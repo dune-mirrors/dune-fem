@@ -433,6 +433,31 @@ namespace Dune{
   }
 
   
+  //! traits of DiscreteFunctionAdapter 
+  template <class EvalImp>
+  class LocalFunctionAdapter;
+  template <class EvalImp>
+  struct LocalFunctionAdapterTraits 
+  {
+    typedef typename EvalImp :: FunctionSpaceType FunctionSpaceType;
+    typedef typename FunctionSpaceType::RangeFieldType RangeFieldType;
+    typedef typename FunctionSpaceType::DomainFieldType DomainFieldType;
+    typedef typename FunctionSpaceType::RangeType RangeType;
+    typedef typename FunctionSpaceType::DomainType DomainType;
+    typedef typename FunctionSpaceType::JacobianRangeType JacobianRangeType;
+    typedef typename EvalImp :: GridPartType GridPartType;
+    typedef typename GridPartType :: GridType GridType;
+    typedef typename GridType :: template Codim<0> :: Entity EntityType;
+    //! type of iterator 
+    typedef typename GridPartType :: template Codim<0> :: IteratorType IteratorType; 
+    //! type of IndexSet 
+    typedef typename GridPartType :: IndexSetType IndexSetType; 
+    typedef DiscreteFunctionSpaceAdapter<FunctionSpaceType,GridPartType>
+            DiscreteFunctionSpaceType;
+
+    typedef LocalFunctionAdapter<EvalImp> DiscreteFunctionType;
+  };
+
   /** \brief LocalFunctionAdapter wrapped a class with a local evaluate method
    *         into a grid function. 
    *
@@ -458,6 +483,9 @@ namespace Dune{
   public:  
     //! type of function 
     typedef ThisType FunctionType;
+
+    //! traits class
+    typedef LocalFunctionAdapterTraits<EvalImp> Traits;
 
     //! type of grid part 
     typedef typename EvalImp::GridPartType GridPartType;
