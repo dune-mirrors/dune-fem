@@ -1,6 +1,10 @@
 #ifndef DUNE_VERSION_HH
 #define DUNE_VERSION_HH
 
+#ifndef DUNE_COMMON_VERSION_MAJOR
+#include "version.inc"
+#endif
+
 #define DUNE_VERSION_JOIN(module,type) module##_VERSION_##type
 
 #define DUNE_VERSION_EQUAL(module,major,minor) \
