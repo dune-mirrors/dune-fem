@@ -203,10 +203,10 @@ protected:
   GridWidthProvider( const ThisType& );
 public:
   //! constructor taking grid part 
-  GridWidthProvider(const GridType& grid) 
-    : grid_( grid )
+  GridWidthProvider(const GridType* grid) 
+    : grid_( *grid )
     , dm_( DMFactoryType::getDofManager( grid_ ))
-    , gridPart_( const_cast<GridType& > (grid) )
+    , gridPart_( const_cast<GridType& > (grid_) )
     , geoInfo_( gridPart_.indexSet() )
     , faceGeoInfo_( geoInfo_.geomTypes(1) ) 
     , width_(-1.0)
