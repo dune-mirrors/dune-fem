@@ -329,40 +329,40 @@ namespace Dune {
     class CoefficientCaller<CallerType,true,false> 
       : public CoefficientCallerTrue<CallerType>
       , public CoefficientCallerNoRHS<CallerType>
-    {
-      public:
-    };
+    {};
 
     template <class CallerType> 
     class CoefficientCaller<CallerType,false,false> 
       : public CoefficientCallerFalse<CallerType>
       , public CoefficientCallerNoRHS<CallerType>
-    {
-      public:
-    };
+    {};
 
   public:
     //- Public methods
-    /**  \brief Constructor
-     \param problem Actual problem definition (see problem.hh)
-     \param[in]  gradPass  types and discrete model for the gradient pass
-     \param pass Previous pass
-     \param spc Space belonging to the discrete function local to this pass
-     \param paramFile parameter file to read necessary parameters, if empty 
-             default parameters will be applied 
-    
-     \note Available methods are (chosen by parameters B_{+,-}, beta, and CDG-BZ)
-          - Interior Penalty : B_{+,-}: 0 , beta: > 0 (big) , CDG-BZ: 0 
-          - Baumann-Oden     : B_{+,-}: 1 , beta: = 0       , CDG-BZ: 0 (needs polOrd > 1) 
-          - NIPG             : B_{+,-}: 1 , beta: > 0       , CDG-BZ: 0
-          - Babuska-Zlamal   : B_{+,-}: 1 , beta: > 0       , CDG-BZ: 1
-          - Compact LDG (CDG): B_{+,-}: 0 , beta: > 0       , CDG-BZ: 1
-    */         
-    DGPrimalOperator(DiscreteModelType& problem, 
-                GradientPassType & gradPass,
-                const DiscreteFunctionSpaceType& spc,
-                const std::string paramFile = "")
-      : BaseType(gradPass.previousPass(), spc),
+    /** \brief Constructor
+     *
+     *  \param      problem    actual problem definition (see problem.hh)
+     *  \param[in]  gradPass   types and discrete model for the gradient pass
+     *  \param      spc        space containing the discrete function local
+     *                         to this pass
+     *  \param      paramFile  parameter file to read necessary parameters
+     *                         (if empty default parameters will be applied)
+     *
+     *  \note Available methods are (chosen by parameters B_{+,-}, beta, and
+     *        CDG-BZ):
+     *  - Interior Penalty : B_{+,-}: 0, beta: > 0 (big), CDG-BZ: 0 
+     *  - Baumann-Oden     : B_{+,-}: 1, beta: = 0      , CDG-BZ: 0
+     *    (needs polOrd > 1)
+     *  - NIPG             : B_{+,-}: 1, beta: > 0      , CDG-BZ: 0
+     *  - Babuska-Zlamal   : B_{+,-}: 1, beta: > 0      , CDG-BZ: 1
+     *  - Compact LDG (CDG): B_{+,-}: 0, beta: > 0      , CDG-BZ: 1
+     *  .
+     */         
+    DGPrimalOperator( DiscreteModelType &problem,
+                      GradientPassType &gradPass,
+                      const DiscreteFunctionSpaceType &spc,
+                      const std::string paramFile = "" )
+    : BaseType( gradPass.previousPass(), spc ),
       caller_(problem),
       problem_(problem),
       arg_(0),
