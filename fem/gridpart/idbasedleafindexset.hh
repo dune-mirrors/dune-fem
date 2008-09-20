@@ -501,7 +501,7 @@ public:
     return leafSet_.geomTypes(codim);
   }
  
-#if INDEXSET_HAS_ITERATORS
+#ifdef INDEXSET_HAS_ITERATORS
   /** @brief Iterator to one past the last entity of given codim for partition type
    *  Here the grids leaf iterator is used 
    */
