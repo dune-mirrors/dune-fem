@@ -1021,7 +1021,7 @@ namespace Dune
       // exchange data 
       if(objList_.size() > 0)
       {
-        typedef CommObjListType :: iterator iterator; 
+        typedef CommObjListType :: const_iterator iterator; 
         // rebuild cahce if grid has changed
         {
           iterator end = objList_.end();
