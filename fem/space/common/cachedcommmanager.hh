@@ -806,12 +806,23 @@ namespace Dune
     mutable DependencyCacheType &cache_;
     CommunicationManager(const ThisType& org);
   public:  
-    //! constructor taking space 
+    //! constructor taking space and communication interface/direction 
     CommunicationManager(const SpaceType & space,
-                         const InterfaceType interface = InteriorBorder_All_Interface,
-                         const CommunicationDirection dir = ForwardCommunication )
+                         const InterfaceType interface,
+                         const CommunicationDirection dir)
       : space_(space)
       , key_(space_,interface,dir)
+      , mySize_(space_.grid().comm().size())
+      , cache_(CommunicationProviderType::getObject(key_)) 
+    {
+    }
+
+    //! constructor taking space and communication interface/direction 
+    CommunicationManager(const SpaceType & space)
+      : space_(space)
+      , key_(space_,
+             space.communicationInterface(),
+             space.communicationDirection())
       , mySize_(space_.grid().comm().size())
       , cache_(CommunicationProviderType::getObject(key_)) 
     {

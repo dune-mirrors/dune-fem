@@ -67,12 +67,11 @@ namespace Dune
     mutable double exchangeTime_;
     
   public:
-    //! constructor taking space, but here only storing gridPart for
-    //! communication
+    //! constructor taking space and communication interface/direction
     explicit DefaultCommunicationManager
       ( const SpaceType &space,
-        const InterfaceType interface = InteriorBorder_All_Interface,
-        const CommunicationDirection dir = ForwardCommunication )
+        const InterfaceType interface,
+        const CommunicationDirection dir)
     : space_( space ),
       interface_( interface ),
       dir_ ( dir ),
@@ -166,12 +165,17 @@ namespace Dune
     typedef DefaultCommunicationManager<SpaceImp> BaseType;
     CommunicationManager(const CommunicationManager &);
   public:
-    //! constructor taking space, but here only storing gridPart for
-    //! communication
+    //! constructor taking space and communication interface/direction
     CommunicationManager(const SpaceImp & space,  
-        const InterfaceType interface = InteriorBorder_All_Interface,
-        const CommunicationDirection dir = ForwardCommunication )
+        const InterfaceType interface,
+        const CommunicationDirection dir)
       : BaseType(space,interface,dir) 
+    {}
+    //! constructor taking space
+    CommunicationManager(const SpaceImp & space)
+      : BaseType(space,
+                 space.communicationInterface(),
+                 space.communicationDirection() )
     {}
   };
 
