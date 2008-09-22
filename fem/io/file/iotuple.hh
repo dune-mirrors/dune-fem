@@ -14,6 +14,7 @@
 #include <dune/fem/space/common/communicationmanager.hh>
 #include <dune/fem/io/file/iolock.hh>
 #include <dune/fem/io/file/iointerface.hh>
+#include <dune/fem/io/parameter.hh>
 
 namespace Dune {
 
@@ -326,9 +327,9 @@ struct IOTuple : public IOTupleBase
   static void restoreDofManager(const GridType& grid,
                                 int n,
                                 std::string path,
-                                std::string name,
-                                bool verbose = true ) 
+                                std::string name) 
   {
+    const bool verbose = Parameter::verbose();
     if( verbose ) 
       std::cout << "Reading Dof Manager" << std::endl;
     
@@ -342,7 +343,7 @@ struct IOTuple : public IOTupleBase
       std::cout << "    from file " << dmname << std::endl;
 
     // read dofmanager, i.e. read all index sets 
-    DMFactoryType::readDofManager(grid,dmname,n,verbose);
+    DMFactoryType::readDofManager(grid,dmname,n);
     
     // resize all data because size of index set might have changed  
     // NOTE: avoid resize of index sets by using resizeForRestict 
