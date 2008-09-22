@@ -338,83 +338,41 @@ public:
 
 
 
-//******************************************************************
-//
-// Indexset that provides consecutive indicies for the leaf level
-// this index set uses the grid hierarchical index  
-//
-//******************************************************************
-/*! 
-  This index set generates a consecutive leaf index out of the unique
-  global index of each entity. This index set can be used instead of the
-  default grid index sets and can be generated for each grid implementation.
-
-  Note that only codim = 0 is working at the moment. 
-
-  Future work. Index set for each codim.
-*/
-
-
-template <class GridType>
-class IdBasedLeafIndexSet : 
-  public ConsecutivePersistentIndexSet<
-        GridType, 
-        IdBasedLeafIndexSet<GridType>,
-        DefaultLeafIteratorTypes<GridType>
-        >
+/** \class IdBasedLeafIndexSet
+ *  \brief consecutive leaf index set based on the grid's local id set
+ *
+ *  This index set maps an entity to a consecutive leaf index. Internally,
+ *  the entity's local id is mapped to the leaf index using an STL map.
+ *
+ *  \note Only codim 0 is working at the moment
+ *
+ *  \note Local id's are only unique within the InteriorBorder_Partition. Dune
+ *        requires the ids of periodic ghost and overlap entities to equal the
+ *        ids of the corresponding interior element (the index has to be unique,
+ *        though). So be careful when using this index set with a periodic grid.
+ *
+ *  \todo Make the index set work for all codimensions
+ */
+template< class Grid >
+class IdBasedLeafIndexSet
+: public ConsecutivePersistentIndexSet
+  < Grid, IdBasedLeafIndexSet< Grid >, DefaultLeafIteratorTypes< Grid > >
 {
+  typedef IdBasedLeafIndexSet< Grid > ThisType;
+  typedef ConsecutivePersistentIndexSet
+    < Grid, ThisType, DefaultLeafIteratorTypes< Grid > >
+    BaseType;
+
 public:
-  enum { ncodim = GridType::dimension + 1 };
+  typedef Grid GridType;
 
-private:
-  // busines as usual 
-
-  // count elements of set by iterating the grid 
-  template <class AdLeafSet, int codim >
-  struct CountElements
-  {
-    static inline int count (const AdLeafSet & ls , int cd, GeometryType type )
-    {
-      if( cd == codim ) 
-      {
-        return ls.template countElements<codim> (type);
-      }
-      else 
-        return CountElements < AdLeafSet, codim-1> :: count (ls,cd,type);
-    }
-  };
-
-  // count elements of set by iterating the grid 
-  template <class AdLeafSet>
-  struct CountElements<AdLeafSet,0>
-  {
-    static inline int count (const AdLeafSet & ls , int cd, GeometryType type )
-    {
-      enum { codim = 0 };
-      if( cd == codim ) 
-      {
-        return ls.template countElements<codim> (type);
-      }
-      else 
-        return 0;
-    }
-  };
-
-  //! type of base class 
-  typedef ConsecutivePersistentIndexSet<
-        GridType, 
-        IdBasedLeafIndexSet<GridType>,
-        DefaultLeafIteratorTypes<GridType>
-        > BaseType;
+  static const int dim = GridType :: dimension;
 
   //! type of index 
   typedef typename BaseType :: IndexType IndexType;
 
-  //! type of this class 
-  typedef IdBasedLeafIndexSet < GridType > ThisType;
-
-  //! fro consecutive method 
-  friend class Conversion< ThisType, EmptyIndexSet> ;
+private:
+  friend class Conversion< ThisType, EmptyIndexSet >;
   
   // my type, to be revised 
   enum { myType = 8 };
@@ -422,19 +380,23 @@ private:
   typedef typename GridType :: Traits :: LeafIndexSet LeafIndexSetType;
   typedef typename GridType :: Traits :: LocalIdSet LocalIdSetType;
   typedef typename GridType :: template Codim<0> :: Entity EntityCodim0Type;
-  const LeafIndexSetType & leafSet_; 
-  const LocalIdSetType & idSet_; 
 
-  enum { dim = GridType :: dimension };
+  typedef IdBasedCodimIndexSet< LocalIdSetType, LeafIndexSetType, 0 >
+    IdBasedCodimIndexSetType;
 
-  typedef IdBasedCodimIndexSet<LocalIdSetType,LeafIndexSetType,0> IdBasedCodimIndexSetType;
+  const LeafIndexSetType &leafSet_; 
+  const LocalIdSetType &idSet_; 
+
+
   mutable IdBasedCodimIndexSetType pLeafSet_;
   
   // true if all entities that we use are marked as USED 
   bool compressed_;
 
-  // no copying 
-  IdBasedLeafIndexSet (const ThisType& ); 
+  // no copying, no assignment
+  IdBasedLeafIndexSet ( const ThisType & );
+  ThisType &operator= ( const ThisType & );
+
 public:
   //! type traits of this class
   typedef DefaultLeafIteratorTypes<GridType> Traits; 
@@ -763,7 +725,7 @@ public:
       assert(type == myType);
     }
 
-    for(int i=0; i<ncodim; i++) codimLeafSet_[i].processXdr(&xdrs);
+    for(int i=0; i<=dim; i++) codimLeafSet_[i].processXdr(&xdrs);
 
     xdr_destroy(&xdrs);
     fclose(file);
@@ -807,7 +769,7 @@ public:
       codimLeafSet_[0].processXdr(&xdrs);
     else 
     {
-      for(int i=0; i<ncodim; i++) codimLeafSet_[i].processXdr(&xdrs);
+      for(int i=0; i<=dim; i++) codimLeafSet_[i].processXdr(&xdrs);
     }
 
     xdr_destroy(&xdrs);
