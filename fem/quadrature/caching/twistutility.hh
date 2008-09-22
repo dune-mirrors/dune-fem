@@ -21,6 +21,10 @@
 #include <dune/grid/uggrid.hh>
 #endif
 
+#if HAVE_DUNE_GEOGRID
+#include <dune/grid/utility/hostgridaccess.hh>
+#endif
+
 //#include <dune/grid/sgrid.hh>
 //#include <dune/grid/yaspgrid.hh>
 
@@ -785,6 +789,182 @@ namespace Dune
     }
   };
 #endif
+
+
+#if HAVE_DUNE_GEOGRID
+  template< class HostGrid, class CoordFunction >
+  class GeometryGrid;
+
+  template< class HostGrid, class CoordFunction >
+  class TwistUtility< GeometryGrid< HostGrid, CoordFunction > >
+  {
+  public:
+    typedef GeometryGrid< HostGrid, CoordFunction > GridType;
+    typedef typename GridType :: Traits :: LeafIntersectionIterator
+      LeafIntersectionIterator;
+    typedef typename LeafIntersectionIterator :: Intersection LeafIntersection;
+    typedef typename GridType :: Traits :: LevelIntersectionIterator
+      LevelIntersectionIterator;
+    typedef typename LevelIntersectionIterator :: Intersection LevelIntersection;
+
+  private:
+    typedef TwistUtility< HostGrid > HostTwistUtility;
+    typedef Dune :: HostGridAccess< GridType > HostGridAccess;
+
+    const GridType &grid_;
+
+  public:
+    //! \brief constructor
+    TwistUtility ( const GridType &grid )
+    : grid_( grid )
+    {}
+
+    //! \brief return twist for inner face
+    static int twistInSelf ( const GridType &grid,
+                             const LeafIntersection &intersection )
+    {
+      typedef typename HostGridAccess :: HostLeafIntersection HostIntersection;
+      const HostIntersection &hostIntersection
+        = HostGridAccess :: getIntersection( intersection );
+      return HostTwistUtility :: twistInSelf( grid.hostGrid(), hostIntersection );
+    }
+
+    //! \brief return twist for inner face
+    static int twistInSelf ( const GridType &grid,
+                             const LevelIntersection &intersection )
+    {
+      typedef typename HostGridAccess :: HostLevelIntersection HostIntersection;
+      const HostIntersection &hostIntersection
+        = HostGridAccess :: getIntersection( intersection );
+      return HostTwistUtility :: twistInSelf( grid.hostGrid(), hostIntersection );
+    }
+
+    //! \brief return twist for inner face
+    template< class G, template< class > class II, template< class > class I >
+    static int DUNE_DEPRECATED
+    twistInSelf ( const GridType &grid,
+                  const IntersectionIterator< G, II, I > &intersectionIterator )
+    {
+      return twistInSelf( grid, *intersectionIterator );
+    }
+
+    //! \brief return twist for inner face
+    template< class Intersection >
+    int twistInSelf ( const Intersection &intersection ) const
+    {
+      return twistInSelf( grid_, intersection );
+    }
+
+
+    //! \brief return twist for outer face
+    static int twistInNeighbor ( const GridType &grid,
+                                 const LeafIntersection &intersection )
+    {
+      typedef typename HostGridAccess :: HostLeafIntersection HostIntersection;
+      const HostIntersection &hostIntersection
+        = HostGridAccess :: getIntersection( intersection );
+      return HostTwistUtility :: twistInNeighbor( grid.hostGrid(), hostIntersection );
+    }
+
+    //! \brief return twist for outer face
+    static int twistInNeighbor ( const GridType &grid,
+                                 const LevelIntersection &intersection )
+    {
+      typedef typename HostGridAccess :: HostLevelIntersection HostIntersection;
+      const HostIntersection &hostIntersection
+        = HostGridAccess :: getIntersection( intersection );
+      return HostTwistUtility :: twistInNeighbor( grid.hostGrid(), hostIntersection );
+    }
+
+    //! \brief return twist for inner face
+    template< class G, template< class > class II, template< class > class I >
+    static int DUNE_DEPRECATED
+    twistInNeighbor ( const GridType &grid,
+                      const IntersectionIterator< G, II, I > &intersectionIterator )
+    {
+      return twistInNeighbor( grid, *intersectionIterator );
+    }
+
+    //! \brief return twist for outer face
+    template< class Intersection >
+    int twistInNeighbor ( const Intersection &intersection ) const
+    {
+      return twistInNeighbor( grid_, intersection );
+    }
+
+
+    //! \brief return true if intersection is conform
+    static bool conforming ( const GridType &grid,
+                             const LeafIntersection &intersection )
+    {
+      typedef typename HostGridAccess :: HostLeafIntersection HostIntersection;
+      const HostIntersection &hostIntersection
+        = HostGridAccess :: getIntersection( intersection );
+      return HostTwistUtility :: conforming( grid.hostGrid(), hostIntersection );
+    }
+
+    //! \brief return true if intersection is conform
+    static bool conforming ( const GridType &grid,
+                             const LevelIntersection &intersection )
+    {
+      typedef typename HostGridAccess :: HostLevelIntersection HostIntersection;
+      const HostIntersection &hostIntersection
+        = HostGridAccess :: getIntersection( intersection );
+      return HostTwistUtility :: conforming( grid.hostGrid(), hostIntersection );
+    }
+
+    //! \brief return true if intersection is conform
+    template< class G, template< class > class II, template< class > class I >
+    static bool DUNE_DEPRECATED
+    conforming ( const GridType &grid,
+                 const IntersectionIterator< G, II, I > &intersectionIterator )
+    {
+      return conforming( grid, *intersectionIterator );
+    }
+
+    //! \brief return true if intersection is conform
+    template< class Intersection >
+    bool conforming ( const Intersection &intersection ) const
+    {
+      return conforming( grid_, intersection );
+    }
+
+
+    /** \brief return element geometry type of inside or outside entity */
+    static GeometryType
+    elementGeometry ( const LeafIntersection &intersection, bool inside )
+    {
+      typedef typename HostGridAccess :: HostLeafIntersection HostIntersection;
+      const HostIntersection &hostIntersection
+        = HostGridAccess :: getIntersection( intersection );
+      return HostTwistUtility :: elementGeometry( hostIntersection, inside );
+    }
+
+    /** \brief return element geometry type of inside or outside entity */
+    static GeometryType
+    elementGeometry ( const LevelIntersection &intersection, bool inside )
+    {
+      typedef typename HostGridAccess :: HostLevelIntersection HostIntersection;
+      const HostIntersection &hostIntersection
+        = HostGridAccess :: getIntersection( intersection );
+      return HostTwistUtility :: elementGeometry( hostIntersection, inside );
+    }
+
+    /** \brief return element geometry type of inside or outside entity */
+    template< class G, template< class > class II, template< class > class I >
+    static GeometryType DUNE_DEPRECATED
+    elementGeometry ( const IntersectionIterator< G, II, I > &intersectionIterator,
+                      bool inside )
+    {
+      return elementGeometry( *intersectionIterator, inside );
+    }
+
+  private:
+    TwistUtility( const TwistUtility & );
+    TwistUtility &operator=( const TwistUtility & );
+  };
+#endif
   
 } // end namespace Dune 
+
 #endif
