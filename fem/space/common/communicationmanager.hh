@@ -64,12 +64,12 @@ namespace Dune
     const InterfaceType interface_;
     const CommunicationDirection dir_;
 
-    double exchangeTime_;
+    mutable double exchangeTime_;
     
   public:
     //! constructor taking space, but here only storing gridPart for
     //! communication
-    inline DefaultCommunicationManager
+    explicit DefaultCommunicationManager
       ( const SpaceType &space,
         const InterfaceType interface = InteriorBorder_All_Interface,
         const CommunicationDirection dir = ForwardCommunication )
@@ -112,7 +112,7 @@ namespace Dune
      *  \param  discreteFunction  discrete function to communicate
      */
     template< class DiscreteFunction >
-    inline void exchange ( DiscreteFunction &discreteFunction )
+    inline void exchange ( DiscreteFunction &discreteFunction ) const
     {
       // get type of default operation 
       typedef typename DiscreteFunction :: DiscreteFunctionSpaceType :: 
@@ -131,7 +131,7 @@ namespace Dune
      */
     template< class DiscreteFunction, class Operation >
     inline void exchange ( DiscreteFunction &discreteFunction,
-                           const Operation *operation )
+                           const Operation *operation ) const
     {
       // get type of data handle from the discrete function space
       typedef typename DiscreteFunction
@@ -210,7 +210,7 @@ namespace Dune
       }
 
       // exchange discrete function 
-      void exchange () 
+      void exchange () const
       {
         comm_.exchange(df_);
       }
@@ -252,9 +252,9 @@ namespace Dune
 
     //! exchange discrete function to all procs we share data with 
     //! by using given OperationImp when receiving data from other procs 
-    void exchange() 
+    void exchange() const
     {
-      typedef CommObjListType :: iterator iterator; 
+      typedef CommObjListType :: const_iterator iterator; 
       {
         iterator end = objList_.end();
         for(iterator it = objList_.begin(); it != end; ++it) 

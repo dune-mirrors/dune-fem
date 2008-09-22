@@ -559,11 +559,13 @@ namespace Dune
     DofManagerType& dofManager_;
 
     // communication manager 
-    mutable CommunicationManagerType communicator_;
+    const InterfaceType commInterface_;
+    const CommunicationDirection commDirection_;
+    mutable CommunicationManagerType *communicator_;
  
   public:
     //! constructor
-    inline explicit DiscreteFunctionSpaceDefault( GridPartType &gridPart,
+    explicit DiscreteFunctionSpaceDefault( GridPartType &gridPart,
         const InterfaceType commInterface = InteriorBorder_All_Interface,
         const CommunicationDirection commDirection = ForwardCommunication )
     : BaseType(),
@@ -572,10 +574,19 @@ namespace Dune
       lfStorage_( lfFactory_ ),
       allGeomTypes_( gridPart.indexSet() ),
       dofManager_( DofManagerFactoryType :: getDofManager( gridPart.grid() ) ),
-      communicator_( asImp() , commInterface , commDirection )
+      commInterface_( commInterface ),
+      commDirection_( commDirection ),
+      communicator_( 0 )
+    {}
+
+  protected:
+    ~DiscreteFunctionSpaceDefault ()
     {
+      if( communicator_ != 0 )
+        delete communicator_;
     }
 
+  public:
     /** \copydoc Dune::DiscreteFunctionSpaceInterface::sequence */
     inline int sequence () const
     { 
@@ -690,21 +701,27 @@ namespace Dune
     }
 
     /** \copydoc Dune::DiscreteFunctionSpaceInterface::communicationInterface() */
-    InterfaceType communicationInterface() const
+    InterfaceType communicationInterface () const
     {
-      return communicator_.communicationInterface();
+      return commInterface_;
     }
 
     /** \copydoc Dune::DiscreteFunctionSpaceInterface::communicationInterface() */
-    CommunicationDirection communicationDirection() const
+    CommunicationDirection communicationDirection () const
     {
-      return communicator_.communicationDirection();
+      return commDirection_;
     }
 
     /** \copydoc Dune::DiscreteFunctionSpaceInterface::communicator() */
     const CommunicationManagerType& communicator() const
     {
-      return communicator_;
+      if( communicator_ == 0 )
+      {
+        communicator_
+          = new CommunicationManagerType( asImp(), commInterface_, commDirection_ );
+      }
+      assert( communicator_ != 0 );
+      return *communicator_;
     }
 
     /** \copydoc Dune::DiscreteFunctionSpaceInterface::communicate(DiscreteFunction &discreteFunction) const */
@@ -723,7 +740,7 @@ namespace Dune
     template <class DiscreteFunction, class Operation>
     void communicate(DiscreteFunction& discreteFunction, const Operation *op ) const
     {
-      communicator_.exchange( discreteFunction, (Operation *) 0);
+      communicator().exchange( discreteFunction, (Operation *) 0);
     }
 
     /** \copydoc Dune::DiscreteFunctionSpaceInterface::createDataHandle(DiscreteFunction &discreteFunction.const Operation *operation) const

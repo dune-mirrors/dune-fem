@@ -803,7 +803,7 @@ namespace Dune
     typedef ALU3DSPACE MpAccessLocal MPAccessInterfaceType; 
     
     // is singleton per space 
-    DependencyCacheType & cache_;
+    mutable DependencyCacheType &cache_;
     CommunicationManager(const ThisType& org);
   public:  
     //! constructor taking space 
@@ -845,7 +845,7 @@ namespace Dune
     //! exchange discrete function to all procs we share data 
     //! using the copy operation 
     template <class DiscreteFunctionType> 
-    void exchange(DiscreteFunctionType & df) 
+    void exchange(DiscreteFunctionType & df) const
     {
       cache_.exchange( df, (DFCommunicationOperation :: Copy *) 0 );
     }
@@ -853,7 +853,7 @@ namespace Dune
     //! exchange discrete function to all procs we share data 
     //! using the given operation 
     template <class DiscreteFunctionType, class OperationImp> 
-    void exchange(DiscreteFunctionType & df, const OperationImp* ) 
+    void exchange(DiscreteFunctionType & df, const OperationImp* ) const
     {
       cache_.exchange( df, (OperationImp*) 0 );
     }
@@ -1013,7 +1013,7 @@ namespace Dune
 
     //! exchange the list of discrete functions between processes 
     //! only one communication is done here 
-    void exchange() 
+    void exchange() const
     {
       // if only one process, do nothing 
       if( mySize_ <= 1 ) return ;
