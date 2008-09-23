@@ -42,8 +42,13 @@ namespace Dune
     template< class GridT, bool isGood >
     struct GoodGridChooser
     {
-      // choose the adative index based on hierarhic index set
-      typedef AdaptiveLeafIndexSet< GridT > IndexSetType;
+      // choose the adative index based on hierarhic index setq
+      // to be revised 
+#ifdef USE_PARTITIONTYPED_INDEXSET
+      typedef AdaptiveLeafIndexSet<GridT,pitype> IndexSetType;
+#else
+      typedef AdaptiveLeafIndexSet<GridT> IndexSetType;
+#endif
     };
 
     // the same for shitty grids 
