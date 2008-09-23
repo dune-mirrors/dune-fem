@@ -19,7 +19,12 @@
 #include <dune/grid/alugrid.hh>
 #endif
 
-#if ALU3DGRID_PARALLEL 
+// default is: enabled 
+#ifndef WANT_CACHED_COMM_MANAGER 
+#define WANT_CACHED_COMM_MANAGER 1 
+#endif
+
+#if ALU3DGRID_PARALLEL && WANT_CACHED_COMM_MANAGER
 #define USE_CACHED_COMM_MANAGER 
 #else 
 #ifndef NDEBUG 
@@ -27,9 +32,13 @@
   #warning "HAVE_MPI == 0, therefore default CommunicationManager is used!"
 #elif !ALU3DGRID_PARALLEL 
   #warning "No Parallel ALUGrid found, using default CommunicationManager!"
+#elif ! WANT_CACHED_COMM_MANAGER 
+  #warning "CachedCommunication Manager disabled by WANT_CACHED_COMM_MANAGER=0!"
 #endif 
 #endif
 #endif
+
+#undef WANT_CACHED_COMM_MANAGER 
 
 #ifdef USE_CACHED_COMM_MANAGER
 #include "cachedcommmanager.hh"
