@@ -77,10 +77,8 @@ struct VtxProjectionImpl
       }
     }
 
-    // Communicate for distributed runs:
-    CommunicationManagerType communicate( space );
-    communicate.exchange( discFunc, (DFCommunicationOperation :: Add *) 0 );
-    communicate.exchange( weightDF, (DFCommunicationOperation :: Add *) 0 );
+    discFunc.space().communicate( discFunc );
+    weightDF.space().communicate( weightDF );
 
     typename DiscreteFunctionImp::DofIteratorType
       itdof = discFunc.dbegin();
