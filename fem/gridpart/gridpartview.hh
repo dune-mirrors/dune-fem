@@ -32,9 +32,25 @@ namespace Dune
     : public Grid :: Traits :: template Codim< codim >
     {
       typedef typename GridPart :: template Codim< codim > :: IteratorType Iterator;
+
+      typedef typename Grid :: template Codim< codim > :: Entity Entity;
+      typedef typename Grid :: template Codim< codim > :: EntityPointer
+        EntityPointer;
+
+      typedef typename Grid :: template Codim< codim > :: Geometry Geometry;
+      typedef typename Grid :: template Codim< codim > :: LocalGeometry
+        LocalGeometry;
+
+        template< PartitionIteratorType pitype >
+        struct Partition
+        {
+          typedef typename GridPart :: template Codim< codim >
+            :: template Partition< pitype > :: IteratorType
+            Iterator;
+        };
     };
 
-    enum { conforming = GridPart :: conforming };
+    static const bool conforming = GridPart :: conforming;
   };
 
 
@@ -64,8 +80,10 @@ namespace Dune
     typedef typename Traits :: CollectiveCommunication CollectiveCommunication;
 
     /** \brief Codim Structure */
-    template< int cd >
-    struct Codim : public Traits :: template Codim<cd> {};
+    template< int codim >
+    struct Codim
+    : public Traits :: template Codim< codim >
+    {};
  
     enum { conforming = Traits :: conforming };
 
@@ -103,6 +121,12 @@ namespace Dune
     {
       return gridPart_.template begin< codim >();
     }
+
+    template< int codim, PartitionIteratorType pitype >
+    typename Codim< codim > :: template Partition< pitype > :: Iterator begin () const
+    {
+      return gridPart_.template begin< codim, pitype >();
+    }
     
     template< int codim >
     typename Codim< codim > :: Iterator end () const
@@ -110,6 +134,12 @@ namespace Dune
       return gridPart_.template end< codim >();
     }
 
+    template< int codim, PartitionIteratorType pitype >
+    typename Codim< codim > :: template Partition< pitype > :: Iterator end () const
+    {
+      return gridPart_.template end< codim, pitype >();
+    }
+    
     IntersectionIterator ibegin ( const typename Codim< 0 > :: Entity &entity ) const
     {
       return gridPart_.ibegin( entity );
