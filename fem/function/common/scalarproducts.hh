@@ -155,14 +155,22 @@ namespace Dune
   template< class Space, class Mapper >
   inline void SlaveDofs< Space, Mapper > :: buildDiscontinuousMaps ()
   {
+#if 0
     typedef typename GridPartNewPartitionType< GridPartType, All_Partition >
       :: NewGridPartType NewGridPartType;
     typedef typename NewGridPartType :: template Codim<0> :: IteratorType IteratorType;
 
     NewGridPartType gridPart( const_cast< GridPartType & >( gridPart_ ).grid() );
+#endif
 
-    IteratorType endit = gridPart.template end<0>();
-    for( IteratorType it = gridPart.template begin<0>(); it != endit; ++it )
+    const PartitionIteratorType idxpitype = GridPartType :: indexSetPartitionType;
+
+    typedef typename GridPartType :: template Codim< 0 >
+      :: template Partition< idxpitype > :: IteratorType
+      IteratorType;
+
+    const IteratorType endit = gridPart_.template end< 0, idxpitype >();
+    for( IteratorType it = gridPart_.template begin< 0, idxpitype >(); it != endit; ++it )
     {
       typedef typename GridPartType :: GridType :: template Codim< 0 > :: Entity
         EntityType;
