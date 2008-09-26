@@ -7,134 +7,172 @@
 //- local includes 
 #include "idbasedleafindexset.hh"
 
-namespace Dune {
-
-/////////////////////////////////////////////////////////////////////////
-//
-//  --IdBasedLeafGridPart 
-//
-/////////////////////////////////////////////////////////////////////////
-
-// forward deklaration of grid part 
-template <class GridImp,PartitionIteratorType pitype>
-struct IdBasedLeafGridPart;
-template <class GridImp>
-struct DefaultAdaptiveLeafIndexSet;
-
-//! Type definitions for the LeafGridPart class
-template <class GridImp,PartitionIteratorType pitype>
-struct IdBasedLeafGridPartTraits {
-  typedef GridImp GridType;
-  typedef IdBasedLeafGridPart<GridImp,pitype> GridPartType;
-  typedef IdBasedLeafIndexSet<GridImp> IndexSetType;
-
-  typedef typename GridType::template Codim<0>::Entity::
-    LeafIntersectionIterator IntersectionIteratorType;
-  
-  template <int cd>
-  struct Codim {
-    typedef typename GridImp::template Codim<cd>::template Partition<pitype>::LeafIterator IteratorType;
-  };
-
-  //! \brief is true if grid on this view only has conformingi intersections 
-  enum { conforming = Capabilities::isLeafwiseConforming<GridType>::v };
-};
-
-/** @ingroup AdaptiveLeafGP
-    \brief IdBasedLeafGridPart with
-    indexset only for codimension 0 entities.
-
-    Special implementation of the AdaptiveLeafGridPart with
-    an underlying index set is only defined for 
-    entities with codimension 0 for use with
-    the Dune::DiscontinuousGalerkinSpace of FiniteVolumeSpaces.
-
-    The underlying \ref IdBasedLeafIndexSet "index set" is
-    a singleton for each different grid. 
-    NOTE: The indices are stored in maps using the LocalIdSet of the grid 
-          to generate these maps. 
-    */
-template <class GridImp, PartitionIteratorType pitype = Interior_Partition > 
-class IdBasedLeafGridPart
-: public GridPartDefault<IdBasedLeafGridPartTraits<GridImp,pitype> > 
+namespace Dune
 {
-public:
-  //- Public typedefs and enums
-  //! Type definitions
-  typedef IdBasedLeafGridPartTraits<GridImp,pitype> Traits;
-  //! Grid implementation type
-  typedef typename Traits::GridType GridType;
-  //! The leaf index set of the grid implementation
-  typedef typename Traits::IndexSetType IndexSetType;
-  
-  //! The corresponding IntersectionIterator 
-  typedef typename Traits::IntersectionIteratorType IntersectionIteratorType ;
-  
-  //! Struct providing types of the leaf iterators on codimension cd
-  template <int cd>
-  struct Codim {
-    typedef typename Traits::template Codim<cd>::IteratorType IteratorType;
+
+  // Internal Forward Declarations
+  // -----------------------------
+
+  template< class GridImp >
+  struct IdBasedLeafGridPart;
+
+
+
+  // Traits for IdBasedLeafGridPart
+  // ------------------------------
+
+  template< class GridImp >
+  struct IdBasedLeafGridPartTraits
+  {
+    typedef GridImp GridType;
+    typedef IdBasedLeafGridPart< GridImp > GridPartType;
+
+    typedef IdBasedLeafIndexSet< GridImp > IndexSetType;
+    static const PartitionIteratorType indexSetPartitionType = All_Partition;
+
+    typedef typename GridType::template Codim<0>::Entity::
+      LeafIntersectionIterator IntersectionIteratorType;
+    
+    template< int codim >
+    struct Codim
+    {
+      template< PartitionIteratorType pitype >
+      struct Partition
+      {
+        typedef typename GridType :: template Codim< codim >
+          :: template Partition< pitype > :: LeafIterator
+          IteratorType;
+      };
+    };
+
+    static const bool conforming = Capabilities::isLeafwiseConforming<GridType>::v;
   };
 
-  //! \brief is true if grid on this view only has conforming intersections 
-  enum { conforming = Traits :: conforming };
 
-protected:
-  // singleton provider 
-  typedef SingletonList<const GridType* , IndexSetType > IndexSetProviderType;  
 
-  // type of entity of codim 0
-  typedef typename GridType::template Codim<0>::Entity EntityCodim0Type;
+  // IdBasedLeafGridPart
+  // -------------------
 
-public:
-  //- Public methods
-  //! Constructor
-  IdBasedLeafGridPart(GridType& grid) :
-    GridPartDefault<Traits>(grid, IndexSetProviderType::getObject(&grid) )
-  {}
-
-  /** \brief Destrcutor removeing index set, if only one reference left, index set
-      removed.  */
-  ~IdBasedLeafGridPart() 
-  { 
-    IndexSetProviderType::removeObject(this->indexSet());
-  }
-
-  //! Begin iterator on the leaf level
-  template <int cd>
-  typename Traits::template Codim<cd>::IteratorType begin() const {
-    return this->grid().template leafbegin<cd,pitype>();
-  }
-
-  //! End iterator on the leaf level
-  template <int cd>
-  typename Traits::template Codim<cd>::IteratorType end() const {
-    return this->grid().template leafend<cd,pitype>();
-  }
-
-  //! ibegin of corresponding intersection iterator for given entity
-  IntersectionIteratorType ibegin(const EntityCodim0Type & en) const 
+  /** \class IdBasedLeafGridPart
+   *  \ingroup AdaptiveLeafGP
+   *  \brief index set based on the grid's local ids
+   *
+   *  Special implementation of the AdaptiveLeafGridPart with an underlying
+   *  index set is only defined for entities with codimension 0 for use with
+   *  the Dune::DiscontinuousGalerkinSpace of FiniteVolumeSpaces.
+   *
+   *  The underlying \ref IdBasedLeafIndexSet "index set" is a singleton for
+   *  each different grid.
+   *
+   *  \note: This index set provides only indices for codimension 0.
+   *  \note: The indices are stored in maps using the grid's local ids as the
+   *         key.
+   *
+   *  \todo add support for higher codimensions
+   */
+  template< class GridImp > 
+  class IdBasedLeafGridPart
+  : public GridPartDefault< IdBasedLeafGridPartTraits< GridImp > > 
   {
-    return en.ileafbegin();
-  }
-  
-  //! iend of corresponding intersection iterator for given entity
-  IntersectionIteratorType iend(const EntityCodim0Type & en) const 
-  {
-    return en.ileafend();
-  }
+    typedef IdBaseLeafGridPart< GridImp > ThisType;
+    typedef GridPartDefault< IdBasedLeafGridPartTraits< GridImp > > BaseType;
 
-  //! Returns maxlevel of the grid
-  int level() const { return this->grid().maxLevel(); }
+  public:
+    //- Public typedefs and enums
+    //! Type definitions
+    typedef IdBasedLeafGridPartTraits< GridImp > Traits;
 
-  //! corresponding communication method for this grid part
-  template <class DataHandleImp,class DataType>
-  void communicate(CommDataHandleIF<DataHandleImp,DataType> & data, 
-                   InterfaceType iftype, CommunicationDirection dir) const 
-  {
-    this->grid().communicate(data,iftype,dir);
-  }
-};
+    //! Grid implementation type
+    typedef typename Traits::GridType GridType;
+    //! The leaf index set of the grid implementation
+    typedef typename Traits::IndexSetType IndexSetType;
+    
+    //! The corresponding IntersectionIterator 
+    typedef typename Traits::IntersectionIteratorType IntersectionIteratorType ;
+    
+    //! Struct providing types of the leaf iterators on codimension cd
+    template< int codim >
+    struct Codim
+    : public BaseType :: template Codim< codim >
+    {};
+
+  protected:
+    // singleton provider 
+    typedef SingletonList<const GridType* , IndexSetType > IndexSetProviderType;  
+
+    // type of entity of codim 0
+    typedef typename GridType::template Codim<0>::Entity EntityCodim0Type;
+
+  public:
+    //- Public methods
+    //! Constructor
+    IdBasedLeafGridPart ( GridType &grid )
+    : BaseType( grid, IndexSetProviderType :: getObject( &grid ) )
+    {}
+
+    /** \brief Destrcutor removeing index set, if only one reference left, index set
+        removed.  */
+    ~IdBasedLeafGridPart() 
+    { 
+      IndexSetProviderType::removeObject(this->indexSet());
+    }
+
+    //! Begin iterator on the leaf level
+    template< int codim >
+    typename Codim< codim > :: IteratorType
+    begin () const
+    {
+      return BaseType :: template begin< codim >();
+    }
+
+    //! Begin iterator on the leaf level
+    template< int codim, PartitionIteratorType pitype >
+    typename Codim< codim > :: template Partition< pitype > :: IteratorType
+    begin () const
+    {
+      return (*this).grid().template leafbegin< codim, pitype >();
+    }
+
+    //! Begin iterator on the leaf level
+    template< int codim >
+    typename Codim< codim > :: IteratorType
+    end () const
+    {
+      return BaseType :: template end< codim >();
+    }
+
+    //! End iterator on the leaf level
+    template< int codim, PartitionIteratorType pitype >
+    typename Codim< codim > :: template Partition< pitype > :: IteratorType
+    end () const
+    {
+      return (*this).grid().template leafend< codim, pitype >();
+    }
+
+    //! ibegin of corresponding intersection iterator for given entity
+    IntersectionIteratorType ibegin(const EntityCodim0Type & en) const 
+    {
+      return en.ileafbegin();
+    }
+    
+    //! iend of corresponding intersection iterator for given entity
+    IntersectionIteratorType iend(const EntityCodim0Type & en) const 
+    {
+      return en.ileafend();
+    }
+
+    //! Returns maxlevel of the grid
+    int level() const { return this->grid().maxLevel(); }
+
+    //! corresponding communication method for this grid part
+    template <class DataHandleImp,class DataType>
+    void communicate(CommDataHandleIF<DataHandleImp,DataType> & data, 
+                     InterfaceType iftype, CommunicationDirection dir) const 
+    {
+      this->grid().communicate(data,iftype,dir);
+    }
+  };
 
 } // end namespace Dune 
+
 #endif
