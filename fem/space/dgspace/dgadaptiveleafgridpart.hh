@@ -13,14 +13,14 @@ namespace Dune
 {
 
   // forward deklaration 
-  template< class Grid, PartitionIteratorType pitype >
+  template< class Grid >
   class DGAdaptiveLeafGridPart;
 
-  template< class Grid >
-  class DGAdaptiveLeafIndexSet;
+  //template< class Grid >
+  //class DGAdaptiveLeafIndexSet;
 
   //! Type definitions for the DGAdaptiveLeafGridPart class
-  template< class Grid, PartitionIteratorType pitype >
+  template< class Grid >
   struct DGAdaptiveLeafGridPartTraits
   {
     //! default is to use DGAdaptiveLeafIndexSet
@@ -49,7 +49,7 @@ namespace Dune
     };
 
     typedef Grid GridType;
-    typedef DGAdaptiveLeafGridPart< GridType, pitype > GridPartType;
+    typedef DGAdaptiveLeafGridPart< GridType > GridPartType;
 
     // choose index set dependend on grid type  
     typedef GoodGridChooser
@@ -59,20 +59,26 @@ namespace Dune
                 
     typedef typename IndexSetChooserType :: IndexSetType IndexSetType;
 
+    static const PartitionIteratorType indexSetPartitionType = All_Partition;
+
     typedef typename GridType
       :: template Codim< 0 > :: Entity :: LeafIntersectionIterator
       IntersectionIteratorType;
     
-    template< int cd >
+    template< int codim >
     struct Codim
     {
-      typedef typename GridType
-        :: template Codim< cd > :: template Partition< pitype > :: LeafIterator
-        IteratorType;
+      template< PartitionIteratorType pitype >
+      struct Partition
+      {
+        typedef typename GridType
+          :: template Codim< codim > :: template Partition< pitype > :: LeafIterator
+          IteratorType;
+      };
     };
         
     //! \brief is true if grid on this view only has conforming intersections 
-    enum { conforming = Capabilities :: isLeafwiseConforming< GridType > :: v };
+    static const bool conforming = Capabilities :: isLeafwiseConforming< GridType > :: v;
   };
 
 
@@ -87,17 +93,17 @@ namespace Dune
 
       The underlying \ref DGAdaptiveLeafIndexSet "index set" is
       a singleton for each different grid. */
-  template< class Grid, PartitionIteratorType pitype = Interior_Partition >
+  template< class Grid >
   class DGAdaptiveLeafGridPart
-  : public GridPartDefault< DGAdaptiveLeafGridPartTraits< Grid, pitype > >
+  : public GridPartDefault< DGAdaptiveLeafGridPartTraits< Grid > >
   {
-    typedef DGAdaptiveLeafGridPart< Grid, pitype > ThisType;
-    typedef GridPartDefault< DGAdaptiveLeafGridPartTraits< Grid, pitype > >
+    typedef DGAdaptiveLeafGridPart< Grid > ThisType;
+    typedef GridPartDefault< DGAdaptiveLeafGridPartTraits< Grid > >
       BaseType;
 
   public:
     //! Type definitions
-    typedef DGAdaptiveLeafGridPartTraits< Grid, pitype > Traits;
+    typedef DGAdaptiveLeafGridPartTraits< Grid > Traits;
     //! Grid implementation type
     typedef typename Traits :: GridType GridType;
     //! The leaf index set of the grid implementation
@@ -108,15 +114,10 @@ namespace Dune
       IntersectionIteratorType ;
     
     //! Struct providing types of the leaf iterators on codimension cd
-    template< int cd >
+    template< int codim >
     struct Codim
-    {
-      typedef typename Traits :: template Codim< cd > :: IteratorType
-        IteratorType;
-    };
-
-    //! \brief is true if grid on this view only has conforming intersections 
-    enum { conforming = Traits :: conforming };
+    : public BaseType :: template Codim< codim >
+    {};
 
     typedef typename GridType::template Codim<0>::Entity EntityCodim0Type;
 
@@ -155,17 +156,35 @@ namespace Dune
     }
 
     //! Begin iterator on the leaf level
-    template< int cd >
-    inline typename Codim< cd > :: IteratorType begin () const
+    template< int codim >
+    typename Codim< codim > :: IteratorType
+    begin () const
     {
-      return this->grid().template leafbegin< cd, pitype >();
+      return BaseType :: template begin< codim >();
+    }
+
+    //! Begin iterator on the leaf level
+    template< int codim, PartitionIteratorType pitype >
+    typename Codim< codim > :: template Partition< pitype > :: IteratorType
+    begin () const
+    {
+      return (*this).grid().template leafbegin< codim, pitype >();
+    }
+
+    //! Begin iterator on the leaf level
+    template< int codim >
+    typename Codim< codim > :: IteratorType
+    end () const
+    {
+      return BaseType :: template end< codim >();
     }
 
     //! End iterator on the leaf level
-    template< int cd >
-    inline typename Codim< cd > :: IteratorType end () const
+    template< int codim, PartitionIteratorType pitype >
+    typename Codim< codim > :: template Partition< pitype > :: IteratorType
+    end () const
     {
-      return this->grid().template leafend< cd, pitype >();
+      return (*this).grid().template leafend< codim, pitype >();
     }
 
     //! ibegin of corresponding intersection iterator for given entity
