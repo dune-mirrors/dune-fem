@@ -374,7 +374,7 @@ protected:
     // read verbose parameter 
     verbose_ = Parameter::verbose();
 
-    path_ = Parameter::prefix();
+    path_ = Parameter::commonOutputPath();
     // create path if not already exists 
     IOInterface :: createGlobalPath ( grid_.comm(), path_ );
 
