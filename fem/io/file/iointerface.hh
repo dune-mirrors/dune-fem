@@ -227,7 +227,7 @@ public:
   //! rank is added to output path 
   static std::string readPath()
   {
-    return Parameter::prefix();
+    return Parameter::commonOutputPath();
   }
 
   //! standard path reading and creation method 
