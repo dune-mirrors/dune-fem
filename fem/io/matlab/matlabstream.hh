@@ -112,7 +112,7 @@ namespace Dune
       typedef GridPartInterface< Traits > GridPartType;
       typedef typename GridPartType :: IndexSetType IndexSetType;
       typedef typename GridPartType :: GridType GridType;
-      typedef typename Traits :: template Codim< 0 > :: IteratorType IteratorType;
+      typedef typename GridPartType :: template Codim< 0 > :: IteratorType IteratorType;
 
       enum { dim = GridType :: dimension };
       enum { dimworld = GridType :: dimensionworld };
