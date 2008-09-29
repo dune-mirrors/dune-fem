@@ -237,6 +237,7 @@ read_ascii( const std::string filename )
 }
 #endif
 
+#if 0
 template<class DiscreteFunctionSpaceType>
 inline bool BlockVectorDiscreteFunction<DiscreteFunctionSpaceType>::
 write_pgm( const std::string filename ) const
@@ -281,7 +282,7 @@ read_pgm( const std::string filename )
   fclose( in );
   return true;
 }
-
+#endif 
 
 template< class DiscreteFunctionSpaceType >
 inline void BlockVectorDiscreteFunction< DiscreteFunctionSpaceType >

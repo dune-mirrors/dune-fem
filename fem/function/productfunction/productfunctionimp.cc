@@ -256,6 +256,7 @@ read_ascii(const std::string fn)
   return true;
 }
 
+#if 0
 template<class DiscreteFunctionSpaceType, class DiscreteFunctionSpace2Type>
 inline bool ProductDiscreteFunction< DiscreteFunctionSpaceType, DiscreteFunctionSpace2Type>::
 write_pgm(const std::string fn) const
@@ -301,6 +302,7 @@ read_pgm(const std::string fn)
   fclose( in );
   return true;
 }
+#endif
 
 template<class DiscreteFunctionSpaceType, class DiscreteFunctionSpace2Type>
 inline void ProductDiscreteFunction< DiscreteFunctionSpaceType, DiscreteFunctionSpace2Type>::

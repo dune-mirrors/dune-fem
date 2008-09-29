@@ -325,12 +325,6 @@ public:
   virtual bool read_ascii( const std::string filename );
 #endif
 
-  /** \copydoc DiscreteFunctionDefault::write_pgm  */
-  virtual bool DUNE_DEPRECATED write_pgm(const std::string filename) const;
-
-  /** \copydoc DiscreteFunctionDefault::read_pgm  */
-  virtual bool DUNE_DEPRECATED read_pgm(const std::string filename); 
-
   /** \brief return reference to internal block vector 
       \return reference to blockVector */ 
   DofStorageType& blockVector () const { return dofVec_; }

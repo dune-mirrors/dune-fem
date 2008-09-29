@@ -248,8 +248,6 @@ namespace Dune
     using Imp::write_ascii;
     using Imp::read_ascii;
 #endif
-    using Imp::write_pgm;
-    using Imp::read_pgm;
 
     using Imp::leakPointer;
     using Imp::block;
@@ -431,9 +429,6 @@ namespace Dune
     using Imp::write_ascii;
     using Imp::read_ascii;
 #endif
-    using Imp::write_pgm;
-    using Imp::read_pgm;
-
     using Imp::leakPointer;
     using Imp::block;
     using Imp::enableDofCompression;

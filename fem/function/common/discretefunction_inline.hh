@@ -383,23 +383,6 @@ namespace Dune
     }
   }
 
-
-  template< class Traits >
-  bool DiscreteFunctionDefault< Traits >
-    :: read_pgm ( const std :: string filename ) const
-  {
-    return true;
-  }
-
-
-  template< class Traits >
-  bool DiscreteFunctionDefault< Traits >
-    :: write_pgm ( const std :: string filename ) const
-  {
-    return true;
-  }
-
-
   template< class Traits >
   inline void DiscreteFunctionDefault< Traits >
     :: enableDofCompression ()

@@ -238,6 +238,7 @@ namespace Dune
   }
 #endif
 
+#if 0
   template<class DiscreteFunctionSpaceImp>
   bool AdaptiveFunctionImplementation<DiscreteFunctionSpaceImp>::
   write_pgm(const std::string fn) const
@@ -281,6 +282,7 @@ namespace Dune
     fclose( in );
     return true;
   }
+#endif
   
   template<class DiscreteFunctionSpaceImp>
   void AdaptiveFunctionImplementation<DiscreteFunctionSpaceImp>::

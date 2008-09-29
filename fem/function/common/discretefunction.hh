@@ -452,18 +452,6 @@ namespace Dune
      */
     virtual bool write_ascii ( const std :: string filename ) const = 0;
 
-    /** \brief write discrete function to file with given filename using pgm encoding
-        \param[in] filename name of file to which discrete function should be written using pgm 
-        \return \b true if operation was successful 
-    */
-    virtual bool DUNE_DEPRECATED write_pgm(const std::string filename) const = 0;
-
-    /** \brief read discrete function from file with given filename using pgm decoding
-        \param[in] filename name of file from which discrete function should be read using pgm 
-        \return \b true if operation was successful 
-    */
-    virtual bool DUNE_DEPRECATED read_pgm(const std::string filename) const = 0;
-    
     /** \brief Enable this discrete function for dof compression, 
          i.e. during grdi changes a dof compression 
          is done when the DofManagers compress is called. 
@@ -729,12 +717,6 @@ namespace Dune
      *        discrete function to an ASSCIIOutStream.
      */
     virtual bool write_ascii ( const std :: string filename ) const;
-
-    /** \copydoc DiscreteFunctionInterface::read_pgm */
-    virtual bool DUNE_DEPRECATED read_pgm ( const std :: string filename) const;
-
-    /** \copydoc DiscreteFunctionInterface::write_pgm */
-    virtual bool DUNE_DEPRECATED write_pgm ( const std :: string filename) const;
 
     /** \copydoc Dune::DiscreteFunctionInterface::enableDofCompression()
      *
