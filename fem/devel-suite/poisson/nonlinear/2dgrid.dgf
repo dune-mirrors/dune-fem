@@ -1,0 +1,14 @@
+DGF
+INTERVAL
+0    0      % first corner
+1    1      % second corner
+8    8      % 8 cells in both directions
+# end INTERVAL
+
+GRIDPARAMETER
+overlap 0
+# end GRIDPARAMETER
+
+BOUNDARYDOMAIN
+default 1   % all other boundary segments have id 1
+# end BOUNDARYDOMAIN
