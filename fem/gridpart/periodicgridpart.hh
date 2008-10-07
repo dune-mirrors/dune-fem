@@ -9,7 +9,7 @@
 namespace Dune
 {
   
-  template< class GridImp, PartitionIteratorType pitype >
+  template< class Grid >
   class PeriodicLeafGridPart;
 
 
@@ -19,8 +19,7 @@ namespace Dune
   {
     typedef PeriodicLeafIntersectionIterator< Grid > ThisType;
       
-    template< class, PartitionIteratorType >
-    friend class PeriodicLeafGridPart;
+    friend class PeriodicLeafGridPart< Grid >;
 
   public:
     typedef Grid GridType;
@@ -200,21 +199,21 @@ namespace Dune
   public:
     typedef Grid GridType;
 
-    typedef PeriodicLeafGridPart< GridType, pitype > GridPartType;
+    typedef PeriodicLeafGridPart< GridType > GridPartType;
    
     typedef PeriodicLeafIndexSet< GridType > IndexSetType;
 
     static const PartitionIteratorType indexSetPartitionType = All_Partition;
 
-    //! type of intersection iterators
-    //typedef typename Codim0EntityType :: LeafIntersectionIterator
-    //  IntersectionIteratorType;
     typedef PeriodicLeafIntersectionIterator< GridType >
       IntersectionIteratorType;
 
     template< int codim >
     struct Codim
     {
+      // type of the entity (should be wrapped, too)
+      typedef typename GridType :: template Codim< codim > :: Entity EntityType;
+
       template< PartitionIteratorType pitype >
       struct Partition
       {
@@ -272,16 +271,15 @@ namespace Dune
     //! type of the index set
     typedef typename Traits :: IndexSetType IndexSetType;
 
-    //! type of codim 0 entities (these must be wrapped, too)
-    typedef typename Traits :: Codim0EntityType Codim0EntityType;
-
     //! type of intersection iterators
     typedef typename Traits :: IntersectionIteratorType IntersectionIteratorType;
     
     template< int codim >
     struct Codim
     : public BaseType :: template Codim< codim >
-    {};
+    {
+      typedef typename Traits :: template Codim< codim > :: EntityType EntityType;
+    };
 
   protected:
     IndexSetType indexSet_;
@@ -334,7 +332,8 @@ namespace Dune
      *
      *  \returns a begin intersection iterator
      */
-    IntersectionIteratorType ibegin ( const Codim0EntityType &entity ) const
+    IntersectionIteratorType
+    ibegin ( const typename Codim< 0 > :: EntityType &entity ) const
     {
       return IntersectionIteratorType( entity.ileafbegin() );
     }
@@ -348,7 +347,8 @@ namespace Dune
      *
      *  \returns an end intersection iterator
      */
-    IntersectionIteratorType iend ( const Codim0EntityType &entity ) const
+    IntersectionIteratorType
+    iend ( const typename Codim< 0 > :: EntityType &entity ) const
     {
       return IntersectionIteratorType( entity.ileafend() );
     }
@@ -361,7 +361,9 @@ namespace Dune
 
     //! Communication Method for this grid partition
     template< class DataHandleImp, class DataType >
-    void communicate ( CommDataHandleIF< DataHandleImp, DataType > &data, InterfaceType iftype, CommunicationDirection dir ) const
+    void communicate ( CommDataHandleIF< DataHandleImp, DataType > &data,
+                       InterfaceType iftype,
+                       CommunicationDirection dir ) const
     {
       this->grid().communicate( data, iftype, dir );
     }
