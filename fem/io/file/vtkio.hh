@@ -12,9 +12,7 @@ namespace Dune
   template< class GridPart >
   struct VTKWriterSelector
   {
-    typedef Dune :: VTKWriter
-      < typename GridPart :: GridType, typename GridPart :: GridViewType >
-      VTKWriter;
+    typedef Dune :: VTKWriter< typename GridPart :: GridViewType > VTKWriter;
   };
 #else
   template< class GridPart >
