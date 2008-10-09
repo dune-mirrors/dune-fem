@@ -160,6 +160,10 @@ namespace Dune
     inline explicit AdaptiveLeafGridPart ( GridType &grid )
     : BaseType( grid, IndexSetProviderType :: getObject( &grid ) )
     {}
+    //! Copy Constructor
+    AdaptiveLeafGridPart ( const ThisType &other )
+    : BaseType( other.grid_, IndexSetProviderType :: getObject( &(other.grid()) ) )
+    {}
 
     /** \brief Destrcutor removeing index set, if only one reference left, index set
         removed.  */

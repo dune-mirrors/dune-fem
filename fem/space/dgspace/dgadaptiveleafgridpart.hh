@@ -144,8 +144,12 @@ namespace Dune
 
   public:
     //! Constructor
-    inline explicit DGAdaptiveLeafGridPart( GridType &grid )
+    explicit DGAdaptiveLeafGridPart( GridType &grid )
     : BaseType( grid, IndexSetProviderType :: getObject( &grid ) )
+    {}
+    //! Copy Constructor
+    DGAdaptiveLeafGridPart( const ThisType &other )
+    : BaseType( other.grid_, IndexSetProviderType :: getObject( &(other.grid()) ) )
     {}
 
     /** \brief Desctrutor removing index set. When only one reference is

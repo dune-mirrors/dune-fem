@@ -269,7 +269,7 @@ namespace Dune
     //! Index set implementation
     typedef typename BaseType :: IndexSetType IndexSetType;
 
-  private:
+  protected:
     GridType &grid_;
     const IndexSetType &indexSet_;
 

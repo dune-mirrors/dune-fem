@@ -109,6 +109,10 @@ namespace Dune
     IdBasedLeafGridPart ( GridType &grid )
     : BaseType( grid, IndexSetProviderType :: getObject( &grid ) )
     {}
+    //! copy Constructor
+    IdBasedLeafGridPart ( const ThisType &other )
+    : BaseType( other.grid_, IndexSetProviderType :: getObject( &(other.grid()) ) )
+    {}
 
     /** \brief Destrcutor removeing index set, if only one reference left, index set
         removed.  */
