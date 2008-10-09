@@ -4,6 +4,7 @@
 #include <iostream>
 
 #include <dune/fem/gridpart/gridpart.hh>
+#include <dune/fem/space/dgspace/dgadaptiveleafgridpart.hh>
 
 #if defined USE_BLOCKVECTORFUNCTION
 #include <dune/fem/function/blockvectorfunction.hh>
@@ -23,7 +24,8 @@
 
 using namespace Dune;
 
-typedef HierarchicGridPart< GridType > GridPartType;
+// typedef HierarchicGridPart< GridType > GridPartType;
+typedef DGAdaptiveLeafGridPart< GridType > GridPartType;
 
 typedef TestFunctionSpace FunctionSpaceType;
 typedef TestDiscreteFunctionSpace< GridPartType > DiscreteFunctionSpaceType;
@@ -47,8 +49,9 @@ typedef AdaptiveDiscreteFunction< DiscreteFunctionSpaceType >
 
 typedef ExactSolution< FunctionSpaceType > ExactSolutionType;
 
-int main ()
+int main(int argc, char ** argv) 
 {
+  MPIManager :: initialize( argc, argv );
   try
   {
     GridType &grid = TestGrid :: grid();
