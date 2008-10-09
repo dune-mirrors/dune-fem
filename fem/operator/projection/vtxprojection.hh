@@ -82,6 +82,7 @@ struct VtxProjectionImpl
         }
       }
     }
+    
     discFunc.space().communicate( discFunc );
     weightDF.space().communicate( weightDF );
 
@@ -103,7 +104,7 @@ struct VtxProjectionImpl
     // make function continuous over hanging nodes
 
     if (!GridPartType::conforming) {
-      const GridPartType gridPart =  space.gridPart();
+      const GridPartType& gridPart =  space.gridPart();
       for(Iterator it = space.begin(); it != endit ; ++it) {
         const EntityType& en = *it;
         typedef typename GridPartType::IntersectionIteratorType IntersectionIteratorType;
