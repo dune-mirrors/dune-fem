@@ -56,9 +56,8 @@ public:
     , quadord_(2*df.space().order())
     , weight_(-1.0)
   {
-    // make sure that index set is used that can handle adaptivity 
-    assert( (Capabilities::IsUnstructured<GridType>::v) ? ( checkPersistent(df_.space().indexSet()) ) : true );
   }
+
   //! if weight is set, then ists assumend that we have always the same
   //! proportion between fahter and son volume 
   void setFatherChildWeight (const RangeFieldType& val) const
