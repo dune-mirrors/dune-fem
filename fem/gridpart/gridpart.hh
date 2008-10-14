@@ -291,7 +291,10 @@ namespace Dune
     //! Returns reference to the underlying grid
     GridType& grid() { return grid_; }
 
-    /** \copydoc Dune::GridPartInterface::begin<codim>() const */
+    /** \brief obtain begin iterator for the interior-border partition
+     *
+     *  \tparam  codim  codimension for which the iterator is requested
+     */
     template< int codim >
     typename BaseType :: template Codim< codim > :: IteratorType
     begin () const 
@@ -299,7 +302,10 @@ namespace Dune
       return BaseType :: template begin< codim, InteriorBorder_Partition >();
     }
 
-    /** \copydoc Dune::GridPartInterface::end<codim>() const */
+    /** \brief obtain end iterator for the interior-border partition
+     *
+     *  \tparam  codim  codimension for which the iterator is requested
+     */
     template< int codim >
     typename BaseType :: template Codim< codim > :: IteratorType
     end () const 
