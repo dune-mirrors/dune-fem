@@ -56,8 +56,6 @@ namespace Dune
     typedef typename Traits :: DofMapIteratorType DofMapIteratorType;
 
   protected:
-    enum { numCodims = IndexSetType::ncodim };
-
     const IndexSetType &indexSet_;
 
   public:
