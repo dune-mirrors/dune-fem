@@ -74,7 +74,7 @@ namespace Dune
   class IdBasedLeafGridPart
   : public GridPartDefault< IdBasedLeafGridPartTraits< GridImp > > 
   {
-    typedef IdBaseLeafGridPart< GridImp > ThisType;
+    typedef IdBasedLeafGridPart< GridImp > ThisType;
     typedef GridPartDefault< IdBasedLeafGridPartTraits< GridImp > > BaseType;
 
   public:

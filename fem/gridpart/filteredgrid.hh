@@ -7,10 +7,12 @@
 
 //- Dune includes
 #include <dune/common/interfaces.hh>
+
 #include <dune/grid/common/grid.hh>
 #include <dune/grid/common/referenceelements.hh>
 #include <dune/grid/common/defaultindexsets.hh>
 #include <dune/grid/common/sizecache.hh>
+
 #include <dune/fem/gridpart/gridpart.hh>
 #include <dune/grid/common/datahandleif.hh>
 #include <dune/common/bartonnackmanifcheck.hh>
@@ -315,7 +317,7 @@ namespace Dune
     typedef typename GridPartImp::GridType GridType;
 
     //! type of underlying grid part 
-    typedef FilteredGridPart<GridPartImp, FilterImp, pitype> GridPartType;
+    //typedef FilteredGridPart<GridPartImp, FilterImp > GridPartType;
 
     //! The index set of the gridpart implementation
     typedef typename GridPartImp::IndexSetType IndexSetType;
@@ -333,11 +335,11 @@ namespace Dune
       struct Partition
       {
       private:
-        typedef typename GridPartImp :: template Codim< cd >
-          :: Partition< pitype > :: IteratorType IteratorImpType;
+        typedef typename GridPartImp :: template Codim< codim >
+          :: template Partition< pitype > :: IteratorType IteratorImpType;
 
       public:
-        typedef IteratorWrapper< GridPartImp, cd, IteratorImpType > IteratorType;
+        typedef IteratorWrapper< GridPartImp, codim, IteratorImpType > IteratorType;
       };
 
       typedef typename Partition< InteriorBorder_Partition > :: IteratorType
@@ -619,11 +621,11 @@ namespace Dune
 
   template< class GridPartImp, class FilterImp >
   template< class GridPart, int codim, class Iterator >
-  class FilteredGridPart :: IteratorWrapper
+  class FilteredGridPart< GridPartImp, FilterImp > :: IteratorWrapper
   : public Iterator
   {
     typedef IteratorWrapper< GridPart, codim, Iterator > ThisType;
-    typedef Iterator Base;
+    typedef Iterator BaseType;
 
     const GridPart *gridPart_;        
     const FilterType *filter_;
@@ -634,12 +636,12 @@ namespace Dune
                      const FilterType* filter,
                      const Iterator &iterator,
                      const Iterator &endIterator )
-    : Base( iterator ),
+    : BaseType( iterator ),
       gridPart_( gridPart ),
-      filter_( filer ),
+      filter_( filter ),
       endIter_( endIterator )
     {
-      while( (*this != endIter_) && (!filer_->has0Entity( *this )) )
+      while( (*this != endIter_) && (!filter_->has0Entity( *this )) )
         BaseType :: operator++();
     }
 
