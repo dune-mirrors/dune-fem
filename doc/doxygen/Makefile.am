@@ -23,13 +23,15 @@ DOXYFILE_OVERWRITE_DIST = $(DOXYFILE_OVERWRITE) \
 
 doxygendir = $(datadir)/doc/dune-fem/doxygen
 
-DISTCLEANFILES = doxygen.log doxygen-tag doxygen-dist-tag doxygen.out doxygen-dist.out
+DISTCLEANFILES = stamp doxygen.out doxygen-dist.out doxygen.log doxygen-dist.log
 # we need this in the distribution
-EXTRA_DIST = $(DOXYGEN_DIST) $(PAGES)
+EXTRA_DIST = $(DOXYGEN_DIST) $(PAGES) Doxyfile
 # these files should be removed on 'make clean'
 CLEANFILES = stamp doxygen.out doxygen-dist.out doxygen.log doxygen-dist.log
 
-all: $(DOXYGEN_HTML)
+#all: $(DOXYGEN_HTML)
+all:
+	@echo "Please use 'make html' to build the documentation."
 
 FORCE:
 
