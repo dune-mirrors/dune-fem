@@ -12,9 +12,6 @@ AM_CONFIG_HEADER([config.h])
 # we need no more than the standard DUNE-stuff
 DUNE_CHECK_ALL_M
 
-# parse dune-fem version
-DUNE_FEM_PARSE_VERSION
-
 # check dennis package 
 DUNE_PATH_PARDG
 
@@ -129,7 +126,6 @@ AC_CONFIG_FILES([Makefile
      fem/test/Makefile
      fem/gridpart/Makefile
      lib/Makefile
-     fem/version.inc
      make.inc
      dune-fem.pc])
 AC_OUTPUT
