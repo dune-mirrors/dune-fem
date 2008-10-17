@@ -1,10 +1,6 @@
 #ifndef DUNE_FEM_GRIDVIEW_HH
 #define DUNE_FEM_GRIDVIEW_HH
 
-#include <dune/fem/version.hh>
-
-#if DUNE_VERSION_NEWER(DUNE_GRID,1,2,0)
-
 #include <dune/grid/common/gridview.hh>
 
 namespace Dune
@@ -186,7 +182,5 @@ namespace Dune
   };
   
 }
-
-#endif
 
 #endif

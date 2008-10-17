@@ -8,25 +8,9 @@
 namespace Dune
 {
 
-#if DUNE_VERSION_NEWER(DUNE_GRID,1,2,0)
-  template< class GridPart >
-  struct VTKWriterSelector
-  {
-    typedef Dune :: VTKWriter< typename GridPart :: GridViewType > VTKWriter;
-  };
-#else
-  template< class GridPart >
-  struct VTKWriterSelector
-  {
-    typedef Dune :: VTKWriter
-      < typename GridPart :: GridType, typename GridPart :: IndexSetType >
-      VTKWriter;
-  };
-#endif
-
   template <class DF>
-  class VTKFunctionWrapper : 
-    public VTKWriterSelector< typename DF :: DiscreteFunctionSpaceType :: GridPartType > :: VTKWriter :: VTKFunction 
+  class VTKFunctionWrapper
+  : public VTKWriter< typename DF :: DiscreteFunctionSpaceType :: GridPartType :: GridViewType > :: VTKFunction
   {
   public:
     typedef DF DiscreteFunctionType;
@@ -81,8 +65,11 @@ namespace Dune
   //! /brief Output using VTK
   template< class GridPartImp >
   class VTKIO
-  : public VTKWriterSelector< GridPartImp > :: VTKWriter
+  : public VTKWriter< typename GridPartImp :: GridViewType >
   {
+    typedef VTKIO< GridPartImp > ThisType;
+    typedef VTKWriter< typename GridPartImp :: GridViewType > BaseType;
+
   public:
     typedef GridPartImp GridPartType;
 
@@ -90,20 +77,13 @@ namespace Dune
     typedef typename GridPartType :: IndexSetType IndexSetType;
 
   private:
-    typedef VTKIO< GridPartType > ThisType;
-    typedef typename VTKWriterSelector< GridPartImp > :: VTKWriter BaseType;
-    
     const GridPartType& gridPart_;
 
   public:
     //! constructor  
     explicit VTKIO ( const GridPartType &gridPart,
                      VTKOptions :: DataMode dm = VTKOptions :: conforming )
-#if DUNE_VERSION_NEWER(DUNE_GRID,1,2,0)
     : BaseType( gridPart.gridView(), dm ),
-#else
-    : BaseType( gridPart.grid(), gridPart.indexSet(), dm ),
-#endif
       gridPart_( gridPart )
     {}
 

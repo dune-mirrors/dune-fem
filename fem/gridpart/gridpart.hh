@@ -110,9 +110,7 @@ namespace Dune
     //! \brief is true if grid on this view only has conforming intersections 
     static const bool conforming = Traits :: conforming;
 
-#if DUNE_VERSION_NEWER(DUNE_GRID,1,2,0)
     typedef GridView< GridPartViewTraits< GridPartType > > GridViewType;
-#endif
 
     template< int codim >
     struct Codim
@@ -143,13 +141,11 @@ namespace Dune
       return asImp().grid(); 
     }
 
-#if DUNE_VERSION_NEWER(DUNE_GRID,1,2,0)
     GridViewType gridView () const
     {
       typedef typename GridViewType :: GridViewImp Impl;
       return GridViewType( Impl( asImp() ) );
     }
-#endif
     
     //! \brief Returns reference to index set of the underlying grid
     const IndexSetType& indexSet() const 
