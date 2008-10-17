@@ -125,7 +125,7 @@ inline int readParameterList (int argc, char **argv, bool displayData = true )
 
   int    i_delta = 1;
   const  char *replay = 0;
-  REAL   timestep = 1.0e-3;
+  double   timestep = 1.0e-3;
   bool fixedMesh = false;
   
   info = (INFO *) malloc(n_info*sizeof(INFO));
