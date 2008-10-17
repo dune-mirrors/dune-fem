@@ -16,6 +16,7 @@ misc_HEADERS = bartonnackmaninterface.hh \
 	       femtimer.hh \
                femtuples.hh \
 	       fieldmatrixhelper.hh \
+	       forloop.hh \
 	       gridhelper.hh \
                gridwidth.hh \
 	       h1norm.hh \
@@ -35,8 +36,6 @@ misc_HEADERS = bartonnackmaninterface.hh \
 	       suite.hh \
 	       test.cc \
 	       test.hh \
-	       timeprovider.hh \
-	       timeutility.hh \
                utility.hh \
 	       validator.hh
 
