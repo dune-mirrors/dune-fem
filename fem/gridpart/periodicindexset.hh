@@ -156,7 +156,7 @@ namespace Dune
     template< class Iterator >
     inline void calcEdgeIndices ( const Iterator &begin, const Iterator &end );
     
-    bool geometryTypeValid( const GeometryType &type ) const;
+    inline bool geometryTypeValid( const GeometryType &type ) const;
 
     template< int codim >
     inline IndexType map ( const IndexType &baseIndex ) const;

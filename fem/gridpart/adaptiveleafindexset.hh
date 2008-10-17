@@ -70,80 +70,6 @@ private:
     }
   };
 
-  //**************************************************************//
-
-  // index return from method index (const EntityType & en, int num )
-  // this puts the index method and the subIndex methods together 
-  template <class AdLeafSet, class HSetImp, class CodimLeafSet, class EntityType, int enCodim, int codim >
-  struct IndexWrapper
-  {
-    static inline int index (const AdLeafSet & ls , const HSetImp & hset, const CodimLeafSet (&cls)[ncodim], 
-                             const EntityType & en , int num , bool (&cdUsed)[ncodim] )
-    {
-      if(!cdUsed[codim]) ls.template setUpCodimSet<codim> ();
-      assert(cls[codim].index ( hset.index( en ) ) >= 0 );
-      return cls[codim].index ( hset.index( en ) );
-    }
-  };
-
-  template <class AdLeafSet, class HSetImp, class CodimLeafSet, class EntityType>
-  struct IndexWrapper<AdLeafSet,HSetImp,CodimLeafSet,EntityType,0,0>
-  {
-    static inline int index (const AdLeafSet & ls , const HSetImp & hset, const CodimLeafSet (&cls)[ncodim], 
-                             const EntityType & en , int num ,  bool (&cdUsed)[ncodim] )
-    {
-      enum { codim = 0 };
-      // check if we have index for given entity
-      assert(cls[codim].index ( hset.index( en ) ) >= 0 );
-      return cls[codim].index ( hset.index( en ) );
-    }
-  };
-
-  //! if codim > codim of entity use subIndex 
-  template <class AdLeafSet, class HSetImp, class CodimLeafSet, class EntityType>
-  struct IndexWrapper<AdLeafSet,HSetImp,CodimLeafSet,EntityType,0,1>
-  {
-    static inline int index (const AdLeafSet & ls , const HSetImp & hset, const CodimLeafSet (&cls)[ncodim], 
-                             const EntityType & en , int num ,  bool (&cdUsed)[ncodim] )
-    {
-      enum { codim = 1 };
-      if(!cdUsed[codim]) ls.template setUpCodimSet<codim> ();
-      assert(cls[codim].index ( hset.template subIndex<codim>( en , num ) ) >= 0 );
-      return cls[codim].index ( hset.template subIndex<codim>( en , num ) );
-    }
-  };
-
-  //! if codim > codim of entity use subIndex 
-  template <class AdLeafSet, class HSetImp, class CodimLeafSet, class EntityType>
-  struct IndexWrapper<AdLeafSet,HSetImp,CodimLeafSet,EntityType,0,2>
-  {
-    static inline int index (const AdLeafSet & ls , const HSetImp & hset, const CodimLeafSet (&cls)[ncodim], 
-                             const EntityType & en , int num ,  bool (&cdUsed)[ncodim] )
-    {
-      enum { codim = 2 };
-      assert( cls[codim].myCodim () == codim );
-      
-      if(!cdUsed[codim]) ls.template setUpCodimSet<codim> ();
-      assert( cdUsed[codim] );
-      assert(cls[codim].index ( hset.template subIndex<codim>( en , num ) ) >= 0 );
-      return cls[codim].index ( hset.template subIndex<codim>( en , num ) );
-    }
-  };
-
-  //! if codim > codim of entity use subIndex 
-  template <class AdLeafSet, class HSetImp, class CodimLeafSet, class EntityType>
-  struct IndexWrapper<AdLeafSet,HSetImp,CodimLeafSet,EntityType,0,3>
-  {
-    static inline int index (const AdLeafSet & ls , const HSetImp & hset, const CodimLeafSet (&cls)[ncodim], 
-                             const EntityType & en , int num ,  bool (&cdUsed)[ncodim] )
-    {
-      enum { codim = 3 };
-      if(!cdUsed[codim]) ls.template setUpCodimSet<codim> ();
-      assert(cls[codim].index ( hset.template subIndex<codim>( en , num ) ) >= 0 );
-      return cls[codim].index ( hset.template subIndex<codim>( en , num ) );
-    }
-  };
-
   //******************************************************************
   //  partial specialisation for the insertion of all sub entity indices 
   //******************************************************************
@@ -315,7 +241,7 @@ public:
   //
   //****************************************************************
   //! return size of grid entities per level and codim 
-  int size (GeometryType type) const
+  IndexType size (GeometryType type) const
   {
     int codim=GridType::dimension-type.dim();
     if( !codimUsed_[codim] )
@@ -327,7 +253,7 @@ public:
   }
   
   //! return size of grid entities of given codim 
-  int size ( int codim ) const
+  IndexType size ( int codim ) const
   {
     assert( hIndexSet_.geomTypes(codim).size() == 1 ); 
     return size(hIndexSet_.geomTypes(codim)[0]);
@@ -452,16 +378,37 @@ public:
     return haveToCopy;
   }
 
-  //! return index for codim, entity and local number  
-  //! for dof mapper 
-  // --index 
-  template <int codim, class EntityType>
-  IndexType indexImp (const EntityType & en, const int localNum) const
+  template< class Entity >
+  IndexType index ( const Entity &entity ) const
   {
-    return IndexWrapper<ThisType,HIndexSetType,CodimIndexSetType,EntityType,EntityType::codimension,codim>::
-           index(*this,hIndexSet_,codimLeafSet_,en, localNum, codimUsed_);
+    return index< Entity :: codimension >( entity );
   }
- 
+
+  template< int codim >
+  IndexType
+  index ( const typename GridType :: template Codim< codim > :: Entity &entity ) const
+  {
+    if( (codim != 0) && !codimUsed_[ codim ] )
+      setUpCodimSet< codim >();
+    const int hIdx = hIndexSet_.template index< codim >( entity );
+    const int idx = codimLeafSet_[ codim ].index( hIdx );
+    assert( idx >= 0 );
+    return idx;
+  }
+
+  template< int codim >
+  IndexType
+  subIndex ( const typename GridType :: template Codim< 0 > :: Entity &entity,
+             int subNumber ) const
+  {
+    if( (codim != 0) && !codimUsed_[ codim ] )
+      setUpCodimSet< codim >();
+    const int hIdx = hIndexSet_.template subIndex< codim >( entity, subNumber );
+    const int idx = codimLeafSet_[ codim ].index( hIdx );
+    assert( idx >= 0 );
+    return idx;
+  }
+
   //! return number of holes of the sets indices 
   int numberOfHoles ( const int codim ) const
   {
