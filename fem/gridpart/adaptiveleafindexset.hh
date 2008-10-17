@@ -390,7 +390,7 @@ public:
   {
     if( (codim != 0) && !codimUsed_[ codim ] )
       setUpCodimSet< codim >();
-    const int hIdx = hIndexSet_.template index< codim >( entity );
+    const int hIdx = hIndexSet_.template index( entity );
     const int idx = codimLeafSet_[ codim ].index( hIdx );
     assert( idx >= 0 );
     return idx;
