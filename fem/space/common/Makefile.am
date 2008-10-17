@@ -1,6 +1,5 @@
 commondir =  $(includedir)/dune/fem/space/common
-common_HEADERS = adaptiveleafgridpart.hh \
-     adaptmanager.hh \
+common_HEADERS = adaptmanager.hh \
      allgeomtypes.hh \
      arrays.hh \
      basefunctionfactory.hh \
@@ -18,18 +17,11 @@ common_HEADERS = adaptiveleafgridpart.hh \
      dofstorage.hh \
      dynamictype.hh \
      entitycommhelper.hh \
-     filteredgrid.hh \
      functionspace.hh \
      functionspaceinterface.hh \
      geometryconversion.hh \
-     gridpartutility.hh \
-     idbasedleafgridpart.hh \
      loadbalancer.hh \
-     periodicgridpart.hh \
-     restrictprolonginterface.hh \
-     persistentindexsets.hh \
-     dunefemindexsets.hh \
-     emptyindexset.hh
+     restrictprolonginterface.hh
 
 include $(top_srcdir)/am/global-rules
 
