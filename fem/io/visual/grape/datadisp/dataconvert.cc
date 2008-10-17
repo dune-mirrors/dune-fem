@@ -17,7 +17,7 @@
 using namespace Dune;
 
 // include definition of grid type 
-#include <dune/grid/io/file/dgfparser/dgfgridtype.hh>
+// #include <dune/grid/io/file/dgfparser/dgfgridtype.hh>
 
 // include data reading 
 #include <dune/fem/io/visual/grape/datadisp/printhelp.cc>
@@ -25,10 +25,13 @@ using namespace Dune;
 // uses readtuple data instead of readiotupledata.
 #include <dune/fem/io/visual/grape/datadisp/readtupledata.cc>
 #include <dune/fem/io/visual/grape/datadisp/readioparams.cc> 
+#include <dune/fem/misc/mpimanager.hh>
 
 int main(int argc, char **argv)
 {
+  MPIManager::initialize(argc,argv);
   try {
+    Parameter::append(argc,argv);
     if (argc < 2)
     {
       print_help(argv[0]);

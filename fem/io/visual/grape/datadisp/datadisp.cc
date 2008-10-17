@@ -99,9 +99,11 @@ using namespace Dune;
 #include <dune/fem/io/visual/grape/datadisp/readioparams.cc> 
 #include <dune/fem/io/parameter.hh>
 #include <dune/fem/function/common/discretefunctionadapter.hh>
+#include <dune/fem/misc/mpimanager.hh>
 
 int main(int argc, char **argv)
 {
+  MPIManager::initialize(argc,argv);
   try {			         
     Parameter::append(argc,argv);
     if (argc < 2)
