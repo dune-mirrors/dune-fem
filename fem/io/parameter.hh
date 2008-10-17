@@ -467,7 +467,7 @@ namespace Dune
     std :: pair< ParameterMapType :: iterator, bool > info
       = params_.insert( std :: make_pair( key, value ) );
 
-    if( !info.second )
+    if( info.second )
     {
       if( verbose() )
       {
