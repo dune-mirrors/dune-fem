@@ -1,10 +1,8 @@
 Module: dune-fem
 Version: 1.1.0
 Maintainer: dune@mathematik.uni-freiburg.de
-# Temporarily make dune-istl a dependency
-Depends: dune-common dune-grid dune-istl
-# Suggests: dune-istl
-Suggests: dune-geogrid dune-psg
+Depends: dune-common dune-grid
+Suggests: dune-istl
 
 run_configure () {
   run_default_configure "$@"
