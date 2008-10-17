@@ -104,7 +104,7 @@ namespace Dune
       // make sure the index set can handle adaptivity
       assert( checkPersistent(discreteFunction_.space().indexSet()) );
 
-      typedef typename EntityType :: Geometry GeometryType;
+      typedef typename EntityType :: LocalGeometry LocalGeometryType;
 
       LocalFunctionType fatherFunction = discreteFunction_.localFunction( father );
       LocalFunctionType sonFunction = discreteFunction_.localFunction( son );
@@ -112,7 +112,7 @@ namespace Dune
       const LagrangePointSetType &lagrangePointSet
         = discreteFunctionSpace_.lagrangePointSet( father );
 
-      const GeometryType &geometryInFather = son.geometryInFather();
+      const LocalGeometryType &geometryInFather = son.geometryInFather();
 
       EntityDofIteratorType it
         = lagrangePointSet.template beginSubEntity< 0 >( 0 );
@@ -138,7 +138,7 @@ namespace Dune
       // make sure the index set can handle adaptivity
       assert( checkPersistent(discreteFunction_.space().indexSet()) );
 
-      typedef typename EntityType :: Geometry GeometryType;
+      typedef typename EntityType :: LocalGeometry LocalGeometryType;
 
       LocalFunctionType fatherFunction = discreteFunction_.localFunction( father );
       LocalFunctionType sonFunction = discreteFunction_.localFunction( son );
@@ -146,7 +146,7 @@ namespace Dune
       const LagrangePointSetType &lagrangePointSet
         = discreteFunctionSpace_.lagrangePointSet( son );
 
-      const GeometryType &geometryInFather = son.geometryInFather();
+      const LocalGeometryType &geometryInFather = son.geometryInFather();
 
       EntityDofIteratorType it
         = lagrangePointSet.template beginSubEntity< 0 >( 0 );

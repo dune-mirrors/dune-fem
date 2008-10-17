@@ -46,7 +46,7 @@ public:
   typedef typename DiscreteFunctionType::RangeFieldType RangeFieldType;
   typedef typename DiscreteFunctionType::DomainType DomainType;
   typedef CachingQuadrature<GridPartType,0> QuadratureType;
-  typedef typename GridType::template Codim<0>::Entity::Geometry Geometry;
+  typedef typename GridType::template Codim<0>::Entity::LocalGeometry LocalGeometry;
 
   enum { dimRange = FunctionSpaceType :: dimRange };
 public:  
@@ -89,7 +89,7 @@ public:
     const typename FunctionSpaceType::BaseFunctionSetType & baseset =
       vati_.baseFunctionSet();
     const int nop=quad.nop();
-    const Geometry& geometryInFather = son.geometryInFather();
+    const LocalGeometry& geometryInFather = son.geometryInFather();
 
     const int diff_numDofs = vati_.baseFunctionSet().numDifferentBaseFunctions();
     const int vati_numDofs = vati_.numDofs(); 
@@ -147,7 +147,7 @@ public:
     const typename FunctionSpaceType::BaseFunctionSetType & baseset =
       sohn_.baseFunctionSet();
     // get geometry 
-    const Geometry& geometryInFather = son.geometryInFather();
+    const LocalGeometry& geometryInFather = son.geometryInFather();
     // get number of points 
     const int nop=quad.nop();
     for(int qP = 0; qP < nop; ++qP) 

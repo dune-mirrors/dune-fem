@@ -44,7 +44,7 @@ public:
   typedef typename DiscreteFunctionType::RangeFieldType RangeFieldType;
   typedef typename DiscreteFunctionType::DomainType DomainType;
   typedef CachingQuadrature<GridPartType,0> QuadratureType;
-  typedef typename GridType::template Codim<0>::Entity::Geometry Geometry;
+  typedef typename GridType::template Codim<0>::Entity::LocalGeometry LocalGeometry;
 public:  
   //! Constructor
   RestrictProlongDiscontinuousSpace( DiscreteFunctionType & df ) 
@@ -85,7 +85,7 @@ public:
     const typename FunctionSpaceType::BaseFunctionSetType & baseset =
       vati_.baseFunctionSet();
     const int nop=quad.nop();
-    const Geometry& geometryInFather = son.geometryInFather();
+    const LocalGeometry& geometryInFather = son.geometryInFather();
 
     const int vati_numDofs = vati_.numDofs();
     if(initialize) 
@@ -125,7 +125,7 @@ public:
     QuadratureType quad(son,quadord_);
     const typename FunctionSpaceType::BaseFunctionSetType & baseset =
       sohn_.baseFunctionSet();
-    const Geometry& geometryInFather = son.geometryInFather();
+    const LocalGeometry& geometryInFather = son.geometryInFather();
     const int nop=quad.nop();
     for(int qP = 0; qP < nop; ++qP) 
     {
