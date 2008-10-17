@@ -21,7 +21,7 @@
 
 // default is: enabled 
 #ifndef WANT_CACHED_COMM_MANAGER 
-#define WANT_CACHED_COMM_MANAGER 1 
+#define WANT_CACHED_COMM_MANAGER 1
 #endif
 
 #if ALU3DGRID_PARALLEL && WANT_CACHED_COMM_MANAGER
@@ -200,7 +200,7 @@ namespace Dune
       DiscreteFunctionCommunicatorInterface () {}
     public:
       virtual ~DiscreteFunctionCommunicatorInterface () {}
-      virtual void exchange () = 0;
+      virtual void exchange () const = 0;
     };
     
     //! communicated object implementation  
