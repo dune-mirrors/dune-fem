@@ -331,8 +331,8 @@ public:
     // get stopwatch 
     Timer timer; 
 
-    AdaptationMethod<ThisType,GridType,
-      Conversion<GridType,HasHierarchicIndexSet>::exists>::
+    AdaptationMethod<ThisType,GridType,false>::
+      // Conversion<GridType,HasHierarchicIndexSet>::exists>::
         adapt(*this,grid_,dm_,rpOp_,this->adaptationMethod_);
     
     // take time 
@@ -476,7 +476,7 @@ private:
     }
     // if all children return mightBeCoarsened,
     // then doRestrict on father remains true 
-    return en.mightBeCoarsened();
+    return en.mightVanish();
   }
 
   template <class EntityType, class ProlongOperatorType >
@@ -502,7 +502,7 @@ private:
       assert( en.partitionType() != GhostEntity );
       
       EntityType & son = *it; 
-      if( son.wasRefined() )
+      if( son.isNew() )
       {
         EntityPointerType vati = son.father();
         prolop.prolongLocal( *vati , son , initialize ); 
