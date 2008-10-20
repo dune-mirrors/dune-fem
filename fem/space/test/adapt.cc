@@ -245,7 +245,7 @@ void adapt(GridType& grid,
       grid.mark(mark, *it);
     } 
     grid.adapt(dm,rp);
-    std::cout << message << "NOT GERNERIC!" << std::endl;
+    std::cout << message << "NOT GENERIC!" << std::endl;
   }
 #endif
   /*
@@ -326,12 +326,14 @@ double algorithm (GridType& grid, DiscreteFunctionType& solution,
 //  main programm, run algorithm twice to calc EOC 
 //
 //**************************************************
-int main (int argc, char **argv)
-{
+int main( int argc, char *argv[] )
+try {
+  MPIManager :: initialize( argc, argv );
+
   if(argc != 2)
   {
-    fprintf(stderr,"usage: %s <maxlevel> \n",argv[0]);
-    exit(1);
+    std :: cerr << "Usage: " << argv[ 0 ] << " <maxlevel>" << std :: endl;
+    return 1;
   }
   int ml = atoi( argv[1] );
   std::vector<double> error(ml);
@@ -366,5 +368,10 @@ int main (int argc, char **argv)
     }
   }
   return 0;
+}
+catch( const Dune :: Exception &exception )
+{
+  std :: cerr << exception << std :: endl;
+  return 1;
 }
 
