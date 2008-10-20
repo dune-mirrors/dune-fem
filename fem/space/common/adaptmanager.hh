@@ -8,8 +8,10 @@
 
 #include <dune/fem/space/common/communicationmanager.hh>
 #include <dune/fem/space/common/loadbalancer.hh>
+#include <dune/fem/space/common/adaptcaps.hh>
 
-namespace Dune{
+namespace Dune
+{
 
 /** @addtogroup Adaptation Adaptation 
     Here the interfaces and algorithms for adapatation of a grid are
@@ -331,9 +333,10 @@ public:
     // get stopwatch 
     Timer timer; 
 
-    AdaptationMethod<ThisType,GridType,false>::
-      // Conversion<GridType,HasHierarchicIndexSet>::exists>::
-        adapt(*this,grid_,dm_,rpOp_,this->adaptationMethod_);
+    // const bool supportsCallback = Conversion< GridType, HasHierarchicIndexSet > :: exists;
+    const bool supportsCallback = Capabilities :: supportsCallbackAdaptation< GridType > :: v;
+    AdaptationMethod< ThisType, GridType, supportsCallback >
+      :: adapt(*this,grid_,dm_,rpOp_,this->adaptationMethod_);
     
     // take time 
     adaptTime_ = timer.elapsed();

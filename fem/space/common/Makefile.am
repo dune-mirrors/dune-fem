@@ -1,5 +1,6 @@
 commondir =  $(includedir)/dune/fem/space/common
-common_HEADERS = adaptmanager.hh \
+common_HEADERS = adaptcaps.hh \
+     adaptmanager.hh \
      allgeomtypes.hh \
      arrays.hh \
      basefunctionfactory.hh \
