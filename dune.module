@@ -1,8 +1,8 @@
 Module: dune-fem
 Version: 1.1.0
 Maintainer: dune@mathematik.uni-freiburg.de
-Depends: dune-common dune-grid
-Suggests: dune-istl
+Depends: dune-common (>=1.2) dune-grid (>=1.2)
+Suggests: dune-istl (>=1.2)
 
 run_configure () {
   run_default_configure "$@"
