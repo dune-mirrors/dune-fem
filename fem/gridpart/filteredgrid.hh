@@ -15,17 +15,23 @@
 
 #include <dune/fem/gridpart/gridpart.hh>
 #include <dune/grid/common/datahandleif.hh>
-#include <dune/common/bartonnackmanifcheck.hh>
 #include <dune/grid/utility/grapedataioformattypes.hh>
 
 namespace Dune
 {
 
-  // forward declarations
+  // Forward Declarations
+  // --------------------
+
   template <class FilterImp, class GridImp>
   struct DefaultFilterTraits;
-  template <class FilterTraits>
+
+  template< class FilterTraits >
   class FilterInterface;
+
+  template< class FilterTraits >
+  class FilterDefaultImplementation;
+
   //template <class GridType>
   //class TrueFilter;
   template <class GridType>
@@ -57,122 +63,174 @@ namespace Dune
     };
   }; // end DefaultFilterTraits
 
-//***************************************************************************
-// 
-// FilteredInterface
-//
-//***************************************************************************
-/** @ingroup FilterGridPart 
- @brief
- Interface class for filter to use with a Dune::FilteredGridPart
- **/
-  template <class FilterTraits>
+
+
+  // FilterInterface
+  // ---------------
+
+  /** \ingroup FilterGridPart
+   *  \brief   Interface class for filter to use with a Dune::FilteredGridPart
+   */
+  template< class FilterTraits >
   class FilterInterface
   {
+    typedef FilterInterface< FilterTraits > ThisType;
+
+    friend class FilterDefaultImplementation< FilterTraits >;
+
   public:
     //! \brief Type of the filter implementation
-    typedef typename FilterTraits::FilterType FilterType;  
-    //! \brief type of Grid implementation
-    typedef typename FilterTraits::GridType GridType;
+    typedef typename FilterTraits :: FilterType FilterType;
     //! \brief type of original grid part 
-    typedef typename FilterTraits::GridPartType GridPartType;
-    //! \brief type of Entity with codim=0 
-    typedef typename FilterTraits::EntityCodim0Type EntityCodim0Type; 
+    typedef typename FilterTraits :: GridPartType GridPartType;
+
+    //! \brief type of Grid implementation
+    typedef typename GridPartType :: GridType GridType;
+    //! \brief type of Entity with codim=0
+    typedef typename GridType :: template Codim< 0 > :: Entity EntityCodim0Type;
     //! \brief type of EntityPointer with codim=0 
-    typedef typename FilterTraits::EntityPointerCodim0Type EntityPointerCodim0Type;
+    typedef typename GridType :: template Codim< 0 > :: EntityPointer EntityPointerCodim0Type;
       
+    //! \brief type of Elements (i.e., Entities with codim=0)
+    typedef typename GridType :: template Codim< 0 > :: Entity ElementType;
+    //! \brief type of Element Pointers (i.e. Entity Pointers with codim=0)
+    typedef typename GridType :: template Codim< 0 > :: EntityPointer ElementPointerType;
+
+  private: 
+    FilterInterface ()
+    {}
+
+    FilterInterface ( const ThisType & );
+    ThisType &operator= ( const ThisType & );
+
+  public:
     //! returns true if the given entity of the pointer in the domain 
-    inline bool has0Entity(EntityCodim0Type & e) const {
-      CHECK_INTERFACE_IMPLEMENTATION((asImp().has0Entity(e)));
-      return asImp().has0Entity(e);
+    bool has0Entity ( const ElementType &element ) const
+    {
+      return asImp().has0Entity( element );
     }
     
     //! returns true if the given entity is in the domain 
-    inline bool has0Entity(EntityPointerCodim0Type & e) const {
-      CHECK_INTERFACE_IMPLEMENTATION((asImp().has0Entity(e)));
-      return asImp().has0Entity(e);
+    bool has0Entity ( const ElementPointerType &elementPtr ) const
+    {
+      return asImp().has0Entity( elementPtr );
     }
     
     //! returns true if an intersection is interior 
     //! (allows boundarys within a given domain)
-    template<class IntersectionIteratorType>
-    inline bool interiorIntersection(const IntersectionIteratorType & it) const {
-      CHECK_INTERFACE_IMPLEMENTATION((asImp().interiorIntersection(it)));
-      return asImp().interiorIntersection(it);
+    template< class Intersection >
+    bool interiorIntersection ( const Intersection &intersection ) const
+    {
+      return asImp().interiorIntersection( intersection );
     }
 
     //! returns true if an intersection is a boundary intersection 
-    template<class IntersectionIteratorType>
-    inline bool intersectionBoundary(IntersectionIteratorType & it) const {
-      CHECK_INTERFACE_IMPLEMENTATION((asImp().intersectionBoundary<IntersectionIteratorType>(it)));
-      return asImp().intersectionBoundary<IntersectionIteratorType>(it);
+    template< class Intersection >
+    bool intersectionBoundary( Intersection &intersection ) const
+    {
+      return asImp().intersectionBoundary( intersection );
     }
     
     //! returns the boundary id for an intersection 
-    template<class IntersectionIteratorType>
-    inline int intersectionBoundaryId(IntersectionIteratorType & it) const {
-      CHECK_INTERFACE_IMPLEMENTATION((asImp().intersectionBoundaryId<IntersectionIteratorType>(it)));
-      return asImp().intersectionBoundaryId<IntersectionIteratorType>(it);
+    template< class Intersection >
+    int intersectionBoundaryId ( Intersection &intersection ) const
+    {
+      return asImp().intersectionBoundaryId( intersection );
     }
 
     //! returns true if for an intersection a neighbor exsits 
-    template<class IntersectionIteratorType>
-    inline bool intersectionNeighbor(IntersectionIteratorType & it) const {
-      CHECK_INTERFACE_IMPLEMENTATION((asImp().intersectionNeighbor<IntersectionIteratorType>(it)));
-      return asImp().intersectionNeighbor<IntersectionIteratorType>(it);
+    template< class Intersection >
+    bool intersectionNeighbor ( Intersection &intersection ) const
+    {
+      return asImp().intersectionNeighbor( intersection );
     }
 
     //! return object instance of filter for object creation  
-    inline static FilterType createObject(const GridPartType& gridPart)
+    static FilterType createObject( const GridPartType &gridPart )
     {
-      CHECK_INTERFACE_IMPLEMENTATION( FilterType :: createObject(gridPart));
-      return FilterType :: createObject(gridPart);
+      return FilterType :: createObject( gridPart );
     }
 
-  protected: 
-    //! do not create explict instances of this class 
-    FilterInterface () {}  
-
   protected:
-    // Barton-Nackman 
-    FilterType& asImp() { return static_cast<FilterType&>(*this); }
+    FilterType &asImp ()
+    {
+      return static_cast< FilterType & >( *this );
+    }
     
-    // const Barton-Nackman 
-    const FilterType& asImp() const { return static_cast<const FilterType&>(*this); }  
-  }; // end FilteredInterface
+    const FilterType &asImp () const
+    {
+      return static_cast< const FilterType & >( *this );
+    }
+  };
 
-  template <class FilterTraits>
-  class FilterDefaultImplementation : public FilterInterface<FilterTraits>
+
+
+  // FilterDefaultImplementation
+  // ---------------------------
+
+  template< class FilterTraits >
+  class FilterDefaultImplementation
+  : public FilterInterface< FilterTraits >
   {
-    typedef FilterInterface<FilterTraits> BaseType;
-    using BaseType :: asImp;
-    using BaseType :: has0Entity;
+    typedef FilterDefaultImplementation< FilterTraits > ThisType;
+    typedef FilterInterface< FilterTraits > BaseType;
+
   public:
     //! \brief Type of the filter implementation
-    typedef typename FilterTraits::FilterType FilterType;  
-    //! \brief type of Grid implementation
-    typedef typename FilterTraits::GridType GridType;
-    //! \brief type of Entity with codim=0 
-    typedef typename FilterTraits::EntityCodim0Type EntityCodim0Type; 
-    //! \brief type of EntityPointer with codim=0 
-    typedef typename FilterTraits::EntityPointerCodim0Type EntityPointerCodim0Type;
+    typedef typename BaseType :: FilterType FilterType;
     //! \brief type of original grid part 
-    typedef typename FilterTraits::GridPartType GridPartType;
+    typedef typename BaseType :: GridPartType GridPartType;
+    
+
+    //! \brief type of Elements (i.e., Entities with codim=0)
+    typedef typename BaseType :: ElementType ElementType;
+    //! \brief type of Element Pointers (i.e. Entity Pointers with codim=0)
+    typedef typename BaseType :: ElementPointerType ElementPointerType;
       
+  protected:
+    FilterDefaultImplementation ()
+    {}
+
+  private:
+    FilterDefaultImplementation ( const ThisType & );
+    ThisType &operator= ( const ThisType & );
+
+  public:
     //! default implementation returns hasEntity0 from neighbor
-    template<class IntersectionIteratorType>
-    inline bool interiorIntersection(IntersectionIteratorType & it) const 
+    template< class Intersection >
+    bool interiorIntersection( Intersection &intersection ) const
     {
-      return asImp().has0Entity( it.outside() );
+      const ElementPointerType outside = intersection.outside();
+      return asImp().has0Entity( outside );
     }
 
     //! \brief default createObject method calling FilterType(gridPart) 
-    inline static FilterType createObject(const GridPartType& gridPart)
+    static FilterType createObject( const GridPartType &gridPart )
     {
-      return FilterType(gridPart);      
+      return FilterType( gridPart );
     }
+
+  private:
+    bool has0Entity ( const ElementType &element ) const;
+    
+    bool has0Entity ( const ElementPointerType &elementPtr ) const;
+    
+    template< class Intersection >
+    bool intersectionBoundary( Intersection &intersection ) const;
+    
+    //! returns the boundary id for an intersection 
+    template< class Intersection >
+    int intersectionBoundaryId ( Intersection &intersection ) const;
+
+    template< class Intersection >
+    bool intersectionNeighbor ( Intersection &intersection ) const;
+
+  protected:
+    using BaseType :: asImp;
   };
-  
+
+
+
 //***************************************************************************
 // 
 // Example: RadialFilter
