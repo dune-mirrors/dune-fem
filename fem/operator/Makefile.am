@@ -13,7 +13,6 @@ operator_HEADERS = artificialdiffusion.hh \
 		   feop.hh \
 		   identityoperator.hh \
 		   integrationoperator.hh \
-		   inverseoperators.hh \
 		   lagrangeinterpolation.hh \
 		   lagrangeinterpolation_inline.hh \
 		   matrixadapter.hh \
