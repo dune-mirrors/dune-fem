@@ -1,6 +1,0 @@
-gridFile: 2dmacro.al
-epsilon: 0.01
-velo: 0.5
-dt: 0.001
-endTime: 0.25
-globalRefineCount: 0
