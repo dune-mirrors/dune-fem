@@ -1207,10 +1207,27 @@ private:
   //! writes all underlying index sets to a file 
   bool write(const std::string filename, int timestep);
   //! reads all underlying index sets from a file 
-  bool read(const std::string filename, int timestep);
+  bool read(const std::string filename, int timestep, bool verbose = true );
 
   bool write_xdr(const std::string filename, int timestep);
-  bool read_xdr( const std::string filename, int timestep);
+  bool read_xdr( const std::string filename, int timestep, bool verbose );
+
+  // generate index set filename 
+  std::string generateIndexSetName(const std::string& filename,
+                                   const int count) const
+  {
+    std::string newFilename (filename);
+    newFilename += "_";
+    // add number 
+    {
+      std::stringstream tmp;
+      tmp << count;
+      newFilename += tmp.str();
+    }
+
+    newFilename += "_";
+    return newFilename;
+  }
 }; // end class DofManager
 
 //***************************************************************************
@@ -1388,57 +1405,52 @@ write(const std::string filename, int timestep)
 }
 template <class GridType>
 inline bool DofManager<GridType>::
-read(const std::string filename , int timestep)
+read(const std::string filename , int timestep, bool verbose )
 {
-  return read_xdr(filename,timestep);  
+  return read_xdr(filename,timestep,verbose);  
 }
 
 template <class GridType>
 inline bool DofManager<GridType>::
-write_xdr(const std::string filename , int timestep)
+write_xdr(const std::string filename , int timestep )
 {
   int count = 0;
   IndexListIteratorType endit = indexList_.end();
   for(IndexListIteratorType it = indexList_.begin(); it != endit; ++it)
   {
-    std::string newFilename (filename);
-    newFilename += "_"; 
-    char tmp[256]; 
-    sprintf(tmp,"%d",count);
-    newFilename += tmp;
-    newFilename += "_"; 
+    std::string newFilename = generateIndexSetName(filename, count);
     (*it)->write_xdr(newFilename.c_str(),timestep); 
-    count ++;
+    ++ count;
   }
   return true;
 }
 
 template <class GridType>
 inline bool DofManager<GridType>::
-read_xdr(const std::string filename , int timestep)
+read_xdr(const std::string filename , int timestep, bool verbose )
 {
   int count = 0;
   IndexListIteratorType endit = indexList_.end();
   for(IndexListIteratorType it = indexList_.begin(); it != endit; ++it)
   {
-    std::string newFilename (filename);
-    newFilename += "_"; 
-    char tmp[256]; 
-    sprintf(tmp,"%d",count);
-    newFilename += tmp;
-    newFilename += "_"; 
-    std::string fnstr = genFilename("",newFilename.c_str(), timestep);
-    FILE * testfile = fopen(fnstr.c_str(),"r");
+    // create filename 
+    std::string newFilename = generateIndexSetName(filename, count);
+    
+    // create filename that is used by index sets 
+    std::string fileToRead = genFilename("", newFilename.c_str(), timestep);
+      
+    // check if file exists, and skip if not 
+    FILE * testfile = fopen(fileToRead.c_str(),"r");
     if( testfile )
     {
       fclose( testfile );
-      (*it)->read_xdr(newFilename.c_str(),timestep); 
-      ++count;
+      (*it)->read_xdr(newFilename.c_str(),timestep);
     }
-    else 
+    else if(verbose)
     {
-      std::cout << "WARNING: Skipping " << fnstr << " in DofManager::read_xdr! \n";
+      std::cout << "WARNING: Skipping " << newFilename << " in DofManager::read_xdr!" << std::endl;
     }
+    ++count;
   }
   return true;
 }
@@ -1505,11 +1517,12 @@ read_xdr(const std::string filename , int timestep)
     inline static bool 
     readDofManager ( const GridType &grid,
                      const std :: string &filename,
-                     int timestep )
+                     int timestep ,
+                     bool verbose = true )
     {
       DofManagerType *dm = getDmFromList( grid );
       if( dm )
-        return dm->read( filename, timestep );
+        return dm->read( filename, timestep , verbose );
       return false;
     }
 
