@@ -285,18 +285,11 @@ public:
   //! new size of space, i.e. after grid adaptation
   virtual int newSize () const = 0;
   //! returns name of obj
-  virtual const char * name () const  = 0;
+  virtual const std::string& name () const  = 0;
   //! compressed the underlying dof vector 
   virtual void dofCompress () = 0;
-
-  //! returns true if resize ids needed 
-  virtual bool resizeNeeded () const = 0;
-  //! returns size of memory per element
-  virtual int  elementMemory() const = 0;
-
   //! return size of mem used by MemObject 
-  virtual int usedMemorySize() const = 0;
-
+  virtual size_t usedMemorySize() const = 0;
   //! enable dof compression in MemObject
   virtual void enableDofCompression() = 0;
 };
@@ -379,7 +372,7 @@ public:
   }
 
   //! returns name of this vector 
-  const char * name () const { return name_.c_str(); }
+  const std::string& name () const { return name_; }
 
   //! if grid changed, then calulate new size of dofset 
   inline int newSize () const
@@ -389,18 +382,6 @@ public:
 
   //! return size of underlying array 
   int size () const { return array_.size(); }
-
-  //! return true if array needs resize 
-  bool resizeNeeded () const 
-  {
-    return (size() < newSize());  
-  }
-
-  //! return number of dofs on one element 
-  inline int elementMemory () const
-  {
-    return mapper().maxNumDofs();
-  }
 
   //! resize the memory with the new size 
   void resize () 
@@ -426,7 +407,7 @@ public:
     // if index set is compressible, then add requested size 
     if( mapper().consecutive() )
     {
-      const int nSize = size() + (needed * elementMemory());
+      const int nSize = size() + (needed * mapper().maxNumDofs());
       array_.reserve( nSize );
     }
     else 
@@ -474,9 +455,9 @@ public:
   DofArrayType & getArray() { return array_; } 
 
   //! return used memory size 
-  int usedMemorySize() const 
+  size_t usedMemorySize() const 
   {
-    return sizeof(ThisType) + SpecialArrayFeatures<DofArrayType>::used(array_); 
+    return ((size_t) sizeof(ThisType) + SpecialArrayFeatures<DofArrayType>::used(array_)); 
   }
 
   //! enable dof compression for this MemObject
@@ -578,27 +559,13 @@ public:
     } 
 
   //! returns name of this vector 
-  const char * name () const { return name_.c_str(); }
+  const std::string& name () const { return name_; }
 
   //! if grid changed, then calulate new size of dofset 
   int newSize () const { return mapper_.newSize(); }  
 
   //! return size of underlying array 
   int size () const { return array_.size(); }
-
-  //! return true if array needs resize 
-  bool resizeNeeded () const 
-  {
-    assert( (size() != newSize()) ? 
-        (std::cerr << "WARNING: DummyMemObject's vector is not up to date! \n" , 0) : 1);
-    return false; 
-  }
-
-  //! return number of dofs on one element 
-  int elementMemory () const 
-  {
-    return mapper_.maxNumDofs();
-  }
 
   //! resize the memory with the new size 
   void resize () 
@@ -625,9 +592,9 @@ public:
   DofArrayType & getArray() { return array_; } 
   
   //! return used memory size 
-  int usedMemorySize() const 
+  size_t usedMemorySize() const 
   {
-    return sizeof(ThisType) + SpecialArrayFeatures<DofArrayType>::used(array_); 
+    return ((size_t) sizeof(ThisType) + SpecialArrayFeatures<DofArrayType>::used(array_)); 
   }
   
   //! does nothing here
@@ -667,27 +634,13 @@ public:
   } 
 
   //! returns name of this vector 
-  const char * name () const { return name_.c_str(); }
+  const std::string& name () const { return name_; }
 
   //! if grid changed, then calulate new size of dofset 
   int newSize () const { return mapper_.newSize(); }  
 
   //! return size of underlying array 
   int size () const { return array_.size(); }
-
-  //! return true if array needs resize 
-  bool resizeNeeded () const 
-  {
-    assert( (size() != newSize()) ? 
-        (std::cerr << "WARNING: DummyMemObject's vector is not up to date! \n" , 0) : 1);
-    return false; 
-  }
-
-  //! return number of dofs on one element 
-  int elementMemory () const 
-  {
-    return mapper_.maxNumDofs();
-  }
 
   //! resize the memory with the new size 
   void resize () 
@@ -714,9 +667,9 @@ public:
   DofArrayType & getArray() { return array_; } 
   
   //! return used memory size 
-  int usedMemorySize() const 
+  size_t usedMemorySize() const 
   {
-    return sizeof(ThisType) + SpecialArrayFeatures<DofArrayType>::used(array_); 
+    return ((size_t) sizeof(ThisType) + SpecialArrayFeatures<DofArrayType>::used(array_)); 
   }
 
   //! does nothing here
@@ -1028,9 +981,9 @@ public:
   }
    
   /** \brief return used memory size of all MemObjects in bytes. */
-  int usedMemorySize () const 
+  size_t usedMemorySize () const 
   {
-    int used = 0;
+    size_t used = 0;
     ConstListIteratorType endit = memList_.end();
     for(ConstListIteratorType it = memList_.begin(); it != endit ; ++it)
     {
@@ -1207,10 +1160,10 @@ private:
   //! writes all underlying index sets to a file 
   bool write(const std::string filename, int timestep);
   //! reads all underlying index sets from a file 
-  bool read(const std::string filename, int timestep, bool verbose = true );
+  bool read(const std::string filename, int timestep);
 
   bool write_xdr(const std::string filename, int timestep);
-  bool read_xdr( const std::string filename, int timestep, bool verbose );
+  bool read_xdr( const std::string filename, int timestep);
 
   // generate index set filename 
   std::string generateIndexSetName(const std::string& filename,
@@ -1405,9 +1358,9 @@ write(const std::string filename, int timestep)
 }
 template <class GridType>
 inline bool DofManager<GridType>::
-read(const std::string filename , int timestep, bool verbose )
+read(const std::string filename , int timestep )
 {
-  return read_xdr(filename,timestep,verbose);  
+  return read_xdr(filename,timestep);  
 }
 
 template <class GridType>
@@ -1427,7 +1380,7 @@ write_xdr(const std::string filename , int timestep )
 
 template <class GridType>
 inline bool DofManager<GridType>::
-read_xdr(const std::string filename , int timestep, bool verbose )
+read_xdr(const std::string filename , int timestep )
 {
   int count = 0;
   IndexListIteratorType endit = indexList_.end();
@@ -1446,7 +1399,7 @@ read_xdr(const std::string filename , int timestep, bool verbose )
       fclose( testfile );
       (*it)->read_xdr(newFilename.c_str(),timestep);
     }
-    else if(verbose)
+    else if( Parameter :: verbose() )
     {
       std::cout << "WARNING: Skipping " << newFilename << " in DofManager::read_xdr!" << std::endl;
     }
@@ -1517,12 +1470,11 @@ read_xdr(const std::string filename , int timestep, bool verbose )
     inline static bool 
     readDofManager ( const GridType &grid,
                      const std :: string &filename,
-                     int timestep ,
-                     bool verbose = true )
+                     int timestep )
     {
       DofManagerType *dm = getDmFromList( grid );
       if( dm )
-        return dm->read( filename, timestep , verbose );
+        return dm->read( filename, timestep );
       return false;
     }
 
