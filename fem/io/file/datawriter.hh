@@ -330,7 +330,7 @@ public:
         GrapeDataIO<GridType> dataio;
         // call output of IOTuple 
         IOTuple<OutputTupleType>::output(dataio, 
-          grid_ ,time, writeStep_, timeStepPath , datapref_, data , verbose_ );
+          grid_ ,time, writeStep_, timeStepPath , datapref_, data );
       }
 #if USE_VTKWRITER
       else if ( outputFormat_ == vtk || outputFormat_ == vtkvtx )
@@ -841,7 +841,7 @@ public:
       GrapeDataIO<GridType> dataio;
       // call output of IOTuple 
       IOTuple<OutPutDataType>::output(dataio, this->grid_ ,
-          time, checkPointNumber_ , path, this->datapref_ , this->data_ , false );
+          time, checkPointNumber_ , path, this->datapref_ , this->data_ );
       
       writeCheckPoint(path,time,timestep,
                       checkPointNumber_, 

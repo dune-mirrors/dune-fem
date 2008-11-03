@@ -52,12 +52,11 @@ struct IOTupleCaller
   static void restore(DiscFuncType* df, 
                       DataIO& dataio,
                       const std::string& name, 
-                      const int n,
-                      bool verbose = true ) 
+                      const int n)
   {
     std::stringstream dataname;
     dataname << name << "_" << N; 
-    if( verbose ) 
+    if( Parameter :: verbose() ) 
       std::cout << "    Dataset from " << dataname.str() << std::endl;
     assert( df );
     
@@ -131,15 +130,13 @@ struct IOTupleHelper
   restore(ReturnType ret,
           DataIO& dataio, 
           const std::string& name, 
-          const int n, 
-          bool verbose = true 
-          )
+          const int n) 
   {
     T2 next = ret.second();
-    NextType::restore(next,dataio,name,n,verbose);
+    NextType::restore(next,dataio,name,n);
     
     T1* df = ret.first();
-    IOTupleCaller<N,T1>::restore(df,dataio,name,n,verbose);
+    IOTupleCaller<N,T1>::restore(df,dataio,name,n);
   }
   
   template <class DataIO>
@@ -216,11 +213,10 @@ struct IOTupleHelper<T1,Nil,N>
   static void restore(ReturnType ret, 
                       DataIO& dataio, 
                       const std::string& name, 
-                      const int n,
-                      bool verbose = true )
+                      const int n)
   {
     T1 * df = ret.first();
-    IOTupleCaller<N,T1>::restore(df,dataio,name,n,verbose);
+    IOTupleCaller<N,T1>::restore(df,dataio,name,n);
   }
 
   template <class DataIO>
@@ -327,10 +323,9 @@ struct IOTuple : public IOTupleBase
   static void restoreDofManager(const GridType& grid,
                                 int n,
                                 std::string path,
-                                std::string name,
-                                bool verbose = true ) 
+                                std::string name)
   {
-    if( verbose ) 
+    if( Parameter :: verbose() ) 
       std::cout << "Reading Dof Manager" << std::endl;
     
     typedef DofManager<GridType> DofManagerType;
@@ -339,11 +334,11 @@ struct IOTuple : public IOTupleBase
     dmname = gridName(path,name) + "_dm";
     DofManagerType& dm = DMFactoryType::getDofManager(grid);
 
-    if( verbose ) 
+    if( Parameter :: verbose() ) 
       std::cout << "    from file " << dmname << std::endl;
 
     // read dofmanager, i.e. read all index sets 
-    DMFactoryType::readDofManager(grid,dmname,n,verbose);
+    DMFactoryType::readDofManager(grid,dmname,n);
     
     // resize all data because size of index set might have changed  
     // NOTE: avoid resize of index sets by using resizeForRestict 
@@ -400,19 +395,19 @@ struct IOTuple : public IOTupleBase
   template <class DataIO,class GridType>
   static void restoreData(ReturnType& data, 
          DataIO& dataio,const GridType& grid,
-         int n, std::string path, std::string name, bool verbose = false ) 
+         int n, std::string path, std::string name) 
   {
     std::string dname( dataName(path,name) );
-    if( verbose )
+    if( Parameter :: verbose() )
     {
       std::cout << "P["<< grid.comm().rank()<< "] Reading data from " << dname << std::endl;
     }
 
     // read dofmanager and index sets 
-    IOTuple<TupType>::restoreDofManager(grid,n,path,name,verbose);
+    IOTuple<TupType>::restoreDofManager(grid,n,path,name);
 
     // read all data now 
-    IOTupleHelper<T1,T2,0>::restore(data,dataio,dname,n,verbose);
+    IOTupleHelper<T1,T2,0>::restore(data,dataio,dname,n);
 
     typedef DofManager<GridType> DofManagerType;
     typedef DofManagerFactory<DofManagerType> DMFactoryType;
@@ -423,7 +418,7 @@ struct IOTuple : public IOTupleBase
     // compress all data 
     dm.compress();
 
-    if( verbose ) 
+    if( Parameter :: verbose() ) 
     {
       std::cout << "P["<<grid.comm().rank()<< "]  FINISHED!" << std::endl;
     }
@@ -435,11 +430,11 @@ struct IOTuple : public IOTupleBase
                      double t,int n,
                      std::string path,
                      std::string name, 
-                     const Pair<T1*,T2>& tup, bool verbose = true ) 
+                     const Pair<T1*,T2>& tup ) 
   {
     std::string gname( gridName( path, name ) );
     
-    if(verbose) 
+    if( Parameter :: verbose() ) 
     {
       std::cout << "Writing grid to " << gname << std::endl;
     }
@@ -455,7 +450,7 @@ struct IOTuple : public IOTupleBase
 
     std::string dname( dataName(path, name ) );
 
-    if(verbose) 
+    if( Parameter :: verbose() ) 
     {
       std::cout << "Writing data to " << dname << std::endl;
     }
