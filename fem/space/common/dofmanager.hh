@@ -1409,9 +1409,9 @@ read_xdr(const std::string filename , int timestep )
 
   public:
     typedef DofManager DofManagerType;
+    typedef typename DofManagerType :: GridType GridType; 
 
   private:
-    typedef typename DofManagerType :: GridType GridType; 
     typedef const GridType *KeyType;
 
     typedef SingletonList< KeyType, DofManagerType > DMProviderType;
