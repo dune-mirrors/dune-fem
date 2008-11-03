@@ -123,12 +123,6 @@ public:
   virtual void resize () = 0; 
   //! compress of index set 
   virtual bool compress () = 0;
-  //! returns true if set generally needs a compress 
-  virtual bool consecutive () const = 0;
-
-  //! return type of set 
-  virtual int typeOfSet () const = 0;
-
   //! read and write method of index sets 
   virtual void read_xdr(const char * filename, int timestep) = 0;
   //! read and write method of index sets 
@@ -233,17 +227,6 @@ public:
   bool compress () 
   { 
     return indexSet_.compress(); 
-  }
-
-  //! returns whether the set needs a compress after adaptation 
-  bool consecutive () const 
-  {
-    return indexSet_.consecutive (); 
-  }
-
-  int typeOfSet() const 
-  { 
-    return indexSet_.type();
   }
 
   //! call read_xdr of index set 
