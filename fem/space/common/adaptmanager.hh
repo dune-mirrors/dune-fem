@@ -528,11 +528,17 @@ protected:
   double adaptTime_;
 };
 
+// forward declaration 
+template <class GridType, class RestProlOperatorImp >
+class AdaptationManager;
+
 /*! \brief This class manages the adaptation process including a load
-  balancing after the adaptation step. 
+  balancing after the adaptation step. This class is created by the
+  AdaptationManager for each grid instance. See AdaptationManager for
+  details. 
 */
 template <class GridType, class RestProlOperatorImp >
-class AdaptationManager :
+class AdaptationManagerImplementation :
   public AdaptationManagerBase<GridType,RestProlOperatorImp> ,
   public LoadBalancer<GridType> 
 {  
@@ -543,8 +549,12 @@ class AdaptationManager :
   double balanceTime_ ;
 
   // do not copy 
-  AdaptationManager(const AdaptationManager&);
-public:  
+  AdaptationManagerImplementation(const AdaptationManagerImplementation&);
+
+  // make friend to call constructor 
+  friend class AdaptationManager< GridType,RestProlOperatorImp > :: Factory;
+  
+protected:  
   /** \brief constructor of AdaptationManager 
      \param grid Grid that adaptation is done for 
      \param rpOp restriction and prlongation operator that describes how the 
@@ -555,7 +565,7 @@ public:
         AdaptationMethod: 1 # default value 
      \param balanceCounter start counter for balance cycle (default = 0)   
   */   
-  AdaptationManager(GridType & grid, 
+  AdaptationManagerImplementation(GridType & grid, 
                     RestProlOperatorImp & rpOp, 
                     std::string paramFile = "", 
                     int balanceCounter = 0 ) 
@@ -565,6 +575,7 @@ public:
   {
   }
 
+public:  
   /** @copydoc LoadBalancerInterface::loadBalance */
   virtual bool loadBalance () 
   {
@@ -609,6 +620,145 @@ public:
     }
   }
 };
+
+/*! \brief This class manages the adaptation process including a load
+  balancing after the adaptation step. This class implements the
+  SingletonList pattern, i.e. for each grid only one instance of this
+  class is created. 
+*/
+template <class GridType, class RestProlOperatorImp >
+class AdaptationManager :
+  public AdaptationManagerInterface 
+{ 
+protected:
+  //! type of object to be created 
+  typedef AdaptationManagerImplementation< GridType, RestProlOperatorImp > ObjectType;
+
+  //! factory for creation of AdaptationManagers 
+  class Key
+  {
+    mutable GridType& grid_;
+    mutable RestProlOperatorImp& rp_;
+    const std::string& paramFile_;
+    const int balanceCounter_; 
+  public:
+    Key(GridType& grid, RestProlOperatorImp& rp, 
+        const std::string& pfile , const int bc)
+      : grid_(grid), rp_(rp) , paramFile_(pfile) , balanceCounter_(bc) {}
+    Key(const Key& other) : grid_(other.grid_), rp_(other.rp_), 
+        paramFile_(other.paramFile_), balanceCounter_(other.balanceCounter_) {}  
+    bool operator == (const Key& other) const 
+    {
+      return (&grid_ == &other.grid_) && (&rp_ == &other.rp_); 
+    }
+    GridType& grid() const { return grid_; }
+    RestProlOperatorImp& rp() const { return rp_; }
+    const std::string& paramFile() const { return paramFile_; }
+    const int balanceCounter() const { return balanceCounter_; }
+  };
+  
+public:  
+  //! factory for creation of AdaptationManagers 
+  struct Factory
+  {
+    static ObjectType* createObject(const Key& key) 
+    {
+      return new ObjectType( key.grid(), key.rp(), 
+                             key.paramFile(), key.balanceCounter() );
+    }
+
+    //! delete comm manager  
+    static void deleteObject( ObjectType * obj )
+    {
+      delete obj;
+    }
+
+  };
+
+protected:  
+  //! type of Singleton lsit for AdaptationManagers 
+  typedef SingletonList< Key , ObjectType , Factory > ProviderType;
+
+  //! reference to adaptation manager 
+  ObjectType& adaptManager_;
+ 
+private:  
+  //! copy construtor is prohibited 
+  AdaptationManager(const AdaptationManager&);
+public:  
+  /** \brief constructor of AdaptationManager
+     \param grid Grid that adaptation is done for 
+     \param rpOp restriction and prlongation operator that describes how the 
+      user data is projected to other grid levels
+     \param paramFile optional parameter file which contains 
+        the following two lines:
+        # 0 == none, 1 == generic, 2 == call back (only AlbertaGrid and ALUGrid)  
+        AdaptationMethod: 1 # default value 
+     \param balanceCounter initial value of balance counter for restarts (default is 0)
+  */   
+  AdaptationManager(
+      GridType & grid, RestProlOperatorImp & rpOp, std::string paramFile = "", 
+      int balanceCounter = 0 ) 
+    // get adaptation manager 
+    : adaptManager_( ProviderType :: getObject( Key( grid, rpOp, paramFile, balanceCounter ) ) )
+  {
+    assert( this->balanceCounter() == balanceCounter );
+  }
+
+  //! destructor removing object 
+  ~AdaptationManager() 
+  {
+    // free object 
+    ProviderType :: removeObject( adaptManager_ ); 
+  }
+
+  /** @copydoc LoadBalancerInterface::loadBalance */
+  virtual bool loadBalance () 
+  {
+    // call load balance 
+    return adaptManager_.loadBalance(); 
+  }
+
+  /** @copydoc LoadBalancerInterface::balanceCounter */ 
+  virtual int balanceCounter () const 
+  { 
+    return adaptManager_.balanceCounter(); 
+  }
+
+  /** @copydoc LoadBalancerInterface::loadBalanceTime */
+  virtual double loadBalanceTime() const 
+  {
+    return adaptManager_.loadBalanceTime(); 
+  }
+  
+  /** @copydoc AdaptationManagerInterface::adapt */ 
+  virtual bool adaptive () const  
+  {
+    // call adaptive 
+    return adaptManager_.adaptive(); 
+  }
+  
+  /** @copydoc AdaptationManagerInterface::adapt */ 
+  virtual void adapt () 
+  {
+    // call adapt 
+    adaptManager_.adapt(); 
+  }
+
+  /** @copydoc AdaptationManagerInterface::methodName */
+  virtual const char * methodName() const 
+  {
+    return adaptManager_.methodName(); 
+  }
+
+  /** @copydoc AdaptationManagerInterface::adaptationTime */
+  virtual double adaptationTime () const
+  {
+    return adaptManager_.adaptationTime(); 
+  }
+};
+
+
 
 template <class GridType, class RestProlOperatorImp >
 class AdaptationLoadBalanceManager :

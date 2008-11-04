@@ -77,7 +77,7 @@ class LoadBalancer
   // type of local data collector interface 
   typedef typename DataCollectorType :: LocalInterfaceType
     LocalDataCollectorInterfaceType;
-public:
+protected:
   /** \brief constructor of LoadBalancer  
      \param grid Grid that load balancing is done for 
      \param paramFile optional parameter file which contains 
@@ -143,6 +143,7 @@ public:
     }
   }
 
+public:  
   //! destructor 
   virtual ~LoadBalancer () 
   {
@@ -191,9 +192,15 @@ public:
     // if balance counter has readed balanceStep do load balance
     if( callBalance )
     {
-      // call grids load balance, only implemented in ALUGrid right now
-      changed = grid_.loadBalance( dm_ ); 
-
+      try {
+        // call grids load balance, only implemented in ALUGrid right now
+        changed = grid_.loadBalance( dm_ ); 
+      }
+      catch (...) 
+      {
+        std::cout << "P[" << grid_.comm().rank() << "] : Cought an exepction during load balance" << std::endl;
+        abort();
+      }
       // reset balance counter 
       balanceCounter_ = 0;
     }
