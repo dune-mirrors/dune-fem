@@ -263,7 +263,7 @@ namespace Dune
    * that matches the template-given id
    *
    */
-  template< class Pair , class Tuple , int id , bool matched >
+  template< class Pair, class Tuple, int id, bool match >
   struct MatchTuplesHelperForValue
   {};
   
@@ -284,11 +284,11 @@ namespace Dune
     static typename TupleAccessTraits< MatchedType > :: ConstType
     get( const Tuple &arg )
     {
-      return MatchTuplesHelperForValue< SelectorTail, TupleTail, id, matchedTail >
+      return MatchTuplesHelperForValue< SelectorTail, TupleTail, id, matchTail >
         :: get( arg.second() );
     }
     
-    static typename TupleAccessTraits< MathedType > :: NonConstType
+    static typename TupleAccessTraits< MatchedType > :: NonConstType
     get( Tuple &arg )
     {
       return MatchTuplesHelperForValue< SelectorTail , TupleTail, id, matchTail >
@@ -300,7 +300,7 @@ namespace Dune
   struct MatchTuplesHelperForValue
     < Pair< SelectorHead, Nil >, Pair< TupleHead, TupleTail >, id, false >
   {
-    typedef Pair< SelectorHead, SelectorTail > Selector;
+    typedef Pair< SelectorHead, Nil > Selector;
     typedef Pair< TupleHead, TupleTail > Tuple;
 
     // when unable to match selector values with template-given id
@@ -343,7 +343,7 @@ namespace Dune
   struct MatchTuplesForValue
   {
   private:
-    typedef typename MatchTuplesForType< SelectorBase, Tuple, id > :: Type MathedType;
+    typedef typename MatchTuplesForType< SelectorBase, Tuple, id > :: Type MatchedType;
 
     static const bool match = ((int)SelectorBase::Type1::value == id);
 
