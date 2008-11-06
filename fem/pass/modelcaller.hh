@@ -263,11 +263,11 @@ namespace Dune {
     }
     
   protected:
-    void setter(Entity& en, LocalFunctionTupleType& tuple) 
+    void setter ( Entity &entity, LocalFunctionTupleType &localFunctionTuple )
     {
-      ForEachValue<LocalFunctionTupleType> forEach(tuple);
-      LocalFunctionSetter<Entity> setter(en);
-      forEach.apply(setter);
+      ForEachValue< LocalFunctionTupleType > forEach( localFunctionTuple );
+      LocalFunctionSetter< Entity > setter( entity );
+      forEach.apply( setter );
     }
 
     void evaluateLocal(const DomainType& x, 
@@ -370,10 +370,11 @@ namespace Dune {
       }
 
     private:
-      void setter(Entity& en, LocalFunctionTupleType& tuple) {
-        ForEachValue<LocalFunctionTupleType> forEach(tuple);
-        LocalFunctionSetter<Entity> setter(en);
-        forEach.apply(setter);
+      void setter( Entity &entity, LocalFunctionTupleType &localFunctionTuple )
+      {
+        ForEachValue< LocalFunctionTupleType > forEach( localFunctionTuple );
+        LocalFunctionSetter< Entity > setter( entity );
+        forEach.apply( setter );
       }
 
     private:
