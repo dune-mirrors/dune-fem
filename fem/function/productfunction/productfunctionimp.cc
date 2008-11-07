@@ -14,22 +14,18 @@ template<class DiscreteFunctionSpaceType, class DiscreteFunctionSpace2Type>
   ProductDiscreteFunction(const DiscreteFunctionSpaceType& f, const DiscreteFunctionSpace2Type& f2) :
     // DiscreteFunctionDefaultType ( f ), 
     name_ ("no name"),
-    dm_(DofManagerFactoryType::getDofManager(f.grid())),
-    memPair_(dm_.addDofSet(&dofVec_, f.mapper(), name_)),
-    dofVec_ ( *memPair_.second ),
     functionSpace_(f),
-    functionSpace2_ (f2)
+    functionSpace2_ (f2),
+    dofVec_ ( f.size() * f2.size() )
 {
-    std::cout << "Size old = " << dofVec_.size() << "  Size  f2 = " << functionSpace2_.size();
-    std::cout << " New size will be " << dofVec_.size() * functionSpace2_.size() << "\n";
-    dofVec_.resize ( dofVec_.size() * functionSpace2_.size() );
+   // std::cout << "Size old = " << dofVec_.size() << "  Size  f2 = " << functionSpace2_.size();
+   // std::cout << " New size will be " << dofVec_.size() * functionSpace2_.size() << "\n";
 }
 // Desctructor 
 template<class DiscreteFunctionSpaceType, class DiscreteFunctionSpace2Type>
 inline ProductDiscreteFunction< DiscreteFunctionSpaceType, DiscreteFunctionSpace2Type>::
 ~ProductDiscreteFunction()
 {
-  dm_.removeDofSet(*memPair_.first);
 }
 
 template<class DiscreteFunctionSpaceType, class DiscreteFunctionSpace2Type>
@@ -75,29 +71,6 @@ ProductDiscreteFunction<DiscreteFunctionSpaceType, DiscreteFunctionSpace2Type>::
  return AdaptiveDiscreteFunction< DiscreteFunctionSpaceType> ( name(), this->functionSpace_, &(dofVec_.leakPointer()[this->functionSpace_.size()*space2().mapToGlobal( en2 ,dofIndex2)]));
  
 }
-#if 0
-//local function for given entity2 and local coordinate of second space and discrete function of first space
-template<class DiscreteFunctionSpaceType, class DiscreteFunctionSpace2Type>
-template < class Entity2Type, class LocalCoord2Type>
-inline void ProductDiscreteFunction<DiscreteFunctionSpaceType, DiscreteFunctionSpace2Type>::
-localFunction(const Entity2Type &en2, const LocalCoord2Type &loc2,  DiscreteFunction1Type &discFunc) const
-{
- typedef typename DiscreteFunctionSpace2Type::BaseFunctionSetType BaseFunctionSetType;
- typename DiscreteFunctionSpace2Type::RangeType tmp_;
- discFunc.clear();
- const BaseFunctionSetType bSet2 = space2().baseFunctionSet(en2);
- const int numOfDofs = bSet2.numBaseFunctions();
- 
- for(int i = 0; i< numOfDofs; i++) 
- {
-  const int map = space2().mapToGlobal( en2 , i );  
-  bSet2.evaluate(i,loc2,tmp_);
-  DiscreteFunction1Type df = this->localFunction(map);
-	    discFunc.addScaled(df,tmp_);
- }
-	
-}
-#endif
 
 //local function for given entity2, quadrature type and qudrature point number of second space and discrete function of first space
 template<class DiscreteFunctionSpaceType, class DiscreteFunctionSpace2Type>
@@ -255,54 +228,6 @@ read_ascii(const std::string fn)
   fclose(infile);
   return true;
 }
-
-#if 0
-template<class DiscreteFunctionSpaceType, class DiscreteFunctionSpace2Type>
-inline bool ProductDiscreteFunction< DiscreteFunctionSpaceType, DiscreteFunctionSpace2Type>::
-write_pgm(const std::string fn) const
-{
-  std::ofstream out( fn.c_str() );
-
-  enum { dim = GridType::dimension };
- 
-  if(out)
-  {
-    int danz = 129; 
-  
-    out << "P2\n " << danz << " " << danz <<"\n255\n";
-    ConstDofIteratorType enddof = dend ();
-    for(ConstDofIteratorType itdof = dbegin (); itdof != enddof; ++itdof) {
-      out << (int)((*itdof)*255.) << "\n";
-    }
-    out.close();
-  }
-  else 
-  {
-    std::cerr << "Couldn't open file '"<<fn<<"' \n";
-  }
-  return true;
-}
-
-template<class DiscreteFunctionSpaceType, class DiscreteFunctionSpace2Type>
-inline bool ProductDiscreteFunction< DiscreteFunctionSpaceType, DiscreteFunctionSpace2Type>::
-read_pgm(const std::string fn)
-{
-  FILE *in;
-  int v;
-
-  in = fopen( fn.c_str(), "r" );
-  assert(in);
-
-  fscanf( in, "P2\n%d %d\n%d\n", &v, &v, &v );
-  DofIteratorType enddof = dend ();
-  for(DofIteratorType itdof = dbegin (); itdof != enddof; ++itdof) {
-    fscanf( in, "%d", &v );
-    (*itdof) = ((double)v)/255.;
-  } 
-  fclose( in );
-  return true;
-}
-#endif
 
 template<class DiscreteFunctionSpaceType, class DiscreteFunctionSpace2Type>
 inline void ProductDiscreteFunction< DiscreteFunctionSpaceType, DiscreteFunctionSpace2Type>::
