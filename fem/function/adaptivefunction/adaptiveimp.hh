@@ -112,9 +112,16 @@ namespace Dune {
 #endif
 
     //! return pointer to underlying array 
-    DofType       * leakPointer ()       { return dofVec_.leakPointer(); }
+    DofType *leakPointer ()
+    {
+      return dofStorage().leakPointer();
+    }
+
     //! return pointer to underlying array 
-    const DofType * leakPointer () const { return dofVec_.leakPointer(); }
+    const DofType *leakPointer () const
+    {
+      return dofStorage().leakPointer();
+    }
 
     inline ConstDofBlockPtrType block ( unsigned int index ) const
     {
@@ -130,7 +137,16 @@ namespace Dune {
     
   protected:
     //! return reference to dof storage 
-    DofStorageType& dofStorage() { return dofVec_; }
+    const DofStorageType &dofStorage () const
+    {
+      return dofVec_;
+    }
+
+    //! return reference to dof storage 
+    DofStorageType &dofStorage ()
+    {
+      return dofVec_;
+    }
 
     //! normal constructor creating discrete function 
     AdaptiveFunctionImplementation ( const std :: string &name,

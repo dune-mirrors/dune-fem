@@ -121,7 +121,7 @@ namespace Dune
   AdaptiveFunctionImplementation<DiscreteFunctionSpaceImp>::
   dbegin() 
   {
-    return dofVec_.begin();
+    return dofStorage().begin();
   }
 
   template <class DiscreteFunctionSpaceImp>
@@ -130,7 +130,7 @@ namespace Dune
   AdaptiveFunctionImplementation<DiscreteFunctionSpaceImp>::
   dend() 
   {
-    return dofVec_.end();
+    return dofStorage().end();
   }
 
   template <class DiscreteFunctionSpaceImp>
@@ -139,7 +139,7 @@ namespace Dune
   AdaptiveFunctionImplementation<DiscreteFunctionSpaceImp>::
   dbegin() const 
   {
-    return dofVec_.begin();
+    return dofStorage().begin();
   }
 
   template <class DiscreteFunctionSpaceImp>
@@ -148,7 +148,7 @@ namespace Dune
   AdaptiveFunctionImplementation<DiscreteFunctionSpaceImp>::
   dend() const
   {
-    return dofVec_.end();
+    return dofStorage().end();
   }
 
 #if DUNE_FEM_COMPATIBILITY
