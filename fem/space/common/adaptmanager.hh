@@ -531,7 +531,7 @@ protected:
 
 //! factory class to create adaptation manager reference counter 
 template <class KeyType, class ObjectType>
-struct AdaptationManagerRerferenceFactory
+struct AdaptationManagerReferenceFactory
 {
   static ObjectType* createObject(const KeyType& key)
   {
@@ -558,7 +558,7 @@ class AdaptationManager :
   // object type 
   typedef size_t ObjectType;
   // type of factory 
-  typedef AdaptationManagerRerferenceFactory<KeyType, ObjectType>  FactoryType;
+  typedef AdaptationManagerReferenceFactory<KeyType, ObjectType>  FactoryType;
 
   // type of singleton list 
   typedef SingletonList< KeyType, ObjectType, FactoryType > ProviderType;
