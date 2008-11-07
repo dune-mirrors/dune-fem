@@ -238,52 +238,6 @@ namespace Dune
   }
 #endif
 
-#if 0
-  template<class DiscreteFunctionSpaceImp>
-  bool AdaptiveFunctionImplementation<DiscreteFunctionSpaceImp>::
-  write_pgm(const std::string fn) const
-  {
-    std::ofstream out( fn.c_str() );
-    
-    enum { dim = GridType::dimension };
-    
-    if (out) {
-      int danz = 129; 
-      
-      out << "P2\n " << danz << " " << danz <<"\n255\n";
-      ConstDofIteratorType enddof = dend ();
-      for(ConstDofIteratorType itdof = dbegin (); itdof != enddof; ++itdof) {
-        out << (int)((*itdof)*255.) << "\n";
-      }
-      out.close();
-    }
-    else {
-      std::cerr << "Couldn't open file '"<<fn<<"' \n";
-    }
-    return true;
-  }
-  
-  template<class DiscreteFunctionSpaceImp>
-  bool AdaptiveFunctionImplementation<DiscreteFunctionSpaceImp>::
-  read_pgm(const std::string fn)
-  {
-    FILE *in;
-    int v;
-    
-    in = fopen( fn.c_str(), "r" );
-    assert(in);
-    
-    fscanf( in, "P2\n%d %d\n%d\n", &v, &v, &v );
-    DofIteratorType enddof = dend ();
-    for(DofIteratorType itdof = dbegin (); itdof != enddof; ++itdof) {
-      fscanf( in, "%d", &v );
-      (*itdof) = ((double)v)/255.;
-    } 
-    fclose( in );
-    return true;
-  }
-#endif
-  
   template<class DiscreteFunctionSpaceImp>
   void AdaptiveFunctionImplementation<DiscreteFunctionSpaceImp>::
   enableDofCompression() 
