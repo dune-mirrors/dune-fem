@@ -6,8 +6,8 @@ namespace Dune
     :: AdaptiveFunctionImplementation ( const std :: string &name,
                                         const DiscreteFunctionSpaceType &spc )
   : spc_(spc),
-    dm_(DofManagerFactory<DofManagerType>::getDofManager(spc.grid())),
-    memPair_(dm_.addDofSet((MutableDofStorageType *) 0, spc.mapper(), name)),
+    memPair_( allocateManagedDofStorage( spc.grid(), spc.mapper(),
+              name, (MutableDofStorageType *) 0) ),
     dofVec_(*memPair_.second)
   {
   }
@@ -20,8 +20,8 @@ namespace Dune
                                         const DiscreteFunctionSpaceType &spc,
                                         VectorPointerType *vector )
   : spc_(spc),
-    dm_(DofManagerFactory<DofManagerType>::getDofManager(spc.grid())),
-    memPair_(dm_.addDummyDofSet((DofStorageType *) 0, spc.mapper(), name, vector )),
+    memPair_( allocateManagedDofStorage( spc.grid(), spc.mapper(),
+              name, (MutableDofStorageType *) 0) ),
     dofVec_(*memPair_.second)
   {}
 
@@ -31,8 +31,7 @@ namespace Dune
                                        const DiscreteFunctionSpaceType &spc,
                                        DofStorageType &dofVec)
   : spc_(spc),
-    dm_(DofManagerFactory<DofManagerType>::getDofManager(spc.grid())),
-    memPair_(std::pair<MemObjectInterface*, DofStorageType*>(0, 0)),
+    memPair_( (DofStorageInterface* ) 0, (DofStorageType* ) 0),
     dofVec_(dofVec)
   {}
 
@@ -41,8 +40,8 @@ namespace Dune
   AdaptiveFunctionImplementation( const std :: string &name,
                                   const ThisType &other )
   : spc_( other.spc_ ),
-    dm_(other.dm_),
-    memPair_(dm_.addDofSet((MutableDofStorageType *) 0, other.spc_.mapper(), name)),
+    memPair_( allocateManagedDofStorage( spc_.grid(), spc_.mapper(),
+              name, (MutableDofStorageType *) 0) ),
     dofVec_(*memPair_.second)
   {
     // copy values
@@ -53,12 +52,9 @@ namespace Dune
   AdaptiveFunctionImplementation<DiscreteFunctionSpaceImp>::
   ~AdaptiveFunctionImplementation() 
   {
-    if (memPair_.first) {
-#ifndef NDEBUG
-      bool removed = 
-#endif
-      dm_.removeDofSet(*memPair_.first);
-      assert(removed);
+    if (memPair_.first) 
+    {
+      delete memPair_.first ;
     }
   }
  
@@ -242,8 +238,8 @@ namespace Dune
   void AdaptiveFunctionImplementation<DiscreteFunctionSpaceImp>::
   enableDofCompression() 
   {
-    assert( memPair_.first );
-    memPair_.first->enableDofCompression();
+    if( memPair_.first )
+      memPair_.first->enableDofCompression();
   }
   
 } // end namespace Dune

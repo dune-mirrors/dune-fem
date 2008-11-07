@@ -54,7 +54,6 @@ namespace Dune {
     // static dof array to be used by discrete function 
     typedef typename Traits::DofStorageType DofStorageType;
     typedef typename Traits::GridType GridType;
-    typedef DofManager<GridType> DofManagerType;
 
     typedef typename Traits::DiscreteFunctionType LeafType;
 
@@ -173,10 +172,53 @@ namespace Dune {
     void enableDofCompression(); 
 
   protected:
+
+    //! wrapper class to create fake DofStorage from double* 
+    template <class VectorPointerType>
+    class DofStorageWrapper : public DofStorageInterface
+    {
+      const std::string name_;
+      DofStorageType array_;
+    public:
+      template <class MapperType>
+      DofStorageWrapper(const MapperType& mapper,
+                        const std::string& name,
+                        const VectorPointerType* v)
+        : name_(name),
+          array_( mapper.size() , const_cast<VectorPointerType *> (v))
+      {}
+
+      //! returns name of this vector 
+      const std::string& name () const { return name_; }
+
+      //! return array 
+      DofStorageType& getArray() { return array_; }
+
+      //! do nothing here 
+      void enableDofCompression () {}
+
+      //! return array's size 
+      int size() const { return array_.size(); }
+    };
+
+    template <class MapperType, class VectorPointerType>
+    static std::pair< DofStorageInterface* , DofStorageType* >
+      allocateDofStorageWrapper(const MapperType& mapper,
+                                const std::string& name,
+                                const VectorPointerType* v)
+    {
+      typedef DofStorageWrapper<VectorPointerType> DofStorageWrapperType;
+      DofStorageWrapperType* dsw = new DofStorageWrapperType(mapper,name,v);
+      assert( dsw );
+
+      // return pair with dof storage pointer and array pointer 
+      return std::pair< DofStorageInterface* , DofStorageType* >
+              ( dsw , & dsw->getArray () );
+    }
+    
     virtual const LeafType& interface() const = 0;
     const DiscreteFunctionSpaceType& spc_;
-    DofManagerType& dm_;
-    std::pair<MemObjectInterface*, DofStorageType*> memPair_; 
+    std::pair< DofStorageInterface*, DofStorageType*> memPair_; 
 
   protected:
     DofStorageType& dofVec_;
