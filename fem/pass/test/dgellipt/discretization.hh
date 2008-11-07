@@ -265,7 +265,7 @@ public:
         {
           grid_.globalRefine(DGFGridInfo<GridType>::refineStepsForHalf());
           dm_.resize();
-          dm_.dofCompress();
+          dm_.compress();
         }
       }
 
