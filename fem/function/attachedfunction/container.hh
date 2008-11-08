@@ -38,16 +38,16 @@ namespace Dune
       ConstSlotIteratorType;
 
   private:
-    MemObjectInterface *memObject_;
+    DofStorageInterface *memObject_;
     StorageType *storage_;
 
   private:
     inline explicit
     AttachedDiscreteFunctionContainer ( const SingletonKey &key )
     {
+      StorageType *const null = 0;
       std :: pair< DofStorageInterface *, StorageType * > memPair
-        = allocadofManager_.addDofSet( key.grid(), key.mapper(), 
-                                       name() , (StorageType *) 0 );
+        = allocateManagedDofStorage( key.grid(), key.mapper(), name(), null );
 
       // store pointers 
       memObject_ = memPair.first;
