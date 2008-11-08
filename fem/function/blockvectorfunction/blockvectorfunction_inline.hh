@@ -73,17 +73,16 @@ namespace Dune
 
 template<class DiscreteFunctionSpaceType>
 inline typename BlockVectorDiscreteFunction<DiscreteFunctionSpaceType>::DofStorageType& 
-BlockVectorDiscreteFunction<DiscreteFunctionSpaceType>::
-allocateDofStorage()
+BlockVectorDiscreteFunction< DiscreteFunctionSpaceType > :: allocateDofStorage()
 {
   if( memObject_ != 0 ) 
     DUNE_THROW(InvalidStateException,"DofStorage already allocated!");
   
-  std::pair< DofStorageInterface* , ::DofStorageType* > memPair = 
-    allocateManagedDofStorage( this->functionSpace_.grid(),
-                               mapper_ ,
-                               this->name(),
-                               (DofStorageType *) 0 );
+  std::pair< DofStorageInterface*, DofStorageType* > memPair
+    = allocateManagedDofStorage( this->functionSpace_.grid(),
+                                 mapper_ ,
+                                 this->name(),
+                                 (DofStorageType *) 0 );
   // store memory 
   memObject_ = memPair.first;
 
