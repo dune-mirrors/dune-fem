@@ -19,7 +19,6 @@ namespace Dune
     class SingletonKey;
 
     friend class DefaultSingletonFactory< SingletonKey, ThisType >;
-    //friend class SingletonList< SingletonKey, ThisType >;
 
     typedef SingletonList< SingletonKey, ThisType > SingletonProvider;
 
@@ -59,7 +58,8 @@ namespace Dune
 
     inline ~AttachedDiscreteFunctionContainer ()
     {
-      if ( memObject_ ) delete memObject_ ;
+      if ( memObject_ )
+        delete memObject_ ;
     }
 
     // prohibit assignment
@@ -139,7 +139,7 @@ namespace Dune
     }
 
   public:
-    inline static ThisType &attach ( GridType &grid,
+    inline static ThisType &attach ( const GridType &grid,
                                      MapperType &mapper )
     {
       SingletonKey key( grid, mapper );
@@ -161,11 +161,11 @@ namespace Dune
     typedef SingletonKey ThisType;
 
   public:
-    typedef Grid  GridType;
+    typedef Grid GridType;
     typedef Mapper MapperType;
 
   protected:
-    GridType *const grid_;
+    const GridType *const grid_;
     MapperType *const mapper_;
 
   public:
@@ -180,7 +180,7 @@ namespace Dune
       return ((grid_ == other.grid_) && (mapper_ == other.mapper_));
     }
 
-    inline GridType &grid () const
+    inline const GridType &grid () const
     {
       return *grid_;
     }
