@@ -160,67 +160,64 @@ namespace Dune
 
 
 
-  template< class ElementImp, class ArrayImp >
+  template< class Element, class Array >
   class ArrayDefaultIterator
   {
+    typedef ArrayDefaultIterator< Element, Array > ThisType;
+
   public:
-    typedef ElementImp ElementType;
+    typedef Element ElementType;
 
-    typedef ArrayImp ArrayType;
-
-  private:
-    typedef ArrayDefaultIterator< ElementType, ArrayType > ThisType;
+    typedef Array ArrayType;
 
   protected:
     ArrayType &array_;
     unsigned int index_;
 
   public:
-    inline ArrayDefaultIterator ( ArrayType &array,
-                                  unsigned int index )
+    ArrayDefaultIterator ( ArrayType &array, unsigned int index )
     : array_( array ),
       index_( index )
     {
       assert( index <= array.size() );
     }
 
-    inline ArrayDefaultIterator( const ThisType &other )
+    ArrayDefaultIterator( const ThisType &other )
     : array_( other.array_ ),
       index_( other.index_ )
-    {
-    }
+    {}
 
-    inline ThisType &operator= ( const ThisType &other )
+    ThisType &operator= ( const ThisType &other )
     {
       assert( &(other.array_) == &array_ );
       index_ = other.index_;
     }
 
-    inline ElementType &operator* ()
+    ElementType &operator* ()
     {
       assert( index_ < array_.size() );
       return array_[ index_ ];
     }
 
-    inline ThisType &operator++ ()
+    ThisType &operator++ ()
     {
       assert( index_ < array_.size() );
       ++index_;
       return *this;
     }
 
-    inline bool operator== ( const ThisType &other ) const
+    bool operator== ( const ThisType &other ) const
     {
       assert( &(other.array_) == &array_ );
       return index_ == other.index_;
     }
 
-    inline bool operator!= ( const ThisType &other ) const
+    bool operator!= ( const ThisType &other ) const
     {
       return !(*this == other);
     }
 
-    inline unsigned int index () const
+    unsigned int index () const
     {
       return index_;
     }

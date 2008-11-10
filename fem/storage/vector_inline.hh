@@ -5,20 +5,6 @@
 
 namespace Dune
 {
-  
-  template< class VectorTraits >
-  struct VectorInterfaceArrayTraits
-  {
-    typedef typename VectorTraits :: VectorType ArrayType;
-
-    typedef typename VectorTraits :: FieldType ElementType;
-
-    typedef typename VectorTraits :: ConstIteratorType ConstIteratorType;
-    
-    typedef typename VectorTraits :: IteratorType IteratorType;
-  };
-
-
 
   // VectorInterface
   // ---------------
