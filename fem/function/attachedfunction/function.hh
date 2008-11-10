@@ -42,6 +42,8 @@ namespace Dune
     typedef typename DiscreteFunctionSpaceType :: MapperType MapperType;
     typedef typename DiscreteFunctionSpaceType :: GridPartType GridPartType;
 
+    typedef typename GridPartType :: GridType GridType;
+
     typedef RangeFieldType DofType;
     typedef AttachedDiscreteFunctionContainer< DofType, GridType, MapperType >
       ContainerType;
