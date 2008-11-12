@@ -71,16 +71,16 @@ namespace Dune
   template< class Impl, class User >
   class EngineWrapper
   {
+    typedef EngineWrapper< Impl, User > ThisType;
+
+    // Prohibit copying and assignment
+    EngineWrapper ( const ThisType & );
+    ThisType &operator= ( const ThisType & );
+
   protected:
     EngineWrapper ()
-    {
-    }
+    {}
     
-  private:
-    // Prohibit automatic copying of the interface
-    EngineWrapper ( const EngineWrapper & );
-    
-  protected:
     /** \brief obtain the implementation from the user class (const version)
      *
      *  Ths method uses the Barton-Nackman trick, to obtain a reference to the
@@ -88,7 +88,7 @@ namespace Dune
      *
      *  \returns a const reference to the implementation
      */
-    inline const Impl &asImp () const
+    const Impl &asImp () const
     {
       const User &user = static_cast< const User & >( *this );
       return user.asImp();
@@ -101,7 +101,7 @@ namespace Dune
      *
      *  \returns a reference to the implementation
      */
-    inline Impl &asImp ()
+    Impl &asImp ()
     {
       User &user = static_cast< User & >( *this );
       return user.asImp();
@@ -123,7 +123,16 @@ namespace Dune
   template< class Impl >
   class EngineDefault
   {
+    typedef EngineDefault< Impl > ThisType;
+
+    // prohibit copying and assignment
+    EngineDefault ( const ThisType & );
+    ThisType &operator= ( const ThisType & );
+
   protected:
+    EngineDefault ()
+    {}
+
     /** \brief obtain the implementation (const version)
      *
      *  Ths method uses the Barton-Nackman trick, to obtain a reference to the
@@ -131,7 +140,7 @@ namespace Dune
      *
      *  \returns a const reference to the implementation
      */
-    inline const Impl &asImp () const
+    const Impl &asImp () const
     {
       return static_cast< const Impl & >( *this );
     }
@@ -143,7 +152,7 @@ namespace Dune
      *
      *  \returns a reference to the implementation
      */
-    inline Impl &asImp ()
+    Impl &asImp ()
     {
       return static_cast< Impl & >( *this );
     }
