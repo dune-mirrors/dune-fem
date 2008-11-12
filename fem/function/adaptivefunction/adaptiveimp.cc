@@ -6,9 +6,8 @@ namespace Dune
     :: AdaptiveFunctionImplementation ( const std :: string &name,
                                         const DiscreteFunctionSpaceType &spc )
   : spc_(spc),
-    memPair_( allocateManagedDofStorage( spc.grid(), spc.mapper(),
-              name, (MutableDofStorageType *) 0) ),
-    dofVec_(*memPair_.second)
+    memObject_( 0 ),
+    dofVec_( allocateDofStorage( name ) )
   {
   }
 
@@ -20,9 +19,8 @@ namespace Dune
                                         const DiscreteFunctionSpaceType &spc,
                                         VectorPointerType *vector )
   : spc_(spc),
-    memPair_( allocateManagedDofStorage( spc.grid(), spc.mapper(),
-              name, (MutableDofStorageType *) 0) ),
-    dofVec_(*memPair_.second)
+    memObject_( 0 ),
+    dofVec_( allocateDofStorageWrapper( spc_.mapper(), name, vector ) )
   {}
 
   template <class DiscreteFunctionSpaceImp>
@@ -31,7 +29,7 @@ namespace Dune
                                        const DiscreteFunctionSpaceType &spc,
                                        DofStorageType &dofVec)
   : spc_(spc),
-    memPair_( (DofStorageInterface* ) 0, (DofStorageType* ) 0),
+    memObject_( 0 ),
     dofVec_(dofVec)
   {}
 
@@ -40,9 +38,8 @@ namespace Dune
   AdaptiveFunctionImplementation( const std :: string &name,
                                   const ThisType &other )
   : spc_( other.spc_ ),
-    memPair_( allocateManagedDofStorage( spc_.grid(), spc_.mapper(),
-              name, (MutableDofStorageType *) 0) ),
-    dofVec_(*memPair_.second)
+    memObject_( 0 ),
+    dofVec_( allocateDofStorage( name ) )
   {
     // copy values
     dofVec_ = other.dofVec_;
@@ -52,9 +49,9 @@ namespace Dune
   AdaptiveFunctionImplementation<DiscreteFunctionSpaceImp>::
   ~AdaptiveFunctionImplementation() 
   {
-    if (memPair_.first) 
+    if( memObject_ ) 
     {
-      delete memPair_.first ;
+      delete memObject_;
     }
   }
  
@@ -238,8 +235,8 @@ namespace Dune
   void AdaptiveFunctionImplementation<DiscreteFunctionSpaceImp>::
   enableDofCompression() 
   {
-    if( memPair_.first )
-      memPair_.first->enableDofCompression();
+    if( memObject_ )
+      memObject_->enableDofCompression();
   }
   
 } // end namespace Dune

@@ -201,24 +201,45 @@ namespace Dune {
       int size() const { return array_.size(); }
     };
 
+  protected:
+    // allocate unmanaged dof storage 
     template <class MapperType, class VectorPointerType>
-    static std::pair< DofStorageInterface* , DofStorageType* >
-      allocateDofStorageWrapper(const MapperType& mapper,
-                                const std::string& name,
-                                const VectorPointerType* v)
-    {
+    DofStorageType& 
+    allocateDofStorageWrapper(const MapperType& mapper,
+                              const std::string& name, 
+                              const VectorPointerType* v)
+    {                         
       typedef DofStorageWrapper<VectorPointerType> DofStorageWrapperType;
       DofStorageWrapperType* dsw = new DofStorageWrapperType(mapper,name,v);
       assert( dsw );
-
-      // return pair with dof storage pointer and array pointer 
-      return std::pair< DofStorageInterface* , DofStorageType* >
-              ( dsw , & dsw->getArray () );
-    }
+      
+      // save pointer to object 
+      memObject_ = dsw; 
+      // return array  
+      return dsw->getArray ();
+    } 
     
+    // allocate managed dof storage 
+    DofStorageType& allocateDofStorage(const std::string& name)
+    {
+      if( memObject_ != 0)
+      {
+        DUNE_THROW(InvalidStateException,"DofStorage already allocated!");
+      } 
+      
+      // create memory object 
+      std::pair< DofStorageInterface* , DofStorageType* > memPair
+         = allocateManagedDofStorage( spc_.grid(), spc_.mapper(),
+                                      name, (MutableDofStorageType *) 0);
+                                      
+      // save pointer 
+      memObject_ = memPair.first;
+      return *(memPair.second);
+    }
+ 
     virtual const LeafType& interface() const = 0;
     const DiscreteFunctionSpaceType& spc_;
-    std::pair< DofStorageInterface*, DofStorageType*> memPair_; 
+    DofStorageInterface* memObject_;
 
   protected:
     DofStorageType& dofVec_;
