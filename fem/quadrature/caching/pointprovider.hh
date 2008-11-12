@@ -11,19 +11,19 @@
 //- Local includes
 #include "pointmapper.hh"
 
-namespace Dune {
+namespace Dune
+{
 
-  template <class ct, int dim, int codim>
+  template< class ct, int dim, int codim >
   class PointProvider 
   {
-    typedef CompileTimeChecker<false> 
-    Point_Provider_exists_only_for_codims_1_and_2;
+    dune_static_assert( (codim >= 0) && (codim <= 1),
+                        "PointProvider exists only for codimension 0 and 1." );
   };
 
   template <class ct, int dim>
   class PointProvider<ct, dim, 0>
   {
-  private:
     typedef CachingTraits<ct, dim> Traits;
 
   public:
