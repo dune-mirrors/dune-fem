@@ -17,10 +17,14 @@ namespace Dune {
     static inline size_t quadId2MapperId(const GeometryType& elemGeo, 
                                          const size_t quadId) 
     {
+      // in 1d or 0d everthing is simplex 
+      const int basicType = (elemGeo.dim() <= 1) ? 
+          GeometryType :: simplex : elemGeo.basicType();
+
       // split between different geometry basic types 
-      assert( (int)elemGeo.basicType() >= 0 );
+      assert( basicType >= 0 );
       assert( quadId < 65536 );
-      return ((int)elemGeo.basicType()) * 65536 + quadId;
+      return (basicType * 65536) + quadId;
     }
   public:  
     QuadratureKey(const GeometryType& geoType, const size_t id) 
