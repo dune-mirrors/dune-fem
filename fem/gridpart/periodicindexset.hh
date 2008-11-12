@@ -37,18 +37,20 @@ namespace Dune
     typedef typename GridType :: ctype ctype;
      
     //! dimension of the grid
-    enum { dimension = GridType :: dimension };
+    static const int dimension = GridType :: dimension;
 
   protected:
     typedef typename GridType :: Traits :: LeafIndexSet BaseIndexSetType;
 
     static const ctype tolerance = 1e-10;
 
-#ifdef INDEXSET_HAS_ITERATORS
   public:
     template< int codim >
     struct Codim
     {
+      typedef typename GridType :: template Codim< codim > :: Entity Entity;
+
+#ifdef INDEXSET_HAS_ITERATORS
       template< PartitionIteratorType pitype >
       struct Partition
       {
@@ -56,8 +58,8 @@ namespace Dune
           :: template Partition< pitype > :: Iterator
           Iterator;
       };
+#endif // ifdef INDEXSET_HAS_ITERATORS
     };
-#endif
 
   protected:
     using BaseType :: grid_;
@@ -74,22 +76,19 @@ namespace Dune
     inline explicit PeriodicLeafIndexSet ( const GridType &grid );
 
     template< class Entity >
-    inline IndexType index ( const Entity &entity ) const
+    IndexType index ( const Entity &entity ) const
     {
       return index< Entity :: codimension >( entity );
     }
     
     template< int codim >
-    inline IndexType
-    index ( const typename GridType :: template Codim< codim > :: Entity &entity ) const
+    IndexType index ( const typename Codim< codim > :: Entity &entity ) const
     {
       return map< codim >( baseIndexSet_.template index< codim >( entity ) );
     }
 
     template< int codim >
-    inline IndexType
-    subIndex ( const typename GridType :: template Codim< 0 > ::  Entity &entity,
-               int subNumber ) const
+    IndexType subIndex ( const typename Codim< 0 > ::  Entity &entity, int subNumber ) const
     {
       return map< codim >( baseIndexSet_.template subIndex< codim >( entity, subNumber ) );
     }
@@ -103,7 +102,7 @@ namespace Dune
 
     //! Return the size of the index set for a codimension
     //! Marked for revision in grid/common/defaultindexsets.hh
-    inline IndexType size ( GeometryType type ) const
+    IndexType size ( GeometryType type ) const
     {
       if( geometryTypeValid( type ) )
         return size( dimension - type.dim() );
@@ -111,7 +110,7 @@ namespace Dune
     }
 
     //! Deliver all geometry types used in this grid
-    inline const std :: vector< GeometryType > &geomTypes ( int codim ) const
+    const std :: vector< GeometryType > &geomTypes ( int codim ) const
     {
       return baseIndexSet_.geomTypes( codim );
     }
@@ -185,42 +184,33 @@ namespace Dune
   inline bool
   PeriodicLeafIndexSet< Grid > :: contains ( const Entity &entity ) const
   {
+    const int codim = Entity :: codimension;
+
     if( !baseIndexSet_.contains( entity ) )
       return false;
 
-    switch( Entity :: codimension )
-    {
-    case 0:
+    if( codim == 0 )
       return true;
-
-    case dimension - 1:
-      return edgeIndex_[ baseIndexSet_.index( entity ) ] >= 0;
-
-    case dimension:
+    else if( codim == dimension )
       return index_[ baseIndexSet_.index( entity ) ] >= 0;
-
-    default:
+    else if( codim == dimension - 1 )
+      return edgeIndex_[ baseIndexSet_.index( entity ) ] >= 0;
+    else
       return false;
-    }
   }
 
   template< class Grid >
   inline typename PeriodicLeafIndexSet< Grid > :: IndexType
   PeriodicLeafIndexSet< Grid > :: size ( int codim ) const
   {
-    switch( codim )
-    {
-    case 0:
+    if( codim == 0 )
       return baseIndexSet_.size( 0 );
-
-    case dimension - 1:
-      return edgeSize_;
-
-    case dimension:
+    else if( codim == dimension )
       return size_;
-    default:
+    else if( codim == dimension - 1 )
+      return edgeSize_;
+    else
       return 0;
-    }
   }
 
   template< class Grid >
@@ -380,22 +370,20 @@ namespace Dune
   inline typename PeriodicLeafIndexSet< Grid > :: IndexType
   PeriodicLeafIndexSet< Grid > :: map ( const IndexType &baseIndex ) const
   {
-    switch( codim )
-    {
-    case 0:
+    if( codim == 0 )
       return baseIndex;
-
-    case dimension - 1:
-      assert( edgeIndex_[ baseIndex ] >= 0 );
-      return edgeIndex_[ baseIndex ];
-
-    case dimension:
+    else if( codim == dimension )
+    {
       assert( index_[ baseIndex ] >= 0 );
       return index_[ baseIndex ];
-
-    default:
-      DUNE_THROW( NotImplemented, "PeriodicLeafIndexSet supports only codimensions 0, (dimension-1) and dimension!" );
     }
+    else if( codim == dimension - 1 )
+    {
+      assert( edgeIndex_[ baseIndex ] >= 0 );
+      return edgeIndex_[ baseIndex ];
+    }
+    else
+      DUNE_THROW( NotImplemented, "PeriodicLeafIndexSet supports only codimensions 0, (dimension-1) and dimension!" );
     return 0;
   }
 
