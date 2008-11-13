@@ -48,8 +48,8 @@ namespace Dune
      *
      *  \returns boundary type of the intersection
      */
-    template< class IntersectionIteratorType >
-    inline BoundaryType boundaryType ( const IntersectionIteratorType &intersection ) const
+    template< class IntersectionType >
+    inline BoundaryType boundaryType ( const IntersectionType &intersection ) const
     {
       CHECK_INTERFACE_IMPLEMENTATION
         ( asImp().boundaryType( intersection ) );
@@ -75,8 +75,8 @@ namespace Dune
      *
      *  \param[out] phi          Dirichlet value in the quadrature point
      */
-    template< class IntersectionIteratorType, class QuadratureType >
-    inline void dirichletValues ( const IntersectionIteratorType &intersection,
+    template< class IntersectionType, class QuadratureType >
+    inline void dirichletValues ( const IntersectionType &intersection,
                                   const QuadratureType &quadrature,
                                   int point,
                                   RangeType &phi ) const
@@ -86,8 +86,8 @@ namespace Dune
         ( asImp().dirichletValues( intersection, quadrature, point, phi ) );
     }
 
-    template< class IntersectionIteratorType, class QuadratureType >
-    inline void neumannValues ( const IntersectionIteratorType &intersection,
+    template< class IntersectionType, class QuadratureType >
+    inline void neumannValues ( const IntersectionType &intersection,
                                 const QuadratureType &quadrature,
                                 int point,
                                 RangeType &phi ) const
@@ -97,8 +97,8 @@ namespace Dune
         ( asImp().neumannValues( intersection, quadrature, point, phi ) );
     }
     
-    template< class IntersectionIteratorType, class QuadratureType >
-    inline void robinValues ( const IntersectionIteratorType &intersection,
+    template< class IntersectionType, class QuadratureType >
+    inline void robinValues ( const IntersectionType &intersection,
                               const QuadratureType &quadrature,
                               int point,
                               RangeType &phi ) const
@@ -108,8 +108,8 @@ namespace Dune
         ( asImp().robinValues( intersection, quadrature, point, phi ) );
     }
 
-    template< class IntersectionIteratorType, class QuadratureType >
-    inline RangeFieldType robinAlpha ( const IntersectionIteratorType &intersection,
+    template< class IntersectionType, class QuadratureType >
+    inline RangeFieldType robinAlpha ( const IntersectionType &intersection,
                                        const QuadratureType &quadrature,
                                        int point ) const
     {
@@ -158,8 +158,8 @@ namespace Dune
     typedef typename FunctionSpaceType :: RangeFieldType RangeFieldType;
     
   public:
-    template< class IntersectionIteratorType, class QuadratureType >
-    inline void dirichletValues ( const IntersectionIteratorType &intersection,
+    template< class IntersectionType, class QuadratureType >
+    inline void dirichletValues ( const IntersectionType &intersection,
                                   const QuadratureType &quadrature,
                                   int point,
                                   RangeType &phi ) const
@@ -168,8 +168,8 @@ namespace Dune
       phi = 0;
     }
 
-    template< class IntersectionIteratorType, class QuadratureType >
-    inline void neumannValues ( const IntersectionIteratorType &intersection,
+    template< class IntersectionType, class QuadratureType >
+    inline void neumannValues ( const IntersectionType &intersection,
                                 const QuadratureType &quadrature,
                                 int point,
                                 RangeType &phi ) const
@@ -178,8 +178,8 @@ namespace Dune
       phi = 0;
     }
     
-    template< class IntersectionIteratorType, class QuadratureType >
-    inline void robinValues ( const IntersectionIteratorType &intersection,
+    template< class IntersectionType, class QuadratureType >
+    inline void robinValues ( const IntersectionType &intersection,
                               const QuadratureType &quadrature,
                               int point,
                               RangeType &phi ) const
@@ -188,8 +188,8 @@ namespace Dune
       phi = 0;
     }
 
-    template< class IntersectionIteratorType, class QuadratureType >
-    inline RangeFieldType robinAlpha ( IntersectionIteratorType &intersection,
+    template< class IntersectionType, class QuadratureType >
+    inline RangeFieldType robinAlpha ( IntersectionType &intersection,
                                        QuadratureType &quadrature,
                                        int point ) const
     {

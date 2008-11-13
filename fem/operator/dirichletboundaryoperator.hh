@@ -219,6 +219,7 @@ namespace Dune
         FaceDofIteratorType;
 
       typedef typename GridPartType :: IntersectionIteratorType IntersectionIteratorType;
+      typedef typename GridPartType :: IntersectionType IntersectionType;
 
       if( !entity.hasBoundaryIntersections() )
         return;
@@ -229,12 +230,13 @@ namespace Dune
       const IntersectionIteratorType end = gridPart.iend( entity );
       for( IntersectionIteratorType it = gridPart.ibegin( entity ); it != end; ++it )
       {
-        if( !it.boundary() )
+        const IntersectionType &intersection = *it;
+        if( !intersection.boundary() )
           continue;
-        if( boundaryModel_.boundaryType( it ) != BoundaryModelType :: Dirichlet )
+        if( boundaryModel_.boundaryType( intersection ) != BoundaryModelType :: Dirichlet )
           continue;
 
-        const int faceNumber = it.numberInSelf();
+        const int faceNumber = intersection.numberInSelf();
         FaceDofIteratorType faceDofIt
           = lagrangePointSet.template beginSubEntity< faceCodim >( faceNumber );
         const FaceDofIteratorType faceDofEnd
