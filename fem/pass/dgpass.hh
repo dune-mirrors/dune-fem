@@ -276,7 +276,8 @@ namespace Dune {
 
               typedef TwistUtility<GridType> TwistUtilityType;
               // for conforming situations apply Quadrature given
-              if( TwistUtilityType::conforming(gridPart_.grid(),inter) )
+              //if( TwistUtilityType::conforming(gridPart_.grid(),inter) )
+              if( inter.conforming() )
               {
                 FaceQuadratureType faceQuadInner(gridPart_, inter, faceQuadOrd_,
                                                  FaceQuadratureType::INSIDE);

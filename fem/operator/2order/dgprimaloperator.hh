@@ -838,7 +838,7 @@ namespace Dune {
       /////////////////////////////////
       IntersectionIteratorType endnit = gridPart_.iend(en); 
       for (IntersectionIteratorType nit = gridPart_.ibegin(en); nit != endnit; ++nit) 
-      { 
+      {
         // if neighbor exists 
         if (nit.neighbor()) 
         {
@@ -858,7 +858,8 @@ namespace Dune {
             // type of TwistUtility 
             typedef TwistUtility<GridType> TwistUtilityType;
             // check conformity 
-            if( TwistUtilityType::conforming(gridPart_.grid(),nit) ) 
+            //if( TwistUtilityType::conforming(gridPart_.grid(),nit) )
+            if( nit->conforming() )
             {
               FaceQuadratureType faceQuadInner(gridPart_, nit, faceQuadOrd_,
                                                FaceQuadratureType::INSIDE);

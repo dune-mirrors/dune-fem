@@ -232,7 +232,7 @@ namespace Dune
           ) )
     {
       // make sure CachingPointList is only created for conforming intersections
-      // assert( TwistUtilityType :: conforming( gridPart.grid(), intersection ) );
+      // assert( intersection.conforming() );
     }
 
     /** \brief copy constructor

@@ -756,7 +756,8 @@ private:
 
         typedef TwistUtility<GridType> TwistUtilityType;
         // for conforming situations apply Quadrature given
-        if( TwistUtilityType::conforming(gridPart.grid(),inter) )
+        //if( TwistUtilityType::conforming(gridPart.grid(),inter) )
+        if( inter.conforming() )
         {
           // create quadratures 
           FaceQuadratureType faceQuadInner(gridPart, inter, polOrd, FaceQuadratureType::INSIDE);
@@ -979,7 +980,8 @@ public:
             
             typedef TwistUtility<GridType> TwistUtilityType;
             // for conforming situations apply Quadrature given
-            if( TwistUtilityType::conforming(gridPart.grid(),inter) )
+            //if( TwistUtilityType::conforming(gridPart.grid(),inter) )
+            if( inter.conforming() )
             {
               // create quadratures 
               FaceQuadratureType faceQuadInner(gridPart, inter, polOrd, FaceQuadratureType::INSIDE);

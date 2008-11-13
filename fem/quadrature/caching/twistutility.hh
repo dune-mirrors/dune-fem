@@ -95,11 +95,12 @@ namespace Dune
 
     //! \brief return true if intersection is conform, default is true  
     template <class IntersectionIterator> 
-    bool conforming (const IntersectionIterator& it) const { return true; }
+    bool DUNE_DEPRECATED conforming (const IntersectionIterator& it) const { return true; }
     
     //! \brief return true if intersection is conform, default is true  
     template <class IntersectionIterator> 
-    static inline bool conforming (const GridType &, const IntersectionIterator&) { return true; }
+    static bool DUNE_DEPRECATED
+    conforming (const GridType &, const IntersectionIterator&) { return true; }
 
     /** \brief return geometry type of inside or outside entity */
     template <class Intersection>  
@@ -179,12 +180,18 @@ namespace Dune
 
     //! \brief return true if intersection is conform, default is true  
     template <class IntersectionIterator> 
-    bool conforming (const IntersectionIterator& it) const { return true; }
+    bool DUNE_DEPRECATED conforming (const IntersectionIterator& it) const
+    {
+      return true;
+    }
     
     //! \brief return true if intersection is conform, default is true  
     template <class IntersectionIterator> 
-    static inline bool conforming (const GridType & grid, 
-                            const IntersectionIterator& it) { return true; }
+    static bool DUNE_DEPRECATED
+    conforming (const GridType & grid, const IntersectionIterator& it)
+    {
+      return true;
+    }
     
     /** \brief return element geometry type of inside or outside entity 
     */
@@ -256,15 +263,15 @@ namespace Dune
     
     //! \brief return true if intersection is conform, default is true  
     template <class IntersectionIterator> 
-    bool conforming (const IntersectionIterator& it) const 
+    bool DUNE_DEPRECATED conforming (const IntersectionIterator& it) const
     { 
       return grid_.getRealIntersectionIterator(it).conforming(); 
     }
 
     //! \brief return true if intersection is conform, default is true  
     template <class IntersectionIterator> 
-    static inline bool conforming (const GridType & grid, 
-                     const IntersectionIterator& it)
+    static bool DUNE_DEPRECATED
+    conforming (const GridType & grid, const IntersectionIterator& it)
     { 
       return grid.getRealIntersectionIterator(it).conforming(); 
     }
@@ -341,15 +348,15 @@ namespace Dune
 
     //! \brief return true if intersection is conform, default is true  
     template <class IntersectionIterator> 
-    bool conforming (const IntersectionIterator& it) const 
+    bool DUNE_DEPRECATED conforming (const IntersectionIterator& it) const
     { 
       return grid_.getRealIntersectionIterator(it).conforming(); 
     }
 
     //! \brief return true if intersection is conform, default is true  
     template <class IntersectionIterator> 
-    static inline bool conforming (const GridType & grid, 
-                            const IntersectionIterator& it)
+    static bool DUNE_DEPRECATED
+    conforming (const GridType & grid, const IntersectionIterator& it)
     { 
       return grid.getRealIntersectionIterator(it).conforming(); 
     }
@@ -420,15 +427,15 @@ namespace Dune
 
     //! \brief return true if intersection is conform, default is true  
     template <class IntersectionIterator> 
-    bool conforming (const IntersectionIterator& it) const 
+    bool DUNE_DEPRECATED conforming (const IntersectionIterator& it) const
     { 
       return grid_.getRealIntersectionIterator(it).conforming(); 
     }
     
     //! \brief return true if intersection is conform, default is true  
     template <class IntersectionIterator> 
-    static inline bool conforming (const GridType & grid, 
-                     const IntersectionIterator& it)
+    static bool DUNE_DEPRECATED
+    conforming (const GridType & grid, const IntersectionIterator& it)
     { 
       return grid.getRealIntersectionIterator(it).conforming(); 
     }
@@ -497,15 +504,15 @@ namespace Dune
 
     //! \brief return true if intersection is conform, default is true  
     template <class IntersectionIterator> 
-    bool conforming (const IntersectionIterator& it) const 
+    bool DUNE_DEPRECATED conforming (const IntersectionIterator& it) const
     { 
       return grid_.getRealIntersectionIterator(it).conforming(); 
     }
     
     //! \brief return true if intersection is conform, default is true  
     template <class IntersectionIterator> 
-    static inline bool conforming (const GridType & grid, 
-                     const IntersectionIterator& it)
+    static bool DUNE_DEPRECATED
+    conforming (const GridType & grid, const IntersectionIterator& it)
     { 
       return grid.getRealIntersectionIterator(it).conforming(); 
     }
@@ -584,7 +591,7 @@ namespace Dune
 
     //! \brief return true if intersection is conform, default is true  
     template <class IntersectionIterator> 
-    bool conforming (const IntersectionIterator& it) const 
+    bool DUNE_DEPRECATED conforming (const IntersectionIterator& it) const
     { 
       return (it.neighbor()) ? 
         (it.inside()->level() == it.outside()->level()) : true; 
@@ -592,7 +599,8 @@ namespace Dune
     
     //! \brief return true if intersection is conform, default is true  
     template <class IntersectionIterator> 
-    static inline bool conforming (const GridType &, const IntersectionIterator& it)
+    static bool DUNE_DEPRECATED
+    conforming (const GridType &, const IntersectionIterator& it)
     { 
       return (it.neighbor()) ? 
         (it.inside()->level() == it.outside()->level()) : true; 
@@ -764,7 +772,7 @@ namespace Dune
 
     //! \brief return true if intersection is conform, default is true  
     template <class IntersectionIterator> 
-    bool conforming (const IntersectionIterator& it) const 
+    bool DUNE_DEPRECATED conforming (const IntersectionIterator& it) const
     { 
       return (it.neighbor()) ? 
         (it.inside()->level() == it.outside()->level()) : true; 
@@ -772,7 +780,8 @@ namespace Dune
     
     //! \brief return true if intersection is conform, default is true  
     template <class IntersectionIterator> 
-    static inline bool conforming (const GridType &, const IntersectionIterator& it)
+    static bool DUNE_DEPRECATED
+    conforming (const GridType &, const IntersectionIterator& it)
     { 
       return (it.neighbor()) ? 
         (it.inside()->level() == it.outside()->level()) : true; 
@@ -894,8 +903,8 @@ namespace Dune
 
 
     //! \brief return true if intersection is conform
-    static bool conforming ( const GridType &grid,
-                             const LeafIntersection &intersection )
+    static bool DUNE_DEPRECATED
+    conforming ( const GridType &grid, const LeafIntersection &intersection )
     {
       typedef typename HostGridAccess :: HostLeafIntersection HostIntersection;
       const HostIntersection &hostIntersection
@@ -904,8 +913,8 @@ namespace Dune
     }
 
     //! \brief return true if intersection is conform
-    static bool conforming ( const GridType &grid,
-                             const LevelIntersection &intersection )
+    static bool DUNE_DEPRECATED
+    conforming ( const GridType &grid, const LevelIntersection &intersection )
     {
       typedef typename HostGridAccess :: HostLevelIntersection HostIntersection;
       const HostIntersection &hostIntersection
@@ -924,7 +933,7 @@ namespace Dune
 
     //! \brief return true if intersection is conform
     template< class Intersection >
-    bool conforming ( const Intersection &intersection ) const
+    bool DUNE_DEPRECATED conforming ( const Intersection &intersection ) const
     {
       return conforming( grid_, intersection );
     }
