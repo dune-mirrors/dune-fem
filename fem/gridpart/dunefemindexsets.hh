@@ -19,7 +19,8 @@
  @brief Provides default index set class for persistent index sets. 
 */
 
-namespace Dune {
+namespace Dune
+{
 
 /** \brief  class implementing the DUNE grid index set interface for any DUNE
             fem index set. However, one should not cast to this class as
@@ -216,38 +217,46 @@ public:
     are consecutive and also persistent. Implementations of this type
     are for example AdaptiveLeafIndexSet and DGAdaptiveLeafIndexSet. 
 */
-template <class GridImp, class Imp, class IteratorTraits >
-class ConsecutivePersistentIndexSet : public PersistentIndexSet<GridImp,Imp,IteratorTraits> 
+template< class GridImp, class Imp, class IteratorTraits >
+class ConsecutivePersistentIndexSet
+: public PersistentIndexSet< GridImp, Imp, IteratorTraits >
 {
-  // no copying 
-  ConsecutivePersistentIndexSet(const ConsecutivePersistentIndexSet&);
+  typedef ConsecutivePersistentIndexSet< GridImp, Imp, IteratorTraits > ThisType;
+  typedef PersistentIndexSet< GridImp, Imp, IteratorTraits > BaseType;
 
   typedef Imp ImplementationType;
+
 public:  
-  //! type of base class 
-  typedef PersistentIndexSet<GridImp, Imp, IteratorTraits> BaseType;
-  
   //! type of grid 
   typedef GridImp GridType;
 
-  // use asImp from BaseType
-  using BaseType :: asImp;
-  
-public:
+protected:
   //! Conschdrugdor 
-  inline ConsecutivePersistentIndexSet(const GridType & grid) 
-    : BaseType(grid)
+  explicit ConsecutivePersistentIndexSet ( const GridType &grid )
+  : BaseType( grid )
+  {}
+
+private:
+  // no copying & no assignment
+  ConsecutivePersistentIndexSet ( const ThisType & );
+  ThisType &operator= ( const ThisType & );
+
+public:
+  //! returns true since we deal with a consecutive index set 
+  bool consecutive () const
   {
+    return true;
   }
 
-  //! returns true since we deal with a consecutive index set 
-  inline bool consecutive () const { return true; }
-
   //! remove holes and make index set consecutive 
-  inline bool compress() 
+  bool compress()
   {
     return asImp().compress();
   } 
+
+protected:
+  // use asImp from BaseType
+  using BaseType :: asImp;
 };
 
 } // end namespace Dune 

@@ -24,17 +24,20 @@ namespace Dune {
   Future work. Index set for each codim.
 */
 template <class GridType, PartitionIteratorType pitype = All_Partition >
-class AdaptiveLeafIndexSet : 
-  public ConsecutivePersistentIndexSet <
-    GridType, 
-    AdaptiveLeafIndexSet<GridType,pitype>, 
-    DefaultLeafIteratorTypes<GridType> 
-      >
+class AdaptiveLeafIndexSet
+: public ConsecutivePersistentIndexSet
+  < GridType, AdaptiveLeafIndexSet< GridType, pitype >, DefaultLeafIteratorTypes< GridType > >
 {
+  typedef ConsecutivePersistentIndexSet
+    < GridType, AdaptiveLeafIndexSet< GridType, pitype>, DefaultLeafIteratorTypes< GridType > >
+    BaseType;
+
+
 public:
-  enum { ncodim = GridType::dimension + 1 };
+  static const int ncodim = GridType :: dimension + 1;
 
   enum INDEXSTATE { NEW, USED, UNUSED };
+
 private:
 
   // busines as usual 
@@ -150,13 +153,6 @@ private:
       }
     }
   };
-
-  //! type of base class 
-  typedef ConsecutivePersistentIndexSet <
-    GridType, 
-    AdaptiveLeafIndexSet<GridType,pitype>, 
-    DefaultLeafIteratorTypes<GridType> 
-      > BaseType ;
 
   //! type of index 
   typedef typename BaseType :: IndexType IndexType;

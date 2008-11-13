@@ -13,7 +13,8 @@
  @brief Provides default empty index set class for persistent index sets. 
 */
 
-namespace Dune {
+namespace Dune
+{
 
 /*!
   The EmptyIndexSet implements all additional method of a DUNE fem index set with 
@@ -31,7 +32,10 @@ public:
   }
 
   //! return true if the index set is consecutive 
-  inline bool consecutive() const { return false; }
+  bool consecutive () const
+  {
+    return false;
+  }
 
   //! return true if the index set is persistent 
   inline bool persistent() const { return false; }

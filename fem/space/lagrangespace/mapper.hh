@@ -227,11 +227,10 @@ namespace Dune
       return this->size();
     }
 
-    /** \copydoc Dune::DofMapper::consecutive
-     */
+    /** \copydoc Dune::DofMapper::consecutive() const */
     bool consecutive () const
     {
-      return BaseType :: checkConsecutive(indexSet_);
+      return BaseType :: checkConsecutive( indexSet_ );
     }
   };
 
@@ -525,11 +524,10 @@ namespace Dune
       return dimRange * newSize;
     }
 
-    /** \copydoc Dune::DofMapperInterface::needsCompress
-     */
-    bool needsCompress () const
+    /** \copydoc Dune::DofMapper::consecutive() const */
+    bool consecutive () const
     {
-      return indexSet_.needsCompress();
+      return BaseType :: checkConsecutive( indexSet_ );
     }
   };
 
@@ -920,11 +918,10 @@ namespace Dune
       return dimRange * newSize;
     }
 
-    /** \copydoc Dune::DofMapper::consecutive
-     */
+    /** \copydoc Dune::DofMapper::consecutive() const */
     bool consecutive () const
     {
-      return BaseType :: checkConsecutive(indexSet_);
+      return BaseType :: checkConsecutive( indexSet_ );
     }
   };
 
