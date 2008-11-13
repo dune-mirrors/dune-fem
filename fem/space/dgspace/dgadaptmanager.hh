@@ -31,9 +31,6 @@ class RestrictProlongDiscontinuousSpace
   typedef RestrictProlongInterfaceDefault<RestrictProlongTraits< 
   RestrictProlongDiscontinuousSpace<DiscreteFunctionImp,polOrd> > > BaseType;
 
-  
-  using BaseType :: checkPersistent;
-  
 public:
   typedef DiscreteFunctionImp DiscreteFunctionType;
   typedef typename DiscreteFunctionType::FunctionSpaceType FunctionSpaceType;
@@ -45,58 +42,60 @@ public:
   typedef typename DiscreteFunctionType::DomainType DomainType;
   typedef CachingQuadrature<GridPartType,0> QuadratureType;
   typedef typename GridType::template Codim<0>::Entity::LocalGeometry LocalGeometry;
+
+protected:
+  using BaseType :: calcWeight;
+  using BaseType :: entitiesAreCopies;
+  
 public:  
   //! Constructor
-  RestrictProlongDiscontinuousSpace( DiscreteFunctionType & df ) 
-    : df_ (df) 
-    , quadord_( 2 * df.space().order() )
-    , weight_(-1.0)
+  explicit RestrictProlongDiscontinuousSpace( DiscreteFunctionType &df )
+  : df_( df ),
+    quadord_( 2 * df.space().order() ),
+    weight_( -1.0 )
+  {}
+
+  /** \brief explicit set volume ratio of son and father
+   *
+   *  \param[in]  weight  volume of son / volume of father
+   *
+   *  \note If this ratio is set, it is assume to be constant.
+   */
+  void setFatherChildWeight ( const RangeFieldType &weight ) const
   {
-    // make sure that index set is used that can handle adaptivity 
-    assert( (Capabilities::IsUnstructured<GridType>::v) ? 
-        ( checkPersistent(df_.space().indexSet()) ) : true );
-  }
-  //! if weight is set, then ists assumend that we have always the same
-  //! proportion between fahter and son volume 
-  void setFatherChildWeight (const RangeFieldType& val) const
-  {
-    // volume of son / volume of father  
-    weight_ = val; 
+    weight_ = weight;
   }
 
   //! restrict data to father 
-  template <class EntityType>
-  void restrictLocal ( EntityType &father, EntityType &son, 
-           bool initialize ) const
+  template< class EntityType >
+  void restrictLocal ( const EntityType &father, const EntityType &son, bool initialize ) const
   {
-    // make sure that index set is used that can handle adaptivity 
-    assert( checkPersistent(df_.space().indexSet()) );
+    // if father and son are copies, do nothing
+    if( entitiesAreCopies( df_.space().indexSet(), father, son ) )
+      return;
     
     typename FunctionSpaceType::RangeType ret (0.0);
     typename FunctionSpaceType::RangeType phi (0.0);
     assert( !father.isLeaf() );
-    const RangeFieldType weight = 
-      (weight_ < 0.0) ? (this->calcWeight(father,son)) : weight_; 
+    const RangeFieldType weight = (weight_ < 0.0) ? calcWeight( father, son ) : weight_;
 
     LocalFunctionType vati_ = df_.localFunction( father);
     LocalFunctionType sohn_ = df_.localFunction( son   );
 
-    QuadratureType quad(son,quadord_);
     const typename FunctionSpaceType::BaseFunctionSetType & baseset =
       vati_.baseFunctionSet();
-    const int nop=quad.nop();
     const LocalGeometry& geometryInFather = son.geometryInFather();
 
     const int vati_numDofs = vati_.numDofs();
-    if(initialize) 
+    if( initialize )
     {
       for(int i=0; i<vati_numDofs; ++i) 
-      {
         vati_[i] = 0.0;
-      }
     }
     
-    for(int qP = 0; qP < nop; ++qP) 
+    QuadratureType quad(son,quadord_);
+    const int nop = quad.nop();
+    for( int qP = 0; qP < nop; ++qP )
     {
       sohn_.evaluate(quad[qP],ret);
       for(int i=0; i<vati_numDofs; ++i) 
@@ -108,30 +107,34 @@ public:
   }
 
   //! prolong data to children 
-  template <class EntityType>
-  void prolongLocal ( EntityType &father, EntityType &son, bool initialize ) const
+  template< class EntityType >
+  void prolongLocal ( const EntityType &father, const EntityType &son, bool initialize ) const
   {
-    // make sure that index set is used that can handle adaptivity 
-    assert( checkPersistent(df_.space().indexSet()) );
+    // if father and son are copies, do nothing
+    if( entitiesAreCopies( df_.space().indexSet(), father, son ) )
+      return;
     
-    //assert( son.state() == REFINED );
     typename FunctionSpaceType::RangeType ret (0.0);
     typename FunctionSpaceType::RangeType phi (0.0);
+
     LocalFunctionType vati_ = df_.localFunction( father);
     LocalFunctionType sohn_ = df_.localFunction( son   );
+
     const int sohn_numDofs = sohn_.numDofs();
     for(int i=0; i<sohn_numDofs; ++i) sohn_[i] = 0.;
 
-    QuadratureType quad(son,quadord_);
-    const typename FunctionSpaceType::BaseFunctionSetType & baseset =
-      sohn_.baseFunctionSet();
+    const typename FunctionSpaceType::BaseFunctionSetType &baseset
+      = sohn_.baseFunctionSet();
     const LocalGeometry& geometryInFather = son.geometryInFather();
-    const int nop=quad.nop();
-    for(int qP = 0; qP < nop; ++qP) 
+
+    QuadratureType quad(son,quadord_);
+    const int nop = quad.nop();
+    for( int qP = 0; qP < nop; ++qP )
     {
       vati_.evaluate(geometryInFather.global(quad.point(qP)),ret);
       
-      for(int i=0; i<sohn_numDofs; ++i) {
+      for( int i = 0; i < sohn_numDofs; ++i )
+      {
         baseset.evaluate(i,quad[qP],phi);
         sohn_[i] += quad.weight(qP) * (ret * phi) ;
       }

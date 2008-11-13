@@ -458,7 +458,7 @@ private:
       
       // check all children first 
       {
-        HierarchicIterator endit  = en.hend  ( childLevel );
+        const HierarchicIterator endit = en.hend( childLevel );
         for(HierarchicIterator it = en.hbegin( childLevel ); it != endit; ++it)
         {
           doRestrict &= hierarchicRestrict( *it , restop );
@@ -470,7 +470,7 @@ private:
       {
         // true for first child, otherwise false 
         bool initialize = true;
-        HierarchicIterator endit  = en.hend  ( childLevel );
+        const HierarchicIterator endit = en.hend( childLevel );
         for(HierarchicIterator it = en.hbegin( childLevel ); it != endit; ++it)
         {
           restop.restrictLocal( en , *it , initialize);     
@@ -495,9 +495,9 @@ private:
     // first call on this element 
     bool initialize = true;
     
-    HierarchicIterator endit  = en.hend  ( grid_.maxLevel() );
-    for(HierarchicIterator it = en.hbegin( grid_.maxLevel() ); 
-        it != endit; ++it)
+    const int maxLevel = grid_.maxLevel();
+    const HierarchicIterator endit = en.hend( maxLevel );
+    for( HierarchicIterator it = en.hbegin( maxLevel ); it != endit; ++it )
     {
       // should only get here on non-leaf entities 
       assert( !en.isLeaf() );

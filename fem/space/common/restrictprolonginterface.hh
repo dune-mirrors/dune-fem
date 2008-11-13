@@ -90,19 +90,19 @@ protected:
       \param[in] son Son Entity 
       \return proportion between fahter and son volume
   */
-  template <class EntityType>
-  RangeFieldType calcWeight (EntityType &father, EntityType &son) const
+  template< class EntityType >
+  RangeFieldType calcWeight ( const EntityType &father, const EntityType &son ) const
   {
-    assert( (son.geometry().volume() / father.geometry().volume()) > 0.0 );
-    return (son.geometry().volume() / father.geometry().volume());
+    const RangeFieldType weight = son.geometry().volume() / father.geometry().volume();
+    assert( weight > RangeFieldType( 0 ) );
+    return weight;
   }
   
 private:
-  //! Barton-Nackman Trick
   RestProlImp& asImp() {
     return static_cast<RestProlImp&>(*this);
   }
-  //! Barton-Nackman Trick
+
   const RestProlImp& asImp() const {
     return static_cast<const RestProlImp&>(*this);
   }
@@ -160,42 +160,53 @@ public:
   }
 };
 
+
 /** \brief Interface default implementation for derived classes. 
     Note the difference to RestrictProlongDefaultImplementation, which
     represents the implementation for certain spaces. 
 */
-template <class TraitsImp>
+template< class TraitsImp >
 class RestrictProlongInterfaceDefault 
- : public RestrictProlongInterface <TraitsImp> 
+: public RestrictProlongInterface< TraitsImp >
 {
-  template <class IndexSetType, bool persistent>
+  template< class IndexSetType, bool isFemIndexSet >
   struct Persistent
   {
-    static inline bool check(const IndexSetType& indexSet)
+    static bool check ( const IndexSetType &indexSet )
     {
       return indexSet.persistent();
     }
   };
 
-  template <class IndexSetType>
-  struct Persistent<IndexSetType,false>
+  template< class IndexSetType >
+  struct Persistent< IndexSetType, false >
   {
-    static inline bool check(const IndexSetType& indexSet)
+    static bool check ( const IndexSetType &indexSet )
     {
       return indexSet.adaptive();
     }
   };
-  
-public:  
+
   //! check persistence of index set (also includes backward compatibility) 
-  template <class IndexSetType>
-  inline bool checkPersistent(const IndexSetType& indexSet) const
+  template< class IndexSetType >
+  bool checkPersistent ( const IndexSetType &indexSet ) const
   {
-    return Persistent< IndexSetType,
-                       Conversion<IndexSetType,EmptyIndexSet>::exists
-                     >::check(indexSet);
+    const bool isFemIndexSet = Conversion< IndexSetType, EmptyIndexSet > :: exists;
+    return Persistent< IndexSetType, isFemIndexSet > :: check( indexSet );
+  }
+
+protected:
+  //! return true if father and son have the same index
+  template< class IndexSetType, class EntityType >
+  bool entitiesAreCopies ( const IndexSetType &indexSet,
+                           const EntityType &father,
+                           const EntityType &son ) const
+  {
+    assert( checkPersistent( indexSet ) );
+    return (indexSet.index( father ) == indexSet.index( son ));
   }
 };
+
 
 /** \brief This is a general restriction/prolongation operator
     which is speciallized for some discreteFunctionSpaces (e.g. DG)
@@ -229,17 +240,20 @@ private:
   RestrictProlongDefault();
 };
 
+
+
 /** \brief This is a simple restriction/prolongation operator for
  piecewise constant data stored on elements. 
 */
- 
-template <class DiscreteFunctionType>
-class RestrictProlongPieceWiseConstantData : 
-public RestrictProlongInterfaceDefault<RestrictProlongTraits< 
-  RestrictProlongPieceWiseConstantData<DiscreteFunctionType> > >
+template< class DiscreteFunctionType >
+class RestrictProlongPieceWiseConstantData
+: public RestrictProlongInterfaceDefault
+  < RestrictProlongTraits< RestrictProlongPieceWiseConstantData< DiscreteFunctionType > > >
 {
-  typedef RestrictProlongInterface<RestrictProlongTraits< 
-  RestrictProlongPieceWiseConstantData<DiscreteFunctionType> > > BaseType;
+  typedef RestrictProlongInterfaceDefault
+    < RestrictProlongTraits< RestrictProlongPieceWiseConstantData< DiscreteFunctionType > > >
+    BaseType;
+
 public:  
   typedef typename DiscreteFunctionType::LocalFunctionType LocalFunctionType;
 
@@ -249,66 +263,71 @@ public:
 
   typedef typename DiscreteFunctionType::RangeFieldType RangeFieldType;
   typedef typename DiscreteFunctionType::DomainType DomainType;
+
+protected:
+  using BaseType :: calcWeight;
+  using BaseType :: entitiesAreCopies;
+
 public:  
   //! Constructor
-  RestrictProlongPieceWiseConstantData( DiscreteFunctionType & df ) 
-    : df_ (df), weight_(-1.0)
-  {
-  }
+  explicit RestrictProlongPieceWiseConstantData( DiscreteFunctionType &df ) 
+  : df_ (df), weight_( -1.0 )
+  {}
 
-  //! if weight is set, then ists assumend that we have always the same
-  //! proportion between fahter and son volume 
-  void setFatherChildWeight (const RangeFieldType& val) const
+  /** \brief explicit set volume ratio of son and father
+   *
+   *  \param[in]  weight  volume of son / volume of father
+   *
+   *  \note If this ratio is set, it is assume to be constant.
+   */
+  void setFatherChildWeight ( const RangeFieldType &weight ) const
   {
-    // volume of son / volume of father  
-    weight_ = val; 
+    weight_ = weight;
   }
   
   //! restrict data to father 
-  template <class EntityType>
-  void restrictLocal ( EntityType &father, EntityType &son, bool initialize ) const
+  template< class EntityType >
+  void restrictLocal ( const EntityType &father, const EntityType &son, bool initialize ) const
   {
-    assert( this->checkPersistent(df_.space().indexSet()) );
+    // if father and son are copies, do nothing
+    if( entitiesAreCopies( df_.space().indexSet(), father, son ) )
+      return;
 
     assert( !father.isLeaf() );
 
-    const RangeFieldType weight = (weight_ < 0.0) ? (this->calcWeight(father,son)) : weight_; 
+    const RangeFieldType weight = (weight_ < 0.0) ? calcWeight( father, son ) : weight_; 
 
     assert( weight > 0.0 );
     
-    LocalFunctionType vati = df_.localFunction( father);
-    LocalFunctionType sohn = df_.localFunction( son   );
+    LocalFunctionType lfFather = df_.localFunction( father );
+    LocalFunctionType lfSon = df_.localFunction( son );
 
-    const int numDofs = vati.numDofs();
-    if(initialize)
+    const int numDofs = lfFather.numDofs();
+    if( initialize )
     {
-      for(int i=0; i<numDofs; ++i)
-      {
-        vati[i] = weight * sohn[i];
-      }
+      for( int i = 0; i < numDofs; ++i )
+        lfFather[ i ] = weight * lfSon[ i ];
     }
     else 
     {
-      for(int i=0; i<numDofs; ++i)
-      {
-        vati[i] += weight * sohn[i];
-      }
+      for( int i = 0; i < numDofs; ++i )
+        lfFather[ i ] += weight * lfSon[ i ];
     }
   }
 
   //! prolong data to children 
-  template <class EntityType>
-  void prolongLocal ( EntityType &father, EntityType &son, bool initialize ) const
+  template< class EntityType >
+  void prolongLocal ( const EntityType &father, const EntityType &son, bool initialize ) const
   {
-    assert( this->checkPersistent(df_.space().indexSet()) );
+    // if father and son are copies, do nothing
+    if( entitiesAreCopies( df_.space().indexSet(), father, son ) )
+      return;
     
-    LocalFunctionType vati = df_.localFunction( father);
-    LocalFunctionType sohn = df_.localFunction( son   );
-    const int numDofs = vati.numDofs();
-    for(int i=0; i<numDofs; ++i)
-    {
-      sohn[i] = vati[i];
-    }
+    LocalFunctionType lfFather = df_.localFunction( father );
+    LocalFunctionType lfSon = df_.localFunction( son );
+    const int numDofs = lfFather.numDofs();
+    for( int i = 0; i < numDofs; ++i )
+      lfSon[ i ] = lfFather[ i ];
   }
 
   //! add discrete function to communicator 
@@ -324,5 +343,7 @@ private:
 };
 
 ///@} 
+
 } // end namespace Dune 
+
 #endif

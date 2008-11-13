@@ -16,7 +16,9 @@
 //-      Kinderquadraturen
 //----------------------------------------------------------------------
 
-namespace Dune{
+namespace Dune
+{
+
 /** @ingroup RestrictProlongImpl
     @{
 **/
@@ -24,18 +26,15 @@ namespace Dune{
 //***********************************************************************
 /** \brief This is a restriction/prolongation operator for combined DG data. 
  */
-template <class DiscreteFunctionImp, int polOrd> 
+template< class DiscreteFunctionImp, int polOrd >
 class RestrictProlongCombinedSpace
-: public RestrictProlongInterfaceDefault<RestrictProlongTraits< 
-         RestrictProlongCombinedSpace<DiscreteFunctionImp,polOrd> 
-         > >
+: public RestrictProlongInterfaceDefault
+  < RestrictProlongTraits< RestrictProlongCombinedSpace< DiscreteFunctionImp,polOrd > > >
 {
-  typedef RestrictProlongInterfaceDefault<RestrictProlongTraits< 
-         RestrictProlongCombinedSpace<DiscreteFunctionImp,polOrd> 
-         > > BaseType;
+  typedef RestrictProlongInterfaceDefault
+    < RestrictProlongTraits< RestrictProlongCombinedSpace< DiscreteFunctionImp, polOrd > > >
+    BaseType;
 
-  using BaseType :: checkPersistent;
-  
 public:
   typedef DiscreteFunctionImp DiscreteFunctionType;
   typedef typename DiscreteFunctionType::FunctionSpaceType FunctionSpaceType;
@@ -49,38 +48,44 @@ public:
   typedef typename GridType::template Codim<0>::Entity::LocalGeometry LocalGeometry;
 
   enum { dimRange = FunctionSpaceType :: dimRange };
+
+protected:
+  using BaseType :: calcWeight;
+  using BaseType :: entitiesAreCopies;
+
 public:  
   //! Constructor
-  RestrictProlongCombinedSpace( DiscreteFunctionType & df ) 
-    : df_ (df)
-    , quadord_(2*df.space().order())
-    , weight_(-1.0)
-  {
-  }
+  explicit RestrictProlongCombinedSpace( DiscreteFunctionType &df )
+  : df_( df ),
+    quadord_( 2*df.space().order() ),
+    weight_( -1.0 )
+  {}
 
-  //! if weight is set, then ists assumend that we have always the same
-  //! proportion between fahter and son volume 
-  void setFatherChildWeight (const RangeFieldType& val) const
+  /** \brief explicit set volume ratio of son and father
+   *
+   *  \param[in]  weight  volume of son / volume of father
+   *
+   *  \note If this ratio is set, it is assume to be constant.
+   */
+  void setFatherChildWeight ( const RangeFieldType &weight ) const
   {
-    // volume of son / volume of father  
-    weight_ = val; 
+    weight_ = weight;
   }
 
   //! restrict data to father 
-  template <class EntityType>
-  void restrictLocal ( EntityType &father, EntityType &son, 
-           bool initialize ) const
+  template< class EntityType >
+  void restrictLocal ( const EntityType &father, const EntityType &son, bool initialize ) const
   {
-    // make sure that index set is used that can handle adaptivity 
-    assert( checkPersistent(df_.space().indexSet()) );
+    // if father and son are copies, do nothing 
+    if( entitiesAreCopies( df_.space().indexSet(), father, son ) )
+      return;
     
     typedef typename FunctionSpaceType :: DomainFieldType DomainFieldType;
 
     typename FunctionSpaceType::RangeType ret (0.0);
     typename FunctionSpaceType::ContainedRangeType phi (0.0);
     assert( !father.isLeaf() );
-    const DomainFieldType weight = 
-      (weight_ < 0.0) ? (this->calcWeight(father,son)) : weight_; 
+    const DomainFieldType weight = (weight_ < 0.0) ? calcWeight( father, son) : weight_;
 
     LocalFunctionType vati_ = df_.localFunction( father);
     LocalFunctionType sohn_ = df_.localFunction( son   );
@@ -125,10 +130,9 @@ public:
   template <class EntityType>
   void prolongLocal ( EntityType &father, EntityType &son, bool initialize ) const
   {
-    // make sure that index set is used that can handle adaptivity 
-    assert( checkPersistent(df_.space().indexSet()) );
+    // if father and son are copies, do nothing 
+    if( this->entitiesAreCopies( df_.space().indexSet(), father, son ) ) return ; 
     
-    //assert( son.state() == REFINED );
     typename FunctionSpaceType::RangeType ret (0.0);
     typename FunctionSpaceType::ContainedRangeType phi (0.0);
     // get local functions 
@@ -144,16 +148,18 @@ public:
     // get quadrature 
     QuadratureType quad(son,quadord_);
     // get base function set 
-    const typename FunctionSpaceType::BaseFunctionSetType & baseset =
-      sohn_.baseFunctionSet();
+    const typename FunctionSpaceType::BaseFunctionSetType& 
+        baseset = sohn_.baseFunctionSet();
+
     // get geometry 
     const LocalGeometry& geometryInFather = son.geometryInFather();
+    
     // get number of points 
     const int nop=quad.nop();
     for(int qP = 0; qP < nop; ++qP) 
     {
       // evaluate father 
-      vati_.evaluate(geometryInFather.global(quad.point(qP)),ret);
+      vati_.evaluate(geometryInFather.global(quad.point(qP)), ret);
       // make projection 
       for(int i=0; i<diff_numDofs; ++i) 
       {

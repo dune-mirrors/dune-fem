@@ -330,8 +330,12 @@ void algorithm ( GridPartType &gridPart,
 
 
 int Main ( int argc, char **argv )
+try
 {
-  if( argc != 2 ) {
+  MPIManager :: initialize( argc, argv );
+
+  if( argc != 2 )
+  {
     std :: cerr << "Usage: " << argv[ 0 ] << "<maxlevel>" << std :: endl;
     exit( 1 );
   }
@@ -358,4 +362,9 @@ int Main ( int argc, char **argv )
     algorithm( gridPart, solution, -step, 1 );
 
   return 0;
+}
+catch( const Dune :: Exception &e )
+{
+  std :: cerr << e << std :: endl;
+  return 1;
 }
