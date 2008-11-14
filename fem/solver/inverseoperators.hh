@@ -38,6 +38,8 @@ namespace Dune
     const RangeFieldType epsilon_;
     const unsigned int maxIterations_;
     const bool verbose_;
+    mutable double averageCommTime_;
+    mutable int realCount_;
     
   public:
     /** \brief constructor
@@ -51,7 +53,9 @@ namespace Dune
                                      bool verbose = false )
     : epsilon_( epsilon ),
       maxIterations_( maxIterations ),
-      verbose_( verbose )
+      verbose_( verbose ),
+      averageCommTime_( 0.0 ),
+      realCount_(0)
     {}
 
   private:
@@ -78,6 +82,8 @@ namespace Dune
 
       const RangeFieldType tolerance = SQR( epsilon_ ) * b.scalarProductDofs( b );
 
+      averageCommTime_ = 0.0;
+      
       RangeType h( b );
       op( x, h );
 
@@ -90,6 +96,7 @@ namespace Dune
       RangeFieldType prevResiduum = 0;
       RangeFieldType residuum = r.scalarProductDofs( r );
    
+      realCount_ = 0;
       for( unsigned int count = 0;
            (residuum > tolerance) && (count < maxIterations_); ++count )
       {
@@ -108,10 +115,29 @@ namespace Dune
         prevResiduum = residuum;
         residuum = r.scalarProductDofs( r );
         
+        double exchangeTime = h.space().communicator().exchangeTime();
         if( verbose )
+        {
           std :: cerr << "CG-Iteration: " << count << ", Residuum: " << residuum
                       << std :: endl;
+          std :: cerr << "Communication needed: " << exchangeTime << " sec " << std::endl;
+        }
+        
+        averageCommTime_ += exchangeTime;
+        ++realCount_;
       }
+    }
+
+    //! number of iterations needed for last solve 
+    int iterations () const 
+    {
+      return realCount_;
+    }
+    
+    //! return average communication time during last solve 
+    double averageCommTime() const 
+    {
+      return averageCommTime_;
     }
   };
 
@@ -171,6 +197,18 @@ namespace Dune
     {
       solver_.solve( operator_, arg, dest );
     }
+
+    //! number of iterations needed for last solve 
+    int iterations () const 
+    {
+      return solver_.iterations();
+    }
+    
+    //! return average communication time during last solve 
+    double averageCommTime() const 
+    {
+      return solver_.averageCommTime();
+    }
   };
 
 
@@ -216,6 +254,18 @@ namespace Dune
                               DiscreteFunctionType &dest ) const
     {
       solver_.solve( operator_, arg, dest );
+    }
+    
+    //! number of iterations needed for last solve 
+    int iterations () const 
+    {
+      return solver_.iterations();
+    }
+
+    //! return average communication time during last solve 
+    double averageCommTime() const 
+    {
+      return solver_.averageCommTime();
     }
   };
 
