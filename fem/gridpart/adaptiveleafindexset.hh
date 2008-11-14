@@ -2,185 +2,102 @@
 #define DUNE_ADAPTIVELEAFINDEXSET_HH
 
 //- local includes 
+#include <dune/fem/misc/forloop.hh>
 #include <dune/fem/gridpart/dunefemindexsets.hh>
 #include <dune/fem/gridpart/codimindexset.hh>
 #include <dune/fem/io/file/xdrio.hh>
 
-namespace Dune {
+namespace Dune
+{
 
-//******************************************************************
-//
-// Indexset that provides consecutive indicies for the leaf level
-// this index set uses the grid hierarchical index  
-//
-//******************************************************************
-/*! 
-  This index set generates a consecutive leaf index out of the unique
-  global index of each entity. This index set can be used instead of the
-  default grid index sets and can be generated for each grid implementation.
-
-  Note that only codim = 0 is working at the moment. 
-
-  Future work. Index set for each codim.
-*/
+/** \class AdaptiveLeafIndexSet
+ *  \brief consecutive, persistent index set for the leaf level based on the
+ *         grid's hierarchy index set
+ *
+ *  This index set generates a consecutive leaf index out of the unique global
+ *  index of each entity. It can be used instead of the default grid index sets
+ *  and can be generated for each grid implementation.
+ *
+ *  \note Only codimension 0 is working at the moment.
+ *
+ *  \todo Support higher codimensions
+ */
 template <class GridType, PartitionIteratorType pitype = All_Partition >
 class AdaptiveLeafIndexSet
 : public ConsecutivePersistentIndexSet
   < GridType, AdaptiveLeafIndexSet< GridType, pitype >, DefaultLeafIteratorTypes< GridType > >
 {
+  typedef AdaptiveLeafIndexSet< GridType, pitype > ThisType;
   typedef ConsecutivePersistentIndexSet
-    < GridType, AdaptiveLeafIndexSet< GridType, pitype>, DefaultLeafIteratorTypes< GridType > >
+    < GridType, ThisType, DefaultLeafIteratorTypes< GridType > >
     BaseType;
 
+  friend class Conversion< ThisType, EmptyIndexSet >;
 
 public:
-  static const int ncodim = GridType :: dimension + 1;
+  static const int dimension = GridType :: dimension;
+
+  static const int ncodim = dimension + 1;
 
   enum INDEXSTATE { NEW, USED, UNUSED };
 
-private:
-
-  // busines as usual 
-
-  // count elements of set by iterating the grid 
-  template <class AdLeafSet, int codim >
-  struct CountElements
-  {
-    static inline int count (const AdLeafSet & ls , int cd, GeometryType type )
-    {
-      if( cd == codim ) 
-      {
-        return ls.template countElements<codim> (type);
-      }
-      else 
-        return CountElements < AdLeafSet, codim-1> :: count (ls,cd,type);
-    }
-  };
-
-  // count elements of set by iterating the grid 
-  template <class AdLeafSet>
-  struct CountElements<AdLeafSet,0>
-  {
-    static inline int count (const AdLeafSet & ls , int cd, GeometryType type )
-    {
-      enum { codim = 0 };
-      if( cd == codim ) 
-      {
-        return ls.template countElements<codim> (type);
-      }
-      else 
-        return 0;
-    }
-  };
-
-  //******************************************************************
-  //  partial specialisation for the insertion of all sub entity indices 
-  //******************************************************************
-  template <class HSetImp, class CodimLeafSet, class EntityType, int codim> 
-  struct PartialSpec 
-  {
-    // only for higher codims 
-    CompileTimeChecker< (codim > 1) ? true : false> check; 
-    
-    static inline void iterateCodims (const HSetImp & hIndexSet , 
-        CodimLeafSet (&cls)[ncodim], const EntityType & en , bool (&cdUsed)[ncodim])
-    {
-      CodimLeafSet & lset = cls[codim];
-
-      // if codim is used then insert all sub entities of this codim 
-      if(cdUsed[codim])
-      {
-        for(int i=0; i<en.template count<codim> (); ++i)
-        {
-          lset.insert( hIndexSet. template subIndex<codim> (en,i) );   
-        }
-      }
-      
-      PartialSpec<HSetImp,CodimLeafSet,EntityType,codim-1> :: 
-        iterateCodims (hIndexSet, cls, en , cdUsed );
-    }
-    
-    static inline void removeCodims (const HSetImp & hIndexSet , 
-        CodimLeafSet (&cls)[ncodim], const EntityType & en , bool (&cdUsed)[ncodim])
-    {
-      CodimLeafSet & lset = cls[codim];
-
-      // if codim is already used, then also remove entities of this codim
-      if(cdUsed[codim])
-      {
-        for(int i=0; i<en.template count<codim> (); i++)
-        {
-          lset.remove( hIndexSet. template subIndex<codim> (en,i) );   
-        }
-      }
-      
-      PartialSpec<HSetImp,CodimLeafSet,EntityType,codim-1> :: 
-        removeCodims (hIndexSet, cls, en , cdUsed );
-    }
-  };
- 
-  // specialisation for codim 1 is then end of the loop
-  template <class HSetImp, class CodimLeafSet, class EntityType> 
-  struct PartialSpec<HSetImp,CodimLeafSet,EntityType,1> 
-  {
-    static inline void iterateCodims (const HSetImp & hIndexSet , 
-        CodimLeafSet (&cls)[ncodim], const EntityType & en , bool (&cdUsed)[ncodim])
-    {
-      enum { codim = 1 };
-      CodimLeafSet & lset = cls[codim];
-      // if codim is already used, then also insert entities of this codim
-      if(cdUsed[codim])
-      {
-        for(int i=0; i<en.template count<codim> (); ++i)
-        {
-          lset.insert( hIndexSet. template subIndex<codim> (en,i) );   
-        }
-      }
-    }
-    
-    static inline void removeCodims (const HSetImp & hIndexSet , 
-        CodimLeafSet (&cls)[ncodim], const EntityType & en , bool (&cdUsed)[ncodim])
-    {
-      enum { codim = 1 };
-      CodimLeafSet & lset = cls[codim];
-      // if codim is already used, then also remove entities of this codim
-      if(cdUsed[codim])
-      {
-        for(int i=0; i<en.template count<codim> (); ++i)
-        {
-          lset.remove( hIndexSet. template subIndex<codim> (en,i) );   
-        }
-      }
-    }
-  };
-
   //! type of index 
   typedef typename BaseType :: IndexType IndexType;
-  
-  //! type of this class 
-  typedef AdaptiveLeafIndexSet < GridType, pitype > ThisType;
 
-  //! for consecutive method 
-  friend class Conversion< ThisType, EmptyIndexSet> ;
-  
+  typedef typename GridType :: template Codim< 0 > :: Entity ElementType;
+
+private:
+  typedef CodimIndexSet CodimIndexSetType; 
+
+  typedef HierarchicIndexSetSelector< GridType > SelectorType;
+  typedef typename SelectorType :: HierarchicIndexSet HIndexSetType;
+
+  template< int codim >
+  struct CountElements
+  {
+    static void apply ( const ThisType &indexSet, const GeometryType &type, int &count )
+    {
+      if( type.dim() == dimension - codim )
+        count = indexSet.template countElements< codim >( type );
+    }
+  };
+
+  template< int codim >
+  struct InsertSubEntities
+  {
+    static void apply ( ThisType &indexSet, const ElementType &entity )
+    {
+      const HIndexSetType &hIndexSet = indexSet.hIndexSet_;
+      if( !indexSet.codimUsed_[ codim ] )
+        return;
+      
+      CodimIndexSetType &codimSet = indexSet.codimLeafSet_[ codim ];
+      for( int i = 0; i < entity.template count< codim >(); ++i )
+        codimSet.insert( hIndexSet.template subIndex< codim >( entity, i ) );
+    }
+  };
+
+  template< int codim >
+  struct RemoveSubEntities
+  {
+    static void apply ( ThisType &indexSet, const ElementType &entity )
+    {
+      const HIndexSetType &hIndexSet = indexSet.hIndexSet_;
+      if( !indexSet.codimUsed_[ codim ] )
+        return;
+      
+      CodimIndexSetType &codimSet = indexSet.codimLeafSet_[ codim ];
+      for( int i = 0; i < entity.template count< codim >(); ++i )
+        codimSet.remove( hIndexSet.template subIndex< codim >( entity, i ) );
+    }
+  };
+
   // my type, to be revised 
   enum { myType = 6 };
   enum { myVersionTag = -665 };
 
-  typedef CodimIndexSet CodimIndexSetType; 
-  mutable CodimIndexSetType codimLeafSet_[ncodim];
-
-  // type of Hset Selector 
-  typedef HierarchicIndexSetSelector<GridType> SelectorType;
-
-  // my index set type 
-  typedef typename SelectorType :: HierarchicIndexSet HIndexSetType;
-
-  typedef typename GridType :: template Codim<0> :: Entity EntityCodim0Type;
-  const HIndexSetType & hIndexSet_; 
-
-  enum { dim = GridType :: dimension };
-
+  const HIndexSetType &hIndexSet_;
+  mutable CodimIndexSetType codimLeafSet_[ ncodim ];
   // flag for codim is in use or not 
   mutable bool codimUsed_ [ncodim];
   
@@ -237,15 +154,16 @@ public:
   //
   //****************************************************************
   //! return size of grid entities per level and codim 
-  IndexType size (GeometryType type) const
+  IndexType size ( GeometryType type ) const
   {
-    int codim=GridType::dimension-type.dim();
-    if( !codimUsed_[codim] )
-    {
-      assert( hIndexSet_.geomTypes(codim).size() == 1 ); 
-      return CountElements<ThisType,dim>::count(*this,codim,type);
-    }
-    return codimLeafSet_[codim].size();
+    const int codim = dimension - type.dim();
+    if( codimUsed_[ codim ] )
+      return codimLeafSet_[ codim ].size();
+
+    assert( hIndexSet_.geomTypes( codim ).size() == 1 );
+    int count = 0;
+    ForLoop< CountElements, 0, dimension > :: apply( *this, type, count );
+    return count;
   }
   
   //! return size of grid entities of given codim 
@@ -429,70 +347,59 @@ public:
 protected:
   //! memorise index 
   // --insertIndex
-  void insertIndex(const EntityCodim0Type & en)
+  void insertIndex ( const ElementType &entity )
   {
-    if( !codimLeafSet_[0].exists( hIndexSet_.index(en) ) ) 
+    const int index = hIndexSet_.index( entity );
+    if( !codimLeafSet_[ 0 ].exists( index ) )
     {
-      codimLeafSet_[0].insert ( hIndexSet_.index(en) );
-      if(higherCodims_)
-      {
-        PartialSpec<HIndexSetType,CodimIndexSetType,EntityCodim0Type,dim> :: 
-         iterateCodims ( hIndexSet_, codimLeafSet_, en , codimUsed_ ); 
-      }
+      codimLeafSet_[ 0 ].insert( index );
+      if( higherCodims_ )
+        ForLoop< InsertSubEntities, 1, dimension > :: apply( *this, entity );
     }
     compressed_ = false;
   }
 
   //! set indices to unsed so that they are cleaned on compress  
   // --removeIndex
-  void removeIndex(const EntityCodim0Type & en)
+  void removeIndex( const ElementType &entity )
   {
     // if state is NEW or USED the index of all entities is removed 
-    if( codimLeafSet_[0].exists( hIndexSet_.index(en) ) ) 
+    const int index = hIndexSet_.index( entity );
+    if( codimLeafSet_[ 0 ].exists( index ) )
     {
-      codimLeafSet_[0].remove ( hIndexSet_.index(en) );
-      if(higherCodims_)
-      {
-        PartialSpec<HIndexSetType,CodimIndexSetType,EntityCodim0Type,dim> :: 
-          removeCodims ( hIndexSet_, codimLeafSet_, en , codimUsed_ ); 
-      }
+      codimLeafSet_[0].remove( index );
+      if( higherCodims_ )
+        ForLoop< RemoveSubEntities, 1, dimension > :: apply( *this, entity );
     }
     compressed_ = false;
   }
 
   // insert index if entities lies below used entity, return 
   // false if not , otherwise return true
-  bool insertNewIndex (const EntityCodim0Type & en, bool isLeaf , bool canInsert )
+  bool insertNewIndex ( const ElementType &entity, bool isLeaf, bool canInsert )
   {
     // if entity isLeaf then we insert index 
-    if(isLeaf)
+    if( isLeaf )
     {
-      this->insertIndex(en );
+      insertIndex( entity );
       return true;
     }
-    
-    // which is the case if we havent reached a entity which has 
-    // already a number 
-    if(!canInsert) 
-    {
-      // if index >= 0, then all children may  also appear in the set 
-      // from now on, indices can be inserted 
-      if( codimLeafSet_[0].index( hIndexSet_.index (en ) ) >= 0 )
-      {
-        return true; 
-      }
 
-      // we have to go deeper 
-      return false;
-    }
-    else 
+    if( canInsert )
     {
       // we insert to get an index 
-      this->insertIndex( en );
+      insertIndex( entity );
       // we remove to unmark, because this is not a leaf entity 
-      this->removeIndex( en );
+      removeIndex( entity );
+      return true;
     }
-    return true;
+    else
+    {
+      // this is the case if we haven't reached an entity which already has a number
+      // if index >= 0, then all children may also appear in the set 
+      // from now on, indices can be inserted 
+      return (codimLeafSet_[ 0 ].index( hIndexSet_.index( entity ) ) >= 0);
+    }
   }
 
   //! mark indices that are still used and give new indices to 
