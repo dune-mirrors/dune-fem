@@ -164,6 +164,7 @@ namespace Dune
       }
     }
 
+    //! add discrete function to communicator 
     template< class CommunicatorImp >
     void addToList ( CommunicatorImp &comm )
     {

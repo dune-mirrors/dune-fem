@@ -150,6 +150,8 @@ public:
       am = Parameter::getValidValue<int>("fem.adaptation.method",am,
                       ValidateInterval<int,true,true>(0,2));
     }
+
+    // chose adaptation method 
     if(am == 2) adaptationMethod_ = callback;
     else if(am == 1) adaptationMethod_ = generic;
     else adaptationMethod_ = none;

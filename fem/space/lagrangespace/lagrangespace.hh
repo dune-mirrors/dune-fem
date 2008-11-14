@@ -501,4 +501,6 @@ namespace Dune
   
 } // end Dune namespace  
 
+// include definition of RestrictProlongDefault for Lagrange Space.
+#include "adaptmanager.hh"
 #endif
