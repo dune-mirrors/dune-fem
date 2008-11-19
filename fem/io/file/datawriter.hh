@@ -468,8 +468,8 @@ protected:
     typedef typename DiscreteFunctionSpaceType :: IteratorType IteratorType;
     typedef typename DiscreteFunctionSpaceType :: GridPartType GridPartType;
 
-    typedef typename Traits :: DomainType DomainType;
-    typedef typename Traits :: RangeType RangeType;
+    typedef typename DiscreteFunctionSpaceType :: DomainType DomainType;
+    typedef typename DiscreteFunctionSpaceType :: RangeType RangeType;
  
     enum{ dimDomain = DiscreteFunctionSpaceType :: dimDomain };
     enum{ dimRange = DiscreteFunctionSpaceType :: dimRange };
