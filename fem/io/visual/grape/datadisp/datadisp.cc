@@ -79,7 +79,7 @@ namespace Dune {
 #include <string>
 
 #if HAVE_MPI == 1 
-#error "Visualization only works without MPI" 
+#warning "Visualization does not work in parallel" 
 #endif 
 
 #include <dune/common/misc.hh>
