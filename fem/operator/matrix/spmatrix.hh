@@ -513,6 +513,31 @@ private:
     void createPreconditionMatrix()
     { 
     }
+
+    /** \brief delete all row belonging to a hanging node and rebuild them */
+    template <class HangingNodesType>
+    void changeHangingNodes(const HangingNodesType& hangingNodes)
+    {
+      typedef typename HangingNodesType :: IteratorType IteratorType;
+      const IteratorType end = hangingNodes.end();
+      for( IteratorType it = hangingNodes.begin(); it != end; ++it)
+      {
+        insertHangingRow( (*it).first , (*it).second );
+      }
+    }
+protected:
+    /** \brief insert row to be a row for a hanging node */
+    template <class ColumnVectorType>
+    void insertHangingRow( const int row, const ColumnVectorType& colVec)
+    {
+      matrix().unitRow( row );
+      const size_t cols = colVec.size();
+      const double factor = -1.0 / ((double) cols );
+      for( size_t j = 0; j < cols; ++ j)
+      {
+        matrix().add( row, colVec[j] , factor );
+      }
+    }
   };
 
 

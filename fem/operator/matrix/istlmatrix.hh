@@ -36,6 +36,9 @@ namespace Dune {
       typedef typename BaseType :: RowIterator RowIteratorType ;
       typedef typename BaseType :: ColIterator ColIteratorType ;
 
+      typedef ImprovedBCRSMatrix< LittleBlockType,
+              RowDiscreteFunctionImp, ColDiscreteFunctionImp> ThisType;
+
       typedef typename BaseType :: size_type size_type;
 
       //===== type definitions and constants
@@ -171,6 +174,91 @@ namespace Dune {
             (*j) = 0;
           }
         }
+      }
+
+      //! setup like the old matrix but remove rows with hanging nodes 
+      template <class HangingNodesType> 
+      void setup(ThisType& oldMatrix,
+                 const HangingNodesType& hangingNodes) 
+      {
+        // type of create interator 
+        typedef typename BaseType :: CreateIterator CreateIteratorType; 
+
+        {
+          // not insert map of indices into matrix 
+          RowIteratorType rowit  = oldMatrix.begin();
+
+          CreateIteratorType endcreate = this->createend();
+          for(CreateIteratorType create = this->createbegin();
+              create != endcreate; ++create, ++rowit ) 
+          {
+            assert( rowit != oldMatrix.end() );
+            const int row = create.index();
+            if( hangingNodes.isHangingNode( row ) )
+            {
+              // insert diagonal 
+              create.insert( row );
+
+              // insert columns 
+              typedef typename HangingNodesType :: ColumnVectorType ColumnVectorType;
+              const ColumnVectorType& cols = hangingNodes.associatedDofs( row );
+              for(size_t i=0; i<cols.size(); ++i) 
+              {
+                create.insert( cols[i] );
+              }
+            }
+            else 
+            {
+              // copy from old matrix 
+              ColIteratorType endj = (*rowit).end();
+              for (ColIteratorType j= (*rowit).begin(); j!=endj; ++j)
+              {
+                create.insert( j.index () );
+              }
+            }
+          }
+        } // end create, matrix is on delete of create iterator 
+
+        {
+          // not insert map of indices into matrix 
+          RowIteratorType rowit  = oldMatrix.begin();
+
+          RowIteratorType endcreate = this->end();
+          for(RowIteratorType create = this->begin();
+              create != endcreate; ++create, ++rowit ) 
+          {
+            assert( rowit != oldMatrix.end() );
+
+            const int row = create.index();
+            if( hangingNodes.isHangingNode( row ) )
+            {
+              typedef typename HangingNodesType :: ColumnVectorType ColumnVectorType;
+              const ColumnVectorType& cols = hangingNodes.associatedDofs( row );
+
+              // to be revised 
+              block_type factor = -1.0 / ((field_type) cols.size());
+
+              ColIteratorType endj = (*create).end();
+              for (ColIteratorType j= (*create).begin(); j!=endj; ++j)
+              {
+                if( j.index() == row ) 
+                  (*j) = 1; 
+                else 
+                  (*j) = factor; 
+              }
+            }
+            else 
+            {
+              ColIteratorType colit = (*rowit).begin();
+              ColIteratorType endj = (*create).end();
+              for (ColIteratorType j= (*create).begin(); j!=endj; ++j, ++colit )
+              {
+                assert( colit != (*rowit).end() );
+                (*j) = (*colit);
+              }
+            }
+          }
+        } // end create 
       }
 
       //! print matrix 
@@ -650,6 +738,22 @@ namespace Dune {
 
         sequence_ = rowSpace_.sequence();
       }
+    }
+
+    //! setup new matrix with hanging nodes taken into account 
+    template <class HangingNodesType>
+    void changeHangingNodes(const HangingNodesType& hangingNodes)
+    {
+      // create new matrix 
+      MatrixType* newMatrix = new MatrixType(rowMapper_.size(), colMapper_.size());
+
+      // setup with hanging rows 
+      newMatrix->setup( *matrix_ , hangingNodes );
+
+      // remove old matrix 
+      removeObj();
+      // store new matrix 
+      matrix_ = newMatrix;
     }
 
     //! we only have right precondition
