@@ -42,7 +42,7 @@ namespace Dune
     lfFactory_( *this ),
     mapper_( f.blockMapper() ),
     memObject_( 0 ),
-    dofVec_( data ),
+    dofVec_( const_cast<DofStorageType&> (data) ),
     leakPtr_(dofVec_),
     localFunc_( *this )
   {}
