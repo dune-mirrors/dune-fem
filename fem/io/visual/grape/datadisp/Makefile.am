@@ -11,7 +11,8 @@ datadisp_HEADERS = dataconvert.cc \
                    printhelp.cc \
 		   programtemplate.cc \
 		   readiotupledata.cc \
-                   readioparams.cc
+                   readioparams.cc \
+		   readtupledata.cc
 
 include $(top_srcdir)/am/global-rules
 
