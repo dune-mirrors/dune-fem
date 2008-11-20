@@ -112,6 +112,7 @@ AC_CONFIG_FILES([Makefile
      fem/test/Makefile
      fem/gridpart/Makefile
      lib/Makefile
+     m4/Makefile
      make.inc
      dune-fem.pc])
 AC_OUTPUT
