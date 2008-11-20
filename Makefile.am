@@ -7,11 +7,11 @@ EXTRA_DIST=dune.module
 #AUTOMAKE_OPTIONS = foreign 1.5
 
 # do everything in the subdirs
-DIST_SUBDIRS = fem lib doc
+DIST_SUBDIRS = fem lib m4 doc
 if BUILD_DOCS
-SUBDIRS = fem lib doc
+SUBDIRS = fem lib m4 doc
 else
-SUBDIRS = fem lib
+SUBDIRS = fem lib m4
 endif
 
 pkgconfigdir = $(libdir)/pkgconfig
