@@ -112,6 +112,16 @@ namespace Dune
       return gridPart_.indexSet();
     }
 
+    int size ( int codim ) const
+    {
+      return indexSet().size( codim );
+    }
+
+    int size ( const GeometryType &type ) const
+    {
+      return indexSet().size( type );
+    }
+
     template< int codim >
     typename Codim< codim > :: Iterator begin () const
     {
