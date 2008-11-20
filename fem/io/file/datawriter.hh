@@ -417,7 +417,7 @@ protected:
       if( parallel )
       {
         // write all data for parallel runs  
-        vtkio.pwrite( name.c_str(), path_.c_str(), "" , Dune::VTKOptions::binaryappended );
+        vtkio.pwrite( name.c_str(), path_.c_str(), "." , Dune::VTKOptions::binaryappended );
       }
       else
       {
@@ -446,7 +446,7 @@ protected:
         if( parallel )
         {
           // write all data for parallel runs  
-          vtkio.pwrite( name.c_str(), path_.c_str(), "" , Dune::VTKOptions::binaryappended );
+          vtkio.pwrite( name.c_str(), path_.c_str(), "." , Dune::VTKOptions::binaryappended );
         }
         else
         {
