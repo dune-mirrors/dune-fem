@@ -383,13 +383,14 @@ protected:
 #if HAVE_MPI 
       // we need special treatment for ghosts 
       // ghosts should not be inlcuded in holes list 
-      if(en.partitionType() == GhostEntity)
+      if(entity.partitionType() == GhostEntity)
       {
         codimLeafSet_[ 0 ].insertGhost( index );
         if( higherCodims_ )
         {
+          const bool skipGhosts = (pitype != All_Partition);
           ForLoop< InsertGhostSubEntities, 1, dimension > :: 
-            apply( *this, entity , pitype != All_Partition );
+            apply( *this, entity , skipGhosts );
         }
       }
       else 
