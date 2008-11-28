@@ -657,8 +657,14 @@ public:
   typedef typename DiscreteFunctionType::DomainType DomainType;
 
 public:  
+  //! constructor 
   DataInliner ( const DiscreteFunctionType & df ) 
     : df_ (df) 
+  {}
+
+  //! copy constructor 
+  DataInliner ( const DataInliner & other  ) 
+    : df_ (other.df_) 
   {}
 
   //! store data to stream  
@@ -681,7 +687,7 @@ public:
     }
   }
 
-private:
+protected:
   const DiscreteFunctionType & df_;
 };
 
@@ -710,9 +716,15 @@ public:
   typedef typename DiscreteFunctionType::RangeFieldType RangeFieldType;
   typedef typename DiscreteFunctionType::DomainType DomainType;
 public:  
+  //! constructor 
   DataXtractor ( DiscreteFunctionType & df ) 
     : df_ (df) 
     {}
+
+  //! copy constructor 
+  DataXtractor ( const DataXtractor & other ) 
+    : df_( other.df_ ) 
+  {}
 
   //! store data to stream  
   void apply ( ParamType & p ) const 
@@ -735,7 +747,7 @@ public:
     }
   }
 
-private:
+protected:
   mutable DiscreteFunctionType & df_;
 };
 
