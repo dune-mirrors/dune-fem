@@ -17,10 +17,16 @@ namespace Dune {
 class CodimIndexSet
 {
 private:
-  enum INDEXSTATE { NEW = 2 , USED = 1 , UNUSED = -1 };
+  //enum INDEXSTATE { NEW = 2 , USED = 1 , UNUSED = -1 };
+  static const char NEW    = 2;  // new indices 
+  static const char USED   = 1;  // used indices 
+  static const char UNUSED = 0; // unused indices 
 
+  // array type for indices 
   typedef MutableArray<int> IndexArrayType;
-  typedef MutableArray<int> StateArrayType;
+
+  // array type of state of indices 
+  typedef MutableArray<char> StateArrayType;
 
   // the mapping of the global to leaf index 
   IndexArrayType leafIndex_;
@@ -28,7 +34,8 @@ private:
   // stack for holes 
   IndexArrayType holes_; 
  
-  // Array that only remeber the occuring holes (for compress of data)
+  // Array that only remeber the occuring 
+  // holes (for compress of data)
   IndexArrayType oldIdx_; 
   IndexArrayType newIdx_; 
 
@@ -38,26 +45,27 @@ private:
   // next index to give away 
   int nextFreeIndex_;
 
+  // last size of set before compress (needed in parallel runs) 
+  int lastSize_;
+
   // codim for which index is provided 
   int myCodim_; 
 
   // actual number of holes 
   int numberHoles_;
 
-  const double memFactor_;
-
 public:
-  //! Constructor
-  CodimIndexSet (double memoryFactor = 1.1) 
+  //! Constructor taking memory factor (default = 1.1)
+  CodimIndexSet (const double memoryFactor = 1.1) 
     : leafIndex_(0)
     , holes_(0)
     , oldIdx_(0)
     , newIdx_(0)
     , state_(0)
     , nextFreeIndex_ (0)
+    , lastSize_ (0)
     , myCodim_(-1) 
     , numberHoles_(0)
-    , memFactor_(memoryFactor) 
   {
     setMemoryFactor(memoryFactor);
   }
@@ -129,7 +137,10 @@ public:
   //! clear holes, i.e. set number of holes to zero 
   void clearHoles() 
   {
+    // set number of holes to zero 
     numberHoles_ = 0;
+    // remember actual size 
+    lastSize_ = nextFreeIndex_;
   }
 
   //! make to index numbers consecutive 
@@ -181,7 +192,12 @@ public:
       { 
         // a index that is used but larger then actual size 
         // has to move to a hole 
-        if(state_[i] != UNUSED) 
+        if(state_[i] == UNUSED) 
+        {
+          // all unused indices are reset to -1 
+          leafIndex_[i] = -1;
+        }
+        else 
         {
           // if used index lies behind size, then index has to move 
           // to one of the holes 
@@ -202,6 +218,8 @@ public:
 
 #if HAVE_MPI 
             // only for none-ghost elements hole storage is applied
+            // this is because ghost indices might have in introduced 
+            // after the resize was done. 
             if( state_[i] == USED ) 
 #endif
             {
@@ -217,11 +235,6 @@ public:
             state_[i] = NEW;
             haveToCopy = true;
           }
-        }
-        else 
-        {
-          // all unsed indices are reset to -1 
-          leafIndex_[i] = -1;
         }
       }
 
@@ -279,7 +292,7 @@ public:
   //! return true if index is valid 
   bool validIndex ( const int num ) const
   {
-    return (leafIndex_[ num ] >= 0);
+    return (leafIndex_[num] >= 0);
   }
  
   //! return number of holes 
@@ -317,13 +330,15 @@ public:
   // insert element and create index for element number  
   void insertGhost (const int num )
   {
-    assert(num < leafIndex_.size() );
-    if(leafIndex_[num] < 0)
+    // insert index 
+    insert( num );
+
+    // if index is also larger than lastSize
+    // mark as new to skip old-new index lists 
+    if( leafIndex_[num] >= lastSize_ ) 
     {
-      leafIndex_[num] = nextFreeIndex_;
-      ++nextFreeIndex_;
+      state_[num] = NEW;
     }
-    state_[num] = NEW;
   }
   
   // read/write from/to xdr stream 
