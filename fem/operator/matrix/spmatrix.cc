@@ -93,7 +93,7 @@ reserve(int rows, int cols, int nz,const T& dummy )
   dim_[0] = rows;
   dim_[1] = cols;
   
-  memSize_ = rows;
+  memSize_ = rows * nz;
   nz_ = nz;
   // add first col for offset
   nz_ += firstCol ;
@@ -122,28 +122,39 @@ void SparseRowMatrix<T>::resize (int newSize)
 
 // resize matrix 
 template <class T>
-void SparseRowMatrix<T>::resize (int newRow, int newCol)  
+void SparseRowMatrix<T>::resize (int newRow, int newCol, int newNz )  
 {
-  if(newRow != this->size(0))
+  if(newRow != this->size(0) || newNz > nz_ )
   {
+    if( newNz < 0 ) newNz = nz_;
+
+    int newMemSize = newRow * newNz ;
+
     int memHalf = (int) memSize_/2;
-    if((newRow > memSize_) || (newRow < memHalf))
+    if((newMemSize > memSize_) || (newMemSize < memHalf))
     {
       T tmp = 0;
       T * oldValues = values_;       values_ = 0;
       int * oldCol  = col_;          col_ = 0;
       int * oldNonZeros = nonZeros_; nonZeros_ = 0;
-      int oldNz = nz_;
-      int copySize = std::min( dim_[0] , newRow );
-      int oldSize = dim_[0];
+      const int oldNz = nz_;
+      const int copySize = std::min( dim_[0] , newRow );
+      const int oldSize = dim_[0];
 
       // reserve new memory 
-      reserve(newRow,newCol,nz_,tmp);
+      reserve(newRow,newCol,newNz,tmp);
 
       if( (oldSize > 0) && (oldNz > 0 ))
       {
-        std::memcpy(values_  , oldValues  , copySize * nz_ * sizeof(T) );
-        std::memcpy(col_     , oldCol     , copySize * nz_ * sizeof(int) );
+        std::memset( col_ , -1 , newRow * newNz * sizeof(int));
+        const int entries = std::min( oldNz, newNz );
+        for( int row = 0; row < copySize; ++ row )
+        {
+          const int newLoc = row * newNz ;
+          const int oldLoc = row * oldNz ; 
+          std::memcpy( values_ + newLoc , oldValues + oldLoc , oldNz * sizeof(T) );
+          std::memcpy( col_ + newLoc    , oldCol + oldLoc   , oldNz * sizeof(int) );
+        }
         std::memcpy(nonZeros_, oldNonZeros, copySize * sizeof(int) );
       }
 
@@ -209,6 +220,7 @@ int SparseRowMatrix<T>::colIndex(int row, int col)
     }
   }
   
+#ifndef DNDEBUG 
   if(whichCol == defaultCol ) 
   {
     std::cout << "Writing colIndex for, nz = " << nz_ <<  " , " << col << "\n";
@@ -218,6 +230,8 @@ int SparseRowMatrix<T>::colIndex(int row, int col)
     }
     std::cout << std::endl;
   }
+#endif
+
   if (checkNonConstMethods) assert(checkConsistency());
   return whichCol;
 }
@@ -338,7 +352,13 @@ void SparseRowMatrix<T>::set(int row, int col, T val)
   assert((row>=0) && (row <= dim_[0]));
 
   int whichCol = colIndex(row,col);
+  if( whichCol == defaultCol ) 
+  {
+    resize( rows(), cols(), (2 * nz_) );
+    whichCol = colIndex(row,col);
+  } 
   assert( whichCol != defaultCol );
+
   {
     values_[row*nz_ + whichCol] = val; 
     if (whichCol >= nonZeros_[row]) 
@@ -353,6 +373,11 @@ void SparseRowMatrix<T>::add(int row, int col, T val)
 {
   if (checkNonConstMethods) assert(checkConsistency());
   int whichCol = colIndex(row,col);
+  if( whichCol == defaultCol ) 
+  {
+    resize( rows(), cols(), (2 * nz_) );
+    whichCol = colIndex(row,col);
+  } 
   assert( whichCol != defaultCol );
   values_[row*nz_ + whichCol] += val; 
   col_[row*nz_ + whichCol] = col;

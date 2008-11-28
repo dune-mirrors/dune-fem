@@ -89,7 +89,7 @@ public:
   void resize ( int newSize );
 
   //! resize keeping old values if possible   
-  void resize ( int newRow, int newCol );
+  void resize ( int newRow, int newCol , int newNz = -1 );
 
   //! free memory for values_ and col_
   ~SparseRowMatrix();
@@ -478,7 +478,7 @@ private:
           }
 
           // upper estimate for number of non-zeros 
-          const int nonZeros = StencilType :: nonZerosEstimate( rangeSpace_ );
+          const int nonZeros = std::max( StencilType :: nonZerosEstimate( rangeSpace_ ), matrix_.numNonZeros() );
 
           matrix_.reserve( domainSpace_.size(), rangeSpace_.size(), nonZeros, 0.0 );
         }
@@ -531,25 +531,6 @@ private:
     template <class HangingNodesType> 
     void changeHangingNodes(const HangingNodesType& hangingNodes) 
     {
-      /*
-      for(int i=0; i< domainSpace_.size(); ++i) 
-      {
-        bool foundDiag = false ;
-        const int nonZeros = matrix().numNonZeros( i );
-        for( int c = 0; c < nonZeros; ++c)
-        {
-          std::pair< double, int > val =  matrix().realValue( i, c );
-          if( val.second == i ) 
-          {
-            assert( (std::abs( val.first ) > 0) ? true : (std::cout <<
-                  val.first << std::endl, 0) );
-            foundDiag = true ;
-          }
-        }
-        assert( foundDiag );
-      } 
-      */
-
       typedef typename HangingNodesType :: IteratorType IteratorType;
       const IteratorType end = hangingNodes.end();
       for( IteratorType it = hangingNodes.begin(); it != end; ++it)
