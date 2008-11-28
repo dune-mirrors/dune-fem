@@ -39,8 +39,6 @@ public:
 
   static const int ncodim = dimension + 1;
 
-  enum INDEXSTATE { NEW, USED, UNUSED };
-
   //! type of index 
   typedef typename BaseType :: IndexType IndexType;
 
@@ -67,10 +65,10 @@ private:
   {
     static void apply ( ThisType &indexSet, const ElementType &entity )
     {
-      const HIndexSetType &hIndexSet = indexSet.hIndexSet_;
       if( !indexSet.codimUsed_[ codim ] )
         return;
       
+      const HIndexSetType &hIndexSet = indexSet.hIndexSet_;
       CodimIndexSetType &codimSet = indexSet.codimLeafSet_[ codim ];
       for( int i = 0; i < entity.template count< codim >(); ++i )
         codimSet.insert( hIndexSet.template subIndex< codim >( entity, i ) );
@@ -78,17 +76,39 @@ private:
   };
 
   template< int codim >
-  struct RemoveSubEntities
+  struct InsertGhostSubEntities
   {
-    static void apply ( ThisType &indexSet, const ElementType &entity )
+    static void apply ( ThisType &indexSet, const ElementType &entity ,
+                        const bool skipGhosts )
     {
-      const HIndexSetType &hIndexSet = indexSet.hIndexSet_;
       if( !indexSet.codimUsed_[ codim ] )
         return;
       
+      typedef typename GridType :: template Codim<codim> :: EntityPointer EntityPointerType;
+      typedef typename GridType :: template Codim<codim> :: Entity EntityCodimType;
+
+      const HIndexSetType &hIndexSet = indexSet.hIndexSet_;
       CodimIndexSetType &codimSet = indexSet.codimLeafSet_[ codim ];
+
       for( int i = 0; i < entity.template count< codim >(); ++i )
-        codimSet.remove( hIndexSet.template subIndex< codim >( entity, i ) );
+      {
+        // get entity point to check partition type 
+        EntityPointerType ep = entity.template entity< codim > (i);
+        const EntityCodimType& e = *ep;
+        if( e.partitionType() == GhostEntity )
+        {
+          if( ! skipGhosts )
+          {
+            // insert ghost entity 
+            codimSet.insertGhost( hIndexSet.index( e ) );
+          }
+        }
+        else
+        {
+          // insert border entity  
+          codimSet.insertGhost( hIndexSet.index( e ) );
+        }
+      }
     }
   };
 
@@ -101,17 +121,14 @@ private:
   // flag for codim is in use or not 
   mutable bool codimUsed_ [ncodim];
   
-  // true if all entities that we use are marked as USED 
-  bool marked_;
-
-  // true if the used entities were marked by grid walkthrough 
-  bool markAllU_;
-
   // true if any of the higher codims is used 
   mutable bool higherCodims_;
 
   //! flag is tru if set is in compressed status
   mutable bool compressed_;
+
+  // actual sequence number 
+  int sequence_;
 
 public:
   //! type traits of this class (see defaultindexsets.hh)
@@ -121,9 +138,9 @@ public:
   AdaptiveLeafIndexSet (const GridType & grid) 
     : BaseType(grid) 
     , hIndexSet_( SelectorType::hierarchicIndexSet(grid) ) 
-    , marked_ (false) , markAllU_ (false) 
     , higherCodims_ (false) // higherCodims are not used by default 
     , compressed_(true) // at start the set is compressed 
+    , sequence_( this->dofManager_.sequence() )
   {
     // codim 0 is used by default
     codimUsed_[0] = true;
@@ -223,14 +240,12 @@ public:
     resizeVectors();
     
     this->insertIndex( en );
-    marked_ = true;
   }
 
   //! Unregister entity from set 
   void removeEntity(const typename GridType::template Codim<0>::Entity & en )
   {
     this->removeIndex( en ); 
-    marked_ = true;
   }
 
   //! reallocate the vector for new size
@@ -264,17 +279,32 @@ public:
 
   //! make to index numbers consecutive 
   //! return true, if at least one hole existed  
+  // --compress 
   bool compress ()
   {
-    if(compressed_) return false;
-
-    //std::cout << marked_ << " m|u " << markAllU_ << "\n";
-    // if not marked, mark which indices are still used 
-    //if( (!marked_ && markAllU_) || higherCodims_ ) 
-    { 
-      //std::cout << "Marking the low level for " << this << "\n";
-      markAllUsed(); 
+    for(int i=0; i<ncodim; ++i) 
+    {
+      // reset list of holes in any case 
+      codimLeafSet_[i].clearHoles();
     }
+
+    // if set already compress, do noting (only for serial runs) 
+    if(compressed_)
+    {
+      // in parallel runs check sequence number of dof manager 
+      if( this->grid_.comm().size() > 1 )
+      {
+        if( sequence_ == this->dofManager_.sequence() ) return false;
+      }
+      else
+      {
+        // for serial runs just return 
+        return false;
+      }
+    }
+
+    // mark all leaf elements 
+    markAllUsed(); 
 
     // true if a least one dof must be copied 
     bool haveToCopy = codimLeafSet_[0].compress(); 
@@ -284,11 +314,10 @@ public:
         haveToCopy = (codimLeafSet_[i].compress()) ? true : haveToCopy;
     }
 
-    // next turn mark again 
-    marked_   = false;
-    markAllU_ = false;
-    
+    // now status is compressed 
     compressed_ = true;
+    // update sequence number 
+    sequence_ = this->dofManager_.sequence();
     return haveToCopy;
   }
 
@@ -349,28 +378,45 @@ protected:
   // --insertIndex
   void insertIndex ( const ElementType &entity )
   {
-    const int index = hIndexSet_.index( entity );
-    if( !codimLeafSet_[ 0 ].exists( index ) )
+    const int index = hIndexSet_.index( entity ) ;
     {
-      codimLeafSet_[ 0 ].insert( index );
-      if( higherCodims_ )
-        ForLoop< InsertSubEntities, 1, dimension > :: apply( *this, entity );
+#if HAVE_MPI 
+      // we need special treatment for ghosts 
+      // ghosts should not be inlcuded in holes list 
+      if(en.partitionType() == GhostEntity)
+      {
+        codimLeafSet_[ 0 ].insertGhost( index );
+        if( higherCodims_ )
+        {
+          ForLoop< InsertGhostSubEntities, 1, dimension > :: 
+            apply( *this, entity , pitype != All_Partition );
+        }
+      }
+      else 
+#endif
+      {
+        codimLeafSet_[ 0 ].insert( index );
+        if( higherCodims_ )
+          ForLoop< InsertSubEntities, 1, dimension > :: apply( *this, entity );
+      }
+
+      // now compression is not guaranteed 
+      compressed_ = false;
     }
-    compressed_ = false;
+    assert( codimLeafSet_[0].exists( index ) );
   }
 
   //! set indices to unsed so that they are cleaned on compress  
   // --removeIndex
   void removeIndex( const ElementType &entity )
   {
-    // if state is NEW or USED the index of all entities is removed 
-    const int index = hIndexSet_.index( entity );
-    if( codimLeafSet_[ 0 ].exists( index ) )
-    {
-      codimLeafSet_[0].remove( index );
-      if( higherCodims_ )
-        ForLoop< RemoveSubEntities, 1, dimension > :: apply( *this, entity );
-    }
+    // remove entities (only mark that they ar not used anymore)
+    codimLeafSet_[0].remove ( hIndexSet_.index( entity ) );
+
+    // skip higher codims (will be removed only compression if not
+    // existent anymore) 
+
+    // now compressed state is not guaranteed anymore 
     compressed_ = false;
   }
 
@@ -384,8 +430,10 @@ protected:
       insertIndex( entity );
       return true;
     }
-
-    if( canInsert )
+    
+    // canInsert is true if we reached an entity 
+    // that already has an index 
+    if( canInsert ) 
     {
       // we insert to get an index 
       insertIndex( entity );
@@ -393,12 +441,11 @@ protected:
       removeIndex( entity );
       return true;
     }
-    else
+    else 
     {
-      // this is the case if we haven't reached an entity which already has a number
-      // if index >= 0, then all children may also appear in the set 
+      // if we have an valid index, then all children may  also appear in the set 
       // from now on, indices can be inserted 
-      return (codimLeafSet_[ 0 ].index( hIndexSet_.index( entity ) ) >= 0);
+      return codimLeafSet_[0].validIndex( hIndexSet_.index ( entity ) );
     }
   }
 
@@ -406,20 +453,26 @@ protected:
   //! elements that need one 
   void markAllUsed () 
   {
+    // make correct size of vectors 
+    resizeVectors();
+
     // unset all indices 
-    for(int i=0; i<ncodim; i++) 
+    for(int i=0; i<ncodim; ++i) 
       if(codimUsed_[i]) codimLeafSet_[i].set2Unused(); 
     
+    const PartitionIteratorType pt = All_Partition;
+    //const PartitionIteratorType pt = pitype;
+
     typedef typename GridType:: template Codim<0> :: 
-      template Partition<pitype> :: LeafIterator LeafIteratorType; 
+      template Partition<pt> :: LeafIterator LeafIteratorType; 
+
     // walk over leaf level on locate all needed entities  
-    LeafIteratorType endit  = this->grid_.template leafend<0,pitype>   ();
-    for(LeafIteratorType it = this->grid_.template leafbegin<0,pitype> (); 
+    LeafIteratorType endit  = this->grid_.template leafend<0,pt>   ();
+    for(LeafIteratorType it = this->grid_.template leafbegin<0,pt> (); 
         it != endit ; ++it )
     {
       this->insertIndex( *it );
     }
-    marked_ = true;
   }
   
   //! mark indices that are still used and give new indices to 
@@ -442,7 +495,6 @@ protected:
       codimLeafSet_[codim].insert( hIndexSet_.index ( *it ) );
     }
 
-    //codimLeafSet_[codim].print("setup codim");
     codimUsed_[codim] = true;
     higherCodims_ = true;
   }
@@ -454,12 +506,8 @@ protected:
   //! element 
   void markAllBelowOld () 
   {
-    typedef typename GridType:: template Codim<0> :: 
-      template Partition<pitype> :: LevelIterator LevelIteratorType; 
-
-    int maxlevel = this->grid_.maxLevel();
-   
-    for(int i=0; i<ncodim; i++) 
+    // mark all existing entries as unused 
+    for(int i=0; i<ncodim; ++i) 
     {
       if(codimUsed_[i])
       {
@@ -467,36 +515,43 @@ protected:
       }
     }
     
-    for(int level = 0; level<=maxlevel; level++)
+    const PartitionIteratorType pt = All_Partition;
+    //const PartitionIteratorType pt = pitype;
+
+    // get macro iterator 
+    typedef typename GridType::
+      template Codim<0>::template Partition<pt>:: LevelIterator LevelIteratorType;
+
+    // iterate over macro level and check all entities hierachically 
+    const LevelIteratorType macroend = this->grid_.template lend  <0,pt> (0);
+    for(LevelIteratorType macroit = this->grid_.template lbegin<0,pt> (0);
+        macroit != macroend; ++macroit )
     {
-      LevelIteratorType levelend    = 
-        this->grid_.template lend  <0,pitype> (level);
-      for(LevelIteratorType levelit = 
-          this->grid_.template lbegin<0,pitype> (level);
-          levelit != levelend; ++levelit )
+      checkEntity( *macroit , false );
+    } // end grid walk trough
+  }
+
+
+  //! check whether entity can be inserted or not 
+  void checkEntity(const ElementType& entity, const bool wasNew )
+  {
+    typedef typename ElementType :: HierarchicIterator HierarchicIteratorType;
+
+    // check whether we can insert or not 
+    const bool isNew = insertNewIndex( entity , entity.isLeaf() , wasNew );
+
+    // if entity is not leaf go deeper 
+    if( ! entity.isLeaf() )
+    {
+      const int level = entity.level() + 1;
+
+      // got to next level 
+      const HierarchicIteratorType endit  = entity.hend   ( level );
+      for(HierarchicIteratorType it = entity.hbegin ( level ); it != endit ; ++it )
       {
-        typedef typename GridType::template Codim<0>::
-              Entity::HierarchicIterator HierarchicIteratorType; 
-       
-        // if we have index all entities below need new numbers 
-        bool areNew = false; 
-
-        // check whether we can insert or not 
-        areNew = insertNewIndex ( *levelit , levelit->isLeaf() , areNew ); 
-        
-        HierarchicIteratorType endit  = levelit->hend   ( level + 1 );
-        for(HierarchicIteratorType it = levelit->hbegin ( level + 1 ); it != endit ; ++it )
-        {
-          // areNew == true, then index is inserted 
-          areNew = insertNewIndex  ( *it , it->isLeaf() , areNew ); 
-        }
-
-      } // end grid walk trough
-    } // end for all levels 
-
-    // means on compress we have to mark the leaf level 
-    marked_ = false;
-    markAllU_ = true;
+        checkEntity( *it , isNew );
+      }
+    }
   }
 
   //! count elements by iterating over grid and compare 
