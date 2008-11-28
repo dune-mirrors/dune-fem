@@ -168,7 +168,10 @@ namespace Dune
     template< class CommunicatorImp >
     void addToList ( CommunicatorImp &comm )
     {
-      comm.addToList( discreteFunction_ );
+      // for Lagrange spaces this communication is not needed (since
+      // data on ghosts is neglected 
+
+      //  comm.addToList( discreteFunction_ );
     }
   };
 
