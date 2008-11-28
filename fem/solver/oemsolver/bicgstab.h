@@ -53,9 +53,6 @@ bicgstab_algo( const CommunicatorType & comm,
   }
 
   typedef Mult<MATRIX,PC_MATRIX,usePC> MultType; 
-  typedef typename MultType :: mult_t mult_t; 
-  // get appropriate mult method 
-  mult_t * mult_pc = MultType :: mult_pc;
 
   double * tmp = 0;
 #ifdef USE_MEMPROVIDER
@@ -87,15 +84,7 @@ bicgstab_algo( const CommunicatorType & comm,
   // f"ur's Abbruchkriterium (*)  -- r enth"alt immer das Residuum r=Ax-b
   unsigned int its=0;
 
-  double rtVal[2];
-  double & rTr = rtVal[0];
-  double & rTh = rtVal[1];
-  double * rtBuff = ((double *) &rtVal[0]);
-  
-  double stVal[2];
-  double & st = stVal[0];
-  double & tt = stVal[1];
-  double * stBuff = ((double *) &stVal[0]);
+  double st, tt, rTr, rTh; 
   
   double rtTmp;
   double rTAd, alpha, beta, omega;
@@ -103,64 +92,53 @@ bicgstab_algo( const CommunicatorType & comm,
   double err=eps*eps;
   double bb = 0.0;
 
-  bool rightPreCon = MultType :: first_mult(A,C,x,r,tmp);
+  bool rightPreCon = MultType :: mult_pc(A,C,x,r,tmp);
+
   // if pc matrix, recalc rhs 
   if( usePC && (!rightPreCon) )
   {
     mult(C,rhs,tmp);
     daxpy(N,-1.,tmp,1,r,1);
-    bb = ddot(N,tmp,1,tmp,1); 
+    bb = MultType::ddot(A,tmp,tmp); 
   }
   else 
   {
     daxpy(N,-1.,rhs,1,r,1);
-    bb = ddot(N,rhs,1,rhs,1); 
+    bb = MultType::ddot(A,rhs,rhs); 
   }
 
-  err *= comm.sum( bb );
+  err *= bb ; 
   
   dcopy(N,r,1,d,1);
   dcopy(N,d,1,s,1);
   dcopy(N,s,1,rT,1);
  
-  assert( ddot(N,rT,1,rT,1)> bicgeps );
-  
-  rTr = ddot(N,r,1,r,1);
-  rTh = ddot(N,rT,1,s,1);
+  rTr = MultType::ddot(A,r,r);
+  rTh = MultType::ddot(A,rT,s);
  
-  // communicate rTr and rTh
-  comm.sum( rtBuff, 2 );
-  
   while( rTr>err ) 
   {
     // do multiply 
-    mult_pc(A,C,d,Ad,tmp);
-    rtTmp = ddot(N,rT,1,Ad,1);
+    MultType :: mult_pc(A,C,d,Ad,tmp);
+    rTAd = MultType::ddot(A,rT,Ad);
    
-    // communicate rTAd
-    rTAd = comm.sum( rtTmp );
-    
-    //assert( fabs(rTAd)> bicgeps );
     // if no error, return 
     if( fabs(rTAd) <= bicgeps ) break;
 
-    alpha=rTh/rTAd;
+    alpha = rTh/rTAd;
 
     daxpy(N,-alpha,Ad,1,r,1);
     daxpy(N,-alpha,Ad,1,s,1);
     
     // do multiply 
-    mult_pc(A,C,s,t,tmp);
+    MultType :: mult_pc(A,C,s,t,tmp);
 
     daxpy(N,1.,t,1,u,1);
     dscal(N,alpha,u,1);
 
-    st=ddot(N,s,1,t,1);
-    tt=ddot(N,t,1,t,1);
+    st = MultType::ddot(A,s,t);
+    tt = MultType::ddot(A,t,t);
 
-    // communicate st and tt 
-    comm.sum( stBuff, 2 );
-    
     if ( fabs(st)<bicgeps || fabs(tt)<bicgeps )
     {
       omega = 0.;
@@ -177,12 +155,9 @@ bicgstab_algo( const CommunicatorType & comm,
     daxpy(N,-omega,t,1,s,1);
     beta=(alpha/omega)/rTh; 
     
-    rTh=ddot(N,rT,1,s,1); 
-    rTr=ddot(N,r,1,r,1);
+    rTh = MultType::ddot(A,rT,s); 
+    rTr = MultType::ddot(A,r,r);
 
-    // communicate rTr and rTh 
-    comm.sum( rtBuff , 2 );
-    
     beta*=rTh;
     dscal(N,beta,d,1);
     daxpy(N,1.,s,1,d,1);

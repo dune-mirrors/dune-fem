@@ -125,34 +125,18 @@ void mult(const MatrixImp & m, const VectorType * x, VectorType * ret)
 template <class Matrix , class PC_Matrix , bool >
 struct Mult
 {
-  typedef void mult_t(const Matrix &A,
+  static inline double ddot( const Matrix& A,
+                             const double *x, 
+                             const double *y)
+  {
+    return A.ddotOEM(x,y);
+  }
+
+  typedef bool mult_t(const Matrix &A,
                       const PC_Matrix & C, 
                       const double *arg,
                       double *dest , 
                       double * tmp);
-
-  static bool first_mult(const Matrix &A, const PC_Matrix & C,
-              const double *arg, double *dest , double * tmp)
-  {
-    assert( tmp );
-
-    bool rightPreCon = C.rightPrecondition();
-    // check type of preconditioning 
-    if( rightPreCon )
-    {
-      // call mult of Matrix A 
-      mult(A,arg,dest);
-    }
-    else 
-    {
-      // call mult of Matrix A 
-      mult(A,arg,tmp);
-
-      // call precondition of Matrix PC
-      C.precondition(tmp,dest);
-    }
-    return rightPreCon;
-  }
   
   static void back_solve(const int size, 
         const PC_Matrix & C, double* solution, double* tmp)
@@ -166,13 +150,14 @@ struct Mult
     }
   }
   
-  static void mult_pc (const Matrix &A, const PC_Matrix & C, 
+  static bool mult_pc (const Matrix &A, const PC_Matrix & C, 
         const double *arg, double *dest , double * tmp)
   {
     assert( tmp );
 
+    bool rightPreCon = C.rightPrecondition();
     // check type of preconditioning 
-    if( C.rightPrecondition() )
+    if( rightPreCon )
     {
       // call precondition of Matrix PC
       C.precondition(arg,tmp);    
@@ -188,6 +173,7 @@ struct Mult
       // call precondition of Matrix PC
       C.precondition(tmp,dest);
     }
+    return rightPreCon ;
   }
 };
 
@@ -195,34 +181,26 @@ struct Mult
 template <class Matrix>
 struct Mult<Matrix,Matrix,false>
 {
-  typedef void mult_t(const Matrix &A,
+  static inline double ddot( const Matrix& A,
+                             const double *x, 
+                             const double *y)
+  {
+    return A.ddotOEM(x,y);
+  }
+
+  typedef bool mult_t(const Matrix &A,
                       const Matrix &C, 
                       const double *arg,
                       double *dest , 
                       double * tmp);
   
-  static bool first_mult(const Matrix &A, const Matrix & C,
-              const double *arg, double *dest , double * tmp)
-  {
-    // tmp has to be 0
-    assert( tmp == 0 );
-    // C is just a fake 
-    assert( &A == &C );
-
-    // call mult of Matrix A 
-    mult(A,arg,dest);
-
-    // first mult like right precon  
-    return true;
-  }
-
   static void back_solve(const int size, 
         const Matrix & C, double* solution, double* tmp)
   {
     // do nothing here
   }
   
-  static void mult_pc(const Matrix &A, const Matrix & C, const double *arg ,
+  static bool mult_pc(const Matrix &A, const Matrix & C, const double *arg ,
                       double *dest , double * tmp)
   {
     // tmp has to be 0
@@ -232,6 +210,8 @@ struct Mult<Matrix,Matrix,false>
     
     // call mult of Matrix A 
     mult(A,arg,dest);
+
+    return true;
   }
 };
 

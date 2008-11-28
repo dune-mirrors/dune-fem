@@ -50,7 +50,6 @@ cghs_algo( const CommunicatorType & comm,
 
   // define type of multiplication 
   typedef Mult<MATRIX,PC_MATRIX,usePC> MultType;
-  typedef typename MultType :: mult_t mult_t;
 
   double* tmp = 0;
 
@@ -77,37 +76,28 @@ cghs_algo( const CommunicatorType & comm,
   
   int its=0;
   double t, gam;
-  // send and recive buffer for rho,tau and sig
-  double commVal[3] = { 0.0,0.0,0.0} ; 
-  double * commBuff = (double *) &commVal[0];
+  double rho, sig, tau;
   
-  double & rho = commVal[0];
-  double & sig = commVal[1];
-  double & tau = commVal[2];
-  
-  double bb = ddot(N,b,1,b,1);
-  double err=eps*eps* comm.sum( bb );
+  double err= eps * eps * MultType :: ddot(A,b,b);
   
   // apply first multiplication 
-  MultType :: first_mult(A,C,x,g,tmp);
+  MultType :: mult_pc(A,C,x,g,tmp);
     
   daxpy(N,-1.,b,1,g,1);
   dscal(N,-1.,g,1);
   dcopy(N,g,1,r,1);
 
-  double gg = ddot(N,g,1,g,1);
-  double ddo = comm.sum( gg );
-  while ( ddo>err ) 
+  double gg = MultType :: ddot(A,g,g);
+
+  while ( gg > err ) 
   {
     // apply multiplication 
     MultType :: mult_pc(A,C,r,p,tmp);
 
-    rho=ddot(N,p,1,p,1);
-    sig=ddot(N,r,1,p,1);
-    tau=ddot(N,g,1,r,1);
+    rho = MultType :: ddot(A,p,p);
+    sig = MultType :: ddot(A,r,p);
+    tau = MultType :: ddot(A,g,r);
     
-    comm.sum ( commBuff , 3 );
-
     t=tau/sig;
     daxpy(N,t,r,1,x,1);
     
@@ -116,12 +106,11 @@ cghs_algo( const CommunicatorType & comm,
     dscal(N,gam,r,1);
     daxpy(N,1.,g,1,r,1);
     
-    gg = ddot(N,g,1,g,1);
-    ddo = comm.sum( gg );
+    gg = MultType :: ddot(A,g,g);
     
     if ( detailed && (comm.rank() == 0) )
     {
-      std::cout<<"cghs "<<its<<"\t"<<sqrt(ddo)<< std::endl;
+      std::cout<<"cghs "<<its<<"\t"<<sqrt(gg)<< std::endl;
     }
     ++its;
   }
