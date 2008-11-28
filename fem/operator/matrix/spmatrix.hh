@@ -3,11 +3,13 @@
 
 //- system includes 
 #include <vector>
+#include <algorithm>
 
 //- local includes 
 #include <dune/fem/function/adaptivefunction/adaptivefunction.hh>
 #include <dune/fem/operator/common/localmatrix.hh> 
 #include <dune/fem/operator/common/localmatrixwrapper.hh> 
+#include <dune/fem/io/parameter.hh>
 
 namespace Dune
 {
@@ -392,7 +394,6 @@ private:
 
     mutable MatrixType matrix_;
     bool preconditioning_;
-    PreconditionMatrixType * pcMatrix_;
 
     mutable LocalMatrixStackType localMatrixStack_;
 
@@ -406,15 +407,18 @@ private:
       sequence_( -1 ),
       matrix_(),
       preconditioning_( false ),
-      pcMatrix_( 0 ),
       localMatrixStack_( *this )
     {
+      int precon = 0;
       if( paramfile != "" )
       {
-        int precon = 0;
         readParameter( paramfile, "Preconditioning", precon );
-        preconditioning_ = (precon > 0 ? true : false);
       }
+      else 
+      {
+        precon = Parameter :: getValue("Preconditioning", precon );
+      }
+      preconditioning_ = (precon > 0) ? true : false;
     }
 
     //! return reference to stability matrix
@@ -486,11 +490,20 @@ private:
     template< class DomainFunction, class RangeFunction >
     void apply ( const DomainFunction &arg, RangeFunction &dest ) const
     {
-      // apply matrix vector multiplication 
+      // do matrix vector multiplication 
       matrix_.multOEM( arg.leakPointer(), dest.leakPointer() );
 
       // communicate data 
       rangeSpace_.communicate( dest );
+    }
+
+    //! mult method of matrix object used by oem solver
+    double ddotOEM( const double *v, const double *w ) const
+    {
+      typedef AdaptiveDiscreteFunction< DomainSpaceType > DomainFunctionType;
+      DomainFunctionType V( "ddot V", domainSpace_, v );
+      DomainFunctionType W( "ddot W", domainSpace_, w );
+      return V.scalarProductDofs( W );
     }
 
     //! mult method of matrix object used by oem solver
@@ -515,27 +528,61 @@ private:
     }
 
     /** \brief delete all row belonging to a hanging node and rebuild them */
-    template <class HangingNodesType>
-    void changeHangingNodes(const HangingNodesType& hangingNodes)
+    template <class HangingNodesType> 
+    void changeHangingNodes(const HangingNodesType& hangingNodes) 
     {
+      /*
+      for(int i=0; i< domainSpace_.size(); ++i) 
+      {
+        bool foundDiag = false ;
+        const int nonZeros = matrix().numNonZeros( i );
+        for( int c = 0; c < nonZeros; ++c)
+        {
+          std::pair< double, int > val =  matrix().realValue( i, c );
+          if( val.second == i ) 
+          {
+            assert( (std::abs( val.first ) > 0) ? true : (std::cout <<
+                  val.first << std::endl, 0) );
+            foundDiag = true ;
+          }
+        }
+        assert( foundDiag );
+      } 
+      */
+
       typedef typename HangingNodesType :: IteratorType IteratorType;
       const IteratorType end = hangingNodes.end();
       for( IteratorType it = hangingNodes.begin(); it != end; ++it)
       {
-        insertHangingRow( (*it).first , (*it).second );
+        insertHangingRow( hangingNodes, (*it).first , (*it).second );
       }
     }
 protected:
     /** \brief insert row to be a row for a hanging node */
-    template <class ColumnVectorType>
-    void insertHangingRow( const int row, const ColumnVectorType& colVec)
+    template <class HangingNodesType, class ColumnVectorType>
+    void insertHangingRow( const HangingNodesType& hangingNodes,
+                           const int row, const ColumnVectorType& colVec)
     {
-      matrix().unitRow( row );
       const size_t cols = colVec.size();
-      const double factor = -1.0 / ((double) cols );
+
+      // distribute row to associated rows 
+      const int nonZeros = matrix().numNonZeros( row );
+      for( int c = 0; c < nonZeros; ++c)
+      {
+        std::pair< double, int > val =  matrix().realValue( row, c );
+        for( size_t j = 0; j < cols; ++ j)
+        {
+          const double value = colVec[j].second * val.first;
+          assert( ! hangingNodes.isHangingNode( colVec[j].first ) );
+          matrix().add( colVec[j].first , val.second, value );
+        }
+      }
+
+      // replace hanging row 
+      matrix().unitRow( row );
       for( size_t j = 0; j < cols; ++ j)
       {
-        matrix().add( row, colVec[j] , factor );
+        matrix().add( row, colVec[j].first , -colVec[j].second );
       }
     }
   };
