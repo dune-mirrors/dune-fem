@@ -13,6 +13,7 @@
 #include <dune/fem/space/common/dofmanager.hh>
 #include <dune/fem/function/common/discretefunction.hh>
 #include <dune/fem/io/file/asciiparser.hh>
+#include <dune/fem/io/parameter.hh>
 
 
 namespace Dune{
@@ -91,18 +92,12 @@ protected:
                int balanceCounter = 0) 
     : grid_(grid) 
     , dm_ ( DofManagerFactoryType::getDofManager(grid_) )
-    , balanceStep_(0)
+    , balanceStep_( readBalanceStep( paramFile ))
     , balanceCounter_(balanceCounter)
     , localList_()
     , collList_()
   {
-    const bool output = (grid_.comm().rank() == 0);
-    if( paramFile != "")
-    {
-      readParameter(paramFile,"BalanceStep",balanceStep_, output);
-    }
-
-    if( output )
+    if( Parameter :: verbose () ) 
     {
       std::cout << "Created LoadBalancer: balanceStep = " << balanceStep_ << std::endl;
     }
@@ -124,25 +119,34 @@ protected:
                int balanceCounter = 0) 
     : grid_(grid) 
     , dm_ ( DofManagerFactoryType::getDofManager(grid_) )
-    , balanceStep_(0)
+    , balanceStep_( readBalanceStep( paramFile ))
     , balanceCounter_(balanceCounter)
     , localList_()
     , collList_()
     , balanceTime_(0.0)
   {
-    const bool output = (grid_.comm().rank() == 0);
-    if( paramFile != "")
-    {
-      readParameter(paramFile,"BalanceStep",balanceStep_, output);
-    }
-
     rpOp.addToList(*this);
-    if( output ) 
+    if( Parameter :: verbose () ) 
     {
       std::cout << "Created LoadBalancer: balanceStep = " << balanceStep_ << std::endl;
     }
   }
 
+  // read balanceStep from parameter file or list 
+  int readBalanceStep(const std::string& paramFile) const 
+  {
+    int balanceStep = 0;
+    const bool output = (grid_.comm().rank() == 0);
+    if( paramFile != "")
+    {
+      readParameter(paramFile,"BalanceStep",balanceStep, output);
+    }
+    else 
+    {
+      balanceStep = Parameter :: getValue("BalanceStep", balanceStep);
+    }
+    return balanceStep;
+  }
 public:  
   //! destructor 
   virtual ~LoadBalancer () 
@@ -304,7 +308,7 @@ protected:
   DofManagerType & dm_;
 
   // call loadBalance ervery balanceStep_ step
-  int balanceStep_ ;
+  const int balanceStep_ ;
   // count actual balance call
   int balanceCounter_;
 
