@@ -770,7 +770,7 @@ namespace Dune
                                unsigned int &subEntity ) const
     {
       unsigned int dofNumber;
-      return lagrangePointList_.dofSubEntity
+      lagrangePointList_.dofSubEntity
                ( index, codim, subEntity, dofNumber );
     }
  
@@ -779,8 +779,8 @@ namespace Dune
                                unsigned int &subEntity,
                                unsigned int &dofNumber ) const
     {
-      return lagrangePointList_.dofSubEntity
-               ( index, codim, subEntity, dofNumber );
+      lagrangePointList_.dofSubEntity
+             ( index, codim, subEntity, dofNumber );
     }
  
     inline unsigned int entityDofNumber ( unsigned int codim,
