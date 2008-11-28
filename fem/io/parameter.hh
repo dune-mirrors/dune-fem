@@ -257,6 +257,18 @@ namespace Dune
     inline static void get ( const std :: string &key,
                              const T &defaultValue,
                              T &value );
+    /** \brief get an optional parameter from the container special case for string
+     *
+     *  \note This method returns a default value, if the parameter cannot be
+     *        found.
+     *
+     *  \param[in]   key           name of the parameter to get
+     *  \param[in]   defaultValue  default value for this parameter
+     *  \param[out]  value         value of the parameter
+     */
+    inline static void get ( const std :: string &key,
+                             const char* defaultValue,
+                             std::string &value );
 
     /** \brief get a mandatory parameter from the container
      *
@@ -651,6 +663,13 @@ namespace Dune
     std :: ostringstream out;
     out << defaultValue;
     parse( instance().map( key, out.str() ), value );
+  }
+  inline void
+  Parameter :: get ( const std :: string &key,
+                     const char* defaultValue,
+                     std::string &value )
+  {
+    get(key,std::string(defaultValue),value);
   }
 
   template< class T, class Validator >
