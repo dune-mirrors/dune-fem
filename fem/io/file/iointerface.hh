@@ -378,7 +378,8 @@ public:
       cmd += destFilename;
 
       // copy file to actual path 
-      system(cmd.c_str());
+      if( system( cmd.c_str() ) < 0 )
+        DUNE_THROW( IOError, "Unable to execute command: '" << cmd << "'." );
     }
   }
 
