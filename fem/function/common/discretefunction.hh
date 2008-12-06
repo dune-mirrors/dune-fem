@@ -357,6 +357,14 @@ namespace Dune
       return asImp().dataHandle( operation );
     }
 
+    /** \brief do default communication of space for this discrete
+               function 
+    */
+    inline void communicate()
+    {
+      CHECK_AND_CALL_INTERFACE_IMPLEMENTATION( asImp().communicate() );
+    }
+
     /** \brief add another discrete function to this one
      *
      *  \param[in]  g  discrete function to add 
@@ -638,6 +646,12 @@ namespace Dune
     template< class Operation >
     typename CommDataHandle< Operation > :: Type
     dataHandle ( const Operation *operation );
+
+    /** \copydoc Dune::DiscreteFunctionInterface::communicate() */
+    inline void communicate()
+    {
+      this->space().communicate( asImp() );
+    }
  
     /** \copydoc Dune::Function::evaluate(const DomainType &x,RangeType &ret) const
      *
