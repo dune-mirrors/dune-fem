@@ -1,5 +1,5 @@
-#ifndef DUNE_LDGDISCRETEMODELS_HH
-#define DUNE_LDGDISCRETEMODELS_HH
+#ifndef DUNE_FEM_LDG_DISCRETEMODELS_HH
+#define DUNE_FEM_LDG_DISCRETEMODELS_HH
 
 #include <dune/fem/pass/dgpass.hh>
 #include <dune/fem/pass/discretemodel.hh>

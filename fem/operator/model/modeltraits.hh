@@ -1,5 +1,5 @@
-#ifndef DUNE_MODELTRAITS_HH
-#define DUNE_MODELTRAITS_HH
+#ifndef DUNE_FEM_MODELTRAITS_HH
+#define DUNE_FEM_MODELTRAITS_HH
 
 namespace Dune {
 
