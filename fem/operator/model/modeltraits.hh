@@ -1,6 +1,8 @@
 #ifndef DUNE_FEM_MODELTRAITS_HH
 #define DUNE_FEM_MODELTRAITS_HH
 
+#include <dune/common/fvector.hh>
+
 namespace Dune {
 
   // *** ModelTraits class
