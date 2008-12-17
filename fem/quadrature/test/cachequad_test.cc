@@ -145,7 +145,7 @@ namespace Dune {
 
         if( inter.neighbor ())
         {
-          if( TwistUtilityType::conforming( gridPart.grid(), inter ))
+          if( inter.conforming() )
           {
             const LocalGeometryType& nGeo = inter.intersectionNeighborLocal();
             QuadratureType outerQuad(gridPart, inter, quadOrd , QuadratureType::OUTSIDE);
