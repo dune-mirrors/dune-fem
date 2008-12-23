@@ -30,8 +30,8 @@ EXTRA_DIST = $(DOXYGEN_DIST) $(PAGES) Doxyfile
 CLEANFILES = stamp doxygen.out doxygen-dist.out doxygen.log doxygen-dist.log
 
 #all: $(DOXYGEN_HTML)
-all:
-	@echo "Please use 'make html' to build the documentation."
+all: html
+#	@echo "Please use 'make html' to build the documentation."
 
 FORCE:
 
