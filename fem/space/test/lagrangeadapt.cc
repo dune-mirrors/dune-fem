@@ -264,7 +264,7 @@ void algorithm ( GridPartType &gridPart,
 {
   const unsigned int polOrder
     = DiscreteFunctionSpaceType :: polynomialOrder + 1;
-  
+
   FunctionSpaceType functionSpace;
   ExactSolutionType fexact( functionSpace );
   GridExactSolutionType f( "exact solution", fexact, gridPart, polOrder );
@@ -276,20 +276,24 @@ void algorithm ( GridPartType &gridPart,
   double preL2error = l2norm.distance( f, solution );
   double preH1error = h1norm.distance( f, solution );
 
-  std :: cout << "L2 error before adaption: " << preL2error << std :: endl;
-  std :: cout << "H1 error before adaption: " << preH1error << std :: endl; 
+  std::cout << "Unknowns before adaptation: " << solution.space().size() << std::endl;
+  std::cout << "L2 error before adaptation: " << preL2error << std::endl;
+  std::cout << "H1 error before adaptation: " << preH1error << std::endl; 
   
   adapt( gridPart.grid(), solution, step );
   
   double postL2error = l2norm.distance( f, solution );
   double postH1error = h1norm.distance( f, solution );
 
-  std :: cout << "L2 error after "
+  std::cout << "Unknowns after "
+            << (step < 0 ? "restriction" : "prolongation")
+            << ": " << solution.space().size() << std::endl;
+  std::cout << "L2 error after "
               << (step < 0 ? "restriction" : "prolongation")
-              << ": " << postL2error << std :: endl;
-  std :: cout << "H1 error after "
+              << ": " << postL2error << std::endl;
+  std::cout << "H1 error after "
               << (step < 0 ? "restriction" : "prolongation")
-              << ": " << postH1error << std :: endl; 
+              << ": " << postH1error << std::endl; 
   
   #if USE_GRAPE && SHOW_RESTRICT_PROLONG
     if( turn > 0 ) {
