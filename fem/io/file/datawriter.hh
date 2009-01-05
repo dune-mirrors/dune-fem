@@ -307,7 +307,11 @@ public:
         (saveCount_>0 && timestep%saveCount_ == 0) );
   }
   
-  /** \copydoc IOInterface::write */
+  /** \brief write given data to disc
+     \param[in] time actual time of computation 
+     \param[in] timestep current number of time step 
+     \param[in] data data to write (template type, should be a tuple)
+  */
   template <class OutputTupleType>
   void write(double time, int timestep, OutputTupleType& data) const 
   {
@@ -582,7 +586,9 @@ public:
   /** \brief Constructor generating a checkpointer 
     \param grid corresponding grid 
     \param gridName name of macro grid file (for structured grids)
-    \param data Tuple containing discrete functions to write 
+    \param data Tuple containing discrete functions to write
+    \param startTime start time of simulation (needed for next save step)
+    \param endTime end time of simulation
     \param lb LoadBalancer instance 
       (default is zero, which means start from new)
 
@@ -635,6 +641,8 @@ protected:
     \param grid corresponding grid 
     \param gridName name of macro grid file (for structured grids)
     \param data Tuple containing discrete functions to write 
+    \param startTime start time of simulation (needed for next save step)
+    \param endTime end time of simulation
     \param checkFile filename for restoring state of program from
            previous runs 
 
@@ -818,7 +826,7 @@ protected:
   }
 
 public:
-  /** \copydoc IOInterface::writeStep */
+  /** \copydoc IOInterface::willWrite */
   virtual bool willWrite(double time, int timestep) const 
   {
     // only write data time > saveTime  
