@@ -10,6 +10,7 @@
 
 //- Dune includes  
 #include <dune/common/mpihelper.hh>
+#include <dune/common/exceptions.hh>
 
 #include <dune/grid/common/datahandleif.hh>
 
@@ -84,14 +85,28 @@ namespace Dune
     SlaveDofs ( const SlaveDofs & );
 
   public:
+    //! return dof number of salve with index 
     const int operator [] ( const int index ) const
     {
       return slaves_[ index ];
     }
 
+    //! return number of slave dofs 
     const int size () const
     {
       return slaves_.size();
+    }
+
+    //! return true if index is contained, meaning is a slave dof 
+    bool isSlave( const int index ) const 
+    {
+      // search vector for index 
+      const int sSize = size(); 
+      for(int i=0; i< sSize; ++i)
+      {
+        if( slaves_[i] == index ) return true; 
+      }
+      return false;
     }
 
   public:
@@ -209,7 +224,9 @@ namespace Dune
         LinkBuilderHandleType handle( *this, space_ , mapper_ );
 
         gridPart_.communicate
-          ( handle, space_.communicationInterface(), space_.communicationDirection() );
+          ( handle, 
+            space_.communicationInterface(), 
+            space_.communicationDirection() );
       }
       // catch possible exceptions here to have a clue where it happend 
       catch ( Exception& e )
@@ -322,10 +339,8 @@ namespace Dune
     inline void gather ( MessageBuffer &buffer,
                          const Entity &entity ) const
     {
-      const PartitionType ptype = entity.partitionType();
-
-      if( (ptype == InteriorEntity) || (ptype == BorderEntity) )
-        buffer.write( myRank_ );
+      // for sending ranks write rank 
+      if( sendRank( entity ) ) buffer.write( myRank_ );
     }
 
     //! read buffer and apply operation 
@@ -337,19 +352,17 @@ namespace Dune
                           const EntityType &entity,
                           size_t n )
     {
-      if( n > 0 )
+      assert( ( ! sendRank( entity ) ) ? (n > 0) : true);
+      if( n == 1 )
       {
-        assert( n == 1 );
         int rank;
         buffer.read( rank );
+
         assert( (rank >= 0) && (rank < mySize_) );
-
-        const PartitionType ptype = entity.partitionType();
-        const bool interiorBorder
-          = ((ptype == InteriorEntity) || (ptype == BorderEntity));
-
-        if( !interiorBorder || (rank < myRank_) )
-        {
+        
+        // if entity in not interiorBorder insert anyway 
+        if ( rank < myRank_ || ! sendRank( entity ) )
+        { 
           const int numDofs = mapper_.numEntityDofs( entity );
           for( int i = 0; i < numDofs; ++i )
             slaves_.insert( mapper_.mapEntityDofToGlobal( entity, i ) );
@@ -361,8 +374,15 @@ namespace Dune
     template< class Entity >
     size_t size ( const Entity &entity ) const
     {
+      return (sendRank( entity )) ? 1 : 0;
+    }
+
+  protected:  
+    template <class Entity> 
+    bool sendRank(const Entity& entity) const 
+    {
       const PartitionType ptype = entity.partitionType();
-      return ((ptype == InteriorEntity) || (ptype == BorderEntity) ? 1 : 0);
+      return (ptype == InteriorEntity) || (ptype == BorderEntity);
     }
   };
 
