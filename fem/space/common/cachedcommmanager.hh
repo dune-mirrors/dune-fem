@@ -9,6 +9,10 @@
 
 //- Dune includes  
 #include <dune/common/misc.hh>
+>>>>>>>>>>>>>>>>>>>> File 1
+#include <dune/common/mpihelper.hh>
+>>>>>>>>>>>>>>>>>>>> File 2
+<<<<<<<<<<<<<<<<<<<<
 #include <dune/common/timer.hh>
 #include <dune/common/mpihelper.hh>
 #include <dune/grid/common/grid.hh>
@@ -22,6 +26,10 @@
 //- Dune-fem includes 
 #include <dune/fem/storage/singletonlist.hh>
 #include <dune/fem/space/common/commoperations.hh>
+>>>>>>>>>>>>>>>>>>>> File 1
+#include <dune/fem/space/common/singletonlist.hh>
+>>>>>>>>>>>>>>>>>>>> File 2
+<<<<<<<<<<<<<<<<<<<<
 #include <dune/fem/space/common/arrays.hh>
 #include <dune/fem/space/common/entitycommhelper.hh>
 #include <dune/fem/space/common/commindexmap.hh>
@@ -171,7 +179,11 @@ namespace Dune
 
     //! return time needed for last build 
     double buildTime() const { return buildTime_; }
+>>>>>>>>>>>>>>>>>>>> File 1
+    
+>>>>>>>>>>>>>>>>>>>> File 2
 
+<<<<<<<<<<<<<<<<<<<<
     //! return time needed for last exchange  
     double exchangeTime() const { return exchangeTime_; }
 
@@ -680,6 +692,9 @@ namespace Dune
     // update cache 
     rebuild();
     
+    // take timer needed for exchange  
+    Timer exchangeTime;
+      
     const int numLinks = nlinks();
 
     // write buffers 
@@ -695,6 +710,9 @@ namespace Dune
     // read buffers 
     for( int link = 0; link < numLinks; ++link )
       readBuffer( link, buffer_[ link ], discreteFunction, operation );
+
+    // store time for exchange 
+    exchangeTime_ = exchangeTime.elapsed();
   }
 
 
@@ -856,9 +874,13 @@ namespace Dune
     //! exchange discrete function to all procs we share data 
     //! using the copy operation 
     template <class DiscreteFunctionType> 
-    void exchange(DiscreteFunctionType & df) const
+    void exchange(DiscreteFunctionType & df) const 
     {
-      cache_.exchange( df, (DFCommunicationOperation :: Copy *) 0 );
+      // get type of default operation 
+      typedef typename DiscreteFunctionType :: DiscreteFunctionSpaceType
+        :: template CommDataHandle< DiscreteFunctionType > :: OperationType  DefaultOperationType;
+      
+      cache_.exchange( df, (DefaultOperationType *) 0 );
     }
     
     //! exchange discrete function to all procs we share data 
@@ -884,7 +906,17 @@ namespace Dune
     {
       typedef typename DiscreteFunctionType :: DiscreteFunctionSpaceType
         :: template CommDataHandle<DiscreteFunctionType> :: OperationType OperationType;
-      cache_.readBuffer(osv, df , (OperationType *) 0 );
+      readBuffer( osv, df, (OperationType *) 0 );
+    }
+
+    // read given df from given buffer 
+    template <class ObjectStreamVectorType, class DiscreteFunctionType,
+              class OperationType> 
+    void readBuffer(ObjectStreamVectorType& osv, 
+                    DiscreteFunctionType & df,
+                    const OperationType* op) const 
+    {
+      cache_.readBuffer(osv, df , op);
     }
 
     //! rebuild underlying cache if necessary 
@@ -913,9 +945,12 @@ namespace Dune
     };
     
     //! communicated object implementation  
+    //! default operation is copy, because these lists are used to
+    //! restore consistency only 
     template <class DiscreteFunctionImp,
               class MPAccessType,
-              class ObjectStreamVectorType>
+              class ObjectStreamVectorType,
+              class OperationType = DFCommunicationOperation :: Copy >
     class DiscreteFunctionCommunicator 
     : public DiscreteFunctionCommunicatorInterface<MPAccessType,ObjectStreamVectorType> 
     {
@@ -946,7 +981,7 @@ namespace Dune
       //! read discrete function from all buffers 
       virtual void readBuffer(ObjectStreamVectorType& osv)
       {
-        comm_.readBuffer(osv,df_);
+        comm_.readBuffer(osv,df_, (OperationType *) 0);
       }
 
       //! rebuild cache if grid changed 
@@ -1024,7 +1059,7 @@ namespace Dune
 
     //! exchange the list of discrete functions between processes 
     //! only one communication is done here 
-    void exchange() const
+    void exchange() 
     {
       // if only one process, do nothing 
       if( mySize_ <= 1 ) return ;
@@ -1032,7 +1067,7 @@ namespace Dune
       // exchange data 
       if(objList_.size() > 0)
       {
-        typedef CommObjListType :: const_iterator iterator; 
+        typedef CommObjListType :: iterator iterator; 
         // rebuild cahce if grid has changed
         {
           iterator end = objList_.end();
