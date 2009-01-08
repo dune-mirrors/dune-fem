@@ -9,10 +9,6 @@
 
 //- Dune includes  
 #include <dune/common/misc.hh>
->>>>>>>>>>>>>>>>>>>> File 1
-#include <dune/common/mpihelper.hh>
->>>>>>>>>>>>>>>>>>>> File 2
-<<<<<<<<<<<<<<<<<<<<
 #include <dune/common/timer.hh>
 #include <dune/common/mpihelper.hh>
 #include <dune/grid/common/grid.hh>
@@ -26,10 +22,6 @@
 //- Dune-fem includes 
 #include <dune/fem/storage/singletonlist.hh>
 #include <dune/fem/space/common/commoperations.hh>
->>>>>>>>>>>>>>>>>>>> File 1
-#include <dune/fem/space/common/singletonlist.hh>
->>>>>>>>>>>>>>>>>>>> File 2
-<<<<<<<<<<<<<<<<<<<<
 #include <dune/fem/space/common/arrays.hh>
 #include <dune/fem/space/common/entitycommhelper.hh>
 #include <dune/fem/space/common/commindexmap.hh>
@@ -179,11 +171,7 @@ namespace Dune
 
     //! return time needed for last build 
     double buildTime() const { return buildTime_; }
->>>>>>>>>>>>>>>>>>>> File 1
-    
->>>>>>>>>>>>>>>>>>>> File 2
 
-<<<<<<<<<<<<<<<<<<<<
     //! return time needed for last exchange  
     double exchangeTime() const { return exchangeTime_; }
 
