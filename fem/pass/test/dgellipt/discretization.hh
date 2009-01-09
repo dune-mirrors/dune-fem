@@ -271,6 +271,8 @@ public:
       }
 
       SolutionType& dest = const_cast<SolutionType&> (lastPass_.destination());
+      // only for testing 
+      lastPass_.setTime ( 0.0 ) ; 
       dest.clear();
 
       veloPass_(arg,velo);
