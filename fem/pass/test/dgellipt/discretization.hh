@@ -102,6 +102,7 @@ public:
   typedef typename GradientModelType::Traits::DiscreteFunctionSpaceType GradDiscreteFunctionSpaceType;
 
   typedef DiscreteFunctionSpaceType VeloSpaceType;
+
   typedef StartPass<DiscreteFunctionType, startPass > Pass0Type;
   // note, the destination type of the pass 0 is the argument type of pass 1
   typedef LocalDGElliptGradientPass<GradientModelType , Pass0Type, gradientId > GradPassType;
