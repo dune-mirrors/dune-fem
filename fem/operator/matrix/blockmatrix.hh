@@ -218,6 +218,18 @@ public:
     } 
   }
 
+  //! scale matrix with scalar 
+  void scale ( const T& val ) 
+  {
+    for(int row=0; row<rows(); ++row)
+    {
+      for(int col=0; col<cols(); ++col)
+      {
+        matrix_[row][col] *= val;
+      }
+    }
+  }
+
   //! set all values of the matrix to given value 
   DenseMatrix<T> & operator = (const T & val)
   {
@@ -1051,6 +1063,20 @@ public:
       }
     }
 
+    //! clear all entries belonging to local matrix 
+    void scale ( const DofType& value )
+    {
+      const size_t rows = rows_.size();
+      const size_t cols = cols_.size();
+      for(size_t i=0; i<rows; ++i) 
+      {
+        for(size_t j=0; j<cols; ++j) 
+        {
+          matrices_[i][j]->scale( value ); 
+        }
+      }
+    }
+
     //! resort all global rows of matrix to have ascending numbering 
     void resort ()
     {
@@ -1248,6 +1274,15 @@ public:
 
   //! empty method as we use right preconditioning here
   void createPreconditionMatrix() {}
+
+  /** \brief delete all row belonging to a hanging node and rebuild them */
+  template <class HangingNodesType>
+  void changeHangingNodes(const HangingNodesType& hangingNodes)
+  {
+  }
+
+protected:
+
 };
 
 
