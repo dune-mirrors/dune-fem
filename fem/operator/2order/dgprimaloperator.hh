@@ -542,12 +542,11 @@ namespace Dune {
       // also calculate matrix for overlap 
       if( spc_.grid().overlapSize(0) > 0 ) 
       {
-        typedef typename GridPartNewPartitionType<GridPartType,Overlap_Partition>:: NewGridPartType NewGridPartType;
-        typedef typename NewGridPartType :: template Codim<0> :: IteratorType IteratorType;
+        typedef typename GridPartType :: template Codim<0> :: 
+            template Partition< Overlap_Partition > :: IteratorType IteratorType;
 
-        NewGridPartType gridPart( gridPart_.grid() );
-        IteratorType endit = gridPart. template end<0>();
-        for(IteratorType it = gridPart. template begin<0>();
+        IteratorType endit = gridPart_. template end<0, Overlap_Partition >();
+        for(IteratorType it = gridPart_. template begin<0, Overlap_Partition>();
             it != endit; ++it)
         {
           applyLocal(*it);

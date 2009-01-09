@@ -1,7 +1,6 @@
 #ifndef DUNE_DGMATRIXSETUP_HH
 #define DUNE_DGMATRIXSETUP_HH
 
-#include <dune/fem/gridpart/gridpartutility.hh>
 #include <dune/fem/function/common/scalarproducts.hh>
 #include <dune/fem/space/common/commoperations.hh>
 
@@ -45,16 +44,8 @@ public:
                            MatrixStructureMapImp& indices,
                            const DiscreteFunctionType* )
   {
-    typedef typename SpaceImp :: GridPartType GridPartImp;
-    GridPartImp& gridP = space.gridPart();
-
-    typedef typename GridPartNewPartitionType<
-      GridPartImp,All_Partition> :: NewGridPartType GridPartType;    
-
-    const GridPartType gridPart ( gridP.grid() );
-    
-    //typedef typename SpaceImp :: GridPartType GridPartType;
-    //const GridPartType& gridPart = space.gridPart();
+    typedef typename SpaceImp :: GridPartType GridPartType;
+    const GridPartType& gridPart = space.gridPart();
 
     typedef ParallelScalarProduct<DiscreteFunctionType> ParallelScalarProductType;
     typedef typename ParallelScalarProductType :: BuildProxyType BuildProxyType;
