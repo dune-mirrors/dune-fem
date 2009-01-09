@@ -17,6 +17,7 @@
 #include <dune/fem/operator/common/localmatrix.hh>
 #include <dune/fem/operator/common/localmatrixwrapper.hh>
 #include <dune/fem/function/common/scalarproducts.hh>
+#include <dune/fem/io/parameter.hh>
 
 namespace Dune { 
 
@@ -37,7 +38,7 @@ namespace Dune {
       typedef typename BaseType :: ColIterator ColIteratorType ;
 
       typedef ImprovedBCRSMatrix< LittleBlockType,
-              RowDiscreteFunctionImp, ColDiscreteFunctionImp> ThisType;
+              RowDiscreteFunctionImp, ColDiscreteFunctionImp > ThisType;
 
       typedef typename BaseType :: size_type size_type;
 
@@ -88,17 +89,19 @@ namespace Dune {
       int localRows_; 
       int localCols_;
 
+      typedef typename BaseType :: BuildMode BuildMode ;
+
     public:
       //! constructor used by ISTLMatrixObject
-      ImprovedBCRSMatrix(size_type rows, size_type cols)
-        : BaseType (rows,cols,BaseType::row_wise)
+      ImprovedBCRSMatrix(size_type rows, size_type cols) 
+        : BaseType (rows,cols, BaseType :: row_wise)
         , nz_(0)
       {
       }
 
       //! constuctor used by ILU preconditioner 
-      ImprovedBCRSMatrix(size_type rows, size_type cols, size_type nz)
-        : BaseType (rows,cols, BaseType::row_wise)
+      ImprovedBCRSMatrix(size_type rows, size_type cols, size_type nz) 
+        : BaseType (rows,cols, BaseType :: row_wise)
         , nz_(nz)
       {
       }
@@ -136,29 +139,35 @@ namespace Dune {
           // build matrix entries
           stencil.setup(colSpace, rowMapper, colMapper, indices , (ColDiscreteFunctionType*) 0);
 
-          // type of create interator 
-          typedef typename BaseType :: CreateIterator CreateIteratorType; 
-          // not insert map of indices into matrix 
-          CreateIteratorType endcreate = this->createend();
-          for(CreateIteratorType create = this->createbegin();
-              create != endcreate; ++create) 
-          {
-            // set of column indices 
-            std::set<int>& localIndices = indices[create.index()];
-            typedef typename std::set<int>::iterator iterator;
-            iterator end = localIndices.end();
-            // insert all indices for this row 
-            for (iterator it = localIndices.begin(); it != end; ++it)
-            {
-              create.insert( *it );
-            }
-          }
+          // insert entries 
+          createEntries( indices );
         }
 
         // in verbose mode some output 
         if(verbose)  
         {
           std::cout << "ISTLMatrix::setup: finished assembly of matrix structure! \n";
+        }
+      }
+
+      void createEntries(std::map<int , std::set<int> >& indices) 
+      {
+        // type of create interator 
+        typedef typename BaseType :: CreateIterator CreateIteratorType; 
+        // not insert map of indices into matrix 
+        CreateIteratorType endcreate = this->createend();
+        for(CreateIteratorType create = this->createbegin();
+            create != endcreate; ++create) 
+        {
+          // set of column indices 
+          std::set<int>& localIndices = indices[ create.index() ];
+          typedef typename std::set<int>::iterator iterator;
+          iterator end = localIndices.end();
+          // insert all indices for this row 
+          for (iterator it = localIndices.begin(); it != end; ++it)
+          {
+            create.insert( *it );
+          }
         }
       }
 
@@ -181,42 +190,66 @@ namespace Dune {
       void setup(ThisType& oldMatrix,
                  const HangingNodesType& hangingNodes) 
       {
-        // type of create interator 
-        typedef typename BaseType :: CreateIterator CreateIteratorType; 
+        // necessary because element traversal not necessaryly is in
+        // ascending order 
+        typedef std::set< std::pair<int, block_type> > LocalEntryType;
+        typedef std::map< int , LocalEntryType > EntriesType;
+        EntriesType entries;
 
         {
+          // map of indices 
+          std::map< int , std::set<int> > indices;
           // not insert map of indices into matrix 
-          RowIteratorType rowit  = oldMatrix.begin();
-
-          CreateIteratorType endcreate = this->createend();
-          for(CreateIteratorType create = this->createbegin();
-              create != endcreate; ++create, ++rowit ) 
+          RowIteratorType rowend  = oldMatrix.end();
+          for(RowIteratorType it  = oldMatrix.begin(); it != rowend; ++it)
           {
-            assert( rowit != oldMatrix.end() );
-            const int row = create.index();
+            const int row = it.index();
+            std::set< int >& localIndices = indices[ row ];
+
             if( hangingNodes.isHangingNode( row ) )
             {
-              // insert diagonal 
-              create.insert( row );
-
-              // insert columns 
+              // insert columns into other columns 
               typedef typename HangingNodesType :: ColumnVectorType ColumnVectorType;
               const ColumnVectorType& cols = hangingNodes.associatedDofs( row );
-              for(size_t i=0; i<cols.size(); ++i) 
+              const size_t colSize = cols.size();
+              for(size_t i=0; i<colSize; ++i) 
               {
-                create.insert( cols[i] );
+                assert( ! hangingNodes.isHangingNode( cols[i].first ) );
+
+                // get local indices of col
+                std::set< int >& localColIndices = indices[ cols[i].first ];
+                LocalEntryType& localEntry = entries[  cols[i].first ];
+
+                // copy from old matrix 
+                ColIteratorType endj = (*it).end();
+                for (ColIteratorType j= (*it).begin(); j!=endj; ++j)
+                {
+                  localColIndices.insert( j.index () );
+                  localEntry.insert( std::make_pair( j.index(), (cols[i].second * (*j)) ));
+                }
+              }
+
+              // insert diagonal and hanging columns 
+              localIndices.insert( row );
+              for(size_t i=0; i<colSize; ++i) 
+              {
+                localIndices.insert( cols[i].first );
               }
             }
             else 
             {
               // copy from old matrix 
-              ColIteratorType endj = (*rowit).end();
-              for (ColIteratorType j= (*rowit).begin(); j!=endj; ++j)
+              ColIteratorType endj = (*it).end();
+              for (ColIteratorType j= (*it).begin(); j!=endj; ++j)
               {
-                create.insert( j.index () );
+                localIndices.insert( j.index () );
               }
             }
           }
+
+          // create matrix from entry map 
+          createEntries( indices );
+
         } // end create, matrix is on delete of create iterator 
 
         {
@@ -235,19 +268,27 @@ namespace Dune {
               typedef typename HangingNodesType :: ColumnVectorType ColumnVectorType;
               const ColumnVectorType& cols = hangingNodes.associatedDofs( row );
 
-              // to be revised 
-              block_type factor = -1.0 / ((field_type) cols.size());
+              std::map< const int , block_type > colMap; 
+              // only working for block size 1 ath the moment 
+              assert( block_type :: rows == 1 );
+              // insert columns into map 
+              const size_t colSize = cols.size();
+              for( size_t i=0; i<colSize; ++i) 
+              {
+                colMap[ cols[i].first ] = -cols[i].second;
+              }
+              // insert diagonal into map
+              colMap[ row ] = 1;
 
               ColIteratorType endj = (*create).end();
               for (ColIteratorType j= (*create).begin(); j!=endj; ++j)
               {
-                if( j.index() == row ) 
-                  (*j) = 1; 
-                else 
-                  (*j) = factor; 
+                assert( colMap.find( j.index() ) != colMap.end() );
+                (*j) = colMap[ j.index() ];
               }
             }
-            else 
+            // if entries are equal, just copy 
+            else if ( entries.find( row ) == entries.end() ) 
             {
               ColIteratorType colit = (*rowit).begin();
               ColIteratorType endj = (*create).end();
@@ -255,6 +296,66 @@ namespace Dune {
               {
                 assert( colit != (*rowit).end() );
                 (*j) = (*colit);
+              }
+            }
+            else 
+            {
+              typedef std::map< int , block_type > ColMapType;
+              ColMapType oldCols;
+
+              {
+                ColIteratorType colend = (*rowit).end(); 
+                for(ColIteratorType colit = (*rowit).begin(); colit !=
+                    colend; ++colit)
+                {
+                  oldCols[ colit.index() ] = 0; 
+                }
+              }
+
+              typedef typename EntriesType :: iterator Entryiterator ;
+              Entryiterator entry = entries.find( row );
+              assert( entry  != entries.end ());
+
+              {
+                typedef typename LocalEntryType :: iterator iterator;
+                iterator endcol = (*entry).second.end();
+                for( iterator co = (*entry).second.begin(); co != endcol; ++co) 
+                {
+                  oldCols[ (*co).first ] = 0;
+                }
+              }
+
+              {
+                ColIteratorType colend = (*rowit).end(); 
+                for(ColIteratorType colit = (*rowit).begin(); colit !=
+                    colend; ++colit)
+                {
+                  oldCols[ colit.index() ] += (*colit); 
+                }
+              }
+
+              {
+                typedef typename LocalEntryType :: iterator iterator;
+                iterator endcol = (*entry).second.end();
+                for( iterator co = (*entry).second.begin(); co != endcol; ++co) 
+                {
+                  oldCols[ (*co).first ] += (*co).second;   
+                }
+              }
+
+              ColIteratorType endj = (*create).end();
+              for (ColIteratorType j= (*create).begin(); j!=endj; ++j )
+              {
+                typedef typename ColMapType :: iterator iterator;
+                iterator colEntry = oldCols.find( j.index() );
+                if( colEntry != oldCols.end() ) 
+                {
+                  (*j) = (*colEntry).second;
+                }
+                else 
+                {
+                  abort();
+                }
               }
             }
           }
@@ -348,12 +449,15 @@ namespace Dune {
     typedef ThisType PreconditionMatrixType;
     typedef typename MatrixAdapterType :: ParallelScalarProductType ParallelScalarProductType;
    
+    template <class MatrixObjectImp> 
+    class LocalMatrix; 
+
     struct LocalMatrixTraits
     {
       typedef RowSpaceType DomainSpaceType ;
       typedef ColumnSpaceType RangeSpaceType;
       typedef typename RowSpaceType :: RangeFieldType RangeFieldType;
-      typedef MatrixType LocalMatrixType;
+      typedef LocalMatrix<ThisType> LocalMatrixType;
       typedef typename MatrixType:: block_type LittleBlockType;
     };
 
@@ -485,9 +589,23 @@ namespace Dune {
         const int lCol = localCol%littleCols;
         return (*matrices_[row][col])[lRow][lCol];
       }
+
     public:
-      int rows () const { return matrices_.size()*littleRows; }
-      int cols () const { return matrices_[0].size()*littleCols; }
+      const DofType get(const int localRow, const int localCol) const 
+      {
+        const int row = (int) localRow / littleRows;
+        const int col = (int) localCol / littleCols;
+        const int lRow = localRow%littleRows;
+        const int lCol = localCol%littleCols;
+        return (*matrices_[row][col])[lRow][lCol];
+      }
+
+      void scale (const DofType& scalar) 
+      {
+        for(size_t i=0; i<matrices_.size(); ++i)
+          for(size_t j=0; j<matrices_[i].size(); ++j)
+            (*matrices_[i][j]) *= scalar;
+      }
 
       void add(const int localRow, const int localCol , const DofType value)
       {
@@ -512,7 +630,7 @@ namespace Dune {
         const int lRow = localRow%littleRows;
 
         // get number of columns  
-        const int col = cols();
+        const int col = this->cols();
         for(int localCol=0; localCol<col; ++localCol) 
         {
           const int col = (int) localCol / littleCols;
@@ -521,15 +639,6 @@ namespace Dune {
         }
         // set diagonal entry to 1 
         (*matrices_[row][row])[lRow][lRow] = 1;
-      }
-
-      // get entry of matrix 
-      DofType get(int localRow, int localCol ) const
-      {
-#ifndef NDEBUG
-        check(localRow,localCol);
-#endif
-        return getValue(localRow,localCol); 
       }
 
       //! clear all entries belonging to local matrix 
@@ -623,19 +732,25 @@ namespace Dune {
       , Arg_(0)
       , Dest_(0)
     {
+      int preCon = 0;
       if(paramfile != "")
       {
         const bool output = (rowSpace_.grid().comm().rank() == 0);
-        int preCon = 0;
         readParameter(paramfile,"Preconditioning",preCon, output);
-        if( preCon >= 0 && preCon <= 6) 
-          preconditioning_ = (PreConder_Id) preCon;
-        else 
-          preConErrorMsg(preCon);
-        
         readParameter(paramfile,"Pre-iteration",numIterations_, output);
         readParameter(paramfile,"Pre-relaxation",relaxFactor_, output);
       }
+      else 
+      {
+        preCon          = Parameter :: getValue("Preconditioning", preCon); 
+        numIterations_  = Parameter :: getValue("Pre-iteration", numIterations_);
+        relaxFactor_    = Parameter :: getValue("Pre-relaxation",relaxFactor_);
+      }
+
+      if( preCon >= 0 && preCon <= 6) 
+        preconditioning_ = (PreConder_Id) preCon;
+      else 
+        preConErrorMsg(preCon);
 
       assert( rowMapper_.size() == colMapper_.size() );
     }
@@ -732,8 +847,8 @@ namespace Dune {
       {
         removeObj();
 
-        matrix_ = new MatrixType(rowMapper_.size(), colMapper_.size());
         StencilType stencil; 
+        matrix_ = new MatrixType(rowMapper_.size(),colMapper_.size());
         matrix().setup(colSpace_,rowMapper(),colMapper(),stencil,verbose);
 
         sequence_ = rowSpace_.sequence();
@@ -741,8 +856,8 @@ namespace Dune {
     }
 
     //! setup new matrix with hanging nodes taken into account 
-    template <class HangingNodesType>
-    void changeHangingNodes(const HangingNodesType& hangingNodes)
+    template <class HangingNodesType> 
+    void changeHangingNodes(const HangingNodesType& hangingNodes) 
     {
       // create new matrix 
       MatrixType* newMatrix = new MatrixType(rowMapper_.size(), colMapper_.size());
@@ -810,7 +925,7 @@ namespace Dune {
     
     //! apply with discrete functions 
     void apply(const RowDiscreteFunctionType& arg,
-               RowDiscreteFunctionType& dest) const 
+               ColumnDiscreteFunctionType& dest) const 
     {
       createMatrixAdapter();
       assert( matrixAdap_ );
@@ -830,6 +945,31 @@ namespace Dune {
       createMatrixAdapter();
       assert( matrixAdap_ );
       matrixAdap_->apply( arg.blockVector(), dest.blockVector() );
+    }
+
+    //! dot method for OEM Solver 
+    double ddotOEM(const double* v, const double* w) const
+    {
+      createBlockVectors();
+      
+      assert( Arg_ );
+      assert( Dest_ );
+
+      RowBlockVectorType&    V = *Arg_;
+      ColumnBlockVectorType& W = *Dest_;
+      
+      // copy from double 
+      double2Block(v, V);
+      double2Block(w, W);
+
+#if HAVE_MPI 
+      // in parallel use scalar product of discrete functions 
+      BlockVectorDiscreteFunction< RowSpaceType    > vF("ddotOEM:vF", rowSpace_, V ); 
+      BlockVectorDiscreteFunction< ColumnSpaceType > wF("ddotOEM:wF", colSpace_, W ); 
+      return vF.scalarProductDofs( wF );
+#else 
+      return V * W;
+#endif
     }
 
     //! resort row numbering in matrix to have ascending numbering 
