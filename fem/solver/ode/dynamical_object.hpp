@@ -1,7 +1,7 @@
 #ifndef DYNAMICAL_OBJECT_HPP
 #define DYNAMICAL_OBJECT_HPP
 
-
+#include <cstring>
 #include <cassert>
 #include <iostream>
 
@@ -44,8 +44,8 @@ DynamicalObject::DynamicalObject(const char name[], int id, int components) :
   assert(_size);
   for(int i=0; i<components; i++) _size[i] = 0;
 
-  this->name = new char[strlen(name) + 1];
-  strcpy(this->name, name);
+  this->name = new char[std::strlen(name) + 1];
+  std::strcpy(this->name, name);
 
   // set this to some useful values
   eta_lo = 0.2;
@@ -108,16 +108,16 @@ int DynamicalObject::new_size(int requested_new_size, int component)
 
     if (os){
       if (_id >= 0){
-	*os << name << " " << _id << ":   " 
-	    << "component: " << component << "   "
-	    << _size[component] << " -> " << requested_new_size+add_size
-	    << std::endl;
+  *os << name << " " << _id << ":   " 
+      << "component: " << component << "   "
+      << _size[component] << " -> " << requested_new_size+add_size
+      << std::endl;
       }
       else{
-	*os << name << " " << "unknown id:   " 
-	    << "component: " << component << "   "
-	    << _size[component] << " -> " << requested_new_size+add_size
-	    << std::endl;
+  *os << name << " " << "unknown id:   " 
+      << "component: " << component << "   "
+      << _size[component] << " -> " << requested_new_size+add_size
+      << std::endl;
       }
     }
 
