@@ -144,7 +144,7 @@ struct OnTheFlyMatrixTraits
   template <class OperatorTraits>
   struct MatrixObject
   {
-    typedef OnTheFlyMatrixObject<RowSpaceType,ColumnSpaceType,OperatorTraits> MatrixObjectType;
+    typedef OnTheFlyMatrixObject<RowSpaceType,ColumnSpaceType, OperatorTraits> MatrixObjectType;
   };
 };
 
@@ -287,6 +287,12 @@ public:
       matrix_.clear();
     }
 
+    //! scale local matrix 
+    void scale ( const DofType& value )
+    {
+      matrix_.scale ( value );
+    }
+
     //! resort does nothing because already sorted in good way 
     void resort ()
     {
@@ -315,9 +321,6 @@ public:
 
   mutable MatrixType matrix_;
 
-  // communication manager 
-  mutable CommunicationManagerType communicate_;
-
   // local matrix stack 
   mutable LocalMatrixStackType localMatrixStack_;
 
@@ -328,11 +331,10 @@ public:
   //!         - Preconditioning: {0 == no, 1 == yes} used is SSOR 
   OnTheFlyMatrixObject(const RowSpaceType & rowSpace, 
                        const ColumnSpaceType & colSpace,
-                       const std::string paramfile = "" ) 
+                       const std::string paramfile = "") 
     : rowSpace_(rowSpace)
     , colSpace_(colSpace) 
     , matrix_()
-    , communicate_(rowSpace_)
     , localMatrixStack_(*this)
   {
     /*
@@ -376,7 +378,6 @@ public:
     abort();
   }
 
-
   //! mult method of matrix object used by oem solver
   void multOEM(const double * arg, double * dest) const 
   {
@@ -386,12 +387,10 @@ public:
   //! communicate data 
   void communicate(const double * arg) const
   {
-    /*
     if( rowSpace_.grid().comm().size() <= 1 ) return ;
 
     DestinationType tmp("BlockMatrixObject::communicate_tmp",rowSpace_,arg);
-    communicate_.exchange( tmp );
-    */
+    rowSpace_.communicate( tmp );
   }
 
   //! resort row numbering in matrix to have ascending numbering 
@@ -421,6 +420,13 @@ public:
 
   //! empty method as we use right preconditioning here
   void createPreconditionMatrix() {}
+
+  /** \brief delete all row belonging to a hanging node and rebuild them */
+  template <class HangingNodesType>
+  void changeHangingNodes(const HangingNodesType& hangingNodes)
+  { 
+    DUNE_THROW(NotImplemented,"OnTheFlyMatrixObject: changeHangingNodes not implemented for this matrix object");
+  }
 };
 
 
