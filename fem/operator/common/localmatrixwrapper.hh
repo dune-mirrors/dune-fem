@@ -143,6 +143,12 @@ namespace Dune
       return localMatrix().get( localRow, localCol );
     }
 
+    /** \copydoc Dune::LocalMatrixInterface::scale */
+    inline void scale ( const RangeFieldType& scalar ) 
+    {
+      return localMatrix().scale( scalar );
+    }
+
     /** \copydoc Dune::LocalMatrixInterface::clear */
     inline void clear ()
     {

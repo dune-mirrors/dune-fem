@@ -135,6 +135,15 @@ namespace Dune
       return asImp().get(localRow,localCol);
     }
 
+    /*! \brief scale matrix with scalar value 
+        \param[in] scalar scalar value that scales the matrix
+    */
+    inline void scale ( const RangeFieldType& scalar )
+    {
+      CHECK_AND_CALL_INTERFACE_IMPLEMENTATION(
+        asImp().scale( scalar ) );
+    }
+
     /*! \brief set all entries of local matrix to zero */
     inline void clear ()
     {
