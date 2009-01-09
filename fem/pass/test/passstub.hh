@@ -58,7 +58,7 @@ namespace Dune
 
 
   class ProblemStub : public
-        DiscreteModelDefaultWithInsideOutSide<PassStubTraits<GridType> > 
+        DiscreteModelDefaultWithInsideOutSide<PassStubTraits<GridType>, 0 > 
   {
   public:  
     typedef PassStubTraits<GridType> Traits;
