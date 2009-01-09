@@ -228,7 +228,7 @@ namespace Dune {
     //! type of restrict and prolong operator during adaptation 
     typedef LocalOperatorType RestrictProlongOperatorType;
 
-  private:  
+  protected:  
     DiscreteModelType& problem_; 
     const DiscreteFunctionSpaceType& spc_;
     const bool verbose_;
@@ -299,6 +299,7 @@ namespace Dune {
       assert( this->destination_ == 0 );
       this->destination_ = &dest;
     }
+
     void printTexInfo(std::ostream& out) const {
       BaseType::printTexInfo(out);
       out << "LocalDGElliptPass: ";
@@ -308,13 +309,18 @@ namespace Dune {
       // invOp_.printTexInfo(out);
     }
 
+    //! Set time provider (which gives you access to the global time).
+    void setTime(const double t)
+    {
+      BaseType :: setTime( t );
+      op_.setTime( t );
+    }
+
     //! do nothing here 
     void applyLocal(EntityType& en) const
     {
     }
     
-    GradDestinationType & tmpMemory() { return op_.tmpMemory(); }
-
     //! return restrict and prolong operator for fe-pass 
     RestrictProlongOperatorType & restrictProlongOperator () { return op_; }
 
@@ -345,11 +351,6 @@ namespace Dune {
       spc_.communicate( dest );
     } 
 
-    template <class FuncType, class GradType>
-    void evalGradient(const FuncType & u, GradType & grad, bool applyMass = false) const
-    {
-      op_.evalGradient(u,grad,applyMass);
-    }
   private:
     bool readVerbose(const std::string& paramFile, const bool verboseOutput) const 
     {
@@ -514,7 +515,7 @@ namespace Dune {
     {
     }
 
-  private:
+  protected:
     mutable DiscreteModelCallerType caller_;
     DiscreteModelType& problem_; 
     const DiscreteFunctionSpaceType& spc_;
