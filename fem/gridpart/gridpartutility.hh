@@ -2,6 +2,7 @@
 #define DUNE_GRIDPARTUTILITY_HH
 
 //- System includes
+#error "Adapt code to new gridparts" 
 
 //- Dune includes
 #include <dune/fem/gridpart/gridpart.hh>
@@ -26,7 +27,7 @@ namespace Dune {
   template <class GridImp, PartitionIteratorType old_pitype, 
             template <class, PartitionIteratorType> class GridPartImp, 
             PartitionIteratorType pitype> 
-  struct GridPartNewPartitionType<GridPartImp<GridImp, old_pitype> , pitype>
+  struct GridPartNewPartitionType< GridPartImp<GridImp, old_pitype> , pitype >
   {
     //! type of grid part with new partition type 
     typedef GridPartImp<GridImp,pitype> NewGridPartType;
