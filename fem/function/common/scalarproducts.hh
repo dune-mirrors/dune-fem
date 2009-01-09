@@ -22,7 +22,6 @@
 //- Dune-fem includes 
 //#include <dune/fem/space/common/commoperations.hh>
 #include <dune/fem/storage/singletonlist.hh>
-#include <dune/fem/gridpart/gridpartutility.hh>
 #include <dune/fem/space/common/commindexmap.hh>
 
 namespace Dune
@@ -170,14 +169,6 @@ namespace Dune
   template< class Space, class Mapper >
   inline void SlaveDofs< Space, Mapper > :: buildDiscontinuousMaps ()
   {
-#if 0
-    typedef typename GridPartNewPartitionType< GridPartType, All_Partition >
-      :: NewGridPartType NewGridPartType;
-    typedef typename NewGridPartType :: template Codim<0> :: IteratorType IteratorType;
-
-    NewGridPartType gridPart( const_cast< GridPartType & >( gridPart_ ).grid() );
-#endif
-
     const PartitionIteratorType idxpitype = GridPartType :: indexSetPartitionType;
 
     typedef typename GridPartType :: template Codim< 0 >
