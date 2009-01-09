@@ -203,6 +203,9 @@ public:
   //! set all entries in row to zero 
   void clearRow (int row);
 
+  //! set all entries in row to zero 
+  void scaleRow (int row, const T& val );
+
   //! set all matrix entries to zero, no other value makes sense for 
   //! sparse matrix 
   void clear();
@@ -531,12 +534,28 @@ private:
     template <class HangingNodesType> 
     void changeHangingNodes(const HangingNodesType& hangingNodes) 
     {
-      typedef typename HangingNodesType :: IteratorType IteratorType;
-      const IteratorType end = hangingNodes.end();
-      for( IteratorType it = hangingNodes.begin(); it != end; ++it)
       {
-        insertHangingRow( hangingNodes, (*it).first , (*it).second );
+        typedef typename HangingNodesType :: IteratorType IteratorType;
+        const IteratorType end = hangingNodes.end();
+        for( IteratorType it = hangingNodes.begin(); it != end; ++it)
+        {
+          insertHangingRow( hangingNodes, (*it).first , (*it).second );
+        }
       }
+
+      /*
+      {
+        typedef typename HangingNodesType :: SlaveNodesType SlaveNodesType; 
+        typedef typename SlaveNodesType :: const_iterator iterator;
+        iterator end =  hangingNodes.slaveNodes().end();
+        for( iterator it =  hangingNodes.slaveNodes().begin(); 
+             it != end; ++it )
+        {
+          matrix().unitRow( *it );
+          matrix().set( *it, *it, 0.0 );
+        }
+      }
+      */
     }
 protected:
     /** \brief insert row to be a row for a hanging node */
@@ -688,7 +707,7 @@ protected:
 
       return matrix_( row_[ localRow ], col_[ localCol ] );
     }
-    
+
     //! set matrix entry to value 
     void set( int localRow, int localCol, const DofType value )
     {
@@ -711,6 +730,14 @@ protected:
       const int row = rows();
       for( int i = 0; i < row; ++i )
         matrix_.clearRow( row_[ i ] );
+    }
+
+    //! scale local matrix with a certain value 
+    void scale ( const DofType& value ) 
+    {
+      const int row = rows();
+      for( int i = 0; i < row; ++i )
+        matrix_.scaleRow( row_[ i ] , value );
     }
 
     //! resort all global rows of matrix to have ascending numbering 

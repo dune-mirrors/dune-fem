@@ -147,7 +147,7 @@ void SparseRowMatrix<T>::resize (int newRow, int newCol, int newNz )
       if( (oldSize > 0) && (oldNz > 0 ))
       {
         std::memset( col_ , -1 , newRow * newNz * sizeof(int));
-        //const int entries = std::min( oldNz, newNz );
+        const int entries = std::min( oldNz, newNz );
         for( int row = 0; row < copySize; ++ row )
         {
           const int newLoc = row * newNz ;
@@ -284,6 +284,20 @@ void SparseRowMatrix<T>::clearRow(int row)
     ++col;
   }
   if (checkNonConstMethods) assert(checkConsistency());
+}
+
+template <class T> 
+void SparseRowMatrix<T>::scaleRow(int row, const T& val )
+{
+  assert( nonZeros_ );
+  assert( values_ );
+  assert( col_ );
+
+  int col = row * nz_ ;
+  for(int i=0; i<nz_ ; ++i, ++ col )
+  {
+    values_ [col] *= val ;
+  }
 }
 
 template <class T> 
