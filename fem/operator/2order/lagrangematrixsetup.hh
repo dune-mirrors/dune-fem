@@ -1,6 +1,11 @@
 #ifndef DUNE_LAGRANGEMATRIXSETUP_HH
 #define DUNE_LAGRANGEMATRIXSETUP_HH
 
+#include <map>
+#include <set>
+
+#include <dune/fem/function/common/scalarproducts.hh>
+
 #if HAVE_DUNE_ISTL
 #include <dune/istl/operators.hh>
 #include <dune/fem/operator/matrix/istlmatrix.hh>

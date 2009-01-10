@@ -21,6 +21,8 @@
 
 #include <dune/common/bartonnackmanifcheck.hh>
 
+#include <dune/fem/gridpart/gridpart.hh>
+
 #include <dune/fem/space/lagrangespace.hh>
 #include <dune/fem/function/adaptivefunction.hh>
 #include <dune/fem/quadrature/cachequad.hh>

@@ -12,6 +12,7 @@
 #include <dune/common/mpihelper.hh>
 #include <dune/common/exceptions.hh>
 
+#include <dune/grid/common/gridenums.hh>
 #include <dune/grid/common/datahandleif.hh>
 
 // in case of ISTL found include some more headers 
