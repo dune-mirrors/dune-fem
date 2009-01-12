@@ -12,6 +12,7 @@ misc_HEADERS = bartonnackmaninterface.hh \
 	       double.hh \
 	       engineconcept.hh \
 	       eoc.hh \
+	       femeoc.hh \
 	       example.cc \
 	       femtimer.hh \
                femtuples.hh \
