@@ -276,7 +276,7 @@ namespace Dune
       VertexType &vertex = vertices[ idx ];
       
       const GeometryType &geometry = it->geometry();
-      vertex = geometry[ 0 ];
+      vertex = geometry.corner( 0 );
       truncate( vertex );
 
       for( int i = 0; i < n; ++i )
@@ -326,8 +326,8 @@ namespace Dune
       VertexType &vertex1 = vertices1[ idx ];
       
       const GeometryType &geometry = it->geometry();
-      vertex0 = geometry[ 0 ];
-      vertex1 = geometry[ 1 ];
+      vertex0 = geometry.corner( 0 );
+      vertex1 = geometry.corner( 1 );
       truncate( vertex0, vertex1 );
 
       for( int i = 0; i < n; ++i )
