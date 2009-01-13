@@ -27,3 +27,5 @@ SOURCEFILE_MASK = -name \*.h -o -name \*.hh -o -name \*.c -o -name \*.cc
 # add library name, authors list, and license to progam files
 dist-hook:
 	find $(distdir) \( $(SOURCEFILE_MASK) \) -exec scripts/addauthors.sh ./AUTHORS {} \;
+	touch $(distdir)/doc/doxygen/stamp 
+	touch $(distdir)/doc/doxygen/html-dist 
