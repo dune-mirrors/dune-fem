@@ -23,11 +23,11 @@ DOXYFILE_OVERWRITE_DIST = $(DOXYFILE_OVERWRITE) \
 
 doxygendir = $(datadir)/doc/dune-fem/doxygen
 
-DISTCLEANFILES = stamp doxygen.out doxygen-dist.out doxygen.log doxygen-dist.log
+DISTCLEANFILES = doxygen.out doxygen-dist.out doxygen.log doxygen-dist.log
 # we need this in the distribution
 EXTRA_DIST = $(DOXYGEN_DIST) $(PAGES) Doxyfile doxygen-dist.out stamp
 # these files should be removed on 'make clean'
-CLEANFILES = stamp doxygen.out doxygen-dist.out doxygen.log doxygen-dist.log
+CLEANFILES = doxygen.out doxygen-dist.out doxygen.log doxygen-dist.log
 
 #all: $(DOXYGEN_HTML)
 all: html
@@ -102,7 +102,7 @@ web-install: doxygen-install
 #include $(top_srcdir)/am/webstuff
 
 clean-local:
-	if test -e Doxydep; then rm -rf html html-dist; fi
+	if test -e Doxydep; then rm -rf html html-dist stamp; fi
 	rm -rf latex *~
 
 # end BUILD_DOCS
