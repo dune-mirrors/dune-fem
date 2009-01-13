@@ -52,14 +52,14 @@ html-dist: doxygen-dist.out
 doxygen.out: Doxyfile stamp
 	@echo "Creating documentation (running doxygen)..."
 	@( cat Doxyfile; $(DOXYFILE_OVERWRITE_HTML) ) > Doxyfile.tmp
-	@$(DOXYGEN) Doxyfile.tmp > dogygen.log 2>&1
+	@$(DOXYGEN) Doxyfile.tmp > doxygen.log 2>&1
 	@rm -f Doxyfile.tmp
 	@cat doxygen.out
 
 doxygen-dist.out: Doxyfile stamp
 	@echo "Creating distribution documentation (running doxygen)..."
 	@( cat Doxyfile; $(DOXYFILE_OVERWRITE_DIST) ) > Doxyfile.tmp
-	@$(DOXYGEN) Doxyfile.tmp > dogygen-dist.log 2>&1
+	@$(DOXYGEN) Doxyfile.tmp > doxygen-dist.log 2>&1
 	@rm -f Doxyfile.tmp
 	@cat doxygen-dist.out
 
