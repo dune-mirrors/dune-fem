@@ -25,6 +25,7 @@ include $(top_srcdir)/am/global-rules
 SOURCEFILE_MASK = -name \*.h -o -name \*.hh -o -name \*.c -o -name \*.cc
 
 # add library name, authors list, and license to progam files
+# after that touch stamp again, otherwise docu is build on install 
 dist-hook:
 	find $(distdir) \( $(SOURCEFILE_MASK) \) -exec scripts/addauthors.sh ./AUTHORS {} \;
 	touch $(distdir)/doc/doxygen/stamp 
