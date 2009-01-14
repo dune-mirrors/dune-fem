@@ -10,9 +10,9 @@
 namespace Dune
 {
 
-  #define obstack_chunk_alloc &std :: malloc
-  #define obstack_chunk_free &std :: free
-  #define obstack_alloc_failed_handler = &ObStack :: allocFailed;
+  #define obstack_chunk_alloc &std::malloc
+  #define obstack_chunk_free &std::free
+  #define obstack_alloc_failed_handler = &ObStack::allocFailed;
 
   class ObStack
   {
@@ -64,6 +64,7 @@ namespace Dune
 
   #undef obstack_chunk_alloc
   #undef obstack_chunk_free
+  #undef obstack_alloc_failed_handler
 
 
 
