@@ -456,6 +456,7 @@ namespace Dune{
             DiscreteFunctionSpaceType;
 
     typedef LocalFunctionAdapter<EvalImp> DiscreteFunctionType;
+    typedef typename DiscreteFunctionType::LocalFunctionType LocalFunctionType;
   };
 
   /** \brief LocalFunctionAdapter wrapped a class with a local evaluate method
