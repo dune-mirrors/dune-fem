@@ -25,7 +25,7 @@ doxygendir = $(datadir)/doc/dune-fem/doxygen
 
 DISTCLEANFILES = doxygen.out doxygen-dist.out doxygen.log doxygen-dist.log
 # we need this in the distribution
-EXTRA_DIST = $(DOXYGEN_DIST) $(PAGES) Doxyfile doxygen-dist.out stamp
+EXTRA_DIST = $(DOXYGEN_DIST) $(PAGES) Doxyfile doxygen-dist.out
 # these files should be removed on 'make clean'
 CLEANFILES = doxygen.out doxygen-dist.out doxygen.log doxygen-dist.log
 
