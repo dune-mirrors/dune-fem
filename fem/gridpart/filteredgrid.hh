@@ -450,7 +450,9 @@ namespace Dune
     begin () const
     {
       typedef typename Codim< codim > :: template Partition< pitype > :: IteratorType IteratorType;
-      return IteratorType( this, &filter_, GridPartImp :: template begin< codim, pitype >() );
+      return IteratorType( this, &filter_, 
+      GridPartImp :: template begin< codim, pitype >() ,
+      GridPartImp :: template end< codim, pitype >() );
     }
 
     //! Begin iterator on the leaf level
@@ -467,7 +469,9 @@ namespace Dune
     end () const
     {
       typedef typename Codim< codim > :: template Partition< pitype > :: IteratorType IteratorType;
-      return IteratorType( this, &filter_, GridPartImp :: template end< codim, pitype >() );
+      return IteratorType( this, &filter_, 
+      GridPartImp :: template end< codim, pitype >() ,
+      GridPartImp :: template end< codim, pitype >() );
     }
 
     //! ibegin of corresponding intersection iterator for given entity
@@ -648,7 +652,8 @@ namespace Dune
 
           return *this;
         }
-          
+        //! overloaded conforming method 
+        inline bool conforming() const { return asBase()->conforming(); }
         //! overloaded boundary method 
         inline bool boundary() const  { return nInfo_.boundary_; }
         //! overloaded boundaryId method 
@@ -665,6 +670,8 @@ namespace Dune
       protected:
         //! return reference to base class 
         inline IteratorType & asBase() { return static_cast<IteratorType &>(*this); }
+        //! return reference to base class 
+        inline const IteratorType & asBase() const { return static_cast<const IteratorType &>(*this); }
         
         const GridPartType* gridPart_;        
         const FilterType* filter_;
