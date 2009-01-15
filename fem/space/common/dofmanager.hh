@@ -637,50 +637,65 @@ public:
   }
 };
 
+
 // this is the dofmanagers object which is being used during restriction 
 // and prolongation process for adding and removing indices to and from
 // index sets which belong to functions that belong to that dofmanager
-template <class DofManagerType , class RestrictProlongIndexSetType> 
+template <class DofManagerType , class RestrictProlongIndexSetType, bool doResize > 
 class IndexSetRestrictProlong  : 
-  public RestrictProlongInterface<RestrictProlongTraits<IndexSetRestrictProlong<DofManagerType,RestrictProlongIndexSetType> > >
+  public RestrictProlongInterface<
+          RestrictProlongTraits<
+            IndexSetRestrictProlong<DofManagerType,RestrictProlongIndexSetType,doResize> > > 
 {
   DofManagerType & dm_;
-  
+
   RestrictProlongIndexSetType & insert_;
   RestrictProlongIndexSetType & remove_;
 public: 
   
   IndexSetRestrictProlong ( DofManagerType & dm , RestrictProlongIndexSetType & is, RestrictProlongIndexSetType & rm ) 
-    : dm_(dm) , insert_(is), remove_(rm) {}
+    : dm_(dm) , insert_( is ), remove_( rm ) {}
 
-  // required for interface
+  //! required for interface
   typedef double RangeFieldType;
+  //! required for interface
   void setFatherChildWeight (const RangeFieldType& val) const {
   }
 
-  //! restrict data to father 
+  //! restrict data to father and resize memory if doResize is true 
   template <class EntityType>
   inline void restrictLocal ( EntityType & father, EntityType & son , bool initialize ) const
   {
+    // insert index of father
     insert_.apply( father );
+    // mark index of son for removal
     remove_.apply( son );
 
-    // resize memory 
-    dm_.resizeMemory();
+    // resize memory if doResize is true 
+    if ( doResize ) 
+    {
+      dm_.resizeMemory(); 
+    }
   }  
 
-  //! prolong data to children 
+  //! prolong data to children and resize memory if doResize is true 
   template <class EntityType>
   inline void prolongLocal ( EntityType & father, EntityType & son , bool initialize ) const
   {
+    // mark index of father for removal
     remove_.apply( father );
+    // insert index of son 
     insert_.apply( son );
     
-    // resize memory 
-    dm_.resizeMemory();
+    // resize memory if doResize is true 
+    if ( doResize ) 
+    {
+      dm_.resizeMemory(); 
+    }
   }
-  
 };
+
+
 
 class DofManError : public Exception {};
 
@@ -765,14 +780,18 @@ private:
   int sequence_; 
   
 public: 
-  typedef IndexSetRestrictProlong< ThisType , LocalIndexSetObjectsType >
+  typedef IndexSetRestrictProlong< ThisType, LocalIndexSetObjectsType , true >
     IndexSetRestrictProlongType;
+  typedef IndexSetRestrictProlong< ThisType, LocalIndexSetObjectsType , false >
+    IndexSetRestrictProlongNoResizeType;
   // this class needs to call resizeMemory 
-  friend class IndexSetRestrictProlong< ThisType , LocalIndexSetObjectsType > ;
+  friend class IndexSetRestrictProlong< ThisType , LocalIndexSetObjectsType , true  > ;
+  friend class IndexSetRestrictProlong< ThisType , LocalIndexSetObjectsType , false > ;
 
 private:
   // combine object holding all index set for restrict and prolong 
   IndexSetRestrictProlongType indexRPop_; 
+  IndexSetRestrictProlongNoResizeType indexRPopNoResize_; 
   
   //! memory over estimation factor for re-allocation 
   double memoryFactor_;
@@ -784,6 +803,7 @@ private:
     defaultChunkSize_( 128 ),
     sequence_( 0 ),
     indexRPop_( *this, insertIndices_ , removeIndices_ ),
+    indexRPopNoResize_( *this, insertIndices_ , removeIndices_ ),
     memoryFactor_( Parameter :: getValidValue
       ( "fem.dofmanager.memoryfactor",  double( 1.1 ),
         ValidateNotLess< double >( 1.0 ) ) )
@@ -838,6 +858,14 @@ public:
     // erzeugt werden, welcher die den IndexSet mit einem anderen Object
     // kombiniert 
     return indexRPop_;
+  }
+
+  //! returns the index set restrinction and prolongation operator
+  IndexSetRestrictProlongNoResizeType& indexSetRestrictProlongNoResize() 
+  {
+    // return index set restrict/prolong operator that is only inserting
+    // and mark for removal indices but not doing resize 
+    return indexRPopNoResize_;
   }
 
   //! if dofmanagers list is not empty return true 

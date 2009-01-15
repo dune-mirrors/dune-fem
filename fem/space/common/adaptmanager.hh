@@ -390,7 +390,7 @@ private:
         for(LevelIterator it = grid_.template lbegin<0,pitype> ( 0 );
             it != endit; ++it )
         {
-          hierarchicRestrict( *it , dm_.indexSetRPop() );
+          hierarchicRestrict( *it , dm_.indexSetRestrictProlongNoResize() );
         }
       }
 
@@ -417,9 +417,9 @@ private:
     {
       // resizes the index sets and resizes the memory
       dm_.resize();
-      typedef typename DofManagerType :: IndexSetRestrictProlongType IndexSetRPType;
+      typedef typename DofManagerType :: IndexSetRestrictProlongNoResizeType IndexSetRPType;
       typedef CombinedRestProl <IndexSetRPType,RestProlOperatorImp> COType;
-      COType tmpop ( dm_.indexSetRPop() , rpOp_ );
+      COType tmpop ( dm_.indexSetRestrictProlongNoResize() , rpOp_ );
       
       typedef typename GridType::template Codim<0>::
         template Partition<pitype> :: LevelIterator LevelIterator;

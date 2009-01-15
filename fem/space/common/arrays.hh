@@ -583,9 +583,11 @@ struct SpecialArrayFeatures<MutableArray<ValueType> >
     //array.memmove(length,oldStartIdx,newStartIdx);
     // get new end of block which is offSet + (length of block - 1) 
     int newIdx = newStartIdx + length - 1; 
+    assert( newIdx < array.size() );
     // copy all entries backwards 
     for(int oldIdx = oldStartIdx+length-1; oldIdx >= oldStartIdx; --oldIdx, --newIdx )
     {
+      assert( oldIdx < array.size() );
       // move value to new location 
       array[newIdx] = array[oldIdx];
 #ifndef NDEBUG
