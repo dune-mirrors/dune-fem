@@ -7,7 +7,7 @@
 namespace Dune
 {
 
-  /*! \ingroup FEM
+  /*! \ingroup EllipticOperator
    *  \class DiffusionModelInterface
    *  \brief Interface for a mathematical model of a DiffusionOperator
    *

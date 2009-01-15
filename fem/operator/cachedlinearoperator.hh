@@ -5,7 +5,7 @@
 
 namespace Dune
 {
-  //! @ingroup LinearDiscOperatos 
+  //! @ingroup LinearDiscOperators 
   //! \newimplementation see fem/operator/concept.tex
   template< class WrappedOperatorImp, class SystemMatrixImp >
   class CachedLinearOperator

@@ -9,7 +9,6 @@
 #include <dune/fem/space/lagrangespace.hh>
 #include <dune/fem/function/adaptivefunction.hh>
 
-//#include <dune/fem/operator/matrix/localmatrix.hh>
 #include <dune/fem/operator/common/localmatrix.hh>
 #include <dune/fem/operator/identityoperator.hh>
 #include <dune/fem/operator/integrationoperator.hh>
