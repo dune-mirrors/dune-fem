@@ -14,7 +14,7 @@ AM_CPPFLAGS = $(ALL_PKG_CPPFLAGS)
 AM_CXXFLAGS = -O0 -g -Wall $(ALL_PKG_CXXFLAGS) $(MPI_CPPFLAGS)
 
 TESTPROGS = lagrangeinterpolation_linear lagrangeinterpolation_quadratic \
-            dgl2projection_adaptive      dgl2projection_blockvector \
+            dgl2projection_adaptive    dgl2projection_filtered   dgl2projection_blockvector \
 	    dgl2projection_vector 	 dgl2projection_attached \
 	    dgl2projection_fv \
 	    dgl2projection_cmbpoint      dgl2projection_cmbvariable \
@@ -34,6 +34,9 @@ lagrangeinterpolation_quadratic_CPPFLAGS = -DPOLORDER=2 -DCOUNT_FLOPS $(AM_CPPFL
 
 dgl2projection_adaptive_SOURCES = dgl2projection.cc
 dgl2projection_adaptive_CPPFLAGS = -DPOLORDER=1 -DCOUNT_FLOPS $(AM_CPPFLAGS)
+
+dgl2projection_filtered_SOURCES = dgl2projection.cc
+dgl2projection_filtered_CPPFLAGS = -DPOLORDER=1 -DCOUNT_FLOPS $(AM_CPPFLAGS) -DUSE_FILTEREDGRID 
 
 dgl2projection_fv_SOURCES = dgl2projection.cc
 dgl2projection_fv_CPPFLAGS = -DUSE_FVSPACE -DCOUNT_FLOPS $(AM_CPPFLAGS)

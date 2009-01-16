@@ -17,6 +17,10 @@
 #include <dune/fem/function/adaptivefunction.hh>
 #endif
 
+#if defined  USE_FILTEREDGRID 
+#include <dune/fem/gridpart/filteredgrid.hh>
+#endif
+
 #include "testgrid.hh"
 #include "dfspace.hh"
 #include "dgl2projection.hh"
@@ -24,8 +28,16 @@
 
 using namespace Dune;
 
-// typedef HierarchicGridPart< GridType > GridPartType;
-typedef DGAdaptiveLeafGridPart< GridType > GridPartType;
+// typedef HierarchicGridPart< GridType >  ContainedGridPartType;
+typedef DGAdaptiveLeafGridPart< GridType > ContainedGridPartType;
+
+// use filtered grid for testing 
+#if defined  USE_FILTEREDGRID 
+  typedef RadialFilter< ContainedGridPartType > FilterType;
+  typedef FilteredGridPart<ContainedGridPartType, FilterType> GridPartType;
+#else
+  typedef ContainedGridPartType GridPartType;
+#endif
 
 typedef TestFunctionSpace FunctionSpaceType;
 typedef TestDiscreteFunctionSpace< GridPartType > DiscreteFunctionSpaceType;
