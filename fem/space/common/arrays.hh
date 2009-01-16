@@ -580,12 +580,13 @@ struct SpecialArrayFeatures<MutableArray<ValueType> >
   static void memMoveBackward(ArrayType& array, const int length,
             const int oldStartIdx, const int newStartIdx)
   {
+    assert( newStartIdx >= oldStartIdx );
     //array.memmove(length,oldStartIdx,newStartIdx);
     // get new end of block which is offSet + (length of block - 1) 
     int newIdx = newStartIdx + length - 1; 
     assert( newIdx < array.size() );
     // copy all entries backwards 
-    for(int oldIdx = oldStartIdx+length-1; oldIdx >= oldStartIdx; --oldIdx, --newIdx )
+    for(int oldIdx = oldStartIdx + length-1; oldIdx >= oldStartIdx; --oldIdx, --newIdx )
     {
       assert( oldIdx < array.size() );
       // move value to new location 
@@ -599,6 +600,7 @@ struct SpecialArrayFeatures<MutableArray<ValueType> >
   static void memMoveForward(ArrayType& array, const int length,
             const int oldStartIdx, const int newStartIdx)
   {
+    assert( newStartIdx <= oldStartIdx );
     //array.memmove(length,oldStartIdx,newStartIdx);
     const int upperBound = oldStartIdx + length;
     // get new off set that should be smaller then old one
