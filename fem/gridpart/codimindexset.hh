@@ -44,6 +44,7 @@ private:
  
   // next index to give away 
   int nextFreeIndex_;
+  int reservedSize_; 
 
   // last size of set before compress (needed in parallel runs) 
   int lastSize_;
@@ -54,6 +55,9 @@ private:
   // actual number of holes 
   int numberHoles_;
 
+  // memory oversize factor 
+  const double memoryFactor_;
+
 public:
   //! Constructor taking memory factor (default = 1.1)
   CodimIndexSet (const double memoryFactor = 1.1) 
@@ -63,9 +67,11 @@ public:
     , newIdx_(0)
     , state_(0)
     , nextFreeIndex_ (0)
+    , reservedSize_ (0)
     , lastSize_ (0)
     , myCodim_(-1) 
     , numberHoles_(0)
+    , memoryFactor_ ( memoryFactor )
   {
     setMemoryFactor(memoryFactor);
   }
@@ -110,6 +116,18 @@ public:
     }
   }
 
+  void incrementIndex () 
+  {
+    ++nextFreeIndex_ ; 
+
+    // reserve more numbers 
+    if( nextFreeIndex_ >= reservedSize_ ) 
+    {
+      const double add = memoryFactor_ * nextFreeIndex_ + 1.0 ;
+      reservedSize_ += (int) add ;
+    }
+  }
+
   //! clear set 
   void clear() 
   {
@@ -125,6 +143,7 @@ public:
     }
     // reset next free index 
     nextFreeIndex_ = 0;
+    reservedSize_  = 0;
   }
 
   //! set all entries to unused 
@@ -249,6 +268,7 @@ public:
 
     // the next index that can be given away is equal to size
     nextFreeIndex_ = actSize;
+    reservedSize_ = nextFreeIndex_;
     return haveToCopy;
   }
 
@@ -258,7 +278,7 @@ public:
   //! return size of grid entities per level and codim 
   int size () const
   {
-    return nextFreeIndex_;
+    return reservedSize_;
   }
   
   //! return size of grid entities per level and codim 
@@ -322,7 +342,7 @@ public:
     if(leafIndex_[num] < 0)
     {
       leafIndex_[num] = nextFreeIndex_;
-      ++nextFreeIndex_;
+      incrementIndex();
     }
     state_[num] = USED;
   }
