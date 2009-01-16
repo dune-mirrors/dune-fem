@@ -398,6 +398,7 @@ public:
 
     // resize memory 
     array_.resize( nSize );
+
     // update mapper and move array 
     moveToRear();
   }
@@ -433,6 +434,7 @@ public:
       const int numBlocks = mapper().numBlocks();
       for( int block = 0; block < numBlocks; ++block )
       {
+        // move memory 
         moveToFront( oldSize, block );
 
         // run over all holes and copy array vules to new place 
@@ -476,7 +478,7 @@ protected:
   // move array to rear insertion points 
   void moveToRear ()
   {
-    // calculate new insertion points 
+    // store old size of mapper 
     const int oldSize = mapper().size();
 
     // update mapper to new sizes 
@@ -487,11 +489,13 @@ protected:
     for( int block = numBlocks-1; block >= 0; --block )
     {
       // get old off set 
+      const int newOffSet = mapper().offSet( block );
       const int oldOffSet = mapper().oldOffSet( block );
+      assert( newOffSet >= oldOffSet );
+
       // if off set is not zero  
-      if( oldOffSet > 0 )
+      if( newOffSet > oldOffSet )
       {
-        const int newOffSet = mapper().offSet( block );
         // get upperBound
         const int upperBound
           = (block == numBlocks - 1) ? oldSize : mapper().oldOffSet( block + 1 );
@@ -510,12 +514,15 @@ protected:
     // get insertion point from block
     const int oldOffSet = mapper().oldOffSet( block );
 
-    const int numBlocks = mapper().numBlocks();
+    // get new off set 
+    const int newOffSet = mapper().offSet( block );
+
     // only if block is not starting from zero 
-    if( oldOffSet > 0 )
+    if( oldOffSet > newOffSet )
     {
-      const int newOffSet = mapper().offSet( block );
-      
+      // get number of blocks 
+      const int numBlocks = mapper().numBlocks();
+
       // for last section upperBound is size 
       const int upperBound
         = (block == numBlocks - 1) ? oldSize : mapper().oldOffSet( block + 1 );
