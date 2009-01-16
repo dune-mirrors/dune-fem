@@ -311,10 +311,10 @@ namespace Dune
     mutable unsigned int offset_[ dimension+1 ];
     mutable unsigned int oldOffSet_[ dimension+1 ];
     mutable unsigned int size_;
+    unsigned int lastSize_;
     unsigned int numDofs_;
 
     // for debugging only 
-    mutable int sequence_;
 
   public:
     //! constructor
@@ -323,7 +323,7 @@ namespace Dune
     : dm_( DMFactoryType :: getDofManager(gridPart.grid()) ),
       indexSet_( gridPart.indexSet() ),
       lagrangePointSet_( lagrangePointSet ),
-      sequence_( dm_.sequence() )
+      lastSize_( 1 )
     {
       numDofs_ = 0;
       for( int codim = 0; codim <= dimension; ++codim )
@@ -350,6 +350,7 @@ namespace Dune
         oldOffSet_[ codim ] = size_;
         size_ += indexSet_.size( codim ) * maxDofs_[ codim ];
       }
+      lastSize_ = size_;
     }
     
     //! destructor 
@@ -475,19 +476,28 @@ namespace Dune
     /** \copydoc Dune::DofMapperInterface::update */
     void update()
     {
-      // assure that update is only called once per 
-      // dof manager resize or compress 
-      if( sequence_ != dm_.sequence() )
+      unsigned int newOffSet[ dimension+1 ];
+      
+      // calculate new possible size 
+      unsigned int  newSize = 0;
+      for( int codim = 0; codim <= dimension; ++codim )
       {
-        // calculate new size 
-        size_ = 0;
+        newOffSet[ codim ] = newSize;
+        newSize += indexSet_.size( codim ) * maxDofs_[ codim ];
+      }
+
+      // assure that update is only called once per 
+      // index set update (store old size for that purpose)
+      if( lastSize_ != newSize ) 
+      {
         for( int codim = 0; codim <= dimension; ++codim )
         {
           oldOffSet_[ codim ] = offset_[ codim ];
-          offset_[ codim ] = size_;
-          size_ += indexSet_.size( codim ) * maxDofs_[ codim ];
+          offset_[ codim ] = newOffSet[ codim ];
         }
-        sequence_ = dm_.sequence();
+        // update sizes 
+        size_ = newSize;
+        lastSize_ = size_ ;
       }
     }
 
@@ -700,10 +710,8 @@ namespace Dune
     mutable unsigned int offset_[ dimension+1 ];
     mutable unsigned int oldOffSet_[ dimension+1 ];
     mutable unsigned int size_;
+    unsigned int lastSize_ ;
     unsigned int numDofs_;
-
-    // for debugging only 
-    mutable int sequence_;
 
   public:
     //! constructor
@@ -712,7 +720,7 @@ namespace Dune
     : dm_( DMFactoryType :: getDofManager(gridPart.grid()) ),
       indexSet_( gridPart.indexSet() ),
       lagrangePointSet_( lagrangePointSet ),
-      sequence_( dm_.sequence() )
+      lastSize_( 1 )
     {
       numDofs_ = 0;
       for( int codim = 0; codim <= dimension; ++codim )
@@ -739,6 +747,7 @@ namespace Dune
         oldOffSet_[ codim ] = size_;
         size_ += indexSet_.size( codim ) * maxDofs_[ codim ];
       }
+      lastSize_ = size_;
     }
     
     //! destructor 
@@ -869,19 +878,28 @@ namespace Dune
     /** \copydoc Dune::DofMapper::update */
     void update()
     {
-      // assure that update is only called once per 
-      // dof manager resize or compress 
-      if( sequence_ != dm_.sequence() )
+      unsigned int newOffSet[ dimension+1 ];
+      
+      // calculate new possible size 
+      unsigned int  newSize = 0;
+      for( int codim = 0; codim <= dimension; ++codim )
       {
-        // calculate new size 
-        size_ = 0;
+        newOffSet[ codim ] = newSize;
+        newSize += indexSet_.size( codim ) * maxDofs_[ codim ];
+      }
+
+      // assure that update is only called once per 
+      // index set update (store old size for that purpose)
+      if( lastSize_ != newSize ) 
+      {
         for( int codim = 0; codim <= dimension; ++codim )
         {
           oldOffSet_[ codim ] = offset_[ codim ];
-          offset_[ codim ] = size_;
-          size_ += indexSet_.size( codim ) * maxDofs_[ codim ];
+          offset_[ codim ] = newOffSet[ codim ];
         }
-        sequence_ = dm_.sequence();
+        // update sizes 
+        size_ = newSize;
+        lastSize_ = size_ ;
       }
     }
 
