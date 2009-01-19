@@ -36,7 +36,7 @@ struct GridWidth
     IntersectionIteratorType begin = gridPart.ibegin(en);
     const IntersectionIteratorType end = gridPart.iend(en);
 
-    return maxEdgeWidth(begin, end, gridPart, geoInfo, faceGeoInfo, en);
+    return maxEdgeWidth(begin, end, geoInfo, faceGeoInfo, en);
   }
   
   template <class IntersectionIteratorType, class ElemGeoInfoType, class FaceGeoInfoType, class EntityType> 
@@ -91,14 +91,6 @@ struct GridWidth
     typedef typename GridPartType :: GridType GridType;
     typedef typename GridPartType :: template Codim<0> :: IteratorType IteratorType; 
 
-    // get geo infor for elements 
-    typedef AllGeomTypes< typename GridPartType :: IndexSetType, GridType > GeomInfoType;
-    GeomInfoType geoInfo( gridPart.indexSet() );
-
-    // get geo infor for faces  
-    typedef GeometryInformation< GridType , 1 > FaceGeometryInformationType;
-    FaceGeometryInformationType faceGeoInfo( geoInfo.geomTypes(1) );
-
     // unstructured case 
     if( Capabilities::IsUnstructured<GridType>::v )
     {
@@ -106,7 +98,7 @@ struct GridWidth
       for(IteratorType it = gridPart.template begin<0> (); 
           it != endit; ++it )
       {
-        const double w = maxEdgeWidth(gridPart, geoInfo, faceGeoInfo, *it);
+        const double w = maxEdgeWidth(gridPart, *it);
         if(w > maxwidth) maxwidth = w;
       }
     }
@@ -116,7 +108,7 @@ struct GridWidth
       IteratorType it = gridPart.template begin<0> (); 
       if( it != gridPart.template end<0> () )
       {
-        const double w = maxEdgeWidth(gridPart, geoInfo, faceGeoInfo, *it);
+        const double w = maxEdgeWidth(gridPart, *it);
         if(w > maxwidth) maxwidth = w;
       }
     }
