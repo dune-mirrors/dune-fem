@@ -110,7 +110,7 @@ namespace Dune
     }
    
     /** \copydoc DofMapper::newSize */
-    int newSize() const
+    int newSize() const DUNE_DEPRECATED 
     {
       return this->size();
     }
