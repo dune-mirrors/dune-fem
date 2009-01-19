@@ -279,11 +279,7 @@ public:
   //! resize memory 
   virtual void resize () = 0;
   //! resize memory 
-  virtual void resize (int newSize) = 0;
-  //! resize memory 
   virtual void reserve (int newSize) = 0;
-  //! new size of space, i.e. after grid adaptation
-  virtual int newSize () const = 0;
   //! compressed the underlying dof vector 
   virtual void dofCompress () = 0;
   //! return size of mem used by MemObject 
@@ -375,32 +371,66 @@ public:
   //! returns name of this vector 
   const std::string& name () const { return name_; }
 
-  //! if grid changed, then calulate new size of dofset 
-  inline int newSize () const
-  {
-    return mapper().newSize();
-  }
-
   //! return size of underlying array 
   int size () const { return array_.size(); }
 
   //! resize the memory with the new size 
   void resize () 
   {
-    resize ( newSize() );
-  }
+    // store old size of space (don't use mapper here) 
+    const int oldSize = array_.size();
 
-  //! resize the memory with the new size 
-  void resize ( const int nSize ) 
-  {
-    // if the size is allready correct, do nothing
-    if( nSize == size() ) return ;
+    // make the memory sizes a little bit larger 
+    const bool overSizeMemory = true ;
 
-    // resize memory 
+    // update mapper to new sizes 
+    mapper().update( overSizeMemory );
+
+    // get current size 
+    const int nSize = mapper().size();
+
+    // if nothing changed do nothing 
+    if( nSize == oldSize ) return ;
+
+    // resize memory to current value 
     array_.resize( nSize );
 
-    // update mapper and move array 
-    moveToRear();
+    // if data is only temporary data, don't adjust memory 
+    if( ! dataNeedCompress_ ) return ;
+
+    // now check all blocks beginning with the largest 
+    const int numBlocks = mapper().numBlocks();
+
+    // initialize upperBound
+    int upperBound = oldSize ; 
+
+    // make sure offset of block 0 is zero  
+    assert( mapper().offSet( 0 ) == 0 );
+    assert( mapper().oldOffSet( 0 ) == 0 );
+
+    // skip block 0 (since offset == 0)
+    for( int block = numBlocks-1; block >= 1; --block )
+    {
+      // get offsets
+      const int newOffSet = mapper().offSet( block );
+      const int oldOffSet = mapper().oldOffSet( block );
+
+      // make sure new offset is larger 
+      assert( newOffSet >= oldOffSet );
+
+      // if off set is not zero  
+      if( newOffSet > oldOffSet )
+      {
+        // calculate block size 
+        const int blockSize = upperBound - oldOffSet;
+        // move block backward 
+        SpecialArrayFeatures< DofArrayType >
+          :: memMoveBackward( array_, blockSize, oldOffSet, newOffSet );
+
+        // update upper bound 
+        upperBound = oldOffSet;
+      }
+    }
   }
 
   //! reserve memory for what is comming 
@@ -417,19 +447,28 @@ public:
       // if compress is not needed just resize with given size 
       // therefore use newSize to enleage array 
       assert( ! mapper().consecutive() );
-      array_.resize( newSize() );
+      // resize array 
+      // ???? noch ueberpruefen 
+      resize (); 
     }
   }
 
   //! copy the dof from the rear section of the vector to the holes 
   void dofCompress () 
   {
-    const int nSize = newSize();
+    // update to current memory size without oversizing memory  
+    const bool overSizeMemory = false ;
+
+    // update mapper to new sizes 
+    mapper().update( overSizeMemory );
+
+    // get current size 
+    const int nSize = mapper().size();
+
     if( dataNeedCompress_ && mapper().consecutive() )
     {
-      const int oldSize = mapper().size();
-      // update mapper to new sizes 
-      mapper().update();
+      // get old size (which we still have in array)
+      const int oldSize = array_.size(); 
 
       const int numBlocks = mapper().numBlocks();
       for( int block = 0; block < numBlocks; ++block )
@@ -476,36 +515,8 @@ protected:
   }
   
   // move array to rear insertion points 
-  void moveToRear ()
+  void resizeAndMoveToRear ()
   {
-    // store old size of mapper 
-    const int oldSize = mapper().size();
-
-    // update mapper to new sizes 
-    mapper().update();
-
-    // now check all blocks beginning with the largest 
-    const int numBlocks = mapper().numBlocks();
-    for( int block = numBlocks-1; block >= 0; --block )
-    {
-      // get old off set 
-      const int newOffSet = mapper().offSet( block );
-      const int oldOffSet = mapper().oldOffSet( block );
-      assert( newOffSet >= oldOffSet );
-
-      // if off set is not zero  
-      if( newOffSet > oldOffSet )
-      {
-        // get upperBound
-        const int upperBound
-          = (block == numBlocks - 1) ? oldSize : mapper().oldOffSet( block + 1 );
-        const int blockSize = upperBound - oldOffSet;
-
-        // move block backward 
-        SpecialArrayFeatures< DofArrayType >
-          :: memMoveBackward( array_, blockSize, oldOffSet, newOffSet );
-      }
-    }
   }
 
   //! move block to front again 
