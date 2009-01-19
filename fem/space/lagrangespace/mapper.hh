@@ -307,11 +307,13 @@ namespace Dune
     
     LagrangePointSetMapType &lagrangePointSet_;
 
+    // memory overshoot 
+    const double overShoot_ ;
+
     unsigned int maxDofs_[ dimension+1 ];
     mutable unsigned int offset_[ dimension+1 ];
     mutable unsigned int oldOffSet_[ dimension+1 ];
     mutable unsigned int size_;
-    unsigned int lastSize_;
     unsigned int numDofs_;
 
     // for debugging only 
@@ -323,7 +325,7 @@ namespace Dune
     : dm_( DMFactoryType :: getDofManager(gridPart.grid()) ),
       indexSet_( gridPart.indexSet() ),
       lagrangePointSet_( lagrangePointSet ),
-      lastSize_( 1 )
+      overShoot_( 1.5 )
     {
       numDofs_ = 0;
       for( int codim = 0; codim <= dimension; ++codim )
@@ -350,7 +352,6 @@ namespace Dune
         oldOffSet_[ codim ] = size_;
         size_ += indexSet_.size( codim ) * maxDofs_[ codim ];
       }
-      lastSize_ = size_;
     }
     
     //! destructor 
@@ -363,21 +364,21 @@ namespace Dune
       return dimRange * size_;
     }
 
-    /** \copydoc Dune::DofMapperInterface::begin(const EntityType &entity) const */
+    /** \copydoc Dune::DofMapper::begin(const EntityType &entity) const */
     inline DofMapIteratorType begin ( const EntityType &entity ) const
     {
       return DofMapIteratorType
         ( DofMapIteratorType :: beginIterator, entity, *this );
     }
     
-    /** \copydoc Dune::DofMapperInterface::end(const EntityType &entity) const */
+    /** \copydoc Dune::DofMapper::end(const EntityType &entity) const */
     inline DofMapIteratorType end ( const EntityType &entity ) const
     {
       return DofMapIteratorType
         ( DofMapIteratorType :: endIterator, entity, *this );
     }
 
-    /** \copydoc Dune::DofMapperInterface::mapToGlobal */
+    /** \copydoc Dune::DofMapper::mapToGlobal */
     int mapToGlobal ( const EntityType &entity, const int local ) const
     {
       const int coordinate = local % dimRange;
@@ -400,7 +401,7 @@ namespace Dune
       return globalDof;
     }
 
-    /** \copydoc Dune::DofMapperInterface::mapEntityDofToGlobal */
+    /** \copydoc Dune::DofMapper::mapEntityDofToGlobal */
     template< class Entity >
     int mapEntityDofToGlobal ( const Entity &entity, const int localDof ) const 
     {
@@ -410,7 +411,7 @@ namespace Dune
       return dimRange * globalDofPt + localDof;
     }
     
-    /** \copydoc Dune::DofMapperInterface::maxNumDofs() const */
+    /** \copydoc Dune::DofMapper::maxNumDofs() const */
     inline int maxNumDofs () const
     {
       return dimRange * numDofs_;
@@ -418,13 +419,13 @@ namespace Dune
 
     using BaseType :: numDofs;
 
-    /** \copydoc Dune::DofMapperInterface::numDofs(const EntityType &entity) const */
+    /** \copydoc Dune::DofMapper::numDofs(const EntityType &entity) const */
     inline int numDofs ( const EntityType &entity ) const
     {
       return dimRange * lagrangePointSet_[ entity.geometry().type() ]->size();
     }
 
-    /** \copydoc Dune::DofMapperInterface::numEntityDofs(const Entity &entity) const */
+    /** \copydoc Dune::DofMapper::numEntityDofs(const Entity &entity) const */
     template< class Entity >
     inline int numEntityDofs ( const Entity &entity ) const
     {
@@ -444,7 +445,7 @@ namespace Dune
       return false;
     }
 
-    /** \copydoc Dune::DofMapperInterface::oldIndex */
+    /** \copydoc Dune::DofMapper::oldIndex */
     int oldIndex ( const int num, const int codim ) const
     {
       // corresponding number of set is newn 
@@ -455,7 +456,7 @@ namespace Dune
       return dimRange * (oldOffSet_[codim] + indexSet_.oldIndex(newn,codim)) + local;
     }
 
-    /** \copydoc Dune::DofMapperInterface::newIndex */
+    /** \copydoc Dune::DofMapper::newIndex */
     int newIndex ( const int num , const int codim) const
     {
       // corresponding number of set is newn 
@@ -466,49 +467,93 @@ namespace Dune
       return dimRange * (offset_[codim] + indexSet_.newIndex(newn,codim)) + local;
     }
 
-    /** \copydoc Dune::DofMapperInterface::numberOfHoles */
+    /** \copydoc Dune::DofMapper::numberOfHoles */
     int numberOfHoles ( const int codim ) const
     {
       return (maxDofs_[ codim ] > 0) ? 
         (dimRange * indexSet_.numberOfHoles( codim )) : 0;
     }
 
-    /** \copydoc Dune::DofMapperInterface::update */
-    void update()
+    /** \copydoc Dune::DofMapper::update */
+    void update(const bool oversize)
     {
+      unsigned int codimSize[ dimension+1 ];
+
+      // calculate codimension sizes 
+      for( int codim = 0; codim <= dimension ;  ++codim )
+      {
+        codimSize[ codim ] = indexSet_.size( codim ) * maxDofs_[ codim ];
+      }
+
+      if( oversize ) 
+      {
+        bool noUpdateNeeded = true ;
+        // calculate new possible size 
+        unsigned int upperBound = size_ ;
+
+        // check all codimensions 
+        for( int codim = dimension ; codim >= 0;  --codim )
+        {
+          // check update needed for codimension 
+          if( noUpdateNeeded && 
+              (((offset_[ codim ] + codimSize[ codim ]) 
+                * maxDofs_[ codim ]) > upperBound) )
+          {
+            noUpdateNeeded = false ; 
+          }
+
+          // set new upper bound 
+          upperBound = offset_[ codim ] ;
+        }
+
+        // if size still ok in oversize mode, do nothing 
+        if( noUpdateNeeded ) 
+        {
+          return ;
+        }
+      }
+
+      // calculate new offsets 
       unsigned int newOffSet[ dimension+1 ];
-      
-      // calculate new possible size 
-      unsigned int  newSize = 0;
+      unsigned int newSize = 0;
       for( int codim = 0; codim <= dimension; ++codim )
       {
         newOffSet[ codim ] = newSize;
-        newSize += indexSet_.size( codim ) * maxDofs_[ codim ];
+
+        // make space a little bit larger if oversize is true 
+        if( oversize ) 
+        {
+          const double add = overShoot_ * codimSize[ codim ] ;
+          codimSize[ codim ] = static_cast<unsigned int> (add) ;
+        }
+
+        // oversize new size 
+        newSize += codimSize [ codim ] ;
       }
 
       // assure that update is only called once per 
       // index set update (store old size for that purpose)
-      if( lastSize_ != newSize ) 
+      if( size_ != newSize ) 
       {
         for( int codim = 0; codim <= dimension; ++codim )
         {
           oldOffSet_[ codim ] = offset_[ codim ];
           offset_[ codim ] = newOffSet[ codim ];
         }
-        // update sizes 
-        size_ = newSize;
-        lastSize_ = size_ ;
+
+        // update size 
+        size_ = newSize ;
       }
     }
 
-    /** \copydoc Dune::DofMapperInterface::numBlocks
+    /** \copydoc Dune::DofMapper::numBlocks
      */
     int numBlocks () const 
     {
       return dimension + 1;
     }
 
-    /** \copydoc Dune::DofMapperInterface::oldOffset
+    /** \copydoc Dune::DofMapper::oldOffset
      */
     int oldOffSet ( const int block ) const
     {
@@ -516,7 +561,7 @@ namespace Dune
       return dimRange * oldOffSet_[ block ];
     }
 
-    /** \copydoc Dune::DofMapperInterface::newOffset
+    /** \copydoc Dune::DofMapper::newOffset
      */
     int offSet ( const int block ) const
     {
@@ -524,9 +569,9 @@ namespace Dune
       return dimRange * offset_[ block ];
     }
 
-    /** \copydoc Dune::DofMapperInterface::newSize
+    /** \copydoc Dune::DofMapper::newSize
      */ 
-    int newSize () const
+    int newSize () const DUNE_DEPRECATED
     {
       int newSize = 0;
       for( int codim = 0; codim <= dimension; ++codim )
@@ -706,11 +751,13 @@ namespace Dune
     
     LagrangePointSetMapType &lagrangePointSet_;
 
+    // memory overshoot 
+    const double overShoot_ ;
+
     unsigned int maxDofs_[ dimension+1 ];
     mutable unsigned int offset_[ dimension+1 ];
     mutable unsigned int oldOffSet_[ dimension+1 ];
     mutable unsigned int size_;
-    unsigned int lastSize_ ;
     unsigned int numDofs_;
 
   public:
@@ -720,7 +767,7 @@ namespace Dune
     : dm_( DMFactoryType :: getDofManager(gridPart.grid()) ),
       indexSet_( gridPart.indexSet() ),
       lagrangePointSet_( lagrangePointSet ),
-      lastSize_( 1 )
+      overShoot_ ( 1.5 )
     {
       numDofs_ = 0;
       for( int codim = 0; codim <= dimension; ++codim )
@@ -747,7 +794,6 @@ namespace Dune
         oldOffSet_[ codim ] = size_;
         size_ += indexSet_.size( codim ) * maxDofs_[ codim ];
       }
-      lastSize_ = size_;
     }
     
     //! destructor 
@@ -876,30 +922,74 @@ namespace Dune
     }
 
     /** \copydoc Dune::DofMapper::update */
-    void update()
+    void update(const bool oversize)
     {
+      unsigned int codimSize[ dimension+1 ];
+
+      // calculate codimension sizes 
+      for( int codim = 0; codim <= dimension ;  ++codim )
+      {
+        codimSize[ codim ] = indexSet_.size( codim ) * maxDofs_[ codim ];
+      }
+
+      if( oversize ) 
+      {
+        bool noUpdateNeeded = true ;
+        // calculate new possible size 
+        unsigned int upperBound = size_ ;
+
+        // check all codimensions 
+        for( int codim = dimension ; codim >= 0;  --codim )
+        {
+          // check update needed for codimension 
+          if( noUpdateNeeded && 
+              (((offset_[ codim ] + codimSize[ codim ]) 
+                * maxDofs_[ codim ]) > upperBound) )
+          {
+            noUpdateNeeded = false ; 
+          }
+
+          // set new upper bound 
+          upperBound = offset_[ codim ] ;
+        }
+
+        // if size still ok in oversize mode, do nothing 
+        if( noUpdateNeeded ) 
+        {
+          return ;
+        }
+      }
+
+      // calculate new offsets 
       unsigned int newOffSet[ dimension+1 ];
-      
-      // calculate new possible size 
-      unsigned int  newSize = 0;
+      unsigned int newSize = 0;
       for( int codim = 0; codim <= dimension; ++codim )
       {
         newOffSet[ codim ] = newSize;
-        newSize += indexSet_.size( codim ) * maxDofs_[ codim ];
+
+        // make space a little bit larger if oversize is true 
+        if( oversize ) 
+        {
+          const double add = overShoot_ * codimSize[ codim ] ;
+          codimSize[ codim ] = static_cast<unsigned int> (add) ;
+        }
+
+        // oversize new size 
+        newSize += codimSize [ codim ] ;
       }
 
       // assure that update is only called once per 
       // index set update (store old size for that purpose)
-      if( lastSize_ != newSize ) 
+      if( size_ != newSize ) 
       {
         for( int codim = 0; codim <= dimension; ++codim )
         {
           oldOffSet_[ codim ] = offset_[ codim ];
           offset_[ codim ] = newOffSet[ codim ];
         }
-        // update sizes 
-        size_ = newSize;
-        lastSize_ = size_ ;
+
+        // update size 
+        size_ = newSize ;
       }
     }
 
@@ -928,7 +1018,7 @@ namespace Dune
 
     /** \copydoc Dune::DofMapper::newSize
      */ 
-    int newSize () const
+    int newSize () const DUNE_DEPRECATED 
     {
       int newSize = 0;
       for( int codim = 0; codim <= dimension; ++codim )
