@@ -609,9 +609,9 @@ namespace Dune
         //! write information for current intersection 
         inline void writeNeighborInfo() 
         {
-          if ( IteratorType::neighbor() ) 
+          if ( asBase()->neighbor() ) 
           { 
-            if ( filter_->interiorIntersection( asBase() ) )
+            if ( filter_->interiorIntersection( *asBase() ) )
             {
               nInfo_.boundary_   = false;
               nInfo_.boundaryId_ = 0;
@@ -620,16 +620,16 @@ namespace Dune
             else 
             {
               // otherwise get boundary information from filter 
-              nInfo_.boundary_   = filter_->intersectionBoundary( asBase() );
-              nInfo_.boundaryId_ = filter_->intersectionBoundaryId( asBase() );
-              nInfo_.neighbor_   = filter_->intersectionNeighbor( asBase() );
+              nInfo_.boundary_   = filter_->intersectionBoundary( *asBase() );
+              nInfo_.boundaryId_ = filter_->intersectionBoundaryId( *asBase() );
+              nInfo_.neighbor_   = filter_->intersectionNeighbor( *asBase() );
             }
           }
           else 
           {
             // for real boundary get boundary from filter 
             nInfo_.boundary_   = true;
-            nInfo_.boundaryId_ = filter_->intersectionBoundaryId( asBase() );
+            nInfo_.boundaryId_ = filter_->intersectionBoundaryId( *asBase() );
             nInfo_.neighbor_   = false;
           }    
         }
