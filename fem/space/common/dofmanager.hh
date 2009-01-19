@@ -330,7 +330,7 @@ private:
   ReserveMemoryObjectType reserveMemObj_;
 
   // true if data need to be compressed 
-  bool dataNeedCompress_;
+  bool dataCompressionEnabled_;
 
   // prohibit copying 
   ManagedDofStorage(const ManagedDofStorage& );
@@ -346,7 +346,7 @@ public:
       name_ (name),
       resizeMemObj_(*this),
       reserveMemObj_(*this),
-      dataNeedCompress_(false)
+      dataCompressionEnabled_(false)
   {
     // add to dof manager 
     dm_.addDofStorage( *this );
@@ -396,7 +396,7 @@ public:
     array_.resize( nSize );
 
     // if data is only temporary data, don't adjust memory 
-    if( ! dataNeedCompress_ ) return ;
+    if( ! dataCompressionEnabled_ ) return ;
 
     // now check all blocks beginning with the largest 
     const int numBlocks = mapper().numBlocks();
@@ -465,26 +465,35 @@ public:
     // get current size 
     const int nSize = mapper().size();
 
-    if( dataNeedCompress_ && mapper().consecutive() )
+    // if data is non-temporary do data compression 
+    if( dataCompressionEnabled_ ) 
     {
       // get old size (which we still have in array)
       const int oldSize = array_.size(); 
+      // new size must be at least the same as old size 
+      assert( nSize <= oldSize );
 
+      // begin with block zero since closing of holes 
+      // has to be done anyway if the mapper is consecutive
       const int numBlocks = mapper().numBlocks();
       for( int block = 0; block < numBlocks; ++block )
       {
         // move memory 
         moveToFront( oldSize, block );
 
-        // run over all holes and copy array vules to new place 
-        const int holes = mapper().numberOfHoles( block );
-        for( int i = 0; i < holes; ++i )
+        // only close holes for consecutive mappers  
+        if( mapper().consecutive () ) 
         {
-          const int oldIndex = mapper().oldIndex( i, block );
-          const int newIndex = mapper().newIndex( i, block );
+          // run over all holes and copy array vules to new place 
+          const int holes = mapper().numberOfHoles( block );
+          for( int i = 0; i < holes; ++i )
+          {
+            const int oldIndex = mapper().oldIndex( i, block );
+            const int newIndex = mapper().newIndex( i, block );
 
-          assert( newIndex < nSize );
-          array_[ newIndex ] = array_[ oldIndex ];
+            assert( newIndex < nSize );
+            array_[ newIndex ] = array_[ oldIndex ];
+          }
         }
       }
     }
@@ -502,7 +511,7 @@ public:
   //! enable dof compression for this MemObject
   void enableDofCompression() 
   {
-    dataNeedCompress_ = true;
+    dataCompressionEnabled_ = true;
   }
 
   //! return reference to array for DiscreteFunction 
@@ -982,7 +991,7 @@ public:
       \note This will increase the sequence counter by 1.
       \note This method is deprecated! 
   */
-  void dofCompress() 
+  void dofCompress() DUNE_DEPRECATED 
   {
     compress();
   }
