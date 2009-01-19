@@ -101,7 +101,7 @@ public:
   /** return new size of space, i.e. after adaptation 
     \returns new size of space 
   */
-  int newSize() const 
+  int newSize() const DUNE_DEPRECATED 
   {
     CHECK_INTERFACE_IMPLEMENTATION(asImp().newSize());
     return asImp().newSize();
@@ -219,12 +219,15 @@ public:
     return asImp().consecutive();
   }
 
-  //! update mapper, 
-  //! i.e. calculate new insertion points of blocks 
-  void update ()
+  /** \brief update mapper, 
+      i.e. calculate new insertion points of blocks 
+      \param[in] oversize \b true if offsets should be a little bit larger, 
+                          \b false make memory according to index set size 
+  */
+  void update (const bool oversize)
   {
     CHECK_AND_CALL_INTERFACE_IMPLEMENTATION(
-        asImp().update());
+        asImp().update(oversize));
   }
 
   /** \brief return old offsets for given block */
@@ -417,7 +420,7 @@ public:
   }
 
   //! update mapper, default does nothing 
-  void update ()
+  void update (const bool)
   {}
 
   //! return old offsets for block number, default returns zero 
