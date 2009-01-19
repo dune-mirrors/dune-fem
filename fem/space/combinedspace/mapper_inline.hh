@@ -128,27 +128,8 @@ namespace Dune
       const int component = block / numContainedBlocks;
       
       const int containedOffset = containedMapper().newIndex( hole, containedBlock );
-      return containedOffset + component * containedMapper().newSize();
+      return containedOffset + component * containedMapper().size();
     }
-    
-#if 0
-    assert(policy != PointBased || block==0);
-    return (policy == PointBased) ?
-     (mapper_.newIndex(hole/N,block)*N+hole%N) :
-     (mapper_.newIndex(hole,block%mapper_.numBlocks())+
-      size_*block/mapper_.numBlocks());
-    
-    DofConversionUtility<policy> 
-      tmpUtilGlobal(chooseSize(N, mapper_.newSize(), Int2Type<policy>()));
-
-    const int component = tmpUtilGlobal.component(hole);
-    const int contained = tmpUtilGlobal.containedDof(hole);
-
-    const int containedNew = mapper_.newIndex(contained,0);
-    // const int containedNew = mapper_.newIndex(contained,block);
-
-    return tmpUtilGlobal.combinedDof(containedNew, component);
-#endif
   }
 
 
@@ -220,12 +201,11 @@ namespace Dune
 
 
   template< class ContainedMapper, int N, DofStoragePolicy policy >
-  inline void CombinedMapper< ContainedMapper, N, policy > :: update ()
+  inline void CombinedMapper< ContainedMapper, N, policy > :: 
+  update ( const bool oversize )
   {
-    containedMapper().update();
-    // calculate new size 
-    //oldSize_ = size_;
-    //size_ = containedMapper().size();
+    // call contained mappers update 
+    containedMapper().update( oversize );
   }
 
 
@@ -262,7 +242,7 @@ namespace Dune
       const int component = block / numContainedBlocks;
       
       const int containedOffset = containedMapper().offSet( containedBlock );
-      return containedOffset + component * containedMapper().newSize();
+      return containedOffset + component * containedMapper().size();
     }
   }
 
