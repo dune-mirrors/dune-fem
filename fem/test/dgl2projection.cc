@@ -6,6 +6,8 @@
 #include <dune/fem/gridpart/gridpart.hh>
 #include <dune/fem/space/dgspace/dgadaptiveleafgridpart.hh>
 
+#include <dune/fem/misc/gridwidth.hh>
+
 #if defined USE_BLOCKVECTORFUNCTION
 #include <dune/fem/function/blockvectorfunction.hh>
 #elif defined USE_VECTORFUNCTION
@@ -71,6 +73,10 @@ int main(int argc, char ** argv)
     grid.globalRefine( 2*step );
 
     GridPartType gridPart( grid );
+    // add check for grid width 
+    std::cout << "Grid width: " 
+      << GridWidth :: calcGridWidth( gridPart ) << std::endl; 
+
     DiscreteFunctionSpaceType discreteFunctionSpace( gridPart );
     ExactSolutionType exactSolution( discreteFunctionSpace );
     DiscreteFunctionType solution( "solution", discreteFunctionSpace );
