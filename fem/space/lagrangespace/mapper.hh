@@ -485,6 +485,7 @@ namespace Dune
         codimSize[ codim ] = indexSet_.size( codim ) * maxDofs_[ codim ];
       }
 
+      // in oversize mode check offsets 
       if( oversize ) 
       {
         bool noUpdateNeeded = true ;
@@ -500,6 +501,7 @@ namespace Dune
                 * maxDofs_[ codim ]) > upperBound) )
           {
             noUpdateNeeded = false ; 
+            break ;
           }
 
           // set new upper bound 
@@ -514,35 +516,23 @@ namespace Dune
       }
 
       // calculate new offsets 
-      unsigned int newOffSet[ dimension+1 ];
-      unsigned int newSize = 0;
+      size_ = 0 ;
       for( int codim = 0; codim <= dimension; ++codim )
       {
-        newOffSet[ codim ] = newSize;
+        // store old offset 
+        oldOffSet_[ codim ] = offset_[ codim ];
+        offset_[ codim ] = size_; 
 
         // make space a little bit larger if oversize is true 
+        // oversize new size 
         if( oversize ) 
         {
           const double add = overShoot_ * codimSize[ codim ] ;
           codimSize[ codim ] = static_cast<unsigned int> (add) ;
         }
 
-        // oversize new size 
-        newSize += codimSize [ codim ] ;
-      }
-
-      // assure that update is only called once per 
-      // index set update (store old size for that purpose)
-      if( size_ != newSize ) 
-      {
-        for( int codim = 0; codim <= dimension; ++codim )
-        {
-          oldOffSet_[ codim ] = offset_[ codim ];
-          offset_[ codim ] = newOffSet[ codim ];
-        }
-
-        // update size 
-        size_ = newSize ;
+        // add to size 
+        size_ += codimSize [ codim ] ;
       }
     }
 
@@ -932,6 +922,7 @@ namespace Dune
         codimSize[ codim ] = indexSet_.size( codim ) * maxDofs_[ codim ];
       }
 
+      // in oversize mode check offsets 
       if( oversize ) 
       {
         bool noUpdateNeeded = true ;
@@ -947,6 +938,7 @@ namespace Dune
                 * maxDofs_[ codim ]) > upperBound) )
           {
             noUpdateNeeded = false ; 
+            break ;
           }
 
           // set new upper bound 
@@ -961,35 +953,23 @@ namespace Dune
       }
 
       // calculate new offsets 
-      unsigned int newOffSet[ dimension+1 ];
-      unsigned int newSize = 0;
+      size_ = 0 ;
       for( int codim = 0; codim <= dimension; ++codim )
       {
-        newOffSet[ codim ] = newSize;
+        // store old offset 
+        oldOffSet_[ codim ] = offset_[ codim ];
+        offset_[ codim ] = size_; 
 
         // make space a little bit larger if oversize is true 
+        // oversize new size 
         if( oversize ) 
         {
           const double add = overShoot_ * codimSize[ codim ] ;
           codimSize[ codim ] = static_cast<unsigned int> (add) ;
         }
 
-        // oversize new size 
-        newSize += codimSize [ codim ] ;
-      }
-
-      // assure that update is only called once per 
-      // index set update (store old size for that purpose)
-      if( size_ != newSize ) 
-      {
-        for( int codim = 0; codim <= dimension; ++codim )
-        {
-          oldOffSet_[ codim ] = offset_[ codim ];
-          offset_[ codim ] = newOffSet[ codim ];
-        }
-
-        // update size 
-        size_ = newSize ;
+        // add to size 
+        size_ += codimSize [ codim ] ;
       }
     }
 
