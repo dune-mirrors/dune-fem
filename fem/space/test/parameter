@@ -1,0 +1,6 @@
+# verbosity (0 = off | 1 = on )
+fem.verbose: 1
+# max level for test 
+lagrangeadapt.maxlevel: 3
+# adaptation method 0 = none | 1 = generic | 2 = callback 
+fem.adaptation.method: 1
