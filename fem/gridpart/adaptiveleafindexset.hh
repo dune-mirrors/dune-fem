@@ -321,6 +321,7 @@ public:
     return haveToCopy;
   }
 
+#if 0
 private:
   void assertCodimSetSize ( int codim ) const
   {
@@ -343,6 +344,7 @@ private:
     }
 #endif
   }
+#endif
 
 public:
   template< class Entity >
@@ -358,7 +360,7 @@ public:
     if( (codim != 0) && !codimUsed_[ codim ] )
       setUpCodimSet< codim >();
 
-    assertCodimSetSize( codim );
+    //assertCodimSetSize( codim );
     const CodimIndexSetType &codimSet = codimLeafSet_[ codim ];
     const int hIdx = hIndexSet_.template index( entity );
     const int idx = codimSet.index( hIdx );
@@ -374,7 +376,7 @@ public:
     if( (codim != 0) && !codimUsed_[ codim ] )
       setUpCodimSet< codim >();
 
-    assertCodimSetSize( codim );
+    //assertCodimSetSize( codim );
     const CodimIndexSetType &codimSet = codimLeafSet_[ codim ];
     const int hIdx = hIndexSet_.template subIndex< codim >( entity, subNumber );
     const int idx = codimSet.index( hIdx );
