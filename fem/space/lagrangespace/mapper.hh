@@ -451,7 +451,7 @@ namespace Dune
       // local number of dof is local 
       const int local = (num % dimRange);
       // codim to be revised 
-      return dimRange * (oldOffSet_[codim] + indexSet_.oldIndex(newn,codim)) + local;
+      return dimRange * (offset_[codim] + indexSet_.oldIndex(newn,codim)) + local;
     }
 
     /** \copydoc Dune::DofMapper::newIndex */
@@ -888,7 +888,7 @@ namespace Dune
       // local number of dof is local 
       const int local = (num % dimRange);
       // codim to be revised 
-      return dimRange * (oldOffSet_[codim] + indexSet_.oldIndex(newn,codim)) + local;
+      return dimRange * (offset_[codim] + indexSet_.oldIndex(newn,codim)) + local;
     }
 
     /** \copydoc Dune::DofMapper::newIndex */
