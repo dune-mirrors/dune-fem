@@ -6,9 +6,6 @@
 // to write out the data, set WRITE_DATA to 1
 #define WRITE_DATA 0
 
-// to use generic adaption, set GENERIC_ADAPT to 1
-#define GENERIC_ADAPT 1
-
 // to use grape, set to WANT_GRAPE to 1
 #ifndef WANT_GRAPE
 #define WANT_GRAPE 0
@@ -60,7 +57,8 @@ struct CheckGridEnabled
 {
   typedef Grid GridType;
 
-  typedef Dune :: AdaptiveLeafGridPart< GridType > GridPartType;
+  //typedef Dune::HierarchicGridPart< GridType > GridPartType;
+  typedef Dune::AdaptiveLeafGridPart< GridType > GridPartType;
   
   inline static int CallMain ( int argc, char **argv )
   {

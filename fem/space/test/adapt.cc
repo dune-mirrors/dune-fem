@@ -18,6 +18,7 @@ using namespace Dune;
 // #include "../leafindexset.hh"
 #include <dune/fem/space/dgspace/dgadaptiveleafgridpart.hh>
 #include <dune/fem/gridpart/gridpart.hh>
+#include <dune/fem/gridpart/adaptiveleafgridpart.hh>
 
 #include <dune/grid/common/referenceelements.hh>
 #include <dune/fem/space/lagrangespace.hh>
@@ -48,10 +49,10 @@ const int polOrd = POLORDER;
 */
 //***********************************************************************
 
-//! the index set we are using 
-typedef DGAdaptiveLeafGridPart<GridType> GridPartType; 
-//typedef HierarchicGridPart<GridType> GridPartType; 
-//typedef AdaptiveLeafGridPart<GridType> GridPartType; 
+//! the index set we are using
+typedef DGAdaptiveLeafGridPart<GridType> GridPartType;
+//typedef HierarchicGridPart<GridType> GridPartType;
+//typedef AdaptiveLeafGridPart<GridType> GridPartType;
 
 //! define the function space, \f[ \R^2 \rightarrow \R \f]
 // see dune/common/functionspace.hh
