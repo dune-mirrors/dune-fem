@@ -722,6 +722,23 @@ public:
   }
 };
 
+// empty restrict prolong operator 
+class EmptyIndexSetRestrictProlong  : 
+  public RestrictProlongInterface< RestrictProlongTraits< EmptyIndexSetRestrictProlong > > 
+{
+public: 
+  EmptyIndexSetRestrictProlong() {} 
+  //! required for interface
+  typedef double RangeFieldType;
+  //! required for interface
+  void setFatherChildWeight (const RangeFieldType& val) const {}
+  //! restrict data to father and resize memory if doResize is true 
+  template <class EntityType>
+  inline void restrictLocal ( EntityType & father, EntityType & son , bool initialize ) const {}
+  //! prolong data to children and resize memory if doResize is true 
+  template <class EntityType>
+  inline void prolongLocal ( EntityType & father, EntityType & son , bool initialize ) const {}
+};
 
 
 class DofManError : public Exception {};
@@ -808,17 +825,24 @@ private:
   
 public: 
   typedef IndexSetRestrictProlong< ThisType, LocalIndexSetObjectsType , true >
-    IndexSetRestrictProlongType;
+    NewIndexSetRestrictProlongType;
   typedef IndexSetRestrictProlong< ThisType, LocalIndexSetObjectsType , false >
     IndexSetRestrictProlongNoResizeType;
+
+  // old type 
+  typedef EmptyIndexSetRestrictProlong IndexSetRestrictProlongType;
+
   // this class needs to call resizeMemory 
   friend class IndexSetRestrictProlong< ThisType , LocalIndexSetObjectsType , true  > ;
   friend class IndexSetRestrictProlong< ThisType , LocalIndexSetObjectsType , false > ;
 
 private:
   // combine object holding all index set for restrict and prolong 
-  IndexSetRestrictProlongType indexRPop_; 
-  IndexSetRestrictProlongNoResizeType indexRPopNoResize_; 
+  NewIndexSetRestrictProlongType indexSetRestrictProlong_; 
+  IndexSetRestrictProlongNoResizeType indexSetRestrictProlongNoResize_; 
+
+  // old type 
+  IndexSetRestrictProlongType indexRPop_;
   
   //! memory over estimation factor for re-allocation 
   double memoryFactor_;
@@ -829,8 +853,9 @@ private:
   : grid_( *grid ),
     defaultChunkSize_( 128 ),
     sequence_( 0 ),
-    indexRPop_( *this, insertIndices_ , removeIndices_ ),
-    indexRPopNoResize_( *this, insertIndices_ , removeIndices_ ),
+    indexSetRestrictProlong_( *this, insertIndices_ , removeIndices_ ),
+    indexSetRestrictProlongNoResize_( *this, insertIndices_ , removeIndices_ ),
+    indexRPop_(),
     memoryFactor_( Parameter :: getValidValue
       ( "fem.dofmanager.memoryfactor",  double( 1.1 ),
         ValidateNotLess< double >( 1.0 ) ) )
@@ -877,14 +902,14 @@ public:
   template <class ManagedDofStorageImp>
   void removeDofStorage(ManagedDofStorageImp& dofStorage);
 
-  //! returns the index set restrinction and prolongation operator
-  IndexSetRestrictProlongType & indexSetRPop () 
+  //! returns the index set restriction and prolongation operator
+  NewIndexSetRestrictProlongType & indexSetRestrictProlong () 
   {
     // hier muss statt dessen ein Combiniertes Object erzeugt werden. 
     // dafuer sollte bei einhaengen der IndexSets ein Methoden Pointer
     // erzeugt werden, welcher die den IndexSet mit einem anderen Object
     // kombiniert 
-    return indexRPop_;
+    return indexSetRestrictProlong_;
   }
 
   //! returns the index set restrinction and prolongation operator
@@ -892,7 +917,17 @@ public:
   {
     // return index set restrict/prolong operator that is only inserting
     // and mark for removal indices but not doing resize 
-    return indexRPopNoResize_;
+    return indexSetRestrictProlongNoResize_;
+  }
+
+  //! returns the index set restriction and prolongation operator (deprecated) use indexSetRestrictProlong instead 
+  IndexSetRestrictProlongType & indexSetRPop () DUNE_DEPRECATED 
+  {
+    // hier muss statt dessen ein Combiniertes Object erzeugt werden. 
+    // dafuer sollte bei einhaengen der IndexSets ein Methoden Pointer
+    // erzeugt werden, welcher die den IndexSet mit einem anderen Object
+    // kombiniert 
+    return indexRPop_;
   }
 
   //! if dofmanagers list is not empty return true 
