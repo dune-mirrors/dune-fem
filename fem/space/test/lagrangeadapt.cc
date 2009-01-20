@@ -46,6 +46,7 @@ const int polOrder = POLORDER;
   #include <dune/grid/io/visual/grapedatadisplay.hh>
 #endif
 #include <dune/fem/io/file/grapedataio.hh>
+#include <dune/fem/io/parameter.hh>
 
 
 // Check for unhealthy grids
@@ -229,11 +230,7 @@ void adapt ( GridType &grid, DiscreteFunctionType &solution, int step )
   
   RestrictProlongOperatorType rp( solution );
 
-  #if GENERIC_ADAPT 
-    AdaptationManagerType adaptationManager( grid, rp );
-  #else 
-    DofManagerType &dofManager = DofManagerFactoryType :: getDofManager( grid );
-  #endif  
+  AdaptationManagerType adaptationManager( grid, rp );
 
   std :: string message = (step < 0 ? "Coarsening..." : "Refining..." );
   const int mark = (step < 0 ? -1 : 1);
@@ -244,14 +241,9 @@ void adapt ( GridType &grid, DiscreteFunctionType &solution, int step )
     const IteratorType endit = discreteFunctionSpace.end();
     for( ; it != endit; ++it )
       grid.mark( mark, *it );
-      
-    #if GENERIC_ADAPT
-      std :: cout << message << std::endl;
-      adaptationManager.adapt();
-    #else
-      std :: cout << message << " (nongeneric)" << std :: endl;
-      grid.adapt( dofManager, rp );
-    #endif
+
+    // adapt grid 
+    adaptationManager.adapt();
   }
 }
 
@@ -338,13 +330,22 @@ try
 {
   MPIManager :: initialize( argc, argv );
 
-  if( argc != 2 )
+  const char* paramName = "parameter";
+  if( argc < 2 )
   {
-    std :: cerr << "Usage: " << argv[ 0 ] << "<maxlevel>" << std :: endl;
-    exit( 1 );
+    std :: cerr << "Usage: " << argv[ 0 ] << "<parameter>" << std :: endl;
   }
-  
-  int ml = atoi( argv[ 1 ] );
+  else 
+    paramName = argv[1]; 
+
+  std::string paramFile( paramName );
+
+  // append parameter 
+  Parameter :: append( argc , argv );
+  Parameter :: append( paramFile );
+
+  int ml = 2 ; // default value = 2 
+  ml = Parameter :: getValue ("lagrangeadapt.maxlevel", ml);
 
   char tmp[ 100 ]; 
   sprintf( tmp, "%ddgrid.dgf", dimworld );
