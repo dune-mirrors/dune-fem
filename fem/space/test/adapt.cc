@@ -33,6 +33,7 @@ using namespace Dune;
 #endif
 
 #include <dune/fem/io/file/grapedataio.hh>
+#include <dune/fem/io/parameter.hh>
 
 // polynom approximation order of quadratures, 
 // at least poolynom order of basis functions 
@@ -41,8 +42,6 @@ const int polOrd = POLORDER;
 #ifndef GRIDDIM 
 #define GRIDDIM dimworld 
 #endif
-
-#define GENERIC_ADAPT 1
 
 //***********************************************************************
 /*! L2 Projection of a function f: 
@@ -78,7 +77,7 @@ typedef DofManager<GridType> DofManagerType;
 typedef DofManagerFactory<DofManagerType> DofManagerFactoryType;
 
 typedef AdaptationManager <GridType,
-          RestrictProlongDefault<DiscreteFunctionType> > ADOperatorType;
+          RestrictProlongDefault<DiscreteFunctionType> > AdaptationManagerType;
 
 // ***********************************************************
 // the exact solution to the problem for EOC calculation 
@@ -205,11 +204,7 @@ void adapt(GridType& grid,
   RestrictProlongDefault<DiscreteFunctionType> rp(solution);
   rp.setFatherChildWeight(DGFGridInfo<GridType>::refineWeight());
 
-#if GENERIC_ADAPT 
-  ADOperatorType adop(grid,rp);
-#else 
-  DofManagerType& dm = DofManagerFactoryType :: getDofManager( grid );  
-#endif  
+  AdaptationManagerType adop(grid,rp);
 
   std::string message;
 
@@ -225,38 +220,17 @@ void adapt(GridType& grid,
     message += "Refining...";
 
   
-#if GENERIC_ADAPT
   for(int i=0; i<count; ++i)
   {
     Iterator it = space.begin();  
     Iterator endit = space.end();
-    for(; it != endit ; ++it) {
+    for(; it != endit ; ++it) 
+    {
       grid.mark(mark, *it);
     } 
     adop.adapt();
     std::cout << message << std::endl;
   }
-#else 
-  for(int i=0; i<count; ++i)
-  {
-    Iterator it = space.begin();  
-    Iterator endit = space.end();
-    for(; it != endit ; ++it) {
-      grid.mark(mark, *it);
-    } 
-    grid.adapt(dm,rp);
-    std::cout << message << "NOT GENERIC!" << std::endl;
-  }
-#endif
-  /*
-  DofManagerType& dm = DofManagerFactoryType :: getDofManager( grid );  
-  grid.preAdapt();
-  dm.resizeForRestrict();
-  grid.globalRefine(step);
-  dm.resize();
-  // dm.dofCompress();
-  grid.postAdapt();
-  */
 }
 // ********************************************************************
 double algorithm (GridType& grid, DiscreteFunctionType& solution,
@@ -330,12 +304,23 @@ int main( int argc, char *argv[] )
 try {
   MPIManager :: initialize( argc, argv );
 
-  if(argc != 2)
+  const char* paramName = "parameter";
+  if( argc < 2 )
   {
-    std :: cerr << "Usage: " << argv[ 0 ] << " <maxlevel>" << std :: endl;
-    return 1;
+    std :: cerr << "Usage: " << argv[ 0 ] << "<parameter>" << std :: endl;
   }
-  int ml = atoi( argv[1] );
+  else
+    paramName = argv[1];
+
+  std::string paramFile( paramName );
+
+  // append parameter 
+  Parameter :: append( argc , argv );
+  Parameter :: append( paramFile );
+
+  int ml = 2 ; // default value = 2 
+  ml = Parameter :: getValue ("lagrangeadapt.maxlevel", ml);
+
   std::vector<double> error(ml);
 
   char tmp[100]; 
