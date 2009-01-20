@@ -244,17 +244,32 @@ public:
   //! return number of enties of array 
   int size () const { return size_; }  
 
+private:
+  void assertIndex ( int i ) const
+  {
+#ifndef NDEBUG
+    if( (i < 0) || (i >= size()) )
+    {
+      std::cerr << std::endl;
+      std::cerr << "Error in StaticArray: Index out of Range: " << i << std::endl;
+      std::cerr << "                      Size of array: " << size() << std::endl;
+      abort();
+    }
+#endif
+  }
+
+public:
   //! return reference to entry i
   T& operator [] ( int i )       
   { 
-    assert( ((i<0) || (i>=size ()) ? (std::cout << std::endl << i << " i|size " << size() << std::endl, 0) : 1));
+    assertIndex( i );
     return vec_[i]; 
   }
   
   //! return reference to const entry i
   const T& operator [] ( int i ) const 
-  { 
-    assert( ((i<0) || (i>=size()) ? (std::cout << std::endl << i << " i|size " << size() << std::endl, 0) : 1));
+  {
+    assertIndex( i );
     return vec_[i]; 
   }
 

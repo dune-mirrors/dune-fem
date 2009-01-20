@@ -138,7 +138,7 @@ public:
   AdaptiveLeafIndexSet (const GridType & grid) 
     : BaseType(grid) 
     , hIndexSet_( SelectorType::hierarchicIndexSet(grid) ) 
-    , higherCodims_ (false) // higherCodims are not used by default 
+    , higherCodims_( false ) // higherCodims are not used by default 
     , compressed_(true) // at start the set is compressed 
     , sequence_( this->dofManager_.sequence() )
   {
@@ -146,7 +146,7 @@ public:
     codimUsed_[0] = true;
 
     // all higher codims are not used by default
-    for(int i=1; i<ncodim; ++i) codimUsed_[i] = false;
+    for(int i=1; i<ncodim; ++i) codimUsed_[i] = higherCodims_;
     
     // set the codim of each Codim Set. 
     for(int i=0; i<ncodim; ++i) codimLeafSet_[i].setCodim( i );
@@ -321,6 +321,30 @@ public:
     return haveToCopy;
   }
 
+private:
+  void assertCodimSetSize ( int codim ) const
+  {
+#ifndef NDEBUG
+    const CodimIndexSetType &codimSet = codimLeafSet_[ codim ];
+    if( codimSet.realSize() != hIndexSet_.size( codim ) )
+    {
+      std::cerr << std::endl;
+      std::cerr << "Error in AdaptiveLeafIndexSet: "
+                << "Real size of Index set for codim " << codim
+                << " is wrong." << std::endl;
+      std::cerr << "                               "
+                << "Real size of codim index set: " << codimSet.realSize()
+                << std::endl;
+      std::cerr << "                               "
+                << "Size of codim " << codim << " in hierarchic index set: "
+                << hIndexSet_.size( codim )
+                << std::endl;
+      abort();
+    }
+#endif
+  }
+
+public:
   template< class Entity >
   IndexType index ( const Entity &entity ) const
   {
@@ -333,9 +357,12 @@ public:
   {
     if( (codim != 0) && !codimUsed_[ codim ] )
       setUpCodimSet< codim >();
+
+    assertCodimSetSize( codim );
+    const CodimIndexSetType &codimSet = codimLeafSet_[ codim ];
     const int hIdx = hIndexSet_.template index( entity );
-    const int idx = codimLeafSet_[ codim ].index( hIdx );
-    assert( idx >= 0 );
+    const int idx = codimSet.index( hIdx );
+    assert( (idx >= 0) && (idx < codimSet.size()) );
     return idx;
   }
 
@@ -346,9 +373,12 @@ public:
   {
     if( (codim != 0) && !codimUsed_[ codim ] )
       setUpCodimSet< codim >();
+
+    assertCodimSetSize( codim );
+    const CodimIndexSetType &codimSet = codimLeafSet_[ codim ];
     const int hIdx = hIndexSet_.template subIndex< codim >( entity, subNumber );
-    const int idx = codimLeafSet_[ codim ].index( hIdx );
-    assert( idx >= 0 );
+    const int idx = codimSet.index( hIdx );
+    assert( (idx >= 0) && (idx < codimSet.size()) );
     return idx;
   }
 
