@@ -9,6 +9,7 @@
 #include <dune/fem/space/common/communicationmanager.hh>
 #include <dune/fem/space/common/loadbalancer.hh>
 #include <dune/fem/space/common/adaptcaps.hh>
+#include <dune/fem/space/common/restrictprolonginterface.hh>
 #include <dune/fem/storage/singletonlist.hh>
 
 namespace Dune
@@ -236,7 +237,15 @@ class AdaptationManagerBase
       // use grid call back adapt method 
       if( adaptMethod == BaseType :: callback ) 
       {
-        grid.adapt(dm,rpop); 
+        // generate new combined restriction and prolongation operator 
+        // first persistent index sets from dofmanager 
+        // second user data 
+        typedef typename DofManagerType :: NewIndexSetRestrictProlongType IndexSetRPType;
+        typedef RestrictProlongPair < IndexSetRPType& , RPOpImp& > COType;
+        COType combinedRestrictProlong ( dm.indexSetRestrictProlong() , rpop );
+      
+        // call grid adaptation 
+        grid.adapt(dm, combinedRestrictProlong); 
         return ;
       }
     }
@@ -291,10 +300,10 @@ public:
 
   /*! 
    Add to AdaptationManagers means that the RestProlOperators will be combined.
-   See DiscreteOperatorImp.
+   See DiscreteOperatorImp. (deprecated method)
    */
   template <class RestProlOperatorType> 
-  AdaptationManagerBase<GridType,
+  DUNE_DEPRECATED AdaptationManagerBase<GridType,
   CombinedRestProl <RestProlOperatorImp,RestProlOperatorType> > & 
   operator + (const AdaptationManagerBase<GridType,RestProlOperatorType> &op)
   {
@@ -417,8 +426,13 @@ private:
     {
       // resizes the index sets and resizes the memory
       dm_.resize();
+
+      // generate new combined restriction and prolongation operator
+      // (here resize is disabled since already done)
+      // first persistent index sets from dofmanager 
+      // second user data 
       typedef typename DofManagerType :: IndexSetRestrictProlongNoResizeType IndexSetRPType;
-      typedef CombinedRestProl <IndexSetRPType,RestProlOperatorImp> COType;
+      typedef RestrictProlongPair< IndexSetRPType&, RestProlOperatorImp& > COType;
       COType tmpop ( dm_.indexSetRestrictProlongNoResize() , rpOp_ );
       
       typedef typename GridType::template Codim<0>::
