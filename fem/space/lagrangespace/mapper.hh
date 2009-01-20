@@ -316,8 +316,6 @@ namespace Dune
     mutable unsigned int size_;
     unsigned int numDofs_;
 
-    // for debugging only 
-
   public:
     //! constructor
     LagrangeMapper ( const GridPartType &gridPart,
