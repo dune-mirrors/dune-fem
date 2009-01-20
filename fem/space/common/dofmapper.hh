@@ -198,14 +198,14 @@ public:
     return asImp().numberOfHoles(block); 
   }
   
-  /** \brief return old index of hole for data block */
+  /** \brief return old index of hole for data block (with resprect to new offset) */
   int oldIndex (const int hole, const int block) const 
   { 
     CHECK_INTERFACE_IMPLEMENTATION(asImp().oldIndex(hole,block));
     return asImp().oldIndex(hole,block); 
   }
     
-  /** \brief return new index of hole for data block */
+  /** \brief return new index of hole for data block (with resprect to new offset) */
   int newIndex (const int hole, const int block) const 
   { 
     CHECK_INTERFACE_IMPLEMENTATION(asImp().newIndex(hole,block));

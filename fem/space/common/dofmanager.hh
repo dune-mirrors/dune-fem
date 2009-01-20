@@ -537,8 +537,11 @@ protected:
     // get new off set 
     const int newOffSet = mapper().offSet( block );
 
+    // here we should have at least the same offsets 
+    assert( newOffSet <= oldOffSet );
+
     // only if block is not starting from zero 
-    if( oldOffSet > newOffSet )
+    if( newOffSet < oldOffSet )
     {
       // get number of blocks 
       const int numBlocks = mapper().numBlocks();
