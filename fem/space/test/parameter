@@ -1,5 +1,5 @@
-# verbosity (0 = off | 1 = on )
-fem.verbose: 1
+# select parallel process for verbose output (-1 = verbosity off)
+fem.verboserank: 0
 # max level for test 
 lagrangeadapt.maxlevel: 3
 # adaptation method 0 = none | 1 = generic | 2 = callback 
