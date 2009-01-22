@@ -15,6 +15,7 @@
 const int polOrder = POLORDER;
 
 #include <iostream>
+#include <sstream>
 #include <dune/common/stdstreams.cc>
 
 #include <dune/fem/gridpart/gridpart.hh>
@@ -345,9 +346,9 @@ try
   int ml = 2 ; // default value = 2 
   ml = Parameter :: getValue ("lagrangeadapt.maxlevel", ml);
 
-  char tmp[ 100 ]; 
-  sprintf( tmp, "%ddgrid.dgf", dimworld );
-  GridPtr< GridType > gridptr( tmp );
+  std::ostringstream gridName;
+  gridName << dimworld << "dgrid.dgf";
+  GridPtr< GridType > gridptr( gridName.str().c_str() );
 
   const int step = DGFGridInfo< GridType > :: refineStepsForHalf();
 
