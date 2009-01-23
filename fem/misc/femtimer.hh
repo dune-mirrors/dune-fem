@@ -68,7 +68,9 @@ namespace Dune {
    *  femTimer.stop(id);
    *  \endcode
    *  Execution time is summed up over all calls
-   *  to start and stop. Using 
+   *  to start and stop. It is possible to pass an operation
+   *  argument which changes this behavior; {\tt sum} and {\tt max} are
+   *  implemented Using 
    *  \code
    *  femTimer.reset(id);
    *  \endcode
@@ -113,14 +115,9 @@ namespace Dune {
    */
 #ifdef FEMTIMER
 class FemTimer {
-  Timer timer_;
-  std::stack<double> timesS_;
-  std::vector<std::vector<double> > startTimesV_;
-  std::vector<std::vector<double> > timesV_;
-  std::vector<std::string> timesVName_;
-  std::ofstream output_;
-  int stepCount_;
-  bool changed_;
+  public:
+  typedef enum {max,sum} operation;
+  private:
   FemTimer() : timesS_(), 
                startTimesV_(),
                timesV_(0), timesVName_(0),
@@ -186,11 +183,16 @@ class FemTimer {
     startTimesV_[id][nr] = timer_.elapsed();
     assert( startTimesV_[ id ][ 0 ] >= 0. );
   }
-  double stop_timer(int id,int nr) {
+  double stop_timer(int id,int nr,operation op) {
     assert( (startTimesV_[ id ][ nr ] >= 0.) && (startTimesV_[ id ][ 0 ] >= 0.) );
     double ret = timer_.elapsed() - startTimesV_[id][nr];
     startTimesV_[ id ][ nr ] = -1.;
-    timesV_[id][nr] += ret;
+    switch (op) {
+    case sum: timesV_[id][nr] += ret; 
+              break;
+    case max: timesV_[id][nr] = std::max(ret,timesV_[id][nr]); 
+              break;
+    }
     return ret;
   }
   void reset_timer(int id,int nr) {
@@ -207,11 +209,15 @@ class FemTimer {
   }
   // *****************************************************
   void print_timer(std::ostream& out,int id) {
-    out << "(" << timesVName_[id] << ":";
+    if (timesV_.size()>1) {
+      out << "(" << timesVName_[id] << ":";
+    }
     out << timesV_[id][0];
     for (unsigned int i=1;i<timesV_[id].size();++i)
       out << "," << timesV_[id][i]/timesV_[id][0];
-    out << ") ";
+    if (timesV_.size()>1) {
+      out << ") ";
+    }
   }
   void print_timer(std::ostream& out,const std::string& msg) {
     out << msg << " : ";
@@ -231,12 +237,15 @@ class FemTimer {
   void printToFile() {
     for (unsigned int i=0;i<timesV_.size();++i) {
       if (timesV_[i].size()>0) {
-        output_ << std::setw(6) << inMS(timesV_[i][0]) << " ( ";
-        for (unsigned int nr=1;nr<timesV_[i].size();++nr) {
-          output_ << std::setw(3) << inProz(timesV_[i][nr],timesV_[i][0])
-                  << "% ";
+        output_ << std::setw(6) << inMS(timesV_[i][0]);
+        if (timesV_[i].size()>1) {
+          output_ << " ( ";
+          for (unsigned int nr=1;nr<timesV_[i].size();++nr) {
+            output_ << std::setw(3) << inProz(timesV_[i][nr],timesV_[i][0])
+                    << "% ";
+          }
+          output_ << ") ";
         }
-        output_ << ") ";
       }
     }
     output_ << std::endl;
@@ -291,6 +300,14 @@ class FemTimer {
     }
     stepCount_++;
   }
+  Timer timer_;
+  std::stack<double> timesS_;
+  std::vector<std::vector<double> > startTimesV_;
+  std::vector<std::vector<double> > timesV_;
+  std::vector<std::string> timesVName_;
+  std::ofstream output_;
+  int stepCount_;
+  bool changed_;
   // **************************************
   // **************************************
   // **************************************
@@ -317,8 +334,11 @@ class FemTimer {
   static void start(int id,int nr=0) {
     instance().start_timer(id,nr);
   }
-  static double stop(int id,int nr=0) {
-    return instance().stop_timer(id,nr);
+  static double stop(int id,int nr=0,operation op=sum) {
+    return instance().stop_timer(id,nr,op);
+  }
+  static double stop(int id,operation op=sum) {
+    return instance().stop_timer(id,0,op);
   }
   static void reset() {
     instance().reset_timer();
@@ -345,6 +365,9 @@ class FemTimer {
 };
 #else
 class FemTimer {
+  public:
+  typedef enum {max,sum} operation;
+  private:
   Timer timer_;
   std::stack<double> timesS_;
   FemTimer()   {}
@@ -373,7 +396,10 @@ class FemTimer {
   }
   static void start(int id,int nr=0) {
   }
-  static double stop(int id,int nr=0) {
+  static double stop(int id,int nr=0,operation op=sum) {
+    return 0.;
+  }
+  static double stop(int id,operation op) {
     return 0.;
   }
   static void reset() {
@@ -404,9 +430,6 @@ namespace {
    *          timing parts of a program.
    **/
 class ExecutionTimer {
-  double total_;
-  double start_;
-  Timer time_;
   public:
   ExecutionTimer() : total_(0) {
   }
@@ -422,6 +445,9 @@ class ExecutionTimer {
   void reset() {
     total_=0;
   }
+  double total_;
+  double start_;
+  Timer time_;
 };
 }
 #endif
