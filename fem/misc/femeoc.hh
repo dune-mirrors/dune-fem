@@ -191,6 +191,9 @@ class FemEoc
   static size_t addEntry(const std::string& descript) {
     return instance().addentry(descript);
   }
+  static size_t addEntry(const char* descript) {
+    return addEntry(std::string(descript));
+  }
   template <class VectorType>
   static void setErrors(size_t id,const VectorType& err,int size) {
     instance().seterrors(id,err,size);
