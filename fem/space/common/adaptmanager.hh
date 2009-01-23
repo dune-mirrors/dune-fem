@@ -138,19 +138,31 @@ public:
 
   */   
   AdaptationMethod(const GridType & grid,
-                   std::string paramFile = "") 
-    : adaptationMethod_(generic)
-  {
+                   std::string paramFile ) DUNE_DEPRECATED
+    : adaptationMethod_(generic) {
     const bool output = (grid.comm().rank() == 0);
     int am = 1;
-    if( paramFile != "")
-    {
-      readParameter(paramFile,"AdaptationMethod",am, output);
-    }
-    else {
-      am = Parameter::getValidValue<int>("fem.adaptation.method",am,
-                      ValidateInterval<int,true,true>(0,2));
-    }
+    readParameter(paramFile,"AdaptationMethod",am, output);
+    init(am,output);
+  }
+  /** \brief constructor of AdaptationMethod 
+     The following optional parameters are used 
+        # 0 == none, 1 == generic, 2 == call back (only AlbertaGrid and ALUGrid)  
+        AdaptationMethod: 1 # default value 
+     \param grid Grid that adaptation method is read for  
+
+  */   
+  AdaptationMethod(const GridType & grid) 
+    : adaptationMethod_(generic) {
+    const bool output = (grid.comm().rank() == 0);
+    int am = 1;
+    am = Parameter::getValidValue<int>("fem.adaptation.method",am,
+                    ValidateInterval<int,true,true>(0,2));
+    init(am,output);
+  }
+private:
+  void init(int am,const bool output)
+  {
 
     // chose adaptation method 
     if(am == 2) adaptationMethod_ = callback;
@@ -169,7 +181,7 @@ public:
       std::cout << "Created AdaptationMethod: adaptation method = " << methodName() << std::endl;
     }
   }
-
+public:
   //! virtual destructor 
   virtual ~AdaptationMethod () {}
 
@@ -286,8 +298,25 @@ public:
         AdaptationMethod: 1 # default value 
   */   
   AdaptationManagerBase (GridType & grid, RestProlOperatorImp & rpOp,
-      std::string paramFile = "") 
+      std::string paramFile ) DUNE_DEPRECATED
     : BaseType(grid,paramFile)
+    , grid_(grid) 
+    , dm_ ( DofManagerFactoryType::getDofManager(grid_) )
+    , rpOp_ (rpOp) 
+    , adaptTime_(0.0)
+  {
+  }
+  /** \brief constructor of AdaptationManagerBase 
+     The following optional parameter can be used
+        # 0 == none, 1 == generic, 2 == call back (only AlbertaGrid and ALUGrid)  
+        AdaptationMethod: 1 # default value 
+     \param grid Grid that adaptation is done for 
+     \param rpOp restriction and prlongation operator that describes how the 
+      user data is projected to other grid levels
+        the following two lines:
+  */   
+  AdaptationManagerBase (GridType & grid, RestProlOperatorImp & rpOp)
+    : BaseType(grid)
     , grid_(grid) 
     , dm_ ( DofManagerFactoryType::getDofManager(grid_) )
     , rpOp_ (rpOp) 
@@ -370,6 +399,10 @@ public:
   virtual double adaptationTime() const 
   {
     return adaptTime_;
+  }
+
+  static DofManagerType& getDofManager(const GridType& grid) {
+    return DofManagerFactoryType::getDofManager( grid );
   }
 
 private:  
@@ -564,7 +597,7 @@ struct AdaptationManagerReferenceFactory
   AdaptationManager for each grid instance. See AdaptationManager for
   details. 
 */
-template <class GridType, class RestProlOperatorImp >
+template <class GridType, class RestProlOperatorImp=RestrictProlongEmpty >
 class AdaptationManager :
   public AdaptationManagerBase<GridType,RestProlOperatorImp> ,
   public LoadBalancer<GridType> 
@@ -593,6 +626,29 @@ class AdaptationManager :
 
 public:  
   /** \brief constructor of AdaptationManager 
+     The following optional parameters from the Parameter class are used
+        # 0 == none, 1 == generic, 2 == call back (only AlbertaGrid and ALUGrid)  
+        AdaptationMethod: 1 # default value 
+     \param grid Grid that adaptation is done for 
+     \param rpOp restriction and prlongation operator that describes how the 
+      user data is projected to other grid levels
+     \param balanceCounter start counter for balance cycle (default = 0)   
+  */   
+  AdaptationManager(GridType & grid, 
+                    RestProlOperatorImp & rpOp, 
+                    int balanceCounter = 0 )
+    : BaseType(grid,rpOp) 
+    , Base2Type( grid , rpOp , balanceCounter )
+    , commList_(rpOp)
+    , referenceCounter_( ProviderType :: getObject( &grid ) )
+  {
+    ++ referenceCounter_;
+    if( referenceCounter_ > 1 )
+    {
+      DUNE_THROW(InvalidStateException,"Only one instance of AdaptationManager allowed per grid instance");
+    }
+  }
+  /** \brief constructor of AdaptationManager 
      \param grid Grid that adaptation is done for 
      \param rpOp restriction and prlongation operator that describes how the 
       user data is projected to other grid levels
@@ -604,8 +660,8 @@ public:
   */   
   AdaptationManager(GridType & grid, 
                     RestProlOperatorImp & rpOp, 
-                    std::string paramFile = "", 
-                    int balanceCounter = 0 ) 
+                    std::string paramFile , 
+                    int balanceCounter = 0 ) DUNE_DEPRECATED
     : BaseType(grid,rpOp,paramFile) 
     , Base2Type( grid , rpOp , paramFile , balanceCounter )
     , commList_(rpOp)
@@ -623,6 +679,25 @@ public:
   {
     -- referenceCounter_;
     ProviderType :: removeObject( referenceCounter_ );
+  }
+
+  //! a static method to globaly refine a grid based on a GridPart (or GridView)
+  static void globalRefine(GridType& grid,int step) {
+    // typedef DofManager<GridType> DofManagerType;
+    // typedef DofManagerFactory<DofManagerType> DofManagerFactoryType;
+    grid.globalRefine(step);
+    BaseType::getDofManager( grid ).resize();
+    /*
+    typedef typename GridPart::template Codim<0>::IteratorType IteratorType;
+    const IteratorType endit = gridPart.template end<0>();
+    for(IteratorType it = gridPart.template begin<0>(); it != endit ; ++it) {
+      gridPart.grid().mark(1,*it);
+    }
+    RestrictProlongEmpty rp;
+    AdaptationManager<typename GridPart::GridType,RestrictProlongEmpty>
+      adapt(gridPart.grid(),rp);
+    adapt.adapt();
+    */
   }
 
   /** @copydoc LoadBalancerInterface::loadBalance */
@@ -678,7 +753,7 @@ class AdaptationLoadBalanceManager :
 public:
   AdaptationLoadBalanceManager(
       GridType & grid, RestProlOperatorImp & rpOp, 
-      std::string paramFile = "", int balanceCounter = 0 ) DUNE_DEPRECATED      
+      std::string paramFile , int balanceCounter = 0 ) DUNE_DEPRECATED      
     : BaseType(grid,rpOp,paramFile,balanceCounter)
   {
   }
