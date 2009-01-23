@@ -13,6 +13,7 @@ static const int dimw = dimworld;
 
 #include <dune/fem/gridpart/gridpart.hh>
 #include <dune/fem/gridpart/adaptiveleafgridpart.hh> 
+#include <dune/fem/space/common/adaptmanager.hh>
 
 #include <dune/grid/common/referenceelements.hh>
 #include <dune/fem/misc/double.hh>
@@ -48,7 +49,7 @@ typedef HierarchicGridPart<GridType> GridPartType;
 //! define the function space, \f[ \R^2 \rightarrow \R \f]
 // see dune/common/functionspace.hh
 //typedef MatrixFunctionSpace < double , double, dimw , 3,5 > FuncSpace;
-typedef FunctionSpace < GridType :: ctype, Double , dimw , 2 > FuncSpace;
+typedef FunctionSpace < GridType :: ctype, double , dimw , 2 > FuncSpace;
 
 //! define the function space our unkown belong to 
 //! see dune/fem/lagrangebase.hh
@@ -247,6 +248,10 @@ double algorithm (GridType& grid, DiscreteFunctionType& solution  , int turn )
 //**************************************************
 int main (int argc, char **argv)
 {
+  MPIManager :: initialize( argc, argv );
+  try
+  {
+  
   if(argc != 2)
   {
     fprintf(stderr,"usage: %s <maxlevel> \n",argv[0]);
@@ -269,9 +274,10 @@ int main (int argc, char **argv)
   
   for(int i=0; i<ml; i+=step)
   {
-    grid.globalRefine(step);
-    DofManagerType& dm = DofManagerFactoryType :: getDofManager( grid );
-    dm.resize();
+    // grid.globalRefine(step);
+    // DofManagerType& dm = DofManagerFactoryType :: getDofManager( grid );
+    // dm.resize();
+    AdaptationManager<GridType>::globalRefine(grid,step);
     error[i] = algorithm ( grid , solution , i==ml-1);
     if (i>0) 
     {
@@ -281,5 +287,11 @@ int main (int argc, char **argv)
   }
   delete [] error;
   return 0;
+  }
+  catch( Exception e )
+  {
+    std :: cerr << e.what() << std :: endl;
+    return 1;
+  }
 }
 
