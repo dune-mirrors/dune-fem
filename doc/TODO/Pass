@@ -1,0 +1,21 @@
+1) Move pass to operator
+2) Restructure:
+   i) Basics: StartPass, Pass, LocalPass and
+              the unspecific part of ModelCaller
+              (template magic with selector,
+               handling DiscreteFunctionTuples)
+  ii) Implementations: DGPass+DGModelCaller,...
+                       and example DiscreteModels
+3) A InsertOperatorPass:
+   Given some OperatorImplementation Op we need
+   a mechanism to add it to a pass tree.
+   We have v=Op(u) and through some Model Op
+   depends on some other data function 
+   (e.g. viscosity tensor A(s))
+   These data function could now depend on 
+   the results from previous passes:
+   v=Op(u,u_1,u_2.,...,u_k)
+   Prehaps we need Operator with more than one
+   argument - prehaps use the technique with
+   Tuples of DiscreteFunctions as used in the
+   ModelCaller

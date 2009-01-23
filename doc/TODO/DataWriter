@@ -1,0 +1,16 @@
+A) data_ set in constructor and data passed in write
+   method very inconsistenly used (e.g. vtkWriter)
+   No DataTuple in constructor needed?
+
+1) seperate grape output (call it different anyway)
+   from meare visualization output for paraview
+   It is impossible to use the DataWriter with 
+   a function, which has no read/write method 
+   (e.g. Adpators)
+2) A specialized version (e.g. for the howto)
+   taking a single function would be nice.
+3) It should be possible to set some parameters 
+   (e.g. filename) not only through the paramerfile
+   but also in the program itself dynamicaly
+   and perhaps also to change the stepCounter and
+   force writting (override willWrite)
