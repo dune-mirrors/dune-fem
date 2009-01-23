@@ -328,7 +328,7 @@ public:
     const int numDofs = lfFather.numDofs();
     for( int i = 0; i < numDofs; ++i )
       lfSon[ i ] = lfFather[ i ];
-  }
+  } 
 
   //! add discrete function to communicator 
   template <class CommunicatorImp> 
@@ -342,6 +342,53 @@ private:
   mutable RangeFieldType weight_;
 };
 
+/** \brief This is an empty restriction/prolongation operator 
+*/
+class RestrictProlongEmpty;
+struct RestrictProlongEmptyTraits {
+  typedef RestrictProlongEmpty RestProlImp;
+  typedef double RangeFieldType;
+};
+class RestrictProlongEmpty
+: public RestrictProlongInterfaceDefault
+  < RestrictProlongEmptyTraits >
+{
+  typedef RestrictProlongInterfaceDefault
+    < RestrictProlongEmptyTraits >
+    BaseType;
+
+public:  
+
+protected:
+  using BaseType :: calcWeight;
+  using BaseType :: entitiesAreCopies;
+
+public:  
+  //! Constructor
+  explicit RestrictProlongEmpty( ) 
+  {}
+
+  void setFatherChildWeight ( const double &weight ) const
+  {}
+  
+  //! restrict data to father 
+  template< class EntityType >
+  void restrictLocal ( const EntityType &father, 
+                       const EntityType &son, bool initialize ) const
+  {}
+
+  //! prolong data to children 
+  template< class EntityType >
+  void prolongLocal ( const EntityType &father, 
+                      const EntityType &son, bool initialize ) const
+  {}
+
+  //! add discrete function to communicator 
+  template <class CommunicatorImp> 
+  void addToList(CommunicatorImp& comm) 
+  {}
+
+};
 ///@} 
 
 } // end namespace Dune 
