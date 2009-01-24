@@ -54,6 +54,7 @@ AC_CHECK_FILE([fem/pass/test/Makefile.am],
 AC_CONFIG_FILES([Makefile
      doc/Makefile
      doc/doxygen/Makefile
+     doc/doxygen/pages/Makefile
      fem/Makefile
      fem/pass/Makefile
      fem/space/Makefile

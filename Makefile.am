@@ -1,18 +1,13 @@
 # $Id$
 
 # we need the module file to be able to build via dunecontrol
-EXTRA_DIST=dune.module
+EXTRA_DIST=dune.module modules
 
 # don't follow the full GNU-standard; we definitely need automake >= 1.5
 #AUTOMAKE_OPTIONS = foreign 1.5
 
 # do everything in the subdirs
-DIST_SUBDIRS = fem lib m4 doc
-if BUILD_DOCS
 SUBDIRS = fem lib m4 doc
-else
-SUBDIRS = fem lib m4
-endif
 
 pkgconfigdir = $(libdir)/pkgconfig
 pkgconfig_DATA = dune-fem.pc
@@ -25,8 +20,5 @@ include $(top_srcdir)/am/global-rules
 SOURCEFILE_MASK = -name \*.h -o -name \*.hh -o -name \*.c -o -name \*.cc
 
 # add library name, authors list, and license to progam files
-# after that touch stamp again, otherwise docu is build on install 
 dist-hook:
 	find $(distdir) \( $(SOURCEFILE_MASK) \) -exec scripts/addauthors.sh ./AUTHORS {} \;
-	touch $(distdir)/doc/doxygen/stamp 
-	touch $(distdir)/doc/doxygen/html-dist 

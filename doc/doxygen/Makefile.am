@@ -1,37 +1,27 @@
-# if documentation was enabled 
-if BUILD_DOCS
-DOXYGEN_HTML = html 
-DOXYGEN_DIST = html-dist
+SUBDIRS = pages
 
-# what files does the doxygen-generated stuff depend on (find-syntax)
-DEPENDON = -name \*.cc -o -name \*.hh -o -name \*.png
-ADDITIONALDOCS = -name Doxyfile -o -name modules -o -name \*.dist -o -name \*.dev
-
-DOXYFILE_OVERWRITE = echo "PROJECT_NAME = $(PACKAGE_NAME)"; \
-                     echo "PROJECT_NUMBER = $(PACKAGE_VERSION)";
-	
-DOXYFILE_OVERWRITE_HTML = $(DOXYFILE_OVERWRITE) \
-                          echo "HTML_OUTPUT = $(DOXYGEN_HTML)"; \
-			  echo "WARN_LOGFILE = doxygen.out"; \
-			  echo "FILE_PATTERNS += *.dev";
-DOXYFILE_OVERWRITE_DIST = $(DOXYFILE_OVERWRITE) \
-                          echo "HTML_OUTPUT = $(DOXYGEN_DIST)"; \
-			  echo "WARN_LOGFILE = doxygen-dist.out"; \
-			  echo "INTERNAL_DOCS = NO";
+EXTRA_DIST = Doxyfile modules
+CLEANFILES = stamp doxygen.out doxygen.log
 
 # ----------------------------------------------------------------------------
 
+# what files does the doxygen-generated stuff depend on (find-syntax)
+DEPENDON = -name \*.cc -o -name \*.hh -o -name \*.png
+ADDITIONALDOCS = -name Doxyfile -o -name modules -o -name pages\*
+
+# Things to add to Doxyfile
+DOXYFILE_OVERWRITE = echo "PROJECT_NAME = $(PACKAGE_NAME)"; \
+                     echo "PROJECT_NUMBER = $(PACKAGE_VERSION)";
+
 doxygendir = $(datadir)/doc/dune-fem/doxygen
 
-DISTCLEANFILES = doxygen.out doxygen-dist.out doxygen.log doxygen-dist.log
-# we need this in the distribution
-EXTRA_DIST = $(DOXYGEN_DIST) $(PAGES) Doxyfile
-# these files should be removed on 'make clean'
-CLEANFILES = doxygen.out doxygen-dist.out doxygen.log doxygen-dist.log
+# ----------------------------------------------------------------------------
 
-#all: $(DOXYGEN_HTML)
-all: html
-#	@echo "Please use 'make html' to build the documentation."
+if BUILD_DOCS
+all: html/index.html
+else
+all:
+endif
 
 FORCE:
 
@@ -45,67 +35,32 @@ stamp: FORCE
 	  touch stamp; \
 	fi
 
-html: doxygen.out
-
-html-dist: doxygen-dist.out
-
-doxygen.out: Doxyfile stamp
+html/index.html: Doxyfile stamp
 	@echo "Creating documentation (running doxygen)..."
-	@( cat Doxyfile; $(DOXYFILE_OVERWRITE_HTML) ) > Doxyfile.tmp
+	@( cat Doxyfile; $(DOXYFILE_OVERWRITE) ) > Doxyfile.tmp
 	@$(DOXYGEN) Doxyfile.tmp > doxygen.log 2>&1
 	@rm -f Doxyfile.tmp
 	@cat doxygen.out
 
-doxygen-dist.out: Doxyfile stamp
-	@echo "Creating distribution documentation (running doxygen)..."
-	@( cat Doxyfile; $(DOXYFILE_OVERWRITE_DIST) ) > Doxyfile.tmp
-	@$(DOXYGEN) Doxyfile.tmp > doxygen-dist.log 2>&1
-	@rm -f Doxyfile.tmp
-	@cat doxygen-dist.out
-
-
-# setting like in dune-web
-BASEDIR=../..
-CURDIR=doc/doxygen
-EXTRAINSTALL = doxygen.log
-
-# EXTRAINSTALL in the html subdirectory
-DOXYGENINSTALL = *.html *.css *.png *.gif
-
-install-data-local: $(DOXYGEN_DIST)
+if BUILD_DOCS
+install-data-local: html/index.html
+	@echo "Installing documentation..."
+	@set -e; \
 	$(mkinstalldirs) $(DESTDIR)/$(doxygendir); \
-	list="$(srcdir)/html-dist/*.html $(srcdir)/html-dist/*.css $(srcdir)/html-dist/*.png $(srcdir)/html-dist/*.gif"; \
+	list="$(srcdir)/html/*.html $(srcdir)/html/*.css $(srcdir)/html/*.png $(srcdir)/html/*.gif"; \
 	for p in $$list; do \
-		$(install_sh_DATA) $$p $(DESTDIR)/$(doxygendir); \
+	  $(install_sh_DATA) $$p $(DESTDIR)/$(doxygendir); \
 	done
 
 uninstall-local:
-	rm -f $(DESTDIR)/$(doxygendir)/*.html $(DESTDIR)/$(doxygendir)/*.css \
-	$(DESTDIR)/$(doxygendir)/*.png $(DESTDIR)/$(doxygendir)/*.gif
-
-# as all doxygen files fill be installed in the html subdirectory
-# the BASEDIR has to be adjusted
-%.build: FORCE
-	$(MAKE) $* BASEDIR=../../..
-
-# how to install the doxygen documentation
-doxygen-install:
-	if test -d $(DUNEWEBDIR) && test -r $(DUNEWEBDIR)/Make.global ; then \
-	  pushd html; \
-	    $(MAKE) -f $(DUNEWEBDIR)/Make.global \
-          EXTRAINSTALL="$(DOXYGENINSTALL)" CURDIR="$(CURDIR)/dune-fem-html" install ; \
-	  popd; \
-	fi
-
-web-install: doxygen-install
-
-#include $(top_srcdir)/am/webstuff
+	@echo "Uninstalling documentation..."
+	@rm -f $(DESTDIR)/$(doxygendir)/*.html
+	@rm -f $(DESTDIR)/$(doxygendir)/*.css
+	@rm -f $(DESTDIR)/$(doxygendir)/*.png
+	@rm -f $(DESTDIR)/$(doxygendir)/*.gif
+endif
 
 clean-local:
-	if test -e Doxydep; then rm -rf html html-dist stamp; fi
-	rm -rf latex *~
-
-# end BUILD_DOCS
-endif
+	rm -rf html
 
 include $(top_srcdir)/am/global-rules
