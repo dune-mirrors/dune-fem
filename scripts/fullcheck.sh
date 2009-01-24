@@ -96,6 +96,11 @@ fi
 # --------------
 
 for MODULE in $MODULES ; do
+  # ignore missing modules since istl may be missing
+  if ! test -d $DUNEDIR/$MODULE ; then
+    continue;
+  fi
+
   echo
   echo "Making tarball in $MODULE..."
 

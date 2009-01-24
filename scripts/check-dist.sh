@@ -26,6 +26,11 @@ MODULES="dune-common dune-grid dune-istl dune-fem"
 # -----------------------------------
 
 for MODULE in $MODULES ; do
+  # ignore missing modules since istl may be missing
+  if ! test -d $DUNEDIR/$MODULE ; then
+    continue;
+  fi
+
   cd $DUNEDIR/$MODULE
   if test x`find -maxdepth 1 -name "*.tar.gz"` != x ; then
     continue
@@ -74,7 +79,9 @@ for OPTS in `cd $OPTSDIR ; ls *.opts` ; do
   find $DUNEDIR -maxdepth 2 -name "*.tar.gz" -exec tar -xzf \{\} \;
 
   for MODULE in $MODULES ; do
-    mv `ls -d ${MODULE}*` $MODULE
+    if ls -d ${MODULE}* &> /dev/null ; then
+      mv `ls -d ${MODULE}*` $MODULE
+    fi
   done
 
   CONFIGLOG="$WORKINGDIR/${OPTS%.opts}-conf.out"
