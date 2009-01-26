@@ -337,7 +337,7 @@ class FemTimer {
   static double stop(int id,int nr=0,operation op=sum) {
     return instance().stop_timer(id,nr,op);
   }
-  static double stop(int id,operation op=sum) {
+  static double stop(int id,operation op) {
     return instance().stop_timer(id,0,op);
   }
   static void reset() {
