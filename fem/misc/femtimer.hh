@@ -69,7 +69,7 @@ namespace Dune {
    *  \endcode
    *  Execution time is summed up over all calls
    *  to start and stop. It is possible to pass an operation
-   *  argument which changes this behavior; {\tt sum} and {\tt max} are
+   *  argument which changes this behavior; \c sum and \c max are
    *  implemented Using 
    *  \code
    *  femTimer.reset(id);
