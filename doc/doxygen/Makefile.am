@@ -17,11 +17,15 @@ doxygendir = $(datadir)/doc/dune-fem/doxygen
 
 # ----------------------------------------------------------------------------
 
+# only build documentation if not configured with '--disable-documentation'
 if BUILD_DOCS
 all: html/index.html
 else
 all:
 endif
+
+# pseudo targot to allow writing 'make doc' instead of 'make html/index.html'
+doc: html/index.html
 
 FORCE:
 
