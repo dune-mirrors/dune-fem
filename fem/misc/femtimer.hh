@@ -316,109 +316,120 @@ class FemTimer {
     static FemTimer instance_;
     return instance_;
   }
+  //! push a new timer to the stack
   static void start() {
     instance().push_time();
   }
+  //! retrieve a timer from the stack
   static double stop() {
     return instance().pop_time();
   }
+  //! add a new timer with description 
+  //! @param name description for output
+  //! @param nr   number of subtimers to store
+  //! @ret        id used to identify this timer in all following calls
   static unsigned int addTo(const std::string& name, int nr=0) {
+#ifdef FEMTIMER
     return instance().add(name,nr+1);
-  }
-  static void removeFrom(unsigned int id) {
-    instance().remove(id);
-  }
-  static void removeAll() {
-    instance().remove();
-  }
-  static void start(int id,int nr=0) {
-    instance().start_timer(id,nr);
-  }
-  static double stop(int id,int nr=0,operation op=sum) {
-    return instance().stop_timer(id,nr,op);
-  }
-  static double stop(int id,operation op) {
-    return instance().stop_timer(id,0,op);
-  }
-  static void reset() {
-    instance().reset_timer();
-  }
-  static void reset(int id) {
-    instance().reset_timer(id);
-  }
-  static void reset(int id,int nr) {
-    instance().reset_timer(id,nr);
-  }
-  static void print(std::ostream& out,int id) {
-    instance().print_timer(out,id);
-  }
-  static void print(std::ostream& out,const std::string msg="") {
-    instance().print_timer(out,msg);
-  }
-  static void printFile(const std::string& fileName, int step=1) {
-    instance().printToFile(fileName,step);
-  }
-  static void printFile(const TimeProviderBase& tp,
-                        const std::string& fileName, int step=1) {
-    instance().printToFile(tp,fileName,step);
-  }
-};
 #else
-class FemTimer {
-  public:
-  typedef enum {max,sum} operation;
-  private:
-  Timer timer_;
-  std::stack<double> timesS_;
-  FemTimer()   {}
-  void push_time() {
-    timesS_.push(timer_.elapsed());
+    return 0;
+#endif
   }
-  double pop_time() {
-    double ret = timer_.elapsed()-timesS_.top();
-    timesS_.pop();
-    return ret;
+  //! remove a timer with given id
+  static void removeFrom(unsigned int id) {
+#ifdef FEMTIMER
+    instance().remove(id);
+#endif
   }
-  // **************************************
-  public:
-  static FemTimer& instance() {
-    static FemTimer instance_;
-    return instance_;
+  //! remove all timers 
+  static void removeAll() {
+#ifdef FEMTIMER
+    instance().remove();
+#endif
   }
-  static void start() {
-    instance().push_time();
-  }
-  static double stop() {
-    return instance().pop_time();
-  }
-  static unsigned int addTo(const std::string& name, int nr=0) {
-    return -1;
-  }
+  //! start a given timer (or subtimer)
+  //! @param id the id returned by the method addTo
+  //! @param nr the number of the subtimer
   static void start(int id,int nr=0) {
+#ifdef FEMTIMER
+    instance().start_timer(id,nr);
+#endif
   }
+  //! stop a given timer (or subtimer)
+  //! @param id the id of the timer as returned by the method addTo
+  //! @param nr the number of the subtimer
+  //! @param op the operation to perform (sum or max)
+  //! @return the total (or max) time used by this timer since the last reset
   static double stop(int id,int nr=0,operation op=sum) {
-    return 0.;
+#ifdef FEMTIMER
+    return instance().stop_timer(id,nr,op);
+#else
+    return -1;
+#endif
   }
+  //! stop a given timer (with subtimer 0)
+  //! @param id the id of the timer as returned by the method addTo
+  //! @param op the operation to perform (sum or max)
+  //! @return the total (or max) time used by this timer since the last reset
   static double stop(int id,operation op) {
-    return 0.;
+#ifdef FEMTIMER
+    return instance().stop_timer(id,0,op);
+#else
+    return -1;
+#endif
   }
+  //! reset all timers to zero
   static void reset() {
+#ifdef FEMTIMER
+    instance().reset_timer();
+#endif
   }
+  //! reset a given timer with all its subtimers
   static void reset(int id) {
+#ifdef FEMTIMER
+    instance().reset_timer(id);
+#endif
   }
+  //! rest a given subtimer
   static void reset(int id,int nr) {
+#ifdef FEMTIMER
+    instance().reset_timer(id,nr);
+#endif
   }
+  //! print the values of a given timer (plus subtimers) to a stream
   static void print(std::ostream& out,int id) {
+#ifdef FEMTIMER
+    instance().print_timer(out,id);
+#endif
   }
+  //! print the values of all timers to a stream
   static void print(std::ostream& out,const std::string msg="") {
+#ifdef FEMTIMER
+    instance().print_timer(out,msg);
+#endif
   }
+  //! print the values of all timers to a file
+  //! if the file is open a new line is appended
+  //! @param fileName name of the file
+  //! @param step only add a line to the file each step calls of this method
   static void printFile(const std::string& fileName, int step=1) {
+#ifdef FEMTIMER
+    instance().printToFile(fileName,step);
+#endif
   }
+  //! print the values of all timers to a file
+  //! if the file is open a new line is appended 
+  //! information taken from a time provider is also added to the file
+  //! @param tp the time provider
+  //! @param fileName name of the file
+  //! @param step only add a line to the file each step calls of this method
   static void printFile(const TimeProviderBase& tp,
                         const std::string& fileName, int step=1) {
+#ifdef FEMTIMER
+    instance().printToFile(tp,fileName,step);
+#endif
   }
 };
-#endif
 namespace {
   FemTimer& femTimer = FemTimer::instance();
 };
