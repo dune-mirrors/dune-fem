@@ -740,13 +740,21 @@ public:
   }
 };
 
-//! A class with one static method apply to globaly refine a grid.
-//! All index sets are adapted to the new grid and the 
-//! managed dof storage is expanded - but no prolongation or
-//! restriction of data is performed.
+/** \brief A class with one static method apply to globaly refine a grid.
+    All index sets are adapted to the new grid and the 
+    managed dof storage is expanded - but no prolongation or
+    restriction of data is performed.
+*/
 struct GlobalRefine {
+
+  /** \brief apply global refinement and also adjust index sets and 
+      managed dof storage. However, user data stored before is lost. 
+      \param[inout] grid Grid that is globally refined 
+      \param[in]    step refinement steps that are applied 
+  */
   template <class GridType>
-  static void apply(GridType& grid,int step) {
+  static void apply(GridType& grid, const int step) 
+  {
     typedef DofManager< GridType > DofManagerType; 
     typedef DofManagerFactory<DofManagerType> DofManagerFactoryType;
     DofManagerType& dm = DofManagerFactoryType::getDofManager(grid);
