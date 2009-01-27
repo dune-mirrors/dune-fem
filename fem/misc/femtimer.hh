@@ -113,7 +113,6 @@ namespace Dune {
    *  first the main timing followed by the
    *  relative time used in each sub timing.
    */
-#ifdef FEMTIMER
 class FemTimer {
   public:
   typedef enum {max,sum} operation;
