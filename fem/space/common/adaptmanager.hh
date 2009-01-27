@@ -597,7 +597,7 @@ struct AdaptationManagerReferenceFactory
   AdaptationManager for each grid instance. See AdaptationManager for
   details. 
 */
-template <class GridType, class RestProlOperatorImp=RestrictProlongEmpty >
+template <class GridType, class RestProlOperatorImp>
 class AdaptationManager :
   public AdaptationManagerBase<GridType,RestProlOperatorImp> ,
   public LoadBalancer<GridType> 
@@ -681,25 +681,6 @@ public:
     ProviderType :: removeObject( referenceCounter_ );
   }
 
-  //! a static method to globaly refine a grid based on a GridPart (or GridView)
-  static void globalRefine(GridType& grid,int step) {
-    // typedef DofManager<GridType> DofManagerType;
-    // typedef DofManagerFactory<DofManagerType> DofManagerFactoryType;
-    grid.globalRefine(step);
-    BaseType::getDofManager( grid ).resize();
-    /*
-    typedef typename GridPart::template Codim<0>::IteratorType IteratorType;
-    const IteratorType endit = gridPart.template end<0>();
-    for(IteratorType it = gridPart.template begin<0>(); it != endit ; ++it) {
-      gridPart.grid().mark(1,*it);
-    }
-    RestrictProlongEmpty rp;
-    AdaptationManager<typename GridPart::GridType,RestrictProlongEmpty>
-      adapt(gridPart.grid(),rp);
-    adapt.adapt();
-    */
-  }
-
   /** @copydoc LoadBalancerInterface::loadBalance */
   virtual bool loadBalance () 
   {
@@ -759,6 +740,21 @@ public:
   }
 };
 
+//! A class with one static method apply to globaly refine a grid.
+//! All index sets are adapted to the new grid and the 
+//! managed dof storage is expanded - but no prolongation or
+//! restriction of data is performed.
+struct GlobalRefine {
+  template <class GridType>
+  static void apply(GridType& grid,int step) {
+    typedef DofManager< GridType > DofManagerType; 
+    typedef DofManagerFactory<DofManagerType> DofManagerFactoryType;
+    DofManagerType& dm = DofManagerFactoryType::getDofManager(grid);
+    grid.globalRefine(step);
+    dm.resize();
+    dm.compress();
+  }
+};
 /** @} end documentation group */
 
 } // end namespace Dune 

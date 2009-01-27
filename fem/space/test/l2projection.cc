@@ -182,7 +182,7 @@ int main (int argc, char **argv)
     // DofManagerType& dm = DofManagerFactoryType :: getDofManager( grid );
     // dm.resize();
     // dm.compress();
-    AdaptationManager<GridType>::globalRefine(grid,step);
+    GlobalRefine::apply(grid,step);
     error[i] = algorithm ( grid , solution , i==ml-1);
     if (i>0) 
     {
