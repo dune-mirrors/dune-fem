@@ -223,6 +223,17 @@ public:
     }
   }
 
+  void printmyInfo(string filename) const
+  {
+    std::ostringstream filestream;
+    filestream << filename;
+    std::ofstream ofs(filestream.str().c_str(), std::ios::app);
+    ofs << "ExplRungeKutta, steps: " << this->ord_ << "\n\n";
+//    ofs << "                cfl: " << this->tp_.cfl() << "\\\\\n\n";
+    ofs.close();
+//    this->op_.printmyInfo(filename);
+  }
+
 protected:
   // operator to solve for 
   Operator& op_;
