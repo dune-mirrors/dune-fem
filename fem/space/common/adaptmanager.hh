@@ -401,6 +401,7 @@ public:
     return adaptTime_;
   }
 
+protected:
   static DofManagerType& getDofManager(const GridType& grid) {
     return DofManagerFactoryType::getDofManager( grid );
   }
@@ -749,8 +750,8 @@ struct GlobalRefine {
 
   /** \brief apply global refinement and also adjust index sets and 
       managed dof storage. However, user data stored before is lost. 
-      \param[inout] grid Grid that is globally refined 
-      \param[in]    step refinement steps that are applied 
+      \param grid Grid that is globally refined 
+      \param step refinement steps that are applied 
   */
   template <class GridType>
   static void apply(GridType& grid, const int step) 

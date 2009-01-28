@@ -326,7 +326,7 @@ class FemTimer {
   //! add a new timer with description 
   //! @param name description for output
   //! @param nr   number of subtimers to store
-  //! @ret        id used to identify this timer in all following calls
+  //! @return     id used to identify this timer in all following calls
   static unsigned int addTo(const std::string& name, int nr=0) {
 #ifdef FEMTIMER
     return instance().add(name,nr+1);
