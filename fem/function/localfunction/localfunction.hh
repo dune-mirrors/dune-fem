@@ -231,6 +231,21 @@ namespace Dune
       asImp().axpy( x, factor1, factor2 );
     }
 
+    /** \brief obtain the order of this local function
+     *
+     *  The order of a local function refers to the polynomial order required
+     *  to integrate it exactly.
+     *
+     *  \note It is not completely clear what this value should be, e.g., for
+     *        bilinear base functions.
+     *
+     *  \returns order of the local function
+     */
+    inline int order () const
+    {
+      return asImp().order();
+    }
+
     /** \brief obtain the base function set for this local function
      *
      *  \returns reference to the base function set

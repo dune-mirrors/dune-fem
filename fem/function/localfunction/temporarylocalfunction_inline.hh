@@ -14,8 +14,7 @@ namespace Dune
     baseFunctionSet_(),
     dofs_( discreteFunctionSpace_.maxNumLocalDofs() ),
     needCheckGeometry_( true )
-  {
-  }
+  {}
 
 
   
@@ -28,8 +27,7 @@ namespace Dune
     baseFunctionSet_( discreteFunctionSpace_.baseFunctionSet( entity ) ),
     dofs_( discreteFunctionSpace_.maxNumLocalDofs() ),
     needCheckGeometry_( true )
-  {
-  }
+  {}
 
 
 
@@ -41,8 +39,7 @@ namespace Dune
     baseFunctionSet_( other.baseFunctionSet_ ),
     dofs_( other.dofs_ ),
     needCheckGeometry_( true )
-  {
-  }
+  {}
 
 
   
@@ -68,6 +65,15 @@ namespace Dune
   {
     assert( num < numDofs() );
     return dofs_[ num ];
+  }
+
+
+
+  template< class DiscreteFunctionSpace, template< class > class ArrayAllocator >
+  inline int
+  TemporaryLocalFunctionImpl< DiscreteFunctionSpace, ArrayAllocator >::order () const
+  {
+    return discreteFunctionSpace_.order();
   }
 
 

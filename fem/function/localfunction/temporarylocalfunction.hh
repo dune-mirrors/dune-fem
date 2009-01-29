@@ -258,6 +258,9 @@ namespace Dune
     /** \copydoc Dune::LocalFunction::operator[]( const int num ) */
     inline RangeFieldType &operator[] ( const int num );
 
+    /** \copydoc Dune::LocalFunction::order() const */
+    inline int order () const;
+
     /** \copydoc Dune::LocalFunction::baseFunctionSet() const */
     inline const BaseFunctionSetType &baseFunctionSet () const;
 

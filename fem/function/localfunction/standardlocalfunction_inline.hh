@@ -64,6 +64,15 @@ namespace Dune
 
 
   template< class DiscreteFunction, class DiscreteFunctionSpace >
+  inline int
+  StandardLocalFunctionImpl< DiscreteFunction, DiscreteFunctionSpace > ::order () const
+  {
+    return discreteFunction_.space().order();
+  }
+
+
+
+  template< class DiscreteFunction, class DiscreteFunctionSpace >
   inline
   const typename StandardLocalFunctionImpl< DiscreteFunction, DiscreteFunctionSpace >
     :: BaseFunctionSetType &
@@ -218,7 +227,19 @@ namespace Dune
   }
 
 
-  
+
+  template< class DiscreteFunction,
+            class ContainedFunctionSpace, int N, DofStoragePolicy policy >
+  inline int
+  StandardLocalFunctionImpl
+    < DiscreteFunction, CombinedSpace< ContainedFunctionSpace, N, policy > >
+    ::order () const
+  {
+    return discreteFunction_.space().order();
+  }
+
+
+
   template< class DiscreteFunction,
             class ContainedFunctionSpace, int N, DofStoragePolicy policy >
   inline
