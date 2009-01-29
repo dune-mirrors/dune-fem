@@ -169,7 +169,7 @@ protected:
     , collList_()
     , balanceTime_(0.0)
   {
-    const bool output = (grid_.comm().rank() == 0);
+    //const bool output = (grid_.comm().rank() == 0);
 
     rpOp.addToList(*this);
   }
