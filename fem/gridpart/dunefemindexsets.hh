@@ -172,9 +172,9 @@ protected:
   // reference to dof manager 
   DofManagerType& dofManager_;
 
-public:
-  //! Conschdrugdor 
-  inline PersistentIndexSet(const GridType & grid) 
+protected:
+  /** \brief constructor */
+  explicit PersistentIndexSet ( const GridType &grid )
     // here false, because methods have to be overloaded
     : BaseType(grid)
     , dofManager_( DofManagerFactoryType :: getDofManager( grid ) ) 
@@ -183,13 +183,15 @@ public:
     dofManager_.addIndexSet( asImp() );
   }
 
+public:
   //! destructor remoing index set from dof manager  
-  inline ~PersistentIndexSet() 
+  ~PersistentIndexSet () 
   {
     // remove persistent index set from dofmanagers list 
     dofManager_.removeIndexSet( asImp() );
   }
 
+#if 0
   //! insert index for father, mark childs index for removal  
   inline void restrictLocal ( const EntityCodim0Type &father,
                               const EntityCodim0Type &son,
@@ -211,9 +213,13 @@ public:
     asImp().removeEntity( father );
     asImp().insertEntity( son );
   }
+#endif
 
   //! return true if the index set is persistent 
-  inline bool persistent() const { return true; }
+  inline bool persistent () const
+  {
+    return true;
+  }
 };
 
 
