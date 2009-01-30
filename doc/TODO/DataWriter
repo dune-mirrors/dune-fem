@@ -13,4 +13,7 @@ A) data_ set in constructor and data passed in write
    (e.g. filename) not only through the paramerfile
    but also in the program itself dynamicaly
    and perhaps also to change the stepCounter and
-   force writting (override willWrite)
+   force writting (override willWrite - or 
+   constructor without starttime-endtime which sets
+   endtime<starttime)
+4) Write pvd file for paraview (use VtkMovieWriter)
