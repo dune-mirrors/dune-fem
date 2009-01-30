@@ -191,7 +191,9 @@ public:
   }
 
   //! insert index for father, mark childs index for removal  
-  inline void restrictLocal ( EntityCodim0Type &father, EntityCodim0Type &son, bool initialize )
+  inline void restrictLocal ( const EntityCodim0Type &father,
+                              const EntityCodim0Type &son,
+                              bool initialize )
   {
     // important, first remove old, because 
     // on father indices might be used aswell 
@@ -200,7 +202,9 @@ public:
   }
 
   //! insert indices for children , mark fathers index for removal  
-  inline void prolongLocal ( EntityCodim0Type &father, EntityCodim0Type &son, bool initialize )
+  inline void prolongLocal ( const EntityCodim0Type &father,
+                             const EntityCodim0Type &son,
+                             bool initialize )
   {
     // important, first remove old, because 
     // on children indices might be used aswell 
