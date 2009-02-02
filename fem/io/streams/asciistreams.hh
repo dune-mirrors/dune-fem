@@ -62,7 +62,7 @@ namespace Dune
      *
      *  \param[in]  filename  name of a file to write to
      */
-    inline explicit ASCIIOutStream ( const std :: string filename )
+    inline explicit ASCIIOutStream ( const std::string &filename )
     : stream_( *(new std :: ofstream( filename.c_str() )) ),
       mustFreeStream_( true )
     {}
@@ -189,7 +189,7 @@ namespace Dune
      *
      *  \param[in]  filename  name of a file to write to
      */
-    inline ASCIIInStream ( const std :: string filename )
+    inline ASCIIInStream ( const std::string &filename )
     : stream_( *(new std :: ifstream( filename.c_str() )) ),
       mustFreeStream_( true )
     {}
