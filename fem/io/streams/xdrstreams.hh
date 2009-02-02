@@ -219,7 +219,7 @@ namespace Dune
      *
      *  \param[in]  filename  name of the file to write to
      */
-    inline explicit XDRFileOutStream ( const std :: string filename )
+    inline explicit XDRFileOutStream ( const std::string &filename )
     {
       file_ = fopen( filename.c_str(), "wb" );
       if( file_ == 0 )
@@ -267,7 +267,7 @@ namespace Dune
      *
      *  \param[in]  filename  name of the file to read from
      */
-    inline explicit XDRFileInStream ( const std :: string filename )
+    inline explicit XDRFileInStream ( const std::string &filename )
     {
       file_ = fopen( filename.c_str(), "rb" );
       if( file_ == 0 )
