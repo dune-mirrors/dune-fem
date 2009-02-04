@@ -30,7 +30,7 @@ namespace Dune
         component_(component) {}
     //! return number of components
     virtual int ncomps () const {
-      return (!vector_) ? 1 : dimDomain;
+      return (!vector_) ? 1 : 3; // dimDomain;
     }
     //! evaluate single component comp in
     //! the entity
@@ -38,8 +38,12 @@ namespace Dune
       const LocalFunctionType lf = discFunc_.localFunction(e);
       RangeType val;
       lf.evaluate(xi,val);
-      if (vector_)
-        return val[comp + component_];
+      if (vector_) {
+        if (comp>dimDomain)
+          return 0;
+        else;
+          return val[comp + component_];
+      }
       else 
         return val[component_];
     }
