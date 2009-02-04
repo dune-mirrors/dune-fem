@@ -627,9 +627,9 @@ class AdaptationManager :
 
 public:  
   /** \brief constructor of AdaptationManager 
-     The following optional parameters from the Parameter class are used
+     The following optional parameters from the Dune::Parameter class are used
         # 0 == none, 1 == generic, 2 == call back (only AlbertaGrid and ALUGrid)  
-        AdaptationMethod: 1 # default value 
+        fem.adaptation.method: 1 # default value 
      \param grid Grid that adaptation is done for 
      \param rpOp restriction and prlongation operator that describes how the 
       user data is projected to other grid levels
@@ -737,6 +737,12 @@ public:
       GridType & grid, RestProlOperatorImp & rpOp, 
       std::string paramFile , int balanceCounter = 0 ) DUNE_DEPRECATED      
     : BaseType(grid,rpOp,paramFile,balanceCounter)
+  {
+  }
+  AdaptationLoadBalanceManager(
+      GridType & grid, RestProlOperatorImp & rpOp, 
+      int balanceCounter = 0 )
+    : BaseType(grid,rpOp,balanceCounter)
   {
   }
 };
