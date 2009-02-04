@@ -122,15 +122,20 @@ class FemEoc
   }
   template <class VectorType>
   void seterrors(size_t id,const VectorType& err,size_t size) {
+    assert(id<pos_.size());
     int pos = pos_[id];
+    assert(pos+size<error_.size());
     for (size_t i=0;i<size;++i)
       error_[pos+i] = err[i];
   }
   template <int SIZE>
   void seterrors(size_t id,const FieldVector<double,SIZE>& err) {
+    seterrors(id,err,SIZE);
+    /*
     int pos = pos_[id];
     for (int i=0;i<SIZE;++i)
       error_[pos+i] = err[i];
+    */
   }
   void seterrors(size_t id,const double& err) {
     int pos = pos_[id];
@@ -259,6 +264,11 @@ class FemEoc
     instance().seterrors(id,err);
   }
   /** \brief commit a line to the eoc file 
+   *
+   *  \param h grid width (e.g. given by GridWith utitlity class)
+   *  \param size number of elements in the grid or number of dofs...
+   *  \param time computational time
+   *  \param counter number of timesteps or iterations for a solver...
    */
   static void write(double h,double size,double time,int counter) {
     instance().writeerr(h,size,time,counter);
