@@ -29,29 +29,33 @@ namespace Dune {
       const typename Traits::DomainType normal = it->integrationOuterNormal(x);  
       typename Traits::RangeType visc;
       typename Traits::FluxRangeType anaflux;
+
       model_.analyticalFlux(*(it->inside()), time,
-          it->intersectionSelfLocal().global(x),
-          uLeft, anaflux);
+                            it->intersectionSelfLocal().global(x),
+                            uLeft, anaflux);
       gLeft*=0;
       anaflux.umv(normal, gLeft);
       if (it->neighbor())
-  model_.analyticalFlux(*(it->outside()), time,
-            it->intersectionNeighborLocal().global(x),
-            uRight, anaflux);
+         model_.analyticalFlux(*(it->outside()), time,
+                               it->intersectionNeighborLocal().global(x),
+                               uRight, anaflux);
       else
-  model_.analyticalFlux(*(it->inside()), time,
-            it->intersectionSelfLocal().global(x),
-            uRight, anaflux);
-      anaflux.umv(normal,gLeft);
+         model_.analyticalFlux(*(it->inside()), time,
+                               it->intersectionSelfLocal().global(x),
+                               uRight, anaflux);
+                               anaflux.umv(normal,gLeft);
 
       double maxspeedl,maxspeedr,maxspeed;
       double viscparal,viscparar,viscpara;
+
       model_.maxSpeed(normal,time,it->intersectionGlobal().global(x),
-          uLeft,viscparal,maxspeedl);
+                      uLeft,viscparal,maxspeedl);
       model_.maxSpeed(normal,time,it->intersectionGlobal().global(x),
-          uRight,viscparar,maxspeedr);
+                      uRight,viscparar,maxspeedr);
+
       maxspeed=(maxspeedl>maxspeedr)?maxspeedl:maxspeedr;
       viscpara=(viscparal>viscparar)?viscparal:viscparar;
+
       visc=uRight;
       visc-=uLeft;
       visc*=2.*viscpara;
