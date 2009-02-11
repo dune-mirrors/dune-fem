@@ -48,7 +48,7 @@ struct OutputParameters1 :
   virtual double savestep() const {
     return -1;
   }
-  //! save data every savecount calls to write method (fem.io.savecount)
+  //! save data every savecount calls to write method
   virtual int savecount() const {
     return 1;
   }
@@ -74,6 +74,10 @@ struct OutputParameters2 :
   //! save data every savestep interval (fem.io.savestep)
   virtual double savestep() const {
     return 0.1;
+  }
+  //! save data every savecount calls to write method
+  virtual int savecount() const {
+    return 0;
   }
 };
 

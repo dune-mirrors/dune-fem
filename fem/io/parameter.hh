@@ -767,6 +767,13 @@ namespace Dune
       return static_cast<const ParamImpl&>(*this);
     }
   };
+  template <class ParamDefault>
+  struct LocalParameter<ParamDefault,ParamDefault> {
+    virtual ~LocalParameter() {}
+    virtual ParamDefault* clone() const {
+      return new ParamDefault();
+    }
+  };
 
 }
 
