@@ -6,6 +6,7 @@
 #include <dune/fem/gridpart/gridpart.hh>
 #include <dune/fem/misc/mpimanager.hh>
 #include <dune/fem/operator/projection/vtxprojection.hh>
+#include <dune/fem/operator/projection/l2projection.hh>
 #include <dune/fem/operator/lagrangeinterpolation.hh>
 
 #if defined USE_BLOCKVECTORFUNCTION
@@ -21,7 +22,6 @@
 
 #include "testgrid.hh"
 #include "dfspace.hh"
-#include "dgl2projection.hh"
 // #include "vtxl2projection.hh"
 #include "exactsolution.hh"
 
@@ -54,6 +54,21 @@ typedef ExactSolution< FunctionSpaceType > ExactSolutionType;
 
 #include <dune/fem/io/file/vtkio.hh>
 
+// dummy class for easier use of L2 Projection 
+template< class Domain, class Range >
+class DGL2Projection :
+  public L2Projection< typename Range :: DomainFieldType ,
+                       typename Range :: RangeFieldType ,
+                       Domain , Range >
+{
+  typedef L2Projection< typename Range :: DomainFieldType ,
+                       typename Range :: RangeFieldType ,
+                       Domain , Range >  BaseType;
+public:
+  DGL2Projection() : BaseType() {}
+};
+
+// main program 
 int main(int argc, char ** argv) 
 {
   MPIManager :: initialize( argc, argv );
@@ -73,7 +88,8 @@ int main(int argc, char ** argv)
 
     // perform the L2Projection
     DiscreteFunctionType solution( "solution", discreteFunctionSpace );
-    DGL2Projection< DiscreteFunctionType > :: project( exactSolution, solution );
+    DGL2Projection< ExactSolutionType,  DiscreteFunctionType > dgl2; 
+    dgl2( exactSolution, solution );
     
     LagrangeFunctionType contSolution("contSolution",lagspace);
     VtxProjection<double,double,DiscreteFunctionType,LagrangeFunctionType> projection;

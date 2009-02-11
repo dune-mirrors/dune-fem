@@ -5,7 +5,7 @@
 
 #include <dune/fem/gridpart/gridpart.hh>
 #include <dune/fem/space/dgspace/dgadaptiveleafgridpart.hh>
-
+#include <dune/fem/operator/projection/l2projection.hh>
 #include <dune/fem/misc/gridwidth.hh>
 
 #if defined USE_BLOCKVECTORFUNCTION
@@ -25,7 +25,6 @@
 
 #include "testgrid.hh"
 #include "dfspace.hh"
-#include "dgl2projection.hh"
 #include "exactsolution.hh"
 
 using namespace Dune;
@@ -63,6 +62,21 @@ typedef AdaptiveDiscreteFunction< DiscreteFunctionSpaceType >
 
 typedef ExactSolution< FunctionSpaceType > ExactSolutionType;
 
+// dummy class for easier use of L2 Projection 
+template< class Domain, class Range >
+class DGL2Projection : 
+  public L2Projection< typename Range :: DomainFieldType ,
+                       typename Range :: RangeFieldType , 
+                       Domain , Range > 
+{
+  typedef L2Projection< typename Range :: DomainFieldType ,
+                       typename Range :: RangeFieldType , 
+                       Domain , Range >  BaseType; 
+public:
+  DGL2Projection() : BaseType() {} 
+};
+
+// main program 
 int main(int argc, char ** argv) 
 {
   MPIManager :: initialize( argc, argv );
@@ -83,7 +97,8 @@ int main(int argc, char ** argv)
     solution.clear();
   
     // perform the L2Projection
-    DGL2Projection< DiscreteFunctionType > :: project( exactSolution, solution );
+    DGL2Projection< ExactSolutionType, DiscreteFunctionType > dgl2; 
+    dgl2( exactSolution, solution );
 
     return 0;
   }
