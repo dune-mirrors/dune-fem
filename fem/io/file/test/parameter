@@ -1,0 +1,7 @@
+# start and end time of simulation 
+fem.io.savestep: 0.1
+fem.io.savecount: 1
+fem.io.grapedisplay: 0
+fem.io.outputformat: 2
+fem.prefix: data
+fem.io.datafileprefix: sol
