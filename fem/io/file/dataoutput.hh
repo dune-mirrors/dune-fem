@@ -138,7 +138,7 @@ protected:
       , space_( const_cast<GridPartType&> (gridPart) )
       , func_(0)
     {
-      space_.setDescription(df.space().getDescription());
+      // space_.setDescription(df.space().getDescription());
     }
 
     ~VTKFunc () 

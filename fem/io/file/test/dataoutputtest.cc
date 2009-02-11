@@ -175,7 +175,7 @@ double algorithm (GridType& grid, DiscreteFunctionType& solution,double time=0)
 }
 
 template <class ConsType>
-struct AddLsgErr : public SpaceDescriptor {
+struct AddLsgErr {
   typedef typename ConsType::DiscreteFunctionSpaceType DiscreteFunctionSpaceType;
   typedef typename DiscreteFunctionSpaceType::GridPartType GridPartType;
   typedef typename GridPartType :: GridType :: 
@@ -193,6 +193,7 @@ struct AddLsgErr : public SpaceDescriptor {
   typedef typename FunctionSpaceType :: DomainType DomainType;
   typedef typename FunctionSpaceType :: RangeType RangeType;
   typedef typename FunctionSpaceType :: JacobianRangeType JacobianRangeType;
+  /*
   virtual std::string name(int i) const {
     const int d = ConsRangeType::dimension;
     std::string ret;
@@ -212,6 +213,7 @@ struct AddLsgErr : public SpaceDescriptor {
     const int d = ConsRangeType::dimension;
     return space_.vecsize(i%d);
   }
+  */
   AddLsgErr(const ConsType& Uh,double time) : 
     space_(Uh.space()),
     lUh_(Uh), 
@@ -256,8 +258,8 @@ private:
   const GeometryImp* geometry_;
   bool initialized_;
 };
-  
-struct Model : public SpaceDescriptor {
+/*
+struct Model { // : public SpaceDescriptor {
   virtual std::string name(int i) const {
     switch (i) {
     case 0: return "rho";
@@ -283,7 +285,7 @@ struct Model : public SpaceDescriptor {
     }
   }
 };
-
+*/
 //**************************************************
 //
 //  main programm, run algorithm twice to calc EOC 
@@ -316,8 +318,8 @@ int main (int argc, char **argv)
   DiscreteFunctionSpaceType linFuncSpace ( part );
   DiscreteFunctionType solution ( "sol", linFuncSpace );
   solution.clear();
-  Model model;
-  solution.space().setDescription(model);
+  // Model model;
+  // solution.space().setDescription(model);
   
   typedef AddLsgErr<DiscreteFunctionType> AddLsgErrType;
   typedef LocalFunctionAdapter<AddLsgErrType> AddLsgErrFunction;
@@ -342,12 +344,12 @@ int main (int argc, char **argv)
   }
   {
     GridTimeProvider<GridType> tp(0,grid);
-    tp.setEndTime(1);
+    // tp.setEndTime(1);
     DataOutput<GridType,OutputType> output(grid,out,tp,OutputParameters2());
     for( tp.init(0.01) ; tp.time()<=1 ; tp.next(0.01) )
     {
       algorithm ( grid , solution,tp.time() );
-      output.write();
+      output.write(tp);
     }
     output.write();
   }
