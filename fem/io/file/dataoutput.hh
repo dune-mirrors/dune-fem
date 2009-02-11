@@ -15,6 +15,7 @@
 #include <dune/fem/space/lagrangespace.hh>
 #include <dune/fem/function/adaptivefunction.hh>
 #include <dune/fem/quadrature/cachequad.hh>
+#include <dune/fem/space/dgspace/dgadaptiveleafgridpart.hh>
 
 #if USE_VTKWRITER
 #include <dune/fem/io/file/vtkio.hh>
@@ -31,6 +32,9 @@
 #endif
 
 namespace Dune {
+template <class GridImp, 
+          class DataImp> 
+class DataOutput;
 
 /** \brief Parameter class for Dune::DataWriter
 
@@ -42,9 +46,12 @@ namespace Dune {
  */
 struct DataOutputParameters {
   virtual ~DataOutputParameters() {}
-  //! path where the data is stored (path are always relative to fem.prefix)
+  virtual DataOutputParameters* clone() const {
+    return new DataOutputParameters(*this);
+  }
+  //! path where the data is stored (path are always relative to fem.commonOutputPath)
   virtual std::string path() const {
-    return "";
+    return Parameter::getValue<std::string>("fem.io.path","");
   }
   //! base of file name for data file (fem.io.datafileprefix)
   virtual std::string prefix() const {
@@ -52,8 +59,8 @@ struct DataOutputParameters {
   }
   //! format of output (fem.io.outputformat)
   virtual int outputformat() const {
-    return Parameter::getValidValue<int>("fem.io.outputformat",0,
-					 ValidateInterval<int,true,true>(1,3));
+    return Parameter::getValidValue<int>("fem.io.outputformat",2,
+           ValidateInterval<int,true,true>(1,3));
   }
   //! use online grape display (fem.io.grapedisplay)
   virtual bool grapedisplay() const {
@@ -71,6 +78,19 @@ struct DataOutputParameters {
   virtual int startcounter() const {
     return 0;
   }
+  //! method used for conditional data output - default
+  //! value passed as argument.
+  virtual bool willWrite(bool write) const {
+    return write;
+  }
+  protected:
+  static DataOutputParameters& instance() {
+    static DataOutputParameters paramDefault;
+    return paramDefault;
+  }
+  template <class GridImp, 
+            class DataImp> 
+  friend class DataOutput;
 };
 
 /** @ingroup DiscFuncIO 
@@ -118,6 +138,7 @@ protected:
       , space_( const_cast<GridPartType&> (gridPart) )
       , func_(0)
     {
+      space_.setDescription(df.space().getDescription());
     }
 
     ~VTKFunc () 
@@ -131,7 +152,7 @@ protected:
       WeightDefault<GridPartType> weight;
       VtxProjectionImpl::project( df_, *func_, weight );
       vtkio.addVertexData( *func_ );
-      vtkio.addVectorVertexData( *func_ );
+      // vtkio.addVectorVertexData( *func_ );
     }
   };
 
@@ -277,26 +298,26 @@ protected:
   // grape, vtk or ...
   OutputFormat outputFormat_;
   mutable std::ofstream sequence_;
+  const DataOutputParameters* param_;
 public: 
  /** \brief Constructor creating data output class 
     \param grid corresponding grid 
-    \param gridName corresponding macro grid name (needed for structured grids)
     \param data Tuple containing discrete functions to write 
-
-    The Dune::DataOutput is tuned through \ref Parameter 
-    described under \ref DiscFuncIO. 
+    \param parameter structure for tuning the behavior of the Dune::DataOutput 
+                     defaults to Dune::DataOutputParameters
   */
   DataOutput(const GridType & grid, 
              OutPutDataType& data,
-             const DataOutputParameters& parameter=DataOutputParameters())
+             const DataOutputParameters& parameter=DataOutputParameters::instance())
     : grid_(grid), data_(data) 
     , writeStep_(0)
     , writeCalls_(0)
-    , saveTime_(0.0)
+    , saveTime_(0.0)  // why 0.0?
     , saveStep_(-1)
     , saveCount_(-1)
     , myRank_(grid_.comm().rank())
     , outputFormat_(vtkvtx)
+    , param_(&parameter)
   {
     // initialize class 
     init(parameter);
@@ -305,11 +326,14 @@ public:
   /** \brief Constructor creating data writer 
     \param grid corresponding grid 
     \param data Tuple containing discrete functions to write 
+    \param tp   a time provider to set time
+    \param parameter structure for tuning the behavior of the Dune::DataOutput 
+                     defaults to Dune::DataOutputParameters
   */ 
   DataOutput(const GridType & grid, 
              OutPutDataType& data, 
              const TimeProviderBase& tp,
-             const DataOutputParameters& parameter=DataOutputParameters())
+             const DataOutputParameters& parameter=DataOutputParameters::instance())
     : grid_(grid), data_(data) 
     , writeStep_(0)
     , writeCalls_(0)
@@ -318,6 +342,7 @@ public:
     , saveCount_(-1)
     , myRank_(grid_.comm().rank())
     , outputFormat_(vtkvtx)
+    , param_(&parameter)
   {
     init(parameter);
 
@@ -341,12 +366,12 @@ protected:
     // read verbose parameter 
     verbose_ = Parameter::verbose(); 
 
+    IOInterface :: createGlobalPath ( grid_.comm(), Parameter::commonOutputPath() );
     path_ = Parameter::commonOutputPath()+"/"+parameter.path();
     // create path if not already exists 
     IOInterface :: createGlobalPath ( grid_.comm(), path_ );
 
     // write parameter file 
-    // Parameter::write("parameter.log");
     
     // add prefix for data file
     datapref_ += parameter.prefix();
@@ -377,13 +402,14 @@ protected:
       if (!sequence_)
         std::cout << "could not write sequence file" << std::endl;
     }
+    Parameter::write("parameter.log");
   }
 private:
   bool willWrite(const TimeProviderBase& tp) const 
   {
     return ( (saveStep_>0 && tp.time() >= saveTime_ ) || 
-        // (tp.time() >= tp.endTime()) ||
-        (saveCount_>0 && writeCalls_%saveCount_ == 0) );
+             // tp.end() ||
+           (saveCount_>0 && writeCalls_%saveCount_ == 0) );
   }
   bool willWrite() const 
   {
@@ -394,7 +420,7 @@ public:
   */
   void write() const 
   {
-    if (willWrite()) {
+    if (param_->willWrite(willWrite())) {
       if (sequence_) 
         sequence_ << writeStep_ << " " << writeStep_ << std::endl;
       writeData();
@@ -402,7 +428,7 @@ public:
   }
   void write(const TimeProviderBase& tp) const
   {
-    if (willWrite(tp)) {
+    if (param_->willWrite(willWrite(tp))) {
       if (sequence_)
         sequence_ << writeStep_ << " " << tp.time() << std::endl;
       writeData();

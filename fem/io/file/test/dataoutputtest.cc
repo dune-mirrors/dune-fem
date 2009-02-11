@@ -17,6 +17,7 @@ static const int dimw = dimworld;
 #include <dune/fem/gridpart/adaptiveleafgridpart.hh> 
 #include <dune/fem/space/dgspace/dgadaptiveleafgridpart.hh> 
 #include <dune/fem/space/common/adaptmanager.hh>
+#include <dune/fem/function/common/discretefunctionadapter.hh>
 
 #include <dune/grid/common/referenceelements.hh>
 #include <dune/fem/operator/projection/l2projection.hh>
@@ -25,21 +26,19 @@ static const int dimw = dimworld;
 #include <dune/fem/misc/double.hh>
 
 #include <dune/fem/io/file/dataoutput.hh>
+#include <dune/fem/solver/timeprovider.hh>
 
 using namespace Dune;
-struct OutputParameters1 : public DataOutputParameters {
+struct OutputParameters1 : 
+  public LocalParameter<DataOutputParameters,OutputParameters1> {
   virtual ~OutputParameters1() {}
   //! path where the data is stored (path are always relative to fem.prefix)
   virtual std::string path() const {
-    return "data";
-  }
-  //! base of file name for data file (fem.io.datafileprefix)
-  virtual std::string prefix() const {
-    return "testEOC";
+    return "eoc";
   }
   //! format of output (fem.io.outputformat)
   virtual int outputformat() const {
-    return 2;
+    return 1;
   }
   //! use online grape display (fem.io.grapedisplay)
   virtual bool grapedisplay() const {
@@ -57,36 +56,24 @@ struct OutputParameters1 : public DataOutputParameters {
   virtual int startcounter() const {
     return 0;
   }
+  virtual bool willWrite(bool test) const {
+    return test;
+  }
 };
-struct OutputParameters2 : public DataOutputParameters {
+struct OutputParameters2 : 
+  public LocalParameter<DataOutputParameters,OutputParameters2> {
   virtual ~OutputParameters2() {}
   //! path where the data is stored (path are always relative to fem.prefix)
   virtual std::string path() const {
-    return "data";
-  }
-  //! base of file name for data file (fem.io.datafileprefix)
-  virtual std::string prefix() const {
-    return "testTIME";
+    return "time";
   }
   //! format of output (fem.io.outputformat)
   virtual int outputformat() const {
     return 2;
   }
-  //! use online grape display (fem.io.grapedisplay)
-  virtual bool grapedisplay() const {
-    return WANT_GRAPE;
-  }
   //! save data every savestep interval (fem.io.savestep)
   virtual double savestep() const {
     return 0.1;
-  }
-  //! save data every savecount calls to write method (fem.io.savecount)
-  virtual int savecount() const {
-    return -1;
-  }
-  //! number for first data file (no parameter available)
-  virtual int startcounter() const {
-    return 0;
   }
 };
 
@@ -118,7 +105,7 @@ typedef AdaptiveLeafGridPart<GridType> GridPartType;
 //! define the function space, \f[ \R^2 \rightarrow \R \f]
 // see dune/common/functionspace.hh
 //typedef MatrixFunctionSpace < double , double, dimw , 3,5 > FuncSpace;
-typedef FunctionSpace < GridType :: ctype, double , dimw , 2 > FuncSpace;
+typedef FunctionSpace < GridType :: ctype, double , dimw , 4 > FuncSpace;
 
 //! define the function space our unkown belong to 
 //! see dune/fem/lagrangebase.hh
@@ -149,10 +136,13 @@ public:
   //! f(x,y) = x*(1-x)*y*(1-y)
   void evaluate (const DomainType & x , RangeType & ret)  const
   {
-    ret = 2.*cos(2.*M_PI*time_); // maximum of function is 2
-    for (int j=0;j<RangeType::dimension; j++) 
-      for(int i=0; i<DomainType::dimension; i++)
-      	ret[j] *= pow(x[i]*(1.0 -x[i])*4.,double(j+1));
+    ret = 2.*cos(2.*M_PI*time_);
+    for(int i=0; i<DomainType::dimension; i++)
+      ret[0] *= x[i]*(1.0 -x[i]);
+    for(int i=0; i<DomainType::dimension; i++)
+      ret[3] *= sin(2.*M_PI*x[i]*(1.0 -x[i]));
+    ret[1] = -x[1];
+    ret[2] = x[0];
   }
   void evaluate (const DomainType & x , RangeFieldType time , RangeType & ret) const
   {
@@ -177,12 +167,122 @@ double algorithm (GridType& grid, DiscreteFunctionType& solution,double time=0)
    // pol for evaluation the basefunctions 
    typedef DiscreteFunctionSpaceType :: RangeType RangeType; 
    RangeType error = l2err.norm(f ,solution, 0.0);
+   std::cout << "\nL2 Error: ";
    for(int i=0; i<RangeType::dimension; ++i)
-     std::cout << "\nL2 Error["<<i<<"] : " << error[i] << "\n\n";
-
+     std::cout << "["<<i<<"] : " << error[i] << " ";
+   std::cout << std::endl;
    return sqrt(error*error);
 }
 
+template <class ConsType>
+struct AddLsgErr : public SpaceDescriptor {
+  typedef typename ConsType::DiscreteFunctionSpaceType DiscreteFunctionSpaceType;
+  typedef typename DiscreteFunctionSpaceType::GridPartType GridPartType;
+  typedef typename GridPartType :: GridType :: 
+          template Codim<0> :: Entity EntityType;
+  typedef typename EntityType :: Geometry GeometryImp;
+  typedef typename ConsType :: DiscreteFunctionSpaceType :: FunctionSpaceType
+                   ConsFunctionSpaceType;
+  typedef typename ConsFunctionSpaceType :: DomainType ConsDomainType;
+  typedef typename ConsFunctionSpaceType :: RangeType ConsRangeType;
+  
+  typedef FunctionSpace<double,double,
+      ConsDomainType::dimension,
+      3*ConsRangeType::dimension>
+      FunctionSpaceType;
+  typedef typename FunctionSpaceType :: DomainType DomainType;
+  typedef typename FunctionSpaceType :: RangeType RangeType;
+  typedef typename FunctionSpaceType :: JacobianRangeType JacobianRangeType;
+  virtual std::string name(int i) const {
+    const int d = ConsRangeType::dimension;
+    std::string ret;
+    switch (i/d) {
+    case 0: ret="sol-"; break;
+    case 1: ret="lsg-"; break;
+    case 2: ret="err-"; break;
+    }
+    ret+=space_.name(i%d);
+    return ret;
+  }
+  virtual CompType comptype(int i) const {
+    const int d = ConsRangeType::dimension;
+    return space_.comptype(i%d);
+  }
+  virtual unsigned int vecsize(int i) const {
+    const int d = ConsRangeType::dimension;
+    return space_.vecsize(i%d);
+  }
+  AddLsgErr(const ConsType& Uh,double time) : 
+    space_(Uh.space()),
+    lUh_(Uh), 
+    time_(time),
+    geometry_(0),
+    initialized_(false) {
+  }
+  ~AddLsgErr() {
+  }
+  template< class PointType >
+  void evaluate ( const PointType &x, RangeType& ret) const {
+    assert(initialized_);
+    ConsRangeType u;
+    lUh_.evaluate(x,u);
+    ConsRangeType u0;
+    DomainType global = geometry_->global( coordinate( x ) );
+    ExactSolution f ( space_,time_ ); 
+    f.evaluate(global,u0);
+    const int d = ConsRangeType::dimension;
+    for (int i=0;i<d;i++) {
+      ret[0*d+i] = u[i];
+      ret[1*d+i] = u0[i];
+      ret[2*d+i] = std::abs(u[i]-u0[i]);
+    }
+  }
+  template< class PointType >
+  void jacobian ( const PointType &x, JacobianRangeType& ret) const {
+    abort();
+  }
+  //! init local function
+  void init(const EntityType& en)
+  {
+    lUh_.init(en);
+    geometry_ = &(en.geometry());
+    initialized_ = true;
+  }
+private:
+  typedef typename ConsType::LocalFunctionType ConsLocalFunctionType;
+  const DiscreteFunctionSpaceType& space_;
+  ConsLocalFunctionType lUh_;
+  double time_;
+  const GeometryImp* geometry_;
+  bool initialized_;
+};
+  
+struct Model : public SpaceDescriptor {
+  virtual std::string name(int i) const {
+    switch (i) {
+    case 0: return "rho";
+    case 1: 
+    case 2: return "momentum";
+    case 3: return "energy";
+    }
+  }
+  virtual CompType comptype(int i) const {
+    switch (i) {
+    case 0: return scalar;
+    case 1:
+    case 2: return vector;
+    case 3: return scalar;
+    }
+  }
+  virtual unsigned int vecsize(int i) const {
+    switch (i) {
+    case 0: return 0;
+    case 1:
+    case 2: return 2;
+    case 3: return 0;
+    }
+  }
+};
 
 //**************************************************
 //
@@ -192,6 +292,7 @@ double algorithm (GridType& grid, DiscreteFunctionType& solution,double time=0)
 int main (int argc, char **argv)
 {
   MPIManager :: initialize( argc, argv );
+  Parameter::append(argc,argv);
   try
   {
   
@@ -215,11 +316,18 @@ int main (int argc, char **argv)
   DiscreteFunctionSpaceType linFuncSpace ( part );
   DiscreteFunctionType solution ( "sol", linFuncSpace );
   solution.clear();
+  Model model;
+  solution.space().setDescription(model);
   
-  typedef Tuple<DiscreteFunctionType*> OutputType;
-  OutputType out(&solution);
+  typedef AddLsgErr<DiscreteFunctionType> AddLsgErrType;
+  typedef LocalFunctionAdapter<AddLsgErrType> AddLsgErrFunction;
+  AddLsgErrType evalAddLsgErr(solution,0);
+  AddLsgErrFunction addLsgErr("U",evalAddLsgErr,solution.space().gridPart()); 
+  typedef Tuple<AddLsgErrFunction*> OutputType;
+  OutputType out(&addLsgErr);
   {
-    DataOutput<GridType,OutputType> output(grid,out,OutputParameters1());
+    OutputParameters1 param1;
+    DataOutput<GridType,OutputType> output(grid,out); // ,param1);
     for(int i=0; i<ml; i+=step)
     {
       GlobalRefine::apply(grid,step);
@@ -236,12 +344,12 @@ int main (int argc, char **argv)
     GridTimeProvider<GridType> tp(0,grid);
     tp.setEndTime(1);
     DataOutput<GridType,OutputType> output(grid,out,tp,OutputParameters2());
-    for( tp.init(0.01) ; tp ; tp.next(0.01) )
+    for( tp.init(0.01) ; tp.time()<=1 ; tp.next(0.01) )
     {
       algorithm ( grid , solution,tp.time() );
-      output.write(tp);
+      output.write();
     }
-    output.writeData();
+    output.write();
   }
   return 0;
   }

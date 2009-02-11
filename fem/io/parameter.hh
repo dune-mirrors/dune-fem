@@ -755,6 +755,19 @@ namespace Dune
       out << it->first << ": " << it->second << std :: endl;
   }
 
+  // Helper class for Parameter structures for classes
+  template <class ParamDefault,class ParamImpl>
+  struct LocalParameter : public ParamDefault {
+    virtual ~LocalParameter() {}
+    virtual ParamDefault* clone() const {
+      return new ParamImpl(asImp());
+    }
+    private:
+    const ParamImpl& asImp() const {
+      return static_cast<const ParamImpl&>(*this);
+    }
+  };
+
 }
 
 #endif
