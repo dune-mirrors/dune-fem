@@ -121,7 +121,7 @@ double algorithm (GridType& grid, DiscreteFunctionType& solution, bool display)
    L2Error < DiscreteFunctionType > l2err;
        
    //! perform l2-projection
-   L2ProjectionImpl::project(f, solution);
+   DGL2ProjectionImpl::project(f, solution);
 
    // calculation L2 error 
    // pol ord for calculation the error chould by higher than 
