@@ -44,11 +44,7 @@ class DataOutput;
     structure and modify any subset of the parameters. An instance of this modified
     class can then be passed in the construction of the Dune::DataWriter.
  */
-struct DataOutputParameters {
-  virtual ~DataOutputParameters() {}
-  virtual DataOutputParameters* clone() const {
-    return new DataOutputParameters(*this);
-  }
+struct DataOutputParameters : public LocalParameter<DataOutputParameters,DataOutputParameters> {
   //! path where the data is stored (path are always relative to fem.commonOutputPath)
   virtual std::string path() const {
     return Parameter::getValue<std::string>("fem.io.path","");
@@ -83,14 +79,6 @@ struct DataOutputParameters {
   virtual bool willWrite(bool write) const {
     return write;
   }
-  protected:
-  static DataOutputParameters& instance() {
-    static DataOutputParameters paramDefault;
-    return paramDefault;
-  }
-  template <class GridImp, 
-            class DataImp> 
-  friend class DataOutput;
 };
 
 /** @ingroup DiscFuncIO 
@@ -308,7 +296,7 @@ public:
   */
   DataOutput(const GridType & grid, 
              OutPutDataType& data,
-             const DataOutputParameters& parameter=DataOutputParameters::instance())
+             const DataOutputParameters& parameter=DataOutputParameters())
     : grid_(grid), data_(data) 
     , writeStep_(0)
     , writeCalls_(0)
@@ -317,7 +305,7 @@ public:
     , saveCount_(-1)
     , myRank_(grid_.comm().rank())
     , outputFormat_(vtkvtx)
-    , param_(&parameter)
+    , param_(parameter.clone())
   {
     // initialize class 
     init(parameter);
@@ -333,7 +321,7 @@ public:
   DataOutput(const GridType & grid, 
              OutPutDataType& data, 
              const TimeProviderBase& tp,
-             const DataOutputParameters& parameter=DataOutputParameters::instance())
+             const DataOutputParameters& parameter=DataOutputParameters())
     : grid_(grid), data_(data) 
     , writeStep_(0)
     , writeCalls_(0)
@@ -342,7 +330,7 @@ public:
     , saveCount_(-1)
     , myRank_(grid_.comm().rank())
     , outputFormat_(vtkvtx)
-    , param_(&parameter)
+    , param_(parameter.clone())
   {
     init(parameter);
 
