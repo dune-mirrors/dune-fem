@@ -6,6 +6,10 @@
 #include <dune/grid/yaspgrid.hh>
 #include <dune/grid/io/file/dgfparser/dgfyasp.hh>
 
+#ifdef ENABLE_ALUGRID 
+#include <dune/grid/io/file/dgfparser/dgfalu.hh>
+#endif
+
 #ifdef ENABLE_UG
 #include <dune/grid/uggrid.hh>
 #include <dune/grid/io/file/dgfparser/dgfug.hh>
@@ -33,6 +37,7 @@ namespace Dune {
     codim1UGTest();
     codim1ALUHexaTest();
     codim1ALUTetraTest();
+    codim1ALUSimplexTest();
     codim1YaspGridTest();
   }
 
@@ -298,6 +303,32 @@ namespace Dune {
 
     GridFixtureType fix(aluGridTetraFile_);
     GridType& grid = fix.grid();
+    GridPartType gridPart( grid );
+
+    const int quadOrd = 4;
+
+    for(int l=0; l<3; ++l) 
+    {
+      checkLeafsCodim1(gridPart,quadOrd);
+      grid.globalRefine(1);
+    }
+#endif
+  }
+
+  void CachingQuadrature_Test::codim1ALUSimplexTest ()
+  {
+#ifdef ENABLE_ALUGRID 
+    std::cout << "\n**********************************************\n";
+    std::cout << "CachingQuadrature_Test checking ALUSimplexGrid\n";
+
+    const int dim = GRIDDIM;
+
+    typedef ALUSimplexGrid< dim, dim > GridType;
+    typedef LeafGridPart< GridType > GridPartType;
+
+    const std::string &filename = (dim == 2 ? dgf2DGridFile_ : dgf3DGridFile_);
+    GridPtr< GridType > gridptr( filename );
+    GridType &grid = *gridptr;
     GridPartType gridPart( grid );
 
     const int quadOrd = 4;
