@@ -132,52 +132,82 @@ namespace Dune
   
   /** \brief Specialization of TwistUtility for AlbertaGrid. 
   */
-  template <int dim, int dimW>
-  class TwistUtility<AlbertaGrid<dim, dimW> >
+  template< int dim, int dimW >
+  struct TwistUtility< AlbertaGrid< dim, dimW > >
   {
-  public:
     typedef AlbertaGrid<dim, dimW> GridType;
     typedef typename GridType::Traits::LeafIntersectionIterator  LeafIntersectionIterator;
     typedef typename LeafIntersectionIterator::Intersection  LeafIntersection;
     typedef typename GridType::Traits::LevelIntersectionIterator LevelIntersectionIterator;
     typedef typename LevelIntersectionIterator::Intersection LevelIntersection;
+
+    static const int dimension = GridType::dimension;
+
+  private:
+    const GridType &grid_;
+
   public:
     //! \brief constructor taking grid reference 
-    TwistUtility(const GridType& grid) :
-      grid_(grid)
+    TwistUtility ( const GridType &grid )
+    : grid_( grid )
     {}
 
     //! \brief return twist for inner face 
-    static inline int twistInSelf(const GridType & grid, 
-                           const LeafIntersection& it) {
-      return grid.getRealIntersectionIterator(it).twistInSelf();
+    static int twistInSelf ( const GridType &grid, const LeafIntersection &it )
+    {
+      if( dimension == 2 )
+      {
+        // in 2d, caching quadratures require the inner twist to be 0
+        return 0;
+      }
+      else if( dimension == 3 )
+      {
+        const int map3d[ 6 ] = {-2, -3, -1, 0, 2, 1};
+        const int twist = grid.getRealIntersectionIterator( it ).twistInSelf();
+        return map3d[ twist + 3 ];
+      }
+      else
+      {
+        DUNE_THROW( NotImplemented,
+                    "twistInSelf not implemented for " << dimension << "d." );
+      }
     }
     
     //! \brief return twist for inner face 
-    int twistInSelf(const LeafIntersection& it) const {
-      return grid_.getRealIntersectionIterator(it).twistInSelf();
-    }
-    
-    //int twistInSelf(const LevelIntersectionIterator& it) const {
-    //  return grid_.getRealIntersectionIterator(it).twistInSelf();
-    //}
-
-    //! \brief return twist for outer face 
-    int twistInNeighbor(const LeafIntersection& it) const {
-      return grid_.getRealIntersectionIterator(it).twistInNeighbor();
-    }
-    
-    //! \brief return twist for outer face 
-    static inline int twistInNeighbor(const GridType & grid, 
-                               const LeafIntersection& it)
+    int twistInSelf ( const LeafIntersection &it ) const
     {
-      return grid.getRealIntersectionIterator(it).twistInNeighbor();
+      return twistInSelf( grid_, it );
     }
     
-    //int twistInNeighbor(const LevelIntersectionIterator& it) const {
-    //  return grid_.getRealIntersectionIterator(it).twistInNeighbor();
-    //}
+    //! \brief return twist for outer face 
+    static int twistInNeighbor ( const GridType &grid, const LeafIntersection &it )
+    {
+      if( dimension == 2 )
+      {
+        // in 2d, caching quadratures require the inner twist to be 0
+        const int myTwist = grid.getRealIntersectionIterator( it ).twistInSelf();
+        const int nbTwist = grid.getRealIntersectionIterator( it ).twistInNeighbor();
+        return (myTwist+nbTwist) % 2;
+      }
+      else if( dimension == 3 )
+      {
+        const int map3d[ 6 ] = {-2, -3, -1, 0, 2, 1};
+        const int twist = grid.getRealIntersectionIterator( it ).twistInNeighbor();
+        return map3d[ twist + 3 ];
+      }
+      else
+      {
+        DUNE_THROW( NotImplemented,
+                    "twistInNeighbor not implemented for " << dimension << "d." );
+      }
+    }
 
+    //! \brief return twist for outer face 
+    int twistInNeighbor ( const LeafIntersection &it ) const
+    {
+      return twistInNeighbor( grid_, it );
+    }
+    
     //! \brief return true if intersection is conform, default is true  
     template <class IntersectionIterator> 
     bool DUNE_DEPRECATED conforming (const IntersectionIterator& it) const
@@ -200,25 +230,29 @@ namespace Dune
     elementGeometry(const Intersection& intersection, 
                     const bool inside)
     {
-      return GeometryType( GeometryType::simplex, GridType :: dimension );
+      return GeometryType( GeometryType::simplex, dimension );
     }
-  private:
-    const GridType& grid_;
   };
 #endif
 
 #ifdef ENABLE_ALUGRID
   /** \brief Specialization of TwistUtility for ALUGridSimplex. 
   */
-  template <>
-  class TwistUtility<ALUSimplexGrid<3,3>  >
+  template< int dim >
+  struct TwistUtility< ALUSimplexGrid< dim, dim > >
   {
-  public:
-    typedef ALUSimplexGrid<3,3> GridType;
-    typedef GridType::Traits::LeafIntersectionIterator LeafIntersectionIterator;
-    typedef LeafIntersectionIterator::Intersection LeafIntersection;
-    typedef GridType::Traits::LevelIntersectionIterator LevelIntersectionIterator;
-    typedef LevelIntersectionIterator::Intersection LevelIntersection;
+    typedef ALUSimplexGrid< dim, dim > GridType;
+
+    typedef typename GridType::Traits::LeafIntersectionIterator
+      LeafIntersectionIterator;
+    typedef typename LeafIntersectionIterator::Intersection LeafIntersection;
+
+    typedef typename GridType::Traits::LevelIntersectionIterator
+      LevelIntersectionIterator;
+    typedef typename LevelIntersectionIterator::Intersection LevelIntersection;
+
+    static const int dimension = GridType::dimension;
+
   public:
     //! \brief constructor taking grid reference 
     TwistUtility(const GridType& grid) :
@@ -283,7 +317,7 @@ namespace Dune
     elementGeometry(const Intersection& intersection, 
                     const bool inside)
     {
-      return GeometryType( GeometryType::simplex, GridType :: dimension );
+      return GeometryType( GeometryType::simplex, dimension );
     }
   private:
     TwistUtility(const TwistUtility&);
@@ -377,7 +411,8 @@ namespace Dune
   private:
     const GridType& grid_; 
   };
-  
+
+#if 0
   /** \brief Specialization of TwistUtility for ALUGridSimplex. 
   */
   template <>
@@ -456,6 +491,7 @@ namespace Dune
   private:
     const GridType& grid_; 
   };
+#endif
   
   template <>
   class TwistUtility<ALUConformGrid<2,2>  >
