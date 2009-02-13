@@ -155,22 +155,9 @@ namespace Dune
     //! \brief return twist for inner face 
     static int twistInSelf ( const GridType &grid, const LeafIntersection &it )
     {
-      if( dimension == 2 )
-      {
-        // in 2d, caching quadratures require the inner twist to be 0
-        return 0;
-      }
-      else if( dimension == 3 )
-      {
-        const int map3d[ 6 ] = {-2, -3, -1, 0, 2, 1};
-        const int twist = grid.getRealIntersectionIterator( it ).twistInSelf();
-        return map3d[ twist + 3 ];
-      }
-      else
-      {
-        DUNE_THROW( NotImplemented,
-                    "twistInSelf not implemented for " << dimension << "d." );
-      }
+      const int map3d[ 6 ] = {-2, -3, -1, 0, 2, 1};
+      const int twist = grid.getRealIntersectionIterator( it ).twistInSelf();
+      return (dimension == 3 ? map3d[ twist + 3 ] : twist);
     }
     
     //! \brief return twist for inner face 
@@ -182,24 +169,9 @@ namespace Dune
     //! \brief return twist for outer face 
     static int twistInNeighbor ( const GridType &grid, const LeafIntersection &it )
     {
-      if( dimension == 2 )
-      {
-        // in 2d, caching quadratures require the inner twist to be 0
-        const int myTwist = grid.getRealIntersectionIterator( it ).twistInSelf();
-        const int nbTwist = grid.getRealIntersectionIterator( it ).twistInNeighbor();
-        return (myTwist+nbTwist) % 2;
-      }
-      else if( dimension == 3 )
-      {
-        const int map3d[ 6 ] = {-2, -3, -1, 0, 2, 1};
-        const int twist = grid.getRealIntersectionIterator( it ).twistInNeighbor();
-        return map3d[ twist + 3 ];
-      }
-      else
-      {
-        DUNE_THROW( NotImplemented,
-                    "twistInNeighbor not implemented for " << dimension << "d." );
-      }
+      const int map3d[ 6 ] = {-2, -3, -1, 0, 2, 1};
+      const int twist = grid.getRealIntersectionIterator( it ).twistInNeighbor();
+      return (dimension == 3 ? map3d[ twist + 3 ] : twist);
     }
 
     //! \brief return twist for outer face 
