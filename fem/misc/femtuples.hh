@@ -349,7 +349,10 @@ namespace Dune{
    * @brief Get the type of the N-th element of the tuple.
    */
   template<int N, class Tuple>
-  struct ElementType
+  struct ElementType;
+
+  template< int N, class T1, class T2, class T3, class T4, class T5, class T6, class T7, class T8, class T9 >
+  struct ElementType< N, Tuple< T1, T2, T3, T4, T5, T6, T7, T8, T9 > >
   {
     /**
      * @brief The type of the N-th element of the tuple.
@@ -357,7 +360,12 @@ namespace Dune{
     typedef typename ElementType<N,typename Tuple::FirstPair>::type type;
     typedef typename ElementType<N,typename Tuple::FirstPair>::type Type;
   };
-  
+
+  template< int N, class T1, class T2, class T3, class T4, class T5, class T6, class T7, class T8, class T9 >
+  struct ElementType< N, const Tuple< T1, T2, T3, T4, T5, T6, T7, T8, T9 > >
+  : public ElementType< N, Tuple< T1, T2, T3, T4, T5, T6, T7, T8, T9 > >
+  {};
+
   template<int N, typename T1, typename T2>
   struct ElementType<N,Pair<T1,T2> >
   {
