@@ -354,11 +354,12 @@ namespace Dune{
   template< int N, class T1, class T2, class T3, class T4, class T5, class T6, class T7, class T8, class T9 >
   struct ElementType< N, Tuple< T1, T2, T3, T4, T5, T6, T7, T8, T9 > >
   {
+    typedef Tuple< T1, T2, T3, T4, T5, T6, T7, T8, T9 > TupleType;
     /**
      * @brief The type of the N-th element of the tuple.
      */
-    typedef typename ElementType<N,typename Tuple::FirstPair>::type type;
-    typedef typename ElementType<N,typename Tuple::FirstPair>::type Type;
+    typedef typename ElementType<N,typename TupleType::FirstPair>::type type;
+    typedef typename ElementType<N,typename TupleType::FirstPair>::type Type;
   };
 
   template< int N, class T1, class T2, class T3, class T4, class T5, class T6, class T7, class T8, class T9 >
@@ -466,27 +467,37 @@ namespace Dune{
    *
    */
   template<class T>
-  struct Size
+  struct Size;
+
+  template< class T1, class T2, class T3, class T4, class T5, class T6, class T7, class T8, class T9 >
+  struct Size< Tuple< T1, T2, T3, T4, T5, T6, T7, T8, T9 > >
   {
-    enum{ 
-      // @brief The number of Elements in the Tuple.
-      value=Size<typename T::FirstPair>::value
+    typedef Tuple< T1, T2, T3, T4, T5, T6, T7, T8, T9 > TupleType;
+    static const int value = Size< typename TupleType::FirstPair >::value;
   };
-    
-    
+
+  template< class T1, class T2, class T3, class T4, class T5, class T6, class T7, class T8, class T9 >
+  struct Size< const Tuple< T1, T2, T3, T4, T5, T6, T7, T8, T9 > >
+  : public Size< Tuple< T1, T2, T3, T4, T5, T6, T7, T8, T9 > >
+  {};
+  
+  template< typename T1, typename T2 >
+  struct Size< Pair< T1, T2 > >
+  {
+    static const int value = 1 + Size< T2 >::value;
   };
   
-  template<typename T1, typename T2>
-  struct Size<Pair<T1,T2> >
+  
+  template< typename T1 >
+  struct Size< Pair< T1, Nil > >
   {
-    enum{ value=1+Size<T2>::value};
+    static const int value = 1;
   };
-  
-  
-  template<typename T1>
-  struct Size<Pair<T1,Nil> >
+
+  template<>
+  struct Size< Pair< Nil, Nil > >
   {
-    enum{ value=1};
+    static const int value = 0;
   };
 
 
