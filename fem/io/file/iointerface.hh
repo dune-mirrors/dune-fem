@@ -157,6 +157,7 @@ public:
   //! destructor 
   virtual ~IOInterface () {}
 
+#if 0
   /** \brief Returns true, if DataWriter will write data with given parameters.
      \param[in] time actual time of computation
      \param[in] timestep current number of time step
@@ -164,21 +165,22 @@ public:
 
      Call this method before DataWriter::write(time, timestep), otherwise it will always return false.
   */
-  // virtual bool willWrite(double time, int timestep) const = 0;
+  virtual bool willWrite(double time, int timestep) const = 0;
 
   /** \brief write data to disc
      \param[in] time actual time of computation 
      \param[in] timestep current number of time step 
   */
-  // virtual void write(double time, int timestep) const = 0; 
+  virtual void write(double time, int timestep) const = 0; 
 
   //! display data if HAVE_GRAPE is 1  
-  //  virtual void display() const = 0; 
+  virtual void display() const = 0; 
 
   /** \brief save structured macro grid 
      \param[in] macroFileName is the macro which should be saved in DGF format  
   */
-  // virtual void saveMacroGrid(const std::string macroFileName) const = 0;
+  virtual void saveMacroGrid(const std::string macroFileName) const = 0;
+#endif
   
   //! create given path in combination with rank 
   static void createPath(const std::string& path)
