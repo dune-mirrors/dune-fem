@@ -297,13 +297,14 @@ public:
   DataOutput(const GridType & grid, 
              OutPutDataType& data,
              const DataOutputParameters& parameter=DataOutputParameters())
-    : grid_(grid), data_(data) 
-    , writeStep_(0)
+    : grid_(grid),
+      data_(data) 
+      myRank_(grid_.comm().rank()),
+      writeStep_(0)
     , writeCalls_(0)
     , saveTime_(0.0)  // why 0.0?
     , saveStep_(-1)
     , saveCount_(-1)
-    , myRank_(grid_.comm().rank())
     , outputFormat_(vtkvtx)
     , param_(parameter.clone())
   {
