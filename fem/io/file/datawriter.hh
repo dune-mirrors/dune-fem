@@ -843,7 +843,7 @@ public:
               (time >= endTime_ )); // also write very last time step 
   }
 
-  /** \copydoc DataWriter::write */
+  /** \copydoc DataWriter::write(double time,int timestep) const */
   virtual void write(double time, int timestep) const 
   {
     if( willWrite(time, timestep ) ) 
