@@ -371,7 +371,7 @@ namespace Dune
     typedef Pair< Head, Tail > BaseType;
 
   public:
-    // For compatibility with ElementAccess, ElementType
+    // For compatibility with ElementAccess
     typedef BaseType FirstPair;
 
     typedef Selector SelectorType;
@@ -431,6 +431,21 @@ namespace Dune
       return get< id >();
     }
   };
+
+
+
+  // ElementType (specialization for SelectorPair
+  // --------------------------------------------
+
+  template< int N, class Selector, class Head, class Tail >
+  struct ElementType< N, SelectorPair< Selector, Head, Tail > >
+  : public ElementType< N, Pair< Head, Tail > >
+  {};
+
+  template< int N, class Selector, class Head, class Tail >
+  struct ElementType< N, const SelectorPair< Selector, Head, Tail > >
+  : public ElementType< N, const Pair< Head, Tail > >
+  {};
 
 } // end namespace Dune
 
