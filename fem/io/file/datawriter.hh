@@ -299,7 +299,13 @@ protected:
   }
 
 public:
-  /** \copydoc IOInterface::willWrite */
+  /** \brief Returns true, if DataWriter will write data with given parameters.
+     \param[in] time actual time of computation
+     \param[in] timestep current number of time step
+     \return returns true, if DataWriter will write data with given parameters, false otherwise
+
+     Call this method before DataWriter::write(time, timestep), otherwise it will always return false.
+  */
   virtual bool willWrite(double time, int timestep) const 
   {
     return ( (saveStep_>0 && time >= saveTime_ ) || 
@@ -364,7 +370,10 @@ public:
     return;
   }
 
-  /** \copydoc IOInterface::write */
+  /** \brief write data to disc
+     \param[in] time actual time of computation 
+     \param[in] timestep current number of time step 
+  */
   virtual void write(double time, int timestep) const 
   {
     write(time, timestep, data_);
@@ -826,7 +835,7 @@ protected:
   }
 
 public:
-  /** \copydoc IOInterface::willWrite */
+  /** \copydoc DataWriter::willWrite */
   virtual bool willWrite(double time, int timestep) const 
   {
     // only write data time > saveTime  
@@ -834,7 +843,7 @@ public:
               (time >= endTime_ )); // also write very last time step 
   }
 
-  /** \copydoc IOInterface::write */
+  /** \copydoc DataWriter::write */
   virtual void write(double time, int timestep) const 
   {
     if( willWrite(time, timestep ) ) 
