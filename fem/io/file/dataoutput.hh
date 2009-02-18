@@ -297,21 +297,21 @@ public:
   DataOutput(const GridType & grid, 
              OutPutDataType& data,
              const DataOutputParameters& parameter=DataOutputParameters())
-    : grid_(grid),
-      data_(data) 
+    : grid_( grid ),
+      data_( data ), 
       myRank_(grid_.comm().rank()),
-      writeStep_(0)
-    , writeCalls_(0)
-    , saveTime_(0.0)  // why 0.0?
-    , saveStep_(-1)
-    , saveCount_(-1)
-    , outputFormat_(vtkvtx)
-    , param_(parameter.clone())
+      writeStep_(0),
+      writeCalls_(0),
+      saveTime_(0.0),  // why 0.0?
+      saveStep_(-1),
+      saveCount_(-1),
+      outputFormat_(vtkvtx),
+      param_(parameter.clone())
   {
     // initialize class 
     init(parameter);
-
   }
+
   /** \brief Constructor creating data writer 
     \param grid corresponding grid 
     \param data Tuple containing discrete functions to write 
@@ -323,15 +323,16 @@ public:
              OutPutDataType& data, 
              const TimeProviderBase& tp,
              const DataOutputParameters& parameter=DataOutputParameters())
-    : grid_(grid), data_(data) 
-    , writeStep_(0)
-    , writeCalls_(0)
-    , saveTime_(0)
-    , saveStep_(-1)
-    , saveCount_(-1)
-    , myRank_(grid_.comm().rank())
-    , outputFormat_(vtkvtx)
-    , param_(parameter.clone())
+    : grid_(grid),
+      data_(data),
+      myRank_(grid_.comm().rank()),
+      writeStep_(0),
+      writeCalls_(0),
+      saveTime_(0),
+      saveStep_(-1),
+      saveCount_(-1),
+      outputFormat_(vtkvtx),
+      param_(parameter.clone())
   {
     init(parameter);
 
