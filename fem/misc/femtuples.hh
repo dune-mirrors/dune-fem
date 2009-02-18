@@ -3,12 +3,13 @@
 
 #include <dune/common/static_assert.hh>
 #include <dune/common/tuples.hh>
+#include <dune/common/version.hh>
 
 #if HAVE_TUPLE || HAVE_TR1_TUPLE
 
 // if Tuple is undefined to the preprocessor, dune/common/tuples.hh already
 // implements this verson of Tuple!
-#ifdef Tuple
+#if defined Tuple || DUNE_VERSION_NEWER(DUNE_COMMON,1,3,0)
 
 // undef defines from tuples.hh 
 #undef Tuple
