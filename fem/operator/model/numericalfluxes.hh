@@ -108,7 +108,7 @@ namespace Dune {
          model_.analyticalFlux(*(it->inside()), time,
                                it->intersectionSelfLocal().global(x),
                                uRight, anaflux);
-                               anaflux.umv(normal,gLeft);
+      anaflux.umv(normal,gLeft);
 
       double maxspeedl,maxspeedr,maxspeed;
       double viscparal,viscparar,viscpara;
