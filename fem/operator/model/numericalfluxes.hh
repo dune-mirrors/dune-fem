@@ -68,7 +68,80 @@ namespace Dune {
     }
   private:
     const Model& model_;
-  };
+  }; // end of LLFFlux class
+
+
+  // *** the Local Lax-Friedrichs flux, modified for the wetting-drying treatment *** //
+  template <class Model>
+  class WDLLFFlux {
+  public:
+    typedef typename Model::Traits Traits;
+    enum { dimRange = Model::dimRange };
+    typedef typename Model::RangeType RangeType;
+    typedef typename Model::FluxRangeType FluxRangeType;
+  public:
+    WDLLFFlux(const Model& mod) : model_(mod) {}
+    const Model& model() const {return model_;}
+    // Return value: maximum wavespeed*length of integrationOuterNormal
+    // gLeft,gRight are fluxed * length of integrationOuterNormal
+    inline double numericalFlux(typename Traits::IntersectionIterator& it,
+               double time, 
+               const typename Traits::FaceDomainType& x,
+               const RangeType& uLeft, 
+               const RangeType& uRight,
+               RangeType& gLeft,
+               RangeType& gRight) const {
+      const typename Traits::DomainType normal = it->integrationOuterNormal(x);  
+      typename Traits::RangeType visc;
+      typename Traits::FluxRangeType anaflux;
+
+      model_.analyticalFlux(*(it->inside()), time,
+                            it->intersectionSelfLocal().global(x),
+                            uLeft, anaflux);
+      gLeft*=0;
+      anaflux.umv(normal, gLeft);
+      if (it->neighbor())
+         model_.analyticalFlux(*(it->outside()), time,
+                               it->intersectionNeighborLocal().global(x),
+                               uRight, anaflux);
+      else
+         model_.analyticalFlux(*(it->inside()), time,
+                               it->intersectionSelfLocal().global(x),
+                               uRight, anaflux);
+                               anaflux.umv(normal,gLeft);
+
+      double maxspeedl,maxspeedr,maxspeed;
+      double viscparal,viscparar,viscpara;
+
+// nsh: another version of the method maxSpeed is now used 
+//      with the additional argument for wetting-drying treatment
+//
+//      model_.maxSpeed(normal,time,it->intersectionGlobal().global(x),
+//                      uLeft,viscparal,maxspeedl);
+//      model_.maxSpeed(normal,time,it->intersectionGlobal().global(x),
+//                      uRight,viscparar,maxspeedr);
+//
+      model_.maxSpeed(normal,time,it->intersectionGlobal().global(x),*(it->inside()),
+                      uLeft,viscparal,maxspeedl);
+      model_.maxSpeed(normal,time,it->intersectionGlobal().global(x),*(it->outside()),
+                      uRight,viscparar,maxspeedr);
+
+      maxspeed=(maxspeedl>maxspeedr)?maxspeedl:maxspeedr;
+      viscpara=(viscparal>viscparar)?viscparal:viscparar;
+
+      visc=uRight;
+      visc-=uLeft;
+      visc*=2.*viscpara;
+      gLeft-=visc;
+      
+      gLeft*=0.5;
+      gRight=gLeft;
+
+      return maxspeed;
+    }
+  private:
+    const Model& model_;
+  }; // end of WDLLFFlux class
 
 } // end namespace Dune
 
