@@ -1139,8 +1139,7 @@ namespace Dune {
       //const UType& argURight = uRight[ uVar ];
       
       // Advection
-      double ldt=numflux_.
-	numericalFlux( it , time , x , uLeft[ uVar ] , uRight[ uVar ] , gLeft , gRight );
+      double ldt=numflux_.numericalFlux( it , time , x , uLeft[ uVar ] , uRight[ uVar ] , gLeft , gRight );
       return ldt;
     }
 
@@ -1178,8 +1177,11 @@ namespace Dune {
       // Advection
       model_.analyticalFlux( en , time , x , u[ uVar ] , f );
     }
-  private:
+  // public access is needed to access WDflag in applyLocalNeighbor in swe/pass/wdswedgpass.hh
+  public:
     const Model& model_;
+  private:
+//    const Model& model_;
     const NumFlux& numflux_;
   }; //end of ShallowWaterDiscreteModel with wetting-drying treatment
 
