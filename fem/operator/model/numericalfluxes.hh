@@ -90,6 +90,7 @@ namespace Dune {
                                 const typename Traits::FaceDomainType& x,
                                 const RangeType& uLeft, 
                                 const RangeType& uRight,
+                                bool reflection,
                                 RangeType& gLeft,
                                 RangeType& gRight) const
     {

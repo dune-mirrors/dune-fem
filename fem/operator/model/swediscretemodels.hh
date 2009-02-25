@@ -255,6 +255,7 @@ namespace Dune {
                          double time, const FaceDomainType& x,
                          const ArgumentTuple& uLeft, 
                          const ArgumentTuple& uRight,
+                         bool reflection,
                          RangeType& gLeft,
                          RangeType& gRight)
     {
@@ -269,7 +270,7 @@ namespace Dune {
       //const UType& argURight = uRight[ uVar ];
       
       // Advection
-      double ldt=numflux_.numericalFlux( it , time , x , uLeft[ uVar ] , uRight[ uVar ] , gLeft , gRight );
+      double ldt=numflux_.numericalFlux( it , time , x , uLeft[ uVar ] , uRight[ uVar ] , reflection, gLeft , gRight );
       return ldt;
     }
 
@@ -289,7 +290,7 @@ namespace Dune {
       if (model_.hasBoundaryValue(it,time,x)) {
 	RangeType uRight,gRight;
 	model_.boundaryValue( it , time , x , uLeft[ uVar ] , uRight );
-	ldt = numflux_.numericalFlux( it , time , x , uLeft[ uVar ] , uRight , gLeft , gRight );
+	ldt = numflux_.numericalFlux( it , time , x , uLeft[ uVar ] , uRight , false, gLeft , gRight );
       } else {
         ldt = model_.boundaryFlux( it , time , x , uLeft[ uVar ] , gLeft );
       }
