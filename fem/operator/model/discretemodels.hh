@@ -64,10 +64,6 @@ namespace Dune {
   class AdvDiffDModel4; // true,false
 
 
-  template < class Model , class NumFlux , int polOrd
-             , int passId1 = -1
-             >
-
   // MethodOrderTraits
   template <class Model,int dimRange,int polOrd>
   class PassTraits 
