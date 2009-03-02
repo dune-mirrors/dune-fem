@@ -8,7 +8,6 @@
 #include <dune/common/timer.hh>
 
 #include <dune/grid/io/file/dgfparser/dgfgridtype.hh>
-#include <dune/common/mpihelper.hh>
 #include <dune/common/exceptions.hh>
 
 #include <dune/fem/misc/double.hh>
@@ -20,6 +19,7 @@ const int ncomp = 1;
 
 // include file with the description of the convection diffusion problem
 #include "discretization.hh"
+#include <dune/fem/misc/mpimanager.hh> 
 
 using namespace LDGExample;
 
@@ -45,7 +45,7 @@ struct DescriptionTraits
 int main (int argc, char **argv)
 {
   // this method calls MPI_Init, if MPI is enabled
-  MPIHelper::instance(argc,argv);
+  MPIManager :: initialize(argc,argv);
   try 
   {
     // error message if called without parameter file

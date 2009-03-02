@@ -17,7 +17,7 @@
 
 #include <dune/fem/misc/boundaryidentifier.hh>
 
-#include <dune/fem/operator/matrix/matrixhandler.hh>
+#include <dune/fem/operator/matrix/spmatrix.hh>
 #if HAVE_BLAS
 #include <dune/fem/solver/oemsolver/oemsolver.hh>
 #endif
@@ -84,207 +84,6 @@ namespace LDGExample {
     typedef AdaptiveDiscreteFunction<DiscreteFunctionSpaceType> DiscreteFunctionType;
   };
 
-  ///////////////////////////////////////////////////////
-  //
-  //  --Gradient Traits 
-  //
-  ///////////////////////////////////////////////////////
-  template <class Model,class NumFlux,int polOrd, int passId = -1 >
-  class GradientDiscreteModel ; 
-    
-  template <class Model,class NumFlux,int polOrd, int passId = -1 >
-  struct GradientTraits
-  {
-    typedef typename Model::Traits ModelTraits;
-    typedef typename ModelTraits::GridType GridType;
-
-    enum { dimDomain = ModelTraits::dimDomain };
-    enum { dimRange  = dimDomain };
-
-    typedef ElliptPassTraits<Model,polOrd,dimDomain> Traits;
-    typedef typename Traits::FunctionSpaceType FunctionSpaceType;
-    typedef typename FunctionSpaceType::DomainType DomainType;
-    typedef typename FunctionSpaceType::RangeType RangeType;
-    typedef typename FunctionSpaceType::JacobianRangeType JacobianRangeType;
-
-    typedef typename Traits::VolumeQuadratureType VolumeQuadratureType;
-    typedef typename Traits::FaceQuadratureType FaceQuadratureType;
-    typedef typename Traits::GridPartType GridPartType;
-
-    typedef typename Traits::DiscreteFunctionSpaceType DiscreteFunctionSpaceType;
-    typedef typename Traits::ContainedSpaceType ContainedSpaceType;
-    typedef typename Traits::DiscreteFunctionType DiscreteFunctionType;
-    typedef DiscreteFunctionType DestinationType;
-
-    typedef GradientDiscreteModel<Model,NumFlux,polOrd,passId> DiscreteModelType;
-  };
-
-  template <class Model,class NumFlux,int polOrd, int passId>
-  class GradientDiscreteModel : 
-    public  DiscreteModelDefault<GradientTraits<Model,NumFlux,polOrd,passId>, passId >
-  { 
-  public:
-    enum { polynomialOrder = polOrd };
-
-    typedef GradientTraits< Model , NumFlux , polOrd , passId > Traits;
-    typedef FieldVector<double, Traits::dimDomain> DomainType;
-    typedef FieldVector<double, Traits::dimDomain-1> FaceDomainType;
-
-    typedef typename Traits::RangeType RangeType;
-    typedef typename Traits::GridType GridType;
-    typedef typename Traits::JacobianRangeType JacobianRangeType;
-    typedef typename Traits::GridPartType GridPartType; 
-    typedef typename GridPartType :: IntersectionIteratorType IntersectionIterator; 
-    typedef typename GridType::template Codim<0>::EntityPointer  EntityPointerType;
-    typedef typename GridType::template Codim<0>::Entity EntityType;
-
-    typedef BoundaryIdentifier BoundaryIdentifierType ;
-
-    enum { dimRange = Traits::dimRange };
-
-  public:
-    GradientDiscreteModel(const Model& mod,const NumFlux& numf) :
-      model_(mod),
-      numflux_(numf),
-      one_(0.0)
-    {
-      for(int i=0; i<dimRange; ++i) one_[i][i] = 1.0;
-    }
-
-    const Model & data () const { return model_; }
-
-    bool hasSource() const { return true; }
-    bool hasFlux() const { return false; }
-
-    template <class ArgumentTuple> 
-    double numericalFlux(const IntersectionIterator& it,
-                         const double time, 
-                         const FaceDomainType& local,
-                         const ArgumentTuple& uLeft,
-                         const ArgumentTuple& uRight,
-                         RangeType & sigmaLeft, 
-                         RangeType & sigmaRight,
-                         RangeType & gLeft,
-                         RangeType & gRight) const 
-    {
-      // calculate unit normal and face volume  
-      DomainType unitNormal = it.integrationOuterNormal(local);
-      const double faceVol = unitNormal.two_norm();
-      unitNormal *= 1.0/faceVol;
-
-      if( hasFlux() )
-      {
-        DomainType dom = it.intersectionGlobal().global(local);
-        // default is id matrix 
-        JacobianRangeType anaFluxLeft(one_);
-        JacobianRangeType anaFluxRight(one_);
-
-        RangeType tmpLeft(0.0);
-        RangeType tmpRight(0.0);
-        
-        {
-          EntityPointerType ep = it.inside();
-          const EntityType & en = *ep;
-          analyticalFlux(en,time,dom,
-                         uLeft,anaFluxLeft);
-        }
-                      
-        {
-          assert( it.neighbor() );
-          EntityPointerType ep = it.outside();
-          const EntityType & en = *ep;
-          analyticalFlux(en,time,dom,
-                         uRight,anaFluxRight);
-        }
-
-        anaFluxLeft.umv(unitNormal,tmpLeft); 
-        anaFluxRight.umv(unitNormal,tmpRight); 
-        
-        // evaluate u part of ldg flux 
-        numflux_.uFlux(unitNormal,faceVol,
-                       tmpLeft,tmpRight, 
-                       sigmaLeft,sigmaRight,
-                       gLeft,gRight);
-      }
-      else 
-      {
-        // evaluate u part of ldg flux 
-        numflux_.uFlux(unitNormal,faceVol,
-                       unitNormal,unitNormal, 
-                       sigmaLeft,sigmaRight,
-                       gLeft,gRight);
-      }
-      return 0.0;
-    }
-
-    template <class ArgumentTuple>
-    void analyticalFlux(const EntityType& en,
-                        const double time, 
-                        const DomainType& local,
-                        const ArgumentTuple& u, 
-                        JacobianRangeType& f) const
-    {
-      model_.diffusion(en,time,local,f);
-      double tmp = f[0][0];
-      tmp = sqrt(tmp);
-
-      for(int i=0;i<dimRange; ++i) f[i][i] = tmp;
-      
-      //std::cout << f << " f \n";
-    }
-
-    template <class ArgumentTuple, class ReturnType >
-    double boundaryFlux(IntersectionIterator& it,
-                        double time, const FaceDomainType& x,
-                        const ArgumentTuple& uLeft,
-                        ReturnType& gLeft) const
-    {
-      return 0.0;
-    }
-
-    // returns true, when Dirichlet boundary, false when other boundary
-    // (Neumann) 
-    template <class IntersectionIteratorType, class FaceDomType, 
-              class ArgumentTuple>
-    BoundaryIdentifierType 
-    boundaryValue(const IntersectionIteratorType& it,
-                  double time, const FaceDomType& x,
-                  const ArgumentTuple& u,               
-                  RangeType& bndVal) const
-    {
-      return BoundaryIdentifierType::undefined; 
-    }
-    
-    template <class EntityType , class DomainType,
-              class ArgumentTuple, class JacobianTuple>
-    void source(EntityType &en,
-                const double time,
-                const DomainType& local,
-                const ArgumentTuple& u,
-                const JacobianTuple& jac,
-                RangeType & s)
-    {
-      model_.diffusion(en,time,local,s);
-    }
-
-    template <class EntityType , class DomainType,
-              class ArgumentTuple, class JacobianTuple, class RanType>
-    void rightHandSide(EntityType &en,
-                       const double time,
-                       const DomainType& local,
-                       const ArgumentTuple& u,
-                       const JacobianTuple& jac,
-                       RanType& s)
-    {
-      abort();
-    }
-
-  private:
-    const Model& model_;
-    const NumFlux& numflux_;
-    JacobianRangeType one_;
-  };
-
   ///////////////////////////////////////////////////////////
   //
   //  --Laplace Traits 
@@ -330,32 +129,19 @@ namespace LDGExample {
     template <class PreviousPassType>
     struct LocalOperatorSelector
     {
-      //! select one pass before fake gradient pass 
-      typedef typename PreviousPassType :: PreviousPassType ElliptPrevPassType;
-        
-      // get type of gradient pass 
-      typedef typename PreviousPassType :: DiscreteFunctionSpaceType
-        PrevSpaceType;
-
-      // old type 
-      typedef MatrixHandlerSPMat<DiscreteFunctionSpaceType,
-                                 PrevSpaceType> MatrixHandlerType; 
-      
-      // new type 
 #if USE_DUNE_ISTL                                
       typedef ISTLMatrixTraits<DiscreteFunctionSpaceType> MatrixObjectTraits;
 #else 
-      //typedef SparseRowMatrixTraits<DiscreteFunctionSpaceType,
-      //                              DiscreteFunctionSpaceType> MatrixObjectTraits; 
-      typedef BlockMatrixTraits<DiscreteFunctionSpaceType,
-                                DiscreteFunctionSpaceType> MatrixObjectTraits; 
+      typedef SparseRowMatrixTraits<DiscreteFunctionSpaceType,
+                                    DiscreteFunctionSpaceType> MatrixObjectTraits; 
+      //typedef BlockMatrixTraits<DiscreteFunctionSpaceType,
+      //                          DiscreteFunctionSpaceType> MatrixObjectTraits; 
 #endif
       //! The pass id for DGPrimalOperator-pass should be something different than, 
       //! template-given passId, which is given for this template class.
       //! Since this is the last pass, doesn't play role, 
       //! but it's pass id can not be -1 or omitted
-      typedef DGPrimalOperator<ThisType,PreviousPassType,
-                ElliptPrevPassType, MatrixObjectTraits, passId > LocalOperatorType;
+      typedef DGPrimalOperator<ThisType,PreviousPassType, MatrixObjectTraits, passId > LocalOperatorType;
 
 #if USE_DUNE_ISTL
       typedef ISTLBICGSTABOp <DiscreteFunctionType, LocalOperatorType> InverseOperatorType;
@@ -389,6 +175,7 @@ namespace LDGExample {
     typedef typename Traits::JacobianRangeType JacobianRangeType;
     typedef typename Traits::GridPartType GridPartType; 
     typedef typename GridPartType :: IntersectionIteratorType IntersectionIterator; 
+    typedef typename IntersectionIterator :: Intersection  Intersection; 
     typedef typename GridType::template Codim<0>::EntityPointer  EntityPointerType;
     typedef typename GridType::template Codim<0>::Entity EntityType;
 
@@ -553,7 +340,7 @@ namespace LDGExample {
     }
 
     template <class ArgumentTuple, class CoefficientType> 
-    void coefficientFace(const IntersectionIterator& it,
+    void coefficientFace(const Intersection& it,
                          const double time, 
                          const FaceDomainType& local,
                          const ArgumentTuple& uLeft,
@@ -661,6 +448,7 @@ namespace LDGExample {
     typedef typename Traits::GridType GridType;
     typedef typename Traits::JacobianRangeType JacobianRangeType;
     typedef typename Traits::GridPartType::IntersectionIteratorType IntersectionIteratorType;
+    typedef typename IntersectionIteratorType :: Intersection Intersection;
     typedef typename GridType::template Codim<0>::Entity EntityType;
     typedef NumFluxImp NumFluxType;
 
@@ -676,13 +464,14 @@ namespace LDGExample {
     bool hasFlux() const   { return true; }
 
     template <class ArgumentTuple>
-    double numericalFlux(IntersectionIteratorType& it,
+    double numericalFlux(const IntersectionIteratorType& nit,
                          double time, const FaceDomainType& x,
                          const ArgumentTuple& uLeft,
                          const ArgumentTuple& uRight,
                          RangeType& gLeft,
                          RangeType& gRight)
     {
+      const Intersection& it = *nit; 
       const DomainType normal = it.integrationOuterNormal(x);
       const double faceVol = normal.two_norm();
 
@@ -727,11 +516,12 @@ namespace LDGExample {
     }
 
     template <class ArgumentTuple>
-    double boundaryFlux(IntersectionIteratorType& it,
+    double boundaryFlux(IntersectionIteratorType& nit,
                         double time, const FaceDomainType& x,
                         const ArgumentTuple& uLeft,
                         RangeType& gLeft)
     {
+      const Intersection& it = *nit; 
       const DomainType normal = it.integrationOuterNormal(x);
       // get saturation 
       typedef typename ElementType<0, ArgumentTuple>::Type SType;

@@ -13,8 +13,8 @@
 #include <dune/fem/pass/discretemodel.hh>
 #include <dune/fem/pass/ellipticmodelcaller.hh>
 
-#include <dune/fem/misc/boundaryidentifier.hh>
 #include <dune/fem/solver/timeprovider.hh>
+#include <dune/fem/misc/boundaryidentifier.hh>
 #include <dune/fem/solver/oemsolver/preconditioning.hh>
 
 #include <dune/fem/space/combinedspace.hh>
@@ -24,14 +24,15 @@
 
 #include <dune/fem/misc/gridwidth.hh>
 
-#include "dgmatrixsetup.hh"
+#include <dune/fem/operator/2order/dgmatrixsetup.hh>
+
+namespace Dune {
 
 // double feature only works in serial runs 
 //#if HAVE_MPI == 0
-#define DG_DOUBLE_FEATURE 
+//#define DG_DOUBLE_FEATURE 
 //#endif
 
-namespace Dune {
 /*! @ingroup EllipticOperator
  * Description: Solver for equations of the form
 ** \f{eqnarray*}
@@ -42,7 +43,7 @@ namespace Dune {
 **************************************************************************/
   ////////////////////////////////////////////////////////////
   //
-  //  --DGPrimalOperator 
+  //  --DGPrimalOperatorImpl 
   //
   ////////////////////////////////////////////////////////////
   /** \brief Operator assembling matrix for DG methods for elliptic problems. 
@@ -50,8 +51,6 @@ namespace Dune {
         - Interior Penalty
         - Baumann-Oden
         - NIPG 
-        - Babuska-Zlamal
-        - Compact LDG (CDG) 
 
         References:
           The first 4 methods can be found for example in:
@@ -59,42 +58,27 @@ namespace Dune {
             Analysis of Discontinuous Galerkin Methods for Elliptic
             Problems SIAM J. Num. Anal, 39  (2002), 1749-1779.
             http://www.imati.cnr.it/~marini/reports/dgm_siam.ps.gz
-
-          The Compact LDG method is described in detail in:
-            J. Peraire and P.-O. Persson,
-            The Compact Discontinuous Galerkin (CDG) Method for Elliptic Problems.
-            SIAM J. Sci. Comput., to appear.
-            http://www.mit.edu/~persson/pub/peraire07cdg.pdf
   */
-  template <class DiscreteModelImp, class GradientPassImp, 
-            class PreviousPassImp, class MatrixObjectTraits,
-            int pId = -1 >
-  class DGPrimalOperator 
-    : public LocalPass< DiscreteModelImp, PreviousPassImp, pId > 
-    , public OEMSolver::PreconditionInterface
+  template <class DiscreteModelImp, 
+            class PreviousPassImp, 
+            class MatrixObjectTraits,
+            int passId >
+  class DGPrimalOperatorImpl 
+    : public LocalPass<DiscreteModelImp, PreviousPassImp, passId> 
   {
   public:
     //- Typedefs and enums
     //! Base class
-    typedef LocalPass< DiscreteModelImp, PreviousPassImp, pId > BaseType;
+    typedef LocalPass<DiscreteModelImp, PreviousPassImp, passId> BaseType;
 
-    typedef DGPrimalOperator
-      < DiscreteModelImp , GradientPassImp , PreviousPassImp , MatrixObjectTraits , pId > 
-            ThisType;
-
-    typedef GradientPassImp GradientPassType; 
-    typedef typename GradientPassType :: DiscreteModelType
-      GradientDiscreteModelType;
+    typedef DGPrimalOperatorImpl<DiscreteModelImp,
+            PreviousPassImp,MatrixObjectTraits, passId > ThisType;
 
     //! Repetition of template arguments
     typedef DiscreteModelImp DiscreteModelType;
 
-    //! Repetition of template arguments
-
-    //! Slavko: 
     //! I need to switch PreviousPassType
-    //! to be GradientPassImp instead PreviousPassImp
-    typedef GradientPassImp PreviousPassType;
+    typedef PreviousPassImp PreviousPassType;
 
     // Types from the base class
     typedef typename BaseType::Entity EntityType; 
@@ -108,11 +92,15 @@ namespace Dune {
     typedef typename DiscreteModelType::Traits::DiscreteFunctionSpaceType DiscreteFunctionSpaceType;
     typedef typename DiscreteFunctionSpaceType::RangeType RangeType;
     typedef typename DiscreteFunctionSpaceType::JacobianRangeType JacobianRangeType;
-    typedef typename DiscreteFunctionSpaceType :: GridType GridType;
+
+    // Types extracted from the discrete function space type
+    typedef typename DiscreteFunctionSpaceType::GridPartType GridPartType;
+    typedef typename GridPartType :: GridType  GridType;
+    typedef typename GridType :: Traits :: LocalIdSet LocalIdSetType; 
         
     // Range of the destination
-    enum { dimDomain = DiscreteFunctionSpaceType::dimDomain };
-    enum { dimRange = DiscreteFunctionSpaceType::dimRange };
+    enum { dimDomain = DiscreteFunctionSpaceType::DimDomain };
+    enum { dimRange = DiscreteFunctionSpaceType::DimRange };
     enum { cols = JacobianRangeType :: cols };
     enum { rows = JacobianRangeType :: rows };
     enum { dim = GridType :: dimension };
@@ -120,27 +108,32 @@ namespace Dune {
     enum { dimGradRange = dimDomain * dimRange };
     enum { polOrd = DiscreteFunctionSpaceType::polynomialOrder };
 
+    typedef typename DiscreteModelType::Traits::ContainedSpaceType ContainedSpaceType;
     //! space of gradients of function 
-    typedef CombinedSpace< DiscreteFunctionSpaceType, 
+    typedef CombinedSpace< ContainedSpaceType, 
                            dimGradRange,
                            PointBased > DiscreteGradientSpaceType; 
 
-    // Types extracted from the discrete function space type
-    typedef typename DiscreteFunctionSpaceType::GridPartType GridPartType;
-    typedef typename GridPartType :: GridType :: Traits :: LocalIdSet LocalIdSetType; 
+    enum { elementMassSize = DiscreteFunctionSpaceType :: localBlockSize };
+    enum { massSize = DiscreteGradientSpaceType :: localBlockSize };
+
     typedef typename DiscreteFunctionSpaceType::DomainType DomainType;
     typedef FieldVector<double,DomainType::dimension-1> FaceDomainType;
 
     // Types extracted from the underlying grid
     typedef typename GridPartType::IntersectionIteratorType IntersectionIteratorType;
+    typedef typename IntersectionIteratorType::Intersection IntersectionType;
     typedef typename GridType::template Codim<0>::Geometry GeometryType;
 
     // Various other types
     typedef typename DestinationType::LocalFunctionType LocalFunctionType;
+
     typedef typename DiscreteModelType::SelectorType SelectorType;
-    typedef CombinedSelector< ThisType , SelectorType > CombinedSelectorType;
-    typedef EllipticDiscreteModelCaller<
-      DiscreteModelType, ArgumentType, CombinedSelectorType > DiscreteModelCallerType;
+
+    // model callers 
+    typedef CombinedSelector< ThisType , SelectorType >  CombinedSelectorType;
+    typedef EllipticDiscreteModelCaller< DiscreteModelType, ArgumentType,
+              CombinedSelectorType> DiscreteModelCallerType;
 
     typedef typename GridType :: ctype ctype;
     typedef FieldMatrix<ctype,dim,dim> JacobianInverseType;
@@ -161,14 +154,11 @@ namespace Dune {
     
     typedef typename DiscreteGradientSpaceType::BaseFunctionSetType GradientBaseFunctionSetType;
      // type of temporary local function belonging to lower space 
-    typedef TemporaryLocalFunction< DiscreteGradientSpaceType > TemporaryLocalFunctionType;
-    typedef MutableArray< std::auto_ptr< TemporaryLocalFunctionType > > TemporaryLocalFunctionArrayType;
 
     typedef DGMatrixTraits< MatrixObjectTraits > MyOperatorTraits;
     //! type of underlying matrix implementation 
     typedef typename MatrixObjectTraits :: template MatrixObject<
       MyOperatorTraits > :: MatrixObjectType MatrixObjectType;
-    //typedef MatrixObjectImp MatrixObjectType; 
 
     typedef typename MatrixObjectType::LocalMatrixType LocalMatrixType;
     typedef typename MatrixObjectType::MatrixType MatrixType;
@@ -284,6 +274,8 @@ namespace Dune {
         // scale with intel 
         rhsval_ *= intel;
 
+        //std::cout << rhsval_ << "\n";
+
         for (int j = 0; j < numDofs_; ++j) 
         {
           singleRhs_[j] += bsetEn_.evaluateSingle(j, volQuad[l] , rhsval_ );
@@ -329,64 +321,63 @@ namespace Dune {
     class CoefficientCaller<CallerType,true,false> 
       : public CoefficientCallerTrue<CallerType>
       , public CoefficientCallerNoRHS<CallerType>
-    {};
+    {
+      public:
+    };
 
     template <class CallerType> 
     class CoefficientCaller<CallerType,false,false> 
       : public CoefficientCallerFalse<CallerType>
       , public CoefficientCallerNoRHS<CallerType>
-    {};
+    {
+      public:
+    };
 
   public:
     //- Public methods
-    /** \brief Constructor
-     *
-     *  \param      problem    actual problem definition (see problem.hh)
-     *  \param[in]  gradPass   types and discrete model for the gradient pass
-     *  \param      spc        space containing the discrete function local
-     *                         to this pass
-     *  \param      paramFile  parameter file to read necessary parameters
-     *                         (if empty default parameters will be applied)
-     *
-     *  \note Available methods are (chosen by parameters B_{+,-}, beta, and
-     *        CDG-BZ):
-     *  - Interior Penalty : B_{+,-}: 0, beta: > 0 (big), CDG-BZ: 0 
-     *  - Baumann-Oden     : B_{+,-}: 1, beta: = 0      , CDG-BZ: 0
-     *    (needs polOrd > 1)
-     *  - NIPG             : B_{+,-}: 1, beta: > 0      , CDG-BZ: 0
-     *  - Babuska-Zlamal   : B_{+,-}: 1, beta: > 0      , CDG-BZ: 1
-     *  - Compact LDG (CDG): B_{+,-}: 0, beta: > 0      , CDG-BZ: 1
-     *  .
-     */         
-    DGPrimalOperator( DiscreteModelType &problem,
-                      GradientPassType &gradPass,
-                      const DiscreteFunctionSpaceType &spc,
-                      const std::string paramFile = "" )
-    : BaseType( gradPass.previousPass(), spc ),
-      caller_(problem),
-      problem_(problem),
-      arg_(0),
-      dest_(0),
-      spc_(spc),
-      gridPart_(spc_.gridPart()),
-      gradientSpace_(gridPart_),
-      localIdSet_(gridPart_.grid().localIdSet()),
-      gridWidth_ ( GridWidthProviderType :: getObject( & spc_.grid())),
-      time_(0),
-      volumeQuadOrd_(2* spc_.order() ),
-      faceQuadOrd_(2*spc_.order() + 2),
-      matrixObj_(spc_,spc_, paramFile ),
-      coeffEn_(1.0),
-      coeffNb_(1.0),
-      matrixAssembled_(false),
-      betaFactor_(0.0),
-      globalBeta_(0.0),
-      beta_(0.0),
-      bilinearPlus_(true),
-      power_( 2*spc_.order() ),
-      notBabuskaZlamal_(true),
-      compactLDG_(false),
-      betaNotZero_(false)
+    /**  \brief Constructor
+     \param problem Actual problem definition (see problem.hh)
+     \param pass Previous pass
+     \param spc Space belonging to the discrete function local to this pass
+     \param paramFile parameter file to read necessary parameters, if empty 
+             default parameters will be applied 
+    
+     \note Available methods are (chosen by parameters B_{+,-}, beta
+          - Interior Penalty : B_{+,-}: 0 , beta: > 0 (big)
+          - Baumann-Oden     : B_{+,-}: 1 , beta: = 0       (needs polOrd > 1) 
+          - NIPG             : B_{+,-}: 1 , beta: > 0      
+    */         
+    DGPrimalOperatorImpl(DiscreteModelType& problem, 
+                PreviousPassType& pass, 
+                const DiscreteFunctionSpaceType& spc,
+                const std::string paramFile = "")
+      : BaseType(pass, spc),
+        caller_(problem),
+        problem_(problem),
+        arg_(0),
+        rhs_(0),
+        uh_(0),
+        spc_(spc),
+        gridPart_(const_cast<GridPartType &> (spc_.gridPart())),
+        gradientSpace_(gridPart_),
+        localIdSet_(gridPart_.grid().localIdSet()),
+        gridWidth_ ( GridWidthProviderType :: getObject( &spc_.grid())),
+        volumeQuadOrd_(2* spc_.order()+2),
+        faceQuadOrd_(2*spc_.order()+2 ),
+        matrixObj_(spc_,spc_, paramFile ),
+        coeffEn_(1.0),
+        coeffNb_(1.0),
+        matrixAssembled_(false),
+        betaFactor_(0.0),
+        globalBeta_(0.0),
+        beta_(0.0),
+        bilinearPlus_(true),
+        power_( 2*spc_.order() ),
+        betaNotZero_(false),
+        dtMin_ (std::numeric_limits<double>::max()),
+        minLimit_(2.0*std::numeric_limits<double>::min()),
+        timeDependent_( false ),
+        sequence_ ( -1 )
     {
 #ifndef DG_DOUBLE_FEATURE
       // we need global upwind vector to select edges 
@@ -394,19 +385,8 @@ namespace Dune {
       if( dim > 1 ) upwind_[1] = M_LN2;
       if( dim > 2 ) upwind_[2] = M_E;
 #endif
-
-      for( int i=0; i<FluxRangeType :: rows ; ++i) 
-      {
-        // set diagonal to 1 
-        coeffEn_[i][i] = coeffNb_[i][i] = 1.0;
-        // all others to zero 
-        for(int j=i+1; j< FluxRangeType :: cols; ++j) 
-        {
-          // set default value to fMat 
-          coeffEn_[i][j] = coeffNb_[i][j] = 0.0;
-          coeffEn_[j][i] = coeffNb_[j][i] = 0.0;
-        }
-      }
+      // set to unit matrix 
+      setToUnitMatrix(coeffEn_, coeffNb_);
 
       if( ! (spc_.order() > 0))
       {
@@ -428,23 +408,6 @@ namespace Dune {
 
         assert( (bplus == 0) || (bplus == 1) ); 
         bilinearPlus_ = (bplus == 0) ? false : true; 
-
-        int zlamal = 0;
-        if( ! readParameter(paramFile,"CDG-BZ",zlamal, output) )
-        {
-          if( readParameter(paramFile,"Babuska-Zlamal",zlamal, output) )
-          {
-            std::cerr << std::endl;
-            std::cerr << "WARNING: parameter `Babuska-Zlamal' is deprecated, change it to `CDG-BZ' please in file: ";
-            std::cerr << paramFile << " !" << std::endl << std::endl;  
-          }
-          else 
-          {
-            success = false; 
-          }
-        }
-
-        notBabuskaZlamal_ = (zlamal == 1) ? false : true;
       }
 
       if( ! success )
@@ -452,22 +415,20 @@ namespace Dune {
         if( output ) 
         {
           std::cerr << "\nERROR: Couldn't read parameter! \n";
-          std::cerr << "DGPrimalOperator -- Available Methods:\n";
-          std::cerr << "Interior Penalty : B_{+,-}: 0 , beta: > 0 (big) , CDG-BZ: 0 \n";
-          std::cerr << "Baumann-Oden     : B_{+,-}: 1 , beta: = 0       , CDG-BZ: 0 \n";
-          std::cerr << "NIPG             : B_{+,-}: 1 , beta: > 0       , CDG-BZ: 0 \n";
-          std::cerr << "Babuska-Zlamal   : B_{+,-}: 1 , beta: > 0       , CDG-BZ: 1 \n";
-          std::cerr << "Compact LDG (CDG): B_{+,-}: 0 , beta: > 0       , CDG-BZ: 1 \n\n";
+          std::cerr << "DGPrimalOperatorImpl -- Available Methods:\n";
+          std::cerr << "Interior Penalty : B_{+,-}: 0 , beta: >  0 (big) \n";
+          std::cerr << "Baumann-Oden     : B_{+,-}: 1 , beta: =  0       \n";
+          std::cerr << "NIPG             : B_{+,-}: 1 , beta: >  0       \n";
         }
         exit(1);
       }
 
       betaNotZero_ = (std::abs(betaFactor_) > 0.0);
 
-      if( ! betaNotZero_ && notBabuskaZlamal_ )
+      if( ! betaNotZero_ )
       {
-        std::cout << "DGPrimalOperator: using Baumann-Oden method!\n"; 
-        if(spc_.order() < 2)
+        std::cout << "DGPrimalOperatorImpl: using Baumann-Oden method!\n"; 
+        if(spc_.order() < 1)
         {
           std::cerr << "WARNING: Baumann-Oden method only working for polynomial degree >= 2! \n";
           assert(false);
@@ -476,29 +437,13 @@ namespace Dune {
       }
       else 
       {
-        if( notBabuskaZlamal_ )
+        if(bilinearPlus_ )
         {
-          if(bilinearPlus_ )
-          {
-            std::cout << "DGPrimalOperator: using NIPG method, beta = " << betaFactor_ << " !\n"; 
-          }
-          else 
-          {
-            std::cout << "DGPrimalOperator: using Interior Penalty method, beta = " << betaFactor_ << " !\n"; 
-          }
+          std::cout << "DGPrimalOperatorImpl: using NIPG method, beta = " << betaFactor_ << " !\n"; 
         }
         else 
         {
-          if(bilinearPlus_ )
-          {
-            std::cout << "DGPrimalOperator: using Babuska-Zlamal method, beta = " << betaFactor_ << " !\n"; 
-          }
-          else 
-          {
-            notBabuskaZlamal_ = true;
-            compactLDG_ = true; 
-            std::cout << "DGPrimalOperator: using Compact LDG method, beta = " << betaFactor_ << " !\n"; 
-          }
+          std::cout << "DGPrimalOperatorImpl: using Interior Penalty method, beta = " << betaFactor_ << " !\n"; 
         }
       }
       
@@ -512,112 +457,148 @@ namespace Dune {
       }
     }
 
-    //! Destructor
-    virtual ~DGPrimalOperator() 
+    void setToUnitMatrix(FluxRangeType& coeffEn, FluxRangeType& coeffNb) const
     {
-    }
-
-    //! Stores the time provider passed by the base class in order to have
-    //! access to the global time
-    virtual void setTime ( const double time )
-    {
-      time_ = time;
-    }
-
-    //! Estimate for the timestep size, return value is 0 
-    double timeStepEstimate() const {
-      return 0.0;
-    }
-
-    void compute(const ArgumentType& arg, DestinationType& dest) const
-    {
-      prepare(arg, dest);
-
-      IteratorType endit = spc_.end();
-      for (IteratorType it = spc_.begin(); it != endit; ++it) 
+      for( int i=0; i<FluxRangeType :: rows ; ++i) 
       {
-        applyLocal(*it);
-      }
-            
-      // also calculate matrix for overlap 
-      if( spc_.grid().overlapSize(0) > 0 ) 
-      {
-        typedef typename GridPartType :: template Codim<0> :: 
-            template Partition< Overlap_Partition > :: IteratorType IteratorType;
-
-        IteratorType endit = gridPart_. template end<0, Overlap_Partition >();
-        for(IteratorType it = gridPart_. template begin<0, Overlap_Partition>();
-            it != endit; ++it)
+        // set diagonal to 1 
+        coeffEn[i][i] = coeffNb[i][i] = 1.0;
+        // all others to zero 
+        for(int j=i+1; j< FluxRangeType :: cols; ++j) 
         {
-          applyLocal(*it);
+          // set default value to fMat 
+          coeffEn[i][j] = coeffNb[i][j] = 0.0;
+          coeffEn[j][i] = coeffNb[j][i] = 0.0;
         }
       }
+    }
 
-      finalize(arg, dest);
+    //! Destructor
+    virtual ~DGPrimalOperatorImpl() 
+    {
+    }
+
+    void switchUpwind( double x, double y) 
+    {
+      upwind_[0] *= x;
+      upwind_[1] *= y;
+    }
+
+    // set tau and theta 
+    void enableTimeDerivative()
+    {
+      timeDependent_ = true ;
+    }
+
+    // set tau and theta 
+    void setTauAndTheta(const double tau, const double theta)
+    {
+      tau_1_ = 1.0/tau;
+      theta_ = theta;
     }
 
     //! compute matrix entries 
-    void computeMatrix(const ArgumentType & arg, DestinationType & rhs)
+    void computeMatrix(const ArgumentType & arg, 
+                       const DestinationType &uh, 
+                       DestinationType & rhs)
     {
-      // prepare 
-      prepare( arg, rhs );
+      // store uh_ ;
+      uh_ = &uh;
 
-      // if grid has changed, then matrix structure is re-build
-      matrixObj_.reserve();
+      computeMatrix( arg, rhs );
+    }
 
-      // clear matrix 
-      matrixObj_.clear();
-      
-      // clear right hand side 
-      rhs.clear();
+    void buildRhs(DestinationType & rhs)
+    {
+      // rhs.clear();
+      typedef typename DiscreteFunctionSpaceType :: IteratorType IteratorType;
+      const IteratorType end = spc_.end();
+      rhs_ = & rhs ;
+      for(IteratorType it = spc_.begin(); it != end; ++it)
+      {
+        EntityType& entity = *it ; 
+        if( entity.hasBoundaryIntersections() ) 
+        {
+          applyBoundary( *it );
+        }
+      }
+      rhs_ = 0;
+    }
 
-      // build matrix and rhs 
-      //Timer timer; 
-      this->compute( arg, rhs );
-      matrixAssembled_ = true;
-      //std::cout << "Setup of Matrix took " << timer.elapsed() << " sec.\n";
+    //! compute matrix entries 
+    void computeMatrix(const ArgumentType & arg, 
+                       const bool rebuild )
+    {
+      if( rebuild || sequence_ != spc_.sequence() )
+      {
+        // time initialisation to max value 
+        dtMin_ = std::numeric_limits<double>::max();
 
-      // create pre-condition matrix if activated 
-      matrixObj_.createPreconditionMatrix();
-      
-      // finalize 
-      finalize( arg, rhs );
+        // prepare operator  
+        prepare( arg );
+
+        // if grid has changed, then matrix structure is re-build
+        matrixObj_.reserve();
+
+        // clear matrix 
+        matrixObj_.clear();
+        
+        // build matrix 
+        const IteratorType endit = spc_.end();
+        for (IteratorType it = spc_.begin(); it != endit; ++it) 
+        {
+          applyLocal( *it );
+        }
+
+        // build matrix and rhs 
+        matrixAssembled_ = true;
+        
+        // create pre-condition matrix if activated 
+        matrixObj_.createPreconditionMatrix();
+        
+        // finalize 
+        finalize( );
+
+        // store current sequence 
+        sequence_ = spc_.sequence();
+      }
+    }
+
+    //! compute matrix entries 
+    void computeMatrix(const ArgumentType & arg, 
+                       DestinationType & rhs, const bool rebuild = false )
+    {
+      if( rebuild || sequence_ != spc_.sequence() )
+      {
+        //set right hand side 
+        setRightHandSide( rhs );
+
+        // compute matrix 
+        computeMatrix( arg, rebuild );
+      }
     }
 
   public:  
     //! do matrix vector multiplication, used by InverseOp  
     void operator () (const DestinationType & arg, DestinationType& dest) const 
     {
-      multOEM( arg.leakPointer(), dest.leakPointer());
+      matrixObj_.multOEM( arg.leakPointer(), dest.leakPointer() ); 
     }
     
-    //! do matrix vector multiplication, used by OEM-Solver and DuneODE Solvers  
-    // --multOEM
-    void multOEM(const double * arg, double * dest) const
-    {
-      matrixObj_.multOEM( arg, dest );
-    }
-
   public:
-    //! return refernence to system matrix, used by Solvers
-    const MatrixObjectType & systemMatrix () const { return matrixObj_; }
-    
-    //! return reference to preconditioning matrix, used by OEM-Solver
-    const PreconditionMatrixType & preconditionMatrix () const { 
-      return matrixObj_.preconditionMatrix(); 
+    //set right hand side 
+    void setRightHandSide( DestinationType& rhs ) const 
+    {
+      rhs.clear ();
+      rhs_ = & rhs ;
     }
 
-    //! returns true if preconditioning matrix has been build 
-    bool hasPreconditionMatrix() const  { 
-      return matrixObj_.hasPreconditionMatrix(); 
-    }
-           
     //! In the preparations, store pointers to the actual arguments and 
     //! destinations. Filter out the "right" arguments for this pass.
-    virtual void prepare(const ArgumentType& arg, DestinationType& dest) const
+    void prepare(const ArgumentType& arg) const
     {
+      // set argument 
       arg_ = const_cast<ArgumentType*>(&arg);
-      dest_ = &dest;
       caller_.setArgument(*arg_);
 
       // only calculate in case of beta not zero 
@@ -627,13 +608,41 @@ namespace Dune {
         globalBeta_ = betaFactor_/gridWidth_.gridWidth();
       }
 
-      caller_.setTime( time_ );
+      // set time to caller 
+      caller_.setTime( this->time() );
+    }
+
+    //! In the preparations, store pointers to the actual arguments and 
+    //! destinations. Filter out the "right" arguments for this pass.
+    virtual void prepare(const ArgumentType& arg, DestinationType& dest) const
+    {
+      // prepare operator 
+      prepare( arg );
+
+      //set right hand side 
+      setRightHandSide( dest );
+    }
+
+    //! Some timestep size management.
+    void finalize() const
+    {
+      caller_.finalize();
+      rhs_ = 0;
+      uh_ = 0;
     }
 
     //! Some timestep size management.
     virtual void finalize(const ArgumentType& arg, DestinationType& dest) const
     {
-      caller_.finalize();
+      finalize ();
+    }
+
+    //! Estimate for the timestep size 
+    double timeStepEstimateImpl() const
+    {
+      // factor for LDG  Discretization 
+      const double p  = 2 * spc_.order() + 1;
+      return dtMin_ / p;
     }
 
   public:
@@ -643,7 +652,6 @@ namespace Dune {
       return spc_;
     }
 
-  public:
     //! set all data belonging to this entity to zero 
     void restrictLocal(const EntityType& father, const EntityType & son, bool firstCall ) const
     {
@@ -654,6 +662,7 @@ namespace Dune {
     {
     }
 
+protected:
     void resizeCaches(const int numDofs) const
     {
       // resize caches 
@@ -667,6 +676,72 @@ namespace Dune {
         coeffPsi_.resize(numDofs);
       }
     }
+
+    //! assemble right hand side modifications 
+    void applyBoundary(EntityType& en) const
+    {
+      // this method should not be called for ghost entities 
+      assert( en.partitionType() != GhostEntity );
+      
+      // make entities known in callers
+      caller_.setEntity(en);
+
+      // create volume quadrature  
+      VolumeQuadratureType volQuad(en, volumeQuadOrd_);
+
+      // get geometry
+      const GeometryType & geo = en.geometry();
+
+      // get base function set of single space 
+      const BaseFunctionSetType bsetEn = spc_.baseFunctionSet(en);
+      const int numDofs = bsetEn.numBaseFunctions();
+      assert( numDofs > 0 );
+      // resize caches 
+      resizeCaches(numDofs);
+
+      // calculate local beta factor 
+      if( betaNotZero_ ) 
+      {
+        double betaEst = 0.0;
+        if( problem_.hasCoefficient() )
+        {
+          CoefficientCaller<DiscreteModelCallerType,true,false> coeffCaller; 
+          betaEst = getBetaEstimate(coeffCaller, en, volQuad); 
+        }
+        else 
+        {
+          CoefficientCaller<DiscreteModelCallerType,false,false> coeffCaller; 
+          betaEst = getBetaEstimate(coeffCaller, en, volQuad); 
+        }
+        // calculate local beta 
+        beta_ = (betaEst * globalBeta_);
+      }
+
+      assert( rhs_ );
+      // local function for right hand side 
+      SingleLFType singleRhs = rhs_->localFunction(en);
+      
+      /////////////////////////////////
+      // Surface integral part
+      /////////////////////////////////
+      const IntersectionIteratorType endnit = gridPart_.iend(en); 
+      for (IntersectionIteratorType nit = gridPart_.ibegin(en); nit != endnit; ++nit) 
+      { 
+        // neighbor volume  
+        double wspeedS = 0.0;
+  
+        // if intersection with boundary 
+        // --boundary
+        if( nit.boundary() ) 
+        { 
+          applyLocalBoundary( *nit, 
+              en, geo, volQuad, numDofs, 
+              bsetEn, (LocalMatrixType* ) 0, 
+              singleRhs, 
+              wspeedS ); 
+        } // end if boundary
+      } // end intersection iterator 
+    } // end applyBoundary  
 
     template<class QuadratureType, class CoeffCallerType> 
     double volumetricPart(EntityType& en, 
@@ -763,9 +838,10 @@ namespace Dune {
   
       return betaEst;
     }
-
-    /////////////////////////////////
-    //! apply operator on entity 
+ 
+    ///////////////////////////////////////////
+    //! --apply operator on entity 
+    ///////////////////////////////////////////
     void applyLocal(EntityType& en) const
     {
       // this method should not be called for ghost entities 
@@ -783,33 +859,32 @@ namespace Dune {
       // get geometry
       const GeometryType & geo = en.geometry();
 
+      factorFaces_ = 1;//((geo.type().isSimplex()) ? (dim+1) : 2 * dim);
+
       // get base function set of single space 
       const BaseFunctionSetType bsetEn = spc_.baseFunctionSet(en);
       const int numDofs = bsetEn.numBaseFunctions();
       assert( numDofs > 0 );
 
-      // set matrix to id matrix 
-      if( en.partitionType() != InteriorEntity ) 
-      {
-        for(int k=0; k<numDofs; ++k) 
-        {
-          matrixEn.set( k, k, 1);
-        }
-        return ;
-      }
+      double betaEst = 0.0;
+
+      const bool rightHandSide = problem_.hasRHS() && rhs_; 
 
       // local function for right hand side 
-      SingleLFType singleRhs = dest_->localFunction(en); //rhs
+      SingleLFType* singleRhsPtr = ( rhs_ ) ? 
+        new SingleLFType(rhs_->localFunction(en)) :  0;
+      
+      // local function for right hand side 
+      SingleLFType& singleRhs = *singleRhsPtr; //rhs_->localFunction(en); //rhs
       
       // resize caches 
       resizeCaches(numDofs);
 
-      double betaEst = 0.0;
-      
+
       /////////////////////////////////
       // Volumetric integral part
       /////////////////////////////////
-      if(problem_.hasCoefficient() && problem_.hasRHS() )
+      if(problem_.hasCoefficient() && rightHandSide )
       {
         CoefficientCaller<DiscreteModelCallerType,true,true> coeffCaller( singleRhs ); 
         betaEst = volumetricPart(en,geo,volQuad,coeffCaller,bsetEn,numDofs,matrixEn);
@@ -819,7 +894,7 @@ namespace Dune {
         CoefficientCaller<DiscreteModelCallerType,true,false> coeffCaller; 
         betaEst = volumetricPart(en,geo,volQuad,coeffCaller,bsetEn,numDofs,matrixEn);
       }
-      else if ( problem_.hasRHS() )
+      else if ( rightHandSide )
       {
         CoefficientCaller<DiscreteModelCallerType,false,true> coeffCaller( singleRhs ); 
         betaEst = volumetricPart(en,geo,volQuad,coeffCaller,bsetEn,numDofs,matrixEn);
@@ -829,25 +904,33 @@ namespace Dune {
         CoefficientCaller<DiscreteModelCallerType,false,false> coeffCaller; 
         betaEst = volumetricPart(en,geo,volQuad,coeffCaller,bsetEn,numDofs,matrixEn);
       }
+  
+      // get beta estimate 
+      beta_ = (betaEst * globalBeta_);
 
-      beta_ = betaEst * globalBeta_;
-
+      const double enVolume = geo.volume();
       /////////////////////////////////
       // Surface integral part
       /////////////////////////////////
-      IntersectionIteratorType endnit = gridPart_.iend(en); 
+      const IntersectionIteratorType endnit = gridPart_.iend(en); 
       for (IntersectionIteratorType nit = gridPart_.ibegin(en); nit != endnit; ++nit) 
-      {
+      { 
+        // neighbor volume  
+        double nbVolume = enVolume;
+        double wspeedS = 0.0;
+
+        const IntersectionType& intersection = * nit; 
+  
         // if neighbor exists 
-        if (nit.neighbor()) 
+        if ( intersection.neighbor() ) 
         {
-          EntityPointerType neighEp = nit.outside();
+          EntityPointerType neighEp = intersection.outside();
           EntityType& nb = *neighEp;
 
 #ifdef DG_DOUBLE_FEATURE
           // get partition type 
           const bool ghostEntity = 
-            ( nb.partitionType() != InteriorEntity );
+            ( nb.partitionType() == GhostEntity );
           // only once per intersection or when outside is not interior 
           if( (localIdSet_.id(en) < localIdSet_.id(nb)) 
               || ghostEntity
@@ -857,25 +940,25 @@ namespace Dune {
             // type of TwistUtility 
             typedef TwistUtility<GridType> TwistUtilityType;
             // check conformity 
-            //if( TwistUtilityType::conforming(gridPart_.grid(),nit) )
             if( nit->conforming() )
             {
-              FaceQuadratureType faceQuadInner(gridPart_, nit, faceQuadOrd_,
+              FaceQuadratureType faceQuadInner(gridPart_, intersection, faceQuadOrd_,
                                                FaceQuadratureType::INSIDE);
 
         
-              FaceQuadratureType faceQuadOuter(gridPart_, nit, faceQuadOrd_,
+              FaceQuadratureType faceQuadOuter(gridPart_, intersection, faceQuadOrd_,
                                                FaceQuadratureType::OUTSIDE);
 
               // apply neighbor part 
-              applyLocalNeighbor(nit,en,nb,volQuad,
-                    faceQuadInner,faceQuadOuter, 
-                    bsetEn,matrixEn
+              nbVolume = applyLocalNeighbor( intersection, 
+                              en,nb,volQuad,
+                              faceQuadInner,faceQuadOuter, 
+                              bsetEn,matrixEn, singleRhs, wspeedS  
 #ifdef DG_DOUBLE_FEATURE
-                    //, true
-                    , ! ghostEntity 
+                              //, true
+                            , ! ghostEntity 
 #endif
-                    );
+                           );
             }
             else 
             {
@@ -887,332 +970,413 @@ namespace Dune {
                 NonConformingFaceQuadratureType;
               
               NonConformingFaceQuadratureType 
-                nonConformingFaceQuadInner(gridPart_, nit, faceQuadOrd_,
+                nonConformingFaceQuadInner(gridPart_, intersection, faceQuadOrd_,
                                            NonConformingFaceQuadratureType::INSIDE);
           
               NonConformingFaceQuadratureType 
-                nonConformingFaceQuadOuter(gridPart_,nit, faceQuadOrd_,
+                nonConformingFaceQuadOuter(gridPart_, intersection, faceQuadOrd_,
                                            NonConformingFaceQuadratureType::OUTSIDE);
 
               // apply neighbor part 
-              applyLocalNeighbor(nit,en,nb,volQuad,
-                    nonConformingFaceQuadInner,
-                    nonConformingFaceQuadOuter, 
-                    bsetEn,matrixEn
+              nbVolume = applyLocalNeighbor(intersection,
+                            en,nb,volQuad,
+                            nonConformingFaceQuadInner,
+                            nonConformingFaceQuadOuter, 
+                            bsetEn,matrixEn, singleRhs , wspeedS 
 #ifdef DG_DOUBLE_FEATURE
-                    //, true
-                    , ! ghostEntity 
+                            //, true
+                            , ! ghostEntity 
 #endif
-                    );
+                          );
             }
           }
+
+
         } // end if neighbor 
 
         // if intersection with boundary 
-        if (nit.boundary()) 
+        // --boundary
+        if( intersection.boundary() ) 
         { 
-          // create quadrature 
-          FaceQuadratureType faceQuadInner(gridPart_, nit, faceQuadOrd_,
-                                           FaceQuadratureType::INSIDE);
+          applyLocalBoundary( intersection, 
+              en, geo, volQuad, numDofs, 
+              bsetEn, &matrixEn, singleRhs, 
+              wspeedS ); 
 
-          typedef typename DiscreteGradientSpaceType :: BaseFunctionSetType BaseFunctionSetType;
-          const BaseFunctionSetType enSet = gradientSpace_.baseFunctionSet( en );
-          // get number of base functions for gradient space 
-          const int numGradBase = enSet.numBaseFunctions();
-
-          // swtich for adding compact LDG lifting operator 
-          bool addCompactDG = compactLDG_;
-          if( compactLDG_ ) 
-          {
-            // resize and reset temporary functions 
-            resizeTemporaryFunctions( en, r_e_, numDofs, numGradBase );
-          } // end compact LDG 
-
-          // loop over quadrature points 
-          const int quadNop = faceQuadInner.nop();
-          for (int l = 0; l < quadNop ; ++l) 
-          {
-            // calculate normal 
-            DomainType unitNormal(nit.integrationOuterNormal(faceQuadInner.localPoint(l)));
-            const double faceVol = unitNormal.two_norm();
-            unitNormal *= 1.0/faceVol;
-
-            const double intelFactor = faceQuadInner.weight(l);
-            
-            // integration element factor 
-            const double intel = intelFactor * faceVol;
-
-            // intel switching between bilinear from B_+ and B_-  
-            const double bilinIntel = (bilinearPlus_) ? intel : -intel;
-
-            // overall beta factor 
-            const double facBeta = factorBeta(intelFactor,faceVol);
-
-            // get boundary value 
-            RangeType boundaryValue(0.0);
-
-            // call boundary value function 
-            BoundaryIdentifierType bndType = 
-              caller_.boundaryValue(nit,faceQuadInner,l,boundaryValue);
-
-            // only Dirichlet and Neumann Boundary supported right now 
-            assert( bndType.isDirichletType() || bndType.isNeumannType() );
-
-            ///////////////////////////////
-            //  evaluate coefficients 
-            ///////////////////////////////
-            assert( psi_.size() > 0 );
-            JacobianRangeType& norm = psi_[0];
-            if(problem_.hasCoefficient())
-            {
-              // evaluate coefficient on boundary
-              caller_.evaluateCoefficientBoundary(nit,faceQuadInner,l,coeffEn_);
-              for(int i=0; i<dimRange; ++i)
-              {
-                norm[i] = 0.0;
-                coeffEn_.umv(unitNormal,norm[i]);
-              }
-            }
-            else 
-            {
-              for(int i=0; i<dimRange; ++i)
-              {
-                for(int j=0; j<dimDomain; ++j)
-                {
-                  norm[i][j] = unitNormal[j];
-                }
-              }
-            }
-
-            // cache base functions evaluations
-            for(int k=0; k<numDofs; ++k)
-            { 
-              // evaluate normal * grad phi 
-              tau_[k] = bsetEn.evaluateGradientSingle(k,en, faceQuadInner[l] , norm);  
-              // evaluate phi 
-              bsetEn.evaluate(k,faceQuadInner[l] , phi_[k]);
-            }
-
-            // only add compact LDG values on dicrichlet boundary 
-            addCompactDG = (compactLDG_ && bndType.isDirichletType() );
-            if( addCompactDG )
-            {
-              GradRangeType& tmp = rRets_[0];
-
-              // get numbre of base functions 
-              for(int m=0; m<numGradBase; ++m)
-              {  
-                // eval base functions 
-                enSet.evaluate(m, faceQuadInner[l], tmp );
-                // apply unit normal 
-                eta_[m] = tmp * unitNormal;
-              }
-
-              RangeType bndPhi(0.0); 
-              // only add this when we have a dirichlet boundary 
-              if( bndType.isDirichletType() )
-              {
-                bndPhi = boundaryValue;
-              }
-
-              // calculate coefficients for r_D( g_D - u_h )
-              for(int k=0; k<numDofs; ++k)
-              {
-                RangeType phiVal ( bndPhi );
-                phiVal -= phi_[k];
-                //RangeType phiVal ( phi_[k] );
-                //phiVal -= bndPhi;
-                phiVal *= intel;
-
-                TemporaryLocalFunctionType& r_e = *(r_e_[k]);
-                // calculate coefficients 
-                for(int m=0; m<numGradBase; ++m)
-                {
-                  r_e[m] -= phiVal * eta_[m]; 
-                }
-              }
-            }
-                   
-            // if not Babuska-Zlamal method, add boundary terms 
-            if( notBabuskaZlamal_ )
-            {
-              if( bndType.isDirichletNonZero())
-              {
-                // fill right hand side  
-                for(int k=0; k<numDofs; ++k)
-                {  
-                  // only valid for dim range = 1
-                  RangeFieldType rhsVal1 = boundaryValue[0] * tau_[k];
-
-                  rhsVal1 *= bilinIntel;
-                  singleRhs[k] += rhsVal1;
-                }
-              }
-
-              // only on non Neumann type boundaries
-              if( bndType.isDirichletType() )
-              {
-                // fill matrix entries 
-                for(int k=0; k<numDofs; ++k)
-                {  
-                  for (int j = 0; j < numDofs; ++j) 
-                  {
-                    {
-                      // grad w * v 
-                      RangeFieldType val = tau_[j] * phi_[k][0];
-                      val *= -intel;
-                      matrixEn.add( k , j , val );
-                    }
-                    
-                    {
-                      // w * grad v
-                      RangeFieldType val = tau_[k] * phi_[j][0];
-                      val *= bilinIntel;
-                      matrixEn.add( k , j , val );
-                    }
-                  }
-                }
-              }
-            }
-                
-            // dirichlet boundary values for u 
-            if(bndType.isNeumannNonZero())
-            {
-              // fill matrix entries 
-              for(int k=0; k<numDofs; ++k)
-              {  
-                // only valid for dim range = 1
-                RangeFieldType rhsVal = boundaryValue * phi_[k];
-
-                rhsVal *= intelFactor;
-                //rhsVal *= intel;
-                singleRhs[k] += rhsVal;
-              }
-            }
-
-            if( betaNotZero_ )
-            {
-              // stabilization 
-              if( bndType.isDirichletType())
-              {
-
-                // fill matrix entries 
-                for(int k=0; k<numDofs; ++k)
-                {  
-                  for (int j = 0; j < numDofs; ++j) 
-                  {
-                    // phi_j * phi_k 
-                    RangeFieldType phiVal = phi_[j] * phi_[k]; 
-                    phiVal *= facBeta;
-                    matrixEn.add( k , j , phiVal );
-                  }
-                }
-              }
-                
-              // dirichlet boundary values for u 
-              if(bndType.isDirichletNonZero())
-              {
-                // fill right hand side 
-                for(int k=0; k<numDofs; ++k)
-                {  
-                  // only valid for dim range = 1
-                  RangeFieldType rhsVal1 = boundaryValue[0] * phi_[k];
-                  rhsVal1 *= facBeta;
-                  singleRhs[k] += rhsVal1;
-                }
-              } 
-            }
-          }
-
-          // now add lifting operators if we use compact LDG 
-          if( addCompactDG )
-          {
-            if( problem_.hasCoefficient() )
-            {
-              CoefficientCaller<DiscreteModelCallerType,true,false> coeffCaller; 
-              addLiftingOperator(coeffCaller,en,
-                                 geo,volQuad,
-                                 numDofs,r_e_,matrixEn);
-
-            }
-            else 
-            {
-              CoefficientCaller<DiscreteModelCallerType,false,false> coeffCaller; 
-              addLiftingOperator(coeffCaller,en,
-                                 geo,volQuad,
-                                 numDofs,r_e_,matrixEn);
-            }
-          }
         } // end if boundary
+
+        // check timestep size 
+        if ( wspeedS > minLimit_ )
+        {
+          const double minvolS = std::min(enVolume, nbVolume);
+          const double p1 = 4.0 * (spc_.order() + 1);
+          wspeedS *= p1 ;
+          dtMin_ = std::min(dtMin_,minvolS/wspeedS);
+        }
 
       } // end intersection iterator 
 
+      // apply mass matrix to previous solution
+      if( timeDependent_ )
+      {
+        typedef FieldMatrix<double, elementMassSize , elementMassSize > MassMatrixType; 
+        MassMatrixType massEn(0);
+
+        // mass matrix for en 
+        getMassMatrix(geo,volQuad,bsetEn,numDofs,phi_,massEn);
+
+        // apply 1/tau
+        massEn *= tau_1_  ;
+
+        //if( theta_ >=  1.0 ) 
+
+        assert( uh_ );
+        // local function for right hand side 
+        const SingleLFType uhLf = uh_->localFunction(en); //rhs
+      
+        if( theta_ < 1.0 )
+        {
+          // apply matrix to old right hand side 
+          multLocal( matrixEn, singleRhs, uhLf );
+          matrixEn.scale( theta_ );
+        }
+
+        {
+          // add to system matrix and adjust right hand side 
+          for(int i=0; i<numDofs; ++i) 
+          {
+            for(int j=0; j<numDofs; ++j) 
+            {
+              singleRhs[i] += massEn[ i ][ j ] * uhLf[ j ];
+              matrixEn.add( i, j, massEn[ i ][ j ] );
+            }
+          }
+        }
+      }
+
       // resort corresponding matrix rows for ascending numbering 
       matrixEn.resort(); 
+
+      if( singleRhsPtr ) delete singleRhsPtr;
+
     } // end apply local 
 
-    double factorBeta(const double intelFactor, const double faceVol) const 
+    void multLocal(LocalMatrixType& matrix, SingleLFType& rhsLF, 
+                   const SingleLFType& uhLf) const 
     {
-      if(notBabuskaZlamal_)
+      const double factor = 1.0 - theta_ ;
+      typedef FieldVector<double, elementMassSize > MassVectorType; 
+      MassVectorType rhs (0);
+
+      matrix.multiplyAdd( uhLf, rhs );
+
+      const int numDofs = rhsLF.numDofs();
+      // add to system matrix and adjust right hand side 
+      for(int i=0; i<numDofs; ++i) 
       {
-        return (beta_ * intelFactor);
-      }
-      else 
-      {
-        return (beta_ * intelFactor * faceVol * pow(faceVol , -power_ )); 
+        rhsLF[i] += factor * rhs[ i ];
       }
     }
 
-    // resize memory for r_e and l_e functions 
-    void resizeTemporaryFunctions(const EntityType& en,
-                                  TemporaryLocalFunctionArrayType& r_e,
-                                  const int numDofs, const int numGradBase) const 
+    template <class CoeffCallerImp>
+    double getBetaEstimate(CoeffCallerImp& coeffCaller, 
+                           EntityType& en,
+                           VolumeQuadratureType& volQuad) const 
     {
-      if( r_e.size() < numDofs )
+      double betaEst = 0.0;
+      // loop over quadrature points 
+      const int quadNop = volQuad.nop();
+      for (int l = 0; l < quadNop ; ++l) 
       {
-        r_e.resize(0);
-        r_e.resize( numDofs );
-        rRets_.resize( numDofs );
-        rRetsCoeff_.resize( numDofs );
-        for(int i=0; i<numDofs; ++i) 
-        {  
-          std::auto_ptr< TemporaryLocalFunctionType > 
-            ptr(  new TemporaryLocalFunctionType ( gradientSpace_ ) );
-          r_e[i] = ptr; 
-        }
+        // call anayltical flux of discrete model 
+        betaEst = std::max(coeffCaller.evaluateCoefficient(caller_, en, volQuad, l, coeffEn_ ),
+                           betaEst);
       }
+      return betaEst ;
+    }
 
-      if( eta_.size() < numGradBase )
-      {
-        eta_.resize( numGradBase );
-        etaNeigh_.resize( numGradBase );
-      }
+    //! apply boundary integrals to matrix and right hand side 
+    void applyLocalBoundary(const IntersectionType& nit, 
+                            EntityType& en,
+                            const GeometryType& geo, 
+                            VolumeQuadratureType& volQuad,
+                            const int numDofs,
+                            const BaseFunctionSetType& bsetEn, 
+                            LocalMatrixType* matrixEnPtr, 
+                            SingleLFType& singleRhs,
+                            double& wspeedS) const 
+    {
+      // create quadrature 
+      FaceQuadratureType faceQuadInner(gridPart_, nit, faceQuadOrd_,
+                                       FaceQuadratureType::INSIDE);
 
-      for(int i=0; i<numDofs; ++i) 
+      typedef typename DiscreteGradientSpaceType :: BaseFunctionSetType BaseFunctionSetType;
+      const BaseFunctionSetType enSet = gradientSpace_.baseFunctionSet( en );
+      // get number of base functions for gradient space 
+
+      LocalMatrixType& matrixEn = *matrixEnPtr;
+
+      // loop over quadrature points 
+      const int quadNop = faceQuadInner.nop();
+      for (int l = 0; l < quadNop ; ++l) 
       {
-        TemporaryLocalFunctionType& re = (*r_e[i]);
-        re.init ( en );
-        assert( re.numDofs() == numGradBase );
-        for(int m=0; m<numGradBase; ++m) 
+        // calculate normal 
+        DomainType unitNormal(nit.integrationOuterNormal(faceQuadInner.localPoint(l)));
+        const double faceVol = unitNormal.two_norm();
+        unitNormal *= 1.0/faceVol;
+
+        const double intelFactor = faceQuadInner.weight(l);
+        
+        // integration element factor 
+        const double intel = intelFactor * faceVol;
+
+        // intel switching between bilinear from B_+ and B_-  
+        const double bilinIntel = (bilinearPlus_) ? intel : -intel;
+
+        // get boundary value 
+        RangeType boundaryValue(0.0);
+
+        // call boundary value function 
+        BoundaryIdentifierType bndType = 
+          caller_.boundaryValue(nit, faceQuadInner, l, boundaryValue);
+
+        // only Dirichlet and Neumann Boundary supported right now 
+        assert( bndType.isDirichletType() || bndType.isNeumannType() );
+
+        ///////////////////////////////
+        //  evaluate coefficients 
+        ///////////////////////////////
+        assert( psi_.size() > 0 );
+        JacobianRangeType& norm = psi_[0];
+        if( problem_.hasCoefficient() )
         {
-          re[m] = 0;
+          // evaluate coefficient on boundary
+          caller_.evaluateCoefficientBoundary(nit, faceQuadInner,l,coeffEn_);
+          for(int i=0; i<dimRange; ++i)
+          {
+            norm[i] = 0.0;
+            coeffEn_.umv(unitNormal,norm[i]);
+          }
+        }
+        else 
+        {
+          for(int i=0; i<dimRange; ++i)
+          {
+            for(int j=0; j<dimDomain; ++j)
+            {
+              norm[i][j] = unitNormal[j];
+            }
+          }
+        }
+
+        double ldt = 0.0 ;
+        // overall beta factor 
+        const double facBeta = 
+          factorBeta(intelFactor,faceVol, coeffEn_, coeffEn_, ldt );
+
+        wspeedS += ldt * faceQuadInner.weight(l);
+
+        // cache base functions evaluations
+        for(int k=0; k<numDofs; ++k)
+        { 
+          // evaluate normal * grad phi 
+          tau_[k] = bsetEn.evaluateGradientSingle(k,en, faceQuadInner[l] , norm);  
+          // evaluate phi 
+          bsetEn.evaluate(k,faceQuadInner[l] , phi_[k]);
+        }
+
+        // if not Babuska-Zlamal method, add boundary terms 
+        {
+          // only change right hand side if exists 
+          if( bndType.isDirichletNonZero() && rhs_ )
+          {
+            // fill right hand side  
+            for(int k=0; k<numDofs; ++k)
+            {  
+              // only valid for dim range = 1
+              RangeFieldType rhsVal1 = boundaryValue[0] * tau_[k];
+
+              rhsVal1 *= bilinIntel;
+              singleRhs[k] += rhsVal1;
+            }
+          }
+
+          // only on non Neumann type boundaries
+          if( matrixEnPtr && bndType.isDirichletType() )
+          {
+            // fill matrix entries 
+            for(int k=0; k<numDofs; ++k)
+            {  
+              for (int j = 0; j < numDofs; ++j) 
+              {
+                {
+                  // grad w * v 
+                  RangeFieldType val = tau_[j] * phi_[k][0];
+                  val *= -intel;
+                  matrixEn.add( k , j , val );
+                }
+                
+                {
+                  // w * grad v
+                  RangeFieldType val = tau_[k] * phi_[j][0];
+                  val *= bilinIntel;
+                  matrixEn.add( k , j , val );
+                }
+              }
+            }
+          }
+        }
+            
+        // dirichlet boundary values for u 
+        // only change right hand side if exists 
+        if(bndType.isNeumannNonZero() && rhs_ )
+        {
+          // fill matrix entries 
+          for(int k=0; k<numDofs; ++k)
+          {  
+            // only valid for dim range = 1
+            RangeFieldType rhsVal = boundaryValue * phi_[k];
+
+            rhsVal *= intelFactor;
+            singleRhs[k] += rhsVal;
+          }
+        }
+
+        if( betaNotZero_ )
+        {
+          // stabilization 
+          if( matrixEnPtr && bndType.isDirichletType() )
+          {
+            // fill matrix entries 
+            for(int k=0; k<numDofs; ++k)
+            {  
+              for (int j = 0; j < numDofs; ++j) 
+              {
+                // phi_j * phi_k 
+                RangeFieldType phiVal = phi_[j] * phi_[k]; 
+                phiVal *= facBeta;
+                matrixEn.add( k , j , phiVal );
+              }
+            }
+            
+            // dirichlet boundary values for u 
+            // only change right hand side if exists 
+            if(bndType.isDirichletNonZero() && rhs_ )
+            {
+              // fill right hand side 
+              for(int k=0; k<numDofs; ++k)
+              {  
+                // only valid for dim range = 1
+                RangeFieldType rhsVal1 = boundaryValue[0] * phi_[k];
+                rhsVal1 *= facBeta;
+                singleRhs[k] += rhsVal1;
+              }
+            } 
+          }
         }
       }
+    } // end applyLocalBoundary
+
+    double compBetaK(const FluxRangeType& K) const 
+    {
+      double detK = K[0][0]*K[1][1]-K[1][0]*K[0][1];
+      double p = (K[0][0]+K[1][1])*0.5;
+      double q = p*p-detK;
+      if( q < 0 && q > -1e-14 ) q = 0;
+      if (p<0 || q<0) 
+      {
+        return 0.0;
+        std::cout << p << " p | q " << q << "\n";
+        std::cout << K << std::endl; 
+        std::cout << "something went wrong in Eigenvalues for beta!" << std::endl;
+        assert(false);
+        abort();
+      }
+      q = sqrt(q);
+      double l_max = p + q;
+      double l_min = p - q;
+      
+      return SQR(l_max)/l_min;
+    }
+
+    // --factorBeta
+    double factorBeta(const double intelFactor, 
+                      const double faceVol,
+                      const FluxRangeType& enK, 
+                      const FluxRangeType& nbK,
+                      double& wspeedL ) const
+    {
+      //double minEn = 1e308;
+      //double maxEn = -1e308;
+      //double minNb = 1e308;
+      //double maxNb = -1e308;
+      double minK = 1e308;
+      double maxK = -1e308;
+
+      FluxRangeType K;
+
+      for(int j=0; j<dimDomain; ++j) 
+      {
+        for (int i=0;i<dimDomain;++i) 
+          K[i][j] = 0.5*(enK[i][j]+nbK[i][j]);
+
+        minK = std::min( K[j][j] , minK); 
+        maxK = std::max( K[j][j] , maxK); 
+
+        /*
+        minEn = std::min( enK[j][j] , minEn); 
+        maxEn = std::max( enK[j][j] , maxEn); 
+        
+        minNb = std::min( nbK[j][j] , minNb); 
+        maxNb = std::max( nbK[j][j] , maxNb); 
+        */
+      }
+
+      // store local diffusion time step 
+      wspeedL = std::max( std::abs(maxK) , std::abs(minK) );
+
+      //double betEn = SQR(maxEn) / minEn;
+      //double betNb = SQR(maxNb) / minNb;
+      //double betS  = SQR(maxK) / minK;
+      //double betS  = std::abs(maxK) / minK;
+       
+      //compBetaK(enK,betEn);
+      //compBetaK(nbK,betNb);
+      double betS = compBetaK(K);
+      
+      //double betS  = SQR(maxK) / minK;
+      //double betS  = 1./ SQR(maxK);// / minK;
+      //double betS  = std::abs(maxK) / minK;
+       
+      /*
+      //std::cout << betS << " betS factor vorher \n";
+      if (&enK != &nbK) 
+      {
+        double jumpK = tanh(std::abs(betEn-betNb));
+        //std::cout << jumpK << " jump \n";
+        betS = betS * jumpK + betS * (1.-jumpK);
+      }
+      */
+
+      //std::cout << betS << " betS factor nachher \n";
+      return (beta_ * intelFactor * betS * faceVol);
     }
 
     template <class QuadratureImp> 
-    void applyLocalNeighbor(IntersectionIteratorType & nit, 
-                            EntityType & en, 
-                            EntityType & nb,
-                            VolumeQuadratureType & volQuad,
-                            const QuadratureImp & faceQuadInner, 
-                            const QuadratureImp & faceQuadOuter, 
-                            const BaseFunctionSetType & bsetEn, 
-                            LocalMatrixType & matrixEn
+    double applyLocalNeighbor(const IntersectionType & nit, 
+                              EntityType & en, 
+                              EntityType & nb,
+                              VolumeQuadratureType & volQuad,
+                              const QuadratureImp & faceQuadInner, 
+                              const QuadratureImp & faceQuadOuter, 
+                              const BaseFunctionSetType & bsetEn, 
+                              LocalMatrixType & matrixEn,
+                              SingleLFType& singleRhs,
+                              double& wspeedS 
 #ifdef DG_DOUBLE_FEATURE
-                            , const bool interior 
-#endif
-                            ) const
+                              , const bool interior 
+#endif    
+                              ) const
     {
       const int numDofs = bsetEn.numBaseFunctions();
 
@@ -1236,7 +1400,7 @@ namespace Dune {
 
       // create matrix handles for neighbor 
       LocalMatrixType matrixNb = matrixObj_.localMatrix( en, nb );
-     
+
 #ifdef DG_DOUBLE_FEATURE
       // create matrix handles for neighbor (when called with ghost do nothing)
       LocalMatrixType enMatrix = matrixObj_.localMatrix( nb, (interior) ? en : nb ); 
@@ -1262,18 +1426,8 @@ namespace Dune {
       const BaseFunctionSetType enSet = gradientSpace_.baseFunctionSet( en );
       const BaseFunctionSetType nbSet = gradientSpace_.baseFunctionSet( nb );
 
-      // get number of base functions for gradient space 
-      const int numGradBase = enSet.numBaseFunctions();
-
-      // if we use compact LDG initialize helper functions 
-      if( compactLDG_ ) 
-      {
-        // resize and reset temporary functions 
-        resizeTemporaryFunctions( en, r_e_ , numDofs, numGradBase );
-#ifndef DG_DOUBLE_FEATURE
-        resizeTemporaryFunctions( nb, r_e_neigh_ , numDofs, numGradBase );
-#endif
-      }
+      typedef FieldMatrix<double, massSize , massSize > MassMatrixType; 
+      typedef FieldVector<double, massSize > MassVectorType; 
 
       // loop over all quadrature points 
       const int quadNop = faceQuadInner.nop();
@@ -1287,7 +1441,8 @@ namespace Dune {
         // make sure we have the same factors 
         assert( std::abs(faceQuadInner.weight(l) - faceQuadOuter.weight(l)) < 1e-10);
         // integration element factor 
-        const double intelFactor = faceQuadInner.weight(l); 
+        const double intelFactor = faceQuadInner.weight(l);
+        
         const double intel = faceVol * intelFactor; 
 #ifdef DG_DOUBLE_FEATURE
         // use opposite signs here
@@ -1298,15 +1453,9 @@ namespace Dune {
         // we alwas stay on the positive side 
         const RangeFieldType C_12 = 0.5;
 #else 
-        // C_12 stabilization factor 
-        const RangeFieldType C_12 = (unitNormal * upwind_ < 0) ? -0.5 : 0.5;
-        useInterior = ( C_12 < 0 );
 #endif
         // intel switching between bilinear from B_+ and B_-  
         const double bilinIntel = (bilinearPlus_) ? intel : -intel;
-
-        // overall beta factor 
-        const double facBeta = factorBeta(intelFactor,faceVol);
 
         ///////////////////////////////
         //  evaluate coefficients 
@@ -1316,6 +1465,7 @@ namespace Dune {
           // call anayltical flux of discrete model 
           caller_.evaluateCoefficientFace(nit,
               faceQuadInner,faceQuadOuter,l,coeffEn_,coeffNb_);
+
           for(int i=0; i<dimRange; ++i)
           {
             normEn[i] = 0.0;
@@ -1326,6 +1476,9 @@ namespace Dune {
         }
         else 
         {
+          // set to unit matrix 
+          setToUnitMatrix(coeffEn_, coeffNb_);
+
           for(int i=0; i<dimRange; ++i)
           {
             for(int j=0; j<dimDomain; ++j)
@@ -1335,7 +1488,18 @@ namespace Dune {
             }
           }
         }
-               
+
+        double ldt = 0.0;
+        // overall beta factor 
+        const double facBeta = factorBeta(intelFactor,faceVol,coeffEn_,coeffNb_, ldt);
+
+        wspeedS += ldt * faceQuadInner.weight(l) ;
+
+        // C_12 switch 
+        const RangeFieldType C_12 = ((unitNormal * upwind_) < 0) ? -0.5 : 0.5;
+        // set useInterior to save comp time 
+        useInterior = ( C_12 > 0 );
+        
         // cache base functions evaluations
         // leads to major speedup
         for(int k=0; k<numDofs; ++k)
@@ -1351,55 +1515,7 @@ namespace Dune {
           tauNeigh_[k] = bsetNeigh.evaluateGradientSingle(k, nb, faceQuadOuter[l] , normNb);      
         }
                
-        if(compactLDG_)
-        {
-          assert( rRets_.size() > 0 );
-          GradRangeType& tmp = rRets_[0];
-
-          // get numbre of base functions 
-          for(int m=0; m<numGradBase; ++m)
-          {  
-            // eval base functions 
-            enSet.evaluate(m, faceQuadInner[l], tmp );
-            // apply unit normal 
-            eta_[m] = tmp * unitNormal;
-
-#ifndef DG_DOUBLE_FEATURE
-            // neighbor stuff 
-            nbSet.evaluate(m, faceQuadOuter[l], tmp ); 
-            // apply unit Normal
-            etaNeigh_[m] = tmp * unitNormal;
-#endif
-          }
-
-          for(int k=0; k<numDofs; ++k)
-          {
-            TemporaryLocalFunctionType& r_e = *(r_e_)[k];
-#ifndef DG_DOUBLE_FEATURE
-            TemporaryLocalFunctionType& r_e_neigh = *(r_e_neigh_)[k];
-#endif
-            // calculate [u] 
-            // which is the jump of phi 
-            RangeType phiDiff (phi_[k]);
-            phiDiff -= phiNeigh_[k];
-            // scale with integration element 
-            phiDiff *= intel;
-
-            // calculate coefficients 
-            for(int m=0; m<numGradBase; ++m)
-            {
-              const RangeFieldType mean = 0.5  * phiDiff * (eta_[m] + etaNeigh_[m]);
-              const RangeFieldType jump = C_12 * phiDiff * (eta_[m] - etaNeigh_[m]);
-              r_e[m] -= (mean + jump);
-#ifndef DG_DOUBLE_FEATURE
-              r_e_neigh[m] -= (mean + jump);
-#endif
-            }
-          }
-        }
-
         // this terms dissapear if Babuska-Zlamal is used 
-        if(notBabuskaZlamal_)
         {
           for(int k=0; k<numDofs; ++k)
           {
@@ -1474,87 +1590,9 @@ namespace Dune {
                 }
               }
 #endif
-
-              ////////////////////////////////////
-              //  C12 stabilization 
-              ///////////////////////////////////
-              if( compactLDG_)
-              {
-                typedef typename DiscreteGradientSpaceType :: BaseFunctionSetType BaseFunctionSetType;
-                const BaseFunctionSetType enSet = gradientSpace_.baseFunctionSet( en );
-                const BaseFunctionSetType nbSet = gradientSpace_.baseFunctionSet( nb );
-
-                // view from inner entity en 
-                {
-                  numericalFlux_C12(phi_[k], tau_[j] , tauNeigh_[j] , resultLeft, resultRight);
-
-                  RangeFieldType valLeft = (C_12 * resultLeft[0]);
-                  valLeft *= bilinIntel;
-
-                  matrixEn.add( k , j , valLeft );
-
-                  RangeFieldType valRight = (C_12 * resultRight[0]);
-                  valRight *= bilinIntel;
-
-                  matrixNb.add( k , j , valRight );
-                }
-
-                // view from inner entity en 
-                {
-                  numericalFlux2_C12(tau_[k] , phi_[j] , phiNeigh_[j] , resultLeft, resultRight);
-
-                  RangeFieldType valLeft = (resultLeft[0] * C_12);
-                  valLeft *= bilinIntel;
-
-                  matrixEn.add( k , j , valLeft );
-
-                  RangeFieldType valRight = (resultRight[0] * C_12);
-                  valRight *= bilinIntel;
-
-                  matrixNb.add( k , j , valRight );
-                }
-
-#ifdef DG_DOUBLE_FEATURE 
-                // this part should only be calculated if neighboring
-                // entity has partition type interior 
-                if( interior ) 
-                {
-                  // view from inner entity en 
-                  {
-                    numericalFlux_C12(phiNeigh_[k], tauNeigh_[j] , tau_[j] , resultLeft, resultRight);
-
-                    RangeFieldType valLeft = (C_12 * resultLeft[0]);
-                    valLeft *= bilinIntel;
-
-                    nbMatrix.add( k , j , valLeft );
-
-                    RangeFieldType valRight = (C_12 * resultRight[0]);
-                    valRight *= bilinIntel;
-
-                    enMatrix.add( k , j , valRight );
-                  }
-
-                  // view from inner entity en 
-                  {
-                    numericalFlux2_C12(tauNeigh_[k] , phiNeigh_[j] , phi_[j] , resultLeft, resultRight);
-
-                    RangeFieldType valLeft = (resultLeft[0] * C_12);
-                    valLeft *= bilinIntel;
-
-                    nbMatrix.add( k , j , valLeft );
-
-                    RangeFieldType valRight = (resultRight[0] * C_12);
-                    valRight *= bilinIntel;
-
-                    enMatrix.add( k , j , valRight );
-                  }
-                }
-#endif
-              } // compact LDG 
-
             } // end for 
           } // end for 
-        } // end notBabuskaZlamal
+        } // end }  
 
         if( betaNotZero_ )
         {
@@ -1608,95 +1646,52 @@ namespace Dune {
         }
       } // end loop quadrature points 
 
-      if( compactLDG_ )
+      if( timeDependent_ && theta_ < 1.0 ) 
       {
+        assert( uh_ );
+        const SingleLFType nbLf = uh_->localFunction( nb );
+        multLocal( matrixNb, singleRhs, nbLf );
+      }
 
-#ifndef DG_DOUBLE_FEATURE
-        if( useInterior ) 
-#endif 
-        {
-          if( problem_.hasCoefficient() )
-          {
-            CoefficientCaller<DiscreteModelCallerType,true,false> coeffCaller; 
-            addLiftingOperator(coeffCaller,en,
-                               en.geometry(),volQuad,
-                               numDofs,r_e_,matrixEn);
+      return nb.geometry().volume();
+    } // end applyLocalNeighbor 
 
-          }
-          else 
-          {
-            CoefficientCaller<DiscreteModelCallerType,false,false> coeffCaller; 
-            addLiftingOperator(coeffCaller,en,
-                               en.geometry(),volQuad,
-                               numDofs,r_e_,matrixEn);
-          }
-        }
-#ifndef DG_DOUBLE_FEATURE
-        else 
-        {
-          VolumeQuadratureType nbQuad(nb, volumeQuadOrd_);
-          if( problem_.hasCoefficient() )
-          {
-            CoefficientCaller<DiscreteModelCallerType,true,false> coeffCaller; 
-            addLiftingOperator(coeffCaller,nb,
-                               nb.geometry(),nbQuad,
-                               numDofs,r_e_neigh_,matrixNb);
-
-          }
-          else 
-          {
-            CoefficientCaller<DiscreteModelCallerType,false,false> coeffCaller; 
-            addLiftingOperator(coeffCaller,nb,
-                               nb.geometry(),nbQuad,
-                               numDofs,r_e_neigh_,matrixNb);
-          }
-        }
-#endif 
-      } // end compactLDG 
-    }
-
-    template <class CoeffCallerType>
-    void addLiftingOperator(CoeffCallerType& coeffCaller,
-                            EntityType& en, 
-                            const GeometryType& geo,
-                            VolumeQuadratureType& volQuad,
-                            const int numDofs, 
-                            TemporaryLocalFunctionArrayType& r_e_array,
-                            LocalMatrixType& matrixEn) const
+    template <class BaseFunctionSet, 
+              class LocalStorageType, 
+              class MassMatrixType>
+    void getMassMatrix(const GeometryType& geo,
+                       VolumeQuadratureType& volQuad,
+                       BaseFunctionSet& set,
+                       const int numBase,
+                       LocalStorageType& tmp,
+                       MassMatrixType& massMatrix) const
     {
       const int volNop = volQuad.nop();
-      for (int l = 0; l < volNop ; ++l) 
+      for(int qp=0; qp<volNop; ++qp) 
       {
-        // evaluate diffusion coefficient 
-        coeffCaller.evaluateCoefficient(caller_, en, volQuad, l, coeffEn_ );
-
         // calculate integration weight 
-        const double intel = volQuad.weight(l)
-            * geo.integrationElement(volQuad.point(l));
+        const double intel = volQuad.weight(qp)
+           * geo.integrationElement(volQuad.point(qp));
 
-        for(int k=0; k<numDofs; ++k) 
-        {
-          // evaluate lifting coefficient function 
-          (*r_e_[k]).evaluate(volQuad[l] , rRets_[k] );
-
-          // apply diffusion coefficient 
-          coeffCaller.applyCoefficient(coeffEn_, rRets_[k], rRetsCoeff_[k] );
+        for(int m=0; m<numBase; ++m)
+        {  
+          // eval base functions 
+          set.evaluate(m, volQuad[qp], tmp[m] );
         }
 
-        for(int k=0; k<numDofs; ++k) 
+        for(int m=0; m<numBase; ++m)
         {
           {
-            RangeFieldType val = rRets_[k] * rRetsCoeff_[k];
-            val *= intel;
-            matrixEn.add(k, k, val);
+            double val = intel * (tmp[m] * tmp[m]);
+            massMatrix[m][m] += val;
           }
-          for(int j=k+1; j<numDofs; ++j) 
-          {
-            RangeFieldType val = rRets_[k] * rRetsCoeff_[j];
-            val *= intel;
 
-            matrixEn.add(k, j, val);
-            matrixEn.add(j, k, val);
+          
+          for(int k=m+1; k<numBase; ++k) 
+          {
+            double val = intel * (tmp[m] * tmp[k]);
+            massMatrix[k][m] += val;
+            massMatrix[m][k] += val;
           }
         }
       }
@@ -1772,18 +1767,19 @@ namespace Dune {
     // needs to be friend for conversion check 
     friend class Conversion<ThisType,OEMSolver::PreconditionInterface>;
     //! empty constructor not defined 
-    DGPrimalOperator();
+    DGPrimalOperatorImpl();
     //! copy constructor not defined 
-    DGPrimalOperator(const DGPrimalOperator&);
+    DGPrimalOperatorImpl(const DGPrimalOperatorImpl&);
 
-  private:
+  protected:
     mutable DiscreteModelCallerType caller_;
 
     DiscreteModelType& problem_; 
          
     
     mutable ArgumentType* arg_;
-    mutable DestinationType* dest_;
+    mutable DestinationType* rhs_;
+    mutable const DestinationType* uh_;
 
     const DiscreteFunctionSpaceType& spc_;
     GridPartType & gridPart_;
@@ -1792,9 +1788,6 @@ namespace Dune {
     const LocalIdSetType & localIdSet_;
     const GridWidthType& gridWidth_;
     
-    // time
-    double time_;
-
     const int volumeQuadOrd_;
     const int faceQuadOrd_;
 
@@ -1817,11 +1810,7 @@ namespace Dune {
     mutable MutableArray<GradRangeType> rRets_;
     mutable MutableArray<GradRangeType> rRetsCoeff_;
 
-    mutable TemporaryLocalFunctionArrayType r_e_;
-#ifndef DG_DOUBLE_FEATURE
-    mutable TemporaryLocalFunctionArrayType r_e_neigh_;
     DomainType upwind_;
-#endif
 
     mutable JacobianRangeType psitmp_;
 
@@ -1833,9 +1822,85 @@ namespace Dune {
     // if true B_+ is used otherwise B_-
     bool bilinearPlus_;
     double power_;
-    bool notBabuskaZlamal_;
-    bool compactLDG_;
     bool betaNotZero_;
+    mutable double factorFaces_;
+    mutable double tau_1_;
+    mutable double theta_;
+    mutable double dtMin_;
+    const double minLimit_;
+    bool timeDependent_;
+    int sequence_ ;
+  };
+
+  template <class DiscreteModelImp, 
+            class PreviousPassImp, 
+            class MatrixObjectTraits, 
+            int passId = -1 >
+  class DGPrimalOperator
+    : public DGPrimalOperatorImpl< DiscreteModelImp, 
+                                    PreviousPassImp, 
+                                    MatrixObjectTraits, 
+                                    passId > ,
+     public OEMSolver :: PreconditionInterface                               
+  {
+  public:
+    //- Typedefs and enums
+    //! Base class
+    typedef DGPrimalOperatorImpl<DiscreteModelImp,
+            PreviousPassImp,MatrixObjectTraits, passId > BaseType;
+
+    typedef DGPrimalOperator<DiscreteModelImp,
+            PreviousPassImp,MatrixObjectTraits, passId > ThisType;
+
+    //! Repetition of template arguments
+    typedef DiscreteModelImp DiscreteModelType;
+
+    typedef PreviousPassImp PreviousPassType;
+
+    typedef typename DiscreteModelType::Traits::DiscreteFunctionSpaceType DiscreteFunctionSpaceType;
+
+    typedef typename BaseType :: MatrixObjectType MatrixObjectType;
+    typedef typename BaseType :: MatrixObjectType::MatrixType MatrixType;
+    typedef typename BaseType :: MatrixObjectType::PreconditionMatrixType PreconditionMatrixType;
+    
+  protected:  
+    using BaseType :: matrixObj_ ;
+  public:
+    //- Public methods
+    /**  \brief Constructor
+     \param problem Actual problem definition (see problem.hh)
+     \param pass Previous pass
+     \param spc Space belonging to the discrete function local to this pass
+     \param paramFile parameter file to read necessary parameters, if empty 
+             default parameters will be applied 
+    
+     \note Available methods are (chosen by parameters B_{+,-}, beta)
+          - Interior Penalty : B_{+,-}: 0 , beta: > 0 (big)
+          - Baumann-Oden     : B_{+,-}: 1 , beta: = 0       
+          - NIPG             : B_{+,-}: 1 , beta: > 0       
+     */         
+    DGPrimalOperator(DiscreteModelType& problem, 
+                      PreviousPassType& pass, 
+                      const DiscreteFunctionSpaceType& spc,
+                      const std::string paramFile = "")
+      : BaseType(problem, pass, spc, paramFile)
+    {
+    }
+  public:
+    virtual ~DGPrimalOperator() {}
+
+    //! return refernence to system matrix, used by Solvers
+    const MatrixObjectType & systemMatrix () const { return matrixObj_; }
+    
+    //! return reference to preconditioning matrix, used by OEM-Solver
+    const PreconditionMatrixType & preconditionMatrix () const { 
+      return matrixObj_.preconditionMatrix(); 
+    }
+
+    //! returns true if preconditioning matrix has been build 
+    bool hasPreconditionMatrix() const  { 
+      return matrixObj_.hasPreconditionMatrix(); 
+    }
   };
 #undef DG_DOUBLE_FEATURE  
 } // end namespace Dune

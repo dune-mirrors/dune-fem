@@ -35,6 +35,7 @@ namespace Dune {
     typedef typename Traits::GridPartType GridPartType;
     typedef typename GridPartType :: GridType GridType;
     typedef typename GridPartType::IntersectionIteratorType IntersectionIterator;
+    typedef typename IntersectionIterator :: Intersection Intersection;
     typedef typename GridType::template Codim<0>::Entity Entity;
 
     typedef typename Traits::FaceQuadratureType FaceQuadratureType;
@@ -60,7 +61,23 @@ namespace Dune {
 
     // Ensure: entities set correctly before call
     template <class QuadratureType, class CoefficientType>
+    DUNE_DEPRECATED 
     void evaluateCoefficientFace(const IntersectionIterator& nit,
+                         const QuadratureType& quadInner, 
+                         const QuadratureType& quadOuter, 
+                         const int quadPoint,
+                         CoefficientType& coeffLeft, 
+                         CoefficientType& coeffRight) 
+    {
+      evaluateCoefficientFace( *nit, 
+                               quadInner, quadOuter,
+                               quadPoint, 
+                               coeffLeft, coeffRight);
+    }
+
+    // Ensure: entities set correctly before call
+    template <class QuadratureType, class CoefficientType>
+    void evaluateCoefficientFace(const Intersection& intersection,
                          const QuadratureType& quadInner, 
                          const QuadratureType& quadOuter, 
                          const int quadPoint,
@@ -73,7 +90,7 @@ namespace Dune {
       this->evaluateQuad( quadOuter, quadPoint,
                          this->data_->localFunctionsNeigh(), this->valuesNeigh_);
 
-      problem_.coefficientFace(nit, this->time_, 
+      problem_.coefficientFace(intersection, this->time_, 
                                quadInner.localPoint(quadPoint),
                                this->valuesEn_, 
                                this->valuesNeigh_,
@@ -82,6 +99,22 @@ namespace Dune {
 
     // Ensure: entities set correctly before call
     template <class QuadratureType, class CoefficientType>
+    void evaluateCoefficientBoundary(const Intersection& intersection,
+                         const QuadratureType& quadInner, 
+                         const int quadPoint,
+                         CoefficientType& coeff) 
+    {
+      this->evaluateQuad( quadInner, quadPoint,
+                          this->data_->localFunctionsSelf(), this->valuesEn_);
+
+      problem_.coefficient(this->data_->self(), 
+                           this->time_, quadInner.point(quadPoint), 
+                           this->valuesEn_, coeff);
+    }
+      
+    // Ensure: entities set correctly before call
+    template <class QuadratureType, class CoefficientType>
+    DUNE_DEPRECATED 
     void evaluateCoefficientBoundary(const IntersectionIterator& nit,
                          const QuadratureType& quadInner, 
                          const int quadPoint,
@@ -104,18 +137,27 @@ namespace Dune {
                            this->valuesEn_, coeff);
     }
 
-    template <class IntersectionIterator>
     BoundaryIdentifierType
+    DUNE_DEPRECATED 
     boundaryValue(IntersectionIterator& nit,
-                         const FaceQuadratureType& quad,
-                         const int quadPoint,
-                         RangeType& boundaryValue) 
+                  const FaceQuadratureType& quad,
+                  const int quadPoint,
+                  RangeType& value) 
     {
-      typedef typename IntersectionIterator::LocalGeometry Geometry;
+      return boundaryValue( *nit, quad, quadPoint, value);
+    }
+
+    BoundaryIdentifierType
+    boundaryValue(const Intersection& intersection,
+                  const FaceQuadratureType& quad,
+                  const int quadPoint,
+                  RangeType& boundaryValue) 
+    {
+      typedef typename Intersection::LocalGeometry Geometry;
 
       this->evaluateQuad( quad, quadPoint,
                          this->data_->localFunctionsSelf(), this->valuesEn_);
-      return problem_.boundaryValue(nit, this->time_, quad.localPoint(quadPoint),
+      return problem_.boundaryValue(intersection, this->time_, quad.localPoint(quadPoint),
                                     this->valuesEn_, boundaryValue);
     }
 

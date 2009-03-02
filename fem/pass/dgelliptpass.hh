@@ -25,158 +25,20 @@ namespace Dune {
 ** where \f$ v \f$ is to be computed.
 ** @{
 **************************************************************************/
-
-  //! Concrete implementation of Pass for elliptic equations using LDG
-  template< class DiscreteModelImp , class PreviousPassImp , int passId = -1 >
-  class LocalDGElliptGradientPass :
-    public LocalPass< DiscreteModelImp , PreviousPassImp , passId > 
-  {
-    typedef LocalDGElliptGradientPass< DiscreteModelImp , PreviousPassImp , passId > ThisType;
-  public:
-    //- Typedefs and enums
-    //! Base class
-    typedef LocalPass< DiscreteModelImp , PreviousPassImp , passId > BaseType;
-
-    //! Repetition of template arguments
-    typedef DiscreteModelImp DiscreteModelType;
-    //! Repetition of template arguments
-    typedef PreviousPassImp PreviousPassType;
-
-    // Types from the base class
-    typedef typename BaseType::Entity EntityType; 
-    typedef typename EntityType::EntityPointer EntityPointerType;
-    typedef typename BaseType::ArgumentType ArgumentType;
-    typedef typename BaseType::GlobalArgumentType GlobalArgumentType;
-
-    // Types from the traits
-    typedef typename DiscreteModelType::Traits::DestinationType DestinationType;
-    typedef typename DiscreteModelType::Traits::VolumeQuadratureType VolumeQuadratureType;
-    typedef typename DiscreteModelType::Traits::FaceQuadratureType FaceQuadratureType;
-    typedef typename DiscreteModelType::Traits::DiscreteFunctionSpaceType DiscreteFunctionSpaceType;
-        
-    
-    // Types extracted from the discrete function space type
-    typedef typename DiscreteFunctionSpaceType::GridType GridType;
-    typedef typename DiscreteFunctionSpaceType::GridPartType GridPartType;
-    typedef typename DiscreteFunctionSpaceType::DomainType DomainType;
-    typedef typename DiscreteFunctionSpaceType::RangeType RangeType;
-    typedef typename DiscreteFunctionSpaceType::JacobianRangeType JacobianRangeType;
-    
-    // Types extracted from the underlying grid
-    typedef typename GridPartType::IntersectionIteratorType IntersectionIteratorType;
-    typedef typename GridType::template Codim<0>::Geometry Geometry;
-
-
-    // Various other types
-    typedef typename DestinationType::LocalFunctionType LocalFunctionType;
-    typedef typename DiscreteModelType::SelectorType SelectorType;
-    typedef CombinedSelector< ThisType , SelectorType > CombinedSelectorType;
-    typedef EllipticDiscreteModelCaller
-      < DiscreteModelType, ArgumentType, CombinedSelectorType >
-      DiscreteModelCallerType;
-
-    // Range of the destination
-    enum { dimDomain = DiscreteFunctionSpaceType::dimDomain };
-    enum { dimRange = DiscreteFunctionSpaceType::dimRange };
-    enum { cols = JacobianRangeType :: cols };
-    enum { rows = JacobianRangeType :: rows };
-    
-
-    typedef FieldMatrix<double,rows,rows> TensorType;
-    
-    //my Typedefs
-    enum { dimGradRange = dimDomain * dimRange };
-    enum { polOrd = DiscreteFunctionSpaceType::polynomialOrder };
-
-    typedef typename DiscreteFunctionSpaceType::DomainFieldType DomainFieldType;
-    typedef typename DiscreteFunctionSpaceType::RangeFieldType RangeFieldType;
-
-  public:
-    //- Public methods
-    //! Constructor
-    //! \param problem Actual problem definition (see problem.hh)
-    //! \param pass Previous pass
-    //! \param spc Space belonging to the discrete function local to this pass
-    LocalDGElliptGradientPass(DiscreteModelType& problem, 
-                    PreviousPassType& pass, 
-                    const DiscreteFunctionSpaceType& spc) 
-      : BaseType(pass, spc),
-      caller_(problem),
-      problem_(problem),
-      spc_(spc)
-    {
-    }
-    void printTexInfo(std::ostream& out) const {
-      BaseType::printTexInfo(out);
-      out << "LocalDGElliptGradientPass: ";
-      out << "\\\\ \n";
-    }
-
-    //! don't allocate memory here 
-    virtual void allocateLocalMemory() {}
-   
-    //! return reference to caller 
-    DiscreteModelCallerType & caller () { return caller_; }
-
-    //! return previous pass of this pass 
-    PreviousPassType & previousPass() { return this->previousPass_; }
-
-    //! return problem for real fe pass 
-    DiscreteModelType & problem () { return problem_; }
-
-    //! return reference to space 
-    const DiscreteFunctionSpaceType & space () const { return spc_; }
-   
-    //! Destructor
-    virtual ~LocalDGElliptGradientPass() {
-    }
-
-    //! do nothing here 
-    void applyLocal(EntityType& en) const
-    {
-    }
-
-    //! do nothing here  
-    void operator () (const GlobalArgumentType& arg, DestinationType& dest) const 
-    {
-      abort();
-    }
-
-    //! do nothing here 
-    void prepare(const ArgumentType& arg, DestinationType& dest) const
-    {
-    }
-
-    //! Some timestep size management.
-    void finalize(const ArgumentType& arg, DestinationType& dest) const
-    {
-    }
-
-  private:
-    mutable DiscreteModelCallerType caller_;
-    DiscreteModelType& problem_; 
-    const DiscreteFunctionSpaceType& spc_;
-  };
-
-  
-  //! Concrete implementation of Pass for LDG.
+  //! Concrete implementation of Pass for DG.
   template< class DiscreteModelImp , class PreviousPassImp , int passId = -1 >
   class LocalDGElliptPass :
-    public LocalPass< DiscreteModelImp , typename PreviousPassImp:: PreviousPassType , passId > 
+    public LocalPass< DiscreteModelImp , PreviousPassImp , passId > 
   {
     typedef LocalDGElliptPass< DiscreteModelImp , PreviousPassImp , passId > ThisType;
   public:
-    typedef typename PreviousPassImp::PreviousPassType  PreviousPassType;
+    typedef PreviousPassImp PreviousPassType;
     //- Typedefs and enums
     //! Base class
     typedef LocalPass< DiscreteModelImp , PreviousPassType , passId > BaseType;
 
     //! Repetition of template arguments
     typedef DiscreteModelImp DiscreteModelType;
-    //! Repetition of template arguments
-    typedef PreviousPassImp GradFePassImp;
-
-    typedef typename GradFePassImp :: DestinationType GradDestinationType;
 
     // Types from the base class
     typedef typename BaseType::Entity EntityType;
@@ -199,6 +61,7 @@ namespace Dune {
     // Various other types
     typedef typename DestinationType::LocalFunctionType LocalFunctionType;
     typedef typename DiscreteModelType::SelectorType SelectorType;
+
     typedef CombinedSelector< ThisType, SelectorType > CombinedSelectorType;
     typedef DiscreteModelCaller
       < DiscreteModelType, ArgumentType, CombinedSelectorType >
@@ -216,12 +79,9 @@ namespace Dune {
     enum { cols = JacobianRangeType :: cols };
     enum { rows = JacobianRangeType :: rows };
 
-    // define previous pass of grad pass as previous pass of hole ellipt
-    // pass
-    typedef typename GradFePassImp :: PreviousPassType ElliptPrevPassType;
-
     typedef typename DiscreteModelType :: Traits :: template 
-      LocalOperatorSelector<GradFePassImp> LocalOperatorSelectorType;
+      LocalOperatorSelector<PreviousPassType> LocalOperatorSelectorType;
+
     typedef typename  LocalOperatorSelectorType :: LocalOperatorType LocalOperatorType;
     typedef typename  LocalOperatorSelectorType :: InverseOperatorType InverseOperatorType;
 
@@ -257,7 +117,7 @@ namespace Dune {
                 PreviousPassImp & pass, 
                 const DiscreteFunctionSpaceType& spc,
                 const std::string paramFile = "")
-      : BaseType(pass.previousPass(),spc)
+      : BaseType(pass,spc)
       , problem_(problem)
       , spc_(spc) 
       , verbose_(readVerbose(paramFile, spc_.grid().comm().rank() == 0))
@@ -266,7 +126,7 @@ namespace Dune {
       , maxIterFactor_(4) 
       , maxIter_( maxIterFactor_ * spc_.size() )
       , invOp_(op_,eps_,eps_,maxIter_,verbose_)
-      , rhs_("FEPass::RHS",spc)
+      , rhs_("DGPass::RHS",spc)
     {
       //assert( this->destination_ );
     }
@@ -285,7 +145,7 @@ namespace Dune {
                 PreviousPassImp & pass, 
                 DestinationType & dest,
                 const std::string paramFile = "")
-      : BaseType(pass.previousPass(),dest.space())
+      : BaseType(pass,dest.space())
       , problem_(problem)
       , spc_(dest.space()) 
       , verbose_(readVerbose(paramFile, spc_.grid().comm().rank() == 0))
@@ -294,7 +154,7 @@ namespace Dune {
       , maxIterFactor_(4) 
       , maxIter_( maxIterFactor_ * spc_.size() )
       , invOp_(op_,eps_,eps_,maxIter_,verbose_)
-      , rhs_("FEPass::RHS",spc_)
+      , rhs_("DGPass::RHS",spc_)
     {
       assert( this->destination_ == 0 );
       this->destination_ = &dest;
@@ -369,161 +229,5 @@ namespace Dune {
     }
   };
 
-  //! Concrete implementation of Pass for LDG.
-  template< class DiscreteModelImp , class PreviousPassImp , int passId = -1 >
-  class LocalDGElliptGradPass :
-    public LocalPass< DiscreteModelImp , PreviousPassImp, passId > 
-  {
-    typedef LocalDGElliptGradPass< DiscreteModelImp , PreviousPassImp , passId > ThisType;
-  public:
-    //- Typedefs and enums
-    //! Base class
-    typedef LocalPass< DiscreteModelImp , PreviousPassImp , passId > BaseType;
-
-    //! Repetition of template arguments
-    typedef DiscreteModelImp DiscreteModelType;
-    //! Repetition of template arguments
-    typedef PreviousPassImp PreviousPassType;
-
-    // Types from the base class
-    typedef typename BaseType::Entity EntityType; 
-    typedef typename EntityType::EntityPointer EntityPointerType;
-    typedef typename BaseType::ArgumentType ArgumentType;
-    typedef typename BaseType::GlobalArgumentType GlobalArgumentType;
-
-    // Types from the traits
-    typedef typename DiscreteModelType::Traits::DestinationType DestinationType;
-    typedef typename DiscreteModelType::Traits::VolumeQuadratureType VolumeQuadratureType;
-    typedef typename DiscreteModelType::Traits::FaceQuadratureType FaceQuadratureType;
-    typedef typename DiscreteModelType::Traits::DiscreteFunctionSpaceType DiscreteFunctionSpaceType;
-        
-    
-    // Types extracted from the discrete function space type
-    typedef typename DiscreteFunctionSpaceType::GridType GridType;
-    typedef typename DiscreteFunctionSpaceType::GridPartType GridPartType;
-    typedef typename DiscreteFunctionSpaceType::DomainType DomainType;
-    typedef typename DiscreteFunctionSpaceType::RangeType RangeType;
-    typedef typename DiscreteFunctionSpaceType::JacobianRangeType JacobianRangeType;
-    
-    // Types extracted from the underlying grid
-    typedef typename GridPartType::IntersectionIteratorType IntersectionIteratorType;
-    typedef typename GridType::template Codim<0>::Geometry Geometry;
-
-
-    // Various other types
-    typedef typename DestinationType::LocalFunctionType LocalFunctionType;
-    typedef typename DiscreteModelType::SelectorType SelectorType;
-    typedef CombinedSelector< ThisType , SelectorType > CombinedSelectorType;
-    typedef DiscreteModelCaller
-      < DiscreteModelType, ArgumentType, CombinedSelectorType >
-      DiscreteModelCallerType;
-
-    // Range of the destination
-    enum { dimDomain = DiscreteFunctionSpaceType::dimDomain };
-    enum { dimRange = DiscreteFunctionSpaceType::dimRange };
-    enum { cols = JacobianRangeType :: cols };
-    enum { rows = JacobianRangeType :: rows };
-    
-
-    typedef FieldMatrix<double,rows,rows> TensorType;
-    
-    //my Typedefs
-    enum { dimGradRange = dimDomain * dimRange };
-    enum { polOrd =DiscreteFunctionSpaceType::polOrd};
-
-    typedef typename DiscreteFunctionSpaceType::DomainFieldType DomainFieldType;
-    typedef typename DiscreteFunctionSpaceType::RangeFieldType RangeFieldType;
-
-  public:
-    //- Public methods
-    //! Constructor
-    //! \param problem Actual problem definition (see problem.hh)
-    //! \param pass Previous pass
-    //! \param spc Space belonging to the discrete function local to this pass
-    //! \param factor Sign of the gradient
-    //! \param applyMassMatrix if true also mass matrix (if exsists) 
-    //! is applied when evaluating the gradient, default is true 
-    LocalDGElliptGradPass(DiscreteModelType& problem, 
-                    PreviousPassType& pass, 
-                    const DiscreteFunctionSpaceType& spc,
-                    double factor = -1.0,
-                    bool applyMassMatrix = true) 
-      : BaseType(pass, spc),
-      caller_(problem),
-      problem_(problem),
-      spc_(spc),
-      prevPass_(pass),
-      factor_(factor),
-      applyMassMatrix_(applyMassMatrix)
-    {
-    }
-    void printTexInfo(std::ostream& out) const {
-      BaseType::printTexInfo(out);
-      out << "LocalDGElliptGradPass: ";
-      out << " factor = " << factor_
-          << " apply Mass = " << applyMassMatrix_
-          << "\\\\ \n";
-    }
-
-    //! don't allocate memory here 
-    virtual void allocateLocalMemory() {}
-   
-    //! return reference to caller 
-    DiscreteModelCallerType & caller () { return caller_; }
-
-    //! return previous pass of this pass 
-    PreviousPassType & previousPass() { return this->previousPass_; }
-
-    //! return problem for real fe pass 
-    DiscreteModelType & problem () { return problem_; }
-
-    const DiscreteFunctionSpaceType & space () const { return spc_; }
-   
-    //! Destructor
-    virtual ~LocalDGElliptGradPass() {
-    }
-
-    //! calls evalGradient of previous pass 
-    void operator () (const GlobalArgumentType& arg, DestinationType& dest) const 
-    {
-      // normal call procedure 
-      prevPass_.pass(arg);
-
-      // now get gradient from previous pass 
-      prevPass_.evalGradient(prevPass_.destination(), dest,
-                             applyMassMatrix_);
-
-      // return -grad p 
-      dest *= factor_;
-
-      // exchange data 
-      spc_.communicate( dest );
-    }
-
-    //! nothing to do here
-    void applyLocal(EntityType& en) const
-    {
-    }
-    
-    //! nothing to do here
-    void prepare(const ArgumentType& arg, DestinationType& dest) const
-    {
-    }
-
-    //! nothing to do here 
-    void finalize(const ArgumentType& arg, DestinationType& dest) const
-    {
-    }
-
-  protected:
-    mutable DiscreteModelCallerType caller_;
-    DiscreteModelType& problem_; 
-    const DiscreteFunctionSpaceType& spc_;
-    mutable PreviousPassImp & prevPass_;
-    const double factor_;
-    const bool applyMassMatrix_;
-  };
-
 } // end namespace Dune
-
 #endif
