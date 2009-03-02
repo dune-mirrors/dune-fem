@@ -86,7 +86,6 @@ bicgstab_algo( const CommunicatorType & comm,
 
   double st, tt, rTr, rTh; 
   
-  double rtTmp;
   double rTAd, alpha, beta, omega;
 
   double err=eps*eps;
