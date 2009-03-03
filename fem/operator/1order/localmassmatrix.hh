@@ -89,6 +89,12 @@ public:
   }
 
 public:  
+  //! return mass factor for diagonal mass matrix 
+  double getAffineMassFactor(const Geometry& geo) const 
+  {
+    return geoInfo_.referenceVolume( geo.type() ) / geo.volume(); 
+  }
+
   //! apply local dg mass matrix to local function lf
   //! using the massFactor method of the caller 
   template <class MassCallerType, class LocalFunctionType> 
@@ -103,7 +109,7 @@ public:
     // in case of affine mappings we only have to multiply with a factor 
     if( affine_ && ! caller.hasMass() )
     {
-      const double massVolInv = geoInfo_.referenceVolume( geo.type() ) / geo.volume(); 
+      const double massVolInv = getAffineMassFactor( geo );
 
       // apply inverse mass matrix  
       for(int l=0; l<numDofs_; ++l) 
