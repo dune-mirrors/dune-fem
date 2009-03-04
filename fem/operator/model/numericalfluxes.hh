@@ -81,8 +81,9 @@ namespace Dune {
     typedef typename Model::RangeType RangeType;
     typedef typename Model::FluxRangeType FluxRangeType;
   public:
-    WDLLFFlux(const Model& mod) : model_(mod) {}
+    WDLLFFlux(Model& mod) : model_(mod) {}
     const Model& model() const {return model_;}
+    Model& model() {return model_;}
     // Return value: maximum wavespeed*length of integrationOuterNormal
     // gLeft,gRight are fluxed * length of integrationOuterNormal
     inline double numericalFlux(typename Traits::IntersectionIterator& it,
@@ -137,7 +138,7 @@ namespace Dune {
       return maxspeed;
     }
   private:
-    const Model& model_;
+    Model& model_;
   }; // end of WDLLFFlux class
 
 } // end namespace Dune
