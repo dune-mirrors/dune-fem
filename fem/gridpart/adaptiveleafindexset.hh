@@ -111,9 +111,6 @@ namespace Dune
     // flag for codim is in use or not 
     mutable bool codimUsed_ [ncodim];
     
-    // true if any of the higher codims is used 
-    mutable bool higherCodims_;
-
     //! flag is tru if set is in compressed status
     mutable bool compressed_;
 
@@ -132,7 +129,6 @@ namespace Dune
     AdaptiveLeafIndexSet (const GridType & grid) 
       : BaseType(grid) 
       , hIndexSet_( SelectorType::hierarchicIndexSet(grid) ) 
-      , higherCodims_( false ) // higherCodims are not used by default 
       , compressed_(true) // at start the set is compressed 
       , sequence_( this->dofManager_.sequence() )
     {
@@ -140,7 +136,7 @@ namespace Dune
       codimUsed_[0] = true;
 
       // all higher codims are not used by default
-      for(int i=1; i<ncodim; ++i) codimUsed_[i] = higherCodims_;
+      for(int i=1; i<ncodim; ++i) codimUsed_[i] = false ;
       
       // set the codim of each Codim Set. 
       for(int i=0; i<ncodim; ++i) codimLeafSet_[i].setCodim( i );
@@ -371,8 +367,6 @@ namespace Dune
   AdaptiveLeafIndexSet< GridType, pitype >::resizeVectors ()
   {
     codimLeafSet_[ 0 ].resize( hIndexSet_.size( 0 ) );
-    if( !higherCodims_ )
-      return;
 
     for( int codim = 1; codim < ncodim; ++codim )
     {
@@ -403,9 +397,9 @@ namespace Dune
 
     // true if a least one index is moved
     bool haveToCopy = codimLeafSet_[ 0 ].compress();
-    if( higherCodims_ )
+    for( int i = 1; i < ncodim; ++i )
     {
-      for( int i = 1; i < ncodim; ++i )
+      if( codimUsed_[i] ) 
         haveToCopy |= codimLeafSet_[ i ].compress();
     }
 
@@ -430,18 +424,14 @@ namespace Dune
     if( entity.partitionType() == GhostEntity )
     {
       codimLeafSet_[ 0 ].insertGhost( index );
-      if( higherCodims_ )
-      {
-        const bool skipGhosts = (pitype != All_Partition);
-        ForLoop< InsertGhostSubEntities, 1, dimension >::apply( *this, entity, skipGhosts );
-      }
+      const bool skipGhosts = (pitype != All_Partition);
+      ForLoop< InsertGhostSubEntities, 1, dimension >::apply( *this, entity, skipGhosts );
     }
     else 
 #endif // HAVE_MPI
     {
       codimLeafSet_[ 0 ].insert( index );
-      if( higherCodims_ )
-        ForLoop< InsertSubEntities, 1, dimension >::apply( *this, entity );
+      ForLoop< InsertSubEntities, 1, dimension >::apply( *this, entity );
     }
 
     assert( codimLeafSet_[ 0 ].exists( index ) );
@@ -573,7 +563,6 @@ namespace Dune
 
     // mark codimension as used
     codimUsed_[codim] = true;
-    higherCodims_ = true;
   }
 
 
@@ -677,12 +666,6 @@ namespace Dune
         codimUsed_[ i ] = (typeVar == type());
     }
 
-    // set higher codims depending on codimUsed 
-    for( int i = 1; i < ncodim; ++i )
-    {
-      if( codimUsed_[ i ] ) higherCodims_ = true ;
-    }
-   
     if( typeVar == type() )
     {
       for( int i = 0; i < ncodim; ++i )
