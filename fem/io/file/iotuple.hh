@@ -63,18 +63,11 @@ struct IOTupleCaller
     // check if lock file exists, and if exit 
     FileIOCheckError check( dataname.str() );
 
+    // make sure dof compression is applied 
+    df->enableDofCompression ();
+
     // read data 
     dataio.readData(*df, dataname.str(), n);
-
-    /*
-    // create non-cached communication manager  
-    DefaultCommunicationManager< typename DiscFuncType ::
-      DiscreteFunctionSpaceType > comm( df->space(), InteriorBorder_All_Interface );
-
-    // do a copy of data from interior 
-    // to other partition types 
-    comm.exchange( *df , (DFCommunicationOperation :: Copy *) 0 );
-    */
   }
   
   template <class DataIO>
