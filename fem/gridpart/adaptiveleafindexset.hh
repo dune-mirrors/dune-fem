@@ -676,6 +676,12 @@ namespace Dune
       for( int i = 0; i < ncodim; ++i )
         codimUsed_[ i ] = (typeVar == type());
     }
+
+    // set higher codims depending on codimUsed 
+    for( int i = 1; i < ncodim; ++i )
+    {
+      if( codimUsed_[ i ] ) higherCodims_ = true ;
+    }
    
     if( typeVar == type() )
     {
