@@ -614,7 +614,7 @@ public:
                OutPutDataType& data, 
                const double startTime,
                const double endTime, 
-               const LoadBalancerInterface* lb ) 
+               const LoadBalancerInterface* lb = 0)
     : BaseType(grid,gridName,data,startTime,endTime) 
     , checkPointStep_(500)
     , checkPointNumber_(1)
