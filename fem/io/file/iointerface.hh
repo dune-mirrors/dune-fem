@@ -397,20 +397,37 @@ protected:
   //! write my partition as macro grid 
   template <int dimworld> 
   static void saveMacroGridImp (const int rank,
-                                DGFNAMESPACE IntervalBlock& interval,
+                                DGFNAMESPACE IntervalBlock& intervalBlock,
                                 std::string filename )
   {
     FieldVector<double,dimworld> lang;
     FieldVector<int,dimworld>    anz;
     FieldVector<double,dimworld>  h;
     
-    // set values 
-    for (int i=0;i<dimworld;i++) 
+#if DUNE_VERSION_NEWER(DUNE_GRID,1,3,0)
+    if( intervalBlock.numIntervals() != 1 )
     {
-      lang[i] = interval.length(i);
-      anz[i]  = interval.segments(i);
-      h[i] = lang[i]/anz[i];
+      std::cerr << "Warning: Only 1 interval block is handled by "
+                << "IOInterface::saveMacroGridImp" << std::endl;
     }
+
+    typedef typename DGFNAMESPACE IntervalBlock::Interval Interval;
+    const Interval &interval = intervalBlock.get( 0 );
+    for( int i = 0; i < dimworld; ++i )
+    {
+      lang[ i ] = interval.p[ 1 ][ i ] - interval.p[ 0 ][ i ];
+      anz[ i ] = interval.n[ i ];
+      h[ i ] = lang[ i ] / anz[ i ];
+    }
+#else
+    // set values 
+    for( int i = 0; i < dimworld; ++i )
+    {
+      lang[ i ] = intervalBlock.length( i );
+      anz[ i ]  = intervalBlock.segments( i );
+      h[ i ] = lang[ i ] / anz[ i ];
+    }
+#endif // #if DUNE_VERSION_NEWER(DUNE_GRID,1,3,0)
 
     // write sub grid for this rank 
     {
