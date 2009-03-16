@@ -2,14 +2,13 @@ POLORDER = 2
 GRIDTYPE = YASPGRID
 GRIDDIM = 2
 
-LDADD = $(ALL_PKG_LDFLAGS) $(ALL_PKG_LIBS) $(MPI_LDFLAGS) ../../libfem.la
+#CXXFLAGS=-O3 -DNOFEL=$(size) -DNDEBUG # -Wall
+
+LDADD = $(ALL_PKG_LDFLAGS) $(ALL_PKG_LIBS) $(LOCAL_LIBS)
 AM_CPPFLAGS = $(ALL_PKG_CPPFLAGS) -DPOLORDER=$(POLORDER)
 
-# check_PROGRAMS = odetest odesystemtest
-
+#check_PROGRAMS = odetest odesystemtest
 odetest_SOURCES = odetest.cc
 odesystemtest_SOURCES = odesystemtest.cc
-CXXFLAGS=-O3 -DNOFEL=$(size) -DNDEBUG # -Wall
 
 include $(top_srcdir)/am/global-rules
-

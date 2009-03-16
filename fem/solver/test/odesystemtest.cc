@@ -1,4 +1,14 @@
- #define USERK 0
+#include <config.h>
+#include <iostream>
+
+// dune includes
+#include <dune/fem/solver/timeprovider.hh>
+#include <fem/operator/common/spaceoperatorif.hh>
+#include <fem/solver/rungekutta.hh>
+// #include <fem/solver/multistep.hh>
+
+
+#define USERK 1
 int order = 2;
 
 #include <cmath>
@@ -20,18 +30,16 @@ const double savestep = 0.05;
 bool usePAdapt = false;
 double* h; 
 
-#include <config.h>
-#include <iostream>
-#include <fem/operator/common/spaceoperatorif.hh>
-#include <fem/solver/rungekutta.hh>
-#include <fem/solver/multistepAdams.hh>
 
 using namespace Dune;
 using namespace DuneODE;
 using namespace std;
 
-#include "grid.hh"
-#include "bucklev.hh"
+// #include "grid.hh"
+// #include "bucklev.hh"
+
+// struct SpaceDummy {
+// };
 
 template <int N>
 struct Dest : public FieldVector<double,N> {
@@ -40,17 +48,23 @@ struct Dest : public FieldVector<double,N> {
   typedef double RangeFieldType;
   typedef SpaceDummy DiscreteFunctionSpaceType;
   typedef Dest<N> ScalarDestinationType;
-  Dest(string,const SpaceDummy&) {}
+  
+  Dest(string, const SpaceDummy&) {}
+  
   Dest() {}
+  
   void clear() {
     BaseType::operator=(0.);
   }
+  
   void assign(const Dest& other) {
     BaseType::operator=(other);
   }
+  
   void addScaled(const Dest& other,RangeFieldType l) {
     (*this).axpy(l,other);
   }
+  
   double operator()(int i) const {
     if (i<0 || i>this->size-1) {
       std::cout << "ERROR: Accessing element " << i << std::endl;
@@ -61,6 +75,7 @@ struct Dest : public FieldVector<double,N> {
 
 Dest<size> x;
 
+#if 0
 struct Heat : SpaceOperatorInterface<Dest<size> > {
   double w0;
   double visc(double x) const {
@@ -110,17 +125,17 @@ struct Heat : SpaceOperatorInterface<Dest<size> > {
     int i0  = i;
     int i1  = j;
     int i2  = (i1==size-1)?0:i1+1;
-    int i_1 = (i0==0)?size-1:i0-1; 
+    int i_1 = (i0==0)?size-1:i0-1;
     // Higher order
     double ret = (-u(i2)+u(i_1)+15.*u(i1)-15.*u(i0))/12.;
     // Second order
     // double ret = u[i1]-u[i0];
     return ret;
   }
-  void applyIntersection (const  
+  void applyIntersection (const
 	       SpaceType::IntersectionIteratorType& iter,
 	       double time,
-	       const DestinationType& x, 
+	       const DestinationType& x,
 	       double& ret) const {
     SpaceType::IteratorType::EntityType in = iter.inside();
     SpaceType::IteratorType::EntityType out = iter.outside();
@@ -138,8 +153,8 @@ struct Heat : SpaceOperatorInterface<Dest<size> > {
     // return 0.;
     // return time;
     return M_PI*cos(M_PI*time);
-    // return -visc(x[i])*u[i]; 
-    //        +time+visc(x[i])*0.5*time*time; 
+    // return -visc(x[i])*u[i];
+    //        +time+visc(x[i])*0.5*time*time;
     double f= -2.*visc(x[i])*time*
       dvisc(x[i])*exp(-time*visc(x[i]))*sin(x[i])+
       visc(x[i])*time*dvisc(x[i])*dvisc(x[i])*u[i]*(1.-time);
@@ -151,14 +166,14 @@ struct Heat : SpaceOperatorInterface<Dest<size> > {
 	    u[size-1])/h[size-1];
     return f;
   }
-  void applyElement (const 
+  void applyElement (const
                SpaceType::IteratorType::EntityType& en,
 	       double time,
 	       const DestinationType& u,
 	       double& ret) const {
     ret = elementFlux(en,time,u);
   }
-		     
+
   void operator()(const DestinationType& u,
                   DestinationType& y) const {
     for (int i=0;i<size;i++) {
@@ -177,11 +192,16 @@ struct Heat : SpaceOperatorInterface<Dest<size> > {
     tp_ = tp;
   }
 };
+#endif
+
+
+template <typename TimeProviderType>
 struct Advect : SpaceOperatorInterface<Dest<size> > {
   double a;
-  TimeProvider* tp_;
+  TimeProviderType* tp_;
   SpaceType space_;
   mutable int eval;
+  
   double lsg(double t,double x) const {
     double s = x-a*t;
     while (s>length()) s-=length();
@@ -192,30 +212,38 @@ struct Advect : SpaceOperatorInterface<Dest<size> > {
     else
       return 0.;
   }
+  
   Advect() : eval(0), tp_(0), a(2.) {
   }
+  
   const double length() const {
     return 1.;
   }
+  
   const double maxTime() const {
     return 5.;
   }
+  
   const double saveStep() const {
     return 0.1;
   }
+  
   const SpaceType& space() const {return space_;}
   double mass(double x,double gridh) {
     return gridh/a;
   }
+  
   double cfl(double dt,double h,double gridh) {
     return dt/h;
   }
+  
   double flux(double ui,double uj) const {
     ++eval;
     double ret;
     ret = -ui;
     return ret;
   }
+  
   double minmod(double a,double b) const {
     double ret=0;
     // return ret;
@@ -227,6 +255,7 @@ struct Advect : SpaceOperatorInterface<Dest<size> > {
     } else ret=0;
     return ret;
   }
+  
   void applyIntersection (const  
 	       SpaceType::IntersectionIteratorType& iter,
 	       double time,
@@ -245,7 +274,7 @@ struct Advect : SpaceOperatorInterface<Dest<size> > {
       IntersectionIteratorType nbend=space().iend(in);
       for (IntersectionIteratorType nbiter=space().ibegin(in);
 	   !(nbiter==nbend);++nbiter) {
-	W[nbiter.numberInSelf()] = u[nbiter.outside()];
+	     W[nbiter.numberInSelf()] = u[nbiter.outside()];
       }
       aIn = minmod(W0-W[0],W[1]-W0);
     }
@@ -274,6 +303,7 @@ struct Advect : SpaceOperatorInterface<Dest<size> > {
       ret *= -1;
     }
   }
+  
   double elementFlux (int i,
 		      double time,
 		      const DestinationType& u) const {
@@ -281,6 +311,7 @@ struct Advect : SpaceOperatorInterface<Dest<size> > {
     double f = 0.;
     return f;
   }
+  
   void applyElement (const 
                SpaceType::IteratorType::EntityType& en,
 	       double time,
@@ -293,31 +324,31 @@ struct Advect : SpaceOperatorInterface<Dest<size> > {
                   DestinationType& y) const {
     y.clear();
     SpaceType::IteratorType end=space().end();
-    for (SpaceType::IteratorType 
-	   iter=this->space().begin();
-	 !(iter==end);++iter) {
+    for (SpaceType::IteratorType iter=this->space().begin();
+	     !(iter==end);++iter) {
       double value;
       applyElement(*iter,tp_->time(),u,value);
       y[*iter] += value;
-      SpaceType::IntersectionIteratorType nbend=
-	space().iend(*iter);
+      SpaceType::IntersectionIteratorType nbend=space().iend(*iter);
       for (SpaceType::IntersectionIteratorType nbiter=
-	     space().ibegin(*iter);
-	   !(nbiter==nbend);++nbiter) {
-	if (nbiter.inside()<nbiter.outside()) {
-	  double flux;
-    int order;
-	  applyIntersection(nbiter,tp_->time(),u,flux,order);
-	  y[nbiter.inside()]  += flux/h[nbiter.inside()];
-	  y[nbiter.outside()] -= flux/h[nbiter.outside()];
-	}
+	       space().ibegin(*iter); !(nbiter==nbend); ++nbiter) {
+        if (nbiter.inside()<nbiter.outside()) {
+          double flux;
+          int order;
+          applyIntersection(nbiter,tp_->time(),u,flux,order);
+          y[nbiter.inside()]  += flux/h[nbiter.inside()];
+          y[nbiter.outside()] -= flux/h[nbiter.outside()];
+        }
       }
     }
   }
-  void timeProvider(TimeProvider* tp) {
+  
+  void timeProvider(TimeProviderType* tp) {
     tp_ = tp;
   }
 };
+
+#if 0
 struct BuckleyLevert : SpaceOperatorInterface<Dest<size> > {
   // Size=400 dt=0.001
   U0BuckLev sol;
@@ -362,20 +393,20 @@ struct BuckleyLevert : SpaceOperatorInterface<Dest<size> > {
     if (a*b>0) {
       if (fabs(a)<fabs(b))
 	ret=a;
-      else 
+      else
 	ret=b;
     } else ret=0;
     return ret;
   }
-  void applyIntersection (const  
+  void applyIntersection (const
 	       SpaceType::IntersectionIteratorType& iter,
 	       double time,
-	       const DestinationType& u, 
+	       const DestinationType& u,
 	       double& ret,
 	       int& localOrder) const {
     SpaceType::IteratorType::EntityType in = iter.inside();
     SpaceType::IteratorType::EntityType out = iter.outside();
-    typedef SpaceType::IntersectionIteratorType 
+    typedef SpaceType::IntersectionIteratorType
       IntersectionIteratorType;
     double aIn=0,aOut=0;
     if (!usePAdapt || fabs(u[in]-u[out])<0.1) {
@@ -383,7 +414,7 @@ struct BuckleyLevert : SpaceOperatorInterface<Dest<size> > {
 	double W0,W[2];
 	W0=u[in];
 	IntersectionIteratorType nbend=space().iend(in);
-	for (IntersectionIteratorType 
+	for (IntersectionIteratorType
 	       nbiter=space().ibegin(in);
 	     !(nbiter==nbend);++nbiter) {
 	  W[nbiter.numberInSelf()] = u[nbiter.outside()];
@@ -394,7 +425,7 @@ struct BuckleyLevert : SpaceOperatorInterface<Dest<size> > {
 	double W0,W[2];
 	W0=u[out];
 	IntersectionIteratorType nbend=space().iend(out);
-	for (IntersectionIteratorType 
+	for (IntersectionIteratorType
 	       nbiter=space().ibegin(out);
 	     !(nbiter==nbend);++nbiter) {
 	  W[nbiter.numberInSelf()] = u[nbiter.outside()];
@@ -419,19 +450,19 @@ struct BuckleyLevert : SpaceOperatorInterface<Dest<size> > {
     double f = 0.;
     return f;
   }
-  void applyElement (const 
+  void applyElement (const
                SpaceType::IteratorType::EntityType& en,
 	       double time,
 	       const DestinationType& u,
 	       double& ret) const {
     ret = elementFlux(en,time,u);
   }
-		     
+
   void operator()(const DestinationType& u,
                   DestinationType& y) const {
     y.clear();
     SpaceType::IteratorType end=space().end();
-    for (SpaceType::IteratorType 
+    for (SpaceType::IteratorType
 	   iter=this->space().begin();
 	 !(iter==end);++iter) {
       double value;
@@ -457,6 +488,8 @@ struct BuckleyLevert : SpaceOperatorInterface<Dest<size> > {
     tp_ = tp;
   }
 };
+#endif
+
 
 int main (int argc, char **argv) {
   if(argc != 2)
@@ -464,13 +497,16 @@ int main (int argc, char **argv) {
     fprintf(stderr,"usage: %s dt \n",argv[0]);
     exit(1);
   }
+  
   // Heat rhs;
-  Advect rhs;
+  Advect<TimeProvider<> > rhs;
   // BuckleyLevert rhs;
-  TimeProvider tp(0.,1.);
+  
+  TimeProvider<> tp(0.,1.);
   rhs.timeProvider(&tp);
   tp.setDeltaT(atof(argv[1]));
   double cfl = 1.;
+  
   #if USERK
   ExplicitRungeKuttaSolver<Dest<size> > rk(rhs,tp,order,true);
   // ExplicitMultiStepSolver<Dest<size> > rk(rhs,tp,order,true); cfl /= double(order);
@@ -480,6 +516,7 @@ int main (int argc, char **argv) {
   // cfl /= 16.;
   cfl /= double(order);
   #endif
+  
   h = new double[size];
   double minh = 10.;
   tp.setCfl(cfl);
@@ -491,6 +528,7 @@ int main (int argc, char **argv) {
     h[i] = rhs.mass(x[i],meshWidth);
     if (h[i]<minh) minh = h[i];
   }
+  
   /* two odes 
   u[0] = 0.6;
   u[1] = 0.4;

@@ -1,15 +1,21 @@
 #include <config.h>
 #include <iostream>
+
+// dune includes
+#include <dune/fem/solver/timeprovider.hh>
 #include <fem/operator/common/spaceoperatorif.hh>
 #include <fem/solver/rungekutta.hh>
-#include <fem/solver/multistepAdams.hh>
+//#include <fem/solver/multistep.hh>
 
 using namespace Dune;
 using namespace DuneODE;
 using namespace std;
 
+
 struct SpaceDummy {
 };
+
+
 struct Dest {
   typedef double DomainFieldType;
   typedef double RangeFieldType;
@@ -42,30 +48,39 @@ struct Dest {
   }
   RangeFieldType d_;
 };
+
+
+template <typename TimeProviderType>
 struct RHS : SpaceOperatorInterface<Dest> {
-  TimeProvider* tp_;
+  TimeProviderType* tp_;
   SpaceType space_;
   mutable int eval;
+  
   RHS() : eval(0) {}
+  
   const SpaceType& space() const {return space_;}
+  
   void operator()(const DestinationType& x,
                   DestinationType& y) const {
     y[0]=x[0];
     ++eval;
   }
-  void timeProvider(TimeProvider* tp) {
+  
+  void timeProvider(TimeProviderType* tp) {
     tp_ = tp;
   }
 };
 
+
+
 int main() {
-  RHS rhs;
-  TimeProvider tp(0.,1.);
+  RHS<TimeProvider<> > rhs;
+  TimeProvider<> tp(0.,1.);
   tp.setDeltaT(0.1);
   double cfl = 1.;
-  ExplicitMultiStepSolver<Dest> rk(rhs,tp,2,true);
+  //ExplicitMultiStepSolver<Dest> rk(rhs,tp,2,true);
   cfl /= 2.;
-  // ExplicitRungeKuttaSolver<Dest> rk(rhs,tp,2,true);
+  ExplicitRungeKuttaSolver<Dest> rk(rhs,tp,2,true);
 
   Dest u;
   u[0] = 1.;
@@ -80,8 +95,10 @@ int main() {
     tp.augmentTime();
     
     tp.setDeltaT(dt*(1.+0.5*(2.*double(random())/double(RAND_MAX)-1.0)));
-    std::cout << tp.time() << " " << rhs.eval 
-              << " " << u[0] << " " 
-              << tp.deltaT()/dt << " " << tp.deltaT() << std::endl;
+    std::cout << tp.time() << " "
+              << rhs.eval  << " "
+              << u[0] << " "
+              << tp.deltaT()/dt << " "
+              << tp.deltaT() << std::endl;
   }
 }
