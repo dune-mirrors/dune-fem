@@ -1,7 +1,7 @@
 #ifndef RUNGEKUTTA_SOLVER_HH
 #define RUNGEKUTTA_SOLVER_HH
 
-// inlcude all used headers before, that they don not appear in DuneODE 
+// include all used headers before, that they don not appear in DuneODE
 
 //- system includes 
 #include <iostream>
@@ -35,9 +35,9 @@ using namespace std;
     from the Dune::SpaceOperatorInterface<DiscreteFunctionSpace>.
     Further arguments in the constructor are an instance of the
     Dune::Timeprovider and the requested order of the scheme which can
-    be choses during runtime.
+    be chosen during runtime.
 
-    The managment of the simulation time is performed by an instance of the
+    The management of the simulation time is performed by an instance of the
     Dune::TimeProvider class. The time at which the space operator is
     to be evaluated is passed to the operator in the \c setTime method on
     the Dune::SpaceOperatorInterface and it is assumed that
@@ -60,7 +60,7 @@ template <class DestinationImp>
 class OdeSolverInterface 
 {
 protected:
-  //! cosntructor 
+  //! constructor
   OdeSolverInterface () {}    
 public:
   //! type of destination 
@@ -69,8 +69,8 @@ public:
   //! destructor 
   virtual ~OdeSolverInterface () {}
   
-  /** \brief initialze solver 
-      \param[in] arg argument to apply internal operator once for intiail time step estimate 
+  /** \brief initialize solver 
+      \param[in] arg argument to apply internal operator once for intial time step estimate
   */
   virtual void initialize(const DestinationType& arg) = 0;
   
@@ -120,36 +120,37 @@ public:
     b.resize(ord_); 
     c.resize(ord_); 
     
-    switch (ord_) {
-    case 4 :
-      a[0][0]=0.;     a[0][1]=0.;     a[0][2]=0.;    a[0][3]=0.;
-      a[1][0]=1.0;    a[1][1]=0.;     a[1][2]=0.;    a[1][3]=0.;
-      a[2][0]=0.25;   a[2][1]=0.25;   a[2][2]=0.;    a[2][3]=0.;
-      a[3][0]=1./6.;  a[3][1]=1./6.;  a[3][2]=2./3.; a[3][3]=0.;
-      b[0]=1./6.;     b[1]=1./6.;     b[2]=2./3.;    b[3]=0.;
-      c[0]=0.;        c[1]=1.0;       c[2]=0.5;      c[3]=1.0;
-      break;
-    case 3 :
-      a[0][0]=0.;     a[0][1]=0.;     a[0][2]=0.;
-      a[1][0]=1.0;    a[1][1]=0.;     a[1][2]=0.;
-      a[2][0]=0.25;   a[2][1]=0.25;   a[2][2]=0.;
-      b[0]=1./6.;     b[1]=1./6.;     b[2]=2./3.;
-      c[0]=0.;        c[1]=1;         c[2]=0.5;
-      break;
-    case 2 :
-      a[0][0]=0.;     a[0][1]=0.;
-      a[1][0]=1.0;    a[1][1]=0.;
-      b[0]=0.5;       b[1]=0.5;
-      c[0]=0;         c[1]=1;
-      break;
-    case 1:
-      a[0][0]=0.;
-      b[0]=1.;
-      c[0]=0.;
-      break;
-    default : std::cerr << "Runge-Kutta method of this order not implemented" 
-                        << std::endl;
-              abort();
+    switch (ord_)
+    {
+      case 4 :
+        a[0][0]=0.;     a[0][1]=0.;     a[0][2]=0.;    a[0][3]=0.;
+        a[1][0]=1.0;    a[1][1]=0.;     a[1][2]=0.;    a[1][3]=0.;
+        a[2][0]=0.25;   a[2][1]=0.25;   a[2][2]=0.;    a[2][3]=0.;
+        a[3][0]=1./6.;  a[3][1]=1./6.;  a[3][2]=2./3.; a[3][3]=0.;
+        b[0]=1./6.;     b[1]=1./6.;     b[2]=2./3.;    b[3]=0.;
+        c[0]=0.;        c[1]=1.0;       c[2]=0.5;      c[3]=1.0;
+        break;
+      case 3 :
+        a[0][0]=0.;     a[0][1]=0.;     a[0][2]=0.;
+        a[1][0]=1.0;    a[1][1]=0.;     a[1][2]=0.;
+        a[2][0]=0.25;   a[2][1]=0.25;   a[2][2]=0.;
+        b[0]=1./6.;     b[1]=1./6.;     b[2]=2./3.;
+        c[0]=0.;        c[1]=1;         c[2]=0.5;
+        break;
+      case 2 :
+        a[0][0]=0.;     a[0][1]=0.;
+        a[1][0]=1.0;    a[1][1]=0.;
+        b[0]=0.5;       b[1]=0.5;
+        c[0]=0;         c[1]=1;
+        break;
+      case 1:
+        a[0][0]=0.;
+        b[0]=1.;
+        c[0]=0.;
+        break;
+      default : std::cerr << "Runge-Kutta method of this order not implemented" 
+                          << std::endl;
+                abort();
     }
 
     // create update memory 

@@ -19,7 +19,7 @@ namespace Dune
 
   /** \class   TimeProviderBase
    *  \ingroup ODESolver
-   *  \brief   gereral base for time providers 
+   *  \brief   general base for time providers
    *
    *  This class consists of the methods required for example in the
    *  ODE Solvers, e.g., provideTimeStepEstimate and 
