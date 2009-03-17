@@ -8,7 +8,7 @@
 
 #include "callerutility.hh"
 #include "ellipticdiscretemodel.hh"
-#include "modelcaller.hh"
+#include "modelcallerdefault.hh"
 
 #include <dune/fem/misc/boundaryidentifier.hh>
 
@@ -20,10 +20,10 @@ namespace Dune {
    */
   template <class DiscreteModelImp, class ArgumentImp, class SelectorImp>
   class EllipticDiscreteModelCaller 
-    : public DiscreteModelCaller<DiscreteModelImp,ArgumentImp,SelectorImp> 
+    : public DiscreteModelCallerDefault<DiscreteModelImp,ArgumentImp,SelectorImp> 
   {
   public:
-    typedef DiscreteModelCaller<DiscreteModelImp,ArgumentImp,SelectorImp> BaseType; 
+    typedef DiscreteModelCallerDefault<DiscreteModelImp,ArgumentImp,SelectorImp> BaseType; 
     typedef DiscreteModelImp DiscreteModelType;
     typedef ArgumentImp TotalArgumentType;
     typedef SelectorImp SelectorType;
@@ -55,8 +55,11 @@ namespace Dune {
     typedef BoundaryIdentifier BoundaryIdentifierType;
   public:
     EllipticDiscreteModelCaller(DiscreteModelType& problem) 
-      : BaseType(problem) 
-      , problem_(problem)
+      : problem_( problem )
+      , valuesEn_( RangeCreator::apply() )
+      , valuesNeigh_( RangeCreator::apply() )
+      , jacobians_( JacobianCreator::apply() )
+      , BaseType( problem_, valuesEn_, valuesNeigh_, jacobians_ ) 
     {}
 
     // Ensure: entities set correctly before call
@@ -175,6 +178,12 @@ namespace Dune {
   private:
     // our problem 
     DiscreteModelType& problem_;
+
+  protected:
+    RangeTupleType valuesEn_;
+    RangeTupleType valuesNeigh_;
+    JacobianRangeTupleType jacobians_;
+
   }; // end EllipticDiscreteModelCaller 
 
 } // end namespace Dune 

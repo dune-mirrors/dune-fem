@@ -63,7 +63,7 @@ namespace Dune {
     typedef typename DiscreteModelType::SelectorType SelectorType;
 
     typedef CombinedSelector< ThisType, SelectorType > CombinedSelectorType;
-    typedef DiscreteModelCaller
+    typedef DiscreteModelCallerDefault
       < DiscreteModelType, ArgumentType, CombinedSelectorType >
       DiscreteModelCallerType;
    

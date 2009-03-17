@@ -9,7 +9,7 @@
 #include "pass.hh"
 #include "selection.hh"
 #include "discretemodel.hh"
-#include "modelcaller.hh"
+#include "dgmodelcaller.hh"
 
 #include <dune/fem/solver/timeprovider.hh>
 
@@ -95,10 +95,10 @@ namespace Dune {
     typedef typename DestinationType::LocalFunctionType LocalFunctionType;
     typedef typename DiscreteModelType::SelectorType SelectorType;
     typedef CombinedSelector< ThisType , SelectorType > CombinedSelectorType;
-    typedef DiscreteModelCaller< DiscreteModelType 
-                                 , ArgumentType 
-                                 , CombinedSelectorType
-                               > DiscreteModelCallerType;
+    typedef DGDiscreteModelCaller< DiscreteModelType 
+                                   , ArgumentType 
+                                   , CombinedSelectorType
+                                 > DiscreteModelCallerType;
 
     // Range of the destination
     enum { dimRange = DiscreteFunctionSpaceType::dimRange };

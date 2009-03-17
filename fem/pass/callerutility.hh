@@ -24,7 +24,6 @@ namespace Dune {
       static_cast<int>(TupleLength<ArgTupleImp>::value)
     > Maximal_index_of_selector_exceeds_argument_length;
     
-    //typedef SelectorImp SelectorType;
     typedef typename SelectorImp::Base SelectorType;
 
     //! The index of the extracted element.
@@ -58,8 +57,7 @@ namespace Dune {
    *
    * The end of the filtering is marked by the last element of the selector.
    * \warning If the largest index in the selector is greater than the length
-   * of the tuple, an ugly compile-time error will occur... (I'll switch that
-   * off as soon as I can)
+   *          of the tuple, an ugly compile-time error will occur.
    */ 
 
   template < class ArgTupleImp , class Pass , int N1>
