@@ -54,15 +54,22 @@ namespace Dune {
     typedef typename DiscreteModelType :: MassFactorType MassFactorType;
   public:
     DGDiscreteModelCaller( DiscreteModelType& problem ) :
-      problem_( problem ),
-      data_( 0 ),
-      valuesEn_( RangeCreator::apply() ),
-      valuesNeigh_( RangeCreator::apply() ),
-      jacobians_( JacobianCreator::apply() ),
-      BaseType( problem_, valuesEn_, valuesNeigh_, jacobians_ ), 
-      time_( 0.0 )
+      BaseType( ), 
+      problem_( problem )
     {}
 
+    void setEntity(Entity& en) 
+    {
+      BaseType::setEntity(en);
+      problem_.setEntity(en);
+    }
+
+    void setNeighbor(Entity& nb) 
+    {
+      BaseType::setNeighbor(nb);
+      problem_.setNeighbor(nb);
+    }
+    \
     // Here, the interface of the problem is replicated and the Caller
     // is used to do the actual work
     void analyticalFlux(Entity& en, const DomainType& x, 
@@ -226,16 +233,11 @@ namespace Dune {
     DiscreteModelType& problem_;
 
   protected:  
-    std::auto_ptr< DataStorage > data_;
-
-    RangeTupleType valuesEn_;
-    RangeTupleType valuesNeigh_;
-    JacobianRangeTupleType jacobians_;
-
-    // Entity* self_;
-    // Entity* neighbor_;
-    
-    double time_;
+    using BaseType::data_;
+    using BaseType::valuesEn_;
+    using BaseType::valuesNeigh_;
+    using BaseType::jacobians_;
+    using BaseType::time_;
   };
 
 }
