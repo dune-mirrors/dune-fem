@@ -59,7 +59,6 @@ namespace Dune {
       , valuesEn_( RangeCreator::apply() )
       , valuesNeigh_( RangeCreator::apply() )
       , jacobians_( JacobianCreator::apply() )
-      , BaseType( problem_, valuesEn_, valuesNeigh_, jacobians_ ) 
     {}
 
     // Ensure: entities set correctly before call

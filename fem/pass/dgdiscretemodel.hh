@@ -281,7 +281,6 @@ namespace Dune {
     //! passIds necessary for this DiscreteModel
     typedef Selector< N1 , N2 , N3 , N4 , N5 , N6 , N7 , N8 , N9 > SelectorType;
   public:
-    DiscreteModelDefault() DUNE_DEPRECATED {}
     /** \copydoc Dune::DiscreteModelInterface::hasFlux() const
      *
      *  The default implementation always returns false
@@ -384,7 +383,7 @@ namespace Dune {
     }
 
     //! Empty implementation 
-    void setEntity(EntityType& en) DUNE_DEPRECATED
+    void setEntity(EntityType& en)
     { }
 
     //! Empty implementation 
@@ -424,8 +423,8 @@ namespace Dune {
 
   public:
     //! \brief default constructor 
-    DiscreteModelDefaultWithInsideOutSide() DUNE_DEPRECATED
-      : enVol_(-1.0) , nbVol_(-1.0) , en_(0) , nb_(0)  
+    DiscreteModelDefaultWithInsideOutSide() 
+      : enVol_(-1.0) , nbVol_(-1.0) , en_(0) , nb_(0) 
     {}
 
     //! set entity and get volume  
