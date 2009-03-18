@@ -1,104 +1,131 @@
+// *****************************
+//
+// Solve the ODE dy/dt = F(y,t)
+//
+// *****************************
+
+// standard includes
 #include <config.h>
 #include <iostream>
 
 // dune includes
 #include <dune/fem/solver/timeprovider.hh>
-#include <fem/operator/common/spaceoperatorif.hh>
-#include <fem/solver/rungekutta.hh>
-//#include <fem/solver/multistep.hh>
+#include <dune/fem/operator/common/spaceoperatorif.hh>
+#include <dune/fem/solver/rungekutta.hh>
+
 
 using namespace Dune;
 using namespace DuneODE;
 using namespace std;
 
 
-struct SpaceDummy {
-};
-
-
-struct Dest {
+// Faked data structure for our unknown,
+// nothing more than a "tuned up" double
+class myDest {
+  struct SpaceDummy {};
+  
+public:
   typedef double DomainFieldType;
   typedef double RangeFieldType;
   typedef SpaceDummy DiscreteFunctionSpaceType;
-  Dest(string,const SpaceDummy&) {}
-  Dest() {}
+  
+  myDest(string, const SpaceDummy&) {
+  }
+  myDest() {
+  }
   RangeFieldType operator[](int i) const {
     return d_;
   }
   RangeFieldType& operator[](int i) {
     return d_;
   }
-  void assign(const Dest& other) {
+  void assign(const myDest& other) {
     d_ = other.d_;
   }
-  void addScaled(const Dest& other,RangeFieldType l) {
+  void addScaled(const myDest& other, RangeFieldType l) {
     d_ += other.d_*l;
   }
-  Dest& operator*=(RangeFieldType l) {
+  myDest& operator*=(RangeFieldType l) {
     d_ *= l;
     return *this;
   }
-  Dest& operator+=(const Dest& other) {
+  myDest& operator+=(const myDest& other) {
     d_ += other.d_;
     return *this;
   }
-  Dest& operator-=(const Dest& other) {
+  myDest& operator-=(const myDest& other) {
     d_ += other.d_;
     return *this;
   }
+  
+private:
   RangeFieldType d_;
 };
 
 
-template <typename TimeProviderType>
-struct RHS : SpaceOperatorInterface<Dest> {
-  TimeProviderType* tp_;
-  SpaceType space_;
-  mutable int eval;
+// implement right hand side F(y,t)
+class myRHS : public SpaceOperatorInterface<myDest> {
+public:
+  myRHS() {
+  }
   
-  RHS() : eval(0) {}
-  
-  const SpaceType& space() const {return space_;}
-  
+  const SpaceType& space() const {
+    return space_;
+  }
+
   void operator()(const DestinationType& x,
                   DestinationType& y) const {
-    y[0]=x[0];
-    ++eval;
+    y[0]=2.0*t_;
+    //y[0]=3.0*t_*t_;        
+    //y[0]=x[0];
   }
-  
-  void timeProvider(TimeProviderType* tp) {
-    tp_ = tp;
+
+  void setTime(const double time) {
+    t_=time;
   }
+
+private:
+  SpaceType space_;
+  double t_;
 };
 
 
-
 int main() {
-  RHS<TimeProvider<> > rhs;
-  TimeProvider<> tp(0.,1.);
-  tp.setDeltaT(0.1);
-  double cfl = 1.;
-  //ExplicitMultiStepSolver<Dest> rk(rhs,tp,2,true);
-  cfl /= 2.;
-  ExplicitRungeKuttaSolver<Dest> rk(rhs,tp,2,true);
+  // problem data
+  const double initialData = 1.0;
+  const double startTime = -2.0;
+  const double endTime = 2.0;
 
-  Dest u;
-  u[0] = 1.;
-  rk.initialize(u);
-  tp.setCfl(cfl);
-  std::cout << tp.time() << " " << rhs.eval 
-            << " " << u[0] << " " 
-            << 1.0 << " " << tp.deltaT() << std::endl;
-  while (tp.time()<1.) {
-    double dt = tp.deltaT();
-    rk.solve(u);
-    tp.augmentTime();
-    
-    tp.setDeltaT(dt*(1.+0.5*(2.*double(random())/double(RAND_MAX)-1.0)));
-    std::cout << tp.time() << " "
-              << rhs.eval  << " "
-              << u[0] << " "
-              << tp.deltaT()/dt << " "
-              << tp.deltaT() << std::endl;
+  // options
+  const double stepSize = 0.01;
+  const double cfl = 1.;
+  const int order = 2;
+
+  // types
+  typedef myRHS SpaceOperatorType;
+  typedef SpaceOperatorType::DestinationType DestinationType;
+  typedef ExplicitRungeKuttaSolver<DestinationType> OdeSolverType;
+
+  // create solver
+  TimeProvider<> tp( startTime, cfl );
+  SpaceOperatorType spaceOperator;
+  OdeSolverType odeSolver( spaceOperator, tp, order );
+
+  // initialize solution vector
+  DestinationType U;
+  U[0] = initialData;
+
+  // initialize odesolver
+  odeSolver.initialize( U );
+
+  // time loop
+  for( tp.init(stepSize); tp.time() < endTime; tp.next(stepSize) ) {
+    // do calculation
+    odeSolver.solve(U);
+
+    // print out solution
+    std::cout << tp.time()
+              << " " << U[0]
+              << std::endl;
   }
 }
