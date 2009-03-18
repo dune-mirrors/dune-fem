@@ -68,7 +68,7 @@ public:
   }
 };
 
-//! only for kepping the pointer 
+//! only for keeping the pointer
 template <class OperatorType>
 class SpaceOperatorStorage
 : public ObjPointerStorage                  
@@ -110,7 +110,7 @@ public:
   }
 };
 
-//! only for kepping the pointer 
+//! only for keeping the pointer
 template <class OperatorType>
 class SpaceOperatorPtr
 : public SpaceOperatorStorage< OperatorType >,

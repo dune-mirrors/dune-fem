@@ -1,7 +1,7 @@
 #ifndef RUNGEKUTTA_SOLVER_HH
 #define RUNGEKUTTA_SOLVER_HH
 
-// include all used headers before, that they don not appear in DuneODE
+// include all used headers before, that they do not appear in DuneODE
 
 //- system includes 
 #include <iostream>
@@ -29,7 +29,7 @@ using namespace std;
     Furthermore implicit methods and IMEX schemes up to order 
     4 can be used through Dune::ImplicitOdeSolver
     and Dune::SemiImplicitOdeSolver. 
-    Each of these clases require an operator defining the right hand
+    Each of these classes require an operator defining the right hand
     side for its construction; the template argument is a
     Dune::DiscreteFunctionSpace and the operator has to be derived
     from the Dune::SpaceOperatorInterface<DiscreteFunctionSpace>.

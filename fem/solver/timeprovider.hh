@@ -212,7 +212,7 @@ namespace Dune
    *  this is done by the initialize method of the ODE solver. In tp.init(),
    *  the first time step (deltaT) is set based on the estimate and 
    *  this value can also be fixed independent of the estimate through
-   *  an optinal argument. The following loop would fix the time step
+   *  an optional argument. The following loop would fix the time step
    *  to 1e-3
    *  \code
    *  for( tp.init(1e-3); tp.time() < endTime; tp.next(1e-3) )
@@ -225,7 +225,7 @@ namespace Dune
    *  In order to allow the user to incfluence the calculation of the next time
    *  step from the estimate, the time provider also maintains an additional
    *  factor (which is constant during the entire simulation). 
-   *  Therefore the acctual time step used, is calculated as follows:
+   *  Therefore the actual time step used, is calculated as follows:
    *  \f[
    *  \mathrm{deltaT} = \mathrm{factor} * \mathrm{timeStepEstimate}.
    *  \f]
@@ -268,7 +268,7 @@ namespace Dune
    *
    *  This implementation of a timeprovider takes a CollectiveCommunicate 
    *  for parallel runs which default to a default communicator
-   *  which also works for seriellel simulations.
+   *  which also works for serial simulations.
    *
    */
   template< class C >
