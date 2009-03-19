@@ -384,7 +384,7 @@ namespace Dune {
     }
 
     //! Empty implementation 
-    void setEntity(EntityType& en) DUNE_DEPRECATED
+    void setEntity(EntityType& en)
     { }
 
     //! Empty implementation 
