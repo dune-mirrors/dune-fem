@@ -776,10 +776,6 @@ namespace Dune{
 #endif // end if HAVE_TUPLE || HAVE_TR1_TUPLE
 #endif // end ifdef Tuple 
 
-//#if DUNE_VERSION_NEWER(DUNE_COMMON,1,3,0)
-#define Tuple tuple
-//#endif
-
 namespace Dune
 {
 
