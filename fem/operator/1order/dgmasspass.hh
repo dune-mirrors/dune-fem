@@ -72,7 +72,7 @@ namespace Dune
     typedef typename DestinationType::LocalFunctionType LocalFunctionType;
     typedef typename DiscreteModelType::SelectorType SelectorType;
     typedef CombinedSelector< ThisType, SelectorType > CombinedSelectorType;
-    typedef DiscreteModelCaller< DiscreteModelType, ArgumentType, CombinedSelectorType >
+    typedef DGDiscreteModelCaller< DiscreteModelType, ArgumentType, CombinedSelectorType >
       DiscreteModelCallerType;
 
     // type of Communication Manager 
