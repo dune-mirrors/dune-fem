@@ -28,21 +28,26 @@ namespace Dune
 */
 template <class GridImp, class Imp, class IteratorTraits >
 class DuneGridIndexSetAdapter 
-  : public BartonNackmanInterface< 
-        DuneGridIndexSetAdapter<GridImp, Imp, IteratorTraits > , 
-        Imp > ,
-    public EmptyIndexSet ,
-    public IndexSet< GridImp, Imp, IteratorTraits > 
+: public BartonNackmanInterface
+  < DuneGridIndexSetAdapter< GridImp, Imp, IteratorTraits >, Imp >,
+  public EmptyIndexSet,
+#if DUNE_VERSION_NEWER(DUNE_GRID,1,3,0)
+  public IndexSet< GridImp, Imp >
+#else
+  public IndexSet< GridImp, Imp, IteratorTraits >
+#endif
 {
+  typedef DuneGridIndexSetAdapter< GridImp, Imp, IteratorTraits > ThisType;
+  typedef BartonNackmanInterface< ThisType, Imp > BaseType;
+
 protected:
-  typedef BartonNackmanInterface< 
-            DuneGridIndexSetAdapter<GridImp, Imp, IteratorTraits > , 
-            Imp > BaseType;
   using BaseType :: asImp;
 
+#if DUNE_VERSION_NEWER(DUNE_GRID,1,3,0)
+  typedef IndexSet< GridImp, Imp > DuneIndexSetType;
+#else
   typedef IndexSet< GridImp, Imp, IteratorTraits > DuneIndexSetType;
-
-  typedef DuneGridIndexSetAdapter<GridImp, Imp, IteratorTraits > ThisType;
+#endif
 
 public:
   //! type of index (i.e. unsigned int)
