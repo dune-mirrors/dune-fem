@@ -17,7 +17,7 @@ namespace Dune
    *  \f[
    *  -\nabla \cdot \bigl( a( x ) \nabla u \bigr).
    *  \f]
-   *  Here the matematical data is exactly the function \f$a\f$, which we call
+   *  Here the mathematical data is exactly the function \f$a\f$, which we call
    *  diffusive flux.
    *
    *  \param  FunctionSpace   function space to work in

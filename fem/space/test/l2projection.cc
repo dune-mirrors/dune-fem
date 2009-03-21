@@ -45,7 +45,7 @@ static const int dimw = dimworld;
 using namespace Dune;
 
 // polynom approximation order of quadratures, 
-// at least poolynom order of basis functions 
+// at least polynom order of basis functions
 const int polOrd = POLORDER;
 
 //***********************************************************************
@@ -124,7 +124,7 @@ double algorithm (GridType& grid, DiscreteFunctionType& solution, bool display)
    DGL2ProjectionImpl::project(f, solution);
 
    // calculation L2 error 
-   // pol ord for calculation the error chould by higher than 
+   // pol ord for calculation the error should be higher than
    // pol for evaluation the basefunctions 
    typedef DiscreteFunctionSpaceType :: RangeType RangeType; 
    RangeType error = l2err.norm(f ,solution, 0.0);

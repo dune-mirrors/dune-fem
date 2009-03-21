@@ -60,6 +60,7 @@ struct OutputParameters1 :
     return test;
   }
 };
+
 struct OutputParameters2 : 
   public LocalParameter<DataOutputParameters,OutputParameters2> {
   virtual ~OutputParameters2() {}
@@ -82,7 +83,7 @@ struct OutputParameters2 :
 };
 
 // polynom approximation order of quadratures, 
-// at least poolynom order of basis functions 
+// at least polynom order of basis functions
 const int polOrd = POLORDER;
 
 //***********************************************************************
@@ -262,6 +263,7 @@ private:
   const GeometryImp* geometry_;
   bool initialized_;
 };
+
 /*
 struct Model { // : public SpaceDescriptor {
   virtual std::string name(int i) const {
@@ -289,6 +291,7 @@ struct Model { // : public SpaceDescriptor {
     }
   }
 };
+
 */
 //**************************************************
 //
@@ -326,11 +329,14 @@ int main (int argc, char **argv)
   // solution.space().setDescription(model);
   
   typedef AddLsgErr<DiscreteFunctionType> AddLsgErrType;
-  typedef LocalFunctionAdapter<AddLsgErrType> AddLsgErrFunction;
   AddLsgErrType evalAddLsgErr(solution,0);
-  AddLsgErrFunction addLsgErr("U",evalAddLsgErr,solution.space().gridPart()); 
+  
+  typedef LocalFunctionAdapter<AddLsgErrType> AddLsgErrFunction;
+  AddLsgErrFunction addLsgErr("U",evalAddLsgErr,solution.space().gridPart());
+  
   typedef Tuple<AddLsgErrFunction*> OutputType;
   OutputType out(&addLsgErr);
+  
   {
     OutputParameters1 param1;
     DataOutput<GridType,OutputType> output(grid,out); // ,param1);
@@ -346,6 +352,7 @@ int main (int argc, char **argv)
       }
     }
   }
+  
   {
     GridTimeProvider<GridType> tp(0,grid);
     // tp.setEndTime(1);
@@ -357,6 +364,9 @@ int main (int argc, char **argv)
     }
     output.write();
   }
+
+
+  
   return 0;
   }
   catch( Exception e )

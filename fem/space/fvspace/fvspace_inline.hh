@@ -30,7 +30,7 @@ template <class FunctionSpaceImp, class GridPartImp, int polOrd, template <class
 inline void FiniteVolumeSpace<FunctionSpaceImp, GridPartImp, polOrd, BaseFunctionStorageImp>::
 makeFunctionSpace (GridPartType& gridPart) 
 {
-  // search the macro grid for diffrent element types 
+  // search the macro grid for different element types 
   AllGeomTypes< typename GridPartType::IndexSetType ,
                 typename GridPartType::GridType > 
             allGeomTypes(gridPart.indexSet());
