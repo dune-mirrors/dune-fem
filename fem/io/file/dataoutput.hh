@@ -183,6 +183,7 @@ protected:
           out_ << x[i] << " ";
         for (int i = 0; i < dimRange; ++i) 
           out_ << u[i] << "   ";
+        out_ << std::endl;
       }
     }
   };
@@ -567,7 +568,6 @@ protected:
       GnuplotOutputer< typename GridPartType::EntityCodim0Type > 
                      io( gnuout,*it );
       forEach.apply( io );
-      gnuout << std::endl;
     }
   }
 
