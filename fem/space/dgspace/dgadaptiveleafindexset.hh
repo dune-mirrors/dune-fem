@@ -526,7 +526,8 @@ public:
     }
 
     // for parallel data read in serial program we need compression 
-    if(StructuredGrid && (hIndexSet_.size(0) != codimLeafSet_.size()) )
+    if(StructuredGrid && 
+    	((int) hIndexSet_.size(0) != (int) codimLeafSet_.size()) )
     {
       compressed_ = false;
     }
