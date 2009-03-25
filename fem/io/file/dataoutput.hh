@@ -441,7 +441,7 @@ public:
     case gnuplot :
       writeGnuPlotOutput();
       break;
-    otherwise:
+    default:
       DUNE_THROW(NotImplemented,"DataWriter::write: wrong output format");
     }
     // only write info for proc 0, otherwise on large number of procs
