@@ -53,7 +53,7 @@
       @ingroup FunctionCommon */
       /** @defgroup DGDSpace Discontinuous Galerkin Space 
           @ingroup DiscreteFunctionSpace */
-      /** @defgroup FVDFSpace Finie Volume Function Space
+      /** @defgroup FVDFSpace Finite Volume Function Space
           @ingroup DiscreteFunctionSpace */
       /** @defgroup LagrangeDiscreteFunctionSpace Lagrange  Discrete Function Space
           @ingroup DiscreteFunctionSpace */
