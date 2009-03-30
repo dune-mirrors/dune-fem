@@ -118,7 +118,8 @@ struct VtxProjectionImpl
             // get neighbor 
             typename EntityType::EntityPointer ep = inter.outside();
             EntityType & nb = *ep;
-            if (en.level()>nb.level()) {
+            if (en.level()>nb.level())
+            {
               const int numInSelf = inter.numberInSelf();
               const LagrangePointSetType &lagrangePointSet
                     = space.lagrangePointSet( en );
@@ -126,8 +127,13 @@ struct VtxProjectionImpl
                  = lagrangePointSet.template beginSubEntity< 1 >( numInSelf );
               const FaceDofIteratorType enditPoint
                  = lagrangePointSet.template endSubEntity< 1 >( numInSelf );
+#if DUNE_VERSION_NEWER(DUNE_GRID,1,3,0)
+              const typename IntersectionType::LocalGeometry& geoIn  = inter.geometryInInside();
+              const typename IntersectionType::LocalGeometry& geoOut = inter.geometryInOutside();
+#else
               const typename IntersectionType::LocalGeometry& geoIn  = inter.intersectionSelfLocal();
               const typename IntersectionType::LocalGeometry& geoOut = inter.intersectionNeighborLocal();
+#endif
               LocalFuncType ldfIn  = discFunc.localFunction(en);
               LocalFuncType ldfOut = discFunc.localFunction(nb);
               for( ; itPoint != enditPoint; ++itPoint ) {
