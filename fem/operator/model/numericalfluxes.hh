@@ -1,57 +1,89 @@
 #ifndef DUNE_FEM_LDG_NUMERICALFLUX_HH
 #define DUNE_FEM_LDG_NUMERICALFLUX_HH
 
+#include <dune/common/version.hh>
+
 // *** Numerical fluxes ***
 
 // Dune includes
-namespace Dune {
+namespace Dune
+{
 
   // *** the Local Lax-Friedrichs flux *** //
-  template <class Model>
-  class LLFFlux {
-  public:
+  template< class Model >
+  struct LLFFlux
+  {
     typedef typename Model::Traits Traits;
     enum { dimRange = Model::dimRange };
     typedef typename Model::RangeType RangeType;
     typedef typename Model::FluxRangeType FluxRangeType;
-  public:
-    LLFFlux(const Model& mod) : model_(mod) {}
-    const Model& model() const {return model_;}
+
+    typedef typename Traits::IntersectionIterator IntersectionIterator;
+    typedef typename IntersectionIterator::Intersection Intersection;
+
+    LLFFlux ( const Model &model )
+    : model_( model )
+    {}
+
+    const Model &model () const
+    {
+      return model_;
+    }
+
     // Return value: maximum wavespeed*length of integrationOuterNormal
     // gLeft,gRight are fluxed * length of integrationOuterNormal
-    inline double numericalFlux(typename Traits::IntersectionIterator& it,
-               double time, 
-               const typename Traits::FaceDomainType& x,
-               const RangeType& uLeft, 
-               const RangeType& uRight,
-               RangeType& gLeft,
-               RangeType& gRight) const {
-      const typename Traits::DomainType normal = it->integrationOuterNormal(x);  
+    double numericalFlux ( const Intersection &intersection,
+                           double time, 
+                           const typename Traits::FaceDomainType &x,
+                           const RangeType &uLeft, 
+                           const RangeType &uRight,
+                           RangeType &gLeft,
+                           RangeType &gRight) const
+    {
+      typedef typename Intersection::Geometry IntersectionGeometry;
+      typedef typename Intersection::LocalGeometry IntersectionLocalGeometry;
+
+      const typename Traits::DomainType normal = intersection.integrationOuterNormal(x);
       typename Traits::RangeType visc;
       typename Traits::FluxRangeType anaflux;
 
-      model_.analyticalFlux(*(it->inside()), time,
-                            it->intersectionSelfLocal().global(x),
-                            uLeft, anaflux);
+#if DUNE_VERSION_NEWER(DUNE_GRID,1,3,0)
+      const IntersectionLocalGeometry &geoInInside = intersection.geometryInInside();
+#else
+      const IntersectionLocalGeometry &geoInInside = intersection.intersectionSelfLocal();
+#endif
+
+      model_.analyticalFlux( *(intersection.inside()), time, geoInInside.global( x ),
+                             uLeft, anaflux);
       gLeft*=0;
       anaflux.umv(normal, gLeft);
-      if (it->neighbor())
-         model_.analyticalFlux(*(it->outside()), time,
-                               it->intersectionNeighborLocal().global(x),
-                               uRight, anaflux);
+      if( intersection.neighbor() )
+      {
+#if DUNE_VERSION_NEWER(DUNE_GRID,1,3,0)
+        const IntersectionLocalGeometry &geoInOutside = intersection.geometryInOutside();
+#else
+        const IntersectionLocalGeometry &geoInOutside = intersection.intersectionNeighborLocal();
+#endif
+         model_.analyticalFlux( *(intersection.outside()), time, geoInOutside.global( x ),
+                                uRight, anaflux);
+      }
       else
-         model_.analyticalFlux(*(it->inside()), time,
-                               it->intersectionSelfLocal().global(x),
-                               uRight, anaflux);
-                               anaflux.umv(normal,gLeft);
+      {
+         model_.analyticalFlux( *(intersection.inside()), time, geoInInside.global( x ),
+                                uRight, anaflux);
+      }
+      anaflux.umv( normal, gLeft );
 
       double maxspeedl,maxspeedr,maxspeed;
       double viscparal,viscparar,viscpara;
 
-      model_.maxSpeed(normal,time,it->intersectionGlobal().global(x),
-                      uLeft,viscparal,maxspeedl);
-      model_.maxSpeed(normal,time,it->intersectionGlobal().global(x),
-                      uRight,viscparar,maxspeedr);
+#if DUNE_VERSION_NEWER(DUNE_GRID,1,3,0)
+      const IntersectionGeometry &geo = intersection.geometry();
+#else      
+      const IntersectionGeometry &geo = intersection.intersectionGlobal();
+#endif
+      model_.maxSpeed( normal, time, geometry.global( x ), uLeft, viscparal, maxspeedl );
+      model_.maxSpeed( normal, time, geometry.global( x ), uRight, viscparar, maxspeedr );
 
       maxspeed=(maxspeedl>maxspeedr)?maxspeedl:maxspeedr;
       viscpara=(viscparal>viscparar)?viscparal:viscparar;
@@ -66,8 +98,22 @@ namespace Dune {
 
       return maxspeed;
     }
+
+    // Return value: maximum wavespeed*length of integrationOuterNormal
+    // gLeft,gRight are fluxed * length of integrationOuterNormal
+    double numericalFlux ( const IntersectionIterator &it,
+                           double time, 
+                           const typename Traits::FaceDomainType &x,
+                           const RangeType &uLeft, 
+                           const RangeType &uRight,
+                           RangeType &gLeft,
+                           RangeType &gRight) const
+    {
+      return numericalFlux( *it, time, x, uLeft, uRight, gLeft, gRight );
+    }
+
   private:
-    const Model& model_;
+    const Model &model_;
   }; // end of LLFFlux class
 
 
