@@ -1,6 +1,9 @@
 #ifndef DUNE_GRIDWIDTH_HH
 #define DUNE_GRIDWIDTH_HH
 
+//- system includes 
+#include <limits>
+
 //- Dune includes 
 #include <dune/common/fvector.hh>
 #include <dune/grid/common/capabilities.hh>
@@ -48,14 +51,11 @@ struct GridWidth
   {
     typedef typename EntityType :: Geometry Geometry;
     enum { dim = EntityType::dimension };
-
-    const Geometry& geo = en.geometry();
-    const double elemVol = geo.volume() * geoInfo.referenceVolume( geo.type() );
     
-    double faceVol = 1e10;
+    double faceVol = std::numeric_limits<double>::max() ;
     int numberInSelf = -1;
-    double currVol = -1e10;
-    double refFaceVol = -1e10;
+    double currVol = std::numeric_limits<double>::min() ;
+    double refFaceVol = std::numeric_limits<double>::min() ;
     
     for( ; it != endit; ++it)
     {
@@ -81,6 +81,8 @@ struct GridWidth
       currVol += interGeo.volume();
     }
 
+    const Geometry& geo = en.geometry();
+    const double elemVol = geo.volume() * geoInfo.referenceVolume( geo.type() );
     return elemVol/faceVol;
   }
 
@@ -134,14 +136,15 @@ struct GridWidth
       const GeomInfoType& geoInfo,
       const FaceGeomInfoType& faceGeoInfo)
   {     
-    double width = 1e308;
-    typedef typename GridType::template Codim<0> :: LeafIterator IteratorType; 
+    double width = std::numeric_limits<double>::max() ;
+    typedef typename GridType::template Codim<0> :: 
+      template Partition<Interior_Partition> ::  LeafIterator IteratorType; 
     
     // unstructured case 
     if( Capabilities::IsUnstructured<GridType>::v )
     {
-      IteratorType endit = grid.template leafend<0> (); 
-      for(IteratorType it = grid.template leafbegin<0> (); 
+      IteratorType endit = grid.template leafend<0, Interior_Partition> (); 
+      for(IteratorType it = grid.template leafbegin<0, Interior_Partition> (); 
           it != endit; ++it )
       {
         width = std::min( width , leafEdgeWidth(*it, geoInfo, faceGeoInfo) );
@@ -150,8 +153,8 @@ struct GridWidth
     else 
     {
       // here we only need to check one element 
-      IteratorType it = grid.template leafbegin<0> (); 
-      if( it != grid.template leafend<0> () )
+      IteratorType it = grid.template leafbegin<0, Interior_Partition> (); 
+      if( it != grid.template leafend<0, Interior_Partition> () )
       {
         width = std::min( width , leafEdgeWidth(*it, geoInfo, faceGeoInfo) );
       }
@@ -228,11 +231,22 @@ public:
 protected:  
   void calcWidths() const 
   {
+#ifndef NDEBUG 
+    // make sure grid width calculation is done on every process 
+    int check = (dm_.sequence() != sequence_) ? 1 : 0;
+    int willCalc = grid_.comm().min( check );
+    assert( check == willCalc );
+#endif
+
     if( dm_.sequence() != sequence_ )
     {
-      width_ = GridWidth::calcLeafWidth( grid_ , geoInfo_, faceGeoInfo_ );
+      double width = GridWidth :: calcLeafWidth( grid_ , geoInfo_, faceGeoInfo_ );
+
+      // take global minmum 
+      width_ = grid_.comm().min( width );
+
       assert( width_ > 0 );
-      sequence_  = dm_.sequence();
+      sequence_ = dm_.sequence();
     }
   }
 };
