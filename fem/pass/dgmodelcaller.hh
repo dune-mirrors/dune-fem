@@ -229,7 +229,7 @@ namespace Dune {
     DGDiscreteModelCaller(const DGDiscreteModelCaller&);
     DGDiscreteModelCaller& operator=(const DGDiscreteModelCaller&);
 
-  private:
+  protected:
     DiscreteModelType& problem_;
 
   protected:  
