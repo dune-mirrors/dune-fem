@@ -7,7 +7,7 @@
 #include <dune/common/fvector.hh> 
 
 #include "callerutility.hh"
-#include "discretemodel.hh"
+#include "dgdiscretemodel.hh"
 #include "modelcallerdefault.hh"
 
 namespace Dune {

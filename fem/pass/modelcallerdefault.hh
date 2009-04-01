@@ -7,7 +7,6 @@
 #include <dune/common/fvector.hh> 
 
 #include "callerutility.hh"
-#include "discretemodel.hh"
 
 namespace Dune {
 
