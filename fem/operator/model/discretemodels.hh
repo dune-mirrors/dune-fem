@@ -2,7 +2,7 @@
 #define DUNE_FEM_LDG_DISCRETEMODELS_HH
 
 #include <dune/fem/pass/dgpass.hh>
-#include <dune/fem/pass/discretemodel.hh>
+#include <dune/fem/pass/dgdiscretemodel.hh>
 #include <dune/fem/pass/selection.hh>
 #include <dune/fem/solver/timeprovider.hh>
 #include <dune/fem/pass/limitpass.hh>
@@ -301,7 +301,7 @@ namespace Dune {
              , int passId1
              >
   class AdvDiffDModel1 :
-    public DiscreteModelDefault
+    public DGDiscreteModelDefault
       < AdvDiffTraits1< Model , NumFlux , polOrd , passId1 > , passId1 >
   {
     Int2Type< passId1 > uVar;
@@ -426,7 +426,7 @@ namespace Dune {
              , int passId2
              >
   class AdvDiffDModel2 :
-    public DiscreteModelDefault
+    public DGDiscreteModelDefault
       < AdvDiffTraits2< Model , NumFlux , polOrd , passId1 , passId2 > 
         , passId1 , passId2 >
   {
@@ -568,7 +568,7 @@ namespace Dune {
              , int passId1
              >
   class AdvDiffDModel3 :
-    public DiscreteModelDefault
+    public DGDiscreteModelDefault
       < AdvDiffTraits3< Model , NumFlux , polOrd , passId1 > , passId1 >
   {
     Int2Type< passId1 > uVar;
@@ -664,7 +664,7 @@ namespace Dune {
              , int passId1
              >
   class AdvDiffDModel3WithSource :
-    public DiscreteModelDefault
+    public DGDiscreteModelDefault
       < AdvDiffTraits3WithSource< Model , NumFlux , polOrd , passId1 > , passId1 >
   {
     Int2Type< passId1 > uVar;
@@ -772,7 +772,7 @@ namespace Dune {
              , int passId2
              >
   class AdvDiffDModel4 :
-    public DiscreteModelDefault< AdvDiffTraits4< Model , NumFlux , polOrd
+    public DGDiscreteModelDefault< AdvDiffTraits4< Model , NumFlux , polOrd
              , passId1
              , passId2
              >
@@ -898,7 +898,7 @@ namespace Dune {
              , int passId1
              >
   class LimiterDiscreteModel1 :
-    public DiscreteModelDefault
+    public DGDiscreteModelDefault
       < LimiterTraits1< Model , polOrd , passId1 > , passId1 >
   {
     Int2Type< passId1 > uVar;
