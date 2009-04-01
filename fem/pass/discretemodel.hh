@@ -1,5 +1,6 @@
 #ifndef DUNE_DISCRETEMODEL_HH
 #define DUNE_DISCRETEMODEL_HH
+#warning DiscreteModel for DGPass should be derived from DGDiscreteModelInterface/Default in fem/pass/dgdiscretemodel.hh - type in Traits should be DGDiscreteModelType
 
 //- Dune includes 
 #include <dune/common/bartonnackmanifcheck.hh>
@@ -259,9 +260,9 @@ namespace Dune {
 
     //! Selector for data tuple to use as arguments for all methods;
     //! this fixes the template type ArgumentTuple.
-    //! If this discrete model is used for a pass n+1, i.e., follwoing
+    //! If this discrete model is used for a pass n+1, i.e., following
     //! passes p0,p1,..,pn then the return type of pass i (i=0,..,n)
-    //! can be used by adding the interger number i in the Selector.
+    //! can be used by adding the integer number i in the Selector.
     //! Assume the following: \$ u_{n+1} = p_{n+1}(u_n,u_{n-1},..,u_1,u_0) \$
     //! where $u_0=u$ is the global argument of the combined passes.
     //! If \$ p_{n+1} \$ only depends on \$ u_0,u_2,u_n \$ then the

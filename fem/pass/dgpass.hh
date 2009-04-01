@@ -8,7 +8,7 @@
 
 #include "pass.hh"
 #include "selection.hh"
-#include "discretemodel.hh"
+// #include "discretemodel.hh"
 #include "dgmodelcaller.hh"
 
 #include <dune/fem/solver/timeprovider.hh>

@@ -1,5 +1,5 @@
-#ifndef DUNE_DISCRETEMODEL_HH
-#define DUNE_DISCRETEMODEL_HH
+#ifndef DUNE_DGDiscreteModel_HH
+#define DUNE_DGDiscreteModel_HH
 
 //- Dune includes 
 #include <dune/common/bartonnackmanifcheck.hh>
@@ -13,7 +13,7 @@ namespace Dune {
    *
    * The problem interface prescribes the methods needed by the implementation
    * of local DG passes. Users need to derive from either this class or the
-   * DiscreteModelDefault class. The methods provided by this class are used by
+   * DGDiscreteModelDefault class. The methods provided by this class are used by
    * LocalDGPass (and possibly other classes) to solve for the space 
    * discretisation of the equation d_t u + div f(u) = s(u), where f
    * represents a flux function and s a source term. Even non-conservative
@@ -21,14 +21,14 @@ namespace Dune {
    * \note The definition of f(u) differs from the usual definition for 
    * conservation laws in the leading sign.
    */
-  template <class DiscreteModelTraits>
-  class DiscreteModelInterface 
+  template <class DGDiscreteModelTraits>
+  class DGDiscreteModelInterface
   {
   public:
     //! Traits class defined by the user
-    typedef DiscreteModelTraits Traits;
+    typedef DGDiscreteModelTraits Traits;
     //! Implementation type for Barton-Nackman trick
-    typedef typename Traits::DiscreteModelType DiscreteModelType;
+    typedef typename Traits::DGDiscreteModelType DGDiscreteModelType;
     //! Function space (we take the discrete one even though the continuous one
     //! would suffice...)
     typedef typename Traits::DiscreteFunctionSpaceType DiscreteFunctionSpaceType;
@@ -218,15 +218,15 @@ namespace Dune {
     }
 
   protected:
-    DiscreteModelType& asImp() { return static_cast<DiscreteModelType&>(*this); }
-    const DiscreteModelType& asImp() const { return static_cast<const DiscreteModelType&>(*this); }
+    DGDiscreteModelType& asImp() { return static_cast<DGDiscreteModelType&>(*this); }
+    const DGDiscreteModelType& asImp() const { return static_cast<const DGDiscreteModelType&>(*this); }
   };
   
-  //! Default implementation of the DiscreteModelInterface where methods for 
+  //! Default implementation of the DGDiscreteModelInterface where methods for
   //! the fluxes and the source term do nothing, so that the user needn't
   //! implement them if not needed.
   //! N1, ..., N9 are passIds on which model depends
-  template< class DiscreteModelTraits
+  template< class DGDiscreteModelTraits
             , int N1 = -1 
             , int N2 = -1 
             , int N3 = -1 
@@ -237,13 +237,13 @@ namespace Dune {
             , int N8 = -1 
             , int N9 = -1 
             >
-  class DiscreteModelDefault : 
-    public DiscreteModelInterface<DiscreteModelTraits> 
+  class DGDiscreteModelDefault :
+    public DGDiscreteModelInterface<DGDiscreteModelTraits>
   {
-    typedef DiscreteModelInterface<DiscreteModelTraits> BaseType;
+    typedef DGDiscreteModelInterface<DGDiscreteModelTraits> BaseType;
   public:
-    typedef DiscreteModelTraits Traits;
-    typedef typename Traits::DiscreteModelType DiscreteModelType;
+    typedef DGDiscreteModelTraits Traits;
+    typedef typename Traits::DGDiscreteModelType DGDiscreteModelType;
     typedef typename Traits::DiscreteFunctionSpaceType DiscreteFunctionSpaceType;
     typedef typename DiscreteFunctionSpaceType::DomainType DomainType;
     typedef typename DiscreteFunctionSpaceType::RangeType RangeType;
@@ -259,9 +259,9 @@ namespace Dune {
 
     //! Selector for data tuple to use as arguments for all methods;
     //! this fixes the template type ArgumentTuple.
-    //! If this discrete model is used for a pass n+1, i.e., follwoing
+    //! If this discrete model is used for a pass n+1, i.e., following
     //! passes p0,p1,..,pn then the return type of pass i (i=0,..,n)
-    //! can be used by adding the interger number i in the Selector.
+    //! can be used by adding the integer number i in the Selector.
     //! Assume the following: \$ u_{n+1} = p_{n+1}(u_n,u_{n-1},..,u_1,u_0) \$
     //! where $u_0=u$ is the global argument of the combined passes.
     //! If \$ p_{n+1} \$ only depends on \$ u_0,u_2,u_n \$ then the
@@ -273,15 +273,15 @@ namespace Dune {
     //! depends on the passes with following passIds: firstPassId , passId2 
     //! , passId5 then the desired Selector is 
     //! Selector< firstPassId , passId2 , passId5 > ...
-    //! If there's no SelectorType in user-implemented DiscreteModel then
+    //! If there's no SelectorType in user-implemented DGDiscreteModel then
     //! this Selector is used. Therefore it's good to pass passIds to this class
-    //! and avoid writing SelectorType in user-implemented DiscreteModel.
+    //! and avoid writing SelectorType in user-implemented DGDiscreteModel.
     //! The point where a user specifies what's going to be in the Selector is
-    //! in the template declaration of the DiscreteModel where one names
-    //! passIds necessary for this DiscreteModel
+    //! in the template declaration of the DGDiscreteModel where one names
+    //! passIds necessary for this DGDiscreteModel
     typedef Selector< N1 , N2 , N3 , N4 , N5 , N6 , N7 , N8 , N9 > SelectorType;
   public:
-    /** \copydoc Dune::DiscreteModelInterface::hasFlux() const
+    /** \copydoc Dune::DGDiscreteModelInterface::hasFlux() const
      *
      *  The default implementation always returns false
      */
@@ -290,7 +290,7 @@ namespace Dune {
       return false;
     }
     
-    /** \copydoc Dune::DiscreteModelInterface::hasSource() const
+    /** \copydoc Dune::DGDiscreteModelInterface::hasSource() const
      *
      *  The default implementation always returns false
      */
@@ -299,7 +299,7 @@ namespace Dune {
       return false;
     }
     
-    /** \copydoc Dune::DiscreteModelInterface::hasMass() const
+    /** \copydoc Dune::DGDiscreteModelInterface::hasMass() const
      *
      *  The default implementation always returns false
      */
@@ -391,10 +391,10 @@ namespace Dune {
     { }
   };
 
-  //! Default implementation of the DiscreteModelInterface where methods for 
+  //! Default implementation of the DGDiscreteModelInterface where methods for
   //! the fluxes and the source term do nothing, so that the user needn't
   //! implement them if not needed.
-  template <class DiscreteModelTraits
+  template <class DGDiscreteModelTraits
             , int N1 = -1 
             , int N2 = -1 
             , int N3 = -1 
@@ -405,12 +405,12 @@ namespace Dune {
             , int N8 = -1 
             , int N9 = -1 
             >
-  class DiscreteModelDefaultWithInsideOutSide : 
-    public DiscreteModelDefault<DiscreteModelTraits,N1,N2,N3,N4,N5,N6,N7,N8,N9> 
+  class DGDiscreteModelDefaultWithInsideOutSide :
+    public DGDiscreteModelDefault<DGDiscreteModelTraits,N1,N2,N3,N4,N5,N6,N7,N8,N9>
   {
   public:
-    typedef DiscreteModelTraits Traits;
-    typedef typename Traits::DiscreteModelType DiscreteModelType;
+    typedef DGDiscreteModelTraits Traits;
+    typedef typename Traits::DGDiscreteModelType DGDiscreteModelType;
     typedef typename Traits::DiscreteFunctionSpaceType DiscreteFunctionSpaceType;
     typedef typename DiscreteFunctionSpaceType::DomainType DomainType;
     typedef typename DiscreteFunctionSpaceType::RangeType RangeType;
@@ -423,7 +423,7 @@ namespace Dune {
 
   public:
     //! \brief default constructor 
-    DiscreteModelDefaultWithInsideOutSide() 
+    DGDiscreteModelDefaultWithInsideOutSide()
       : enVol_(-1.0) , nbVol_(-1.0) , en_(0) , nb_(0) 
     {}
 
