@@ -14,7 +14,7 @@
 #include <dune/fem/gridpart/gridpart.hh>
 
 #include <dune/fem/pass/dgpass.hh>
-#include <dune/fem/pass/discretemodel.hh>
+#include <dune/fem/pass/dgdiscretemodel.hh>
 #include <dune/fem/pass/selection.hh>
 #include <dune/fem/solver/timeprovider.hh>
 
@@ -67,7 +67,7 @@ namespace Dune {
   // **********************************************
   template <class GlobalTraitsImp, class Model>
   class LimiterDefaultDiscreteModel :
-    public DiscreteModelDefaultWithInsideOutSide< LimiterDefaultTraits<GlobalTraitsImp,Model> > 
+    public DGDiscreteModelDefaultWithInsideOutSide< LimiterDefaultTraits<GlobalTraitsImp,Model> > 
   {
   public:
     typedef LimiterDefaultTraits<GlobalTraitsImp,Model> Traits;
