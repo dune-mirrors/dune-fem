@@ -413,9 +413,10 @@ public:
   {
     if (param_->willWrite(willWrite())) {
       if (sequence_) 
-        sequence_ << writeStep_ << " " << writeStep_ << std::endl;
+        sequence_ << writeStep_ << " " << writeCalls_ << std::endl;
       writeData();
     }
+    ++writeCalls_;    
   }
   void write(const TimeProviderBase& tp) const
   {
@@ -424,6 +425,7 @@ public:
         sequence_ << writeStep_ << " " << tp.time() << std::endl;
       writeData();
     }
+    ++writeCalls_;
   }
   void writeData() const
   {
@@ -451,7 +453,6 @@ public:
       std::cout << "DataOutput["<<myRank_<<"]::write data with step number " << writeStep_ << std::endl;
     }
     saveTime_ += saveStep_;
-    ++writeCalls_;
     ++writeStep_;
   }
 
