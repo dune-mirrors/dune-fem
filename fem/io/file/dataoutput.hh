@@ -395,37 +395,48 @@ protected:
     }
     Parameter::write("parameter.log");
   }
-private:
+public:
+  /** \brief returns true if data will be written on next write call
+  */
   bool willWrite(const TimeProviderBase& tp) const 
   {
-    return ( (saveStep_>0 && tp.time() >= saveTime_ ) || 
+    return param_->willWrite( (saveStep_>0 && tp.time() >= saveTime_ ) || 
              // tp.end() ||
            (saveCount_>0 && writeCalls_%saveCount_ == 0) );
   }
+  /** \brief returns true if data will be written on next write call
+  */
   bool willWrite() const 
   {
-    return (saveCount_>0 && writeCalls_%saveCount_ == 0) ;
+    return param_->willWrite( (saveCount_>0 && writeCalls_%saveCount_ == 0) );
   }
-public:
-  /** \brief write given data to disc
+  /** \brief write given data to disc, evaluates parameter savecount
   */
-  void write() const 
+  void write( const std::string& out="" ) const 
   {
-    if (param_->willWrite(willWrite())) {
-      if (sequence_) 
-        sequence_ << writeStep_ << " " << writeCalls_ << std::endl;
+    if (willWrite()) {
+      if (sequence_)
+      {
+        sequence_ << writeStep_ << " " << writeCalls_ << out << std::endl;
+        //sequence_ << "writestep:" << writeStep_ << " writecall:" << writeCalls_ << out << std::endl;
+      }
       writeData();
     }
     ++writeCalls_;    
   }
-  void write(const TimeProviderBase& tp) const
+  /** \brief write given data to disc, evaluates parameter savecount and savestep
+  */
+  void write(const TimeProviderBase& tp, const std::string& out="") const
   {
-    if (param_->willWrite(willWrite(tp))) {
+    if (willWrite(tp)) {
       if (sequence_)
-        sequence_ << writeStep_ << " " << tp.time() << std::endl;
+      {
+        sequence_ << writeStep_ << " " << tp.time() << out << std::endl;      
+        //sequence_ << "writestep:" << writeStep_ << " time:" << tp.time() << out << std::endl;
+      }
       writeData();
     }
-    ++writeCalls_;
+    ++writeCalls_;    
   }
   void writeData() const
   {
