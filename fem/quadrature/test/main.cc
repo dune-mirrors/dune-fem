@@ -5,18 +5,16 @@
 #include "../../misc/test.hh"
 #include "../../misc/suite.hh"
 
-// if grid dim is not defined simply use ALBERTA_DIM 
-#ifndef GRIDDIM 
-#define GRIDDIM ALBERTA_DIM
-#endif
-
 #include "cachequad_test.hh"
 #include "quad_test.hh"
 
-int main() {
-
+int main()
+{
   std::stringstream albertaGridFile;
-  albertaGridFile << "../../../macrogrids/AlbertaGrid/" << GRIDDIM << "dgrid.al";
+#if HAVE_ALBERTA
+  albertaGridFile << "../../../macrogrids/AlbertaGrid/" << ALBERTA_DIM << "dgrid.al";
+#endif
+
   std::string aluGridHexaFile("../../../macrogrids/ALU3dGrid/cube.hexa");
   std::string aluGridTetraFile("../../../macrogrids/ALU3dGrid/macro.small");
   std::string dgf2DGridFile("../../../macrogrids/DGFMacrogrids/examplegrid5.dgf");
