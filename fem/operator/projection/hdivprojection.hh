@@ -12,6 +12,9 @@
 #include <dune/fem/space/dgspace.hh>
 #include <dune/fem/space/combinedspace.hh>
 
+// make sure higher order Lagrange works (define USE_TWISTFREE_MAPPER)
+#include <dune/fem/space/lagrangespace.hh>
+
 #ifdef ENABLE_UG 
 #include <dune/grid/uggrid.hh>
 #endif
@@ -70,7 +73,7 @@ class HdivProjection : public SpaceOperatorInterface<DiscreteFunctionType>
   typedef FunctionSpace<DomainFieldType,RangeFieldType,DiscreteFunctionSpaceType::dimDomain,dimRange> ElSpaceType;
 
   enum { gradPolOrd = ((polOrdN - 1) < 0) ? 0 : (polOrdN - 1) };
-  enum { bubblePolOrd = ((polOrdN - 2) < 0) ? 0 : (polOrdN - 2) };
+  enum { bubblePolOrd = (polOrdN + 1) };
   
   template <class Space> struct Spaces; 
   
@@ -81,9 +84,14 @@ class HdivProjection : public SpaceOperatorInterface<DiscreteFunctionType>
             template <class,class,int,template <class> class> class DiscreteFunctionSpaceImp>
   struct Spaces<DiscreteFunctionSpaceImp<FunctionSpaceImp,GridPartImp,polOrd,StorageImp> >
   {
+    //typedef LagrangeDiscreteFunctionSpace<ElSpaceType,GridPartImp,gradPolOrd,StorageImp> ElementGradientSpaceType;
+    //typedef LegendreDiscontinuousGalerkinSpace<ElSpaceType,GridPartImp,gradPolOrd,StorageImp> ElementGradientSpaceType;
     typedef DiscreteFunctionSpaceImp<ElSpaceType,GridPartImp,gradPolOrd,StorageImp> ElementGradientSpaceType;
+    //typedef DiscontinuousGalerkinSpace<ElSpaceType,GridPartImp,gradPolOrd,StorageImp> ElementGradientSpaceType;
     typedef DiscreteFunctionSpaceImp<FaceSpaceType,GridPartType,polOrdN,StorageImp> FaceDiscreteSpaceType; 
-    typedef DiscreteFunctionSpaceImp<ElSpaceType,GridPartType, bubblePolOrd,StorageImp> ElementDiscreteSpaceType; 
+    //typedef LegendreDiscontinuousGalerkinSpace<FaceSpaceType,GridPartType,polOrdN,StorageImp> FaceDiscreteSpaceType; 
+    //typedef DiscontinuousGalerkinSpace<FaceSpaceType,GridPartType,polOrdN,StorageImp> FaceDiscreteSpaceType; 
+    typedef LagrangeDiscreteFunctionSpace< ElSpaceType, GridPartType,  bubblePolOrd,StorageImp> ElementDiscreteSpaceType; 
   };
   
   template <class DiscreteFunctionSpaceImp,
@@ -218,211 +226,167 @@ class HdivProjection : public SpaceOperatorInterface<DiscreteFunctionType>
   }
   
 private:  
-  double bubbleQuad(const DomainType & point) const 
-  {
-    double ret = 1.0;
-    for(int i=0; i<DomainType::dimension; ++i)
-    {
-      ret *= 4.0 * point[i] * (1.0-point[i]);
-    }
-    return ret;
-  }
-  
-  // bubble function for simplex 
-  double gradBubbleQuad(int deri, const DomainType & point) const 
-  {
-    assert( deri >= 0 );
-    assert( deri < DomainType::dimension );
-      
-    double ret = 1.0;
-
-    for(int i=0; i<DomainType::dimension; ++i) 
-    {
-      if( i != deri ) ret *= (4.0* point[i] *(1.0 - point[i]));
-      else ret *= 4.0 * (1 - 2.0 *point[i]);
-    }
-    return ret; 
-  }
-
-  // bubble function for simplex 
-  double bubbleSimplex(const DomainType & point) const 
-  {
-    double ret = 1.0;
-    double lambdaNull = 1.0;
-    for(int i=0; i<DomainType::dimension; ++i) 
-    {
-      ret *= point[i];
-      lambdaNull -= point[i];
-    }
-    ret *= lambdaNull;
-    return ret; 
-  }
-  
-  // bubble function for simplex 
-  double gradBubbleSimplex(int deri, const DomainType & point) const 
-  {
-    assert( deri >= 0 );
-    assert( deri < DomainType::dimension );
-      
-    double ret = 1.0;
-    double lambdaNull = 1.0;
-
-    for(int i=0; i<DomainType::dimension; ++i) 
-    {
-      if( i != deri )  ret *= point[i];
-      lambdaNull -= point[i];
-    }
-    ret *= lambdaNull;
-    
-    double first = -1.0;
-    for(int i=0; i<DomainType::dimension; ++i)
-    {
-      first *= point[i]; 
-    }
-    return (ret+first); 
-  }
-  
-  void gradientBubbleSimplex(const DomainType & point, DomainType & result) const 
-  {
-    for(int i=0; i<DomainType::dimension; ++i) 
-    {
-      result[i] = gradBubbleSimplex(i,point); 
-    }
-  }
-
-  void gradientBubbleQuad(const DomainType & point, DomainType & result) const 
-  {
-    for(int i=0; i<DomainType::dimension; ++i) 
-    {
-      result[i] = gradBubbleQuad(i,point); 
-    }
-  }
-
-  template <class BaseFunctionSetType, class QuadratureType, class JacoRangeType>
-  void evalBubbleBase(const BaseFunctionSetType & bSet, int func, QuadratureType & quad,
-      int quadPoint, JacoRangeType & result) const 
-  {
-    const DomainType & point = quad.point(quadPoint);
-    
-    bSet.jacobian(func,quad,quadPoint,result);
-    //double bub = bubbleSimplex(point);
-    double bub = bubbleQuad(point);
-    result *= bub; 
-    
-    typedef typename ElementDiscreteSpaceType :: RangeType ElRangeType; 
-    ElRangeType bTmp; 
-    bSet.evaluate(func,quad[quadPoint], bTmp);
-    RangeType tmp; 
-    gradientBubbleQuad(point,tmp);
-    //gradientBubbleSimplex(point,tmp);
-
-    tmp *= bTmp[0];
-    result[0]= tmp;
-  }
 
   // only works for 2d right now 
-  void curl(const DomainType & arg, DomainType & dest) const 
+  void curl(const DomainType & arg, DomainType & dest, const int d ) const 
   {
-    dest[0] =  arg[1];
-    dest[1] = -arg[0];
+    if( DomainType :: dimension == 2 ) 
+    {
+      dest[0] =  arg[1];
+      dest[1] = -arg[0];
+
+      return ;
+    }
+    else if( DomainType :: dimension == 3 )
+    {
+      if( d == 0 ) 
+      {
+        dest[0] =  arg[1];
+        dest[1] = -arg[0];
+        dest[2] =  0; 
+        return ;
+      }
+      else 
+      {
+        dest[0] =  arg[2];
+        dest[1] =  0;
+        dest[2] = -arg[0]; 
+        return ;
+      }
+    }
+    else 
+    {
+      assert( false );
+      abort();
+    }
   }
 
-  void evalBubbleFunc(int comp, const DomainType & point, 
-                      RangeType & result) const 
-  {
-    assert( comp == 0 );
-    gradientBubbleSimplex(point,result);
-  }
-
-  template <class DiscreteFunctionSpaceImp, class EntityType, 
-            class LocalFunctionType, class MatrixType, class VectorType> 
-  void bubblePart(const DiscreteFunctionSpaceImp & space, 
+  template <class EntityType, 
+            class LocalFunctionType, 
+            class ArrayType, 
+            class MatrixType, 
+            class VectorType> 
+  void bubblePart(const ElementDiscreteSpaceType& space, 
                   EntityType & en, 
                   const LocalFunctionType & uLF, const int startRow , 
+                  ArrayType& uRets, 
                   MatrixType & matrix, VectorType& rhs ) const 
   {
-    typedef DiscreteFunctionSpaceImp FunctionSpaceType;
-    typedef typename FunctionSpaceType::BaseFunctionSetType BaseFunctionSetType;
-    typedef typename FunctionSpaceType::Traits::GridType GridType;
-    typedef typename FunctionSpaceType::Traits::GridPartType GridPartType;
-    typedef typename GridPartType :: IntersectionIteratorType IntersectionIteratorType;
-    typedef typename FunctionSpaceType::Traits::IteratorType Iterator;
-    typedef typename GridType :: template Codim<0> :: Entity EntityType;
-    typedef typename GridType :: template Codim<0> :: EntityPointer EntityPointerType;
-    typedef typename GridType :: Traits :: LocalIdSet LocalIdSetType; 
 
-    typedef typename FunctionSpaceType::RangeFieldType RangeFieldType; 
-    typedef typename FunctionSpaceType::DomainFieldType DomainFieldType;
-    typedef typename FunctionSpaceType::RangeType RangeType; 
+    typedef typename ElementDiscreteSpaceType :: BaseFunctionSetType BaseFunctionSetType;
+    typedef typename ElementDiscreteSpaceType :: LagrangePointSetType  LagrangePointSetType;
+    typedef typename ElementDiscreteSpaceType :: Traits::GridPartType GridPartType;
 
-    typedef typename ElementDiscreteSpaceType::JacobianRangeType JacobianRangeType; 
-    typedef typename FunctionSpaceType :: DomainType DomainType;
+    typedef typename ElementDiscreteSpaceType :: JacobianRangeType JacobianRangeType; 
+    typedef typename ElementDiscreteSpaceType :: DomainType DomainType;
     
     enum { dim = GridType::dimension };
     
-    const BaseFunctionSetType bSet = space.baseFunctionSet(en); 
-    int polOrd = 2 * space.order() + 1;
+    const LagrangePointSetType& lagrangePointSet = space.lagrangePointSet( en ); 
+    const BaseFunctionSetType bSet = space.baseFunctionSet( en ); 
+    const int polOrd = 2 * space.order(); // + 2;
     
     typedef CachingQuadrature <GridPartType , 0> QuadratureType; 
 
-    //const int localRows = 2 ;//bSet.numBaseFunctions(); 
-    const int localRows = bSet.numBaseFunctions(); 
-    //std::cout << localRows << " local bubbles \n";
     const int cols = uLF.numDofs();
+    assert( uRets.size() == cols );
 
     QuadratureType quad (en,polOrd);
     DomainType result;
+    JacobianRangeType valTmp;
     JacobianRangeType val;
     DomainType bVal; 
     DomainType aVal; 
 
+    // get geometry 
+    typedef typename EntityType :: Geometry Geometry ;
+    const Geometry& geo = en.geometry();
+    // get geometry type 
+    const GeometryType& type = geo.type(); 
+    const int bubbleOffset = (type.isSimplex()) ? 0 : baseFunctionOffset( 0 );
+
+    // get number of dofs for codim 0 (skip first for) 
+    const int enDofs = numberOfBubbles( lagrangePointSet.numDofs( 0 ), type );
+
+    // type of jacobian inverse 
+    typedef typename Geometry :: ctype ctype; 
+    enum { cdim  = Geometry :: coorddimension };
+    enum { mydim = Geometry :: mydimension    };
+    typedef FieldMatrix<ctype, cdim, mydim> JacobianInverseType;
+
     const int quadNop = quad.nop();
     for (int l = 0; l < quadNop ; ++l)
     {
-      const double intel = quad.weight(l) * 
-        en.geometry().integrationElement(quad.point(l));
+      // get jacobian inverse 
+      const JacobianInverseType& inv = geo.jacobianInverseTransposed( quad.point(l) );
       
+      // get integration element 
+      const double intel = quad.weight(l) * 
+        geo.integrationElement(quad.point(l));
+
+      // evaluate u 
       uLF.evaluate(quad[l], result);
-      for(int i=0; i<localRows; ++i)     
+
+      // evaluate base functions of u 
+      for(int j=0; j<cols; ++j)     
+      {
+        uLF.baseFunctionSet().evaluate(j, quad[l], uRets[j] );
+      }
+
+      // for all bubble functions 
+      for( int i = 0 ; i<enDofs; ++i) 
       {
         // we might have other row 
         int row = startRow + i;
+
+        // map to lagrange base function number 
+        const int baseFct = 
+          lagrangePointSet.entityDofNumber( 0, 0, i + bubbleOffset ); 
         
-        evalBubbleBase(bSet,i,quad,l,val);
-        curl(val[0],aVal);
+        // evaluate gradient 
+        bSet.jacobian( baseFct, quad[l], valTmp );
 
-        double r = aVal * result; 
-        r *= intel; 
-        rhs[row] += r; 
+        //apply inverse 
+        inv.mv( valTmp[0], val[0] );
 
-        // for cols make matrix 
-        for(int j=0; j<cols; ++j)     
+        for(int d = 0; d<mydim-1; ++d ) 
         {
-          uLF.baseFunctionSet().evaluate(j, quad[l], bVal);
-          double t = aVal * bVal;
-          t *= intel; 
-          matrix[row][j] += t;
+          // apply curl 
+          curl(val[0], aVal, d);
+
+          double r = aVal * result; 
+          r *= intel; 
+          rhs[row] += r; 
+
+          // for cols make matrix 
+          for(int j=0; j<cols; ++j)     
+          {
+            double t = aVal * uRets[ j ];
+            t *= intel; 
+            matrix[ row ][ j ] += t;
+          }
+
+          // increase row 
+          row += d;
         }
       }
     }
   }
 
-  template <class EntityType, class LocalFunctionType,
+  template <class EntityType, class LocalFunctionType, class ArrayType, 
             class MatrixType, class VectorType> 
   void gradientPart(const ElementGradientSpaceType & space, 
                     EntityType & en, 
-                    const LocalFunctionType & uLF, const int startRow , 
-                    MatrixType& matrix, VectorType& rhs ) const 
+                    const LocalFunctionType & uLF, const int startRow ,
+                    ArrayType& uRets, MatrixType& matrix, VectorType& rhs ) const 
   {
-    if( space.order() <= 0 ) return ;
-
-    typedef typename ElementGradientSpaceType::BaseFunctionSetType BaseFunctionSetType;
-    const BaseFunctionSetType bSet = space.baseFunctionSet(en); 
+    typedef typename ElementGradientSpaceType :: BaseFunctionSetType BaseFunctionSetType;
+    const BaseFunctionSetType bSet = space.baseFunctionSet( en ); 
     int polOrd = 2 * space.order() + 1;
     
     typedef CachingQuadrature <GridPartType , 0> QuadratureType; 
 
-    const int localRows = bSet.numBaseFunctions(); 
+    const int localRows = gradientBaseFct( bSet ); 
     const int cols = uLF.numDofs();
 
     QuadratureType quad (en,polOrd);
@@ -430,30 +394,58 @@ private:
     RangeType result;
     RangeType uPhi;
 
-    typedef typename ElementGradientSpaceType::JacobianRangeType GradJacobianRangeType; 
+    typedef typename ElementGradientSpaceType :: JacobianRangeType GradJacobianRangeType; 
+    GradJacobianRangeType gradTmp;
     GradJacobianRangeType gradPhi;
+
+    typedef typename EntityType :: Geometry Geometry ;
+    const Geometry& geo = en.geometry();
+
+    typedef typename Geometry :: ctype ctype; 
+    enum { cdim  = Geometry :: coorddimension };
+    enum { mydim = Geometry :: mydimension    };
+    typedef FieldMatrix<ctype, cdim, mydim> JacobianInverseType;
 
     const int quadNop = quad.nop();
     for (int l = 0; l < quadNop ; ++l)
     {
+      // get jacobian inverse 
+      const JacobianInverseType& inv = geo.jacobianInverseTransposed( quad.point( l ) );
+
+      // get integration element 
       const double intel = quad.weight(l) * 
-        en.geometry().integrationElement(quad.point(l));
+        geo.integrationElement( quad.point( l ) );
       
+      // evaluate uLF 
       uLF.evaluate(quad[l], result);
+
+      // evaluate base function on quadrature point 
+      for(int j=0; j<cols; ++j)     
+      {
+        uLF.baseFunctionSet().evaluate(j, quad[l], uRets[ j ] );
+      }
+
       for(int i=0; i<localRows; ++i)     
       {
         // we might have other row 
-        int row = startRow + i;
-        
-        bSet.jacobian(i,quad,l,gradPhi);
-        double uDGVal = result * gradPhi[0];
+        const int row = startRow + i;
+
+        // evaluate gradient (skip first function because this function
+        // is constant and the gradient therefore 0 )
+        bSet.jacobian( baseFunctionOffset( i ), quad[l], gradTmp);
+
+        // apply jacobian Inverse 
+        inv.mv( gradTmp[0], gradPhi[0] );
+
+        const double uDGVal = result * gradPhi[0];
         rhs[row] += uDGVal * intel;  
 
         // for cols make matrix 
         for(int j=0; j<cols; ++j)     
         {
-          uLF.baseFunctionSet().evaluate(j, quad[l], uPhi);
-          double val = uPhi * gradPhi[0]; 
+          //uLF.baseFunctionSet().evaluate(j, quad[l], uPhi);
+          //const double val = uPhi * gradPhi[0]; 
+          const double val = uRets[ j ] * gradPhi[0]; 
           matrix[row][j] += val * intel;
         }
       }
@@ -494,6 +486,23 @@ private:
   };
 #endif
 
+  enum { gradFuncOffset = 1 };
+  template <class GradBaseFunctionSet>
+  int gradientBaseFct(const GradBaseFunctionSet& gradSet) const 
+  {
+    return (gradPolOrd <= 0) ? 0 : gradSet.numBaseFunctions() - gradFuncOffset;
+  }
+
+  int baseFunctionOffset(const int i) const 
+  {
+    return i + gradFuncOffset; 
+  }
+
+  int numberOfBubbles( const int bubbles , const GeometryType& type) const 
+  {
+    return (type.isSimplex()) ? bubbles : bubbles - gradFuncOffset;
+  }
+
   //! do projection of discrete functions  
   void project(const DiscreteFunctionType &uDG,
                DiscreteFunctionType & velo ) const 
@@ -525,9 +534,6 @@ private:
 
     const int polOrd = 2 * space.order() + 2;
 
-    // only working for polOrd = 1 at the moment 
-    //assert( space.order() == 1 );
-    
     typedef typename FaceDiscreteSpaceType :: BaseFunctionSetType FaceBSetType  ; 
     typedef typename FaceDiscreteSpaceType :: RangeType FaceRangeType; 
     
@@ -549,15 +555,6 @@ private:
       }
     }
 
-    // only implemented for order 1 right now 
-    if( space.order() > 1 )
-    {
-      std::cerr << std::endl;
-      std::cerr << "WARNING: H-div projection not implemented for polOrd > 1 ! \n\n";
-      // return doing nothing
-      return ;
-    }
-
     // colums are dofs of searched function 
     LocalFuncType lf = uDG.localFunction(*start); 
     const int numDofs = lf.numDofs();
@@ -568,28 +565,27 @@ private:
     // number of dofs on faces 
     const int numFaceDofs = faceSet.numBaseFunctions();
     
-    const ElementBaseSetType elSet = elSpace_.baseFunctionSet(*start);
-    const int numBubbleDofs = elSet.numBaseFunctions();
+    const GeometryType startType = start->type();
+
+    // get all element dofs from Lagrange space 
+    const int numBubbleDofs = (space.order() <= 1) ? 0 : 
+          numberOfBubbles( elSpace_.lagrangePointSet( *start ).numDofs ( 0 ) , startType );
+
     //std::cout << numBubbleDofs << " bubbleDofs \n";
   
     const GradientBaseSetType gradSet = gradSpace_.baseFunctionSet(*start);
     // in case of linear space the is zero 
-    const int numGradDofs = (space.order() <= 1) ? 0 : gradSet.numBaseFunctions();
-    // std::cout << numGradDofs << " numGradDofs \n";
+    const int numGradDofs = gradientBaseFct( gradSet ); 
+    //std::cout << numGradDofs << " numGradDofs \n";
   
     const ReferenceElement< coordType, dim > & refElem =
-        ReferenceElements< coordType, dim >::general(start->geometry().type());
+        ReferenceElements< coordType, dim >::general( startType );
 
     // get number of faces 
     const int overallFaceDofs = numFaceDofs * refElem.size(1);
     //std::cout << overallFaceDofs << " allFAceDofs \n";
 
-    const int rows = (space.order() <= 1) ? (overallFaceDofs) : (overallFaceDofs + numGradDofs + numBubbleDofs);
-
-    //const int rows = (overallFaceDofs + numGradDofs + numBubbleDofs);
-    //const int rows = (space.order() <= 1) ? (overallFaceDofs) : (overallFaceDofs + numGradDofs);
-
-    //std::cout << "faceDofs " << overallFaceDofs << " | rows " << rows << "\n";
+    const int rows = (overallFaceDofs + numGradDofs + numBubbleDofs);
     
     // number of columns 
     const int cols = numDofs; 
@@ -603,6 +599,7 @@ private:
     }
 
     MutableArray< RangeFieldType > rets(numDofs);
+    MutableArray< RangeType > uRets(numDofs);
 
     typedef FieldMatrix<RangeFieldType,localBlockSize,localBlockSize> FieldMatrixType;
 
@@ -613,6 +610,7 @@ private:
     VectorType fRhs(0.0);
     VectorType x(0.0);
 
+    assert( numDofs == localBlockSize );
     if( numDofs != localBlockSize ) 
     {
       DUNE_THROW(InvalidStateException,"wrong sizes ");
@@ -641,18 +639,23 @@ private:
       {
         // reset values 
         matrix = 0.0;
+
         // reset rhs 
-        for(int i=0; i<numDofs; ++i) 
+        for(int i=0; i<rows; ++i) 
         {
           rhs[i] = 0.0;
         }
 
         // fill non-symetric matrix 
-        fillMatrix(gridPart_,en,uDG,faceSpace_,polOrd,numDofs,numFaceDofs,
-                   rets,matrix,rhs);
+        fillMatrix(gridPart_,en,uDG,
+                   faceSpace_,
+                   gradSpace_, overallFaceDofs, 
+                   elSpace_, rows - numBubbleDofs, 
+                   polOrd,numDofs,numFaceDofs,
+                   rets,uRets, matrix,rhs);
 
         // apply least square 
-        matrix.multTransposed(rhs,fakeRhs);
+        matrix.multTransposed(rhs, fakeRhs);
         fakeMatrix.multiply_AT_A(matrix);
 
         // copy values 
@@ -674,8 +677,12 @@ private:
 
         assert( cols == rows );
         // fill inv and fRhs directly 
-        fillMatrix(gridPart_,en,uDG,faceSpace_,polOrd,numDofs,numFaceDofs,
-                   rets,inv,fRhs);
+        fillMatrix(gridPart_,en,uDG,
+                   faceSpace_,
+                   gradSpace_, rows - numBubbleDofs - numGradDofs,
+                   elSpace_, rows - numBubbleDofs, 
+                   polOrd,numDofs,numFaceDofs,
+                   rets, uRets, inv,fRhs);
       }
 
       // solve linear system 
@@ -695,14 +702,18 @@ private:
   template <class GridPartType,
             class EntityType,
             class ArrayType, 
+            class Array2Type,
             class MatrixType,
             class VectorType>
   void fillMatrix(const GridPartType& gridPart,
                   const EntityType& en,
                   const DiscreteFunctionType& uDG,
                   const FaceDiscreteSpaceType& faceSpace,
+                  const ElementGradientSpaceType& gradSpace, const int startGradDofs, 
+                  const ElementDiscreteSpaceType& elSpace, const int startBubbleDofs,
                   const int polOrd, const int numDofs, const int numFaceDofs,
-                  ArrayType& rets, MatrixType& matrix, VectorType& rhs) const
+                  ArrayType& rets, Array2Type& uRets, 
+                  MatrixType& matrix, VectorType& rhs) const
   {
     typedef typename GridPartType :: IntersectionIteratorType IntersectionIteratorType;
     typedef typename IntersectionIteratorType::Intersection IntersectionType;
@@ -754,7 +765,7 @@ private:
         // get local function of neighbor 
         const LocalFuncType uNeighLf = uDG.localFunction(nb);
 
-        typedef TwistUtility<GridType> TwistUtilityType;
+        //typedef TwistUtility<GridType> TwistUtilityType;
         // for conforming situations apply Quadrature given
         //if( TwistUtilityType::conforming(gridPart.grid(),inter) )
         if( inter.conforming() )
@@ -834,6 +845,39 @@ private:
         }
       }
     }
+
+    // add gradient part 
+    if( gradPolOrd > 0 ) 
+    {
+      gradientPart(gradSpace, en, uLF, startGradDofs, uRets, matrix, rhs );
+    }
+
+    // add bubble part 
+    if( bubblePolOrd > 2 ) 
+    {
+      bubblePart(elSpace, en, uLF, startBubbleDofs, uRets, matrix, rhs);
+    }
+
+    // printMatrix( matrix );
+  }
+
+  template <class MatrixType>
+  void printMatrix(const MatrixType& matrix) const 
+  {
+    std::cout << "Print Matrix \n";
+    for(size_t row = 0; row < matrix.N(); ++row) 
+    {
+      std::cout << row << ": ";
+      for(size_t col = 0; col< matrix.M(); ++col) 
+      {
+        if( std::abs(  matrix[row][col] ) < 1e-12 ) 
+          std::cout << "0 ";
+        else 
+          std::cout << matrix[row][col] << " ";
+      }
+      std::cout << std::endl; 
+    }
+    std::cout << "Finished print Matrix \n";
   }
       
   template <class IntersectionIteratorType, 
@@ -873,7 +917,7 @@ private:
       // get unit outer normal 
       const double faceVol = unitNormal.two_norm();
       unitNormal *= 1.0/faceVol;
-                   
+
       // integration weight 
       const double intel = faceVol * faceQuadInner.weight(l);
 
@@ -891,7 +935,7 @@ private:
       // evaluate base functions 
       for(int i=0; i<numDofs; ++i) 
       {
-        bSet.evaluate(i,faceQuadInner[l], ret);
+        bSet.evaluate(i, faceQuadInner[l], ret);
         rets[i]  = ret * unitNormal;
         rets[i] *= intel;
       }
@@ -899,8 +943,8 @@ private:
       int row = firstRow; 
       for(int j=0; j<numFaceDofs; ++j, ++row )
       {
-        faceSet.evaluate(j,faceQuadInner.localPoint(l), faceVal);
-        rhs[row] += val*faceVal[0];
+        faceSet.evaluate(j, faceQuadInner.localPoint(l), faceVal);
+        rhs[row] += val * faceVal[0];
 
         for(int i=0; i<numDofs; ++i) 
         {
@@ -978,7 +1022,7 @@ public:
           {
             const LocalFuncType uNeighLf = velo.localFunction(nb);
             
-            typedef TwistUtility<GridType> TwistUtilityType;
+            //typedef TwistUtility<GridType> TwistUtilityType;
             // for conforming situations apply Quadrature given
             //if( TwistUtilityType::conforming(gridPart.grid(),inter) )
             if( inter.conforming() )
