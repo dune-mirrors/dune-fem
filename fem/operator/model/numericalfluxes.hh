@@ -137,7 +137,7 @@ namespace Dune
           {
             return model_;
           }
-          Model& model() 
+          Model& model() // in LLFFlux model_ is const, but here model contains wet-or-dry status flags, which are updated, therefore, const can't be used here
           {
             return model_;
           }
