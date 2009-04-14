@@ -144,50 +144,6 @@ protected:
     }
   };
 
-  template <class Entity>
-  class GnuplotOutputer {
-    std::ostream& out_;
-    const Entity& en_;
-  public:
-    //! Constructor
-    GnuplotOutputer(std::ostream& out,
-                    const Entity& en) : 
-    out_(out),
-    en_(en)
-    {
-    }
-
-    //! Applies the setting on every DiscreteFunction/LocalFunction pair.
-    template <class DFType>
-    void visit(DFType* df) 
-    {
-      typedef typename DFType :: Traits Traits;
-      typedef typename Traits :: LocalFunctionType LocalFunctionType;
-      typedef typename Traits :: DiscreteFunctionSpaceType DiscreteFunctionSpaceType;
-      typedef typename DiscreteFunctionSpaceType :: IteratorType IteratorType;
-      typedef typename DiscreteFunctionSpaceType :: GridPartType GridPartType;
-
-      typedef typename DiscreteFunctionSpaceType :: DomainType DomainType;
-      typedef typename DiscreteFunctionSpaceType :: RangeType RangeType;
- 
-      enum{ dimDomain = DiscreteFunctionSpaceType :: dimDomain };
-      enum{ dimRange = DiscreteFunctionSpaceType :: dimRange };
-
-      CachingQuadrature<GridPartType,0> quad(en_,df->space().order());
-      LocalFunctionType lf = df->localFunction(en_);
-      for (int i=0;i<quad.nop();++i) {
-        RangeType u;
-        DomainType x = en_.geometry().global(quad.point(i));
-        lf.evaluate(quad[i],u);
-        for (int i = 0; i < dimDomain; ++i) 
-          out_ << x[i] << " ";
-        for (int i = 0; i < dimRange; ++i) 
-          out_ << u[i] << "   ";
-        out_ << std::endl;
-      }
-    }
-  };
-
   template <class VTKOut>
   class VTKOutputerDG {
   public:
@@ -252,6 +208,49 @@ protected:
     std::vector<VTKListEntryType *> vec_;
   };
 #endif
+  template <class Entity>
+  class GnuplotOutputer {
+    std::ostream& out_;
+    const Entity& en_;
+  public:
+    //! Constructor
+    GnuplotOutputer(std::ostream& out,
+                    const Entity& en) : 
+    out_(out),
+    en_(en)
+    {
+    }
+
+    //! Applies the setting on every DiscreteFunction/LocalFunction pair.
+    template <class DFType>
+    void visit(DFType* df) 
+    {
+      typedef typename DFType :: Traits Traits;
+      typedef typename Traits :: LocalFunctionType LocalFunctionType;
+      typedef typename Traits :: DiscreteFunctionSpaceType DiscreteFunctionSpaceType;
+      typedef typename DiscreteFunctionSpaceType :: IteratorType IteratorType;
+      typedef typename DiscreteFunctionSpaceType :: GridPartType GridPartType;
+
+      typedef typename DiscreteFunctionSpaceType :: DomainType DomainType;
+      typedef typename DiscreteFunctionSpaceType :: RangeType RangeType;
+ 
+      enum{ dimDomain = DiscreteFunctionSpaceType :: dimDomain };
+      enum{ dimRange = DiscreteFunctionSpaceType :: dimRange };
+
+      CachingQuadrature<GridPartType,0> quad(en_,df->space().order());
+      LocalFunctionType lf = df->localFunction(en_);
+      for (int i=0;i<quad.nop();++i) {
+        RangeType u;
+        DomainType x = en_.geometry().global(quad.point(i));
+        lf.evaluate(quad[i],u);
+        for (int i = 0; i < dimDomain; ++i) 
+          out_ << x[i] << " ";
+        for (int i = 0; i < dimRange; ++i) 
+          out_ << u[i] << "   ";
+        out_ << std::endl;
+      }
+    }
+  };
 
 protected:  
   enum OutputFormat { vtk = 1 , vtkvtx = 2 , gnuplot = 3 };
@@ -415,12 +414,7 @@ public:
   void write( const std::string& out="" ) const 
   {
     if (willWrite()) {
-      if (sequence_)
-      {
-        sequence_ << writeStep_ << " " << writeCalls_ << out << std::endl;
-        //sequence_ << "writestep:" << writeStep_ << " writecall:" << writeCalls_ << out << std::endl;
-      }
-      writeData();
+      writeData(writeStep_);
     }
     ++writeCalls_;    
   }
@@ -429,17 +423,13 @@ public:
   void write(const TimeProviderBase& tp, const std::string& out="") const
   {
     if (willWrite(tp)) {
-      if (sequence_)
-      {
-        sequence_ << writeStep_ << " " << tp.time() << out << std::endl;      
-        //sequence_ << "writestep:" << writeStep_ << " time:" << tp.time() << out << std::endl;
-      }
-      writeData();
+      writeData(tp.time());
     }
     ++writeCalls_;    
   }
-  void writeData() const
+  void writeData(double sequenceStamp) const
   {
+    std::string filename;
     // check online display 
     display(); 
     switch (outputFormat_)
@@ -448,15 +438,21 @@ public:
     case vtk : 
     case vtkvtx :
       // write data in vtk output format 
-      writeVTKOutput();
+      filename = writeVTKOutput();
       break;
 #endif
     case gnuplot :
-      writeGnuPlotOutput();
+      filename = writeGnuPlotOutput();
       break;
     default:
       DUNE_THROW(NotImplemented,"DataWriter::write: wrong output format");
     }
+
+    if (sequence_)
+      sequence_ << writeStep_ << " "
+                << filename << " "
+                << sequenceStamp << std::endl;
+
     // only write info for proc 0, otherwise on large number of procs
     // this is to much output 
     if(myRank_ <= 0)
@@ -474,8 +470,9 @@ public:
 
 protected:  
 #if USE_VTKWRITER
-  void writeVTKOutput() const 
+  std::string writeVTKOutput() const 
   {
+    std::string filename;
     // check whether to use vertex data of discontinuous data 
     const bool vertexData = (outputFormat_ == vtkvtx);
 
@@ -517,22 +514,29 @@ protected:
       if( parallel )
       {
         // write all data for parallel runs  
-        vtkio.pwrite( name.c_str(), path_.c_str(), "." , Dune::VTKOptions::binaryappended );
+        filename = vtkio.pwrite( name.c_str(), path_.c_str(), "." , Dune::VTKOptions::binaryappended );
       }
       else
       {
         // write all data serial 
-        vtkio.write( name.c_str(), Dune::VTKOptions::binaryappended );
+        filename = vtkio.write( name.c_str(), Dune::VTKOptions::binaryappended );
       }
     }
     else
 #endif 
     {
+      typedef typename 
+        TypeTraits<typename Dune::ElementType<0,OutPutDataType>::Type>::PointeeType DFType;
+      const DFType* func = Element<0>::get(data_);
+      typedef typename DFType :: DiscreteFunctionSpaceType :: GridPartType GridPartType; 
+      const GridPartType& gridPart = func->space().gridPart();
+      /*
       // generate adaptive leaf grid part 
       // do not use leaf grid part since this will 
       // create the grids leaf index set, which might not be wanted. 
       typedef AdaptiveLeafGridPart< GridType > GridPartType; 
       GridPartType gridPart( const_cast<GridType&> (grid_) );
+      */
       {
         // create vtk output handler 
         typedef VTKIO < GridPartType > VTKIOType; 
@@ -547,20 +551,21 @@ protected:
         if( parallel )
         {
           // write all data for parallel runs  
-          vtkio.pwrite( name.c_str(), path_.c_str(), "." , Dune::VTKOptions::binaryappended );
+          filename = vtkio.pwrite( name.c_str(), path_.c_str(), "." , Dune::VTKOptions::binaryappended );
         }
         else
         {
           // write all data serial 
-          vtkio.write( name.c_str(), Dune::VTKOptions::binaryappended );
+          filename = vtkio.write( name.c_str(), Dune::VTKOptions::binaryappended );
         }
       }
     }
+    return filename;
   }
 #endif
 
   // write to gnuplot file format
-  void writeGnuPlotOutput() const
+  std::string writeGnuPlotOutput() const
   {
     // generate filename
     std::string name = genFilename( path_, datapref_, writeStep_ );
@@ -580,7 +585,9 @@ protected:
       GnuplotOutputer< typename GridPartType::EntityCodim0Type > 
                      io( gnuout,*it );
       forEach.apply( io );
+      gnuout << std::endl;
     }
+    return name;
   }
 
   //! display data with grape 
