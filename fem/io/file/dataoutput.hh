@@ -591,7 +591,6 @@ protected:
       GnuplotOutputer< typename GridPartType::EntityCodim0Type > 
                      io( gnuout,*it );
       forEach.apply( io );
-      gnuout << std::endl;
     }
     return name;
   }
