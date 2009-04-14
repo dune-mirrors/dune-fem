@@ -5,7 +5,7 @@
 #define USE_VTKWRITER 1
 #endif
 
-//- Dune includes 
+//- Dune includes
 #include <dune/fem/io/file/iointerface.hh>
 #include <dune/fem/io/file/iotuple.hh>
 #include <dune/fem/io/parameter.hh>
@@ -411,23 +411,23 @@ public:
   }
   /** \brief write given data to disc, evaluates parameter savecount
   */
-  void write( const std::string& out="" ) const 
+  void write( const std::string& outstring="" ) const
   {
     if (willWrite()) {
-      writeData(writeStep_);
+      writeData(writeCalls_, outstring);
     }
     ++writeCalls_;    
   }
   /** \brief write given data to disc, evaluates parameter savecount and savestep
   */
-  void write(const TimeProviderBase& tp, const std::string& out="") const
+  void write(const TimeProviderBase& tp, const std::string& outstring="") const
   {
     if (willWrite(tp)) {
-      writeData(tp.time());
+      writeData(tp.time(), outstring);
     }
     ++writeCalls_;    
   }
-  void writeData(double sequenceStamp) const
+  void writeData(double sequenceStamp, const std::string& outstring="") const
   {
     std::string filename;
     // check online display 
@@ -451,13 +451,19 @@ public:
     if (sequence_)
       sequence_ << writeStep_ << " "
                 << filename << " "
-                << sequenceStamp << std::endl;
+                << sequenceStamp
+                << outstring
+                << std::endl;
 
     // only write info for proc 0, otherwise on large number of procs
     // this is to much output 
     if(myRank_ <= 0)
     {
-      std::cout << "DataOutput["<<myRank_<<"]::write data with step number " << writeStep_ << std::endl;
+      std::cout << "DataOutput[" << myRank_ << "]::write data"
+                << " writestep=" << writeStep_
+                << " sequenceStamp=" << sequenceStamp
+                << outstring
+                << std::endl;
     }
     saveTime_ += saveStep_;
     ++writeStep_;
