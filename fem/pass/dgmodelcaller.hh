@@ -69,7 +69,7 @@ namespace Dune {
       BaseType::setNeighbor(nb);
       problem_.setNeighbor(nb);
     }
-    \
+
     // Here, the interface of the problem is replicated and the Caller
     // is used to do the actual work
     void analyticalFlux(Entity& en, const DomainType& x, 
