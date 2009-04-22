@@ -42,12 +42,11 @@ namespace Dune
 
   public:
     template< unsigned int codim >
-    class Codim
+    struct Codim
     {
-    public:
-      static inline unsigned int maxDofs ()
+      static unsigned int maxDofs ()
       {
-        return BaseType :: template Codim< codim > :: maxDofs();
+        return BaseType::template Codim< codim >::maxDofs();
       }
     };
     
@@ -185,8 +184,7 @@ namespace Dune
      *
      *  \returns the number of DoFs associated with the specified entity
      */
-    virtual unsigned int numDofs ( unsigned int codim,
-                                   unsigned int subEntity ) const = 0;
+    virtual unsigned int numDofs ( unsigned int codim, unsigned int subEntity ) const = 0;
 
     /** \brief obtain the total number of DoFs in a codimension
      *

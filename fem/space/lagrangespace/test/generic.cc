@@ -1,5 +1,7 @@
 #include <config.h>
 
+#include <dune/fem/misc/forloop.hh>
+
 #include "../basefunctions.hh"
 #include "../lagrangepoints.hh"
 
@@ -36,35 +38,13 @@ typedef LagrangePointListImplementation
 
 
 
-template< unsigned int codim >
-class printMaxDofs
+template< int codim >
+struct PrintMaxDofs
 {
-public:
-  static void print()
+  static void apply ()
   {
-    const unsigned int maxCodimDofs
-      = LagrangePointType :: template Codim< codim > :: maxDofs();
-  
-    std :: cout << "MaxDofs< " << codim << " >: " << maxCodimDofs << std :: endl;
-    printMaxDofs< codim-1 > :: print();
-  }
-};
-
-
-
-template<>
-class printMaxDofs< 0 >
-{
-private:
-  enum { codim = 0 };
-
-public:
-  static void print()
-  {
-    const unsigned int maxCodimDofs
-      = LagrangePointType :: Codim< codim > :: maxDofs();
-  
-    std :: cout << "MaxDofs< " << codim << " >: " << maxCodimDofs << std :: endl;
+    const unsigned int maxCodimDofs = LagrangePointType::template Codim< codim >::maxDofs();
+    std::cout << "MaxDofs< " << codim << " >: " << maxCodimDofs << std::endl;
   }
 };
 
@@ -72,16 +52,16 @@ public:
 
 int main( int argc, char **argv )
 {
-  GeometryType geometryType( GeometryType :: GEOMETRYTYPE, DIMENSION );
+  GeometryType geometryType( GeometryType::GEOMETRYTYPE, DIMENSION );
   BaseFunctionFactoryType baseFunctionFactory ( geometryType );
 
   const unsigned int numBaseFunctions = baseFunctionFactory.numBaseFunctions();
 
-  std :: cout << "Number of base functions: " << numBaseFunctions;
-  std :: cout << std :: endl << std :: endl;
+  std::cout << "Number of base functions: " << numBaseFunctions;
+  std::cout << std::endl << std::endl;
 
-  printMaxDofs< DIMENSION > :: print();
-  std :: cout << std :: endl;
+  ForLoop< PrintMaxDofs, 0, DIMENSION >::apply();
+  std::cout << std::endl;
 
   unsigned int errors = 0;
   unsigned int indexErrors = 0;

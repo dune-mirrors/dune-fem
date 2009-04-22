@@ -136,8 +136,7 @@ namespace Dune
      *
      *  \returns the number of DoFs associated with the specified entity
      */
-    static inline unsigned int numDofs ( unsigned int codim,
-                                         unsigned int subEntity )
+    static unsigned int numDofs ( unsigned int codim, unsigned int subEntity )
     {
       return ((codim == 0) ? 1 : 0);
     }
