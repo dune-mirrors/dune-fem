@@ -14,6 +14,7 @@
 
 // make sure higher order Lagrange works (define USE_TWISTFREE_MAPPER)
 #include <dune/fem/space/lagrangespace.hh>
+#include <dune/fem/space/dgspace.hh>
 
 #ifdef ENABLE_UG 
 #include <dune/grid/uggrid.hh>
@@ -63,17 +64,72 @@ class HdivProjection : public SpaceOperatorInterface<DiscreteFunctionType>
   typedef typename DiscreteFunctionSpaceType::JacobianRangeType JacobianRangeType; 
   typedef typename DiscreteFunctionSpaceType::GridPartType GridPartType; 
 
+  typedef CachingQuadrature <GridPartType , 0> VolumeQuadratureType; 
+  //typedef ElementQuadrature <GridPartType , 0> VolumeQuadratureType; 
+
+  // face quadrature type 
+  //typedef CachingQuadrature<GridPartType, 1> FaceQuadratureType;
+  typedef ElementQuadrature<GridPartType, 1> FaceQuadratureType;
+
   typedef typename GridPartType :: GridType GridType;
   
-    enum { dimRange = 1 };
-    enum { dimDomain = DiscreteFunctionSpaceType::dimDomain - 1 };
-    enum { polOrdN = DiscreteFunctionSpaceType::polynomialOrder };
+    enum { dimFaceRange = 1 };
+    enum { dimDomain = DiscreteFunctionSpaceType::dimDomain };
+    enum { dimFaceDomain = dimDomain - 1 };
+    enum { polOrdN = DiscreteFunctionSpaceType :: polynomialOrder };
 
-  typedef FunctionSpace<DomainFieldType,RangeFieldType,dimDomain,dimRange> FaceSpaceType;
-  typedef FunctionSpace<DomainFieldType,RangeFieldType,DiscreteFunctionSpaceType::dimDomain,dimRange> ElSpaceType;
+  typedef FunctionSpace<DomainFieldType,RangeFieldType,dimFaceDomain,dimFaceRange> FaceSpaceType;
+  typedef FunctionSpace<DomainFieldType,RangeFieldType,dimDomain,dimFaceRange> ElSpaceType;
 
   enum { gradPolOrd = ((polOrdN - 1) < 0) ? 0 : (polOrdN - 1) };
-  enum { bubblePolOrd = (polOrdN + 1) };
+
+  template <class Space> struct BubbleM; 
+
+  template <class FunctionSpaceImp,
+            class GridPartImp,
+            int polOrd,
+            template <class> class StorageImp,
+            template <class,class,int,template <class> class> class DiscreteFunctionSpaceImp>
+  struct BubbleM <DiscreteFunctionSpaceImp<FunctionSpaceImp,GridPartImp,polOrd,StorageImp> >
+  {
+    enum { bubblePModifier = dimDomain - 1 }; 
+  };
+
+  template <class FunctionSpaceImp,
+            class GridPartImp,
+            int polOrd,
+            template <class> class StorageImp>
+  struct BubbleM < LegendreDiscontinuousGalerkinSpace<FunctionSpaceImp,GridPartImp,polOrd,StorageImp> >
+  {
+    enum { bubblePModifier = 1 }; 
+  };
+
+  template <class DiscreteFunctionSpaceImp,
+            int N, 
+            Dune::DofStoragePolicy policy> 
+  struct BubbleM <CombinedSpace<DiscreteFunctionSpaceImp,N,policy> >
+  {
+    enum { bubblePModifier = BubbleM< DiscreteFunctionSpaceImp > :: bubblePModifier };
+  };
+
+  typedef BubbleM <DiscreteFunctionSpaceType> BubbleMType;
+
+#ifdef USE_TWISTFREE_MAPPER 
+  // modifier for bubble pol order 
+  enum { bubblePModifier = BubbleMType :: bubblePModifier };
+
+  // we need polOrd + 1 in 2d and polOrd + 2 in 3d 
+  enum { bubblePolOrd = (polOrdN + bubblePModifier) };
+#else 
+#ifndef NDEBUG 
+#warning "Hdiv-Projection only working for polOrd = 1 (enable higher order Lagrange with -DUSE_TWISTFREE_MAPPER)"  
+#endif
+  // modifier for bubble pol order 
+  enum { bubblePModifier = 1 };
+
+  // limit bubble polord otherwise no compilation possible 
+  enum { bubblePolOrd = (polOrdN > 1) ? 2 : (polOrdN + 1) };
+#endif
   
   template <class Space> struct Spaces; 
   
@@ -242,15 +298,22 @@ private:
       if( d == 0 ) 
       {
         dest[0] =  arg[1];
-        dest[1] = -arg[0];
+        dest[1] = -arg[2];
         dest[2] =  0; 
         return ;
       }
-      else 
+      else if ( d == 1 ) 
       {
-        dest[0] =  arg[2];
-        dest[1] =  0;
+        dest[0] =  0;
+        dest[1] =  arg[2];
         dest[2] = -arg[0]; 
+        return ;
+      }
+      else  
+      {
+        dest[0] = -arg[2];
+        dest[1] = 0;
+        dest[2] = arg[1];
         return ;
       }
     }
@@ -286,12 +349,10 @@ private:
     const BaseFunctionSetType bSet = space.baseFunctionSet( en ); 
     const int polOrd = 2 * space.order(); // + 2;
     
-    typedef CachingQuadrature <GridPartType , 0> QuadratureType; 
-
     const int cols = uLF.numDofs();
     assert( uRets.size() == cols );
 
-    QuadratureType quad (en,polOrd);
+    VolumeQuadratureType quad (en,polOrd);
     DomainType result;
     JacobianRangeType valTmp;
     JacobianRangeType val;
@@ -305,14 +366,16 @@ private:
     const GeometryType& type = geo.type(); 
     const int bubbleOffset = (type.isSimplex()) ? 0 : baseFunctionOffset( 0 );
 
-    // get number of dofs for codim 0 (skip first for) 
-    const int enDofs = numberOfBubbles( lagrangePointSet.numDofs( 0 ), type );
-
     // type of jacobian inverse 
     typedef typename Geometry :: ctype ctype; 
     enum { cdim  = Geometry :: coorddimension };
     enum { mydim = Geometry :: mydimension    };
     typedef FieldMatrix<ctype, cdim, mydim> JacobianInverseType;
+
+    // get number of dofs for codim 0 (skip first for) 
+    const int enDofs = numberOfBubbles( lagrangePointSet.numDofs( 0 ), type ,
+                                        cols, startRow );
+    const int bubbleMod = bubbleModifier( mydim );
 
     const int quadNop = quad.nop();
     for (int l = 0; l < quadNop ; ++l)
@@ -334,14 +397,15 @@ private:
       }
 
       // for all bubble functions 
-      for( int i = 0 ; i<enDofs; ++i) 
+      for( int i = 0 ; i<enDofs; i += bubbleMod ) 
       {
         // we might have other row 
         int row = startRow + i;
 
         // map to lagrange base function number 
-        const int baseFct = 
-          lagrangePointSet.entityDofNumber( 0, 0, i + bubbleOffset ); 
+        const int localBaseFct = ((int) i/bubbleMod) + bubbleOffset;
+        // get dof number of 'localBaseFct' dof on codim 0 subentity 0  
+        const int baseFct = lagrangePointSet.entityDofNumber( 0, 0, localBaseFct ); 
         
         // evaluate gradient 
         bSet.jacobian( baseFct, quad[l], valTmp );
@@ -349,10 +413,10 @@ private:
         //apply inverse 
         inv.mv( valTmp[0], val[0] );
 
-        for(int d = 0; d<mydim-1; ++d ) 
+        for(int d = 0; d<bubbleMod; ++d ) 
         {
           // apply curl 
-          curl(val[0], aVal, d);
+          curl(val[0], aVal, d );
 
           double r = aVal * result; 
           r *= intel; 
@@ -367,7 +431,7 @@ private:
           }
 
           // increase row 
-          row += d;
+          ++row; 
         }
       }
     }
@@ -384,12 +448,10 @@ private:
     const BaseFunctionSetType bSet = space.baseFunctionSet( en ); 
     int polOrd = 2 * space.order() + 1;
     
-    typedef CachingQuadrature <GridPartType , 0> QuadratureType; 
-
     const int localRows = gradientBaseFct( bSet ); 
     const int cols = uLF.numDofs();
 
-    QuadratureType quad (en,polOrd);
+    VolumeQuadratureType quad (en,polOrd);
 
     RangeType result;
     RangeType uPhi;
@@ -498,9 +560,28 @@ private:
     return i + gradFuncOffset; 
   }
 
-  int numberOfBubbles( const int bubbles , const GeometryType& type) const 
+  int numberOfBubbles( const int bubbles , const GeometryType& type, 
+                       const int allDofs, const int allOther ) const 
   {
-    return (type.isSimplex()) ? bubbles : bubbles - gradFuncOffset;
+    /*
+    // for hexahedrons this is different 
+    if( type.isHexahedron() ) 
+    {
+      return (bubbleModifier( type.dim() )) * (bubbles - gradFuncOffset) - 1;
+    }
+    else
+    */
+    {
+      // the rest is padded with bubble functions 
+      const int numBubble = allDofs - allOther ;
+      return (numBubble > 0) ? numBubble : 0;
+    }
+  }
+
+  int bubbleModifier( const int dim ) const 
+  {
+    // return 1 for 2d and 3 for 3d 
+    return (dim - 2) * (dim - 1) + 1;
   }
 
   //! do projection of discrete functions  
@@ -530,7 +611,12 @@ private:
     const FunctionSpaceType& space = uDG.space();
 
     // for polOrd 0 this is not working 
-    if(space.order() < 1 ) return ;
+    // then just copy the function 
+    if(space.order() < 1 ) 
+    {
+      velo.assign( uDG );  
+      return ;
+    }
 
     const int polOrd = 2 * space.order() + 2;
 
@@ -551,8 +637,27 @@ private:
     {
       if( space.indexSet().geomTypes(0).size() > 1)
       {
+        assert( space.indexSet().geomTypes(0).size() == 1 );
         DUNE_THROW(NotImplemented,"H-div projection not implemented for hybrid grids"); 
       }
+    }
+
+    const GeometryType startType = start->type();
+
+    // only working for spaces with one element type 
+    if( startType.isHexahedron() && space.order() > 1 ) 
+    {
+      assert( !  startType.isHexahedron() || space.order() <= 1 );
+      DUNE_THROW(NotImplemented,"H-div projection not implemented for p > 1 on hexas! ");
+    }
+
+    const int desiredOrder = space.order() + bubblePModifier; 
+    // check Lagrange space present 
+    if( bubblePolOrd != desiredOrder )
+    {
+      assert( bubblePolOrd == desiredOrder );
+      DUNE_THROW(NotImplemented,"H-div projection not working for " 
+          << space.order() << " when LagrangeSpace of order "<< desiredOrder << " is missing");
     }
 
     // colums are dofs of searched function 
@@ -565,38 +670,33 @@ private:
     // number of dofs on faces 
     const int numFaceDofs = faceSet.numBaseFunctions();
     
-    const GeometryType startType = start->type();
 
-    // get all element dofs from Lagrange space 
-    const int numBubbleDofs = (space.order() <= 1) ? 0 : 
-          numberOfBubbles( elSpace_.lagrangePointSet( *start ).numDofs ( 0 ) , startType );
-
-    //std::cout << numBubbleDofs << " bubbleDofs \n";
-  
     const GradientBaseSetType gradSet = gradSpace_.baseFunctionSet(*start);
     // in case of linear space the is zero 
     const int numGradDofs = gradientBaseFct( gradSet ); 
-    //std::cout << numGradDofs << " numGradDofs \n";
   
     const ReferenceElement< coordType, dim > & refElem =
         ReferenceElements< coordType, dim >::general( startType );
 
     // get number of faces 
     const int overallFaceDofs = numFaceDofs * refElem.size(1);
-    //std::cout << overallFaceDofs << " allFAceDofs \n";
 
+    // get all element dofs from Lagrange space 
+    const int numBubbleDofs = (space.order() <= 1) ? 0 : 
+          numberOfBubbles( elSpace_.lagrangePointSet( *start ).numDofs ( 0 ) , startType,
+                           numDofs, overallFaceDofs + numGradDofs );
+  
     const int rows = (overallFaceDofs + numGradDofs + numBubbleDofs);
     
     // number of columns 
     const int cols = numDofs; 
-    //std::cout << "cols " << cols << " | rows " << rows << "\n";
 
-    // check rows == cols 
-    if( space.order() == 1 )
-    {
-      if( (cols != rows) && dim > 2 ) 
-        DUNE_THROW(InvalidStateException,"H-div for order 1 only works with symetric matrices in 3d"); 
-    }
+#if 0
+    std::cout << numBubbleDofs << " bubbleDofs | bubbleP = " << bubblePolOrd << "\n";
+    std::cout << numGradDofs << " numGradDofs \n";
+    std::cout << overallFaceDofs << " allFAceDofs \n";
+    std::cout << "cols " << cols << " | rows " << rows << "\n";
+#endif
 
     MutableArray< RangeFieldType > rets(numDofs);
     MutableArray< RangeType > uRets(numDofs);
@@ -608,7 +708,6 @@ private:
       
     typedef FieldVector<RangeFieldType,localBlockSize> VectorType; 
     VectorType fRhs(0.0);
-    VectorType x(0.0);
 
     assert( numDofs == localBlockSize );
     if( numDofs != localBlockSize ) 
@@ -685,15 +784,22 @@ private:
                    rets, uRets, inv,fRhs);
       }
 
-      // solve linear system 
-      inv.solve(x,fRhs);
-      
       // set new values to new velocity function 
       {
-        LocalFuncType veloLF = velo.localFunction(en);
-        for(int i=0; i<numDofs; ++i)
+        LocalFuncType veloLF = velo.localFunction( en );
+#if 0
+        VectorType x( 0 );
+
+        inv.solve(x, fRhs);
+#else 
+        // solve linear system 
+        luSolve( inv, fRhs );
+        const VectorType& x = fRhs ;
+#endif
+
+        for(int i=0; i<localBlockSize; ++i)
         {
-          veloLF[i] = x[i];
+          veloLF[ i ] = x[ i ];
         }
       }
     }
@@ -728,10 +834,6 @@ private:
     RangeType ret (0.0);
     RangeType neighRet (0.0);
     RangeType uPhi (0.0);
-
-    // face quadrature type 
-    //typedef CachingQuadrature<GridPartType, 1> FaceQuadratureType;
-    typedef ElementQuadrature<GridPartType, 1> FaceQuadratureType;
 
     typedef typename DiscreteFunctionType :: LocalFunctionType LocalFuncType ;
     typedef typename DiscreteFunctionType :: DiscreteFunctionSpaceType
@@ -853,7 +955,7 @@ private:
     }
 
     // add bubble part 
-    if( bubblePolOrd > 2 ) 
+    if( bubblePolOrd - bubblePModifier > 1 ) 
     {
       bubblePart(elSpace, en, uLF, startBubbleDofs, uRets, matrix, rhs);
     }
@@ -964,8 +1066,8 @@ public:
   }
 
   template <class AdaptationType>
-  void estimator(const DiscreteFunctionType &velo,
-                 AdaptationType& adaptation) const 
+  static void estimator(const DiscreteFunctionType &velo,
+                        AdaptationType& adaptation)
   {
     typedef typename DiscreteFunctionType::LocalFunctionType LocalFuncType;
     typedef typename GridType :: Traits :: LocalIdSet LocalIdSetType;  
@@ -1123,6 +1225,86 @@ private:
       )
     {
       adaptation.addToLocalIndicator( nb , nbError );
+    }
+  }
+
+  // LU decomposition of matrix (matrix and b are overwritten)
+  //
+  // param[inout] a Matrix that LU decomposition is calculated for 
+  // param[in] b right hand side 
+  // param[out] solution solution of linear system 
+  template <class MatrixType, class VectorType>
+  void luSolve(MatrixType& a, 
+               VectorType& x) const  
+  {
+    typedef typename VectorType :: field_type ctype;
+    enum { n = VectorType :: dimension }; 
+
+    // make sure we got the right dimensions 
+    assert( a.N() == a.M() );
+    assert( a.N() == n );
+
+    // pivot storage  
+    int p[ n-1 ];
+
+    for(int i=0; i<n-1; ++i)
+    {
+      // initialize 
+      p[i] = i;
+
+      // Pivot search 
+      ctype max_abs = 0;
+      for(int k=i; k<n; ++k)
+      {
+        if ( std::abs(a[k][i]) > max_abs )
+        {
+          max_abs = fabs(a[k][i]);
+          p[i] = k;
+        }
+      }
+
+      if( p[ i ] != i ) 
+      {
+        // toggle row i with row argmax=p[i]
+        for(int j=0; j<n; ++j)
+        {
+          const ctype tmp = a[ p[i] ][j];
+          a[ p[i] ][j] = a[i][j];
+          a[i][j] = tmp;
+        }
+      }
+
+      // elimination
+      for(int k=i+1; k<n; ++k)
+      {
+        const ctype lambda = a[k][i] / a[i][i];
+        a[k][i] = lambda;
+        for(int j=i+1; j<n; ++j) a[k][j] -= lambda * a[i][j];
+      }
+    }
+
+    // 1. x = Px_old, permutation with right hand side
+    for(int i=0; i<n-1; ++i)
+    {
+      const ctype tmp = x[ i ];
+      x[ i ] = x[ p[ i ] ];
+      x[ p[ i ] ] = tmp;
+    }
+
+    // 1. Lx = x_old, forward loesen 
+    for(int i=0; i<n; ++i)
+    {
+      ctype dot = 0;
+      for(int j=0; j<i; ++j) dot += a[i][j] * x[j];
+      x[i] -= dot;
+    }
+
+    // 2. Ux = x_old, backward solve  
+    for(int i=n-1; i>=0; --i)
+    {
+      ctype dot = 0;
+      for(int j=i+1; j<n; ++j) dot += a[i][j] * x[j];
+      x[i] = (x[i] - dot) / a[i][i];
     }
   }
 };
