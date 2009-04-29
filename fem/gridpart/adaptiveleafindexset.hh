@@ -102,6 +102,18 @@ namespace Dune
       }
     };
 
+#if DUNE_VERSION_NEWER(DUNE_GRID,1,3,0)
+    template< int codim >
+    struct CallSetUpCodimSet
+    {
+      static void apply ( const int cd, const ThisType &indexSet )
+      {
+        if( cd == codim )
+          indexSet.template setUpCodimSet< codim >();
+      }
+    };
+#endif // #if DUNE_VERSION_NEWER(DUNE_GRID,1,3,0)
+
     // my type, to be revised 
     enum { myType = 6 };
     enum { myVersionTag = -665 };
@@ -297,6 +309,22 @@ namespace Dune
       assert( (idx >= 0) && (idx < codimSet.size()) );
       return idx;
     }
+
+#if DUNE_VERSION_NEWER(DUNE_GRID,1,3,0)
+    IndexType
+    subIndex ( const typename GridType::template Codim< 0 >::Entity &entity,
+               int subNumber, unsigned int codim ) const
+    {
+      if( (codim != 0) && !codimUsed_[ codim ] )
+        ForLoop< CallSetUpCodimSet, 0, dimension >::apply( codim, *this );
+      
+      const CodimIndexSetType &codimSet = codimLeafSet_[ codim ];
+      const int hIdx = hIndexSet_.subIndex( entity, subNumber, codim );
+      const int idx = codimSet.index( hIdx );
+      assert( (idx >= 0) && (idx < codimSet.size()) );
+      return idx;
+    }
+#endif // #if DUNE_VERSION_NEWER(DUNE_GRID,1,3,0)
 
     //! return number of holes of the sets indices 
     int numberOfHoles ( const int codim ) const
