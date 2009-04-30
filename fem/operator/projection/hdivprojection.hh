@@ -26,8 +26,13 @@ namespace Dune
   // External Forward Declarations
   // -----------------------------
 
+#if DUNE_VERSION_NEWER(DUNE_GRID,1,3,0)
+  template< int dim >
+  class YaspGrid;
+#else
   template< int dim, int dimworld >
   class YaspGrid;
+#endif
 
 
 
@@ -525,7 +530,11 @@ private:
   };
 
   template <class FaceBSetType, int dim> 
-  struct GetSubBaseFunctionSet<FaceBSetType, YaspGrid<dim,dim> >
+#if DUNE_VERSION_NEWER(DUNE_GRID,1,3,0)
+  struct GetSubBaseFunctionSet< FaceBSetType, YaspGrid< dim > >
+#else
+  struct GetSubBaseFunctionSet< FaceBSetType, YaspGrid< dim, dim > >
+#endif
   {
     template <class EntityType, class SpaceType> 
     static inline FaceBSetType faceBaseSet(const EntityType& en, const SpaceType& space) 
