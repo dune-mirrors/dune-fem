@@ -1,5 +1,9 @@
-#include <iostream>
 #include <config.h>
+
+#include <iostream>
+
+#include <dune/common/version.hh>
+
 // #include <dune/grid/io/file/dgfparser/gridtype.hh>
 // static const int dimw = dimworld;
 #define S_GRID 0
@@ -14,7 +18,11 @@ typedef Dune::SGrid<dimw,dimw> GridType;
 #if YGRID
 #include<dune/grid/yaspgrid.hh> 
 
-typedef Dune::YaspGrid<dimw,dimw> GridType;
+#if DUNE_VERSION_NEWER(DUNE_GRID,1,3,0)
+typedef Dune::YaspGrid< dimw > GridType;
+#else
+typedef Dune::YaspGrid< dimw, dimw > GridType;
+#endif
 #endif
 
 #include <dune/fem/operator/discreteoperatorimp.hh>
