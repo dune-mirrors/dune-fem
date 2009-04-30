@@ -371,7 +371,7 @@ namespace Dune {
     std::cout << "CachingQuadrature_Test checking YaspGrid \n";
     const int dim = 3;
 
-    typedef YaspGrid<dim, dim> GridType;
+    typedef YaspGrid< dim > GridType;
     typedef LeafGridPart< GridType > GridPartType;
 
     GridPtr<GridType> gridPtr ( dgf3DGridFile_ );
