@@ -24,18 +24,15 @@ namespace Dune
    */
   template <class GridType, PartitionIteratorType pitype = All_Partition >
   class AdaptiveLeafIndexSet
-  : public ConsecutivePersistentIndexSet
-    < GridType, AdaptiveLeafIndexSet< GridType, pitype >, DefaultLeafIteratorTypes< GridType > >
+  : public ConsecutivePersistentIndexSet< GridType, AdaptiveLeafIndexSet< GridType, pitype > >
   {
     typedef AdaptiveLeafIndexSet< GridType, pitype > ThisType;
-    typedef ConsecutivePersistentIndexSet
-      < GridType, ThisType, DefaultLeafIteratorTypes< GridType > >
-      BaseType;
+    typedef ConsecutivePersistentIndexSet< GridType, ThisType > BaseType;
 
     friend class Conversion< ThisType, EmptyIndexSet >;
 
   public:
-    static const int dimension = GridType :: dimension;
+    static const int dimension = GridType::dimension;
 
     static const int ncodim = dimension + 1;
 
@@ -93,7 +90,11 @@ namespace Dune
           typedef typename GridType::template Codim< codim >::EntityPointer EntityPointer;
           typedef typename GridType::template Codim< codim >::Entity Entity;
 
+#if DUNE_VERSION_NEWER(DUNE_GRID,1,3,0)
+          EntityPointer ptr = entity.template subEntity< codim >( i );
+#else
           EntityPointer ptr = entity.template entity< codim >( i );
+#endif
           const Entity &subentity = *ptr;
 
           if( !skipGhosts || (entity.partitionType() != GhostEntity) )
@@ -204,28 +205,6 @@ namespace Dune
     {
       return hIndexSet_.geomTypes(codim);
     }
-   
-  #if defined INDEXSET_HAS_ITERATORS
-    /** @brief Iterator to one past the last entity of given codim for partition type
-     *  Here the grids leaf iterator is used 
-     */
-    template<int cd, PartitionIteratorType pt>
-    typename DefaultLeafIteratorTypes<GridType>::template Codim<cd>::
-      template Partition<pt>::Iterator end () const
-    {
-      return this->grid_.template leafend<cd,pt> ();
-    }
-
-    /** @brief Iterator to first entity of given codimension and partition type.
-     *  Here the grids leaf iterator is used 
-     */
-    template<int cd, PartitionIteratorType pt>
-    typename DefaultLeafIteratorTypes<GridType>::template Codim<cd>::
-      template Partition<pt>::Iterator begin () const
-    {
-      return this->grid_.template leafbegin<cd,pt> ();
-    }
-  #endif
    
     //! \brief returns true if entity is contained in index set 
     template <class EntityType>

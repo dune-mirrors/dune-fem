@@ -16,64 +16,42 @@ namespace Dune
   //! This index set supports only codimensions 0 and dimension!
   template< class Grid >
   class PeriodicLeafIndexSet
-  : public DuneGridIndexSetAdapter
-    < Grid, PeriodicLeafIndexSet< Grid >, DefaultLeafIteratorTypes< Grid > >
+  : public DuneGridIndexSetAdapter< Grid, PeriodicLeafIndexSet< Grid > >
   {
-    typedef DefaultLeafIteratorTypes< Grid > IndexSetTypes;
-    
     typedef PeriodicLeafIndexSet< Grid > ThisType;
-    typedef DuneGridIndexSetAdapter< Grid, ThisType, IndexSetTypes > BaseType;
+    typedef DuneGridIndexSetAdapter< Grid, ThisType > BaseType;
 
-    friend class DuneGridIndexSetAdapter< Grid, ThisType, IndexSetTypes >;
+    friend class DuneGridIndexSetAdapter< Grid, ThisType >;
     
   public:
     //! type of the grid
     typedef Grid GridType;
 
     //! type of indices
-    typedef typename BaseType :: IndexType IndexType;
+    typedef typename BaseType::IndexType IndexType;
 
     //! coordinate type of the grid
-    typedef typename GridType :: ctype ctype;
+    typedef typename GridType::ctype ctype;
      
     //! dimension of the grid
-    static const int dimension = GridType :: dimension;
+    static const int dimension = GridType::dimension;
 
   protected:
-    typedef typename GridType :: Traits :: LeafIndexSet BaseIndexSetType;
+    typedef typename GridType::Traits::LeafIndexSet BaseIndexSetType;
 
     static const ctype tolerance = 1e-10;
 
   public:
     template< int codim >
     struct Codim
+    : public BaseType::template Codim< codim >
     {
-      typedef typename GridType :: template Codim< codim > :: Entity Entity;
-
-#ifdef INDEXSET_HAS_ITERATORS
-      template< PartitionIteratorType pitype >
-      struct Partition
-      {
-        typedef typename IndexSetTypes :: template Codim< codim >
-          :: template Partition< pitype > :: Iterator
-          Iterator;
-      };
-#endif // ifdef INDEXSET_HAS_ITERATORS
+      typedef typename GridType::template Codim< codim >::Entity Entity;
     };
-
-  protected:
-    using BaseType :: grid_;
-    const BaseIndexSetType &baseIndexSet_;
-    
-    IndexType size_;
-    DynamicArray< int > index_;
-    
-    IndexType edgeSize_;
-    DynamicArray< int > edgeIndex_;
 
   public:
     //! Create PeriodicIndexSet for a grid
-    inline explicit PeriodicLeafIndexSet ( const GridType &grid );
+    explicit PeriodicLeafIndexSet ( const GridType &grid );
 
     template< class Entity >
     IndexType index ( const Entity &entity ) const
@@ -95,10 +73,10 @@ namespace Dune
 
     //! Return true, if this set provides an index for an entity
     template< class Entity >
-    inline bool contains ( const Entity &entity ) const;
+    bool contains ( const Entity &entity ) const;
 
     //! Return the size of the index set for a codimension
-    inline IndexType size ( int codim ) const;
+    IndexType size ( int codim ) const;
 
     //! Return the size of the index set for a codimension
     //! Marked for revision in grid/common/defaultindexsets.hh
@@ -110,55 +88,46 @@ namespace Dune
     }
 
     //! Deliver all geometry types used in this grid
-    const std :: vector< GeometryType > &geomTypes ( int codim ) const
+    const std::vector< GeometryType > &geomTypes ( int codim ) const
     {
       return baseIndexSet_.geomTypes( codim );
     }
 
-#ifdef INDEXSET_HAS_ITERATORS
-    /** \brief Deliver iterator to first entity of given codimension and partition type.
-     */
-    template< int codim, PartitionIteratorType pitype >
-    typename Codim< codim > :: template Partition< pitype > :: Iterator begin () const
+    std::string name () const
     {
-      return grid_.template leafbegin< codim, pitype >();
-    }
-
-    /** \brief Deliver iterator to last entity of given codimension and partition type.
-     */
-    template< int codim, PartitionIteratorType pitype >
-    typename Codim< codim > :: template Partition< pitype > :: Iterator end () const
-    {
-      return grid_.template leafend< codim, pitype >();
-    }
-#endif
-
-    inline std :: string name () const
-    {
-      return std :: string( "PeriodicLeafIndexSet" );
+      return std::string( "PeriodicLeafIndexSet" );
     }
 
   protected:
     template< class field, int dim >
-    inline static field
+    static field
     dist2 ( const FieldVector< field, dim > &u, const FieldVector< field, dim > &v );
 
     template< class field, int dim >
-    inline static void
+    static void
     truncate ( FieldVector< field, dim > &v );
     template< class field, int dim >
-    inline static void
+    static void
     truncate ( FieldVector< field, dim > &v, FieldVector< field, dim > &w );
    
     template< class Iterator >
-    inline void calcVertexIndices ( const Iterator &begin, const Iterator &end );
+    void calcVertexIndices ( const Iterator &begin, const Iterator &end );
     template< class Iterator >
-    inline void calcEdgeIndices ( const Iterator &begin, const Iterator &end );
+    void calcEdgeIndices ( const Iterator &begin, const Iterator &end );
     
-    inline bool geometryTypeValid( const GeometryType &type ) const;
+    bool geometryTypeValid( const GeometryType &type ) const;
 
     template< int codim >
-    inline IndexType map ( const IndexType &baseIndex ) const;
+    IndexType map ( const IndexType &baseIndex ) const;
+
+    using BaseType::grid_;
+    const BaseIndexSetType &baseIndexSet_;
+    
+    IndexType size_;
+    DynamicArray< int > index_;
+    
+    IndexType edgeSize_;
+    DynamicArray< int > edgeIndex_;
   };
 
 
@@ -182,9 +151,9 @@ namespace Dune
   template< class Grid >
   template< class Entity >
   inline bool
-  PeriodicLeafIndexSet< Grid > :: contains ( const Entity &entity ) const
+  PeriodicLeafIndexSet< Grid >::contains ( const Entity &entity ) const
   {
-    const int codim = Entity :: codimension;
+    const int codim = Entity::codimension;
 
     if( !baseIndexSet_.contains( entity ) )
       return false;
@@ -200,8 +169,8 @@ namespace Dune
   }
 
   template< class Grid >
-  inline typename PeriodicLeafIndexSet< Grid > :: IndexType
-  PeriodicLeafIndexSet< Grid > :: size ( int codim ) const
+  inline typename PeriodicLeafIndexSet< Grid >::IndexType
+  PeriodicLeafIndexSet< Grid >::size ( int codim ) const
   {
     if( codim == 0 )
       return baseIndexSet_.size( 0 );
@@ -217,7 +186,7 @@ namespace Dune
   template< class field, int dim >
   inline field
   PeriodicLeafIndexSet< Grid >
-    :: dist2 ( const FieldVector< field, dim > &u, const FieldVector< field, dim > &v )
+    ::dist2 ( const FieldVector< field, dim > &u, const FieldVector< field, dim > &v )
   {
     field d2 = 0;
     for( int i = 0; i < dim; ++i )
@@ -231,7 +200,7 @@ namespace Dune
   template< class Grid >
   template< class field, int dim >
   inline void
-  PeriodicLeafIndexSet< Grid > :: truncate ( FieldVector< field, dim > &v )
+  PeriodicLeafIndexSet< Grid >::truncate ( FieldVector< field, dim > &v )
   {
      for( int i = 0; i < dim; ++i )
        v[ i ] -= floor( v[ i ] );
@@ -241,7 +210,7 @@ namespace Dune
   template< class field, int dim >
   inline void
   PeriodicLeafIndexSet< Grid >
-    :: truncate ( FieldVector< field, dim > &v, FieldVector< field, dim > &w )
+    ::truncate ( FieldVector< field, dim > &v, FieldVector< field, dim > &w )
   {
     for( int i = 0; i < dim; ++i )
     {
@@ -255,13 +224,13 @@ namespace Dune
   template< class Iterator >
   inline void
   PeriodicLeafIndexSet< Grid >
-    :: calcVertexIndices ( const Iterator &begin, const Iterator &end )
+    ::calcVertexIndices ( const Iterator &begin, const Iterator &end )
   {
     enum { codim = dimension };
 
-    typedef typename GridType :: template Codim< codim > :: Geometry GeometryType;
-    const unsigned int dimWorld = GeometryType :: coorddimension;
-    typedef FieldVector< typename GeometryType :: ctype, dimWorld > VertexType;
+    typedef typename GridType::template Codim< codim >::Geometry GeometryType;
+    const unsigned int dimWorld = GeometryType::coorddimension;
+    typedef FieldVector< typename GeometryType::ctype, dimWorld > VertexType;
     
     const int n = baseIndexSet_.size( codim );
     index_.resize( n );
@@ -300,13 +269,12 @@ namespace Dune
   template< class Iterator >
   inline void
   PeriodicLeafIndexSet< Grid >
-    :: calcEdgeIndices ( const Iterator &begin, const Iterator &end )
+    ::calcEdgeIndices ( const Iterator &begin, const Iterator &end )
   {
     enum { codim = dimension - 1 };
 
-    typedef typename GridType :: template Codim< codim > :: Geometry GeometryType;
-    typedef FieldVector< typename GeometryType :: ctype,
-                         GeometryType :: coorddimension >
+    typedef typename GridType::template Codim< codim >::Geometry GeometryType;
+    typedef FieldVector< typename GeometryType::ctype, GeometryType::coorddimension >
       VertexType;
 
     const ctype eps = tolerance * tolerance;
@@ -356,7 +324,7 @@ namespace Dune
   PeriodicLeafIndexSet< Grid > :: geometryTypeValid( const GeometryType &type ) const
   {
     const int codim = dimension - type.dim();
-    const std :: vector< GeometryType > &gT = geomTypes( codim );
+    const std::vector< GeometryType > &gT = geomTypes( codim );
     for( size_t i = 0; i < gT.size(); ++i )
     {
       if( gT[ i ] == type )
@@ -367,8 +335,8 @@ namespace Dune
 
   template< class Grid >
   template< int codim >
-  inline typename PeriodicLeafIndexSet< Grid > :: IndexType
-  PeriodicLeafIndexSet< Grid > :: map ( const IndexType &baseIndex ) const
+  inline typename PeriodicLeafIndexSet< Grid >::IndexType
+  PeriodicLeafIndexSet< Grid >::map ( const IndexType &baseIndex ) const
   {
     if( codim == 0 )
       return baseIndex;
