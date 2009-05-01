@@ -70,10 +70,31 @@ struct CheckGridEnabled
 // disable YaspGrid
 namespace Dune
 {
+#if DUNE_VERSION_NEWER(DUNE_GRID,1,3,0)
+  template< int dim >
+  class YaspGrid;
+#else
   template< int dim, int dimworld >
   class YaspGrid;
+#endif
 }
 
+#if DUNE_VERSION_NEWER(DUNE_GRID,1,3,0)
+template< int dim >
+struct CheckGridEnabled< Dune :: YaspGrid< dim > >
+{
+  typedef Dune :: YaspGrid< dim > GridType;
+  
+  typedef Dune :: LeafGridPart< GridType > GridPartType;
+
+  inline static int CallMain ( int argc, char **argv )
+  {
+    std :: cerr << "WARNING: Lagrange Adaptation test disabled, because YaspGrid sucks!"
+                << std :: endl;
+    return 0;
+  }
+};
+#else
 template< int dim, int dimworld >
 struct CheckGridEnabled< Dune :: YaspGrid< dim, dimworld > >
 {
@@ -88,6 +109,7 @@ struct CheckGridEnabled< Dune :: YaspGrid< dim, dimworld > >
     return 0;
   }
 };
+#endif
 
 // disable UGGrid
 namespace Dune
