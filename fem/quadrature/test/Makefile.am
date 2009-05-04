@@ -7,7 +7,8 @@ EXTRA_DIST = cachequad_test.hh \
              quad_test.hh
 
 LDADD = $(ALL_PKG_LDFLAGS) $(ALL_PKG_LIBS) $(LOCAL_LIBS)
-AM_CPPFLAGS = $(ALL_PKG_CPPFLAGS) 
+AM_CPPFLAGS = $(ALL_PKG_CPPFLAGS)
+#AM_CPPFLAGS = $(ALL_PKG_CPPFLAGS) -DENABLE_PRIMSGRID -I$(HOME)/disk1/Dune/trunk/dune-prismgrid
 
 check_PROGRAMS = tester 
 tester_SOURCES = main.cc ../../misc/test.cc ../../misc/suite.cc \

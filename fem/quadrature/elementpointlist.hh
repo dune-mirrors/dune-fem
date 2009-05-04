@@ -281,12 +281,12 @@ namespace Dune
                                   const IntersectionType &intersection, 
                                   int order,
                                   Side side )
-    : referenceGeometry_( side == INSIDE ? intersection.intersectionSelfLocal() 
-                                         : intersection.intersectionNeighborLocal() ),
+    : referenceGeometry_( side == INSIDE ? intersection.geometryInInside() 
+                                         : intersection.geometryInOutside() ),
       elementGeometry_( TwistUtilityType::elementGeometry(intersection, side == INSIDE ) ), 
       quad_( referenceGeometry_.type() , order ),
-      faceNumber_( side == INSIDE ? intersection.numberInSelf()
-                                  : intersection.numberInNeighbor() ),
+      faceNumber_( side == INSIDE ? intersection.indexInInside()
+                                  : intersection.indexInOutside() ),
       dummy_( 0. )
     {
     }
