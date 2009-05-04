@@ -178,7 +178,7 @@ namespace Dune
     void removeEntity (const typename GridType::template Codim<0>::Entity & en )
     {
       // only indices that are contained should be removed 
-      assert( codimLeafSet_.index( hIndexSet_.index( en )) >= 0 );
+      assert( codimLeafSet_.validIndex( hIndexSet_.index( en )) );
       this->removeIndex( en ); 
     }
 
@@ -341,7 +341,7 @@ namespace Dune
       
       // which is the case if we havent reached a entity which has 
       // already a number 
-      if(!canInsert) 
+      if( ! canInsert) 
       {
         // if index >= 0, then all children may  also appear in the set 
         // from now on, indices can be inserted, otherwise go deeper 
