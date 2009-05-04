@@ -1,6 +1,8 @@
 #ifndef DUNE_ELEMENTPOINTLIST_HH
 #define DUNE_ELEMENTPOINTLIST_HH
 
+#include <dune/common/version.hh>
+
 #include <dune/fem/quadrature/quadrature.hh>
 #include <dune/fem/quadrature/caching/twistutility.hh>
 
@@ -261,7 +263,7 @@ namespace Dune
     const ReferenceGeometry &referenceGeometry_;
     const GeometryType elementGeometry_;
     const IntegrationPointListType quad_;
-    const int faceNumber_;
+    int localFaceIndex_;
 
     mutable CoordinateType dummy_;
 
@@ -279,17 +281,8 @@ namespace Dune
      */
     ElementIntegrationPointList ( const GridPartType &gridPart, 
                                   const IntersectionType &intersection, 
-                                  int order,
-                                  Side side )
-    : referenceGeometry_( side == INSIDE ? intersection.geometryInInside() 
-                                         : intersection.geometryInOutside() ),
-      elementGeometry_( TwistUtilityType::elementGeometry(intersection, side == INSIDE ) ), 
-      quad_( referenceGeometry_.type() , order ),
-      faceNumber_( side == INSIDE ? intersection.indexInInside()
-                                  : intersection.indexInOutside() ),
-      dummy_( 0. )
-    {
-    }
+                                  const int order,
+                                  const Side side );
     
     /** \brief copy constructor
      *
@@ -299,12 +292,11 @@ namespace Dune
     : referenceGeometry_( org.referenceGeometry_ ),
       elementGeometry_( org.elementGeometry_ ),
       quad_( org.quad_ ),
-      faceNumber_( org.faceNumber_ ),
+      localFaceIndex_( org.localFaceIndex_ ),
       dummy_( org.dummy_ )
-    {
-    }
+    {}
     
-    inline const QuadraturePointWrapperType operator[] ( size_t i ) const
+    const QuadraturePointWrapperType operator[] ( size_t i ) const
     {
       return QuadraturePointWrapperType( *this, i );
     }
@@ -359,9 +351,16 @@ namespace Dune
 
   protected:
     // return local face number 
-    int faceNumber() const
+    int faceNumber () const DUNE_DEPRECATED
     {
-      return faceNumber_;
+      typedef GenericGeometry::MapNumberingProvider< dimension > Numbering;
+      const unsigned int tid = GenericGeometry::topologyId( elementGeometry() );
+      return Numbering::template generic2dune< 1 >( tid, localFaceIndex() );
+    }
+
+    int localFaceIndex () const
+    {
+      return localFaceIndex_;
     }
 
     /** \brief obtain the actual implementation of the quadrature
@@ -376,5 +375,47 @@ namespace Dune
     }
   };
 
+
+#if DUNE_VERSION_NEWER(DUNE_GRID,1,3,0)
+  template< class GridPartImp, class IntegrationTraits >
+  ElementIntegrationPointList< GridPartImp, 1, IntegrationTraits >
+    ::ElementIntegrationPointList ( const GridPartType &gridPart, 
+                                    const IntersectionType &intersection, 
+                                    const int order,
+                                    const Side side )
+  : referenceGeometry_( side == INSIDE ? intersection.geometryInInside() 
+                                       : intersection.geometryInOutside() ),
+    elementGeometry_( TwistUtilityType::elementGeometry(intersection, side == INSIDE ) ), 
+    quad_( referenceGeometry_.type(), order ),
+    dummy_( 0. )
+  {
+    const bool inside = (side == INSIDE);
+    localFaceIndex_
+      = (inside ? intersection.indexInInside() : intersection.indexInOutside());
+  }
+#else
+  template< class GridPartImp, class IntegrationTraits >
+  ElementIntegrationPointList< GridPartImp, 1, IntegrationTraits >
+    ::ElementIntegrationPointList ( const GridPartType &gridPart, 
+                                    const IntersectionType &intersection, 
+                                    const int order,
+                                    const Side side )
+  : referenceGeometry_( side == INSIDE ? intersection.intersectionSelfLocal() 
+                                       : intersection.intersectionNeighborLocal() ),
+    elementGeometry_( TwistUtilityType::elementGeometry(intersection, side == INSIDE ) ), 
+    quad_( referenceGeometry_.type(), order ),
+    dummy_( 0. )
+  {
+    const bool inside = (side == INSIDE);
+    const int faceNumber
+      = (inside ? intersection.numberInSelf() : intersection.numberInNeighbor());
+
+    typedef GenericGeometry::MapNumberingProvider< dimension > Numbering;
+    const unsigned int tid = GenericGeometry::topologyId( elementGeometry() );
+    localFaceIndex_ = Numbering::template dune2generic< 1 >( tid, faceNumber );
+  }
+#endif
+
 } // end namespace Dune
+
 #endif

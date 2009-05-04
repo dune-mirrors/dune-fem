@@ -83,24 +83,26 @@ namespace Dune {
     typedef typename Traits::MapperType MapperType;
 
   public:
-    CacheStorage(int numFaces) :
-      mappers_(numFaces)
+    explicit CacheStorage ( int numFaces )
+    : mappers_( numFaces )
     {}
 
-    CacheStorage(const CacheStorage& other) :
-      mappers_(other.mappers_)
+    CacheStorage ( const CacheStorage &other )
+    : mappers_( other.mappers_ )
     {}
 
-    void addMapper(const MapperType& mapper, int faceIndex) 
+    void addMapper ( const MapperType &mapper, int faceIndex )
     {
-      assert(faceIndex >= 0 && faceIndex < (int) mappers_.size());
-      mappers_[faceIndex] = mapper;
+      assert( (faceIndex >= 0) && (faceIndex < (int)mappers_.size()) );
+      mappers_[ faceIndex ] = mapper;
     }
 
-    const MapperType& getMapper(int faceIndex, int faceTwist) const 
+    const MapperType &getMapper ( int faceIndex, int faceTwist ) const
     {
-      assert(faceIndex >= 0 && faceIndex < (int) mappers_.size());
-      return mappers_[faceIndex];
+      if( faceIndex >= (int)mappers_.size() )
+        std::cerr << "Error: faceIndex = " << faceIndex << " >= " << mappers_.size() << " = mappers_.size()" << std::endl;
+      assert( (faceIndex >= 0) && (faceIndex < (int)mappers_.size()) );
+      return mappers_[ faceIndex ];
     }
 
   private:
