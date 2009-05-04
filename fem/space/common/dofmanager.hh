@@ -915,7 +915,7 @@ public:
     return indexSetRestrictProlong_;
   }
 
-  //! returns the index set restrinction and prolongation operator
+  //! returns the index set restriction and prolongation operator
   IndexSetRestrictProlongNoResizeType& indexSetRestrictProlongNoResize() 
   {
     // return index set restrict/prolong operator that is only inserting

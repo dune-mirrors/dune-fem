@@ -465,9 +465,12 @@ private:
       // (here resize is disabled since already done)
       // first persistent index sets from dofmanager 
       // second user data 
+      //NewIndexSetRestrictProlongType
+      //typedef typename DofManagerType :: NewIndexSetRestrictProlongType IndexSetRPType;
       typedef typename DofManagerType :: IndexSetRestrictProlongNoResizeType IndexSetRPType;
       typedef RestrictProlongPair< IndexSetRPType&, RestProlOperatorImp& > COType;
       COType tmpop ( dm_.indexSetRestrictProlongNoResize() , rpOp_ );
+      //COType tmpop ( dm_.indexSetRestrictProlong() , rpOp_ );
       
       typedef typename GridType::template Codim<0>::
         template Partition<pitype> :: LevelIterator LevelIterator;
@@ -478,6 +481,7 @@ private:
           it != endit; ++it )
       {
         hierarchicProlong( *it , tmpop );
+        //hierarchicProlong( *it , rpOp_ );
       }
     }
 
@@ -497,7 +501,7 @@ private:
   template <class EntityType, class RestrictOperatorType  >
   bool hierarchicRestrict ( EntityType& en, RestrictOperatorType & restop ) const 
   {
-    if(!en.isLeaf())
+    if( ! en.isLeaf() )
     {
       // true means we are going to restrict data 
       bool doRestrict = true;
@@ -523,11 +527,15 @@ private:
         const HierarchicIterator endit = en.hend( childLevel );
         for(HierarchicIterator it = en.hbegin( childLevel ); it != endit; ++it)
         {
+          //std::cout << "Call restrict for (" << 
+          //    grid_.localIdSet().id( en ) << " , " <<
+          //    grid_.localIdSet().id( *it ) << ") \n";
           restop.restrictLocal( en , *it , initialize);     
           initialize = false;
         }
       }
     }
+
     // if all children return mightBeCoarsened,
     // then doRestrict on father remains true 
     return en.mightVanish();
@@ -559,6 +567,9 @@ private:
       if( son.isNew() )
       {
         EntityPointerType vati = son.father();
+        //std::cout << "Call prolong for (" << 
+        //    grid_.localIdSet().id( *vati ) << " , " <<
+        //    grid_.localIdSet().id( son ) << ") \n";
         prolop.prolongLocal( *vati , son , initialize ); 
         initialize = false;
       }
