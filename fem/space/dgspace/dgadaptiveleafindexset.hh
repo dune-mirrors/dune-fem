@@ -39,36 +39,17 @@ namespace Dune
   public:
     enum { ncodim = GridType::dimension + 1 };
 
+    template< int codim >
+    struct Codim
+    {
+      typedef typename GridType::template Codim< codim >::Entity Entity;
+    };
+
   public:  
     //! type of index 
     typedef typename BaseType::IndexType IndexType;
 
   protected:
-    template <class CodimLeafSet,class HIndexSet, int codim>
-    struct Index
-    {
-      template <class EntityType> 
-      inline static int index(const CodimLeafSet & lset, 
-                                 const HIndexSet & hset, 
-                                 const EntityType & en) 
-      {
-        DUNE_THROW(NotImplemented,"DGAdaptiveLeafIndexSet does not support indices for higher codimension!");
-        return 0;
-      }
-    };
-
-    template <class CodimLeafSet,class HIndexSet>
-    struct Index<CodimLeafSet,HIndexSet,0>
-    {
-      template <class EntityType> 
-      inline static int index(const CodimLeafSet & lset, 
-                                 const HIndexSet & hset, 
-                                 const EntityType & en) 
-      {
-        return lset.index( hset.index( en ) );
-      }
-    };
-
     //! is true if grid is structured grid 
     enum { StructuredGrid = ! Capabilities::IsUnstructured<GridType>::v };
     
@@ -261,13 +242,37 @@ namespace Dune
       return haveToCopy;
     }
 
-    /** \brief return global index for dof mapper */
-    //- --index 
-    template <int codim, class EntityType>
-    inline IndexType indexImp (const EntityType & en, int num) const
+    template< class Entity >
+    IndexType index ( const Entity &entity ) const
     {
-      return Index<CodimIndexSetType,HIndexSetType,codim>::index(codimLeafSet_,hIndexSet_,en);
+      return index< Entity::codimension >( entity );
     }
+
+    template< int codim >
+    IndexType index ( const typename Codim< codim >::Entity &entity ) const
+    {
+      if( codim != 0 )
+        DUNE_THROW( NotImplemented, "DGAdaptiveLeafIndexSet does not support indices for higher codimension!" );
+      const int hIndex = hIndexSet_.index( entity );
+      return codimLeafSet_.index( hIndex );
+    }
+
+    template< int codim >
+    IndexType subIndex ( const typename Codim< 0 >::Entity &entity, const int i ) const
+    {
+      if( codim != 0 )
+        DUNE_THROW( NotImplemented, "DGAdaptiveLeafIndexSet does not support indices for higher codimension!" );
+      const int hIndex = hIndexSet_.template subIndex< codim >( entity, i );
+      return codimLeafSet_.index( hIndex );
+    }
+
+    IndexType subIndex ( const typename Codim< 0 >::Entity &entity, const int i, const unsigned int codim ) const
+    {
+      if( codim != 0 )
+        DUNE_THROW( NotImplemented, "DGAdaptiveLeafIndexSet does not support indices for higher codimension!" );
+      const int hIndex = hIndexSet_.subIndex( entity, i, codim );
+      return codimLeafSet_.index( hIndex );
+      }
    
     //! \brief return number of holes of the sets indices 
     int numberOfHoles ( const int codim ) const
