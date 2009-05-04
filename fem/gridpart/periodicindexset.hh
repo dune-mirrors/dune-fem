@@ -44,7 +44,6 @@ namespace Dune
   public:
     template< int codim >
     struct Codim
-    : public BaseType::template Codim< codim >
     {
       typedef typename GridType::template Codim< codim >::Entity Entity;
     };
