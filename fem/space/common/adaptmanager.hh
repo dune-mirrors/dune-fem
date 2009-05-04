@@ -419,12 +419,12 @@ private:
     // one element is marked for coarsening 
     bool restr = grid_.preAdapt();  
 
+    // get macro grid iterator 
+    typedef typename GridType::template Codim<0>::
+      template Partition<pitype> :: LevelIterator LevelIterator;
+
     if(restr)
     {
-      // get macro grid iterator 
-      typedef typename GridType::template Codim<0>::
-        template Partition<pitype> :: LevelIterator LevelIterator;
-
       // make a hierarchical to insert all elements 
       // that are father of elements that might be coarsened 
       {
@@ -461,9 +461,6 @@ private:
       // resizes the index sets (insert all new indices) 
       // and resizes the memory
       dm_.resize();
-
-      typedef typename GridType::template Codim<0>::
-        template Partition<pitype> :: LevelIterator LevelIterator;
 
       // make run through grid to project data 
       LevelIterator endit = grid_.template lend<0,pitype> ( 0 );
