@@ -44,11 +44,11 @@ namespace Dune
     typedef MutableArray<int> IndexVectorType;
     
     // the mapping of the global to leaf index 
-    mutable IndexStorageType leafIndex_;
+    mutable IndexStorageType* leafIndex_;
     mutable IdStorageType leafId_;
 
     // old indices 
-    mutable IndexStorageType oldLeafIndex_;
+    mutable IndexStorageType* oldLeafIndex_;
 
     // list of old and new index for all holes 
     mutable IndexVectorType oldIndexVec_;
@@ -62,6 +62,9 @@ namespace Dune
 
     int oldIds_;
 
+    // number of holes 
+    int numberOfHoles_; 
+
     // no copying 
     IdBasedCodimIndexSet (const IdBasedCodimIndexSet& );
 
@@ -72,7 +75,9 @@ namespace Dune
                            const IndexSetType &indexSet,
                            const Iterator &begin,
                            const Iterator &end )
-    : idSet_( idSet ),
+    : leafIndex_( new IndexStorageType () ),
+      oldLeafIndex_( new IndexStorageType () ),
+      idSet_( idSet ),
       indexSet_( indexSet ),
       nextFreeIndex_( indexSet_.size( codim ) )
     {
@@ -83,6 +88,13 @@ namespace Dune
       newIndexVec_.setMemoryFactor( 1.1 );
     }
 
+    //! destructor 
+    ~IdBasedCodimIndexSet() 
+    {
+      delete oldLeafIndex_ ;
+      delete leafIndex_ ;
+    }
+
     template< class Iterator >
     void createMaps ( const Iterator &begin, const Iterator &end );
 
@@ -90,12 +102,18 @@ namespace Dune
     //! return true, if at least one hole was closed 
     void resize ()
     {
+      // get new size 
       nextFreeIndex_ = indexSet_.size(codim);
-      oldLeafIndex_.clear();
-      oldLeafIndex_ = leafIndex_;
+
+      // swap pointers of index storages 
+      {
+        IndexStorageType* swap  = oldLeafIndex_;
+        oldLeafIndex_ = leafIndex_;
+        leafIndex_ = swap;
+      }
 
       leafId_.clear();
-      leafIndex_.clear();
+      leafIndex().clear();
       oldIds_ = 0;
     }
 
@@ -103,18 +121,18 @@ namespace Dune
     //! return true, if at least one hole was closed 
     bool compress ()
     {
-      int actSize = leafIndex_.size ();
+      int actSize = leafIndex().size ();
       nextFreeIndex_ = actSize;
 
       // create holes index vector 
-      HolesIndicesType holesIdx(oldLeafIndex_.size(), -1);   
+      HolesIndicesType holesIdx(oldLeafIndex().size(), -1);   
 
       int noHole = 0;
       {
         // remove all indices that are bigger than nextFreeIndex 
         typedef typename IndexStorageType :: const_iterator iterator;
-        iterator end = oldLeafIndex_.end();
-        for(iterator it = oldLeafIndex_.begin(); it != end; ++it) 
+        iterator end = oldLeafIndex().end();
+        for(iterator it = oldLeafIndex().begin(); it != end; ++it) 
         {
           int idx = (*it).second;
           assert( idx >= 0 );
@@ -132,8 +150,8 @@ namespace Dune
         }
       }
 
-      assert( (leafIndex_.size() != (size_t) actSize) ? 
-          (std::cerr << actSize << " s|ls " << leafIndex_.size() << "\n",0) : 1);
+      assert( (leafIndex().size() != (size_t) actSize) ? 
+          (std::cerr << actSize << " s|ls " << leafIndex().size() << "\n",0) : 1);
 
       {
         // resize hole lists 
@@ -142,8 +160,8 @@ namespace Dune
         
         int hole = 0;
         typedef typename IndexStorageType :: iterator iterator;
-        const iterator end = leafIndex_.end();
-        for(iterator it = leafIndex_.begin(); it != end; ++it) 
+        const iterator end = leafIndex().end();
+        for(iterator it = leafIndex().begin(); it != end; ++it) 
         {
           const int idx = (*it).second;
           if( idx >= nextFreeIndex_ ) 
@@ -185,10 +203,13 @@ namespace Dune
         // set current number of holes
         oldIndexVec_.resize( hole );
         newIndexVec_.resize( hole );
+
+        // store number of holes 
+        numberOfHoles_ = oldIndexVec_.size();
       }
 
       // clear old values 
-      oldLeafIndex_.clear();
+      oldLeafIndex().clear();
       
       // check that index set is consecutive 
       // only done in debug mode 
@@ -200,8 +221,8 @@ namespace Dune
     {
   #ifndef NDEBUG
       typedef typename IndexStorageType :: const_iterator iterator;
-      iterator end    = leafIndex_.end();
-      for(iterator it = leafIndex_.begin(); it != end; ++it) 
+      iterator end    = leafIndex().end();
+      for(iterator it = leafIndex().begin(); it != end; ++it) 
       {
         int idx = (*it).second;
         assert( idx < nextFreeIndex_ );
@@ -230,22 +251,28 @@ namespace Dune
     {
       // assert if index was not set yet 
       assert( exists( en ) );
-      assert( leafIndex_ [ idSet_.id(en) ] < size() );
-      return leafIndex_ [ idSet_.id(en) ];
+      assert( leafIndex() [ idSet_.id(en) ] < size() );
+      return leafIndex() [ idSet_.id(en) ];
     }
    
     //! return state of index for given hierarchic number  
     template <class EntityType> 
     bool exists ( const EntityType & en) const
     {
-      return (leafIndex_.find( idSet_.id(en) ) != leafIndex_.end()); 
+      return (leafIndex().find( idSet_.id(en) ) != leafIndex().end()); 
     }
    
+    //! remove the list of holes (to avoid double compression)
+    void clearHoles() 
+    {
+      numberOfHoles_ = 0;
+    }
+
     //! return number of existing holes 
     int numberOfHoles () const
     {
       assert( oldIndexVec_.size() == newIndexVec_.size() );
-      return oldIndexVec_.size();
+      return numberOfHoles_; 
     }
 
     //! return old index, for dof manager only 
@@ -265,21 +292,22 @@ namespace Dune
     void checkIndex (const EntityType & en) 
     {
       IdType id = idSet_.id(en);
-      if(leafIndex_.find(id) == leafIndex_.end())
+      if( leafIndex().find(id) == leafIndex().end() )
       {
-        if(oldLeafIndex_.find(id) == oldLeafIndex_.end())
+        // check if entity is really new 
+        if( oldLeafIndex().find(id) == oldLeafIndex().end() )
         {
           int idx = nextFreeIndex_;
           ++nextFreeIndex_;
-          leafIndex_[id] = idx; 
-          leafId_[idx] = id;
+          leafIndex()[ id  ] = idx; 
+          leafId_   [ idx ] = id;
         }
         else 
         {
           ++oldIds_;
-          int idx = oldLeafIndex_[id];
-          leafIndex_[id]  = idx; 
-          leafId_   [idx] = id;
+          int idx = oldLeafIndex()[ id ];
+          leafIndex()[ id  ] = idx; 
+          leafId_   [ idx ] = id;
         }
       }
     }
@@ -289,15 +317,15 @@ namespace Dune
     void insert (const EntityType & en ) 
     {
       IdType id = idSet_.id(en);
-      if(leafIndex_.find(id) == leafIndex_.end())
+      if(leafIndex().find(id) == leafIndex().end())
       {
-        leafIndex_[id] = nextFreeIndex_;
+        leafIndex()[id] = nextFreeIndex_;
         leafId_[nextFreeIndex_] = id;
         ++nextFreeIndex_;
       }
     }
     
-    // remove index actually is done in compression 
+    // removal of indices is actually done in compression 
     template <class EntityType> 
     void remove ( const EntityType & en ) 
     {
@@ -311,12 +339,28 @@ namespace Dune
       /*
       xdr_int ( xdrs, &nextFreeIndex_ );
       xdr_int ( xdrs, &actSize_ );
-      leafIndex_.processXdr(xdrs);
+      leafIndex().processXdr(xdrs);
       state_.processXdr(xdrs);
       return true;
       */
       return false;
     }
+
+  protected:
+    // return reference to leaf index 
+    IndexStorageType& leafIndex() const 
+    {
+      assert( leafIndex_ );
+      return *leafIndex_;
+    }
+
+    // return reference to old leaf index 
+    IndexStorageType& oldLeafIndex() const 
+    {
+      assert( oldLeafIndex_ );
+      return *oldLeafIndex_;
+    }
+
   }; // end of class 
 
 
@@ -329,10 +373,10 @@ namespace Dune
     for( Iterator it = begin; it != end; ++it )
     {
       IdType id = idSet_.id(*it);
-      if(leafIndex_.find(id) == leafIndex_.end())
+      if(leafIndex().find(id) == leafIndex().end())
       {
-        int idx = indexSet_.index(*it);
-        leafIndex_[id] = idx;    
+        int idx = indexSet_.index( *it );
+        leafIndex()[id] = idx;    
         leafId_  [idx] = id;
       }
     }
@@ -487,6 +531,7 @@ namespace Dune
     //! Unregister entity which will be removed from the grid
     void removeEntity(const typename GridType::template Codim<0>::Entity & en )
     {
+      assert( contains( en ) );
       this->removeIndex( en ); 
     }
 
@@ -501,8 +546,28 @@ namespace Dune
     //! return true, if at least one hole was closed 
     bool compress ()
     {
+      // reset list of holes in any case 
+      persistentLeafSet().clearHoles();
+
       // if already compressed, do nothing 
       if ( compressed_ ) return false;
+
+      /*
+      // if set already compress, do noting (only for serial runs) 
+      if(compressed_)
+      {
+        // in parallel runs check sequence number of dof manager 
+        if( this->grid_.comm().size() > 1 )
+        {
+          if( sequence_ == this->dofManager_.sequence() ) return false;
+        }
+        else
+        {
+          // for serial runs just return 
+          return false;
+        }
+      }
+      */
 
       // prepare for resize 
       persistentLeafSet().resize();
@@ -648,11 +713,14 @@ namespace Dune
     {
       typedef typename EntityCodim0Type :: HierarchicIterator HierarchicIteratorType;
 
+      // get leaf information
+      const bool isLeaf = en.isLeaf();
+
       // check whether we can insert or not 
-      const bool isNew = insertNewIndex ( en , en.isLeaf() , wasNew );
+      const bool isNew = insertNewIndex ( en , isLeaf , wasNew );
 
       // if entity is not leaf go deeper 
-      if( ! en.isLeaf() )
+      if( ! isLeaf )
       {
         const int level = en.level() + 1;
 
