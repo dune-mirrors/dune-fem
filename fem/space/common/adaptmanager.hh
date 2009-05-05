@@ -12,6 +12,8 @@
 #include <dune/fem/space/common/restrictprolonginterface.hh>
 #include <dune/fem/storage/singletonlist.hh>
 
+#include <dune/fem/space/common/adaptcallbackhandle.hh>
+
 namespace Dune
 {
 
@@ -249,15 +251,14 @@ class AdaptationManagerBase
       // use grid call back adapt method 
       if( adaptMethod == BaseType :: callback ) 
       {
-        // generate new combined restriction and prolongation operator 
-        // first persistent index sets from dofmanager 
-        // second user data 
-        typedef typename DofManagerType :: NewIndexSetRestrictProlongType IndexSetRPType;
-        typedef RestrictProlongPair < IndexSetRPType& , RPOpImp& > COType;
-        COType combinedRestrictProlong ( dm.indexSetRestrictProlong() , rpop );
-      
+        // combine dof manager and restrict prolong operator 
+        typedef RestrictProlongWrapper< GridImp, DofManagerType, RPOpImp > RPType;
+
+        // create new handle 
+        RPType restrictProlongHandle ( dm , rpop );
+
         // call grid adaptation 
-        grid.adapt(dm, combinedRestrictProlong); 
+        grid.adapt( restrictProlongHandle ); 
         return ;
       }
     }
@@ -374,7 +375,6 @@ public:
     // get stopwatch 
     Timer timer; 
 
-    // const bool supportsCallback = Conversion< GridType, HasHierarchicIndexSet > :: exists;
     const bool supportsCallback = Capabilities :: supportsCallbackAdaptation< GridType > :: v;
     CallAdaptationMethod< ThisType, GridType, supportsCallback >
       :: adapt(*this,grid_,dm_,rpOp_,this->adaptationMethod_);

@@ -22,7 +22,8 @@ common_HEADERS = adaptcaps.hh \
      functionspaceinterface.hh \
      geometryconversion.hh \
      loadbalancer.hh \
-     restrictprolonginterface.hh
+     restrictprolonginterface.hh \
+     adaptcallbackhandle.hh
 
 include $(top_srcdir)/am/global-rules
 
