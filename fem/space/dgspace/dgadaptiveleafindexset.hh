@@ -441,11 +441,14 @@ namespace Dune
     {
       typedef typename EntityCodim0Type :: HierarchicIterator HierarchicIteratorType;
 
+      // get leaf information 
+      const bool isLeaf = en.isLeaf();
+
       // check whether we can insert or not 
-      const bool isNew = insertNewIndex( en , en.isLeaf() , wasNew );
+      const bool isNew = insertNewIndex( en , isLeaf , wasNew );
 
       // if entity is not leaf go deeper 
-      if( ! en.isLeaf() )
+      if( ! isLeaf )
       {
         const int level = en.level() + 1;
 
