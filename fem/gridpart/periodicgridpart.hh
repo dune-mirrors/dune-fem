@@ -152,6 +152,27 @@ namespace Dune
       return wrappedIterator_->intersectionGlobal();
     }
 
+#if DUNE_VERSION_NEWER(DUNE_GRID,1,3,0)
+    const LocalGeometry &geometryInInside () const
+    {
+      return wrappedIterator_->geometryInInside();
+    }
+
+    const LocalGeometry &geometryInOutside () const
+    {
+      if( wrappedIterator_->neighbor() )
+        return wrappedIterator_->geometryInOutside();
+      else
+        DUNE_THROW( NotImplemented, "PeriodicLeafIntersectionIteratorWrapper: "
+                                    "outside on boundary not implemented yet." );
+    }
+
+    const Geometry &geometry () const
+    {
+      return wrappedIterator_->geometry();
+    }
+#endif
+
     int numberInSelf () const
     {
       return wrappedIterator_->numberInSelf();
@@ -161,6 +182,18 @@ namespace Dune
     {
       return wrappedIterator_->numberInNeighbor();
     }
+
+#if DUNE_VERSION_NEWER(DUNE_GRID,1,3,0)
+    int indexInInside () const
+    {
+      return wrappedIterator_->indexInInside();
+    }
+
+    int indexInOutside () const
+    {
+      return wrappedIterator_->indexInOutside();
+    }
+#endif
 
     DomainType outerNormal ( const LocalDomainType &x ) const
     {
