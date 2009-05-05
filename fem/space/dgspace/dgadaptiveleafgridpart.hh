@@ -29,6 +29,7 @@ namespace Dune
     {
       // choose the adative index based on hierarhic index set
       typedef DGAdaptiveLeafIndexSet< GridT > IndexSetType;
+      static const char* warningMsg () { return 0; }
     };
 
     // the same for shitty unstructured grids 
@@ -37,6 +38,11 @@ namespace Dune
     {
       // choose the leaf index set based on local ids 
       typedef IdBasedLeafIndexSet< GridT > IndexSetType;
+
+      static const char* warningMsg () 
+      {
+        return "WARNING: DGAdaptiveLeafGridPart: using IdBasedLeafIndexSet because HierarchicIndexSet is missing for current grid type !!!";
+      }
     };
 
     // for structured grids with no hierarchic index set choose 
@@ -46,6 +52,7 @@ namespace Dune
     {
       // choose the adative index based on leaf index set
       typedef DGAdaptiveLeafIndexSet< GridT > IndexSetType;
+      static const char* warningMsg () { return 0; }
     };
 
     typedef Grid GridType;
@@ -146,11 +153,21 @@ namespace Dune
     //! Constructor
     explicit DGAdaptiveLeafGridPart( GridType &grid )
     : BaseType( grid, IndexSetProviderType :: getObject( &grid ) )
-    {}
+    {
+      // warning message when IdBasedLeafIndexSet is used
+      const char * warningMsg = Traits :: IndexSetChooserType :: warningMsg ();
+
+      if( warningMsg ) 
+      {
+        std::cerr << warningMsg << std :: endl;
+      }
+    }
+
     //! Copy Constructor
     DGAdaptiveLeafGridPart( const ThisType &other )
     : BaseType( other.grid_, IndexSetProviderType :: getObject( &(other.grid()) ) )
-    {}
+    {
+    }
 
     /** \brief Desctrutor removing index set. When only one reference is
         left, index set object is deleted. */
