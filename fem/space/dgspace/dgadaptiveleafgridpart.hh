@@ -41,7 +41,14 @@ namespace Dune
 
       static const char* warningMsg () 
       {
-        return "WARNING: DGAdaptiveLeafGridPart: using IdBasedLeafIndexSet because HierarchicIndexSet is missing for current grid type !!!";
+        static bool called = false ;
+        if( ! called ) 
+        {
+          called = true ;
+          return "WARNING: DGAdaptiveLeafGridPart: using IdBasedLeafIndexSet because HierarchicIndexSet is missing for current grid type !!!";
+        }
+        else 
+          return 0;
       }
     };
 
