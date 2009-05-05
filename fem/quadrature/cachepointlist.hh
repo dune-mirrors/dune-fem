@@ -166,7 +166,7 @@ namespace Dune
       BaseType;
 
  protected:
-    using BaseType :: localFaceIndex;
+    using BaseType :: faceNumber;
     using BaseType :: quadImp;
 
   public:
@@ -225,7 +225,7 @@ namespace Dune
                        typename BaseType :: Side side)
       : BaseType( gridPart, intersection, order, side ),
         mapper_( CacheProvider< GridType, codimension > :: getMapper
-          ( quadImp(), elementGeometry(), localFaceIndex(),
+          ( quadImp(), elementGeometry(), faceNumber(),
             (side == BaseType :: INSIDE)
               ? TwistUtilityType :: twistInSelf( gridPart.grid(), intersection )
               : TwistUtilityType :: twistInNeighbor( gridPart.grid(), intersection )
