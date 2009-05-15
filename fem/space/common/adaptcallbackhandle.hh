@@ -42,7 +42,7 @@ namespace Dune
       rpOp_( org.rpOp_ )
     {}
 
-    void preAdapt ( const size_t estimatedAdditionalElements )
+    void preAdapt ( const unsigned int estimatedAdditionalElements )
     {
       dofManager_.reserveMemory( estimatedAdditionalElements );
     }
