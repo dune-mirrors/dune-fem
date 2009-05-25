@@ -12,6 +12,8 @@
 
 #include <dune/fem/misc/boundaryidentifier.hh>
 
+#include <dune/fem/version.hh>
+
 namespace Dune {
 
   /**
@@ -20,10 +22,10 @@ namespace Dune {
    */
   template <class DiscreteModelImp, class ArgumentImp, class SelectorImp>
   class EllipticDiscreteModelCaller 
-    : public DiscreteModelCallerDefault<DiscreteModelImp,ArgumentImp,SelectorImp> 
+    : public DiscreteModelCallerDefault< DiscreteModelImp, ArgumentImp, SelectorImp > 
   {
   public:
-    typedef DiscreteModelCallerDefault<DiscreteModelImp,ArgumentImp,SelectorImp> BaseType; 
+    typedef DiscreteModelCallerDefault< DiscreteModelImp, ArgumentImp, SelectorImp > BaseType; 
     typedef DiscreteModelImp DiscreteModelType;
     typedef ArgumentImp TotalArgumentType;
     typedef SelectorImp SelectorType;
@@ -55,12 +57,14 @@ namespace Dune {
     typedef BoundaryIdentifier BoundaryIdentifierType;
   public:
     EllipticDiscreteModelCaller(DiscreteModelType& problem) 
-      : problem_( problem )
+      : BaseType(problem) 
+      , problem_(problem)
       , valuesEn_( RangeCreator::apply() )
       , valuesNeigh_( RangeCreator::apply() )
       , jacobians_( JacobianCreator::apply() )
     {}
 
+#if DUNE_VERSION_NEWER(DUNE_GRID,1,2,0)
     // Ensure: entities set correctly before call
     template <class QuadratureType, class CoefficientType>
     DUNE_DEPRECATED 
@@ -76,6 +80,7 @@ namespace Dune {
                                quadPoint, 
                                coeffLeft, coeffRight);
     }
+#endif
 
     // Ensure: entities set correctly before call
     template <class QuadratureType, class CoefficientType>
@@ -114,6 +119,7 @@ namespace Dune {
                            this->valuesEn_, coeff);
     }
       
+#if DUNE_VERSION_NEWER(DUNE_GRID,1,2,0)
     // Ensure: entities set correctly before call
     template <class QuadratureType, class CoefficientType>
     DUNE_DEPRECATED 
@@ -128,6 +134,7 @@ namespace Dune {
                            this->time_, quadInner.point(quadPoint), 
                            this->valuesEn_, coeff);
     }
+#endif
       
     template <class CoefficientType>
     void evaluateCoefficient(Entity& en, VolumeQuadratureType& quad, int quadPoint,
@@ -141,7 +148,7 @@ namespace Dune {
 
     BoundaryIdentifierType
     DUNE_DEPRECATED 
-    boundaryValue(IntersectionIterator& nit,
+    boundaryValue(const IntersectionIterator& nit,
                   const FaceQuadratureType& quad,
                   const int quadPoint,
                   RangeType& value) 
@@ -163,7 +170,9 @@ namespace Dune {
                                     this->valuesEn_, boundaryValue);
     }
 
-    void rightHandSide(Entity& en, VolumeQuadratureType& quad, int quadPoint, 
+    void rightHandSide(const Entity& en, 
+                       const VolumeQuadratureType& quad, 
+                       const int quadPoint, 
                        RangeType& res) 
     {
       this->evaluateQuad( quad, quadPoint,
@@ -171,18 +180,18 @@ namespace Dune {
       this->evaluateJacobianQuad(en, quad, quadPoint);
       problem_.rightHandSide(en, this->time_, quad.point(quadPoint), 
                              this->valuesEn_,
-                             this->jacobians_, res);
+                             this->jacobians_,
+                             res);
     }
-
-  private:
-    // our problem 
-    DiscreteModelType& problem_;
 
   protected:
     RangeTupleType valuesEn_;
     RangeTupleType valuesNeigh_;
     JacobianRangeTupleType jacobians_;
 
+  private:
+    // our problem 
+    DiscreteModelType& problem_;
   }; // end EllipticDiscreteModelCaller 
 
 } // end namespace Dune 

@@ -51,6 +51,8 @@ namespace Dune {
 
     //! Intersection iterator of the grid
     typedef typename GridPartType::IntersectionIteratorType IntersectionIteratorType;
+    //! Intersection of the grid
+    typedef typename IntersectionIteratorType::IntersectionType IntersectionType;
     //! Element (codim 0 entity) of the grid
     typedef typename GridType::template Codim<0>::Entity EntityType;
 
@@ -83,6 +85,7 @@ namespace Dune {
     template <class FaceDomType,
               class ArgumentTuple>
     BoundaryIdentifierType
+    DUNE_DEPRECATED
     boundaryValue(const IntersectionIteratorType& it,
                   double time, const FaceDomType& local,
                   const ArgumentTuple& u,
@@ -92,7 +95,21 @@ namespace Dune {
       return asImp().boundaryValue(it,time,local,u,bndVal);
     }
 
+    // Ensure: entities set correctly before call
+    template <class FaceDomType,
+              class ArgumentTuple>
+    BoundaryIdentifierType
+    boundaryValue(const IntersectionType& it,
+                  double time, const FaceDomType& local,
+                  const ArgumentTuple& u,
+                  RangeType& bndVal) const
+    {
+      CHECK_INTERFACE_IMPLEMENTATION(asImp().boundaryValue(it,time,local,u,bndVal));
+      return asImp().boundaryValue(it,time,local,u,bndVal);
+    }
+
     template <class ArgumentTuple, class CoefficientType>
+    DUNE_DEPRECATED
     void coefficientFace(const IntersectionIteratorType& it,
                          const double time,
                          const FaceDomainType& local,
@@ -105,6 +122,19 @@ namespace Dune {
                         uLeft,uRight,coeffLeft,coeffRight));
     }
 
+    // Ensure: entities set correctly before call
+    template <class ArgumentTuple, class CoefficientType>
+    void coefficientFace(const IntersectionType& it,
+                         const double time,
+                         const FaceDomainType& local,
+                         const ArgumentTuple& uLeft,
+                         const ArgumentTuple& uRight,
+                         CoefficientType & coeffLeft,
+                         CoefficientType & coeffRight) const
+    {
+      CHECK_AND_CALL_INTERFACE_IMPLEMENTATION(asImp().coefficientFace(it,time,local,
+                        uLeft,uRight,coeffLeft,coeffRight));
+    }
  
     //! \brief Implements the source term of the problem.
     //! Source term contribution. The source term can contain parts of the
@@ -139,7 +169,7 @@ namespace Dune {
     //! (needed for the non-conservative contributions)
     //! \param rhs The right hand side contribution (return value).
     template <class ArgumentTuple, class JacobianTuple>
-    void rightHandSide(EntityType &en,
+    void rightHandSide(const EntityType &en,
                        const double time,
                        const DomainType& local,
                        const ArgumentTuple& u,
