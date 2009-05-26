@@ -455,9 +455,9 @@ namespace LDGExample {
     enum { polynomialOrder = polOrd };
 
   public:
-    VelocityDiscreteModel(const ModelImp& mod, const NumFluxType& flux) 
-      : model_(mod)
-      , numFlux_(flux) 
+    VelocityDiscreteModel ( const ModelImp &model, const NumFluxType &numFlux )
+    : model_( model ),
+      numFlux_( numFlux )
     {}
 
     bool hasSource() const { return false; }
@@ -551,8 +551,8 @@ namespace LDGExample {
       model_.gradient(en,time,x,argU,f);
     }
   private:
-    const ModelImp & model_;
-    const NumFluxType& numFlux_;
+    const ModelImp &model_;
+    const NumFluxType &numFlux_;
   };
 
 

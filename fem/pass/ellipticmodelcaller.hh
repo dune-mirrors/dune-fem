@@ -14,18 +14,21 @@
 
 #include <dune/fem/version.hh>
 
-namespace Dune {
+namespace Dune
+{
 
   /**
    * @brief Wrapper class for all the template magic used to call the problem
    * methods.
    */
   template <class DiscreteModelImp, class ArgumentImp, class SelectorImp>
-  class EllipticDiscreteModelCaller 
-    : public DiscreteModelCallerDefault< DiscreteModelImp, ArgumentImp, SelectorImp > 
+  class EllipticDiscreteModelCaller
+  : public DiscreteModelCallerDefault< DiscreteModelImp, ArgumentImp, SelectorImp >
   {
-  public:
+    typedef EllipticDiscreteModelCaller< DiscreteModelImp, ArgumentImp, SelectorImp > ThisType;
     typedef DiscreteModelCallerDefault< DiscreteModelImp, ArgumentImp, SelectorImp > BaseType; 
+
+  public:
     typedef DiscreteModelImp DiscreteModelType;
     typedef ArgumentImp TotalArgumentType;
     typedef SelectorImp SelectorType;
@@ -55,13 +58,12 @@ namespace Dune {
     typedef typename JacobianCreator::ResultType JacobianRangeTupleType;
 
     typedef BoundaryIdentifier BoundaryIdentifierType;
-  public:
-    EllipticDiscreteModelCaller(DiscreteModelType& problem) 
-      : BaseType(problem) 
-      , problem_(problem)
-      , valuesEn_( RangeCreator::apply() )
-      , valuesNeigh_( RangeCreator::apply() )
-      , jacobians_( JacobianCreator::apply() )
+
+    EllipticDiscreteModelCaller( DiscreteModelType &problem )
+    : problem_( problem ),
+      valuesEn_( RangeCreator::apply() ),
+      valuesNeigh_( RangeCreator::apply() ),
+      jacobians_( JacobianCreator::apply() )
     {}
 
 #if DUNE_VERSION_NEWER(DUNE_GRID,1,2,0)
@@ -184,14 +186,14 @@ namespace Dune {
                              res);
     }
 
+  private:
+    // our problem 
+    DiscreteModelType& problem_;
+
   protected:
     RangeTupleType valuesEn_;
     RangeTupleType valuesNeigh_;
     JacobianRangeTupleType jacobians_;
-
-  private:
-    // our problem 
-    DiscreteModelType& problem_;
   }; // end EllipticDiscreteModelCaller 
 
 } // end namespace Dune 

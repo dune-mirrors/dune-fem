@@ -48,8 +48,8 @@ namespace Dune {
     //! type of mass matrix factor (see discretemodel.hh)
     typedef typename DiscreteModelType :: MassFactorType MassFactorType;
   public:
-    DiscreteModelCallerDefault(  ) :
-      data_( 0 ),
+    DiscreteModelCallerDefault()
+    : data_( 0 ),
       valuesEn_( RangeCreator::apply() ),
       valuesNeigh_( RangeCreator::apply() ),
       jacobians_( JacobianCreator::apply() ),
@@ -135,33 +135,27 @@ namespace Dune {
 
 #endif
 
-    template <class QuadratureType>
-    inline
-    void evaluateQuad(const QuadratureType& quad, 
-                      const int quadPoint, 
-                      LocalFunctionTupleType& lfs, 
-                      RangeTupleType& ranges) 
+    template< class QuadratureType >
+    void evaluateQuad ( const QuadratureType &quadrature, 
+                        const int quadPoint, 
+                        LocalFunctionTupleType &lfs, 
+                        RangeTupleType &ranges )
     {
-      ForEachValuePair<
-        LocalFunctionTupleType, RangeTupleType> forEach(lfs,
-                                                        ranges);
-      LocalFunctionEvaluateQuad<QuadratureType> eval(quad, quadPoint);
-      
+      ForEachValuePair< LocalFunctionTupleType, RangeTupleType > forEach( lfs, ranges );
+      LocalFunctionEvaluateQuad< QuadratureType > eval( quadrature, quadPoint );
       forEach.apply(eval);
     }
 
-    template <class QuadratureType>
-    void evaluateJacobianQuad(Entity& en, QuadratureType& quad, 
-                              int quadPoint) 
+    template< class QuadratureType >
+    void evaluateJacobianQuad ( const Entity &entity,
+                                const QuadratureType &quadrature,
+                                const int quadPoint )
     {
-      ForEachValuePair<
-       LocalFunctionTupleType,
-        JacobianRangeTupleType> forEach(data_->localFunctionsSelf(),
-                                        jacobians_);
-      LocalFunctionEvaluateJacobianQuad<
-        QuadratureType> eval(quad, quadPoint);
-      
-      forEach.apply(eval);
+      ForEachValuePair< LocalFunctionTupleType, JacobianRangeTupleType >
+        forEach( data_->localFunctionsSelf(), jacobians_ );
+      LocalFunctionEvaluateJacobianQuad< QuadratureType >
+        eval( quadrature, quadPoint );
+      forEach.apply( eval );
     }
 
   private:
