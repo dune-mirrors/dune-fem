@@ -16,6 +16,45 @@
 // include BLAS  implementation 
 #include "cblas.h"
 
+
+namespace Dune
+{
+
+  /** \class   OEMMatrix
+   *  \ingroup OEMSolver  
+   *  \brief   interface for matrices to be used with OEM sovlers
+   */
+  struct OEMMatrix
+  {
+    /** \brief evaluate matrix vector multiplication
+     *
+     *  \param[in]   u  vector to multiply the matrix with
+     *  \param[out]  w  vector to store the result in
+     */
+    virtual void multOEM ( const double *u, double *w ) const = 0;
+
+    /** \brief evaluate scalar product
+     *
+     *  \param[in]   u  first argument of scalar product
+     *  \param[in]   v  second argument of scalar product
+     */
+    virtual double ddotOEM ( const double *u, const double *v ) const = 0;
+
+    // SparseRowMatrixObject does not implement this method
+#if 0
+    /** \brief apply preconditioner
+     *
+     *  \param[in]   u  vector to apply preconditioner to
+     *  \param[out]  w  vector to store the result in
+     */
+    virtual void precondition ( const double *u, double *w ) const = 0;
+#endif
+  };
+
+}
+
+
+
 namespace OEMSolver 
 {
 

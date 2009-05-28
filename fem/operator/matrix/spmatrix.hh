@@ -10,6 +10,7 @@
 #include <dune/fem/operator/common/localmatrix.hh> 
 #include <dune/fem/operator/common/localmatrixwrapper.hh> 
 #include <dune/fem/io/parameter.hh>
+#include <dune/fem/solver/oemsolver.hh>
 
 namespace Dune
 {
@@ -39,7 +40,7 @@ namespace Dune
 //*****************************************************************
   
 template <class T>
-class SparseRowMatrix 
+class SparseRowMatrix
 {
 public: 
   typedef T Ttype;  //! remember the value type
@@ -334,6 +335,11 @@ private:
   void removeObj();
 };
 
+
+
+  // SparseRowMatrixObject
+  // ---------------------
+
   template <class DomainSpace, class RangeSpace, class TraitsImp>
   class SparseRowMatrixObject;
 
@@ -353,6 +359,7 @@ private:
 
   template< class DomainSpace, class RangeSpace , class TraitsImp >
   class SparseRowMatrixObject
+  : public OEMMatrix
   {
   public:
     //! type of traits 
