@@ -310,7 +310,6 @@ private:
   typedef ManagedDofStorage <GridImp, MapperType , DofArrayType> ThisType;
 
   typedef DofManager<GridImp> DofManagerType;
-  typedef DofManagerFactory< DofManagerType > DofManagerFactoryType;
 
   // reference to dof manager 
   DofManagerType& dm_;
@@ -340,7 +339,7 @@ public:
                       const MapperType& mapper,
                       const std::string& name
                     )
-    : dm_( DofManagerFactoryType :: getDofManager( grid ) ),
+    : dm_( DofManagerType :: instance( grid ) ),
       mapper_ ( const_cast<MapperType& >(mapper)),
       array_( mapper_.size() ),
       name_ (name),
@@ -1111,6 +1110,38 @@ public:
     dataXtractor_.apply(str,en);
   }
 
+  //********************************************************
+  // Interface for DofManager access 
+  //********************************************************
+  
+  /** \brief obtain a reference to the DofManager for a given grid
+   *
+   *  \param[in]  grid  grid for which the DofManager is desired
+   *
+   *  \returns a reference to the singleton instance of the DofManager
+   */
+  static inline ThisType& instance( const GridType& grid )
+  {
+    typedef DofManagerFactory< ThisType > DofManagerFactoryType;
+    return DofManagerFactoryType :: instance( grid );
+  }
+
+  //! writes DofManager of corresponding grid, when DofManager exists 
+  inline static bool
+  write(const GridType & grid, const std::string filename, int timestep)
+  {
+    typedef DofManagerFactory< ThisType > DofManagerFactoryType;
+    return DofManagerFactoryType :: writeDofManagerNew(grid, filename, timestep);
+  }
+
+  //! reads DofManager of corresponding grid, when DofManager exists 
+  inline static bool
+  read(const GridType & grid, const std::string filename, int timestep, bool verbose = true )
+  {
+    typedef DofManagerFactory< ThisType > DofManagerFactoryType;
+    return DofManagerFactoryType :: readDofManagerNew(grid, filename, timestep, verbose);
+  }
+
 private:
   //! only called from DofManagerFactory 
   //********************************************************
@@ -1118,9 +1149,9 @@ private:
   //********************************************************
 
   //! writes all underlying index sets to a file 
-  bool writeIndexSets(const std::string filename, int timestep);
+  bool writeIndexSets(const std::string& filename, int timestep);
   //! reads all underlying index sets from a file 
-  bool readIndexSets(const std::string filename, int timestep);
+  bool readIndexSets(const std::string& filename, int timestep);
 
   // generate index set filename 
   std::string generateIndexSetName(const std::string& filename,
@@ -1286,7 +1317,7 @@ removeDofStorage(ManagedDofStorageImp& dofStorage)
 
 template <class GridType>
 inline bool DofManager<GridType>::
-writeIndexSets(const std::string filename , int timestep )
+writeIndexSets(const std::string& filename , int timestep )
 {
   int count = 0;
   IndexListIteratorType endit = indexList_.end();
@@ -1301,7 +1332,7 @@ writeIndexSets(const std::string filename , int timestep )
 
 template <class GridType>
 inline bool DofManager<GridType>::
-readIndexSets(const std::string filename , int timestep )
+readIndexSets(const std::string& filename , int timestep )
 {
   int count = 0;
   IndexListIteratorType endit = indexList_.end();
@@ -1340,19 +1371,61 @@ readIndexSets(const std::string filename , int timestep )
    *  DofManagerFactory guarantees that at most one instance of DofManager
    *  is generated for each grid.
    */
-  template< class DofManager >
+  template< class DofManagerImp >
   class DofManagerFactory
   {
-    typedef DofManagerFactory< DofManager > ThisType;
+    typedef DofManagerFactory< DofManagerImp > ThisType;
 
   public:
-    typedef DofManager DofManagerType;
+    typedef DofManagerImp DofManagerType;
     typedef typename DofManagerType :: GridType GridType; 
 
   private:
     typedef const GridType *KeyType;
 
     typedef SingletonList< KeyType, DofManagerType > DMProviderType;
+
+    // declare friendship becase of methods instance
+    friend class DofManager< GridType >; 
+
+  protected:
+    /** \brief obtain a reference to the DofManager for a given grid
+     *
+     *  \param[in]  grid  grid for which the DofManager is desired
+     *
+     *  \returns a reference to the singleton instance of the DofManager
+     */
+    inline static DofManagerType &instance ( const GridType &grid )
+    {
+      DofManagerType *dm = getDmFromList( grid );
+      if( !dm )
+        return DMProviderType :: getObject( &grid );
+      return *dm;
+    } 
+
+    //! writes DofManager of corresponding grid, when DofManager exists 
+    inline static bool 
+    writeDofManagerNew ( const GridType &grid,
+                         const std :: string &filename,
+                         int timestep )
+    {
+      DofManagerType *dm = getDmFromList( grid );
+      if( dm )
+        return dm->writeIndexSets( filename, timestep );
+      return false;
+    }
+
+    //! reads DofManager of corresponding grid, when DofManager exists 
+    inline static bool 
+    readDofManagerNew ( const GridType &grid,
+                        const std :: string &filename,
+                        int timestep )
+    {
+      DofManagerType *dm = getDmFromList( grid );
+      if( dm )
+        return dm->readIndexSets( filename, timestep );
+      return false;
+    }
 
   public:
     /** \brief obtain a reference to the DofManager for a given grid
@@ -1361,12 +1434,9 @@ readIndexSets(const std::string filename , int timestep )
      *
      *  \returns a reference to the singleton instance of the DofManager
      */
-    inline static DofManagerType &getDofManager ( const GridType &grid )
+    inline static DofManagerType &getDofManager ( const GridType &grid ) DUNE_DEPRECATED
     {
-      DofManagerType *dm = getDmFromList( grid );
-      if( !dm )
-        return DMProviderType :: getObject( &grid );
-      return *dm;
+      return instance( grid );
     } 
 
     //! delete the dof manager that belong to the given grid 
@@ -1379,24 +1449,22 @@ readIndexSets(const std::string filename , int timestep )
     inline static bool 
     writeDofManager ( const GridType &grid,
                       const std :: string &filename,
-                      int timestep )
+                      int timestep ) DUNE_DEPRECATED
     {
-      DofManagerType *dm = getDmFromList( grid );
-      if( dm )
-        return dm->writeIndexSets( filename, timestep );
-      return false;
+      return writeDofManagerNew( grid,
+                                 filename,
+                                 timestep ); 
     }
 
     //! reads DofManager of corresponding grid, when DofManager exists 
     inline static bool 
     readDofManager ( const GridType &grid,
                      const std :: string &filename,
-                     int timestep )
+                     int timestep ) DUNE_DEPRECATED 
     {
-      DofManagerType *dm = getDmFromList( grid );
-      if( dm )
-        return dm->readIndexSets( filename, timestep );
-      return false;
+      return readDofManagerNew( grid,
+                                filename,
+                                timestep );
     }
 
   private: 

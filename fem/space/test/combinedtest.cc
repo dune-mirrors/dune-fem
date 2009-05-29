@@ -219,8 +219,6 @@ typedef AdaptiveDiscreteFunction <
 
 //! Get the Dofmanager type
 typedef DofManager<GridType> DofManagerType;
-typedef DofManagerFactory<DofManagerType> 
-        DofManagerFactoryType;
 
 template <class DiscreteFunctionType>
 double algorithm (GridType& grid, 
@@ -305,8 +303,7 @@ int main (int argc, char **argv)
     solution1->clear();
     for(int i=0; i<ml; i+=step) {
       grid.globalRefine(step);
-      DofManagerType& dm = DofManagerFactoryType :: 
-	      getDofManager( grid );
+      DofManagerType& dm = DofManagerType :: instance( grid );
       dm.resize();
       error[i] = algorithm ( grid , *solution1 , i==ml-1);
       if (i>0) {
@@ -332,8 +329,7 @@ int main (int argc, char **argv)
     solution2->clear();
     for(int i=0; i<ml; i+=step) {
       grid.globalRefine(step);
-      DofManagerType& dm = DofManagerFactoryType :: 
-	getDofManager( grid );
+      DofManagerType& dm = DofManagerType :: instance( grid );
       dm.resize();
       error[i] = algorithm ( grid , *solution2 , i==ml-1);
       if (i>0) {

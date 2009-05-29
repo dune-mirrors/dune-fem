@@ -284,8 +284,6 @@ namespace Dune
 
     //! type of the DoF manager
     typedef DofManager< GridType > DofManagerType;
-    //! type of the DoF manager factory
-    typedef DofManagerFactory< DofManagerType > DMFactoryType;
 
   protected:
     typedef typename LagrangePointSetType :: DofInfo DofInfo;
@@ -320,7 +318,7 @@ namespace Dune
     //! constructor
     LagrangeMapper ( const GridPartType &gridPart,
                      LagrangePointSetMapType &lagrangePointSet )
-    : dm_( DMFactoryType :: getDofManager(gridPart.grid()) ),
+    : dm_( DofManagerType :: instance(gridPart.grid()) ),
       indexSet_( gridPart.indexSet() ),
       lagrangePointSet_( lagrangePointSet ),
       overShoot_( 1.5 )
@@ -716,8 +714,6 @@ namespace Dune
 
     //! type of the DoF manager
     typedef DofManager< GridType > DofManagerType;
-    //! type of the DoF manager factory
-    typedef DofManagerFactory< DofManagerType > DMFactoryType;
 
   protected:
     typedef typename LagrangePointSetType :: DofInfo DofInfo;
@@ -752,7 +748,7 @@ namespace Dune
     //! constructor
     LagrangeMapper ( const GridPartType &gridPart,
                      LagrangePointSetMapType &lagrangePointSet )
-    : dm_( DMFactoryType :: getDofManager(gridPart.grid()) ),
+    : dm_( DofManagerType :: instance(gridPart.grid()) ),
       indexSet_( gridPart.indexSet() ),
       lagrangePointSet_( lagrangePointSet ),
       overShoot_ ( 1.5 )

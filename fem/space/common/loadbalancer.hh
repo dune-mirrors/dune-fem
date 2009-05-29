@@ -69,8 +69,6 @@ class LoadBalancer
   typedef LoadBalancer<GridType> ThisType;
   // dof manager 
   typedef DofManager<GridType> DofManagerType; 
-  // factory 
-  typedef DofManagerFactory<DofManagerType> DofManagerFactoryType;
 
   // type of data collector during load balance 
   typedef typename DofManagerType :: DataCollectorType DataCollectorType; 
@@ -95,7 +93,7 @@ protected:
                std::string paramFile ,
                int balanceCounter = 0) // DUNE_DEPRECATED
     : grid_(grid) 
-    , dm_ ( DofManagerFactoryType::getDofManager(grid_) )
+    , dm_ ( DofManagerType :: instance( grid_ ) )
     , balanceStep_( readBalanceStep( paramFile ))
     , balanceCounter_(balanceCounter)
     , localList_()
@@ -162,7 +160,7 @@ protected:
                RestrictProlongTpye& rpOp,
                int balanceCounter = 0) 
     : grid_(grid) 
-    , dm_ ( DofManagerFactoryType::getDofManager(grid_) )
+    , dm_ ( DofManagerType :: instance( grid_ ) )
     , balanceStep_(Parameter::getValue<int>("BalanceStep",balanceCounter))
     , balanceCounter_(balanceCounter)
     , localList_()

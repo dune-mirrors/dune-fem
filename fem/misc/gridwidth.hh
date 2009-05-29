@@ -174,7 +174,6 @@ public:
 
 protected:
   typedef DofManager<GridType> DofManagerType;
-  typedef DofManagerFactory< DofManagerType > DMFactoryType;
 
   typedef HierarchicGridPart< GridType > GridPartType; 
   
@@ -200,7 +199,7 @@ public:
   //! constructor taking grid part 
   GridWidthProvider(const GridType* grid) 
     : grid_( *grid )
-    , dm_( DMFactoryType::getDofManager( grid_ ))
+    , dm_( DofManagerType :: instance( grid_ ))
     , gridPart_( const_cast<GridType& > (grid_) )
     , geoInfo_( gridPart_.indexSet() )
     , faceGeoInfo_( geoInfo_.geomTypes(1) ) 

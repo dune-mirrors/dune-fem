@@ -217,7 +217,6 @@ namespace Dune
     enum { localBlockSize = Traits :: localBlockSize };
     
     typedef DofManager<typename Traits::GridType> DofManagerType;
-    typedef DofManagerFactory<DofManagerType> DofManagerFactoryType;
 
     typedef typename Traits::IteratorType IteratorType;
 

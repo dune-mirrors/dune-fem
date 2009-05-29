@@ -90,8 +90,6 @@ typedef AdaptiveDiscreteFunction< DiscreteGradientFunctionSpaceType >
 
 //! Get the Dofmanager type
 typedef DofManager< GridType > DofManagerType;
-typedef DofManagerFactory< DofManagerType > DofManagerFactoryType;
-
 
 
 class ExactSolution
@@ -466,7 +464,7 @@ int main (int argc, char **argv)
     for( int i = 0; i < ml; ++i )
     {
       grid.globalRefine( step );
-      DofManagerType& dm = DofManagerFactoryType :: getDofManager( grid );
+      DofManagerType& dm = DofManagerType :: instance( grid );
       dm.resize();
 
       DiscreteFunctionSpaceType discreteFunctionSpace( gridPart );

@@ -178,10 +178,6 @@ int main (int argc, char **argv)
   
   for(int i=0; i<ml; i+=step)
   {
-    // grid.globalRefine(step);
-    // DofManagerType& dm = DofManagerFactoryType :: getDofManager( grid );
-    // dm.resize();
-    // dm.compress();
     GlobalRefine::apply(grid,step);
     error[i] = algorithm ( grid , solution , i==ml-1);
     if (i>0) 

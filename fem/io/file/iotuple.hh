@@ -322,16 +322,16 @@ struct IOTuple : public IOTupleBase
       std::cout << "Reading Dof Manager" << std::endl;
     
     typedef DofManager<GridType> DofManagerType;
-    typedef DofManagerFactory<DofManagerType> DMFactoryType;
+
     std::string dmname;
     dmname = gridName(path,name) + "_dm";
-    DofManagerType& dm = DMFactoryType::getDofManager(grid);
+    DofManagerType& dm = DofManagerType :: instance(grid);
 
     if( Parameter :: verbose() ) 
       std::cout << "    from file " << dmname << std::endl;
 
     // read dofmanager, i.e. read all index sets 
-    DMFactoryType::readDofManager(grid,dmname,n);
+    DofManagerType :: read(grid,dmname,n);
     
     // resize all data because size of index set might have changed  
     // NOTE: avoid resize of index sets by using resizeForRestict 
@@ -368,13 +368,12 @@ struct IOTuple : public IOTupleBase
     // now read all data 
     IOTupleHelper<T1,T2,0>::restore(*ret,dataio,dname,n);
     
-    typedef DofManager<GridType> DofManagerType;
-    typedef DofManagerFactory<DofManagerType> DMFactoryType;
-
     if( newGrid ) 
     {
+      typedef DofManager<GridType> DofManagerType;
+
       // get dof manager 
-      DofManagerType& dm = DMFactoryType::getDofManager(*grid);
+      DofManagerType& dm = DofManagerType :: instance(*grid);
    
       // compress all data 
       dm.compress();
@@ -403,10 +402,9 @@ struct IOTuple : public IOTupleBase
     IOTupleHelper<T1,T2,0>::restore(data,dataio,dname,n);
 
     typedef DofManager<GridType> DofManagerType;
-    typedef DofManagerFactory<DofManagerType> DMFactoryType;
 
     // get dof manager 
-    DofManagerType& dm = DMFactoryType::getDofManager(grid);
+    DofManagerType& dm = DofManagerType :: instance(grid);
     
     // compress all data 
     dm.compress();

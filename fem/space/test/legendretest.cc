@@ -75,7 +75,6 @@ typedef AdaptiveDiscreteFunction < DiscreteFunctionSpaceType > DiscreteFunctionT
 
 //! Get the Dofmanager type
 typedef DofManager<GridType> DofManagerType;
-typedef DofManagerFactory<DofManagerType> DofManagerFactoryType;
 
 
 // the exact solution to the problem for EOC calculation 
@@ -423,7 +422,7 @@ FieldVector<double, dimw> lang;
   for(int i=0; i<ml; i+=step)
   {
     grid.globalRefine(step);
-    DofManagerType& dm = DofManagerFactoryType :: getDofManager( grid );
+    DofManagerType& dm = DofManagerType :: instance( grid );
     dm.resize();
     error[i] = algorithm ( grid , solution , i==ml-1);
     if (i>0) {

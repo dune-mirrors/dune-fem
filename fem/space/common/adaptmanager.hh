@@ -281,10 +281,11 @@ class AdaptationManagerBase
     }
   };
   
+  //! type of this class 
   typedef AdaptationManagerBase<GridType,RestProlOperatorImp> ThisType;
-  typedef DofManager< GridType > DofManagerType; 
-  typedef DofManagerFactory<DofManagerType> DofManagerFactoryType;
 
+  //! type of dof manager 
+  typedef DofManager< GridType > DofManagerType; 
 
 public:
   typedef typename GridType :: Traits :: LocalIdSet LocalIdSet;
@@ -302,7 +303,7 @@ public:
       std::string paramFile ) DUNE_DEPRECATED
     : BaseType(grid,paramFile)
     , grid_(grid) 
-    , dm_ ( DofManagerFactoryType::getDofManager(grid_) )
+    , dm_ ( DofManagerType :: instance( grid_ ) )
     , rpOp_ (rpOp) 
     , adaptTime_(0.0)
   {
@@ -402,8 +403,9 @@ public:
   }
 
 protected:
-  static DofManagerType& getDofManager(const GridType& grid) {
-    return DofManagerFactoryType::getDofManager( grid );
+  static DofManagerType& getDofManager(const GridType& grid) 
+  {
+    return DofManagerType :: instance( grid );
   }
 
 private:  
@@ -754,8 +756,7 @@ struct GlobalRefine {
   static void apply(GridType& grid, const int step) 
   {
     typedef DofManager< GridType > DofManagerType; 
-    typedef DofManagerFactory<DofManagerType> DofManagerFactoryType;
-    DofManagerType& dm = DofManagerFactoryType::getDofManager(grid);
+    DofManagerType& dm = DofManagerType :: instance(grid);
     grid.globalRefine(step);
     dm.resize();
     dm.compress();

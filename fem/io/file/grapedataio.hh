@@ -106,11 +106,10 @@ public:
     bool hasDm = false;
     {
       typedef DofManager<GridImp> DofManagerType; 
-      typedef DofManagerFactory<DofManagerType> DMFactoryType; 
 
       std::string dmname(fnprefix);
       dmname += "_dm";
-      hasDm = DMFactoryType::writeDofManager(grid,dmname,timestep);
+      hasDm = DofManagerType :: write(grid,dmname,timestep);
     }
    
     // write Grid itself 
@@ -291,11 +290,10 @@ inline bool GrapeDataIOImp<dim,dimworld,GridImp,hasBackupRestore> :: writeGrid
   // write dof manager, that corresponds to grid 
   {
     typedef DofManager<GridImp> DofManagerType; 
-    typedef DofManagerFactory<DofManagerType> DMFactoryType; 
 
     std::string dmname(fnprefix);
     dmname += "_dm";
-    hasDm = DMFactoryType::writeDofManager(grid,dmname,timestep);
+    hasDm = DofManagerType :: write(grid,dmname,timestep);
   }
  
   // write Grid itself 
@@ -396,14 +394,13 @@ inline bool GrapeDataIOImp<dim,dimworld,GridImp,hasBackupRestore> :: readGrid
   if(hasDm)
   {
     typedef DofManager<GridImp> DofManagerType; 
-    typedef DofManagerFactory<DofManagerType> DMFactoryType; 
     
     std::string dmname(fn);
     dmname += "_dm";
     //std::cout << "Read DofManager from file " << dmname << "\n";
     // this call creates DofManager if not already existing 
-    DMFactoryType::getDofManager(grid);
-    succeded = DMFactoryType::writeDofManager(grid,dmname,timestep);
+    DofManagerType :: instance(grid);
+    succeded = DofManagerType :: write(grid,dmname,timestep);
   }
   */
   return succeded;

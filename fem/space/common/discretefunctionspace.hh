@@ -544,8 +544,6 @@ namespace Dune
 
     //! type of DoF manager
     typedef DofManager< GridType > DofManagerType;
-    //! type of DoF manager factory
-    typedef DofManagerFactory< DofManagerType > DofManagerFactoryType;
 
     //! type of communication manager 
     typedef CommunicationManager< DiscreteFunctionSpaceType > CommunicationManagerType;
@@ -577,7 +575,7 @@ namespace Dune
       lfFactory_( asImp() ),
       lfStorage_( lfFactory_ ),
       allGeomTypes_( gridPart.indexSet() ),
-      dofManager_( DofManagerFactoryType :: getDofManager( gridPart.grid() ) ),
+      dofManager_( DofManagerType :: instance( gridPart.grid() ) ),
       commInterface_( commInterface ),
       commDirection_( commDirection ),
       communicator_( 0 )

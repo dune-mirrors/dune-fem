@@ -11,7 +11,7 @@ namespace Dune
     mapper_( containedSpace_.mapper() ),
     blockMapper_( Traits :: BlockTraits :: containedBlockMapper( containedSpace_ ) ),
     baseSetMap_(),
-    dm_( DofManagerFactoryType :: getDofManager( containedSpace_.grid() ) )
+    dm_( DofManagerType :: instance( containedSpace_.grid() ) )
   {
     const std::vector<GeometryType>& geomTypes = containedSpace_.geomTypes(0);
     int maxNumDofs = -1;

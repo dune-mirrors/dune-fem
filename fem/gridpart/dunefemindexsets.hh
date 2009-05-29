@@ -180,15 +180,13 @@ namespace Dune
     typedef GridImp GridType;
     //! type of DoF manager
     typedef DofManager< GridType > DofManagerType;
-    //! type of DoF manager factory
-    typedef DofManagerFactory< DofManagerType > DofManagerFactoryType;
 
   protected:
     /** \brief constructor */
     explicit PersistentIndexSet ( const GridType &grid )
       // here false, because methods have to be overloaded
-      : BaseType(grid)
-      , dofManager_( DofManagerFactoryType :: getDofManager( grid ) ) 
+      : BaseType(grid),
+        dofManager_( DofManagerType::instance( grid ) )
     {
       // add persistent index set to dofmanagers list 
       dofManager_.addIndexSet( asImp() );
