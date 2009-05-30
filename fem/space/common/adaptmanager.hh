@@ -299,15 +299,14 @@ public:
         # 0 == none, 1 == generic, 2 == call back (only AlbertaGrid and ALUGrid)  
         AdaptationMethod: 1 # default value 
   */   
-  AdaptationManagerBase (GridType & grid, RestProlOperatorImp & rpOp,
-      std::string paramFile ) DUNE_DEPRECATED
-    : BaseType(grid,paramFile)
-    , grid_(grid) 
-    , dm_ ( DofManagerType :: instance( grid_ ) )
-    , rpOp_ (rpOp) 
-    , adaptTime_(0.0)
-  {
-  }
+  AdaptationManagerBase ( GridType &grid, RestProlOperatorImp &rpOp, std::string paramFile ) DUNE_DEPRECATED
+  : BaseType( grid, paramFile ),
+    grid_( grid ),
+    dm_( DofManagerType::instance( grid_ ) ),
+    rpOp_( rpOp ),
+    adaptTime_( 0.0 )
+  {}
+
   /** \brief constructor of AdaptationManagerBase 
      The following optional parameter can be used
         # 0 == none, 1 == generic, 2 == call back (only AlbertaGrid and ALUGrid)  
@@ -317,14 +316,13 @@ public:
       user data is projected to other grid levels
         the following two lines:
   */   
-  AdaptationManagerBase (GridType & grid, RestProlOperatorImp & rpOp)
-    : BaseType(grid)
-    , grid_(grid) 
-    , dm_ ( DofManagerFactoryType::getDofManager(grid_) )
-    , rpOp_ (rpOp) 
-    , adaptTime_(0.0)
-  {
-  }
+  AdaptationManagerBase ( GridType &grid, RestProlOperatorImp &rpOp )
+  : BaseType( grid ),
+    grid_( grid ),
+    dm_( DofManagerType::instance( grid_ ) ),
+    rpOp_( rpOp ),
+    adaptTime_( 0.0 )
+  {}
 
   //! destructor 
   virtual ~AdaptationManagerBase () {}

@@ -87,25 +87,25 @@ protected:
      BalanceStep: 1 # (do balancing every step)
      \param balanceCounter actual counter, default is zero 
   */   
-  template <class RestrictProlongTpye> 
-  LoadBalancer(GridType & grid,
-               RestrictProlongTpye& rpOp,
-               std::string paramFile ,
-               int balanceCounter = 0) // DUNE_DEPRECATED
-    : grid_(grid) 
-    , dm_ ( DofManagerType :: instance( grid_ ) )
-    , balanceStep_( readBalanceStep( paramFile ))
-    , balanceCounter_(balanceCounter)
-    , localList_()
-    , collList_()
-    , balanceTime_(0.0)
+  template< class RestrictProlongOperator >
+  DUNE_DEPRECATED
+  LoadBalancer ( GridType &grid,
+                 RestrictProlongOperator &rpOp,
+                 std::string paramFile,
+                 int balanceCounter = 0 )
+  : grid_( grid ),
+    dm_ ( DofManagerType::instance( grid_ ) ),
+    balanceStep_( readBalanceStep( paramFile ) ),
+    balanceCounter_( balanceCounter ),
+    localList_(),
+    collList_(),
+    balanceTime_( 0.0 )
   {
-    rpOp.addToList(*this);
-    if( Parameter :: verbose () ) 
-    {
+    rpOp.addToList( *this );
+    if( Parameter::verbose() ) 
       std::cout << "Created LoadBalancer: balanceStep = " << balanceStep_ << std::endl;
-    }
   }
+
   /** \brief constructor of LoadBalancer  
      \param grid Grid that load balancing is done for 
      \param paramFile optional parameter file which contains 
@@ -114,24 +114,23 @@ protected:
      BalanceStep: 1 # (do balancing every step)
      \param balanceCounter actual counter, default is zero 
   */   
-  LoadBalancer(GridType & grid,
-               std::string paramFile ,
-               int balanceCounter = 0) DUNE_DEPRECATED
-    : grid_(grid) 
-    , dm_ ( DofManagerFactoryType::getDofManager(grid_) )
-    , balanceStep_( readBalanceStep( paramFile ))
-    , balanceCounter_(balanceCounter)
-    , localList_()
-    , collList_()
+  LoadBalancer ( GridType &grid,
+                 std::string paramFile,
+                 int balanceCounter = 0 ) DUNE_DEPRECATED
+    : grid_( grid ),
+      dm_ ( DofManagerType::instance( grid_ ) ),
+      balanceStep_( readBalanceStep( paramFile ) ),
+      balanceCounter_( balanceCounter ),
+      localList_(),
+      collList_(),
+      balanceTime_( 0.0 )
   {
-    if( Parameter :: verbose () ) 
-    {
+    if( Parameter::verbose() )
       std::cout << "Created LoadBalancer: balanceStep = " << balanceStep_ << std::endl;
-    }
   }
 
   // read balanceStep from parameter file or list 
-  int readBalanceStep(const std::string& paramFile) const 
+  int readBalanceStep(const std::string& paramFile) const DUNE_DEPRECATED
   {
     int balanceStep = 0;
     const bool output = (grid_.comm().rank() == 0);
@@ -155,22 +154,23 @@ protected:
      \param rpOp restrict prolong tpye 
      \param balanceCounter actual counter, default is zero 
   */   
-  template <class RestrictProlongTpye> 
-  LoadBalancer(GridType & grid,
-               RestrictProlongTpye& rpOp,
-               int balanceCounter = 0) 
-    : grid_(grid) 
-    , dm_ ( DofManagerType :: instance( grid_ ) )
-    , balanceStep_(Parameter::getValue<int>("BalanceStep",balanceCounter))
-    , balanceCounter_(balanceCounter)
-    , localList_()
-    , collList_()
-    , balanceTime_(0.0)
+  template< class RestrictProlongOperator > 
+  LoadBalancer ( GridType & grid,
+                 RestrictProlongOperator &rpOp,
+                 int balanceCounter = 0 )
+  : grid_( grid ),
+    dm_ ( DofManagerType::instance( grid_ ) ),
+    balanceStep_( Parameter::getValue< int >( "BalanceStep", balanceCounter ) ),
+    balanceCounter_( balanceCounter ),
+    localList_(),
+    collList_(),
+    balanceTime_( 0.0 )
   {
-    //const bool output = (grid_.comm().rank() == 0);
-
-    rpOp.addToList(*this);
+    rpOp.addToList( *this );
+    if( Parameter::verbose() )
+      std::cout << "Created LoadBalancer: balanceStep = " << balanceStep_ << std::endl;
   }
+
   /** \brief constructor of LoadBalancer  
      The following optional parameter is used from the Parameter class:
      # BalanceStep, balancing is done every x-th step, 0 means no balancing    
@@ -179,20 +179,18 @@ protected:
      BalanceStep: 1 # (do balancing every step)
      \param balanceCounter actual counter, default is zero 
   */   
-  LoadBalancer(GridType & grid,
-               int balanceCounter = 0) 
-    : grid_(grid) 
-    , dm_ ( DofManagerFactoryType::getDofManager(grid_) )
-    , balanceStep_(Parameter::getValue<int>("BalanceStep",balanceCounter))
-    , balanceCounter_(balanceCounter)
-    , localList_()
-    , collList_()
+  explicit LoadBalancer ( GridType &grid,
+                          int balanceCounter = 0 )
+  : grid_( grid ),
+    dm_ ( DofManagerType::instance( grid_ ) ),
+    balanceStep_( Parameter::getValue< int >( "BalanceStep", balanceCounter ) ),
+    balanceCounter_( balanceCounter ),
+    localList_(),
+    collList_(),
+    balanceTime_( 0.0 )
   {
-    const bool output = (grid_.comm().rank() == 0);
-    if( output )
-    {
+    if( Parameter::verbose() )
       std::cout << "Created LoadBalancer: balanceStep = " << balanceStep_ << std::endl;
-    }
   }
 
 public:  
