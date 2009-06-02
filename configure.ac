@@ -9,8 +9,10 @@ AC_CONFIG_SRCDIR([fem/space/dgspace/dgspace.hh])
 # which header-file is created
 AM_CONFIG_HEADER([config.h])
 
-# we need no more than the standard DUNE-stuff
-DUNE_CHECK_ALL_M
+# make dune -> . symlink
+DUNE_SYMLINK
+# check all dune-module stuff
+DUNE_CHECK_ALL
 
 # check dennis package 
 DUNE_PATH_PARDG
