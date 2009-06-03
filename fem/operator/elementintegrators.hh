@@ -104,8 +104,7 @@ namespace Dune
     enum { quadDegree = 5 }; //<! degree of quadrature
     
     //- derived types
-    typedef typename GridPartType :: IntersectionIteratorType
-      IntersectionIteratorType;
+    typedef typename GridPartType::IntersectionIteratorType IntersectionIteratorType;
     typedef typename GridType :: template Codim< 0 > :: Entity EntityType;
     typedef typename GridType :: template Codim< 0 > :: EntityPointer
       EntityPointerType;
@@ -326,8 +325,8 @@ namespace Dune
     typedef typename TraitsType::RangeType RangeType;
     typedef typename TraitsType::DomainType DomainType;
     typedef typename TraitsType::JacobianRangeType JacobianRangeType;
-    typedef typename TraitsType::IntersectionIteratorType 
-                     IntersectionIteratorType;
+    typedef typename TraitsType::IntersectionIteratorType IntersectionIteratorType;
+    typedef typename IntersectionIteratorType::Intersection IntersectionType;
     typedef typename TraitsType::IntersectionQuadratureType 
                      IntersectionQuadratureType;
     typedef typename TraitsType::GridPartType GridPartType;
@@ -762,27 +761,31 @@ namespace Dune
       const IntersectionIteratorType end = gridPart.iend( entity );
       for( IntersectionIteratorType it = gridPart.ibegin( entity ); it != end; ++it )
       {
+        const IntersectionType &intersection = *it;
+
         // check for boundary
-        if( !it.boundary() )
+        if( !intersection.boundary() )
           continue;
 
         // check for robin boundary values
-        if( model.boundaryType( it ) != ModelType :: Robin )
+        if( model.boundaryType( intersection ) != ModelType::Robin )
           continue;
 
         const BaseFunctionSetType baseFunctionSet
           = dfSpace.baseFunctionSet( entity );
         const int numBaseFunctions = baseFunctionSet.numBaseFunctions();
 
+        const typename IntersectionType::Geometry &intersectionGeometry = intersection.intersectionGlobal();
+
         // integrate over intersection
         IntersectionQuadratureType quadrature
-          ( gridPart, it, quadratureDegree, IntersectionQuadratureType :: INSIDE );
+          ( gridPart, intersection, quadratureDegree, IntersectionQuadratureType::INSIDE );
         const int numQuadraturePoints = quadrature.nop();
         for( int pt = 0; pt < numQuadraturePoints; ++pt ) 
         {
           const double volume
-            = it.intersectionGlobal().integrationElement( quadrature.localPoint( pt ) );
-          const double alpha = model.robinAlpha( it, quadrature, pt );
+            = intersectionGeometry.integrationElement( quadrature.localPoint( pt ) );
+          const double alpha = model.robinAlpha( intersection, quadrature, pt );
           const double factor = coefficient * alpha * quadrature.weight( pt ) * volume;
                                             
           for( int i = 0; i < numBaseFunctions; ++i ) 
@@ -952,8 +955,8 @@ namespace Dune
                      LocalFunctionType;
     typedef typename TraitsType::RangeType RangeType;
     typedef typename TraitsType::GridPartType GridPartType;
-    typedef typename TraitsType::IntersectionIteratorType 
-                     IntersectionIteratorType;
+    typedef typename TraitsType::IntersectionIteratorType IntersectionIteratorType;
+    typedef typename IntersectionIteratorType::Intersection IntersectionType;
 
     // the following does not seem to work properly...
     //  enum {quadDegree = TraitsType::quadDegree};
@@ -1115,25 +1118,29 @@ namespace Dune
       const IntersectionIteratorType end = gridPart.iend( entity );
       for( IntersectionIteratorType it = gridPart.ibegin( entity ); it != end; ++it )
       {
+        const IntersectionType &intersection = *it;
+
         // check for boundary
-        if( !it.boundary() )
+        if( !intersection.boundary() )
           continue;
         // check for Neumann boundary
-        if( model.boundaryType( it ) != ModelType :: Neumann )
+        if( model.boundaryType( intersection ) != ModelType::Neumann )
           continue;
 
         const BaseFunctionSetType baseFunctionSet = dfSpace.baseFunctionSet( entity );
         const int numBaseFunctions = baseFunctionSet.numBaseFunctions();
+
+        const typename IntersectionType::Geometry &intersectionGeometry = intersection.intersectionGlobal();
  
         // integrate over intersection
         IntersectionQuadratureType quadrature
-          ( gridPart, it, quadratureDegree, IntersectionQuadratureType :: INSIDE );
+          ( gridPart, intersection, quadratureDegree, IntersectionQuadratureType::INSIDE );
         const int numQuadraturePoints = quadrature.nop();
         for( int pt = 0; pt < numQuadraturePoints; ++pt ) 
         {
           // the following seems wrong...
           const double volume
-            = it.intersectionGlobal().integrationElement( quadrature.localPoint( pt ) );
+            = intersectionGeometry.integrationElement( quadrature.localPoint( pt ) );
           const double factor = coefficient * quadrature.weight( pt ) * volume;
         
           for( int i = 0; i < numBaseFunctions; ++i )
@@ -1142,7 +1149,7 @@ namespace Dune
             baseFunctionSet.evaluate( i, quadrature[ pt ], phi );  
             
             RangeType value;
-            model.neumannValues( it, quadrature, pt, value );
+            model.neumannValues( intersection, quadrature, pt, value );
             
             elRhs[ i ] += factor * (value[ 0 ] * phi[ 0 ]);
           }
@@ -1189,23 +1196,27 @@ namespace Dune
       const IntersectionIteratorType end = gridPart.iend( entity );
       for( IntersectionIteratorType it = gridPart.ibegin( entity ); it != end; ++it )
       {
-        if( !it.boundary() )
+        const IntersectionType &intersection = *it;
+
+        if( !intersection.boundary() )
           continue;
-        if( model.boundaryType( it ) != ModelType :: Robin )
+        if( model.boundaryType( intersection ) != ModelType::Robin )
           continue;
 
         const BaseFunctionSetType baseFunctionSet = dfSpace.baseFunctionSet( entity );
         const int numBaseFunctions = baseFunctionSet.numBaseFunctions();
  
+        const typename IntersectionType::Geometry &intersectionGeometry = intersection.intersectionGlobal();
+
         // integrate over intersection
         IntersectionQuadratureType quadrature
-          ( gridPart, it, quadratureDegree, IntersectionQuadratureType :: INSIDE );
+          ( gridPart, intersection, quadratureDegree, IntersectionQuadratureType::INSIDE );
         const int numQuadraturePoints = quadrature.nop();
         for( int pt = 0; pt < numQuadraturePoints; ++pt ) 
         {  
           // the following seems wrong...
           const double volume
-            = it.intersectionGlobal().integrationElement( quadrature.localPoint( pt ) );
+            = intersectionGeometry.integrationElement( quadrature.localPoint( pt ) );
           const double factor = coefficient * quadrature.weight( pt ) * volume;
         
           for( int i = 0; i < numBaseFunctions; ++i ) 
@@ -1214,7 +1225,7 @@ namespace Dune
             baseFunctionSet.evaluate( i, quadrature[ pt ], phi );  
             
             RangeType value;
-            model.robinValues( it, quadrature, pt, value );
+            model.robinValues( intersection, quadrature, pt, value );
             
             elRhs[ i ] += factor * (value[ 0 ] * phi[ 0 ]);
           }
@@ -1305,10 +1316,9 @@ public:
   typedef typename DiscreteFunctionSpaceType::GridType GridType; 
   typedef typename GridType::template Codim<0>::Entity EntityType;
   typedef typename DiscreteFunctionSpaceType::GridPartType GridPartType;
-  typedef typename GridPartType::IntersectionIteratorType 
-          IntersectionIteratorType;
-  typedef typename TraitsType::IntersectionQuadratureType 
-          IntersectionQuadratureType;
+  typedef typename GridPartType::IntersectionIteratorType IntersectionIteratorType;
+  typedef typename IntersectionIteratorType::Intersection IntersectionType;
+  typedef typename TraitsType::IntersectionQuadratureType IntersectionQuadratureType;
   typedef typename DiscreteFunctionSpaceType::IteratorType IteratorType;
   typedef typename TraitsType::RangeType RangeType;
   typedef typename DiscreteFunctionType::LocalFunctionType LocalFunctionType;
@@ -1405,19 +1415,23 @@ private:
                     
       IteratorType it = fspace.begin();
       const IteratorType endit = fspace.end();
-      for( ; it != endit; ++it ) {
+      for( ; it != endit; ++it )
+      {
         const EntityType &entity = *it;
 
         // const GeometryType t = entity.geometry().type();
         IntersectionIteratorType nit = gridPart.ibegin( entity );
         const IntersectionIteratorType endnit = gridPart.iend( entity );
-        for( ; nit != endnit; ++nit ) {
-          if( !nit.boundary() )
+        for( ; nit != endnit; ++nit )
+        {
+          const IntersectionType &intersection = *nit;
+
+          if( !intersection.boundary() )
             continue;
-          if( model.boundaryType( nit ) != ModelType :: Dirichlet )
+          if( model.boundaryType( intersection ) != ModelType::Dirichlet )
             continue;
           
-          const int faceNumber = nit.numberInSelf();
+          const int faceNumber = intersection.numberInSelf();
           LocalFunctionType lf = rhs.localFunction( entity );
           
           const LagrangePointSetType &lagrangePointSet
@@ -1429,7 +1443,7 @@ private:
           for( ; faceIt != faceEndIt; ++faceIt ) {
             const unsigned int entityDofNumber = *faceIt;
             RangeType phi;
-            model.dirichletValues( nit, lagrangePointSet, entityDofNumber, phi );
+            model.dirichletValues( intersection, lagrangePointSet, entityDofNumber, phi );
             lf[ entityDofNumber ] = phi[ 0 ];
           }
         }
