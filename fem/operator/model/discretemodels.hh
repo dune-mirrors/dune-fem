@@ -20,7 +20,7 @@
 #if HAVE_DUNE_ISTL
 #include <dune/fem/function/blockvectorfunction.hh>
 #endif
-#include <dune/fem/quadrature/cachequad.hh>
+#include <dune/fem/quadrature/cachingquadrature.hh>
 
 //*************************************************************
 namespace Dune {  

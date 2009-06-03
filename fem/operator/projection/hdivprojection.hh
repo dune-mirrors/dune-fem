@@ -6,7 +6,7 @@
 
 //- Dune-fem includes 
 #include <dune/fem/quadrature/caching/twistutility.hh>
-#include <dune/fem/quadrature/cachequad.hh>
+#include <dune/fem/quadrature/cachingquadrature.hh>
 #include <dune/fem/operator/common/spaceoperatorif.hh> 
 #include <dune/fem/operator/matrix/blockmatrix.hh>
 #include <dune/fem/space/dgspace.hh>

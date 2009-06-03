@@ -13,7 +13,7 @@
 #include <dune/fem/gridpart/adaptiveleafgridpart.hh>
 #include <dune/fem/space/lagrangespace.hh>
 #include <dune/fem/function/adaptivefunction.hh>
-#include <dune/fem/quadrature/cachequad.hh>
+#include <dune/fem/quadrature/cachingquadrature.hh>
 
 #if USE_VTKWRITER
 #include <dune/fem/io/file/vtkio.hh>

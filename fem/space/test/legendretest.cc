@@ -24,7 +24,7 @@ typedef Dune::YaspGrid< dimw > GridType;
 #include <dune/fem/function/adaptivefunction.hh>
 #include <dune/fem/space/dgspace.hh>
 #include <dune/fem/space/lagrangespace.hh>
-#include <dune/fem/quadrature/cachequad.hh> 
+#include <dune/fem/quadrature/cachingquadrature.hh> 
 
 #include <dune/fem/gridpart/gridpart.hh>
 #include <dune/fem/gridpart/adaptiveleafgridpart.hh> 

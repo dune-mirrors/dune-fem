@@ -4,7 +4,7 @@
 #include <dune/common/fmatrix.hh>
 
 #include <dune/fem/quadrature/elementquadrature.hh>
-#include <dune/fem/quadrature/cachequad.hh>
+#include <dune/fem/quadrature/cachingquadrature.hh>
 
 #include <dune/fem/space/lagrangespace.hh>
 #include <dune/fem/function/adaptivefunction.hh>

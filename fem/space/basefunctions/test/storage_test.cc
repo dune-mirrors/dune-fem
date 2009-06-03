@@ -1,7 +1,7 @@
 #include "storage_test.hh"
 
 #include <dune/fem/space/common/discretefunctionspace.hh>
-#include <dune/fem/quadrature/cachequad.hh>
+#include <dune/fem/quadrature/cachingquadrature.hh>
 
 #include "basefunctionstub.hh"
 #include "../basefunctionstorage.hh"

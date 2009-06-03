@@ -8,7 +8,7 @@
 
 //- Dune-fem includes 
 #include <dune/fem/function/localfunction/temporarylocalfunction.hh>
-#include <dune/fem/quadrature/cachequad.hh>
+#include <dune/fem/quadrature/cachingquadrature.hh>
 #include <dune/fem/space/fvspace.hh>
 #include <dune/fem/space/dgspace.hh>
 #include <dune/fem/function/adaptivefunction.hh>

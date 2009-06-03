@@ -3,7 +3,7 @@
 
 //- local includes  
 #include <dune/fem/space/common/adaptmanager.hh>
-#include <dune/fem/quadrature/cachequad.hh>
+#include <dune/fem/quadrature/cachingquadrature.hh>
 
 //- local includes 
 #include "dgspace.hh"

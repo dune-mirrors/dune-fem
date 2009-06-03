@@ -1,7 +1,7 @@
 #ifndef DUNE_DGL2PROJECTION_HH
 #define DUNE_DGL2PROJECTION_HH
 
-#include <dune/fem/quadrature/cachequad.hh>
+#include <dune/fem/quadrature/cachingquadrature.hh>
 #include <dune/fem/operator/common/operator.hh>
 #include <dune/fem/function/common/discretefunction.hh>
 #include <dune/fem/function/common/discretefunctionadapter.hh>

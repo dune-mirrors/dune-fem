@@ -3,7 +3,7 @@
 
 //- Dune includes 
 #include <dune/common/fmatrix.hh>
-#include <dune/fem/quadrature/cachequad.hh>
+#include <dune/fem/quadrature/cachingquadrature.hh>
 #include <dune/fem/space/common/allgeomtypes.hh>
 #include <dune/fem/misc/checkgeomaffinity.hh>
 

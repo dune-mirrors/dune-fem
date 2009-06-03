@@ -3,6 +3,7 @@ SUBDIRS = caching test
 quadraturedir =  $(includedir)/dune/fem/quadrature
 quadrature_HEADERS = cachepointlist.hh \
 		     cachequad.hh \
+		     cachingquadrature.hh \
 		     defaultquadratures.hh \
 		     dunequadratures.hh \
                      elementpointlist.hh \

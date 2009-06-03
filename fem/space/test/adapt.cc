@@ -11,7 +11,7 @@ using namespace Dune;
 #include <dune/fem/function/attachedfunction.hh>
 #include <dune/fem/space/dgspace.hh>
 #include <dune/fem/space/combinedspace.hh>
-#include <dune/fem/quadrature/cachequad.hh>
+#include <dune/fem/quadrature/cachingquadrature.hh>
 #include <dune/fem/space/dgspace/dgadaptmanager.hh>
 #include <dune/fem/space/combinedspace/combinedadaptmanager.hh>
 

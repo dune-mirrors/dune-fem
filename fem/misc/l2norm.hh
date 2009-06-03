@@ -1,7 +1,7 @@
 #ifndef DUNE_FEM_L2NORM_HH
 #define DUNE_FEM_L2NORM_HH
 
-#include <dune/fem/quadrature/cachequad.hh>
+#include <dune/fem/quadrature/cachingquadrature.hh>
 #include <dune/fem/quadrature/integrator.hh>
 
 namespace Dune

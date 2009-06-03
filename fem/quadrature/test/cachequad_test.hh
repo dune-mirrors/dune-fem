@@ -1,8 +1,8 @@
 #ifndef DUNE_CACHEQUAD_TEST_HH
 #define DUNE_CACHEQUAD_TEST_HH
 
-#include "../../misc/test.hh"
-#include "../cachequad.hh"
+#include <dune/fem/misc/test.hh>
+#include <dune/fem/quadrature/cachingquadrature.hh>
 
 namespace Dune {
 

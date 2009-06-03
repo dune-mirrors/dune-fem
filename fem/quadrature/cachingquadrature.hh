@@ -1,5 +1,5 @@
-#ifndef DUNE_CACHEQUAD_HH
-#define DUNE_CACHEQUAD_HH
+#ifndef DUNE_CACHINGQUADRATURE_HH
+#define DUNE_CACHINGQUADRATURE_HH
 
 //- Dune includes
 #include <dune/common/misc.hh>
@@ -94,8 +94,7 @@ namespace Dune
     CachingQuadrature( const EntityType &entity,
                        int order )
     : BaseType( entity.geometry().type(), order )
-    {
-    }
+    {}
 
     /** \brief copy constructor
      *
@@ -103,8 +102,7 @@ namespace Dune
      */
     CachingQuadrature( const ThisType &org ) 
     : BaseType( org )
-    {
-    }
+    {}
 
     /** \copydoc Dune::ElementQuadrature<GridPartImp,0>::weight */
     const RealType &weight ( size_t i ) const 
@@ -178,16 +176,16 @@ namespace Dune
     CachingQuadrature( const GridPartType &gridPart, 
                        const IntersectionType &intersection,
                        int order,
-                       typename BaseType :: Side side )
+                       typename BaseType::Side side )
     : BaseType( gridPart, intersection, order, side )
     {}
 
     CachingQuadrature( const GridPartType &gridPart, 
                        const typename PhonyIntersectionIterator
-                         < IntersectionType, IntersectionIteratorType > :: Type
+                         < IntersectionType, IntersectionIteratorType >::Type
                          &intersection, 
                        int order,
-                       typename BaseType :: Side side ) DUNE_DEPRECATED
+                       typename BaseType::Side side ) DUNE_DEPRECATED
     : BaseType(gridPart,*intersection, order, side)
     {}
 
@@ -197,8 +195,7 @@ namespace Dune
      */
     CachingQuadrature( const ThisType& org ) 
     : BaseType( org )
-    {
-    }
+    {}
 
     /** \copydoc Dune::ElementQuadrature<GridPartImp,1>::weight */
     const RealType &weight( size_t i ) const 
@@ -206,6 +203,7 @@ namespace Dune
       return quadImp().weight(i);
     }
   };
+
 }
 
-#endif
+#endif // #ifndef DUNE_CACHINGQUADRATURE_HH

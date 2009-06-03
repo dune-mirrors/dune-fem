@@ -26,7 +26,7 @@ const int polOrder = POLORDER;
 #include <dune/fem/space/lagrangespace.hh>
 #include <dune/fem/space/lagrangespace/adaptmanager.hh>
 #include <dune/fem/function/adaptivefunction.hh>
-#include <dune/fem/quadrature/cachequad.hh>
+#include <dune/fem/quadrature/cachingquadrature.hh>
 #include <dune/fem/operator/lagrangeinterpolation.hh>
 #include <dune/fem/misc/l2norm.hh>
 #include <dune/fem/misc/h1norm.hh>

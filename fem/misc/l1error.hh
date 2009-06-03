@@ -14,7 +14,7 @@
 #define DUNE_L1ERROR_HH
 
 // where the quadratures are defined
-#include <dune/fem/quadrature/cachequad.hh>
+#include <dune/fem/quadrature/cachingquadrature.hh>
 
 namespace Dune
 {
