@@ -712,8 +712,8 @@ namespace Dune
       typedef typename DiscreteFunctionSpaceType :: GridPartType GridPartType;
       typedef typename DiscreteFunctionSpaceType :: GridType GridType; 
       typedef typename GridType :: template Codim< 0 > :: Entity EntityType;
-      typedef typename GridPartType :: IntersectionIteratorType 
-        IntersectionIteratorType;
+      typedef typename GridPartType::IntersectionIteratorType IntersectionIteratorType;
+      typedef typename IntersectionIteratorType::Intersection IntersectionType;
       typedef typename DiscreteFunctionSpaceType :: IteratorType IteratorType;
 
       // codimension of faces
@@ -753,15 +753,18 @@ namespace Dune
 
         IntersectionIteratorType nit = gridPart.ibegin( entity );
         const IntersectionIteratorType endnit = gridPart.iend( entity );
-        for( ; nit != endnit; ++nit ) {
+        for( ; nit != endnit; ++nit )
+        {
+          const IntersectionType &intersection = *nit;
+
           // make sure we are on the boundary
-          if( !nit.boundary() )
+          if( !intersection.boundary() )
             continue;
               
-          if( elementMatrixIntegrator_.model().boundaryType( nit ) != ModelType :: Dirichlet )
+          if( elementMatrixIntegrator_.model().boundaryType( nit ) != ModelType::Dirichlet )
             continue;
 
-          const int faceNumber = nit.numberInSelf();
+          const int faceNumber = intersection.numberInSelf();
           
           const LagrangePointSetType &lagrangePointSet
             = functionSpace_.lagrangePointSet( entity );
