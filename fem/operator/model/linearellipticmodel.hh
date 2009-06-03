@@ -8,18 +8,19 @@
 
 namespace Dune
 {
+
   /** \ingroup EllipticOperator
    */
 
   struct DefaultLinearEllipticModelProperties
   {
-    enum { hasDirichletValues = true };
-    enum { hasNeumannValues = true };
-    enum { hasRobinValues = true };
-    enum { hasGeneralizedNeumannValues = true };
-    enum { hasConvectiveFlux = true };
-    enum { hasMass = true };
-    enum { hasSource = true };
+    static const bool hasDirichletValues = true;
+    static const bool hasNeumannValues = true;
+    static const bool hasRobinValues = true;
+    static const bool hasGeneralizedNeumannValues = true;
+    static const bool hasConvectiveFlux = true;
+    static const bool hasMass = true;
+    static const bool hasSource = true;
   };
 
 
@@ -193,42 +194,41 @@ namespace Dune
     typedef typename FunctionSpaceType :: RangeFieldType RangeFieldType;
     
   public:
-    inline LinearEllipticModelDefault ()
+    LinearEllipticModelDefault ()
     : boundaryModelDefault_()
-    {
-    }
+    {}
     
-    template< class IntersectionIteratorType, class QuadratureType >
-    inline void dirichletValues ( const IntersectionIteratorType &intersection,
-                                  const QuadratureType &quadrature,
-                                  int point,
-                                  RangeType &phi ) const
+    template< class IntersectionType, class QuadratureType >
+    void dirichletValues ( const IntersectionType &intersection,
+                           const QuadratureType &quadrature,
+                           int point,
+                           RangeType &phi ) const
     {
       boundaryModelDefault_.dirichletValues( intersection, quadrature, point, phi );
     }
 
-    template< class IntersectionIteratorType, class QuadratureType >
-    inline void neumannValues ( const IntersectionIteratorType &intersection,
-                                const QuadratureType &quadrature,
-                                int point,
-                                RangeType &phi ) const
+    template< class IntersectionType, class QuadratureType >
+    void neumannValues ( const IntersectionType &intersection,
+                         const QuadratureType &quadrature,
+                         int point,
+                         RangeType &phi ) const
     {
       boundaryModelDefault_.neumannValues( intersection, quadrature, point, phi );
     }
     
-    template< class IntersectionIteratorType, class QuadratureType >
-    inline void robinValues ( const IntersectionIteratorType &intersection,
-                              const QuadratureType &quadrature,
-                              int point,
-                              RangeType &phi ) const
+    template< class IntersectionType, class QuadratureType >
+    void robinValues ( const IntersectionType &intersection,
+                       const QuadratureType &quadrature,
+                       int point,
+                       RangeType &phi ) const
     {
       boundaryModelDefault_.robinValues( intersection, quadrature, point, phi );
     }
 
-    template< class IntersectionIteratorType, class QuadratureType >
-    inline RangeFieldType robinAlpha ( IntersectionIteratorType &intersection,
-                                       QuadratureType &quadrature,
-                                       int point ) const
+    template< class IntersectionType, class QuadratureType >
+    RangeFieldType robinAlpha ( IntersectionType &intersection,
+                                QuadratureType &quadrature,
+                                int point ) const
     {
       return boundaryModelDefault_.robinAlpha( intersection, quadrature, point );
     }
@@ -294,4 +294,4 @@ namespace Dune
 
 }
 
-#endif
+#endif // #ifndef DUNE_FEM_LINEARELLIPTICMODEL_HH
