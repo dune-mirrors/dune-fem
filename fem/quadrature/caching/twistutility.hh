@@ -157,11 +157,7 @@ namespace Dune
     static int twistInSelf ( const GridType &grid, const LeafIntersection &it )
     {
       const int map3d[ 6 ] = {-2, -3, -1, 0, 2, 1};
-#if DUNE_VERSION_NEWER( DUNE_GRID, 1, 3, 0 )
       const int twist = grid.getTwistInInside( it );
-#else
-      const int twist = grid.getRealIntersection( it ).twistInSelf();
-#endif
       return (dimension == 3 ? map3d[ twist + 3 ] : twist);
     }
     
@@ -175,11 +171,7 @@ namespace Dune
     static int twistInNeighbor ( const GridType &grid, const LeafIntersection &it )
     {
       const int map3d[ 6 ] = {-2, -3, -1, 0, 2, 1};
-#if DUNE_VERSION_NEWER( DUNE_GRID, 1, 3, 0 )
       const int twist = grid.getTwistInOutside( it );
-#else
-      const int twist = grid.getRealIntersection( it ).twistInNeighbor();
-#endif
       return (dimension == 3 ? map3d[ twist + 3 ] : twist);
     }
 

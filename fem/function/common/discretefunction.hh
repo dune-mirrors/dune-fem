@@ -5,10 +5,11 @@
 #include <string>
 
 //- Dune inlcudes 
+#include <dune/common/version.hh>
+
 #include <dune/grid/common/grid.hh>
 
 //- local includes 
-#include <dune/fem/version.hh>
 #include <dune/fem/misc/debug.hh>
 #include <dune/fem/storage/objectstack.hh>
 #include <dune/fem/io/streams/streams.hh>

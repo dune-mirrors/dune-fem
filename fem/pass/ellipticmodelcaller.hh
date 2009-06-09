@@ -12,8 +12,6 @@
 
 #include <dune/fem/misc/boundaryidentifier.hh>
 
-#include <dune/fem/version.hh>
-
 namespace Dune
 {
 
@@ -66,7 +64,6 @@ namespace Dune
       jacobians_( JacobianCreator::apply() )
     {}
 
-#if DUNE_VERSION_NEWER(DUNE_GRID,1,2,0)
     // Ensure: entities set correctly before call
     template <class QuadratureType, class CoefficientType>
     DUNE_DEPRECATED 
@@ -82,7 +79,6 @@ namespace Dune
                                quadPoint, 
                                coeffLeft, coeffRight);
     }
-#endif
 
     // Ensure: entities set correctly before call
     template <class QuadratureType, class CoefficientType>
@@ -121,7 +117,6 @@ namespace Dune
                            this->valuesEn_, coeff);
     }
       
-#if DUNE_VERSION_NEWER(DUNE_GRID,1,2,0)
     // Ensure: entities set correctly before call
     template <class QuadratureType, class CoefficientType>
     DUNE_DEPRECATED 
@@ -136,7 +131,6 @@ namespace Dune
                            this->time_, quadInner.point(quadPoint), 
                            this->valuesEn_, coeff);
     }
-#endif
       
     template <class CoefficientType>
     void evaluateCoefficient(Entity& en, VolumeQuadratureType& quad, int quadPoint,

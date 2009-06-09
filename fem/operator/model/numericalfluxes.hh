@@ -1,8 +1,6 @@
 #ifndef DUNE_FEM_LDG_NUMERICALFLUX_HH
 #define DUNE_FEM_LDG_NUMERICALFLUX_HH
 
-#include <dune/common/version.hh>
-
 // *** Numerical fluxes ***
 
 // Dune includes
@@ -47,11 +45,7 @@ namespace Dune
       typename Traits::RangeType visc;
       typename Traits::FluxRangeType anaflux;
 
-#if DUNE_VERSION_NEWER(DUNE_GRID,1,3,0)
       const IntersectionLocalGeometry &geoInInside = intersection.geometryInInside();
-#else
-      const IntersectionLocalGeometry &geoInInside = intersection.intersectionSelfLocal();
-#endif
 
       model_.analyticalFlux( *(intersection.inside()), time, geoInInside.global( x ),
                              uLeft, anaflux);
@@ -59,11 +53,7 @@ namespace Dune
       anaflux.umv(normal, gLeft);
       if( intersection.neighbor() )
       {
-#if DUNE_VERSION_NEWER(DUNE_GRID,1,3,0)
         const IntersectionLocalGeometry &geoInOutside = intersection.geometryInOutside();
-#else
-        const IntersectionLocalGeometry &geoInOutside = intersection.intersectionNeighborLocal();
-#endif
          model_.analyticalFlux( *(intersection.outside()), time, geoInOutside.global( x ),
                                 uRight, anaflux);
       }
@@ -77,11 +67,7 @@ namespace Dune
       double maxspeedl,maxspeedr,maxspeed;
       double viscparal,viscparar,viscpara;
 
-#if DUNE_VERSION_NEWER(DUNE_GRID,1,3,0)
       const IntersectionGeometry &geo = intersection.geometry();
-#else      
-      const IntersectionGeometry &geo = intersection.intersectionGlobal();
-#endif
       model_.maxSpeed( normal, time, geo.global( x ), uLeft, viscparal, maxspeedl );
       model_.maxSpeed( normal, time, geo.global( x ), uRight, viscparar, maxspeedr );
 
@@ -166,17 +152,9 @@ namespace Dune
       //std::cout << " reflectionLeft is " << reflectionLeft << std::endl;
       //std::cout << " reflectionRight is " << reflectionRight << std::endl;
 
-#if DUNE_VERSION_NEWER(DUNE_GRID,1,3,0)
       const IntersectionLocalGeometry &geoInInside = intersection.geometryInInside();
-#else
-      const IntersectionLocalGeometry &geoInInside = intersection.intersectionSelfLocal();
-#endif
 
-#if DUNE_VERSION_NEWER(DUNE_GRID,1,3,0)
-        const IntersectionLocalGeometry &geoInOutside = intersection.geometryInOutside();
-#else
-        const IntersectionLocalGeometry &geoInOutside = intersection.intersectionNeighborLocal();
-#endif
+      const IntersectionLocalGeometry &geoInOutside = intersection.geometryInOutside();
 
       gLeft = 0;
       gRight = 0;
@@ -253,11 +231,7 @@ namespace Dune
       double maxspeedl, maxspeedr, maxspeed;
       double viscparal, viscparar, viscpara;
 
-#if DUNE_VERSION_NEWER(DUNE_GRID,1,3,0)
       const IntersectionGeometry &geo = intersection.geometry();
-#else      
-      const IntersectionGeometry &geo = intersection.intersectionGlobal();
-#endif
 
 // the version of the method maxSpeed is used with the additional argument for wetting-drying treatment
 

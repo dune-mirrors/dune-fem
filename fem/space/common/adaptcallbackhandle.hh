@@ -1,7 +1,6 @@
 #ifndef DUNE_ADAPTCALLBACKHANDLE_HH
 #define DUNE_ADAPTCALLBACKHANDLE_HH
 
-#include <dune/common/version.hh>
 #include <dune/grid/common/adaptcallback.hh>
 
 /** \file
@@ -16,7 +15,6 @@ namespace Dune
   // RestrictProlongWrapper
   // ----------------------
 
-#if DUNE_VERSION_NEWER(DUNE_GRID,1,3,0)
   template< class Grid, class DofManager, class RestrictProlongOperator >
   class RestrictProlongWrapper
   : public AdaptDataHandle
@@ -92,7 +90,6 @@ namespace Dune
       rpOp_.prolongLocal( const_cast< Entity & >( father ), const_cast< Entity & >( son ), initialize );
     }
   };
-#endif
 
 } // end namespace Dune 
 

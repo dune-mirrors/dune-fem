@@ -12,14 +12,6 @@
 #include <dune/grid/yaspgrid.hh>
 #include <dune/grid/io/file/dgfparser/dgfparser.hh>
 
-#include <dune/fem/version.hh>
-
-#if DUNE_VERSION_NEWER(DUNE_GRID,1,2,0)
-#define DGFNAMESPACE dgf::
-#else
-#define DGFNAMESPACE
-#endif
-
 // defines function readParameter 
 #include <dune/fem/io/file/asciiparser.hh>
 // defines Parameter 
@@ -334,7 +326,7 @@ public:
     } 
         
     // read interval information of structured grid 
-    DGFNAMESPACE IntervalBlock interval(gridin);
+    dgf::IntervalBlock interval(gridin);
     if(!interval.isactive()) 
     {
       std::cerr<<"Did not find IntervalBlock in macro grid file `" << macroname << "' ! \n";
@@ -397,21 +389,20 @@ protected:
   //! write my partition as macro grid 
   template <int dimworld> 
   static void saveMacroGridImp (const int rank,
-                                DGFNAMESPACE IntervalBlock& intervalBlock,
+                                dgf::IntervalBlock& intervalBlock,
                                 std::string filename )
   {
     FieldVector<double,dimworld> lang;
     FieldVector<int,dimworld>    anz;
     FieldVector<double,dimworld>  h;
     
-#if DUNE_VERSION_NEWER(DUNE_GRID,1,3,0)
     if( intervalBlock.numIntervals() != 1 )
     {
       std::cerr << "Warning: Only 1 interval block is handled by "
                 << "IOInterface::saveMacroGridImp" << std::endl;
     }
 
-    typedef typename DGFNAMESPACE IntervalBlock::Interval Interval;
+    typedef typename dgf::IntervalBlock::Interval Interval;
     const Interval &interval = intervalBlock.get( 0 );
     for( int i = 0; i < dimworld; ++i )
     {
@@ -419,15 +410,6 @@ protected:
       anz[ i ] = interval.n[ i ];
       h[ i ] = lang[ i ] / anz[ i ];
     }
-#else
-    // set values 
-    for( int i = 0; i < dimworld; ++i )
-    {
-      lang[ i ] = intervalBlock.length( i );
-      anz[ i ]  = intervalBlock.segments( i );
-      h[ i ] = lang[ i ] / anz[ i ];
-    }
-#endif // #if DUNE_VERSION_NEWER(DUNE_GRID,1,3,0)
 
     // write sub grid for this rank 
     {

@@ -3,13 +3,8 @@
 
 #include <dune/common/static_assert.hh>
 #include <dune/common/tuples.hh>
-#include <dune/common/version.hh>
 
 #if HAVE_TUPLE || HAVE_TR1_TUPLE
-
-// if Tuple is undefined to the preprocessor, dune/common/tuples.hh already
-// implements this verson of Tuple!
-#if defined Tuple || DUNE_VERSION_NEWER(DUNE_COMMON,1,3,0)
 
 // undef defines from tuples.hh 
 #undef Tuple
@@ -774,7 +769,6 @@ namespace Dune{
 
 } // end namespace Dune 
 #endif // end if HAVE_TUPLE || HAVE_TR1_TUPLE
-#endif // end ifdef Tuple 
 
 namespace Dune
 {
@@ -908,4 +902,4 @@ namespace Dune
     enum { value = 0 };
   };
 } // end namespace Dune 
-#endif
+#endif // #ifndef DUNE_FEM_TUPLES_HH

@@ -90,11 +90,7 @@ namespace Dune
           typedef typename GridType::template Codim< codim >::EntityPointer EntityPointer;
           typedef typename GridType::template Codim< codim >::Entity Entity;
 
-#if DUNE_VERSION_NEWER(DUNE_GRID,1,3,0)
           EntityPointer ptr = entity.template subEntity< codim >( i );
-#else
-          EntityPointer ptr = entity.template entity< codim >( i );
-#endif
           const Entity &subentity = *ptr;
 
           if( !skipGhosts || (entity.partitionType() != GhostEntity) )
@@ -103,7 +99,6 @@ namespace Dune
       }
     };
 
-#if DUNE_VERSION_NEWER(DUNE_GRID,1,3,0)
     template< int codim >
     struct CallSetUpCodimSet
     {
@@ -113,7 +108,6 @@ namespace Dune
           indexSet.template setUpCodimSet< codim >();
       }
     };
-#endif // #if DUNE_VERSION_NEWER(DUNE_GRID,1,3,0)
 
     // my type, to be revised 
     enum { myType = 6 };
@@ -289,7 +283,6 @@ namespace Dune
       return idx;
     }
 
-#if DUNE_VERSION_NEWER(DUNE_GRID,1,3,0)
     IndexType
     subIndex ( const typename GridType::template Codim< 0 >::Entity &entity,
                int subNumber, unsigned int codim ) const
@@ -303,7 +296,6 @@ namespace Dune
       assert( (idx >= 0) && (idx < codimSet.size()) );
       return idx;
     }
-#endif // #if DUNE_VERSION_NEWER(DUNE_GRID,1,3,0)
 
     //! return number of holes of the sets indices 
     int numberOfHoles ( const int codim ) const

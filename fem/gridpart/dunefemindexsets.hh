@@ -30,11 +30,7 @@ namespace Dune
   class DuneGridIndexSetAdapter 
   : public BartonNackmanInterface< DuneGridIndexSetAdapter< GridImp, Imp >, Imp >,
     public EmptyIndexSet,
-  #if DUNE_VERSION_NEWER(DUNE_GRID,1,3,0)
     public IndexSet< GridImp, Imp >
-  #else
-    public IndexSet< GridImp, Imp, DefaultLeafIteratorTypes< GridImp > >
-  #endif
   {
     typedef DuneGridIndexSetAdapter< GridImp, Imp > ThisType;
     typedef BartonNackmanInterface< ThisType, Imp > BaseType;
@@ -44,11 +40,7 @@ namespace Dune
   protected:
     using BaseType::asImp;
 
-  #if DUNE_VERSION_NEWER(DUNE_GRID,1,3,0)
     typedef IndexSet< GridImp, Imp > DuneIndexSetType;
-  #else
-    typedef IndexSet< GridImp, Imp, DefaultLeafIteratorTypes< GridImp > > DuneIndexSetType;
-  #endif
 
   public:
     //! type of grid 
@@ -95,24 +87,6 @@ namespace Dune
       return this->template index< codim >( entity, localNum );
     }
 
-#if not DUNE_VERSION_NEWER(DUNE_GRID,1,3,0) && defined INDEXSET_HAS_ITERATORS
-    template< int codim, PartitionIteratorType pitype >
-    typename DefaultLeafIteratorTypes< GridType >::template Codim< codim >::template Partition< pitype >::Iterator
-    begin () const
-    {
-      DUNE_THROW( NotImplemented, "DUNE-FEM index sets do not provide deprecated methods begin / end." );
-      return this->grid_.template leafend< codim, pitype > ();
-    }
-
-    template< int codim, PartitionIteratorType pitype >
-    typename DefaultLeafIteratorTypes< GridType >::template Codim< codim >::template Partition< pitype >::Iterator
-    end () const
-    {
-      DUNE_THROW( NotImplemented, "DUNE-FEM index sets do not provide deprecated methods begin / end." );
-      return this->grid_.template leafend< codim, pitype > ();
-    }
-#endif // #if not DUNE_VERSION_NEWER(DUNE_GRID,1,3,0) && defined INDEXSET_HAS_ITERATORS
-   
     //////////////////////////////////////////////////////////////////
     //
     //  DUNE fem index method implementer interface  

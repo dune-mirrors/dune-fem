@@ -152,7 +152,6 @@ namespace Dune
       return wrappedIterator_->intersectionGlobal();
     }
 
-#if DUNE_VERSION_NEWER(DUNE_GRID,1,3,0)
     const LocalGeometry &geometryInInside () const
     {
       return wrappedIterator_->geometryInInside();
@@ -171,7 +170,6 @@ namespace Dune
     {
       return wrappedIterator_->geometry();
     }
-#endif
 
     int numberInSelf () const
     {
@@ -183,7 +181,6 @@ namespace Dune
       return wrappedIterator_->numberInNeighbor();
     }
 
-#if DUNE_VERSION_NEWER(DUNE_GRID,1,3,0)
     int indexInInside () const
     {
       return wrappedIterator_->indexInInside();
@@ -193,7 +190,6 @@ namespace Dune
     {
       return wrappedIterator_->indexInOutside();
     }
-#endif
 
     DomainType outerNormal ( const LocalDomainType &x ) const
     {

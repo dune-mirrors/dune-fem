@@ -1,8 +1,6 @@
 #ifndef DUNE_ELEMENTPOINTLIST_HH
 #define DUNE_ELEMENTPOINTLIST_HH
 
-#include <dune/common/version.hh>
-
 #include <dune/fem/quadrature/quadrature.hh>
 #include <dune/fem/quadrature/caching/twistutility.hh>
 
@@ -376,7 +374,6 @@ namespace Dune
   };
 
 
-#if DUNE_VERSION_NEWER(DUNE_GRID,1,3,0)
   template< class GridPartImp, class IntegrationTraits >
   ElementIntegrationPointList< GridPartImp, 1, IntegrationTraits >
     ::ElementIntegrationPointList ( const GridPartType &gridPart, 
@@ -393,28 +390,6 @@ namespace Dune
     localFaceIndex_
       = (inside ? intersection.indexInInside() : intersection.indexInOutside());
   }
-#else
-  template< class GridPartImp, class IntegrationTraits >
-  ElementIntegrationPointList< GridPartImp, 1, IntegrationTraits >
-    ::ElementIntegrationPointList ( const GridPartType &gridPart, 
-                                    const IntersectionType &intersection, 
-                                    const int order,
-                                    const Side side )
-  : referenceGeometry_( side == INSIDE ? intersection.intersectionSelfLocal() 
-                                       : intersection.intersectionNeighborLocal() ),
-    elementGeometry_( TwistUtilityType::elementGeometry(intersection, side == INSIDE ) ), 
-    quad_( referenceGeometry_.type(), order ),
-    dummy_( 0. )
-  {
-    const bool inside = (side == INSIDE);
-    const int faceNumber
-      = (inside ? intersection.numberInSelf() : intersection.numberInNeighbor());
-
-    typedef GenericGeometry::MapNumberingProvider< dimension > Numbering;
-    const unsigned int tid = GenericGeometry::topologyId( elementGeometry() );
-    localFaceIndex_ = Numbering::template dune2generic< 1 >( tid, faceNumber );
-  }
-#endif
 
 } // end namespace Dune
 
