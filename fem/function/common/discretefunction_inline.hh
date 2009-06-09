@@ -3,6 +3,8 @@
 
 #include <fstream>
 
+#include <dune/grid/common/genericreferenceelements.hh>
+
 #include <dune/fem/io/file/asciiparser.hh>
 #include <dune/fem/io/streams/streams.hh>
 
@@ -187,33 +189,35 @@ namespace Dune
   template< class Traits >
   template< int diffOrder >
   inline void DiscreteFunctionDefault< Traits >
-    :: evaluate ( const FieldVector< deriType, diffOrder > &diffVariable,
-                  const DomainType &x,
-                  RangeType &ret ) const
+    ::evaluate ( const FieldVector< deriType, diffOrder > &diffVariable,
+                 const DomainType &x,
+                 RangeType &ret ) const
   {
-    typedef typename DiscreteFunctionSpaceType :: IteratorType IteratorType;
-    typedef typename IteratorType :: Entity EntityType;
-    typedef typename EntityType :: Geometry GeometryType;
+    typedef typename DiscreteFunctionSpaceType::IteratorType Iterator;
+    typedef typename Iterator::Entity Entity;
+    typedef typename Entity::Geometry Geometry;
+
+    const int dimDomain = DomainType::dimension;
     
-    const DiscreteFunctionSpaceType &space = BaseType :: space();
-    const IteratorType end = space.end();
-    for( IteratorType it = space.begin(); it != end; ++it )
+    const DiscreteFunctionSpaceType &space = BaseType::space();
+    const Iterator end = space.end();
+    for( Iterator it = space.begin(); it != end; ++it )
     {
-      const EntityType &entity = *it;
-      const GeometryType &geometry = entity.geometry();
+      const Entity &entity = *it;
+      const Geometry &geometry = entity.geometry();
+
+      const GenericReferenceElement< DomainFieldType, dimDomain > &refElement
+        = GenericReferenceElements< DomainFieldType, dimDomain >::general( geometry.type() );
 
       const DomainType xlocal = geometry.local( x );
-      if( geometry.checkInside( xlocal ) )
+      if( refElement.checkInside( xlocal ) )
       {
-        const LocalFunctionType localFunction
-          = BaseType :: localFunction( entity );
-
+        const LocalFunctionType localFunction = BaseType::localFunction( entity );
         localFunction.evaluate( diffVariable, xlocal, ret );
         return;
       }
     }
-    DUNE_THROW( RangeError,
-                "DiscreteFunctionDefault :: evaluate: x is within domain." );
+    DUNE_THROW( RangeError, "DiscreteFunctionDefault::evaluate: x is within domain." );
   }
 
 

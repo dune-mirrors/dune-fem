@@ -423,7 +423,7 @@ public:
   //! return dof
   DofType& operator *()
   {
-    assert((count_ >=0) && (count_ < dofArray_->size()));
+    assert((count_ >=0) && (count_ < (int)dofArray_->size()));
     //return DofWrapperType::convert((*dofArray_)[count_],idx_);
     return ((*dofArray_)[count_][idx_]);
   }
@@ -431,7 +431,7 @@ public:
   //! return dof read only 
   const DofType& operator * () const
   {
-    assert((count_ >=0) && (count_ < dofArray_->size()));
+    assert((count_ >=0) && (count_ < (int)dofArray_->size()));
     //return DofWrapperType::convert((*dofArray_)[count_],idx_);
     return ((*dofArray_)[count_][idx_]);
   }

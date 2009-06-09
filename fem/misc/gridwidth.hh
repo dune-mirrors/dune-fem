@@ -21,9 +21,10 @@ class GridWidthProvider;
 struct GridWidth 
 {
   // for convenience  
-  template <class GridPartType, class EntityType> 
-  static inline double maxEdgeWidth(const GridPartType& gridPart,
-                                    const EntityType &en)
+  template< class GridPartType, class EntityType >
+  static inline double
+  maxEdgeWidth ( const GridPartType &gridPart,
+                 const EntityType &en )
   {
     typedef typename GridPartType :: GridType GridType;
 
@@ -39,51 +40,50 @@ struct GridWidth
     IntersectionIteratorType begin = gridPart.ibegin(en);
     const IntersectionIteratorType end = gridPart.iend(en);
 
-    return maxEdgeWidth(begin, end, geoInfo, faceGeoInfo, en);
+    return maxEdgeWidth( begin, end, geoInfo, faceGeoInfo, en );
   }
   
-  template <class IntersectionIteratorType, class ElemGeoInfoType, class FaceGeoInfoType, class EntityType> 
-  static inline double maxEdgeWidth(IntersectionIteratorType& it, 
-                                    const IntersectionIteratorType& endit,
-                                    const ElemGeoInfoType& geoInfo,
-                                    const FaceGeoInfoType& faceGeoInfo, 
-                                    const EntityType &en)
+  template< class IntersectionIteratorType, class ElemGeoInfoType, class FaceGeoInfoType, class EntityType >
+  static inline double
+  maxEdgeWidth ( IntersectionIteratorType &it, 
+                 const IntersectionIteratorType &endit,
+                 const ElemGeoInfoType &geoInfo,
+                 const FaceGeoInfoType &faceGeoInfo, 
+                 const EntityType &entity )
   {
-    typedef typename EntityType :: Geometry Geometry;
+    typedef typename EntityType::Geometry Geometry;
     enum { dim = EntityType::dimension };
     
     double faceVol = std::numeric_limits<double>::max() ;
-    int numberInSelf = -1;
+    int indexInInside = -1;
     double currVol = std::numeric_limits<double>::min() ;
     double refFaceVol = std::numeric_limits<double>::min() ;
     
     for( ; it != endit; ++it)
     {
-      typedef typename IntersectionIteratorType :: Intersection IntersectionType;
-      const IntersectionType& inter = *it;
+      typedef typename IntersectionIteratorType::Intersection Intersection;
+      const Intersection &intersection = *it;
       
-      typedef typename IntersectionIteratorType :: Geometry LocalGeometryType;
-      const LocalGeometryType& interGeo = inter.intersectionGlobal();
+      typedef typename IntersectionIteratorType::Geometry LocalGeometryType;
+      const LocalGeometryType &interGeo = intersection.geometry();
 
       // calculate face Volume also for non-conforming intersections  
-      if( numberInSelf != inter.numberInSelf() )
+      if( indexInInside != intersection.indexInInside() )
       {
-        if (numberInSelf >= 0) 
-        {
-          faceVol = std::min( faceVol, currVol * refFaceVol );
-        }
+        if( indexInInside >= 0 )
+          faceVol = std::min( faceVol, currVol*refFaceVol );
         
-        refFaceVol = faceGeoInfo.referenceVolume( interGeo.type() );
-        numberInSelf = inter.numberInSelf();
+        refFaceVol = faceGeoInfo.referenceVolume( intersection.type() );
+        indexInInside = intersection.indexInInside();
         currVol = 0.0;
       }
 
       currVol += interGeo.volume();
     }
 
-    const Geometry& geo = en.geometry();
+    const Geometry &geo = entity.geometry();
     const double elemVol = geo.volume() * geoInfo.referenceVolume( geo.type() );
-    return elemVol/faceVol;
+    return elemVol / faceVol;
   }
 
   template <class GridPartType> 

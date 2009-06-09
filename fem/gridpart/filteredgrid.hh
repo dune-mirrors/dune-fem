@@ -521,8 +521,9 @@ namespace Dune
     // IntersectionIteratorWrapper
     //**********************************************************************
 
-    template <class GridPartType, class IteratorType>
-    class IntersectionIteratorWrapper : public IteratorType 
+    template< class GridPartType, class IteratorType >
+    class IntersectionIteratorWrapper
+    : public IteratorType 
     {
       // type of codim 0 entity      
       typedef typename GridPartType::GridType::template Codim<0>::EntityPointer EntityPointerCodim0Type;
@@ -530,6 +531,22 @@ namespace Dune
 
       typedef IntersectionIteratorWrapper<GridPartType,IteratorType>  ThisType;
       
+      typedef typename IteratorType::Intersection RealIntersection;
+
+    public:
+      typedef typename RealIntersection::ctype ctype;
+
+      static const int dimension = RealIntersection::dimension;
+      static const int dimensionworld = RealIntersection::dimensionworld;
+
+      typedef FieldVector< ctype, dimensionworld > NormalVector;
+      typedef FieldVector< ctype, dimension-1 > LocalVector;
+
+      typedef typename RealIntersection::Entity Entity;
+      typedef typename RealIntersection::EntityPointer EntityPointer;
+      typedef typename RealIntersection::Geometry Geometry;
+      typedef typename RealIntersection::LocalGeometry LocalGeometry;
+
     protected:
       class neighborInfo 
       {
@@ -650,14 +667,84 @@ namespace Dune
 
           return *this;
         }
-        //! overloaded conforming method 
-        inline bool conforming() const { return asBase()->conforming(); }
+
         //! overloaded boundary method 
-        inline bool boundary() const  { return nInfo_.boundary_; }
+        bool boundary () const
+        {
+          return nInfo_.boundary_;
+        }
+
         //! overloaded boundaryId method 
-        inline int boundaryId() const { return nInfo_.boundaryId_; }
+        int boundaryId () const
+        {
+          return nInfo_.boundaryId_;
+        }
+
         //! overloaded neighbor method 
-        inline bool neighbor() const { return nInfo_.neighbor_; }
+        bool neighbor () const
+        {
+          return nInfo_.neighbor_;
+        }
+
+        EntityPointer inside () const
+        {
+          return asBase()->inside();
+        }
+
+        EntityPointer outside () const
+        {
+          return asBase()->outside();
+        }
+
+        bool conforming () const
+        {
+          return asBase()->conforming();
+        }
+
+        const LocalGeometry &geometryInInside () const
+        {
+          return asBase()->geometryInInside();
+        }
+
+        const LocalGeometry &geometryInOutside () const
+        {
+          return asBase()->geometryInOutside();
+        }
+
+        const Geometry &geometry () const
+        {
+          return asBase()->geometry();
+        }
+
+        GeometryType type () const
+        {
+          return asBase()->type();
+        }
+
+        int indexInInside () const
+        {
+          return asBase()->indexInInside();
+        }
+
+        int indexInOutside () const
+        {
+          return asBase()->indexInOutside();
+        }
+
+        NormalVector outerNormal ( const LocalVector &local ) const
+        {
+          return asBase()->outerNormal( local );
+        }
+
+        NormalVector integrationOuterNormal ( const LocalVector &local ) const
+        {
+          return asBase()->integrationOuterNormal( local );
+        }
+
+        NormalVector unitOuterNormal( const LocalVector &local ) const
+        {
+          return asBase()->unitOuterNormal( local );
+        }
 
         //! type of Intersection 
         typedef ThisType Intersection;
