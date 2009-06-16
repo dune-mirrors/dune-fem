@@ -6,14 +6,10 @@
 
 #if HAVE_TUPLE || HAVE_TR1_TUPLE
 
-// undef defines from tuples.hh 
-#undef Tuple
-#undef ElementType
-#undef Size 
-
 // overload Element Implementation 
 #define Element ElementAccess 
-namespace Dune{
+namespace Dune
+{
 
   /**
    * @brief An empty class.
@@ -216,6 +212,12 @@ namespace Dune{
     typedef Pair<T1,Nil> Type;
   };
   
+} // end namespace Dune 
+#endif // end if HAVE_TUPLE || HAVE_TR1_TUPLE
+
+namespace Dune
+{
+
   /**
    * @brief A Tuple of objects.
    *
@@ -340,6 +342,12 @@ namespace Dune{
       return *this;
     }
   };
+
+}
+
+#if HAVE_TUPLE || HAVE_TR1_TUPLE
+namespace Dune
+{
 
   /**
    * @brief Get the type of the N-th element of the tuple.
