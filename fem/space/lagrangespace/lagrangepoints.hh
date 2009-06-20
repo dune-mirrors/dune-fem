@@ -18,27 +18,25 @@ namespace Dune
    * lagrange point is located. 
    *
    **/
-  template< GeometryType :: BasicType type,
-            unsigned int dim,
-            unsigned int polOrder >
+  template< GeometryType::BasicType type, unsigned int dim, unsigned int polOrder >
   class LagrangePoint
   : public GenericLagrangePoint
-    < typename GeometryWrapper< type, dim > :: GenericGeometryType, polOrder >
+    < typename GeometryWrapper< type, dim >::GenericGeometryType, polOrder >
   {
-  private:
-    typedef GeometryWrapper< type, dim > GeometryWrapperType;
-    typedef GenericLagrangePoint
-      < typename GeometryWrapperType :: GenericGeometryType, polOrder >
-      BaseType;
     typedef LagrangePoint< type, dim, polOrder > ThisType;
+    typedef GenericLagrangePoint
+      < typename GeometryWrapper< type, dim >::GenericGeometryType, polOrder >
+      BaseType;
+
+    typedef GeometryWrapper< type, dim > GeometryWrapperType;
 
   public:
-    enum { dimension = BaseType :: dimension };
-    typedef typename BaseType :: DofCoordinateType DofCoordinateType;
+    static const unsigned int dimension = BaseType::dimension;
 
-    enum { polynomialOrder = BaseType :: polynomialOrder };
+    typedef typename BaseType::DofCoordinateType DofCoordinateType;
 
-    enum { numLagrangePoints = BaseType :: numLagrangePoints };
+    static const unsigned int polynomialOrder = BaseType::polynomialOrder;
+    static const unsigned int numLagrangePoints = BaseType::numLagrangePoints;
 
   public:
     template< unsigned int codim >
@@ -51,37 +49,31 @@ namespace Dune
     };
     
   public:
-    inline LagrangePoint ( unsigned int index )
+    LagrangePoint ( unsigned int index )
     : BaseType( index )
-    {
-    }
+    {}
 
-    inline LagrangePoint ( const BaseType &point )
+    LagrangePoint ( const BaseType &point )
     : BaseType( point )
+    {}
+
+    void dofSubEntity ( unsigned int &codim, unsigned int &subEntity )
     {
+      BaseType::dofSubEntity( codim, subEntity );
+      //GeometryWrapperType::duneSubEntity( codim, subEntity );
     }
 
-    inline void dofSubEntity ( unsigned int &codim,
-                               unsigned int &subEntity )
+    void dofSubEntity ( unsigned int &codim, unsigned int &subEntity, unsigned int &dofNumber )
     {
-      BaseType :: dofSubEntity( codim, subEntity );
-      GeometryWrapperType :: duneSubEntity( codim, subEntity );
+      BaseType::dofSubEntity( codim, subEntity, dofNumber );
+      //GeometryWrapperType::duneSubEntity( codim, subEntity );
     }
 
-    inline void dofSubEntity ( unsigned int &codim,
-                               unsigned int &subEntity,
-                               unsigned int &dofNumber )
+    static unsigned int
+    entityDofNumber ( unsigned int codim, unsigned int subEntity, unsigned int dof )
     {
-      BaseType :: dofSubEntity( codim, subEntity, dofNumber );
-      GeometryWrapperType :: duneSubEntity( codim, subEntity );
-    }
-
-    static inline unsigned int entityDofNumber ( unsigned int codim,
-                                                 unsigned int subEntity,
-                                                 unsigned int dof )
-    {
-      GeometryWrapperType :: duneSubEntity( codim, subEntity );
-      return BaseType :: entityDofNumber( codim, subEntity, dof );
+      //GeometryWrapperType::duneSubEntity( codim, subEntity );
+      return BaseType::entityDofNumber( codim, subEntity, dof );
     }
   };
 

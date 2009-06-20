@@ -18,29 +18,24 @@
 namespace Dune
 {
   
-  template< class GridPart, unsigned int polOrder, unsigned int dimR >
+  template< class GridPart, int polOrder, int dimR >
   class LagrangeMapper;
 
 
   
-  template< class GridPart, unsigned int polOrder, unsigned int dimR >
+  template< class GridPart, int polOrder, int dimR >
   struct LagrangeMapperTraits
   {
     typedef GridPart GridPartType;
     
-    enum { polynomialOrder = polOrder };
+    static const int polynomialOrder = polOrder;
 
     //! dimension of the discrete function space's range
-    enum { dimRange = dimR };
+    static const int dimRange = dimR;
 
-    typedef typename GridPartType :: template Codim< 0 > :: IteratorType :: Entity
-      EntityType;
-
-    typedef LagrangeMapper< GridPartType, polynomialOrder, dimRange >
-      DofMapperType;
-
-    typedef DefaultDofMapIterator< EntityType, DofMapperType >
-      DofMapIteratorType;
+    typedef typename GridPartType::template Codim< 0 >::IteratorType::Entity EntityType;
+    typedef LagrangeMapper< GridPartType, polynomialOrder, dimRange > DofMapperType;
+    typedef DefaultDofMapIterator< EntityType, DofMapperType > DofMapIteratorType;
   };
 
 
@@ -49,51 +44,45 @@ namespace Dune
   class LagrangeMapper< GridPart, 1, dimR >
   : public DofMapperDefault< LagrangeMapperTraits< GridPart, 1, dimR > >
   {
+    typedef LagrangeMapper< GridPart, 1, dimR > ThisType;
+    typedef DofMapperDefault< LagrangeMapperTraits< GridPart, 1, dimR > > BaseType;
+
   public:
     typedef LagrangeMapperTraits< GridPart, 1, dimR > Traits;
     
     //! type of the grid part
-    typedef typename Traits :: GridPartType GridPartType;
+    typedef typename Traits::GridPartType GridPartType;
 
     //! type of entities (codim 0)
-    typedef typename Traits :: EntityType EntityType;
+    typedef typename Traits::EntityType EntityType;
 
     //! type of DofMapIterator
-    typedef typename Traits :: DofMapIteratorType DofMapIteratorType;
+    typedef typename Traits::DofMapIteratorType DofMapIteratorType;
     
     //! type of the underlying grid
-    typedef typename GridPartType :: GridType GridType;
+    typedef typename GridPartType::GridType GridType;
+
+    //! type of the index set
+    typedef typename GridPartType::IndexSetType IndexSetType;
 
     //! type of coordinates within the grid
-    typedef typename GridType :: ctype FieldType;
+    typedef typename GridType::ctype FieldType;
 
     //! dimension of the grid
-    enum { dimension = GridType :: dimension };
+    static const int dimension = GridType::dimension;
 
     //! order of the Lagrange polynoms
-    enum { polynomialOrder = Traits :: polynomialOrder };
+    static const int polynomialOrder = Traits::polynomialOrder;
 
     //! dimension of the discrete function space's range
-    enum { dimRange = Traits :: dimRange };
-
-  private:
-    typedef LagrangeMapper< GridPartType, polynomialOrder, dimRange > ThisType;
-    typedef DofMapperDefault< Traits > BaseType;
-
-  public:
-    //! type of the index set
-    typedef typename GridPartType :: IndexSetType IndexSetType;
+    static const int dimRange = Traits::dimRange;
 
     //! type of the Lagrange point set
     typedef LagrangePointSet< GridPartType, polynomialOrder >
       LagrangePointSetType;
     //! type of the map for the Lagrange point sets
-    typedef std :: map< const GeometryType, const LagrangePointSetType* >
+    typedef std::map< const GeometryType, const LagrangePointSetType* >
       LagrangePointSetMapType;
-
-  private:
-    const IndexSetType &indexSet_;
-    unsigned int maxDofs_;
 
   public:
     //! constructor
@@ -117,8 +106,7 @@ namespace Dune
    
     //! destructor
     virtual ~LagrangeMapper ()
-    {
-    }
+    {}
 
     /** \copydoc Dune::DofMapper::size() const */
     int size () const
@@ -127,36 +115,31 @@ namespace Dune
     }
 
     /** \copydoc Dune::DofMapper::begin(const EntityType &entity) const */
-    inline DofMapIteratorType begin ( const EntityType &entity ) const
+    DofMapIteratorType begin ( const EntityType &entity ) const
     {
-      return DofMapIteratorType
-        ( DofMapIteratorType :: beginIterator, entity, *this );
+      return DofMapIteratorType( DofMapIteratorType::beginIterator, entity, *this );
     }
     
     /** \copydoc Dune::DofMapper::end(const EntityType &entity) const */
-    inline DofMapIteratorType end ( const EntityType &entity ) const
+    DofMapIteratorType end ( const EntityType &entity ) const
     {
-      return DofMapIteratorType
-        ( DofMapIteratorType :: endIterator, entity, *this );
+      return DofMapIteratorType( DofMapIteratorType::endIterator, entity, *this );
     }
 
     /** \copydoc Dune::DofMapper::mapToGlobal */
-    inline int mapToGlobal ( const EntityType &entity,
-                             const int localDof ) const
+    int mapToGlobal ( const EntityType &entity, const int localDof ) const
     {
       const int coordinate = localDof % dimRange;
       const int localPoint = localDof / dimRange;
-      const int globalPoint
-        = indexSet_.template subIndex< dimension >( entity, localPoint );
+      const int globalPoint = indexSet_.subIndex( entity, localPoint, dimension );
       return dimRange * globalPoint + coordinate;
     }
 
     /** \copydoc Dune::DofMapper::mapEntityDofToGlobal */
     template< class Entity >
-    inline int mapEntityDofToGlobal ( const Entity &entity,
-                                      const int localDof ) const
+    int mapEntityDofToGlobal ( const Entity &entity, const int localDof ) const
     {
-      if( Entity :: codimension != (unsigned int) dimension )
+      if( Entity::codimension != dimension )
         DUNE_THROW( RangeError, "No such local DoF." );
 
       assert( (localDof >= 0) && (localDof < dimRange) );
@@ -169,7 +152,7 @@ namespace Dune
       return dimRange * maxDofs_;
     }
 
-    using BaseType :: numDofs;
+    using BaseType::numDofs;
     
     /** \copydoc Dune::DofMapper::numDofs(const EntityType &entity) const */
     int numDofs ( const EntityType &entity ) const
@@ -178,19 +161,19 @@ namespace Dune
     }
 
     template< class Entity >
-    inline int numEntityDofs ( const Entity &entity ) const
+    int numEntityDofs ( const Entity &entity ) const
     {
-      return (Entity :: codimension == (unsigned int) dimension ? dimRange : 0);
+      return (Entity::codimension == dimension ? dimRange : 0);
     }
 
     /** \brief Check, whether any DoFs are associated with a codimension */
-    inline bool contains ( unsigned int codim ) const
+    bool contains ( unsigned int codim ) const
     {
       return (codim == dimension);
     }
 
     /** \brief Check, whether the data in a codimension has fixed size */
-    inline bool fixedDataSize ( unsigned int codim ) const
+    bool fixedDataSize ( unsigned int codim ) const
     {
       return true;
     }
@@ -230,63 +213,65 @@ namespace Dune
     /** \copydoc Dune::DofMapper::consecutive() const */
     bool consecutive () const
     {
-      return BaseType :: checkConsecutive( indexSet_ );
+      return BaseType::checkConsecutive( indexSet_ );
     }
+
+  private:
+    const IndexSetType &indexSet_;
+    unsigned int maxDofs_;
   };
 
 
 
-  template< class GridPart, unsigned int dimR >
+  template< class GridPart, int dimR >
   class LagrangeMapper< GridPart, 2, dimR >
   : public DofMapperDefault< LagrangeMapperTraits< GridPart, 2, dimR > >
   {
+    typedef LagrangeMapper< GridPart, 2, dimR > ThisType;
+    typedef DofMapperDefault< LagrangeMapperTraits< GridPart, 2, dimR > > BaseType;
+
   public:
     typedef LagrangeMapperTraits< GridPart, 2, dimR > Traits;
     
     //! type of the grid part
-    typedef typename Traits :: GridPartType GridPartType;
+    typedef typename Traits::GridPartType GridPartType;
 
     //! type of entities (codim 0)
-    typedef typename Traits :: EntityType EntityType;
+    typedef typename Traits::EntityType EntityType;
 
     //! type of DofMapIterator
-    typedef typename Traits :: DofMapIteratorType DofMapIteratorType;
+    typedef typename Traits::DofMapIteratorType DofMapIteratorType;
  
     //! type of the underlying grid
-    typedef typename GridPartType :: GridType GridType;
+    typedef typename GridPartType::GridType GridType;
+
+    //! type of the index set
+    typedef typename GridPartType::IndexSetType IndexSetType;
 
     //! type of coordinates within the grid
-    typedef typename GridType :: ctype FieldType;
+    typedef typename GridType::ctype FieldType;
 
     //! dimension of the grid
-    enum { dimension = GridType :: dimension };
+    static const int dimension = GridType::dimension;
 
     //! order of the Lagrange polynoms
-    enum { polynomialOrder = Traits :: polynomialOrder };
+    static const int polynomialOrder = Traits::polynomialOrder;
 
     //! dimension of the discrete function space's range
-    enum { dimRange = Traits :: dimRange };
-
-  private:
-    typedef LagrangeMapper< GridPartType, polynomialOrder, dimRange > ThisType;
-    typedef DofMapperDefault< Traits > BaseType;
-
-  public:
-    //! type of the index set
-    typedef typename GridPartType :: IndexSetType IndexSetType;
+    static const int dimRange = Traits::dimRange;
 
     //! type of the Lagrange point set
     typedef LagrangePointSet< GridPartType, polynomialOrder >
       LagrangePointSetType;
     //! type of the map for the Lagrange point sets
-    typedef std :: map< const GeometryType, const LagrangePointSetType* >
+    typedef std::map< const GeometryType, const LagrangePointSetType* >
       LagrangePointSetMapType;
 
     //! type of the DoF manager
     typedef DofManager< GridType > DofManagerType;
 
   protected:
-    typedef typename LagrangePointSetType :: DofInfo DofInfo;
+    typedef typename LagrangePointSetType::DofInfo DofInfo;
 
   private:
     struct CodimCallInterface;
@@ -295,24 +280,6 @@ namespace Dune
     struct CodimCall;
 
     typedef CodimMap< dimension+1, CodimCall > CodimCallMapType;
-
-  private:
-    // reference to dof manager needed for debug issues 
-    const DofManagerType& dm_;
-
-    const IndexSetType &indexSet_;
-    const CodimCallMapType codimCall_;
-    
-    LagrangePointSetMapType &lagrangePointSet_;
-
-    // memory overshoot 
-    const double overShoot_ ;
-
-    unsigned int maxDofs_[ dimension+1 ];
-    mutable unsigned int offset_[ dimension+1 ];
-    mutable unsigned int oldOffSet_[ dimension+1 ];
-    mutable unsigned int size_;
-    unsigned int numDofs_;
 
   public:
     //! constructor
@@ -361,17 +328,15 @@ namespace Dune
     }
 
     /** \copydoc Dune::DofMapper::begin(const EntityType &entity) const */
-    inline DofMapIteratorType begin ( const EntityType &entity ) const
+    DofMapIteratorType begin ( const EntityType &entity ) const
     {
-      return DofMapIteratorType
-        ( DofMapIteratorType :: beginIterator, entity, *this );
+      return DofMapIteratorType( DofMapIteratorType::beginIterator, entity, *this );
     }
     
     /** \copydoc Dune::DofMapper::end(const EntityType &entity) const */
-    inline DofMapIteratorType end ( const EntityType &entity ) const
+    DofMapIteratorType end ( const EntityType &entity ) const
     {
-      return DofMapIteratorType
-        ( DofMapIteratorType :: endIterator, entity, *this );
+      return DofMapIteratorType( DofMapIteratorType::endIterator, entity, *this );
     }
 
     /** \copydoc Dune::DofMapper::mapToGlobal */
@@ -381,16 +346,14 @@ namespace Dune
       const int localDof = local / dimRange;
       
       // unsigned int codim, subEntity;
-      const LagrangePointSetType *set
-        = lagrangePointSet_[ entity.geometry().type() ];
-      const DofInfo& dofInfo = set->dofInfo( localDof );
+      const LagrangePointSetType *set = lagrangePointSet_[ entity.type() ];
+      const DofInfo &dofInfo = set->dofInfo( localDof );
 
       const unsigned int codim = dofInfo.codim;
-      const int subIndex
-        = codimCall_[ codim ].subIndex( *this, entity, dofInfo.subEntity );
+      const int subIndex = indexSet_.subIndex( entity, dofInfo.subEntity, codim );
+      //const int subIndex = codimCall_[ codim ].subIndex( *this, entity, dofInfo.subEntity );
 
-      const int globalDof
-        = dimRange * (offset_[ codim ] + subIndex) + coordinate;
+      const int globalDof = dimRange * (offset_[ codim ] + subIndex) + coordinate;
 
       assert( codimCall_[ codim ].checkMapEntityDofToGlobal
                 ( *this, entity, dofInfo.subEntity, coordinate, globalDof ) );
@@ -401,42 +364,42 @@ namespace Dune
     template< class Entity >
     int mapEntityDofToGlobal ( const Entity &entity, const int localDof ) const 
     {
+      static const unsigned int codim = Entity::codimension;
       assert( localDof < numEntityDofs( entity ) );
-      const int globalDofPt
-        = offset_[ Entity :: codimension ] + indexSet_.index( entity );
+      const int globalDofPt = offset_[ codim ] + indexSet_.index( entity );
       return dimRange * globalDofPt + localDof;
     }
     
     /** \copydoc Dune::DofMapper::maxNumDofs() const */
-    inline int maxNumDofs () const
+    int maxNumDofs () const
     {
       return dimRange * numDofs_;
     }
 
-    using BaseType :: numDofs;
+    using BaseType::numDofs;
 
     /** \copydoc Dune::DofMapper::numDofs(const EntityType &entity) const */
-    inline int numDofs ( const EntityType &entity ) const
+    int numDofs ( const EntityType &entity ) const
     {
-      return dimRange * lagrangePointSet_[ entity.geometry().type() ]->size();
+      return dimRange * lagrangePointSet_[ entity.type() ]->size();
     }
 
     /** \copydoc Dune::DofMapper::numEntityDofs(const Entity &entity) const */
     template< class Entity >
-    inline int numEntityDofs ( const Entity &entity ) const
+    int numEntityDofs ( const Entity &entity ) const
     {
       // This implementation only works for nonhybrid grids (simplices or cubes)
-      return dimRange * maxDofs_[ Entity :: codimension ];
+      return dimRange * maxDofs_[ Entity::codimension ];
     }
     
     /** \brief Check, whether any DoFs are associated with a codimension */
-    inline bool contains ( unsigned int codim ) const
+    bool contains ( unsigned int codim ) const
     {
       return true;
     }
 
     /** \brief Check, whether the data in a codimension has fixed size */
-    inline bool fixedDataSize ( unsigned int codim ) const
+    bool fixedDataSize ( unsigned int codim ) const
     {
       return false;
     }
@@ -568,163 +531,8 @@ namespace Dune
     /** \copydoc Dune::DofMapper::consecutive() const */
     bool consecutive () const
     {
-      return BaseType :: checkConsecutive( indexSet_ );
+      return BaseType::checkConsecutive( indexSet_ );
     }
-  };
-
-
-/** \cond */
-  template< class GridPart, unsigned int dimR >
-  struct LagrangeMapper< GridPart, 2, dimR > :: CodimCallInterface
-  {
-    typedef LagrangeMapper< GridPart, 2, dimR > MapperType;
-
-    virtual ~CodimCallInterface ()
-    {}
-
-    virtual int subIndex ( const MapperType &mapper,
-                           const EntityType &entity,
-                           int i ) const = 0;
-
-    virtual bool
-    checkMapEntityDofToGlobal ( const MapperType &mapper,
-                                const EntityType &entity,
-                                const int subEntity,
-                                const int localDof,
-                                const int globalDof ) const = 0;
-  };
-/** \endcond */
-
-
-
-/** \cond */
-  template< class GridPart, unsigned int dimR >
-  template< unsigned int codim >
-  struct LagrangeMapper< GridPart, 2, dimR > :: CodimCall
-  : public CodimCallInterface
-  {
-    typedef LagrangeMapper< GridPart, 2, dimR > MapperType;
-
-    typedef CodimCallInterface BaseType;
-
-    virtual int subIndex ( const MapperType &mapper,
-                           const EntityType &entity,
-                           int i ) const
-    {
-      return mapper.indexSet_.template subIndex< codim >( entity, i );
-    }
-
-    virtual bool checkMapEntityDofToGlobal ( const MapperType &mapper,
-                                             const EntityType &entity,
-                                             const int subEntity,
-                                             const int localDof,
-                                             const int globalDof ) const
-    {
-      typedef Capabilities :: hasEntity< GridType, codim > HasEntity;
-
-      return checkMapEntityDofToGlobal
-        ( mapper, entity, subEntity, localDof, globalDof,
-          MetaBool< HasEntity :: v >() );
-    }
-
-    inline bool
-    checkMapEntityDofToGlobal ( const MapperType &mapper,
-                                const EntityType &entity,
-                                const int subEntity,
-                                const int localDof,
-                                const int globalDof,
-                                const MetaBool< true > hasEntity ) const
-    {
-      typedef typename EntityType :: template Codim< codim > :: EntityPointer
-        SubEntityPtrType;
-
-      const SubEntityPtrType subEntityPtr
-        = entity.template entity< codim >( subEntity );
-      const int globalEntityDof
-        = mapper.mapEntityDofToGlobal( *subEntityPtr, localDof );
-      return (globalEntityDof == globalDof);
-    }
-
-    inline bool
-    checkMapEntityDofToGlobal ( const MapperType &mapper,
-                                const EntityType &entity,
-                                const int subEntity,
-                                const int localDof,
-                                const int globalDof,
-                                const MetaBool< false > hasEntity ) const
-    {
-      return true;
-    }
-  };
-  /** \endcond */
-
-
-
-  // Higher Order Lagrange Mapper
-  // ----------------------------
-  //
-  // Note: This mapper assumes that the grid is "twist-free".
-
-#ifdef USE_TWISTFREE_MAPPER
-  template< class GridPart, unsigned int polOrder, unsigned int dimR >
-  class LagrangeMapper
-  : public DofMapperDefault< LagrangeMapperTraits< GridPart, polOrder, dimR > >
-  {
-  public:
-    typedef LagrangeMapperTraits< GridPart, polOrder, dimR > Traits;
-    
-    //! type of the grid part
-    typedef typename Traits :: GridPartType GridPartType;
-
-    //! type of entities (codim 0)
-    typedef typename Traits :: EntityType EntityType;
-
-    //! type of DofMapIterator
-    typedef typename Traits :: DofMapIteratorType DofMapIteratorType;
- 
-    //! type of the underlying grid
-    typedef typename GridPartType :: GridType GridType;
-
-    //! type of coordinates within the grid
-    typedef typename GridType :: ctype FieldType;
-
-    //! dimension of the grid
-    enum { dimension = GridType :: dimension };
-
-    //! order of the Lagrange polynoms
-    enum { polynomialOrder = Traits :: polynomialOrder };
-
-    //! dimension of the discrete function space's range
-    enum { dimRange = Traits :: dimRange };
-
-  private:
-    typedef LagrangeMapper< GridPartType, polynomialOrder, dimRange > ThisType;
-    typedef DofMapperDefault< Traits > BaseType;
-
-  public:
-    //! type of the index set
-    typedef typename GridPartType :: IndexSetType IndexSetType;
-
-    //! type of the Lagrange point set
-    typedef LagrangePointSet< GridPartType, polynomialOrder >
-      LagrangePointSetType;
-    //! type of the map for the Lagrange point sets
-    typedef std :: map< const GeometryType, const LagrangePointSetType* >
-      LagrangePointSetMapType;
-
-    //! type of the DoF manager
-    typedef DofManager< GridType > DofManagerType;
-
-  protected:
-    typedef typename LagrangePointSetType :: DofInfo DofInfo;
-
-  private:
-    struct CodimCallInterface;
-    
-    template< unsigned int codim >
-    struct CodimCall;
-
-    typedef CodimMap< dimension+1, CodimCall > CodimCallMapType;
 
   private:
     // reference to dof manager needed for debug issues 
@@ -743,6 +551,151 @@ namespace Dune
     mutable unsigned int oldOffSet_[ dimension+1 ];
     mutable unsigned int size_;
     unsigned int numDofs_;
+  };
+
+
+/** \cond */
+  template< class GridPart, int dimR >
+  struct LagrangeMapper< GridPart, 2, dimR >::CodimCallInterface
+  {
+    typedef LagrangeMapper< GridPart, 2, dimR > MapperType;
+
+    virtual ~CodimCallInterface ()
+    {}
+
+    virtual int
+    subIndex ( const MapperType &mapper, const EntityType &entity, int i ) const = 0;
+
+    virtual bool
+    checkMapEntityDofToGlobal ( const MapperType &mapper,
+                                const EntityType &entity,
+                                const int subEntity,
+                                const int localDof,
+                                const int globalDof ) const = 0;
+  };
+/** \endcond */
+
+
+
+/** \cond */
+  template< class GridPart, int dimR >
+  template< unsigned int codim >
+  struct LagrangeMapper< GridPart, 2, dimR >::CodimCall
+  : public CodimCallInterface
+  {
+    typedef LagrangeMapper< GridPart, 2, dimR > MapperType;
+
+    typedef CodimCallInterface BaseType;
+
+    virtual int
+    subIndex ( const MapperType &mapper, const EntityType &entity, int i ) const
+    {
+      //return mapper.indexSet_.template subIndex< codim >( entity, i );
+      return mapper.indexSet_.subIndex( entity, i, codim );
+    }
+
+    virtual bool checkMapEntityDofToGlobal ( const MapperType &mapper,
+                                             const EntityType &entity,
+                                             const int subEntity,
+                                             const int localDof,
+                                             const int globalDof ) const
+    {
+      typedef Capabilities::hasEntity< GridType, codim > HasEntity;
+      return checkMapEntityDofToGlobal( mapper, entity, subEntity, localDof, globalDof, MetaBool< HasEntity::v >() );
+    }
+
+    bool checkMapEntityDofToGlobal ( const MapperType &mapper,
+                                     const EntityType &entity,
+                                     const int subEntity,
+                                     const int localDof,
+                                     const int globalDof,
+                                     const MetaBool< true > hasEntity ) const
+    {
+      typedef typename EntityType::template Codim< codim >::EntityPointer SubEntityPtrType;
+
+      //const SubEntityPtrType subEntityPtr = entity.template entity< codim >( subEntity );
+      const SubEntityPtrType subEntityPtr = entity.template subEntity< codim >( subEntity );
+      const int globalEntityDof = mapper.mapEntityDofToGlobal( *subEntityPtr, localDof );
+      return (globalEntityDof == globalDof);
+    }
+
+    bool checkMapEntityDofToGlobal ( const MapperType &mapper,
+                                     const EntityType &entity,
+                                     const int subEntity,
+                                     const int localDof,
+                                     const int globalDof,
+                                     const MetaBool< false > hasEntity ) const
+    {
+      return true;
+    }
+  };
+  /** \endcond */
+
+
+
+  // Higher Order Lagrange Mapper
+  // ----------------------------
+  //
+  // Note: This mapper assumes that the grid is "twist-free".
+
+#ifdef USE_TWISTFREE_MAPPER
+  template< class GridPart, int polOrder, int dimR >
+  class LagrangeMapper
+  : public DofMapperDefault< LagrangeMapperTraits< GridPart, polOrder, dimR > >
+  {
+    typedef LagrangeMapper< GridPart, polOrder, dimR > ThisType;
+    typedef DofMapperDefault< LagrangeMapperTraits< GridPart, polOrder, dimR > > BaseType;
+
+  public:
+    typedef LagrangeMapperTraits< GridPart, polOrder, dimR > Traits;
+    
+    //! type of the grid part
+    typedef typename Traits::GridPartType GridPartType;
+
+    //! type of entities (codim 0)
+    typedef typename Traits::EntityType EntityType;
+
+    //! type of DofMapIterator
+    typedef typename Traits::DofMapIteratorType DofMapIteratorType;
+ 
+    //! type of the underlying grid
+    typedef typename GridPartType::GridType GridType;
+
+    //! type of coordinates within the grid
+    typedef typename GridType::ctype FieldType;
+
+    //! dimension of the grid
+    static const int dimension = GridType::dimension;
+
+    //! order of the Lagrange polynoms
+    static const int polynomialOrder = Traits::polynomialOrder;
+
+    //! dimension of the discrete function space's range
+    static const int dimRange = Traits::dimRange;
+
+    //! type of the index set
+    typedef typename GridPartType::IndexSetType IndexSetType;
+
+    //! type of the Lagrange point set
+    typedef LagrangePointSet< GridPartType, polynomialOrder >
+      LagrangePointSetType;
+    //! type of the map for the Lagrange point sets
+    typedef std::map< const GeometryType, const LagrangePointSetType* >
+      LagrangePointSetMapType;
+
+    //! type of the DoF manager
+    typedef DofManager< GridType > DofManagerType;
+
+  protected:
+    typedef typename LagrangePointSetType::DofInfo DofInfo;
+
+  private:
+    struct CodimCallInterface;
+    
+    template< unsigned int codim >
+    struct CodimCall;
+
+    typedef CodimMap< dimension+1, CodimCall > CodimCallMapType;
 
   public:
     //! constructor
@@ -765,10 +718,10 @@ namespace Dune
         if( set == 0 )
           continue;
 
-        numDofs_ = std :: max( numDofs_, set->size() );
+        numDofs_ = std::max( numDofs_, set->size() );
         for( int codim = 0; codim <= dimension; ++codim )
           maxDofs_[ codim ]
-            = std :: max( maxDofs_[ codim ], set->maxDofs( codim ) );
+            = std::max( maxDofs_[ codim ], set->maxDofs( codim ) );
       }
 
       size_ = 0;
@@ -791,17 +744,15 @@ namespace Dune
     }
 
     /** \copydoc Dune::DofMapper::begin(const EntityType &entity) const */
-    inline DofMapIteratorType begin ( const EntityType &entity ) const
+    DofMapIteratorType begin ( const EntityType &entity ) const
     {
-      return DofMapIteratorType
-        ( DofMapIteratorType :: beginIterator, entity, *this );
+      return DofMapIteratorType( DofMapIteratorType::beginIterator, entity, *this );
     }
     
     /** \copydoc Dune::DofMapper::end(const EntityType &entity) const */
-    inline DofMapIteratorType end ( const EntityType &entity ) const
+    DofMapIteratorType end ( const EntityType &entity ) const
     {
-      return DofMapIteratorType
-        ( DofMapIteratorType :: endIterator, entity, *this );
+      return DofMapIteratorType( DofMapIteratorType::endIterator, entity, *this );
     }
 
     /** \copydoc Dune::DofMapper::mapToGlobal */
@@ -811,19 +762,16 @@ namespace Dune
       const int localDof = local / dimRange;
       
       // unsigned int codim, subEntity;
-      const LagrangePointSetType *set
-        = lagrangePointSet_[ entity.geometry().type() ];
+      const LagrangePointSetType *set = lagrangePointSet_[ entity.type() ];
       const DofInfo& dofInfo = set->dofInfo( localDof );
       
       const int entityDof = dofInfo.dofNumber * dimRange + coordinate;
 
       const unsigned int codim = dofInfo.codim;
-      const int subIndex
-        = codimCall_[ codim ].subIndex( *this, entity, dofInfo.subEntity );
+      //const int subIndex = codimCall_[ codim ].subIndex( *this, entity, dofInfo.subEntity );
+      const int subIndex = indexSet_.subIndex( entity, dofInfo.subEntity, codim );
 
-      const int globalDof
-        = dimRange * (offset_[ codim ] + subIndex * maxDofs_[ codim ])
-          + entityDof;
+      const int globalDof = dimRange * (offset_[ codim ] + subIndex * maxDofs_[ codim ]) + entityDof;
 
       assert( codimCall_[ codim ].checkMapEntityDofToGlobal
                 ( *this, entity, dofInfo.subEntity, entityDof, globalDof ) );
@@ -834,44 +782,43 @@ namespace Dune
     template< class Entity >
     int mapEntityDofToGlobal ( const Entity &entity, const int localDof ) const 
     {
-      const unsigned int codim = Entity :: codimension;
+      const unsigned int codim = Entity::codimension;
 
       assert( localDof < numEntityDofs( entity ) );
-      const int offset = offset_[ codim ]
-                         + indexSet_.index( entity ) * maxDofs_[ codim ];
+      const int offset = offset_[ codim ] + indexSet_.index( entity ) * maxDofs_[ codim ];
       return dimRange * offset + localDof;
     }
     
     /** \copydoc Dune::DofMapper::maxNumDofs() const */
-    inline int maxNumDofs () const
+    int maxNumDofs () const
     {
       return dimRange * numDofs_;
     }
 
-    using BaseType :: numDofs;
+    using BaseType::numDofs;
 
     /** \copydoc Dune::DofMapper::numDofs(const EntityType &entity) const */
-    inline int numDofs ( const EntityType &entity ) const
+    int numDofs ( const EntityType &entity ) const
     {
-      return dimRange * lagrangePointSet_[ entity.geometry().type() ]->size();
+      return dimRange * lagrangePointSet_[ entity.type() ]->size();
     }
 
     /** \copydoc Dune::DofMapper::numEntityDofs(const Entity &entity) const */
     template< class Entity >
-    inline int numEntityDofs ( const Entity &entity ) const
+    int numEntityDofs ( const Entity &entity ) const
     {
       // This implementation only works for nonhybrid grids (simplices or cubes)
-      return dimRange * maxDofs_[ Entity :: codimension ];
+      return dimRange * maxDofs_[ Entity::codimension ];
     }
     
     /** \brief Check, whether any DoFs are associated with a codimension */
-    inline bool contains ( unsigned int codim ) const
+    bool contains ( unsigned int codim ) const
     {
       return true;
     }
 
     /** \brief Check, whether the data in a codimension has fixed size */
-    inline bool fixedDataSize ( unsigned int codim ) const
+    bool fixedDataSize ( unsigned int codim ) const
     {
       return false;
     }
@@ -1003,23 +950,40 @@ namespace Dune
     /** \copydoc Dune::DofMapper::consecutive() const */
     bool consecutive () const
     {
-      return BaseType :: checkConsecutive( indexSet_ );
+      return BaseType::checkConsecutive( indexSet_ );
     }
+
+  private:
+    // reference to dof manager needed for debug issues 
+    const DofManagerType& dm_;
+
+    const IndexSetType &indexSet_;
+    const CodimCallMapType codimCall_;
+    
+    LagrangePointSetMapType &lagrangePointSet_;
+
+    // memory overshoot 
+    const double overShoot_ ;
+
+    unsigned int maxDofs_[ dimension+1 ];
+    mutable unsigned int offset_[ dimension+1 ];
+    mutable unsigned int oldOffSet_[ dimension+1 ];
+    mutable unsigned int size_;
+    unsigned int numDofs_;
   };
 
 
 
-  template< class GridPart, unsigned int polOrder, unsigned int dimR >
-  struct LagrangeMapper< GridPart, polOrder, dimR > :: CodimCallInterface
+  template< class GridPart, int polOrder, int dimR >
+  struct LagrangeMapper< GridPart, polOrder, dimR >::CodimCallInterface
   {
     typedef LagrangeMapper< GridPart, polOrder, dimR > MapperType;
 
     virtual ~CodimCallInterface ()
     {}
 
-    virtual int subIndex ( const MapperType &mapper,
-                           const EntityType &entity,
-                           int i ) const = 0;
+    virtual int
+    subIndex ( const MapperType &mapper, const EntityType &entity, int i ) const = 0;
 
     virtual bool
     checkMapEntityDofToGlobal ( const MapperType &mapper,
@@ -1031,20 +995,20 @@ namespace Dune
 
 
 
-  template< class GridPart, unsigned int polOrder, unsigned int dimR >
+  template< class GridPart, int polOrder, int dimR >
   template< unsigned int codim >
-  struct LagrangeMapper< GridPart, polOrder, dimR > :: CodimCall
+  struct LagrangeMapper< GridPart, polOrder, dimR >::CodimCall
   : public CodimCallInterface
   {
     typedef LagrangeMapper< GridPart, polOrder, dimR > MapperType;
 
     typedef CodimCallInterface BaseType;
 
-    virtual int subIndex ( const MapperType &mapper,
-                           const EntityType &entity,
-                           int i ) const
+    virtual int
+    subIndex ( const MapperType &mapper, const EntityType &entity, int i ) const
     {
-      return mapper.indexSet_.template subIndex< codim >( entity, i );
+      //return mapper.indexSet_.template subIndex< codim >( entity, i );
+      return mapper.indexSet_.subIndex( entity, i, codim );
     }
 
     virtual bool checkMapEntityDofToGlobal ( const MapperType &mapper,
@@ -1053,38 +1017,32 @@ namespace Dune
                                              const int localDof,
                                              const int globalDof ) const
     {
-      typedef Capabilities :: hasEntity< GridType, codim > HasEntity;
-
-      return checkMapEntityDofToGlobal
-        ( mapper, entity, subEntity, localDof, globalDof,
-          MetaBool< HasEntity :: v >() );
+      typedef Capabilities::hasEntity< GridType, codim > HasEntity;
+      return checkMapEntityDofToGlobal( mapper, entity, subEntity, localDof, globalDof, MetaBool< HasEntity::v >() );
     }
 
-    inline bool
-    checkMapEntityDofToGlobal ( const MapperType &mapper,
-                                const EntityType &entity,
-                                const int subEntity,
-                                const int localDof,
-                                const int globalDof,
-                                const MetaBool< true > hasEntity ) const
+    bool checkMapEntityDofToGlobal ( const MapperType &mapper,
+                                     const EntityType &entity,
+                                     const int subEntity,
+                                     const int localDof,
+                                     const int globalDof,
+                                     const MetaBool< true > hasEntity ) const
     {
-      typedef typename EntityType :: template Codim< codim > :: EntityPointer
+      typedef typename EntityType::template Codim< codim >::EntityPointer
         SubEntityPtrType;
 
-      const SubEntityPtrType subEntityPtr
-        = entity.template entity< codim >( subEntity );
-      const int globalEntityDof
-        = mapper.mapEntityDofToGlobal( *subEntityPtr, localDof );
+      //const SubEntityPtrType subEntityPtr = entity.template entity< codim >( subEntity );
+      const SubEntityPtrType subEntityPtr = entity.template subEntity< codim >( subEntity );
+      const int globalEntityDof = mapper.mapEntityDofToGlobal( *subEntityPtr, localDof );
       return (globalEntityDof == globalDof);
     }
 
-    inline bool
-    checkMapEntityDofToGlobal ( const MapperType &mapper,
-                                const EntityType &entity,
-                                const int subEntity,
-                                const int localDof,
-                                const int globalDof,
-                                const MetaBool< false > hasEntity ) const
+    bool checkMapEntityDofToGlobal ( const MapperType &mapper,
+                                     const EntityType &entity,
+                                     const int subEntity,
+                                     const int localDof,
+                                     const int globalDof,
+                                     const MetaBool< false > hasEntity ) const
     {
       return true;
     }
