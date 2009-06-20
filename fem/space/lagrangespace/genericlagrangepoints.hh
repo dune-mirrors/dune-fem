@@ -114,7 +114,7 @@ namespace Dune
     void local ( FieldVector< FieldType, dimension > &coordinate ) const
     {
       const FieldType factor = FieldType( 1 ) / FieldType( polynomialOrder );
-      for( int i = 0; i < dimension; ++i )
+      for( unsigned int i = 0; i < dimension; ++i )
         coordinate[ i ] = factor * dofCoordinate_[ i ]; 
     }
 
@@ -512,7 +512,7 @@ namespace Dune
     void local ( FieldVector< FieldType, dimension > &coordinate ) const
     {
       const FieldType factor = FieldType( 1 ) / FieldType( polynomialOrder );
-      for( int i = 0; i < dimension; ++i )
+      for( unsigned int i = 0; i < dimension; ++i )
         coordinate[ i ] = factor * dofCoordinate_[ i ]; 
     }
     
@@ -792,7 +792,7 @@ namespace Dune
     void local ( FieldVector< FieldType, dimension > &coordinate ) const
     {
       const FieldType factor = FieldType( 1 ) / FieldType( polynomialOrder );
-      for( int i = 0; i < dimension; ++i )
+      for( unsigned int i = 0; i < dimension; ++i )
         coordinate[ i ] = factor * dofCoordinate_[ i ]; 
     }
     
