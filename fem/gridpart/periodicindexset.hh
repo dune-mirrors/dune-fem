@@ -55,19 +55,24 @@ namespace Dune
     template< class Entity >
     IndexType index ( const Entity &entity ) const
     {
-      return index< Entity :: codimension >( entity );
+      return index< Entity::codimension >( entity );
     }
     
     template< int codim >
     IndexType index ( const typename Codim< codim > :: Entity &entity ) const
     {
-      return map< codim >( baseIndexSet_.template index< codim >( entity ) );
+      return map( codim, baseIndexSet_.template index< codim >( entity ) );
     }
 
     template< int codim >
-    IndexType subIndex ( const typename Codim< 0 > ::  Entity &entity, int subNumber ) const
+    IndexType subIndex ( const typename Codim< 0 >::Entity &entity, int i ) const
     {
-      return map< codim >( baseIndexSet_.template subIndex< codim >( entity, subNumber ) );
+      return map( codim, baseIndexSet_.template subIndex< codim >( entity, i ) );
+    }
+
+    IndexType subIndex ( const typename Codim< 0 >::Entity &entity, int i, unsigned int codim ) const
+    {
+      return map( codim, baseIndexSet_.subIndex( entity, i, codim ) );
     }
 
     //! Return true, if this set provides an index for an entity
@@ -116,8 +121,7 @@ namespace Dune
     
     bool geometryTypeValid( const GeometryType &type ) const;
 
-    template< int codim >
-    IndexType map ( const IndexType &baseIndex ) const;
+    IndexType map ( const int codim, const IndexType &baseIndex ) const;
 
     using BaseType::grid_;
     const BaseIndexSetType &baseIndexSet_;
@@ -333,9 +337,9 @@ namespace Dune
   }
 
   template< class Grid >
-  template< int codim >
   inline typename PeriodicLeafIndexSet< Grid >::IndexType
-  PeriodicLeafIndexSet< Grid >::map ( const IndexType &baseIndex ) const
+  PeriodicLeafIndexSet< Grid >
+    ::map ( const int codim, const IndexType &baseIndex ) const
   {
     if( codim == 0 )
       return baseIndex;
