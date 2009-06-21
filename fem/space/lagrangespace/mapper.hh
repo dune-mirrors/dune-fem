@@ -40,7 +40,7 @@ namespace Dune
 
 
   
-  template< class GridPart, unsigned int dimR >
+  template< class GridPart, int dimR >
   class LagrangeMapper< GridPart, 1, dimR >
   : public DofMapperDefault< LagrangeMapperTraits< GridPart, 1, dimR > >
   {
