@@ -104,42 +104,43 @@ struct VtxProjectionImpl
 
     // make function continuous over hanging nodes
 
-    if (!GridPartType::conforming) {
-      const GridPartType& gridPart =  space.gridPart();
-      for(Iterator it = space.begin(); it != endit ; ++it) {
-        const EntityType& en = *it;
+    if( !GridPartType::conforming )
+    {
+      const GridPartType &gridPart =  space.gridPart();
+      for( Iterator it = space.begin(); it != endit ; ++it )
+      {
+        const EntityType &entity = *it;
         typedef typename GridPartType::IntersectionIteratorType IntersectionIteratorType;
-        const IntersectionIteratorType endnit = gridPart.iend(en);
-        for (IntersectionIteratorType nit = gridPart.ibegin(en); nit != endnit; ++nit) 
+        const IntersectionIteratorType iend = gridPart.iend( entity );
+        for( IntersectionIteratorType iit = gridPart.ibegin( entity ); iit != iend; ++iit )
         {
           typedef typename IntersectionIteratorType::Intersection IntersectionType;
-          const IntersectionType& inter=*nit;
-          if (inter.neighbor()) 
+          const IntersectionType &intersection = *iit;
+          if( intersection.neighbor() )
           {
             // get neighbor 
-            typename EntityType::EntityPointer ep = inter.outside();
-            EntityType & nb = *ep;
-            if (en.level()>nb.level())
+            typename EntityType::EntityPointer ep = intersection.outside();
+            EntityType &neighbor = *ep;
+            if( entity.level() > neighbor.level() )
             {
-              const int numInSelf = inter.numberInSelf();
-              const LagrangePointSetType &lagrangePointSet
-                    = space.lagrangePointSet( en );
+              const int indexInInside = intersection.indexInInside();
+              const LagrangePointSetType &lagrangePointSet = space.lagrangePointSet( entity );
               FaceDofIteratorType itPoint
-                 = lagrangePointSet.template beginSubEntity< 1 >( numInSelf );
+                 = lagrangePointSet.template beginSubEntity< 1 >( indexInInside );
               const FaceDofIteratorType enditPoint
-                 = lagrangePointSet.template endSubEntity< 1 >( numInSelf );
-              const typename IntersectionType::LocalGeometry& geoIn  = inter.geometryInInside();
-              const typename IntersectionType::LocalGeometry& geoOut = inter.geometryInOutside();
-              LocalFuncType ldfIn  = discFunc.localFunction(en);
-              LocalFuncType ldfOut = discFunc.localFunction(nb);
-              for( ; itPoint != enditPoint; ++itPoint ) {
+                 = lagrangePointSet.template endSubEntity< 1 >( indexInInside );
+              const typename IntersectionType::LocalGeometry &geoIn  = intersection.geometryInInside();
+              const typename IntersectionType::LocalGeometry &geoOut = intersection.geometryInOutside();
+              LocalFuncType ldfIn  = discFunc.localFunction( entity );
+              LocalFuncType ldfOut = discFunc.localFunction( neighbor );
+              for( ; itPoint != enditPoint; ++itPoint )
+              {
                 const unsigned int dof = *itPoint;
                 const DomainType &point = lagrangePointSet.point( dof );
-                DomainType x = geoOut.global(geoIn.local(point));
-                ldfOut.evaluate(x, val);
-                for( unsigned int coordinate = 0; coordinate < dimRange; ++coordinate ) {
-                  ldfIn[ dimRange * dof + coordinate ] = val[coordinate];
-                }
+                DomainType x = geoOut.global( geoIn.local( point ) );
+                ldfOut.evaluate( x, val );
+                for( unsigned int coordinate = 0; coordinate < dimRange; ++coordinate )
+                  ldfIn[ dimRange * dof + coordinate ] = val[ coordinate ];
               }
             }
           }
