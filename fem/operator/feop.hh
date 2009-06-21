@@ -764,16 +764,14 @@ namespace Dune
           if( elementMatrixIntegrator_.model().boundaryType( nit ) != ModelType::Dirichlet )
             continue;
 
-          const int faceNumber = intersection.numberInSelf();
-          
-          const LagrangePointSetType &lagrangePointSet
-            = functionSpace_.lagrangePointSet( entity );
-          
+          const int faceNumber = intersection.indexInInside();
+          const LagrangePointSetType &lagrangePointSet = functionSpace_.lagrangePointSet( entity );
           FaceDofIteratorType faceIt
             = lagrangePointSet.template beginSubEntity< faceCodim >( faceNumber );
           const FaceDofIteratorType faceEndIt
             = lagrangePointSet.template endSubEntity< faceCodim >( faceNumber );
-          for( ; faceIt != faceEndIt; ++faceIt ) {
+          for( ; faceIt != faceEndIt; ++faceIt )
+          {
             const int row = functionSpace_.mapToGlobal( entity, *faceIt );
             isDirichletDOF_->set( 0, row, 1 );
           }

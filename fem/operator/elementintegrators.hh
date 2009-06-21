@@ -648,83 +648,6 @@ namespace Dune
       } // end loop over quadrature points
     } // end method addMassElementMatrix
     
-#if 0
-    /*! \brief accumulate generalized Neumann boundary contributions
-     *
-     *  The method is used for the Neumann boundary of general elliptic problems.
-     *  The following matrix is computed, where i,j run over the local dofs
-     *  of base functions, which have support on an entity.
-     *  \f[
-     *     L_{ij} :=  +  \int_{\Gamma_N} alphaFunction (entity, iquad, pt,it,ret )  phi_i        phi_j     
-     *  \f]
-     *  
-     *  The model class is assumed to implement the following methods
-     *  \code
-     *  generalizedNeumannAlpha( intersection, quadrature, point )
-     *  boundaryType()
-     *  \endcode
-     *
-     *  \param[in]  entity       entity over which the intrgration is performed
-     *  \param      matrix       local matrix to update
-     *  \param[in]  coefficient  optional weighting coefficient (defaults to 1)
-     */
-    template< class EntityType, class ElementMatrixType >
-    void addGeneralizedNeumannElementMatrix ( const EntityType &entity,
-                                              ElementMatrixType &matrix,
-                                              double coefficient = 1 ) //  const
-    {
-      assert( ModelType :: Properties :: hasNeumannValues );
-
-      enum { quadratureDegree = TraitsType :: quadDegree };
-
-      const ModelType &model = this->model(); 
-
-	    // for all intersections check whether boundary
-      const DiscreteFunctionSpaceType &dfSpace = this->discreteFunctionSpace(); 
-      
-      const GridPartType &gridPart = dfSpace.gridPart();
-           
-      const IntersectionIteratorType end = gridPart.iend( entity );
-      for( IntersectionIteratorType it = gridPart.ibegin( entity ); it != end; ++it )
-      {
-        // check whether this is a boundary
-        if( !it.boundary() )
-          continue;
-        // check for generalized neumann boundary type
-        if( model.boundaryType( it ) != ModelType :: GeneralizedNeumann )
-          continue;
-                   
-        const BaseFunctionSetType baseFunctionSet
-          = dfSpace.baseFunctionSet( entity );
-        const int numBaseFunctions = baseFunctionSet.numBaseFunctions();     
-
-        // integrate over intersection
-        IntersectionQuadratureType quadrature
-          ( gridPart, it, quadratureDegree, IntersectionQuadratureType :: INSIDE );
-        const int numQuadraturePoints = quadrature.nop();
-        for ( int pt = 0; pt < numQuadraturePoints; ++pt ) 
-        {  
-          const double volume
-            = it.intersectionGlobal().integrationElement( quadrature.localPoint( pt ) );
-          const double alpha = model.generalizedNeumannAlpha( it, quadrature, pt );
-          const double factor = coefficient * alpha * quadrature.weight( pt ) * volume;
-                                            
-          for(int i = 0; i < numBaseFunctions; ++i )
-          {
-            RangeType phi_i;
-            baseFunctionSet.evaluate( i, quadrature, pt, phi_i );
-            for( int j = 0; j < numBaseFunctions; ++j ) 
-            {
-			        RangeType phi_j;
-      			  baseFunctionSet.evaluate( j, quadrature, pt, phi_j );
-              matrix.add( i, j, factor * (phi_i[ 0 ] * phi_j[ 0 ]) );
-			      }
-          } 
-        } // end loop over quadraturepoints
-      } // end loop over intersections
-    } // end method addGeneralizedNeumannElementMatrix
-#endif
-
     /*! addRobinElementMatrix: accumulate Robin boundary contributions
      *
      *  The method is used for the robin boundary of general elliptic problems.
@@ -775,7 +698,7 @@ namespace Dune
           = dfSpace.baseFunctionSet( entity );
         const int numBaseFunctions = baseFunctionSet.numBaseFunctions();
 
-        const typename IntersectionType::Geometry &intersectionGeometry = intersection.intersectionGlobal();
+        const typename IntersectionType::Geometry &intersectionGeometry = intersection.geometry();
 
         // integrate over intersection
         IntersectionQuadratureType quadrature
@@ -1130,7 +1053,7 @@ namespace Dune
         const BaseFunctionSetType baseFunctionSet = dfSpace.baseFunctionSet( entity );
         const int numBaseFunctions = baseFunctionSet.numBaseFunctions();
 
-        const typename IntersectionType::Geometry &intersectionGeometry = intersection.intersectionGlobal();
+        const typename IntersectionType::Geometry &intersectionGeometry = intersection.geometry();
  
         // integrate over intersection
         IntersectionQuadratureType quadrature
@@ -1206,7 +1129,7 @@ namespace Dune
         const BaseFunctionSetType baseFunctionSet = dfSpace.baseFunctionSet( entity );
         const int numBaseFunctions = baseFunctionSet.numBaseFunctions();
  
-        const typename IntersectionType::Geometry &intersectionGeometry = intersection.intersectionGlobal();
+        const typename IntersectionType::Geometry &intersectionGeometry = intersection.geometry();
 
         // integrate over intersection
         IntersectionQuadratureType quadrature
@@ -1431,11 +1354,10 @@ private:
           if( model.boundaryType( intersection ) != ModelType::Dirichlet )
             continue;
           
-          const int faceNumber = intersection.numberInSelf();
+          const int faceNumber = intersection.indexInInside();
           LocalFunctionType lf = rhs.localFunction( entity );
           
-          const LagrangePointSetType &lagrangePointSet
-            = fspace.lagrangePointSet( entity );
+          const LagrangePointSetType &lagrangePointSet = fspace.lagrangePointSet( entity );
           FaceDofIteratorType faceIt
             = lagrangePointSet.template beginSubEntity< faceCodim >( faceNumber );
           const FaceDofIteratorType faceEndIt
