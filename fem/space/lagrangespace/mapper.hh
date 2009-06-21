@@ -167,13 +167,13 @@ namespace Dune
     }
 
     /** \brief Check, whether any DoFs are associated with a codimension */
-    bool contains ( unsigned int codim ) const
+    bool contains ( int codim ) const
     {
       return (codim == dimension);
     }
 
     /** \brief Check, whether the data in a codimension has fixed size */
-    bool fixedDataSize ( unsigned int codim ) const
+    bool fixedDataSize ( int codim ) const
     {
       return true;
     }
@@ -393,13 +393,13 @@ namespace Dune
     }
     
     /** \brief Check, whether any DoFs are associated with a codimension */
-    bool contains ( unsigned int codim ) const
+    bool contains ( int codim ) const
     {
       return true;
     }
 
     /** \brief Check, whether the data in a codimension has fixed size */
-    bool fixedDataSize ( unsigned int codim ) const
+    bool fixedDataSize ( int codim ) const
     {
       return false;
     }
@@ -812,13 +812,13 @@ namespace Dune
     }
     
     /** \brief Check, whether any DoFs are associated with a codimension */
-    bool contains ( unsigned int codim ) const
+    bool contains ( int codim ) const
     {
       return true;
     }
 
     /** \brief Check, whether the data in a codimension has fixed size */
-    bool fixedDataSize ( unsigned int codim ) const
+    bool fixedDataSize ( int codim ) const
     {
       return false;
     }
