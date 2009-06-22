@@ -110,14 +110,18 @@ protected:
     // insert neighbors 
     typedef typename GridPartImp:: GridType :: template Codim<0>::EntityPointer EntityPointerType; 
     typedef typename GridPartImp:: IntersectionIteratorType IntersectionIteratorType;
+    typedef typename IntersectionIteratorType :: Intersection IntersectionType;
     IntersectionIteratorType endnit = gridPart.iend(en);
     for(IntersectionIteratorType nit = gridPart.ibegin(en);
         nit != endnit; ++nit)
     {
-      if(nit.neighbor())
+      // get the actual intersection from the intersection pointer
+      const IntersectionType& nit_intersection = *nit;
+
+      if(nit_intersection.neighbor())
       {
         // get neighbor 
-        EntityPointerType ep = nit.outside();
+        EntityPointerType ep = nit_intersection.outside();
         const EntityImp& nb = *ep;
 
         // get index of neighbor 
