@@ -6,7 +6,8 @@
 #include <dune/fem/space/common/basefunctioninterface.hh>
 #include <dune/fem/gridpart/emptyindexset.hh>
 
-namespace Dune {
+namespace Dune
+{
 
 /** @addtogroup DofMapper  
 
@@ -38,22 +39,23 @@ class DofMapper
 : public BartonNackmanInterface< DofMapper< DofMapperTraits >,
                                  typename DofMapperTraits :: DofMapperType >
 {
+  typedef DofMapper< DofMapperTraits > ThisType;
+  typedef BartonNackmanInterface< ThisType, typename DofMapperTraits::DofMapperType > BaseType;
+
 public:
   typedef DofMapperTraits Traits;
 
-  typedef typename Traits :: DofMapperType DofMapperType;
-  
-private:
-  typedef DofMapper< Traits > ThisType;
-  typedef BartonNackmanInterface< ThisType, DofMapperType > BaseType;
+  //! type of the DofMapper implementation
+  typedef typename Traits::DofMapperType DofMapperType;
+ 
+  //! type of codimension 0 entities
+  typedef typename Traits::EntityType EntityType;
 
-public:
-  typedef typename Traits :: EntityType EntityType;
-
-  typedef typename Traits :: DofMapIteratorType DofMapIteratorType;
+  //! type of the dof map iterator
+  typedef typename Traits::DofMapIteratorType DofMapIteratorType;
 
 protected:
-  using BaseType :: asImp;
+  using BaseType::asImp;
 
 public: 
   //! return number of dofs for special function space and grid on
@@ -75,7 +77,7 @@ public:
    *
    *  \returns begin iterator for the local DoF mapping
    */
-  inline DofMapIteratorType begin ( const EntityType &entity ) const
+  DofMapIteratorType begin ( const EntityType &entity ) const
   {
     CHECK_INTERFACE_IMPLEMENTATION( asImp().begin( entity ) );
     return asImp().begin( entity );
@@ -92,7 +94,7 @@ public:
    *
    *  \returns end iterator for the local DoF mapping
    */
-  inline DofMapIteratorType end ( const EntityType &entity ) const
+  DofMapIteratorType end ( const EntityType &entity ) const
   {
     CHECK_INTERFACE_IMPLEMENTATION( asImp().end( entity ) );
     return asImp().end( entity );
@@ -164,7 +166,7 @@ public:
    *  
    *  \returns number of DoFs on the entity
    */
-  inline int numDofs ( const EntityType &entity ) const
+  int numDofs ( const EntityType &entity ) const
   {
     CHECK_INTERFACE_IMPLEMENTATION( asImp().numDofs( entity ) );
     return asImp().numDofs( entity );
@@ -185,7 +187,7 @@ public:
    *  \returns number of DoFs on the entity
    */
   template< class Entity >
-  inline int numEntityDofs ( const Entity &entity ) const
+  int numEntityDofs ( const Entity &entity ) const
   {
     CHECK_INTERFACE_IMPLEMENTATION( asImp().numEntityDofs( entity ) );
     return asImp().numEntityDofs( entity );
