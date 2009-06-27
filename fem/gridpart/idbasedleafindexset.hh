@@ -589,15 +589,39 @@ namespace Dune
       return persistentLeafSet().additionalSizeEstimate();
     }
 
-    //! return global index 
-    //! for dof mapper 
-    // --index 
-    template <int codim, class EntityType>
-    IndexType indexImp (const EntityType & en, int num) const
+    template< class Entity >
+    IndexType index ( const Entity &entity ) const
     {
-      return persistentLeafSet().index(en,num);
+      return index< 0 >( entity );
     }
-    
+
+    template< int codim >
+    IndexType index ( const typename GridType::template Codim< codim >::Entity &entity ) const
+    {
+      if( codim == 0 )
+        return persistentLeafSet().index( entity, 0 );
+      else
+        DUNE_THROW( NotImplemented, "IdBasedLeafIndexSet supports only codimension 0." );
+    }
+
+    template< int codim >
+    IndexType subIndex ( const typename GridType::template Codim< 0 >::Entity, int i ) const
+    {
+      if( codim == 0 )
+        return persistentLeafSet().index( entity, 0 );
+      else
+        DUNE_THROW( NotImplemented, "IdBasedLeafIndexSet supports only codimension 0." );
+    }
+
+    template< int codim >
+    IndexType subIndex ( const typename GridType::template Codim< 0 >::Entity, int i, unsigned int codim ) const
+    {
+      if( codim == 0 )
+        return persistentLeafSet().index( entity, i );
+      else
+        DUNE_THROW( NotImplemented, "IdBasedLeafIndexSet supports only codimension 0." );
+    }
+
     //! return number of exisiting holes 
     int numberOfHoles(const int codim)  const
     {
