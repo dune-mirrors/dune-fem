@@ -605,7 +605,7 @@ namespace Dune
     }
 
     template< int codim >
-    IndexType subIndex ( const typename GridType::template Codim< 0 >::Entity, int i ) const
+    IndexType subIndex ( const typename GridType::template Codim< 0 >::Entity &entity, int i ) const
     {
       if( codim == 0 )
         return persistentLeafSet().index( entity, 0 );
@@ -614,7 +614,7 @@ namespace Dune
     }
 
     template< int codim >
-    IndexType subIndex ( const typename GridType::template Codim< 0 >::Entity, int i, unsigned int codim ) const
+    IndexType subIndex ( const typename GridType::template Codim< 0 >::Entity &entity, int i, unsigned int codim ) const
     {
       if( codim == 0 )
         return persistentLeafSet().index( entity, i );
