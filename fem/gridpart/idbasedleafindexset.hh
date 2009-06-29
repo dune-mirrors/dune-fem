@@ -592,7 +592,7 @@ namespace Dune
     template< class Entity >
     IndexType index ( const Entity &entity ) const
     {
-      return index< 0 >( entity );
+      return index< Entity::codimension >( entity );
     }
 
     template< int codim >
@@ -613,7 +613,6 @@ namespace Dune
         DUNE_THROW( NotImplemented, "IdBasedLeafIndexSet supports only codimension 0." );
     }
 
-    template< int codim >
     IndexType subIndex ( const typename GridType::template Codim< 0 >::Entity &entity, int i, unsigned int codim ) const
     {
       if( codim == 0 )
