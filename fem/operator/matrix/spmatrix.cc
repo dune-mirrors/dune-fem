@@ -219,7 +219,7 @@ int SparseRowMatrix<T>::colIndex(int row, int col)
     }
   }
   
-#ifndef DNDEBUG 
+#ifndef NDEBUG 
   if(whichCol == defaultCol ) 
   {
     std::cout << "Writing colIndex for, nz = " << nz_ <<  " , " << col << "\n";
