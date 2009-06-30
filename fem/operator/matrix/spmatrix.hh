@@ -11,6 +11,7 @@
 #include <dune/fem/operator/common/localmatrixwrapper.hh> 
 #include <dune/fem/io/parameter.hh>
 #include <dune/fem/solver/oemsolver.hh>
+#include <dune/fem/operator/common/operator.hh>
 
 namespace Dune
 {
@@ -357,7 +358,7 @@ private:
     };
   };
 
-  template< class DomainSpace, class RangeSpace , class TraitsImp >
+  template< class DomainSpace, class RangeSpace, class TraitsImp >
   class SparseRowMatrixObject
   : public OEMMatrix
   {
@@ -411,7 +412,7 @@ private:
     //! setup matrix handler 
     inline SparseRowMatrixObject( const DomainSpaceType &domainSpace,
                                   const RangeSpaceType &rangeSpace,
-                                  const std :: string paramfile = "" )
+                                  const std::string &paramfile = "" )
     : domainSpace_( domainSpace ),
       rangeSpace_( rangeSpace ),
       sequence_( -1 ),
@@ -596,9 +597,9 @@ protected:
 
 
 
-  template< class DomainSpace, class RangeSpace , class TraitsImp >
+  template< class DomainSpace, class RangeSpace, class TraitsImp >
   template< class MatrixObject >
-  struct SparseRowMatrixObject< DomainSpace, RangeSpace, TraitsImp > :: LocalMatrixTraits
+  struct SparseRowMatrixObject< DomainSpace, RangeSpace, TraitsImp >::LocalMatrixTraits
   {
     typedef DomainSpace DomainSpaceType;
     typedef RangeSpace RangeSpaceType;
@@ -753,6 +754,37 @@ protected:
       const int row = rows();
       for( int i = 0; i < row; ++i )
         matrix_.resortRow( row_[ i ] );
+    }
+  };
+
+
+
+  // SparseRowMatrixOperator
+  // -----------------------
+
+  template< class DomainFunction, class RangeFunction, class TraitsImp >
+  class SparseRowMatrixOperator
+  : public SparseRowMatrixObject< typename DomainFunction::DiscreteFunctionSpaceType, typename RangeFunction::DiscreteFunctionSpaceType, TraitsImp >,
+    public Operator< typename DomainFunction::RangeFieldType, typename RangeFunction::RangeFieldType, DomainFunction, RangeFunction >
+  {
+    typedef SparseRowMatrixOperator< DomainFunction, RangeFunction, TraitsImp > This;
+    typedef SparseRowMatrixObject< typename DomainFunction::DiscreteFunctionSpaceType, typename RangeFunction::DiscreteFunctionSpaceType, TraitsImp > Base;
+
+  public:
+    typedef typename Base::DomainSpaceType DomainSpaceType;
+    typedef typename Base::RangeSpaceType RangeSpaceType;
+
+    using Base::apply;
+
+    SparseRowMatrixOperator ( const DomainSpaceType &domainSpace,
+                              const RangeSpaceType &rangeSpace,
+                              const std::string &paramfile = "" )
+    : Base( domainSpace, rangeSpace, paramfile )
+    {}
+
+    virtual void operator() ( const DomainFunction &arg, RangeFunction &dest ) const
+    {
+      Base::apply( arg, dest );
     }
   };
 
