@@ -776,7 +776,8 @@ protected:
 
     using Base::apply;
 
-    SparseRowMatrixOperator ( const DomainSpaceType &domainSpace,
+    SparseRowMatrixOperator ( const std::string &name,
+                              const DomainSpaceType &domainSpace,
                               const RangeSpaceType &rangeSpace,
                               const std::string &paramfile = "" )
     : Base( domainSpace, rangeSpace, paramfile )
