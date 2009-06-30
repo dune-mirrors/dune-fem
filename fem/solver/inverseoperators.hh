@@ -240,8 +240,8 @@ namespace Dune
     CGInverseOp( const OperatorType &op,
                  double  redEps,
                  double absLimit,
-                 int maxIter,
-                 int verbose )
+                 int maxIter = std::numeric_limits<int>::max(),
+                 int verbose = 0 )
     : operator_( op ),
       solver_( absLimit, maxIter, (verbose > 0) )
     {} 
