@@ -259,6 +259,7 @@ namespace Dune {
         IntersectionIteratorType endnit = gridPart_.iend(en);
         for (IntersectionIteratorType nit = gridPart_.ibegin(en); nit != endnit; ++nit) 
         {
+          // get intersection from intersection iterator
           const IntersectionType& inter=*nit;
           //double nbvol;
           double nbvol = vol;
@@ -286,7 +287,7 @@ namespace Dune {
                                                  FaceQuadratureType::OUTSIDE);
                 // apply neighbor part, return is volume of neighbor which is
                 // needed below 
-                nbvol = applyLocalNeighbor(nit,en,nb,
+                nbvol = applyLocalNeighbor(inter,en,nb,
                           faceQuadInner,faceQuadOuter,
                           updEn, updNeigh_ , 
                           wspeedS);
