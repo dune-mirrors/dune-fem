@@ -255,7 +255,7 @@ namespace Dune {
     typedef typename GridPartType::GridType GridType;
     typedef typename GridType::template Codim<0>::Entity EntityType;
     typedef typename GridPartType::IntersectionIteratorType IntersectionIterator;
-    typedef typename IntersectionIteratorType::Intersection IntersectionType;
+    typedef typename IntersectionIterator::Intersection IntersectionType;
 
     typedef typename BaseType :: MassFactorType MassFactorType;
 
@@ -314,12 +314,13 @@ namespace Dune {
     //! Empty implementation that fails if problem claims to have a flux
     //! contribution.
     template <class ArgumentTuple, class FaceDomainType>
-    double numericalFlux(IntersectionIterator& it,
-                         double time, const FaceDomainType& x,
-                         const ArgumentTuple& uLeft, 
-                         const ArgumentTuple& uRight,
-                         RangeType& gLeft,
-                         RangeType& gRight) DUNE_DEPRECATED
+    double DUNE_DEPRECATED
+    numericalFlux ( IntersectionIterator &it,
+                    double time, const FaceDomainType& x,
+                    const ArgumentTuple& uLeft, 
+                    const ArgumentTuple& uRight,
+                    RangeType& gLeft,
+                    RangeType& gRight )
     { 
       assert(!this->asImp().hasFlux()); 
       gLeft = 0.0;
@@ -348,10 +349,11 @@ namespace Dune {
     //! Empty implementation that fails if problem claims to have a flux
     //! contribution.
     template <class ArgumentTuple, class FaceDomainType>
-    double boundaryFlux(IntersectionIterator& it,
-                        double time, const FaceDomainType& x,
-                        const ArgumentTuple& uLeft,
-                        RangeType& gLeft) DUNE_DEPRECATED
+    double DUNE_DEPRECATED
+    boundaryFlux ( IntersectionIterator& it,
+                   double time, const FaceDomainType& x,
+                   const ArgumentTuple& uLeft,
+                   RangeType& gLeft )
     {
       assert(!this->asImp().hasFlux());
       gLeft = 0.0;
