@@ -463,15 +463,14 @@ namespace LDGExample {
     bool hasSource() const { return false; }
     bool hasFlux() const   { return true; }
 
-    template <class ArgumentTuple>
-    double numericalFlux(const IntersectionIteratorType& nit,
-                         double time, const FaceDomainType& x,
-                         const ArgumentTuple& uLeft,
-                         const ArgumentTuple& uRight,
-                         RangeType& gLeft,
-                         RangeType& gRight)
+    template< class ArgumentTuple >
+    double numericalFlux ( const Intersection &it,
+                           double time, const FaceDomainType &x,
+                           const ArgumentTuple &uLeft,
+                           const ArgumentTuple &uRight,
+                           RangeType &gLeft,
+                           RangeType &gRight )
     {
-      const Intersection& it = *nit; 
       const DomainType normal = it.integrationOuterNormal(x);
       const double faceVol = normal.two_norm();
 
@@ -515,13 +514,12 @@ namespace LDGExample {
       return 0.;
     }
 
-    template <class ArgumentTuple>
-    double boundaryFlux(IntersectionIteratorType& nit,
-                        double time, const FaceDomainType& x,
-                        const ArgumentTuple& uLeft,
-                        RangeType& gLeft)
+    template< class ArgumentTuple >
+    double boundaryFlux ( const Intersection &it,
+                          double time, const FaceDomainType &x,
+                          const ArgumentTuple &uLeft,
+                          RangeType &gLeft )
     {
-      const Intersection& it = *nit; 
       const DomainType normal = it.integrationOuterNormal(x);
       // get saturation 
       typedef typename ElementType<0, ArgumentTuple>::Type SType;
