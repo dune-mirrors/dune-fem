@@ -255,6 +255,7 @@ namespace Dune {
     typedef typename GridPartType::GridType GridType;
     typedef typename GridType::template Codim<0>::Entity EntityType;
     typedef typename GridPartType::IntersectionIteratorType IntersectionIterator;
+    typedef typename IntersectionIteratorType::Intersection IntersectionType;
 
     typedef typename BaseType :: MassFactorType MassFactorType;
 
@@ -318,6 +319,23 @@ namespace Dune {
                          const ArgumentTuple& uLeft, 
                          const ArgumentTuple& uRight,
                          RangeType& gLeft,
+                         RangeType& gRight) DUNE_DEPRECATED
+    { 
+      assert(!this->asImp().hasFlux()); 
+      gLeft = 0.0;
+      gRight = 0.0;
+      return 0.0;
+    }
+
+
+    //! Empty implementation that fails if problem claims to have a flux
+    //! contribution.
+    template <class ArgumentTuple, class FaceDomainType>
+    double numericalFlux(IntersectionType& it,
+                         double time, const FaceDomainType& x,
+                         const ArgumentTuple& uLeft, 
+                         const ArgumentTuple& uRight,
+                         RangeType& gLeft,
                          RangeType& gRight)
     { 
       assert(!this->asImp().hasFlux()); 
@@ -326,10 +344,25 @@ namespace Dune {
       return 0.0;
     }
 
+
     //! Empty implementation that fails if problem claims to have a flux
     //! contribution.
     template <class ArgumentTuple, class FaceDomainType>
     double boundaryFlux(IntersectionIterator& it,
+                        double time, const FaceDomainType& x,
+                        const ArgumentTuple& uLeft,
+                        RangeType& gLeft) DUNE_DEPRECATED
+    {
+      assert(!this->asImp().hasFlux());
+      gLeft = 0.0;
+      return 0.0;
+    }
+
+
+    //! Empty implementation that fails if problem claims to have a flux
+    //! contribution.
+    template <class ArgumentTuple, class FaceDomainType>
+    double boundaryFlux(IntersectionType& it,
                         double time, const FaceDomainType& x,
                         const ArgumentTuple& uLeft,
                         RangeType& gLeft)
@@ -338,6 +371,7 @@ namespace Dune {
       gLeft = 0.0;
       return 0.0;
     }
+
 
     //! Empty implementation that fails if problem claims to have a flux
     //! contribution.
@@ -422,6 +456,7 @@ namespace Dune {
     typedef typename GridPartType::GridType GridType;
     typedef typename GridType::template Codim<0>::Entity EntityType;
     typedef typename GridPartType::IntersectionIteratorType IntersectionIteratorType;
+    typedef typename IntersectionIteratorType::Intersection IntersectionType;
 
   public:
     //! \brief default constructor 
