@@ -46,6 +46,7 @@ namespace Dune {
     typedef typename GridPartType::GridType GridType;
     //! Intersection iterator of the grid
     typedef typename GridPartType::IntersectionIteratorType IntersectionIterator;
+    typedef typename IntersectionIterator::Intersection IntersectionType;
     //! Element (codim 0 entity) of the grid
     typedef typename GridType::template Codim<0>::Entity EntityType;
 
@@ -106,6 +107,22 @@ namespace Dune {
                          const ArgumentTuple& uLeft, 
                          const ArgumentTuple& uRight,
                          RangeType& gLeft,
+                         RangeType& gRight) DUNE_DEPRECATED
+    { 
+      CHECK_INTERFACE_IMPLEMENTATION( asImp().numericalFlux(it, time, x, 
+                                   uLeft, uRight, gLeft, gRight) );
+      return asImp().numericalFlux(it, time, x, 
+                                   uLeft, uRight, gLeft, gRight); 
+    }
+
+
+    template <class ArgumentTuple, class FaceDomainType>
+    double numericalFlux(IntersectionType& it,
+                         const double time, 
+                         const FaceDomainType& x,
+                         const ArgumentTuple& uLeft, 
+                         const ArgumentTuple& uRight,
+                         RangeType& gLeft,
                          RangeType& gRight)
     { 
       CHECK_INTERFACE_IMPLEMENTATION( asImp().numericalFlux(it, time, x, 
@@ -113,6 +130,7 @@ namespace Dune {
       return asImp().numericalFlux(it, time, x, 
                                    uLeft, uRight, gLeft, gRight); 
     }
+
 
     //! \brief Computes the flux at the boundary
     //! Special kind of numerical flux. The intersection iterator provides
@@ -131,12 +149,26 @@ namespace Dune {
                         const double time, 
                         const FaceDomainType& x,
                         const ArgumentTuple& uLeft,
+                        RangeType& gLeft) DUNE_DEPRECATED
+    { 
+      CHECK_INTERFACE_IMPLEMENTATION( 
+        asImp().boundaryFlux(it, time, x, uLeft, gLeft) );
+      return asImp().boundaryFlux(it, time, x, uLeft, gLeft);
+    }
+
+
+    template <class ArgumentTuple, class FaceDomainType>
+    double boundaryFlux(IntersectionType& it,
+                        const double time, 
+                        const FaceDomainType& x,
+                        const ArgumentTuple& uLeft,
                         RangeType& gLeft)
     { 
       CHECK_INTERFACE_IMPLEMENTATION( 
         asImp().boundaryFlux(it, time, x, uLeft, gLeft) );
       return asImp().boundaryFlux(it, time, x, uLeft, gLeft);
     }
+
 
     //! \brief Computes the analytical flux of the problem.
     //! Analytical flux of the problem.
@@ -254,6 +286,7 @@ namespace Dune {
     typedef typename GridPartType::GridType GridType;
     typedef typename GridType::template Codim<0>::Entity EntityType;
     typedef typename GridPartType::IntersectionIteratorType IntersectionIterator;
+    typedef typename IntersectionIterator::Intersection Intersection;
 
     typedef typename BaseType :: MassFactorType MassFactorType;
 
@@ -311,12 +344,13 @@ namespace Dune {
     //! Empty implementation that fails if problem claims to have a flux
     //! contribution.
     template <class ArgumentTuple, class FaceDomainType>
-    double numericalFlux(IntersectionIterator& it,
-                         double time, const FaceDomainType& x,
-                         const ArgumentTuple& uLeft, 
-                         const ArgumentTuple& uRight,
-                         RangeType& gLeft,
-                         RangeType& gRight)
+    double numericalFlux( const IntersectionIterator& it,
+                          const double time,
+                          const FaceDomainType& x,
+                          const ArgumentTuple& uLeft, 
+                          const ArgumentTuple& uRight,
+                          RangeType& gLeft,
+                          RangeType& gRight) DUNE_DEPRECATED
     { 
       assert(!this->asImp().hasFlux()); 
       gLeft = 0.0;
@@ -324,25 +358,59 @@ namespace Dune {
       return 0.0;
     }
 
+
+    template <class ArgumentTuple, class FaceDomainType>
+    double numericalFlux( const Intersection& it,
+                          const double time,
+                          const FaceDomainType& x,
+                          const ArgumentTuple& uLeft, 
+                          const ArgumentTuple& uRight,
+                          RangeType& gLeft,
+                          RangeType& gRight)
+    { 
+      assert(!this->asImp().hasFlux()); 
+      gLeft = 0.0;
+      gRight = 0.0;
+      return 0.0;
+    }
+
+
     //! Empty implementation that fails if problem claims to have a flux
     //! contribution.
     template <class ArgumentTuple, class FaceDomainType>
-    double boundaryFlux(IntersectionIterator& it,
-                        double time, const FaceDomainType& x,
-                        const ArgumentTuple& uLeft,
-                        RangeType& gLeft)
+    double boundaryFlux( const IntersectionIterator& it,
+                         const double time, 
+                         const FaceDomainType& x,
+                         const ArgumentTuple& uLeft,
+                         RangeType& gLeft) DUNE_DEPRECATED
     {
       assert(!this->asImp().hasFlux());
       gLeft = 0.0;
       return 0.0;
     }
 
+
+    template <class ArgumentTuple, class FaceDomainType>
+    double boundaryFlux( const Intersection& it,
+                         const double time,
+                         const FaceDomainType& x,
+                         const ArgumentTuple& uLeft,
+                         RangeType& gLeft)
+    {
+      assert(!this->asImp().hasFlux());
+      gLeft = 0.0;
+      return 0.0;
+    }
+
+
     //! Empty implementation that fails if problem claims to have a flux
     //! contribution.
     template <class ArgumentTuple>
-    void analyticalFlux(EntityType& en,
-                        double time, const DomainType& x,
-                        const ArgumentTuple& u, JacobianRangeType& f)
+    void analyticalFlux( const EntityType& en,
+                         const double time,
+                         const DomainType& x,
+                         const ArgumentTuple& u,
+                         JacobianRangeType& f )
     { 
       assert(!this->asImp().hasFlux()); 
       f = 0.0;
@@ -351,10 +419,12 @@ namespace Dune {
     //! Empty implementation that fails if problem claims to have a source 
     //! term.
     template <class ArgumentTuple, class JacobianTuple>
-    void source(EntityType& en, 
-                double time, const DomainType& x,
-                const ArgumentTuple& u, const JacobianTuple& jac, 
-                RangeType& s)
+    void source( const EntityType& en, 
+                 const double time,
+                 const DomainType& x,
+                 const ArgumentTuple& u,
+                 const JacobianTuple& jac, 
+                 RangeType& s )
     { 
       assert(!this->asImp().hasSource()); 
       s = 0.0;
