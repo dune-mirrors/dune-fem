@@ -3,11 +3,10 @@
 
 // *** Numerical fluxes ***
 
-// Dune includes
 namespace Dune
 {
 
-  // *** the Local Lax-Friedrichs flux *** //
+  // local Lax-Friedrichs flux
   template< class Model >
   struct LLFFlux
   {
@@ -28,15 +27,15 @@ namespace Dune
       return model_;
     }
 
-    // Return value: maximum wavespeed*length of integrationOuterNormal
-    // gLeft,gRight are fluxed * length of integrationOuterNormal
+    // return value: maximum wavespeed * length of integrationOuterNormal
+    // gLeft, gRight are fluxes * length of integrationOuterNormal
     double numericalFlux ( const Intersection &intersection,
                            double time, 
                            const typename Traits::FaceDomainType &x,
                            const RangeType &uLeft, 
                            const RangeType &uRight,
                            RangeType &gLeft,
-                           RangeType &gRight) const
+                           RangeType &gRight ) const
     {
       typedef typename Intersection::Geometry IntersectionGeometry;
       typedef typename Intersection::LocalGeometry IntersectionLocalGeometry;
@@ -54,13 +53,13 @@ namespace Dune
       if( intersection.neighbor() )
       {
         const IntersectionLocalGeometry &geoInOutside = intersection.geometryInOutside();
-         model_.analyticalFlux( *(intersection.outside()), time, geoInOutside.global( x ),
-                                uRight, anaflux);
+        model_.analyticalFlux( *(intersection.outside()), time, geoInOutside.global( x ),
+                               uRight, anaflux);
       }
       else
       {
-         model_.analyticalFlux( *(intersection.inside()), time, geoInInside.global( x ),
-                                uRight, anaflux);
+        model_.analyticalFlux( *(intersection.inside()), time, geoInInside.global( x ),
+                               uRight, anaflux);
       }
       anaflux.umv( normal, gLeft );
 
@@ -85,25 +84,25 @@ namespace Dune
       return maxspeed;
     }
 
-    // Return value: maximum wavespeed*length of integrationOuterNormal
-    // gLeft,gRight are fluxed * length of integrationOuterNormal
+    // return value: maximum wavespeed * length of integrationOuterNormal
+    // gLeft, gRight are fluxes * length of integrationOuterNormal
     double numericalFlux ( const IntersectionIterator &it,
                            double time, 
                            const typename Traits::FaceDomainType &x,
                            const RangeType &uLeft, 
                            const RangeType &uRight,
                            RangeType &gLeft,
-                           RangeType &gRight) const
+                           RangeType &gRight ) const
     {
       return numericalFlux( *it, time, x, uLeft, uRight, gLeft, gRight );
     }
 
   private:
     const Model &model_;
-  }; // end of LLFFlux class
+  }; // end of LLFFlux
 
 
-  // *** the Local Lax-Friedrichs flux, modified for the wetting-drying treatment *** //
+  // local Lax-Friedrichs flux, modified for the wetting-drying treatment
   template <class Model>
   class WDLLFFlux
   {
@@ -123,13 +122,14 @@ namespace Dune
           {
             return model_;
           }
-          Model& model() // in LLFFlux model_ is const, but here model contains wet-or-dry status flags, which are updated, therefore, const can't be used here
+          // in LLFFlux model_ is const, but here model contains wet-or-dry status flags, which are updated, therefore, const can't be used here
+          Model& model()
           {
             return model_;
           }
     
-    // Return value: maximum wavespeed*length of integrationOuterNormal
-    // gLeft,gRight are fluxed * length of integrationOuterNormal
+    // return value: maximum wavespeed * length of integrationOuterNormal
+    // gLeft, gRight are fluxes * length of integrationOuterNormal
     inline double numericalFlux(const Intersection &intersection,
                                 double time, 
                                 const typename Traits::FaceDomainType& x,
@@ -137,7 +137,7 @@ namespace Dune
                                 const RangeType& uRight,
                                 bool reflectionLeft, bool reflectionRight,
                                 RangeType& gLeft,
-                                RangeType& gRight) const
+                                RangeType& gRight ) const
     {
       typedef typename Intersection::Geometry IntersectionGeometry;
       typedef typename Intersection::LocalGeometry IntersectionLocalGeometry;
@@ -146,14 +146,14 @@ namespace Dune
       typename Traits::RangeType visc;
       typename Traits::FluxRangeType anaflux;
 
-      //std::cout << " uLeft is " << uLeft << std::endl;
-      //std::cout << " uRight is " << uRight << std::endl;
-
-      //std::cout << " reflectionLeft is " << reflectionLeft << std::endl;
-      //std::cout << " reflectionRight is " << reflectionRight << std::endl;
+#if WRITENUMFLUX == 1
+      std::cout << " uLeft is " << uLeft << std::endl;
+      std::cout << " uRight is " << uRight << std::endl;
+      std::cout << " reflectionLeft is " << reflectionLeft << std::endl;
+      std::cout << " reflectionRight is " << reflectionRight << std::endl;
+#endif
 
       const IntersectionLocalGeometry &geoInInside = intersection.geometryInInside();
-
       const IntersectionLocalGeometry &geoInOutside = intersection.geometryInOutside();
 
       gLeft = 0;
@@ -161,32 +161,41 @@ namespace Dune
       RangeType uLeftRef;
       RangeType uRightRef;
 
-      if (reflectionRight == false) // (no reflection) or (reflection in entity)
+      if ( reflectionRight == false )
+      // (no reflection) or (reflection in entity)
       {
         // anaflux = F( uLeft )
-        //std::cout << " reflectionRight = false, compute g(uLeft) .. "  << std::endl;
+#if WRITENUMFLUX == 1
+        std::cout << " reflectionRight = false, compute g(uLeft) .. "  << std::endl;
+#endif
         model_.analyticalFlux( *(intersection.inside()), time,
                                geoInInside.global(x),
-                               uLeft, anaflux);
+                               uLeft, anaflux );
         anaflux.umv( normal, gLeft );
       }
-      else // (reflection in neighbor)
+      else
+      // (reflection in neighbor)
       {
         // anaflux = F( uRight )
-        //std::cout << " reflectionRight = true, compute g(uRight) .. "  << std::endl;
+#if WRITENUMFLUX == 1
+        std::cout << " reflectionRight = true, compute g(uRight) .. "  << std::endl;
+#endif
         model_.analyticalFlux( *(intersection.outside()), time,
                                geoInOutside.global(x),
-                               uRight, anaflux);
+                               uRight, anaflux );
         anaflux.umv( normal, gRight );
       }
 
-      if (reflectionLeft == true) // (reflection in entity)
+      if ( reflectionLeft == true )
+      // (reflection in entity)
       {
         // anaflux = F( uLeftRef )
-        //std::cout << " reflectionLeft = true, compute g(uLeftRef) .. "  << std::endl;
+#if WRITENUMFLUX == 1
+        std::cout << " reflectionLeft = true, compute g(uLeftRef) .. "  << std::endl;
+#endif
         model_.analyticalFlux( *(intersection.inside()), time,
                                geoInInside.global(x),
-                               model_.reflectU( uLeft, normal, uLeftRef ), anaflux);
+                               model_.reflectU( uLeft, normal, uLeftRef ), anaflux );
 
         /*reflectU ( uLeft, normal, uLeftRef );
         model_.analyticalFlux( *(intersection.inside()), time,
@@ -202,18 +211,24 @@ namespace Dune
       }
       else
       {
-        if (reflectionRight == true) // (reflection in neigbor)
+        if ( reflectionRight == true )
+        // (reflection in neigbor)
         {
           // anaflux = F( uRightRef )
-          //std::cout << " reflectionRight = true, compute g(uRightRef) ..  "  << std::endl;
+#if WRITENUMFLUX == 1
+          std::cout << " reflectionRight = true, compute g(uRightRef) ..  "  << std::endl;
+#endif
           model_.analyticalFlux( *(intersection.outside()), time,
                                  geoInOutside.global(x),
                                  model_.reflectU( uRight, normal, uRightRef ), anaflux);
           anaflux.umv( normal, gRight );
         }
-        else // (no reflection)
+        else
+        // (no reflection)
         {
-          //std::cout << " reflectionLeft = false, reflectionRight = false, compute g(uRight) ..  "  << std::endl;
+#if WRITENUMFLUX == 1
+      std::cout << " reflectionLeft = false, reflectionRight = false, compute g(uRight) ..  "  << std::endl;
+#endif
           if (intersection.neighbor())
              model_.analyticalFlux( *(intersection.outside()), time,
                                     geoInOutside.global(x),
@@ -233,32 +248,36 @@ namespace Dune
 
       const IntersectionGeometry &geo = intersection.geometry();
 
-// the version of the method maxSpeed is used with the additional argument for wetting-drying treatment
-
-      if (reflectionRight == false) // (no reflection) or (reflection in entity)
+      // the version of the method maxSpeed is used with the additional argument for wetting-drying treatment
+      if ( reflectionRight == false )
+      // (no reflection) or (reflection in entity)
       {
         model_.maxSpeed( normal, time, geo.global(x), *(intersection.inside()),
-                         uLeft, viscparal, maxspeedl);
+                         uLeft, viscparal, maxspeedl );
       }
-      else // (reflection in neighbor)
+      else
+      // (reflection in neighbor)
       {
         model_.maxSpeed( normal, time, geo.global(x), *(intersection.outside()),
-                         uRight, viscparar, maxspeedr);
+                         uRight, viscparar, maxspeedr );
       }
 
-      if (reflectionLeft == true) // (reflection in entity)
+      if ( reflectionLeft == true )
+      // (reflection in entity)
       {
         model_.maxSpeed( normal, time, geo.global(x), *(intersection.inside()),
-                         uLeftRef, viscparar, maxspeedr);
+                         uLeftRef, viscparar, maxspeedr );
       }
       else
       {
-        if (reflectionRight == true) // (reflection in neigbor)
+        if ( reflectionRight == true )
+        // (reflection in neigbor)
         {
           model_.maxSpeed( normal, time, geo.global(x), *(intersection.outside()),
                            uRightRef, viscparal, maxspeedl );
         }
-        else // (no reflection)
+        else
+        // (no reflection)
         {
           model_.maxSpeed( normal, time, geo.global(x), *(intersection.outside()),
                            uRight, viscparar, maxspeedr );
@@ -267,7 +286,7 @@ namespace Dune
 
 /*      model_.analyticalFlux( *(intersection.inside()), time,
                              geoInInside.global(x),
-                             uLeft, anaflux);
+                             uLeft, anaflux );
       gLeft = 0;
       anaflux.umv( normal, gLeft );
       if (it->neighbor())
@@ -281,21 +300,23 @@ namespace Dune
       anaflux.umv( normal,gLeft );
 
       model_.maxSpeed( normal, time, geo.global(x), *(intersection.inside()),
-                       uLeft, viscparal, maxspeedl);
+                       uLeft, viscparal, maxspeedl );
 
       model_.maxSpeed( normal, time, geo.global(x), *(intersection.outside()),
-                       uRight, viscparar, maxspeedr); */
+                       uRight, viscparar, maxspeedr ); */
 
       maxspeed = (maxspeedl>maxspeedr) ? maxspeedl : maxspeedr;
       viscpara = (viscparal>viscparar) ? viscparal : viscparar;
 
-      //std::cout << " reflectionRight = true, compute g(uRightRef) ..  "  << std::endl;
+#if WRITENUMFLUX == 1
+      std::cout << " reflectionRight = true, compute g(uRightRef) ..  "  << std::endl;
+#endif
 
-      if (reflectionRight == true)
+      if ( reflectionRight == true )
       {
         visc  = uRightRef - uRight;  
       }
-      if (reflectionLeft == true)
+      if ( reflectionLeft == true )
       {
         visc  = uLeftRef - uLeft;  
       }
@@ -306,7 +327,7 @@ namespace Dune
 
       visc *= 2.*viscpara;
 
-      if (reflectionRight == true)
+      if ( reflectionRight == true )
       {
         gRight -= visc;
         gRight *= 0.5;        
@@ -322,8 +343,8 @@ namespace Dune
       return maxspeed;
     }
 
-    // Return value: maximum wavespeed*length of integrationOuterNormal
-    // gLeft,gRight are fluxed * length of integrationOuterNormal
+    // return value: maximum wavespeed * length of integrationOuterNormal
+    // gLeft, gRight are fluxes * length of integrationOuterNormal
     double numericalFlux ( const IntersectionIterator &it,
                            double time, 
                            const typename Traits::FaceDomainType &x,
@@ -331,16 +352,14 @@ namespace Dune
                            const RangeType &uRight,
                            bool reflectionLeft, bool reflectionRight,
                            RangeType &gLeft,
-                           RangeType &gRight) const
+                           RangeType &gRight ) const
     {
       return numericalFlux( *it, time, x, uLeft, uRight, reflectionLeft, reflectionRight, gLeft, gRight );
     }
 
-
-
   private:
     Model& model_;
-  }; // end of WDLLFFlux class
+  }; // end of WDLLFFlux
 
 } // end namespace Dune
 
