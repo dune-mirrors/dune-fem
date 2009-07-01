@@ -314,7 +314,7 @@ namespace Dune {
 
                 // apply neighbor part, return is volume of neighbor which is
                 // needed below 
-                nbvol = applyLocalNeighbor(nit,en,nb,
+                nbvol = applyLocalNeighbor(*nit,en,nb,
                           nonConformingFaceQuadInner,
                           nonConformingFaceQuadOuter,
                           updEn, updNeigh_ , 
@@ -337,7 +337,7 @@ namespace Dune {
             for (int l = 0; l < faceQuadInner_nop; ++l) 
             {
               // eval boundary Flux  
-              wspeedS += caller_.boundaryFlux(nit, faceQuadInner, l, valEn_ )
+              wspeedS += caller_.boundaryFlux( *nit, faceQuadInner, l, valEn_ )
                        * faceQuadInner.weight(l);
               
               // apply weights 
@@ -449,13 +449,13 @@ namespace Dune {
     }
     
     template <class QuadratureImp, class LocalFunctionImp >  
-    double applyLocalNeighbor(IntersectionIteratorType & nit, 
-            EntityType & en, EntityType & nb, 
-            const QuadratureImp & faceQuadInner, 
-            const QuadratureImp & faceQuadOuter,
-            LocalFunctionImp & updEn,
-            LocalFunctionImp & updNeigh,
-            double & wspeedS) const 
+    double applyLocalNeighbor ( const IntersectionType &intersection,
+                                EntityType &en, EntityType &nb, 
+                                const QuadratureImp &faceQuadInner, 
+                                const QuadratureImp &faceQuadOuter,
+                                LocalFunctionImp &updEn,
+                                LocalFunctionImp &updNeigh,
+                                double &wspeedS ) const 
     {
       // make Entity known in caller  
       caller_.setNeighbor(nb);
@@ -469,7 +469,7 @@ namespace Dune {
       const int faceQuadInner_nop = faceQuadInner.nop();
       for (int l = 0; l < faceQuadInner_nop; ++l) 
       {
-        wspeedS += caller_.numericalFlux(nit, 
+        wspeedS += caller_.numericalFlux(intersection, 
                                          faceQuadInner, 
                                          faceQuadOuter,
                                          l, 

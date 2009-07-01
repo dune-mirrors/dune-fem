@@ -102,7 +102,7 @@ namespace Dune {
                       jacobians_, sourceRes);
     }
 
-    template <class FaceDomainType>
+    template< class IntersectionIterator, class FaceDomainType >
     double numericalFlux(IntersectionIterator& nit, const FaceDomainType& x,
                          RangeType& resEn, RangeType& resNeigh) 
     {
@@ -120,7 +120,7 @@ namespace Dune {
     }
 
     // Ensure: entities set correctly before call
-    template <class QuadratureType>
+    template< class IntersectionIterator, class QuadratureType >
     double numericalFlux(IntersectionIterator& nit,
                          QuadratureType& quadInner, 
                          QuadratureType& quadOuter, 
@@ -139,7 +139,7 @@ namespace Dune {
     }
 
     // Ensure: entities set correctly before call
-    template <class QuadratureType>
+    template< class IntersectionIterator, class QuadratureType >
     double numericalFlux(const IntersectionIterator& nit,
                          const QuadratureType& quadInner, 
                          const QuadratureType& quadOuter, 

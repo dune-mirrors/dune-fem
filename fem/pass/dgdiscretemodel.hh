@@ -118,18 +118,16 @@ namespace Dune {
 
 
     template <class ArgumentTuple, class FaceDomainType>
-    double numericalFlux(IntersectionType& it,
-                         const double time, 
-                         const FaceDomainType& x,
-                         const ArgumentTuple& uLeft, 
-                         const ArgumentTuple& uRight,
-                         RangeType& gLeft,
-                         RangeType& gRight)
+    double numericalFlux ( const IntersectionType &intersection,
+                           const double time, 
+                           const FaceDomainType &x,
+                           const ArgumentTuple &uLeft, 
+                           const ArgumentTuple &uRight,
+                           RangeType &gLeft,
+                           RangeType &gRight)
     { 
-      CHECK_INTERFACE_IMPLEMENTATION( asImp().numericalFlux(it, time, x, 
-                                   uLeft, uRight, gLeft, gRight) );
-      return asImp().numericalFlux(it, time, x, 
-                                   uLeft, uRight, gLeft, gRight); 
+      CHECK_INTERFACE_IMPLEMENTATION( asImp().numericalFlux( intersection, time, x, uLeft, uRight, gLeft, gRight) );
+      return asImp().numericalFlux( intersection, time, x, uLeft, uRight, gLeft, gRight );
     }
 
 
@@ -160,15 +158,14 @@ namespace Dune {
 
 
     template <class ArgumentTuple, class FaceDomainType>
-    double boundaryFlux(IntersectionType& it,
-                        const double time, 
-                        const FaceDomainType& x,
-                        const ArgumentTuple& uLeft,
-                        RangeType& gLeft)
+    double boundaryFlux ( const IntersectionType &intersection,
+                          const double time,
+                          const FaceDomainType &x,
+                          const ArgumentTuple &uLeft,
+                          RangeType &gLeft )
     { 
-      CHECK_INTERFACE_IMPLEMENTATION( 
-        asImp().boundaryFlux(it, time, x, uLeft, gLeft) );
-      return asImp().boundaryFlux(it, time, x, uLeft, gLeft);
+      CHECK_INTERFACE_IMPLEMENTATION( asImp().boundaryFlux( intersection, time, x, uLeft, gLeft ) );
+      return asImp().boundaryFlux( intersection, time, x, uLeft, gLeft );
     }
 
 
