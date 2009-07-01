@@ -44,39 +44,34 @@ namespace Dune
       BaseType;
 
   protected:
-    using BaseType :: entitiesAreCopies;
+    using BaseType::entitiesAreCopies;
 
   public:
     //! field type of the discrete function's domain
-    typedef typename DiscreteFunctionType :: DomainFieldType DomainFieldType;
+    typedef typename DiscreteFunctionType::DomainFieldType DomainFieldType;
     //! type of the discrete function's domain
-    typedef typename DiscreteFunctionType :: DomainType DomainType;
+    typedef typename DiscreteFunctionType::DomainType DomainType;
     //! field type of the discrete function's range
-    typedef typename DiscreteFunctionType :: RangeFieldType RangeFieldType;
+    typedef typename DiscreteFunctionType::RangeFieldType RangeFieldType;
     //! type of the discrete function's range
-    typedef typename DiscreteFunctionType :: RangeType RangeType;
+    typedef typename DiscreteFunctionType::RangeType RangeType;
     //! type of the local functions
-    typedef typename DiscreteFunctionType :: LocalFunctionType
-      LocalFunctionType;
+    typedef typename DiscreteFunctionType::LocalFunctionType LocalFunctionType;
 
     //! type of the grid partition
-    typedef typename DiscreteFunctionSpaceType :: GridPartType GridPartType;
+    typedef typename DiscreteFunctionSpaceType::GridPartType GridPartType;
     //! type of the grid
-    typedef typename DiscreteFunctionSpaceType :: GridType GridType;
+    typedef typename DiscreteFunctionSpaceType::GridType GridType;
     //! type of the Lagrange point set
-    typedef typename DiscreteFunctionSpaceType :: LagrangePointSetType
+    typedef typename DiscreteFunctionSpaceType::LagrangePointSetType
       LagrangePointSetType;
 
-    enum { dimRange = DiscreteFunctionSpaceType :: dimRange };
+    static const int dimGrid = GridType::dimension;
+    static const int dimRange = DiscreteFunctionSpaceType::dimRange;
 
-    typedef typename LagrangePointSetType
-      :: template Codim< 0 > :: SubEntityIteratorType
+    typedef typename LagrangePointSetType::template Codim< 0 >::SubEntityIteratorType
       EntityDofIteratorType;
 
-  private:
-    DiscreteFunctionType &discreteFunction_;
-    const DiscreteFunctionSpaceType &discreteFunctionSpace_;
-    
   public:
     //! constructor
     explicit
@@ -104,7 +99,10 @@ namespace Dune
       if( entitiesAreCopies( discreteFunctionSpace_.indexSet(), father, son ) )
         return;
 
-      typedef typename EntityType :: LocalGeometry LocalGeometryType;
+      typedef typename EntityType::LocalGeometry LocalGeometryType;
+
+      const GenericReferenceElement< DomainFieldType, dimGrid > &refSon
+        = GenericReferenceElements< DomainFieldType, dimGrid >::general( son.type() );
 
       LocalFunctionType fatherFunction = discreteFunction_.localFunction( father );
       LocalFunctionType sonFunction = discreteFunction_.localFunction( son );
@@ -121,11 +119,11 @@ namespace Dune
         const unsigned int dof = *it;
         const DomainType &pointInFather = lagrangePointSet.point( dof );
         const DomainType pointInSon = geometryInFather.local( pointInFather );
-        if( geometryInFather.checkInside( pointInSon ) )
+        if( refSon.checkInside( pointInSon ) )
         {
           RangeType phi;
           sonFunction.evaluate( pointInSon, phi );
-          for( unsigned int coordinate = 0; coordinate < dimRange; ++coordinate )
+          for( int coordinate = 0; coordinate < dimRange; ++coordinate )
             fatherFunction[ dimRange * dof + coordinate ] = phi[ coordinate ];
         }
       }
@@ -159,7 +157,7 @@ namespace Dune
         
         RangeType phi;
         fatherFunction.evaluate( pointInFather, phi );
-        for( unsigned int coordinate = 0; coordinate < dimRange; ++coordinate )
+        for( int coordinate = 0; coordinate < dimRange; ++coordinate )
           sonFunction[ dimRange * dof + coordinate ] = phi[ coordinate ];
       }
     }
@@ -173,6 +171,10 @@ namespace Dune
 
       //  comm.addToList( discreteFunction_ );
     }
+
+  private:
+    DiscreteFunctionType &discreteFunction_;
+    const DiscreteFunctionSpaceType &discreteFunctionSpace_;
   };
 
 }
