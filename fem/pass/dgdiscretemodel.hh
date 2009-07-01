@@ -145,7 +145,7 @@ namespace Dune {
     //! the maximum admissible timestep size.
     template <class ArgumentTuple, class FaceDomainType>
     double DUNE_DEPRECATED
-    boundaryFlux ( IntersectionIterator &it,
+    boundaryFlux ( const IntersectionIterator &it,
                    const double time, 
                    const FaceDomainType& x,
                    const ArgumentTuple& uLeft,
@@ -178,11 +178,11 @@ namespace Dune {
     //! argument.
     //! \param f The analytical flux (return value)
     template <class ArgumentTuple>
-    void analyticalFlux(EntityType& en,
-                        const double time, 
-                        const DomainType& x,
-                        const ArgumentTuple& u, 
-                        JacobianRangeType& f) 
+    void analyticalFlux( const EntityType& en,
+                         const double time, 
+                         const DomainType& x,
+                         const ArgumentTuple& u, 
+                         JacobianRangeType& f) 
     { 
       CHECK_AND_CALL_INTERFACE_IMPLEMENTATION(
               asImp().analyticalFlux(en, time, x, u, f) ); 
@@ -200,12 +200,12 @@ namespace Dune {
     //! (needed for the non-conservative contributions)
     //! \param s The source contribution (return value).
     template <class ArgumentTuple, class JacobianTuple>
-    void source(EntityType& en, 
-                const double time, 
-                const DomainType& x,
-                const ArgumentTuple& u, 
-                const JacobianTuple& jac, 
-                RangeType& s) 
+    void source( const EntityType& en, 
+                 const double time, 
+                 const DomainType& x,
+                 const ArgumentTuple& u, 
+                 const JacobianTuple& jac, 
+                 RangeType& s ) 
     { 
       CHECK_AND_CALL_INTERFACE_IMPLEMENTATION(
           asImp().source(en, time, x, u, jac, s) ); 
@@ -220,11 +220,11 @@ namespace Dune {
     //! \param m The mass contribution (return value).
     //! default implementation sets this factor to 1.0 
     template <class ArgumentTuple>
-    void mass(const EntityType& en, 
-              const double time, 
-              const DomainType& x,
-              const ArgumentTuple& u, 
-              MassFactorType& m)
+    void mass( const EntityType& en, 
+               const double time, 
+               const DomainType& x,
+               const ArgumentTuple& u, 
+               MassFactorType& m )
     {
       CHECK_AND_CALL_INTERFACE_IMPLEMENTATION(
           asImp().mass(en, time, x, u, m) ); 
@@ -454,11 +454,11 @@ namespace Dune {
     }
 
     //! Empty implementation 
-    void setEntity(EntityType& en)
+    void setEntity( const EntityType& en )
     { }
 
     //! Empty implementation 
-    void setNeighbor(EntityType& nb)
+    void setNeighbor( const EntityType& nb )
     { }
   };
 
@@ -501,7 +501,7 @@ namespace Dune {
     //! set entity and get volume  
     //! \brief method setting pointer of inside entity and getting volume 
     //! \param[in] en reference to inside entity 
-    void setEntity(EntityType& en)
+    void setEntity( const EntityType& en )
     { 
       en_ = &en;
       enVol_ = en.geometry().volume();
@@ -509,7 +509,7 @@ namespace Dune {
 
     //! \brief method seting pointer of outside entity and getting volume 
     //! \param[in] nb reference to outside entity 
-    void setNeighbor(EntityType& nb)
+    void setNeighbor( const EntityType& nb )
     { 
       nb_ = &nb;
       nbVol_ = nb.geometry().volume();
@@ -548,8 +548,8 @@ namespace Dune {
     double enVol_;
     double nbVol_;
 
-    EntityType* en_;
-    EntityType* nb_;
+    const EntityType* en_;
+    const EntityType* nb_;
   };
 
 }  // end namespace Dune

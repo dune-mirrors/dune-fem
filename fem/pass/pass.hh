@@ -332,7 +332,7 @@ namespace Dune {
                           DestinationType& dest) const = 0;
     //! Actions to be taken on every element. To be overridden in a derived 
     //! class.
-    virtual void applyLocal(Entity& en) const = 0;
+    virtual void applyLocal( const Entity& en ) const = 0;
 
   protected:
     //! The actual computations are performed as follows. First, prepare

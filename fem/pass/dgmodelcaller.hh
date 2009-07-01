@@ -34,6 +34,7 @@ namespace Dune {
     typedef typename Traits::GridPartType GridPartType;
     typedef typename GridPartType :: GridType GridType;
     typedef typename GridPartType::IntersectionIteratorType IntersectionIterator;
+    typedef typename IntersectionIterator::Intersection IntersectionType;
     typedef typename GridType::template Codim<0>::Entity Entity;
 
     typedef typename Traits::FaceQuadratureType FaceQuadratureType;
@@ -58,13 +59,13 @@ namespace Dune {
       problem_( problem )
     {}
 
-    void setEntity(Entity& en) 
+    void setEntity( const Entity& en ) 
     {
       BaseType::setEntity(en);
       problem_.setEntity(en);
     }
 
-    void setNeighbor(Entity& nb) 
+    void setNeighbor( const Entity& nb) 
     {
       BaseType::setNeighbor(nb);
       problem_.setNeighbor(nb);
@@ -72,23 +73,29 @@ namespace Dune {
 
     // Here, the interface of the problem is replicated and the Caller
     // is used to do the actual work
-    void analyticalFlux(Entity& en, const DomainType& x, 
-                        JacobianRangeType& res) 
+    void analyticalFlux( const Entity& en, 
+                         const DomainType& x, 
+                         JacobianRangeType& res) 
     {
       evaluateLocal(x, data_->localFunctionsSelf(), valuesEn_);
       problem_.analyticalFlux(en, time_, x, valuesEn_, res);
     }
     
-    void analyticalFlux(Entity& en, VolumeQuadratureType& quad, int quadPoint,
-                        JacobianRangeType& res) 
+    void analyticalFlux( const Entity& en, 
+                         const VolumeQuadratureType& quad, 
+                         const int quadPoint,
+                         JacobianRangeType& res) 
     {
       evaluateQuad(quad, quadPoint, data_->localFunctionsSelf(),valuesEn_);
       problem_.analyticalFlux(en, time_, quad.point(quadPoint), 
                               valuesEn_, res);
     }
 
-    void analyticalFluxAndSource(Entity& en, VolumeQuadratureType& quad, int quadPoint,
-                                 JacobianRangeType& fluxRes, RangeType& sourceRes) 
+    void analyticalFluxAndSource( const Entity& en, 
+                                  const VolumeQuadratureType& quad, 
+                                  const int quadPoint,
+                                  JacobianRangeType& fluxRes, 
+                                  RangeType& sourceRes ) 
     {
       // evaluate local functions 
       evaluateQuad(quad, quadPoint, data_->localFunctionsSelf(),valuesEn_);
@@ -103,8 +110,10 @@ namespace Dune {
     }
 
     template< class IntersectionIterator, class FaceDomainType >
-    double numericalFlux(IntersectionIterator& nit, const FaceDomainType& x,
-                         RangeType& resEn, RangeType& resNeigh) 
+    double numericalFlux( const IntersectionIterator& nit,
+                          const FaceDomainType& x,
+                          RangeType& resEn,
+                          RangeType& resNeigh ) 
     {
       typedef typename IntersectionIterator::LocalGeometry Geometry;
 
@@ -121,11 +130,12 @@ namespace Dune {
 
     // Ensure: entities set correctly before call
     template< class IntersectionIterator, class QuadratureType >
-    double numericalFlux(IntersectionIterator& nit,
-                         QuadratureType& quadInner, 
-                         QuadratureType& quadOuter, 
-                         int quadPoint,
-                         RangeType& resEn, RangeType& resNeigh)
+    double numericalFlux( const IntersectionIterator& nit,
+                          const QuadratureType& quadInner, 
+                          const QuadratureType& quadOuter, 
+                          const int quadPoint,
+                          RangeType& resEn,
+                          RangeType& resNeigh )
     {
       evaluateQuad(quadInner, quadPoint,
                    data_->localFunctionsSelf(), valuesEn_);
@@ -137,6 +147,7 @@ namespace Dune {
                                     valuesNeigh_,
                                     resEn, resNeigh);
     }
+
 
     // Ensure: entities set correctly before call
     template< class IntersectionIterator, class QuadratureType >
@@ -177,8 +188,8 @@ namespace Dune {
                                    boundaryFlux);
     }
 
-    template <class IntersectionIterator>
-    double boundaryFlux(IntersectionIterator& nit,
+    //template <class IntersectionIterator>
+    double boundaryFlux(const IntersectionType& nit,
                         const FaceQuadratureType& quad,
                         const int quadPoint,
                         RangeType& boundaryFlux) 
@@ -191,15 +202,19 @@ namespace Dune {
                                    valuesEn_, boundaryFlux);
     }
 
-    void source(Entity& en, const DomainType& x, RangeType& res) 
+    void source( const Entity& en, 
+                 const DomainType& x, 
+                 RangeType& res ) 
     {
       evaluateLocal( x, data_->localFunctionsSelf(), valuesEn_);
       evaluateJacobianLocal(en, x);
       problem_.source(en, time_, x, valuesEn_, jacobians_, res);
     }
 
-    void source(Entity& en, VolumeQuadratureType& quad, int quadPoint, 
-                RangeType& res) 
+    void source( const Entity& en, 
+                 const VolumeQuadratureType& quad, 
+                 const int quadPoint, 
+                 RangeType& res ) 
     {
       evaluateQuad( quad, quadPoint, data_->localFunctionsSelf(), valuesEn_);
       evaluateJacobianQuad(en, quad, quadPoint);

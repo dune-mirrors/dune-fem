@@ -177,7 +177,7 @@ namespace Dune {
     }
 
     //! do nothing here 
-    void applyLocal(EntityType& en) const
+    void applyLocal( const EntityType& en) const
     {
     }
     

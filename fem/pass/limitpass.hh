@@ -420,7 +420,7 @@ namespace Dune {
     }
 
     //! Perform the limitation on all elements.
-    void applyLocal(EntityType& en) const
+    void applyLocal( const EntityType& en ) const
     {
       enum { dim = EntityType :: dimension };
       // check argument is not zero

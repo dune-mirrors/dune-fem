@@ -45,8 +45,9 @@ namespace Dune {
     typedef typename DiscreteFunctionSpaceType::GridPartType GridPartType; 
     //! Type of the grid
     typedef typename GridPartType::GridType GridType;
-    //! Intersection iterator of the grid
+    //! Intersection iterator and Intersection of the grid
     typedef typename GridPartType::IntersectionIteratorType IntersectionIterator;
+    typedef typename IntersectionIterator::Intersection IntersectionType;
     //! Element (codim 0 entity) of the grid
     typedef typename GridType::template Codim<0>::Entity EntityType;
 
@@ -101,13 +102,30 @@ namespace Dune {
     //! \return Speed of the fastest wave. This information is used to compute
     //! the maximum admissible timestep size.
     template <class ArgumentTuple, class FaceDomainType>
-    double numericalFlux(IntersectionIterator& it,
-                         const double time, 
-                         const FaceDomainType& x,
-                         const ArgumentTuple& uLeft, 
-                         const ArgumentTuple& uRight,
-                         RangeType& gLeft,
-                         RangeType& gRight)
+    DUNE_DEPRECATED
+    double numericalFlux( const IntersectionIterator& it,
+                          const double time, 
+                          const FaceDomainType& x,
+                          const ArgumentTuple& uLeft, 
+                          const ArgumentTuple& uRight,
+                          RangeType& gLeft,
+                          RangeType& gRight )
+    { 
+      CHECK_INTERFACE_IMPLEMENTATION( asImp().numericalFlux(it, time, x, 
+                                   uLeft, uRight, gLeft, gRight) );
+      return asImp().numericalFlux(*it, time, x, 
+                                   uLeft, uRight, gLeft, gRight); 
+    }
+
+
+    template <class ArgumentTuple, class FaceDomainType>
+    double numericalFlux( const IntersectionType& it,
+                          const double time, 
+                          const FaceDomainType& x,
+                          const ArgumentTuple& uLeft, 
+                          const ArgumentTuple& uRight,
+                          RangeType& gLeft,
+                          RangeType& gRight )
     { 
       CHECK_INTERFACE_IMPLEMENTATION( asImp().numericalFlux(it, time, x, 
                                    uLeft, uRight, gLeft, gRight) );
@@ -128,11 +146,26 @@ namespace Dune {
     //! \return Speed of the fastest wave. This information is used to compute
     //! the maximum admissible timestep size.
     template <class ArgumentTuple, class FaceDomainType>
-    double boundaryFlux(IntersectionIterator& it,
-                        const double time, 
-                        const FaceDomainType& x,
-                        const ArgumentTuple& uLeft,
-                        RangeType& gLeft)
+    DUNE_DEPRECATED
+    double boundaryFlux( const IntersectionIterator& it,
+                         const double time, 
+                         const FaceDomainType& x,
+                         const ArgumentTuple& uLeft,
+                         RangeType& gLeft )
+    { 
+      CHECK_INTERFACE_IMPLEMENTATION( 
+        asImp().boundaryFlux(it, time, x, uLeft, gLeft) );
+      return asImp().boundaryFlux(it, time, x, uLeft, gLeft);
+    }
+
+
+    template <class ArgumentTuple, class FaceDomainType>
+    DUNE_DEPRECATED
+    double boundaryFlux( const IntersectionType& it,
+                         const double time, 
+                         const FaceDomainType& x,
+                         const ArgumentTuple& uLeft,
+                         RangeType& gLeft )
     { 
       CHECK_INTERFACE_IMPLEMENTATION( 
         asImp().boundaryFlux(it, time, x, uLeft, gLeft) );
@@ -148,11 +181,11 @@ namespace Dune {
     //! argument.
     //! \param f The analytical flux (return value)
     template <class ArgumentTuple>
-    void analyticalFlux(EntityType& en,
-                        const double time, 
-                        const DomainType& x,
-                        const ArgumentTuple& u, 
-                        JacobianRangeType& f) 
+    void analyticalFlux( const EntityType& en,
+                         const double time, 
+                         const DomainType& x,
+                         const ArgumentTuple& u, 
+                         JacobianRangeType& f ) 
     { 
       CHECK_AND_CALL_INTERFACE_IMPLEMENTATION(
               asImp().analyticalFlux(en, time, x, u, f) ); 
@@ -170,12 +203,12 @@ namespace Dune {
     //! (needed for the non-conservative contributions)
     //! \param s The source contribution (return value).
     template <class ArgumentTuple, class JacobianTuple>
-    void source(EntityType& en, 
-                const double time, 
-                const DomainType& x,
-                const ArgumentTuple& u, 
-                const JacobianTuple& jac, 
-                RangeType& s) 
+    void source( const EntityType& en, 
+                 const double time, 
+                 const DomainType& x,
+                 const ArgumentTuple& u, 
+                 const JacobianTuple& jac, 
+                 RangeType& s ) 
     { 
       CHECK_AND_CALL_INTERFACE_IMPLEMENTATION(
           asImp().source(en, time, x, u, jac, s) ); 
@@ -190,11 +223,11 @@ namespace Dune {
     //! \param m The mass contribution (return value).
     //! default implementation sets this factor to 1.0 
     template <class ArgumentTuple>
-    void mass(const EntityType& en, 
-              const double time, 
-              const DomainType& x,
-              const ArgumentTuple& u, 
-              MassFactorType& m)
+    void mass( const EntityType& en, 
+               const double time, 
+               const DomainType& x,
+               const ArgumentTuple& u, 
+               MassFactorType& m )
     {
       CHECK_AND_CALL_INTERFACE_IMPLEMENTATION(
           asImp().mass(en, time, x, u, m) ); 
@@ -315,7 +348,7 @@ namespace Dune {
     //! contribution.
     template <class ArgumentTuple, class FaceDomainType>
     double DUNE_DEPRECATED
-    numericalFlux ( IntersectionIterator &it,
+    numericalFlux ( const IntersectionIterator &it,
                     double time, const FaceDomainType& x,
                     const ArgumentTuple& uLeft, 
                     const ArgumentTuple& uRight,
@@ -332,12 +365,13 @@ namespace Dune {
     //! Empty implementation that fails if problem claims to have a flux
     //! contribution.
     template <class ArgumentTuple, class FaceDomainType>
-    double numericalFlux(IntersectionType& it,
-                         double time, const FaceDomainType& x,
-                         const ArgumentTuple& uLeft, 
-                         const ArgumentTuple& uRight,
-                         RangeType& gLeft,
-                         RangeType& gRight)
+    double numericalFlux( const IntersectionType& it,
+                          const double time,
+                          const FaceDomainType& x,
+                          const ArgumentTuple& uLeft, 
+                          const ArgumentTuple& uRight,
+                          RangeType& gLeft,
+                          RangeType& gRight )
     { 
       assert(!this->asImp().hasFlux()); 
       gLeft = 0.0;
@@ -350,7 +384,7 @@ namespace Dune {
     //! contribution.
     template <class ArgumentTuple, class FaceDomainType>
     double DUNE_DEPRECATED
-    boundaryFlux ( IntersectionIterator& it,
+    boundaryFlux ( const IntersectionIterator& it,
                    double time, const FaceDomainType& x,
                    const ArgumentTuple& uLeft,
                    RangeType& gLeft )
@@ -389,10 +423,12 @@ namespace Dune {
     //! Empty implementation that fails if problem claims to have a source 
     //! term.
     template <class ArgumentTuple, class JacobianTuple>
-    void source(EntityType& en, 
-                double time, const DomainType& x,
-                const ArgumentTuple& u, const JacobianTuple& jac, 
-                RangeType& s)
+    void source( const EntityType& en, 
+                 const double time,
+                 const DomainType& x,
+                 const ArgumentTuple& u,
+                 const JacobianTuple& jac, 
+                 RangeType& s )
     { 
       assert(!this->asImp().hasSource()); 
       s = 0.0;
@@ -421,11 +457,11 @@ namespace Dune {
     }
 
     //! Empty implementation 
-    void setEntity(EntityType& en)
+    void setEntity( const EntityType& en )
     { }
 
     //! Empty implementation 
-    void setNeighbor(EntityType& nb)
+    void setNeighbor( const EntityType& nb )
     { }
   };
 

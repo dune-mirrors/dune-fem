@@ -308,7 +308,7 @@ namespace Dune {
   public:
     //! Constructor
     //! \param en The entity the local functions are set to.
-    LocalFunctionSetter(EntityImp& en) :
+    LocalFunctionSetter( const EntityImp& en ) :
       en_(en)
     {}
 
@@ -324,7 +324,7 @@ namespace Dune {
     LocalFunctionSetter& operator=(const LocalFunctionSetter&);
 
   private:
-    EntityImp& en_;
+    const EntityImp& en_;
   };
 
   /**

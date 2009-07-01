@@ -210,7 +210,7 @@ namespace Dune {
       caller_.finalize();
     }
 
-    void applyLocal(EntityType& en) const 
+    void applyLocal( const EntityType& en) const 
     {
       // init local function 
       initLocalFunction( en , updEn_ );
@@ -223,7 +223,7 @@ namespace Dune {
     }
 
     //! local integration 
-    void applyLocal(EntityType& en, TemporaryLocalFunctionType& updEn) const
+    void applyLocal( const EntityType& en, TemporaryLocalFunctionType& updEn) const
     {
       //- statements
       caller_.setEntity(en);
@@ -261,6 +261,7 @@ namespace Dune {
         {
           // get intersection from intersection iterator
           const IntersectionType& inter=*nit;
+
           //double nbvol;
           double nbvol = vol;
           double wspeedS = 0.0;
@@ -363,7 +364,7 @@ namespace Dune {
 
     // initialize local update function 
     template <class LocalFunctionImp>
-    void initLocalFunction(EntityType& en, LocalFunctionImp& update) const 
+    void initLocalFunction( const EntityType& en, LocalFunctionImp& update) const 
     {
       // init local function  
       update.init( en );
@@ -373,8 +374,8 @@ namespace Dune {
 
     //! add update to destination 
     template <class LocalFunctionImp>
-    void updateFunction(EntityType& en, 
-                        LocalFunctionImp& update) const 
+    void updateFunction( const EntityType& en, 
+                         LocalFunctionImp& update) const 
     {
       // get local function and add update 
       LocalFunctionType function = dest_->localFunction(en);
@@ -384,7 +385,7 @@ namespace Dune {
     //! add update to destination 
     template <class LocalFunctionImp>
     void updateFunctionAndApplyMass(
-                        EntityType& en, 
+                        const EntityType& en, 
                         LocalFunctionImp& update) const
     {
       // get local function and add update 
@@ -399,9 +400,9 @@ namespace Dune {
     // Volumetric integral part only flux 
     //////////////////////////////////////////
     template <class LocalFunctionImp>
-    void evalVolumetricPartFlux(EntityType& en, 
-                                const Geometry& geo , 
-                                LocalFunctionImp& updEn) const
+    void evalVolumetricPartFlux( const EntityType& en, 
+                                 const Geometry& geo , 
+                                 LocalFunctionImp& updEn ) const
     {
       VolumeQuadratureType volQuad(en, volumeQuadOrd_);
       const int volQuad_nop = volQuad.nop();
@@ -425,9 +426,9 @@ namespace Dune {
     // Volumetric integral part only flux 
     //////////////////////////////////////////
     template <class LocalFunctionImp>
-    void evalVolumetricPartBoth(EntityType& en, 
-                                const Geometry& geo, 
-                               LocalFunctionImp& updEn) const
+    void evalVolumetricPartBoth( const EntityType& en, 
+                                 const Geometry& geo, 
+                                 LocalFunctionImp& updEn ) const
     {
       VolumeQuadratureType volQuad(en, volumeQuadOrd_);
       const int volQuad_nop = volQuad.nop();
@@ -450,7 +451,8 @@ namespace Dune {
     
     template <class QuadratureImp, class LocalFunctionImp >  
     double applyLocalNeighbor ( const IntersectionType &intersection,
-                                EntityType &en, EntityType &nb, 
+                                const EntityType &en, 
+                                const EntityType &nb, 
                                 const QuadratureImp &faceQuadInner, 
                                 const QuadratureImp &faceQuadOuter,
                                 LocalFunctionImp &updEn,
