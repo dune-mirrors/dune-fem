@@ -188,24 +188,28 @@ namespace Dune {
       	return discreteFunctions_;
       }
 
-      Entity& self() {
+      const Entity &self ()
+      {
         assert( self_ );
         return *self_;
       }
 
-      Entity& neighbor() {
+      const Entity &neighbor ()
+      {
         assert( neighbor_ );
         return *neighbor_;
       }
 
-      void setSelf( const Entity& en ) {
-        self_ = &en;
-        setter(en, localFunctionsSelf_);
+      void setSelf( const Entity &entity )
+      {
+        self_ = &entity;
+        setter( entity, localFunctionsSelf_ );
       }
 
-      void setNeighbor( const Entity& en ) {
-      	neighbor_=&en;
-        setter(en, localFunctionsNeigh_);
+      void setNeighbor( const Entity &entity )
+      {
+      	neighbor_ = &entity;
+        setter( entity, localFunctionsNeigh_ );
       }
 
     private:

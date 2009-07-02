@@ -132,14 +132,15 @@ namespace Dune
                            this->valuesEn_, coeff);
     }
       
-    template <class CoefficientType>
-    void evaluateCoefficient(Entity& en, VolumeQuadratureType& quad, int quadPoint,
-                        CoefficientType& coeff) 
+    template< class CoefficientType >
+    void evaluateCoefficient( const Entity &entity,
+                              const VolumeQuadratureType &quad, int quadPoint,
+                              CoefficientType &coeff )
     {
-      evaluateQuad(quad, quadPoint, 
-                   this->data_->localFunctionsSelf(), this->valuesEn_);
-      problem_.coefficient(en, this->time_, quad.point(quadPoint), 
-                           this->valuesEn_, coeff);
+      evaluateQuad( quad, quadPoint,
+                    this->data_->localFunctionsSelf(), this->valuesEn_ );
+      problem_.coefficient( entity, this->time_, quad.point( quadPoint ),
+                            this->valuesEn_, coeff );
     }
 
     BoundaryIdentifierType

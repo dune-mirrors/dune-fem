@@ -182,18 +182,17 @@ namespace Dune {
     //  Coefficient and RHS caller 
     //
     ////////////////////////////////////////////////////
-    template <class CallerType> 
-    class CoefficientCallerTrue
+    template< class CallerType >
+    struct CoefficientCallerTrue
     {
-    public:  
-      template <class QuadratureType, class CoeffType> 
-      double evaluateCoefficient(CallerType& caller, 
-                               EntityType& en, 
-                               QuadratureType& quad, 
-                               const int l,
-                               CoeffType& coeff) const 
+      template< class QuadratureType, class CoeffType >
+      double evaluateCoefficient ( CallerType &caller,
+                                   const EntityType &entity,
+                                   const QuadratureType &quad,
+                                   const int l,
+                                   CoeffType &coeff ) const
       {
-        caller.evaluateCoefficient(en, quad, l, coeff );
+        caller.evaluateCoefficient( entity, quad, l, coeff );
         return coeff.infinity_norm();
       }         
 
@@ -219,15 +218,15 @@ namespace Dune {
       }
     };
 
-    template <class CallerType> 
+    template< class CallerType >
     struct CoefficientCallerFalse
     {
-      template <class QuadratureType, class CoeffType> 
-      double evaluateCoefficient(const CallerType& caller, 
-                               const EntityType& en, 
-                               const QuadratureType& quad, 
-                               const int l,
-                               CoeffType& coeff) const 
+      template< class QuadratureType, class CoeffType >
+      double evaluateCoefficient ( const CallerType &caller,
+                                   const EntityType &entity,
+                                   const QuadratureType &quad,
+                                   const int l,
+                                   CoeffType &coeff ) const
       {
         return 1.0;
       }         
@@ -244,58 +243,54 @@ namespace Dune {
 
 
     //! if right hand side available 
-    template <class CallerType> 
+    template< class CallerType >
     class CoefficientCallerRHS 
     {
-      mutable SingleLFType& singleRhs_;
-      const BaseFunctionSetType& bsetEn_;
+      mutable SingleLFType &singleRhs_;
+      const BaseFunctionSetType &bsetEn_;
       mutable RangeType rhsval_;
       const int numDofs_ ;
 
     public:
-      CoefficientCallerRHS(SingleLFType& singleRhs)
+      explicit CoefficientCallerRHS ( SingleLFType &singleRhs )
         : singleRhs_ ( singleRhs )
         , bsetEn_( singleRhs_.baseFunctionSet()) 
         , rhsval_ (0.0)  
         , numDofs_ ( singleRhs_.numDofs () )
       {}
 
-      template <class QuadratureType> 
-      void rightHandSide(CallerType& caller, 
-                         EntityType& en, 
-                         QuadratureType& volQuad, 
-                         const int l, 
-                         const double intel) const 
+      template< class QuadratureType >
+      void rightHandSide ( CallerType &caller,
+                           const EntityType &entity,
+                           const QuadratureType &volQuad,
+                           const int l,
+                           const double intel ) const
       {
         // eval rightHandSide function 
         // if empty, rhs stays 0.0
-        caller.rightHandSide(en, volQuad, l, rhsval_ );
+        caller.rightHandSide( entity, volQuad, l, rhsval_ );
 
         // scale with intel 
         rhsval_ *= intel;
 
         //std::cout << rhsval_ << "\n";
 
-        for (int j = 0; j < numDofs_; ++j) 
-        {
-          singleRhs_[j] += bsetEn_.evaluateSingle(j, volQuad[l] , rhsval_ );
-        }
+        for( int j = 0; j < numDofs_; ++j )
+          singleRhs_[ j ] += bsetEn_.evaluateSingle( j, volQuad[ l ], rhsval_ );
       }
     };
 
     //! no rhs 
-    template <class CallerType> 
-    class CoefficientCallerNoRHS 
+    template< class CallerType >
+    struct CoefficientCallerNoRHS 
     {
-    public:  
-      template <class QuadratureType> 
-      void rightHandSide(const CallerType& caller, 
-                         const EntityType& en, 
-                         const QuadratureType& volQuad, 
-                         const int l,
-                         const double intel) const 
-      {
-      }
+      template< class QuadratureType> 
+      void rightHandSide ( const CallerType &caller,
+                           const EntityType &entity,
+                           const QuadratureType &volQuad,
+                           const int l,
+                           const double intel ) const
+      {}
     };
 
     template <class CallerType, bool hasCoeff, bool hasRHS> 
@@ -744,13 +739,13 @@ protected:
     } // end applyBoundary  
 
     template<class QuadratureType, class CoeffCallerType> 
-    double volumetricPart(EntityType& en, 
-                        const GeometryType& geo,
-                        QuadratureType& volQuad,
-                        const CoeffCallerType& coeffCaller,
-                        const BaseFunctionSetType bsetEn,
-                        const int numDofs, 
-                        LocalMatrixType& matrixEn) const
+    double volumetricPart ( const EntityType &entity,
+                            const GeometryType &geo,
+                            const QuadratureType &volQuad,
+                            const CoeffCallerType& coeffCaller,
+                            const BaseFunctionSetType bsetEn,
+                            const int numDofs, 
+                            LocalMatrixType &matrixEn) const
     {
       const int quadNop = volQuad.nop();
 
@@ -769,15 +764,14 @@ protected:
         ////////////////////////////////////
         // create rightHandSide
         ////////////////////////////////////
-        coeffCaller.rightHandSide(caller_, en, volQuad, l, intel);
+        coeffCaller.rightHandSide( caller_, entity, volQuad, l, intel );
         
         ///////////////////////////////
         //  evaluate coefficients 
         ///////////////////////////////
         
         // call anayltical flux of discrete model 
-        betaEst = std::max(coeffCaller.evaluateCoefficient(caller_, en, volQuad, l, coeffEn_ ),
-                           betaEst);
+        betaEst = std::max( betaEst, coeffCaller.evaluateCoefficient( caller_, entity, volQuad, l, coeffEn_ ) );
 
         /////////////////////////////////
         // fill element matrix 
@@ -842,27 +836,27 @@ protected:
     ///////////////////////////////////////////
     //! --apply operator on entity 
     ///////////////////////////////////////////
-    void applyLocal(EntityType& en) const
+    void applyLocal ( const EntityType &entity ) const
     {
       // this method should not be called for ghost entities 
-      assert( en.partitionType() != GhostEntity );
+      assert( entity.partitionType() != GhostEntity );
       
       // get local element matrix 
-      LocalMatrixType matrixEn = matrixObj_.localMatrix(en,en); 
+      LocalMatrixType matrixEn = matrixObj_.localMatrix( entity, entity );
 
       // make entities known in callers
-      caller_.setEntity(en);
+      caller_.setEntity( entity );
 
       // create volume quadrature  
-      VolumeQuadratureType volQuad(en, volumeQuadOrd_);
+      VolumeQuadratureType volQuad( entity, volumeQuadOrd_ );
 
       // get geometry
-      const GeometryType & geo = en.geometry();
+      const GeometryType &geo = entity.geometry();
 
       factorFaces_ = 1;//((geo.type().isSimplex()) ? (dim+1) : 2 * dim);
 
       // get base function set of single space 
-      const BaseFunctionSetType bsetEn = spc_.baseFunctionSet(en);
+      const BaseFunctionSetType bsetEn = spc_.baseFunctionSet( entity );
       const int numDofs = bsetEn.numBaseFunctions();
       assert( numDofs > 0 );
 
@@ -872,7 +866,7 @@ protected:
 
       // local function for right hand side 
       SingleLFType* singleRhsPtr = ( rhs_ ) ? 
-        new SingleLFType(rhs_->localFunction(en)) :  0;
+        new SingleLFType(rhs_->localFunction( entity )) :  0;
       
       // local function for right hand side 
       SingleLFType& singleRhs = *singleRhsPtr; //rhs_->localFunction(en); //rhs
@@ -884,25 +878,25 @@ protected:
       /////////////////////////////////
       // Volumetric integral part
       /////////////////////////////////
-      if(problem_.hasCoefficient() && rightHandSide )
+      if( problem_.hasCoefficient() && rightHandSide )
       {
         CoefficientCaller<DiscreteModelCallerType,true,true> coeffCaller( singleRhs ); 
-        betaEst = volumetricPart(en,geo,volQuad,coeffCaller,bsetEn,numDofs,matrixEn);
+        betaEst = volumetricPart( entity, geo, volQuad, coeffCaller, bsetEn, numDofs, matrixEn );
       }
       else if( problem_.hasCoefficient() )
       {
         CoefficientCaller<DiscreteModelCallerType,true,false> coeffCaller; 
-        betaEst = volumetricPart(en,geo,volQuad,coeffCaller,bsetEn,numDofs,matrixEn);
+        betaEst = volumetricPart( entity, geo, volQuad, coeffCaller, bsetEn, numDofs, matrixEn );
       }
-      else if ( rightHandSide )
+      else if( rightHandSide )
       {
         CoefficientCaller<DiscreteModelCallerType,false,true> coeffCaller( singleRhs ); 
-        betaEst = volumetricPart(en,geo,volQuad,coeffCaller,bsetEn,numDofs,matrixEn);
+        betaEst = volumetricPart( entity, geo, volQuad, coeffCaller, bsetEn, numDofs, matrixEn );
       }
       else 
       {
         CoefficientCaller<DiscreteModelCallerType,false,false> coeffCaller; 
-        betaEst = volumetricPart(en,geo,volQuad,coeffCaller,bsetEn,numDofs,matrixEn);
+        betaEst = volumetricPart(entity, geo, volQuad, coeffCaller, bsetEn, numDofs, matrixEn );
       }
   
       // get beta estimate 
@@ -912,8 +906,8 @@ protected:
       /////////////////////////////////
       // Surface integral part
       /////////////////////////////////
-      const IntersectionIteratorType endnit = gridPart_.iend(en); 
-      for (IntersectionIteratorType nit = gridPart_.ibegin(en); nit != endnit; ++nit) 
+      const IntersectionIteratorType nend = gridPart_.iend( entity ); 
+      for( IntersectionIteratorType nit = gridPart_.ibegin( entity ); nit != nend; ++nit )
       { 
         // neighbor volume  
         double nbVolume = enVolume;
@@ -932,9 +926,7 @@ protected:
           const bool ghostEntity = 
             ( nb.partitionType() == GhostEntity );
           // only once per intersection or when outside is not interior 
-          if( (localIdSet_.id(en) < localIdSet_.id(nb)) 
-              || ghostEntity
-            )
+          if( (localIdSet_.id( entity ) < localIdSet_.id( nb )) || ghostEntity )
 #endif
           {
             // type of TwistUtility 
@@ -951,7 +943,7 @@ protected:
 
               // apply neighbor part 
               nbVolume = applyLocalNeighbor( intersection, 
-                              en,nb,volQuad,
+                              entity,nb,volQuad,
                               faceQuadInner,faceQuadOuter, 
                               bsetEn,matrixEn, singleRhs, wspeedS  
 #ifdef DG_DOUBLE_FEATURE
@@ -979,7 +971,7 @@ protected:
 
               // apply neighbor part 
               nbVolume = applyLocalNeighbor(intersection,
-                            en,nb,volQuad,
+                            entity,nb,volQuad,
                             nonConformingFaceQuadInner,
                             nonConformingFaceQuadOuter, 
                             bsetEn,matrixEn, singleRhs , wspeedS 
@@ -999,7 +991,7 @@ protected:
         if( intersection.boundary() ) 
         { 
           applyLocalBoundary( intersection, 
-              en, geo, volQuad, numDofs, 
+              entity, geo, volQuad, numDofs, 
               bsetEn, &matrixEn, singleRhs, 
               wspeedS ); 
 
@@ -1032,7 +1024,7 @@ protected:
 
         assert( uh_ );
         // local function for right hand side 
-        const SingleLFType uhLf = uh_->localFunction(en); //rhs
+        const SingleLFType uhLf = uh_->localFunction( entity ); //rhs
       
         if( theta_ < 1.0 )
         {
@@ -1096,22 +1088,22 @@ protected:
     }
 
     //! apply boundary integrals to matrix and right hand side 
-    void applyLocalBoundary(const IntersectionType& nit, 
-                            EntityType& en,
-                            const GeometryType& geo, 
-                            VolumeQuadratureType& volQuad,
-                            const int numDofs,
-                            const BaseFunctionSetType& bsetEn, 
-                            LocalMatrixType* matrixEnPtr, 
-                            SingleLFType& singleRhs,
-                            double& wspeedS) const 
+    void applyLocalBoundary ( const IntersectionType &nit,
+                              const EntityType &entity,
+                              const GeometryType &geo,
+                              const VolumeQuadratureType &volQuad,
+                              const int numDofs,
+                              const BaseFunctionSetType &bsetEn, 
+                              LocalMatrixType *matrixEnPtr, 
+                              SingleLFType &singleRhs,
+                              double &wspeedS ) const 
     {
       // create quadrature 
       FaceQuadratureType faceQuadInner(gridPart_, nit, faceQuadOrd_,
                                        FaceQuadratureType::INSIDE);
 
-      typedef typename DiscreteGradientSpaceType :: BaseFunctionSetType BaseFunctionSetType;
-      const BaseFunctionSetType enSet = gradientSpace_.baseFunctionSet( en );
+      typedef typename DiscreteGradientSpaceType::BaseFunctionSetType BaseFunctionSetType;
+      const BaseFunctionSetType enSet = gradientSpace_.baseFunctionSet( entity );
       // get number of base functions for gradient space 
 
       LocalMatrixType& matrixEn = *matrixEnPtr;
@@ -1180,7 +1172,7 @@ protected:
         for(int k=0; k<numDofs; ++k)
         { 
           // evaluate normal * grad phi 
-          tau_[k] = bsetEn.evaluateGradientSingle(k,en, faceQuadInner[l] , norm);  
+          tau_[ k ] = bsetEn.evaluateGradientSingle( k, entity, faceQuadInner[ l ], norm );
           // evaluate phi 
           bsetEn.evaluate(k,faceQuadInner[l] , phi_[k]);
         }
@@ -1362,17 +1354,17 @@ protected:
       return (beta_ * intelFactor * betS * faceVol);
     }
 
-    template <class QuadratureImp> 
-    double applyLocalNeighbor(const IntersectionType & nit, 
-                              EntityType & en, 
-                              EntityType & nb,
-                              VolumeQuadratureType & volQuad,
-                              const QuadratureImp & faceQuadInner, 
-                              const QuadratureImp & faceQuadOuter, 
-                              const BaseFunctionSetType & bsetEn, 
-                              LocalMatrixType & matrixEn,
-                              SingleLFType& singleRhs,
-                              double& wspeedS 
+    template< class QuadratureImp >
+    double applyLocalNeighbor ( const IntersectionType &nit,
+                                const EntityType &entity, 
+                                const EntityType &neighbor,
+                                const VolumeQuadratureType &volQuad,
+                                const QuadratureImp &faceQuadInner,
+                                const QuadratureImp &faceQuadOuter,
+                                const BaseFunctionSetType &bsetEn,
+                                LocalMatrixType &matrixEn,
+                                SingleLFType &singleRhs,
+                                double &wspeedS
 #ifdef DG_DOUBLE_FEATURE
                               , const bool interior 
 #endif    
@@ -1381,7 +1373,7 @@ protected:
       const int numDofs = bsetEn.numBaseFunctions();
 
       // make neighbor known to model caller 
-      caller_.setNeighbor(nb);
+      caller_.setNeighbor( neighbor );
 
       ////////////////////////////////////////////////////////////
       RangeType resultLeft(0.0);
@@ -1399,14 +1391,14 @@ protected:
       JacobianRangeType& normNb = coeffPsi_[0];
 
       // create matrix handles for neighbor 
-      LocalMatrixType matrixNb = matrixObj_.localMatrix( en, nb );
+      LocalMatrixType matrixNb = matrixObj_.localMatrix( entity, neighbor );
 
 #ifdef DG_DOUBLE_FEATURE
       // create matrix handles for neighbor (when called with ghost do nothing)
-      LocalMatrixType enMatrix = matrixObj_.localMatrix( nb, (interior) ? en : nb ); 
+      LocalMatrixType enMatrix = matrixObj_.localMatrix( neighbor, interior ? entity : neighbor ); 
 
       // create matrix handles for neighbor 
-      LocalMatrixType nbMatrix = matrixObj_.localMatrix( nb, nb ); 
+      LocalMatrixType nbMatrix = matrixObj_.localMatrix( neighbor, neighbor ); 
       
       // set matrix to id matrix 
       if( ! interior ) 
@@ -1420,11 +1412,11 @@ protected:
       bool useInterior = false;
 #endif
       // get base function set 
-      const BaseFunctionSetType bsetNeigh = spc_.baseFunctionSet(nb);
+      const BaseFunctionSetType bsetNeigh = spc_.baseFunctionSet( neighbor );
 
-      typedef typename DiscreteGradientSpaceType :: BaseFunctionSetType BaseFunctionSetType;
-      const BaseFunctionSetType enSet = gradientSpace_.baseFunctionSet( en );
-      const BaseFunctionSetType nbSet = gradientSpace_.baseFunctionSet( nb );
+      typedef typename DiscreteGradientSpaceType::BaseFunctionSetType BaseFunctionSetType;
+      const BaseFunctionSetType enSet = gradientSpace_.baseFunctionSet( entity );
+      const BaseFunctionSetType nbSet = gradientSpace_.baseFunctionSet( neighbor );
 
       typedef FieldMatrix<double, massSize , massSize > MassMatrixType; 
       typedef FieldVector<double, massSize > MassVectorType; 
@@ -1452,7 +1444,6 @@ protected:
 
         // we alwas stay on the positive side 
         const RangeFieldType C_12 = 0.5;
-#else 
 #endif
         // intel switching between bilinear from B_+ and B_-  
         const double bilinIntel = (bilinearPlus_) ? intel : -intel;
@@ -1463,8 +1454,7 @@ protected:
         if(problem_.hasCoefficient())
         {
           // call anayltical flux of discrete model 
-          caller_.evaluateCoefficientFace(nit,
-              faceQuadInner,faceQuadOuter,l,coeffEn_,coeffNb_);
+          caller_.evaluateCoefficientFace( nit, faceQuadInner, faceQuadOuter, l, coeffEn_, coeffNb_ );
 
           for(int i=0; i<dimRange; ++i)
           {
@@ -1506,13 +1496,13 @@ protected:
         { 
           // eval base functions 
           bsetEn.evaluate(k,faceQuadInner[l], phi_[k]);
-          // eval gradient for en 
-          tau_[k] = bsetEn.evaluateGradientSingle(k, en, faceQuadInner[l] , normEn);  
+          // eval gradient for entity
+          tau_[ k ] = bsetEn.evaluateGradientSingle( k, entity, faceQuadInner[ l ], normEn );
 
           // neighbor stuff 
           bsetNeigh.evaluate(k,faceQuadOuter[l], phiNeigh_[k] );      
-          // eval gradient for nb 
-          tauNeigh_[k] = bsetNeigh.evaluateGradientSingle(k, nb, faceQuadOuter[l] , normNb);      
+          // eval gradient for neighbor
+          tauNeigh_[ k ] = bsetNeigh.evaluateGradientSingle( k, neighbor, faceQuadOuter[ l ], normNb );
         }
                
         // this terms dissapear if Babuska-Zlamal is used 
@@ -1521,7 +1511,7 @@ protected:
           {
             for(int j=0; j<numDofs; ++j)
             {
-              // view from inner entity en 
+              // view from inner entity entity
               // v^+ * (grad w^+  + grad w^-)
               {
                 numericalFlux2(phi_[k] , tau_[j] , tauNeigh_[j] , resultLeft, resultRight);
@@ -1537,7 +1527,7 @@ protected:
                 matrixNb.add( k , j , valRight );
               }
 
-              // view from inner entity en 
+              // view from inner entity entity
               // grad v^+ * ( w^+  - w^-)
               {
                 numericalFlux(tau_[k] , phi_[j] , phiNeigh_[j] , resultLeft, resultRight);
@@ -1557,7 +1547,7 @@ protected:
               // entity has partition type interior 
               if( interior ) 
               {
-                // view from outer entity nb 
+                // view from outer entity neighbor
                 // v^+ * (grad w^+  + grad w^-)
                 {
                   numericalFlux2(phiNeigh_[k] , tauNeigh_[j] , tau_[j] , resultLeft, resultRight);
@@ -1573,7 +1563,7 @@ protected:
                   enMatrix.add( k , j , valRight );
                 }
 
-                // view from outer entity nb 
+                // view from outer entity neighbor
                 // v^+ * (grad w^+  + grad w^-)
                 {
                   numericalFlux(tauNeigh_[k] , phiNeigh_[j] , phi_[j] , resultLeft, resultRight);
@@ -1602,15 +1592,15 @@ protected:
             {
               // phi_j * phi_k on entity 
               phi_j    = phi_[j] * phi_[k]; 
-              // product with nb 
+              // product with neighbor
               phiNeigh = phiNeigh_[j] * phi_[k]; //bsetNeigh.evaluateSingle(j,faceQuadOuter,l, phi_[k] );      
               
               // phi_j * phi_k on neighbour  
               phiNeigh_j = phiNeigh_[j] * phiNeigh_[k];//bsetNeigh.evaluateSingle(j,faceQuadOuter,l, phiNeigh_[k] );      
-              // product with nb 
+              // product with neighbor
               phiEn = phi_[j] * phiNeigh_[k]; //bsetEn.evaluateSingle(j,faceQuadInner,l, phiNeigh_[k]); 
 
-              // view from inner entity en 
+              // view from inner entity entity
               {
                 numericalFluxStab(phi_j, phiNeigh , resultLeft, resultRight);
 
@@ -1626,7 +1616,7 @@ protected:
               }
               
 #ifdef DG_DOUBLE_FEATURE
-              // view from outer entity nb
+              // view from outer entity neighbor
               {
                 numericalFluxStab(phiNeigh_j, phiEn , resultLeft, resultRight);
 
@@ -1649,11 +1639,11 @@ protected:
       if( timeDependent_ && theta_ < 1.0 ) 
       {
         assert( uh_ );
-        const SingleLFType nbLf = uh_->localFunction( nb );
+        const SingleLFType nbLf = uh_->localFunction( neighbor );
         multLocal( matrixNb, singleRhs, nbLf );
       }
 
-      return nb.geometry().volume();
+      return neighbor.geometry().volume();
     } // end applyLocalNeighbor 
 
     template <class BaseFunctionSet, 

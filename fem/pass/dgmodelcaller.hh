@@ -59,16 +59,16 @@ namespace Dune {
       problem_( problem )
     {}
 
-    void setEntity( const Entity& en ) 
+    void setEntity ( const Entity &entity ) 
     {
-      BaseType::setEntity(en);
-      problem_.setEntity(en);
+      BaseType::setEntity( entity );
+      problem_.setEntity( entity );
     }
 
-    void setNeighbor( const Entity& nb) 
+    void setNeighbor( const Entity &neighbor )
     {
-      BaseType::setNeighbor(nb);
-      problem_.setNeighbor(nb);
+      BaseType::setNeighbor( neighbor );
+      problem_.setNeighbor( neighbor );
     }
 
     // Here, the interface of the problem is replicated and the Caller
@@ -81,14 +81,12 @@ namespace Dune {
       problem_.analyticalFlux(en, time_, x, valuesEn_, res);
     }
     
-    void analyticalFlux( const Entity& en, 
-                         const VolumeQuadratureType& quad, 
-                         const int quadPoint,
-                         JacobianRangeType& res) 
+    void analyticalFlux ( const Entity &entity,
+                          const VolumeQuadratureType &quad,  const int quadPoint,
+                          JacobianRangeType &res )
     {
-      evaluateQuad(quad, quadPoint, data_->localFunctionsSelf(),valuesEn_);
-      problem_.analyticalFlux(en, time_, quad.point(quadPoint), 
-                              valuesEn_, res);
+      evaluateQuad( quad, quadPoint, data_->localFunctionsSelf(), valuesEn_ );
+      problem_.analyticalFlux( entity, time_, quad.point( quadPoint ), valuesEn_, res );
     }
 
     void analyticalFluxAndSource( const Entity& en, 

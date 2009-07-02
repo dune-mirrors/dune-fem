@@ -7,7 +7,8 @@
 #include <dune/common/fvector.hh>
 #include "selection.hh"
 
-namespace Dune {
+namespace Dune
+{
 
   /**
    * @brief Interface class for problem definition in the LDG context.
@@ -237,18 +238,18 @@ namespace Dune {
     //! This can be used, to set local functions required as data function
     //! in the model.
     //! \param en active Entity 
-    void setEntity(EntityType& en) 
+    void setEntity ( const EntityType &entity )
     { 
-      CHECK_AND_CALL_INTERFACE_IMPLEMENTATION( asImp().setEntity(en) ); 
+      CHECK_AND_CALL_INTERFACE_IMPLEMENTATION( asImp().setEntity( entity ) ); 
     }
 
     //! \brief Passes the active neigbor entity to the model.
     //! This can be used, to set local functions required as data functions 
     //! in the model.
     //! \param nb active neighbor Entity 
-    void setNeighbor(EntityType& nb) 
+    void setNeighbor ( const EntityType &neighbor )
     { 
-      CHECK_AND_CALL_INTERFACE_IMPLEMENTATION( asImp().setNeighbor(nb) ); 
+      CHECK_AND_CALL_INTERFACE_IMPLEMENTATION( asImp().setNeighbor( neighbor ) ); 
     }
 
   protected:
@@ -457,12 +458,12 @@ namespace Dune {
     }
 
     //! Empty implementation 
-    void setEntity( const EntityType& en )
-    { }
+    void setEntity ( const EntityType &entity )
+    {}
 
     //! Empty implementation 
-    void setNeighbor( const EntityType& nb )
-    { }
+    void setNeighbor ( const EntityType &neighbor )
+    {}
   };
 
   //! Default implementation of the DiscreteModelInterface where methods for 
@@ -505,18 +506,18 @@ namespace Dune {
     //! set entity and get volume  
     //! \brief method setting pointer of inside entity and getting volume 
     //! \param[in] en reference to inside entity 
-    void setEntity(EntityType& en)
+    void setEntity ( const EntityType &entity )
     { 
-      en_ = &en;
-      enVol_ = en.geometry().volume();
+      en_ = &entity;
+      enVol_ = entity.geometry().volume();
     }
 
     //! \brief method seting pointer of outside entity and getting volume 
     //! \param[in] nb reference to outside entity 
-    void setNeighbor(EntityType& nb)
+    void setNeighbor ( const EntityType &neighbor )
     { 
-      nb_ = &nb;
-      nbVol_ = nb.geometry().volume();
+      nb_ = &neighbor;
+      nbVol_ = neighbor.geometry().volume();
     }
     
     //! \brief method returning reference to inside entity 
@@ -552,9 +553,10 @@ namespace Dune {
     double enVol_;
     double nbVol_;
 
-    EntityType* en_;
-    EntityType* nb_;
+    const EntityType *en_;
+    const EntityType *nb_;
   };
 
 }  // end namespace Dune
-#endif
+
+#endif // #ifndef DUNE_DISCRETEMODEL_HH

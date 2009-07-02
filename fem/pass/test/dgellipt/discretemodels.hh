@@ -538,16 +538,17 @@ namespace LDGExample {
       return 0.0;
     }
 
-    template <class ArgumentTuple>
-    void analyticalFlux(EntityType& en,
-                        double time, const DomainType& x,
-                        const ArgumentTuple& u, JacobianRangeType& f)
+    template< class ArgumentTuple >
+    void analyticalFlux ( const EntityType &entity,
+                          double time, const DomainType &x,
+                          const ArgumentTuple &u, JacobianRangeType &f )
     {
-      typedef typename ElementType<0, ArgumentTuple>::Type UType;
-      const UType& argU = Element<0>::get(u);
+      typedef typename ElementType< 0, ArgumentTuple >::Type UType;
+      const UType &argU = Element< 0 >::get( u );
       // get saturation 
-      model_.gradient(en,time,x,argU,f);
+      model_.gradient( entity, time, x, argU, f );
     }
+
   private:
     const ModelImp &model_;
     const NumFluxType &numFlux_;
