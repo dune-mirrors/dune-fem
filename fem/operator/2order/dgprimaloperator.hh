@@ -10,7 +10,7 @@
 
 //- local includes 
 #include <dune/fem/pass/pass.hh>
-#include <dune/fem/pass/discretemodel.hh>
+#include <dune/fem/pass/dgdiscretemodel.hh>
 #include <dune/fem/pass/ellipticmodelcaller.hh>
 
 #include <dune/fem/solver/timeprovider.hh>
@@ -26,7 +26,8 @@
 
 #include <dune/fem/operator/2order/dgmatrixsetup.hh>
 
-namespace Dune {
+namespace Dune
+{
 
 // double feature only works in serial runs 
 //#if HAVE_MPI == 0

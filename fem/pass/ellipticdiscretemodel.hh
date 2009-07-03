@@ -9,9 +9,10 @@
 //- local includes 
 #include <dune/fem/misc/boundaryidentifier.hh>
 #include "selection.hh"
-#include "discretemodel.hh"
+#include "dgdiscretemodel.hh"
 
-namespace Dune {
+namespace Dune
+{
 
   /**
    * @brief Interface class for problem definition in the 

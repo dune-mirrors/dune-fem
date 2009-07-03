@@ -89,7 +89,7 @@ namespace Dune {
       problem_.analyticalFlux( entity, time_, quad.point( quadPoint ), valuesEn_, res );
     }
 
-    void analyticalFluxAndSource( const Entity& en, 
+    void analyticalFluxAndSource( const Entity &entity,
                                   const VolumeQuadratureType& quad, 
                                   const int quadPoint,
                                   JacobianRangeType& fluxRes, 
@@ -98,13 +98,10 @@ namespace Dune {
       // evaluate local functions 
       evaluateQuad(quad, quadPoint, data_->localFunctionsSelf(),valuesEn_);
       // evaluate local gradients 
-      evaluateJacobianQuad(en, quad, quadPoint);
+      evaluateJacobianQuad( entity, quad, quadPoint );
       
-      problem_.analyticalFlux(en, time_, quad.point(quadPoint), 
-                              valuesEn_, fluxRes);
-
-      problem_.source(en, time_, quad.point(quadPoint), valuesEn_,
-                      jacobians_, sourceRes);
+      problem_.analyticalFlux( entity, time_, quad.point( quadPoint ), valuesEn_, fluxRes );
+      problem_.source( entity, time_, quad.point( quadPoint ), valuesEn_, jacobians_, sourceRes );
     }
 
     template< class IntersectionIterator, class FaceDomainType >

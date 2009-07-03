@@ -4,7 +4,7 @@
 // FR passes 
 #include <dune/fem/pass/dgpass.hh>
 #include <dune/fem/pass/selection.hh>
-#include <dune/fem/pass/discretemodel.hh>
+#include <dune/fem/pass/dgdiscretemodel.hh>
 #include <dune/fem/space/dgspace.hh>
 #include <dune/fem/space/combinedspace.hh>
 
@@ -47,14 +47,15 @@
 //#define USE_DUNE_ISTL 0
 
 //*************************************************************
-namespace LDGExample {  
+namespace LDGExample
+{
 
   using namespace Dune;
 
   // MethodOrderTraits
-  template <class Model,int polOrd,int dimRange>
-  class ElliptPassTraits {
-  public:
+  template< class Model, int polOrd, int dimRange >
+  struct ElliptPassTraits
+  {
     typedef typename Model::Traits ModelTraits;
     typedef typename ModelTraits::GridType GridType;
     enum { dimDomain = Model::Traits::dimDomain };
@@ -123,8 +124,7 @@ namespace LDGExample {
 #endif
     typedef DiscreteFunctionType DestinationType;
 
-    typedef LaplaceDiscreteModel<Model,NumFlux,polOrd,passId> DiscreteModelType;
-    typedef DiscreteModelType ThisType;
+    typedef LaplaceDiscreteModel< Model, NumFlux, polOrd, passId > DGDiscreteModelType;
 
     template <class PreviousPassType>
     struct LocalOperatorSelector
@@ -141,7 +141,8 @@ namespace LDGExample {
       //! template-given passId, which is given for this template class.
       //! Since this is the last pass, doesn't play role, 
       //! but it's pass id can not be -1 or omitted
-      typedef DGPrimalOperator<ThisType,PreviousPassType, MatrixObjectTraits, passId > LocalOperatorType;
+      typedef DGPrimalOperator< DGDiscreteModelType, PreviousPassType, MatrixObjectTraits, passId >
+        LocalOperatorType;
 
 #if USE_DUNE_ISTL
       typedef ISTLBICGSTABOp <DiscreteFunctionType, LocalOperatorType> InverseOperatorType;
@@ -158,15 +159,14 @@ namespace LDGExample {
     };
   };
 
-  template <class Model,class NumFlux,int polOrd, int passId >
-  class LaplaceDiscreteModel : 
-    public DiscreteModelDefaultWithInsideOutSide<
-      LaplaceTraits<Model,NumFlux,polOrd,passId> , passId >
+  template< class Model, class NumFlux, int polOrd, int passId >
+  struct LaplaceDiscreteModel
+  : public DGDiscreteModelDefaultWithInsideOutSide
+    < LaplaceTraits< Model, NumFlux, polOrd, passId >, passId >
   { 
-  public:
     enum { polynomialOrder = polOrd };
 
-    typedef LaplaceTraits< Model , NumFlux , polOrd , passId > Traits;
+    typedef LaplaceTraits< Model, NumFlux, polOrd, passId > Traits;
     typedef FieldVector<double, Traits::dimDomain> DomainType;
     typedef FieldVector<double, Traits::dimDomain-1> FaceDomainType;
 
@@ -349,8 +349,8 @@ namespace LDGExample {
                          CoefficientType & coeffRight) const 
     {
       assert( it.neighbor() );
-      model_.diffusion(this->inside(),time,it.intersectionSelfLocal().global(local),coeffLeft);
-      model_.diffusion(this->outside(),time,it.intersectionNeighborLocal().global(local),coeffRight);
+      model_.diffusion( this->inside(), time, it.geometryInInside().global( local ), coeffLeft );
+      model_.diffusion( this->outside(), time, it.geometryInOutside().global( local ), coeffRight );
     }
     
     template <class EntityType , class DomainType,
@@ -427,19 +427,20 @@ namespace LDGExample {
     typedef DiscreteFunctionType DestinationType;
 
 
-    typedef VelocityDiscreteModel<ModelImp,NumFluxImp,polOrd,passId> DiscreteModelType;
+    typedef VelocityDiscreteModel< ModelImp, NumFluxImp, polOrd, passId > DGDiscreteModelType;
   };
 
 
   template <class ModelImp,class NumFluxImp,int polOrd, int passId >
-  class VelocityDiscreteModel :
-    public DiscreteModelDefaultWithInsideOutSide<
-      VelocityTraits<ModelImp,NumFluxImp,polOrd,passId>, passId >
+  class VelocityDiscreteModel
+  : public DGDiscreteModelDefaultWithInsideOutSide
+    < VelocityTraits< ModelImp, NumFluxImp, polOrd, passId >, passId >
   {
     // do not copy this class 
     VelocityDiscreteModel(const VelocityDiscreteModel&);
+
   public:
-    typedef VelocityTraits< ModelImp , NumFluxImp , polOrd , passId > Traits;
+    typedef VelocityTraits< ModelImp, NumFluxImp, polOrd, passId > Traits;
     
     // select Pressure, which comes from pass before 
     typedef FieldVector<double, Traits::dimDomain> DomainType;

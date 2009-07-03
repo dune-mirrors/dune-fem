@@ -398,13 +398,13 @@ namespace Dune
 
     //! Empty implementation that fails if problem claims to have a flux
     //! contribution.
-    template <class ArgumentTuple, class FaceDomainType>
-    double boundaryFlux(IntersectionType& it,
-                        double time, const FaceDomainType& x,
-                        const ArgumentTuple& uLeft,
-                        RangeType& gLeft)
+    template< class ArgumentTuple, class FaceDomainType >
+    double boundaryFlux ( const IntersectionType &intersection,
+                          double time, const FaceDomainType &x,
+                          const ArgumentTuple &uLeft,
+                          RangeType &gLeft )
     {
-      assert(!this->asImp().hasFlux());
+      assert( !this->asImp().hasFlux() );
       gLeft = 0.0;
       return 0.0;
     }
@@ -412,26 +412,26 @@ namespace Dune
 
     //! Empty implementation that fails if problem claims to have a flux
     //! contribution.
-    template <class ArgumentTuple>
-    void analyticalFlux(EntityType& en,
-                        double time, const DomainType& x,
-                        const ArgumentTuple& u, JacobianRangeType& f)
+    template< class ArgumentTuple >
+    void analyticalFlux ( const EntityType &entity,
+                          double time, const DomainType &x,
+                          const ArgumentTuple &u, JacobianRangeType &f )
     { 
-      assert(!this->asImp().hasFlux()); 
+      assert( !this->asImp().hasFlux() );
       f = 0.0;
     }
 
     //! Empty implementation that fails if problem claims to have a source 
     //! term.
-    template <class ArgumentTuple, class JacobianTuple>
-    void source( const EntityType& en, 
-                 const double time,
-                 const DomainType& x,
-                 const ArgumentTuple& u,
-                 const JacobianTuple& jac, 
-                 RangeType& s )
+    template< class ArgumentTuple, class JacobianTuple >
+    void source ( const EntityType &entity, 
+                  const double time,
+                  const DomainType &x,
+                  const ArgumentTuple &u,
+                  const JacobianTuple &jac, 
+                  RangeType &s )
     { 
-      assert(!this->asImp().hasSource()); 
+      assert( !this->asImp().hasSource() );
       s = 0.0;
     }
 

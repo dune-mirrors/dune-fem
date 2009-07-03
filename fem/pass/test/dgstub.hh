@@ -5,20 +5,22 @@
 
 #include <dune/grid/io/file/dgfparser/dgfgridtype.hh>
 
-#include "../dgpass.hh"
-#include "../discretemodel.hh"
-#include "../selection.hh"
-
 #include <dune/fem/space/lagrangespace.hh>
 #include <dune/fem/gridpart/gridpart.hh>
 #include <dune/fem/function/adaptivefunction.hh>
 #include <dune/fem/quadrature/elementquadrature.hh>
 
-namespace Dune {
+#include <dune/fem/pass/dgpass.hh>
+#include <dune/fem/pass/dgdiscretemodel.hh>
+#include <dune/fem/pass/selection.hh>
+
+namespace Dune
+{
   
   class DiscreteModelStub;
 
-  struct DGStubTraits {
+  struct DGStubTraits
+  {
     enum { dim = GridType :: dimension };
     typedef LeafGridPart<GridType> GridPartType;
     typedef FunctionSpace<double, double, dim , 1> FunctionSpaceType;
@@ -33,21 +35,22 @@ namespace Dune {
     typedef DiscreteFunctionSpaceType::RangeType RangeType;
     typedef DiscreteFunctionSpaceType::JacobianRangeType JacobianRangeType;
 
-    typedef DiscreteModelStub DiscreteModelType;
+    typedef DiscreteModelStub DGDiscreteModelType;
   };
   
-  class DiscreteModelStub : 
-    public DiscreteModelDefault<DGStubTraits>
+  class DiscreteModelStub
+  : public DGDiscreteModelDefault< DGStubTraits >
   {
-    typedef DiscreteModelDefault<DGStubTraits> BaseType;
+    typedef DGDiscreteModelDefault< DGStubTraits > BaseType;
+
   public:
-    typedef Selector<0>::Base SelectorType;
+    typedef Selector< 0 >::Base SelectorType;
 
     typedef DGStubTraits Traits;
 
     typedef Traits::FunctionSpaceType FunctionSpaceType;
     typedef Traits::GridPartType GridPartType;
-    typedef GridPartType:: GridType GridType;
+    typedef GridPartType::GridType GridType;
     typedef Traits::DiscreteFunctionSpaceType DiscreteFunctionSpaceType;
     // * find common notation
     typedef Traits::SpaceType SpaceType;
@@ -64,9 +67,20 @@ namespace Dune {
     typedef FieldVector<double, 3> DomainType;
   
   public:
-    bool hasFlux() const { return true; }
-    bool hasSource() const { return true; }
-    bool hasMass () const { return true; }
+    bool hasFlux() const
+    {
+      return true;
+    }
+
+    bool hasSource() const
+    {
+      return true;
+    }
+
+    bool hasMass () const
+    {
+      return true;
+    }
 
     template <class ArgumentTuple, class FaceDomainType>
     double numericalFlux(IntersectionIterator& it,
@@ -94,7 +108,9 @@ namespace Dune {
     void analyticalFlux(EntityType& en,
                         double time, const DomainType& x,
                         const ArgumentTuple& u, JacobianRangeType& f) 
-    { std::cout << "analyticalFlux()" << std::endl; }
+    {
+      std::cout << "analyticalFlux()" << std::endl;
+    }
 
     template <class ArgumentTuple, class JacobianTuple>
     void source(EntityType& en, 
@@ -102,7 +118,9 @@ namespace Dune {
                 const ArgumentTuple& u, 
                 const JacobianTuple& jac, 
                 RangeType& s)
-    { std::cout << "S()" << std::endl; }
+    {
+      std::cout << "S()" << std::endl;
+    }
 
     template <class ArgumentTuple>
     void mass(const EntityType& en,
@@ -110,8 +128,9 @@ namespace Dune {
               const DomainType& x,
               const ArgumentTuple& u,
               MassFactorType& m)
-    { std::cout << "M()" << std::endl; }
-
+    {
+      std::cout << "M()" << std::endl;
+    }
   };
 
 } // end namespace Dune

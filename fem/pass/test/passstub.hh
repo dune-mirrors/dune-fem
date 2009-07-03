@@ -2,23 +2,25 @@
 #define DUNE_PASSSTUB_HH
 
 #include <dune/grid/io/file/dgfparser/dgfgridtype.hh>
-#include <dune/fem/gridpart/gridpart.hh>
 
+#include <dune/fem/gridpart/gridpart.hh>
 #include <dune/fem/space/lagrangespace.hh>
 #include <dune/fem/function/adaptivefunction.hh>
-#include "dune/fem/pass/pass.hh"
-#include "dune/fem/pass/discretemodel.hh"
+
+#include <dune/fem/pass/pass.hh>
+#include <dune/fem/pass/dgdiscretemodel.hh>
 
 namespace Dune
 {
 
   class ProblemStub;
 
-  template <class GridImp> 
-  struct PassStubTraits {
+  template< class GridImp >
+  struct PassStubTraits
+  {
     typedef GridImp GridType;
     typedef PassStubTraits<GridType> Traits;
-    typedef ProblemStub DiscreteModelType;
+    typedef ProblemStub DGDiscreteModelType;
     typedef FunctionSpace<double, double, GridType :: dimension, 1> FunctionSpaceType;
     typedef typename FunctionSpaceType :: RangeType  RangeType;
     typedef typename FunctionSpaceType :: DomainType DomainType;
@@ -57,10 +59,9 @@ namespace Dune
   };
 
 
-  class ProblemStub : public
-        DiscreteModelDefaultWithInsideOutSide<PassStubTraits<GridType>, 0 > 
+  struct ProblemStub
+  : public DGDiscreteModelDefaultWithInsideOutSide< PassStubTraits< GridType >, 0 > 
   {
-  public:  
     typedef PassStubTraits<GridType> Traits;
   };
 }
