@@ -234,19 +234,25 @@ namespace Dune
           asImp().mass(en, time, x, u, m) ); 
     }
 
-    //! \brief Passes the active entity to the model.
-    //! This can be used, to set local functions required as data function
-    //! in the model.
-    //! \param en active Entity 
+    /** \brief Passes the active entity to the model.
+     * 
+     *  This can be used, to set local functions required as data function
+     *  in the model.
+     * 
+     *  \param[in]  entity  active Entity
+     */
     void setEntity ( const EntityType &entity )
     { 
       CHECK_AND_CALL_INTERFACE_IMPLEMENTATION( asImp().setEntity( entity ) ); 
     }
 
-    //! \brief Passes the active neigbor entity to the model.
-    //! This can be used, to set local functions required as data functions 
-    //! in the model.
-    //! \param nb active neighbor Entity 
+    /** \brief Passes the active neigbor entity to the model.
+     *  
+     *  This can be used, to set local functions required as data functions
+     *  in the model.
+     *
+     *  \param[in]  neighbor  active neighbor Entity 
+     */
     void setNeighbor ( const EntityType &neighbor )
     { 
       CHECK_AND_CALL_INTERFACE_IMPLEMENTATION( asImp().setNeighbor( neighbor ) ); 
@@ -503,17 +509,14 @@ namespace Dune
       : enVol_(-1.0) , nbVol_(-1.0) , en_(0) , nb_(0)  
     {}
 
-    //! set entity and get volume  
-    //! \brief method setting pointer of inside entity and getting volume 
-    //! \param[in] en reference to inside entity 
+    /** \copydoc DiscreteModelInterface::setEntity(const EntityType &entity) */
     void setEntity ( const EntityType &entity )
     { 
       en_ = &entity;
       enVol_ = entity.geometry().volume();
     }
 
-    //! \brief method seting pointer of outside entity and getting volume 
-    //! \param[in] nb reference to outside entity 
+    /** \copydoc DiscreteModelInterface::setNeighbor(const EntityType &entity) */
     void setNeighbor ( const EntityType &neighbor )
     { 
       nb_ = &neighbor;
