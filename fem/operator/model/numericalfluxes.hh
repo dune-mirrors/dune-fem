@@ -147,7 +147,6 @@ namespace Dune
       typename Traits::FluxRangeType anaflux;
 
 #if WRITENUMFLUX == 1
-      std::cout << std::endl;
       std::cout << " .. uLeft is " << uLeft << std::endl;
       std::cout << " .. uRight is " << uRight << std::endl;
       std::cout << " .. reflectionLeft is " << reflectionLeft << std::endl;
@@ -167,8 +166,8 @@ namespace Dune
       // (no reflection)
       {
 #if WRITENUMFLUX == 1
-        std::cout << " .. no refelction: reflectionLeft = false & reflectionRight = false"  << std::endl;
-        std::cout << " ..   evaluate f(a) = F( en, time, x_en, uLeft )"  << std::endl;
+        std::cout << " .. no reflection: reflectionLeft = false & reflectionRight = false" << std::endl;
+        std::cout << " ..   evaluate f(a) = F( en, time, x_en, uLeft )" << std::endl;
 #endif
         // anaflux = F( en, time, x_en, uLeft )
         model_.analyticalFlux( *(intersection.inside()), time, geoInInside.global(x),
@@ -180,23 +179,23 @@ namespace Dune
         if (intersection.neighbor())
         {
 #if WRITENUMFLUX == 1
-          std::cout << " ..   neighbor: evaluate f(b) = F( nb, time, x_nb, uRight)"  << std::endl;
+          std::cout << " ..   neighbor: evaluate f(b) = F( nb, time, x_nb, uRight)" << std::endl;
 #endif
           // anaflux = F( nb, time, x_nb, uRight)
           model_.analyticalFlux( *(intersection.outside()), time, geoInOutside.global(x),
                                  uRight, 
                                  anaflux );
-        }
+        } // end of neighbor
         else
         {
 #if WRITENUMFLUX == 1
-          std::cout << " ..   no neighbor: evaluate f(b) = F( en, time, x_en, uRight)"  << std::endl;
+          std::cout << " ..   no neighbor: evaluate f(b) = F( en, time, x_en, uRight)" << std::endl;
 #endif
           // anaflux = F( en, time, x_en, uRight)
           model_.analyticalFlux( *(intersection.inside()), time, geoInInside.global(x), 
                                  uRight, 
                                  anaflux );
-        }
+        } // end of no neighbor
         
         // gLeft = F( en, time, x_en, uLeft ) * n + F( nb, time, x_nb, uRight) * n (neighbor)
         //   or
@@ -210,8 +209,8 @@ namespace Dune
       // (reflection in entity) or (reflection in both entity and neighbor)
       {
 #if WRITENUMFLUX == 1
-        std::cout << " .. reflection in entity: reflectionLeft = true, reflectionRight can be true or false"  << std::endl;
-        std::cout << " ..   evaluate f(a) = F( en, time, x_en, uLeft )"  << std::endl;
+        std::cout << " .. reflection in entity: reflectionLeft = true, reflectionRight can be true or false" << std::endl;
+        std::cout << " ..   evaluate f(a) = F( en, time, x_en, uLeft )" << std::endl;
 #endif
         // anaflux = F( en, time, x_en, uLeft )
         model_.analyticalFlux( *(intersection.inside()), time, geoInInside.global(x),
@@ -220,7 +219,7 @@ namespace Dune
         // gLeft = F( en, time, x_en, uLeft ) * n
         anaflux.umv( normal, gLeft );
 #if WRITENUMFLUX == 1
-        std::cout << " ..   evaluate f(b) = F( en, time, x_en, uLeftRef )"  << std::endl;
+        std::cout << " ..   evaluate f(b) = F( en, time, x_en, uLeftRef )" << std::endl;
 #endif
         // anaflux = F( en, time, x_en, uLeftRef )
         model_.analyticalFlux( *(intersection.inside()), time, geoInInside.global(x),
@@ -247,19 +246,19 @@ namespace Dune
       // (reflection in neighbor)
       {
 #if WRITENUMFLUX == 1
-        std::cout << " .. reflection in neighbor: reflectionLeft = false && reflectionRight = true "  << std::endl;
-        std::cout << " ..   evaluate f(a) = F( nb, time, x_nb, uRightRef )"  << std::endl;
+        std::cout << " .. reflection in neighbor: reflectionLeft = false && reflectionRight = true " << std::endl;
+        std::cout << " ..   evaluate f(a) = F( nb, time, x_nb, uRightRef )" << std::endl;
 #endif
-          // anaflux = F( nb, time, x_nb, uRightRef )
-          model_.analyticalFlux( *(intersection.outside()), time,
-                                 geoInOutside.global(x),
-                                 model_.reflectU( uRight, normal, uRightRef ), 
-                                 anaflux);
-          // gLeft = F( nb, time, x_nb, uRightRef ) * n
-          anaflux.umv( normal, gRight );
+        // anaflux = F( nb, time, x_nb, uRightRef )
+        model_.analyticalFlux( *(intersection.outside()), time,
+                               geoInOutside.global(x),
+                               model_.reflectU( uRight, normal, uRightRef ), 
+                               anaflux);
+        // gLeft = F( nb, time, x_nb, uRightRef ) * n
+        anaflux.umv( normal, gRight );
 
 #if WRITENUMFLUX == 1
-        std::cout << " ..   evaluate f(b) = F( nb, time, x_nb, uRight )"  << std::endl;
+        std::cout << " ..   evaluate f(b) = F( nb, time, x_nb, uRight )" << std::endl;
 #endif
         // anaflux = F( nb, time, x_nb, uRight )
         model_.analyticalFlux( *(intersection.outside()), time, geoInOutside.global(x),
@@ -267,13 +266,51 @@ namespace Dune
                                anaflux );
         // gLeft = F( nb, time, x_nb, uRightRef ) * n + F( nb, time, x_nb, uRight ) * n
         anaflux.umv( normal, gRight );
+      }
       } // end of (reflection in neighbor)
-      } // end of else
 
       double maxspeedl, maxspeedr, maxspeed;
       double viscparal, viscparar, viscpara;
 
       const IntersectionGeometry &geo = intersection.geometry();
+
+
+
+
+
+
+      if ( reflectionLeft == false && reflectionRight == false )
+      // (no reflection)
+      {
+#if WRITENUMFLUX == 1
+        std::cout << " .. no reflection: reflectionLeft = false & reflectionRight = false" << std::endl;
+#endif
+        model_.maxSpeed( normal, time, geo.global(x), *(intersection.inside()),
+                         uLeft, viscparal, maxspeedl );
+      } // end of (no reflection)
+
+      if ( reflectionLeft == true )
+      // (reflection in entity) or (reflection in both entity and neighbor)
+      {
+#if WRITENUMFLUX == 1
+        std::cout << " .. reflection in entity: reflectionLeft = true, reflectionRight can be true or false" << std::endl;
+#endif
+      } // end of (reflection in entity) or (reflection in both entity and neighbor)
+      else
+      {
+      if ( reflectionLeft == false && reflectionRight == true )
+      // (reflection in neighbor)
+      {
+#if WRITENUMFLUX == 1
+        std::cout << " .. reflection in neighbor: reflectionLeft = false && reflectionRight = true " << std::endl;
+#endif
+      }
+      } // end of (reflection in neighbor)
+
+
+
+
+
 
       // the version of the method maxSpeed is used with the additional argument for wetting-drying treatment
       if ( reflectionRight == false )
@@ -310,6 +347,9 @@ namespace Dune
                            uRight, viscparar, maxspeedr );
         }
       }
+
+
+
 
 /*
       if ( reflectionRight == false )
@@ -456,23 +496,66 @@ namespace Dune
       model_.maxSpeed( normal, time, geo.global(x), *(intersection.outside()),
                        uRight, viscparar, maxspeedr ); */
 
+/*
       maxspeed = (maxspeedl>maxspeedr) ? maxspeedl : maxspeedr;
       viscpara = (viscparal>viscparar) ? viscparal : viscparar;
 
-#if WRITENUMFLUX == 1
-      std::cout << " .. reflectionRight = true, evaluate g(uRightRef)"  << std::endl;
-#endif
+      // the version of the method maxSpeed is used with the additional argument for wetting-drying treatment
+      if ( reflectionRight == false )
+      // (no reflection) or (reflection in entity)
+      {
+        model_.maxSpeed( normal, time, geo.global(x), *(intersection.inside()),
+                         uLeft, viscparal, maxspeedl );
+      }
+      else
+      // (reflection in neighbor)
+      {
+        model_.maxSpeed( normal, time, geo.global(x), *(intersection.outside()),
+                         uRight, viscparar, maxspeedr );
+      }
+
+      if ( reflectionLeft == true )
+      // (reflection in entity)
+      {
+        model_.maxSpeed( normal, time, geo.global(x), *(intersection.inside()),
+                         uLeftRef, viscparar, maxspeedr );
+      }
+      else
+      {
+        if ( reflectionRight == true )
+        // (reflection in neigbor)
+        {
+          model_.maxSpeed( normal, time, geo.global(x), *(intersection.outside()),
+                           uRightRef, viscparal, maxspeedl );
+        }
+        else
+        // (no reflection)
+        {
+          model_.maxSpeed( normal, time, geo.global(x), *(intersection.outside()),
+                           uRight, viscparar, maxspeedr );
+        }
+      }
+*/
 
       if ( reflectionRight == true )
       {
+#if WRITENUMFLUX == 1
+      std::cout << " .. reflectionRight = true, evaluate visc" << std::endl;
+#endif
         visc  = uRightRef - uRight;  
       }
       if ( reflectionLeft == true )
       {
+#if WRITENUMFLUX == 1
+      std::cout << " .. reflectionLeft = true, evaluate visc" << std::endl;
+#endif
         visc  = uLeftRef - uLeft;  
       }
       else
       {
+#if WRITENUMFLUX == 1
+        std::cout << " .. no reflection: reflectionLeft = false & reflectionRight = false" << std::endl;
+#endif
         visc  = uRight - uLeft;
       }
 
@@ -480,12 +563,20 @@ namespace Dune
 
       if ( reflectionRight == true )
       {
+      {
+#if WRITENUMFLUX == 1
+      std::cout << " .. reflectionRight = true, evaluate gRight, gLeft = gRight" << std::endl;
+#endif
         gRight -= visc;
         gRight *= 0.5;        
         gLeft = gRight;  
       }
       else
       {
+#if WRITENUMFLUX == 1
+      std::cout << " .. (no reflection: reflectionLeft = false & reflectionRight = false)" << std::endl;
+      std::cout << " ..   or (reflectionLeft = true), evaluate gLeft, gRight = gLeft" << std::endl;
+#endif
         gLeft -= visc;
         gLeft *= 0.5;
         gRight = gLeft;
