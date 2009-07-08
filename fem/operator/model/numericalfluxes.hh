@@ -254,7 +254,7 @@ namespace Dune
                                geoInOutside.global(x),
                                model_.reflectU( uRight, normal, uRightRef ), 
                                anaflux);
-        // gLeft = F( nb, time, x_nb, uRightRef ) * n
+        // gRight = F( nb, time, x_nb, uRightRef ) * n
         anaflux.umv( normal, gRight );
 
 #if WRITENUMFLUX == 1
@@ -264,29 +264,33 @@ namespace Dune
         model_.analyticalFlux( *(intersection.outside()), time, geoInOutside.global(x),
                                uRight, 
                                anaflux );
-        // gLeft = F( nb, time, x_nb, uRightRef ) * n + F( nb, time, x_nb, uRight ) * n
+        // gRight = F( nb, time, x_nb, uRightRef ) * n + F( nb, time, x_nb, uRight ) * n
         anaflux.umv( normal, gRight );
       }
       } // end of (reflection in neighbor)
 
-      double maxspeedl, maxspeedr, maxspeed;
-      double viscparal, viscparar, viscpara;
+
+      double maxspeedl = 0.;
+      double maxspeedr = 0.;
+      double maxspeed = 0.;
+      double viscparal = 0.;
+      double viscparar = 0.;
+      double viscpara = 0.;
 
       const IntersectionGeometry &geo = intersection.geometry();
 
-
-
-
-
-
+      // the version of the method maxSpeed is used with the additional argument for wetting-drying treatment
       if ( reflectionLeft == false && reflectionRight == false )
       // (no reflection)
       {
 #if WRITENUMFLUX == 1
         std::cout << " .. no reflection: reflectionLeft = false & reflectionRight = false" << std::endl;
+        std::cout << " ..   evaluate viscparal, maxspeedl, viscparar, maxspeedr" << std::endl;
 #endif
         model_.maxSpeed( normal, time, geo.global(x), *(intersection.inside()),
                          uLeft, viscparal, maxspeedl );
+        model_.maxSpeed( normal, time, geo.global(x), *(intersection.outside()),
+                         uRight, viscparar, maxspeedr );
       } // end of (no reflection)
 
       if ( reflectionLeft == true )
@@ -294,7 +298,12 @@ namespace Dune
       {
 #if WRITENUMFLUX == 1
         std::cout << " .. reflection in entity: reflectionLeft = true, reflectionRight can be true or false" << std::endl;
+        std::cout << " ..   evaluate viscparal, maxspeedl, viscparar, maxspeedr" << std::endl;
 #endif
+        model_.maxSpeed( normal, time, geo.global(x), *(intersection.inside()),
+                         uLeft, viscparal, maxspeedl );
+        model_.maxSpeed( normal, time, geo.global(x), *(intersection.outside()),
+                         uLeftRef, viscparar, maxspeedr );
       } // end of (reflection in entity) or (reflection in both entity and neighbor)
       else
       {
@@ -303,53 +312,97 @@ namespace Dune
       {
 #if WRITENUMFLUX == 1
         std::cout << " .. reflection in neighbor: reflectionLeft = false && reflectionRight = true " << std::endl;
+        std::cout << " ..   evaluate viscparal, maxspeedl, viscparar, maxspeedr" << std::endl;
 #endif
-      }
-      } // end of (reflection in neighbor)
-
-
-
-
-
-
-      // the version of the method maxSpeed is used with the additional argument for wetting-drying treatment
-      if ( reflectionRight == false )
-      // (no reflection) or (reflection in entity)
-      {
         model_.maxSpeed( normal, time, geo.global(x), *(intersection.inside()),
-                         uLeft, viscparal, maxspeedl );
-      }
-      else
-      // (reflection in neighbor)
-      {
+                         uRightRef, viscparal, maxspeedl );
         model_.maxSpeed( normal, time, geo.global(x), *(intersection.outside()),
                          uRight, viscparar, maxspeedr );
       }
+      } // end of (reflection in neighbor)
+
+      maxspeed = (maxspeedl>maxspeedr) ? maxspeedl : maxspeedr;
+      std::cout << " .. maxspeedl = " << maxspeedl << std::endl;
+      std::cout << " .. maxspeedr = " << maxspeedr << std::endl;
+      std::cout << " .. maxspeed = " << maxspeed << std::endl;
+      viscpara = (viscparal>viscparar) ? viscparal : viscparar;
+      std::cout << " .. viscparal = " << viscparal << std::endl;
+      std::cout << " .. viscparar = " << viscparar << std::endl;
+      std::cout << " .. viscpara = " << viscpara << std::endl;
+
+      if ( reflectionLeft == false && reflectionRight == false )
+      // (no reflection)
+      {
+#if WRITENUMFLUX == 1
+        std::cout << " .. no reflection: reflectionLeft = false & reflectionRight = false" << std::endl;
+        std::cout << " ..   evaluate ( b - a )" << std::endl;
+#endif
+        visc  = uRight - uLeft;
+      } // end of (no reflection)
 
       if ( reflectionLeft == true )
-      // (reflection in entity)
+      // (reflection in entity) or (reflection in both entity and neighbor)
       {
-        model_.maxSpeed( normal, time, geo.global(x), *(intersection.inside()),
-                         uLeftRef, viscparar, maxspeedr );
-      }
+#if WRITENUMFLUX == 1
+        std::cout << " .. reflection in entity: reflectionLeft = true, reflectionRight can be true or false" << std::endl;
+        std::cout << " ..   evaluate ( b - a )" << std::endl;
+#endif
+        visc  = uLeftRef - uLeft;  
+      } // end of (reflection in entity) or (reflection in both entity and neighbor)
       else
       {
-        if ( reflectionRight == true )
-        // (reflection in neigbor)
-        {
-          model_.maxSpeed( normal, time, geo.global(x), *(intersection.outside()),
-                           uRightRef, viscparal, maxspeedl );
-        }
-        else
-        // (no reflection)
-        {
-          model_.maxSpeed( normal, time, geo.global(x), *(intersection.outside()),
-                           uRight, viscparar, maxspeedr );
-        }
+      if ( reflectionLeft == false && reflectionRight == true )
+      // (reflection in neighbor)
+      {
+#if WRITENUMFLUX == 1
+        std::cout << " .. reflection in neighbor: reflectionLeft = false && reflectionRight = true " << std::endl;
+        std::cout << " ..   evaluate ( b - a )" << std::endl;
+#endif
+        visc  = uRightRef - uRight;  
       }
+      } // end of (reflection in neighbor)
 
+      visc *= 2.*viscpara;
 
+      if ( reflectionLeft == false && reflectionRight == false )
+      // (no reflection)
+      {
+#if WRITENUMFLUX == 1
+        std::cout << " .. no reflection: reflectionLeft = false & reflectionRight = false" << std::endl;
+        std::cout << " ..   evaluate gLeft and gRight = gLeft" << std::endl;
+#endif
+        gLeft -= visc;
+        gLeft *= 0.5;
+        gRight = gLeft;
+      } // end of (no reflection)
 
+      if ( reflectionLeft == true )
+      // (reflection in entity) or (reflection in both entity and neighbor)
+      {
+#if WRITENUMFLUX == 1
+        std::cout << " .. reflection in entity: reflectionLeft = true, reflectionRight can be true or false" << std::endl;
+        std::cout << " ..   evaluate gLeft and gRight = gLeft" << std::endl;
+#endif
+        gLeft -= visc;
+        gLeft *= 0.5;
+        gRight = gLeft;
+      } // end of (reflection in entity) or (reflection in both entity and neighbor)
+      else
+      {
+      if ( reflectionLeft == false && reflectionRight == true )
+      // (reflection in neighbor)
+      {
+#if WRITENUMFLUX == 1
+        std::cout << " .. reflection in neighbor: reflectionLeft = false && reflectionRight = true " << std::endl;
+        std::cout << " ..   evaluate gRight and gLeft = gRight" << std::endl;
+#endif
+        gRight -= visc;
+        gRight *= 0.5;        
+        gLeft = gRight;  
+      }
+      } // end of (reflection in neighbor)
+
+      return maxspeed;
 
 /*
       if ( reflectionRight == false )
@@ -537,6 +590,7 @@ namespace Dune
       }
 */
 
+/*
       if ( reflectionRight == true )
       {
 #if WRITENUMFLUX == 1
@@ -583,7 +637,8 @@ namespace Dune
       }
 
       return maxspeed;
-    }
+*/
+    } // end of numericalFlux
 
     // return value: maximum wavespeed * length of integrationOuterNormal
     // gLeft, gRight are fluxes * length of integrationOuterNormal
