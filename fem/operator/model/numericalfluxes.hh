@@ -1,6 +1,8 @@
 #ifndef DUNE_FEM_LDG_NUMERICALFLUX_HH
 #define DUNE_FEM_LDG_NUMERICALFLUX_HH
 
+#include <iostream>
+
 // *** Numerical fluxes ***
 
 namespace Dune
