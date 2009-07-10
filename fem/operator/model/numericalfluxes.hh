@@ -324,13 +324,17 @@ namespace Dune
       } // end of (reflection in neighbor)
 
       maxspeed = (maxspeedl>maxspeedr) ? maxspeedl : maxspeedr;
+#if WRITENUMFLUX == 1
       std::cout << " .. maxspeedl = " << maxspeedl << std::endl;
       std::cout << " .. maxspeedr = " << maxspeedr << std::endl;
       std::cout << " .. maxspeed = " << maxspeed << std::endl;
+#endif
       viscpara = (viscparal>viscparar) ? viscparal : viscparar;
+#if WRITENUMFLUX == 1
       std::cout << " .. viscparal = " << viscparal << std::endl;
       std::cout << " .. viscparar = " << viscparar << std::endl;
       std::cout << " .. viscpara = " << viscpara << std::endl;
+#endif
 
       if ( reflectionLeft == false && reflectionRight == false )
       // (no reflection)
