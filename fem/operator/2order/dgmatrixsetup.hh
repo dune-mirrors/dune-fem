@@ -1,6 +1,8 @@
 #ifndef DUNE_DGMATRIXSETUP_HH
 #define DUNE_DGMATRIXSETUP_HH
 
+#include <dune/common/timer.hh>
+
 #include <dune/fem/function/common/scalarproducts.hh>
 #include <dune/fem/space/common/commoperations.hh>
 
@@ -115,13 +117,13 @@ protected:
     for(IntersectionIteratorType nit = gridPart.ibegin(en);
         nit != endnit; ++nit)
     {
-      // get the actual intersection from the intersection pointer
-      const IntersectionType& nit_intersection = *nit;
+      // get intersection 
+      const IntersectionType& inter = *nit;
 
-      if(nit_intersection.neighbor())
+      if(inter.neighbor())
       {
         // get neighbor 
-        EntityPointerType ep = nit_intersection.outside();
+        EntityPointerType ep = inter.outside();
         const EntityImp& nb = *ep;
 
         // get index of neighbor 
@@ -238,6 +240,7 @@ protected:
     ParallelScalarProductType scp_;
 
     PreconditionAdapterType preconditioner_;
+    mutable double averageCommTime_;
     
   public:  
     //! constructor: just store a reference to a matrix
@@ -247,6 +250,7 @@ protected:
       , colSpace_(org.colSpace_)
       , scp_(colSpace_)
       , preconditioner_(org.preconditioner_)
+      , averageCommTime_( org.averageCommTime_ )
     {}
     //! constructor: just store a reference to a matrix
     DGParallelMatrixAdapter (MatrixType& A,
@@ -257,6 +261,7 @@ protected:
       , colSpace_(colSpace)
       , scp_(colSpace)
       , preconditioner_(matrix_)
+      , averageCommTime_( 0.0 )
     {}
 
     //! constructor: just store a reference to a matrix
@@ -270,6 +275,7 @@ protected:
       , colSpace_(colSpace)
       , scp_(colSpace_)
       , preconditioner_(matrix_,iter,relax,dummy)
+      , averageCommTime_( 0.0 )
     {}
 
     //! constructor: just store a reference to a matrix
@@ -283,7 +289,14 @@ protected:
       , colSpace_(colSpace)
       , scp_(colSpace_)
       , preconditioner_(matrix_,relax,dummy)
+      , averageCommTime_( 0.0 )
     {}
+
+    //! return communication time 
+    double averageCommTime() const 
+    {
+      return averageCommTime_ ;
+    }
 
     //! return reference to preconditioner 
     PreconditionAdapterType& preconditionAdapter() { return preconditioner_; }
@@ -373,6 +386,8 @@ protected:
     void communicate(const X& x) const 
     {
       if( rowSpace_.grid().comm().size() <= 1 ) return ;
+
+      Timer commTime; 
       
       // create temporary discretet function object 
       RowDiscreteFunctionType tmp ("DGParallelMatrixAdapter::communicate",
@@ -380,6 +395,9 @@ protected:
 
       // exchange data by copying 
       rowSpace_.communicate( tmp );
+
+      // accumulate communication time 
+      averageCommTime_ += commTime.elapsed();
     }
   };
 #endif

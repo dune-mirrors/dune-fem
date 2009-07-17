@@ -471,8 +471,8 @@ private:
   DofStorageType * dofArray_;  
   
   //! index 
-  mutable int count_;
-  mutable int idx_;
+  mutable size_t count_;
+  mutable size_t idx_;
 
 }; // end DofIteratorBlockVectorDiscreteFunction 
 template <class DiscreteFunctionSpaceImp>

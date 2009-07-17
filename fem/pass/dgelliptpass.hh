@@ -16,6 +16,8 @@
 #include <dune/fem/solver/timeprovider.hh>
 #include <dune/fem/solver/oemsolver/preconditioning.hh>
 
+#include <dune/fem/io/parameter.hh>
+
 namespace Dune {
 /*! @addtogroup PassEllipt
  * Description: Solver for equations of the form
@@ -89,7 +91,6 @@ namespace Dune {
     typedef LocalOperatorType RestrictProlongOperatorType;
 
   protected:  
-    DiscreteModelType& problem_; 
     const DiscreteFunctionSpaceType& spc_;
     const bool verbose_;
     mutable LocalOperatorType op_;
@@ -101,6 +102,10 @@ namespace Dune {
     InverseOperatorType invOp_; 
 
     mutable DestinationType rhs_;
+    mutable double solveTime_ ;
+    mutable double averageCommTime_ ;
+
+    const bool rebuild_ ;
 
   public:
     //- Public methods
@@ -114,11 +119,10 @@ namespace Dune {
     //!         - InvSolverEps epsilon for interative solver, default is 1e-10 
     //!         - verbose if true some output is given, default is false
     LocalDGElliptPass(DiscreteModelType& problem, 
-                PreviousPassImp & pass, 
-                const DiscreteFunctionSpaceType& spc,
-                const std::string paramFile = "")
+                      PreviousPassImp & pass, 
+                      const DiscreteFunctionSpaceType& spc,
+                      const std::string paramFile = "")
       : BaseType(pass,spc)
-      , problem_(problem)
       , spc_(spc) 
       , verbose_(readVerbose(paramFile, spc_.grid().comm().rank() == 0))
       , op_(problem,pass,spc,paramFile)
@@ -126,7 +130,10 @@ namespace Dune {
       , maxIterFactor_(4) 
       , maxIter_( maxIterFactor_ * spc_.size() )
       , invOp_(op_,eps_,eps_,maxIter_,verbose_)
-      , rhs_("DGPass::RHS",spc)
+      , rhs_("FEPass::RHS",spc)
+      , solveTime_ ( 0.0 )
+      , averageCommTime_( 0.0 )
+      , rebuild_( ! problem.constantCoefficient() )
     {
       //assert( this->destination_ );
     }
@@ -146,7 +153,6 @@ namespace Dune {
                 DestinationType & dest,
                 const std::string paramFile = "")
       : BaseType(pass,dest.space())
-      , problem_(problem)
       , spc_(dest.space()) 
       , verbose_(readVerbose(paramFile, spc_.grid().comm().rank() == 0))
       , op_(problem,pass,spc_,paramFile)
@@ -154,19 +160,42 @@ namespace Dune {
       , maxIterFactor_(4) 
       , maxIter_( maxIterFactor_ * spc_.size() )
       , invOp_(op_,eps_,eps_,maxIter_,verbose_)
-      , rhs_("DGPass::RHS",spc_)
+      , rhs_("FEPass::RHS",spc_)
+      , solveTime_ ( 0.0 )
+      , averageCommTime_( 0.0 )
+      , rebuild_( ! problem.constantCoefficient() )
     {
       assert( this->destination_ == 0 );
       this->destination_ = &dest;
     }
 
-    void printTexInfo(std::ostream& out) const {
+    void printTexInfo(std::ostream& out) const 
+    {
       BaseType::printTexInfo(out);
-      out << "LocalDGElliptPass: ";
-      out << " eps = " << eps_
-          << " inverse Operator: "
-          << "\\\\ \n";
-      // invOp_.printTexInfo(out);
+      //out << "LocalDGElliptPass: ";
+      //out << " eps = " << eps_
+      //    << " inverse Operator: "
+      //    << "\\\\ \n";
+      op_.printTexInfo( out );
+      invOp_.printTexInfo( out );
+    }
+
+    // return number of iterations of linear solver 
+    int iterations () const 
+    {   
+      return invOp_.iterations();
+    } 
+
+    //! return average communication time 
+    double averageCommTime() const 
+    {
+      return averageCommTime_;
+    }
+
+    //! return time needed by linear solver 
+    double solverTime() const 
+    {
+      return solveTime_;
     }
 
     //! Set time provider (which gives you access to the global time).
@@ -186,13 +215,16 @@ namespace Dune {
 
     virtual void prepare(const ArgumentType& arg, DestinationType& dest) const
     {
-      // re-compute matrix 
-      op_.computeMatrix( arg, rhs_ );
+      // prepare operator 
+      op_.prepare( arg, rhs_ );
+      // re-compute matrix  (true for rebuild anyway)
+      op_.computeMatrix( arg, rhs_ , rebuild_ );
     }
 
     //! Some timestep size management.
     virtual void finalize(const ArgumentType& arg, DestinationType& dest) const
     {
+      op_.finalize( arg, rhs_ );
     }
 
     //! compute method 
@@ -204,27 +236,39 @@ namespace Dune {
       // calculate new maxIter  
       maxIter_ = maxIterFactor_ * spc_.size();
 
-      // solve the system 
-      invOp_(rhs_,dest);
+      {
+        Timer solveTime ;
 
-      // do data exchange 
-      spc_.communicate( dest );
+        // solve the system 
+        invOp_(rhs_, dest);
+
+        // get time for solving the system 
+        solveTime_ = solveTime.elapsed ();
+      }
+      
+      { 
+        Timer commTime ;
+        // do data exchange 
+        spc_.communicate( dest );
+
+        // get communication time 
+        averageCommTime_ = commTime.elapsed() + invOp_.averageCommTime();
+      }
+
+      // finalize operator 
+      finalize(arg,dest);
     } 
 
   private:
     bool readVerbose(const std::string& paramFile, const bool verboseOutput) const 
     {
-      if( paramFile == "" ) return false;
-      int val = 0;
-      readParameter(paramFile,"verbose",val, verboseOutput);
-      return ( (val == 1) && verboseOutput) ? true : false;
+      return Parameter :: verbose ();
     }
     
     double readEps(const std::string& paramFile, const bool output) const 
     {
       double eps = 1e-10; 
-      if( paramFile == "" ) return eps;
-      readParameter(paramFile,"InvSolverEps",eps, output);
+      eps = Parameter :: getValue("InvSolverEps",eps); 
       return eps;
     }
   };

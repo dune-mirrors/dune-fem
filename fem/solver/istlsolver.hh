@@ -34,26 +34,30 @@ private:
   double reduction_;
   int maxIter_;
   bool verbose_ ;
+  mutable int iterations_;
+  mutable double averageCommTime_;
 
   template <class OperatorImp, bool hasPreconditioning>
   struct SolverCaller
   {
     template <class DiscreteFunctionImp>
-    static void call(OperatorImp & op,
-                     const DiscreteFunctionImp & arg,
-                     DiscreteFunctionImp & dest,
-                     double reduction, int maxIter, bool verbose)
+    static std::pair< int, double > 
+               call(OperatorImp & op,
+                    const DiscreteFunctionImp & arg,
+                    DiscreteFunctionImp & dest,
+                    double reduction, int maxIter, bool verbose)
     {
-      solve(op.systemMatrix(),
-            arg,dest,reduction,maxIter,verbose);
+      return solve(op.systemMatrix(),
+                   arg,dest,reduction,maxIter,verbose);
     }
 
     template <class MatrixObjType, 
               class DiscreteFunctionImp>
-    static void solve(const MatrixObjType & mObj,
-                 const DiscreteFunctionImp & arg,
-                 DiscreteFunctionImp & dest,
-                 double absLimit, int maxIter, bool verbose)
+    static std::pair< int, double > 
+         solve(const MatrixObjType & mObj,
+               const DiscreteFunctionImp & arg,
+               DiscreteFunctionImp & dest,
+               double absLimit, int maxIter, bool verbose)
     {
       typedef typename MatrixObjType :: MatrixAdapterType MatrixAdapterType;
       MatrixAdapterType matrix = mObj.matrixAdapter();
@@ -78,6 +82,10 @@ private:
       InverseOperatorResult returnInfo;
   
       solver.apply(dest.blockVector(),arg.blockVector(),returnInfo);
+
+      // get information 
+      std::pair< int, double > p( returnInfo.iterations, matrix.averageCommTime() );
+      return p; 
     }
   };
 
@@ -95,6 +103,8 @@ public:
                 int maxIter , bool verbose ) 
     : op_(op), reduction_ ( absLimit ) 
     , maxIter_ (maxIter ) , verbose_ ( verbose ) 
+    , iterations_( 0 )
+    , averageCommTime_( 0.0 )
   {
   }
 
@@ -106,6 +116,11 @@ public:
   {
   }
 
+  void printTexInfo(std::ostream& out) const
+  {
+    out << "Solver: ISTL BiCG-STAB,  eps = " << reduction_ ;
+    out  << "\\\\ \n";
+  }
 
   /** \brief solve the system 
       \param[in] arg right hand side 
@@ -113,9 +128,23 @@ public:
   */
   void apply( const DiscreteFunctionType& arg, DiscreteFunctionType& dest ) const
   {
-    SolverCaller<OperatorType,true>::call(op_,arg,dest,reduction_,maxIter_,verbose_);
+    std::pair<int,double> info = SolverCaller<OperatorType,true>::
+                    call(op_,arg,dest,reduction_,maxIter_,verbose_);
+    iterations_ = info.first; 
+    averageCommTime_ = info.second;
   }
 
+  // return number of iterations 
+  int iterations() const 
+  {
+    return iterations_;
+  }
+
+  //! return accumulated communication time
+  double averageCommTime() const 
+  {
+    return averageCommTime_;
+  }
 
   /** \brief solve the system 
       \param[in] arg right hand side 
@@ -147,23 +176,27 @@ private:
   const double absLimit_;
   int maxIter_;
   bool verbose_ ;
+  mutable int iterations_;
+  mutable double averageCommTime_;
 
   template <class OperatorImp, bool hasPreconditioning>
   struct SolverCaller
   {
     template <class DiscreteFunctionImp>
-    static void call(OperatorImp & op,
+    static std::pair<int,double> 
+                 call(OperatorImp & op,
                      const DiscreteFunctionImp & arg,
                      DiscreteFunctionImp & dest,
                      double absLimit, int maxIter, bool verbose)
     {
-      solve(op.systemMatrix(),
-            arg,dest,absLimit,maxIter,verbose);
+      return solve(op.systemMatrix(),
+                   arg,dest,absLimit,maxIter,verbose);
     }
 
     template <class MatrixObjType, 
               class DiscreteFunctionImp>
-    static void solve(const MatrixObjType & mObj,
+    static std::pair<int,double>
+           solve(const MatrixObjType & mObj,
                  const DiscreteFunctionImp & arg,
                  DiscreteFunctionImp & dest,
                  double absLimit, int maxIter, bool verbose)
@@ -191,6 +224,9 @@ private:
       InverseOperatorResult returnInfo;
   
       solver.apply(dest.blockVector(),arg.blockVector(),returnInfo);
+
+      std::pair<int,double> p( returnInfo.iterations, matrix.averageCommTime() );
+      return p;
     }
   };
 
@@ -208,7 +244,15 @@ public:
            int maxIter , bool verbose ) 
     : op_(op), absLimit_ ( absLimit ) 
     , maxIter_ (maxIter ) , verbose_ ( verbose ) 
+    , iterations_( 0 )
+    , averageCommTime_( 0.0 )  
   {
+  }
+
+  void printTexInfo(std::ostream& out) const
+  {
+    out << "Solver: ISTL CG solver,  eps = " << absLimit_ ;
+    out  << "\\\\ \n";
   }
 
   void prepare (const DiscreteFunctionType& Arg, DiscreteFunctionType& Dest) const
@@ -226,7 +270,23 @@ public:
   */
   void apply( const DiscreteFunctionType& arg, DiscreteFunctionType& dest ) const
   {
-    SolverCaller<OperatorType,true>::call(op_,arg,dest,absLimit_,maxIter_,verbose_);
+    std::pair<int,double> info = SolverCaller<OperatorType,true>::
+                          call(op_,arg,dest,absLimit_,maxIter_,verbose_);
+
+    iterations_ = info.first; 
+    averageCommTime_ = info.second;
+  }
+
+  //! return number of iterations 
+  int iterations() const 
+  {
+    return iterations_;
+  }
+
+  //! return accumulated communication time
+  double averageCommTime() const 
+  {
+    return averageCommTime_;
   }
 
 

@@ -518,12 +518,12 @@ namespace Dune {
       void init(const EntityType & rowEntity,
                 const EntityType & colEntity)
       {
-        if( geomType_ != rowEntity.geometry().type() ) 
+        if( geomType_ != rowEntity.type() ) 
         {
           // initialize base functions sets 
           BaseType :: init ( rowEntity , colEntity );
 
-          geomType_ = rowEntity.geometry().type();
+          geomType_ = rowEntity.type();
           numRows_  = rowMapper_.numDofs(rowEntity);
           numCols_  = colMapper_.numDofs(colEntity);
           matrices_.resize( numRows_ );
@@ -767,6 +767,37 @@ namespace Dune {
     { 
       assert( matrix_ );
       return *matrix_; 
+    }
+
+    void printTexInfo(std::ostream& out) const
+    {
+      out << "ISTL MatrixObj: ";
+      out << " preconditioner = " << preconditionName() ;
+      out  << "\\\\ \n";
+    }
+
+    //! return matrix adapter object  
+    std::string preconditionName() const 
+    { 
+      std::stringstream tmp ; 
+      // no preconditioner 
+      switch (preconditioning_) 
+      {
+        case ssor : tmp << "SSOR"; break;
+        case sor  : tmp << "SOR"; break;
+        case ilu_0: tmp << "ILU-0"; break;
+        case ilu_n: tmp << "ILU-n"; break;
+        case gauss_seidel : tmp << "Gauss-Seidel"; break;
+        case jacobi: tmp << "Jacobi"; break; 
+        default: tmp << "None"; break;
+      }
+
+      if( preconditioning_ != ilu_0 ) 
+      {
+        tmp << " n=" << numIterations_;
+      }
+      tmp << " relax=" << relaxFactor_ ;
+      return tmp.str();
     }
     
     //! return matrix adapter object  
