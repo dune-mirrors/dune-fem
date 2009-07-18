@@ -61,6 +61,13 @@ namespace Dune
     typedef BoundaryIdentifier BoundaryIdentifierType; 
 
   public:
+    //! \todo Please document
+    bool constantCoefficient () const
+    {
+      CHECK_INTERFACE_IMPLEMENTATION( asImp().constantCoefficient() );
+      return asImp().constantCoefficient();
+    }
+
     //! Returns true if problem has a coefficient before laplace term.
     bool hasCoefficient () const 
     { 

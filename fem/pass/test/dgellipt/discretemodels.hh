@@ -190,6 +190,8 @@ namespace LDGExample
 
     const Model & data () const { return model_; }
 
+    bool constantCoefficient () const { return false; }
+
     bool hasSource() const { return false; }
     bool hasFlux() const { return false; }
     bool hasCoefficient() const { return true; }

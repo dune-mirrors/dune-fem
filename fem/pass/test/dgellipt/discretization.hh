@@ -95,7 +95,6 @@ public:
   typedef typename SolutionType :: DiscreteFunctionSpaceType LastSpaceType;
 
   typedef DofManager<GridType> DofManagerType; 
-  typedef DofManagerFactory<DofManagerType> DofManagerFactoryType;
 
   typedef typename Traits::DiscreteFunctionSpaceType DiscreteFunctionSpaceType;
 
@@ -114,7 +113,7 @@ public:
                     VelocityModelType& vm,
                     std::string paramfile)
     : grid_(grid)
-    , dm_(DofManagerFactoryType::getDofManager(grid_))
+    , dm_( DofManagerType::instance( grid_ ) )
     , model_(lpm)
     , gridPart_(grid_)
     , lastSpace_(gridPart_)
