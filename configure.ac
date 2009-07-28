@@ -14,9 +14,6 @@ DUNE_SYMLINK
 # check all dune-module stuff
 DUNE_CHECK_ALL
 
-# check dennis package 
-DUNE_PATH_PARDG
-
 AC_ARG_ENABLE(
   compatibility,
   AC_HELP_STRING([--enable-compatibility],
