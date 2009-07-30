@@ -55,6 +55,7 @@ void SparseRowMatrix<T>::removeObj()
   values_ = 0;
   col_ = 0;
   nonZeros_ = 0;
+  clearedRows_.clear();
   if (checkNonConstMethods) assert(checkConsistency());
 }
 
@@ -262,6 +263,9 @@ void SparseRowMatrix<T>::clear()
   {
     nonZeros_[i] = 0;
   }
+
+  clearedRows_.clear();
+
   if (checkNonConstMethods) assert(checkConsistency());
 }
 
@@ -682,6 +686,10 @@ void SparseRowMatrix<T>::unitRow(int row)
   values_[row*nz_] = 1.0;
   col_[row*nz_] = row;
   nonZeros_[row] = 1;
+
+  // store row number 
+  clearedRows_.insert( row );
+
   if (checkNonConstMethods) assert(checkConsistency());
 } 
 
@@ -937,5 +945,75 @@ void SparseRowMatrix<T>::ssorPrecondition(const T* u, T* x) const
     x[row] -= omega * dot / diag;
   }
 }
+
+template <class T>
+void SparseRowMatrix<T>::solveUMF(const T* b, T* x)
+{
+#ifdef ENABLE_UMFPACK
+  // clear all columns that have been cleared from unitRow
+  typedef typename std::set<int> :: iterator iterator ;
+  const iterator end = clearedRows_.end();
+
+  // needed for Lagrange dirichlet nodes 
+  if( clearedRows_.size() > 0 )
+  {
+    for(int row = 0; row < dim_[0]; ++ row)
+    {
+      if( clearedRows_.find( row ) != end )
+      {
+        unitCol( row );
+      }
+    }
+  }
+
+  const int n = dim_[0];
+  const int m = dim_[1];
+
+  int* Ap = new int [n+1];
+
+  const int nAll = n * nz_ ;
+  int* Ai = new int [ nAll ];
+  int* Tj = new int [ nAll ];
+  T*   Ax = new   T [ nAll ];
+
+  int nZ = 0;
+  for(int i=0; i<nAll; ++i)
+  {
+    if( i % nz_ == 0 )
+    {
+      const int row = (int)i / nz_ ;
+      Ap[ row ] = nZ;
+    }
+    if( col_[i] != defaultCol && values_[i] != 0 )
+    {
+      Ai[ nZ ] = col_   [ i ];
+      Ax[ nZ ] = values_[ i ];
+      ++ nZ ;
+    }
+  }
+  Ap[ n ] = nZ;
+
+  double *null = (double *) NULL ;
+  void *Symbolic, *Numeric;
+
+  // convert matrix 
+  umfpack_di_col_to_triplet(n,Ap,Tj);
+  umfpack_di_triplet_to_col(n,m,nZ,Ai,Tj,Ax,Ap,Ai,Ax,(int *) NULL );
+
+  // call solver 
+  umfpack_di_symbolic (n, m, Ap, Ai, Ax, &Symbolic, null, null) ;
+  umfpack_di_numeric (Ap, Ai, Ax, Symbolic, &Numeric, null, null) ;
+  umfpack_di_free_symbolic (&Symbolic) ;
+  umfpack_di_solve (UMFPACK_A, Ap, Ai, Ax, x, b, Numeric, null, null) ;
+  umfpack_di_free_numeric (&Numeric) ;
+
+  // delete temp memory 
+  delete [] Ap;
+  delete [] Ax;
+  delete [] Tj;
+  delete [] Ai;
+#endif
+}
+
 
 } // end namespace Dune

@@ -3,6 +3,7 @@
 
 //- system includes 
 #include <vector>
+#include <set>
 #include <algorithm>
 
 //- local includes 
@@ -12,6 +13,10 @@
 #include <dune/fem/io/parameter.hh>
 #include <dune/fem/solver/oemsolver.hh>
 #include <dune/fem/operator/common/operator.hh>
+
+#ifdef ENABLE_UMFPACK 
+#include <umfpack.h>
+#endif
 
 namespace Dune
 {
@@ -64,6 +69,8 @@ private:
   // temporary mem for resort 
   std::vector<int> newIndices_;
   std::vector<T> newValues_;
+
+  std::set< int > clearedRows_;
 
   // omega for ssor preconditioning
   const double omega_;
@@ -331,6 +338,9 @@ public:
   //! apply preconditioning, calls ssorPreconditioning at the moment 
   void precondition (const T*u , T*x) const {  ssorPrecondition(u,x); }
 
+  //! solve A x = b using the UMFPACK direct solver 
+  void solveUMF(const T* b, T* x);
+
 private:
   //! delete memory 
   void removeObj();
@@ -495,6 +505,13 @@ private:
         }
         sequence_ = domainSpace_.sequence();
       }
+    }
+
+    //! solve A dest = arg using the UMFPACK direct solver 
+    template< class DomainFunction, class RangeFunction >
+    void solveUMF( const DomainFunction &arg, RangeFunction &dest ) const
+    {
+      matrix_.solveUMF( arg.leakPointer(), dest.leakPointer() );
     }
 
     //! apply matrix to discrete function

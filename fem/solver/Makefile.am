@@ -22,7 +22,8 @@ solver_HEADERS = inverseoperators.hh \
 		 multistep.hh \
 		 pardg.hh \
                  rungekutta.hh \
-		 timeprovider.hh
+		 timeprovider.hh \
+		 umfpacksolver.hh
 
 include $(top_srcdir)/am/global-rules
 
