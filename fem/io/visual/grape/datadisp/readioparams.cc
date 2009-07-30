@@ -141,7 +141,7 @@ inline int readParameterList (int argc, char **argv, bool displayData = true )
     return(0);
   }
   if (argc == 3) {
-    path = Parameter::prefix();
+    path = Parameter::commonOutputPath();
     std::string dummyfile;
     Parameter::get("fem.io.datafileprefix",solprefix);
     info[n].name = solprefix.c_str();
