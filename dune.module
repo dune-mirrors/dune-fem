@@ -4,7 +4,3 @@ Maintainer: dune@mathematik.uni-freiburg.de
 Depends: dune-common (>= 1.3) dune-grid (>= 1.3)
 Suggests: dune-istl (>= 1.3)
 Sources: fem
-
-run_configure () {
-  run_default_configure "$@"
-}
