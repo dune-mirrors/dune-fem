@@ -80,6 +80,7 @@ void Communicator::reset_timers()
 
 void Communicator::write2(const char filename[])
 {
+#if MPI_VERSION >= 2
   MPI_Status status;
   MPI_File file;
 
@@ -120,6 +121,10 @@ void Communicator::write2(const char filename[])
   // clear buffer and close file
   send_buffer[_id].clear();
   MPI_File_close(&file);
+#else
+  std::cerr << "Error: Communicator::write2 requires MPI-2 or later." << std::endl;
+  abort();
+#endif // #if MPI_VERSION >= 2
 }
 
 
@@ -127,6 +132,7 @@ void Communicator::write2(const char filename[])
 
 int Communicator::read2(const char filename[], int cycle)
 {
+#if MPI_VERSION >= 2
   int exold_num_of_processes, *length;
  
   receive_buffer[_id].clear();
@@ -199,6 +205,10 @@ int Communicator::read2(const char filename[], int cycle)
 
   // return num of cycles
   return exold_num_of_processes / num_of_processes;
+#else
+  std::cerr << "Error: Communicator::write2 requires MPI-2 or later." << std::endl;
+  abort();
+#endif // #if MPI_VERSION >= 2
 }
 
 
