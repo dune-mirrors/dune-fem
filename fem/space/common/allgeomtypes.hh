@@ -9,13 +9,19 @@
 #include <dune/common/geometrytype.hh>
 #include <dune/grid/common/referenceelements.hh>
 
-#define USE_UG HAVE_UG 
-#if USE_UG 
-#include <dune/grid/uggrid.hh>
-#endif
-
 namespace Dune
 {
+
+  // External Forward Declarations
+  // -----------------------------
+
+  template< int dim >
+  class UGGrid;
+
+
+
+  // GeometryInformation
+  // -------------------
 
   /**  \brief ReferenceVolume and local bary center keeper class. 
    */
@@ -151,7 +157,6 @@ namespace Dune
 
 
 
-#if USE_UG 
   /** \brief specialisation fir UGGrid, because geomTypes method of index
       sets not usable in this case. 
   */
@@ -227,9 +232,6 @@ namespace Dune
       return true;
     }
   };
-#endif
-
-#undef USE_UG
 
 } // end namespace Dune
 
