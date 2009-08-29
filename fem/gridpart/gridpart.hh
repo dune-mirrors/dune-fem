@@ -102,7 +102,10 @@ namespace Dune
       = Traits :: indexSetPartitionType;
 
     //! \brief type of IntersectionIterator
-    typedef typename Traits::IntersectionIteratorType IntersectionIteratorType; 
+    typedef typename Traits::IntersectionIteratorType IntersectionIteratorType;
+
+    //! \brief type of Intersection
+    typedef typename IntersectionIteratorType::Intersection IntersectionType;
 
     //! \brief type of Entity with codim=0 
     typedef typename GridType::template Codim<0>::Entity EntityCodim0Type;
@@ -345,9 +348,6 @@ namespace Dune
     //! Level index set that corresponds to the grid
     typedef typename Traits::IndexSetType IndexSetType;
     
-    //! The corresponding Intersection
-    typedef typename Traits::IntersectionType IntersectionType ;
-    
     //! The corresponding IntersectionIterator 
     typedef typename Traits::IntersectionIteratorType IntersectionIteratorType ;
 
@@ -450,13 +450,9 @@ namespace Dune
 
     static const PartitionIteratorType indexSetPartitionType = All_Partition;
 
-      /** \brief The appropriate intersection */
-    typedef typename GridType::Traits::
-      LevelIntersection IntersectionType;
-
       /** \brief The appropriate intersection iterator */
-    typedef typename GridType::template Codim<0>::Entity::
-      LevelIntersectionIterator IntersectionIteratorType;
+    typedef typename GridType::template Codim<0>::Entity::LevelIntersectionIterator
+      IntersectionIteratorType;
 
       /** \brief Iterators over the entities of codimension <tt>cd</tt> of this grid part */
     template< int codim >
@@ -493,9 +489,6 @@ namespace Dune
     typedef typename Traits::GridType GridType;
     //! The leaf index set of the grid implementation
     typedef typename Traits::IndexSetType IndexSetType;
-    
-    //! The corresponding Intersection
-    typedef typename Traits::IntersectionType IntersectionType ;
     
     //! The corresponding IntersectionIterator 
     typedef typename Traits::IntersectionIteratorType IntersectionIteratorType ;
@@ -591,13 +584,9 @@ namespace Dune
 
     static const PartitionIteratorType indexSetPartitionType = All_Partition;
 
-    /** \brief The appropriate intersection */
-    typedef typename GridType::Traits::
-      LeafIntersection IntersectionType;
-
     /** \brief The appropriate intersection iterator */
-    typedef typename GridType::template Codim<0>::Entity::
-      LeafIntersectionIterator IntersectionIteratorType;
+    typedef typename GridType::template Codim<0>::Entity::LeafIntersectionIterator
+      IntersectionIteratorType;
 
     /** \brief Iterators over the entities of codimension <tt>cd</tt> of this grid part */
     template< int codim >
@@ -740,8 +729,8 @@ namespace Dune
     static const PartitionIteratorType indexSetPartitionType = All_Partition;
 
     /** \brief The appropriate intersection iterator */
-    typedef typename GridType::template Codim<0>::Entity::
-      LeafIntersectionIterator IntersectionIteratorType;
+    typedef typename GridType::template Codim<0>::Entity::LeafIntersectionIterator
+      IntersectionIteratorType;
 
     /** \brief Iterators over the entities of codimension <tt>cd</tt> of this grid part */
     template< int codim >
