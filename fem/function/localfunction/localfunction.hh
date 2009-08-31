@@ -78,6 +78,11 @@ namespace Dune
     typedef typename DiscreteFunctionSpaceType :: JacobianRangeType
       JacobianRangeType;
 
+    //! dimension of the domain
+    static const int dimDomain = DiscreteFunctionSpaceType::dimDomain;
+    //! dimension of the range
+    static const int dimRange = DiscreteFunctionSpaceType::dimRange;
+
     //! type of base function set  
     typedef typename DiscreteFunctionSpaceType :: BaseFunctionSetType
       BaseFunctionSetType;
