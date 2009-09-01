@@ -69,7 +69,10 @@ namespace Dune
         CodimIndexSetType &codimSet = indexSet.codimLeafSet_[ codim ];
 
         for( int i = 0; i < entity.template count< codim >(); ++i )
-          codimSet.insert( hIndexSet.template subIndex< codim >( entity, i ) );
+        {
+          // codimSet.insert( hIndexSet.template subIndex< codim >( entity, i ) );
+          codimSet.insert( hIndexSet.subIndex( entity, i, codim ) );
+        }
       }
     };
 
@@ -268,7 +271,7 @@ namespace Dune
     }
 
     template< int codim >
-    IndexType
+    IndexType DUNE_DEPRECATED
     subIndex ( const typename GridType :: template Codim< 0 > :: Entity &entity,
                int subNumber ) const
     {
