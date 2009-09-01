@@ -26,6 +26,8 @@ namespace Dune
    */
   struct OEMMatrix
   {
+    virtual ~OEMMatrix () {}
+
     /** \brief evaluate matrix vector multiplication
      *
      *  \param[in]   u  vector to multiply the matrix with
