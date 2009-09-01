@@ -348,8 +348,11 @@ namespace Dune
     }
 
   protected:
-    // return local face number 
-    int faceNumber () const DUNE_DEPRECATED
+    /** \brief return local face number 
+     *
+     *  \todo switch to generic numbering
+     */
+    int faceNumber () const 
     {
       typedef GenericGeometry::MapNumberingProvider< dimension > Numbering;
       const unsigned int tid = GenericGeometry::topologyId( elementGeometry() );
