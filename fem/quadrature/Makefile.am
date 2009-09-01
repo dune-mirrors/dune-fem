@@ -21,5 +21,9 @@ quadrature_HEADERS = cachepointlist.hh \
 		     quadprovider.hh \
 		     simplexpoints.hh
 
-include $(top_srcdir)/am/global-rules
+noinst_LTLIBRARIES = libquadrature.la
 
+libquadrature_la_SOURCES =
+libquadrature_la_LIBADD = caching/libcaching.la
+
+include $(top_srcdir)/am/global-rules
