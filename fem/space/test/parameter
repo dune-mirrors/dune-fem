@@ -4,3 +4,11 @@ fem.verboserank: 0
 lagrangeadapt.maxlevel: 3
 # adaptation method 0 = none | 1 = generic | 2 = callback 
 fem.adaptation.method: 1
+
+
+
+# Parameters for lagrangeglobalrefine
+# -----------------------------------
+
+# number of global refinement steps to perform
+lagrangeglobalrefine.maxlevel: 3

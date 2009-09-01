@@ -22,6 +22,7 @@ common_HEADERS = adaptcaps.hh \
      functionspaceinterface.hh \
      geometryconversion.hh \
      loadbalancer.hh \
+     restrictprolongfunction.hh \
      restrictprolonginterface.hh \
      adaptcallbackhandle.hh
 
