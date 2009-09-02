@@ -1,6 +1,10 @@
 #ifndef DUNE_RESTRICTPROLONGFUNCTION_HH
 #define DUNE_RESTRICTPROLONGFUNCTION_HH
 
+#include <dune/common/exceptions.hh>
+
+#include <dune/grid/common/grid.hh>
+
 namespace Dune
 {
 
