@@ -8,13 +8,31 @@
 namespace Dune
 {
 
-  template< class LocalRestrictProlong >
+  /** \class   ProlongFunction
+   *  \ingroup Adaptation
+   *  \brief   prolong discrete functions between grid levels
+   *
+   *  \tparam LRP local restriction and prolongation operator
+   *              (e.g., LocalLagrangeRestrictProlong)
+   */
+  template< class LRP >
   struct ProlongFunction
   {
+    //! type of the local restriction and prolongation operator
+    typedef LRP LocalRestrictProlong;
 
+  private:
     typedef typename LocalRestrictProlong::Entity Entity;
     typedef typename Entity::HierarchicIterator HierarchicIterator;
 
+  public:
+    /** \brief prolong a discrete function to finer grid level
+     *
+     *  \note The grid parts modelling the levels need not be of same type.
+     *
+     *  \param[in]  coarseFunction  discrete function on the coarse level
+     *  \param[out] fineFunction    discrete function on the finer level
+     */
     template< class CoarseFunction, class FineFunction >
     void operator() ( const CoarseFunction &coarseFunction,
                       FineFunction &fineFunction ) const
