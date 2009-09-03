@@ -14,9 +14,8 @@ namespace Dune
    *  \param  Operator  type of the operator to invert
    */
   template< class Operator >
-  class ConjugateGradientSolver
+  struct ConjugateGradientSolver
   {
-  public:
     //! type of the operators to invert
     typedef Operator OperatorType;
 
@@ -48,9 +47,9 @@ namespace Dune
      *  \param[in]  maxIterations  maximum number of CG iterations
      *  \param[in]  verbose        verbose output
      */
-    inline ConjugateGradientSolver ( RangeFieldType epsilon,
-                                     unsigned int maxIterations,
-                                     bool verbose = false )
+    ConjugateGradientSolver ( RangeFieldType epsilon,
+                              unsigned int maxIterations,
+                              bool verbose = false )
     : epsilon_( epsilon ),
       maxIterations_( maxIterations ),
       verbose_( verbose ),
@@ -74,9 +73,7 @@ namespace Dune
      *  \param[in]   b   right hand side
      *  \param       x   solution (must be initialized to a start value)
      */
-    inline void solve ( const OperatorType &op,
-                        const RangeType &b,
-                        DomainType &x ) const
+    void solve ( const OperatorType &op, const RangeType &b, DomainType &x ) const
     {
       const bool verbose = (verbose_ && (b.space().grid().comm().rank() == 0));
 
@@ -220,7 +217,7 @@ namespace Dune
    */
   template< class DF, class Op >
   struct CGInverseOp
-  : public Operator< typename DF::DomainFieldType, typename DF::RangeFieldType, DF, DF >
+  : public Operator< typename DF::RangeFieldType, typename DF::RangeFieldType, DF, DF >
   {
     typedef DF DiscreteFunctionType;
     typedef Op OperatorType;
