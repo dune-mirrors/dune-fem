@@ -218,18 +218,13 @@ namespace Dune
    *  \brief   Inversion operator using CG algorithm, operator type is a
    *           template parameter.
    */
-  template <class DiscreteFunctionType, class OperatorType>
-  class CGInverseOp : public Operator<
-    typename DiscreteFunctionType::DomainFieldType,
-    typename DiscreteFunctionType::RangeFieldType,
-    DiscreteFunctionType,DiscreteFunctionType> 
+  template< class DF, class Op >
+  struct CGInverseOp
+  : public Operator< typename DF::DomainFieldType, typename DF::RangeFieldType, DF, DF >
   {
-  protected:
-    const OperatorType &operator_;
+    typedef DF DiscreteFunctionType;
+    typedef Op OperatorType;
 
-    const ConjugateGradientSolver< OperatorType > solver_;
-
-  public:
     /** \brief constructor of CGInverseOperator
       \param[in] op Mapping describing operator to invert 
       \param[in] redEps reduction epsilon 
@@ -267,6 +262,10 @@ namespace Dune
     {
       return solver_.averageCommTime();
     }
+
+  protected:
+    const OperatorType &operator_;
+    const ConjugateGradientSolver< OperatorType > solver_;
   };
 
 } // end namespace Dune
