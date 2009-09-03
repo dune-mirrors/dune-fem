@@ -49,10 +49,24 @@ namespace Dune
      */
     ConjugateGradientSolver ( RangeFieldType epsilon,
                               unsigned int maxIterations,
-                              bool verbose = false )
+                              bool verbose )
     : epsilon_( epsilon ),
       maxIterations_( maxIterations ),
       verbose_( verbose ),
+      averageCommTime_( 0.0 ),
+      realCount_(0)
+    {}
+
+    /** \brief constructor
+     *
+     *  \param[in]  epsilon        tolerance
+     *  \param[in]  maxIterations  maximum number of CG iterations
+     */
+    ConjugateGradientSolver ( RangeFieldType epsilon,
+                              unsigned int maxIterations )
+    : epsilon_( epsilon ),
+      maxIterations_( maxIterations ),
+      verbose_( Parameter::getValue< bool >( "fem.solver.verbose", false ) ),
       averageCommTime_( 0.0 ),
       realCount_(0)
     {}
@@ -76,8 +90,8 @@ namespace Dune
     void solve ( const OperatorType &op, const RangeType &b, DomainType &x ) const
     {
       const bool verbose = (verbose_ && (b.space().grid().comm().rank() == 0));
-
-      const RangeFieldType tolerance = SQR( epsilon_ ) * b.scalarProductDofs( b );
+      
+      const RangeFieldType tolerance = SQR( epsilon_ ) * b.scalarProductDofs( b ); 
 
       averageCommTime_ = 0.0;
       
@@ -94,8 +108,7 @@ namespace Dune
       RangeFieldType residuum = r.scalarProductDofs( r );
    
       realCount_ = 0;
-      for( unsigned int count = 0;
-           (residuum > tolerance) && (count < maxIterations_); ++count )
+      for( unsigned int count = 0; (residuum > tolerance) && (count < maxIterations_); ++count )
       {
         if( count > 0 )
         { 
@@ -223,19 +236,35 @@ namespace Dune
     typedef Op OperatorType;
 
     /** \brief constructor of CGInverseOperator
-      \param[in] op Mapping describing operator to invert 
-      \param[in] redEps reduction epsilon 
-      \param[in] absLimit absolut limit of residual  
-      \param[in] maxIter maximal iteration steps 
-      \param[in] verbose verbosity 
-    */
+     *
+     *  \param[in] op Mapping describing operator to invert
+     *  \param[in] redEps reduction epsilon
+     *  \param[in] absLimit absolut limit of residual
+     *  \param[in] maxIter maximal iteration steps
+     *  \param[in] verbose verbosity
+     */
     CGInverseOp( const OperatorType &op,
-                 double  redEps,
+                 double redEps,
                  double absLimit,
-                 int maxIter = std::numeric_limits<int>::max(),
-                 int verbose = 0 )
+                 int maxIter,
+                 bool verbose )
     : operator_( op ),
-      solver_( absLimit, maxIter, (verbose > 0) )
+      solver_( absLimit, maxIter, verbose )
+    {} 
+
+    /** \brief constructor of CGInverseOperator
+     *
+     *  \param[in] op Mapping describing operator to invert
+     *  \param[in] redEps reduction epsilon
+     *  \param[in] absLimit absolut limit of residual
+     *  \param[in] maxIter maximal iteration steps
+     */
+    CGInverseOp( const OperatorType &op,
+                 double redEps,
+                 double absLimit,
+                 int maxIter = std::numeric_limits< int >::max() )
+    : operator_( op ),
+      solver_( absLimit, maxIter )
     {} 
 
     /** \brief solve the system 
