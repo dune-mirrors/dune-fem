@@ -743,9 +743,9 @@ namespace Dune
       }
       else 
       {
-        preCon          = Parameter :: getValue("Preconditioning", preCon); 
-        numIterations_  = Parameter :: getValue("Pre-iteration", numIterations_);
-        relaxFactor_    = Parameter :: getValue("Pre-relaxation",relaxFactor_);
+        preCon         = Parameter::getValue( "istl.preconditioning.method", preCon );
+        numIterations_ = Parameter::getValue( "istl.preconditioning.iterations", numIterations_ );
+        relaxFactor_   = Parameter::getValue( "istl.preconditioning.relaxation", relaxFactor_ );
       }
 
       if( preCon >= 0 && preCon <= 6) 
