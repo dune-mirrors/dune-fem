@@ -147,85 +147,99 @@ namespace Dune
     //! define the category
     enum { category=SolverCategory::sequential };
 
-  protected:  
-    MatrixType& matrix_;
-    const RowSpaceType& rowSpace_;
-    const ColSpaceType& colSpace_;
-
-    mutable ParallelScalarProductType scp_;
-
-    PreconditionAdapterType preconditioner_;
-    
   public:  
     //! constructor: just store a reference to a matrix
-    LagrangeParallelMatrixAdapter (const LagrangeParallelMatrixAdapter& org)
-      : matrix_(org.matrix_) 
-      , rowSpace_(org.rowSpace_)
-      , colSpace_(org.colSpace_)
-      , scp_(colSpace_)
-      , preconditioner_(org.preconditioner_)
-    {}
-    //! constructor: just store a reference to a matrix
-    LagrangeParallelMatrixAdapter (MatrixType& A,
-                             const RowSpaceType& rowSpace, 
-                             const ColSpaceType& colSpace) 
-      : matrix_(A) 
-      , rowSpace_(rowSpace)
-      , colSpace_(colSpace)
-      , scp_(colSpace)
-      , preconditioner_(matrix_)
+    LagrangeParallelMatrixAdapter ( const LagrangeParallelMatrixAdapter &org )
+    : matrix_( org.matrix_ ),
+      rowSpace_( org.rowSpace_ ),
+      colSpace_( org.colSpace_ ),
+      scp_( colSpace_ ),
+      preconditioner_( org.preconditioner_ ),
+      averageCommTime_( org.averageCommTime_ )
     {}
 
     //! constructor: just store a reference to a matrix
-    template <class PreconditionerType>
-    LagrangeParallelMatrixAdapter (MatrixType& A,
-                             const RowSpaceType& rowSpace, 
-                             const ColSpaceType& colSpace,
-                             int iter, field_type relax, const PreconditionerType* dummy) 
-      : matrix_(A) 
-      , rowSpace_(rowSpace)
-      , colSpace_(colSpace)
-      , scp_(colSpace_)
-      , preconditioner_(matrix_,iter,relax,dummy)
+    LagrangeParallelMatrixAdapter ( MatrixType &matrix,
+                                    const RowSpaceType &rowSpace,
+                                    const ColSpaceType &colSpace )
+    : matrix_( matrix ),
+      rowSpace_( rowSpace ),
+      colSpace_( colSpace ),
+      scp_( colSpace ),
+      preconditioner_( matrix_ ),
+      averageCommTime_( 0 )
     {}
 
     //! constructor: just store a reference to a matrix
-    template <class PreconditionerType>
-    LagrangeParallelMatrixAdapter (MatrixType& A,
-                             const RowSpaceType& rowSpace, 
-                             const ColSpaceType& colSpace, 
-                             field_type relax, const PreconditionerType* dummy) 
-      : matrix_(A) 
-      , rowSpace_(rowSpace)
-      , colSpace_(colSpace)
-      , scp_(colSpace_)
-      , preconditioner_(matrix_,relax,dummy)
+    template< class PreconditionerType >
+    LagrangeParallelMatrixAdapter ( MatrixType &matrix,
+                                    const RowSpaceType &rowSpace,
+                                    const ColSpaceType &colSpace,
+                                    int iter,
+                                    field_type relax,
+                                    const PreconditionerType *dummy )
+    : matrix_( matrix ),
+      rowSpace_( rowSpace ),
+      colSpace_( colSpace ),
+      scp_( colSpace_ ),
+      preconditioner_( matrix_, iter, relax, dummy ),
+      averageCommTime_( 0 )
     {}
+
+    //! constructor: just store a reference to a matrix
+    template< class PreconditionerType >
+    LagrangeParallelMatrixAdapter ( MatrixType &matrix,
+                                    const RowSpaceType &rowSpace,
+                                    const ColSpaceType &colSpace,
+                                    field_type relax,
+                                    const PreconditionerType *dummy )
+    : matrix_( matrix ),
+      rowSpace_( rowSpace ),
+      colSpace_( colSpace ),
+      scp_( colSpace_ ),
+      preconditioner_( matrix_, relax, dummy ),
+      averageCommTime_( 0 )
+    {}
+
+    //! return communication time 
+    double averageCommTime() const 
+    {
+      return averageCommTime_ ;
+    }
 
     //! return reference to preconditioner 
-    PreconditionAdapterType& preconditionAdapter() { return preconditioner_; }
+    PreconditionAdapterType &preconditionAdapter()
+    {
+      return preconditioner_;
+    }
 
     //! return reference to preconditioner 
-    ParallelScalarProductType& scp() { return scp_; }
+    ParallelScalarProductType &scp()
+    {
+      return scp_;
+    }
 
     //! apply operator to x:  \f$ y = A(x) \f$
-    virtual void apply (const X& x, Y& y) const
+    virtual void apply ( const X &x, Y &y ) const
     {
-      // apply matrix 
-      matrix_.mv(x,y);
-
-      // exchange data first 
+      matrix_.mv( x, y );
       communicate( y );
     }
 
     //! apply operator to x, scale and add:  \f$ y = y + \alpha A(x) \f$
-    virtual void applyscaleadd (field_type alpha, const X& x, Y& y) const
+    virtual void applyscaleadd ( field_type alpha, const X &x, Y &y) const
     {
-      // apply matrix 
-      matrix_.usmv(alpha,x,y);
-
-      // exchange data first 
-      communicate( y );
+      if( rowSpace_.grid().comm().size() <= 1 )
+      {
+        matrix_.usmv(alpha,x,y);
+        communicate( y );
+      }
+      else
+      {
+        Y tmp( y.size() );
+        apply( x, tmp );
+        y.axpy( alpha, tmp );
+      }
     }
 
     virtual double residuum(const Y& rhs, X& x) const 
@@ -244,19 +258,29 @@ namespace Dune
     {
       return matrix_;
     }
-  protected:
-    void communicate(Y& y) const 
-    {
-      if( rowSpace_.grid().comm().size() <= 1 ) return ;
-      
-      // create temporary discretet function object 
-      ColumnDiscreteFunctionType tmp ("LagrangeParallelMatrixAdapter::communicate",
-                                   colSpace_, y );
 
-      // exchange data (default operation is add)
+  protected:
+    void communicate( Y &y ) const
+    {
+      if( rowSpace_.grid().comm().size() <= 1 )
+        return;
+
+      Timer commTime; 
+      ColumnDiscreteFunctionType tmp( "LagrangeParallelMatrixAdapter::communicate", colSpace_, y );
       colSpace_.communicate( tmp );
+      averageCommTime_ += commTime.elapsed();
     }
+
+    MatrixType &matrix_;
+    const RowSpaceType &rowSpace_;
+    const ColSpaceType &colSpace_;
+    mutable ParallelScalarProductType scp_;
+    PreconditionAdapterType preconditioner_;
+    mutable double averageCommTime_;
   };
-#endif
+
+#endif // #if HAVE_DUNE_ISTL
+
 } // end namespace Dune 
+
 #endif
