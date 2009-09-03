@@ -19,7 +19,8 @@
 #include <dune/fem/function/common/scalarproducts.hh>
 #include <dune/fem/io/parameter.hh>
 
-namespace Dune { 
+namespace Dune
+{ 
 
   ///////////////////////////////////////////////////////
   // --BlockMatrixHandle
@@ -1119,7 +1120,45 @@ namespace Dune {
     
   };
 
-} // end namespace Dune 
-#endif
 
-#endif
+
+  // ISTLMatrixOperator
+  // ------------------
+
+  template< class DomainFunction, class RangeFunction, class TraitsImp >
+  class ISTLMatrixOperator
+  : public ISTLMatrixObject< typename DomainFunction::DiscreteFunctionSpaceType, typename RangeFunction::DiscreteFunctionSpaceType, TraitsImp >,
+    public Operator< typename DomainFunction::RangeFieldType, typename RangeFunction::RangeFieldType, DomainFunction, RangeFunction >
+  {
+    typedef ISTLMatrixOperator< DomainFunction, RangeFunction, TraitsImp > This;
+    typedef ISTLMatrixObject< typename DomainFunction::DiscreteFunctionSpaceType, typename RangeFunction::DiscreteFunctionSpaceType, TraitsImp > Base;
+
+  public:
+    typedef typename Base::ColumnSpaceType DomainSpaceType;
+    typedef typename Base::RowSpaceType RangeSpaceType;
+
+    using Base::apply;
+
+    ISTLMatrixOperator ( const std::string &name,
+                         const DomainSpaceType &domainSpace,
+                         const RangeSpaceType &rangeSpace,
+                         const std::string &paramfile = "" )
+    : Base( domainSpace, rangeSpace, paramfile )
+    {}
+
+    virtual void operator() ( const DomainFunction &arg, RangeFunction &dest ) const
+    {
+      Base::apply( arg, dest );
+    }
+
+    const Base &systemMatrix () const
+    {
+      return *this;
+    }
+  };
+
+} // end namespace Dune 
+
+#endif // #if HAVE_DUNE_ISTL
+
+#endif // #ifndef DUNE_ISTLMATRIXWRAPPER_HH
