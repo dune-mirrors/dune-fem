@@ -804,6 +804,11 @@ protected:
     {
       Base::apply( arg, dest );
     }
+
+    const Base &systemMatrix () const
+    {
+      return *this;
+    }
   };
 
 } // end namespace Dune 
