@@ -16,6 +16,7 @@
 #include <dune/fem/io/file/asciiparser.hh>
 #include <dune/fem/operator/common/localmatrix.hh>
 #include <dune/fem/operator/common/localmatrixwrapper.hh>
+#include <dune/fem/operator/common/operator.hh>
 #include <dune/fem/function/common/scalarproducts.hh>
 #include <dune/fem/io/parameter.hh>
 
