@@ -182,9 +182,9 @@ public:
       static std::pair< int, double >
       call ( const OperatorImp &op,
              const DiscreteFunctionImp &arg, DiscreteFunctionImp &dest,
-             double absLimit, int maxIter, bool verbose )
+             double reduction, double absLimit, int maxIter, bool verbose )
       {
-        return solve( op.systemMatrix(), arg, dest, absLimit, maxIter, verbose );
+        return solve( op.systemMatrix(), arg, dest, reduction, absLimit, maxIter, verbose );
       }
 
       template< class MatrixObjType, class DiscreteFunctionImp >
@@ -192,7 +192,7 @@ public:
       solve ( const MatrixObjType &mObj,
               const DiscreteFunctionImp &arg,
               DiscreteFunctionImp &dest,
-              double absLimit, int maxIter, bool verbose )
+              double reduction, double absLimit, int maxIter, bool verbose )
       {
         typedef typename MatrixObjType :: MatrixAdapterType MatrixAdapterType;
         MatrixAdapterType matrix = mObj.matrixAdapter();
@@ -202,21 +202,19 @@ public:
         // verbose only in verbose mode and for rank 0 
         int verb = (verbose && (dest.space().grid().comm().rank() == 0)) ? 2 : 0;
           
-        double residuum = matrix.residuum( arg.blockVector(), dest.blockVector() );
-        double reduction = (residuum > 0) ? absLimit/ residuum : 1e-3;
-
-        if( verbose ) 
+        if( absLimit < std::numeric_limits< double >::max() )
         {
-          std::cout << "ISTL CG-Solver: reduction: " << reduction << ", residuum: " << residuum << ", absolut limit: " << absLimit<< "\n";
+          const double residuum = matrix.residuum( arg.blockVector(), dest.blockVector() );
+          reduction = (residuum > 0) ? absLimit/ residuum : 1e-3;
+
+          if( verbose ) 
+            std::cout << "ISTL CG-Solver: reduction: " << reduction << ", residuum: " << residuum << ", absolut limit: " << absLimit << std::endl;
         }
 
-        CGSolver<BlockVectorType> 
-          solver(matrix,matrix.scp(),matrix.preconditionAdapter(),
-            reduction,maxIter,verb);    
-
+        CGSolver< BlockVectorType >
+          solver( matrix, matrix.scp(), matrix.preconditionAdapter(), reduction, maxIter, verb );
         InverseOperatorResult returnInfo;
-    
-        solver.apply(dest.blockVector(),arg.blockVector(),returnInfo);
+        solver.apply( dest.blockVector(), arg.blockVector(), returnInfo );
 
         std::pair< int, double > p( returnInfo.iterations, matrix.averageCommTime() );
         return p;
@@ -238,6 +236,7 @@ public:
                int maxIter,
                bool verbose )
     : op_( op ),
+      reduction_( reduction ),
       absLimit_ ( absLimit ),
       maxIter_( maxIter ),
       verbose_( verbose ),
@@ -257,6 +256,7 @@ public:
                double absLimit,
                int maxIter = std::numeric_limits< int >::max() )
     : op_( op ),
+      reduction_( reduction ),
       absLimit_ ( absLimit ),
       maxIter_( maxIter ),
       verbose_( Parameter::getValue< bool >( "fem.solver.verbose", false ) ),
@@ -288,7 +288,7 @@ public:
       typedef SolverCaller< OperatorType, true > Caller;
 
       std::pair< int, double > info
-        = Caller::call( op_, arg, dest, absLimit_, maxIter_, verbose_ );
+        = Caller::call( op_, arg, dest, reduction_, absLimit_, maxIter_, verbose_ );
 
       iterations_ = info.first; 
       averageCommTime_ = info.second;
@@ -319,6 +319,7 @@ public:
   private:
     // no const reference, we make const later 
     const OperatorType &op_;
+    const double reduction_;
     const double absLimit_;
     int maxIter_;
     bool verbose_ ;
