@@ -10,7 +10,7 @@
 #include "caching/pointmapper.hh"
 #include "caching/cacheprovider.hh"
 
-#include "cachepointlist.hh"
+#include "cachingpointlist.hh"
 
 namespace Dune
 {
