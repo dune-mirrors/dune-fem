@@ -352,7 +352,7 @@ namespace Dune
      *
      *  \todo switch to generic numbering
      */
-    int faceNumber () const 
+    int faceNumber () const DUNE_DEPRECATED
     {
       typedef GenericGeometry::MapNumberingProvider< dimension > Numbering;
       const unsigned int tid = GenericGeometry::topologyId( elementGeometry() );

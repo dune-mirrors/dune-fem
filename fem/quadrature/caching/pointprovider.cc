@@ -1,5 +1,5 @@
 #include <cassert>
-#include <dune/grid/common/referenceelements.hh>
+#include <dune/grid/common/genericreferenceelements.hh>
 
 #include <dune/fem/space/basefunctions/storageinterface.hh>
 
@@ -98,8 +98,8 @@ namespace Dune {
                                       const LocalPointVectorType& points,
                                       GeometryType elementGeo)
   {
-    const ReferenceElementContainer<ct, dim> refContainer;
-    const ReferenceElement<ct, dim>& refElem = refContainer(elementGeo);
+    const GenericReferenceElement<ct, dim>& refElem = GenericReferenceElements<ct, dim>::general(elementGeo);
+
 
     const int numLocalPoints = points.size();
     const int numFaces = refElem.size(codim);
@@ -131,7 +131,7 @@ namespace Dune {
         // Store point mapping
         pMap[pt] = globalNum;
       }
-      mit->second[face] = pMap;
+      mit->second[face] = pMap;  // = face*numLocalPoints+pt
     } // end for all faces
 
     StorageInterface<dim>::registerQuadratureToStorages(quad,1);

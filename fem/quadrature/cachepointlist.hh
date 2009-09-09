@@ -166,7 +166,7 @@ namespace Dune
       BaseType;
 
  protected:
-    using BaseType :: faceNumber;
+    using BaseType :: localFaceIndex;
     using BaseType :: quadImp;
 
   public:
@@ -225,7 +225,7 @@ namespace Dune
                        typename BaseType :: Side side)
       : BaseType( gridPart, intersection, order, side ),
         mapper_( CacheProvider< GridType, codimension > :: getMapper
-          ( quadImp(), elementGeometry(), faceNumber(),
+          ( quadImp(), elementGeometry(), localFaceIndex(),
             (side == BaseType :: INSIDE)
               ? TwistUtilityType :: twistInSelf( gridPart.grid(), intersection )
               : TwistUtilityType :: twistInNeighbor( gridPart.grid(), intersection )
@@ -250,6 +250,17 @@ namespace Dune
       return QuadraturePointWrapperType( *this, i );
     }
 
+    /** \copydoc Dune::IntegrationPointList::point
+     */
+    const CoordinateType &point ( size_t i ) const
+    {
+      return PointProvider<typename GridType::ctype,GridType::dimension,codimension> :: getPoints
+        (quadImp().ipList().id(),elementGeometry())
+        [ cachingPoint(i) ];
+      // dummy_ = referenceGeometry_.global( quad_.point( i ) );
+      // return dummy_;
+    }
+
     /** \copydoc Dune::CachingInterface::cachingPoint */
     size_t cachingPoint( const size_t quadraturePoint ) const 
     {
@@ -265,7 +276,7 @@ namespace Dune
       assert(quadraturePoint >= 0);
       assert(quadraturePoint < (size_t)this->nop());
 
-      int faceIndex = this->faceNumber();
+      int faceIndex = this->localFaceIndex();
       int point = mapper_[quadraturePoint] - faceIndex*mapper_.size();
       assert( mapper_[quadraturePoint] >= 0 );
 
