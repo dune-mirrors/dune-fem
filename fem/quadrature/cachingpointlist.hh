@@ -1,5 +1,5 @@
-#ifndef DUNE_CACHEPOINTLIST_HH
-#define DUNE_CACHEPOINTLIST_HH
+#ifndef DUNE_CACHINGPOINTLIST_HH
+#define DUNE_CACHINGPOINTLIST_HH
 
 //- Dune includes
 #include <dune/common/misc.hh>
@@ -81,22 +81,16 @@ namespace Dune
   : public ElementIntegrationPointList< GridPartImp, 0, IntegrationTraits >,
     public CachingInterface
   {
+    typedef CachingPointList< GridPartImp, 0, IntegrationTraits > ThisType;
+    typedef ElementIntegrationPointList< GridPartImp, 0, IntegrationTraits > BaseType;
+
   public:
     //! type of grid partition
     typedef GridPartImp GridPartType;
 
     //! codimension of element quadrature
-    enum { codimension = 0 };
+    static const int codimension = 0;
     
-  private:
-    typedef CachingPointList< GridPartType, codimension, IntegrationTraits > ThisType;
-    typedef ElementIntegrationPointList< GridPartType, codimension, IntegrationTraits >
-      BaseType;
-
-  protected:
-    using BaseType :: quadImp;
-
-  public:
     // type of grid 
     typedef typename GridPartImp :: GridType GridType;
 
@@ -115,6 +109,9 @@ namespace Dune
     //! the type of the quadrature point 
     typedef QuadraturePointWrapper< ThisType > QuadraturePointWrapperType;
     
+  protected:
+    using BaseType::quadImp;
+
   public:
     /** \copydoc Dune::ElementIntegrationPointList<GridPartImp,0,IntegrationTraits>::ElementIntegrationPointList(const GeometryType &geometry,int order)
      */
@@ -153,27 +150,16 @@ namespace Dune
   : public ElementIntegrationPointList< GridPartImp, 1, IntegrationTraits >, 
     public CachingInterface
   {
+    typedef CachingPointList< GridPartImp, 1, IntegrationTraits > ThisType;
+    typedef ElementIntegrationPointList< GridPartImp, 1, IntegrationTraits > BaseType;
+
   public:
     //! type of grid partition
     typedef GridPartImp GridPartType;
 
     //! codimension of the element quadrature
-    enum { codimension = 1 };
-    
-  private:
-    typedef CachingPointList< GridPartType, codimension, IntegrationTraits > ThisType;
-    typedef ElementIntegrationPointList< GridPartType, codimension, IntegrationTraits >
-      BaseType;
+    static const int codimension = 1;
 
- protected:
-    using BaseType :: localFaceIndex;
-    using BaseType :: quadImp;
-
-  public:
-    using BaseType :: elementGeometry;
-    using BaseType :: nop;
-    
-  public:
     //! type of the grid
     typedef typename GridPartType :: GridType GridType;
 
@@ -201,10 +187,23 @@ namespace Dune
     typedef QuadraturePointWrapper< ThisType > QuadraturePointWrapperType;
     
   protected:
-    typedef typename CachingTraits< RealType, dimension > :: MapperType MapperType;
+    typedef typename CachingTraits< RealType, dimension >::MapperType MapperType;
+    typedef typename CachingTraits< RealType, dimension >::PointVectorType PointVectorType;
+
+    typedef Dune::CacheProvider< GridType, codimension > CacheProvider;
+    typedef Dune::PointProvider< RealType, dimension, codimension> PointProvider;
 
   protected:
     const MapperType &mapper_;
+    const PointVectorType &points_;
+
+  public:
+    using BaseType::elementGeometry;
+    using BaseType::nop;
+
+  protected:
+    using BaseType::localFaceIndex;
+    using BaseType::quadImp;
 
   public:
     /** \brief constructor
@@ -222,18 +221,15 @@ namespace Dune
     CachingPointList ( const GridPartType &gridPart,
                        const IntersectionType &intersection,
                        int order,
-                       typename BaseType :: Side side)
+                       typename BaseType::Side side )
       : BaseType( gridPart, intersection, order, side ),
-        mapper_( CacheProvider< GridType, codimension > :: getMapper
-          ( quadImp(), elementGeometry(), localFaceIndex(),
-            (side == BaseType :: INSIDE)
-              ? TwistUtilityType :: twistInSelf( gridPart.grid(), intersection )
-              : TwistUtilityType :: twistInNeighbor( gridPart.grid(), intersection )
-          ) )
+        mapper_( CacheProvider::getMapper( quadImp(), elementGeometry(),
+                   localFaceIndex(), twist( gridPart, intersection, side ) ) ),
+        points_( PointProvider::getPoints( quadImp().ipList().id(), elementGeometry() ) )
     {
-      // make sure CachingPointList is only created for conforming intersections
-      // assert( intersection.conforming() );
+      //assert( intersection.conforming() );
     }
+
 
     /** \brief copy constructor
      *
@@ -242,48 +238,58 @@ namespace Dune
     CachingPointList( const ThisType& org )
     : BaseType( org ),
       mapper_( org.mapper_ )
-    {
-    }
+    {}
 
-    inline const QuadraturePointWrapperType operator[] ( const unsigned int i ) const
+    const QuadraturePointWrapperType operator[] ( const size_t i ) const
     {
       return QuadraturePointWrapperType( *this, i );
     }
 
     /** \copydoc Dune::IntegrationPointList::point
      */
-    const CoordinateType &point ( size_t i ) const
+    const CoordinateType &point ( const size_t i ) const
     {
-      return PointProvider<typename GridType::ctype,GridType::dimension,codimension> :: getPoints
-        (quadImp().ipList().id(),elementGeometry())
-        [ cachingPoint(i) ];
-      // dummy_ = referenceGeometry_.global( quad_.point( i ) );
-      // return dummy_;
+      return points_[ cachingPoint( i ) ];
     }
 
     /** \copydoc Dune::CachingInterface::cachingPoint */
-    size_t cachingPoint( const size_t quadraturePoint ) const 
+    size_t cachingPoint ( const size_t i ) const 
     {
-      assert( quadraturePoint < (size_t)nop() );
-      return mapper_[ quadraturePoint ];
+      assert( i < (size_t)nop() );
+      return mapper_[ i ];
     }
 
     // return local caching point 
     // for debugging issues only 
-    size_t localCachingPoint(size_t quadraturePoint) const 
+    size_t localCachingPoint ( const size_t i ) const 
     {
-      // this makes no sense for usigned ints ;)
-      assert(quadraturePoint >= 0);
-      assert(quadraturePoint < (size_t)this->nop());
+      assert( i < (size_t)nop() );
 
-      int faceIndex = this->localFaceIndex();
-      int point = mapper_[quadraturePoint] - faceIndex*mapper_.size();
-      assert( mapper_[quadraturePoint] >= 0 );
+      assert( mapper_[ i ] >= 0 );
+      int faceIndex = localFaceIndex();
+      int point = mapper_[ i ] - faceIndex * mapper_.size();
+      assert( point < nop() );
 
-      assert( point < this->nop() );
       return point;
     }
+
+  private:
+    static int twist ( const GridPartType &gridPart, const IntersectionType &intersection, typename BaseType::Side side )
+    {
+      switch( side )
+      {
+        case BaseType::INSIDE:
+          return TwistUtilityType::twistInSelf( gridPart.grid(), intersection );
+
+        case BaseType::OUTSIDE:
+          return TwistUtilityType::twistInNeighbor( gridPart.grid(), intersection );
+
+        default:
+          DUNE_THROW( InvalidStateException, "CachingPointList: side must either be INSIDE or OUTSIDE." );
+      }
+    }
   };
+
 }
 
-#endif
+#endif // #ifndef DUNE_CACHINGPOINTLIST_HH
