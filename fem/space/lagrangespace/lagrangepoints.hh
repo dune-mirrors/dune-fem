@@ -2,7 +2,7 @@
 #define DUNE_LAGRANGESPACE_LAGRANGEPOINTS_HH
 
 #include <dune/grid/common/referenceelements.hh>
-#include <dune/fem/quadrature/cachepointlist.hh>
+#include <dune/fem/quadrature/cachingpointlist.hh>
 
 #include "genericgeometry.hh"
 #include "genericlagrangepoints.hh"
