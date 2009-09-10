@@ -19,152 +19,347 @@ namespace Dune
   // Implementation for ISTL-matrix based operator
   //=====================================================================
 
-/** @ingroup OEMSolver
-    @{
-**/
-  
-/** \brief BICG-stab scheme for block matrices (BCRSMatrix) 
-and block vectors (BVector) from dune-istl. */
-template <class DiscreteFunctionType, class OperatorType>
-class ISTLBICGSTABOp : public Operator<
-      typename DiscreteFunctionType::DomainFieldType,
-      typename DiscreteFunctionType::RangeFieldType,
-            DiscreteFunctionType,DiscreteFunctionType> 
-{
-private:
-  // no const reference, we make const later 
-  mutable OperatorType &op_;
-  double reduction_;
-  int maxIter_;
-  bool verbose_ ;
-  mutable int iterations_;
-  mutable double averageCommTime_;
+  /** @ingroup OEMSolver
+      @{
+  **/
 
-  template <class OperatorImp, bool hasPreconditioning>
-  struct SolverCaller
+
+
+  // ISTLBICGSTABOp
+  // --------------
+
+  /** \brief BICG-stab scheme for block matrices (BCRSMatrix) 
+  and block vectors (BVector) from dune-istl. */
+  template< class DF, class Op >
+  struct ISTLBICGSTABOp
+  : public Operator< typename DF::RangeFieldType, typename DF::RangeFieldType, DF, DF >
   {
-    template <class DiscreteFunctionImp>
-    static std::pair< int, double > 
-               call(OperatorImp & op,
-                    const DiscreteFunctionImp & arg,
-                    DiscreteFunctionImp & dest,
-                    double reduction, int maxIter, bool verbose)
+    typedef DF DiscreteFunctionType;
+    typedef Op OperatorType;
+
+  private:
+    template <class OperatorImp, bool hasPreconditioning>
+    struct SolverCaller
     {
-      return solve(op.systemMatrix(),
-                   arg,dest,reduction,maxIter,verbose);
-    }
-
-    template <class MatrixObjType, 
-              class DiscreteFunctionImp>
-    static std::pair< int, double > 
-         solve(const MatrixObjType & mObj,
-               const DiscreteFunctionImp & arg,
-               DiscreteFunctionImp & dest,
-               double absLimit, int maxIter, bool verbose)
-    {
-      typedef typename MatrixObjType :: MatrixAdapterType MatrixAdapterType;
-      MatrixAdapterType matrix = mObj.matrixAdapter();
-      
-      typedef typename DiscreteFunctionType :: DofStorageType BlockVectorType;
-
-      // verbose only in verbose mode and for rank 0 
-      int verb = (verbose && (dest.space().grid().comm().rank() == 0)) ? 2 : 0;
-        
-      double residuum = matrix.residuum( arg.blockVector(), dest.blockVector());
-      double reduction = (residuum > 0) ? absLimit/ residuum : 1e-3;
-
-      if( verbose ) 
+      template <class DiscreteFunctionImp>
+      static std::pair< int, double >
+      call ( const OperatorImp &op,
+             const DiscreteFunctionImp &arg, DiscreteFunctionImp &dest,
+             double reduction, double absLimit, int maxIter, bool verbose )
       {
-        std::cout << "ISTL BiCG-Solver: reduction: " << reduction << ", residuum: " << residuum << ", absolut limit: " << absLimit<< "\n";
+        return solve( op.systemMatrix(), arg, dest, reduction, absLimit, maxIter, verbose );
       }
 
-      BiCGSTABSolver<BlockVectorType>
-        solver(matrix,matrix.scp(),matrix.preconditionAdapter(),
-               reduction,maxIter,verb);    
+      template< class MatrixObjType, class DiscreteFunctionImp >
+      static std::pair< int, double >
+      solve ( const MatrixObjType &mObj,
+              const DiscreteFunctionImp &arg, DiscreteFunctionImp &dest,
+              double reduction, double absLimit, int maxIter, bool verbose )
+      {
+        typedef typename MatrixObjType::MatrixAdapterType MatrixAdapterType;
+        MatrixAdapterType matrix = mObj.matrixAdapter();
+        
+        typedef typename DiscreteFunctionType :: DofStorageType BlockVectorType;
 
-      InverseOperatorResult returnInfo;
-  
-      solver.apply(dest.blockVector(),arg.blockVector(),returnInfo);
+        // verbose only in verbose mode and for rank 0 
+        int verb = (verbose && (dest.space().grid().comm().rank() == 0)) ? 2 : 0;
+         
+        if( absLimit < std::numeric_limits< double >::max() )
+        {
+          const double residuum = matrix.residuum( arg.blockVector(), dest.blockVector() );
+          reduction = (residuum > 0) ? absLimit/ residuum : 1e-3;
 
-      // get information 
-      std::pair< int, double > p( returnInfo.iterations, matrix.averageCommTime() );
-      return p; 
+          if( verbose ) 
+            std::cout << "ISTL CG-Solver: reduction: " << reduction << ", residuum: " << residuum << ", absolut limit: " << absLimit << std::endl;
+        }
+
+        BiCGSTABSolver< BlockVectorType >
+          solver( matrix, matrix.scp(), matrix.preconditionAdapter(), reduction, maxIter, verb );
+        InverseOperatorResult returnInfo;
+        solver.apply( dest.blockVector(), arg.blockVector(), returnInfo );
+
+        // get information 
+        std::pair< int, double > p( returnInfo.iterations, matrix.averageCommTime() );
+        return p; 
+      }
+    };
+
+  public:
+    /** \brief constructor
+     *
+     *  \param[in] op Mapping describing operator to invert
+     *  \param[in] redEps reduction epsilon
+     *  \param[in] absLimit absolut limit of residual (not used here)
+     *  \param[in] maxIter maximal iteration steps
+     *  \param[in] verbose verbosity
+     *
+     *  \note ISTL BiCG-stab only uses the relative reduction.
+     */
+    ISTLBICGSTABOp ( const OperatorType &op,
+                     double  reduction,
+                     double absLimit,
+                     int maxIter,
+                     bool verbose )
+    : op_( op ),
+      reduction_( reduction ),
+      absLimit_( absLimit ),
+      maxIter_( maxIter ),
+      verbose_( verbose ),
+      iterations_( 0 ),
+      averageCommTime_( 0.0 )
+    {}
+
+    /** \brief constructor
+     *
+     *  \param[in] op        mapping describing operator to invert
+     *  \param[in] redEps    reduction epsilon
+     *  \param[in] absLimit  absolut limit of residual (not used here)
+     *  \param[in] maxIter   maximal iteration steps
+     */
+    ISTLBICGSTABOp ( const OperatorType &op,
+                     double reduction,
+                     double absLimit,
+                     int maxIter = std::numeric_limits< int >::max() )
+    : op_( op ),
+      reduction_( reduction ),
+      absLimit_ ( absLimit ),
+      maxIter_( maxIter ),
+      verbose_( Parameter::getValue< bool >( "fem.solver.verbose", false ) ),
+      iterations_( 0 ),
+      averageCommTime_( 0.0 )
+    {}
+
+    void prepare (const DiscreteFunctionType& Arg, DiscreteFunctionType& Dest) const
+    {}
+
+    void finalize () const
+    {}
+
+    void printTexInfo(std::ostream& out) const
+    {
+      out << "Solver: ISTL BiCG-STAB,  eps = " << reduction_ ;
+      out  << "\\\\ \n";
     }
-  };
 
-public:
-  /** \brief constructor of ISTLBICGSTABOp 
-    \param[in] op Mapping describing operator to invert 
-    \param[in] redEps reduction epsilon 
-    \param[in] absLimit absolut limit of residual (not used here) 
-    \param[in] maxIter maximal iteration steps 
-    \param[in] verbose verbosity 
+    /** \brief solve the system 
+        \param[in] arg right hand side 
+        \param[out] dest solution 
+    */
+    void apply( const DiscreteFunctionType& arg, DiscreteFunctionType& dest ) const
+    {
+      typedef SolverCaller< OperatorType, true > Caller;
 
-    \note ISTL BiCG-stab only uses the relative reduction.
-  */
-  ISTLBICGSTABOp(OperatorType & op , double  reduction , double absLimit , 
-                int maxIter , bool verbose ) 
-    : op_(op), reduction_ ( absLimit ) 
-    , maxIter_ (maxIter ) , verbose_ ( verbose ) 
-    , iterations_( 0 )
-    , averageCommTime_( 0.0 )
+      std::pair< int, double > info
+        = Caller::call( op_, arg, dest, reduction_, absLimit_, maxIter_, verbose_ );
+
+      iterations_ = info.first;
+      averageCommTime_ = info.second;
+    }
+
+    // return number of iterations 
+    int iterations() const 
+    {
+      return iterations_;
+    }
+
+    //! return accumulated communication time
+    double averageCommTime() const 
+    {
+      return averageCommTime_;
+    }
+
+    /** \brief solve the system 
+        \param[in] arg right hand side 
+        \param[out] dest solution 
+    */
+    void operator() ( const DiscreteFunctionType& arg, DiscreteFunctionType& dest ) const
+    {
+      apply(arg,dest);
+    }
+
+  private:
+    const OperatorType &op_;
+    double reduction_;
+    double absLimit_;
+    int maxIter_;
+    bool verbose_ ;
+    mutable int iterations_;
+    mutable double averageCommTime_;
+  }; 
+
+
+
+  // ISTLGMResOp
+  // -----------
+
+  /** \brief GMRes scheme for block matrices (BCRSMatrix)
+   *         and block vectors (BVector) from dune-istl
+   */
+  template< class DF, class Op >
+  struct ISTLGMResOp
+  : public Operator< typename DF::RangeFieldType, typename DF::RangeFieldType, DF, DF >
   {
-  }
+    typedef DF DiscreteFunctionType;
+    typedef Op OperatorType;
 
-  void prepare (const DiscreteFunctionType& Arg, DiscreteFunctionType& Dest) const
-  {
-  }
+  private:
+    template <class OperatorImp, bool hasPreconditioning>
+    struct SolverCaller
+    {
+      template <class DiscreteFunctionImp>
+      static std::pair< int, double >
+      call ( const OperatorImp &op,
+             const DiscreteFunctionImp &arg, DiscreteFunctionImp &dest,
+             double reduction, double absLimit, int restart, int maxIter, bool verbose )
+      {
+        return solve( op.systemMatrix(), arg, dest, reduction, absLimit, restart, maxIter, verbose );
+      }
 
-  void finalize () const
-  {
-  }
+      template< class MatrixObjType, class DiscreteFunctionImp >
+      static std::pair< int, double >
+      solve ( const MatrixObjType &mObj,
+              const DiscreteFunctionImp &arg, DiscreteFunctionImp &dest,
+              double reduction, double absLimit, int restart, int maxIter, bool verbose )
+      {
+        typedef typename MatrixObjType::MatrixAdapterType MatrixAdapterType;
+        MatrixAdapterType matrix = mObj.matrixAdapter();
+        
+        typedef typename DiscreteFunctionType :: DofStorageType BlockVectorType;
 
-  void printTexInfo(std::ostream& out) const
-  {
-    out << "Solver: ISTL BiCG-STAB,  eps = " << reduction_ ;
-    out  << "\\\\ \n";
-  }
+        // verbose only in verbose mode and for rank 0 
+        int verb = (verbose && (dest.space().grid().comm().rank() == 0)) ? 2 : 0;
+         
+        if( absLimit < std::numeric_limits< double >::max() )
+        {
+          const double residuum = matrix.residuum( arg.blockVector(), dest.blockVector() );
+          reduction = (residuum > 0) ? absLimit/ residuum : 1e-3;
 
-  /** \brief solve the system 
-      \param[in] arg right hand side 
-      \param[out] dest solution 
-  */
-  void apply( const DiscreteFunctionType& arg, DiscreteFunctionType& dest ) const
-  {
-    std::pair<int,double> info = SolverCaller<OperatorType,true>::
-                    call(op_,arg,dest,reduction_,maxIter_,verbose_);
-    iterations_ = info.first; 
-    averageCommTime_ = info.second;
-  }
+          if( verbose ) 
+            std::cout << "ISTL CG-Solver: reduction: " << reduction << ", residuum: " << residuum << ", absolut limit: " << absLimit << std::endl;
+        }
 
-  // return number of iterations 
-  int iterations() const 
-  {
-    return iterations_;
-  }
+        RestartedGMResSolver< BlockVectorType >
+          solver( matrix, matrix.scp(), matrix.preconditionAdapter(), reduction, restart, maxIter, verb );
+        InverseOperatorResult returnInfo;
+        solver.apply( dest.blockVector(), arg.blockVector(), returnInfo );
 
-  //! return accumulated communication time
-  double averageCommTime() const 
-  {
-    return averageCommTime_;
-  }
+        // get information 
+        std::pair< int, double > p( returnInfo.iterations, matrix.averageCommTime() );
+        return p; 
+      }
+    };
 
-  /** \brief solve the system 
-      \param[in] arg right hand side 
-      \param[out] dest solution 
-  */
-  void operator ()( const DiscreteFunctionType& arg, DiscreteFunctionType& dest ) const
-  {
-    apply(arg,dest);
-  }
-}; 
+  public:
+    /** \brief constructor
+     *
+     *  \param[in] op Mapping describing operator to invert
+     *  \param[in] redEps reduction epsilon
+     *  \param[in] absLimit absolut limit of residual (not used here)
+     *  \param[in] maxIter maximal iteration steps
+     *  \param[in] verbose verbosity
+     *
+     *  \note ISTL BiCG-stab only uses the relative reduction.
+     */
+    ISTLGMResOp ( const OperatorType &op,
+                  double  reduction,
+                  double absLimit,
+                  int maxIter,
+                  bool verbose )
+    : op_( op ),
+      reduction_( reduction ),
+      absLimit_( absLimit ),
+      restart_( Parameter::getValue< int >( "istl.gmres.restart", 5 ) ),
+      maxIter_( maxIter ),
+      verbose_( verbose ),
+      iterations_( 0 ),
+      averageCommTime_( 0.0 )
+    {}
+
+    /** \brief constructor
+     *
+     *  \param[in] op        mapping describing operator to invert
+     *  \param[in] redEps    reduction epsilon
+     *  \param[in] absLimit  absolut limit of residual (not used here)
+     *  \param[in] maxIter   maximal iteration steps
+     */
+    ISTLGMResOp ( const OperatorType &op,
+                  double reduction,
+                  double absLimit,
+                  int maxIter = std::numeric_limits< int >::max() )
+    : op_( op ),
+      reduction_( reduction ),
+      absLimit_ ( absLimit ),
+      restart_( Parameter::getValue< int >( "istl.gmres.restart", 5 ) ),
+      maxIter_( maxIter ),
+      verbose_( Parameter::getValue< bool >( "fem.solver.verbose", false ) ),
+      iterations_( 0 ),
+      averageCommTime_( 0.0 )
+    {}
+
+    void prepare (const DiscreteFunctionType& Arg, DiscreteFunctionType& Dest) const
+    {}
+
+    void finalize () const
+    {}
+
+    void printTexInfo(std::ostream& out) const
+    {
+      out << "Solver: ISTL BiCG-STAB,  eps = " << reduction_ ;
+      out  << "\\\\ \n";
+    }
+
+    /** \brief solve the system 
+        \param[in] arg right hand side 
+        \param[out] dest solution 
+    */
+    void apply( const DiscreteFunctionType& arg, DiscreteFunctionType& dest ) const
+    {
+      typedef SolverCaller< OperatorType, true > Caller;
+
+      std::pair< int, double > info
+        = Caller::call( op_, arg, dest, reduction_, absLimit_, restart_, maxIter_, verbose_ );
+
+      iterations_ = info.first;
+      averageCommTime_ = info.second;
+    }
+
+    // return number of iterations 
+    int iterations() const 
+    {
+      return iterations_;
+    }
+
+    //! return accumulated communication time
+    double averageCommTime() const 
+    {
+      return averageCommTime_;
+    }
+
+    /** \brief solve the system 
+        \param[in] arg right hand side 
+        \param[out] dest solution 
+    */
+    void operator() ( const DiscreteFunctionType& arg, DiscreteFunctionType& dest ) const
+    {
+      apply(arg,dest);
+    }
+
+  private:
+    const OperatorType &op_;
+    double reduction_;
+    double absLimit_;
+    int restart_;
+    int maxIter_;
+    bool verbose_ ;
+    mutable int iterations_;
+    mutable double averageCommTime_;
+  }; 
 
 
-  //////////////////////////////////////////////////////////////////
-  //
-  //  ISTL CG Solver 
-  //
-  //////////////////////////////////////////////////////////////////
+
+  // ISTLCGOp
+  // --------
+
   /** \brief BICG-stab scheme for block matrices (BCRSMatrix) 
   and block vectors (BVector) from dune-istl. */
   template< class DF, class Op >
