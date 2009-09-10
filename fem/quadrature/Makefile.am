@@ -7,6 +7,7 @@ quadrature_HEADERS = cachequad.hh \
 		     defaultquadratures.hh \
 		     dunequadratures.hh \
                      elementpointlist.hh \
+		     elementpointlistbase.hh \
                      elementquadrature.hh \
 		     femquadratures.hh \
 		     femquadratures_inline.hh \

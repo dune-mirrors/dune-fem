@@ -5,7 +5,7 @@
 #include <dune/common/misc.hh>
 
 //- Local includes
-#include <dune/fem/quadrature/elementquadrature.hh>
+#include <dune/fem/quadrature/elementpointlistbase.hh>
 #include <dune/fem/quadrature/caching/twistutility.hh>
 #include <dune/fem/quadrature/caching/pointmapper.hh>
 #include <dune/fem/quadrature/caching/cacheprovider.hh>
@@ -68,77 +68,64 @@ namespace Dune
    * \interfaceclass
    */
   template< class GridPartImp, int codim, class IntegrationTraits >
-  class CachingPointList
-  {
-    typedef CompileTimeChecker< false > Only_specialisations_for_codim_0_and_1_so_far;
-  };
+  class CachingPointList;
 
   
   
   /** \copydoc Dune::CachingPointList */
   template< class GridPartImp, class IntegrationTraits >
   class CachingPointList< GridPartImp, 0, IntegrationTraits >
-  : public ElementIntegrationPointList< GridPartImp, 0, IntegrationTraits >,
+  : public ElementPointListBase< GridPartImp, 0, IntegrationTraits >,
     public CachingInterface
   {
-    typedef CachingPointList< GridPartImp, 0, IntegrationTraits > ThisType;
-    typedef ElementIntegrationPointList< GridPartImp, 0, IntegrationTraits > BaseType;
+    typedef CachingPointList< GridPartImp, 0, IntegrationTraits > This;
+    typedef ElementPointListBase< GridPartImp, 0, IntegrationTraits > Base;
 
   public:
-    //! type of grid partition
-    typedef GridPartImp GridPartType;
+    static const int codimension = Base::codimension;
 
-    //! codimension of element quadrature
-    static const int codimension = 0;
-    
-    // type of grid 
-    typedef typename GridPartImp :: GridType GridType;
-
-    //! Dimension of the world.
-    enum { dimension = BaseType::dimension };
-
-    //! Just another name for double...
-    typedef typename BaseType::RealType RealType;
-    
     //! The type of the coordinates in the codim-0 reference element.
-    typedef typename BaseType::CoordinateType CoordinateType;
-
-    //! The type of the codim-0 entity.
-    typedef typename BaseType::Entity Entity;
+    typedef typename Base::CoordinateType CoordinateType;
 
     //! the type of the quadrature point 
-    typedef QuadraturePointWrapper< ThisType > QuadraturePointWrapperType;
+    typedef QuadraturePointWrapper< This > QuadraturePointWrapperType;
     
+
+    // for compatibility
+    enum Side { INSIDE, OUTSIDE };
+    typedef typename Base::GridPartType::GridType GridType;
+    typedef typename GridType::template Codim< 0 >::Entity Entity;
+
+
   protected:
-    using BaseType::quadImp;
+    using Base::quadImp;
 
   public:
+    using Base::localPoint;
+
     /** \copydoc Dune::ElementIntegrationPointList<GridPartImp,0,IntegrationTraits>::ElementIntegrationPointList(const GeometryType &geometry,int order)
      */
-    inline CachingPointList( const GeometryType &geometry, int order )
-    : BaseType( geometry, order )
+    CachingPointList( const GeometryType &geometry, int order )
+    : Base( geometry, order )
     {
-      CacheProvider< GridType, codimension > :: registerQuadrature( quadImp() );
+      CacheProvider< GridType, codimension >::registerQuadrature( quadImp() );
     }
 
-    /** \brief copy constructor
-     *
-     *  \param[in]  org  element quadrature to copy
-     */
-    inline CachingPointList( const ThisType& org )
-    : BaseType( org )
-    {
-    }
-
-    inline const QuadraturePointWrapperType operator[] ( const unsigned int i ) const
+    const QuadraturePointWrapperType operator[] ( const size_t i ) const
     {
       return QuadraturePointWrapperType( *this, i );
     }
 
-    /** \copydoc Dune::CachingInterface::cachingPoint */
-    inline size_t cachingPoint( const size_t quadraturePoint ) const
+    /** \copydoc Dune::IntegrationPointList::point */
+    const CoordinateType &point ( const size_t i ) const
     {
-      return quadraturePoint;
+      return localPoint( i );
+    }
+
+    /** \copydoc Dune::CachingInterface::cachingPoint */
+    size_t cachingPoint( const size_t i ) const
+    {
+      return i;
     }
   };
  
@@ -147,45 +134,43 @@ namespace Dune
   /** \copydoc Dune::CachingPointList */
   template< typename GridPartImp, class IntegrationTraits >
   class CachingPointList< GridPartImp, 1, IntegrationTraits >
-  : public ElementIntegrationPointList< GridPartImp, 1, IntegrationTraits >, 
+  : public ElementPointListBase< GridPartImp, 1, IntegrationTraits >, 
     public CachingInterface
   {
-    typedef CachingPointList< GridPartImp, 1, IntegrationTraits > ThisType;
-    typedef ElementIntegrationPointList< GridPartImp, 1, IntegrationTraits > BaseType;
+    typedef CachingPointList< GridPartImp, 1, IntegrationTraits > This;
+    typedef ElementPointListBase< GridPartImp, 1, IntegrationTraits > Base;
 
   public:
-    //! type of grid partition
+    //! type of the grid partition
     typedef GridPartImp GridPartType;
 
-    //! codimension of the element quadrature
-    static const int codimension = 1;
+    //! side of intersection  
+    enum Side { INSIDE, OUTSIDE };
 
-    //! type of the grid
-    typedef typename GridPartType :: GridType GridType;
+    typedef typename Base::RealType RealType;
+    static const int dimension = Base::dimension;
+    static const int codimension = Base::codimension;
 
-    //! Dimeinsion of the world
-    enum { dimension = BaseType::dimension };
+    //! Type of coordinates in codim-0 reference element
+    typedef typename Base::CoordinateType CoordinateType;
     
-    //! A double... or whatever your grid wants
-    typedef typename BaseType::RealType RealType;
-    
-    //! The coordinates of the quadrature points in the codim-0 reference
-    //! element
-    typedef typename BaseType::CoordinateType CoordinateType;
-
     //! Type of the intersection iterator
-    typedef typename BaseType::IntersectionIterator IntersectionIterator;
-    typedef typename IntersectionIterator::Intersection IntersectionType;
+    typedef typename GridPartType::IntersectionIteratorType IntersectionIteratorType;
+    typedef typename IntersectionIteratorType::Intersection IntersectionType;
+
+    typedef QuadraturePointWrapper< This > QuadraturePointWrapperType;
 
     //! type of quadrature used for non-conforming intersections  
-    typedef BaseType NonConformingQuadratureType; 
+    typedef ElementIntegrationPointList< GridPartType, codimension, IntegrationTraits >
+      NonConformingQuadratureType; 
 
-    //! type of twist utility 
+
+    // for compatibility
+    typedef typename GridPartType::GridType GridType;
     typedef TwistUtility< GridType > TwistUtilityType;
+    typedef IntersectionIteratorType IntersectionIterator;
 
-    //! the type of the quadrature point 
-    typedef QuadraturePointWrapper< ThisType > QuadraturePointWrapperType;
-    
+
   protected:
     typedef typename CachingTraits< RealType, dimension >::MapperType MapperType;
     typedef typename CachingTraits< RealType, dimension >::PointVectorType PointVectorType;
@@ -193,19 +178,13 @@ namespace Dune
     typedef Dune::CacheProvider< GridType, codimension > CacheProvider;
     typedef Dune::PointProvider< RealType, dimension, codimension> PointProvider;
 
-  protected:
-    const MapperType &mapper_;
-    const PointVectorType &points_;
+    using Base::localFaceIndex;
+    using Base::quadImp;
 
   public:
-    using BaseType::elementGeometry;
-    using BaseType::nop;
+    using Base::elementGeometry;
+    using Base::nop;
 
-  protected:
-    using BaseType::localFaceIndex;
-    using BaseType::quadImp;
-
-  public:
     /** \brief constructor
      *
      *  \note The CachingPointList requires the grid part to get twist
@@ -220,25 +199,13 @@ namespace Dune
      */
     CachingPointList ( const GridPartType &gridPart,
                        const IntersectionType &intersection,
-                       int order,
-                       typename BaseType::Side side )
-      : BaseType( gridPart, intersection, order, side ),
-        mapper_( CacheProvider::getMapper( quadImp(), elementGeometry(),
-                   localFaceIndex(), twist( gridPart, intersection, side ) ) ),
+                       int order, const Side side )
+      : Base( getPointList( gridPart, intersection, order, side ) ),
+        mapper_( CacheProvider::getMapper( quadImp(), elementGeometry(), localFaceIndex(), twist_ ) ),
         points_( PointProvider::getPoints( quadImp().ipList().id(), elementGeometry() ) )
     {
       //assert( intersection.conforming() );
     }
-
-
-    /** \brief copy constructor
-     *
-     *  \param[in]  org  element quadrature to copy
-     */
-    CachingPointList( const ThisType& org )
-    : BaseType( org ),
-      mapper_( org.mapper_ )
-    {}
 
     const QuadraturePointWrapperType operator[] ( const size_t i ) const
     {
@@ -273,21 +240,32 @@ namespace Dune
       return point;
     }
 
-  private:
-    static int twist ( const GridPartType &gridPart, const IntersectionType &intersection, typename BaseType::Side side )
+  protected:
+    Base getPointList ( const GridPartType &gridPart,
+                        const IntersectionType &intersection,
+                        const int order, const Side side )
     {
       switch( side )
       {
-        case BaseType::INSIDE:
-          return TwistUtilityType::twistInSelf( gridPart.grid(), intersection );
+      case INSIDE:
+        twist_ = TwistUtilityType::twistInSelf( gridPart.grid(), intersection );
+        return Base( TwistUtilityType::elementGeometry( intersection, true ),
+                     intersection.indexInInside(), order );
 
-        case BaseType::OUTSIDE:
-          return TwistUtilityType::twistInNeighbor( gridPart.grid(), intersection );
+      case OUTSIDE:
+        twist_ = TwistUtilityType::twistInNeighbor( gridPart.grid(), intersection );
+        return Base( TwistUtilityType::elementGeometry( intersection, false ),
+                     intersection.indexInOutside(), order );
 
-        default:
-          DUNE_THROW( InvalidStateException, "CachingPointList: side must either be INSIDE or OUTSIDE." );
+      default:
+        DUNE_THROW( InvalidStateException, "ElementIntegrationPointList: side must either be INSIDE or OUTSIDE." );
       }
     }
+
+  private:
+    int twist_;
+    const MapperType &mapper_;
+    const PointVectorType &points_;
   };
 
 }
