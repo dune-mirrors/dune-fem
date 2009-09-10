@@ -5,7 +5,7 @@
 #include <dune/common/misc.hh>
 
 //- Local includes
-#include <dune/fem/quadrature/elementpointlistbase.hh>
+#include <dune/fem/quadrature/elementpointlist.hh>
 #include <dune/fem/quadrature/caching/twistutility.hh>
 #include <dune/fem/quadrature/caching/pointmapper.hh>
 #include <dune/fem/quadrature/caching/cacheprovider.hh>
