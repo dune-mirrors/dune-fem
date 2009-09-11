@@ -94,7 +94,6 @@ namespace Dune
     // for compatibility
     enum Side { INSIDE, OUTSIDE };
     typedef typename Base::GridPartType::GridType GridType;
-    typedef typename GridType::template Codim< 0 >::Entity Entity;
 
 
   protected:

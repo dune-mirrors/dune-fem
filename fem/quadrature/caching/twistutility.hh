@@ -42,9 +42,11 @@ namespace Dune
   template< class Grid > 
   class TwistUtility
   {
+#if 0
     dune_static_assert( (!Conversion< Grid, HasHierarchicIndexSet > :: exists),
                         "The default TwistUtility is only for SGrid, "
 			"YaspGrid, UGGrid and OneDGrid." );
+#endif
 
   public:
     typedef Grid GridType;

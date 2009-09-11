@@ -36,10 +36,7 @@ namespace Dune
    *  - CachingQuadrature<GridPartImp,1>
    */
   template< typename GridPartImp, int codim >
-  class CachingQuadrature
-  {
-    typedef CompileTimeChecker< false > Only_specialisations_for_codim_0_and_1_so_far;
-  };
+  class CachingQuadrature;
 
 
 
@@ -73,8 +70,9 @@ namespace Dune
     typedef typename BaseType :: RealType RealType;
     //! The type of the coordinates in the codim-0 reference element.
     typedef typename BaseType :: CoordinateType CoordinateType;
-    //! The type of the codim-0 entity.
-    typedef typename BaseType :: Entity EntityType;
+
+    // for compatibility
+    typedef typename GridType::template Codim< 0 >::Entity EntityType;
     
 #if DUNE_FEM_COMPATIBILITY
   public:

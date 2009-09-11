@@ -43,11 +43,7 @@ namespace Dune
    *  - ElementQuadrature<GridPartImp,1>
    */
   template< typename GridPartImp, int codim >
-  class ElementQuadrature
-  {
-    typedef CompileTimeChecker< false >
-      __Only_implementations_for_codim_0_and_1_exist__;
-  };
+  class ElementQuadrature;
 
 
 
@@ -76,9 +72,12 @@ namespace Dune
   /** \copydoc Dune::ElementQuadrature */
   template< typename GridPartImp >
   class ElementQuadrature< GridPartImp, 0 >
-  : public ElementIntegrationPointList
-    < GridPartImp, 0, ElementQuadratureTraits< GridPartImp, 0 > >
+  : public ElementIntegrationPointList< GridPartImp, 0, ElementQuadratureTraits< GridPartImp, 0 > >
   {
+    typedef ElementQuadrature< GridPartImp, 0 > ThisType;
+    typedef ElementQuadratureTraits< GridPartImp, 0 > IntegrationTraits;
+    typedef ElementIntegrationPointList< GridPartImp, 0, IntegrationTraits > BaseType;
+
   public:
     //! type of the grid partition
     typedef GridPartImp GridPartType;
@@ -86,15 +85,6 @@ namespace Dune
     //! codimension of the element quadrature
     enum { codimension = 0 };
 
-  private:
-    typedef ElementQuadratureTraits< GridPartType, codimension > IntegrationTraits;
-    
-    typedef ElementQuadrature< GridPartType, codimension > ThisType;
-    typedef ElementIntegrationPointList< GridPartType, codimension, IntegrationTraits >
-      BaseType;
-
- 
-  public:
     //! type of the grid
     typedef typename GridPartType :: GridType GridType;
 
@@ -104,21 +94,14 @@ namespace Dune
     //! type for reals (usually double)
     typedef typename GridType :: ctype RealType;
     
-  public:
     //! type for coordinates in the codim-0 reference element 
     typedef typename IntegrationTraits :: CoordinateType CoordinateType;
     
-    //! type of the codim-0 entity
-    typedef typename BaseType :: Entity EntityType;
-    //typedef typename GridType :: template Codim< 0 > :: Entity EntityType;
-
-#if DUNE_FEM_COMPATIBILITY
-  public:
-    typedef EntityType Entity;
-#endif
+    // for compatibility
+    typedef typename GridType::template Codim< 0 >::Entity EntityType;
 
   protected:
-    using BaseType :: quadImp;
+    using BaseType::quadImp;
 
   public:
     /*! \brief constructor
@@ -129,8 +112,7 @@ namespace Dune
      */
     ElementQuadrature( const EntityType &entity, int order )
     : BaseType( entity.geometry().type(), order )
-    {
-    }
+    {}
     
     /** \brief copy constructor
      *
@@ -138,8 +120,7 @@ namespace Dune
      */
     ElementQuadrature( const ThisType &org )
     : BaseType( org )
-    {
-    }
+    {}
 
     /** \copydoc Dune::Quadrature::weight */
     const RealType &weight( size_t i ) const

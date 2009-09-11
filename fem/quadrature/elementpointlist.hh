@@ -50,7 +50,7 @@ namespace Dune
   /** \copydoc Dune::ElementIntegrationPointList */
   template< class GridPartImp, class IntegrationTraits >
   class ElementIntegrationPointList< GridPartImp, 0, IntegrationTraits >
-  : ElementPointListBase< GridPartImp, 0, IntegrationTraits >
+  : public ElementPointListBase< GridPartImp, 0, IntegrationTraits >
   {
     typedef ElementIntegrationPointList< GridPartImp, 0, IntegrationTraits > This;
     typedef ElementPointListBase< GridPartImp, 0, IntegrationTraits >  Base;
@@ -64,9 +64,8 @@ namespace Dune
     // for compatibility
     enum Side { INSIDE, OUTSIDE };
     typedef typename Base::GridPartType::GridType GridType;
-    typedef typename GridType::template Codim< 0 >::Entity Entity;
 
-
+  public:
     using Base::localPoint;
    
     /** \brief constructor
