@@ -49,49 +49,49 @@ namespace Dune
 
 
     template< int dim, int dimw >
-    class hasHierarchicIndexSet< AlbertaGrid< dim, dimw > >
+    struct hasHierarchicIndexSet< AlbertaGrid< dim, dimw > >
     {
       static const bool v = true;
     };
 
     template< int dim, int dimw >
-    class hasHierarchicIndexSet< ALUConformGrid< dim, dimw > >
+    struct hasHierarchicIndexSet< ALUConformGrid< dim, dimw > >
     {
       static const bool v = true;
     };
 
     template< int dim, int dimw >
-    class hasHierarchicIndexSet< ALUCubeGrid< dim, dimw > >
+    struct hasHierarchicIndexSet< ALUCubeGrid< dim, dimw > >
     {
       static const bool v = true;
     };
 
     template< int dim, int dimw >
-    class hasHierarchicIndexSet< ALUSimplexGrid< dim, dimw > >
+    struct hasHierarchicIndexSet< ALUSimplexGrid< dim, dimw > >
     {
       static const bool v = true;
     };
 
     template<>
-    class hasHierarchicIndexSet< OneDGrid >
+    struct hasHierarchicIndexSet< OneDGrid >
     {
       static const bool v = false;
     };
 
     template< int dim, int dimw >
-    class hasHierarchicIndexSet< SGrid< dim, dimw > >
+    struct hasHierarchicIndexSet< SGrid< dim, dimw > >
     {
       static const bool v = false;
     };
 
     template< int dim >
-    class hasHierarchicIndexSet< UGGrid< dim > >
+    struct hasHierarchicIndexSet< UGGrid< dim > >
     {
       static const bool v = false;
     };
 
     template< int dim >
-    class hasHierarchicIndexSet< YaspGrid< dim > >
+    struct hasHierarchicIndexSet< YaspGrid< dim > >
     {
       static const bool v = false;
     };

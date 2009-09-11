@@ -2,6 +2,7 @@
 #define DGADAPTIVELEAFGRIDPART_HH
 
 //- Dune includes 
+#include <dune/fem/misc/capabilities.hh>
 #include <dune/fem/gridpart/gridpart.hh>
 #include <dune/fem/gridpart/idbasedleafindexset.hh>
 #include <dune/fem/storage/singletonlist.hh>
@@ -67,8 +68,8 @@ namespace Dune
 
     // choose index set dependend on grid type  
     typedef GoodGridChooser
-      < GridType, Capabilities :: IsUnstructured< GridType > :: v,
-        Conversion< GridType, HasHierarchicIndexSet > :: exists >
+      < GridType, Capabilities::IsUnstructured< GridType >::v,
+        Capabilities::hasHierarchicIndexSet< GridType >::v >
       IndexSetChooserType;
                 
     typedef typename IndexSetChooserType :: IndexSetType IndexSetType;

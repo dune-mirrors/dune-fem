@@ -1,7 +1,7 @@
 #ifndef DUNE_ADAPTIVELEAFGRIDPART_HH
 #define DUNE_ADAPTIVELEAFGRIDPART_HH
 
-//- Dune includes 
+#include <dune/fem/misc/capabilities.hh>
 #include <dune/fem/gridpart/gridpart.hh>
 #include <dune/fem/storage/singletonlist.hh>
 
@@ -67,8 +67,7 @@ namespace Dune
     typedef AdaptiveLeafGridPart< GridType, idxpitype > GridPartType;
 
     // choose index set dependend on grid type  
-    typedef GoodGridChooser
-      < GridType, Conversion< GridType, HasHierarchicIndexSet > :: exists >
+    typedef GoodGridChooser< GridType, Capabilities::hasHierarchicIndexSet< GridType >::v >
       IndexSetChooserType;
                 
     //! type of the index set 
