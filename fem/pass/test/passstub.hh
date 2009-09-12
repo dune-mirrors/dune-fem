@@ -9,7 +9,7 @@
 
 #include <dune/fem/pass/pass.hh>
 #include <dune/fem/pass/dgdiscretemodel.hh>
-
+#include <dune/fem/quadrature/elementquadrature.hh>
 namespace Dune
 {
 
