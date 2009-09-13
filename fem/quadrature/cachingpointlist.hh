@@ -219,10 +219,10 @@ namespace Dune
     }
 
     /** \copydoc Dune::CachingInterface::cachingPoint */
-    size_t cachingPoint ( const size_t i ) const 
+    inline size_t cachingPoint( const size_t quadraturePoint ) const
     {
-      assert( i < (size_t)nop() );
-      return mapper_[ i ];
+      assert( quadraturePoint < (size_t)nop() );
+      return mapper_[ quadraturePoint ];
     }
 
     // return local caching point 
