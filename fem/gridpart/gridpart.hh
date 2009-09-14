@@ -631,6 +631,9 @@ namespace Dune
     //! The leaf index set of the grid implementation
     typedef typename Traits::IndexSetType IndexSetType;
     
+    //! The corresponding Intersection
+    typedef typename Traits::IntersectionType IntersectionType ;
+
     //! The corresponding IntersectionIterator 
     typedef typename Traits::IntersectionIteratorType IntersectionIteratorType ;
 
@@ -727,6 +730,10 @@ namespace Dune
     typedef WrappedHierarchicIndexSet<GridType> IndexSetType;
 
     static const PartitionIteratorType indexSetPartitionType = All_Partition;
+
+      /** \brief The appropriate intersection */
+    typedef typename GridType::Traits::
+      LeafIntersection IntersectionType;
 
     /** \brief The appropriate intersection iterator */
     typedef typename GridType::template Codim<0>::Entity::LeafIntersectionIterator
