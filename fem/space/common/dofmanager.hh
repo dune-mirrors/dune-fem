@@ -1139,7 +1139,7 @@ public:
   read(const GridType & grid, const std::string filename, int timestep, bool verbose = true )
   {
     typedef DofManagerFactory< ThisType > DofManagerFactoryType;
-    return DofManagerFactoryType :: readDofManagerNew(grid, filename, timestep, verbose);
+    return DofManagerFactoryType :: readDofManagerNew(grid, filename, timestep);
   }
 
 private:
