@@ -11,7 +11,7 @@
 
 
 #include <dune/grid/common/grid.hh>
-#include <dune/grid/common/defaultindexsets.hh>
+#include <dune/fem/gridpart/defaultindexsets.hh>
 #include <dune/grid/common/datahandleif.hh>
 
 #include <dune/common/bartonnackmanifcheck.hh>

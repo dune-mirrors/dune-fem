@@ -7,7 +7,7 @@
 #include <rpc/xdr.h>
 #include <cassert>
 
-#include <dune/grid/common/defaultindexsets.hh>
+#include <dune/fem/gridpart/defaultindexsets.hh>
 
 /** @file
  @brief Provides default empty index set class for persistent index sets. 

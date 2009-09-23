@@ -6,11 +6,10 @@
 #include <cassert>
 
 //- Dune includes
-#include <dune/common/interfaces.hh>
+// #include <dune/fem/gridpart/interfaces.hh>
 
 #include <dune/grid/common/grid.hh>
 #include <dune/grid/common/referenceelements.hh>
-#include <dune/grid/common/defaultindexsets.hh>
 #include <dune/grid/common/sizecache.hh>
 
 #include <dune/fem/gridpart/gridpart.hh>
