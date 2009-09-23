@@ -3,12 +3,12 @@
 
 #include <cassert>
 
-#include <dune/common/interfaces.hh>
 #include <dune/common/static_assert.hh>
 #include <dune/common/version.hh>
 #include <dune/common/geometrytype.hh>
 
 #include <dune/grid/common/capabilities.hh>
+#include <dune/grid/alugrid/interfaces.hh>
 
 #if HAVE_DUNE_GEOGRID
 #include <dune/grid/utility/hostgridaccess.hh>
