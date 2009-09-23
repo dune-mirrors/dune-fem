@@ -10,13 +10,13 @@
 
 //- Dune includes 
 #include <dune/common/genericiterator.hh>
-#include <dune/common/interfaces.hh>
 #include <dune/common/exceptions.hh>
 
 #if HAVE_BLAS 
 // include BLAS for daxpy operation 
 #include <dune/fem/solver/oemsolver/cblas.h>
 #endif
+#include <dune/grid/alugrid/interfaces.hh>
 
 // include xdr wrapper 
 #include <dune/fem/io/file/xdrio.hh>

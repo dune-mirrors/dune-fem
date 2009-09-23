@@ -9,7 +9,7 @@
 //- Dune includes 
 #include <dune/common/stdstreams.hh>
 #include <dune/common/exceptions.hh>
-#include <dune/common/interfaces.hh>
+#include <dune/grid/alugrid/interfaces.hh>
 
 // here are the default grid index set defined 
 #include <dune/fem/space/common/restrictprolonginterface.hh>

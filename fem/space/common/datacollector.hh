@@ -10,7 +10,7 @@
 #include <iostream>
 
 //-Dune includes 
-#include <dune/common/interfaces.hh>
+#include <dune/grid/alugrid/interfaces.hh>
 
 //- local includes 
 #include <dune/fem/operator/common/objpointer.hh>
