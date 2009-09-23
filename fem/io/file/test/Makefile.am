@@ -2,7 +2,7 @@ POLORDER = 2
 WANT_GRAPE = 0
 
 LDADD = $(ALL_PKG_LDFLAGS) $(ALL_PKG_LIBS) $(LOCAL_LIBS) $(MPI_LDFLAGS)
-AM_CPPFLAGS = $(ALL_PKG_CPPFLAGS)
+# AM_CPPFLAGS = $(ALL_PKG_CPPFLAGS)
 
 check_PROGRAMS = persistencemanagertest dataoutputtest
 
