@@ -42,7 +42,7 @@ if test x$with_umfpack != x && test x$with_umfpack != xno ; then
   REM_CPPFLAGS=$CPPFLAGS
 
   LDFLAGS="$LDFLAGS -L$UMFPACK_LIB_PATH -L$UMFAMD_LIB_PATH"
-  UMFPACK_INC_FLAG="-I$UMFPACK_INCLUDE_PATH -I$UMFPACKROOT/UFconfig -I$UMFPACKROOT/AMD/Include -DENABLE_UMFPACK"
+  UMFPACK_INC_FLAG="-I$UMFPACK_INCLUDE_PATH -I$UMFPACKROOT/UFconfig -I$UMFPACKROOT/AMD/Include -DENABLE_UMFPACK=1"
   CPPFLAGS="$CPPFLAGS $UMFPACK_INC_FLAG $MPI_CPPFLAGS"
 
   # check for header
@@ -101,6 +101,7 @@ if test x$HAVE_UMFPACK = x1 ; then
 
   # set variable for summary
   with_umfpack="yes"
+
 else
   AC_SUBST(UMFPACK_LIBS, "")
   AC_SUBST(UMFPACK_LDFLAGS, "")
@@ -118,4 +119,6 @@ LIBS="$ac_save_LIBS"
 CPPFLAGS="$ac_save_CPPFLAGS"
 LDFLAGS="$ac_save_LDFLAGS"
 
+  echo "Call add entry "
+  DUNE_ADD_SUMMARY_ENTRY([UMFPACK],[$with_umfpack])
 ])
