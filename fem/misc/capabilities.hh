@@ -21,7 +21,7 @@ namespace Dune
   template< int dim, int dimw >
   class ALUSimplexGrid;
 
-  template< int dim, int dimw >
+  template< int dim, int dimw, class ctype >
   class SGrid;
 
   template< int dim >
@@ -78,8 +78,8 @@ namespace Dune
       static const bool v = false;
     };
 
-    template< int dim, int dimw >
-    struct hasHierarchicIndexSet< SGrid< dim, dimw > >
+    template< int dim, int dimw, class ctype >
+    struct hasHierarchicIndexSet< SGrid< dim, dimw, ctype > >
     {
       static const bool v = false;
     };
