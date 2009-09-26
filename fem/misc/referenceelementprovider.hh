@@ -197,14 +197,14 @@ namespace Dune
   // ReferenceElementProvider for SGrid
   // ----------------------------------
 
-  template< int dim, int dimworld >
+  template< int dim, int dimworld, class ctype >
   class SGrid;
 
-  template< int dim, int dimworld, int codim >
-  class ReferenceElementProvider< SGrid< dim, dimworld >, codim >
-  : public ReferenceElementProviderBase< SGrid< dim, dimworld >, codim >
+  template< int dim, int dimworld, class ctype, int codim >
+  class ReferenceElementProvider< SGrid< dim, dimworld, ctype >, codim >
+  : public ReferenceElementProviderBase< SGrid< dim, dimworld, ctype >, codim >
   {
-    typedef ReferenceElementProviderBase< SGrid< dim, dimworld >, codim > BaseType;
+    typedef ReferenceElementProviderBase< SGrid< dim, dimworld, ctype >, codim > BaseType;
 
   public:
     typedef typename BaseType::ReferenceElementType ReferenceElementType;
