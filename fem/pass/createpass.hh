@@ -27,10 +27,13 @@ namespace Dune {
     = CreatePassTree::create( pass1 , pass2 );
   @endcode
 */
-template< class Model , template <class,class,int> class PassType , int passId  = -1 >
+template< class Model , template <class,class,int> class PassType , int pId  = -1 >
 class CreatePass
 {
 public:  
+  //! forward pass id 
+  enum { passId = pId };
+
   //! type of discrete function space
   typedef typename Model :: Traits :: DiscreteFunctionSpaceType DiscreteFunctionSpaceType;
   //! destination type 
@@ -265,11 +268,16 @@ public:
  and creates with the parameter PreviousPass in the method create the
  desired pass. The advantage here is, that no typedefs have to be done.
 */
-template <class Model, template <class,class> class PassType, 
-          class SpaceType = typename Model :: Traits :: DiscreteFunctionSpaceType >
+template <class Model, template <class,class,int> class PassType, 
+          class SpaceType, // = typename Model :: Traits :: DiscreteFunctionSpaceType ,
+          int pId  
+          >
 class CreateFeaturedPass
 {
 public:  
+  //! forward pass id 
+  enum { passId = pId };
+
   //! type of discrete functions space 
   typedef SpaceType DiscreteFunctionSpaceType;
   //! destination type 
@@ -306,10 +314,10 @@ public:
 
   //! creation method
   template <class PreviousPass>
-  SpaceOperatorPtr<PassType<Model,PreviousPass> >*
+  SpaceOperatorPtr< PassType<Model,PreviousPass,passId> >*
   create(SpaceOperatorStorage<PreviousPass>* prevObj)
   {
-    typedef PassType<Model,PreviousPass> RealPassType;
+    typedef PassType<Model,PreviousPass,passId> RealPassType;
     typedef SpaceOperatorPtr<RealPassType> ObjPtrType;
     // create pass 
     RealPassType* pass = new RealPassType(model_,prevObj->pass(),space_,paramFile_);
@@ -327,10 +335,10 @@ public:
   
   //! last creation method 
   template <class PreviousPass>
-  SpaceOperatorWrapper<PassType<Model,PreviousPass> >*
+  SpaceOperatorWrapper< PassType<Model,PreviousPass,passId> >*
   createLast(SpaceOperatorStorage<PreviousPass>* prevObj)
   {
-    typedef PassType<Model,PreviousPass> RealPassType;
+    typedef PassType<Model,PreviousPass,passId> RealPassType;
     typedef SpaceOperatorWrapper<RealPassType> ObjPtrType;
     // create pass 
     RealPassType* pass = new RealPassType(model_,prevObj->pass(),space_,paramFile_);
@@ -355,15 +363,18 @@ public:
 };
 
 /** \brief create pass tree from given list of discrete models 
+    the passId is deliviered to the start pass and stands for the global variable 
+    calculated by this pass
  */
+template <int startPassId = -1> 
 class CreatePassTree
 {
 protected:   
   //! method that creates first pass 
   template <class DestinationType>
-  inline static SpaceOperatorStorage< StartPass<DestinationType> >* createStartPass() 
+  inline static SpaceOperatorStorage< StartPass<DestinationType,startPassId> >* createStartPass() 
   {
-    typedef StartPass<DestinationType> StartPassType;
+    typedef StartPass<DestinationType, startPassId> StartPassType;
     typedef SpaceOperatorStorage<StartPassType> ObjPtrType;
 
     // create start pass 
