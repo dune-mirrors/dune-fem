@@ -87,7 +87,7 @@ protected:
       // calculate grid with 
       for(int i=0; i<dimension; ++i) 
       {
-        h[i] = (geo[0] - geo[map[i]]).two_norm();
+        h[i] = (geo.corner( 0 ) - geo.corner( map[i] )).two_norm();
       }
     }
 
@@ -108,7 +108,7 @@ protected:
 
       for(int i=0; i<dimension; ++i) 
       {
-        const ctype w = (geo[0] - geo[map[i]]).two_norm();
+        const ctype w = (geo.corner(0) - geo.corner( map[i] )).two_norm();
         if( std::abs( h[i] - w ) > 1e-15 ) return false; 
       }
 
