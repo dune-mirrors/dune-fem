@@ -449,7 +449,7 @@ namespace Dune {
       // get position as we get it from intersectionSelfLocal 
       // in the best case this should be the same 
       // at least the orientatation should be the same 
-      CoordinateVectorType localPos = localGeom[idx];
+      CoordinateVectorType localPos = localGeom.corner( idx );
 
       if( (refPos - localPos).infinity_norm() > 1e-8 )
       {
@@ -480,7 +480,7 @@ namespace Dune {
                          CubeFaceMapping::dune2aluVertex( newVx ) :
                          SimplexFaceMapping::dune2aluVertex( newVx );
           
-          CoordinateVectorType localPos = localGeom[newVx];
+          CoordinateVectorType localPos = localGeom.corner( newVx );
           if( (refPos - localPos).infinity_norm() < 1e-8 )
           {
             faceMap[i] = newVx;
@@ -494,7 +494,7 @@ namespace Dune {
         // get position in reference element of vertex i
         CoordinateVectorType refPos   = refElem.position( vx[i], dim );
         // get corner from local geometry 
-        CoordinateVectorType localPos = localGeom[ faceMap[i] ];
+        CoordinateVectorType localPos = localGeom.corner( faceMap[i] );
 
         if( (refPos - localPos).infinity_norm() > 1e-8 )
         {
@@ -531,7 +531,7 @@ namespace Dune {
           }
           
           // check coordinates again 
-          CoordinateVectorType localPos = localGeom[ twistedDuneIndex ];
+          CoordinateVectorType localPos = localGeom.corner( twistedDuneIndex );
           if( (refPos - localPos).infinity_norm() > 1e-8 )
           {
             twistOk = false;
