@@ -24,9 +24,6 @@ namespace Dune
   template< int dim >
   class UGGrid;
 
-  template< int dim >
-  class YaspGrid;
-
 
 
   // Capabilities
@@ -77,12 +74,6 @@ namespace Dune
 
     template< int dim >
     struct hasHierarchicIndexSet< UGGrid< dim > >
-    {
-      static const bool v = false;
-    };
-
-    template< int dim >
-    struct hasHierarchicIndexSet< YaspGrid< dim > >
     {
       static const bool v = false;
     };
