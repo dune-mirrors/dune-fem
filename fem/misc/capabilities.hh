@@ -10,9 +10,6 @@ namespace Dune
   // -------------------------------------------
 
   template< int dim, int dimw >
-  class AlbertaGrid;
-
-  template< int dim, int dimw >
   class ALUConformGrid;
 
   template< int dim, int dimw >
@@ -47,12 +44,6 @@ namespace Dune
       static const bool v = hasHierarchicIndexSet< Grid >::v;
     };
 
-
-    template< int dim, int dimw >
-    struct hasHierarchicIndexSet< AlbertaGrid< dim, dimw > >
-    {
-      static const bool v = true;
-    };
 
     template< int dim, int dimw >
     struct hasHierarchicIndexSet< ALUConformGrid< dim, dimw > >
