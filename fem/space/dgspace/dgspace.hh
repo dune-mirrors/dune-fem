@@ -84,7 +84,7 @@ namespace Dune {
 
     //! factory type for base functions 
     typedef DiscontinuousGalerkinBaseFunctionFactory<
-      typename Traits::FunctionSpaceType, polOrd> FactoryType;
+      typename Traits::BaseFunctionSpaceType, polOrd> FactoryType;
 
     //! Dimension of the range vector field
     enum { dimRange = Traits::FunctionSpaceType :: dimRange };
@@ -311,7 +311,7 @@ namespace Dune {
 
     enum { dimRange  = FunctionSpaceType::dimRange };
     enum { dimDomain = FunctionSpaceType::dimDomain };
-    enum { codimension = GridType :: dimension - dimDomain }; 
+    enum { codimension = GridType :: dimensionworld - dimDomain }; 
 
     typedef typename GridPartType::IndexSetType IndexSetType;
     typedef typename GridPartType::template Codim<codimension>::IteratorType IteratorType;
@@ -321,15 +321,19 @@ namespace Dune {
     typedef typename FunctionSpaceType::RangeType RangeType;
     typedef typename FunctionSpaceType::DomainType DomainType;
     typedef typename FunctionSpaceType::JacobianRangeType JacobianRangeType;
-    typedef typename FunctionSpaceType::ScalarFunctionSpaceType ScalarFunctionSpaceType;
 
     typedef DiscontinuousGalerkinSpace<
       FunctionSpaceType, GridPartType, polOrd, BaseFunctionStorageImp > DiscreteFunctionSpaceType;
+
+    enum { dimLocal = GridType :: dimension };
+
+    typedef typename ToLocalFunctionSpace< FunctionSpaceType, dimLocal> :: Type 
+      BaseFunctionSpaceType;
  
-    typedef VectorialBaseFunctionSet<FunctionSpaceType, BaseFunctionStorageImp > BaseFunctionSetImp;
-    //typedef BaseFunctionSetImp BaseFunctionSetType;
+    typedef VectorialBaseFunctionSet<BaseFunctionSpaceType, BaseFunctionStorageImp > BaseFunctionSetImp;
     typedef SimpleBaseFunctionProxy<BaseFunctionSetImp> BaseFunctionSetType;
-    //
+    
+    //! type of DG mapper 
     typedef DGMapper< GridPartType, polOrd, dimRange > MapperType;
 
     //! mapper for block vector function 
@@ -416,11 +420,11 @@ namespace Dune {
     CompileTimeChecker<(dimensionworld<=3)> use_Legendre_Spaces_for_higher_worlddims;
 
     //! scalar space type 
-    typedef typename Traits::ScalarFunctionSpaceType ScalarFunctionSpaceType;
+    typedef typename Traits::BaseFunctionSpaceType  BaseFunctionSpaceType;
 
     // type of base function factory 
-    typedef DiscontinuousGalerkinBaseFunctionFactory<
-      ScalarFunctionSpaceType, polOrd> ScalarFactoryType;   
+    typedef DiscontinuousGalerkinBaseFunctionFactory< 
+      typename BaseFunctionSpaceType :: ScalarFunctionSpaceType, polOrd> ScalarFactoryType;   
 
     // type of singleton factory 
     typedef BaseFunctionSetSingletonFactory<const GeometryType,BaseFunctionSetImp,
@@ -475,7 +479,7 @@ namespace Dune {
     typedef typename GridPartType::GridType GridType;
     enum { dimRange  = FunctionSpaceType::dimRange };
     enum { dimDomain = FunctionSpaceType::dimDomain };
-    enum { codimension = GridType :: dimension - dimDomain }; 
+    enum { codimension = GridType :: dimensionworld - dimDomain }; 
 
     typedef typename GridPartType::IndexSetType IndexSetType;
     typedef typename GridPartType::template Codim<codimension>::IteratorType IteratorType;
@@ -485,12 +489,16 @@ namespace Dune {
     typedef typename FunctionSpaceType::RangeType RangeType;
     typedef typename FunctionSpaceType::DomainType DomainType;
     typedef typename FunctionSpaceType::JacobianRangeType JacobianRangeType;
-    typedef typename FunctionSpaceType::ScalarFunctionSpaceType ScalarFunctionSpaceType;
 
     typedef LegendreDiscontinuousGalerkinSpace<
       FunctionSpaceType, GridPartType, polOrd, BaseFunctionStorageImp> DiscreteFunctionSpaceType;
  
-    typedef VectorialBaseFunctionSet<FunctionSpaceType, BaseFunctionStorageImp > BaseFunctionSetImp;
+    enum { dimLocal = GridType :: dimension };
+
+    typedef typename ToLocalFunctionSpace< FunctionSpaceType, dimLocal> :: Type 
+      BaseFunctionSpaceType;
+ 
+    typedef VectorialBaseFunctionSet<BaseFunctionSpaceType, BaseFunctionStorageImp > BaseFunctionSetImp;
     typedef SimpleBaseFunctionProxy< BaseFunctionSetImp > BaseFunctionSetType;
 
     typedef DGMapper< GridPartType, polOrd, dimRange > MapperType;
@@ -576,11 +584,13 @@ namespace Dune {
     enum { polynomialOrder = polOrd };
 
     //! type of scalar space 
-    typedef typename Traits::ScalarFunctionSpaceType ScalarFunctionSpaceType;
+    typedef typename Traits::BaseFunctionSpaceType BaseFunctionSpaceType;
     
     // type of base function factory 
-    typedef LegendreDGBaseFunctionFactory<
-      ScalarFunctionSpaceType, polOrd> ScalarFactoryType;   
+    typedef LegendreDGBaseFunctionFactory< 
+        typename BaseFunctionSpaceType :: ScalarFunctionSpaceType, 
+        polOrd
+          > ScalarFactoryType;   
 
     // type of singleton factory  
     typedef BaseFunctionSetSingletonFactory<GeometryType,BaseFunctionSetImp,

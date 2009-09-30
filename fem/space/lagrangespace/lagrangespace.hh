@@ -45,8 +45,7 @@ namespace Dune
     typedef typename FunctionSpaceType :: RangeFieldType RangeFieldType;
     typedef typename FunctionSpaceType :: RangeType RangeType;
     typedef typename FunctionSpaceType :: JacobianRangeType JacobianRangeType;
-    typedef typename FunctionSpaceType :: ScalarFunctionSpaceType
-      ScalarFunctionSpaceType;
+
     enum { dimRange = FunctionSpaceType :: dimRange };
     
     typedef GridPart GridPartType;
@@ -54,6 +53,12 @@ namespace Dune
     typedef typename GridPartType :: IndexSetType IndexSetType;
     typedef typename GridPartType :: template Codim< 0 > :: IteratorType
       IteratorType;
+
+    // get dimension of local coordinate 
+    enum { dimLocal = GridType :: dimension };
+
+    typedef typename ToLocalFunctionSpace< FunctionSpaceType, dimLocal > :: Type 
+      BaseFunctionSpaceType;
 
     enum { polynomialOrder = polOrder };
     
@@ -68,7 +73,7 @@ namespace Dune
       BlockMapperType;
     
     // implementation of basefunction set 
-    typedef VectorialBaseFunctionSet< FunctionSpaceType, BaseFunctionStorage >
+    typedef VectorialBaseFunctionSet< BaseFunctionSpaceType, BaseFunctionStorage >
         BaseFunctionSetImp;
 
     // exported type 
@@ -208,7 +213,7 @@ namespace Dune
     //! dimension of function space's range
     enum { dimRange = FunctionSpaceType :: dimRange };
     //! type of scalar function space
-    typedef typename Traits :: ScalarFunctionSpaceType ScalarFunctionSpaceType;
+    typedef typename Traits :: BaseFunctionSpaceType BaseFunctionSpaceType;
    
     //! maximum polynomial order of functions in this space
     enum { polynomialOrder = Traits :: polynomialOrder };
@@ -222,7 +227,7 @@ namespace Dune
       BaseFunctionMapType;
     //! type of base function factory
     typedef LagrangeBaseFunctionFactory
-      < ScalarFunctionSpaceType, dimension, polynomialOrder >
+      < typename BaseFunctionSpaceType :: ScalarFunctionSpaceType, dimension, polynomialOrder >
       ScalarFactoryType;
     //! type of singleton base function factory
     typedef BaseFunctionSetSingletonFactory

@@ -59,7 +59,7 @@ namespace Dune {
       FunctionSpaceImp, GridPartImp, polOrd, BaseFunctionStorageImp > DiscreteFunctionSpaceType;
     
     // convert function space to local function space 
-    typedef typename ToLocalScalarFunctionSpace< FunctionSpaceImp, dimLocal > :: Type
+    typedef typename ToLocalFunctionSpace< FunctionSpaceImp, dimLocal > :: Type
       BaseFunctionSpaceType ; 
 
     typedef VectorialBaseFunctionSet<BaseFunctionSpaceType, BaseFunctionStorageImp > BaseFunctionSetImp;
@@ -183,8 +183,8 @@ namespace Dune {
     typedef typename Traits::BaseFunctionSpaceType BaseFunctionSpaceType;
 
     //! type of base function factory 
-    typedef FVBaseFunctionFactory<
-      BaseFunctionSpaceType, polOrd> ScalarFactoryType;
+    typedef FVBaseFunctionFactory<typename BaseFunctionSpaceType ::
+      ScalarFunctionSpaceType, polOrd> ScalarFactoryType;
 
     //! type of singleton factory 
     typedef BaseFunctionSetSingletonFactory<GeometryType,BaseFunctionSetImp,
