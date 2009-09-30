@@ -92,6 +92,15 @@ namespace Dune
     //! type of block mapper of this space
     typedef typename Traits :: BlockMapperType BlockMapperType;
 
+    /** \copydoc FunctionSpace::dimRange */
+    enum { dimRange  = FunctionSpaceType::dimRange };
+
+    /** \copydoc FunctionSpace::dimDomain */
+    enum { dimDomain = FunctionSpaceType::dimDomain };
+
+    //! size of local blocks, here always 1 
+    enum { localBlockSize = Traits :: localBlockSize };
+
     //! type of underlying \ref GridPart "grid part" 
     typedef typename Traits :: GridPartType GridPartType;
 
@@ -107,7 +116,18 @@ namespace Dune
       IteratorType;
     //! type of entity of codimension 0
     typedef typename IteratorType :: Entity EntityType;
- 
+
+    /** \copydoc FunctionSpace::DomainType */
+    typedef typename Traits :: DomainType DomainType;
+    /** \copydoc FunctionSpace::RangeType */
+    typedef typename Traits :: RangeType RangeType;
+
+    typedef typename Traits :: RangeFieldType DofType;
+    /** \copydoc FunctionSpace::RangeFieldType */
+    typedef typename Traits :: RangeFieldType RangeFieldType;
+    /** \copydoc FunctionSpace::DomainFieldType */
+    typedef typename Traits :: DomainFieldType DomainFieldType;
+
     /** \brief defines type of data handle for communication
      *  \param  DiscreteFunction  type of \ref Dune::DiscreteFunctionInterface
      *                            "discrete function" to communicate
