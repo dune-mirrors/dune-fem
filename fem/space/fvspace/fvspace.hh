@@ -46,17 +46,24 @@ namespace Dune {
     typedef typename GridPartType::template Codim<0>::IteratorType IteratorType;
     enum { dimRange = FunctionSpaceType :: dimRange };
 
+    // dimension of local coordinates 
+    enum { dimLocal = GridType :: dimension };
+
     typedef typename FunctionSpaceType::RangeFieldType RangeFieldType;
     typedef typename FunctionSpaceType::DomainFieldType DomainFieldType;
     typedef typename FunctionSpaceType::RangeType RangeType;
     typedef typename FunctionSpaceType::DomainType DomainType;
     typedef typename FunctionSpaceType::JacobianRangeType JacobianRangeType;
-    typedef typename FunctionSpaceType::ScalarFunctionSpaceType ScalarFunctionSpaceType;
 
     typedef FiniteVolumeSpace<
       FunctionSpaceImp, GridPartImp, polOrd, BaseFunctionStorageImp > DiscreteFunctionSpaceType;
     
-    typedef VectorialBaseFunctionSet<FunctionSpaceImp, BaseFunctionStorageImp > BaseFunctionSetImp;
+    // convert function space to local function space 
+    typedef typename ToLocalScalarFunctionSpace< FunctionSpaceImp, dimLocal > :: Type
+      BaseFunctionSpaceType ; 
+
+    typedef VectorialBaseFunctionSet<BaseFunctionSpaceType, BaseFunctionStorageImp > BaseFunctionSetImp;
+
     typedef SimpleBaseFunctionProxy<BaseFunctionSetImp> BaseFunctionSetType;
     typedef FiniteVolumeMapper< GridPartType, polOrd, dimRange > MapperType;
 
@@ -131,7 +138,7 @@ namespace Dune {
     /** type of base function set implementation  */
     typedef typename Traits::BaseFunctionSetImp BaseFunctionSetImp;
 
-    typedef typename Traits::BaseFunctionSetType  BaseFunctionSetType;
+    typedef typename Traits::BaseFunctionSetType BaseFunctionSetType;
 
     typedef typename Traits::IndexSetType IndexSetType;
 
@@ -147,17 +154,12 @@ namespace Dune {
     //! id is neighbor of the beast
     static const IdentifierType id = 665;
 
-    /** \copydoc FunctionSpace::dimRange */
-    enum { dimRange = FunctionSpaceType::dimRange };
-
-    //! size of local blocks, here always 1 
-    enum { localBlockSize = Traits :: localBlockSize };
-  
     typedef typename Traits :: MapperType MapperType; 
 
     //! block mapper 
     typedef typename Traits :: BlockMapperType BlockMapperType; 
 
+ protected:  
     //! mapper singleton key  
     typedef MapperSingletonKey< IndexSetType > MapperSingletonKeyType;
 
@@ -177,23 +179,12 @@ namespace Dune {
     typedef SingletonList< MapperSingletonKeyType , BlockMapperType ,
             BlockMapperSingletonFactoryType > BlockMapperProviderType;
 
-    /** \copydoc FunctionSpace::DomainType */
-    typedef typename FunctionSpaceType::DomainType DomainType;
-    /** \copydoc FunctionSpace::RangeType */
-    typedef typename FunctionSpaceType::RangeType RangeType;
-
-    typedef typename FunctionSpaceType::RangeFieldType DofType;
-    /** \copydoc FunctionSpace::RangeFieldType */
-    typedef typename FunctionSpaceType::RangeFieldType RangeFieldType;
-    /** \copydoc FunctionSpace::DomainFieldType */
-    typedef typename FunctionSpaceType::DomainFieldType DomainFieldType;
-
-    //! scalar space type 
-    typedef typename Traits::ScalarFunctionSpaceType ScalarFunctionSpaceType;
+    //! scalar basefunction space type 
+    typedef typename Traits::BaseFunctionSpaceType BaseFunctionSpaceType;
 
     //! type of base function factory 
     typedef FVBaseFunctionFactory<
-      ScalarFunctionSpaceType, polOrd> ScalarFactoryType;
+      BaseFunctionSpaceType, polOrd> ScalarFactoryType;
 
     //! type of singleton factory 
     typedef BaseFunctionSetSingletonFactory<GeometryType,BaseFunctionSetImp,
