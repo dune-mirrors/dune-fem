@@ -196,8 +196,9 @@ namespace Dune
     typedef typename DiscreteFunctionSpaceType::IteratorType Iterator;
     typedef typename Iterator::Entity Entity;
     typedef typename Entity::Geometry Geometry;
+    typedef typename Geometry :: LocalCoordinate LocalCoordinateType;
 
-    const int dimDomain = DomainType::dimension;
+    const int dimLocal = LocalCoordinateType :: dimension;
     
     const DiscreteFunctionSpaceType &space = BaseType::space();
     const Iterator end = space.end();
@@ -206,10 +207,10 @@ namespace Dune
       const Entity &entity = *it;
       const Geometry &geometry = entity.geometry();
 
-      const GenericReferenceElement< DomainFieldType, dimDomain > &refElement
-        = GenericReferenceElements< DomainFieldType, dimDomain >::general( geometry.type() );
+      const GenericReferenceElement< DomainFieldType, dimLocal > &refElement
+        = GenericReferenceElements< DomainFieldType, dimLocal >::general( geometry.type() );
 
-      const DomainType xlocal = geometry.local( x );
+      const LocalCoordinateType xlocal = geometry.local( x );
       if( refElement.checkInside( xlocal ) )
       {
         const LocalFunctionType localFunction = BaseType::localFunction( entity );
