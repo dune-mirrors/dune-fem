@@ -247,14 +247,14 @@ struct ToScalarFunctionSpace<
 
 //! convert functions space to scalar function space of basis functions (local space)
 template <class FunctionSpaceImp, int dimLocal>
-struct ToLocalScalarFunctionSpace {};
+struct ToLocalFunctionSpace {};
 
 //! specialization for parameter list <domainfile,rangefield,dimDomain,dimRange,dimLocal> 
 template <class DomainFieldImp, class RangeFieldImp, int dimDomain, int dimRange, int dimLocal>
-struct ToLocalScalarFunctionSpace<
+struct ToLocalFunctionSpace<
   FunctionSpace<DomainFieldImp, RangeFieldImp, dimDomain, dimRange>, dimLocal >
 {
-  typedef FunctionSpace<DomainFieldImp, RangeFieldImp, dimLocal, 1> Type;
+  typedef FunctionSpace<DomainFieldImp, RangeFieldImp, dimLocal, dimRange> Type;
 };
 
 } // end namespace Dune 
