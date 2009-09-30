@@ -9,11 +9,11 @@ namespace Dune
 
 // Forward declaration of
 // base class for vector valued function spaces.
-template< class DomainField, class RangeField, int dimD, int dimR >
+template< class DomainField, class RangeField, int dimD, int dimR>
 class FunctionSpace;
 
 //! \brief Traits class for vector function spaces 
-template< class DomainField, class RangeField, int dimD,int dimR >
+template< class DomainField, class RangeField, int dimD, int dimR>
 struct VectorSpaceTraits
 {
   /** \copydoc Dune::FunctionSpaceInterface::DomainFieldType */
@@ -28,6 +28,7 @@ struct VectorSpaceTraits
 
   /** \copydoc Dune::FunctionSpaceInterface::DomainType */
   typedef FieldVector< DomainFieldType, dimDomain > DomainType;
+
   /** \copydoc Dune::FunctionSpaceInterface::RangeType */
   typedef FieldVector< RangeFieldType, dimRange> RangeType;
   
@@ -35,7 +36,7 @@ struct VectorSpaceTraits
   typedef FieldMatrix< RangeFieldType, dimRange, dimDomain > LinearMappingType;
 
   /** \brief scalar function space type */
-  typedef FunctionSpace< DomainFieldType, RangeFieldType, dimDomain, 1 >
+  typedef FunctionSpace< DomainFieldType, RangeFieldType, dimDomain, 1>
     ScalarFunctionSpaceType;
 };
 
@@ -45,12 +46,12 @@ struct VectorSpaceTraits
     FunctionSpace defines what the types of the domain vector
     space and the range vector space for a function are. 
 */
-template< class DomainField, class RangeField, int dimD, int dimR >
+template< class DomainField, class RangeField, int dimD, int dimR>
 class FunctionSpace
 : public FunctionSpaceInterface
-    < VectorSpaceTraits< DomainField, RangeField, dimD, dimR > >
+    < VectorSpaceTraits< DomainField, RangeField, dimD, dimR> >
 {
-  typedef FunctionSpace< DomainField, RangeField, dimD, dimR > ThisType;
+  typedef FunctionSpace< DomainField, RangeField, dimD, dimR> ThisType;
 
 public:
   typedef ThisType FunctionSpaceType;
@@ -242,6 +243,18 @@ struct ToScalarFunctionSpace<
   FunctionSpace<DomainFieldImp, RangeFieldImp, dimDomain, dimRange> >
 {
   typedef FunctionSpace<DomainFieldImp, RangeFieldImp, dimDomain, 1> Type;
+};
+
+//! convert functions space to scalar function space of basis functions (local space)
+template <class FunctionSpaceImp, int dimLocal>
+struct ToLocalScalarFunctionSpace {};
+
+//! specialization for parameter list <domainfile,rangefield,dimDomain,dimRange,dimLocal> 
+template <class DomainFieldImp, class RangeFieldImp, int dimDomain, int dimRange, int dimLocal>
+struct ToLocalScalarFunctionSpace<
+  FunctionSpace<DomainFieldImp, RangeFieldImp, dimDomain, dimRange>, dimLocal >
+{
+  typedef FunctionSpace<DomainFieldImp, RangeFieldImp, dimLocal, 1> Type;
 };
 
 } // end namespace Dune 

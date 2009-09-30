@@ -40,7 +40,7 @@ namespace Dune
       //! dimension of domain vector space
       dimDomain = FunctionSpaceTraits :: dimDomain,
       //! dimension of range vector space
-      dimRange = FunctionSpaceTraits :: dimRange
+      dimRange  = FunctionSpaceTraits :: dimRange,
     };
 
     // for compatibility with GrapDataDisplay (see dune-grid), we also export
