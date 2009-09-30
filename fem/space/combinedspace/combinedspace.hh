@@ -132,14 +132,25 @@ namespace Dune
     typedef typename ContainedFunctionSpaceType::JacobianRangeType
     ContainedJacobianRangeType;
 
-   typedef CombinedSpace<
+    typedef typename ContainedSpaceTraits::GridType GridType;
+    typedef typename ContainedSpaceTraits::GridPartType GridPartType;
+    typedef typename ContainedSpaceTraits::IndexSetType IndexSetType;
+    typedef typename ContainedSpaceTraits::IteratorType IteratorType;
+
+    typedef CombinedSpace<
       DiscreteFunctionSpaceImp, N, policy> DiscreteFunctionSpaceType;
+
     typedef FunctionSpace<
       DomainFieldType, RangeFieldType, 
       ContainedDimDomain, ContainedDimRange*N > FunctionSpaceType;
 
+    enum { dimLocal = GridType :: dimension };
+
+    typedef typename ToLocalFunctionSpace< FunctionSpaceType, dimLocal > :: Type 
+      BaseFunctionSpaceType; 
+
     // type of singleton factory 
-    typedef VectorialBaseFunctionSet< FunctionSpaceType, CachingStorage >
+    typedef VectorialBaseFunctionSet< BaseFunctionSpaceType, CachingStorage >
       BaseFunctionSetImp;
     typedef VectorialBaseFunctionProxy<BaseFunctionSetImp> BaseFunctionSetType;
 
@@ -152,11 +163,6 @@ namespace Dune
     typedef typename FunctionSpaceType::RangeType RangeType;
     typedef typename FunctionSpaceType::DomainType DomainType;
     typedef typename FunctionSpaceType::JacobianRangeType JacobianRangeType;
-
-    typedef typename ContainedSpaceTraits::GridType GridType;
-    typedef typename ContainedSpaceTraits::GridPartType GridPartType;
-    typedef typename ContainedSpaceTraits::IndexSetType IndexSetType;
-    typedef typename ContainedSpaceTraits::IteratorType IteratorType;
 
     typedef CombinedDofConversionUtility< ContainedMapperType, policy >
       DofConversionType;
