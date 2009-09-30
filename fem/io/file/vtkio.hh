@@ -26,6 +26,7 @@ namespace Dune
     typedef typename FunctionSpaceType::RangeType RangeType;
     typedef typename FunctionSpaceType::GridPartType GridPartType;
     typedef typename FunctionSpaceType::IteratorType::Entity EntityType;
+    typedef typename EntityType :: Geometry :: LocalCoordinate LocalCoordinateType;
 
     static const int dimRange = FunctionSpaceType::dimRange;
     static const int dimDomain = FunctionSpaceType::dimDomain;
@@ -50,7 +51,7 @@ namespace Dune
 
     //! evaluate single component comp in
     //! the entity
-    virtual double evaluate (int comp, const EntityType& e, const DomainType& xi) const {
+    virtual double evaluate (int comp, const EntityType& e, const LocalCoordinateType& xi) const {
       const LocalFunctionType lf = discFunc_.localFunction(e);
       RangeType val;
       lf.evaluate(xi,val);
