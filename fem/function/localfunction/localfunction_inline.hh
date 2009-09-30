@@ -206,7 +206,7 @@ namespace Dune
   template< class DiscreteFunctionSpace, class LocalFunctionImp >
   inline void LocalFunctionDefault< DiscreteFunctionSpace, LocalFunctionImp >
     :: rightMultiply( const JacobianRangeType &factor,
-                      const DomainType &x,
+                      const LocalCoordinateType &x,
                       JacobianRangeType &ret ) const
   {
     const GeometryJacobianInverseType &gjit
@@ -441,7 +441,7 @@ namespace Dune
   inline void LocalFunctionDefault
     < CombinedSpace< ContainedFunctionSpace, N, policy >, LocalFunctionImp >
     :: rightMultiply( const JacobianRangeType &factor,
-                      const DomainType &x,
+                      const LocalCoordinateType &x,
                       JacobianRangeType &ret ) const
   {
     const GeometryJacobianInverseType &gjit

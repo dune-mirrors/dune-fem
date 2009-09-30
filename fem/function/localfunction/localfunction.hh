@@ -78,6 +78,9 @@ namespace Dune
     typedef typename DiscreteFunctionSpaceType :: JacobianRangeType
       JacobianRangeType;
 
+    //! type of local coordinates 
+    typedef typename EntityType :: Geometry :: LocalCoordinate LocalCoordinateType;
+
     //! dimension of the domain
     static const int dimDomain = DiscreteFunctionSpaceType::dimDomain;
     //! dimension of the range
@@ -371,6 +374,9 @@ namespace Dune
     typedef typename DiscreteFunctionSpaceType :: JacobianRangeType
       JacobianRangeType;
 
+    //! type of local coordinates 
+    typedef typename EntityType :: Geometry :: LocalCoordinate LocalCoordinateType;
+
     //! type of base function set  
     typedef typename DiscreteFunctionSpaceType :: BaseFunctionSetType
       BaseFunctionSetType;
@@ -443,7 +449,7 @@ namespace Dune
 
   protected:
     inline void rightMultiply ( const JacobianRangeType &factor,
-                                const DomainType &x,
+                                const LocalCoordinateType &x,
                                 JacobianRangeType &result ) const;
   };
 
@@ -486,6 +492,9 @@ namespace Dune
     //! type of Jacobian, i.e., type of evaluated Jacobian matrix
     typedef typename DiscreteFunctionSpaceType :: JacobianRangeType
       JacobianRangeType;
+
+    //! type of local coordinates 
+    typedef typename EntityType :: Geometry :: LocalCoordinate LocalCoordinateType;
 
     //! type of base function set  
     typedef typename DiscreteFunctionSpaceType :: BaseFunctionSetType
@@ -572,7 +581,7 @@ namespace Dune
 
   protected:
     inline void rightMultiply ( const JacobianRangeType &factor,
-                                const DomainType &x,
+                                const LocalCoordinateType &x,
                                 JacobianRangeType &result ) const;
   };
 
