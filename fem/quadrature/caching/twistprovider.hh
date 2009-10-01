@@ -8,7 +8,7 @@
 #include <cassert>
 
 //- Dune includes
-#include <dune/grid/common/referenceelements.hh>
+#include <dune/grid/common/genericreferenceelements.hh>
 #include <dune/grid/alugrid/3d/topology.hh>
 #include <dune/fem/quadrature/quadrature.hh>
 
@@ -234,7 +234,7 @@ namespace Dune {
     virtual const MatrixType& buildTransformationMatrix(int tiwst) const;
     
   private:
-    const ReferenceCube<ct, dim>& refElem_;
+    const GenericReferenceElement<ct, dim>& refElem_;
     mutable MatrixType mat_;
   };
   //! Implements the creator's functionality that depends on the underlying
@@ -254,7 +254,7 @@ namespace Dune {
     virtual const MatrixType& buildTransformationMatrix(int tiwst) const;
     
   private:
-    const ReferenceCube<ct, dim>& refElem_;
+    const GenericReferenceElement<ct, dim>& refElem_;
     mutable MatrixType mat_;
   };
 
@@ -277,7 +277,7 @@ namespace Dune {
     typedef FaceTopologyMapping<tetra> FaceTopo;
 
   private:
-    const ReferenceSimplex<ct, dim>& refElem_;
+    const GenericReferenceElement<ct, dim>& refElem_;
     mutable MatrixType mat_;
   };
 
@@ -302,7 +302,7 @@ namespace Dune {
     typedef FaceTopologyMapping<hexa> FaceTopo;
 
   private:
-    const ReferenceCube<ct, dim>& refElem_;
+    const GenericReferenceElement<ct, dim>& refElem_;
     mutable MatrixType mat_;
   };
 
