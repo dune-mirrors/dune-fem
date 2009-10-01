@@ -41,7 +41,7 @@ namespace Dune
     int timeStep_;
     double dt_;
     bool valid_;
-    bool dtValid_;
+    bool dtEstimateValid_;
     double dtEstimate_;
     double dtUpperBound_;
 
@@ -50,8 +50,9 @@ namespace Dune
     : time_( Parameter :: getValue( "fem.timeprovider.starttime",
                                     (double)0.0 ) ),
       timeStep_( 0 ),
+      dt_( 0.0 ),
       valid_( false ),
-      dtValid_( false )
+      dtEstimateValid_( false )
     {
       initTimeStepEstimate();
     }
@@ -59,24 +60,28 @@ namespace Dune
     inline explicit TimeProviderBase ( const double startTime )
     : time_( startTime ),
       timeStep_( 0 ),
+      dt_( 0.0 ),
       valid_( false ),
-      dtValid_( false )
+      dtEstimateValid_( false )
     {
       initTimeStepEstimate();
     }
 
     virtual ~TimeProviderBase() {}
 
-    void backup() const {
+    void backup() const 
+    {
       Tuple<const double&,const int&,const double&,const bool&,const double&>
         values(time_,timeStep_,dt_,valid_,dtEstimate_);
       PersistenceManager::backupValue("timeprovider",values);
     }
-    void restore() {
+
+    void restore() 
+    {
       Tuple<double&,int&,double&,bool&,double&>
         values(time_,timeStep_,dt_,valid_,dtEstimate_);
       PersistenceManager::restoreValue("timeprovider",values);
-      dtValid_=true;
+      dtEstimateValid_ = true;
     }
     
   private:
@@ -120,7 +125,7 @@ namespace Dune
     inline void provideTimeStepEstimate ( const double dtEstimate )
     {
       dtEstimate_ = std :: min( dtEstimate_, dtEstimate );
-      dtValid_ = true;
+      dtEstimateValid_ = true;
     }
     /** \brief set upper bound for time step to minimum of given value and
                internal bound
@@ -129,7 +134,7 @@ namespace Dune
     inline void provideTimeStepUpperBound ( const double upperBound )
     {
       dtUpperBound_ = std :: min( dtUpperBound_, upperBound );
-      dtValid_ = true;
+      dtEstimateValid_ = true;
     }
     
     /** \brief count current time step a not valid */
@@ -158,7 +163,7 @@ namespace Dune
     {
       dtEstimate_ = std :: numeric_limits< double > :: max();
       dtUpperBound_ = std :: numeric_limits< double > :: max();
-      dtValid_ = false;
+      dtEstimateValid_ = false;
     }
   };
 
@@ -371,7 +376,7 @@ namespace Dune
      */
     void next ( ) 
     {
-      assert(this->dtValid_);
+      assert(this->dtEstimateValid_);
       advance();
       initTimeStep(dtEstimate_);
     }
@@ -405,8 +410,8 @@ namespace Dune
     {
       dt_ = std::min(cfl_ * dtEstimate,dtUpperBound_);
       dt_ = comm_.min( dt_ );
-      assert( dt_ > 0.0 );
-      valid_ = true;
+      //assert( dt_ > 0.0 );
+      valid_ = (dt_ > 0.0);
 
       initTimeStepEstimate();
     }
