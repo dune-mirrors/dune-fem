@@ -412,9 +412,6 @@ namespace Dune
     }
 
   public:
-    // old methods, possibly deprecated in future
-    // ------------------------------------------
-    
     /** \brief restore time and timestep from outside 
          (i.e. from former calculation)  
          \param[in] time new time 
@@ -426,91 +423,6 @@ namespace Dune
       timeStep_ = timeStep;
     }
     
-    /** \brief restore time and timestep from outside 
-         (i.e. from former calculation)  
-         \param[in] time new time 
-         \param[in] timeStep new time step counter 
-    */
-    void setTime(const double time, const int timeStep ) DUNE_DEPRECATED
-    { 
-      restore(time, timeStep);
-    }
-
-    /** \brief augment time , i.e. \f$t = t + \triangle t\f$ and
-        increase time step counter  */
-    double augmentTime() DUNE_DEPRECATED
-    { 
-      advance();
-      return time_;
-    }
-    
-    /** \brief reset set time step estimate 
-        by setting ti to big value 
-    */
-    void resetTimeStepEstimate() DUNE_DEPRECATED
-    {
-      initTimeStepEstimate();
-    }
-    
-    /** \brief  return time step size estimate  
-        \return time step size estimate  
-    */
-    double timeStepEstimate() const DUNE_DEPRECATED
-    {
-      return dtEstimate_;
-    }
-
-    /** \brief  return cfl number 
-        \return cfl number 
-    */
-    double cfl () const DUNE_DEPRECATED
-    {
-      return cfl_;
-    }
-    
-    /** \brief set internal cfl to given value
-        \param[in] cfl new cfl number 
-    */
-    void setCfl(const double cfl) DUNE_DEPRECATED DUNE_DEPRECATED
-    {
-      //cfl_ = cfl;
-    }
-    
-    /** \brief set internal cfl to minimum of given value and internal
-        cfl number 
-        \param[in] cfl cfl estimate 
-    */
-    void provideCflEstimate(const double cfl) DUNE_DEPRECATED
-    {
-      //cfl_ = std::min(cfl_, cfl );
-    }
-    
-    /** \brief sets time step size to size of dt 
-        \param dt new time step size 
-    */
-    void setDeltaT (const double dt) DUNE_DEPRECATED
-    {
-      //resetTimeStepEstimate();
-      //provideTimeStepEstimate(dt);
-      //syncTimeStep();
-    }
-    
-    /** \brief  syncronize time step, i.e. set timeStep to values of current 
-        estimate and reset estimate 
-    */
-    void syncTimeStep() DUNE_DEPRECATED 
-    {
-      initTimeStep();
-    }
-
-    /** \brief returns true if TimeProvider is in syncronized state,
-        i.e. after next has been called. 
-    */
-    bool syncronized () const DUNE_DEPRECATED
-    {
-      return false;
-    }
-
     virtual void backup() const {
       BaseType::backup();
     }
