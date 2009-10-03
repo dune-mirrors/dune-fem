@@ -110,7 +110,7 @@ namespace Dune {
                           RangeType& resEn,
                           RangeType& resNeigh ) 
     {
-      typedef typename IntersectionIterator::LocalGeometry Geometry;
+      typedef typename IntersectionIterator::Intersection::LocalGeometry Geometry;
 
       const Geometry& selfLocal = nit.intersectionSelfLocal();
       const Geometry& neighLocal = nit.intersectionNeighborLocal();
@@ -174,7 +174,7 @@ namespace Dune {
                         const FaceDomainType& x,
                         RangeType& boundaryFlux) 
     {
-      typedef typename IntersectionIterator::LocalGeometry Geometry;
+      typedef typename IntersectionIterator::Intersection::LocalGeometry Geometry;
       const Geometry& selfLocal = nit.intersectionSelfLocal();
       evaluateLocal(selfLocal.global(x),
                     data_->localFunctionsSelf(), valuesEn_);
@@ -189,7 +189,7 @@ namespace Dune {
                         const int quadPoint,
                         RangeType& boundaryFlux) 
     {
-      typedef typename IntersectionIterator::LocalGeometry Geometry;
+      typedef typename IntersectionIterator::Intersection::LocalGeometry Geometry;
 
       evaluateQuad( quad, quadPoint,
                     data_->localFunctionsSelf(), valuesEn_);

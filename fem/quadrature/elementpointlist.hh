@@ -196,7 +196,7 @@ namespace Dune
     }
 
   private:
-    typedef typename IntersectionIteratorType::LocalGeometry ReferenceGeometry;
+    typedef typename IntersectionIteratorType::Intersection::LocalGeometry ReferenceGeometry;
 
     const ReferenceGeometry *referenceGeometry_;
     mutable CoordinateType dummy_;

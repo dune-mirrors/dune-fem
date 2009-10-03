@@ -695,7 +695,7 @@ namespace Dune {
             // store value 
             nbVals.push_back( avg );
 
-            typedef typename IntersectionIteratorType :: Geometry LocalGeometryType;
+            typedef typename IntersectionIteratorType :: Intersection :: Geometry LocalGeometryType;
             const LocalGeometryType& interGeo = nit.intersectionGlobal();
             DomainType tmp (interGeo[0]);
             tmp -= enBary;
