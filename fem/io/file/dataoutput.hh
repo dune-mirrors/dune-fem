@@ -239,7 +239,8 @@ protected:
 
       CachingQuadrature<GridPartType,0> quad(en_,df->space().order());
       LocalFunctionType lf = df->localFunction(en_);
-      for (int i=0;i<quad.nop();++i) {
+      for( size_t i = 0; i < quad.nop(); ++i )
+      {
         RangeType u;
         DomainType x = en_.geometry().global(quad.point(i));
         lf.evaluate(quad[i],u);
