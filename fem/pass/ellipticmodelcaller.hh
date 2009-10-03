@@ -64,6 +64,18 @@ namespace Dune
       jacobians_( JacobianCreator::apply() )
     {}
 
+    void setEntity ( const Entity &entity ) 
+    {
+      BaseType::setEntity( entity );
+      problem_.setEntity( entity );
+    }
+
+    void setNeighbor( const Entity &neighbor )
+    {
+      BaseType::setNeighbor( neighbor );
+      problem_.setNeighbor( neighbor );
+    }
+
     // Ensure: entities set correctly before call
     template <class QuadratureType, class CoefficientType>
     DUNE_DEPRECATED 
