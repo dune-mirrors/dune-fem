@@ -64,7 +64,7 @@ struct GridWidth
       typedef typename IntersectionIteratorType::Intersection Intersection;
       const Intersection &intersection = *it;
       
-      typedef typename IntersectionIteratorType::Geometry LocalGeometryType;
+      typedef typename Intersection::Geometry LocalGeometryType;
       const LocalGeometryType &interGeo = intersection.geometry();
 
       // calculate face Volume also for non-conforming intersections  
