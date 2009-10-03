@@ -2,7 +2,7 @@
 #define DUNE_ADAPTIVELEAFINDEXSET_HH
 
 //- local includes 
-#include <dune/fem/misc/forloop.hh>
+#include <dune/common/forloop.hh>
 #include <dune/fem/gridpart/dunefemindexsets.hh>
 #include <dune/fem/gridpart/codimindexset.hh>
 #include <dune/fem/io/file/xdrio.hh>

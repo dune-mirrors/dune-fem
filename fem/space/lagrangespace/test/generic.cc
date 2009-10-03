@@ -1,6 +1,6 @@
 #include <config.h>
 
-#include <dune/fem/misc/forloop.hh>
+#include <dune/common/forloop.hh>
 
 #include "../basefunctions.hh"
 #include "../lagrangepoints.hh"
