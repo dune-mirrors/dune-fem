@@ -22,6 +22,8 @@
 //#include <dune/prismgrid/dgfgridtype.hh> 
 #endif
 
+#include <dune/grid/common/genericreferenceelements.hh>
+
 #include "cache_test.hh"
 
 namespace Dune {
@@ -54,8 +56,8 @@ namespace Dune {
     GeometryType elemGeo = GeometryType(GeometryType::prism,3);
 
     // Get reference element
-    const ReferenceElement<double, dim>& refElem =
-      ReferenceElements<double, dim>::general(elemGeo);
+    const GenericReferenceElement<double, dim>& refElem =
+      GenericReferenceElements<double, dim>::general(elemGeo);
     
     // Loop over all faces
     for (int i = 0; i < refElem.size(codim); ++i) 
@@ -110,8 +112,8 @@ namespace Dune {
     GeometryType faceGeo = GeometryType(GeometryType::cube,2);
 
     // Get reference element
-    const ReferenceElement<double, dim>& refElem =
-      ReferenceElements<double, dim>::general(elemGeo);
+    const GenericReferenceElement<double, dim>& refElem =
+      GenericReferenceElements<double, dim>::general(elemGeo);
     
     // Build quadrature
     QuadratureType quad(faceGeo, 3);
@@ -159,8 +161,8 @@ namespace Dune {
     GeometryType faceGeo = GeometryType(GeometryType::simplex,2);
 
     // Get reference element
-    const ReferenceElement<double, dim>& refElem =
-      ReferenceElements<double, dim>::general(elemGeo);
+    const GenericReferenceElement<double, dim>& refElem =
+      GenericReferenceElements<double, dim>::general(elemGeo);
     
     // Build quadrature
     QuadratureType quad(faceGeo, 3);
@@ -206,8 +208,8 @@ namespace Dune {
     GeometryType faceGeo = GeometryType(GeometryType::simplex,1);
 
     // Get reference element
-    const ReferenceElement<double, dim>& refElem =
-      ReferenceElements<double, dim>::general(elemGeo);
+    const GenericReferenceElement<double, dim>& refElem =
+      GenericReferenceElements<double, dim>::general(elemGeo);
     
     // Build quadrature
     QuadratureType quad(faceGeo, 3);
@@ -252,8 +254,8 @@ namespace Dune {
     GeometryType faceGeo = GeometryType(GeometryType::cube,1);
 
     // Get reference element
-    const ReferenceElement<double, dim>& refElem =
-      ReferenceElements<double, dim>::general(elemGeo);
+    const GenericReferenceElement<double, dim>& refElem =
+      GenericReferenceElements<double, dim>::general(elemGeo);
     
     // Build quadrature
     QuadratureType quad(faceGeo, 5);
