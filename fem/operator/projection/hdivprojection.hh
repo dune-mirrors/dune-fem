@@ -852,8 +852,7 @@ private:
     {
       const IntersectionType& inter=*nit;
       // get base function set of face 
-      const FaceBSetType & faceSet =
-        faceSpace.baseFunctionSet(inter.intersectionGlobal().type());
+      const FaceBSetType &faceSet = faceSpace.baseFunctionSet( inter.type() );
      
       const int firstRow = inter.numberInSelf() * numFaceDofs;
       
@@ -936,7 +935,9 @@ private:
           int row = firstRow; 
           for(int j=0; j<numFaceDofs; ++j, ++row)
           {
-            faceSet.evaluate(j,faceQuadInner.localPoint(l), faceVal);
+            // can the following line ever have worked?
+            // faceSet.evaluate(j,faceQuadInner.localPoint(l), faceVal);
+            faceSet.evaluate( j, faceQuadInner[ l ], faceVal );
             rhs[row] += val*faceVal[0];
 
             for(int i=0; i<numDofs; ++i) 
@@ -1045,7 +1046,9 @@ private:
       int row = firstRow; 
       for(int j=0; j<numFaceDofs; ++j, ++row )
       {
-        faceSet.evaluate(j, faceQuadInner.localPoint(l), faceVal);
+        // can the following line ever have worked?
+        // faceSet.evaluate(j, faceQuadInner.localPoint(l), faceVal);
+        faceSet.evaluate( j, faceQuadInner[ l ], faceVal );
         rhs[row] += val * faceVal[0];
 
         for(int i=0; i<numDofs; ++i) 
