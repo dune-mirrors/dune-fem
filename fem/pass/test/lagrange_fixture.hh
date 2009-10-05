@@ -14,7 +14,6 @@ namespace Dune {
   public:
     typedef GridImp GridType;
     typedef DofManager<GridType> DofManagerType;
-    typedef DofManagerFactory<DofManagerType> DofManagerFactoryType;
     typedef LeafGridPart<GridType> GridPartType;
     typedef FunctionSpace<double, double, GridType :: dimension , 1> FunctionSpaceType;
     typedef LagrangeDiscreteFunctionSpace<
@@ -23,7 +22,7 @@ namespace Dune {
   public:
     Lagrange_Fixture(GridType& grid) :
       grid_(grid),
-      dm_(DofManagerFactoryType::getDofManager(grid_)),
+      dm_( DofManagerType::instance( grid_ ) ),
       part_(grid_),
       spc_(part_)
     {}
