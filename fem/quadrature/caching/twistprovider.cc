@@ -129,7 +129,9 @@ namespace Dune {
 
     // Loop over all twists
     // and find all mapped quad points 
-    for (int twist = helper_->minTwist();twist < helper_->maxTwist();++twist) {
+    for (int twist = helper_->minTwist(); 
+         twist < helper_->maxTwist(); ++twist) 
+    {
       MapperType mapper(quad_.nop());
       
       const MatrixType& mat = helper_->buildTransformationMatrix(twist);
@@ -244,9 +246,8 @@ namespace Dune {
 
     for (int idx = 0; idx < dim+1; ++idx) 
     {
-      const int aluIndex = FaceTopo::dune2aluVertex(idx);
-      const int twistedDuneIndex = FaceTopo::alu2duneVertex(aluIndex, twist);
-      mat_[idx] = refElem_.position(twistedDuneIndex, dim); // dim == codim here
+      mat_[idx] = refElem_.position( 
+          FaceTopo::twistedDuneIndex(idx, twist), dim); // dim == codim here
     }
     
     return mat_;
@@ -268,10 +269,10 @@ namespace Dune {
   buildTransformationMatrix(int twist) const 
   {
     mat_ = 0.0;
-    for (int idx = 0; idx < dim+1; ++idx) {
-      const int aluIndex = FaceTopo::dune2aluVertex(idx);
-      const int twistedDuneIndex = FaceTopo::alu2duneVertex(aluIndex, twist);
-      mat_[idx] = refElem_.position(twistedDuneIndex, dim); // dim == codim here
+    for (int idx = 0; idx < dim+1; ++idx) 
+    {
+      mat_[idx] = refElem_.position(
+          FaceTopo::twistedDuneIndex(idx, twist), dim); // dim == codim here
     }
 
     return mat_;

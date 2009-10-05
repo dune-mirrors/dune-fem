@@ -148,9 +148,7 @@ namespace Dune
     //! \brief return twist for inner face 
     static int twistInSelf ( const GridType &grid, const LeafIntersection &it )
     {
-      const int map3d[ 6 ] = {-2, -3, -1, 0, 2, 1};
-      const int twist = grid.getTwistInInside( it );
-      return (dimension == 3 ? map3d[ twist + 3 ] : twist);
+      return grid.getTwistInInside( it );
     }
     
     //! \brief return twist for inner face 
@@ -162,9 +160,7 @@ namespace Dune
     //! \brief return twist for outer face 
     static int twistInNeighbor ( const GridType &grid, const LeafIntersection &it )
     {
-      const int map3d[ 6 ] = {-2, -3, -1, 0, 2, 1};
-      const int twist = grid.getTwistInOutside( it );
-      return (dimension == 3 ? map3d[ twist + 3 ] : twist);
+      return grid.getTwistInOutside( it );
     }
 
     //! \brief return twist for outer face 
@@ -247,23 +243,14 @@ namespace Dune
     }
     
     //! \brief return twist for inner face 
-    int twistInSelf(const LeafIntersection& it) const {
-      return grid_.getRealIntersectionIterator(it).twistInSelf();
+    int twistInSelf(const LeafIntersection& it) const 
+    {
+      return twistInSelf( grid_, it );
     }
     
     //! \brief return twist for inner face 
     int twistInSelf(const LevelIntersection& it) const {
-      return grid_.getRealIntersectionIterator(it).twistInSelf();
-    }
-
-    //! \brief return twist for outer face 
-    int twistInNeighbor(const LeafIntersection& it) const {
-      return grid_.getRealIntersectionIterator(it).twistInNeighbor();
-    }
-    
-    //! \brief return twist for outer face 
-    int twistInNeighbor(const LevelIntersection& it) const {
-      return grid_.getRealIntersectionIterator(it).twistInNeighbor();
+      return twistInSelf( grid_, it );
     }
 
     //! \brief return twist for outer face 
@@ -274,6 +261,18 @@ namespace Dune
       return grid.getRealIntersectionIterator(it).twistInNeighbor();
     }
     
+    //! \brief return twist for outer face 
+    int twistInNeighbor(const LeafIntersection& it) const 
+    {
+      return twistInNeighbor( grid_, it );
+    }
+    
+    //! \brief return twist for outer face 
+    int twistInNeighbor(const LevelIntersection& it) const 
+    {
+      return twistInNeighbor( grid_, it );
+    }
+
     //! \brief return true if intersection is conform, default is true  
     template <class IntersectionIterator> 
     bool DUNE_DEPRECATED conforming (const IntersectionIterator& it) const
@@ -326,37 +325,39 @@ namespace Dune
     //! \brief return twist for inner face 
     template <class IntersectionIterator> 
     static inline int twistInSelf(const GridType & grid, 
-                           const IntersectionIterator& it)
+                                  const IntersectionIterator& it)
     {
       return grid.getRealIntersectionIterator(it).twistInSelf();
     }
     
     //! \brief return twist for inner face 
     int twistInSelf(const LeafIntersection& it) const {
-      return grid_.getRealIntersectionIterator(it).twistInSelf();
+      return twistInSelf( grid_, it );
     }
     
     //! \brief return twist for inner face 
     int twistInSelf(const LevelIntersection& it) const {
-      return grid_.getRealIntersectionIterator(it).twistInSelf();
+      return twistInSelf( grid_, it );
     }
 
     //! \brief return twist for outer face 
-    int twistInNeighbor(const LeafIntersection& it) const {
-      return grid_.getRealIntersectionIterator(it).twistInNeighbor();
-    }
-    
-    //! \brief return twist for outer face 
     template <class IntersectionIterator>
     static inline int twistInNeighbor(const GridType & grid, 
-                               const IntersectionIterator& it) 
+                                      const IntersectionIterator& it) 
     {
       return grid.getRealIntersectionIterator(it).twistInNeighbor();
     }
     
     //! \brief return twist for outer face 
-    int twistInNeighbor(const LevelIntersection& it) const {
-      return grid_.getRealIntersectionIterator(it).twistInNeighbor();
+    int twistInNeighbor(const LeafIntersection& it) const 
+    {
+      return twistInNeighbor( grid_, it);
+    }
+    
+    //! \brief return twist for outer face 
+    int twistInNeighbor(const LevelIntersection& it) const 
+    {
+      return twistInNeighbor( grid_, it);
     }
 
     //! \brief return true if intersection is conform, default is true  
