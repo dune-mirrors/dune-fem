@@ -428,9 +428,9 @@ protected:
         iTupel s_interior;
 
         enum { tag = MultiYGrid<dimworld,double> ::tag };
-        Torus<dimworld> torus(MPI_COMM_WORLD,tag,anz);
-        torus.partition( torus.rank() , o,anz,
-                         o_interior,s_interior);
+        YLoadBalance< dimworld > loadBalancer;
+        Torus< dimworld > torus( MPI_COMM_WORLD, tag, anz, &loadBalancer );
+        torus.partition( torus.rank(), o,anz, o_interior, s_interior );
 
         FieldVector<double,dimworld> origin(0.0);
         FieldVector<double,dimworld> sublang(0.0);
