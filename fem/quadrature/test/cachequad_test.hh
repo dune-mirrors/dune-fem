@@ -38,7 +38,7 @@ namespace Dune {
                     const int quadOrd);
 
     template <class EntityType, class LocalGeometryType>
-    void checkLocalIntersectionConsistency(
+    int  checkLocalIntersectionConsistency(
               const EntityType& en, const LocalGeometryType& localGeom,
               const int face, const bool neighbor, const bool output = false) const;
 

@@ -121,12 +121,10 @@ namespace Dune {
           const int twistFound = checkLocalIntersectionConsistency( *inter.inside(),
                                 inter.geometryInInside(), inter.indexInInside() , false, output);
           const int twistInside = TwistUtilityType::twistInSelf( gridPart.grid(), inter);
-          /*
-          if( twistFound != twistInside ) 
+          if( output && twistFound != twistInside ) 
           {
             std::cout << "Twist inconsistent: calculated twist " << twistFound << "  not equal to inside " << twistInside << "\n";
           }
-          */
 
           if( inter.neighbor() ) 
           {
@@ -134,12 +132,10 @@ namespace Dune {
                           inter.geometryInOutside(), inter.indexInOutside(), true, output);
 
             const int twistOutside = TwistUtilityType::twistInNeighbor( gridPart.grid(), inter);
-            /*
-            if( twstF != twistOutside ) 
+            if( output && twstF != twistOutside ) 
             {
               std::cout << "Twist inconsistent: calculated twist " << twstF << "  not equal to outside " << twistOutside << "\n";
             }
-            */
           }
         }
 
