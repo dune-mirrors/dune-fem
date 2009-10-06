@@ -36,8 +36,7 @@ namespace Dune
             template< class > class BaseFunctionStorage = CachingStorage >
   struct LagrangeDiscreteFunctionSpaceTraits
   {
-    CompileTimeChecker< (polOrder > 0) >
-      __LagrangeSpace_only_defined_for_polOrder_greater_zero__;
+    dune_static_assert((polOrder > 0), "LagrangeSpace only defined for polOrder > 0" );
     
     typedef FunctionSpace FunctionSpaceType;
     typedef typename FunctionSpaceType :: DomainFieldType DomainFieldType;
@@ -260,8 +259,6 @@ namespace Dune
     enum { dimVal = 1 };
     //! type of DoF manager
     typedef DofManager< GridType > DofManagerType;
-    //! type of DoF manager factory
-    typedef DofManagerFactory< DofManagerType > DofManagerFactoryType;
 
     //! mapper singleton key 
     typedef LagrangeMapperSingletonKey< GridPartType, LagrangePointSetMapType >
