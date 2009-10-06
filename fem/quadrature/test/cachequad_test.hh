@@ -29,7 +29,8 @@ namespace Dune {
     void codim1UGTest();
     void codim1ALUHexaTest();
     void codim1ALUTetraTest();
-    void codim1ALUSimplexTest ();
+    template <class GridType> 
+    void codim1ALUGridTest (const GridType* );
     void codim1SGridTest();
     void codim1YaspGridTest();
 

@@ -36,11 +36,20 @@ namespace Dune {
     codim1SGridTest();
     codim1PrismTest();
     codim1UGTest();
-    codim1ALUHexaTest();
 
-    codim1ALUTetraTest();
-    codim1ALUSimplexTest();
+    // check ALUSimplexGrid<3,3> 
+    codim1ALUGridTest( (ALUCubeGrid<3,3> *) 0 );
 
+    // check ALUSimplexGrid<3,3> 
+    codim1ALUGridTest( (ALUSimplexGrid<3,3> *) 0 );
+
+    // check ALUSimplexGrid<2,2> 
+    codim1ALUGridTest( (ALUSimplexGrid<2,2> *) 0 );
+
+    // check ALUSimplexGrid<2,2> 
+    codim1ALUGridTest( (ALUConformGrid<2,2> *) 0 );
+
+    // check YaspGrid
     codim1YaspGridTest();
   }
 
@@ -296,69 +305,22 @@ namespace Dune {
 #endif
   }
 
-  void CachingQuadrature_Test::codim1ALUHexaTest() 
+  template< class GridType >
+  void CachingQuadrature_Test::codim1ALUGridTest (const GridType *)
   {
 #ifdef ENABLE_ALUGRID 
-    std::cout << "\n**********************************************\n";
-    std::cout << "CachingQuadrature_Test checking ALUCubeGrid\n";
 
-    typedef ALUCubeGridFixture GridFixtureType;
-    typedef GridFixtureType::GridType GridType;
-    typedef LeafGridPart< GridType > GridPartType;
+    const int dim = GridType :: dimension;
 
-    GridFixtureType fix(aluGridHexaFile_);
-    GridType& grid = fix.grid();
-    GridPartType gridPart( grid );
-
-    const int quadOrd = 4;
-
-    for(int l=0; l<3; ++l) 
-    {
-      checkLeafsCodim1(gridPart,quadOrd);
-      grid.globalRefine(1);
-    }
-#endif
-  }
-
-  void CachingQuadrature_Test::codim1ALUTetraTest() 
-  {
-#ifdef ENABLE_ALUGRID 
-    std::cout << "\n**********************************************\n";
-    std::cout << "CachingQuadrature_Test checking ALUSimplexGrid\n";
-
-    typedef ALUSimplexGridFixture GridFixtureType;
-    typedef GridFixtureType::GridType GridType;
-    typedef LeafGridPart< GridType > GridPartType;
-
-    GridFixtureType fix(aluGridTetraFile_);
-    GridType& grid = fix.grid();
-    GridPartType gridPart( grid );
-
-    const int quadOrd = 4;
-
-    for(int l=0; l<3; ++l) 
-    {
-      checkLeafsCodim1(gridPart,quadOrd);
-      grid.globalRefine(1);
-    }
-#endif
-  }
-
-  void CachingQuadrature_Test::codim1ALUSimplexTest ()
-  {
-#ifdef ENABLE_ALUGRID 
-    std::cout << "\n**********************************************\n";
-    std::cout << "CachingQuadrature_Test checking ALUSimplexGrid\n";
-
-    const int dim = 2;
-
-    typedef ALUSimplexGrid< dim, dim > GridType;
     typedef LeafGridPart< GridType > GridPartType;
 
     const std::string &filename = (dim == 2 ? dgf2DGridFile_ : dgf3DGridFile_);
     GridPtr< GridType > gridptr( filename );
     GridType &grid = *gridptr;
     GridPartType gridPart( grid );
+
+    std::cout << "\n**********************************************\n";
+    std::cout << "CachingQuadrature_Test checking " << grid.name() << std::endl;
 
     const int quadOrd = 4;
 
