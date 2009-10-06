@@ -38,8 +38,8 @@ namespace Dune {
     codim1UGTest();
     codim1ALUHexaTest();
 
-    //codim1ALUTetraTest();
-    //codim1ALUSimplexTest();
+    codim1ALUTetraTest();
+    codim1ALUSimplexTest();
 
     codim1YaspGridTest();
   }
@@ -111,19 +111,39 @@ namespace Dune {
            it != endit; ++it) 
       {
         const Intersection& inter=*it;
+        typedef TwistUtility<GridType> TwistUtilityType; 
+
         if( dim > 2 )
         {
-          checkLocalIntersectionConsistency( *inter.inside(),
-              inter.geometryInInside(), inter.indexInInside() , false );
+          // set this flag to true for output of twists that have been calculated 
+          const bool output = false ;
+
+          const int twistFound = checkLocalIntersectionConsistency( *inter.inside(),
+                                inter.geometryInInside(), inter.indexInInside() , false, output);
+          const int twistInside = TwistUtilityType::twistInSelf( gridPart.grid(), inter);
+          /*
+          if( twistFound != twistInside ) 
+          {
+            std::cout << "Twist inconsistent: calculated twist " << twistFound << "  not equal to inside " << twistInside << "\n";
+          }
+          */
+
           if( inter.neighbor() ) 
           {
-            checkLocalIntersectionConsistency( *inter.outside(),
-                inter.geometryInOutside(), inter.indexInOutside(), true );
+            const int twstF = checkLocalIntersectionConsistency( *inter.outside(),
+                          inter.geometryInOutside(), inter.indexInOutside(), true, output);
+
+            const int twistOutside = TwistUtilityType::twistInNeighbor( gridPart.grid(), inter);
+            /*
+            if( twstF != twistOutside ) 
+            {
+              std::cout << "Twist inconsistent: calculated twist " << twstF << "  not equal to outside " << twistOutside << "\n";
+            }
+            */
           }
         }
 
         const LocalGeometryType& geo = inter.geometryInInside();
-        typedef TwistUtility<GridType> TwistUtilityType; 
 
         QuadratureType quad(gridPart, inter, quadOrd , QuadratureType :: INSIDE);
 
@@ -139,17 +159,21 @@ namespace Dune {
 
         for (size_t i = 0; i < quad.nop(); ++i) 
         {
+          typedef typename PointVectorType :: value_type PointType;
           for (int d = 0; d < dim; ++d) 
           {
-            //std::cout << quad.cachingPoint(i) << " cp | size " << points.size() << "\n";
             assert( quad.cachingPoint(i) < points.size() );
             _floatTest(points[quad.cachingPoint(i)][d],
                        geo.global(quad.localPoint(i))[d]);
           }
 
-          //std::cout << "nis: " << inter.indexInInside();
-          //std::cout << " pt " << i << ": " << points[quad.cachingPoint(i)]
-          //          << " == " << geo.global(quad.localPoint(i)) << std::endl;
+          /*
+          {
+            std::cout << "nis: " << inter.indexInInside();
+            std::cout << " pt " << i << ": " << points[quad.cachingPoint(i)]
+                      << " == " << geo.global(quad.localPoint(i)) << std::endl;
+          }
+          */
         }
 
         if( inter.neighbor ())
@@ -167,10 +191,15 @@ namespace Dune {
                 _floatTest(points[outerQuad.cachingPoint(i)][d],
                            nGeo.global(outerQuad.localPoint(i))[d]);
               }
-              //std::cout << "nin: " << inter.indexInOutside();
-              //std::cout << " nis: " << inter.indexInInside();
-              //std::cout << " pt " << i << ": " << points[outerQuad.cachingPoint(i)]
-              //          << " == " << nGeo.global(outerQuad.localPoint(i)) << std::endl;
+
+              /*
+              { 
+                std::cout << "nin: " << inter.indexInOutside();
+                std::cout << " nis: " << inter.indexInInside();
+                std::cout << " pt " << i << ": " << points[outerQuad.cachingPoint(i)]
+                          << " == " << nGeo.global(outerQuad.localPoint(i)) << std::endl;
+              }
+              */
             }
           }
         }
@@ -311,7 +340,7 @@ namespace Dune {
 
     const int quadOrd = 4;
 
-    //for(int l=0; l<3; ++l) 
+    for(int l=0; l<3; ++l) 
     {
       checkLeafsCodim1(gridPart,quadOrd);
       grid.globalRefine(1);
@@ -325,7 +354,7 @@ namespace Dune {
     std::cout << "\n**********************************************\n";
     std::cout << "CachingQuadrature_Test checking ALUSimplexGrid\n";
 
-    const int dim = GRIDDIM;
+    const int dim = 2;
 
     typedef ALUSimplexGrid< dim, dim > GridType;
     typedef LeafGridPart< GridType > GridPartType;
@@ -392,7 +421,7 @@ namespace Dune {
   }
 
   template <class EntityType, class LocalGeometryType>
-  void CachingQuadrature_Test::checkLocalIntersectionConsistency(
+  int CachingQuadrature_Test :: checkLocalIntersectionConsistency(
       const EntityType& en, const LocalGeometryType& localGeom, 
       const int face, const bool neighbor, const bool output ) const
   {
@@ -404,7 +433,7 @@ namespace Dune {
 
     // get reference element 
     const GenericReferenceElement< ctype, dim > &refElem = 
-      GenericReferenceElements< ctype, dim >::general( en.geometry().type() ); 
+      GenericReferenceElements< ctype, dim >::general( en.type() ); 
 
     const int vxSize = refElem.size( face, 1, dim );
     std::vector<int> vx( vxSize ,-1);
@@ -502,6 +531,7 @@ namespace Dune {
 
         if( (refPos - localPos).infinity_norm() > 1e-8 )
         {
+          assert( false );
           DUNE_THROW(GridError,"Inconsistent face mapping");
         }
       }
@@ -525,13 +555,11 @@ namespace Dune {
           int twistedDuneIndex = -1;
           if( localGeom.type().isCube() ) 
           {
-            const int aluIndex = CubeFaceMapping::dune2aluVertex( i );
-            twistedDuneIndex = CubeFaceMapping::alu2duneVertex(aluIndex, twist);
+            twistedDuneIndex = CubeFaceMapping::twistedDuneIndex( i, twist );
           }
           else 
           {
-            const int aluIndex = SimplexFaceMapping::dune2aluVertex( i );
-            twistedDuneIndex = SimplexFaceMapping::alu2duneVertex(aluIndex, twist);
+            twistedDuneIndex = SimplexFaceMapping::twistedDuneIndex( i, twist );
           }
           
           // check coordinates again 
@@ -553,6 +581,7 @@ namespace Dune {
       // if no twist found, then something is wrong 
       if( twistFound == -66 ) 
       {
+        assert(false);
         DUNE_THROW(GridError,"Not matching twist found");
       }
       
@@ -564,7 +593,12 @@ namespace Dune {
         std::cout << "\nPut twist = "<< twistFound << " In TwistUtility::"<< twistIn << " for " << numberIn << " = " << face << " ! \n";
         std::cout << "******************************************\n";
       }
+
+      return twistFound;
     }
+
+    assert( ! faceTwisted );
+    return 0;
   }
 } // end namespace Dune
  
