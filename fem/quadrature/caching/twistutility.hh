@@ -406,35 +406,35 @@ namespace Dune
     TwistUtility(const GridType& grid) : grid_(grid) {}
 
     //! \brief return twist for inner face 
-    static inline int twistInSelf(const GridType &, const LeafIntersection&)
+    static inline int twistInSelf(const GridType & grid, const LeafIntersection& it)
     {
-      return 0;
+      return grid.getRealIntersectionIterator(it).twistInSelf();
     }
     
     //! \brief return twist for inner face 
     int twistInSelf(const LeafIntersection& it) const {
-      return 0;
+      return twistInSelf( grid_, it );
     }
     
     //! \brief return twist for inner face 
     int twistInSelf(const LevelIntersection& it) const {
-      return 0;
+      return twistInSelf( grid_, it );
     }
 
     //! \brief return twist for outer face 
-    static inline int twistInNeighbor(const GridType &, const LeafIntersection&)
+    static inline int twistInNeighbor(const GridType &grid, const LeafIntersection& it)
     {
-      return 1;
+      return grid.getRealIntersectionIterator(it).twistInNeighbor();
     }
     
     //! \brief return twist for outer face 
     int twistInNeighbor(const LeafIntersection& it) const {
-      return 1;
+      return twistInNeighbor( grid_, it );
     }
     
     //! \brief return twist for outer face 
     int twistInNeighbor(const LevelIntersection& it) const {
-      return 1;
+      return twistInNeighbor( grid_, it );
     }
 
     //! \brief return true if intersection is conform, default is true  
