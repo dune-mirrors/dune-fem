@@ -694,6 +694,24 @@ protected:
       row_.resize( domainSpace_.baseFunctionSet( rowEntity ).numBaseFunctions() );
       col_.resize( rangeSpace_.baseFunctionSet( colEntity ).numBaseFunctions() );
 
+      // Martin: shouldn't domainSpace and rangeSpace be flipped, here?
+      typedef typename DomainSpaceType::MapperType::DofMapIteratorType DomainMapIterator;
+      const DomainMapIterator dmend = domainSpace_.mapper().end( rowEntity );
+      for( DomainMapIterator dmit = domainSpace_.mapper().begin( rowEntity ); dmit != dmend; ++dmit )
+      {
+        assert( dmit.global() == domainSpace_.mapToGlboal( rowEntity, dmit.local() ) );
+        row_[ dmit.local() ] = dmit.global();
+      }
+
+      typedef typename RangeSpaceType::MapperType::DofMapIteratorType RangeMapIterator;
+      const RangeMapIterator rmend = rangeSpace_.mapper().end( colEntity );
+      for( RangeMapIterator rmit = rangeSpace_.mapper().begin( colEntity ); rmit != rmend; ++rmit )
+      {
+        assert( rmit.global() == rangeSpace_.mapToGlboal( colEntity, rmit.local() ) );
+        row_[ rmit.local() ] = rmit.global();
+      }
+
+#if 0
       const size_t rows = row_.size();
       for( size_t i = 0; i < rows; ++i )
         row_[ i ] = domainSpace_.mapToGlobal( rowEntity, i );
@@ -701,6 +719,7 @@ protected:
       const size_t cols = col_.size();
       for( size_t i = 0; i < cols; ++i )
         col_[ i ] = rangeSpace_.mapToGlobal( colEntity, i );
+#endif
     }
 
     //! return number of rows 
