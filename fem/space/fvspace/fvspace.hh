@@ -182,6 +182,7 @@ namespace Dune {
     //! scalar basefunction space type 
     typedef typename Traits::BaseFunctionSpaceType BaseFunctionSpaceType;
 
+  public:
     //! type of base function factory 
     typedef FVBaseFunctionFactory<typename BaseFunctionSpaceType ::
       ScalarFunctionSpaceType, polOrd> ScalarFactoryType;
@@ -194,7 +195,6 @@ namespace Dune {
     typedef SingletonList< GeometryType, BaseFunctionSetImp,
             SingletonFactoryType > SingletonProviderType;
 
-  public:
     //! default communication interface 
     static const InterfaceType defaultInterface = InteriorBorder_All_Interface;
 
