@@ -37,6 +37,7 @@ namespace Dune {
     codim1PrismTest();
     codim1UGTest();
 
+#ifdef ENABLE_ALUGRID 
     // check ALUSimplexGrid<3,3> 
     codim1ALUGridTest( (ALUCubeGrid<3,3> *) 0 );
 
@@ -48,7 +49,7 @@ namespace Dune {
 
     // check ALUSimplexGrid<2,2> 
     codim1ALUGridTest( (ALUConformGrid<2,2> *) 0 );
-
+#endif
     // check YaspGrid
     codim1YaspGridTest();
   }
