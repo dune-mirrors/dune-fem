@@ -699,7 +699,7 @@ protected:
       const DomainMapIterator dmend = domainSpace_.mapper().end( rowEntity );
       for( DomainMapIterator dmit = domainSpace_.mapper().begin( rowEntity ); dmit != dmend; ++dmit )
       {
-        assert( dmit.global() == domainSpace_.mapToGlboal( rowEntity, dmit.local() ) );
+        assert( dmit.global() == domainSpace_.mapToGlobal( rowEntity, dmit.local() ) );
         row_[ dmit.local() ] = dmit.global();
       }
 
@@ -707,7 +707,7 @@ protected:
       const RangeMapIterator rmend = rangeSpace_.mapper().end( colEntity );
       for( RangeMapIterator rmit = rangeSpace_.mapper().begin( colEntity ); rmit != rmend; ++rmit )
       {
-        assert( rmit.global() == rangeSpace_.mapToGlboal( colEntity, rmit.local() ) );
+        assert( rmit.global() == rangeSpace_.mapToGlobal( colEntity, rmit.local() ) );
         row_[ rmit.local() ] = rmit.global();
       }
 
