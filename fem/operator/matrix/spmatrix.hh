@@ -708,7 +708,7 @@ protected:
       for( RangeMapIterator rmit = rangeSpace_.mapper().begin( colEntity ); rmit != rmend; ++rmit )
       {
         assert( rmit.global() == rangeSpace_.mapToGlobal( colEntity, rmit.local() ) );
-        row_[ rmit.local() ] = rmit.global();
+        col_[ rmit.local() ] = rmit.global();
       }
 
 #if 0
