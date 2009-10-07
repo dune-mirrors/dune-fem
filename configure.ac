@@ -63,6 +63,8 @@ AC_CONFIG_FILES([Makefile
      fem/space/fvspace/Makefile
      fem/space/lagrangespace/Makefile
      fem/space/lagrangespace/test/Makefile
+     fem/space/p12dspace/Makefile
+     fem/space/p12dspace/test/Makefile
      fem/space/reducedbasisspace/Makefile
      fem/space/reducedbasisspace/test/Makefile
      fem/space/combinedspace/Makefile

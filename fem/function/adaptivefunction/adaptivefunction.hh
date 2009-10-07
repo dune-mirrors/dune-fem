@@ -6,6 +6,7 @@
 #include <vector>
 
 //- Dune includes
+#include <dune/common/typetraits.hh>
 #include <dune/fem/space/common/dofstorage.hh>
 #include <dune/fem/space/common/dofmanager.hh>
 
@@ -16,6 +17,7 @@
 //- Local includes
 #include "adaptiveimp.hh"
 #include <dune/fem/function/localfunction/standardlocalfunction.hh>
+#include <dune/fem/function/localfunction/genericlocalfunction.hh>
 
 namespace Dune
 {
@@ -41,8 +43,10 @@ namespace Dune
     typedef AdaptiveFunctionImplementation< DiscreteFunctionSpaceType >
       ImplementationType;
 
-    typedef StandardLocalFunctionFactory
-      < AdaptiveDiscreteFunctionTraits< DiscreteFunctionSpaceType > >
+    typedef AdaptiveDiscreteFunctionTraits< DiscreteFunctionSpaceType > Traits;
+
+    static const bool isGenericSpace = Conversion< DiscreteFunctionSpaceType, GenericDiscreteFunctionSpace >::exists;
+    typedef typename SelectType< isGenericSpace, GenericLocalFunctionFactory< Traits >, StandardLocalFunctionFactory< Traits > >::Type
       LocalFunctionFactoryType;
 
     typedef LocalFunctionStack< LocalFunctionFactoryType > LocalFunctionStorageType;

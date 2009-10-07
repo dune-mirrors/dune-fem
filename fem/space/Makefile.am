@@ -9,7 +9,7 @@ libspace_la_LIBADD = dgspace/libdgspace.la \
                      lagrangespace/liblagrangespace.la
 
 SUBDIRS = common test dgspace fvspace lagrangespace combinedspace \
-basefunctions reducedbasisspace 
+basefunctions reducedbasisspace p12dspace
 
 spacedir = $(includedir)/dune/fem/space
 space_HEADERS = adaptoperator.hh \
