@@ -20,6 +20,7 @@ common_HEADERS = adaptcaps.hh \
      entitycommhelper.hh \
      functionspace.hh \
      functionspaceinterface.hh \
+     genericdofmapper.hh \
      geometryconversion.hh \
      loadbalancer.hh \
      restrictprolongfunction.hh \

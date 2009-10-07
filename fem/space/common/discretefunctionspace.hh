@@ -39,12 +39,18 @@ namespace Dune
 
   //! \brief enumerator for identification of spaces 
   enum DFSpaceIdentifier {  
+    GenericSpace_id ,  //!< id for Generic Space
     LagrangeSpace_id , //!< id for Lagrange Space 
     DGSpace_id ,       //!< id for Discontinuous Galerkin Space 
     CombinedSpace_id , //!< id for Combined Space 
     FiniteVolumeSpace_id , //!< id for Finite Volume Space 
     DFAdapter_id    //!< id for DiscreteFunctionSpace Adapter
   };
+
+
+
+  struct GenericDiscreteFunctionSpace
+  {};
 
 
 
