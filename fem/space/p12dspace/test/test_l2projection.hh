@@ -14,7 +14,9 @@
 #include <dune/fem/io/parameter.hh>
 // include basic grid parts
 #include <dune/fem/gridpart/gridpart.hh>
+#include <dune/fem/gridpart/adaptiveleafgridpart.hh>
 // include Lagrange discrete function space
+#include <dune/fem/space/common/adaptmanager.hh>
 #include <dune/fem/space/p12dspace/p12dspace.hh>
 #include <dune/fem/function/adaptivefunction.hh>
 #include <dune/fem/solver/inverseoperators.hh>
@@ -30,7 +32,8 @@ class L2Projection_Test
 public:
   static const int polOrder = 1;
   // select grid part to use
-  typedef Dune :: LeafGridPart< GridType >                           GridPartType;
+  //typedef Dune::LeafGridPart< GridType > GridPartType;
+  typedef Dune::AdaptiveLeafGridPart< GridType > GridPartType;
 
   typedef Dune :: FunctionSpace< double, double, dimgrid, 1 >        FunctionSpaceType;
 
@@ -89,32 +92,35 @@ public:
 
   void run() 
   {
-
-    try {
-    GridPtr< GridType > gridPtr( gridFile_ );
-    GridType& grid = *gridPtr;
-    grid.globalRefine(level_);
-
-    Function< FunctionSpaceType > function;
-    GridPartType gridPart( grid );
-
-    double error = algorithm( function, grid, 0 );
-    std::cout << error << std::endl;
-    double eoc = 0;
-    for( int i = 0; i < repeats_; ++i )
+    try
     {
-      const double prevError = error;
-      gridPtr->globalRefine( Dune::DGFGridInfo< GridType >::refineStepsForHalf() );
-      error = algorithm( function, grid, i+1 );
-      eoc   = log( prevError / error ) / M_LN2;
+      GridPtr< GridType > gridPtr( gridFile_ );
+      GridType& grid = *gridPtr;
+      grid.globalRefine( level_ );
 
-      std::cout << "error: " << error << " EOC: " << eoc << std::endl;
+      Function< FunctionSpaceType > function;
+      GridPartType gridPart( grid );
+
+      double error = algorithm( function, grid, 0 );
+      std::cout << error << std::endl;
+      double eoc = 0;
+      for( int i = 0; i < repeats_; ++i )
+      {
+        const double prevError = error;
+        Dune::GlobalRefine::apply( *gridPtr, Dune::DGFGridInfo< GridType >::refineStepsForHalf() );
+        error = algorithm( function, grid, i+1 );
+        eoc   = log( prevError / error ) / M_LN2;
+
+        std::cout << "error: " << error << " EOC: " << eoc << std::endl;
+      }
+      _test(eoc > 1.5);
     }
-    _test(eoc > 1.5);
-    }
-    catch(Dune::Exception &e) {
+    catch( const Dune::Exception &e )
+    {
       std::cerr << e << std::endl;
-    } catch (...) {
+    }
+    catch(...)
+    {
       std::cerr << "Generic exception!" << std::endl;
     }       
   }
