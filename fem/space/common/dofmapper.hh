@@ -145,21 +145,6 @@ public:
     return asImp().maxNumDofs();
   }
 
-  /** \brief obtain maximal number of DoFs on one entity
-   *  \deprecated
-   * 
-   *  \note Use Dune::DofMapper::maxNumDofs instead.
-   * 
-   *  \note The naming of this method is misleading since the number of DoFs on
-   *        one entity need not be constant (e.g. Lagrange base functions on a
-   *        hybrid grid).
-   */
-  int DUNE_DEPRECATED numDofs () const
-  {
-    CHECK_INTERFACE_IMPLEMENTATION(asImp().numDofs());
-    return asImp().numDofs();
-  }
-
   /** \brief obtain number of DoFs on an entity
    * 
    *  \param[in]  entity  entity of codimension 0
@@ -362,12 +347,6 @@ protected:
   }
 
 public:
-  //! deprecated method telling whether mapper in consecutive or not 
-  bool needsCompress () const DUNE_DEPRECATED 
-  {
-    return this->consecutive(); 
-  }
-
   /** \copydoc Dune::DofMapper::mapEntityDofToGlobal(const Entity &entity,const int localDof) const
    *  \note The default implementation associates all DoFs with codimension 0.
    */
@@ -385,12 +364,6 @@ public:
     typedef CompileTimeChecker< (Entity :: codimension > 0) >
       __CHECK_ENTITY_CODIMENSION__;
     return 0;
-  }
-
-  /** \copydoc Dune::DofMapper::numDofs() const */
-  int DUNE_DEPRECATED numDofs () const
-  {
-    return asImp().maxNumDofs();
   }
 
   /** \copydoc Dune::DofMapper::numDofs(const EntityType &entity) const
