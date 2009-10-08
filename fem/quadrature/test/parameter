@@ -1,3 +1,3 @@
-fem.gridfile: 3dgrid.dgf
-fem.startlevel: 1
+fem.gridfile: 2dgrid.dgf
+fem.startlevel: 0
 fem.quadorder: 3
