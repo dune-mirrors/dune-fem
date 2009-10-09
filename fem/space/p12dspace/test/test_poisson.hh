@@ -1,20 +1,6 @@
 #ifndef  DUNE_FEM_P12DSPACE_TEST_POISSON_HH__
 #define  DUNE_FEM_P12DSPACE_TEST_POISSON_HH__
 
-
-/**************************************************************************
-**       Title: poisson.cc
-**    $RCSfile$
-**   $Revision: 3976 $$Name$
-**       $Date: 2008-09-16 15:24:56 +0200 (Tue, 16 Sep 2008) $
-**   Copyright: GPL Author: robertk 
-** Description: File demonstrating a simple numerics problem on arbitrary
-**              grids: poisson-problem with known solution is given
-**              and compared with numerical solution (EOC)
-**              Dune grid parser is used.
-**
-**************************************************************************/
-
 #define VERBOSE false
 
 #define USE_TWISTFREE_MAPPER
@@ -86,39 +72,15 @@
 #include "laplace.hh"
 
 
-//***********************************************************************
-/*! Poisson problem: 
-
-  This is an example solving the poisson problem
-  \f{displaymath}
-  \begin{array}{rcll}
-  -\triangle u &=& f & \quad \mbox{in}\ \Omega\\
-             u &=& 0 & \quad \mbox{on}\ \partial\Omega
-  \end{array}
-  \f}
-  with the finite element method using Lagrangian elements. The polynomial
-  order is given by POLORDER.
-  
-  In this example, $\Omega = ]0,1[^{dimworld}$ and
-  \f[
-  f( x, y, z ) = 2 \sum_{i=1}^{dimworld} \prod_{j \neq i} (x_j-x_j^2)
-  \f]
-
-  The exact solution to the poisson problem is then given by
-  \f[
-  u( x, y, z ) = \prod_{i=1}^{dimworld} (x_i - x_i^2).
-  \f]
-*/
-//***********************************************************************
-
-namespace Dune {
+namespace Dune
+{
 
 template<class GridType>
 class Poisson_Test
   : public Test
 {
 public:
-  /** choose the grid partition (and hence the index set) to use
+  /*  choose the grid partition (and hence the index set) to use
    *
    *  \note Not all index sets are continuous. The LeafIndexSet for AlbertaGrid,
    *        for example, is not. If you want to use OEM solvers, the index set
@@ -130,9 +92,6 @@ public:
   //---- other choices--------------------------------------------------------
   //typedef AdaptiveLeafGridPart< GridType, InteriorBorder_Partition > GridPartType;
 
-  //---- FunctionSpace -------------------------------------------------------
-  //! define the function space, \f[ \R^n \rightarrow \R \f]
-  // see dune/common/functionspace.hh
   typedef FunctionSpace< double, double, dimworld, 1 >               FunctionSpaceType;
 
   // The data functions (as defined in problem.hh)
