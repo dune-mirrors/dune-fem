@@ -157,6 +157,7 @@ public:
 template< class Grid >
 class HierarchicIndexSetSelector
 {
+  template< bool >
   struct HierarchicIndexSetGetter
   {
     typedef typename Grid::HierarchicIndexSet IndexSet;
@@ -167,6 +168,7 @@ class HierarchicIndexSetSelector
     }
   };
 
+  template< bool >
   struct LeafIndexSetGetter
   {
     typedef typename Grid::LeafIndexSet IndexSet;
@@ -180,16 +182,16 @@ class HierarchicIndexSetSelector
   };
 
   static const bool hasHierarchicIndexSet = Capabilities::hasHierarchicIndexSet< Grid >::v;
-  typedef typename SelectType< hasHierarchicIndexSet, HierarchicIndexSetGetter, LeafIndexSetGetter >::Type IndexSetGetter;
+  typedef typename SelectType< hasHierarchicIndexSet, HierarchicIndexSetGetter< true >, LeafIndexSetGetter< false > >::Type IndexSetGetter;
   
 public: 
   //! \brief type of HierarchicIndexSet, default is LeafIndexSet
-  typedef typename HierarchicIndexSetGetter::IndexSet HierarchicIndexSet;
+  typedef typename IndexSetGetter::IndexSet HierarchicIndexSet;
  
   //! \brief return reference to hierarchic index set 
   static const HierarchicIndexSet &hierarchicIndexSet ( const Grid &grid )
   { 
-    return HierarchicIndexSetGetter::indexSet( grid );
+    return IndexSetGetter::indexSet( grid );
   }
 
   //! return true if index set can be used for adapitve calculations 

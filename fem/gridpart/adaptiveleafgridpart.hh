@@ -38,7 +38,8 @@ namespace Dune
   class AdaptiveLeafGridPartTraits
   {
     // choose the AdaptiveIndexSet (based on the HierarchicIndexSet)
-    // to be revised 
+    // to be revised
+    template< bool >
     struct AdaptiveLeafIndexSetChooser
     {
 #ifdef USE_PARTITIONTYPED_INDEXSET
@@ -50,6 +51,7 @@ namespace Dune
     };
 
     // choose the LeafIndexSet
+    template< bool >
     struct LeafIndexSetChooser
     {
       static const PartitionIteratorType indexSetPartitionType = All_Partition;
@@ -57,7 +59,7 @@ namespace Dune
     };
 
     static const bool hasHierarchicIndexSet = Capabilities::hasHierarchicIndexSet< Grid >::v;
-    typedef typename SelectType< hasHierarchicIndexSet, AdaptiveLeafIndexSetChooser, LeafIndexSetChooser >::Type
+    typedef typename SelectType< hasHierarchicIndexSet, AdaptiveLeafIndexSetChooser< true >, LeafIndexSetChooser< false > >::Type
       IndexSetChooserType;
 
   public:
