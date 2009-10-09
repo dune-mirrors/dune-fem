@@ -1,12 +1,12 @@
 #ifndef DUNE_ADAPTIVELEAFGRIDPART_HH
 #define DUNE_ADAPTIVELEAFGRIDPART_HH
 
+#include <dune/common/typetraits.hh>
+
 #include <dune/fem/misc/capabilities.hh>
 #include <dune/fem/gridpart/gridpart.hh>
 #include <dune/fem/storage/singletonlist.hh>
-
-//- local includes 
-#include "adaptiveleafindexset.hh"
+#include <dune/fem/gridpart/adaptiveleafindexset.hh>
 
 namespace Dune
 {
@@ -35,49 +35,44 @@ namespace Dune
 
   //! Type definitions for the LeafGridPart class
   template< class Grid, PartitionIteratorType idxpitype >
-  struct AdaptiveLeafGridPartTraits
+  class AdaptiveLeafGridPartTraits
   {
-    //! type of the grid 
-    typedef Grid GridType;
-
-    //! default is to use DGAdaptiveLeafIndexSet
-    template< class GridT, bool isGood >
-    struct GoodGridChooser
+    // choose the AdaptiveIndexSet (based on the HierarchicIndexSet)
+    // to be revised 
+    struct AdaptiveLeafIndexSetChooser
     {
-      // choose the adative index based on hierarhic index setq
-      // to be revised 
 #ifdef USE_PARTITIONTYPED_INDEXSET
       static const PartitionIteratorType indexSetPartitionType = idxpitype;
 #else
       static const PartitionIteratorType indexSetPartitionType = All_Partition;
 #endif
-      typedef AdaptiveLeafIndexSet< GridT, indexSetPartitionType > IndexSetType;
+      typedef AdaptiveLeafIndexSet< Grid, indexSetPartitionType > IndexSetType;
     };
 
-    // the same for shitty grids 
-    template< class GridT >
-    struct GoodGridChooser< GridT, false >
+    // choose the LeafIndexSet
+    struct LeafIndexSetChooser
     {
       static const PartitionIteratorType indexSetPartitionType = All_Partition;
-      // the grids leaf index set wrapper for good 
-      typedef WrappedLeafIndexSet< GridT > IndexSetType;
+      typedef WrappedLeafIndexSet< Grid > IndexSetType;
     };
+
+    static const bool hasHierarchicIndexSet = Capabilities::hasHierarchicIndexSet< Grid >::v;
+    typedef typename SelectType< hasHierarchicIndexSet, AdaptiveLeafIndexSetChooser, LeafIndexSetChooser >::Type
+      IndexSetChooserType;
+
+  public:
+    //! type of the grid 
+    typedef Grid GridType;
 
     //! type of the grid part , i.e. this type 
     typedef AdaptiveLeafGridPart< GridType, idxpitype > GridPartType;
 
-    // choose index set dependend on grid type  
-    typedef GoodGridChooser< GridType, Capabilities::hasHierarchicIndexSet< GridType >::v >
-      IndexSetChooserType;
-                
     //! type of the index set 
-    typedef typename IndexSetChooserType :: IndexSetType IndexSetType;
+    typedef typename IndexSetChooserType::IndexSetType IndexSetType;
 
-    static const PartitionIteratorType indexSetPartitionType
-      = IndexSetChooserType :: indexSetPartitionType;
+    static const PartitionIteratorType indexSetPartitionType = IndexSetChooserType::indexSetPartitionType;
 
-    typedef typename GridType
-      :: template Codim< 0 > :: Entity :: LeafIntersectionIterator
+    typedef typename GridType::template Codim< 0 >::Entity::LeafIntersectionIterator
       IntersectionIteratorType;
     
     template< int cd >
