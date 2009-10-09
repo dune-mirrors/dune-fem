@@ -7,10 +7,12 @@
 
 //- Dune includes 
 #include <dune/common/misc.hh>
-#include <dune/grid/alugrid/interfaces.hh>
+#include <dune/common/typetraits.hh>
 #include <dune/grid/common/grid.hh>
 #include <dune/grid/common/adaptcallback.hh> // for compatibility only
 #include <dune/grid/alugrid/defaultindexsets.hh>
+
+#include <dune/fem/misc/capabilities.hh>
 
 /** @file
  @author Robert Kloefkorn
@@ -152,46 +154,52 @@ public:
 
 //! compile time chooser for hierarchic or leaf index set
 /** \deprecated */
-template <class GridImp> 
+template< class Grid >
 class HierarchicIndexSetSelector
 {
-  
-  // true if GridImp has HierarchicIndexSet 
-  enum { hasHierarchicIndexSet = Conversion<GridImp,HasHierarchicIndexSet>::exists };
+  struct HierarchicIndexSetGetter
+  {
+    typedef typename Grid::HierarchicIndexSet IndexSet;
 
-  template <class GridType, bool hasHSet> 
-  struct HSetChooser
-  {
-    typedef typename GridType::Traits::LeafIndexSet IndexSetType;
-    static const IndexSetType & hierarchicIndexSet(const GridType & grid)  
-    { 
-      return grid.leafIndexSet();
-    }
-  };
-  
-  template <class GridType> 
-  struct HSetChooser<GridType,true>
-  {
-    typedef typename GridImp:: HierarchicIndexSet IndexSetType;
-    static const IndexSetType & hierarchicIndexSet(const GridType & grid)  
-    { 
+    static const IndexSet &indexSet ( const Grid &grid )
+    {
       return grid.hierarchicIndexSet();
     }
   };
+
+  struct LeafIndexSetGetter
+  {
+    typedef typename Grid::LeafIndexSet IndexSet;
+
+    static const IndexSet &indexSet ( const Grid &grid )
+    {
+      std::cerr << "Warning: " << grid.name << " does not provide a "
+                << "HierarchicIndexSet, using LeafIndexSet instead." << std::endl;
+      return grid.leafIndexSet();
+    }
+  };
+
+  static const bool hasHierarchicIndexSet = Capabilities::hasHierarchicIndexSet< Grid >::v;
+  typedef typename SelectType< hasHierarchicIndexSet, HierarchicIndexSetGetter, LeafIndexSetGetter >::Type IndexSetGetter;
   
 public: 
-  //! \brief type of HierarchicIndexSet, default is LeafIndexSet 
-  typedef typename HSetChooser<GridImp,hasHierarchicIndexSet>::IndexSetType HierarchicIndexSet; 
+  //! \brief type of HierarchicIndexSet, default is LeafIndexSet
+  typedef typename HierarchicIndexSetGetter::IndexSet HierarchicIndexSet;
  
   //! \brief return reference to hierarchic index set 
-  static const HierarchicIndexSet & hierarchicIndexSet(const GridImp & grid) 
+  static const HierarchicIndexSet &hierarchicIndexSet ( const Grid &grid )
   { 
-    return HSetChooser<GridImp,hasHierarchicIndexSet>::hierarchicIndexSet(grid);
+    return HierarchicIndexSetGetter::indexSet( grid );
   }
 
   //! return true if index set can be used for adapitve calculations 
-  static bool adaptive () { return hasHierarchicIndexSet; }
+  static bool adaptive ()
+  {
+    return hasHierarchicIndexSet;
+  }
 };
+
+
 
 //! Wraps HierarchicIndex Sets of AlbertaGrid and ALUGrid 
 /** \deprecated */
