@@ -137,7 +137,7 @@ class L2Projection
         lf.baseFunctionSet();
       const typename GridType::template Codim<0>::Entity::Geometry& 
                   itGeom = (*it).geometry();
-      for(int qP = 0; qP < quad.nop(); qP++) 
+      for( size_t qP = 0; qP < quad.nop(); ++qP )
       {
         f.evaluate(itGeom.global(quad.point(qP)), ret);
         for(int i=0; i<lf.numDofs(); i++) 
@@ -185,7 +185,7 @@ public:
     {
       CachingQuadrature<GridPartType,0> quad(*it, polOrd);
       LocalFuncType lf = discFunc.localFunction(*it);
-      for(int qP = 0; qP < quad.nop(); qP++)
+      for( size_t qP = 0; qP < quad.nop(); ++qP )
       {
         double det = (*it).geometry().integrationElement(quad.point(qP));
         f.evaluate((*it).geometry().global(quad.point(qP)),time, ret);
