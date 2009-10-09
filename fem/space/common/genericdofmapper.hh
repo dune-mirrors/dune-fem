@@ -160,18 +160,6 @@ namespace Dune
       DUNE_THROW( NotImplemented, "GenericDofMapper::mapEntityDofToGlobal not implemented, yet." );
     }
 
-    unsigned int size ( const unsigned int topologyId ) const
-    {
-      assert( topologyId < numTopologies );
-      return mapInfo_[ topologyId ].numDofs;
-    }
-
-    template< class Entity >
-    unsigned int size ( const Entity &entity ) const
-    {
-      return size( GenericGeometry::topologyId( entity.type() ) );
-    }
-
     unsigned int size () const
     {
       return size_;
@@ -192,6 +180,12 @@ namespace Dune
     int numEntityDofs ( const Entity &entity ) const
     {
       DUNE_THROW( NotImplemented, "GenericDofMapper::numEntityDofs not implemented, yet." );
+    }
+
+    bool contains ( const int codim ) const
+    {
+      assert( (codim >= 0) && (codim <= dimension) );
+      return contains_[ codim ];
     }
 
     void update ();
@@ -262,6 +256,7 @@ namespace Dune
     std::vector< Block > blocks_;
     unsigned int maxNumDofs_;
     unsigned int size_;
+    bool contains_[ dimension+1 ];
   };
 
 
@@ -280,6 +275,7 @@ namespace Dune
       // The last bit of the topology id is insignificat, hence store only
       // (1 << subdimension-1) many indexInfos.
       blockIndex[ codim ].resize( subdimension > 0 ? 1 << (subdimension-1) : 1, -1 );
+      contains_[ codim ] = false;
     }
     ForLoop< Build, 0, numTopologies-1 >::apply( localCoefficientsProvider, blockIndex, *this );
     update();
@@ -390,6 +386,7 @@ namespace Dune
 
         if( numDofs > 0 )
         {
+          contains_[ codim ] = true;
           SubEntityInfo subEntityInfo;
           subEntityInfo.codim      = codim;
           subEntityInfo.subEntity  = subEntity;
