@@ -175,7 +175,7 @@ class HierarchicIndexSetSelector
 
     static const IndexSet &indexSet ( const Grid &grid )
     {
-      std::cerr << "Warning: " << grid.name << " does not provide a "
+      std::cerr << "Warning: " << grid.name() << " does not provide a "
                 << "HierarchicIndexSet, using LeafIndexSet instead." << std::endl;
       return grid.leafIndexSet();
     }
@@ -205,40 +205,44 @@ public:
 
 //! Wraps HierarchicIndex Sets of AlbertaGrid and ALUGrid 
 /** \deprecated */
-template <class GridType>
+template< class GridType >
 class WrappedHierarchicIndexSet
-: public IndexSetWrapper< typename HierarchicIndexSetSelector<GridType> :: HierarchicIndexSet >
+: public IndexSetWrapper< typename HierarchicIndexSetSelector< GridType >::HierarchicIndexSet >
 {
+  typedef WrappedHierarchicIndexSet< GridType > ThisType;
+  typedef IndexSetWrapper< typename HierarchicIndexSetSelector< GridType >::HierarchicIndexSet > BaseType;
+
   // my type, to be revised 
   enum { myType = 0 };
 
-  //! type of hset selector 
-  typedef HierarchicIndexSetSelector<GridType> SelectorType;
+  // type of hierarchic index set selector
+  typedef HierarchicIndexSetSelector< GridType > SelectorType;
   
-  // my index set type 
-  typedef typename SelectorType :: HierarchicIndexSet HSetType;
-
-  typedef WrappedHierarchicIndexSet<GridType> ThisType;
 public:
   //! number of codimensions 
   enum { ncodim = GridType::dimension + 1 };
 
   //! constructor 
-  WrappedHierarchicIndexSet ( const GridType & grid , const int level =-1 ) 
-    : IndexSetWrapper< HSetType > ( SelectorType :: hierarchicIndexSet(grid) 
-                                  , SelectorType :: adaptive() ) {}
+  WrappedHierarchicIndexSet ( const GridType &grid, const int level =-1 )
+  : BaseType( SelectorType::hierarchicIndexSet( grid ), SelectorType::adaptive() )
+  {}
      
   //! return type (for Grape In/Output)
-  static int type() { return myType; }
-
-  //! returns reference to singleton 
-  static ThisType & instance (const GridType & grid)
-  { 
-    static ThisType set(grid);
-    return set;
+  static int type ()
+  {
+    return myType;
   }
 
+  //! returns reference to singleton
+  static ThisType &instance ( const GridType &grid )
+  {
+    static ThisType set( grid );
+    std::cerr << "Warning: WrappedHierarchicIndexSet::instance( grid ) can only handle one grid." << std::endl;
+    return set;
+  }
 };
+
+
 
 //! Wraps LeafIndexSet of Dune Grids for use with LagrangeFunctionSpace 
 template <class GridType>
