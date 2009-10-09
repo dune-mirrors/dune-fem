@@ -14,10 +14,8 @@ operator_HEADERS = artificialdiffusion.hh \
 		   identityoperator.hh \
 		   integrationoperator.hh \
 		   lagrangeinterpolation.hh \
-		   lagrangeinterpolation_inline.hh \
 		   matrixadapter.hh \
 		   minimizationoperator.hh \
 		   sourceprojection.hh
 
 include $(top_srcdir)/am/global-rules
-
