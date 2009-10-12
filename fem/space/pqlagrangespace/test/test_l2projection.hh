@@ -17,7 +17,7 @@
 #include <dune/fem/gridpart/adaptiveleafgridpart.hh>
 // include Lagrange discrete function space
 #include <dune/fem/space/common/adaptmanager.hh>
-#include <dune/fem/space/p12dspace/p12dspace.hh>
+#include <dune/fem/space/pqlagrangespace/pqlagrangespace.hh>
 #include <dune/fem/function/adaptivefunction.hh>
 #include <dune/fem/solver/inverseoperators.hh>
 #include <dune/fem/misc/l2error.hh>

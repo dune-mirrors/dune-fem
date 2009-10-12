@@ -36,7 +36,7 @@
 // adaptation classes 
 #include <dune/fem/space/common/adaptmanager.hh>
 // lagrange space 
-#include <dune/fem/space/p12dspace/p12dspace.hh>
+#include <dune/fem/space/pqlagrangespace/pqlagrangespace.hh>
 /*#include <dune/fem/space/lagrangespace.hh>*/
 
 // discrete functions 
