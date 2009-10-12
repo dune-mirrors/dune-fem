@@ -19,46 +19,175 @@
 #include <dune/fem/space/lagrangespace/lagrangedatahandle.hh>
 
 //- Dune-Localfunctions include
+#include  <dune/finiteelements/p0.hh>
 #include  <dune/finiteelements/p1.hh>
+#include  <dune/finiteelements/p2.hh>
+#include  <dune/finiteelements/pk2d.hh>
+#include  <dune/finiteelements/pk3d.hh>
+#include  <dune/finiteelements/q1.hh>
+#include  <dune/finiteelements/q22d.hh>
 
 namespace Dune
 {
 
   template< class FunctionSpaceImp,
-            class GridPartImp >
-  class P12DSpace;
+            class GridPartImp, int polOrder = 1 >
+  class PLagrangeSpace;
 
+  template< class FunctionSpaceImp,
+            class GridPartImp, int polOrder = 1 >
+  class QLagrangeSpace;
 
-
-  template< class FunctionSpace, class GridPart >
-  struct P12DSpaceTraits
+  template< class FunctionSpace, class GridPart, bool isSimplexP, bool isCubeP, int polOrder = 1 >
+  struct PQLagrangeSpaceTraits
   {
+    typedef FunctionSpace                                            FunctionSpaceType;
+    typedef typename FunctionSpaceType :: DomainFieldType            DomainFieldType;
+    typedef typename FunctionSpaceType :: DomainType                 DomainType;
+    typedef typename FunctionSpaceType :: RangeFieldType             RangeFieldType;
+    typedef typename FunctionSpaceType :: RangeType                  RangeType;
+    typedef typename FunctionSpaceType :: JacobianRangeType          JacobianRangeType;
+    typedef typename FunctionSpaceType :: ScalarFunctionSpaceType    ScalarFunctionSpaceType;
+    static const unsigned int dimRange  = FunctionSpaceType :: dimRange;
+    static const unsigned int dimDomain = FunctionSpaceType :: dimDomain;
+    dune_static_assert(( dimRange == 1 ), "P12DSpace expects range dimension == 1");
     
-    typedef FunctionSpace FunctionSpaceType;
-    typedef typename FunctionSpaceType :: DomainFieldType DomainFieldType;
-    typedef typename FunctionSpaceType :: DomainType DomainType;
-    typedef typename FunctionSpaceType :: RangeFieldType RangeFieldType;
-    typedef typename FunctionSpaceType :: RangeType RangeType;
-    typedef typename FunctionSpaceType :: JacobianRangeType JacobianRangeType;
-    typedef typename FunctionSpaceType :: ScalarFunctionSpaceType
-      ScalarFunctionSpaceType;
-    enum { dimRange = FunctionSpaceType :: dimRange };
-    dune_static_assert(( dimRange == 1 ), "P12DExpects range dimension == 1");
-    
-    typedef GridPart GridPartType;
-    typedef typename GridPartType :: GridType GridType;
-    typedef typename GridPartType :: IndexSetType IndexSetType;
-    typedef typename GridPartType :: template Codim< 0 > :: IteratorType
-      IteratorType;
+    typedef GridPart                                                 GridPartType;
+    typedef typename GridPartType :: GridType                        GridType;
+    typedef typename GridPartType :: IndexSetType                    IndexSetType;
+    typedef typename GridPartType :: template Codim< 0 >
+              :: IteratorType                                        IteratorType;
 
-    enum { polynomialOrder = 1 };
+    static const int polynomialOrder = polOrder;
 
-    typedef P1LocalFiniteElement< DomainFieldType, RangeFieldType,
-                                  2 >                                LocalFiniteElementType;
-    
-    typedef P12DSpace< FunctionSpaceType, GridPartType > DiscreteFunctionSpaceType;
-    typedef GenericDofMapper< GridPartType > MapperType;
-    typedef MapperType BlockMapperType;
+    // TODO: extract this information from the grid(part) and merge
+    // PLagrangeSpace and QLagrangeSpace implementations.
+    static const bool isSimplex = isSimplexP;
+    static const bool isCube    = isCubeP;
+  private:
+    template<int polOrd, 
+             bool isSimplex, bool isCube,
+             int dimDomain, bool polOrderGreaterThanOne = (polOrd > 1) >
+    struct LocalFiniteElementFactoryTraits
+    {
+      struct NotImplemented
+      {
+        NotImplemented() 
+        { 
+          DUNE_THROW(NotImplemented, "Shape function implementation missing for" << \
+                     "selected GridType at dimension " << dimDomain << " and for" << \
+                     "polynomial order " << polOrd << ".");
+        }
+      };
+      typedef NotImplemented                                         LocalFiniteElementType;
+      static const bool geometryTypeIsFixed = true;
+    };
+
+    template<bool isCube, int dimDomain, bool dummy>
+    struct LocalFiniteElementFactoryTraits<0, true, isCube, dimDomain, dummy>
+    {
+      typedef P0LocalFiniteElement< DomainFieldType, RangeFieldType,
+                                    dimDomain >                      LocalFiniteElementType;
+      static const bool geometryTypeIsFixed = false;
+    };
+
+    template<bool isCube, int dimDomain, bool dummy>
+    struct LocalFiniteElementFactoryTraits<1, true, isCube, dimDomain, dummy>
+    {
+      typedef P1LocalFiniteElement< DomainFieldType, RangeFieldType,
+                                    dimDomain >                      LocalFiniteElementType;
+      static const bool geometryTypeIsFixed = true;
+    };
+
+    template<bool isCube, int polOrd>
+    struct LocalFiniteElementFactoryTraits<polOrd, true, isCube, 2, true>
+    {
+      typedef Pk2DLocalFiniteElement< DomainFieldType,
+                                      RangeFieldType, polOrd >     LocalFiniteElementType;
+      static const bool geometryTypeIsFixed = true;
+    };
+
+    template<bool isCube, int polOrd>
+    struct LocalFiniteElementFactoryTraits<polOrd, true, isCube, 3, true>
+    {
+      typedef Pk3DLocalFiniteElement< DomainFieldType,
+                                      RangeFieldType, polOrd >     LocalFiniteElementType;
+      static const bool geometryTypeIsFixed = true;
+    };
+
+    template<int dimDomain, bool dummy>
+    struct LocalFiniteElementFactoryTraits<1, false, true, dimDomain, dummy>
+    {
+      typedef Q1LocalFiniteElement< DomainFieldType, RangeFieldType,
+                                    dimDomain >                      LocalFiniteElementType;
+      static const bool geometryTypeIsFixed = true;
+    };
+
+    template<bool isSimplex, bool dummy>
+    struct LocalFiniteElementFactoryTraits<2, isSimplex, true, 2, dummy>
+    {
+      typedef Q22DLocalFiniteElement< DomainFieldType,
+                                      RangeFieldType >               LocalFiniteElementType;
+      static const bool geometryTypeIsFixed = true;
+    };
+
+    template<class Traits, bool geometryTypeIsFixed = Traits :: geometryTypeIsFixed>
+    class LocalFiniteElementFactory;
+
+    template<class Traits>
+    class LocalFiniteElementFactory<Traits, true>
+    {
+    private:
+      typedef typename Traits :: LocalFiniteElementType              LocalFiniteElementType;
+
+    public:
+      LocalFiniteElementFactory()
+        : localFiniteElement_() { }
+
+      const LocalFiniteElementType & getObject() const
+      {
+        return localFiniteElement_;
+      }
+
+    private:
+      LocalFiniteElementType                localFiniteElement_;
+    };
+
+    template<class Traits>
+    class LocalFiniteElementFactory<Traits, false>
+    {
+    private:
+      typedef P0LocalFiniteElement< DomainFieldType, RangeFieldType,
+              dimDomain >                        LocalFiniteElementType;
+
+    public:
+      LocalFiniteElementFactory()
+        : basicType_(isCube ? GeometryType :: cube : GeometryType :: simplex),
+        localFiniteElement_(basicType_) { }
+
+      const LocalFiniteElementType & getObject() const
+      {
+        return localFiniteElement_;
+      }
+
+    private:
+      typename GeometryType :: BasicType basicType_;
+      LocalFiniteElementType             localFiniteElement_;
+    };
+
+  public:
+
+    typedef LocalFiniteElementFactoryTraits< polynomialOrder,
+                                             isSimplex, isCube,
+                                             dimDomain >             LocalFEFactoryTraitsType;
+
+    typedef typename LocalFEFactoryTraitsType
+              :: LocalFiniteElementType                              LocalFiniteElementType;
+
+    typedef LocalFiniteElementFactory< LocalFEFactoryTraitsType >    LocalFEFactoryType;
+
+    typedef GenericDofMapper< GridPartType >                         MapperType;
+    typedef MapperType                                               BlockMapperType;
 
     // implementation of basefunction set 
     typedef GenericBaseFunctionSet< LocalFiniteElementType,
@@ -83,7 +212,19 @@ namespace Dune
     };
   };
 
+  template< class FunctionSpace, class GridPart, int polOrder = 1 >
+  struct PLagrangeSpaceTraits
+  : public PQLagrangeSpaceTraits< FunctionSpace, GridPart, true, false, polOrder>
+  {
+    typedef PLagrangeSpace< FunctionSpace, GridPart, polOrder >      DiscreteFunctionSpaceType;
+  };
 
+  template< class FunctionSpace, class GridPart, int polOrder = 1 >
+  struct QLagrangeSpaceTraits
+  : public PQLagrangeSpaceTraits< FunctionSpace, GridPart, false, true, polOrder>
+  {
+    typedef QLagrangeSpace< FunctionSpace, GridPart, polOrder >      DiscreteFunctionSpaceType;
+  };
 
   // GenericMapperSingletonKey
   // -------------------------
@@ -93,8 +234,8 @@ namespace Dune
   struct GenericMapperSingletonKey 
   {
     //! constructor taking index set and numDofs 
-    GenericMapperSingletonKey(const GridPartImp & gridPart, 
-                              FiniteElementImp & finiteElement,
+    GenericMapperSingletonKey(const GridPartImp & gridPart,
+                              const FiniteElementImp & finiteElement,
                               const int polOrd)
       : gridPart_(gridPart),  finiteElement_(finiteElement) , polOrd_(polOrd) 
     {}
@@ -111,13 +252,13 @@ namespace Dune
 
     //! return reference to index set 
     const GridPartImp & gridPart() const { return gridPart_; }
-    //! return lagrange point map set  
-    FiniteElementImp& finiteElement() const { return finiteElement_; }
+    //! return local finite element object
+    const FiniteElementImp& finiteElement() const { return finiteElement_; }
 
   private:
-    const GridPartImp        &gridPart_;
-    mutable FiniteElementImp &finiteElement_;
-    const int                 polOrd_;
+    const GridPartImp      &gridPart_;
+    const FiniteElementImp &finiteElement_;
+    const int               polOrd_;
   };
 
 
@@ -127,11 +268,11 @@ namespace Dune
 
   // Factory class for SingletonList to tell how objects are created and
   // how compared.
-  template< class Key, class Object >
+  template< class Key, class Object, bool isSimplex=true, bool isCube=false >
   class GenericMapperSingletonFactory;
 
-  template< class GridPart, class LocalFiniteElement, class Object >
-  class GenericMapperSingletonFactory< GenericMapperSingletonKey< GridPart, LocalFiniteElement >, Object >
+  template< class GridPart, class LocalFiniteElement, class Object, bool isSimplex, bool isCube >
+  class GenericMapperSingletonFactory< GenericMapperSingletonKey< GridPart, LocalFiniteElement >, Object, isSimplex, isCube >
   {
     struct LocalCoefficientsProvider
     {
@@ -145,8 +286,14 @@ namespace Dune
       template< class Topology >
       unsigned int size () const
       {
-        dune_static_assert( (Topology::dimension == 2), "GenericMapperSingletonFactory currently supports only 2d." );
-        return (GenericGeometry::IsSimplex< Topology >::value ? 1 : 0);
+        int size = 0;
+        if( isSimplex ) {
+          size+=GenericGeometry::IsSimplex< Topology >::value ? 1 : 0;
+        }
+        if( isCube ) {
+          size+=GenericGeometry::IsCube< Topology >::value ? 1 : 0;
+        }
+        return size;
       }
 
       template< class Topology >
@@ -176,35 +323,27 @@ namespace Dune
 
 
 
-  /** \addtogroup LocalFunctionSpaces
-   *
-   * docme
-   *
-   */
-
-
-
-  // P12DSpace
+  // PLagrangeSpace
   // ---------
 
-  /** \class   P12DSpace
+  /** \class   PQLagrangeSpace
    *  \ingroup LocalFunctionSpaces
-   *  \brief   p1 discrete function space for two dimensions
+   *  \brief   langrange discrete function space for simplex and cube grids
    */
-  template< class FunctionSpaceImp, class GridPartImp >
-  class P12DSpace
-  : public DiscreteFunctionSpaceDefault< P12DSpaceTraits< FunctionSpaceImp, GridPartImp > >,
+  template< class FunctionSpaceImp, class GridPartImp, int polOrder, template<class,class,int> class SpaceTraits >
+  class PQLagrangeSpace
+  : public DiscreteFunctionSpaceDefault< SpaceTraits< FunctionSpaceImp, GridPartImp, polOrder > >,
     public GenericDiscreteFunctionSpace
   {
-    typedef P12DSpace< FunctionSpaceImp, GridPartImp > ThisType;
-    typedef DiscreteFunctionSpaceDefault< P12DSpaceTraits< FunctionSpaceImp, GridPartImp > > BaseType;
+    typedef PQLagrangeSpace< FunctionSpaceImp, GridPartImp, polOrder,
+                             SpaceTraits >                           ThisType;
+    typedef DiscreteFunctionSpaceDefault
+              < SpaceTraits< FunctionSpaceImp, GridPartImp,
+                             polOrder > >                            BaseType;
 
   public:
     //! traits for the discrete function space
-    typedef P12DSpaceTraits< FunctionSpaceImp, GridPartImp >         Traits;
-
-    //! type of the discrete function space
-    typedef P12DSpace< FunctionSpaceImp, GridPartImp >               P12DDiscreteFunctionSpaceType;
+    typedef SpaceTraits< FunctionSpaceImp, GridPartImp, polOrder >   Traits;
 
     typedef typename Traits :: GridPartType                          GridPartType;
     typedef typename Traits :: GridType                              GridType;
@@ -241,8 +380,13 @@ namespace Dune
     //! local finite element type
     typedef typename Traits :: LocalFiniteElementType                LocalFiniteElementType;
 
+    typedef typename Traits :: LocalFEFactoryType                    LocalFEFactoryType;
+
     //! size of local blocks
     enum { localBlockSize = Traits :: localBlockSize };
+
+    static const bool isSimplex = Traits :: isSimplex;
+    static const bool isCube    = Traits :: isCube;
 
     //! type for DoF
     typedef RangeFieldType                                           DofType;
@@ -257,7 +401,8 @@ namespace Dune
 
     //! mapper factory
     typedef GenericMapperSingletonFactory< MapperSingletonKeyType,
-                                           MapperType >              MapperSingletonFactoryType;
+                                           MapperType, isSimplex,
+                                           isCube >                  MapperSingletonFactoryType;
 
     //! singleton list of mappers
     typedef SingletonList< MapperSingletonKeyType, MapperType,
@@ -279,10 +424,11 @@ namespace Dune
      *  \param[in]  commInterface  communication interface to use (optional)
      *  \param[in]  commDirection  communication direction to use (optional)
      */
-    explicit P12DSpace ( GridPartType &gridPart )
+    explicit PQLagrangeSpace ( GridPartType &gridPart )
     : BaseType( gridPart ),
       mapper_( 0 ),
-      finiteElement_(),
+      finiteElementFactory_(),
+      finiteElement_( finiteElementFactory_.getObject() ),
       genericBaseFunctionSet_( finiteElement_ ),
       baseFunctionSet_( &genericBaseFunctionSet_ )
     {
@@ -293,13 +439,13 @@ namespace Dune
 
   private:
     // forbid the copy constructor
-    P12DSpace ( const ThisType & );
+    PQLagrangeSpace ( const ThisType & );
 
   public:
     /** \brief Destructor (freeing mapper)
         \return 
     **/
-    ~P12DSpace ()
+    ~PQLagrangeSpace ()
     {
       MapperProviderType::removeObject( *mapper_ );
     }
@@ -340,7 +486,7 @@ namespace Dune
     template< class Entity >
     const BaseFunctionSetType baseFunctionSet ( const Entity &entity ) const
     {
-      assert( entity.type().isSimplex() && (Entity::dimension == 2) );
+/*      assert( entity.type().isSimplex() && (Entity::dimension == 2) );*/
       return baseFunctionSet_;
     }
 
@@ -370,11 +516,35 @@ namespace Dune
     //! corresponding mapper
     MapperType *mapper_;
 
-    LocalFiniteElementType finiteElement_;
-    BaseFunctionSetImp     genericBaseFunctionSet_;
-    BaseFunctionSetType    baseFunctionSet_;
+    LocalFEFactoryType            finiteElementFactory_;
+    const LocalFiniteElementType &finiteElement_;
+    BaseFunctionSetImp            genericBaseFunctionSet_;
+    BaseFunctionSetType           baseFunctionSet_;
+  };
+
+  template<class FunctionSpaceImp, class GridPartImp, int polOrder>
+  class PLagrangeSpace
+    : public PQLagrangeSpace<FunctionSpaceImp, GridPartImp, polOrder, PLagrangeSpaceTraits>
+  {
+  private:
+    typedef PQLagrangeSpace< FunctionSpaceImp, GridPartImp, polOrder,
+                             PLagrangeSpaceTraits >                  BaseType;
+  public:
+    explicit PLagrangeSpace ( GridPartImp &gridPart )
+      : BaseType(gridPart) {}
   };
   
+  template<class FunctionSpaceImp, class GridPartImp, int polOrder>
+  class QLagrangeSpace
+    : public PQLagrangeSpace<FunctionSpaceImp, GridPartImp, polOrder, QLagrangeSpaceTraits>
+  {
+  private:
+    typedef PQLagrangeSpace< FunctionSpaceImp, GridPartImp, polOrder,
+                             QLagrangeSpaceTraits >                  BaseType;
+  public:
+    explicit QLagrangeSpace ( GridPartImp &gridPart )
+      : BaseType(gridPart) {}
+  };
 } // end Dune namespace  
 
 #endif // #if HAVE_DUNE_LOCALFUNCTIONS

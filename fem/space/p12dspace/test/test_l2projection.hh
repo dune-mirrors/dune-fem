@@ -25,22 +25,28 @@
 
 namespace Dune {
 
-template<class GridType>
+template<class GridType, int polOrder, bool isCube=false>
 class L2Projection_Test
   : public Test
 {
 public:
-  static const int polOrder = 1;
+  static const unsigned int dimension = GridType :: dimension;
   // select grid part to use
   //typedef Dune::LeafGridPart< GridType > GridPartType;
   typedef Dune::AdaptiveLeafGridPart< GridType > GridPartType;
 
-  typedef Dune :: FunctionSpace< double, double, dimgrid, 1 >        FunctionSpaceType;
+  typedef FunctionSpace< double, double, dimension, 1 >                FunctionSpaceType;
 
-  typedef Dune :: P12DSpace< FunctionSpaceType, GridPartType >       DiscreteFunctionSpaceType;
+/*  typedef Dune :: P12DSpace< FunctionSpaceType, GridPartType >       DiscreteFunctionSpaceType;*/
+  typedef typename SelectType< isCube,
+                               QLagrangeSpace< FunctionSpaceType,
+                                               GridPartType,
+                                               polOrder >,
+                               PLagrangeSpace< FunctionSpaceType,
+                                               GridPartType,
+                                               polOrder > > :: Type  DiscreteFunctionSpaceType;
 
-  typedef Dune :: AdaptiveDiscreteFunction
-                    < DiscreteFunctionSpaceType >                    DiscreteFunctionType;
+  typedef AdaptiveDiscreteFunction< DiscreteFunctionSpaceType >      DiscreteFunctionType;
 private:
   template< class FunctionSpace >
   struct Function

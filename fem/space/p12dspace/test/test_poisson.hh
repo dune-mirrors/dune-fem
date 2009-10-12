@@ -3,13 +3,6 @@
 
 #define VERBOSE false
 
-#define USE_TWISTFREE_MAPPER
-
-#ifndef POLORDER
-#define POLORDER 1
-#endif
-
-
 // System Includes
 // ---------------
 
@@ -75,7 +68,7 @@
 namespace Dune
 {
 
-template<class GridType>
+template<class GridType, unsigned int polOrder, bool isCube=false>
 class Poisson_Test
   : public Test
 {
@@ -89,10 +82,11 @@ public:
   //---- GridParts -----------------------------------------------------------
   //---- best choice ---------------------------------------------------------
   typedef LeafGridPart< GridType >                                   GridPartType;
+  static const int dimension = GridType :: dimension;
   //---- other choices--------------------------------------------------------
   //typedef AdaptiveLeafGridPart< GridType, InteriorBorder_Partition > GridPartType;
 
-  typedef FunctionSpace< double, double, dimworld, 1 >               FunctionSpaceType;
+  typedef FunctionSpace< double, double, dimension, 1 >              FunctionSpaceType;
 
   // The data functions (as defined in problem.hh)
   //---- Right Hand Side, Exact Solution, and Stiffness tensor ---------------
@@ -105,9 +99,15 @@ public:
 
   //---- DiscreteFunctionSpace -----------------------------------------------
   //! define the discrete function space our unkown belongs to
-  typedef P12DSpace< FunctionSpaceType, GridPartType >               DiscreteSpaceType;
+  typedef typename SelectType< isCube,
+                               QLagrangeSpace< FunctionSpaceType,
+                                               GridPartType,
+                                               polOrder >,
+                               PLagrangeSpace< FunctionSpaceType,
+                                               GridPartType,
+                                               polOrder > > :: Type  DiscreteSpaceType;
 /*  typedef LagrangeDiscreteFunctionSpace< FunctionSpaceType,
- *                                         GridPartType, POLORDER,
+ *                                         GridPartType, polOrder,
  *                                         CachingStorage >            DiscreteSpaceType;*/
 
   //---- DiscreteFunction ----------------------------------------------------
