@@ -331,7 +331,7 @@ public:
       double h1eoc = log(prevErrors_[1]/errors[1]) / M_LN2;
       std :: cout << "L2 - EOC: " << l2eoc << "\n\n";
       std :: cout << "H1 - EOC: " << h1eoc << "\n\n";
-      if(l2eoc < 1.8 || h1eoc < 0.8)
+      if(l2eoc < 0.8 + polOrder || h1eoc < -0.2 + polOrder)
         eocState_ = false;
     }
     prevErrors_ = errors;
@@ -344,7 +344,15 @@ public:
 
   void run()
   {
-    const int startLevel = 3;
+    std::cout << "\n\n";
+    std::cout << "=============================================================\n";
+    std::cout << "Starting Poisson test with EOC measurements for \n";
+    std::cout << "base functions of polynomial order " << polOrder << "\n";
+    std::cout << "on a grid of type                  " << grid_.name() << "\n";
+    std::cout << "of dimension                       " << GridType :: dimension << "\n";
+    std::cout << "=============================================================" << std::endl;
+
+    const int startLevel = 0;
 
     // refine the grid until the startLevel is reached
     grid_.globalRefine(startLevel);
@@ -354,7 +362,7 @@ public:
 
     algorithm( 0 );
 
-    for( int eocloop = 0; eocloop < eocSteps; ++eocloop )
+    for( int eocloop = 1; eocloop < eocSteps; ++eocloop )
     {
       // refine the grid
       grid_.globalRefine( DGFGridInfo<GridType>::refineStepsForHalf() );

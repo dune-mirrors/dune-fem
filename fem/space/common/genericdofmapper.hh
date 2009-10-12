@@ -246,6 +246,12 @@ namespace Dune
       return true;
     }
 
+    bool fixedDataSize( int codim ) const
+    {
+      // TODO: i am not so sure wether it is correct always to return true.
+      return true;
+    }
+
   private: 
     template< class Topology, class LocalCoefficients >
     void build ( const LocalCoefficients &localCoefficients,

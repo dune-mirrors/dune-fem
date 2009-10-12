@@ -93,7 +93,7 @@ private:
 
 public:
   L2Projection_Test(std::string gridFile)
-    : gridFile_(gridFile), level_(0), repeats_(4)
+    : gridFile_(gridFile), level_(0), repeats_(3)
   { }
 
   void run() 
@@ -104,6 +104,14 @@ public:
       GridType& grid = *gridPtr;
       grid.globalRefine( level_ );
 
+      std::cout << "\n\n";
+      std::cout << "=============================================================\n";
+      std::cout << "Starting L2 projection test with EOC measurements for \n";
+      std::cout << "base functions of polynomial order " << polOrder << "\n";
+      std::cout << "on a grid of type                  " << grid.name() << "\n";
+      std::cout << "of dimension                       " << GridType :: dimension << "\n";
+      std::cout << "=============================================================" << std::endl;
+
       Function< FunctionSpaceType > function;
       GridPartType gridPart( grid );
 
@@ -113,13 +121,13 @@ public:
       for( int i = 0; i < repeats_; ++i )
       {
         const double prevError = error;
-        Dune::GlobalRefine::apply( *gridPtr, Dune::DGFGridInfo< GridType >::refineStepsForHalf() );
+        Dune::GlobalRefine::apply( grid, Dune::DGFGridInfo< GridType >::refineStepsForHalf() );
         error = algorithm( function, grid, i+1 );
         eoc   = log( prevError / error ) / M_LN2;
 
         std::cout << "error: " << error << " EOC: " << eoc << std::endl;
       }
-      _test(eoc > 1.5);
+      _test(eoc > 0.5 + polOrder);
     }
     catch( const Dune::Exception &e )
     {
