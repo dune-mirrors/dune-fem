@@ -112,11 +112,12 @@ namespace Dune {
     MapperContainerType mappers_;
   };
 
-  template <class GridImp, int codim>
-  class CacheProvider 
-  {
-    typedef CompileTimeChecker<false> Only_implementation_for_codim_0_and_1_exist;
-  };
+
+  // CacheProvider
+  // -------------
+
+  template< class GridImp, int codim >
+  class CacheProvider;
 
   template <class GridImp>
   class CacheProvider<GridImp, 0>
