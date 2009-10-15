@@ -361,8 +361,7 @@ public:
   template< class Entity > 
   int mapEntityDofToGlobal ( const Entity &entity, const int localDof ) const
   {
-    typedef CompileTimeChecker< (Entity :: codimension > 0) >
-      __CHECK_ENTITY_CODIMENSION__;
+    dune_static_assert( (Entity::codimension > 0), "Call specialization for codimension 0." );
     return 0;
   }
 
@@ -389,8 +388,7 @@ public:
   template< class Entity >
   int numEntityDofs ( const Entity &entity ) const
   {
-    typedef CompileTimeChecker< (Entity :: codimension > 0) >
-      __CHECK_ENTITY_CODIMENSION__;
+    dune_static_assert( (Entity::codimension > 0), "Call specialization for codimension 0." );
     return 0;
   }
 

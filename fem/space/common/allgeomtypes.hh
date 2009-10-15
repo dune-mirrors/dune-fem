@@ -160,67 +160,60 @@ namespace Dune
   /** \brief specialisation fir UGGrid, because geomTypes method of index
       sets not usable in this case. 
   */
-  template< class IndexSetImp, int dimworld >
-  class AllGeomTypes< IndexSetImp, UGGrid< dimworld > > 
-    : public GeometryInformation< UGGrid< dimworld > , 0 > 
+  template< class IndexSetImp, int dim >
+  class AllGeomTypes< IndexSetImp, UGGrid< dim > > 
+  : public GeometryInformation< UGGrid< dim > , 0 > 
   {
+    typedef AllGeomTypes< IndexSetImp, UGGrid< dim > > ThisType;
+
+    dune_static_assert( (dim == 2) || (dim == 3), "Invalid dimension for UG specified." );
+
   public:
     typedef IndexSetImp IndexSetType;
-    typedef UGGrid< dimworld > GridType;
-
-  private:
-    typedef AllGeomTypes< IndexSetType, GridType > ThisType;
-
-    CompileTimeChecker< (dimworld == 2) || (dimworld == 3) >
-      __UGGrid_Works_Only_for_Dimensions_2_and_3__;
+    typedef UGGrid< dim > GridType;
    
   protected:
-    enum { ncodim = dimworld + 1 };
+    enum { ncodim = dim + 1 };
     
     std::vector< GeometryType > geomTypes_[ ncodim ];
 
   public:
     //! constructor storing index set reference 
-    inline explicit AllGeomTypes( const IndexSetType &indexSet )
+    explicit AllGeomTypes ( const IndexSetType &indexSet )
     {
       // vertices 
-      {
-        geomTypes_[dimworld].push_back( GeometryType(GeometryType::simplex,0)); 
-      }
+      geomTypes_[ dim ].push_back( GeometryType( GeometryType::simplex, 0 ) );
       
+      if( dim == 2 )
       {
-        if( dimworld == 2 )
-        {
-          // elements 
-          geomTypes_[0].push_back( GeometryType(GeometryType::simplex,2)); 
-          geomTypes_[0].push_back( GeometryType(GeometryType::cube,2)); 
+        // elements 
+        geomTypes_[ 0 ].push_back( GeometryType( GeometryType::simplex, 2 ) );
+        geomTypes_[ 0 ].push_back( GeometryType( GeometryType::cube, 2 ) );
 
-          // faces 
-          geomTypes_[1].push_back( GeometryType(GeometryType::cube,1));
-        }
+        // faces 
+        geomTypes_[ 1 ].push_back( GeometryType( GeometryType::cube, 1 ) );
+      }
+      else if( dim == 3 )
+      {
+        // elements 
+        geomTypes_[ 0 ].push_back( GeometryType( GeometryType::simplex, 3 ) );
+        geomTypes_[ 0 ].push_back( GeometryType( GeometryType::cube, 3 ) );
+        geomTypes_[ 0 ].push_back( GeometryType( GeometryType::prism, 3 ) );
+        geomTypes_[ 0 ].push_back( GeometryType( GeometryType::pyramid, 3 ) );
 
-        if( dimworld == 3 )
-        {
-          // elements 
-          geomTypes_[0].push_back( GeometryType(GeometryType::simplex,3)); 
-          geomTypes_[0].push_back( GeometryType(GeometryType::cube,3)); 
-          geomTypes_[0].push_back( GeometryType(GeometryType::prism,3)); 
-          geomTypes_[0].push_back( GeometryType(GeometryType::pyramid,3)); 
+        // faces 
+        geomTypes_[ 1 ].push_back( GeometryType( GeometryType::simplex, 2 ) );
+        geomTypes_[ 1 ].push_back( GeometryType( GeometryType::cube, 2 ) );
 
-          // faces 
-          geomTypes_[1].push_back( GeometryType(GeometryType::simplex,2)); 
-          geomTypes_[1].push_back( GeometryType(GeometryType::cube,2)); 
-
-          // edges 
-          geomTypes_[2].push_back( GeometryType(GeometryType::cube,1));
-        }
+        // edges 
+        geomTypes_[ 2 ].push_back( GeometryType( GeometryType::cube, 1 ) );
       }
 
-      this->buildMaps( geomTypes_[0] );
+      this->buildMaps( geomTypes_[ 0 ] );
     }                  
     
     //! returns vector with geometry types this index set has indices for
-    const std :: vector< GeometryType > &geomTypes ( int codim ) const
+    const std::vector< GeometryType > &geomTypes ( int codim ) const
     {
       assert( (codim >= 0) && (codim < ncodim) );
       return geomTypes_[ codim ];
@@ -235,4 +228,4 @@ namespace Dune
 
 } // end namespace Dune
 
-#endif
+#endif // #ifndef DUNE_ALLGEOMTYPES_HH
