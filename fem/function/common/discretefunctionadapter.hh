@@ -56,39 +56,37 @@ namespace Dune{
 
   /** \brief DiscreteFunctionAdapter provides local functions for a Function. 
    */
-  template <class FunctionImp, class GridPartImp>
+  template< class FunctionImp, class GridPartImp >
   class DiscreteFunctionAdapter 
-  : public HasLocalFunction , 
-    public Function<DiscreteFunctionSpaceAdapter<typename FunctionImp :: FunctionSpaceType,GridPartImp>, 
-                    DiscreteFunctionAdapter<FunctionImp,GridPartImp> >
+  : public Function< DiscreteFunctionSpaceAdapter< typename FunctionImp::FunctionSpaceType, GridPartImp >,
+                     DiscreteFunctionAdapter< FunctionImp, GridPartImp > >,
+    public HasLocalFunction
   {
+    typedef DiscreteFunctionAdapter< FunctionImp, GridPartImp > ThisType;
+    typedef Function< DiscreteFunctionSpaceAdapter< typename FunctionImp::FunctionSpaceType, GridPartImp >, ThisType > BaseType;
+
+    // Make sure the function is not a discrete functon
+    dune_static_assert( !(Conversion< FunctionImp, HasLocalFunction >::exists),
+                        "FunctionType may not be a discrete function type." );
+
   public:  
+    //! type of traits 
+    typedef DiscreteFunctionAdapterTraits< FunctionImp, GridPartImp > Traits;
+
     //! type of function 
     typedef FunctionImp FunctionType;
 
     //! type of grid part 
     typedef GridPartImp GridPartType;
                        
-    //! type of traits 
-    typedef DiscreteFunctionAdapterTraits< FunctionType, GridPartType > Traits;
-
     //! type of discrete function space 
-    typedef typename Traits :: DiscreteFunctionSpaceType DiscreteFunctionSpaceType;
+    typedef typename Traits::DiscreteFunctionSpaceType DiscreteFunctionSpaceType;
 
-  private:
-    typedef DiscreteFunctionAdapter< FunctionType, GridPartType > ThisType;
-    typedef Function< DiscreteFunctionSpaceType, ThisType > BaseType;
-
-    // Make sure the function is not a discrete functon
-    CompileTimeChecker < !(Conversion< FunctionType, HasLocalFunction > :: exists) >
-      __FunctionType_May_Not_Be_a_DiscreteFunctionType__;
-
-  public:
     // type of discrete function space
-    typedef typename Traits :: FunctionSpaceType FunctionSpaceType; 
+    typedef typename Traits::FunctionSpaceType FunctionSpaceType; 
 
     //! type of grid 
-    typedef typename DiscreteFunctionSpaceType :: GridType GridType;
+    typedef typename DiscreteFunctionSpaceType::GridType GridType;
 
     //! domain type (from function space)
     typedef typename DiscreteFunctionSpaceType::DomainFieldType DomainFieldType ;
@@ -102,9 +100,9 @@ namespace Dune{
     typedef typename DiscreteFunctionSpaceType::JacobianRangeType JacobianRangeType;
 
     //! type of codim 0 entity
-    typedef typename GridType :: template Codim<0> :: Entity EntityType; 
+    typedef typename GridType::template Codim< 0 >::Entity EntityType; 
 
-    private:
+  private:
     class LocalFunctionStorage;
     class LocalFunction
     {
