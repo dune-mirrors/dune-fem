@@ -21,10 +21,9 @@ namespace Dune
   template< class FunctionSpace, unsigned int order >
   class GenericLagrangeBaseFunction< FunctionSpace, PointGeometry, order >
   {
-    typedef GenericLagrangeBaseFunction< FunctionSpace, PointGeometry, order >
-      ThisType;
+    typedef GenericLagrangeBaseFunction< FunctionSpace, PointGeometry, order > ThisType;
     
-    CompileTimeChecker< (FunctionSpace :: dimRange == 1) > __check_dimRange__;
+    dune_static_assert( (FunctionSpace::dimRange == 1), "FunctionSpace must be scalar." );
 
   public:
     typedef FunctionSpace FunctionSpaceType;
@@ -103,7 +102,7 @@ namespace Dune
       < FunctionSpace, PyramidGeometry< BaseGeometryType >, 0 >
       ThisType;
     
-    CompileTimeChecker< (FunctionSpace :: dimRange == 1) > __check_dimRange__;
+    dune_static_assert( (FunctionSpace::dimRange == 1), "FunctionSpace must be scalar." );
 
   public:
     typedef FunctionSpace FunctionSpaceType;
@@ -231,7 +230,7 @@ namespace Dune
       < FunctionSpace, PyramidGeometry< BaseGeometryType >, order >
       ThisType;
     
-    CompileTimeChecker< (FunctionSpace :: dimRange == 1) > __check_dimRange__;
+    dune_static_assert( (FunctionSpace::dimRange == 1), "FunctionSpace must be scalar." );
 
   public:
     typedef FunctionSpace FunctionSpaceType;
@@ -339,7 +338,7 @@ namespace Dune
 
       if( LagrangePointType :: useDimReduction( dofCoordinate ) )
       {
-        if( diffVariable[ 0 ] != LocalDofCoordinateType :: index )
+        if( (unsigned int)diffVariable[ 0 ] != LocalDofCoordinateType::index )
           DimensionReductionType :: evaluate
             ( dofCoordinate.base(), diffVariable, myfactor * factor, x.base(), phi );
         else
@@ -365,7 +364,7 @@ namespace Dune
           ( dofCoordinate, diffVariable, factor, x, phi );
         phi *= (myfactor * factor * (*x) - myshift);
 
-        if( diffVariable[ 0 ] == LocalDofCoordinateType :: index )
+        if( (unsigned int)diffVariable[ 0 ] == LocalDofCoordinateType::index )
         {
           RangeType psi;
           OrderReductionType :: template evaluate
@@ -409,15 +408,14 @@ namespace Dune
 
       if( LagrangePointType :: useDimReduction( dofCoordinate ) )
       {
-        if( (diffVariable[ 0 ] != LocalDofCoordinateType :: index)
-            && (diffVariable[ 1 ] != LocalDofCoordinateType :: index) )
+        if( ((unsigned int)diffVariable[ 0 ] != LocalDofCoordinateType::index)
+            && ((unsigned int)diffVariable[ 1 ] != LocalDofCoordinateType::index) )
         DimensionReductionType :: evaluate
           ( dofCoordinate.base(), diffVariable, myfactor * factor, x.base(), phi );
         else
           phi = 0;
 
-        const unsigned int height
-          = LagrangePointType :: height( dofCoordinate );
+        const unsigned int height = LagrangePointType::height( dofCoordinate );
         for( unsigned int i = 0; i < height; ++i )
         {
           ++(*dofCoordinate);
@@ -437,7 +435,7 @@ namespace Dune
           ( dofCoordinate, diffVariable, factor, x, phi );
         phi *= (myfactor * factor * (*x) - myshift);
         
-        if( diffVariable[ 0 ] == LocalDofCoordinateType :: index )
+        if( (unsigned int)diffVariable[ 0 ] == LocalDofCoordinateType::index )
         {
           OrderReductionType :: template evaluate
             < LocalDofCoordinateType, LocalCoordinateType, porder >
@@ -445,7 +443,7 @@ namespace Dune
           phi.axpy( myfactor * factor, psi );
         }
         
-        if( diffVariable[ 1 ] == LocalDofCoordinateType :: index )
+        if( (unsigned int)diffVariable[ 1 ] == LocalDofCoordinateType::index )
         {
           OrderReductionType :: template evaluate
             < LocalDofCoordinateType, LocalCoordinateType, porder >
@@ -498,7 +496,7 @@ namespace Dune
         order >
       ThisType;
     
-    CompileTimeChecker< (FunctionSpace :: dimRange == 1) > __check_dimRange__;
+    dune_static_assert( (FunctionSpace::dimRange == 1), "FunctionSpace must be scalar." );
 
   public:
     typedef FunctionSpace FunctionSpaceType;

@@ -53,25 +53,20 @@ namespace Dune
   class PointGeometry
   {
   public:
-    enum
-    {
-      /** \brief dimension of the geometry object */
-      dimension = 0
-    };
+    /** \brief dimension of the geometry object */
+    static const unsigned int dimension = 0;
 
     template< unsigned int codim >
     class Codim
     {
-    private:
-      CompileTimeChecker< (codim <= dimension) >
-        __CODIM_MUST_BE_LESS_EQUAL_TO_DIMENSION__;
+      dune_static_assert( (codim <= dimension), "Codimension must be less or equal to dimension." );
 
     public:
-      enum { numSubEntities = ((codim == 0) ? 1 : 0) };
+      static const unsigned int numSubEntities = ((codim == 0) ? 1 : 0);
     };
 
     /** \brief number of subentites of a given codimension */
-    inline static unsigned int numSubEntities ( unsigned int codim )
+    static unsigned int numSubEntities ( unsigned int codim )
     {
       return ((codim == 0) ? 1 : 0);
     }
@@ -90,58 +85,34 @@ namespace Dune
     /** \brief type of base geometry */
     typedef BaseGeometry BaseGeometryType;
 
-    enum
-    {
-      /** \brief dimension of the geometry object */
-      dimension = BaseGeometryType :: dimension + 1
-    };
+    /** \brief dimension of the geometry object */
+    static const unsigned int dimension = BaseGeometryType::dimension + 1;
 
     template< unsigned int codim >
     class Codim
     {
-    private:
-      CompileTimeChecker< (codim <= dimension) >
-        __CODIM_MUST_BE_LESS_EQUAL_TO_DIMENSION__;
+      dune_static_assert( (codim <= dimension), "Codimension must be less or equal to dimension." );
 
     public:
-      enum
-      {
-        numSubEntities
-          = MetaIf
-            <
-              (codim > 0),
-              MetaPlus
-              <
-                MetaInt
-                <
-                  Protect< BaseGeometryType :: template Codim, codim - 1,
-                           PointGeometry :: template Codim< 0 >, 0
-                         > :: numSubEntities
-                >,
-                MetaInt
-                <
-                  Protect< BaseGeometryType :: template Codim, codim,
-                           PointGeometry :: template Codim< 0 >, dimension
-                         > :: numSubEntities
-                >
-              >,
-              MetaInt< 1 >
-            > :: value
-      };
+      static const unsigned int numSubEntities
+        = MetaIf< (codim > 0),
+                  MetaPlus< MetaInt< Protect< BaseGeometryType::template Codim, codim-1, PointGeometry::template Codim< 0 >, 0 >::numSubEntities >,
+                            MetaInt< Protect< BaseGeometryType::template Codim, codim, PointGeometry::template Codim< 0 >, dimension >::numSubEntities > >,
+                  MetaInt< 1 > >::value;
     };
 
     /** \brief number of subentites of a given codimension */
-    inline static unsigned int numSubEntities ( unsigned int codim )
+    static unsigned int numSubEntities ( unsigned int codim )
     {
       if( codim > 0 )
       {
-        const unsigned int sameCodimCount
-          = BaseGeometryType :: numSubEntities( codim - 1 );
+        const unsigned int sameCodimCount = BaseGeometryType::numSubEntities( codim-1 );
         if( codim < dimension )
-          return sameCodimCount + BaseGeometryType :: numSubEntities( codim );
+          return sameCodimCount + BaseGeometryType::numSubEntities( codim );
         else
-          return (codim == dimension ? sameCodimCount + 1 : 0);
-      } else
+          return (codim == dimension ? sameCodimCount+1 : 0);
+      }
+      else
         return 1;
     }
   };
@@ -161,148 +132,114 @@ namespace Dune
     /** \brief type of the second base geometry */
     typedef SecondGeometry SecondGeometryType;
 
-    enum
-    {
-      /** \brief dimension of the geometry object */
-      dimension = FirstGeometryType :: dimension
-                  + SecondGeometryType :: dimension
-    };
+    /** \brief dimension of the geometry object */
+    static const unsigned int dimension = FirstGeometryType::dimension + SecondGeometryType::dimension;
 
     template< unsigned int codim >
     class Codim
     {
-    private:
-      CompileTimeChecker< (codim <= dimension) >
-        __CODIM_MUST_BE_LESS_EQUAL_TO_DIMENSION__;
+      dune_static_assert( (codim <= dimension), "Codimension must be less or equal to dimension." );
 
-    private:
       template< unsigned int i >
       struct NumSubEntities
-      : public MetaInt
-        < FirstGeometryType :: template Codim< codim - i > :: numSubEntities
-          * SecondGeometryType :: template Codim< i > :: numSubEntities
-        >
-      {
-      };
+      : public MetaInt< FirstGeometryType::template Codim< codim-i >::numSubEntities * SecondGeometryType::template Codim< i >::numSubEntities >
+      {};
 
     public:
-      enum { numSubEntities = Loop< MetaPlus, NumSubEntities, codim > :: value };
+      static const unsigned int numSubEntities = Loop< MetaPlus, NumSubEntities, codim >::value;
     };
 
     /** \brief number of subentites of a given codimension */
-    inline static unsigned int numSubEntities ( unsigned int codim )
+    static unsigned int numSubEntities ( unsigned int codim )
     {
-      enum { firstDimension = FirstGeometryType :: dimension };
+      static const unsigned int firstDimension = FirstGeometryType::dimension;
         
       unsigned int cnt = 0;
-      for( unsigned int i = 0; i <= codim; ++i ) {
-        cnt += FirstGeometryType :: numSubEntities( codim - i )
-             * SecondGeometryType :: numSubEntities( i );
-      }
+      for( unsigned int i = 0; i <= codim; ++i )
+        cnt += FirstGeometryType::numSubEntities( codim - i ) * SecondGeometryType::numSubEntities( i );
       return cnt;
     }
   };
 
 
 
-  template< GeometryType :: BasicType type, unsigned int dim >
+  template< GeometryType::BasicType type, unsigned int dim >
   class GeometryWrapper;
 
 
 
   template< unsigned int dim >
-  class GeometryWrapper< GeometryType :: simplex, dim >
+  class GeometryWrapper< GeometryType::simplex, dim >
   {
-  public:
-    enum { dimension = dim };
-
-  private:
-    typedef GeometryWrapper< GeometryType :: simplex, dimension > ThisType;
-    typedef GeometryWrapper< GeometryType :: simplex,  dimension - 1 >
-      DimensionReductionType;
+    typedef GeometryWrapper< GeometryType::simplex, dim > ThisType;
+    typedef GeometryWrapper< GeometryType::simplex, dim-1 > DimensionReductionType;
     
     // disallow use for dim > 3
-    CompileTimeChecker< (dim <= 3) > __assert_dimension__;
-
+    dune_static_assert( (dim <= 3), "Dimension must be less or equal to 3." );
 
   public:
-    typedef PyramidGeometry< typename DimensionReductionType :: GenericGeometryType >
-      GenericGeometryType;
+    static const unsigned int dimension = dim;
+
+    typedef PyramidGeometry< typename DimensionReductionType::GenericGeometryType > GenericGeometryType;
     
-    static inline void duneSubEntity ( const unsigned int codim,
-                                       unsigned int &subEntity )
-    {
-    }
+    static void duneSubEntity ( const unsigned int codim, unsigned int &subEntity )
+    {}
   };
 
 
   
   template<>
-  class GeometryWrapper< GeometryType :: simplex, 0 >
+  class GeometryWrapper< GeometryType::simplex, 0 >
   {
-  public:
-    enum { dimension = 0 };
-
-  private:
-    typedef GeometryWrapper< GeometryType :: simplex,  dimension > ThisType;
+    typedef GeometryWrapper< GeometryType::simplex, 0 > ThisType;
 
   public:
+    static const unsigned int dimension = 0;
+
     typedef PointGeometry GenericGeometryType;
     
-    static inline void duneSubEntity ( const unsigned int codim,
-                                       unsigned int &subEntity )
-    {
-    }
+    static void duneSubEntity ( const unsigned int codim, unsigned int &subEntity )
+    {}
   };
 
 
   
   template<>
-  class GeometryWrapper< GeometryType :: simplex, 2 >
+  class GeometryWrapper< GeometryType::simplex, 2 >
   {
-  public:
-    enum { dimension = 2 };
-
-  private:
-    typedef GeometryWrapper< GeometryType :: simplex, dimension > ThisType;
-    typedef GeometryWrapper< GeometryType :: simplex,  dimension - 1 >
-      DimensionReductionType;
+    typedef GeometryWrapper< GeometryType::simplex, 2 > ThisType;
+    typedef GeometryWrapper< GeometryType::simplex, 1 > DimensionReductionType;
 
   public:
-    typedef PyramidGeometry< DimensionReductionType :: GenericGeometryType >
-      GenericGeometryType;
+    static const unsigned int dimension = 2;
 
-    static inline void duneSubEntity ( const unsigned int codim,
-                                       unsigned int &subEntity )
+    typedef PyramidGeometry< DimensionReductionType::GenericGeometryType > GenericGeometryType;
+
+    static void duneSubEntity ( const unsigned int codim, unsigned int &subEntity )
     {
-      if( codim == 1 )
-        subEntity = 2 - subEntity;
+      subEntity = (codim == 1 ? 2 - subEntity : subEntity);
     }
   };
   
 
   
   template<>
-  class GeometryWrapper< GeometryType :: simplex, 3 >
+  class GeometryWrapper< GeometryType::simplex, 3 >
   {
-  public:
-    enum { dimension = 3 };
-
-  private:
-    typedef GeometryWrapper< GeometryType :: simplex, dimension > ThisType;
-    typedef GeometryWrapper< GeometryType :: simplex,  dimension - 1 >
-      DimensionReductionType;
+    typedef GeometryWrapper< GeometryType::simplex, 3 > ThisType;
+    typedef GeometryWrapper< GeometryType::simplex, 2 > DimensionReductionType;
 
   public:
-    typedef PyramidGeometry< DimensionReductionType :: GenericGeometryType >
-      GenericGeometryType;
+    static const unsigned int dimension = 3;
 
-    static inline void duneSubEntity ( const unsigned int codim,
-                                       unsigned int &subEntity )
+    typedef PyramidGeometry< DimensionReductionType::GenericGeometryType > GenericGeometryType;
+
+    static void duneSubEntity ( const unsigned int codim, unsigned int &subEntity )
     {
       if( codim == 1 )
         subEntity = 3 - subEntity;
-      else if( codim == 2 ) {
+      else if( codim == 2 )
+      {
         if( subEntity == 1 )
           subEntity = 2;
         else if( subEntity == 2 )
@@ -314,73 +251,58 @@ namespace Dune
 
 
   template< unsigned int dim >
-  class GeometryWrapper< GeometryType :: cube, dim >
+  class GeometryWrapper< GeometryType::cube, dim >
   {
-  public:
-    enum { dimension = dim };
+    typedef GeometryWrapper< GeometryType::cube, dim > ThisType;
+    typedef GeometryWrapper< GeometryType::simplex, 1 > LineGeometryType;
+    typedef GeometryWrapper< GeometryType::cube, dim-1 > DimensionReductionType;
 
-  private:
-    typedef GeometryWrapper< GeometryType :: cube, dimension > ThisType;
-    typedef GeometryWrapper< GeometryType :: simplex, 1 > LineGeometryType;
-    typedef GeometryWrapper< GeometryType :: cube, dimension - 1 >
-      DimensionReductionType;
+  public:
+    static const unsigned int dimension = dim;
 
     // disallow use for dim > 3
-    CompileTimeChecker< (dim <= 3) > __assert_dimension__;
+    dune_static_assert( (dim <= 3), "Dimension must be less or equal to 3." );
 
-  public:
-    typedef ProductGeometry< typename DimensionReductionType :: GenericGeometryType,
-                             typename LineGeometryType :: GenericGeometryType >
+    typedef ProductGeometry< typename DimensionReductionType::GenericGeometryType, typename LineGeometryType::GenericGeometryType >
       GenericGeometryType;
 
-    static inline void duneSubEntity ( const unsigned int codim,
-                                       unsigned int &subEntity )
-    {
-    }
+    static void duneSubEntity ( const unsigned int codim, unsigned int &subEntity )
+    {}
   };
 
 
   
   template<>
-  class GeometryWrapper< GeometryType :: cube, 0 >
+  class GeometryWrapper< GeometryType::cube, 0 >
   {
-  public:
-    enum { dimension = 0 };
-    
-  private:
-    typedef GeometryWrapper< GeometryType :: cube, dimension > ThisType;
-    typedef GeometryWrapper< GeometryType :: simplex, 1 > LineGeometryType;
+    typedef GeometryWrapper< GeometryType::cube, 0 > ThisType;
+    typedef GeometryWrapper< GeometryType::simplex, 1 > LineGeometryType;
 
   public:
+    static const unsigned int dimension = 0;
+    
     typedef PointGeometry GenericGeometryType;
     
-    static inline void duneSubEntity ( const unsigned int codim,
-                                       unsigned int &subEntity )
-    {
-    }
+    static void duneSubEntity ( const unsigned int codim, unsigned int &subEntity )
+    {}
   };
 
 
   
   template<>
-  class GeometryWrapper< GeometryType :: cube, 3 >
+  class GeometryWrapper< GeometryType::cube, 3 >
   {
-  public:
-    enum { dimension = 3 };
-
-  private:
-    typedef GeometryWrapper< GeometryType :: cube, dimension > ThisType;
-    typedef GeometryWrapper< GeometryType :: simplex, 1 > LineGeometryType;
-    typedef GeometryWrapper< GeometryType :: cube, dimension - 1 >
-      DimensionReductionType;
+    typedef GeometryWrapper< GeometryType::cube, 3 > ThisType;
+    typedef GeometryWrapper< GeometryType::simplex, 1 > LineGeometryType;
+    typedef GeometryWrapper< GeometryType::cube, 2 > DimensionReductionType;
 
   public:
-    typedef ProductGeometry< DimensionReductionType :: GenericGeometryType,
-                             LineGeometryType :: GenericGeometryType >
+    static const unsigned int dimension = 3;
+
+    typedef ProductGeometry< DimensionReductionType::GenericGeometryType, LineGeometryType::GenericGeometryType >
       GenericGeometryType;
 
-    static inline void duneSubEntity ( const unsigned int codim,
-                                       unsigned int &subEntity )
+    static void duneSubEntity ( const unsigned int codim, unsigned int &subEntity )
     {
       if( codim != 2 )
         return;
@@ -399,47 +321,37 @@ namespace Dune
 
 
   template<>
-  class GeometryWrapper< GeometryType :: pyramid, 3 >
+  class GeometryWrapper< GeometryType::pyramid, 3 >
   {
-  public:
-    enum { dimension = 3 };
-
-  private:
-    typedef GeometryWrapper< GeometryType :: pyramid, 3 > ThisType;
-    typedef GeometryWrapper< GeometryType :: cube, 2 > BaseGeometryType;
+    typedef GeometryWrapper< GeometryType::pyramid, 3 > ThisType;
+    typedef GeometryWrapper< GeometryType::cube, 2 > BaseGeometryType;
 
   public:
-    typedef PyramidGeometry< BaseGeometryType :: GenericGeometryType >
-      GenericGeometryType;
+    static const unsigned int dimension = 3;
 
-    static inline void duneSubEntity ( const unsigned int codim,
-                                       unsigned int &subEntity )
-    {
-    }
+    typedef PyramidGeometry< BaseGeometryType::GenericGeometryType > GenericGeometryType;
+
+    static void duneSubEntity ( const unsigned int codim, unsigned int &subEntity )
+    {}
   };
 
 
 
   template<>
-  class GeometryWrapper< GeometryType :: prism, 3 >
+  class GeometryWrapper< GeometryType::prism, 3 >
   {
-  public:
-    enum { dimension = 3 };
-    
-  private:
-    typedef GeometryWrapper< GeometryType :: prism, 3 > ThisType;
-    typedef GeometryWrapper< GeometryType :: simplex, 2 >  FirstGeometryType;
-    typedef GeometryWrapper< GeometryType :: simplex, 1 > SecondGeometryType;
+    typedef GeometryWrapper< GeometryType::prism, 3 > ThisType;
+    typedef GeometryWrapper< GeometryType::simplex, 2 > FirstGeometryType;
+    typedef GeometryWrapper< GeometryType::simplex, 1 > SecondGeometryType;
 
   public:
-    typedef ProductGeometry< FirstGeometryType :: GenericGeometryType,
-                             SecondGeometryType :: GenericGeometryType >
+    static const unsigned int dimension = 3;
+    
+    typedef ProductGeometry< FirstGeometryType::GenericGeometryType, SecondGeometryType::GenericGeometryType >
       GenericGeometryType;
 
-    static inline void duneSubEntity ( const unsigned int codim,
-                                       unsigned int &subEntity )
-    {
-    }
+    static void duneSubEntity ( const unsigned int codim, unsigned int &subEntity )
+    {}
   };
 
 
@@ -455,66 +367,62 @@ namespace Dune
   template< class Field, unsigned int offset >
   class LocalCoordinate< PointGeometry, Field, offset >
   {
+    typedef LocalCoordinate< PointGeometry, Field, offset > ThisType;
+
   public:
     typedef PointGeometry GeometryType;
 
-    enum { dimension = GeometryType :: dimension };
+    static const unsigned int dimension = GeometryType::dimension;
 
     typedef Field FieldType;
 
-  private:
-    typedef LocalCoordinate< GeometryType, FieldType, offset > ThisType;
-    
-  public:
     inline LocalCoordinate ()
     {}
     
     template< int sz >
-    inline explicit LocalCoordinate ( const FieldVector< FieldType, sz > &x )
+    explicit LocalCoordinate ( const FieldVector< FieldType, sz > &x )
     {
-      typedef CompileTimeChecker< (sz >= offset + dimension) >
-        __CHECK_VECTOR_SIZE__;
+      dune_static_assert( (sz >= offset + dimension), "Invalid vector size" );
     }
 
-    inline ThisType &operator= ( const FieldType s )
+    ThisType &operator= ( const FieldType s )
     {
       return *this;
     }
 
     template< int sz >
-    inline ThisType &operator= ( const FieldVector< FieldType, sz > &x )
+    ThisType &operator= ( const FieldVector< FieldType, sz > &x )
     {
-      typedef CompileTimeChecker< (sz >= offset + dimension) >
-        __CHECK_VECTOR_SIZE__;
+      dune_static_assert( (sz >= offset + dimension), "Invalid vector size" );
       return *this;
     }
     
-    inline ThisType &operator= ( const ThisType &v )
+    ThisType &operator= ( const ThisType &v )
     {
       return *this;
     }
 
-    inline ThisType &operator*= ( const FieldType s )
+    ThisType &operator*= ( const FieldType s )
     {
       return *this;
     }
 
-    inline ThisType &operator+= ( const ThisType &v )
+    ThisType &operator+= ( const ThisType &v )
     {
       return *this;
     }
 
-    inline ThisType &operator-= ( const ThisType &v )
+    ThisType &operator-= ( const ThisType &v )
     {
       return *this;
     }
 
-    inline const FieldType &operator[] ( const unsigned int i ) const
+    const FieldType &operator[] ( const unsigned int i ) const
     {
       DUNE_THROW( RangeError, "LocalCoordinate: No such index." );
     }
 
-    inline FieldType &operator[] ( const unsigned int i )
+    FieldType &operator[] ( const unsigned int i )
     {
       DUNE_THROW( RangeError, "LocalCoordinate: No such index." );
     }
@@ -525,41 +433,33 @@ namespace Dune
   template< class BaseGeometry, class Field, unsigned int offset >
   class LocalCoordinate< PyramidGeometry< BaseGeometry >, Field, offset >
   {
+    typedef LocalCoordinate< PyramidGeometry< BaseGeometry >, Field, offset > ThisType;
+
   public:
     typedef BaseGeometry BaseGeometryType;
     
     typedef PyramidGeometry< BaseGeometryType > GeometryType;
 
-    enum { dimension = GeometryType :: dimension };
+    static const unsigned int dimension = GeometryType::dimension;
 
     typedef Field FieldType;
     
-    typedef LocalCoordinate< BaseGeometry, FieldType, offset >
-      BaseCoordinateType;
+    typedef LocalCoordinate< BaseGeometry, FieldType, offset > BaseCoordinateType;
 
-    enum { index = offset + BaseGeometryType :: dimension };
+    static const unsigned int index = offset + BaseGeometryType::dimension;
     
-  private:
-    typedef LocalCoordinate< GeometryType, FieldType, offset > ThisType;
-
-  private:
-    FieldType myCoordinate_;
-    BaseCoordinateType baseCoordinate_;
-
-  public:
-    inline LocalCoordinate ()
+    LocalCoordinate ()
     {}
     
     template< int sz >
-    inline explicit LocalCoordinate ( const FieldVector< FieldType, sz > &x )
+    explicit LocalCoordinate ( const FieldVector< FieldType, sz > &x )
     : myCoordinate_( x[ index ] ),
       baseCoordinate_( x ) 
     {
-      typedef CompileTimeChecker< (sz >= offset + dimension) >
-        __CHECK_VECTOR_SIZE__;
+      dune_static_assert( (sz >= offset + dimension), "Invalid vector size" );
     }
     
-    inline ThisType &operator= ( const FieldType s )
+    ThisType &operator= ( const FieldType s )
     {
       myCoordinate_ = s;
       baseCoordinate_ = s;
@@ -567,45 +467,44 @@ namespace Dune
     }
     
     template< int sz >
-    inline ThisType &operator= ( const FieldVector< FieldType, sz > &x )
+    ThisType &operator= ( const FieldVector< FieldType, sz > &x )
     {
-      typedef CompileTimeChecker< (sz >= offset + dimension) >
-        __CHECK_VECTOR_SIZE__;
+      dune_static_assert( (sz >= offset + dimension), "Invalid vector size" );
       
       myCoordinate_ = x[ index ];
       baseCoordinate_ = x;
       return *this;
     }
 
-    inline ThisType &operator= ( const ThisType &v )
+    ThisType &operator= ( const ThisType &v )
     {
       myCoordinate_ = v.myCoordinate_;
       baseCoordinate_ = v.baseCoordinate_;
       return *this;
     }
 
-    inline ThisType &operator*= ( const FieldType s )
+    ThisType &operator*= ( const FieldType s )
     {
       myCoordinate_ *= s;
       baseCoordinate_ *= s;
       return *this;
     }
     
-    inline ThisType &operator+= ( const ThisType &v )
+    ThisType &operator+= ( const ThisType &v )
     {
       myCoordinate_ += v.myCoordinate_;
       baseCoordinate_ += v.baseCoordinate_;
       return *this;
     }
     
-    inline ThisType &operator-= ( const ThisType &v )
+    ThisType &operator-= ( const ThisType &v )
     {
       myCoordinate_ -= v.myCoordinate_;
       baseCoordinate_ -= v.baseCoordinate_;
       return *this;
     }
     
-    inline const FieldType &operator[] ( const unsigned int i ) const
+    const FieldType &operator[] ( const unsigned int i ) const
     {
       if( i == index )
         return myCoordinate_;
@@ -613,7 +512,7 @@ namespace Dune
         return baseCoordinate_[ i ];
     }
 
-    inline FieldType &operator[] ( const unsigned int i )
+    FieldType &operator[] ( const unsigned int i )
     {
       if( i == index )
         return myCoordinate_;
@@ -621,77 +520,67 @@ namespace Dune
         return baseCoordinate_[ i ];
     }
 
-    inline const FieldType &operator* () const
+    const FieldType &operator* () const
     {
       return myCoordinate_;
     }
 
-    inline FieldType &operator* ()
+    FieldType &operator* ()
     {
       return myCoordinate_;
     }
 
-    inline const BaseCoordinateType &base () const
+    const BaseCoordinateType &base () const
     {
       return baseCoordinate_;
     }
 
-    inline BaseCoordinateType &base ()
+    BaseCoordinateType &base ()
     {
       return baseCoordinate_;
     }
+
+  private:
+    FieldType myCoordinate_;
+    BaseCoordinateType baseCoordinate_;
   };
 
 
 
-  template< class FirstGeometry, class SecondGeometry, class Field,
-            unsigned int offset >
-  class LocalCoordinate
-    < ProductGeometry< FirstGeometry, SecondGeometry >, Field, offset >
+  template< class FirstGeometry, class SecondGeometry, class Field, unsigned int offset >
+  class LocalCoordinate< ProductGeometry< FirstGeometry, SecondGeometry >, Field, offset >
   {
+    typedef LocalCoordinate< ProductGeometry< FirstGeometry, SecondGeometry >, Field, offset > ThisType;
+
   public:
     typedef FirstGeometry FirstGeometryType;
     typedef SecondGeometry SecondGeometryType;
-    typedef ProductGeometry< FirstGeometryType, SecondGeometryType >
-      GeometryType;
+    typedef ProductGeometry< FirstGeometryType, SecondGeometryType > GeometryType;
 
-    enum { dimension = GeometryType :: dimension };
+    static const unsigned int dimension = GeometryType::dimension;
 
     typedef Field FieldType;
 
   protected:
-    enum {
-      firstOffset = offset,
-      secondOffset = offset + FirstGeometryType :: dimension
-    };
+    static const unsigned int firstOffset = offset;
+    static const unsigned int secondOffset = offset + FirstGeometryType::dimension;
 
   public:
-    typedef LocalCoordinate< FirstGeometryType, FieldType, firstOffset >
-      FirstCoordinateType;
-    typedef LocalCoordinate< SecondGeometryType, FieldType, secondOffset >
-      SecondCoordinateType;
+    typedef LocalCoordinate< FirstGeometryType, FieldType, firstOffset > FirstCoordinateType;
+    typedef LocalCoordinate< SecondGeometryType, FieldType, secondOffset > SecondCoordinateType;
 
-  private:
-    typedef LocalCoordinate< GeometryType, FieldType, offset > ThisType;
-
-  private:
-    FirstCoordinateType firstCoordinate_;
-    SecondCoordinateType secondCoordinate_;
-
-  public:
-    inline LocalCoordinate ()
+    LocalCoordinate ()
     {}
     
     template< int sz >
-    inline explicit LocalCoordinate ( const FieldVector< FieldType, sz > &x )
+    explicit LocalCoordinate ( const FieldVector< FieldType, sz > &x )
     : firstCoordinate_( x ),
       secondCoordinate_( x )
     {
-      typedef CompileTimeChecker< (sz >= offset + dimension) >
-        __CHECK_VECTOR_SIZE__;
+      dune_static_assert( (sz >= offset + dimension), "Invalid vector size" );
     }
 
-    inline ThisType &operator= ( const FieldType s )
+    ThisType &operator= ( const FieldType s )
     {
       firstCoordinate_ = s;
       secondCoordinate_ = s;
@@ -699,45 +588,44 @@ namespace Dune
     }
     
     template< int sz >
-    inline ThisType &operator= ( const FieldVector< FieldType, sz > &x )
+    ThisType &operator= ( const FieldVector< FieldType, sz > &x )
     {
-      typedef CompileTimeChecker< (sz >= offset + dimension) >
-        __CHECK_VECTOR_SIZE__;
+      dune_static_assert( (sz >= offset + dimension), "Invalid vector size" );
       
       firstCoordinate_ = x;
       secondCoordinate_ = x;
       return *this;
     }
 
-    inline ThisType &operator= ( const ThisType &v )
+    ThisType &operator= ( const ThisType &v )
     {
       firstCoordinate_ = v;
       secondCoordinate_ = v;
       return *this;
     }
 
-    inline ThisType &operator*= ( const FieldType s )
+    ThisType &operator*= ( const FieldType s )
     {
       firstCoordinate_ *= s;
       secondCoordinate_ *= s;
       return *this;
     }
     
-    inline ThisType &operator+= ( const ThisType &v )
+    ThisType &operator+= ( const ThisType &v )
     {
       firstCoordinate_ += v;
       secondCoordinate_ += v;
       return *this;
     }
     
-    inline ThisType &operator-= ( const ThisType &v )
+    ThisType &operator-= ( const ThisType &v )
     {
       firstCoordinate_ -= v;
       secondCoordinate_ -= v;
       return *this;
     }
 
-    inline const FieldType &operator[] ( const unsigned int i ) const
+    const FieldType &operator[] ( const unsigned int i ) const
     {
       if( i < secondOffset )
         return firstCoordinate_[ i ];
@@ -745,7 +633,7 @@ namespace Dune
         return secondCoordinate_[ i ];
     }
 
-    inline FieldType &operator[] ( const unsigned int i )
+    FieldType &operator[] ( const unsigned int i )
     {
       if( i < secondOffset )
         return firstCoordinate_[ i ];
@@ -753,25 +641,29 @@ namespace Dune
         return secondCoordinate_[ i ];
     }
 
-    inline const FirstCoordinateType &first () const
+    const FirstCoordinateType &first () const
     {
       return firstCoordinate_;
     }
 
-    inline FirstCoordinateType &first ()
+    FirstCoordinateType &first ()
     {
       return firstCoordinate_;
     }
 
-    inline const SecondCoordinateType &second () const
+    const SecondCoordinateType &second () const
     {
       return secondCoordinate_;
     }
 
-    inline SecondCoordinateType &second ()
+    SecondCoordinateType &second ()
     {
       return secondCoordinate_;
     }
+
+  private:
+    FirstCoordinateType firstCoordinate_;
+    SecondCoordinateType secondCoordinate_;
   };
 
 }
