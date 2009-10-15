@@ -37,18 +37,20 @@ namespace Dune
 
     //! The type of the next stage of the filter.
     typedef Filter< ArgTupleImp, typename SelectorImp::Type2 > NextFilterType;
+
+    typedef typename NextFilterType::ResultType NextResultType;
     
     //! The filtered tuple resulting from this filter stage.
     // typedef Pair<AppendType, typename NextFilterType::ResultType> ResultType;
-    typedef SelectorPair< SelectorType, AppendType, typename NextFilterType::ResultType > ResultType;
+    typedef SelectorPair< SelectorType, AppendType, NextResultType > ResultType;
     
     //! Extracts the elements specified by the selector template argument.
     //! \param arg Argument tuple.
     static ResultType apply ( ArgTupleImp &arg )
     {
-      typedef typename NextFilterType::ResultType NextResultType;
       typedef Pair< AppendType, NextResultType > BasicResultType;
-      return ResultType( BasicResultType( Element< index >::get( arg ), NextFilterType::apply( arg ) ) );
+      NextResultType nextResult = NextFilterType::apply( arg );
+      return ResultType( BasicResultType( Element< index >::get( arg ), nextResult ) );
     }
   };
   
