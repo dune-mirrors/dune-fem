@@ -1,5 +1,5 @@
-#ifndef DUNE_FEM_PERSISTENCE_HH
-#define DUNE_FEM_PERSISTENCE_HH
+#ifndef DUNE_FEM_PERSISTENCEMANAGER_HH
+#define DUNE_FEM_PERSISTENCEMANAGER_HH
 
 #include <fstream>
 #include <list>
@@ -11,6 +11,7 @@
 #include <dune/fem/io/file/asciiparser.hh>
 #include <dune/fem/io/file/iointerface.hh>
 #include <dune/fem/io/parameter.hh>
+
 namespace Dune
 {
   
@@ -113,8 +114,7 @@ namespace Dune
   template< class ObjectType >
   struct IsPersistent
   {
-    static const bool value
-      = Dune :: Conversion< ObjectType *, PersistentObject * > :: exists;
+    static const bool value = Dune::Conversion< ObjectType *, PersistentObject * >::exists;
   };
  
 
@@ -128,10 +128,12 @@ namespace Dune
   {
     typedef PersistenceManager ThisType;
     template <class ObjectType,bool isPersistent>
-    struct WrapObject;  
+    struct WrapObject;
+
   private:
-    typedef std :: list < std::pair<PersistentObject *, unsigned int > > PersistentType;
-    typedef PersistentType :: iterator IteratorType;
+    typedef std::list< std::pair< PersistentObject *, unsigned int > > PersistentType;
+    typedef PersistentType::iterator IteratorType;
+
     PersistentType objects_;
     int fileCounter_,lineNo_;
     std::string path_;
@@ -139,16 +141,20 @@ namespace Dune
     std::ofstream outAsciStream_;
     bool closed_,invalid_;
     
-    inline PersistenceManager () :
-      fileCounter_(0), lineNo_(), path_(), 
-      closed_(false), invalid_(false)
+    PersistenceManager ()
+    : fileCounter_( 0 ),
+      lineNo_(),
+      path_(), 
+      closed_( false ),
+      invalid_( false )
     {}
+
     PersistenceManager ( const ThisType & );
     ThisType &operator= ( const ThisType & );
 
   public:
     template< class ObjectType >
-    inline void insertObject( ObjectType &object )
+    void insertObject( ObjectType &object )
     {
       IteratorType end = objects_.end();
       for( IteratorType it = objects_.begin(); it != end; ++it )
@@ -173,7 +179,7 @@ namespace Dune
     }
 
     template< class ObjectType >
-    inline void removeObject ( ObjectType &object )
+    void removeObject ( ObjectType &object )
     {
       IteratorType end = objects_.end();
       for( IteratorType it = objects_.begin(); it != end; ++it )
@@ -194,27 +200,28 @@ namespace Dune
       }
     }
 
-    inline void backupObjects ( const std::string& path ) 
+    void backupObjects ( const std::string& path ) 
     {
-      if (invalid_) {
-        #ifndef NDEBUG 
+      if( invalid_ )
+      {
+#ifndef NDEBUG 
         std::cerr << "WARNING: backup called although objects "
                   << "have been removed from the PersistenceManager! "
                   << "Backup ignored!" << std::endl;
-        #endif
+#endif
         return;
       }
-      closed_=true;
-      startBackup(path);
-      typedef PersistentType :: iterator IteratorType;
+      closed_ = true;
+      startBackup( path );
+      typedef PersistentType::iterator IteratorType;
 
       for( IteratorType it = objects_.begin(); it != objects_.end(); ++it )
-        it->first->backup( );
+        it->first->backup();
 
       closeAsci();
     }
     
-    inline void restoreObjects ( const std::string& path) 
+    void restoreObjects ( const std::string &path )
     {
       if (invalid_) {
         #ifndef NDEBUG 
@@ -234,16 +241,20 @@ namespace Dune
       closeAsci();
     }
 
-    inline std::string getUniqueFileName() { 
-      fileCounter_++;
-      return genFilename(path_,"",fileCounter_);
+    std::string getUniqueFileName ()
+    { 
+      return genFilename( path_, "", ++fileCounter_ );
     }
-    template <class T>
-    inline void backup(const std::string& token,const T& value) {
+
+    template< class T >
+    void backup ( const std::string &token, const T &value )
+    {
       outAsciStream_ << token << ": " << value << std::endl;
     }
-    template <class T>
-    inline void restore(const std::string& token,T& value) {
+
+    template< class T >
+    void restore ( const std::string &token, T &value )
+    {
       std::string linestring;
       int startLine=lineNo_;
       bool found;
@@ -269,45 +280,52 @@ namespace Dune
     }
 
   public:
-    inline static PersistenceManager &instance ()
+    static PersistenceManager &instance ()
     {
       static PersistenceManager theInstance;
       return theInstance;
     }
 
-    inline static void insert ( PersistentObject &object )
+    static void insert ( PersistentObject &object )
     {
       instance().insertObject( object );
     }
 
-    inline static void remove ( PersistentObject &object )
+    static void remove ( PersistentObject &object )
     {
       instance().removeObject( object );
     }
 
-    inline static void backup ( const std::string& path )
+    static void backup ( const std::string& path )
     {
       instance().backupObjects( path );
     }
 
-    inline static void restore ( const std::string& path )
+    static void restore ( const std::string& path )
     {
       instance().restoreObjects( path );
     }
 
-    inline static std::string uniqueFileName() { 
+    static std::string uniqueFileName()
+    {
       return instance().getUniqueFileName();
     }
-    template <class T>
-    inline static void backupValue(const std::string& token,const T& value) {
-      instance().backup(token,value);
+
+    template< class T >
+    static void backupValue ( const std::string &token, const T &value )
+    {
+      instance().backup( token, value );
     }
-    template <class T>
-    inline static void restoreValue(const std::string& token,T& value) {
-      instance().restore(token,value);
+
+    template< class T >
+    static void restoreValue ( const std::string &token, T &value )
+    {
+      instance().restore( token, value );
     }
+
   private:
-    void startBackup(const std::string& path) {
+    void startBackup ( const std::string &path )
+    {
       path_=path+"/";
       fileCounter_=0;
       lineNo_=0;
@@ -320,7 +338,9 @@ namespace Dune
       outAsciStream_ << "Persistent Objects" << std::endl;
       Parameter::write(path_+"parameter");
     }
-    void startRestore(const std::string& path) {
+
+    void startRestore ( const std::string &path )
+    {
       path_=path+"/";
       fileCounter_=0;
       lineNo_=0;
@@ -340,39 +360,35 @@ namespace Dune
       Parameter::clear();
       Parameter::append(path_+"parameter");
     }
-    void closeAsci() {
-      if (outAsciStream_.is_open())
+
+    void closeAsci ()
+    {
+      if( outAsciStream_.is_open() )
         outAsciStream_.close();
-      if (inAsciStream_.is_open())
+      if( inAsciStream_.is_open() )
         inAsciStream_.close();
     }
   };
   
-  namespace {
-  PersistenceManager& persistenceManager = 
-    PersistenceManager::instance();
+  namespace
+  {
+    PersistenceManager &persistenceManager = PersistenceManager::instance();
   }
 
-  template <class ObjectType>
-  inline PersistenceManager &operator<< ( PersistenceManager &pm,
-                                          ObjectType *object )
+
+  template< class ObjectType >
+  inline PersistenceManager &
+  operator<< ( PersistenceManager &pm, ObjectType &object )
   {
-    CompileTimeChecker<false> 
-     do_not_add_pointer_to_PersistenceManager;
-    return pm;
-  }
-  template <class ObjectType>
-  inline PersistenceManager &operator<< ( PersistenceManager &pm,
-                                          ObjectType &object )
-  {
+    dune_static_assert( !TypeTraits< ObjectType >::isPointer, "Do not add pointers to PersistenceManager." );
     pm.insertObject( object );
     return pm;
   }
 
   
-  template <class ObjectType>
-  inline PersistenceManager &operator>> ( PersistenceManager &pm,
-                                          ObjectType &object )
+  template< class ObjectType >
+  inline PersistenceManager &
+  operator>> ( PersistenceManager &pm, ObjectType &object )
   {
     pm.removeObject( object );
     return pm;
@@ -380,9 +396,9 @@ namespace Dune
 
   
   template< class ObjectType >
-  struct PersistenceManager :: WrapObject< ObjectType, true >
+  struct PersistenceManager::WrapObject< ObjectType, true >
   {
-    inline static PersistentObject *apply( ObjectType &obj )
+    static PersistentObject *apply( ObjectType &obj )
     {
       return &obj;
     }
@@ -390,7 +406,7 @@ namespace Dune
 
   
   template< class ObjectType >
-  struct PersistenceManager :: WrapObject< ObjectType, false >
+  struct PersistenceManager::WrapObject< ObjectType, false >
   : public PersistentObject
   {
     typedef WrapObject< ObjectType, false > ThisType;
@@ -409,14 +425,12 @@ namespace Dune
     
     virtual void backup () const
     {
-      PersistenceManager :: backupValue
-        ( "_token"+PersistenceManager::uniqueFileName(), obj_ );
+      PersistenceManager::backupValue( "_token"+PersistenceManager::uniqueFileName(), obj_ );
     }
     
     virtual void restore ()
     {
-      PersistenceManager :: restoreValue
-        ( "_token"+PersistenceManager::uniqueFileName(), obj_ );
+      PersistenceManager::restoreValue( "_token"+PersistenceManager::uniqueFileName(), obj_ );
     }
     
   protected:
@@ -426,7 +440,7 @@ namespace Dune
     }
     
   public:
-    inline static PersistentObject *apply( ObjectType &obj )
+    static PersistentObject *apply ( ObjectType &obj )
     {
       return new ThisType( obj );
     }
@@ -445,22 +459,22 @@ namespace Dune
     typedef PersistentObject BaseType;
 
   protected:
-    inline AutoPersistentObject ()
+    AutoPersistentObject ()
     {
-      PersistenceManager :: insert( *this );
+      PersistenceManager::insert( *this );
     }
 
-    inline AutoPersistentObject ( const ThisType & )
+    AutoPersistentObject ( const ThisType & )
     {
-      PersistenceManager :: insert( *this );
+      PersistenceManager::insert( *this );
     }
 
-    inline virtual ~AutoPersistentObject ()
+    virtual ~AutoPersistentObject ()
     {
-      PersistenceManager :: remove( *this );
+      PersistenceManager::remove( *this );
     }
   };
 
 }
 
-#endif
+#endif // #ifndef DUNE_FEM_PERSISTENCEMANAGER_HH
