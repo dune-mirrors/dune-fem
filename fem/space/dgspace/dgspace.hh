@@ -5,26 +5,27 @@
 1) static method to create a space<dimRange> from a given Grid
  *************************************************************/
 
-//- system includes 
 #include <vector>
 
-// -Dune includes 
+#include <dune/common/static_assert.hh>
+
 #include <dune/grid/common/grid.hh>
 
 #include <dune/fem/space/common/discretefunctionspace.hh>
 #include <dune/fem/space/common/dofmanager.hh>
 #include <dune/fem/space/common/allgeomtypes.hh>
+
 #include <dune/fem/space/basefunctions/basefunctionsets.hh>
 #include <dune/fem/space/basefunctions/basefunctionstorage.hh>
 #include <dune/fem/space/basefunctions/basefunctionproxy.hh>
 
-//- local includes 
-#include "dgmapper.hh"
-#include "dgbasefunctions.hh"
-#include "legendredgbasefunctions.hh"
-#include "dgdatahandle.hh"
+#include <dune/fem/space/dgspace/dgmapper.hh>
+#include <dune/fem/space/dgspace/dgbasefunctions.hh>
+#include <dune/fem/space/dgspace/legendredgbasefunctions.hh>
+#include <dune/fem/space/dgspace/dgdatahandle.hh>
 
-namespace Dune {
+namespace Dune
+{
 
   /** @addtogroup DGDSpace 
    DiscreteFunctionSpace for discontinuous functions 
@@ -100,7 +101,7 @@ namespace Dune {
     
     //! The polynom order of the base functions
     enum { polynomialOrder = polOrd };
-    CompileTimeChecker<(polOrd>=0)> only_use_DGSpace_with_positive_polOrd;
+    dune_static_assert( (polOrd >= 0), "Only use DGSpace with positive polOrd." );
 
     //! mapper used to implement mapToGlobal 
     typedef typename Traits::MapperType MapperType; 
@@ -416,8 +417,7 @@ namespace Dune {
 
     //! dimensionworld of grid 
     enum { dimensionworld = GridType :: dimensionworld };
-    //! only use with dimension <= 3 
-    CompileTimeChecker<(dimensionworld<=3)> use_Legendre_Spaces_for_higher_worlddims;
+    dune_static_assert( (dimensionworld <= 3), "Use Legendre spaces for higher dimensions." );
 
     //! scalar space type 
     typedef typename Traits::BaseFunctionSpaceType  BaseFunctionSpaceType;
