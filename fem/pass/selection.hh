@@ -67,21 +67,20 @@ namespace Dune
   template< class Pass, int id >
   struct FindPass
   {
-    CompileTimeChecker< (Pass::passId != -1) > __ASSERT_ALL_PASSES_HAVE_PASSID_OR_NONE__;
-    typedef typename Pass :: PreviousPassType PreviousPassType;
-    enum { passNum = ( (int)Pass::passId == (int)id ? (int)Pass :: passNum
-                     : (int)FindPass< PreviousPassType, id > :: passNum ) };
+    typedef typename Pass::PreviousPassType PreviousPassType;
+    static const int passNum
+      = ((int)Pass::passId == id ? (int)Pass::passNum : FindPass< PreviousPassType, id >::passNum);
+
   private:
-    // no need to have instance of this class
-    FindPass();
+    dune_static_assert( (Pass::passId != -1), "Pass must have a valid id." );
   };
 
 
-  template < class Argument , int StartPassIdImp, int id >
-  struct FindPass< StartPass< Argument , StartPassIdImp > , id >
+  template< class Argument, int startPassId, int id >
+  struct FindPass< StartPass< Argument, startPassId >, id >
   {
-    enum { passNum = ( (int)StartPass< Argument , StartPassIdImp >
-                        ::passId == (int)id ? 0 : -1 ) };
+    typedef StartPass< Argument, startPassId > Pass;
+    static const int passNum = ((int)Pass::passId == id ? 0 : -1);
   };
 
 
@@ -92,32 +91,35 @@ namespace Dune
    * equal to template-given id, with exception that 0 means StartPass )
    *
    */
-  template < class Pass , int id >
+  template< class Pass, int id >
   struct PassId2PassDiff
   {
-    enum { passNum = (int)FindPass< typename Pass::PreviousPassType , id >::passNum };
-    CompileTimeChecker< (passNum != -1) > __ASSERT_PASS_ID_FOUND_AND_ASSERT_ALL_PASSES_HAVE_ID_OR_NONE;
-    enum { passDiff = ((passNum == 0) ? 0 : Pass::passNum - passNum) };
+    static const int passNum = FindPass< typename Pass::PreviousPassType, id >::passNum;
+    static const int passDiff = ((passNum == 0) ? 0 : (int)Pass::passNum - passNum);
+
+  private:
+    dune_static_assert( (passNum != -1), "Pass not found." );
   };
 
-  template< class Pass , int id , bool passHasId >
+  template< class Pass, int id , bool passHasId >
   struct CompatiblePassId2PassDiff;
 
-  template< class Pass , int id >
-  struct CompatiblePassId2PassDiff< Pass , id , true >
-  { 
+  template< class Pass, int id >
+  struct CompatiblePassId2PassDiff< Pass, id, true >
+  {
     // in this case template-given id is passId
-    enum { passDiff = PassId2PassDiff< Pass , id >::passDiff };
+    static const int passDiff = PassId2PassDiff< Pass, id >::passDiff;
   };
   
-  template< class Pass , int id >
-  struct CompatiblePassId2PassDiff< Pass , id , false >
-  { 
+  template< class Pass, int id >
+  struct CompatiblePassId2PassDiff< Pass, id, false >
+  {
     // in this case template-given id is already passDiff
-    enum { passDiff = id };
-    // check if all pases don't have passId
-    CompileTimeChecker< Pass::PreviousPassType::passId == -1 > __ASSERT_ALL_PASSES_HAVE_PASSID_OR_NONE__;
-    typedef CompatiblePassId2PassDiff< typename Pass::PreviousPassType , id , false > CheckPassIds;
+    static const int passDiff = id;
+
+  private:
+    dune_static_assert( (Pass::PreviousPassType::passId == -1), "Either all passes or none have an id." );
+    typedef CompatiblePassId2PassDiff< typename Pass::PreviousPassType, id , false > CheckPassIds;
   };
   
 
