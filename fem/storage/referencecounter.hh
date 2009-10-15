@@ -26,34 +26,31 @@ namespace Dune
    *        since it does not detect cycles. So be careful when using reference
    *        counters!
    */
-  template< class TraitsImp >
+  template< class RCT >
   class ReferenceCounterInterface
-  : public BartonNackmanInterface< ReferenceCounterInterface< TraitsImp >,
-                                   typename TraitsImp :: ReferenceCounterType >
+  : public BartonNackmanInterface< ReferenceCounterInterface< RCT >, typename RCT::ReferenceCounterType >
   {
-  public:
-    //! type of the traits
-    typedef TraitsImp Traits;
-
-    //! type of the implementation (Barton-Nackman)
-    typedef typename Traits :: ReferenceCounterType ReferenceCounterType;
-
-  private:
-    typedef ReferenceCounterInterface< Traits > ThisType;
-    typedef BartonNackmanInterface< ThisType, ReferenceCounterType > BaseType;
+    typedef ReferenceCounterInterface< RCT > ThisType;
+    typedef BartonNackmanInterface< ThisType, typename RCT::ReferenceCounterType > BaseType;
 
     template< class, class >
     friend class Conversion;
 
   public:
+    //! type of the traits
+    typedef RCT Traits;
+
+    //! type of the implementation (Barton-Nackman)
+    typedef typename Traits::ReferenceCounterType ReferenceCounterType;
+
     //! type of the reference counter interface
     typedef ThisType ReferenceCounterInterfaceType;
 
     //! type of the object, this is a reference counter for
-    typedef typename Traits :: ObjectType ObjectType;
+    typedef typename Traits::ObjectType ObjectType;
 
   protected:
-    using BaseType :: asImp;
+    using BaseType::asImp;
 
   public:
     /** \brief add a reference to this object
@@ -65,7 +62,7 @@ namespace Dune
      *        references to const objects, too. Hence, the reference coutner
      *        must be declared mutable.
      */
-    inline void addReference () const
+    void addReference () const
     {
       CHECK_AND_CALL_INTERFACE_IMPLEMENTATION( asImp().addReference() );
     }
@@ -80,7 +77,7 @@ namespace Dune
      *        removeReference method) is responsible for performing a necessary
      *        const_cast.
      */
-    inline void deleteObject ()
+    void deleteObject ()
     {
       CHECK_AND_CALL_INTERFACE_IMPLEMENTATION( asImp().deleteObject() );
     }
@@ -93,7 +90,7 @@ namespace Dune
      *
      *  \returns a constant reference to the real object
      */
-    inline const ObjectType &getObject () const
+    const ObjectType &getObject () const
     {
       CHECK_INTERFACE_IMPLEMENTATION( asImp().getObject() );
       return asImp().getObject();
@@ -107,7 +104,7 @@ namespace Dune
      *
      *  \returns a reference to the real object
      */
-    inline ObjectType &getObject ()
+    ObjectType &getObject ()
     {
       CHECK_INTERFACE_IMPLEMENTATION( asImp().getObject() );
       return asImp().getObject();
@@ -122,7 +119,7 @@ namespace Dune
      *        references to const objects, too. Hence, the reference coutner
      *        must be declared mutable.
      */
-    inline void removeReference () const
+    void removeReference () const
     {
       CHECK_AND_CALL_INTERFACE_IMPLEMENTATION( asImp().removeReference() );
     }
@@ -130,15 +127,11 @@ namespace Dune
 
 
 
-  template< class ReferenceCounterType >
-  struct CheckReferenceCounterInterface
+  template< class ReferenceCounter >
+  struct SupportsReferenceCounterInterface
   {
-    typedef ReferenceCounterInterface< typename ReferenceCounterType :: Traits >
-      ReferenceCounterInterfaceType;
-    typedef CompileTimeChecker< Conversion< ReferenceCounterType,
-                                            ReferenceCounterInterfaceType
-                                          > :: exists >
-      CheckerType;
+    typedef ReferenceCounterInterface< typename ReferenceCounter::Traits > ReferenceCounterInterfaceType;
+    static const bool v = Conversion< ReferenceCounter, ReferenceCounterInterfaceType >::exists;
   };
 
 
@@ -154,30 +147,22 @@ namespace Dune
    *        reference counter reaches zero. To perform any action other than
    *        deleting the object, simply overwrite this method.
    */
-  template< class TraitsImp >
+  template< class RCT >
   class ReferenceCounterDefault
-  : public ReferenceCounterInterface< TraitsImp >
+  : public ReferenceCounterInterface< RCT >
   {
-  public:
-    //! type of the traits
-    typedef TraitsImp Traits;
-
-  private:
-    typedef ReferenceCounterDefault< Traits > ThisType;
-    typedef ReferenceCounterInterface< Traits > BaseType;
+    typedef ReferenceCounterDefault< RCT > ThisType;
+    typedef ReferenceCounterInterface< RCT > BaseType;
 
     template< class, class >
     friend class Conversion;
 
   public:
     //! type of the implementation (Barton-Nackman)
-    typedef typename Traits :: ReferenceCounterType ReferenceCounterType;
+    typedef typename BaseType::ReferenceCounterType ReferenceCounterType;
 
   protected:
-    using BaseType :: asImp;
-
-  protected:
-    mutable unsigned int refcount_;
+    using BaseType::asImp;
 
   public:
     /** \brief constructor initializing the reference counter
@@ -191,10 +176,9 @@ namespace Dune
      *  \param[in]  refcount  start value for the reference counter; this
      *              value defalts to 1
      */
-    inline explicit ReferenceCounterDefault ( unsigned int refcount = 1 )
+    explicit ReferenceCounterDefault ( unsigned int refcount = 1 )
     : refcount_( refcount )
-    {
-    }
+    {}
 
   private:
     // prohibit copying
@@ -203,25 +187,28 @@ namespace Dune
 
   public:
     /** \copydoc Dune :: ReferenceCounterInterface :: addReference */
-    inline void addReference () const
+    void addReference () const
     {
       ++refcount_;
     }
 
     /** \copydoc Dune :: ReferenceCounterInterface :: deleteObject */
-    inline void deleteObject ()
+    void deleteObject ()
     {
       delete this;
     }
 
     /** \copydoc Dune :: ReferenceCounterInterface :: removeReference */
-    inline void removeReference () const
+    void removeReference () const
     {
       assert( refcount_ > 0 );
       --refcount_;
       if( refcount_ == 0 )
         const_cast< ReferenceCounterType& >( asImp() ).deleteObject();
     }
+
+  protected:
+    mutable unsigned int refcount_;
   };
 
 
@@ -234,32 +221,25 @@ namespace Dune
    *  calls the object's addReference and removeReference methods whenever the
    *  pointer is created, assign or deleted.
    */
-  template< class ReferenceCounterImp >
+  template< class ReferenceCounter >
   class ObjectPointer
   {
+    typedef ObjectPointer< ReferenceCounter > ThisType;
+
+    dune_static_assert( SupportsReferenceCounterInterface< ReferenceCounter >::v, "ObjectPointer can only point to reference counting types." );
+
   public:
     //! type of the object, this pointer points to
-    typedef ReferenceCounterImp ReferenceCounterType;
+    typedef ReferenceCounter ReferenceCounterType;
 
-  private:
-    typedef ObjectPointer< ReferenceCounterType > ThisType;
+    typedef typename ReferenceCounterType::ObjectType ObjectType;
 
-    typedef CheckReferenceCounterInterface< ReferenceCounterType >
-      CheckReferenceCounterType;
-
-  public:
-    typedef typename ReferenceCounterType :: ObjectType ObjectType;
-
-  protected:
-    ReferenceCounterType *object_;
-
-  public:
     /** \brief initialize a pointer (with a standard C++ pointer)
      *
      *  \param[in]  object  C++ pointer to initialize this pointer with; the
      *                      default value is 0
      */
-    inline explicit ObjectPointer ( ReferenceCounterType *const object = 0 )
+    explicit ObjectPointer ( ReferenceCounterType *const object = 0 )
     : object_( object )
     {
       if( object_ != 0 )
@@ -273,7 +253,7 @@ namespace Dune
      *
      *  \param[in]  other  pointer to assign to this one
      */
-    inline ObjectPointer ( const ThisType &other )
+    ObjectPointer ( const ThisType &other )
     : object_( other.object_ )
     {
       if( object_ != 0 )
@@ -285,7 +265,7 @@ namespace Dune
      *  When the pointer is deleted, the reference counter of the object pointed
      *  to is automatically decreased.
      */
-    inline ~ObjectPointer ()
+    ~ObjectPointer ()
     {
       if( object_ != 0 )
         object_->removeReference();
@@ -293,7 +273,7 @@ namespace Dune
 
     /** \brief assign another pointer to this one.
      */
-    inline ThisType &operator= ( const ThisType &other )
+    ThisType &operator= ( const ThisType &other )
     {
       // Note that it is safe to remove the reference first. If other holds
       // a reference to the same object, the reference counter cannot reach
@@ -318,80 +298,11 @@ namespace Dune
       assert( object_ != 0 );
       return object_->getObject();
     }
-  };
-
-
-
-#if 0
-  /** \class ObjectReference
-   *  \brief models a reference to a reference countable object
-   *
-   *  ObjectReference tries to behave just like a normal C++ reference to an
-   *  object implementing the ReferenceCounterInterface. Internally, however,
-   *  it calls the object's addReference method when the reference is created
-   *  and the removeReference method when it is deleted.
-   */
-  template< class ObjectImp >
-  class ObjectReference
-  {
-  public:
-    //! type of object this reference points to
-    typedef ObjectImp ObjectType;
-
-  private:
-    typedef ObjectReference< ObjectType > ThisType;
-
-    typedef CheckReferenceCounterInterface< ObjectType > CheckObjectType;
 
   protected:
-    ObjectType &object_;
-
-  public:
-    inline explicit ObjectReference ( ObjectType &object )
-    : object_( object )
-    {
-      object_.addReference();
-    }
-
-    inline ObjectReference ( const ThisType &other )
-    : object_( other.object_ )
-    {
-      object_.addReference();
-    }
-
-    inline ~ObjectReference ()
-    {
-      object_.removeReference();
-    }
-    
-   private:
-    // prohibit copying
-    ThisType &operator= ( const ThisType & );
-
-  public:
-    inline operator const ObjectType& () const
-    {
-      return object_;
-    }
-
-    inline operator ObjectType& ()
-    {
-      return object_;
-    }
-
-    // somehow necessary for LocalFunctionWrapper (at the moment...)
-    const ObjectType &operator* () const
-    {
-      return object_;
-    }
-
-    ObjectType &operator* ()
-    {
-      return object_;
-    }
+    ReferenceCounterType *object_;
   };
-#endif
 
 }
 
-#endif
+#endif // #ifndef DUNE_FEM_REFERENCECOUNTER_HH

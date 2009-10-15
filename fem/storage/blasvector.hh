@@ -6,11 +6,15 @@
 #include <cmath>
 #include <dune/fem/solver/pardg.hh>
 #include <dune/fem/storage/vector.hh>
-namespace Dune {
 
-class BlasVector : 
-public VectorDefault<double,BlasVector> {
+namespace Dune
+{
+
+class BlasVector
+: public VectorDefault< double, BlasVector >
+{
   bool owner_;
+
 public:
   typedef double FieldType;
   BlasVector(unsigned int n);

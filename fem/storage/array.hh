@@ -15,37 +15,34 @@ namespace Dune
    *  \ingroup VectorClasses
    *  \brief abstract array interface
    */
-  template< class TraitsImp >
+  template< class AT >
   class ArrayInterface
-  : public BartonNackmanInterface< ArrayInterface< TraitsImp >,
-                                   typename TraitsImp :: ArrayType >
+  : public BartonNackmanInterface< ArrayInterface< AT >, typename AT::ArrayType >
   {
+    typedef ArrayInterface< AT > ThisType;
+    typedef BartonNackmanInterface< ThisType, typename AT::ArrayType > BaseType;
+
   public:
     //! type of the traits
-    typedef TraitsImp Traits;
+    typedef AT Traits;
 
     //! type of the implementation (Barton-Nackman) 
-    typedef typename Traits :: ArrayType ArrayType;
+    typedef typename Traits::ArrayType ArrayType;
 
-  private:
-    typedef ArrayInterface< Traits > ThisType;
-    typedef BartonNackmanInterface< ThisType, ArrayType > BaseType;
-
-  public:
     //! type of this interface
     typedef ThisType ArrayInterfaceType;
     
     //! type of the array elements
-    typedef typename Traits :: ElementType ElementType;
+    typedef typename Traits::ElementType ElementType;
 
     //! type of constant iterator
-    typedef typename Traits :: ConstIteratorType ConstIteratorType;
+    typedef typename Traits::ConstIteratorType ConstIteratorType;
 
     //! type of (non-constant) iterator
-    typedef typename Traits :: IteratorType IteratorType;
+    typedef typename Traits::IteratorType IteratorType;
 
   protected:
-    using BaseType :: asImp;
+    using BaseType::asImp;
 
   public:
     /** \brief access an array element
@@ -54,7 +51,7 @@ namespace Dune
      *  
      *  \returns a const reference to the array element
      */
-    inline const ElementType &operator[] ( unsigned int index ) const
+    const ElementType &operator[] ( unsigned int index ) const
     {
       CHECK_INTERFACE_IMPLEMENTATION( asImp()[ index ] );
       return asImp()[ index ];
@@ -66,7 +63,7 @@ namespace Dune
      *  
      *  \returns a reference to the array element
      */
-    inline ElementType &operator[] ( unsigned int index )
+    ElementType &operator[] ( unsigned int index )
     {
       CHECK_INTERFACE_IMPLEMENTATION( asImp()[ index ] );
       return asImp()[ index ];
@@ -77,7 +74,7 @@ namespace Dune
      *  \param[in]  element  element wich shall be copied into every array
      *                       entry
      */
-    inline void assign ( const ElementType &element )
+    void assign ( const ElementType &element )
     {
       CHECK_AND_CALL_INTERFACE_IMPLEMENTATION( asImp().assign( element ) );
     }
@@ -90,7 +87,7 @@ namespace Dune
      *  \param[in]  other  array to copy
      */
     template< class T >
-    inline void assign( const ArrayInterface< T > &other )
+    void assign( const ArrayInterface< T > &other )
     {
       CHECK_AND_CALL_INTERFACE_IMPLEMENTATION( asImp().assign( other ) );
     }
@@ -99,7 +96,7 @@ namespace Dune
      *
      *  \returns an iterator pointing to the first array element
      */
-    inline ConstIteratorType begin () const
+    ConstIteratorType begin () const
     {
       CHECK_INTERFACE_IMPLEMENTATION( asImp().begin() );
       return asImp().begin();
@@ -109,7 +106,7 @@ namespace Dune
      *
      *  \returns an iterator pointing to the first array element
      */
-    inline IteratorType begin ()
+    IteratorType begin ()
     {
       CHECK_INTERFACE_IMPLEMENTATION( asImp().begin() );
       return asImp().begin();
@@ -119,7 +116,7 @@ namespace Dune
      *
      *  \returns an iterator pointing behind the last array element
      */
-    inline ConstIteratorType end () const
+    ConstIteratorType end () const
     {
       CHECK_INTERFACE_IMPLEMENTATION( asImp().end() );
       return asImp().end();
@@ -129,7 +126,7 @@ namespace Dune
      *
      *  \returns an iterator pointing behind the last array element
      */
-    inline IteratorType end ()
+    IteratorType end ()
     {
       CHECK_INTERFACE_IMPLEMENTATION( asImp().end() );
       return asImp().end();
@@ -139,7 +136,7 @@ namespace Dune
      *
      *  \returns the size of the array
      */
-    inline unsigned int size () const
+    unsigned int size () const
     {
       CHECK_INTERFACE_IMPLEMENTATION( asImp().size() );
       return asImp().size();
@@ -148,14 +145,11 @@ namespace Dune
 
 
 
-  // helper structure to make sure an array is derived from the interface
-  template< class ArrayType >
-  struct CheckArrayInterface
+  template< class Array >
+  struct SupportsArrayInterface
   {
-    typedef ArrayInterface< typename ArrayType :: Traits > ArrayInterfaceType;
-
-    typedef CompileTimeChecker< Conversion< ArrayType, ArrayInterfaceType > :: exists >
-      CheckerType;
+    typedef ArrayInterface< typename Array::Traits > ArrayInterfaceType;
+    static const bool v = Conversion< Array, ArrayInterfaceType >::exists;
   };
 
 

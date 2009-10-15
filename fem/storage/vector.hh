@@ -19,79 +19,79 @@
 namespace Dune
 {
 
-  template< class VectorTraits >
+  template< class VT >
   struct VectorInterfaceArrayTraits
   {
-    typedef typename VectorTraits :: VectorType ArrayType;
-    typedef typename VectorTraits :: FieldType ElementType;
+    typedef typename VT::VectorType ArrayType;
+    typedef typename VT::FieldType ElementType;
 
-    typedef typename VectorTraits :: ConstIteratorType ConstIteratorType;
-    typedef typename VectorTraits :: IteratorType IteratorType;
+    typedef typename VT::ConstIteratorType ConstIteratorType;
+    typedef typename VT::IteratorType IteratorType;
   };
 
 
 
   //! An abstract vector interface
-  template< class VectorTraits >
+  template< class VT >
   class VectorInterface
-  : public ArrayInterface< VectorInterfaceArrayTraits< VectorTraits > >
+  : public ArrayInterface< VectorInterfaceArrayTraits< VT > >
   {
-    typedef VectorInterface< VectorTraits > ThisType;
-    typedef ArrayInterface< VectorInterfaceArrayTraits< VectorTraits > > BaseType;
+    typedef VectorInterface< VT > ThisType;
+    typedef ArrayInterface< VectorInterfaceArrayTraits< VT > > BaseType;
 
     template< class > friend class VectorInterface;
 
   public:
-    typedef VectorTraits Traits;
+    typedef VT Traits;
 
     //! type of this interface
     typedef ThisType VectorInterfaceType;
 
     //! type of the implementation (Barton-Nackman)
-    typedef typename Traits :: VectorType VectorType;
+    typedef typename Traits::VectorType VectorType;
 
     //! field type for the vector
-    typedef typename Traits :: FieldType FieldType;
+    typedef typename Traits::FieldType FieldType;
     typedef FieldType value_type;
 
     //! type of constant iterator
-    typedef typename Traits :: ConstIteratorType ConstIteratorType;
+    typedef typename Traits::ConstIteratorType ConstIteratorType;
     
     //! type of iterator
-    typedef typename Traits :: IteratorType IteratorType;
+    typedef typename Traits::IteratorType IteratorType;
 
   public:
     //! Assign another vector to this one
     template< class T >
-    inline VectorType& operator= ( const VectorInterface< T > &v );
+    VectorType& operator= ( const VectorInterface< T > &v );
     
     //! Assign another vector to this one
-    inline VectorType& operator= ( const ThisType &v );
+    VectorType& operator= ( const ThisType &v );
 
     //! Initialize all fields of this vector with a scalar
-    inline VectorType &operator= ( const FieldType s );
+    VectorType &operator= ( const FieldType s );
 
     //! Returns a const reference to the field indexed by index
-    inline const FieldType &operator[] ( unsigned int index ) const;
+    const FieldType &operator[] ( unsigned int index ) const;
 
     //! Returns a reference to the field indexed by index
-    inline FieldType &operator[] ( unsigned int index );
+    FieldType &operator[] ( unsigned int index );
 
     //! Add another vector to this one
     template< class T >
-    inline VectorType &operator+= ( const VectorInterface< T > &v );
+    VectorType &operator+= ( const VectorInterface< T > &v );
 
     //! Subtract another vector from this one
     template< class T >
-    inline VectorType &operator-= ( const VectorInterface< T > &v );
+    VectorType &operator-= ( const VectorInterface< T > &v );
 
     //! Multiply this vector by a scalar
-    inline VectorType &operator*= ( const FieldType s );
+    VectorType &operator*= ( const FieldType s );
             
     //! Add a multiple of another vector to this one
     template< class T >
-    inline VectorType &addScaled ( const FieldType s,
-                                   const VectorInterface< T > &v );
+    VectorType &addScaled ( const FieldType s,
+                            const VectorInterface< T > &v );
     
     /** \brief copy another vector to this one
      *
@@ -101,53 +101,49 @@ namespace Dune
      *  \param[in]  v  vector to copy
      */
     template< class T >
-    inline void assign ( const VectorInterface< T > &v );
+    void assign ( const VectorInterface< T > &v );
 
     //! Initialize all fields of this vector with a scalar
-    inline void assign ( const FieldType s );
+    void assign ( const FieldType s );
 
     /** \brief initialize the vector to 0 */
-    inline void clear ();
+    void clear ();
 
     //! obtain begin iterator
-    inline ConstIteratorType begin () const;
+    ConstIteratorType begin () const;
 
     //! obtain begin iterator
-    inline IteratorType begin ();
+    IteratorType begin ();
 
     //! obtain end iterator
-    inline ConstIteratorType end () const;
+    ConstIteratorType end () const;
 
     //! obtain end iterator
-    inline IteratorType end ();
+    IteratorType end ();
     
     //! Returns the vector's size
-    inline unsigned int size () const;
+    unsigned int size () const;
 
   protected:
-    using BaseType :: asImp;
+    using BaseType::asImp;
   };
 
 
-
-  template< class VectorType >
-  struct CheckVectorInterface
+  template< class Vector >
+  struct SupportsVectorInterface
   {
-    typedef VectorInterface< typename VectorType :: Traits > VectorInterfaceType;
-    
-    typedef CompileTimeChecker< Conversion< VectorType, VectorInterfaceType > :: exists >
-      CheckerType;
+    typedef VectorInterface< typename Vector::Traits > VectorInterfaceType;
+    static const bool v = Conversion< Vector, VectorInterfaceType >::exists;
   };
-
 
 
   template< class V, class W >
   struct ExtractCommonFieldType
   {
-    typedef typename V :: FieldType FieldType;
+    typedef typename V::FieldType FieldType;
 
   private:
-    dune_static_assert( (Conversion< FieldType, typename W :: FieldType > :: sameType),
+    dune_static_assert( (Conversion< FieldType, typename W::FieldType >::sameType),
                         "FieldType must be identical." );
   };
 
@@ -748,35 +744,25 @@ namespace Dune
   
   template< class Vector1Type, class Vector2Type >
   class CombinedVector
-  : public VectorDefault< typename Vector1Type :: FieldType,
+  : public VectorDefault< typename ExtractCommonFieldType< Vector1Type, Vector2Type >::FieldType,
                           CombinedVector< Vector1Type, Vector2Type > >
   {
-  public:
-    typedef typename Vector1Type :: FieldType FieldType;
-
-  private:
     typedef CombinedVector< Vector1Type, Vector2Type > ThisType;
-    typedef VectorDefault< typename Vector1Type :: FieldType, ThisType > BaseType;
+    typedef VectorDefault< typename ExtractCommonFieldType< Vector1Type, Vector2Type >::FieldType, ThisType > BaseType;
 
-    typedef CheckVectorInterface< Vector1Type > __CheckVector1Type__;
-    typedef CheckVectorInterface< Vector2Type > __CheckVector2Type__;
-
-    typedef CompileTimeChecker
-      < Conversion< FieldType, typename Vector2Type :: FieldType > :: sameType >
-      __CheckFieldType__;
-
-  protected:
-      Vector1Type &vector1_;
-      Vector2Type &vector2_;
+    dune_static_assert( SupportsVectorInterface< Vector1Type >::v, "CombinedVector only works on vectors." );
+    dune_static_assert( SupportsVectorInterface< Vector2Type >::v, "CombinedVector only works on vectors." );
 
   public:
-    inline CombinedVector( Vector1Type &v1, Vector2Type &v2 )
+    typedef typename ExtractCommonFieldType< Vector1Type, Vector2Type >::FieldType FieldType;
+    
+  public:
+    CombinedVector( Vector1Type &v1, Vector2Type &v2 )
     : vector1_( v1 ),
       vector2_( v2 )
-    {
-    }
+    {}
       
-    inline const FieldType &operator[] ( unsigned int index ) const
+    const FieldType &operator[] ( unsigned int index ) const
     {
       const int index2 = index - vector1_.size();
       if( index2 < 0 )
@@ -785,7 +771,7 @@ namespace Dune
         return vector2_[ index2 ];
     }
 
-    inline FieldType &operator[] ( unsigned int index )
+    FieldType &operator[] ( unsigned int index )
     {
       const int index2 = index - vector1_.size();
       if( index2 < 0 )
@@ -794,10 +780,14 @@ namespace Dune
         return vector2_[ index2 ];
     }
 
-    inline const unsigned int size() const
+    const unsigned int size() const
     {
       return vector1_.size() + vector2_.size();
     }
+
+  protected:
+    Vector1Type &vector1_;
+    Vector2Type &vector2_;
   };
 
 
@@ -825,36 +815,32 @@ namespace Dune
    */
   template< class RVector1Type, class RVector2Type >
   class PairOfVectors
-  : public VectorDefault< typename TypeTraits<RVector1Type>::
-                          ReferredType :: FieldType,
+  : public VectorDefault< typename TypeTraits< RVector1Type >::ReferredType::FieldType,
                           PairOfVectors<RVector1Type,RVector2Type> >,
     public PairOfInterfaces<RVector1Type,RVector2Type>
   {
-    typedef typename PairOfInterfaces<RVector1Type,RVector2Type>::T1Type Vector1Type;
-    typedef typename PairOfInterfaces<RVector1Type,RVector2Type>::T2Type Vector2Type;
+    typedef PairOfVectors< RVector1Type, RVector2Type > ThisType;
+    typedef VectorDefault< typename TypeTraits< RVector1Type >::ReferredType::FieldType, ThisType > BaseType;
+
+    typedef typename PairOfInterfaces< RVector1Type, RVector2Type >::T1Type Vector1Type;
+    typedef typename PairOfInterfaces< RVector1Type, RVector2Type >::T2Type Vector2Type;
+
+    dune_static_assert( SupportsVectorInterface< Vector1Type >::v, "PairOfVectors only works on vectors." );
+    dune_static_assert( SupportsVectorInterface< Vector2Type >::v, "PairOfVectors only works on vectors." );
+
   public:
-    
-    typedef typename Vector1Type :: FieldType FieldType;
+    typedef typename ExtractCommonFieldType< Vector1Type, Vector2Type >::FieldType FieldType;
 
   private:
-    typedef PairOfVectors< Vector1Type, Vector2Type > ThisType;
-    typedef VectorDefault< typename Vector1Type :: FieldType, ThisType > BaseType;
-
-    typedef CheckVectorInterface< Vector1Type > __CheckVector1Type__;
-    typedef CheckVectorInterface< Vector2Type > __CheckVector2Type__;
-
-    typedef CompileTimeChecker
-      < Conversion< FieldType, typename Vector2Type :: FieldType > :: sameType >
-      __CheckFieldType__;
-
-    PairOfVectors();
-    PairOfVectors& operator=(const PairOfVectors&);
+    PairOfVectors ();
+    PairOfVectors &operator= ( const ThisType & );
 
   public:
-    PairOfVectors(RVector1Type v1, RVector2Type v2) : 
-      Dune::PairOfInterfaces<RVector1Type,RVector2Type>(v1,v2) {}
+    PairOfVectors ( RVector1Type v1, RVector2Type v2 )
+    : Dune::PairOfInterfaces< RVector1Type, RVector2Type >( v1, v2 )
+    {}
       
-    inline const FieldType &operator[] ( unsigned int index ) const
+    const FieldType &operator[] ( unsigned int index ) const
     {
       const int index2 = index - this->first().size();
       if( index2 < 0 )
@@ -863,7 +849,7 @@ namespace Dune
         return this->second()[ index2 ];
     }
 
-    inline FieldType &operator[] ( unsigned int index )
+    FieldType &operator[] ( unsigned int index )
     {
       const int index2 = index - this->first().size();
       if( index2 < 0 )
@@ -872,7 +858,7 @@ namespace Dune
         return this->second()[ index2 ];
     }
 
-    inline const unsigned int size() const
+    const unsigned int size () const
     {
       return this->first().size() + this->second().size();
     }
@@ -899,4 +885,4 @@ namespace Dune
 
 //! @}
 
-#endif
+#endif // #ifndef DUNE_FEM_VECTOR_HH
