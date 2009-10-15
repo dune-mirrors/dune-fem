@@ -1,6 +1,8 @@
 #ifndef DUNE_FEM_INVERSEOPERATORS_HH
 #define DUNE_FEM_INVERSEOPERATORS_HH
 
+#include <dune/common/static_assert.hh>
+
 #include <dune/fem/function/common/discretefunction.hh>
 #include <dune/fem/operator/common/operator.hh>
 
@@ -30,8 +32,7 @@ namespace Dune
     typedef typename OperatorType :: RangeType RangeType;
 
   private:
-    typedef CompileTimeChecker< Conversion< DomainType, RangeType > :: sameType >
-      __DOMAINTYPE_MUST_EQUAL_RANGETYPE__;
+    dune_static_assert( (Conversion< DomainType, RangeType >::sameType), "DomainType must equal RangeType" );
 
   protected:
     const RangeFieldType epsilon_;
