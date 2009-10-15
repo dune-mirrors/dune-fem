@@ -1,37 +1,53 @@
 #ifndef DUNE_INSERTFUNCTIONPASS_HH
 #define DUNE_INSERTFUNCTIONPASS_HH
 
-//- System includes
-#include <string>
+#include <dune/fem/pass/pass.hh>
 
-//- local includes 
-#include <dune/fem/misc/femtuples.hh>
-#include <dune/fem/function/common/discretefunction.hh>
+namespace Dune
+{
 
-#include "discretemodel.hh"
-#include "pass.hh"
+  // Internal Forward Declarations
+  // -----------------------------
 
-namespace Dune {
+  template< class DiscreteFunction >
+  struct InsertFunctionPassDiscreteModel;
+
+  template< class DiscreteFunction, class PreviousPass, int passId = -1 >
+  class InsertFunctionPass;
+
+
+
+  // InsertFunctionPassDiscreteModelTraits
+  // -------------------------------------
 
   //! Traits for InsertFunctionPass to create dummy discrete model
-  template <class DiscreteFunctionImp>
-  struct EmptyDiscreteModelTraits
+  template< class DiscreteFunction >
+  struct InsertFunctionPassDiscreteModelTraits
   {
-    typedef DiscreteFunctionImp DiscreteFunctionType;
-    typedef EmptyDiscreteModelTraits<DiscreteFunctionType> ThisType;  
-    typedef DiscreteModelDefault<ThisType> DiscreteModelType; 
+    typedef DiscreteFunction DiscreteFunctionType;
 
-    typedef DiscreteFunctionImp DestinationType;
-    typedef typename DiscreteFunctionImp::DiscreteFunctionSpaceType DiscreteFunctionSpaceType;
-    typedef typename DiscreteFunctionSpaceType::DomainType DomainType;
-    typedef typename DiscreteFunctionSpaceType::RangeType RangeType;
-    typedef typename DiscreteFunctionSpaceType::JacobianRangeType JacobianRangeType;
-    typedef typename DiscreteFunctionSpaceType::GridType GridType;
-    typedef typename DiscreteFunctionSpaceType::GridPartType GridPartType;
-    typedef typename GridType::template Codim<0>::Entity EntityType;
-    typedef typename GridPartType::IntersectionIteratorType IntersectionIteratorType;
+    typedef typename DiscreteFunctionType::DiscreteFunctionSpaceType DiscreteFunctionSpaceType;
+
+    typedef DiscreteFunctionType DestinationType;
+    typedef InsertFunctionPassDiscreteModel< DiscreteFunction > DiscreteModelType;
   };
-  
+
+
+
+  // InsertFunctionPassDiscreteModel
+  // -------------------------------
+
+  template< class DiscreteFunction >
+  struct InsertFunctionPassDiscreteModel
+  {
+    typedef InsertFunctionPassDiscreteModelTraits< DiscreteFunction > Traits;
+  };
+
+
+
+  // InsertFunctionPass
+  // ------------------
+
   /**
    * @brief Base class for specific pass implementations.
      InsertFunctionPass simply inserts a discrete function from outside of the pass tree 
@@ -39,122 +55,105 @@ namespace Dune {
      transport the velocity function comes from a different pass but has to
      be inserted into the species pass. 
    */
-  template< class DiscreteFunctionImp , class PreviousPassImp , int passIdImp  = -1 >
-  class InsertFunctionPass 
-    : public Pass< DiscreteModelDefault< EmptyDiscreteModelTraits< DiscreteFunctionImp > >
-                   , PreviousPassImp , passIdImp >
+  template< class DiscreteFunction, class PreviousPass, int passId >
+  class InsertFunctionPass
+  : public Pass< InsertFunctionPassDiscreteModel< DiscreteFunction >, PreviousPass, passId >
   {
-    //! make sure DiscreteFunctionImp provides local functions 
-    enum { hasLocalFunction = Conversion<DiscreteFunctionImp,HasLocalFunction>:: exists };
-    CompileTimeChecker <hasLocalFunction> discrete_function_does_not_provide_local_functions;
+    typedef InsertFunctionPass< DiscreteFunction, PreviousPass, passId > ThisType;
+    typedef Pass< InsertFunctionPassDiscreteModel< DiscreteFunction >, PreviousPass, passId > BaseType;
+
+    static const bool hasLocalFunction = Conversion< DiscreteFunction, HasLocalFunction >::exists;
+    dune_static_assert( hasLocalFunction, "InsertFunctionPass can only insert grid functions." );
     
   public:
-    //- Typedefs and enums
-    //! type of traits for this class  
-    typedef EmptyDiscreteModelTraits<DiscreteFunctionImp> Traits;
     //! type of discrete model for this class 
-    typedef DiscreteModelDefault<Traits> DiscreteModelImp;
-    //! Base class
-    typedef Pass<DiscreteModelImp, PreviousPassImp , passIdImp > BaseType;
+    typedef InsertFunctionPassDiscreteModel< DiscreteFunction > DiscreteModelType;
 
-    //! type of this class 
-    typedef InsertFunctionPass<DiscreteFunctionImp,PreviousPassImp , passIdImp > ThisType;
+    //! type of traits for this class
+    typedef typename DiscreteModelType::Traits Traits;
 
     //! Repetition of template arguments
-    typedef DiscreteModelImp DiscreteModelType;
-    //! Repetition of template arguments
-    typedef PreviousPassImp PreviousPassType;
+    typedef PreviousPass PreviousPassType;
 
-    // Types from the base class
     typedef typename BaseType::TotalArgumentType ArgumentType;
     typedef typename BaseType::GlobalArgumentType GlobalArgumentType;
 
-    //! The discrete function representing the return value of this pass
+    //! discrete function representing the return value of this pass
     typedef typename Traits::DestinationType DestinationType;
-    //! The discrete function space belonging to DestinationType
+    //! discrete function space belonging to DestinationType
     typedef typename Traits::DiscreteFunctionSpaceType DiscreteFunctionSpaceType;
 
   public:
-    //- Public methods
-    //! Constructor
-    //! \param destination to be stored in this pass 
-    //! \param pass Previous pass
-    InsertFunctionPass(DestinationType & destination, 
-                       PreviousPassType& pass)
-      : BaseType(pass)
+    /** constructor
+     *
+     *  \param[in]  destination   to be stored in this pass 
+     *  \param[in]  previousPass  previous pass in the tree
+     */
+    InsertFunctionPass ( const DestinationType &destination, PreviousPassType &previousPass )
+    : BaseType( previousPass )
     {
-      this->destination_ = &destination;
+      destination_ = const_cast< DestinationType * >( &destination );
     }
 
-    //- Public methods
-    //! Constructor
-    //! \param destination to be stored in this pass 
-    //! \param pass Previous pass
-    //! \param space to make constructor look like that from other passes
-    InsertFunctionPass(DestinationType & destination, 
-                       PreviousPassType& pass,
-                       const DiscreteFunctionSpaceType& space) 
-      : BaseType(pass)
+    /** constructor
+     *
+     *  \param[in]  destination   to be stored in this pass 
+     *  \param[in]  previousPass  previous pass in the tree
+     *  \param[in]  space         discrete function space
+     *
+     *  \note The argument space is ignored; it just makes the constructor
+     *        look like that from other passes.
+     */
+    InsertFunctionPass ( const DestinationType &destination,
+                         PreviousPassType &previousPass,
+                         const DiscreteFunctionSpaceType &space )
+    : BaseType( previousPass )
     {
-      this->destination_ = &destination;
+      destination_ = const_cast< DestinationType * >( &destination );
     }
 
-    //- Public methods
-    //! Constructor
-    //! \param pass Previous pass
-    InsertFunctionPass(PreviousPassType& pass) 
-      : BaseType(pass)
+    /** constructor
+     *
+     *  \param[in]  previousPass  previous pass in the tree
+     */
+    explicit InsertFunctionPass ( PreviousPassType &previousPass ) 
+    : BaseType( previousPass )
     {
-      assert( this->destination_ == 0 );
+      assert( destination_ == 0 );
     }
 
-    //! Destructor
-    virtual ~InsertFunctionPass() 
+    //! destructor
+    ~InsertFunctionPass ()
     {
-      this->destination_ = 0;
+      destination_ = 0;
     }
 
-    //! Allocates the local memory of a pass, if needed.
-    virtual void allocateLocalMemory() 
-    {
-      // do not allocate memory here 
-    }
+    // empty method here
+    void allocateLocalMemory ()
+    {}
 
     //! return reference to space 
-    const DiscreteFunctionSpaceType& space () const 
+    const DiscreteFunctionSpaceType &space () const
     {
-      assert( this->destination_ );
-      return this->destination_->space();
-    }
-
-    //! empty method here
-    void operator () (const GlobalArgumentType& arg, DestinationType& dest) const
-    {
-    }
-
-    //! empty method here
-    void prepare(const ArgumentType& arg, DestinationType& dest) const
-    {
-    }
-
-    //! empty method here
-    void finalize(const ArgumentType& arg, DestinationType& dest) const
-    {
+      assert( destination_ != 0 );
+      return destination_->space();
     }
 
     //! set internal destination pointer to dest 
-    void setDestination(DestinationType& dest) 
+    void setDestination ( const DestinationType &destination )
     {
-      this->destination_ = &dest;
+      destination_ = const_cast< DestinationType * >( &destination );
     }
     
   protected:
-    void compute(const ArgumentType& arg, DestinationType& dest) const 
-    {
-      // do nothing here 
-    }
+    // empty method here
+    void compute ( const ArgumentType &arg, DestinationType &dest ) const
+    {}
+
+    using BaseType::destination_;
   }; // end class InsertFunctionPass
 
 
 } // end namespace Dune
-#endif
+
+#endif // #ifndef DUNE_INSERTFUNCTIONPASS_HH
