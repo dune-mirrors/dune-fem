@@ -7,7 +7,8 @@
 
 #include "selection.hh"
 
-namespace Dune {
+namespace Dune
+{
 
   /**
    * @brief Extracts elements from a tuple based on a Selector definition
@@ -16,39 +17,38 @@ namespace Dune {
    * specifies the elements to be extracted by indicating their index. The
    * extracted elements are again stored in a tuple.
    */
-  template <class ArgTupleImp, class SelectorImp>
+  template< class ArgTupleImp, class SelectorImp >
   struct Filter 
   {
-    typedef CompileTimeChecker<
-      static_cast<int>(MaxIndex<SelectorImp>::value) < 
-      static_cast<int>(TupleLength<ArgTupleImp>::value)
-    > Maximal_index_of_selector_exceeds_argument_length;
+    dune_static_assert( ((int)MaxIndex< SelectorImp >::value < (int)TupleLength< ArgTupleImp >::value),
+                        "Maximum index of selector exceeds argument length." );
     
     typedef typename SelectorImp::Base SelectorType;
+    typedef typename SelectorImp::PassType PassType;
 
-    //! The index of the extracted element.
-    enum { index = (int)CompatiblePassId2PassDiff< typename SelectorImp::PassType
-                     , ElementType<0, SelectorType>::Type::value 
-                     , ((int)SelectorImp::PassType::passId != -1) > :: passDiff };
+    static const bool hasPassId = ((int)SelectorImp::PassType::passId != -1);
+
+    //! The index of the extracted element
+    static const int index
+      = CompatiblePassId2PassDiff< PassType, ElementType< 0, SelectorType >::Type::value, hasPassId >::passDiff;
 
     //! The type of the extracted element.
-    typedef typename ElementType<index, ArgTupleImp>::Type AppendType;
+    typedef typename ElementType< index, ArgTupleImp >::Type AppendType;
 
     //! The type of the next stage of the filter.
-    typedef Filter< ArgTupleImp , typename SelectorImp::Type2 > NextFilterType;
+    typedef Filter< ArgTupleImp, typename SelectorImp::Type2 > NextFilterType;
     
     //! The filtered tuple resulting from this filter stage.
     // typedef Pair<AppendType, typename NextFilterType::ResultType> ResultType;
-    typedef SelectorPair
-      < SelectorType, AppendType, typename NextFilterType :: ResultType >
-      ResultType;
+    typedef SelectorPair< SelectorType, AppendType, typename NextFilterType::ResultType > ResultType;
     
     //! Extracts the elements specified by the selector template argument.
     //! \param arg Argument tuple.
-    static inline ResultType apply(ArgTupleImp& arg) {
-      typename NextFilterType::ResultType nextFilter = NextFilterType::apply(arg);
-      return ResultType( Pair< AppendType , typename NextFilterType::ResultType >
-                         ( Element<index>::get(arg) , nextFilter ) );
+    static ResultType apply ( ArgTupleImp &arg )
+    {
+      typedef typename NextFilterType::ResultType NextResultType;
+      typedef Pair< AppendType, NextResultType > BasicResultType;
+      return ResultType( BasicResultType( Element< index >::get( arg ), NextFilterType::apply( arg ) ) );
     }
   };
   
