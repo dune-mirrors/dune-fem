@@ -236,7 +236,7 @@ namespace Dune
         if( boundaryModel_.boundaryType( intersection ) != BoundaryModelType :: Dirichlet )
           continue;
 
-        const int faceNumber = intersection.numberInSelf();
+        const int faceNumber = intersection.indexInInsde();
         FaceDofIteratorType faceDofIt
           = lagrangePointSet.template beginSubEntity< faceCodim >( faceNumber );
         const FaceDofIteratorType faceDofEnd
