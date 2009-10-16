@@ -73,8 +73,7 @@ template <class ScalarFunctionSpaceImp, int polOrd>
 class FVBaseFunctionFactory :
   public BaseFunctionFactory<ScalarFunctionSpaceImp>
 {
-  // at the moment only for polOrd 0
-  CompileTimeChecker<polOrd == 0> only_implemented_for_polOrd_0;
+  dune_static_assert( polOrd == 0, "Only implemented for PolOrd=0." );
     
 public:
   typedef ScalarFunctionSpaceImp FunctionSpaceType;
