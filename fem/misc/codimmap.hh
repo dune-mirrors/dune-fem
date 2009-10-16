@@ -43,18 +43,16 @@ namespace Dune
   template< unsigned int nCodims, template< unsigned int > class CodimObjectImp >
   class CodimMap
   {
+    typedef CodimMap< nCodims, CodimObjectImp > ThisType;
+
+    dune_static_assert( (nCodims > 0), "numCodims must be positive." );
+
   public:
     //! number of codimensions (= size of the array)
-    enum { numCodims = nCodims };
+    static const unsigned int numCodims = nCodims;
 
-  private:
-    typedef CodimMap< numCodims, CodimObjectImp > ThisType;
-
-    CompileTimeChecker< (numCodims > 0) > __numCodims_Must_Be_Positive__;
-
-  public:
     //! common base type of all the instances of CodimObjectImp
-    typedef typename CodimObjectImp< 0 > :: BaseType CodimObjectBaseType;
+    typedef typename CodimObjectImp< 0 >::BaseType CodimObjectBaseType;
 
   protected:
     CodimObjectBaseType *codimObjects_[ numCodims ];
@@ -65,24 +63,22 @@ namespace Dune
     {
       typedef ThisType &ArgumentType;
 
-      inline static void apply ( ArgumentType map )
+      static void apply ( ArgumentType map )
       {
         map.codimObjects_[ codim ] = new CodimObjectImp< codim >();
         assert( map.codimObjects_[ codim ] != 0 );
-        // std :: cout << "Creating object " << codim << std :: endl;
       }
     };
 
   public:
     //! constructor building the CodimMap
-    inline CodimMap ()
+    CodimMap ()
     {
       Loop< MetaSequence, MapConstructor, numCodims - 1 > :: apply( *this );
-      //Factory< ThisType, numCodims - 1 > :: getObjects( *this );
     }
     
     //! destructor freeing all the instances of CodimObjectImp
-    inline ~CodimMap ()
+    ~CodimMap ()
     {
       for( unsigned int codim = 0; codim < numCodims; ++codim )
         delete codimObjects_[ codim ];
@@ -94,7 +90,7 @@ namespace Dune
      *
      *  \returns instance of CodimObjectImp with the given codimension
      */
-    inline const CodimObjectBaseType &operator[] ( unsigned int codim ) const
+    const CodimObjectBaseType &operator[] ( unsigned int codim ) const
     {
       assert( codim < numCodims );
       return *(codimObjects_[ codim ]);
@@ -106,43 +102,13 @@ namespace Dune
      *
      *  \returns instance of CodimObjectImp with the given codimension
      */
-    inline CodimObjectBaseType &operator[] ( unsigned int codim )
+    CodimObjectBaseType &operator[] ( unsigned int codim )
     {
       assert( codim < numCodims );
       return *(codimObjects_[ codim ]);
     }
- 
-#if 0
-  protected:
-    template< class CodimMapType,
-              unsigned int codim >
-    struct Factory
-    {
-      static void getObjects ( CodimMapType &map )
-      {
-        map.codimObjects_[ codim ] = new CodimObjectImp< codim >();
-        assert( map.codimObjects_[ codim ] != 0 );
-        Factory< CodimMapType, codim - 1 > :: getObjects( map );
-      }
-    };
-
-    template< class CodimMapType >
-    struct Factory< CodimMapType, 0 >
-    {
-      enum { codim = 0 };
-
-      static void getObjects ( CodimMapType &map )
-      {
-        map.codimObjects_[ codim ] = new CodimObjectImp< codim >();
-        assert( map.codimObjects_[ codim ] != 0 );
-      }
-    };
-
-    template< class, unsigned int >
-    friend struct Factory;
-#endif
   };
   
 }
 
-#endif
+#endif // #ifndef DUNE_FEM_CODIMMAP_HH
