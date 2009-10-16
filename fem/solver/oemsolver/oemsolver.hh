@@ -655,22 +655,21 @@ public:
 
 
 /** \brief GMRES solver */
-template <class DiscreteFunctionType, class OperatorType>
-class OEMGMRESOp : public Operator<
-      typename DiscreteFunctionType::DomainFieldType,
-      typename DiscreteFunctionType::RangeFieldType,
-            DiscreteFunctionType,DiscreteFunctionType> {
+template< class DiscreteFunctionType, class Op >
+class OEMGMRESOp
+: public Operator< typename DiscreteFunctionType::DomainFieldType,
+                   typename DiscreteFunctionType::RangeFieldType,
+                   DiscreteFunctionType, DiscreteFunctionType >
+{
+  typedef OEMGMRESOp< DiscreteFunctionType, Op > This;
+
+public:
+  typedef Op OperatorType;
 
 private:
   // type of internal projector if no preconditioner given 
   typedef OEMSolver :: FakeConditioner FakeConditionerType;
   
-  // no const reference, we make const later 
-  OperatorType &op_;
-  typename DiscreteFunctionType::RangeFieldType epsilon_;
-  int maxIter_;
-  bool verbose_ ;
-
   typedef std::pair < int , double > ReturnValueType;
   
   template <class OperatorImp, bool hasPreconditioning> 
@@ -743,10 +742,26 @@ public:
       \param[in] maxIter maximal number of iterations performed 
       \param[in] verbose verbosity 
   */
-  OEMGMRESOp( OperatorType & op , double  redEps , double absLimit , int maxIter , bool verbose ) :
-        op_(op), epsilon_ ( absLimit ) ,
-        maxIter_ (maxIter ) , verbose_ ( verbose ) {
-  }
+  OEMGMRESOp ( OperatorType &op,
+               double redEps,
+               double absLimit,
+               int maxIter,
+               bool verbose )
+  : op_( op ),
+    epsilon_( absLimit ),
+    maxIter_( maxIter ),
+    verbose_( verbose )
+  {}
+
+  OEMGMRESOp ( OperatorType &op,
+               double redEps,
+               double absLimit,
+               int maxIter = std::numeric_limits< int >::max() )
+  : op_( op ),
+    epsilon_( absLimit ),
+    maxIter_( maxIter ),
+    verbose_( Parameter::getValue< bool >( "fem.solver.verbose", false ) )
+  {}
 
   void prepare (const DiscreteFunctionType& Arg, DiscreteFunctionType& Dest) const
   {
@@ -795,6 +810,12 @@ public:
     apply(arg,dest);
   }
 
+private:
+  // no const reference, we make const later 
+  OperatorType &op_;
+  typename DiscreteFunctionType::RangeFieldType epsilon_;
+  int maxIter_;
+  bool verbose_ ;
 };
 
 /**
