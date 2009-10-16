@@ -1,6 +1,7 @@
 #ifndef DUNE_INSERTFUNCTIONPASS_HH
 #define DUNE_INSERTFUNCTIONPASS_HH
 
+#include <dune/fem/function/common/discretefunction.hh>
 #include <dune/fem/pass/pass.hh>
 
 namespace Dune
