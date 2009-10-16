@@ -1,6 +1,8 @@
 #ifndef DUNE_FEM_L2NORM_INLINE_HH
 #define DUNE_FEM_L2NORM_INLINE_HH
 
+#include <dune/common/static_assert.hh>
+
 #include "l2norm.hh"
 
 namespace Dune
@@ -12,16 +14,14 @@ namespace Dune
   template< class GridPart >
   inline L2Norm< GridPart > :: L2Norm ( const GridPartType &gridPart )
   : gridPart_( gridPart )
-  {
-  }
+  {}
 
 
 
   template< class GridPart >
   inline L2Norm< GridPart > :: L2Norm ( const ThisType &other )
   : gridPart_( other.gridPart_ )
-  {
-  }
+  {}
 
 
   
@@ -178,8 +178,8 @@ namespace Dune
   : BaseType( weightFunction.space().gridPart ),
     weightFunction_( weightFunction )
   {
-    CompileTimeChecker< (WeightFunctionSpaceType :: dimRange == 1) >
-      __WEIGHTFUNCTION_MUST_BE_SCALAR__;
+    dune_static_assert( (WeightFunctionSpaceType::dimRange == 1),
+                        "Wight function must be scalar." );
   }
 
 
@@ -189,8 +189,7 @@ namespace Dune
     :: WeightedL2Norm ( const ThisType &other )
   : BaseType( other ),
     weightFunction_( other.weightFunction_ )
-  {
-  }
+  {}
 
 
   
