@@ -156,7 +156,7 @@ namespace Dune
      *
      *  \param[in]  elementGeo      geometry type of the element
      *  \param[in]  faceGeo         geometry type of the subentity
-     *  \param{in]  localFaceIndex  index of the subentity
+     *  \param[in]  localFaceIndex  index of the subentity
      *  \param[in]  order           desired order of the quadrature
      */
     ElementPointListBase ( const GeometryType &elementGeo,
@@ -171,7 +171,7 @@ namespace Dune
     /** \brief constructor
      *
      *  \param[in]  elementGeo      geometry type of the element
-     *  \param{in]  localFaceIndex  index of the subentity
+     *  \param[in]  localFaceIndex  index of the subentity
      *  \param[in]  order           desired order of the quadrature
      */
     ElementPointListBase ( const GeometryType &elementGeo,
