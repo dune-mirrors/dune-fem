@@ -115,11 +115,11 @@ namespace Dune
   {
     const BaseFunctionSetType &baseSet = asImp().baseFunctionSet();
     
-    JacobianRangeType refJacobian( 0 );
+    LocalJacobianRangeType refJacobian( 0 );
     const int numDofs = asImp().numDofs();
     for( int i = 0; i < numDofs; ++i )
     {
-      JacobianRangeType grad;
+      LocalJacobianRangeType grad;
       baseSet.jacobian( i, x, grad );
       for( int j = 0; j < dimRange; ++j )
         refJacobian[ j ].axpy( asImp()[ i ], grad[ j ] );
@@ -127,8 +127,8 @@ namespace Dune
 
     const GeometryJacobianInverseType &gjit
       = asImp().entity().geometry().jacobianInverseTransposed( coordinate( x ) );
+
     for( int i = 0; i < dimRange; ++i )
-      // ret[ i ] = FMatrixHelp :: mult( gjit, refJacobian[ i ] );
       FieldMatrixHelper :: multiply( gjit, refJacobian[ i ], ret[ i ] );
   }
  
@@ -161,13 +161,13 @@ namespace Dune
   {
     const BaseFunctionSetType &baseSet = asImp().baseFunctionSet();
 
-    JacobianRangeType factorInv;
+    LocalJacobianRangeType factorInv;
     rightMultiply( factor, coordinate( x ), factorInv );
     
     const int numDofs = asImp().numDofs();
     for( int i = 0; i < numDofs; ++i )
     {
-      JacobianRangeType grad;
+      LocalJacobianRangeType grad;
       baseSet.jacobian( i, x, grad );
       for( int j = 0; j < dimRange; ++j )
         asImp()[ i ] += grad[ j ] * factorInv[ j ];
@@ -185,7 +185,7 @@ namespace Dune
   {
     const BaseFunctionSetType &baseSet = asImp().baseFunctionSet();
 
-    JacobianRangeType factor2Inv;
+    LocalJacobianRangeType factor2Inv;
     rightMultiply( factor2, coordinate( x ), factor2Inv );
 
     const int numDofs = asImp().numDofs();
@@ -194,7 +194,8 @@ namespace Dune
       RangeType phi;
       baseSet.evaluate( i, x, phi );
       asImp()[ i ] += phi * factor1;
-      JacobianRangeType grad;
+
+      LocalJacobianRangeType grad;
       baseSet.jacobian( i, x, grad );
       for( int j = 0; j < dimRange; ++j )
         asImp()[ i ] += grad[ j ] * factor2Inv[ j ];
@@ -207,7 +208,7 @@ namespace Dune
   inline void LocalFunctionDefault< DiscreteFunctionSpace, LocalFunctionImp >
     :: rightMultiply( const JacobianRangeType &factor,
                       const LocalCoordinateType &x,
-                      JacobianRangeType &ret ) const
+                      LocalJacobianRangeType &ret ) const
   {
     const GeometryJacobianInverseType &gjit
       = asImp().entity().geometry().jacobianInverseTransposed( x );
@@ -442,7 +443,7 @@ namespace Dune
     < CombinedSpace< ContainedFunctionSpace, N, policy >, LocalFunctionImp >
     :: rightMultiply( const JacobianRangeType &factor,
                       const LocalCoordinateType &x,
-                      JacobianRangeType &ret ) const
+                      LocalJacobianRangeType &ret ) const
   {
     const GeometryJacobianInverseType &gjit
       = asImp().entity().geometry().jacobianInverseTransposed( x );

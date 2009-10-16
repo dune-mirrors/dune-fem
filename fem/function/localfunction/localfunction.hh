@@ -90,6 +90,9 @@ namespace Dune
     typedef typename DiscreteFunctionSpaceType :: BaseFunctionSetType
       BaseFunctionSetType;
 
+    //! type of JacobianRangeType of basis functions 
+    typedef typename BaseFunctionSetType :: JacobianRangeType LocalJacobianRangeType;
+
   protected:
     using BaseType :: asImp;
 
@@ -381,6 +384,9 @@ namespace Dune
     typedef typename DiscreteFunctionSpaceType :: BaseFunctionSetType
       BaseFunctionSetType;
 
+    //! type of JacobianRangeType of basis functions 
+    typedef typename BaseFunctionSetType :: JacobianRangeType LocalJacobianRangeType;
+
     //! dimension of the domain
     enum { dimDomain = DiscreteFunctionSpaceType :: dimDomain };
     //! dimension of the range
@@ -390,9 +396,7 @@ namespace Dune
     //! type of entity's geometry
     typedef typename EntityType :: Geometry GeometryType;
     //! type of transposed of geometry's Jacobian Inverse
-    typedef FieldMatrix
-      < typename GridType :: ctype, GridType :: dimension, GridType :: dimension >
-      GeometryJacobianInverseType;
+    typedef typename GeometryType :: Jacobian  GeometryJacobianInverseType;
 
   protected:
     using BaseType :: asImp;
@@ -450,7 +454,7 @@ namespace Dune
   protected:
     inline void rightMultiply ( const JacobianRangeType &factor,
                                 const LocalCoordinateType &x,
-                                JacobianRangeType &result ) const;
+                                LocalJacobianRangeType &result ) const;
   };
 
 
@@ -500,6 +504,9 @@ namespace Dune
     typedef typename DiscreteFunctionSpaceType :: BaseFunctionSetType
       BaseFunctionSetType;
 
+    //! type of JacobianRangeType of basis functions 
+    typedef typename BaseFunctionSetType :: JacobianRangeType LocalJacobianRangeType;
+
     //! dimension of the domain
     enum { dimDomain = DiscreteFunctionSpaceType :: dimDomain };
     //! dimension of the range
@@ -509,9 +516,7 @@ namespace Dune
     //! type of entity's geometry
     typedef typename EntityType :: Geometry GeometryType;
     //! type of transposed of geometry's Jacobian Inverse
-    typedef FieldMatrix
-      < typename GridType :: ctype, GridType :: dimension, GridType :: dimension >
-      GeometryJacobianInverseType;
+    typedef typename GeometryType :: Jacobian GeometryJacobianInverseType;
 
   protected:
     typedef typename DiscreteFunctionSpaceType :: ContainedRangeType
@@ -582,7 +587,7 @@ namespace Dune
   protected:
     inline void rightMultiply ( const JacobianRangeType &factor,
                                 const LocalCoordinateType &x,
-                                JacobianRangeType &result ) const;
+                                LocalJacobianRangeType &result ) const;
   };
 
   /** \} */
