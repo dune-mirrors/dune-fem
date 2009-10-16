@@ -10,7 +10,6 @@
 
 #ifdef ENABLE_ALBERTA
 #include <dune/grid/albertagrid.hh>
-#include "albertagrid_fixture.hh"
 #endif
 
 #ifdef ENABLE_UGGRID
@@ -195,8 +194,7 @@ namespace Dune {
     const int dim = 2;
     const int codim = 1;
 
-    typedef AlbertaGridFixture<dim, dim> FixType;
-    typedef FixType::GridType GridType;
+    typedef AlbertaGrid< dim > GridType;
     typedef CacheProvider<GridType, codim> CacheProviderType;
     //typedef CacheProviderType::QuadratureType QuadratureType;
     typedef Quadrature< GridType :: ctype, GridType :: dimension-1> QuadratureType;
