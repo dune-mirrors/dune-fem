@@ -750,6 +750,7 @@ public:
   : op_( op ),
     epsilon_( absLimit ),
     maxIter_( maxIter ),
+    restart_( Parameter::getValue< int >( "oemsolver.gmres.restart", 20 ) ),
     verbose_( verbose )
   {}
 
@@ -760,6 +761,7 @@ public:
   : op_( op ),
     epsilon_( absLimit ),
     maxIter_( maxIter ),
+    restart_( Parameter::getValue< int >( "oemsolver.gmres.restart", 20 ) ),
     verbose_( Parameter::getValue< bool >( "fem.solver.verbose", false ) )
   {}
 
@@ -781,7 +783,7 @@ public:
     prepare ( arg, dest );
 
     int size = arg.space().size();
-    int inner = (size > 20) ? 20 : size;
+    int inner = std::min( size, restart_ );
 
     ReturnValueType val = 
       SolverCaller<OperatorType,
@@ -815,6 +817,7 @@ private:
   OperatorType &op_;
   typename DiscreteFunctionType::RangeFieldType epsilon_;
   int maxIter_;
+  int restart_;
   bool verbose_ ;
 };
 
