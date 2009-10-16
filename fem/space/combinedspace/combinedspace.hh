@@ -6,7 +6,7 @@
 #include <map>
 
 //- Dune includes
-#include <dune/common/misc.hh>
+#include <dune/common/static_assert.hh>
 
 //- Local includes
 #include <dune/fem/space/common/discretefunctionspace.hh>
@@ -256,9 +256,9 @@ namespace Dune
     typedef CombinedSubMapper<ThisType> SubMapperType;
 
     enum { spaceId_ = 13 };
-    
-    CompileTimeChecker<(Traits::ContainedDimRange == 1)>
-      use_CombinedSpace_only_with_scalar_spaces;
+   
+    dune_static_assert( (Traits::ContainedDimRange == 1),
+                        "Use CombinedSpace only with scalar spaces." );
   public:
     //! default communication interface 
     static const InterfaceType defaultInterface =
