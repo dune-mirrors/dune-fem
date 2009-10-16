@@ -72,7 +72,7 @@ namespace Dune
 
   
   
-  /** \copydoc Dune::CachingPointList */
+  /** \copydoc CachingPointList */
   template< class GridPartImp, class IntegrationTraits >
   class CachingPointList< GridPartImp, 0, IntegrationTraits >
   : public ElementPointListBase< GridPartImp, 0, IntegrationTraits >,
@@ -122,9 +122,9 @@ namespace Dune
     }
 
     /** \copydoc Dune::CachingInterface::cachingPoint */
-    size_t cachingPoint( const size_t i ) const
+    inline size_t cachingPoint( const size_t quadraturePoint ) const
     {
-      return i;
+      return quadraturePoint;
     }
   };
  
