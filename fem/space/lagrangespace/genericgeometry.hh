@@ -152,8 +152,6 @@ namespace Dune
     /** \brief number of subentites of a given codimension */
     static unsigned int numSubEntities ( unsigned int codim )
     {
-      static const unsigned int firstDimension = FirstGeometryType::dimension;
-        
       unsigned int cnt = 0;
       for( unsigned int i = 0; i <= codim; ++i )
         cnt += FirstGeometryType::numSubEntities( codim - i ) * SecondGeometryType::numSubEntities( i );
