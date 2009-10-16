@@ -632,7 +632,7 @@ namespace Dune
         const int lRow = localRow%littleRows;
 
         // get number of columns  
-        const int col = this->cols();
+        const int col = this->columns();
         for(int localCol=0; localCol<col; ++localCol) 
         {
           const int col = (int) localCol / littleCols;
