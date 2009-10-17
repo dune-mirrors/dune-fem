@@ -1,6 +1,8 @@
 #ifndef  DUNE_FEM_P12DSPACE_TEST_MAIN_CC__
 #define  DUNE_FEM_P12DSPACE_TEST_MAIN_CC__
 
+#define USE_PQSPACE 0
+
 #include  <config.h>
 
 #include  <dune/fem/misc/suite.hh>
@@ -22,13 +24,16 @@ int main(int argc, char *argv[])
   const std::string gridFile  ("2dgrid.dgf");
   const std::string grid3DFile("3dgrid.dgf");
 
+  Dune::Suite suite("Generic Basefunction tests");
+
+#if USE_PQSPACE
   // YaspGrid quadrilateral grid
   typedef Dune :: YaspGrid< 2 >                                      QuadGridUnitSquare;
-  Dune::Suite suite("Generic Basefunction tests");
   suite.addTest( new Dune::L2Projection_Test< QuadGridUnitSquare, 1, true >(gridFile) );
   suite.addTest( new Dune::L2Projection_Test< QuadGridUnitSquare, 2, true >(gridFile) );
   suite.addTest( new Dune::Poisson_Test< QuadGridUnitSquare, 1, true >(gridFile) );
   suite.addTest( new Dune::Poisson_Test< QuadGridUnitSquare, 2, true >(gridFile) );
+#endif
 
 #ifdef HAVE_ALUGRID
   // Alugrid simplical grid
