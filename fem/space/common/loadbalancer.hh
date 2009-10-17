@@ -8,6 +8,7 @@
 #include <iostream>
 
 //- local includes 
+#include <dune/common/static_assert.hh>
 #include <dune/common/timer.hh>
 #include <dune/fem/space/common/datacollector.hh>
 #include <dune/fem/space/common/dofmanager.hh>
@@ -281,8 +282,8 @@ public:
   template <class DiscreteFunctionType> 
   void addDiscreteFunction(DiscreteFunctionType& df) 
   {
-    CompileTimeChecker< Conversion<DiscreteFunctionType,IsDiscreteFunction>::exists > 
-      only_valid_for_discretefunctions();
+    dune_static_assert( (Conversion< DiscreteFunctionType, IsDiscreteFunction >::exists),
+                        "Only valid for discrete functions" );
 
     const IsDiscreteFunction * fct = &df;
 
