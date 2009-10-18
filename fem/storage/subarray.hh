@@ -148,7 +148,9 @@ namespace Dune
     : baseVector_( baseVector ),
       indexMapper_( indexMapper )
     {
-      dune_static_assert( SupportsVectorInterface< BaseVectorType >::v, "SubVector can only wrap vectors." );
+      // used for StaticArray which only implements parts of the VectorInterface (axpy <-> addScaled for example)
+      // but SubVector obly requires parts of the VectorInterface (operator[]...)
+      // dune_static_assert( SupportsVectorInterface< BaseVectorType >::v, "SubVector can only wrap vectors." );
       dune_static_assert( SupportsIndexMapperInterface< IndexMapperType >::v, "Invalid index mapper." );
 
       assert( (unsigned int)baseVector_.size() == indexMapper_.range() );
