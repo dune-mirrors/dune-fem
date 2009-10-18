@@ -1,11 +1,12 @@
 #ifndef DUNE_OEMSOLVER_HH
 #define DUNE_OEMSOLVER_HH
 
-//- system includes 
+//- system includes
+#include <limits>
 #include <utility>
 
 //- Dune includes 
-#include <dune/common/typetraits.hh>
+#include <dune/fem/io/parameter.hh>
 #include <dune/fem/operator/common/operator.hh>
 
 //- local includes 
