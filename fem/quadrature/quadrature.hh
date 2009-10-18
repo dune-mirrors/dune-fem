@@ -350,7 +350,7 @@ namespace Dune
   public:
     typedef FieldImp FieldType;
 
-    enum { dimension = dim };
+    static const unsigned int dimension = dim ;
 
   private:
     typedef Quadrature< FieldType, dimension, QuadratureTraits > ThisType;
