@@ -308,7 +308,7 @@ namespace LDGExample
                   const ArgumentTuple& u,               
                   RangeType& bndVal) const
     {
-      DomainType p = it.intersectionGlobal().global(x);
+      DomainType p = it.geometry().global(x);
       bool dirich = model_.boundaryValue(p,bndVal);
 
       if(!dirich)
@@ -497,7 +497,7 @@ namespace LDGExample
 
         // set diffmatrix 
         model_.gradient( this->inside(),time,
-              it.intersectionSelfLocal().global(x),
+              it.geometryInInside().global(x),
               result,diffmatrix);
 
         diffmatrix.umv(normal,gLeft);
@@ -509,7 +509,7 @@ namespace LDGExample
         
         // set diffmatrix 
         model_.gradient( this->inside(),time,
-              it.intersectionSelfLocal().global(x),
+              it.geometryInInside().global(x),
               result,diffmatrix);
 
         diffmatrix.umv(normal,gRight);
@@ -533,7 +533,7 @@ namespace LDGExample
 
       {
         model_.gradient( this->inside(),time,
-            it.intersectionSelfLocal().global(x),
+            it.geometryInInside().global(x),
             argSLeft,diffmatrix);
       }
 
