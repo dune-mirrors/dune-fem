@@ -19,6 +19,7 @@
 #include <dune/fem/space/lagrangespace/lagrangedatahandle.hh>
 
 //- Dune-Localfunctions include
+#include  <dune/finiteelements/common/field.hh>
 #include  <dune/finiteelements/lagrangefiniteelement.hh>
 
 #include "pqlagrangespace.hh"
@@ -65,6 +66,9 @@ namespace Dune
     struct LocalFiniteElementFactoryTraits
     {
       typedef LagrangeLocalFiniteElement<dimDomain,double,double> LocalFiniteElementType;
+      // typedef LagrangeLocalFiniteElement<dimDomain,double,double, GMPField<128>,GMPField<512> > LocalFiniteElementType;
+      // typedef LagrangeLocalFiniteElement<dimDomain,double,double, amp::ampf<128>,amp::ampf<512> > LocalFiniteElementType;
+      // typedef LagrangeLocalFiniteElement<dimDomain,double,double, double,GMPField<512> > LocalFiniteElementType;
       static const bool geometryTypeIsFixed = false;
     };
 
@@ -72,7 +76,8 @@ namespace Dune
     class LocalFiniteElementFactory
     {
     private:
-      typedef LagrangeLocalFiniteElement< dimDomain, DomainFieldType, RangeFieldType > LocalFiniteElementType;
+      typedef typename Traits::LocalFiniteElementType LocalFiniteElementType;
+      // typedef LagrangeLocalFiniteElement< dimDomain, DomainFieldType, RangeFieldType > LocalFiniteElementType;
 
     public:
       LocalFiniteElementFactory(unsigned int order)
