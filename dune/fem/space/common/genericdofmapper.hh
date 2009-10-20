@@ -157,7 +157,14 @@ namespace Dune
     template< class Entity >
     int mapEntityDofToGlobal ( const Entity &entity, const int localDof ) const
     {
-      DUNE_THROW( NotImplemented, "GenericDofMapper::mapEntityDofToGlobal not implemented, yet." );
+      const int codim = Entity::codimension;
+      const unsigned int topologyId = GenericGeometry::topologyId( entity.type() );
+      const int blockIndex = blockIndex_[ codim ][ topologyId >> 1 ];
+      assert( blockIndex >= 0 );
+
+      const Block &block = blocks_[ blockIndex ];
+      assert( (unsigned int)localDof < block.numDofs );
+      return block.offset + block.numDofs*indexSet_.index( entity ) + localDof;
     }
 
     unsigned int size () const
@@ -179,13 +186,22 @@ namespace Dune
     template< class Entity >
     int numEntityDofs ( const Entity &entity ) const
     {
-      DUNE_THROW( NotImplemented, "GenericDofMapper::numEntityDofs not implemented, yet." );
+      const int codim = Entity::codimension;
+      const unsigned int topologyId = GenericGeometry::topologyId( entity.type() );
+      const int blockIndex = blockIndex_[ codim ][ topologyId >> 1 ];
+      return (blockIndex >= 0 ? blocks_[ blockIndex ].numDofs : 0);
     }
 
     bool contains ( const int codim ) const
     {
+      typedef typename std::vector< int >::const_iterator Iterator;
       assert( (codim >= 0) && (codim <= dimension) );
-      return contains_[ codim ];
+
+      bool contains = false;
+      const Iterator end = blockIndex_[ codim ].end();
+      for( Iterator it  = blockIndex_[ codim ].begin(); it != end; ++it )
+        contains |= (*it >= 0);
+      return contains;
     }
 
     void update ();
@@ -246,23 +262,34 @@ namespace Dune
       return true;
     }
 
-    bool fixedDataSize( int codim ) const
+    bool fixedDataSize( const int codim ) const
     {
-      // TODO: i am not so sure wether it is correct always to return true.
-      return true;
+      typedef typename std::vector< int >::const_iterator Iterator;
+      assert( (codim >= 0) && (codim <= dimension) );
+
+      const Iterator begin = blockIndex_[ codim ].begin();
+      const Iterator end = blockIndex_[ codim ].end();
+      if( begin == end )
+        return true;
+
+      unsigned int numDofs = (*begin >= 0 ? blocks_[ *begin ].numDofs : 0);
+      bool fixedSize = true;
+      for( Iterator it = begin++; it != end; ++it )
+        fixedSize &= (numDofs == (*it >= 0 ? blocks_[ *it ].numDofs : 0));
+      return fixedSize;
     }
 
   private: 
     template< class Topology, class LocalCoefficients >
     void build ( const LocalCoefficients &localCoefficients,
-                 std::vector< int > (&blockIndex)[ dimension+1 ] );
+                 MapInfo &mapInfo );
 
     const IndexSetType &indexSet_;
     MapInfo mapInfo_[ numTopologies ];
     std::vector< Block > blocks_;
     unsigned int maxNumDofs_;
     unsigned int size_;
-    bool contains_[ dimension+1 ];
+    std::vector< int > blockIndex_[ dimension+1 ];
   };
 
 
@@ -274,16 +301,14 @@ namespace Dune
   : indexSet_( gridPart.indexSet() ),
     maxNumDofs_( 0 )
   {
-    std::vector< int > blockIndex[ dimension+1 ];
     for( int codim = 0; codim <= dimension; ++codim )
     {
       const int subdimension = dimension-codim;
       // The last bit of the topology id is insignificat, hence store only
       // (1 << subdimension-1) many indexInfos.
-      blockIndex[ codim ].resize( subdimension > 0 ? 1 << (subdimension-1) : 1, -1 );
-      contains_[ codim ] = false;
+      blockIndex_[ codim ].resize( subdimension > 0 ? 1 << (subdimension-1) : 1, -1 );
     }
-    ForLoop< Build, 0, numTopologies-1 >::apply( localCoefficientsProvider, blockIndex, *this );
+    ForLoop< Build, 0, numTopologies-1 >::apply( localCoefficientsProvider, *this );
     update();
   }
 
@@ -348,26 +373,25 @@ namespace Dune
   template< class Topology, class LocalCoefficients >
   inline void GenericDofMapper< GridPart >
     ::build ( const LocalCoefficients &localCoefficients,
-              std::vector< int > (&blockIndex)[ dimension+1 ] )
+              MapInfo &mapInfo )
   {
-    MapInfo &mapInfo = mapInfo_[ Topology::id ];
+    const GenericGeometry::ReferenceTopology< dimension > &refTopology
+      = GenericGeometry::ReferenceTopologies< dimension >::get( Topology::id );
 
     mapInfo.numDofs = localCoefficients.size();
     mapInfo.localDof.resize( mapInfo.numDofs );
     maxNumDofs_ = std::max( maxNumDofs_, mapInfo.numDofs );
 
-    const GenericGeometry::ReferenceTopology< dimension > &refTopology
-      = GenericGeometry::ReferenceTopologies< dimension >::get( Topology::id );
-
+    // count the number of DoFs on each subentity
     GenericGeometry::SubTopologyMapper< Topology > mapper;
     std::vector< unsigned int > counts( mapper.size(), (unsigned int)0 );
-
     for( unsigned int i = 0; i < mapInfo.numDofs; ++i )
     {
       const LocalKey &key = localCoefficients.localKey( i );
       ++counts[ mapper( key.codim(), key.subEntity() ) ];
     }
 
+    // build subentity information
     for( int codim = 0; codim <= dimension; ++codim )
     {
       const unsigned int codimSize = refTopology.size( codim );
@@ -375,7 +399,7 @@ namespace Dune
       {
         const unsigned int topologyId = refTopology.topologyId( codim, subEntity );
 
-        int &blockIdx = blockIndex[ codim ][ topologyId >> 1 ];
+        int &blockIdx = blockIndex_[ codim ][ topologyId >> 1 ];
         const unsigned int numDofs = counts[ mapper( codim, subEntity ) ];
         if( blockIdx == -1 )
         {
@@ -392,7 +416,6 @@ namespace Dune
 
         if( numDofs > 0 )
         {
-          contains_[ codim ] = true;
           SubEntityInfo subEntityInfo;
           subEntityInfo.codim      = codim;
           subEntityInfo.subEntity  = subEntity;
@@ -404,6 +427,7 @@ namespace Dune
       }
     }
 
+    // build permutation of local dofs
     for( unsigned int i = 0; i < mapInfo.numDofs; ++i )
     {
       typedef typename std::vector< SubEntityInfo >::iterator Iterator;
@@ -447,21 +471,15 @@ namespace Dune
     template< class LocalCoefficientsProvider >
     static void
     apply ( const LocalCoefficientsProvider &localCoefficientsProvider,
-            std::vector< int > (&blockIndex)[ dimension+1 ],
             ThisType &dofMapper )
     {
       const unsigned int size = localCoefficientsProvider.template size< Topology >();
-      switch( size )
-      {
-      case 0:
-        break;
-
-      case 1:
-        dofMapper.template build< Topology >( localCoefficientsProvider.template localCoefficients< Topology >( 0 ), blockIndex );
-        break;
-
-      default:
+      if( size > 1 )
         DUNE_THROW( InvalidStateException, "GenericDofMapper supports at most one set of LocalCoefficients per topology." );
+      for( unsigned int i = 0; i < size; ++i )
+      {
+        MapInfo &mapInfo = dofMapper.mapInfo_[ topologyId ];
+        dofMapper.template build< Topology >( localCoefficientsProvider.template localCoefficients< Topology >( 0 ), mapInfo );
       }
     }
   };
