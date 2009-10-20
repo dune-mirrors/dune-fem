@@ -769,7 +769,6 @@ class DofManager
 
   friend class DefaultSingletonFactory< const Grid*, ThisType >;
   friend class DofManagerFactory< ThisType >;
-  friend class Conversion< ThisType, IsDofManager >;
 
 public:  
   //! type of Grid this DofManager belongs to 

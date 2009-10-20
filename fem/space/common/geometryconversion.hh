@@ -1,6 +1,8 @@
 #ifndef DUNE_GEOMETRYCONVERSION_HH
 #define DUNE_GEOMETRYCONVERSION_HH
 
+#warning "<dune/fem/space/common/geometryconversion.hh> is deprecated. Use <dune/common/geometrytype.hh> instead."
+
 #include <cassert>
 #include <cstdlib>
 #include <iostream>

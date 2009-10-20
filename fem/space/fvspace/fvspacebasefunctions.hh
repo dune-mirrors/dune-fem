@@ -7,149 +7,85 @@
 
 //- Dune-Fem includes 
 #include <dune/fem/space/common/basefunctionfactory.hh>
-#include <dune/fem/space/common/geometryconversion.hh>
 
-namespace Dune {
-
-//! definition of FVBaseFunction, implementation via specialization 
-template<class FunctionSpaceType, GeometryIdentifier::IdentifierType ElType, int polOrd> 
-class FVBaseFunction;
-         
-//! Piecewise const base functions for all types of elements 
-template<class FunctionSpaceType, GeometryIdentifier::IdentifierType ElType>
-class FVBaseFunction < FunctionSpaceType, ElType, 0 >  
-: public BaseFunctionInterface<FunctionSpaceType> 
+namespace Dune
 {
-  enum { dimRange = FunctionSpaceType::dimRange };
-  int baseNum_;
 
-  typedef typename FunctionSpaceType::DomainType DomainType;
-  typedef typename FunctionSpaceType::RangeType RangeType;
-  typedef typename FunctionSpaceType::RangeFieldType RangeFieldType;
-  
-public:
-  FVBaseFunction (int baseNum) : 
-    BaseFunctionInterface<FunctionSpaceType> (),
-    baseNum_ ( baseNum ) 
-  { 
-    assert((baseNum_ >= 0) || (baseNum_ < dimRange));
-  }
-  
-  virtual void evaluate ( const FieldVector<deriType, 0> &diffVariable, 
-                          const DomainType & x, RangeType & phi) const 
+  //! definition of FVBaseFunction, implementation via specialization 
+  template< class FunctionSpaceType, int polOrd >
+  class FVBaseFunction;
+           
+  //! Piecewise const base functions for all types of elements 
+  template< class FunctionSpaceType >
+  class FVBaseFunction< FunctionSpaceType, 0 >
+  : public BaseFunctionInterface< FunctionSpaceType >
   {
-    phi = 0;
-    phi[baseNum_] = 1;
-  }
+    typedef BaseFunctionInterface< FunctionSpaceType > BaseType;
 
-  virtual void evaluate ( const FieldVector<deriType, 1> &diffVariable, 
-                          const DomainType & x, RangeType & phi) const 
-  {
-    phi = 0;
-  }
+    enum { dimRange = FunctionSpaceType::dimRange };
+    int baseNum_;
 
-  virtual void evaluate ( const FieldVector<deriType, 2> &diffVariable, 
-                          const DomainType & x, RangeType & phi) const 
-  {
-    phi = 0;
-  }
-};
-
-//! default definition stays empty because implementation via
-//! specialization
-template <GeometryIdentifier::IdentifierType ElType, int polOrd ,int dimrange > 
-struct FVDefinition;
-
-//! FV Space Definition for all types 
-template <GeometryIdentifier::IdentifierType ElType, int dimrange > 
-struct FVDefinition< ElType, 0, dimrange > 
-{
-  //! number of base functions for polOrd = 0
-  enum { numOfBaseFct = dimrange }; 
-};
-
-//! Factory class for base functions
-template <class ScalarFunctionSpaceImp, int polOrd>
-class FVBaseFunctionFactory :
-  public BaseFunctionFactory<ScalarFunctionSpaceImp>
-{
-  dune_static_assert( polOrd == 0, "Only implemented for PolOrd=0." );
+    typedef typename FunctionSpaceType::DomainType DomainType;
+    typedef typename FunctionSpaceType::RangeType RangeType;
+    typedef typename FunctionSpaceType::RangeFieldType RangeFieldType;
     
-public:
-  typedef ScalarFunctionSpaceImp FunctionSpaceType;
-  typedef BaseFunctionInterface<FunctionSpaceType> BaseFunctionType;
-public:
-  FVBaseFunctionFactory(GeometryType geo) :
-    BaseFunctionFactory<FunctionSpaceType>(geo)
-  {}
-
-  virtual ~FVBaseFunctionFactory() {}
-
-  virtual BaseFunctionType* baseFunction(int i) const 
-  {
-    switch (GeometryIdentifier::fromGeo(this->geometry())) 
-    {
-      case GeometryIdentifier::Line:
-        return new 
-          FVBaseFunction<FunctionSpaceType, GeometryIdentifier::Line, polOrd>(i);
-      case GeometryIdentifier::Triangle:
-        return new 
-          FVBaseFunction<FunctionSpaceType, GeometryIdentifier::Triangle, polOrd>(i);
-      case GeometryIdentifier::Tetrahedron:
-        return new 
-          FVBaseFunction<FunctionSpaceType, GeometryIdentifier::Tetrahedron, polOrd>(i);
-      case GeometryIdentifier::Quadrilateral:
-        return new 
-          FVBaseFunction<FunctionSpaceType, GeometryIdentifier::Quadrilateral, polOrd>(i);
-      case GeometryIdentifier::Hexahedron:
-        return new 
-          FVBaseFunction<FunctionSpaceType, GeometryIdentifier::Hexahedron, polOrd>(i);
-      case GeometryIdentifier::Prism:
-        return new 
-          FVBaseFunction<FunctionSpaceType, GeometryIdentifier::Prism, polOrd>(i);
-      case GeometryIdentifier::Pyramid:
-        return new 
-          FVBaseFunction<FunctionSpaceType, GeometryIdentifier::Pyramid, polOrd>(i);
-      default:
-        DUNE_THROW(NotImplemented, 
-                   "The chosen geometry type is not implemented");
+  public:
+    FVBaseFunction ( const int baseNum )
+    : baseNum_ ( baseNum ) 
+    { 
+      assert( (baseNum_ >= 0) && (baseNum_ < dimRange) );
     }
-    return 0;
-  }
-  
-  virtual int numBaseFunctions() const 
-  {
-    const int dimRange = FunctionSpaceType::dimRange;
-    switch (GeometryIdentifier::fromGeo(this->geometry())) 
+    
+    virtual void evaluate ( const FieldVector<deriType, 0> &diffVariable, 
+                            const DomainType & x, RangeType & phi) const 
     {
-      case GeometryIdentifier::Line:
-        return  
-          FVDefinition<GeometryIdentifier::Line, polOrd, dimRange>::numOfBaseFct;
-      case GeometryIdentifier::Triangle:
-        return  
-          FVDefinition<GeometryIdentifier::Triangle, polOrd, dimRange>::numOfBaseFct;
-      case GeometryIdentifier::Tetrahedron:
-        return  
-          FVDefinition<GeometryIdentifier::Tetrahedron, polOrd, dimRange>::numOfBaseFct;
-      case GeometryIdentifier::Quadrilateral:
-        return  
-          FVDefinition<GeometryIdentifier::Quadrilateral, polOrd, dimRange>::numOfBaseFct;
-      case GeometryIdentifier::Hexahedron:
-        return  
-          FVDefinition<GeometryIdentifier::Hexahedron, polOrd, dimRange>::numOfBaseFct;
-      case GeometryIdentifier::Prism:
-        return  
-          FVDefinition<GeometryIdentifier::Prism, polOrd, dimRange>::numOfBaseFct;
-      case GeometryIdentifier::Pyramid:
-        return 
-          FVDefinition<GeometryIdentifier::Pyramid, polOrd, dimRange>::numOfBaseFct;
-      default:
-        DUNE_THROW(NotImplemented, 
-                   "The chosen geometry type is not implemented");
+      phi = 0;
+      phi[baseNum_] = 1;
     }
-    return 0;
-  }
-};
+
+    virtual void evaluate ( const FieldVector<deriType, 1> &diffVariable, 
+                            const DomainType & x, RangeType & phi) const 
+    {
+      phi = 0;
+    }
+
+    virtual void evaluate ( const FieldVector<deriType, 2> &diffVariable, 
+                            const DomainType & x, RangeType & phi) const 
+    {
+      phi = 0;
+    }
+  };
+
+
+
+  //! Factory class for base functions
+  template< class FunctionSpace, int polOrd >
+  class FVBaseFunctionFactory
+  : public BaseFunctionFactory< FunctionSpace >
+  {
+    dune_static_assert( polOrd == 0, "Only implemented for PolOrd=0." );
+      
+  public:
+    typedef FunctionSpace FunctionSpaceType;
+    typedef BaseFunctionInterface< FunctionSpaceType > BaseFunctionType;
+
+    static const int dimRange = FunctionSpaceType::dimRange;
+
+    FVBaseFunctionFactory ( const GeometryType &type )
+    : BaseFunctionFactory< FunctionSpaceType >( type )
+    {}
+
+    virtual BaseFunctionType *baseFunction ( const int i ) const
+    {
+      return new FVBaseFunction< FunctionSpaceType, polOrd >( i );
+    }
+    
+    virtual int numBaseFunctions() const 
+    {
+      return dimRange;
+    }
+  };
 
 } // end namespace Dune
-#endif
+
+#endif // #ifndef DUNE_FVSPACEBASEFUNCTIONS_HH

@@ -6,7 +6,6 @@
 
 //- Dune includes 
 #include <dune/common/bartonnackmanifcheck.hh>
-#include <dune/fem/space/common/geometryconversion.hh>
 #include <dune/fem/space/common/functionspace.hh>
 #include <dune/fem/space/common/basefunctioninterface.hh>
 #include <dune/fem/space/common/commoperations.hh>
