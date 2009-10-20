@@ -22,6 +22,7 @@
 #include <dune/fem/function/adaptivefunction.hh>
 #include <dune/fem/space/dgspace.hh>
 #include <dune/fem/space/lagrangespace.hh>
+#include <dune/fem/space/common/adaptmanager.hh>
 #include <dune/fem/quadrature/cachingquadrature.hh>
 
 #include <dune/fem/operator/lagrangeinterpolation.hh>
@@ -95,6 +96,9 @@ typedef DofManager< GridType > DofManagerType;
 class ExactSolution
 : public Function< FunctionSpaceType, ExactSolution >
 {
+  typedef ExactSolution ThisType;
+  typedef Function< FunctionSpaceType, ThisType > BaseType;
+
 public:
   typedef FunctionSpaceType :: DomainFieldType DomainFieldType;
   typedef FunctionSpaceType :: RangeFieldType RangeFieldType;
@@ -103,27 +107,52 @@ public:
   typedef FunctionSpaceType :: RangeType RangeType;
   typedef FunctionSpaceType :: JacobianRangeType JacobianRangeType;
 
-private:
-  typedef ExactSolution ThisType;
-  typedef Function< FunctionSpaceType, ThisType > BaseType;
-
-public:
   ExactSolution( FunctionSpaceType &functionSpace )
   : BaseType( functionSpace )
+  {}
+
+  virtual ~ExactSolution ()
+  {}
+
+  virtual void evaluate ( const DomainType &x, RangeType &phi ) const = 0;
+  virtual void jacobian( const DomainType &x, JacobianRangeType &Dphi ) const = 0;
+
+  void evaluate( const DomainType &x, RangeFieldType t, RangeType &phi ) const
   {
+    evaluate( x, phi );
   }
 
-  void evaluate( const DomainType &x, RangeType &phi ) const
+  void jacobian( const DomainType &x, RangeFieldType t, JacobianRangeType &Dphi ) const
+  {
+    jacobian( x, Dphi );
+  }
+};
+
+
+class MyExactSolution
+: public ExactSolution
+{
+  typedef MyExactSolution ThisType;
+  typedef ExactSolution BaseType;
+
+public:
+  typedef BaseType::DomainFieldType DomainFieldType;
+  typedef BaseType::RangeFieldType RangeFieldType;
+
+  typedef BaseType::DomainType DomainType;
+  typedef BaseType::RangeType RangeType;
+  typedef BaseType::JacobianRangeType JacobianRangeType;
+
+  MyExactSolution( FunctionSpaceType &functionSpace )
+  : BaseType( functionSpace )
+  {}
+
+  void evaluate ( const DomainType &x, RangeType &phi ) const
   {
     phi = 1;
     for( int i = 0; i < DomainType :: dimension; ++i )
       // phi[ 0 ] += x[ i ] * x[ i ]; 
       phi[ 0 ] *= sin( M_PI * x[ i ] ); 
-  }
-
-  void evaluate( const DomainType &x, RangeFieldType t, RangeType &phi ) const
-  {
-    evaluate( x, phi );
   }
 
   void jacobian( const DomainType &x, JacobianRangeType &Dphi ) const
@@ -133,11 +162,6 @@ public:
       for( int j = 0; j < DomainType :: dimension; ++j )
         // Dphi[ 0 ][ j ] *= ((i != j) ? 1. : 2.*x[i]);
         Dphi[ 0 ][ j ] *= ((i != j) ? sin( M_PI * x[ i ]) : M_PI * cos( M_PI * x[ i ] ));
-  }
-
-  void jacobian( const DomainType &x, RangeFieldType t, JacobianRangeType &Dphi ) const
-  {
-    jacobian( x, Dphi );
   }
 };
                       
@@ -387,11 +411,10 @@ double algorithm( GridType &grid, DiscreteFunctionType &solution, int turn )
 
   GridPartType part( grid );
   DiscreteFunctionSpaceType discreteFunctionSpace( part );
-  ExactSolution f( discreteFunctionSpace );
+  ExactSolution *f = new MyExactSolution( discreteFunctionSpace );
   
   //! perform Lagrange interpolation
-  LagrangeInterpolation< DiscreteFunctionType >
-  :: interpolateFunction( f, solution );
+  LagrangeInterpolation< DiscreteFunctionType >::interpolateFunction( *f, solution );
 
   #if 0
   DiscreteGradientFunctionSpaceType discreteGradientFunctionSpace( part );
@@ -405,10 +428,10 @@ double algorithm( GridType &grid, DiscreteFunctionType &solution, int turn )
   // pol ord for calculation the error chould by higher than 
   // pol for evaluation the basefunctions
   #ifdef USE_H1ERROR
-    RangeType error = H1Error< DiscreteFunctionType > :: norm( f ,solution, 0 );
+    RangeType error = H1Error< DiscreteFunctionType >::norm( *f ,solution, 0 );
     std :: cout << std :: endl << "H1 Error: [ " << error[ 0 ];
   #else
-    RangeType error = L2Error< DiscreteFunctionType > :: norm( f ,solution, 0 );
+    RangeType error = L2Error< DiscreteFunctionType >::norm( *f ,solution, 0 );
     std :: cout << std :: endl << "L2 Error: [ " << error[ 0 ];
   #endif
   for( int i = 1; i < RangeType :: dimension; ++i )
@@ -426,6 +449,7 @@ double algorithm( GridType &grid, DiscreteFunctionType &solution, int turn )
    }
   #endif
    
+  delete f;
   return sqrt( error * error );
 }
 
@@ -436,7 +460,10 @@ double algorithm( GridType &grid, DiscreteFunctionType &solution, int turn )
 //
 //**************************************************
 int main (int argc, char **argv)
+try
 {
+  Dune::MPIManager::initialize( argc, argv );
+
   std :: cout << "L2 projection test for polynomial order " << polOrder
               << std :: endl;
     
@@ -446,43 +473,37 @@ int main (int argc, char **argv)
     exit( 1 );
   }
 
-  try
+  int ml = atoi( argv[1] );
+  double error[ ml ];
+
+  char tmp[16];
+  sprintf( tmp, "%d", dimworld );
+  std :: string macroGridName( tmp );
+  macroGridName += "dgrid.dgf";
+
+  GridPtr<GridType> gridptr(macroGridName);
+  GridType& grid=*gridptr;
+  const int step = Dune::DGFGridInfo<GridType>::refineStepsForHalf();
+  GridPartType gridPart( grid );
+
+  for( int i = 0; i < ml; ++i )
   {
-    int ml = atoi( argv[1] );
-    double error[ ml ];
+    Dune::GlobalRefine::apply( grid, step );
 
-    char tmp[16];
-    sprintf( tmp, "%d", dimworld );
-    std :: string macroGridName( tmp );
-    macroGridName += "dgrid.dgf";
-
-    GridPtr<GridType> gridptr(macroGridName);
-    GridType& grid=*gridptr;
-    const int step = Dune::DGFGridInfo<GridType>::refineStepsForHalf();
-    GridPartType gridPart( grid );
-
-    for( int i = 0; i < ml; ++i )
-    {
-      grid.globalRefine( step );
-      DofManagerType& dm = DofManagerType :: instance( grid );
-      dm.resize();
-
-      DiscreteFunctionSpaceType discreteFunctionSpace( gridPart );
-      DiscreteFunctionType solution( "sol", discreteFunctionSpace );
-      solution.clear();
-      
-      error[ i ] = algorithm( grid, solution, i == ml-1 );
-      if( i > 0 ) {
-        double eoc = log( error[ i-1 ] / error[ i ] ) / M_LN2;
-        std :: cout << "EOC = " << eoc << std :: endl;
-      }
+    DiscreteFunctionSpaceType discreteFunctionSpace( gridPart );
+    DiscreteFunctionType solution( "sol", discreteFunctionSpace );
+    solution.clear();
+    
+    error[ i ] = algorithm( grid, solution, i == ml-1 );
+    if( i > 0 ) {
+      double eoc = log( error[ i-1 ] / error[ i ] ) / M_LN2;
+      std :: cout << "EOC = " << eoc << std :: endl;
     }
-    return 0;
   }
-  catch( Exception e )
-  {
-    std :: cerr << e.what() << std :: endl;
-    return 1;
-  }
+  return 0;
 }
-
+catch( const Dune::Exception &e )
+{
+  std::cerr << "Error: " << e << std::endl;
+  return 1;
+}
