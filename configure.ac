@@ -5,12 +5,10 @@ DUNE_AC_INIT
 AM_INIT_AUTOMAKE([foreign 1.9 tar-pax dist-bzip2])
 
 # check if we're in the right directory
-AC_CONFIG_SRCDIR([fem/space/dgspace/dgspace.hh])
+AC_CONFIG_SRCDIR([dune/fem/space/dgspace/dgspace.hh])
 # which header-file is created
 AM_CONFIG_HEADER([config.h])
 
-# make dune -> . symlink
-DUNE_SYMLINK
 # check all dune-module stuff
 DUNE_CHECK_ALL
 
@@ -38,81 +36,82 @@ fi
 # preset variable to path such that #include <dune/...> works
 AC_SUBST(AM_CPPFLAGS, '$(DUNE_CPPFLAGS) -I$(top_srcdir)')
 AC_SUBST(AM_LDFLAGS, '$(DUNE_LDFLAGS) $(DUNE_LIBS)')
-AC_SUBST([LOCAL_LIBS], '$(top_builddir)/fem/libfem.la')
+AC_SUBST([LOCAL_LIBS], '$(top_builddir)/dune/fem/libfem.la')
 
 # implicitly set the Dune-flags everywhere
 CPPFLAGS="$DUNE_CPPFLAGS"
 LDFLAGS="$DUNE_LDFLAGS"
 LIBS="$DUNE_LIBS $BLAS_LIBS"
 
-AC_CHECK_FILE([fem/pass/test/Makefile.am],
-              [AC_CONFIG_FILES([fem/pass/test/Makefile
-                                fem/pass/test/dgellipt/Makefile])],
+AC_CHECK_FILE([dune/fem/pass/test/Makefile.am],
+              [AC_CONFIG_FILES([dune/fem/pass/test/Makefile
+                                dune/fem/pass/test/dgellipt/Makefile])],
               [])
               
 AC_CONFIG_FILES([Makefile
      doc/Makefile
      doc/doxygen/Makefile
      doc/doxygen/pages/Makefile
-     fem/Makefile
-     fem/pass/Makefile
-     fem/space/Makefile
-     fem/space/test/Makefile
-     fem/space/basefunctions/Makefile
-     fem/space/dgspace/Makefile
-     fem/space/fvspace/Makefile
-     fem/space/lagrangespace/Makefile
-     fem/space/lagrangespace/test/Makefile
-     fem/space/pqlagrangespace/Makefile
-     fem/space/pqlagrangespace/test/Makefile
-     fem/space/reducedbasisspace/Makefile
-     fem/space/reducedbasisspace/test/Makefile
-     fem/space/combinedspace/Makefile
-     fem/space/common/Makefile
-     fem/quadrature/Makefile
-     fem/quadrature/test/Makefile
-     fem/quadrature/caching/Makefile
-     fem/quadrature/caching/test/Makefile
-     fem/function/Makefile
-     fem/function/common/Makefile
-     fem/function/localfunction/Makefile
-     fem/function/adaptivefunction/Makefile
-     fem/function/attachedfunction/Makefile
-     fem/function/blockvectorfunction/Makefile
-     fem/function/combinedfunction/Makefile
-     fem/function/productfunction/Makefile
-     fem/function/productfunction/test/Makefile
-     fem/function/vectorfunction/Makefile
-     fem/operator/Makefile
-     fem/operator/common/Makefile
-     fem/operator/common/test/Makefile
-     fem/operator/0order/Makefile
-     fem/operator/1order/Makefile
-     fem/operator/2order/Makefile
-     fem/operator/matrix/Makefile
-     fem/operator/model/Makefile
-     fem/operator/projection/Makefile
-     fem/io/Makefile
-     fem/io/file/Makefile
-     fem/io/file/test/Makefile
-     fem/io/streams/Makefile
-     fem/io/streams/test/Makefile
-     fem/io/matlab/Makefile
-     fem/io/matlab/m/Makefile
-     fem/io/matlab/test/Makefile
-     fem/io/visual/Makefile
-     fem/io/visual/grape/Makefile
-     fem/io/visual/grape/datadisp/Makefile
-     fem/io/visual/grape/gridview/Makefile
-     fem/io/visual/grape/functionview/Makefile
-     fem/solver/Makefile 
-     fem/solver/test/Makefile 
-     fem/solver/ode/Makefile 
-     fem/solver/oemsolver/Makefile 
-     fem/misc/Makefile
-     fem/storage/Makefile
-     fem/test/Makefile
-     fem/gridpart/Makefile
+     dune/Makefile
+     dune/fem/Makefile
+     dune/fem/pass/Makefile
+     dune/fem/space/Makefile
+     dune/fem/space/test/Makefile
+     dune/fem/space/basefunctions/Makefile
+     dune/fem/space/dgspace/Makefile
+     dune/fem/space/fvspace/Makefile
+     dune/fem/space/lagrangespace/Makefile
+     dune/fem/space/lagrangespace/test/Makefile
+     dune/fem/space/pqlagrangespace/Makefile
+     dune/fem/space/pqlagrangespace/test/Makefile
+     dune/fem/space/reducedbasisspace/Makefile
+     dune/fem/space/reducedbasisspace/test/Makefile
+     dune/fem/space/combinedspace/Makefile
+     dune/fem/space/common/Makefile
+     dune/fem/quadrature/Makefile
+     dune/fem/quadrature/test/Makefile
+     dune/fem/quadrature/caching/Makefile
+     dune/fem/quadrature/caching/test/Makefile
+     dune/fem/function/Makefile
+     dune/fem/function/common/Makefile
+     dune/fem/function/localfunction/Makefile
+     dune/fem/function/adaptivefunction/Makefile
+     dune/fem/function/attachedfunction/Makefile
+     dune/fem/function/blockvectorfunction/Makefile
+     dune/fem/function/combinedfunction/Makefile
+     dune/fem/function/productfunction/Makefile
+     dune/fem/function/productfunction/test/Makefile
+     dune/fem/function/vectorfunction/Makefile
+     dune/fem/operator/Makefile
+     dune/fem/operator/common/Makefile
+     dune/fem/operator/common/test/Makefile
+     dune/fem/operator/0order/Makefile
+     dune/fem/operator/1order/Makefile
+     dune/fem/operator/2order/Makefile
+     dune/fem/operator/matrix/Makefile
+     dune/fem/operator/model/Makefile
+     dune/fem/operator/projection/Makefile
+     dune/fem/io/Makefile
+     dune/fem/io/file/Makefile
+     dune/fem/io/file/test/Makefile
+     dune/fem/io/streams/Makefile
+     dune/fem/io/streams/test/Makefile
+     dune/fem/io/matlab/Makefile
+     dune/fem/io/matlab/m/Makefile
+     dune/fem/io/matlab/test/Makefile
+     dune/fem/io/visual/Makefile
+     dune/fem/io/visual/grape/Makefile
+     dune/fem/io/visual/grape/datadisp/Makefile
+     dune/fem/io/visual/grape/gridview/Makefile
+     dune/fem/io/visual/grape/functionview/Makefile
+     dune/fem/solver/Makefile 
+     dune/fem/solver/test/Makefile 
+     dune/fem/solver/ode/Makefile 
+     dune/fem/solver/oemsolver/Makefile 
+     dune/fem/misc/Makefile
+     dune/fem/storage/Makefile
+     dune/fem/test/Makefile
+     dune/fem/gridpart/Makefile
      lib/Makefile
      m4/Makefile
      make.inc

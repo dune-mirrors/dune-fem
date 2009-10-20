@@ -452,8 +452,8 @@ WARN_LOGFILE           =  doxygen.out
 INPUT                  = modules \
                          ../../modules \
                          pages \
-                         ../../fem \
-                         ../../fem/io/visual/grape/datadisp/datadisp.cc
+                         ../../dune \
+                         ../../dune/fem/io/visual/grape/datadisp/datadisp.cc
 
 # If the value of the INPUT tag contains directories, you can use the 
 # FILE_PATTERNS tag to specify one or more wildcard pattern (like *.cpp 
@@ -474,9 +474,7 @@ RECURSIVE              = YES
 # excluded from the INPUT source files. This way you can easily exclude a 
 # subdirectory from a directory tree whose root is specified with the INPUT tag.
 
-EXCLUDE                = ../../dune/ \
-                         ../../fem/devel-suite \
-                         ../../fem/test \
+EXCLUDE                = ../../fem/test \
                          ../../fem/quadrature/ugquadratures.* \
                          ../../fem/quadrature/simplexpoints.hh \
                          ../../fem/misc/metaprogramming.hh
@@ -497,7 +495,7 @@ EXCLUDE_PATTERNS       =
 # directories that contain example code fragments that are included (see 
 # the \include command).
 
-EXAMPLE_PATH           =  ../../fem/misc
+EXAMPLE_PATH           =  ../../dune/fem/misc
 
 # If the value of the EXAMPLE_PATH tag contains directories, you can use the 
 # EXAMPLE_PATTERNS tag to specify one or more wildcard pattern (like *.cpp 

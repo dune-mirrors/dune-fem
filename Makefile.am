@@ -7,7 +7,7 @@ EXTRA_DIST=dune.module modules
 #AUTOMAKE_OPTIONS = foreign 1.5
 
 # do everything in the subdirs
-SUBDIRS = fem lib m4 doc
+SUBDIRS = dune lib m4 doc
 
 pkgconfigdir = $(libdir)/pkgconfig
 pkgconfig_DATA = dune-fem.pc
