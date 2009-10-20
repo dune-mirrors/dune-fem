@@ -854,7 +854,7 @@ private:
       // get base function set of face 
       const FaceBSetType &faceSet = faceSpace.baseFunctionSet( inter.type() );
      
-      const int firstRow = inter.numberInSelf() * numFaceDofs;
+      const int firstRow = inter.indexInInside() * numFaceDofs;
       
       // only interior faces are considered 
       if(inter.neighbor())
