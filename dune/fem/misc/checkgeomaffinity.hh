@@ -176,7 +176,7 @@ public:
   template <class IntersectionType>
   static bool checkIntersection(const IntersectionType& nit)  
   {     
-    if ( ! nit.intersectionGlobal().type().isCube() ) return false;
+    if ( ! nit.type().isCube() ) return false;
         
     typedef typename IntersectionType :: Entity EntityType;
     typedef typename EntityType :: ctype ctype; 
@@ -187,7 +187,7 @@ public:
     
     // get current normal  
     FieldVector<ctype,dimworld> unitNormal = nit.unitOuterNormal(normals.faceMidPoint());
-    unitNormal -= normals.referenceNormal( nit.numberInSelf() );
+    unitNormal -= normals.referenceNormal( nit.indexInInside() );
 
     // if normals are not equal grid is not cartesian 
     if( unitNormal.infinity_norm() > 1e-10 ) return false;
