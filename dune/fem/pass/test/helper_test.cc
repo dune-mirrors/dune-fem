@@ -1,4 +1,4 @@
-#include <dune/config.h>
+#include <config.h>
 
 #include <dune/grid/io/file/dgfparser/dgfgridtype.hh>
 #include <dune/common/typetraits.hh>

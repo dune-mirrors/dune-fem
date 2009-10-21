@@ -1,7 +1,7 @@
 #ifndef DUNE_PASS_TEST_HH
 #define DUNE_PASS_TEST_HH
 
-#include <dune/config.h>
+#include <config.h>
 #include <string>
 
 #include <dune/fem/misc/test.hh>
