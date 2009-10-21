@@ -144,6 +144,9 @@ namespace Dune
     }
 
     template< class Entity >
+    const MapInfo &mapInfo ( const Entity &entity ) const;
+
+    template< class Entity >
     void map ( const Entity &entity, std::vector< unsigned int > &indices ) const;
 
     template< class Entity >
@@ -155,17 +158,7 @@ namespace Dune
     }
 
     template< class Entity >
-    int mapEntityDofToGlobal ( const Entity &entity, const int localDof ) const
-    {
-      const int codim = Entity::codimension;
-      const unsigned int topologyId = GenericGeometry::topologyId( entity.type() );
-      const int blockIndex = blockIndex_[ codim ][ topologyId >> 1 ];
-      assert( blockIndex >= 0 );
-
-      const Block &block = blocks_[ blockIndex ];
-      assert( (unsigned int)localDof < block.numDofs );
-      return block.offset + block.numDofs*indexSet_.index( entity ) + localDof;
-    }
+    int mapEntityDofToGlobal ( const Entity &entity, const int localDof ) const;
 
     unsigned int size () const
     {
@@ -192,29 +185,13 @@ namespace Dune
       return (blockIndex >= 0 ? blocks_[ blockIndex ].numDofs : 0);
     }
 
-    bool contains ( const int codim ) const
-    {
-      typedef typename std::vector< int >::const_iterator Iterator;
-      assert( (codim >= 0) && (codim <= dimension) );
-
-      bool contains = false;
-      const Iterator end = blockIndex_[ codim ].end();
-      for( Iterator it  = blockIndex_[ codim ].begin(); it != end; ++it )
-        contains |= (*it >= 0);
-      return contains;
-    }
+    bool contains ( const int codim ) const;
 
     void update ();
 
     void update ( const bool overSizeMemory )
     {
       update();
-    }
-
-    template< class Entity >
-    const MapInfo &mapInfo ( const Entity &entity ) const
-    {
-      return mapInfo_[ GenericGeometry::topologyId( entity.type() ) ];
     }
 
     const int numBlocks () const
@@ -234,50 +211,16 @@ namespace Dune
       return blocks_[ blockIdx ].oldOffset;
     }
 
-    int numberOfHoles ( const int blockIdx ) const
-    {
-      assert( (blockIdx >= 0) && (blockIdx < numBlocks()) );
-      const Block &block = blocks_[ blockIdx ];
-      return block.numDofs * indexSet().numberOfHoles( block.codim );
-    }
-
-    int oldIndex ( const int hole, const int blockIdx ) const
-    {
-      assert( (hole >= 0) && (hole < numberOfHoles( blockIdx )) );
-      const Block &block = blocks_[ blockIdx ];
-      const int numDofs = block.numDofs;
-      return block.offset + numDofs * indexSet().oldIndex( hole / numDofs, block.codim ) + (hole % numDofs);
-    }
-
-    int newIndex ( const int hole, const int blockIdx ) const
-    {
-      assert( (hole >= 0) && (hole < numberOfHoles( blockIdx )) );
-      const Block &block = blocks_[ blockIdx ];
-      const int numDofs = block.numDofs;
-      return block.offset + numDofs * indexSet().newIndex( hole / numDofs, block.codim ) + (hole % numDofs);
-    }
+    int numberOfHoles ( const int blockIdx ) const;
+    int oldIndex ( const int hole, const int blockIdx ) const;
+    int newIndex ( const int hole, const int blockIdx ) const;
 
     bool consecutive () const
     {
       return true;
     }
 
-    bool fixedDataSize( const int codim ) const
-    {
-      typedef typename std::vector< int >::const_iterator Iterator;
-      assert( (codim >= 0) && (codim <= dimension) );
-
-      const Iterator begin = blockIndex_[ codim ].begin();
-      const Iterator end = blockIndex_[ codim ].end();
-      if( begin == end )
-        return true;
-
-      unsigned int numDofs = (*begin >= 0 ? blocks_[ *begin ].numDofs : 0);
-      bool fixedSize = true;
-      for( Iterator it = begin++; it != end; ++it )
-        fixedSize &= (numDofs == (*it >= 0 ? blocks_[ *it ].numDofs : 0));
-      return fixedSize;
-    }
+    bool fixedDataSize( const int codim ) const;
 
   private: 
     template< class Topology, class LocalCoefficients >
@@ -285,7 +228,7 @@ namespace Dune
                  MapInfo &mapInfo );
 
     const IndexSetType &indexSet_;
-    MapInfo mapInfo_[ numTopologies ];
+    std::vector< MapInfo > mapInfo_[ numTopologies ];
     std::vector< Block > blocks_;
     unsigned int maxNumDofs_;
     unsigned int size_;
@@ -314,25 +257,67 @@ namespace Dune
 
 
   template< class GridPart >
+  inline bool GenericDofMapper< GridPart >::contains ( const int codim ) const
+  {
+    typedef typename std::vector< int >::const_iterator Iterator;
+    assert( (codim >= 0) && (codim <= dimension) );
+
+    bool contains = false;
+    const Iterator end = blockIndex_[ codim ].end();
+    for( Iterator it  = blockIndex_[ codim ].begin(); it != end; ++it )
+      contains |= (*it >= 0);
+    return contains;
+  }
+
+
+  template< class GridPart >
+  template< class Entity >
+  const typename GenericDofMapper< GridPart >::MapInfo &
+  GenericDofMapper< GridPart >::mapInfo ( const Entity &entity ) const
+  {
+    const unsigned int topologyId = GenericGeometry::topologyId( entity.type() );
+    if( mapInfo_[ topologyId ].size() != 1 )
+      DUNE_THROW( NotImplemented, "Multiple mapping not implemented." );
+    return mapInfo_[ topologyId ][ 0 ];
+  }
+
+
+  template< class GridPart >
   template< class Entity >
   inline void GenericDofMapper< GridPart >
     ::map ( const Entity &entity, std::vector< unsigned int > &indices ) const
   {
     typedef typename std::vector< SubEntityInfo >::const_iterator Iterator;
 
-    const MapInfo &mapInfo = mapInfo_[ GenericGeometry::topologyId( entity.type() ) ];
+    const MapInfo &info = mapInfo( entity );
 
-    indices.resize( mapInfo.numDofs );
-    const unsigned int *localDof = &(mapInfo.localDof[ 0 ]);
+    indices.resize( info.numDofs );
+    const unsigned int *localDof = &(info.localDof[ 0 ]);
 
-    const Iterator end = mapInfo.subEntityInfo.end();
-    for( Iterator it = mapInfo.subEntityInfo.begin(); it != end; ++it )
+    const Iterator end = info.subEntityInfo.end();
+    for( Iterator it = info.subEntityInfo.begin(); it != end; ++it )
     {
       const unsigned int index  = indexSet().subIndex( entity, it->subEntity, it->codim );
       const unsigned int offset = it->offset + index*it->numDofs;
       for( unsigned int j = 0; j < it->numDofs; ++j )
         indices[ *(localDof++) ] = offset + j;
     }
+  }
+
+
+  template< class GridPart >
+  template< class Entity >
+  inline int GenericDofMapper< GridPart >
+    ::mapEntityDofToGlobal ( const Entity &entity, const int localDof ) const
+  {
+    const int codim = Entity::codimension;
+    const unsigned int topologyId = GenericGeometry::topologyId( entity.type() );
+    const int blockIndex = blockIndex_[ codim ][ topologyId >> 1 ];
+    assert( blockIndex >= 0 );
+
+    const Block &block = blocks_[ blockIndex ];
+    assert( (unsigned int)localDof < block.numDofs );
+    return block.offset + block.numDofs*indexSet_.index( entity ) + localDof;
   }
 
 
@@ -359,13 +344,66 @@ namespace Dune
 
     for( unsigned int topologyId = 0; topologyId < numTopologies; ++topologyId )
     {
-      typedef typename std::vector< SubEntityInfo >::iterator Iterator;
-      MapInfo &mapInfo = mapInfo_[ topologyId ];
-
-      const Iterator end = mapInfo.subEntityInfo.end();
-      for( Iterator it = mapInfo.subEntityInfo.begin(); it != end; ++it )
-        it->offset = blocks_[ it->blockIdx ].offset;
+      typedef typename std::vector< MapInfo >::iterator Iterator;
+      const Iterator mend = mapInfo_[ topologyId ].end();
+      for( Iterator mit = mapInfo_[ topologyId ].begin(); mit != mend; ++mit )
+      {
+        typedef typename std::vector< SubEntityInfo >::iterator Iterator;
+        const Iterator send = mit->subEntityInfo.end();
+        for( Iterator sit = mit->subEntityInfo.begin(); sit != send; ++sit )
+          sit->offset = blocks_[ sit->blockIdx ].offset;
+      }
     }
+  }
+
+
+  template< class GridPart >
+  inline int GenericDofMapper< GridPart >::numberOfHoles ( const int blockIdx ) const
+  {
+    assert( (blockIdx >= 0) && (blockIdx < numBlocks()) );
+    const Block &block = blocks_[ blockIdx ];
+    return block.numDofs * indexSet().numberOfHoles( block.codim );
+  }
+
+
+  template< class GridPart >
+  inline int GenericDofMapper< GridPart >
+    ::oldIndex ( const int hole, const int blockIdx ) const
+  {
+    assert( (hole >= 0) && (hole < numberOfHoles( blockIdx )) );
+    const Block &block = blocks_[ blockIdx ];
+    const int numDofs = block.numDofs;
+    return block.offset + numDofs * indexSet().oldIndex( hole / numDofs, block.codim ) + (hole % numDofs);
+  }
+
+
+  template< class GridPart >
+  inline int GenericDofMapper< GridPart >
+    ::newIndex ( const int hole, const int blockIdx ) const
+  {
+    assert( (hole >= 0) && (hole < numberOfHoles( blockIdx )) );
+    const Block &block = blocks_[ blockIdx ];
+    const int numDofs = block.numDofs;
+    return block.offset + numDofs * indexSet().newIndex( hole / numDofs, block.codim ) + (hole % numDofs);
+  }
+
+
+  template< class GridPart >
+  inline bool GenericDofMapper< GridPart >::fixedDataSize( const int codim ) const
+  {
+    typedef typename std::vector< int >::const_iterator Iterator;
+    assert( (codim >= 0) && (codim <= dimension) );
+
+    const Iterator begin = blockIndex_[ codim ].begin();
+    const Iterator end = blockIndex_[ codim ].end();
+    if( begin == end )
+      return true;
+
+    unsigned int numDofs = (*begin >= 0 ? blocks_[ *begin ].numDofs : 0);
+    bool fixedSize = true;
+    for( Iterator it = begin++; it != end; ++it )
+      fixedSize &= (numDofs == (*it >= 0 ? blocks_[ *it ].numDofs : 0));
+    return fixedSize;
   }
 
 
@@ -474,12 +512,13 @@ namespace Dune
             ThisType &dofMapper )
     {
       const unsigned int size = localCoefficientsProvider.template size< Topology >();
-      if( size > 1 )
-        DUNE_THROW( InvalidStateException, "GenericDofMapper supports at most one set of LocalCoefficients per topology." );
+      dofMapper.mapInfo_[ topologyId ].resize( size );
       for( unsigned int i = 0; i < size; ++i )
       {
-        MapInfo &mapInfo = dofMapper.mapInfo_[ topologyId ];
-        dofMapper.template build< Topology >( localCoefficientsProvider.template localCoefficients< Topology >( 0 ), mapInfo );
+        MapInfo &mapInfo = dofMapper.mapInfo_[ topologyId ][ i ];
+        const typename LocalCoefficientsProvider::LocalCoefficientsType &coefficients
+          = localCoefficientsProvider.template localCoefficients< Topology >( i );
+        dofMapper.template build< Topology >( coefficients, mapInfo );
       }
     }
   };
@@ -514,7 +553,7 @@ namespace Dune
                             const Begin &begin )
     : indexSet_( dofMapper.indexSet() ),
       entity_( entity ),
-      mapInfo_( dofMapper.mapInfo_[ GenericGeometry::topologyId( entity.type() ) ] ),
+      mapInfo_( dofMapper.mapInfo( entity ) ),
       subEntityInfoIt_( mapInfo_.subEntityInfo.begin() ),
       localDof_( &(mapInfo_.localDof[ 0 ]) )
     {
@@ -526,7 +565,7 @@ namespace Dune
                             const End &end )
     : indexSet_( dofMapper.indexSet() ),
       entity_( entity ),
-      mapInfo_( dofMapper.mapInfo_[ GenericGeometry::topologyId( entity.type() ) ] ),
+      mapInfo_( dofMapper.mapInfo( entity ) ),
       subEntityInfoIt_( mapInfo_.subEntityInfo.end() ),
       localDof_( &(mapInfo_.localDof[ mapInfo_.numDofs ]) )
     {}
