@@ -20,8 +20,12 @@
 
 //- Dune-Localfunctions include
 #include  <dune/finiteelements/common/field.hh>
-#include  <dune/finiteelements/lagrangefiniteelement.hh>
 
+#include  <dune/finiteelements/lagrangefiniteelement.hh>
+#include  <dune/finiteelements/lagrangebasis/equidistantpoints.hh>
+#if HAVE_ALGLIB
+#include  <dune/finiteelements/lagrangebasis/lobattopoints.hh>
+#endif
 #include "pqlagrangespace.hh"
 
 namespace Dune
@@ -65,7 +69,8 @@ namespace Dune
     template< int dimDomain >
     struct LocalFiniteElementFactoryTraits
     {
-      typedef LagrangeLocalFiniteElement<dimDomain,double,double> LocalFiniteElementType;
+      typedef LagrangeLocalFiniteElement<EquidistantCoefficients,dimDomain,double,double> LocalFiniteElementType;
+      // typedef LobattoLocalFiniteElement<dimDomain,double,double> LocalFiniteElementType;
       // typedef LagrangeLocalFiniteElement<dimDomain,double,double, GMPField<128>,GMPField<512> > LocalFiniteElementType;
       // typedef LagrangeLocalFiniteElement<dimDomain,double,double, amp::ampf<128>,amp::ampf<512> > LocalFiniteElementType;
       // typedef LagrangeLocalFiniteElement<dimDomain,double,double, double,GMPField<512> > LocalFiniteElementType;

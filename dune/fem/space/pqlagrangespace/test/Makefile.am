@@ -17,7 +17,7 @@ if HAVE_DUNE_LOCALFUNCTIONS
 
 check_PROGRAMS          = test_pqlagrangespace 
 test_pqlagrangespace_SOURCES  = main.cc ../../../misc/test.cc ../../../misc/suite.cc
-test_pqlagrangespace_CPPFLAGS = $(ALL_PKG_CPPFLAGS) -DHAVE_GMP=0 -DHAVE_ALGLIB=0
+test_pqlagrangespace_CPPFLAGS = $(ALL_PKG_CPPFLAGS) -DHAVE_GMP=0 -DHAVE_ALGLIB=1
 
 endif
 
