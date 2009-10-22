@@ -291,18 +291,6 @@ public:
   void addScaled ( const DiscreteFunctionType &g,
                    const RangeFieldType &s ); 
  
-  template< class GridIteratorType >
-  void DUNE_DEPRECATED addLocal ( GridIteratorType &it,
-                                  const DiscreteFunctionType &g );
-  
-  template< class GridIteratorType >
-  void DUNE_DEPRECATED substractLocal ( GridIteratorType &it,
-                                        const DiscreteFunctionType &g ); 
-  
-  template< class GridIteratorType >
-  void DUNE_DEPRECATED setLocal ( GridIteratorType &it,
-                                  const RangeFieldType &scalar );
-  
   /** \copydoc Dune::DiscreteFunctionInterface::print */
   void print( std :: ostream &out ) const;
 

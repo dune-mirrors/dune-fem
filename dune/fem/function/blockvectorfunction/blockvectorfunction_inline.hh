@@ -250,53 +250,6 @@ read_ascii( const std::string filename )
 }
 #endif
 
-#if 0
-template<class DiscreteFunctionSpaceType>
-inline bool BlockVectorDiscreteFunction<DiscreteFunctionSpaceType>::
-write_pgm( const std::string filename ) const
-{
-  const char * fn = filename.c_str();
-  std::ofstream out( fn );
-
-  enum { dim = GridType::dimension };
-  
-  int danz = 129; 
-  /*
-  int danz = this->functionSpace_.getGrid().size(level_, dim );
-  danz = (int) pow (( double ) danz, (double) (1.0/dim) );
-  std::cout << danz << " Danz!\n";
-  */
-  
-  out << "P2\n " << danz << " " << danz <<"\n255\n";
-  ConstDofIteratorType enddof = this->dend ( );
-  for(ConstDofIteratorType itdof = this->dbegin ( ); itdof != enddof; ++itdof) {
-    out << (int)((*itdof)*255.) << "\n";
-  }
-  out.close();
-  return true;
-}
-
-template<class DiscreteFunctionSpaceType>
-inline bool BlockVectorDiscreteFunction<DiscreteFunctionSpaceType>::
-read_pgm( const std::string filename )
-{
-  const char * fn = filename.c_str();
-  FILE *in;
-  int v;
-
-  in = fopen( fn, "r" );
-  assert(in);
-  fscanf( in, "P2\n%d %d\n%d\n", &v, &v, &v );
-  DofIteratorType enddof = this->dend ( );
-  for(DofIteratorType itdof = this->dbegin ( ); itdof != enddof; ++itdof) {
-    fscanf( in, "%d", &v );
-    (*itdof) = ((double)v)/255.;
-  } 
-  fclose( in );
-  return true;
-}
-#endif 
-
 template< class DiscreteFunctionSpaceType >
 inline void BlockVectorDiscreteFunction< DiscreteFunctionSpaceType >
   :: addScaled ( const DiscreteFunctionType &g,
@@ -306,34 +259,6 @@ inline void BlockVectorDiscreteFunction< DiscreteFunctionSpaceType >
   const DofStorageType &gvec = g.dofVec_;
   assert(length == gvec.size());
   dofVec_.axpy( s, gvec );
-}
-
-template<class DiscreteFunctionSpaceType>
-template<class GridIteratorType>
-inline void BlockVectorDiscreteFunction<DiscreteFunctionSpaceType>::
-substractLocal( GridIteratorType &it , 
- const BlockVectorDiscreteFunction<DiscreteFunctionSpaceType> &g)
-{
-  localFunction( *it , localFunc_ );
-  
-  BlockVectorDiscreteFunction<DiscreteFunctionSpaceType> &G = 
-      const_cast<BlockVectorDiscreteFunction<DiscreteFunctionSpaceType> &> (g);
-  G.localFunction(*it,G.localFunc_);
-
-  int length = localFunc_.numberOfDofs();
-  for(int i=0; i<length; ++i)
-    localFunc_[i] -= G.localFunc_[i];
-}
-
-template<class DiscreteFunctionSpaceType>
-template<class GridIteratorType>
-inline void BlockVectorDiscreteFunction<DiscreteFunctionSpaceType>::
-setLocal( GridIteratorType &it , const RangeFieldType & scalar )
-{
-  localFunction( *it , localFunc_ );
-  int length = localFunc_.numberOfDofs();
-  for(int i=0; i<length; ++i)
-    localFunc_[i] = scalar;
 }
 
 template<class DiscreteFunctionSpaceType>
