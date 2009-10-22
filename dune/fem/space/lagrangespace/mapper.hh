@@ -203,13 +203,6 @@ namespace Dune
       return dimRange * indexSet_.numberOfHoles( dimension );
     }
 
-    /** \copydoc Dune::DofMapper::newSize
-     */
-    int newSize () const
-    {
-      return this->size();
-    }
-
     /** \copydoc Dune::DofMapper::consecutive() const */
     bool consecutive () const
     {
@@ -516,16 +509,6 @@ namespace Dune
     {
       assert( (block >= 0) && (block < numBlocks()) );
       return dimRange * offset_[ block ];
-    }
-
-    /** \copydoc Dune::DofMapper::newSize
-     */ 
-    int newSize () const DUNE_DEPRECATED
-    {
-      int newSize = 0;
-      for( int codim = 0; codim <= dimension; ++codim )
-        newSize += indexSet_.size( codim ) * maxDofs_[ codim ];
-      return dimRange * newSize;
     }
 
     /** \copydoc Dune::DofMapper::consecutive() const */
@@ -935,16 +918,6 @@ namespace Dune
     {
       assert( (block >= 0) && (block < numBlocks()) );
       return dimRange * offset_[ block ];
-    }
-
-    /** \copydoc Dune::DofMapper::newSize
-     */ 
-    int newSize () const DUNE_DEPRECATED 
-    {
-      int newSize = 0;
-      for( int codim = 0; codim <= dimension; ++codim )
-        newSize += indexSet_.size( codim ) * maxDofs_[ codim ];
-      return dimRange * newSize;
     }
 
     /** \copydoc Dune::DofMapper::consecutive() const */
