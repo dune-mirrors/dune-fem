@@ -1027,15 +1027,6 @@ protected:
   
 public:
   /** \brief Compress all data that is hold by this dofmanager 
-      \note This will increase the sequence counter by 1.
-      \note This method is deprecated! 
-  */
-  void dofCompress() DUNE_DEPRECATED 
-  {
-    compress();
-  }
-  
-  /** \brief Compress all data that is hold by this dofmanager 
       \note  This will increase the sequence counter by 1.
   */
   void compress() 
@@ -1430,43 +1421,10 @@ readIndexSets(const std::string& filename , int timestep )
     }
 
   public:
-    /** \brief obtain a reference to the DofManager for a given grid
-     *
-     *  \param[in]  grid  grid for which the DofManager is desired
-     *
-     *  \returns a reference to the singleton instance of the DofManager
-     */
-    inline static DofManagerType &getDofManager ( const GridType &grid ) DUNE_DEPRECATED
-    {
-      return instance( grid );
-    } 
-
     //! delete the dof manager that belong to the given grid 
     inline static void deleteDofManager ( DofManagerType &dm )
     {
       DMProviderType :: removeObject( &dm );
-    }
-
-    //! writes DofManager of corresponding grid, when DofManager exists 
-    inline static bool 
-    writeDofManager ( const GridType &grid,
-                      const std :: string &filename,
-                      int timestep ) DUNE_DEPRECATED
-    {
-      return writeDofManagerNew( grid,
-                                 filename,
-                                 timestep ); 
-    }
-
-    //! reads DofManager of corresponding grid, when DofManager exists 
-    inline static bool 
-    readDofManager ( const GridType &grid,
-                     const std :: string &filename,
-                     int timestep ) DUNE_DEPRECATED 
-    {
-      return readDofManagerNew( grid,
-                                filename,
-                                timestep );
     }
 
   private: 
