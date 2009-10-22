@@ -11,6 +11,8 @@
 #include <dune/common/exceptions.hh>
 #include <dune/grid/alugrid/interfaces.hh>
 
+#include <dune/fem/version.hh>
+
 // here are the default grid index set defined 
 #include <dune/fem/space/common/restrictprolonginterface.hh>
 #include <dune/fem/storage/singletonlist.hh>
@@ -922,7 +924,7 @@ public:
   }
 
   //! returns the index set restriction and prolongation operator (deprecated) use indexSetRestrictProlong instead 
-  IndexSetRestrictProlongType & indexSetRPop () DUNE_DEPRECATED 
+  DUNE_VERSION_DEPRECATED(1,3) IndexSetRestrictProlongType & indexSetRPop () 
   {
     // hier muss statt dessen ein Combiniertes Object erzeugt werden. 
     // dafuer sollte bei einhaengen der IndexSets ein Methoden Pointer
