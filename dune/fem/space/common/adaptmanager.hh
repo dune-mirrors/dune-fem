@@ -116,9 +116,6 @@ private:
   AdaptationManagerInterface* am_;
 };
 
-//! deprecated typedef 
-typedef AdaptationManagerInterface AdaptMapping;
-
 /** \brief AdaptationMethod is a simple adaptation method reader class. */
 template <class GridType>
 class AdaptationMethod : virtual public AdaptationManagerInterface 
@@ -139,8 +136,9 @@ public:
         AdaptationMethod: 1 # default value 
 
   */   
+  DUNE_VERSION_DEPRECATED(1,2,AdaptationMethod_no_param_file)
   AdaptationMethod(const GridType & grid,
-                   std::string paramFile ) DUNE_DEPRECATED
+                   std::string paramFile ) 
     : adaptationMethod_(generic) {
     const bool output = (grid.comm().rank() == 0);
     int am = 1;
@@ -299,7 +297,8 @@ public:
         # 0 == none, 1 == generic, 2 == call back (only AlbertaGrid and ALUGrid)  
         AdaptationMethod: 1 # default value 
   */   
-  AdaptationManagerBase ( GridType &grid, RestProlOperatorImp &rpOp, std::string paramFile ) DUNE_DEPRECATED
+  DUNE_VERSION_DEPRECATED(1,2,AdaptationManagerBase_no_param_file)
+  AdaptationManagerBase ( GridType &grid, RestProlOperatorImp &rpOp, std::string paramFile )
   : BaseType( grid, paramFile ),
     grid_( grid ),
     dm_( DofManagerType::instance( grid_ ) ),
@@ -332,7 +331,8 @@ public:
    See DiscreteOperatorImp. (deprecated method)
    */
   template <class RestProlOperatorType> 
-  DUNE_DEPRECATED AdaptationManagerBase<GridType,
+  DUNE_VERSION_DEPRECATED(1,2,no_method)
+  AdaptationManagerBase<GridType,
   CombinedRestProl <RestProlOperatorImp,RestProlOperatorType> > & 
   operator + (const AdaptationManagerBase<GridType,RestProlOperatorType> &op)
   {
@@ -650,10 +650,11 @@ public:
         AdaptationMethod: 1 # default value 
      \param balanceCounter start counter for balance cycle (default = 0)   
   */   
+  DUNE_VERSION_DEPRECATED(1,2,AdaptationManager_no_param_file)
   AdaptationManager(GridType & grid, 
                     RestProlOperatorImp & rpOp, 
                     std::string paramFile , 
-                    int balanceCounter = 0 ) DUNE_DEPRECATED
+                    int balanceCounter = 0 )
     : BaseType(grid,rpOp,paramFile) 
     , Base2Type( grid , rpOp , paramFile , balanceCounter )
     , commList_(rpOp)
@@ -724,9 +725,10 @@ class AdaptationLoadBalanceManager :
 {
   typedef AdaptationManager<GridType,RestProlOperatorImp> BaseType;    
 public:
+  DUNE_VERSION_DEPRECATED(1,2,no_method)      
   AdaptationLoadBalanceManager(
       GridType & grid, RestProlOperatorImp & rpOp, 
-      std::string paramFile , int balanceCounter = 0 ) DUNE_DEPRECATED      
+      std::string paramFile , int balanceCounter = 0 ) 
     : BaseType(grid,rpOp,paramFile,balanceCounter)
   {
   }
