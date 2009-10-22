@@ -1,2 +1,2 @@
 #warning include "fem/space/dgspace/dgadaptmanager.hh" instead
-#include <fem/space/dgspace/dgadaptmanager.hh>
+#include <dune/fem/space/dgspace/dgadaptmanager.hh>
