@@ -924,7 +924,8 @@ public:
   }
 
   //! returns the index set restriction and prolongation operator (deprecated) use indexSetRestrictProlong instead 
-  DUNE_VERSION_DEPRECATED(1,3) IndexSetRestrictProlongType & indexSetRPop () 
+  DUNE_VERSION_DEPRECATED(1,1,indexSetRestrictProlong) 
+  IndexSetRestrictProlongType & indexSetRPop () 
   {
     // hier muss statt dessen ein Combiniertes Object erzeugt werden. 
     // dafuer sollte bei einhaengen der IndexSets ein Methoden Pointer
