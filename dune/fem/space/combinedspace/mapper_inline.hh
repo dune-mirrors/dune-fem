@@ -100,16 +100,6 @@ namespace Dune
     return numComponents * containedMapper().numEntityDofs( entity );
   }
 
-  
-  template< class ContainedMapper, int N, DofStoragePolicy policy >
-  inline int CombinedMapper< ContainedMapper, N, policy >
-    :: newSize () const
-  {
-    return numComponents * containedMapper().newSize();
-  }
- 
-
-  
   template< class ContainedMapper, int N, DofStoragePolicy policy >
   inline int CombinedMapper< ContainedMapper, N, policy >
     :: newIndex ( const int hole, const int block ) const

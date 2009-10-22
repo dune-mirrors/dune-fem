@@ -212,11 +212,6 @@ namespace Dune
     template< class Entity >
     inline int numEntityDofs ( const Entity &entity ) const;
 
-    //- Method inherited from mapper interface
-    //! if grid has changed determine new size 
-    //! (to be called once per timestep, therefore virtual )
-    inline int newSize() const;
-  
     //! return new index in dof array 
     inline int newIndex ( const int hole, const int block ) const;
 
