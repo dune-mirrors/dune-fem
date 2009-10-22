@@ -35,7 +35,7 @@ typedef DGAdaptiveLeafGridPart< GridType > ContainedGridPartType;
 // use filtered grid for testing 
 #if defined  USE_FILTEREDGRID 
   typedef RadialFilter< ContainedGridPartType > FilterType;
-  typedef FilteredGridPart<ContainedGridPartType, FilterType> GridPartType;
+  typedef FilteredGridPart<ContainedGridPartType, FilterType, true > GridPartType;
 #else
   typedef ContainedGridPartType GridPartType;
 #endif
