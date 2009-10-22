@@ -126,12 +126,6 @@ namespace Dune
       return dimrange * indexSet_.numberOfHoles( 0 );
     }
     
-    // is called once and calcs the insertion points too
-    int newSize() const 
-    {
-      return this->size();
-    }
-
     //! return the sets consecutive 
     bool consecutive () const
     {

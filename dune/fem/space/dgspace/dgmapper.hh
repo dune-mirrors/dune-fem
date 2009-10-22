@@ -109,12 +109,6 @@ namespace Dune
       return numberOfDofs_;
     }
    
-    /** \copydoc DofMapper::newSize */
-    int newSize() const DUNE_DEPRECATED 
-    {
-      return this->size();
-    }
-
     /** \copydoc DofMapper::oldIndex */
     int oldIndex (const int hole, int ) const
     {
