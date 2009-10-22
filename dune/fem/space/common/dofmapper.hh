@@ -100,15 +100,6 @@ public:
     return asImp().end( entity );
   }
 
-  /** return new size of space, i.e. after adaptation 
-    \returns new size of space 
-  */
-  int newSize() const DUNE_DEPRECATED 
-  {
-    CHECK_INTERFACE_IMPLEMENTATION(asImp().newSize());
-    return asImp().newSize();
-  }
-
   /** \brief map a local DoF number to a global one
    *
    *  \param[in]  entity    entity the DoF belongs to
