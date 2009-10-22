@@ -16,6 +16,8 @@
 #include <dune/grid/common/datahandleif.hh>
 #include <dune/grid/utility/grapedataioformattypes.hh>
 
+#include <dune/fem/gridpart/filteredindexset.hh>
+
 namespace Dune
 {
 
@@ -36,7 +38,7 @@ namespace Dune
   template <class GridType>
   class RadialFilter;
 
-  template< class GridPartImp, class FilterImp >
+  template< class GridPartImp, class FilterImp, bool useFilteredIndexSet = false >
   class FilteredGridPart;
 
 //***************************************************************************
@@ -352,11 +354,11 @@ namespace Dune
  A FilteredGridPart allows to extract a set of entities from a grid
  satisfying a given constrainted defined through a filter class.
 **/ 
-  template< class GridPartImp, class FilterImp >
+  template< class GridPartImp, class FilterImp, bool useFilteredIndexSet > 
   class FilteredGridPart
-  : public GridPartImp
+    : public GridPartImp
   {
-    typedef FilteredGridPart< GridPartImp, FilterImp > ThisType;
+    typedef FilteredGridPart< GridPartImp, FilterImp, useFilteredIndexSet > ThisType;
 
     // forward declaration of IteratorWrappers
     template< class GridPart, int codim, class Iterator >
@@ -375,8 +377,44 @@ namespace Dune
     //! Grid implementation type
     typedef typename GridPartImp::GridType GridType;
 
-    //! The index set of the gridpart implementation
-    typedef typename GridPartImp::IndexSetType IndexSetType;
+    template <int dummy, bool useNewIndexSet > 
+    struct IndexSetSpecialization
+    {
+      typedef FilteredIndexSet<GridPartImp,FilterImp> IndexSetType;
+      static IndexSetType* create(const ThisType& gridPart) 
+      {
+        return new IndexSetType( gridPart );
+      }
+
+      template <class IndexSetPtr>
+      static inline const IndexSetType& 
+      indexSet(const GridPartImp& gridPart, const IndexSetPtr* idxSetPtr )
+      {
+        assert( idxSetPtr );
+        return *idxSetPtr;
+      }
+    };
+
+    //! when index set from gridpartimp is used return 0 
+    template <int dummy>
+    struct IndexSetSpecialization<dummy, false > 
+    {
+      typedef typename GridPartImp :: IndexSetType IndexSetType;
+
+      static IndexSetType* create(const GridPartImp&) 
+      {
+        return 0;
+      }
+      template <class IndexSetPtr>
+      static inline const IndexSetType& 
+      indexSet(const GridPartImp& gridPart, const IndexSetPtr* )
+      {
+        return gridPart.indexSet();
+      }
+    };
+
+    //! The index set use in this gridpart 
+    typedef typename IndexSetSpecialization<0, useFilteredIndexSet> :: IndexSetType IndexSetType;
     
     //! The corresponding IntersectionIterator 
     typedef IntersectionIteratorWrapper<GridPartImp, IntersectionIteratorImpType> IntersectionIteratorType;
@@ -410,16 +448,19 @@ namespace Dune
                            // A constructor LevelGridPart(GridType grid) exists, but will  
                            // return a LevelGridPart<GridType, maxLevel>.
       filter_(filter),
-      maxlevel_(0)
+      maxlevel_(0),
+      indexSetPtr_( 0 )
     {
       updateStatus();
+      indexSetPtr_ = IndexSetSpecialization<0, useFilteredIndexSet > :: create( *this );
     }
 
     //! Copy Constructor
     FilteredGridPart(const FilteredGridPart& other) :
       GridPartImp(other), 
       filter_(other.filter_),
-      maxlevel_(other.maxlevel_)
+      maxlevel_(other.maxlevel_),
+      indexSetPtr_( IndexSetSpecialization<0, useFilteredIndexSet > :: create( *this ))
     {
     }
 
@@ -429,10 +470,19 @@ namespace Dune
                            // A constructor LevelGridPart(GridType grid) exists, but will  
                            // return a LevelGridPart<GridType, maxLevel>.
       filter_( FilterType :: createObject(static_cast<const GridPartImp&> (*this) )), 
-      maxlevel_(0)
+      maxlevel_(0),
+      indexSetPtr_( 0 )
     {
       updateStatus();
+      indexSetPtr_ = IndexSetSpecialization<0, useFilteredIndexSet > :: create( *this );
     }
+
+    //! destructor 
+    ~FilteredGridPart()
+    {
+      delete indexSetPtr_; 
+    }
+
 
     //! Begin iterator on the leaf level
     template< int codim >
@@ -500,6 +550,13 @@ namespace Dune
 
     //! return reference to filter 
     const FilterType & filter() const { return filter_; }
+
+    //! return index set of this grid part 
+    //! if IndexSetType is from GridPartImp the original index set is returned 
+    const IndexSetType& indexSet() const 
+    {
+      return IndexSetSpecialization<0, useFilteredIndexSet > :: indexSet( *this, indexSetPtr_ );
+    } 
     
   private:   
     inline void updateStatus()
@@ -511,9 +568,10 @@ namespace Dune
       maxlevel_ = GridPartImp::level();
     }
 
-  private: 
+  protected: 
     FilterType filter_;
     int maxlevel_;
+    const IndexSetType* indexSetPtr_; 
 
   private:
     //**********************************************************************
@@ -763,14 +821,12 @@ namespace Dune
     }; // end IntersectionIteratorWrapper
   }; // end FilteredGridPart
 
-
-
   // FilteredGridPart :: IteratorWrapper
   // -----------------------------------
 
-  template< class GridPartImp, class FilterImp >
+  template< class GridPartImp, class FilterImp, bool useFilteredIndexSet >
   template< class GridPart, int codim, class Iterator >
-  class FilteredGridPart< GridPartImp, FilterImp > :: IteratorWrapper
+  class FilteredGridPart< GridPartImp, FilterImp, useFilteredIndexSet > :: IteratorWrapper
   : public Iterator
   {
     typedef IteratorWrapper< GridPart, codim, Iterator > ThisType;
@@ -805,26 +861,6 @@ namespace Dune
       endIter_( endIterator )
     {
     }
-
-#if 0
-    //! copy constructor 
-    IteratorWrapper( const ThisType &other )
-    : IteratorType( other ),
-      gridPart_( other.gridPart_ ),
-      filter_( other.filter_ ),
-      endIter_( other.endIter_ )
-    {}
-
-    //! assignment operator
-    ThisType &operator= ( const ThisType &other )
-    {
-      BaseType :: operator=( other );
-      gridPart_ = other.gridPart_;
-      filter_ = other.filter_;
-      endIter_ = other.endIter_;
-      return *this;
-    }
-#endif
 
     //! overloaded increment 
     ThisType &operator++ ()

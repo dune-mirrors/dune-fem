@@ -131,6 +131,58 @@ namespace Dune
     const GridType &grid_;
   };
 
+  /** \brief ConsecutivePersistentIndexSet is the base class for all index sets that 
+      are consecutive and also persistent. Implementations of this type
+      are for example AdaptiveLeafIndexSet and DGAdaptiveLeafIndexSet. 
+  */
+  template< class GridImp, class Imp >
+  class ConsecutiveIndexSet
+  : public DuneGridIndexSetAdapter< GridImp, Imp >
+  {
+    typedef ConsecutiveIndexSet< GridImp, Imp > ThisType;
+    typedef DuneGridIndexSetAdapter< GridImp, Imp > BaseType;
+
+    typedef Imp ImplementationType;
+
+  public:  
+    //! type of grid 
+    typedef GridImp GridType;
+
+  protected:
+    //! Conschdrugdor 
+    explicit ConsecutiveIndexSet ( const GridType &grid )
+    : BaseType( grid )
+    {}
+
+  private:
+    // no copying & no assignment
+    ConsecutiveIndexSet ( const ThisType & );
+    ThisType &operator= ( const ThisType & );
+
+  public:
+    //! returns true since we deal with a consecutive index set 
+    bool consecutive () const
+    {
+      return true;
+    }
+
+    //! return true if the index set is persistent 
+    bool persistent () const
+    {
+      return false;
+    }
+
+    //! remove holes and make index set consecutive 
+    bool compress()
+    {
+      return asImp().compress();
+    } 
+
+  protected:
+    // use asImp from BaseType
+    using BaseType::asImp;
+  };
+
 
 
   /** \brief ConsecutivePersistentIndexSet is the base class for 
@@ -178,30 +230,6 @@ namespace Dune
       // remove persistent index set from dofmanagers list 
       dofManager_.removeIndexSet( asImp() );
     }
-
-  #if 0
-    //! insert index for father, mark childs index for removal  
-    inline void restrictLocal ( const EntityCodim0Type &father,
-                                const EntityCodim0Type &son,
-                                bool initialize )
-    {
-      // important, first remove old, because 
-      // on father indices might be used aswell 
-      asImp().removeEntity( son );
-      asImp().insertEntity( father );
-    }
-
-    //! insert indices for children , mark fathers index for removal  
-    inline void prolongLocal ( const EntityCodim0Type &father,
-                               const EntityCodim0Type &son,
-                               bool initialize )
-    {
-      // important, first remove old, because 
-      // on children indices might be used aswell 
-      asImp().removeEntity( father );
-      asImp().insertEntity( son );
-    }
-  #endif
 
     //! return true if the index set is persistent 
     bool persistent () const

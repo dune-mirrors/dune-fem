@@ -5,6 +5,7 @@ gridpart_HEADERS = adaptiveleafgridpart.hh \
 		   dunefemindexsets.hh \
 		   emptyindexset.hh \
 		   filteredgrid.hh \
+       filteredindexset.hh \
        gridpart.hh \
 		   gridpartview.hh \
 		   gridpartutility.hh \
