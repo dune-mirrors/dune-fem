@@ -89,7 +89,7 @@ protected:
      \param balanceCounter actual counter, default is zero 
   */   
   template< class RestrictProlongOperator >
-  DUNE_DEPRECATED
+  DUNE_VERSION_DEPRECATED(1,2,LoadBalancer_no_param_file)
   LoadBalancer ( GridType &grid,
                  RestrictProlongOperator &rpOp,
                  std::string paramFile,
@@ -115,9 +115,10 @@ protected:
      BalanceStep: 1 # (do balancing every step)
      \param balanceCounter actual counter, default is zero 
   */   
+  DUNE_VERSION_DEPRECATED(1,2,LoadBalancer_no_param_file)
   LoadBalancer ( GridType &grid,
                  std::string paramFile,
-                 int balanceCounter = 0 ) DUNE_DEPRECATED
+                 int balanceCounter = 0 ) 
     : grid_( grid ),
       dm_ ( DofManagerType::instance( grid_ ) ),
       balanceStep_( readBalanceStep( paramFile ) ),
@@ -130,8 +131,9 @@ protected:
       std::cout << "Created LoadBalancer: balanceStep = " << balanceStep_ << std::endl;
   }
 
+  DUNE_VERSION_DEPRECATED(1,2,no_method)
   // read balanceStep from parameter file or list 
-  int readBalanceStep(const std::string& paramFile) const DUNE_DEPRECATED
+  int readBalanceStep(const std::string& paramFile) const 
   {
     int balanceStep = 0;
     const bool output = (grid_.comm().rank() == 0);
