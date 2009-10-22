@@ -535,7 +535,7 @@ namespace Dune
     {
       const int maxBaseFunctions = DGNumberOfBaseFunctions< polOrd, dimDomain >::numBaseFunctions;
 
-      assert( geometry().dim() == dimDomain );
+      assert( (int) geometry().dim() == dimDomain );
 
       if( dimDomain == 1 )
         return BaseFunctionCreator< 1, GeometryType::cube, maxBaseFunctions, 0 >::create( i );
