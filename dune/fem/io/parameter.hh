@@ -20,8 +20,8 @@ namespace Dune
    *  Handling Parameters, i.e., values that can be set after compilation, in
    *  dune-fem is extremely easy. Just add
    *  \code
-   *  Dune :: MPIManager :: initialize( argc, argv );
-   *  Dune :: Parameter :: append( argc, argv );
+   *  Dune::MPIManager::initialize( argc, argv );
+   *  Dune::Parameter::append( argc, argv );
    *  \endcode
    *  at the head of your main function. Parameters are strings of the
    *  format "key: value". Any command line argument containing a colon
@@ -76,7 +76,7 @@ namespace Dune
    *  \endcode
    *  This can beused throughout the the program; by calling:
    *  \code
-   *  Parameter :: verbose()
+   *  Parameter::verbose()
    *  \endcode
    *  If verbose is set, information concerning the parameters read will
    *  be output to stdout.
@@ -85,31 +85,31 @@ namespace Dune
    *  \code
    *  #include <dune/fem/io/parameter.hh>
    *  
-   *  using Dune :: Parameter;
+   *  using Dune::Parameter;
    *
    *  int globalFlag;
    *
    *  int main ( int argc, char **argv )
    *  {
-   *    Dune :: MPIManager :: initialize( argc, argv );
-   *    Parameter :: append( argc, argv );
+   *    Dune::MPIManager::initialize( argc, argv );
+   *    Parameter::append( argc, argv );
    *
    *    // get parameters
-   *    double startTime = Parameter :: getValue< double >( "starttime", 0.0 );
-   *    Dune :: ValidateGreater< double > validator( startTime );
-   *    double endTime = Parameter :: getValidValue< double >( "endtime", validator );
-   *    Parameter :: get( "flag", 0, globalFlag );
+   *    double startTime = Parameter::getValue< double >( "starttime", 0.0 );
+   *    Dune::ValidateGreater< double > validator( startTime );
+   *    double endTime = Parameter::getValidValue< double >( "endtime", validator );
+   *    Parameter::get( "flag", 0, globalFlag );
    *    
-   *    if( Parameter :: verbose() )
-   *      std :: cout << "Computing from " << startTime << " to " << endTime << std::endl;
+   *    if( Parameter::verbose() )
+   *      std::cout << "Computing from " << startTime << " to " << endTime << std::endl;
    *    
    *    // ...
    *
-   *    std :: ofstream results( (Parameter :: outputPrefix() + "/results").c_str() );
+   *    std::ofstream results( (Parameter::outputPrefix() + "/results").c_str() );
    *
    *    // ...
    *
-   *    Parameter :: write( "parameter.log" );
+   *    Parameter::write( "parameter.log" );
    *  }
    *  \endcode
    */
@@ -137,69 +137,62 @@ namespace Dune
   {
     typedef Parameter ThisType;
 
-  private:
-    typedef std :: map< std :: string, std :: string > ParameterMapType;
+    typedef std::map< std::string, std::string > ParameterMapType;
 
-  private:
-    std :: string curFileName_;
-    int curLineNumber_;
-    ParameterMapType params_;
-    int verboseRank_;
-    
-  private:
-    inline Parameter ()
+    Parameter ()
     : verboseRank_( -1 )
     {}
 
     // Prohibit copying and assignment
-    inline Parameter ( const ThisType & );
-    inline ThisType &operator= ( const ThisType & );
+    Parameter ( const ThisType & );
+    ThisType &operator= ( const ThisType & );
 
-    inline static ThisType &instance ()
+    static ThisType &instance ()
     {
       static ThisType theInstance;
       return theInstance;
     }
 
-    inline const std :: string *find ( const std :: string &key );
+    const std::string *find ( const std::string &key );
 
-    inline const std :: string &map ( const std :: string &key );
+    inline const std::string &map ( const std::string &key );
 
-    inline const std :: string &map ( const std :: string &key,
-                                      const std :: string &value,
+    inline const std::string &map ( const std::string &key,
+                                      const std::string &value,
                                       bool verbFound = false );
 
-    inline bool insert ( const std :: string &s,
-                         std :: queue< std :: string > &includes );
+    inline bool insert ( const std::string &s,
+                         std::queue< std::string > &includes );
 
     template< class T >
-    inline static void parse ( const std :: string &s, T &value );
+    inline static void parse ( const std::string &s, T &value );
 
-    inline void processFile ( const std :: string &filename );
+    inline void processFile ( const std::string &filename );
 
-    inline void processIncludes( std :: queue< std :: string > &includes );
+    inline void processIncludes( std::queue< std::string > &includes );
 
-    inline void replace ( const std :: string &key,
-                          const std :: string &value );
+    inline void replace ( const std::string &key,
+                          const std::string &value );
 
   public:
     /** \brief add parameters from a file to the container
      * 
      * \param[in]  filename  name of the file containing the parameters
      */
-    inline static void append ( const std :: string &filename )
+    static void append ( const std::string &filename )
     {
       instance().processFile( filename );
     }
 
     /** \brief clear all parameters
      */
-    inline static void clear() {
+    static void clear ()
+    {
       instance().params_.clear();
     }
    
     template <class T>
-    inline static void replaceKey ( const std :: string& key, const T& value)
+    inline static void replaceKey ( const std::string& key, const T& value)
     {
       std::stringstream valueStr;
       valueStr << value;
@@ -224,7 +217,7 @@ namespace Dune
      *  \returns \b true, if the parameter is found in the container,
      *           \b false otherwise
      */
-    inline static bool exists ( const std :: string &key )
+    static bool exists ( const std::string &key )
     {
       return (instance().find( key ) != 0);
     }
@@ -238,8 +231,7 @@ namespace Dune
      *  \param[out]  value  value of the parameter
      */
     template< class T >
-    inline static void get ( const std :: string &key,
-                             T &value )
+    static void get ( const std::string &key, T &value )
     {
       parse( instance().map( key ), value );
     }
@@ -254,9 +246,8 @@ namespace Dune
      *  \param[out]  value         value of the parameter
      */
     template< class T >
-    inline static void get ( const std :: string &key,
-                             const T &defaultValue,
-                             T &value );
+    static void get ( const std::string &key, const T &defaultValue, T &value );
+
     /** \brief get an optional parameter from the container special case for string
      *
      *  \note This method returns a default value, if the parameter cannot be
@@ -266,9 +257,7 @@ namespace Dune
      *  \param[in]   defaultValue  default value for this parameter
      *  \param[out]  value         value of the parameter
      */
-    inline static void get ( const std :: string &key,
-                             const char* defaultValue,
-                             std::string &value );
+    static void get ( const std::string &key, const char* defaultValue, std::string &value );
 
     /** \brief get a mandatory parameter from the container
      *
@@ -280,9 +269,7 @@ namespace Dune
      *  \param[out]  value      value of the parameter
      */
     template< class T, class Validator >
-    inline static void getValid ( const std :: string &key,
-                                  const Validator &validator,
-                                  T &value );
+    static void getValid ( const std::string &key, const Validator &validator, T &value );
 
     /** \brief get an optional parameter from the container
      *
@@ -295,10 +282,7 @@ namespace Dune
      *  \param[out]  value         value of the parameter
      */
     template< class T, class Validator >
-    inline static void getValid ( const std :: string &key,
-                                  const T &defaultValue,
-                                  const Validator &validator,
-                                  T &value );
+    static void getValid ( const std::string &key, const T &defaultValue, const Validator &validator, T &value );
     
     /** \brief get a mandatory parameter from the container
      *
@@ -310,7 +294,7 @@ namespace Dune
      *  \returns value of the parameter
      */
     template< class T >
-    static T getValue ( const std :: string &key )
+    static T getValue ( const std::string &key )
     {
       T value;
       get( key, value );
@@ -328,7 +312,7 @@ namespace Dune
      *  \returns value of the parameter
      */
     template< class T >
-    static T getValue ( const std :: string &key,
+    static T getValue ( const std::string &key,
                         const T &defaultValue )
     {
       T value;
@@ -347,7 +331,7 @@ namespace Dune
      *  \returns value of the parameter
      */
     template< class T, class Validator >
-    static T getValidValue ( const std :: string &key,
+    static T getValidValue ( const std::string &key,
                              const Validator &validator )
     {
       T value;
@@ -368,7 +352,7 @@ namespace Dune
      *  \returns value of the parameter
      */
     template< class T, class Validator >
-    static T getValidValue ( const std :: string &key,
+    static T getValidValue ( const std::string &key,
                              const T &defaultValue,
                              const Validator &validator )
     {
@@ -377,6 +361,11 @@ namespace Dune
       return value;
     }
 
+    template< int n >
+    static int getEnum ( const std::string &key, const std::string (&values)[ n ] );
+    template< int n >
+    static int getEnum ( const std::string &key, const std::string (&values)[ n ], const int defaultValue );
+    
     /** \brief obtain common output path
      *
      *  For parallel jobs you need two different output paths:
@@ -388,7 +377,7 @@ namespace Dune
      * 
      *  \returns value of parameter 'fem.prefix', which defaults to '.'.
      */
-    static std :: string commonOutputPath ()
+    static std::string commonOutputPath ()
     {
       return instance().map( "fem.prefix", "." );
     }
@@ -407,11 +396,11 @@ namespace Dune
      *  - \<rank\> denots the this processes rank.
      *  .
      */
-    inline static std :: string outputPath ();
+    static std::string outputPath ();
 
     /** \brief obtain the value for fem.prefix defaults to '.'
      */
-    DUNE_DEPRECATED static const std :: string &prefix ()
+    DUNE_DEPRECATED static const std::string &prefix ()
     {
       return instance().map( "fem.prefix", "." );
     }
@@ -420,7 +409,7 @@ namespace Dune
      */
     static bool verbose ()
     {
-      return (instance().verboseRank_ == MPIManager :: rank());
+      return (instance().verboseRank_ == MPIManager::rank());
     }
   
     /** \brief write the parameter database to a file
@@ -433,7 +422,7 @@ namespace Dune
      *
      *  \param[in]  filename  name of the file to store the parameters in; prefix() is used.
      */
-    inline static void write ( const std :: string &filename );
+    static void write ( const std::string &filename );
 
     /** \brief write the parameter database to a stream
      *
@@ -444,7 +433,13 @@ namespace Dune
      *
      *  \param[in]  out stream for the parameters.
      */
-    inline static void write ( std :: ostream &out );
+    static void write ( std::ostream &out );
+
+  private:
+    std::string curFileName_;
+    int curLineNumber_;
+    ParameterMapType params_;
+    int verboseRank_;
   };
 
 
@@ -452,47 +447,45 @@ namespace Dune
   // Private Methods
   // ---------------
 
-  inline const std :: string *
-  Parameter :: find ( const std :: string &key )
+  inline const std::string *
+  Parameter::find ( const std::string &key )
   {
-    ParameterMapType :: iterator it = params_.find( key );
+    ParameterMapType::iterator it = params_.find( key );
     return (it != params_.end()) ? &(it->second) : 0;
   }
 
-  inline const std :: string &
-  Parameter :: map ( const std :: string &key )
+  inline const std::string &
+  Parameter::map ( const std::string &key )
   {
-    const std :: string *value = find( key );
+    const std::string *value = find( key );
     if( value != 0 )
       return *value;
 
-    std :: ostringstream message;
+    std::ostringstream message;
     message << "Parameter '" << key << "' not found.";
     DUNE_THROW( ParameterNotFound, message.str() );
   }
 
-  inline const std :: string &
-  Parameter :: map ( const std :: string &key,
-                     const std :: string &value,
-                     bool verbFound )
+  inline const std::string &
+  Parameter::map ( const std::string &key, const std::string &value, bool verbFound )
   {
-    std :: pair< ParameterMapType :: iterator, bool > info
-      = params_.insert( std :: make_pair( key, value ) );
+    std::pair< ParameterMapType::iterator, bool > info
+      = params_.insert( std::make_pair( key, value ) );
 
     if( info.second )
     {
       if( verbose() )
       {
-        std :: cout << curFileName_ << "[" << curLineNumber_ << "]: ";
-        std :: cout << "Adding " << key << " = " << value << std :: endl;
+        std::cout << curFileName_ << "[" << curLineNumber_ << "]: ";
+        std::cout << "Adding " << key << " = " << value << std::endl;
       }
     }
     else
     {
       if( verbFound && verbose() )
       {
-        std :: cout << curFileName_ << "[" << curLineNumber_ << "]: ";
-        std :: cout << "Ignored " << key << " = " << value
+        std::cout << curFileName_ << "[" << curLineNumber_ << "]: ";
+        std::cout << "Ignored " << key << " = " << value
                     << ", using " << info.first->second << std::endl;
       }
     }
@@ -500,8 +493,7 @@ namespace Dune
   }
 
   inline bool
-  Parameter :: insert ( const std :: string &s,
-                        std :: queue< std :: string > &includes )
+  Parameter::insert ( const std::string &s, std::queue< std::string > &includes )
   {
     const unsigned int size = s.size();
 
@@ -537,27 +529,27 @@ namespace Dune
     if( value_start >= size )
       return false;
 
-    std :: string key = s.substr( key_start, key_end - key_start );
-    std :: string value = s.substr( value_start, size - value_start );
+    std::string key = s.substr( key_start, key_end - key_start );
+    std::string value = s.substr( value_start, size - value_start );
 
     if( key != "paramfile" )
     {
-      const std :: string &actual_value = map( key, value, true );
+      const std::string &actual_value = map( key, value, true );
       if( key == "fem.verbose" )
       {
         bool verbose;
         parse( actual_value, verbose );
-        verboseRank_ = (verbose ? MPIManager :: rank() : -1);
-        std :: cout << "Warning: Using deprecated parameter 'fem.verbose'; "
-                    << "use 'fem.verboserank' instead." << std :: endl;
+        verboseRank_ = (verbose ? MPIManager::rank() : -1);
+        std::cout << "Warning: Using deprecated parameter 'fem.verbose'; "
+                    << "use 'fem.verboserank' instead." << std::endl;
       }
       if( key == "fem.verboserank" )
       {
         parse( actual_value, verboseRank_ );
-        if( (verboseRank_ < -1) || (verboseRank_ >= MPIManager :: size() ) )
+        if( (verboseRank_ < -1) || (verboseRank_ >= MPIManager::size() ) )
         {
-          std :: cout << "Warning: Parameter 'fem.verboserank' is neither a "
-                      << "valid rank nor -1." << std :: endl;
+          std::cout << "Warning: Parameter 'fem.verboserank' is neither a "
+                      << "valid rank nor -1." << std::endl;
         }
       }
     }
@@ -568,29 +560,29 @@ namespace Dune
 
   template< class T >
   inline void
-  Parameter :: parse ( const std :: string &s, T &value )
+  Parameter::parse ( const std::string &s, T &value )
   {
-    std :: istringstream in( s );
+    std::istringstream in( s );
     in >> value;
   }
 
   inline void
-  Parameter :: processFile ( const std :: string &filename )
+  Parameter::processFile ( const std::string &filename )
   {
     if( verbose() )
-      std :: cout << "Parameter: Processing '" << filename << "'..."
-                   << std :: endl;
+      std::cout << "Parameter: Processing '" << filename << "'..."
+                   << std::endl;
     
-    std :: ifstream file( filename.c_str() );
+    std::ifstream file( filename.c_str() );
     if( file.is_open() )
     {
       curFileName_ = filename;
       curLineNumber_ = 0;
-      std :: queue< std :: string > includes;
+      std::queue< std::string > includes;
       while( !file.eof() )
       {
-        std :: string line;
-        std :: getline( file, line );
+        std::string line;
+        std::getline( file, line );
         curLineNumber_++;
         if( line.size() == 0 )
           continue;
@@ -603,28 +595,27 @@ namespace Dune
       processIncludes( includes );
     }
     else
-      std :: cerr << "Warning: Unable to read parameter file '"
-                  << filename << "'" << std :: endl;
+      std::cerr << "Warning: Unable to read parameter file '"
+                  << filename << "'" << std::endl;
   }
 
   inline void
-  Parameter :: processIncludes( std :: queue< std :: string > &includes )
+  Parameter::processIncludes( std::queue< std::string > &includes )
   {
     while( !includes.empty() )
     {
-      std :: string filename = includes.front();
+      std::string filename = includes.front();
       includes.pop();
       processFile( filename );
     }
   }
 
   inline void
-  Parameter :: replace ( const std :: string &key,
-                         const std :: string &value )
+  Parameter::replace ( const std::string &key, const std::string &value )
   {
     if( verbose() )
-      std :: cout << "Parameter: Replacing " << key << " = " << value
-                  << std :: endl;
+      std::cout << "Parameter: Replacing " << key << " = " << value
+                  << std::endl;
     params_[ key ] = value;
   }
 
@@ -634,14 +625,14 @@ namespace Dune
   // --------------
 
   inline void
-  Parameter :: append ( int &argc, char **argv )
+  Parameter::append ( int &argc, char **argv )
   {
-    std :: queue< std :: string > includes;
+    std::queue< std::string > includes;
     instance().curFileName_ = "programm arguments";
     int &i = instance().curLineNumber_;
     for( i = 1 ; i < argc; ++i )
     {
-      if( !instance().insert( std :: string( argv[ i ] ), includes ) )
+      if( !instance().insert( std::string( argv[ i ] ), includes ) )
         continue;
 
       for( int j = i+1; j < argc; ++j )
@@ -654,34 +645,31 @@ namespace Dune
 
   template< class T >
   inline void
-  Parameter :: get ( const std :: string &key,
-                     const T &defaultValue,
-                     T &value )
+  Parameter::get ( const std::string &key, const T &defaultValue, T &value )
   {
     instance().curFileName_ = "using default";
     instance().curLineNumber_ = 0;
-    std :: ostringstream out;
+    std::ostringstream out;
     out << defaultValue;
     parse( instance().map( key, out.str() ), value );
   }
+
   inline void
-  Parameter :: get ( const std :: string &key,
-                     const char* defaultValue,
-                     std::string &value )
+  Parameter::get ( const std::string &key, const char* defaultValue, std::string &value )
   {
     get(key,std::string(defaultValue),value);
   }
 
   template< class T, class Validator >
   inline void
-  Parameter :: getValid ( const std :: string &key,
-                          const Validator &validator,
-                          T &value )
+  Parameter::getValid ( const std::string &key,
+                        const Validator &validator,
+                        T &value )
   {
     parse( instance().map( key ), value );
     if( !validator( value ) )
     {
-      std :: ostringstream message;
+      std::ostringstream message;
       message << "Parameter '" << key << "' invalid.";
       DUNE_THROW( ParameterInvalid, message.str() );
     }
@@ -689,30 +677,29 @@ namespace Dune
 
   template< class T, class Validator >
   inline void
-  Parameter :: getValid ( const std :: string &key,
-                          const T &defaultValue,
-                          const Validator &validator,
-                          T &value )
+  Parameter::getValid ( const std::string &key,
+                        const T &defaultValue,
+                        const Validator &validator,
+                        T &value )
   {
     instance().curFileName_ = "using default";
     instance().curLineNumber_ = 0;
-    std :: ostringstream out;
+    std::ostringstream out;
     out << defaultValue;
     parse( instance().map( key, out.str() ), value );
     if( !validator( value ) )
     {
-      std :: cerr << "Warning: Parameter '" << key << "' is invalid."
-                  << std :: endl;
+      std::cerr << "Warning: Parameter '" << key << "' is invalid." << std::endl;
       instance().replace( key, out.str() );
       parse( out.str(), value );
     }
   }
   
-  inline std :: string
-  Parameter :: outputPath ()
+  inline std::string
+  Parameter::outputPath ()
   {
-    const std :: string &prefix = instance().map( "fem.prefix", "." );
-    std :: ostringstream path;
+    const std::string &prefix = instance().map( "fem.prefix", "." );
+    std::ostringstream path;
     if( !prefix.empty() )
     {
       path << prefix;
@@ -721,60 +708,111 @@ namespace Dune
     }
     else
       path << "./";
-    path << 'p' << MPIManager :: rank();
+    path << 'p' << MPIManager::rank();
     return path.str();
   }
 
+
+  template< int n >
+  inline int
+  Parameter::getEnum ( const std::string &key, const std::string (&values)[ n ] )
+  {
+    const std::string &value = instance().map( key );
+    for( int i = 0; i < n; ++i )
+    {
+      if( value == values[ i ] )
+        return i;
+    }
+    int j;
+    parse( value, j );
+    return j;
+  }
+
+  template< int n >
+  inline int
+  Parameter::getEnum ( const std::string &key, const std::string (&values)[ n ], const int defaultValue )
+  {
+    instance().curFileName_ = "using default";
+    instance().curLineNumber_ = 0;
+    const std::string &value = instance().map( key, values[ defaultValue ] );
+    for( int i = 0; i < n; ++i )
+    {
+      if( value == values[ i ] )
+        return i;
+    }
+    int j;
+    parse( value, j );
+    return j;
+  }
+
+
   inline void
-  Parameter :: write ( const std :: string &filename )
+  Parameter::write ( const std::string &filename )
   {
     // only write one parameter log file
-    if( MPIManager :: rank() != 0 )
+    if( MPIManager::rank() != 0 )
       return;
 
-    std :: string fullname( commonOutputPath() );
+    std::string fullname( commonOutputPath() );
     fullname += "/";
     fullname += filename;
 
-    std :: ofstream file( fullname.c_str() );
+    std::ofstream file( fullname.c_str() );
     if( !file.is_open() )
     {
-      std :: cerr << "Warning: Unable to write parameter file '"
-                  << filename << "'" << std :: endl;
+      std::cerr << "Warning: Unable to write parameter file '"
+                << filename << "'" << std::endl;
     }
     write( file );
     file.close();
   }
 
   inline void
-  Parameter :: write ( std :: ostream &out )
+  Parameter::write ( std::ostream &out )
   {
-    typedef std :: map< std :: string, std :: string > :: iterator iterator;
+    typedef std::map< std::string, std::string >::iterator iterator;
     const iterator end = instance().params_.end();
     for( iterator it = instance().params_.begin(); it != end; ++it )
-      out << it->first << ": " << it->second << std :: endl;
+      out << it->first << ": " << it->second << std::endl;
   }
 
+
+
+  // LocalParameter
+  // --------------
+
   // Helper class for Parameter structures for classes
-  template <class ParamDefault,class ParamImpl>
-  struct LocalParameter : public ParamDefault {
-    virtual ~LocalParameter() {}
-    virtual ParamDefault* clone() const {
-      return new ParamImpl(asImp());
+  template< class ParamDefault, class ParamImpl >
+  struct LocalParameter
+  : public ParamDefault
+  {
+    virtual ~LocalParameter ()
+    {}
+
+    virtual ParamDefault *clone () const
+    {
+      return new ParamImpl( asImp() );
     }
-    private:
-    const ParamImpl& asImp() const {
-      return static_cast<const ParamImpl&>(*this);
+
+  protected:
+    const ParamImpl &asImp () const
+    {
+      return static_cast< const ParamImpl & >( *this );
     }
   };
-  template <class ParamDefault>
-  struct LocalParameter<ParamDefault,ParamDefault> {
-    virtual ~LocalParameter() {}
-    virtual ParamDefault* clone() const {
+
+  template< class ParamDefault >
+  struct LocalParameter< ParamDefault, ParamDefault >
+  {
+    virtual ~LocalParameter ()
+    {}
+
+    virtual ParamDefault *clone () const
+    {
       return new ParamDefault();
     }
   };
 
 }
 
-#endif
+#endif // #ifndef DUNE_FEM_PARAMETER_HH
