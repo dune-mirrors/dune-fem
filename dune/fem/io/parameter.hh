@@ -668,11 +668,7 @@ namespace Dune
   {
     parse( instance().map( key ), value );
     if( !validator( value ) )
-    {
-      std::ostringstream message;
-      message << "Parameter '" << key << "' invalid.";
-      DUNE_THROW( ParameterInvalid, message.str() );
-    }
+      DUNE_THROW( ParameterInvalid, "Parameter '" << key << "' invalid." );
   }
 
   template< class T, class Validator >
@@ -723,8 +719,11 @@ namespace Dune
       if( value == values[ i ] )
         return i;
     }
+
     int j;
     parse( value, j );
+    if( (j < 0) || (j >= n) )
+      DUNE_THROW( ParameterInvalid, "Parameter '" << key << "' invalid." );
     return j;
   }
 
@@ -740,9 +739,15 @@ namespace Dune
       if( value == values[ i ] )
         return i;
     }
+
     int j;
     parse( value, j );
-    return j;
+    if( (j >= 0) && (j < n) )
+      return j;
+
+    std::cerr << "Warning: Parameter '" << key << "' is invalid." << std::endl;
+    instance().replace( key, values[ defaultValue ] );
+    return defaultValue;
   }
 
 
