@@ -64,44 +64,18 @@ namespace Dune
     template< int codim >
     struct InsertSubEntities
     {
-      static void apply ( ThisType &indexSet, const ElementType &entity )
+      static void apply ( const ThisType &indexSet, const ElementType &entity )
       {
-        if( !indexSet.codimUsed_[ codim ] )
+        if( ! indexSet.codimUsed_[ codim ] )
           return;
         
         const HIndexSetType &hIndexSet = indexSet.hIndexSet_;
         CodimIndexSetType &codimSet = indexSet.codimLeafSet_[ codim ];
 
-        for( int i = 0; i < entity.template count< codim >(); ++i )
+        const int subEntities = entity.template count< codim >();
+        for( int i = 0; i < subEntities ; ++i )
         {
-          // codimSet.insert( hIndexSet.template subIndex< codim >( entity, i ) );
           codimSet.insert( hIndexSet.subIndex( entity, i, codim ) );
-        }
-      }
-    };
-
-    template< int codim >
-    struct InsertGhostSubEntities
-    {
-      static void apply ( ThisType &indexSet, const ElementType &entity ,
-                          const bool skipGhosts )
-      {
-        if( !indexSet.codimUsed_[ codim ] )
-          return;
-
-        const HIndexSetType &hIndexSet = indexSet.hIndexSet_;
-        CodimIndexSetType &codimSet = indexSet.codimLeafSet_[ codim ];
-
-        for( int i = 0; i < entity.template count< codim >(); ++i )
-        {
-          typedef typename GridType::template Codim< codim >::EntityPointer EntityPointer;
-          typedef typename GridType::template Codim< codim >::Entity Entity;
-
-          EntityPointer ptr = entity.template subEntity< codim >( i );
-          const Entity &subentity = *ptr;
-
-          if( !skipGhosts || (entity.partitionType() != GhostEntity) )
-            codimSet.insertGhost( hIndexSet.index( subentity ) );
         }
       }
     };
@@ -405,22 +379,8 @@ namespace Dune
   FilteredIndexSet< GridPartType, FilterImp >::insertIndex ( const ElementType &entity )
   {
     const int index = hIndexSet_.index( entity );
-
-#if HAVE_MPI 
-    // we need special treatment for ghosts 
-    // ghosts should not be inlcuded in holes list 
-    if( entity.partitionType() == GhostEntity )
-    {
-      codimLeafSet_[ 0 ].insertGhost( index );
-      const bool skipGhosts = (pitype != All_Partition);
-      ForLoop< InsertGhostSubEntities, 1, dimension >::apply( *this, entity, skipGhosts );
-    }
-    else 
-#endif // HAVE_MPI
-    {
-      codimLeafSet_[ 0 ].insert( index );
-      ForLoop< InsertSubEntities, 1, dimension >::apply( *this, entity );
-    }
+    codimLeafSet_[ 0 ].insert( index );
+    ForLoop< InsertSubEntities, 1, dimension >::apply( *this, entity );
 
     assert( codimLeafSet_[ 0 ].exists( index ) );
 
@@ -476,31 +436,26 @@ namespace Dune
     // resize if necessary 
     codimLeafSet_[ codim ].resize( hIndexSet_.size( codim ) );
     
+    // mark codimension as used
+    codimUsed_[codim] = true;
+
     // walk over leaf level on locate all needed entities  
     typedef typename GridPartType :: template Codim< 0 >:: 
       template Partition< pitype >:: IteratorType Iterator;
-    typedef typename Iterator :: Entity EntityType;
 
     const Iterator end = gridPart_.template end< 0, pitype >();
     for( Iterator it = gridPart_.template begin< 0, pitype >(); 
       it != end; ++it )
     {
-      const EntityType& entity = *it;
+      const ElementType& entity = *it;
+
       if( codim == 0 ) 
         codimLeafSet_[ codim ].insert( hIndexSet_.index ( entity ));
       else 
       {
-        const int subEntities = entity.template count< codim >();
-        for( int i=0; i<subEntities; ++i) 
-        {
-          codimLeafSet_[ codim ].insert( 
-             hIndexSet_.index ( *(entity.template subEntity< codim >( i )))); 
-        }
+        InsertSubEntities< codim > :: apply( *this, entity );
       }
     }
-
-    // mark codimension as used
-    codimUsed_[codim] = true;
   }
 
 
