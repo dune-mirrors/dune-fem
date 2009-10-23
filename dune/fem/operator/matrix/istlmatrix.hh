@@ -744,7 +744,9 @@ namespace Dune
       }
       else 
       {
-        preCon         = Parameter::getValue( "istl.preconditioning.method", preCon );
+        static const std::string preConTable[]
+          = { "none", "ssor", "sor", "ilu-0", "ilu-n", "gauss-seidel", "jacobi" };
+        preCon         = Parameter::getEnum( "istl.preconditioning.method", preConTable, preCon );
         numIterations_ = Parameter::getValue( "istl.preconditioning.iterations", numIterations_ );
         relaxFactor_   = Parameter::getValue( "istl.preconditioning.relaxation", relaxFactor_ );
       }
