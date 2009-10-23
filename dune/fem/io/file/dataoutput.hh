@@ -231,15 +231,22 @@ protected:
     std::vector<VTKListEntryType *> vec_;
   };
 #endif
-  template <class Entity>
+  template <class GridPartType>
   class GnuplotOutputer {
+    typedef typename GridPartType::EntityCodim0Type Entity;
     std::ostream& out_;
+    CachingQuadrature<GridPartType,0> &quad_;
+    int i_;
     const Entity& en_;
   public:
     //! Constructor
     GnuplotOutputer(std::ostream& out,
+                    CachingQuadrature<GridPartType,0> &quad,
+                    int i,
                     const Entity& en) : 
     out_(out),
+    quad_(quad),
+    i_(i),
     en_(en)
     {
     }
@@ -260,18 +267,18 @@ protected:
       enum{ dimDomain = DiscreteFunctionSpaceType :: dimDomain };
       enum{ dimRange = DiscreteFunctionSpaceType :: dimRange };
 
-      CachingQuadrature<GridPartType,0> quad(en_,df->space().order());
+      // CachingQuadrature<GridPartType,0> quad(en_,df->space().order());
       LocalFunctionType lf = df->localFunction(en_);
-      for( size_t i = 0; i < quad.nop(); ++i )
+      // for( size_t i = 0; i < quad.nop(); ++i )
       {
+        //DomainType x = en_.geometry().global(quad_.point(i_));
+        // for (int k = 0; k < dimDomain; ++k) 
+        //   out_ << x[k] << " ";
         RangeType u;
-        DomainType x = en_.geometry().global(quad.point(i));
-        lf.evaluate(quad[i],u);
-        for (int i = 0; i < dimDomain; ++i) 
-          out_ << x[i] << " ";
-        for (int i = 0; i < dimRange; ++i) 
-          out_ << u[i] << "   ";
-        out_ << std::endl;
+        lf.evaluate(quad_[i_],u);
+        for (int k = 0; k < dimRange; ++k) 
+          out_ << u[k] << "   ";
+        // out_ << std::endl;
       }
     }
   };
@@ -601,6 +608,7 @@ protected:
     std::string name = genFilename( path_, datapref_, writeStep_ );
     name += ".gnu";
     std::ofstream gnuout(name.c_str());
+    gnuout << std::scientific << std::setprecision(16);
 
     // generate adaptive leaf grid part 
     // do not use leaf grid part since this will 
@@ -611,10 +619,21 @@ protected:
     typedef typename GridPartType::template Codim<0>::IteratorType IteratorType;
     IteratorType endit = gridPart.template end<0>();
     for (IteratorType it = gridPart.template begin<0>(); it != endit; ++it) {
-      ForEachValue<OutPutDataType> forEach(data_); 
-      GnuplotOutputer< typename GridPartType::EntityCodim0Type > 
-                     io( gnuout,*it );
-      forEach.apply( io );
+      CachingQuadrature<GridPartType,0> quad(*it,1);
+      for( size_t i = 0; i < quad.nop(); ++i )
+      {
+        typedef typename IteratorType::Entity Entity;
+        const Entity& en = *it;
+        typename Entity::Geometry::GlobalCoordinate x = 
+          en.geometry().global(quad.point(i));
+        for (int k = 0; k < x.size; ++k) 
+           gnuout << x[k] << " ";
+        ForEachValue<OutPutDataType> forEach(data_); 
+        GnuplotOutputer< GridPartType > 
+                       io( gnuout,quad,i,en );
+        forEach.apply( io );
+        gnuout << std::endl;
+      }
     }
     return name;
   }
