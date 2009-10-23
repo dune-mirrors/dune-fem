@@ -44,42 +44,65 @@ class DataOutput;
     structure and modify any subset of the parameters. An instance of this modified
     class can then be passed in the construction of the Dune::DataWriter.
  */
-struct DataOutputParameters : public LocalParameter<DataOutputParameters,DataOutputParameters> {
+struct DataOutputParameters
+: public LocalParameter< DataOutputParameters, DataOutputParameters >
+{
   //! path where the data is stored (path are always relative to fem.commonOutputPath)
-  virtual std::string path() const {
-    return Parameter::getValue<std::string>("fem.io.path","");
+  virtual std::string path() const
+  {
+    return Parameter::getValue< std::string >( "fem.io.path", "" );
   }
+
   //! base of file name for data file (fem.io.datafileprefix)
-  virtual std::string prefix() const {
-    return Parameter::getValue<std::string>("fem.io.datafileprefix");
+  virtual std::string prefix () const
+  {
+    return Parameter::getValue< std::string >( "fem.io.datafileprefix" );
   }
+
   //! format of output (fem.io.outputformat)
-  virtual int outputformat() const {
-    return Parameter::getValidValue<int>("fem.io.outputformat",2,
-           ValidateInterval<int,true,true>(1,3));
+  virtual int outputformat () const
+  {
+    static const std::string formatTable[]
+      = { "grape", "vtk-cell", "vtk-vertex", "gnuplot" };
+    int format = Parameter::getEnum( "fem.io.outputformat", formatTable, 2 );
+    if( format == 0 )
+      DUNE_THROW( ParameterInvalid, "Format 'grape' not supported by DataOutput." );
+    return format;
   }
+
   //! use online grape display (fem.io.grapedisplay)
-  virtual bool grapedisplay() const {
-    return (Parameter::getValue("fem.io.grapedisplay",0) == 1);
+  virtual bool grapedisplay () const
+  {
+    return (Parameter::getValue( "fem.io.grapedisplay", 0 ) == 1);
   }
+
   //! save data every savestep interval (fem.io.savestep)
-  virtual double savestep() const {
-    return Parameter::getValue<double>("fem.io.savestep",0);
+  virtual double savestep () const
+  {
+    return Parameter::getValue< double >( "fem.io.savestep", 0 );
   }
+
   //! save data every savecount calls to write method (fem.io.savecount)
-  virtual int savecount() const {
-    return Parameter::getValue<int>("fem.io.savecount",0);
+  virtual int savecount () const
+  {
+    return Parameter::getValue< int >( "fem.io.savecount", 0 );
   }
+
   //! number for first data file (no parameter available)
-  virtual int startcounter() const {
+  virtual int startcounter () const
+  {
     return 0;
   }
+
   //! method used for conditional data output - default
   //! value passed as argument.
-  virtual bool willWrite(bool write) const {
+  virtual bool willWrite ( bool write ) const
+  {
     return write;
   }
 };
+
+
 
 /** @ingroup DiscFuncIO 
    \brief Implementation of the Dune::IOInterface. 

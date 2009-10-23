@@ -276,8 +276,9 @@ protected:
       datapref_ += dummyfile;
     }
 
-    int outputFormat = Parameter::getValidValue<int>("fem.io.outputformat",0,
-                                                ValidateInterval<int,true,true>(0,3));
+    static const std::string formatTable[]
+      = { "grape", "vtk-cell", "vtk-vertex", "gnuplot" };
+    int outputFormat = Parameter::getEnum( "fem.io.outputformat", formatTable, 0 );
     switch( outputFormat ) 
     {
       case 0: outputFormat_ = grape; break;
