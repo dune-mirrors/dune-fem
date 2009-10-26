@@ -227,6 +227,9 @@ namespace Dune
     void build ( const LocalCoefficients &localCoefficients,
                  MapInfo &mapInfo );
 
+    template< class Topology, class LocalCoefficientsProvider >
+    void build ( const LocalCoefficientsProvider &localCoefficientsProvider );
+
     const IndexSetType &indexSet_;
     std::vector< MapInfo > mapInfo_[ numTopologies ];
     std::vector< Block > blocks_;
@@ -501,6 +504,24 @@ namespace Dune
 
 
   template< class GridPart >
+  template< class Topology, class LocalCoefficientsProvider >
+  inline void GenericDofMapper< GridPart >
+    ::build ( const LocalCoefficientsProvider &localCoefficientsProvider )
+  {
+    const unsigned int size = localCoefficientsProvider.template size< Topology >();
+    mapInfo_[ Topology::id ].resize( size );
+    for( unsigned int i = 0; i < size; ++i )
+    {
+      MapInfo &mapInfo = mapInfo_[ Topology::id ][ i ];
+      const typename LocalCoefficientsProvider::LocalCoefficientsType &coefficients
+        = localCoefficientsProvider.template localCoefficients< Topology >( i );
+      build< Topology >( coefficients, mapInfo );
+    }
+  }
+
+
+
+  template< class GridPart >
   template< int topologyId >
   struct GenericDofMapper< GridPart >::Build
   {
@@ -511,15 +532,7 @@ namespace Dune
     apply ( const LocalCoefficientsProvider &localCoefficientsProvider,
             ThisType &dofMapper )
     {
-      const unsigned int size = localCoefficientsProvider.template size< Topology >();
-      dofMapper.mapInfo_[ topologyId ].resize( size );
-      for( unsigned int i = 0; i < size; ++i )
-      {
-        MapInfo &mapInfo = dofMapper.mapInfo_[ topologyId ][ i ];
-        const typename LocalCoefficientsProvider::LocalCoefficientsType &coefficients
-          = localCoefficientsProvider.template localCoefficients< Topology >( i );
-        dofMapper.template build< Topology >( coefficients, mapInfo );
-      }
+      dofMapper.template build< Topology >( localCoefficientsProvider );
     }
   };
 
