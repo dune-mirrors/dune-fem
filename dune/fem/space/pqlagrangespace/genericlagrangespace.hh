@@ -69,7 +69,7 @@ namespace Dune
     template< int dimDomain >
     struct LocalFiniteElementFactoryTraits
     {
-      typedef LagrangeLocalFiniteElement<EquidistantCoefficients,dimDomain,double,double> LocalFiniteElementType;
+      typedef LagrangeLocalFiniteElement< EquidistantPointSet, dimDomain, double, double > LocalFiniteElementType;
       // typedef LobattoLocalFiniteElement<dimDomain,double,double> LocalFiniteElementType;
       // typedef LagrangeLocalFiniteElement<dimDomain,double,double, GMPField<128>,GMPField<512> > LocalFiniteElementType;
       // typedef LagrangeLocalFiniteElement<dimDomain,double,double, amp::ampf<128>,amp::ampf<512> > LocalFiniteElementType;
