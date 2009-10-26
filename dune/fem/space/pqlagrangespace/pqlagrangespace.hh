@@ -236,8 +236,7 @@ namespace Dune
     typedef MapperType BlockMapperType;
 
     // implementation of basefunction set 
-    typedef GenericBaseFunctionSet< LocalFiniteElementType,
-                                    FunctionSpaceType >              BaseFunctionSetImp;
+    typedef GenericBaseFunctionSet< typename LocalFiniteElementType::Traits::LocalBasisType > BaseFunctionSetImp;
 
     // exported type 
     typedef SimpleBaseFunctionProxy< BaseFunctionSetImp >            BaseFunctionSetType;
@@ -372,7 +371,7 @@ namespace Dune
       finiteElement_( finiteElementFactory_.getObject() ),
       localCoefficientsMap_( finiteElement_ ),
       mapper_( gridPart, localCoefficientsMap_ ),
-      baseFunctionSet_( finiteElement_ )
+      baseFunctionSet_( finiteElement_.localBasis(), finiteElement_.type() )
     {}
 
   private:
