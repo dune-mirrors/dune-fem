@@ -1,5 +1,7 @@
 # IGNORE_HEADERS
 
+POLORDER=3
+
 testdir=$(includedir)/dune/fem/space/pqlagrangespace/test
 
 LDADD = $(ALL_PKG_LDFLAGS) $(ALL_PKG_LIBS) $(LOCAL_LIBS) -lgmpxx -lgmp -lmpfr
@@ -15,9 +17,13 @@ EXTRA_DIST = laplace.hh  massoperator.hh  problem.hh  \
 
 if HAVE_DUNE_LOCALFUNCTIONS
 
-check_PROGRAMS          = test_pqlagrangespace 
+check_PROGRAMS          = test_pqlagrangespace test-pk2d
+
 test_pqlagrangespace_SOURCES  = main.cc ../../../misc/test.cc ../../../misc/suite.cc
 test_pqlagrangespace_CPPFLAGS = $(ALL_PKG_CPPFLAGS) -DHAVE_GMP=0 -DHAVE_ALGLIB=1
+
+test_pk2d_SOURCES = test-pk2d.cc
+test_pk2d_CPPFLAGS = $(ALL_PKG_CPPFLAGS) -DPOLORDER=$(POLORDER)
 
 endif
 

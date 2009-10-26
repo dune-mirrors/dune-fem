@@ -1,5 +1,5 @@
 pqlagrangespacedir = $(includedir)/dune/fem/space/pqlagrangespace
-pqlagrangespace_HEADERS = pqlagrangespace.hh genericlagrangespace.hh
+pqlagrangespace_HEADERS = pqlagrangespace.hh genericlagrangespace.hh pk2dlagrangespace.hh
 
 SUBDIRS = test 
 

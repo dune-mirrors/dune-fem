@@ -1,0 +1,4 @@
+l2projection.gridfile: 2dgrid.dgf
+l2projection.level: 0
+l2projection.repeats: 3
+l2projection.vtkout: true
