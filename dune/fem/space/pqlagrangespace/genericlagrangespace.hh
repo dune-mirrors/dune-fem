@@ -106,8 +106,10 @@ namespace Dune
 
     typedef LocalFiniteElementFactory< LocalFEFactoryTraitsType >    LocalFEFactoryType;
 
-    typedef GenericDofMapper< GridPartType >                         MapperType;
-    typedef MapperType                                               BlockMapperType;
+    typedef PQLocalCoefficientsMap< LocalFiniteElementType, true, false >
+      LocalCoefficientsMapType;
+    typedef GenericDofMapper< GridPartType, LocalCoefficientsMapType > MapperType;
+    typedef MapperType BlockMapperType;
 
     // implementation of basefunction set 
     typedef GenericBaseFunctionSet< LocalFiniteElementType,
@@ -139,102 +141,6 @@ namespace Dune
     typedef LagrangeSpace< FunctionSpace, GridPart, polOrder >      DiscreteFunctionSpaceType;
   };
 
-#if 0
-  // GenericMapperSingletonKey
-  // -------------------------
-
-  //! Key for Mapper singleton list 
-  template< class GridPartImp, class FiniteElementImp >
-  struct GenericMapperSingletonKey 
-  {
-    //! constructor taking index set and numDofs 
-    GenericMapperSingletonKey(const GridPartImp & gridPart,
-                              const FiniteElementImp & finiteElement,
-                              const int polOrd)
-      : gridPart_(gridPart),  finiteElement_(finiteElement) , polOrd_(polOrd) 
-    {}
-    //! copy constructor 
-    GenericMapperSingletonKey(const GenericMapperSingletonKey &org) 
-      : gridPart_(org.gridPart_), finiteElement_(org.finiteElement_), polOrd_(org.polOrd_)
-    {}
-    //! returns true if indexSet pointer and numDofs are equal 
-    bool operator == (const GenericMapperSingletonKey & otherKey) const 
-    {
-      return ((&(gridPart_.indexSet()) == &(otherKey.gridPart().indexSet())) 
-	      && (polOrd_ == otherKey.polOrd_));
-    }
-
-    //! return reference to index set 
-    const GridPartImp & gridPart() const { return gridPart_; }
-    //! return local finite element object
-    const FiniteElementImp& finiteElement() const { return finiteElement_; }
-
-  private:
-    const GridPartImp      &gridPart_;
-    const FiniteElementImp &finiteElement_;
-    const int               polOrd_;
-  };
-
-
-
-  // GenericMapperSingletonFactory
-  // -----------------------------
-
-  // Factory class for SingletonList to tell how objects are created and
-  // how compared.
-  template< class Key, class Object, bool isSimplex=true, bool isCube=false >
-  class GenericMapperSingletonFactory;
-
-  template< class GridPart, class LocalFiniteElement, class Object, bool isSimplex, bool isCube >
-  class GenericMapperSingletonFactory< GenericMapperSingletonKey< GridPart, LocalFiniteElement >, Object, isSimplex, isCube >
-  {
-    struct LocalCoefficientsProvider
-    {
-      typedef typename LocalFiniteElement::Traits::LocalCoefficientsType
-        LocalCoefficientsType;
-
-      LocalCoefficientsProvider ( const LocalFiniteElement &fem )
-      : fem_( fem )
-      {}
-
-      template< class Topology >
-      unsigned int size () const
-      {
-        int size = 0;
-        if( isSimplex ) {
-          size+=GenericGeometry::IsSimplex< Topology >::value ? 1 : 0;
-        }
-        if( isCube ) {
-          size+=GenericGeometry::IsCube< Topology >::value ? 1 : 0;
-        }
-        return size;
-      }
-
-      template< class Topology >
-      const LocalCoefficientsType &localCoefficients ( const unsigned int i ) const
-      {
-        return fem_.localCoefficients();
-      }
-
-    private:
-      const LocalFiniteElement &fem_;
-    };
-
-  public:
-    typedef GenericMapperSingletonKey< GridPart, LocalFiniteElement > KeyType;
-
-    static Object *createObject( const KeyType &key )
-    {
-      LocalCoefficientsProvider localCoefficientsProvider( key.finiteElement() );
-      return new Object( key.gridPart(), localCoefficientsProvider );
-    }
-    
-    static void deleteObject( Object *obj )
-    {
-      delete obj;
-    }
-  };
-#endif
 
 
   // GenericLagrangeSpace
@@ -289,6 +195,8 @@ namespace Dune
     
     typedef typename Traits :: BaseFunctionSetType                   BaseFunctionSetType;
 
+    typedef typename Traits::LocalCoefficientsMapType LocalCoefficientsMapType;
+
     //! mapper used to implement mapToGlobal
     typedef typename Traits :: MapperType                            MapperType;
 
@@ -307,18 +215,6 @@ namespace Dune
     //! type of DoF manager
     typedef DofManager< GridType >                                   DofManagerType;
 
-    //! mapper singleton key
-    typedef GenericMapperSingletonKey< GridPartType,
-                                       LocalFiniteElementType >      MapperSingletonKeyType;
-
-    //! mapper factory
-    typedef GenericMapperSingletonFactory< MapperSingletonKeyType,
-                                           MapperType >              MapperSingletonFactoryType;
-
-    //! singleton list of mappers
-    typedef SingletonList< MapperSingletonKeyType, MapperType,
-                           MapperSingletonFactoryType >              MapperProviderType;
-
   public:
     //! type of identifier for this discrete function space
     typedef int IdentifierType;
@@ -329,39 +225,21 @@ namespace Dune
     using BaseType::gridPart;
 
   public:
-    /** \brief constructor
-     *
-     *  \param[in]  gridPart       grid part for the Lagrange space
-     *  \param[in]  commInterface  communication interface to use (optional)
-     *  \param[in]  commDirection  communication direction to use (optional)
-     */
-    explicit GenericLagrangeSpace ( GridPartType &gridPart, unsigned int polOrder )
+    GenericLagrangeSpace ( GridPartType &gridPart, unsigned int polOrder )
     : BaseType( gridPart ),
       polynomialOrder(polOrder),
-      mapper_( 0 ),
       finiteElementFactory_(polynomialOrder),
       finiteElement_( finiteElementFactory_.getObject() ),
-      genericBaseFunctionSet_( finiteElement_ ),
-      baseFunctionSet_( &genericBaseFunctionSet_ )
-    {
-      MapperSingletonKeyType key( gridPart, finiteElement_, polynomialOrder );
-      mapper_ = &MapperProviderType::getObject( key );
-      assert( mapper_ != 0 );
-    }
+      localCoefficientsMap_( finiteElement_ ),
+      mapper_( gridPart, localCoefficientsMap_ ),
+      baseFunctionSet_( finiteElement_ )
+    {}
 
   private:
     // forbid the copy constructor
     GenericLagrangeSpace ( const ThisType & );
 
   public:
-    /** \brief Destructor (freeing mapper)
-        \return 
-    **/
-    ~GenericLagrangeSpace ()
-    {
-      MapperProviderType::removeObject( *mapper_ );
-    }
-
     /** \copydoc Dune::DiscreteFunctionSpaceInterface::contains */
     bool contains ( const int codim ) const
     {
@@ -398,8 +276,7 @@ namespace Dune
     template< class Entity >
     const BaseFunctionSetType baseFunctionSet ( const Entity &entity ) const
     {
-/*      assert( entity.type().isSimplex() && (Entity::dimension == 2) );*/
-      return baseFunctionSet_;
+      return BaseFunctionSetType( &baseFunctionSet_ );
     }
 
     /** \brief get dimension of value
@@ -413,26 +290,24 @@ namespace Dune
     /** \copydoc Dune::DiscreteFunctionSpaceInterface::mapper */
     MapperType &mapper () const
     {
-      assert( mapper_ != 0 );
-      return *mapper_;
+      return mapper_;
     }
 
     /** \copydoc Dune::DiscreteFunctionSpaceInterface::blockMapper */
     MapperType &blockMapper () const
     {
-      assert( mapper_ != 0 );
-      return *mapper_;
+      return mapper_;
     }
 
   private:
     //! corresponding mapper
     unsigned int polynomialOrder;
-    MapperType *mapper_;
 
-    LocalFEFactoryType            finiteElementFactory_;
+    LocalFEFactoryType finiteElementFactory_;
     const LocalFiniteElementType &finiteElement_;
-    BaseFunctionSetImp            genericBaseFunctionSet_;
-    BaseFunctionSetType           baseFunctionSet_;
+    LocalCoefficientsMapType localCoefficientsMap_;
+    mutable MapperType mapper_;
+    BaseFunctionSetImp baseFunctionSet_;
   };
 
   template<class FunctionSpaceImp, class GridPartImp, int polOrder>

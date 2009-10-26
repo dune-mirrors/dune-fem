@@ -18,10 +18,10 @@ namespace Dune
   // Internal Forward Declarations
   // -----------------------------
 
-  template< class GridPart >
+  template< class GridPart, class LocalCoefficientsMap >
   class GenericDofMapper;
 
-  template< class GridPart >
+  template< class GridPart, class LocalCoefficientsMap >
   class GenericDofMapIterator;
 
 
@@ -29,14 +29,14 @@ namespace Dune
   // GenericDofMapperTraits
   // ----------------------
 
-  template< class GridPart >
+  template< class GridPart, class LocalCoefficientsMap >
   struct GenericDofMapperTraits
   {
-    typedef GenericDofMapper< GridPart > DofMapperType;
+    typedef GenericDofMapper< GridPart, LocalCoefficientsMap > DofMapperType;
 
     typedef typename GridPart::GridType::template Codim< 0 >::Entity EntityType;
 
-    typedef GenericDofMapIterator< GridPart > DofMapIteratorType;
+    typedef GenericDofMapIterator< GridPart, LocalCoefficientsMap > DofMapIteratorType;
   };
 
 
@@ -44,20 +44,23 @@ namespace Dune
   // GenericDofMapper
   // ----------------
 
-  template< class GridPart >
+  template< class GridPart, class LocalCoefficientsMap >
   class GenericDofMapper
-  : public DofMapper< GenericDofMapperTraits< GridPart > >
+  : public DofMapper< GenericDofMapperTraits< GridPart, LocalCoefficientsMap > >
   {
-    typedef GenericDofMapper< GridPart > ThisType;
-    typedef DofMapper< GenericDofMapperTraits< GridPart > > BaseType;
+    typedef GenericDofMapper< GridPart, LocalCoefficientsMap > ThisType;
+    typedef DofMapper< GenericDofMapperTraits< GridPart, LocalCoefficientsMap > > BaseType;
 
-    friend class GenericDofMapIterator< GridPart >;
+    friend class GenericDofMapIterator< GridPart, LocalCoefficientsMap >;
 
   public:
     typedef typename BaseType::EntityType EntityType;
     typedef typename BaseType::DofMapIteratorType DofMapIteratorType;
 
     typedef GridPart GridPartType;
+    typedef LocalCoefficientsMap LocalCoefficientsMapType;
+
+    typedef typename LocalCoefficientsMapType::LocalCoefficientsType LocalCoefficientsType;
 
     struct SubEntityInfo
     {
@@ -122,9 +125,8 @@ namespace Dune
     static const int dimension = GridPartType::GridType::dimension;
     static const unsigned int numTopologies = (1 << dimension);
 
-    template< class LocalCoefficientsProvider >
     GenericDofMapper ( const GridPartType &gridPart,
-                       const LocalCoefficientsProvider &localCoefficientsProvider );
+                       const LocalCoefficientsMapType &localCoefficientsMap );
 
     const IndexSetType &indexSet () const
     {
@@ -223,14 +225,15 @@ namespace Dune
     bool fixedDataSize( const int codim ) const;
 
   private: 
-    template< class Topology, class LocalCoefficients >
-    void build ( const LocalCoefficients &localCoefficients,
+    template< class Topology >
+    void build ( const LocalCoefficientsType &localCoefficients,
                  MapInfo &mapInfo );
 
-    template< class Topology, class LocalCoefficientsProvider >
-    void build ( const LocalCoefficientsProvider &localCoefficientsProvider );
+    template< class Topology >
+    void build ();
 
     const IndexSetType &indexSet_;
+    const LocalCoefficientsMapType &localCoefficientsMap_;
     std::vector< MapInfo > mapInfo_[ numTopologies ];
     std::vector< Block > blocks_;
     unsigned int maxNumDofs_;
@@ -239,12 +242,12 @@ namespace Dune
   };
 
 
-  template< class GridPart >
-  template< class LocalCoefficientsProvider >
-  inline GenericDofMapper< GridPart >
+  template< class GridPart, class LocalCoefficientsMap >
+  inline GenericDofMapper< GridPart, LocalCoefficientsMap >
     ::GenericDofMapper ( const GridPartType &gridPart,
-                         const LocalCoefficientsProvider &localCoefficientsProvider )
+                         const LocalCoefficientsMapType &localCoefficientsMap )
   : indexSet_( gridPart.indexSet() ),
+    localCoefficientsMap_( localCoefficientsMap ),
     maxNumDofs_( 0 )
   {
     for( int codim = 0; codim <= dimension; ++codim )
@@ -254,13 +257,14 @@ namespace Dune
       // (1 << subdimension-1) many indexInfos.
       blockIndex_[ codim ].resize( subdimension > 0 ? 1 << (subdimension-1) : 1, -1 );
     }
-    ForLoop< Build, 0, numTopologies-1 >::apply( localCoefficientsProvider, *this );
+    ForLoop< Build, 0, numTopologies-1 >::apply( *this );
     update();
   }
 
 
-  template< class GridPart >
-  inline bool GenericDofMapper< GridPart >::contains ( const int codim ) const
+  template< class GridPart, class LocalCoefficientsMap >
+  inline bool
+  GenericDofMapper< GridPart, LocalCoefficientsMap >::contains ( const int codim ) const
   {
     typedef typename std::vector< int >::const_iterator Iterator;
     assert( (codim >= 0) && (codim <= dimension) );
@@ -273,21 +277,22 @@ namespace Dune
   }
 
 
-  template< class GridPart >
+  template< class GridPart, class LocalCoefficientsMap >
   template< class Entity >
-  const typename GenericDofMapper< GridPart >::MapInfo &
-  GenericDofMapper< GridPart >::mapInfo ( const Entity &entity ) const
+  const typename GenericDofMapper< GridPart, LocalCoefficientsMap >::MapInfo &
+  GenericDofMapper< GridPart, LocalCoefficientsMap >::mapInfo ( const Entity &entity ) const
   {
     const unsigned int topologyId = GenericGeometry::topologyId( entity.type() );
-    if( mapInfo_[ topologyId ].size() != 1 )
-      DUNE_THROW( NotImplemented, "Multiple mapping not implemented." );
-    return mapInfo_[ topologyId ][ 0 ];
+    const unsigned int i = localCoefficientsMap_( entity );
+    assert( i <= mapInfo_[ topologyId ].size() );
+    return mapInfo_[ topologyId ][ i ];
   }
 
 
-  template< class GridPart >
+  template< class GridPart, class LocalCoefficientsMap >
   template< class Entity >
-  inline void GenericDofMapper< GridPart >
+  inline void
+  GenericDofMapper< GridPart, LocalCoefficientsMap >
     ::map ( const Entity &entity, std::vector< unsigned int > &indices ) const
   {
     typedef typename std::vector< SubEntityInfo >::const_iterator Iterator;
@@ -308,9 +313,10 @@ namespace Dune
   }
 
 
-  template< class GridPart >
+  template< class GridPart, class LocalCoefficientsMap >
   template< class Entity >
-  inline int GenericDofMapper< GridPart >
+  inline int
+  GenericDofMapper< GridPart, LocalCoefficientsMap >
     ::mapEntityDofToGlobal ( const Entity &entity, const int localDof ) const
   {
     const int codim = Entity::codimension;
@@ -324,8 +330,9 @@ namespace Dune
   }
 
 
-  template< class GridPart >
-  inline void GenericDofMapper< GridPart >::update ()
+  template< class GridPart, class LocalCoefficientsMap >
+  inline void
+  GenericDofMapper< GridPart, LocalCoefficientsMap >::update ()
   {
     size_ = 0;
     const unsigned int numBlocks = blocks_.size();
@@ -360,8 +367,9 @@ namespace Dune
   }
 
 
-  template< class GridPart >
-  inline int GenericDofMapper< GridPart >::numberOfHoles ( const int blockIdx ) const
+  template< class GridPart, class LocalCoefficientsMap >
+  inline int
+  GenericDofMapper< GridPart, LocalCoefficientsMap >::numberOfHoles ( const int blockIdx ) const
   {
     assert( (blockIdx >= 0) && (blockIdx < numBlocks()) );
     const Block &block = blocks_[ blockIdx ];
@@ -369,8 +377,9 @@ namespace Dune
   }
 
 
-  template< class GridPart >
-  inline int GenericDofMapper< GridPart >
+  template< class GridPart, class LocalCoefficientsMap >
+  inline int
+  GenericDofMapper< GridPart, LocalCoefficientsMap >
     ::oldIndex ( const int hole, const int blockIdx ) const
   {
     assert( (hole >= 0) && (hole < numberOfHoles( blockIdx )) );
@@ -380,8 +389,9 @@ namespace Dune
   }
 
 
-  template< class GridPart >
-  inline int GenericDofMapper< GridPart >
+  template< class GridPart, class LocalCoefficientsMap >
+  inline int
+  GenericDofMapper< GridPart, LocalCoefficientsMap >
     ::newIndex ( const int hole, const int blockIdx ) const
   {
     assert( (hole >= 0) && (hole < numberOfHoles( blockIdx )) );
@@ -391,8 +401,9 @@ namespace Dune
   }
 
 
-  template< class GridPart >
-  inline bool GenericDofMapper< GridPart >::fixedDataSize( const int codim ) const
+  template< class GridPart, class LocalCoefficientsMap >
+  inline bool
+  GenericDofMapper< GridPart, LocalCoefficientsMap >::fixedDataSize( const int codim ) const
   {
     typedef typename std::vector< int >::const_iterator Iterator;
     assert( (codim >= 0) && (codim <= dimension) );
@@ -410,10 +421,11 @@ namespace Dune
   }
 
 
-  template< class GridPart >
-  template< class Topology, class LocalCoefficients >
-  inline void GenericDofMapper< GridPart >
-    ::build ( const LocalCoefficients &localCoefficients,
+  template< class GridPart, class LocalCoefficientsMap >
+  template< class Topology >
+  inline void
+  GenericDofMapper< GridPart, LocalCoefficientsMap >
+    ::build ( const LocalCoefficientsType &localCoefficients,
               MapInfo &mapInfo )
   {
     const GenericGeometry::ReferenceTopology< dimension > &refTopology
@@ -503,36 +515,33 @@ namespace Dune
   }
 
 
-  template< class GridPart >
-  template< class Topology, class LocalCoefficientsProvider >
-  inline void GenericDofMapper< GridPart >
-    ::build ( const LocalCoefficientsProvider &localCoefficientsProvider )
+  template< class GridPart, class LocalCoefficientsMap >
+  template< class Topology >
+  inline void
+  GenericDofMapper< GridPart, LocalCoefficientsMap >::build ()
   {
-    const unsigned int size = localCoefficientsProvider.template size< Topology >();
+    const unsigned int size = localCoefficientsMap_.template size< Topology >();
     mapInfo_[ Topology::id ].resize( size );
     for( unsigned int i = 0; i < size; ++i )
     {
       MapInfo &mapInfo = mapInfo_[ Topology::id ][ i ];
-      const typename LocalCoefficientsProvider::LocalCoefficientsType &coefficients
-        = localCoefficientsProvider.template localCoefficients< Topology >( i );
-      build< Topology >( coefficients, mapInfo );
+      const LocalCoefficientsType &localCoefficients
+        = localCoefficientsMap_.template localCoefficients< Topology >( i );
+      build< Topology >( localCoefficients, mapInfo );
     }
   }
 
 
 
-  template< class GridPart >
+  template< class GridPart, class LocalCoefficientsMap >
   template< int topologyId >
-  struct GenericDofMapper< GridPart >::Build
+  struct GenericDofMapper< GridPart, LocalCoefficientsMap >::Build
   {
     typedef typename GenericGeometry::Topology< topologyId, dimension >::type Topology;
 
-    template< class LocalCoefficientsProvider >
-    static void
-    apply ( const LocalCoefficientsProvider &localCoefficientsProvider,
-            ThisType &dofMapper )
+    static void apply ( ThisType &dofMapper )
     {
-      dofMapper.template build< Topology >( localCoefficientsProvider );
+      dofMapper.template build< Topology >();
     }
   };
 
@@ -541,13 +550,13 @@ namespace Dune
   // GenericDofMapIterator
   // ---------------------
   
-  template< class GridPart >
+  template< class GridPart, class LocalCoefficientsMap >
   class GenericDofMapIterator
   {
-    typedef GenericDofMapIterator< GridPart > ThisType;
+    typedef GenericDofMapIterator< GridPart, LocalCoefficientsMap > ThisType;
 
   public:
-    typedef GenericDofMapper< GridPart > DofMapperType;
+    typedef GenericDofMapper< GridPart, LocalCoefficientsMap > DofMapperType;
 
     typedef typename DofMapperType::EntityType EntityType;
     typedef typename DofMapperType::IndexSetType IndexSetType;
