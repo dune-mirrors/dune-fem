@@ -1,5 +1,5 @@
 #ifndef  DUNE_FEM_GENERICLAGRANGESPACE_HH
-#define  DUNE_FEM_GENERICLAGRNAGESPACE_HH
+#define  DUNE_FEM_GENERICLAGRANGESPACE_HH
 
 #if HAVE_DUNE_GENERICLOCALFUNCTIONS
 
@@ -10,10 +10,7 @@
 //- Dune-Fem includes 
 #include <dune/fem/space/common/dofmanager.hh>
 #include <dune/fem/space/common/discretefunctionspace.hh>
-#include <dune/fem/space/common/basefunctionfactory.hh>
 #include <dune/fem/space/common/genericdofmapper.hh>
-#include <dune/fem/space/basefunctions/basefunctionstorage.hh>
-#include <dune/fem/space/basefunctions/basefunctionsets.hh>
 #include <dune/fem/space/basefunctions/genericbasefunctionsets.hh>
 #include <dune/fem/space/basefunctions/basefunctionproxy.hh>
 #include <dune/fem/space/lagrangespace/lagrangedatahandle.hh>
@@ -31,9 +28,10 @@
 namespace Dune
 {
 
-  template< class FunctionSpaceImp,
-            class GridPartImp, int polOrder = 1 >
+  template< class FunctionSpaceImp, class GridPartImp, int polOrder = 1 >
   class LagrangeSpace;
+
+
 
   template< class FunctionSpace, class GridPart >
   struct GenericLagrangeSpaceTraits
@@ -133,7 +131,7 @@ namespace Dune
     };
   };
 
-  template< class FunctionSpace, class GridPart, int polOrder = 1 >
+  template< class FunctionSpace, class GridPart, int polOrder >
   struct LagrangeSpaceTraits
   : public GenericLagrangeSpaceTraits< FunctionSpace, GridPart >
   {
@@ -328,6 +326,6 @@ namespace Dune
 
 #endif // #if HAVE_DUNE_GENERICLOCALFUNCTIONS
 
-#endif // #ifndef  _HH
+#endif // #ifndef  DUNE_FEM_GENERICLAGRANGESPACE_HH
 
 /* vim: set sw=2 et: */

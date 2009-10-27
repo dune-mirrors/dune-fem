@@ -1,21 +1,20 @@
 #ifndef DUNE_BASEFUNCTIONSTORAGE_HH
 #define DUNE_BASEFUNCTIONSTORAGE_HH
 
-//- system includes 
 #include <map>
 #include <vector>
 #include <list>
 
-//- Dune includes 
 #include <dune/common/typetraits.hh>
 #include <dune/grid/common/grid.hh>
 
-//- local includes 
 #include <dune/fem/space/common/arrays.hh>
-#include <dune/fem/space/common/basefunctionfactory.hh>
-#include "storageinterface.hh"
+#include <dune/fem/space/basefunctions/basefunctionfactory.hh>
+#include <dune/fem/space/basefunctions/storageinterface.hh>
+#include <dune/fem/quadrature/quadrature.hh>
 
-namespace Dune {
+namespace Dune
+{
 
   //! forward deklaration for CachingInterface 
   class CachingInterface;

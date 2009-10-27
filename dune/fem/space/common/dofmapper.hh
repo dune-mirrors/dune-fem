@@ -3,7 +3,6 @@
 
 //- Dune includes
 #include <dune/fem/misc/bartonnackmaninterface.hh>
-#include <dune/fem/space/common/basefunctioninterface.hh>
 #include <dune/fem/gridpart/emptyindexset.hh>
 
 namespace Dune

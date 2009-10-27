@@ -1,8 +1,10 @@
 #ifndef DUNE_GENERICBASEFUNCTIONSETS_HH
 #define DUNE_GENERICBASEFUNCTIONSETS_HH
 
-#include <dune/fem/space/common/basefunctionsetinterface.hh>
+#include <vector>
+
 #include <dune/fem/space/common/functionspace.hh>
+#include <dune/fem/space/basefunctions/basefunctionsetinterface.hh>
 
 namespace Dune
 {

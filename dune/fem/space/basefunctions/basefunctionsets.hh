@@ -1,13 +1,12 @@
 #ifndef DUNE_BASEFUNCTIONSETS_HH
 #define DUNE_BASEFUNCTIONSETS_HH
 
-//- Dune includes 
 #include <dune/common/fvector.hh>
 
-//- local includes 
-#include <dune/fem/space/common/basefunctioninterface.hh>
-#include <dune/fem/space/common/basefunctionfactory.hh>
 #include <dune/fem/space/common/dofstorage.hh>
+#include <dune/fem/space/basefunctions/basefunctioninterface.hh>
+#include <dune/fem/space/basefunctions/basefunctionfactory.hh>
+#include <dune/fem/space/basefunctions/basefunctionsetinterface.hh>
 
 namespace Dune
 {

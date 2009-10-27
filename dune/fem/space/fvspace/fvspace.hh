@@ -1,25 +1,19 @@
 #ifndef DUNE_FVSPACE_HH
 #define DUNE_FVSPACE_HH
 
-//- system includes 
 #include <map>
 
-//- Dune includes 
 #include <dune/grid/common/grid.hh>
 
-//- Dune-Fem includes 
 #include <dune/fem/space/common/discretefunctionspace.hh>
 #include <dune/fem/space/common/dofmanager.hh>
-#include <dune/fem/space/common/basefunctionfactory.hh>
 #include <dune/fem/space/basefunctions/basefunctionstorage.hh>
 #include <dune/fem/space/basefunctions/basefunctionsets.hh>
 #include <dune/fem/space/basefunctions/basefunctionproxy.hh>
 
-//- local includes 
-#include "fvspacebasefunctions.hh"
-#include "fvspacemapper.hh"
+#include <dune/fem/space/fvspace/fvspacebasefunctions.hh>
+#include <dune/fem/space/fvspace/fvspacemapper.hh>
 
-// use dg data handle 
 #include <dune/fem/space/dgspace/dgdatahandle.hh>
 
 // * Note: the dofmanager could be removed from the space altogether now.
@@ -27,7 +21,8 @@
 // there would be one DofManager per space and the DiscreteFunctions wouldn't
 // need to fiddle with the DofMapper anymore...
 
-namespace Dune {
+namespace Dune
+{
 
   // Forward declarations
   template <class FunctionSpaceImp, class GridPartImp, int polOrd,

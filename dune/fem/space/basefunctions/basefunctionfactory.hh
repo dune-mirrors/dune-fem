@@ -3,9 +3,10 @@
 
 #include <dune/common/geometrytype.hh>
 
-#include "basefunctioninterface.hh"
+#include <dune/fem/space/basefunctions/basefunctioninterface.hh>
 
-namespace Dune {
+namespace Dune
+{
 
   //! \brief Interface class for the generation of base functions.
   //! For every concrete set of base functions, derive your own concrete
@@ -17,8 +18,8 @@ namespace Dune {
     typedef BaseFunctionInterface<FunctionSpaceImp> BaseFunctionType;
   public:
     //! constructor storing geometry type 
-    BaseFunctionFactory(GeometryType geo) :
-      geo_(geo)
+    BaseFunctionFactory( const GeometryType &geo )
+    : geo_( geo )
     {}
 
     virtual ~BaseFunctionFactory() {}

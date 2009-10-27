@@ -6,7 +6,8 @@
 #include <dune/grid/common/grid.hh>
 
 //- Dune-Fem includes 
-#include <dune/fem/space/common/basefunctionfactory.hh>
+#include <dune/fem/space/basefunctions/basefunctioninterface.hh>
+#include <dune/fem/space/basefunctions/basefunctionfactory.hh>
 
 namespace Dune
 {

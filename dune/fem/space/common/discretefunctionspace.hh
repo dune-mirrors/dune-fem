@@ -7,7 +7,6 @@
 //- Dune includes 
 #include <dune/common/bartonnackmanifcheck.hh>
 #include <dune/fem/space/common/functionspace.hh>
-#include <dune/fem/space/common/basefunctioninterface.hh>
 #include <dune/fem/space/common/commoperations.hh>
 #include <dune/fem/function/localfunction/localfunctionwrapper.hh>
 #include <dune/fem/function/localfunction/temporarylocalfunction.hh>

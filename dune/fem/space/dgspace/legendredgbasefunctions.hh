@@ -1,14 +1,17 @@
 #ifndef DUNE_LEGENDREDGBASEFUNCTIONS_HH
 #define DUNE_LEGENDREDGBASEFUNCTIONS_HH
 
-// Dune includes
-#include <dune/grid/common/grid.hh>
 #include <dune/common/misc.hh>
-// Local includes
-#include <dune/fem/space/common/basefunctioninterface.hh>
-#include <dune/fem/space/common/basefunctionfactory.hh>
-#include "legendrepoly.hh"
-namespace Dune {
+
+#include <dune/grid/common/grid.hh>
+
+#include <dune/fem/space/basefunctions/basefunctioninterface.hh>
+#include <dune/fem/space/basefunctions/basefunctionfactory.hh>
+
+#include <dune/fem/space/dgspace/legendrepoly.hh>
+
+namespace Dune
+{
   
   //Template Meta Programm for evaluating tensorproduct polynomial in arbitrary dimensions
   template<int dim,int i,int PolOrd>

@@ -1,7 +1,7 @@
 #ifndef DUNE_BASEFUNCTIONPROXY_HH
 #define DUNE_BASEFUNCTIONPROXY_HH
 
-#include <dune/fem/space/common/basefunctionsetinterface.hh>
+#include <dune/fem/space/basefunctions/basefunctionsetinterface.hh>
 
 namespace Dune
 {

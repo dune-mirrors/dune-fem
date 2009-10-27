@@ -5,7 +5,8 @@
 #include <dune/common/fvector.hh>
 
 #include <dune/fem/space/common/functionspace.hh>
-#include <dune/fem/space/common/basefunctionfactory.hh>
+#include <dune/fem/space/basefunctions/basefunctioninterface.hh>
+#include <dune/fem/space/basefunctions/basefunctionfactory.hh>
 
 //- local includes 
 #include "genericlagrangepoints.hh"

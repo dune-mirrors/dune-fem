@@ -1,12 +1,11 @@
 #ifndef DUNE_BASEFUNCTIONSETINTERFACE_HH
 #define DUNE_BASEFUNCTIONSETINTERFACE_HH
 
-//- local includes 
-#include <dune/fem/space/common/basefunctioninterface.hh>
+#include <dune/common/fvector.hh>
+#include <dune/common/geometrytype.hh>
 
 #include <dune/fem/misc/bartonnackmaninterface.hh>
-
-#include <dune/fem/quadrature/quadrature.hh>
+#include <dune/fem/misc/deritype.hh>
 
 namespace Dune
 {
@@ -59,9 +58,6 @@ namespace Dune
     enum { dimDomain = FunctionSpaceType :: dimDomain };
     //! dimension of range 
     enum { dimRange  = FunctionSpaceType :: dimRange  };
-
-    //! type of BaseFunctions 
-    typedef BaseFunctionInterface<FunctionSpaceType> BaseFunctionType;
 
   protected:
     using BaseType :: asImp;

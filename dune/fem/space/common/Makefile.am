@@ -3,9 +3,6 @@ common_HEADERS = adaptcaps.hh \
      adaptmanager.hh \
      allgeomtypes.hh \
      arrays.hh \
-     basefunctionfactory.hh \
-     basefunctioninterface.hh \
-     basefunctionsetinterface.hh \
      cachedcommmanager.hh \
      commindexmap.hh \
      commoperations.hh \

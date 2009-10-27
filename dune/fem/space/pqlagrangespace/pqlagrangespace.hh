@@ -10,10 +10,7 @@
 //- Dune-Fem includes 
 #include <dune/fem/space/common/dofmanager.hh>
 #include <dune/fem/space/common/discretefunctionspace.hh>
-#include <dune/fem/space/common/basefunctionfactory.hh>
 #include <dune/fem/space/common/genericdofmapper.hh>
-#include <dune/fem/space/basefunctions/basefunctionstorage.hh>
-#include <dune/fem/space/basefunctions/basefunctionsets.hh>
 #include <dune/fem/space/basefunctions/genericbasefunctionsets.hh>
 #include <dune/fem/space/basefunctions/basefunctionproxy.hh>
 #include <dune/fem/space/lagrangespace/lagrangedatahandle.hh>
@@ -30,12 +27,10 @@
 namespace Dune
 {
 
-  template< class FunctionSpaceImp,
-            class GridPartImp, int polOrder = 1 >
+  template< class FunctionSpaceImp, class GridPartImp, int polOrder = 1 >
   class PLagrangeSpace;
 
-  template< class FunctionSpaceImp,
-            class GridPartImp, int polOrder = 1 >
+  template< class FunctionSpaceImp, class GridPartImp, int polOrder = 1 >
   class QLagrangeSpace;
 
 

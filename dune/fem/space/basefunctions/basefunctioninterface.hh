@@ -1,13 +1,12 @@
 #ifndef DUNE_BASEFUNCTIONINTERFACE_HH
 #define DUNE_BASEFUNCTIONINTERFACE_HH
 
-//- Dune includes 
 #include <dune/common/bartonnackmanifcheck.hh>
 
-//- local includes 
-#include <dune/fem/operator/common/mapping.hh>
+#include <dune/fem/misc/deritype.hh>
 
-namespace Dune{
+namespace Dune
+{
 
 /** @addtogroup BaseFunction  
     
@@ -49,10 +48,6 @@ namespace Dune{
  */
 template< class FunctionSpaceImp >
 class BaseFunctionInterface
-: public Mapping< typename FunctionSpaceImp :: DomainFieldType,
-                  typename FunctionSpaceImp :: RangeFieldType, 
-                  typename FunctionSpaceImp :: DomainType, 
-                  typename FunctionSpaceImp :: RangeType > 
 {
     
 public:
@@ -110,6 +105,7 @@ public:
 };
 
 ///@}
+
 } // end namespace Dune 
-#include "basefunctionsetinterface.hh"
-#endif
+
+#endif // #ifndef DUNE_BASEFUNCTIONINTERFACE_HH

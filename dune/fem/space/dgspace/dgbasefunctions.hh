@@ -4,9 +4,9 @@
 #include <dune/common/exceptions.hh>
 #include <dune/grid/common/grid.hh>
 
-#include <dune/fem/space/common/basefunctioninterface.hh>
-#include <dune/fem/space/common/basefunctionfactory.hh>
 #include <dune/fem/space/common/functionspace.hh>
+#include <dune/fem/space/basefunctions/basefunctioninterface.hh>
+#include <dune/fem/space/basefunctions/basefunctionfactory.hh>
 #include <dune/fem/space/dgspace/orthonormalbase_mod.hh>
 
 namespace Dune
