@@ -17,3 +17,5 @@ EXTRA_DIST = dgstub.hh \
              pass_test.hh \
              suite.hh \
              test.hh
+
+include $(top_srcdir)/am/global-rules

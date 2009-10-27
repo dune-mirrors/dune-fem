@@ -10,4 +10,3 @@ discretemodel.hh  dgdiscretemodel.hh\
 ellipticdiscretemodel.hh ellipticmodelcaller.hh limitpass.hh
 
 include $(top_srcdir)/am/global-rules
-
