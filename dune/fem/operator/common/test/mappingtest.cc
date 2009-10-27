@@ -3,6 +3,7 @@
 
 #include <dune/common/fvector.hh>
 #include <dune/fem/operator/common/mapping.hh>
+#include <dune/fem/operator/common/operator.hh>
 #include <dune/fem/space/common/functionspace.hh>
 
 using namespace Dune;
@@ -56,10 +57,30 @@ public:
 };
 
 
+class C : public Operator<
+          DomainFieldType, 
+          RangeFieldType, 
+          DomainType, 
+          RangeType >
+{
+  typedef SpaceType :: DomainType DomainType; 
+  typedef SpaceType :: RangeType  RangeType; 
+
+public:   
+  void operator () (const DomainType& arg, RangeType& dest) const 
+  {
+    dest = arg;
+    std::cout << "Call C :: apply \n";
+  }
+
+};
+
+
 int main () 
 {
   A a; 
   B b;
+  C c;
 
   MappingType m = a + b * 2.0 + a / 2.0 + b - 3.0 * a;
   DomainType arg = 1.0; 
@@ -69,19 +90,23 @@ int main ()
 
   m1( arg, dest );
 
-  m1 = a + b * 2.0;
+  m1 = c;
   m1( arg, dest );
-  std::cout << "Result of m1 combined mapping is: " << dest << std::endl;
+
+
+  m1 = a + b * 2.0 + c; // result should be 4 
+  m1( arg, dest );
+  std::cout << "Result (should be 4) of m1 combined mapping is: " << dest << std::endl;
 
   MappingType m2( m1 );
   m1( arg, dest );
-  std::cout << "Result of m2 combined mapping is: " << dest << std::endl;
+  std::cout << "Result (should be 4) of m2 combined mapping is: " << dest << std::endl;
 
   m(arg,dest);
 
-  std::cout << "Result of combined mapping is: " << dest << std::endl;
+  std::cout << "Result (should be 1.5) of combined mapping is: " << dest << std::endl;
   MappingType m3 = a - b * 2.0;
   m3(arg,dest);
-  std::cout << "Result of combined mapping is: " << dest << std::endl;
+  std::cout << "Result (should be -1.0) of combined mapping is: " << dest << std::endl;
   return 0;
 }
