@@ -2,6 +2,7 @@
 #define DUNE_GENERICBASEFUNCTIONSETS_HH
 
 #include <dune/fem/space/common/basefunctionsetinterface.hh>
+#include <dune/fem/space/common/functionspace.hh>
 
 namespace Dune
 {
