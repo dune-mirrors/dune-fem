@@ -65,11 +65,23 @@ int main ()
   DomainType arg = 1.0; 
   DomainType dest;
 
+  MappingType m1;
+
+  m1( arg, dest );
+
+  m1 = a + b * 2.0;
+  m1( arg, dest );
+  std::cout << "Result of m1 combined mapping is: " << dest << std::endl;
+
+  MappingType m2( m1 );
+  m1( arg, dest );
+  std::cout << "Result of m2 combined mapping is: " << dest << std::endl;
+
   m(arg,dest);
 
   std::cout << "Result of combined mapping is: " << dest << std::endl;
-  MappingType m2 = a - b * 2.0;
-  m2(arg,dest);
+  MappingType m3 = a - b * 2.0;
+  m3(arg,dest);
   std::cout << "Result of combined mapping is: " << dest << std::endl;
   return 0;
 }
