@@ -138,7 +138,13 @@ private:
   virtual void apply (const DomainType &arg, RangeType &dest) const 
   {
     // do noting if apply method leads to myself
-    if( loopDetected_ ) return ;
+    if( loopDetected_ ) 
+    {
+#ifndef NDEBUG 
+      std::cerr << "WARNING: Mapping::apply: Loop detected! Check overloading of operator() and apply! " << std::endl;
+#endif
+      return ;
+    }
 
     // set applyLoop to true again 
     loopDetected_ = true ;
