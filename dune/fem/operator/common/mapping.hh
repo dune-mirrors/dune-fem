@@ -93,10 +93,13 @@ public:
     lincomb_.erase( lincomb_.begin(), lincomb_.end() );
     typedef typename std::vector<term>::const_iterator iterator;
 
+    // reserve memory 
+    lincomb_.reserve( m.lincomb_.size() );
+
     iterator end = m.lincomb_.end();
     for (iterator it = m.lincomb_.begin(); it != end; it++ ) 
     {
-      lincomb_.push_back( term( *it->v_, it->scalar_ ) );
+      lincomb_.push_back( *it ); 
     }
     return *this;
   }
@@ -113,33 +116,16 @@ public:
     const_iterator end = lincomb_.end();
     for ( const_iterator it = lincomb_.begin(); it != end; ++it ) 
     {
+      const term& current = (*it);
       if ( count == 0 ) 
       {
-        it->v_->apply( arg, dest );
-        if ( it->scalar_ != 1. ) 
-        {
-          dest *= it->scalar_;
-        } 
+        // call apply of term, see below 
+        current.apply( arg, dest );
       } 
       else 
       {
-        // note, copying here might be costly 
-        RangeType tmp( dest );
-
-        it->v_->apply( arg, tmp );
-        if ( it->scalar_ == 1. ) 
-        {
-          dest += tmp;
-        } 
-        else if ( it->scalar_ == -1. ) 
-        {
-          dest -= tmp;
-        } 
-        else 
-        {
-          tmp *= it->scalar_;
-          dest += tmp;
-        }
+        // call applyAdd of term, see below 
+        current.applyAdd( arg, dest );
       }
       ++count;
     }
@@ -163,16 +149,52 @@ private:
   //! linear comnination object 
   struct term {
     term() : v_(NULL), scalar_(1.0), scaleIt_(false) { }
-
+    term(const term& other) 
+      : v_(other.v_), scalar_(other.scalar_), scaleIt_(other.scaleIt_) { }
+    
     term(const MappingType &mapping, RangeFieldType scalar ) : v_(&mapping), scalar_(scalar), scaleIt_( true ) {
       if ( scalar_ == 1. ) {
         scaleIt_ = false;
       }
     }
+   
+    void apply(const DomainType &arg, RangeType &dest) const
+    {
+      v_->apply( arg, dest );
+      if ( scaleIt_ ) 
+      {
+        dest *= scalar_;
+      } 
+    }
 
+    void applyAdd(const DomainType &arg, RangeType &dest) const
+    {
+      // note, copying here might be costly 
+      RangeType tmp( dest );
+
+      v_->apply( arg, tmp );
+      if ( scalar_ == 1. ) 
+      {
+        dest += tmp;
+      } 
+      else if ( scalar_ == -1. ) 
+      {
+        dest -= tmp;
+      } 
+      else 
+      {
+        tmp *= scalar_;
+        dest += tmp;
+      }
+    }
+
+  protected:  
     const MappingType *v_;
     RangeFieldType scalar_;
     bool scaleIt_;
+
+    // friendship for operations 
+    friend class MappingOperators;
   };
 
 
