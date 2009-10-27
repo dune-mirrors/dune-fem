@@ -3,21 +3,14 @@
 
 //- system includes 
 #include <vector>
-#include <dune/common/fvector.hh>
+
+#include <dune/fem/misc/deritype.hh>
+
 //- local includes 
 #include "vectorspace.hh"
 
-namespace Dune{
-
-//! type of derivative component chooser 
-typedef int deriType;
-
-//! type of derivative specializer 
-template <int dim>
-struct DiffVariable
+namespace Dune
 {
-  typedef FieldVector<deriType, dim> Type;
-};
 
 /** @addtogroup Mapping
 

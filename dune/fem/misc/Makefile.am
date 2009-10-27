@@ -10,6 +10,7 @@ misc_HEADERS = bartonnackmaninterface.hh \
 	       combineinterface.hh \
 	       commhelper.hh \
 	       debug.hh \
+	       deritype.hh \
 	       double.hh \
 	       engineconcept.hh \
 	       eoc.hh \
