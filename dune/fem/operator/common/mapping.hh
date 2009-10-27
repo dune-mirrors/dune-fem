@@ -71,8 +71,10 @@ public:
   
   //! create Mappiung with empty linear combination  
   Mapping() 
+    : applyLoop_( false )
   {
-    lincomb_.push_back( term( *this, 1 ) );
+    // store pointer to myself 
+    lincomb_.push_back( term( *this, 1. ) );
   }
   
   //! delete linear combination if necessary  
@@ -94,7 +96,7 @@ public:
     iterator end = m.lincomb_.end();
     for (iterator it = m.lincomb_.begin(); it != end; it++ ) 
     {
-      lincomb_.push_back( term( *it->v_, -it->scalar_ ) );
+      lincomb_.push_back( term( *it->v_, it->scalar_ ) );
     }
     return *this;
   }
@@ -106,8 +108,6 @@ public:
   */    
   void operator() (const DomainType &arg, RangeType &dest ) const 
   {
-    //dest.clear();
-    
     int count = 0;
     typedef typename std::vector<term>::const_iterator const_iterator;
     const_iterator end = lincomb_.end();
@@ -143,12 +143,20 @@ public:
       }
       ++count;
     }
+
+    applyLoop_ = false ;
   }
 
 private:
   //! apply operators 
   virtual void apply (const DomainType &arg, RangeType &dest) const 
   {
+    // do noting if apply method leads to myself
+    if( applyLoop_ ) return ;
+
+    // set applyLoop to true again 
+    applyLoop_ = true ;
+
     operator()(arg, dest);
   }
 
@@ -170,6 +178,9 @@ private:
 
   //! vector holding linear combination factors 
   std::vector<term> lincomb_;
+
+  //! true if we are stuck in an apply Loop 
+  mutable bool applyLoop_ ;
 
   // friendship for operations 
   friend class MappingOperators;
