@@ -1,12 +1,11 @@
 #ifndef DUNE_MAPPING_HH
 #define DUNE_MAPPING_HH
 
-//- system includes 
+#include <iostream>
 #include <vector>
 
 #include <dune/fem/misc/deritype.hh>
 
-//- local includes 
 #include "vectorspace.hh"
 
 namespace Dune
