@@ -476,7 +476,7 @@ namespace Dune {
             , int N8 = -1 
             , int N9 = -1 
             >
-  class DGDiscreteModelDefaultWithInsideOutSide :
+  class DGDiscreteModelDefaultWithInsideOutside :
     public DGDiscreteModelDefault<DGDiscreteModelTraits,N1,N2,N3,N4,N5,N6,N7,N8,N9>
   {
   public:
@@ -494,7 +494,7 @@ namespace Dune {
 
   public:
     //! \brief default constructor 
-    DGDiscreteModelDefaultWithInsideOutSide()
+    DGDiscreteModelDefaultWithInsideOutside()
       : enVol_(-1.0) , nbVol_(-1.0) , en_(0) , nb_(0) 
     {}
 
