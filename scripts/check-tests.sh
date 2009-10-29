@@ -13,7 +13,7 @@ CHECKLOG=$WORKINGDIR/check-tests.out
 make -i check &> $CHECKLOG
 
 retvalue=0
-warnings=`grep warning: $CHECKLOG | wc -l`
+warnings=`grep warning: $CHECKLOG | grep -v "default CommunicationManager is used" | wc -l`
 if test $warnings -gt 0 ; then
   echo "Warning: $warnings compiler warnings occurred."
 fi
