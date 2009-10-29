@@ -1,7 +1,7 @@
 #ifndef  DUNE_FEM_GENERICLAGRANGESPACE_HH
 #define  DUNE_FEM_GENERICLAGRANGESPACE_HH
 
-#if HAVE_DUNE_GENERICLOCALFUNCTIONS
+#if HAVE_DUNE_LOCALFUNCTIONS
 
 //- Dune includes 
 #include <dune/common/misc.hh>
@@ -16,12 +16,12 @@
 #include <dune/fem/space/lagrangespace/lagrangedatahandle.hh>
 
 //- Dune-Localfunctions include
-#include  <dune/finiteelements/common/field.hh>
+#include  <dune/finiteelements/generic/math/field.hh>
 
-#include  <dune/finiteelements/lagrangefiniteelement.hh>
-#include  <dune/finiteelements/lagrangebasis/equidistantpoints.hh>
+#include  <dune/finiteelements/generic/lagrangefiniteelement.hh>
+#include  <dune/finiteelements/generic/lagrangebasis/equidistantpoints.hh>
 #if HAVE_ALGLIB
-#include  <dune/finiteelements/lagrangebasis/lobattopoints.hh>
+#include  <dune/finiteelements/generic/lagrangebasis/lobattopoints.hh>
 #endif
 #include "pqlagrangespace.hh"
 
