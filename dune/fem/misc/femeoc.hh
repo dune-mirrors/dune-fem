@@ -2,6 +2,7 @@
 #define DUNE_FEMEOC_HH
 
 #include <cassert>
+#include <iostream>
 #include <sstream>
 #include <fstream>
 #include <vector>
@@ -100,7 +101,8 @@ class FemEoc
     }
   }
   template <class StrVectorType>
-  size_t addentry(const StrVectorType& descript,size_t size) {
+  size_t addentry(const StrVectorType& descript,size_t size) 
+  {
     if (!initial_) 
       abort();
     pos_.push_back(error_.size());
@@ -120,23 +122,24 @@ class FemEoc
     description_.push_back(descript);  
     return pos_.size()-1;
   }
+
   template <class VectorType>
-  void seterrors(size_t id,const VectorType& err,size_t size) {
+  void seterrors(size_t id,const VectorType& err,size_t size) 
+  {
     assert(id<pos_.size());
-    int pos = pos_[id];
-    assert(pos+size<error_.size());
-    for (size_t i=0;i<size;++i)
+    int pos = pos_[ id ];
+    assert(pos+size <= error_.size());
+
+    for (size_t i=0; i<size; ++i)
       error_[pos+i] = err[i];
   }
+
   template <int SIZE>
-  void seterrors(size_t id,const FieldVector<double,SIZE>& err) {
+  void seterrors(size_t id,const FieldVector<double,SIZE>& err) 
+  {
     seterrors(id,err,SIZE);
-    /*
-    int pos = pos_[id];
-    for (int i=0;i<SIZE;++i)
-      error_[pos+i] = err[i];
-    */
   }
+  
   void seterrors(size_t id,const double& err) {
     int pos = pos_[id];
     error_[pos] = err;
@@ -183,6 +186,33 @@ class FemEoc
     prevh_ = h;
     level_++;
     initial_ = false;
+  }
+
+  // do the same calculations as in write, but don't overwrite status 
+  void printerr(const double h, 
+                const double size, 
+                const double time, 
+                const int counter,
+                std::ostream& out) 
+  {
+	  out << "level:   " << level_  << std::endl;
+	  out << "h        " << h << std::endl;
+	  out << "size:    " << size << std::endl;
+	  out << "time:    " << time << " sec. " << std::endl;
+	  out << "counter: " << counter << std::endl;
+
+    for (unsigned int i=0;i<error_.size();++i) 
+    {
+      out << description_[i] << ":       " << error_[i] << std::endl;
+      if (! initial_) 
+      {
+        const double factor = prevh_/h;
+        const double eoc = log(prevError_[i]/error_[i])/log(factor);
+
+        out << "EOC (" <<description_[i] << "): " << eoc << std::endl;
+      }
+      out << std::endl;
+    }
   }
  public:
   static FemEoc& instance() {
@@ -238,7 +268,8 @@ class FemEoc
    *           returning a double (C style array can be used)
    */
   template <class VectorType>
-  static void setErrors(size_t id,const VectorType& err,int size) {
+  static void setErrors(size_t id,const VectorType& err,int size) 
+  {
     instance().seterrors(id,err,size);
   }
   /** \brief add a vector of error values for the given id (returned by
@@ -271,6 +302,27 @@ class FemEoc
    *  \param counter number of timesteps or iterations for a solver...
    */
   static void write(double h,double size,double time,int counter) {
+    instance().writeerr(h,size,time,counter);
+  }
+
+  /** \brief commit a line to the eoc file 
+   *
+   *  \param h grid width (e.g. given by GridWith utitlity class)
+   *  \param size number of elements in the grid or number of dofs...
+   *  \param time computational time
+   *  \param counter number of timesteps or iterations for a solver...
+   *  \param out std::ostream to print data to (e.g. std::cout) 
+   */
+  static void write(const double h,
+                    const double size,
+                    const double time, 
+                    const int counter,
+                    std::ostream& out) 
+  {
+    // print last line to out 
+    instance().printerr( h, size, time, counter, out );
+
+    // no write to file 
     instance().writeerr(h,size,time,counter);
   }
 };
