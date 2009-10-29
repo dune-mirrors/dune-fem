@@ -142,10 +142,10 @@ namespace Dune
         // run over all vertices of the simplex 
         for( unsigned int i = 0; i <= dim; ++i )
         {
-          const VertexPtrType vertexptr = entity.template entity< dim >( i );
+          const VertexPtrType vertexptr = entity.template subEntity< dim >( i );
           const VertexType &vertex = *vertexptr;
 
-          const PointType &point = vertex.geometry()[ 0 ];
+          const PointType &point = vertex.geometry().corner( 0 );
           const unsigned int ptindex = indexSet.index( vertex );
 
           for( unsigned int j = 0; j < dimworld; ++j )
