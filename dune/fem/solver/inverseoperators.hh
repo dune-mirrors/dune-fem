@@ -131,7 +131,9 @@ namespace Dune
         {
           std :: cerr << "CG-Iteration: " << count << ", Residuum: " << residuum
                       << std :: endl;
-          std :: cerr << "Communication needed: " << exchangeTime << " sec " << std::endl;
+          // only for parallel apps 
+          if( b.space().grid().comm().size() > 1 )
+            std :: cerr << "Communication needed: " << exchangeTime << " sec " << std::endl;
         }
         
         averageCommTime_ += exchangeTime;
