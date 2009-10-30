@@ -161,7 +161,7 @@ namespace LDGExample
 
   template< class Model, class NumFlux, int polOrd, int passId >
   struct LaplaceDiscreteModel
-  : public DGDiscreteModelDefaultWithInsideOutSide
+  : public DGDiscreteModelDefaultWithInsideOutside
     < LaplaceTraits< Model, NumFlux, polOrd, passId >, passId >
   { 
     enum { polynomialOrder = polOrd };
@@ -435,7 +435,7 @@ namespace LDGExample
 
   template <class ModelImp,class NumFluxImp,int polOrd, int passId >
   class VelocityDiscreteModel
-  : public DGDiscreteModelDefaultWithInsideOutSide
+  : public DGDiscreteModelDefaultWithInsideOutside
     < VelocityTraits< ModelImp, NumFluxImp, polOrd, passId >, passId >
   {
     // do not copy this class 

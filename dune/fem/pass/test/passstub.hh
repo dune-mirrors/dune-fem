@@ -61,7 +61,7 @@ namespace Dune
 
 
   struct ProblemStub
-  : public DGDiscreteModelDefaultWithInsideOutSide< PassStubTraits< GridType >, 0 > 
+  : public DGDiscreteModelDefaultWithInsideOutside< PassStubTraits< GridType >, 0 > 
   {
     typedef PassStubTraits<GridType> Traits;
   };
