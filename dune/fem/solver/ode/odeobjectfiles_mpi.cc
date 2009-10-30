@@ -9,10 +9,17 @@
 
 #include <config.h>
 
-namespace parDG_NoMPI {
+#if HAVE_MPI 
+#include <mpi.h>
+#endif
 
-#include "emptycommunicator.hpp"
-#define COMMUNICATOR_HPP
+// version of ode solver from parDG with MPI 
+namespace parDG_MPI {
+
+#if HAVE_MPI
+// include first, because of typedef 
+#include "communicator.cpp"
+#include "buffer.cpp"
   
 #include "bulirsch_stoer.cpp"  
 #include "iterative_solver.cpp"  
@@ -36,4 +43,5 @@ namespace parDG_NoMPI {
 #include "quadrature2d.cpp"
 #include "quadrature3d.cpp"
 
+#endif
 } // end namespace parDG_MPI
