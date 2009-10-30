@@ -22,15 +22,15 @@
 //- include runge kutta ode solver 
 #include <dune/fem/solver/rungekutta.hh>
 
-// include headers of pardg 
-#include "pardg.hh"
+// include headers of PARDG 
+#include "PARDG.hh"
 
 namespace DuneODE {
 
 #ifdef USE_PARDG_ODE_SOLVER
 
 template <class Operator>
-class OperatorWrapper : public pardg::Function 
+class OperatorWrapper : public PARDG::Function 
 {
   // type of discrete function 
   typedef typename Operator::DestinationType DestinationType;
@@ -105,17 +105,17 @@ public:
                       int pord, 
                       bool verbose) :
     ord_(pord),
-    comm_(pardg::Communicator::instance()),
+    comm_(PARDG::Communicator::instance()),
     op_(op),
     expl_(op),
     ode_(0),
     initialized_(false)
   {
     switch (pord) {
-      case 1: ode_ = new pardg::ExplicitEuler(comm_,expl_); break;
-      case 2: ode_ = new pardg::ExplicitTVD2(comm_,expl_); break;
-      case 3: ode_ = new pardg::ExplicitTVD3(comm_,expl_); break;
-      case 4: ode_ = new pardg::ExplicitRK4(comm_,expl_); break;
+      case 1: ode_ = new PARDG::ExplicitEuler(comm_,expl_); break;
+      case 2: ode_ = new PARDG::ExplicitTVD2(comm_,expl_); break;
+      case 3: ode_ = new PARDG::ExplicitTVD3(comm_,expl_); break;
+      case 4: ode_ = new PARDG::ExplicitRK4(comm_,expl_); break;
       default : std::cerr << "Runge-Kutta method of this order not implemented" 
                           << std::endl;
                 abort();
@@ -145,7 +145,7 @@ public:
   ~ExplTimeStepperBase() { delete ode_; }
 
   //! return reference to ode solver 
-  pardg::ODESolver& odeSolver() 
+  PARDG::ODESolver& odeSolver() 
   {
     assert( ode_ );
     return *ode_;
@@ -162,10 +162,10 @@ public:
   
 protected:
   int ord_;
-  pardg::Communicator & comm_;
+  PARDG::Communicator & comm_;
   const Operator& op_;
   OperatorWrapper<Operator> expl_;
-  pardg::ODESolver* ode_;
+  PARDG::ODESolver* ode_;
   bool initialized_;
 };
 
@@ -247,7 +247,7 @@ public:
   ImplTimeStepperBase(Operator& op, Dune :: TimeProviderBase &tp, 
                       int pord, bool verbose) :
     ord_(pord),
-    comm_(pardg::Communicator::instance()),
+    comm_(PARDG::Communicator::instance()),
     op_(op),
     impl_(op),
     ode_(0),
@@ -260,10 +260,10 @@ public:
     linsolver_.set_max_number_of_iterations(30);
     switch (pord) 
     {
-      case 1: ode_ = new pardg::ImplicitEuler(comm_,impl_); break;
-      case 2: ode_ = new pardg::Gauss2(comm_,impl_); break;
-      case 3: ode_ = new pardg::DIRK3(comm_,impl_); break;
-      //case 4: ode_ = new pardg::ExplicitRK4(comm,expl_); break;
+      case 1: ode_ = new PARDG::ImplicitEuler(comm_,impl_); break;
+      case 2: ode_ = new PARDG::Gauss2(comm_,impl_); break;
+      case 3: ode_ = new PARDG::DIRK3(comm_,impl_); break;
+      //case 4: ode_ = new PARDG::ExplicitRK4(comm,expl_); break;
       default : std::cerr << "Runge-Kutta method of this order not implemented" 
                           << std::endl;
                 abort();
@@ -297,7 +297,7 @@ public:
   ~ImplTimeStepperBase() {delete ode_;}
   
   // return reference to ode solver 
-  pardg::DIRK& odeSolver() 
+  PARDG::DIRK& odeSolver() 
   {
     assert( ode_ );
     return *ode_;
@@ -313,11 +313,11 @@ public:
   
 protected:
   int ord_;
-  pardg::Communicator & comm_;   
+  PARDG::Communicator & comm_;   
   const Operator& op_;
   OperatorWrapper<Operator> impl_;
-  pardg::DIRK* ode_;
-  pardg::GMRES linsolver_;
+  PARDG::DIRK* ode_;
+  PARDG::GMRES linsolver_;
   //enum { cycle = 20 };
   enum { cycle = 15 };
   bool initialized_;
@@ -445,7 +445,7 @@ public:
   SemiImplTimeStepperBase(OperatorExpl& explOp, OperatorImpl & implOp, Dune :: TimeProviderBase &tp, 
                       int pord, bool verbose) :
     ord_(pord),
-    comm_(pardg::Communicator::instance()),
+    comm_(PARDG::Communicator::instance()),
     explOp_(explOp),
     implOp_(implOp),
     expl_(explOp),
@@ -460,9 +460,9 @@ public:
     linsolver_.set_max_number_of_iterations(30);
 
     switch (pord) {
-      case 1: ode_=new pardg::SemiImplicitEuler(comm_,impl_,expl_); break;
-      case 2: ode_=new pardg::IMEX_SSP222(comm_,impl_,expl_); break;
-      case 3: ode_=new pardg::SIRK33(comm_,impl_,expl_); break;
+      case 1: ode_=new PARDG::SemiImplicitEuler(comm_,impl_,expl_); break;
+      case 2: ode_=new PARDG::IMEX_SSP222(comm_,impl_,expl_); break;
+      case 3: ode_=new PARDG::SIRK33(comm_,impl_,expl_); break;
       default : std::cerr << "Runge-Kutta method of this order not implemented" 
                           << std::endl;
                 abort();
@@ -496,7 +496,7 @@ public:
   ~SemiImplTimeStepperBase() {delete ode_;}
   
   // return reference to ode solver 
-  pardg::SIRK& odeSolver() 
+  PARDG::SIRK& odeSolver() 
   {
     assert( ode_ );
     return *ode_;
@@ -512,14 +512,14 @@ public:
   
 protected:
   int ord_;
-  pardg::Communicator & comm_;   
+  PARDG::Communicator & comm_;   
   const OperatorExpl& explOp_;
   const OperatorImpl& implOp_;
   OperatorWrapper<OperatorExpl> expl_;
   OperatorWrapper<OperatorImpl> impl_;
-  pardg::SIRK* ode_;
-  //pardg::CG linsolver_;
-  pardg::GMRES linsolver_;
+  PARDG::SIRK* ode_;
+  //PARDG::CG linsolver_;
+  PARDG::GMRES linsolver_;
   //enum { cycle = 20 };
   enum { cycle = 15 };
   bool initialized_;

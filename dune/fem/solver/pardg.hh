@@ -15,12 +15,19 @@
 #define USE_PARDG_ODE_SOLVER 
 //#endif
 
+// use different namespaces in case of MPI or not 
+#if HAVE_MPI 
+#define PARDG parDG_MPI::pardg
+#else 
+#define PARDG parDG_NoMPI::pardg
+#endif
+
 // if the preprocessor variable is defined, the ODE Solver from Dennis
 // are used.
 #ifdef USE_PARDG_ODE_SOLVER
 
 // timer has no namespace therefore we put here 
-namespace pardg {
+namespace PARDG {
 // if pardg library was found 
 #ifdef ENABLE_PARDG 
 #include <timer.hpp>
@@ -36,7 +43,7 @@ namespace pardg {
 #ifdef ENABLE_PARDG 
 
 #include <blas.hpp>
-namespace pardg {
+namespace PARDG {
 // we also need vector to be in namespace parDG 
 #include <vector.hpp>
 }
@@ -48,7 +55,7 @@ namespace pardg {
 // else use build in ode solver (may be outdated)
 #else
 
-namespace pardg {
+namespace PARDG {
 // we also need vector to be in namespace parDG 
 #include "ode/vector.hpp"
 }
