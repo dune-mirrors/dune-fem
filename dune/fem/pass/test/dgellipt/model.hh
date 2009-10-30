@@ -5,7 +5,6 @@
 #ifndef __LDGEXAMPLE_MODEL_HH__
 #define __LDGEXAMPLE_MODEL_HH__
 
-using namespace Dune;
 
 #include <math.h>
 #include <dune/fem/io/file/asciiparser.hh>
@@ -16,6 +15,8 @@ using namespace Dune;
 // include function space
 #include <dune/fem/space/common/functionspace.hh>
 #include <dune/fem/function/common/function.hh>
+
+using namespace Dune;
 
 namespace LDGExample { 
 

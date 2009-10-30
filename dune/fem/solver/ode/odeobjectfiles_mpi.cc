@@ -4,6 +4,8 @@
 #include <cmath>
 #include <vector>
 #include <pthread.h>
+#include <cstring>
+#include <cstdlib>
 #include <cassert>
 #include <sys/times.h>
 

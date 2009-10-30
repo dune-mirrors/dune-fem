@@ -16,7 +16,7 @@ namespace Dune {
   class ParDGSimplexPointsAdapter {
   public:
     enum { numCorners = dim+1 };
-    typedef typename pardg::Quadrature<dim> ParDGQuadratureType;
+    typedef typename PARDG::Quadrature<dim> ParDGQuadratureType;
     typedef FieldVector<double, dim> CoordinateType;
 
   public:

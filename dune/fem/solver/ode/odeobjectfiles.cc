@@ -3,6 +3,7 @@
 #include <fstream>
 #include <cmath>
 #include <vector>
+#include <cstring>
 #include <pthread.h>
 #include <cassert>
 #include <sys/times.h>

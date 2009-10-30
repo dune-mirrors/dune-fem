@@ -49,7 +49,7 @@ public:
     if (!data) data = newData;
     else {
       double* oldData;
-      pardg::cblas_dcopy(n,data,1,newData,1);
+      PARDG::cblas_dcopy(n,data,1,newData,1);
       data = newData;
       delete [] oldData;
     }
@@ -76,7 +76,7 @@ BlasVector::BlasVector(unsigned int pn) : owner_(true),
 n(pn), totalSize(pn), data(new double[pn])
 {
   assert(data);
-  pardg::dset(n, 0.0, data, 1);
+  PARDG::dset(n, 0.0, data, 1);
 }
 
 
@@ -85,7 +85,7 @@ BlasVector::BlasVector(unsigned int pn, const double *a) : owner_(false),
 n(pn), totalSize(pn), data(const_cast<double*>(a))
 {
   assert(data);
-  // pardg::cblas_dcopy(n, a, 1, data, 1);
+  // PARDG::cblas_dcopy(n, a, 1, data, 1);
 }
 
 
@@ -94,7 +94,7 @@ BlasVector::BlasVector(const BlasVector &v) : owner_(true),
 n(v.n), totalSize(v.n), data(new double[v.n])
 {
   assert(data);
-  pardg::cblas_dcopy(n, v.data, 1, data, 1);
+  PARDG::cblas_dcopy(n, v.data, 1, data, 1);
 }
 
 
@@ -125,7 +125,7 @@ inline
 BlasVector& BlasVector::operator=(const BlasVector& v)
 {
   assert(n==v.n);
-  pardg::cblas_dcopy(n, v.data, 1, data, 1);
+  PARDG::cblas_dcopy(n, v.data, 1, data, 1);
   return *this;
 }
 
@@ -134,7 +134,7 @@ inline
 BlasVector& BlasVector::operator+=(const BlasVector& v)
 {
   assert(n==v.n);
-  pardg::cblas_daxpy(n, 1.0, v.data, 1, data, 1);
+  PARDG::cblas_daxpy(n, 1.0, v.data, 1, data, 1);
   return *this;
 }
 
@@ -143,7 +143,7 @@ inline
 BlasVector& BlasVector::operator-=(const BlasVector& v)
 {
   assert(n==v.n);
-  pardg::cblas_daxpy(n, -1.0, v.data, 1, data, 1);
+  PARDG::cblas_daxpy(n, -1.0, v.data, 1, data, 1);
   return *this;
 }
 
@@ -151,7 +151,7 @@ BlasVector& BlasVector::operator-=(const BlasVector& v)
 inline
 BlasVector& BlasVector::operator*=(double alpha)
 {
-  pardg::cblas_dscal(n, alpha, data, 1);
+  PARDG::cblas_dscal(n, alpha, data, 1);
   return *this;
 }
 
@@ -159,7 +159,7 @@ BlasVector& BlasVector::operator*=(double alpha)
 inline
 BlasVector& BlasVector::operator=(double alpha)
 {
-  pardg::dset(n, alpha, data, 1);
+  PARDG::dset(n, alpha, data, 1);
   return *this;
 }
 

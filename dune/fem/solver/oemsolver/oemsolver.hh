@@ -12,7 +12,7 @@
 //- local includes 
 #include "preconditioning.hh"
 
-#include "../pardg.hh"
+#include <dune/fem/solver/pardg.hh>
 
 // include BLAS  implementation 
 #include "cblas.h"
@@ -69,7 +69,7 @@ namespace OEMSolver
 template <class OperatorImp>
 class SolverInterfaceImpl 
 #ifdef USE_PARDG_ODE_SOLVER
-: public pardg::Function 
+: public PARDG::Function 
 #endif
 {
   const OperatorImp & op_;
@@ -111,7 +111,7 @@ public:
 template <class PreconditionerImp>
 class PreconditionerImpl 
 #ifdef USE_PARDG_ODE_SOLVER
-: public pardg::Function 
+: public PARDG::Function 
 #endif
 {
   const PreconditionerImp& pre_;
@@ -921,7 +921,7 @@ private:
   };
 
   // solver 
-  typedef pardg::GMRES SolverType;
+  typedef PARDG::GMRES SolverType;
   mutable SolverType solver_;
   
   // wrapper to fit interface of FGMRES operator 
@@ -935,7 +935,7 @@ private:
   
 public:
   GMRESOp( OperatorType & op , double  redEps , double absLimit , int maxIter , bool verbose )
-      : solver_(pardg::Communicator::instance(),20)
+      : solver_(PARDG::Communicator::instance(),20)
       , op_(op) , epsilon_ ( absLimit ) 
       , maxIter_ (maxIter ) , verbose_ ( verbose ) 
   {
@@ -1066,7 +1066,7 @@ private:
   };
 
   // solver 
-  typedef pardg::FGMRES SolverType;
+  typedef PARDG::FGMRES SolverType;
   mutable SolverType solver_;
   
   // wrapper to fit interface of FGMRES operator 
@@ -1080,7 +1080,7 @@ private:
   
 public:
   FGMRESOp( OperatorType & op , double  redEps , double absLimit , int maxIter , bool verbose )
-      : solver_(pardg::Communicator::instance(),20)
+      : solver_(PARDG::Communicator::instance(),20)
       , op_(op) , epsilon_ ( absLimit ) 
       , maxIter_ (maxIter ) , verbose_ ( verbose ) 
   {
@@ -1211,7 +1211,7 @@ private:
   };
 
   // solver 
-  typedef pardg::BICGSTAB SolverType;
+  typedef PARDG::BICGSTAB SolverType;
   mutable SolverType solver_;
   // wrapper to fit interface of GMRES operator 
   mutable OperatorType & op_; 
@@ -1224,7 +1224,7 @@ private:
   
 public:
   BICGSTABOp( OperatorType & op , double  redEps , double absLimit , int maxIter , bool verbose )
-      : solver_(pardg::Communicator::instance())
+      : solver_(PARDG::Communicator::instance())
       , op_(op), epsilon_ ( absLimit ) 
       , maxIter_ (maxIter ) , verbose_ ( verbose ) 
   {

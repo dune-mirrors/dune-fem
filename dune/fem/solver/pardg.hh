@@ -17,8 +17,10 @@
 
 // use different namespaces in case of MPI or not 
 #if HAVE_MPI 
+#define PARDG_NS parDG_MPI 
 #define PARDG parDG_MPI::pardg
 #else 
+#define PARDG_NS parDG_NoMPI
 #define PARDG parDG_NoMPI::pardg
 #endif
 
@@ -26,8 +28,13 @@
 // are used.
 #ifdef USE_PARDG_ODE_SOLVER
 
+#if HAVE_MPI 
+#include <mpi.h>
+#endif
+
 // timer has no namespace therefore we put here 
-namespace PARDG {
+namespace PARDG_NS {
+namespace pardg {
 // if pardg library was found 
 #ifdef ENABLE_PARDG 
 #include <timer.hpp>
@@ -38,12 +45,13 @@ namespace PARDG {
 
 // include pardg communicator 
 #include "ode/communicator.hpp"
-
+}
 // if pardg library was found 
 #ifdef ENABLE_PARDG 
 
 #include <blas.hpp>
-namespace PARDG {
+namespace PARDG_NS {
+namespace pardg {
 // we also need vector to be in namespace parDG 
 #include <vector.hpp>
 }
@@ -51,20 +59,21 @@ namespace PARDG {
 #include <quadrature.hpp>  
 #include <ode_solver.hpp>
 #include <linear_solver.hpp>
-
+}
 // else use build in ode solver (may be outdated)
 #else
 
-namespace PARDG {
+namespace PARDG_NS {
+namespace pardg {
 // we also need vector to be in namespace parDG 
 #include "ode/vector.hpp"
 }
-
-#include "ode/quadrature.hpp"  
 #include "ode/blas.hpp"
+#include "ode/quadrature.hpp"  
 #include "ode/function.hpp"
 #include "ode/ode_solver.hpp"
 #include "ode/linear_solver.hpp"
+}
 #endif
 
 #endif // end USE_DENNIS 
