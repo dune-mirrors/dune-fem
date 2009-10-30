@@ -67,7 +67,7 @@ namespace Dune {
   // **********************************************
   template <class GlobalTraitsImp, class Model>
   class LimiterDefaultDiscreteModel :
-    public DGDiscreteModelDefaultWithInsideOutSide< LimiterDefaultTraits<GlobalTraitsImp,Model> > 
+    public DGDiscreteModelDefaultWithInsideOutside< LimiterDefaultTraits<GlobalTraitsImp,Model> > 
   {
   public:
     typedef LimiterDefaultTraits<GlobalTraitsImp,Model> Traits;
