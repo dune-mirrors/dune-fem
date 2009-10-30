@@ -23,7 +23,7 @@
 #include <dune/fem/solver/rungekutta.hh>
 
 // include headers of PARDG 
-#include "PARDG.hh"
+#include "pardg.hh"
 
 namespace DuneODE {
 
