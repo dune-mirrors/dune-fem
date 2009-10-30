@@ -68,10 +68,10 @@ namespace Dune
     struct LocalFiniteElementFactoryTraits
     {
       typedef LagrangeLocalFiniteElement< EquidistantPointSet, dimDomain, double, double > LocalFiniteElementType;
-      // typedef LobattoLocalFiniteElement<dimDomain,double,double> LocalFiniteElementType;
-      // typedef LagrangeLocalFiniteElement<dimDomain,double,double, GMPField<128>,GMPField<512> > LocalFiniteElementType;
-      // typedef LagrangeLocalFiniteElement<dimDomain,double,double, amp::ampf<128>,amp::ampf<512> > LocalFiniteElementType;
-      // typedef LagrangeLocalFiniteElement<dimDomain,double,double, double,GMPField<512> > LocalFiniteElementType;
+      // typedef LagrangeLocalFiniteElement< LobattoPointSet, dimDomain,double,amp::ampf<256>> LocalFiniteElementType;
+      // typedef LagrangeLocalFiniteElement< EquidistantPointSet, dimDomain,double,double, GMPField<128>,GMPField<512> > LocalFiniteElementType;
+      // typedef LagrangeLocalFiniteElement< EquidistantPointSet, dimDomain,double,double, amp::ampf<128>,amp::ampf<512> > LocalFiniteElementType;
+      // typedef LagrangeLocalFiniteElement< EquidistantPointSet, dimDomain,double,double, double,GMPField<512> > LocalFiniteElementType;
       static const bool geometryTypeIsFixed = false;
     };
 
