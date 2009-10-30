@@ -19,11 +19,12 @@
 #if HAVE_MPI 
 #include <mpi.h>
 #define PARDG_NS parDG_MPI 
-#define PARDG parDG_MPI::pardg
 #else 
 #define PARDG_NS parDG_NoMPI
-#define PARDG parDG_NoMPI::pardg
 #endif
+
+// define combined namespace for later use 
+#define PARDG PARDG_NS::pardg
 
 // if the preprocessor variable is defined, the ODE Solver from Dennis
 // are used.
