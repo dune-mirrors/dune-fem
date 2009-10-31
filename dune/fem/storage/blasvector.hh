@@ -4,6 +4,8 @@
 #include <iostream>
 #include <cassert>
 #include <cmath>
+#include <vector>
+
 #include <dune/fem/solver/pardg.hh>
 #include <dune/fem/storage/vector.hh>
 

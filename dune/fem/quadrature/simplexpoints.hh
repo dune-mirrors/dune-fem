@@ -1,6 +1,7 @@
 #ifndef DUNE_SIMPLEXPOINTS_HH
 #define DUNE_SIMPLEXPOINTS_HH
 
+#include <vector>
 #include <cassert>
 
 //- Dune includes
