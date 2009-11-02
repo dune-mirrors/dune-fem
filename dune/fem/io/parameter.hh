@@ -684,11 +684,7 @@ namespace Dune
     out << defaultValue;
     parse( instance().map( key, out.str() ), value );
     if( !validator( value ) )
-    {
-      std::cerr << "Warning: Parameter '" << key << "' is invalid." << std::endl;
-      instance().replace( key, out.str() );
-      parse( out.str(), value );
-    }
+      DUNE_THROW( ParameterInvalid, "Parameter '" << key << "' invalid." );
   }
   
   inline std::string
@@ -714,6 +710,7 @@ namespace Dune
   Parameter::getEnum ( const std::string &key, const std::string (&values)[ n ] )
   {
     const std::string &value = instance().map( key );
+
     for( int i = 0; i < n; ++i )
     {
       if( value == values[ i ] )
@@ -734,6 +731,7 @@ namespace Dune
     instance().curFileName_ = "using default";
     instance().curLineNumber_ = 0;
     const std::string &value = instance().map( key, values[ defaultValue ] );
+
     for( int i = 0; i < n; ++i )
     {
       if( value == values[ i ] )
@@ -742,12 +740,10 @@ namespace Dune
 
     int j;
     parse( value, j );
-    if( (j >= 0) && (j < n) )
-      return j;
 
-    std::cerr << "Warning: Parameter '" << key << "' is invalid." << std::endl;
-    instance().replace( key, values[ defaultValue ] );
-    return defaultValue;
+    if( (j < 0) || (j >= n) )
+      DUNE_THROW( ParameterInvalid, "Parameter '" << key << "' invalid." );
+    return j;
   }
 
 
