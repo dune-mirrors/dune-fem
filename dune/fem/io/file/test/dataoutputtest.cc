@@ -20,7 +20,7 @@ static const int dimw = dimworld;
 #include <dune/fem/function/common/discretefunctionadapter.hh>
 
 #include <dune/grid/common/referenceelements.hh>
-#include <dune/fem/operator/projection/l2projection.hh>
+#include <dune/fem/operator/projection/dgl2projection.hh>
 #include <dune/fem/misc/l2error.hh>
 
 #include <dune/fem/misc/double.hh>
@@ -165,7 +165,7 @@ double algorithm (GridType& grid, DiscreteFunctionType& solution,double time=0)
    L2Error < DiscreteFunctionType > l2err;
        
    //! perform l2-projection
-   L2ProjectionImpl::project(f, solution);
+   DGL2ProjectionImpl::project(f, solution);
 
    // calculation L2 error 
    // pol ord for calculation the error chould by higher than 

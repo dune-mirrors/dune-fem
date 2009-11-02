@@ -520,7 +520,7 @@ private:
     template <class EntityType, class SpaceType> 
     static inline FaceBSetType faceBaseSet(const EntityType& en, const SpaceType& space) 
     {
-      return space.baseFunctionSet( *(en.template entity<1> (0) ));
+      return space.baseFunctionSet( *(en.template subEntity<1> (0) ));
     }
   };
 
