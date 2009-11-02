@@ -64,7 +64,7 @@ struct DataOutputParameters
   {
     static const std::string formatTable[]
       = { "grape", "vtk-cell", "vtk-vertex", "gnuplot" };
-    int format = Parameter::getEnum( "fem.io.outputformat", formatTable, 2 );
+    int format = Parameter::getEnum( "fem.io.outputformat", formatTable, 1 );
     if( format == 0 )
       DUNE_THROW( ParameterInvalid, "Format 'grape' not supported by DataOutput." );
     return format;
@@ -519,7 +519,7 @@ protected:
     // generate filename, with path only for serial run  
     std::string name = genFilename( (parallel) ? "" : path_, datapref_, writeStep_ );
 
-#ifdef YASPGRID 
+#if 0 // YASPGRID 
     if( vertexData )
     {
       static bool called = false; 

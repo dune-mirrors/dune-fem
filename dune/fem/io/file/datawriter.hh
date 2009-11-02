@@ -399,7 +399,7 @@ protected:
     // generate filename, with path only for serial run  
     std::string name = genFilename( (parallel) ? "" : path_, datapref_, writeStep_ );
 
-#ifdef YASPGRID 
+#if 0 // YASPGRID 
     if( vertexData )
     {
       static bool called = false; 
