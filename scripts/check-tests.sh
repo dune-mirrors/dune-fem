@@ -13,7 +13,7 @@ CHECKLOG=$WORKINGDIR/check-tests.out
 make -i check &> $CHECKLOG
 
 retvalue=0
-warnings=`grep warning: $CHECKLOG | grep -v "default CommunicationManager is used" | grep -v "GRIDDIM not defined" | grep -v "No GRIDTYPE defined" | grep -v "Hdiv-Projection only working for polOrd = 1" | wc -l`
+warnings=`grep warning: $CHECKLOG | grep -v "default CommunicationManager is used" | grep -v "GRIDDIM not defined" | grep -v "No GRIDTYPE defined" | grep -v "Hdiv-Projection only working for polOrd = 1" | grep -v "YaspGrid does not provide a HierarchicIndexSet" wc -l`
 if test $warnings -gt 0 ; then
   echo "Warning: $warnings compiler warnings occurred."
 fi
