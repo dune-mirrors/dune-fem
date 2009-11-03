@@ -155,24 +155,20 @@ namespace Dune
 
     const std::string *find ( const std::string &key );
 
-    inline const std::string &map ( const std::string &key );
+    const std::string &map ( const std::string &key );
+    const std::string &map ( const std::string &key, const std::string &value, bool verbFound = false );
 
-    inline const std::string &map ( const std::string &key,
-                                      const std::string &value,
-                                      bool verbFound = false );
+    static std::string stripComment ( const std::string &line );
 
-    inline bool insert ( const std::string &s,
-                         std::queue< std::string > &includes );
+    bool insert ( const std::string &s, std::queue< std::string > &includes );
 
     template< class T >
-    inline static void parse ( const std::string &s, T &value );
+    static bool parse ( const std::string &s, T &value );
 
-    inline void processFile ( const std::string &filename );
+    void processFile ( const std::string &filename );
+    void processIncludes( std::queue< std::string > &includes );
 
-    inline void processIncludes( std::queue< std::string > &includes );
-
-    inline void replace ( const std::string &key,
-                          const std::string &value );
+    void replace ( const std::string &key, const std::string &value );
 
   public:
     /** \brief add parameters from a file to the container
@@ -192,7 +188,7 @@ namespace Dune
     }
    
     template <class T>
-    inline static void replaceKey ( const std::string& key, const T& value)
+    static void replaceKey ( const std::string& key, const T& value )
     {
       std::stringstream valueStr;
       valueStr << value;
@@ -208,7 +204,7 @@ namespace Dune
      * \param[in]  argc  number of arguments (as given to main)
      * \param[in]  argv  vector of arguments (as given to main)
      */
-    inline static void append ( int &argc, char **argv );
+    static void append ( int &argc, char **argv );
     
     /** \brief find out, whether a parameter is defined in the container
      *
@@ -233,7 +229,8 @@ namespace Dune
     template< class T >
     static void get ( const std::string &key, T &value )
     {
-      parse( instance().map( key ), value );
+      if( !parse( instance().map( key ), value ) )
+        DUNE_THROW( ParameterInvalid, "Parameter '" << key << "' invalid." );
     }
     
     /** \brief get an optional parameter from the container
@@ -312,8 +309,7 @@ namespace Dune
      *  \returns value of the parameter
      */
     template< class T >
-    static T getValue ( const std::string &key,
-                        const T &defaultValue )
+    static T getValue ( const std::string &key, const T &defaultValue )
     {
       T value;
       get( key, defaultValue, value );
@@ -331,8 +327,7 @@ namespace Dune
      *  \returns value of the parameter
      */
     template< class T, class Validator >
-    static T getValidValue ( const std::string &key,
-                             const Validator &validator )
+    static T getValidValue ( const std::string &key, const Validator &validator )
     {
       T value;
       getValid( key, validator, value );
@@ -352,9 +347,7 @@ namespace Dune
      *  \returns value of the parameter
      */
     template< class T, class Validator >
-    static T getValidValue ( const std::string &key,
-                             const T &defaultValue,
-                             const Validator &validator )
+    static T getValidValue ( const std::string &key, const T &defaultValue, const Validator &validator )
     {
       T value;
       getValid( key, defaultValue, validator, value );
@@ -447,15 +440,13 @@ namespace Dune
   // Private Methods
   // ---------------
 
-  inline const std::string *
-  Parameter::find ( const std::string &key )
+  inline const std::string *Parameter::find ( const std::string &key )
   {
     ParameterMapType::iterator it = params_.find( key );
     return (it != params_.end()) ? &(it->second) : 0;
   }
 
-  inline const std::string &
-  Parameter::map ( const std::string &key )
+  inline const std::string &Parameter::map ( const std::string &key )
   {
     const std::string *value = find( key );
     if( value != 0 )
@@ -492,6 +483,31 @@ namespace Dune
     return info.first->second;
   }
 
+  inline std::string Parameter::stripComment ( const std::string &line )
+  {
+    const unsigned int size = line.size();
+    unsigned int begin = 0;
+    for( ; begin < size; ++begin )
+    {
+      if( (line[ begin ] != ' ') && (line[ begin ] != '\t') )
+        break;
+    }
+
+    unsigned int end = begin;
+    for( unsigned int i = begin; i < size; ++i )
+    {
+      if( (line[ i ] == '%') || (line[ i ] == '#') )
+        break;
+      if( (line[ i ] != ' ') && (line[ i ] != '\t') )
+        end = i+1;
+    }
+
+    if( begin >= size )
+      return std::string( "" );
+    else
+      return line.substr( begin, end-begin );
+  }
+
   inline bool
   Parameter::insert ( const std::string &s, std::queue< std::string > &includes )
   {
@@ -526,11 +542,18 @@ namespace Dune
         break;
     }
 
+    unsigned int value_end = value_start;
+    for( unsigned int i = 0; i < size; ++i )
+    {
+      if( (s[ i ] != ' ') && (s[ i ] != '\t') )
+        value_end = i+1;
+    }
+
     if( value_start >= size )
       return false;
 
     std::string key = s.substr( key_start, key_end - key_start );
-    std::string value = s.substr( value_start, size - value_start );
+    std::string value = s.substr( value_start, value_end - value_start );
 
     if( key != "paramfile" )
     {
@@ -559,11 +582,13 @@ namespace Dune
   }
 
   template< class T >
-  inline void
+  inline bool
   Parameter::parse ( const std::string &s, T &value )
   {
     std::istringstream in( s );
-    in >> value;
+    char eof;
+    in >> value >> eof;
+    return in.eof();
   }
 
   inline void
@@ -584,11 +609,10 @@ namespace Dune
         std::string line;
         std::getline( file, line );
         curLineNumber_++;
+        line = stripComment( line );
         if( line.size() == 0 )
           continue;
-
-        if( (line[ 0 ] != '%') && (line[ 0 ] != '#') )
-          insert( line, includes );
+        insert( line, includes );
       }
       file.close();
 
@@ -651,7 +675,8 @@ namespace Dune
     instance().curLineNumber_ = 0;
     std::ostringstream out;
     out << defaultValue;
-    parse( instance().map( key, out.str() ), value );
+    if( !parse( instance().map( key, out.str() ), value ) )
+      DUNE_THROW( ParameterInvalid, "Parameter '" << key << "' invalid." );
   }
 
   inline void
@@ -666,7 +691,8 @@ namespace Dune
                         const Validator &validator,
                         T &value )
   {
-    parse( instance().map( key ), value );
+    if( !parse( instance().map( key ), value ) )
+      DUNE_THROW( ParameterInvalid, "Parameter '" << key << "' invalid." );
     if( !validator( value ) )
       DUNE_THROW( ParameterInvalid, "Parameter '" << key << "' invalid." );
   }
@@ -682,7 +708,8 @@ namespace Dune
     instance().curLineNumber_ = 0;
     std::ostringstream out;
     out << defaultValue;
-    parse( instance().map( key, out.str() ), value );
+    if( !parse( instance().map( key, out.str() ), value ) )
+      DUNE_THROW( ParameterInvalid, "Parameter '" << key << "' invalid." );
     if( !validator( value ) )
       DUNE_THROW( ParameterInvalid, "Parameter '" << key << "' invalid." );
   }
@@ -718,7 +745,8 @@ namespace Dune
     }
 
     int j;
-    parse( value, j );
+    if( !parse( value, j ) )
+      DUNE_THROW( ParameterInvalid, "Parameter '" << key << "' invalid." );
     if( (j < 0) || (j >= n) )
       DUNE_THROW( ParameterInvalid, "Parameter '" << key << "' invalid." );
     return j;
@@ -739,7 +767,8 @@ namespace Dune
     }
 
     int j;
-    parse( value, j );
+    if( !parse( value, j ) )
+      DUNE_THROW( ParameterInvalid, "Parameter '" << key << "' invalid." );
 
     if( (j < 0) || (j >= n) )
       DUNE_THROW( ParameterInvalid, "Parameter '" << key << "' invalid." );
