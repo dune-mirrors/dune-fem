@@ -491,6 +491,7 @@ namespace Dune {
     typedef typename GridPartType::GridType GridType;
     typedef typename GridType::template Codim<0>::Entity EntityType;
     typedef typename GridPartType::IntersectionIteratorType IntersectionIteratorType;
+    typedef typename IntersectionIteratorType :: Intersection  IntersectionType;
 
   public:
     //! \brief default constructor 
@@ -544,6 +545,27 @@ namespace Dune {
       assert( nbVol_ > 0.0 );
       return nbVol_;
     }
+
+    /** \brief return local coordinate of quadrature point 
+     *   with respect to inside element */
+    template <class FaceDomainType>
+    const DomainType pointInInside(const IntersectionType& intersection,
+                                   const FaceDomainType& faceLocal) const
+    {
+      return intersection.geometryInInside().global( faceLocal );
+    }
+
+    /** \brief return local coordinate of quadrature point 
+     *  with respect to outside element */
+    template <class FaceDomainType>
+    const DomainType pointInOutside(const IntersectionType& intersection,
+                                    const FaceDomainType& faceLocal) const
+    {
+      return intersection.geometryInOutside().global( faceLocal );
+    }
+
+
+
   private:
     double enVol_;
     double nbVol_;
