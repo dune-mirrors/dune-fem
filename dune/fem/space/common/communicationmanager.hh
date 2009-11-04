@@ -29,7 +29,9 @@
 #else 
 #ifndef NDEBUG 
 #if HAVE_MPI == 0
-  #warning "HAVE_MPI == 0, therefore default CommunicationManager is used!"
+  #ifdef DUNE_DEVEL_MODE
+    #warning "HAVE_MPI == 0, therefore default CommunicationManager is used!"
+  #endif
 #elif !ALU3DGRID_PARALLEL 
   #warning "No Parallel ALUGrid found, using default CommunicationManager!"
 #elif ! WANT_CACHED_COMM_MANAGER 
