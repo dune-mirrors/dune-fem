@@ -8,16 +8,17 @@ noinst_LTLIBRARIES = libsolver.la
 # construct only from sub-libraries
 libsolver_la_SOURCES =
 # if par DG was found, then ODE solver are not included  
-if PARDG 
+# if PARDG 
 libsolver_la_LIBADD =
-else 
+# else 
 libsolver_la_LIBADD = ode/libodesolver.la
-endif
+# endif
 
 solverdir =  $(includedir)/dune/fem/solver
 solver_HEADERS = inverseoperators.hh \
                  istlsolver.hh \
 		 odesolver.hh \
+		 pardgodesolver.hh \
 		 oemsolver.hh \
 		 multistep.hh \
 		 pardg.hh \

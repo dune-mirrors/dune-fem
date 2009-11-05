@@ -109,7 +109,7 @@ bool GMRES::solve(Function &op, double *u, const double *b)
       // preconditioner)
       if (preconditioner)
       {
-	      (*preconditioner)(vj, z);
+        (*preconditioner)(vj, z);
       	op(z, vjp);
       }
       else op(vj, vjp);
@@ -149,6 +149,10 @@ bool GMRES::solve(Function &op, double *u, const double *b)
       cblas_drot(1, &g[j+1], 1, &g[j], 1, c[j], s[j]);
 
       //*os << fabs(g[j+1]) << std::endl;
+      if (IterativeSolver::os)
+      {
+        *IterativeSolver::os << "GMRES "<< comm.id() << " it: " << iterations << " : " <<  fabs(g[j+1]) << std::endl; 
+      }
 
       iterations++;
       if (fabs(g[j+1]) < _tolerance 
@@ -191,10 +195,6 @@ bool GMRES::solve(Function &op, double *u, const double *b)
     }
 
     if (fabs(g[last]) < _tolerance) break;
-    if (IterativeSolver::os)
-    {
-      *IterativeSolver::os << "GMRES "<< comm.id() << " it: " << iterations << " : " <<  fabs(g[last]) << std::endl; 
-    }
 
   }
 
