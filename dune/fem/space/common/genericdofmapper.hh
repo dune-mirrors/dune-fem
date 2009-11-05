@@ -408,7 +408,7 @@ namespace Dune
     typedef typename std::vector< int >::const_iterator Iterator;
     assert( (codim >= 0) && (codim <= dimension) );
 
-    const Iterator begin = blockIndex_[ codim ].begin();
+    Iterator begin = blockIndex_[ codim ].begin();
     const Iterator end = blockIndex_[ codim ].end();
     if( begin == end )
       return true;
