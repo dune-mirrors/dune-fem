@@ -358,7 +358,11 @@ namespace Dune
     static int getEnum ( const std::string &key, const std::string (&values)[ n ] );
     template< int n >
     static int getEnum ( const std::string &key, const std::string (&values)[ n ], const int defaultValue );
-    
+  protected:
+    template< int n >
+    static int getEnumeration( const std::string &key, const std::string& value, const std::string (&values)[ n ]);
+
+  public:  
     /** \brief obtain common output path
      *
      *  For parallel jobs you need two different output paths:
@@ -708,10 +712,17 @@ namespace Dune
     instance().curLineNumber_ = 0;
     std::ostringstream out;
     out << defaultValue;
-    if( !parse( instance().map( key, out.str() ), value ) )
+
+    bool valid = true ;
+    if( !parse( instance().map( key, out.str() ), value ) ) valid = false;
+    if( !validator( value ) ) valid = false;
+
+    if( ! valid ) 
+    {
+      std::cerr << std::endl << "Parameter '" << key << "' invalid." << std::endl;
+      validator.print( std::cerr );
       DUNE_THROW( ParameterInvalid, "Parameter '" << key << "' invalid." );
-    if( !validator( value ) )
-      DUNE_THROW( ParameterInvalid, "Parameter '" << key << "' invalid." );
+    }
   }
   
   inline std::string
@@ -736,42 +747,45 @@ namespace Dune
   inline int
   Parameter::getEnum ( const std::string &key, const std::string (&values)[ n ] )
   {
-    const std::string &value = instance().map( key );
-
-    for( int i = 0; i < n; ++i )
-    {
-      if( value == values[ i ] )
-        return i;
-    }
-
-    int j;
-    if( !parse( value, j ) )
-      DUNE_THROW( ParameterInvalid, "Parameter '" << key << "' invalid." );
-    if( (j < 0) || (j >= n) )
-      DUNE_THROW( ParameterInvalid, "Parameter '" << key << "' invalid." );
-    return j;
+    return getEnumeration( key, instance().map( key ), values );
   }
-
   template< int n >
   inline int
   Parameter::getEnum ( const std::string &key, const std::string (&values)[ n ], const int defaultValue )
   {
     instance().curFileName_ = "using default";
     instance().curLineNumber_ = 0;
-    const std::string &value = instance().map( key, values[ defaultValue ] );
+    return getEnumeration( key, 
+                           instance().map( key, values[ defaultValue ] ),
+                           values);
+  }
 
+  template< int n >
+  inline int
+  Parameter::getEnumeration ( const std::string &key, 
+                              const std::string& value, 
+                              const std::string (&values)[ n ] )
+  {
     for( int i = 0; i < n; ++i )
     {
       if( value == values[ i ] )
         return i;
     }
 
-    int j;
-    if( !parse( value, j ) )
-      DUNE_THROW( ParameterInvalid, "Parameter '" << key << "' invalid." );
-
+    int j = -1;
+    if( ! parse( value, j ) ) j = -1;
     if( (j < 0) || (j >= n) )
+    {
+      std::cerr << std::endl << "Parameter '" << key << "' invalid." << std::endl;
+      std::cerr << "Valid values are: "; 
+      for( int i = 0; i < n; ++i )
+      {
+        std::cerr << values[ i ];
+        if( i < n-1 ) std::cerr << ", "; 
+      }
+      std::cerr << std::endl << std::endl; 
       DUNE_THROW( ParameterInvalid, "Parameter '" << key << "' invalid." );
+    }
     return j;
   }
 
