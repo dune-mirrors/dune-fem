@@ -27,6 +27,11 @@ namespace Dune
     {
       return asImp()( value );
     }
+
+    inline void print(std::ostream& s) const
+    {
+      asImp().print( s );
+    }
     
   protected:
     inline const Impl &asImp () const
@@ -57,6 +62,7 @@ namespace Dune
 
   private:
     bool operator () ( const T &value ) const;
+    inline void print(std::ostream& s) const {}
   };
 
 
@@ -85,6 +91,12 @@ namespace Dune
     {
       return value > threshold_;
     }
+
+    inline void print(std::ostream& s) const
+    {
+      s << "ValidateLess: valid values are: > " << threshold_ << std::endl << std::endl;
+    }
+
   };
 
 
@@ -111,6 +123,11 @@ namespace Dune
     inline bool operator() ( const T &value ) const
     {
       return value < threshold_;
+    }
+
+    inline void print(std::ostream& s) const
+    {
+      s << "ValidateLess: valid values are: < " << threshold_ << std::endl << std::endl;
     }
   };
 
@@ -139,6 +156,12 @@ namespace Dune
     {
       return value <= threshold_;
     }
+
+    inline void print(std::ostream& s) const
+    {
+      s << "ValidateNotGreater: valid values are: <= " << threshold_ << std::endl << std::endl;
+    }
+
   };
 
 
@@ -165,6 +188,11 @@ namespace Dune
     inline bool operator() ( const T &value ) const
     {
       return value >= threshold_;
+    }
+
+    inline void print(std::ostream& s) const
+    {
+      s << "ValidateNotLess: valid values are: >= " << threshold_ << std::endl << std::endl;
     }
   };
 
@@ -198,8 +226,15 @@ namespace Dune
       ret &= (rightClosed ? value <= rThreshold_ : value < rThreshold_);
       return ret;
     }
+
+    inline void print(std::ostream& s) const
+    {
+      const char* left  = (leftClosed)  ? "[" : "(";
+      const char* right = (rightClosed) ? "]" : ")";
+      s << "ValidateInterval: valid values are " << left << lThreshold_ << "," <<
+              rThreshold_ << right << std::endl << std::endl;
+    }
   };
 
-}
-
+} // end namespace Dune 
 #endif
