@@ -2,13 +2,13 @@
 odedir = $(includedir)/dune/fem/solver/ode
 
 # if parDG is used, don't include ode solver 
-# if PARDG
+if PARDG
 # only install these headers 
 ode_HEADERS = communicator.hpp mpicommunicator.hpp emptycommunicator.hpp 
 noinst_LTLIBRARIES = libodesolver.la
 libodesolver_la_SOURCES =
 
-# else 
+else 
 # otherwise install all 
 noinst_LTLIBRARIES = libodesolver.la
 if MPI
@@ -35,7 +35,7 @@ bulirsch_stoer.cpp  gmres.cpp             ode_solver.cpp  sirk.cpp \
 cg.cpp              iterative_solver.cpp  pc_limiter.cpp  ssp.cpp \
 lu_solver.cpp         qr_solver.cpp   vector.cpp \
 quadrature0d.cpp  quadrature1d.cpp  quadrature2d.cpp  quadrature3d.cpp
-# endif
+endif
 # end if PARDG 
 
 include $(top_srcdir)/am/global-rules
