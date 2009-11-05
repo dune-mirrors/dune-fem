@@ -1,4 +1,4 @@
-#ifndef  DUNE_FEM_PQ22DSPACE_HH
+#ifdef  DUNE_FEM_PQ22DSPACE_HH  // does not work yet
 #define  DUNE_FEM_PQ22DSPACE_HH
 
 #if HAVE_DUNE_LOCALFUNCTIONS
