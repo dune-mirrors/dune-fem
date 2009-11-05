@@ -36,13 +36,13 @@ template <class GridImp,
           class DataImp> 
 class DataOutput;
 
-/** \brief Parameter class for Dune::DataWriter
+/** \brief Parameter class for Dune::DataOutput
 
-    Structure providing the main parameters used to setup the Dune::DataWriter.
+    Structure providing the main parameters used to setup the Dune::DataOutput.
     By default these parameters are set through the Dune::Parameter class, i.e.,
     can be set in a parameter file. To override this a user can derive from this
     structure and modify any subset of the parameters. An instance of this modified
-    class can then be passed in the construction of the Dune::DataWriter.
+    class can then be passed in the construction of the Dune::DataOutput.
  */
 struct DataOutputParameters
 : public LocalParameter< DataOutputParameters, DataOutputParameters >
@@ -404,7 +404,7 @@ protected:
       case 2: outputFormat_ = vtkvtx; break;
       case 3: outputFormat_ = gnuplot; break;
       default:
-        DUNE_THROW(NotImplemented,"DataWriter::init: wrong output format");
+        DUNE_THROW(NotImplemented,"DataOutput::init: wrong output format");
     }
 
     grapeDisplay_ = parameter.grapedisplay();
@@ -476,7 +476,7 @@ public:
       filename = writeGnuPlotOutput();
       break;
     default:
-      DUNE_THROW(NotImplemented,"DataWriter::write: wrong output format");
+      DUNE_THROW(NotImplemented,"DataOutput::write: wrong output format");
     }
 
     if (sequence_)
