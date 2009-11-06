@@ -1,6 +1,8 @@
 #ifndef DUNE_FEM_VALIDATOR_HH
 #define DUNE_FEM_VALIDATOR_HH
 
+#include <iostream>
+
 namespace Dune
 {
   
