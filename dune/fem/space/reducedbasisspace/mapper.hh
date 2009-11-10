@@ -117,12 +117,6 @@ namespace Dune
       return -1;
     }
 
-    /** \copydoc Dune::DofMapper::newSize() const */
-    int newSize () const
-    {
-      return size();
-    }
-
     /** \copydoc Dune::DofMapper::numberOfHoles(const int block) const */
     int numberOfHoles ( const int block ) const
     {
