@@ -69,7 +69,7 @@ namespace Dune
 
   
 
-  /** \copydoc Dune::ElementQuadrature */
+  /** \copydoc ElementQuadrature */
   template< typename GridPartImp >
   class ElementQuadrature< GridPartImp, 0 >
   : public ElementIntegrationPointList< GridPartImp, 0, ElementQuadratureTraits< GridPartImp, 0 > >
@@ -131,7 +131,7 @@ namespace Dune
 
 
 
-  /** \copydoc Dune::ElementQuadrature */
+  /** \copydoc ElementQuadrature */
   template< class GridPartImp >
   class ElementQuadrature< GridPartImp, 1 >
   : public ElementIntegrationPointList

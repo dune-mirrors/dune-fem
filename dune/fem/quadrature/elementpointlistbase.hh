@@ -8,6 +8,7 @@
 namespace Dune
 {
   
+  /** \brief ElementPointListBase */
   template< class GridPartImp, int codim, class IntegrationTraits >
   class ElementPointListBase;
 
@@ -124,7 +125,7 @@ namespace Dune
 
 
 
-  /** \copydoc Dune::ElementIntegrationPointList */
+  /** \copydoc ElementIntegrationPointList */
   template< class GridPartImp, int codim, class IntegrationTraits >
   class ElementPointListBase
   {
@@ -194,7 +195,16 @@ namespace Dune
       return quadImp().nop();
     }
 
-    /** \copydoc Dune::ElementIntegrationPointList<GridPartImp,0,IntegrationTraits>::localPoint(size_t i) const */
+    /** \brief obtain local coordinates of i-th integration point
+     *
+     *  This method returns a reference to the local coordinates of the i-th
+     *  integration point for 0 <= i < nop(). Here, local coordinates means
+     *  coordinates with respect to the reference element of the subentity.
+     *
+     *  \param[in]  i  number of the integration point, 0 <= i < nop()
+     *
+     *  \returns reference to i-th integration point
+     */
     const LocalCoordinateType &localPoint ( size_t i ) const
     {
       return quad_.point( i );

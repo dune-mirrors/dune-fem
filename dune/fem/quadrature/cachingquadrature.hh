@@ -40,7 +40,7 @@ namespace Dune
 
 
 
-  /** \copydoc Dune::CachingQuadrature */
+  /** \copydoc CachingQuadrature */
   template< typename GridPart >
   class CachingQuadrature< GridPart, 0 >
   : public CachingPointList< GridPart, 0, ElementQuadratureTraits< GridPart, 0 > >
@@ -111,7 +111,7 @@ namespace Dune
 
 
  
-  /** \copydoc Dune::CachingQuadrature */
+  /** \copydoc CachingQuadrature */
   template< typename GridPartImp >
   class CachingQuadrature< GridPartImp, 1 >
   : public CachingPointList

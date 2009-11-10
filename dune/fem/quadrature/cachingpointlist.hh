@@ -130,7 +130,7 @@ namespace Dune
  
 
 
-  /** \copydoc Dune::CachingPointList */
+  /** \copydoc CachingPointList */
   template< typename GridPartImp, class IntegrationTraits >
   class CachingPointList< GridPartImp, 1, IntegrationTraits >
   : public ElementPointListBase< GridPartImp, 1, IntegrationTraits >, 

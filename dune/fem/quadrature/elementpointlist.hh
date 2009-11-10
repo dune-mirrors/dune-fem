@@ -47,7 +47,7 @@ namespace Dune
 
 
 
-  /** \copydoc Dune::ElementIntegrationPointList */
+  /** \copydoc ElementIntegrationPointList */
   template< class GridPartImp, class IntegrationTraits >
   class ElementIntegrationPointList< GridPartImp, 0, IntegrationTraits >
   : public ElementPointListBase< GridPartImp, 0, IntegrationTraits >
@@ -91,7 +91,7 @@ namespace Dune
 
 
 
-  /** \copydoc Dune::ElementIntegrationPointList */
+  /** \copydoc ElementIntegrationPointList */
   template< class GridPartImp, class IntegrationTraits >
   class ElementIntegrationPointList< GridPartImp, 1, IntegrationTraits >
   : public ElementPointListBase< GridPartImp, 1, IntegrationTraits >
