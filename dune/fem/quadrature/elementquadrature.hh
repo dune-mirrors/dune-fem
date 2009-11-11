@@ -111,7 +111,7 @@ namespace Dune
      *  \param[in]  order   desired minimal order of the quadrature
      */
     ElementQuadrature( const EntityType &entity, int order )
-    : BaseType( entity.geometry().type(), order )
+    : BaseType( entity.type(), order )
     {}
     
     /** \brief copy constructor

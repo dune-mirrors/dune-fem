@@ -91,7 +91,7 @@ namespace Dune
      */
     CachingQuadrature( const EntityType &entity,
                        int order )
-    : BaseType( entity.geometry().type(), order )
+    : BaseType( entity.type(), order )
     {}
 
     /** \brief copy constructor
