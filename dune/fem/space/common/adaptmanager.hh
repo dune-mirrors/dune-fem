@@ -1,6 +1,9 @@
 #ifndef DUNE_ADAPTMANAGER_HH
 #define DUNE_ADAPTMANAGER_HH
 
+//- system includes 
+#include <string>
+
 //- local includes 
 #include <dune/common/timer.hh>
 #include <dune/fem/space/common/dofmanager.hh>
@@ -153,11 +156,12 @@ public:
 
   */   
   AdaptationMethod(const GridType & grid) 
-    : adaptationMethod_(generic) {
+    : adaptationMethod_(generic) 
+  {
     const bool output = (grid.comm().rank() == 0);
     int am = 1;
-    am = Parameter::getValidValue<int>("fem.adaptation.method",am,
-                    ValidateInterval<int,true,true>(0,2));
+    const std::string methodNames [] = { "none", "generic", "callback" };
+    am = Parameter::getEnum("fem.adaptation.method", methodNames, am);
     init(am,output);
   }
 private:
