@@ -19,6 +19,7 @@ namespace Dune
    *  \brief Setup Matrix structure for Lagrange operators by including all
    *         Lagrange nodes of an element.
    */
+  template <bool addNonConformingNeighbors >
   class LagrangeMatrixSetup
   {
   public:
@@ -65,8 +66,8 @@ namespace Dune
       typedef typename ColMapper :: DofMapIteratorType ColDofMapIteratorType;
 
       const RowDofMapIteratorType rowEnd = rowMapper.end( entity );
-      RowDofMapIteratorType rowIt = rowMapper.begin( entity );
-      for( ; rowIt != rowEnd; ++rowIt )
+      for(RowDofMapIteratorType rowIt = rowMapper.begin( entity );
+          rowIt != rowEnd; ++rowIt )
       {
         LocalIndicesType &localIndices = indices[ rowIt.global() ];
 
@@ -75,16 +76,72 @@ namespace Dune
         for( ; colIt != colEnd; ++colIt )
           localIndices.insert( colIt.global() );
       }
+
+      // in case of non-conforming stabilization 
+      if( addNonConformingNeighbors )
+      {
+        typedef typename GridPart :: IntersectionIteratorType IntersectionIteratorType;
+        typedef typename IntersectionIteratorType :: Intersection IntersectionType;
+        typedef typename GridPart :: GridType :: template Codim<0> :: EntityPointer EntityPointer;
+
+        const IntersectionIteratorType endit = gridPart.iend( entity );
+        for( IntersectionIteratorType it = gridPart.ibegin( entity );
+             it != endit; ++it )
+        {
+          const IntersectionType& intersection = *it;
+          if( intersection.neighbor() && ! intersection.conforming() ) 
+          {
+            EntityPointer ep = intersection.outside(); 
+            const Entity& neighbor = *ep;
+
+            // also add all neighbor dofs 
+            for(RowDofMapIteratorType rowIt = rowMapper.begin( entity );
+                rowIt != rowEnd; ++rowIt )
+            {
+              LocalIndicesType &localIndices = indices[ rowIt.global() ];
+              const ColDofMapIteratorType colEnd = colMapper.end( neighbor );
+              for(ColDofMapIteratorType colIt = colMapper.begin( neighbor );
+                  colIt != colEnd; ++colIt )
+              {
+                localIndices.insert( colIt.global() );
+              }
+            }
+          }
+        }
+      }
+
+#if 0
+      // debug output 
+      for(RowDofMapIteratorType rowIt = rowMapper.begin( entity );
+          rowIt != rowEnd; ++rowIt )
+      {
+        LocalIndicesType &localIndices = indices[ rowIt.global() ];
+        std::cout << "row[ " << rowIt.global() << "] contains: " <<std::endl;
+        typedef typename LocalIndicesType :: iterator iterator;
+        const iterator endlocal = localIndices.end();
+        for(iterator it = localIndices.begin(); it != endlocal; ++it)
+        {
+          std::cout << *it << " ";
+        }
+        std::cout << std::endl;
+      }
+#endif
     }
   };
 
-  template <class TraitsImp>
+  /** \brief LagrangeMatrixTraits traits class for Matrix Objects 
+      used to setup system matrices for FE operators 
+      \note For standard Lagrange conforming Finite Elements the 
+      addNonConformingNeighbors flag is false.
+      For others is flag could be equal the inverse to GridPart :: conforming 
+  */
+  template <class TraitsImp, bool addNonConformingNeighbors = false>
   struct LagrangeMatrixTraits
   {
     typedef typename TraitsImp :: RowSpaceType RowSpaceType;
     typedef typename TraitsImp :: ColumnSpaceType ColumnSpaceType;
 
-    typedef LagrangeMatrixSetup StencilType; 
+    typedef LagrangeMatrixSetup<addNonConformingNeighbors> StencilType; 
     
     typedef ParallelScalarProduct < ColumnSpaceType > ParallelScalarProductType;
   };
@@ -95,13 +152,13 @@ namespace Dune
   class LagrangeParallelMatrixAdapter;
 
   // specialization for ISTL matrices 
-  template <class RowSpaceImp, class ColSpaceImp>
-  struct LagrangeMatrixTraits<ISTLMatrixTraits<RowSpaceImp,ColSpaceImp> >
+  template <class RowSpaceImp, class ColSpaceImp, bool addNonConformingNeighbors>
+  struct LagrangeMatrixTraits<ISTLMatrixTraits<RowSpaceImp,ColSpaceImp>,addNonConformingNeighbors>
   {
     typedef RowSpaceImp RowSpaceType;
     typedef ColSpaceImp ColumnSpaceType;
 
-    typedef LagrangeMatrixSetup StencilType; 
+    typedef LagrangeMatrixSetup<addNonConformingNeighbors> StencilType; 
     
     typedef ParallelScalarProduct < ColumnSpaceType > ParallelScalarProductType;
 
