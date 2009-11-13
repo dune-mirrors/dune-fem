@@ -480,6 +480,8 @@ namespace Dune
       //! type of entries of little blocks 
       typedef typename RowSpaceType :: RangeFieldType DofType;
 
+      typedef typename MatrixType::row_type RowType; 
+
       //! type of row mapper 
       typedef typename MatrixObjectType :: RowMapperType RowMapperType;
       //! type of col mapper 
@@ -535,10 +537,14 @@ namespace Dune
           {
             matrices_[i].resize( numCols_ );
             const int rowIdx = rowMapper_.mapToGlobal(rowEntity,i);
+
+            // get row 
+            RowType& row = matrix[rowIdx];
             for(int j=0; j<numCols_; ++j) 
             {
-              matrices_[i][j] =
-                &matrix[rowIdx][colMapper_.mapToGlobal(colEntity,j)];
+              const int colIdx = colMapper_.mapToGlobal(colEntity,j);
+              assert( matrix.exists( rowIdx, colIdx ));
+              matrices_[i][j] = &row[colIdx];
             }
           }
         }
@@ -548,10 +554,14 @@ namespace Dune
           for(int i=0; i<numRows_; ++i)
           {
             const int rowIdx = rowMapper_.mapToGlobal(rowEntity,i);
+
+            // get row 
+            RowType& row = matrix[rowIdx];
             for(int j=0; j<numCols_; ++j) 
             {
-              matrices_[i][j] =
-                &matrix[rowIdx][colMapper_.mapToGlobal(colEntity,j)];
+              const int colIdx = colMapper_.mapToGlobal(colEntity,j);
+              assert( matrix.exists( rowIdx, colIdx ));
+              matrices_[i][j] = &row[colIdx];
             }
           }
         }
