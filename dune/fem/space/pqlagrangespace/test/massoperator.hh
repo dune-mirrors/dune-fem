@@ -66,7 +66,7 @@ namespace Dune
     typedef DiscreteFunctionSpaceType                                RowSpaceType;
     typedef DiscreteFunctionSpaceType                                ColumnSpaceType;
 
-    typedef LagrangeMatrixSetup                                      StencilType;
+    typedef LagrangeMatrixSetup< false >                             StencilType;
 
     typedef ParallelScalarProduct< DiscreteFunctionSpaceType >       ParallelScalarProductType;
   };
