@@ -365,7 +365,7 @@ namespace Dune
       if (verbose_)
           std::cout << "got discrete functionspace" << std :: endl;
 
-      EntityPointerType ep = dfSpace.begin();
+      EntityPointerType ep( dfSpace.begin() );
       EntityType& entity = *ep;     
 
       if (verbose_)

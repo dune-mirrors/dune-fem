@@ -847,7 +847,7 @@ namespace Dune
       filter_( filter ),
       endIter_( endIterator )
     {
-      while( (*this != endIter_) && (!filter_->has0Entity( *this )) )
+      while( (*this != endIter_) && (!filter_->has0Entity( *(*this) )) )
         BaseType :: operator++();
     }
 
@@ -867,7 +867,7 @@ namespace Dune
     {
       do
         BaseType :: operator++();
-      while( (*this != endIter_) && (!filter_->has0Entity( *this )) );
+      while( (*this != endIter_) && (!filter_->has0Entity( *(*this) )) );
       return *this;
     }
   }; // end IteratorWrapper
