@@ -25,7 +25,7 @@
 namespace Dune
 {
 
-  typedef FunctionSpace< double, double, dimworld, DIMRANGE >
+  typedef FunctionSpace< double, double, GridSelector::dimworld, DIMRANGE >
     TestFunctionSpace;
 
 

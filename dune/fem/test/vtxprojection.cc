@@ -24,9 +24,11 @@
 #include "dfspace.hh"
 // #include "vtxl2projection.hh"
 #include "exactsolution.hh"
+#include <dune/fem/gridpart/adaptiveleafgridpart.hh>
 
 using namespace Dune;
-#include <dune/fem/gridpart/adaptiveleafgridpart.hh>
+
+typedef GridSelector::GridType GridType;
 // typedef HierarchicGridPart< GridType > GridPartType;
 typedef AdaptiveLeafGridPart< GridType > GridPartType;
 

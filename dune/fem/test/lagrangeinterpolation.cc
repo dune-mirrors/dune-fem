@@ -29,6 +29,7 @@ using namespace Dune;
   const int polOrder = 1;
 #endif
 
+typedef GridSelector::GridType GridType;
 typedef AdaptiveLeafGridPart< GridType > GridPartType;
 
 // typedef FunctionSpace< double, Double, dimworld, 1 > FunctionSpaceType;

@@ -29,6 +29,7 @@
 
 using namespace Dune;
 
+typedef GridSelector::GridType GridType;
 // typedef HierarchicGridPart< GridType >  ContainedGridPartType;
 typedef DGAdaptiveLeafGridPart< GridType > ContainedGridPartType;
 
