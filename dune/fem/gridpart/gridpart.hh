@@ -1,15 +1,6 @@
 #ifndef DUNE_FEM_GRIDPART_HH
 #define DUNE_FEM_GRIDPART_HH
 
-#ifdef DUNE_GRIDPART_HH
-#error "Including <dune/grid/common/gridpart.hh> directly is deprecated."
-#error "Include <dune/fem/gridpart/gridpart.hh> instead."
-#endif
-
-// make sure GridParts from dune-grid are not included afterwards
-#define DUNE_GRIDPART_HH
-
-
 #include <dune/grid/common/grid.hh>
 #include <dune/fem/gridpart/defaultindexsets.hh>
 #include <dune/grid/common/datahandleif.hh>
