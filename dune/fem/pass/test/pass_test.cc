@@ -19,6 +19,8 @@ namespace Dune {
   }
 
   void Pass_Test::functorTest() {
+    typedef GridSelector::GridType GridType;
+
     typedef Lagrange_Fixture<GridType,1> Fix0;
     typedef Lagrange_Fixture<GridType,1> Fix1;
     typedef Lagrange_Fixture<GridType,1> Fix2;

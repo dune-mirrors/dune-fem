@@ -14,7 +14,7 @@
 
 using namespace Dune;
 
-const int dim = dimworld;
+const int dim = GridSelector::dimworld;
 const int ncomp = 1;
 
 // include file with the description of the convection diffusion problem
@@ -60,7 +60,7 @@ int main (int argc, char **argv)
 
     std::string paramfile ( paramname );
 
-    typedef DescriptionTraits <double,GridType,ncomp,2> DescrType;
+    typedef DescriptionTraits <double,Dune::GridSelector::GridType,ncomp,2> DescrType;
     typedef DescrType :: ModelType ModelType;
     typedef DescrType :: DiscrParamType DiscrParamType;
 

@@ -49,6 +49,7 @@ namespace Dune {
   }
 
   void PassHelper_Test::tupleConverterTest() {
+    typedef GridSelector::GridType GridType;
     typedef Lagrange_Fixture<GridType, 1> Fix0;
     typedef Lagrange_Fixture<GridType, 1> Fix1;
     typedef Lagrange_Fixture<GridType, 2> Fix2;
