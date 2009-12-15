@@ -4,7 +4,7 @@
 #include <sstream>
 
 #include <dune/grid/io/file/dgfparser/dgfgridtype.hh>
-static const int dimw = dimworld;
+static const int dimw = Dune::GridSelector::dimworld;
 
 #include <dune/fem/operator/discreteoperatorimp.hh>
 #include <dune/fem/space/lagrangespace.hh>
@@ -101,6 +101,7 @@ const int polOrd = POLORDER;
   with the finite element method using lagrangian elements of polynom order +1.
 */
 //***********************************************************************
+typedef GridSelector::GridType GridType;
 
 //! the index set we are using 
 //typedef HierarchicGridPart<GridType> GridPartType;

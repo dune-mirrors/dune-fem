@@ -13,7 +13,7 @@ namespace Dune
   {
   private:
     typedef TestGrid ThisType;
-
+    typedef GridSelector::GridType GridType;
   protected:
     GridPtr< GridType > gridptr_;
     

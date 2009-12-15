@@ -10,10 +10,11 @@
 
 using namespace Dune;
 
-typedef LeafGridPart< GridType > GridPartType; 
 
 int main()
 {
+  typedef Dune::GridSelector::GridType GridType;
+  typedef LeafGridPart< GridType > GridPartType; 
   // test writing a vector and a matrix to 1 file
   MatlabOutStream s( "test.data" );
   

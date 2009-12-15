@@ -1,7 +1,8 @@
 # IGNORE_HEADERS
 
-#GRIDTYPE=ALUGRID_CONFORM
-#GRIDDIM=2
+# set default grid type for make all
+GRIDTYPE=YASPGRID
+GRIDDIM=2
 
 EXTRA_DIST = testgrid.hh
 
