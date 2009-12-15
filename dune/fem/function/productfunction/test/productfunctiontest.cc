@@ -2,8 +2,8 @@
 #include <config.h>
 
 #include <dune/grid/io/file/dgfparser/dgfgridtype.hh>
-static const int dimw = dimworld;
-static const int dimp = dimworld;
+static const int dimw = Dune::GridSelector::dimworld; 
+static const int dimp = Dune::GridSelector::dimworld;
   
 //dimension of second space/ grid
 static const int dim2 = 3;
@@ -41,6 +41,9 @@ const int polOrd = POLORDER;
 */
 //***********************************************************************
 
+namespace {
+
+typedef Dune::GridSelector::GridType GridType;
 // static const int dimworld = GRIDDIM;
 // static const int dimworld = dimworld;
 typedef SGrid  < dim2,dim2 > Grid2Type;
@@ -465,4 +468,6 @@ int main (int argc, char **argv)
 		<< std::endl;
     std::cout << std::endl;
   }
+}
+
 }
