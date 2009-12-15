@@ -79,7 +79,7 @@ public:
 
 // Type Definitions
 // ----------------
-typedef GridSelector::GridType GridType;
+typedef Dune::GridSelector::GridType GridType;
 
 typedef Dune::LevelGridPart< GridType > GridPartType;
 
