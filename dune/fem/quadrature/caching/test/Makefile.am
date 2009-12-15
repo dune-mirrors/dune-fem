@@ -1,6 +1,10 @@
 LDADD = $(ALL_PKG_LDFLAGS) $(ALL_PKG_LIBS) $(LOCAL_LIBS)
 AM_CPPFLAGS = $(ALL_PKG_CPPFLAGS) 
 
+# set default grid type for make all
+GRIDTYPE=YASPGRID
+GRIDDIM=2
+
 cachingtestdir =  $(includedir)/dune/fem/quadrature/caching/test
 cachingtest_HEADERS = cache_test.hh \
 refelem_test.hh   twist_test.hh alugrid_fixture.hh \

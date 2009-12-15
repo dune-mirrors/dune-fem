@@ -1,5 +1,9 @@
 # IGNORE_HEADERS
 
+# set default grid type for make all
+GRIDTYPE=YASPGRID
+GRIDDIM=2
+
 EXTRA_DIST = cachequad_test.hh \
              albertagrid_fixture.hh \
              alugrid_fixture.hh \

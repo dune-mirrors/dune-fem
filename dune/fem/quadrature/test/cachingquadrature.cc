@@ -53,6 +53,8 @@ public:
 
   void runTest()
   {
+    typedef Dune::GridSelector::GridType GridType;
+
     IteratorType endit = gridPart_.template end<0>();
     for (IteratorType it = gridPart_.template begin<0>(); it != endit; ++it) 
     {
@@ -105,6 +107,7 @@ int main(int argc, char ** argv)
     if (argc==2) Parameter::append(argv[1]);
     else Parameter::append("parameter");
 
+    typedef Dune::GridSelector::GridType GridType;
     std::string filename;
     Parameter::get("fem.gridfile", filename);
     Dune::GridPtr< GridType > gridptr( filename );
