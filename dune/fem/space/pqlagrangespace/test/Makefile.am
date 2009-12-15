@@ -1,5 +1,9 @@
 # IGNORE_HEADERS
 
+# set default grid type for make all
+GRIDTYPE=YASPGRID
+GRIDDIM=2
+
 POLORDER=3
 
 testdir=$(includedir)/dune/fem/space/pqlagrangespace/test
@@ -20,10 +24,10 @@ if HAVE_DUNE_LOCALFUNCTIONS
 check_PROGRAMS          = test_pqlagrangespace test-pk2d
 
 test_pqlagrangespace_SOURCES  = main.cc ../../../misc/test.cc ../../../misc/suite.cc
-test_pqlagrangespace_CPPFLAGS = $(ALL_PKG_CPPFLAGS) 
-
+test_pqlagrangespace_CPPFLAGS = $(ALL_PKG_CPPFLAGS)
 test_pk2d_SOURCES = test-pk2d.cc
-test_pk2d_CPPFLAGS = $(ALL_PKG_CPPFLAGS) -DPOLORDER=$(POLORDER)
+test_pk2d_CPPFLAGS = $(ALL_PKG_CPPFLAGS) -DPOLORDER=$(POLORDER) $(MPI_CPPFLAGS)
+ 
 
 endif
 

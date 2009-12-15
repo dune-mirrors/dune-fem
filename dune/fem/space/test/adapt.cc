@@ -50,6 +50,7 @@ const int polOrd = POLORDER;
 //***********************************************************************
 
 //! the index set we are using
+typedef GridSelector::GridType GridType;
 typedef DGAdaptiveLeafGridPart<GridType> GridPartType;
 //typedef HierarchicGridPart<GridType> GridPartType;
 //typedef AdaptiveLeafGridPart<GridType> GridPartType;

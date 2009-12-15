@@ -61,6 +61,7 @@ using namespace Dune;
   with the finite element method using lagrangian elements of polynom order +1.
 */
 //***********************************************************************
+typedef GridSelector::GridType GridType;
 
 //! the index set we are using 
 //typedef HierarchicGridPart< GridType > GridPartType;

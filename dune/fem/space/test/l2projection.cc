@@ -4,7 +4,7 @@
 #include <sstream>
 
 #include <dune/grid/io/file/dgfparser/dgfgridtype.hh>
-static const int dimw = dimworld;
+static const int dimw = Dune::GridSelector::dimworld;
 
 #include <dune/fem/operator/discreteoperatorimp.hh>
 #include <dune/fem/space/lagrangespace.hh>
@@ -65,6 +65,7 @@ const int polOrd = POLORDER;
 //***********************************************************************
 
 //! the index set we are using 
+typedef GridSelector::GridType GridType;
 //typedef HierarchicGridPart<GridType> GridPartType;
 //typedef DGAdaptiveLeafGridPart<GridType> GridPartType;
 typedef AdaptiveLeafGridPart<GridType> GridPartType;

@@ -18,7 +18,7 @@
 // include Lagrange discrete function space
 #include <dune/fem/space/common/adaptmanager.hh>
 #include <dune/fem/space/pqlagrangespace/pqlagrangespace.hh>
-#include <dune/fem/space/pqlagrangespace/genericlagrangespace.hh>
+// #include <dune/fem/space/pqlagrangespace/genericlagrangespace.hh>
 #include <dune/fem/function/adaptivefunction.hh>
 #include <dune/fem/solver/inverseoperators.hh>
 #include <dune/fem/misc/l2error.hh>
@@ -40,7 +40,8 @@ public:
 
 /*  typedef Dune :: P12DSpace< FunctionSpaceType, GridPartType >       DiscreteFunctionSpaceType;*/
 
-#if USE_PQSPACE
+#if 0 // USE_PQSPACE
+  /*
   typedef typename SelectType< isCube,
                                QLagrangeSpace< FunctionSpaceType,
                                                GridPartType,
@@ -48,6 +49,8 @@ public:
                                PLagrangeSpace< FunctionSpaceType,
                                                GridPartType,
                                                polOrder > > :: Type  DiscreteFunctionSpaceType; 
+  */
+  typedef class PQ22DLagrangeSpace< FunctionSpaceType, GridPartType > DiscreteFunctionSpaceType;
 #else
   typedef LagrangeSpace < FunctionSpaceType,
                           GridPartType,

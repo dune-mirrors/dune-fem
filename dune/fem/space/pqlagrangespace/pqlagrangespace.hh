@@ -16,13 +16,13 @@
 #include <dune/fem/space/lagrangespace/lagrangedatahandle.hh>
 
 //- Dune-Localfunctions include
-#include  <dune/finiteelements/p0.hh>
-#include  <dune/finiteelements/p1.hh>
-#include  <dune/finiteelements/p2.hh>
-#include  <dune/finiteelements/pk2d.hh>
-#include  <dune/finiteelements/pk3d.hh>
-#include  <dune/finiteelements/q1.hh>
-#include  <dune/finiteelements/q22d.hh>
+#include  <dune/localfunctions/p0.hh>
+#include  <dune/localfunctions/p1.hh>
+#include  <dune/localfunctions/p2.hh>
+#include  <dune/localfunctions/pk2d.hh>
+#include  <dune/localfunctions/pk3d.hh>
+#include  <dune/localfunctions/q1.hh>
+#include  <dune/localfunctions/q22d.hh>
 
 namespace Dune
 {

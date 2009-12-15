@@ -16,12 +16,12 @@
 #include <dune/fem/space/lagrangespace/lagrangedatahandle.hh>
 
 //- Dune-Localfunctions include
-#include  <dune/finiteelements/generic/math/field.hh>
+#include  <dune/localfunctions/generic/math/field.hh>
 
-#include  <dune/finiteelements/generic/lagrangefiniteelement.hh>
-#include  <dune/finiteelements/generic/lagrangebasis/equidistantpoints.hh>
+#include  <dune/localfunctions/generic/lagrangefiniteelement.hh>
+#include  <dune/localfunctions/generic/lagrangebasis/equidistantpoints.hh>
 #if HAVE_ALGLIB
-#include  <dune/finiteelements/generic/lagrangebasis/lobattopoints.hh>
+#include  <dune/localfunctions/generic/lagrangebasis/lobattopoints.hh>
 #endif
 #include "pqlagrangespace.hh"
 

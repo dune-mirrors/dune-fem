@@ -1,4 +1,4 @@
-l2projection.gridfile: 2dgrid.dgf
+l2projection.gridfile: hybrid2_0.dgf
 l2projection.level: 0
-l2projection.repeats: 3
-l2projection.vtkout: true
+l2projection.repeats: 7
+l2projection.vtkout: 1

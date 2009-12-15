@@ -12,11 +12,8 @@
 // Includes from Core Modules
 // --------------------------
 
-#include <dune/grid/albertagrid.hh>
-#include <dune/grid/albertagrid/dgfparser.hh>
-
-typedef Dune::AlbertaGrid< 2 > GridType;
-
+#include <dune/grid/io/file/dgfparser/dgfgridtype.hh>
+#include <dune/grid/io/file/dgfparser/dgfparser.hh>
 
 
 // Includes from DUNE-FEM
@@ -30,9 +27,11 @@ typedef Dune::AlbertaGrid< 2 > GridType;
 
 // include basic grid parts
 #include <dune/fem/gridpart/gridpart.hh>
+#include <dune/fem/gridpart/adaptiveleafgridpart.hh>
 
 // include Lagrange discrete function space
 #include <dune/fem/space/pqlagrangespace/pk2dlagrangespace.hh>
+#include <dune/fem/space/pqlagrangespace/pq22dlagrangespace.hh>
 
 #include <dune/fem/function/adaptivefunction.hh>
 
@@ -56,11 +55,13 @@ const int polOrder = 1;
 #endif
 
 // select grid part to use
-typedef Dune::LeafGridPart< GridType > GridPartType;
+typedef Dune::AdaptiveLeafGridPart< Dune::GridSelector::GridType > GridPartType;
 
-typedef Dune::FunctionSpace< double, double, GridType::dimension, 1 > FunctionSpaceType;
+typedef Dune::FunctionSpace< double, double, Dune::GridSelector::GridType::dimension, 1 > FunctionSpaceType;
 
-typedef Dune::Pk2DLagrangeSpace< FunctionSpaceType, GridPartType, polOrder >
+// typedef Dune::Pk2DLagrangeSpace< FunctionSpaceType, GridPartType, polOrder >
+//   DiscreteFunctionSpaceType;
+typedef Dune::PQ22DLagrangeSpace< FunctionSpaceType, GridPartType >
   DiscreteFunctionSpaceType;
 
 typedef Dune::AdaptiveDiscreteFunction< DiscreteFunctionSpaceType > DiscreteFunctionType;
@@ -92,7 +93,7 @@ struct Function
 // ---------
 
 template< class Function >
-double algorithm ( const Function &function, GridType &grid, int repeat )
+double algorithm ( const Function &function, Dune::GridSelector::GridType &grid, int repeat )
 {
   typedef Dune::MassOperator< DiscreteFunctionType > MassOperatorType;
   typedef Dune::CGInverseOp< DiscreteFunctionType, MassOperatorType > InverseOperator;
@@ -135,6 +136,7 @@ try
   Dune::MPIManager::initialize( argc, argv );
   // add command line parameters to global parameter table
   Dune::Parameter::append( argc, argv );
+  Dune::Parameter::append( "parameter" );
 
   // get name of grid file
   std::string gridfile;
@@ -144,6 +146,7 @@ try
   const int repeats = Dune::Parameter::getValue< int >( "l2projection.repeats", 0 );
 
   // use DGF parser to create grid
+  typedef Dune::GridSelector::GridType GridType;
   Dune::GridPtr< GridType > gridptr( gridfile );
   // distribute the grid to all processes
   gridptr->loadBalance();

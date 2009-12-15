@@ -99,6 +99,10 @@ public:
 
   //---- DiscreteFunctionSpace -----------------------------------------------
   //! define the discrete function space our unkown belongs to
+  typedef LagrangeSpace < FunctionSpaceType,
+                          GridPartType,
+                          polOrder > DiscreteSpaceType;
+  /*
   typedef typename SelectType< isCube,
                                QLagrangeSpace< FunctionSpaceType,
                                                GridPartType,
@@ -106,6 +110,7 @@ public:
                                PLagrangeSpace< FunctionSpaceType,
                                                GridPartType,
                                                polOrder > > :: Type  DiscreteSpaceType;
+    */
 /*  typedef LagrangeDiscreteFunctionSpace< FunctionSpaceType,
  *                                         GridPartType, polOrder,
  *                                         CachingStorage >            DiscreteSpaceType;*/

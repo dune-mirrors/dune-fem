@@ -31,7 +31,7 @@ using namespace Dune;
 
 const int polOrder = POLORDER;
 
-typedef LeafGridPart< GridType > GridPartType;
+typedef LeafGridPart< GridSelector::GridType > GridPartType;
 
 typedef FunctionSpace< double, double, dimworld, 1 > FunctionSpaceType;
 
@@ -252,7 +252,7 @@ double algorithm ( GridPartType &gridPart )
   std :: cout << "L2 Error: " << error << std :: endl;
 
   #if USE_GRAPE
-    GrapeDataDisplay< GridType > grape( gridPart ); 
+    GrapeDataDisplay< GridPartType::GridType > grape( gridPart ); 
     grape.dataDisplay( solution );
   #endif
    
@@ -271,6 +271,8 @@ int main ( int argc, char **argv )
 
   try
   {
+    typedef GridSelector::GridType GridType;
+
     unsigned int maxlevel = atoi( argv[ 1 ] );
     double* error = new double[ maxlevel ];
 

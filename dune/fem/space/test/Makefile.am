@@ -1,7 +1,9 @@
 POLORDER = 2
 WANT_GRAPE = 0
-#GRIDTYPE = ALUGRID_SIMPLEX
-#GRIDDIM = 2
+
+# set default grid type for make all
+GRIDTYPE=YASPGRID
+GRIDDIM=2
 
 CXXFLAGS=-g -Wall
 

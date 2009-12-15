@@ -13,7 +13,7 @@
 #include <dune/fem/space/basefunctions/basefunctionproxy.hh>
 #include <dune/fem/space/lagrangespace/lagrangedatahandle.hh>
 
-#include  <dune/finiteelements/pk2d.hh>
+#include  <dune/localfunctions/pk2d.hh>
 
 namespace Dune
 {

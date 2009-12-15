@@ -208,6 +208,7 @@ public:
 
 // Type Definitions
 // ----------------
+typedef GridSelector::GridType GridType;
 
 typedef CheckGridEnabled< GridType > :: GridPartType GridPartType;
 

@@ -11,6 +11,8 @@ namespace Dune
   template< class Grid >
   void LagrangeMapper_Test< Grid > :: run()
   {
+    typedef GridSelector::GridType GridType;
+
     GridPtr< GridType > gridPtr( gridFile_ );
     GridType& grid = *gridPtr;
     //grid.globalRefine( 2 );

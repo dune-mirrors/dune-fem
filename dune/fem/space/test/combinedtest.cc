@@ -45,6 +45,7 @@ const int polOrd = POLORDER;
 //***********************************************************************
 
 //! the index set we are using 
+typedef GridSelector::GridType GridType;
 typedef HierarchicGridPart<GridType> GridPartType;
 
 //! define the function space, \f[ \R^2 \rightarrow \R \f]

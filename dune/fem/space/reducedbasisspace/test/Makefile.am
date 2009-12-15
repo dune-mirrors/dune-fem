@@ -1,5 +1,9 @@
 LDADD = $(ALL_PKG_LDFLAGS) $(ALL_PKG_LIBS) $(LOCAL_LIBS)
 
+# set default grid type for make all
+GRIDTYPE=YASPGRID
+GRIDDIM=2
+
 POLORDER = 1
 
 check_PROGRAMS = l2projection

@@ -1,4 +1,4 @@
-#ifdef  DUNE_FEM_PQ22DSPACE_HH  // does not work yet
+#ifndef  DUNE_FEM_PQ22DSPACE_HH  // does not work yet
 #define  DUNE_FEM_PQ22DSPACE_HH
 
 #if HAVE_DUNE_LOCALFUNCTIONS
@@ -16,7 +16,7 @@
 #include <dune/fem/space/lagrangespace/lagrangedatahandle.hh>
 
 //- Dune-Localfunctions include
-#include  <dune/finiteelements/pq22d.hh>
+#include  <dune/localfunctions/pq22d.hh>
 
 namespace Dune
 {

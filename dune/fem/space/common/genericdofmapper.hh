@@ -8,7 +8,7 @@
 #include <dune/grid/genericgeometry/conversion.hh>
 #include <dune/grid/genericgeometry/referencetopologies.hh>
 
-#include <dune/finiteelements/common/localcoefficients.hh>
+#include <dune/localfunctions/common/localcoefficients.hh>
 
 #include <dune/fem/space/common/dofmapper.hh>
 
