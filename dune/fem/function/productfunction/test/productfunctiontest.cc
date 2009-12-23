@@ -41,9 +41,8 @@ const int polOrd = POLORDER;
 */
 //***********************************************************************
 
-namespace {
-
 typedef Dune::GridSelector::GridType GridType;
+
 // static const int dimworld = GRIDDIM;
 // static const int dimworld = dimworld;
 typedef SGrid  < dim2,dim2 > Grid2Type;
@@ -468,6 +467,6 @@ int main (int argc, char **argv)
 		<< std::endl;
     std::cout << std::endl;
   }
+  return 0;
 }
 
-}
