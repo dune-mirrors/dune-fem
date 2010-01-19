@@ -1,11 +1,14 @@
-# don't follow the full GNU-standard; we definitely need automake >= 1.5
-AUTOMAKE_OPTIONS = foreign 1.5
-
+# install header files
 iodir =  $(includedir)/dune/fem/io
-io_HEADERS = parameter.hh
+io_HEADERS = io.hh  parameter.hh
 
 # do everything in the subdirs
 SUBDIRS = file streams visual matlab
 
-include $(top_srcdir)/am/global-rules
+# build io library
+noinst_LTLIBRARIES = libio.la
 
+libio_la_SOURCES = io.cc
+
+# include common rules
+include $(top_srcdir)/am/global-rules
