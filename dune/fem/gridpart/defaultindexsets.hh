@@ -175,8 +175,7 @@ class HierarchicIndexSetSelector
 
     static const IndexSet &indexSet ( const Grid &grid )
     {
-      std::cerr << "Warning: " << grid.name() << " does not provide a "
-                << "HierarchicIndexSet, using LeafIndexSet instead." << std::endl;
+      std::cerr << "Warning: Grid does not provide a HierarchicIndexSet, using LeafIndexSet instead." << std::endl;
       return grid.leafIndexSet();
     }
   };
