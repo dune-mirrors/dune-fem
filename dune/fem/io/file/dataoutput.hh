@@ -551,12 +551,12 @@ protected:
       if( parallel )
       {
         // write all data for parallel runs  
-        filename = vtkio.pwrite( name.c_str(), path_.c_str(), "." , Dune::VTKOptions::binaryappended );
+        filename = vtkio.pwrite( name, path_, "." , Dune::VTKOptions::binaryappended );
       }
       else
       {
         // write all data serial 
-        filename = vtkio.write( name.c_str(), Dune::VTKOptions::binaryappended );
+        filename = vtkio.write( name, Dune::VTKOptions::binaryappended );
       }
     }
     else
@@ -588,12 +588,12 @@ protected:
         if( parallel )
         {
           // write all data for parallel runs  
-          filename = vtkio.pwrite( name.c_str(), path_.c_str(), "." , Dune::VTKOptions::binaryappended );
+          filename = vtkio.pwrite( name, path_, "." , Dune::VTKOptions::binaryappended );
         }
         else
         {
           // write all data serial 
-          filename = vtkio.write( name.c_str(), Dune::VTKOptions::binaryappended );
+          filename = vtkio.write( name, Dune::VTKOptions::binaryappended );
         }
       }
     }

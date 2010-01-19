@@ -1,5 +1,7 @@
-#ifndef VTKIO_HH
-#define VTKIO_HH
+#ifndef DUNE_FEM_VTKIO_HH
+#define DUNE_FEM_VTKIO_HH
+
+#include <dune/common/typetraits.hh>
 
 #include <dune/grid/io/file/vtk/vtkwriter.hh>
 #include <dune/fem/version.hh>
@@ -10,6 +12,17 @@
 
 namespace Dune
 {
+
+  // Internal Forward Declarations
+  // -----------------------------
+
+  template< class GridPart, bool subsampling = false >
+  class VTKIO;
+
+
+
+  // VTKFunctionWrapper
+  // ------------------
 
   template< class DF >
   class VTKFunctionWrapper
@@ -84,80 +97,25 @@ namespace Dune
     const int component_;
   };
 
+
+
+  // VTKIOBase
+  // ---------
+
   //! /brief Output using VTK
-  template< class GridPart , bool subsampling  >
+  template< class GridPart, bool subsampling >
   class VTKIOBase
   {
-  protected:  
-    //! /brief Output using VTK
-    template< class GridPartImp>
-    class FemVTKWriter
-    : public VTKWriter< typename GridPartImp :: GridViewType >
-    {
-    public:
-      typedef GridPartImp GridPartType;
-      typedef typename GridPartType :: GridViewType GridViewType;
+    typedef VTKIOBase< GridPart, subsampling > ThisType;
 
-    protected:
-      typedef VTKWriter< GridViewType > BaseType;
+  protected:
+    typedef typename GridPart::GridViewType GridViewType;
 
-    public:
-      // make all write methods public for data convert
-      using BaseType :: write;
-      using BaseType :: pwrite;
+    class VTKWriter;
+    class SubsamplingVTKWriter;
 
-    public:
-      //! constructor  
-      FemVTKWriter( const GridPartType &gridPart, 
-             VTKOptions::DataMode dm = VTKOptions::conforming )
-      : BaseType( gridPart.gridView(), dm )
-      {
-      }
-    };
-
-    template <class GP , bool sp > 
-    struct VTKChooser 
-    {
-      typedef FemVTKWriter< GP > VTKWriterType;
-    };
-
-    //! /brief Output using VTK
-    template< class GridPartImp >
-    class FemSubVTKWriter
-    : public SubsamplingVTKWriter< typename GridPartImp :: GridViewType >
-    {
-    public:
-      typedef GridPartImp GridPartType;
-      typedef typename GridPartType :: GridViewType GridViewType;
-
-    protected:
-      typedef SubsamplingVTKWriter< GridViewType > BaseType;
-
-    public:
-      // make all write methods public for data convert
-      using BaseType :: write;
-      using BaseType :: pwrite;
-
-    public:
-      //! constructor  
-      FemSubVTKWriter( const GridPartType &gridPart, 
-                       const int level, 
-                       bool coerceToSimplex = false )
-      : BaseType( gridPart.gridView(), level, coerceToSimplex )
-      {
-      }
-    };
-
-    template <class GP> 
-    struct VTKChooser< GP, true >
-    {
-      typedef FemSubVTKWriter< GP > VTKWriterType;
-    };
-
-    typedef VTKIOBase< GridPart , subsampling > ThisType;
-
-    typedef typename VTKChooser< GridPart , 
-              subsampling > ::  VTKWriterType VTKWriterType; 
+    typedef typename SelectType< subsampling, SubsamplingVTKWriter, VTKWriter >::Type
+      VTKWriterType;
 
   public:
     typedef GridPart GridPartType;
@@ -184,42 +142,31 @@ namespace Dune
     }
 
     template< class DF >
-    void addCellData( DF &df)
+    void addCellData( DF &df )
     {
-      typedef typename DF::FunctionSpaceType FunctionSpaceType;
-      enum {dimRange=FunctionSpaceType::dimRange};
-      enum {dimDomain=FunctionSpaceType::dimDomain};
-      for (int i=0;i<dimRange;++i) 
-         vtkWriter_->addCellData(new VTKFunctionWrapper<DF>(df,i,false)); 
+      static const int dimRange = DF::FunctionSpaceType::dimRange;
+      for( int i = 0;i < dimRange; ++i )
+        vtkWriter_->addCellData( new VTKFunctionWrapper< DF >( df, i, false ) );
     }
 
     template< class DF >
-    void addVectorCellData( DF &df,
-                      int startPoint = 0 )
+    void addVectorCellData( DF &df, int startPoint = 0 )
     {
-      typedef typename DF::FunctionSpaceType FunctionSpaceType;
-      enum {dimRange=FunctionSpaceType::dimRange};
-      enum {dimDomain=FunctionSpaceType::dimDomain};
-      vtkWriter_->addCellData(new VTKFunctionWrapper<DF>(df,startPoint,true)); 
+      vtkWriter_->addCellData( new VTKFunctionWrapper< DF >( df, startPoint, true ) );
     }
 
     template< class DF >
     void addVertexData( DF &df )
     {
-      typedef typename DF::FunctionSpaceType FunctionSpaceType;
-      enum {dimRange=FunctionSpaceType::dimRange};
-      enum {dimDomain=FunctionSpaceType::dimDomain};
-      for (int i=0;i<dimRange;++i) 
-        vtkWriter_->addVertexData(new VTKFunctionWrapper<DF>(df,i,false)); 
+      static const int dimRange = DF::FunctionSpaceType::dimRange;
+      for( int i = 0;i < dimRange; ++i )
+        vtkWriter_->addVertexData( new VTKFunctionWrapper< DF >( df, i, false ) );
     }
 
     template< class DF >
     void addVectorVertexData( DF &df, int startPoint = 0 )
     {
-      typedef typename DF::FunctionSpaceType FunctionSpaceType;
-      enum {dimRange=FunctionSpaceType::dimRange};
-      enum {dimDomain=FunctionSpaceType::dimDomain};
-      vtkWriter_->addVertexData(new VTKFunctionWrapper<DF>(df,startPoint,true)); 
+      vtkWriter_->addVertexData( new VTKFunctionWrapper< DF >( df, startPoint, true ) );
     }
 
     void clear ()
@@ -233,10 +180,12 @@ namespace Dune
       return vtkWriter_->write( name, type );
     }
 
-    std::string pwrite ( const char *name, const char *path, const char *extendpath,
+    std::string pwrite ( const std::string &name,
+                         const std::string &path,
+                         const std::string &extendpath,
                          VTKOptions::OutputType type = VTKOptions::ascii )
     {
-      return vtkWriter_->pwrite( name, path, extendpath, type );
+      return vtkWriter_->pwrite( name.c_str(), path.c_str(), extendpath.c_str(), type );
     }
 
     std::string write ( const std::string &name,
@@ -248,47 +197,126 @@ namespace Dune
     }
 
   private:
-    const GridPartType& gridPart_;
+    const GridPartType &gridPart_;
     VTKWriterType *vtkWriter_;
   };
 
-  template< class GridPart >
-  class VTKIO
-  : public VTKIOBase< GridPart , false >
-  {
-    typedef VTKIO< GridPart > ThisType;
-    typedef VTKIOBase< GridPart , false > BaseType;
 
-    typedef typename BaseType :: VTKWriterType VTKWriterType;
+
+  // VTKIOBase::VTKWriter
+  // -----------------------
+
+  template< class GridPart, bool subsampling >
+  class VTKIOBase< GridPart, subsampling >::VTKWriter
+  : public Dune::VTKWriter< GridViewType >
+  {
+    typedef Dune::VTKWriter< GridViewType > BaseType;
 
   public:
-    typedef GridPart GridPartType;
+    // make all write methods public for data convert
+    using BaseType::write;
+    using BaseType::pwrite;
 
-    explicit VTKIO ( const GridPartType &gridPart,
-                     VTKOptions::DataMode dm = VTKOptions::conforming )
-    : BaseType( gridPart , new VTKWriterType( gridPart, dm ) )
+    //! constructor  
+    VTKWriter( const GridPartType &gridPart, 
+               VTKOptions::DataMode dm = VTKOptions::conforming )
+    : BaseType( gridPart.gridView(), dm )
     {}
   };
 
-  template< class GridPart >
-  class SubsamplingVTKIO
-  : public VTKIOBase< GridPart , true >
-  {
-    typedef SubsamplingVTKIO< GridPart > ThisType;
-    typedef VTKIOBase< GridPart , true > BaseType;
 
-     typedef typename BaseType :: VTKWriterType  VTKWriterType;
+
+  // VTKIOBase::SubSamplingVTKWriter
+  // --------------------------
+
+  template< class GridPart, bool subsampling >
+  class VTKIOBase< GridPart, subsampling >::SubsamplingVTKWriter
+  : public Dune::SubsamplingVTKWriter< GridViewType >
+  {
+    typedef Dune::SubsamplingVTKWriter< GridViewType > BaseType;
 
   public:
-    typedef GridPart GridPartType;
+    // make all write methods public for data convert
+    using BaseType::write;
+    using BaseType::pwrite;
+
+    //! constructor  
+    SubsamplingVTKWriter( const GridPartType &gridPart, 
+                          const int level, 
+                          bool coerceToSimplex = false )
+    : BaseType( gridPart.gridView(), level, coerceToSimplex )
+    {}
+  };
+
+
+
+  // VTKIO (without subsampling)
+  // ---------------------------
+
+  template< class GridPart >
+  class VTKIO< GridPart, false >
+  : public VTKIOBase< GridPart, false >
+  {
+    typedef VTKIO< GridPart > ThisType;
+    typedef VTKIOBase< GridPart, false > BaseType;
+
+    typedef typename BaseType::VTKWriterType VTKWriterType;
+
+  public:
+    typedef typename BaseType::GridPartType GridPartType;
+
+    explicit VTKIO ( const GridPartType &gridPart,
+                     VTKOptions::DataMode dm = VTKOptions::conforming )
+    : BaseType( gridPart, new VTKWriterType( gridPart, dm ) )
+    {}
+  };
+
+
+
+  // VTKIO (with subsampling)
+  // ------------------------
+
+  template< class GridPart >
+  class VTKIO< GridPart, true >
+  : public VTKIOBase< GridPart , true >
+  {
+    typedef VTKIO< GridPart, true > ThisType;
+    typedef VTKIOBase< GridPart, true > BaseType;
+
+     typedef typename BaseType::VTKWriterType VTKWriterType;
+
+  public:
+    typedef typename BaseType::GridPartType GridPartType;
+
+    explicit VTKIO ( const GridPartType &gridPart,
+                     unsigned int level = 0,
+                     bool coerceToSimplex = false )
+    : BaseType( gridPart, new VTKWriterType( gridPart, level, coerceToSimplex ) )
+    {}
+  };
+
+
+
+  // SubsamplingVTKIO
+  // ----------------
+
+  template< class GridPart >
+  class SubsamplingVTKIO
+  : public VTKIO< GridPart, true >
+  {
+    typedef SubsamplingVTKIO< GridPart > ThisType;
+    typedef VTKIO< GridPart, true > BaseType;
+
+  public:
+    typedef typename BaseType::GridPartType GridPartType;
 
     explicit SubsamplingVTKIO ( const GridPartType &gridPart,
                                 unsigned int level = 0,
                                 bool coerceToSimplex = false )
-    : BaseType( gridPart, new VTKWriterType( gridPart, level, coerceToSimplex ) )
+    : BaseType( gridPart, level, coerceToSimplex )
     {}
   };
 
 }
 
-#endif // #ifndef VTKIO_HH
+#endif // #ifndef DUNE_FEM_VTKIO_HH
