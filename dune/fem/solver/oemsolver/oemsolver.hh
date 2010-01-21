@@ -342,11 +342,14 @@ namespace Dune
    **/
 
 /** \brief OEM-CG scheme after Hestenes and Stiefel */
-template <class DiscreteFunctionType, class OperatorType>
+template <class DiscreteFunctionType, class OpType >
 class OEMCGOp : public Operator<
       typename DiscreteFunctionType::DomainFieldType,
       typename DiscreteFunctionType::RangeFieldType,
-            DiscreteFunctionType,DiscreteFunctionType> {
+            DiscreteFunctionType,DiscreteFunctionType>
+{
+public:
+  typedef OpType OperatorType;
 
 private:
   // no const reference, we make const later 
@@ -415,9 +418,27 @@ public:
       \param[in] maxIter maximal number of iterations performed 
       \param[in] verbose verbosity 
   */
-  OEMCGOp( OperatorType & op , double  redEps , double absLimit , int maxIter , bool verbose ) :
-        op_(op), epsilon_ ( absLimit ) ,
-        maxIter_ (maxIter ) , verbose_ ( verbose ) {
+  OEMCGOp( OperatorType &op,
+           double redEps,
+           double absLimit,
+           int maxIter,
+           bool verbose )
+  : op_(op),
+    epsilon_( absLimit ),
+    maxIter_(maxIter ),
+    verbose_( verbose )
+  {
+  }
+
+  OEMCGOp( OperatorType &op,
+           double redEps,
+           double absLimit,
+           int maxIter = std::numeric_limits< int >::max() )
+  : op_( op ),
+    epsilon_( absLimit ),
+    maxIter_( maxIter ),
+    verbose_( Parameter::getValue< bool >( "fem.solver.verbose", false ) )
+  {
   }
 
   void prepare (const DiscreteFunctionType& Arg, DiscreteFunctionType& Dest) const
@@ -466,11 +487,14 @@ public:
 };
 
 /** \brief BiCG-stab solver */
-template <class DiscreteFunctionType, class OperatorType>
+template <class DiscreteFunctionType, class OpType>
 class OEMBICGSTABOp : public Operator<
       typename DiscreteFunctionType::DomainFieldType,
       typename DiscreteFunctionType::RangeFieldType,
-            DiscreteFunctionType,DiscreteFunctionType> {
+            DiscreteFunctionType,DiscreteFunctionType>
+{
+public:
+  typedef OpType OperatorType;
 
 private:
   // no const reference, we make const later 
@@ -531,10 +555,28 @@ public:
       \param[in] maxIter maximal number of iterations performed 
       \param[in] verbose verbosity 
   */
-  OEMBICGSTABOp( OperatorType & op , double  redEps , double absLimit , int maxIter , bool verbose ) :
-        op_(op), epsilon_ ( absLimit ) ,
-        maxIter_ (maxIter ) , verbose_ ( verbose ) {
+  OEMBICGSTABOp( OperatorType& op,
+                 double redEps,
+                 double absLimit,
+                 int maxIter,
+                 bool verbose )
+  : op_(op),
+    epsilon_( absLimit ),
+    maxIter_( maxIter ),
+    verbose_( verbose )
+  {
   }
+
+  OEMBICGSTABOp( OperatorType &op,
+                 double redEps,
+                 double absLimit,
+                 int maxIter = std::numeric_limits< int >::max() )
+  : op_( op ),
+    epsilon_( absLimit ),
+    maxIter_( maxIter ),
+    verbose_( Parameter::getValue< bool >( "fem.solver.verbose", false ) )
+  {
+  }  
 
   void prepare (const DiscreteFunctionType& Arg, DiscreteFunctionType& Dest) const
   {
@@ -588,11 +630,14 @@ public:
 // BICG SQ scheme 
 ////////////////////////////////
 /** \brief BiCG-SQ method */
-template <class DiscreteFunctionType, class OperatorType>
+template <class DiscreteFunctionType, class OpType>
 class OEMBICGSQOp : public Operator<
       typename DiscreteFunctionType::DomainFieldType,
       typename DiscreteFunctionType::RangeFieldType,
-            DiscreteFunctionType,DiscreteFunctionType> {
+            DiscreteFunctionType,DiscreteFunctionType>
+{
+public:
+  typedef OpType OperatorType;
 
 private:
   // no const reference, we make const later 
@@ -609,9 +654,27 @@ public:
       \param[in] maxIter maximal number of iterations performed 
       \param[in] verbose verbosity 
   */
-  OEMBICGSQOp( OperatorType & op , double  redEps , double absLimit , int maxIter , bool verbose ) :
-        op_(op), epsilon_ ( absLimit ) ,
-        maxIter_ (maxIter ) , verbose_ ( verbose ) {
+  OEMBICGSQOp( OperatorType &op,
+               double redEps,
+               double absLimit,
+               int maxIter,
+               bool verbose )
+  : op_(op),
+    epsilon_( absLimit ),
+    maxIter_( maxIter ),
+    verbose_( verbose )
+  {
+  }
+
+  OEMBICGSQOp( OperatorType &op,
+               double redEps,
+               double absLimit,
+               int maxIter =  std::numeric_limits< int >::max() )
+  : op_( op ),
+    epsilon_( absLimit ),
+    maxIter_( maxIter ),
+    verbose_( Parameter::getValue< bool >( "fem.solver.verbose", false ) )
+  {
   }
 
   void prepare (const DiscreteFunctionType& Arg, DiscreteFunctionType& Dest) const
