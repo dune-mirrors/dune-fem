@@ -23,6 +23,9 @@ namespace Dune
     //! type of the grid partition
     typedef GridPartImp GridPartType;
 
+    //! inside and outside flags 
+    enum Side { INSIDE, OUTSIDE };
+
     //! codimension of the integration point list
     static const int codimension = 0;
 
@@ -134,6 +137,9 @@ namespace Dune
   public:
     //! type of the grid partition
     typedef GridPartImp GridPartType;
+
+    //! inside and outside flags 
+    enum Side { INSIDE, OUTSIDE };
 
     //! codimension of the element integration point list
     static const int codimension = codim;

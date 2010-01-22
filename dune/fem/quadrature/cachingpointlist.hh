@@ -90,11 +90,8 @@ namespace Dune
     //! the type of the quadrature point 
     typedef QuadraturePointWrapper< This > QuadraturePointWrapperType;
     
-
-    // for compatibility
-    enum Side { INSIDE, OUTSIDE };
+    //! type of grid 
     typedef typename Base::GridPartType::GridType GridType;
-
 
   protected:
     using Base::quadImp;
@@ -142,9 +139,6 @@ namespace Dune
   public:
     //! type of the grid partition
     typedef GridPartImp GridPartType;
-
-    //! side of intersection  
-    enum Side { INSIDE, OUTSIDE };
 
     typedef typename Base::RealType RealType;
     static const int dimension = Base::dimension;
@@ -198,7 +192,7 @@ namespace Dune
      */
     CachingPointList ( const GridPartType &gridPart,
                        const IntersectionType &intersection,
-                       int order, const Side side )
+                       int order, const typename Base :: Side side )
       : Base( getPointList( gridPart, intersection, order, side ) ),
         mapper_( CacheProvider::getMapper( quadImp(), elementGeometry(), localFaceIndex(), twist_ ) ),
         points_( PointProvider::getPoints( quadImp().ipList().id(), elementGeometry() ) )
@@ -242,22 +236,23 @@ namespace Dune
   protected:
     Base getPointList ( const GridPartType &gridPart,
                         const IntersectionType &intersection,
-                        const int order, const Side side )
+                        const int order, 
+                        const typename Base :: Side side )
     {
       switch( side )
       {
-      case INSIDE:
-        twist_ = TwistUtilityType::twistInSelf( gridPart.grid(), intersection );
-        return Base( TwistUtilityType::elementGeometry( intersection, true ),
-                     intersection.indexInInside(), order );
+        case Base :: INSIDE:
+          twist_ = TwistUtilityType::twistInSelf( gridPart.grid(), intersection );
+          return Base( TwistUtilityType::elementGeometry( intersection, true ),
+                       intersection.indexInInside(), order );
 
-      case OUTSIDE:
-        twist_ = TwistUtilityType::twistInNeighbor( gridPart.grid(), intersection );
-        return Base( TwistUtilityType::elementGeometry( intersection, false ),
-                     intersection.indexInOutside(), order );
+        case Base :: OUTSIDE:
+          twist_ = TwistUtilityType::twistInNeighbor( gridPart.grid(), intersection );
+          return Base( TwistUtilityType::elementGeometry( intersection, false ),
+                       intersection.indexInOutside(), order );
 
-      default:
-        DUNE_THROW( InvalidStateException, "ElementIntegrationPointList: side must either be INSIDE or OUTSIDE." );
+        default:
+          DUNE_THROW( InvalidStateException, "ElementIntegrationPointList: side must either be INSIDE or OUTSIDE." );
       }
     }
 

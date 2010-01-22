@@ -61,8 +61,6 @@ namespace Dune
 
     typedef QuadraturePointWrapper< This > QuadraturePointWrapperType;
 
-    // for compatibility
-    enum Side { INSIDE, OUTSIDE };
     typedef typename Base::GridPartType::GridType GridType;
 
   public:
@@ -103,9 +101,6 @@ namespace Dune
     //! type of the grid partition
     typedef GridPartImp GridPartType;
 
-    //! side of intersection  
-    enum Side { INSIDE, OUTSIDE };
-
     static const int dimension = Base::dimension;
 
     //! Type of coordinates in codim-0 reference element
@@ -144,7 +139,7 @@ namespace Dune
     ElementIntegrationPointList ( const GridPartType &gridPart, 
                                   const IntersectionType &intersection, 
                                   const int order,
-                                  const Side side )
+                                  const typename Base :: Side side )
     : Base( getPointList( intersection, order, side ) )
     {}
 
@@ -176,22 +171,23 @@ namespace Dune
     }
 
   protected:
-    Base getPointList ( const IntersectionType &intersection, const int order, const Side side )
+    Base getPointList ( const IntersectionType &intersection, const int order, 
+                        const typename Base :: Side side )
     {
       switch( side )
       {
-      case INSIDE:
-        referenceGeometry_ = &(intersection.geometryInInside());
-        return Base( TwistUtilityType::elementGeometry( intersection, true ),
-                     referenceGeometry_->type(), intersection.indexInInside(), order );
+        case Base :: INSIDE:
+          referenceGeometry_ = &(intersection.geometryInInside());
+          return Base( TwistUtilityType::elementGeometry( intersection, true ),
+                       referenceGeometry_->type(), intersection.indexInInside(), order );
 
-      case OUTSIDE:
-        referenceGeometry_ = &(intersection.geometryInOutside());
-        return Base( TwistUtilityType::elementGeometry( intersection, false ),
-                     referenceGeometry_->type(), intersection.indexInOutside(), order );
+        case Base ::OUTSIDE:
+          referenceGeometry_ = &(intersection.geometryInOutside());
+          return Base( TwistUtilityType::elementGeometry( intersection, false ),
+                       referenceGeometry_->type(), intersection.indexInOutside(), order );
 
-      default:
-        DUNE_THROW( InvalidStateException, "ElementIntegrationPointList: side must either be INSIDE or OUTSIDE." );
+        default:
+          DUNE_THROW( InvalidStateException, "ElementIntegrationPointList: side must either be INSIDE or OUTSIDE." );
       }
     }
 
