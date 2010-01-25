@@ -629,25 +629,38 @@ private:
 
 //***********************************************************************
 
+template< class DiscreteFunctionType >
+struct DataInlinerTraits
+{
+  typedef typename DiscreteFunctionType::DiscreteFunctionSpaceType
+    DiscreteFunctionSpaceType;
+  typedef typename DiscreteFunctionSpaceType::GridType GridType;
+  typedef typename GridType::template Codim< 0 >::Entity EntityType;
+
+  typedef typename GridObjectStreamOrDefault< GridType, DummyObjectStream >::ObjectStreamType
+    ObjectStreamType;
+  typedef std::pair< ObjectStreamType *, const EntityType * > ParamType;
+  typedef LocalInterface< ParamType > LocalInterfaceType;
+};
+
+
     /** \brief ???
      * \todo Please doc me!
      */
-template <class DiscreteFunctionType>
-class DataInliner : 
-public LocalInlinePlus < DataInliner< DiscreteFunctionType > , 
-  typename std::pair < 
-  typename GridObjectStreamOrDefault<typename DiscreteFunctionType::FunctionSpaceType::GridType, DummyObjectStream > :: ObjectStreamType * , 
-      const typename DiscreteFunctionType::FunctionSpaceType::GridType::template Codim<0>::Entity * > > 
+template< class DiscreteFunctionType >
+class DataInliner
+: public LocalInlinePlus< DataInliner< DiscreteFunctionType >,
+                          typename DataInlinerTraits< DiscreteFunctionType >::ParamType >
 {
-  typedef typename GridObjectStreamOrDefault<typename DiscreteFunctionType::FunctionSpaceType::GridType, DummyObjectStream > :: ObjectStreamType ObjectStreamType; 
-  typedef LocalInlinePlus < DataInliner< DiscreteFunctionType > ,
-    typename std::pair < ObjectStreamType * ,
-          const typename  DiscreteFunctionType::FunctionSpaceType::GridType::template Codim<0>::Entity * > >  ChefType;
-public:
-  typedef typename DiscreteFunctionType::FunctionSpaceType::GridType::template Codim<0>::Entity EntityType;
-  typedef typename ChefType::Traits::ParamType ParamType;
+  typedef DataInliner< DiscreteFunctionType > ThisType;
+  typedef LocalInlinePlus< ThisType, typename DataInlinerTraits< DiscreteFunctionType >::ParamType > BaseType;
 
-  typedef DataInliner<DiscreteFunctionType> MyType;
+public:
+  typedef DataInlinerTraits< DiscreteFunctionType > Traits;
+  typedef typename Traits::ObjectStreamType ObjectStreamType;
+
+  typedef typename Traits::EntityType EntityType;
+  typedef typename Traits::ParamType ParamType;
 
   typedef LocalInterface<ParamType> LocalInterfaceType;
     
@@ -656,9 +669,8 @@ public:
   typedef typename DiscreteFunctionType::RangeFieldType RangeFieldType;
   typedef typename DiscreteFunctionType::DomainType DomainType;
 
-public:  
   //! constructor 
-  DataInliner ( const DiscreteFunctionType & df ) 
+  explicit DataInliner ( const DiscreteFunctionType & df ) 
     : df_ (df) 
   {}
 
@@ -692,22 +704,35 @@ protected:
 };
 
 
-template <class DiscreteFunctionType>
-class DataXtractor : 
-public LocalInlinePlus < DataXtractor< DiscreteFunctionType > , 
-  typename std::pair < 
-  typename GridObjectStreamOrDefault<typename DiscreteFunctionType::FunctionSpaceType::GridType, DummyObjectStream > :: ObjectStreamType * , 
-      const typename DiscreteFunctionType::FunctionSpaceType::GridType::template Codim<0>::Entity * > > 
+template< class DiscreteFunctionType >
+struct DataXtractorTraits
 {
-  typedef typename GridObjectStreamOrDefault<typename DiscreteFunctionType::FunctionSpaceType::GridType, DummyObjectStream > :: ObjectStreamType ObjectStreamType;  
-  typedef LocalInlinePlus < DataInliner< DiscreteFunctionType > ,
-    typename std::pair < ObjectStreamType * ,
-          const typename  DiscreteFunctionType::FunctionSpaceType::GridType::template Codim<0>::Entity * > >  ChefType;
-public:
-  typedef typename DiscreteFunctionType::FunctionSpaceType::GridType::template Codim<0>::Entity EntityType;
-  typedef typename ChefType::Traits::ParamType ParamType;
+  typedef typename DiscreteFunctionType::DiscreteFunctionSpaceType
+    DiscreteFunctionSpaceType;
+  typedef typename DiscreteFunctionSpaceType::GridType GridType;
+  typedef typename GridType::template Codim< 0 >::Entity EntityType;
 
-  typedef DataXtractor<DiscreteFunctionType> MyType;
+  typedef typename GridObjectStreamOrDefault< GridType, DummyObjectStream >::ObjectStreamType
+    ObjectStreamType;
+  typedef std::pair< ObjectStreamType *, const EntityType * > ParamType;
+  typedef LocalInterface< ParamType > LocalInterfaceType;
+};
+
+
+template< class DiscreteFunctionType >
+class DataXtractor
+: public LocalInlinePlus< DataXtractor< DiscreteFunctionType >,
+                          typename DataXtractorTraits< DiscreteFunctionType >::ParamType >
+{
+  typedef DataXtractor< DiscreteFunctionType > ThisType;
+  typedef LocalInlinePlus< ThisType, typename DataXtractorTraits< DiscreteFunctionType >::ParamType > BaseType;
+
+public:
+  typedef DataXtractorTraits< DiscreteFunctionType > Traits;
+  typedef typename Traits::ObjectStreamType ObjectStreamType;
+
+  typedef typename Traits::EntityType EntityType;
+  typedef typename Traits::ParamType ParamType;
 
   typedef LocalInterface<ParamType> LocalInterfaceType;
     
@@ -715,9 +740,9 @@ public:
 
   typedef typename DiscreteFunctionType::RangeFieldType RangeFieldType;
   typedef typename DiscreteFunctionType::DomainType DomainType;
-public:  
+
   //! constructor 
-  DataXtractor ( DiscreteFunctionType & df ) 
+  explicit DataXtractor ( DiscreteFunctionType & df ) 
     : df_ (df) 
     {}
 
