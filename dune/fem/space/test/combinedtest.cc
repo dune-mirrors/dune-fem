@@ -2,7 +2,7 @@
 #include <config.h>
 
 #include <dune/grid/io/file/dgfparser/dgfgridtype.hh>
-static const int dimw = dimworld;
+static const int dimw = Dune::GridSelector::dimworld;
 
 #include <dune/fem/operator/discreteoperatorimp.hh>
 #include <dune/fem/space/lagrangespace.hh>
@@ -45,8 +45,8 @@ const int polOrd = POLORDER;
 //***********************************************************************
 
 //! the index set we are using 
-typedef GridSelector::GridType GridType;
-typedef HierarchicGridPart<GridType> GridPartType;
+typedef GridSelector::GridType MyGridType;
+typedef HierarchicGridPart< MyGridType > GridPartType;
 
 //! define the function space, \f[ \R^2 \rightarrow \R \f]
 // see dune/common/functionspace.hh
@@ -54,16 +54,21 @@ typedef HierarchicGridPart<GridType> GridPartType;
 // double -> Double
 
 // the exact solution to the problem for EOC calculation 
-template <class FuncSpace>
-class ExactSolution : public Function < FuncSpace , ExactSolution<FuncSpace> > 
+template< class FuncSpace >
+class ExactSolution
+: public Fem::Function< FuncSpace, ExactSolution< FuncSpace > >
 {
-  typedef Function < FuncSpace , ExactSolution<FuncSpace> > BaseType;
+  typedef Fem::Function < FuncSpace , ExactSolution<FuncSpace> > BaseType;
+
+public:
   typedef typename FuncSpace::RangeType RangeType;
   typedef typename FuncSpace::RangeFieldType RangeFieldType;
   typedef typename FuncSpace::DomainType DomainType;
+
 public:
-  ExactSolution (const FuncSpace &f,int shift=0) :
-    BaseType ( f ), shift_(shift) {}
+  explicit ExactSolution ( int shift = 0 )
+  : shift_( shift )
+  {}
  
   //! f(x,y) = x*(1-x)*y*(1-y)
   void evaluate (const DomainType & x , RangeType & ret)  const
@@ -119,7 +124,7 @@ class L2Projection
       const BaseFunctionSetType & baseset =
         lf.baseFunctionSet();
 
-      const typename GridType::template Codim<0>::Entity::Geometry& 
+      const typename MyGridType::template Codim<0>::Entity::Geometry& 
         itGeom = (*it).geometry();
      
       const int quadNop = quad.nop();
@@ -208,9 +213,9 @@ public:
 // ********************************************************************
 // ********************************************************************
 const int RANGE = 3;
-typedef FunctionSpace < GridType :: ctype, double , 
+typedef FunctionSpace < MyGridType :: ctype, double , 
 			dimw , RANGE > FuncSpace;
-typedef FunctionSpace < GridType :: ctype, double , 
+typedef FunctionSpace < MyGridType :: ctype, double , 
 			dimw , 1 > SingleFuncSpace;
 typedef DiscontinuousGalerkinSpace<
   SingleFuncSpace,GridPartType, 
@@ -219,53 +224,52 @@ typedef AdaptiveDiscreteFunction <
   SingleDiscreteFunctionSpaceType > SingleDiscreteFunctionType;
 
 //! Get the Dofmanager type
-typedef DofManager<GridType> DofManagerType;
+typedef DofManager<MyGridType> DofManagerType;
 
 template <class DiscreteFunctionType>
-double algorithm (GridType& grid, 
+double algorithm (MyGridType& grid, 
 		  DiscreteFunctionType& solution  , int turn )
 {
   typedef typename 
     DiscreteFunctionType::DiscreteFunctionSpaceType
     DiscreteFunctionSpaceType;
-   //! perform l2-projection
-   typedef typename DiscreteFunctionSpaceType :: 
-     ContainedSpaceType SubDFSType;
-   typedef typename DiscreteFunctionType :: 
-     SubDiscreteFunctionType SubDFType;
-   typedef typename DiscreteFunctionSpaceType :: 
-     RangeType RangeType; 
-   typedef typename SubDFSType :: RangeType SubRangeType;
-   RangeType error(0);
-  const DiscreteFunctionSpaceType& 
-    linFuncSpace = solution.space();
-  ExactSolution<DiscreteFunctionSpaceType> f (linFuncSpace); 
-   L2Projection<DiscreteFunctionType>:: project(f, solution);
-   for (int method=0;method<2;method++) {
-     // calculation L2 error 
-     // pol ord for calculation the error chould by higher than 
-     // pol for evaluation the basefunctions 
-     L2Error < DiscreteFunctionType > l2err;
-     error = l2err.norm(f ,solution, 0.0);
-     for(int i=0; i<RangeType::dimension; ++i)
-       std::cout << "\nL2 Error["<<i<<"] : " << error[i] << "\n\n";
-     for (int i=0;i<RangeType::dimension; ++i) {
-       SubDFType& sol0 = solution.subFunction(i);
-       ExactSolution<SubDFSType> f0 (linFuncSpace.containedSpace(),i ); 
-       L2Error < SubDFType > l2err0;
-       SubRangeType error0 = l2err0.norm(f0,sol0,0.0);
-       std::cout << "\n L2 SubError[" << i << "]-Error[" << i << "]  : " 
-                 << error0[0]-error[i] << "\n\n";
-     }
-     solution.clear();
-     for (int i=0;i<RangeType::dimension; i+=1) {
-       SubDFType& sol0 = solution.subFunction(i);
-       ExactSolution<SubDFSType> f0 (sol0.space(),i ); 
-       L2Projection<SubDFType>:: project(f0, sol0);
-     }
-   }
-   
-   return sqrt(error*error);
+  //! perform l2-projection
+  typedef typename DiscreteFunctionSpaceType :: 
+    ContainedSpaceType SubDFSType;
+  typedef typename DiscreteFunctionType :: 
+    SubDiscreteFunctionType SubDFType;
+  typedef typename DiscreteFunctionSpaceType :: 
+    RangeType RangeType; 
+  typedef typename SubDFSType :: RangeType SubRangeType;
+  RangeType error(0);
+  ExactSolution< typename DiscreteFunctionSpaceType::FunctionSpaceType > f;
+  L2Projection<DiscreteFunctionType>:: project(f, solution);
+  for (int method=0;method<2;method++)
+  {
+    // calculation L2 error 
+    // pol ord for calculation the error chould by higher than 
+    // pol for evaluation the basefunctions 
+    L2Error < DiscreteFunctionType > l2err;
+    error = l2err.norm(f ,solution, 0.0);
+    for(int i=0; i<RangeType::dimension; ++i)
+      std::cout << "\nL2 Error["<<i<<"] : " << error[i] << "\n\n";
+    for (int i=0;i<RangeType::dimension; ++i) {
+      SubDFType& sol0 = solution.subFunction(i);
+      ExactSolution< typename SubDFSType::FunctionSpaceType > f0( i );
+      L2Error < SubDFType > l2err0;
+      SubRangeType error0 = l2err0.norm(f0,sol0,0.0);
+      std::cout << "\n L2 SubError[" << i << "]-Error[" << i << "]  : " 
+                << error0[0]-error[i] << "\n\n";
+    }
+    solution.clear();
+    for (int i=0;i<RangeType::dimension; i+=1) {
+      SubDFType& sol0 = solution.subFunction(i);
+      ExactSolution< typename SubDFSType::FunctionSpaceType > f0( i );
+      L2Projection<SubDFType>:: project(f0, sol0);
+    }
+  }
+
+  return sqrt(error*error);
 }
 
 
@@ -293,9 +297,9 @@ int main (int argc, char **argv)
     SingleDiscreteFunctionType,RANGE > DiscreteFunctionType1;
   DiscreteFunctionType1* solution1;
   {
-    GridPtr<GridType> gridptr(macroGridName);
-    GridType& grid=*gridptr;
-    const int step = Dune::DGFGridInfo<GridType>::
+    GridPtr<MyGridType> gridptr(macroGridName);
+    MyGridType& grid=*gridptr;
+    const int step = Dune::DGFGridInfo<MyGridType>::
       refineStepsForHalf();
     GridPartType part ( grid );
     SingleDiscreteFunctionSpaceType singFuncSpace ( part );
@@ -320,9 +324,9 @@ int main (int argc, char **argv)
       DiscreteFunctionType2;
   DiscreteFunctionType2* solution2;
   {
-    GridPtr<GridType> gridptr(macroGridName);
-    GridType& grid=*gridptr;
-    const int step = Dune::DGFGridInfo<GridType>::
+    GridPtr<MyGridType> gridptr(macroGridName);
+    MyGridType& grid=*gridptr;
+    const int step = Dune::DGFGridInfo<MyGridType>::
       refineStepsForHalf();
     GridPartType part ( grid );
     DiscreteFunctionSpaceType2 funcSpace(part);

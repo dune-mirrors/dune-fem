@@ -25,10 +25,10 @@ const int polOrder = POLORDER;
 
 template< class FunctionSpace >
 class ExactSolution
-: public Dune::Function< FunctionSpace, ExactSolution< FunctionSpace > >
+: public Dune::Fem::Function< FunctionSpace, ExactSolution< FunctionSpace > >
 {
   typedef ExactSolution< FunctionSpace > ThisType;
-  typedef Dune::Function< FunctionSpace, ThisType > BaseType;
+  typedef Dune::Fem::Function< FunctionSpace, ThisType > BaseType;
 
 public:
   typedef FunctionSpace FunctionSpaceType;
@@ -39,11 +39,6 @@ public:
   typedef typename FunctionSpaceType::DomainType DomainType;
   typedef typename FunctionSpaceType::RangeType RangeType;
   typedef typename FunctionSpaceType::JacobianRangeType JacobianRangeType;
-
-public:
-  ExactSolution ( FunctionSpaceType &functionSpace )
-  : BaseType( functionSpace )
-  {}
 
   void evaluate ( const DomainType &x, RangeType &phi ) const
   {
@@ -79,12 +74,12 @@ public:
 
 // Type Definitions
 // ----------------
-typedef Dune::GridSelector::GridType GridType;
+typedef Dune::GridSelector::GridType MyGridType;
 
-typedef Dune::LevelGridPart< GridType > GridPartType;
+typedef Dune::LevelGridPart< MyGridType > GridPartType;
 
 //! type of the function space
-typedef Dune::FunctionSpace< double, double, dimworld, 1 > FunctionSpaceType;
+typedef Dune::FunctionSpace< double, double, MyGridType::dimensionworld, 1 > FunctionSpaceType;
 
 //! type of the discrete function space our unkown belongs to
 typedef Dune::LagrangeDiscreteFunctionSpace< FunctionSpaceType, GridPartType, polOrder >
@@ -102,11 +97,10 @@ typedef Dune::DiscreteFunctionAdapter< ExactSolutionType, GridPartType > GridExa
 // Algorithm to Apply Repeatedly
 // -----------------------------
 
-void algorithm ( GridType &grid, int level )
+void algorithm ( MyGridType &grid, int level )
 {
   const unsigned int polOrder = DiscreteFunctionSpaceType::polynomialOrder;
-  FunctionSpaceType functionSpace;
-  ExactSolutionType fExact( functionSpace );
+  ExactSolutionType fExact;
 
   GridPartType fatherGrid( grid, level );
   DiscreteFunctionSpaceType fatherSpace( fatherGrid );
@@ -132,7 +126,7 @@ void algorithm ( GridType &grid, int level )
   Dune::L2Norm< GridPartType > sonL2norm( sonGrid );
   Dune::H1Norm< GridPartType > sonH1norm( sonGrid );
 
-  Dune::ProlongFunction< Dune::LagrangeLocalRestrictProlong< GridType, polOrder > > prolongFunction;
+  Dune::ProlongFunction< Dune::LagrangeLocalRestrictProlong< MyGridType, polOrder > > prolongFunction;
   prolongFunction( fatherFunction, sonFunction );
   double sonL2error = sonL2norm.distance( sonExact, sonFunction );
   double sonH1error = sonH1norm.distance( sonExact, sonFunction );
@@ -172,10 +166,10 @@ try
   const int ml = Dune::Parameter::getValue< int >( "lagrangeglobalrefine.maxlevel", 2 );
 
   std::ostringstream gridName;
-  gridName << dimworld << "dgrid.dgf";
-  Dune::GridPtr< GridType > gridptr( gridName.str().c_str() );
+  gridName << MyGridType::dimension << "dgrid.dgf";
+  Dune::GridPtr< MyGridType > gridptr( gridName.str().c_str() );
 
-  //const int step = DGFGridInfo< GridType >::refineStepsForHalf();
+  //const int step = DGFGridInfo< MyGridType >::refineStepsForHalf();
   gridptr->globalRefine( ml );
 
   for( int level = 0; level < gridptr->maxLevel(); ++level )

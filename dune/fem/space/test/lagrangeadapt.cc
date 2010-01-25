@@ -135,7 +135,7 @@ struct CheckGridEnabled< Dune :: UGGrid< dim > >
 
 int main ( int argc, char **argv )
 {
-  return CheckGridEnabled< GridType > :: CallMain( argc, argv );
+  return CheckGridEnabled< Dune::GridSelector::GridType >::CallMain( argc, argv );
 }
 
 
@@ -147,31 +147,23 @@ using namespace Dune;
 
 template< class FunctionSpace >
 class ExactSolution
-: public Function< FunctionSpace, ExactSolution< FunctionSpace > >
+: public Fem::Function< FunctionSpace, ExactSolution< FunctionSpace > >
 {
+  typedef ExactSolution< FunctionSpace > ThisType;
+  typedef Fem::Function< FunctionSpace, ThisType > BaseType;
+
 public:
   typedef FunctionSpace FunctionSpaceType;
 
-private:
-  typedef ExactSolution< FunctionSpaceType > ThisType;
-  typedef Function< FunctionSpaceType, ThisType > BaseType;
+  typedef typename FunctionSpaceType::DomainFieldType DomainFieldType;
+  typedef typename FunctionSpaceType::RangeFieldType RangeFieldType;
+
+  typedef typename FunctionSpaceType::DomainType DomainType;
+  typedef typename FunctionSpaceType::RangeType RangeType;
+  typedef typename FunctionSpaceType::JacobianRangeType JacobianRangeType;
 
 public:
-  typedef typename FunctionSpaceType :: DomainFieldType DomainFieldType;
-  typedef typename FunctionSpaceType :: RangeFieldType RangeFieldType;
-
-  typedef typename FunctionSpaceType :: DomainType DomainType;
-  typedef typename FunctionSpaceType :: RangeType RangeType;
-  typedef typename FunctionSpaceType :: JacobianRangeType JacobianRangeType;
-
-public:
-  ExactSolution ( FunctionSpaceType &functionSpace )
-  : BaseType( functionSpace )
-  {
-  }
-
-  void evaluate ( const DomainType &x,
-                  RangeType &phi ) const
+  void evaluate ( const DomainType &x, RangeType &phi ) const
   {
     phi = 1;
     for( int i = 0; i < DomainType :: dimension; ++i )
@@ -179,15 +171,12 @@ public:
       phi[ 0 ] *= sin( M_PI * x[ i ] ); 
   }
 
-  void evaluate ( const DomainType &x,
-                  RangeFieldType t,
-                  RangeType &phi ) const
+  void evaluate ( const DomainType &x, RangeFieldType t, RangeType &phi ) const
   {
     evaluate( x, phi );
   }
 
-  void jacobian( const DomainType &x,
-                 JacobianRangeType &Dphi ) const
+  void jacobian( const DomainType &x, JacobianRangeType &Dphi ) const
   {
     Dphi = 1;
     for( int i = 0; i < DomainType :: dimension; ++i )
@@ -196,9 +185,7 @@ public:
         Dphi[ 0 ][ j ] *= ((i != j) ? sin( M_PI * x[ i ]) : M_PI * cos( M_PI * x[ i ] ));
   }
 
-  void jacobian( const DomainType &x,
-                 RangeFieldType t,
-                 JacobianRangeType &Dphi ) const
+  void jacobian( const DomainType &x, RangeFieldType t, JacobianRangeType &Dphi ) const
   {
     jacobian( x, Dphi );
   }
@@ -208,12 +195,13 @@ public:
 
 // Type Definitions
 // ----------------
-typedef GridSelector::GridType GridType;
 
-typedef CheckGridEnabled< GridType > :: GridPartType GridPartType;
+typedef Dune::GridSelector::GridType MyGridType;
+
+typedef CheckGridEnabled< MyGridType >::GridPartType GridPartType;
 
 //! type of the function space
-typedef FunctionSpace< double, double, dimworld, 1 > FunctionSpaceType;
+typedef FunctionSpace< double, double, MyGridType::dimensionworld, 1 > FunctionSpaceType;
 
 //! type of the discrete function space our unkown belongs to
 typedef LagrangeDiscreteFunctionSpace< FunctionSpaceType, GridPartType, polOrder >
@@ -228,7 +216,7 @@ typedef DiscreteFunctionAdapter< ExactSolutionType, GridPartType >
   GridExactSolutionType;
 
 //! type of the DoF manager
-typedef DofManager< GridType > DofManagerType;
+typedef DofManager< MyGridType > DofManagerType;
 //! type of the DoF manager factory
 typedef DofManagerFactory< DofManagerType > DofManagerFactoryType;
 
@@ -236,7 +224,7 @@ typedef DofManagerFactory< DofManagerType > DofManagerFactoryType;
 typedef RestrictProlongDefault< DiscreteFunctionType >
   RestrictProlongOperatorType;
 //! type of the adaption manager
-typedef AdaptationManager< GridType, RestrictProlongOperatorType >
+typedef AdaptationManager< MyGridType, RestrictProlongOperatorType >
   AdaptationManagerType;
 
 
@@ -244,7 +232,7 @@ typedef AdaptationManager< GridType, RestrictProlongOperatorType >
 
  
 
-void adapt ( GridType &grid, DiscreteFunctionType &solution, int step )
+void adapt ( MyGridType &grid, DiscreteFunctionType &solution, int step )
 {
   typedef DiscreteFunctionSpaceType :: IteratorType IteratorType;
   
@@ -279,8 +267,7 @@ void algorithm ( GridPartType &gridPart,
   const unsigned int polOrder
     = DiscreteFunctionSpaceType :: polynomialOrder + 1;
 
-  FunctionSpaceType functionSpace;
-  ExactSolutionType fexact( functionSpace );
+  ExactSolutionType fexact;
   GridExactSolutionType f( "exact solution", fexact, gridPart, polOrder );
 
   L2Norm< GridPartType > l2norm( gridPart );
@@ -311,7 +298,7 @@ void algorithm ( GridPartType &gridPart,
   
   #if USE_GRAPE && SHOW_RESTRICT_PROLONG
     if( turn > 0 ) {
-      GrapeDataDisplay< GridType > grape( gridPart.grid() );
+      GrapeDataDisplay< MyGridType > grape( gridPart.grid() );
       grape.dataDisplay( solution );
     }
   #endif
@@ -325,7 +312,7 @@ void algorithm ( GridPartType &gridPart,
   
   #if USE_GRAPE && SHOW_INTERPOLATION
     if( turn > 0 ) {
-      GrapeDataDisplay< GridType > grape( gridPart.grid );
+      GrapeDataDisplay< MyGridType > grape( gridPart.grid );
       grape.dataDisplay( solution );
     }
   #endif
@@ -337,7 +324,7 @@ void algorithm ( GridPartType &gridPart,
   std :: cout << "H1 EOC: " << h1eoc << std :: endl;
 
   #if WRITE_DATA
-    GrapeDataIO< GridType > dataio; 
+    GrapeDataIO< MyGridType > dataio; 
     dataio.writeGrid( gridPart.grid(), xdr, "gridout", 0, turn );
     dataio.writeData( solution, xdr, "sol", turn );
   #endif
@@ -370,10 +357,10 @@ try
   ml = Parameter :: getValue ("lagrangeadapt.maxlevel", ml);
 
   std::ostringstream gridName;
-  gridName << dimworld << "dgrid.dgf";
-  GridPtr< GridType > gridptr( gridName.str().c_str() );
+  gridName << MyGridType::dimensionworld << "dgrid.dgf";
+  GridPtr< MyGridType > gridptr( gridName.str().c_str() );
 
-  const int step = DGFGridInfo< GridType > :: refineStepsForHalf();
+  const int step = DGFGridInfo< MyGridType >::refineStepsForHalf();
 
   GridPartType gridPart( *gridptr );
   DiscreteFunctionSpaceType discreteFunctionSpace( gridPart );

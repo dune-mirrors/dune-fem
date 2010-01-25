@@ -50,10 +50,10 @@ const int polOrd = POLORDER;
 //***********************************************************************
 
 //! the index set we are using
-typedef GridSelector::GridType GridType;
-typedef DGAdaptiveLeafGridPart<GridType> GridPartType;
-//typedef HierarchicGridPart<GridType> GridPartType;
-//typedef AdaptiveLeafGridPart<GridType> GridPartType;
+typedef GridSelector::GridType MyGridType;
+typedef DGAdaptiveLeafGridPart< MyGridType > GridPartType;
+//typedef HierarchicGridPart< MyGridType > GridPartType;
+//typedef AdaptiveLeafGridPart< MyGridType > GridPartType;
 
 //! define the function space, \f[ \R^2 \rightarrow \R \f]
 // see dune/common/functionspace.hh
@@ -75,32 +75,31 @@ typedef CombinedSpace<SingleDiscreteFunctionSpaceType,5,PointBased>
 //typedef ManagedDiscreteFunction< VectorDiscreteFunction< DiscreteFunctionSpaceType, DynamicVector< double > > > DiscreteFunctionType;
 typedef AttachedDiscreteFunction< DiscreteFunctionSpaceType > DiscreteFunctionType;
 
-typedef DofManager<GridType> DofManagerType;
+typedef DofManager< MyGridType > DofManagerType;
 typedef DofManagerFactory<DofManagerType> DofManagerFactoryType;
 
-typedef AdaptationManager <GridType,
-          RestrictProlongDefault<DiscreteFunctionType> > AdaptationManagerType;
+typedef AdaptationManager< MyGridType, RestrictProlongDefault< DiscreteFunctionType > > AdaptationManagerType;
 
 // ***********************************************************
 // the exact solution to the problem for EOC calculation 
-class ExactSolution : public Function < FuncSpace , ExactSolution > 
+struct ExactSolution
+: public Fem::Function< FuncSpace, ExactSolution > 
 {
   typedef FuncSpace::RangeType RangeType;
   typedef FuncSpace::RangeFieldType RangeFieldType;
   typedef FuncSpace::DomainType DomainType;
-public:
-  ExactSolution (const FuncSpace &f) : Function < FuncSpace , ExactSolution > ( f ) {}
- 
+
   //! f(x,y) = x*(1-x)*y*(1-y)
-  void evaluate (const DomainType & x , RangeType & ret)  const
+  void evaluate ( const DomainType &x, RangeType &ret ) const
   {
     ret = 2.; // maximum of function is 2
-    for(int i=0; i<DomainType::dimension; i++)
-      ret *= sin(x[i]*(1.0 -x[i])*4.);
+    for( int i = 0; i < DomainType::dimension; ++i )
+      ret *= sin( x[ i ]*(1.0 -x[ i ])*4.);
   }
-  void evaluate (const DomainType & x , RangeFieldType time , RangeType & ret) const
+
+  void evaluate ( const DomainType &x, RangeFieldType time, RangeType &ret ) const
   {
-    evaluate ( x , ret );
+    evaluate( x, ret );
   }
 };
  
@@ -136,8 +135,8 @@ class L2Projection
       LocalFuncType lf = discFunc.localFunction(*it);
       const typename FunctionSpaceType::BaseFunctionSetType & baseset =
         lf.baseFunctionSet();
-      const typename GridType::template Codim<0>::Entity::Geometry& 
-                  itGeom = (*it).geometry();
+      const typename MyGridType::template Codim<0>::Entity::Geometry &itGeom
+        = (*it).geometry();
       for( size_t qP = 0; qP < quad.nop(); ++qP )
       {
         f.evaluate(itGeom.global(quad.point(qP)), ret);
@@ -150,31 +149,30 @@ class L2Projection
     }
   }
 };
+
 // calculates || u-u_h ||_L2
 template <class DiscreteFunctionType>
 class L2Error
 {
-  typedef typename DiscreteFunctionType::FunctionSpaceType FunctionSpaceType;
+  typedef typename DiscreteFunctionType::DiscreteFunctionSpaceType
+    DiscreteFunctionSpaceType;
 
 public:
-  template <int polOrd, class FunctionType>
-  double norm (FunctionType &f, DiscreteFunctionType &discFunc,
-      double time)
+  template< int polOrd, class FunctionType >
+  double norm (FunctionType &f, DiscreteFunctionType &discFunc, double time)
   {
-    const typename DiscreteFunctionType::FunctionSpaceType
-        & space = discFunc.space();
+    const DiscreteFunctionSpaceType &space = discFunc.space();
 
-    typedef typename FunctionSpaceType::GridPartType GridPartType;
-    typedef typename FunctionSpaceType::IteratorType IteratorType;
+    typedef typename DiscreteFunctionSpaceType::GridPartType GridPartType;
+    typedef typename DiscreteFunctionSpaceType::IteratorType IteratorType;
+    typedef typename DiscreteFunctionSpaceType::RangeType RangeType;
+
     typedef typename DiscreteFunctionType::LocalFunctionType LocalFuncType;
-
-    typedef typename FunctionSpaceType::RangeType RangeType;
 
     RangeType ret (0.0);
     RangeType phi (0.0);
 
     double sum = 0.0;
-    //LocalFuncType lf = discFunc.newLocalFunction();
 
     IteratorType it    = space.begin();
     IteratorType endit = space.end();
@@ -198,13 +196,12 @@ public:
   }
 };
 // ********************************************************************
-void adapt(GridType& grid,
-     DiscreteFunctionType& solution,int step) {
-  typedef DiscreteFunctionType::FunctionSpaceType::Traits::IteratorType Iterator;
-  const DiscreteFunctionType::FunctionSpaceType
-    & space = solution.space();
+void adapt( MyGridType &grid, DiscreteFunctionType &solution, int step )
+{
+  typedef DiscreteFunctionType::DiscreteFunctionSpaceType::IteratorType Iterator;
+  const DiscreteFunctionType::DiscreteFunctionSpaceType &space = solution.space();
   RestrictProlongDefault<DiscreteFunctionType> rp(solution);
-  rp.setFatherChildWeight(DGFGridInfo<GridType>::refineWeight());
+  rp.setFatherChildWeight(DGFGridInfo< MyGridType >::refineWeight());
 
   AdaptationManagerType adop(grid,rp);
 
@@ -222,29 +219,22 @@ void adapt(GridType& grid,
     message += "Refining...";
 
   
-  for(int i=0; i<count; ++i)
+  for( int i = 0; i < count; ++i )
   {
-    Iterator it = space.begin();  
-    Iterator endit = space.end();
-    for(; it != endit ; ++it) 
-    {
-      grid.mark(mark, *it);
-    } 
+    const Iterator end = space.end();
+    for( Iterator it = space.begin(); it != end ; ++it )
+      grid.mark( mark, *it );
     adop.adapt();
     std::cout << message << std::endl;
   }
 }
 // ********************************************************************
-double algorithm (GridType& grid, DiscreteFunctionType& solution,
-      int step,
-      int turn )
+double algorithm ( MyGridType &grid, DiscreteFunctionType &solution, int step, int turn )
 {
   {
-    const DiscreteFunctionSpaceType & space = solution.space();
-    ExactSolution f ( space ); 
-    L2Projection<DiscreteFunctionType, ExactSolution, polOrd>::
-      project(f, solution);
-    L2Error < DiscreteFunctionType > l2err;
+    ExactSolution f;
+    L2Projection< DiscreteFunctionType, ExactSolution, polOrd >::project( f, solution );
+    L2Error< DiscreteFunctionType > l2err;
     double new_error = l2err.norm<polOrd + 4> (f ,solution, 0.0);
     std::cout << "before ref." << new_error << "\n\n"; 
   }
@@ -253,12 +243,12 @@ double algorithm (GridType& grid, DiscreteFunctionType& solution,
   // if Grape was found, then display last solution 
   if(0 && turn > 0) {
     std::cerr << "GRAPE 1" << std::endl;
-    GrapeDataDisplay < GridType > grape(grid); 
+    GrapeDataDisplay < MyGridType > grape(grid); 
     grape.dataDisplay( solution );
   }
 #endif
-  const DiscreteFunctionSpaceType & space = solution.space();
-  ExactSolution f ( space ); 
+
+  ExactSolution f; 
   // calculation L2 error on refined grid
   // pol ord for calculation the error chould by higher than 
   // pol for evaluation the basefunctions 
@@ -269,14 +259,13 @@ double algorithm (GridType& grid, DiscreteFunctionType& solution,
   // if Grape was found, then display last solution 
   if(0 && turn > 0) {
     std::cerr << "GRAPE 2" << std::endl;
-    GrapeDataDisplay < GridType > grape(grid); 
+    GrapeDataDisplay< MyGridType > grape(grid); 
     grape.dataDisplay( solution );
   }
 #endif
   
   //! perform l2-projection to refined grid
-  L2Projection<DiscreteFunctionType, ExactSolution, polOrd>::
-    project(f, solution);
+  L2Projection<DiscreteFunctionType, ExactSolution, polOrd>::project( f, solution );
   double new_error = l2err.norm<polOrd + 4> (f ,solution, 0.0);
   std::cout << "\nL2 Error : " << error << " on new grid " << new_error << "\n\n";
 #if USE_GRAPE
@@ -285,11 +274,11 @@ double algorithm (GridType& grid, DiscreteFunctionType& solution,
     std::cerr << "SIZE: " << solution.space().size() 
 	      << " GRID: " << grid.size(0) << std::endl;
     std::cerr << "GRAPE 3" << std::endl;
-    GrapeDataDisplay < GridType > grape(grid); 
+    GrapeDataDisplay< MyGridType > grape(grid); 
     grape.dataDisplay( solution );
   }
 #endif
-  GrapeDataIO< GridType > dataio; 
+  GrapeDataIO< MyGridType > dataio; 
   dataio.writeGrid( grid, xdr, "gridout", 0.0, turn );
   dataio.writeData( solution, xdr, "sol", turn );
   
@@ -325,12 +314,11 @@ try {
 
   std::vector<double> error(ml);
 
-  char tmp[100]; 
-  sprintf(tmp,"%ddgrid.dgf",GRIDDIM);
-  GridPtr<GridType> gridptr(tmp);
-  GridType* grid= gridptr.operator -> ();
+  std::ostringstream gridFilenameStream;
+  gridFilenameStream << GRIDDIM << "dgrid.dgf";
+  GridPtr< MyGridType > grid( gridFilenameStream.str() );
 
-  const int step = DGFGridInfo<GridType>::refineStepsForHalf();
+  const int step = DGFGridInfo< MyGridType >::refineStepsForHalf();
 
   GridPartType part ( *grid );
   DiscreteFunctionSpaceType linFuncSpace ( part );

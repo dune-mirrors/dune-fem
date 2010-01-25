@@ -65,15 +65,15 @@ const int polOrd = POLORDER;
 //***********************************************************************
 
 //! the index set we are using 
-typedef GridSelector::GridType GridType;
-//typedef HierarchicGridPart<GridType> GridPartType;
-//typedef DGAdaptiveLeafGridPart<GridType> GridPartType;
-typedef AdaptiveLeafGridPart<GridType> GridPartType;
+typedef GridSelector::GridType MyGridType;
+//typedef HierarchicGridPart< MyGridType > GridPartType;
+//typedef DGAdaptiveLeafGridPart< MyGridType > GridPartType;
+typedef AdaptiveLeafGridPart< MyGridType > GridPartType;
 
 //! define the function space, \f[ \R^2 \rightarrow \R \f]
 // see dune/common/functionspace.hh
 //typedef MatrixFunctionSpace < double , double, dimw , 3,5 > FuncSpace;
-typedef FunctionSpace < GridType :: ctype, double , dimw , 2 > FuncSpace;
+typedef FunctionSpace < MyGridType::ctype, double, dimw, 2 > FuncSpace;
 
 //! define the function space our unkown belong to 
 //! see dune/fem/lagrangebase.hh
@@ -85,18 +85,17 @@ typedef DiscontinuousGalerkinSpace<FuncSpace, GridPartType,
 typedef AdaptiveDiscreteFunction < DiscreteFunctionSpaceType > DiscreteFunctionType;
 
 //! Get the Dofmanager type
-typedef DofManager<GridType> DofManagerType;
+typedef DofManager< MyGridType > DofManagerType;
 typedef DofManagerFactory<DofManagerType> DofManagerFactoryType;
 
 
 // the exact solution to the problem for EOC calculation 
-class ExactSolution : public Function < FuncSpace , ExactSolution > 
+struct ExactSolution
+: public Fem::Function< FuncSpace, ExactSolution >
 {
   typedef FuncSpace::RangeType RangeType;
   typedef FuncSpace::RangeFieldType RangeFieldType;
   typedef FuncSpace::DomainType DomainType;
-public:
-  ExactSolution (const FuncSpace &f) : Function < FuncSpace , ExactSolution > ( f ) {}
  
   //! f(x,y) = x*(1-x)*y*(1-y)
   void evaluate (const DomainType & x , RangeType & ret)  const
@@ -106,6 +105,7 @@ public:
       for(int i=0; i<DomainType::dimension; i++)
 	ret[j] *= pow(x[i]*(1.0 -x[i])*4.,double(j+1));
   }
+
   void evaluate (const DomainType & x , RangeFieldType time , RangeType & ret) const
   {
     evaluate ( x , ret );
@@ -113,10 +113,10 @@ public:
 };
  
 // ********************************************************************
-double algorithm (GridType& grid, DiscreteFunctionType& solution, bool display)
+double algorithm ( MyGridType &grid, DiscreteFunctionType &solution, bool display )
 {
    // create exact solution for error evaluation 
-   ExactSolution f ( solution.space() ); 
+   ExactSolution f;
 
    // L2 error class 
    L2Error < DiscreteFunctionType > l2err;
@@ -136,7 +136,7 @@ double algorithm (GridType& grid, DiscreteFunctionType& solution, bool display)
    // if Grape was found, then display last solution 
    if( display )
    {
-     GrapeDataDisplay < GridType > grape( solution.space().gridPart() ); 
+     GrapeDataDisplay< MyGridType > grape( solution.space().gridPart() ); 
      grape.dataDisplay( solution );
    }
 #endif
@@ -168,9 +168,9 @@ int main (int argc, char **argv)
   std::string macroGridName (tmp.str()); 
   macroGridName += "dgrid.dgf";
 
-  GridPtr<GridType> gridptr(macroGridName);
-  GridType& grid=*gridptr;
-  const int step = Dune::DGFGridInfo<GridType>::refineStepsForHalf();
+  GridPtr< MyGridType > gridptr( macroGridName );
+  MyGridType &grid = *gridptr;
+  const int step = Dune::DGFGridInfo< MyGridType >::refineStepsForHalf();
 
   GridPartType part ( grid );
   DiscreteFunctionSpaceType linFuncSpace ( part );

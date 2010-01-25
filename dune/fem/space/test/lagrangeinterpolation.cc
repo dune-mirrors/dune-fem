@@ -61,18 +61,18 @@ using namespace Dune;
   with the finite element method using lagrangian elements of polynom order +1.
 */
 //***********************************************************************
-typedef GridSelector::GridType GridType;
+typedef GridSelector::GridType MyGridType;
 
 //! the index set we are using 
-//typedef HierarchicGridPart< GridType > GridPartType;
-typedef LeafGridPart< GridType > GridPartType;
+//typedef HierarchicGridPart< MyGridType > GridPartType;
+typedef LeafGridPart< MyGridType > GridPartType;
 
 //! define the function space, \f[ \R^2 \rightarrow \R \f]
 // see dune/common/functionspace.hh
-//typedef MatrixFunctionSpace< double, double, dimworld, 3, 5 >
+//typedef MatrixFunctionSpace< double, double, MyGridType::dimensionworld, 3, 5 >
 //  FunctionSpaceType;
-typedef FunctionSpace< double, double, dimworld, 1 > FunctionSpaceType;
-typedef MatrixFunctionSpace< double, double, dimworld, 1, dimworld >
+typedef FunctionSpace< double, double, MyGridType::dimensionworld, 1 > FunctionSpaceType;
+typedef MatrixFunctionSpace< double, double, MyGridType::dimensionworld, 1, MyGridType::dimensionworld >
   GradientFunctionSpaceType;
 
 //! define the function space our unkown belong to 
@@ -91,29 +91,22 @@ typedef AdaptiveDiscreteFunction< DiscreteGradientFunctionSpaceType >
   DiscreteGradientFunctionType;
 
 //! Get the Dofmanager type
-typedef DofManager< GridType > DofManagerType;
+typedef DofManager< MyGridType > DofManagerType;
 
 
 class ExactSolution
-: public Function< FunctionSpaceType, ExactSolution >
+: public Fem::Function< FunctionSpaceType, ExactSolution >
 {
   typedef ExactSolution ThisType;
-  typedef Function< FunctionSpaceType, ThisType > BaseType;
+  typedef Fem::Function< FunctionSpaceType, ThisType > BaseType;
 
 public:
-  typedef FunctionSpaceType :: DomainFieldType DomainFieldType;
-  typedef FunctionSpaceType :: RangeFieldType RangeFieldType;
+  typedef FunctionSpaceType::DomainFieldType DomainFieldType;
+  typedef FunctionSpaceType::RangeFieldType RangeFieldType;
 
-  typedef FunctionSpaceType :: DomainType DomainType;
-  typedef FunctionSpaceType :: RangeType RangeType;
-  typedef FunctionSpaceType :: JacobianRangeType JacobianRangeType;
-
-  ExactSolution( FunctionSpaceType &functionSpace )
-  : BaseType( functionSpace )
-  {}
-
-  virtual ~ExactSolution ()
-  {}
+  typedef FunctionSpaceType::DomainType DomainType;
+  typedef FunctionSpaceType::RangeType RangeType;
+  typedef FunctionSpaceType::JacobianRangeType JacobianRangeType;
 
   virtual void evaluate ( const DomainType &x, RangeType &phi ) const = 0;
   virtual void jacobian( const DomainType &x, JacobianRangeType &Dphi ) const = 0;
@@ -143,10 +136,6 @@ public:
   typedef BaseType::DomainType DomainType;
   typedef BaseType::RangeType RangeType;
   typedef BaseType::JacobianRangeType JacobianRangeType;
-
-  MyExactSolution( FunctionSpaceType &functionSpace )
-  : BaseType( functionSpace )
-  {}
 
   void evaluate ( const DomainType &x, RangeType &phi ) const
   {
@@ -202,7 +191,7 @@ class L2Projection
       const BaseFunctionSetType & baseset =
         lf.baseFunctionSet();
 
-      //const typename GridType::template Codim<0>::Entity::Geometry& 
+      //const typename MyGridType::template Codim<0>::Entity::Geometry& 
       //  itGeom = (*it).geometry();
      
       const int quadNop = quad.nop();
@@ -248,9 +237,9 @@ public:
   
   enum { DimRange = DiscreteFunctionSpaceType :: DimRange };
 
-  typedef typename GridPartType :: GridType GridType;
-  typedef typename GridType :: template Codim< 0 > :: Entity Entity0Type;
-  typedef typename Entity0Type :: Geometry GeometryType;
+  typedef typename GridPartType::GridType GridType;
+  typedef typename GridType::template Codim< 0 >::Entity Entity0Type;
+  typedef typename Entity0Type::Geometry GeometryType;
  
   
 public:
@@ -317,27 +306,23 @@ class H1Error
 public:
   typedef DiscreteFunctionImp DiscreteFunctionType;
     
-  typedef typename DiscreteFunctionType :: FunctionSpaceType
+  typedef typename DiscreteFunctionType::DiscreteFunctionSpaceType
     DiscreteFunctionSpaceType;
-  typedef typename DiscreteFunctionType :: LocalFunctionType
-    LocalFunctionType;
+  typedef typename DiscreteFunctionType::LocalFunctionType LocalFunctionType;
  
-  typedef typename DiscreteFunctionSpaceType :: DomainFieldType
-    DomainFieldType;
-  typedef typename DiscreteFunctionSpaceType :: DomainType DomainType;
-  typedef typename DiscreteFunctionSpaceType :: RangeFieldType
-    RangeFieldType;
-  typedef typename DiscreteFunctionSpaceType :: RangeType RangeType;
-  typedef typename DiscreteFunctionSpaceType :: JacobianRangeType
-    JacobianRangeType;
-  typedef typename DiscreteFunctionSpaceType :: GridPartType GridPartType;
+  typedef typename DiscreteFunctionSpaceType::DomainFieldType DomainFieldType;
+  typedef typename DiscreteFunctionSpaceType::DomainType DomainType;
+  typedef typename DiscreteFunctionSpaceType::RangeFieldType RangeFieldType;
+  typedef typename DiscreteFunctionSpaceType::RangeType RangeType;
+  typedef typename DiscreteFunctionSpaceType::JacobianRangeType JacobianRangeType;
+  typedef typename DiscreteFunctionSpaceType::GridPartType GridPartType;
 
-  enum { DimDomain = DiscreteFunctionSpaceType :: DimDomain };
-  enum { DimRange = DiscreteFunctionSpaceType :: DimRange };
+  static const int DimDomain = DiscreteFunctionSpaceType::DimDomain;
+  static const int DimRange = DiscreteFunctionSpaceType::DimRange;
 
-  typedef typename GridPartType :: GridType GridType;
-  typedef typename GridType :: template Codim< 0 > :: Entity Entity0Type;
-  typedef typename Entity0Type :: Geometry GeometryType;
+  typedef typename GridPartType::GridType GridType;
+  typedef typename GridType::template Codim< 0 >::Entity Entity0Type;
+  typedef typename Entity0Type::Geometry GeometryType;
  
   
 public:
@@ -406,13 +391,13 @@ public:
 
 
 
-double algorithm( GridType &grid, DiscreteFunctionType &solution, int turn )
+double algorithm( MyGridType &grid, DiscreteFunctionType &solution, int turn )
 {
   typedef DiscreteFunctionSpaceType :: RangeType RangeType; 
 
   GridPartType part( grid );
   DiscreteFunctionSpaceType discreteFunctionSpace( part );
-  ExactSolution *f = new MyExactSolution( discreteFunctionSpace );
+  ExactSolution *f = new MyExactSolution;
   
   //! perform Lagrange interpolation
   LagrangeInterpolation< DiscreteFunctionType >::interpolateFunction( *f, solution );
@@ -443,7 +428,7 @@ double algorithm( GridType &grid, DiscreteFunctionType &solution, int turn )
    // if Grape was found, then display last solution 
    if(turn > 0)
    {
-     GrapeDataDisplay < GridType > grape(part); 
+     GrapeDataDisplay< MyGridType > grape(part); 
      grape.addData( solution );
      //grape.addData( graddf );
      grape.display( );
@@ -477,14 +462,13 @@ try
   int ml = atoi( argv[1] );
   double error[ ml ];
 
-  char tmp[16];
-  sprintf( tmp, "%d", dimworld );
-  std :: string macroGridName( tmp );
-  macroGridName += "dgrid.dgf";
+  std::ostringstream gridFilenameStream;
+  gridFilenameStream << MyGridType::dimensionworld << "dgrid.dgf";
+  const std::string macroGridName = gridFilenameStream.str();
 
-  GridPtr<GridType> gridptr(macroGridName);
-  GridType& grid=*gridptr;
-  const int step = Dune::DGFGridInfo<GridType>::refineStepsForHalf();
+  GridPtr< MyGridType > gridptr( macroGridName );
+  MyGridType &grid = *gridptr;
+  const int step = Dune::DGFGridInfo< MyGridType >::refineStepsForHalf();
   GridPartType gridPart( grid );
 
   for( int i = 0; i < ml; ++i )

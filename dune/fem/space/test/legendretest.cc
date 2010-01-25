@@ -78,15 +78,14 @@ typedef DofManager<GridType> DofManagerType;
 
 
 // the exact solution to the problem for EOC calculation 
-class ExactSolution : public Function < FuncSpace , ExactSolution > 
+struct ExactSolution
+: public Fem::Function < FuncSpace , ExactSolution > 
 {
   typedef FuncSpace::RangeType RangeType;
   typedef FuncSpace::JacobianRangeType JacobianRangeType;
   typedef FuncSpace::RangeFieldType RangeFieldType;
   typedef FuncSpace::DomainType DomainType;
-public:
-  ExactSolution (FuncSpace &f) : Function < FuncSpace , ExactSolution > ( f ) {}
- 
+
   //! f(x,y) = x*(1-x)*y*(1-y)
   void evaluate (const DomainType & x , RangeType & ret)  const
   {
@@ -128,7 +127,8 @@ public:
 template <class DiscreteFunctionType>
 class L2Projection
 {
-  typedef typename DiscreteFunctionType::FunctionSpaceType DiscreteFunctionSpaceType;
+  typedef typename DiscreteFunctionType::DiscreteFunctionSpaceType
+    DiscreteFunctionSpaceType;
 
  public:
   template <class FunctionType>
@@ -197,11 +197,12 @@ class L2Projection
 template <class DiscreteFunctionType>
 class L2Error
 {
-  typedef typename DiscreteFunctionType::FunctionSpaceType DiscreteFunctionSpaceType;
+  typedef typename DiscreteFunctionType::DiscreteFunctionSpaceType
+    DiscreteFunctionSpaceType;
   typedef typename DiscreteFunctionSpaceType :: RangeType RangeType;
   typedef typename DiscreteFunctionSpaceType :: JacobianRangeType JacobianRangeType;
-public:
 
+public:
   template <class FunctionType>
   RangeType h1norm (const FunctionType &f, DiscreteFunctionType &discFunc,
       double time, int polOrd) const
@@ -334,7 +335,7 @@ double algorithm (GridType& grid, DiscreteFunctionType& solution  , int turn )
 {
    GridPartType part ( grid );
    DiscreteFunctionSpaceType linFuncSpace ( part );
-   ExactSolution f ( linFuncSpace ); 
+   ExactSolution f;
    L2Error < DiscreteFunctionType > l2err;
        
    //! perform l2-projection
