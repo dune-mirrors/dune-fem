@@ -106,8 +106,8 @@ inline bool checkMappers ( const DiscreteFunctionSpaceType &space )
 
 using namespace Dune;
 
-typedef GridSelector::GridType GridType;
-typedef HierarchicGridPart< GridType > GridPartType;
+typedef GridSelector::GridType MyGridType;
+typedef HierarchicGridPart< MyGridType > GridPartType;
 
 typedef TestFunctionSpace FunctionSpaceType;
 typedef TestDiscreteFunctionSpace< GridPartType > DiscreteFunctionSpaceType;
@@ -118,7 +118,7 @@ try
 {
   MPIManager :: initialize( argc, argv );
 
-  GridType &grid = TestGrid :: grid();
+  MyGridType &grid = TestGrid :: grid();
   const int step = TestGrid :: refineStepsForHalf();
   grid.globalRefine( 2*step );
 
