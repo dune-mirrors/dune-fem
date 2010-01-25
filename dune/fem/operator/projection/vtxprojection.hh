@@ -30,8 +30,11 @@ struct VtxProjectionImpl
   {
     typedef typename ArgFunctionImp::FunctionSpaceType ArgFunctionSpaceType;
     typedef typename ArgFunctionImp::LocalFunctionType ArgLocalFuncType;
-    typedef typename DiscreteFunctionImp::FunctionSpaceType DiscreteFunctionSpaceType;
+
+    typedef typename DiscreteFunctionImp::DiscreteFunctionSpaceType
+      DiscreteFunctionSpaceType;
     typedef typename DiscreteFunctionImp::LocalFunctionType LocalFuncType;
+
     typedef typename DiscreteFunctionSpaceType::Traits::GridPartType GridPartType;
     typedef typename DiscreteFunctionSpaceType::Traits::IteratorType Iterator;
     typedef typename DiscreteFunctionSpaceType::BaseFunctionSetType BaseFunctionSetType ; 
