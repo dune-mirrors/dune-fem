@@ -80,27 +80,22 @@ namespace Dune
   //! type to a vector valued function
   template <class ContainedDiscreteFunctionImp,int N >
   class CombinedDiscreteFunction
-  : public DiscreteFunctionDefault
-    < CombinedDiscreteFunctionTraits< ContainedDiscreteFunctionImp, N > >
+  : public DiscreteFunctionDefault< CombinedDiscreteFunctionTraits< ContainedDiscreteFunctionImp, N > >
   {
+    typedef CombinedDiscreteFunction< ContainedDiscreteFunctionImp, N > ThisType;
+    typedef DiscreteFunctionDefault< CombinedDiscreteFunctionTraits< ContainedDiscreteFunctionImp, N > >
+      BaseType;
+
   public:
     //! Discrete function this discrete function belongs to
-    typedef ContainedDiscreteFunctionImp 
-    ContainedDiscreteFunctionType;
-    typedef ContainedDiscreteFunctionType 
-    SubDiscreteFunctionType;
+    typedef ContainedDiscreteFunctionImp ContainedDiscreteFunctionType;
+    typedef ContainedDiscreteFunctionType SubDiscreteFunctionType;
+
     //! Traits class with all necessary type definitions
     typedef CombinedDiscreteFunctionTraits<ContainedDiscreteFunctionType,N> Traits;
 
     //! type of the interface of this discrete function
     typedef DiscreteFunctionInterface< Traits > DiscreteFunctionInterfaceType;
-
-  private:
-    typedef CombinedDiscreteFunction< ContainedDiscreteFunctionType,N > ThisType;
-    typedef DiscreteFunctionDefault< Traits > BaseType;
-
-  public:
-    using BaseType :: assign; // needs DofIterator!
 
     //! Grid implementation 
     typedef typename Traits::GridType GridType;
@@ -144,7 +139,8 @@ namespace Dune
     typedef typename Traits :: DofBlockPtrType DofBlockPtrType;
     typedef typename Traits :: ConstDofBlockPtrType ConstDofBlockPtrType;
 
-  public:
+    using BaseType :: assign; // needs DofIterator!
+
     //- Public methods
     //! Constructor 
     //! WARNING: here we have to use a const cast for the
@@ -190,63 +186,70 @@ namespace Dune
       for (int i=0;i<N;i++)
 	func_[i]->clear();
     }
-    /** \copydoc Dune::DiscreteFunctionInterface::assign(const DiscreteFunctionType &g) */
-    inline void assign( const DiscreteFunctionType &g )
+
+    /** \copydoc Dune::DiscreteFunctionInterface::assign(const DiscreteFunctionInterfaceType &g) */
+    void assign( const DiscreteFunctionInterfaceType &g )
     {
-      for (int i=0;i<N;i++)
-	      func_[i]->assign(g.subFunction(i));
+      for( int i=0;i<N;i++)
+        func_[i]->assign( asImp( g ).subFunction( i ) );
     }
+
     /** \copydoc Dune::DiscreteFunctionInterface::size() const */ 
-    inline int size() const
+    int size() const
     {
       return func_[0]->size()*N;
     }
 
-    /** \copydoc Dune::DiscreteFunctionInterface::operator+=(const DiscreteFunctionType &g) */
-    inline ThisType &operator+= ( const ThisType &g )
+    /** \copydoc Dune::DiscreteFunctionInterface::operator+=(const DiscreteFunctionInterfaceType &g) */
+    ThisType &operator+= ( const DiscreteFunctionInterfaceType &g )
     {
       for (int i=0;i<N;i++)
-	      *func_[i] += g.subFunction(i);
+        *func_[ i ] += asImp( g ).subFunction( i );
       return *this;
     }
 
     /** \copydoc Dune::DiscreteFunctionInterface::operator-=
      */ 
     using BaseType::operator-=;
-    inline BaseType &operator-= ( const ThisType &g )
+    ThisType &operator-= ( const DiscreteFunctionInterfaceType &g )
     {
       // std::cout << "     special operator -= in combineddf" 
       //	<< std::endl;
-      for (int i=0;i<N;i++)
-	*func_[i] -= g.subFunction(i);
+      for( int i = 0; i < N; ++i )
+	*func_[ i ] -= asImp( g ).subFunction( i );
      return *this;
     }
+
     /** \copydoc Dune::DiscreteFunctionInterface::operator*=(const RangeFieldType &scalar) */    
-    DiscreteFunctionType& operator *= (const RangeFieldType &scalar) {
+    DiscreteFunctionType& operator *= (const RangeFieldType &scalar)
+    {
       for (int i=0;i<N;i++)
 	*func_[i] *= scalar;
       return *this;
     }
-    /** \copydoc Dune::DiscreteFunctionInterface::operator*=(const RangeFieldType &scalar) */    
-    DiscreteFunctionType& operator /= (const RangeFieldType &scalar) {
+
+    /** \copydoc Dune::DiscreteFunctionInterface::operator*=(const RangeFieldType &scalar) */
+    DiscreteFunctionType& operator /= (const RangeFieldType &scalar)
+    {
       for (int i=0;i<N;i++)
 	*func_[i] /= scalar;
       return *this;
     }
+
     /** \copydoc Dune::DiscreteFunctionInterface::addScaled
      */
-    inline void addScaled( const ThisType &g,
-                           const RangeFieldType &s )
+    void addScaled( const DiscreteFunctionInterfaceType &g, const RangeFieldType &s )
     {
       for (int i=0;i<N;i++)
-	func_[i]->addScaled(g.subFunction(i),s);
+	func_[i]->addScaled( asImp( g ).subFunction( i ), s );
     }
+
     /** \copydoc Dune::DiscreteFunctionInterface::scalarProductDofs(const DiscreteFunctionInterfaceType &other) const */
     RangeFieldType scalarProductDofs ( const DiscreteFunctionInterfaceType &other ) const
     {
       RangeFieldType ret( 0 );
       for( int i = 0; i < N; ++i )
-	ret += func_[ i ]->scalarProductDofs( other.asImp().subFunction( i ) );
+	ret += func_[ i ]->scalarProductDofs( asImp( other ).subFunction( i ) );
       return ret;
     }
 
@@ -305,6 +308,7 @@ namespace Dune
       int point    = index % func_[0]->size();
       return func_[variable]->dof(point);
     }
+
     inline RangeFieldType &dof ( unsigned int index )
     {
       /*
