@@ -8,29 +8,22 @@ namespace Dune
 
   template< class FunctionSpaceImp >
   class ExactSolution
-  : public Function< FunctionSpaceImp, ExactSolution< FunctionSpaceImp > >
+  : public Fem::Function< FunctionSpaceImp, ExactSolution< FunctionSpaceImp > >
   {
+    typedef ExactSolution< FunctionSpaceImp > ThisType;
+    typedef Function< FunctionSpaceImp, ThisType > BaseType;
+
   public:
     typedef FunctionSpaceImp FunctionSpaceType;
 
-  private:
-    typedef ExactSolution< FunctionSpaceType > ThisType;
-    typedef Function< FunctionSpaceType, ThisType > BaseType;
-    
-  public:
-    typedef typename FunctionSpaceType :: DomainFieldType DomainFieldType;
-    typedef typename FunctionSpaceType :: RangeFieldType RangeFieldType;
+    typedef typename FunctionSpaceType::DomainFieldType DomainFieldType;
+    typedef typename FunctionSpaceType::RangeFieldType RangeFieldType;
 
-    typedef typename FunctionSpaceType :: DomainType DomainType;
-    typedef typename FunctionSpaceType :: RangeType RangeType;
-    typedef typename FunctionSpaceType :: JacobianRangeType JacobianRangeType;
+    typedef typename FunctionSpaceType::DomainType DomainType;
+    typedef typename FunctionSpaceType::RangeType RangeType;
+    typedef typename FunctionSpaceType::JacobianRangeType JacobianRangeType;
 
   public:
-    ExactSolution( FunctionSpaceType &functionSpace )
-    : BaseType( functionSpace )
-    {
-    }
-
     void evaluate( const DomainType &x, RangeType &phi ) const
     {
       phi = 1;
@@ -62,4 +55,4 @@ namespace Dune
 
 }
   
-#endif
+#endif // #ifndef DUNE_FEM_TEST_EXACTSOLUTION_HH

@@ -29,8 +29,8 @@ using namespace Dune;
   const int polOrder = 1;
 #endif
 
-typedef GridSelector::GridType GridType;
-typedef AdaptiveLeafGridPart< GridType > GridPartType;
+typedef GridSelector::GridType MyGridType;
+typedef AdaptiveLeafGridPart< MyGridType > GridPartType;
 
 // typedef FunctionSpace< double, Double, dimworld, 1 > FunctionSpaceType;
 typedef TestFunctionSpace FunctionSpaceType;
@@ -63,14 +63,14 @@ int main(int argc, char ** argv)
   MPIManager :: initialize( argc, argv );
   try
   {
-    GridType &grid = TestGrid :: grid();
+    MyGridType &grid = TestGrid :: grid();
     const int step = TestGrid :: refineStepsForHalf();
     GridPartType gridPart( grid );
 
     grid.globalRefine( 2*step );
 
     DiscreteFunctionSpaceType discreteFunctionSpace( gridPart );
-    ExactSolutionType f( discreteFunctionSpace );
+    ExactSolutionType f;
     DiscreteFunctionType solution( "solution", discreteFunctionSpace );
     solution.clear();
 

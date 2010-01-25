@@ -28,9 +28,9 @@
 
 using namespace Dune;
 
-typedef GridSelector::GridType GridType;
-// typedef HierarchicGridPart< GridType > GridPartType;
-typedef AdaptiveLeafGridPart< GridType > GridPartType;
+typedef GridSelector::GridType MyGridType;
+// typedef HierarchicGridPart< MyGridType > GridPartType;
+typedef AdaptiveLeafGridPart< MyGridType > GridPartType;
 
 typedef TestFunctionSpace FunctionSpaceType;
 typedef TestDiscreteFunctionSpace< GridPartType > DiscreteFunctionSpaceType;
@@ -76,7 +76,7 @@ int main(int argc, char ** argv)
   MPIManager :: initialize( argc, argv );
   try
   {
-    GridType &grid = TestGrid :: grid();
+    MyGridType &grid = TestGrid :: grid();
     // const int step = TestGrid :: refineStepsForHalf();
     // grid.globalRefine( 2*step );
 
@@ -85,7 +85,7 @@ int main(int argc, char ** argv)
     typedef LagrangeDiscreteFunctionSpace<FunctionSpaceType, GridPartType,
       1,CachingStorage> LDiscreteFunctionSpaceType; 
     LDiscreteFunctionSpaceType lagspace(gridPart);
-    ExactSolutionType exactSolution( lagspace );
+    ExactSolutionType exactSolution;
     typedef AdaptiveDiscreteFunction<LDiscreteFunctionSpaceType> LagrangeFunctionType;
 
     // perform the L2Projection

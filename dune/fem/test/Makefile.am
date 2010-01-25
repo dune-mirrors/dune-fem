@@ -11,10 +11,10 @@ EXTRA_DIST = 2dgrid.dgf \
 	     testgrid.hh
 
 # linker flags
-LDADD = $(ALL_PKG_LDFLAGS) $(ALL_PKG_LIBS) $(LOCAL_LIBS)
+LDADD = $(ALL_PKG_LDFLAGS) $(ALL_PKG_LIBS) $(DUNEMPILIBS) $(LOCAL_LIBS)
 # preprocessor flags
 AM_CPPFLAGS = $(ALL_PKG_CPPFLAGS)
-AM_CXXFLAGS = -O0 -g -Wall $(ALL_PKG_CXXFLAGS) $(MPI_CPPFLAGS)
+AM_CXXFLAGS = -O0 -g -Wall $(ALL_PKG_CXXFLAGS) $(DUNEMPICPPFLAGS)
 
 TESTPROGS = lagrangeinterpolation_linear lagrangeinterpolation_quadratic \
             dgl2projection_adaptive      dgl2projection_filtered \

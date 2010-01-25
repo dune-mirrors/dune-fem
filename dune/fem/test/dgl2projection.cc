@@ -29,9 +29,9 @@
 
 using namespace Dune;
 
-typedef GridSelector::GridType GridType;
-// typedef HierarchicGridPart< GridType >  ContainedGridPartType;
-typedef DGAdaptiveLeafGridPart< GridType > ContainedGridPartType;
+typedef GridSelector::GridType MyGridType;
+// typedef HierarchicGridPart< MyGridType >  ContainedGridPartType;
+typedef DGAdaptiveLeafGridPart< MyGridType > ContainedGridPartType;
 
 // use filtered grid for testing 
 #if defined  USE_FILTEREDGRID 
@@ -83,7 +83,7 @@ int main(int argc, char ** argv)
   MPIManager :: initialize( argc, argv );
   try
   {
-    GridType &grid = TestGrid :: grid();
+    MyGridType &grid = TestGrid :: grid();
     const int step = TestGrid :: refineStepsForHalf();
     grid.globalRefine( 2*step );
 
@@ -93,7 +93,7 @@ int main(int argc, char ** argv)
       << GridWidth :: calcGridWidth( gridPart ) << std::endl; 
 
     DiscreteFunctionSpaceType discreteFunctionSpace( gridPart );
-    ExactSolutionType exactSolution( discreteFunctionSpace );
+    ExactSolutionType exactSolution;
     DiscreteFunctionType solution( "solution", discreteFunctionSpace );
     solution.clear();
   
