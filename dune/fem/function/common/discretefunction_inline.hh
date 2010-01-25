@@ -18,10 +18,10 @@ namespace Dune
 
   template< class Traits >
   inline DiscreteFunctionDefault< Traits >
-    :: DiscreteFunctionDefault ( const std :: string &name,
+    :: DiscreteFunctionDefault ( const std::string &name,
                                  const DiscreteFunctionSpaceType &dfSpace,
                                  const LocalFunctionFactoryType &lfFactory )
-  : DiscreteFunctionInterfaceType( dfSpace ),
+  : dfSpace_( dfSpace ),
     lfStorage_( lfFactory ),
     name_( name ),
     scalarProduct_( dfSpace )
@@ -29,19 +29,25 @@ namespace Dune
 
   
   template< class Traits >
-  inline DiscreteFunctionDefault< Traits >
-    :: ~DiscreteFunctionDefault ()
+  inline DiscreteFunctionDefault< Traits >::~DiscreteFunctionDefault ()
   {
     assert( !dofPointerLock_ );
   }
 
 
   template< class Traits >
-  inline const std :: string &DiscreteFunctionDefault< Traits > :: name () const
+  inline const std::string &DiscreteFunctionDefault< Traits >::name () const
   {
     return name_;
   }
 
+
+  template< class Traits >
+  inline const typename DiscreteFunctionDefault< Traits >::DiscreteFunctionSpaceType &
+  DiscreteFunctionDefault< Traits >::space () const
+  {
+    return dfSpace_;
+  }
 
   template< class Traits >
   template< class EntityType >

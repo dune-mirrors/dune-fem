@@ -70,11 +70,16 @@ namespace Dune
   */
   template< class TraitsImp >
   class DiscreteFunctionInterface
-  : public Function< typename TraitsImp :: DiscreteFunctionSpaceType,
-                     typename TraitsImp :: DiscreteFunctionType >,
+  : public Fem::Function< typename TraitsImp::DiscreteFunctionSpaceType::FunctionSpaceType,
+                          typename TraitsImp::DiscreteFunctionType >,
     public IsDiscreteFunction, 
     public HasLocalFunction
   {
+    typedef DiscreteFunctionInterface< TraitsImp > ThisType;
+    typedef Fem::Function< typename TraitsImp::DiscreteFunctionSpaceType::FunctionSpaceType,
+                           typename TraitsImp::DiscreteFunctionType >
+      BaseType;
+
   public:
     //! type of the traits
     typedef TraitsImp Traits;
@@ -88,11 +93,6 @@ namespace Dune
      //! type of the discrete function interface (this type)
     typedef DiscreteFunctionInterface< Traits > DiscreteFunctionInterfaceType;
  
-  private:
-    typedef DiscreteFunctionInterfaceType ThisType;
-    typedef Function< DiscreteFunctionSpaceType, DiscreteFunctionType > BaseType;
-
-  public:
     //! type of domain field, i.e. type of coordinate component
     typedef typename DiscreteFunctionSpaceType :: DomainFieldType DomainFieldType;
     //! type of range field, i.e. dof type 
@@ -124,9 +124,8 @@ namespace Dune
     typedef typename Traits :: DofBlockPtrType DofBlockPtrType;
     typedef typename Traits :: ConstDofBlockPtrType ConstDofBlockPtrType;
 
-    //! type of mapping base class for this discrete function 
-    typedef Mapping<DomainFieldType, RangeFieldType,
-                    DomainType, RangeType> MappingType;
+    //! type of mapping base class for this discrete function
+    typedef typename BaseType::MappingType MappingType;
 
     template< class Operation >
     struct CommDataHandle
@@ -136,24 +135,16 @@ namespace Dune
         Type;
     };
 
-
   protected:
-    using BaseType :: asImp;
+    using BaseType::asImp;
 
-  protected:
-    /** \brief Constructor storing discrete function space
-     *
-     *  \param[in]  dfSpace  discrete function space 
-     */
-    inline explicit
-    DiscreteFunctionInterface ( const DiscreteFunctionSpaceType &dfSpace )
-    : BaseType( dfSpace )
+    /** \brief default constructor */
+    DiscreteFunctionInterface ()
     {}
 
   private:
-    // prohibit copying
+    // prohibit copying and assignment
     DiscreteFunctionInterface ( const ThisType &other );
-    // prohibit assignment
     ThisType &operator= ( const ThisType &other );
     
   public:
@@ -161,9 +152,14 @@ namespace Dune
      *
      *  \returns string holding name of discrete function
      */
-    inline const std :: string &name () const
+    const std::string &name () const
     {
       return asImp().name();
+    }
+
+    const DiscreteFunctionSpaceType &space () const
+    {
+      return asImp().space();
     }
 
     /** \brief obtain a local function for an entity (read-only)
@@ -556,16 +552,6 @@ namespace Dune
     : public BaseType :: template CommDataHandle< Operation >
     {};
 
-  private:
-    // the local function storage 
-    mutable LocalFunctionStorageType lfStorage_;
-
-    DebugLock dofPointerLock_;
-
-  protected:
-    std :: string name_;
-    ScalarProductType scalarProduct_;
-
   protected:
     using BaseType :: asImp;
 
@@ -580,38 +566,38 @@ namespace Dune
      *  \param[in]  dfSpace    discrete function space 
      *  \param[in]  lfFactory  local function factory
      */
-    inline DiscreteFunctionDefault ( const std :: string &name,
-                                     const DiscreteFunctionSpaceType &dfSpace,
-                                     const LocalFunctionFactoryType &lfFactory );
+    DiscreteFunctionDefault ( const std::string &name,
+                              const DiscreteFunctionSpaceType &dfSpace,
+                              const LocalFunctionFactoryType &lfFactory );
 
   private:
-    // prohibit copying
+    // prohibit copying and assignment
     inline DiscreteFunctionDefault ( const ThisType & );
+    ThisType &operator= ( const ThisType & );
 
   public:
     inline ~DiscreteFunctionDefault ();
 
-  private:
-    // prohibit assignment
-    ThisType &operator= ( const ThisType & );
-    
-  public:
+
     // Default Implementations
     // -----------------------
 
     /** \copydoc Dune::DiscreteFunctionInterface::name() const */
-    const std :: string &name () const;
+    const std::string &name () const;
+
+    /** \copydoc Dune::DiscreteFunctionInterface::space() const */
+    const DiscreteFunctionSpaceType &space () const;
 
     /** \copydoc Dune::DiscreteFunctionInterface::localFunction(const EntityType &entity) const */
     template< class EntityType >
-    inline const LocalFunctionType localFunction ( const EntityType &entity ) const;
+    const LocalFunctionType localFunction ( const EntityType &entity ) const;
     
     /** \copydoc Dune::DiscreteFunctionInterface::localFunction(const EntityType &entity) */
     template< class EntityType >
-    inline LocalFunctionType localFunction ( const EntityType &entity );
+    LocalFunctionType localFunction ( const EntityType &entity );
   
     /** \copydoc Dune::DiscreteFunctionInterface::clear() */
-    inline void clear();
+    void clear();
     
     /** \copydoc Dune::DiscreteFunctionInterface::allocDofPointer
      *  
@@ -769,6 +755,18 @@ namespace Dune
     
     DofIteratorType dbegin ();
     DofIteratorType dend ();
+
+  private:
+    const DiscreteFunctionSpaceType &dfSpace_;
+
+    // the local function storage 
+    mutable LocalFunctionStorageType lfStorage_;
+
+    DebugLock dofPointerLock_;
+
+  protected:
+    std::string name_;
+    ScalarProductType scalarProduct_;
   }; // end class DiscreteFunctionDefault 
 
 
