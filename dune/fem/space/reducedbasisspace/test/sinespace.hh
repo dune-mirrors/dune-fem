@@ -8,44 +8,35 @@
 namespace Dune
 {
 
-  template< class FunctionSpaceImp >
+  template< class FunctionSpace >
   class SineBaseFunction
-  : public Function< FunctionSpaceImp, SineBaseFunction< FunctionSpaceImp > >
+  : public Fem::Function< FunctionSpace, SineBaseFunction< FunctionSpace > >
   {
-  public:
-    typedef FunctionSpaceImp FunctionSpaceType;
-
-  private:
-    typedef SineBaseFunction< FunctionSpaceType > ThisType;
-    typedef Function< FunctionSpaceType, ThisType > BaseType;
+    typedef SineBaseFunction< FunctionSpace > ThisType;
+    typedef Fem::Function< FunctionSpace, ThisType > BaseType;
 
   public:
-    typedef typename FunctionSpaceType :: DomainType DomainType;
-    typedef typename FunctionSpaceType :: RangeType RangeType;
+    typedef FunctionSpace FunctionSpaceType;
 
-    typedef typename FunctionSpaceType :: DomainFieldType DomainFieldType;
-    typedef typename FunctionSpaceType :: RangeFieldType RangeFieldType;
+    typedef typename FunctionSpaceType::DomainType DomainType;
+    typedef typename FunctionSpaceType::RangeType RangeType;
 
-    enum { dimDomain = FunctionSpaceType :: dimDomain };
-    enum { dimRange = FunctionSpaceType :: dimRange };
+    typedef typename FunctionSpaceType::DomainFieldType DomainFieldType;
+    typedef typename FunctionSpaceType::RangeFieldType RangeFieldType;
+
+    static const int dimDomain = FunctionSpaceType::dimDomain;
+    static const int dimRange = FunctionSpaceType::dimRange;
 
     typedef FieldVector< int, dimDomain > CoefficientType;
     
-  protected:
-    const CoefficientType coefficient_;
-    
-  public:
-    inline SineBaseFunction ( const FunctionSpaceType &functionSpace,
-                              const CoefficientType coefficient )
-    : BaseType( functionSpace ),
-      coefficient_( coefficient )
-    {
-    }
+    explicit SineBaseFunction ( const CoefficientType coefficient )
+    : coefficient_( coefficient )
+    {}
 
-    inline void evaluate ( const DomainType &x, RangeType &y ) const
+    void evaluate ( const DomainType &x, RangeType &y ) const
     {
       y = 1;
-      for( unsigned int i = 0; i < dimDomain; ++i )
+      for( int i = 0; i < dimDomain; ++i )
       {
         /*
         if( coefficient_[ i ] < 0 )
@@ -57,10 +48,13 @@ namespace Dune
       }
     }
 
-    inline void evaluate ( const DomainType &x, const RangeFieldType t, RangeType &y ) const
+    void evaluate ( const DomainType &x, const RangeFieldType t, RangeType &y ) const
     {
       evaluate( x, y );
     }
+
+  protected:
+    const CoefficientType coefficient_;
   };
 
 
@@ -69,26 +63,22 @@ namespace Dune
   class SineReducedBasisSpace
   : public ReducedBasisSpace< AdaptiveDiscreteFunction< BaseFunctionSpaceImp > >
   {
+    typedef SineReducedBasisSpace< BaseFunctionSpaceImp, maxCoefficient > ThisType;
+    typedef ReducedBasisSpace< AdaptiveDiscreteFunction< BaseFunctionSpaceImp > > BaseType;
+
   public:
     typedef BaseFunctionSpaceImp BaseFunctionSpaceType;
 
     typedef AdaptiveDiscreteFunction< BaseFunctionSpaceType > BaseFunctionType;
 
-  private:
-    typedef SineReducedBasisSpace< BaseFunctionSpaceType, maxCoefficient > ThisType;
-    typedef ReducedBasisSpace< BaseFunctionType > BaseType;
-
-    using BaseType :: baseFunctionSpace_;
-
-  public:
-    typedef SineBaseFunction< typename BaseFunctionSpaceType :: FunctionSpaceType >
+    typedef SineBaseFunction< typename BaseFunctionSpaceType::FunctionSpaceType >
       ContinuousBaseFunctionType;
 
   private:
-    typedef typename ContinuousBaseFunctionType :: CoefficientType CoefficientType;
+    typedef typename ContinuousBaseFunctionType::CoefficientType CoefficientType;
 
   public:
-    inline explicit SineReducedBasisSpace ( BaseFunctionSpaceType &baseFunctionSpace )
+    explicit SineReducedBasisSpace ( BaseFunctionSpaceType &baseFunctionSpace )
     : BaseType( baseFunctionSpace )
     {
       // CoefficientType coefficient( -maxCoefficient );
@@ -111,7 +101,7 @@ namespace Dune
     }
 
   private:
-    static inline int abs( const CoefficientType &coefficient )
+    static int abs( const CoefficientType &coefficient )
     {
       int value = 0;
       for( unsigned int i = 0; i < CoefficientType :: dimension; ++i )
@@ -119,16 +109,18 @@ namespace Dune
       return value;
     }
     
-    inline void addBaseFunction( const CoefficientType &coefficient )
+    void addBaseFunction( const CoefficientType &coefficient )
     {
       BaseFunctionType discreteBaseFunction( "base function", baseFunctionSpace_ );
-      ContinuousBaseFunctionType continuousBaseFunction( baseFunctionSpace_, coefficient );
+      ContinuousBaseFunctionType continuousBaseFunction( coefficient );
       LagrangeInterpolation< BaseFunctionType >
-        :: interpolateFunction( continuousBaseFunction, discreteBaseFunction );
-      BaseType :: addBaseFunction( discreteBaseFunction );
+        ::interpolateFunction( continuousBaseFunction, discreteBaseFunction );
+      BaseType::addBaseFunction( discreteBaseFunction );
     }
+
+    using BaseType::baseFunctionSpace_;
   };
 
 }
 
-#endif
+#endif // #ifndef DUNE_FEM_REDUCEDBASISSPACE_SINESPACE_HH

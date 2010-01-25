@@ -28,7 +28,8 @@ namespace Dune
   public:
     typedef ReducedBasisSpace< BaseFunctionType > DiscreteFunctionSpaceType;
 
-    typedef typename BaseFunctionType :: FunctionSpaceType BaseFunctionSpaceType;
+    typedef typename BaseFunctionType::DiscreteFunctionSpaceType
+      BaseFunctionSpaceType;
 
     typedef typename BaseFunctionSpaceType :: DomainType DomainType;
     typedef typename BaseFunctionSpaceType :: RangeType RangeType;

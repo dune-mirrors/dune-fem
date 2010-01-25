@@ -6,47 +6,33 @@
 namespace Dune
 {
 
-  template< class BaseFunctionImp >
+  template< class BaseFunction >
   template< int diffOrd, class PointType >
-  inline void ReducedBasisBaseFunctionSet< BaseFunctionImp >
-    :: evaluate ( const int baseFunction,
-                  const FieldVector< deriType, diffOrd > &diffVariable,
-                  const PointType &x,
-                  RangeType &phi ) const
+  inline void ReducedBasisBaseFunctionSet< BaseFunction >
+    ::evaluate ( const int baseFunction,
+                 const FieldVector< deriType, diffOrd > &diffVariable,
+                 const PointType &x,
+                 RangeType &phi ) const
   {
-    assert( baseFunctionList_ != NULL );
+    assert( baseFunctionList_ != 0 );
     assert( (baseFunction >= 0) && (baseFunction < numBaseFunctions()) );
-
-    typedef typename LocalBaseFunctionType :: BaseFunctionSetType
-      LocalBaseFunctionSetType;
 
     const LocalBaseFunctionType localBaseFunction
       = (*baseFunctionList_)[ baseFunction ]->localFunction( entity() );
-    const LocalBaseFunctionSetType &localBaseFunctionSet
-      = localBaseFunction.baseFunctionSet();
-    const int numLocalBaseFunctions = localBaseFunctionSet.numBaseFunctions();
-    
-    phi = 0;
-    for( int i = 0; i < numLocalBaseFunctions; ++i )
-    {
-      RangeType psi;
-      localBaseFunctionSet.evaluate( i, diffVariable, x, psi );
-      phi.axpy( localBaseFunction[ i ], psi );
-    }
+    localBaseFunction.evaluate( diffVariable, x, phi );
   }
 
 
 
-  template< class BaseFunctionImp >
+  template< class BaseFunction >
   template< class PointType >
-  inline
-  typename ReducedBasisBaseFunctionSet< BaseFunctionImp > :: RangeFieldType
-  ReducedBasisBaseFunctionSet< BaseFunctionImp >
-    :: evaluateSingle ( const int baseFunction,
-                        const PointType &x,
-                        RangeType &psi ) const
+  inline typename ReducedBasisBaseFunctionSet< BaseFunction >::RangeFieldType
+  ReducedBasisBaseFunctionSet< BaseFunction >
+    ::evaluateSingle ( const int baseFunction,
+                       const PointType &x,
+                       RangeType &psi ) const
   {
-    assert( baseFunctionList_ != NULL );
+    assert( baseFunctionList_ != 0 );
     assert( (baseFunction >= 0) && (baseFunction < numBaseFunctions()) );
 
     typedef typename LocalBaseFunctionType :: BaseFunctionSetType
@@ -70,4 +56,4 @@ namespace Dune
 
 }
 
-#endif
+#endif // #ifndef DUNE_FEM_REDUCEDBASISSPACE_BASEFUNCTIONSET_INLINE_HH

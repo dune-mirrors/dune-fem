@@ -12,22 +12,19 @@ namespace Dune
 
 
   
-  template< class BaseFunctionImp >
+  template< class BaseFunction >
   class ReducedBasisBaseFunctionSetTraits
   {
-  public:
-    typedef BaseFunctionImp BaseFunctionType;
-
-  private:
-    typedef ReducedBasisBaseFunctionSetTraits< BaseFunctionType > ThisType;
+    typedef ReducedBasisBaseFunctionSetTraits< BaseFunction > ThisType;
 
   public:
-    typedef ReducedBasisBaseFunctionSet< BaseFunctionImp > BaseFunctionSetType;
+    typedef ReducedBasisBaseFunctionSet< BaseFunction > BaseFunctionSetType;
+
+    typedef BaseFunction BaseFunctionType;
     
-    typedef typename BaseFunctionType :: FunctionSpaceType
-      BaseFunctionSpaceType;
+    typedef typename BaseFunctionType::DiscreteFunctionSpaceType BaseFunctionSpaceType;
      
-    typedef typename BaseFunctionSpaceType :: BaseFunctionSetType :: FunctionSpaceType
+    typedef typename BaseFunctionSpaceType::BaseFunctionSetType::FunctionSpaceType
       FunctionSpaceType;
   };
 
@@ -39,65 +36,54 @@ namespace Dune
    *  This class is needed to build the space and provides the functionality of
    *  the space for example the jacobian method is implemented here 
    */
-  template< class BaseFunctionImp >
+  template< class BaseFunction >
   class ReducedBasisBaseFunctionSet
-  : public BaseFunctionSetDefault< ReducedBasisBaseFunctionSetTraits< BaseFunctionImp > >
+  : public BaseFunctionSetDefault< ReducedBasisBaseFunctionSetTraits< BaseFunction > >
   {
-  public:
-    typedef BaseFunctionImp BaseFunctionType;
-
-    typedef ReducedBasisBaseFunctionSetTraits< BaseFunctionType > TraitsType;
-
-  private:
-    typedef ReducedBasisBaseFunctionSet< BaseFunctionType > ThisType;
-    typedef BaseFunctionSetDefault< TraitsType > BaseType;
-
-    using BaseType :: evaluate;
-    using BaseType :: evaluateSingle;
+    typedef ReducedBasisBaseFunctionSet< BaseFunction > ThisType;
+    typedef BaseFunctionSetDefault< ReducedBasisBaseFunctionSetTraits< BaseFunction> >
+      BaseType;
 
   public:
     typedef ThisType BaseFunctionSetType;
-    
-    typedef typename BaseFunctionType :: FunctionSpaceType
-      BaseFunctionSpaceType;
-    typedef typename BaseFunctionType :: LocalFunctionType
-      LocalBaseFunctionType;
 
-    typedef typename BaseFunctionSpaceType :: GridPartType GridPartType;
+    typedef ReducedBasisBaseFunctionSetTraits< BaseFunction > Traits;
+
+    typedef typename Traits::BaseFunctionType BaseFunctionType;
+    typedef typename Traits::BaseFunctionSpaceType BaseFunctionSpaceType;
+
+    typedef typename BaseFunctionType::LocalFunctionType LocalBaseFunctionType;
+
+    typedef typename BaseFunctionSpaceType::GridPartType GridPartType;
    
-    typedef typename TraitsType :: FunctionSpaceType FunctionSpaceType;
+    typedef typename Traits::FunctionSpaceType FunctionSpaceType;
     
-    typedef typename FunctionSpaceType :: DomainFieldType DomainFieldType;
-    typedef typename FunctionSpaceType :: RangeFieldType RangeFieldType;
+    typedef typename FunctionSpaceType::DomainFieldType DomainFieldType;
+    typedef typename FunctionSpaceType::RangeFieldType RangeFieldType;
 
-    typedef typename FunctionSpaceType :: DomainType DomainType;
-    typedef typename FunctionSpaceType :: RangeType RangeType;
+    typedef typename FunctionSpaceType::DomainType DomainType;
+    typedef typename FunctionSpaceType::RangeType RangeType;
 
-    typedef typename FunctionSpaceType :: JacobianRangeType JacobianRangeType;
-    typedef typename FunctionSpaceType :: HessianRangeType HessianRangeType;
+    typedef typename FunctionSpaceType::JacobianRangeType JacobianRangeType;
+    typedef typename FunctionSpaceType::HessianRangeType HessianRangeType;
 
-    enum { dimDomain = FunctionSpaceType :: dimDomain };
-    enum { dimRange = FunctionSpaceType :: dimRange };
+    static const int dimDomain = FunctionSpaceType::dimDomain;
+    static const int dimRange = FunctionSpaceType::dimRange;
 
     typedef DynamicArray< BaseFunctionType* > BaseFunctionListType;
 
   private:
-    typedef typename GridPartType :: GridType :: template Codim< 0 > :: Entity
-      EntityCodim0Type;
-
-  protected:
-    const BaseFunctionListType *baseFunctionList_;
-    int numBaseFunctions_;
-    
-    const EntityCodim0Type *entity_;
+    typedef typename GridPartType::GridType::template Codim< 0 >::Entity ElementType;
 
   public:
+    using BaseType::evaluate;
+    using BaseType::evaluateSingle;
+
     /** \brief default constructor */
-    inline ReducedBasisBaseFunctionSet ()
-    : baseFunctionList_( NULL ),
-      entity_( NULL )
-    {
-    }
+    ReducedBasisBaseFunctionSet ()
+    : baseFunctionList_( 0 ),
+      entity_( 0 )
+    {}
    
     /** constructor
      *
@@ -107,12 +93,10 @@ namespace Dune
      *  \param[in]  baseFunctionList  array containing the discrete functions
      *                                to be used as base functions
      */
-    inline explicit ReducedBasisBaseFunctionSet
-      ( const BaseFunctionListType &baseFunctionList )
+    explicit ReducedBasisBaseFunctionSet ( const BaseFunctionListType &baseFunctionList )
     : baseFunctionList_( &baseFunctionList ),
-      entity_( NULL )
-    {
-    }
+      entity_( 0 )
+    {}
 
     /** constructor
      *
@@ -124,69 +108,51 @@ namespace Dune
      *  \param[in]  entity            entity (of codim 0) to bind the base
      *                                function set to
      */
-    inline ReducedBasisBaseFunctionSet ( const BaseFunctionListType &baseFunctionList,
-                                         const EntityCodim0Type &entity )
+    ReducedBasisBaseFunctionSet ( const BaseFunctionListType &baseFunctionList,
+                                  const ElementType &entity )
     : baseFunctionList_( &baseFunctionList ),
       entity_( &entity )
-    {
-    }
+    {}
     
-    /** \brief copy constructor
-     *
-     *  \param[in]  other  base function set to copy
-     */
-    inline ReducedBasisBaseFunctionSet ( const ThisType &other )
-    : baseFunctionList_( other.baseFunctionList_ ),
-      entity_( other.entity_ )
-    {
-    }
-
-    /** \brief copy another ReducedBasisBaseFunctionSet
-     *
-     *  \param[in]  other  base function set to copy
-     */
-    inline ThisType &operator= ( const ThisType &other )
-    {
-      baseFunctionList_ = other.baseFunctionList_;
-      entity_ = other.entity_;
-      return *this;
-    }
-
     /** \copydoc Dune::BaseFunctionSetInterface::evaluate(const int baseFunction,const FieldVector<deriType,diffOrd> &diffVariable,const PointType &x,RangeType &phi) const */
     template< int diffOrd, class PointType >
-    inline void evaluate ( const int baseFunction,
-                           const FieldVector< deriType, diffOrd > &diffVariable,
-                           const PointType &x,
-                           RangeType &phi ) const;
+    void evaluate ( const int baseFunction,
+                    const FieldVector< deriType, diffOrd > &diffVariable,
+                    const PointType &x,
+                    RangeType &phi ) const;
 
     /** \copydoc Dune::BaseFunctionSetInterface::evaluateSingle(const int baseFunction,const PointType &x,const RangeType &psi) const */
     template< class PointType >
-    inline RangeFieldType evaluateSingle ( const int baseFunction,
-                                           const PointType &x,
-                                           RangeType &psi ) const;
+    RangeFieldType evaluateSingle ( const int baseFunction,
+                                    const PointType &x,
+                                    RangeType &psi ) const;
    
     /** \brief obtain the entity, this base function set belongs to */
-    inline const EntityCodim0Type &entity () const
+    const ElementType &entity () const
     {
-      assert( entity_ != NULL );
+      assert( entity_ != 0 );
       return *entity_;
     }
 
-    inline GeometryType geometryType () const
+    GeometryType geometryType () const
     {
       return entity().geometry().type();
     }
 
     /** \copydoc Dune::BaseFunctionSetInterface::numBaseFunctions */
-    inline int numBaseFunctions () const
+    int numBaseFunctions () const
     {
-      assert( baseFunctionList_ != NULL );
+      assert( baseFunctionList_ != 0 );
       return baseFunctionList_->size();
     }
+
+  protected:
+    const BaseFunctionListType *baseFunctionList_;
+    const ElementType *entity_;
   };
 
 }
 
 #include "basefunctionset_inline.hh"
 
-#endif
+#endif // #ifndef DUNE_FEM_REDUCEDBASISSPACE_BASEFUNCTIONSET_HH

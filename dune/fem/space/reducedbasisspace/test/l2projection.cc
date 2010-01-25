@@ -33,7 +33,7 @@ const int polOrder = POLORDER;
 
 typedef LeafGridPart< GridSelector::GridType > GridPartType;
 
-typedef FunctionSpace< double, double, dimworld, 1 > FunctionSpaceType;
+typedef FunctionSpace< double, double, GridSelector::dimworld, 1 > FunctionSpaceType;
 
 typedef LagrangeDiscreteFunctionSpace< FunctionSpaceType, GridPartType, polOrder, CachingStorage >
   DiscreteBaseFunctionSpaceType;
@@ -45,16 +45,14 @@ typedef AdaptiveDiscreteFunction< DiscreteFunctionSpaceType > DiscreteFunctionTy
 
 template< class FunctionSpaceImp >
 class ExactSolution
-: public Function< FunctionSpaceImp, ExactSolution< FunctionSpaceImp > > 
+: public Fem::Function< FunctionSpaceImp, ExactSolution< FunctionSpaceImp > > 
 {
+  typedef ExactSolution< FunctionSpaceImp > ThisType;
+  typedef Fem::Function< FunctionSpaceImp, ThisType > BaseType;
+
 public:
   typedef FunctionSpaceImp FunctionSpaceType;
 
-private:
-  typedef ExactSolution< FunctionSpaceType > ThisType;
-  typedef Function< FunctionSpaceType, ThisType > BaseType;
-
-public:
   typedef typename FunctionSpaceType :: DomainType DomainType;
   typedef typename FunctionSpaceType :: RangeType RangeType;
 
@@ -64,13 +62,7 @@ public:
   enum { DimDomain = FunctionSpaceType :: DimDomain };
   enum { DimRange = FunctionSpaceType :: DimRange };
 
-public:
-  inline ExactSolution ( const FunctionSpaceType &functionSpace )
-  : BaseType( functionSpace )
-  {
-  }
- 
-  inline void evaluate ( const DomainType &x, RangeType &y ) const
+  void evaluate ( const DomainType &x, RangeType &y ) const
   {
     y = 1;
     for( unsigned int i = 0; i < DimDomain; ++i )
@@ -98,25 +90,25 @@ private:
   typedef L2Projection< DiscreteFunctionType > ThisType;
 
 public:
-  typedef typename DiscreteFunctionType :: FunctionSpaceType DiscreteFunctionSpaceType;
+  typedef typename DiscreteFunctionType::DiscreteFunctionSpaceType DiscreteFunctionSpaceType;
 
-  typedef typename DiscreteFunctionSpaceType :: DomainType DomainType;
-  typedef typename DiscreteFunctionSpaceType :: RangeType RangeType;
+  typedef typename DiscreteFunctionSpaceType::DomainType DomainType;
+  typedef typename DiscreteFunctionSpaceType::RangeType RangeType;
 
-  typedef typename DiscreteFunctionSpaceType :: DomainFieldType DomainFieldType;
-  typedef typename DiscreteFunctionSpaceType :: RangeFieldType RangeFieldType;
+  typedef typename DiscreteFunctionSpaceType::DomainFieldType DomainFieldType;
+  typedef typename DiscreteFunctionSpaceType::RangeFieldType RangeFieldType;
 
 public:
   template< class FunctionType >
   static inline void project ( const FunctionType &function,
                                DiscreteFunctionType &discreteFunction )
   {
-    typedef typename DiscreteFunctionType :: LocalFunctionType LocalFunctionType;
+    typedef typename DiscreteFunctionType::LocalFunctionType LocalFunctionType;
 
-    typedef typename LocalFunctionType :: BaseFunctionSetType BaseFunctionSetType;
+    typedef typename LocalFunctionType::BaseFunctionSetType BaseFunctionSetType;
 
-    typedef typename DiscreteFunctionSpaceType :: GridPartType GridPartType;
-    typedef typename DiscreteFunctionSpaceType :: IteratorType IteratorType;
+    typedef typename DiscreteFunctionSpaceType::GridPartType GridPartType;
+    typedef typename DiscreteFunctionSpaceType::IteratorType IteratorType;
 
     typedef typename GridPartType :: GridType :: template Codim< 0 > :: Entity :: Geometry
       GeometryType;
@@ -173,16 +165,16 @@ private:
   typedef L2Error< DiscreteFunctionType > ThisType;
 
 public:
-  typedef typename DiscreteFunctionType :: FunctionSpaceType DiscreteFunctionSpaceType;
+  typedef typename DiscreteFunctionType::DiscreteFunctionSpaceType DiscreteFunctionSpaceType;
   
-  typedef typename DiscreteFunctionSpaceType :: DomainType DomainType;
-  typedef typename DiscreteFunctionSpaceType :: RangeType RangeType;
+  typedef typename DiscreteFunctionSpaceType::DomainType DomainType;
+  typedef typename DiscreteFunctionSpaceType::RangeType RangeType;
 
-  typedef typename DiscreteFunctionSpaceType :: DomainFieldType DomainFieldType;
-  typedef typename DiscreteFunctionSpaceType :: RangeFieldType RangeFieldType;
+  typedef typename DiscreteFunctionSpaceType::DomainFieldType DomainFieldType;
+  typedef typename DiscreteFunctionSpaceType::RangeFieldType RangeFieldType;
 
-  enum { DimDomain = DiscreteFunctionSpaceType :: DimDomain };
-  enum { DimRange = DiscreteFunctionSpaceType :: DimRange };
+  enum { DimDomain = DiscreteFunctionSpaceType::DimDomain };
+  enum { DimRange = DiscreteFunctionSpaceType::DimRange };
 
 public:
   template< class FunctionType >
@@ -190,12 +182,12 @@ public:
                             const DiscreteFunctionType &discreteFunction,
                             RangeType &error )
   {
-    typedef typename DiscreteFunctionType :: LocalFunctionType LocalFunctionType;
+    typedef typename DiscreteFunctionType::LocalFunctionType LocalFunctionType;
 
-    typedef typename DiscreteFunctionSpaceType :: GridPartType GridPartType;
-    typedef typename DiscreteFunctionSpaceType :: IteratorType IteratorType;
+    typedef typename DiscreteFunctionSpaceType::GridPartType GridPartType;
+    typedef typename DiscreteFunctionSpaceType::IteratorType IteratorType;
     
-    typedef typename GridPartType :: GridType :: template Codim< 0 > :: Entity :: Geometry
+    typedef typename GridPartType::GridType::template Codim< 0 >::Entity::Geometry
       GeometryType;
 
     typedef CachingQuadrature< GridPartType, 0 > QuadratureType;
@@ -244,7 +236,7 @@ double algorithm ( GridPartType &gridPart )
   DiscreteFunctionSpaceType discreteFunctionSpace( baseFunctionSpace );
 
   DiscreteFunctionType solution( "solution", discreteFunctionSpace );
-  ExactSolution< FunctionSpaceType > exactSolution( discreteFunctionSpace );
+  ExactSolution< FunctionSpaceType > exactSolution;
   L2Projection< DiscreteFunctionType > :: project( exactSolution, solution );
 
   FunctionSpaceType :: RangeType error;
@@ -263,6 +255,8 @@ double algorithm ( GridPartType &gridPart )
 
 int main ( int argc, char **argv )
 {
+  MPIManager::initialize( argc, argv );
+
   if( argc != 2 )
   {
     std :: cerr << "Usage: " << argv[ 0 ] << " <maxlevel>" << std :: endl;
