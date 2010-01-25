@@ -34,15 +34,20 @@ namespace Dune
     typedef DF DiscreteFunctionType;
 
     typedef typename DiscreteFunctionType::LocalFunctionType LocalFunctionType;
-    typedef typename DiscreteFunctionType::FunctionSpaceType FunctionSpaceType;
-    typedef typename FunctionSpaceType::DomainType DomainType;
-    typedef typename FunctionSpaceType::RangeType RangeType;
-    typedef typename FunctionSpaceType::GridPartType GridPartType;
-    typedef typename FunctionSpaceType::IteratorType::Entity EntityType;
-    typedef typename EntityType :: Geometry :: LocalCoordinate LocalCoordinateType;
+    typedef typename DiscreteFunctionType::DiscreteFunctionSpaceType
+      DiscreteFunctionSpaceType;
 
-    static const int dimRange = FunctionSpaceType::dimRange;
-    static const int dimDomain = FunctionSpaceType::dimDomain;
+    static const int dimRange = DiscreteFunctionSpaceType::dimRange;
+    static const int dimDomain = DiscreteFunctionSpaceType::dimDomain;
+
+    typedef typename DiscreteFunctionSpaceType::DomainType DomainType;
+    typedef typename DiscreteFunctionSpaceType::RangeType RangeType;
+
+    typedef typename DiscreteFunctionSpaceType::GridPartType GridPartType;
+    typedef typename DiscreteFunctionSpaceType::IteratorType::Entity EntityType;
+
+    typedef typename EntityType::Geometry::LocalCoordinate LocalCoordinateType;
+
 
     //! constructor taking discrete function 
     VTKFunctionWrapper ( const DiscreteFunctionType& df,
