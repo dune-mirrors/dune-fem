@@ -37,17 +37,21 @@ class RestrictProlongCombinedSpace
 
 public:
   typedef DiscreteFunctionImp DiscreteFunctionType;
-  typedef typename DiscreteFunctionType::FunctionSpaceType FunctionSpaceType;
-  typedef typename FunctionSpaceType :: GridPartType GridPartType;
-  typedef typename FunctionSpaceType :: GridType GridType;
+
+  typedef typename DiscreteFunctionType::DiscreteFunctionSpaceType
+    DiscreteFunctionSpaceType;
   typedef typename DiscreteFunctionType::LocalFunctionType LocalFunctionType;
 
-  typedef typename DiscreteFunctionType::RangeFieldType RangeFieldType;
-  typedef typename DiscreteFunctionType::DomainType DomainType;
+  typedef typename DiscreteFunctionSpaceType::GridPartType GridPartType;
+  typedef typename DiscreteFunctionSpaceType::GridType GridType;
+
+  typedef typename DiscreteFunctionSpaceType::RangeFieldType RangeFieldType;
+  typedef typename DiscreteFunctionSpaceType::DomainType DomainType;
+
   typedef CachingQuadrature<GridPartType,0> QuadratureType;
   typedef typename GridType::template Codim<0>::Entity::LocalGeometry LocalGeometry;
 
-  enum { dimRange = FunctionSpaceType :: dimRange };
+  static const int dimRange = DiscreteFunctionSpaceType::dimRange;
 
 protected:
   using BaseType :: calcWeight;
@@ -80,10 +84,10 @@ public:
     if( entitiesAreCopies( df_.space().indexSet(), father, son ) )
       return;
     
-    typedef typename FunctionSpaceType :: DomainFieldType DomainFieldType;
+    typedef typename DiscreteFunctionSpaceType::DomainFieldType DomainFieldType;
 
-    typename FunctionSpaceType::RangeType ret (0.0);
-    typename FunctionSpaceType::ContainedRangeType phi (0.0);
+    typename DicreteFunctionSpaceType::RangeType ret (0.0);
+    typename DiscreteFunctionSpaceType::ContainedRangeType phi (0.0);
     assert( !father.isLeaf() );
     const DomainFieldType weight = (weight_ < 0.0) ? calcWeight( father, son) : weight_;
 
@@ -91,8 +95,8 @@ public:
     LocalFunctionType sohn_ = df_.localFunction( son   );
 
     QuadratureType quad(son,quadord_);
-    const typename FunctionSpaceType::BaseFunctionSetType & baseset =
-      vati_.baseFunctionSet();
+    const typename DiscreteFunctionSpaceType::BaseFunctionSetType &baseset
+      = vati_.baseFunctionSet();
     const int nop=quad.nop();
     const LocalGeometry& geometryInFather = son.geometryInFather();
 
@@ -133,23 +137,25 @@ public:
     // if father and son are copies, do nothing 
     if( this->entitiesAreCopies( df_.space().indexSet(), father, son ) ) return ; 
     
-    typename FunctionSpaceType::RangeType ret (0.0);
-    typename FunctionSpaceType::ContainedRangeType phi (0.0);
+    typename DiscreteFunctionSpaceType::RangeType ret( 0.0 );
+    typename DiscreteFunctionSpaceType::ContainedRangeType phi( 0.0 );
     // get local functions 
     LocalFunctionType vati_ = df_.localFunction( father);
     LocalFunctionType sohn_ = df_.localFunction( son   );
 
+    // get base function set 
+    const typename DiscreteFunctionSpaceType::BaseFunctionSetType &baseset
+      = sohn_.baseFunctionSet();
+
     // get number of dofs 
     const int sohn_numDofs = sohn_.numDofs();
-    const int diff_numDofs = sohn_.baseFunctionSet().numDifferentBaseFunctions();
+    const int diff_numDofs = baseset.numDifferentBaseFunctions();
     // set sohn to zero
-    for(int i=0; i<sohn_numDofs; ++i) sohn_[i] = 0.;
+    for( int i = 0; i < sohn_numDofs; ++i )
+      sohn_[ i ] = 0.;
 
     // get quadrature 
     QuadratureType quad(son,quadord_);
-    // get base function set 
-    const typename FunctionSpaceType::BaseFunctionSetType& 
-        baseset = sohn_.baseFunctionSet();
 
     // get geometry 
     const LocalGeometry& geometryInFather = son.geometryInFather();
