@@ -21,14 +21,24 @@ namespace Dune
     }
     
   protected:
+    static const Implementation &asImp ( const ThisType &other )
+    {
+      return static_cast< const Implementation & >( other );
+    }
+
+    static Implementation &asImp ( ThisType &other )
+    {
+      return static_cast< Implementation & >( other );
+    }
+
     const Implementation &asImp () const
     {
-      return static_cast< const Implementation & >( *this );
+      return asImp( *this );
     }
 
     Implementation &asImp ()
     {
-      return static_cast< Implementation & >( *this );
+      return asImp( *this );
     }
   };
   
