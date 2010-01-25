@@ -86,7 +86,7 @@ public:
     
     typedef typename DiscreteFunctionSpaceType::DomainFieldType DomainFieldType;
 
-    typename DicreteFunctionSpaceType::RangeType ret (0.0);
+    typename DiscreteFunctionSpaceType::RangeType ret (0.0);
     typename DiscreteFunctionSpaceType::ContainedRangeType phi (0.0);
     assert( !father.isLeaf() );
     const DomainFieldType weight = (weight_ < 0.0) ? calcWeight( father, son) : weight_;
