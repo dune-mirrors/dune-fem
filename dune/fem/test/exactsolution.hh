@@ -11,7 +11,7 @@ namespace Dune
   : public Fem::Function< FunctionSpaceImp, ExactSolution< FunctionSpaceImp > >
   {
     typedef ExactSolution< FunctionSpaceImp > ThisType;
-    typedef Function< FunctionSpaceImp, ThisType > BaseType;
+    typedef Fem::Function< FunctionSpaceImp, ThisType > BaseType;
 
   public:
     typedef FunctionSpaceImp FunctionSpaceType;
