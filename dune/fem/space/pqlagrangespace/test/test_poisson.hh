@@ -159,14 +159,16 @@ private:
                             DiscreteFunctionType &rhs,
                             DiscreteFunctionType &solution )
     {
-      typedef typename DiscreteFunctionType :: FunctionSpaceType     DiscreteSpaceType;
-      typedef typename DiscreteFunctionType :: LocalFunctionType     LocalFunctionType;
+      typedef typename DiscreteFunctionType::DiscreteFunctionSpaceType
+        DiscreteFunctionSpaceType;
+      typedef typename DiscreteFunctionType::LocalFunctionType LocalFunctionType;
 
-      typedef typename DiscreteSpaceType :: LocalFiniteElementType   LocalFiniteElementType;
-      typedef typename GridFunctionType :: LocalFunctionType         LocalExactSolutionType;
+      typedef typename DiscreteFunctionSpaceType::LocalFiniteElementType
+        LocalFiniteElementType;
+      typedef typename GridFunctionType::LocalFunctionType LocalExactSolutionType;
 
-/*      typedef typename DiscreteSpaceType :: LagrangePointSetType     LagrangePointSetType;*/
-      typedef typename DiscreteSpaceType :: GridPartType             GridPartType;
+/*      typedef typename DiscreteFunctionSpaceType::LagrangePointSetType LagrangePointSetType;*/
+      typedef typename DiscreteFunctionSpaceType::GridPartType GridPartType;
 
 /*      const int faceCodim = 1;*/
 /*      typedef typename GridPartType :: IntersectionIteratorType      IntersectionIteratorType;*/
@@ -174,11 +176,10 @@ private:
  *                :: template Codim< faceCodim >
  *                :: SubEntityIteratorType                             FaceDofIteratorType;*/
 
-      if( ! entity.hasBoundaryIntersections() ) {
+      if( ! entity.hasBoundaryIntersections() )
         return;
-      }
 
-      const DiscreteSpaceType &dfSpace   = rhs.space();
+      const DiscreteFunctionSpaceType &dfSpace = rhs.space();
       const LocalFiniteElementType & fem = dfSpace.localFiniteElement();
 
       LocalExactSolutionType exactLocal = exactSolution.localFunction( entity );
@@ -262,10 +263,10 @@ public:
   {
     std::cout << "starting algorithm run no. " << repeat << std::endl;
 
-    GridPartType         gridPart(grid_);
-    DiscreteSpaceType    space(gridPart);
-    RHSFunctionType      exactRhs(space);
-    DiscreteFunctionType u("solution", space);
+    GridPartType gridPart( grid_ );
+    DiscreteSpaceType space( gridPart );
+    RHSFunctionType exactRhs;
+    DiscreteFunctionType u( "solution", space );
     u.clear();
 
     std::cout << "size of u: " << u.size() << std::endl;
@@ -276,7 +277,7 @@ public:
     typedef typename IteratorType :: Entity                          EntityType;
 
     // create exact solution
-    ExactSolutionType uexact( space ); 
+    ExactSolutionType uexact; 
 
     // create adapter (for visualization with grape)
     GridExactSolutionType ugrid( "exact solution", uexact, gridPart,
@@ -349,12 +350,11 @@ public:
 
   void run()
   {
-    std::cout << "\n\n";
-    std::cout << "=============================================================\n";
-    std::cout << "Starting Poisson test with EOC measurements for \n";
-    std::cout << "base functions of polynomial order " << polOrder << "\n";
-    std::cout << "on a grid of type                  " << grid_.name() << "\n";
-    std::cout << "of dimension                       " << GridType :: dimension << "\n";
+    std::cout << std::endl << std::endl;
+    std::cout << "=============================================================" << std::endl;
+    std::cout << "Starting Poisson test with EOC measurements for" << std::endl;
+    std::cout << "base functions of polynomial order " << polOrder << std::endl;
+    std::cout << "on a grid of dimension             " << GridType::dimension << std::endl;
     std::cout << "=============================================================" << std::endl;
 
     const int startLevel = 0;

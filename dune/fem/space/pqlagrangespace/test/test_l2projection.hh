@@ -18,13 +18,14 @@
 // include Lagrange discrete function space
 #include <dune/fem/space/common/adaptmanager.hh>
 #include <dune/fem/space/pqlagrangespace/pqlagrangespace.hh>
-// #include <dune/fem/space/pqlagrangespace/genericlagrangespace.hh>
+#include <dune/fem/space/pqlagrangespace/genericlagrangespace.hh>
 #include <dune/fem/function/adaptivefunction.hh>
 #include <dune/fem/solver/inverseoperators.hh>
 #include <dune/fem/misc/l2error.hh>
 #include "massoperator.hh"
 
-namespace Dune {
+namespace Dune
+{
 
 template<class GridType, int polOrder, bool isCube=false>
 class L2Projection_Test
@@ -52,14 +53,13 @@ public:
   */
   typedef class PQ22DLagrangeSpace< FunctionSpaceType, GridPartType > DiscreteFunctionSpaceType;
 #else
-  typedef LagrangeSpace < FunctionSpaceType,
-                          GridPartType,
-                          polOrder > DiscreteFunctionSpaceType;
+  typedef LagrangeSpace< FunctionSpaceType, GridPartType, polOrder > DiscreteFunctionSpaceType;
 #endif
   typedef AdaptiveDiscreteFunction< DiscreteFunctionSpaceType >      DiscreteFunctionType;
 private:
   template< class FunctionSpace >
-  struct Function
+  struct MyFunction
+  : public Fem::Function< FunctionSpace, MyFunction< FunctionSpace > >
   {
     typedef typename FunctionSpace :: DomainType                     DomainType;
     typedef typename FunctionSpace :: RangeType                      RangeType;
@@ -114,15 +114,14 @@ public:
       GridType& grid = *gridPtr;
       grid.globalRefine( level_ );
 
-      std::cout << "\n\n";
-      std::cout << "=============================================================\n";
-      std::cout << "Starting L2 projection test with EOC measurements for \n";
-      std::cout << "base functions of polynomial order " << polOrder << "\n";
-      std::cout << "on a grid of type                  " << grid.name() << "\n";
-      std::cout << "of dimension                       " << GridType :: dimension << "\n";
+      std::cout << std::endl << std::endl;
+      std::cout << "=============================================================" << std::endl;
+      std::cout << "Starting L2 projection test with EOC measurements for" << std::endl;
+      std::cout << "base functions of polynomial order " << polOrder << std::endl;
+      std::cout << "on a grid of dimension             " << GridType::dimension << std::endl;
       std::cout << "=============================================================" << std::endl;
 
-      Function< FunctionSpaceType > function;
+      MyFunction< FunctionSpaceType > function;
       GridPartType gridPart( grid );
 
       double error = algorithm( function, grid, 0 );

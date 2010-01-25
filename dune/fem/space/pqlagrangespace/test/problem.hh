@@ -1,58 +1,57 @@
-#ifndef DUNE_FEM_P12DSPACE_PROBLEM_HH
-#define DUNE_FEM_P12DSPACE_PROBLEM_HH
+#ifndef DUNE_FEM_PQLAGRANGESPACE_PROBLEM_HH
+#define DUNE_FEM_PQLAGRANGESPACE_PROBLEM_HH
 
 namespace Dune
 {
 
   template< class EntityType >
-  struct BoundaryCheck {
-    BoundaryCheck(const EntityType & en) : en_(en)
-    { }
+  struct BoundaryCheck
+  {
+    typedef typename EntityType::Geometry::LocalCoordinate DomainType;
+    typedef FieldVector< typename EntityType::Geometry::ctype, 1 > RangeType;
+
+    BoundaryCheck( const EntityType &entity )
+    : entity_( entity )
+    {}
+
     //! check wether x is on boundary element
-    template<class DomainType, class RangeType>
-    void evaluate(const DomainType & x, RangeType & out) const
+    void evaluate ( const DomainType &x, RangeType &out ) const
     {
-      DomainType xGlobal = en_.geometry().global(x);
+      DomainType xGlobal = entity_.geometry().global( x );
 
-      const double eps = 1E-8;
+      const double eps = 1e-8;
 
-      if( xGlobal[0] < eps || xGlobal[1] < eps || xGlobal[0] > 1-eps || xGlobal[1] > 1-eps ) {
-        out[0] = 1;
-      } else {
-        out[0] = 0;
-      }
+      if( (xGlobal[ 0 ] < eps) || (xGlobal[ 1 ] < eps) || (xGlobal[ 0 ] > 1-eps) || (xGlobal[ 1 ] > 1-eps) )
+        out[ 0 ] = 1;
+      else
+        out[ 0 ] = 0;
     }
+
   private:
-    const EntityType & en_;
+    const EntityType &entity_;
   };
+
+
 
   // right hand side of governing problem 
   template< class FunctionSpaceImp >
   class RHSFunction
-  : public Function< FunctionSpaceImp, RHSFunction< FunctionSpaceImp > >
+  : public Fem::Function< FunctionSpaceImp, RHSFunction< FunctionSpaceImp > >
   {
+    typedef RHSFunction< FunctionSpaceImp > ThisType;
+    typedef Fem::Function< FunctionSpaceImp, ThisType > BaseType;
+
   public:
     typedef FunctionSpaceImp                                         FunctionSpaceType;
 
-  private:
-    typedef RHSFunction< FunctionSpaceType >                         ThisType;
-    typedef Function< FunctionSpaceType, ThisType >                  BaseType;
-
-  public:
     typedef typename FunctionSpaceType :: DomainType                 DomainType;
     typedef typename FunctionSpaceType :: RangeType                  RangeType;
 
     typedef typename FunctionSpaceType :: DomainFieldType            DomainFieldType;
     typedef typename FunctionSpaceType :: RangeFieldType             RangeFieldType;
 
-  public:
-    inline RHSFunction ( const FunctionSpaceType &functionSpace )
-    : BaseType( functionSpace )
-    {
-    }
-     
     // f( x, y, z ) = 2 \sum_{i=1}^{dimworld} \prod_{j \neq i} (x_j-x_j^2)
-    inline void evaluate( const DomainType &x , RangeType &phi ) const
+    void evaluate( const DomainType &x , RangeType &phi ) const
     {
       enum { dimension = DomainType :: dimension };
       
@@ -75,16 +74,14 @@ namespace Dune
   //! the exact solution to the problem for EOC calculation 
   template< class FunctionSpaceImp >
   class ExactSolution
-  : public Function < FunctionSpaceImp, ExactSolution< FunctionSpaceImp > >
+  : public Fem::Function < FunctionSpaceImp, ExactSolution< FunctionSpaceImp > >
   {
+    typedef ExactSolution< FunctionSpaceImp > ThisType;
+    typedef Fem::Function< FunctionSpaceImp, ThisType > BaseType;
+
   public:
     typedef FunctionSpaceImp                                         FunctionSpaceType;
 
-  private:
-    typedef ExactSolution< FunctionSpaceType >                       ThisType;
-    typedef Function< FunctionSpaceType, ThisType >                  BaseType;
-
-  public:
     typedef typename FunctionSpaceType :: DomainType                 DomainType;
     typedef typename FunctionSpaceType :: RangeType                  RangeType;
     typedef typename FunctionSpaceType :: JacobianRangeType          JacobianRangeType;
@@ -94,14 +91,8 @@ namespace Dune
     typedef typename FunctionSpaceType :: DomainFieldType            DomainFieldType;
     typedef typename FunctionSpaceType :: RangeFieldType             RangeFieldType;
 
-  public:
-    inline ExactSolution ( const FunctionSpaceType &functionSpace )
-    : BaseType( functionSpace )
-    {
-    }
-   
     // u( x, y, z ) = \prod_{i=1}^{dimworld} (x_i - x_i^2).
-    inline void evaluate ( const DomainType &x , RangeType &phi ) const
+    void evaluate ( const DomainType &x , RangeType &phi ) const
     {
       phi = 1;
       for( int i = 0; i < dimDomain; ++i )
@@ -111,7 +102,7 @@ namespace Dune
       }
     }
 
-    inline void jacobian ( const DomainType &x, JacobianRangeType &ret ) const
+    void jacobian ( const DomainType &x, JacobianRangeType &ret ) const
     {
       for( unsigned int i = 0; i < dimDomain; ++i )
       {
@@ -127,7 +118,7 @@ namespace Dune
       }
     }
    
-    inline void evaluate ( const DomainType &x , RangeFieldType time, RangeType &phi ) const
+    void evaluate ( const DomainType &x , RangeFieldType time, RangeType &phi ) const
     {
       evaluate( x, phi );
     }
@@ -138,39 +129,31 @@ namespace Dune
   // diffusion coefficient for this problem
   template< class FunctionSpaceImp >
   class Tensor
-  : public Function< FunctionSpaceImp, Tensor< FunctionSpaceImp > >
+  : public Fem::Function< FunctionSpaceImp, Tensor< FunctionSpaceImp > >
   {
+    typedef Tensor< FunctionSpaceImp > ThisType;
+    typedef Fem::Function< FunctionSpaceImp, ThisType > BaseType;
+
   public:
     typedef FunctionSpaceImp                                         FunctionSpaceType;
 
-  private:
-    typedef Tensor< FunctionSpaceType >                              ThisType;
-    typedef Function< FunctionSpaceType, ThisType >                  BaseType;
-
-  public:
     typedef typename FunctionSpaceType :: DomainType                 DomainType;
     typedef typename FunctionSpaceType :: RangeType                  RangeType;
 
     typedef typename FunctionSpaceType :: DomainFieldType            DomainFieldType;
     typedef typename FunctionSpaceType :: RangeFieldType             RangeFieldType;
 
-  public:
-    inline Tensor ( const FunctionSpaceType &functionSpace )
-    : BaseType( functionSpace )
-    {
-    }
-    
-    inline void evaluate ( int i, int j, const DomainType &x, RangeType &phi ) const
+    void evaluate ( int i, int j, const DomainType &x, RangeType &phi ) const
     {
       evaluate( x, phi );
     }
     
-    inline void evaluate ( const DomainType &x, RangeType &phi ) const
+    void evaluate ( const DomainType &x, RangeType &phi ) const
     {
       phi = 1;
     }
 
-    inline void evaluate ( const DomainType &x, RangeFieldType time, RangeType &phi ) const
+    void evaluate ( const DomainType &x, RangeFieldType time, RangeType &phi ) const
     {
       evaluate( x, phi );
     }
@@ -178,4 +161,4 @@ namespace Dune
 
 }
 
-#endif // DUNE_FEM_P12DSPACE_PROBLEM_HH
+#endif // #ifndef DUNE_FEM_PQLAGRANGESPACE_PROBLEM_HH

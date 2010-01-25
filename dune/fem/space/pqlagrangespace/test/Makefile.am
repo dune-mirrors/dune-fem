@@ -26,8 +26,8 @@ check_PROGRAMS          = test_pqlagrangespace test-pk2d
 test_pqlagrangespace_SOURCES  = main.cc ../../../misc/test.cc ../../../misc/suite.cc
 test_pqlagrangespace_CPPFLAGS = $(ALL_PKG_CPPFLAGS)
 test_pk2d_SOURCES = test-pk2d.cc
-test_pk2d_CPPFLAGS = $(ALL_PKG_CPPFLAGS) -DPOLORDER=$(POLORDER) $(MPI_CPPFLAGS)
- 
+test_pk2d_CPPFLAGS = $(ALL_PKG_CPPFLAGS) -DPOLORDER=$(POLORDER) $(DUNEMPICPPFLAGS)
+test_pk2d_LDADD = $(ALL_PKG_LIBS) $(DUNEMPILIBS)
 
 endif
 
