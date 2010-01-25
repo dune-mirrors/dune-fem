@@ -176,15 +176,14 @@ public:
   }
 public:
   //! constructor 
-  Model(std::string paramFile) 
-    : funcSpace_() // fake id = 1
-    , gradFuncSpace_() // fake id = 1
-    , problem_( createData ( paramFile ) )
-    , solution_( funcSpace_, problem() )
-    , gradient_( gradFuncSpace_, problem() )
-    , rhsData_ ( funcSpace_ , problem() )
-  {
-  }
+  Model( const std::string &paramFile )
+  : funcSpace_(), // fake id = 1
+    gradFuncSpace_(), // fake id = 1
+    problem_( createData ( paramFile ) ),
+    solution_( problem() ),
+    gradient_( problem() ),
+    rhsData_ ( problem() )
+  {}
   
   ~Model() 
   {
@@ -255,16 +254,17 @@ public:
   }
   
   //! interface methods for the initial data
-  class RHSData : public Function < FuncSpaceType , RHSData > 
+  class RHSData
+  : public Fem::Function< FuncSpaceType, RHSData >
   {
     enum { dimDomain = FuncSpaceType :: dimDomain };
     typedef DataFunctionIF<dimDomain,DomainFieldType,RangeFieldType> DataFunctionType;
 
     const DataFunctionType& func_;
+
   public:  
-    RHSData ( FuncSpaceType &f, const DataFunctionType & data)
-      : Function < FuncSpaceType , RHSData > ( f ) 
-      , func_(data)
+    explicit RHSData ( const DataFunctionType &data )
+    : func_(data)
     {}  
 
     void evaluate (const DomainType & x , RangeType & ret) const 
@@ -280,13 +280,15 @@ public:
       evaluate (x,ret); return;
     } 
   };
+
   typedef RHSData RHSDataType;
   const RHSData & rhsData () const {
     return rhsData_;
   } 
 
   //! the exact solution to the problem for EOC calculation 
-  class ExactSolution : public Function < FuncSpaceType , ExactSolution >
+  class ExactSolution
+  : public Fem::Function< FuncSpaceType, ExactSolution >
   {
     typedef typename FuncSpaceType::RangeType RangeType;
     typedef typename FuncSpaceType::RangeFieldType RangeFieldType;
@@ -297,9 +299,8 @@ public:
 
     const DataFunctionType& data_;
   public:
-    ExactSolution (FuncSpaceType &f, const DataFunctionType& d) 
-    : Function < FuncSpaceType , ExactSolution > ( f ) 
-    , data_(d)   
+    explicit ExactSolution ( const DataFunctionType &d )
+    : data_( d )   
     {}
 
     //! see problem.cc 
@@ -318,8 +319,8 @@ public:
 
   //! the exact solution to the problem for EOC calculation 
   template <class FuncSPCType>
-  class ExactGradient : public Function < FuncSPCType , ExactGradient<
-                        FuncSPCType > >
+  class ExactGradient
+  : public Fem::Function< FuncSPCType, ExactGradient< FuncSPCType > >
   {
     typedef typename FuncSPCType::RangeType RangeType;
     typedef typename FuncSPCType::RangeFieldType RangeFieldType;
@@ -329,11 +330,9 @@ public:
 
     const DataFunctionType& data_;
   public:
-    ExactGradient (const FuncSPCType &f,
-        const DataFunctionType& d)
-      : Function < FuncSPCType , ExactGradient< FuncSPCType > > ( f ) 
-      , data_(d)
-      {}
+    explicit ExactGradient ( const DataFunctionType &d )
+    : data_( d )
+    {}
 
     void evaluate (const DomainType & x , RangeType & ret) const
     {
@@ -358,4 +357,5 @@ private:
 };
 
 } // end namespace LDGExample 
+
 #endif
