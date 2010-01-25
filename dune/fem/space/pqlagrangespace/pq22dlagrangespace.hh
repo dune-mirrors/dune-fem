@@ -16,7 +16,7 @@
 #include <dune/fem/space/lagrangespace/lagrangedatahandle.hh>
 
 //- Dune-Localfunctions include
-#include  <dune/localfunctions/pq22d.hh>
+#include  <dune/localfunctions/lagrange/pq22d.hh>
 
 namespace Dune
 {
