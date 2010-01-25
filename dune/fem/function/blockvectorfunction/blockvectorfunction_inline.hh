@@ -21,11 +21,11 @@ namespace Dune
 
   template< class DiscreteFunctionSpaceImp >
   inline BlockVectorDiscreteFunction< DiscreteFunctionSpaceImp >
-    :: BlockVectorDiscreteFunction ( const std :: string &name,
-                                     const DiscreteFunctionSpaceType &f )
-  : BaseType( name, f, lfFactory_ ),
+    :: BlockVectorDiscreteFunction ( const std::string &name,
+                                     const DiscreteFunctionSpaceType &dfSpace )
+  : BaseType( name, dfSpace, lfFactory_ ),
     lfFactory_( *this ),
-    mapper_( f.blockMapper() ),
+    mapper_( dfSpace.blockMapper() ),
     memObject_( 0 ), 
     dofVec_( allocateDofStorage() ),
     leakPtr_(dofVec_),
@@ -51,9 +51,9 @@ namespace Dune
   template< class DiscreteFunctionSpaceImp >
   inline BlockVectorDiscreteFunction< DiscreteFunctionSpaceImp >
     :: BlockVectorDiscreteFunction ( const ThisType &other ) 
-  : BaseType( other.name(), other.functionSpace_, lfFactory_ ),
+  : BaseType( other.name(), other.space(), lfFactory_ ),
     lfFactory_( *this ),
-    mapper_( other.functionSpace_.blockMapper() ),
+    mapper_( other.space().blockMapper() ),
     memObject_( 0 ),
     dofVec_( allocateDofStorage() ),
     leakPtr_( dofVec_ ),
@@ -79,7 +79,7 @@ BlockVectorDiscreteFunction< DiscreteFunctionSpaceType > :: allocateDofStorage()
     DUNE_THROW(InvalidStateException,"DofStorage already allocated!");
   
   std::pair< DofStorageInterface*, DofStorageType* > memPair
-    = allocateManagedDofStorage( this->functionSpace_.grid(),
+    = allocateManagedDofStorage( this->space().grid(),
                                  mapper_ ,
                                  this->name(),
                                  (DofStorageType *) 0 );
