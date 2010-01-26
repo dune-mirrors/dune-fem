@@ -332,7 +332,7 @@ namespace Dune
     /** \brief check for NaNs
      *  \returns if one of the DoFs is NaN \b false is returned, otherwise \b true
      */
-    inline bool dofsValid () const
+    bool dofsValid () const
     {
       return asImp().dofsValid();
     }
@@ -341,7 +341,7 @@ namespace Dune
      * 
      *  \param[in]  g  discrete function which is copied
      */
-    inline void assign( const DiscreteFunctionType &g )
+    void assign( const DiscreteFunctionInterfaceType &g )
     {
       asImp().assign( g );
     }
@@ -368,7 +368,7 @@ namespace Dune
      *
      *  \returns a reference to this discrete function (i.e. *this)
      */
-    inline DiscreteFunctionType &operator+= ( const DiscreteFunctionType &g )
+    DiscreteFunctionType &operator+= ( const DiscreteFunctionInterfaceType &g )
     {
       return asImp() += g;
     }
@@ -640,7 +640,7 @@ namespace Dune
       this->space().communicate( asImp() );
     }
  
-    /** \copydoc Dune::Function::evaluate(const DomainType &x,RangeType &ret) const
+    /** \copydoc Dune::Fem::Function::evaluate(const DomainType &x,RangeType &ret) const
      *
      *  The default implementation just does
      *  \code
@@ -651,7 +651,7 @@ namespace Dune
     inline void evaluate ( const DomainType &x,
                            RangeType &ret ) const;
 
-    /** \copydoc Dune::Function::evaluate(const FieldVector<deriType,diffOrder> &diffVariable,const DomainType &x,RangeType &ret) const */
+    /** \copydoc Dune::Fem::Function::evaluate(const FieldVector<deriType,diffOrder> &diffVariable,const DomainType &x,RangeType &ret) const */
     template< int diffOrder >
     inline void evaluate ( const FieldVector< deriType, diffOrder > &diffVariable,
                            const DomainType &x,

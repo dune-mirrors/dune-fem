@@ -1,24 +1,21 @@
 #ifndef DUNE_DISCRETEFUNCTIONADAPTER_HH
 #define DUNE_DISCRETEFUNCTIONADAPTER_HH
 
-//- system includes 
-#include <string>
-
 //- local includes 
 #include <dune/fem/function/common/discretefunction.hh>
 
-namespace Dune{
+namespace Dune
+{
 
-  /** 
-      @addtogroup DiscreteFunctionAdapter
+  /** @addtogroup DiscreteFunctionAdapter
 
-      To plug an \ref Function "analytical function" 
+      To plug an \ref Fem::Function "analytical function" 
       into a operator taking 
       \ref DiscreteFunctionInterface "discrete functions",
       i.e., expecting \ref LocalFunction "local functions"
       a wrapper can be applied to the analytical function
       instance.
-      The resulting class is still a \ref Function "Function"
+      The resulting class is still a \ref Fem::Function "Function"
       but with the property \ref HasLocalFunction "\" has local function \"" added.
       
       @{
