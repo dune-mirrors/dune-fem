@@ -20,9 +20,9 @@ namespace Dune
       ThisType;
 
   public:
-    typedef typename RangeFunctionImp :: FunctionSpaceType DiscreteFunctionSpaceType;
+    typedef typename RangeFunctionImp::DiscreteFunctionSpaceType DiscreteFunctionSpaceType;
    
-    typedef typename DiscreteFunctionSpaceType :: GridPartType GridPartType;
+    typedef typename DiscreteFunctionSpaceType::GridPartType GridPartType;
     
     typedef CachingQuadrature< GridPartType, 0 > QuadratureType;
   };
