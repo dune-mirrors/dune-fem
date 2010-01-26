@@ -512,85 +512,35 @@ namespace Dune
             JacobianRangeType;
     //! type of codim 0 entity
     typedef typename GridType :: template Codim<0> :: Entity EntityType; 
-    private:
-    class LocalFunction
-    {
-    public:  
-      //! domain type (from function space)
-      typedef typename DiscreteFunctionSpaceType::DomainFieldType DomainFieldType ;
-      //! range type (from function space)
-      typedef typename DiscreteFunctionSpaceType::RangeFieldType RangeFieldType ;
-      //! domain type (from function space)
-      typedef typename DiscreteFunctionSpaceType::DomainType DomainType ;
-      //! range type (from function space)
-      typedef typename DiscreteFunctionSpaceType::RangeType RangeType ;
-      //! jacobian type (from function space)
-      typedef typename DiscreteFunctionSpaceType::JacobianRangeType JacobianRangeType;
 
-      //! constructor initializing local function 
-      LocalFunction(const EntityType& en, const ThisType& a)
-        : eval_(a.eval_) {
-	eval_.init(en);
-      }
+  private:
+    struct LocalFunction;
 
-      LocalFunction(const ThisType& a)
-        : eval_(a.eval_) 
-      {}
-
-      //! copy constructor 
-      LocalFunction(const LocalFunction& org) 
-        : eval_(org.eval_) 
-      {}
-
-      //! evaluate local function 
-      template< class PointType >
-      void evaluate ( const PointType &x, RangeType &ret ) const {
-        eval_.evaluate(x,ret);
-      }
-
-      //! jacobian of local function 
-      template< class PointType >
-      void jacobian ( const PointType &x, JacobianRangeType &ret ) const {
-        eval_.jacobian( x, ret );
-      }
-
-      //! init local function
-      void init(const EntityType& en) {
-        eval_.init(en);
-      } 
-    private:
-      EvalType& eval_;
-    };
-    public:
+  public:
     //! type of local function to export 
     typedef LocalFunction LocalFunctionType; 
 
     //! constructer taking instance of EvalImp class 
-    inline LocalFunctionAdapter
-      ( const std :: string &name,
-        EvalType &eval,
-        const GridPartType &gridPart,
-        unsigned int order = DiscreteFunctionSpaceType :: polynomialOrder )
-    : BaseType(space_),
-      space_( gridPart, order ),
+    LocalFunctionAdapter ( const std::string &name,
+                           EvalType &eval,
+                           const GridPartType &gridPart,
+                           unsigned int order = DiscreteFunctionSpaceType::polynomialOrder )
+    : space_( gridPart, order ),
       eval_( eval ),
       name_( name )
-    {
-    }
+    {}
 
     // reference to function this local belongs to
-    LocalFunctionAdapter( const ThisType &other ) 
-    : BaseType( other ),
-      space_( other.space_ ),
+    LocalFunctionAdapter( const ThisType &other )
+    : space_( other.space_ ),
       eval_( other.eval_ ),
       name_( other.name_ )
-    {
-    }
+    {}
 
     //! evaluate function on local coordinate local 
     void evaluate(const DomainType& global, RangeType& result) const 
     {
-      // DUNE_NOT_IMPLEMENTED;
+      DUNE_THROW( NotImplemented, "LocalFunctionAdapter::evaluate is not implemented." );
     }
 
     /** \copydoc Dune::DiscreteFunctionInterface::localFunction(const EntityType &entity) const */ 
@@ -606,9 +556,14 @@ namespace Dune
     }
 
     /** \copydoc Dune::DiscreteFunctionInterface::name */
-    inline const std :: string &name() const
+    const std::string &name() const
     {
       return name_;
+    }
+
+    const DiscreteFunctionSpaceType &space () const
+    {
+      return space_;
     }
 
   private:    
@@ -617,8 +572,62 @@ namespace Dune
     const std::string name_;
   };
 
+
+  template< class EvalImp >
+  struct LocalFunctionAdapter< EvalImp >::LocalFunction
+  {
+    //! domain type (from function space)
+    typedef typename DiscreteFunctionSpaceType::DomainFieldType DomainFieldType ;
+    //! range type (from function space)
+    typedef typename DiscreteFunctionSpaceType::RangeFieldType RangeFieldType ;
+    //! domain type (from function space)
+    typedef typename DiscreteFunctionSpaceType::DomainType DomainType ;
+    //! range type (from function space)
+    typedef typename DiscreteFunctionSpaceType::RangeType RangeType ;
+    //! jacobian type (from function space)
+    typedef typename DiscreteFunctionSpaceType::JacobianRangeType JacobianRangeType;
+
+    //! constructor initializing local function 
+    LocalFunction(const EntityType& en, const ThisType& a)
+    : eval_(a.eval_)
+    {
+      eval_.init(en);
+    }
+
+    LocalFunction(const ThisType& a)
+    : eval_(a.eval_) 
+    {}
+
+    //! copy constructor 
+    LocalFunction(const LocalFunction& org) 
+    : eval_(org.eval_) 
+    {}
+
+    //! evaluate local function 
+    template< class PointType >
+    void evaluate ( const PointType &x, RangeType &ret ) const
+    {
+      eval_.evaluate(x,ret);
+    }
+
+    //! jacobian of local function 
+    template< class PointType >
+    void jacobian ( const PointType &x, JacobianRangeType &ret ) const
+    {
+      eval_.jacobian( x, ret );
+    }
+
+    //! init local function
+    void init(const EntityType& en)
+    {
+      eval_.init(en);
+    } 
+  private:
+    EvalType& eval_;
+  };
+
 } // end namespace Dune
 
 //@}
 
-#endif
+#endif // #ifndef DUNE_DISCRETEFUNCTIONADAPTER_HH
