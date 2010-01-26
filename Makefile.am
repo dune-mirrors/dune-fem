@@ -1,7 +1,7 @@
 # $Id$
 
 # we need the module file to be able to build via dunecontrol
-EXTRA_DIST=dune.module modules
+EXTRA_DIST = dune.module ChangeLog modules
 
 # don't follow the full GNU-standard; we definitely need automake >= 1.5
 #AUTOMAKE_OPTIONS = foreign 1.5
