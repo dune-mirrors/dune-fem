@@ -128,16 +128,16 @@ typedef DofManagerFactory<DofManagerType> DofManagerFactoryType;
 
 
 // the exact solution to the problem for EOC calculation 
-class ExactSolution : public Function < FuncSpace , ExactSolution > 
+struct ExactSolution
+: public Fem::Function< FuncSpace, ExactSolution >
 {
   typedef FuncSpace::RangeType RangeType;
   typedef FuncSpace::RangeFieldType RangeFieldType;
   typedef FuncSpace::DomainType DomainType;
-  double time_;
-public:
-  ExactSolution (const FuncSpace &f,double time=0) : 
-    Function < FuncSpace , ExactSolution > ( f ),
-    time_(time) {}
+  
+  ExactSolution ( double time = 0 )
+  : time_( time )
+  {}
  
   //! f(x,y) = x*(1-x)*y*(1-y)
   void evaluate (const DomainType & x , RangeType & ret)  const
@@ -154,13 +154,16 @@ public:
   {
     evaluate ( x , ret );
   }
+
+private:
+  double time_;
 };
  
 // ********************************************************************
 double algorithm (GridType& grid, DiscreteFunctionType& solution,double time=0)
 {
    // create exact solution for error evaluation 
-   ExactSolution f ( solution.space(),time ); 
+   ExactSolution f( time ); 
 
    // L2 error class 
    L2Error < DiscreteFunctionType > l2err;
@@ -236,7 +239,7 @@ struct AddLsgErr {
     lUh_.evaluate(x,u);
     ConsRangeType u0;
     DomainType global = geometry_->global( coordinate( x ) );
-    ExactSolution f ( space_,time_ ); 
+    ExactSolution f( time_ ); 
     f.evaluate(global,u0);
     const int d = ConsRangeType::dimension;
     for (int i=0;i<d;i++) {
