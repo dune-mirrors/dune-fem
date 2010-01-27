@@ -77,15 +77,14 @@ struct TestProdDF {
   typedef ProductDiscreteFunction < DiscreteFunction1SpaceType, DiscreteFunction2SpaceType > DiscreteFunctionType;
   typedef typename DiscreteFunctionType::DiscreteFunction1Type  DiscreteFunction1Type;
   //! the exact solution to the problem for EOC calculation 
-  class ExactSolution : public Function < FuncSpace , ExactSolution > 
+  struct ExactSolution
+  : public Fem::Function< FuncSpace, ExactSolution >
   {   
     typedef typename FuncSpace::RangeType RangeType; 
     typedef typename FuncSpace::RangeFieldType RangeFieldType;
     typedef typename FuncSpace::DomainType DomainType;     
     typedef typename FuncSpace2::DomainType Domain2Type;
-  public: 
-    ExactSolution (FuncSpace &f) : Function < FuncSpace , ExactSolution > ( f ) {} 
-  
+
     //! f(x,y) = 4x*(1-x)*y*(1-y)  
     void evaluate (const DomainType & x , RangeType & ret)  const 
     {
@@ -114,17 +113,16 @@ struct TestProdDF {
 	}   
       //std::cerr << x << " " << y << " " << ret << std::endl;
     }
-  
   };   
     
 
   
   // ********************************************************************
-  template <class DiscreteFunctionType>
+  template< class DiscreteFunctionType >
   class L2Projection
   {
-    typedef typename DiscreteFunction1Type::FunctionSpaceType DiscreteFunction1SpaceType;
-    typedef typename DiscreteFunctionType::DiscreteFunction1Type  DiscreteFunction1Type;
+    typedef typename DiscreteFunctionType::DiscreteFunction1Type DiscreteFunction1Type;
+    typedef typename DiscreteFunction1Type::DiscreteFunctionSpaceType DiscreteFunction1SpaceType;
 
   public:
     template <class FunctionType>
@@ -231,7 +229,7 @@ struct TestProdDF {
   class L2Error
   {
     typedef typename DiscreteFunctionType::DiscreteFunction1Type DiscreteFunction1Type;
-    typedef typename DiscreteFunction1Type::FunctionSpaceType DiscreteFunction1SpaceType;
+    typedef typename DiscreteFunction1Type::DiscreteFunctionSpaceType DiscreteFunction1SpaceType;
     typedef typename DiscreteFunction1SpaceType :: RangeType RangeType;
 
   public:
@@ -354,7 +352,7 @@ struct TestProdDF {
     DiscreteFunction2SpaceType linFuncSpace2 ( part2 );
    
    
-    ExactSolution f ( linFuncSpace ); 
+    ExactSolution f; 
     L2Error < DiscreteFunctionType > l2err;
   
     // calculation L2 error 
@@ -363,8 +361,7 @@ struct TestProdDF {
     typedef DiscreteFunction1SpaceType :: RangeType RangeType; 
    
     //! perform l2-projection
-    L2Projection<DiscreteFunctionType>::
-      project(f,solution ); 
+    L2Projection< DiscreteFunctionType >::project( f ,solution );
  
     RangeType error = l2err.norm(f ,solution, 0.0);
 
