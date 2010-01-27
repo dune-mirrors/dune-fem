@@ -295,8 +295,7 @@ namespace Dune
      *  \param[in]  g  discrete function to add
      *  \param[in]  s  scalar value to scale g with
      */
-    inline void addScaled( const DiscreteFunctionType &g,
-                           const RangeFieldType &s )
+    void addScaled( const DiscreteFunctionInterfaceType &g, const RangeFieldType &s )
     {
       asImp().addScaled( g, s );
     }
@@ -486,21 +485,19 @@ namespace Dune
   class DiscreteFunctionDefault
   : public DiscreteFunctionInterface< DiscreteFunctionTraits > 
   { 
+    typedef DiscreteFunctionDefault< DiscreteFunctionTraits > ThisType;
+    typedef DiscreteFunctionInterface< DiscreteFunctionTraits > BaseType;
+
   public:
     typedef DiscreteFunctionTraits Traits;
-
-  private:
-    typedef DiscreteFunctionDefault< Traits > ThisType;
-    typedef DiscreteFunctionInterface< Traits > BaseType;
 
     //! type of the discrete function (Barton-Nackman parameter)
     typedef typename DiscreteFunctionTraits :: DiscreteFunctionType
       DiscreteFunctionType;
 
-  private:
-    typedef DiscreteFunctionInterface< DiscreteFunctionTraits >
-      DiscreteFunctionInterfaceType;
+    typedef typename BaseType::DiscreteFunctionInterfaceType DiscreteFunctionInterfaceType;
 
+  private:
     typedef DiscreteFunctionDefault< DiscreteFunctionTraits >
       DiscreteFunctionDefaultType;
 
@@ -613,8 +610,8 @@ namespace Dune
      */
     inline void freeDofPointer( RangeFieldType *dofPointer );
 
-    /** \copydoc Dune::DiscreteFunctionInterface::addScaled */
-    void addScaled ( const DiscreteFunctionType &g, const RangeFieldType &s );
+    /** \copydoc Dune::DiscreteFunctionInterface::addScaled(const DiscreteFunctionInterfaceType &g,const RangeFieldType &s) */
+    void addScaled ( const DiscreteFunctionInterfaceType &g, const RangeFieldType &s );
     
     /** \copydoc Dune::DiscreteFunctionInterface::scalarProductDofs */
     inline RangeFieldType
@@ -626,8 +623,8 @@ namespace Dune
     /** \copydoc Dune::DiscreteFunctionInterface::dofsValid */
     inline bool dofsValid () const;
  
-    /** \copydoc Dune::DiscreteFunctionInterface::assign(const DiscreteFunctionType &g) */
-    inline void assign ( const DiscreteFunctionType &g );
+    /** \copydoc Dune::DiscreteFunctionInterface::assign(const DiscreteFunctionInterfaceType &g) */
+    void assign ( const DiscreteFunctionInterfaceType &g );
     
     /** \copydoc Dune::DiscreteFunctionInterface::dataHandle */
     template< class Operation >
@@ -635,7 +632,7 @@ namespace Dune
     dataHandle ( const Operation *operation );
 
     /** \copydoc Dune::DiscreteFunctionInterface::communicate() */
-    inline void communicate()
+    void communicate()
     {
       this->space().communicate( asImp() );
     }
@@ -657,8 +654,8 @@ namespace Dune
                            const DomainType &x,
                            RangeType &ret ) const;
 
-    /** \copydoc Dune::DiscreteFunctionInterface::operator+=(const DiscreteFunctionType &g) */
-    inline DiscreteFunctionType &operator+= ( const DiscreteFunctionType &g );
+    /** \copydoc Dune::DiscreteFunctionInterface::operator+=(const DiscreteFunctionInterfaceType &g) */
+    DiscreteFunctionType &operator+= ( const DiscreteFunctionInterfaceType &g );
 
     /** \brief substract all degrees of freedom from given discrete function using the dof iterators 
         \param[in] g discrete function which is substracted from this discrete function 

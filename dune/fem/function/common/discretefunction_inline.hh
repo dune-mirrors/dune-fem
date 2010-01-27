@@ -114,13 +114,12 @@ namespace Dune
 
   template< class Traits >
   inline void DiscreteFunctionDefault< Traits >
-    :: addScaled ( const DiscreteFunctionType &g,
-                   const RangeFieldType &s )
+    ::addScaled ( const DiscreteFunctionInterfaceType &g, const RangeFieldType &s )
   {
-    assert( BaseType :: size() == g.size() );
-    const DofIteratorType end = BaseType :: dend();
+    assert( BaseType::size() == g.size() );
+    const DofIteratorType end = BaseType::dend();
     ConstDofIteratorType git = g.dbegin();
-    for( DofIteratorType it = BaseType :: dbegin(); it != end; ++it, ++git )
+    for( DofIteratorType it = BaseType::dbegin(); it != end; ++it, ++git )
       (*it) += s * (*git);
   }
 
@@ -128,7 +127,7 @@ namespace Dune
   template< class Traits >
   inline typename DiscreteFunctionDefault< Traits > :: RangeFieldType
   DiscreteFunctionDefault< Traits >
-    :: scalarProductDofs ( const DiscreteFunctionInterfaceType &other ) const
+    ::scalarProductDofs ( const DiscreteFunctionInterfaceType &other ) const
   {
     return scalarProduct_.scalarProductDofs( *this, other );
   }
@@ -161,13 +160,13 @@ namespace Dune
   
   template< class Traits >
   inline void DiscreteFunctionDefault< Traits >
-    :: assign( const DiscreteFunctionType &g )
+    ::assign ( const DiscreteFunctionInterfaceType &g )
   {
-    assert( BaseType :: size() == g.size() );
+    assert( BaseType::size() == g.size() );
 
-    const DofIteratorType end = BaseType :: dend();
+    const DofIteratorType end = BaseType::dend();
     ConstDofIteratorType git = g.dbegin();
-    for( DofIteratorType it = BaseType :: dbegin(); it != end; ++it, ++git )
+    for( DofIteratorType it = BaseType::dbegin(); it != end; ++it, ++git )
       *it = *git;
   }
 
@@ -231,13 +230,13 @@ namespace Dune
   template< class Traits >
   inline typename DiscreteFunctionDefault< Traits > :: DiscreteFunctionType &
   DiscreteFunctionDefault< Traits >
-    :: operator+= ( const DiscreteFunctionType &g )
+    ::operator+= ( const DiscreteFunctionInterfaceType &g )
   {
-    assert( BaseType :: size() == g.size() );
+    assert( BaseType::size() == g.size() );
 
-    const DofIteratorType end = BaseType :: dend();
+    const DofIteratorType end = BaseType::dend();
     ConstDofIteratorType git = g.dbegin();
-    for( DofIteratorType it = BaseType :: dbegin(); it != end; ++it, ++git )
+    for( DofIteratorType it = BaseType::dbegin(); it != end; ++it, ++git )
       *it += *git;
     return asImp();
   }

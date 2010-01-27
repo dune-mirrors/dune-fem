@@ -237,7 +237,9 @@ namespace Dune {
       return *(memPair.second);
     }
  
+ #if 0
     virtual const LeafType& interface() const = 0;
+#endif
     const DiscreteFunctionSpaceType& spc_;
     DofStorageInterface* memObject_;
 

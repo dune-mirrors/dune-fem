@@ -88,11 +88,16 @@ namespace Dune
   //! specialisation for CombinedSpace objects which provides enriched 
   //! functionality (access to subfunctions) and runtime optimisations
   template <class DiscreteFunctionSpaceImp>
-  class AdaptiveDiscreteFunction : 
-    public DiscreteFunctionDefault<
-    AdaptiveDiscreteFunctionTraits<DiscreteFunctionSpaceImp > >,
-    private AdaptiveFunctionImplementation<DiscreteFunctionSpaceImp > 
+  class AdaptiveDiscreteFunction
+  : public DiscreteFunctionDefault< AdaptiveDiscreteFunctionTraits< DiscreteFunctionSpaceImp > >,
+    private AdaptiveFunctionImplementation< DiscreteFunctionSpaceImp >
   {
+    typedef AdaptiveDiscreteFunction< DiscreteFunctionSpaceImp > ThisType;
+    typedef DiscreteFunctionDefault< AdaptiveDiscreteFunctionTraits< DiscreteFunctionSpaceImp > >
+      BaseType;
+
+    typedef AdaptiveFunctionImplementation< DiscreteFunctionSpaceImp > Imp;
+
   public:
     //! Discrete function space this discrete function belongs to
     typedef DiscreteFunctionSpaceImp DiscreteFunctionSpaceType;
@@ -100,14 +105,9 @@ namespace Dune
     //! Traits class with all necessary type definitions
     typedef AdaptiveDiscreteFunctionTraits< DiscreteFunctionSpaceType > Traits;
 
-  private:
-    typedef AdaptiveDiscreteFunction< DiscreteFunctionSpaceType > MyType;
-    typedef AdaptiveFunctionImplementation< DiscreteFunctionSpaceType > Imp;
-    typedef DiscreteFunctionDefault< Traits > BaseType;
-    typedef AdaptiveDiscreteFunction<DiscreteFunctionSpaceImp> ThisType;
+    typedef typename BaseType::DiscreteFunctionInterfaceType DiscreteFunctionInterfaceType;
 
-  public:
-    using BaseType :: assign;
+    using BaseType::assign;
 
   public:
     //- Typedefs and enums
@@ -199,32 +199,30 @@ namespace Dune
     ThisType &operator= ( const ThisType &other );
     
   public:
-    /** \copydoc Dune::DiscreteFunctionInterface::assign(const DiscreteFunctionType &g) */
-    inline void assign( const DiscreteFunctionType &g )
+    /** \copydoc Dune::DiscreteFunctionInterface::assign(const DiscreteFunctionInterfaceType &g) */
+    void assign ( const DiscreteFunctionInterfaceType &g )
     {
-      Imp :: assignFunction( g );
+      Imp::assignFunction( asImp( g ) );
     }
 
-    /** \copydoc Dune::DiscreteFunctionInterface::operator+=(const DiscreteFunctionType &g) */ 
-    inline ThisType &operator += ( const ThisType &g )
+    /** \copydoc Dune::DiscreteFunctionInterface::operator+=(const DiscreteFunctionInterfaceType &g) */ 
+    ThisType &operator+= ( const DiscreteFunctionInterfaceType &g )
     {
-      Imp :: addFunction( g );
+      Imp::addFunction( asImp( g ) );
       return *this;
     }
 
     /** \copydoc Dune::DiscreteFunctionInterface::operator-=(const DFType &g) */ 
-    inline BaseType &operator-= ( const ThisType &g )
+    ThisType &operator-= ( const DiscreteFunctionInterfaceType &g )
     {
-      Imp::substractFunction(g);
+      Imp::substractFunction( asImp( g ) );
       return *this;
     }
 
-    /** \copydoc Dune::DiscreteFunctionDefault::addScaled
-     */
-    inline void addScaled( const ThisType &g,
-                           const RangeFieldType &s )
+    /** \copydoc Dune::DiscreteFunctionDefault::addScaled(const DiscreteFunctionInterfaceType &g,RangeFieldType &s) */
+    void addScaled( const DiscreteFunctionInterfaceType &g, const RangeFieldType &s )
     {
-      Imp :: addScaled( g, s );
+      Imp::addScaled( asImp( g ), s );
     }
 
   protected:
@@ -257,9 +255,14 @@ namespace Dune
     using Imp::block;
     using Imp::enableDofCompression;
 
+#if 0
     //- Forbidden members
   private:
-    const MyType& interface() const { return *this; }
+    const ThisType &interface () const
+    {
+      return *this;
+    }
+#endif
   }; // end class AdaptiveDiscreteFunction
  
 
@@ -267,29 +270,28 @@ namespace Dune
   //- Specialisations
   //! Specialised version of AdaptiveDiscreteFunction for CombinedSpace
 
-  template <class ContainedFunctionSpaceImp, int N, DofStoragePolicy p>
-  class AdaptiveDiscreteFunction<
-    CombinedSpace<ContainedFunctionSpaceImp, N, p> > : 
-    public DiscreteFunctionDefault<AdaptiveDiscreteFunctionTraits<CombinedSpace<ContainedFunctionSpaceImp, N, p> > >,
-    private AdaptiveFunctionImplementation<CombinedSpace<ContainedFunctionSpaceImp, N, p> >
+  template< class ContainedFunctionSpaceImp, int N, DofStoragePolicy p >
+  class AdaptiveDiscreteFunction< CombinedSpace<ContainedFunctionSpaceImp, N, p > >
+  : public DiscreteFunctionDefault< AdaptiveDiscreteFunctionTraits< CombinedSpace< ContainedFunctionSpaceImp, N, p > > >,
+    private AdaptiveFunctionImplementation< CombinedSpace< ContainedFunctionSpaceImp, N, p > >
   {
-  private:
-    typedef CombinedSpace<
-      ContainedFunctionSpaceImp, N, p> DiscreteFunctionSpaceImp;
-    typedef AdaptiveDiscreteFunction<DiscreteFunctionSpaceImp> MyType;
-    typedef AdaptiveFunctionImplementation<DiscreteFunctionSpaceImp> Imp;
-    typedef AdaptiveDiscreteFunctionTraits<DiscreteFunctionSpaceImp> MyTraits;
-    typedef DiscreteFunctionDefault<MyTraits> BaseType;
-    typedef AdaptiveDiscreteFunction<CombinedSpace<ContainedFunctionSpaceImp,N,p> > ThisType;
+    typedef AdaptiveDiscreteFunction< CombinedSpace< ContainedFunctionSpaceImp, N, p > > ThisType;
+    typedef DiscreteFunctionDefault< AdaptiveDiscreteFunctionTraits< CombinedSpace< ContainedFunctionSpaceImp, N, p > > >
+      BaseType;
 
-    using BaseType :: assign;
+    typedef AdaptiveFunctionImplementation< CombinedSpace< ContainedFunctionSpaceImp, N, p > > Imp;
 
   public:
-    //- Typedefs and enums
-    typedef MyTraits Traits;
-    typedef Imp ImplementationType;
-    typedef DiscreteFunctionSpaceImp DiscreteFunctionSpaceType;
+    typedef CombinedSpace< ContainedFunctionSpaceImp, N, p > DiscreteFunctionSpaceType;
 
+    using BaseType::assign;
+
+    //- Typedefs and enums
+    typedef AdaptiveDiscreteFunctionTraits< DiscreteFunctionSpaceType > Traits;
+
+    typedef typename BaseType::DiscreteFunctionInterfaceType DiscreteFunctionInterfaceType;
+
+    typedef Imp ImplementationType;
 
     typedef typename Traits::LocalFunctionType LocalFunctionType;
     typedef typename Traits::DiscreteFunctionType DiscreteFunctionType;
@@ -381,31 +383,29 @@ namespace Dune
  
   public:
     /** \copydoc Dune::DiscreteFunctionDefault::assign(const DiscreteFunctionType &g) */
-    inline void assign( const DiscreteFunctionType &g )
+    void assign ( const DiscreteFunctionInterfaceType &g )
     {
-      Imp :: assignFunction( g );
+      Imp::assignFunction( asImp( g ) );
     }
 
     /** \copydoc Dune::DiscreteFunctionInterface::operator+=(const DiscreteFunctionType &g) */
-    inline ThisType &operator+= ( const ThisType &g )
+    ThisType &operator+= ( const DiscreteFunctionInterfaceType &g )
     {
-      Imp::addFunction(g);
+      Imp::addFunction( asImp( g ) );
       return *this;
     }
 
     /** \copydoc Dune::DiscreteFunctionInterface::operator-=(const DFType &g) */
-    inline ThisType &operator-= ( const ThisType &g )
+    ThisType &operator-= ( const DiscreteFunctionInterfaceType &g )
     {
-      Imp::substractFunction(g);
+      Imp::substractFunction( asImp( g ) );
       return *this;
     }
 
-    /** \copydoc Dune::DiscreteFunctionDefault::addScaled
-     */
-    inline void addScaled( const ThisType &g,
-                           const RangeFieldType &s )
+    /** \copydoc Dune::DiscreteFunctionDefault::addScaled(const DiscreteFunctionInterfaceType &g,RangeFieldType &s) */
+    void addScaled( const DiscreteFunctionInterfaceType &g, const RangeFieldType &s )
     {
-      Imp :: addScaled( g, s );
+      Imp::addScaled( asImp( g ), s );
     }
 
   protected:
@@ -448,8 +448,14 @@ namespace Dune
 
     int numComponents() const { return N; }
 
+#if 0
   private:
-    const MyType& interface() const { return *this; }
+    const ThisType &interface () const
+    {
+      return *this;
+    }
+#endif
+
     SubMapperType* subDofMapper_[N];
     SubDofVectorType* subDofVector_[N]; 
     SubDiscreteFunctionType* subDiscFunc_[N];
@@ -485,4 +491,4 @@ public:
 
 #include "adaptivefunction.cc"
 
-#endif
+#endif // #ifndef DUNE_ADAPTIVEFUNCTION_HH
