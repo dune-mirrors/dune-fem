@@ -2,6 +2,7 @@
 #define DUNE_NONCONFORMITYLEVEL_HH
 
 #include <cassert>
+#include <cstdlib>
 #include <iostream>
 
 //- Dune includes 
