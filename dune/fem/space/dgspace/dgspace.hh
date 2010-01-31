@@ -188,7 +188,7 @@ namespace Dune
       BlockMapperProviderType::removeObject( blockMapper_ );
     }
   
-    /** @copydoc DiscreteFunctionSpaceInterface::type */
+    /** @copydoc Dune::DiscreteFunctionSpaceInterface::type */
     DFSpaceIdentifier type () const 
     {
       return DGSpace_id;
@@ -216,19 +216,19 @@ namespace Dune
       return BaseFunctionSetType(baseFuncSet_[geomType]);
     }
 
-    /** @copydoc DiscreteFunctionSpaceInterface::contains */
+    /** @copydoc Dune::DiscreteFunctionSpaceInterface::contains */
     bool contains (const int codim) const
     {
       return (codim == codimension);
     }
   
-    /** @copydoc DiscreteFunctionSpaceInterface::continuous */
+    /** @copydoc Dune::DiscreteFunctionSpaceInterface::continuous */
     bool continuous () const
     {
       return false;
     }
   
-    /** @copydoc DiscreteFunctionSpaceInterface::order */
+    /** @copydoc Dune::DiscreteFunctionSpaceInterface::order */
     int order () const
     {
       return polOrd;
