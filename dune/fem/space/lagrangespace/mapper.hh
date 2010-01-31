@@ -739,14 +739,14 @@ namespace Dune
     }
 
     /** \copydoc Dune::DofMapper::mapToGlobal */
-    int mapToGlobal ( const EntityType &entity, const int local ) const
+    int mapToGlobal ( const EntityType &entity, const int localDof ) const
     {
-      const int coordinate = local % dimRange;
-      const int localDof = local / dimRange;
+      const int coordinate = localDof % dimRange;
+      const int scalarDof = localDof / dimRange;
       
       // unsigned int codim, subEntity;
       const LagrangePointSetType *set = lagrangePointSet_[ entity.type() ];
-      const DofInfo& dofInfo = set->dofInfo( localDof );
+      const DofInfo& dofInfo = set->dofInfo( scalarDof );
       
       const int entityDof = dofInfo.dofNumber * dimRange + coordinate;
 
@@ -904,16 +904,14 @@ namespace Dune
       return dimension + 1;
     }
 
-    /** \copydoc Dune::DofMapper::oldOffset
-     */
+    /** \copydoc Dune::DofMapper::oldOffSet(const int block) const */
     int oldOffSet ( const int block ) const
     {
       assert( (block >= 0) && (block < numBlocks()) );
       return dimRange * oldOffSet_[ block ];
     }
 
-    /** \copydoc Dune::DofMapper::newOffset
-     */
+    /** \copydoc Dune::DofMapper::offSet(const int block) const */
     int offSet ( const int block ) const
     {
       assert( (block >= 0) && (block < numBlocks()) );
