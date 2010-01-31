@@ -219,7 +219,7 @@ namespace Dune
       return *this;
     }
 
-    /** \copydoc Dune::DiscreteFunctionDefault::addScaled(const DiscreteFunctionInterfaceType &g,RangeFieldType &s) */
+    /** \copydoc Dune::DiscreteFunctionInterface::addScaled(const DiscreteFunctionInterfaceType &g,const RangeFieldType &s) */
     void addScaled( const DiscreteFunctionInterfaceType &g, const RangeFieldType &s )
     {
       Imp::addScaled( asImp( g ), s );
@@ -382,13 +382,13 @@ namespace Dune
     ThisType &operator= ( const ThisType &other );
  
   public:
-    /** \copydoc Dune::DiscreteFunctionDefault::assign(const DiscreteFunctionType &g) */
+    /** \copydoc Dune::DiscreteFunctionInterface::assign(const DiscreteFunctionInterfaceType &g) */
     void assign ( const DiscreteFunctionInterfaceType &g )
     {
       Imp::assignFunction( asImp( g ) );
     }
 
-    /** \copydoc Dune::DiscreteFunctionInterface::operator+=(const DiscreteFunctionType &g) */
+    /** \copydoc Dune::DiscreteFunctionInterface::operator+=(const DiscreteFunctionInterfaceType &g) */
     ThisType &operator+= ( const DiscreteFunctionInterfaceType &g )
     {
       Imp::addFunction( asImp( g ) );
@@ -402,7 +402,7 @@ namespace Dune
       return *this;
     }
 
-    /** \copydoc Dune::DiscreteFunctionDefault::addScaled(const DiscreteFunctionInterfaceType &g,RangeFieldType &s) */
+    /** \copydoc Dune::DiscreteFunctionInterface::addScaled(const DiscreteFunctionInterfaceType &g,const RangeFieldType &s) */
     void addScaled( const DiscreteFunctionInterfaceType &g, const RangeFieldType &s )
     {
       Imp::addScaled( asImp( g ), s );
