@@ -24,6 +24,8 @@
 #include <dune/fem/operator/1order/localmassmatrix.hh>
 #include <dune/fem/pass/selection.hh>
 
+#include <dune/fem/quadrature/intersectionquadrature.hh>
+
 namespace Dune {
 /*! @addtogroup PassHyp
  * Description: Solver for equations of the form
@@ -276,50 +278,32 @@ namespace Dune {
               // init local function 
               initLocalFunction( nb, updNeigh_ );
 
-              typedef TwistUtility<GridType> TwistUtilityType;
+              //typedef TwistUtility<GridType> TwistUtilityType;
               // for conforming situations apply Quadrature given
               //if( TwistUtilityType::conforming(gridPart_.grid(),intersection) )
-              if( intersection.conforming() )
+              if( ! GridPartType :: conforming && ! intersection.conforming() )
               {
-                FaceQuadratureType faceQuadInner(gridPart_, intersection, faceQuadOrd_,
-                                                 FaceQuadratureType::INSIDE);
-          
-                FaceQuadratureType faceQuadOuter(gridPart_, intersection, faceQuadOrd_,
-                                                 FaceQuadratureType::OUTSIDE);
-                // apply neighbor part, return is volume of neighbor which is
-                // needed below 
-                nbvol = applyLocalNeighbor(intersection,en,nb,
-                          faceQuadInner,faceQuadOuter,
-                          updEn, updNeigh_ , 
-                          wspeedS);
-              }
-              else
-              { 
-                // for non-conforming situations apply the non-conforming 
-                // type of the qaudrature 
-                 
                 // we only should get here whne a non-conforming situation 
                 // occurs in a non-conforming grid 
                 assert( GridPartType :: conforming == false );
 
-                typedef typename FaceQuadratureType :: NonConformingQuadratureType
-                  NonConformingFaceQuadratureType;
-
-                NonConformingFaceQuadratureType 
-                    nonConformingFaceQuadInner(gridPart_, intersection, faceQuadOrd_,
-                                               NonConformingFaceQuadratureType::INSIDE);
-
-                NonConformingFaceQuadratureType 
-                    nonConformingFaceQuadOuter(gridPart_,intersection, faceQuadOrd_,
-                                               NonConformingFaceQuadratureType::OUTSIDE);
+                // apply neighbor part, return is volume of neighbor which is
+                // needed below 
+                nbvol = applyLocalNeighbor< false > 
+                                    (intersection,en,nb,
+                                     updEn, updNeigh_ , 
+                                     wspeedS);
+              }
+              else
+              { 
+                assert( GridPartType :: conforming == true );
 
                 // apply neighbor part, return is volume of neighbor which is
                 // needed below 
-                nbvol = applyLocalNeighbor(*nit,en,nb,
-                          nonConformingFaceQuadInner,
-                          nonConformingFaceQuadOuter,
-                          updEn, updNeigh_ , 
-                          wspeedS);
+                nbvol = applyLocalNeighbor< true > 
+                                    (intersection,en,nb,
+                                     updEn, updNeigh_ , 
+                                     wspeedS);
               }
 
               // add update to real function 
@@ -449,19 +433,28 @@ namespace Dune {
       }
     }
     
-    template <class QuadratureImp, class LocalFunctionImp >  
+    template <bool conforming, class LocalFunctionImp>  
     double applyLocalNeighbor ( const IntersectionType &intersection,
                                 const EntityType &en, 
                                 const EntityType &nb, 
-                                const QuadratureImp &faceQuadInner, 
-                                const QuadratureImp &faceQuadOuter,
                                 LocalFunctionImp &updEn,
                                 LocalFunctionImp &updNeigh,
                                 double &wspeedS ) const 
     {
       // make Entity known in caller  
       caller_.setNeighbor(nb);
-      
+     
+      // use IntersectionQuadrature to create appropriate face quadratures 
+      typedef IntersectionQuadrature< FaceQuadratureType, conforming > IntersectionQuadratureType; 
+      typedef typename IntersectionQuadratureType :: FaceQuadratureType QuadratureImp;
+
+      // create intersection quadrature 
+      IntersectionQuadratureType interQuad( gridPart_, intersection, faceQuadOrd_ );
+
+      // get appropriate references 
+      const QuadratureImp &faceQuadInner = interQuad.inside();
+      const QuadratureImp &faceQuadOuter = interQuad.outside();
+
       // get goemetry of neighbor 
       const Geometry & nbGeo = nb.geometry();
 
