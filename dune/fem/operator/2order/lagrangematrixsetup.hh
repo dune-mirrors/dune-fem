@@ -129,6 +129,23 @@ namespace Dune
     }
   };
 
+  /** \class LagrangeMatrixSetup
+   *  \brief Setup Matrix structure for Lagrange operators by including all
+   *         Lagrange nodes of an element for conforming Lagrange Elements.
+   */
+  struct LagrangeConformingMatrixSetup : public LagrangeMatrixSetup< false >
+  {
+  };
+
+
+  /** \class LagrangeMatrixSetup
+   *  \brief Setup Matrix structure for Lagrange operators by including all
+   *         Lagrange nodes of an element for non-conforming Lagrange Elements.
+   */
+  struct LagrangeNonConformingMatrixSetup : public LagrangeMatrixSetup< true >
+  {
+  };
+
   /** \brief LagrangeMatrixTraits traits class for Matrix Objects 
       used to setup system matrices for FE operators 
       \note For standard Lagrange conforming Finite Elements the 
