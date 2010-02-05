@@ -278,15 +278,9 @@ namespace Dune {
               // init local function 
               initLocalFunction( nb, updNeigh_ );
 
-              //typedef TwistUtility<GridType> TwistUtilityType;
               // for conforming situations apply Quadrature given
-              //if( TwistUtilityType::conforming(gridPart_.grid(),intersection) )
               if( ! GridPartType :: conforming && ! intersection.conforming() )
               {
-                // we only should get here whne a non-conforming situation 
-                // occurs in a non-conforming grid 
-                assert( GridPartType :: conforming == false );
-
                 // apply neighbor part, return is volume of neighbor which is
                 // needed below 
                 nbvol = applyLocalNeighbor< false > 
@@ -296,8 +290,6 @@ namespace Dune {
               }
               else
               { 
-                assert( GridPartType :: conforming == true );
-
                 // apply neighbor part, return is volume of neighbor which is
                 // needed below 
                 nbvol = applyLocalNeighbor< true > 
@@ -316,9 +308,13 @@ namespace Dune {
           {
             FaceQuadratureType faceQuadInner(gridPart_, intersection, faceQuadOrd_, 
                                              FaceQuadratureType::INSIDE);
-            //nbvol = vol;
+
+            // set neighbor entity to inside entity 
             caller_.setNeighbor(en);
+
+            // cache number of quadrature points 
             const int faceQuadInner_nop = faceQuadInner.nop();
+            // loop over quadrature points 
             for (int l = 0; l < faceQuadInner_nop; ++l) 
             {
               // eval boundary Flux  
@@ -441,6 +437,9 @@ namespace Dune {
                                 LocalFunctionImp &updNeigh,
                                 double &wspeedS ) const 
     {
+      // make sure we got the right conforming statement
+      assert( intersection.conforming() == conforming );
+
       // make Entity known in caller  
       caller_.setNeighbor(nb);
      
