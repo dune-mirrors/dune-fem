@@ -6,7 +6,7 @@
 namespace Dune
 {
 
-  template< InterfaceType interface >
+  template< InterfaceType iftype >
   struct EntityCommHelper;
 
 
@@ -15,16 +15,18 @@ namespace Dune
   {
     static bool send ( const PartitionType p )
     {
+      //return (p == InteriorEntity) || (p == BorderEntity);
       return (p == BorderEntity);
     }
 
     static bool receive ( const PartitionType p )
     {
+      //return (p == InteriorEntity) || (p == BorderEntity);
       return (p == BorderEntity);
     }
   };
 
-  
+
   template<>
   struct EntityCommHelper< InteriorBorder_All_Interface >
   {
@@ -37,6 +39,39 @@ namespace Dune
     {
       //return true;
       return (p != InteriorEntity);
+    }
+  };
+
+
+  template<>
+  struct EntityCommHelper< Overlap_OverlapFront_Interface >
+  {
+    static bool send ( const PartitionType p )
+    {
+      //return (p == InteriorEntity) || (p == BorderEntity) || (p == OverlapEntity);
+      return (p != FrontEntity) && (p != GhostEntity);
+    }
+
+    static bool receive ( const PartitionType p )
+    {
+      //return (p == InteriorEntity) || (p == BorderEntity) || (p == OverlapEntity) || (p == FrontEntity);
+      return (p != GhostEntity);
+    }
+  };
+
+
+  template<>
+  struct EntityCommHelper< Overlap_All_Interface >
+  {
+    static bool send ( const PartitionType p )
+    {
+      //return (p == InteriorEntity) || (p == BorderEntity) || (p == OverlapEntity);
+      return (p != FrontEntity) && (p != GhostEntity);
+    }
+
+    static bool receive ( const PartitionType p )
+    {
+      return true;
     }
   };
 
