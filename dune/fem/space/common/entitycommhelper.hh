@@ -1,7 +1,7 @@
 #ifndef DUNE_FEM_ENTITYCOMMHELPER_HH
 #define DUNE_FEM_ENTITYCOMMHELPER_HH
 
-#include <dune/grid/common/grid.hh>
+#include <dune/grid/common/gridenums.hh>
 
 namespace Dune
 {
@@ -13,12 +13,12 @@ namespace Dune
   template<>
   struct EntityCommHelper< InteriorBorder_InteriorBorder_Interface >
   {
-    inline static bool send ( const PartitionType p )
+    static bool send ( const PartitionType p )
     {
       return (p == BorderEntity);
     }
 
-    inline static bool receive ( const PartitionType p )
+    static bool receive ( const PartitionType p )
     {
       return (p == BorderEntity);
     }
@@ -28,13 +28,14 @@ namespace Dune
   template<>
   struct EntityCommHelper< InteriorBorder_All_Interface >
   {
-    inline static bool send ( const PartitionType p )
+    static bool send ( const PartitionType p )
     {
       return (p == InteriorEntity) || (p == BorderEntity);
     }
 
-    inline static bool receive ( const PartitionType p )
+    static bool receive ( const PartitionType p )
     {
+      //return true;
       return (p != InteriorEntity);
     }
   };
@@ -43,12 +44,12 @@ namespace Dune
   template<>
   struct EntityCommHelper< All_All_Interface >
   {
-    inline static bool send ( const PartitionType p )
+    static bool send ( const PartitionType p )
     {
       return true;
     }
 
-    inline static bool receive ( const PartitionType p )
+    static bool receive ( const PartitionType p )
     {
       return true;
     }
@@ -56,4 +57,4 @@ namespace Dune
 
 }
 
-#endif
+#endif // #ifndef DUNE_FEM_ENTITYCOMMHELPER_HH
