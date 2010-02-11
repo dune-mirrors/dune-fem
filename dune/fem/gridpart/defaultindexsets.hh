@@ -13,6 +13,7 @@
 #include <dune/grid/alugrid/defaultindexsets.hh>
 
 #include <dune/fem/misc/capabilities.hh>
+#include <dune/fem/misc/mpimanager.hh>
 
 /** @file
  @author Robert Kloefkorn
@@ -175,7 +176,8 @@ class HierarchicIndexSetSelector
 
     static const IndexSet &indexSet ( const Grid &grid )
     {
-      std::cerr << "Warning: Grid does not provide a HierarchicIndexSet, using LeafIndexSet instead." << std::endl;
+      if( Dune::MPIManager::rank() == 0 )
+        std::cerr << "Warning: Grid does not provide a HierarchicIndexSet, using LeafIndexSet instead." << std::endl;
       return grid.leafIndexSet();
     }
   };
