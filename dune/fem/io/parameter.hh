@@ -137,7 +137,14 @@ namespace Dune
   {
     typedef Parameter ThisType;
 
-    typedef std::map< std::string, std::string > ParameterMapType;
+    struct Value
+    {
+      Value() : used(false), hasDefault(false), isDefault(false) {}
+      std::string value, fileName, defaultValue;
+      bool used, hasDefault, isDefault;
+    };
+
+    typedef std::map< std::string, Value > ParameterMapType;
 
     Parameter ()
     : verboseRank_( -1 )
@@ -153,10 +160,13 @@ namespace Dune
       return theInstance;
     }
 
-    const std::string *find ( const std::string &key );
+    Value *find ( const std::string &key );
 
     const std::string &map ( const std::string &key );
-    const std::string &map ( const std::string &key, const std::string &value, bool verbFound = false );
+    template <class T>
+    const std::string &map ( const std::string &key, const T &value );
+
+    const std::string &insert ( const std::string &key, const std::string &value );
 
     static std::string stripComment ( const std::string &line );
 
@@ -168,7 +178,9 @@ namespace Dune
     void processFile ( const std::string &filename );
     void processIncludes( std::queue< std::string > &includes );
 
+#if 0
     void replace ( const std::string &key, const std::string &value );
+#endif
 
   public:
     /** \brief add parameters from a file to the container
@@ -187,6 +199,7 @@ namespace Dune
       instance().params_.clear();
     }
    
+#if 0
     template <class T>
     static void replaceKey ( const std::string& key, const T& value )
     {
@@ -194,6 +207,7 @@ namespace Dune
       valueStr << value;
       instance().replace( key,valueStr.str() );
     }
+#endif
 
     /** \brief add parameters from the command line
      *
@@ -376,7 +390,7 @@ namespace Dune
      */
     static std::string commonOutputPath ()
     {
-      return instance().map( "fem.prefix", "." );
+      return instance().map( "fem.prefix", std::string(".") );
     }
 
     /** \brief obtain unique output path for this process
@@ -399,7 +413,7 @@ namespace Dune
      */
     DUNE_DEPRECATED static const std::string &prefix ()
     {
-      return instance().map( "fem.prefix", "." );
+      return instance().map( "fem.prefix", std::string(".") );
     }
 
     /** \brief obtain the cached value for fem.verbose
@@ -411,26 +425,33 @@ namespace Dune
   
     /** \brief write the parameter database to a file
      *
-     *  This method writes all paramters in the database to the given file.
-     *  The parameters are stored in alphabetical order. Includes are not used.
+     *  This method writes paramters to the given file.
+     *  If the second parameter is true all parameters are written;
+     *  otherwise only used parameters which do not coincide with the default value
+     *  are written.
      *
      *  \note This method is safe for parallel jobs. Parameters are only written
      *        on rank 0.
      *
      *  \param[in]  filename  name of the file to store the parameters in; prefix() is used.
+     *  \param[in]  writeAll default is true
      */
-    static void write ( const std::string &filename );
+    static void write ( const std::string &filename, bool writeAll = true );
 
     /** \brief write the parameter database to a stream
      *
-     *  This method writes all paramters in the database to the given stream.
+     *  This method writes paramters to the given stream.
+     *  If the second parameter is true all parameters are written;
+     *  otherwise only used parameters which do not coincide with the default value
+     *  are written.
      *
      *  \note This method is \b not safe for parallel jobs. Parameters are
-     *        written on all ranks.
+     *        written on all ranks. 
      *
      *  \param[in]  out stream for the parameters.
+     *  \param[in]  writeAll default is true
      */
-    static void write ( std::ostream &out );
+    static void write ( std::ostream &out, bool writeAll = true );
 
   private:
     std::string curFileName_;
@@ -444,7 +465,7 @@ namespace Dune
   // Private Methods
   // ---------------
 
-  inline const std::string *Parameter::find ( const std::string &key )
+  inline Parameter::Value *Parameter::find ( const std::string &key )
   {
     ParameterMapType::iterator it = params_.find( key );
     return (it != params_.end()) ? &(it->second) : 0;
@@ -452,39 +473,91 @@ namespace Dune
 
   inline const std::string &Parameter::map ( const std::string &key )
   {
-    const std::string *value = find( key );
-    if( value != 0 )
-      return *value;
+    Value *val = find( key );
+    if (!val)
+    {
+      std::ostringstream message;
+      message << "Parameter '" << key << "' not found.";
+      DUNE_THROW( ParameterNotFound, message.str() );
+    }
 
-    std::ostringstream message;
-    message << "Parameter '" << key << "' not found.";
-    DUNE_THROW( ParameterNotFound, message.str() );
+    if ( val->used )
+    {
+      if (val->hasDefault)
+        DUNE_THROW( ParameterInvalid, "Parameter '" << key << "' used first with and then without default." );
+    }
+    val->used = true;
+    val->hasDefault = false;
+    return val->value;
   }
 
+  template <class T>
   inline const std::string &
-  Parameter::map ( const std::string &key, const std::string &value, bool verbFound )
+  Parameter::map ( const std::string &key, const T &value )
   {
-    std::pair< ParameterMapType::iterator, bool > info
-      = params_.insert( std::make_pair( key, value ) );
+    std::ostringstream out;
+    out << value;
 
-    if( info.second )
+    Value insVal;
+    insVal.value = out.str();
+    insVal.fileName = "default";
+    insVal.used = false;
+
+    std::pair< ParameterMapType::iterator, bool > info
+      = params_.insert( std::make_pair( key, insVal ) );
+    Value &val = info.first->second;
+
+    if ( info.second )  
     {
-      if( verbose() )
-      {
-        std::cout << curFileName_ << "[" << curLineNumber_ << "]: ";
-        std::cout << "Adding " << key << " = " << value << std::endl;
-      }
+      if ( verbose() )
+        std::cout << "Adding default: " << key << " = " << value << std::endl;
+      val.isDefault = true;
+    }
+    else if ( val.used )
+    {
+      if (!val.hasDefault)
+        DUNE_THROW( ParameterInvalid, "Parameter '" << key << "' used first without and then with default." );
+      if ( val.defaultValue != insVal.value )
+        DUNE_THROW( ParameterInvalid, "Parameter '" << key << "' used with different default values." );
     }
     else
     {
-      if( verbFound && verbose() )
-      {
-        std::cout << curFileName_ << "[" << curLineNumber_ << "]: ";
-        std::cout << "Ignored " << key << " = " << value
-                    << ", using " << info.first->second << std::endl;
-      }
+      std::istringstream in(val.value);
+      T setValue(value);
+      in >> setValue;
+      if (!in.fail())
+        val.isDefault = (setValue == value);
     }
-    return info.first->second;
+    val.used = true;
+    val.hasDefault = true;
+    val.defaultValue = insVal.value;
+
+    return val.value;
+  }
+
+  inline const std::string &
+  Parameter::insert ( const std::string &key, const std::string &value )
+  {
+    Value insVal;
+    insVal.value = value;
+    insVal.fileName = curFileName_;
+    insVal.used = false;
+
+    std::pair< ParameterMapType::iterator, bool > info
+      = params_.insert( std::make_pair( key, insVal ) );
+    Value &val = info.first->second;
+
+    if( verbose() )
+    {
+      std::cout << curFileName_ << "[" << curLineNumber_ << "]: ";
+      if( info.second )
+        std::cout << "Adding " << key << " = " << value << std::endl;
+      else 
+        std::cout << "Ignored " << key << " = " << value
+                  << ", using " << val.value << std::endl;
+    }
+
+    return val.value;
   }
 
   inline std::string Parameter::stripComment ( const std::string &line )
@@ -561,7 +634,7 @@ namespace Dune
 
     if( key != "paramfile" )
     {
-      const std::string &actual_value = map( key, value, true );
+      const std::string &actual_value = insert( key, value );
       if( key == "fem.verbose" )
       {
         bool verbose;
@@ -638,6 +711,7 @@ namespace Dune
     }
   }
 
+#if 0
   inline void
   Parameter::replace ( const std::string &key, const std::string &value )
   {
@@ -646,7 +720,7 @@ namespace Dune
                   << std::endl;
     params_[ key ] = value;
   }
-
+#endif
 
 
   // Public methods
@@ -675,11 +749,7 @@ namespace Dune
   inline void
   Parameter::get ( const std::string &key, const T &defaultValue, T &value )
   {
-    instance().curFileName_ = "using default";
-    instance().curLineNumber_ = 0;
-    std::ostringstream out;
-    out << defaultValue;
-    if( !parse( instance().map( key, out.str() ), value ) )
+    if( !parse( instance().map( key, defaultValue ), value ) )
       DUNE_THROW( ParameterInvalid, "Parameter '" << key << "' invalid." );
   }
 
@@ -708,13 +778,8 @@ namespace Dune
                         const Validator &validator,
                         T &value )
   {
-    instance().curFileName_ = "using default";
-    instance().curLineNumber_ = 0;
-    std::ostringstream out;
-    out << defaultValue;
-
     bool valid = true ;
-    if( !parse( instance().map( key, out.str() ), value ) ) valid = false;
+    if( !parse( instance().map( key, defaultValue ), value ) ) valid = false;
     if( !validator( value ) ) valid = false;
 
     if( ! valid ) 
@@ -728,7 +793,7 @@ namespace Dune
   inline std::string
   Parameter::outputPath ()
   {
-    const std::string &prefix = instance().map( "fem.prefix", "." );
+    const std::string &prefix = instance().map( "fem.prefix", std::string(".") );
     std::ostringstream path;
     if( !prefix.empty() )
     {
@@ -753,8 +818,6 @@ namespace Dune
   inline int
   Parameter::getEnum ( const std::string &key, const std::string (&values)[ n ], const int defaultValue )
   {
-    instance().curFileName_ = "using default";
-    instance().curLineNumber_ = 0;
     return getEnumeration( key, 
                            instance().map( key, values[ defaultValue ] ),
                            values);
@@ -791,7 +854,7 @@ namespace Dune
 
 
   inline void
-  Parameter::write ( const std::string &filename )
+  Parameter::write ( const std::string &filename, bool writeAll )
   {
     // only write one parameter log file
     if( MPIManager::rank() != 0 )
@@ -807,17 +870,35 @@ namespace Dune
       std::cerr << "Warning: Unable to write parameter file '"
                 << filename << "'" << std::endl;
     }
-    write( file );
+    write( file, writeAll );
     file.close();
   }
 
   inline void
-  Parameter::write ( std::ostream &out )
+  Parameter::write ( std::ostream &out, bool writeAll )
   {
-    typedef std::map< std::string, std::string >::iterator iterator;
-    const iterator end = instance().params_.end();
-    for( iterator it = instance().params_.begin(); it != end; ++it )
-      out << it->first << ": " << it->second << std::endl;
+    typedef std::map< std::string,std::map<std::string,std::string> > WriteMap;
+    typedef ParameterMapType::iterator Iterator;
+    typedef WriteMap::iterator WriteIterator;
+    typedef std::map<std::string,std::string>::iterator ParamIterator;
+
+    WriteMap writeMap;
+    const Iterator end = instance().params_.end();
+    for( Iterator it = instance().params_.begin(); it != end; ++it )
+    {
+      const Value &val = it->second;
+      if ( writeAll || (val.used && !val.isDefault) )
+        writeMap[val.fileName][ (val.used?"":"# ") + it->first] = val.value;
+    }
+    const WriteIterator wEnd = writeMap.end();
+    for( WriteIterator wit = writeMap.begin(); wit != wEnd; ++wit )
+    {
+      out << "# from " << wit->first << std::endl;
+      const ParamIterator end = wit->second.end();
+      for( ParamIterator it = wit->second.begin(); it != end; ++it )
+        out << it->first << ": " << it->second << std::endl;
+      out << std::endl;
+    }
   }
 
 
