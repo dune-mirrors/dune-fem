@@ -13,7 +13,7 @@ namespace Dune
 // implementation of L2 projection for discontinuous spaces 
 class DGL2ProjectionImpl
 {
-  template <int dummy, bool isDiscreteFunction> 
+  template <int dummy, bool hasLocalFunction> 
   struct ProjectChooser
   {
     template <class FunctionImp, class FunctionSpace> 
@@ -69,7 +69,7 @@ public:
   template <class FunctionImp, class DiscreteFunctionImp>
   static void project(const FunctionImp& f, DiscreteFunctionImp& discFunc, int polOrd = -1) 
   {
-    ProjectChooser<0, Conversion<FunctionImp, IsDiscreteFunction> ::exists > :: project(f,discFunc,polOrd);
+    ProjectChooser<0, Conversion<FunctionImp, HasLocalFunction> ::exists > :: project(f,discFunc,polOrd);
   }
 
 protected:  
