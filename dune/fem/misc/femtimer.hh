@@ -1,11 +1,13 @@
 #ifndef FEMTIMER_HH
 #define FEMTIMER_HH
+
 #include <stack>
 #include <vector>
 #include <string>
 #include <fstream>
 #include <iomanip>
 
+#include <dune/common/exceptions.hh>
 #include <dune/common/timer.hh>
 
 #include <dune/fem/solver/timeprovider.hh>
@@ -253,7 +255,8 @@ class FemTimer {
                    int step) {
     if (!output_.is_open()) {
       output_.open(fileName.c_str());
-      if (!output_) abort();
+      if( !output_ )
+        DUNE_THROW( IOError, "FemTimer: Unable to open '" << fileName << "' for writing." );
       changed_=true;
     }
     if (changed_) {
@@ -276,7 +279,8 @@ class FemTimer {
                    int step) {
     if (!output_.is_open()) {
       output_.open(fileName.c_str());
-      if (!output_) abort();
+      if( !output_ )
+        DUNE_THROW( IOError, "FemTimer: Unable to open '" << fileName << "' for writing." );
       changed_=true;
     }
     if (changed_) {
