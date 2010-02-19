@@ -6,11 +6,11 @@
 namespace Dune {
 
 template <class VectorType, class ConvertToType> 
-class FMatrixConverter;
+class FieldMatrixConverter;
 
 //! convert a FieldVector with length n * m to a FieldMatrix with n rows and m cols 
 template <typename K, int n, int m> 
-class FMatrixConverter<FieldVector<K ,n * m> , FieldMatrix<K ,n, m> >
+class FieldMatrixConverter<FieldVector<K ,n * m> , FieldMatrix<K ,n, m> >
 {
 public:
   typedef FieldVector<K ,n * m> InteralVectorType;
@@ -36,7 +36,7 @@ public:
     dimension = n * m 
   };
 
-  FMatrixConverter(InteralVectorType& v) 
+  FieldMatrixConverter(InteralVectorType& v) 
     : vec_( v )
 #ifndef NDEBUG 
     , mutableVec_( true )
@@ -44,7 +44,7 @@ public:
   {
   }
 
-  FMatrixConverter(const InteralVectorType& v) 
+  FieldMatrixConverter(const InteralVectorType& v) 
     : vec_(const_cast<InteralVectorType&> (v) )
 #ifndef NDEBUG 
     , mutableVec_( false )
@@ -52,7 +52,7 @@ public:
   {
   }
 
-  FMatrixConverter(const FMatrixConverter& org) 
+  FieldMatrixConverter(const FieldMatrixConverter& org) 
     : vec_( org.vec_ )
 #ifndef NDEBUG 
     , mutableVec_( org.mutableVec_ )
@@ -72,7 +72,7 @@ public:
     return &vec_[ row * cols ];
   }
 
-  FMatrixConverter& operator = (const FMatrixConverter& other) 
+  FieldMatrixConverter& operator = (const FieldMatrixConverter& other) 
   {
     assert( mutableVec_ );
     vec_ = other.vec_;
@@ -81,7 +81,7 @@ public:
 #endif
   }
 
-  FMatrixConverter& operator = (const FieldMatrix<K, n, m>& matrix) 
+  FieldMatrixConverter& operator = (const FieldMatrix<K, n, m>& matrix) 
   {
     assert( mutableVec_ );
     for(size_t i=0; i< rows; ++i) 
@@ -93,6 +93,19 @@ public:
     }
   }
 
+  /** \brief Sends the matrix to an output stream */
+  friend std::ostream& operator<< (std::ostream& s, 
+                                   const FieldMatrixConverter& a)
+  {
+    for (size_type i=0; i<n; ++i)
+    {
+      for(size_type j=0; j<m; ++j)
+        s << a[ i ][ j ] << " "; 
+      s << std::endl;
+    }
+    return s;
+  }
+
 protected:
   InteralVectorType& vec_;
 #ifndef NDEBUG 
@@ -100,10 +113,10 @@ protected:
 #endif
 };
 
-// method that implements the operator= of a FieldMatrix taking a FMatrixConverter
+// method that implements the operator= of a FieldMatrix taking a FieldMatrixConverter
 template<class K, int n, int m>
 inline void istl_assign_to_fmatrix(FieldMatrix<K,n,m>& A, 
-    const FMatrixConverter< FieldVector<K, n * m> , FieldMatrix<K,n,m> >& B)
+    const FieldMatrixConverter< FieldVector<K, n * m> , FieldMatrix<K,n,m> >& B)
 {
   for(size_t i=0; i<n; ++i) 
   {
@@ -113,6 +126,8 @@ inline void istl_assign_to_fmatrix(FieldMatrix<K,n,m>& A,
     }
   }
 }
+
+
 
 } // end namespace Dune 
 #endif // end DUNE_FIELDMATRIXCONVERTER_HH
