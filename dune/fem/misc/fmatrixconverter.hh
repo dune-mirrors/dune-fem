@@ -1,6 +1,7 @@
 #ifndef DUNE_FIELDMATRIXCONVERTER_HH
 #define DUNE_FIELDMATRIXCONVERTER_HH
 
+#include <cassert>
 #include <dune/common/fmatrix.hh>
 
 namespace Dune {
@@ -52,10 +53,10 @@ public:
   {
   }
 
-  FieldMatrixConverter(const FieldMatrixConverter& org) 
-    : vec_( org.vec_ )
+  FieldMatrixConverter(const FieldMatrixConverter& other) 
+    : vec_( other.vec_ )
 #ifndef NDEBUG 
-    , mutableVec_( org.mutableVec_ )
+    , mutableVec_( other.mutableVec_ )
 #endif
   {}
 
@@ -77,7 +78,7 @@ public:
     assert( mutableVec_ );
     vec_ = other.vec_;
 #ifndef NDEBUG 
-    mutableVec_ = org.mutableVec_;
+    mutableVec_ = other.mutableVec_;
 #endif
   }
 
@@ -109,7 +110,7 @@ public:
 protected:
   InteralVectorType& vec_;
 #ifndef NDEBUG 
-  const bool constVec_;
+  bool mutableVec_;
 #endif
 };
 
