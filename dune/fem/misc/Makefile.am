@@ -41,7 +41,8 @@ misc_HEADERS = bartonnackmaninterface.hh \
 	       test.cc \
 	       test.hh \
                utility.hh \
-	       validator.hh
+	       validator.hh \
+         fmatrixconverter.hh
 
 include $(top_srcdir)/am/global-rules
 
