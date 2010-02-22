@@ -6,11 +6,13 @@
 #include <string>
 #include <fstream>
 #include <iomanip>
+#include <limits>
 
 #include <dune/common/exceptions.hh>
 #include <dune/common/timer.hh>
 
 #include <dune/fem/solver/timeprovider.hh>
+#include <dune/fem/misc/mpimanager.hh>
 
 namespace Dune {
  /** \class   FemTimer
@@ -128,16 +130,42 @@ class FemTimer {
   {
     push_time();
   }
-  ~FemTimer() {
+
+  ~FemTimer ()
+  {
     double totalTime = pop_time();
-    std::cout << "#  ******** TOTAL RUNTIME: " << totalTime 
-              << "   ******** " << std::endl;
-    if (output_.is_open()) {
+
+    if( output_.is_open() )
+    {
       output_ << "#  ******** TOTAL RUNTIME: " << totalTime
               << "   ******** " << std::endl;
       output_.close();
     }
+
+    const MPIManager::CollectiveCommunication &comm = MPIManager::comm();
+    if( comm.rank() == 0 )
+    {
+      double *totalTimes = new double[ comm.size() ];
+      comm.gather( &totalTime, totalTimes, 1, 0 );
+      double avgTime = 0.0;
+      double minTime = std::numeric_limits< double >::max();
+      double maxTime = std::numeric_limits< double >::min();
+      for( int i = 0; i < comm.size(); ++i )
+      {
+        avgTime += totalTimes[ i ];
+        minTime = std::min( minTime, totalTimes[ i ] );
+        maxTime = std::max( maxTime, totalTimes[ i ] );
+      }
+      avgTime /= comm.size();
+      delete[] totalTimes;
+
+      std::cerr << "#  ******** TOTAL RUNTIME: average = " << avgTime
+                << ", minimum = " << minTime << ", maximum = " << maxTime
+                << "   ******** " << std::endl;
+    }
+    else comm.gather( &totalTime, (double *)0, 1, 0 );
   }
+
   void push_time() {
     timesS_.push(timer_.elapsed());
   }
@@ -433,9 +461,14 @@ class FemTimer {
 #endif
   }
 };
+
+// This construction is incompatible with the MPIHelper singleton
+#if 0
 namespace {
   FemTimer& femTimer = FemTimer::instance();
 };
+#endif
+
 #define TIMEDEXECUTION(command) \
     (femTimer.start(),command,femTimer.stop())
  /** \class   ExecutionTimer
