@@ -14,6 +14,8 @@
 
 #include <dune/grid/io/file/dgfparser/dgfparser.hh> 
 
+#include <dune/fem/misc/gridname.hh> 
+
 //- Local includes 
 #include "asciiparser.hh"
 
@@ -117,7 +119,7 @@ public:
       std::ofstream file (fnprefix.c_str());
       if( file.is_open() )
       {
-        file << "Grid: "   << grid.name() << std::endl;
+        file << "Grid: "   << Fem::gridName(grid) << std::endl;
         file << "Format: " << ftype <<  std::endl;
         file << "Precision: " << precision << std::endl;
         int writeDm = (hasDm)? 1 : 0;
@@ -163,15 +165,16 @@ public:
       return false;
     }
 
-    if( grid.name() != gridname )
+    std::string grName ( Fem::gridName( grid ) );
+    if( grName != gridname )
     {
-      if( (grid.name() == "SGrid") && (gridname == "YaspGrid") ) 
+      if( (grName == "SGrid") && (gridname == "YaspGrid") ) 
       {
         std::cerr << "WARNING: YaspGrid is read as SGrid! \n";
       }
       else 
       {
-        std::cerr << "\nERROR: '" << grid.name() << "' tries to read '" << gridname << "' file. \n";
+        std::cerr << "\nERROR: '" << grName << "' tries to read '" << gridname << "' file. \n";
         abort();
       }
     }
@@ -301,7 +304,7 @@ inline bool GrapeDataIOImp<dim,dimworld,GridImp,hasBackupRestore> :: writeGrid
     std::fstream file (fnprefix.c_str(),std::ios::out);
     if( file.is_open() )
     {
-      file << "Grid: "   << grid.name() << std::endl;
+      file << "Grid: "   << Fem::gridName(grid) << std::endl;
       file << "Format: " << ftype <<  std::endl;
       file << "Precision: " << precision << std::endl;
       int writeDm = (hasDm)? 1 : 0;
@@ -354,9 +357,10 @@ inline bool GrapeDataIOImp<dim,dimworld,GridImp,hasBackupRestore> :: readGrid
   }
   else 
   {
-    if(grid.name() != gridname)
+    std::string grName ( Fem::gridName( grid ) );
+    if( grName != gridname)
     {
-      std::cerr << "\nERROR: '" << grid.name() << "' tries to read '" << gridname << "' file. \n";
+      std::cerr << "\nERROR: '" << grName << "' tries to read '" << gridname << "' file. \n";
       abort();
     }
   }
