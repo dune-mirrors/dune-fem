@@ -42,7 +42,8 @@ misc_HEADERS = bartonnackmaninterface.hh \
 	       test.hh \
                utility.hh \
 	       validator.hh \
-         fmatrixconverter.hh
+         fmatrixconverter.hh \
+         gridname.hh
 
 include $(top_srcdir)/am/global-rules
 
