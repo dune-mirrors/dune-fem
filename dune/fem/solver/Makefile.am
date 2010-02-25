@@ -17,14 +17,14 @@ libsolver_la_LIBADD = ode/libodesolver.la
 solverdir =  $(includedir)/dune/fem/solver
 solver_HEADERS = inverseoperators.hh \
                  istlsolver.hh \
-		 odesolver.hh \
-		 pardgodesolver.hh \
-		 oemsolver.hh \
-		 multistep.hh \
-		 pardg.hh \
+                 odesolver.hh \
+                 pardgodesolver.hh \
+                 oemsolver.hh \
+                 multistep.hh \
+                 pardg.hh \
                  rungekutta.hh \
-		 timeprovider.hh \
-		 umfpacksolver.hh
+                 timeprovider.hh \
+                 umfpacksolver.hh
 
 include $(top_srcdir)/am/global-rules
 
