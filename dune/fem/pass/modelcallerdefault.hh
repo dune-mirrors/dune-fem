@@ -29,6 +29,7 @@ namespace Dune {
     typedef typename Traits::GridPartType GridPartType;
     typedef typename GridPartType :: GridType GridType;
     typedef typename GridPartType::IntersectionIteratorType IntersectionIterator;
+    typedef typename IntersectionIterator :: Intersection  Intersection;
     typedef typename GridType::template Codim<0>::Entity Entity;
 
     typedef typename Traits::FaceQuadratureType FaceQuadratureType;
@@ -128,10 +129,10 @@ namespace Dune {
     void evaluateJacobianQuad ( const QuadratureType &quadrature,
                                 const int quadPoint,
                                 LocalFunctionTupleType &lfs,
-                                JacobianRangeTupleType& jacobians )
+                                JacobianRangeTupleType& jacobianRanges )
     {
       ForEachValuePair< LocalFunctionTupleType, JacobianRangeTupleType >
-        forEach( lfs,  jacobians );
+        forEach( lfs,  jacobianRanges );
 
       LocalFunctionEvaluateJacobianQuad< QuadratureType >
         eval( quadrature, quadPoint );
