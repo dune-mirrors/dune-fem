@@ -181,8 +181,8 @@ void SparseRowMatrix<T>::resize (int newRow, int newCol, int newNz )
 //  reserve(rows,cols,nz,val);
 //}
 
-template <class T> 
-T SparseRowMatrix<T>::operator()(int row, int col) const
+template< class T >
+inline T SparseRowMatrix<T>::operator() ( const int row, const int col ) const
 {
   assert( row >= 0 );
   assert( (row < dim_[0]) ? 1 : (std::cout << row << " bigger " << dim_[0] <<"\n", 0));
@@ -199,6 +199,15 @@ T SparseRowMatrix<T>::operator()(int row, int col) const
   }
   return 0;
 }
+
+
+template< class T >
+inline T SparseRowMatrix<T>
+  ::operator() ( const unsigned int row, const unsigned int col ) const
+{
+  return (*this)( int( row ), int( col ) );
+}
+
 
 template <class T> 
 int SparseRowMatrix<T>::colIndex(int row, int col)

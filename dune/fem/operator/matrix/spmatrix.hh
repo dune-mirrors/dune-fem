@@ -200,8 +200,9 @@ public:
     return nonZeros_[i]; 
   }
 
-  //! return value of entry (i,j)
-  T  operator() (int i, int j) const;        
+  //! return value of entry (row,col)
+  T operator() ( const int row, const int col ) const;
+  T operator() ( const unsigned int row, const unsigned int col ) const;
 
   //! set entry to value
   //! note, that every entry is performed into the matrix!
