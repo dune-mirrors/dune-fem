@@ -16,8 +16,12 @@ class FieldMatrixConverter<FieldVector<K ,n * m> , FieldMatrix<K ,n, m> >
 public:
   typedef FieldVector<K ,n * m> InteralVectorType;
 
-  typedef InteralVectorType row_type;
-  typedef row_type RowType;
+  typedef FieldVector<K , m > RowType;
+
+  typedef FieldVector<K , n > ColType;
+
+  typedef RowType row_type;
+  typedef ColType col_type;
 
   //! export the type representing the field
   typedef K field_type;
@@ -61,16 +65,55 @@ public:
   {}
 
   // return row 
-  K* operator [] (const size_t row) 
+  RowType& operator [] (const size_t row) 
   {
     assert( mutableVec_ );
-    return &vec_[ row * cols ] ;
+    return *(( RowType*) (&vec_[ row * cols ]));
   }
   
   // return row  
-  const K* operator [] (const size_t row) const 
+  const RowType& operator [] (const size_t row) const 
   {
-    return &vec_[ row * cols ];
+    return *(( const RowType*) (&vec_[ row * cols ]));
+  }
+
+  template<class X, class Y>
+  void mv(const X& x, Y& y) const 
+  {
+    for(size_type i=0; i<n; ++i) 
+    {
+      y[ i ] = (*this)[ i ] * x;
+    }
+  }
+
+  template<class X, class Y>
+  void umv(const X& x, Y& y) const 
+  {
+    for(size_type i=0; i<n; ++i) 
+    {
+      y[ i ] += (*this)[ i ] * x;
+    }
+  }
+
+  template<class X, class Y>
+  void mtv(const X& x, Y& y) const 
+  {
+    for( size_type i = 0; i < cols; ++i )
+    {
+      y[ i ] = 0;
+      for( size_type j = 0; j < rows; ++j )
+        y[ i ] += (*this)[ j ][ i ] * x[ j ];
+    }
+  }
+
+  template<class X, class Y>
+  void umtv(const X& x, Y& y) const 
+  {
+    for( size_type i = 0; i < cols; ++i )
+    {
+      for( size_type j = 0; j < rows; ++j )
+        y[ i ] += (*this)[ j ][ i ] * x[ j ];
+    }
   }
 
   FieldMatrixConverter& operator = (const FieldMatrixConverter& other) 
