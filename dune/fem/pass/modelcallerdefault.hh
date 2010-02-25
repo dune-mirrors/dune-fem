@@ -113,30 +113,6 @@ namespace Dune {
       forEach.apply( setter );
     }
 
-#if 0
-    void evaluateLocal(const DomainType& x, 
-                       LocalFunctionTupleType& lfs, RangeTupleType& ranges) 
-    {
-      ForEachValuePair<
-        LocalFunctionTupleType, RangeTupleType> forEach(lfs,
-                                                        ranges);
-      
-      LocalFunctionEvaluateLocal<DomainType> eval(x);
-      forEach.apply(eval);
-    }
-    void evaluateJacobianLocal(Entity& en, const DomainType& x)
-    {
-      ForEachValuePair<
-       LocalFunctionTupleType,
-        JacobianRangeTupleType> forEach(data_->localFunctionsSelf(),
-                                        jacobians_);
-      
-      LocalFunctionEvaluateJacobianLocal<DomainType> eval(x);
-      forEach.apply(eval);
-    }
-
-#endif
-
     template< class QuadratureType >
     void evaluateQuad ( const QuadratureType &quadrature, 
                         const int quadPoint, 
@@ -149,12 +125,14 @@ namespace Dune {
     }
 
     template< class QuadratureType >
-    void evaluateJacobianQuad ( const Entity &entity,
-                                const QuadratureType &quadrature,
-                                const int quadPoint )
+    void evaluateJacobianQuad ( const QuadratureType &quadrature,
+                                const int quadPoint,
+                                LocalFunctionTupleType &lfs,
+                                JacobianRangeTupleType& jacobians )
     {
       ForEachValuePair< LocalFunctionTupleType, JacobianRangeTupleType >
-        forEach( data_->localFunctionsSelf(), jacobians_ );
+        forEach( lfs,  jacobians );
+
       LocalFunctionEvaluateJacobianQuad< QuadratureType >
         eval( quadrature, quadPoint );
       forEach.apply( eval );
@@ -188,13 +166,13 @@ namespace Dune {
       	return discreteFunctions_;
       }
 
-      const Entity &self ()
+      const Entity& self () const
       {
         assert( self_ );
         return *self_;
       }
 
-      const Entity &neighbor ()
+      const Entity& neighbor () const
       {
         assert( neighbor_ );
         return *neighbor_;

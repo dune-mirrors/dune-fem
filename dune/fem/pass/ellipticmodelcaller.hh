@@ -186,7 +186,9 @@ namespace Dune
     {
       this->evaluateQuad( quad, quadPoint,
                          this->data_->localFunctionsSelf(), this->valuesEn_);
-      this->evaluateJacobianQuad(en, quad, quadPoint);
+      this->evaluateJacobianQuad( quad, quadPoint, 
+                                  this->data_->localFunctionsSelf(),
+                                  this->jacobians_ );
       problem_.rightHandSide(en, this->time_, quad.point(quadPoint), 
                              this->valuesEn_,
                              this->jacobians_,

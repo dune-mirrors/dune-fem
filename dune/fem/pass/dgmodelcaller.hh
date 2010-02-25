@@ -98,7 +98,7 @@ namespace Dune {
       // evaluate local functions 
       evaluateQuad(quad, quadPoint, data_->localFunctionsSelf(),valuesEn_);
       // evaluate local gradients 
-      evaluateJacobianQuad( entity, quad, quadPoint );
+      evaluateJacobianQuad( quad, quadPoint, data_->localFunctionsSelf(), jacobians_ );
       
       problem_.analyticalFlux( entity, time_, quad.point( quadPoint ), valuesEn_, fluxRes );
       problem_.source( entity, time_, quad.point( quadPoint ), valuesEn_, jacobians_, sourceRes );
@@ -212,7 +212,7 @@ namespace Dune {
                  RangeType& res ) 
     {
       evaluateQuad( quad, quadPoint, data_->localFunctionsSelf(), valuesEn_);
-      evaluateJacobianQuad(en, quad, quadPoint);
+      evaluateJacobianQuad( quad, quadPoint, data_->localFunctionsSelf(), jacobians_);
       problem_.source(en, time_, quad.point(quadPoint), valuesEn_,
                       jacobians_, res);
     }
