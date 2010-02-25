@@ -45,7 +45,7 @@ protected:
   GeometryInformationType geoInfo_;
 
   mutable MatrixType matrix_;
-  mutable VectorType x_, rhs_;
+  mutable VectorType rhs_;
 
   mutable RangeType phi_[numDofs_];
   mutable RangeType phiMass_[numDofs_];
@@ -106,6 +106,7 @@ public:
     const Geometry& geo = en.geometry();
 
     assert( numDofs_ == lf.numDofs() );
+
     // in case of affine mappings we only have to multiply with a factor 
     if( affine_ && ! caller.hasMass() )
     {
@@ -126,7 +127,6 @@ public:
       {
         // copy 
         rhs_[l] = lf[l];
-        x_[l] = 0;
       }
 
       // setup local mass matrix 
@@ -134,14 +134,9 @@ public:
 
       // invert matrix 
       matrix_.invert();
-      // apply matrix 
-      matrix_.umv( rhs_ , x_ );
 
-      // copy back to local function 
-      for(int l=0; l<numDofs_; ++l) 
-      {
-        lf[l] = x_[l];
-      }
+      // apply matrix 
+      matrix_.mv( rhs_ , lf );
 
       return; 
     }
@@ -154,6 +149,13 @@ public:
   {
     NoMassDummyCaller caller;
     applyInverse(caller, en, lf );
+  }
+
+  //! apply local dg mass matrix to local function lf without mass factor 
+  template <class LocalFunctionType> 
+  void applyInverse(LocalFunctionType& lf) const 
+  {
+    applyInverse( lf.entity(), lf );
   }
 
 public:  
