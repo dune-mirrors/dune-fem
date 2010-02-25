@@ -212,6 +212,15 @@ namespace Dune {
       caller_.finalize();
     }
 
+    void applyLocalMass( const EntityType& en) const 
+    {
+      // get local function and add update 
+      LocalFunctionType function = dest_->localFunction(en);
+
+      // apply local inverse mass matrix 
+      localMassMatrix_.applyInverse( caller_, en, function );
+    }
+
     void applyLocal( const EntityType& en) const 
     {
       // init local function 
