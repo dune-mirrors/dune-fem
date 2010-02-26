@@ -45,7 +45,7 @@ protected:
   GeometryInformationType geoInfo_;
 
   mutable MatrixType matrix_;
-  mutable VectorType rhs_;
+  mutable VectorType x_, rhs_;
 
   mutable RangeType phi_[numDofs_];
   mutable RangeType phiMass_[numDofs_];
@@ -136,7 +136,13 @@ public:
       matrix_.invert();
 
       // apply matrix 
-      matrix_.mv( rhs_ , lf );
+      matrix_.mv( rhs_ , x_ );
+
+      // copy back to local function 
+      for(int l=0; l<numDofs_; ++l)
+      {
+        lf[l] = x_[l];
+      }
 
       return; 
     }
