@@ -189,7 +189,7 @@ public:
   //! virtual destructor 
   virtual ~AdaptationMethod () {}
 
-  /** @copydoc AdaptationManagerInterface::methodName */
+  /** \copydoc Dune::AdaptationManagerInterface::methodName */
   virtual const char * methodName() const 
   {
     switch (adaptationMethod_) {
@@ -200,7 +200,7 @@ public:
     }
   }
 
-  /** @copydoc AdaptationManagerInterface::adaptive */
+  /** \copydoc Dune::AdaptationManagerInterface::adaptive */
   virtual bool adaptive () const { return adaptationMethod_ != none; }
   
 protected:  
@@ -398,7 +398,7 @@ public:
     return 0; 
   }
 
-  /** @copydoc AdaptationManagerInterface::adaptationTime */
+  /** \copydoc Dune::AdaptationManagerInterface::adaptationTime */
   virtual double adaptationTime() const 
   {
     return adaptTime_;
