@@ -100,7 +100,7 @@ public:
     
     const LocalGeometry& geometryInFather = son.geometryInFather();
 
-    RangeType value ( 0 );
+    RangeType value ;
 
     QuadratureType quad( son, quadord_);
 
@@ -139,7 +139,7 @@ public:
     // get geometry 
     const LocalGeometry& geometryInFather = son.geometryInFather();
     
-    RangeType value ( 0 );
+    RangeType value ;
 
     // get number of points 
     const int nop = quad.nop();

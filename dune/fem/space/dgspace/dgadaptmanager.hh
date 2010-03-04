@@ -89,7 +89,7 @@ public:
       vati.clear();
     }
     
-    RangeType value ( 0 );
+    RangeType value ;
     QuadratureType quad( son, quadord_ );
     const int nop = quad.nop();
     for( int qP = 0; qP < nop; ++qP )
@@ -121,7 +121,7 @@ public:
 
     const LocalGeometry& geometryInFather = son.geometryInFather();
 
-    RangeType value ( 0 );
+    RangeType value ;
     QuadratureType quad( son, quadord_ );
     const int nop = quad.nop();
     for( int qP = 0; qP < nop; ++qP )
