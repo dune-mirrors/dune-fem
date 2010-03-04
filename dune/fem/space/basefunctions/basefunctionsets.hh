@@ -372,44 +372,7 @@ namespace Dune
       assert( (baseFunction >= 0) && (baseFunction < numDifferentBaseFunctions()) );
       storage_.jacobian( baseFunction, x, phi );
     }
-
-  protected:
-    template< int diffOrd, class PointType >
-    inline void evaluateScalar ( const int baseFunction,
-                                 const FieldVector< int, diffOrd > &diffVariable,
-                                 const PointType &x,
-                                 ScalarRangeType &phi ) const
-    {
-      assert( (baseFunction >= 0) && (baseFunction < numDifferentBaseFunctions()) );
-      storage_.evaluate( baseFunction, diffVariable, x, phi );
-    }
     
-    template< class PointType >
-    inline void evaluateScalar ( const int baseFunction,
-                                 const PointType &x,
-                                 ScalarRangeType &phi ) const
-    {
-      FieldVector< int, 0 > diffVar;
-      evaluateScalar( baseFunction, diffVar, x, phi );
-    }
-    
-#if 0
-    
-    /** \copydoc Dune::BaseFunctionSetInterface::evaluateSingle(const int baseFunction,const PointType &x,const RangeType &psi) const */
-    template< class PointType >
-    inline RangeFieldType evaluateSingle ( const int baseFunction,
-                                           const PointType &x,
-                                           const RangeType &psi ) const
-    {
-      ScalarRangeType phi;
-      const int scalarBaseFunction = util_.containedDof( baseFunction );
-
-      evaluateScalar( scalarBaseFunction, x, phi );
-      return psi[ util_.component( baseFunction ) ] * phi[ 0 ];
-    }
-#endif
-    
-  public:
     template< int diffOrder, class PointType, class LocalDofVectorType >
     inline void evaluate ( const FieldVector< int, diffOrder > &diffVariable,
                            const PointType &x,
@@ -485,7 +448,7 @@ namespace Dune
         evaluateScalar( i, x, phi ); 
         for( int r = 0; r < dimRange; ++r )
         { 
-          dofs[ util_.combinedDof( i , r ) ] += phi[ 0 ]  * rangeFactor[ r ];
+          dofs[ util_.combinedDof( i , r ) ] += phi[ 0 ] * rangeFactor[ r ];
         }
       }
     }
@@ -536,9 +499,23 @@ namespace Dune
       }
     }
  
-#if 0
+    /** \copydoc Dune::BaseFunctionSetInterface::evaluateSingle(const int baseFunction,const PointType &x,const RangeType &psi) const */
+    template< class PointType >
+    DUNE_VERSION_DEPRECATED(1,2,remove)
+    inline RangeFieldType evaluateSingle ( const int baseFunction,
+                                           const PointType &x,
+                                           const RangeType &psi ) const
+    {
+      ScalarRangeType phi;
+      const int scalarBaseFunction = util_.containedDof( baseFunction );
+
+      evaluateScalar( scalarBaseFunction, x, phi );
+      return psi[ util_.component( baseFunction ) ] * phi[ 0 ];
+    }
+
     /** \copydoc Dune::BaseFunctionSetInterface::evaluateGradientSingle(const int baseFunction,const EntityType &entity,const PointType &x,const JacobianRangeType &psi) const */
     template< class EntityType, class PointType >
+    DUNE_VERSION_DEPRECATED(1,2,remove)
     inline RangeFieldType evaluateGradientSingle( const int baseFunction,
                                                   const EntityType &entity,
                                                   const PointType &x,
@@ -562,7 +539,26 @@ namespace Dune
       jacobianInverseTransposed.umv( gradPhi[ 0 ], gradScaled );
       return gradScaled * psi[ util_.component( baseFunction ) ];
     }
-#endif
+
+  protected:
+    template< int diffOrd, class PointType >
+    inline void evaluateScalar ( const int baseFunction,
+                                 const FieldVector< int, diffOrd > &diffVariable,
+                                 const PointType &x,
+                                 ScalarRangeType &phi ) const
+    {
+      assert( (baseFunction >= 0) && (baseFunction < numDifferentBaseFunctions()) );
+      storage_.evaluate( baseFunction, diffVariable, x, phi );
+    }
+    
+    template< class PointType >
+    inline void evaluateScalar ( const int baseFunction,
+                                 const PointType &x,
+                                 ScalarRangeType &phi ) const
+    {
+      FieldVector< int, 0 > diffVar;
+      evaluateScalar( baseFunction, diffVar, x, phi );
+    }
   };
 
   /** \} */

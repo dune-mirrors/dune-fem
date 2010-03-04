@@ -151,6 +151,7 @@ namespace Dune
       CHECK_AND_CALL_INTERFACE_IMPLEMENTATION
         ( asImp().jacobian( baseFunction, x, phi ) );
     }
+
     
     /** \brief evaluate the base function and multiply the result by a vector
      *
@@ -176,6 +177,7 @@ namespace Dune
      *           the specified vector
      */
     template< class PointType >
+    DUNE_VERSION_DEPRECATED(1,2,remove)
     RangeFieldType evaluateSingle ( const int baseFunction,
                                     const PointType &x,
                                     const RangeType &psi ) const
@@ -194,6 +196,7 @@ namespace Dune
         \return return scalar product between gradient of base function and factor 
     */
     template< class EntityType, class PointType >
+    DUNE_VERSION_DEPRECATED(1,2,remove)
     inline RangeFieldType evaluateGradientSingle( const int baseFunction,
                                                   const EntityType &entity,
                                                   const PointType &x,
@@ -285,6 +288,7 @@ namespace Dune
 
     /** \copydoc Dune::BaseFunctionSetInterface::evaluateSingle(const int baseFunction,const PointType &x,const RangeType &psi) const */
     template< class PointType >
+    DUNE_VERSION_DEPRECATED(1,2,remove)
     inline RangeFieldType evaluateSingle ( const int baseFunction,
                                            const PointType &x,
                                            const RangeType &psi ) const
@@ -296,6 +300,7 @@ namespace Dune
 
     /** \copydoc Dune::BaseFunctionSetInterface::evaluateGradientSingle(const int baseFunction,const EntityType &entity,const PointType &x,const JacobianRangeType &psi) const */
     template< class EntityType, class PointType >
+    DUNE_VERSION_DEPRECATED(1,2,remove)
     inline RangeFieldType evaluateGradientSingle( const int baseFunction,
                                                   const EntityType &entity,
                                                   const PointType &x,
