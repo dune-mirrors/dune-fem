@@ -123,6 +123,37 @@ namespace Dune
       baseFunctionSet().jacobian( baseFunction, x, phi );
     }
 
+    template< class PointType, 
+              class LocalDofVectorType >
+    inline void evaluate ( const PointType &x,
+                           const LocalDofVectorType& dofs,
+                           RangeType& ret) const
+    {
+      baseFunctionSet().evaluate( x, dofs, ret );
+    }
+
+    template< int diffOrder, 
+              class PointType, 
+              class LocalDofVectorType >
+    inline void evaluate ( const FieldVector<int, diffOrder>& diffVariable,
+                           const PointType &x,
+                           const LocalDofVectorType& dofs,
+                           RangeType& ret) const
+    {
+      baseFunctionSet().evaluate( diffVariable, x, dofs, ret );
+    }
+
+    template< class PointType, class GeometryJacobianInverseType,
+              class GlobalJacobianRangeType, class LocalDofVectorType >
+    inline void jacobian ( const PointType &x,
+                           const GeometryJacobianInverseType& gjit,   
+                           const LocalDofVectorType& dofs,
+                           GlobalJacobianRangeType& ret) const
+    {
+      baseFunctionSet().jacobian( x, gjit, dofs, ret );
+    }
+
+#if 0
     /** \copydoc Dune::BaseFunctionSetInterface::evaluateSingle(const int baseFunction,const PointType &x,const RangeType &psi) const */
     template< class PointType >
     inline RangeFieldType evaluateSingle ( const int baseFunction,
@@ -141,108 +172,44 @@ namespace Dune
     {
       return baseFunctionSet().evaluateGradientSingle( baseFunction, entity, x, psi );
     }
-    
+#endif
+
+    template< class PointType, class LocalDofVectorType >
+    inline void axpy ( const PointType &x,
+                       const RangeType& factor,
+                       LocalDofVectorType& dofs) const
+    {
+      baseFunctionSet().axpy( x, factor, dofs );
+    }
+
+    template< class PointType, class GeometryJacobianInverseType,
+              class GlobalJacobianRangeType, class LocalDofVectorType >
+    inline void axpy ( const PointType &x,
+                       const GeometryJacobianInverseType& gjit,   
+                       const GlobalJacobianRangeType& factor,
+                       LocalDofVectorType& dofs) const
+    {
+      baseFunctionSet().axpy( x, gjit, factor, dofs );
+    }
+
+    template< class PointType, class GeometryJacobianInverseType,
+              class GlobalJacobianRangeType, class LocalDofVectorType >
+    inline void axpy ( const PointType &x,
+                       const GeometryJacobianInverseType& gjit,
+                       const RangeType& factor1,
+                       const GlobalJacobianRangeType& factor2,
+                       LocalDofVectorType& dofs) const
+    {
+      baseFunctionSet().axpy( x, gjit, factor1, factor2, dofs );
+    }
+
   protected:
     inline const BaseFunctionSetImp &baseFunctionSet () const
     {
-      assert( this->baseSet_ );
+      assert( baseSet_ );
       return *baseSet_;
     }
   }; // end SimpleBaseFunctionProxy 
-
-
-
-  /** \class VectorialBaseFunctionSetProxy */
-  template< class BaseFunctionSetImp > 
-  class VectorialBaseFunctionProxy
-  : public SimpleBaseFunctionProxy< BaseFunctionSetImp >
-  {
-  private:
-    typedef VectorialBaseFunctionProxy< BaseFunctionSetImp > ThisType;
-    typedef SimpleBaseFunctionProxy< BaseFunctionSetImp > BaseType;
-      
-  public:  
-    typedef typename BaseType :: Traits Traits;
-
-    typedef typename Traits :: FunctionSpaceType FunctionSpaceType;
-
-    typedef typename BaseFunctionSetImp :: ScalarRangeType ScalarRangeType;
-    typedef typename BaseFunctionSetImp :: ScalarJacobianRangeType ScalarJacobianRangeType;
-
-    enum { dimRange = FunctionSpaceType :: dimRange };
-    enum { dimDomain = FunctionSpaceType :: dimDomain };
-
-    typedef typename FunctionSpaceType::RangeFieldType RangeFieldType;
-    typedef typename FunctionSpaceType::DomainType DomainType;
-    typedef typename FunctionSpaceType::RangeType RangeType;
-    typedef typename FunctionSpaceType::JacobianRangeType JacobianRangeType;
-
-  protected:
-    using BaseType :: baseFunctionSet;
-
-  public:
-    //! default constructor 
-    inline VectorialBaseFunctionProxy()
-    : BaseType () 
-    {
-    }
-      
-    //! constructor storing base function set pointer 
-    inline VectorialBaseFunctionProxy( const BaseFunctionSetImp *baseSet )
-    : BaseType( baseSet ) 
-    {
-    }
-
-    /** \brief copy constructor
-     *
-     *  \param[in]  other  VectorialBaseFunctionProxy to copy
-     */
-    inline VectorialBaseFunctionProxy ( const ThisType &other )
-    : BaseType( other )
-    {
-    }
-
-    /** \brief assign another VectorialBaseFunctionProxy to this one
-     *
-     *  \param[in]  other  VectorialBaseFunctionProxy to copy
-     */
-    inline ThisType &operator= ( const ThisType &other ) 
-    {
-      BaseType :: operator= ( other );
-      return *this;
-    }   
-
-    //! number of different base functions
-    inline int numDifferentBaseFunctions () const 
-    {
-      return baseFunctionSet().numDifferentBaseFunctions(); 
-    }
-    
-    template< int diffOrd, class PointType >
-    inline void evaluateScalar ( const int baseFunction,
-                                 const FieldVector< int, diffOrd > &diffVariable,
-                                 const PointType &x,
-                                 ScalarRangeType &phi ) const
-    {
-      baseFunctionSet().evaluateScalar( baseFunction, diffVariable, x, phi );
-    }
-  
-    template< class PointType >
-    inline void evaluateScalar ( const int baseFunction,
-                                 const PointType &x,
-                                 ScalarRangeType &phi ) const
-    {
-      baseFunctionSet().evaluateScalar( baseFunction, x, phi );
-    }
-
-    template< class PointType >
-    inline void jacobianScalar ( const int baseFunction,
-                                 const PointType &x,
-                                 ScalarJacobianRangeType &gradPhi ) const
-    {
-      baseFunctionSet().jacobianScalar( baseFunction, x, gradPhi );
-    }
-  };
 
   /** \} */
 

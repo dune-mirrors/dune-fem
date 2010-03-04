@@ -337,12 +337,6 @@ namespace Dune
 
 
 
-  //- Forward declarations of Combined Space 
-  template< class, int, DofStoragePolicy >
-  class CombinedSpace;
-
-
-
   /** \class LocalFunctionDefault
    *  \brief default implementation of a LocalFunction
    */
@@ -377,15 +371,9 @@ namespace Dune
     typedef typename DiscreteFunctionSpaceType :: JacobianRangeType
       JacobianRangeType;
 
-    //! type of local coordinates 
-    typedef typename EntityType :: Geometry :: LocalCoordinate LocalCoordinateType;
-
     //! type of base function set  
     typedef typename DiscreteFunctionSpaceType :: BaseFunctionSetType
       BaseFunctionSetType;
-
-    //! type of JacobianRangeType of basis functions 
-    typedef typename BaseFunctionSetType :: JacobianRangeType LocalJacobianRangeType;
 
     //! dimension of the domain
     enum { dimDomain = DiscreteFunctionSpaceType :: dimDomain };
@@ -395,8 +383,6 @@ namespace Dune
   protected:
     //! type of entity's geometry
     typedef typename EntityType :: Geometry GeometryType;
-    //! type of transposed of geometry's Jacobian Inverse
-    typedef typename GeometryType :: Jacobian  GeometryJacobianInverseType;
 
   protected:
     using BaseType :: asImp;
@@ -451,143 +437,12 @@ namespace Dune
                       const RangeType &factor1,
                       const JacobianRangeType &factor2 );
 
-  protected:
-    inline void rightMultiply ( const JacobianRangeType &factor,
-                                const LocalCoordinateType &x,
-                                LocalJacobianRangeType &result ) const;
-  };
-
-
-
-  /** \copydoc Dune::LocalFunctionDefault
-   *
-   *  Specialised version for CombinedSpaces
-   */
-  template< class ContainedFunctionSpaceImp, int N, DofStoragePolicy policy,
-            class LocalFunctionImp >
-  class LocalFunctionDefault
-    < CombinedSpace< ContainedFunctionSpaceImp, N, policy >, LocalFunctionImp >
-  : public EngineDefault< LocalFunctionImp >
-  {
-  public:
-    //! type of  discrete function space the local function belongs to
-    typedef CombinedSpace< ContainedFunctionSpaceImp, N, policy >
-      DiscreteFunctionSpaceType;
-
-  private:
-    typedef EngineDefault< LocalFunctionImp > BaseType;
-
-  private:
-    typedef typename DiscreteFunctionSpaceType :: GridType GridType;
-
-  public:
-    //! type of the entity, the local function lives on
-    typedef typename GridType :: template Codim< 0 > :: Entity EntityType;
-
-  public:
-    //! field type of the domain
-    typedef typename DiscreteFunctionSpaceType :: DomainFieldType DomainFieldType;
-    //! field type of the range
-    typedef typename DiscreteFunctionSpaceType :: RangeFieldType RangeFieldType;
-    //! type of domain vectors, i.e., type of coordinates
-    typedef typename DiscreteFunctionSpaceType :: DomainType DomainType;
-    //! type of range vectors, i.e., type of function values
-    typedef typename DiscreteFunctionSpaceType :: RangeType RangeType;
-    //! type of Jacobian, i.e., type of evaluated Jacobian matrix
-    typedef typename DiscreteFunctionSpaceType :: JacobianRangeType
-      JacobianRangeType;
-
-    //! type of local coordinates 
-    typedef typename EntityType :: Geometry :: LocalCoordinate LocalCoordinateType;
-
-    //! type of base function set  
-    typedef typename DiscreteFunctionSpaceType :: BaseFunctionSetType
-      BaseFunctionSetType;
-
-    //! type of JacobianRangeType of basis functions 
-    typedef typename BaseFunctionSetType :: JacobianRangeType LocalJacobianRangeType;
-
-    //! dimension of the domain
-    enum { dimDomain = DiscreteFunctionSpaceType :: dimDomain };
-    //! dimension of the range
-    enum { dimRange = DiscreteFunctionSpaceType :: dimRange };
-
-  protected:
-    //! type of entity's geometry
-    typedef typename EntityType :: Geometry GeometryType;
-    //! type of transposed of geometry's Jacobian Inverse
-    typedef typename GeometryType :: Jacobian GeometryJacobianInverseType;
-
-  protected:
-    typedef typename DiscreteFunctionSpaceType :: ContainedRangeType
-      ScalarRangeType;
-    typedef typename DiscreteFunctionSpaceType :: ContainedJacobianRangeType
-      ScalarJacobianRangeType;
-
-  protected:
-    using BaseType :: asImp;
-      
-  public:
-    /** \copydoc Dune::LocalFunction::operator+=(const LocalFunction<T> &lf) */
-    template< class T >
-    inline void operator+= ( const LocalFunction< T > &lf );
-
-    /** \copydoc Dune::LocalFunction::operator-=(const LocalFunction<T> &lf) */
-    template< class T >
-    inline void operator-= ( const LocalFunction< T > &lf );
-
-    template< class T >
-    inline void assign ( const LocalFunction< T > &lf );
-    inline void clear ( );
-
-    /** \copydoc Dune::LocalFunction::axpy(const RangeFieldType s,const LocalFunction<T> &lf) */
-    template< class T >
-    inline void axpy ( const RangeFieldType s,
-                       const LocalFunction< T > &lf );
-
-    /** \copydoc Dune::LocalFunction::axpy(const PointType &x,const RangeType &factor) */
-    template< class PointType >
-    inline void axpy ( const PointType &x,
-                       const RangeType &factor );
-
-    /** \copydoc Dune::LocalFunction::axpy(const PointType &x,const JacobianRangeType &factor) */
-    template< class PointType >
-    inline void axpy ( const PointType &x,
-                       const JacobianRangeType &factor );
-
-    /** \copydoc Dune::LocalFunction::axpy(const PointType &x,const RangeType &factor1,const JacobianRangeType &factor2) */
-    template< class PointType >
-    inline void axpy ( const PointType &x,
-                       const RangeType &factor1,
-                       const JacobianRangeType &factor2 );
-
-    /** \copydoc Dune::LocalFunction::evaluate(const FieldVector<deriType,diffOrder> &diffVariable,const PointType &x,RangeType &ret) const */
-    template< int diffOrder, class PointType >
-    inline void evaluate ( const FieldVector< deriType, diffOrder > &diffVariable,
-                           const PointType &x,
-                           RangeType &ret ) const;
-
-    /** \copydoc Dune::LocalFunction::evaluate(const PointType &x,RangeType &ret) const */
-    template< class PointType >
-    inline void evaluate( const PointType &x,
-                          RangeType &ret ) const;
-
-    /** \copydoc Dune::LocalFunction::jacobian(const PointType &x,JacobianRangeType &ret) const */
-    template< class PointType >
-    inline void jacobian ( const PointType &x,
-                           JacobianRangeType &ret ) const;
-
     inline int numScalarDofs () const
     {
       const int numDofs = asImp().numDofs();
-      assert( numDofs % N == 0 );
-      return numDofs / N;
+      assert( numDofs % dimRange == 0 );
+      return numDofs / dimRange;
     }
-
-  protected:
-    inline void rightMultiply ( const JacobianRangeType &factor,
-                                const LocalCoordinateType &x,
-                                LocalJacobianRangeType &result ) const;
   };
 
   /** \} */

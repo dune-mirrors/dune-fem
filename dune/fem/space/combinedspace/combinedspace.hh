@@ -151,7 +151,8 @@ namespace Dune
     // type of singleton factory 
     typedef VectorialBaseFunctionSet< BaseFunctionSpaceType, CachingStorage >
       BaseFunctionSetImp;
-    typedef VectorialBaseFunctionProxy<BaseFunctionSetImp> BaseFunctionSetType;
+    //typedef VectorialBaseFunctionProxy<BaseFunctionSetImp> BaseFunctionSetType;
+    typedef SimpleBaseFunctionProxy<BaseFunctionSetImp> BaseFunctionSetType;
 
     typedef CombinedMapper< ContainedMapperType, N, policy > MapperType;
     

@@ -1,7 +1,7 @@
 #ifndef DUNE_BASEFUNCTIONSETS_HH
 #define DUNE_BASEFUNCTIONSETS_HH
 
-#include <dune/common/fvector.hh>
+#include <dune/common/fmatrix.hh>
 
 #include <dune/fem/space/common/dofstorage.hh>
 #include <dune/fem/space/basefunctions/basefunctioninterface.hh>
@@ -58,6 +58,8 @@ namespace Dune
     typedef BaseFunctionSetDefault< Traits > BaseType;
     
   public:
+    enum { dimRange = FunctionSpaceType :: dimRange };  
+      
     typedef typename FunctionSpaceType :: DomainType DomainType;
     typedef typename FunctionSpaceType :: RangeType RangeType;
     typedef typename FunctionSpaceType :: RangeFieldType DofType;
@@ -108,15 +110,132 @@ namespace Dune
       storage_.jacobian( baseFunction, x, phi );
     }
     
+    template< int diffOrder, class PointType, class LocalDofVectorType >
+    inline void evaluate ( const FieldVector< int, diffOrder > &diffVariable,
+                           const PointType &x,
+                           const LocalDofVectorType& dofs, 
+                           RangeType &ret ) const
+    {
+      ret = 0;
+
+      const int numBase = numBaseFunctions ();
+      for( int i = 0; i < numBase ; ++i )
+      {
+        RangeType phi;
+        evaluate( i, diffVariable, x, phi ); 
+        ret.axpy( dofs[ i ], phi );
+      }
+    }
+
+    template< class PointType, class LocalDofVectorType >
+    inline void evaluate ( const PointType &x,
+                           const LocalDofVectorType& dofs, 
+                           RangeType &ret ) const
+    {
+      ret = 0;
+
+      const int numBase = numBaseFunctions ();
+      for( int i = 0; i < numBase ; ++i )
+      {
+        RangeType phi;
+        evaluate( i, x, phi ); 
+        ret.axpy( dofs[ i ], phi );
+      }
+    }
+
+    template< class PointType, 
+              class GeometryJacobianInverseType,
+              class LocalDofVectorType, 
+              class GlobalJacobianRangeType>
+    inline void jacobian ( const PointType &x,
+                           const GeometryJacobianInverseType& gjit, 
+                           const LocalDofVectorType& dofs, 
+                           GlobalJacobianRangeType &ret ) const
+    {
+      ret = 0;
+
+      JacobianRangeType refJacobian( 0 );
+      const int numBase = numBaseFunctions ();
+      for( int i = 0; i < numBase ; ++i )
+      {
+        JacobianRangeType grad;
+        jacobian( i, x, grad );
+        
+        for( int r = 0; r < dimRange; ++r )
+          refJacobian[ r ].axpy( dofs[ i ], grad[ r ] );
+      }
+
+      for( int r = 0; r < dimRange; ++r )
+        FieldMatrixHelper :: multiply( gjit, refJacobian[ r ], ret[ r ] );
+    }
+    
+    template< class PointType, class LocalDofVectorType >
+    inline void axpy ( const PointType &x,
+                       const RangeType &rangeFactor,
+                       LocalDofVectorType& dofs ) const
+    {
+      const int numBase = numBaseFunctions ();
+      for( int i = 0; i < numBase ; ++i )
+      {
+        RangeType phi;
+        evaluate( i, x, phi ); 
+        dofs[ i ] += phi * rangeFactor;
+      }
+    }
+    
+    template< class PointType, class GeometryJacobianInverseType, 
+              class GlobalJacobianRangeType,
+              class LocalDofVectorType >
+    inline void axpy ( const PointType &x,
+                       const GeometryJacobianInverseType& gjit, 
+                       const GlobalJacobianRangeType &jacFactor,
+                       LocalDofVectorType& dofs ) const
+    {
+      GlobalJacobianRangeType jacFactorInv;
+      FieldMatrixHelper :: multiply( jacFactor, gjit, jacFactorInv );
+
+      const int numBase = numBaseFunctions ();
+      for( int i = 0; i < numBase; ++i )
+      {
+        JacobianRangeType grad;
+        jacobian( i, x, grad );
+        for( int r = 0; r < dimRange; ++r )
+          dofs[ i ] += grad[ r ] * jacFactorInv[ r ];
+      }
+    }
+ 
+
+    template< class PointType, class GeometryJacobianInverseType, 
+              class GlobalJacobianRangeType,
+              class LocalDofVectorType >
+    inline void axpy ( const PointType &x,
+                       const GeometryJacobianInverseType& gjit, 
+                       const RangeType& rangeFactor,
+                       const GlobalJacobianRangeType &jacFactor,
+                       LocalDofVectorType& dofs ) const
+    {
+      GlobalJacobianRangeType jacFactorInv;
+      FieldMatrixHelper :: multiply( jacFactor, gjit, jacFactorInv );
+
+      const int numBase = numBaseFunctions ();
+      for( int i = 0; i < numBase; ++i )
+      {
+        RangeType phi;
+        evaluate( i, x, phi );
+        dofs[ i ] += phi * rangeFactor;
+
+        JacobianRangeType grad;
+        jacobian( i, x, grad );
+        for( int r = 0; r < dimRange; ++r )
+          dofs[ i ] += grad[ r ] * jacFactorInv[ r ];
+      }
+    }
+ 
   private:
     StandardBaseFunctionSet( const StandardBaseFunctionSet& );
 
   protected:
     typename Traits::StorageType storage_;
-    
-    //mutable FieldVector<int, 0> diffVar0_;
-    //mutable RangeType tmp_;
-    //mutable JacobianRangeType jTmp_;
   };
 
 
@@ -181,7 +300,7 @@ namespace Dune
     
   protected:
     StorageType storage_;
-    DofConversionUtility<PointBased> util_;
+    PointBasedDofConversionUtility< dimRange > util_;
 
   public:
     using BaseType :: evaluate;
@@ -216,6 +335,45 @@ namespace Dune
       return storage_.numBaseFunctions();
     }
 
+    /** \copydoc Dune::BaseFunctionSetInterface::evaluate(const int baseFunction,const FieldVector<int,diffOrd> &diffVariable,const PointType &x,RangeType &phi) const */
+    template< int diffOrd, class PointType >
+    inline void evaluate ( const int baseFunction,
+                           const FieldVector< int, diffOrd > &diffVariable,
+                           const PointType &x,
+                           RangeType &phi ) const
+    {
+      ScalarRangeType tmp;
+      const int scalarBaseFunction = util_.containedDof( baseFunction );
+      evaluateScalar( scalarBaseFunction, diffVariable, x, tmp );
+
+      phi = 0;
+      phi[ util_.component( baseFunction ) ] = tmp[ 0 ];
+    }
+
+    /** \copydoc Dune::BaseFunctionSetInterface::jacobian(const int baseFunction,const PointType &x,JacobianRangeType &phi) const */
+    template< class PointType >
+    inline void jacobian ( const int baseFunction,
+                           const PointType &x, 
+                           JacobianRangeType &phi ) const
+    {
+      ScalarJacobianRangeType tmp;
+      const int scalarBaseFunction = util_.containedDof( baseFunction );
+      jacobianScalar( scalarBaseFunction, x, tmp );
+
+      phi = 0;
+      phi[ util_.component( baseFunction )] = tmp[ 0 ];
+    }
+
+    template< class PointType >
+    inline void jacobianScalar ( const int baseFunction,
+                                 const PointType &x,
+                                 ScalarJacobianRangeType &phi ) const
+    {
+      assert( (baseFunction >= 0) && (baseFunction < numDifferentBaseFunctions()) );
+      storage_.jacobian( baseFunction, x, phi );
+    }
+
+  protected:
     template< int diffOrd, class PointType >
     inline void evaluateScalar ( const int baseFunction,
                                  const FieldVector< int, diffOrd > &diffVariable,
@@ -235,43 +393,7 @@ namespace Dune
       evaluateScalar( baseFunction, diffVar, x, phi );
     }
     
-    /** \copydoc Dune::BaseFunctionSetInterface::evaluate(const int baseFunction,const FieldVector<int,diffOrd> &diffVariable,const PointType &x,RangeType &phi) const */
-    template< int diffOrd, class PointType >
-    inline void evaluate ( const int baseFunction,
-                           const FieldVector< int, diffOrd > &diffVariable,
-                           const PointType &x,
-                           RangeType &phi ) const
-    {
-      ScalarRangeType tmp;
-      const int scalarBaseFunction = util_.containedDof( baseFunction );
-      evaluateScalar( scalarBaseFunction, diffVariable, x, tmp );
-
-      phi = 0;
-      phi[ util_.component( baseFunction ) ] = tmp[ 0 ];
-    }
-
-    template< class PointType >
-    inline void jacobianScalar ( const int baseFunction,
-                                 const PointType &x,
-                                 ScalarJacobianRangeType &phi ) const
-    {
-      assert( (baseFunction >= 0) && (baseFunction < numDifferentBaseFunctions()) );
-      storage_.jacobian( baseFunction, x, phi );
-    }
-
-    /** \copydoc Dune::BaseFunctionSetInterface::jacobian(const int baseFunction,const PointType &x,JacobianRangeType &phi) const */
-    template< class PointType >
-    inline void jacobian ( const int baseFunction,
-                           const PointType &x, 
-                           JacobianRangeType &phi ) const
-    {
-      ScalarJacobianRangeType tmp;
-      const int scalarBaseFunction = util_.containedDof( baseFunction );
-      jacobianScalar( scalarBaseFunction, x, tmp );
-
-      phi = 0;
-      phi[ util_.component( baseFunction )] = tmp[ 0 ];
-    }
+#if 0
     
     /** \copydoc Dune::BaseFunctionSetInterface::evaluateSingle(const int baseFunction,const PointType &x,const RangeType &psi) const */
     template< class PointType >
@@ -285,7 +407,136 @@ namespace Dune
       evaluateScalar( scalarBaseFunction, x, phi );
       return psi[ util_.component( baseFunction ) ] * phi[ 0 ];
     }
+#endif
     
+  public:
+    template< int diffOrder, class PointType, class LocalDofVectorType >
+    inline void evaluate ( const FieldVector< int, diffOrder > &diffVariable,
+                           const PointType &x,
+                           const LocalDofVectorType& dofs, 
+                           RangeType &ret ) const
+    {
+      ret = 0;
+
+      const int numScalarBase = numDifferentBaseFunctions ();
+      for( int i = 0; i < numScalarBase ; ++i )
+      {
+        ScalarRangeType phi;
+        evaluateScalar( i, diffVariable, x, phi ); 
+        for( int r = 0; r < dimRange; ++r )
+        { 
+          ret[ r ] += phi[ 0 ] * dofs[ util_.combinedDof( i , r ) ];
+        }
+      }
+    }
+
+    template< class PointType, class LocalDofVectorType >
+    inline void evaluate ( const PointType &x,
+                           const LocalDofVectorType& dofs, 
+                           RangeType &ret ) const
+    {
+      ret = 0;
+
+      const int numScalarBase = numDifferentBaseFunctions ();
+      for( int i = 0; i < numScalarBase ; ++i )
+      {
+        ScalarRangeType phi;
+        evaluateScalar( i, x, phi ); 
+        for( int r = 0; r < dimRange; ++r )
+        { 
+          ret[ r ] += phi[ 0 ] * dofs[ util_.combinedDof( i , r ) ];
+        }
+      }
+    }
+
+    template< class PointType, 
+              class GeometryJacobianInverseType,
+              class LocalDofVectorType, 
+              class GlobalJacobianRangeType>
+    inline void jacobian ( const PointType &x,
+                           const GeometryJacobianInverseType& gjit, 
+                           const LocalDofVectorType& dofs, 
+                           GlobalJacobianRangeType &ret ) const
+    {
+      ret = 0;
+
+      const int numScalarBase = numDifferentBaseFunctions ();
+      for( int i = 0; i < numScalarBase ; ++i )
+      {
+        ScalarJacobianRangeType gradPhiRef, gradPhi;
+        jacobianScalar( i, x, gradPhiRef );
+
+        FieldMatrixHelper :: multiply( gjit, gradPhiRef[ 0 ], gradPhi[ 0 ] );
+
+        for( int r = 0; r < dimRange; ++r )
+          ret[ r ].axpy( dofs[ util_.combinedDof( i , r ) ], gradPhi[ 0 ] );
+      }
+    }
+    
+    template< class PointType, class LocalDofVectorType >
+    inline void axpy ( const PointType &x,
+                       const RangeType &rangeFactor,
+                       LocalDofVectorType& dofs ) const
+    {
+      const int numScalarBase = numDifferentBaseFunctions ();
+      for( int i = 0; i < numScalarBase ; ++i )
+      {
+        ScalarRangeType phi;
+        evaluateScalar( i, x, phi ); 
+        for( int r = 0; r < dimRange; ++r )
+        { 
+          dofs[ util_.combinedDof( i , r ) ] += phi[ 0 ]  * rangeFactor[ r ];
+        }
+      }
+    }
+    
+    template< class PointType, class GeometryJacobianInverseType, 
+              class GlobalJacobianRangeType,
+              class LocalDofVectorType >
+    inline void axpy ( const PointType &x,
+                       const GeometryJacobianInverseType& gjit, 
+                       const GlobalJacobianRangeType &jacFactor,
+                       LocalDofVectorType& dofs ) const
+    {
+      GlobalJacobianRangeType jacFactorInv;
+      FieldMatrixHelper :: multiply( jacFactor, gjit, jacFactorInv );
+
+      const int numScalarBase = numDifferentBaseFunctions ();
+      for( int i = 0; i < numScalarBase; ++i )
+      {
+        ScalarJacobianRangeType grad;
+        jacobianScalar( i, x, grad );
+        for( int r = 0; r < dimRange; ++r )
+          dofs[ util_.combinedDof( i , r ) ] += grad[ 0 ] * jacFactorInv[ r ];
+      }
+    }
+ 
+
+    template< class PointType, class GeometryJacobianInverseType, 
+              class GlobalJacobianRangeType,
+              class LocalDofVectorType >
+    inline void axpy ( const PointType &x,
+                       const GeometryJacobianInverseType& gjit, 
+                       const RangeType& rangeFactor,
+                       const GlobalJacobianRangeType &jacFactor,
+                       LocalDofVectorType& dofs ) const
+    {
+      GlobalJacobianRangeType jacFactorInv;
+      FieldMatrixHelper :: multiply( jacFactor, gjit, jacFactorInv );
+
+      const int numScalarBase = numDifferentBaseFunctions ();
+      for( int i = 0; i < numScalarBase; ++i )
+      {
+        ScalarRangeType phi;
+        evaluateScalar( i, x, phi );
+        ScalarJacobianRangeType grad;
+        jacobianScalar( i, x, grad );
+        for( int r = 0; r < dimRange; ++r )
+          dofs[ util_.combinedDof( i , r ) ] += (phi[ 0 ] * rangeFactor[ r ]) + (grad[ 0 ] * jacFactorInv[ r ]);
+      }
+    }
+ 
+#if 0
     /** \copydoc Dune::BaseFunctionSetInterface::evaluateGradientSingle(const int baseFunction,const EntityType &entity,const PointType &x,const JacobianRangeType &psi) const */
     template< class EntityType, class PointType >
     inline RangeFieldType evaluateGradientSingle( const int baseFunction,
@@ -311,6 +562,7 @@ namespace Dune
       jacobianInverseTransposed.umv( gradPhi[ 0 ], gradScaled );
       return gradScaled * psi[ util_.component( baseFunction ) ];
     }
+#endif
   };
 
   /** \} */
