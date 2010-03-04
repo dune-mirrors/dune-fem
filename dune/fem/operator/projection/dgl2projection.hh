@@ -87,8 +87,6 @@ protected:
 
     typedef typename FunctionImp::LocalFunctionType LocalFType;
     
-    typename DiscreteFunctionSpaceType::RangeType ret (0.0);
-    typename DiscreteFunctionSpaceType::RangeType phi (0.0);
     const DiscreteFunctionSpaceType& space =  discFunc.space();
 
     // type of quadrature 
@@ -123,11 +121,9 @@ protected:
       // get local function of argument 
       const LocalFType f = func.localFunction(en);
 
-      // get base function set 
-      const BaseFunctionSetType & baseset = lf.baseFunctionSet();
-
       const int quadNop = quad.nop();
-      const int numDofs = lf.numDofs();
+
+      typename DiscreteFunctionSpaceType :: RangeType value ;
 
       for(int qP = 0; qP < quadNop ; ++qP) 
       {
@@ -136,14 +132,13 @@ protected:
              quad.weight(qP) * geo.integrationElement( quad.point(qP) ); // general case 
 
         // evaluate function 
-        f.evaluate(quad[qP], ret);
+        f.evaluate(quad[ qP ], value );
         
-        // do projection 
-        for(int i=0; i<numDofs; ++i) 
-        {
-          baseset.evaluate(i, quad[qP], phi);
-          lf[i] += intel * (ret * phi) ;
-        }
+        // apply weight 
+        value *= intel;
+
+        // add to local function 
+        lf.axpy( quad[ qP ], value );
       }
 
       // in case of non-linear mapping apply inverse 
