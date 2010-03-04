@@ -43,7 +43,6 @@ public:
   typedef typename DiscreteFunctionSpaceType :: DomainType DomainType;
   typedef CachingQuadrature<GridPartType,0> QuadratureType;
   typedef typename GridType::template Codim<0>::Entity::LocalGeometry LocalGeometry;
-  typedef typename DiscreteFunctionSpaceType :: BaseFunctionSetType BaseFunctionSetType;
 
 protected:
   using BaseType :: calcWeight;
@@ -76,35 +75,33 @@ public:
     if( entitiesAreCopies( df_.space().indexSet(), father, son ) )
       return;
     
-    RangeType ret (0.0);
-    RangeType phi (0.0);
     assert( !father.isLeaf() );
     const RangeFieldType weight = (weight_ < 0.0) ? calcWeight( father, son ) : weight_;
 
-    LocalFunctionType vati_ = df_.localFunction( father);
-    LocalFunctionType sohn_ = df_.localFunction( son   );
+    LocalFunctionType vati = df_.localFunction( father);
+    LocalFunctionType sohn = df_.localFunction( son   );
 
-    const BaseFunctionSetType & baseset =
-      vati_.baseFunctionSet();
     const LocalGeometry& geometryInFather = son.geometryInFather();
 
-    const int vati_numDofs = vati_.numDofs();
+    // clear father on initialize 
     if( initialize )
     {
-      for(int i=0; i<vati_numDofs; ++i) 
-        vati_[i] = 0.0;
+      vati.clear();
     }
     
-    QuadratureType quad(son,quadord_);
+    RangeType value ( 0 );
+    QuadratureType quad( son, quadord_ );
     const int nop = quad.nop();
     for( int qP = 0; qP < nop; ++qP )
     {
-      sohn_.evaluate(quad[qP],ret);
-      for(int i=0; i<vati_numDofs; ++i) 
-      {
-        baseset.evaluate(i,geometryInFather.global(quad.point(qP)),phi);
-        vati_[i] += quad.weight(qP) * weight * (ret * phi) ;
-      }
+      // evaluate son function 
+      sohn.evaluate( quad[ qP ], value );
+
+      // apply weight 
+      value *= quad.weight( qP ) * weight ;
+
+      // add to father 
+      vati.axpy( geometryInFather.global(quad.point(qP) ), value );
     }
   }
 
@@ -116,30 +113,27 @@ public:
     if( entitiesAreCopies( df_.space().indexSet(), father, son ) )
       return;
     
-    RangeType ret (0.0);
-    RangeType phi (0.0);
+    LocalFunctionType vati = df_.localFunction( father);
+    LocalFunctionType sohn = df_.localFunction( son   );
 
-    LocalFunctionType vati_ = df_.localFunction( father);
-    LocalFunctionType sohn_ = df_.localFunction( son   );
+    // clear son 
+    sohn.clear();
 
-    const int sohn_numDofs = sohn_.numDofs();
-    for(int i=0; i<sohn_numDofs; ++i) sohn_[i] = 0.;
-
-    const BaseFunctionSetType &baseset
-      = sohn_.baseFunctionSet();
     const LocalGeometry& geometryInFather = son.geometryInFather();
 
-    QuadratureType quad(son,quadord_);
+    RangeType value ( 0 );
+    QuadratureType quad( son, quadord_ );
     const int nop = quad.nop();
     for( int qP = 0; qP < nop; ++qP )
     {
-      vati_.evaluate(geometryInFather.global(quad.point(qP)),ret);
+      // evaluate father 
+      vati.evaluate(geometryInFather.global(quad.point(qP)), value );
       
-      for( int i = 0; i < sohn_numDofs; ++i )
-      {
-        baseset.evaluate(i,quad[qP],phi);
-        sohn_[i] += quad.weight(qP) * (ret * phi) ;
-      }
+      // apply weight 
+      value *= quad.weight( qP );
+
+      // add to son 
+      sohn.axpy( quad[ qP ], value );
     }
   }
 
