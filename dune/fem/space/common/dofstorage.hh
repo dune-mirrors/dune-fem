@@ -108,6 +108,42 @@ namespace Dune {
     int size_;
   };
 
+  //! Specialisation for PointBased approach
+  template <unsigned int dimRange>
+  class PointBasedDofConversionUtility {
+  public:
+    //! Constructor
+    //! \param numComponents Number of components in range vector (==dimRange).
+    PointBasedDofConversionUtility(int numComponents) 
+    {}
+
+    //! Find out what type of policy this is.
+    static DofStoragePolicy policy() { return PointBased; }
+
+    //! The size of the range vector cannot change, hence this method does
+    //! nothing. (In fact, this method is only here so that you can treat
+    //! all DofStorageUtility objects identically without knowing whether they
+    //! are PointBased or VariableBased.)
+    void newSize(const int size) {} // just do nothing
+
+    //! Component which the actual base function index gives a contribution
+    //! \return is in range {0, dimRange-1}
+    int component(const int combinedIndex) const { 
+      return combinedIndex % dimRange; 
+    }
+    //! Number of the (scalar) base function belonging to base function index
+    int containedDof(const int combinedIndex) const {
+      return combinedIndex / dimRange;
+    }
+
+    //! Reverse operation of containedDof, component
+    //! i == combinedDof(containedDof(i), component(i))
+    int combinedDof(const int containedIndex, 
+                    const int component) const {
+      return containedIndex * dimRange + component;
+    }
+  };
+
 } // end namespace Dune
 
 #endif
