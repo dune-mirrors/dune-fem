@@ -33,15 +33,17 @@ class RestrictProlongDiscontinuousSpace
 
 public:
   typedef DiscreteFunctionImp DiscreteFunctionType;
-  typedef typename DiscreteFunctionType::FunctionSpaceType FunctionSpaceType;
-  typedef typename FunctionSpaceType :: GridPartType GridPartType;
-  typedef typename FunctionSpaceType :: GridType GridType;
+  typedef typename DiscreteFunctionType::DiscreteFunctionSpaceType DiscreteFunctionSpaceType;
+  typedef typename DiscreteFunctionSpaceType :: GridPartType GridPartType;
+  typedef typename DiscreteFunctionSpaceType :: GridType GridType;
   typedef typename DiscreteFunctionType::LocalFunctionType LocalFunctionType;
 
-  typedef typename DiscreteFunctionType::RangeFieldType RangeFieldType;
-  typedef typename DiscreteFunctionType::DomainType DomainType;
+  typedef typename DiscreteFunctionSpaceType :: RangeFieldType RangeFieldType;
+  typedef typename DiscreteFunctionSpaceType :: RangeType RangeType;
+  typedef typename DiscreteFunctionSpaceType :: DomainType DomainType;
   typedef CachingQuadrature<GridPartType,0> QuadratureType;
   typedef typename GridType::template Codim<0>::Entity::LocalGeometry LocalGeometry;
+  typedef typename DiscreteFunctionSpaceType :: BaseFunctionSetType BaseFunctionSetType;
 
 protected:
   using BaseType :: calcWeight;
@@ -74,15 +76,15 @@ public:
     if( entitiesAreCopies( df_.space().indexSet(), father, son ) )
       return;
     
-    typename FunctionSpaceType::RangeType ret (0.0);
-    typename FunctionSpaceType::RangeType phi (0.0);
+    RangeType ret (0.0);
+    RangeType phi (0.0);
     assert( !father.isLeaf() );
     const RangeFieldType weight = (weight_ < 0.0) ? calcWeight( father, son ) : weight_;
 
     LocalFunctionType vati_ = df_.localFunction( father);
     LocalFunctionType sohn_ = df_.localFunction( son   );
 
-    const typename FunctionSpaceType::BaseFunctionSetType & baseset =
+    const BaseFunctionSetType & baseset =
       vati_.baseFunctionSet();
     const LocalGeometry& geometryInFather = son.geometryInFather();
 
@@ -114,8 +116,8 @@ public:
     if( entitiesAreCopies( df_.space().indexSet(), father, son ) )
       return;
     
-    typename FunctionSpaceType::RangeType ret (0.0);
-    typename FunctionSpaceType::RangeType phi (0.0);
+    RangeType ret (0.0);
+    RangeType phi (0.0);
 
     LocalFunctionType vati_ = df_.localFunction( father);
     LocalFunctionType sohn_ = df_.localFunction( son   );
@@ -123,7 +125,7 @@ public:
     const int sohn_numDofs = sohn_.numDofs();
     for(int i=0; i<sohn_numDofs; ++i) sohn_[i] = 0.;
 
-    const typename FunctionSpaceType::BaseFunctionSetType &baseset
+    const BaseFunctionSetType &baseset
       = sohn_.baseFunctionSet();
     const LocalGeometry& geometryInFather = son.geometryInFather();
 
