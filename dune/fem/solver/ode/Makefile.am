@@ -12,8 +12,8 @@ else
 # otherwise install all 
 noinst_LTLIBRARIES = libodesolver.la
 if MPI
-libodesolver_la_CXXFLAGS = @AM_CPPFLAGS@ $(MPI_CPPFLAGS)
-libodesolver_la_LIBADD  = $(MPI_LDFLAGS) $(MPILIBS)
+libodesolver_la_CXXFLAGS = @AM_CPPFLAGS@ $(DUNEMPICPPFLAGS)
+libodesolver_la_LIBADD  = $(DUNEMPILDFLAGS) $(DUNEMPILIBS)
 else 
 libodesolver_la_CXXFLAGS = @AM_CPPFLAGS@
 libodesolver_la_LIBADD  = 
