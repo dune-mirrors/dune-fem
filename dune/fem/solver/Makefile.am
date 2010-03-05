@@ -9,7 +9,7 @@ noinst_LTLIBRARIES = libsolver.la
 libsolver_la_SOURCES =
 # if par DG was found, then ODE solver are not included  
 # if PARDG 
-libsolver_la_LIBADD =
+# libsolver_la_LIBADD =
 # else 
 libsolver_la_LIBADD = ode/libodesolver.la
 # endif
@@ -27,4 +27,3 @@ solver_HEADERS = inverseoperators.hh \
                  umfpacksolver.hh
 
 include $(top_srcdir)/am/global-rules
-
