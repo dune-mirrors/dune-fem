@@ -414,7 +414,8 @@ public:
       timeProvider_.provideTimeStepEstimate( cfl_ * this->op_.timeStepEstimate() );
     
       this->linsolver_.reset_number_of_iterations();
-      std::cout << "number of iterations of linear solver  " << iter << std::endl;
+      if( Parameter::verbose() )
+        std::cout << "number of iterations of linear solver  " << iter << std::endl;
    }
    else 
    {
