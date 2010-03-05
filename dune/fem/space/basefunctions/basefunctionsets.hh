@@ -109,7 +109,8 @@ namespace Dune
     {
       storage_.jacobian( baseFunction, x, phi );
     }
-    
+
+#if 0
     template< int diffOrder, class PointType, class LocalDofVectorType >
     inline void evaluate ( const FieldVector< int, diffOrder > &diffVariable,
                            const PointType &x,
@@ -230,6 +231,7 @@ namespace Dune
           dofs[ i ] += grad[ r ] * jacFactorInv[ r ];
       }
     }
+#endif
  
   private:
     StandardBaseFunctionSet( const StandardBaseFunctionSet& );
