@@ -260,12 +260,17 @@ namespace Dune
     
     /** \copydoc Dune::BaseFunctionSetInterface::evaluate(const int baseFunction,const PointType &x,RangeType &phi) const */
     template< class PointType >
-    inline void evaluate ( const int baseFunction,
-                           const PointType &x,
-                           RangeType &phi ) const
+    void evaluate ( const int baseFunction, const PointType &x, RangeType &phi ) const
     {
       FieldVector< deriType, 0 > diffVar;
       asImp().evaluate( baseFunction, diffVar, x, phi );
+    }
+
+    // This declaration is only to avoid a problem with specialization
+    template< class PointType >
+    void evaluate ( const unsigned int baseFunction, const PointType &x, RangeType &phi ) const
+    {
+      evaluate( int( baseFunction ), x, phi );
     }
 
     /** \copydoc Dune::BaseFunctionSetInterface::jacobian(const int baseFunction,const PointType &x, JacobianRangeType &phi) const */
