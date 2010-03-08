@@ -453,6 +453,21 @@ namespace Dune
           dofs[ i ] += grad[ r ] * jacFactorInv[ r ];
       }
     }
+
+    template< class QuadratureType,
+              class LocalDofVectorType,
+              class RangeVectorType>
+    inline void
+    evaluateRanges ( const QuadratureType& quad,
+                     const LocalDofVectorType& dofs,
+                     RangeVectorType &rangeVector) const
+    {
+      const size_t quadNop = quad.nop();
+      for( size_t qp = 0; qp < quadNop; ++qp )
+      {
+        evaluate( quad[ qp ], dofs, rangeVector[ qp ] );
+      }
+    }
   };
 
   /** \} */

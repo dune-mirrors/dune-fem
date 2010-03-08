@@ -1,6 +1,8 @@
 #ifndef DUNE_BASEFUNCTIONSTORAGE_HH
 #define DUNE_BASEFUNCTIONSTORAGE_HH
 
+//#define DUNE_FEM_BASEFUNC_USE_SSE
+
 #include <map>
 #include <vector>
 #include <list>
@@ -12,6 +14,8 @@
 #include <dune/fem/space/basefunctions/basefunctionfactory.hh>
 #include <dune/fem/space/basefunctions/storageinterface.hh>
 #include <dune/fem/quadrature/quadrature.hh>
+
+#include <dune/fem/storage/ssematrixdynamic.hh>
 
 namespace Dune
 {
@@ -59,6 +63,66 @@ namespace Dune
     //! return geometry type 
     GeometryType geometryType () const { return elementGeometry_; }
 
+    // default implementation to fill cache with base function evaluation 
+    template <class StorageType,
+              class QuadratureType,
+              class RangeMatrixType>
+    static inline 
+    void fillRangeCache(const StorageType& storage,
+                        const QuadratureType& quad, 
+                        RangeMatrixType& ranges ) 
+    {
+      // for all quad points evaluate all basis functions 
+      const size_t quadNop = quad.nop();
+      const int numBase = storage.numBaseFunctions();
+
+      FieldVector<int, 0> diffVar;
+#ifndef DUNE_FEM_BASEFUNC_USE_SSE
+      ranges.resize( quadNop );
+#endif
+      for( size_t qp = 0; qp < quadNop; ++qp ) 
+      {
+#ifndef DUNE_FEM_BASEFUNC_USE_SSE
+        ranges[ qp ].resize( numBase );
+#endif
+        for( int i = 0 ; i< numBase; ++i ) 
+        {
+#ifndef DUNE_FEM_BASEFUNC_USE_SSE
+          storage.evaluate( i, diffVar, quad[ qp ], ranges[ qp ][ i ] );
+#else 
+          RangeType val;
+          storage.evaluate( i, diffVar, quad[ qp ], val );
+          ranges[ qp ][ i ]  = val[ 0 ];
+#endif
+        }
+      }
+    }
+
+    // default implementation to fill cache with base function evaluation 
+    template <class StorageType,
+              class QuadratureType,
+              class JacobianRangeVectorType>
+    static inline 
+    void fillJacobianCache(const StorageType& storage,
+                           const QuadratureType& quad, 
+                           JacobianRangeVectorType& jacobians)
+    {
+      // for all quad points evaluate all basis functions 
+      const size_t quadNop = quad.nop();
+      const int numBase = storage.numBaseFunctions();
+
+      FieldVector<int, 0> diffVar;
+      jacobians.resize( quadNop );
+      for( size_t qp = 0; qp < quadNop; ++qp ) 
+      {
+        jacobians[ qp ].resize( numBase );
+        for( int i = 0 ; i< numBase; ++i ) 
+        {
+          storage.jacobian( i, quad[ qp ], jacobians[ qp ][ i ] );
+        }
+      }
+    }
+
   private:
     typedef typename FactoryType::BaseFunctionType BaseFunctionType;
 
@@ -70,8 +134,6 @@ namespace Dune
   protected:
     const GeometryType elementGeometry_;
   };
-
-
 
   /** \brief simple base function storage
    *
@@ -95,6 +157,7 @@ namespace Dune
     typedef typename FunctionSpaceType :: RangeType RangeType;
     typedef typename FunctionSpaceType :: JacobianRangeType JacobianRangeType;
 
+    typedef MutableArray< MutableArray<RangeType> >         RangeVectorType;
   public:
     using BaseType :: evaluate;
     using BaseType :: jacobian;
@@ -122,8 +185,19 @@ namespace Dune
     {
       jacobian( baseFunction, coordinate( x ), ret );
     }
-  };
 
+    /*
+    template <class QuadratureType> 
+    const RangeVectorType& evaluate( const QuadratureType& quad ) const 
+    {
+      this->fillTemporaryCache( *this, quad, ranges_ );
+      return ranges_;
+    }
+    */
+
+  protected:  
+    mutable RangeVectorType ranges_;
+  };
 
 
   //! \brief Storage scheme which caches evaluations of base function values
@@ -150,16 +224,23 @@ namespace Dune
     typedef typename FunctionSpaceType :: RangeType RangeType;
     typedef typename FunctionSpaceType :: JacobianRangeType JacobianRangeType;
 
-  private:
-    typedef typename FunctionSpaceImp::DomainFieldType RealType;
+    typedef typename FunctionSpaceImp :: RangeFieldType  RealType;
+
     typedef MutableArray< MutableArray<RangeType> >         RangeVectorType;
     typedef MutableArray< MutableArray<JacobianRangeType> > JacobianRangeVectorType;
+
+    typedef Fem :: SSEMatrix< RealType > RangeCacheMatrixType ;
+    typedef std::vector< std::pair< RangeCacheMatrixType*, RangeCacheMatrixType* > > RangeCacheMatrixContainerType ;
+
+  private:
     typedef std::map<size_t, bool> RangeStoredType;
     typedef std::map<size_t, bool> JacobianRangeStoredType;
     typedef typename RangeStoredType::iterator RangeIteratorType;
     typedef typename JacobianRangeStoredType::iterator JacobianRangeIteratorType;
     typedef std::pair<
       RangeIteratorType, JacobianRangeIteratorType> ReturnPairType;
+
+
     typedef MutableArray< RangeVectorType >         RangeContainerType;
     typedef MutableArray< JacobianRangeVectorType > JacobianRangeContainerType;
 
@@ -200,6 +281,37 @@ namespace Dune
         storage.jacobian(baseFunct,quad.point(quadPoint),result); 
       }
 
+      static const RangeCacheMatrixType& 
+      evaluate(const ThisType& storage,
+               const QuadratureType& quad, 
+               RangeCacheMatrixContainerType& rangeMatrices)
+      {
+        assert( rangeMatrices[ quad.id() ].second );
+        RangeCacheMatrixType& matrix = * (rangeMatrices[ quad.id() ].second);
+        storage.fillRangeCache( storage, quad, matrix );
+        return matrix; 
+      }
+
+      static const RangeVectorType& 
+      evaluate(const ThisType& storage,
+               const QuadratureType& quad, 
+               const RangeContainerType&,
+               RangeVectorType& rangeTmp )
+      {
+        storage.fillRangeCache( storage, quad, rangeTmp );
+        return rangeTmp;
+      }
+
+      static const JacobianRangeVectorType& 
+      jacobian(const ThisType& storage,
+               const QuadratureType& quad, 
+               const JacobianRangeContainerType&,
+               const JacobianRangeVectorType& jacobianTmp )
+      {
+        storage.fillJacobianCache( storage, quad, jacobianTmp );
+        return jacobianTmp;
+      }
+      
     };
     
     //! evaluation for CachingQuadratures 
@@ -243,6 +355,34 @@ namespace Dune
       {
         result = jacobians[quad.id()][quad.cachingPoint(quadPoint)][baseFunct];
       }
+
+      static const RangeCacheMatrixType& 
+      evaluate(const ThisType& storage,
+               const QuadratureType& quad, 
+               const RangeCacheMatrixContainerType& rangeMatrices)
+      {
+        assert( rangeMatrices[ quad.id() ].first );
+        return * (rangeMatrices[ quad.id() ].first);
+      }
+
+      static const RangeVectorType& 
+      evaluate(const ThisType& storage,
+               const QuadratureType& quad, 
+               const RangeContainerType& ranges,
+               RangeVectorType& )
+      {
+        return ranges[ quad.id() ];
+      }
+
+      static const JacobianRangeVectorType& 
+      jacobian(const ThisType& storage,
+               const QuadratureType& quad, 
+               const JacobianRangeContainerType& jacobians,
+               const JacobianRangeVectorType& )
+      {
+        return jacobians[ quad.id() ];
+      }
+      
     };
 
   public:
@@ -283,6 +423,28 @@ namespace Dune
                            const QuadraturePointWrapper< QuadratureType > &x,
                            JacobianRangeType &ret ) const;
 
+    template <class QuadratureType> 
+    const RangeCacheMatrixType& getRangeMatrix( const QuadratureType& quad ) const 
+    {
+      enum { cachable = Conversion< QuadratureType, CachingInterface > :: exists };
+      return Evaluate< QuadratureType, cachable > :: evaluate( *this, quad, rangeMatrices_ );
+    }
+
+    template <class QuadratureType> 
+    const RangeVectorType& getRangeStorage( const QuadratureType& quad ) const 
+    {
+      enum { cachable = Conversion< QuadratureType, CachingInterface > :: exists };
+      return Evaluate< QuadratureType, cachable > :: evaluate( *this, quad, ranges_, rangeTmp_ );
+    }
+
+    template <class QuadratureType> 
+    const JacobianRangeVectorType& getJacobianStorage( const QuadratureType& quad ) const 
+    {
+      enum { cachable = Conversion< QuadratureType, CachingInterface > :: exists };
+      return Evaluate< QuadratureType, cachable > :: 
+        jacobian( *this, quad, jacobians_, jacobianTmp_ );
+    }
+
   private:
     // caches the quadrature, see also addEntry.. 
     inline void cacheQuadrature(size_t id, int codim) const;
@@ -294,11 +456,16 @@ namespace Dune
     template <int codim>
     inline ReturnPairType addEntry(size_t id) const;
 
-  private:
+  protected:
     mutable RangeContainerType ranges_;
     mutable JacobianRangeContainerType jacobians_;
     mutable RangeStoredType rangestored_;
     mutable JacobianRangeStoredType jacobianstored_;
+
+    mutable RangeCacheMatrixContainerType rangeMatrices_;
+
+    mutable RangeVectorType rangeTmp_;
+    mutable JacobianRangeVectorType jacobianTmp_;
   };
 
 } // end namespace Dune

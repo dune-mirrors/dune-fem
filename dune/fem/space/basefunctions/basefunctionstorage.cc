@@ -193,11 +193,14 @@ namespace Dune
     ranges_[quadId].resize(points.size());
     jacobians_[quadId].resize(points.size());
 
-    for (size_t i = 0; i < points.size(); ++i) {
-      ranges_[quadId][i].resize(this->numBaseFunctions());
-      jacobians_[quadId][i].resize(this->numBaseFunctions());
+    const size_t pointSize = points.size();
+    const size_t numBaseFunctions = this->numBaseFunctions(); 
+    for (size_t i = 0; i < pointSize; ++i) 
+    {
+      ranges_[quadId][i].resize(numBaseFunctions);
+      jacobians_[quadId][i].resize(numBaseFunctions);
 
-      for (int j = 0; j < this->numBaseFunctions(); ++j) 
+      for (size_t j = 0; j < numBaseFunctions; ++j) 
       {
         // evaluate value and jacobian and store it 
         this->evaluate(j, diffVar, points[i], ranges_[quadId][i][j]);
@@ -205,6 +208,36 @@ namespace Dune
       }
     }
 
+    RangeCacheMatrixType* matrixPtr = new RangeCacheMatrixType( pointSize, numBaseFunctions );
+    RangeCacheMatrixType* matrixPtr2 = new RangeCacheMatrixType( pointSize, numBaseFunctions);
+    assert( matrixPtr && matrixPtr2 );
+
+    RangeCacheMatrixType& matrix = *matrixPtr; 
+    // copy entries 
+    for( size_t i = 0; i < pointSize; ++i) 
+    {
+      for (size_t j = 0; j < numBaseFunctions; ++j) 
+      {
+        //assert( ranges_[ quadId ][ i ][ j ].size() == 1 );
+        matrix[ i ][ j ] = ranges_[ quadId ][ i ][ j ][ 0 ];
+      }
+    }
+
+    if( rangeMatrices_.size() <= quadId ) 
+    {
+      rangeMatrices_.resize( quadId + 10 );
+      const size_t rangeSize = rangeMatrices_.size(); 
+      for( size_t i = 0; i < rangeSize; ++i ) 
+      {
+        if( rangestored_.find(quadId) == rangestored_.end() )
+        {
+          RangeCacheMatrixType* dummy = 0;
+          rangeMatrices_[ i ] = std::make_pair( dummy, dummy );
+        }
+      }
+    }
+
+    rangeMatrices_[ quadId ] = std::make_pair( matrixPtr , matrixPtr2 );
     return std::make_pair(rit, jit);
   }
 
