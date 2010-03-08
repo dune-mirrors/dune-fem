@@ -120,8 +120,10 @@ namespace Dune {
                               LocalFunctionTupleType &lfs, 
                               RangeTupleVectorType &rangeVec )
     {
+      assert( rangeVec.size() > 0 );
       resizeVector( quadrature, rangeVec, rangeVec[ 0 ] );
 
+      // evaluate local function or jacobian due to type of rangeVec
       ForEachValueVector< LocalFunctionTupleType, RangeTupleVectorType > forEach( lfs, rangeVec );
       LocalFunctionEvaluateQuadrature< QuadratureType > eval( quadrature );
       forEach.apply( eval );
