@@ -468,6 +468,26 @@ namespace Dune
         evaluate( quad[ qp ], dofs, rangeVector[ qp ] );
       }
     }
+
+    template< class QuadratureType,
+              class Geometry,
+              class LocalDofVectorType,
+              class JacobianRangeVectorType>
+    inline void
+    evaluateJacobians ( const QuadratureType& quad,
+                        const Geometry& geometry,
+                        const LocalDofVectorType& dofs,
+                        JacobianRangeVectorType &jacVector ) const
+    {
+      const size_t quadNop = quad.nop();
+      for( size_t qp = 0; qp < quadNop; ++qp )
+      {
+        jacobian( quad[ qp ], 
+                  geometry.jacobianInverseTransposed( quad.point( qp ) ),
+                  dofs, 
+                  jacVector[ qp ] );
+      }
+    }
   };
 
   /** \} */
