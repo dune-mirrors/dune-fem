@@ -334,15 +334,14 @@ namespace Dune
       return asImp().numDofs();
     }
 
-    /** \copydoc Dune::LocalFunction::axpy(const PointType &x,const JacobianRangeType &factor) */
     template< class QuadratureType, class VectorType  >
     inline void axpyQuadrature ( const QuadratureType &quad,
                                  const VectorType& factorVec )
     {
-      asImp().axpyQuadrature( quad, factorVec );
+      assert( factorVec.size() > 0 );
+      axpyQuadrature( quad, factorVec, factorVec[ 0 ] );
     }
 
-    /** \copydoc Dune::LocalFunction::axpy(const PointType &x,const JacobianRangeType &factor) */
     template< class QuadratureType, 
               class RangeVectorType , 
               class JacobianRangeVectorType >
@@ -350,17 +349,55 @@ namespace Dune
                                  const RangeVectorType& rangeVector,
                                  const JacobianRangeVectorType& jacobianVector )
     {
-      asImp().axpyQuadrature( quad, rangeVector, jacobianVector );
+      asImp().baseFunctionSet().axpyRanges   ( quad, rangeVector, asImp() );
+      asImp().baseFunctionSet().axpyJacobians( quad, entity().geometry(), jacobianVector, asImp() );
     }
     
-    /** \brief evaluate local function and store result in vector of RangeTypes or
-        vector of JacobianRangeTypes */
     template< class QuadratureType, class VectorType  >
     inline void 
     evaluateQuadrature( const QuadratureType &quad,
                         VectorType& result ) const 
     {
-      asImp().evaluateQuadrature( quad, result );
+      assert( result.size() > 0 );
+      evaluateQuadrature( quad, result, result[ 0 ] );
+    }
+
+  protected:  
+    template< class QuadratureType, class VectorType  >
+    inline void axpyQuadrature ( const QuadratureType &quad,
+                                 const VectorType& factorVec,
+                                 const RangeType& )
+    {
+      asImp().baseFunctionSet().axpyRanges( quad, factorVec, asImp() );
+    }
+
+    template< class QuadratureType, class VectorType  >
+    inline void axpyQuadrature ( const QuadratureType &quad,
+                                 const VectorType& factorVec,
+                                 const JacobianRangeType& )
+    {
+      asImp().baseFunctionSet().axpyJacobians( quad, entity().geometry(), factorVec, asImp() );
+    }
+
+    // evaluate local function and store results in vector of RangeTypes 
+    template< class QuadratureType, class VectorType  >
+    inline void 
+    evaluateQuadrature( const QuadratureType &quad,
+                        VectorType& result,
+                        const RangeType& ) const 
+    {
+      asImp().baseFunctionSet().evaluateRanges( quad, asImp(), result );
+    }
+
+    // evaluate jacobian of local function and store result in vector of
+    // JacobianRangeTypes 
+    template< class QuadratureType, class VectorType  >
+    inline void 
+    evaluateQuadrature( const QuadratureType &quad,
+                        VectorType& result,
+                        const JacobianRangeType& ) const 
+    {
+      asImp().baseFunctionSet().evaluateJacobians( quad, entity().geometry(), asImp(), result );
     }
   };
 
@@ -470,72 +507,6 @@ namespace Dune
       const int numDofs = asImp().numDofs();
       assert( numDofs % dimRange == 0 );
       return numDofs / dimRange;
-    }
-
-    template< class QuadratureType, class VectorType  >
-    inline void axpyQuadrature ( const QuadratureType &quad,
-                                 const VectorType& factorVec )
-    {
-      assert( factorVec.size() > 0 );
-      axpyQuadrature( quad, factorVec, factorVec[ 0 ] );
-    }
-
-    template< class QuadratureType, 
-              class RangeVectorType , 
-              class JacobianRangeVectorType >
-    inline void axpyQuadrature ( const QuadratureType &quad,
-                                 const RangeVectorType& rangeVector,
-                                 const JacobianRangeVectorType& jacobianVector )
-    {
-      asImp().baseFunctionSet().axpyRanges   ( quad, rangeVector, asImp() );
-      asImp().baseFunctionSet().axpyJacobians( quad, asImp().entity().geometry(), jacobianVector, asImp() );
-    }
-    
-    template< class QuadratureType, class VectorType  >
-    inline void 
-    evaluateQuadrature( const QuadratureType &quad,
-                        VectorType& result ) const 
-    {
-      assert( result.size() > 0 );
-      evaluateQuadrature( quad, result, result[ 0 ] );
-    }
-
-  protected:  
-    template< class QuadratureType, class VectorType  >
-    inline void axpyQuadrature ( const QuadratureType &quad,
-                                 const VectorType& factorVec,
-                                 const RangeType& )
-    {
-      asImp().baseFunctionSet().axpyRanges( quad, factorVec, asImp() );
-    }
-
-    template< class QuadratureType, class VectorType  >
-    inline void axpyQuadrature ( const QuadratureType &quad,
-                                 const VectorType& factorVec,
-                                 const JacobianRangeType& )
-    {
-      asImp().baseFunctionSet().axpyJacobians( quad, asImp().entity().geometry(), factorVec, asImp() );
-    }
-
-    // evaluate local function and store results in vector of RangeTypes 
-    template< class QuadratureType, class VectorType  >
-    inline void 
-    evaluateQuadrature( const QuadratureType &quad,
-                        VectorType& result,
-                        const RangeType& ) const 
-    {
-      asImp().baseFunctionSet().evaluateRanges( quad, asImp(), result );
-    }
-
-    // evaluate jacobian of local function and store result in vector of
-    // JacobianRangeTypes 
-    template< class QuadratureType, class VectorType  >
-    inline void 
-    evaluateQuadrature( const QuadratureType &quad,
-                        VectorType& result,
-                        const JacobianRangeType& ) const 
-    {
-      asImp().baseFunctionSet().evaluateJacobians( quad, asImp().entity().geometry(), asImp(), result );
     }
   };
 
