@@ -114,6 +114,52 @@ namespace Dune {
       forEach.apply( setter );
     }
 
+    template< class QuadratureType, 
+              class RangeTupleVectorType >
+    void evaluateQuadrature ( const QuadratureType &quadrature, 
+                              LocalFunctionTupleType &lfs, 
+                              RangeTupleVectorType &rangeVec )
+    {
+      resizeVector( quadrature, rangeVec, rangeVec[ 0 ] );
+
+      ForEachValueVector< LocalFunctionTupleType, RangeTupleVectorType > forEach( lfs, rangeVec );
+      LocalFunctionEvaluateQuadrature< QuadratureType > eval( quadrature );
+      forEach.apply( eval );
+    }
+
+
+    template< class QuadratureType, 
+              class TupleVectorType >
+    void resizeVector( const QuadratureType &quadrature, 
+                       TupleVectorType &tupleVec,
+                       const RangeTupleType& )
+    {
+      const size_t quadNop = quadrature.nop();
+      if( tupleVec.size() < quadNop )
+      {
+        while( tupleVec.size() < quadNop )
+        {
+          tupleVec.push_back( RangeTupleType( RangeCreator::apply() ) );
+        }
+      }
+    }
+
+    template< class QuadratureType, 
+              class TupleVectorType >
+    void resizeVector( const QuadratureType &quadrature, 
+                       TupleVectorType &tupleVec,
+                       const JacobianRangeTupleType& )
+    {
+      const size_t quadNop = quadrature.nop();
+      if( tupleVec.size() < quadNop )
+      {
+        while( tupleVec.size() < quadNop )
+        {
+          tupleVec.push_back( JacobianRangeTupleType( JacobianCreator::apply() ) );
+        }
+      }
+    }
+
     template< class QuadratureType >
     void evaluateQuad ( const QuadratureType &quadrature, 
                         const int quadPoint, 

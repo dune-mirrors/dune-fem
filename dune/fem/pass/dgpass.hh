@@ -67,9 +67,6 @@ namespace Dune {
     typedef typename EntityType :: EntityPointer EntityPointerType;
     typedef typename BaseType::ArgumentType ArgumentType;
 
-    //! map that stores the volume of the reference element  
-    typedef std::map<const Dune::GeometryType, double> RefVolumeMapType;
-
     // Types from the traits
     typedef typename DiscreteModelType::Traits::DestinationType DestinationType;
     typedef typename DiscreteModelType::Traits::VolumeQuadratureType VolumeQuadratureType;
@@ -133,23 +130,14 @@ namespace Dune {
       gridPart_(spc_.gridPart()),
       indexSet_(gridPart_.indexSet()),
       visited_(0),
-      refVolMap_ (),
       updEn_(spc_),
-      updNeigh_(spc_),
+      updNb_(spc_),
       dtMin_(std::numeric_limits<double>::max()),
-      fMat_(0.0),
-      valEn_(0.0),
-      valNeigh_(0.0),
-      baseEn_(0.0),
-      baseNeigh_(0.0),
-      source_(0.0),
-      grads_(0.0),
       minLimit_(2.0*std::numeric_limits<double>::min()),
-      diffVar_(),
       volumeQuadOrd_( (volumeQuadOrd < 0) ? 
-          (2*spc_.order()) : volumeQuadOrd ),
+          ( 2 * spc_.order()) : volumeQuadOrd ),
       faceQuadOrd_( (faceQuadOrd < 0) ? 
-        (2*spc_.order()+1) : faceQuadOrd ),
+        ( 2 * spc_.order()+1) : faceQuadOrd ),
       localMassMatrix_( spc_ , volumeQuadOrd_ ) 
     {
       assert( volumeQuadOrd_ >= 0 );
@@ -236,9 +224,6 @@ namespace Dune {
     //! local integration 
     void applyLocal( const EntityType& en, TemporaryLocalFunctionType& updEn) const
     {
-      //- statements
-      caller_.setEntity(en);
-
       // only call geometry once, who know what is done in this function 
       const Geometry & geo = en.geometry();
 
@@ -250,16 +235,27 @@ namespace Dune {
       
       if( (spc_.order() > 0) || problem_.hasSource()) 
       {
+        // create quadrature 
+        VolumeQuadratureType volQuad(en, volumeQuadOrd_);
+
+        // set entity and evaluate local functions for quadrature 
+        caller_.setEntity( en , volQuad );
+
         // if only flux, evaluate only flux 
-        if ( problem_.hasFlux() && !problem_.hasSource() ) 
+        if ( problem_.hasFlux() && ! problem_.hasSource() ) 
         {
-          evalVolumetricPartFlux(en, geo, updEn);
+          evalVolumetricPartFlux(en, geo, volQuad, updEn);
         }
         else 
         {
           // evaluate flux and source 
-          evalVolumetricPartBoth(en, geo, updEn);
+          evalVolumetricPartBoth(en, geo, volQuad, updEn);
         }
+      }
+      else 
+      {
+        // only set entity here without evaluation 
+        caller_.setEntity( en );
       }
 
       /////////////////////////////
@@ -271,7 +267,7 @@ namespace Dune {
         for (IntersectionIteratorType nit = gridPart_.ibegin(en); nit != endnit; ++nit) 
         {
           // get intersection from intersection iterator
-          const IntersectionType& intersection=*nit;
+          const IntersectionType& intersection = *nit;
 
           //double nbvol;
           double nbvol = vol;
@@ -285,7 +281,7 @@ namespace Dune {
             if ( ! visited_[ indexSet_.index( nb ) ] ) 
             {
               // init local function 
-              initLocalFunction( nb, updNeigh_ );
+              initLocalFunction( nb, updNb_ );
 
               // for conforming situations apply Quadrature given
               if( ! GridPartType :: conforming && ! intersection.conforming() )
@@ -294,7 +290,7 @@ namespace Dune {
                 // needed below 
                 nbvol = applyLocalNeighbor< false > 
                                     (intersection,en,nb,
-                                     updEn, updNeigh_ , 
+                                     updEn, updNb_ , 
                                      wspeedS);
               }
               else
@@ -303,12 +299,12 @@ namespace Dune {
                 // needed below 
                 nbvol = applyLocalNeighbor< true > 
                                     (intersection,en,nb,
-                                     updEn, updNeigh_ , 
+                                     updEn, updNb_ , 
                                      wspeedS);
               }
 
               // add update to real function 
-              updateFunction(nb, updNeigh_ );
+              updateFunction(nb, updNb_ );
 
             } // end if do something 
               
@@ -319,23 +315,30 @@ namespace Dune {
                                              FaceQuadratureType::INSIDE);
 
             // set neighbor entity to inside entity 
-            caller_.setNeighbor(en);
+            caller_.setBoundary(en, faceQuadInner);
 
             // cache number of quadrature points 
             const int faceQuadInner_nop = faceQuadInner.nop();
+
+            if( valEnVec_.size() < faceQuadInner_nop )
+              valEnVec_.resize( faceQuadInner_nop );
+
             // loop over quadrature points 
             for (int l = 0; l < faceQuadInner_nop; ++l) 
             {
+              RangeType& flux = valEnVec_[ l ];
+
               // eval boundary Flux  
-              wspeedS += caller_.boundaryFlux( *nit, faceQuadInner, l, valEn_ )
+              wspeedS += caller_.boundaryFlux( *nit, faceQuadInner, l, flux )
                        * faceQuadInner.weight(l);
               
               // apply weights 
-              valEn_ *= -faceQuadInner.weight(l);
-
-              // add factor 
-              updEn.axpy( faceQuadInner[l], valEn_  );
+              flux *= -faceQuadInner.weight(l);
             }
+
+            // add factor 
+            updEn.axpyQuadrature ( faceQuadInner, valEnVec_ );
+
           } // end if boundary
           
           if (wspeedS > minLimit_ ) 
@@ -391,24 +394,31 @@ namespace Dune {
     template <class LocalFunctionImp>
     void evalVolumetricPartFlux( const EntityType& en, 
                                  const Geometry& geo , 
+                                 const VolumeQuadratureType& volQuad,
                                  LocalFunctionImp& updEn ) const
     {
-      VolumeQuadratureType volQuad(en, volumeQuadOrd_);
       const int volQuad_nop = volQuad.nop();
+      if( fMatVec_.size() < volQuad_nop ) 
+      {
+        fMatVec_.resize( volQuad_nop );
+      }
+
       for (int l = 0; l < volQuad_nop; ++l) 
       {
+        JacobianRangeType& flux = fMatVec_[ l ];
+
         // evaluate analytical flux and source 
-        caller_.analyticalFlux(en, volQuad, l, fMat_ );
+        caller_.analyticalFlux(en, volQuad, l, flux );
         
         const double intel = geo.integrationElement(volQuad.point(l))
                            * volQuad.weight(l);
         
         // apply integration weights 
-        fMat_ *= intel;
-
-        // add values to local function 
-        updEn.axpy( volQuad[l], fMat_);
+        flux *= intel;
       }
+
+      // add values to local function 
+      updEn.axpyQuadrature (volQuad, fMatVec_ );
     }
     
     //////////////////////////////////////////
@@ -417,25 +427,39 @@ namespace Dune {
     template <class LocalFunctionImp>
     void evalVolumetricPartBoth( const EntityType& en, 
                                  const Geometry& geo, 
+                                 const VolumeQuadratureType& volQuad,
                                  LocalFunctionImp& updEn ) const
     {
-      VolumeQuadratureType volQuad(en, volumeQuadOrd_);
       const int volQuad_nop = volQuad.nop();
+
+      if( fMatVec_.size() < volQuad_nop ) 
+      {
+        fMatVec_.resize( volQuad_nop );
+      }
+
+      if( valEnVec_.size() < volQuad_nop ) 
+      {
+        valEnVec_.resize( volQuad_nop );
+      }
+
       for (int l = 0; l < volQuad_nop; ++l) 
       {
+        JacobianRangeType& flux = fMatVec_[ l ];
+        RangeType& source = valEnVec_[ l ];
+
         // evaluate analytical flux and source 
-        caller_.analyticalFluxAndSource(en, volQuad, l, fMat_, source_ );
+        caller_.analyticalFluxAndSource(en, volQuad, l, flux, source );
         
         const double intel = geo.integrationElement(volQuad.point(l))
                            * volQuad.weight(l);
         
         // apply integration weights 
-        source_ *= intel;
-        fMat_   *= intel;
-        
-        // add values to local function 
-        updEn.axpy(volQuad[l],source_,fMat_);
+        source *= intel;
+        flux   *= intel;
       }
+
+      // add values to local function 
+      updEn.axpyQuadrature (volQuad, valEnVec_, fMatVec_ );
     }
     
     template <bool conforming, class LocalFunctionImp>  
@@ -443,15 +467,12 @@ namespace Dune {
                                 const EntityType &en, 
                                 const EntityType &nb, 
                                 LocalFunctionImp &updEn,
-                                LocalFunctionImp &updNeigh,
+                                LocalFunctionImp &updNb,
                                 double &wspeedS ) const 
     {
       // make sure we got the right conforming statement
       assert( intersection.conforming() == conforming );
 
-      // make Entity known in caller  
-      caller_.setNeighbor(nb);
-     
       // use IntersectionQuadrature to create appropriate face quadratures 
       typedef IntersectionQuadrature< FaceQuadratureType, conforming > IntersectionQuadratureType; 
       typedef typename IntersectionQuadratureType :: FaceQuadratureType QuadratureImp;
@@ -463,6 +484,9 @@ namespace Dune {
       const QuadratureImp &faceQuadInner = interQuad.inside();
       const QuadratureImp &faceQuadOuter = interQuad.outside();
 
+      // make Entity known in caller  
+      caller_.setNeighbor(nb, faceQuadInner, faceQuadOuter);
+     
       // get goemetry of neighbor 
       const Geometry & nbGeo = nb.geometry();
 
@@ -470,23 +494,34 @@ namespace Dune {
       const double nbvol = nbGeo.volume(); 
       
       const int faceQuadInner_nop = faceQuadInner.nop();
+
+      if( valEnVec_.size() < faceQuadInner_nop )
+      {
+        valEnVec_.resize( faceQuadInner_nop );
+        valNbVec_.resize( faceQuadInner_nop );
+      }
+
       for (int l = 0; l < faceQuadInner_nop; ++l) 
       {
+        RangeType& fluxEn = valEnVec_[ l ];
+        RangeType& fluxNb = valNbVec_[ l ];
+
         wspeedS += caller_.numericalFlux(intersection, 
                                          faceQuadInner, 
                                          faceQuadOuter,
                                          l, 
-                                         valEn_, valNeigh_)
+                                         fluxEn, fluxNb )
                  * faceQuadInner.weight(l);
         
         // apply weights 
-        valEn_    *= -faceQuadInner.weight(l);
-        valNeigh_ *=  faceQuadOuter.weight(l);
-        
-        // add values to local functions 
-        updEn.axpy   ( faceQuadInner[l], valEn_ );
-        updNeigh.axpy( faceQuadOuter[l], valNeigh_ );
+        fluxEn *= -faceQuadInner.weight(l);
+        fluxNb *=  faceQuadOuter.weight(l);
       }
+        
+      // add values to local functions 
+      updEn.axpyQuadrature( faceQuadInner, valEnVec_ );
+      updNb.axpyQuadrature( faceQuadOuter, valNbVec_ );
+
       return nbvol;
     }
                          
@@ -509,23 +544,16 @@ namespace Dune {
     // indicator for grid walk 
     mutable MutableArray<bool> visited_;
 
-    mutable RefVolumeMapType refVolMap_;
-
     mutable TemporaryLocalFunctionType updEn_;
-    mutable TemporaryLocalFunctionType updNeigh_;
+    mutable TemporaryLocalFunctionType updNb_;
+
+    //! Some helper variables
+    mutable MutableArray< JacobianRangeType > fMatVec_;
+    mutable MutableArray< RangeType > valEnVec_;
+    mutable MutableArray< RangeType > valNbVec_;
 
     mutable double dtMin_;
-  
-    //! Some helper variables
-    mutable JacobianRangeType fMat_,fMatTmp;
-    mutable RangeType valEn_;
-    mutable RangeType valNeigh_;
-    mutable RangeType baseEn_;
-    mutable RangeType baseNeigh_;
-    mutable RangeType source_;
-    mutable DomainType grads_;
     const double minLimit_;
-    FieldVector<int, 0> diffVar_;
 
     const int volumeQuadOrd_, faceQuadOrd_;
     LocalMassMatrixType localMassMatrix_;

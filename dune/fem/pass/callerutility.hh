@@ -360,6 +360,123 @@ namespace Dune
     const DomainImp& x_;
   };
 
+  template <class VectorTupleType, int passId >
+  class TupleToVectorConverter
+  {
+
+    TupleToVectorConverter(const TupleToVectorConverter&);
+  public:
+    typedef typename VectorTupleType :: value_type TupleType;
+    typedef typename ElementType<passId, TupleType> :: Type ValueType;
+
+    TupleToVectorConverter(VectorTupleType& vec)
+      : vector_( vec )
+    {}
+
+    ValueType& operator [] (const size_t i)
+    {
+      assert( i < vector_.size() );
+      return Element< passId > :: get( vector_[ i ] );
+    }
+
+    const ValueType& operator [] (const size_t i) const
+    {
+      assert( i < vector_.size() );
+      return Element< passId > :: get( vector_[ i ] );
+    }
+
+    size_t size() const 
+    {
+      return vector_.size();
+    }
+
+  protected:  
+    VectorTupleType& vector_;
+  };
+
+  template <class TupleType1, class VectorType>
+  class ForEachValueVector {
+  public:
+    //! Constructor
+    //! \param t1 First tuple.
+    //! \param t2 Second tuple.
+    ForEachValueVector(TupleType1& t1, VectorType& vec ) :
+      tuple1_(t1),
+      vector_( vec )
+    {}
+
+    //! Applies the function object f to the pair of tuples.
+    //! \param f The function object to apply on the pair of tuples.
+    template <class Functor>
+    void apply(Functor& f) 
+    {
+      apply <0> (f, tuple1_);
+    }
+
+  private:
+    //! Specialisation for the last element.
+    template <int passId, class Functor, class Head1>
+    void apply(Functor& f, Pair<Head1, Nil>& last1) 
+    {
+      callFunction< passId > ( f, last1.first() ); 
+    }
+
+    //! Specialisation for a standard element.
+    template <int passId, class Functor, class Head1, class Tail1>
+    void apply(Functor& f, Pair<Head1, Tail1>& p1) 
+    {
+      callFunction< passId > ( f, p1.first() ); 
+      apply< passId + 1 >( f, p1.second() );
+    }
+
+    template <int passId, class Functor, class P1> 
+    void callFunction(Functor& f, P1& p1) 
+    {
+      TupleToVectorConverter< VectorType, passId > vector ( vector_ ); 
+      f.visit( p1, vector );
+    }
+
+  private:
+    TupleType1& tuple1_;
+    VectorType& vector_;
+  };
+
+
+  /**
+   * @brief  Calls lf.evaluate on a tuple of local functions with a 
+   * corresponding tuple of results.
+   *
+   * Use this Functor in conjunction with a ForEachValuePair built from a tuple
+   * of local functions and a tuple with the corresponding range vectors.
+   *
+   */
+  template <class QuadratureImp>
+  class LocalFunctionEvaluateQuadrature 
+  {
+  public:
+    //! Constructor
+    //! \param quad The quadrature in question.
+    //! \param quadPoint The index of the quadrature point of quadrature quad
+    LocalFunctionEvaluateQuadrature(const QuadratureImp& quad )
+      : quad_( quad )
+    {}
+
+    //! Evaluation of a local function
+    template <class LFType, class RangeVectorType>
+    void visit(LFType& lf, RangeVectorType& ranges) 
+    {
+      lf.evaluateQuadrature ( quad_ , ranges);
+    }
+
+  private:
+    LocalFunctionEvaluateQuadrature();
+    LocalFunctionEvaluateQuadrature(const LocalFunctionEvaluateQuadrature&);
+    LocalFunctionEvaluateQuadrature& operator=(const LocalFunctionEvaluateQuadrature&);
+
+  private:
+    const QuadratureImp& quad_;
+  };
+
   /**
    * @brief  Calls lf.evaluate on a tuple of local functions with a 
    * corresponding tuple of results.
