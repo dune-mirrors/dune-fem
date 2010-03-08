@@ -2,10 +2,13 @@
 #define DUNE_BASEFUNCTIONSETINTERFACE_HH
 
 #include <dune/common/fvector.hh>
+#include <dune/common/fmatrix.hh>
 #include <dune/common/geometrytype.hh>
 
+#include <dune/fem/version.hh>
 #include <dune/fem/misc/bartonnackmaninterface.hh>
 #include <dune/fem/misc/deritype.hh>
+#include <dune/fem/misc/fieldmatrixhelper.hh>
 
 namespace Dune
 {
