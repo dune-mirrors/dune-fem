@@ -488,6 +488,42 @@ namespace Dune
                   jacVector[ qp ] );
       }
     }
+
+    ////////////////////////////////////////////////////
+    //  axpyRanges and axpyJacobians 
+    ////////////////////////////////////////////////////
+    template< class QuadratureType,
+              class RangeVectorType,
+              class LocalDofVectorType >
+    inline void axpyRanges ( const QuadratureType& quad,
+                             const RangeVectorType &rangeFactors,
+                             LocalDofVectorType& dofs ) const
+    {
+      const size_t quadNop = quad.nop();
+      for( size_t qp = 0; qp < quadNop; ++qp )
+      {
+        axpy( quad[ qp ], rangeFactors[ qp ], dofs );
+      }
+    }
+
+    template< class QuadratureType,
+              class Geometry,
+              class JacobianVectorType,
+              class LocalDofVectorType >
+    inline void axpyJacobians ( const QuadratureType& quad,
+                                const Geometry& geometry,
+                                const JacobianVectorType &jacVector,
+                                LocalDofVectorType& dofs) const
+    {
+      const size_t quadNop = quad.nop();
+      for( size_t qp = 0; qp < quadNop; ++qp )
+      {
+        axpy( quad[ qp ], 
+              geometry.jacobianInverseTransposed( quad.point( qp ) ),
+              jacVector[ qp ],
+              dofs );
+      }
+    }
   };
 
   /** \} */
