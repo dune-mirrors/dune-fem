@@ -182,6 +182,52 @@ namespace Dune
       baseFunctionSet().axpy( x, factor, dofs );
     }
 
+    template< class QuadratureType, 
+              class LocalDofVectorType,
+              class RangeVectorType>
+    inline void 
+    evaluateRanges ( const QuadratureType& quad,
+                     const LocalDofVectorType& dofs,
+                     RangeVectorType& rangeVector) const
+    {
+      baseFunctionSet().evaluateRanges( quad, dofs, rangeVector );
+    }
+
+    template< class QuadratureType, 
+              class Geometry,
+              class LocalDofVectorType,
+              class JacobianRangeVectorType>
+    inline void 
+    evaluateJacobians( const QuadratureType& quad,
+                       const Geometry& geometry, 
+                       const LocalDofVectorType& dofs,
+                       JacobianRangeVectorType& jacVector) const
+    {
+      baseFunctionSet().evaluateJacobians( quad, geometry, dofs, jacVector );
+    }
+
+    template< class QuadratureType, 
+              class RangeVectorType,
+              class LocalDofVectorType >
+    inline void axpyRanges ( const QuadratureType& quad,
+                             const RangeVectorType& factorVec,
+                             LocalDofVectorType& dofs) const
+    {
+      baseFunctionSet().axpyRanges( quad, factorVec, dofs );
+    }
+
+    template< class QuadratureType, 
+              class Geometry,
+              class JacobianRangeVectorType,
+              class LocalDofVectorType >
+    inline void axpyJacobians( const QuadratureType& quad,
+                               const Geometry& geometry,
+                               const JacobianRangeVectorType& factorVec,
+                               LocalDofVectorType& dofs) const
+    {
+      baseFunctionSet().axpyJacobians( quad, geometry, factorVec, dofs );
+    }
+
     template< class PointType, class GeometryJacobianInverseType,
               class GlobalJacobianRangeType, class LocalDofVectorType >
     inline void axpy ( const PointType &x,
