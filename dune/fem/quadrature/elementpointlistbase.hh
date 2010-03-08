@@ -13,7 +13,6 @@ namespace Dune
   class ElementPointListBase;
 
 
-
   template< class GridPartImp, class IntegrationTraits >
   class ElementPointListBase< GridPartImp, 0, IntegrationTraits >
   {
@@ -108,6 +107,11 @@ namespace Dune
     GeometryType elementGeometry () const
     {
       return quadImp().geometry();
+    }
+
+    size_t cachingPoint( const size_t quadraturePoint ) const 
+    {
+      return quadraturePoint; 
     }
 
   protected:
@@ -253,6 +257,11 @@ namespace Dune
     GeometryType elementGeometry () const
     {
       return elementGeometry_;
+    }
+
+    size_t cachingPoint( const size_t quadraturePoint ) const 
+    {
+      return quadraturePoint; 
     }
 
   protected:
