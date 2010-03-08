@@ -112,42 +112,6 @@ namespace Dune
       storage_.jacobian( baseFunction, x, phi );
     }
 
-    /////////////////////////////////////////////////////////////////////////
-    //
-    //  evaluate and store results in a vector 
-    //
-    /////////////////////////////////////////////////////////////////////////
-    template< class QuadratureType, 
-              class LocalDofVectorType,
-              class RangeVectorType>
-    inline void 
-    evaluateRanges ( const QuadratureType& quad,
-                     const LocalDofVectorType& dofs,
-                     RangeVectorType &rangeVector) const 
-    {
-      typedef typename StorageType :: RangeVectorType RangeVectorType;
-      const RangeVectorType& baseFctStorage = storage_.getRangeStorage( quad );
-
-      const size_t numRows = quad.nop();
-      const int numBase = numBaseFunctions();
-
-      assert( baseFctStorage.size() >= numRows );
-      for( size_t row = 0; row < numRows ; ++row )
-      {
-        const size_t baseRow = quad.cachingPoint( row );
-
-        assert( baseFctStorage.size() > baseRow );
-        assert( baseFctStorage[ baseRow ].size() >= numBase );
-
-        RangeType& result = rangeVector[ row ]; 
-        result = 0;
-
-        for( size_t col = 0; col < numBase; ++col ) 
-        {
-          result.axpy( dofs[ col ], baseFctStorage[ baseRow ][ col ] );
-        }
-      }
-    }
   private:
     StandardBaseFunctionSet( const StandardBaseFunctionSet& );
 
@@ -496,11 +460,11 @@ namespace Dune
 
         for( size_t col = 0; col < numDiffBase; ++col ) 
         {
-          const ScalarRangeType& baseValue = baseFctStorage[ baseRow ][ col ];
+          const ScalarRangeType& phi = baseFctStorage[ baseRow ][ col ];
           size_t colR = util_.combinedDof( col, 0 );
           for( int r = 0; r < dimRange; ++r, ++colR ) 
           {
-            result[ r ] +=  dofs[ colR ] * baseValue[ 0 ];
+            result[ r ] +=  dofs[ colR ] * phi[ 0 ];
           }
         }
       }
@@ -517,19 +481,20 @@ namespace Dune
                         const LocalDofVectorType& dofs,
                         JacobianRangeVectorType &jacVector ) const 
     {
-      // evaluateJacobians( quad, geometry, jacVector, dofs, jacVector[ 0 ] );
+      assert( jacVector.size() > 0 );
+      evaluateJacobians( quad, geometry, dofs, jacVector, jacVector[ 0 ] );
     }
 
     template< class QuadratureType, 
               class Geometry,
               class LocalDofVectorType,
-              class JacobianRangeVectorType,
+              class JacobianVectorType,
               class GlobalJacobianRangeType >
     inline void 
     evaluateJacobians ( const QuadratureType& quad,
                         const Geometry& geometry,
                         const LocalDofVectorType& dofs,
-                        JacobianRangeVectorType &jacVector,
+                        JacobianVectorType &jacVector,
                         const GlobalJacobianRangeType& ) const 
     {
       typedef typename StorageType :: JacobianRangeVectorType JacobianRangeVectorType;
@@ -554,6 +519,7 @@ namespace Dune
       {
         const size_t baseRow = quad.cachingPoint( row );
 
+        // if geometry has non-affine mapping we need to update jacobian inverse
         if( ! affineGeometry ) 
           gjitTmp = geometry.jacobianInverseTransposed( quad.point( row ) );
 
@@ -617,11 +583,11 @@ namespace Dune
 
         for( size_t col = 0; col < numDiffBase; ++col ) 
         {
-          const ScalarRangeType& baseValue = baseFctStorage[ baseRow ][ col ];
+          const ScalarRangeType& phi = baseFctStorage[ baseRow ][ col ];
           size_t colR = util_.combinedDof( col, 0 );
           for( int r = 0; r < dimRange; ++r , ++colR ) 
           {
-            dofs[ colR ] += baseValue[ 0 ] * factor[ r ];
+            dofs[ colR ] += phi[ 0 ] * factor[ r ];
           }
         }
       }
@@ -640,6 +606,7 @@ namespace Dune
                                 const JacobianVectorType &jacVector,
                                 LocalDofVectorType& dofs) const 
     {
+      assert( jacVector.size() > 0 );
       axpyJacobians( quad, geometry,
                      jacVector, dofs, jacVector[ 0 ] );
     }
@@ -682,6 +649,7 @@ namespace Dune
         assert( baseFctStorage.size() > baseRow );
         assert( baseFctStorage[ baseRow ].size() >= numDiffBase );
 
+        // if geometry has non-affine mapping we need to update jacobian inverse
         if( ! affineGeometry ) 
           gjitTmp = geometry.jacobianInverseTransposed( quad.point( row ));
 
