@@ -169,7 +169,6 @@ namespace Dune
     inline explicit SimpleStorage ( const FactoryType &factory )
     : BaseType( factory )
     {
-      std::cout << "Create simple storage \n";
     }
 
     template< int diffOrder, class QuadratureType >
@@ -203,11 +202,6 @@ namespace Dune
       return jacobianTmp_;
     }
 
-    template <class QuadratureType> 
-    int applyCaching (const QuadratureType&, const int i ) const 
-    {
-      return i;
-    } 
   protected:  
     mutable RangeVectorType ranges_;
     mutable JacobianRangeVectorType jacobianTmp_;
@@ -409,7 +403,6 @@ namespace Dune
     inline explicit CachingStorage ( const FactoryType &factory )
     : BaseType( factory )
     {
-      std::cout << "Create caching storage \n";
       cacheExistingQuadratures( *this );
     }
     
@@ -460,30 +453,6 @@ namespace Dune
         jacobian( *this, quad, jacobians_, jacobianTmp_ );
     }
 
-    template < class QuadratureType, bool caching > 
-    struct ApplyCaching
-    {
-      static int apply(const QuadratureType& quad, const int i ) 
-      {
-        return i;
-      }
-    };
-
-    template < class QuadratureType > 
-    struct ApplyCaching< QuadratureType, true >
-    {
-      static int apply(const QuadratureType& quad, const int i ) 
-      {
-        return quad.cachingPoint( i );
-      }
-    };
-
-    template <class QuadratureType> 
-    int applyCaching (const QuadratureType& quad, const int i ) const 
-    {
-      enum { applyCache = Conversion< QuadratureType, CachingInterface > :: exists };
-      return ApplyCaching< QuadratureType, applyCache > :: apply( quad, i );
-    } 
   private:
     // caches the quadrature, see also addEntry.. 
     inline void cacheQuadrature(size_t id, int codim) const;

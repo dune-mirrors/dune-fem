@@ -462,7 +462,7 @@ namespace Dune
       assert( baseFctStorage.size() >= numRows );
       for( size_t row = 0; row < numRows ; ++row )
       {
-        const size_t baseRow = storage_.applyCaching( quad , row ); 
+        const size_t baseRow = quad.cachingPoint( row ); 
 
         assert( baseFctStorage.size() > baseRow );
         assert( baseFctStorage[ baseRow ].size() >= numDiffBase );
@@ -530,7 +530,7 @@ namespace Dune
 
       for( size_t row = 0; row < numRows ; ++row )
       {
-        const size_t baseRow = storage_.applyCaching( quad , row ); 
+        const size_t baseRow = quad.cachingPoint( row ); 
 
         // if geometry has non-affine mapping we need to update jacobian inverse
         if( ! affineGeometry ) 
@@ -598,7 +598,7 @@ namespace Dune
       assert( baseFctStorage.size() >= numRows );
       for( size_t row = 0; row < numRows ; ++row )
       {
-        const size_t baseRow = storage_.applyCaching( quad , row ); 
+        const size_t baseRow = quad.cachingPoint( row ); 
 
         assert( baseFctStorage.size() > baseRow );
         assert( baseFctStorage[ baseRow ].size() >= numDiffBase );
@@ -648,7 +648,6 @@ namespace Dune
       typedef typename StorageType :: JacobianRangeVectorType JacobianRangeVectorType;
       const JacobianRangeVectorType& baseFctStorage = storage_.getJacobianStorage( quad );
 
-
       const size_t numRows = quad.nop();
       const size_t numDiffBase = numDifferentBaseFunctions();
       assert( numDiffBase * dimRange == dofs.numDofs() );
@@ -664,11 +663,10 @@ namespace Dune
         geometry.jacobianInverseTransposed( quad.point( 0 )) :
         gjitTmp ;
 
-
       assert( baseFctStorage.size() >= numRows );
       for( size_t row = 0; row < numRows ; ++row )
       {
-        const size_t baseRow = storage_.applyCaching( quad , row ); 
+        const size_t baseRow = quad.cachingPoint( row ); 
         assert( baseFctStorage.size() > baseRow );
         assert( baseFctStorage[ baseRow ].size() >= numDiffBase );
 
