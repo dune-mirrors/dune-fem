@@ -58,105 +58,6 @@ public:
   size_t size() const { return size_; }
 };
 
-template<class RowVector, class ColVector>  
-inline 
-void multiplySSE(const size_t I, const size_t J, 
-                 float** const &A, 
-                 const RowVector& X, 
-                 ColVector& Y)
-{
-  const size_t N = 3;
-
-  const size_t FI = ((N)*((I)/(N)));
-  const size_t FJ = (4*((J)/4));
-
-  const size_t AI = ((N)*((I+(N-1)/(N))));
-  const size_t AJ = (4*((J+3)/4));
-
-  for (size_t i = 0; i < FI; i += N) 
-  {
-    __m128 tmp[N];
-    for (size_t n = 0; n < N; n++)
-      tmp[n] = _mm_set1_ps(0);
-      
-    for (size_t j = 0; j < FJ; j += 4)
-      for (size_t n = 0; n < N; n++)
-        tmp[n] = _mm_add_ps(tmp[n], _mm_mul_ps(_mm_load_ps(A[i+n]+j), _mm_load_ps(X+j)));
-        
-    for (size_t n = 0; n < N; n++)
-      _mm_store_ss(Y+i+n, _mm_add_ss(_mm_add_ss(_mm_add_ss(tmp[n], _mm_shuffle_ps(tmp[n], tmp[n], 1)), 
-                  _mm_shuffle_ps(tmp[n], tmp[n], 2)), _mm_shuffle_ps(tmp[n], tmp[n], 3)));
-
-    for (size_t n = 0; n < N; n++)
-      for (size_t j = FJ; j < J; j++)
-        Y[i+n] += A[i+n][j] * X[j];
-  }
-  for (size_t i = FI; i < I; i++) {
-    __m128 tmp = _mm_set1_ps(0);
-
-    for (size_t j = 0; j < FJ; j += 4)
-      tmp = _mm_add_ps(tmp, _mm_mul_ps(_mm_load_ps(A[i]+j), _mm_load_ps(X+j)));
-
-    _mm_store_ss(Y+i, _mm_add_ss(_mm_add_ss(_mm_add_ss(tmp, _mm_shuffle_ps(tmp, tmp, 1)), _mm_shuffle_ps(tmp, tmp, 2)), _mm_shuffle_ps(tmp, tmp, 3)));
-
-    for (size_t j = FJ; j < J; j++)
-      Y[i] += A[i][j] * X[j];
-  }
-}
-
-template<class RowVector, class ColVector>  
-inline 
-void multiplySSE(const size_t I, const size_t J, 
-                 double** const &A, 
-                 const RowVector&X, 
-                 ColVector& Y)
-{
-  const size_t N = 3;
-  const size_t FI = ((N)*(( I )/(N)));  
-  const size_t FJ = (2*( J )/2);
-
-  for (size_t i = 0; i < FI; i += N) 
-  {
-    __m128d tmp[N];
-    for (size_t n = 0; n < N; ++n)
-      tmp[n] = _mm_set1_pd(0);
-
-    for (size_t j = 0; j < FJ; j += 2)
-      for (size_t n = 0; n < N; ++n)
-        tmp[n] = _mm_add_pd(tmp[n], _mm_mul_pd(_mm_load_pd(A[i+n]+j), _mm_load_pd(X+j)));
-
-    for (size_t n = 0; n < N; ++n)
-      _mm_store_sd(Y+i+n, _mm_add_sd(tmp[n], _mm_shuffle_pd(tmp[n], tmp[n], 1)));
-
-    for (size_t n = 0; n < N; ++n)
-      for (size_t j = FJ; j < J; ++j)
-        Y[i+n] += A[i+n][j] * X[j];
-  }
-
-  for (size_t i = FI; i < I; ++i) 
-  {
-    __m128d tmp = _mm_set1_pd(0);
-
-    for (size_t j = 0; j < FJ; j += 2)
-      tmp = _mm_add_pd(tmp, _mm_mul_pd(_mm_load_pd(A[i]+j), _mm_load_pd(X+j)));
-
-    _mm_store_sd(Y+i, _mm_add_sd(tmp, _mm_shuffle_pd(tmp, tmp, 1)));
-
-    for (size_t j = FJ; j < J; ++j)
-      Y[i] += A[i][j] * X[j];
-  }
-}
-
-template<class Matrix, class RowVector, class ColVector>  
-inline 
-void multiplySSE(const Matrix& mat, 
-                 const RowVector& X, 
-                 ColVector& Y)
-{
-  multiplySSE( mat.rows(), mat.cols(),
-               mat.raw(), X, Y);
-}
-
 template < class K > 
 class SSEMatrix 
 {
@@ -178,6 +79,24 @@ protected:
   const size_t cols_;
 
   mutable size_t qSize_;
+
+  template < class QuadratureType, bool caching >
+  struct ApplyCaching
+  {
+    static int apply(const QuadratureType& quad, const int i )
+    {
+      return i;
+    }
+  };
+
+  template < class QuadratureType >
+  struct ApplyCaching< QuadratureType, true >
+  {
+    static int apply(const QuadratureType& quad, const int i )
+    {
+      return quad.cachingPoint( i );
+    }
+  };
 
 public:
 
@@ -336,6 +255,97 @@ public:
   const MatrixType& raw() const { return sseMat_; }
 
   size_t size() const { return rows() * cols(); }
+
+protected:
+  template<class RowVector, class ColVector>  
+  inline 
+  void multiplySSE(const size_t I, const size_t J, 
+                   float** const &A, 
+                   const RowVector& X, 
+                   ColVector& Y)
+  {
+    const size_t N = 3;
+
+    const size_t FI = ((N)*((I)/(N)));
+    const size_t FJ = (4*((J)/4));
+
+    const size_t AI = ((N)*((I+(N-1)/(N))));
+    const size_t AJ = (4*((J+3)/4));
+
+    for (size_t i = 0; i < FI; i += N) 
+    {
+      __m128 tmp[N];
+      for (size_t n = 0; n < N; n++)
+        tmp[n] = _mm_set1_ps(0);
+        
+      for (size_t j = 0; j < FJ; j += 4)
+        for (size_t n = 0; n < N; n++)
+          tmp[n] = _mm_add_ps(tmp[n], _mm_mul_ps(_mm_load_ps(A[i+n]+j), _mm_load_ps(X+j)));
+          
+      for (size_t n = 0; n < N; n++)
+        _mm_store_ss(Y+i+n, _mm_add_ss(_mm_add_ss(_mm_add_ss(tmp[n], _mm_shuffle_ps(tmp[n], tmp[n], 1)), 
+                    _mm_shuffle_ps(tmp[n], tmp[n], 2)), _mm_shuffle_ps(tmp[n], tmp[n], 3)));
+
+      for (size_t n = 0; n < N; n++)
+        for (size_t j = FJ; j < J; j++)
+          Y[i+n] += A[i+n][j] * X[j];
+    }
+    for (size_t i = FI; i < I; i++) {
+      __m128 tmp = _mm_set1_ps(0);
+
+      for (size_t j = 0; j < FJ; j += 4)
+        tmp = _mm_add_ps(tmp, _mm_mul_ps(_mm_load_ps(A[i]+j), _mm_load_ps(X+j)));
+
+      _mm_store_ss(Y+i, _mm_add_ss(_mm_add_ss(_mm_add_ss(tmp, _mm_shuffle_ps(tmp, tmp, 1)), _mm_shuffle_ps(tmp, tmp, 2)), _mm_shuffle_ps(tmp, tmp, 3)));
+
+      for (size_t j = FJ; j < J; j++)
+        Y[i] += A[i][j] * X[j];
+    }
+  }
+
+  template<class RowVector, class ColVector>  
+  inline 
+  void multiplySSE(const size_t I, const size_t J, 
+                   double** const &A, 
+                   const RowVector&X, 
+                   ColVector& Y)
+  {
+    const size_t N = 3;
+    const size_t FI = ((N)*(( I )/(N)));  
+    const size_t FJ = (2*( J )/2);
+
+    for (size_t i = 0; i < FI; i += N) 
+    {
+      __m128d tmp[N];
+      for (size_t n = 0; n < N; ++n)
+        tmp[n] = _mm_set1_pd(0);
+
+      for (size_t j = 0; j < FJ; j += 2)
+        for (size_t n = 0; n < N; ++n)
+          tmp[n] = _mm_add_pd(tmp[n], _mm_mul_pd(_mm_load_pd(A[i+n]+j), _mm_load_pd(X+j)));
+
+      for (size_t n = 0; n < N; ++n)
+        _mm_store_sd(Y+i+n, _mm_add_sd(tmp[n], _mm_shuffle_pd(tmp[n], tmp[n], 1)));
+
+      for (size_t n = 0; n < N; ++n)
+        for (size_t j = FJ; j < J; ++j)
+          Y[i+n] += A[i+n][j] * X[j];
+    }
+
+    for (size_t i = FI; i < I; ++i) 
+    {
+      __m128d tmp = _mm_set1_pd(0);
+
+      for (size_t j = 0; j < FJ; j += 2)
+        tmp = _mm_add_pd(tmp, _mm_mul_pd(_mm_load_pd(A[i]+j), _mm_load_pd(X+j)));
+
+      _mm_store_sd(Y+i, _mm_add_sd(tmp, _mm_shuffle_pd(tmp, tmp, 1)));
+
+      for (size_t j = FJ; j < J; ++j)
+        Y[i] += A[i][j] * X[j];
+    }
+  }
+
 };
 
 } // end namespace Fem 
