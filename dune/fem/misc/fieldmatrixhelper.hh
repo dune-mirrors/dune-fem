@@ -10,14 +10,14 @@ namespace Dune
   namespace FieldMatrixHelper
   {
 
-    template< class Field, int m, int n >
-    inline void multiply ( const FieldMatrix< Field, m, n > &A,
-                           const FieldVector< Field, n > &x,
-                           FieldVector< Field, m > &y )
+    template< class Field1, class Field2, class Field3, int m, int n >
+    inline void multiply ( const FieldMatrix< Field1, m, n > &A,
+                           const FieldVector< Field2, n > &x,
+                           FieldVector< Field3, m > &y )
     {
       for( int i = 0; i < m; ++i )
       {
-        Field &value = y[ i ];
+        Field3 &value = y[ i ];
 
         value = 0;
         for( int j = 0; j < n; ++j )
@@ -27,16 +27,16 @@ namespace Dune
 
 
 
-    template< class Field, int m, int n, int p >
-    inline void multiply ( const FieldMatrix< Field, m, n > &A,
-                           const FieldMatrix< Field, n, p > &B,
-                           FieldMatrix< Field, m, p > &C )
+    template< class Field1, class Field2, class Field3, int m, int n, int p >
+    inline void multiply ( const FieldMatrix< Field1, m, n > &A,
+                           const FieldMatrix< Field2, n, p > &B,
+                           FieldMatrix< Field3, m, p > &C )
     {
       for( int i = 0; i < m; ++i )
       {
         for( int j = 0; j < p; ++j )
         {
-          Field &value = C[ i ][ j ];
+          Field3 &value = C[ i ][ j ];
           
           value = 0;
           for( int k = 0; k < n; ++k )
