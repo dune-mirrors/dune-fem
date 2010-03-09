@@ -1,7 +1,7 @@
 #ifndef DUNE_BASEFUNCTIONSTORAGE_HH
 #define DUNE_BASEFUNCTIONSTORAGE_HH
 
-//#define DUNE_FEM_BASEFUNC_USE_SSE
+#define DUNE_FEM_BASEFUNC_USE_SSE
 
 #include <map>
 #include <vector>
@@ -58,7 +58,10 @@ namespace Dune
                   const DomainType& xLocal, 
                   JacobianRangeType& result) const;
 
-    inline void cacheQuadrature(size_t id, int codim) const {}
+    inline void cacheQuadrature(const size_t id, 
+                                const size_t codim, 
+                                const size_t quadSize) const 
+    {}
     
     //! return geometry type 
     GeometryType geometryType () const { return elementGeometry_; }
@@ -486,14 +489,18 @@ namespace Dune
     } 
   private:
     // caches the quadrature, see also addEntry.. 
-    inline void cacheQuadrature(size_t id, int codim) const;
+    inline void cacheQuadrature(const size_t id, 
+                                const size_t codim,
+                                const size_t quadSize) const;
  
     // here a switch-case for codim is done and then addEntry called
-    inline ReturnPairType addEntryInterface(size_t id , int codim) const;
+    inline ReturnPairType addEntryInterface(const size_t id, 
+                                            const size_t codim,
+                                            const size_t quadSize) const;
     
     // here the real caching is done 
     template <int codim>
-    inline ReturnPairType addEntry(size_t id) const;
+    inline ReturnPairType addEntry(const size_t id, const size_t quadSize) const;
 
   protected:
     mutable RangeContainerType ranges_;

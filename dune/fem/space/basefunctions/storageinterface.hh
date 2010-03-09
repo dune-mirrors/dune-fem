@@ -25,8 +25,10 @@ namespace Dune {
       typedef std::list< ThisType* > StorageInterfaceListType;
 
       typedef StorageInterfaceListType* StorageInterfaceListPointer;
-      typedef std::pair< size_t , int > QuadratureIdentifierType;
+      typedef std::vector< size_t > QuadratureIdentifierType;
       typedef std::list< QuadratureIdentifierType > QuadratureListType;
+
+      enum { ids = 0, codims = 1, sizes = 2, sizeIndents = 3 };
 
       // return reference to list singleton pointer 
       static StorageInterfaceListPointer& storageListPtr () 
@@ -98,14 +100,17 @@ namespace Dune {
         for(IteratorType it = quadratureList().begin(); it != endit; ++it)
         {
           // get if and codim of quad 
-          const size_t id = (*it).first;
-          const int codim = (*it).second;
-          storage.cacheQuadrature(id,codim);
+          const size_t id = (*it)[ ids ];
+          const size_t codim = (*it)[ codims ];
+          const size_t quadSize = (*it)[ sizes ];
+          storage.cacheQuadrature(id, codim, quadSize);
         }
       }
 
       //! cache quadrature for given id and codim 
-      virtual void cacheQuadrature(size_t id, int codim ) const = 0;
+      virtual void cacheQuadrature(const size_t id, 
+                                   const size_t codim, 
+                                   const size_t quadSize ) const = 0;
 
       //! return geometry type of base function set 
       virtual GeometryType geometryType() const = 0;
@@ -113,25 +118,29 @@ namespace Dune {
       template <class QuadratureType>
       static void registerQuadratureToStorages(const QuadratureType & quad)
       {
-        const int codim = QuadratureType :: codimension;
+        const size_t codim = QuadratureType :: codimension;
         registerQuadratureToStorages(quad,codim);
       }
 
       //! register quadrature for all existing storages 
       template <class QuadratureType>
       static void registerQuadratureToStorages(const QuadratureType & quad, 
-                                               const int codim)
+                                               const size_t codim)
       {
         const size_t id = quad.id();
+        const size_t quadSize = quad.nop();
         // store quadrature 
-        QuadratureIdentifierType ident(id,codim);
+        QuadratureIdentifierType ident( sizeIndents );
+        ident[ ids ]    = id ;
+        ident[ codims ] = codim; 
+        ident[ sizes ]  = quadSize;
         quadratureList().push_back(ident);
 
         typedef typename StorageInterfaceListType::iterator IteratorType;
         IteratorType endit = storageList().end();
         for(IteratorType it = storageList().begin(); it != endit; ++it)
         {
-          (*it)->cacheQuadrature(id,codim);
+          (*it)->cacheQuadrature(id, codim, quadSize);
         }
       }
   };

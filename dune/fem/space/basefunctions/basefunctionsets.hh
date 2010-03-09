@@ -644,7 +644,6 @@ namespace Dune
       typedef typename StorageType :: JacobianRangeVectorType JacobianRangeVectorType;
       const JacobianRangeVectorType& baseFctStorage = storage_.getJacobianStorage( quad );
 
-
       const size_t numRows = quad.nop();
       const size_t numDiffBase = numDifferentBaseFunctions();
       assert( numDiffBase * dimRange == dofs.numDofs() );

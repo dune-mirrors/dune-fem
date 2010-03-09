@@ -126,12 +126,12 @@ namespace Dune
 
   template <class FunctionSpaceImp>
   inline void CachingStorage<FunctionSpaceImp>::
-  cacheQuadrature(size_t id, int codim) const 
+  cacheQuadrature(const size_t id, const size_t codim, const size_t quadSize ) const 
   {
     RangeIteratorType it = rangestored_.find(id);
     if (it == rangestored_.end()) 
     {
-      it = addEntryInterface(id,codim).first;
+      it = addEntryInterface(id, codim, quadSize).first;
     }
 
     assert(rangestored_.find(id) != rangestored_.end());
@@ -141,20 +141,20 @@ namespace Dune
   template <class FunctionSpaceImp>
   inline typename CachingStorage<FunctionSpaceImp>::ReturnPairType
   CachingStorage<FunctionSpaceImp>::
-  addEntryInterface(size_t id , int codim ) const 
+  addEntryInterface(const size_t id, const size_t codim, const size_t quadSize ) const 
   {
     enum { dimension = DomainType::dimension };
     switch (codim) 
     {
-      case 0: return addEntry<0>(id);
-      case 1: return addEntry<1>(id);
+      case 0: return addEntry<0>(id, quadSize);
+      case 1: return addEntry<1>(id, quadSize);
       default: assert(false); abort();
     }
 
     assert(false);
     abort();
     // only fake 
-    return addEntry<0>(id);
+    return addEntry<0>(id, quadSize);
   }
 
   //--addEntry
@@ -162,11 +162,9 @@ namespace Dune
   template <int codimension>
   inline typename CachingStorage<FunctionSpaceImp>::ReturnPairType
   CachingStorage<FunctionSpaceImp>::
-  addEntry(size_t id) const 
+  addEntry(const size_t quadId, const size_t quadSize) const 
   {
     enum { dimension = DomainType::dimension };
-
-    size_t quadId = id;
 
     typedef PointProvider<RealType, dimension, codimension> PointProviderType;
     typedef typename PointProviderType::GlobalPointVectorType PointVectorType;
@@ -208,8 +206,8 @@ namespace Dune
       }
     }
 
-    RangeCacheMatrixType* matrixPtr = new RangeCacheMatrixType( pointSize, numBaseFunctions );
-    RangeCacheMatrixType* matrixPtr2 = new RangeCacheMatrixType( pointSize, numBaseFunctions);
+    RangeCacheMatrixType* matrixPtr = new RangeCacheMatrixType( pointSize, numBaseFunctions, quadSize);
+    RangeCacheMatrixType* matrixPtr2 = new RangeCacheMatrixType( pointSize, numBaseFunctions, quadSize);
     assert( matrixPtr && matrixPtr2 );
 
     RangeCacheMatrixType& matrix = *matrixPtr; 
