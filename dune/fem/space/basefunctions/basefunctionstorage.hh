@@ -123,6 +123,13 @@ namespace Dune
       }
     }
 
+    // default method simply returns quadrature point 
+    template <class QuadratureType> 
+    int applyCaching (const QuadratureType&, const int quadraturePoint ) const 
+    {
+      return quadraturePoint;
+    } 
+
   private:
     typedef typename FactoryType::BaseFunctionType BaseFunctionType;
 
@@ -453,6 +460,30 @@ namespace Dune
         jacobian( *this, quad, jacobians_, jacobianTmp_ );
     }
 
+    template < class QuadratureType, bool caching > 
+    struct ApplyCaching
+    {
+      static int apply(const QuadratureType& quad, const int i ) 
+      {
+        return i;
+      }
+    };
+
+    template < class QuadratureType > 
+    struct ApplyCaching< QuadratureType, true >
+    {
+      static int apply(const QuadratureType& quad, const int i ) 
+      {
+        return quad.cachingPoint( i );
+      }
+    };
+
+    template <class QuadratureType> 
+    int applyCaching (const QuadratureType& quad, const int i ) const 
+    {
+      enum { applyCache = Conversion< QuadratureType, CachingInterface > :: exists };
+      return ApplyCaching< QuadratureType, applyCache > :: apply( quad, i );
+    } 
   private:
     // caches the quadrature, see also addEntry.. 
     inline void cacheQuadrature(size_t id, int codim) const;

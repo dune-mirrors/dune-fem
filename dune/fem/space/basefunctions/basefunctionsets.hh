@@ -420,7 +420,6 @@ namespace Dune
       return gradScaled * psi[ util_.component( baseFunction ) ];
     }
 
-#if 1
     /////////////////////////////////////////////////////////////////////////
     //
     //  evaluate and store results in a vector 
@@ -444,8 +443,7 @@ namespace Dune
       if( faceCachingQuad ) 
       {
         // apply mapping of quadrature points 
-        RangeCacheMatrixType mat = baseFunctionMatrix.getQuadMat( quad );
-        mat.mv( dofs, rangeVector, dimRange );  
+        baseFunctionMatrix.mv( dofs, rangeVector, quad, dimRange );
       }
       else 
       {
@@ -462,7 +460,7 @@ namespace Dune
       assert( baseFctStorage.size() >= numRows );
       for( size_t row = 0; row < numRows ; ++row )
       {
-        const size_t baseRow = quad.cachingPoint( row ); 
+        const size_t baseRow = storage_.applyCaching( quad , row ); 
 
         assert( baseFctStorage.size() > baseRow );
         assert( baseFctStorage[ baseRow ].size() >= numDiffBase );
@@ -482,7 +480,6 @@ namespace Dune
       }
 #endif
     }
-#endif
 
     template< class QuadratureType, 
               class Geometry,
@@ -530,7 +527,7 @@ namespace Dune
 
       for( size_t row = 0; row < numRows ; ++row )
       {
-        const size_t baseRow = quad.cachingPoint( row ); 
+        const size_t baseRow = storage_.applyCaching( quad , row ); 
 
         // if geometry has non-affine mapping we need to update jacobian inverse
         if( ! affineGeometry ) 
@@ -580,12 +577,11 @@ namespace Dune
 
       if( faceCachingQuad ) 
       {
-        RangeCacheMatrixType mat = baseFunctionMatrix.getQuadMat( quad );
         // apply mapping of quadrature points 
-        mat.umtv( rangeFactors, dofs , dimRange );
+        baseFunctionMatrix.umtv( rangeFactors, dofs, quad, dimRange );
       }
       else 
-        baseFunctionMatrix.umtv( rangeFactors, dofs , dimRange );
+        baseFunctionMatrix.umtv( rangeFactors, dofs, dimRange );
 
 #else 
       typedef typename StorageType :: RangeVectorType RangeVectorType;
@@ -598,7 +594,7 @@ namespace Dune
       assert( baseFctStorage.size() >= numRows );
       for( size_t row = 0; row < numRows ; ++row )
       {
-        const size_t baseRow = quad.cachingPoint( row ); 
+        const size_t baseRow = storage_.applyCaching( quad , row ); 
 
         assert( baseFctStorage.size() > baseRow );
         assert( baseFctStorage[ baseRow ].size() >= numDiffBase );
@@ -648,6 +644,7 @@ namespace Dune
       typedef typename StorageType :: JacobianRangeVectorType JacobianRangeVectorType;
       const JacobianRangeVectorType& baseFctStorage = storage_.getJacobianStorage( quad );
 
+
       const size_t numRows = quad.nop();
       const size_t numDiffBase = numDifferentBaseFunctions();
       assert( numDiffBase * dimRange == dofs.numDofs() );
@@ -663,10 +660,11 @@ namespace Dune
         geometry.jacobianInverseTransposed( quad.point( 0 )) :
         gjitTmp ;
 
+
       assert( baseFctStorage.size() >= numRows );
       for( size_t row = 0; row < numRows ; ++row )
       {
-        const size_t baseRow = quad.cachingPoint( row ); 
+        const size_t baseRow = storage_.applyCaching( quad , row ); 
         assert( baseFctStorage.size() > baseRow );
         assert( baseFctStorage[ baseRow ].size() >= numDiffBase );
 
