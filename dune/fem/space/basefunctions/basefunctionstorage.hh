@@ -1,7 +1,7 @@
 #ifndef DUNE_BASEFUNCTIONSTORAGE_HH
 #define DUNE_BASEFUNCTIONSTORAGE_HH
 
-#define DUNE_FEM_BASEFUNC_USE_SSE
+//#define DUNE_FEM_BASEFUNC_USE_SSE
 
 #include <map>
 #include <vector>
@@ -15,7 +15,9 @@
 #include <dune/fem/space/basefunctions/storageinterface.hh>
 #include <dune/fem/quadrature/quadrature.hh>
 
+#ifdef DUNE_FEM_BASEFUNC_USE_SSE
 #include <dune/fem/storage/ssematrixdynamic.hh>
+#endif
 
 namespace Dune
 {
@@ -247,8 +249,10 @@ namespace Dune
     typedef MutableArray< MutableArray<RangeType> >         RangeVectorType;
     typedef MutableArray< MutableArray<JacobianRangeType> > JacobianRangeVectorType;
 
+#ifdef DUNE_FEM_BASEFUNC_USE_SSE
     typedef Fem :: SSEMatrix< RealType > RangeCacheMatrixType ;
     typedef std::vector< std::pair< RangeCacheMatrixType*, RangeCacheMatrixType* > > RangeCacheMatrixContainerType ;
+#endif
 
   private:
     typedef std::map<size_t, bool> RangeStoredType;
@@ -299,6 +303,7 @@ namespace Dune
         storage.jacobian(baseFunct,quad.point(quadPoint),result); 
       }
 
+#ifdef DUNE_FEM_BASEFUNC_USE_SSE
       static const RangeCacheMatrixType& 
       evaluate(const ThisType& storage,
                const QuadratureType& quad, 
@@ -309,6 +314,7 @@ namespace Dune
         storage.fillRangeCache( storage, quad, matrix );
         return matrix; 
       }
+#endif
 
       static const RangeVectorType& 
       evaluate(const ThisType& storage,
@@ -374,6 +380,7 @@ namespace Dune
         result = jacobians[quad.id()][quad.cachingPoint(quadPoint)][baseFunct];
       }
 
+#ifdef DUNE_FEM_BASEFUNC_USE_SSE
       static const RangeCacheMatrixType& 
       evaluate(const ThisType& storage,
                const QuadratureType& quad, 
@@ -382,6 +389,7 @@ namespace Dune
         assert( rangeMatrices[ quad.id() ].first );
         return * (rangeMatrices[ quad.id() ].first);
       }
+#endif
 
       static const RangeVectorType& 
       evaluate(const ThisType& storage,
@@ -441,12 +449,14 @@ namespace Dune
                            const QuadraturePointWrapper< QuadratureType > &x,
                            JacobianRangeType &ret ) const;
 
+#ifdef DUNE_FEM_BASEFUNC_USE_SSE
     template <class QuadratureType> 
     const RangeCacheMatrixType& getRangeMatrix( const QuadratureType& quad ) const 
     {
       enum { cachable = Conversion< QuadratureType, CachingInterface > :: exists };
       return Evaluate< QuadratureType, cachable > :: evaluate( *this, quad, rangeMatrices_ );
     }
+#endif
 
     template <class QuadratureType> 
     const RangeVectorType& getRangeStorage( const QuadratureType& quad ) const 
@@ -508,7 +518,9 @@ namespace Dune
     mutable RangeStoredType rangestored_;
     mutable JacobianRangeStoredType jacobianstored_;
 
+#ifdef DUNE_FEM_BASEFUNC_USE_SSE
     mutable RangeCacheMatrixContainerType rangeMatrices_;
+#endif
 
     mutable RangeVectorType rangeTmp_;
     mutable JacobianRangeVectorType jacobianTmp_;

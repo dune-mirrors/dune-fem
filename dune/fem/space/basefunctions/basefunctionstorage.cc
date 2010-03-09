@@ -206,6 +206,7 @@ namespace Dune
       }
     }
 
+#ifdef DUNE_FEM_BASEFUNC_USE_SSE
     RangeCacheMatrixType* matrixPtr = new RangeCacheMatrixType( pointSize, numBaseFunctions, quadSize);
     RangeCacheMatrixType* matrixPtr2 = new RangeCacheMatrixType( pointSize, numBaseFunctions, quadSize);
     assert( matrixPtr && matrixPtr2 );
@@ -234,8 +235,9 @@ namespace Dune
         }
       }
     }
-
     rangeMatrices_[ quadId ] = std::make_pair( matrixPtr , matrixPtr2 );
+#endif
+
     return std::make_pair(rit, jit);
   }
 
