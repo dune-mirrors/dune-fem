@@ -262,13 +262,13 @@ namespace Dune
       ret = 0;
 
       const int numScalarBase = numDifferentBaseFunctions ();
-      for( int i = 0; i < numScalarBase ; ++i )
+      for( int i = 0, iR = 0; i < numScalarBase ; ++i )
       {
         ScalarRangeType phi;
         evaluateScalar( i, diffVariable, x, phi ); 
-        for( int r = 0; r < dimRange; ++r )
+        for( int r = 0; r < dimRange; ++r , ++iR )
         { 
-          ret[ r ] += phi[ 0 ] * dofs[ util_.combinedDof( i , r ) ];
+          ret[ r ] += phi[ 0 ] * dofs[ iR ];
         }
       }
     }
@@ -281,13 +281,13 @@ namespace Dune
       ret = 0;
 
       const int numScalarBase = numDifferentBaseFunctions ();
-      for( int i = 0; i < numScalarBase ; ++i )
+      for( int i = 0, iR = 0; i < numScalarBase ; ++i )
       {
         ScalarRangeType phi;
         evaluateScalar( i, x, phi ); 
-        for( int r = 0; r < dimRange; ++r )
+        for( int r = 0; r < dimRange; ++r , ++iR )
         { 
-          ret[ r ] += phi[ 0 ] * dofs[ util_.combinedDof( i , r ) ];
+          ret[ r ] += phi[ 0 ] * dofs[ iR ];
         }
       }
     }
@@ -304,15 +304,15 @@ namespace Dune
       ret = 0;
 
       const int numScalarBase = numDifferentBaseFunctions ();
-      for( int i = 0; i < numScalarBase ; ++i )
+      for( int i = 0, iR = 0; i < numScalarBase ; ++i )
       {
         ScalarJacobianRangeType gradPhiRef, gradPhi;
         jacobianScalar( i, x, gradPhiRef );
 
         FieldMatrixHelper :: multiply( gjit, gradPhiRef[ 0 ], gradPhi[ 0 ] );
 
-        for( int r = 0; r < dimRange; ++r )
-          ret[ r ].axpy( dofs[ util_.combinedDof( i , r ) ], gradPhi[ 0 ] );
+        for( int r = 0; r < dimRange; ++r, ++iR )
+          ret[ r ].axpy( dofs[ iR ], gradPhi[ 0 ] );
       }
     }
     
@@ -322,13 +322,13 @@ namespace Dune
                        LocalDofVectorType& dofs ) const
     {
       const int numScalarBase = numDifferentBaseFunctions ();
-      for( int i = 0; i < numScalarBase ; ++i )
+      for( int i = 0, iR = 0; i < numScalarBase ; ++i )
       {
         ScalarRangeType phi;
         evaluateScalar( i, x, phi ); 
-        for( int r = 0; r < dimRange; ++r )
+        for( int r = 0; r < dimRange; ++r , ++iR )
         { 
-          dofs[ util_.combinedDof( i , r ) ] += phi[ 0 ] * rangeFactor[ r ];
+          dofs[ iR ] += phi[ 0 ] * rangeFactor[ r ];
         }
       }
     }
@@ -345,12 +345,12 @@ namespace Dune
       FieldMatrixHelper :: multiply( jacFactor, gjit, jacFactorInv );
 
       const int numScalarBase = numDifferentBaseFunctions ();
-      for( int i = 0; i < numScalarBase; ++i )
+      for( int i = 0, iR = 0; i < numScalarBase; ++i )
       {
         ScalarJacobianRangeType grad;
         jacobianScalar( i, x, grad );
-        for( int r = 0; r < dimRange; ++r )
-          dofs[ util_.combinedDof( i , r ) ] += grad[ 0 ] * jacFactorInv[ r ];
+        for( int r = 0; r < dimRange; ++r , ++iR )
+          dofs[ iR ] += grad[ 0 ] * jacFactorInv[ r ];
       }
     }
  
@@ -368,14 +368,14 @@ namespace Dune
       FieldMatrixHelper :: multiply( jacFactor, gjit, jacFactorInv );
 
       const int numScalarBase = numDifferentBaseFunctions ();
-      for( int i = 0; i < numScalarBase; ++i )
+      for( int i = 0, iR = 0; i < numScalarBase; ++i )
       {
         ScalarRangeType phi;
         evaluateScalar( i, x, phi );
         ScalarJacobianRangeType grad;
         jacobianScalar( i, x, grad );
-        for( int r = 0; r < dimRange; ++r )
-          dofs[ util_.combinedDof( i , r ) ] += (phi[ 0 ] * rangeFactor[ r ]) + (grad[ 0 ] * jacFactorInv[ r ]);
+        for( int r = 0; r < dimRange; ++r, ++iR  )
+          dofs[ iR ] += (phi[ 0 ] * rangeFactor[ r ]) + (grad[ 0 ] * jacFactorInv[ r ]);
       }
     }
  
@@ -468,10 +468,9 @@ namespace Dune
         RangeType& result = rangeVector[ row ]; 
         result = 0;
 
-        for( size_t col = 0; col < numDiffBase; ++col ) 
+        for( size_t col = 0, colR = 0; col < numDiffBase; ++col ) 
         {
           const ScalarRangeType& phi = baseFctStorage[ baseRow ][ col ];
-          size_t colR = util_.combinedDof( col, 0 );
           for( int r = 0; r < dimRange; ++r, ++colR ) 
           {
             result[ r ] +=  dofs[ colR ] * phi[ 0 ];
@@ -542,13 +541,12 @@ namespace Dune
         // work to do here, need scalar global jacobian 
         ScalarJacobianRangeType gradPhi;
 
-        for( size_t col = 0; col < numDiffBase; ++col ) 
+        for( size_t col = 0, colR = 0; col < numDiffBase; ++col ) 
         {
           FieldMatrixHelper :: multiply(gjit,
                                         baseFctStorage[ baseRow ][ col ][ 0 ], 
                                         gradPhi[ 0 ] );
 
-          size_t colR = util_.combinedDof( col, 0 );
           for( int r = 0; r < dimRange; ++r, ++colR ) 
           {
             result[ r ].axpy( dofs[ colR ], gradPhi[ 0 ] );
@@ -600,10 +598,9 @@ namespace Dune
         assert( baseFctStorage[ baseRow ].size() >= numDiffBase );
         const RangeType& factor = rangeFactors[ row ]; 
 
-        for( size_t col = 0; col < numDiffBase; ++col ) 
+        for( size_t col = 0, colR = 0; col < numDiffBase; ++col ) 
         {
           const ScalarRangeType& phi = baseFctStorage[ baseRow ][ col ];
-          size_t colR = util_.combinedDof( col, 0 );
           for( int r = 0; r < dimRange; ++r , ++colR ) 
           {
             dofs[ colR ] += phi[ 0 ] * factor[ r ];
@@ -676,9 +673,8 @@ namespace Dune
                                        gjit,
                                        jacFactorInv );
 
-        for( size_t col = 0; col < numDiffBase; ++col ) 
+        for( size_t col = 0, colR = 0; col < numDiffBase; ++col ) 
         {
-          size_t colR = util_.combinedDof( col, 0 );
           for( int r = 0; r < dimRange; ++r, ++colR ) 
           {
             dofs[ colR ] += baseFctStorage[ baseRow ][ col ][ 0 ] * jacFactorInv[ r ];
