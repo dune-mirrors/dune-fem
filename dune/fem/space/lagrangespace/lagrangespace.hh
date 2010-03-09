@@ -428,7 +428,7 @@ namespace Dune
     template< class EntityType >
     inline const BaseFunctionSetType baseFunctionSet ( const EntityType &entity ) const
     {
-      return baseFunctionSet( entity.geometry().type() );
+      return baseFunctionSet( entity.type() );
     }
 
     /** \brief provide access to the base function set for a geometry type
@@ -456,7 +456,7 @@ namespace Dune
     template< class EntityType >
     inline const LagrangePointSetType &lagrangePointSet ( const EntityType &entity ) const
     {
-      return this->lagrangePointSet( entity.geometry().type() );
+      return this->lagrangePointSet( entity.type() );
     }
 
     /** \brief provide access to the Lagrange point set for a geometry type

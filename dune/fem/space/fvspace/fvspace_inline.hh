@@ -90,7 +90,7 @@ typename FiniteVolumeSpace<FunctionSpaceImp, GridPartImp, polOrd, BaseFunctionSt
 FiniteVolumeSpace<FunctionSpaceImp, GridPartImp, polOrd, BaseFunctionStorageImp>::
 baseFunctionSet (const EntityType &en) const 
 {
-  return this->baseFunctionSet(en.geometry().type());
+  return this->baseFunctionSet(en.type());
 }
 
 template <class FunctionSpaceImp, class GridPartImp, int polOrd, template <class> class BaseFunctionStorageImp >

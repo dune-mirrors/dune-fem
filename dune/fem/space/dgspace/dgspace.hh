@@ -199,9 +199,9 @@ namespace Dune
        \return BaseFunctionSetType
     */
     const BaseFunctionSetType
-    baseFunctionSet (const EntityType & en) const 
+    baseFunctionSet (const EntityType & entity) const 
     {
-      return this->baseFunctionSet(en.geometry().type());
+      return this->baseFunctionSet(entity.type());
     }
 
 
