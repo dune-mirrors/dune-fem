@@ -244,13 +244,11 @@ namespace Dune
     typedef typename FunctionSpaceType :: RangeType RangeType;
     typedef typename FunctionSpaceType :: JacobianRangeType JacobianRangeType;
 
-    typedef typename FunctionSpaceImp :: RangeFieldType  RealType;
-
     typedef MutableArray< MutableArray<RangeType> >         RangeVectorType;
     typedef MutableArray< MutableArray<JacobianRangeType> > JacobianRangeVectorType;
 
 #ifdef DUNE_FEM_BASEFUNC_USE_SSE
-    typedef Fem :: SSEMatrix< RealType > RangeCacheMatrixType ;
+    typedef Fem :: SSEMatrix< typename FunctionSpaceType :: RangeFieldType > RangeCacheMatrixType ;
     typedef std::vector< std::pair< RangeCacheMatrixType*, RangeCacheMatrixType* > > RangeCacheMatrixContainerType ;
 #endif
 

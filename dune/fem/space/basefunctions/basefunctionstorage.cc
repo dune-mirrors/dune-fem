@@ -166,7 +166,8 @@ namespace Dune
   {
     enum { dimension = DomainType::dimension };
 
-    typedef PointProvider<RealType, dimension, codimension> PointProviderType;
+    typedef typename FunctionSpaceImp :: DomainFieldType DomainFieldType;
+    typedef PointProvider<DomainFieldType, dimension, codimension> PointProviderType;
     typedef typename PointProviderType::GlobalPointVectorType PointVectorType;
 
     const PointVectorType& points = 
