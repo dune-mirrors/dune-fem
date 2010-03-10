@@ -141,7 +141,7 @@ namespace Dune {
     {
       // make sure we git the right quadrature 
       assert( enQuadId_ == quad.id() );
-      assert( valuesVec_.size() > quadPoint );
+      assert( (int) valuesVec_.size() > quadPoint );
 
       problem_.analyticalFlux( entity, time_, quad.point( quadPoint ), valuesVec_[ quadPoint ] , res );
     }
@@ -153,8 +153,8 @@ namespace Dune {
                                   RangeType& sourceRes ) 
     {
       assert( enQuadId_ == quad.id() );
-      assert( valuesVec_.size() > quadPoint );
-      assert( jacobianVec_.size() > quadPoint );
+      assert( (int) valuesVec_.size() > quadPoint );
+      assert( (int) jacobianVec_.size() > quadPoint );
 
       problem_.analyticalFlux( entity, time_, quad.point( quadPoint ), 
           valuesVec_[ quadPoint ], fluxRes );
@@ -171,7 +171,7 @@ namespace Dune {
                           RangeType& resEn,
                           RangeType& resNeigh )
     {
-      assert( valuesEnVec_.size() > quadPoint );
+      assert( (int) valuesEnVec_.size() > quadPoint );
       // make sure we git the right quadrature 
       assert( faceQuadId_ == quadInner.id() );
 
@@ -217,7 +217,7 @@ namespace Dune {
                         RangeType& boundaryFlux) 
     {
       assert( faceQuadId_ == quad.id() );
-      assert( valuesEnVec_.size() > quadPoint );
+      assert( (int) valuesEnVec_.size() > quadPoint );
 
       return problem_.boundaryFlux(nit, time_, quad.localPoint(quadPoint),
                                    valuesEnVec_[ quadPoint ], boundaryFlux);
