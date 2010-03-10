@@ -35,6 +35,8 @@ namespace Dune
     typedef typename FunctionSpaceImp::RangeType RangeType;
     typedef typename FunctionSpaceImp::JacobianRangeType JacobianRangeType;
 
+    enum { dimRange  = FunctionSpaceImp :: dimRange };
+    enum { dimDomain = FunctionSpaceImp :: dimDomain };
   public:
     //! Constructor
     explicit StorageBase( const FactoryType& factory );
@@ -90,14 +92,17 @@ namespace Dune
 #ifndef DUNE_FEM_BASEFUNC_USE_SSE
         ranges[ qp ].resize( numBase );
 #endif
-        for( int i = 0 ; i< numBase; ++i ) 
+        for( int i = 0, iR = 0 ; i< numBase; ++i ) 
         {
 #ifndef DUNE_FEM_BASEFUNC_USE_SSE
           storage.evaluate( i, diffVar, quad[ qp ], ranges[ qp ][ i ] );
 #else 
           RangeType val;
           storage.evaluate( i, diffVar, quad[ qp ], val );
-          ranges[ qp ][ i ]  = val[ 0 ];
+          for( int r = 0 ; r < dimRange; ++r , ++iR )
+          {
+            ranges[ qp ][ iR ]  = val[ r ];
+          }
 #endif
         }
       }
@@ -117,13 +122,29 @@ namespace Dune
       const int numBase = storage.numBaseFunctions();
 
       FieldVector<int, 0> diffVar;
+#ifndef DUNE_FEM_BASEFUNC_USE_SSE
       jacobians.resize( quadNop );
+#endif
       for( size_t qp = 0; qp < quadNop; ++qp ) 
       {
+#ifndef DUNE_FEM_BASEFUNC_USE_SSE
         jacobians[ qp ].resize( numBase );
-        for( int i = 0 ; i< numBase; ++i ) 
+#endif
+        for( int i = 0 , iD = 0; i< numBase; ++i ) 
         {
+#ifndef DUNE_FEM_BASEFUNC_USE_SSE
           storage.jacobian( i, quad[ qp ], jacobians[ qp ][ i ] );
+#else 
+          JacobianRangeType val;
+          storage.jacobian( i, quad[ qp ], val );
+          for( int r = 0 ; r < dimRange; ++r )
+          {
+            for( int d = 0; d < dimDomain; ++d , ++iD )
+            {
+              jacobians[ qp ][ iD ] = val[ r ][ d ];
+            }
+          }
+#endif
         }
       }
     }
@@ -312,6 +333,17 @@ namespace Dune
         storage.fillRangeCache( storage, quad, matrix );
         return matrix; 
       }
+
+      static const RangeCacheMatrixType& 
+      jacobian(const ThisType& storage,
+               const QuadratureType& quad, 
+               RangeCacheMatrixContainerType& jacobianMatrices)
+      {
+        assert( rangeMatrices[ quad.id() ].second );
+        RangeCacheMatrixType& matrix = * (jacobianMatrices[ quad.id() ].second);
+        storage.fillJacobianCache( storage, quad, matrix );
+        return matrix; 
+      }
 #endif
 
       static const RangeVectorType& 
@@ -328,7 +360,7 @@ namespace Dune
       jacobian(const ThisType& storage,
                const QuadratureType& quad, 
                const JacobianRangeContainerType&,
-               const JacobianRangeVectorType& jacobianTmp )
+               JacobianRangeVectorType& jacobianTmp )
       {
         storage.fillJacobianCache( storage, quad, jacobianTmp );
         return jacobianTmp;
@@ -387,6 +419,15 @@ namespace Dune
         assert( rangeMatrices[ quad.id() ].first );
         return * (rangeMatrices[ quad.id() ].first);
       }
+
+      static const RangeCacheMatrixType& 
+      jacobian(const ThisType& storage,
+               const QuadratureType& quad, 
+               const RangeCacheMatrixContainerType& jacobianMatrices)
+      {
+        assert( jacobianMatrices[ quad.id() ].first );
+        return * (jacobianMatrices[ quad.id() ].first);
+      }
 #endif
 
       static const RangeVectorType& 
@@ -402,7 +443,7 @@ namespace Dune
       jacobian(const ThisType& storage,
                const QuadratureType& quad, 
                const JacobianRangeContainerType& jacobians,
-               const JacobianRangeVectorType& )
+               JacobianRangeVectorType& )
       {
         return jacobians[ quad.id() ];
       }
@@ -453,6 +494,13 @@ namespace Dune
     {
       enum { cachable = Conversion< QuadratureType, CachingInterface > :: exists };
       return Evaluate< QuadratureType, cachable > :: evaluate( *this, quad, rangeMatrices_ );
+    }
+
+    template <class QuadratureType> 
+    const RangeCacheMatrixType& getJacobianMatrix( const QuadratureType& quad ) const 
+    {
+      enum { cachable = Conversion< QuadratureType, CachingInterface > :: exists };
+      return Evaluate< QuadratureType, cachable > :: jacobian( *this, quad, jacobianMatrices_ );
     }
 #endif
 
@@ -518,6 +566,7 @@ namespace Dune
 
 #ifdef DUNE_FEM_BASEFUNC_USE_SSE
     mutable RangeCacheMatrixContainerType rangeMatrices_;
+    mutable RangeCacheMatrixContainerType jacobianMatrices_;
 #endif
 
     mutable RangeVectorType rangeTmp_;
