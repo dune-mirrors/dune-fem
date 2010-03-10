@@ -451,26 +451,26 @@ namespace Dune
       }
 #else 
       typedef typename StorageType :: RangeVectorType RangeVectorType;
-      const RangeVectorType& baseFctStorage = storage_.getRangeStorage( quad );
+      const RangeVectorType& rangeStorage = storage_.getRangeStorage( quad );
 
       const size_t numRows = quad.nop();
-      const int numDiffBase = numDifferentBaseFunctions();
+      const size_t numDiffBase = numDifferentBaseFunctions();
       assert( numDiffBase * dimRange == dofs.numDofs() );
 
-      assert( baseFctStorage.size() >= numRows );
+      assert( rangeStorage.size() >= (int) numRows );
       for( size_t row = 0; row < numRows ; ++row )
       {
         const size_t baseRow = storage_.applyCaching( quad , row ); 
 
-        assert( baseFctStorage.size() > baseRow );
-        assert( baseFctStorage[ baseRow ].size() >= numDiffBase );
+        assert( rangeStorage.size() > baseRow );
+        assert( rangeStorage[ baseRow ].size() >= numDiffBase );
 
         RangeType& result = rangeVector[ row ]; 
         result = 0;
 
         for( size_t col = 0, colR = 0; col < numDiffBase; ++col ) 
         {
-          const ScalarRangeType& phi = baseFctStorage[ baseRow ][ col ];
+          const ScalarRangeType& phi = rangeStorage[ baseRow ][ col ];
           for( int r = 0; r < dimRange; ++r, ++colR ) 
           {
             result[ r ] +=  dofs[ colR ] * phi[ 0 ];
@@ -507,12 +507,12 @@ namespace Dune
                         const GlobalJacobianRangeType& ) const 
     {
       typedef typename StorageType :: JacobianRangeVectorType JacobianRangeVectorType;
-      const JacobianRangeVectorType& baseFctStorage = storage_.getJacobianStorage( quad );
+      const JacobianRangeVectorType& jacobianStorage = storage_.getJacobianStorage( quad );
 
       const size_t numRows = quad.nop();
       const size_t numDiffBase = numDifferentBaseFunctions();
       assert( numDiffBase * dimRange == dofs.numDofs() );
-      assert( baseFctStorage.size() >= numRows );
+      assert( jacobianStorage.size() >= (int )numRows );
 
       const bool affineGeometry = geometry.affine();
       typedef typename Geometry :: JacobianTransposed GeometryJacobianType;
@@ -532,8 +532,8 @@ namespace Dune
         if( ! affineGeometry ) 
           gjitTmp = geometry.jacobianInverseTransposed( quad.point( row ) );
 
-        assert( baseFctStorage.size() > baseRow );
-        assert( baseFctStorage[ baseRow ].size() >= numDiffBase );
+        assert( jacobianStorage.size() > (int) baseRow );
+        assert( jacobianStorage[ baseRow ].size() >= (int) numDiffBase );
 
         GlobalJacobianRangeType& result = jacVector[ row ]; 
         result = 0;
@@ -544,7 +544,7 @@ namespace Dune
         for( size_t col = 0, colR = 0; col < numDiffBase; ++col ) 
         {
           FieldMatrixHelper :: multiply(gjit,
-                                        baseFctStorage[ baseRow ][ col ][ 0 ], 
+                                        jacobianStorage[ baseRow ][ col ][ 0 ], 
                                         gradPhi[ 0 ] );
 
           for( int r = 0; r < dimRange; ++r, ++colR ) 
@@ -569,7 +569,6 @@ namespace Dune
       typedef typename StorageType :: RangeCacheMatrixType RangeCacheMatrixType;
       const RangeCacheMatrixType& baseFunctionMatrix = storage_.getRangeMatrix( quad );
 
-
       const bool faceCachingQuad = (QuadratureType :: codimension == 1) && 
         Conversion< QuadratureType, CachingInterface > :: exists ;
 
@@ -583,24 +582,24 @@ namespace Dune
 
 #else 
       typedef typename StorageType :: RangeVectorType RangeVectorType;
-      const RangeVectorType& baseFctStorage = storage_.getRangeStorage( quad );
+      const RangeVectorType& rangeStorage = storage_.getRangeStorage( quad );
 
       const size_t numRows = quad.nop();
       const size_t numDiffBase = numDifferentBaseFunctions();
       assert( numDiffBase * dimRange == dofs.numDofs() );
 
-      assert( baseFctStorage.size() >= numRows );
+      assert( rangeStorage.size() >= (int) numRows );
       for( size_t row = 0; row < numRows ; ++row )
       {
         const size_t baseRow = storage_.applyCaching( quad , row ); 
 
-        assert( baseFctStorage.size() > baseRow );
-        assert( baseFctStorage[ baseRow ].size() >= numDiffBase );
+        assert( rangeStorage.size() > (int) baseRow );
+        assert( rangeStorage[ baseRow ].size() >= (int)numDiffBase );
         const RangeType& factor = rangeFactors[ row ]; 
 
         for( size_t col = 0, colR = 0; col < numDiffBase; ++col ) 
         {
-          const ScalarRangeType& phi = baseFctStorage[ baseRow ][ col ];
+          const ScalarRangeType& phi = rangeStorage[ baseRow ][ col ];
           for( int r = 0; r < dimRange; ++r , ++colR ) 
           {
             dofs[ colR ] += phi[ 0 ] * factor[ r ];
@@ -638,17 +637,8 @@ namespace Dune
                                 LocalDofVectorType& dofs,
                                 const GlobalJacobianRangeType& ) const
     {
-      typedef typename StorageType :: JacobianRangeVectorType JacobianRangeVectorType;
-      const JacobianRangeVectorType& baseFctStorage = storage_.getJacobianStorage( quad );
-
-      const size_t numRows = quad.nop();
-      const size_t numDiffBase = numDifferentBaseFunctions();
-      assert( numDiffBase * dimRange == dofs.numDofs() );
-
-      typedef typename Geometry :: JacobianTransposed GeometryJacobianType;
-      GlobalJacobianRangeType jacFactorInv;
-
       const bool affineGeometry = geometry.affine();
+      typedef typename Geometry :: JacobianTransposed GeometryJacobianType;
       GeometryJacobianType gjitTmp ;
 
       const GeometryJacobianType& gjit = 
@@ -656,17 +646,57 @@ namespace Dune
         geometry.jacobianInverseTransposed( quad.point( 0 )) :
         gjitTmp ;
 
+      const size_t numRows = quad.nop();
 
-      assert( baseFctStorage.size() >= numRows );
+#ifdef DUNE_FEM_BASEFUNC_USE_SSE
+      typedef typename StorageType :: RangeCacheMatrixType RangeCacheMatrixType;
+      const RangeCacheMatrixType& baseFunctionMatrix = storage_.getJacobianMatrix( quad );
+
+      const size_t offset = GlobalJacobianRangeType :: rows * 
+                            GlobalJacobianRangeType :: cols;
+      double* jacFactorGlobal = new double [ numRows * offset ];
       for( size_t row = 0; row < numRows ; ++row )
       {
-        const size_t baseRow = storage_.applyCaching( quad , row ); 
-        assert( baseFctStorage.size() > baseRow );
-        assert( baseFctStorage[ baseRow ].size() >= numDiffBase );
-
         // if geometry has non-affine mapping we need to update jacobian inverse
         if( ! affineGeometry ) 
           gjitTmp = geometry.jacobianInverseTransposed( quad.point( row ));
+
+        // multiply jacobian factor with geometry inverse 
+        FieldMatrixHelper :: multiply( jacVector[ row ], 
+                                       gjit,
+                                       &jacFactorGlobal[ row * offset ] );
+      }
+
+      const bool faceCachingQuad = (QuadratureType :: codimension == 1) && 
+        Conversion< QuadratureType, CachingInterface > :: exists ;
+      if( faceCachingQuad ) 
+      {
+        // apply mapping of quadrature points 
+        baseFunctionMatrix.umtv( jacFactorGlobal, dofs, quad, dimRange , true );
+      }
+      else 
+        baseFunctionMatrix.umtv( jacFactorGlobal, dofs, dimRange, true );
+
+      delete [] jacFactorGlobal;
+#else 
+      typedef typename StorageType :: JacobianRangeVectorType JacobianRangeVectorType;
+      const JacobianRangeVectorType& jacobianStorage = storage_.getJacobianStorage( quad );
+
+      const size_t numDiffBase = numDifferentBaseFunctions();
+      assert( numDiffBase * dimRange == dofs.numDofs() );
+
+      GlobalJacobianRangeType jacFactorInv;
+
+      assert( jacobianStorage.size() >= (int) numRows );
+      for( size_t row = 0; row < numRows ; ++row )
+      {
+        const size_t baseRow = storage_.applyCaching( quad , row ); 
+        assert( jacobianStorage.size() > (int)baseRow );
+        assert( jacobianStorage[ baseRow ].size() >= (int)numDiffBase );
+
+        // if geometry has non-affine mapping we need to update jacobian inverse
+        if( ! affineGeometry ) 
+          gjitTmp = geometry.jacobianInverseTransposed( quad.point( row ) );
 
         // multiply jacobian factor with geometry inverse 
         FieldMatrixHelper :: multiply( jacVector[ row ], 
@@ -677,10 +707,11 @@ namespace Dune
         {
           for( int r = 0; r < dimRange; ++r, ++colR ) 
           {
-            dofs[ colR ] += baseFctStorage[ baseRow ][ col ][ 0 ] * jacFactorInv[ r ];
+            dofs[ colR ] += jacobianStorage[ baseRow ][ col ][ 0 ] * jacFactorInv[ r ];
           }
         }
       }
+#endif
     }
 
   protected:
