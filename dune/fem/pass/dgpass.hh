@@ -132,14 +132,23 @@ namespace Dune {
       visited_(0),
       updEn_(spc_),
       updNb_(spc_),
+      fMatVec_( 20 ),
+      valEnVec_( 20 ),
+      valNbVec_( 20 ),
       dtMin_(std::numeric_limits<double>::max()),
       minLimit_(2.0*std::numeric_limits<double>::min()),
+      //volumeQuadOrd_( 2 * spc_.order() ),
+      //faceQuadOrd_( 2 * spc_.order() + 1),
       volumeQuadOrd_( (volumeQuadOrd < 0) ? 
           ( 2 * spc_.order()) : volumeQuadOrd ),
       faceQuadOrd_( (faceQuadOrd < 0) ? 
         ( 2 * spc_.order()+1) : faceQuadOrd ),
       localMassMatrix_( spc_ , volumeQuadOrd_ ) 
     {
+      fMatVec_.setMemoryFactor( 1.1 );
+      valEnVec_.setMemoryFactor( 1.1 );
+      valNbVec_.setMemoryFactor( 1.1 );
+
       assert( volumeQuadOrd_ >= 0 );
       assert( faceQuadOrd_ >= 0 );
     }
@@ -494,8 +503,10 @@ namespace Dune {
       const double nbvol = nbGeo.volume(); 
       
       const int faceQuadInner_nop = faceQuadInner.nop();
+      assert( faceQuadInner.nop() == faceQuadOuter.nop() );
 
-      if( valEnVec_.size() < faceQuadInner_nop )
+      // check  valNbVec_ here, valEnVec_ might have been resized  
+      if( valNbVec_.size() < faceQuadInner_nop )
       {
         valEnVec_.resize( faceQuadInner_nop );
         valNbVec_.resize( faceQuadInner_nop );
