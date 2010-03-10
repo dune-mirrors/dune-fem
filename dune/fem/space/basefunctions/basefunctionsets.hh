@@ -685,7 +685,6 @@ namespace Dune
       const size_t numDiffBase = numDifferentBaseFunctions();
       assert( numDiffBase * dimRange == dofs.numDofs() );
 
-      GlobalJacobianRangeType jacFactorInv;
 
       assert( jacobianStorage.size() >= (int) numRows );
       for( size_t row = 0; row < numRows ; ++row )
@@ -698,6 +697,7 @@ namespace Dune
         if( ! affineGeometry ) 
           gjitTmp = geometry.jacobianInverseTransposed( quad.point( row ) );
 
+        GlobalJacobianRangeType jacFactorInv;
         // multiply jacobian factor with geometry inverse 
         FieldMatrixHelper :: multiply( jacVector[ row ], 
                                        gjit,
