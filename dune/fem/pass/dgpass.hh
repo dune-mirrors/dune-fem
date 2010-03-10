@@ -2,14 +2,12 @@
 #define DUNE_DGPASS_HH
 
 //- system includes 
-#include <map>
-
 #include <dune/fem/misc/utility.hh>
 
-#include "pass.hh"
-#include "selection.hh"
+#include <dune/fem/pass/pass.hh>
+#include <dune/fem/pass/selection.hh>
 // #include "discretemodel.hh"
-#include "dgmodelcaller.hh"
+#include <dune/fem/pass/dgmodelcaller.hh>
 
 #include <dune/fem/solver/timeprovider.hh>
 
