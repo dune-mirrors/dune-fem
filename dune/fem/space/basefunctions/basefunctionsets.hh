@@ -455,15 +455,15 @@ namespace Dune
 
       const size_t numRows = quad.nop();
       const size_t numDiffBase = numDifferentBaseFunctions();
-      assert( numDiffBase * dimRange == dofs.numDofs() );
+      assert( (int) numDiffBase * dimRange == dofs.numDofs() );
 
       assert( rangeStorage.size() >= (int) numRows );
       for( size_t row = 0; row < numRows ; ++row )
       {
         const size_t baseRow = storage_.applyCaching( quad , row ); 
 
-        assert( rangeStorage.size() > baseRow );
-        assert( rangeStorage[ baseRow ].size() >= numDiffBase );
+        assert( rangeStorage.size() > (int) baseRow );
+        assert( rangeStorage[ baseRow ].size() >= (int) numDiffBase );
 
         RangeType& result = rangeVector[ row ]; 
         result = 0;
@@ -511,7 +511,7 @@ namespace Dune
 
       const size_t numRows = quad.nop();
       const size_t numDiffBase = numDifferentBaseFunctions();
-      assert( numDiffBase * dimRange == dofs.numDofs() );
+      assert( (int) numDiffBase * dimRange == dofs.numDofs() );
       assert( jacobianStorage.size() >= (int )numRows );
 
       const bool affineGeometry = geometry.affine();
@@ -586,7 +586,7 @@ namespace Dune
 
       const size_t numRows = quad.nop();
       const size_t numDiffBase = numDifferentBaseFunctions();
-      assert( numDiffBase * dimRange == dofs.numDofs() );
+      assert( (int) numDiffBase * dimRange == dofs.numDofs() );
 
       assert( rangeStorage.size() >= (int) numRows );
       for( size_t row = 0; row < numRows ; ++row )
@@ -683,7 +683,7 @@ namespace Dune
       const JacobianRangeVectorType& jacobianStorage = storage_.getJacobianStorage( quad );
 
       const size_t numDiffBase = numDifferentBaseFunctions();
-      assert( numDiffBase * dimRange == dofs.numDofs() );
+      assert( (int ) numDiffBase * dimRange == dofs.numDofs() );
 
 
       assert( jacobianStorage.size() >= (int) numRows );

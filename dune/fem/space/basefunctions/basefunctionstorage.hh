@@ -91,8 +91,10 @@ namespace Dune
       {
 #ifndef DUNE_FEM_BASEFUNC_USE_SSE
         ranges[ qp ].resize( numBase );
+#else 
+        int iR = 0;
 #endif
-        for( int i = 0, iR = 0 ; i< numBase; ++i ) 
+        for( int i = 0; i< numBase; ++i ) 
         {
 #ifndef DUNE_FEM_BASEFUNC_USE_SSE
           storage.evaluate( i, diffVar, quad[ qp ], ranges[ qp ][ i ] );
@@ -129,8 +131,10 @@ namespace Dune
       {
 #ifndef DUNE_FEM_BASEFUNC_USE_SSE
         jacobians[ qp ].resize( numBase );
+#else 
+        int iD = 0;
 #endif
-        for( int i = 0 , iD = 0; i< numBase; ++i ) 
+        for( int i = 0; i< numBase; ++i ) 
         {
 #ifndef DUNE_FEM_BASEFUNC_USE_SSE
           storage.jacobian( i, quad[ qp ], jacobians[ qp ][ i ] );
