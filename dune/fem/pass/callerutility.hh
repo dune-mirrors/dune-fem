@@ -456,7 +456,6 @@ namespace Dune
   public:
     //! Constructor
     //! \param quad The quadrature in question.
-    //! \param quadPoint The index of the quadrature point of quadrature quad
     LocalFunctionEvaluateQuadrature(const QuadratureImp& quad )
       : quad_( quad )
     {}

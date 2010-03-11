@@ -194,10 +194,12 @@ namespace Dune
       return DGSpace_id;
     }
   
-    /**\brief return reference to base functions set according to the entity's geometry type 
-       \param[in] en entity type 
-       \return BaseFunctionSetType
-    */
+    /** \brief obtain the base functions corresponding to an entity
+     *
+     *  \param[in]  entity  entity for which the base function set is requested
+     *
+     *  \return a reference to the base function set
+     */
     const BaseFunctionSetType
     baseFunctionSet (const EntityType & entity) const 
     {
