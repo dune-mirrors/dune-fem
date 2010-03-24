@@ -762,6 +762,32 @@ struct GlobalRefine
     typedef DofManager< GridType > DofManagerType; 
     DofManagerType& dm = DofManagerType :: instance(grid);
     grid.globalRefine(step);
+    grid.loadBalance();
+    dm.resize();
+    dm.compress();
+  }
+};
+/** \brief A class with one static method apply for invoking the local
+    adaptation procedure on a given grid instance.
+    All index sets are adapted to the new grid and the 
+    managed dof storage is expanded - but no prolongation or
+    restriction of data is performed.
+*/
+struct LocalRefine 
+{
+  /** \brief apply local refinement and also adjust index sets and 
+      managed dof storage. However, user data stored before is lost. 
+      \param grid Grid that is globally refined 
+  */
+  template <class GridType>
+  static void apply(GridType& grid) 
+  {
+    typedef DofManager< GridType > DofManagerType; 
+    DofManagerType& dm = DofManagerType :: instance(grid);
+    grid.preAdapt();
+    grid.adapt();
+    grid.postAdapt();
+    grid.loadBalance();
     dm.resize();
     dm.compress();
   }
