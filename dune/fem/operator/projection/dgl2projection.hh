@@ -58,8 +58,7 @@ class DGL2ProjectionImpl
     template <class FunctionImp, class DiscreteFunctionImp>
     static void project(const FunctionImp& f, 
                         DiscreteFunctionImp& discFunc,
-                        const int polOrd,
-                        ) 
+                        const int polOrd ) 
     {
       DGL2ProjectionImpl::projectFunction(f, discFunc, polOrd);
     }
@@ -77,7 +76,7 @@ public:
   static void project(const FunctionImp& f, DiscreteFunctionImp& discFunc, 
                       const int quadOrd = -1, const bool communicate = true ) 
   {
-    ProjectChooser<0, Conversion<FunctionImp, HasLocalFunction> ::exists > :: project(f,discFunc,quadOrd,communicate);
+    ProjectChooser<0, Conversion<FunctionImp, HasLocalFunction> ::exists > :: project(f,discFunc,quadOrd);
 
     // do communication in parallel cases 
     if( communicate ) 
