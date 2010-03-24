@@ -36,7 +36,7 @@ class DGL2ProjectionImpl
     template <class FunctionImp, class DiscreteFunctionImp>
     static void project(const FunctionImp& f, 
                         DiscreteFunctionImp& discFunc,
-                        int polOrd) 
+                        const int polOrd) 
     {
       // some typedefs 
       typedef typename DiscreteFunctionImp :: DiscreteFunctionSpaceType DiscreteFunctionSpaceType;
@@ -58,18 +58,30 @@ class DGL2ProjectionImpl
     template <class FunctionImp, class DiscreteFunctionImp>
     static void project(const FunctionImp& f, 
                         DiscreteFunctionImp& discFunc,
-                        int polOrd) 
+                        const int polOrd,
+                        ) 
     {
       DGL2ProjectionImpl::projectFunction(f, discFunc, polOrd);
     }
   };
 
 public:  
-  //! project function onto discrete function space  
+  /** /brief project function onto discrete discontinuous galerkin space   
+   * 
+   * \param f  function that is going to be projected 
+   * \param discFunc discrete function storing the result 
+   * \param quadOrd order of quadrature used (defaults to 2 * space.order())
+   * \param communicate  restore integrity of data (defaults to true) 
+   */
   template <class FunctionImp, class DiscreteFunctionImp>
-  static void project(const FunctionImp& f, DiscreteFunctionImp& discFunc, int polOrd = -1) 
+  static void project(const FunctionImp& f, DiscreteFunctionImp& discFunc, 
+                      const int quadOrd = -1, const bool communicate = true ) 
   {
-    ProjectChooser<0, Conversion<FunctionImp, HasLocalFunction> ::exists > :: project(f,discFunc,polOrd);
+    ProjectChooser<0, Conversion<FunctionImp, HasLocalFunction> ::exists > :: project(f,discFunc,quadOrd,communicate);
+
+    // do communication in parallel cases 
+    if( communicate ) 
+      discFunc.communicate();
   }
 
 protected:  
