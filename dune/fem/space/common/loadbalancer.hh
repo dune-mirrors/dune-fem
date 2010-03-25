@@ -15,6 +15,7 @@
 #include <dune/fem/function/common/discretefunction.hh>
 #include <dune/fem/io/file/asciiparser.hh>
 #include <dune/fem/io/parameter.hh>
+#include <dune/fem/io/file/persistencemanager.hh>
 
 
 namespace Dune{
@@ -64,7 +65,8 @@ public:
  */
 template <class GridType>
 class LoadBalancer 
-: virtual public LoadBalancerInterface 
+: virtual public LoadBalancerInterface ,
+  public PersistenceManager 
 {  
   // type of this 
   typedef LoadBalancer<GridType> ThisType;
@@ -271,6 +273,20 @@ public:
   virtual double loadBalanceTime() const 
   {
     return balanceTime_;
+  }
+
+  //! backup internal data 
+  void backup() const 
+  { 
+    Tuple<const int& > value( balanceCounter_ );
+    PersistenceManager::backupValue("loadbalancer",value);
+  }
+
+  //! retore internal data 
+  void restore() 
+  {
+    Tuple< int& > value( balanceCounter_ );
+    PersistenceManager::restoreValue("loadbalancer",value);
   }
 
   //! add discrete function to data inliner/xtractor list 
