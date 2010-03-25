@@ -66,7 +66,7 @@ public:
 template <class GridType>
 class LoadBalancer 
 : virtual public LoadBalancerInterface ,
-  public PersistenceManager 
+  public AutoPersistentObject
 {  
   // type of this 
   typedef LoadBalancer<GridType> ThisType;
