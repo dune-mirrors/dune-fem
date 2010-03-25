@@ -4,6 +4,7 @@ file_HEADERS = asciiparser.hh \
 	       datawriter.hh \
 				 dataoutput.hh \
 	       grapedataio.hh \
+         binarydataio.hh \
 	       iointerface.hh \
 	       iolock.hh \
 	       iotuple.hh \
