@@ -55,7 +55,7 @@ namespace Dune
  *  orignally defined through a run time parameter using the Parameter
  *  class:
  *  \code 
- *  class A : public Dune::AutoPersistent {
+ *  class A : public Dune::AutoPersistentObject {
  *    int var_,b_;
  *    ComplexType U_;
  *    A() : var_(Dune::Parameter::getValue("token",0,var_) {}
@@ -324,15 +324,17 @@ namespace Dune
     }
 
   private:
+    const char* myTag() const { return "persistentobjects"; }
+
     void startBackup ( const std::string &path )
     {
-      path_=path+"/";
+      path_ = path+"/";
       fileCounter_=0;
       lineNo_=0;
 
       IOInterface::createPath(path_);
       
-      outAsciStream_.open((path_+"checkpoint").c_str());  
+      outAsciStream_.open((path_+ myTag()).c_str());  
       outAsciStream_ << std::scientific;
       outAsciStream_.precision(16);
       outAsciStream_ << "Persistent Objects" << std::endl;
@@ -344,7 +346,7 @@ namespace Dune
       path_=path+"/";
       fileCounter_=0;
       lineNo_=0;
-      inAsciStream_.open((path_+"checkpoint").c_str());  
+      inAsciStream_.open((path_+myTag()).c_str());  
       if (!inAsciStream_) {
         std::cout << "Error opening global checkpoint stream!"
                   << std::endl;
