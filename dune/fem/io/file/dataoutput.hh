@@ -59,14 +59,18 @@ struct DataOutputParameters
     return Parameter::getValue< std::string >( "fem.io.datafileprefix" );
   }
 
+  //! base of file name for data file (fem.io.macroGridFile)
+  virtual std::string macroGridName () const
+  {
+    return Parameter::getValue< std::string >( "fem.io.macroGridFile" );
+  }
+
   //! format of output (fem.io.outputformat)
   virtual int outputformat () const
   {
     static const std::string formatTable[]
-      = { "grape", "vtk-cell", "vtk-vertex", "gnuplot" };
+      = { "binary", "vtk-cell", "vtk-vertex", "gnuplot" };
     int format = Parameter::getEnum( "fem.io.outputformat", formatTable, 1 );
-    if( format == 0 )
-      DUNE_THROW( ParameterInvalid, "Format 'grape' not supported by DataOutput." );
     return format;
   }
 
@@ -284,7 +288,7 @@ protected:
   };
 
 protected:  
-  enum OutputFormat { vtk = 1 , vtkvtx = 2 , gnuplot = 3 };
+  enum OutputFormat { binary = 0 , vtk = 1 , vtkvtx = 2 , gnuplot = 3 };
 
   //! \brief type of grid used 
   typedef GridImp GridType;
@@ -400,6 +404,7 @@ protected:
     int outputFormat = parameter.outputformat();
     switch( outputFormat ) 
     {
+      case 0: outputFormat_ = binary; break;
       case 1: outputFormat_ = vtk; break;
       case 2: outputFormat_ = vtkvtx; break;
       case 3: outputFormat_ = gnuplot; break;
@@ -465,6 +470,9 @@ public:
     display(); 
     switch (outputFormat_)
     {
+    case binary:   
+      writeBinaryData( sequenceStamp );
+      break;
 #if USE_VTKWRITER
     case vtk : 
     case vtkvtx :
@@ -486,19 +494,23 @@ public:
                 << outstring
                 << std::endl;
 
-    // only write info for proc 0, otherwise on large number of procs
-    // this is to much output 
     if(myRank_ <= 0)
     {
-      std::cout << "DataOutput[" << myRank_ << "]::write data"
+      // only write info for proc 0, otherwise on large number of procs
+      // this is to much output 
+      std::cout << myClassName() << "[" << myRank_ << "]::write data"
                 << " writestep=" << writeStep_
                 << " sequenceStamp=" << sequenceStamp
                 << outstring
                 << std::endl;
     }
+
     saveTime_ += saveStep_;
     ++writeStep_;
   }
+
+  //! print class name 
+  virtual const char* myClassName() const { return "DataOutput"; }
 
   /** Return output path name */
   const std::string& path() const {
@@ -636,6 +648,12 @@ protected:
       }
     }
     return name;
+  }
+
+  //! write binary data 
+  virtual void writeBinaryData(const double) const 
+  {
+    DUNE_THROW(NotImplemented, "Format 'binary' not supported by DataOutput, but by DataWriter." );
   }
 
   //! display data with grape 
