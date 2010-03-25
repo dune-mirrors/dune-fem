@@ -8,6 +8,12 @@
 namespace Dune 
 {
 
+  template< int dimW >
+  class YaspGrid;
+
+  template< int dim, int dimW , class ctype >
+  class SGrid;
+
 #ifdef ENABLE_ALBERTA
   template< int dim, int dimW >
   class AlbertaGrid;
@@ -32,6 +38,24 @@ namespace Dune
       {
         //return std::string( "unknown" );
         return grid.name();
+      }
+    };
+
+    template < int dimworld > 
+    struct GridName< YaspGrid<dimworld> >
+    {
+      static std::string name(const YaspGrid<dimworld>& ) 
+      {
+        return std::string( "YaspGrid" );
+      }
+    };
+
+    template <int dim, int dimworld, class ctype > 
+    struct GridName< SGrid<dim, dimworld, ctype> >
+    {
+      static std::string name(const SGrid<dim, dimworld, ctype>& ) 
+      {
+        return std::string( "SGrid" );
       }
     };
 
