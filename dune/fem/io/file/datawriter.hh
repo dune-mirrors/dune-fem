@@ -1,11 +1,8 @@
 #ifndef DUNE_DATAWRITER_HH
 #define DUNE_DATAWRITER_HH
 
-#ifndef USE_VTKWRITER
-#define USE_VTKWRITER 1
-#endif
+#include <string>
 
-//- Dune includes 
 #include <dune/fem/io/file/iointerface.hh>
 #include <dune/fem/io/file/iotuple.hh>
 #include <dune/fem/io/parameter.hh>
@@ -14,20 +11,15 @@
 #include <dune/fem/space/lagrangespace.hh>
 #include <dune/fem/function/adaptivefunction.hh>
 #include <dune/fem/quadrature/cachingquadrature.hh>
-
-#if USE_VTKWRITER
-#include <dune/fem/io/file/vtkio.hh>
-#include <dune/fem/operator/projection/vtxprojection.hh>
-#endif
+#include <dune/fem/io/file/persistencemanager.hh>
 
 #ifndef USE_GRAPE 
 // define whether to use grape of not 
 #define USE_GRAPE HAVE_GRAPE
 #endif
 
-#if USE_GRAPE
 #include <dune/grid/io/visual/grapedatadisplay.hh>
-#endif
+#include <dune/fem/io/file/dataoutput.hh>
 
 namespace Dune {
 
@@ -40,127 +32,9 @@ namespace Dune {
 */    
 template <class GridImp, 
           class DataImp> 
-class DataWriter : public IOInterface 
+class DataWriter : public DataOutput< GridImp, DataImp > 
 {
-
 protected:  
-#if USE_VTKWRITER
-  template <class VTKIOType>
-  class VTKListEntry 
-  {
-  protected: 
-    VTKListEntry () {}
-  public:
-    virtual ~VTKListEntry () {}
-    virtual void add(VTKIOType &) const = 0;
-  };
-
-  template <class VTKIOType, class DFType> 
-  class VTKFunc : public VTKListEntry<VTKIOType>
-  {
-    typedef typename VTKIOType :: GridPartType GridPartType ;
-    typedef typename DFType :: DiscreteFunctionSpaceType :: FunctionSpaceType FunctionSpaceType;
-
-    typedef LagrangeDiscreteFunctionSpace< FunctionSpaceType,
-            GridPartType, 1> LagrangeSpaceType;
-    typedef AdaptiveDiscreteFunction< LagrangeSpaceType >  NewFunctionType;
-
-    const DFType& df_;
-    LagrangeSpaceType space_;
-    mutable NewFunctionType* func_;
-    
-    VTKFunc( const VTKFunc&) ; 
-  public:
-    VTKFunc( const GridPartType& gridPart, const DFType& df ) 
-      : df_ (df) 
-      , space_( const_cast<GridPartType&> (gridPart) )
-      , func_(0)
-    {
-    }
-
-    ~VTKFunc () 
-    {
-      delete func_;
-    }
-
-    virtual void add(VTKIOType& vtkio) const 
-    {
-      func_ = new NewFunctionType ( df_.name(), space_ );
-      WeightDefault<GridPartType> weight;
-      VtxProjectionImpl::project( df_, *func_, weight );
-      vtkio.addVertexData( *func_ );
-      vtkio.addVectorVertexData( *func_ );
-    }
-  };
-
-  template <class VTKOut>
-  class VTKOutputerDG {
-  public:
-    //! Constructor
-    VTKOutputerDG(VTKOut& vtkOut) :
-      vtkOut_(vtkOut)
-    {
-    }
-
-    //! Applies the setting on every DiscreteFunction/LocalFunction pair.
-    template <class DFType>
-    void visit(DFType* df) 
-    {
-      if(df->space().order() > 0)
-      {
-        vtkOut_.addVertexData( *df );
-        vtkOut_.addVectorVertexData( *df );
-      }
-      else 
-      {
-        vtkOut_.addCellData( *df ); 
-        vtkOut_.addVectorCellData( *df );
-      }
-    }
-
-  private:
-    VTKOut & vtkOut_;
-  };
-
-  template <class VTKOut>
-  class VTKOutputerLagrange {
-  public:
-    //! Constructor
-    VTKOutputerLagrange( VTKOut& vtkOut ) :
-      vtkOut_(vtkOut), vec_()
-    {
-    }
-
-    //! destructor, delete entries of list 
-    ~VTKOutputerLagrange() 
-    {
-      for(size_t i=0; i<vec_.size(); ++i)
-      {
-        delete vec_[i];
-        vec_[i] = 0;
-      }
-    }
-
-    //! Applies the setting on every DiscreteFunction/LocalFunction pair.
-    template <class DFType>
-    void visit(DFType* df) 
-    {
-      typedef VTKFunc<VTKOut,DFType> EntryType; 
-      EntryType* entry = new EntryType(vtkOut_.gridPart(), *df);
-      entry->add( vtkOut_ );
-      vec_.push_back( entry );
-    }
-
-  private:
-    VTKOut & vtkOut_;
-    typedef VTKListEntry<VTKOut> VTKListEntryType;
-    std::vector<VTKListEntryType *> vec_;
-  };
-#endif
-
-protected:  
-  enum OutputFormat { grape = 0 , vtk = 1 , vtkvtx = 2 , gnuplot = 3 };
-
   //! \brief type of grid used 
   typedef GridImp GridType;
   //! \brief type of data tuple 
@@ -168,28 +42,16 @@ protected:
 
   //! \brief type of this class 
   typedef DataWriter< GridImp, DataImp > ThisType;
-  
-  const GridType& grid_;
-  mutable OutPutDataType& data_; 
 
-  // name for data output 
-  std::string path_;
-  std::string datapref_;
+  typedef DataOutput< GridImp, DataImp > BaseType;
 
-  bool grapeDisplay_;
-  
-  mutable int writeStep_;
-  mutable double saveTime_;
+  using BaseType :: grid_;
+  using BaseType :: data_;
 
-  double saveStep_;
-  int saveCount_;
-  double endTime_;
-  const int myRank_;
-
-  bool verbose_;
-
-  // grape of vtk 
-  OutputFormat outputFormat_;
+  using BaseType :: path_;
+  using BaseType :: datapref_;
+  using BaseType :: writeStep_;
+  using BaseType :: outputFormat_ ;
 
 public: 
  /** \brief Constructor creating data writer 
@@ -202,331 +64,60 @@ public:
     The DataWriter is tuned through \ref Parameter 
     described under \ref DiscFuncIO. 
   */
-  DataWriter(const GridType & grid, 
-             const std::string& gridName, 
+  DataWriter(const GridType & grid,
              OutPutDataType& data,
-             double startTime,
-             double endTime)
-    : grid_(grid), data_(data) 
-    , writeStep_(0)
-    , saveTime_(startTime)
-    , saveStep_(0.1)
-    , saveCount_(-1)
-    , endTime_(endTime)
-    , myRank_(grid_.comm().rank())
-    , outputFormat_(grape)
+             const DataOutputParameters& parameter=DataOutputParameters())
+    : BaseType( grid, data, parameter )
   {
-    // initialize class 
-    init();
     // save macro grid for structured grids 
-    saveMacroGrid( gridName );
+    saveMacroGrid( parameter.macroGridName() );
   }
 
-  /** \brief Constructor creating data writer 
-    \param grid corresponding grid 
-    \param data Tuple containing discrete functions to write 
-    \param time for restarted jobs get time from outside 
-    \param startTime starting time for a time dependent simulation
-    \param endTime final time of a time dependent simulation
-  */ 
-  DataWriter(const GridType & grid, OutPutDataType& data, 
-             double time,
-             double startTime,
-             double endTime)
-    : grid_(grid), data_(data) 
-    , writeStep_(0) 
-    , saveTime_(startTime)
-    , saveStep_(0.1)
-    , saveCount_(-1)
-    , endTime_(endTime)
-    , myRank_(grid_.comm().rank())
-    , outputFormat_(grape)
+  DataWriter(const GridType & grid,
+             OutPutDataType& data,
+             const TimeProviderBase& tp,
+             const DataOutputParameters& parameter=DataOutputParameters())
+    : BaseType( grid, data, tp, parameter )
   {
-    init();
-
-    // set old values according to new time 
-    while(saveTime_ < time) 
-    {
-      ++writeStep_;
-      saveTime_ += saveStep_;
-    }
+    // save macro grid for structured grids 
+    saveMacroGrid( parameter.macroGridName() );
   }
 
   //! destructor 
   virtual ~DataWriter() {}
 
-protected:  
-  //! initialize data writer 
-  void init() 
-  {
-    // read verbose parameter 
-    verbose_ = Parameter::verbose(); 
-
-    path_ = Parameter::commonOutputPath();
-    // create path if not already exists 
-    IOInterface :: createGlobalPath ( grid_.comm(), path_ );
-
-    // write parameter file 
-    Parameter::write("parameter.log");
-    
-    // get prefix for data files
-    {
-      std::string dummyfile;
-      Parameter::get("fem.io.datafileprefix",dummyfile);
-      datapref_ += dummyfile;
-    }
-
-    static const std::string formatTable[]
-      = { "grape", "vtk-cell", "vtk-vertex", "gnuplot" };
-    int outputFormat = Parameter::getEnum( "fem.io.outputformat", formatTable, 0 );
-    switch( outputFormat ) 
-    {
-      case 0: outputFormat_ = grape; break;
-      case 1: outputFormat_ = vtk; break;
-      case 2: outputFormat_ = vtkvtx; break;
-      case 3: outputFormat_ = gnuplot; break;
-      default:
-        DUNE_THROW(NotImplemented,"DataWriter::init: wrong output format");
-    }
-
-    int gpdisp = Parameter::getValue("fem.io.grapedisplay",0);
-    grapeDisplay_ = (gpdisp == 1) ? true : false;
-
-    // get parameters for data writing
-    Parameter::get("fem.io.savestep",saveStep_);
-    Parameter::get("fem.io.savecount",saveCount_);
-    Parameter::get("fem.io.starttime",saveTime_,saveTime_);
-    Parameter::get("fem.io.endtime",endTime_,endTime_);
-  }
-
-public:
-  /** \brief Returns true, if DataWriter will write data with given parameters.
-     \param[in] time actual time of computation
-     \param[in] timestep current number of time step
-     \return returns true, if DataWriter will write data with given parameters, false otherwise
-
-     Call this method before DataWriter::write(time, timestep), otherwise it will always return false.
-  */
-  virtual bool willWrite(double time, int timestep) const 
-  {
-    return ( (saveStep_>0 && time >= saveTime_ ) || 
-        (time >= endTime_) ||
-        (saveCount_>0 && timestep%saveCount_ == 0) );
-  }
-  
-  /** \brief write given data to disc
-     \param[in] time actual time of computation 
-     \param[in] timestep current number of time step 
-     \param[in] data data to write (template type, should be a tuple)
-  */
-  template <class OutputTupleType>
-  void write(double time, int timestep, OutputTupleType& data) const 
-  {
-    if( willWrite( time, timestep ) )
-    {
-      {
-        // check online display 
-        display(); 
-      }
-
-      if( outputFormat_ == grape )
-      {
-        // create new path for time step output 
-        std::string timeStepPath = IOInterface::createPath ( grid_.comm(),
-            path_, datapref_ , writeStep_ );
-
-        // for structured grids copy grid 
-        IOInterface::copyMacroGrid(grid_,path_,timeStepPath,datapref_);
-
-        GrapeDataIO<GridType> dataio;
-        // call output of IOTuple 
-        IOTuple<OutputTupleType>::output(dataio, 
-          grid_ ,time, writeStep_, timeStepPath , datapref_, data );
-      }
-#if USE_VTKWRITER
-      else if ( outputFormat_ == vtk || outputFormat_ == vtkvtx )
-      {
-        // write data in vtk output format 
-        writeVTKOutput( Element<0>::get(data), time );
-      }
-#endif
-      else if ( outputFormat_ == gnuplot )
-      {
-        writeGnuPlotOutput( Element<0>::get(data_), time );
-      }
-      else 
-      {
-        DUNE_THROW(NotImplemented,"DataWriter::write: wrong output format");
-      }
-
-      // only write info for proc 0, otherwise on large number of procs
-      // this is to much output 
-      if(myRank_ <= 0)
-      {
-        std::cout << "DataWriter["<<myRank_<<"]::write:  time = "<< time << "  writeData: step number " << writeStep_ << std::endl;
-      }
-      saveTime_ += saveStep_;
-      ++writeStep_;
-    }
-    return;
-  }
-
-  /** \brief write data to disc
-     \param[in] time actual time of computation 
-     \param[in] timestep current number of time step 
-  */
-  virtual void write(double time, int timestep) const 
-  {
-    write(time, timestep, data_);
-  }
-
-  /** Return output path name */
-  const std::string& path() const {
-    return path_;
-  }
-
-protected:  
-#if USE_VTKWRITER
-  template <class DFType> 
-  void writeVTKOutput(const DFType* func, double time) const 
-  {
-    // check whether to use vertex data of discontinuous data 
-    const bool vertexData = (outputFormat_ == vtkvtx);
-
-    // check whether we have parallel run  
-    const bool parallel = (grid_.comm().size() > 1);
-
-    // generate filename, with path only for serial run  
-    std::string name = genFilename( (parallel) ? "" : path_, datapref_, writeStep_ );
-
-#if 0 // YASPGRID 
-    if( vertexData )
-    {
-      static bool called = false; 
-      if( ! called ) 
-      {
-        std::cerr << "WARNING: vertexData output not working with YaspGrid! \n"; 
-        called = true;
-      }
-    }
-
-#else 
-    if( vertexData ) 
-    {
-      // generate adaptive leaf grid part 
-      // do not use leaf grid part since this will 
-      // create the grids leaf index set, which might not be wanted. 
-      typedef AdaptiveLeafGridPart< GridType > GridPartType; 
-      GridPartType gridPart( const_cast<GridType&> (grid_) );
-
-      // create vtk output handler 
-      typedef VTKIO < GridPartType > VTKIOType; 
-      VTKIOType vtkio ( gridPart, VTKOptions::conforming );
-
-      // add all functions 
-      ForEachValue<OutPutDataType> forEach(data_); 
-      VTKOutputerLagrange< VTKIOType > io( vtkio );
-      forEach.apply( io );
-
-      if( parallel )
-      {
-        // write all data for parallel runs  
-        vtkio.pwrite( name, path_, "." , Dune::VTKOptions::binaryappended );
-      }
-      else
-      {
-        // write all data serial 
-        vtkio.write( name, Dune::VTKOptions::binaryappended );
-      }
-    }
-    else
-#endif 
-    {
-      // get grid part 
-      typedef typename DFType :: DiscreteFunctionSpaceType :: GridPartType GridPartType; 
-      const GridPartType& gridPart = func->space().gridPart();
-
-      {
-        // create vtk output handler 
-        typedef VTKIO < GridPartType > VTKIOType; 
-        VTKIOType vtkio ( gridPart, VTKOptions::nonconforming );
-
-        // add all functions 
-        ForEachValue<OutPutDataType> forEach(data_); 
-        VTKOutputerDG< VTKIOType > io( vtkio );
-        forEach.apply( io );
-
-        // write all data 
-        if( parallel )
-        {
-          // write all data for parallel runs  
-          vtkio.pwrite( name, path_, "." , Dune::VTKOptions::binaryappended );
-        }
-        else
-        {
-          // write all data serial 
-          vtkio.write( name, Dune::VTKOptions::binaryappended );
-        }
-      }
-    }
-  }
-#endif
-
-  // write to gnuplot file format
-  template <class DFType> 
-  void writeGnuPlotOutput(const DFType* func, double time) const
-  {
-    typedef typename DFType :: Traits Traits;
-    typedef typename Traits :: LocalFunctionType LocalFunctionType;
-    typedef typename Traits :: DiscreteFunctionSpaceType DiscreteFunctionSpaceType;
-    typedef typename DiscreteFunctionSpaceType :: IteratorType IteratorType;
-    typedef typename DiscreteFunctionSpaceType :: GridPartType GridPartType;
-
-    typedef typename DiscreteFunctionSpaceType :: DomainType DomainType;
-    typedef typename DiscreteFunctionSpaceType :: RangeType RangeType;
- 
-    enum{ dimDomain = DiscreteFunctionSpaceType :: dimDomain };
-    enum{ dimRange = DiscreteFunctionSpaceType :: dimRange };
-
-    // generate filename
-    std::string name = genFilename( path_, datapref_, writeStep_ );
-    name += ".gnu";
-    std::ofstream gnuout(name.c_str());
-
-    // start iteration
-    IteratorType endit = func->space().end();
-    for (IteratorType it = func->space().begin(); it != endit; ++it) {
-      CachingQuadrature<GridPartType,0> quad(*it,func->space().order());
-      LocalFunctionType lf = func->localFunction(*it);
-      for ( unsigned int i=0; i < quad.nop(); ++i ) {
-        RangeType u;
-        DomainType x = it->geometry().global(quad.point(i));
-        lf.evaluate(quad[i],u);
-        for (int i = 0; i < dimDomain; ++i) 
-          gnuout << x[i] << " ";
-        for (int i = 0; i < dimRange; ++i) 
-          gnuout << u[i] << " ";
-        gnuout << "\n";
-      }
-    }
-  }
-
-  //! display data with grape 
-  virtual void display() const 
-  {
-    if( grapeDisplay_ )
-    {
-#if USE_GRAPE
-      GrapeDataDisplay<GridType> grape(grid_);
-      IOTuple<OutPutDataType>::addToDisplay(grape,data_);
-      grape.display();
-#else 
-      std::cerr <<"WARNING: HAVE_GRAPE == 0, but grapeDisplay == true, recompile with grape support for online display!" << std::endl;
-#endif
-    }
-  }
-
 public:  
+  //! print class name 
+  virtual const char* myClassName() const { return "DataWriter"; }
+    
+  //! write binary data 
+  virtual void writeBinaryData(const double sequenceStamp) const 
+  {
+    writeMyData( sequenceStamp, writeStep_ , data_ );
+  }
+
+  template <class OutputTupleType>
+  std::string writeMyData(const double sequenceStamp, 
+                          const int step, 
+                          OutputTupleType& data) const 
+  {
+    // create new path for time step output 
+    std::string timeStepPath = IOInterface::createPath ( grid_.comm(),
+        path_, datapref_ , step );
+
+    // for structured grids copy grid 
+    IOInterface::copyMacroGrid(grid_,path_, timeStepPath, datapref_);
+
+    // create binary io obj 
+    BinaryDataIO<GridType> dataio;
+
+    // call output of IOTuple 
+    IOTuple<OutputTupleType>::output(dataio, 
+       grid_ , sequenceStamp, step, timeStepPath , datapref_, data );
+
+    return timeStepPath;
+  }
+
   /** \brief save structured macro grid file 
     \param macroFileName filename which contains the macro file 
   */
@@ -543,7 +134,7 @@ public:
 //
 //////////////////////////////////////////////////////////////////
 
-
+#if 1
 /** @ingroup Checkpointing 
    \brief Implementation of the IOInterface. 
    This class manages checkpointing. 
@@ -566,6 +157,18 @@ class CheckPointer : public DataWriter<GridImp,DataImp>
 protected:
   //! type of base class 
   typedef DataWriter<GridImp,DataImp> BaseType;
+
+  using BaseType :: grid_;
+  using BaseType :: data_;
+
+  using BaseType :: path_;
+  using BaseType :: datapref_;
+  using BaseType :: writeStep_;
+  using BaseType :: outputFormat_ ;
+  using BaseType :: myRank_;
+  using BaseType :: verbose_;
+  using BaseType :: grapeDisplay_;
+
   //! type of this class  
   typedef CheckPointer<GridImp,DataImp> ThisType;
   
@@ -580,11 +183,6 @@ protected:
   std::string runPrefix_;
   std::string checkPointFile_;
   const double endTime_;
-
-  // pointer to adaptation manager 
-  const LoadBalancerInterface* lb_;
-  
-  int balanceRecover_;
 
   //! return default value for check point prefix 
   static const char * checkPointPrefix()
@@ -611,26 +209,25 @@ public:
     fem.io.checkpointfile: checkpoint
   */
   CheckPointer(const GridType & grid, 
-               const std::string& gridName, 
-               OutPutDataType& data, 
-               const double startTime,
-               const double endTime, 
-               const LoadBalancerInterface* lb = 0)
-    : BaseType(grid,gridName,data,startTime,endTime) 
+               OutPutDataType& data) 
+    : BaseType(grid,data)  
     , checkPointStep_(500)
     , checkPointNumber_(1)
-    , endTime_(endTime)
-    , lb_(lb)
-    , balanceRecover_(0)
+    , endTime_( 100 )
   {
-    this->datapref_ = checkPointPrefix();
+    // output format can oinly be binary
+    outputFormat_ = BaseType :: binary; 
+    // do not display 
+    grapeDisplay_ = false ;
+
+    datapref_ = checkPointPrefix();
     Parameter::get("fem.io.checkpointstep",checkPointStep_,checkPointStep_);
 
     // create runfile  prefix 
     {
       runPrefix_ = "run.";
       std::stringstream rankDummy;
-      rankDummy << this->myRank_;
+      rankDummy << myRank_;
       runPrefix_ += rankDummy.str();
     }
     
@@ -638,7 +235,7 @@ public:
       // read name of check point file 
       std::string dummyfile;
       Parameter::get("fem.io.checkpointfile",dummyfile);
-      checkPointFile_ = this->path_; 
+      checkPointFile_ = path_; 
       checkPointFile_ += "/"; 
       checkPointFile_ += dummyfile;
     }
@@ -674,17 +271,20 @@ protected:
     , checkPointStep_(500)
     , checkPointNumber_(1)
     , endTime_(endTime)
-    , lb_(0)
-    , balanceRecover_(0)
   {
-    this->datapref_ = checkPointPrefix();
+    // output format can oinly be binary
+    outputFormat_ = BaseType :: binary; 
+    // do not display 
+    grapeDisplay_ = false ;
+
+    datapref_ = checkPointPrefix();
     Parameter::get("fem.io.checkpointstep",checkPointStep_,checkPointStep_);
 
     // create runf prefix 
     {
       runPrefix_ = "run.";
       std::stringstream rankDummy;
-      rankDummy << this->myRank_;
+      rankDummy << myRank_;
       runPrefix_ += rankDummy.str();
     }
     
@@ -696,7 +296,7 @@ protected:
       // read name of check point file 
       std::string dummyfile;
       Parameter::get("fem.io.checkpointfile",dummyfile);
-      checkPointFile_ = this->path_; 
+      checkPointFile_ = path_; 
       checkPointFile_ += "/"; 
       checkPointFile_ += dummyfile;
 
@@ -762,10 +362,6 @@ public:
       }
     }
 
-    int timeStep = 0;
-    // try to read time step, if fails default value is taken
-    readParameter(checkFile,"TimeStep",timeStep,verbose);
-
     // now add timestamp and rank 
     path = IOInterface::createRecoverPath(
         path, rank, datapref, checkPointNumber );
@@ -773,21 +369,19 @@ public:
     // time is set during grid restore  
     double time = 0.0; 
 
-    GrapeDataIO<GridType> dataio;
+    BinaryDataIO<GridType> dataio;
     GridType* grid = 
       IOTuple<OutPutDataType>::restoreGrid(dataio, time, 
           checkPointNumber , 
           path, datapref);
 
-    tp.restore( time, timeStep );
-    
     return grid;
   }
 
   /** \brief restores data, assumes that all objects have been created before
              this method is called
   */
-  static inline int restoreData(
+  static inline void restoreData(
                const GridType & grid, 
                const std::string& gridName, 
                OutPutDataType& data, 
@@ -807,9 +401,6 @@ public:
 
     // restore data 
     checker.restoreData();
-    
-    // return current balance counter 
-    return checker.balanceCounter();
   }
 
 protected:
@@ -820,58 +411,59 @@ protected:
   {
     // now add timestamp and rank 
     std::string path = IOInterface::createRecoverPath(
-        this->path_, this->myRank_ , this->datapref_, checkPointNumber_ );
+        path_, myRank_ , datapref_, checkPointNumber_ );
 
-    GrapeDataIO<GridType> dataio;
-    IOTuple<OutPutDataType>::restoreData(this->data_, dataio, 
-      this->grid_, checkPointNumber_, path , this->datapref_ );
-  }
+    // restore all persistent values kept by PersistenceManager 
+    PersistenceManager::restore( path );
 
-  /** returns actual balance counter, for restoreing LoadBalancer 
-    \return Restored load balance counter 
-   */
-  int balanceCounter () const 
-  {
-    return balanceRecover_;
+    // restore user data 
+    BinaryDataIO<GridType> dataio;
+    IOTuple<OutPutDataType>::restoreData(data_, dataio, 
+      grid_, checkPointNumber_, path , datapref_ );
   }
 
 public:
+  //! print class name 
+  virtual const char* myClassName() const { return "CheckPointer"; }
+    
+  /** \brief returns true if data will be written on next write call
+  */
+  bool willWrite(const TimeProviderBase& tp) const
+  {
+    return willWrite( tp.time(), tp.timeStep() );
+  }
+
   /** \copydoc DataWriter::willWrite */
   virtual bool willWrite(double time, int timestep) const 
   {
     // only write data time > saveTime  
-    return ( (((timestep % checkPointStep_) == 0) && timestep > 0) ||
-              (time >= endTime_ )); // also write very last time step 
+    return ( (((timestep % checkPointStep_) == 0) && timestep > 0) );
+//||
+  //            (time >= endTime_ )); // also write very last time step 
   }
 
-  /** \copydoc DataWriter::write(double time,int timestep) const */
-  virtual void write(double time, int timestep) const 
+  virtual void writeBinaryData(const double time) const 
   {
-    if( willWrite(time, timestep ) ) 
-    {
-      // toggle between 0 and 1 
-      checkPointNumber_ = (checkPointNumber_ == 0) ? 1 : 0;
+    // toggle between 0 and 1 
+    checkPointNumber_ = (checkPointNumber_ == 0) ? 1 : 0;
 
-      // create new timestep path 
-      std::string path = IOInterface::createPath ( this->grid_.comm(),
-          this->path_, this->datapref_ , checkPointNumber_ );
+    // write data 
+    std::string path = this->writeMyData( time, checkPointNumber_, data_ );
 
-      GrapeDataIO<GridType> dataio;
-      // call output of IOTuple 
-      IOTuple<OutPutDataType>::output(dataio, this->grid_ ,
-          time, checkPointNumber_ , path, this->datapref_ , this->data_ );
-      
-      writeCheckPoint(path,time,timestep,
-                      checkPointNumber_, 
-                      (lb_) ? lb_->balanceCounter() : 0);
-    }
+    // backup all persistent values kept by PersistenceManager 
+    PersistenceManager::backup( path );
+
+    // write checkpoint info 
+    writeCheckPoint(path, time, 
+                    checkPointNumber_ );
+
     return;
   }
 
   //! return file name for run file (if needed)
   std::string runFile() const
   {
-    return this->path_ + "/" + runPrefix_;
+    return path_ + "/" + runPrefix_;
   }
   
 protected:
@@ -879,21 +471,19 @@ protected:
   bool readCheckPoint(const bool warn = true)
   {
     // read Checkpiont file 
-    if( readParameter(checkPointFile_,"LastCheckPoint",checkPointNumber_, this->verbose_, warn ) )
+    if( readParameter(checkPointFile_,"LastCheckPoint",checkPointNumber_, verbose_, warn ) )
     {
-      readParameter(checkPointFile_,"BalanceCounter",balanceRecover_, this->verbose_ );
-
       std::string recoverPath;
       // try to read recover path 
-      if( ! readParameter(checkPointFile_,"RecoverPath", recoverPath, this->verbose_) )
+      if( ! readParameter(checkPointFile_,"RecoverPath", recoverPath, verbose_) )
       {
         // default value is output path
-        recoverPath = this->path_;
+        recoverPath = path_;
       }
 
       // create processor path 
-      std::string path = IOInterface :: createPath( this->grid_.comm(),
-          recoverPath, this->datapref_ , checkPointNumber_);
+      std::string path = IOInterface :: createPath( grid_.comm(),
+          recoverPath, datapref_ , checkPointNumber_);
 
       // copy store checkpoint run file to run file to 
       // resume from same point 
@@ -928,7 +518,7 @@ protected:
       }
       
       // overwrite path with recover path 
-      this->path_ = recoverPath;
+      path_ = recoverPath;
       
       return true;
     }
@@ -937,14 +527,14 @@ protected:
 
   // write some info for checkpointing 
   void writeCheckPoint (const std::string& path,
-            const double time, int timestep,
-            int savestep, int balancecounter) const 
+                        const double time,
+                        const int savestep ) const 
   {   
     // write some needed informantion to current checkpoint file 
     {
       std::string filepref(path);
       filepref += "/";
-      filepref += this->datapref_;
+      filepref += datapref_;
 
       std::string filename = genFilename("",filepref,savestep);
 
@@ -961,7 +551,7 @@ protected:
     }
     
     // only proc 0 writes global checkpoint file 
-    if( this->myRank_ <= 0)
+    if( myRank_ <= 0)
     {
       // write last checkpoint to filename named like the checkpoint files 
       // but with no extentions 
@@ -970,10 +560,8 @@ protected:
       {
         file << "LastCheckPoint: " << savestep << std::endl;
         file << "Time: " << std::scientific << time << std::endl;
-        file << "TimeStep: "  << timestep << std::endl;
-        file << "BalanceCounter: " << balancecounter << std::endl;
         file << "# RecoverPath can be edited by hand if data has been moved!" << std::endl;
-        file << "RecoverPath: " << this->path_ << std::endl;
+        file << "RecoverPath: " << path_ << std::endl;
         file.close();
 
         // copy checkpoint file to checkpoint path 
@@ -991,22 +579,29 @@ protected:
     }
 
     {
-      // copy run file for recovery  
-      std::string cmd;
-      cmd += "cp ";
-      cmd += this->path_ ;
-      cmd += "/"; cmd += runPrefix_; cmd += " ";
-      cmd += path;
-      system ( cmd.c_str() );
-    }
+      std::string runfilename( runFile() );
 
-    if( this->myRank_ <= 0)
-    {
-      std::cout << "CheckPointer: time = " << time << " , wrote checkpoint path `" << path << "'\n";
-    } 
+      std::ifstream testfile ( runfilename.c_str() );
+
+      // check whether file exists 
+      if( testfile.is_open() ) 
+      {
+        // close first 
+        testfile.close();
+
+        // copy run file for recovery  
+        std::string cmd;
+        cmd += "cp ";
+        cmd += runfilename  ;
+        cmd += " ";
+        cmd += path;
+        system ( cmd.c_str() );
+      }
+    }
   }
 
 }; // end class CheckPointer 
+#endif
   
 } // end namespace DataIO 
 #endif
