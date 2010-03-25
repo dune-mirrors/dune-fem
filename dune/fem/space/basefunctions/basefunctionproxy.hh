@@ -125,32 +125,32 @@ namespace Dune
 
     template< class PointType, 
               class LocalDofVectorType >
-    inline void evaluate ( const PointType &x,
-                           const LocalDofVectorType& dofs,
-                           RangeType& ret) const
+    inline void evaluateAll ( const PointType &x,
+                              const LocalDofVectorType& dofs,
+                              RangeType& ret) const
     {
-      baseFunctionSet().evaluate( x, dofs, ret );
+      baseFunctionSet().evaluateAll( x, dofs, ret );
     }
 
     template< int diffOrder, 
               class PointType, 
               class LocalDofVectorType >
-    inline void evaluate ( const FieldVector<int, diffOrder>& diffVariable,
-                           const PointType &x,
-                           const LocalDofVectorType& dofs,
-                           RangeType& ret) const
+    inline void evaluateAll ( const FieldVector<int, diffOrder>& diffVariable,
+                              const PointType &x,
+                              const LocalDofVectorType& dofs,
+                              RangeType& ret) const
     {
-      baseFunctionSet().evaluate( diffVariable, x, dofs, ret );
+      baseFunctionSet().evaluateAll( diffVariable, x, dofs, ret );
     }
 
     template< class PointType, class GeometryJacobianInverseType,
               class GlobalJacobianRangeType, class LocalDofVectorType >
-    inline void jacobian ( const PointType &x,
-                           const GeometryJacobianInverseType& gjit,   
-                           const LocalDofVectorType& dofs,
-                           GlobalJacobianRangeType& ret) const
+    inline void jacobianAll ( const PointType &x,
+                              const GeometryJacobianInverseType& gjit,   
+                              const LocalDofVectorType& dofs,
+                              GlobalJacobianRangeType& ret) const
     {
-      baseFunctionSet().jacobian( x, gjit, dofs, ret );
+      baseFunctionSet().jacobianAll( x, gjit, dofs, ret );
     }
 
 #if 0

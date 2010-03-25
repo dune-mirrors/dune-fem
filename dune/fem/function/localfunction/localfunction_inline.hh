@@ -76,7 +76,7 @@ namespace Dune
                   const PointType &x,
                   RangeType &ret ) const
   {
-    asImp().baseFunctionSet().evaluate( diffVariable, x, asImp(), ret);
+    asImp().baseFunctionSet().evaluateAll( diffVariable, x, asImp(), ret);
   }
 
 
@@ -87,7 +87,7 @@ namespace Dune
     :: evaluate ( const PointType &x,
                   RangeType &ret ) const
   {
-    asImp().baseFunctionSet().evaluate( x, asImp(), ret);
+    asImp().baseFunctionSet().evaluateAll( x, asImp(), ret);
   }
 
 
@@ -98,7 +98,7 @@ namespace Dune
     :: jacobian( const PointType &x,
                  JacobianRangeType &ret ) const
   {
-    asImp().baseFunctionSet().jacobian( 
+    asImp().baseFunctionSet().jacobianAll( 
         x, 
         asImp().entity().geometry().jacobianInverseTransposed( coordinate( x ) ),
         asImp(), ret);
