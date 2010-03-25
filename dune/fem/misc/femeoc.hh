@@ -61,10 +61,12 @@ class FemEoc
   }
   void init(const std::string& path,
             const std::string& name, const std::string& descript) {
+    if (MPIManager::rank() != 0) return;
     IOInterface::createPath(path);
     init(path+"/"+name,descript);
   }
   void init(const std::string& name, const std::string& descript) {
+    if (MPIManager::rank() != 0) return;
     if (!outputFile_.is_open()) {
       std::ofstream main((name+"_main.tex").c_str());
       if (!main) {
@@ -145,6 +147,7 @@ class FemEoc
     error_[pos] = err;
   }
   void writeerr(double h,double size,double time,int counter) {
+    if (MPIManager::rank() != 0) return;
     if (initial_) {
 	    outputFile_ << "\\begin{tabular}{|c|c|c|c|c|";
       for (unsigned int i=0;i<error_.size();i++) {
@@ -157,12 +160,12 @@ class FemEoc
         outputFile_ << " & " << description_[i]
                     << " & EOC ";
       }
-	    outputFile_ << "\n \\tabularnewline\n"
-	                << "\\hline\n"
-	                << "\\hline\n";
+      outputFile_ << "\n \\tabularnewline\n"
+                  << "\\hline\n"
+                  << "\\hline\n";
     }
-	  outputFile_ <<  "\\hline \n"
-	              << level_ << " & "
+    outputFile_ <<  "\\hline \n"
+                << level_ << " & "
                 << h      << " & "
                 << size   << " & "
                 << time   << " & " 
@@ -179,9 +182,9 @@ class FemEoc
       prevError_[i]=error_[i];
       error_[i] = -1;  // uninitialized
     }
-	  outputFile_ << "\n"
+    outputFile_ << "\n"
                 << "\\tabularnewline\n"
-	              << "\\hline \n";
+                << "\\hline \n";
     outputFile_.flush();
     prevh_ = h;
     level_++;
@@ -195,6 +198,7 @@ class FemEoc
                 const int counter,
                 std::ostream& out) 
   {
+    if (!Parameter::verbose()) return;
 	  out << "level:   " << level_  << std::endl;
 	  out << "h        " << h << std::endl;
 	  out << "size:    " << size << std::endl;
@@ -322,7 +326,7 @@ class FemEoc
     // print last line to out 
     instance().printerr( h, size, time, counter, out );
 
-    // no write to file 
+    // now write to file 
     instance().writeerr(h,size,time,counter);
   }
 };
