@@ -7,13 +7,9 @@
 #include <dune/common/misc.hh>
 #include <dune/grid/common/capabilities.hh>
 #include <dune/grid/common/grid.hh>
-// #include <dune/grid/common/defaultindexsets.hh>
 #include <dune/grid/utility/grapedataioformattypes.hh>
 
 #include <dune/fem/space/common/dofmanager.hh>
-
-#include <dune/grid/io/file/dgfparser/dgfparser.hh> 
-
 #include <dune/fem/misc/gridname.hh> 
 
 //- Local includes 
@@ -232,7 +228,7 @@ class BinaryDataIO
 public:
    typedef GridImp GridType;
 
-   BinaryDataIO () {};
+   BinaryDataIO () {}
 
    /** Write Grid with GridType file filename and time 
    *
