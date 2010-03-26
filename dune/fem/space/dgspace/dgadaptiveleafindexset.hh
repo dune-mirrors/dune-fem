@@ -463,13 +463,20 @@ namespace Dune
 
   public:
     //! \brief write indexset to xdr file 
-    bool write_xdr(const std::basic_string<char> filename, int timestep) 
+    bool write_xdr(const std::string& filename, int timestep) const
     {
       const char *path = "";
       std::string fnstr = genFilename(path,filename, timestep);
 
+      return write_xdr( fnstr );
+    }
+
+
+    //! \brief write indexset to xdr file 
+    bool write_xdr(const std::string& filename ) const 
+    {
       // create xdr write stream 
-      XDRWriteStream xdr(fnstr);
+      XDRWriteStream xdr( filename );
 
       // check type of set 
       int type = myType;
@@ -479,13 +486,19 @@ namespace Dune
     }
 
     //! \brief read index set from given xdr file 
-    bool read_xdr(const std::string filename , int timestep)
+    bool read_xdr(const std::string& filename , int timestep)
     {
       const char *path = "";
       std::string fnstr = genFilename(path,filename, timestep);
 
+      return read_xdr( fnstr );
+    }
+
+    //! \brief read index set from given xdr file 
+    bool read_xdr(const std::string& filename)
+    {
       // create xdr read stream 
-      XDRReadStream xdr(fnstr);
+      XDRReadStream xdr( filename );
 
       // check type 
       int type = myType;
