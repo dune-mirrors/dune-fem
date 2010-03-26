@@ -24,13 +24,13 @@ namespace Dune
  *  Variables of any type can be added to the manager
  *  using operator<< and removed through operator>>.
  *  For general types the state is written to an ascii file
- *  \c checkpoint through the call to PersistenceManager::backup(path).
+ *  \c persistentobjects through the call to PersistenceManager::backup(path).
  *  
  *  Finer control is available for user defined classes by 
  *  deriving these from the Dune::PersistentObject class and
  *  implementing the virtual functions \c backup and \c restore.
  *  Values can then either be written to the ascii file
- *  \c checkpoint using the method
+ *  \c persistentobjects using the method
  *  Dune::PersistenceManager::backupValue giving a token and
  *  the value to store (a structure simular to the Dune::Parameter
  *  files is used).
@@ -269,7 +269,7 @@ namespace Dune
         if (!(inAsciStream_)) {
           std::cout << "Error in restore process! " 
                     << "The token " << token << " was not found "
-                    << "in file " << path_+"checkpoint" << " "
+                    << "in file " << path_+myTag() << " "
                     << "after line number " << startLine
                     << std::endl;
           abort();
@@ -348,7 +348,7 @@ namespace Dune
       lineNo_=0;
       inAsciStream_.open((path_+myTag()).c_str());  
       if (!inAsciStream_) {
-        std::cout << "Error opening global checkpoint stream!"
+        std::cout << "Error opening global stream: " << path_+myTag()
                   << std::endl;
         abort();
       }
