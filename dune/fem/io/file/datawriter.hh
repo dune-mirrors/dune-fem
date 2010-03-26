@@ -23,6 +23,15 @@
 
 namespace Dune {
 
+struct DataWriterParameters : public DataOutputParameters
+{
+  //! base of file name for data file (fem.io.macroGridFile)
+  virtual std::string macroGridName () const
+  {
+    return Parameter::getValue< std::string >( "fem.io.macroGridFile" );
+  }
+};
+
 /** @ingroup DiscFuncIO 
    \brief Implementation of the Dune::IOInterface. 
    This class manages data output.
@@ -54,6 +63,7 @@ protected:
   using BaseType :: outputFormat_ ;
 
 public: 
+
  /** \brief Constructor creating data writer 
     \param grid corresponding grid 
     \param gridName corresponding macro grid name (needed for structured grids)
@@ -66,7 +76,7 @@ public:
   */
   DataWriter(const GridType & grid,
              OutPutDataType& data,
-             const DataOutputParameters& parameter=DataOutputParameters())
+             const DataWriterParameters& parameter = DataWriterParameters() )
     : BaseType( grid, data, parameter )
   {
     // save macro grid for structured grids 
@@ -76,7 +86,7 @@ public:
   DataWriter(const GridType & grid,
              OutPutDataType& data,
              const TimeProviderBase& tp,
-             const DataOutputParameters& parameter=DataOutputParameters())
+             const DataWriterParameters& parameter = DataWriterParameters() )
     : BaseType( grid, data, tp, parameter )
   {
     // save macro grid for structured grids 
@@ -94,6 +104,21 @@ public:
   virtual void writeBinaryData(const double sequenceStamp) const 
   {
     writeMyData( sequenceStamp, writeStep_ , data_ );
+  }
+
+  std::string writeMyData(const double sequenceStamp, 
+                          const int step, 
+                          Dune::Nil& data) const 
+  {
+
+    // create new path for time step output 
+    std::string timeStepPath = IOInterface::createPath ( grid_.comm(),
+        path_, datapref_ , step );
+
+    // for structured grids copy grid 
+    IOInterface::copyMacroGrid(grid_,path_, timeStepPath, datapref_);
+
+    return timeStepPath;
   }
 
   template <class OutputTupleType>
@@ -134,7 +159,22 @@ public:
 //
 //////////////////////////////////////////////////////////////////
 
-#if 1
+struct CheckPointerParameters : public DataWriterParameters 
+{
+  //! base of file name for data file (fem.io.datafileprefix)
+  virtual std::string prefix () const
+  {
+    return checkPointPrefix();
+  }
+
+  //! return default value for check point prefix 
+  static const char * checkPointPrefix()
+  {
+    return "checkpoint";
+  }
+  
+};
+
 /** @ingroup Checkpointing 
    \brief Implementation of the IOInterface. 
    This class manages checkpointing. 
@@ -150,8 +190,7 @@ public:
    of pointers to the discrete functions types
    to be stored.
 */    
-template <class GridImp, 
-          class DataImp> 
+template <class GridImp, class DataImp = Dune::Nil > 
 class CheckPointer : public DataWriter<GridImp,DataImp> 
 {
 protected:
@@ -182,23 +221,13 @@ protected:
 
   std::string runPrefix_;
   std::string checkPointFile_;
-  const double endTime_;
 
-  //! return default value for check point prefix 
-  static const char * checkPointPrefix()
-  {
-    return "checkpoint";
-  }
-  
+  const OutPutDataType* dataPtr_;
+
 public: 
   /** \brief Constructor generating a checkpointer 
     \param grid corresponding grid 
-    \param gridName name of macro grid file (for structured grids)
     \param data Tuple containing discrete functions to write
-    \param startTime start time of simulation (needed for next save step)
-    \param endTime end time of simulation
-    \param lb LoadBalancer instance 
-      (default is zero, which means start from new)
 
     \note In Addition to the parameters read by the DataWriter this class 
           reads the following parameters: 
@@ -209,20 +238,44 @@ public:
     fem.io.checkpointfile: checkpoint
   */
   CheckPointer(const GridType & grid, 
-               OutPutDataType& data) 
-    : BaseType(grid,data)  
+               OutPutDataType& data,
+               const CheckPointerParameters& parameter = CheckPointerParameters() ) 
+    : BaseType(grid,data,parameter)  
     , checkPointStep_(500)
     , checkPointNumber_(1)
-    , endTime_( 100 )
+    , dataPtr_( 0 )
+  {
+    initialize();
+  }
+
+  CheckPointer( const GridType & grid, const CheckPointerParameters& parameter = CheckPointerParameters() )
+    : BaseType(grid, *( new OutPutDataType () ), parameter )  
+    , checkPointStep_(500)
+    , checkPointNumber_(1)
+    , dataPtr_( &data_ )
+  {
+    initialize();
+  }
+
+  ~CheckPointer() 
+  {
+    if( dataPtr_ ) 
+    {
+      delete dataPtr_;
+      dataPtr_ = 0;
+    }
+  }
+protected:  
+  void initialize() 
   {
     // output format can oinly be binary
     outputFormat_ = BaseType :: binary; 
     // do not display 
     grapeDisplay_ = false ;
 
-    datapref_ = checkPointPrefix();
     Parameter::get("fem.io.checkpointstep",checkPointStep_,checkPointStep_);
 
+    /*
     // create runfile  prefix 
     {
       runPrefix_ = "run.";
@@ -230,6 +283,7 @@ public:
       rankDummy << myRank_;
       runPrefix_ += rankDummy.str();
     }
+    */
     
     {
       // read name of check point file 
@@ -242,8 +296,8 @@ public:
     
     Parameter::write("parameter.log");
   }
-
 protected:  
+  friend class CheckPointer< GridType , Dune::Nil > ;
   /** \brief Constructor generating a checkpointer to restore data 
     \param grid corresponding grid 
     \param gridName name of macro grid file (for structured grids)
@@ -262,24 +316,22 @@ protected:
     fem.io.checkpointfile: checkpoint
   */
   CheckPointer(const GridType & grid, 
-               const std::string& gridName, 
                OutPutDataType& data, 
-               const double startTime,
-               const double endTime, 
                const char * checkFile)
-    : BaseType(grid,gridName,data,startTime,endTime) 
+    : BaseType(grid, data, CheckPointerParameters() ) 
     , checkPointStep_(500)
     , checkPointNumber_(1)
-    , endTime_(endTime)
+    , dataPtr_( 0 )
   {
     // output format can oinly be binary
     outputFormat_ = BaseType :: binary; 
     // do not display 
     grapeDisplay_ = false ;
 
-    datapref_ = checkPointPrefix();
+    datapref_ = CheckPointerParameters :: checkPointPrefix();
     Parameter::get("fem.io.checkpointstep",checkPointStep_,checkPointStep_);
 
+    /*
     // create runf prefix 
     {
       runPrefix_ = "run.";
@@ -287,6 +339,7 @@ protected:
       rankDummy << myRank_;
       runPrefix_ += rankDummy.str();
     }
+    */
     
     if( checkFile )
     {
@@ -323,17 +376,14 @@ protected:
 public:
   /** \brief restore grid from previous runs 
     \param[in] checkFile checkPoint filename 
-    \param[in] rank number of my process 
-    \param tp TimeProvider to restore time and timestep to
+    \param[in] rank number of my process (defaults to MPIManager :: rank() )
 
-    \return Pointer to restored grid 
+    \return Pointer to restored grid instance 
   */
-  template <class TimeProviderImp> 
   static GridType* restoreGrid(const std::string checkFile,
-                               const int rank, 
-                               TimeProviderImp& tp)
+                               const int rank = MPIManager :: rank() ) 
   {
-    std::string datapref( checkPointPrefix() );
+    std::string datapref( CheckPointerParameters::checkPointPrefix() );
     std::string path;
     std::string checkPointFile;
 
@@ -366,28 +416,23 @@ public:
     path = IOInterface::createRecoverPath(
         path, rank, datapref, checkPointNumber );
 
-    // time is set during grid restore  
+    // time is set during grid restore (not needed here)
     double time = 0.0; 
 
     BinaryDataIO<GridType> dataio;
-    GridType* grid = 
-      IOTuple<OutPutDataType>::restoreGrid(dataio, time, 
-          checkPointNumber , 
-          path, datapref);
-
+    GridType* grid = IOTupleBase::restoreGrid(dataio, time, checkPointNumber, path, datapref);
+    assert( grid );
     return grid;
   }
 
   /** \brief restores data, assumes that all objects have been created before
              this method is called
   */
+  template <class InputTupleType>
   static inline void restoreData(
-               const GridType & grid, 
-               const std::string& gridName, 
-               OutPutDataType& data, 
-               const double startTime,
-               const double endTime, 
-               const std::string& checkFile)
+               const GridType& grid, 
+               InputTupleType& data,
+               const std::string checkFile)
   {
     // check that check point is not empty 
     if( checkFile == "" ) 
@@ -396,8 +441,7 @@ public:
     }
     
     // create temporary check pointer 
-    ThisType checker( grid, gridName, data, 
-                      startTime, endTime, checkFile.c_str() );
+    CheckPointer<GridType, InputTupleType> checker( grid, data, checkFile.c_str() );
 
     // restore data 
     checker.restoreData();
@@ -438,8 +482,6 @@ public:
   {
     // only write data time > saveTime  
     return ( (((timestep % checkPointStep_) == 0) && timestep > 0) );
-//||
-  //            (time >= endTime_ )); // also write very last time step 
   }
 
   virtual void writeBinaryData(const double time) const 
@@ -578,6 +620,7 @@ protected:
       }
     }
 
+    /*
     {
       std::string runfilename( runFile() );
 
@@ -598,10 +641,10 @@ protected:
         system ( cmd.c_str() );
       }
     }
+    */
   }
 
 }; // end class CheckPointer 
-#endif
   
 } // end namespace DataIO 
 #endif
