@@ -14,6 +14,7 @@
 
 //- Local includes 
 #include <dune/fem/io/file/asciiparser.hh>
+#include <dune/fem/misc/mpimanager.hh>
 
 namespace Dune {
 
@@ -200,16 +201,22 @@ public:
       const GrapeIOStringType & fnprefix , double & time , int timestep, bool verbose = false )
   {
     std::string macroName (fnprefix);
-#if HAVE_MPI 
-    // read global file, only differs for YaspGrid
-    macroName += ".macro.global";
-#else 
-    // read sub grid file 
-    macroName += ".macro";
-#endif
+
+    if( MPIManager :: size() > 1 )
+    {
+      // read global file, only differs for YaspGrid
+      macroName += ".macro.global";
+    }
+    else 
+    {
+      // read sub grid file 
+      macroName += ".macro";
+    }
     
     GridType * grid = 0;
     {
+      if( Parameter :: verbose () )
+        std::cout << "Read grid from " << macroName << std::endl;
       // create macro grid 
       GridPtr<GridType> gridptr(macroName);
       std::cout << "Created Structured Macro Grid `" << macroName << "' !\n";
