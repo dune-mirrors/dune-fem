@@ -59,12 +59,6 @@ struct DataOutputParameters
     return Parameter::getValue< std::string >( "fem.io.datafileprefix" );
   }
 
-  //! base of file name for data file (fem.io.macroGridFile)
-  virtual std::string macroGridName () const
-  {
-    return Parameter::getValue< std::string >( "fem.io.macroGridFile" );
-  }
-
   //! format of output (fem.io.outputformat)
   virtual int outputformat () const
   {
