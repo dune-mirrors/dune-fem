@@ -288,14 +288,6 @@ struct IOTupleBase
   {
     return pathAndName(path,name,"_data");
   }
-};
-
-template <class TupType>
-struct IOTuple : public IOTupleBase 
-{
-  typedef typename TypeTraits<typename TupType::Type1>::PointeeType T1;
-  typedef typename TupType::Type2 T2;
-  typedef typename IOTupleHelper<T1,T2,0>::ReturnType ReturnType;
 
   template <class DataIO>
   static typename DataIO :: GridType*  
@@ -311,7 +303,15 @@ struct IOTuple : public IOTupleBase
     // grid is created inside of restore grid method
     return dataio.restoreGrid( gname, t, n); 
   }
-  
+};
+
+template <class TupType>
+struct IOTuple : public IOTupleBase 
+{
+  typedef typename TypeTraits<typename TupType::Type1>::PointeeType T1;
+  typedef typename TupType::Type2 T2;
+  typedef typename IOTupleHelper<T1,T2,0>::ReturnType ReturnType;
+
   template <class GridType>
   static void restoreDofManager(const GridType& grid,
                                 int n,
@@ -349,7 +349,7 @@ struct IOTuple : public IOTupleBase
     if( newGrid ) 
     {
       // create and read grid 
-      grid = IOTuple<TupType>::restoreGrid(dataio,t,n,path,name);
+      grid = IOTupleBase::restoreGrid(dataio,t,n,path,name);
     }
     
     std::string dname( dataName(path,name) );
