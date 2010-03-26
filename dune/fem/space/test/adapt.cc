@@ -33,7 +33,7 @@ using namespace Dune;
 #include <dune/grid/io/visual/grapedatadisplay.hh>
 #endif
 
-#include <dune/fem/io/file/grapedataio.hh>
+#include <dune/fem/io/file/binarydataio.hh>
 #include <dune/fem/io/parameter.hh>
 
 // polynom approximation order of quadratures, 
@@ -278,7 +278,7 @@ double algorithm ( MyGridType &grid, DiscreteFunctionType &solution, int step, i
     grape.dataDisplay( solution );
   }
 #endif
-  GrapeDataIO< MyGridType > dataio; 
+  BinaryDataIO< MyGridType > dataio; 
   dataio.writeGrid( grid, xdr, "gridout", 0.0, turn );
   dataio.writeData( solution, xdr, "sol", turn );
   

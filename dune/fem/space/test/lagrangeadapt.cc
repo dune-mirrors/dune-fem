@@ -43,7 +43,6 @@ const int polOrder = POLORDER;
 #if USE_GRAPE 
   #include <dune/grid/io/visual/grapedatadisplay.hh>
 #endif
-#include <dune/fem/io/file/grapedataio.hh>
 #include <dune/fem/io/parameter.hh>
 
 
