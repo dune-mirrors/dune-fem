@@ -103,7 +103,7 @@ int main (int argc, char **argv) {
   GridPtr<GridType> gridptr("2dgrid.dgf");
   GridType& grid=*gridptr;
   GridTimeProvider<GridType> timeProv(grid);
-  GridTimeProvider<GridType> timeProv1(grid);
+  GridTimeProvider<GridType> timeProv1(1,grid);
 
   double param;
   persistenceManager << param;
@@ -138,12 +138,24 @@ int main (int argc, char **argv) {
   PersistenceManager::backup("backup.end");
 
   // write all objects
-  cout << "WERTE: " << a << " " << b << " " << s << " ,  "
+  cout << "Data:     " 
+       << a << " " << b << " " << s << " ,  "
        << test1a.a << " " << test1b.a << " ,  " 
        << test2.b << " ,  " 
        << testA.a << " " << testA.b  << "  ,  "
        << param << "  ,  "
        << timeProv.time() << " "
+       << timeProv1.time() << "  ,  "
        << *aPtr << " "
+       << std::endl;
+  cout << "Expected: " 
+       << 10 << " " << 20 << " " << "HALLO" << " ,  "
+       << -10 << " " << -sqrt(2) << " ,  " 
+       << 1 << " ,  " 
+       << 25 << " " << 16  << "  ,  "
+       << 100000 << "  ,  "
+       << 0 << " "
+       << 1 << "  ,  "
+       << -17 << " "
        << std::endl;
 }
