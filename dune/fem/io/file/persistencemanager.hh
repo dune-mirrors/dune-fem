@@ -99,10 +99,17 @@ namespace Dune
 
   public:
     virtual ~PersistentObject() {}
+    /** \brief backup persistent object */
     virtual void backup () const = 0;
+    /** \brief restore persistent object */
     virtual void restore () = 0;
-   
+
   protected:
+    /** \brief insert possible sub data of object */
+    virtual void insertSubData() const {} 
+    /** \brief remove possible sub data of object */
+    virtual void removeSubData() const {} 
+   
     virtual void *pointer ()
     {
       return this;
@@ -175,6 +182,8 @@ namespace Dune
       PersistentObject *obj = 
         WrapObject< ObjectType, IsPersistent< ObjectType > :: value >
         :: apply( object );
+      // insert possible sub data 
+      obj->insertSubData();
       objects_.push_back( std :: make_pair( obj, 1 ) );
     }
 
@@ -192,6 +201,8 @@ namespace Dune
         {
           if (closed_) invalid_=true;
           PersistentObject *obj = it->first;
+          // remove possible sub data 
+          obj->removeSubData();
           objects_.erase( it );
           if( !IsPersistent< ObjectType > :: value )
             delete obj;
