@@ -14,6 +14,7 @@
 //- Dune fem includes 
 #include <dune/fem/gridpart/emptyindexset.hh>
 #include <dune/fem/space/common/dofmanager.hh>
+#include <dune/fem/io/file/persistencemanager.hh>
 
 /** @file
  @brief Provides default index set class for persistent index sets. 
@@ -191,7 +192,8 @@ namespace Dune
   */
   template< class GridImp, class Imp >
   class PersistentIndexSet
-  : public DuneGridIndexSetAdapter< GridImp, Imp >
+  : public DuneGridIndexSetAdapter< GridImp, Imp > ,
+    public PersistentObject 
   {
     typedef PersistentIndexSet< GridImp, Imp > ThisType;
     typedef DuneGridIndexSetAdapter< GridImp, Imp > BaseType;
@@ -238,12 +240,40 @@ namespace Dune
     }
 
   protected:
+    friend class PersistenceManager ;
+
+    /** \copydoc PersistentObject :: backup */
+    virtual void backup() const 
+    {
+      std::string filename ( PersistenceManager :: uniqueFileName () );
+#ifndef NDEBUG 
+      bool success = 
+#endif
+        write_xdr( filename );
+      assert( success );
+    }
+
+    /** \copydoc PersistentObject :: restore */
+    virtual void restore() 
+    {
+      std::string filename ( PersistenceManager :: uniqueFileName () );
+#ifndef NDEBUG 
+      bool success = 
+#endif
+        read_xdr( filename );
+      assert( success );
+    }
+
+    //! write index set to file 
+    virtual bool write_xdr( const std::string & ) const { return false; }
+    //! read index set from file 
+    virtual bool read_xdr( const std::string & ) { return false; }
+
     using BaseType::asImp;
 
     // reference to dof manager 
     DofManagerType& dofManager_;
   };
-
 
 
   /** \brief ConsecutivePersistentIndexSet is the base class for all index sets that 

@@ -50,6 +50,9 @@ public:
   //! store const reference to set 
   IndexSetWrapper(const IndexSetWrapper<IndexSetImp> & s) 
     : DefaultEmptyIndexSet(s.adaptive_), set_(s.set_) {}
+
+  //! return persistent status 
+  bool persistent () const { return false; }
  
   //! return size of set for codim  
   int size ( GeometryType type ) const   
