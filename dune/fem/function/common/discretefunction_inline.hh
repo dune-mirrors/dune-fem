@@ -393,6 +393,24 @@ namespace Dune
     }
   }
 
+
+  template< class Traits >
+  void DiscreteFunctionDefault< Traits >
+    :: backup() const
+  {
+    // get my unique file name 
+    asImp().write_xdr( PersistenceManager :: uniqueFileName() );
+  }
+
+
+  template< class Traits >
+  void DiscreteFunctionDefault< Traits >
+    :: restore()
+  {
+    // get my unique file name 
+    asImp().read_xdr( PersistenceManager :: uniqueFileName() );
+  }
+
   template< class Traits >
   inline void DiscreteFunctionDefault< Traits >
     :: enableDofCompression ()

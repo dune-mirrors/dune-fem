@@ -20,6 +20,7 @@
 #include <dune/fem/function/common/function.hh>
 #include <dune/fem/function/common/scalarproducts.hh>
 #include <dune/fem/function/localfunction/localfunctionwrapper.hh>
+#include <dune/fem/io/file/persistencemanager.hh>
 
 namespace Dune
 {
@@ -483,7 +484,8 @@ namespace Dune
   //*************************************************************************
   template< class DiscreteFunctionTraits >
   class DiscreteFunctionDefault
-  : public DiscreteFunctionInterface< DiscreteFunctionTraits > 
+  : public DiscreteFunctionInterface< DiscreteFunctionTraits > ,
+    public PersistentObject 
   { 
     typedef DiscreteFunctionDefault< DiscreteFunctionTraits > ThisType;
     typedef DiscreteFunctionInterface< DiscreteFunctionTraits > BaseType;
@@ -737,6 +739,34 @@ namespace Dune
      */
     inline LocalFunctionStorageType &localFunctionStorage () const;
 
+  protected:  
+    /** \copydoc PersistentObject :: backup */
+    virtual void backup() const; 
+
+    /** \copydoc PersistentObject :: restore */
+    virtual void restore(); 
+
+    /** \brief insert also index set to persistenceManager */
+    virtual void insertSubData() const
+    {
+      if( space().indexSet().persistent() )
+      {
+        PersistentObject& object = (PersistentObject &) space().indexSet();
+        persistenceManager >> object;
+      }
+    }
+
+    /** \brief remove also index from persistenceManager */
+    virtual void removeSubData() const 
+    {
+      if( space().indexSet().persistent() ) 
+      {
+        PersistentObject& object = (PersistentObject &) space().indexSet();
+        persistenceManager >> object;
+      }
+    }
+
+    friend class PersistenceManager;
 
   private:
     // Unimplemented Interface Methods
