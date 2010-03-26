@@ -282,8 +282,8 @@ namespace Dune
     }
 
     template< int diffOrder, class PointType, class LocalDofVectorType >
-    void evaluate ( const FieldVector< int, diffOrder > &diffVariable,
-                    const PointType &x, const LocalDofVectorType& dofs, RangeType &ret ) const
+    void evaluateAll ( const FieldVector< int, diffOrder > &diffVariable,
+                       const PointType &x, const LocalDofVectorType& dofs, RangeType &ret ) const
     {
       ret = 0;
 
@@ -297,7 +297,7 @@ namespace Dune
     }
 
     template< class PointType, class LocalDofVectorType >
-    void evaluate ( const PointType &x, const LocalDofVectorType &dofs, RangeType &ret ) const
+    void evaluateAll ( const PointType &x, const LocalDofVectorType &dofs, RangeType &ret ) const
     {
       ret = 0;
 
@@ -330,10 +330,10 @@ namespace Dune
 
     template< class PointType, class GeometryJacobianInverseType,
               class LocalDofVectorType, class GlobalJacobianRangeType >
-    void jacobian ( const PointType &x,
-                    const GeometryJacobianInverseType& gjit, 
-                    const LocalDofVectorType& dofs, 
-                    GlobalJacobianRangeType &ret ) const
+    void jacobianAll ( const PointType &x,
+                       const GeometryJacobianInverseType& gjit, 
+                       const LocalDofVectorType& dofs, 
+                       GlobalJacobianRangeType &ret ) const
     {
       ret = 0;
 
