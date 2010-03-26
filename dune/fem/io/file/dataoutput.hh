@@ -122,6 +122,41 @@ class DataOutput : public IOInterface
 
 protected:  
 #if USE_VTKWRITER
+  template <class Grid, class OutputTuple> 
+  class GridPartGetter 
+  {
+  public:  
+    typedef typename TypeTraits<typename Dune::ElementType<0,OutputTuple>::Type>::PointeeType DFType;
+    typedef typename DFType :: DiscreteFunctionSpaceType :: GridPartType GridPartType; 
+  protected:  
+    const GridPartType& gridPart_;
+    const GridPartType& getPart( const OutputTuple& data ) const 
+    {
+      const DFType* func = Element<0>::get(data);
+      assert( func );
+      return func->space().gridPart();
+    }
+  public:  
+    GridPartGetter(const Grid&, const OutputTuple& data) 
+      : gridPart_( getPart( data ) )
+    {}
+    const GridPartType& gridPart() const { return gridPart_; }
+  };
+
+  template <class Grid> 
+  class GridPartGetter< Grid, Dune::Nil > 
+  {
+  public:  
+    typedef HierarchicGridPart< Grid > GridPartType;
+  protected:  
+    const GridPartType gridPart_;
+  public:  
+    GridPartGetter(const Grid& grid, const Dune::Nil& ) 
+      : gridPart_( const_cast<Grid&> (grid) )
+    {}
+    const GridPartType& gridPart() const { return gridPart_; }
+  };
+
   template <class VTKIOType>
   class VTKListEntry 
   {
@@ -196,6 +231,15 @@ protected:
       }
     }
 
+    void forEach(Dune::Nil& ) {} 
+
+    template <class OutputTuple>
+    void forEach(OutputTuple& data) 
+    {
+      ForEachValue<OutputTuple> forEach(data); 
+      forEach.apply( *this );
+    }
+
   private:
     VTKOut & vtkOut_;
   };
@@ -227,6 +271,15 @@ protected:
       EntryType* entry = new EntryType(vtkOut_.gridPart(), *df);
       entry->add( vtkOut_ );
       vec_.push_back( entry );
+    }
+
+    void forEach(Dune::Nil& ) {} 
+
+    template <class OutputTuple>
+    void forEach(OutputTuple& data) 
+    {
+      ForEachValue<OutputTuple> forEach(data); 
+      forEach.apply( *this );
     }
 
   private:
@@ -284,6 +337,15 @@ protected:
           out_ << u[k] << "   ";
         // out_ << std::endl;
       }
+    }
+
+    void forEach(Dune::Nil& ) {} 
+
+    template <class OutputTuple>
+    void forEach(OutputTuple& data) 
+    {
+      ForEachValue<OutputTuple> forEach(data); 
+      forEach.apply( *this );
     }
   };
 
@@ -531,18 +593,6 @@ protected:
     // generate filename, with path only for serial run  
     std::string name = genFilename( (parallel) ? "" : path_, datapref_, writeStep_ );
 
-#if 0 // YASPGRID 
-    if( vertexData )
-    {
-      static bool called = false; 
-      if( ! called ) 
-      {
-        std::cerr << "WARNING: vertexData output not working with YaspGrid! \n"; 
-        called = true;
-      }
-    }
-
-#else 
     if( vertexData ) 
     {
       // generate adaptive leaf grid part 
@@ -556,9 +606,8 @@ protected:
       VTKIOType vtkio ( gridPart, VTKOptions::conforming );
 
       // add all functions 
-      ForEachValue<OutPutDataType> forEach(data_); 
       VTKOutputerLagrange< VTKIOType > io( vtkio );
-      forEach.apply( io );
+      io.forEach( data_ );
 
       if( parallel )
       {
@@ -572,41 +621,28 @@ protected:
       }
     }
     else
-#endif 
     {
-      typedef typename 
-        TypeTraits<typename Dune::ElementType<0,OutPutDataType>::Type>::PointeeType DFType;
-      const DFType* func = Element<0>::get(data_);
-      typedef typename DFType :: DiscreteFunctionSpaceType :: GridPartType GridPartType; 
-      const GridPartType& gridPart = func->space().gridPart();
-      /*
-      // generate adaptive leaf grid part 
-      // do not use leaf grid part since this will 
-      // create the grids leaf index set, which might not be wanted. 
-      typedef AdaptiveLeafGridPart< GridType > GridPartType; 
-      GridPartType gridPart( const_cast<GridType&> (grid_) );
-      */
+      typedef GridPartGetter< GridType, OutPutDataType> GridPartGetterType;
+      GridPartGetterType gp( grid_, data_ );
+
+      // create vtk output handler 
+      typedef VTKIO < typename GridPartGetterType :: GridPartType > VTKIOType; 
+      VTKIOType vtkio ( gp.gridPart() , VTKOptions::nonconforming );
+
+      // add all functions 
+      VTKOutputerDG< VTKIOType > io( vtkio );
+      io.forEach( data_ );
+
+      // write all data 
+      if( parallel )
       {
-        // create vtk output handler 
-        typedef VTKIO < GridPartType > VTKIOType; 
-        VTKIOType vtkio ( gridPart, VTKOptions::nonconforming );
-
-        // add all functions 
-        ForEachValue<OutPutDataType> forEach(data_); 
-        VTKOutputerDG< VTKIOType > io( vtkio );
-        forEach.apply( io );
-
-        // write all data 
-        if( parallel )
-        {
-          // write all data for parallel runs  
-          filename = vtkio.pwrite( name, path_, "." , Dune::VTKOptions::binaryappended );
-        }
-        else
-        {
-          // write all data serial 
-          filename = vtkio.write( name, Dune::VTKOptions::binaryappended );
-        }
+        // write all data for parallel runs  
+        filename = vtkio.pwrite( name, path_, "." , Dune::VTKOptions::binaryappended );
+      }
+      else
+      {
+        // write all data serial 
+        filename = vtkio.write( name, Dune::VTKOptions::binaryappended );
       }
     }
     return filename;
@@ -640,10 +676,10 @@ protected:
           en.geometry().global(quad.point(i));
         for (int k = 0; k < x.size; ++k) 
            gnuout << x[k] << " ";
-        ForEachValue<OutPutDataType> forEach(data_); 
         GnuplotOutputer< GridPartType > 
                        io( gnuout,quad,i,en );
-        forEach.apply( io );
+        io.forEach( data_ );
+
         gnuout << std::endl;
       }
     }
@@ -653,7 +689,7 @@ protected:
   //! write binary data 
   virtual void writeBinaryData(const double) const 
   {
-    DUNE_THROW(NotImplemented, "Format 'binary' not supported by DataOutput, but by DataWriter." );
+    DUNE_THROW(NotImplemented, "Format 'binary' not supported by DataOutput, use DataWriter instead." );
   }
 
   //! display data with grape 
@@ -661,14 +697,24 @@ protected:
   {
     if( grapeDisplay_ )
     {
-#if USE_GRAPE
-      GrapeDataDisplay<GridType> grape(grid_);
-      IOTuple<OutPutDataType>::addToDisplay(grape,data_);
-      grape.display();
-#else 
-      std::cerr <<"WARNING: HAVE_GRAPE == 0, but grapeDisplay == true, recompile with grape support for online display!" << std::endl;
-#endif
+      grapeDisplay( data_ );
     }
+  }
+
+protected:  
+  void grapeDisplay(Dune::Nil& data) const {}
+
+  //! display data with grape 
+  template <class OutputTupleType>
+  void grapeDisplay(OutputTupleType& data) const 
+  {
+#if USE_GRAPE
+    GrapeDataDisplay<GridType> grape(grid_);
+    IOTuple<OutPutDataType>::addToDisplay(grape,data);
+    grape.display();
+#else 
+    std::cerr <<"WARNING: HAVE_GRAPE == 0, but grapeDisplay == true, recompile with grape support for online display!" << std::endl;
+#endif
   }
 
 }; // end class DataOutput
