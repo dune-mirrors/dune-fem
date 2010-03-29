@@ -111,7 +111,7 @@ struct DataOutputParameters
 */    
 template <class GridImp, 
           class DataImp> 
-class DataOutput : public IOInterface 
+class DataOutput : public IOInterface
 {
 
 protected:  
@@ -428,8 +428,9 @@ public:
     init(parameter);
 
     // set old values according to new time 
-    if (saveStep_>0) {
-      while(saveTime_ < tp.time()) 
+    if (saveStep_>0) 
+    {
+      while( saveTime_ < tp.time() ) 
       {
         ++writeStep_;
         saveTime_ += saveStep_;
@@ -452,7 +453,6 @@ protected:
     // create path if not already exists 
     IOInterface :: createGlobalPath ( grid_.comm(), path_ );
 
-    // write parameter file 
     
     // add prefix for data file
     datapref_ += parameter.prefix();
@@ -484,6 +484,8 @@ protected:
       if (!sequence_)
         std::cout << "could not write sequence file" << std::endl;
     }
+
+    // write parameter file 
     Parameter::write("parameter.log");
   }
 public:
