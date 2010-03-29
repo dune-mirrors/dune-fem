@@ -62,17 +62,15 @@ protected:
   using BaseType :: writeStep_;
   using BaseType :: outputFormat_ ;
 
+  friend class DataOutput< GridImp, DataImp >;
+
 public: 
 
- /** \brief Constructor creating data writer 
+  /** \brief Constructor creating data writer 
     \param grid corresponding grid 
-    \param gridName corresponding macro grid name (needed for structured grids)
     \param data Tuple containing discrete functions to write 
-    \param startTime starting time for a time dependent simulation
-    \param endTime final time of a time dependent simulation
-
-    The DataWriter is tuned through \ref Parameter 
-    described under \ref DiscFuncIO. 
+    \param parameter structure for tuning the behavior of the Dune::DataWriter 
+                     defaults to Dune::DataWriterParameters
   */
   DataWriter(const GridType & grid,
              OutPutDataType& data,
@@ -83,6 +81,13 @@ public:
     saveMacroGrid( parameter.macroGridName() );
   }
 
+  /** \brief Constructor creating data writer 
+    \param grid corresponding grid 
+    \param data Tuple containing discrete functions to write 
+    \param tp   a time provider to set time (e.g. for restart)
+    \param parameter structure for tuning the behavior of the Dune::DataWriter
+                     defaults to Dune::DataWriterParameters
+  */
   DataWriter(const GridType & grid,
              OutPutDataType& data,
              const TimeProviderBase& tp,
@@ -96,7 +101,7 @@ public:
   //! destructor 
   virtual ~DataWriter() {}
 
-public:  
+protected:  
   //! print class name 
   virtual const char* myClassName() const { return "DataWriter"; }
     
@@ -245,20 +250,16 @@ protected:
 public: 
   /** \brief Constructor generating a checkpointer 
     \param grid corresponding grid 
-    \param data Tuple containing discrete functions to write
-
-    \note In Addition to the parameters read by the DataWriter this class 
-          reads the following parameters: 
-
-    # write checkpoint every `CheckPointStep' time step
-    fem.io.checkpointstep: 500 
-    # store checkpoint information to file `CheckPointFile'
-    fem.io.checkpointfile: checkpoint
+    \param data Tuple containing discrete functions to write 
+    \param tp   a time provider to set time (e.g. for restart)
+    \param parameter structure for tuning the behavior of the Dune::CheckPointer
+                     defaults to Dune::CheckPointerParameters
   */
   CheckPointer(const GridType & grid, 
                OutPutDataType& data,
+               const TimeProviderBase& tp,
                const CheckPointerParameters& parameter = CheckPointerParameters() ) 
-    : BaseType(grid,data,parameter)  
+    : BaseType(grid,data,tp,parameter)  
     , checkPointStep_( parameter.checkPointStep() )
     , maxCheckPointNumber_( parameter.maxNumberOfCheckPoints() )
     , dataPtr_( 0 )
@@ -266,6 +267,12 @@ public:
     initialize( parameter );
   }
 
+  /** \brief Constructor generating a checkpointer 
+    \param grid corresponding grid 
+    \param tp   a time provider to set time (e.g. for restart)
+    \param parameter structure for tuning the behavior of the Dune::CheckPointer
+                     defaults to Dune::CheckPointerParameters
+  */
   CheckPointer( const GridType & grid, 
                 const TimeProviderBase& tp,
                 const CheckPointerParameters& parameter = CheckPointerParameters() )
