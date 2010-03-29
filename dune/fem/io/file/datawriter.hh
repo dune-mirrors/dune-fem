@@ -234,8 +234,7 @@ protected:
   //! used data tuple 
   typedef DataImp OutPutDataType; 
 
-  int checkPointStep_;
-  mutable int checkPointNumber_;
+  const int checkPointStep_;
   const int maxCheckPointNumber_;
 
   std::string runPrefix_;
@@ -261,17 +260,17 @@ public:
                const CheckPointerParameters& parameter = CheckPointerParameters() ) 
     : BaseType(grid,data,parameter)  
     , checkPointStep_( parameter.checkPointStep() )
-    , checkPointNumber_(0)
     , maxCheckPointNumber_( parameter.maxNumberOfCheckPoints() )
     , dataPtr_( 0 )
   {
     initialize( parameter );
   }
 
-  CheckPointer( const GridType & grid, const CheckPointerParameters& parameter = CheckPointerParameters() )
-    : BaseType(grid, *( new OutPutDataType () ), parameter )  
+  CheckPointer( const GridType & grid, 
+                const TimeProviderBase& tp,
+                const CheckPointerParameters& parameter = CheckPointerParameters() )
+    : BaseType(grid, *( new OutPutDataType () ), tp, parameter )  
     , checkPointStep_( parameter.checkPointStep() )
-    , checkPointNumber_(0)
     , maxCheckPointNumber_( parameter.maxNumberOfCheckPoints() )
     , dataPtr_( &data_ )
   {
@@ -307,8 +306,6 @@ protected:
     checkPointFile_ = path_; 
     checkPointFile_ += "/"; 
     checkPointFile_ += parameter.prefix();
-    
-    Parameter::write("parameter.log");
   }
 protected:  
   friend class CheckPointer< GridType , Dune::Nil > ;
@@ -334,7 +331,6 @@ protected:
                const char * checkFile)
     : BaseType(grid, data, CheckPointerParameters() ) 
     , checkPointStep_( 0 )
-    , checkPointNumber_( 0 )
     , maxCheckPointNumber_( 0 )
     , dataPtr_( 0 )
   {
@@ -382,8 +378,6 @@ protected:
     {
       DUNE_THROW(InvalidStateException,"No CheckPoint file!");
     }
-    
-    // Parameter::write("parameter.log");
   }
 
 public:
@@ -436,8 +430,11 @@ public:
     return grid;
   }
 
-  /** \brief restores data, assumes that all objects have been created before
-             this method is called
+  /** \brief restores data, assumes that all objects have been created and inserted to
+   *         PersistenceManager before this method is called
+   *
+   *  \param grid Grid the data belong to 
+   *  \param checkFile check point file 
   */
   static inline 
   void restoreData(const GridType& grid, const std::string checkFile)
@@ -446,8 +443,12 @@ public:
     restoreData( grid, fakeData, checkFile );
   }
 
-  /** \brief restores data, assumes that all objects have been created before
-             this method is called
+  /** \brief restores data, assumes that all objects have been created and inserted to
+   *         PersistenceManager before this method is called
+   *
+   *  \param grid Grid the data belong to 
+   *  \param data tuple of discrete functions to be additionally read during restore  
+   *  \param checkFile check point file 
   */
   template <class InputTupleType>
   static inline 
@@ -476,7 +477,7 @@ protected:
   {
     // now add timestamp and rank 
     std::string path = IOInterface::createRecoverPath(
-        path_, myRank_ , datapref_, checkPointNumber_ );
+        path_, myRank_ , datapref_, writeStep_ );
 
     // restore all persistent values kept by PersistenceManager 
     PersistenceManager::restore( path );
@@ -484,7 +485,7 @@ protected:
     return path;
   }
 
-  void restoreUserData(Dune::Nil & ) 
+  void restoreUserData( Dune::Nil& ) 
   {
     // restore persistent data 
     restorePersistentData();
@@ -499,7 +500,7 @@ protected:
     // restore user data 
     BinaryDataIO<GridType> dataio;
     IOTuple<OutPutDataType>::restoreData(data, dataio, 
-      grid_, checkPointNumber_, path , datapref_ );
+      grid_, writeStep_, path , datapref_ );
   }
 
   void restoreData() 
@@ -527,19 +528,18 @@ public:
 
   virtual void writeBinaryData(const double time) const 
   {
+    // reset writeStep_ when maxCheckPointNumber_ is reached 
+    if( writeStep_ >= maxCheckPointNumber_ ) writeStep_ = 0;
+
     // write data 
-    std::string path = this->writeMyBinaryData( time, checkPointNumber_, data_ );
+    std::string path = this->writeMyBinaryData( time, writeStep_, data_ );
 
     // backup all persistent values kept by PersistenceManager 
     PersistenceManager::backup( path );
 
     // write checkpoint info 
     writeCheckPoint(path, time, 
-                    checkPointNumber_ );
-
-    // toggle between 0 and maxCheckPointNumber_ 
-    ++checkPointNumber_; 
-    if( checkPointNumber_ >= maxCheckPointNumber_ ) checkPointNumber_ = 0;
+                    writeStep_ );
 
     return;
   }
@@ -555,7 +555,7 @@ protected:
   bool readCheckPoint(const bool warn = true)
   {
     // read Checkpiont file 
-    if( readParameter(checkPointFile_,"LastCheckPoint",checkPointNumber_, verbose_, warn ) )
+    if( readParameter(checkPointFile_,"LastCheckPoint",writeStep_, verbose_, warn ) )
     {
       std::string recoverPath;
       // try to read recover path 
@@ -567,7 +567,7 @@ protected:
 
       // create processor path 
       std::string path = IOInterface :: createPath( grid_.comm(),
-          recoverPath, datapref_ , checkPointNumber_);
+          recoverPath, datapref_ , writeStep_);
 
       // copy store checkpoint run file to run file to 
       // resume from same point 
