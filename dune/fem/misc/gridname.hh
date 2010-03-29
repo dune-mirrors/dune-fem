@@ -34,19 +34,46 @@ namespace Dune
     template <class GridImp> 
     struct GridName
     {
+      static std::string computeName(const GridImp& grid) 
+      {
+        std::string name ( typeid( GridImp ).name() ); 
+
+        size_t dunePos = name.find( "Dune" );
+        name.erase( 0, dunePos+4 );
+
+        char* endptr = 0;
+        // get position of strings that are not numbers 
+        strtol( name.c_str(), &endptr, 0 );
+
+        if( endptr ) 
+          name = std::string( endptr );
+
+        // Grid seems to be followed by IL 
+        size_t pos = name.find( "GridIL" );
+        pos += 4; // add length of Grid to get pos of IL 
+
+        if( pos < name.size() ) 
+          name.erase( pos, name.size() - pos );
+
+        return name;
+      }
+
       static std::string name(const GridImp& grid) 
       {
-        //return std::string( "unknown" );
-        return grid.name();
+        static std::string name ( computeName( grid ) ); 
+        return name;
       }
     };
 
+#if 0
     template < int dimworld > 
     struct GridName< YaspGrid<dimworld> >
     {
       static std::string name(const YaspGrid<dimworld>& ) 
       {
-        return std::string( "YaspGrid" );
+        std::string name ( typeid( YaspGrid<dimworld> ).name() ); 
+
+        //return std::string( "YaspGrid" );
       }
     };
 
@@ -95,6 +122,7 @@ namespace Dune
         return std::string( "ALUConformGrid" );
       }
     };
+#endif
 #endif
 
     template <class GridImp>
