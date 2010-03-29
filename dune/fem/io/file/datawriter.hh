@@ -103,12 +103,12 @@ public:
   //! write binary data 
   virtual void writeBinaryData(const double sequenceStamp) const 
   {
-    writeMyData( sequenceStamp, writeStep_ , data_ );
+    writeMyBinaryData( sequenceStamp, writeStep_ , data_ );
   }
 
-  std::string writeMyData(const double sequenceStamp, 
-                          const int step, 
-                          Dune::Nil& data) const 
+  std::string writeMyBinaryData(const double sequenceStamp, 
+                                const int step, 
+                                Dune::Nil& data) const 
   {
 
     // create new path for time step output 
@@ -118,13 +118,19 @@ public:
     // for structured grids copy grid 
     IOInterface::copyMacroGrid(grid_,path_, timeStepPath, datapref_);
 
+    // create binary io obj 
+    BinaryDataIO<GridType> dataio;
+
+    // call writeGrid of IOTupleBase
+    IOTupleBase::writeGrid(dataio, grid_ , sequenceStamp, step, timeStepPath, datapref_ );
+
     return timeStepPath;
   }
 
   template <class OutputTupleType>
-  std::string writeMyData(const double sequenceStamp, 
-                          const int step, 
-                          OutputTupleType& data) const 
+  std::string writeMyBinaryData(const double sequenceStamp, 
+                                const int step, 
+                                OutputTupleType& data) const 
   {
     // create new path for time step output 
     std::string timeStepPath = IOInterface::createPath ( grid_.comm(),
@@ -165,6 +171,18 @@ struct CheckPointerParameters : public DataWriterParameters
   virtual std::string prefix () const
   {
     return checkPointPrefix();
+  }
+
+  //! return number of timestep to be passed until next checkpoint in written 
+  virtual int checkPointStep() const 
+  {
+    return Parameter::getValue< int > ("fem.io.checkpointstep", 500 );
+  }
+
+  //! maximal number of checkpoint stages written (default = 2)
+  virtual int maxNumberOfCheckPoints() const 
+  {
+    return Parameter :: getValue< int > ("fem.io.checkpointmax", 2 );
   }
 
   //! return default value for check point prefix 
@@ -218,6 +236,7 @@ protected:
 
   int checkPointStep_;
   mutable int checkPointNumber_;
+  const int maxCheckPointNumber_;
 
   std::string runPrefix_;
   std::string checkPointFile_;
@@ -241,20 +260,22 @@ public:
                OutPutDataType& data,
                const CheckPointerParameters& parameter = CheckPointerParameters() ) 
     : BaseType(grid,data,parameter)  
-    , checkPointStep_(500)
-    , checkPointNumber_(1)
+    , checkPointStep_( parameter.checkPointStep() )
+    , checkPointNumber_(0)
+    , maxCheckPointNumber_( parameter.maxNumberOfCheckPoints() )
     , dataPtr_( 0 )
   {
-    initialize();
+    initialize( parameter );
   }
 
   CheckPointer( const GridType & grid, const CheckPointerParameters& parameter = CheckPointerParameters() )
     : BaseType(grid, *( new OutPutDataType () ), parameter )  
-    , checkPointStep_(500)
-    , checkPointNumber_(1)
+    , checkPointStep_( parameter.checkPointStep() )
+    , checkPointNumber_(0)
+    , maxCheckPointNumber_( parameter.maxNumberOfCheckPoints() )
     , dataPtr_( &data_ )
   {
-    initialize();
+    initialize( parameter );
   }
 
   ~CheckPointer() 
@@ -266,14 +287,12 @@ public:
     }
   }
 protected:  
-  void initialize() 
+  void initialize( const CheckPointerParameters& parameter ) 
   {
-    // output format can oinly be binary
+    // output format can only be binary
     outputFormat_ = BaseType :: binary; 
     // do not display 
     grapeDisplay_ = false ;
-
-    Parameter::get("fem.io.checkpointstep",checkPointStep_,checkPointStep_);
 
     /*
     // create runfile  prefix 
@@ -285,14 +304,9 @@ protected:
     }
     */
     
-    {
-      // read name of check point file 
-      std::string dummyfile;
-      Parameter::get("fem.io.checkpointfile",dummyfile);
-      checkPointFile_ = path_; 
-      checkPointFile_ += "/"; 
-      checkPointFile_ += dummyfile;
-    }
+    checkPointFile_ = path_; 
+    checkPointFile_ += "/"; 
+    checkPointFile_ += parameter.prefix();
     
     Parameter::write("parameter.log");
   }
@@ -319,8 +333,9 @@ protected:
                OutPutDataType& data, 
                const char * checkFile)
     : BaseType(grid, data, CheckPointerParameters() ) 
-    , checkPointStep_(500)
-    , checkPointNumber_(1)
+    , checkPointStep_( 0 )
+    , checkPointNumber_( 0 )
+    , maxCheckPointNumber_( 0 )
     , dataPtr_( 0 )
   {
     // output format can oinly be binary
@@ -329,7 +344,6 @@ protected:
     grapeDisplay_ = false ;
 
     datapref_ = CheckPointerParameters :: checkPointPrefix();
-    Parameter::get("fem.io.checkpointstep",checkPointStep_,checkPointStep_);
 
     /*
     // create runf prefix 
@@ -343,20 +357,19 @@ protected:
     
     if( checkFile )
     {
+      // try to read given check point file 
       checkPointFile_ = checkFile;
       // read last counter 
       bool ok = readCheckPoint();
-      // read name of check point file 
-      std::string dummyfile;
-      Parameter::get("fem.io.checkpointfile",dummyfile);
-      checkPointFile_ = path_; 
-      checkPointFile_ += "/"; 
-      checkPointFile_ += dummyfile;
 
-
-      // if check point couldn't be opened, try again   
+      // if check point couldn't be opened, try again with default  
       if(!ok)
       {
+        // read name of check point file 
+        checkPointFile_ = path_; 
+        checkPointFile_ += "/"; 
+        checkPointFile_ += CheckPointerParameters :: checkPointPrefix();
+
         ok = readCheckPoint();
         if( ! ok )
         {
@@ -370,7 +383,7 @@ protected:
       DUNE_THROW(InvalidStateException,"No CheckPoint file!");
     }
     
-    Parameter::write("parameter.log");
+    // Parameter::write("parameter.log");
   }
 
 public:
@@ -385,7 +398,6 @@ public:
   {
     std::string datapref( CheckPointerParameters::checkPointPrefix() );
     std::string path;
-    std::string checkPointFile;
 
     const bool verbose = (rank == 0);
 
@@ -396,11 +408,10 @@ public:
       // read default path
       path = IOInterface::readPath();
       // set checkpointfile 
-      checkPointFile = path;
-      // read name of check point file 
-      std::string dummyfile;
-      Parameter::get("fem.io.checkpointfile",dummyfile);
-      checkPointFile += "/"; checkPointFile += dummyfile;
+      std::string checkPointFile = path;
+      // try out default checkpoint file 
+      checkPointFile += "/"; 
+      checkPointFile += CheckPointerParameters :: checkPointPrefix(); 
       readParameter(checkPointFile,"LastCheckPoint",checkPointNumber, verbose);
     }
     else
@@ -428,11 +439,21 @@ public:
   /** \brief restores data, assumes that all objects have been created before
              this method is called
   */
+  static inline 
+  void restoreData(const GridType& grid, const std::string checkFile)
+  {
+    Dune::Nil fakeData;
+    restoreData( grid, fakeData, checkFile );
+  }
+
+  /** \brief restores data, assumes that all objects have been created before
+             this method is called
+  */
   template <class InputTupleType>
-  static inline void restoreData(
-               const GridType& grid, 
-               InputTupleType& data,
-               const std::string checkFile)
+  static inline 
+  void restoreData(const GridType& grid, 
+                   InputTupleType& data,
+                   const std::string checkFile)
   {
     // check that check point is not empty 
     if( checkFile == "" ) 
@@ -451,7 +472,7 @@ protected:
   /** \brief restores data, assumes that all objects have been created before
    *         this method is called
   */
-  void restoreData()
+  std::string restorePersistentData()
   {
     // now add timestamp and rank 
     std::string path = IOInterface::createRecoverPath(
@@ -460,10 +481,30 @@ protected:
     // restore all persistent values kept by PersistenceManager 
     PersistenceManager::restore( path );
 
+    return path;
+  }
+
+  void restoreUserData(Dune::Nil & ) 
+  {
+    // restore persistent data 
+    restorePersistentData();
+  }
+
+  template <class InputTupleType>
+  void restoreUserData(InputTupleType & data) 
+  {
+    // restore persistent data 
+    std::string path = restorePersistentData();
+
     // restore user data 
     BinaryDataIO<GridType> dataio;
-    IOTuple<OutPutDataType>::restoreData(data_, dataio, 
+    IOTuple<OutPutDataType>::restoreData(data, dataio, 
       grid_, checkPointNumber_, path , datapref_ );
+  }
+
+  void restoreData() 
+  {
+    restoreUserData( data_ );
   }
 
 public:
@@ -486,11 +527,8 @@ public:
 
   virtual void writeBinaryData(const double time) const 
   {
-    // toggle between 0 and 1 
-    checkPointNumber_ = (checkPointNumber_ == 0) ? 1 : 0;
-
     // write data 
-    std::string path = this->writeMyData( time, checkPointNumber_, data_ );
+    std::string path = this->writeMyBinaryData( time, checkPointNumber_, data_ );
 
     // backup all persistent values kept by PersistenceManager 
     PersistenceManager::backup( path );
@@ -498,6 +536,10 @@ public:
     // write checkpoint info 
     writeCheckPoint(path, time, 
                     checkPointNumber_ );
+
+    // toggle between 0 and maxCheckPointNumber_ 
+    ++checkPointNumber_; 
+    if( checkPointNumber_ >= maxCheckPointNumber_ ) checkPointNumber_ = 0;
 
     return;
   }
