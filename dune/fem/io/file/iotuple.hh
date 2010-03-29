@@ -303,6 +303,31 @@ struct IOTupleBase
     // grid is created inside of restore grid method
     return dataio.restoreGrid( gname, t, n); 
   }
+
+  //! write grid and data to given directory 
+  template <class DataIO,class GridType>
+  static void 
+  writeGrid(DataIO& dataio,GridType& grid,
+            double t,int n,
+            const std::string& path,
+            const std::string& name) 
+  {
+    std::string gname( gridName( path, name ) );
+    
+    if( Parameter :: verbose() ) 
+    {
+      std::cout << "Writing grid to " << gname << std::endl;
+    }
+
+    // extra braces to destroy lock before data is written 
+    {
+      // create lock file which is removed after sucessful backup 
+      FileIOLock lock( gname );
+      
+      // write grid 
+      dataio.writeGrid(grid, xdr, gname, t, n);
+    }
+  }
 };
 
 template <class TupType>
@@ -423,21 +448,8 @@ struct IOTuple : public IOTupleBase
                      std::string name, 
                      const Pair<T1*,T2>& tup ) 
   {
-    std::string gname( gridName( path, name ) );
-    
-    if( Parameter :: verbose() ) 
-    {
-      std::cout << "Writing grid to " << gname << std::endl;
-    }
-
-    // extra braces to destroy lock before data is written 
-    {
-      // create lock file which is removed after sucessful backup 
-      FileIOLock lock( gname );
-      
-      // write grid 
-      dataio.writeGrid(grid, xdr, gname, t, n);
-    }
+    // write grid first 
+    writeGrid( dataio, grid, t, n, path, name );
 
     std::string dname( dataName(path, name ) );
 
