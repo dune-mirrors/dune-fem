@@ -406,7 +406,7 @@ public:
   /** \brief Constructor creating data writer 
     \param grid corresponding grid 
     \param data Tuple containing discrete functions to write 
-    \param tp   a time provider to set time
+    \param tp   a time provider to set time (e.g. for restart)
     \param parameter structure for tuning the behavior of the Dune::DataOutput 
                      defaults to Dune::DataOutputParameters
   */ 
