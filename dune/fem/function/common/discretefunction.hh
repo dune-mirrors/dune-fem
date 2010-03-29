@@ -747,25 +747,12 @@ namespace Dune
     virtual void restore(); 
 
     /** \brief insert also index set to persistenceManager */
-    virtual void insertSubData() const
-    {
-      if( space().indexSet().persistent() )
-      {
-        PersistentObject& object = (PersistentObject &) space().indexSet();
-        persistenceManager >> object;
-      }
-    }
+    virtual void insertSubData();
 
     /** \brief remove also index from persistenceManager */
-    virtual void removeSubData() const 
-    {
-      if( space().indexSet().persistent() ) 
-      {
-        PersistentObject& object = (PersistentObject &) space().indexSet();
-        persistenceManager >> object;
-      }
-    }
+    virtual void removeSubData();
 
+    // only PersistenceManager should call backup and restore 
     friend class PersistenceManager;
 
   private:

@@ -399,7 +399,9 @@ namespace Dune
     :: backup() const
   {
     // get my unique file name 
-    asImp().write_xdr( PersistenceManager :: uniqueFileName() );
+    std::string filename ( PersistenceManager :: uniqueFileName() );
+    std::cout << "Write file = " << filename << std::endl;
+    asImp().write_xdr( filename );
   }
 
 
@@ -408,7 +410,34 @@ namespace Dune
     :: restore()
   {
     // get my unique file name 
-    asImp().read_xdr( PersistenceManager :: uniqueFileName() );
+    std::string filename ( PersistenceManager :: uniqueFileName() );
+    asImp().read_xdr( filename );
+  }
+
+  template< class Traits >
+  void DiscreteFunctionDefault< Traits >
+    :: insertSubData()
+  {
+    // if indexset is persistent it is also 
+    // derived from PersistentObject 
+    if( space().indexSet().persistent() )
+    {
+      PersistentObject& object = (PersistentObject &) space().indexSet();
+      persistenceManager << object;
+    }
+  }
+
+  template< class Traits >
+  void DiscreteFunctionDefault< Traits >
+    :: removeSubData()
+  {
+    // if indexset is persistent it is also
+    // derived from PersistentObject 
+    if( space().indexSet().persistent() )
+    {
+      PersistentObject& object = (PersistentObject &) space().indexSet();
+      persistenceManager >> object;
+    }
   }
 
   template< class Traits >
