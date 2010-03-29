@@ -106,9 +106,9 @@ namespace Dune
 
   protected:
     /** \brief insert possible sub data of object */
-    virtual void insertSubData() const {} 
+    virtual void insertSubData() {} 
     /** \brief remove possible sub data of object */
-    virtual void removeSubData() const {} 
+    virtual void removeSubData() {} 
    
     virtual void *pointer ()
     {
@@ -254,7 +254,7 @@ namespace Dune
 
     std::string getUniqueFileName ()
     { 
-      return genFilename( path_, "", ++fileCounter_ );
+      return genFilename( path_, "po_", ++fileCounter_ );
     }
 
     template< class T >
