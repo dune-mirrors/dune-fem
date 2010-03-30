@@ -245,7 +245,7 @@ namespace Dune
     /** \copydoc PersistentObject :: backup */
     virtual void backup() const 
     {
-      std::string filename ( PersistenceManager :: uniqueFileName () );
+      std::string filename ( PersistenceManager :: uniqueFileName ( "indexset" ) );
 #ifndef NDEBUG 
       bool success = 
 #endif
@@ -256,7 +256,7 @@ namespace Dune
     /** \copydoc PersistentObject :: restore */
     virtual void restore() 
     {
-      std::string filename ( PersistenceManager :: uniqueFileName () );
+      std::string filename ( PersistenceManager :: uniqueFileName ( "indexset" ) );
 #ifndef NDEBUG 
       bool success = 
 #endif
