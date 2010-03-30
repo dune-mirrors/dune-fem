@@ -252,9 +252,9 @@ namespace Dune
       closeAsci();
     }
 
-    std::string getUniqueFileName ()
+    std::string getUniqueFileName (const std::string& tag )
     { 
-      return genFilename( path_, "po_", ++fileCounter_ );
+      return genFilename( path_, tag, ++fileCounter_ );
     }
 
     template< class T >
@@ -317,9 +317,9 @@ namespace Dune
       instance().restoreObjects( path );
     }
 
-    static std::string uniqueFileName()
+    static std::string uniqueFileName(const std::string& tag = "" )
     {
-      return instance().getUniqueFileName();
+      return instance().getUniqueFileName( tag );
     }
 
     template< class T >
@@ -339,9 +339,9 @@ namespace Dune
 
     void startBackup ( const std::string &path )
     {
-      path_ = path+"/";
-      fileCounter_=0;
-      lineNo_=0;
+      path_ = path + "/";
+      fileCounter_ = 0;
+      lineNo_ = 0;
 
       IOInterface::createPath(path_);
       
@@ -349,14 +349,14 @@ namespace Dune
       outAsciStream_ << std::scientific;
       outAsciStream_.precision(16);
       outAsciStream_ << "Persistent Objects" << std::endl;
-      Parameter::write(path_+"parameter");
+      Parameter::write( path_, "parameter" );
     }
 
     void startRestore ( const std::string &path )
     {
-      path_=path+"/";
-      fileCounter_=0;
-      lineNo_=0;
+      path_=path + "/";
+      fileCounter_ = 0;
+      lineNo_ = 0;
       inAsciStream_.open((path_+myTag()).c_str());  
       if (!inAsciStream_) {
         std::cout << "Error opening global stream: " << path_+myTag()
