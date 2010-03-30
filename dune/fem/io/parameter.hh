@@ -437,7 +437,6 @@ namespace Dune
      *  \param[in]  writeAll default is true
      */
     static void write ( const std::string &filename, bool writeAll = true );
-
     /** \brief write the parameter database to a stream
      *
      *  This method writes paramters to the given stream.
@@ -453,6 +452,25 @@ namespace Dune
      */
     static void write ( std::ostream &out, bool writeAll = true );
 
+  protected:  
+    friend class PersistenceManager ;
+
+    /** \brief write the parameter database to a file
+     *
+     *  This method writes paramters to the given file.
+     *  If the second parameter is true all parameters are written;
+     *  otherwise only used parameters which do not coincide with the default value
+     *  are written.
+     *
+     *  \note This method is safe for parallel jobs. Parameters are only written
+     *        on rank 0.
+     *
+     *  \param[in]  path  path where filename is stored (for parallel writing)
+     *  \param[in]  filename  name of the file to store the parameters in; prefix() is used.
+     *  \param[in]  writeAll default is true
+     */
+    static void write ( const std::string& path, const std::string &filename, 
+                        bool writeAll = true  );
   private:
     std::string curFileName_;
     int curLineNumber_;
@@ -857,10 +875,17 @@ namespace Dune
   Parameter::write ( const std::string &filename, bool writeAll )
   {
     // only write one parameter log file
-    if( MPIManager::rank() != 0 )
-      return;
+    // to the common path 
+    if( MPIManager::rank() != 0 ) return;
 
-    std::string fullname( commonOutputPath() );
+    write( commonOutputPath(), filename, writeAll );
+  }
+
+  inline void
+  Parameter::write ( const std::string &path, 
+                     const std::string &filename , bool writeAll ) 
+  {
+    std::string fullname( path );
     fullname += "/";
     fullname += filename;
 
@@ -868,8 +893,10 @@ namespace Dune
     if( !file.is_open() )
     {
       std::cerr << "Warning: Unable to write parameter file '"
-                << filename << "'" << std::endl;
+                << fullname << "'" << std::endl;
+      return ;
     }
+
     write( file, writeAll );
     file.close();
   }
