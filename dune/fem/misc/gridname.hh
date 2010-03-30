@@ -2,12 +2,15 @@
 #define DUNE_GRIDNAME_HH
 
 #include <string>
-
-
+#include <iostream>
+#include <typeinfo>
+#include <vector>
+#include <cstdlib>
 
 namespace Dune 
 {
 
+#if 0
   template< int dimW >
   class YaspGrid;
 
@@ -26,6 +29,7 @@ namespace Dune
   class ALUSimplexGrid;
   template< int dim, int dimW >
   class ALUConformGrid;
+#endif
 #endif
 
   namespace Fem 
@@ -54,11 +58,39 @@ namespace Dune
 
         if( pos < name.size() ) 
           name.erase( pos, name.size() - pos );
+#ifndef NDEBUG 
+        std::vector< std::string > knownGrids;
+        knownGrids.push_back( "AlbertaGrid" );
+        knownGrids.push_back( "ALUSimplexGrid" ); 
+        knownGrids.push_back( "ALUConformGrid" );
+        knownGrids.push_back( "ALUCubeGrid" ); 
+        knownGrids.push_back( "SGrid" );
+        knownGrids.push_back( "YaspGrid" );
+        knownGrids.push_back( "PrismGrid" );
+        knownGrids.push_back( "UGGrid" );
+        knownGrids.push_back( "OneDGrid" );
+        knownGrids.push_back( "GeoGrid" );
+
+        bool found = false ;
+        for(size_t i=0; i<knownGrids.size(); ++i) 
+        {
+          if( name == knownGrids[ i ] )
+          {
+            found = true; 
+            break;
+          }
+        }
+
+        if( ! found ) 
+        {
+          std::cerr << "WARNING: Grid name " << name << "not found in list of known grids! Please add in file " << __FILE__ << std::endl;
+        }
+#endif
 
         return name;
       }
 
-      static std::string name(const GridImp& grid) 
+      static const std::string& name(const GridImp& grid) 
       {
         static std::string name ( computeName( grid ) ); 
         return name;
