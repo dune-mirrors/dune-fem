@@ -399,8 +399,7 @@ namespace Dune
     :: backup() const
   {
     // get my unique file name 
-    std::string filename ( PersistenceManager :: uniqueFileName() );
-    std::cout << "Write file = " << filename << std::endl;
+    std::string filename ( PersistenceManager :: uniqueFileName( name() ) );
     asImp().write_xdr( filename );
   }
 
@@ -410,7 +409,7 @@ namespace Dune
     :: restore()
   {
     // get my unique file name 
-    std::string filename ( PersistenceManager :: uniqueFileName() );
+    std::string filename ( PersistenceManager :: uniqueFileName( name() ) );
     asImp().read_xdr( filename );
   }
 
