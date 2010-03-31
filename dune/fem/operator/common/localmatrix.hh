@@ -192,7 +192,7 @@ namespace Dune
     }
     
     /** \brief access to the base function set within the range space */
-    inline const DomainBaseFunctionSetType &rangeBaseFunctionSet () const
+    inline const RangeBaseFunctionSetType &rangeBaseFunctionSet () const
     {
       CHECK_INTERFACE_IMPLEMENTATION( asImp().rangeBaseFunctionSet() );
       return asImp().rangeBaseFunctionSet();
@@ -318,7 +318,7 @@ namespace Dune
     }
     
     /** \copydoc Dune::LocalMatrixInterface::rangeBaseFunctionSet */
-    inline const DomainBaseFunctionSetType &rangeBaseFunctionSet () const
+    inline const RangeBaseFunctionSetType &rangeBaseFunctionSet () const
     {
       return rangeBaseSet_;
     }
