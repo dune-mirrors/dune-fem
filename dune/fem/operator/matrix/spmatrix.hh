@@ -526,6 +526,18 @@ private:
       rangeSpace_.communicate( dest );
     }
 
+    //! apply transposed matrix to discrete function
+    template< class DomainFunction, class RangeFunction >
+    void apply_t ( const RangeFunction &arg, DomainFunction &dest ) const
+    {
+      // do matrix vector multiplication 
+      matrix_.multOEM_t( arg.leakPointer(), dest.leakPointer() );
+
+      // communicate data 
+      rangeSpace_.communicate( dest );
+    }
+
+
     //! mult method of matrix object used by oem solver
     double ddotOEM( const double *v, const double *w ) const
     {
