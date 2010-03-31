@@ -242,7 +242,6 @@ protected:
   const int checkPointStep_;
   const int maxCheckPointNumber_;
 
-  std::string runPrefix_;
   std::string checkPointFile_;
 
   const OutPutDataType* dataPtr_;
@@ -300,16 +299,6 @@ protected:
     // do not display 
     grapeDisplay_ = false ;
 
-    /*
-    // create runfile  prefix 
-    {
-      runPrefix_ = "run.";
-      std::stringstream rankDummy;
-      rankDummy << myRank_;
-      runPrefix_ += rankDummy.str();
-    }
-    */
-    
     checkPointFile_ = path_; 
     checkPointFile_ += "/"; 
     checkPointFile_ += parameter.prefix();
@@ -348,16 +337,6 @@ protected:
 
     datapref_ = CheckPointerParameters :: checkPointPrefix();
 
-    /*
-    // create runf prefix 
-    {
-      runPrefix_ = "run.";
-      std::stringstream rankDummy;
-      rankDummy << myRank_;
-      runPrefix_ += rankDummy.str();
-    }
-    */
-    
     if( checkFile )
     {
       // try to read given check point file 
@@ -551,12 +530,6 @@ public:
     return;
   }
 
-  //! return file name for run file (if needed)
-  std::string runFile() const
-  {
-    return path_ + "/" + runPrefix_;
-  }
-  
 protected:
   //! read checkpoint file
   bool readCheckPoint(const bool warn = true)
@@ -572,42 +545,6 @@ protected:
         recoverPath = path_;
       }
 
-      // create processor path 
-      std::string path = IOInterface :: createPath( grid_.comm(),
-          recoverPath, datapref_ , writeStep_);
-
-      // copy store checkpoint run file to run file to 
-      // resume from same point 
-      path += "/";
-      path += runPrefix_;
-
-      // get run file name 
-      std::string runFileName( runFile() );
-      {
-        // clear run file in case we have a restart with 
-        // more processors than the checkpoint was written with
-        std::ofstream clearfile ( runFileName.c_str() );
-        clearfile << "# restarted from checkpoint " << std::endl;
-        // close file 
-        clearfile.close();
-      }
-       
-      // create test file pointer  
-      std::ifstream testfile ( path.c_str() );
-
-      // if file exists then copy it 
-      if( testfile.is_open() ) 
-      {
-        // close test file 
-        testfile.close(); 
-
-        std::string cmd("cp ");
-        cmd += path;
-        cmd += " ";
-        cmd += runFileName;
-        system ( cmd.c_str() );
-      }
-      
       // overwrite path with recover path 
       path_ = recoverPath;
       
@@ -668,29 +605,6 @@ protected:
         std::cerr << "Couldn't open file `" << checkPointFile_ << "' ! " << std::endl;
       }
     }
-
-    /*
-    {
-      std::string runfilename( runFile() );
-
-      std::ifstream testfile ( runfilename.c_str() );
-
-      // check whether file exists 
-      if( testfile.is_open() ) 
-      {
-        // close first 
-        testfile.close();
-
-        // copy run file for recovery  
-        std::string cmd;
-        cmd += "cp ";
-        cmd += runfilename  ;
-        cmd += " ";
-        cmd += path;
-        system ( cmd.c_str() );
-      }
-    }
-    */
   }
 
 }; // end class CheckPointer 
