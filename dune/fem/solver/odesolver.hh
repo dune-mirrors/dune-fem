@@ -116,9 +116,10 @@ public:
       case 2: ode_ = new PARDG::ExplicitTVD2(comm_,expl_); break;
       case 3: ode_ = new PARDG::ExplicitTVD3(comm_,expl_); break;
       case 4: ode_ = new PARDG::ExplicitRK4(comm_,expl_); break;
-      default : std::cerr << "Runge-Kutta method of this order not implemented" 
+      default : ode_ = new PARDG::ExplicitBulirschStoer(comm_,expl_,7);
+                std::cerr << "Runge-Kutta method of this order not implemented.\n" 
+                          << "Using 7-stage Bulirsch-Stoer scheme.\n"
                           << std::endl;
-                abort();
     }
 
     if(verbose)
