@@ -500,7 +500,9 @@ public:
   */
   bool willWrite(const TimeProviderBase& tp) const 
   {
+    // make save step consistent
     consistentSaveStep( tp );
+
     return param_->willWrite( (saveStep_>0 && tp.time() >= saveTime_ ) || 
              // tp.end() ||
            (saveCount_>0 && writeCalls_%saveCount_ == 0) );
