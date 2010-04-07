@@ -641,4 +641,6 @@ namespace Dune
   //@}
 } // end namespace Dune 
 
+#include "dgadaptmanager.hh"
+
 #endif
