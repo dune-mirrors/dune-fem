@@ -90,6 +90,8 @@ namespace Dune
     //! The corresponding IntersectionIterator 
     typedef typename Traits::IntersectionIteratorType IntersectionIteratorType ;
     
+    typedef typename IntersectionIteratorType::Intersection IntersectionType;
+
     //! Struct providing types of the leaf iterators on codimension cd
     template< int codim >
     struct Codim
@@ -163,6 +165,11 @@ namespace Dune
     IntersectionIteratorType iend(const EntityCodim0Type & en) const 
     {
       return en.ileafend();
+    }
+
+    int boundaryId ( const IntersectionType &intersection ) const
+    {
+      return intersection.boundaryId();
     }
 
     //! Returns maxlevel of the grid

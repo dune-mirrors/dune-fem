@@ -219,6 +219,12 @@ namespace Dune
       return asImp().iend(en); 
     }
 
+    int boundaryId ( const IntersectionType &intersection ) const
+    {
+      CHECK_INTERFACE_IMPLEMENTATION( asImp().boundaryId( intersection ) );
+      return asImp().boundaryId( intersection );
+    }
+
     //! \brief corresponding communication method for grid part
     template <class DataHandleImp,class DataType>
     void communicate(CommDataHandleIF<DataHandleImp,DataType> & data, 
@@ -342,6 +348,8 @@ namespace Dune
     //! The corresponding IntersectionIterator 
     typedef typename Traits::IntersectionIteratorType IntersectionIteratorType ;
 
+    typedef typename IntersectionIteratorType::Intersection IntersectionType;
+
   private:
     typedef typename GridType::template Codim<0>::Entity EntityCodim0Type;
 
@@ -407,6 +415,11 @@ namespace Dune
     IntersectionIteratorType iend(const EntityCodim0Type & en) const 
     {
       return en.ilevelend();
+    }
+
+    int boundaryId ( const IntersectionType &intersection ) const
+    {
+      return intersection.boundaryId();
     }
 
     //! Level which this GridPart belongs to
@@ -483,6 +496,8 @@ namespace Dune
     
     //! The corresponding IntersectionIterator 
     typedef typename Traits::IntersectionIteratorType IntersectionIteratorType ;
+
+    typedef typename IntersectionIteratorType::Intersection IntersectionType;
     
   private:
     typedef typename GridType::template Codim<0>::Entity EntityCodim0Type;
@@ -542,6 +557,11 @@ namespace Dune
     IntersectionIteratorType iend(const EntityCodim0Type & en) const 
     {
       return en.ileafend();
+    }
+
+    int boundaryId ( const IntersectionType &intersection ) const
+    {
+      return intersection.boundaryId();
     }
 
     //! Returns maxlevel of the grid
@@ -690,6 +710,11 @@ namespace Dune
     IntersectionIteratorType iend(const EntityCodim0Type & en) const 
     {
       return en.ileafend();
+    }
+
+    int boundaryId ( const IntersectionType &intersection ) const
+    {
+      return intersection.boundaryId();
     }
 
     //! Returns maxlevel of the grid

@@ -418,6 +418,9 @@ namespace Dune
     
     //! The corresponding IntersectionIterator 
     typedef IntersectionIteratorWrapper<GridPartImp, IntersectionIteratorImpType> IntersectionIteratorType;
+
+    typedef typename IntersectionIteratorType::Intersection IntersectionType;
+
     // the codim 0 entities type
     typedef typename GridType::template Codim<0>::Entity EntityCodim0Type;
 
@@ -531,6 +534,11 @@ namespace Dune
     inline IntersectionIteratorType iend(const EntityCodim0Type & en) const 
     {
       return typename ThisType::IntersectionIteratorType(this, &filter_, GridPartImp::iend(en) );
+    }
+
+    int boundaryId ( const IntersectionType &intersection ) const
+    {
+      return intersection.boundaryId();
     }
 
     //! Returns maxlevel of the grid
