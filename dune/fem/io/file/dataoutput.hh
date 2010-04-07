@@ -427,10 +427,17 @@ public:
   {
     init(parameter);
 
+    // make save step consistent
+    consistentSaveStep( tp );
+  }
+
+  void consistentSaveStep(const TimeProviderBase& tp) const
+  {
+    const double oldTime = tp.time() - saveStep_;
     // set old values according to new time 
-    if (saveStep_>0) 
+    if (saveStep_ > 0) 
     {
-      while( saveTime_ < tp.time() ) 
+      while( saveTime_ <= oldTime ) 
       {
         ++writeStep_;
         saveTime_ += saveStep_;
@@ -493,6 +500,7 @@ public:
   */
   bool willWrite(const TimeProviderBase& tp) const 
   {
+    consistentSaveStep( tp );
     return param_->willWrite( (saveStep_>0 && tp.time() >= saveTime_ ) || 
              // tp.end() ||
            (saveCount_>0 && writeCalls_%saveCount_ == 0) );
