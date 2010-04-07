@@ -349,7 +349,8 @@ namespace Dune
       outAsciStream_ << std::scientific;
       outAsciStream_.precision(16);
       outAsciStream_ << "Persistent Objects" << std::endl;
-      Parameter::write( path_, "parameter" );
+      // write parameters 
+      Parameter::write( path_, "parameter", true );
     }
 
     void startRestore ( const std::string &path )
