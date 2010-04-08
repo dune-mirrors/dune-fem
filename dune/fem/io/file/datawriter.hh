@@ -595,7 +595,11 @@ protected:
         cmd += " "; 
         cmd += path; 
 
-        system ( cmd.c_str() );
+        // execute cmd 
+        if(0 != system ( cmd.c_str() ) ) 
+        {
+          std::cerr << "WARNING: copying of checkpointfile might not have been scuessful!" << std::endl;
+        }
       }
       else
       {
