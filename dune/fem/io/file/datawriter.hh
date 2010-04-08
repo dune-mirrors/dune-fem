@@ -307,10 +307,7 @@ protected:
   friend class CheckPointer< GridType , Dune::Nil > ;
   /** \brief Constructor generating a checkpointer to restore data 
     \param grid corresponding grid 
-    \param gridName name of macro grid file (for structured grids)
     \param data Tuple containing discrete functions to write 
-    \param startTime start time of simulation (needed for next save step)
-    \param endTime end time of simulation
     \param checkFile filename for restoring state of program from
            previous runs 
 
