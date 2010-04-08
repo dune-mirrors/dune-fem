@@ -47,7 +47,11 @@ namespace Dune
 
         char* endptr = 0;
         // get position of strings that are not numbers 
-        strtol( name.c_str(), &endptr, 0 );
+        long int result = strtol( name.c_str(), &endptr, 0 );
+        if( result == LONG_MAX || result == LONG_MIN ) 
+        {
+          DUNE_THROW(InvalidStateException,"GridName: faild to determine name of grid!");
+        }
 
         if( endptr ) 
           name = std::string( endptr );
@@ -69,7 +73,8 @@ namespace Dune
         knownGrids.push_back( "PrismGrid" );
         knownGrids.push_back( "UGGrid" );
         knownGrids.push_back( "OneDGrid" );
-        knownGrids.push_back( "GeoGrid" );
+        knownGrids.push_back( "GeometryGrid" );
+        knownGrids.push_back( "ParallelSimplexGrid" );
 
         bool found = false ;
         for(size_t i=0; i<knownGrids.size(); ++i) 
