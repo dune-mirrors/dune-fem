@@ -242,7 +242,7 @@ namespace Dune
   protected:
     friend class PersistenceManager ;
 
-    /** \copydoc PersistentObject :: backup */
+    /** \copydoc Dune::PersistentObject :: backup */
     virtual void backup() const 
     {
       std::string filename ( PersistenceManager :: uniqueFileName ( "indexset" ) );
@@ -253,7 +253,7 @@ namespace Dune
       assert( success );
     }
 
-    /** \copydoc PersistentObject :: restore */
+    /** \copydoc Dune::PersistentObject :: restore */
     virtual void restore() 
     {
       std::string filename ( PersistenceManager :: uniqueFileName ( "indexset" ) );
