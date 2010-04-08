@@ -740,16 +740,16 @@ namespace Dune
     inline LocalFunctionStorageType &localFunctionStorage () const;
 
   protected:  
-    /** \copydoc PersistentObject :: backup */
+    /** \copydoc Dune::PersistentObject :: backup */
     virtual void backup() const; 
 
-    /** \copydoc PersistentObject :: restore */
+    /** \copydoc Dune::PersistentObject :: restore */
     virtual void restore(); 
 
-    /** \brief insert also index set to persistenceManager */
+    /** \copydoc Dune::PersistentObject :: insertSubData */
     virtual void insertSubData();
 
-    /** \brief remove also index from persistenceManager */
+    /** \copydoc Dune::PersistentObject :: removeSubData */
     virtual void removeSubData();
 
     // only PersistenceManager should call backup and restore 
