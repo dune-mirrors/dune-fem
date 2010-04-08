@@ -187,10 +187,22 @@ public:
       GrapeIOStringType fnstr = generateFilename(fnprefix,timestep,precision);
       
       {
+        // read stored maxLevel 
         int maxLevel = 0;
         readParameter(fnstr,"MaxLevel",maxLevel);
-        // refine grid 
-        grid.globalRefine(maxLevel);
+
+        // calculate level to achieve 
+        maxLevel -= grid.maxLevel();
+
+        if( maxLevel < 0 ) 
+        {
+          DUNE_THROW(InvalidStateException,"maxLevel of grid is already to big!");
+        }
+        else if ( maxLevel > 0 ) 
+        {
+          // refine grid 
+          grid.globalRefine( maxLevel );
+        }
       }
       readParameter(fnstr,"Time",time);
     }
