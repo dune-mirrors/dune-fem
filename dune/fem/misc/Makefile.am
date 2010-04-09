@@ -19,7 +19,6 @@ misc_HEADERS = bartonnackmaninterface.hh \
                femtimer.hh \
                femtuples.hh \
                fieldmatrixhelper.hh \
-               forloop.hh \
                gridwidth.hh \
                h1norm.hh \
                h1norm_inline.hh \
@@ -31,7 +30,6 @@ misc_HEADERS = bartonnackmaninterface.hh \
                metaprogramming.hh \
                mpimanager.hh \
                nonconformitylevel.hh \
-               probeutility.hh \
                referenceelementprovider.hh \
                suite.cc \
                suite.hh \

@@ -36,9 +36,8 @@ class EocOutput
   //! Constructor taking base name of file and
   //! and a header for the page which
   //! should be valid tex code. 
-  EocOutput(std::string name,
-            std::string descript) :
-    outputFile(name)
+  EocOutput(std::string name, std::string descript) DUNE_VERSION_DEPRECATED(1,2,remove)
+  : outputFile(name)
   , level(0)
   , prevError(0)
   , prevSize(0)
