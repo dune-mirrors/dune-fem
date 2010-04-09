@@ -30,6 +30,9 @@ namespace Dune
   template< int dim >
   class YaspGrid;
 
+  template< int dim, int dimworld >
+  class AlbertaGrid;
+
 
 
   // Capabilities
@@ -37,6 +40,9 @@ namespace Dune
 
   namespace Capabilities
   {
+
+    // hasHierarchicIndexSet
+    // ---------------------
 
     template< class Grid >
     struct hasHierarchicIndexSet;
@@ -92,6 +98,10 @@ namespace Dune
 
 
 
+
+    // hasAllCodimEntities
+    // -------------------
+
     template< class Grid >
     class hasAllCodimEntities
     {
@@ -103,6 +113,48 @@ namespace Dune
     public:
       static const bool v = Loop< MetaAnd, Codim, Grid :: dimension > :: v;
       static const bool value = v;
+    };
+
+
+
+    // supportsCallbackAdaptation
+    // --------------------------
+
+    template< class Grid >
+    struct supportsCallbackAdaptation
+    {
+      static const bool v = false;
+    };
+
+    template< class Grid >
+    struct supportsCallbackAdaptation< const Grid >
+    {
+      static const bool v = Dune :: Capabilities :: supportsCallbackAdaptation< Grid > :: v;
+    };
+
+    template< int dim, int dimworld >
+    struct supportsCallbackAdaptation< ALUSimplexGrid< dim, dimworld > >
+    {
+      static const bool v = true;
+    };
+
+    template< int dim, int dimworld >
+    struct supportsCallbackAdaptation< ALUCubeGrid< dim, dimworld > >
+    {
+      static const bool v = true;
+    };
+
+    template< int dim, int dimworld >
+    struct supportsCallbackAdaptation< ALUConformGrid< dim, dimworld > >
+    {
+      static const bool v = true;
+    };
+
+
+    template< int dim, int dimworld >
+    struct supportsCallbackAdaptation< AlbertaGrid< dim, dimworld > >
+    {
+      static const bool v = true;
     };
 
   }

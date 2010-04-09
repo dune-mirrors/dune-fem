@@ -1,6 +1,5 @@
 commondir =  $(includedir)/dune/fem/space/common
-common_HEADERS = adaptcaps.hh \
-     adaptmanager.hh \
+common_HEADERS = adaptmanager.hh \
      allgeomtypes.hh \
      arrays.hh \
      cachedcommmanager.hh \
@@ -10,15 +9,12 @@ common_HEADERS = adaptcaps.hh \
      datacollector.hh \
      discretefunctionspace.hh \
      dofmanager.hh \
-     dofmapperinterface.hh \
      dofmapper.hh \
      dofstorage.hh \
-     dynamictype.hh \
      entitycommhelper.hh \
      functionspace.hh \
      functionspaceinterface.hh \
      genericdofmapper.hh \
-     geometryconversion.hh \
      loadbalancer.hh \
      restrictprolongfunction.hh \
      restrictprolonginterface.hh \

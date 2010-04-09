@@ -9,9 +9,9 @@
 #include <dune/fem/space/common/dofmanager.hh>
 #include <dune/fem/operator/common/objpointer.hh>
 
+#include <dune/fem/misc/capabilities.hh>
 #include <dune/fem/space/common/communicationmanager.hh>
 #include <dune/fem/space/common/loadbalancer.hh>
-#include <dune/fem/space/common/adaptcaps.hh>
 #include <dune/fem/space/common/restrictprolonginterface.hh>
 #include <dune/fem/storage/singletonlist.hh>
 
