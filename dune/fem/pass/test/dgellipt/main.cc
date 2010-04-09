@@ -2,15 +2,15 @@
 #include <fstream>
 
 #include <config.h>
+#include <dune/fem/misc/double.hh>
 
 #include <dune/common/stdstreams.cc>
 #include <dune/common/misc.hh>
 #include <dune/common/timer.hh>
 
-#include <dune/grid/io/file/dgfparser/dgfgridtype.hh>
+#include <dgfgridtype.hh>
 #include <dune/common/exceptions.hh>
 
-#include <dune/fem/misc/double.hh>
 
 using namespace Dune;
 

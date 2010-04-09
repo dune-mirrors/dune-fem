@@ -35,8 +35,6 @@
 
 #include <dune/fem/pass/dgelliptpass.hh>
 
-#include <dune/fem/misc/double.hh>
-
 #if HAVE_DUNE_ISTL
 #include <dune/istl/bvector.hh>
 #include <dune/fem/function/blockvectorfunction.hh>
@@ -72,15 +70,8 @@ namespace LDGExample
     // typical tpye of space 
     typedef FunctionSpace< typename Model::DomainFieldType, typename Model::RangeFieldType , 
                            dimDomain, dimRange > FunctionSpaceType; 
-#if 0
-    typedef FunctionSpace< typename Model::DomainFieldType, typename Model::RangeFieldType , 
-                           dimDomain, 1 > SingleFunctionSpaceType; 
-    typedef DiscontinuousGalerkinSpace<SingleFunctionSpaceType, GridPartType, polOrd, CachingStorage > ContainedSpaceType;
-    typedef CombinedSpace< ContainedSpaceType, dimRange, PointBased > DiscreteFunctionSpaceType;
-#else 
     typedef DiscontinuousGalerkinSpace<FunctionSpaceType, GridPartType, polOrd, CachingStorage > ContainedSpaceType;
     typedef ContainedSpaceType DiscreteFunctionSpaceType;
-#endif
     
     typedef AdaptiveDiscreteFunction<DiscreteFunctionSpaceType> DiscreteFunctionType;
   };
@@ -418,8 +409,8 @@ namespace LDGExample
     typedef DiscontinuousGalerkinSpace< SingleFunctionSpaceType,
             GridPartType, polOrd > ContainedFunctionSpaceType;
 #endif
-    typedef CombinedSpace< ContainedFunctionSpaceType, dimRange >
-      DiscreteFunctionSpaceType;
+    typedef typename ContainedFunctionSpaceType :: template ToNewDimRange< dimRange > ::
+      Type DiscreteFunctionSpaceType;
 
     typedef typename ModelTraits::DomainType DomainType;
 

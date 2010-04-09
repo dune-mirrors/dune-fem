@@ -16,9 +16,6 @@
 // ascii parser for parameter files 
 #include <dune/fem/io/file/asciiparser.hh>
 
-// grape data io 
-#include <dune/fem/io/file/grapedataio.hh>
-
 // if grape was configured then include headers 
 #if HAVE_GRAPE
 #include <dune/grid/io/visual/grapedatadisplay.hh>
