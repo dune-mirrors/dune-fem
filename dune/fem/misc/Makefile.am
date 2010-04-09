@@ -20,7 +20,6 @@ misc_HEADERS = bartonnackmaninterface.hh \
                femtuples.hh \
                fieldmatrixhelper.hh \
                forloop.hh \
-               gridhelper.hh \
                gridwidth.hh \
                h1norm.hh \
                h1norm_inline.hh \

@@ -1,7 +1,10 @@
 #ifndef DUNE_FEM_CAPABILITIES_HH
 #define DUNE_FEM_CAPABILITIES_HH
 
+#include <dune/grid/common/capabilities.hh>
 #include <dune/grid/onedgrid.hh>
+
+#include <dune/fem/misc/metaprogramming.hh>
 
 namespace Dune
 {
@@ -85,6 +88,21 @@ namespace Dune
     struct hasHierarchicIndexSet< YaspGrid< dim > >
     {
       static const bool v = false;
+    };
+
+
+
+    template< class Grid >
+    class hasAllCodimEntities
+    {
+      template< unsigned int codim >
+      struct Codim
+      : public hasEntity< Grid, codim >
+      {};
+    
+    public:
+      static const bool v = Loop< MetaAnd, Codim, Grid :: dimension > :: v;
+      static const bool value = v;
     };
 
   }
