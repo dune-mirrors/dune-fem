@@ -272,7 +272,8 @@ namespace Dune
     //! constructor
     inline explicit CombinedSpace( GridPartType &gridpart,
         const InterfaceType commInterface = defaultInterface ,
-        const CommunicationDirection commDirection = defaultDirection );
+        const CommunicationDirection commDirection = defaultDirection )
+      DUNE_VERSION_DEPRECATED(1,2,remove);
 
   private:
     // prohibit copying
