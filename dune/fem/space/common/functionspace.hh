@@ -257,5 +257,17 @@ struct ToLocalFunctionSpace<
   typedef FunctionSpace<DomainFieldImp, RangeFieldImp, dimLocal, dimRange> Type;
 };
 
+//! convert functions space to space with new dim range 
+template <class FunctionSpaceImp, int newDimRange>
+struct ToNewDimRangeFunctionSpace {};
+
+//! specialization for parameter list <domainfile,rangefield,dimDomain,dimRange,dimLocal> 
+template <class DomainFieldImp, class RangeFieldImp, int dimDomain, int dimRange, int newDimRange>
+struct ToNewDimRangeFunctionSpace< 
+  FunctionSpace<DomainFieldImp, RangeFieldImp, dimDomain, dimRange>, newDimRange >
+{
+  typedef FunctionSpace<DomainFieldImp, RangeFieldImp, dimDomain, newDimRange> Type;
+};
+
 } // end namespace Dune 
 #endif

@@ -46,11 +46,25 @@ namespace Dune
   };
 
 
-
   struct GenericDiscreteFunctionSpace
   {};
 
+  template< class DiscreteFunctionSpaceImp, 
+            class NewFunctionSpace>
+  struct DifferentDiscreteFunctionSpace;
 
+  template <class FunctionSpaceImp,
+            class GridPartImp,
+            int polOrd,
+            template <class> class StorageImp,
+            template <class,class,int,template <class> class> class DiscreteFunctionSpaceImp,
+            class NewFunctionSpace> 
+  struct DifferentDiscreteFunctionSpace<
+      DiscreteFunctionSpaceImp<FunctionSpaceImp,GridPartImp,polOrd,StorageImp>, 
+          NewFunctionSpace>
+  {
+    typedef DiscreteFunctionSpaceImp< NewFunctionSpace, GridPartImp, polOrd, StorageImp > Type;
+  };
 
   //**************************************************************************
   //
@@ -140,6 +154,17 @@ namespace Dune
 
     //! type of communication manager 
     typedef CommunicationManager< DiscreteFunctionSpaceType > CommunicationManagerType;
+
+    //! \brief typedef struct for defining the same discrete function with a different dimRange
+    template <int newDimRange>
+    class ToNewDimRange
+    {
+      //! type of new functions space 
+      typedef typename ToNewDimRangeFunctionSpace< FunctionSpaceType , newDimRange> :: Type NewFunctionSpaceType;
+    public:  
+      //! type of my discrete function space with new dim range 
+      typedef typename DifferentDiscreteFunctionSpace< DiscreteFunctionSpaceType, NewFunctionSpaceType> :: Type Type;
+    };
 
   private:
     dune_static_assert( (Conversion<typename BaseType::DomainFieldType,
