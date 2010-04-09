@@ -17,8 +17,6 @@
 #include <dune/fem/misc/boundaryidentifier.hh>
 #include <dune/fem/solver/oemsolver/preconditioning.hh>
 
-#include <dune/fem/space/combinedspace.hh>
-
 #include <dune/fem/space/common/communicationmanager.hh>
 #include <dune/fem/space/common/arrays.hh>
 
@@ -109,11 +107,8 @@ namespace Dune
     enum { dimGradRange = dimDomain * dimRange };
     enum { polOrd = DiscreteFunctionSpaceType::polynomialOrder };
 
-    typedef typename DiscreteModelType::Traits::ContainedSpaceType ContainedSpaceType;
-    //! space of gradients of function 
-    typedef CombinedSpace< ContainedSpaceType, 
-                           dimGradRange,
-                           PointBased > DiscreteGradientSpaceType; 
+    typedef typename DiscreteFunctionSpaceType :: 
+      template ToNewDimRange< dimGradRange> :: Type  DiscreteGradientSpaceType;
 
     enum { elementMassSize = DiscreteFunctionSpaceType :: localBlockSize };
     enum { massSize = DiscreteGradientSpaceType :: localBlockSize };
