@@ -141,6 +141,21 @@ namespace Dune
   static double cos (const Double& v);
   // wrap of std cos 
   static double sin(const Double& v);
+  // wrap of std power 
+  static double pow (const Double& v, const double p);
+
+  // wrap of std min  
+  static inline double min (const Double& v, const double p);
+  // wrap of std min  
+  static inline double min (const double v, const Double& p);
+  // wrap of std max
+  static inline double max (const Double& v, const double p);
+  // wrap of std max
+  static inline double max (const double v, const Double& p);
+
+
+  // numeric limits
+  // --------------
 
   class Double
   {
@@ -243,6 +258,10 @@ namespace Dune
     friend double sin(const Double& v);
     friend double cos(const Double& v);
 
+    friend double min(const Double&, const double);
+    friend double min(const double,  const Double&);
+    friend double max(const Double&, const double);
+    friend double max(const double,  const Double&);
 
     friend struct XdrIO< Double >;
 
@@ -315,7 +334,32 @@ namespace Dune
     }
   };
 
+  // min/max
+  // ---------
 
+  // wrap of std min  
+  static inline double min (const Double& v, const double p)
+  {
+    return (v.value_ > p) ? p : v.value_;   
+  }
+
+  // wrap of std min  
+  static inline double min (const double v, const Double& p)
+  {
+    return (v > p.value_) ? p.value_ : v;   
+  }
+
+  // wrap of std max
+  static inline double max (const Double& v, const double p) 
+  {
+    return (v.value_ < p) ? p : v.value_;   
+  }
+
+  // wrap of std max
+  static inline double max (const double v, const Double& p) 
+  {
+    return (v < p.value_) ? p.value_ : v;   
+  }
 
   // operator+
   // ---------
@@ -827,6 +871,30 @@ namespace std
 
   // numeric limits
   // --------------
+  // wrap of std power 
+  inline double min (const Dune::Double& v, const double p)
+  {
+    return Dune::min(v,p);
+  }
+
+  // wrap of std power 
+  inline double min (const double v, const Dune::Double& p)
+  {
+    return Dune::min(v,p);
+  }
+
+  // wrap of std power 
+  inline double max (const Dune::Double& v, const double p) 
+  {
+    return Dune::max(v,p);
+  }
+
+  // wrap of std power 
+  inline double max (const double v, const Dune::Double& p) 
+  {
+    return Dune::max(v,p);
+  }
+
 
   template<>
   struct numeric_limits< Dune :: Double >
