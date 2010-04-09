@@ -50,7 +50,7 @@ namespace Dune
 
   public:
     //! Create PeriodicIndexSet for a grid
-    explicit PeriodicLeafIndexSet ( const GridType &grid );
+    explicit PeriodicLeafIndexSet ( const GridType &grid ) DUNE_VERSION_DEPRECATED(1,2,remove);
 
     template< class Entity >
     IndexType index ( const Entity &entity ) const

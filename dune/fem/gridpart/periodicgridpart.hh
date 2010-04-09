@@ -315,7 +315,7 @@ namespace Dune
 
   public:
     //! Constructor wrapping a grid in the grid partition
-    PeriodicLeafGridPart ( GridType &grid )
+    PeriodicLeafGridPart ( GridType &grid ) DUNE_VERSION_DEPRECATED(1,2,remove)
     : BaseType( grid, indexSet_ ),
       indexSet_( grid )
     {}
