@@ -676,7 +676,7 @@ template <class DofManagerType , class RestrictProlongIndexSetType, bool doResiz
 class IndexSetRestrictProlong  : 
   public RestrictProlongInterface<
           RestrictProlongTraits<
-            IndexSetRestrictProlong<DofManagerType,RestrictProlongIndexSetType,doResize> > > 
+            IndexSetRestrictProlong<DofManagerType,RestrictProlongIndexSetType,doResize>, double > > 
 {
   DofManagerType & dm_;
 
@@ -686,12 +686,6 @@ public:
   
   IndexSetRestrictProlong ( DofManagerType & dm , RestrictProlongIndexSetType & is, RestrictProlongIndexSetType & rm ) 
     : dm_(dm) , insert_( is ), remove_( rm ) {}
-
-  //! required for interface
-  typedef double RangeFieldType;
-  //! required for interface
-  void setFatherChildWeight (const RangeFieldType& val) const {
-  }
 
   //! restrict data to father and resize memory if doResize is true 
   template <class EntityType>
@@ -728,14 +722,10 @@ public:
 
 // empty restrict prolong operator 
 class EmptyIndexSetRestrictProlong  : 
-  public RestrictProlongInterface< RestrictProlongTraits< EmptyIndexSetRestrictProlong > > 
+  public RestrictProlongInterface< RestrictProlongTraits< EmptyIndexSetRestrictProlong, double > > 
 {
 public: 
   EmptyIndexSetRestrictProlong() {} 
-  //! required for interface
-  typedef double RangeFieldType;
-  //! required for interface
-  void setFatherChildWeight (const RangeFieldType& val) const {}
   //! restrict data to father and resize memory if doResize is true 
   template <class EntityType>
   inline void restrictLocal ( EntityType & father, EntityType & son , bool initialize ) const {}

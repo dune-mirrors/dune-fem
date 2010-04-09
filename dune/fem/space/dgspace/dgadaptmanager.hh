@@ -26,10 +26,14 @@ namespace Dune{
 template <class DiscreteFunctionImp, int polOrd> 
 class RestrictProlongDiscontinuousSpace
 : public RestrictProlongInterfaceDefault<RestrictProlongTraits< 
-  RestrictProlongDiscontinuousSpace<DiscreteFunctionImp,polOrd> > >
+  RestrictProlongDiscontinuousSpace<DiscreteFunctionImp,polOrd>,
+  typename DiscreteFunctionImp::DiscreteFunctionSpaceType::GridType::ctype > >
 {
   typedef RestrictProlongInterfaceDefault<RestrictProlongTraits< 
-  RestrictProlongDiscontinuousSpace<DiscreteFunctionImp,polOrd> > > BaseType;
+    RestrictProlongDiscontinuousSpace<DiscreteFunctionImp,polOrd>,
+    typename DiscreteFunctionImp::DiscreteFunctionSpaceType::GridType::ctype > > BaseType;
+
+  typedef typename BaseType::DomainFieldType DomainFieldType;
 
 public:
   typedef DiscreteFunctionImp DiscreteFunctionType;
@@ -38,7 +42,6 @@ public:
   typedef typename DiscreteFunctionSpaceType :: GridType GridType;
   typedef typename DiscreteFunctionType::LocalFunctionType LocalFunctionType;
 
-  typedef typename DiscreteFunctionSpaceType :: RangeFieldType RangeFieldType;
   typedef typename DiscreteFunctionSpaceType :: RangeType RangeType;
   typedef typename DiscreteFunctionSpaceType :: DomainType DomainType;
   typedef CachingQuadrature<GridPartType,0> QuadratureType;
@@ -62,7 +65,7 @@ public:
    *
    *  \note If this ratio is set, it is assume to be constant.
    */
-  void setFatherChildWeight ( const RangeFieldType &weight ) const
+  void setFatherChildWeight ( const DomainFieldType &weight ) const
   {
     weight_ = weight;
   }
@@ -76,7 +79,7 @@ public:
       return;
     
     assert( !father.isLeaf() );
-    const RangeFieldType weight = (weight_ < 0.0) ? calcWeight( father, son ) : weight_;
+    const DomainFieldType weight = (weight_ < 0.0) ? calcWeight( father, son ) : weight_;
 
     LocalFunctionType vati = df_.localFunction( father);
     LocalFunctionType sohn = df_.localFunction( son   );
@@ -147,7 +150,7 @@ public:
 private:
   mutable DiscreteFunctionType & df_;
   const int quadord_;
-  mutable RangeFieldType weight_;
+  mutable DomainFieldType weight_;
 };
 
 /** \brief This is a restriction/prolongation operator for DG data of order zero. 

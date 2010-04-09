@@ -28,12 +28,16 @@ namespace Dune
  */
 template< class DiscreteFunctionImp, int polOrd >
 class RestrictProlongCombinedSpace
-: public RestrictProlongInterfaceDefault
-  < RestrictProlongTraits< RestrictProlongCombinedSpace< DiscreteFunctionImp,polOrd > > >
+: public RestrictProlongInterfaceDefault< RestrictProlongTraits
+  < RestrictProlongCombinedSpace< DiscreteFunctionImp,polOrd >,
+    typename DiscreteFunctionImp::DiscreteFunctionSpaceType::GridType::ctype > >
 {
-  typedef RestrictProlongInterfaceDefault
-    < RestrictProlongTraits< RestrictProlongCombinedSpace< DiscreteFunctionImp, polOrd > > >
+  typedef RestrictProlongInterfaceDefault< RestrictProlongTraits
+    < RestrictProlongCombinedSpace< DiscreteFunctionImp, polOrd >,
+      typename DiscreteFunctionImp::DiscreteFunctionSpaceType::GridType::ctype > >
     BaseType;
+
+  typedef typename BaseType::DomainFieldType DomainFieldType;
 
 public:
   typedef DiscreteFunctionImp DiscreteFunctionType;
@@ -45,7 +49,6 @@ public:
   typedef typename DiscreteFunctionSpaceType::GridPartType GridPartType;
   typedef typename DiscreteFunctionSpaceType::GridType GridType;
 
-  typedef typename DiscreteFunctionSpaceType::RangeFieldType RangeFieldType;
   typedef typename DiscreteFunctionSpaceType::RangeType  RangeType;
   typedef typename DiscreteFunctionSpaceType::DomainType DomainType;
 
@@ -62,7 +65,7 @@ public:
   //! Constructor
   explicit RestrictProlongCombinedSpace( DiscreteFunctionType &df )
   : df_( df ),
-    quadord_( 2*df.space().order() ),
+    quadord_( 2*df_.space().order() ),
     weight_( -1.0 )
   {}
 
@@ -72,7 +75,7 @@ public:
    *
    *  \note If this ratio is set, it is assume to be constant.
    */
-  void setFatherChildWeight ( const RangeFieldType &weight ) const
+  void setFatherChildWeight ( const DomainFieldType &weight ) const
   {
     weight_ = weight;
   }
@@ -81,6 +84,8 @@ public:
   template< class EntityType >
   void restrictLocal ( const EntityType &father, const EntityType &son, bool initialize ) const
   {
+    assert( !df_.space().continuous() );
+
     // if father and son are copies, do nothing 
     if( entitiesAreCopies( df_.space().indexSet(), father, son ) )
       return;
@@ -123,6 +128,8 @@ public:
   template <class EntityType>
   void prolongLocal ( EntityType &father, EntityType &son, bool initialize ) const
   {
+    assert( !df_.space().continuous() );
+
     // if father and son are copies, do nothing 
     if( this->entitiesAreCopies( df_.space().indexSet(), father, son ) ) return ; 
     
@@ -166,7 +173,7 @@ public:
 private:
   mutable DiscreteFunctionType & df_;
   int quadord_;
-  mutable RangeFieldType weight_;
+  mutable DomainFieldType weight_;
 };
 
 /** \brief This is a restriction/prolongation operator for 

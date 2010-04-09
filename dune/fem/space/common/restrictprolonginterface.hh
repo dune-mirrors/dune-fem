@@ -33,14 +33,15 @@ class RestrictProlongInterface {
 public:  
   //! \brief type of restrict-prolong operator implementation 
   typedef typename RestProlImpTraits::RestProlImp RestProlImp;
-  //! \brief field type of range vector space 
-  typedef typename RestProlImpTraits::RangeFieldType RangeFieldType;
-  
+
+  //! \brief field type of domain vector space
+  typedef typename RestProlImpTraits::DomainFieldType DomainFieldType;
+
   /** \brief if weight is set, then its assumend 
       that we have always the same proportion between fahter and son volume 
       \param[in] weight proportion between fahter and son volume 
   */
-  void setFatherChildWeight (const RangeFieldType& weight) const 
+  void setFatherChildWeight (const DomainFieldType& weight) const 
   {
     CHECK_AND_CALL_INTERFACE_IMPLEMENTATION(
         asImp().setFatherChildWeight(weight));
@@ -91,10 +92,10 @@ protected:
       \return proportion between fahter and son volume
   */
   template< class EntityType >
-  RangeFieldType calcWeight ( const EntityType &father, const EntityType &son ) const
+  DomainFieldType calcWeight ( const EntityType &father, const EntityType &son ) const
   {
-    const RangeFieldType weight = son.geometry().volume() / father.geometry().volume();
-    assert( weight > RangeFieldType( 0 ) );
+    const DomainFieldType weight = son.geometry().volume() / father.geometry().volume();
+    assert( weight > DomainFieldType( 0 ) );
     return weight;
   }
   
@@ -109,30 +110,34 @@ private:
 };
 
 /** \brief Traits class for derivation from RestrictProlongInterface. */
-template <class Base>
+template <class Base, class DomainField>
 struct RestrictProlongTraits {
   typedef Base RestProlImp;
-  typedef double RangeFieldType;
+  typedef DomainField DomainFieldType;
 };
 
 /*! \brief Allow the combination of two restrict/prolong instances
  */
 template <class I1,class I2>
-class RestrictProlongPair : 
-    public RestrictProlongInterface<RestrictProlongTraits<RestrictProlongPair<I1,I2> > >,
-    public PairOfInterfaces<I1,I2> {
-public:  
+class RestrictProlongPair
+: public RestrictProlongInterface< RestrictProlongTraits
+    < RestrictProlongPair<I1,I2>,
+      typename PairOfInterfaces< I1, I2 >::T1Type::DomainFieldType > >,
+  public PairOfInterfaces<I1,I2>
+{
   typedef PairOfInterfaces<I1,I2> BaseType;
-  typedef typename BaseType::T1Type::RangeFieldType RangeFieldType;
-  typedef typename BaseType::T2Type::RangeFieldType RangeFieldType2;
+public:  
+  typedef typename BaseType::T1Type::DomainFieldType DomainFieldType;
+  dune_static_assert( (Conversion< DomainFieldType, typename BaseType::T2Type::DomainFieldType >::sameType),
+                      "DomainFieldType doesn't match." );
 
-  RestrictProlongPair(I1 i1, I2 i2) : PairOfInterfaces<I1,I2>(i1,i2) {
-    //IsTrue<SameType<RangeFieldType,RangeFieldType2>::value>::yes();
-  }
+  RestrictProlongPair(I1 i1, I2 i2)
+  : PairOfInterfaces<I1,I2>(i1,i2)
+  {}
   
   //! if weight is set, then ists assumend that we have always the same
   //! proportion between fahter and son volume 
-  void setFatherChildWeight (const RangeFieldType& val) const {
+  void setFatherChildWeight (const DomainFieldType& val) const {
     this->first().setFatherChildWeight(val);
     this->second().setFatherChildWeight(val);    
   }
@@ -205,6 +210,21 @@ protected:
     assert( checkPersistent( indexSet ) );
     return (indexSet.index( father ) == indexSet.index( son ));
   }
+
+
+public:
+  typedef typename TraitsImp::DomainFieldType DomainFieldType;
+
+  /** \brief explicit set volume ratio of son and father
+   *
+   *  \param[in]  weight  volume of son / volume of father
+   *
+   *  \note If this ratio is set, it is assume to be constant.
+   */
+  void setFatherChildWeight ( const DomainFieldType &weight ) const
+  {
+    // we do not use this information
+  }
 };
 
 
@@ -248,12 +268,9 @@ private:
 template< class DiscreteFunctionType >
 class RestrictProlongPieceWiseConstantData
 : public RestrictProlongInterfaceDefault
-  < RestrictProlongTraits< RestrictProlongPieceWiseConstantData< DiscreteFunctionType > > >
+  < RestrictProlongTraits< RestrictProlongPieceWiseConstantData< DiscreteFunctionType >,
+                           typename DiscreteFunctionType::DiscreteFunctionSpaceType::GridType::ctype > >
 {
-  typedef RestrictProlongInterfaceDefault
-    < RestrictProlongTraits< RestrictProlongPieceWiseConstantData< DiscreteFunctionType > > >
-    BaseType;
-
 public:  
   typedef typename DiscreteFunctionType::LocalFunctionType LocalFunctionType;
 
@@ -261,10 +278,13 @@ public:
   typedef typename SpaceType :: GridPartType GridPartType;
   typedef typename SpaceType :: GridType GridType;
 
-  typedef typename DiscreteFunctionType::RangeFieldType RangeFieldType;
-  typedef typename DiscreteFunctionType::DomainType DomainType;
+  typedef typename GridType::ctype DomainFieldType;
 
 protected:
+  typedef RestrictProlongInterfaceDefault
+    < RestrictProlongTraits< RestrictProlongPieceWiseConstantData< DiscreteFunctionType >, DomainFieldType > >
+    BaseType;
+
   using BaseType :: calcWeight;
   using BaseType :: entitiesAreCopies;
 
@@ -280,7 +300,7 @@ public:
    *
    *  \note If this ratio is set, it is assume to be constant.
    */
-  void setFatherChildWeight ( const RangeFieldType &weight ) const
+  void setFatherChildWeight ( const DomainFieldType &weight ) const
   {
     weight_ = weight;
   }
@@ -295,7 +315,7 @@ public:
 
     assert( !father.isLeaf() );
 
-    const RangeFieldType weight = (weight_ < 0.0) ? calcWeight( father, son ) : weight_; 
+    const DomainFieldType weight = (weight_ < 0.0) ? calcWeight( father, son ) : weight_; 
 
     assert( weight > 0.0 );
     
@@ -339,7 +359,7 @@ public:
 
 private:
   mutable DiscreteFunctionType & df_;
-  mutable RangeFieldType weight_;
+  mutable DomainFieldType weight_;
 };
 
 /** \brief This is an empty restriction/prolongation operator 
@@ -347,7 +367,7 @@ private:
 class RestrictProlongEmpty;
 struct RestrictProlongEmptyTraits {
   typedef RestrictProlongEmpty RestProlImp;
-  typedef double RangeFieldType;
+  typedef double DomainFieldType;
 };
 class RestrictProlongEmpty
 : public RestrictProlongInterfaceDefault

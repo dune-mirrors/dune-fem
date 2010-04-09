@@ -18,13 +18,17 @@ namespace Dune
    */
   template< class DF, class FS, class GP, int ord, template< class > class S >
   class RestrictProlongDefaultImplementation< DF, LagrangeDiscreteFunctionSpace< FS, GP, ord, S > >
-  : public RestrictProlongInterfaceDefault< RestrictProlongTraits< RestrictProlongDefaultImplementation< DF, LagrangeDiscreteFunctionSpace< FS, GP, ord, S > > > >
+  : public RestrictProlongInterfaceDefault< RestrictProlongTraits
+      < RestrictProlongDefaultImplementation< DF, LagrangeDiscreteFunctionSpace< FS, GP, ord, S > >,
+        typename GP::GridType::ctype > >
   {
     typedef RestrictProlongDefaultImplementation
       < DF, LagrangeDiscreteFunctionSpace< FS, GP, ord, S > >
       ThisType;
-    typedef RestrictProlongInterfaceDefault< RestrictProlongTraits< ThisType > >
+    typedef RestrictProlongInterfaceDefault< RestrictProlongTraits< ThisType, typename GP::GridType::ctype > >
       BaseType;
+
+    typedef typename GP::GridType::ctype DomainFieldType;
 
   public:
     //! type of the discrete function
@@ -37,8 +41,6 @@ namespace Dune
     using BaseType::entitiesAreCopies;
 
   public:
-    //! field type of the discrete function's range
-    typedef typename DiscreteFunctionType::RangeFieldType RangeFieldType;
     //! type of the local functions
     typedef typename DiscreteFunctionType::LocalFunctionType LocalFunctionType;
 
@@ -51,17 +53,6 @@ namespace Dune
     RestrictProlongDefaultImplementation ( DiscreteFunctionType &discreteFunction )
     : discreteFunction_( discreteFunction )
     {}
-
-    /** \brief explicit set volume ratio of son and father
-     *
-     *  \param[in]  weight  volume of son / volume of father
-     *
-     *  \note If this ratio is set, it is assume to be constant.
-     */
-    void setFatherChildWeight ( const RangeFieldType &weight ) const
-    {
-      // we do not use this information
-    }
 
     //! restrict data to the father
     template< class Entity >
