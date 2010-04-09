@@ -244,13 +244,6 @@ namespace Dune
     using Imp::dbegin;
     using Imp::dend;
 
-#if DUNE_FEM_COMPATIBILITY
-    using Imp::write_xdr;
-    using Imp::read_xdr;
-    using Imp::write_ascii;
-    using Imp::read_ascii;
-#endif
-
     using Imp::leakPointer;
     using Imp::block;
     using Imp::enableDofCompression;
@@ -427,12 +420,6 @@ namespace Dune
     using Imp::dbegin;
     using Imp::dend;
 
-#if DUNE_FEM_COMPATIBILITY
-    using Imp::write_xdr;
-    using Imp::read_xdr;
-    using Imp::write_ascii;
-    using Imp::read_ascii;
-#endif
     using Imp::leakPointer;
     using Imp::block;
     using Imp::enableDofCompression;

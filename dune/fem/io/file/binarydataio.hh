@@ -471,10 +471,6 @@ const GrapeIOFileFormatType ftype, const GrapeIOStringType filename, int timeste
     return df.write_xdr(fn);
   if(ftype == ascii)
     return df.write_ascii(fn);
-#if DUNE_FEM_COMPATIBILITY
-  if(ftype == pgm)
-    return df.write_pgm(fn);
-#endif
 
   DUNE_THROW( NotImplemented, "GrapeIOFileFormatType " << ftype
                                << " currently not supported." );
@@ -556,10 +552,6 @@ readData(DiscreteFunctionType & df, const GrapeIOStringType filename, int timest
     return df.read_xdr(fn);
   if(ftype == ascii)
     return df.read_ascii(fn);
-#if DUNE_FEM_COMPATIBILITY
-  if(ftype == pgm)
-    return df.read_pgm(fn);
-#endif
 
   DUNE_THROW( NotImplemented, "GrapeIOFileFormatType " << ftype
                                << " currently not supported." );

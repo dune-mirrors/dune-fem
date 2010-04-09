@@ -74,11 +74,6 @@ namespace Dune
     // for compatibility
     typedef typename GridType::template Codim< 0 >::Entity EntityType;
     
-#if DUNE_FEM_COMPATIBILITY
-  public:
-    typedef EntityType Entity;
-#endif
-
   protected:
     using BaseType :: quadImp;
 
