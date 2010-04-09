@@ -102,8 +102,6 @@ AC_CONFIG_FILES([Makefile
      dune/fem/io/visual/Makefile
      dune/fem/io/visual/grape/Makefile
      dune/fem/io/visual/grape/datadisp/Makefile
-     dune/fem/io/visual/grape/gridview/Makefile
-     dune/fem/io/visual/grape/functionview/Makefile
      dune/fem/solver/Makefile 
      dune/fem/solver/test/Makefile 
      dune/fem/solver/ode/Makefile 
@@ -117,3 +115,4 @@ AC_CONFIG_FILES([Makefile
      make.inc
      dune-fem.pc])
 AC_OUTPUT
+DUNE_OUTPUT_GRIDTYPE
