@@ -5,6 +5,7 @@
 #include <iostream>
 #include <typeinfo>
 #include <vector>
+#include <climits>
 #include <cstdlib>
 
 namespace Dune 
@@ -50,7 +51,8 @@ namespace Dune
         long int result = strtol( name.c_str(), &endptr, 0 );
         if( result == LONG_MAX || result == LONG_MIN ) 
         {
-          DUNE_THROW(InvalidStateException,"GridName: faild to determine name of grid!");
+          std::cerr << "GridName: faild to determine name of grid!" << std::endl;
+          abort();
         }
 
         if( endptr ) 
