@@ -33,7 +33,6 @@ misc_HEADERS = bartonnackmaninterface.hh \
                metaprogramming.hh \
 	       mpimanager.hh \
                nonconformitylevel.hh \
-	       phonyiit.hh \
 	       probeutility.hh \
 	       referenceelementprovider.hh \
 	       suite.cc \

@@ -178,15 +178,6 @@ namespace Dune
     : BaseType( gridPart, intersection, order, side )
     {}
 
-    CachingQuadrature( const GridPartType &gridPart, 
-                       const typename PhonyIntersectionIterator
-                         < IntersectionType, IntersectionIteratorType >::Type
-                         &intersection, 
-                       int order,
-                       typename BaseType::Side side ) DUNE_DEPRECATED
-    : BaseType(gridPart,*intersection, order, side)
-    {}
-
     /** \brief copy constructor
      *
      *  \param[in]  org  element quadrature to copy

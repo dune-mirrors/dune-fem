@@ -1,8 +1,6 @@
 #ifndef DUNE_ELEMENTQUADRATURE_HH
 #define DUNE_ELEMENTQUADRATURE_HH
 
-#include <dune/fem/misc/phonyiit.hh>
-
 #include "quadrature.hh"
 #include "elementpointlist.hh"
 
@@ -192,15 +190,6 @@ namespace Dune
                         int order, 
                         typename BaseType :: Side side )
     : BaseType( gridPart, intersection, order, side )
-    {}
-
-    ElementQuadrature ( const GridPartType &gridPart,
-                        const typename PhonyIntersectionIterator
-                          < IntersectionType, IntersectionIteratorType > :: Type
-                          &intersection, 
-                        int order, 
-                        typename BaseType :: Side side ) DUNE_DEPRECATED
-    : BaseType( gridPart, *intersection, order, side )
     {}
 
     /*! \brief copy constructor
