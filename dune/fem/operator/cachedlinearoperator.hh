@@ -39,13 +39,13 @@ namespace Dune
     mutable SystemMatrixType *matrix_;
 
   public:
-    inline CachedLinearOperator ()
+    inline CachedLinearOperator () DUNE_VERSION_DEPRECATED(1,2,remove)
     : wrappedOperator_( NULL ),
       matrix_( NULL )
     {
     }
 
-    inline CachedLinearOperator ( const WrappedOperatorType &wrappedOperator )
+    inline CachedLinearOperator ( const WrappedOperatorType &wrappedOperator ) DUNE_VERSION_DEPRECATED(1,2,remove)
     : wrappedOperator_( &wrappedOperator ),
       matrix_( NULL )
     {

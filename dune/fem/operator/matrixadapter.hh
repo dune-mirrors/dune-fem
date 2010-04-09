@@ -41,7 +41,7 @@ public:
   typedef typename FieldMatrixType::Iterator Iterator;
   
   //! constructor
-  FieldMatrixAdapter()
+  FieldMatrixAdapter() DUNE_VERSION_DEPRECATED(1,2,remove)
           : mat_()
         {};
 

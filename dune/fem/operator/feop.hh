@@ -255,7 +255,7 @@ namespace Dune
           // DirichletTreatmentMode dirichletMode = KRONECKER_ROWS,
           int maxNonZerosPerRow = 50,
           int verbose = 0,
-          bool preconditionSSOR = false )
+          bool preconditionSSOR = false ) DUNE_VERSION_DEPRECATED(1,2,remove)
     : elementMatrixIntegrator_( elementMatrixIntegrator ),
       functionSpace_( elementMatrixIntegrator_.discreteFunctionSpace() ),
       matrix_( NULL ), 

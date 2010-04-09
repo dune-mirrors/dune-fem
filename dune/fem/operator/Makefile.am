@@ -5,17 +5,16 @@ SUBDIRS = common 0order 1order 2order matrix model projection
 
 operatordir =  $(includedir)/dune/fem/operator
 operator_HEADERS = artificialdiffusion.hh \
-		   cachedlinearoperator.hh \
-		   discreteoperatorimp.hh \
-		   diffusionoperator.hh \
+                   cachedlinearoperator.hh \
+                   discreteoperatorimp.hh \
+                   diffusionoperator.hh \
                    dirichletboundaryoperator.hh \
-		   elementintegrators.hh \
-		   feop.hh \
-		   identityoperator.hh \
-		   integrationoperator.hh \
-		   lagrangeinterpolation.hh \
-		   matrixadapter.hh \
-		   minimizationoperator.hh \
-		   sourceprojection.hh
+                   elementintegrators.hh \
+                   feop.hh \
+                   integrationoperator.hh \
+                   lagrangeinterpolation.hh \
+                   matrixadapter.hh \
+                   minimizationoperator.hh \
+                   sourceprojection.hh
 
 include $(top_srcdir)/am/global-rules

@@ -55,7 +55,7 @@ namespace Dune
     enum { polynomialOrder = DiscreteFunctionSpaceType :: polynomialOrder };
 
   public:
-    inline LocalEllipticSourceProjection ()
+    inline LocalEllipticSourceProjection () DUNE_VERSION_DEPRECATED(1,2,remove)
     {
     }
 

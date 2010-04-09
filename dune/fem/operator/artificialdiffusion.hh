@@ -66,7 +66,7 @@ public:
       \param [in] df discrete function to calculate 
                   artificial diffusion values for 
   */
-  ArtificialDiffusion(const DiscreteFunctionType& df) 
+  ArtificialDiffusion(const DiscreteFunctionType& df) DUNE_VERSION_DEPRECATED(1,2,remove)
     : df_(df), diffusionSpace_( df.space().gridPart())
     , diffusion_(df_.name() + "-art-diff", diffusionSpace_ )
     , gridWidth_( GridWidthProviderType :: getObject( &(df_.space().grid())))                                                        

@@ -353,7 +353,7 @@ namespace Dune
      */
     DefaultElementMatrixIntegrator ( ModelType& model,
                                      const DiscreteFunctionSpaceType &dfSpace,
-                                     int verbose = 0 )
+                                     int verbose = 0 ) DUNE_VERSION_DEPRECATED(1,2,remove)
     : model_( model ),
       discreteFunctionSpace_( dfSpace ),
       verbose_( verbose )
@@ -1257,7 +1257,7 @@ public:
  */
 /*======================================================================*/
   
-  RhsAssembler(ElementRhsIntegratorType& elRhsInt, int verbose = 0)
+  RhsAssembler(ElementRhsIntegratorType& elRhsInt, int verbose = 0) DUNE_VERSION_DEPRECATED(1,2,remove)
           : elRhsInt_(elRhsInt), verbose_(verbose)
         {
           if (verbose_)
