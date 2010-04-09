@@ -16,7 +16,6 @@
 #else 
 #include <dune/fem/space/common/arrays.hh>
 #endif
-#include <dune/fem/io/file/xdrio.hh>
 
 #include <dune/fem/function/common/discretefunction.hh>
 #include <dune/fem/function/common/dofiterator.hh>
@@ -294,20 +293,6 @@ public:
   /** \copydoc Dune::DiscreteFunctionInterface::print */
   void print( std :: ostream &out ) const;
 
-#if DUNE_FEM_COMPATIBILITY
-  /** \copydoc Dune::DiscreteFunctionDefault::write_xdr */
-  virtual bool write_xdr( const std::string filename ) const;
-
-  /** \copydoc Dune::DiscreteFunctionDefault::read_xdr */
-  virtual bool read_xdr( const std::string filename );
-
-  /** \copydoc Dune::DiscreteFunctionDefault::write_ascii */
-  virtual bool write_ascii( const std::string filename ) const;
-
-  /** \copydoc Dune::DiscreteFunctionDefault::read_ascii */
-  virtual bool read_ascii( const std::string filename );
-#endif
-
   /** \brief return reference to internal block vector 
       \return reference to blockVector */ 
   DofStorageType& blockVector () const { return dofVec_; }
@@ -329,9 +314,6 @@ private:
   
   LocalFunctionFactoryType lfFactory_;
 
-  //! write/read data to/from xdr stream 
-  bool processXdrs(XDRStream& xdr) const;
-  
   // single mapper for blocks 
   MapperType& mapper_;
 

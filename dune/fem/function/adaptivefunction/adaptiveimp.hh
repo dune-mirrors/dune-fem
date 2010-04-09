@@ -9,7 +9,6 @@
 //- Dune includes
 #include <dune/common/exceptions.hh>
 
-#include <dune/fem/io/file/xdrio.hh>
 #include <dune/fem/storage/envelope.hh>
 #include <dune/fem/space/common/dofmanager.hh>
 
@@ -94,22 +93,6 @@ namespace Dune {
     //! operator -= 
     void substractFunction(const ThisType& org);
   
-#if DUNE_FEM_COMPATIBILITY
-    //! write data of discrete function to file filename|timestep 
-    //! with xdr methods 
-    virtual bool write_xdr(const std::string filename) const;
-
-    //! write data of discrete function to file filename|timestep 
-    //! with xdr methods 
-    virtual bool read_xdr(const std::string filename);
-    
-    //! write function data to file filename|timestep in ascii Format
-    virtual bool write_ascii(const std::string filename) const;
-    
-    //! read function data from file filename|timestep in ascii Format
-    virtual bool read_ascii(const std::string filename);
-#endif
-
     //! return pointer to underlying array 
     DofType *leakPointer ()
     {

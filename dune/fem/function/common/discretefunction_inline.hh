@@ -284,7 +284,6 @@ namespace Dune
   inline void DiscreteFunctionDefault< Traits >
     :: read ( InStreamInterface< StreamTraits > &in )
   {
-#if ! DUNE_FEM_COMPATIBILITY
     unsigned int versionId = in.readUnsignedInt();
     if( versionId < DUNE_VERSION_ID(0,9,1) )
       DUNE_THROW( IOError, "Trying to read outdated file." );
@@ -293,7 +292,6 @@ namespace Dune
                   << versionId << std :: endl;
 
     in >> name_;
-#endif
     
     if( in.readInt() != BaseType :: size() && 
         BaseType :: size() != this->space().size() ) // only read compressed vectors 
@@ -310,10 +308,8 @@ namespace Dune
   inline void DiscreteFunctionDefault< Traits >
     :: write ( OutStreamInterface< StreamTraits > &out ) const
   {
-#if ! DUNE_FEM_COMPATIBILITY
     out << DUNE_MODULE_VERSION_ID(DUNE_FEM);
     out << name_;
-#endif
   
     // only allow write when vector is compressed 
     if( BaseType :: size() != this->space().size() )
