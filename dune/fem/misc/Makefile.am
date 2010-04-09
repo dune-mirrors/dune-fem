@@ -4,45 +4,43 @@ AUTOMAKE_OPTIONS = foreign 1.5
 miscdir =  $(includedir)/dune/fem/misc
 misc_HEADERS = bartonnackmaninterface.hh \
                boundaryidentifier.hh \
-	       capabilities.hh \
-	       checkgeomaffinity.hh \
-	       codimmap.hh \
-	       combineinterface.hh \
-	       commhelper.hh \
-	       debug.hh \
-	       deritype.hh \
-	       double.hh \
-	       engineconcept.hh \
-	       eoc.hh \
-	       femeoc.hh \
-	       example.cc \
-	       femtimer.hh \
+               capabilities.hh \
+               checkgeomaffinity.hh \
+               codimmap.hh \
+               combineinterface.hh \
+               commhelper.hh \
+               debug.hh \
+               deritype.hh \
+               double.hh \
+               engineconcept.hh \
+               eoc.hh \
+               femeoc.hh \
+               example.cc \
+               femtimer.hh \
                femtuples.hh \
-	       fieldmatrixhelper.hh \
-	       forloop.hh \
-	       gridhelper.hh \
+               fieldmatrixhelper.hh \
+               forloop.hh \
+               gridhelper.hh \
                gridwidth.hh \
-	       h1norm.hh \
-	       h1norm_inline.hh \
-               identity.hh \
-	       l1error.hh \
-	       l2error.hh \
-	       l2norm.hh \
-	       l2norm_inline.hh \
+               h1norm.hh \
+               h1norm_inline.hh \
+               l1error.hh \
+               l2error.hh \
+               l2norm.hh \
+               l2norm_inline.hh \
                longexample.cc \
                metaprogramming.hh \
-	       mpimanager.hh \
+               mpimanager.hh \
                nonconformitylevel.hh \
-	       probeutility.hh \
-	       referenceelementprovider.hh \
-	       suite.cc \
-	       suite.hh \
-	       test.cc \
-	       test.hh \
+               probeutility.hh \
+               referenceelementprovider.hh \
+               suite.cc \
+               suite.hh \
+               test.cc \
+               test.hh \
                utility.hh \
-	       validator.hh \
-         fmatrixconverter.hh \
-         gridname.hh
+               validator.hh \
+               fmatrixconverter.hh \
+               gridname.hh
 
 include $(top_srcdir)/am/global-rules
-
