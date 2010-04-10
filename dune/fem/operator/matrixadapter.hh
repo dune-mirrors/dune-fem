@@ -13,6 +13,8 @@
 #ifndef DUNE_MATRIXADAPTER_HH
 #define DUNE_MATRIXADAPTER_HH
 
+#include <dune/fem/version.hh>
+
 namespace Dune
 {
   

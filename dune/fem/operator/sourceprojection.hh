@@ -1,6 +1,7 @@
 #ifndef DUNE_FEM_SOURCEPROJECTION_HH
 #define DUNE_FEM_SOURCEPROJECTION_HH
 
+#include <dune/fem/version.hh>
 #include <dune/fem/quadrature/cachingquadrature.hh>
 #include <dune/fem/function/localfunction/localfunction.hh>
 #include <dune/fem/operator/integrationoperator.hh>

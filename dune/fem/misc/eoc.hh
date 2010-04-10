@@ -8,6 +8,8 @@
 
 #include <dune/common/fvector.hh>
 
+#include <dune/fem/version.hh>
+
 namespace Dune
 {
 
