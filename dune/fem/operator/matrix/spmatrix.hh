@@ -495,17 +495,17 @@ private:
           
           if( verbose )
           {
-            int rowMaxNumbers = domainSpace_.baseFunctionSet(*(domainSpace_.begin())).numBaseFunctions();
-            int colMaxNumbers = rangeSpace_.baseFunctionSet(*(domainSpace_.begin())).numBaseFunctions();
+            int rowMaxNumbers = rangeSpace_.baseFunctionSet(*(domainSpace_.begin())).numBaseFunctions();
+            int colMaxNumbers = domainSpace_.baseFunctionSet(*(domainSpace_.begin())).numBaseFunctions();
 
-            std::cout << "Reserve Matrix with (" << domainSpace_.size() << "," << rangeSpace_.size()<< ")\n";
+            std::cout << "Reserve Matrix with (" << rangeSpace_.size() << "," << domainSpace_.size()<< ")\n";
             std::cout << "Number of base functions = (" << rowMaxNumbers << "," << colMaxNumbers << ")\n";
           }
 
           // upper estimate for number of non-zeros 
-          const int nonZeros = std::max( StencilType :: nonZerosEstimate( rangeSpace_ ), matrix_.numNonZeros() );
+          const int nonZeros = std::max( StencilType :: nonZerosEstimate( domainSpace_ ), matrix_.numNonZeros() );
 
-          matrix_.reserve( domainSpace_.size(), rangeSpace_.size(), nonZeros, 0.0 );
+          matrix_.reserve( rangeSpace_.size(), domainSpace_.size(), nonZeros, 0.0 );
         }
         sequence_ = domainSpace_.sequence();
       }
@@ -706,28 +706,24 @@ protected:
     {
       // initialize base functions sets 
       BaseType :: init ( rowEntity , colEntity );
-      
-      // row_ stores the global indices for the local row (correpsondes to a domain
-      // vector)
-      row_.resize( domainSpace_.baseFunctionSet( rowEntity ).numBaseFunctions() );      
-      // col_ stores the global indices for the local col (correpsondes to a range
-      // vector)      
-      col_.resize( rangeSpace_.baseFunctionSet( colEntity ).numBaseFunctions() );
-
-      typedef typename DomainSpaceType::MapperType::DofMapIteratorType DomainMapIterator;
-      const DomainMapIterator dmend = domainSpace_.mapper().end( rowEntity );
-      for( DomainMapIterator dmit = domainSpace_.mapper().begin( rowEntity ); dmit != dmend; ++dmit )
-      {
-        assert( dmit.global() == domainSpace_.mapToGlobal( rowEntity, dmit.local() ) );
-        row_[ dmit.local() ] = dmit.global();
-      }
+        
+      row_.resize( rangeSpace_.baseFunctionSet( rowEntity ).numBaseFunctions() );
+      col_.resize( domainSpace_.baseFunctionSet( colEntity ).numBaseFunctions() );
 
       typedef typename RangeSpaceType::MapperType::DofMapIteratorType RangeMapIterator;
-      const RangeMapIterator rmend = rangeSpace_.mapper().end( colEntity );
-      for( RangeMapIterator rmit = rangeSpace_.mapper().begin( colEntity ); rmit != rmend; ++rmit )
+      const RangeMapIterator rmend = rangeSpace_.mapper().end( rowEntity );
+      for( RangeMapIterator rmit = rangeSpace_.mapper().begin( rowEntity ); rmit != rmend; ++rmit )
       {
-        assert( rmit.global() == rangeSpace_.mapToGlobal( colEntity, rmit.local() ) );
-        col_[ rmit.local() ] = rmit.global();
+        assert( rmit.global() == rangeSpace_.mapToGlobal( rowEntity, rmit.local() ) );
+        row_[ rmit.local() ] = rmit.global();
+      }
+
+      typedef typename DomainSpaceType::MapperType::DofMapIteratorType DomainMapIterator;
+      const DomainMapIterator dmend = domainSpace_.mapper().end( colEntity );
+      for( DomainMapIterator dmit = domainSpace_.mapper().begin( colEntity ); dmit != dmend; ++dmit )
+      {
+        assert( dmit.global() == domainSpace_.mapToGlobal( colEntity, dmit.local() ) );
+        col_[ dmit.local() ] = dmit.global();
       }
     }
 
