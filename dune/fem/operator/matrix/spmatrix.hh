@@ -706,24 +706,28 @@ protected:
     {
       // initialize base functions sets 
       BaseType :: init ( rowEntity , colEntity );
-        
-      row_.resize( rangeSpace_.baseFunctionSet( rowEntity ).numBaseFunctions() );
-      col_.resize( domainSpace_.baseFunctionSet( colEntity ).numBaseFunctions() );
-
-      typedef typename RangeSpaceType::MapperType::DofMapIteratorType RangeMapIterator;
-      const RangeMapIterator rmend = rangeSpace_.mapper().end( rowEntity );
-      for( RangeMapIterator rmit = rangeSpace_.mapper().begin( rowEntity ); rmit != rmend; ++rmit )
-      {
-        assert( rmit.global() == rangeSpace_.mapToGlobal( rowEntity, rmit.local() ) );
-        row_[ rmit.local() ] = rmit.global();
-      }
+      
+      // row_ stores the global indices for the local row (correpsondes to a domain
+      // vector)
+      row_.resize( domainSpace_.baseFunctionSet( rowEntity ).numBaseFunctions() );      
+      // col_ stores the global indices for the local col (correpsondes to a range
+      // vector)      
+      col_.resize( rangeSpace_.baseFunctionSet( colEntity ).numBaseFunctions() );
 
       typedef typename DomainSpaceType::MapperType::DofMapIteratorType DomainMapIterator;
-      const DomainMapIterator dmend = domainSpace_.mapper().end( colEntity );
-      for( DomainMapIterator dmit = domainSpace_.mapper().begin( colEntity ); dmit != dmend; ++dmit )
+      const DomainMapIterator dmend = domainSpace_.mapper().end( rowEntity );
+      for( DomainMapIterator dmit = domainSpace_.mapper().begin( rowEntity ); dmit != dmend; ++dmit )
       {
-        assert( dmit.global() == domainSpace_.mapToGlobal( colEntity, dmit.local() ) );
-        col_[ dmit.local() ] = dmit.global();
+        assert( dmit.global() == domainSpace_.mapToGlobal( rowEntity, dmit.local() ) );
+        row_[ dmit.local() ] = dmit.global();
+      }
+
+      typedef typename RangeSpaceType::MapperType::DofMapIteratorType RangeMapIterator;
+      const RangeMapIterator rmend = rangeSpace_.mapper().end( colEntity );
+      for( RangeMapIterator rmit = rangeSpace_.mapper().begin( colEntity ); rmit != rmend; ++rmit )
+      {
+        assert( rmit.global() == rangeSpace_.mapToGlobal( colEntity, rmit.local() ) );
+        col_[ rmit.local() ] = rmit.global();
       }
     }
 
