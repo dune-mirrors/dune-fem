@@ -362,6 +362,42 @@ public:
     return ok;
   }
   
+  // write to stream 
+  template <class StreamTraits> 
+  bool write(OutStreamInterface< StreamTraits >& out) const
+  {
+    out << nextFreeIndex_;
+    
+    // should always have the same length 
+    assert( leafIndex_.size() == state_.size() );
+
+    // backup leafIndex 
+    leafIndex_.write( out );
+
+    // backup state
+    state_.write( out );
+
+    return true;
+  }
+  
+  // read from stream 
+  template <class StreamTraits> 
+  bool read(InStreamInterface< StreamTraits >& in) const
+  {
+    in >> nextFreeIndex_;
+    
+    // restore leafIndex 
+    leafIndex_.read( out );
+
+    // restore state
+    state_.read( out );
+
+    // should always have the same length 
+    assert( leafIndex_.size() == state_.size() );
+
+    return true;
+  }
+  
   // insert element and create index for element number  
   void remove (int num )
   {

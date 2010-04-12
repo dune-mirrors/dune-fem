@@ -376,6 +376,37 @@ public:
     return processXdrVector(xdr);
   }
 
+  //! write to  stream 
+  template <class StreamTraits> 
+  bool write(OutStreamInterface< StreamTraits >& out) const 
+  {
+    out << size_;
+    for(int i=0; i<size_; ++i)
+    {
+      out << vec_[i];
+    }
+    return true;
+  }
+
+  //! write to  stream 
+  template <class StreamTraits> 
+  bool read(InStreamInterface< StreamTraits >& in) 
+  {
+    int len; 
+    in >> len;
+    // when read check size 
+    if( size_ != len )
+    {
+      DUNE_THROW(InvalidStateException,"StaticArray::read: internal size " << size_ << " and size to read " << len << " not equal!");
+    }
+
+    for(int i=0; i<size_; ++i)
+    {
+      in >> vec_[i];
+    }
+    return true;
+  }
+
   //! print array 
   void print(std::ostream& s) const 
   {

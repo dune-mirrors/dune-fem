@@ -7,6 +7,8 @@
 #include <dune/fem/gridpart/codimindexset.hh>
 #include <dune/fem/io/file/xdrio.hh>
 
+#include <dune/fem/io/streams/streams.hh>
+
 namespace Dune
 {
 
@@ -351,6 +353,14 @@ namespace Dune
     inline int countElements ( GeometryType type ) const;
     
   public:
+    //! write indexset to stream  
+    template< class StreamTraits > 
+    bool write( OutStreamInterface< StreamTraits >& out ) const;
+
+    //! read indexset from stream  
+    template< class StreamTraits > 
+    bool read( InStreamInterface< StreamTraits >& in );
+
     //! write indexset to xdr file 
     bool write_xdr( const std::string &filename );
     //! write indexset to xdr file 
@@ -592,6 +602,31 @@ namespace Dune
 
 
   template< class GridType, PartitionIteratorType pitype >
+  template< class StreamTraits > 
+  inline bool AdaptiveLeafIndexSet< GridType, pitype >
+    ::write ( OutStreamInterface< StreamTraits >& out ) 
+  {
+    // write new verion tag 
+    int newVerion = myVersionTag;
+    out << newVersion ;
+
+    // write my type
+    int typeVar = type();
+    out << typeVar;
+
+    // write whether codim is used 
+    for( int i = 0; i < ncodim; ++i )
+      out << codimUsed_[ i ];
+
+    // write all sets 
+    for( int i = 0; i < ncodim; ++i )
+      codimLeafSet_[ i ].write( out );
+    
+    // if we got until here writing was sucessful
+    return true;
+  }
+
+  template< class GridType, PartitionIteratorType pitype >
   inline bool AdaptiveLeafIndexSet< GridType, pitype >
     ::write_xdr ( const std::string &filename )
   {
@@ -628,6 +663,61 @@ namespace Dune
     return write_xdr( fnstr );
   }
 
+
+  template< class GridType, PartitionIteratorType pitype >
+  template< class StreamTraits > 
+  inline bool AdaptiveLeafIndexSet< GridType, pitype >
+    ::read ( InStreamInterface< StreamTraits > &in ) 
+  {
+    // check new version tag
+    int newVersionTag = myVersionTag;
+    in >> newVersionTag;
+    const bool newVersion = (newVersionTag == myVersionTag);
+
+    // if new version the read type, otherwise newVersionTag is the type info
+    int typeVar = (newVersion ? type() : newVersionTag);
+    if( newVersion )
+      in >> typeVar;
+
+    // index set type check
+    if( (typeVar != 2) && (typeVar != type()) )
+    {
+      DUNE_THROW( InvalidStateException,
+                  "AdaptiveLeafIndexSet::read_xdr: wrong type " << typeVar
+                  << " given (expected " << type() << ")." );
+    }
+
+    if( newVersion )
+    {
+      // read codim used 
+      for( int i = 0; i < ncodim; ++i )
+        in >> codimUsed_[ i ];
+    }
+    else 
+    {
+      // it depends on the type whether higher codims were stored
+      for( int i = 0; i < ncodim; ++i )
+        codimUsed_[ i ] = (typeVar == type());
+    }
+
+    if( typeVar == type() )
+    {
+      for( int i = 0; i < ncodim; ++i )
+      {
+        if( codimUsed_[ i ] )
+          codimLeafSet_[ i ].read( in );
+      }
+    }
+    else
+      codimLeafSet_[ 0 ].read( in );
+
+    // in parallel runs we have to compress here
+    if( grid_.comm().size() > 1 )
+      compressed_ = false;
+    
+    // if we got until here reading was sucessful 
+    return true;
+  }
 
   template< class GridType, PartitionIteratorType pitype >
   inline bool AdaptiveLeafIndexSet< GridType, pitype >
