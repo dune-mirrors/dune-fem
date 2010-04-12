@@ -707,35 +707,24 @@ protected:
       // initialize base functions sets 
       BaseType :: init ( rowEntity , colEntity );
         
-      row_.resize( domainSpace_.baseFunctionSet( rowEntity ).numBaseFunctions() );
-      col_.resize( rangeSpace_.baseFunctionSet( colEntity ).numBaseFunctions() );
-
-      // Martin: shouldn't domainSpace and rangeSpace be flipped, here?
-      typedef typename DomainSpaceType::MapperType::DofMapIteratorType DomainMapIterator;
-      const DomainMapIterator dmend = domainSpace_.mapper().end( rowEntity );
-      for( DomainMapIterator dmit = domainSpace_.mapper().begin( rowEntity ); dmit != dmend; ++dmit )
-      {
-        assert( dmit.global() == domainSpace_.mapToGlobal( rowEntity, dmit.local() ) );
-        row_[ dmit.local() ] = dmit.global();
-      }
+      row_.resize( rangeSpace_.baseFunctionSet( rowEntity ).numBaseFunctions() );
+      col_.resize( domainSpace_.baseFunctionSet( colEntity ).numBaseFunctions() );
 
       typedef typename RangeSpaceType::MapperType::DofMapIteratorType RangeMapIterator;
-      const RangeMapIterator rmend = rangeSpace_.mapper().end( colEntity );
-      for( RangeMapIterator rmit = rangeSpace_.mapper().begin( colEntity ); rmit != rmend; ++rmit )
+      const RangeMapIterator rmend = rangeSpace_.mapper().end( rowEntity );
+      for( RangeMapIterator rmit = rangeSpace_.mapper().begin( rowEntity ); rmit != rmend; ++rmit )
       {
-        assert( rmit.global() == rangeSpace_.mapToGlobal( colEntity, rmit.local() ) );
-        col_[ rmit.local() ] = rmit.global();
+        assert( rmit.global() == rangeSpace_.mapToGlobal( rowEntity, rmit.local() ) );
+        row_[ rmit.local() ] = rmit.global();
       }
 
-#if 0
-      const size_t rows = row_.size();
-      for( size_t i = 0; i < rows; ++i )
-        row_[ i ] = domainSpace_.mapToGlobal( rowEntity, i );
-      
-      const size_t cols = col_.size();
-      for( size_t i = 0; i < cols; ++i )
-        col_[ i ] = rangeSpace_.mapToGlobal( colEntity, i );
-#endif
+      typedef typename DomainSpaceType::MapperType::DofMapIteratorType DomainMapIterator;
+      const DomainMapIterator dmend = domainSpace_.mapper().end( colEntity );
+      for( DomainMapIterator dmit = domainSpace_.mapper().begin( colEntity ); dmit != dmend; ++dmit )
+      {
+        assert( dmit.global() == domainSpace_.mapToGlobal( colEntity, dmit.local() ) );
+        col_[ dmit.local() ] = dmit.global();
+      }
     }
 
     //! return number of rows 
