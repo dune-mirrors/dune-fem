@@ -33,6 +33,8 @@ namespace Dune
       /** \brief field type of the operator's range */
       typedef typename RangeFunctionType::RangeFieldType RangeFieldType;
 
+      virtual ~Operator () {}
+
       /** \brief application operator
        *
        *  \param[in]   u  argument discrete function
