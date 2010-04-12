@@ -213,6 +213,9 @@ public:
   //! set all entries in row to zero 
   void clearRow (int row);
 
+  //! ser all entris in column col to zero
+  void clearCol ( int col );
+
   //! set all entries in row to zero 
   void scaleRow (int row, const T& val );
 
@@ -779,6 +782,20 @@ protected:
     {
       assert( (localRow >= 0) && (localRow < rows()) );
       matrix_.unitRow( row_[ localRow ] );
+    }
+
+    //! set matrix row to zero
+    void clearRow( const int localRow )
+    {
+      assert( (localRow >= 0) && (localRow < rows()) );
+      matrix_.clearRow( row_[localRow]);
+    }
+
+    //! set matrix column to zero
+    void clearCol ( const int localCol )
+    {
+      assert( (localCol >= 0) && (localCol < columns()) );
+      matrix_.clearCol( col_[localCol] );
     }
 
     //! clear all entries belonging to local matrix 

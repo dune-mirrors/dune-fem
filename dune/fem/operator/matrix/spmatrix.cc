@@ -302,6 +302,24 @@ void SparseRowMatrix<T>::clearRow(int row)
   if (checkNonConstMethods) assert(checkConsistency());
 }
 
+
+template <class T>
+void SparseRowMatrix<T>::clearCol( int col )
+{
+  if (checkNonConstMethods) assert(checkConsistency());
+  assert( nonZeros_ );
+  assert( values_ );
+  assert( col_ );
+
+  for(int i=0; i<dim_[0]; ++i)
+    if((*this)(i,col)!= 0)
+      set(i,col, 0);
+
+  if (checkNonConstMethods) assert(checkConsistency());
+}
+
+
+
 template <class T> 
 void SparseRowMatrix<T>::scaleRow(int row, const T& val )
 {
