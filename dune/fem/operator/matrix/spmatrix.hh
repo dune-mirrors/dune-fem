@@ -534,7 +534,7 @@ private:
       matrix_.multOEM_t( arg.leakPointer(), dest.leakPointer() );
 
       // communicate data 
-      rangeSpace_.communicate( dest );
+      domainSpace_.communicate( dest );
     }
 
 
