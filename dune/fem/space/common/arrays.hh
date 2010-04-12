@@ -20,6 +20,7 @@
 
 // include xdr wrapper 
 #include <dune/fem/io/file/xdrio.hh>
+#include <dune/fem/io/streams/streams.hh>
 
 namespace Dune {
 
