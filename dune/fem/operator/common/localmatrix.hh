@@ -109,6 +109,27 @@ namespace Dune
         asImp().unitRow( localRow ));
     }
 
+
+    /*! \brief set row to zero values
+        \param[in] localRow local row that is set to zero 
+     */
+    inline void clearRow( const int  localRow )
+    {
+      CHECK_AND_CALL_INTERFACE_IMPLEMENTATION(
+          asImp().clearRow( localRow ));
+    }
+
+    /*! \brief ser column entries to zero
+        \param[in] localCol local column that is set to zero
+     */
+
+    inline void clearCol( const int localCol )
+    {
+      CHECK_AND_CALL_INTERFACE_IMPLEMENTATION(
+          asImp().clearCol( localCol ));
+    }   
+    
+
     /*! \brief multiply left hand side with local matrix and add to right hand side 
                rhs += Matrix * lhs  
         \param[in] lhs left hand side 
@@ -292,13 +313,13 @@ namespace Dune
     /** \copydoc Dune::LocalMatrixInterface::rows */
     inline int rows () const
     {
-      return domainBaseSet_.numBaseFunctions();
+      return rangeBaseSet_.numBaseFunctions();
     }
     
     /** \copydoc Dune::LocalMatrixInterface::columns */
     inline int columns () const
     {
-      return rangeBaseSet_.numBaseFunctions();
+      return domainBaseSet_.numBaseFunctions();
     }
 
     /** \copydoc Dune::LocalMatrixInterface::domainSpace */

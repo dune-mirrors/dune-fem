@@ -131,9 +131,21 @@ namespace Dune
     }
     
     /** \copydoc Dune::LocalMatrixInterface::unitRow */
-    inline void unitRow ( const int localRow )
+    inline void unitRow ( const int localRow ) DUNE_DEPRECATED
     {
       localMatrix().unitRow( localRow ); 
+    }
+
+    /** \copydoc Dune::LocalMatrixInterface::clearRow */
+    inline void clearRow ( const int localRow )
+    {
+      localMatrix().clearRow( localRow );
+    }
+
+    /** \copydoc Dune::LocalMatrixInterface::clearRow */
+    inline void clearCol ( const int localCol )
+    {
+      localMatrix().clearCol( localCol );
     }
     
     /** \copydoc Dune::LocalMatrixInterface::get */
