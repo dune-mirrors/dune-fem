@@ -387,10 +387,10 @@ public:
     in >> nextFreeIndex_;
     
     // restore leafIndex 
-    leafIndex_.read( out );
+    leafIndex_.read( in );
 
     // restore state
-    state_.read( out );
+    state_.read( in );
 
     // should always have the same length 
     assert( leafIndex_.size() == state_.size() );

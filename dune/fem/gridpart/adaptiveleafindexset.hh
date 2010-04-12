@@ -604,10 +604,10 @@ namespace Dune
   template< class GridType, PartitionIteratorType pitype >
   template< class StreamTraits > 
   inline bool AdaptiveLeafIndexSet< GridType, pitype >
-    ::write ( OutStreamInterface< StreamTraits >& out ) 
+    ::write ( OutStreamInterface< StreamTraits >& out ) const
   {
     // write new verion tag 
-    int newVerion = myVersionTag;
+    int newVersion = myVersionTag;
     out << newVersion ;
 
     // write my type
