@@ -101,7 +101,9 @@ namespace Dune
     /*! \brief set row to unit rwo (all entries zero only diagonal entry is one)
         \param[in] localRow local row that is set to unit row 
     */
-    inline void unitRow ( const int localRow )
+    /* makes no sens for unsymetrix matrices, use clearRow( localRow ) and 
+     * set( localRow, localRow, 1.) instead */
+    inline void unitRow ( const int localRow ) DUNE_DEPRECATED
     {
       CHECK_AND_CALL_INTERFACE_IMPLEMENTATION(
         asImp().unitRow( localRow ));
@@ -290,13 +292,13 @@ namespace Dune
     /** \copydoc Dune::LocalMatrixInterface::rows */
     inline int rows () const
     {
-      return rangeBaseSet_.numBaseFunctions();
+      return domainBaseSet_.numBaseFunctions();
     }
     
     /** \copydoc Dune::LocalMatrixInterface::columns */
     inline int columns () const
     {
-      return domainBaseSet_.numBaseFunctions();
+      return rangeBaseSet_.numBaseFunctions();
     }
 
     /** \copydoc Dune::LocalMatrixInterface::domainSpace */
