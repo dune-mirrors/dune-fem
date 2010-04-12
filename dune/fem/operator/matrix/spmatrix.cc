@@ -295,6 +295,10 @@ void SparseRowMatrix<T>::clearRow(int row)
     col_[col] = defaultCol;
     ++col;
   }
+
+  // store row number (for UMFPACK solver)
+  clearedRows_.insert( row );
+
   if (checkNonConstMethods) assert(checkConsistency());
 }
 
@@ -686,6 +690,9 @@ void SparseRowMatrix<T>::kroneckerKill(int row, int col)
 template <class T> 
 void SparseRowMatrix<T>::unitRow(int row) 
 {
+  // only works for n x n matrices 
+  assert( dim_[ 0 ]  == dim_[ 1 ] );
+
   if (checkNonConstMethods) assert(checkConsistency());
   for(int i=1; i<nz_; i++) 
   {
@@ -696,7 +703,7 @@ void SparseRowMatrix<T>::unitRow(int row)
   col_[row*nz_] = row;
   nonZeros_[row] = 1;
 
-  // store row number 
+  // store row number (for UMFPACK solver)
   clearedRows_.insert( row );
 
   if (checkNonConstMethods) assert(checkConsistency());
