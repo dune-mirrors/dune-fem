@@ -1,4 +1,5 @@
 #include <config.h>
+
 #include <iostream> 
 
 #include <dune/common/fvector.hh>
@@ -57,7 +58,7 @@ public:
 };
 
 
-class C : public Operator<
+class C : public Mapping<
           DomainFieldType, 
           RangeFieldType, 
           DomainType, 
