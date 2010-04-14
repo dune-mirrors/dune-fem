@@ -5,9 +5,12 @@
 #include <dune/common/forloop.hh>
 #include <dune/fem/gridpart/dunefemindexsets.hh>
 #include <dune/fem/gridpart/codimindexset.hh>
-#include <dune/fem/io/file/xdrio.hh>
 
-#include <dune/fem/io/streams/streams.hh>
+#if DUNE_FEM_COMPATIBILITY
+#include <dune/fem/io/file/xdrio.hh>
+#endif
+
+#include <dune/fem/io/streams/xdrstreams.hh>
 
 namespace Dune
 {
@@ -630,6 +633,7 @@ namespace Dune
   inline bool AdaptiveLeafIndexSet< GridType, pitype >
     ::write_xdr ( const std::string &filename )
   {
+#if DUNE_FEM_COMPATIBILITY
     // create write stream
     XDRWriteStream xdr( filename );
     bool success = true;
@@ -651,6 +655,19 @@ namespace Dune
       success &= codimLeafSet_[ i ].processXdr( xdr );
     
     return success;
+#else 
+    // new version using streams 
+    try
+    {
+      XDRFileOutStream out( filename );
+      write( out );
+      return true;
+    }
+    catch( Exception e )
+    {
+      return false;
+    }
+#endif
   }
 
 
@@ -723,6 +740,7 @@ namespace Dune
   inline bool AdaptiveLeafIndexSet< GridType, pitype >
     ::read_xdr ( const std::string &filename )
   {
+#if DUNE_FEM_COMPATIBILITY
     // create read stream 
     XDRReadStream xdr( filename );
     bool success = true;
@@ -774,6 +792,19 @@ namespace Dune
       compressed_ = false;
     
     return success;
+#else
+    // new version using streams 
+    try
+    {
+      XDRFileInStream in( filename );
+      read( in );
+      return true;
+    }
+    catch( Exception e )
+    {
+      return false;
+    }
+#endif
   }
 
 
