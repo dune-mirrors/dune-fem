@@ -36,6 +36,26 @@ namespace Dune
   template< class Traits >
   inline OutStreamInterface< Traits > &
     operator<< ( OutStreamInterface< Traits > &out,
+                 const char val )
+  {
+    const int value = ( int ) val; 
+    out << value;
+    return out;
+  }
+
+  template< class Traits >
+  inline OutStreamInterface< Traits > &
+    operator<< ( OutStreamInterface< Traits > &out,
+                 const bool val )
+  {
+    const int value = ( val == true ) ? 1 : 0;
+    out << value;
+    return out;
+  }
+
+  template< class Traits >
+  inline OutStreamInterface< Traits > &
+    operator<< ( OutStreamInterface< Traits > &out,
                  const std :: string &s )
   {
     out.writeString( s );
@@ -77,6 +97,28 @@ namespace Dune
                  int &value )
   {
     in.readInt( value );
+    return in;
+  }
+  
+  template< class Traits >
+  inline InStreamInterface< Traits > &
+    operator>> ( InStreamInterface< Traits > &in,
+                 char &value )
+  {
+    int val;
+    in >> val;
+    value = (char) val;
+    return in;
+  }
+
+  template< class Traits >
+  inline InStreamInterface< Traits > &
+    operator>> ( InStreamInterface< Traits > &in,
+                 bool &value )
+  {
+    int val;
+    in >> val;
+    value = ( val == 1 ) ? true : false;
     return in;
   }
   
