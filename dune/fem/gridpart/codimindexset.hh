@@ -382,7 +382,7 @@ public:
   
   // read from stream 
   template <class StreamTraits> 
-  bool read(InStreamInterface< StreamTraits >& in) const
+  bool read(InStreamInterface< StreamTraits >& in)
   {
     in >> nextFreeIndex_;
     
