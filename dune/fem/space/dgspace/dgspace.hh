@@ -342,9 +342,9 @@ namespace Dune
     //! mapper for block vector function 
     typedef DGMapper< GridPartType, polOrd, 1 > BlockMapperType;
     
-    //! number of base functions * dimRange 
+    //! number of base functions * dimRange (use dimLocal here)
     enum { localBlockSize = dimRange * 
-        DGNumberOfBaseFunctions<polOrd,dimDomain>::numBaseFunctions }; 
+        DGNumberOfBaseFunctions<polOrd,dimLocal>::numBaseFunctions }; 
     
     /** \brief defines type of data handle for communication 
         for this type of space.
