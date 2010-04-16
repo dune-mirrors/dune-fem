@@ -9,8 +9,10 @@
 #include <dune/fem/gridpart/dunefemindexsets.hh>
 #include <dune/fem/gridpart/codimindexset.hh>
 
-#include <dune/fem/io/file/xdrio.hh>
-
+#if ! DUNE_FEM_COMPATIBILITY
+#include <dune/fem/gridpart/adaptiveleafindexset.hh>
+#else 
+#warning "Deprecated header, use <dune/fem/gridpart/adaptiveleafindexset.hh> instread!" 
 namespace Dune
 {
 
@@ -79,7 +81,7 @@ namespace Dune
     typedef DefaultLeafIteratorTypes<GridType> Traits; 
 
     //! Constructor
-    explicit DGAdaptiveLeafIndexSet ( const GridType &grid )
+    explicit DGAdaptiveLeafIndexSet ( const GridType &grid ) DUNE_DEPRECATED 
     : BaseType( grid ),
       codimLeafSet_( this->dofManager_.memoryFactor() ),
       hIndexSet_( SelectorType::hierarchicIndexSet( grid ) ),
@@ -471,10 +473,10 @@ namespace Dune
       return write_xdr( fnstr );
     }
 
-
     //! \brief write indexset to xdr file 
     bool write_xdr(const std::string& filename ) const 
     {
+#if DUNE_FEM_COMPATIBILITY
       // create xdr write stream 
       XDRWriteStream xdr( filename );
 
@@ -483,20 +485,15 @@ namespace Dune
       xdr.inout( type );
 
       return codimLeafSet_.processXdr(xdr);
-    }
-
-    //! \brief read index set from given xdr file 
-    bool read_xdr(const std::string& filename , int timestep)
-    {
-      const char *path = "";
-      std::string fnstr = genFilename(path,filename, timestep);
-
-      return read_xdr( fnstr );
+#else 
+      return false;
+#endif
     }
 
     //! \brief read index set from given xdr file 
     bool read_xdr(const std::string& filename)
     {
+#if DUNE_FEM_COMPATIBILITY
       // create xdr read stream 
       XDRReadStream xdr( filename );
 
@@ -526,9 +523,23 @@ namespace Dune
         compressed_ = false;
       }
       return success;
+#else
+      return false;
+#endif
+    }
+
+    //! \brief read index set from given xdr file 
+    bool read_xdr(const std::string& filename , int timestep)
+    {
+      const char *path = "";
+      std::string fnstr = genFilename(path,filename, timestep);
+
+      return read_xdr( fnstr );
     }
   }; // end of class AdaptiveLeafIndexSet 
 
 } // end namespace Dune 
+
+#endif // end if ! DUNE_FEM_COMPATIBILITY
 
 #endif
