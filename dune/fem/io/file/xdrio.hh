@@ -1,6 +1,10 @@
 #ifndef DUNE_XDRIO_HH
 #define DUNE_XDRIO_HH
 
+#if ! DUNE_FEM_COMPATIBILITY
+#warning "Deprecated header, use streams instread! see <dune/fem/io/streams/xdrstreams.hh>"
+#else 
+
 //- system headers  
 #include <iostream>
 #include <rpc/xdr.h>
@@ -213,4 +217,6 @@ public:
 };
 
 } // end namespace Dune 
+#endif // end DUNE_FEM_COMPATIBILITY
+
 #endif
