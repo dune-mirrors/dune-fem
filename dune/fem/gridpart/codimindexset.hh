@@ -4,7 +4,12 @@
 //- Dune includes 
 #include <dune/common/misc.hh>
 #include <dune/fem/space/common/arrays.hh>
+
+#if DUNE_FEM_COMPATIBILITY
 #include <dune/fem/io/file/xdrio.hh>
+#endif
+
+#include <dune/fem/io/streams/xdrstreams.hh>
 
 namespace Dune {
 
@@ -341,6 +346,7 @@ public:
     }
   }
   
+#if DUNE_FEM_COMPATIBILITY
   // read/write from/to xdr stream 
   bool processXdr(XDRStream& xdr)
   {
@@ -361,6 +367,7 @@ public:
 
     return ok;
   }
+#endif
   
   // write to stream 
   template <class StreamTraits> 
