@@ -62,8 +62,8 @@ namespace Dune
       }
     };
 
-    template< int codim >
-    struct InsertSubEntities
+    template< int codim , bool gridHasCodim >
+    struct InsertSubEntitiesBase
     {
       static void apply ( ThisType &indexSet, const ElementType &entity )
       {
@@ -85,7 +85,21 @@ namespace Dune
     };
 
     template< int codim >
-    struct InsertGhostSubEntities
+    struct InsertSubEntitiesBase< codim , false >
+    {
+      static void apply ( ThisType &indexSet, const ElementType &entity )
+      {
+      }
+    };
+
+    template< int codim >
+    struct InsertSubEntities 
+      : public InsertSubEntitiesBase< codim , Capabilities :: hasEntity < GridType, codim > :: v >
+    {
+    };
+
+    template< int codim , bool gridHasCodim >
+    struct InsertGhostSubEntitiesBase
     {
       static void apply ( ThisType &indexSet, const ElementType &entity ,
                           const bool skipGhosts )
@@ -111,6 +125,20 @@ namespace Dune
             codimSet.insertGhost( hIndexSet.index( subentity ) );
         }
       }
+    };
+
+    template< int codim >
+    struct InsertGhostSubEntitiesBase< codim, false >
+    {
+      static void apply ( ThisType &indexSet, const ElementType &entity ,
+                          const bool skipGhosts )
+      {}
+    };
+
+    template< int codim >
+    struct InsertGhostSubEntities 
+      : public InsertGhostSubEntitiesBase< codim, Capabilities :: hasEntity < GridType, codim > :: v >
+    {
     };
 
     template< int codim >
@@ -283,7 +311,8 @@ namespace Dune
       if( StructuredGrid  &&
           grid_.comm().size() > 1 )
       {
-        codimLeafSet_.clear();
+        // only done for structured grids 
+        clear();
 
         // this should only be the case of YaspGrid
         markAllBelowOld<Interior_Partition>();
@@ -448,6 +477,9 @@ namespace Dune
     // mark indices that are still used (and give new indices to new elements)
     template <PartitionIteratorType pt>
     void markAllUsed (); 
+
+    //! clear index set (only for structured grids)
+    void clear();
 
     //! mark all indices of interest 
     void setupIndexSet ();
@@ -652,7 +684,7 @@ namespace Dune
 
   template< class TraitsImp >
   inline void
-  AdaptiveLeafIndexSetBase< TraitsImp >::setupIndexSet ()
+  AdaptiveLeafIndexSetBase< TraitsImp >::clear()
   {
     // for structured grids clear all information 
     // this in only done when setting up grids or after 
@@ -669,6 +701,14 @@ namespace Dune
         }
       }
     }
+  }
+
+  template< class TraitsImp >
+  inline void
+  AdaptiveLeafIndexSetBase< TraitsImp >::setupIndexSet ()
+  {
+    // only done for structured grids 
+    clear();
 
 #if HAVE_MPI
     // for YaspGrid we need all interior indices first 
