@@ -371,7 +371,7 @@ namespace Dune
       }
       else 
       {
-        assert( false );
+        DUNE_THROW( NotImplemented, (name() + " does not support indices for codim = ") << codim );
         return -1;
       }
     }
@@ -395,7 +395,7 @@ namespace Dune
       }
       else 
       {
-        assert( false );
+        DUNE_THROW( NotImplemented, (name() + " does not support indices for codim = ") << codim );
         return -1;
       }
     }
@@ -417,7 +417,7 @@ namespace Dune
       }
       else 
       {
-        assert( false );
+        DUNE_THROW( NotImplemented, (name() + " does not support indices for codim = ") << codim );
         return -1;
       }
     }
@@ -444,7 +444,7 @@ namespace Dune
       }
       else 
       {
-        assert( false );
+        DUNE_THROW( NotImplemented, (name() + " does not support indices for codim = ") << codim );
         return -1; 
       }
     }
@@ -459,7 +459,7 @@ namespace Dune
       }
       else 
       {
-        assert( false );
+        DUNE_THROW( NotImplemented, (name() + " does not support indices for codim = ") << codim );
         return -1; 
       }
     }
