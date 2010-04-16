@@ -5,8 +5,7 @@ operator_HEADERS = artificialdiffusion.hh \
 		   feop.hh \
 		   integrationoperator.hh \
 		   lagrangeinterpolation.hh \
-		   matrixadapter.hh \
-		   minimizationoperator.hh
+		   matrixadapter.hh
 
 SUBDIRS = common 0order 1order 2order matrix model projection 
 
