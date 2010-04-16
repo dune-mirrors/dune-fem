@@ -5,7 +5,7 @@
 #include <dune/fem/misc/capabilities.hh>
 #include <dune/fem/gridpart/gridpart.hh>
 #include <dune/fem/gridpart/idbasedleafindexset.hh>
-#include <dune/fem/gridpart/adaptiveleafindexset.hh>
+#include <dune/fem/space/dgspace/dgadaptiveleafindexset.hh>
 #include <dune/fem/storage/singletonlist.hh>
 
 namespace Dune
