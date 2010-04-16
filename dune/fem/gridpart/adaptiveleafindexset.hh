@@ -167,7 +167,7 @@ namespace Dune
     AdaptiveLeafIndexSetBase (const GridType & grid) 
       : BaseType(grid) 
       , hIndexSet_( SelectorType::hierarchicIndexSet(grid) ) 
-      , sequence_( this->dofManager_.sequence() )
+      , sequence_( dofManager_.sequence() )
       , compressed_(true) // at start the set is compressed 
     {
       // codim 0 is used by default
@@ -281,7 +281,7 @@ namespace Dune
 
   #if HAVE_MPI
       if( StructuredGrid  &&
-          this->grid_.comm().size() > 1 )
+          grid_.comm().size() > 1 )
       {
         codimLeafSet_.clear();
 
@@ -303,7 +303,7 @@ namespace Dune
         // only if ghost are really supported 
         if( pitype == All_Partition ) 
         {
-          if( this->grid_.comm().size() > 1 )
+          if( grid_.comm().size() > 1 )
           {
             // make sure that also ghosts have indices 
             markAllUsed<Ghost_Partition>();
@@ -674,7 +674,7 @@ namespace Dune
     // for YaspGrid we need all interior indices first 
     // so we can use SGrid for the visualization :(
     if( StructuredGrid  &&
-        this->grid_.comm().size() > 1 )
+        grid_.comm().size() > 1 )
     {
       // we should only get here for YaspGrid
       markAllUsed<Interior_Partition> ();
@@ -747,11 +747,9 @@ namespace Dune
       ::template Codim< codim >::template Partition< pitype >::LeafIterator
       Iterator;
 
-    const GridType &grid = this->grid_;
-
     int count = 0;
-    const Iterator begin = grid.template leafbegin< codim, pitype >();
-    const Iterator end = grid.template leafend< codim, pitype >();
+    const Iterator begin = grid_.template leafbegin< codim, pitype >();
+    const Iterator end = grid_.template leafend< codim, pitype >();
     for( Iterator it = begin; it != end; ++it )
     {
       if( it->type() == type )
