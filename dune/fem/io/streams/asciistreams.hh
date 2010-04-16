@@ -112,9 +112,8 @@ namespace Dune
     inline void writeChar ( const char value )
     {
       // make sure char is written as number 
-      stream_ << (int) value << std :: endl;
-      if( !valid () )
-        writeError();
+      int val = (int) value;
+      writeInt( val );
     }
 
     /** \copydoc Dune::OutStreamInterface::writeChar */
@@ -245,9 +244,7 @@ namespace Dune
     inline void readChar ( char &value )
     {
       int val ;
-      stream_ >> val;
-      if( !valid () )
-        readError();
+      readInt( val );
       value = (char) val;
     }
 
