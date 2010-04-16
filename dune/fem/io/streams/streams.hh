@@ -67,12 +67,12 @@ namespace Dune
     {
       CHECK_AND_CALL_INTERFACE_IMPLEMENTATION( asImp().flush() );
     }
-
+   
     /** \brief write a double to the stream
      *
      * \param[in]  value  value to write to the stream
      */
-    inline void writeDouble ( double value )
+    inline void writeDouble ( const double value )
     {
       CHECK_AND_CALL_INTERFACE_IMPLEMENTATION( asImp().writeDouble( value ) );
     }
@@ -81,7 +81,7 @@ namespace Dune
      *
      * \param[in]  value  value to write to the stream
      */
-    inline void writeFloat ( float value )
+    inline void writeFloat ( const float value )
     {
       CHECK_AND_CALL_INTERFACE_IMPLEMENTATION( asImp().writeFloat( value ) );
     }
@@ -90,9 +90,27 @@ namespace Dune
      *
      * \param[in]  value  value to write to the stream
      */
-    inline void writeInt ( int value )
+    inline void writeInt ( const int value )
     {
       CHECK_AND_CALL_INTERFACE_IMPLEMENTATION( asImp().writeInt( value ) );
+    }
+
+    /** \brief write a char to the stream
+     *
+     * \param[in]  value  value to write to the stream
+     */
+    inline void writeChar ( const char value )
+    {
+      CHECK_AND_CALL_INTERFACE_IMPLEMENTATION( asImp().writeChar( value ) );
+    }
+
+    /** \brief write a bool to the stream
+     *
+     * \param[in]  value  value to write to the stream
+     */
+    inline void writeBool ( const bool value )
+    {
+      CHECK_AND_CALL_INTERFACE_IMPLEMENTATION( asImp().writeBool( value ) );
     }
 
     /** \brief write a string to the stream
@@ -224,6 +242,47 @@ namespace Dune
     {
       int value;
       readInt( value );
+      return value;
+    }
+
+    /** \brief read a char from the stream
+     *
+     *  \param[out]  value  reference to the variable to read from the stream
+     */
+    inline void readChar ( char &value )
+    {
+      CHECK_AND_CALL_INTERFACE_IMPLEMENTATION( asImp().readChar( value ) );
+    }
+    
+    /** \brief read a char from the stream
+     *
+     *  \returns a char read from the stream
+     */  
+    inline int readChar ()
+    {
+      char value;
+      readChar( value );
+      return value;
+    }
+
+    /** \brief read a bool from the stream
+     *
+     *  \param[out]  value  reference to the variable to read from the stream
+     *
+     */
+    inline void readBool ( bool &value )
+    {
+      CHECK_AND_CALL_INTERFACE_IMPLEMENTATION( asImp().readBool( value ) );
+    }
+    
+    /** \brief read a bool from the stream
+     *
+     *  \returns a bool read from the stream
+     */  
+    inline bool readBool ()
+    {
+      bool value;
+      readBool( value );
       return value;
     }
 

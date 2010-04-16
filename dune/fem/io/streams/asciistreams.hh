@@ -81,7 +81,7 @@ namespace Dune
     }
 
     /** \copydoc Dune::OutStreamInterface::writeDouble */
-    inline void writeDouble ( double value )
+    inline void writeDouble ( const double value )
     {
       stream_.setf( std ::ios_base :: scientific, std :: ios_base :: floatfield );
       stream_ .precision( 16 );
@@ -91,7 +91,7 @@ namespace Dune
     }
 
     /** \copydoc Dune::OutStreamInterface::writeFloat */
-    inline void writeFloat ( float value )
+    inline void writeFloat ( const float value )
     {
       stream_.setf( std ::ios_base :: scientific, std :: ios_base :: floatfield );
       stream_ .precision( 7 );
@@ -101,9 +101,28 @@ namespace Dune
     }
 
     /** \copydoc Dune::OutStreamInterface::writeInt */
-    inline void writeInt ( int value )
+    inline void writeInt ( const int value )
     {
       stream_ << value << std :: endl;
+      if( !valid () )
+        writeError();
+    }
+
+    /** \copydoc Dune::OutStreamInterface::writeChar */
+    inline void writeChar ( const char value )
+    {
+      // make sure char is written as number 
+      stream_ << (int) value << std :: endl;
+      if( !valid () )
+        writeError();
+    }
+
+    /** \copydoc Dune::OutStreamInterface::writeChar */
+    inline void writeBool ( const bool value )
+    {
+      std::string val( ( value == true ) ? "true" : "false" );
+      // make sure char is written as number 
+      stream_ << val << std :: endl;
       if( !valid () )
         writeError();
     }
@@ -222,6 +241,31 @@ namespace Dune
     {
       stream_ >> value;
       if( !valid () )
+        readError();
+    }
+
+    /** \copydoc Dune::InStreamInterface::readChar */
+    inline void readChar ( char &value )
+    {
+      int val ;
+      stream_ >> val;
+      if( !valid () )
+        readError();
+      value = (char) val;
+    }
+
+    /** \copydoc Dune::InStreamInterface::readBool */
+    inline void readBool ( bool &value )
+    {
+      std::string val;
+      stream_ >> val;
+      if( !valid () )
+        readError();
+      if( val == "true" ) 
+        value = true; 
+      else if ( val == "false" ) 
+        value = false;
+      else 
         readError();
     }
 

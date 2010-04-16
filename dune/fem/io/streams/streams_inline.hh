@@ -36,20 +36,18 @@ namespace Dune
   template< class Traits >
   inline OutStreamInterface< Traits > &
     operator<< ( OutStreamInterface< Traits > &out,
-                 const char val )
+                 const char value )
   {
-    const int value = ( int ) val; 
-    out << value;
+    out.writeChar( value );
     return out;
   }
 
   template< class Traits >
   inline OutStreamInterface< Traits > &
     operator<< ( OutStreamInterface< Traits > &out,
-                 const bool val )
+                 const bool value )
   {
-    const int value = ( val == true ) ? 1 : 0;
-    out << value;
+    out.writeBool( value );
     return out;
   }
 
@@ -71,8 +69,6 @@ namespace Dune
     return out;
   }
  
-
-
   template< class Traits >
   inline InStreamInterface< Traits > &
     operator>> ( InStreamInterface< Traits > &in,
@@ -105,9 +101,7 @@ namespace Dune
     operator>> ( InStreamInterface< Traits > &in,
                  char &value )
   {
-    int val;
-    in >> val;
-    value = (char) val;
+    in.readChar( value );
     return in;
   }
 
@@ -116,9 +110,7 @@ namespace Dune
     operator>> ( InStreamInterface< Traits > &in,
                  bool &value )
   {
-    int val;
-    in >> val;
-    value = ( val == 1 ) ? true : false;
+    in.readBool( value );
     return in;
   }
   

@@ -77,6 +77,21 @@ namespace Dune
         writeError();
     }
 
+    /** \copydoc Dune::OutStreamInterface::writeChar */
+    inline void writeChar ( char value )
+    {
+      if( xdr_char( xdrs(), &value ) == 0 )
+        writeError();
+    }
+
+    /** \copydoc Dune::OutStreamInterface::writeBool */
+    inline void writeBool ( const bool value )
+    {
+      // convert to character and write 
+      char val = ( value == true ) ? 1 : 0;
+      writeChar( val );
+    }
+
     /** \copydoc Dune::OutStreamInterface::writeString */
     inline void writeString ( const std :: string &s )
     {
@@ -167,6 +182,22 @@ namespace Dune
     {
       if( xdr_int( xdrs(), &value ) == 0 )
         readError();
+    }
+
+    /** \copydoc Dune::InStreamInterface::readChar */
+    inline void readChar ( char &value )
+    {
+      if( xdr_char( xdrs(), &value ) == 0 )
+        readError();
+    }
+
+    /** \copydoc Dune::InStreamInterface::readBool */
+    inline void readBool ( bool &value )
+    {
+      char val;
+      readChar( val );
+      // convert to boolean 
+      value = ( val == 1 ) ? true : false;
     }
 
     /** \copydoc Dune::InStreamInterface::readString */
