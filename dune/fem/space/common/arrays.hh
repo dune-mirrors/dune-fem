@@ -19,7 +19,9 @@
 #include <dune/grid/alugrid/interfaces.hh>
 
 // include xdr wrapper 
+#if DUNE_FEM_COMPATIBILITY
 #include <dune/fem/io/file/xdrio.hh>
+#endif
 #include <dune/fem/io/streams/streams.hh>
 
 namespace Dune {
@@ -363,20 +365,6 @@ public:
   //! return leak pointer for usage in BLAS routines 
   const T* leakPointer() const { return vec_; }
 
-  //! read and write xdr 
-  bool processXdr(XDRStream& xdr)
-  {
-    int len = size_;
-    xdr.inout( len );
-
-    // when read check size 
-    if( size_ != len )
-    {
-      DUNE_THROW(InvalidStateException,"StaticArray::processXdr: internal size " << size_ << " and size to read " << len << " not equal!");
-    }
-    return processXdrVector(xdr);
-  }
-
   //! write to  stream 
   template <class StreamTraits> 
   bool write(OutStreamInterface< StreamTraits >& out) const 
@@ -417,7 +405,22 @@ public:
       s << vec_[i] << "\n";
     }
   }
-  
+
+#if DUNE_FEM_COMPATIBILITY
+  //! read and write xdr 
+  bool processXdr(XDRStream& xdr)
+  {
+    int len = size_;
+    xdr.inout( len );
+
+    // when read check size 
+    if( size_ != len )
+    {
+      DUNE_THROW(InvalidStateException,"StaticArray::processXdr: internal size " << size_ << " and size to read " << len << " not equal!");
+    }
+    return processXdrVector(xdr);
+  }
+
 protected:  
   //! read and write vector as bytes using xdr method xdr_bytes  
   bool processXdrVector(XDRStream& xdr)
@@ -430,6 +433,8 @@ protected:
     }
     return (ret == 1) ? true : false;
   }
+
+#endif
 };
 
 // specialisations of axpy 
@@ -581,7 +586,9 @@ public:
   {
     return memSize_ * sizeof(T) + sizeof(ThisType);
   } 
-  
+ 
+#if DUNE_FEM_COMPATIBILITY
+
   //! read and write xdr, during read resize is done 
   //! if sizes do not match  
   bool processXdr(XDRStream& xdr)
@@ -595,6 +602,7 @@ public:
     // write array 
     return this->processXdrVector(xdr);
   }
+#endif
 
 private: 
   // free memory and reset sizes 
