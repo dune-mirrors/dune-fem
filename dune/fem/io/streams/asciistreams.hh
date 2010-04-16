@@ -121,10 +121,7 @@ namespace Dune
     inline void writeBool ( const bool value )
     {
       std::string val( ( value == true ) ? "true" : "false" );
-      // make sure char is written as number 
-      stream_ << val << std :: endl;
-      if( !valid () )
-        writeError();
+      writeString( val );
     }
 
     /** \copydoc Dune::OutStreamInterface::writeString
@@ -258,9 +255,8 @@ namespace Dune
     inline void readBool ( bool &value )
     {
       std::string val;
-      stream_ >> val;
-      if( !valid () )
-        readError();
+      readString( val );
+
       if( val == "true" ) 
         value = true; 
       else if ( val == "false" ) 
