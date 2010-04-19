@@ -8,7 +8,7 @@
 
 namespace Dune
 {
-  /** \class AdaptiveLeafIndexSetBase
+  /** \class AdaptiveIndexSetBase
    *  \brief consecutive, persistent index set for the leaf level based on the
    *         grid's hierarchy index set
    *
@@ -20,15 +20,16 @@ namespace Dune
    *  codimensions of the grid. 
    */
   template <class TraitsImp > 
-  class AdaptiveLeafIndexSetBase
+  class AdaptiveIndexSetBase
   : public ConsecutivePersistentIndexSet< 
             typename TraitsImp :: GridType, 
-            AdaptiveLeafIndexSetBase< TraitsImp > 
+            AdaptiveIndexSetBase< TraitsImp > 
             >
   {
   protected:  
-    typedef typename TraitsImp :: GridType GridType;
-    typedef AdaptiveLeafIndexSetBase< TraitsImp > ThisType;
+    typedef typename TraitsImp :: GridPartType GridPartType;
+    typedef typename GridPartType :: GridType GridType;
+    typedef AdaptiveIndexSetBase< TraitsImp > ThisType;
     typedef ConsecutivePersistentIndexSet< GridType, ThisType > BaseType;
 
     friend class Conversion< ThisType, EmptyIndexSet >;
@@ -162,8 +163,10 @@ namespace Dune
     enum { myVersionTag = -665 };
 
     //! default partition iterator type 
-    static const PartitionIteratorType pitype = TraitsImp :: pitype;
+    static const PartitionIteratorType pitype = GridPartType :: indexSetPartitionType ;
 
+    // reference to grid part 
+    const GridPartType& gridPart_;
     // reference to HierarchicIndexSet 
     const HIndexSetType &hIndexSet_;
     // Codimension leaf index sets 
@@ -192,9 +195,11 @@ namespace Dune
     typedef DefaultLeafIteratorTypes<GridType> Traits; 
 
     //! Constructor
-    AdaptiveLeafIndexSetBase (const GridType & grid) 
-      : BaseType(grid) 
-      , hIndexSet_( SelectorType::hierarchicIndexSet(grid) ) 
+    //AdaptiveIndexSetBase (const GridPartType & gridPart) 
+    AdaptiveIndexSetBase (const GridPartType & gridPart)
+      : BaseType( gridPart.grid() ) 
+      , gridPart_( gridPart )
+      , hIndexSet_( SelectorType::hierarchicIndexSet( gridPart.grid() ) ) 
       , sequence_( dofManager_.sequence() )
       , compressed_(true) // at start the set is compressed 
     {
@@ -205,14 +210,14 @@ namespace Dune
       for(int codim = 1; codim < numCodimensions; ++codim ) codimUsed_[ codim ] = false ;
       
       // set the codim of each Codim Set. 
-      for(int codim = 0; codim < numCodimensions; ++codim) codimLeafSet_[ codim ].setCodim( codim );
+      for(int codim = 0; codim < numCodimensions; ++codim ) codimLeafSet_[ codim ].setCodim( codim );
 
       // build index set 
       setupIndexSet();
     }
 
     //! Destructor
-    virtual ~AdaptiveLeafIndexSetBase ()
+    virtual ~AdaptiveIndexSetBase ()
     {}
 
     //! return type of index set, for GrapeDataIO
@@ -224,7 +229,7 @@ namespace Dune
     //! return name of index set 
     virtual std::string name () const
     {
-      return "AdaptiveLeafIndexSetBase";
+      return "AdaptiveIndexSetBase";
     }
 
     //****************************************************************
@@ -362,7 +367,6 @@ namespace Dune
         if( (codim != 0) && ! codimUsed_[ codim ] )
           setUpCodimSet< codim >();
 
-        //assertCodimSetSize( codim );
         const CodimIndexSetType &codimSet = codimLeafSet_[ codim ];
         const int hIdx = hIndexSet_.template index( entity );
         const int idx = codimSet.index( hIdx );
@@ -523,7 +527,7 @@ namespace Dune
 
   template< class TraitsImp >
   inline void
-  AdaptiveLeafIndexSetBase< TraitsImp >::resizeVectors ()
+  AdaptiveIndexSetBase< TraitsImp >::resizeVectors ()
   {
     codimLeafSet_[ 0 ].resize( hIndexSet_.size( 0 ) );
 
@@ -542,7 +546,7 @@ namespace Dune
   // --compress
   template< class TraitsImp >
   inline bool
-  AdaptiveLeafIndexSetBase< TraitsImp >::compress ()
+  AdaptiveIndexSetBase< TraitsImp >::compress ()
   {
     // reset list of holes in any case
     for( int codim = 0; codim < numCodimensions; ++codim )
@@ -578,7 +582,7 @@ namespace Dune
 
   template< class TraitsImp >
   inline void
-  AdaptiveLeafIndexSetBase< TraitsImp >::insertIndex ( const ElementType &entity )
+  AdaptiveIndexSetBase< TraitsImp >::insertIndex ( const ElementType &entity )
   {
     const int index = hIndexSet_.index( entity );
 
@@ -611,7 +615,7 @@ namespace Dune
 
   template< class TraitsImp >
   inline void
-  AdaptiveLeafIndexSetBase< TraitsImp >::removeIndex( const ElementType &entity )
+  AdaptiveIndexSetBase< TraitsImp >::removeIndex( const ElementType &entity )
   {
     // remove entities (only mark them as unused)
     codimLeafSet_[ 0 ].remove( hIndexSet_.index( entity ) );
@@ -625,7 +629,7 @@ namespace Dune
 
   template< class TraitsImp >
   inline void
-  AdaptiveLeafIndexSetBase< TraitsImp >
+  AdaptiveIndexSetBase< TraitsImp >
     ::checkHierarchy ( const ElementType &entity, bool isNew )
   {
     typedef typename ElementType::HierarchicIterator HierarchicIterator;
@@ -661,7 +665,7 @@ namespace Dune
   template< class TraitsImp >
   template< PartitionIteratorType pt >
   inline void
-  AdaptiveLeafIndexSetBase< TraitsImp >::markAllUsed ()
+  AdaptiveIndexSetBase< TraitsImp >::markAllUsed ()
   {
     // make correct size of vectors 
     resizeVectors();
@@ -672,19 +676,18 @@ namespace Dune
       if( codimUsed_[ codim ] )
         codimLeafSet_[ codim ].set2Unused();
     }
-    
-    typedef typename GridType
-      ::template Codim< 0 >::template Partition< pt >::LeafIterator
-      Iterator;
 
-    const Iterator end  = grid_.template leafend< 0, pt >();
-    for( Iterator it = grid_.template leafbegin< 0, pt >(); it != end; ++it )
+    typedef typename GridPartType 
+      ::template Codim< 0 > :: template Partition< pt > :: IteratorType  Iterator;
+
+    const Iterator end  = gridPart_.template end< 0, pt >();
+    for( Iterator it = gridPart_.template begin< 0, pt >(); it != end; ++it )
       insertIndex( *it );
   }
 
   template< class TraitsImp >
   inline void
-  AdaptiveLeafIndexSetBase< TraitsImp >::clear()
+  AdaptiveIndexSetBase< TraitsImp >::clear()
   {
     // for structured grids clear all information 
     // this in only done when setting up grids or after 
@@ -705,7 +708,7 @@ namespace Dune
 
   template< class TraitsImp >
   inline void
-  AdaptiveLeafIndexSetBase< TraitsImp >::setupIndexSet ()
+  AdaptiveIndexSetBase< TraitsImp >::setupIndexSet ()
   {
     // only done for structured grids 
     clear();
@@ -732,7 +735,7 @@ namespace Dune
   template< class TraitsImp >
   template< PartitionIteratorType pt >
   inline void
-  AdaptiveLeafIndexSetBase< TraitsImp >::markAllBelowOld ()
+  AdaptiveIndexSetBase< TraitsImp >::markAllBelowOld ()
   {
     // mark all indices as unused
     for( int codim = 0; codim < numCodimensions; ++codim )
@@ -756,7 +759,7 @@ namespace Dune
   template< class TraitsImp >
   template< int codim >
   inline void
-  AdaptiveLeafIndexSetBase< TraitsImp >::setUpCodimSet () const
+  AdaptiveIndexSetBase< TraitsImp >::setUpCodimSet () const
   {
     // if codim is not available do nothing 
     if( ! codimAvailable( codim ) ) return ;
@@ -764,13 +767,12 @@ namespace Dune
     // resize if necessary 
     codimLeafSet_[ codim ].resize( hIndexSet_.size( codim ) );
     
-    // walk over leaf level on locate all needed entities  
-    typedef typename GridType
-      ::template Codim< codim >::template Partition< pitype >::LeafIterator
-      Iterator;
+    // walk over grid parts entity set and insert entities
+    typedef typename GridPartType
+      ::template Codim< codim >::template Partition< pitype > :: IteratorType Iterator;
 
-    const Iterator end = grid_.template leafend< codim, pitype >();
-    for( Iterator it = grid_.template leafbegin< codim, pitype >(); it != end; ++it )
+    const Iterator end = gridPart_.template end< codim, pitype >();
+    for( Iterator it = gridPart_.template begin< codim, pitype >(); it != end; ++it )
       codimLeafSet_[ codim ].insert( hIndexSet_.index ( *it ) );
 
     // mark codimension as used
@@ -781,15 +783,14 @@ namespace Dune
   template< class TraitsImp >
   template< int codim >
   inline int
-  AdaptiveLeafIndexSetBase< TraitsImp >::countElements ( GeometryType type ) const
+  AdaptiveIndexSetBase< TraitsImp >::countElements ( GeometryType type ) const
   {
-    typedef typename GridType
-      ::template Codim< codim >::template Partition< pitype >::LeafIterator
-      Iterator;
+    typedef typename GridPartType
+      ::template Codim< codim > :: template Partition< pitype > :: IteratorType Iterator;
 
+    const Iterator begin = gridPart_.template begin< codim, pitype >();
+    const Iterator end = gridPart_.template end< codim, pitype >();
     int count = 0;
-    const Iterator begin = grid_.template leafbegin< codim, pitype >();
-    const Iterator end = grid_.template leafend< codim, pitype >();
     for( Iterator it = begin; it != end; ++it )
     {
       if( it->type() == type )
@@ -801,7 +802,7 @@ namespace Dune
 
   template< class TraitsImp >
   template< class StreamTraits > 
-  inline bool AdaptiveLeafIndexSetBase< TraitsImp >
+  inline bool AdaptiveIndexSetBase< TraitsImp >
     ::write ( OutStreamInterface< StreamTraits >& out ) const
   {
     // write new verion tag 
@@ -825,7 +826,7 @@ namespace Dune
   }
 
   template< class TraitsImp >
-  inline bool AdaptiveLeafIndexSetBase< TraitsImp >
+  inline bool AdaptiveIndexSetBase< TraitsImp >
     ::write_xdr ( const std::string &filename ) const
   {
 #if DUNE_FEM_COMPATIBILITY
@@ -866,7 +867,7 @@ namespace Dune
 
 
   template< class TraitsImp >
-  inline bool AdaptiveLeafIndexSetBase< TraitsImp >
+  inline bool AdaptiveIndexSetBase< TraitsImp >
     ::write_xdr ( const std::string &filename, int timestep ) const
   {
     const char *path = "";
@@ -877,7 +878,7 @@ namespace Dune
 
   template< class TraitsImp >
   template< class StreamTraits > 
-  inline bool AdaptiveLeafIndexSetBase< TraitsImp >
+  inline bool AdaptiveIndexSetBase< TraitsImp >
     ::read ( InStreamInterface< StreamTraits > &in ) 
   {
     // check new version tag
@@ -894,7 +895,7 @@ namespace Dune
     if( (typeVar != 2) && (typeVar != type()) )
     {
       DUNE_THROW( InvalidStateException,
-                  "AdaptiveLeafIndexSetBase::read: wrong type " << typeVar
+                  "AdaptiveIndexSetBase::read: wrong type " << typeVar
                   << " given (expected " << type() << ")." );
     }
 
@@ -931,7 +932,7 @@ namespace Dune
   }
 
   template< class TraitsImp >
-  inline bool AdaptiveLeafIndexSetBase< TraitsImp >
+  inline bool AdaptiveIndexSetBase< TraitsImp >
     ::read_xdr ( const std::string &filename )
   {
 #if DUNE_FEM_COMPATIBILITY
@@ -953,7 +954,7 @@ namespace Dune
     if( (typeVar != 2) && (typeVar != type()) )
     {
       DUNE_THROW( InvalidStateException,
-                  "AdaptiveLeafIndexSetBase::read_xdr: wrong type " << typeVar
+                  "AdaptiveIndexSetBase::read_xdr: wrong type " << typeVar
                   << " given (expected " << type() << ")." );
     }
 
@@ -1002,7 +1003,7 @@ namespace Dune
 
 
   template< class TraitsImp >
-  inline bool AdaptiveLeafIndexSetBase< TraitsImp >
+  inline bool AdaptiveIndexSetBase< TraitsImp >
     ::read_xdr ( const std::string &filename, int timestep )
   {
     const char *path = "";
@@ -1017,12 +1018,14 @@ namespace Dune
   //  --AdaptiveLeafIndexSet 
   //
   /////////////////////////////////////////////////////////////////////////
-  template< class GridImp,  
-            PartitionIteratorType pt>
+  template< class GridPartImp >
   struct AdaptiveLeafIndexSetTraits
   {   
-    typedef GridImp GridType;
-    static const PartitionIteratorType pitype = pt;
+    // type of grid part  
+    typedef GridPartImp GridPartType;
+    // type of grid 
+    typedef typename GridPartType :: GridType GridType;
+    //static const PartitionIteratorType pitype = pt;
     enum { numCodimensions = GridType :: dimension + 1 };
     // first comdimension that is supported (not yet supported)
     enum { startingCodimension = 0 };
@@ -1039,17 +1042,16 @@ namespace Dune
    *  \note This index sets supports all indices for all codimensions of the grid. 
    *
    */
-  template < class GridImp,
-             PartitionIteratorType pitype = All_Partition > 
+  template < class GridPartImp >
   class AdaptiveLeafIndexSet
-  : public AdaptiveLeafIndexSetBase< AdaptiveLeafIndexSetTraits< GridImp, pitype > > 
+  : public AdaptiveIndexSetBase< AdaptiveLeafIndexSetTraits< GridPartImp > >
   {
-    typedef AdaptiveLeafIndexSetBase< AdaptiveLeafIndexSetTraits< GridImp, pitype > > BaseType;
+    typedef AdaptiveIndexSetBase< AdaptiveLeafIndexSetTraits< GridPartImp > > BaseType;
   public:
-    typedef typename BaseType :: GridType GridType;
+    typedef typename BaseType :: GridPartType GridPartType;
     //! Constructor
-    AdaptiveLeafIndexSet (const GridType & grid) 
-      : BaseType(grid) 
+    AdaptiveLeafIndexSet (const GridPartType & gridPart) 
+      : BaseType(gridPart) 
     {
     }
 
@@ -1066,12 +1068,14 @@ namespace Dune
   //  --DGAdaptiveLeafIndexSet 
   //
   /////////////////////////////////////////////////////////////////////////
-  template< class GridImp,  
-            PartitionIteratorType pt>
+  template< class GridPartImp >
   struct DGAdaptiveLeafIndexSetTraits
   {   
-    typedef GridImp GridType;
-    static const PartitionIteratorType pitype = pt;
+    // type of grid part 
+    typedef GridPartImp GridPartType;
+    // type of grid 
+    typedef typename GridPartType :: GridType GridType;
+    //static const PartitionIteratorType pitype = pt;
     // this index set only supports one codimension, codim zero 
     enum { numCodimensions = 1 };
     // first comdimension that is supported (not yet supported)
@@ -1088,17 +1092,16 @@ namespace Dune
    *  \note This index sets supports only indices for codimensions 0 entities of the grid. 
    *
    */
-  template < class GridImp,
-             PartitionIteratorType pitype = All_Partition > 
+  template < class GridPartImp >
   class DGAdaptiveLeafIndexSet
-  : public AdaptiveLeafIndexSetBase< DGAdaptiveLeafIndexSetTraits< GridImp, pitype > > 
+  : public AdaptiveIndexSetBase< DGAdaptiveLeafIndexSetTraits< GridPartImp > > 
   {
-    typedef AdaptiveLeafIndexSetBase< DGAdaptiveLeafIndexSetTraits< GridImp, pitype > > BaseType;
+    typedef AdaptiveIndexSetBase< DGAdaptiveLeafIndexSetTraits< GridPartImp > > BaseType;
   public:
-    typedef typename BaseType :: GridType GridType;
+    typedef typename BaseType :: GridPartType GridPartType;
     //! Constructor
-    DGAdaptiveLeafIndexSet (const GridType & grid) 
-      : BaseType(grid) 
+    DGAdaptiveLeafIndexSet (const GridPartType & gridPart) 
+      : BaseType(gridPart) 
     {
     }
 
