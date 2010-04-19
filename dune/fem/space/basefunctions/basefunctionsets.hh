@@ -515,7 +515,7 @@ namespace Dune
       assert( jacobianStorage.size() >= (int )numRows );
 
       const bool affineGeometry = geometry.affine();
-      typedef typename Geometry :: JacobianTransposed GeometryJacobianType;
+      typedef typename Geometry :: Jacobian  GeometryJacobianType;
       GeometryJacobianType gjitTmp ;
 
       const GeometryJacobianType& gjit = 
@@ -538,18 +538,20 @@ namespace Dune
         GlobalJacobianRangeType& result = jacVector[ row ]; 
         result = 0;
 
-        // work to do here, need scalar global jacobian 
-        ScalarJacobianRangeType gradPhi;
+        // get type of scalar global jacobian 
+        // (which is one row of the GlobalJacobianRangeType)
+        typedef typename GlobalJacobianRangeType :: row_type JacobianRangeType;
+        JacobianRangeType gradPhi;
 
         for( size_t col = 0, colR = 0; col < numDiffBase; ++col ) 
         {
           FieldMatrixHelper :: multiply(gjit,
                                         jacobianStorage[ baseRow ][ col ][ 0 ], 
-                                        gradPhi[ 0 ] );
+                                        gradPhi );
 
           for( int r = 0; r < dimRange; ++r, ++colR ) 
           {
-            result[ r ].axpy( dofs[ colR ], gradPhi[ 0 ] );
+            result[ r ].axpy( dofs[ colR ], gradPhi );
           }
         }
       }
@@ -638,7 +640,7 @@ namespace Dune
                                 const GlobalJacobianRangeType& ) const
     {
       const bool affineGeometry = geometry.affine();
-      typedef typename Geometry :: JacobianTransposed GeometryJacobianType;
+      typedef typename Geometry :: Jacobian   GeometryJacobianType;
       GeometryJacobianType gjitTmp ;
 
       const GeometryJacobianType& gjit = 
@@ -697,7 +699,8 @@ namespace Dune
         if( ! affineGeometry ) 
           gjitTmp = geometry.jacobianInverseTransposed( quad.point( row ) );
 
-        GlobalJacobianRangeType jacFactorInv;
+        JacobianRangeType jacFactorInv;
+
         // multiply jacobian factor with geometry inverse 
         FieldMatrixHelper :: multiply( jacVector[ row ], 
                                        gjit,
