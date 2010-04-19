@@ -4,7 +4,7 @@
 #include <iostream>
 
 #include <dune/fem/gridpart/gridpart.hh>
-#include <dune/fem/space/dgspace/dgadaptiveleafgridpart.hh>
+#include <dune/fem/gridpart/adaptiveleafgridpart.hh>
 #include <dune/fem/operator/projection/l2projection.hh>
 #include <dune/fem/misc/gridwidth.hh>
 
