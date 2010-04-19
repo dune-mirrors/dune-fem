@@ -12,11 +12,10 @@ AM_CPPFLAGS = $(ALL_PKG_CPPFLAGS) -DPOLORDER=$(POLORDER) -DWANT_GRAPE=$(WANT_GRA
 
 ADAPTPROG = lagrangeadapt adapt 
 check_PROGRAMS = $(ADAPTPROG) l2projection lagrangeinterpolation legendretest \
-                 combinedtest lagrangeglobalrefine
+                 lagrangeglobalrefine
 
 l2projection_SOURCES = l2projection.cc
 adapt_SOURCES = adapt.cc
-combinedtest_SOURCES = combinedtest.cc
 lagrangeinterpolation_SOURCES = lagrangeinterpolation.cc
 lagrangeadapt_SOURCES = lagrangeadapt.cc
 lagrangeglobalrefine_SOURCES = lagrangeglobalrefine.cc
