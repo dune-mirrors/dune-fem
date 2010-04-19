@@ -14,7 +14,6 @@ using namespace Dune;
 #include <dune/fem/space/dgspace/dgadaptmanager.hh>
 #include <dune/fem/space/combinedspace/combinedadaptmanager.hh>
 
-// #include "../leafindexset.hh"
 #include <dune/fem/gridpart/gridpart.hh>
 #include <dune/fem/gridpart/adaptiveleafgridpart.hh>
 
