@@ -58,17 +58,10 @@ namespace Dune
     // my type, to be revised 
     enum { myType = (StructuredGrid) ? -1 : 665 };
 
-    typedef CodimIndexSet CodimIndexSetType;
+    typedef CodimIndexSet< GridType >  CodimIndexSetType;
     mutable CodimIndexSetType codimLeafSet_;
 
-    // type of Hset Selector 
-    typedef HierarchicIndexSetSelector<GridType> SelectorType;
-
-    // my index set type 
-    typedef typename SelectorType :: HierarchicIndexSet HIndexSetType;
-
     typedef typename GridType::template Codim< 0 >::Entity EntityCodim0Type;
-    const HIndexSetType & hIndexSet_; 
 
     static const int dim = GridType::dimension;
 
@@ -76,6 +69,7 @@ namespace Dune
     mutable bool compressed_;
     int sequence_;
 
+    using BaseType :: grid_;
   public:
     //! type traits of this class (see defaultindexsets.hh)
     typedef DefaultLeafIteratorTypes<GridType> Traits; 
@@ -83,13 +77,10 @@ namespace Dune
     //! Constructor
     explicit DGAdaptiveLeafIndexSet ( const GridType &grid ) DUNE_DEPRECATED 
     : BaseType( grid ),
-      codimLeafSet_( this->dofManager_.memoryFactor() ),
-      hIndexSet_( SelectorType::hierarchicIndexSet( grid ) ),
+      codimLeafSet_( grid, 0, this->dofManager_.memoryFactor() ),
       compressed_( true ), // at start the set is compressed
       sequence_( this->dofManager_.sequence() )
     {
-      // set the codim of this codim set, here always 0
-      codimLeafSet_.setCodim( 0 );
       // setup all needed indices 
       setupIndexSet();
     }
@@ -123,14 +114,14 @@ namespace Dune
     //! \brief return size of grid entities per level and codim 
     int size ( int codim ) const
     {
-      assert( hIndexSet_.geomTypes(0).size() == 1 ); 
-      return size(hIndexSet_.geomTypes(0)[0]);
+      assert( codimLeafSet_.geomTypes().size() == 1 ); 
+      return size( codimLeafSet_.geomTypes()[0]);
     }
     
     //! \brief returns vector with geometry tpyes this index set has indices for
     const std::vector <GeometryType> & geomTypes (int codim) const 
     {
-      return hIndexSet_.geomTypes(codim);
+      return codimLeafSet_.geomTypes();
     }
     
     /** @brief Iterator to one past the last entity of given codim for partition type
@@ -161,14 +152,14 @@ namespace Dune
     void removeEntity (const typename GridType::template Codim<0>::Entity & en )
     {
       // only indices that are contained should be removed 
-      assert( codimLeafSet_.validIndex( hIndexSet_.index( en )) );
+      assert( codimLeafSet_.validIndex( en ) );
       this->removeIndex( en ); 
     }
 
     //! \brief reallocate the vector for new size
     void resizeVectors()
     {
-      codimLeafSet_.resize( hIndexSet_.size(0) );
+      codimLeafSet_.resize();
     }
 
     /** \brief 
@@ -255,8 +246,7 @@ namespace Dune
     {
       if( codim != 0 )
         DUNE_THROW( NotImplemented, "DGAdaptiveLeafIndexSet does not support indices for higher codimension!" );
-      const int hIndex = hIndexSet_.index( entity );
-      return codimLeafSet_.index( hIndex );
+      return codimLeafSet_.index( entity );
     }
 
     template< int codim >
@@ -264,17 +254,15 @@ namespace Dune
     {
       if( codim != 0 )
         DUNE_THROW( NotImplemented, "DGAdaptiveLeafIndexSet does not support indices for higher codimension!" );
-      const int hIndex = hIndexSet_.template subIndex< codim >( entity, i );
-      return codimLeafSet_.index( hIndex );
+      return codimLeafSet_.subIndex( entity, i );
     }
 
     IndexType subIndex ( const typename Codim< 0 >::Entity &entity, const int i, const unsigned int codim ) const
     {
       if( codim != 0 )
         DUNE_THROW( NotImplemented, "DGAdaptiveLeafIndexSet does not support indices for higher codimension!" );
-      const int hIndex = hIndexSet_.subIndex( entity, i, codim );
-      return codimLeafSet_.index( hIndex );
-      }
+      return codimLeafSet_.subIndex( entity, i );
+    }
    
     //! \brief return number of holes of the sets indices 
     int numberOfHoles ( const int codim ) const
@@ -302,37 +290,29 @@ namespace Dune
     //- --insertIndex
     void insertIndex(const EntityCodim0Type & en)
     {
-      const int idx = hIndexSet_.index(en);
-      if( !codimLeafSet_.exists( idx ) ) 
+#if HAVE_MPI 
+      // we need special treatment for ghosts 
+      // ghosts should not be inlcuded in holes list 
+      if(en.partitionType() == GhostEntity) 
       {
-  #if HAVE_MPI 
-        // we need special treatment for ghosts 
-        // ghosts should not be inlcuded in holes list 
-        if(en.partitionType() == GhostEntity) 
-        {
-          codimLeafSet_.insertGhost ( idx );
-        }
-        else   
-  #endif
-        {
-          codimLeafSet_.insert ( idx );
-        }
-        compressed_ = false;
+        codimLeafSet_.insertGhost ( en );
       }
-      assert( codimLeafSet_.exists( idx ) );
+      else   
+#endif
+      {
+        codimLeafSet_.insert ( en );
+      }
+      compressed_ = false;
+      assert( codimLeafSet_.exists( en ) );
     }
 
     //! \brief set indices to unsed so that they are cleaned on compress  
     //- --removeIndex
     void removeIndex(const EntityCodim0Type & en)
     {
-      const int idx = hIndexSet_.index(en);
       // if state is NEW or USED the index of all entities is removed 
-      if( codimLeafSet_.exists( idx ) ) 
-      {
-        codimLeafSet_.remove ( idx );
-        compressed_ = false;
-      }
+      codimLeafSet_.remove ( en );
+      compressed_ = false;
     }
 
     // insert index if entities lies below used entity, return 
@@ -352,7 +332,7 @@ namespace Dune
       {
         // if index >= 0, then all children may  also appear in the set 
         // from now on, indices can be inserted, otherwise go deeper 
-        return codimLeafSet_.validIndex( hIndexSet_.index (en ) );
+        return codimLeafSet_.validIndex( en );
       }
       else 
       {
@@ -518,7 +498,7 @@ namespace Dune
 
       // for parallel data read in serial program we need compression 
       if(StructuredGrid && 
-          ((int) hIndexSet_.size(0) != (int) codimLeafSet_.size()) )
+          ((int) grid_.size(0) != (int) codimLeafSet_.size()) )
       {
         compressed_ = false;
       }
