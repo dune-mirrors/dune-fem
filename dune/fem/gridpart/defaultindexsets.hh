@@ -266,6 +266,11 @@ public:
   WrappedLeafIndexSet ( const GridType & grid , const int level =-1 ) 
     : IndexSetWrapper < IndexSetType > (grid.leafIndexSet()) {}
 
+  //! constructor taking grid part 
+  template <class GridPartType> 
+  WrappedLeafIndexSet ( const GridPartType& gridPart ) 
+    : IndexSetWrapper < IndexSetType > (gridPart.grid().leafIndexSet()) {}
+
   //! return type (for Grape In/Output)
   static int type() { return myType; }
   //! returns reference to singleton 
