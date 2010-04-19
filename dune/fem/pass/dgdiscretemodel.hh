@@ -50,6 +50,9 @@ namespace Dune {
     //! Element (codim 0 entity) of the grid
     typedef typename GridType::template Codim<0>::Entity EntityType;
 
+    //! type of local coordinate 
+    typedef typename EntityType :: Geometry :: LocalCoordinate  LocalCoordinate;
+
     //! dimRange 
     enum { dimRange = DiscreteFunctionSpaceType :: DimRange };
 
@@ -180,7 +183,7 @@ namespace Dune {
     template <class ArgumentTuple>
     void analyticalFlux( const EntityType& en,
                          const double time, 
-                         const DomainType& x,
+                         const LocalCoordinate& x,
                          const ArgumentTuple& u, 
                          JacobianRangeType& f) 
     { 
@@ -202,7 +205,7 @@ namespace Dune {
     template <class ArgumentTuple, class JacobianTuple>
     void source( const EntityType& en, 
                  const double time, 
-                 const DomainType& x,
+                 const LocalCoordinate& x,
                  const ArgumentTuple& u, 
                  const JacobianTuple& jac, 
                  RangeType& s ) 
@@ -222,7 +225,7 @@ namespace Dune {
     template <class ArgumentTuple>
     void mass( const EntityType& en, 
                const double time, 
-               const DomainType& x,
+               const LocalCoordinate& x,
                const ArgumentTuple& u, 
                MassFactorType& m )
     {
@@ -288,6 +291,8 @@ namespace Dune {
     typedef typename IntersectionIterator::Intersection Intersection;
 
     typedef typename BaseType :: MassFactorType MassFactorType;
+
+    typedef typename BaseType :: LocalCoordinate LocalCoordinate;
 
     //! Selector for data tuple to use as arguments for all methods;
     //! this fixes the template type ArgumentTuple.
@@ -409,7 +414,7 @@ namespace Dune {
     template< class ArgumentTuple >
     void analyticalFlux ( const EntityType &entity,
                           const double time,
-                          const DomainType &x,
+                          const LocalCoordinate &x,
                           const ArgumentTuple &u,
                           JacobianRangeType &f )
     { 
@@ -422,7 +427,7 @@ namespace Dune {
     template <class ArgumentTuple, class JacobianTuple>
     void source( const EntityType& en, 
                  const double time,
-                 const DomainType& x,
+                 const LocalCoordinate& x,
                  const ArgumentTuple& u,
                  const JacobianTuple& jac, 
                  RangeType& s )
@@ -436,7 +441,7 @@ namespace Dune {
     template <class ArgumentTuple>
     void mass(const EntityType& en, 
               const double time, 
-              const DomainType& x,
+              const LocalCoordinate& x,
               const ArgumentTuple& u, 
               MassFactorType& m)
     {
