@@ -53,8 +53,8 @@ namespace Dune
     typedef HierarchicIndexSetSelector< GridType > SelectorType;
     typedef typename SelectorType :: HierarchicIndexSet HIndexSetType;
 
-    template< int codim >
-    struct CountElements
+    template< int codim , bool gridHasCodim >
+    struct CountElementsBase
     {
       static void apply ( const ThisType &indexSet, const GeometryType &type, int &count )
       {
@@ -62,6 +62,23 @@ namespace Dune
           count = indexSet.template countElements< codim >( type );
       }
     };
+
+    template< int codim >
+    struct CountElementsBase< codim, false >
+    {
+      static void apply ( const ThisType &indexSet, const GeometryType &type, int &count )
+      {
+        if( type.dim() == dimension - codim )
+          count = 0 ;
+      }
+    };
+
+    template< int codim >
+    struct CountElements  
+      : public CountElementsBase< codim, Capabilities :: hasEntity < GridType, codim > :: v >
+    {
+    };
+
 
     template< int codim , bool gridHasCodim >
     struct InsertSubEntitiesBase
