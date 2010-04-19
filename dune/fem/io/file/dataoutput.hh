@@ -284,7 +284,7 @@ protected:
 #endif
   template <class GridPartType>
   class GnuplotOutputer {
-    typedef typename GridPartType::EntityCodim0Type Entity;
+    typedef typename GridPartType::template Codim< 0 >::IteratorType::Entity Entity;
     std::ostream& out_;
     CachingQuadrature<GridPartType,0> &quad_;
     int i_;
