@@ -5,6 +5,7 @@
 #include <dune/common/forloop.hh>
 #include <dune/fem/gridpart/dunefemindexsets.hh>
 #include <dune/fem/gridpart/codimindexset.hh>
+#include <dune/fem/gridpart/idbasedleafindexset.hh>
 
 namespace Dune
 {
@@ -49,6 +50,7 @@ namespace Dune
 
   private:
     typedef CodimIndexSet< GridType >  CodimIndexSetType; 
+    //typedef IdBasedCodimIndexSet< GridType >  CodimIndexSetType; 
 
     template< int codim , bool gridHasCodim >
     struct CountElementsBase
@@ -670,7 +672,7 @@ namespace Dune
     for( int codim = 0; codim < numCodimensions; ++codim )
     {
       if( codimUsed_[ codim ] )
-        codimLeafSet( codim ).set2Unused();
+        codimLeafSet( codim ).resetUsed();
     }
 
     typedef typename GridPartType 
@@ -737,7 +739,7 @@ namespace Dune
     for( int codim = 0; codim < numCodimensions; ++codim )
     {
       if( codimUsed_[ codim ] )
-        codimLeafSet( codim ).set2Unused(); 
+        codimLeafSet( codim ).resetUsed(); 
     }
     
     // get macro iterator 

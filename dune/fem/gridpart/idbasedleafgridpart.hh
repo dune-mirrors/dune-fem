@@ -105,22 +105,31 @@ namespace Dune
     // type of entity of codim 0
     typedef typename GridType::template Codim<0>::Entity EntityCodim0Type;
 
+    const IndexSetType& indexSet_;
   public:
     //- Public methods
     //! Constructor
     IdBasedLeafGridPart ( GridType &grid )
-    : BaseType( grid, IndexSetProviderType :: getObject( &grid ) )
+    : BaseType( grid ) 
+    , indexSet_( IndexSetProviderType :: getObject( &grid ) )
     {}
     //! copy Constructor
     IdBasedLeafGridPart ( const ThisType &other )
-    : BaseType( other.grid_, IndexSetProviderType :: getObject( &(other.grid()) ) )
+    : BaseType( other.grid_ )
+    , indexSet_( IndexSetProviderType :: getObject( &(other.grid()) ) )
     {}
 
     /** \brief Destrcutor removeing index set, if only one reference left, index set
         removed.  */
     ~IdBasedLeafGridPart() 
     { 
-      IndexSetProviderType::removeObject(this->indexSet());
+      IndexSetProviderType::removeObject( indexSet() );
+    }
+ 
+    //! Returns reference to index set of the underlying grid
+    const IndexSetType &indexSet () const
+    {
+      return indexSet_;
     }
 
     //! Begin iterator on the leaf level

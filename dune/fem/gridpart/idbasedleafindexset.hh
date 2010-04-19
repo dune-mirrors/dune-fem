@@ -13,7 +13,7 @@ namespace Dune
 
   //! Send vector to output stream
   template<class MapType>
-  void printMap (std::ostream& s, const MapType& m)
+  inline void printMap (std::ostream& s, const MapType& m)
   {
     typedef typename MapType :: const_iterator iterator;
     iterator end = m.end();
@@ -29,14 +29,42 @@ namespace Dune
 
   //! \brief LeafIndexSet based on local ids using std::map to build mapping
   //!from id to index 
-  template< class IdSetImp, class IndexSetImp, int codim >
+  template< class GridImp >
   class IdBasedCodimIndexSet
   {
-    typedef IdSetImp IdSetType;
-    typedef IndexSetImp IndexSetType;
+    typedef IdBasedCodimIndexSet< GridImp > ThisType;
+  protected:  
+    template <class IdBaseCDSet, int codim> 
+    struct CreateMaps 
+    {
+      static void createMaps(IdBaseCDSet& idxset, 
+                             const int cd )
+      {
+        if( codim == cd ) 
+          idxset.template createMaps< codim >();
+        else 
+          CreateMaps< IdBaseCDSet, codim - 1> :: createMaps( idxset, cd );
+      }
+    };
+
+    template <class IdBaseCDSet> 
+    struct CreateMaps< IdBaseCDSet, 0 >
+    {
+      static void createMaps(IdBaseCDSet& idxset, 
+                             const int cd )
+      {
+        assert( 0 == cd );
+        idxset.template createMaps< 0 >();
+      }
+    };
+
+    typedef GridImp  GridType;
+    // use LocalIdSet to get persistent ids 
+    typedef typename GridType :: Traits :: LocalIdSet   IdSetType;
+    typedef typename GridType :: Traits :: LeafIndexSet IndexSetType;
+
     typedef typename IdSetType::IdType IdType;
     
-  private:
     typedef std::map< IdType, int  > IndexStorageType;
     typedef std::map< int , IdType > IdStorageType;
     typedef std::vector < int > HolesIndicesType;
@@ -54,8 +82,12 @@ namespace Dune
     mutable IndexVectorType oldIndexVec_;
     mutable IndexVectorType newIndexVec_;
 
+    const GridType     & grid_;
     const IdSetType    & idSet_;
     const IndexSetType & indexSet_;
+
+    // my codimension 
+    const int codim_; 
    
     // next index to give away 
     int nextFreeIndex_;
@@ -70,18 +102,19 @@ namespace Dune
 
   public:
     //! Constructor
-    template< class Iterator >
-    IdBasedCodimIndexSet ( const IdSetType &idSet,
-                           const IndexSetType &indexSet,
-                           const Iterator &begin,
-                           const Iterator &end )
+    IdBasedCodimIndexSet ( const GridType& grid,
+                           const int codim, 
+                           const double memFactor = 1.0 )
     : leafIndex_( new IndexStorageType () ),
       oldLeafIndex_( new IndexStorageType () ),
-      idSet_( idSet ),
-      indexSet_( indexSet ),
-      nextFreeIndex_( indexSet_.size( codim ) )
+      grid_( grid ),
+      idSet_( grid.localIdSet() ),
+      indexSet_( grid.leafIndexSet() ),
+      codim_( codim ),
+      nextFreeIndex_( indexSet_.size( codim_ ) )
     {
-      createMaps( begin, end );
+      CreateMaps< ThisType, GridType :: dimension > 
+        :: createMaps( *this, codim );
 
       // set memory over estimation 
       oldIndexVec_.setMemoryFactor( 1.1 );
@@ -95,15 +128,24 @@ namespace Dune
       delete leafIndex_ ;
     }
 
-    template< class Iterator >
-    void createMaps ( const Iterator &begin, const Iterator &end );
+    //! set all entries to unused 
+    void resetUsed() {}
+
+    //! returns vector with geometry tpyes this index set has indices for
+    const std::vector <GeometryType> & geomTypes () const
+    {
+      return indexSet_.geomTypes( codim_ );
+    }
+
+    template< int codim >
+    void createMaps ();
 
     //! make to index numbers consecutive 
     //! return true, if at least one hole was closed 
     void resize ()
     {
       // get new size 
-      nextFreeIndex_ = indexSet_.size(codim);
+      nextFreeIndex_ = indexSet_.size(codim_);
 
       // swap pointers of index storages 
       {
@@ -246,21 +288,47 @@ namespace Dune
     }
 
     //! return leaf index for given hierarchic number  
-    template <class EntityType> 
-    int index ( const EntityType & en, int ) const
+    int indexId ( const IdType& id ) const
     {
       // assert if index was not set yet 
+      assert( leafIndex() [ id ] < size() );
+      return leafIndex() [ id ];
+    }
+   
+    //! return leaf index for given hierarchic number  
+    template <class EntityType> 
+    int index ( const EntityType & en ) const
+    {
+      // assert if index was not set yet 
+      assert( EntityType :: codimension == codim_ );
       assert( exists( en ) );
-      assert( leafIndex() [ idSet_.id(en) ] < size() );
-      return leafIndex() [ idSet_.id(en) ];
+      return indexId( idSet_.id(en) );
+    }
+   
+    //! return leaf index for given hierarchic number  
+    template <class EntityType> 
+    int subIndex ( const EntityType & en, const int subNumber) const
+    {
+      assert( EntityType :: codimension == 0 );
+      return indexId( idSet_.subId( en, subNumber, codim_ ) );
     }
    
     //! return state of index for given hierarchic number  
     template <class EntityType> 
     bool exists ( const EntityType & en) const
     {
+      assert( codim_ == EntityType :: codimension );
       return (leafIndex().find( idSet_.id(en) ) != leafIndex().end()); 
     }
+
+    // insert element as ghost and create index for element number 
+    template <class EntityType>
+    bool validIndex (const EntityType& entity ) const
+    {
+      return exists( entity );
+    }
+
+    void clear() {}
    
     //! remove the list of holes (to avoid double compression)
     void clearHoles() 
@@ -291,7 +359,7 @@ namespace Dune
     template <class EntityType> 
     void checkIndex (const EntityType & en) 
     {
-      IdType id = idSet_.id(en);
+      const IdType id = idSet_.id(en);
       if( leafIndex().find(id) == leafIndex().end() )
       {
         // check if entity is really new 
@@ -313,16 +381,38 @@ namespace Dune
     }
     
     // insert element and create index for element number  
-    template <class EntityType> 
-    void insert (const EntityType & en ) 
+    void insertId ( const IdType& id ) 
     {
-      IdType id = idSet_.id(en);
       if(leafIndex().find(id) == leafIndex().end())
       {
         leafIndex()[id] = nextFreeIndex_;
         leafId_[nextFreeIndex_] = id;
         ++nextFreeIndex_;
       }
+    }
+
+    // insert element and create index for element number  
+    template <class EntityType> 
+    void insert (const EntityType & en ) 
+    {
+      checkIndex( en );
+      //insertId( idSet_.id(en) );
+    }
+
+    // insert element and create index for element number  
+    template <class EntityType> 
+    void insertGhost (const EntityType & en ) 
+    {
+      insert( en );
+    }
+
+    // insert element and create index for element number 
+    template <class EntityType>
+    void insertSubEntity (const EntityType& entity,
+                          const int subNumber)
+    {
+      assert( 0 == EntityType :: codimension );
+      insertId( idSet_.subId( entity, subNumber, codim_ ) );
     }
     
     // removal of indices is actually done in compression 
@@ -332,20 +422,21 @@ namespace Dune
     }
     
     void print (const char * msg, bool oldtoo = false ) const {};
-    
-    // read/write from/to xdr stream 
-    bool processXdr(XDR *xdrs)
+
+    // write to stream 
+    template <class StreamTraits>
+    bool write(OutStreamInterface< StreamTraits >& out) const
     {
-      /*
-      xdr_int ( xdrs, &nextFreeIndex_ );
-      xdr_int ( xdrs, &actSize_ );
-      leafIndex().processXdr(xdrs);
-      state_.processXdr(xdrs);
       return true;
-      */
-      return false;
     }
 
+    // read from stream 
+    template <class StreamTraits>
+    bool read(InStreamInterface< StreamTraits >& in)
+    {
+      return true;
+    }
+      
   protected:
     // return reference to leaf index 
     IndexStorageType& leafIndex() const 
@@ -365,12 +456,17 @@ namespace Dune
 
 
 
-  template< class IdSetImp, class IndexSetImp, int codim >
-  template< class Iterator >
-  void IdBasedCodimIndexSet< IdSetImp, IndexSetImp, codim >
-    :: createMaps ( const Iterator &begin, const Iterator &end )
+  template< class GridImp > 
+  template< int codim >
+  void IdBasedCodimIndexSet< GridImp > 
+    :: createMaps ()
   {
-    for( Iterator it = begin; it != end; ++it )
+    typedef typename GridType :: template Codim< codim > :: LeafIterator 
+      Iterator;
+
+    const Iterator end = grid_.template leafend< codim > ();
+    for( Iterator it = grid_.template leafbegin< codim > (); 
+         it != end; ++it )
     {
       IdType id = idSet_.id(*it);
       if(leafIndex().find(id) == leafIndex().end())
@@ -385,7 +481,7 @@ namespace Dune
   }
 
 
-
+//#if DUNE_FEM_COMPATIBILITY
   // IdBasedLeafIndexSet
   // -------------------
 
@@ -428,15 +524,11 @@ namespace Dune
     // my type, to be revised 
     enum { myType = 8 };
 
-    typedef typename GridType :: Traits :: LeafIndexSet LeafIndexSetType;
     typedef typename GridType :: Traits :: LocalIdSet LocalIdSetType;
     typedef typename GridType :: template Codim<0> :: Entity EntityCodim0Type;
 
-    typedef IdBasedCodimIndexSet< LocalIdSetType, LeafIndexSetType, 0 >
+    typedef IdBasedCodimIndexSet< GridType > 
       IdBasedCodimIndexSetType;
-
-    const LeafIndexSetType &leafSet_; 
-    const LocalIdSetType &idSet_; 
 
     mutable IdBasedCodimIndexSetType pLeafSet_;
     
@@ -451,19 +543,13 @@ namespace Dune
     //! Constructor
     explicit IdBasedLeafIndexSet ( const GridType &grid )
     : BaseType( grid ),
-      leafSet_( grid.leafIndexSet() ),
-      idSet_( grid.localIdSet() ),
-      pLeafSet_( idSet_, leafSet_,
-                 grid.template leafbegin< 0 >(), grid.template leafend< 0 >() ),
+      pLeafSet_( grid, 0 ),
       compressed_( true )
     {}
 
     explicit IdBasedLeafIndexSet ( const GridType *const grid )
     : BaseType( *grid ),
-      leafSet_( grid->leafIndexSet() ),
-      idSet_( grid->localIdSet() ),
-      pLeafSet_( idSet_, leafSet_,
-                 grid->template leafbegin< 0 >(), grid->template leafend< 0 >() ),
+      pLeafSet_( *grid, 0 ),
       compressed_( true )
     {}
 
@@ -498,7 +584,7 @@ namespace Dune
     int size ( int codim ) const
     {
       size_t s = 0;
-      const std::vector< GeometryType > & geomTypes = leafSet_.geomTypes(codim);
+      const std::vector< GeometryType > & geomTypes = persistentLeafSet().geomTypes();
       for(size_t i=0; i<geomTypes.size(); ++i)
         s += size(codim,geomTypes[i]);
       return s;
@@ -507,7 +593,7 @@ namespace Dune
     //! returns vector with geometry tpyes this index set has indices for
     const std::vector <GeometryType> & geomTypes (int codim) const 
     {
-      return leafSet_.geomTypes(codim);
+      return persistentLeafSet().geomTypes();
     }
    
     //! \brief returns true if entity is contained in index set 
@@ -599,7 +685,7 @@ namespace Dune
     IndexType index ( const typename GridType::template Codim< codim >::Entity &entity ) const
     {
       if( codim == 0 )
-        return persistentLeafSet().index( entity, 0 );
+        return persistentLeafSet().index( entity );
       else
         DUNE_THROW( NotImplemented, "IdBasedLeafIndexSet supports only codimension 0." );
     }
@@ -608,7 +694,7 @@ namespace Dune
     IndexType subIndex ( const typename GridType::template Codim< 0 >::Entity &entity, int i ) const
     {
       if( codim == 0 )
-        return persistentLeafSet().index( entity, 0 );
+        return persistentLeafSet().index( entity );
       else
         DUNE_THROW( NotImplemented, "IdBasedLeafIndexSet supports only codimension 0." );
     }
@@ -616,7 +702,7 @@ namespace Dune
     IndexType subIndex ( const typename GridType::template Codim< 0 >::Entity &entity, int i, unsigned int codim ) const
     {
       if( codim == 0 )
-        return persistentLeafSet().index( entity, i );
+        return persistentLeafSet().subIndex( entity, i );
       else
         DUNE_THROW( NotImplemented, "IdBasedLeafIndexSet supports only codimension 0." );
     }
@@ -902,6 +988,8 @@ namespace Dune
     std::cout << msg;
 #endif
   }
+
+//#endif
 
 } // end namespace Dune 
 

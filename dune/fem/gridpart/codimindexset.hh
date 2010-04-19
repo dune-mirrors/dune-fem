@@ -104,18 +104,13 @@ public:
     return indexContainer_.geomTypes( myCodim_ );
   }
 
-  //! return codim 
-  int myCodim () const 
-  {
-    return myCodim_;
-  }
-
   //! reallocate the vectors
   void resize ()
   {
     resize( indexContainer_.size( myCodim_ ) );
   }
 
+protected: 
   //! reallocate the vector for new size
   void resize ( const int newSize )
   {
@@ -134,6 +129,7 @@ public:
     }
   }
 
+public:  
   //! clear set 
   void clear() 
   {
@@ -152,7 +148,7 @@ public:
   }
 
   //! set all entries to unused 
-  void set2Unused() 
+  void resetUsed() 
   {
     const int size = state_.size();
     for(int i=0; i<size; ++i) state_[i] = UNUSED;
