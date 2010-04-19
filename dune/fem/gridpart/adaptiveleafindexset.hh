@@ -92,7 +92,7 @@ namespace Dune
         if( !indexSet.codimUsed_[ codim ] ) return;
         
         const HIndexSetType &hIndexSet = indexSet.hIndexSet_;
-        CodimIndexSetType &codimSet = indexSet.codimLeafSet_[ codim ];
+        CodimIndexSetType &codimSet = indexSet.codimLeafSet( codim );
 
         for( int i = 0; i < entity.template count< codim >(); ++i )
         {
@@ -129,7 +129,7 @@ namespace Dune
         if( !indexSet.codimUsed_[ codim ] ) return;
 
         const HIndexSetType &hIndexSet = indexSet.hIndexSet_;
-        CodimIndexSetType &codimSet = indexSet.codimLeafSet_[ codim ];
+        CodimIndexSetType &codimSet = indexSet.codimLeafSet( codim );
 
         for( int i = 0; i < entity.template count< codim >(); ++i )
         {
@@ -207,6 +207,11 @@ namespace Dune
       return codim < numCodimensions ;
     }
 
+    CodimIndexSetType& codimLeafSet( const int codim ) const 
+    {   
+      return codimLeafSet_[ codim ];
+    }
+
   public:
     //! type traits of this class (see defaultindexsets.hh)
     typedef DefaultLeafIteratorTypes<GridType> Traits; 
@@ -227,7 +232,7 @@ namespace Dune
       for(int codim = 1; codim < numCodimensions; ++codim ) codimUsed_[ codim ] = false ;
       
       // set the codim of each Codim Set. 
-      for(int codim = 0; codim < numCodimensions; ++codim ) codimLeafSet_[ codim ].setCodim( codim );
+      for(int codim = 0; codim < numCodimensions; ++codim ) codimLeafSet( codim ).setCodim( codim );
 
       // build index set 
       setupIndexSet();
@@ -263,7 +268,7 @@ namespace Dune
       if( codimAvailable( codim ) )
       {
         if( codimUsed_[ codim ] )
-          return codimLeafSet_[ codim ].size();
+          return codimLeafSet( codim ).size();
       }
 
       assert( hIndexSet_.geomTypes( codim ).size() == 1 );
@@ -293,7 +298,7 @@ namespace Dune
       if( codimAvailable( codim ) )
       {
         assert( codimUsed_[codim] );
-        return codimLeafSet_[codim].exists( hIndexSet_.index( en ) ); 
+        return codimLeafSet( codim ).exists( hIndexSet_.index( en ) ); 
       }
       else 
         return false;
@@ -384,8 +389,8 @@ namespace Dune
         if( (codim != 0) && ! codimUsed_[ codim ] )
           setUpCodimSet< codim >();
 
-        const CodimIndexSetType &codimSet = codimLeafSet_[ codim ];
-        const int hIdx = hIndexSet_.template index( entity );
+        const CodimIndexSetType &codimSet = codimLeafSet( codim );
+        const int hIdx = hIndexSet_.index( entity );
         const int idx = codimSet.index( hIdx );
         assert( (idx >= 0) && (idx < codimSet.size()) );
         return idx;
@@ -408,7 +413,7 @@ namespace Dune
           setUpCodimSet< codim >();
 
         //assertCodimSetSize( codim );
-        const CodimIndexSetType &codimSet = codimLeafSet_[ codim ];
+        const CodimIndexSetType &codimSet = codimLeafSet( codim );
         const int hIdx = hIndexSet_.template subIndex< codim >( entity, subNumber );
         const int idx = codimSet.index( hIdx );
         assert( (idx >= 0) && (idx < codimSet.size()) );
@@ -430,7 +435,7 @@ namespace Dune
         if( (codim != 0) && !codimUsed_[ codim ] )
           ForLoop< CallSetUpCodimSet, 0, dimension >::apply( codim, *this );
         
-        const CodimIndexSetType &codimSet = codimLeafSet_[ codim ];
+        const CodimIndexSetType &codimSet = codimLeafSet( codim );
         const int hIdx = hIndexSet_.subIndex( entity, subNumber, codim );
         const int idx = codimSet.index( hIdx );
         assert( (idx >= 0) && (idx < codimSet.size()) );
@@ -449,7 +454,7 @@ namespace Dune
       if( codimAvailable( codim ) ) 
       {
         assert( codimUsed_[codim] );
-        return codimLeafSet_[codim].numberOfHoles(); 
+        return codimLeafSet( codim ).numberOfHoles(); 
       }
       else 
         return 0;
@@ -461,7 +466,7 @@ namespace Dune
       if( codimAvailable( codim ) ) 
       {
         assert( codimUsed_[codim] );
-        return codimLeafSet_[codim].oldIndex( hole ); 
+        return codimLeafSet( codim ).oldIndex( hole ); 
       }
       else 
       {
@@ -476,7 +481,7 @@ namespace Dune
       if( codimAvailable( codim ) ) 
       {
         assert( codimUsed_[codim] );
-        return codimLeafSet_[codim].newIndex( hole ); 
+        return codimLeafSet( codim ).newIndex( hole ); 
       }
       else 
       {
@@ -546,7 +551,7 @@ namespace Dune
   inline void
   AdaptiveIndexSetBase< TraitsImp >::resizeVectors ()
   {
-    codimLeafSet_[ 0 ].resize( hIndexSet_.size( 0 ) );
+    codimLeafSet( 0 ).resize( hIndexSet_.size( 0 ) );
 
     // if more than one codimension is supported 
     if( numCodimensions > 1 ) 
@@ -554,7 +559,7 @@ namespace Dune
       for( int codim = 1; codim < numCodimensions; ++codim )
       {
         if( codimUsed_[ codim ] )
-          codimLeafSet_[ codim ].resize( hIndexSet_.size( codim ) );
+          codimLeafSet( codim ).resize( hIndexSet_.size( codim ) );
       }
     }
   }
@@ -567,7 +572,7 @@ namespace Dune
   {
     // reset list of holes in any case
     for( int codim = 0; codim < numCodimensions; ++codim )
-      codimLeafSet_[ codim ].clearHoles();
+      codimLeafSet( codim ).clearHoles();
 
     if( compressed_ )
     {
@@ -581,11 +586,11 @@ namespace Dune
     setupIndexSet();
 
     // true if a least one index is moved
-    bool haveToCopy = codimLeafSet_[ 0 ].compress();
+    bool haveToCopy = codimLeafSet( 0 ).compress();
     for( int codim = 1; codim < numCodimensions; ++codim )
     {
       if( codimUsed_[ codim ] ) 
-        haveToCopy |= codimLeafSet_[ codim ].compress();
+        haveToCopy |= codimLeafSet( codim ).compress();
     }
 
     // now status is compressed
@@ -608,7 +613,7 @@ namespace Dune
     // ghosts should not be inlcuded in holes list 
     if( entity.partitionType() == GhostEntity )
     {
-      codimLeafSet_[ 0 ].insertGhost( index );
+      codimLeafSet( 0 ).insertGhost( index );
       const bool skipGhosts = (pitype != All_Partition);
       // only for index sets upporting more than one codim 
       if( numCodimensions > 1 )
@@ -617,13 +622,13 @@ namespace Dune
     else 
 #endif // HAVE_MPI
     {
-      codimLeafSet_[ 0 ].insert( index );
+      codimLeafSet( 0 ).insert( index );
       // only for index sets upporting more than one codim 
       if( numCodimensions > 1 )
         ForLoop< InsertSubEntities, 1, dimension >::apply( *this, entity );
     }
 
-    assert( codimLeafSet_[ 0 ].exists( index ) );
+    assert( codimLeafSet( 0 ).exists( index ) );
 
     // now consecutivity is no longer guaranteed
     compressed_ = false;
@@ -635,7 +640,7 @@ namespace Dune
   AdaptiveIndexSetBase< TraitsImp >::removeIndex( const ElementType &entity )
   {
     // remove entities (only mark them as unused)
-    codimLeafSet_[ 0 ].remove( hIndexSet_.index( entity ) );
+    codimLeafSet( 0 ).remove( hIndexSet_.index( entity ) );
 
     // don't remove higher codim indices (will be done on compression
 
@@ -668,7 +673,7 @@ namespace Dune
     else
     {
       // if we were a leaf entity, all children are new
-      isNew = codimLeafSet_[ 0 ].validIndex( hIndexSet_.index ( entity ) );
+      isNew = codimLeafSet( 0 ).validIndex( hIndexSet_.index ( entity ) );
     }
 
     // entity has children and we need to go deeper
@@ -691,7 +696,7 @@ namespace Dune
     for( int codim = 0; codim < numCodimensions; ++codim )
     {
       if( codimUsed_[ codim ] )
-        codimLeafSet_[ codim ].set2Unused();
+        codimLeafSet( codim ).set2Unused();
     }
 
     typedef typename GridPartType 
@@ -717,7 +722,7 @@ namespace Dune
         if( codimUsed_[ codim ] )
         {
           // clear all information 
-          codimLeafSet_[ codim ].clear();
+          codimLeafSet( codim ).clear();
         }
       }
     }
@@ -758,7 +763,7 @@ namespace Dune
     for( int codim = 0; codim < numCodimensions; ++codim )
     {
       if( codimUsed_[ codim ] )
-        codimLeafSet_[ codim ].set2Unused(); 
+        codimLeafSet( codim ).set2Unused(); 
     }
     
     // get macro iterator 
@@ -782,7 +787,7 @@ namespace Dune
     if( ! codimAvailable( codim ) ) return ;
 
     // resize if necessary 
-    codimLeafSet_[ codim ].resize( hIndexSet_.size( codim ) );
+    codimLeafSet( codim ).resize( hIndexSet_.size( codim ) );
     
     // walk over grid parts entity set and insert entities
     typedef typename GridPartType
@@ -790,7 +795,7 @@ namespace Dune
 
     const Iterator end = gridPart_.template end< codim, pitype >();
     for( Iterator it = gridPart_.template begin< codim, pitype >(); it != end; ++it )
-      codimLeafSet_[ codim ].insert( hIndexSet_.index ( *it ) );
+      codimLeafSet( codim ).insert( hIndexSet_.index ( *it ) );
 
     // mark codimension as used
     codimUsed_[ codim ] = true;
@@ -836,7 +841,7 @@ namespace Dune
 
     // write all sets 
     for( int i = 0; i < numCodimensions; ++i )
-      codimLeafSet_[ i ].write( out );
+      codimLeafSet( i ).write( out );
     
     // if we got until here writing was sucessful
     return true;
@@ -865,7 +870,7 @@ namespace Dune
 
     // write all sets 
     for( int i = 0; i < numCodimensions; ++i )
-      success &= codimLeafSet_[ i ].processXdr( xdr );
+      success &= codimLeafSet( i ).processXdr( xdr );
     
     return success;
 #else 
@@ -934,11 +939,11 @@ namespace Dune
       for( int i = 0; i < numCodimensions; ++i )
       {
         if( codimUsed_[ i ] )
-          codimLeafSet_[ i ].read( in );
+          codimLeafSet( i ).read( in );
       }
     }
     else
-      codimLeafSet_[ 0 ].read( in );
+      codimLeafSet( 0 ).read( in );
 
     // in parallel runs we have to compress here
     if( grid_.comm().size() > 1 )
@@ -993,11 +998,11 @@ namespace Dune
       for( int i = 0; i < numCodimensions; ++i )
       {
         if( codimUsed_[ i ] )
-          success &= codimLeafSet_[ i ].processXdr( xdr );
+          success &= codimLeafSet( i ).processXdr( xdr );
       }
     }
     else
-      success &= codimLeafSet_[ 0 ].processXdr( xdr );
+      success &= codimLeafSet( 0 ).processXdr( xdr );
 
     // in parallel runs we have to compress here
     if( grid_.comm().size() > 1 )
