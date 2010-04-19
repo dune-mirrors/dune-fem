@@ -7,8 +7,10 @@
 #include <limits>
 
 //- Dune includes 
-#include <dune/fem/io/file/xdrio.hh>
 #include <dune/fem/io/streams/streams.hh>
+#if DUNE_FEM_COMPATIBILITY
+#include <dune/fem/io/file/xdrio.hh>
+#endif
 
 namespace Dune
 {
@@ -263,7 +265,9 @@ namespace Dune
     friend double max(const Double&, const double);
     friend double max(const double,  const Double&);
 
+#if DUNE_FEM_COMPATIBILITY
     friend struct XdrIO< Double >;
+#endif
 
   protected:
     typedef FlOpCounter< ThisType > FlOpCounterType;
@@ -849,7 +853,7 @@ namespace Dune
   }
 
 
-
+#if DUNE_FEM_COMPATIBILITY
   // XdrIO
   // -----
   
@@ -861,6 +865,7 @@ namespace Dune
       return XdrIO< double > :: io( xdrs, a.value_ );
     }
   };
+#endif
 
 }
 
