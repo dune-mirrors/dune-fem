@@ -349,19 +349,19 @@ namespace Dune
     //- Public methods
     //! Constructor
     LevelGridPart(GridType& grid, int level ) :
-      GridPartDefault<Traits>(grid,isetWrapper_),
+      GridPartDefault<Traits>(grid),
       isetWrapper_(grid,level),
       level_(level) {}
     
     //! Constructor, choosing maxLevel
     LevelGridPart(const GridType& grid) :
-      GridPartDefault<Traits>(grid,isetWrapper_),
+      GridPartDefault<Traits>(grid),
       isetWrapper_(grid,grid.maxLevel()),
       level_(grid.maxLevel()) {}
     
     //! copy constructor
     LevelGridPart(const LevelGridPart& other) :
-      GridPartDefault<Traits>(const_cast<GridType&>(other.grid()),isetWrapper_),
+      GridPartDefault<Traits>(const_cast<GridType&>(other.grid())),
       isetWrapper_(other.grid(),other.level_),
       level_(other.level_) {}
 
@@ -504,12 +504,12 @@ namespace Dune
     //- Public methods
     //! Constructor
     LeafGridPart(GridType& grid) :
-      GridPartDefault<Traits>(grid, isetWrapper_),
+      GridPartDefault<Traits>(grid),
       isetWrapper_(grid) {}
 
     //! copy constructor
     LeafGridPart(const LeafGridPart& other) :
-      GridPartDefault<Traits>(const_cast<GridType&>(other.grid()),isetWrapper_),
+      GridPartDefault<Traits>(const_cast<GridType&>(other.grid())),
       isetWrapper_(other.grid()) 
     {}
 
@@ -659,17 +659,17 @@ namespace Dune
     //- Public methods
     //! Constructor 
     HierarchicGridPart(GridType& grid) :
-      GridPartDefault<Traits>(grid, isetWrapper_),
+      GridPartDefault<Traits>(grid),
       isetWrapper_(grid) {}
 
     //! Constructor
     HierarchicGridPart(GridType& grid, const IndexSetType & ) :
-      GridPartDefault<Traits>(grid, isetWrapper_),
+      GridPartDefault<Traits>(grid),
       isetWrapper_(grid) {}
 
     //! copy constructor
     HierarchicGridPart(const HierarchicGridPart& other) :
-      GridPartDefault<Traits>(const_cast<GridType&>(other.grid()), isetWrapper_),
+      GridPartDefault<Traits>(const_cast<GridType&>(other.grid())),
       isetWrapper_(other.grid()) {}
 
     //! Returns reference to index set of the underlying grid
