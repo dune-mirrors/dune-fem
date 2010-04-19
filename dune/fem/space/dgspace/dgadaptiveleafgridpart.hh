@@ -1,6 +1,10 @@
 #ifndef DGADAPTIVELEAFGRIDPART_HH
 #define DGADAPTIVELEAFGRIDPART_HH
 
+#if ! DUNE_FEM_COMPATIBILITY 
+#warning "Deprecated header, use <dune/fem/gridpart/adaptiveleafgridpart.hh> instread!"
+#else 
+
 //- Dune includes 
 #include <dune/fem/misc/capabilities.hh>
 #include <dune/fem/gridpart/gridpart.hh>
@@ -14,9 +18,6 @@ namespace Dune
   // forward deklaration 
   template< class Grid >
   class DGAdaptiveLeafGridPart;
-
-  //template< class Grid >
-  //class DGAdaptiveLeafIndexSet;
 
   //! Type definitions for the DGAdaptiveLeafGridPart class
   template< class Grid >
@@ -155,10 +156,12 @@ namespace Dune
       < typename IndexSetFactory :: KeyType, IndexSetType, IndexSetFactory >
       IndexSetProviderType;
 
+    const IndexSetType& indexSet_;
   public:
     //! Constructor
     explicit DGAdaptiveLeafGridPart( GridType &grid )
-    : BaseType( grid, IndexSetProviderType :: getObject( &grid ) )
+    : BaseType( grid )
+    , indexSet_( IndexSetProviderType :: getObject( &grid ) )
     {
       // warning message when IdBasedLeafIndexSet is used
       const char * warningMsg = Traits :: IndexSetChooserType :: warningMsg ();
@@ -171,7 +174,8 @@ namespace Dune
 
     //! Copy Constructor
     DGAdaptiveLeafGridPart( const ThisType &other )
-    : BaseType( other.grid_, IndexSetProviderType :: getObject( &(other.grid()) ) )
+    : BaseType( other.grid_ )
+    , indexSet_( IndexSetProviderType :: getObject( &(other.grid()) ) )
     {
     }
 
@@ -180,6 +184,12 @@ namespace Dune
     inline ~DGAdaptiveLeafGridPart ()
     { 
       IndexSetProviderType :: removeObject( this->indexSet() );
+    }
+
+    //! Returns reference to index set of the underlying grid
+    const IndexSetType &indexSet () const
+    {
+      return indexSet_;
     }
 
     //! Begin iterator on the leaf level
@@ -245,5 +255,7 @@ namespace Dune
   };
 
 }// end namespace Dune
+
+#endif // end DUNE_FEM_COMPATIBILITY
 
 #endif
