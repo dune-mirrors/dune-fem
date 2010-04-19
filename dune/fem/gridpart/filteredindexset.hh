@@ -1,6 +1,8 @@
 #ifndef DUNE_FILTEREDINDEXSET_HH
 #define DUNE_FILTEREDINDEXSET_HH
 
+#warning "Deprecated header, don't use this index set anymore!"
+
 //- local includes 
 #include <dune/common/forloop.hh>
 #include <dune/fem/gridpart/dunefemindexsets.hh>
@@ -111,6 +113,7 @@ namespace Dune
     typedef DefaultLeafIteratorTypes<GridType> Traits; 
 
     //! Constructor
+    DUNE_VERSION_DEPRECATED(1,2,remove) 
     FilteredIndexSet (const GridPartType & gridPart) 
       : BaseType(gridPart.grid()) 
       , gridPart_( gridPart )  

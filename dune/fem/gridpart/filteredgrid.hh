@@ -6,7 +6,6 @@
 #include <cassert>
 
 //- Dune includes
-// #include <dune/fem/gridpart/interfaces.hh>
 
 #include <dune/grid/common/grid.hh>
 #include <dune/grid/common/referenceelements.hh>
@@ -16,7 +15,11 @@
 #include <dune/grid/common/datahandleif.hh>
 #include <dune/grid/utility/grapedataioformattypes.hh>
 
+#if DUNE_FEM_COMPATIBILITY 
 #include <dune/fem/gridpart/filteredindexset.hh>
+#else 
+#include <dune/fem/gridpart/adaptiveleafindexset.hh>
+#endif
 
 namespace Dune
 {
@@ -380,7 +383,11 @@ namespace Dune
     template <int dummy, bool useNewIndexSet > 
     struct IndexSetSpecialization
     {
+#if DUNE_FEM_COMPATIBILITY 
       typedef FilteredIndexSet<GridPartImp,FilterImp> IndexSetType;
+#else
+      typedef AdaptiveLeafIndexSet< GridPartImp > IndexSetType;
+#endif
       static IndexSetType* create(const ThisType& gridPart) 
       {
         return new IndexSetType( gridPart );

@@ -8,6 +8,10 @@
 #include <dune/fem/storage/singletonlist.hh>
 #include <dune/fem/gridpart/adaptiveleafindexset.hh>
 
+#if DUNE_FEM_COMPATIBILITY
+#include <dune/fem/space/dgspace/dgadaptiveleafgridpart.hh>
+#endif
+
 namespace Dune
 {
 
@@ -54,6 +58,7 @@ namespace Dune
       typedef AdaptiveLeafIndexSet< GridPartType > IndexSetType;
     };
 
+#if ! DUNE_FEM_COMPATIBILITY // remove this #if in version 1.2
     template <int dummy> 
     struct AdaptiveLeafIndexSetChooser<dummy, true >
     {
@@ -64,6 +69,7 @@ namespace Dune
 #endif
       typedef DGAdaptiveLeafIndexSet< GridPartType > IndexSetType;
     };
+#endif
 
     // choose the LeafIndexSet
     struct LeafIndexSetChooser
@@ -287,7 +293,7 @@ namespace Dune
     }
   };
 
-#if ! DUNE_FEM_COMPATIBILITY
+#if ! DUNE_FEM_COMPATIBILITY // remove this #if in version 1.2
   /** @ingroup AdaptiveLeafGP
       \brief A grid part with an index set specially
       designed for adaptive calculations.
