@@ -267,14 +267,12 @@ namespace Dune
 
   protected:
     GridType &grid_;
-    const IndexSetType &indexSet_;
 
   protected:
     //! Constructor
-    GridPartDefault ( GridType &grid, const IndexSetType &indexSet )
+    GridPartDefault ( GridType &grid ) //, const IndexSetType &indexSet )
     : BaseType(),
-      grid_( grid ),
-      indexSet_( indexSet )
+      grid_( grid )
     {}
 
     ~GridPartDefault ()
@@ -307,12 +305,6 @@ namespace Dune
     end () const 
     {
       return BaseType :: template end< codim, InteriorBorder_Partition >();
-    }
-
-    //! Returns reference to index set of the underlying grid
-    const IndexSetType &indexSet () const
-    {
-      return indexSet_;
     }
 
   private:
@@ -372,6 +364,12 @@ namespace Dune
       GridPartDefault<Traits>(const_cast<GridType&>(other.grid()),isetWrapper_),
       isetWrapper_(other.grid(),other.level_),
       level_(other.level_) {}
+
+    //! Returns reference to index set of the underlying grid
+    const IndexSetType &indexSet () const
+    {
+      return isetWrapper_;
+    }
 
     //! Begin iterator on the leaf level
     template< int codim >
@@ -514,6 +512,12 @@ namespace Dune
       GridPartDefault<Traits>(const_cast<GridType&>(other.grid()),isetWrapper_),
       isetWrapper_(other.grid()) 
     {}
+
+    //! Returns reference to index set of the underlying grid
+    const IndexSetType &indexSet () const
+    {
+      return isetWrapper_;
+    }
 
     //! Begin iterator on the leaf level
     template< int codim >
@@ -667,6 +671,12 @@ namespace Dune
     HierarchicGridPart(const HierarchicGridPart& other) :
       GridPartDefault<Traits>(const_cast<GridType&>(other.grid()), isetWrapper_),
       isetWrapper_(other.grid()) {}
+
+    //! Returns reference to index set of the underlying grid
+    const IndexSetType &indexSet () const
+    {
+      return isetWrapper_;
+    }
 
     //! Begin iterator on the leaf level
     template< int codim >
