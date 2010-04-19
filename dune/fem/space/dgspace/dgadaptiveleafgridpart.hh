@@ -3,6 +3,7 @@
 
 #if ! DUNE_FEM_COMPATIBILITY 
 #warning "Deprecated header, use <dune/fem/gridpart/adaptiveleafgridpart.hh> instread!"
+#include <dune/fem/gridpart/adaptiveleafgridpart.hh>
 #else 
 
 //- Dune includes 
@@ -159,7 +160,8 @@ namespace Dune
     const IndexSetType& indexSet_;
   public:
     //! Constructor
-    explicit DGAdaptiveLeafGridPart( GridType &grid )
+    explicit DUNE_VERSION_DEPRECATED(1,2,remove) 
+    DGAdaptiveLeafGridPart( GridType &grid )
     : BaseType( grid )
     , indexSet_( IndexSetProviderType :: getObject( &grid ) )
     {

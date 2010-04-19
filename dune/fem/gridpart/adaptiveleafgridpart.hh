@@ -287,6 +287,7 @@ namespace Dune
     }
   };
 
+#if ! DUNE_FEM_COMPATIBILITY
   /** @ingroup AdaptiveLeafGP
       \brief A grid part with an index set specially
       designed for adaptive calculations.
@@ -313,6 +314,7 @@ namespace Dune
     {
     }
   };
+#endif
 
 } // end namespace Dune
 
