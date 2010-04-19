@@ -25,21 +25,25 @@ namespace Dune
   /////////////////////////////////////////////////////////////////////////
 
   // forward deklaration of grid part 
-  template< class Grid, PartitionIteratorType idxpitype = All_Partition >
+  template< class Grid, PartitionIteratorType idxpitype = All_Partition , bool onlyCodimensionZero = false >
   class AdaptiveLeafGridPart;
-
-  //template< class Grid, PartitionIteratorType pitype >
-  //class AdaptiveLeafIndexSet;
-
 
 
   //! Type definitions for the LeafGridPart class
-  template< class Grid, PartitionIteratorType idxpitype >
+  template< class Grid, PartitionIteratorType idxpitype , bool onlyCodimensionZero = false >
   class AdaptiveLeafGridPartTraits
   {
+  public:
+    //! type of the grid 
+    typedef Grid GridType;
+
+    //! type of the grid part , i.e. this type 
+    typedef AdaptiveLeafGridPart< GridType, idxpitype, onlyCodimensionZero > GridPartType;
+
+  protected:  
     // choose the AdaptiveIndexSet (based on the HierarchicIndexSet)
     // to be revised
-    template< bool >
+    template < int dummy, bool onlyCodimZero > 
     struct AdaptiveLeafIndexSetChooser
     {
 #ifdef USE_PARTITIONTYPED_INDEXSET
@@ -47,11 +51,21 @@ namespace Dune
 #else
       static const PartitionIteratorType indexSetPartitionType = All_Partition;
 #endif
-      typedef AdaptiveLeafIndexSet< Grid, indexSetPartitionType > IndexSetType;
+      typedef AdaptiveLeafIndexSet< GridPartType > IndexSetType;
+    };
+
+    template <int dummy> 
+    struct AdaptiveLeafIndexSetChooser<dummy, true >
+    {
+#ifdef USE_PARTITIONTYPED_INDEXSET
+      static const PartitionIteratorType indexSetPartitionType = idxpitype;
+#else
+      static const PartitionIteratorType indexSetPartitionType = All_Partition;
+#endif
+      typedef DGAdaptiveLeafIndexSet< GridPartType > IndexSetType;
     };
 
     // choose the LeafIndexSet
-    template< bool >
     struct LeafIndexSetChooser
     {
       static const PartitionIteratorType indexSetPartitionType = All_Partition;
@@ -59,16 +73,11 @@ namespace Dune
     };
 
     static const bool hasHierarchicIndexSet = Capabilities::hasHierarchicIndexSet< Grid >::v;
-    typedef typename SelectType< hasHierarchicIndexSet, AdaptiveLeafIndexSetChooser< true >, LeafIndexSetChooser< false > >::Type
+    typedef typename SelectType< hasHierarchicIndexSet, 
+            AdaptiveLeafIndexSetChooser<-1, onlyCodimensionZero >, LeafIndexSetChooser>::Type
       IndexSetChooserType;
 
-  public:
-    //! type of the grid 
-    typedef Grid GridType;
-
-    //! type of the grid part , i.e. this type 
-    typedef AdaptiveLeafGridPart< GridType, idxpitype > GridPartType;
-
+  public:  
     //! type of the index set 
     typedef typename IndexSetChooserType::IndexSetType IndexSetType;
 
@@ -101,18 +110,24 @@ namespace Dune
       The underlying \ref AdaptiveLeafIndexSet "index set" is defined for
       entities of all codimensions. 
   */
-  template< class Grid, PartitionIteratorType idxpitype >
+  template< class Grid, PartitionIteratorType idxpitype , bool onlyCodimensionZero >
   class AdaptiveLeafGridPart
-  : public GridPartDefault< AdaptiveLeafGridPartTraits< Grid, idxpitype > >
+  : public GridPartDefault< AdaptiveLeafGridPartTraits< Grid, idxpitype, onlyCodimensionZero > >
   {
-    typedef AdaptiveLeafGridPart< Grid, idxpitype > ThisType;
-    typedef GridPartDefault< AdaptiveLeafGridPartTraits< Grid, idxpitype > >
-      BaseType;
+  public:  
+    //! Type definitions
+    typedef AdaptiveLeafGridPartTraits< Grid, idxpitype, onlyCodimensionZero > Traits;
+
+  protected:  
+    // type of this pointer 
+    typedef AdaptiveLeafGridPart< Grid, idxpitype, onlyCodimensionZero > ThisType;
+
+    // type of base class 
+    typedef GridPartDefault< Traits > BaseType;
 
   public:
-    //! Type definitions
-    typedef AdaptiveLeafGridPartTraits< Grid, idxpitype > Traits;
-
+    //! Grid implementation type
+    typedef typename Traits :: GridPartType GridPartType;
     //! Grid implementation type
     typedef typename Traits :: GridType GridType;
     //! The leaf index set of the grid implementation
@@ -133,12 +148,33 @@ namespace Dune
   private:
     struct IndexSetFactory
     {
+      struct Key 
+      {
+        const GridPartType& gridPart_;
+        const GridType& grid_;
+        Key(const GridPartType& gridPart, const GridType& grid) 
+         : gridPart_( gridPart ), grid_( grid ) 
+        {}
+
+        Key( const Key& other ) 
+          : gridPart_( other.gridPart_ ) 
+          , grid_( other.grid_ )
+        {}
+        bool operator ==( const Key& other ) const 
+        {
+          // compare grid pointers 
+          return (&grid_) == (& other.grid_ );
+        }
+        const GridPartType& gridPart() const { return gridPart_; }
+        const GridType& grid() const { return grid_; }
+      };
+
       typedef IndexSetType ObjectType;
-      typedef const GridType *KeyType;
+      typedef Key KeyType;
 
       inline static ObjectType *createObject ( const KeyType &key )
       {
-        return new ObjectType( *key );
+        return new ObjectType( key.gridPart() );
       }
 
       inline static void deleteObject ( ObjectType *object )
@@ -147,27 +183,41 @@ namespace Dune
       }
     };
 
+    typedef typename IndexSetFactory :: KeyType KeyType;
     typedef SingletonList
-      < typename IndexSetFactory :: KeyType, IndexSetType, IndexSetFactory >
-      IndexSetProviderType;
+      < KeyType, IndexSetType, IndexSetFactory > IndexSetProviderType;
 
+    // type of entity with codimension zero 
     typedef typename GridType :: template Codim< 0 > :: Entity EntityCodim0Type;
 
+    // reference to index set 
+    const IndexSetType& indexSet_;
   public:
     //! Constructor
     inline explicit AdaptiveLeafGridPart ( GridType &grid )
-    : BaseType( grid, IndexSetProviderType :: getObject( &grid ) )
-    {}
+    : BaseType( grid )
+    , indexSet_( IndexSetProviderType :: getObject( KeyType( *this, grid ) ) )
+    {
+    }
+
     //! Copy Constructor
     AdaptiveLeafGridPart ( const ThisType &other )
-    : BaseType( other.grid_, IndexSetProviderType :: getObject( &(other.grid()) ) )
-    {}
+    : BaseType( other.grid_ )
+    , indexSet_( IndexSetProviderType :: getObject( KeyType( *this, other.grid() ) ) )
+    {
+    }
 
     /** \brief Destrcutor removeing index set, if only one reference left, index set
         removed.  */
     inline ~AdaptiveLeafGridPart ()
     { 
       IndexSetProviderType :: removeObject( this->indexSet() );
+    }
+
+    //! Returns reference to index set of the underlying grid
+    const IndexSetType &indexSet () const
+    {
+      return indexSet_;
     }
 
     //! Begin iterator on the leaf level
@@ -234,6 +284,33 @@ namespace Dune
                               CommunicationDirection dir ) const
     {
       this->grid().communicate( data, iftype, dir );
+    }
+  };
+
+  /** @ingroup AdaptiveLeafGP
+      \brief A grid part with an index set specially
+      designed for adaptive calculations.
+
+      The underlying \ref DGAdaptiveLeafIndexSet "index set" is defined 
+      only for codimension 0. 
+  */
+  template< class Grid, PartitionIteratorType idxpitype = All_Partition >
+  class DGAdaptiveLeafGridPart
+  : public AdaptiveLeafGridPart< Grid, idxpitype, true > 
+  {
+    typedef AdaptiveLeafGridPart< Grid, idxpitype, true > BaseType;
+  public:  
+    typedef typename BaseType :: GridType GridType;
+    //! Constructor
+    inline explicit DGAdaptiveLeafGridPart ( GridType &grid )
+    : BaseType( grid )
+    {
+    }
+
+    //! copy constructor 
+    inline DGAdaptiveLeafGridPart ( const DGAdaptiveLeafGridPart& other )
+    : BaseType( other )
+    {
     }
   };
 
