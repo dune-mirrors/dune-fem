@@ -10,13 +10,11 @@ using namespace Dune;
 #include <dune/fem/function/vectorfunction.hh>
 #include <dune/fem/function/attachedfunction.hh>
 #include <dune/fem/space/dgspace.hh>
-#include <dune/fem/space/combinedspace.hh>
 #include <dune/fem/quadrature/cachingquadrature.hh>
 #include <dune/fem/space/dgspace/dgadaptmanager.hh>
 #include <dune/fem/space/combinedspace/combinedadaptmanager.hh>
 
 // #include "../leafindexset.hh"
-#include <dune/fem/space/dgspace/dgadaptiveleafgridpart.hh>
 #include <dune/fem/gridpart/gridpart.hh>
 #include <dune/fem/gridpart/adaptiveleafgridpart.hh>
 
@@ -52,8 +50,8 @@ const int polOrd = POLORDER;
 //! the index set we are using
 typedef GridSelector::GridType MyGridType;
 typedef DGAdaptiveLeafGridPart< MyGridType > GridPartType;
-//typedef HierarchicGridPart< MyGridType > GridPartType;
 //typedef AdaptiveLeafGridPart< MyGridType > GridPartType;
+//typedef HierarchicGridPart< MyGridType > GridPartType;
 
 //! define the function space, \f[ \R^2 \rightarrow \R \f]
 // see dune/common/functionspace.hh
@@ -62,13 +60,8 @@ typedef DGAdaptiveLeafGridPart< MyGridType > GridPartType;
 //! define the function space our unkown belong to 
 //! see dune/fem/lagrangebase.hh
 typedef FunctionSpace < double , double, GRIDDIM , 5 > FuncSpace;
-typedef FunctionSpace < double , double, GRIDDIM , 1 > SingleFuncSpace;
-// typedef DiscontinuousGalerkinSpace<FuncSpace, GridPartType, 
-//    polOrd,CachingStorage> DiscreteFunctionSpaceType;
-typedef DiscontinuousGalerkinSpace<SingleFuncSpace, GridPartType, 
-  polOrd,CachingStorage> SingleDiscreteFunctionSpaceType;
-typedef CombinedSpace<SingleDiscreteFunctionSpaceType,5,PointBased> 
-   DiscreteFunctionSpaceType;
+typedef DiscontinuousGalerkinSpace<FuncSpace, GridPartType, 
+  polOrd,CachingStorage> DiscreteFunctionSpaceType;
 
 //! define the type of discrete function we are using , see
 //typedef AdaptiveDiscreteFunction< DiscreteFunctionSpaceType > DiscreteFunctionType;
