@@ -48,10 +48,7 @@ namespace Dune
     typedef typename GridType::template Codim< 0 >::Entity ElementType;
 
   private:
-    typedef CodimIndexSet CodimIndexSetType; 
-
-    typedef HierarchicIndexSetSelector< GridType > SelectorType;
-    typedef typename SelectorType :: HierarchicIndexSet HIndexSetType;
+    typedef CodimIndexSet< GridType >  CodimIndexSetType; 
 
     template< int codim , bool gridHasCodim >
     struct CountElementsBase
@@ -91,13 +88,11 @@ namespace Dune
         // if codimension is not used return 
         if( !indexSet.codimUsed_[ codim ] ) return;
         
-        const HIndexSetType &hIndexSet = indexSet.hIndexSet_;
         CodimIndexSetType &codimSet = indexSet.codimLeafSet( codim );
 
         for( int i = 0; i < entity.template count< codim >(); ++i )
         {
-          // codimSet.insert( hIndexSet.template subIndex< codim >( entity, i ) );
-          codimSet.insert( hIndexSet.subIndex( entity, i, codim ) );
+          codimSet.insertSubEntity( entity, i );
         }
       }
     };
@@ -128,7 +123,6 @@ namespace Dune
         // if codimension is not used return 
         if( !indexSet.codimUsed_[ codim ] ) return;
 
-        const HIndexSetType &hIndexSet = indexSet.hIndexSet_;
         CodimIndexSetType &codimSet = indexSet.codimLeafSet( codim );
 
         for( int i = 0; i < entity.template count< codim >(); ++i )
@@ -140,7 +134,7 @@ namespace Dune
           const Entity &subentity = *ptr;
 
           if( !skipGhosts || (entity.partitionType() != GhostEntity) )
-            codimSet.insertGhost( hIndexSet.index( subentity ) );
+            codimSet.insertGhost( subentity );
         }
       }
     };
@@ -184,10 +178,8 @@ namespace Dune
 
     // reference to grid part 
     const GridPartType& gridPart_;
-    // reference to HierarchicIndexSet 
-    const HIndexSetType &hIndexSet_;
     // Codimension leaf index sets 
-    mutable CodimIndexSetType codimLeafSet_[ numCodimensions ];
+    mutable CodimIndexSetType* codimLeafSet_[ numCodimensions ];
     // flag for codim is in use or not 
     mutable bool codimUsed_ [ numCodimensions ];
     
@@ -209,7 +201,8 @@ namespace Dune
 
     CodimIndexSetType& codimLeafSet( const int codim ) const 
     {   
-      return codimLeafSet_[ codim ];
+      assert( codimLeafSet_ );
+      return *codimLeafSet_[ codim ];
     }
 
   public:
@@ -221,7 +214,6 @@ namespace Dune
     AdaptiveIndexSetBase (const GridPartType & gridPart)
       : BaseType( gridPart.grid() ) 
       , gridPart_( gridPart )
-      , hIndexSet_( SelectorType::hierarchicIndexSet( gridPart.grid() ) ) 
       , sequence_( dofManager_.sequence() )
       , compressed_(true) // at start the set is compressed 
     {
@@ -232,7 +224,10 @@ namespace Dune
       for(int codim = 1; codim < numCodimensions; ++codim ) codimUsed_[ codim ] = false ;
       
       // set the codim of each Codim Set. 
-      for(int codim = 0; codim < numCodimensions; ++codim ) codimLeafSet( codim ).setCodim( codim );
+      for(int codim = 0; codim < numCodimensions; ++codim ) 
+      {
+        codimLeafSet_[ codim ] = new CodimIndexSetType( grid_, codim );
+      }
 
       // build index set 
       setupIndexSet();
@@ -240,7 +235,14 @@ namespace Dune
 
     //! Destructor
     virtual ~AdaptiveIndexSetBase ()
-    {}
+    {
+      // set the codim of each Codim Set. 
+      for(int codim = 0; codim < numCodimensions; ++codim ) 
+      {
+        delete codimLeafSet_[ codim ];
+        codimLeafSet_[ codim ] = 0;
+      }
+    }
 
     //! return type of index set, for GrapeDataIO
     int type () const
@@ -271,7 +273,7 @@ namespace Dune
           return codimLeafSet( codim ).size();
       }
 
-      assert( hIndexSet_.geomTypes( codim ).size() == 1 );
+      assert( codimLeafSet( codim ).geomTypes().size() == 1 );
       int count = 0;
       ForLoop< CountElements, 0, dimension > :: apply( *this, type, count );
       return count;
@@ -280,14 +282,14 @@ namespace Dune
     //! return size of grid entities of given codim 
     IndexType size ( int codim ) const
     {
-      assert( hIndexSet_.geomTypes(codim).size() == 1 ); 
-      return size(hIndexSet_.geomTypes(codim)[0]);
+      assert( codimLeafSet( codim ).geomTypes().size() == 1 ); 
+      return size( codimLeafSet( codim ).geomTypes()[0] );
     }
     
     //! returns vector with geometry tpyes this index set has indices for
-    const std::vector <GeometryType> & geomTypes (int codim) const 
+    const std::vector <GeometryType> & geomTypes (const int codim) const 
     {
-      return hIndexSet_.geomTypes(codim);
+      return codimLeafSet( codim ).geomTypes();
     }
    
     //! \brief returns true if entity is contained in index set 
@@ -298,7 +300,7 @@ namespace Dune
       if( codimAvailable( codim ) )
       {
         assert( codimUsed_[codim] );
-        return codimLeafSet( codim ).exists( hIndexSet_.index( en ) ); 
+        return codimLeafSet( codim ).exists( en ); 
       }
       else 
         return false;
@@ -390,32 +392,7 @@ namespace Dune
           setUpCodimSet< codim >();
 
         const CodimIndexSetType &codimSet = codimLeafSet( codim );
-        const int hIdx = hIndexSet_.index( entity );
-        const int idx = codimSet.index( hIdx );
-        assert( (idx >= 0) && (idx < codimSet.size()) );
-        return idx;
-      }
-      else 
-      {
-        DUNE_THROW( NotImplemented, (name() + " does not support indices for codim = ") << codim );
-        return -1;
-      }
-    }
-
-    template< int codim >
-    IndexType DUNE_DEPRECATED
-    subIndex ( const typename GridType :: template Codim< 0 > :: Entity &entity,
-               int subNumber ) const
-    {
-      if( codimAvailable( codim ) ) 
-      {
-        if( (codim != 0) && !codimUsed_[ codim ] )
-          setUpCodimSet< codim >();
-
-        //assertCodimSetSize( codim );
-        const CodimIndexSetType &codimSet = codimLeafSet( codim );
-        const int hIdx = hIndexSet_.template subIndex< codim >( entity, subNumber );
-        const int idx = codimSet.index( hIdx );
+        const int idx = codimSet.index( entity );
         assert( (idx >= 0) && (idx < codimSet.size()) );
         return idx;
       }
@@ -436,8 +413,7 @@ namespace Dune
           ForLoop< CallSetUpCodimSet, 0, dimension >::apply( codim, *this );
         
         const CodimIndexSetType &codimSet = codimLeafSet( codim );
-        const int hIdx = hIndexSet_.subIndex( entity, subNumber, codim );
-        const int idx = codimSet.index( hIdx );
+        const int idx = codimSet.subIndex( entity, subNumber );
         assert( (idx >= 0) && (idx < codimSet.size()) );
         return idx;
       }
@@ -551,7 +527,7 @@ namespace Dune
   inline void
   AdaptiveIndexSetBase< TraitsImp >::resizeVectors ()
   {
-    codimLeafSet( 0 ).resize( hIndexSet_.size( 0 ) );
+    codimLeafSet( 0 ).resize();
 
     // if more than one codimension is supported 
     if( numCodimensions > 1 ) 
@@ -559,7 +535,7 @@ namespace Dune
       for( int codim = 1; codim < numCodimensions; ++codim )
       {
         if( codimUsed_[ codim ] )
-          codimLeafSet( codim ).resize( hIndexSet_.size( codim ) );
+          codimLeafSet( codim ).resize();
       }
     }
   }
@@ -606,14 +582,12 @@ namespace Dune
   inline void
   AdaptiveIndexSetBase< TraitsImp >::insertIndex ( const ElementType &entity )
   {
-    const int index = hIndexSet_.index( entity );
-
 #if HAVE_MPI 
     // we need special treatment for ghosts 
     // ghosts should not be inlcuded in holes list 
     if( entity.partitionType() == GhostEntity )
     {
-      codimLeafSet( 0 ).insertGhost( index );
+      codimLeafSet( 0 ).insertGhost( entity );
       const bool skipGhosts = (pitype != All_Partition);
       // only for index sets upporting more than one codim 
       if( numCodimensions > 1 )
@@ -622,13 +596,13 @@ namespace Dune
     else 
 #endif // HAVE_MPI
     {
-      codimLeafSet( 0 ).insert( index );
+      codimLeafSet( 0 ).insert( entity );
       // only for index sets upporting more than one codim 
       if( numCodimensions > 1 )
         ForLoop< InsertSubEntities, 1, dimension >::apply( *this, entity );
     }
 
-    assert( codimLeafSet( 0 ).exists( index ) );
+    assert( codimLeafSet( 0 ).exists( entity ) );
 
     // now consecutivity is no longer guaranteed
     compressed_ = false;
@@ -640,7 +614,7 @@ namespace Dune
   AdaptiveIndexSetBase< TraitsImp >::removeIndex( const ElementType &entity )
   {
     // remove entities (only mark them as unused)
-    codimLeafSet( 0 ).remove( hIndexSet_.index( entity ) );
+    codimLeafSet( 0 ).remove( entity );
 
     // don't remove higher codim indices (will be done on compression
 
@@ -673,7 +647,7 @@ namespace Dune
     else
     {
       // if we were a leaf entity, all children are new
-      isNew = codimLeafSet( 0 ).validIndex( hIndexSet_.index ( entity ) );
+      isNew = codimLeafSet( 0 ).validIndex( entity );
     }
 
     // entity has children and we need to go deeper
@@ -787,7 +761,7 @@ namespace Dune
     if( ! codimAvailable( codim ) ) return ;
 
     // resize if necessary 
-    codimLeafSet( codim ).resize( hIndexSet_.size( codim ) );
+    codimLeafSet( codim ).resize();
     
     // walk over grid parts entity set and insert entities
     typedef typename GridPartType
@@ -795,7 +769,7 @@ namespace Dune
 
     const Iterator end = gridPart_.template end< codim, pitype >();
     for( Iterator it = gridPart_.template begin< codim, pitype >(); it != end; ++it )
-      codimLeafSet( codim ).insert( hIndexSet_.index ( *it ) );
+      codimLeafSet( codim ).insert( *it );
 
     // mark codimension as used
     codimUsed_[ codim ] = true;

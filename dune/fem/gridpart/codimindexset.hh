@@ -4,6 +4,7 @@
 //- Dune includes 
 #include <dune/common/misc.hh>
 #include <dune/fem/space/common/arrays.hh>
+#include <dune/fem/gridpart/defaultindexsets.hh>
 
 #if DUNE_FEM_COMPATIBILITY
 #include <dune/fem/io/file/xdrio.hh>
@@ -19,13 +20,22 @@ namespace Dune {
 //  --CodimIndexSet 
 //
 //***********************************************************************
+template <class GridImp>  
 class CodimIndexSet
 {
+protected:  
+  typedef GridImp GridType;
+  typedef HierarchicIndexSetSelector< GridType > SelectorType;
+  typedef typename SelectorType :: HierarchicIndexSet PersistentIndexSetType;
+
 private:
   //enum INDEXSTATE { NEW = 2 , USED = 1 , UNUSED = -1 };
   static const char NEW    = 2;  // new indices 
   static const char USED   = 1;  // used indices 
   static const char UNUSED = 0; // unused indices 
+
+  // reference to persistent index container 
+  const PersistentIndexSetType& indexContainer_;
 
   // array type for indices 
   typedef MutableArray<int> IndexArrayType;
@@ -54,22 +64,25 @@ private:
   int lastSize_;
 
   // codim for which index is provided 
-  int myCodim_; 
+  const int myCodim_; 
 
   // actual number of holes 
   int numberHoles_;
 
 public:
   //! Constructor taking memory factor (default = 1.1)
-  CodimIndexSet (const double memoryFactor = 1.1) 
-    : leafIndex_(0)
+  CodimIndexSet (const GridType& grid, 
+                 const int codim, 
+                 const double memoryFactor = 1.1) 
+    : indexContainer_( SelectorType::hierarchicIndexSet( grid ) ) 
+    , leafIndex_(0)
     , holes_(0)
     , oldIdx_(0)
     , newIdx_(0)
     , state_(0)
     , nextFreeIndex_ (0)
     , lastSize_ (0)
-    , myCodim_(-1) 
+    , myCodim_( codim ) 
     , numberHoles_(0)
   {
     setMemoryFactor(memoryFactor);
@@ -84,17 +97,23 @@ public:
     oldIdx_.setMemoryFactor(memoryFactor);
     newIdx_.setMemoryFactor(memoryFactor);
   }
-  
-  //! set codim, because we can't use constructor 
-  void setCodim (int codim) 
+
+  //! returns vector with geometry tpyes this index set has indices for
+  const std::vector <GeometryType> & geomTypes () const
   {
-    myCodim_ = codim;
+    return indexContainer_.geomTypes( myCodim_ );
   }
 
   //! return codim 
   int myCodim () const 
   {
     return myCodim_;
+  }
+
+  //! reallocate the vectors
+  void resize ()
+  {
+    resize( indexContainer_.size( myCodim_ ) );
   }
 
   //! reallocate the vector for new size
@@ -272,32 +291,29 @@ public:
     return leafIndex_.size();
   }
 
-  //! return leaf index for given hierarchic number  
-  int index ( int num ) const
+  //! return leaf index for given entity   
+  template <class EntityType>
+  int index ( const EntityType& entity ) const
   {
-    // assert if index was not set yet 
-    return leafIndex_ [ num ];
+    assert( myCodim_ == EntityType :: codimension );
+    return indexIdx( indexContainer_.index( entity ) );
+  }
+  
+  //! return leaf index for given entity   
+  template <class EntityType>
+  int subIndex ( const EntityType& entity,
+                 const int subNumber ) const 
+  {
+    assert( 0 == EntityType :: codimension );
+    return indexIdx( indexContainer_.subIndex( entity, subNumber, myCodim_ ) );
   }
   
   //! return state of index for given hierarchic number  
-  int state ( int num ) const
+  template <class EntityType> 
+  bool exists ( const EntityType& entity ) const
   {
-    // assert if index was not set yet 
-    assert( num >= 0 );
-    assert( num < state_.size() );
-    return state_ [ num ];
-  }
-  
-  //! return state of index for given hierarchic number  
-  bool exists ( int num ) const
-  {
-    return (state(num) != UNUSED);
-  }
- 
-  //! return true if index is valid 
-  bool validIndex ( const int num ) const
-  {
-    return (leafIndex_[num] >= 0);
+    assert( myCodim_ == EntityType :: codimension );
+    return existsIdx( indexContainer_.index( entity ) );
   }
  
   //! return number of holes 
@@ -320,8 +336,72 @@ public:
     return newIdx_[elNum]; 
   }
 
+  // insert element and create index for element number 
+  template <class EntityType> 
+  void insert (const EntityType& entity )
+  {
+    assert( myCodim_ == EntityType :: codimension );
+    return insertIdx( indexContainer_.index( entity ) );
+  }
+
+  // insert element and create index for element number 
+  template <class EntityType> 
+  void insertSubEntity (const EntityType& entity, 
+                        const int subNumber)  
+  {
+    assert( 0 == EntityType :: codimension );
+    insertIdx( indexContainer_.subIndex( entity, subNumber, myCodim_ ) );
+  }
+
+  // insert element as ghost and create index for element number 
+  template <class EntityType> 
+  void insertGhost (const EntityType& entity )
+  {
+    assert( myCodim_ == EntityType :: codimension );
+    insertGhostIdx( indexContainer_.index( entity ) );
+  }
+
+  // insert element and create index for element number 
+  template <class EntityType> 
+  void remove( const EntityType& entity )
+  {
+    assert( myCodim_ == EntityType :: codimension );
+    removeIdx( indexContainer_.index( entity ) );
+  }
+
+  // insert element as ghost and create index for element number 
+  template <class EntityType> 
+  bool validIndex (const EntityType& entity ) const
+  {
+    assert( myCodim_ == EntityType :: codimension );
+    return validIndexIdx( indexContainer_.index( entity ) );
+  }
+
+protected:
+  //! return true if index is valid 
+  bool validIndexIdx ( const int num ) const
+  {
+    return (leafIndex_[num] >= 0);
+  }
+ 
+  //! return leaf index for given hierarchic number  
+  int indexIdx ( const int num ) const
+  {
+    // assert if index was not set yet 
+    return leafIndex_ [ num ];
+  }
+  
+  //! return state of index for given hierarchic number  
+  bool existsIdx ( const int num ) const
+  {
+    // assert if index was not set yet 
+    assert( num >= 0 );
+    assert( num < state_.size() );
+    return state_ [ num ] != UNUSED;
+  }
+ 
   // insert element and create index for element number  
-  void insert (const int num )
+  void insertIdx (const int num )
   {
     assert(num < leafIndex_.size() );
     if(leafIndex_[num] < 0)
@@ -332,11 +412,11 @@ public:
     state_[num] = USED;
   }
   
-  // insert element and create index for element number  
-  void insertGhost (const int num )
+  // insert element as ghost and create index for element number  
+  void insertGhostIdx (const int num )
   {
     // insert index 
-    insert( num );
+    insertIdx( num );
 
     // if index is also larger than lastSize
     // mark as new to skip old-new index lists 
@@ -346,6 +426,13 @@ public:
     }
   }
   
+  // insert element and create index for element number  
+  void removeIdx (const int num)
+  {
+    assert(num < leafIndex_.size() );
+    state_[num] = UNUSED;
+  }
+public:  
 #if DUNE_FEM_COMPATIBILITY
   // read/write from/to xdr stream 
   bool processXdr(XDRStream& xdr)
@@ -405,12 +492,6 @@ public:
     return true;
   }
   
-  // insert element and create index for element number  
-  void remove (int num )
-  {
-    assert(num < leafIndex_.size() );
-    state_[num] = UNUSED;
-  }
 }; // end of CodimIndexSet  
 
 } // end namespace Dune 
