@@ -33,7 +33,7 @@ struct VtxProjectionImpl
 
     typedef typename DiscreteFunctionImp::DiscreteFunctionSpaceType
       DiscreteFunctionSpaceType;
-    typedef typename DiscreteFunctionImp::LocalFunctionType LocalFuncType;
+    typedef typename DiscreteFunctionImp::LocalFunctionType LocalFunctionType;
 
     typedef typename DiscreteFunctionSpaceType::Traits::GridPartType GridPartType;
     typedef typename DiscreteFunctionSpaceType::Traits::IteratorType Iterator;
@@ -43,6 +43,7 @@ struct VtxProjectionImpl
 
     typename ArgFunctionSpaceType::RangeType val;
     typedef typename ArgFunctionSpaceType::DomainType DomainType;
+
     const unsigned int dimRange = ArgFunctionSpaceType :: dimRange;
     const DiscreteFunctionSpaceType& space =  discFunc.space();
     typedef typename DiscreteFunctionSpaceType :: LagrangePointSetType
@@ -54,7 +55,10 @@ struct VtxProjectionImpl
                      :: SubEntityIteratorType
             FaceDofIteratorType;
 
-    typedef typename Iterator::Entity EntityType;
+    typedef typename Iterator::Entity              EntityType;
+    typedef typename EntityType :: EntityPointer   EntityPointer;
+    typedef typename EntityType :: Geometry        Geometry;
+    typedef typename Geometry :: LocalCoordinate   LocalCoordinate;
 
     discFunc.clear();
     DiscreteFunctionImp weightDF("weight",space);
@@ -63,10 +67,12 @@ struct VtxProjectionImpl
     const Iterator endit = space.end();
     for(Iterator it = space.begin(); it != endit ; ++it) 
     {
-      typename Iterator::Entity& en = *it;
+      const EntityType& en = *it;
       weight.setEntity(en);
-      LocalFuncType lw  = weightDF.localFunction(en);
-      LocalFuncType ldf = discFunc.localFunction(en);
+
+      LocalFunctionType lw  = weightDF.localFunction(en);
+      LocalFunctionType ldf = discFunc.localFunction(en);
+
       const ArgLocalFuncType larg = f.localFunction(en);
       const LagrangePointSetType &lagrangePointSet
                 = space.lagrangePointSet( en );
@@ -74,9 +80,10 @@ struct VtxProjectionImpl
              = lagrangePointSet.template beginSubEntity< 0 >( 0 );
       const EntityDofIteratorType enditPoint
             = lagrangePointSet.template endSubEntity< 0 >( 0 );
-      for( ; itPoint != enditPoint; ++itPoint ) {
+      for( ; itPoint != enditPoint; ++itPoint ) 
+      {
         const unsigned int dof = *itPoint;
-        const typename ArgFunctionSpaceType::DomainType &point = lagrangePointSet.point( dof );
+        const LocalCoordinate& point = lagrangePointSet.point( dof );
         larg.evaluate(point, val);
         double w = weight(point);
         val *= w;
@@ -87,19 +94,19 @@ struct VtxProjectionImpl
       }
     }
     
-    discFunc.space().communicate( discFunc );
-    weightDF.space().communicate( weightDF );
+    discFunc.communicate();
+    weightDF.communicate();
 
-    typename DiscreteFunctionImp::DofIteratorType
-      itdof = discFunc.dbegin();
-    const typename DiscreteFunctionImp::DofIteratorType
-      enddof = discFunc.dend();
-    typename DiscreteFunctionImp::DofIteratorType
-      itwdof = weightDF.dbegin();
-    // const typename DiscreteFunctionImp::DofIteratorType
-    //   endwdof = weightDF.dend();
-    for (;itdof != enddof;++itdof,++itwdof) {
-      if (*itwdof>0) {
+    typedef typename DiscreteFunctionImp :: DofIteratorType  DofIteratorType;
+
+    DofIteratorType        itdof = discFunc.dbegin();
+    const DofIteratorType enddof = discFunc.dend();
+    DofIteratorType       itwdof = weightDF.dbegin();
+
+    for (;itdof != enddof;++itdof,++itwdof) 
+    {
+      if (*itwdof>0) 
+      {
         *itdof /= *itwdof;
       }
       assert(*itwdof>0 || *itdof == 0);
@@ -107,7 +114,7 @@ struct VtxProjectionImpl
 
     // make function continuous over hanging nodes
 
-    if( !GridPartType::conforming )
+    if( ! GridPartType::conforming )
     {
       const GridPartType &gridPart =  space.gridPart();
       for( Iterator it = space.begin(); it != endit ; ++it )
@@ -122,8 +129,9 @@ struct VtxProjectionImpl
           if( intersection.neighbor() )
           {
             // get neighbor 
-            typename EntityType::EntityPointer ep = intersection.outside();
-            EntityType &neighbor = *ep;
+            EntityPointer ep = intersection.outside();
+            const EntityType&  neighbor = *ep;
+            // if non-conforming situation 
             if( entity.level() > neighbor.level() )
             {
               const int indexInInside = intersection.indexInInside();
@@ -132,15 +140,20 @@ struct VtxProjectionImpl
                  = lagrangePointSet.template beginSubEntity< 1 >( indexInInside );
               const FaceDofIteratorType enditPoint
                  = lagrangePointSet.template endSubEntity< 1 >( indexInInside );
-              const typename IntersectionType::LocalGeometry &geoIn  = intersection.geometryInInside();
-              const typename IntersectionType::LocalGeometry &geoOut = intersection.geometryInOutside();
-              LocalFuncType ldfIn  = discFunc.localFunction( entity );
-              LocalFuncType ldfOut = discFunc.localFunction( neighbor );
+
+              typedef typename IntersectionType :: LocalGeometry   LocalGeometry;
+              const LocalGeometry &geoIn  = intersection.geometryInInside();
+              const LocalGeometry &geoOut = intersection.geometryInOutside();
+
+              LocalFunctionType ldfIn  = discFunc.localFunction( entity );
+              LocalFunctionType ldfOut = discFunc.localFunction( neighbor );
+
               for( ; itPoint != enditPoint; ++itPoint )
               {
                 const unsigned int dof = *itPoint;
-                const DomainType &point = lagrangePointSet.point( dof );
-                DomainType x = geoOut.global( geoIn.local( point ) );
+                const LocalCoordinate& point = lagrangePointSet.point( dof );
+                const LocalCoordinate x = geoOut.global( geoIn.local( point ) );
+
                 ldfOut.evaluate( x, val );
                 for( unsigned int coordinate = 0; coordinate < dimRange; ++coordinate )
                   ldfIn[ dimRange * dof + coordinate ] = val[ coordinate ];
