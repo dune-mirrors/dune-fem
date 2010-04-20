@@ -8,7 +8,7 @@ gridpart_HEADERS = adaptiveleafgridpart.hh \
                    gridpart.hh \
                    gridpartview.hh \
                    idbasedleafgridpart.hh \
-                   idbasedleafindexset.hh \
+                   idbasedcodimindexset.hh \
                    periodicgridpart.hh \
                    periodicindexset.hh \
                    defaultindexsets.hh
