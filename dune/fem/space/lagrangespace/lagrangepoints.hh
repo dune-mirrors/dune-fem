@@ -1,7 +1,7 @@
 #ifndef DUNE_LAGRANGESPACE_LAGRANGEPOINTS_HH
 #define DUNE_LAGRANGESPACE_LAGRANGEPOINTS_HH
 
-#include <dune/grid/common/referenceelements.hh>
+#include <dune/grid/common/genericreferenceelements.hh>
 #include <dune/fem/quadrature/cachingpointlist.hh>
 
 #include "genericgeometry.hh"
@@ -410,13 +410,13 @@ namespace Dune
     typedef LagrangePointSet< GridPartType, polynomialOrder >
       LagrangePointSetType;
 
-    typedef ReferenceElementContainer< FieldType, dimension >
+    typedef GenericReferenceElementContainer< FieldType, dimension >
       ReferenceElementContainerType;
     typedef typename ReferenceElementContainerType :: value_type
       ReferenceElementType;
 
   private:
-    ReferenceElementContainerType refElementContainer_;
+    const ReferenceElementContainerType *refElementContainer_;
     
     const LagrangePointSetType *lagrangePointSet_;
     unsigned int subEntity_;
@@ -431,7 +431,7 @@ namespace Dune
       ( const LagrangePointSetType &lagrangePointSet,
         const unsigned int subEntity,
         const bool beginIterator )
-    : refElementContainer_()
+    : refElementContainer_( &ReferenceElementContainerType :: instance () )
     {
       lagrangePointSet_ = &lagrangePointSet;
       subEntity_ = subEntity;
@@ -452,7 +452,7 @@ namespace Dune
   
   public:
     inline SubEntityLagrangePointIterator ()
-    : refElementContainer_()
+    : refElementContainer_( &ReferenceElementContainerType :: instance () )
     {
       lagrangePointSet_ = NULL;
       subEntity_ = 0;
@@ -463,7 +463,7 @@ namespace Dune
     }
     
     inline SubEntityLagrangePointIterator ( const ThisType &other )
-    : refElementContainer_()
+    : refElementContainer_( &ReferenceElementContainerType :: instance () )
     {
       lagrangePointSet_ = other.lagrangePointSet_;
       subEntity_ = other.subEntity_;
@@ -541,13 +541,18 @@ namespace Dune
     }
 
   private:
+    const ReferenceElementType & referenceElement ( const GeometryType& geo) const
+    {
+      assert( refElementContainer_ );
+      return (*refElementContainer_)( geo );
+    }
+
     inline void assertDof ()
     {
       assert( lagrangePointSet_ != NULL );
         
       while( dofNumber_ >= numDofs_ ) {
-        const ReferenceElementType &refElement
-          = refElementContainer_( lagrangePointSet_->geometryType() );
+        const ReferenceElementType &refElement = referenceElement( lagrangePointSet_->geometryType() );
           
         dofNumber_ = 0;
         ++subIndex_;
