@@ -110,6 +110,11 @@ public:
     resize( indexContainer_.size( myCodim_ ) );
   }
 
+  //! prepare for setup (nothing to do here)
+  void prepareCompress ()
+  {
+  }
+
 protected: 
   //! reallocate the vector for new size
   void resize ( const int newSize )
@@ -359,7 +364,7 @@ public:
 
   // insert element and create index for element number 
   template <class EntityType> 
-  void remove( const EntityType& entity )
+  void markForRemoval( const EntityType& entity )
   {
     assert( myCodim_ == EntityType :: codimension );
     removeIdx( indexContainer_.index( entity ) );

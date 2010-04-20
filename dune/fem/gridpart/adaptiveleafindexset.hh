@@ -5,7 +5,7 @@
 #include <dune/common/forloop.hh>
 #include <dune/fem/gridpart/dunefemindexsets.hh>
 #include <dune/fem/gridpart/codimindexset.hh>
-#include <dune/fem/gridpart/idbasedleafindexset.hh>
+#include <dune/fem/gridpart/idbasedcodimindexset.hh>
 
 namespace Dune
 {
@@ -49,8 +49,7 @@ namespace Dune
     typedef typename GridType::template Codim< 0 >::Entity ElementType;
 
   private:
-    typedef CodimIndexSet< GridType >  CodimIndexSetType; 
-    //typedef IdBasedCodimIndexSet< GridType >  CodimIndexSetType; 
+    typedef typename TraitsImp :: CodimIndexSetType  CodimIndexSetType ;
 
     template< int codim , bool gridHasCodim >
     struct CountElementsBase
@@ -371,6 +370,8 @@ namespace Dune
         }
   #endif
       }
+
+      std::cout << "Resize done \n";
     }
 
     //! make to index numbers consecutive 
@@ -472,6 +473,9 @@ namespace Dune
     // memorise index 
     void insertIndex ( const ElementType &entity );
 
+    // insert index temporarily
+    void insertTemporary ( const ElementType &entity );
+
     // set indices to unsed so that they are cleaned on compress
     void removeIndex ( const ElementType &entity );
 
@@ -560,6 +564,12 @@ namespace Dune
         return false;
     }
 
+    // prepare index sets for setup 
+    for( int codim = 0; codim < numCodimensions; ++codim ) 
+    {
+      codimLeafSet( codim ).prepareCompress();
+    }
+
     // mark all indices still needed 
     setupIndexSet();
 
@@ -575,6 +585,8 @@ namespace Dune
     compressed_ = true;
     // update sequence number
     sequence_ = dofManager_.sequence();
+
+    std::cout << "Compression done \n";
 
     return haveToCopy;
   }
@@ -610,13 +622,20 @@ namespace Dune
     compressed_ = false;
   }
 
+  template< class TraitsImp >
+  inline void
+  AdaptiveIndexSetBase< TraitsImp >::insertTemporary( const ElementType &entity )
+  {
+    insertIndex( entity );
+    codimLeafSet( 0 ).markForRemoval( entity );
+  }
 
   template< class TraitsImp >
   inline void
   AdaptiveIndexSetBase< TraitsImp >::removeIndex( const ElementType &entity )
   {
     // remove entities (only mark them as unused)
-    codimLeafSet( 0 ).remove( entity );
+    codimLeafSet( 0 ).markForRemoval( entity );
 
     // don't remove higher codim indices (will be done on compression
 
@@ -641,10 +660,9 @@ namespace Dune
 
     if( isNew )
     {
-      // this is a new entity, so insert it
-      insertIndex( entity );
-      // but it's not a leaf entity, so mark it unused
-      removeIndex( entity );
+      // this is a new entity, so insert it, 
+      // but only temporarily because it's not a leaf entity 
+      insertTemporary( entity );
     }
     else
     {
@@ -728,6 +746,8 @@ namespace Dune
       // give all entities that lie on the leaf level new numbers 
       markAllUsed< pitype > ();
     }
+
+    std::cout << "Setup done !\n";
   }
 
   template< class TraitsImp >
@@ -1023,10 +1043,12 @@ namespace Dune
     typedef GridPartImp GridPartType;
     // type of grid 
     typedef typename GridPartType :: GridType GridType;
-    //static const PartitionIteratorType pitype = pt;
+    // number of codimensions 
     enum { numCodimensions = GridType :: dimension + 1 };
     // first comdimension that is supported (not yet supported)
     enum { startingCodimension = 0 };
+    // type of codimension index set  
+    typedef CodimIndexSet< GridType >  CodimIndexSetType; 
   };
 
   /** \class AdaptiveLeafIndexSet
@@ -1073,11 +1095,12 @@ namespace Dune
     typedef GridPartImp GridPartType;
     // type of grid 
     typedef typename GridPartType :: GridType GridType;
-    //static const PartitionIteratorType pitype = pt;
     // this index set only supports one codimension, codim zero 
     enum { numCodimensions = 1 };
     // first comdimension that is supported (not yet supported)
     enum { startingCodimension = 0 };
+    // type of codimension index set  
+    typedef CodimIndexSet< GridType >  CodimIndexSetType; 
   };
 
   /** \class DGAdaptiveLeafIndexSet
@@ -1111,6 +1134,55 @@ namespace Dune
   };
 #endif
 
+  /////////////////////////////////////////////////////////////////////////
+  //
+  //  --IdBasedLeafIndexSet 
+  //
+  /////////////////////////////////////////////////////////////////////////
+  template< class GridPartImp >
+  struct IdBasedLeafIndexSetTraits
+  {   
+    // type of grid part 
+    typedef GridPartImp GridPartType;
+    // type of grid 
+    typedef typename GridPartType :: GridType GridType;
+    // this index set only supports one codimension, codim zero 
+    enum { numCodimensions = GridType :: dimension + 1 };
+    // first comdimension that is supported (not yet supported)
+    enum { startingCodimension = 0 };
+    // type of codimension index set  
+    typedef IdBasedCodimIndexSet< GridType >  CodimIndexSetType; 
+  };
+
+  /** \class DGAdaptiveLeafIndexSet
+   *  \brief consecutive, persistent index set for the leaf level based on the
+   *         grid's hierarchy index set
+   *
+   *  This index set generates a consecutive leaf index out of the unique global
+   *  index of each codimension 0 entity. 
+   *
+   *  \note This index sets supports only indices for codimensions 0 entities of the grid. 
+   *
+   */
+  template < class GridPartImp >
+  class IdBasedLeafIndexSet
+  : public AdaptiveIndexSetBase< IdBasedLeafIndexSetTraits< GridPartImp > > 
+  {
+    typedef AdaptiveIndexSetBase< IdBasedLeafIndexSetTraits< GridPartImp > > BaseType;
+  public:
+    typedef typename BaseType :: GridPartType GridPartType;
+    //! Constructor
+    IdBasedLeafIndexSet (const GridPartType & gridPart) 
+      : BaseType(gridPart) 
+    {
+    }
+
+    //! return name of index set 
+    virtual std::string name () const
+    {
+      return "IdBasedLeafIndexSet";
+    }
+  };
 
 } // end namespace Dune 
 
