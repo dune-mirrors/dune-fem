@@ -4,7 +4,9 @@
 //- system includes 
 #include <map>
 #include <stack>
+#include <vector>
 
+#include <dune/common/geometrytype.hh>
 #include <dune/fem/space/common/arrays.hh>
 
 namespace Dune
@@ -42,9 +44,8 @@ namespace Dune
     
     typedef std::map< IdType, int  > IndexStorageType;
     typedef std::map< int , IdType > IdStorageType;
-    typedef std::vector < int > HolesIndicesType;
 
-    typedef MutableArray<int> IndexVectorType;
+    typedef MutableArray< int > IndexVectorType;
     
     // the mapping of the global to leaf index 
     mutable IndexStorageType* leafIndex_;
@@ -133,7 +134,7 @@ namespace Dune
       nextFreeIndex_ = currentSize;
 
       // create holes index vector 
-      HolesIndicesType holesIdx(leafIndex().size(), -1);   
+      IndexVectorType holesIdx(leafIndex().size());   
 
       int noHole = 0;
       {
