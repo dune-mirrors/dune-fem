@@ -306,13 +306,17 @@ namespace Dune
       const int numScalarBase = numDifferentBaseFunctions ();
       for( int i = 0, iR = 0; i < numScalarBase ; ++i )
       {
-        ScalarJacobianRangeType gradPhiRef, gradPhi;
+        ScalarJacobianRangeType gradPhiRef;
+        // get type of scalar global jacobian range 
+        typename GlobalJacobianRangeType :: 
+          row_type   gradPhi;
+
         jacobianScalar( i, x, gradPhiRef );
 
-        FieldMatrixHelper :: multiply( gjit, gradPhiRef[ 0 ], gradPhi[ 0 ] );
+        FieldMatrixHelper :: multiply( gjit, gradPhiRef[ 0 ], gradPhi );
 
         for( int r = 0; r < dimRange; ++r, ++iR )
-          ret[ r ].axpy( dofs[ iR ], gradPhi[ 0 ] );
+          ret[ r ].axpy( dofs[ iR ], gradPhi );
       }
     }
     
