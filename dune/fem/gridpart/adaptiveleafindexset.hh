@@ -370,8 +370,6 @@ namespace Dune
         }
   #endif
       }
-
-      std::cout << "Resize done \n";
     }
 
     //! make to index numbers consecutive 
@@ -586,8 +584,6 @@ namespace Dune
     // update sequence number
     sequence_ = dofManager_.sequence();
 
-    std::cout << "Compression done \n";
-
     return haveToCopy;
   }
 
@@ -746,8 +742,6 @@ namespace Dune
       // give all entities that lie on the leaf level new numbers 
       markAllUsed< pitype > ();
     }
-
-    std::cout << "Setup done !\n";
   }
 
   template< class TraitsImp >
