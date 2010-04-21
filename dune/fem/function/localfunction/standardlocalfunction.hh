@@ -64,14 +64,6 @@ namespace Dune
 
     //! type of codim 0 entities
     typedef typename GridType :: template Codim< 0 > :: Entity EntityType;
-#if 0
-    //! type of entity's geometry
-    typedef typename EntityType :: Geometry GeometryType;
-    //! type of transposed of geometry's Jacobian Inverse
-    typedef FieldMatrix
-      < typename GridType :: ctype, GridType :: dimension, GridType :: dimension >
-      GeometryJacobianInverseType;
-#endif
 
   protected:
     DiscreteFunctionType &discreteFunction_;

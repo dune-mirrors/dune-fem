@@ -45,6 +45,23 @@ namespace Dune
       }
     }
     
+    template< class Field1, class Field2, class Field3, int m, int n, int p >
+    inline void multiply ( const FieldMatrix< Field1, m, n > &A,
+                           const FieldMatrix< Field2, n, p > &B,
+                           Field3* C)
+    {
+      for( int i = 0, ip = 0; i < m; ++i )
+      {
+        for( int j = 0; j < p; ++j , ++ ip )
+        {
+          Field3 &value = C[ ip ];
+          value = 0;
+          for( int k = 0; k < n; ++k )
+            value += A[ i ][ k ] * B[ k ][ j ];
+        }
+      }
+    }
+    
   }
   
 }
