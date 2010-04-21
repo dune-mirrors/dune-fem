@@ -109,11 +109,12 @@ protected:
         return Multiply<n-1, m> ::umtv( rows, cols );
       }
     }
+
     static inline 
     void multSSE(const size_t I, const size_t J, 
-                   double** const &A, 
-                   double*  const &X, 
-                   double*  &Y)
+                 K** const &A, 
+                 K*  const &X, 
+                 K*  &Y)
     {
       assert( n == I );
       assert( m == J );
@@ -122,9 +123,9 @@ protected:
 
     static inline 
     void multUmtvSSE(const size_t I, const size_t J, 
-                     double** const &A, 
-                     double*  const &X, 
-                     double*  &Y)
+                     K** const &A, 
+                     K*  const &X, 
+                     K*  &Y)
     {
       assert( n == I );
       assert( m == J );
@@ -171,14 +172,15 @@ protected:
   const size_t cols_;
   const size_t realRows_;
 
+  enum { countSize = 100 };
 public:
   SSEMatrix(const size_t n, const size_t m ,
             const size_t realRows ) 
     : xTmp_(  m ) 
     , yTmp_(  n )
     , quadMat_( 0 )
-    , mvSSE_( Multiply<100, 100>::mv( realRows, m ) )
-    , umtvSSE_( Multiply<100, 100>::umtv( realRows, m ) )
+    , mvSSE_(   Multiply<countSize, countSize>::mv( realRows, m ) )
+    , umtvSSE_( Multiply<countSize, countSize>::umtv( realRows, m ) )
     , rows_( n ), cols_ ( m ), realRows_( realRows )
   {
     assert( mvSSE_ );
@@ -255,7 +257,7 @@ public:
   {
     for(size_t r = 0; r < offset ; ++r )
     {
-      for(size_t c = 0; c < cols(); ++c ) xTmp_[ c ] = x[ c * offset + r ];
+      for(size_t c = 0, cR = 0; c < cols(); ++c, cR += r ) xTmp_[ c ] = x[ cR ];
       //multiplySSE( realRows, cols(), mat, xTmp_.raw(), yTmp_.raw() );
       mvSSE_( realRows, cols(), mat, xTmp_.raw(), yTmp_.raw() );
       for(size_t i = 0; i < realRows; ++i ) y[ i ][ r ] = yTmp_[ i ];
@@ -301,13 +303,44 @@ public:
     umtv( quadMat_, quadSize, x, y, offset );
   }
 
+  template <class X, class Y, class quad_t > 
+  void umtv(const X& x, Y& y, const quad_t& quad, 
+            const size_t offset , bool ) const 
+  {
+    const size_t quadSize = quad.nop();
+    for( size_t i = 0; i < quadSize; ++i) 
+    {
+      quadMat_[ i ] = sseMat_[ quad.cachingPoint( i ) ];
+    }
+    umtv( quadMat_, quadSize, x, y, offset , true );
+  }
+
   template <class X, class Y> 
   void umtv(const X& x, Y& y, const size_t offset ) const 
   {
     umtv( sseMat_, rows(), x, y, offset );
   }
 
+  template <class X, class Y> 
+  void umtv(const X& x, Y& y, const size_t offset , bool ) const 
+  {
+    umtv( sseMat_, rows(), x, y, offset , true  );
+  }
+
 #if 1
+  template <class X, class Y> 
+  void umtv(const MatrixType& mat, const size_t realRows,
+            const X& x, Y& y, const size_t offset , bool ) const 
+  {
+    for(size_t r = 0; r < offset ; ++r )
+    {
+      for(size_t i = 0, iR = 0; i < realRows; ++i, iR += r ) yTmp_[ i ] = x[ iR ];
+      //multiplySSE( realRows, cols(), mat, xTmp_.raw(), yTmp_.raw() );
+      umtvSSE_( realRows, cols(), mat, yTmp_.raw(), xTmp_.raw() );
+      for(size_t c = 0, cR = 0; c < cols(); ++c, cR += r ) y[ cR ] += xTmp_[ c ];
+    } 
+  }
+
   template <class X, class Y> 
   void umtv(const MatrixType& mat, const size_t realRows,
             const X& x, Y& y, const size_t offset ) const 
@@ -317,16 +350,16 @@ public:
       for(size_t i = 0; i < realRows; ++i ) yTmp_[ i ] = x[ i ][ r ];
       //multiplySSE( realRows, cols(), mat, xTmp_.raw(), yTmp_.raw() );
       umtvSSE_( realRows, cols(), mat, yTmp_.raw(), xTmp_.raw() );
-      for(size_t c = 0; c < cols(); ++c ) y[ c * offset + r ] += xTmp_[ c ];
+      for(size_t c = 0, cR = 0; c < cols(); ++c, cR += r ) y[ cR ] += xTmp_[ c ];
     } 
   }
 
   static inline 
   void umtv(const size_t rows,
             const size_t cols,
-            double** const &A, 
-            double*  const &X, 
-            double*  &Y)
+            K** const &A, 
+            K*  const &X, 
+            K*  &Y)
   {
     for( size_t j = 0; j < cols; ++j ) 
     {
