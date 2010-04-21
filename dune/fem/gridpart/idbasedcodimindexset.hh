@@ -358,6 +358,21 @@ namespace Dune
     template <class StreamTraits>
     bool write(OutStreamInterface< StreamTraits >& out) const
     {
+      // store nextFreeIndex
+      out << nextFreeIndex_;
+
+      // store number of (id,index) pairs 
+      const unsigned int sizeOfSet = leafIndex().size();
+      out << sizeOfSet;
+
+      typedef typename IndexStorageType :: iterator iterator;
+      const iterator end = leafIndex().end();
+      for(iterator it = leafIndex().begin(); it != end; ++it) 
+      {
+        // store id and index 
+        out << (*it).first << (*it).second; 
+      }
+
       return true;
     }
 
@@ -365,6 +380,31 @@ namespace Dune
     template <class StreamTraits>
     bool read(InStreamInterface< StreamTraits >& in)
     {
+      // store nextFreeIndex
+      in >> nextFreeIndex_;
+
+      // clear set first 
+      leafIndex().clear();
+
+      // store number of (id,index) pairs 
+      unsigned int sizeOfSet;
+      in >> sizeOfSet;
+
+      // read all pairs now 
+      for( unsigned int i = 0; i<sizeOfSet; ++i ) 
+      {
+        // read id 
+        IdType id; 
+        in >> id; 
+
+        // read index 
+        int index; 
+        in >> index;
+
+        // store index 
+        leafIndex()[ id ] = index ;
+      }
+
       return true;
     }
       
