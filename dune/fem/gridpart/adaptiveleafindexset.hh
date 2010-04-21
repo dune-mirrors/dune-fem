@@ -172,7 +172,6 @@ namespace Dune
 
     // my type, to be revised 
     enum { myType = ( numCodimensions == 1 ) ? ( (StructuredGrid) ? -1 : 665 ) : 6 };
-    enum { myVersionTag = -665 };
 
     //! default partition iterator type 
     static const PartitionIteratorType pitype = GridPartType :: indexSetPartitionType ;
@@ -817,13 +816,12 @@ namespace Dune
   inline bool AdaptiveIndexSetBase< TraitsImp >
     ::write ( OutStreamInterface< StreamTraits >& out ) const
   {
-    // write new verion tag 
-    int newVersion = myVersionTag;
-    out << newVersion ;
+    // write name for indentification 
+    const std::string myname( name() );
+    out << myname;
 
-    // write my type
-    int typeVar = type();
-    out << typeVar;
+    // write number of codimensions 
+    out << numCodimensions ;
 
     // write whether codim is used 
     for( int i = 0; i < numCodimensions; ++i )
@@ -831,7 +829,10 @@ namespace Dune
 
     // write all sets 
     for( int i = 0; i < numCodimensions; ++i )
-      codimLeafSet( i ).write( out );
+    {
+      if( codimUsed_[ i ] )
+        codimLeafSet( i ).write( out );
+    }
     
     // if we got until here writing was sucessful
     return true;
@@ -893,47 +894,37 @@ namespace Dune
   inline bool AdaptiveIndexSetBase< TraitsImp >
     ::read ( InStreamInterface< StreamTraits > &in ) 
   {
-    // check new version tag
-    int newVersionTag = myVersionTag;
-    in >> newVersionTag;
-    const bool newVersion = (newVersionTag == myVersionTag);
-
-    // if new version the read type, otherwise newVersionTag is the type info
-    int typeVar = (newVersion ? type() : newVersionTag);
-    if( newVersion )
-      in >> typeVar;
-
-    // index set type check
-    if( (typeVar != 2) && (typeVar != type()) )
     {
-      DUNE_THROW( InvalidStateException,
-                  "AdaptiveIndexSetBase::read: wrong type " << typeVar
-                  << " given (expected " << type() << ")." );
-    }
+      // read name and check compatibility 
+      std::string storedName; 
+      in >> storedName; 
 
-    if( newVersion )
-    {
-      // read codim used 
-      for( int i = 0; i < numCodimensions; ++i )
-        in >> codimUsed_[ i ];
-    }
-    else 
-    {
-      // it depends on the type whether higher codims were stored
-      for( int i = 0; i < numCodimensions; ++i )
-        codimUsed_[ i ] = (typeVar == type());
-    }
+      std::string myname( name() );
 
-    if( typeVar == type() )
-    {
-      for( int i = 0; i < numCodimensions; ++i )
+      if( myname != storedName ) 
       {
-        if( codimUsed_[ i ] )
-          codimLeafSet( i ).read( in );
+        DUNE_THROW( InvalidStateException,
+                    "AdaptiveIndexSetBase::read: got " << storedName 
+                    << " (expected " << storedName << ")." );
       }
     }
-    else
-      codimLeafSet( 0 ).read( in );
+
+    // read number of codimensions 
+    int numCodim;
+    in >> numCodim; 
+
+    // make sure everything is correct 
+    assert( numCodim == numCodimensions );
+
+    // read codim used 
+    for( int i = 0; i < numCodimensions; ++i )
+      in >> codimUsed_[ i ];
+
+    for( int i = 0; i < numCodimensions; ++i )
+    {
+      if( codimUsed_[ i ] )
+        codimLeafSet( i ).read( in );
+    }
 
     // in parallel runs we have to compress here
     if( grid_.comm().size() > 1 )
