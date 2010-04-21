@@ -59,7 +59,7 @@ namespace Dune
  *    int var_,b_;
  *    ComplexType U_;
  *    A() : var_(Dune::Parameter::getValue("token",0,var_) {}
- *    virtual backup() {
+ *    virtual backup() const {
  *      // note var_ is saved in the parameter file
  *
  *      // write b to ascii file 
