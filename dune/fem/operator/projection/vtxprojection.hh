@@ -74,22 +74,17 @@ struct VtxProjectionImpl
       LocalFunctionType ldf = discFunc.localFunction(en);
 
       const ArgLocalFuncType larg = f.localFunction(en);
-      const LagrangePointSetType &lagrangePointSet
-                = space.lagrangePointSet( en );
-      EntityDofIteratorType itPoint
-             = lagrangePointSet.template beginSubEntity< 0 >( 0 );
-      const EntityDofIteratorType enditPoint
-            = lagrangePointSet.template endSubEntity< 0 >( 0 );
-      for( ; itPoint != enditPoint; ++itPoint ) 
+      const LagrangePointSetType &lagrangePointSet = space.lagrangePointSet( en );
+
+      const unsigned int numPoints = lagrangePointSet.nop();
+      for( unsigned int pt = 0; pt < numPoints; ++pt )
       {
-        const unsigned int dof = *itPoint;
-        const LocalCoordinate& point = lagrangePointSet.point( dof );
-        larg.evaluate(point, val);
-        double w = weight(point);
-        val *= w;
-        for( unsigned int coordinate = 0; coordinate < dimRange; ++coordinate ) {
-          ldf[ dimRange * dof + coordinate ] += val[coordinate];
-          lw[  dimRange * dof + coordinate ] += w;
+        larg.evaluate( lagrangePointSet[ pt ], val );
+        double w = weight( lagrangePointSet.point( pt ) );
+        for( unsigned int coordinate = 0; coordinate < dimRange; ++coordinate )
+        {
+          ldf[ dimRange * pt + coordinate ] += w * val[ coordinate];
+          lw[ dimRange * pt + coordinate ] += w;
         }
       }
     }
