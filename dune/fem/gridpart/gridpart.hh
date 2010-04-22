@@ -84,7 +84,7 @@ namespace Dune
    
     //! \brief type of Grid implementation
     typedef typename Traits::GridType GridType;
-    
+
     //! \brief Index set implementation
     typedef typename Traits::IndexSetType IndexSetType;
 
@@ -98,13 +98,14 @@ namespace Dune
     //! \brief type of Intersection
     typedef typename IntersectionIteratorType::Intersection IntersectionType;
 
-    //! \brief type of Entity with codim=0 
-    typedef typename GridType::template Codim<0>::Entity EntityCodim0Type;
-    
     //! \brief is true if grid on this view only has conforming intersections 
     static const bool conforming = Traits :: conforming;
 
     typedef GridView< GridPartViewTraits< GridPartType > > GridViewType;
+
+    typedef typename GridType::ctype ctype;
+
+    static const int dimension = GridType::dimension;
 
     template< int codim >
     struct Codim
@@ -112,13 +113,13 @@ namespace Dune
       template< PartitionIteratorType pitype >
       struct Partition
       {
-        typedef typename Traits :: template Codim< codim >
-          :: template Partition< pitype > :: IteratorType
+        typedef typename Traits::template Codim< codim >::template Partition< pitype >::IteratorType
           IteratorType;
       };
 
-      typedef typename Partition< InteriorBorder_Partition > :: IteratorType
-        IteratorType;
+      typedef typename Partition< InteriorBorder_Partition >::IteratorType IteratorType;
+
+      typedef typename GridType::template Codim< codim >::Entity EntityType;
     };
     
   public:
@@ -206,17 +207,18 @@ namespace Dune
     }
 
     //! \brief ibegin of corresponding intersection iterator for given entity
-    IntersectionIteratorType ibegin(const EntityCodim0Type & en) const 
+    IntersectionIteratorType
+    ibegin ( const typename Codim< 0 >::EntityType &entity ) const
     {
-      CHECK_INTERFACE_IMPLEMENTATION((asImp().ibegin(en)));
-      return asImp().ibegin(en); 
+      CHECK_INTERFACE_IMPLEMENTATION( (asImp().ibegin( entity )) );
+      return asImp().ibegin( entity ); 
     }
     
     //! \brief iend of corresponding intersection iterator for given entity
-    IntersectionIteratorType iend(const EntityCodim0Type & en) const 
+    IntersectionIteratorType iend ( const typename Codim< 0 >::EntityType &entity ) const 
     {
-      CHECK_INTERFACE_IMPLEMENTATION((asImp().iend(en)));
-      return asImp().iend(en); 
+      CHECK_INTERFACE_IMPLEMENTATION( (asImp().iend( entity )) );
+      return asImp().iend( entity ); 
     }
 
     int boundaryId ( const IntersectionType &intersection ) const
