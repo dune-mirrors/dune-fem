@@ -229,7 +229,7 @@ namespace Dune
       for( IteratorType it = objects_.begin(); it != objects_.end(); ++it )
         it->first->backup();
 
-      closeAsci();
+      closeAscii();
     }
     
     void restoreObjects ( const std::string &path )
@@ -249,7 +249,7 @@ namespace Dune
       for( IteratorType it = objects_.begin(); it != objects_.end(); ++it )
         it->first->restore( );
 
-      closeAsci();
+      closeAscii();
     }
 
     std::string getUniqueFileName (const std::string& tag )
@@ -375,7 +375,7 @@ namespace Dune
       Parameter::append(path_+"parameter");
     }
 
-    void closeAsci ()
+    void closeAscii ()
     {
       if( outAsciStream_.is_open() )
         outAsciStream_.close();
