@@ -26,9 +26,74 @@
 #include "pardg.hh"
 
 namespace DuneODE {
-
+struct ODEParameters
+: public LocalParameter< ODEParameters, ODEParameters >
+{ 
+  ODEParameters() : 
+    min_it( Parameter::getValue< int >( "fem.ode.miniterations" , 14 ) ),
+    max_it( Parameter::getValue< int >( "fem.ode.maxiterations" , 16 ) ),
+    sigma( Parameter::getValue< double >( "fem.ode.cflincrease" , 1.1 ) )
+  {
+  }
+  virtual PARDG::IterativeLinearSolver *linearSolver(PARDG::Communicator & comm) const
+  {
+    int cycles = Parameter::getValue< int >( "fem.ode.gmrescycles" , 15 );
+    PARDG::IterativeLinearSolver* solver = new PARDG::GMRES(comm,cycles);
+    double tol = Parameter::getValue< double >( "fem.ode.solver.tolerance" , 1e-6 );
+    static const std::string errorTypeTable[]
+      = { "absolute", "relative" };
+    int errorType = Parameter::getEnum( "fem.ode.solver.errormeassure", errorTypeTable, 0 );
+    solver->set_tolerance(tol,(errorType==1));
+    int maxIter = Parameter::getValue< int >( "fem.ode.solver.iterations" , 1000 );
+    solver->set_max_number_of_iterations(maxIter);
+    return solver;
+  }
+  virtual double tolerance() const
+  {
+    return Parameter::getValue< double >( "fem.ode.tolerance" , 1e-8 );
+  }
+  virtual int iterations() const
+  {
+    return Parameter::getValue< int >( "fem.ode.iterations" , 1000 );
+  }
+  virtual int verbose() const
+  {
+    static const std::string verboseTypeTable[]
+      = { "none", "cfl", "full" };
+    return Parameter::getValue< int >( "fem.ode.verbose" , 0 );
+  }
+  virtual bool cflFactor( const PARDG::ODESolver &ode,
+                          const PARDG::IterativeLinearSolver &solver,
+                          bool converged,
+                          double &factor) const
+  {
+    const int iter = solver.number_of_iterations();
+    factor = 1.;
+    bool changed = false;
+    if (converged) 
+    {
+      if (iter < min_it) 
+      {
+        factor = sigma;
+        changed = true;
+      }
+      else if (iter > max_it) 
+      {
+        factor = (double)max_it/(sigma*(double)iter);
+        changed = true;
+      }
+    }
+    else
+    {
+      factor = 0.5;
+      changed = true;
+    }
+    return changed;
+  }
+  const int min_it,max_it;
+  const double sigma;
+};
 #ifdef USE_PARDG_ODE_SOLVER
-
 template <class Operator>
 class OperatorWrapper : public PARDG::Function 
 {
@@ -245,20 +310,20 @@ class ImplTimeStepperBase
 {
   typedef typename Operator :: DestinationType DestinationType; 
 public:
-  ImplTimeStepperBase(Operator& op, Dune :: TimeProviderBase &tp, 
-                      int pord, bool verbose) :
+  ImplTimeStepperBase(Operator& op, Dune :: TimeProviderBase &tp,
+                      int pord,
+                      const ODEParameters& parameter=ODEParameters()) :
     ord_(pord),
     comm_(PARDG::Communicator::instance()),
     op_(op),
     impl_(op),
     ode_(0),
-    linsolver_(comm_,cycle),
-    initialized_(false)
+    linsolver_(0),
+    initialized_(false),
+    verbose_(parameter.verbose()),
+    param_(parameter.clone())
   {
-    //linsolver_.set_tolerance(1.0e-8,false);
-    linsolver_.set_tolerance(1.0e-6,false);
-    //linsolver_.set_max_number_of_iterations(10000);
-    linsolver_.set_max_number_of_iterations(30);
+    linsolver_ = parameter.linearSolver( comm_ );
     switch (pord) 
     {
       case 1: ode_ = new PARDG::ImplicitEuler(comm_,impl_); break;
@@ -269,12 +334,11 @@ public:
                           << std::endl;
                 abort();
     }
-    ode_->set_linear_solver(linsolver_);
-    //ode_->set_tolerance(1.0e-6);
-    ode_->set_tolerance(1.0e-8);
-    ode_->set_max_number_of_iterations(15);
+    ode_->set_linear_solver(*linsolver_);
+    ode_->set_tolerance( parameter.tolerance() );
+    ode_->set_max_number_of_iterations( parameter.iterations() );
     
-    if( verbose ) 
+    if( verbose_ ==2 ) 
     {
       ode_->IterativeSolver::set_output(cout);
       ode_->DynamicalObject::set_output(cout);
@@ -295,7 +359,7 @@ public:
     return false;
   }
   //! destructor 
-  ~ImplTimeStepperBase() {delete ode_;}
+  ~ImplTimeStepperBase() {delete ode_;delete linsolver_;}
   
   // return reference to ode solver 
   PARDG::DIRK& odeSolver() 
@@ -318,10 +382,10 @@ protected:
   const Operator& op_;
   OperatorWrapper<Operator> impl_;
   PARDG::DIRK* ode_;
-  PARDG::GMRES linsolver_;
-  //enum { cycle = 20 };
-  enum { cycle = 15 };
+  PARDG::IterativeLinearSolver* linsolver_;
   bool initialized_;
+  int verbose_;
+  const ODEParameters* param_;
 };
 
 
@@ -345,8 +409,16 @@ private:
 
 public:
   ImplicitOdeSolver(OperatorType& op, Dune::TimeProviderBase& tp,
-                    int pord, bool verbose = false) :
-    BaseType(op,tp,pord,verbose),
+                    int pord, bool verbose ) DUNE_DEPRECATED :
+    BaseType(op,tp,pord),
+    timeProvider_(tp),
+    cfl_(1.0)
+  {
+  }
+  ImplicitOdeSolver(OperatorType& op, Dune::TimeProviderBase& tp,
+                    int pord,
+                    const ODEParameters& parameter=ODEParameters()) :
+    BaseType(op,tp,pord),
     timeProvider_(tp),
     cfl_(1.0)
   {
@@ -373,10 +445,6 @@ public:
       DUNE_THROW(InvalidStateException,"ImplicitOdeSolver wasn't initialized before first call!");
     }
 
-    const int min_it = 14;
-    const int max_it = 16;
-    const double sigma = 1.1;
-    
     const double dt   = timeProvider_.deltaT();
     assert( dt > 0.0 );
     const double time = timeProvider_.time();
@@ -385,52 +453,36 @@ public:
     double* u = U0.leakPointer();
       
     const bool convergence = this->odeSolver().step(time , dt , u);
-    const int iter = this->linsolver_.number_of_iterations();
-     // set time step estimate of operator 
 
-    if (convergence) 
+    double factor;
+    bool changed = BaseType::param_->cflFactor(this->odeSolver(),
+                                               *(this->linsolver_),
+                                               convergence,factor);
+    cfl_ *= factor;
+    if (convergence)
     {
-      // control the number of iterations of the linear solver
-      // the values for min_it and max_it has to be determined by experience
-      if (iter < min_it) 
-      {
-        cfl_ *= sigma;
-        // output only in verbose mode 
-        if( Parameter::verbose() )
-        {
-          derr << " New cfl number is: "<< cfl_ << "\n";
-        }
-      }
-      else if (iter > max_it) 
-      {
-        cfl_ *= (double)max_it/(sigma*(double)iter);
-        
-        // output only in verbose mode
-        if( Parameter :: verbose() )
-        {
-          derr << " New cfl number is: "<< cfl_ << "\n";
-        }
-      }
-      
       timeProvider_.provideTimeStepEstimate( cfl_ * this->op_.timeStepEstimate() );
-    
-      this->linsolver_.reset_number_of_iterations();
-      if( Parameter::verbose() )
-        std::cout << "number of iterations of linear solver  " << iter << std::endl;
-   }
-   else 
-   {
-     cfl_ *= 0.5;
-     timeProvider_.provideTimeStepEstimate( cfl_ * dt );
-     timeProvider_.invalidateTimeStep();
+
+      if( changed && this->verbose_>=1 )
+        derr << " New cfl number is: "<< cfl_ << " (number of iterations ("
+             << "linear: " << this->linsolver_->number_of_iterations() 
+             << ", ode: " << this->odeSolver().number_of_iterations()
+             << ")"
+             << std::endl;
+    } 
+    else 
+    {
+      timeProvider_.provideTimeStepEstimate( cfl_ * dt );
+      timeProvider_.invalidateTimeStep();
      
-     // output only in verbose mode 
-     if( Parameter :: verbose () )
-     {
-       derr << "No convergence: New cfl number is "<< cfl_ << std :: endl;
-     }
-   }
- }
+      // output only in verbose mode 
+      if( this->verbose_>=1 )
+      {
+        derr << "No convergence: New cfl number is "<< cfl_ << std :: endl;
+      }
+    }
+    this->linsolver_->reset_number_of_iterations();
+  }
 
 }; // end ImplicitOdeSolver
 
@@ -445,7 +497,8 @@ class SemiImplTimeStepperBase
   typedef typename OperatorExpl :: DestinationType DestinationType; 
 public:
   SemiImplTimeStepperBase(OperatorExpl& explOp, OperatorImpl & implOp, Dune :: TimeProviderBase &tp, 
-                      int pord, bool verbose) :
+                      int pord, 
+                      const ODEParameters& parameter=ODEParameters()) :
     ord_(pord),
     comm_(PARDG::Communicator::instance()),
     explOp_(explOp),
@@ -453,14 +506,12 @@ public:
     expl_(explOp),
     impl_(implOp),
     ode_(0),
-    linsolver_(comm_,cycle),
-    initialized_(false)
+    linsolver_(0),
+    initialized_(false),
+    verbose_(parameter.verbose()),
+    param_(parameter.clone())
   {
-    //linsolver_.set_tolerance(1.0e-8,false);
-    linsolver_.set_tolerance(1.0e-6,false);
-    //linsolver_.set_max_number_of_iterations(10000);
-    linsolver_.set_max_number_of_iterations(30);
-
+    linsolver_ = parameter.linearSolver( comm_ );
     switch (pord) {
       case 1: ode_=new PARDG::SemiImplicitEuler(comm_,impl_,expl_); break;
       case 2: ode_=new PARDG::IMEX_SSP222(comm_,impl_,expl_); break;
@@ -469,12 +520,11 @@ public:
                           << std::endl;
                 abort();
     }
-    ode_->set_linear_solver(linsolver_);
-    //ode_->set_tolerance(1.0e-6);
-    ode_->set_tolerance(1.0e-8);
-    ode_->set_max_number_of_iterations(15);
+    ode_->set_linear_solver(*linsolver_);
+    ode_->set_tolerance( parameter.tolerance() );
+    ode_->set_max_number_of_iterations( parameter.iterations() );
     
-    if( verbose ) 
+    if( verbose_==2 ) 
     {
       ode_->IterativeSolver::set_output(cout);
       ode_->DynamicalObject::set_output(cout);
@@ -495,7 +545,7 @@ public:
     return false;
   }
   //! destructor 
-  ~SemiImplTimeStepperBase() {delete ode_;}
+  ~SemiImplTimeStepperBase() {delete ode_;delete linsolver_;}
   
   // return reference to ode solver 
   PARDG::SIRK& odeSolver() 
@@ -520,11 +570,10 @@ protected:
   OperatorWrapper<OperatorExpl> expl_;
   OperatorWrapper<OperatorImpl> impl_;
   PARDG::SIRK* ode_;
-  //PARDG::CG linsolver_;
-  PARDG::GMRES linsolver_;
-  //enum { cycle = 20 };
-  enum { cycle = 15 };
+  PARDG::IterativeLinearSolver* linsolver_;
   bool initialized_;
+  int verbose_;
+  const ODEParameters* param_;
 };
 
 
@@ -548,8 +597,16 @@ protected:
 
 public:
   SemiImplicitOdeSolver(OperatorType& explOp, OperatorType& implOp, Dune::TimeProviderBase& tp,
-                    int pord, bool verbose = false) :
-    BaseType(explOp,implOp,tp,pord,verbose),
+                    int pord, bool verbose ) DUNE_DEPRECATED :
+    BaseType(explOp,implOp,tp,pord),
+    timeProvider_(tp),
+    cfl_(1.0)
+  {
+  }
+  SemiImplicitOdeSolver(OperatorType& explOp, OperatorType& implOp, Dune::TimeProviderBase& tp,
+                    int pord,
+                    const ODEParameters& parameter=ODEParameters()) :
+    BaseType(explOp,implOp,tp,pord,parameter),
     timeProvider_(tp),
     cfl_(1.0)
   {
@@ -576,10 +633,6 @@ public:
       DUNE_THROW(InvalidStateException,"ImplicitOdeSolver wasn't initialized before first call!");
     }
     
-    const int min_it = 14;
-    const int max_it = 16;
-    const double sigma = 1.1;
-    
     const double dt   = timeProvider_.deltaT();
     assert( dt > 0.0 );
     const double time = timeProvider_.time();
@@ -588,53 +641,33 @@ public:
     double* u = U0.leakPointer();
       
     const bool convergence = this->odeSolver().step(time , dt , u);
-    const int iter = this->linsolver_.number_of_iterations();
-    // set time step estimate of operator 
 
-    if (convergence) 
+    double factor;
+    bool changed = BaseType::param_->cflFactor(this->odeSolver(),
+                                               *(this->linsolver_),
+                                               convergence,factor);
+    cfl_ *= factor;
+    if (convergence)
     {
-      // control the number of iterations of the linear solver
-      // the values for min_it and max_it has to be determined by experience
-      if (iter < min_it) 
-      {
-         cfl_ *= sigma;
-         cfl_ = std::min(1.,cfl_); 
-        // output only in verbose mode 
-        if( Parameter::verbose() )
-        {
-          derr << " New cfl number is: "<< cfl_ << "\n";
-        }
-      }
-      else if (iter > max_it) 
-      {
-        cfl_ *= (double)max_it/(sigma*(double)iter);
-        
-        // output only in verbose mode 
-        if( Parameter::verbose() )
-        {
-          derr << " New cfl number is: "<< cfl_ << "\n";
-        }
-      }
-      timeProvider_.provideTimeStepEstimate( cfl_ * this->explOp_.timeStepEstimate() );
-    
-      this->linsolver_.reset_number_of_iterations();
-      if( Parameter::verbose() ) 
-      {
-        std::cout << "number of iterations of linear solver  " << iter << std::endl;
-      }
-    }
+      timeProvider_.provideTimeStepEstimate( cfl_ * this->op_.timeStepEstimate() );
+
+      if( changed && this->verbose_>=1 )
+        derr << " New cfl number is: "<< cfl_ << " (number of iterations: "
+             << this->linsolver_->number_of_iterations() 
+             << std::endl;
+    } 
     else 
     {
-      cfl_ *= 0.5;
       timeProvider_.provideTimeStepEstimate( cfl_ * dt );
       timeProvider_.invalidateTimeStep();
-      
+     
       // output only in verbose mode 
-      if( Parameter::verbose() )
+      if( this->verbose_>=1 )
       {
         derr << "No convergence: New cfl number is "<< cfl_ << std :: endl;
       }
     }
+    this->linsolver_->reset_number_of_iterations();
   }
 
 }; // end SemiImplicitOdeSolver
