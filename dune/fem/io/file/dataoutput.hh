@@ -446,7 +446,9 @@ public:
   }
 
   //! destructor 
-  virtual ~DataOutput() {}
+  virtual ~DataOutput() {
+    delete param_;
+  }
 
 protected:  
   //! initialize data writer 
