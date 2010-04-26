@@ -60,7 +60,7 @@ struct ODEParameters
   {
     static const std::string verboseTypeTable[]
       = { "none", "cfl", "full" };
-    return Parameter::getValue< int >( "fem.ode.verbose" , 0 );
+    return Parameter::getEnum( "fem.ode.verbose" , verboseTypeTable, 0 );
   }
   virtual bool cflFactor( const PARDG::ODESolver &ode,
                           const PARDG::IterativeLinearSolver &solver,
