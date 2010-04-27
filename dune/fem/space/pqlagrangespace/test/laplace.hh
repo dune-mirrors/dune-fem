@@ -273,7 +273,13 @@ namespace Dune
       for( size_t i = 0; i < dofOut.size(); ++i )
       {
         if( dofOut[ i ][ 0 ] == 1 )
-          localMatrix.unitRow( i );
+        {
+          // old version of bnd treatment
+          // localMatrix.unitRow( i );
+ 
+          localMatrix.clearRow(i);
+          localMatrix.set(i, i, 1.);
+        }
       }
     }
   };
