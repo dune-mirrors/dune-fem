@@ -22,7 +22,7 @@ TESTPROGS = lagrangeinterpolation_linear lagrangeinterpolation_quadratic \
             dgl2projection_attached \
             dgl2projection_fv      \
             vtxprojection_adaptive \
-            mapper_dg                    mapper_fv
+            mapper_dg                    mapper_fv    mapper_lagrange
 
 
 TESTS = $(TESTPROGS)
@@ -57,6 +57,9 @@ vtxprojection_adaptive_CPPFLAGS = -DPOLORDER=1 -DCOUNT_FLOPS $(AM_CPPFLAGS)
 
 mapper_dg_SOURCES = mapper.cc
 mapper_dg_CPPFLAGS = -DPOLORDER=1 -DCOUNT_FLOPS $(AM_CPPFLAGS)
+
+mapper_lagrange_SOURCES = mapper.cc
+mapper_lagrange_CPPFLAGS = -DUSE_LAGRANGESPACE -DPOLORDER=2 -DCOUNT_FLOPS $(AM_CPPFLAGS)
 
 mapper_fv_SOURCES = mapper.cc
 mapper_fv_CPPFLAGS = -DUSE_FVSPACE -DCOUNT_FLOPS $(AM_CPPFLAGS)

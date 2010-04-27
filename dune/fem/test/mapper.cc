@@ -4,6 +4,7 @@
 #include <iostream>
 
 #include <dune/fem/gridpart/gridpart.hh>
+#include <dune/fem/function/adaptivefunction.hh>
 
 #include "testgrid.hh"
 #include "dfspace.hh"
@@ -85,11 +86,13 @@ inline bool checkMappers ( const DiscreteFunctionSpaceType &space )
       {
         const int dof = blockSize * block + i;
         const int dofGlobal = mapper.mapToGlobal( entity, dof );
-        /*
+
+#if 0        
         std :: cout << "local DoF: " << dof << ", globalDoF: " << dofGlobal
                     << ", blockMapped: " << (blockSize * blockGlobal + i)
                     << std :: endl;
-        */
+#endif
+
         if( dofGlobal != blockSize * blockGlobal + i )
         {
           std :: cerr << "DoF mapping inconsistent between DoF mappers."
@@ -120,12 +123,20 @@ try
 
   MyGridType &grid = TestGrid :: grid();
   const int step = TestGrid :: refineStepsForHalf();
-  grid.globalRefine( 2*step );
+  // grid.globalRefine( 2*step );
 
   GridPartType gridPart( grid );
   DiscreteFunctionSpaceType discreteFunctionSpace( gridPart );
 
-  return (checkMappers( discreteFunctionSpace ) ? 0 : 1);
+  AdaptiveDiscreteFunction< DiscreteFunctionSpaceType >
+    discreteFunction( "test function",discreteFunctionSpace );
+
+  int ret = (checkMappers( discreteFunctionSpace ) ? 0 : 1);
+
+  Dune::GlobalRefine::apply(grid,Dune::DGFGridInfo<GridType>::refineStepsForHalf());
+  ret += (checkMappers( discreteFunctionSpace ) ? 0 : 2);
+
+  return ret;
 }
 catch( Exception e )
 {

@@ -22,6 +22,7 @@ namespace Dune
     TestGrid ()
     : gridptr_( macroGridName() )
     {
+      /*
       typedef GridType::Codim<0>::LeafIterator Iterator;
       const Iterator end = gridptr_->leafend<0>();
       int count = 0;
@@ -33,6 +34,7 @@ namespace Dune
       gridptr_->preAdapt();
       gridptr_->adapt();
       gridptr_->postAdapt();
+      */
       gridptr_->loadBalance();
     }
 

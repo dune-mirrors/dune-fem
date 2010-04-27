@@ -8,13 +8,16 @@
 #if defined USE_COMBINEDSPACE
 #  include <dune/fem/space/combinedspace.hh>
 #endif
+#if defined USE_LAGRANGESPACE
+#  include <dune/fem/space/lagrangespace.hh>
+#endif
 #if defined USE_FVSPACE
 #  include <dune/fem/space/fvspace.hh>
 #endif
 
 
 #ifndef POLORDER
-#  define POLORDER 1
+#  define POLORDER 2
 #endif
 
 #ifndef DIMRANGE
@@ -54,6 +57,10 @@ namespace Dune
       DiscreteFunctionSpaceType;
 #elif defined USE_FVSPACE
     typedef FiniteVolumeSpace< FunctionSpaceType, GridPartType, 0 >
+      DiscreteFunctionSpaceType;
+#elif defined USE_LAGRANGESPACE
+#warning USING LAGRANGE
+    typedef LagrangeDiscreteFunctionSpace< FunctionSpaceType, GridPartType, polOrder >
       DiscreteFunctionSpaceType;
 #else
     typedef DiscontinuousGalerkinSpace< FunctionSpaceType, GridPartType, polOrder >
