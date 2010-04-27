@@ -1194,11 +1194,14 @@ addIndexSet (const IndexSetType &iset)
 {
   typedef typename GridType::template Codim<0>::Entity EntityType;
   typedef ManagedIndexSet< IndexSetType, EntityType > ManagedIndexSetType;
+
+  typedef typename IndexListType::reverse_iterator IndexListIteratorType;
   
   ManagedIndexSetType * indexSet = 0;
-  
-  IndexListIteratorType endit = indexList_.end();
-  for(IndexListIteratorType it = indexList_.begin(); it != endit; ++it)
+
+  // search index set list in reverse order to find latest index sets faster
+  IndexListIteratorType endit = indexList_.rend();
+  for(IndexListIteratorType it = indexList_.rbegin(); it != endit; ++it)
   {
     // check equality 
     // and increase counter if equal
@@ -1209,15 +1212,11 @@ addIndexSet (const IndexSetType &iset)
     }
   }
   
-  if(!indexSet) 
+  if( !indexSet )
   { 
     indexSet = new ManagedIndexSetType ( iset, indexSets_ , insertIndices_ , removeIndices_  );
-      
-    ManagedIndexSetInterface* iobj = indexSet;
-    // push to front to search latest index sets fast
-    indexList_.push_front( iobj );
+    indexList_.push_back( static_cast< ManagedIndexSetInterface * >( indexSet ) );
   }
-  return ; 
 }
 
 template <class GridType>
