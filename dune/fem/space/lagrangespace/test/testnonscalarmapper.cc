@@ -40,12 +40,12 @@ int main( int argc, char **argv )
   
   try
   {
-    if(argc < 2)
+    if( argc < 2 )
     {
-      std::cout<<"usuage: "<<argv[0]<<" startLevel times"<<std::endl;
-      std::cout<<" with startLevel > 0 and times >0 "<<std::endl;
-      abort();
+      std::cout << "Usuage: " << argv[ 0 ] << " <startLevel> <times>" << std::endl;
+      return 1;
     }
+
     // generate GridPointer holding grid instance
     GridPtr< GridType > gridptr ("2dgrid.dgf");
 
