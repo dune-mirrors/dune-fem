@@ -496,7 +496,6 @@ namespace Dune
         const unsigned int codimSize = indexSet_.size( codim ) * maxDofs_[ codim ];
         size_ += static_cast< unsigned int >( overShoot * codimSize );
       }
-      std::cout << "LagrangeMapper: Recomputed Offsets, size = " << size_ << std::endl;
     }
 
     // reference to dof manager
@@ -609,18 +608,15 @@ namespace Dune
             = std::max( maxDofs_[ codim ], set->maxDofs( codim ) );
       }
 
-      size_ = 0;
-      for( int codim = 0; codim <= dimension; ++codim )
-      {
-        offset_[ codim ] = size_;
-        oldOffSet_[ codim ] = size_;
-        size_ += indexSet_.size( codim ) * maxDofs_[ codim ];
-      }
+      computeOffsets();
+      dm_.addIndexSet( *this );
     }
     
     //! destructor 
     virtual ~LagrangeMapper ()
-    {}
+    {
+      dm_.removeIndexSet( *this );
+    }
 
     //! return overall number of degrees of freedom 
     int size () const
@@ -653,13 +649,10 @@ namespace Dune
       const int entityDof = dofInfo.dofNumber * dimRange + coordinate;
 
       const unsigned int codim = dofInfo.codim;
-      //const int subIndex = codimCall_[ codim ].subIndex( *this, entity, dofInfo.subEntity );
       const int subIndex = indexSet_.subIndex( entity, dofInfo.subEntity, codim );
 
       const int globalDof = dimRange * (offset_[ codim ] + subIndex * maxDofs_[ codim ]) + entityDof;
 
-      assert( codimCall_[ codim ].checkMapEntityDofToGlobal
-                ( *this, entity, dofInfo.subEntity, entityDof, globalDof ) );
       return globalDof;
     }
 
@@ -737,68 +730,6 @@ namespace Dune
         (dimRange * indexSet_.numberOfHoles( codim )) : 0;
     }
 
-    /** \copydoc Dune::DofMapper::update */
-    void update(const bool oversize)
-    {
-      unsigned int codimSize[ dimension+1 ];
-
-      // calculate codimension sizes 
-      for( int codim = 0; codim <= dimension ;  ++codim )
-      {
-        codimSize[ codim ] = indexSet_.size( codim ) * maxDofs_[ codim ];
-      }
-
-      // in oversize mode check offsets 
-      if( oversize ) 
-      {
-        bool noUpdateNeeded = true ;
-        // calculate new possible size 
-        unsigned int upperBound = size_ ;
-
-        // check all codimensions 
-        for( int codim = dimension ; codim >= 0;  --codim )
-        {
-          // check update needed for codimension 
-          if( noUpdateNeeded && 
-              (((offset_[ codim ] + codimSize[ codim ]) 
-                * maxDofs_[ codim ]) > upperBound) )
-          {
-            noUpdateNeeded = false ; 
-            break ;
-          }
-
-          // set new upper bound 
-          upperBound = offset_[ codim ] ;
-        }
-
-        // if size still ok in oversize mode, do nothing 
-        if( noUpdateNeeded ) 
-        {
-          return ;
-        }
-      }
-
-      // calculate new offsets 
-      size_ = 0 ;
-      for( int codim = 0; codim <= dimension; ++codim )
-      {
-        // store old offset 
-        oldOffSet_[ codim ] = offset_[ codim ];
-        offset_[ codim ] = size_; 
-
-        // make space a little bit larger if oversize is true 
-        // oversize new size 
-        if( oversize ) 
-        {
-          const double add = overShoot_ * codimSize[ codim ] ;
-          codimSize[ codim ] = static_cast<unsigned int> (add) ;
-        }
-
-        // add to size 
-        size_ += codimSize [ codim ] ;
-      }
-    }
-
     /** \copydoc Dune::DofMapper::numBlocks
      */
     int numBlocks () const 
@@ -826,12 +757,68 @@ namespace Dune
       return BaseType::checkConsecutive( indexSet_ );
     }
 
+
+    // Adaptation Methods (as for Index Sets)
+
+    void insertEntity ( const EntityType &entity )
+    {
+      // check, whether we need to enlarge any block and compute oversized block size
+      unsigned int oldUpperBound = size_;
+      for( int codim = dimension ; codim >= 0; --codim )
+      {
+        const unsigned int codimSize = indexSet_.size( codim ) * maxDofs_[ codim ];
+        const unsigned int newUpperBound = offset_[ codim ] + codimSize;
+        if( newUpperBound > oldUpperBound )
+          return computeOffsets( overShoot_ );
+        oldUpperBound = offset_[ codim ];
+      }
+    }
+
+    void removeEntity ( const EntityType &entity )
+    {}
+
+    void resize ()
+    {
+      computeOffsets();
+    }
+
+    bool compress ()
+    {
+      computeOffsets();
+      return true;
+    }
+
+    void read_xdr ( const char *filename, int timestep )
+    {
+      computeOffsets();
+    }
+
+    void write_xdr ( const char *filename, int timestep )
+    {}
+
   private:
+    // prohibit copying and assignment
+    LagrangeMapper ( const ThisType & );
+    ThisType &operator=( const ThisType & );
+
+    void computeOffsets ( const double overShoot = 1.0 )
+    {
+      // store old offset and calculate new offsets
+      size_ = 0;
+      for( int codim = 0; codim <= dimension; ++codim )
+      {
+        oldOffSet_[ codim ] = offset_[ codim ];
+        offset_[ codim ] = size_;
+
+        const unsigned int codimSize = indexSet_.size( codim ) * maxDofs_[ codim ];
+        size_ += static_cast< unsigned int >( overShoot * codimSize );
+      }
+    }
+
     // reference to dof manager needed for debug issues 
-    const DofManagerType& dm_;
+    DofManagerType& dm_;
 
     const IndexSetType &indexSet_;
-    const CodimCallMapType codimCall_;
     
     LagrangePointSetMapType &lagrangePointSet_;
 
@@ -844,84 +831,8 @@ namespace Dune
     mutable unsigned int size_;
     unsigned int numDofs_;
   };
-
-
-
-  template< class GridPart, int polOrder, int dimR >
-  struct LagrangeMapper< GridPart, polOrder, dimR >::CodimCallInterface
-  {
-    typedef LagrangeMapper< GridPart, polOrder, dimR > MapperType;
-
-    virtual ~CodimCallInterface ()
-    {}
-
-    virtual int
-    subIndex ( const MapperType &mapper, const EntityType &entity, int i ) const = 0;
-
-    virtual bool
-    checkMapEntityDofToGlobal ( const MapperType &mapper,
-                                const EntityType &entity,
-                                const int subEntity,
-                                const int localDof,
-                                const int globalDof ) const = 0;
-  };
-
-
-
-  template< class GridPart, int polOrder, int dimR >
-  template< unsigned int codim >
-  struct LagrangeMapper< GridPart, polOrder, dimR >::CodimCall
-  : public CodimCallInterface
-  {
-    typedef LagrangeMapper< GridPart, polOrder, dimR > MapperType;
-
-    typedef CodimCallInterface BaseType;
-
-    virtual int
-    subIndex ( const MapperType &mapper, const EntityType &entity, int i ) const
-    {
-      //return mapper.indexSet_.template subIndex< codim >( entity, i );
-      return mapper.indexSet_.subIndex( entity, i, codim );
-    }
-
-    virtual bool checkMapEntityDofToGlobal ( const MapperType &mapper,
-                                             const EntityType &entity,
-                                             const int subEntity,
-                                             const int localDof,
-                                             const int globalDof ) const
-    {
-      typedef Capabilities::hasEntity< GridType, codim > HasEntity;
-      return checkMapEntityDofToGlobal( mapper, entity, subEntity, localDof, globalDof, MetaBool< HasEntity::v >() );
-    }
-
-    bool checkMapEntityDofToGlobal ( const MapperType &mapper,
-                                     const EntityType &entity,
-                                     const int subEntity,
-                                     const int localDof,
-                                     const int globalDof,
-                                     const MetaBool< true > hasEntity ) const
-    {
-      typedef typename EntityType::template Codim< codim >::EntityPointer
-        SubEntityPtrType;
-
-      //const SubEntityPtrType subEntityPtr = entity.template entity< codim >( subEntity );
-      const SubEntityPtrType subEntityPtr = entity.template subEntity< codim >( subEntity );
-      const int globalEntityDof = mapper.mapEntityDofToGlobal( *subEntityPtr, localDof );
-      return (globalEntityDof == globalDof);
-    }
-
-    bool checkMapEntityDofToGlobal ( const MapperType &mapper,
-                                     const EntityType &entity,
-                                     const int subEntity,
-                                     const int localDof,
-                                     const int globalDof,
-                                     const MetaBool< false > hasEntity ) const
-    {
-      return true;
-    }
-  };
-#endif
+#endif // #ifdef USE_TWISTFREE_MAPPER
 
 } // end namespace Dune 
 
-#endif
+#endif // #ifndef DUNE_LAGRANGESPACE_MAPPER_HH
