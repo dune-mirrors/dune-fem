@@ -8,11 +8,16 @@ GRIDDIM=2
 DIMENSION = 2
 POLORDER = 2
 GEOMETRYTYPE = simplex
+SCALAR = 0
 
-check_PROGRAMS = tester generic 
+check_PROGRAMS = tester generic testnonscalarmapper 
 tester_SOURCES = main.cc ../../../misc/test.cc ../../../misc/suite.cc 
 generic_SOURCES = generic.cc
 generic_CPPFLAGS = $(ALL_PKG_CPPFLAGS) -DDIMENSION=$(DIMENSION) -DPOLORDER=$(POLORDER) -DGEOMETRYTYPE=$(GEOMETRYTYPE)
+
+testnonscalarmapper_SOURCES = testnonscalarmapper.cc
+testnonscalarmapper_CPPFLAGS = $(ALL_PKG_CPPFLAGS) -DPOLORDER=$(POLORDER) -DSCALAR=$(SCALAR)
+
 
 testdir=$(includedir)/dune/fem/space/lagrangespace/test
 test_HEADERS = basefunctiontest.hh  mappertest.hh basefunctiontest.cc \
