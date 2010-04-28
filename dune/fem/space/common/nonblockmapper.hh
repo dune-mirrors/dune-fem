@@ -182,6 +182,11 @@ namespace Dune
       return blockMapper_.numBlocks();
     }
 
+    bool contains( const int codim ) const 
+    {
+      return blockMapper_.contains( codim );
+    }
+
   private:
     BlockMapper &blockMapper_;
   };
