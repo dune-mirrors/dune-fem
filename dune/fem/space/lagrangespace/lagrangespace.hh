@@ -64,11 +64,12 @@ namespace Dune
     typedef LagrangeDiscreteFunctionSpace
       < FunctionSpaceType, GridPartType, polynomialOrder, BaseFunctionStorage >
       DiscreteFunctionSpaceType;
-    //typedef LagrangeMapper< GridPartType, polynomialOrder, dimRange > MapperType;
-    
+
+    enum { localBlockSize = dimRange };
+
     // mapper for block
-    typedef LagrangeMapper< GridPartType, polynomialOrder, 1 > BlockMapperType;
-    typedef NonBlockMapper< BlockMapperType, dimRange > MapperType;
+    typedef LagrangeMapper< GridPartType, polynomialOrder > BlockMapperType;
+    typedef NonBlockMapper< BlockMapperType, localBlockSize > MapperType;
     
     // implementation of basefunction set 
     typedef VectorialBaseFunctionSet< BaseFunctionSpaceType, BaseFunctionStorage >
@@ -76,8 +77,6 @@ namespace Dune
 
     // exported type 
     typedef SimpleBaseFunctionProxy<BaseFunctionSetImp>  BaseFunctionSetType;
-
-    enum { localBlockSize = dimRange };
 
     /** \brief defines type of communication data handle for this type of space
      */
@@ -267,13 +266,6 @@ namespace Dune
     typedef LagrangeMapperSingletonFactory< MapperSingletonKeyType, MapperType >
       MapperSingletonFactoryType;
 
-#if 0
-    //! singleton list of mappers 
-    typedef SingletonList
-      < MapperSingletonKeyType, MapperType, MapperSingletonFactoryType >
-      MapperProviderType;
-#endif
-
     //! mapper factory 
     typedef LagrangeMapperSingletonFactory
       < MapperSingletonKeyType, BlockMapperType >
@@ -363,7 +355,6 @@ namespace Dune
       MapperSingletonKeyType key( gridPart, lagrangePointSet_, polynomialOrder );
       blockMapper_ = &BlockMapperProviderType :: getObject( key );
       assert( blockMapper_ != 0 );
-      //mapper_ = &MapperProviderType :: getObject(key);
       mapper_ = new MapperType( *blockMapper_ );
       assert( mapper_ != 0 );
     }
@@ -378,7 +369,6 @@ namespace Dune
     **/
     ~LagrangeDiscreteFunctionSpace ()
     {
-      //MapperProviderType::removeObject( *mapper_ );
       delete mapper_;
       BlockMapperProviderType::removeObject( *blockMapper_ );
 

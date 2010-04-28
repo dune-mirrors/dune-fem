@@ -18,37 +18,34 @@
 namespace Dune
 {
   
-  template< class GridPart, int polOrder, int dimR >
+  template< class GridPart, int polOrder >
   class LagrangeMapper;
 
 
   
-  template< class GridPart, int polOrder, int dimR >
+  template< class GridPart, int polOrder >
   struct LagrangeMapperTraits
   {
     typedef GridPart GridPartType;
     
     static const int polynomialOrder = polOrder;
 
-    //! dimension of the discrete function space's range
-    static const int dimRange = dimR;
-
     typedef typename GridPartType::template Codim< 0 >::IteratorType::Entity EntityType;
-    typedef LagrangeMapper< GridPartType, polynomialOrder, dimRange > DofMapperType;
+    typedef LagrangeMapper< GridPartType, polynomialOrder > DofMapperType;
     typedef DefaultDofMapIterator< EntityType, DofMapperType > DofMapIteratorType;
   };
 
 
   
-  template< class GridPart, int dimR >
-  class LagrangeMapper< GridPart, 1, dimR >
-  : public DofMapperDefault< LagrangeMapperTraits< GridPart, 1, dimR > >
+  template< class GridPart >
+  class LagrangeMapper< GridPart, 1 >
+  : public DofMapperDefault< LagrangeMapperTraits< GridPart, 1 > >
   {
-    typedef LagrangeMapper< GridPart, 1, dimR > ThisType;
-    typedef DofMapperDefault< LagrangeMapperTraits< GridPart, 1, dimR > > BaseType;
+    typedef LagrangeMapper< GridPart, 1 > ThisType;
+    typedef DofMapperDefault< LagrangeMapperTraits< GridPart, 1 > > BaseType;
 
   public:
-    typedef LagrangeMapperTraits< GridPart, 1, dimR > Traits;
+    typedef LagrangeMapperTraits< GridPart, 1 > Traits;
     
     //! type of the grid part
     typedef typename Traits::GridPartType GridPartType;
@@ -73,9 +70,6 @@ namespace Dune
 
     //! order of the Lagrange polynoms
     static const int polynomialOrder = Traits::polynomialOrder;
-
-    //! dimension of the discrete function space's range
-    static const int dimRange = Traits::dimRange;
 
     //! type of the Lagrange point set
     typedef LagrangePointSet< GridPartType, polynomialOrder >
@@ -111,7 +105,7 @@ namespace Dune
     /** \copydoc Dune::DofMapper::size() const */
     int size () const
     {
-      return dimRange * indexSet_.size( dimension );
+      return indexSet_.size( dimension );
     }
 
     /** \copydoc Dune::DofMapper::begin(const EntityType &entity) const */
@@ -129,10 +123,7 @@ namespace Dune
     /** \copydoc Dune::DofMapper::mapToGlobal */
     int mapToGlobal ( const EntityType &entity, const int localDof ) const
     {
-      const int coordinate = localDof % dimRange;
-      const int localPoint = localDof / dimRange;
-      const int globalPoint = indexSet_.subIndex( entity, localPoint, dimension );
-      return dimRange * globalPoint + coordinate;
+      return indexSet_.subIndex( entity, localDof, dimension );
     }
 
     /** \copydoc Dune::DofMapper::mapEntityDofToGlobal */
@@ -142,14 +133,14 @@ namespace Dune
       if( Entity::codimension != dimension )
         DUNE_THROW( RangeError, "No such local DoF." );
 
-      assert( (localDof >= 0) && (localDof < dimRange) );
-      return dimRange * indexSet_.index( entity ) + localDof;
+      assert( localDof == 0 );
+      return indexSet_.index( entity );
     }
     
     /** \copydoc Dune::DofMapper::maxNumDofs() const */
     int maxNumDofs () const
     {
-      return dimRange * maxDofs_;
+      return maxDofs_;
     }
 
     using BaseType::numDofs;
@@ -157,13 +148,13 @@ namespace Dune
     /** \copydoc Dune::DofMapper::numDofs(const EntityType &entity) const */
     int numDofs ( const EntityType &entity ) const
     {
-      return dimRange * entity.template count< dimension >();
+      return entity.template count< dimension >();
     }
 
     template< class Entity >
     int numEntityDofs ( const Entity &entity ) const
     {
-      return (Entity::codimension == dimension ? dimRange : 0);
+      return (Entity::codimension == dimension ? 1 : 0);
     }
 
     /** \brief Check, whether any DoFs are associated with a codimension */
@@ -181,26 +172,20 @@ namespace Dune
     /** \copydoc Dune::DofMapper::oldIndex */
     int oldIndex ( int hole, int ) const
     {
-      const int coordinate = hole % dimRange;
-      const int setHole = hole / dimRange;
-      const int setIndex = indexSet_.oldIndex( setHole, dimension );
-      return setIndex * dimRange + coordinate;
+      return indexSet_.oldIndex( hole, dimension );
     }
 
     /** \copydoc Dune::DofMapper::newIndex */
     int newIndex ( int hole , int ) const
     {
-      const int coordinate = hole % dimRange;
-      const int setHole = hole / dimRange;
-      const int setIndex = indexSet_.newIndex( setHole, dimension );
-      return setIndex * dimRange + coordinate;
+      return indexSet_.newIndex( hole, dimension );
     }
 
     /** \copydoc Dune::DofMapper::numberOfHoles
      */
     int numberOfHoles ( int ) const
     {
-      return dimRange * indexSet_.numberOfHoles( dimension );
+      return indexSet_.numberOfHoles( dimension );
     }
 
     /** \copydoc Dune::DofMapper::consecutive() const */
@@ -216,15 +201,15 @@ namespace Dune
 
 
 
-  template< class GridPart, int dimR >
-  class LagrangeMapper< GridPart, 2, dimR >
-  : public DofMapperDefault< LagrangeMapperTraits< GridPart, 2, dimR > >
+  template< class GridPart >
+  class LagrangeMapper< GridPart, 2 >
+  : public DofMapperDefault< LagrangeMapperTraits< GridPart, 2 > >
   {
-    typedef LagrangeMapper< GridPart, 2, dimR > ThisType;
-    typedef DofMapperDefault< LagrangeMapperTraits< GridPart, 2, dimR > > BaseType;
+    typedef LagrangeMapper< GridPart, 2 > ThisType;
+    typedef DofMapperDefault< LagrangeMapperTraits< GridPart, 2 > > BaseType;
 
   public:
-    typedef LagrangeMapperTraits< GridPart, 2, dimR > Traits;
+    typedef LagrangeMapperTraits< GridPart, 2 > Traits;
     
     //! type of the grid part
     typedef typename Traits::GridPartType GridPartType;
@@ -249,9 +234,6 @@ namespace Dune
 
     //! order of the Lagrange polynoms
     static const int polynomialOrder = Traits::polynomialOrder;
-
-    //! dimension of the discrete function space's range
-    static const int dimRange = Traits::dimRange;
 
     //! type of the Lagrange point set
     typedef LagrangePointSet< GridPartType, polynomialOrder >
@@ -305,7 +287,7 @@ namespace Dune
     //! return overall number of degrees of freedom 
     int size () const
     {
-      return dimRange * size_;
+      return size_;
     }
 
     /** \copydoc Dune::DofMapper::begin(const EntityType &entity) const */
@@ -321,21 +303,13 @@ namespace Dune
     }
 
     /** \copydoc Dune::DofMapper::mapToGlobal */
-    int mapToGlobal ( const EntityType &entity, const int local ) const
+    int mapToGlobal ( const EntityType &entity, const int localDof ) const
     {
-      const int coordinate = local % dimRange;
-      const int localDof = local / dimRange;
-      
-      // unsigned int codim, subEntity;
       const LagrangePointSetType *set = lagrangePointSet_[ entity.type() ];
       const DofInfo &dofInfo = set->dofInfo( localDof );
 
       const unsigned int codim = dofInfo.codim;
-      const int subIndex = indexSet_.subIndex( entity, dofInfo.subEntity, codim );
-
-      const int globalDof = dimRange * (offset_[ codim ] + subIndex) + coordinate;
-
-      return globalDof;
+      return offset_[ codim ] + indexSet_.subIndex( entity, dofInfo.subEntity, codim );
     }
 
     /** \copydoc Dune::DofMapper::mapEntityDofToGlobal */
@@ -343,15 +317,14 @@ namespace Dune
     int mapEntityDofToGlobal ( const Entity &entity, const int localDof ) const 
     {
       static const unsigned int codim = Entity::codimension;
-      assert( localDof < numEntityDofs( entity ) );
-      const int globalDofPt = offset_[ codim ] + indexSet_.index( entity );
-      return dimRange * globalDofPt + localDof;
+      assert( (localDof >= 0) && (localDof < numEntityDofs( entity )) );
+      return offset_[ codim ] + indexSet_.index( entity );
     }
     
     /** \copydoc Dune::DofMapper::maxNumDofs() const */
     int maxNumDofs () const
     {
-      return dimRange * numDofs_;
+      return numDofs_;
     }
 
     using BaseType::numDofs;
@@ -359,7 +332,7 @@ namespace Dune
     /** \copydoc Dune::DofMapper::numDofs(const EntityType &entity) const */
     int numDofs ( const EntityType &entity ) const
     {
-      return dimRange * lagrangePointSet_[ entity.type() ]->size();
+      return lagrangePointSet_[ entity.type() ]->size();
     }
 
     /** \copydoc Dune::DofMapper::numEntityDofs(const Entity &entity) const */
@@ -367,7 +340,7 @@ namespace Dune
     int numEntityDofs ( const Entity &entity ) const
     {
       // This implementation only works for nonhybrid grids (simplices or cubes)
-      return dimRange * maxDofs_[ Entity::codimension ];
+      return maxDofs_[ Entity::codimension ];
     }
     
     /** \brief Check, whether any DoFs are associated with a codimension */
@@ -383,32 +356,21 @@ namespace Dune
     }
 
     /** \copydoc Dune::DofMapper::oldIndex */
-    int oldIndex ( const int num, const int codim ) const
+    int oldIndex ( const int hole, const int codim ) const
     {
-      // corresponding number of set is newn 
-      const int newn  = static_cast<int> (num / dimRange);
-      // local number of dof is local 
-      const int local = (num % dimRange);
-      // codim to be revised 
-      return dimRange * (offset_[codim] + indexSet_.oldIndex(newn,codim)) + local;
+      return offset_[ codim ] + indexSet_.oldIndex( hole, codim );
     }
 
     /** \copydoc Dune::DofMapper::newIndex */
-    int newIndex ( const int num , const int codim) const
+    int newIndex ( const int hole, const int codim ) const
     {
-      // corresponding number of set is newn 
-      const int newn  = static_cast<int> (num / dimRange);
-      // local number of dof is local 
-      const int local = (num % dimRange);
-      // codim to be revised 
-      return dimRange * (offset_[codim] + indexSet_.newIndex(newn,codim)) + local;
+      return offset_[ codim ] + indexSet_.newIndex( hole, codim );
     }
 
     /** \copydoc Dune::DofMapper::numberOfHoles */
     int numberOfHoles ( const int codim ) const
     {
-      return (maxDofs_[ codim ] > 0) ? 
-        (dimRange * indexSet_.numberOfHoles( codim )) : 0;
+      return maxDofs_[ codim ] * indexSet_.numberOfHoles( codim );
     }
 
     /** \copydoc Dune::DofMapper::numBlocks
@@ -423,7 +385,7 @@ namespace Dune
     int oldOffSet ( const int block ) const
     {
       assert( (block >= 0) && (block < numBlocks()) );
-      return dimRange * oldOffSet_[ block ];
+      return oldOffSet_[ block ];
     }
 
     /** \copydoc Dune::DofMapper::newOffset
@@ -431,7 +393,7 @@ namespace Dune
     int offSet ( const int block ) const
     {
       assert( (block >= 0) && (block < numBlocks()) );
-      return dimRange * offset_[ block ];
+      return offset_[ block ];
     }
 
     /** \copydoc Dune::DofMapper::consecutive() const */
@@ -523,15 +485,15 @@ namespace Dune
   // Note: This mapper assumes that the grid is "twist-free".
 
 #ifdef USE_TWISTFREE_MAPPER
-  template< class GridPart, int polOrder, int dimR >
+  template< class GridPart, int polOrder >
   class LagrangeMapper
-  : public DofMapperDefault< LagrangeMapperTraits< GridPart, polOrder, dimR > >
+  : public DofMapperDefault< LagrangeMapperTraits< GridPart, polOrder > >
   {
-    typedef LagrangeMapper< GridPart, polOrder, dimR > ThisType;
-    typedef DofMapperDefault< LagrangeMapperTraits< GridPart, polOrder, dimR > > BaseType;
+    typedef LagrangeMapper< GridPart, polOrder > ThisType;
+    typedef DofMapperDefault< LagrangeMapperTraits< GridPart, polOrder > > BaseType;
 
   public:
-    typedef LagrangeMapperTraits< GridPart, polOrder, dimR > Traits;
+    typedef LagrangeMapperTraits< GridPart, polOrder > Traits;
     
     //! type of the grid part
     typedef typename Traits::GridPartType GridPartType;
@@ -553,9 +515,6 @@ namespace Dune
 
     //! order of the Lagrange polynoms
     static const int polynomialOrder = Traits::polynomialOrder;
-
-    //! dimension of the discrete function space's range
-    static const int dimRange = Traits::dimRange;
 
     //! type of the index set
     typedef typename GridPartType::IndexSetType IndexSetType;
@@ -621,7 +580,7 @@ namespace Dune
     //! return overall number of degrees of freedom 
     int size () const
     {
-      return dimRange * size_;
+      return size_;
     }
 
     /** \copydoc Dune::DofMapper::begin(const EntityType &entity) const */
@@ -639,21 +598,14 @@ namespace Dune
     /** \copydoc Dune::DofMapper::mapToGlobal */
     int mapToGlobal ( const EntityType &entity, const int localDof ) const
     {
-      const int coordinate = localDof % dimRange;
-      const int scalarDof = localDof / dimRange;
-      
       // unsigned int codim, subEntity;
       const LagrangePointSetType *set = lagrangePointSet_[ entity.type() ];
-      const DofInfo& dofInfo = set->dofInfo( scalarDof );
+      const DofInfo& dofInfo = set->dofInfo( localDof );
       
-      const int entityDof = dofInfo.dofNumber * dimRange + coordinate;
-
       const unsigned int codim = dofInfo.codim;
       const int subIndex = indexSet_.subIndex( entity, dofInfo.subEntity, codim );
 
-      const int globalDof = dimRange * (offset_[ codim ] + subIndex * maxDofs_[ codim ]) + entityDof;
-
-      return globalDof;
+      return offset_[ codim ] + subIndex * maxDofs_[ codim ] + dofInfo.dofNumber;
     }
 
     /** \copydoc Dune::DofMapper::mapEntityDofToGlobal */
@@ -661,16 +613,14 @@ namespace Dune
     int mapEntityDofToGlobal ( const Entity &entity, const int localDof ) const 
     {
       const unsigned int codim = Entity::codimension;
-
       assert( localDof < numEntityDofs( entity ) );
-      const int offset = offset_[ codim ] + indexSet_.index( entity ) * maxDofs_[ codim ];
-      return dimRange * offset + localDof;
+      return offset_[ codim ] + indexSet_.index( entity ) * maxDofs_[ codim ] + localDof;
     }
     
     /** \copydoc Dune::DofMapper::maxNumDofs() const */
     int maxNumDofs () const
     {
-      return dimRange * numDofs_;
+      return numDofs_;
     }
 
     using BaseType::numDofs;
@@ -678,7 +628,7 @@ namespace Dune
     /** \copydoc Dune::DofMapper::numDofs(const EntityType &entity) const */
     int numDofs ( const EntityType &entity ) const
     {
-      return dimRange * lagrangePointSet_[ entity.type() ]->size();
+      return lagrangePointSet_[ entity.type() ]->size();
     }
 
     /** \copydoc Dune::DofMapper::numEntityDofs(const Entity &entity) const */
@@ -686,7 +636,7 @@ namespace Dune
     int numEntityDofs ( const Entity &entity ) const
     {
       // This implementation only works for nonhybrid grids (simplices or cubes)
-      return dimRange * maxDofs_[ Entity::codimension ];
+      return maxDofs_[ Entity::codimension ];
     }
     
     /** \brief Check, whether any DoFs are associated with a codimension */
@@ -702,32 +652,23 @@ namespace Dune
     }
 
     /** \copydoc Dune::DofMapper::oldIndex */
-    int oldIndex ( const int num, const int codim ) const
+    int oldIndex ( const int hole, const int codim ) const
     {
-      // corresponding number of set is newn 
-      const int newn  = static_cast<int> (num / dimRange);
-      // local number of dof is local 
-      const int local = (num % dimRange);
-      // codim to be revised 
-      return dimRange * (offset_[codim] + indexSet_.oldIndex(newn,codim)) + local;
+      const int n = maxDofs_[ codim ];
+      return offset_[ codim ] + n*indexSet_.oldIndex( hole / n, codim ) + (hole % n);
     }
 
     /** \copydoc Dune::DofMapper::newIndex */
-    int newIndex ( const int num , const int codim) const
+    int newIndex ( const int hole, const int codim ) const
     {
-      // corresponding number of set is newn 
-      const int newn  = static_cast<int> (num / dimRange);
-      // local number of dof is local 
-      const int local = (num % dimRange);
-      // codim to be revised 
-      return dimRange * (offset_[codim] + indexSet_.newIndex(newn,codim)) + local;
+      const int n = maxDofs_[ codim ];
+      return offset_[ codim ] + n*indexSet_.newIndex( hole / n, codim ) + (hole % n);
     }
 
     /** \copydoc Dune::DofMapper::numberOfHoles */
     int numberOfHoles ( const int codim ) const
     {
-      return (maxDofs_[ codim ] > 0) ? 
-        (dimRange * indexSet_.numberOfHoles( codim )) : 0;
+      return maxDofs_[ codim ] * indexSet_.numberOfHoles( codim );
     }
 
     /** \copydoc Dune::DofMapper::numBlocks
@@ -741,14 +682,14 @@ namespace Dune
     int oldOffSet ( const int block ) const
     {
       assert( (block >= 0) && (block < numBlocks()) );
-      return dimRange * oldOffSet_[ block ];
+      return oldOffSet_[ block ];
     }
 
     /** \copydoc Dune::DofMapper::offSet(const int block) const */
     int offSet ( const int block ) const
     {
       assert( (block >= 0) && (block < numBlocks()) );
-      return dimRange * offset_[ block ];
+      return offset_[ block ];
     }
 
     /** \copydoc Dune::DofMapper::consecutive() const */
