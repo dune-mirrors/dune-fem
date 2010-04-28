@@ -104,12 +104,12 @@ namespace Dune
 
     DofMapIteratorType begin ( const EntityType &entity ) const
     {
-      return DofMapIteratorType( blockMapper_.begin() );
+      return DofMapIteratorType( blockMapper_.begin(entity) );
     }
 
     DofMapIteratorType end ( const EntityType &entity ) const
     {
-      return DofMapIteratorType( blockMapper_.end() );
+      return DofMapIteratorType( blockMapper_.end(entity) );
     }
 
     int mapToGlobal ( const EntityType &entity, const int localDof ) const
