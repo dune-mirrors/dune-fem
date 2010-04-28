@@ -375,12 +375,6 @@ public:
     // store old size of space (don't use mapper here) 
     const int oldSize = array_.size();
 
-    // make the memory sizes a little bit larger 
-    const bool overSizeMemory = true ;
-
-    // update mapper to new sizes 
-    mapper().update( overSizeMemory );
-
     // get current size 
     const int nSize = mapper().size();
 
@@ -451,12 +445,6 @@ public:
   //! copy the dof from the rear section of the vector to the holes 
   void dofCompress () 
   {
-    // update to current memory size without oversizing memory  
-    const bool overSizeMemory = false ;
-
-    // update mapper to new sizes 
-    mapper().update( overSizeMemory );
-
     // get current size 
     const int nSize = mapper().size();
 

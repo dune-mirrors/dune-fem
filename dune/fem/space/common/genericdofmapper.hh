@@ -196,9 +196,6 @@ namespace Dune
 
     bool contains ( const int codim ) const;
 
-    void update ( const bool overSizeMemory )                                                
-    {}
-
     const int numBlocks () const
     {
       return blocks_.size();

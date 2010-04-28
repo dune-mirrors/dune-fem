@@ -167,11 +167,6 @@ namespace Dune
       return blockMapper_.consecutive();
     }
 
-    void update ( const bool oversize )
-    {
-      return blockMapper_.update( oversize );
-    }
-
     int oldOffSet ( const int block ) const
     {
       return blockMapper_.oldOffSet( block ) * blockSize;

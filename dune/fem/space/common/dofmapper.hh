@@ -196,17 +196,6 @@ public:
     return asImp().consecutive();
   }
 
-  /** \brief update mapper, 
-      i.e. calculate new insertion points of blocks 
-      \param[in] oversize \b true if offsets should be a little bit larger, 
-                          \b false make memory according to index set size 
-  */
-  void update (const bool oversize)
-  {
-    CHECK_AND_CALL_INTERFACE_IMPLEMENTATION(
-        asImp().update(oversize));
-  }
-
   /** \brief return old offsets for given block */
   int oldOffSet(const int block) const
   {
@@ -381,10 +370,6 @@ public:
     dune_static_assert( (Entity::codimension > 0), "Call specialization for codimension 0." );
     return 0;
   }
-
-  //! update mapper, default does nothing 
-  void update (const bool)
-  {}
 
   //! return old offsets for block number, default returns zero 
   int oldOffSet(const int block) const { return 0; }

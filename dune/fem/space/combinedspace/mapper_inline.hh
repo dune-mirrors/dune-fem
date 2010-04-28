@@ -191,16 +191,6 @@ namespace Dune
 
 
   template< class ContainedMapper, int N, DofStoragePolicy policy >
-  inline void CombinedMapper< ContainedMapper, N, policy > :: 
-  update ( const bool oversize )
-  {
-    // call contained mappers update 
-    containedMapper().update( oversize );
-  }
-
-
-
-  template< class ContainedMapper, int N, DofStoragePolicy policy >
   inline int CombinedMapper< ContainedMapper, N, policy >
     :: oldOffSet ( const int block ) const 
   {

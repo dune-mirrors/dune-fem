@@ -224,9 +224,6 @@ namespace Dune
     //! returnn number of mem blocks 
     inline int numBlocks () const; 
 
-    //! update offset information
-    inline void update (const bool oversize); 
-    
     //! return current old offset of block 
     inline int oldOffSet ( const int block ) const;
 
