@@ -10,6 +10,7 @@
 
 #include <dune/localfunctions/common/localkey.hh>
 
+#include <dune/fem/space/common/dofmanager.hh>
 #include <dune/fem/space/common/dofmapper.hh>
 
 namespace Dune
@@ -104,6 +105,7 @@ namespace Dune
 
   private:
     typedef typename GridPartType::IndexSetType IndexSetType;
+    typedef DofManager< typename GridPartType::GridType > DofManagerType;
 
     struct Block
     {
@@ -127,6 +129,11 @@ namespace Dune
 
     GenericDofMapper ( const GridPartType &gridPart,
                        const LocalCoefficientsMapType &localCoefficientsMap );
+
+    ~GenericDofMapper ()
+    {
+      dofManager_.removeIndexSet( *this );
+    }
 
     const IndexSetType &indexSet () const
     {
@@ -189,12 +196,8 @@ namespace Dune
 
     bool contains ( const int codim ) const;
 
-    void update ();
-
-    void update ( const bool overSizeMemory )
-    {
-      update();
-    }
+    void update ( const bool overSizeMemory )                                                
+    {}
 
     const int numBlocks () const
     {
@@ -224,7 +227,44 @@ namespace Dune
 
     bool fixedDataSize( const int codim ) const;
 
-  private: 
+
+    // Adaptation Methods (as for Index Sets)
+
+    template< class Entity >
+    void insertEntity ( const Entity &entity )
+    {
+      update();
+    }
+
+    template< class Entity >
+    void removeEntity ( const Entity &entity )
+    {}
+
+    void resize ()
+    {
+      update();
+    }
+
+    bool compress ()
+    {
+      update();
+      return true;
+    }
+
+    void read_xdr ( const char *filename, int timestep )
+    {
+      update();
+    }
+
+    void write_xdr ( const char *filename, int timestep )
+    {}
+
+  private:
+    GenericDofMapper ( const ThisType & );
+    ThisType &operator= ( const ThisType & );
+
+    void update ();
+
     template< class Topology >
     void build ( const LocalCoefficientsType &localCoefficients,
                  MapInfo &mapInfo );
@@ -232,6 +272,7 @@ namespace Dune
     template< class Topology >
     void build ();
 
+    DofManagerType &dofManager_;
     const IndexSetType &indexSet_;
     const LocalCoefficientsMapType &localCoefficientsMap_;
     std::vector< MapInfo > mapInfo_[ numTopologies ];
@@ -246,7 +287,8 @@ namespace Dune
   inline GenericDofMapper< GridPart, LocalCoefficientsMap >
     ::GenericDofMapper ( const GridPartType &gridPart,
                          const LocalCoefficientsMapType &localCoefficientsMap )
-  : indexSet_( gridPart.indexSet() ),
+  : dofManager_( DofManagerType::instance( gridPart.grid() ) ),
+    indexSet_( gridPart.indexSet() ),
     localCoefficientsMap_( localCoefficientsMap ),
     maxNumDofs_( 0 )
   {
@@ -259,6 +301,7 @@ namespace Dune
     }
     ForLoop< Build, 0, numTopologies-1 >::apply( *this );
     update();
+    dofManager_.addIndexSet( *this );
   }
 
 
