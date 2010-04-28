@@ -16,6 +16,7 @@ common_HEADERS = adaptmanager.hh \
      functionspaceinterface.hh \
      genericdofmapper.hh \
      loadbalancer.hh \
+     nonblockmapper.hh \
      restrictprolongfunction.hh \
      restrictprolonginterface.hh \
      adaptcallbackhandle.hh
