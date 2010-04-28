@@ -107,13 +107,14 @@ protected:
   // reference counter 
   size_t referenceCounter_;
   
-  template <class IndexSetType>
-  ManagedIndexSetInterface(const IndexSetType& set) 
-    : setPtr_( getIdentifier(set) ) , referenceCounter_(1) 
+  template< class IndexSet >
+  explicit ManagedIndexSetInterface ( const IndexSet &iset )
+  : setPtr_( getIdentifier( iset ) ), referenceCounter_( 1 )
   {}
 
 public:
   virtual ~ManagedIndexSetInterface () {}
+
   //! resize of index set 
   virtual void resize () = 0; 
   //! compress of index set 
@@ -124,35 +125,28 @@ public:
   virtual void write_xdr(const char * filename, int timestep) const = 0;
 
   //! increase reference counter 
-  template <class IndexSetType>
-  bool increaseReference(const IndexSetType& set) 
+  void addReference () 
   {
-    // if index sets are the same, return true and increase counter 
-    return ( equals( set ) ) ? (++referenceCounter_,true) : false;
+    ++referenceCounter_;
   } 
 
-  template <class IndexSetType>
-  bool decreaseReference(const IndexSetType& set) 
+  bool removeReference ()
   {
-    // if index sets are the same, 
-    // decrease and return true if counter zero 
-    return ( equals( set ) ) ? (--referenceCounter_ == 0) : false;
+    return (--referenceCounter_ == 0);
   }
   
-private:
-  template <class IndexSetType>
-  bool equals(const IndexSetType& set) const
+  template< class IndexSet >
+  bool equals ( const IndexSet &iset ) const
   {
-    // if index sets are the same 
-    return (getIdentifier(set) == setPtr_ );  
+    return (getIdentifier( iset ) == setPtr_);
   }
 
-  template <class IndexSetType>
-  IdentifierType getIdentifier(const IndexSetType& set) const 
+private:
+  template< class IndexSet >
+  IdentifierType getIdentifier ( const IndexSet &iset ) const
   {
-    return static_cast<IdentifierType> (&set); 
+    return static_cast< IdentifierType >( &iset ); 
   } 
-    
 };
 
 template <class IndexSetType, class EntityType> class RemoveIndicesFromSet;
@@ -1224,13 +1218,13 @@ addIndexSet (const IndexSetType &iset)
 
   // search index set list in reverse order to find latest index sets faster
   IndexListIteratorType endit = indexList_.rend();
-  for(IndexListIteratorType it = indexList_.rbegin(); it != endit; ++it)
+  for( IndexListIteratorType it = indexList_.rbegin(); it != endit; ++it )
   {
-    // check equality 
-    // and increase counter if equal
-    if( (*it)->increaseReference(iset) )
+    ManagedIndexSetInterface *set = *it;
+    if( set->equals( iset ) )
     {
-      indexSet = static_cast<ManagedIndexSetType *> ((*it));
+      set->addReference();
+      indexSet = static_cast< ManagedIndexSetType * >( set );
       break;
     }
   }
@@ -1245,23 +1239,28 @@ addIndexSet (const IndexSetType &iset)
 template <class GridType>
 template <class IndexSetType>
 inline void DofManager<GridType>::
-removeIndexSet (const IndexSetType &set)
+removeIndexSet ( const IndexSetType &iset )
 {
-  // search object in list an remove it
-  IndexListIteratorType endit = indexList_.end();
-  for(IndexListIteratorType it = indexList_.begin(); it != endit; ++it)
+  typedef typename IndexListType::reverse_iterator IndexListIteratorType;
+
+  // search index set list in reverse order to find latest index sets faster
+  IndexListIteratorType endit = indexList_.rend();
+  for( IndexListIteratorType it = indexList_.rbegin(); it != endit; ++it )
   {
-    // decrease reference counter 
-    // and delete if refernce is zero
-    if( (*it)->decreaseReference( set ) )
+    ManagedIndexSetInterface *set = *it;
+    if( set->equals( iset ) )
     {
-      // get obj pointer  
-      ManagedIndexSetInterface* set = *it;
-      // remove from list 
-      indexList_.erase( it );
-      // delete proxy 
-      delete set;
-      return ;
+      if( set->removeReference() )
+      {
+        // reverse iterators cannot be erased directly, so erase the base
+        // (forward) iterator
+        // Note: see, e.g., Stroustrup, section 16.3.2 about the decrement
+        typename IndexListType::iterator fit = it.base();
+        indexList_.erase( --fit );
+        // delete proxy
+        delete set;
+      }
+      return;
     }
   }
 
