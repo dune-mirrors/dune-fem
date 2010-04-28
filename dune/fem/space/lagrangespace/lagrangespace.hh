@@ -10,6 +10,7 @@
 
 //- Dune-Fem includes 
 #include <dune/fem/space/common/dofmanager.hh>
+#include <dune/fem/space/common/nonblockmapper.hh>
 #include <dune/fem/space/common/discretefunctionspace.hh>
 #include <dune/fem/space/basefunctions/basefunctionstorage.hh>
 #include <dune/fem/space/basefunctions/basefunctionsets.hh>
@@ -63,12 +64,11 @@ namespace Dune
     typedef LagrangeDiscreteFunctionSpace
       < FunctionSpaceType, GridPartType, polynomialOrder, BaseFunctionStorage >
       DiscreteFunctionSpaceType;
-    typedef LagrangeMapper< GridPartType, polynomialOrder, dimRange >
-      MapperType;
+    //typedef LagrangeMapper< GridPartType, polynomialOrder, dimRange > MapperType;
     
-    // mapper for block 
-    typedef LagrangeMapper< GridPartType, polynomialOrder, 1 >
-      BlockMapperType;
+    // mapper for block
+    typedef LagrangeMapper< GridPartType, polynomialOrder, 1 > BlockMapperType;
+    typedef NonBlockMapper< BlockMapperType, dimRange > MapperType;
     
     // implementation of basefunction set 
     typedef VectorialBaseFunctionSet< BaseFunctionSpaceType, BaseFunctionStorage >
@@ -267,10 +267,12 @@ namespace Dune
     typedef LagrangeMapperSingletonFactory< MapperSingletonKeyType, MapperType >
       MapperSingletonFactoryType;
 
+#if 0
     //! singleton list of mappers 
     typedef SingletonList
       < MapperSingletonKeyType, MapperType, MapperSingletonFactoryType >
       MapperProviderType;
+#endif
 
     //! mapper factory 
     typedef LagrangeMapperSingletonFactory
@@ -359,10 +361,11 @@ namespace Dune
       }
 
       MapperSingletonKeyType key( gridPart, lagrangePointSet_, polynomialOrder );
-      mapper_ = &MapperProviderType :: getObject(key);
-      assert( mapper_ != 0 );
       blockMapper_ = &BlockMapperProviderType :: getObject( key );
       assert( blockMapper_ != 0 );
+      //mapper_ = &MapperProviderType :: getObject(key);
+      mapper_ = new MapperType( *blockMapper_ );
+      assert( mapper_ != 0 );
     }
 
   private:
@@ -373,10 +376,11 @@ namespace Dune
     /** \brief Destructor (freeing base functions and mapper)
         \return 
     **/
-    inline ~LagrangeDiscreteFunctionSpace ()
+    ~LagrangeDiscreteFunctionSpace ()
     {
-      if( blockMapper_ ) BlockMapperProviderType::removeObject( *blockMapper_ );
-      MapperProviderType::removeObject( *mapper_ );
+      //MapperProviderType::removeObject( *mapper_ );
+      delete mapper_;
+      BlockMapperProviderType::removeObject( *blockMapper_ );
 
       typedef typename BaseFunctionMapType :: iterator BFIteratorType;
       BFIteratorType bfend = baseFunctionSet_.end();
@@ -484,7 +488,7 @@ namespace Dune
     }
 
     /** \copydoc Dune::DiscreteFunctionSpaceInterface::mapper */
-    inline MapperType &mapper () const
+    MapperType &mapper () const
     {
       assert( mapper_ != 0 );
       return *mapper_;
@@ -493,7 +497,7 @@ namespace Dune
     /** \brief obtain the DoF block mapper of this space
         \return BlockMapperType
     **/
-    inline BlockMapperType &blockMapper () const
+    BlockMapperType &blockMapper () const
     {
       assert( blockMapper_ != 0 );
       return *blockMapper_;
@@ -504,4 +508,5 @@ namespace Dune
 
 // include definition of RestrictProlongDefault for Lagrange Space.
 #include "adaptmanager.hh"
-#endif
+
+#endif // #ifndef DUNE_LAGRANGESPACE_LAGRANGESPACE_HH
