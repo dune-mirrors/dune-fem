@@ -223,7 +223,7 @@ namespace Dune
         return;
       }
     }
-    DUNE_THROW( RangeError, "DiscreteFunctionDefault::evaluate: x is within domain." );
+    DUNE_THROW( RangeError, "DiscreteFunctionDefault::evaluate: x is not within domain." );
   }
 
 
