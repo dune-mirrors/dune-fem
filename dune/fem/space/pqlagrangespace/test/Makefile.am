@@ -27,7 +27,8 @@ test_pqlagrangespace_SOURCES  = main.cc ../../../misc/test.cc ../../../misc/suit
 test_pqlagrangespace_CPPFLAGS = $(ALL_PKG_CPPFLAGS)
 test_pk2d_SOURCES = test-pk2d.cc
 test_pk2d_CPPFLAGS = $(ALL_PKG_CPPFLAGS) -DPOLORDER=$(POLORDER) $(DUNEMPICPPFLAGS)
-test_pk2d_LDADD = $(ALL_PKG_LIBS) $(DUNEMPILIBS)
+test_pk2d_LDFLAGS = $(ALL_PKG_LDFLAGS)
+test_pk2d_LDADD = $(ALL_PKG_LIBS) $(DUNEMPILIBS) $(LOCAL_LIBS)
 
 endif
 
