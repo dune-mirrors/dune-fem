@@ -873,12 +873,35 @@ private:
 public:
   //! return factor to over estimate new memory allocation 
   double memoryFactor() const { return memoryFactor_; }
-  
-  //! add new index set to the list of the indexsets of this dofmanager
+
+  /** \brief add index set to dof manager's list of index sets
+   *
+   *  During adaptation, all index sets known to the dof manager are notified
+   *  of the changes.
+   *
+   *  To register an index set with the dof manager, it has to satisfy the
+   *  following interface:
+   *  \code
+   *  void insertEntity ( const Element & );
+   *  void removeEntity ( const Element & );
+   *  void resize();
+   *  bool compress();
+   *  void read_xdr();
+   *  void write_xdr();
+   *  \endcode
+   *
+   *  \param[in]  iset  index set to add to list
+   */
   template <class IndexSetType>
   inline void addIndexSet (const IndexSetType &iset); 
 
-  //! remove index set from the indexsets list of this dofmanager
+  /** \brief removed index set from dof manager's list of index sets
+   *
+   *  During adaptation, all index sets known to the dof manager are notified
+   *  of the changes.
+   *
+   *  \param[in]  iset  index set to add to list
+   */
   template <class IndexSetType>
   inline void removeIndexSet (const IndexSetType &iset); 
 
