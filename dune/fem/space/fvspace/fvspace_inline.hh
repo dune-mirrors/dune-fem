@@ -18,10 +18,10 @@ FiniteVolumeSpace (GridPartType & gridPart,
         const CommunicationDirection commDirection) :
     DefaultType(gridPart, commInterface, commDirection),
     baseFuncSet_(),
-    mapper_(0),
     blockMapper_(
       BlockMapperProviderType::getObject( 
-        MapperSingletonKeyType (this->gridPart().indexSet(),1) ))
+        MapperSingletonKeyType ( gridPart, 1 ) )),
+    mapper_( blockMapper_ )
 {
   makeFunctionSpace(gridPart);
 }
@@ -51,12 +51,7 @@ makeFunctionSpace (GridPartType& gridPart)
       maxDofs = std::max( maxDofs , baseSet->numBaseFunctions() );
     }
   }
-
-  {
-    MapperSingletonKeyType key(gridPart.indexSet(),maxDofs);
-    mapper_ = & MapperProviderType::getObject(key);
-  }
-  assert( mapper_ );
+  assert( mapper().maxNumDofs() == maxDofs );
 }
   
 template <class FunctionSpaceImp, class GridPartImp, int polOrd, template <class> class BaseFunctionStorageImp >
@@ -72,7 +67,6 @@ inline FiniteVolumeSpace<FunctionSpaceImp, GridPartImp, polOrd, BaseFunctionStor
   }
 
   baseFuncSet_.clear();
-  MapperProviderType::removeObject(*mapper_);
   BlockMapperProviderType::removeObject(blockMapper_);
 }  
 
@@ -106,8 +100,7 @@ baseFunctionSet (const GeometryType& geomType) const
 template <class FunctionSpaceImp, class GridPartImp, int polOrd, template <class> class BaseFunctionStorageImp >
 inline typename FiniteVolumeSpace<FunctionSpaceImp, GridPartImp, polOrd, BaseFunctionStorageImp>::MapperType&
 FiniteVolumeSpace<FunctionSpaceImp, GridPartImp, polOrd, BaseFunctionStorageImp>::mapper() const {
-  assert(mapper_);
-  return *mapper_;
+  return mapper_;
 }
 template <class FunctionSpaceImp, class GridPartImp, int polOrd, template <class> class BaseFunctionStorageImp >
 inline typename FiniteVolumeSpace<FunctionSpaceImp, GridPartImp, polOrd, BaseFunctionStorageImp>::BlockMapperType&

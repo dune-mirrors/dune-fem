@@ -12,7 +12,9 @@
 #include <dune/fem/space/basefunctions/basefunctionproxy.hh>
 
 #include <dune/fem/space/fvspace/fvspacebasefunctions.hh>
-#include <dune/fem/space/fvspace/fvspacemapper.hh>
+
+#include <dune/fem/space/mapper/codimensionmapper.hh>
+#include <dune/fem/space/mapper/nonblockmapper.hh>
 
 #include <dune/fem/space/dgspace/dgdatahandle.hh>
 
@@ -60,12 +62,15 @@ namespace Dune
     typedef VectorialBaseFunctionSet<BaseFunctionSpaceType, BaseFunctionStorageImp > BaseFunctionSetImp;
 
     typedef SimpleBaseFunctionProxy<BaseFunctionSetImp> BaseFunctionSetType;
-    typedef FiniteVolumeMapper< GridPartType, polOrd, dimRange > MapperType;
-
-    // type of mapper for block vector functions 
-    typedef FiniteVolumeMapper< GridPartType, polOrd, 1 > BlockMapperType;
 
     enum { localBlockSize = dimRange };
+
+    // block mapper 
+    typedef CodimensionMapper< GridPartType, 0 > BlockMapperType;
+
+    // type of mapper for block vector functions 
+    typedef NonBlockMapper< BlockMapperType, localBlockSize > MapperType;
+
     
     /** \brief defines type of data handle for communication 
         for this type of space.
@@ -156,15 +161,7 @@ namespace Dune
 
  protected:  
     //! mapper singleton key  
-    typedef MapperSingletonKey< IndexSetType > MapperSingletonKeyType;
-
-    //! mapper factory 
-    typedef MapperSingletonFactory< MapperSingletonKeyType ,    
-              MapperType > MapperSingletonFactoryType;
-
-    //! mapper singleton list 
-    typedef SingletonList< MapperSingletonKeyType , MapperType ,
-            MapperSingletonFactoryType > MapperProviderType;
+    typedef MapperSingletonKey< GridPartType > MapperSingletonKeyType;
 
     //! mapper factory 
     typedef MapperSingletonFactory< MapperSingletonKeyType ,    
@@ -210,7 +207,7 @@ namespace Dune
     /** \copydoc Dune::DiscreteFunctionSpaceInterface::contains */
     inline bool contains(const int codim) const
     {   
-      return (polynomialOrder == 0) ? (codim == 0) : true;
+      return blockMapper().contains( codim );
     }
     
     /** \copydoc Dune::DiscreteFunctionSpaceInterface::continuous */
@@ -253,11 +250,10 @@ namespace Dune
     mutable BaseFunctionMapType baseFuncSet_;
 
   private:
-    //! the corresponding FiniteVolumeMapper 
-    MapperType* mapper_; 
-
     //! mapper for block vector functions 
     BlockMapperType& blockMapper_;
+    //! the corresponding FiniteVolumeMapper 
+    mutable MapperType mapper_; 
   }; // end class FiniteVolumeSpace
 
 
