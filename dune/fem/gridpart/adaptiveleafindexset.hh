@@ -154,8 +154,8 @@ namespace Dune
     {
     };
 
-    template< int codim >
-    struct CallSetUpCodimSet
+    template< int codim , bool gridHasCodim >
+    struct CallSetUpCodimSetBase
     {
       static void apply ( const int cd, const ThisType &indexSet )
       {
@@ -165,6 +165,21 @@ namespace Dune
         if( cd == codim )
           indexSet.template setUpCodimSet< codim >();
       }
+    };
+
+    template< int codim >
+    struct CallSetUpCodimSetBase< codim, false >
+    {
+      static void apply ( const int cd, const ThisType &indexSet )
+      {
+        assert( ! indexSet.codimAvailable( codim ) );
+      }
+    };
+
+    template< int codim >
+    struct CallSetUpCodimSet 
+      : public CallSetUpCodimSetBase< codim, Capabilities :: hasEntity < GridType, codim > :: v >
+    {
     };
 
     //! is true if grid is structured grid 
