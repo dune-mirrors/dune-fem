@@ -395,7 +395,8 @@ namespace Dune
     /** \copydoc Dune::DiscreteFunctionSpaceInterface::contains */
     inline bool contains ( const int codim ) const
     {
-      return mapper().contains( codim );
+      // forward to mapper since this information is held there 
+      return blockMapper().contains( codim );
     }
 
     /** \copydoc Dune::DiscreteFunctionSpaceInterface::continuous */
