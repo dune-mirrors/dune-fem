@@ -34,6 +34,7 @@ namespace Dune
         i_ = 0;
         ++blockIterator_;
       }
+      return *this;
     }
 
     bool operator== ( const ThisType &other ) const
@@ -180,6 +181,11 @@ namespace Dune
     int numBlocks () const
     {
       return blockMapper_.numBlocks();
+    }
+
+    bool contains( const int codim ) const 
+    {
+      return blockMapper_.contains( codim );
     }
 
   private:

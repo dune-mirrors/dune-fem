@@ -1,5 +1,5 @@
-#ifndef DUNE_CODIMENSIONMAPPER_HH
-#define DUNE_CODIMENSIONMAPPER_HH
+#ifndef DUNE_FEM_CODIMENSIONMAPPER_HH
+#define DUNE_FEM_CODIMENSIONMAPPER_HH
 
 #include <dune/fem/space/common/dofmapper.hh>
 
@@ -9,8 +9,8 @@ namespace Dune
   template< class GridPartImp, int codim >
   class CodimensionMapper;
 
+  template <class EntityType, class DofMapperType> 
   class CodimensionDofMapIterator;
-
 
 
   template< class GridPartImp, int codim >
@@ -18,14 +18,32 @@ namespace Dune
   {
     typedef GridPartImp GridPartType;
 
-    typedef typename GridPartType :: template Codim< codim > :: IteratorType :: Entity
+    // we still need entities of codimension 0 here 
+    typedef typename GridPartType :: template Codim< 0 > :: IteratorType :: Entity
       EntityType;
 
     typedef typename GridPartType :: IndexSetType IndexSetType;
     
-    typedef CodimensionDofMapIterator DofMapIteratorType;
-
     typedef CodimensionMapper< GridPartType, codim >  DofMapperType;
+
+    typedef DefaultDofMapIterator< EntityType, DofMapperType > DofMapIteratorType;
+  };
+
+
+  template< class GridPartImp >
+  struct CodimensionMapperTraits< GridPartImp, 0 >
+  {
+    typedef GridPartImp GridPartType;
+
+    // we still need entities of codimension 0 here 
+    typedef typename GridPartType :: template Codim< 0 > :: IteratorType :: Entity
+      EntityType;
+
+    typedef typename GridPartType :: IndexSetType IndexSetType;
+    
+    typedef CodimensionMapper< GridPartType, 0 >  DofMapperType;
+
+    typedef CodimensionDofMapIterator<EntityType, DofMapperType>  DofMapIteratorType;
   };
 
 
@@ -36,11 +54,14 @@ namespace Dune
   //!  i.e. the entry in the vector of unknowns
   //
   //***************************************************************************
-  template< class GridPartImp, int codim >
+  template< class GridPartImp, int cdim >
   class CodimensionMapper
-  : public DofMapperDefault< CodimensionMapperTraits< GridPartImp, codimension> >
+  : public DofMapperDefault< CodimensionMapperTraits< GridPartImp, cdim > >
   {
   public:
+    //! codimension that is mapped 
+    enum { codimension = cdim };
+
     typedef CodimensionMapperTraits< GridPartImp, codimension> Traits;
 
     typedef typename Traits :: EntityType EntityType;
@@ -51,9 +72,6 @@ namespace Dune
 
     typedef typename Traits :: DofMapIteratorType DofMapIteratorType;
 
-    //! codimension that is mapped 
-    enum { codimension = codim };
-
   private:
     typedef CodimensionMapper< GridPartType, codimension > ThisType;
     typedef DofMapperDefault< Traits > BaseType;
@@ -62,16 +80,21 @@ namespace Dune
     // index set of grid, i.e. the element indices 
     const IndexSetType &indexSet_;
 
-    // number of dofs on element 
-    const int numberOfDofs_;
-
+    // max number of local dofs 
+    const int maxNumberOfDofs_;
   public:
     //! Constructor 
     inline CodimensionMapper( const GridPartType &gridPart,
-                              const int numDofs )
+                              const int maxDofs )
     : indexSet_( gridPart.indexSet() ),
-      numberOfDofs_( numDofs )
+      maxNumberOfDofs_( maxDofs )
     {}
+
+    /** \copydoc DofMapper::contains */
+    bool contains ( const int codim ) const 
+    {
+      return ( codimension == codim );
+    }
 
     //! return size of function space 
     //! see dofmanager.hh for definition of IndexSet, which 
@@ -79,63 +102,74 @@ namespace Dune
     /** \copydoc DofMapper::size */
     int size () const
     {
-      // return number of dofs * number of elements 
-      return (numberOfDofs_ * indexSet_.size( codimension ));
+      // return number of dofs for codimension 
+      return indexSet_.size( codimension );
     }
 
     /** \copydoc Dune::DofMapper::begin(const EntityType &entity) const */
-    inline DofMapIteratorType begin ( const EntityType &entity ) const
+    DofMapIteratorType begin ( const EntityType &entity ) const
     {
-      const int baseIndex = indexSet_.index( entity ) * numberOfDofs_;
-      typename DofMapIteratorType :: BeginIterator type;
-      return DofMapIteratorType( type, baseIndex );
+      return DofMapIteratorType( DofMapIteratorType::beginIterator, entity, *this );
     }
     
     /** \copydoc Dune::DofMapper::end(const EntityType &entity) const */
-    inline DofMapIteratorType end ( const EntityType &entity ) const
+    DofMapIteratorType end ( const EntityType &entity ) const
     {
-      typename DofMapIteratorType :: EndIterator type;
-      return DofMapIteratorType( type, numberOfDofs_ );
+      return DofMapIteratorType( DofMapIteratorType::endIterator, entity, *this );
     }
 
     /** \copydoc DofMapper::mapToGlobal */
     int mapToGlobal ( const EntityType &entity, const int localDof ) const
     {
-      const int baseIndex = indexSet_.index( entity ) * numberOfDofs_;
-      return baseIndex + localDof;
+      // we only have one local dof 
+      assert( localDof < maxNumDofs() );
+      if ( codimension == 0 ) 
+        return indexSet_.index( entity );
+      else 
+        return indexSet_.subIndex( entity, localDof, codimension );
     }
 
     /** \copydoc DofMapper::maxNumDofs() const */
     int maxNumDofs () const
     {
-      return numberOfDofs_;
+      return maxNumberOfDofs_;
+    }
+
+    using BaseType::numDofs;
+
+    /** \copydoc Dune::DofMapper::numDofs(const EntityType &entity) const */
+    int numDofs ( const EntityType &entity ) const
+    {
+      return entity.template count< codimension >();
+    }
+
+    /** \copydoc Dune::DofMapper::numEntityDofs(const EntityType &entity) const */
+    template< class Entity >
+    int numEntityDofs ( const Entity &entity ) const
+    {
+      // check for codimension equality 
+      return ( ( Entity::codimension - codimension ) == 0 ) ? 1 : 0;
     }
    
     /** \copydoc DofMapper::oldIndex */
     int oldIndex (const int hole, int ) const
     {
-      // corresponding number of set is newn 
-      const int newn  = static_cast<int> (hole / numberOfDofs_);
-      // local number of dof is local 
-      const int local = (hole % numberOfDofs_);
-      return (numberOfDofs_ * indexSet_.oldIndex( newn, codimension )) + local;
+      // forward to index set 
+      return indexSet_.oldIndex( hole, codimension ) ;
     }
 
     /** \copydoc DofMapper::newIndex */
     int newIndex (const int hole, int ) const
     {
-      // corresponding number of set is newn 
-      const int newn = static_cast<int> (hole / numberOfDofs_);
-      // local number of dof is local 
-      const int local = (hole % numberOfDofs_);
-      return (numberOfDofs_ * indexSet_.newIndex( newn, codimension )) + local;
+      // forward to index set 
+      return indexSet_.newIndex( hole, codimension );
     }
 
     /** \copydoc DofMapper::numberOfHoles */
     int numberOfHoles ( const int ) const
     {
       // this index set works only for codim = 0 at the moment
-      return numberOfDofs_ * indexSet_.numberOfHoles( codimension );
+      return indexSet_.numberOfHoles( codimension );
     }
 
     /** \copydoc DofMapper::consecutive */
@@ -146,31 +180,26 @@ namespace Dune
   };
 
 
-
+  template <class EntityType, class DofMapperType> 
   class CodimensionDofMapIterator
   {
   public:
-    struct BeginIterator {};
-    struct EndIterator {};
+    enum IteratorType { beginIterator, endIterator };
 
   private:
-    typedef CodimensionDofMapIterator ThisType;
+    typedef CodimensionDofMapIterator<EntityType, DofMapperType>   ThisType;
     
   protected:
     const int baseIndex_;
     int dof_;
     
   public:
-    inline CodimensionDofMapIterator ( const BeginIterator type,
-                              const int baseIndex )
-    : baseIndex_( baseIndex ),
-      dof_( 0 )
-    {}
-
-    inline CodimensionDofMapIterator ( const EndIterator type,
-                              const int numDofs )
-    : baseIndex_( -1 ),
-      dof_( numDofs )
+    inline CodimensionDofMapIterator ( const IteratorType type,
+                                       const EntityType& entity,
+                                       const DofMapperType& mapper)
+    : baseIndex_( (type == endIterator) ? -1 : 
+                    mapper.mapToGlobal( entity, 0 ) ),
+      dof_( (type == endIterator) ? mapper.numDofs( entity ) : 0 )
     {}
 
     inline CodimensionDofMapIterator ( const ThisType &other )
@@ -204,7 +233,6 @@ namespace Dune
       return baseIndex_ + dof_;
     }
   };
-
 
 } // end namespace Dune
 
