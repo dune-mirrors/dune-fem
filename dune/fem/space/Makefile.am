@@ -8,7 +8,7 @@ libspace_la_SOURCES =
 libspace_la_LIBADD = dgspace/libdgspace.la \
                      lagrangespace/liblagrangespace.la
 
-SUBDIRS = common test dgspace fvspace lagrangespace combinedspace \
+SUBDIRS = common mapper test dgspace fvspace lagrangespace combinedspace \
 basefunctions reducedbasisspace pqlagrangespace
 
 spacedir = $(includedir)/dune/fem/space
