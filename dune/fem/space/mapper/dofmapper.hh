@@ -99,6 +99,18 @@ public:
     return asImp().end( entity );
   }
 
+  /** \brief returns true if DoFs for given codimension exist 
+   *
+   *  \param[in]  codim   codimension to check 
+   *
+   *  \returns true if DoFs for codimension exist 
+   */
+  bool contains ( const int codim ) const
+  {
+    CHECK_INTERFACE_IMPLEMENTATION( asImp().contains( codim ) );
+    return asImp().contains( codim );
+  }
+  
   /** \brief map a local DoF number to a global one
    *
    *  \param[in]  entity    entity the DoF belongs to
