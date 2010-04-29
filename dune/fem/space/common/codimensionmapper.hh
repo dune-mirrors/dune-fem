@@ -6,14 +6,14 @@
 namespace Dune
 {
 
-  template< class GridPartImp, int polOrder, int codim >
+  template< class GridPartImp, int codim >
   class CodimensionMapper;
 
   class CodimensionDofMapIterator;
 
 
 
-  template< class GridPartImp, int polOrder, int codim >
+  template< class GridPartImp, int codim >
   struct CodimensionMapperTraits
   {
     typedef GridPartImp GridPartType;
@@ -25,8 +25,7 @@ namespace Dune
     
     typedef CodimensionDofMapIterator DofMapIteratorType;
 
-    typedef CodimensionMapper< GridPartType, polOrder, codim >
-      DofMapperType;
+    typedef CodimensionMapper< GridPartType, codim >  DofMapperType;
   };
 
 
@@ -37,12 +36,12 @@ namespace Dune
   //!  i.e. the entry in the vector of unknowns
   //
   //***************************************************************************
-  template< class GridPartImp, int polOrder, int codim >
+  template< class GridPartImp, int codim >
   class CodimensionMapper
-  : public DofMapperDefault< CodimensionMapperTraits< GridPartImp, polOrder, codimension> >
+  : public DofMapperDefault< CodimensionMapperTraits< GridPartImp, codimension> >
   {
   public:
-    typedef CodimensionMapperTraits< GridPartImp, polOrder, codimension> Traits;
+    typedef CodimensionMapperTraits< GridPartImp, codimension> Traits;
 
     typedef typename Traits :: EntityType EntityType;
 
@@ -56,7 +55,7 @@ namespace Dune
     enum { codimension = codim };
 
   private:
-    typedef CodimensionMapper< GridPartType, polOrder, codimension > ThisType;
+    typedef CodimensionMapper< GridPartType, codimension > ThisType;
     typedef DofMapperDefault< Traits > BaseType;
 
   protected:
