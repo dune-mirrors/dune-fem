@@ -20,9 +20,10 @@
 #include <dune/fem/io/parameter.hh>
 
 //- local includes 
-#include "dofmapper.hh"
-#include "datacollector.hh"
-#include "arrays.hh"
+#include <dune/fem/space/mapper/dofmapper.hh>
+
+#include <dune/fem/space/common/datacollector.hh>
+#include <dune/fem/space/common/arrays.hh>
 
 namespace Dune
 {
