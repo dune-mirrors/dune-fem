@@ -9,7 +9,6 @@
 #include <dune/common/exceptions.hh>
 #include <dune/fem/space/common/arrays.hh>
 #include <dune/fem/space/common/dofmanager.hh>
-#include <dune/fem/space/dgspace/dgmapper.hh>
 
 #if HAVE_DUNE_ISTL 
 #include <dune/istl/bvector.hh>
