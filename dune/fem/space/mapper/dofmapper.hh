@@ -1,5 +1,5 @@
-#ifndef DUNE_DOFMAPPER_HH
-#define DUNE_DOFMAPPER_HH
+#ifndef DUNE_FEM_DOFMAPPER_HH
+#define DUNE_FEM_DOFMAPPER_HH
 
 //- Dune includes
 #include <dune/fem/misc/bartonnackmaninterface.hh>

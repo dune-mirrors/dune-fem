@@ -1,7 +1,7 @@
 #ifndef DUNE_FEM_CODIMENSIONMAPPER_HH
 #define DUNE_FEM_CODIMENSIONMAPPER_HH
 
-#include <dune/fem/space/common/dofmapper.hh>
+#include <dune/fem/space/mapper/dofmapper.hh>
 
 namespace Dune
 {
