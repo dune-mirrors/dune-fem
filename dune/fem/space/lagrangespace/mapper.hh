@@ -10,7 +10,9 @@
 #include <dune/fem/misc/codimmap.hh>
 #include <dune/fem/misc/metaprogramming.hh>
 #include <dune/fem/space/common/dofmanager.hh>
-#include <dune/fem/space/common/dofmapper.hh>
+
+#include <dune/fem/space/mapper/dofmapper.hh>
+#include <dune/fem/space/mapper/codimensionmapper.hh>
 
 //- local includes 
 #include "lagrangepoints.hh"
@@ -39,28 +41,22 @@ namespace Dune
   
   template< class GridPart >
   class LagrangeMapper< GridPart, 1 >
-  : public DofMapperDefault< LagrangeMapperTraits< GridPart, 1 > >
+  //: public DofMapperDefault< LagrangeMapperTraits< GridPart, 1 > >
+  : public CodimensionMapper< GridPart, GridPart::GridType :: dimension >
   {
     typedef LagrangeMapper< GridPart, 1 > ThisType;
-    typedef DofMapperDefault< LagrangeMapperTraits< GridPart, 1 > > BaseType;
+    //typedef DofMapperDefault< LagrangeMapperTraits< GridPart, 1 > > BaseType;
+    typedef CodimensionMapper< GridPart, GridPart::GridType :: dimension > BaseType;
 
   public:
-    typedef LagrangeMapperTraits< GridPart, 1 > Traits;
-    
     //! type of the grid part
-    typedef typename Traits::GridPartType GridPartType;
+    typedef typename BaseType::GridPartType GridPartType;
 
     //! type of entities (codim 0)
-    typedef typename Traits::EntityType EntityType;
+    typedef typename BaseType::EntityType EntityType;
 
-    //! type of DofMapIterator
-    typedef typename Traits::DofMapIteratorType DofMapIteratorType;
-    
     //! type of the underlying grid
     typedef typename GridPartType::GridType GridType;
-
-    //! type of the index set
-    typedef typename GridPartType::IndexSetType IndexSetType;
 
     //! type of coordinates within the grid
     typedef typename GridType::ctype FieldType;
@@ -69,7 +65,7 @@ namespace Dune
     static const int dimension = GridType::dimension;
 
     //! order of the Lagrange polynoms
-    static const int polynomialOrder = Traits::polynomialOrder;
+    static const int polynomialOrder = 1; 
 
     //! type of the Lagrange point set
     typedef LagrangePointSet< GridPartType, polynomialOrder >
@@ -78,13 +74,9 @@ namespace Dune
     typedef std::map< const GeometryType, const LagrangePointSetType* >
       LagrangePointSetMapType;
 
-  public:
-    //! constructor
-    LagrangeMapper ( const GridPartType &gridPart,
-                     LagrangePointSetMapType &lagrangePointSet )
-    : indexSet_( gridPart.indexSet() )
-    , maxDofs_ ( 0 )
+    unsigned int calculateMaxNumDofs( LagrangePointSetMapType &lagrangePointSet ) const 
     {
+      unsigned int maxDofs = 0;
       typedef typename LagrangePointSetMapType :: iterator IteratorType;
       IteratorType end = lagrangePointSet.end();
       for( IteratorType it = lagrangePointSet.begin(); it != end; ++it )
@@ -94,112 +86,19 @@ namespace Dune
           continue;
         
         const unsigned int setDofs = set->numDofs( dimension );
-        maxDofs_ = (maxDofs_ >= setDofs) ? maxDofs_ : setDofs;
+        maxDofs = (maxDofs >= setDofs) ? maxDofs : setDofs;
       }
+      assert( maxDofs > 0 );
+      return maxDofs ;
     }
    
-    //! destructor
-    virtual ~LagrangeMapper ()
+  public:
+    //! constructor
+    LagrangeMapper ( const GridPartType &gridPart,
+                     LagrangePointSetMapType &lagrangePointSet )
+    : BaseType( gridPart, calculateMaxNumDofs( lagrangePointSet ) )
     {}
-
-    /** \copydoc Dune::DofMapper::size() const */
-    int size () const
-    {
-      return indexSet_.size( dimension );
-    }
-
-    /** \copydoc Dune::DofMapper::begin(const EntityType &entity) const */
-    DofMapIteratorType begin ( const EntityType &entity ) const
-    {
-      return DofMapIteratorType( DofMapIteratorType::beginIterator, entity, *this );
-    }
-    
-    /** \copydoc Dune::DofMapper::end(const EntityType &entity) const */
-    DofMapIteratorType end ( const EntityType &entity ) const
-    {
-      return DofMapIteratorType( DofMapIteratorType::endIterator, entity, *this );
-    }
-
-    /** \copydoc Dune::DofMapper::mapToGlobal */
-    int mapToGlobal ( const EntityType &entity, const int localDof ) const
-    {
-      return indexSet_.subIndex( entity, localDof, dimension );
-    }
-
-    /** \copydoc Dune::DofMapper::mapEntityDofToGlobal */
-    template< class Entity >
-    int mapEntityDofToGlobal ( const Entity &entity, const int localDof ) const
-    {
-      if( Entity::codimension != dimension )
-        DUNE_THROW( RangeError, "No such local DoF." );
-
-      assert( localDof == 0 );
-      return indexSet_.index( entity );
-    }
-    
-    /** \copydoc Dune::DofMapper::maxNumDofs() const */
-    int maxNumDofs () const
-    {
-      return maxDofs_;
-    }
-
-    using BaseType::numDofs;
-    
-    /** \copydoc Dune::DofMapper::numDofs(const EntityType &entity) const */
-    int numDofs ( const EntityType &entity ) const
-    {
-      return entity.template count< dimension >();
-    }
-
-    template< class Entity >
-    int numEntityDofs ( const Entity &entity ) const
-    {
-      return (Entity::codimension == dimension ? 1 : 0);
-    }
-
-    /** \brief Check, whether any DoFs are associated with a codimension */
-    bool contains ( int codim ) const
-    {
-      return (codim == dimension);
-    }
-
-    /** \brief Check, whether the data in a codimension has fixed size */
-    bool fixedDataSize ( int codim ) const
-    {
-      return true;
-    }
-   
-    /** \copydoc Dune::DofMapper::oldIndex */
-    int oldIndex ( int hole, int ) const
-    {
-      return indexSet_.oldIndex( hole, dimension );
-    }
-
-    /** \copydoc Dune::DofMapper::newIndex */
-    int newIndex ( int hole , int ) const
-    {
-      return indexSet_.newIndex( hole, dimension );
-    }
-
-    /** \copydoc Dune::DofMapper::numberOfHoles
-     */
-    int numberOfHoles ( int ) const
-    {
-      return indexSet_.numberOfHoles( dimension );
-    }
-
-    /** \copydoc Dune::DofMapper::consecutive() const */
-    bool consecutive () const
-    {
-      return BaseType::checkConsecutive( indexSet_ );
-    }
-
-  private:
-    const IndexSetType &indexSet_;
-    unsigned int maxDofs_;
   };
-
-
 
   template< class GridPart >
   class LagrangeMapper< GridPart, 2 >
