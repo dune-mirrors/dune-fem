@@ -108,15 +108,11 @@ namespace Dune
     //! mapper used to implement mapToGlobal 
     typedef typename Traits::MapperType MapperType; 
 
-    //! mapper used to implement mapToGlobal 
+    //! mapper used to implement mapToGlobal (for each block of DoFs)
     typedef typename Traits::BlockMapperType BlockMapperType; 
 
     //! mapper singleton key 
     typedef MapperSingletonKey< GridPartType > MapperSingletonKeyType;
-
-    //! mapper factory 
-    typedef MapperSingletonFactory< MapperSingletonKeyType , 
-              MapperType > MapperSingletonFactoryType;
 
     //! mapper factory 
     typedef MapperSingletonFactory< MapperSingletonKeyType , 
