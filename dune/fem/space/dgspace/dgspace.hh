@@ -19,7 +19,9 @@
 #include <dune/fem/space/basefunctions/basefunctionstorage.hh>
 #include <dune/fem/space/basefunctions/basefunctionproxy.hh>
 
-#include <dune/fem/space/dgspace/dgmapper.hh>
+#include <dune/fem/space/mapper/codimensionmapper.hh>
+#include <dune/fem/space/mapper/nonblockmapper.hh>
+
 #include <dune/fem/space/dgspace/dgbasefunctions.hh>
 #include <dune/fem/space/dgspace/legendredgbasefunctions.hh>
 #include <dune/fem/space/dgspace/dgdatahandle.hh>
@@ -111,13 +113,10 @@ namespace Dune
 
     //! mapper singleton key 
     typedef MapperSingletonKey< GridPartType > MapperSingletonKeyType;
+
     //! mapper factory 
     typedef MapperSingletonFactory< MapperSingletonKeyType , 
               MapperType > MapperSingletonFactoryType;
-
-    //! singleton list of mappers 
-    typedef SingletonList< MapperSingletonKeyType , MapperType ,
-            MapperSingletonFactoryType > MapperProviderType;
 
     //! mapper factory 
     typedef MapperSingletonFactory< MapperSingletonKeyType , 
@@ -141,9 +140,9 @@ namespace Dune
                                              const InterfaceType commInterface,
                                              const CommunicationDirection commDirection)
     : BaseType( gridPart , commInterface, commDirection ),
-      mapper_( 0 ),
       blockMapper_( BlockMapperProviderType::getObject(
-            MapperSingletonKeyType (this->gridPart(),1) )),
+                    MapperSingletonKeyType ( gridPart, 1 ) )),
+      mapper_( blockMapper_ ),
       baseFuncSet_()
     {
       int maxNumDofs = -1;
@@ -163,14 +162,10 @@ namespace Dune
         }
       }
 
-      // create mapper 
+      // check maxNumDofs 
       assert( maxNumDofs > 0 );
-      {
-        MapperSingletonKeyType key( gridPart, maxNumDofs );
-        mapper_ = & MapperProviderType::getObject(key);
-      }
-      assert( mapper_ );
-      assert( mapper_->maxNumDofs() == maxNumDofs );
+      // this should be the same 
+      assert( maxNumDofs == mapper().maxNumDofs() );
     }
 
     /** \brief Destructor */
@@ -184,7 +179,6 @@ namespace Dune
         if( set ) removeBaseFuncSetPointer( *set );
       }
 
-      MapperProviderType::removeObject( *mapper_ );
       BlockMapperProviderType::removeObject( blockMapper_ );
     }
   
@@ -221,7 +215,7 @@ namespace Dune
     /** @copydoc Dune::DiscreteFunctionSpaceInterface::contains */
     bool contains (const int codim) const
     {
-      return (codim == codimension);
+      return blockMapper_.contains( codim );
     }
   
     /** @copydoc Dune::DiscreteFunctionSpaceInterface::continuous */
@@ -242,8 +236,7 @@ namespace Dune
     */
     MapperType& mapper() const 
     {
-      assert( mapper_ );
-      return *mapper_;
+      return mapper_;
     }
 
     /** \brief Return dof mapper for block located one elements 
@@ -283,10 +276,10 @@ namespace Dune
     }
 
   protected:
-    //! mapper for function space 
-    MapperType* mapper_; 
-    // mapper for blocks 
+    //! mapper for blocks 
     BlockMapperType& blockMapper_;
+    //! mapper for function space 
+    mutable MapperType mapper_; 
 
     //! map holding base function sets
     typedef std::map < const GeometryType, const BaseFunctionSetImp* > BaseFunctionMapType;
@@ -336,15 +329,15 @@ namespace Dune
     typedef VectorialBaseFunctionSet<BaseFunctionSpaceType, BaseFunctionStorageImp > BaseFunctionSetImp;
     typedef SimpleBaseFunctionProxy<BaseFunctionSetImp> BaseFunctionSetType;
     
-    //! type of DG mapper 
-    typedef DGMapper< GridPartType, polOrd, dimRange > MapperType;
-
-    //! mapper for block vector function 
-    typedef DGMapper< GridPartType, polOrd, 1 > BlockMapperType;
-    
     //! number of base functions * dimRange (use dimLocal here)
     enum { localBlockSize = dimRange * 
         DGNumberOfBaseFunctions<polOrd,dimLocal>::numBaseFunctions }; 
+    
+    //! mapper for block vector function 
+    typedef CodimensionMapper< GridPartType, codimension > BlockMapperType;
+
+    //! type of DG mapper (based on BlockMapper)
+    typedef NonBlockMapper< BlockMapperType, localBlockSize > MapperType;
     
     /** \brief defines type of data handle for communication 
         for this type of space.
@@ -503,15 +496,16 @@ namespace Dune
     typedef VectorialBaseFunctionSet<BaseFunctionSpaceType, BaseFunctionStorageImp > BaseFunctionSetImp;
     typedef SimpleBaseFunctionProxy< BaseFunctionSetImp > BaseFunctionSetType;
 
-    typedef DGMapper< GridPartType, polOrd, dimRange > MapperType;
-
-    //! mapper with only one dof 
-    typedef DGMapper< GridPartType, polOrd, 1 > BlockMapperType;
-
     //! number of base functions * dimRange 
     enum { localBlockSize = dimRange * 
         NumLegendreBaseFunctions<polOrd,dimDomain>::numBaseFct }; 
 
+    //! mapper for block vector function 
+    typedef CodimensionMapper< GridPartType, codimension > BlockMapperType;
+
+    //! type of DG mapper (based on BlockMapper)
+    typedef NonBlockMapper< BlockMapperType, localBlockSize > MapperType;
+    
     /** \brief defines type of data handle for communication 
         for this type of space.
     */
