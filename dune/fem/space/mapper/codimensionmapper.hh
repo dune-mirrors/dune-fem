@@ -128,8 +128,6 @@ namespace Dune
       return maxNumberOfDofs_;
     }
 
-    using BaseType::numDofs;
-
     /** \copydoc Dune::DofMapper::numDofs(const EntityType &entity) const */
     int numDofs ( const EntityType &entity ) const
     {
