@@ -160,9 +160,6 @@ namespace Dune
     typedef typename Traits :: BlockMapperType BlockMapperType; 
 
  protected:  
-    //! mapper singleton key  
-    typedef MapperSingletonKey< GridPartType > MapperSingletonKeyType;
-
     //! mapper factory 
     typedef CodimensionMapperSingletonFactory< GridPartType, 0 > BlockMapperSingletonFactoryType;
 
