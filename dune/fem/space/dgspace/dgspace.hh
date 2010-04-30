@@ -111,16 +111,13 @@ namespace Dune
     //! mapper used to implement mapToGlobal (for each block of DoFs)
     typedef typename Traits::BlockMapperType BlockMapperType; 
 
-    //! mapper singleton key 
-    typedef MapperSingletonKey< GridPartType > MapperSingletonKeyType;
-
     //! mapper factory 
-    typedef MapperSingletonFactory< MapperSingletonKeyType , 
-              BlockMapperType > BlockMapperSingletonFactoryType;
+    typedef CodimensionMapperSingletonFactory< GridPartType, 0 > BlockMapperSingletonFactoryType;
 
     //! singleton list of mappers 
-    typedef SingletonList< MapperSingletonKeyType , BlockMapperType ,
-            BlockMapperSingletonFactoryType > BlockMapperProviderType;
+    typedef SingletonList
+      < typename BlockMapperSingletonFactoryType::Key, BlockMapperType, BlockMapperSingletonFactoryType >
+      BlockMapperProviderType;
 
   public:
     //! default communication interface 
@@ -136,8 +133,7 @@ namespace Dune
                                              const InterfaceType commInterface,
                                              const CommunicationDirection commDirection)
     : BaseType( gridPart , commInterface, commDirection ),
-      blockMapper_( BlockMapperProviderType::getObject(
-                    MapperSingletonKeyType ( gridPart ) )),
+      blockMapper_( BlockMapperProviderType::getObject( gridPart ) ),
       mapper_( blockMapper_ ),
       baseFuncSet_()
     {

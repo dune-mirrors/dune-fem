@@ -15,13 +15,11 @@ template <class FunctionSpaceImp, class GridPartImp, int polOrd, template <class
 inline FiniteVolumeSpace<FunctionSpaceImp, GridPartImp, polOrd, BaseFunctionStorageImp>::
 FiniteVolumeSpace (GridPartType & gridPart,
         const InterfaceType commInterface,
-        const CommunicationDirection commDirection) :
-    DefaultType(gridPart, commInterface, commDirection),
-    baseFuncSet_(),
-    blockMapper_(
-      BlockMapperProviderType::getObject( 
-        MapperSingletonKeyType ( gridPart ) )),
-    mapper_( blockMapper_ )
+        const CommunicationDirection commDirection)
+: DefaultType(gridPart, commInterface, commDirection),
+  baseFuncSet_(),
+  blockMapper_( BlockMapperProviderType::getObject( gridPart ) ),
+  mapper_( blockMapper_ )
 {
   makeFunctionSpace(gridPart);
 }

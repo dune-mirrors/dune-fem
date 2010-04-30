@@ -164,12 +164,12 @@ namespace Dune
     typedef MapperSingletonKey< GridPartType > MapperSingletonKeyType;
 
     //! mapper factory 
-    typedef MapperSingletonFactory< MapperSingletonKeyType ,    
-              BlockMapperType > BlockMapperSingletonFactoryType;
+    typedef CodimensionMapperSingletonFactory< GridPartType, 0 > BlockMapperSingletonFactoryType;
 
-    //! mapper singleton list 
-    typedef SingletonList< MapperSingletonKeyType , BlockMapperType ,
-            BlockMapperSingletonFactoryType > BlockMapperProviderType;
+    //! singleton list of mappers 
+    typedef SingletonList
+      < typename BlockMapperSingletonFactoryType::Key, BlockMapperType, BlockMapperSingletonFactoryType >
+      BlockMapperProviderType;
 
     //! scalar basefunction space type 
     typedef typename Traits::BaseFunctionSpaceType BaseFunctionSpaceType;

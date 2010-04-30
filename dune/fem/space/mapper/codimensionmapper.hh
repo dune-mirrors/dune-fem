@@ -195,6 +195,7 @@ namespace Dune
       const int numSubEntities = RefElements::general( type ).size( codimension );
       maxNumberOfDofs_ = std::max( maxNumberOfDofs_, numSubEntities );
     }
+    assert( maxNumberOfDofs_ > 0 );
   }
 
 
@@ -252,6 +253,43 @@ namespace Dune
   protected:
     const int baseIndex_;
     int dof_;
+  };
+
+
+
+  // CodimensionMapperSingletonFactory
+  // ---------------------------------
+
+  template< class GridPartImp, int cdim >
+  struct CodimensionMapperSingletonFactory
+  {
+    typedef CodimensionMapper< GridPartImp, cdim > Object;
+
+    struct Key
+    {
+      Key ( const GridPartImp &gp )
+      : gridPart( gp )
+      {}
+
+      bool operator== ( const Key &other )
+      {
+        return (&gridPart.indexSet() == &other.gridPart.indexSet() );
+      }
+
+      const GridPartImp &gridPart;
+    };
+
+    //! create new mapper  
+    static Object *createObject ( const Key &key )
+    {
+      return new Object ( key.gridPart );
+    }
+
+    //! delete mapper object 
+    static void deleteObject ( Object *object )
+    {
+      delete object;
+    }
   };
 
 } // end namespace Dune
