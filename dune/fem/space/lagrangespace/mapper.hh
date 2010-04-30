@@ -38,7 +38,10 @@ namespace Dune
   };
 
 
-  
+
+  // First Order Lagrange Mapper
+  // ---------------------------
+
   template< class GridPart >
   class LagrangeMapper< GridPart, 1 >
   : public CodimensionMapper< GridPart, GridPart::GridType::dimension >
@@ -72,29 +75,10 @@ namespace Dune
     typedef std::map< const GeometryType, const LagrangePointSetType* >
       LagrangePointSetMapType;
 
-    unsigned int calculateMaxNumDofs( LagrangePointSetMapType &lagrangePointSet ) const 
-    {
-      unsigned int maxDofs = 0;
-      typedef typename LagrangePointSetMapType :: iterator IteratorType;
-      IteratorType end = lagrangePointSet.end();
-      for( IteratorType it = lagrangePointSet.begin(); it != end; ++it )
-      {
-        const LagrangePointSetType *set = (*it).second;
-        if( set == NULL )
-          continue;
-        
-        const unsigned int setDofs = set->numDofs( dimension );
-        maxDofs = (maxDofs >= setDofs) ? maxDofs : setDofs;
-      }
-      assert( maxDofs > 0 );
-      return maxDofs ;
-    }
-   
   public:
     //! constructor
-    LagrangeMapper ( const GridPartType &gridPart,
-                     LagrangePointSetMapType &lagrangePointSet )
-    : BaseType( gridPart, calculateMaxNumDofs( lagrangePointSet ) )
+    LagrangeMapper ( const GridPartType &gridPart, LagrangePointSetMapType &lagrangePointSet )
+    : BaseType( gridPart )
     {}
 
     bool fixedDataSize ( const int codim ) const
@@ -102,6 +86,11 @@ namespace Dune
       return true;
     }
   };
+
+
+
+  // Second Order Lagrange Mapper
+  // ----------------------------
 
   template< class GridPart >
   class LagrangeMapper< GridPart, 2 >

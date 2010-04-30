@@ -20,7 +20,7 @@ FiniteVolumeSpace (GridPartType & gridPart,
     baseFuncSet_(),
     blockMapper_(
       BlockMapperProviderType::getObject( 
-        MapperSingletonKeyType ( gridPart, 1 ) )),
+        MapperSingletonKeyType ( gridPart ) )),
     mapper_( blockMapper_ )
 {
   makeFunctionSpace(gridPart);

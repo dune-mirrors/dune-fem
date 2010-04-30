@@ -1,6 +1,8 @@
 #ifndef DUNE_FEM_CODIMENSIONMAPPER_HH
 #define DUNE_FEM_CODIMENSIONMAPPER_HH
 
+#include <dune/grid/common/genericreferenceelements.hh>
+
 #include <dune/fem/space/mapper/dofmapper.hh>
 
 namespace Dune
@@ -48,21 +50,21 @@ namespace Dune
 
 
 
-  //***************************************************************************
-  //
-  //!  The CodimensionMapper for mapping of local dof numbers to global dof numbers, 
-  //!  i.e. the entry in the vector of unknowns
-  //
-  //***************************************************************************
+  /** \class CodimensionMapper
+   *  \brief mapper allocating one DoF per subentity of a given codimension
+   *
+   *  \tparam  GridPartImp  grid part, the mapper shall be used on
+   *  \tparam  cdim         codimension
+   */
   template< class GridPartImp, int cdim >
   class CodimensionMapper
   : public DofMapperDefault< CodimensionMapperTraits< GridPartImp, cdim > >
   {
-  public:
-    //! codimension that is mapped 
-    enum { codimension = cdim };
+    typedef CodimensionMapper< GridPartImp, cdim > ThisType;
+    typedef DofMapperDefault< CodimensionMapperTraits< GridPartImp, cdim > > BaseType;
 
-    typedef CodimensionMapperTraits< GridPartImp, codimension> Traits;
+  public:
+    typedef typename BaseType::Traits Traits;
 
     typedef typename Traits :: EntityType EntityType;
 
@@ -72,33 +74,24 @@ namespace Dune
 
     typedef typename Traits :: DofMapIteratorType DofMapIteratorType;
 
-  private:
-    typedef CodimensionMapper< GridPartType, codimension > ThisType;
-    typedef DofMapperDefault< Traits > BaseType;
+    //! type of grid, this mapper belongs to
+    typedef typename GridPartType::GridType GridType;
 
-  protected:
-    // index set of grid, i.e. the element indices 
-    const IndexSetType &indexSet_;
+    //! dimension of the grid
+    static const int dimension = GridType::dimension;
 
-    // max number of local dofs 
-    const int maxNumberOfDofs_;
-  public:
-    //! Constructor 
-    inline CodimensionMapper( const GridPartType &gridPart,
-                              const int maxDofs )
-    : indexSet_( gridPart.indexSet() ),
-      maxNumberOfDofs_( maxDofs )
-    {}
+    //! codimension that is mapped 
+    static const int codimension = cdim;
+
+    //! Constructor
+    explicit CodimensionMapper( const GridPartType &gridPart );
 
     /** \copydoc DofMapper::contains */
     bool contains ( const int codim ) const 
     {
-      return ( codimension == codim );
+      return (codim == codimension);
     }
 
-    //! return size of function space 
-    //! see dofmanager.hh for definition of IndexSet, which 
-    //! is a wrapper for en.index 
     /** \copydoc DofMapper::size */
     int size () const
     {
@@ -147,19 +140,18 @@ namespace Dune
     template< class Entity >
     int numEntityDofs ( const Entity &entity ) const
     {
-      // check for codimension equality 
-      return ( ( Entity::codimension - codimension ) == 0 ) ? 1 : 0;
+      return (contains( Entity::codimension ) ? 1 : 0);
     }
    
     /** \copydoc DofMapper::oldIndex */
-    int oldIndex (const int hole, int ) const
+    int oldIndex ( const int hole, int ) const
     {
       // forward to index set 
       return indexSet_.oldIndex( hole, codimension ) ;
     }
 
     /** \copydoc DofMapper::newIndex */
-    int newIndex (const int hole, int ) const
+    int newIndex ( const int hole, int ) const
     {
       // forward to index set 
       return indexSet_.newIndex( hole, codimension );
@@ -168,72 +160,102 @@ namespace Dune
     /** \copydoc DofMapper::numberOfHoles */
     int numberOfHoles ( const int ) const
     {
-      // this index set works only for codim = 0 at the moment
       return indexSet_.numberOfHoles( codimension );
     }
 
     /** \copydoc DofMapper::consecutive */
-    bool consecutive() const 
+    bool consecutive () const 
     {
-      return BaseType::checkConsecutive(indexSet_);
+      return BaseType::checkConsecutive( indexSet_ );
     }
+
+  protected:
+    // index set for the grid
+    const IndexSetType &indexSet_;
+
+    // maximal number of local dofs
+    int maxNumberOfDofs_;
   };
 
 
-  template <class EntityType, class DofMapperType> 
+  template< class GridPartImp, int cdim >
+  inline CodimensionMapper< GridPartImp, cdim >
+    ::CodimensionMapper( const GridPartType &gridPart )
+  : indexSet_( gridPart.indexSet() ),
+    maxNumberOfDofs_( 0 )
+  {
+    typedef typename GridType::ctype ctype;
+    typedef GenericReferenceElements< ctype, dimension > RefElements;
+
+    AllGeomTypes< IndexSetType, GridType > allTypes( indexSet_ );
+    const std::vector< GeometryType > &types = allTypes.geomTypes( 0 );
+    const unsigned int numTypes = types.size();
+    for( unsigned int i = 0; i < numTypes; ++i )
+    {
+      const GeometryType &type = types[ i ];
+      
+      const int numSubEntities = RefElements::general( type ).size( codimension );
+      maxNumberOfDofs_ = std::max( maxNumberOfDofs_, numSubEntities );
+    }
+  }
+
+
+
+  // CodimensionDofMapIterator
+  // -------------------------
+
+  template< class EntityType, class DofMapperType >
   class CodimensionDofMapIterator
   {
+    typedef CodimensionDofMapIterator< EntityType, DofMapperType > ThisType;
+
   public:
     enum IteratorType { beginIterator, endIterator };
 
-  private:
-    typedef CodimensionDofMapIterator<EntityType, DofMapperType>   ThisType;
-    
-  protected:
-    const int baseIndex_;
-    int dof_;
-    
-  public:
-    inline CodimensionDofMapIterator ( const IteratorType type,
-                                       const EntityType& entity,
-                                       const DofMapperType& mapper)
+    CodimensionDofMapIterator ( const IteratorType type,
+                                const EntityType& entity,
+                                const DofMapperType& mapper)
     : baseIndex_( (type == endIterator) ? -1 : 
-                    mapper.mapToGlobal( entity, 0 ) ),
+                   mapper.mapToGlobal( entity, 0 ) ),
       dof_( (type == endIterator) ? mapper.numDofs( entity ) : 0 )
     {}
 
-    inline CodimensionDofMapIterator ( const ThisType &other )
+    CodimensionDofMapIterator ( const ThisType &other )
     : baseIndex_( other.baseIndex_ ),
       dof_( other.dof_ )
     {}
 
-    inline ThisType &operator++ ()
+    ThisType &operator++ ()
     {
       ++dof_;
       return *this;
     }
 
-    inline bool operator== ( const ThisType &other ) const
+    bool operator== ( const ThisType &other ) const
     {
       return dof_ == other.dof_;
     }
 
-    inline bool operator!= ( const ThisType &other ) const
+    bool operator!= ( const ThisType &other ) const
     {
       return dof_ != other.dof_;
     }
 
-    inline int local () const
+    int local () const
     {
       return dof_;
     }
 
-    inline int global () const
+    int global () const
     {
       return baseIndex_ + dof_;
     }
+
+  protected:
+    const int baseIndex_;
+    int dof_;
   };
 
 } // end namespace Dune
 
-#endif
+#endif // #ifndef DUNE_FEM_CODIMENSIONMAPPER_HH

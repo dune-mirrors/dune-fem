@@ -137,7 +137,7 @@ namespace Dune
                                              const CommunicationDirection commDirection)
     : BaseType( gridPart , commInterface, commDirection ),
       blockMapper_( BlockMapperProviderType::getObject(
-                    MapperSingletonKeyType ( gridPart, 1 ) )),
+                    MapperSingletonKeyType ( gridPart ) )),
       mapper_( blockMapper_ ),
       baseFuncSet_()
     {
