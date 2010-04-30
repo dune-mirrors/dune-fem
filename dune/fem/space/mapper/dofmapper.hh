@@ -393,51 +393,8 @@ public:
   int numBlocks() const { return 1; }
 }; 
 
-
-
-//! Key for Mapper singleton list 
-template <class IndexSetImp>
-class MapperSingletonKey 
-{
-  const IndexSetImp & indexSet_; 
-  const int numDofs_; 
-public:
-  //! constructor taking index set and numDofs 
-  MapperSingletonKey(const IndexSetImp & indexSet, int numDofs ) : indexSet_(indexSet) ,  numDofs_(numDofs) {}
-  //! copy constructor 
-  MapperSingletonKey(const MapperSingletonKey &org) : indexSet_(org.indexSet_) , numDofs_(org.numDofs_) {}
-  //! returns true if indexSet pointer and numDofs are equal 
-  bool operator == (const MapperSingletonKey & otherKey) const 
-  {
-    return ((&indexSet_ == &otherKey.indexSet_) && (numDofs_ == otherKey.numDofs_));
-  }
-
-  //! return reference to index set 
-  const IndexSetImp & indexSet() const { return indexSet_; }
-  //! return number of dofs 
-  const int numDofs () const { return numDofs_; }
-};
-
-//! Factory class for SingletonList to tell how objects are created and
-//! how compared.
-template <class KeyImp, class ObjectImp>
-class MapperSingletonFactory
-{
-  public:
-  //! create new mapper  
-  static ObjectImp * createObject( const KeyImp & key )
-  {
-    // create Object of MapperType = ObjectImp 
-    return new ObjectImp(key.indexSet(),key.numDofs());
-  }
-  //! delete mapper object 
-  static void deleteObject( ObjectImp * obj )
-  {
-    delete obj;
-  }
-};
-
 /// @}
 
 } // end namespace Dune
-#endif
+
+#endif // #ifndef DUNE_FEM_DOFMAPPER_HH
