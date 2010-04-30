@@ -146,7 +146,11 @@ class OperatorWrapper : public PARDG::Function
       return -1;
     }
   }
-private:
+
+  //! return reference to real operator 
+  const Operator& op() const { return op_; }
+
+protected:
   // operator to call 
   Operator& op_;
   // discrete function space 
@@ -159,6 +163,91 @@ private:
    @{
  **/
 
+/* \brief Base class for ParDG ode solvers */
+template<class DestinationImp>
+class ParDGOdeSolverBase : public OdeSolverInterface<DestinationImp>
+{
+  ParDGOdeSolverBase(const ParDGOdeSolverBase& );
+public:
+  //! type of destination function 
+  typedef DestinationImp DestinationType; 
+
+  //! type of discretization operator 
+  typedef SpaceOperatorInterface<DestinationType> OperatorType;
+
+protected:
+  //! constructor
+  ParDGOdeSolverBase(Dune::TimeProviderBase& tp, 
+                     const int order ) :
+    timeProvider_( tp ),
+    comm_(PARDG::Communicator::instance()),
+    order_( order ),
+    initialized_( false ),
+    odeSolver_( 0 )
+  {
+  }
+ 
+public:  
+  // initialize time step size 
+  void initialize ( const DestinationType& U0 ) 
+  {
+    // initialized dt on first call
+    if ( ! initialized_ )     
+    {
+      // create instance of ode solver 
+      if( ! odeSolver_ ) odeSolver_ = createOdeSolver();
+
+      // create temporary function
+      DestinationType tmp( U0 );
+      // apply operator once 
+      spaceOperator()( U0, tmp );
+      // set initial time step 
+      timeProvider_.provideTimeStepEstimate( spaceOperator().timeStepEstimate() );
+      // now it's initialized 
+      initialized_ = true;
+    }
+  }
+
+protected:  
+  //! destructor  
+  ~ParDGOdeSolverBase() { delete odeSolver_; odeSolver_ = 0; }
+
+  //! return reference to ode solver 
+  PARDG::ODESolver& odeSolver() 
+  {
+    assert( odeSolver_ );
+    return *odeSolver_;
+  }
+  
+  void printmyInfo(string filename) const 
+  {
+    std::ostringstream filestream;
+    filestream << filename;
+    std::ofstream ofs(filestream.str().c_str(), std::ios::app);
+    ofs << "Explicit ODE solver, steps: " << order_ << "\n\n";
+    ofs.close();
+    //this->op_.printmyInfo(filename);
+  }
+
+protected:  
+  //! return ode solver object 
+  virtual PARDG::ODESolver* createOdeSolver() = 0;
+
+  //! return reference to discretization operator for time step initialization 
+  virtual const OperatorType& spaceOperator() const = 0;
+  
+protected:
+  Dune::TimeProviderBase& timeProvider_;
+  PARDG::Communicator & comm_;
+  const int order_;
+  bool initialized_;
+
+private:
+  // use method odeSolver for access 
+  PARDG::ODESolver* odeSolver_;
+};
+
+#if 0
 /* \brief Explicit ODE Solver base class */
 template<class Operator>
 class ExplTimeStepperBase 
@@ -171,8 +260,6 @@ public:
                       bool verbose) :
     ord_(pord),
     comm_(PARDG::Communicator::instance()),
-    op_(op),
-    expl_(op),
     ode_(0),
     initialized_(false)
   {
@@ -194,13 +281,13 @@ public:
   }
  
   // initialize time step size 
-  bool initialize (const DestinationType& U0) 
+  bool initialize ( const DestinationType& U0 ) 
   {
     // initialized dt on first call
     if ( ! initialized_ )     
     {
       DestinationType tmp(U0);
-      this->op_(U0,tmp);
+      op_( U0, tmp );
       initialized_ = true;
       return true;
     }
@@ -229,43 +316,45 @@ public:
 protected:
   int ord_;
   PARDG::Communicator & comm_;
-  const Operator& op_;
-  OperatorWrapper<Operator> expl_;
   PARDG::ODESolver* ode_;
   bool initialized_;
 };
+#endif
 
 //! ExplicitOdeSolver 
 template<class DestinationImp>
 class ExplicitOdeSolver : 
-  public OdeSolverInterface<DestinationImp> ,
-  public ExplTimeStepperBase<SpaceOperatorInterface<DestinationImp> >  
+  public ParDGOdeSolverBase< DestinationImp >
 {
-  typedef DestinationImp DestinationType; 
-  typedef SpaceOperatorInterface<DestinationType> OperatorType;
-  typedef ExplTimeStepperBase<OperatorType> BaseType; 
+  typedef ParDGOdeSolverBase< DestinationImp > BaseType; 
+
+protected:  
+  using BaseType :: order_;
+  using BaseType :: comm_;
+  using BaseType :: initialized_;
+  using BaseType :: timeProvider_;
+  using BaseType :: odeSolver ;
+  using BaseType :: initialize ;
+
 public:
+  typedef typename BaseType :: OperatorType    OperatorType;
+  typedef typename BaseType :: DestinationType DestinationType; 
+
   //! constructor 
-  ExplicitOdeSolver(OperatorType& op, Dune :: TimeProviderBase &tp, int pord, bool verbose = false) :
-    BaseType(op,tp,pord,verbose),
-    timeProvider_(tp)
+  ExplicitOdeSolver(OperatorType& op, Dune :: TimeProviderBase &tp, const int order, bool verbose = false) :
+    BaseType(tp, order ),
+    expl_( op ),
+    verbose_( verbose )
   {}
 
   //! destructor 
   virtual ~ExplicitOdeSolver() {}
  
-  //! initialize solver 
-  void initialize(const DestinationType& U0)
-  {
-    BaseType :: initialize (U0);
-    timeProvider_.provideTimeStepEstimate( this->op_.timeStepEstimate() );
-  }
-
   //! solve system 
-  void solve(DestinationType& U0) 
+  void solve( DestinationType& U0 ) 
   {
     // initialize 
-    if( ! this->initialized_ ) 
+    if( ! initialized_ ) 
     {
       DUNE_THROW(InvalidStateException,"ExplicitOdeSolver wasn't initialized before first call!");
     }
@@ -283,13 +372,13 @@ public:
     double* u = U0.leakPointer();
     
     // call ode solver 
-    const bool convergence = this->odeSolver().step(time, dt , u);
+    const bool convergence = odeSolver().step(time, dt , u);
 
     // set time step estimate of operator 
-    timeProvider_.provideTimeStepEstimate( this->op_.timeStepEstimate() );
+    timeProvider_.provideTimeStepEstimate( expl_.op().timeStepEstimate() );
     
-    assert(convergence);
-    if(!convergence) 
+    assert( convergence );
+    if(! convergence ) 
     {
       timeProvider_.invalidateTimeStep();
       std::cerr << "No Convergence of ExplicitOdeSolver! \n";
@@ -297,97 +386,37 @@ public:
   }
 
 protected:
-  Dune::TimeProviderBase& timeProvider_;
-};
+  //! for initialization 
+  const OperatorType& spaceOperator() const { return expl_.op(); }
 
-//////////////////////////////////////////////////////////////////
-//
-//  --ImplTimeStepperBase
-//
-//////////////////////////////////////////////////////////////////
-template<class Operator>
-class ImplTimeStepperBase
-{
-  typedef typename Operator :: DestinationType DestinationType; 
-public:
-  ImplTimeStepperBase(Operator& op, Dune :: TimeProviderBase &tp,
-                      int pord,
-                      const ODEParameters& parameter=ODEParameters()) :
-    ord_(pord),
-    comm_(PARDG::Communicator::instance()),
-    op_(op),
-    impl_(op),
-    ode_(0),
-    linsolver_(0),
-    initialized_(false),
-    verbose_(parameter.verbose()),
-    param_(parameter.clone())
+  //! create explicit ode solver 
+  PARDG::ODESolver* createOdeSolver() 
   {
-    linsolver_ = parameter.linearSolver( comm_ );
-    switch (pord) 
+    PARDG::ODESolver* odeSolver = 0;
+    switch ( order_ ) 
     {
-      case 1: ode_ = new PARDG::ImplicitEuler(comm_,impl_); break;
-      case 2: ode_ = new PARDG::Gauss2(comm_,impl_); break;
-      case 3: ode_ = new PARDG::DIRK3(comm_,impl_); break;
-      //case 4: ode_ = new PARDG::ExplicitRK4(comm,expl_); break;
-      default : std::cerr << "Runge-Kutta method of this order not implemented" 
+      case 1  : odeSolver = new PARDG::ExplicitEuler(comm_, expl_); break;
+      case 2  : odeSolver = new PARDG::ExplicitTVD2 (comm_, expl_); break;
+      case 3  : odeSolver = new PARDG::ExplicitTVD3 (comm_, expl_); break;
+      case 4  : odeSolver = new PARDG::ExplicitRK4  (comm_, expl_); break;
+      default : odeSolver = new PARDG::ExplicitBulirschStoer(comm_, expl_, 7);
+                std::cerr << "Runge-Kutta method of this order not implemented.\n" 
+                          << "Using 7-stage Bulirsch-Stoer scheme.\n"
                           << std::endl;
-                abort();
     }
-    ode_->set_linear_solver(*linsolver_);
-    ode_->set_tolerance( parameter.tolerance() );
-    ode_->set_max_number_of_iterations( parameter.iterations() );
-    
-    if( verbose_ ==2 ) 
-    {
-      ode_->IterativeSolver::set_output(cout);
-      ode_->DynamicalObject::set_output(cout);
-    }
-  }
-  
-  // initialize time step size 
-  bool initialize (const DestinationType& U0) 
-  {
-    // initialized dt on first call
-    if ( ! initialized_ )     
-    {
-      DestinationType tmp(U0);
-      this->op_(U0,tmp);
-      initialized_ = true;
-      return true;
-    }
-    return false;
-  }
-  //! destructor 
-  ~ImplTimeStepperBase() {delete ode_;delete linsolver_;}
-  
-  // return reference to ode solver 
-  PARDG::DIRK& odeSolver() 
-  {
-    assert( ode_ );
-    return *ode_;
-  }
-  void printmyInfo(string filename) const {
-    std::ostringstream filestream;
-    filestream << filename;
-    std::ofstream ofs(filestream.str().c_str(), std::ios::app);
-    ofs << "Implicit ODE solver, steps: " << this->ord_ << "\n\n";
-    ofs.close();
-    // this->op_.printmyInfo(filename);
-  }
-  
-protected:
-  int ord_;
-  PARDG::Communicator & comm_;   
-  const Operator& op_;
-  OperatorWrapper<Operator> impl_;
-  PARDG::DIRK* ode_;
-  PARDG::IterativeLinearSolver* linsolver_;
-  bool initialized_;
-  int verbose_;
-  const ODEParameters* param_;
-};
 
+    if( verbose_ )
+    {
+      odeSolver->DynamicalObject::set_output(cout);
+    }
+    assert( odeSolver );
+    return odeSolver;
+  }
+ 
+protected:
+  OperatorWrapper<OperatorType> expl_;
+  const bool verbose_;
+};
 
 ///////////////////////////////////////////////////////
 //
@@ -396,51 +425,103 @@ protected:
 ///////////////////////////////////////////////////////
 template<class DestinationImp>
 class ImplicitOdeSolver : 
-  public OdeSolverInterface<DestinationImp> ,
-  public ImplTimeStepperBase<SpaceOperatorInterface<DestinationImp> > 
+  public ParDGOdeSolverBase< DestinationImp >
 {
-  typedef DestinationImp DestinationType;
-  typedef SpaceOperatorInterface<DestinationImp> OperatorType;
-  typedef ImplTimeStepperBase<OperatorType> BaseType;
-
-private:
-  Dune :: TimeProviderBase &timeProvider_;
-  double cfl_;
+  typedef ParDGOdeSolverBase< DestinationImp > BaseType; 
+protected:
+  using BaseType :: order_;
+  using BaseType :: comm_;
+  using BaseType :: initialized_;
+  using BaseType :: timeProvider_;
+  using BaseType :: odeSolver ;
+  using BaseType :: initialize ;
 
 public:
-  ImplicitOdeSolver(OperatorType& op, Dune::TimeProviderBase& tp,
-                    int pord, bool verbose ) DUNE_DEPRECATED :
-    BaseType(op,tp,pord),
-    timeProvider_(tp),
-    cfl_(1.0)
-  {
-  }
-  ImplicitOdeSolver(OperatorType& op, Dune::TimeProviderBase& tp,
-                    int pord,
-                    const ODEParameters& parameter=ODEParameters()) :
-    BaseType(op,tp,pord),
-    timeProvider_(tp),
+  typedef typename BaseType :: OperatorType    OperatorType;
+  typedef typename BaseType :: DestinationType DestinationType; 
+
+  ImplicitOdeSolver(OperatorType& op, 
+                    Dune::TimeProviderBase& tp,
+                    const int order, 
+                    bool verbose ) DUNE_DEPRECATED :
+    BaseType(tp, order),
+    impl_( op ),
+    linsolver_( 0 ),
+    param_( ODEParameters().clone() ),
+    verbose_( param_->verbose() ),
     cfl_(1.0)
   {
   }
 
-  virtual ~ImplicitOdeSolver() {}
+  ImplicitOdeSolver(OperatorType& op, 
+                    Dune::TimeProviderBase& tp,
+                    const int order,
+                    const ODEParameters& parameter= ODEParameters() ) :
+    BaseType(tp, order),
+    impl_( op ),
+    linsolver_( 0 ),
+    param_( parameter.clone() ),
+    verbose_( parameter.verbose() ),
+    cfl_(1.0)
+  {
+  }
+
+protected:  
+  //! return reference to parameter class 
+  const ODEParameters& parameter() const { assert( param_ ); return *param_; }
+
+  //! for initialization 
+  const OperatorType& spaceOperator() const { return impl_.op(); }
+
+  //! create implicit ode solver     
+  PARDG::ODESolver* createOdeSolver()
+  {
+    linsolver_ = parameter().linearSolver( comm_ );
+    assert( linsolver_ );
+
+    PARDG::DIRK* odeSolver = 0;
+    switch ( order_ ) 
+    {
+      case 1: odeSolver = new PARDG::ImplicitEuler(comm_, impl_); break;
+      case 2: odeSolver = new PARDG::Gauss2(comm_, impl_); break;
+      case 3: odeSolver = new PARDG::DIRK3 (comm_, impl_); break;
+      default : std::cerr << "Runge-Kutta method of this order not implemented" 
+                          << std::endl;
+                abort();
+    }
+
+    assert( odeSolver );
+
+    odeSolver->set_linear_solver( *linsolver_ );
+    odeSolver->set_tolerance( parameter().tolerance() );
+    odeSolver->set_max_number_of_iterations( parameter().iterations() );
+    
+    if( verbose_ == 2 ) 
+    {
+      odeSolver->IterativeSolver::set_output(cout);
+      odeSolver->DynamicalObject::set_output(cout);
+    }
+    return odeSolver;
+  }
   
-  //! initialize solver 
-  void initialize(const DestinationType& U0)
+  virtual ~ImplicitOdeSolver() 
   {
-    // initialize solver 
-    BaseType :: initialize (U0);
-
-    // set time step estimate of operator 
-    timeProvider_.provideTimeStepEstimate( cfl_ * this->op_.timeStepEstimate() );
+    delete linsolver_; linsolver_ = 0;
+    delete param_;     param_ = 0;
   }
-
+  
+  //! return reference to ode solver 
+  PARDG::DIRK& implicitSolver() 
+  {
+    return static_cast<PARDG::DIRK&> (odeSolver());
+  }
+  
+public:  
   //! solve 
   void solve(DestinationType& U0) 
   {
     // initialize 
-    if( ! this->initialized_ ) 
+    if( ! initialized_ ) 
     {
       DUNE_THROW(InvalidStateException,"ImplicitOdeSolver wasn't initialized before first call!");
     }
@@ -452,21 +533,21 @@ public:
      // get pointer to solution
     double* u = U0.leakPointer();
       
-    const bool convergence = this->odeSolver().step(time , dt , u);
+    const bool convergence = odeSolver().step(time , dt , u);
 
     double factor;
-    bool changed = BaseType::param_->cflFactor(this->odeSolver(),
-                                               *(this->linsolver_),
-                                               convergence,factor);
+    bool changed = parameter().cflFactor(odeSolver(),
+                                         *(linsolver_),
+                                         convergence, factor);
     cfl_ *= factor;
     if (convergence)
     {
-      timeProvider_.provideTimeStepEstimate( cfl_ * this->op_.timeStepEstimate() );
+      timeProvider_.provideTimeStepEstimate( cfl_ * impl_.op().timeStepEstimate() );
 
-      if( changed && this->verbose_>=1 )
+      if( changed && verbose_ >= 1 )
         derr << " New cfl number is: "<< cfl_ << " (number of iterations ("
-             << "linear: " << this->linsolver_->number_of_iterations() 
-             << ", ode: " << this->odeSolver().number_of_iterations()
+             << "linear: " << linsolver_->number_of_iterations() 
+             << ", ode: " << implicitSolver().number_of_iterations()
              << ")"
              << std::endl;
     } 
@@ -476,14 +557,21 @@ public:
       timeProvider_.invalidateTimeStep();
      
       // output only in verbose mode 
-      if( this->verbose_>=1 )
+      if( verbose_ >= 1 )
       {
         derr << "No convergence: New cfl number is "<< cfl_ << std :: endl;
       }
     }
-    this->linsolver_->reset_number_of_iterations();
+
+    linsolver_->reset_number_of_iterations();
   }
 
+protected:  
+  OperatorWrapper<OperatorType> impl_;
+  PARDG::IterativeLinearSolver* linsolver_;
+  const ODEParameters* param_;
+  const int verbose_;
+  double cfl_;
 }; // end ImplicitOdeSolver
 
 //////////////////////////////////////////////////////////////////
@@ -524,7 +612,7 @@ public:
     ode_->set_tolerance( parameter.tolerance() );
     ode_->set_max_number_of_iterations( parameter.iterations() );
     
-    if( verbose_==2 ) 
+    if( verbose_ == 2 ) 
     {
       ode_->IterativeSolver::set_output(cout);
       ode_->DynamicalObject::set_output(cout);
@@ -553,6 +641,7 @@ public:
     assert( ode_ );
     return *ode_;
   }
+
   void printmyInfo(string filename) const {
     std::ostringstream filestream;
     filestream << filename;
@@ -592,6 +681,13 @@ class SemiImplicitOdeSolver :
   typedef SemiImplTimeStepperBase<OperatorType, OperatorType> BaseType;
 
 protected:
+  using BaseType :: implOp_;
+  using BaseType :: explOp_;
+  using BaseType :: odeSolver ;
+  using BaseType :: linsolver_ ;
+  using BaseType :: verbose_ ;
+  using BaseType :: initialized_ ;
+
   Dune :: TimeProviderBase &timeProvider_;
   double cfl_;
 
@@ -614,21 +710,30 @@ public:
 
   virtual ~SemiImplicitOdeSolver() {}
   
+  void provideTimeStepEstimate() const 
+  {
+    const double dtEst = std::min( explOp_.timeStepEstimate(),
+                                   implOp_.timeStepEstimate() ); 
+
+    // set time step estimate of operator 
+    timeProvider_.provideTimeStepEstimate( cfl_ * dtEst );
+  }
+
   //! initialize solver 
   void initialize(const DestinationType& U0)
   {
     // initialize solver 
     BaseType :: initialize (U0);
 
-    // set time step estimate of operator 
-    timeProvider_.provideTimeStepEstimate( cfl_ * this->explOp_.timeStepEstimate() );
+    // set time step size 
+    provideTimeStepEstimate();
   }
 
   //! solve 
   void solve(DestinationType& U0) 
   {
     // initialize 
-    if( ! this->initialized_ ) 
+    if( ! initialized_ ) 
     {
       DUNE_THROW(InvalidStateException,"ImplicitOdeSolver wasn't initialized before first call!");
     }
@@ -640,34 +745,36 @@ public:
      // get pointer to solution
     double* u = U0.leakPointer();
       
-    const bool convergence = this->odeSolver().step(time , dt , u);
+    const bool convergence = odeSolver().step(time , dt , u);
 
     double factor;
-    bool changed = BaseType::param_->cflFactor(this->odeSolver(),
-                                               *(this->linsolver_),
+    bool changed = BaseType::param_->cflFactor(odeSolver(),
+                                               *(linsolver_),
                                                convergence,factor);
     cfl_ *= factor;
     if (convergence)
     {
-      timeProvider_.provideTimeStepEstimate( cfl_ * this->op_.timeStepEstimate() );
+      // set time step size 
+      provideTimeStepEstimate();
 
-      if( changed && this->verbose_>=1 )
+      if( changed && verbose_ >= 1 )
         derr << " New cfl number is: "<< cfl_ << " (number of iterations: "
-             << this->linsolver_->number_of_iterations() 
+             << linsolver_->number_of_iterations() 
              << std::endl;
     } 
     else 
     {
+      // reset time step size 
       timeProvider_.provideTimeStepEstimate( cfl_ * dt );
       timeProvider_.invalidateTimeStep();
      
       // output only in verbose mode 
-      if( this->verbose_>=1 )
+      if( verbose_ >= 1 )
       {
         derr << "No convergence: New cfl number is "<< cfl_ << std :: endl;
       }
     }
-    this->linsolver_->reset_number_of_iterations();
+    linsolver_->reset_number_of_iterations();
   }
 
 }; // end SemiImplicitOdeSolver
