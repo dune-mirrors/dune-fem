@@ -402,7 +402,7 @@ protected:
   const ODEParameters& parameter() const { assert( param_ ); return *param_; }
 
   //! for initialization 
-  const OperatorType& spaceOperator() const { return impl_.op(); }
+  virtual const OperatorType& spaceOperator() const { return impl_.op(); }
 
   //! create implicit ode solver     
   PARDG::ODESolver* createOdeSolver()
@@ -441,10 +441,9 @@ protected:
     delete param_;     param_ = 0;
   }
   
-  //! return reference to ode solver 
-  PARDG::DIRK& implicitSolver() 
+  virtual int numberOfIterations()
   {
-    return static_cast<PARDG::DIRK&> (odeSolver());
+    return static_cast<PARDG::DIRK&> (odeSolver()).number_of_iterations();
   }
   
 public:  
@@ -478,7 +477,7 @@ public:
       if( changed && verbose_ >= 1 )
         derr << " New cfl number is: "<< cfl_ << " (number of iterations ("
              << "linear: " << linsolver_->number_of_iterations() 
-             << ", ode: " << implicitSolver().number_of_iterations()
+             << ", ode: " << numberOfIterations() 
              << ")"
              << std::endl;
     } 
@@ -586,6 +585,11 @@ protected:
     return odeSolver;
   }
 
+  virtual int numberOfIterations()
+  {
+    return static_cast<PARDG::SIRK&> (odeSolver()).number_of_iterations();
+  }
+  
 protected:  
   OperatorWrapper<OperatorType> expl_;
 }; // end SemiImplicitOdeSolver
