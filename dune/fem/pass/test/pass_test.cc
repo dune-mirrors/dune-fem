@@ -7,7 +7,7 @@
 
 #include <dune/fem/function/adaptivefunction.hh>
 
-#include <dune/grid/io/file/dgfparser/dgfgridtype.hh>
+#include <dgfgridtype.hh>
 
 
 namespace Dune {
