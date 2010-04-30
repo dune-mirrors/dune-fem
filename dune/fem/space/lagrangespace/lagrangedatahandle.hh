@@ -1,5 +1,5 @@
-#ifndef DUNE_LAGRANGESPACEDATAHANDLE_HH
-#define DUNE_LAGRANGESPACEDATAHANDLE_HH
+#ifndef DUNE_FEM_LAGRANGESPACEDATAHANDLE_HH
+#define DUNE_FEM_LAGRANGESPACEDATAHANDLE_HH
 
 #include <cassert>
 
@@ -17,36 +17,29 @@ namespace Dune
    *
    *  \param  DiscreteFunction  type of discrete function to be communicated
    */
-  template< class DiscreteFunction,
-            class Operation = DFCommunicationOperation :: Add >
+  template< class DiscreteFunction, class Operation = DFCommunicationOperation::Add >
   class LagrangeCommunicationHandler
   : public CommDataHandleIF
     < LagrangeCommunicationHandler< DiscreteFunction, Operation >,
-      typename DiscreteFunction :: RangeFieldType >
+      typename DiscreteFunction::RangeFieldType >
   {
+    typedef LagrangeCommunicationHandler< DiscreteFunction, Operation > ThisType;
+    typedef CommDataHandleIF< ThisType, typename DiscreteFunction::DataType > BaseType;
+
   public:  
+    typedef typename BaseType::DataType DataType;
+
     typedef DiscreteFunction DiscreteFunctionType;
-    
-    typedef typename DiscreteFunctionType :: RangeFieldType DataType;
 
-  private:
-    typedef CommDataHandleIF< LagrangeCommunicationHandler, DataType > BaseType;
-
-  public:
-    typedef typename DiscreteFunctionType :: DiscreteFunctionSpaceType
-      DiscreteFunctionSpaceType;
-
-    typedef typename DiscreteFunctionSpaceType :: BlockMapperType MapperType;
+    typedef typename DiscreteFunctionType::DiscreteFunctionSpaceType DiscreteFunctionSpaceType;
 
   protected:
-    typedef typename DiscreteFunctionType :: DofBlockPtrType DofBlockPtrType;
+    typedef typename DiscreteFunctionSpaceType::BlockMapperType MapperType;
 
-    enum { blockSize = DiscreteFunctionSpaceType :: localBlockSize };
+    typedef typename DiscreteFunctionType::DofBlockPtrType DofBlockPtrType;
+
+    static const int blockSize = DiscreteFunctionSpaceType::localBlockSize;
     
-  protected:
-    DiscreteFunctionType *const function_;
-    const MapperType &mapper_;
-
   public:
     LagrangeCommunicationHandler( DiscreteFunctionType &function )
     : function_( &function ),
@@ -63,12 +56,12 @@ namespace Dune
     LagrangeCommunicationHandler &operator= ( const LagrangeCommunicationHandler & );
 
   public:
-    inline bool contains ( int dim, int codim ) const
+    bool contains ( int dim, int codim ) const
     {
       return mapper_.contains( codim );
     }
 
-    inline bool fixedsize ( int dim, int codim) const
+    bool fixedsize ( int dim, int codim) const
     {
       return mapper_.fixedDataSize( codim );
     }
@@ -116,7 +109,12 @@ namespace Dune
     {
       return blockSize * mapper_.numEntityDofs( entity );
     }
+
+  protected:
+    DiscreteFunctionType *const function_;
+    const MapperType &mapper_;
   };
   
 } // end namespace Dune
-#endif
+
+#endif // #ifndef DUNE_FEM_LAGRANGESPACEDATAHANDLE_HH
