@@ -9,6 +9,7 @@
 
 
 //- Dune includes
+#include <dune/common/exceptions.hh>
 #include <dune/grid/yaspgrid.hh>
 #include <dune/grid/io/file/dgfparser/dgfparser.hh>
 
@@ -149,31 +150,33 @@ public:
   //! destructor 
   virtual ~IOInterface () {}
 
-#if 0
-  /** \brief Returns true, if DataWriter will write data with given parameters.
-     \param[in] time actual time of computation
-     \param[in] timestep current number of time step
-     \return returns true, if DataWriter will write data with given parameters, false otherwise
+  //! return FEM key for macro grid reading 
+  static std::string defaultGridKey( const int dimension )
+  {
+    std::stringstream gridKey;
+    gridKey << "fem.io.macroGridFile";
 
-     Call this method before DataWriter::write(time, timestep), otherwise it will always return false.
-  */
-  virtual bool willWrite(double time, int timestep) const = 0;
+    // check for old parameter 
+    if( Parameter :: exists( gridKey.str() ) )
+    {
+      std::cerr << "WARNING: change `fem.io.macroGridFile' to `" 
+                << gridKey.str() << "_" << dimension << "d' in given parameter file!" << std::endl;
+    }
+    else 
+    {
+      // try new 
+      gridKey << "_" << dimension << "d";
+    }
 
-  /** \brief write data to disc
-     \param[in] time actual time of computation 
-     \param[in] timestep current number of time step 
-  */
-  virtual void write(double time, int timestep) const = 0; 
+    // check for parameter with dimension 
+    if( ! Parameter :: exists( gridKey.str() ) )
+    {
+      std::cerr << "ERROR: Parameter `" << gridKey.str() << "' not found in given parameter file!" << std::endl;
+      DUNE_THROW(InvalidStateException,"Parameter " << gridKey.str() << " not found!");
+    }
+    return gridKey.str();
+  }
 
-  //! display data if HAVE_GRAPE is 1  
-  virtual void display() const = 0; 
-
-  /** \brief save structured macro grid 
-     \param[in] macroFileName is the macro which should be saved in DGF format  
-  */
-  virtual void saveMacroGrid(const std::string macroFileName) const = 0;
-#endif
-  
   //! create given path in combination with rank 
   static void createPath(const std::string& path)
   {

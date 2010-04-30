@@ -26,9 +26,9 @@ namespace Dune {
 struct DataWriterParameters : public DataOutputParameters
 {
   //! base of file name for data file (fem.io.macroGridFile)
-  virtual std::string macroGridName () const
+  virtual std::string macroGridName (const int dim) const
   {
-    return Parameter::getValue< std::string >( "fem.io.macroGridFile" );
+    return Parameter::getValue< std::string >( IOInterface::defaultGridKey( dim ) );
   }
 };
 
@@ -78,7 +78,7 @@ public:
     : BaseType( grid, data, parameter )
   {
     // save macro grid for structured grids 
-    saveMacroGrid( parameter.macroGridName() );
+    saveMacroGrid( parameter.macroGridName( GridType :: dimension ) );
   }
 
   /** \brief Constructor creating data writer 
@@ -95,7 +95,7 @@ public:
     : BaseType( grid, data, tp, parameter )
   {
     // save macro grid for structured grids 
-    saveMacroGrid( parameter.macroGridName() );
+    saveMacroGrid( parameter.macroGridName( GridType :: dimension ) );
   }
 
   //! destructor 
