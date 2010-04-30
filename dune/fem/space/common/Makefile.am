@@ -14,7 +14,6 @@ common_HEADERS = adaptmanager.hh \
      entitycommhelper.hh \
      functionspace.hh \
      functionspaceinterface.hh \
-     genericdofmapper.hh \
      loadbalancer.hh \
      restrictprolongfunction.hh \
      restrictprolonginterface.hh \

@@ -10,7 +10,7 @@
 //- Dune-Fem includes 
 #include <dune/fem/space/common/dofmanager.hh>
 #include <dune/fem/space/common/discretefunctionspace.hh>
-#include <dune/fem/space/common/genericdofmapper.hh>
+#include <dune/fem/space/mapper/genericdofmapper.hh>
 #include <dune/fem/space/basefunctions/genericbasefunctionsets.hh>
 #include <dune/fem/space/basefunctions/basefunctionproxy.hh>
 #include <dune/fem/space/lagrangespace/lagrangedatahandle.hh>
