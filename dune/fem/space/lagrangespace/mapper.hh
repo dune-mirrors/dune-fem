@@ -41,12 +41,10 @@ namespace Dune
   
   template< class GridPart >
   class LagrangeMapper< GridPart, 1 >
-  //: public DofMapperDefault< LagrangeMapperTraits< GridPart, 1 > >
-  : public CodimensionMapper< GridPart, GridPart::GridType :: dimension >
+  : public CodimensionMapper< GridPart, GridPart::GridType::dimension >
   {
     typedef LagrangeMapper< GridPart, 1 > ThisType;
-    //typedef DofMapperDefault< LagrangeMapperTraits< GridPart, 1 > > BaseType;
-    typedef CodimensionMapper< GridPart, GridPart::GridType :: dimension > BaseType;
+    typedef CodimensionMapper< GridPart, GridPart::GridType::dimension > BaseType;
 
   public:
     //! type of the grid part
@@ -98,6 +96,11 @@ namespace Dune
                      LagrangePointSetMapType &lagrangePointSet )
     : BaseType( gridPart, calculateMaxNumDofs( lagrangePointSet ) )
     {}
+
+    bool fixedDataSize ( const int codim ) const
+    {
+      return true;
+    }
   };
 
   template< class GridPart >
