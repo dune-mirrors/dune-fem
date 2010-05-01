@@ -5,7 +5,7 @@
 #include <dune/common/misc.hh>
 
 //- Local includes
-#include <dune/fem/space/common/dofmapper.hh>
+#include <dune/fem/space/mapper/dofmapper.hh>
 #include <dune/fem/space/combinedspace/combineddofstorage.hh>
 
 namespace Dune
