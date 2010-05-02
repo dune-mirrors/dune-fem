@@ -24,7 +24,7 @@ namespace Dune
       typename DiscreteFunction::RangeFieldType >
   {
     typedef LagrangeCommunicationHandler< DiscreteFunction, Operation > ThisType;
-    typedef CommDataHandleIF< ThisType, typename DiscreteFunction::DataType > BaseType;
+    typedef CommDataHandleIF< ThisType, typename DiscreteFunction::RangeFieldType > BaseType;
 
   public:  
     typedef typename BaseType::DataType DataType;
