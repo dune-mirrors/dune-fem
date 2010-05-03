@@ -76,7 +76,7 @@ namespace Dune
         const unsigned int index = mapper_.mapEntityDofToGlobal( entity, i );
         
         DofBlockPtrType blockPtr = function_->block( index );
-        for( unsigned int j = 0; j < blockSize; ++j )
+        for( int j = 0; j < blockSize; ++j )
           buffer.write( (*blockPtr)[ j ] );
       }
     }
