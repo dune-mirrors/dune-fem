@@ -263,9 +263,10 @@ protected:
   using BaseType :: initialized_;
   using BaseType :: timeProvider_;
   using BaseType :: odeSolver ;
-  using BaseType :: initialize ;
 
 public:
+  using BaseType::initialize;
+
   typedef typename BaseType :: OperatorType    OperatorType;
   typedef typename BaseType :: DestinationType DestinationType; 
 
@@ -365,9 +366,10 @@ protected:
   using BaseType :: initialized_;
   using BaseType :: timeProvider_;
   using BaseType :: odeSolver ;
-  using BaseType :: initialize ;
 
 public:
+  using BaseType::initialize;
+
   typedef typename BaseType :: OperatorType    OperatorType;
   typedef typename BaseType :: DestinationType DestinationType; 
 
@@ -521,13 +523,14 @@ protected:
   using BaseType :: initialized_;
   using BaseType :: timeProvider_;
   using BaseType :: odeSolver ;
-  using BaseType :: initialize ;
   using BaseType :: linsolver_ ;
   using BaseType :: parameter ;
   using BaseType :: impl_ ;
   using BaseType :: verbose_ ;
 
 public:
+  using BaseType::initialize;
+
   typedef typename BaseType :: OperatorType    OperatorType;
   typedef typename BaseType :: DestinationType DestinationType; 
 
