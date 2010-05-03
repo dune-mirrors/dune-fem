@@ -3,6 +3,7 @@
 
 #include <dune/grid/common/genericreferenceelements.hh>
 
+#include <dune/fem/space/common/allgeomtypes.hh>
 #include <dune/fem/space/mapper/dofmapper.hh>
 
 namespace Dune
