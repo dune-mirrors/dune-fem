@@ -132,23 +132,6 @@ public:
   
 public:
   /** \brief constructor of AdaptationMethod 
-     \param grid Grid that adaptation method is read for  
-     \param paramFile optional parameter file which contains 
-        the following two lines:
-        # 0 == none, 1 == generic, 2 == call back (only AlbertaGrid and ALUGrid)  
-        AdaptationMethod: 1 # default value 
-
-  */   
-  DUNE_VERSION_DEPRECATED(1,2,AdaptationMethod_no_param_file)
-  AdaptationMethod(const GridType & grid,
-                   std::string paramFile ) 
-    : adaptationMethod_(generic) {
-    const bool output = (grid.comm().rank() == 0);
-    int am = 1;
-    readParameter(paramFile,"AdaptationMethod",am, output);
-    init(am,output);
-  }
-  /** \brief constructor of AdaptationMethod 
      The following optional parameters are used 
         # 0 == none, 1 == generic, 2 == call back (only AlbertaGrid and ALUGrid)  
         AdaptationMethod: 1 # default value 
@@ -644,32 +627,6 @@ public:
       DUNE_THROW(InvalidStateException,"Only one instance of AdaptationManager allowed per grid instance");
     }
   }
-  /** \brief constructor of AdaptationManager 
-     \param grid Grid that adaptation is done for 
-     \param rpOp restriction and prlongation operator that describes how the 
-      user data is projected to other grid levels
-     \param paramFile optional parameter file which contains 
-        the following two lines:
-        # 0 == none, 1 == generic, 2 == call back (only AlbertaGrid and ALUGrid)  
-        AdaptationMethod: 1 # default value 
-     \param balanceCounter start counter for balance cycle (default = 0)   
-  */   
-  DUNE_VERSION_DEPRECATED(1,2,AdaptationManager_no_param_file)
-  AdaptationManager(GridType & grid, 
-                    RestProlOperatorImp & rpOp, 
-                    std::string paramFile , 
-                    int balanceCounter = 0 )
-    : BaseType(grid,rpOp,paramFile) 
-    , Base2Type( grid , rpOp , paramFile , balanceCounter )
-    , commList_(rpOp)
-    , referenceCounter_( ProviderType :: getObject( &grid ) )
-  {
-    ++ referenceCounter_;
-    if( referenceCounter_ > 1 )
-    {
-      DUNE_THROW(InvalidStateException,"Only one instance of AdaptationManager allowed per grid instance");
-    }
-  }
 
   //! destructor decreasing reference counter 
   ~AdaptationManager() 
@@ -720,27 +677,6 @@ public:
       // get time  
       this->balanceTime_ = timer.elapsed();
     }
-  }
-};
-
-template <class GridType, class RestProlOperatorImp >
-class AdaptationLoadBalanceManager :
-  public AdaptationManager<GridType,RestProlOperatorImp>
-{
-  typedef AdaptationManager<GridType,RestProlOperatorImp> BaseType;    
-public:
-  DUNE_VERSION_DEPRECATED(1,2,no_method)      
-  AdaptationLoadBalanceManager(
-      GridType & grid, RestProlOperatorImp & rpOp, 
-      std::string paramFile , int balanceCounter = 0 ) 
-    : BaseType(grid,rpOp,paramFile,balanceCounter)
-  {
-  }
-  AdaptationLoadBalanceManager(
-      GridType & grid, RestProlOperatorImp & rpOp, 
-      int balanceCounter = 0 )
-    : BaseType(grid,rpOp,balanceCounter)
-  {
   }
 };
 
