@@ -399,14 +399,18 @@ namespace Dune
   class CombinedSpace
   : public DiscreteFunctionSpaceImp :: template ToNewDimRange< N > :: Type 
   {
+  public:  
     typedef typename DiscreteFunctionSpaceImp :: template ToNewDimRange< N > :: Type
       BaseType;
-  public:  
+
     typedef typename BaseType :: GridPartType GridPartType;
+
+    typedef DiscreteFunctionSpaceImp ContainedDiscreteFunctionSpaceType;
+    //typedef CombinedSubMapper<ThisType> SubMapperType;
 
     explicit CombinedSpace( GridPartType &gridPart,
         const InterfaceType commInterface = BaseType :: defaultInterface ,
-        const CommunicationDirection commDirection = BaseType :: defaultDirection )
+        const CommunicationDirection commDirection = BaseType :: defaultDirection ) DUNE_VERSION_DEPRECATED(1,2,remove)
      : BaseType( gridPart, commInterface, commDirection )
     {}
   };
@@ -419,7 +423,8 @@ namespace Dune
 #ifdef USE_OLD_COMBINEDSPACE
 // include implementation
 #include "combinedspace.cc"
-#include "combinedadaptmanager.hh"
 #endif
+
+#include "combinedadaptmanager.hh"
 
 #endif

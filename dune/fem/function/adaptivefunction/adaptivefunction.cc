@@ -1,6 +1,7 @@
 namespace Dune
 {
 
+#ifdef USE_OLD_COMBINEDSPACE
   ////////////////////////////////////////////////////////
   //- AdaptiveDiscreteFunction (specialisation)
   ////////////////////////////////////////////////////////
@@ -32,4 +33,6 @@ namespace Dune
                                subSpace,*(subDofVector_[i]));
     }
   }
+#endif
+
 } // end namespace Dune

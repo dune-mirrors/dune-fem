@@ -23,6 +23,7 @@ namespace Dune
     @{
 **/
 
+#ifdef USE_OLD_COMBINEDSPACE
 //***********************************************************************
 /** \brief This is a restriction/prolongation operator for combined DG data. 
  */
@@ -202,7 +203,7 @@ template <class DiscFunc,
           DofStoragePolicy policy> 
 class RestrictProlongDefaultImplementation< 
   DiscFunc,CombinedSpace<DiscreteFunctionSpaceImp,N,policy> > 
-: public RestrictProlongCombinedSpace<
+: public RestrictProlongDefault CombinedSpace<
   DiscFunc,DiscreteFunctionSpaceImp :: polynomialOrder >
 {
 public:
@@ -218,6 +219,32 @@ public:
   {
   }
 };
+#else 
+template <class DiscFunc,
+          class DiscreteFunctionSpaceImp, 
+          int N, 
+          DofStoragePolicy policy> 
+class RestrictProlongDefaultImplementation< 
+  DiscFunc, CombinedSpace<DiscreteFunctionSpaceImp,N,policy> > 
+: public RestrictProlongDefaultImplementation< 
+      DiscFunc, 
+      typename CombinedSpace<DiscreteFunctionSpaceImp,N,policy> :: BaseType > 
+{
+public:
+  //! type of discrete function 
+  typedef DiscFunc DiscreteFunctionType;
+
+  typedef RestrictProlongDefaultImplementation< 
+          DiscFunc, 
+          typename CombinedSpace<DiscreteFunctionSpaceImp,N,policy> :: BaseType > BaseType;
+public:  
+  //! Constructor
+  RestrictProlongDefaultImplementation ( DiscreteFunctionType & df ) : 
+    BaseType(df) 
+  {
+  }
+};
+#endif 
 
 ///@}
 } // end namespace Dune 
