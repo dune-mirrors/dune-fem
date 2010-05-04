@@ -7,6 +7,7 @@
 
 //- Dune includes
 #include <dune/common/static_assert.hh>
+#include <dune/fem/version.hh>
 
 //- Local includes
 #include <dune/fem/space/common/discretefunctionspace.hh>
@@ -99,6 +100,7 @@ namespace Dune
 
 
 
+#ifdef USE_OLD_COMBINEDSPACE
   //! Traits class for CombinedSpace
   template< class DiscreteFunctionSpaceImp, int N, DofStoragePolicy policy >
   struct CombinedSpaceTraits
@@ -270,10 +272,10 @@ namespace Dune
 
     //- Public methods
     //! constructor
-    inline explicit CombinedSpace( GridPartType &gridpart,
+    explicit CombinedSpace( GridPartType &gridpart,
         const InterfaceType commInterface = defaultInterface ,
         const CommunicationDirection commDirection = defaultDirection )
-      DUNE_VERSION_DEPRECATED(1,2,remove);
+    DUNE_VERSION_DEPRECATED(1,2,remove);
 
   private:
     // prohibit copying
@@ -329,6 +331,7 @@ namespace Dune
 
     /** \copydoc Dune::DiscreteFunctionSpaceInterface::baseFunctionSet(const EntityType &entity) const */
     template< class EntityType >
+    DUNE_VERSION_DEPRECATED(1,2,remove)
     const BaseFunctionSetType baseFunctionSet ( const EntityType &entity ) const
     {
       return baseFunctionSet( entity.geometry().type() );
@@ -389,13 +392,34 @@ namespace Dune
     mutable BaseFunctionMapType baseSetMap_; 
     const DofManagerType & dm_;
   }; // end class CombinedSpace  
+#else
+#warning "Using convenience imementation of CombinedSpace"
+  // implementation for convenience 
+  template< class DiscreteFunctionSpaceImp, int N, DofStoragePolicy policy >
+  class CombinedSpace
+  : public DiscreteFunctionSpaceImp :: template ToNewDimRange< N > :: Type 
+  {
+    typedef typename DiscreteFunctionSpaceImp :: template ToNewDimRange< N > :: Type
+      BaseType;
+  public:  
+    typedef typename BaseType :: GridPartType GridPartType;
+
+    explicit CombinedSpace( GridPartType &gridPart,
+        const InterfaceType commInterface = BaseType :: defaultInterface ,
+        const CommunicationDirection commDirection = BaseType :: defaultDirection )
+     : BaseType( gridPart, commInterface, commDirection )
+    {}
+  };
+#endif
 
   /** @} **/  
   
 } // end namespace Dune
 
+#ifdef USE_OLD_COMBINEDSPACE
 // include implementation
 #include "combinedspace.cc"
 #include "combinedadaptmanager.hh"
+#endif
 
 #endif
