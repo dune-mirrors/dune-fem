@@ -135,7 +135,7 @@ namespace Dune
       return entity.template count< codimension >();
     }
 
-    /** \copydoc Dune::DofMapper::numEntityDofs(const EntityType &entity) const */
+    /** \copydoc Dune::DofMapper::numEntityDofs(const Entity &entity) const */
     template< class Entity >
     int numEntityDofs ( const Entity &entity ) const
     {
