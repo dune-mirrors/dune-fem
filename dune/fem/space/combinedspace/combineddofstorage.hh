@@ -10,32 +10,32 @@ namespace Dune
 
   //! Utility class that helps in the transformation between dofs in the
   //! combined space and its enclosed spaces
-  template< class ContainedMapper, DofStoragePolicy policy >
+  template< class ContainedMapper, int N, DofStoragePolicy policy >
   class CombinedDofConversionUtility;
 
 
   //! does the same as DofConversionUtility<PointBased>, just other
   //! construtor 
-  template< class ContainedMapper >
-  class CombinedDofConversionUtility< ContainedMapper, PointBased >
-  : public DofConversionUtility< PointBased >
+  template< class ContainedMapper , int N >
+  class CombinedDofConversionUtility< ContainedMapper, N, PointBased >
+  : public PointBasedDofConversionUtility< N > 
   {
   public:
     typedef ContainedMapper ContainedMapperType;
 
   private:
-    typedef DofConversionUtility< PointBased > BaseType;
+    typedef PointBasedDofConversionUtility< N >  BaseType;
 
   public:
-    inline CombinedDofConversionUtility ( const ContainedMapperType &,
-                                          int numComponents )
+    inline CombinedDofConversionUtility ( const ContainedMapperType & mapper,
+                                          const int numComponents )
     : BaseType( numComponents )
     {}
   };
 
   //! Specialisation for VariableBased approach
-  template< class ContainedMapper >
-  class CombinedDofConversionUtility< ContainedMapper, VariableBased >
+  template< class ContainedMapper, int N >
+  class CombinedDofConversionUtility< ContainedMapper, N, VariableBased >
   {
   public:
     typedef ContainedMapper ContainedMapperType;
@@ -117,7 +117,7 @@ namespace Dune
                         unsigned int component )
     : mapper_( spc.containedSpace().mapper() ),
       component_( component ),
-      utilGlobal_( mapper_,
+      utilGlobal_(mapper_,
                   spc.myPolicy() == PointBased ? 
                   spc.numComponents() :
                   spc.size()/spc.numComponents())

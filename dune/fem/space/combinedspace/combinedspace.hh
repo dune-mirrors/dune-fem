@@ -406,6 +406,10 @@ namespace Dune
     typedef DiscreteFunctionSpaceImp ContainedDiscreteFunctionSpaceType;
     typedef CombinedSubMapper<ThisType> SubMapperType;
 
+    typedef CombinedDofConversionUtility< 
+      typename ContainedDiscreteFunctionSpaceType :: MapperType, N, policy >   DofConversionType;
+
+
     explicit CombinedSpace( GridPartType &gridPart,
         const InterfaceType commInterface = BaseType :: defaultInterface ,
         const CommunicationDirection commDirection = BaseType :: defaultDirection )
@@ -413,6 +417,16 @@ namespace Dune
        containedSpace_( gridPart, commInterface, commDirection )
     {}
   
+    //- Additional methods
+    //! number of components
+    int numComponents() const { return N; }
+
+    //! policy of this space
+    inline DofStoragePolicy myPolicy() const
+    {
+      return DofConversionType :: policy();
+    }
+ 
     //! return reference to contained space  
     inline const ContainedDiscreteFunctionSpaceType &containedSpace () const
     {
