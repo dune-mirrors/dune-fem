@@ -262,7 +262,6 @@ namespace Dune
 
   //- Specialisations
   //! Specialised version of AdaptiveDiscreteFunction for CombinedSpace
-#ifdef USE_OLD_COMBINEDSPACE
   template< class ContainedFunctionSpaceImp, int N, DofStoragePolicy p >
   class AdaptiveDiscreteFunction< CombinedSpace<ContainedFunctionSpaceImp, N, p > >
   : public DiscreteFunctionDefault< AdaptiveDiscreteFunctionTraits< CombinedSpace< ContainedFunctionSpaceImp, N, p > > >,
@@ -474,7 +473,6 @@ public:
   ManagedDiscreteFunction(const ThisType& other)
   : BaseType( other ) {} 
 };
-#endif
 
 } // end namespace Dune
 

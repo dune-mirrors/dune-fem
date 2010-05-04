@@ -17,11 +17,15 @@
 #include <dune/fem/space/basefunctions/basefunctionproxy.hh>
 
 #include "combineddofstorage.hh"
+
+#ifdef USE_OLD_COMBINEDSPACE
 #include "mapper.hh"
+#endif
 
 namespace Dune
 {
   
+#ifdef USE_OLD_COMBINEDSPACE
   namespace CombinedSpaceHelper
   {
 
@@ -82,6 +86,7 @@ namespace Dune
     };
 
   }
+#endif
 
 
   
@@ -101,6 +106,7 @@ namespace Dune
 
 
 #ifdef USE_OLD_COMBINEDSPACE
+#warning "Using old imementation of CombinedSpace"
   //! Traits class for CombinedSpace
   template< class DiscreteFunctionSpaceImp, int N, DofStoragePolicy policy >
   struct CombinedSpaceTraits
@@ -369,12 +375,6 @@ namespace Dune
       return DofConversionType :: policy();
     }
  
-    //! return reference to contained space  
-    inline const ContainedDiscreteFunctionSpaceType &containedSpace () const
-    {
-      return containedSpace_;
-    }
-
     //! return a reference to the contained space's mapper
     inline ContainedMapperType &containedMapper () const
     { 
@@ -382,9 +382,6 @@ namespace Dune
     }
 
   protected:
-    //- Member data  
-    ContainedDiscreteFunctionSpaceType containedSpace_;
-
     mutable MapperType mapper_;
     mutable BlockMapperType blockMapper_;
 
@@ -393,26 +390,38 @@ namespace Dune
     const DofManagerType & dm_;
   }; // end class CombinedSpace  
 #else
-#warning "Using convenience imementation of CombinedSpace"
-  // implementation for convenience 
+  // new implementation (needed by AdaptiveDiscreteFunction to extract sub functions)
   template< class DiscreteFunctionSpaceImp, int N, DofStoragePolicy policy >
   class CombinedSpace
-  : public DiscreteFunctionSpaceImp :: template ToNewDimRange< N > :: Type 
+  : public DiscreteFunctionSpaceImp :: 
+      template ToNewDimRange< DiscreteFunctionSpaceImp:: dimRange * N > :: Type 
   {
+    typedef CombinedSpace< DiscreteFunctionSpaceImp, N, policy > ThisType;
   public:  
-    typedef typename DiscreteFunctionSpaceImp :: template ToNewDimRange< N > :: Type
-      BaseType;
+    typedef typename DiscreteFunctionSpaceImp :: 
+      template ToNewDimRange< DiscreteFunctionSpaceImp:: dimRange * N > :: Type   BaseType;
 
     typedef typename BaseType :: GridPartType GridPartType;
 
     typedef DiscreteFunctionSpaceImp ContainedDiscreteFunctionSpaceType;
-    //typedef CombinedSubMapper<ThisType> SubMapperType;
+    typedef CombinedSubMapper<ThisType> SubMapperType;
 
     explicit CombinedSpace( GridPartType &gridPart,
         const InterfaceType commInterface = BaseType :: defaultInterface ,
-        const CommunicationDirection commDirection = BaseType :: defaultDirection ) DUNE_VERSION_DEPRECATED(1,2,remove)
-     : BaseType( gridPart, commInterface, commDirection )
+        const CommunicationDirection commDirection = BaseType :: defaultDirection )
+     : BaseType( gridPart, commInterface, commDirection ),
+       containedSpace_( gridPart, commInterface, commDirection )
     {}
+  
+    //! return reference to contained space  
+    inline const ContainedDiscreteFunctionSpaceType &containedSpace () const
+    {
+      return containedSpace_;
+    }
+
+  protected:  
+    //- Member data  
+    ContainedDiscreteFunctionSpaceType containedSpace_;
   };
 #endif
 
