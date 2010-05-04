@@ -23,9 +23,9 @@ namespace Dune
   initializeSubFunctions() 
   {
     const SubSpaceType& subSpace = this->space().containedSpace();
-    for (int i=0;i<N;i++)
+    for (int i=0; i < N; ++i)
     {
-      subDofMapper_[i] = new SubMapperType(this->spc_,i);
+      subDofMapper_[i] = new SubMapperType(this->spc_, i);
       subDofVector_[i] = new SubDofVectorType(this->dofStorage(), *subDofMapper_[i]);
       subDiscFunc_[i]  = new SubDiscreteFunctionType(
                                std::string(this->name() + "_sub"),
