@@ -18,11 +18,13 @@ namespace Dune
     \brief Write a self contained tex table 
     for eoc runs with timing information.
     
-    Constructor takes base name (filename) of file and
+    Constructor takes base file name for the tex file and
     generates two files:
-    filename.tex and filename_body.tex.
-    The file filename_body.tex hold the actual body
-    of the eoc table which is included in filename.tex
+    filename_timestemp_main.tex and filename_timestemp_body.tex.
+    A time stemp is added to the base file name to prevent the
+    overwriting of a valuable eoc data from the previous simulation.
+    The file filename_timestemp_body.tex holds the actual body
+    of the eoc table which is included in filename_timestemp_main.tex
     but can also be used to combine e.g. runs with different
     parameters or for plotting using gnuplot.
 
@@ -65,8 +67,17 @@ class FemEoc
     IOInterface::createPath(path);
     init(path+"/"+name,descript);
   }
-  void init(const std::string& name, const std::string& descript) {
+  void init(const std::string& filename, const std::string& descript) {
     if (MPIManager::rank() != 0) return;
+
+    // add timestemp to the file name to prevent eoc results to be overwriten
+    time_t seconds = time(0);
+    struct tm *ptm = localtime( &seconds );
+    char timeString[20];
+    strftime( timeString, 20, "_%d%m%Y_%H%M%S", ptm );
+    const std::string name= filename + std::string(timeString); 
+    std::cout <<"name: " <<name <<std::endl;
+
     if (!outputFile_.is_open()) {
       std::ofstream main((name+"_main.tex").c_str());
       if (!main) {
