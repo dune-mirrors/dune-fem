@@ -31,7 +31,7 @@ namespace Dune
 
     typedef typename ContainedMapperType :: EntityType EntityType;
 
-    typedef CombinedDofConversionUtility< ContainedMapperType, policy >
+    typedef CombinedDofConversionUtility< ContainedMapperType, numComponents, policy >
       GlobalDofConversionUtilityType;
     
     typedef CombinedDofMapIterator< Traits > DofMapIteratorType;
@@ -164,7 +164,7 @@ namespace Dune
     typedef typename Traits :: GlobalDofConversionUtilityType
       GlobalDofConversionUtilityType;
     
-    typedef CombinedDofConversionUtility< ContainedMapperType, PointBased >
+    typedef CombinedDofConversionUtility< ContainedMapperType, numComponents, PointBased >
       LocalDofConversionUtilityType;
 
   protected:
