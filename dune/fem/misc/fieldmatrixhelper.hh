@@ -1,6 +1,8 @@
 #ifndef DUNE_FEM_FIELDMATRIXHELPER_HH
 #define DUNE_FEM_FIELDMATRIXHELPER_HH
 
+#warning "FieldMatrixHelper has been deprecated, use methods on FieldMatrix directly!"
+
 #include <dune/common/fvector.hh>
 #include <dune/common/fmatrix.hh>
 
