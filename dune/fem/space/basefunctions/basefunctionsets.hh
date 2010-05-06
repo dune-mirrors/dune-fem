@@ -313,7 +313,6 @@ namespace Dune
         jacobianScalar( i, x, gradPhiRef );
 
         gjit->mv( gradPhiRef[ 0 ], gradPhi );
-        //FieldMatrixHelper :: multiply( gjit, gradPhiRef[ 0 ], gradPhi );
 
         for( int r = 0; r < dimRange; ++r, ++iR )
           ret[ r ].axpy( dofs[ iR ], gradPhi );
@@ -348,7 +347,6 @@ namespace Dune
       GlobalJacobianRangeType jacFactorInv;
       for( int r = 0; r < dimRange; ++r )
         gjit->mtv( jacFactor[ r ], jacFactorInv[ r ] );
-      //FieldMatrixHelper :: multiply( jacFactor, gjit, jacFactorInv );
 
       const int numScalarBase = numDifferentBaseFunctions();
       for( int i = 0, iR = 0; i < numScalarBase; ++i )
@@ -373,7 +371,6 @@ namespace Dune
       GlobalJacobianRangeType jacFactorInv;
       for( int r = 0; r < dimRange; ++r )
         gjit->mtv( jacFactor[ r ], jacFactorInv[ r ] );
-      //FieldMatrixHelper :: multiply( jacFactor, gjit, jacFactorInv );
 
       const int numScalarBase = numDifferentBaseFunctions ();
       for( int i = 0, iR = 0; i < numScalarBase; ++i )
@@ -549,7 +546,6 @@ namespace Dune
         for( size_t col = 0, colR = 0; col < numDiffBase; ++col ) 
         {
           gjit->mv( jacobianStorage[ baseRow ][ col ][ 0 ], gradPhi );
-          //FieldMatrixHelper::multiply( *gjit, jacobianStorage[ baseRow ][ col ][ 0 ], gradPhi );
 
           for( int r = 0; r < dimRange; ++r, ++colR ) 
           {
@@ -663,7 +659,6 @@ namespace Dune
         // multiply jacobian factor with geometry inverse 
         for( size_t r = 0; r < dimRange; ++r )
           gjit->mtv( jacVector[ row ][ r ], &jacFactorGlobal[ row + offset + r*GlobalJacobianRangeType::cols ] );
-        //FieldMatrixHelper::multiply( jacVector[ row ], *gjit, &jacFactorGlobal[ row * offset ] );
       }
 
       const bool faceCachingQuad = (QuadratureType :: codimension == 1) && 
@@ -701,7 +696,6 @@ namespace Dune
         // multiply jacobian factor with geometry inverse 
         for( size_t r = 0; r < dimRange; ++r )
           gjit->mtv( jacVector[ row ][ r ], jacFactorInv[ r ] );
-        //FieldMatrixHelper::multiply( jacVector[ row ], *gjit, jacFactorInv );
 
         for( size_t col = 0, colR = 0; col < numDiffBase; ++col ) 
         {

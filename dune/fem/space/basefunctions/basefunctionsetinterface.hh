@@ -8,7 +8,6 @@
 #include <dune/fem/version.hh>
 #include <dune/fem/misc/bartonnackmaninterface.hh>
 #include <dune/fem/misc/deritype.hh>
-#include <dune/fem/misc/fieldmatrixhelper.hh>
 
 namespace Dune
 {
@@ -349,10 +348,7 @@ namespace Dune
       }
 
       for( int r = 0; r < dimRange; ++r )
-      {
         gjit->mv( refJacobian[ r ], ret[ r ] );
-        //FieldMatrixHelper::multiply( gjit, refJacobian[ r ], ret[ r ] );
-      }
     }
 
     /** \copydoc Dune::BaseFunctionSetInterface::evaluateSingle(const int baseFunction,const PointType &x,const RangeType &psi) const */
@@ -422,7 +418,6 @@ namespace Dune
       GlobalJacobianRangeType jacFactorInv;
       for( int r = 0; r < dimRange; ++r )
         gjit->mtv( jacFactor[ r ], jacFactorInv[ r ] );
-      //FieldMatrixHelper::multiply( jacFactor, gjit, jacFactorInv );
 
       const int numBase = numBaseFunctions();
       for( int i = 0; i < numBase; ++i )
@@ -445,7 +440,6 @@ namespace Dune
       GlobalJacobianRangeType jacFactorInv;
       for( int r = 0; r < dimRange; ++r )
         gjit->mtv( jacFactor[ r ], jacFactorInv[ r ] );
-      //FieldMatrixHelper::multiply( jacFactor, gjit, jacFactorInv );
 
       const int numBase = numBaseFunctions();
       for( int i = 0; i < numBase; ++i )
