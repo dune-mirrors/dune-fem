@@ -312,7 +312,7 @@ namespace Dune
 
         jacobianScalar( i, x, gradPhiRef );
 
-        gjit->mv( gradPhiRef[ 0 ], gradPhi );
+        gjit.mv( gradPhiRef[ 0 ], gradPhi );
 
         for( int r = 0; r < dimRange; ++r, ++iR )
           ret[ r ].axpy( dofs[ iR ], gradPhi );
@@ -346,7 +346,7 @@ namespace Dune
     {
       GlobalJacobianRangeType jacFactorInv;
       for( int r = 0; r < dimRange; ++r )
-        gjit->mtv( jacFactor[ r ], jacFactorInv[ r ] );
+        gjit.mtv( jacFactor[ r ], jacFactorInv[ r ] );
 
       const int numScalarBase = numDifferentBaseFunctions();
       for( int i = 0, iR = 0; i < numScalarBase; ++i )
@@ -370,7 +370,7 @@ namespace Dune
     {
       GlobalJacobianRangeType jacFactorInv;
       for( int r = 0; r < dimRange; ++r )
-        gjit->mtv( jacFactor[ r ], jacFactorInv[ r ] );
+        gjit.mtv( jacFactor[ r ], jacFactorInv[ r ] );
 
       const int numScalarBase = numDifferentBaseFunctions ();
       for( int i = 0, iR = 0; i < numScalarBase; ++i )

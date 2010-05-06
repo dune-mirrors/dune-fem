@@ -348,7 +348,7 @@ namespace Dune
       }
 
       for( int r = 0; r < dimRange; ++r )
-        gjit->mv( refJacobian[ r ], ret[ r ] );
+        gjit.mv( refJacobian[ r ], ret[ r ] );
     }
 
     /** \copydoc Dune::BaseFunctionSetInterface::evaluateSingle(const int baseFunction,const PointType &x,const RangeType &psi) const */
@@ -417,7 +417,7 @@ namespace Dune
     {
       GlobalJacobianRangeType jacFactorInv;
       for( int r = 0; r < dimRange; ++r )
-        gjit->mtv( jacFactor[ r ], jacFactorInv[ r ] );
+        gjit.mtv( jacFactor[ r ], jacFactorInv[ r ] );
 
       const int numBase = numBaseFunctions();
       for( int i = 0; i < numBase; ++i )
@@ -439,7 +439,7 @@ namespace Dune
     {
       GlobalJacobianRangeType jacFactorInv;
       for( int r = 0; r < dimRange; ++r )
-        gjit->mtv( jacFactor[ r ], jacFactorInv[ r ] );
+        gjit.mtv( jacFactor[ r ], jacFactorInv[ r ] );
 
       const int numBase = numBaseFunctions();
       for( int i = 0; i < numBase; ++i )
