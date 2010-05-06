@@ -304,16 +304,16 @@ namespace Dune
       ret = 0;
 
       const int numScalarBase = numDifferentBaseFunctions ();
-      for( int i = 0, iR = 0; i < numScalarBase ; ++i )
+      for( int i = 0, iR = 0; i < numScalarBase; ++i )
       {
         ScalarJacobianRangeType gradPhiRef;
         // get type of scalar global jacobian range 
-        typename GlobalJacobianRangeType :: 
-          row_type   gradPhi;
+        typename GlobalJacobianRangeType::row_type gradPhi;
 
         jacobianScalar( i, x, gradPhiRef );
 
-        FieldMatrixHelper :: multiply( gjit, gradPhiRef[ 0 ], gradPhi );
+        gjit->mv( gradPhiRef[ 0 ], gradPhi );
+        //FieldMatrixHelper :: multiply( gjit, gradPhiRef[ 0 ], gradPhi );
 
         for( int r = 0; r < dimRange; ++r, ++iR )
           ret[ r ].axpy( dofs[ iR ], gradPhi );
@@ -346,14 +346,16 @@ namespace Dune
                        LocalDofVectorType& dofs ) const
     {
       GlobalJacobianRangeType jacFactorInv;
-      FieldMatrixHelper :: multiply( jacFactor, gjit, jacFactorInv );
+      for( int r = 0; r < dimRange; ++r )
+        gjit->mtv( jacFactor[ r ], jacFactorInv[ r ] );
+      //FieldMatrixHelper :: multiply( jacFactor, gjit, jacFactorInv );
 
-      const int numScalarBase = numDifferentBaseFunctions ();
+      const int numScalarBase = numDifferentBaseFunctions();
       for( int i = 0, iR = 0; i < numScalarBase; ++i )
       {
         ScalarJacobianRangeType grad;
         jacobianScalar( i, x, grad );
-        for( int r = 0; r < dimRange; ++r , ++iR )
+        for( int r = 0; r < dimRange; ++r, ++iR )
           dofs[ iR ] += grad[ 0 ] * jacFactorInv[ r ];
       }
     }
@@ -369,7 +371,9 @@ namespace Dune
                        LocalDofVectorType& dofs ) const
     {
       GlobalJacobianRangeType jacFactorInv;
-      FieldMatrixHelper :: multiply( jacFactor, gjit, jacFactorInv );
+      for( int r = 0; r < dimRange; ++r )
+        gjit->mtv( jacFactor[ r ], jacFactorInv[ r ] );
+      //FieldMatrixHelper :: multiply( jacFactor, gjit, jacFactorInv );
 
       const int numScalarBase = numDifferentBaseFunctions ();
       for( int i = 0, iR = 0; i < numScalarBase; ++i )
