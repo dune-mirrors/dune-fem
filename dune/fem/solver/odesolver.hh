@@ -221,7 +221,9 @@ protected:
 public:
   void description(std::ostream& out) const 
   {
-    out << name() << ", steps: " << order_ << "\n\n";
+    out << name() << ", steps: " << order_;
+    // would be nice to add info on cfl number, but TimeProviderBase doesn't have this
+        //<< ", cfl: " << this->timeProvider_.cfl() << "\\\\" <<std::endl;
   }
 
 protected:  

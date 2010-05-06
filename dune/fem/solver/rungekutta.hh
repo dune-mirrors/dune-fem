@@ -228,8 +228,8 @@ public:
 
   void description(std::ostream& out) const
   {
-    out << "ExplRungeKutta, steps: " << this->ord_ <<std::endl;
-//    ofs << "                cfl: " << this->tp_.cfl() << "\\\\" <<std::endl;
+    out << "ExplRungeKutta, steps: " << this->ord_
+        << ", cfl: " << this->tp_.cfl() << "\\\\" <<std::endl;
   }
 
 protected:
