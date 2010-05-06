@@ -3,7 +3,6 @@
 
 #include <dune/fem/misc/engineconcept.hh>
 #include <dune/fem/space/common/dofstorage.hh>
-#include <dune/fem/misc/fieldmatrixhelper.hh>
 #include <dune/fem/function/common/function.hh>
 
 namespace Dune
