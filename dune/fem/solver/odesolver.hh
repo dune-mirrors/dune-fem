@@ -218,6 +218,7 @@ protected:
     return *odeSolver_;
   }
   
+public:
   void printmyInfo(string filename) const 
   {
     std::ostringstream filestream;
