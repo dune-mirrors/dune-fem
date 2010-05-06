@@ -76,9 +76,9 @@ class FemEoc
     char timeString[20];
     strftime( timeString, 20, "_%d%m%Y_%H%M%S", ptm );
     const std::string name= filename + std::string(timeString); 
-    std::cout <<"name: " <<name <<std::endl;
 
-    if (!outputFile_.is_open()) {
+    if (!outputFile_.is_open()) 
+    {
       std::ofstream main((name+"_main.tex").c_str());
       if (!main) {
         std::cerr << "Could not open file : "
@@ -86,9 +86,10 @@ class FemEoc
                   << " ... ABORTING" << std::endl;
         abort();
       }
-      std::ostringstream filestreamBody;
-      filestreamBody << name << "_body.tex";
-      outputFile_.open(filestreamBody.str().c_str(), std::ios::out);
+
+      std::string filestreamBody;
+      filestreamBody = name + "_body.tex";
+      outputFile_.open(filestreamBody.c_str(), std::ios::out);
       main << "\\documentclass[12pt,english]{article}\n"
            << "\\usepackage[T1]{fontenc}\n"
 	         << "\\usepackage[latin1]{inputenc}\n"
@@ -101,15 +102,23 @@ class FemEoc
 	         << "\\makeatother\n"
 	         << "\\begin{document}\n"
            << "\\begin{center}\\large\n"
-           << descript 
            << "\n\\end{center}\n\n"
            << "\\input{"
-           << filestreamBody.str() 
+           << filestreamBody
            << "}\n";
       main << "\\end{tabular}\\\\\n\n"
 	         << "\\end{document}\n" << std::endl;
       main.close();	
-    } else {
+
+      // write together with table the description
+      // of the scheme and problem in the simulation
+      outputFile_ << descript;
+    } 
+    else 
+    {
+      std::cerr << "Could not open file : "
+                << " already opened!"
+                << " ... ABORTING" << std::endl;
       abort();
     }
   }

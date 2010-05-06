@@ -219,17 +219,15 @@ protected:
   }
   
 public:
-  void printmyInfo(string filename) const 
+  void description(std::ostream& out) const 
   {
-    std::ostringstream filestream;
-    filestream << filename;
-    std::ofstream ofs(filestream.str().c_str(), std::ios::app);
-    ofs << "Explicit ODE solver, steps: " << order_ << "\n\n";
-    ofs.close();
-    //this->op_.printmyInfo(filename);
+    out << name() << ", steps: " << order_ << "\n\n";
   }
 
 protected:  
+  //! return name of ode solver 
+  virtual std::string name()  const = 0; 
+
   //! return ode solver object 
   virtual PARDG::ODESolver* createOdeSolver() = 0;
 
@@ -319,6 +317,9 @@ public:
   }
 
 protected:
+  //! return name of ode solver 
+  virtual std::string name() const { return "ExplicitOdeSolver"; }
+
   //! for initialization 
   const OperatorType& spaceOperator() const { return expl_.op(); }
 
@@ -401,6 +402,9 @@ public:
   }
 
 protected:  
+  //! return name of ode solver 
+  virtual std::string name() const { return "ImplicitOdeSolver"; }
+
   //! return reference to parameter class 
   const ODEParameters& parameter() const { assert( param_ ); return *param_; }
 
@@ -555,6 +559,9 @@ public:
   }
 
 protected:  
+  //! return name of ode solver 
+  virtual std::string name() const { return "SemiImplicitOdeSolver"; }
+
   //! for initialization 
   const OperatorType& spaceOperator() const { return expl_.op(); }
 

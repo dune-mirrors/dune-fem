@@ -79,7 +79,7 @@ public:
   */
   virtual void solve(DestinationType& u) = 0;
 
-  virtual void printmyInfo(std::string) = 0;
+  virtual void description(std::ostream&) const = 0;
 };
 
 /** \brief Base class for explicit RungeKutta ODE solver. */
@@ -226,15 +226,10 @@ public:
     }
   }
 
-  void printmyInfo(string filename) const
+  void description(std::ostream& out) const
   {
-    std::ostringstream filestream;
-    filestream << filename;
-    std::ofstream ofs(filestream.str().c_str(), std::ios::app);
-    ofs << "ExplRungeKutta, steps: " << this->ord_ << "\n\n";
-//    ofs << "                cfl: " << this->tp_.cfl() << "\\\\\n\n";
-    ofs.close();
-//    this->op_.printmyInfo(filename);
+    out << "ExplRungeKutta, steps: " << this->ord_ <<std::endl;
+//    ofs << "                cfl: " << this->tp_.cfl() << "\\\\" <<std::endl;
   }
 
 protected:
