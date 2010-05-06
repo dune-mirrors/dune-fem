@@ -78,6 +78,8 @@ public:
       \param[in] u unknown to solve for 
   */
   virtual void solve(DestinationType& u) = 0;
+
+  virtual void printmyInfo(std::string) = 0;
 };
 
 /** \brief Base class for explicit RungeKutta ODE solver. */
