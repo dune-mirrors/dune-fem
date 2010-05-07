@@ -333,6 +333,19 @@ namespace Dune
       return asImp().numDofs();
     }
 
+    /** \brief obtain the number of local DoFs in the scalar case 
+     *
+     *  Obtain the number of local DoFs of the scalar case 
+     *  of this local function. The value is
+     *  identical to the number of base functons on the entity.
+     *  
+     *  \returns number of local DoFs, scalar case 
+     */
+    inline int numScalarDofs () const 
+    {
+      return asImp().numScalarDofs();
+    }
+
     template< class QuadratureType, class VectorType  >
     inline void axpyQuadrature ( const QuadratureType &quad,
                                  const VectorType& factorVec )
