@@ -240,23 +240,23 @@ namespace Dune {
       // only apply volumetric integral if order > 0 
       // otherwise this contribution is zero 
       
-      if( (spc_.order() > 0) || problem_.hasSource()) 
+      if( (spc_.order() > 0) || problem_.hasSource() ) 
       {
         // create quadrature 
-        VolumeQuadratureType volQuad(en, volumeQuadOrd_);
+        VolumeQuadratureType volQuad( en, volumeQuadOrd_ );
 
         // set entity and evaluate local functions for quadrature 
         caller_.setEntity( en , volQuad );
 
-        // if only flux, evaluate only flux 
-        if ( problem_.hasFlux() && ! problem_.hasSource() ) 
+        if( problem_.hasSource() )
         {
-          evalVolumetricPartFlux(en, geo, volQuad, updEn);
+          // evaluate flux and source
+          evalVolumetricPartBoth( en, geo, volQuad, updEn );
         }
-        else if( problem_.hasFlux() )
+        else if ( problem_.hasFlux() ) 
         {
-          // evaluate flux and source 
-          evalVolumetricPartBoth(en, geo, volQuad, updEn);
+          // if only flux, evaluate only flux 
+          evalVolumetricPartFlux( en, geo, volQuad, updEn );
         }
       }
       else 
