@@ -147,29 +147,34 @@ namespace Dune
     //! function space!
     CombinedDiscreteFunction(ContainedDiscreteFunctionType& func) 
       : BaseType( "", spc_, lfFactory_ ),
-	spc_(const_cast<ContainedDiscreteFunctionSpaceType&>(func.space()).gridPart()),
-	lfFactory_( *this )
+        spc_(const_cast<ContainedDiscreteFunctionSpaceType&>(func.space()).gridPart()),
+        lfFactory_( *this )
     {
-      for (int i=0;i<N;i++) {
-	func_[i] = new ContainedDiscreteFunctionType(func);
+      for (int i=0; i<N; ++i) 
+      {
+        func_[i] = new ContainedDiscreteFunctionType(func);
       }
     }
+
     //! Copy constructor
     //! The copy constructor copies the dofs
     CombinedDiscreteFunction(const ThisType &other)
       : BaseType( "", other.space(), lfFactory_ ),
-	spc_(other.spc_),
-	lfFactory_( *this )
+        spc_(other.spc_),
+        lfFactory_( *this )
     {
-      for (int i=0;i<N;i++) {
-	func_[i] = new 
-	  ContainedDiscreteFunctionType(other.subFunction(i));
+      for (int i=0; i<N; ++i) 
+      {
+        func_[i] = new 
+          ContainedDiscreteFunctionType(other.subFunction(i));
       }
     }
+
     //! Destructor
-    ~CombinedDiscreteFunction() {
-      for (int i=0;i<N;i++) 
-	delete func_[i];
+    ~CombinedDiscreteFunction() 
+    {
+      for (int i=0; i<N; ++i) 
+        delete func_[i];
     }
 
   private:
@@ -183,14 +188,14 @@ namespace Dune
     }
     /** \copydoc Dune::DiscreteFunctionInterface::clear */
     inline void clear() {
-      for (int i=0;i<N;i++)
-	func_[i]->clear();
+      for (int i=0; i<N; ++i)
+        func_[i]->clear();
     }
 
     /** \copydoc Dune::DiscreteFunctionInterface::assign(const DiscreteFunctionInterfaceType &g) */
     void assign( const DiscreteFunctionInterfaceType &g )
     {
-      for( int i=0;i<N;i++)
+      for( int i=0; i<N; ++i)
         func_[i]->assign( asImp( g ).subFunction( i ) );
     }
 
@@ -203,7 +208,7 @@ namespace Dune
     /** \copydoc Dune::DiscreteFunctionInterface::operator+=(const DiscreteFunctionInterfaceType &g) */
     ThisType &operator+= ( const DiscreteFunctionInterfaceType &g )
     {
-      for (int i=0;i<N;i++)
+      for (int i=0; i<N; ++i)
         *func_[ i ] += asImp( g ).subFunction( i );
       return *this;
     }
@@ -214,25 +219,25 @@ namespace Dune
     ThisType &operator-= ( const DiscreteFunctionInterfaceType &g )
     {
       // std::cout << "     special operator -= in combineddf" 
-      //	<< std::endl;
+      //        << std::endl;
       for( int i = 0; i < N; ++i )
-	*func_[ i ] -= asImp( g ).subFunction( i );
+        *func_[ i ] -= asImp( g ).subFunction( i );
      return *this;
     }
 
     /** \copydoc Dune::DiscreteFunctionInterface::operator*=(const RangeFieldType &scalar) */    
     DiscreteFunctionType& operator *= (const RangeFieldType &scalar)
     {
-      for (int i=0;i<N;i++)
-	*func_[i] *= scalar;
+      for (int i=0; i<N; ++i)
+        *func_[i] *= scalar;
       return *this;
     }
 
     /** \copydoc Dune::DiscreteFunctionInterface::operator*=(const RangeFieldType &scalar) */
     DiscreteFunctionType& operator /= (const RangeFieldType &scalar)
     {
-      for (int i=0;i<N;i++)
-	*func_[i] /= scalar;
+      for (int i=0; i<N; ++i)
+        *func_[i] /= scalar;
       return *this;
     }
 
@@ -240,8 +245,8 @@ namespace Dune
      */
     void addScaled( const DiscreteFunctionInterfaceType &g, const RangeFieldType &s )
     {
-      for (int i=0;i<N;i++)
-	func_[i]->addScaled( asImp( g ).subFunction( i ), s );
+      for (int i=0; i<N; ++i)
+        func_[i]->addScaled( asImp( g ).subFunction( i ), s );
     }
 
     /** \copydoc Dune::DiscreteFunctionInterface::scalarProductDofs(const DiscreteFunctionInterfaceType &other) const */
@@ -249,7 +254,7 @@ namespace Dune
     {
       RangeFieldType ret( 0 );
       for( int i = 0; i < N; ++i )
-	ret += func_[ i ]->scalarProductDofs( asImp( other ).subFunction( i ) );
+        ret += func_[ i ]->scalarProductDofs( asImp( other ).subFunction( i ) );
       return ret;
     }
 
@@ -257,26 +262,28 @@ namespace Dune
     template< class StreamTraits >
     inline void read ( InStreamInterface< StreamTraits >& in)
     {
-      for (int i=0;i<N;i++)
-	func_[i]->read(in);
+      for (int i=0; i<N; ++i)
+        func_[i]->read(in);
     }
     /** \copydoc Dune::DiscreteFunctionInterface::write */
     template< class StreamTraits >
     inline void write ( OutStreamInterface< StreamTraits >& out) const
     {
-      for (int i=0;i<N;i++)
-	func_[i]->write(out);
+      for (int i=0; i<N; ++i)
+        func_[i]->write(out);
     }
+
     /** \copydoc Dune::DiscreteFunctionInterface::print(std::ostream &out) const */
     inline void print( std :: ostream &out ) const {
-      for (int i=0;i<N;i++)
-	func_[i]->print(out);
+      for (int i=0; i<N; ++i)
+        func_[i]->print(out);
     }
+
     /** \copydoc Dune::DiscreteFunctionInterface::dofsValid() const */
     inline bool dofsValid () const {
       bool ret = func_[0]->dofsValid();
       for (int i=1;i<N;i++)
-	ret |= func_[i]->dofsValid();
+        ret |= func_[i]->dofsValid();
       return ret;
     }
 
@@ -341,16 +348,21 @@ namespace Dune
       return DofIteratorType(false,*this);
     }
     
-    inline ContainedDiscreteFunctionType& subFunction(int i) {
+    inline ContainedDiscreteFunctionType& subFunction( const int i ) 
+    {
       return *(func_[i]);
     }
-    inline const ContainedDiscreteFunctionType& 
-    subFunction(int i) const {
+
+    inline const ContainedDiscreteFunctionType& subFunction( const int i ) const 
+    {
       return *(func_[i]);
     }
-    inline ContainedDiscreteFunctionSpaceType& subSpace() {
+
+    inline ContainedDiscreteFunctionSpaceType& subSpace() 
+    {
       return spc_.containedSpace();
     }
+
     //- Forbidden members
   private:
     typedef ThisType MyType;
@@ -440,9 +452,9 @@ namespace Dune
     ThisType& operator++ () {
       ++iter_;
       if (iter_==endIter_ && comp_<N-1) {
-	++comp_;
-	iter_ = df_.func_[comp_]->dbegin();
-	endIter_ = df_.func_[comp_]->dend();
+        ++comp_;
+        iter_ = df_.func_[comp_]->dbegin();
+        endIter_ = df_.func_[comp_]->dend();
       } 
       return *this;
     }
