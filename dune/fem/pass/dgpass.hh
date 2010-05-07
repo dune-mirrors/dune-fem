@@ -253,7 +253,7 @@ namespace Dune {
         {
           evalVolumetricPartFlux(en, geo, volQuad, updEn);
         }
-        else 
+        else if( problem_.hasFlux() )
         {
           // evaluate flux and source 
           evalVolumetricPartBoth(en, geo, volQuad, updEn);
