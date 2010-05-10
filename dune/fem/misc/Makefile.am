@@ -21,7 +21,6 @@ misc_HEADERS = bartonnackmaninterface.hh \
                fieldmatrixhelper.hh \
                gridwidth.hh \
                h1norm.hh \
-               h1norm_inline.hh \
                l1error.hh \
                l2error.hh \
                l2norm.hh \
