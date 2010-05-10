@@ -50,6 +50,11 @@ namespace Dune
     typedef DiscreteFunctionAdapter<FunctionImp,GridPartImp> DiscreteFunctionType;
   };
 
+
+
+  // DiscreteFunctionAdapter
+  // -----------------------
+
   /** \brief DiscreteFunctionAdapter provides local functions for a Function. 
    */
   template< class FunctionImp, class GridPartImp >
@@ -99,72 +104,8 @@ namespace Dune
     typedef typename GridType::template Codim< 0 >::Entity EntityType; 
 
   private:
+    class LocalFunction;
     class LocalFunctionStorage;
-    class LocalFunction
-    {
-      //! type of geometry 
-      typedef typename EntityType :: Geometry GeometryImp;
-    public:  
-      //! domain type (from function space)
-      typedef typename DiscreteFunctionSpaceType::DomainFieldType DomainFieldType ;
-      //! range type (from function space)
-      typedef typename DiscreteFunctionSpaceType::RangeFieldType RangeFieldType ;
-      //! domain type (from function space)
-      typedef typename DiscreteFunctionSpaceType::DomainType DomainType ;
-      //! range type (from function space)
-      typedef typename DiscreteFunctionSpaceType::RangeType RangeType ;
-      //! jacobian type (from function space)
-      typedef typename DiscreteFunctionSpaceType::JacobianRangeType JacobianRangeType;
-
-      //! constructor initializing local function 
-      LocalFunction(const EntityType& en, const ThisType& a)
-        : function_(a.function_) 
-        , geometry_(&(en.geometry())) 
-      {}
-
-      LocalFunction(const ThisType& a)
-        : function_(a.function_) 
-        , geometry_(0) 
-      {}
-
-      //! copy constructor 
-      LocalFunction(const LocalFunction& org) 
-        : function_(org.function_) 
-        , geometry_(org.geometry_)  
-      {}
-      
-      LocalFunction(LocalFunctionStorage& storage) 
-        : function_(storage.function().function_)
-        , geometry_(0) 
-      {}
-
-      //! evaluate local function 
-      template< class PointType >
-      void evaluate ( const PointType &x, RangeType &ret ) const
-      {
-        DomainType global = geometry_->global( coordinate( x ) );
-        function_.evaluate( global, ret );
-      }
-
-      //! jacobian of local function 
-      template< class PointType >
-      void jacobian ( const PointType &x, JacobianRangeType &ret ) const
-      {
-        DomainType global = geometry_->global( coordinate( x ) );
-        function_.jacobian( global, ret );
-      }
-
-      //! init local function
-      void init(const EntityType& en) 
-      {
-        geometry_ = &(en.geometry());
-      } 
-
-    private:
-      const FunctionType& function_;
-      const GeometryImp* geometry_;
-    };
-
 
     public:
     //! type of local function to export 
@@ -234,54 +175,134 @@ namespace Dune
 
 
 
+  // DiscreteFunctionAdapter::LocalFunction
+  // --------------------------------------
+
   template< class Function, class GridPart >
-  class DiscreteFunctionAdapter< Function, GridPart > :: LocalFunctionStorage
+  class DiscreteFunctionAdapter< Function, GridPart >::LocalFunction
+  {
+    typedef LocalFunction ThisType;
+    typedef DiscreteFunctionAdapter< Function, GridPart > DiscreteFunctionType;
+
+    typedef typename EntityType::Geometry GeometryType;
+
+  public:  
+    //! domain type (from function space)
+    typedef typename DiscreteFunctionSpaceType::DomainFieldType DomainFieldType ;
+    //! range type (from function space)
+    typedef typename DiscreteFunctionSpaceType::RangeFieldType RangeFieldType ;
+    //! domain type (from function space)
+    typedef typename DiscreteFunctionSpaceType::DomainType DomainType ;
+    //! range type (from function space)
+    typedef typename DiscreteFunctionSpaceType::RangeType RangeType ;
+    //! jacobian type (from function space)
+    typedef typename DiscreteFunctionSpaceType::JacobianRangeType JacobianRangeType;
+
+    //! constructor initializing local function 
+    LocalFunction ( const EntityType &entity, const DiscreteFunctionType &df )
+    : function_( &df.function_ ),
+      geometry_( &entity.geometry() )
+    {}
+
+    LocalFunction ( const DiscreteFunctionType &df )
+    : function_( &df.function_ ),
+      geometry_( 0 )
+    {}
+
+    LocalFunction ( LocalFunctionStorage &storage )
+    : function_( &storage.function().function_ ),
+      geometry_( 0 )
+    {}
+
+    //! evaluate local function 
+    template< class PointType >
+    void evaluate ( const PointType &x, RangeType &ret ) const
+    {
+      DomainType global = geometry().global( coordinate( x ) );
+      function().evaluate( global, ret );
+    }
+
+    //! jacobian of local function 
+    template< class PointType >
+    void jacobian ( const PointType &x, JacobianRangeType &ret ) const
+    {
+      DomainType global = geometry().global( coordinate( x ) );
+      function().jacobian( global, ret );
+    }
+
+    //! init local function
+    void init ( const EntityType &entity )
+    {
+      geometry_ = &entity.geometry();
+    } 
+
+  private:
+    const FunctionType &function () const
+    {
+      return *function_;
+    }
+
+    const GeometryType &geometry () const
+    {
+      return *geometry_;
+    }
+
+    const FunctionType *function_;
+    const GeometryType *geometry_;
+  };
+
+
+
+  // DiscreteFunctionAdapter::LocalFunctionStorage
+  // ---------------------------------------------
+
+  template< class Function, class GridPart >
+  class DiscreteFunctionAdapter< Function, GridPart >::LocalFunctionStorage
   {
     typedef LocalFunctionStorage ThisType;
     typedef DiscreteFunctionAdapter< Function, GridPart > DiscreteFunctionType;
 
   public:
-    typedef typename DiscreteFunctionType :: LocalFunctionType LocalFunctionType;
+    typedef typename DiscreteFunctionType::LocalFunctionType LocalFunctionType;
 
-  private:
-    DiscreteFunctionType &discreteFunction_;
-
-  public:
-    inline explicit
-    LocalFunctionStorage ( DiscreteFunctionType &discreteFunction )
+    explicit LocalFunctionStorage ( DiscreteFunctionType &discreteFunction )
     : discreteFunction_( discreteFunction )
     {}
 
-  private:
-    LocalFunctionStorage ( const ThisType & );
-    ThisType operator= ( const ThisType & );
-
-  public:
-    inline LocalFunctionType localFunction ()
+    LocalFunctionType localFunction ()
     {
       return LocalFunctionType( discreteFunction_ );
     }
 
     template< class Entity >
-    inline const LocalFunctionType localFunction ( const Entity &entity ) const
+    const LocalFunctionType localFunction ( const Entity &entity ) const
     {
       return LocalFunctionType( entity, discreteFunction_ );
     }
 
     template< class Entity >
-    inline LocalFunctionType localFunction ( const Entity &entity )
+    LocalFunctionType localFunction ( const Entity &entity )
     {
       return LocalFunctionType( entity, discreteFunction_ );
     }
 
-    DiscreteFunctionType& function() {
+    DiscreteFunctionType &function ()
+    {
       return discreteFunction_;
     }
+
+  private:
+    LocalFunctionStorage ( const ThisType & );
+    ThisType operator= ( const ThisType & );
+
+    DiscreteFunctionType &discreteFunction_;
   };
 
-  
 
-  namespace {
+
+  namespace
+  {
+
     template <class FunctionImp,class GridPartType,bool>
     struct ConvertDFTypeHelper;
     template <class FunctionImp,class GridPartType>
