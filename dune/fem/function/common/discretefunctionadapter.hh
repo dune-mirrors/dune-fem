@@ -186,7 +186,11 @@ namespace Dune
 
     typedef typename EntityType::Geometry GeometryType;
 
-  public:  
+  public:
+    static const int dimRange = DiscreteFunctionSpaceType::dimRange;
+    static const int dimDomain = GridPart::GridType::dimensionworld;
+    static const int dimLocal = GridPart::GridType::dimension;
+
     //! domain type (from function space)
     typedef typename DiscreteFunctionSpaceType::DomainFieldType DomainFieldType ;
     //! range type (from function space)
@@ -226,8 +230,22 @@ namespace Dune
     template< class PointType >
     void jacobian ( const PointType &x, JacobianRangeType &ret ) const
     {
-      DomainType global = geometry().global( coordinate( x ) );
+      const typename GeometryType::LocalCoordinate cx = coordinate( x );
+      DomainType global = geometry().global( cx );
       function().jacobian( global, ret );
+
+      if( dimLocal != dimDomain )
+      {
+        const typename GeometryType::JacobianTransposed &gjt = geometry().jacobianTransposed( cx );
+        const typename GeometryType::Jacobian &gjit = geometry().jacobianInverseTransposed( cx );
+
+        FieldVector< RangeFieldType, dimLocal > tmp;
+        for( int i = 0; i < dimRange; ++i )
+        {
+          gjit.mtv( ret[ i ], tmp );
+          gjt.mtv( tmp, ret[ i ] );
+        }
+      }
     }
 
     //! init local function
