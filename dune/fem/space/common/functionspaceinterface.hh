@@ -71,7 +71,7 @@ namespace Dune
     
     /** \brief Intrinsic type used for the hessian values 
         has a Dune::FieldMatrix type interface */
-    typedef FieldVector<JacobianRangeType, dimRange> HessianRangeType;
+    typedef FieldVector< FieldMatrix< RangeFieldType, dimDomain, dimDomain >, dimRange > HessianRangeType;
     
     /** \brief corresponding scalar function space */
     typedef typename FunctionSpaceTraits :: ScalarFunctionSpaceType
