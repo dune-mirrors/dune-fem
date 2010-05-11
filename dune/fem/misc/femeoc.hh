@@ -20,18 +20,20 @@ namespace Dune
     
     Constructor takes base file name for the tex file and
     generates two files:
-    filename_timestemp_main.tex and filename_timestemp_body.tex.
-    A time stemp is added to the base file name to prevent the
+    filename_timestamp_main.tex and filename_timestamp_body.tex or
+    without the time stamp (by default) in the name depending on 
+    the parameter fem.io.eocFileTimeStamp.
+    A time stamp is added to the base file name to prevent the
     overwriting of a valuable eoc data from the previous simulation.
-    The file filename_timestemp_body.tex holds the actual body
-    of the eoc table which is included in filename_timestemp_main.tex
+    The file filename_timestamp_body.tex holds the actual body
+    of the eoc table which is included in filename_timestamp_main.tex
     but can also be used to combine e.g. runs with different
     parameters or for plotting using gnuplot.
 
     The class is singleton and thus new errors for eoc
     computations can be added in any part of the program.
     To add a new entry for eoc computations use one of the
-    addEntry methods. These return a unique unsinged int
+    addEntry methods. These return a unique unsigned int
     which can be used to add error values to the table
     with the setErrors methods.
     The method write is used to write a single line
@@ -61,21 +63,31 @@ class FemEoc
   ~FemEoc() {
     outputFile_.close();
   }
+
   void init(const std::string& path,
-            const std::string& name, const std::string& descript) {
+            const std::string& name, const std::string& descript) 
+  {
     if (MPIManager::rank() != 0) return;
     IOInterface::createPath(path);
     init(path+"/"+name,descript);
   }
-  void init(const std::string& filename, const std::string& descript) {
+
+  void init(const std::string& filename, const std::string& descript)
+  {
     if (MPIManager::rank() != 0) return;
 
-    // add timestemp to the file name to prevent eoc results to be overwriten
-    time_t seconds = time(0);
-    struct tm *ptm = localtime( &seconds );
-    char timeString[20];
-    strftime( timeString, 20, "_%d%m%Y_%H%M%S", ptm );
-    const std::string name= filename + std::string(timeString); 
+    std::string name = filename; 
+
+    // if needed add the time stamp to the file name 
+    // to prevent eoc results to be overwritten
+    if ( Parameter::getValue<int>("fem.io.eocFileTimeStamp", 0) )
+    {
+      time_t seconds = time(0);
+      struct tm *ptm = localtime( &seconds );
+      char timeString[20];
+      strftime( timeString, 20, "_%d%m%Y_%H%M%S", ptm );
+      name = filename + std::string(timeString); 
+    }
 
     if (!outputFile_.is_open()) 
     {
