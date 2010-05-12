@@ -146,12 +146,14 @@ namespace Dune
       LocalFunctionType df_local = discreteFunction.localFunction( *it );
       
       // assume point based local dofs 
-      const int numDofs = df_local.numDofs();
-      for( int i = 0; i < numDofs; ++i )
+      const int nop = lagrangePointSet.nop();
+      int k = 0;
+      for( int qp = 0; qp < nop; ++qp )
       {
         RangeType phi;
-        f_local.evaluate( lagrangePointSet[ i/dimRange ], phi );
-        df_local[ i ] = phi[ i % dimRange ];
+        f_local.evaluate( lagrangePointSet[ qp ], phi );
+        for( int i = 0; i < dimRange; ++i, ++k )
+          df_local[ k ] = phi[ i ];
       }
     }
   }
