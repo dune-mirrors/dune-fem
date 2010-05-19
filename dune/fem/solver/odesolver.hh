@@ -125,7 +125,7 @@ class OperatorWrapper : public PARDG::Function
   //! return size of argument 
   int dim_of_argument(int i = 0) const 
   { 
-    if (i==0) return op_.space().size();
+    if (i==0) return space_.size();
     else 
     {
       assert(0);
@@ -137,7 +137,7 @@ class OperatorWrapper : public PARDG::Function
   //! return size of destination  
   int dim_of_value(int i = 0) const 
   { 
-    if (i==0) return op_.space().size();
+    if (i==0) return space_.size();
     else 
     {
       assert(0);
@@ -469,7 +469,7 @@ public:
     assert( dt > 0.0 );
     const double time = timeProvider_.time();
 
-     // get pointer to solution
+    // get pointer to solution
     double* u = U0.leakPointer();
       
     const bool convergence = odeSolver().step(time , dt , u);
