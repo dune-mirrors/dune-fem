@@ -18,32 +18,31 @@ namespace Dune {
   \interfaceclass
 */
 template <class DestinationImp> 
-class ODESpaceOperatorInterface 
-: public Fem::Operator< DestinationImp,
-                        DestinationImp>
+class PARDGSpaceOperatorInterface 
 {
-  typedef Fem::Operator< DestinationImp,
-                         DestinationImp> BaseType;
-
-  using BaseType :: operator ();
 protected:
   // only allow derived class to call this constructor  
-  ODESpaceOperatorInterface() {}
+  PARDGSpaceOperatorInterface() {}
 
 public:
   //! type of argument and destination 
   typedef DestinationImp DestinationType;
   
   //! destructor 
-  virtual ~ODESpaceOperatorInterface() {}
+  virtual ~PARDGSpaceOperatorInterface() {}
   
-  //! return size of space 
+  /** \brief return size of discrete function space, i.e. number of unknowns */
   virtual int size() const = 0 ;
 
-  //! call operator once to calculate initial time step size 
-  virtual void initialize( const DestinationType& U0 ) const = 0;
+  /** \brief call operator once to calculate initial time step size 
+      \param U0  initial data to compute initial time step size 
+   */
+  virtual void initializeTimeStepSize( const DestinationType& U0 ) const = 0;
 
-  // called from PARDG ODESolvers 
+  /** \brief application operator to apply right hand side 
+      \param u  argument, u 
+      \param f  destination, f(u)
+   */
   virtual void operator() (const double* u, double *f ) const = 0;
 
   /** \brief set time for operators 
@@ -69,9 +68,10 @@ public:
 */
 template <class DestinationImp> 
 class SpaceOperatorInterface 
-: public ODESpaceOperatorInterface< DestinationImp >
+: public Fem::Operator< DestinationImp, DestinationImp >,
+  public PARDGSpaceOperatorInterface< DestinationImp >
 {
-  typedef ODESpaceOperatorInterface< DestinationImp > BaseType;
+  typedef Fem::Operator< DestinationImp, DestinationImp > BaseType;
   using BaseType :: operator ();
 
 protected:
@@ -91,24 +91,27 @@ public:
   //! return reference to space (needed by ode solvers)
   virtual const SpaceType& space() const = 0;
 
-  //! return size of space 
+  /** \copydoc PARDGSpaceOperatorInterface :: size */
   virtual int size() const { return space().size(); }
 
-  //! called from PARDG ODESolvers 
+  /** \copydoc PARDGSpaceOperatorInterface :: operator(const double* u, double *f) */
   virtual void operator() (const double* u, double *f ) const 
   {
-    // convert argument to discrete function 
-    DestinationType arg ("ARG" , space(), u);
+    // get space instance 
+    const SpaceType& spc = space();
 
     // convert argument to discrete function 
-    DestinationType dest("DEST", space(), f);
+    const DestinationType arg ("SpaceOperatorIF::ARG" , spc, u);
+
+    // convert argument to discrete function 
+    DestinationType dest("SpaceOperatorIF::DEST", spc, f);
 
     // call operator apply 
     this->operator ()( arg, dest );
   }
 
-  //! call operator once to calculate initial time step size 
-  virtual void initialize( const DestinationType& U0 ) const 
+  /** \copydoc PARDGSpaceOperatorInterface :: initializeTimeStepSize(const DestinationType& U0) */
+  virtual void initializeTimeStepSize( const DestinationType& U0 ) const 
   {
     // create temporary variable 
     DestinationType tmp( U0 );

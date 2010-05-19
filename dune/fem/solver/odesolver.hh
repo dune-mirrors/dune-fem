@@ -153,7 +153,7 @@ public:
   typedef DestinationImp DestinationType; 
 
   //! type of discretization operator 
-  typedef ODESpaceOperatorInterface<DestinationType> OperatorType;
+  typedef PARDGSpaceOperatorInterface<DestinationType> OperatorType;
 
 protected:
   //! constructor
@@ -178,9 +178,11 @@ public:
       if( ! odeSolver_ ) odeSolver_ = createOdeSolver();
 
       // apply operator once 
-      spaceOperator().initialize( U0 );
+      spaceOperator().initializeTimeStepSize( U0 );
+
       // set initial time step 
       timeProvider_.provideTimeStepEstimate( spaceOperator().timeStepEstimate() );
+
       // now it's initialized 
       initialized_ = true;
     }
