@@ -16,10 +16,6 @@
 #include <dune/fem/space/lagrangespace.hh>
 #include <dune/fem/space/dgspace.hh>
 
-#ifdef ENABLE_UG 
-#include <dune/grid/uggrid.hh>
-#endif
-
 namespace Dune
 {
 
@@ -28,6 +24,11 @@ namespace Dune
 
   template< int dim >
   class YaspGrid;
+
+#ifdef ENABLE_UG 
+  template< int dim >
+  class UGGrid;
+#endif // #ifdef ENABLE_UG 
 
 
 
