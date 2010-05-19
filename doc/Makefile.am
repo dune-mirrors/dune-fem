@@ -19,12 +19,5 @@ include $(top_srcdir)/am/webstuff
 # remove html pages on ``make  clean''
 CLEANFILES = $(PAGES)
 
-if ! BUILD_DOCS
-# add tag to notify that dist has been build without documentation 
-dist-hook:
-	echo "# No documentation included in distribution! " > $(distdir)/$(DOCUMENTATION_TAG_FILE) 
-endif
-
-
 # include further rules needed by Dune
 include $(top_srcdir)/am/global-rules
