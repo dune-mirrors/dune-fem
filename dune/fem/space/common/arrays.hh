@@ -216,11 +216,18 @@ public:
   //! Const DofIterator
   typedef GenericIterator<const ThisType, const T> ConstDofIteratorType;
 
-  //! create array of length size
-  //! if size is <= 0 then vec of lenght 1 is created (parallel runs)
+  //! create array of length size and store vec as pointer to memory 
   StaticArray(const int size, T* vec) 
     : size_(size)
     , vec_(vec) 
+  {
+    assert( size_ >= 0 );
+  }
+
+  //! create array of length size and store vec as pointer to memory 
+  StaticArray(const int size, const T* vec) 
+    : size_(size)
+    , vec_( const_cast< T * > (vec) ) 
   {
     assert( size_ >= 0 );
   }
