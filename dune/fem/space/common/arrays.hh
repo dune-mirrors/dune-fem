@@ -217,7 +217,7 @@ public:
   typedef GenericIterator<const ThisType, const T> ConstDofIteratorType;
 
   //! create array of length size and store vec as pointer to memory 
-  StaticArray(const int size, T* vec) 
+  explicit StaticArray(const int size, T* vec) 
     : size_(size)
     , vec_(vec) 
   {
@@ -225,7 +225,7 @@ public:
   }
 
   //! create array of length size and store vec as pointer to memory 
-  StaticArray(const int size, const T* vec) 
+  explicit StaticArray(const int size, const T* vec) 
     : size_(size)
     , vec_( const_cast< T * > (vec) ) 
   {
@@ -496,7 +496,7 @@ private:
 public:
   //! create array of length 0 
   MutableArray() 
-    : BaseType(0,0)
+    : BaseType(0, (T *) 0)
     , memSize_(0) 
     , memoryFactor_(1.0)
   {
@@ -506,7 +506,7 @@ public:
   MutableArray(const int size) 
     : BaseType((size < 0) ? 0 : size, 
                // only alloc memory if size > 0
-               (size <= 0) ? 0 : AllocatorType :: malloc (size))
+               ((T *) (size <= 0) ? 0 : AllocatorType :: malloc (size)))
     , memSize_((size<=0) ? 0 : size) 
     , memoryFactor_(1.0)
   {
