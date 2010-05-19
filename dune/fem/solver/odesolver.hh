@@ -98,52 +98,35 @@ class OperatorWrapper : public PARDG::Function
 {
   // type of discrete function 
   typedef typename Operator::DestinationType DestinationType;
-  // type of discrete function space 
-  typedef typename DestinationType :: DiscreteFunctionSpaceType SpaceType;
  public:
   //! constructor 
   OperatorWrapper(Operator& op) 
-    : op_(op) , space_(op_.space()) 
+    : op_(op)
   {}
 
   //! apply operator applies space operator and creates temporary
   //! discrete function using the memory from outside 
   void operator()(const double *u, double *f, int i = 0) 
   {
-    // create fake argument 
-    DestinationType arg("ARG",space_,u);
-    // create fake destination 
-    DestinationType dest("DEST",space_,f);
-    
     // set actual time of iteration step
     op_.setTime( this->time() );
     
     // call operator apply 
-    op_(arg,dest);
+    op_( u, f );
   }
 
   //! return size of argument 
   int dim_of_argument(int i = 0) const 
   { 
-    if (i==0) return space_.size();
-    else 
-    {
-      assert(0);
-      abort();
-      return -1;
-    }
+    assert( i == 0 );
+    return op_.size();
   }
   
   //! return size of destination  
   int dim_of_value(int i = 0) const 
   { 
-    if (i==0) return space_.size();
-    else 
-    {
-      assert(0);
-      abort();
-      return -1;
-    }
+    assert( i == 0 );
+    return op_.size();
   }
 
   //! return reference to real operator 
@@ -152,8 +135,6 @@ class OperatorWrapper : public PARDG::Function
 protected:
   // operator to call 
   Operator& op_;
-  // discrete function space 
-  const SpaceType& space_;
 };
 
 
@@ -172,7 +153,7 @@ public:
   typedef DestinationImp DestinationType; 
 
   //! type of discretization operator 
-  typedef SpaceOperatorInterface<DestinationType> OperatorType;
+  typedef ODESpaceOperatorInterface<DestinationType> OperatorType;
 
 protected:
   //! constructor
@@ -196,10 +177,8 @@ public:
       // create instance of ode solver 
       if( ! odeSolver_ ) odeSolver_ = createOdeSolver();
 
-      // create temporary function
-      DestinationType tmp( U0 );
       // apply operator once 
-      spaceOperator()( U0, tmp );
+      spaceOperator().initialize( U0 );
       // set initial time step 
       timeProvider_.provideTimeStepEstimate( spaceOperator().timeStepEstimate() );
       // now it's initialized 

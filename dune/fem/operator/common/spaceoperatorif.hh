@@ -12,37 +12,39 @@
 namespace Dune {
 
 /** @ingroup OperatorCommon
-  \brief SpaceOperatorInterface for Operators of the type 
-  \f$L: X \longrightarrow X\f$ where \f$X\f$ is a discrete function space.
+  \brief ODESpaceOperatorInterface for Operators that work with PARDG ODE solvers 
+  of the type \f$L: X \longrightarrow X\f$ where \f$X\f$ is a discrete function space.
   
   \interfaceclass
 */
-template <class DestinationImp>
-class SpaceOperatorInterface 
-: public Operator< typename DestinationImp :: RangeFieldType,
-                   typename DestinationImp :: RangeFieldType,
-                   DestinationImp,
-                   DestinationImp>
+template <class DestinationImp> 
+class ODESpaceOperatorInterface 
+: public Fem::Operator< DestinationImp,
+                        DestinationImp>
 {
+  typedef Fem::Operator< DestinationImp,
+                         DestinationImp> BaseType;
+
+  using BaseType :: operator ();
 protected:
   // only allow derived class to call this constructor  
-  SpaceOperatorInterface() {}
+  ODESpaceOperatorInterface() {}
 
 public:
   //! type of argument and destination 
   typedef DestinationImp DestinationType;
   
-  //! type of discrete function space 
-  typedef typename DestinationType :: DiscreteFunctionSpaceType SpaceType;
-  
   //! destructor 
-  virtual ~SpaceOperatorInterface() {}
+  virtual ~ODESpaceOperatorInterface() {}
+  
+  //! return size of space 
+  virtual int size() const = 0 ;
 
-  //! apply operator 
-  virtual void operator () (const DestinationType& arg, DestinationType& dest) const = 0;
+  //! call operator once to calculate initial time step size 
+  virtual void initialize( const DestinationType& U0 ) const = 0;
 
-  //! return reference to space (needed by ode solvers)
-  virtual const SpaceType& space() const = 0;
+  // called from PARDG ODESolvers 
+  virtual void operator() (const double* u, double *f ) const = 0;
 
   /** \brief set time for operators 
       \param time current time of evaluation 
@@ -55,17 +57,67 @@ public:
   {
     return std::numeric_limits<double>::max();  
   }
+};
+
+/** @ingroup OperatorCommon
+  \brief SpaceOperatorInterface for Operators of the type 
+  \f$L: X \longrightarrow X\f$ where \f$X\f$ is a discrete function space.
+  Use this interface to implement Operators working on DiscreteFunctions for ODE
+  solvers.
+  
+  \interfaceclass
+*/
+template <class DestinationImp> 
+class SpaceOperatorInterface 
+: public ODESpaceOperatorInterface< DestinationImp >
+{
+  typedef ODESpaceOperatorInterface< DestinationImp > BaseType;
+  using BaseType :: operator ();
+
+protected:
+  // only allow derived class to call this constructor  
+  SpaceOperatorInterface() {}
+
+public:
+  //! type of argument and destination 
+  typedef DestinationImp DestinationType;
+  
+  //! type of discrete function space 
+  typedef typename DestinationType :: DiscreteFunctionSpaceType   SpaceType;
+  
+  //! destructor 
+  virtual ~SpaceOperatorInterface() {}
+
+  //! return reference to space (needed by ode solvers)
+  virtual const SpaceType& space() const = 0;
+
+  //! return size of space 
+  virtual int size() const { return space().size(); }
+
+  //! called from PARDG ODESolvers 
+  virtual void operator() (const double* u, double *f ) const 
+  {
+    // convert argument to discrete function 
+    DestinationType arg ("ARG" , space(), u);
+
+    // convert argument to discrete function 
+    DestinationType dest("DEST", space(), f);
+
+    // call operator apply 
+    this->operator ()( arg, dest );
+  }
+
+  //! call operator once to calculate initial time step size 
+  virtual void initialize( const DestinationType& U0 ) const 
+  {
+    // create temporary variable 
+    DestinationType tmp( U0 );
+    // call operator 
+    this->operator() ( U0, tmp );
+  }
 
   //! return reference to pass's local memory  
   virtual const DestinationType* destination() const { return 0; }
-
-  template <class TimeProviderImp> 
-  void DUNE_DEPRECATED timeProvider(TimeProviderImp* tp)
-  {
-    assert( tp );
-    // deprecated method 
-    this->setTime( tp->time() );
-  }
 };
 
 //! only for keeping the pointer

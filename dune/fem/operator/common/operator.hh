@@ -29,9 +29,9 @@ namespace Dune
       typedef RangeFunction RangeFunctionType;
 
       /** \brief field type of the operator's domain */
-      typedef typename DomainFunctionType::RangeFieldType DomainFieldType;
+      //typedef typename DomainFunctionType::RangeFieldType DomainFieldType;
       /** \brief field type of the operator's range */
-      typedef typename RangeFunctionType::RangeFieldType RangeFieldType;
+      //typedef typename RangeFunctionType::RangeFieldType RangeFieldType;
 
       virtual ~Operator () {}
 
