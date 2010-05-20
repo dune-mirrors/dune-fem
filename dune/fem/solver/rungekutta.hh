@@ -79,23 +79,24 @@ public:
   */
   virtual void solve(DestinationType& u) = 0;
 
+  /** \brief print description of ODE solver to out stream */
   virtual void description(std::ostream&) const = 0;
 };
 
-/** \brief Base class for explicit RungeKutta ODE solver. */
-template<class Operator>
-class ExplRungeKuttaBase 
+/** \brief Exlicit RungeKutta ODE solver. */
+template<class DestinationImp>
+class ExplicitRungeKuttaSolver : 
+  public OdeSolverInterface<DestinationImp>
 {
 public:
-  typedef typename Operator::DestinationType DestinationType;
+  typedef DestinationImp DestinationType; 
+  typedef SpaceOperatorInterface<DestinationImp> OperatorType;
   typedef typename DestinationType :: DiscreteFunctionSpaceType SpaceType;
-  // typedef typename SpaceType :: GridType :: Traits :: CollectiveCommunication DuneCommunicatorType; 
-private:
+protected:
   std::vector< std::vector<double> > a;
   std::vector<double> b;
   std::vector<double> c;
   std::vector<DestinationType*> Upd;
-protected:  
   const int ord_;
 
 public:
@@ -105,8 +106,10 @@ public:
     \param[in] pord polynomial order 
     \param[in] verbose verbosity 
   */
-  ExplRungeKuttaBase(Operator& op, TimeProviderBase& tp, 
-                     int pord, bool verbose = true ) :
+  ExplicitRungeKuttaSolver(OperatorType& op, 
+                           TimeProviderBase& tp, 
+                           const int pord, 
+                           bool verbose = true ) :
     a(0),b(0),c(0), Upd(0),
     ord_(pord),
     op_(op),
@@ -164,7 +167,7 @@ public:
   }
 
   //! destructor 
-  ~ExplRungeKuttaBase()
+  ~ExplicitRungeKuttaSolver()
   {
     for(size_t i=0; i<Upd.size(); ++i) 
       delete Upd[i];
@@ -187,6 +190,12 @@ public:
   //! solve the system 
   void solve(DestinationType& U0) 
   {
+    // initialize 
+    if( ! initialized_ ) 
+    {
+      DUNE_THROW(InvalidStateException,"ExplicitRungeKuttaSolver wasn't initialized before first call!");
+    }
+
     // get cfl * timeStepEstimate 
     const double dt = tp_.deltaT();
     // get time 
@@ -228,156 +237,18 @@ public:
 
   void description(std::ostream& out) const
   {
-    out << "ExplRungeKutta, steps: " << this->ord_
-        << ", cfl: " << this->tp_.cfl() << "\\\\" <<std::endl;
+    out << "ExplRungeKutta, steps: " << ord_
+        //<< ", cfl: " << this->tp_.factor() 
+        << "\\\\" <<std::endl;
   }
 
 protected:
   // operator to solve for 
-  Operator& op_;
+  OperatorType& op_;
   // time provider 
   TimeProviderBase& tp_;
   // init flag 
   bool initialized_;
-};
-
-#if 0
-/** \brief Exlicit RungeKutta ODE solver that also behaves like a time
-    stepper. */
-template<class Operator>
-class ExplRungeKutta : public TimeProvider , 
-                       public ExplRungeKuttaBase<Operator> 
-{
-  typedef ExplRungeKuttaBase<Operator> BaseType;
-public:
-  typedef typename Operator :: DestinationType DestinationType;
-  typedef typename DestinationType :: DiscreteFunctionSpaceType SpaceType;
-  typedef typename SpaceType :: GridType :: Traits :: CollectiveCommunication DuneCommunicatorType; 
-
-public:
-  /** \brief constructor 
-    \param[in] op Operator \f$L\f$ 
-    \param[in] pord polynomial order 
-    \param[in] cfl cfl number 
-    \param[in] verbose verbosity 
-  */
-  ExplRungeKutta(Operator& op,int pord,double cfl, bool verbose = true ) DUNE_DEPRECATED 
-    : TimeProvider(0.0,cfl),
-      BaseType(op,*this,pord,verbose),
-      tp_(op.space().grid().comm(),*this), 
-      savetime_(0.0), savestep_(1)
-  {
-  }
-  
-  /** \brief constructor 
-    \param[in] op Operator \f$L\f$ 
-    \param[in] pord polynomial order 
-    \param[in] cfl cfl number 
-    \param[in] startTime start time of time stepper  
-    \param[in] verbose verbosity 
-  */
-  ExplRungeKutta(Operator& op,int pord,double cfl, double startTime, bool verbose = true ) DUNE_DEPRECATED 
-    : TimeProvider(startTime,cfl),
-      BaseType(op,*this,pord,verbose),
-      tp_(op.space().grid().comm(),*this), 
-      savetime_(startTime), savestep_(1)
-  {
-  }
-
-  void initialize(const DestinationType& U0)
-  {
-    if(! this->initialized_)
-    {
-      // initialize 
-      BaseType :: initialize(U0);
-    
-      // global min of dt and reset of dtEstimate 
-      this->tp_.syncTimeStep();
-    }
-  }
-    
-  double solve(typename Operator::DestinationType& U0) 
-  {
-    initialize( U0 );
-    
-    // solve ode 
-    BaseType :: solve (U0);
-    
-    // increase time step 
-    this->tp_.next();
-    
-    // return current time 
-    return this->tp_.time();
-  }
-  
-  void printGrid(int nr, const typename Operator::DestinationType& U) 
-  {
-    if (time()>=savetime_) {
-      printSGrid(time(),savestep_*10+nr,this->op_.space(),U);
-      ++savestep_;
-      savetime_+=0.001;
-    }
-  }
-  
-  void printmyInfo(string filename) const {
-    std::ostringstream filestream;
-    filestream << filename;
-    std::ofstream ofs(filestream.str().c_str(), std::ios::app);
-    ofs << "ExplRungeKutta, steps: " << this->ord_ << "\n\n";
-    ofs << "                cfl: " << this->tp_.cfl() << "\\\\\n\n";
-    ofs.close();
-    this->op_.printmyInfo(filename);
-  }
-
-private:
-  // TimeProvider with communicator 
-  ParallelTimeProvider<DuneCommunicatorType> tp_;
-  double savetime_;
-  int savestep_;
-};
-#endif
-
-/** \brief Exlicit RungeKutta ODE solver. */
-template<class DestinationImp>
-class ExplicitRungeKuttaSolver : 
-  public OdeSolverInterface<DestinationImp> ,
-  public ExplRungeKuttaBase<SpaceOperatorInterface<DestinationImp> >  
-{
-  typedef DestinationImp DestinationType; 
-  typedef SpaceOperatorInterface<DestinationImp> OperatorType;
-  typedef ExplRungeKuttaBase<OperatorType> BaseType;
- public:
-  /** \brief constructor 
-    \param[in] op Operator \f$L\f$ 
-    \param[in] tp TimeProvider 
-    \param[in] pord polynomial order 
-    \param[in] verbose verbosity 
-  */
-  ExplicitRungeKuttaSolver(OperatorType& op, TimeProviderBase &tp, int pord, bool verbose = false) :
-    BaseType(op,tp,pord,verbose)
-  {}
-
-  //! destructor 
-  virtual ~ExplicitRungeKuttaSolver() {}
-  
-  //! apply operator once to get dt estimate 
-  void initialize(const DestinationType& U0)
-  {
-    BaseType :: initialize(U0);
-  }
-  
-  //! solve system 
-  void solve(DestinationType& U0) 
-  {
-    // initialize 
-    if( ! this->initialized_ ) 
-    {
-      DUNE_THROW(InvalidStateException,"ExplicitRungeKuttaSolver wasn't initialized before first call!");
-    }
-
-    // solve ode 
-    BaseType :: solve(U0);
-  }
 };
 
 /** @} **/
