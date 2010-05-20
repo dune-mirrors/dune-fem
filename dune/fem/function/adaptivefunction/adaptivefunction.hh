@@ -246,7 +246,7 @@ namespace Dune
     using Imp::block;
     using Imp::enableDofCompression;
 
-    friend class SubFunction< ThisType >;
+    friend class SubFunctionStorage < ThisType >;
   }; // end class AdaptiveDiscreteFunction
  
 } // end namespace Dune

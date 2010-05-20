@@ -1,6 +1,8 @@
 #ifndef DUNE_FEM_SUBFUNCTION_HH
 #define DUNE_FEM_SUBFUNCTION_HH
 
+#include <vector>
+
 #include <dune/fem/space/combinedspace.hh>
 #include <dune/fem/storage/subarray.hh>
 #include <dune/fem/function/vectorfunction/vectorfunction.hh>
@@ -17,19 +19,18 @@ namespace Dune {
       typedef DiscreteFunctionImp DiscreteFunctionType;
       typedef typename DiscreteFunctionType :: DiscreteFunctionSpaceType  SpaceType;
       enum { dimRange = SpaceType :: dimRange };
-      typedef typename SpaceType :: DofStorageType            DofStorageType;
+      typedef typename DiscreteFunctionType :: DofStorageType            DofStorageType;
     public:  
       typedef typename SpaceType :: template ToNewDimRange < 1 > :: Type  SubSpaceType;  
-      typedef typename CombinedSpace< SubSpaceType, dimRange >            CombinedSpaceType;
 
       typedef CombinedSubMapper< typename SubSpaceType :: MapperType , dimRange, PointBased >  SubMapperType;
       typedef SubVector< DofStorageType, SubMapperType >                  SubDofVectorType;
       typedef VectorDiscreteFunction< SubSpaceType, SubDofVectorType >    SubDiscreteFunctionType;
 
-      explicit SubFunctionStorage( const DiscreteFunctionType& discreteFunction ) 
+      explicit SubFunctionStorage( DiscreteFunctionType& discreteFunction ) :
         discreteFunction_( discreteFunction ),
         space_( discreteFunction.space() ),
-        containedSpace_( space_.gridPart (), 
+        subSpace_( space_.gridPart (), 
                          space_.communicationInterface(),
                          space_.communicationDirection() ),
         subMapper_( dimRange, (SubMapperType *) 0 ),
@@ -47,24 +48,28 @@ namespace Dune {
         }
       }
 
-      SubDiscreteFunctionType& subFunction(const size_t component) const 
+      SubDiscreteFunctionType& subFunction(const size_t component) const
       {
         assert( component < dimRange );
         if( ! subDiscreteFunction_[ component ] )
         {
-          subMapper_[ component ] = new SubMapperType( containedSpace_.mapper(), component );
+          subMapper_[ component ] = new SubMapperType( subSpace_.mapper(), component );
           subVector_[ component ] = new SubDofVectorType( discreteFunction_.dofStorage(), 
                                                           *subMapper_[component] );
           subDiscreteFunction_[ component ] = 
             new SubDiscreteFunctionType( std::string(discreteFunction_.name()+ "_sub"),
-                                         containedSpace_, *( subVector_[ component ] ));
+                                         subSpace_, *( subVector_[ component ] ));
         }
         return *( subDiscreteFunction_[ component ] );
       }
-
+    protected:
+      DiscreteFunctionType& discreteFunction_;
+      const SpaceType& space_;
+      SubSpaceType subSpace_;
+      mutable std::vector< SubMapperType * > subMapper_;
+      mutable std::vector< SubDofVectorType * > subVector_;
+      mutable std::vector< SubDiscreteFunctionType* > subDiscreteFunction_;
     };
-
-
 
 //  }
 }
