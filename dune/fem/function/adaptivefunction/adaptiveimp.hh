@@ -37,11 +37,6 @@ namespace Dune {
     typedef typename Traits::DofIteratorType DofIteratorType;
     typedef typename Traits::ConstDofIteratorType ConstDofIteratorType;
     
-  /*
-  public:   
-    typedef typename Traits::LocalFunctionImp LocalFunctionImp;
-    typedef typename Traits::LocalFunctionType LocalFunctionType;
-  */
   private:
     typedef typename Traits::MapperType MapperType;
 
@@ -155,7 +150,6 @@ namespace Dune {
     void enableDofCompression(); 
 
   protected:
-
     //! wrapper class to create fake DofStorage from double* 
     template <class VectorPointerType>
     class DofStorageWrapper : public DofStorageInterface
@@ -220,9 +214,6 @@ namespace Dune {
       return *(memPair.second);
     }
  
- #if 0
-    virtual const LeafType& interface() const = 0;
-#endif
     const DiscreteFunctionSpaceType& spc_;
     DofStorageInterface* memObject_;
 

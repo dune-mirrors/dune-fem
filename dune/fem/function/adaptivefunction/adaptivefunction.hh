@@ -26,11 +26,9 @@ namespace Dune
   template <class DiscreteFunctionSpaceImp>
   class AdaptiveDiscreteFunction;
 
-  //- Forward declarations of Combined Space 
-  template <class, int , DofStoragePolicy > 
-  class CombinedSpace;
+  template <class DiscreteFunctionImp>
+  class SubFunctionStorage;
 
-  
   //- Class definitions
   //! Traits class for AdaptiveDiscreteFunction and AdaptiveLocalFunction
   template< class DiscreteFunctionSpaceImp >
@@ -65,7 +63,7 @@ namespace Dune
     typedef typename DiscreteFunctionSpaceType :: GridType GridType;
 
     // type of Array seen by functions 
-    typedef StaticArray<DofType> DofStorageType;
+    typedef StaticArray<DofType>  DofStorageType;
     // tpye of array created 
     typedef MutableArray<DofType> MutableDofStorageType;
      
@@ -248,6 +246,7 @@ namespace Dune
     using Imp::block;
     using Imp::enableDofCompression;
 
+    friend class SubFunction< ThisType >;
   }; // end class AdaptiveDiscreteFunction
  
 } // end namespace Dune
