@@ -109,7 +109,7 @@ namespace Dune
 
   public:
     //- Public methods
-    CombinedSubMapper ( const CombinedMapperType &mapper,
+    CombinedSubMapper ( const ContainedMapperType& mapper,
                         const unsigned int component )
     : mapper_( mapper ),
       component_( component ),
