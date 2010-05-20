@@ -404,7 +404,8 @@ namespace Dune
     typedef typename BaseType :: GridPartType GridPartType;
 
     typedef DiscreteFunctionSpaceImp ContainedDiscreteFunctionSpaceType;
-    typedef CombinedSubMapper<ThisType> SubMapperType;
+    typedef CombinedSubMapper< typename ContainedDiscreteFunctionSpaceType ::
+      MapperType, N, policy > SubMapperType;
 
     typedef CombinedDofConversionUtility< 
       typename ContainedDiscreteFunctionSpaceType :: MapperType, N, policy >   DofConversionType;

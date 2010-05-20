@@ -93,43 +93,39 @@ namespace Dune
 
 
   
-  template< class CombinedSpace >
+  template< class MapperImp, int N, DofStoragePolicy policy  >
   class CombinedSubMapper
-  : public IndexMapperInterface< CombinedSubMapper< CombinedSpace > >
+  : public IndexMapperInterface< CombinedSubMapper< MapperImp, N, policy > >
   {
   public:
-    //- Typedefs and enums
-    typedef CombinedSpace CombinedSpaceType;
-    
+    //- original mapper 
+    typedef MapperImp ContainedMapperType;
+
   private:
-    typedef CombinedSubMapper< CombinedSpaceType > ThisType;
+    typedef CombinedSubMapper< ContainedMapperType, N , policy > ThisType;
 
   public:
-    typedef typename CombinedSpaceType :: ContainedDiscreteFunctionSpaceType
-      ContainedDiscreteFunctionSpaceType;
-    typedef typename ContainedDiscreteFunctionSpaceType :: MapperType
-      ContainedMapperType;
-    typedef typename CombinedSpaceType :: DofConversionType DofConversionType;
+    typedef CombinedDofConversionUtility< ContainedMapperType, N, policy >   DofConversionType;
 
   public:
     //- Public methods
-    CombinedSubMapper ( const CombinedSpaceType &spc,
-                        unsigned int component )
-    : mapper_( spc.containedSpace().mapper() ),
+    CombinedSubMapper ( const CombinedMapperType &mapper,
+                        const unsigned int component )
+    : mapper_( mapper ),
       component_( component ),
       utilGlobal_(mapper_,
-                  spc.myPolicy() == PointBased ? 
-                  spc.numComponents() :
-                  spc.size()/spc.numComponents())
+                  policy  == PointBased ? 
+                  N :  mapper.size()/N )
     {
-      assert(component_<CombinedSpaceType::dimRange);
+      assert(component_ < N);
     }
 
     CombinedSubMapper(const ThisType& other) :
       mapper_(other.mapper_),
       component_(other.component_),
-      utilGlobal_(other.utilGlobal_) { 
-      assert(component_<CombinedSpaceType::dimRange);
+      utilGlobal_(other.utilGlobal_) 
+    { 
+      assert(component_ < N);
     }
 
     //! Total number of degrees of freedom
@@ -137,10 +133,11 @@ namespace Dune
       return mapper_.size();
     }
     inline unsigned int range () const {
-      return size()*CombinedSpaceType::dimRange;
+      return size() * N;
     }
-    inline const unsigned int operator[] ( unsigned int index ) const {
-      utilGlobal_.newSize(mapper_.size());
+    inline const unsigned int operator[] ( unsigned int index ) const 
+    {
+      utilGlobal_.newSize( mapper_.size() );
       return utilGlobal_.combinedDof(index, component_);
     }
 
@@ -148,7 +145,7 @@ namespace Dune
     ThisType& operator=(const ThisType& other);
     //- Data members
     const ContainedMapperType& mapper_;
-    unsigned int component_;
+    const unsigned int component_;
     mutable DofConversionType utilGlobal_;
   };
 
