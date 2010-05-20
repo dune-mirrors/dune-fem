@@ -327,7 +327,9 @@ inline int readParameterList (int argc, char **argv, bool displayData = true )
   if(replay) 
   {
     std::string cmd("rm manager.replay");
-    system(cmd.c_str());
+    int result = system(cmd.c_str());
+    if( result != 0 ) 
+      std::cerr << "System call possibly failed!" << std::endl;
   }
 #endif
 

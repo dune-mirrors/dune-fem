@@ -9,21 +9,21 @@
 
 //- include grape io stuff 
 #include <dune/fem/io/file/asciiparser.hh>
-#include <dune/fem/io/file/grapedataio.hh>
+#include <dune/fem/io/file/binarydataio.hh>
 #include <dune/fem/io/file/iotuple.hh>
 #include <dune/fem/io/file/iointerface.hh>
 
 #include <dune/fem/io/visual/grape/datadisp/grcommon.hh>
 
 //! type of used grid 
-typedef GridType GR_GridType;
+typedef Dune::GridSelector::GridType GR_GridType;
 
 //! type of discrete function tuple 
 typedef GR_InputType GR_DiscFuncType;
 
 static std::stack<GR_GridType *> gridStack;
 
-static GrapeDataIO <GR_GridType> dataIO;
+static BinaryDataIO <GR_GridType> dataIO;
 
 template <class T> 
 inline void deleteObjects(std::stack<T *> & stack);
