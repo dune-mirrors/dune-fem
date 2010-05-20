@@ -11,6 +11,9 @@ namespace Dune {
 
 //  namespace Fem {
 
+    //! @ingroup SubDFunction
+    //! A class for extracting sub functions from a 
+    //! discrete function containing pointbased combined data.
     template <class DiscreteFunctionImp>   
     class SubFunctionStorage
     {
@@ -27,6 +30,7 @@ namespace Dune {
       typedef SubVector< DofStorageType, SubMapperType >                  SubDofVectorType;
       typedef VectorDiscreteFunction< SubSpaceType, SubDofVectorType >    SubDiscreteFunctionType;
 
+      //! constructor storing the discrete function 
       explicit SubFunctionStorage( DiscreteFunctionType& discreteFunction ) :
         discreteFunction_( discreteFunction ),
         space_( discreteFunction.space() ),
@@ -38,6 +42,7 @@ namespace Dune {
         subDiscreteFunction_( dimRange, (SubDiscreteFunctionType *) 0 )
       {}
 
+      //! destructor 
       ~SubFunctionStorage() 
       {
         for(int i=0; i<dimRange; ++i)
@@ -48,6 +53,12 @@ namespace Dune {
         }
       }
 
+      /** \brief return a SubDiscreteFunction repsenting only one 
+          component of the original discrete function
+          \param component the component to be extracted 
+          
+          \return reference to SubDiscreteFunction for given component
+      */
       SubDiscreteFunctionType& subFunction(const size_t component) const
       {
         assert( component < dimRange );
@@ -62,6 +73,7 @@ namespace Dune {
         }
         return *( subDiscreteFunction_[ component ] );
       }
+
     protected:
       DiscreteFunctionType& discreteFunction_;
       const SpaceType& space_;
