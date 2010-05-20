@@ -27,7 +27,9 @@ using namespace std;
 template <int N>
 class myDest : public FieldVector<double, N> {
 private:
-  struct SpaceDummy {};
+  struct SpaceDummy {
+    int size () const { return N; }
+  };
   typedef FieldVector<double, N> BaseType;
 
 public:
@@ -35,7 +37,7 @@ public:
   typedef double RangeFieldType;
   typedef SpaceDummy DiscreteFunctionSpaceType;
 
-  myDest(string, const SpaceDummy&) {
+  myDest(string, const SpaceDummy&, const double* u = 0) {
   }
   
   myDest() {
