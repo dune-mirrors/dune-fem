@@ -13,7 +13,6 @@
 
 #include <dune/common/fvector.hh>
 #include <dune/grid/common/grid.hh>
-#include <dune/grid/common/referenceelements.hh>
 #include <dune/fem/quadrature/caching/twistutility.hh>
 
 #include <dune/fem/space/common/allgeomtypes.hh> 

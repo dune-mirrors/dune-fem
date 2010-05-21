@@ -2,7 +2,7 @@
 #define DUNE_HDIV_PROJECTION_HH 
 
 //- Dune includes
-#include <dune/grid/common/referenceelements.hh>
+#include <dune/grid/common/genericreferenceelements.hh>
 
 //- Dune-fem includes 
 #include <dune/fem/quadrature/caching/twistutility.hh>
@@ -676,8 +676,8 @@ private:
     // in case of linear space the is zero 
     const int numGradDofs = gradientBaseFct( gradSet ); 
   
-    const ReferenceElement< coordType, dim > & refElem =
-        ReferenceElements< coordType, dim >::general( startType );
+    const GenericReferenceElement< coordType, dim > & refElem =
+        GenericReferenceElements< coordType, dim >::general( startType );
 
     // get number of faces 
     const int overallFaceDofs = numFaceDofs * refElem.size(1);

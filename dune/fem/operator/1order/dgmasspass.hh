@@ -4,7 +4,7 @@
 //- Dune includes 
 #include <dune/common/fvector.hh>
 #include <dune/grid/common/grid.hh>
-#include <dune/grid/common/referenceelements.hh>
+#include <dune/grid/common/genericreferenceelements.hh>
 #include <dune/fem/quadrature/caching/twistutility.hh>
 
 //- Dune-fem includes 
@@ -202,8 +202,8 @@ namespace Dune
 
       typedef typename GeometryType :: ctype coordType; 
       enum { dim = GridType :: dimension };
-      const ReferenceElement< coordType, dim > & refElem =
-             ReferenceElements< coordType, dim >::general(geo.type());
+      const GenericReferenceElement< coordType, dim > & refElem =
+             GenericReferenceElements< coordType, dim >::general(geo.type());
       
       double volRef = refElem.volume();
       return volRef/volume;

@@ -3,7 +3,6 @@
 
 //- Dune includes
 #include <dune/common/exceptions.hh>
-#include <dune/grid/common/referenceelements.hh>
 #include <dune/fem/quadrature/caching/twistutility.hh>
 
 //- Dune-fem includes 

@@ -8,7 +8,6 @@
 //- Dune includes
 
 #include <dune/grid/common/grid.hh>
-#include <dune/grid/common/referenceelements.hh>
 #include <dune/grid/common/sizecache.hh>
 
 #include <dune/fem/gridpart/gridpart.hh>
