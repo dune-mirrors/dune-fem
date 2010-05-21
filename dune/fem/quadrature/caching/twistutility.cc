@@ -1,6 +1,6 @@
 #include <config.h>
 
-#include <dune/grid/common/referenceelements.hh>
+#include <dune/grid/common/genericreferenceelements.hh>
 
 #include <dune/fem/quadrature/caching/twistutility.hh>
 
