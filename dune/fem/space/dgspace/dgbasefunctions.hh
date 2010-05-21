@@ -122,6 +122,13 @@ namespace Dune
       OrthonormalBase_2D::grad_triangle_2d(baseNum,&xi[0],grad_);
       return grad_[comp];
     }
+
+    RangeFieldType hess_triangle_2d (const int comp, const DomainType & xi) const
+    {
+      double h[3];
+      OrthonormalBase_2D::hess_triangle_2d(baseNum,&xi[0],h);
+      return h[comp];
+    }
     
     RangeFieldType grad_quadrilateral_2d (const int comp, const DomainType & xi) const 
     {
@@ -271,7 +278,8 @@ namespace Dune
     virtual void evaluate(const FieldVector<deriType, 2>&diffVariable,
                           const DomainType& x, RangeType& phi) const 
     {
-      DUNE_THROW(NotImplemented,"hessian not implemented!");
+      int c=diffVariable[0]+diffVariable[1];
+      phi = this->hess_triangle_2d(c, x);
     }
 
     static int numBaseFunctions() {

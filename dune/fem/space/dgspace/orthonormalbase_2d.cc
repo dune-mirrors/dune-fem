@@ -2244,6 +2244,54 @@ grad_triangle_2d ( const int i, DomainType xi, JacobianRangeType grad )
 	}
 }
 
+/* H\phi_i(x,y) for triangle */
+void  
+hess_triangle_2d ( const int i, DomainType xi, HessianRangeType &h )
+{
+	// const double &x = xi[0];
+  // const double &y = xi[1];
+
+	switch (i)	{
+		#if (PMAX2D>=0)
+		case ( 0 ):
+			h[0]= 0;
+			h[1]= 0;
+			h[2]= 0;
+		return;
+		#endif
+		#if (PMAX2D>=1)
+		case ( 1 ):
+			h[0]= 0;
+			h[1]= 0;
+			h[2]= 0;
+			return;
+		case ( 2 ):
+			h[0]= 0;
+			h[1]= 0;
+			h[2]= 0;
+			return;
+		#endif
+		#if (PMAX2D>=2)
+		case ( 3 ):
+			h[0]= 48.989794855663561963945681494118;
+			h[1]= 0;
+			h[2]= 0;
+			return;
+		case ( 4 ):
+			h[0]= 42.426406871192851464050661726291;
+			h[1]= 42.426406871192851464050661726291;
+			h[2]= 0;
+			return;
+		case ( 5 ):
+			h[0]= 10.954451150103322269139395656016;
+			h[1]= 32.863353450309966807418186968048;
+			h[2]= 65.7267069006199336148363739361;
+			return;
+		#endif
+	}
+	printf("Error in hess_triangle_2d -- unmatched switch/case %d\n",i);
+}
+
 /* \phi_i(x,y) for quadrilateral */
 double  
 eval_quadrilateral_2d ( const int i, DomainType xi )

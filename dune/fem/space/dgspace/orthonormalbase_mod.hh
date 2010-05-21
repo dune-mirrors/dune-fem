@@ -16,11 +16,14 @@ namespace OrthonormalBase_2D
 {
   typedef const double* DomainType;
   typedef double* JacobianRangeType;
+  typedef double HessianRangeType[3];
 
   double eval_triangle_2d (const int baseNum, DomainType xi );
   double eval_quadrilateral_2d (const int baseNum, DomainType xi );
   void grad_triangle_2d (const int baseNum, DomainType xi,
                           JacobianRangeType grad );
+  void hess_triangle_2d (const int baseNum, DomainType xi,
+                         HessianRangeType &h );
   void grad_quadrilateral_2d (const int baseNum, DomainType xi,
                                JacobianRangeType grad );
 }
