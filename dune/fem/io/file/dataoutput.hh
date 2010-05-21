@@ -500,7 +500,7 @@ protected:
 public:
   /** \brief returns true if data will be written on next write call
   */
-  bool willWrite(const TimeProviderBase& tp) const 
+  virtual bool willWrite(const TimeProviderBase& tp) const 
   {
     // make save step consistent
     consistentSaveStep( tp );
@@ -511,7 +511,7 @@ public:
   }
   /** \brief returns true if data will be written on next write call
   */
-  bool willWrite() const 
+  virtual bool willWrite() const 
   {
     return param_->willWrite( (saveCount_>0 && writeCalls_%saveCount_ == 0) );
   }

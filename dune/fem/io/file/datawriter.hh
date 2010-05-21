@@ -499,14 +499,9 @@ public:
   */
   bool willWrite(const TimeProviderBase& tp) const
   {
-    return willWrite( tp.time(), tp.timeStep() );
-  }
-
-  /** \copydoc DataWriter::willWrite */
-  virtual bool willWrite(double time, int timestep) const 
-  {
+    const int timestep = tp.timeStep();
     // only write data time > saveTime  
-    return ( (((timestep % checkPointStep_) == 0) && timestep > 0) );
+    return ( (checkPointStep_ > 0) && (((timestep % checkPointStep_) == 0) && timestep > 0) );
   }
 
   virtual void writeBinaryData(const double time) const 
