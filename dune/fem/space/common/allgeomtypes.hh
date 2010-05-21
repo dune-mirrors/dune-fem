@@ -7,7 +7,7 @@
 
 //- Dune includes 
 #include <dune/common/geometrytype.hh>
-#include <dune/grid/common/referenceelements.hh>
+#include <dune/grid/common/genericreferenceelements.hh>
 
 namespace Dune
 {
@@ -25,96 +25,61 @@ namespace Dune
 
   /**  \brief ReferenceVolume and local bary center keeper class. 
    */
-  template< class GridImp , int codim>
+  template< class GridImp, int codim >
   class GeometryInformation  
   {
+    typedef GeometryInformation< GridImp, codim > ThisType;
+
   public:
     //! grid type 
     typedef GridImp GridType;
 
     //! dimension 
-    enum { dim = GridType :: dimension - codim };
+    static const int dim = GridType::dimension - codim;
 
     //! coordinate type 
-    typedef typename GridType :: ctype ctype;
+    typedef typename GridType::ctype ctype;
 
     //! type of reference element 
-    typedef ReferenceElement< ctype, dim > ReferenceElementType; 
+    typedef GenericReferenceElement< ctype, dim > ReferenceElementType; 
 
     //! type of domain vector 
     typedef FieldVector<ctype, dim> DomainType;
 
-    //! map that stores the volume of the reference element  
-    typedef std::map<const Dune::GeometryType, double>  ReferenceVolumeMapType;
-
-    //! map that stores the barycenter of the reference element  
-    typedef std::map<const Dune::GeometryType, DomainType>  BaryCenterMapType;
-
-    //! type of this class 
-    typedef GeometryInformation < GridType , codim > ThisType;
-
   protected:
-    mutable BaryCenterMapType localCenters_;
-    mutable ReferenceVolumeMapType referenceVolumes_;
-    
     //! constructor creating empty geometry information 
-    inline explicit GeometryInformation()
-      : localCenters_()
-      , referenceVolumes_ ()
-    {
-    }
+    GeometryInformation ()
+    {}
 
   public:
     //! creating geometry information due to given geometry types list 
-    GeometryInformation( const std::vector<GeometryType> & geomTypes)
-      : localCenters_() 
-      , referenceVolumes_()
+    explicit GeometryInformation( const std::vector< GeometryType > &geomTypes )
     {
       buildMaps( geomTypes );
     }
 
-    //! copy constructor 
-    GeometryInformation( const GeometryInformation& other ) 
-      : localCenters_( other.localCenters_ ) 
-      , referenceVolumes_( other.referenceVolumes_ )
-    {
-    }
-
-  public:  
     //! return local bary center for geometry of type type 
-    const DomainType& localCenter(const GeometryType& type) const 
+    const DomainType &localCenter ( const GeometryType &type ) const 
     {
-      assert( localCenters_.find( type ) != localCenters_.end() );
-      return localCenters_[ type ];
+      return referenceElement( type ).position( 0, 0 );
     }
 
     //! return volume of reference element for geometry of type type 
-    const double referenceVolume(const GeometryType& type) const 
+    const double referenceVolume ( const GeometryType &type ) const
     {
-      assert( referenceVolumes_.find( type ) != referenceVolumes_.end() );
-      return referenceVolumes_[ type ];
+      return referenceElement( type ).volume();
     }
 
     //! return reference element for type 
-    static const ReferenceElementType& 
-      referenceElement(const GeometryType& type ) 
+    static const ReferenceElementType &referenceElement ( const GeometryType &type )
     {
-      return ReferenceElements<ctype , dim> ::general( type );
+      return GenericReferenceElements< ctype, dim >::general( type );
     }
 
   protected:  
     //! build maps 
-    void buildMaps(const std::vector<GeometryType> & geomTypes)
-    {
-      for(size_t i=0; i<geomTypes.size(); ++i) 
-      {
-        // get local bary center 
-        const ReferenceElementType& refElem = referenceElement( geomTypes[i] );
-        localCenters_[ geomTypes[i] ] = refElem.position(0,0);
-        referenceVolumes_[ geomTypes[i] ] = refElem.volume();
-      }
-    }
-
+    void buildMaps ( const std::vector< GeometryType > &geomTypes )
+    {}
   };
 
 
