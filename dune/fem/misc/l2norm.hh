@@ -52,14 +52,12 @@ namespace Dune
                const VDiscreteFunctionType &v ) const;
 
   protected:
-    inline const GridPartType &gridPart () const
+    const GridPartType &gridPart () const
     {
       return gridPart_;
     }
 
-    inline typename GridPartType :: GridType
-      :: template Codim< 0 > :: CollectiveCommunication 
-      comm () const
+    typename GridPartType::GridType ::CollectiveCommunication comm () const
     {
       return gridPart().grid().comm();
     }
