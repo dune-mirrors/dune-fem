@@ -16,7 +16,6 @@ using namespace Dune;
 #include <dune/fem/gridpart/gridpart.hh>
 #include <dune/fem/gridpart/adaptiveleafgridpart.hh>
 
-#include <dune/grid/common/referenceelements.hh>
 #include <dune/fem/space/lagrangespace.hh>
 
 #if HAVE_GRAPE && GRIDDIM > 1 
