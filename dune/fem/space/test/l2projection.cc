@@ -18,7 +18,6 @@ static const int dimw = Dune::GridSelector::dimworld;
 #include <dune/fem/space/dgspace/dgadaptiveleafgridpart.hh> 
 #include <dune/fem/space/common/adaptmanager.hh>
 
-#include <dune/grid/common/referenceelements.hh>
 #include <dune/fem/operator/projection/l2projection.hh>
 #include <dune/fem/misc/l2error.hh>
 
@@ -189,9 +188,9 @@ int main (int argc, char **argv)
   }
   return 0;
   }
-  catch( Exception e )
+  catch( const Exception &exception )
   {
-    std :: cerr << e.what() << std :: endl;
+    std::cerr << exception << std::endl;
     return 1;
   }
 }
