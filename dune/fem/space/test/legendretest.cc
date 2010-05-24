@@ -29,8 +29,6 @@ typedef Dune::YaspGrid< dimw > GridType;
 #include <dune/fem/gridpart/gridpart.hh>
 #include <dune/fem/gridpart/adaptiveleafgridpart.hh> 
 
-#include <dune/grid/common/referenceelements.hh>
-
 #if HAVE_GRAPE
 #include <dune/grid/io/visual/grapedatadisplay.hh>
 #endif
