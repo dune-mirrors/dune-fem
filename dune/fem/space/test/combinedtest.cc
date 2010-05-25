@@ -16,7 +16,6 @@ static const int dimw = Dune::GridSelector::dimworld;
 #include <dune/fem/gridpart/gridpart.hh>
 #include <dune/fem/gridpart/adaptiveleafgridpart.hh> 
 
-#include <dune/grid/common/referenceelements.hh>
 #include <dune/fem/misc/double.hh>
 
 #if HAVE_GRAPE
