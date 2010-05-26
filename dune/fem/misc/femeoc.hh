@@ -178,6 +178,7 @@ class FemEoc
     int pos = pos_[id];
     error_[pos] = err;
   }
+
   void writeerr(double h,double size,double time,int counter) {
     if (MPIManager::rank() != 0) return;
     if (initial_) {
@@ -223,6 +224,55 @@ class FemEoc
     initial_ = false;
   }
 
+  void writeerr(double h,double size,double time,int counter,
+                double avgTimeStep,double minTimeStep,double maxTimeStep) {
+    if (MPIManager::rank() != 0) return;
+    if (initial_) {
+	    outputFile_ << "\\begin{tabular}{|c|c|c|c|c|c|c|c|";
+      for (unsigned int i=0;i<error_.size();i++) {
+        outputFile_ << "|cc|";
+      }
+      outputFile_ << "}\n"
+	        << "\\hline \n"
+          << "level & h & size & CPU-time & counter & avg dt & min dt & max dt";
+      for (unsigned int i=0;i<error_.size();i++) {
+        outputFile_ << " & " << description_[i]
+                    << " & EOC ";
+      }
+      outputFile_ << "\n \\tabularnewline\n"
+                  << "\\hline\n"
+                  << "\\hline\n";
+    }
+    outputFile_ <<  "\\hline \n"
+                << level_ << " & "
+                << h      << " & "
+                << size   << " & "
+                << time   << " & " 
+                << avgTimeStep   << " & " 
+                << minTimeStep   << " & " 
+                << maxTimeStep   << " & " 
+                << counter;
+    for (unsigned int i=0;i<error_.size();++i) {
+      outputFile_ << " & " << error_[i] << " & ";
+      if (initial_) {
+        outputFile_ << " --- ";
+      }
+      else {
+        double factor = prevh_/h;
+        outputFile_ << log(prevError_[i]/error_[i])/log(factor);
+      }
+      prevError_[i]=error_[i];
+      error_[i] = -1;  // uninitialized
+    }
+    outputFile_ << "\n"
+                << "\\tabularnewline\n"
+                << "\\hline \n";
+    outputFile_.flush();
+    prevh_ = h;
+    level_++;
+    initial_ = false;
+  }
+
   // do the same calculations as in write, but don't overwrite status 
   void printerr(const double h, 
                 const double size, 
@@ -236,6 +286,39 @@ class FemEoc
 	  out << "size:    " << size << std::endl;
 	  out << "time:    " << time << " sec. " << std::endl;
 	  out << "counter: " << counter << std::endl;
+
+    for (unsigned int i=0;i<error_.size();++i) 
+    {
+      out << description_[i] << ":       " << error_[i] << std::endl;
+      if (! initial_) 
+      {
+        const double factor = prevh_/h;
+        const double eoc = log(prevError_[i]/error_[i])/log(factor);
+
+        out << "EOC (" <<description_[i] << "): " << eoc << std::endl;
+      }
+      out << std::endl;
+    }
+  }
+  // do the same calculations as in write, but don't overwrite status 
+  void printerr(const double h, 
+                const double size, 
+                const double time, 
+                const int counter,
+                const double avgTimeStep,
+                const double minTimeStep,
+                const double maxTimeStep,
+                std::ostream& out) 
+  {
+    if (!Parameter::verbose()) return;
+	  out << "level:   " << level_  << std::endl;
+	  out << "h        " << h << std::endl;
+	  out << "size:    " << size << std::endl;
+	  out << "time:    " << time << " sec. " << std::endl;
+	  out << "counter: " << counter << std::endl;
+	  out << "avg. time step: " << avgTimeStep << std::endl;
+	  out << "min. time step: " << minTimeStep << std::endl;
+	  out << "max. time step: " << maxTimeStep << std::endl;
 
     for (unsigned int i=0;i<error_.size();++i) 
     {
@@ -337,8 +420,27 @@ class FemEoc
    *  \param time computational time
    *  \param counter number of timesteps or iterations for a solver...
    */
-  static void write(double h,double size,double time,int counter) {
+  static void write(double h,double size,double time,int counter) 
+  {
     instance().writeerr(h,size,time,counter);
+  }
+
+  /** \brief commit a line to the eoc file 
+   *
+   *  \param h grid width (e.g. given by GridWith utitlity class)
+   *  \param size number of elements in the grid or number of dofs...
+   *  \param time computational time
+   *  \param counter number of timesteps or iterations for a solver...
+   *  \param avgTimeStep average time step for a ODE solver for one run of the program...
+   *  \param minTimeStep minimal time step for a ODE solver for one run of the program...
+   *  \param maxTimeStep maximal time step for a ODE solver for one run of the program...
+   */
+  static void write(double h,double size,double time,int counter,
+                    const double avgTimeStep,
+                    const double minTimeStep,
+                    const double maxTimeStep ) 
+  {
+    instance().writeerr(h,size,time,counter,avgTimeStep,minTimeStep,maxTimeStep);
   }
 
   /** \brief commit a line to the eoc file 
@@ -361,7 +463,35 @@ class FemEoc
     // now write to file 
     instance().writeerr(h,size,time,counter);
   }
-};
+
+  /** \brief commit a line to the eoc file 
+   *
+   *  \param h grid width (e.g. given by GridWith utitlity class)
+   *  \param size number of elements in the grid or number of dofs...
+   *  \param time computational time
+   *  \param counter number of time steps or iterations for a solver...
+   *  \param avgTimeStep average time step for a ODE solver for one run of the program...
+   *  \param minTimeStep minimal time step for a ODE solver for one run of the program...
+   *  \param maxTimeStep maximal time step for a ODE solver for one run of the program...
+   *  \param out std::ostream to print data to (e.g. std::cout) 
+   */
+  static void write(const double h,
+                    const double size,
+                    const double time, 
+                    const int counter,
+                    const double avgTimeStep,
+                    const double minTimeStep,
+                    const double maxTimeStep,
+                    std::ostream& out) 
+  {
+    // print last line to out 
+    instance().printerr( h, size, time, counter, avgTimeStep, minTimeStep, maxTimeStep, out );
+
+    // now write to file 
+    instance().writeerr(h,size,time,counter,avgTimeStep,minTimeStep,maxTimeStep);
+  }
+
+}; // end class FemEoc
 
 }
 #endif
