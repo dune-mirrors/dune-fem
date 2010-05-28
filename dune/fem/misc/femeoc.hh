@@ -248,10 +248,10 @@ class FemEoc
                 << h      << " & "
                 << size   << " & "
                 << time   << " & " 
+                << counter <<" & "
                 << avgTimeStep   << " & " 
                 << minTimeStep   << " & " 
-                << maxTimeStep   << " & " 
-                << counter;
+                << maxTimeStep;
     for (unsigned int i=0;i<error_.size();++i) {
       outputFile_ << " & " << error_[i] << " & ";
       if (initial_) {
