@@ -5,7 +5,6 @@
 #include <dune/fem/pass/dgdiscretemodel.hh>
 #include <dune/fem/pass/selection.hh>
 #include <dune/fem/solver/timeprovider.hh>
-#include <dune/fem/pass/limitpass.hh>
 
 // Dune includes
 #include <dune/common/utility.hh>
