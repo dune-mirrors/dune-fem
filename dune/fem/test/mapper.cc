@@ -133,7 +133,7 @@ try
 
   int ret = (checkMappers( discreteFunctionSpace ) ? 0 : 1);
 
-  Dune::GlobalRefine::apply(grid,Dune::DGFGridInfo<GridType>::refineStepsForHalf());
+  Dune::GlobalRefine::apply(grid,Dune::DGFGridInfo< MyGridType >::refineStepsForHalf());
   ret += (checkMappers( discreteFunctionSpace ) ? 0 : 2);
 
   return ret;
