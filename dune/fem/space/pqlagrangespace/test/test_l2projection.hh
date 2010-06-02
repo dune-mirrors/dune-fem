@@ -1,9 +1,6 @@
 #ifndef  DUNE_FEM_P12DSPACE_TEST_L2PROJECTION_HH__
 #define  DUNE_FEM_P12DSPACE_TEST_L2PROJECTION_HH__
 
-// include grid selected by GRIDTYPE and GRIDDIM and suitable dgfparser
-#include <dgfgridtype.hh>
-
 
 // Includes from DUNE-FEM
 // ----------------------

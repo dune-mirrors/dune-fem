@@ -6,8 +6,6 @@
 #include <dune/fem/space/lagrangespace.hh>
 #include <dune/fem/gridpart/gridpart.hh>
 
-#include <dgfgridtype.hh>
-
 namespace Dune {
   
   template <class GridImp, int polOrd>

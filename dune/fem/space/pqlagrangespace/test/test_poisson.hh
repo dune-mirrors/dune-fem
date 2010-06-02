@@ -23,8 +23,6 @@
 #include <dune/common/stdstreams.hh>
 #include <dune/common/timer.hh>
 
-#include <dgfgridtype.hh>
-
 
 // DUNE-FEM includes
 // -----------------
