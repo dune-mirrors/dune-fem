@@ -3,7 +3,6 @@
 
 #include <sstream>
 
-#include <dgfgridtype.hh>
 #include <dune/grid/io/file/dgfparser/dgfparser.hh>
 
 namespace Dune
@@ -11,13 +10,9 @@ namespace Dune
 
   class TestGrid
   {
-  private:
     typedef TestGrid ThisType;
     typedef Dune::GridSelector::GridType GridType;
 
-  protected:
-    GridPtr< GridType > gridptr_;
-    
   protected:
     TestGrid ()
     : gridptr_( macroGridName() )
@@ -44,31 +39,33 @@ namespace Dune
     ThisType &operator= ( const ThisType & );
 
   public:
-    static inline ThisType &instance ()
+    static ThisType &instance ()
     {
       static ThisType staticInstance;
       return staticInstance;
     }
 
-    static inline GridType &grid ()
+    static GridType &grid ()
     {
       return *(instance().gridptr_);
     }
 
-    static inline int refineStepsForHalf ()
+    static int refineStepsForHalf ()
     {
-      return DGFGridInfo< GridType > :: refineStepsForHalf();
+      return DGFGridInfo< GridType >::refineStepsForHalf();
     }
 
   protected:
-    static inline std :: string macroGridName ()
+    static std::string macroGridName ()
     {
-      std :: ostringstream s;
-      s << GridType :: dimension << "dgrid.dgf";
+      std::ostringstream s;
+      s << GridType::dimension << "dgrid.dgf";
       return s.str();
     }
+
+    GridPtr< GridType > gridptr_;
   };
   
 }
 
-#endif
+#endif // #ifndef DUNE_FEM_TEST_TESTGRID_HH
