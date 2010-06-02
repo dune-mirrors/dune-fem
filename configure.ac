@@ -116,4 +116,3 @@ AC_CONFIG_FILES([Makefile
      make.inc
      dune-fem.pc])
 AC_OUTPUT
-DUNE_OUTPUT_GRIDTYPE
