@@ -8,11 +8,8 @@
 namespace Dune
 {
   
-  //- Forward declarations of Combined Space 
-  template< class, int, DofStoragePolicy >
-  class CombinedSpace;
-
-
+  // StandardLocalFunctionImpl
+  // -------------------------
 
   /** \class StandardLocalFunctionImpl
    *  \brief standard implementation of a local function
@@ -20,9 +17,11 @@ namespace Dune
   template< class DiscreteFunction, class DiscreteFunctionSpace >
   class StandardLocalFunctionImpl
   : public LocalFunctionDefault
-    < DiscreteFunctionSpace,
-      StandardLocalFunctionImpl< DiscreteFunction, DiscreteFunctionSpace > >
+    < DiscreteFunctionSpace, StandardLocalFunctionImpl< DiscreteFunction, DiscreteFunctionSpace > >
   {
+    typedef StandardLocalFunctionImpl< DiscreteFunction, DiscreteFunctionSpace > ThisType;
+    typedef LocalFunctionDefault< DiscreteFunctionSpace, ThisType > BaseType;
+
   public:
     //! type of discrete function the local function belongs to
     typedef DiscreteFunction DiscreteFunctionType;
@@ -30,40 +29,65 @@ namespace Dune
     //! type of  discrete function space the local function belongs to
     typedef DiscreteFunctionSpace DiscreteFunctionSpaceType;
 
-  private:
-    typedef StandardLocalFunctionImpl< DiscreteFunctionType, DiscreteFunctionSpaceType >
-      ThisType;
-    typedef LocalFunctionDefault< DiscreteFunctionSpaceType, ThisType > BaseType;
-
-  public:
     //! type of grid
-    typedef typename DiscreteFunctionSpaceType :: GridType GridType;
+    typedef typename DiscreteFunctionSpaceType::GridType GridType;
     
     //! type of underlying function space
-    typedef typename DiscreteFunctionSpaceType :: FunctionSpaceType FunctionSpaceType;
+    typedef typename DiscreteFunctionSpaceType::FunctionSpaceType FunctionSpaceType;
    
     //! field type for domain vectors
-    typedef typename FunctionSpaceType :: DomainFieldType DomainFieldType;
+    typedef typename FunctionSpaceType::DomainFieldType DomainFieldType;
     //! field type for range vectors
-    typedef typename FunctionSpaceType :: RangeFieldType RangeFieldType;
+    typedef typename FunctionSpaceType::RangeFieldType RangeFieldType;
     //! type of domain vectors
-    typedef typename FunctionSpaceType :: DomainType DomainType;
+    typedef typename FunctionSpaceType::DomainType DomainType;
     //! type of range vectors
-    typedef typename FunctionSpaceType :: RangeType RangeType;
+    typedef typename FunctionSpaceType::RangeType RangeType;
     //! type of the Jacobian
-    typedef typename FunctionSpaceType :: JacobianRangeType JacobianRangeType;
+    typedef typename FunctionSpaceType::JacobianRangeType JacobianRangeType;
 
     //! dimension of the domain
-    enum { dimDomain = DiscreteFunctionSpaceType :: dimDomain };
+    enum { dimDomain = DiscreteFunctionSpaceType::dimDomain };
     //! dimension of the range
-    enum { dimRange = DiscreteFunctionSpaceType :: dimRange };
+    enum { dimRange = DiscreteFunctionSpaceType::dimRange };
     
     //! type of base function sets
-    typedef typename DiscreteFunctionSpaceType :: BaseFunctionSetType
+    typedef typename DiscreteFunctionSpaceType::BaseFunctionSetType
       BaseFunctionSetType;
 
     //! type of codim 0 entities
-    typedef typename GridType :: template Codim< 0 > :: Entity EntityType;
+    typedef typename GridType::template Codim< 0 >::Entity EntityType;
+
+    //! constructor
+    explicit StandardLocalFunctionImpl ( DiscreteFunctionType &discreteFunction );
+    
+    //! copy constructor
+    StandardLocalFunctionImpl ( const ThisType &other );
+
+    /** \copydoc Dune::LocalFunction::operator[](const int num) const */
+    const RangeFieldType &operator[] ( const int num ) const;
+
+    /** \copydoc Dune::LocalFunction::operator[](const int num) */
+    RangeFieldType &operator[] ( const int num );
+
+    /** \copydoc Dune::LocalFunction::order() const */
+    int order () const;
+
+    /** \copydoc Dune::LocalFunction::baseFunctionSet() const */
+    const BaseFunctionSetType &baseFunctionSet() const;
+
+    /** \copydoc Dune::LocalFunction::entity() const */
+    const EntityType &entity () const;
+
+    //! initialize local function 
+    void init ( const EntityType &entity );
+    
+    /** \copydoc Dune::LocalFunction::numDofs() const */
+    int numDofs () const;
+
+  private:
+    // prohibit assignment
+    ThisType &operator= ( const ThisType & );
 
   protected:
     DiscreteFunctionType &discreteFunction_;
@@ -81,77 +105,176 @@ namespace Dune
     unsigned int numDofs_;
 
     bool needCheckGeometry_;
-
-  public:
-    //! constructor
-    inline explicit StandardLocalFunctionImpl ( DiscreteFunctionType &discreteFunction );
-    
-    //! copy constructor
-    inline StandardLocalFunctionImpl ( const ThisType &other );
-
-  private:
-    // prohibit assignment
-    ThisType &operator= ( const ThisType & );
-
-  public:
-    /** \copydoc Dune::LocalFunction::operator[](const int num) const */
-    inline const RangeFieldType &operator[] ( const int num ) const;
-
-    /** \copydoc Dune::LocalFunction::operator[](const int num) */
-    inline RangeFieldType &operator[] ( const int num );
-
-    /** \copydoc Dune::LocalFunction::order() const */
-    inline int order () const;
-
-    /** \copydoc Dune::LocalFunction::baseFunctionSet() const */
-    inline const BaseFunctionSetType &baseFunctionSet() const;
-
-    /** \copydoc Dune::LocalFunction::entity() const */
-    inline const EntityType &entity () const;
-
-    //! initialize local function 
-    inline void init ( const EntityType &entity );
-    
-    /** \copydoc Dune::LocalFunction::numDofs() const */
-    inline int numDofs() const;
   };
 
+
+
+  // StandardLocalFunctionFactory
+  // ----------------------------
 
   template< class DiscreteFunctionTraits >
   class StandardLocalFunctionFactory
   {
-  private:
     typedef StandardLocalFunctionFactory< DiscreteFunctionTraits > ThisType;
 
   public:
-    typedef typename DiscreteFunctionTraits :: DiscreteFunctionType
-      DiscreteFunctionType;
+    typedef typename DiscreteFunctionTraits::DiscreteFunctionType DiscreteFunctionType;
+    typedef typename DiscreteFunctionTraits::DiscreteFunctionSpaceType DiscreteFunctionSpaceType;
 
-    typedef typename DiscreteFunctionTraits :: DiscreteFunctionSpaceType
-      DiscreteFunctionSpaceType;
+    typedef StandardLocalFunctionImpl< DiscreteFunctionType, DiscreteFunctionSpaceType > ObjectType;
 
-    typedef StandardLocalFunctionImpl
-      < DiscreteFunctionType, DiscreteFunctionSpaceType >
-      ObjectType;
-
-  protected:
-    DiscreteFunctionType &discreteFunction_;
-
-  public:
-    inline explicit StandardLocalFunctionFactory ( DiscreteFunctionType &df )
+    explicit StandardLocalFunctionFactory ( DiscreteFunctionType &df )
     : discreteFunction_( df )
-    {
-    }
+    {}
 
     ObjectType *newObject () const
     {
       return new ObjectType( discreteFunction_ );
     }
+
+  protected:
+    DiscreteFunctionType &discreteFunction_;
   };
 
+
+
+  // Implementation of StandardLocalFunctionImpl
+  // -------------------------------------------
+
+  template< class DiscreteFunction, class DiscreteFunctionSpace >
+  inline StandardLocalFunctionImpl< DiscreteFunction, DiscreteFunctionSpace >
+    ::StandardLocalFunctionImpl ( DiscreteFunctionType &discreteFunction )
+  : discreteFunction_( discreteFunction ),
+    values_( discreteFunction_.space().maxNumLocalDofs() ),
+    baseFunctionSet_(),
+    entity_( 0 ),
+    numDofs_( 0 ),
+    needCheckGeometry_( true )
+  {}
+
+
+  template< class DiscreteFunction, class DiscreteFunctionSpace >
+  inline StandardLocalFunctionImpl< DiscreteFunction, DiscreteFunctionSpace >
+    ::StandardLocalFunctionImpl ( const ThisType &other )
+  : discreteFunction_( other.discreteFunction_ ),
+    values_( other.values_ ),
+    baseFunctionSet_( other.baseFunctionSet_ ),
+    entity_( other.entity_ ),
+    numDofs_( other.numDofs_ ),
+    needCheckGeometry_( other.needCheckGeometry_ )
+  {}
+
+
+  template< class DiscreteFunction, class DiscreteFunctionSpace >
+  inline const typename StandardLocalFunctionImpl< DiscreteFunction, DiscreteFunctionSpace >
+    ::RangeFieldType &
+  StandardLocalFunctionImpl< DiscreteFunction, DiscreteFunctionSpace >
+    ::operator[] ( const int num ) const
+  {
+    assert( (num >= 0) && (num < numDofs()) );
+    return *(values_[ num ]);
+  }
   
+  
+  template< class DiscreteFunction, class DiscreteFunctionSpace >
+  inline typename StandardLocalFunctionImpl< DiscreteFunction, DiscreteFunctionSpace >
+    ::RangeFieldType &
+  StandardLocalFunctionImpl< DiscreteFunction, DiscreteFunctionSpace >
+    ::operator[] ( const int num )
+  {
+    assert( (num >= 0) && (num < numDofs()) );
+    return *(values_[ num ]);
+  }
+
+
+  template< class DiscreteFunction, class DiscreteFunctionSpace >
+  inline int
+  StandardLocalFunctionImpl< DiscreteFunction, DiscreteFunctionSpace >::order () const
+  {
+    return discreteFunction_.space().order();
+  }
+
+
+  template< class DiscreteFunction, class DiscreteFunctionSpace >
+  inline const typename StandardLocalFunctionImpl< DiscreteFunction, DiscreteFunctionSpace >
+    ::BaseFunctionSetType &
+  StandardLocalFunctionImpl< DiscreteFunction, DiscreteFunctionSpace >
+    :: baseFunctionSet () const
+  {
+    assert( entity_ != 0 );
+    return baseFunctionSet_;
+  }
+
+  
+  template< class DiscreteFunction, class DiscreteFunctionSpace >
+  inline const typename StandardLocalFunctionImpl< DiscreteFunction, DiscreteFunctionSpace >
+    ::EntityType &
+  StandardLocalFunctionImpl< DiscreteFunction, DiscreteFunctionSpace >::entity () const
+  {
+    assert( entity_ != 0 );
+    return *entity_;
+  }
+
+
+  template< class DiscreteFunction, class DiscreteFunctionSpace >
+  inline void
+  StandardLocalFunctionImpl< DiscreteFunction, DiscreteFunctionSpace >
+    ::init ( const EntityType &entity )
+  {
+    typedef typename DiscreteFunctionSpaceType :: BlockMapperType BlockMapperType;
+    typedef typename BlockMapperType :: DofMapIteratorType DofMapIteratorType;
+    enum { blockSize = DiscreteFunctionSpaceType :: localBlockSize };
+
+    typedef typename DiscreteFunctionType :: DofBlockPtrType DofBlockPtrType;
+    
+    const DiscreteFunctionSpaceType &space = discreteFunction_.space();
+    const bool multipleBaseSets = space.multipleBaseFunctionSets();
+
+    if( multipleBaseSets || needCheckGeometry_ )
+    {
+      // if multiple base sets skip geometry call
+      bool updateBaseSet = true;
+      if( !multipleBaseSets && (entity_ != 0) )
+        updateBaseSet = (baseFunctionSet_.geometryType() != entity.type());
+      
+      if( multipleBaseSets || updateBaseSet )
+      {
+        baseFunctionSet_ = space.baseFunctionSet( entity );
+
+        // note, do not use baseFunctionSet() here, entity might no have been set
+        numDofs_ = baseFunctionSet_.numBaseFunctions();
+
+        needCheckGeometry_ = space.multipleGeometryTypes();
+      }
+    }
+
+    // cache entity
+    entity_ = &entity;
+    assert( baseFunctionSet_.geometryType() == entity.type() );
+
+    assert( numDofs_ <= values_.size() );
+    const BlockMapperType &mapper = space.blockMapper();
+    const DofMapIteratorType end = mapper.end( entity );
+    for( DofMapIteratorType it = mapper.begin( entity ); it != end; ++it )
+    {
+      assert( it.global() == mapper.mapToGlobal( entity, it.local() ) );
+      
+      DofBlockPtrType blockPtr = discreteFunction_.block( it.global() );
+      
+      const unsigned int localBlock = it.local() * blockSize;
+      for( unsigned int i = 0; i < blockSize; ++i )
+        values_[ localBlock + i ] = &((*blockPtr)[ i ]);
+    }
+  }
+
+
+  template< class DiscreteFunction, class DiscreteFunctionSpace >
+  inline int
+  StandardLocalFunctionImpl< DiscreteFunction, DiscreteFunctionSpace >::numDofs () const
+  {
+    return numDofs_;
+  }
+
 }
 
-#include "standardlocalfunction_inline.hh"
-
-#endif
+#endif // #ifndef DUNE_FEM_STANDARDLOCALFUNCTION_HH

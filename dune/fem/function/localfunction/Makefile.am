@@ -6,7 +6,6 @@ localfunction_HEADERS = localfunction.hh \
 			genericlocalfunction.hh \
 			genericlocalfunction_inline.hh \
                         standardlocalfunction.hh \
-                        standardlocalfunction_inline.hh \
 			temporarylocalfunction.hh \
 			temporarylocalfunction_inline.hh
 
