@@ -71,8 +71,10 @@ namespace Dune
     typedef typename DiscreteFunctionSpaceType::DomainType DomainType;
     //! type of range vectors, i.e., type of function values
     typedef typename DiscreteFunctionSpaceType::RangeType RangeType;
-    //! type of Jacobian, i.e., type of evaluated Jacobian matrix
+    //! type of the Jacobian, i.e., type of evaluated Jacobian matrix
     typedef typename DiscreteFunctionSpaceType::JacobianRangeType JacobianRangeType;
+    //! type of the Hessian
+    typedef typename DiscreteFunctionSpaceType::HessianRangeType HessianRangeType;
 
     //! type of local coordinates 
     typedef typename EntityType::Geometry::LocalCoordinate LocalCoordinateType;
@@ -85,8 +87,10 @@ namespace Dune
     //! type of base function set  
     typedef typename DiscreteFunctionSpaceType::BaseFunctionSetType BaseFunctionSetType;
 
-    //! type of JacobianRangeType of basis functions 
+    //! type of the Jacobian of a base function
     typedef typename BaseFunctionSetType::JacobianRangeType LocalJacobianRangeType;
+    // type of the Hessian of a base function
+    typedef typename BaseFunctionSetType::HessianRangeType LocalHessianRangeType;
 
     /** \brief access to local dofs (read-only)
      *
@@ -415,8 +419,9 @@ namespace Dune
     //! type of range vectors, i.e., type of function values
     typedef typename DiscreteFunctionSpaceType::RangeType RangeType;
     //! type of Jacobian, i.e., type of evaluated Jacobian matrix
-    typedef typename DiscreteFunctionSpaceType::JacobianRangeType
-      JacobianRangeType;
+    typedef typename DiscreteFunctionSpaceType::JacobianRangeType JacobianRangeType;
+    //! type of the Hessian
+    typedef typename DiscreteFunctionSpaceType::HessianRangeType HessianRangeType;
 
     //! type of base function set  
     typedef typename DiscreteFunctionSpaceType::BaseFunctionSetType
