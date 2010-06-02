@@ -105,6 +105,17 @@ namespace Dune
   }
 
 
+  template< class FunctionSpaceImp >
+  template< int diffOrder, class QuadratureType >
+  inline void CachingStorage< FunctionSpaceImp >
+    :: evaluate( const int baseFunction,
+                 const FieldVector< int, diffOrder > &diffVariable,
+                 const QuadraturePointWrapper< QuadratureType > &x,
+                 RangeType &ret ) const
+  {
+    evaluate( baseFunction, diffVariable, coordinate( x ), ret );
+  }
+
 
   template< class FunctionSpaceImp >
   template< class QuadratureType >

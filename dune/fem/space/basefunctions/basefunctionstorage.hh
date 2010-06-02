@@ -486,6 +486,13 @@ namespace Dune
                            const QuadraturePointWrapper< QuadratureType > &x, 
                            RangeType &ret ) const;
 
+    //! evaluate (higher) derivative of base function 
+    template< int diffOrder, class QuadratureType >
+    inline void evaluate ( const int baseFunction,
+                           const FieldVector< int, diffOrder > &diffVariable,
+                           const QuadraturePointWrapper< QuadratureType > &x, 
+                           RangeType &ret ) const;
+
     //! get derivative of base function 
     template< class QuadratureType >
     inline void jacobian ( const int baseFunction,

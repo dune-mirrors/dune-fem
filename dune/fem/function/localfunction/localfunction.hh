@@ -309,6 +309,20 @@ namespace Dune
       asImp().jacobian( x, ret );
     }
 
+    /** \brief evaluate Hessian of the local function
+     *
+     *  \note Though the Hessian is evaluated on the reference element, the
+     *        return value is the Hessian with respect to the actual entity.
+     *
+     *  \param[in]   x        evaluation point in local coordinates
+     *  \param[out]  hessian  Hessian of the function in the evaluation point
+     */
+    template< class PointType >
+    void hessian ( const PointType &x, HessianRangeType &hessian ) const
+    {
+      asImp().hessian( x, hessian );
+    }
+
     /** \brief obtain the number of local DoFs
      *
      *  Obtain the number of local DoFs of this local function. The value is
@@ -467,6 +481,9 @@ namespace Dune
     template< class PointType >
     void jacobian ( const PointType &x, JacobianRangeType &ret ) const;
 
+    template< class PointType >
+    void hessian ( const PointType &x, HessianRangeType &hessian ) const;
+
     /** \copydoc Dune::LocalFunction::axpy(const PointType &x,const RangeType &factor) */
     template< class PointType >
     void axpy( const PointType &x, const RangeType &factor );
@@ -575,12 +592,21 @@ namespace Dune
   template< class DiscreteFunctionSpace, class LocalFunctionImp >
   template< class PointType >
   inline void LocalFunctionDefault< DiscreteFunctionSpace, LocalFunctionImp >
-    ::jacobian( const PointType &x, JacobianRangeType &ret ) const
+    ::jacobian ( const PointType &x, JacobianRangeType &ret ) const
   {
     asImp().baseFunctionSet().jacobianAll( 
         x, 
         asImp().entity().geometry().jacobianInverseTransposed( coordinate( x ) ),
         asImp(), ret);
+  }
+
+
+  template< class DiscreteFunctionSpace, class LocalFunctionImp >
+  template< class PointType >
+  inline void LocalFunctionDefault< DiscreteFunctionSpace, LocalFunctionImp >
+    ::hessian ( const PointType &x, HessianRangeType &hessian ) const
+  {
+    asImp().baseFunctionSet().hessianAll( x, asImp().entity().geometry(), asImp(), hessian );
   }
  
   

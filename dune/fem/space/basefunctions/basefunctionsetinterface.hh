@@ -59,7 +59,7 @@ namespace Dune
     //! dimension of domain 
     enum { dimDomain = FunctionSpaceType :: dimDomain };
     //! dimension of range 
-    enum { dimRange  = FunctionSpaceType :: dimRange  };
+    enum { dimRange  = FunctionSpaceType :: dimRange };
 
   protected:
     using BaseType :: asImp;
@@ -234,6 +234,7 @@ namespace Dune
     typedef typename Traits :: BaseFunctionSetType BaseFunctionSetType;
     typedef typename Traits :: FunctionSpaceType FunctionSpaceType;
     typedef typename FunctionSpaceType::JacobianRangeType JacobianRangeType;
+    typedef typename FunctionSpaceType::HessianRangeType  HessianRangeType;
 
     static const int dimDomain = BaseType::dimDomain;
     static const int dimRange = BaseType::dimRange;
@@ -242,12 +243,12 @@ namespace Dune
     enum { dimRow = JacobianRangeType::rows };
     //! number of columns of jacobian range type 
     enum { dimCol = JacobianRangeType::cols };
-    
+   
+    typedef typename FunctionSpaceType::DomainFieldType DomainFieldType;
+    typedef typename FunctionSpaceType::RangeFieldType RangeFieldType;
+
     typedef typename FunctionSpaceType::DomainType DomainType ;
     typedef typename FunctionSpaceType::RangeType RangeType ;
-
-    typedef typename FunctionSpaceType::HessianRangeType  HessianRangeType;
-    typedef typename FunctionSpaceType::RangeFieldType RangeFieldType;
 
   protected:
     using BaseType::asImp;
@@ -311,45 +312,21 @@ namespace Dune
 
     /** \copydoc Dune::BaseFunctionSetInterface::jacobian(const int baseFunction,const PointType &x, JacobianRangeType &phi) const */
     template< class PointType >
-    inline void jacobian ( const int baseFunction,
-                           const PointType &x,
-                           JacobianRangeType &phi ) const
-    {
-      FieldVector< deriType, 1 > diffVar;
-      deriType &i = diffVar[ 0 ];
-      // create temporary variable here 
-      RangeType tmp;
-      for( i = 0; i < dimCol; ++i )
-      {
-        asImp().evaluate( baseFunction, diffVar, x, tmp );
-        for( int j = 0; j < dimRow; ++j )
-          phi[ j ][ i ] = tmp[ j ];
-      }
-    }
+    void jacobian ( const int baseFunction, const PointType &x, JacobianRangeType &phi ) const;
 
     template< class PointType, class GeometryJacobianInverseType,
               class LocalDofVectorType, class GlobalJacobianRangeType >
     void jacobianAll ( const PointType &x,
                        const GeometryJacobianInverseType& gjit, 
                        const LocalDofVectorType& dofs, 
-                       GlobalJacobianRangeType &ret ) const
-    {
-      ret = 0;
+                       GlobalJacobianRangeType &ret ) const;
 
-      JacobianRangeType refJacobian( 0 );
-      const int numBase = numBaseFunctions();
-      for( int i = 0; i < numBase; ++i )
-      {
-        JacobianRangeType grad;
-        jacobian( i, x, grad );
-        
-        for( int r = 0; r < dimRange; ++r )
-          refJacobian[ r ].axpy( dofs[ i ], grad[ r ] );
-      }
+    template< class PointType >
+    void hessian ( const int baseFunction, const PointType &x, HessianRangeType &hessian ) const;
 
-      for( int r = 0; r < dimRange; ++r )
-        gjit.mv( refJacobian[ r ], ret[ r ] );
-    }
+    template< class PointType, class Geometry, class LocalDofVectorType, class GlobalHessianRangeType >
+    void hessianAll ( const PointType &x, const Geometry &geometry,
+                      const LocalDofVectorType &dofs, GlobalHessianRangeType &ret ) const;
 
     /** \copydoc Dune::BaseFunctionSetInterface::evaluateSingle(const int baseFunction,const PointType &x,const RangeType &psi) const */
     template< class PointType >
@@ -528,6 +505,119 @@ namespace Dune
   };
 
   /** \} */
+
+
+
+  // Implementation of BaseFunctionSetDefault
+  // ----------------------------------------
+
+  template< class TraitsImp >
+  template< class PointType >
+  inline void BaseFunctionSetDefault< TraitsImp >
+    ::jacobian ( const int baseFunction, const PointType &x, JacobianRangeType &phi ) const
+  {
+    FieldVector< deriType, 1 > diffVar;
+    deriType &i = diffVar[ 0 ];
+    // create temporary variable here 
+    RangeType tmp;
+    for( i = 0; i < dimCol; ++i )
+    {
+      asImp().evaluate( baseFunction, diffVar, x, tmp );
+      for( int j = 0; j < dimRow; ++j )
+        phi[ j ][ i ] = tmp[ j ];
+    }
+  }
+
+
+  template< class TraitsImp >
+  template< class PointType, class GeometryJacobianInverseType,
+            class LocalDofVectorType, class GlobalJacobianRangeType >
+  inline void BaseFunctionSetDefault< TraitsImp >
+    ::jacobianAll ( const PointType &x,
+                    const GeometryJacobianInverseType &gjit, 
+                    const LocalDofVectorType &dofs, 
+                    GlobalJacobianRangeType &ret ) const
+  {
+    JacobianRangeType refJacobian( 0 );
+    const int numBase = numBaseFunctions();
+    for( int i = 0; i < numBase; ++i )
+    {
+      JacobianRangeType grad;
+      jacobian( i, x, grad );
+      
+      for( int r = 0; r < dimRange; ++r )
+        refJacobian[ r ].axpy( dofs[ i ], grad[ r ] );
+    }
+
+    for( int r = 0; r < dimRange; ++r )
+      gjit.mv( refJacobian[ r ], ret[ r ] );
+  }
+
+
+  template< class TraitsImp >
+  template< class PointType >
+  inline void BaseFunctionSetDefault< TraitsImp >
+    ::hessian ( const int baseFunction, const PointType &x, HessianRangeType &hessian ) const
+  {
+    FieldVector< deriType, 2 > diffVar;
+    deriType &i = diffVar[ 0 ];
+    deriType &j = diffVar[ 1 ];
+    RangeType tmp;
+    for( i = 0; i < dimDomain; ++i )
+    {
+      // We use symmetrized evaluation of the hessian, since calling
+      // evaluate is in general quite expensive
+      for( j = 0; j < i; ++j )
+      {
+        asImp().evaluate( baseFunction, diffVar, x, tmp );
+        for( int k = 0; k < dimRange; ++k )
+          hessian[ k ][ i ][ j ] = hessian[ k ][ j ][ i ] = tmp[ k ];
+      }
+      assert( j == i );
+      asImp().evaluate( baseFunction, diffVar, x, tmp );
+      for( int k = 0; k < dimRange; ++k )
+        hessian[ k ][ i ][ i ] = tmp[ k ];
+    }
+  }
+
+
+  template< class TraitsImp >
+  template< class PointType, class Geometry, class LocalDofVectorType, class GlobalHessianRangeType >
+  inline void BaseFunctionSetDefault< TraitsImp >
+    ::hessianAll ( const PointType &x, const Geometry &geometry,
+                   const LocalDofVectorType &dofs, GlobalHessianRangeType &ret ) const
+  {
+    const int numBase = numBaseFunctions();
+
+    HessianRangeType refHessian( typename HessianRangeType::field_type( 0 ) );
+    for( int b = 0; b < numBase; ++b )
+    {
+      HessianRangeType H;
+      hessian( b, x, H );
+      for( int r = 0; r < dimRange; ++r )
+        refHessian[ r ].axpy( dofs[ b ], H[ r ] );
+    }
+
+    const typename Geometry::Jacobian &Jgeo
+      = geometry.jacobianInverseTransposed( coordinate( x ) );
+    ret = typename GlobalHessianRangeType::field_type( 0 );
+    for( int i = 0; i < Geometry::coorddimension; ++i )
+    {
+      for( int j = 0; j < dimDomain; ++j )
+      {
+        for( int r = 0; r < dimRange; ++r )
+        {
+          FieldVector< RangeFieldType, Geometry::coorddimension > tmp;
+          Jgeo.mv( refHessian[ r ][ j ], tmp );
+          ret[ r ][ i ].axpy( Jgeo[ i ][ j ], tmp );
+        }
+      }
+    }
+
+    // for nonaffine geometries we have to add Du D^2 F^-1
+    if( !geometry.affine() )
+      DUNE_THROW( NotImplemented, "hessianAll: not implemented for nonaffine geometries." );
+  }
 
 } // end namespace Dune 
 
