@@ -1,7 +1,7 @@
 #include <config.h>
 
-#include <dune/grid/io/file/dgfparser/dgfgridtype.hh>
 #include <dune/common/typetraits.hh>
+
 #include "helper_test.hh"
 //#include <dune/fem/quadrature/elementquadrature.hh>
 

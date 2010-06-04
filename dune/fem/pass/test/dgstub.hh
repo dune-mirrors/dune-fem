@@ -3,8 +3,6 @@
 
 #include <string>
 
-#include <dune/grid/io/file/dgfparser/dgfgridtype.hh>
-
 #include <dune/fem/space/lagrangespace.hh>
 #include <dune/fem/gridpart/gridpart.hh>
 #include <dune/fem/function/adaptivefunction.hh>
@@ -21,8 +19,8 @@ namespace Dune
 
   struct DGStubTraits
   {
-    enum { dim = GridType :: dimension };
-    typedef LeafGridPart<GridType> GridPartType;
+    enum { dim = GridSelector::GridType::dimension };
+    typedef LeafGridPart< GridSelector::GridType > GridPartType;
     typedef FunctionSpace<double, double, dim , 1> FunctionSpaceType;
     typedef LagrangeDiscreteFunctionSpace<
       FunctionSpaceType, GridPartType, 1> DiscreteFunctionSpaceType;

@@ -85,7 +85,7 @@ namespace Dune
 
   void Pass_Test::dummyTest() 
   {
-    typedef PassStubTraits<GridType> PassStubTraitsType;
+    typedef PassStubTraits< GridSelector::GridType > PassStubTraitsType;
     typedef PassStubTraitsType :: DestinationType GlobalArgumentType;
     typedef PassStub<StartPass<GlobalArgumentType> > Pass1Type;
     typedef PassStub<Pass1Type> Pass2Type;
@@ -103,7 +103,7 @@ namespace Dune
     typedef StartPass<GlobalArgumentType> Pass0Type;
     typedef LocalDGPass<ProblemStub, Pass0Type> Pass1Type;
     typedef LocalDGPass<ProblemStub, Pass1Type> Pass2Type;
-    typedef Lagrange_Fixture<GridType, 1> Fix;
+    typedef Lagrange_Fixture< GridSelector::GridType, 1 > Fix;
     typedef Fix::GridType GridType;
     typedef Fix::DiscreteFunctionSpaceType SpaceType;
   

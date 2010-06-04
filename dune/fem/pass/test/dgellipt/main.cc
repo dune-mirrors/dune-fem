@@ -3,13 +3,13 @@
 #include <iostream>
 #include <fstream>
 
-#include <dune/fem/misc/double.hh>
-
-#include <dune/common/stdstreams.cc>
+#include <dune/common/exceptions.hh>
 #include <dune/common/misc.hh>
+#include <dune/common/stdstreams.cc>
 #include <dune/common/timer.hh>
 
-#include <dune/common/exceptions.hh>
+#include <dune/fem/misc/double.hh>
+#include <dune/fem/misc/mpimanager.hh> 
 
 
 using namespace Dune;
@@ -19,7 +19,6 @@ const int ncomp = 1;
 
 // include file with the description of the convection diffusion problem
 #include "discretization.hh"
-#include <dune/fem/misc/mpimanager.hh> 
 
 using namespace LDGExample;
 

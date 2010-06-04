@@ -28,7 +28,6 @@
 
 #include <dune/fem/solver/inverseoperators.hh>
 
-#include <dune/fem/space/dgspace/dgadaptiveleafgridpart.hh>
 #include <dune/fem/gridpart/adaptiveleafgridpart.hh>
 
 #include <dune/fem/operator/2order/dgprimaloperator.hh>
