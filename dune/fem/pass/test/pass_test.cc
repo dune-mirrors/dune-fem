@@ -7,10 +7,8 @@
 
 #include <dune/fem/function/adaptivefunction.hh>
 
-#include <dgfgridtype.hh>
-
-
-namespace Dune {
+namespace Dune
+{
 
   void Pass_Test::run() {
     functorTest();
