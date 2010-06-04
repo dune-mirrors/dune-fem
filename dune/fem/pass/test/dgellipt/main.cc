@@ -1,14 +1,14 @@
+#include <config.h>
+
 #include <iostream>
 #include <fstream>
 
-#include <config.h>
 #include <dune/fem/misc/double.hh>
 
 #include <dune/common/stdstreams.cc>
 #include <dune/common/misc.hh>
 #include <dune/common/timer.hh>
 
-#include <dgfgridtype.hh>
 #include <dune/common/exceptions.hh>
 
 
