@@ -1,7 +1,7 @@
-#include <iostream>
 #include <config.h>
+
+#include <iostream>
 #include <dune/common/stdstreams.cc>
-#include <dgfgridtype.hh>
 
 using namespace Dune;
 
