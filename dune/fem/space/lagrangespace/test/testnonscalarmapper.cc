@@ -5,7 +5,7 @@
 #include <dune/common/fvector.hh>
 
 // DGF gridtype 
-#include <dgfgridtype.hh>
+// #include <dgfgridtype.hh>
 #include <dune/fem/misc/mpimanager.hh>
 #include <dune/fem/gridpart/adaptiveleafgridpart.hh>
 // adaptation classes 

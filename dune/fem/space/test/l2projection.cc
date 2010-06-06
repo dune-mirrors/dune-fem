@@ -3,7 +3,7 @@
 #include <string>
 #include <sstream>
 
-#include <dgfgridtype.hh>
+// #include <dgfgridtype.hh>
 static const int dimw = Dune::GridSelector::dimworld;
 
 #include <dune/fem/operator/discreteoperatorimp.hh>

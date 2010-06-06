@@ -16,7 +16,7 @@
 
 #include <iostream>
 
-#include <dgfgridtype.hh>
+// #include <dgfgridtype.hh>
 
 #include <dune/fem/space/lagrangespace.hh>
 #include <dune/fem/function/adaptivefunction.hh>
