@@ -1,7 +1,7 @@
 #include <iostream>
 #include <config.h>
 
-#include <dune/grid/io/file/dgfparser/dgfgridtype.hh>
+// #include <dune/grid/io/file/dgfparser/dgfgridtype.hh>
 static const int dimw = Dune::GridSelector::dimworld; 
 static const int dimp = Dune::GridSelector::dimworld;
   

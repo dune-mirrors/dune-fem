@@ -12,7 +12,7 @@
 // Includes from Core Modules
 // --------------------------
 
-#include <dune/grid/io/file/dgfparser/dgfgridtype.hh>
+// #include <dune/grid/io/file/dgfparser/dgfgridtype.hh>
 #include <dune/grid/io/file/dgfparser/dgfparser.hh>
 
 

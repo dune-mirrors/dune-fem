@@ -1,7 +1,7 @@
 #include <iostream>
 #include <config.h>
 
-#include <dune/grid/io/file/dgfparser/dgfgridtype.hh>
+// #include <dune/grid/io/file/dgfparser/dgfgridtype.hh>
 static const int dimw = Dune::GridSelector::dimworld;
 
 #include <dune/fem/operator/discreteoperatorimp.hh>

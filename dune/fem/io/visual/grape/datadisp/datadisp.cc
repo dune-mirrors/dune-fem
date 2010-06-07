@@ -87,7 +87,7 @@ namespace Dune {
 using namespace Dune;
 
 // include definition of grid type 
-#include <dune/grid/io/file/dgfparser/dgfgridtype.hh>
+// #include <dune/grid/io/file/dgfparser/dgfgridtype.hh>
 
 // include grape visualization 
 #include <dune/grid/io/visual/grapedatadisplay.hh>
