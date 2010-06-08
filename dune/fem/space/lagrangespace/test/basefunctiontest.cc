@@ -14,6 +14,7 @@ namespace Dune {
   void LagrangeBase_Test::testBaseFunctions() 
   {
     typedef GridSelector::GridType GridType;
+    static const int dimworld = GridSelector::dimworld;
 
     GridPtr< GridType > gridPtr( gridFile_ );
     GridType& grid = *gridPtr;

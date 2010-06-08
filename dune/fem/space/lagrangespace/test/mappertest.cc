@@ -12,6 +12,7 @@ namespace Dune
   void LagrangeMapper_Test< Grid > :: run()
   {
     typedef GridSelector::GridType GridType;
+    static const int dimworld = GridSelector::dimworld;
 
     GridPtr< GridType > gridPtr( gridFile_ );
     GridType& grid = *gridPtr;
@@ -64,6 +65,8 @@ namespace Dune
     typedef typename SpaceType :: IteratorType IteratorType;
     typedef typename IteratorType :: Entity EntityType;
     typedef typename EntityType :: Geometry GeometryType;
+    static const int dimworld = SpaceType::GridPartType::GridType::dimensionworld;
+
 
 #if 0
     typedef typename SpaceType :: GridType GridType;

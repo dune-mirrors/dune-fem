@@ -24,7 +24,7 @@ const int PolynomialOrder = POLORDER;
 #if SCALAR
 const int dimRange = 1;
 #else 
-const int dimRange = GridType :: dimensionworld;
+const int dimRange = Dune :: GridSelector :: GridType :: dimensionworld;
 #endif
 
 
@@ -45,6 +45,8 @@ int main( int argc, char **argv )
       std::cout << "Usuage: " << argv[ 0 ] << " <startLevel> <times>" << std::endl;
       return 1;
     }
+
+    typedef GridSelector :: GridType GridType;
 
     // generate GridPointer holding grid instance
     GridPtr< GridType > gridptr ("2dgrid.dgf");
