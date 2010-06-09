@@ -2,7 +2,8 @@
 AUTOMAKE_OPTIONS = foreign 1.5
 
 miscdir =  $(includedir)/dune/fem/misc
-misc_HEADERS = bartonnackmaninterface.hh \
+misc_HEADERS = alugridwriter.hh \
+               bartonnackmaninterface.hh \
                boundaryidentifier.hh \
                capabilities.hh \
                checkgeomaffinity.hh \
