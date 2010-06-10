@@ -154,7 +154,7 @@ public:
     IndexMapIteratorType end = indices_.end();
     for( IndexMapIteratorType it = indices_.begin(); it != end; ++it)
     {
-      out << (*it).second.first << " -1"  << std::endl;
+      out << (*it).second.first << "  -1"  << std::endl;
     }
   }
 
@@ -186,6 +186,7 @@ class ALUGridWriter
 
   enum { dimension = GridType :: dimension };
 
+  typedef typename GridType :: template Codim< 0 > :: Entity  Entity;
 protected:  
   ALUGridWriter( const GridPartType& gridPart ) 
     : gridPart_( gridPart ),
@@ -226,7 +227,9 @@ protected:
 
     const char* header = ( hexahedra ) ? "!Hexahedra" : "!Tetrahedra";
     // write header 
-    file << header << "   |   Elements = " << noElements << std::endl;
+    file << header;
+    file << "  ( noVertices = " << indexSet_.size();
+    file << " | noElements = " << noElements << " )" << std :: endl;
 
     // write vertex coordinates  
     indexSet_.writeCoordinates( file );
@@ -249,6 +252,13 @@ protected:
     indexSet_.writeIndices( file );
   }
 
+  int getIndex( const Entity& entity, const int i ) const 
+  {
+    typedef typename GridType :: template Codim< dimension > :: EntityPointer  EntityPointer;
+    EntityPointer vx = entity.template subEntity< dimension > ( i );
+    return indexSet_.index( *vx );
+  }
+  
   template <class ElementTopo> 
   void writeElements( std::ostream& out ) const 
   {
@@ -257,14 +267,13 @@ protected:
     for(IteratorType it = gridPart_.template begin< 0 > ();
         it != endit; ++it )
     {
-      typedef typename GridType :: template Codim< 0 > :: Entity  Entity;
       const Entity& entity = *it ;
       const int nVx = entity.template count< dimension > ( );
-      for(int i=0; i<nVx; ++i) 
+
+      out << getIndex( entity, ElementTopo::dune2aluVertex( 0 ) );
+      for(int i=1; i<nVx; ++i) 
       {
-        typedef typename GridType :: template Codim< dimension > :: EntityPointer  EntityPointer;
-        EntityPointer vx = entity.template subEntity< dimension > ( ElementTopo::dune2aluVertex( i ) );
-        out << indexSet_.index( *vx ) << " ";
+        out << "  " << getIndex( entity, ElementTopo::dune2aluVertex( i ));
       }
       out << std::endl;
     }
@@ -325,17 +334,20 @@ protected:
 
         if( bndId != 0 )
         {
-          out << -bndId << " ";
-          const int faceNo = inter.indexInInside();
-          const int vxNr   = refElem.size( faceNo, 1, dimension );
-          out << vxNr << " ";
+          out << -bndId << "  ";
+          const int duneFace  = inter.indexInInside();
+          const int vxNr    = refElem.size( duneFace, 1, dimension );
+          out << vxNr;
+
+          std::vector< int > vertices( vxNr );
+          const int aluFace = ElementTopo :: generic2aluFace( duneFace );
           for( int i=0; i<vxNr; ++i) 
           {
-            const int subVx = refElem.subEntity( faceNo, 1, i, dimension );
-            const int aluVx = ElementTopo::dune2aluVertex( subVx );
+            const int j = ElementTopo :: faceVertex( aluFace, i );
+            const int k = ElementTopo :: alu2genericVertex( j );
             typedef typename GridType :: template Codim< dimension > :: EntityPointer  EntityPointer;
-            EntityPointer vx = entity.template subEntity< dimension > ( aluVx );
-            out << indexSet_.index( *vx ) << " ";
+            EntityPointer vx = entity.template subEntity< dimension > ( k );
+            out << "  " << indexSet_.index( *vx );
           }
           out << std::endl;
         }
