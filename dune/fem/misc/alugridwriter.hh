@@ -1,7 +1,15 @@
 #ifndef DUNE_ALUGRIDWRITER_HH
 #define DUNE_ALUGRIDWRITER_HH
 
-#include <dune/grid/alugrid/3d/alugrid.hh>
+#include <iostream>
+#include <fstream>
+#include <map>
+#include <utility>
+#include <string>
+
+#include <dune/grid/common/datahandleif.hh>
+#include <dune/grid/common/grid.hh>
+#include <dune/grid/alugrid/3d/topology.hh>
 
 namespace Dune {
 
@@ -25,7 +33,9 @@ class GlobalConsecutiveIndexSet
   typedef typename IndexMapType :: iterator IndexMapIteratorType;
   mutable IndexMapType indices_;
 
-  class DataHandle : public CommDataHandleIF< DataHandle, int > 
+  class DataHandle : 
+    public CommDataHandleIF< 
+     DataHandle, int > 
   {
     const IdSetType& idSet_;
     const int myRank_;
