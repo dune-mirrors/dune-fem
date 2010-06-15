@@ -91,10 +91,10 @@ public:
   //! return reference to space (needed by ode solvers)
   virtual const SpaceType& space() const = 0;
 
-  /** \copydoc PARDGSpaceOperatorInterface :: size */
+  /** \copydoc Dune::PARDGSpaceOperatorInterface::size() */
   virtual int size() const { return space().size(); }
 
-  /** \copydoc PARDGSpaceOperatorInterface :: operator(const double* u, double *f) */
+  /** \copydoc Dune::PARDGSpaceOperatorInterface::operator(const double* u, double *f) */
   virtual void operator() (const double* u, double *f ) const 
   {
     // get space instance 
@@ -110,7 +110,7 @@ public:
     this->operator ()( arg, dest );
   }
 
-  /** \copydoc PARDGSpaceOperatorInterface :: initializeTimeStepSize(const DestinationType& U0) */
+  /** \copydoc Dune::PARDGSpaceOperatorInterface::initializeTimeStepSize( const DestinationType& U0 ) */
   virtual void initializeTimeStepSize( const DestinationType& U0 ) const 
   {
     // create temporary variable 
