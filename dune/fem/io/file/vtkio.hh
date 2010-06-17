@@ -21,6 +21,15 @@ namespace Dune
 
 
 
+  // Compatibility definiton
+  // -----------------------
+
+#if ! DUNE_VERSION_NEWER(DUNE_GRID,2,1,0)
+typedef VTKOptions VTK;
+#endif
+
+
+
   // VTKFunctionWrapper
   // ------------------
 
@@ -180,7 +189,7 @@ namespace Dune
     }
 
     std::string write ( const std::string &name,
-                        VTKOptions::OutputType type = VTKOptions::ascii )
+                        VTK::OutputType type = VTK::ascii )
     {
       return vtkWriter_->write( name, type );
     }
@@ -188,13 +197,13 @@ namespace Dune
     std::string pwrite ( const std::string &name,
                          const std::string &path,
                          const std::string &extendpath,
-                         VTKOptions::OutputType type = VTKOptions::ascii )
+                         VTK::OutputType type = VTK::ascii )
     {
       return vtkWriter_->pwrite( name.c_str(), path.c_str(), extendpath.c_str(), type );
     }
 
     std::string write ( const std::string &name,
-                        VTKOptions::OutputType type,
+                        VTK::OutputType type,
                         const int rank, 
                         const int size )
     {
@@ -224,7 +233,7 @@ namespace Dune
 
     //! constructor  
     VTKWriter( const GridPartType &gridPart, 
-               VTKOptions::DataMode dm = VTKOptions::conforming )
+               VTK::DataMode dm = VTK::conforming )
     : BaseType( gridPart.gridView(), dm )
     {}
   };
@@ -271,7 +280,7 @@ namespace Dune
     typedef typename BaseType::GridPartType GridPartType;
 
     explicit VTKIO ( const GridPartType &gridPart,
-                     VTKOptions::DataMode dm = VTKOptions::conforming )
+                     VTK::DataMode dm = VTK::conforming )
     : BaseType( gridPart, new VTKWriterType( gridPart, dm ) )
     {}
   };
