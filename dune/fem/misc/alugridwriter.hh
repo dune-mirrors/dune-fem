@@ -105,7 +105,8 @@ class GlobalConsecutiveIndexSet
     }
   };
 public:
-  explicit GlobalConsecutiveIndexSet( const GridPartType& gridPart ) 
+  explicit GlobalConsecutiveIndexSet( const GridPartType& gridPart,
+      const bool makeNew = false  ) 
    : gridPart_( gridPart ),
      grid_( gridPart.grid() ),
      idSet_( grid_.localIdSet() )
@@ -117,18 +118,45 @@ public:
     {
       if( p == myRank ) 
       {
-        typedef typename GridPartType :: template Codim< dimension > :: IteratorType
-          IteratorType;
-        const IteratorType endit = gridPart_.template end< dimension > ();
-        for( IteratorType it = gridPart_.template begin< dimension > ();
-             it != endit; ++it )
+        if( makeNew ) 
         {
-          const IdType id = idSet_.id( *it );
-          if( indices_.find( id ) == indices_.end() )
+          typedef typename GridPartType :: template Codim< dimension > :: IteratorType
+            IteratorType;
+          const IteratorType endit = gridPart_.template end< dimension > ();
+          for( IteratorType it = gridPart_.template begin< dimension > ();
+               it != endit; ++it )
           {
-            VertexType vx( index, it->geometry().corner(0) );
-            indices_[ id ] = vx ;
-            ++index;
+            const IdType id = idSet_.id( *it );
+            std::cout << "Found element " << id << std::endl;
+            if( indices_.find( id ) == indices_.end() )
+            {
+              VertexType vx( index, it->geometry().corner(0) );
+              std::cout << "Insert index " << id << std::endl;
+              indices_[ id ] = vx ;
+              ++index;
+            }
+          }
+        }
+        else 
+        {
+          typedef typename GridPartType :: template Codim< 0 > :: IteratorType
+            IteratorType;
+          const IteratorType endit = gridPart_.template end< 0 > ();
+          for( IteratorType it = gridPart_.template begin< 0 > ();
+               it != endit; ++it )
+          {
+            const int count = it->template count< dimension > ();
+            for( int i = 0; i<count; ++i) 
+            {
+              const int id = gridPart_.indexSet().subIndex( *it, i, dimension );
+              if( indices_.find( id ) == indices_.end() )
+              {
+                VertexType vx( id, it->geometry().corner( i ) );
+                std::cout << "Insert index " << id << std::endl;
+                indices_[ id ] = vx ;
+                ++index;
+              }
+            }
           }
         }
       }
@@ -171,8 +199,12 @@ public:
   template <class EntityType>
   int index ( const EntityType& entity ) const 
   {
+    //assert( (int) EntityType :: codimension == (int) dimension );
+    //IndexMapIteratorType it = indices_.find( idSet_.id( entity ) );
+    //assert( it != indices_.end() );
+    //return (*it).second.first; 
     assert( (int) EntityType :: codimension == (int) dimension );
-    IndexMapIteratorType it = indices_.find( idSet_.id( entity ) );
+    IndexMapIteratorType it = indices_.find( gridPart_.indexSet().index( entity ) );
     assert( it != indices_.end() );
     return (*it).second.first; 
   }
@@ -183,28 +215,27 @@ public:
   }
 };
 
-template <class GridPartType> 
+template <class GridPartType, class IndexSetType > 
 class ALUGridWriter
 {
   const GridPartType& gridPart_;
 
-  typedef GlobalConsecutiveIndexSet < GridPartType > IndexSetType;
-
   typedef typename GridPartType :: GridType  GridType;
 
-  IndexSetType indexSet_;
+  const IndexSetType& indexSet_;
 
   enum { dimension = GridType :: dimension };
 
   typedef typename GridType :: template Codim< 0 > :: Entity  Entity;
 protected:  
-  ALUGridWriter( const GridPartType& gridPart ) 
+  ALUGridWriter( const GridPartType& gridPart,
+                 const IndexSetType& indexSet ) 
     : gridPart_( gridPart ),
-      indexSet_( gridPart_ )
+      indexSet_( indexSet )
   {
   }
 
-  void write(const std::string& filename) const 
+  void write(const std::string& filename, const int rank ) const 
   {
     typedef typename GridPartType :: template Codim< 0 > :: IteratorType
       IteratorType;
@@ -225,7 +256,7 @@ protected:
     }
 
     std::stringstream filestr; 
-    filestr << filename << "." << gridPart_.grid().comm().rank();
+    filestr << filename << "." << rank;
 
     std::ofstream file ( filestr.str().c_str() );
     if( ! file ) 
@@ -366,10 +397,13 @@ protected:
   }
 
 public:  
-  static void dumpMacroGrid(const GridPartType& gridPart, const std::string& filename)
+  static void dumpMacroGrid(const GridPartType& gridPart, 
+                            const IndexSetType& indexSet,
+                            const std::string& filename,
+                            const int rank)// = gridPart.grid().comm().rank ())
   {
-    ALUGridWriter< GridPartType > writer ( gridPart );
-    writer.write( filename );
+    ALUGridWriter< GridPartType, IndexSetType > writer ( gridPart, indexSet );
+    writer.write( filename, rank );
   }
 };
 
