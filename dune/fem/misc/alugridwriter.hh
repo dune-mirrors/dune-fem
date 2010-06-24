@@ -32,6 +32,7 @@ class GlobalConsecutiveIndexSet
   typedef std::map< IdType, VertexType > IndexMapType;
   typedef typename IndexMapType :: iterator IndexMapIteratorType;
   mutable IndexMapType indices_;
+  const bool useIds_;
 
   class DataHandle : 
     public CommDataHandleIF< 
@@ -106,10 +107,11 @@ class GlobalConsecutiveIndexSet
   };
 public:
   explicit GlobalConsecutiveIndexSet( const GridPartType& gridPart,
-      const bool makeNew = false  ) 
+                                      const bool useIds = false  ) 
    : gridPart_( gridPart ),
      grid_( gridPart.grid() ),
-     idSet_( grid_.localIdSet() )
+     idSet_( grid_.localIdSet() ),
+     useIds_( useIds ) 
   {
     const int pSize = grid_.comm().size();
     const int myRank = grid_.comm().rank();
@@ -118,7 +120,7 @@ public:
     {
       if( p == myRank ) 
       {
-        if( makeNew ) 
+        if( useIds_ ) 
         {
           typedef typename GridPartType :: template Codim< dimension > :: IteratorType
             IteratorType;
@@ -127,11 +129,9 @@ public:
                it != endit; ++it )
           {
             const IdType id = idSet_.id( *it );
-            std::cout << "Found element " << id << std::endl;
             if( indices_.find( id ) == indices_.end() )
             {
               VertexType vx( index, it->geometry().corner(0) );
-              std::cout << "Insert index " << id << std::endl;
               indices_[ id ] = vx ;
               ++index;
             }
@@ -152,7 +152,6 @@ public:
               if( indices_.find( id ) == indices_.end() )
               {
                 VertexType vx( id, it->geometry().corner( i ) );
-                std::cout << "Insert index " << id << std::endl;
                 indices_[ id ] = vx ;
                 ++index;
               }
@@ -161,11 +160,12 @@ public:
         }
       }
 
-      std::cout << "P["<<myRank<< "] inddex = " << index << std::endl;
+      //std::cout << "P["<<myRank<< "] inddex = " << index << std::endl;
       // send current index number 
       grid_.comm().broadcast(&index, 1, p );
-      std::cout << "P["<<myRank<< "] inddex = " << index << std::endl;
+      //std::cout << "P["<<myRank<< "] inddex = " << index << std::endl;
 
+      if( grid_.comm().size() > 1 )
       {
         DataHandle dataHandle( idSet_, myRank, indices_ );
         gridPart_.communicate( dataHandle, 
@@ -199,12 +199,11 @@ public:
   template <class EntityType>
   int index ( const EntityType& entity ) const 
   {
-    //assert( (int) EntityType :: codimension == (int) dimension );
-    //IndexMapIteratorType it = indices_.find( idSet_.id( entity ) );
-    //assert( it != indices_.end() );
-    //return (*it).second.first; 
     assert( (int) EntityType :: codimension == (int) dimension );
-    IndexMapIteratorType it = indices_.find( gridPart_.indexSet().index( entity ) );
+    IndexMapIteratorType it = indices_.find( 
+        ( useIds_ ) ? 
+          idSet_.id( entity ) : 
+          gridPart_.indexSet().index( entity ) );
     assert( it != indices_.end() );
     return (*it).second.first; 
   }
@@ -400,8 +399,9 @@ public:
   static void dumpMacroGrid(const GridPartType& gridPart, 
                             const IndexSetType& indexSet,
                             const std::string& filename,
-                            const int rank)// = gridPart.grid().comm().rank ())
+                            const int p =  -1 ) 
   {
+    const int rank = ( p < 0 ) ? gridPart.grid().comm().rank() : p ;
     ALUGridWriter< GridPartType, IndexSetType > writer ( gridPart, indexSet );
     writer.write( filename, rank );
   }
