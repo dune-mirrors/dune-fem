@@ -146,6 +146,8 @@ bool SIRK::step_iterative(double t, double dt, double *u)
 	*IterativeSolver::os << "Newton: iteration: "
 			     << iterations << "    "
 			     << "|p|: " << sqrt(global_dot) << "   "
+           << "linear iterations: " 
+           << ils->number_of_iterations()
 			     << std::endl;
       }
 
