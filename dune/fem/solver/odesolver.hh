@@ -28,10 +28,10 @@ namespace DuneODE {
 struct ODEParameters
 : public LocalParameter< ODEParameters, ODEParameters >
 { 
-  ODEParameters() : 
-    min_it( Parameter::getValue< int >( "fem.ode.miniterations" , 14 ) ),
-    max_it( Parameter::getValue< int >( "fem.ode.maxiterations" , 16 ) ),
-    sigma( Parameter::getValue< double >( "fem.ode.cflincrease" , 1.1 ) )
+  ODEParameters(bool changeCFL = true) : 
+    min_it( Parameter::getValue< int >( "fem.ode.miniterations" , (changeCFL)?14:0 ) ),
+    max_it( Parameter::getValue< int >( "fem.ode.maxiterations" , (changeCFL)?16:0 ) ),
+    sigma( Parameter::getValue< double >( "fem.ode.cflincrease" , 1.1 ) ),
   {
   }
   virtual PARDG::IterativeLinearSolver *linearSolver(PARDG::Communicator & comm) const
@@ -66,7 +66,11 @@ struct ODEParameters
                           bool converged,
                           double &factor) const
   {
-    const int iter = solver.number_of_iterations();
+    if (max_it == 0)
+      return false;
+    const int nonLinearIter = 0;
+    const int iter = solver.number_of_iterations() /
+                     (nonLinearIter>0?nonLinearIter:1);
     factor = 1.;
     bool changed = false;
     if (converged) 
@@ -425,12 +429,14 @@ protected:
     return odeSolver;
   }
   
+public:  
   virtual ~ImplicitOdeSolver() 
   {
     delete linsolver_; linsolver_ = 0;
     delete param_;     param_ = 0;
   }
   
+protected:  
   virtual int numberOfIterations()
   {
     return static_cast<PARDG::DIRK&> (odeSolver()).number_of_iterations();
@@ -535,7 +541,7 @@ public:
                         OperatorType& implOp, 
                         Dune::TimeProviderBase& tp,
                         const int order,
-                        const ODEParameters& parameter=ODEParameters()) :
+                        const ODEParameters& parameter=ODEParameters(false)) :
     BaseType( implOp, tp, order, parameter ),
     expl_( explOp )
   {
