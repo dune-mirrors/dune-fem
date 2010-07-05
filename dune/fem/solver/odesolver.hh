@@ -31,9 +31,9 @@ struct ODEParameters
   ODEParameters(bool changeCFL = true) : 
     min_it( Parameter::getValue< int >( "fem.ode.miniterations" , (changeCFL)?14:0 ) ),
     max_it( Parameter::getValue< int >( "fem.ode.maxiterations" , (changeCFL)?16:0 ) ),
-    sigma( Parameter::getValue< double >( "fem.ode.cflincrease" , 1.1 ) ),
-  {
-  }
+    sigma( Parameter::getValue< double >( "fem.ode.cflincrease" , 1.1 ) )
+  {}
+
   virtual PARDG::IterativeLinearSolver *linearSolver(PARDG::Communicator & comm) const
   {
     int cycles = Parameter::getValue< int >( "fem.ode.gmrescycles" , 15 );
