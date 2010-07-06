@@ -225,6 +225,7 @@ namespace Dune
 
   protected:
     using Imp :: dofVec_;
+    using Imp :: dofStorage;
 
   public:
     inline const RangeFieldType &dof ( unsigned int index ) const
