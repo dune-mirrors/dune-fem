@@ -38,7 +38,7 @@ struct ODEParameters
   {
     int cycles = Parameter::getValue< int >( "fem.ode.gmrescycles" , 15 );
     PARDG::IterativeLinearSolver* solver = new PARDG::GMRES(comm,cycles);
-    double tol = Parameter::getValue< double >( "fem.ode.solver.tolerance" , 1e-6 );
+    double tol = Parameter::getValue< double >( "fem.ode.solver.tolerance" , 1e-8 );
     static const std::string errorTypeTable[]
       = { "absolute", "relative" };
     int errorType = Parameter::getEnum( "fem.ode.solver.errormeassure", errorTypeTable, 0 );
@@ -49,7 +49,7 @@ struct ODEParameters
   }
   virtual double tolerance() const
   {
-    return Parameter::getValue< double >( "fem.ode.tolerance" , 1e-8 );
+    return Parameter::getValue< double >( "fem.ode.tolerance" , 1e-6 );
   }
   virtual int iterations() const
   {
@@ -60,6 +60,10 @@ struct ODEParameters
     static const std::string verboseTypeTable[]
       = { "none", "cfl", "full" };
     return Parameter::getEnum( "fem.ode.verbose" , verboseTypeTable, 0 );
+  }
+  virtual double cflStart() const
+  {
+    return Parameter::getValue< double >( "fem.ode.cflStart" , 1);
   }
   virtual bool cflFactor( const PARDG::ODESolver &ode,
                           const PARDG::IterativeLinearSolver &solver,
@@ -380,7 +384,7 @@ public:
     linsolver_( 0 ),
     param_( parameter.clone() ),
     verbose_( parameter.verbose() ),
-    cfl_(1.0)
+    cfl_( parameter.cflStart() )
   {
   }
 
@@ -462,7 +466,8 @@ public:
     cfl_ *= factor;
     if (convergence)
     {
-      timeProvider_.provideTimeStepEstimate( cfl_ * spaceOperator().timeStepEstimate() );
+      // timeProvider_.provideTimeStepEstimate( cfl_ * spaceOperator().timeStepEstimate() );
+      timeProvider_.provideTimeStepEstimate( timeStepEstimate(cfl_) );
 
       if( changed && verbose_ >= 1 )
         derr << " New cfl number is: "<< cfl_ << " (number of iterations ("
@@ -487,6 +492,11 @@ public:
   }
 
 protected:  
+  virtual double timeStepEstimate(double cfl) 
+  {
+    return cfl*spaceOperator().timeStepEstimate();
+  }
+
   OperatorWrapper<OperatorType> impl_;
   PARDG::IterativeLinearSolver* linsolver_;
   const ODEParameters* param_;
@@ -585,6 +595,12 @@ protected:
   }
   
 protected:  
+  virtual double timeStepEstimate(double cfl) 
+  {
+    // take the minimum of the explicit part and the implicit part scaled by the cfl number
+    return std::min( spaceOperator().timeStepEstimate(),
+                     cfl * impl_.op().timeStepEstimate() ); 
+  }
   OperatorWrapper<OperatorType> expl_;
 }; // end SemiImplicitOdeSolver
 
