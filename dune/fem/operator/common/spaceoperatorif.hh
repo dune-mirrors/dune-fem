@@ -9,7 +9,8 @@
 #include <dune/fem/operator/common/operator.hh>
 #include <dune/fem/operator/common/objpointer.hh>
 
-namespace Dune {
+namespace Dune
+{
 
 /** @ingroup OperatorCommon
   \brief ODESpaceOperatorInterface for Operators that work with PARDG ODE solvers 
@@ -91,10 +92,10 @@ public:
   //! return reference to space (needed by ode solvers)
   virtual const SpaceType& space() const = 0;
 
-  /** \copydoc Dune::PARDGSpaceOperatorInterface::size() */
+  /** \copydoc Dune::PARDGSpaceOperatorInterface::size() const */
   virtual int size() const { return space().size(); }
 
-  /** \copydoc Dune::PARDGSpaceOperatorInterface::operator(const double* u, double *f) const */
+  /** \copydoc Dune::PARDGSpaceOperatorInterface::operator()(const double* u, double* f) const */
   virtual void operator() (const double* u, double *f ) const 
   {
     // get space instance 
@@ -110,7 +111,7 @@ public:
     this->operator ()( arg, dest );
   }
 
-  /** \copydoc Dune::PARDGSpaceOperatorInterface::initializeTimeStepSize(const DestinationType &U0) iconst */
+  /** \copydoc Dune::PARDGSpaceOperatorInterface::initializeTimeStepSize(const DestinationType& U0) const */
   virtual void initializeTimeStepSize( const DestinationType& U0 ) const 
   {
     // create temporary variable 
@@ -264,4 +265,5 @@ public:
 };
 
 } // end namespace Dune 
-#endif
+
+#endif // #ifndef DUNE_SPACEOPERATORIF_HH
