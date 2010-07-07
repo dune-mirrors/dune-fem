@@ -95,7 +95,7 @@ public:
   /** \copydoc Dune::PARDGSpaceOperatorInterface::size() const */
   virtual int size() const { return space().size(); }
 
-  /** \copydoc Dune::PARDGSpaceOperatorInterface::operator()(const double* u, double* f) const */
+  /** \copydoc Dune::PARDGSpaceOperatorInterface::operator()(const double* u,double* f) const */
   virtual void operator() (const double* u, double *f ) const 
   {
     // get space instance 
@@ -107,8 +107,8 @@ public:
     // convert argument to discrete function 
     DestinationType dest("SpaceOperatorIF::DEST", spc, f);
 
-    // call operator apply 
-    this->operator ()( arg, dest );
+    // call operator apply
+    (*this)( arg, dest );
   }
 
   /** \copydoc Dune::PARDGSpaceOperatorInterface::initializeTimeStepSize(const DestinationType& U0) const */
@@ -117,7 +117,7 @@ public:
     // create temporary variable 
     DestinationType tmp( U0 );
     // call operator 
-    this->operator() ( U0, tmp );
+    (*this)( U0, tmp );
   }
 
   //! return reference to pass's local memory  
