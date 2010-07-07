@@ -17,10 +17,11 @@ namespace Dune
      *
      *  \tparam  DomainFunction  type of discrete function for the domain
      *  \tparam  RangeFunction   type of discrete function for the range
+     *                           (defaults to DomainFunction)
      *
      *  \interfaceclass
      */
-    template< class DomainFunction, class RangeFunction >
+    template< class DomainFunction, class RangeFunction = DomainFunction >
     struct Operator
     {
       /** \brief type of discrete function in the operator's domain */
