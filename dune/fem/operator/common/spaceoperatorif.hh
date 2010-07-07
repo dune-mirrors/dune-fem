@@ -94,7 +94,7 @@ public:
   /** \copydoc Dune::PARDGSpaceOperatorInterface::size() */
   virtual int size() const { return space().size(); }
 
-  /** \copydoc Dune::PARDGSpaceOperatorInterface::operator(const double* u, double *f) */
+  /** \copydoc Dune::PARDGSpaceOperatorInterface::operator(const double* u, double *f) const */
   virtual void operator() (const double* u, double *f ) const 
   {
     // get space instance 
@@ -110,7 +110,7 @@ public:
     this->operator ()( arg, dest );
   }
 
-  /** \copydoc Dune::PARDGSpaceOperatorInterface::initializeTimeStepSize( const DestinationType& U0 ) */
+  /** \copydoc Dune::PARDGSpaceOperatorInterface::initializeTimeStepSize(const DestinationType &U0) iconst */
   virtual void initializeTimeStepSize( const DestinationType& U0 ) const 
   {
     // create temporary variable 
