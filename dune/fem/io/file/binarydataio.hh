@@ -17,7 +17,8 @@
 #include <dune/fem/io/file/asciiparser.hh>
 #include <dune/fem/misc/mpimanager.hh>
 
-namespace Dune {
+namespace Dune
+{
 
 inline std::string generateFilename(const std::string& fn,
                                     int ntime,
@@ -57,11 +58,15 @@ std::string indexSetToName(const WrappedHierarchicIndexSet<GridImp>& set)
 }
 
 
-template <int dim, int dimworld, class GridImp, bool hasBackupRestore> 
-class BinaryDataIOImp 
+template< int dim, int dimworld, class GridImp, bool hasBackupRestore >
+struct BinaryDataIOImp;
+
+
+template< int dim, int dimworld, class GridImp >
+struct BinaryDataIOImp< dim, dimworld, GridImp, true >
 {
-public:  
   typedef GridImp GridType;
+
    /** Write Grid with GridType file filename and time 
    *
    * This method uses the Grid Interface Method writeGrid 
@@ -88,11 +93,11 @@ public:
   }
 };
 
-template <int dim, int dimworld, class GridImp> 
-class BinaryDataIOImp<dim,dimworld,GridImp,false>
+template< int dim, int dimworld, class GridImp >
+struct BinaryDataIOImp< dim, dimworld, GridImp, false >
 {
   typedef GridImp GridType;
-public:  
+
    /** Write structurd grid to file filename 
     NOTE: the macro grid file of this structured grid 
           has to stored in a file named "filename.macro" and
@@ -100,186 +105,58 @@ public:
    */
   inline static bool writeGrid (const GridType & grid, 
     const GrapeIOFileFormatType ftype, const GrapeIOStringType & fnprefix 
-      , double time=0.0, int timestep=0, int precision = 6)
-  {
-    // write dof manager, that corresponds to grid 
-    bool hasDm = false;
-    {
-      typedef DofManager<GridImp> DofManagerType; 
-
-      std::string dmname(fnprefix);
-      dmname += "_dm";
-      hasDm = DofManagerType :: write(grid,dmname,timestep);
-    }
-   
-    // write Grid itself 
-    {
-      std::ofstream file (fnprefix.c_str());
-      if( file.is_open() )
-      {
-        file << "Grid: "   << Fem::gridName(grid) << std::endl;
-        file << "Format: " << ftype <<  std::endl;
-        file << "Precision: " << precision << std::endl;
-        int writeDm = (hasDm)? 1 : 0;
-        file << "DofManager: " << writeDm << std::endl; 
-        file.close();
-      }
-      else {
-        std::cerr << "Couldn't open file `" << fnprefix << "' ! \n";
-        return false;
-      }
-    }
-      
-    // write max level and current time to grid specific file 
-    { 
-      GrapeIOStringType fnstr = generateFilename(fnprefix,timestep,precision);
-      std::ofstream gridfile (fnstr.c_str());
-      
-      if( gridfile.is_open() )
-      {
-        gridfile << "MaxLevel: " << grid.maxLevel() << std::endl;
-        gridfile << "Time: " << std::scientific << time << std::endl;
-        gridfile.close();
-      }
-      else 
-      {
-        std::cerr << "Couldn't open file `" << fnstr << "' ! \n";
-        return false;
-      }
-    }
-    return true;
-  }
+      , double time=0.0, int timestep=0, int precision = 6);
 
   //! get Grid from file with time and timestep , return true if ok 
   inline static bool readGrid (GridType & grid, 
-      const GrapeIOStringType & fnprefix , double & time , int timestep, bool verbose = true )
-  {
-    std::string gridname;
-
-    bool readGridName = readParameter(fnprefix,"Grid",gridname);
-    if(! readGridName ) 
-    {
-      std::cerr << "P["<< grid.comm().rank() << "] ERROR: Couldn't open file '"<<fnprefix<<"' !" << std::endl;
-      return false;
-    }
-
-    std::string grName ( Fem::gridName( grid ) );
-    if( grName != gridname )
-    {
-      if( (grName == "SGrid") && (gridname == "YaspGrid") ) 
-      {
-        std::cerr << "WARNING: YaspGrid is read as SGrid! \n";
-      }
-      else 
-      {
-        std::cerr << "\nERROR: '" << grName << "' tries to read '" << gridname << "' file. \n";
-        abort();
-      }
-    }
-
-    int precision = 6;
-    readParameter(fnprefix,"Precision",precision);
-
-    int hasDm = 0;
-    readParameter(fnprefix,"DofManager",hasDm);
-
-    {
-      GrapeIOStringType fnstr = generateFilename(fnprefix,timestep,precision);
-      
-      {
-        // read stored maxLevel 
-        int maxLevel = 0;
-        readParameter(fnstr,"MaxLevel",maxLevel);
-
-        // calculate level to achieve 
-        maxLevel -= grid.maxLevel();
-
-        if( maxLevel < 0 ) 
-        {
-          DUNE_THROW(InvalidStateException,"maxLevel of grid is already to big!");
-        }
-        else if ( maxLevel > 0 ) 
-        {
-          // refine grid 
-          grid.globalRefine( maxLevel );
-        }
-      }
-      readParameter(fnstr,"Time",time);
-    }
-    return true;
-  }
+      const GrapeIOStringType & fnprefix , double & time , int timestep, bool verbose = true );
 
   //! get Grid from file with time and timestep , return true if ok 
   inline static GridType * restoreGrid (
-      const GrapeIOStringType & fnprefix , double & time , int timestep, bool verbose = false )
-  {
-    std::string macroName (fnprefix);
-
-    if( MPIManager :: size() > 1 )
-    {
-      // read global file, only differs for YaspGrid
-      macroName += ".macro.global";
-    }
-    else 
-    {
-      // read sub grid file 
-      macroName += ".macro";
-    }
-    
-    GridType * grid = 0;
-    {
-      if( Parameter :: verbose () )
-        std::cout << "Read grid from " << macroName << std::endl;
-      // create macro grid 
-      GridPtr<GridType> gridptr(macroName);
-      std::cout << "Created Structured Macro Grid `" << macroName << "' !\n";
-      // release pointer 
-      grid = gridptr.release();
-    }
-    assert( grid );
-    readGrid(*grid,fnprefix,time,timestep,verbose);
-    return grid;
-  }
+      const GrapeIOStringType & fnprefix , double & time , int timestep, bool verbose = false );
 };
 
-template <class GridImp>
-class BinaryDataIO 
+template< class GridImp >
+struct BinaryDataIO 
 {
+  typedef GridImp GridType;
+
+private:
+  static const int dimGrid = GridType::dimension;
+  static const int dimWorld = GridType::dimensionworld;
+
+  static const bool hasBackupRestore
+    = Capabilities::hasBackupRestoreFacilities< GridType >::v;
+
+  typedef BinaryDataIOImp< dimGrid, dimWorld, GridType, hasBackupRestore > Impl;
+
 public:
-   typedef GridImp GridType;
+  BinaryDataIO () {}
 
-   BinaryDataIO () {}
-
-   /** Write Grid with GridType file filename and time 
+  /** Write Grid with GridType file filename and time 
    *
-   * This method uses the Grid Interface Method writeGrid 
-   * to actually write the grid, within this method the real file name is
-   * generated out of filename and timestep 
+   *  This method uses the Grid Interface Method writeGrid 
+   *  to actually write the grid, within this method the real file name is
+   *  generated out of filename and timestep 
    */
   inline bool writeGrid (const GridType & grid, 
     const GrapeIOFileFormatType ftype, const GrapeIOStringType fnprefix 
       , double time=0.0, int timestep=0, int precision = 6) const
   {
-    const bool hasBackupRestore = Capabilities::hasBackupRestoreFacilities<GridType>::v;
-    return BinaryDataIOImp<GridType::dimension,GridType::dimensionworld,GridType,hasBackupRestore>::
-      writeGrid(grid,ftype,fnprefix,time,timestep,precision);
+    return Impl::writeGrid( grid, ftype, fnprefix, time, timestep, precision );
   }
 
   //! get Grid from file with time and timestep , return true if ok 
   inline bool readGrid (GridType & grid, 
       const GrapeIOStringType fnprefix , double & time , int timestep, bool verbose = true )
   {
-    const bool hasBackupRestore = Capabilities::hasBackupRestoreFacilities<GridType>::v;
-    return BinaryDataIOImp<GridType::dimension,GridType::dimensionworld,GridType,hasBackupRestore>::
-      readGrid(grid,fnprefix,time,timestep);
+    return Impl::readGrid( grid, fnprefix, time, timestep );
   }
 
   //! get Grid from file with time and timestep , return true if ok 
   inline GridType * restoreGrid(const GrapeIOStringType fnprefix , double & time , int timestep, bool verbose = false )
   {
-    const bool hasBackupRestore = Capabilities::hasBackupRestoreFacilities<GridType>::v;
-    return BinaryDataIOImp<GridType::dimension,GridType::dimensionworld,GridType,hasBackupRestore>::
-          restoreGrid(fnprefix,time,timestep);
+    return Impl::restoreGrid( fnprefix, time, timestep );
   }
 
   /**
@@ -299,8 +176,10 @@ public:
         const GrapeIOStringType filename, int timestep);
 };
 
-template <int dim, int dimworld, class GridImp, bool hasBackupRestore>
-inline bool BinaryDataIOImp<dim,dimworld,GridImp,hasBackupRestore> :: writeGrid 
+
+/** \cond */
+template< int dim, int dimworld, class GridImp >
+inline bool BinaryDataIOImp< dim, dimworld, GridImp, true >::writeGrid
 (const GridImp & grid,
   const GrapeIOFileFormatType ftype, const GrapeIOStringType & fnprefix , 
   double time, int timestep, int precision )
@@ -350,8 +229,8 @@ inline bool BinaryDataIOImp<dim,dimworld,GridImp,hasBackupRestore> :: writeGrid
   }
 }
 
-template <int dim, int dimworld, class GridImp, bool hasBackupRestore>
-inline bool BinaryDataIOImp<dim,dimworld,GridImp,hasBackupRestore> :: readGrid 
+template< int dim, int dimworld, class GridImp >
+inline bool BinaryDataIOImp< dim, dimworld, GridImp, true >::readGrid 
 (GridImp & grid, const GrapeIOStringType & fnprefix , double & time , int timestep, bool verbose )
 {
   int helpType = (int) xdr;
@@ -425,6 +304,159 @@ inline bool BinaryDataIOImp<dim,dimworld,GridImp,hasBackupRestore> :: readGrid
   */
   return succeded;
 }
+
+
+template< int dim, int dimworld, class GridImp >
+inline bool BinaryDataIOImp< dim, dimworld, GridImp, false >
+  ::writeGrid ( const GridType &grid,
+                const GrapeIOFileFormatType ftype, const GrapeIOStringType &fnprefix,
+                double time, int timestep, int precision )
+{
+  // write dof manager, that corresponds to grid 
+  bool hasDm = false;
+  {
+    typedef DofManager<GridImp> DofManagerType; 
+
+    std::string dmname(fnprefix);
+    dmname += "_dm";
+    hasDm = DofManagerType :: write(grid,dmname,timestep);
+  }
+ 
+  // write Grid itself 
+  {
+    std::ofstream file (fnprefix.c_str());
+    if( file.is_open() )
+    {
+      file << "Grid: "   << Fem::gridName(grid) << std::endl;
+      file << "Format: " << ftype <<  std::endl;
+      file << "Precision: " << precision << std::endl;
+      int writeDm = (hasDm)? 1 : 0;
+      file << "DofManager: " << writeDm << std::endl; 
+      file.close();
+    }
+    else {
+      std::cerr << "Couldn't open file `" << fnprefix << "' ! \n";
+      return false;
+    }
+  }
+    
+  // write max level and current time to grid specific file 
+  { 
+    GrapeIOStringType fnstr = generateFilename(fnprefix,timestep,precision);
+    std::ofstream gridfile (fnstr.c_str());
+    
+    if( gridfile.is_open() )
+    {
+      gridfile << "MaxLevel: " << grid.maxLevel() << std::endl;
+      gridfile << "Time: " << std::scientific << time << std::endl;
+      gridfile.close();
+    }
+    else 
+    {
+      std::cerr << "Couldn't open file `" << fnstr << "' ! \n";
+      return false;
+    }
+  }
+  return true;
+}
+
+
+template< int dim, int dimworld, class GridImp >
+inline bool BinaryDataIOImp< dim, dimworld, GridImp, false >
+  ::readGrid ( GridType &grid,
+               const GrapeIOStringType &fnprefix,
+               double &time, int timestep, bool verbose )
+{
+  std::string gridname;
+
+  bool readGridName = readParameter(fnprefix,"Grid",gridname);
+  if(! readGridName ) 
+  {
+    std::cerr << "P["<< grid.comm().rank() << "] ERROR: Couldn't open file '"<<fnprefix<<"' !" << std::endl;
+    return false;
+  }
+
+  std::string grName ( Fem::gridName( grid ) );
+  if( grName != gridname )
+  {
+    if( (grName == "SGrid") && (gridname == "YaspGrid") ) 
+    {
+      std::cerr << "WARNING: YaspGrid is read as SGrid! \n";
+    }
+    else 
+    {
+      std::cerr << "\nERROR: '" << grName << "' tries to read '" << gridname << "' file. \n";
+      abort();
+    }
+  }
+
+  int precision = 6;
+  readParameter(fnprefix,"Precision",precision);
+
+  int hasDm = 0;
+  readParameter(fnprefix,"DofManager",hasDm);
+
+  {
+    GrapeIOStringType fnstr = generateFilename(fnprefix,timestep,precision);
+    
+    {
+      // read stored maxLevel 
+      int maxLevel = 0;
+      readParameter(fnstr,"MaxLevel",maxLevel);
+
+      // calculate level to achieve 
+      maxLevel -= grid.maxLevel();
+
+      if( maxLevel < 0 ) 
+      {
+        DUNE_THROW(InvalidStateException,"maxLevel of grid is already to big!");
+      }
+      else if ( maxLevel > 0 ) 
+      {
+        // refine grid 
+        grid.globalRefine( maxLevel );
+      }
+    }
+    readParameter(fnstr,"Time",time);
+  }
+  return true;
+}
+
+
+template< int dim, int dimworld, class GridImp >
+inline typename BinaryDataIOImp< dim, dimworld, GridImp, false >::GridType *
+BinaryDataIOImp< dim, dimworld, GridImp, false >
+  ::restoreGrid ( const GrapeIOStringType &fnprefix, double &time, int timestep, bool verbose )
+{
+  std::string macroName (fnprefix);
+
+  if( MPIManager :: size() > 1 )
+  {
+    // read global file, only differs for YaspGrid
+    macroName += ".macro.global";
+  }
+  else 
+  {
+    // read sub grid file 
+    macroName += ".macro";
+  }
+  
+  GridType * grid = 0;
+  {
+    if( Parameter :: verbose () )
+      std::cout << "Read grid from " << macroName << std::endl;
+    // create macro grid 
+    GridPtr<GridType> gridptr(macroName);
+    std::cout << "Created Structured Macro Grid `" << macroName << "' !\n";
+    // release pointer 
+    grid = gridptr.release();
+  }
+  assert( grid );
+  readGrid(*grid,fnprefix,time,timestep,verbose);
+  return grid;
+}
+/** \endcond */
+
 
 template <class GridType>
 template <class DiscreteFunctionType> 
@@ -561,4 +593,4 @@ readData(DiscreteFunctionType & df, const GrapeIOStringType filename, int timest
 
 } // end namespace
 
-#endif
+#endif // #ifndef DUNE_BINARYDATAIO_HH
