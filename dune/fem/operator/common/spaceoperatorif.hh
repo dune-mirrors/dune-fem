@@ -23,102 +23,93 @@ class PARDGSpaceOperatorInterface
 {
 protected:
   // only allow derived class to call this constructor  
-  PARDGSpaceOperatorInterface() {}
+  PARDGSpaceOperatorInterface () {}
 
 public:
   //! type of argument and destination 
   typedef DestinationImp DestinationType;
   
   //! destructor 
-  virtual ~PARDGSpaceOperatorInterface() {}
+  virtual ~PARDGSpaceOperatorInterface () {}
   
   /** \brief return size of discrete function space, i.e. number of unknowns */
-  virtual int size() const = 0 ;
+  virtual int size () const = 0 ;
 
   /** \brief call operator once to calculate initial time step size 
       \param U0  initial data to compute initial time step size 
    */
-  virtual void initializeTimeStepSize( const DestinationType& U0 ) const = 0;
+  virtual void initializeTimeStepSize ( const DestinationType& U0 ) const = 0;
 
   /** \brief application operator to apply right hand side 
       \param u  argument, u 
       \param f  destination, f(u)
    */
-  virtual void operator() (const double* u, double *f ) const = 0;
+  virtual void operator() ( const double *u, double *f ) const = 0;
 
   /** \brief set time for operators 
       \param time current time of evaluation 
   */
-  virtual void setTime(const double time) {}
+  virtual void setTime ( const double time ) {}
 
-  /** \brief returns maximal possible dt to assure stabil 
-       explicit Runge Kutta ODE Solver. */
+  /** \brief estimate maximum time step
+   *
+   *  For an explicit time discretization, the time step has to be limited.
+   *  An estimate for the maximum time step of an explicit Euler scheme is
+   *  returned by this function.
+   *  Maximum time steps for higher order Runge Kutta schemes can be derived
+   *  from this value.
+   *  */
   virtual double timeStepEstimate () const 
   {
-    return std::numeric_limits<double>::max();  
+    return std::numeric_limits< double >::max();  
   }
 };
 
-/** @ingroup OperatorCommon
-  \brief SpaceOperatorInterface for Operators of the type 
-  \f$L: X \longrightarrow X\f$ where \f$X\f$ is a discrete function space.
-  Use this interface to implement Operators working on DiscreteFunctions for ODE
-  solvers.
-  
-  \interfaceclass
-*/
-template <class DestinationImp> 
+/** \class   SpaceOperatorInterface
+  * \ingroup OperatorCommon
+  *  \brief  interface for time evolution operators
+  *
+  * The SpaceOperatorInterface defines an interface for operators
+  * \f$L: X \longrightarrow X\f$ from a discrete function space \f$X\f$ into
+  * itself.
+  * This interface is used to implement operators working with the ODE solvers.
+  *
+  * \tparam  DiscreteFunction  type of discretefunction modelling the elements
+  *                            of \f$X\f$.
+  *
+  * \interfaceclass
+  */
+template< class DiscreteFunction >
 class SpaceOperatorInterface 
-: public Fem::Operator< DestinationImp, DestinationImp >,
-  public PARDGSpaceOperatorInterface< DestinationImp >
+: public Fem::Operator< DiscreteFunction >,
+  public PARDGSpaceOperatorInterface< DiscreteFunction >
 {
-  typedef Fem::Operator< DestinationImp, DestinationImp > BaseType;
-  using BaseType :: operator ();
-
-protected:
-  // only allow derived class to call this constructor  
-  SpaceOperatorInterface() {}
+  typedef SpaceOperatorInterface< DiscreteFunction > ThisType;
+  typedef Fem::Operator< DiscreteFunction > BaseType;
 
 public:
   //! type of argument and destination 
-  typedef DestinationImp DestinationType;
+  typedef DiscreteFunction DestinationType;
   
   //! type of discrete function space 
-  typedef typename DestinationType :: DiscreteFunctionSpaceType   SpaceType;
+  typedef typename DestinationType::DiscreteFunctionSpaceType SpaceType;
   
   //! destructor 
   virtual ~SpaceOperatorInterface() {}
 
+  using BaseType::operator ();
+
   //! return reference to space (needed by ode solvers)
-  virtual const SpaceType& space() const = 0;
+  virtual const SpaceType &space() const = 0;
 
   /** \copydoc Dune::PARDGSpaceOperatorInterface::size() const */
-  virtual int size() const { return space().size(); }
+  virtual int size () const { return space().size(); }
 
-  /** \copydoc Dune::PARDGSpaceOperatorInterface::operator()(const double* u,double* f) const */
-  virtual void operator() (const double* u, double *f ) const 
-  {
-    // get space instance 
-    const SpaceType& spc = space();
+  /** \copydoc Dune::PARDGSpaceOperatorInterface::operator()(const double*,double*) const */
+  virtual void operator() ( const double *u, double *f ) const;
 
-    // convert argument to discrete function 
-    const DestinationType arg ("SpaceOperatorIF::ARG" , spc, u);
-
-    // convert argument to discrete function 
-    DestinationType dest("SpaceOperatorIF::DEST", spc, f);
-
-    // call operator apply
-    (*this)( arg, dest );
-  }
-
-  /** \copydoc Dune::PARDGSpaceOperatorInterface::initializeTimeStepSize(const DestinationType& U0) const */
-  virtual void initializeTimeStepSize( const DestinationType& U0 ) const 
-  {
-    // create temporary variable 
-    DestinationType tmp( U0 );
-    // call operator 
-    (*this)( U0, tmp );
-  }
+  /** \copydoc Dune::PARDGSpaceOperatorInterface::initializeTimeStepSize(const DestinationType&) const */
+  virtual void initializeTimeStepSize ( const DestinationType &U0 ) const;
 
   //! return reference to pass's local memory  
   virtual const DestinationType* destination() const { return 0; }
@@ -263,6 +254,35 @@ public:
     pass()(arg,dest);
   }
 };
+
+
+// Implementation of SpaceOperatorInterface
+// ----------------------------------------
+
+template< class DiscreteFunction >
+inline void SpaceOperatorInterface< DiscreteFunction >
+  ::operator() ( const double *u, double *f ) const
+{
+  // get space instance
+  const SpaceType &spc = space();
+
+  // convert arguments to discrete function
+  const DestinationType arg( "SpaceOperatorIF::ARG", spc, u );
+  DestinationType dest( "SpaceOperatorIF::DEST", spc, f );
+
+  // call operator apply
+  (*this)( arg, dest );
+}
+
+template< class DiscreteFunction >
+inline void SpaceOperatorInterface< DiscreteFunction >
+  ::initializeTimeStepSize ( const DestinationType &U0 ) const
+{
+  // create temporary variable
+  DestinationType tmp( U0 );
+  // call operator
+  (*this)( U0, tmp );
+}
 
 } // end namespace Dune 
 
