@@ -63,7 +63,7 @@ struct DataOutputParameters
   virtual int outputformat () const
   {
     static const std::string formatTable[]
-      = { "binary", "vtk-cell", "vtk-vertex", "gnuplot" };
+      = { "binary", "vtk-cell", "vtk-vertex", "gnuplot" , "sub-vtk-cell"};
     int format = Parameter::getEnum( "fem.io.outputformat", formatTable, 1 );
     return format;
   }
@@ -84,6 +84,12 @@ struct DataOutputParameters
   virtual int savecount () const
   {
     return Parameter::getValue< int >( "fem.io.savecount", 0 );
+  }
+
+  //! save data every savecount calls to write method (fem.io.savecount)
+  virtual int subsamplingLevel() const
+  {
+    return Parameter::getValue< int >( "fem.io.subsamplinglevel", 1 );
   }
 
   //! number for first data file (no parameter available)
@@ -344,7 +350,8 @@ protected:
   };
 
 protected:  
-  enum OutputFormat { binary = 0 , vtk = 1 , vtkvtx = 2 , gnuplot = 3 };
+  enum OutputFormat { binary = 0 , vtk = 1 , vtkvtx = 2 , gnuplot = 3 ,
+  subvtk = 4 };
 
   //! \brief type of grid used 
   typedef GridImp GridType;
@@ -473,6 +480,7 @@ protected:
       case 1: outputFormat_ = vtk; break;
       case 2: outputFormat_ = vtkvtx; break;
       case 3: outputFormat_ = gnuplot; break;
+      case 4: outputFormat_ = subvtk; break;
       default:
         DUNE_THROW(NotImplemented,"DataOutput::init: wrong output format");
     }
@@ -546,6 +554,7 @@ public:
 #if USE_VTKWRITER
     case vtk : 
     case vtkvtx :
+    case subvtk :
       // write data in vtk output format 
       filename = writeVTKOutput();
       break;
@@ -628,7 +637,7 @@ protected:
         filename = vtkio.write( name, Dune::VTKOptions::binaryappended );
       }
     }
-    else
+    else if ( outputFormat_ == vtk )
     {
       typedef GridPartGetter< GridType, OutPutDataType> GridPartGetterType;
       GridPartGetterType gp( grid_, data_ );
@@ -636,6 +645,31 @@ protected:
       // create vtk output handler 
       typedef VTKIO < typename GridPartGetterType :: GridPartType > VTKIOType; 
       VTKIOType vtkio ( gp.gridPart() , VTKOptions::nonconforming );
+
+      // add all functions 
+      VTKOutputerDG< VTKIOType > io( vtkio );
+      io.forEach( data_ );
+
+      // write all data 
+      if( parallel )
+      {
+        // write all data for parallel runs  
+        filename = vtkio.pwrite( name, path_, "." , Dune::VTKOptions::binaryappended );
+      }
+      else
+      {
+        // write all data serial 
+        filename = vtkio.write( name, Dune::VTKOptions::binaryappended );
+      }
+    }
+    else if ( outputFormat_ == subvtk )
+    {
+      typedef GridPartGetter< GridType, OutPutDataType> GridPartGetterType;
+      GridPartGetterType gp( grid_, data_ );
+
+      // create vtk output handler 
+      typedef SubsamplingVTKIO < typename GridPartGetterType :: GridPartType > VTKIOType; 
+      VTKIOType vtkio ( gp.gridPart(), param_->subsamplingLevel() );
 
       // add all functions 
       VTKOutputerDG< VTKIOType > io( vtkio );
