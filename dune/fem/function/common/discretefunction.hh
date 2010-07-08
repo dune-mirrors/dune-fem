@@ -158,6 +158,7 @@ namespace Dune
       return asImp().name();
     }
 
+    /** \brief obtain a reference to the corresponding DiscreteFunctionSpace */
     const DiscreteFunctionSpaceType &space () const
     {
       return asImp().space();

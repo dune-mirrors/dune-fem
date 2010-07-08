@@ -215,10 +215,10 @@ namespace Dune
       return storage_.numBaseFunctions();
     }
 
-    /** \copydoc Dune::BaseFunctionSetInterface::evaluate(const int baseFunction,const FieldVector<int,diffOrd> &diffVariable,const PointType &x,RangeType &phi) const */
+    /** \copydoc Dune::BaseFunctionSetInterface::evaluate(const int,const FieldVector<deriType,diffOrd>&,const PointType&,RangeType&) const */
     template< int diffOrd, class PointType >
     inline void evaluate ( const int baseFunction,
-                           const FieldVector< int, diffOrd > &diffVariable,
+                           const FieldVector< deriType, diffOrd > &diffVariable,
                            const PointType &x,
                            RangeType &phi ) const
     {
