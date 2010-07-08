@@ -8,6 +8,7 @@
 //- Dune includes
 
 #include <dune/grid/common/grid.hh>
+#include <dune/common/bartonnackmanifcheck.hh>
 #include <dune/grid/common/sizecache.hh>
 
 #include <dune/fem/gridpart/gridpart.hh>
@@ -103,16 +104,19 @@ namespace Dune
     ThisType &operator= ( const ThisType & );
 
   public:
-    //! returns true if the given entity of the pointer in the domain 
-    bool has0Entity ( const ElementType &element ) const
-    {
-      return asImp().has0Entity( element );
-    }
-    
     //! returns true if the given entity is in the domain 
     bool has0Entity ( const ElementPointerType &elementPtr ) const
     {
+      CHECK_INTERFACE_IMPLEMENTATION( asImp().has0Entity( elementPtr ) );
       return asImp().has0Entity( elementPtr );
+    }
+    
+    //! returns true if the given entity of the pointer in the domain 
+    template <class EntityType>
+    bool has0Entity ( const EntityType &element ) const
+    {
+      CHECK_INTERFACE_IMPLEMENTATION( asImp().has0Entity( element ) );
+      return asImp().has0Entity( element );
     }
     
     //! returns true if an intersection is interior 
@@ -853,7 +857,9 @@ namespace Dune
       filter_( filter ),
       endIter_( endIterator )
     {
-      while( (*this != endIter_) && (!filter_->has0Entity( *(*this) )) )
+      typedef typename BaseType :: Entity Entity ;
+      while( (*this != endIter_) && (!filter_->has0Entity(
+              static_cast<const Entity&> (*(*this)) )) )
         BaseType :: operator++();
     }
 
@@ -871,9 +877,10 @@ namespace Dune
     //! overloaded increment 
     ThisType &operator++ ()
     {
+      typedef typename BaseType :: Entity Entity ;
       do
         BaseType :: operator++();
-      while( (*this != endIter_) && (!filter_->has0Entity( *(*this) )) );
+      while( (*this != endIter_) && (!filter_->has0Entity( static_cast<const Entity&> (*(*this) ))) );
       return *this;
     }
   }; // end IteratorWrapper
