@@ -27,6 +27,7 @@ class GlobalConsecutiveIndexSet
   const IdSetType& idSet_;
 
   typedef typename GridType :: template Codim< 0 >  :: Geometry :: GlobalCoordinate  CoordinateType;
+  typedef typename GridType :: template Codim< 0 >  :: Entity EntityType;
 
   typedef std::pair< int , CoordinateType > VertexType ;
   typedef std::map< IdType, VertexType > IndexMapType;
@@ -145,13 +146,16 @@ public:
           for( IteratorType it = gridPart_.template begin< 0 > ();
                it != endit; ++it )
           {
-            const int count = it->template count< dimension > ();
+            const EntityType& entity = *it ;
+            const int count = entity.template count< dimension > ();
             for( int i = 0; i<count; ++i) 
             {
-              const int id = gridPart_.indexSet().subIndex( *it, i, dimension );
+              typedef typename GridType :: template Codim< dimension > :: EntityPointer  EntityPointer;
+              EntityPointer vertex = entity.template subEntity< dimension > ( i );
+              const int id = gridPart_.indexSet().index( *vertex );
               if( indices_.find( id ) == indices_.end() )
               {
-                VertexType vx( id, it->geometry().corner( i ) );
+                VertexType vx( id, vertex->geometry().corner( 0 ) );
                 indices_[ id ] = vx ;
                 ++index;
               }
@@ -199,7 +203,8 @@ public:
   template <class EntityType>
   int index ( const EntityType& entity ) const 
   {
-    assert( (int) EntityType :: codimension == (int) dimension );
+    //assert( (int) EntityType :: codimension == (int) dimension );
+    //assert( (int) EntityType :: dimension ==  0 );
     IndexMapIteratorType it = indices_.find( 
         ( useIds_ ) ? 
           idSet_.id( entity ) : 
@@ -369,6 +374,7 @@ protected:
         else if( inter.neighbor() && 
                  inter.outside()->partitionType() != InteriorEntity )
         {
+          std::cout <<"Writing ghost bnd \n";
           bndId = 111; 
         }
 
