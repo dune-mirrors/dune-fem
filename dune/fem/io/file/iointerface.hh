@@ -151,7 +151,7 @@ public:
   virtual ~IOInterface () {}
 
   //! return FEM key for macro grid reading 
-  static std::string defaultGridKey( const int dimension )
+  static std::string defaultGridKey( const int dimension , const bool  check = true )
   {
     std::stringstream gridKey;
     gridKey << "fem.io.macroGridFile";
@@ -169,7 +169,7 @@ public:
     }
 
     // check for parameter with dimension 
-    if( ! Parameter :: exists( gridKey.str() ) )
+    if( check && ! Parameter :: exists( gridKey.str() ) )
     {
       std::cerr << "ERROR: Parameter `" << gridKey.str() << "' not found in given parameter file!" << std::endl;
       DUNE_THROW(InvalidStateException,"Parameter " << gridKey.str() << " not found!");
