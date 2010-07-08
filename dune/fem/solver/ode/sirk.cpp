@@ -117,7 +117,7 @@ bool SIRK::step_iterative(double t, double dt, double *u)
 
     // prediction uf ui, todo: extrapolation or something...
     // ui = u^n
-    cblas_dcopy(dim, u, 1, ui, 1);
+    cblas_dcopy(dim, Fpre, 1, ui, 1);
 
     // Newton iteration
     int iterations = 0;
