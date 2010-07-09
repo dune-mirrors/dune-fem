@@ -110,25 +110,23 @@ namespace Dune
     // reference to index set 
     const IndexSetType& indexSet_;
   public:
-    //! Constructor
-    inline explicit AdaptiveGridPartBase ( GridType &grid )
-    : BaseType( grid )
-    , indexSet_( IndexSetProviderType :: getObject( KeyType( asImp(), grid ) ) )
-    {
-    }
+    //! constructor
+    explicit AdaptiveGridPartBase ( GridType &grid )
+    : BaseType( grid ), 
+      indexSet_( IndexSetProviderType::getObject( KeyType( asImp(), grid ) ) )
+    {}
 
     //! Copy Constructor
     AdaptiveGridPartBase ( const ThisType &other )
-    : BaseType( other.grid_ )
-    , indexSet_( IndexSetProviderType :: getObject( KeyType( asImp(), other.grid() ) ) )
-    {
-    }
+    : BaseType( other ),
+      indexSet_( IndexSetProviderType::getObject( KeyType( asImp(), other.grid() ) ) )
+    {}
 
     /** \brief Destrcutor removeing index set, if only one reference left, index set
         removed.  */
-    inline ~AdaptiveGridPartBase ()
+    ~AdaptiveGridPartBase ()
     { 
-      IndexSetProviderType :: removeObject( indexSet() );
+      IndexSetProviderType::removeObject( indexSet() );
     }
 
     //! Returns reference to index set of the underlying grid

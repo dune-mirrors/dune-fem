@@ -271,10 +271,15 @@ namespace Dune
     GridType &grid_;
 
   protected:
-    //! Constructor
-    GridPartDefault ( GridType &grid ) //, const IndexSetType &indexSet )
+    //! constructor
+    GridPartDefault ( GridType &grid )
     : BaseType(),
       grid_( grid )
+    {}
+
+    GridPartDefault ( const ThisType &other )
+    : BaseType(),
+      grid_( other.grid_ )
     {}
 
     ~GridPartDefault ()
@@ -282,10 +287,10 @@ namespace Dune
 
   public:  
     //! Returns const reference to the underlying grid
-    const GridType& grid() const { return grid_; }
+    const GridType &grid () const { return grid_; }
 
     //! Returns reference to the underlying grid
-    GridType& grid() { return grid_; }
+    GridType &grid () { return grid_; }
 
     /** \brief obtain begin iterator for the interior-border partition
      *
@@ -350,22 +355,25 @@ namespace Dune
   public:
     //- Public methods
     //! Constructor
-    LevelGridPart(GridType& grid, int level ) :
-      GridPartDefault<Traits>(grid),
-      isetWrapper_(grid,level),
-      level_(level) {}
+    LevelGridPart(GridType& grid, int level )
+    : BaseType( grid ),
+      isetWrapper_( grid, level ),
+      level_( level )
+    {}
     
     //! Constructor, choosing maxLevel
-    LevelGridPart(const GridType& grid) :
-      GridPartDefault<Traits>(grid),
-      isetWrapper_(grid,grid.maxLevel()),
-      level_(grid.maxLevel()) {}
+    explicit LevelGridPart ( GridType &grid )
+    : BaseType( grid ),
+      isetWrapper_( grid, grid.maxLevel() ),
+      level_( grid.maxLevel() )
+    {}
     
     //! copy constructor
-    LevelGridPart(const LevelGridPart& other) :
-      GridPartDefault<Traits>(const_cast<GridType&>(other.grid())),
-      isetWrapper_(other.grid(),other.level_),
-      level_(other.level_) {}
+    LevelGridPart ( const ThisType &other )
+    : BaseType( other ),
+      isetWrapper_( other.grid(), other.level_ ),
+      level_( other.level_ )
+    {}
 
     //! Returns reference to index set of the underlying grid
     const IndexSetType &indexSet () const
@@ -505,14 +513,15 @@ namespace Dune
   public:
     //- Public methods
     //! Constructor
-    LeafGridPart(GridType& grid) :
-      GridPartDefault<Traits>(grid),
-      isetWrapper_(grid) {}
+    explicit LeafGridPart ( GridType &grid )
+    : BaseType( grid ),
+      isetWrapper_( grid )
+    {}
 
     //! copy constructor
-    LeafGridPart(const LeafGridPart& other) :
-      GridPartDefault<Traits>(const_cast<GridType&>(other.grid())),
-      isetWrapper_(other.grid()) 
+    LeafGridPart ( const ThisType &other )
+    : BaseType( other ),
+      isetWrapper_( other.grid() )
     {}
 
     //! Returns reference to index set of the underlying grid
@@ -659,20 +668,23 @@ namespace Dune
 
   public:
     //- Public methods
-    //! Constructor 
-    HierarchicGridPart(GridType& grid) :
-      GridPartDefault<Traits>(grid),
-      isetWrapper_(grid) {}
+    //! constructor 
+    explicit HierarchicGridPart ( GridType &grid )
+    : BaseType( grid ),
+      isetWrapper_( grid )
+    {}
 
-    //! Constructor
-    HierarchicGridPart(GridType& grid, const IndexSetType & ) :
-      GridPartDefault<Traits>(grid),
-      isetWrapper_(grid) {}
+    //! constructor
+    HierarchicGridPart ( GridType &grid, const IndexSetType & )
+    : BaseType( grid ),
+      isetWrapper_( grid )
+    {}
 
     //! copy constructor
-    HierarchicGridPart(const HierarchicGridPart& other) :
-      GridPartDefault<Traits>(const_cast<GridType&>(other.grid())),
-      isetWrapper_(other.grid()) {}
+    HierarchicGridPart ( const ThisType &other )
+    : BaseType( other ),
+      isetWrapper_( other.grid() )
+    {}
 
     //! Returns reference to index set of the underlying grid
     const IndexSetType &indexSet () const
@@ -791,4 +803,4 @@ namespace Dune
 
 } // end namespace Dune
 
-#endif
+#endif // #ifndef DUNE_FEM_GRIDPART_HH
