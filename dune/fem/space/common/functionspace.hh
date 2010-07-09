@@ -257,6 +257,18 @@ struct ToLocalFunctionSpace<
   typedef FunctionSpace<DomainFieldImp, RangeFieldImp, dimLocal, dimRange> Type;
 };
 
+
+//! specialization for parameter list <domainfile,rangefield,dimDomain,dimRange,dimLocal> 
+template <class DomainFieldImp, class RangeFieldImp, int n, int m1, int m2, int dimLocal>
+struct ToLocalFunctionSpace<
+  MatrixFunctionSpace<DomainFieldImp, RangeFieldImp, n,m1,m2>, dimLocal >
+{
+  typedef MatrixFunctionSpace<DomainFieldImp, RangeFieldImp, dimLocal ,m1,m2> Type;
+};
+
+
+
+
 //! convert functions space to space with new dim range 
 template <class FunctionSpaceImp, int newDimRange>
 struct ToNewDimRangeFunctionSpace {};
