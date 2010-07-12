@@ -105,7 +105,10 @@ public:
   /** \copydoc Dune::PARDGSpaceOperatorInterface::size() const */
   virtual int size () const { return space().size(); }
 
-  /** \copydoc Dune::PARDGSpaceOperatorInterface::operator()(const double*,double*) const */
+  /** \brief application operator to apply right hand side 
+      \param u  argument, u 
+      \param f  destination, f(u)
+   */
   virtual void operator() ( const double *u, double *f ) const;
 
   /** \copydoc Dune::PARDGSpaceOperatorInterface::initializeTimeStepSize(const DestinationType&) const */
