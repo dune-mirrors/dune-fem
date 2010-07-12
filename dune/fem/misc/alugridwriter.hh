@@ -29,12 +29,12 @@ class GlobalConsecutiveIndexSet
   typedef typename GridType :: template Codim< 0 >  :: Geometry :: GlobalCoordinate  CoordinateType;
   typedef typename GridType :: template Codim< 0 >  :: Entity EntityType;
 
-  struct Vertex 
+  class Vertex 
   {
     CoordinateType vx_;
     IdType id_;
     int index_; 
-
+  public:
     Vertex() {}
 
     Vertex( const CoordinateType& vx, 
@@ -45,6 +45,7 @@ class GlobalConsecutiveIndexSet
     const CoordinateType& vx() const { return vx_ ; }
     const IdType& id () const { return id_; }
     const int index () const { assert(index_ >= 0); return index_; }
+    void setIndex(const int index) { index_ = index; }
   };
   typedef Vertex VertexType;
 
@@ -97,7 +98,7 @@ class GlobalConsecutiveIndexSet
       assert( (int) Entity :: codimension == (int) dimension );
       buffer.write( myRank_ );
       IndexMapIteratorType it = indices_.find( idSet_.id( entity ) );
-      int index = ( it == indices_.end() ) ? -1 : (*it).second.index_;
+      int index = ( it == indices_.end() ) ? -1 : (*it).second.index();
       buffer.write( index );
     }
 
@@ -185,7 +186,7 @@ public:
             IndexMapIteratorType end = indices_.end();
             for( IndexMapIteratorType it = indices_.begin(); it != end; ++it, ++myindex)
             {
-              (*it).second.index_ = myindex; 
+              (*it).second.setIndex( myindex ); 
             }
           }
         }
@@ -209,8 +210,8 @@ public:
   void writeCoordinates ( std::ostream& out ) const 
   {
     out << indices_.size() << std::endl; 
-    //out.precision( 16 );
-    //out << std::scientific;
+    out.precision( 16 );
+    out << std::scientific;
     IndexMapIteratorType end = indices_.end();
     for( IndexMapIteratorType it = indices_.begin(); it != end; ++it)
     {
@@ -403,7 +404,6 @@ protected:
         else if( inter.neighbor() && 
                  inter.outside()->partitionType() != InteriorEntity )
         {
-          std::cout <<"Writing ghost bnd \n";
           bndId = 111; 
         }
 
