@@ -153,28 +153,36 @@ public:
   //! return FEM key for macro grid reading 
   static std::string defaultGridKey( const int dimension , const bool  check = true )
   {
-    std::stringstream gridKey;
-    gridKey << "fem.io.macroGridFile";
+    const std::string oldGridKey( "fem.io.macroGridFile" );
+    
+    std::ostringstream gridKeyStream;
+    gridKeyStream << oldGridKey << "_" << dimension << "d";
+    const std::string newGridKey( gridKeyStream.str() );
 
     // check for old parameter 
-    if( Parameter :: exists( gridKey.str() ) )
+    if( Parameter::exists( oldGridKey ) )
     {
-      std::cerr << "WARNING: change `fem.io.macroGridFile' to `" 
-                << gridKey.str() << "_" << dimension << "d' in given parameter file!" << std::endl;
-    }
-    else 
-    {
-      // try new 
-      gridKey << "_" << dimension << "d";
+      if( Parameter::exists( newGridKey ) )
+      {
+        std::cerr << "WARNING: ignoring `" << oldGridKey << "' because `"
+                  << newGridKey << "' was also found in parameter file." << std::endl;
+        return newGridKey;
+      }
+      else
+      {
+        std::cerr << "WARNING: change `" << oldGridKey << "' to `"  << newGridKey
+                  << "' in parameter file." << std::endl;
+        return oldGridKey;
+      }
     }
 
     // check for parameter with dimension 
-    if( check && ! Parameter :: exists( gridKey.str() ) )
+    if( check && !Parameter::exists( newGridKey ) )
     {
-      std::cerr << "ERROR: Parameter `" << gridKey.str() << "' not found in given parameter file!" << std::endl;
-      DUNE_THROW(InvalidStateException,"Parameter " << gridKey.str() << " not found!");
+      std::cerr << "ERROR: Parameter `" << newGridKey << "' not found." << std::endl;
+      DUNE_THROW( ParameterNotFound, "Parameter `" << newGridKey << "' not found." );
     }
-    return gridKey.str();
+    return newGridKey;
   }
 
   //! create given path in combination with rank 
