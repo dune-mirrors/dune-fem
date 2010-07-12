@@ -29,7 +29,25 @@ class GlobalConsecutiveIndexSet
   typedef typename GridType :: template Codim< 0 >  :: Geometry :: GlobalCoordinate  CoordinateType;
   typedef typename GridType :: template Codim< 0 >  :: Entity EntityType;
 
-  typedef std::pair< int , CoordinateType > VertexType ;
+  struct Vertex 
+  {
+    CoordinateType vx_;
+    IdType id_;
+    int index_; 
+
+    Vertex() {}
+
+    Vertex( const CoordinateType& vx, 
+            const IdType& id, 
+            const int index) 
+     : vx_( vx ), id_( id ), index_( index )
+    {} 
+    const CoordinateType& vx() const { return vx_ ; }
+    const IdType& id () const { return id_; }
+    const int index () const { assert(index_ >= 0); return index_; }
+  };
+  typedef Vertex VertexType;
+
   typedef std::map< IdType, VertexType > IndexMapType;
   typedef typename IndexMapType :: iterator IndexMapIteratorType;
   mutable IndexMapType indices_;
@@ -79,7 +97,7 @@ class GlobalConsecutiveIndexSet
       assert( (int) Entity :: codimension == (int) dimension );
       buffer.write( myRank_ );
       IndexMapIteratorType it = indices_.find( idSet_.id( entity ) );
-      int index = ( it == indices_.end() ) ? -1 : (*it).second.first ;
+      int index = ( it == indices_.end() ) ? -1 : (*it).second.index_;
       buffer.write( index );
     }
 
@@ -100,7 +118,7 @@ class GlobalConsecutiveIndexSet
         IndexMapIteratorType it = indices_.find( id );
         if( it == indices_.end() ) 
         {
-          VertexType vx( index, entity.geometry().corner(0));
+          VertexType vx( entity.geometry().corner(0), id, index );
           indices_[ id ] = vx;
         }
       }
@@ -132,7 +150,7 @@ public:
             const IdType id = idSet_.id( *it );
             if( indices_.find( id ) == indices_.end() )
             {
-              VertexType vx( index, it->geometry().corner(0) );
+              VertexType vx( it->geometry().corner(0), id, index );
               indices_[ id ] = vx ;
               ++index;
             }
@@ -155,10 +173,19 @@ public:
               const int id = gridPart_.indexSet().index( *vertex );
               if( indices_.find( id ) == indices_.end() )
               {
-                VertexType vx( id, vertex->geometry().corner( 0 ) );
+                VertexType vx( vertex->geometry().corner(0), id, -1);
                 indices_[ id ] = vx ;
-                ++index;
+                ++ index ;
               }
+            }
+          }
+          {
+            // set index according to appearance in map 
+            int myindex = 0;
+            IndexMapIteratorType end = indices_.end();
+            for( IndexMapIteratorType it = indices_.begin(); it != end; ++it, ++myindex)
+            {
+              (*it).second.index_ = myindex; 
             }
           }
         }
@@ -182,12 +209,12 @@ public:
   void writeCoordinates ( std::ostream& out ) const 
   {
     out << indices_.size() << std::endl; 
-    out.precision( 16 );
-    out << std::scientific;
+    //out.precision( 16 );
+    //out << std::scientific;
     IndexMapIteratorType end = indices_.end();
     for( IndexMapIteratorType it = indices_.begin(); it != end; ++it)
     {
-      out << (*it).second.second << std::endl;
+      out << (*it).second.vx() << std::endl;
     }
   }
 
@@ -196,7 +223,7 @@ public:
     IndexMapIteratorType end = indices_.end();
     for( IndexMapIteratorType it = indices_.begin(); it != end; ++it)
     {
-      out << (*it).second.first << "  -1"  << std::endl;
+      out << (*it).second.id() << "  -1"  << std::endl;
     }
   }
 
@@ -210,7 +237,7 @@ public:
           idSet_.id( entity ) : 
           gridPart_.indexSet().index( entity ) );
     assert( it != indices_.end() );
-    return (*it).second.first; 
+    return (*it).second.index(); 
   }
 
   int size() const 
@@ -269,6 +296,8 @@ protected:
       assert( false );
       abort();
     }
+
+    file.setf (std::ios::fixed, std::ios::floatfield) ;
 
     const char* header = ( hexahedra ) ? "!Hexahedra" : "!Tetrahedra";
     // write header 
