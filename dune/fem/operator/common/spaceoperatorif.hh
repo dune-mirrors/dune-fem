@@ -94,6 +94,34 @@ public:
   //! type of discrete function space 
   typedef typename DestinationType::DiscreteFunctionSpaceType SpaceType;
   
+protected:  
+  template < class Op, class Field > 
+  struct CallDoubleOperator
+  {
+    static inline void apply( const Op& op, const double* u, double* f )
+    {
+      std::cerr << "ERROR: SpaceOperatorInterface::operator()( const double*, double* ) only works for RangeFieldType double" << std::endl;
+      abort();
+    }
+  };
+
+  template < class Op > 
+  struct CallDoubleOperator< Op, double >
+  {
+    static inline void apply( const Op& op, const double* u, double* f )
+    {
+      // get space instance
+      const SpaceType &spc = op.space();
+
+      // convert arguments to discrete function
+      const DestinationType arg( "SpaceOperatorIF::ARG", spc, u );
+      DestinationType dest( "SpaceOperatorIF::DEST", spc, f );
+
+      // call operator apply
+      op( arg, dest );
+    }
+  };
+public:
   //! destructor 
   virtual ~SpaceOperatorInterface() {}
 
@@ -267,15 +295,8 @@ template< class DiscreteFunction >
 inline void SpaceOperatorInterface< DiscreteFunction >
   ::operator() ( const double *u, double *f ) const
 {
-  // get space instance
-  const SpaceType &spc = space();
-
-  // convert arguments to discrete function
-  const DestinationType arg( "SpaceOperatorIF::ARG", spc, u );
-  DestinationType dest( "SpaceOperatorIF::DEST", spc, f );
-
-  // call operator apply
-  (*this)( arg, dest );
+  CallDoubleOperator< SpaceOperatorInterface< DiscreteFunction >, 
+                      typename DiscreteFunction :: RangeFieldType >::apply( *this, u, f );
 }
 
 template< class DiscreteFunction >
