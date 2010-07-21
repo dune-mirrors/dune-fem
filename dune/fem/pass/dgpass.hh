@@ -454,7 +454,8 @@ namespace Dune {
         RangeType& source = valEnVec_[ l ];
 
         // evaluate analytical flux and source 
-        caller_.analyticalFluxAndSource(en, volQuad, l, flux, source );
+        const double dtEst =
+          caller_.analyticalFluxAndSource(en, volQuad, l, flux, source );
         
         const double intel = geo.integrationElement(volQuad.point(l))
                            * volQuad.weight(l);
@@ -462,6 +463,9 @@ namespace Dune {
         // apply integration weights 
         source *= intel;
         flux   *= intel;
+
+        if( dtEst > minLimit_ )
+          dtMin_ = std::min(dtMin_, dtEst);
       }
 
       // add values to local function 

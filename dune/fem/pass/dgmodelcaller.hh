@@ -146,11 +146,11 @@ namespace Dune {
       problem_.analyticalFlux( entity, time_, quad.point( quadPoint ), valuesVec_[ quadPoint ] , res );
     }
 
-    void analyticalFluxAndSource( const Entity &entity,
-                                  const VolumeQuadratureType& quad, 
-                                  const int quadPoint,
-                                  JacobianRangeType& fluxRes, 
-                                  RangeType& sourceRes ) 
+    double analyticalFluxAndSource( const Entity &entity,
+                                    const VolumeQuadratureType& quad, 
+                                    const int quadPoint,
+                                    JacobianRangeType& fluxRes, 
+                                    RangeType& sourceRes ) 
     {
       assert( enQuadId_ == quad.id() );
       assert( (int) valuesVec_.size() > quadPoint );
@@ -158,8 +158,14 @@ namespace Dune {
 
       problem_.analyticalFlux( entity, time_, quad.point( quadPoint ), 
           valuesVec_[ quadPoint ], fluxRes );
-      problem_.source( entity, time_, quad.point( quadPoint ), 
-          valuesVec_[ quadPoint ], jacobianVec_[ quadPoint ], sourceRes );
+      const double dtEst = 
+#ifdef DGPASS_WITHOUT_SOURCE_TIMESTEP
+        0.0;
+#endif
+        problem_.source( entity, time_, quad.point( quadPoint ), 
+              valuesVec_[ quadPoint ], jacobianVec_[ quadPoint ], sourceRes );
+
+      return dtEst;  
     }
 
     // Ensure: entities set correctly before call
