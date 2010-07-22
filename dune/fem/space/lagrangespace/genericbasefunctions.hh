@@ -276,8 +276,8 @@ namespace Dune
                                   const LocalCoordinateType &x,
                                   RangeType &phi )
     {
-      const RangeFieldType divisor = 1 / ((RangeFieldType)polynomialOrder);
-      const RangeFieldType myfactor = porder * divisor;
+      const DomainFieldType divisor = DomainFieldType( 1 ) / ((DomainFieldType)polynomialOrder);
+      const DomainFieldType myfactor = porder * divisor;
       const RangeFieldType myshift = (porder - polynomialOrder) * divisor;
 
       if( LagrangePointType :: useDimReduction( dofCoordinate ) )
@@ -331,8 +331,8 @@ namespace Dune
                                   const LocalCoordinateType &x,
                                   RangeType &phi )
     {
-      const RangeFieldType divisor = polynomialOrder;
-      const RangeFieldType myfactor = porder / divisor;
+      const DomainFieldType divisor = polynomialOrder;
+      const DomainFieldType myfactor = porder / divisor;
       const RangeFieldType myshift = (porder - polynomialOrder) / divisor;
 
       FieldVector< deriType, 0 > dv;
@@ -400,8 +400,8 @@ namespace Dune
                                   const LocalCoordinateType &x,
                                   RangeType &phi )
     {
-      const RangeFieldType divisor = polynomialOrder;
-      const RangeFieldType myfactor = porder / divisor;
+      const DomainFieldType divisor = polynomialOrder;
+      const DomainFieldType myfactor = porder / divisor;
       const RangeFieldType myshift = (porder - polynomialOrder) / divisor;
 
       FieldVector< deriType, 1 > dv0( diffVariable[ 0 ] );
