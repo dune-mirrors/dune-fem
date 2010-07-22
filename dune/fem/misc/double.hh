@@ -329,7 +329,11 @@ namespace Dune
       return *this;
     }
 
-    Double operator- () const { return Double( -value_ ); }
+    Double operator- () const
+    {
+      flOp();
+      return Double( -value_ );
+    }
 
     static std :: string typeName ()
     {
