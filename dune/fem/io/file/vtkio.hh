@@ -4,10 +4,10 @@
 #include <dune/common/typetraits.hh>
 
 #include <dune/grid/io/file/vtk/vtkwriter.hh>
-#include <dune/fem/version.hh>
-
 #include <dune/grid/io/file/vtk/subsamplingvtkwriter.hh>
 
+#include <dune/fem/version.hh>
+#include <dune/fem/misc/field.hh>
 #include <dune/fem/gridpart/gridpartview.hh>
 
 namespace Dune
@@ -82,14 +82,10 @@ typedef VTKOptions VTK;
       const LocalFunctionType lf = discFunc_.localFunction(e);
       RangeType val;
       lf.evaluate(xi,val);
-      if (vector_) {
-        if (comp>dimDomain)
-          return 0;
-        else;
-          return val[comp + component_];
-      }
+      if (vector_)
+        return (comp > dimDomain ? 0.0 : field_cast< double >( val[ comp + component_ ] ));
       else 
-        return val[component_];
+        return field_cast< double >( val[component_] );
     }
 
     //! get name
