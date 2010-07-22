@@ -260,6 +260,7 @@ namespace Dune
     friend double sin(const Double& v);
     friend double cos(const Double& v);
 
+    friend Double abs ( const Double & );
     friend double min(const Double&, const double);
     friend double min(const double,  const Double&);
     friend double max(const Double&, const double);
@@ -287,10 +288,12 @@ namespace Dune
     : value_( other.value_ )
     {}
 
+/*
     inline operator int () const
     {
       return (int)value_;
     }
+*/
 
     inline ThisType &operator= ( const ThisType other )
     {
@@ -325,6 +328,8 @@ namespace Dune
       value_ /= other.value_;
       return *this;
     }
+
+    Double operator- () const { return Double( -value_ ); }
 
     static std :: string typeName ()
     {
@@ -827,6 +832,11 @@ namespace Dune
   // standard functions
   // ------------------
 
+  inline Double abs ( const Double &a )
+  {
+    return Double( std::abs( a.value_ ) );
+  }
+
   static inline double pow (const Double& v, const double p)
   {
     return std::pow(v.value_,p);
@@ -874,8 +884,11 @@ namespace Dune
 namespace std
 {
 
-  // numeric limits
-  // --------------
+  inline Dune::Double abs ( const Dune::Double &a )
+  {
+    return Dune::abs( a );
+  }
+
   // wrap of std power 
   inline double min (const Dune::Double& v, const double p)
   {
@@ -900,6 +913,10 @@ namespace std
     return Dune::max(v,p);
   }
 
+
+
+  // numeric limits
+  // --------------
 
   template<>
   struct numeric_limits< Dune :: Double >
