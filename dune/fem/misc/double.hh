@@ -270,6 +270,8 @@ namespace Dune
     friend struct XdrIO< Double >;
 #endif
 
+    friend void field_cast ( const Double &, double & );
+
   protected:
     typedef FlOpCounter< ThisType > FlOpCounterType;
 
@@ -880,6 +882,12 @@ namespace Dune
     }
   };
 #endif
+
+
+  inline void field_cast ( const Double &f1, double &f2 )
+  {
+    f2 = f1.value_;
+  }
 
 }
 
