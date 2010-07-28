@@ -34,7 +34,7 @@ namespace Fem {
       for( size_t col = 0, colR = 0; col < numCols; ++col ) 
       {
         out << "      {" << std::endl;
-        out << "        const field_type& phi = rangeStorage[ baseRow ][ col ][ 0 ];" << std::endl;
+        out << "        const field_type& phi = rangeStorage[ baseRow ][ " << col << " ][ 0 ];" << std::endl;
         for( int r = 0; r < dimRange; ++r , ++colR ) 
         {
           out << "        result[ " << r << " ] += dofs[ " << colR << " ] * phi;" << std::endl;
