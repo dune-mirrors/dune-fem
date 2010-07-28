@@ -94,12 +94,11 @@ void DynamicalObject::set_output(std::ostream &os)
 }
 
 
-// todo: eta_hi not used! why? -> check
 // new_size >= requested_new_size
 inline 
 int DynamicalObject::new_size(int requested_new_size, int component)
 {
-  const int add_size = static_cast<int>(eta_lo * requested_new_size);
+  const int add_size = static_cast<int>(eta_hi * requested_new_size);
 
   if (requested_new_size > _size[component]
       || requested_new_size < (1.0-eta_lo)*_size[component]){
