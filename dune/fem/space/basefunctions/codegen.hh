@@ -118,15 +118,29 @@ namespace Fem {
       for( int r = 0; r < sseDimRange-1; ++r )  out << " 0 ,";
       out << " 0  };" << std::endl << std::endl;
 
+      out << "      const field_type phi[ " << numRows << " ] = {" << std::endl;
+      for( size_t row=0; row< numRows; ++row ) 
+      {
+        out << "        (*(rangeStorageTmp[ " << row << " ]))[ " << col << " ][ 0 ]";
+        if( row < numRows - 1) 
+          out << " ," << std::endl;
+        else out << "  };" << std::endl;
+      }
       for( size_t row=0; row< numRows; ++row ) 
       {
         out << "      const RangeType& factor" << row  << " = rangeFactors[ " << row << " ];" << std::endl;
-        out << "      const field_type phi" << row << " = (*(rangeStorageTmp[ " << row << " ]))[ " << col << " ][ 0 ];" << std::endl;
+      }
+      for( size_t row=0; row< numRows; ++row ) 
+      {
+        //out << "      const field_type phi" << row << " = (*(rangeStorageTmp[ " << row << " ]))[ " << col << " ][ 0 ];" << std::endl;
         for( int r = 0; r < dimRange; ++r ) 
         {
-          out << "      result[ " << r << " ]  +=  factor" << row << "[ " << r << " ] * phi" << row << ";" << std::endl; 
+          //out << "      result[ " << r << " ]  +=  factor" << row << "[ " << r << " ] * phi" << row << ";" << std::endl; 
+          //if( sseDimRange != dimRange && r == dimRange - 1 )
+          //  out << "      result[ " << r+1 << " ]  +=  0.5 * phi" << row << ";" << std::endl;
+          out << "      result[ " << r << " ]  +=  factor" << row << "[ " << r << " ] * phi[ " << row << " ];" << std::endl; 
           if( sseDimRange != dimRange && r == dimRange - 1 )
-            out << "      result[ " << r+1 << " ]  +=  0.5 * phi" << row << ";" << std::endl;
+            out << "      result[ " << r+1 << " ]  +=  0.5 * phi[ " << row << " ];" << std::endl;
           //out << "      rangeStorage[ quad.cachingPoint( " << row << " ) ][ " << col << " ][ 0 ] * rangeFactors[ " << row << " ][ " << r << " ]"; 
           /*
           if( row < numRows - 1 ) 
