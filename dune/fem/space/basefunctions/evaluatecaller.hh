@@ -14,7 +14,7 @@
 #endif
 
 #ifndef MAX_NUMBER_OF_BASE_FCT 
-#define MAX_NUMBER_OF_BASE_FCT 10 
+#define MAX_NUMBER_OF_BASE_FCT 20 
 #endif
 
 #ifndef MIN_NUMBER_OF_QUAD_POINTS
@@ -22,7 +22,7 @@
 #endif
 
 #ifndef MIN_NUMBER_OF_BASE_FCT 
-#define MIN_NUMBER_OF_BASE_FCT 10
+#define MIN_NUMBER_OF_BASE_FCT 1
 #endif
 
 namespace Dune
