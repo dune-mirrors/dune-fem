@@ -159,6 +159,74 @@ namespace Fem {
     out << "};" << std::endl;
   }
 
+  static void axpyJacobianCodegen(std::ostream& out, 
+          const int dimRange, const size_t numRows, const size_t numCols ) 
+  {
+    out << "template <class BaseFunctionSet>" << std::endl;
+    out << "struct AxpyJacobians<BaseFunctionSet, Fem :: EmptyGeometry, " << dimRange << ", " << numRows << ", " << numCols << ">" << std::endl;
+    out << "{" << std::endl;
+    out << "  template< class QuadratureType,"<< std::endl;
+    out << "            class JacobianRangeVectorType," << std::endl;
+    out << "            class JacobianRangeFactorType," << std::endl;
+    out << "            class LocalDofVectorType>" << std::endl;
+    out << "  static void axpy( const QuadratureType&," << std::endl;
+    out << "                    const Fem :: EmptyGeometry&," << std::endl; 
+    out << "                    const JacobianRangeVectorType&," << std::endl; 
+    out << "                    const JacobianRangeFactorType&," << std::endl;
+    out << "                    LocalDofVectorType&)" << std::endl;
+    out << "  {" << std::endl;
+    out << "    std::cerr << \"ERROR: wrong code generated for VectorialBaseFunctionSet::axpyJacobians\" << std::endl;" << std::endl;
+    out << "    abort();" << std::endl;
+    out << "  }" << std::endl;
+    out << "};" << std::endl << std::endl;
+    out << "template <class BaseFunctionSet, class Geometry>" << std::endl;
+    out << "struct AxpyJacobians<BaseFunctionSet, Geometry, " << dimRange << ", " << numRows << ", " << numCols << ">" << std::endl;
+    out << "{" << std::endl;
+    out << "  template< class QuadratureType,"<< std::endl;
+    out << "            class JacobianRangeVectorType," << std::endl;
+    out << "            class JacobianRangeFactorType," << std::endl;
+    out << "            class LocalDofVectorType>" << std::endl;
+    out << "  static void axpy( const QuadratureType& quad," << std::endl;
+    out << "                    const Geometry& geometry," << std::endl; 
+    out << "                    const JacobianRangeVectorType& jacStorage," << std::endl; 
+    out << "                    const JacobianRangeFactorType& jacFactors," << std::endl;
+    out << "                    LocalDofVectorType& dofs)" << std::endl;
+    out << "  {" << std::endl;
+    out << "    typedef typename Geometry::Jacobian GeometryJacobianType;" << std::endl;
+    out << "    const GeometryJacobianType gjit = geometry.jacobianInverseTransposed( quad.point( 0 ) );" << std::endl << std::endl;
+    out << "    typedef typename JacobianRangeVectorType :: value_type  value_type;" << std::endl; 
+    //out << "    const value_type* const jacStorageTmp[ " << numRows << " ] = {" << std::endl;
+    //for( size_t row = 0; row<numRows ; ++ row )
+    //{
+    //  out << "       &( jacStorage[ quad.cachingPoint( " << row << " ) ] )";
+    //  if( row < numRows - 1 ) out << " ," << std::endl;
+    //  else out << "  };" << std::endl;
+    //}
+    //out << std::endl;
+    out << "    typedef typename ScalarRangeType :: field_type field_type;" << std::endl;
+    const int sseDimRange = (( dimRange % 2 ) == 0) ? dimRange : dimRange+1; 
+    for( size_t row = 0; row<numRows ; ++ row )
+    {
+      out << "    {" << std::endl;
+      out << "      const value_type& jacStorageRow = jacStorage[ quad.cachingPoint( " << row << " ) ];" << std::endl;
+      out << "      JacobianRangeType jacFactorInv;" << std::endl;
+      for( int r = 0; r < dimRange ; ++ r ) 
+      {
+        out << "      gjit.mtv( jacFactors[ " << row << " ][ " << r  << " ], jacFactorInv[ " << r << " ] );" << std::endl;
+      }
+      for( size_t col = 0, colR = 0; col < numCols; ++col ) 
+      {
+        for( int r = 0; r < dimRange; ++r, ++colR )
+        {
+          out << "      dofs[ " << colR << " ]  +=  jacStorageRow[ " << col << " ][ 0 ] * jacFactorInv[ " << r << " ];" << std::endl;
+        }
+      }
+      out << "    }" << std::endl;
+    }
+    out << "  }" << std::endl << std::endl;
+    out << "};" << std::endl;
+  }
+
 } // end namespace Fem 
 
 } // end namespace Dune

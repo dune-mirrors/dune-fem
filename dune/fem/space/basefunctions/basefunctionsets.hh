@@ -714,7 +714,7 @@ namespace Dune
    
     /////////////////////////////////////////////////////////////
     //
-    //  axpyRanges -- add a vector of ranges to the dof vector  
+    //  --axpyRanges -- add a vector of ranges to the dof vector  
     //
     /////////////////////////////////////////////////////////////
 #ifdef USE_BASEFUNCTIONSET_OPTIMIZED
@@ -910,6 +910,10 @@ namespace Dune
         abort();
       }
     };
+
+#ifdef USE_BASEFUNCTIONSET_CODEGEN
+    #include <axpyjacobians.hh>
+#endif
 #endif // endif USE_BASEFUNCTIONSET_OPTIMIZED 
 
     template< class QuadratureType, 
@@ -1010,6 +1014,19 @@ namespace Dune
 
       //delete [] jacFactorGlobal;
 #else 
+
+#ifdef BASEFUNCTIONSET_CODEGEN_GENERATE
+      static std::set< size_t > storedRows; 
+      if( storedRows.find( numRows ) == storedRows.end() ) 
+      {
+        std::stringstream filename;
+        filename << "axpyjacobians" << dimRange << "_" << numRows << "_" << numCols << ".hh";
+        std::ofstream file( filename.str().c_str(), ( storedRows.size() == 0 ) ? (std::ios::out) : (std::ios::app) );
+        Fem :: axpyJacobianCodegen( file, dimRange, numRows, numCols ); 
+        std::cout << "Generate code " << filename.str() << " for (" << numRows << "," << numCols << ")" << std::endl;
+        storedRows.insert( numRows );
+      }
+#endif
       assert( (int ) numCols * dimRange == dofs.numDofs() );
       assert( jacobianStorage.size() >= (int) numRows );
 
