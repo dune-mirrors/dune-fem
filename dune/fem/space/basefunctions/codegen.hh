@@ -33,10 +33,13 @@ namespace Fem {
       out << "      result = 0;" << std::endl;
       for( size_t col = 0, colR = 0; col < numCols; ++col ) 
       {
+        //out << "      {" << std::endl;
+        out << "      const field_type phi"<< col << " = rangeStorageRow[ " << col << " ][ 0 ];" << std::endl;
         for( int r = 0; r < dimRange; ++r , ++colR ) 
         {
-          out << "      result[ " << r << " ]  +=  rangeStorageRow[ " << col << " ][ 0 ] * dofs[ " << colR << " ];" << std::endl;
+          out << "      result[ " << r << " ] += dofs[ " << colR << " ] * phi" << col << ";" << std::endl;
         }
+        //out << "      }" << std::endl;
       }
       out << "    }" << std::endl;
     }
