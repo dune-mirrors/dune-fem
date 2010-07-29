@@ -8,9 +8,23 @@
 #include <dune/fem/space/basefunctions/basefunctionfactory.hh>
 #include <dune/fem/space/basefunctions/basefunctionsetinterface.hh>
 
+
+//#define USE_BASEFUNCTIONSET_OPTIMIZED
+//#define USE_BASEFUNCTIONSET_CODEGEN
+//#define BASEFUNCTIONSET_CODEGEN_GENERATE
+
+#ifdef BASEFUNCTIONSET_CODEGEN_GENERATE
+#include <dune/fem/space/basefunctions/codegen.hh>
+#endif
+
+#ifdef USE_BASEFUNCTIONSET_OPTIMIZED
+#include <dune/fem/space/basefunctions/evaluatecaller.hh>
+#endif
+
 namespace Dune
 {
   
+
   /** \addtogroup BaseFunction
    *  \{
    */
@@ -154,10 +168,10 @@ namespace Dune
     typedef typename FunctionSpaceType :: ScalarFunctionSpaceType
       ScalarFunctionSpaceType;
     
+    typedef StorageImp< ScalarFunctionSpaceType > StorageType;
   private:  
     typedef BaseFunctionFactory< ScalarFunctionSpaceType > FactoryType;
     typedef typename FactoryType :: BaseFunctionType BaseFunctionType;
-    typedef StorageImp< ScalarFunctionSpaceType > StorageType;
 
   public:
     typedef typename FunctionSpaceType :: DomainFieldType DomainFieldType;
@@ -183,6 +197,8 @@ namespace Dune
     PointBasedDofConversionUtility< dimRange > util_;
 
   public:
+    const StorageType& storage() const { return storage_; }
+
     using BaseType :: evaluate;
     using BaseType :: evaluateSingle;
     using BaseType :: evaluateGradientSingle;
@@ -430,13 +446,85 @@ namespace Dune
     //  evaluate and store results in a vector 
     //
     /////////////////////////////////////////////////////////////////////////
+#ifdef USE_BASEFUNCTIONSET_OPTIMIZED
+    template <class BaseFunctionSet, class Geometry, int dimRange, int numRows, int numCols>
+    struct EvaluateRanges 
+    {
+      template< class QuadratureType, 
+                class RangeVectorType,
+                class LocalDofVectorType,
+                class RangeFactorType>
+      static void eval( const QuadratureType& quad,
+                        const RangeVectorType& rangeStorage,
+                        const LocalDofVectorType& dofs,
+                        RangeFactorType &rangeFactors)
+      {
+        std::cerr << "ERROR: wrong code generated for VectorialBaseFunctionSet::evaluateRanges" << std::endl;
+        abort();
+      }
+    };
+
+    template <class BaseFunctionSet, int dimRange, int numRows, int numCols>
+    struct EvaluateRanges<BaseFunctionSet, Fem :: EmptyGeometry, dimRange, numRows, numCols > 
+    {
+      template< class QuadratureType, 
+                class RangeVectorType,
+                class LocalDofVectorType,
+                class RangeFactorType>
+      static void eval( const QuadratureType& quad,
+                        const RangeVectorType& rangeStorage,
+                        const LocalDofVectorType& dofs,
+                        RangeFactorType &rangeFactors)
+      {
+#ifndef USE_BASEFUNCTIONSET_CODEGEN
+        BaseFunctionSet::evaluateRanges( quad, rangeStorage, dofs, rangeFactors, numRows, numCols );
+#else 
+        std::cerr << "ERROR: wrong code generated for VectorialBaseFunctionSet::evaluateRanges" << std::endl;
+        abort();
+#endif
+      }
+    };
+
+#ifdef USE_BASEFUNCTIONSET_CODEGEN
+    #include <evalranges.hh>
+#endif
+#endif
+
     template< class QuadratureType, 
               class LocalDofVectorType,
-              class RangeVectorType>
+              class RangeFactorType>
     inline void 
     evaluateRanges ( const QuadratureType& quad,
                      const LocalDofVectorType& dofs,
-                     RangeVectorType &rangeVector) const 
+                     RangeFactorType &rangeVector) const 
+    {
+#ifdef USE_BASEFUNCTIONSET_OPTIMIZED
+      typedef Fem :: EvaluateCallerInterfaceTraits< 
+          QuadratureType, RangeFactorType, LocalDofVectorType > Traits;
+      typedef Fem :: EvaluateCallerInterface< Traits > BaseEvaluationType;
+
+      // get base function evaluate caller (calls evaluateRanges) 
+      const BaseEvaluationType& baseEval = 
+        BaseEvaluationType::storage( *this, storage_.getRangeStorage( quad ), quad );
+
+      baseEval.evaluateRanges( quad, dofs, rangeVector );
+#else 
+      evaluateRanges( quad, storage_.getRangeStorage( quad ), 
+          dofs, rangeVector, quad.nop(), numDifferentBaseFunctions() );
+#endif
+    }
+
+    template< class QuadratureType, 
+              class LocalDofVectorType,
+              class RangeVectorType,
+              class RangeFactorType>
+    static void 
+    evaluateRanges ( const QuadratureType& quad,
+                     const RangeVectorType& rangeStorage,
+                     const LocalDofVectorType& dofs,
+                     RangeFactorType &rangeVector,
+                     const unsigned int numRows,
+                     const unsigned int numCols)
     {
 #ifdef DUNE_FEM_BASEFUNC_USE_SSE
       typedef typename StorageType :: RangeCacheMatrixType RangeCacheMatrixType;
@@ -455,25 +543,33 @@ namespace Dune
         baseFunctionMatrix.mv( dofs, rangeVector, dimRange );
       }
 #else 
-      typedef typename StorageType :: RangeVectorType RangeVectorType;
-      const RangeVectorType& rangeStorage = storage_.getRangeStorage( quad );
-
-      const size_t numRows = quad.nop();
-      const size_t numDiffBase = numDifferentBaseFunctions();
-      assert( (int) numDiffBase * dimRange == dofs.numDofs() );
+#ifdef BASEFUNCTIONSET_CODEGEN_GENERATE
+      static std::set< size_t > storedRows; 
+      if( storedRows.find( numRows ) == storedRows.end() ) 
+      {
+        std::stringstream filename;
+        filename << "evalranges" << dimRange << "_" << numRows << "_" << numCols << ".hh";
+        std::ofstream file( filename.str().c_str(), ( storedRows.size() == 0 ) ? (std::ios::out) : (std::ios::app) );
+        std::cout << "Generate code " << filename.str() << " for (" << numRows << "," << numCols << ")" << std::endl;
+        Fem :: evaluateCodegen( file, dimRange, numRows, numCols );
+        storedRows.insert( numRows );
+      }
+#endif
+      assert( (int) numCols * dimRange == dofs.numDofs() );
 
       assert( rangeStorage.size() >= (int) numRows );
       for( size_t row = 0; row < numRows ; ++row )
       {
-        const size_t baseRow = storage_.applyCaching( quad , row ); 
+        //const size_t baseRow = storage_.applyCaching( quad , row ); 
+        const size_t baseRow = quad.cachingPoint( row ); 
 
         assert( rangeStorage.size() > (int) baseRow );
-        assert( rangeStorage[ baseRow ].size() >= (int) numDiffBase );
+        assert( rangeStorage[ baseRow ].size() >= (int) numCols );
 
         RangeType& result = rangeVector[ row ]; 
         result = 0;
 
-        for( size_t col = 0, colR = 0; col < numDiffBase; ++col ) 
+        for( size_t col = 0, colR = 0; col < numCols; ++col ) 
         {
           const ScalarRangeType& phi = rangeStorage[ baseRow ][ col ];
           for( int r = 0; r < dimRange; ++r, ++colR ) 
@@ -484,6 +580,52 @@ namespace Dune
       }
 #endif
     }
+
+    ////////////////////////////////////////////////////////////////////
+    //
+    //  --evaluateJacobians 
+    //
+    ////////////////////////////////////////////////////////////////////
+#ifdef USE_BASEFUNCTIONSET_OPTIMIZED
+    template <class BaseFunctionSet, class Geometry, 
+              int dimRange, int numRows, int numCols>
+    struct EvaluateJacobians 
+    {
+      template< class QuadratureType, 
+                class JacobianRangeVectorType,
+                class JacobianRangeFactorType,
+                class LocalDofVectorType >
+      static void eval( const QuadratureType& quad,
+                        const Geometry& geometry,
+                        const JacobianRangeVectorType& jacobianStorage,
+                        const LocalDofVectorType& dofs,
+                        JacobianRangeFactorType &jacFactors)
+      {
+        BaseFunctionSet :: 
+          evaluateJacobians( quad, geometry, jacobianStorage, dofs, jacFactors, 
+                             jacFactors[ 0 ], numRows, numCols );
+      }
+    };
+
+    template <class BaseFunctionSet,
+              int dimRange, int numRows, int numCols>
+    struct EvaluateJacobians< BaseFunctionSet, Fem :: EmptyGeometry, dimRange, numRows, numCols > 
+    {
+      template< class QuadratureType, 
+                class JacobianRangeVectorType,
+                class JacobianRangeFactorType,
+                class LocalDofVectorType >
+      static void eval( const QuadratureType&,
+                        const Fem :: EmptyGeometry&,
+                        const JacobianRangeVectorType&,
+                        const LocalDofVectorType&,
+                        const JacobianRangeFactorType& )
+      {
+        std::cerr << "ERROR: wrong code generated for VectorialBaseFunctionSet::evaluateJacobians" << std::endl;
+        abort();
+      }
+    };
+#endif // endif USE_BASEFUNCTIONSET_OPTIMIZED 
 
     template< class QuadratureType, 
               class Geometry,
@@ -496,27 +638,42 @@ namespace Dune
                         JacobianRangeVectorType &jacVector ) const 
     {
       assert( jacVector.size() > 0 );
-      evaluateJacobians( quad, geometry, dofs, jacVector, jacVector[ 0 ] );
+#ifdef USE_BASEFUNCTIONSET_OPTIMIZED
+      typedef Fem :: EvaluateCallerInterfaceTraits< QuadratureType, 
+              JacobianRangeVectorType, LocalDofVectorType, Geometry >  Traits;
+      typedef Fem :: EvaluateCallerInterface< Traits > BaseEvaluationType;
+
+      // get base function evaluate caller (calls axpyRanges) 
+      const BaseEvaluationType& baseEval = 
+        BaseEvaluationType::storage( *this, storage_.getJacobianStorage( quad ), quad );
+
+      // call appropriate axpyJacobian method 
+      baseEval.evaluateJacobians( quad, geometry, dofs, jacVector );
+#else 
+      evaluateJacobians( quad, geometry, 
+                         storage_.getJacobianStorage( quad ),
+                         dofs, jacVector, jacVector[ 0 ], 
+                         quad.nop(), numDifferentBaseFunctions() );
+#endif
     }
 
     template< class QuadratureType, 
               class Geometry,
+              class JacobianRangeVectorType,
               class LocalDofVectorType,
               class JacobianVectorType,
               class GlobalJacobianRangeType >
-    inline void 
+    static void 
     evaluateJacobians ( const QuadratureType& quad,
                         const Geometry& geometry,
+                        const JacobianRangeVectorType& jacobianStorage,
                         const LocalDofVectorType& dofs,
                         JacobianVectorType &jacVector,
-                        const GlobalJacobianRangeType& ) const 
+                        const GlobalJacobianRangeType&,
+                        const unsigned int numRows,
+                        const unsigned int numCols )
     {
-      typedef typename StorageType :: JacobianRangeVectorType JacobianRangeVectorType;
-      const JacobianRangeVectorType& jacobianStorage = storage_.getJacobianStorage( quad );
-
-      const size_t numRows = quad.nop();
-      const size_t numDiffBase = numDifferentBaseFunctions();
-      assert( (int) numDiffBase * dimRange == dofs.numDofs() );
+      assert( (int) numCols * dimRange == dofs.numDofs() );
       assert( jacobianStorage.size() >= (int)numRows );
 
       const bool affineGeometry = geometry.affine();
@@ -526,14 +683,14 @@ namespace Dune
 
       for( size_t row = 0; row < numRows ; ++row )
       {
-        const size_t baseRow = storage_.applyCaching( quad , row ); 
+        const size_t baseRow = quad.cachingPoint( row ); 
 
         // if geometry has non-affine mapping we need to update jacobian inverse
         if( !affineGeometry ) 
           gjit = &geometry.jacobianInverseTransposed( quad.point( row ) );
 
         assert( jacobianStorage.size() > (int) baseRow );
-        assert( jacobianStorage[ baseRow ].size() >= (int) numDiffBase );
+        assert( jacobianStorage[ baseRow ].size() >= (int) numCols );
 
         GlobalJacobianRangeType& result = jacVector[ row ]; 
         result = 0;
@@ -543,7 +700,7 @@ namespace Dune
         typedef typename GlobalJacobianRangeType :: row_type JacobianRangeType;
         JacobianRangeType gradPhi;
 
-        for( size_t col = 0, colR = 0; col < numDiffBase; ++col ) 
+        for( size_t col = 0, colR = 0; col < numCols; ++col ) 
         {
           gjit->mv( jacobianStorage[ baseRow ][ col ][ 0 ], gradPhi );
 
@@ -555,15 +712,91 @@ namespace Dune
       }
     }
    
-    ////////////////////////////////////////////////////
-    //  axpyRanges 
-    ////////////////////////////////////////////////////
+    /////////////////////////////////////////////////////////////
+    //
+    //  axpyRanges -- add a vector of ranges to the dof vector  
+    //
+    /////////////////////////////////////////////////////////////
+#ifdef USE_BASEFUNCTIONSET_OPTIMIZED
+    template <class BaseFunctionSet, class Geometry, 
+              int dimRange, int numRows, int numCols>
+    struct AxpyRanges 
+    {
+      template< class QuadratureType, 
+                class RangeVectorType,
+                class RangeFactorType,
+                class LocalDofVectorType >
+      static void axpy( const QuadratureType& quad,
+                        const RangeVectorType& rangeStorage,
+                        const RangeFactorType &rangeFactors,
+                        LocalDofVectorType& dofs)
+      {
+        std::cerr << "ERROR: wrong code generated for VectorialBaseFunctionSet::axpyRanges" << std::endl;
+        abort();
+      }
+    };
+
+    template <class BaseFunctionSet,
+              int dimRange, int numRows, int numCols>
+    struct AxpyRanges<BaseFunctionSet, Fem :: EmptyGeometry, dimRange, numRows, numCols>  
+    {
+      template< class QuadratureType, 
+                class RangeVectorType,
+                class RangeFactorType,
+                class LocalDofVectorType >
+      static void axpy( const QuadratureType& quad,
+                        const RangeVectorType& rangeStorage,
+                        const RangeFactorType &rangeFactors,
+                        LocalDofVectorType& dofs)
+      {
+#ifndef USE_BASEFUNCTIONSET_CODEGEN
+        BaseFunctionSet::axpyRanges( quad, rangeStorage, rangeFactors, dofs, numRows, numCols );
+#else 
+        std::cerr << "ERROR: wrong code generated for VectorialBaseFunctionSet::evaluateRanges" << std::endl;
+        abort();
+#endif
+      }
+    };
+
+#ifdef USE_BASEFUNCTIONSET_CODEGEN
+    #include <axpyranges.hh>
+#endif
+#endif // endif USE_BASEFUNCTIONSET_OPTIMIZED 
+
     template< class QuadratureType, 
-              class RangeVectorType,
+              class RangeFactorType,
               class LocalDofVectorType >
     inline void axpyRanges ( const QuadratureType& quad,
-                             const RangeVectorType &rangeFactors,
+                             const RangeFactorType &rangeFactors,
                              LocalDofVectorType& dofs ) const
+    {
+#ifdef USE_BASEFUNCTIONSET_OPTIMIZED
+      typedef Fem :: EvaluateCallerInterfaceTraits< 
+          QuadratureType, RangeFactorType, LocalDofVectorType > Traits;
+      typedef Fem :: EvaluateCallerInterface< Traits > BaseEvaluationType;
+
+      // get base function evaluate caller (calls axpyRanges) 
+      const BaseEvaluationType& baseEval = 
+        BaseEvaluationType::storage( *this, storage_.getRangeStorage( quad ), quad );
+
+      // call appropriate axpyRanges method 
+      baseEval.axpyRanges( quad, rangeFactors, dofs );
+#else 
+      axpyRanges( quad, storage_.getRangeStorage( quad ), 
+          rangeFactors, dofs, quad.nop(), numDifferentBaseFunctions() );
+#endif
+    }
+
+    template< class QuadratureType, 
+              class RangeVectorType,
+              class RangeFactorType,
+              class LocalDofVectorType >
+    static void axpyRanges ( const QuadratureType& quad,
+                             const RangeVectorType& rangeStorage,
+                             const RangeFactorType &rangeFactors,
+                             LocalDofVectorType& dofs,
+                             const unsigned int numRows, 
+                             const unsigned int numCols )
     {
 #ifdef DUNE_FEM_BASEFUNC_USE_SSE
       typedef typename StorageType :: RangeCacheMatrixType RangeCacheMatrixType;
@@ -579,30 +812,56 @@ namespace Dune
       }
       else 
         baseFunctionMatrix.umtv( rangeFactors, dofs, dimRange );
-
 #else 
-      typedef typename StorageType :: RangeVectorType RangeVectorType;
-      const RangeVectorType& rangeStorage = storage_.getRangeStorage( quad );
 
-      const size_t numRows = quad.nop();
-      const size_t numDiffBase = numDifferentBaseFunctions();
-      assert( (int) numDiffBase * dimRange == dofs.numDofs() );
+#ifdef BASEFUNCTIONSET_CODEGEN_GENERATE
+      static std::set< size_t > storedRows; 
+      if( storedRows.find( numRows ) == storedRows.end() ) 
+      {
+        std::stringstream filename;
+        filename << "axpyranges" << dimRange << "_" << numRows << "_" << numCols << ".hh";
+        std::ofstream file( filename.str().c_str(), ( storedRows.size() == 0 ) ? (std::ios::out) : (std::ios::app) );
+        std::cout << "Generate code " << filename.str() << " for (" << numRows << "," << numCols << ")" << std::endl;
+        Fem :: axpyCodegen( file, dimRange, numRows, numCols ); 
+        storedRows.insert( numRows );
+      }
+#endif
 
+      assert( numRows == quad.nop() );
+      assert( (int) numCols * dimRange == dofs.numDofs() );
       assert( rangeStorage.size() >= (int) numRows );
+
+      /*
       for( size_t row = 0; row < numRows ; ++row )
       {
-        const size_t baseRow = storage_.applyCaching( quad , row ); 
+        //const size_t baseRow = quad.cachingPoint( row );
+        const typename RangeVectorType :: value_type& rangeStorageRow 
+          = rangeStorage[ quad.cachingPoint( row ) ];
 
         assert( rangeStorage.size() > (int) baseRow );
-        assert( rangeStorage[ baseRow ].size() >= (int)numDiffBase );
+        //assert( rangeStorage[ baseRow ].size() >= (int)numCols );
         const RangeType& factor = rangeFactors[ row ]; 
 
-        for( size_t col = 0, colR = 0; col < numDiffBase; ++col ) 
+        for( size_t col = 0, colR = 0; col < numCols; ++col ) 
         {
-          const ScalarRangeType& phi = rangeStorage[ baseRow ][ col ];
+          const ScalarRangeType& phi = rangeStorageRow[ col ];
           for( int r = 0; r < dimRange; ++r , ++colR ) 
           {
             dofs[ colR ] += phi[ 0 ] * factor[ r ];
+          }
+        }
+      }
+      */
+
+      // this way the codes seems faster 
+      for( size_t col = 0, colR = 0; col < numCols; ++col ) 
+      {
+        for( int r = 0; r < dimRange; ++r , ++colR ) 
+        {
+          //RangeFieldType& dof = dofs[ colR ]; 
+          for( size_t row = 0; row < numRows ; ++row )
+          {
+            dofs[ colR ] += rangeStorage[ quad.cachingPoint( row ) ][ col ][ 0 ] * rangeFactors[ row ][ r ];
           }
         }
       }
@@ -612,6 +871,47 @@ namespace Dune
     ///////////////////////////////////////////////////////////
     //  applyAxpy Jacobian 
     ///////////////////////////////////////////////////////////
+#ifdef USE_BASEFUNCTIONSET_OPTIMIZED
+    template <class BaseFunctionSet, class Geometry, 
+              int dimRange, int numRows, int numCols>
+    struct AxpyJacobians 
+    {
+      template< class QuadratureType, 
+                class JacobianRangeVectorType,
+                class JacobianRangeFactorType,
+                class LocalDofVectorType >
+      static void axpy( const QuadratureType& quad,
+                        const Geometry& geometry,
+                        const JacobianRangeVectorType& jacobianStorage,
+                        const JacobianRangeFactorType &jacFactors,
+                        LocalDofVectorType& dofs)
+      {
+        BaseFunctionSet :: 
+          axpyJacobians( quad, geometry, jacobianStorage, jacFactors, dofs, 
+                         jacFactors[ 0 ], numRows, numCols );
+      }
+    };
+
+    template <class BaseFunctionSet,
+              int dimRange, int numRows, int numCols>
+    struct AxpyJacobians< BaseFunctionSet, Fem :: EmptyGeometry, dimRange, numRows, numCols > 
+    {
+      template< class QuadratureType, 
+                class JacobianRangeVectorType,
+                class JacobianRangeFactorType,
+                class LocalDofVectorType >
+      static void axpy( const QuadratureType&,
+                        const Fem :: EmptyGeometry&,
+                        const JacobianRangeVectorType&,
+                        const JacobianRangeFactorType &,
+                        LocalDofVectorType&)
+      {
+        std::cerr << "ERROR: wrong code generated for VectorialBaseFunctionSet::axpyJacobians" << std::endl;
+        abort();
+      }
+    };
+#endif // endif USE_BASEFUNCTIONSET_OPTIMIZED 
+
     template< class QuadratureType, 
               class Geometry,
               class JacobianVectorType,
@@ -621,44 +921,81 @@ namespace Dune
                                 const JacobianVectorType &jacVector,
                                 LocalDofVectorType& dofs) const 
     {
+#ifdef USE_BASEFUNCTIONSET_OPTIMIZED
+      typedef Fem :: EvaluateCallerInterfaceTraits< QuadratureType, 
+              JacobianVectorType, LocalDofVectorType, Geometry >  Traits;
+      typedef Fem :: EvaluateCallerInterface< Traits > BaseEvaluationType;
+
+      // get base function evaluate caller (calls axpyRanges) 
+      const BaseEvaluationType& baseEval = 
+        BaseEvaluationType::storage( *this, storage_.getJacobianStorage( quad ), quad );
+
+      // call appropriate axpyJacobian method 
+      baseEval.axpyJacobians( quad, geometry, jacVector, dofs );
+#else 
       assert( jacVector.size() > 0 );
       axpyJacobians( quad, geometry,
-                     jacVector, dofs, jacVector[ 0 ] );
+                     storage_.getJacobianStorage( quad ),
+                     jacVector, dofs, jacVector[ 0 ], 
+                     quad.nop(), numDifferentBaseFunctions() );
+#endif
     }
 
     template< class QuadratureType, 
               class Geometry,
+              class JacobianRangeVectorType,
               class JacobianVectorType,
               class GlobalJacobianRangeType,
               class LocalDofVectorType >
-    inline void axpyJacobians ( const QuadratureType& quad,
+    static void axpyJacobians ( const QuadratureType& quad,
                                 const Geometry& geometry,
+                                const JacobianRangeVectorType& jacobianStorage,
                                 const JacobianVectorType &jacVector,
                                 LocalDofVectorType& dofs,
-                                const GlobalJacobianRangeType& ) const
+                                const GlobalJacobianRangeType&,
+                                const unsigned int numRows, 
+                                const unsigned int numCols )
     {
       const bool affineGeometry = geometry.affine();
       typedef typename Geometry::Jacobian GeometryJacobianType;
       const GeometryJacobianType *gjit
         = (affineGeometry ? &geometry.jacobianInverseTransposed( quad.point( 0 ) ) : 0);
 
-      const size_t numRows = quad.nop();
-
 #ifdef DUNE_FEM_BASEFUNC_USE_SSE
       typedef typename StorageType :: RangeCacheMatrixType RangeCacheMatrixType;
       const RangeCacheMatrixType& baseFunctionMatrix = storage_.getJacobianMatrix( quad );
 
       const size_t offset = GlobalJacobianRangeType::rows * GlobalJacobianRangeType::cols;
-      double* jacFactorGlobal = new double [ numRows * offset ];
-      for( size_t row = 0; row < numRows ; ++row )
-      {
-        // if geometry has non-affine mapping we need to update jacobian inverse
-        if( !affineGeometry ) 
-          gjit = &geometry.jacobianInverseTransposed( quad.point( row ));
+      static MutableArray<double> jacFactorGlobal;
+      const int jacSize = numRows * offset;
+      if( jacFactorGlobal.size() < jacSize ) 
+        jacFactorGlobal.resize( jacSize );
 
-        // multiply jacobian factor with geometry inverse 
-        for( size_t r = 0; r < dimRange; ++r )
-          gjit->mtv( jacVector[ row ][ r ], &jacFactorGlobal[ row + offset + r*GlobalJacobianRangeType::cols ] );
+      if( affineGeometry ) 
+      {
+        for( size_t row = 0; row < numRows ; ++row )
+        {
+          // multiply jacobian factor with geometry inverse 
+          for( size_t r = 0; r < dimRange; ++r )
+          {
+            double * res = &jacFactorGlobal[ row + offset + r*GlobalJacobianRangeType::cols ] ;
+            gjit->mtv( jacVector[ row ][ r ], res );
+          }
+        }
+      }
+      else 
+      {
+        for( size_t row = 0; row < numRows ; ++row )
+        {
+          gjit = &geometry.jacobianInverseTransposed( quad.point( row ));
+  
+          // multiply jacobian factor with geometry inverse 
+          for( size_t r = 0; r < dimRange; ++r )
+          {
+            double * res = &jacFactorGlobal[ row + offset + r*GlobalJacobianRangeType::cols ] ;
+            gjit->mtv( jacVector[ row ][ r ], res );
+          }
+        }
       }
 
       const bool faceCachingQuad = (QuadratureType :: codimension == 1) && 
@@ -671,37 +1008,59 @@ namespace Dune
       else 
         baseFunctionMatrix.umtv( jacFactorGlobal, dofs, dimRange, true );
 
-      delete [] jacFactorGlobal;
+      //delete [] jacFactorGlobal;
 #else 
-      typedef typename StorageType :: JacobianRangeVectorType JacobianRangeVectorType;
-      const JacobianRangeVectorType& jacobianStorage = storage_.getJacobianStorage( quad );
-
-      const size_t numDiffBase = numDifferentBaseFunctions();
-      assert( (int ) numDiffBase * dimRange == dofs.numDofs() );
-
-
+      assert( (int ) numCols * dimRange == dofs.numDofs() );
       assert( jacobianStorage.size() >= (int) numRows );
-      for( size_t row = 0; row < numRows ; ++row )
-      {
-        const size_t baseRow = storage_.applyCaching( quad , row ); 
-        assert( jacobianStorage.size() > (int)baseRow );
-        assert( jacobianStorage[ baseRow ].size() >= (int)numDiffBase );
 
-        // if geometry has non-affine mapping we need to update jacobian inverse
-        if( !affineGeometry ) 
+      if( affineGeometry ) 
+      {
+        for( size_t row = 0; row < numRows ; ++row )
+        {
+          //const size_t baseRow = storage_.applyCaching( quad , row ); 
+          const size_t baseRow = quad.cachingPoint( row ); 
+          assert( jacobianStorage.size() > (int)baseRow );
+          assert( jacobianStorage[ baseRow ].size() >= (int)numCols );
+
+          JacobianRangeType jacFactorInv;
+
+          // multiply jacobian factor with geometry inverse 
+          for( size_t r = 0; r < dimRange; ++r )
+            gjit->mtv( jacVector[ row ][ r ], jacFactorInv[ r ] );
+
+          for( size_t col = 0, colR = 0; col < numCols; ++col ) 
+          {
+            for( int r = 0; r < dimRange; ++r, ++colR ) 
+            {
+              dofs[ colR ] += jacobianStorage[ baseRow ][ col ][ 0 ] * jacFactorInv[ r ];
+            }
+          }
+        }
+      }
+      else 
+      {
+        assert( jacobianStorage.size() >= (int) numRows );
+        for( size_t row = 0; row < numRows ; ++row )
+        {
+          const size_t baseRow = quad.cachingPoint( row ); 
+          assert( jacobianStorage.size() > (int)baseRow );
+          assert( jacobianStorage[ baseRow ].size() >= (int)numCols );
+
+          // if geometry has non-affine mapping we need to update jacobian inverse
           gjit = &geometry.jacobianInverseTransposed( quad.point( row ) );
 
-        JacobianRangeType jacFactorInv;
+          JacobianRangeType jacFactorInv;
 
-        // multiply jacobian factor with geometry inverse 
-        for( size_t r = 0; r < dimRange; ++r )
-          gjit->mtv( jacVector[ row ][ r ], jacFactorInv[ r ] );
+          // multiply jacobian factor with geometry inverse 
+          for( size_t r = 0; r < dimRange; ++r )
+            gjit->mtv( jacVector[ row ][ r ], jacFactorInv[ r ] );
 
-        for( size_t col = 0, colR = 0; col < numDiffBase; ++col ) 
-        {
-          for( int r = 0; r < dimRange; ++r, ++colR ) 
+          for( size_t col = 0, colR = 0; col < numCols; ++col ) 
           {
-            dofs[ colR ] += jacobianStorage[ baseRow ][ col ][ 0 ] * jacFactorInv[ r ];
+            for( int r = 0; r < dimRange; ++r, ++colR ) 
+            {
+              dofs[ colR ] += jacobianStorage[ baseRow ][ col ][ 0 ] * jacFactorInv[ r ];
+            }
           }
         }
       }

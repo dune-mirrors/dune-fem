@@ -16,6 +16,9 @@
 #include <dune/fem/quadrature/quadrature.hh>
 
 #ifdef DUNE_FEM_BASEFUNC_USE_SSE
+#ifndef NDEBUG 
+#warning "Using SSE basefunction evaluate methods"
+#endif
 #include <dune/fem/storage/ssematrixdynamic.hh>
 #endif
 
@@ -24,7 +27,7 @@ namespace Dune
 
   //! forward deklaration for CachingInterface 
   class CachingInterface;
-   
+
   template <class FunctionSpaceImp>
   class StorageBase : public StorageInterface<FunctionSpaceImp::dimDomain> 
 
@@ -572,6 +575,7 @@ namespace Dune
   protected:
     mutable RangeContainerType ranges_;
     mutable JacobianRangeContainerType jacobians_;
+
     mutable RangeStoredType rangestored_;
     mutable JacobianRangeStoredType jacobianstored_;
 
