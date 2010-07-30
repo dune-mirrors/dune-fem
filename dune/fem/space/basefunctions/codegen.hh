@@ -192,19 +192,46 @@ namespace Fem {
     out << "                    const JacobianRangeFactorType& jacFactors," << std::endl;
     out << "                    LocalDofVectorType& dofs)" << std::endl;
     out << "  {" << std::endl;
+    const int dim = 3 ;
+    const int sseDimRange = (( dimRange % 2 ) == 0) ? dimRange : dimRange+1; 
     out << "    typedef typename Geometry::Jacobian GeometryJacobianType;" << std::endl;
     out << "    const GeometryJacobianType gjit = geometry.jacobianInverseTransposed( quad.point( 0 ) );" << std::endl << std::endl;
     out << "    typedef typename JacobianRangeVectorType :: value_type  value_type;" << std::endl; 
-    //out << "    const value_type* const jacStorageTmp[ " << numRows << " ] = {" << std::endl;
-    //for( size_t row = 0; row<numRows ; ++ row )
-    //{
-    //  out << "       &( jacStorage[ quad.cachingPoint( " << row << " ) ] )";
-    //  if( row < numRows - 1 ) out << " ," << std::endl;
-    //  else out << "  };" << std::endl;
-    //}
-    //out << std::endl;
-    out << "    typedef typename ScalarRangeType :: field_type field_type;" << std::endl;
-    const int sseDimRange = (( dimRange % 2 ) == 0) ? dimRange : dimRange+1; 
+    out << "    typedef typename JacobianRangeType :: field_type field_type;" << std::endl;
+    const size_t dofs = sseDimRange * numCols ;
+    out << "    field_type result [ " << dofs << " ] = {"; 
+    for( size_t dof = 0 ; dof < dofs-1 ; ++ dof ) out << " 0,";
+    out << " 0 };" << std::endl << std::endl;
+    out << "    for( size_t row = 0; row < " << numRows << " ; ++ row )" << std::endl;
+    out << "    {" << std::endl;
+    out << "      const value_type& jacStorageRow = jacStorage[ quad.cachingPoint( row ) ];" << std::endl;
+    out << "      field_type jacFactorInv[ " << dim * sseDimRange << " ];" << std::endl;
+    out << "      for( int r = 0; r < " << dimRange << " ; ++r )" << std::endl;
+    out << "      {"<<std::endl; 
+    out << "        for( size_t i = 0; i < GeometryJacobianType :: cols; ++i )" << std::endl;
+    out << "        {" << std::endl;
+    out << "           const size_t ir = i * " << sseDimRange << " + r ;" << std::endl;
+    out << "           jacFactorInv[ ir  ] = 0;" << std::endl;
+    out << "           for( size_t j = 0; j < GeometryJacobianType :: rows; ++j )" << std::endl;
+    out << "             jacFactorInv[ ir ] += gjit[ j ][ i ] * jacFactors[ row ][ r ][ j ];" << std::endl;
+    out << "        }" << std::endl;
+    out << "      }" << std::endl;
+
+    for( size_t col = 0, colR = 0; col < numCols; ++col ) 
+    {
+      for( int d = 0, dr = 0 ; d < dim ; ++ d ) 
+      {
+        out << "      const field_type phi" << col << d << " = jacStorageRow[ " << col << " ][ 0 ][ " << d << " ];" << std::endl;
+        for( int r = 0; r < sseDimRange; ++r, ++dr )
+        {
+          out << "      result[ " << colR+r << " ]  +=  phi" << col << d << " * jacFactorInv[ " << dr << " ];" << std::endl;
+        }
+      }
+      colR += sseDimRange; 
+    }
+    out << "    }" << std::endl << std::endl;
+
+    /*
     for( size_t row = 0; row<numRows ; ++ row )
     {
       out << "    {" << std::endl;
@@ -222,6 +249,15 @@ namespace Fem {
         }
       }
       out << "    }" << std::endl;
+    }
+    */
+    for( size_t col = 0, colD = 0, colR = 0; col < numCols; ++ col ) 
+    {
+      for(int r = 0; r < dimRange; ++ r, ++colD, ++colR )
+      {
+        out << "    dofs[ " << colD << " ]  +=  result[ " << colR << " ];" << std::endl; 
+      }
+      if( sseDimRange != dimRange ) ++ colR ;
     }
     out << "  }" << std::endl << std::endl;
     out << "};" << std::endl;
