@@ -104,7 +104,7 @@ private:
 class SIRK : public ODESolver, public IterativeSolver
 {
 public:
-  SIRK(Communicator &comm, int num_of_stages, int order, 
+  SIRK(Communicator &comm, const int num_of_stages, const int order, 
        Function &f, Function &fex,
        const double *a, const double *b, const double *c,
        const double *aex, const double *cex);
@@ -407,6 +407,13 @@ class IMEX_SSP222 : public SIRK
 {
 public:
   IMEX_SSP222(Communicator &comm, Function &f, Function &fex);
+};
+
+
+class IMEX_ARK46 : public SIRK
+{
+public:
+  IMEX_ARK46(Communicator &comm, Function &f, Function &fex);
 };
 
 
