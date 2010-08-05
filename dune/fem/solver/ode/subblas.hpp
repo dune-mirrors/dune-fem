@@ -58,8 +58,8 @@ inline
 void cblas_drotg(double *sa, double *sb, double *c, double *s)
 {
   double roe = *sb;
-  if( fabs(*sa) > fabs(*sb) ) roe = *sa;
-  double scale = fabs(*sa) + fabs(*sb);
+  if( std::abs(*sa) > std::abs(*sb) ) roe = *sa;
+  double scale = std::abs(*sa) + std::abs(*sb);
   double r, z;
 
   if( scale == 0.0 ){
@@ -74,8 +74,8 @@ void cblas_drotg(double *sa, double *sb, double *c, double *s)
     *c = *sa/r;
     *s = *sb/r;
     z = 1.0;
-    if( fabs(*sa) > fabs(*sb) ) z = *s;
-    if( fabs(*sb) >= fabs(*sa) && *c != 0.0 ) z = 1.0/(*c);
+    if( std::abs(*sa) > std::abs(*sb) ) z = *s;
+    if( std::abs(*sb) >= std::abs(*sa) && *c != 0.0 ) z = 1.0/(*c);
   }
 
   *sa = r;
@@ -194,12 +194,12 @@ double cblas_dnrm2(const int dim, const double *x, const int incx)
 inline
 int cblas_idamax(const int dim, const double *x, const int incx)
 {
-  double max_abs = fabs(*x);
+  double max_abs = std::abs(*x);
   int argmax = 0;
   x += incx;
 
   for(int i=1; i<dim; i++){
-    const double x_abs = fabs(*x);
+    const double x_abs = std::abs(*x);
     if (x_abs > max_abs){
       max_abs = x_abs;
       argmax = i;
