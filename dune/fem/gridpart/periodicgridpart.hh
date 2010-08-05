@@ -14,6 +14,7 @@ namespace Dune
 
 
 
+#if 0
   template< class Grid >
   class PeriodicLeafIntersectionIterator
   {
@@ -217,6 +218,7 @@ namespace Dune
       return wrappedIterator_.getRealImp();
     }
   };
+#endif
 
   
           
@@ -234,8 +236,8 @@ namespace Dune
 
     static const PartitionIteratorType indexSetPartitionType = All_Partition;
 
-    typedef PeriodicLeafIntersectionIterator< GridType >
-      IntersectionIteratorType;
+    //typedef PeriodicLeafIntersectionIterator< GridType > IntersectionIteratorType;
+    typedef typename GridType::LeafIntersectionIterator IntersectionIteratorType;
 
     template< int codim >
     struct Codim
@@ -296,7 +298,6 @@ namespace Dune
     //! type of the underlying grid
     typedef typename Traits :: GridType GridType;
 
-  public:
     //! type of the index set
     typedef typename Traits :: IndexSetType IndexSetType;
 
@@ -310,15 +311,17 @@ namespace Dune
       typedef typename Traits :: template Codim< codim > :: EntityType EntityType;
     };
 
-  protected:
-    IndexSetType indexSet_;
-
-  public:
     //! Constructor wrapping a grid in the grid partition
     PeriodicLeafGridPart ( GridType &grid ) DUNE_VERSION_DEPRECATED(1,2,remove)
-    : BaseType( grid, indexSet_ ),
+    : BaseType( grid ),
       indexSet_( grid )
     {}
+
+    //! Returns reference to index set of the underlying grid
+    const IndexSetType &indexSet () const
+    {
+      return indexSet_;
+    }
 
     //! Begin iterator on the leaf level
     template< int codim >
@@ -396,6 +399,9 @@ namespace Dune
     {
       this->grid().communicate( data, iftype, dir );
     }
+
+  protected:
+    IndexSetType indexSet_;
   };
 
 }
