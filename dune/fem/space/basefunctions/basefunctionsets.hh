@@ -10,9 +10,11 @@
 
 
 //#define USE_BASEFUNCTIONSET_OPTIMIZED
+
 #ifdef USE_BASEFUNCTIONSET_CODEGEN 
 #define USE_BASEFUNCTIONSET_OPTIMIZED
 #endif
+
 //#define USE_BASEFUNCTIONSET_CODEGEN
 //#define BASEFUNCTIONSET_CODEGEN_GENERATE
 
@@ -550,13 +552,10 @@ namespace Dune
       }
       else 
       {
-        std::stringstream filename;
-        filename << "evalranges" << dimRange << "_" << numRows << "_" << numCols << ".hh";
-        std::ofstream file( filename.str().c_str(), ( storedRows.size() == 0 ) ? (std::ios::out) : (std::ios::app) );
-        Fem :: evaluateCodegen( file, dimRange, numRows, numCols );
-        std::cout << "Generate code " << filename.str() << " for (" << numRows << "," << numCols << ")" << std::endl;
         storedRows[ numRows ] = 
-          Fem::CodegenInfo::instance().addEntry( filename.str(), dimRange, numRows, numCols );
+          Fem::CodegenInfo::instance().addEntry( "evalranges", 
+              ( storedRows.size() == 1 ), Fem :: evaluateCodegen, dimRange, numRows, numCols );
+        std::cout << "Generate code evalranges for (" << numRows << "," << numCols << ")" << std::endl;
       }
 #endif
       assert( (int) numCols * dimRange == dofs.numDofs() );
@@ -824,13 +823,10 @@ namespace Dune
       }
       else 
       {
-        std::stringstream filename;
-        filename << "axpyranges" << dimRange << "_" << numRows << "_" << numCols << ".hh";
-        std::ofstream file( filename.str().c_str(), ( storedRows.size() == 0 ) ? (std::ios::out) : (std::ios::app) );
-        Fem :: axpyCodegen( file, dimRange, numRows, numCols ); 
-        std::cout << "Generate code " << filename.str() << " for (" << numRows << "," << numCols << ")" << std::endl;
         storedRows[ numRows ] = 
-          Fem::CodegenInfo::instance().addEntry( filename.str(), dimRange, numRows, numCols );
+          Fem::CodegenInfo::instance().addEntry( "axpyranges", 
+              ( storedRows.size() == 1 ), Fem :: axpyCodegen, dimRange, numRows, numCols );
+        std::cout << "Generate code axpyranges for (" << numRows << "," << numCols << ")" << std::endl;
       }
 #endif
 
@@ -1030,13 +1026,10 @@ namespace Dune
       }
       else 
       {
-        std::stringstream filename;
-        filename << "axpyjacobians" << dimRange << "_" << numRows << "_" << numCols << ".hh";
-        std::ofstream file( filename.str().c_str(), ( storedRows.size() == 0 ) ? (std::ios::out) : (std::ios::app) );
-        Fem :: axpyJacobianCodegen( file, dimRange, numRows, numCols ); 
-        std::cout << "Generate code " << filename.str() << " for (" << numRows << "," << numCols << ")" << std::endl;
         storedRows[ numRows ] = 
-          Fem::CodegenInfo::instance().addEntry( filename.str(), dimRange, numRows, numCols );
+          Fem::CodegenInfo::instance().addEntry( "axpyjacobians", 
+              ( storedRows.size() == 1 ), Fem :: axpyJacobianCodegen, dimRange, numRows, numCols );
+        std::cout << "Generate code axpyjacobians for (" << numRows << "," << numCols << ")" << std::endl;
       }
 #endif
       assert( (int ) numCols * dimRange == dofs.numDofs() );
@@ -1121,4 +1114,7 @@ namespace Dune
 
 } // end namespace Dune
 
+#undef USE_BASEFUNCTIONSET_OPTIMIZED
+#undef USE_BASEFUNCTIONSET_CODEGEN
+#undef BASEFUNCTIONSET_CODEGEN_GENERATE
 #endif

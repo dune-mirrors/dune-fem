@@ -16,6 +16,11 @@ namespace Fem {
     int baseMax_;
     int baseMin_;
 
+    typedef void codegenfunc_t (std::ostream& out, 
+                                const int dimRange, 
+                                const size_t numRows, 
+                                const size_t numCols );
+
     typedef std::pair< std::string, bool > EntryType;
     std::vector< EntryType > filenames_;
 
@@ -42,13 +47,20 @@ namespace Fem {
       }
     }
 
-    size_t addEntry(const std::string& filename, 
+    size_t addEntry(const std::string& fileprefix, 
+                    const bool freshFile, codegenfunc_t* codegenfunc,
                     const int dimRange, const int quadNop, const int numBase ) 
     {
+      std::stringstream filename;
+      filename << fileprefix << dimRange << "_" << quadNop << "_" << numBase << ".hh";
+      std::ofstream file( filename.str().c_str(), ( freshFile ) ? (std::ios::out) : (std::ios::app) );
+      // call code generation function 
+      codegenfunc( file, dimRange, quadNop, numBase );
+ 
       if( baseMin_ == 0 ) baseMin_ = numBase;
       if( nopMin_  == 0 ) nopMin_  = quadNop;
 
-      EntryType entry ( filename, false );
+      EntryType entry ( filename.str() , false );
       filenames_.push_back( entry );
       nopMax_ = std::max( quadNop, nopMax_ );
       nopMin_ = std::min( quadNop, nopMin_ );
@@ -92,7 +104,9 @@ namespace Fem {
   };
 
   static void evaluateCodegen(std::ostream& out, 
-          const int dimRange, const size_t numRows, const size_t numCols ) 
+                              const int dimRange, 
+                              const size_t numRows, 
+                              const size_t numCols ) 
   {
     out << "template <class BaseFunctionSet>" << std::endl;
     out << "struct EvaluateRanges<BaseFunctionSet, Fem :: EmptyGeometry, " << dimRange << ", " << numRows << ", " << numCols << ">" << std::endl;
