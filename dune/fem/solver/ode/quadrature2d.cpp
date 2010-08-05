@@ -70,7 +70,7 @@ void Quadrature2d::check() const
       for(int i=1; i<=k; i++) a *= i;
       for(int i=1; i<=n+k+2; i++) b *= i;
 
-      double error = fabs(sum - (double)a / (double)b);
+      double error = std::abs(sum - (double)a / (double)b);
       total_error += error;
 
       std::cout << n << "  "
