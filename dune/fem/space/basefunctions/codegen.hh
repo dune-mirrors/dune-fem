@@ -1,7 +1,12 @@
 #ifndef DUNE_BASEFUNCTIONSETS_CODEGEN_HH
 #define DUNE_BASEFUNCTIONSETS_CODEGEN_HH
 
+#include <cassert>
+#include <cstdlib>
 #include <iostream>
+#include <fstream>
+#include <sstream>
+#include <vector>
 
 namespace Dune
 {
