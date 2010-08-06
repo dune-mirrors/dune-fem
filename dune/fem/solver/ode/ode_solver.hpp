@@ -410,6 +410,13 @@ public:
 };
 
 
+class IMEX_ARK34 : public SIRK
+{
+public:
+  IMEX_ARK34(Communicator &comm, Function &f, Function &fex);
+};
+
+
 class IMEX_ARK46 : public SIRK
 {
 public:
