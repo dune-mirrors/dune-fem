@@ -187,7 +187,6 @@ namespace Dune
     {
       dimDomain = FunctionSpaceType :: dimDomain,
       dimRange  = FunctionSpaceType :: dimRange,
-      dimLocal  = ScalarFunctionSpaceType :: dimDomain 
     };
     
     typedef RangeFieldType DofType;
@@ -555,7 +554,7 @@ namespace Dune
       {
         storedRows[ numRows ] = 
           Fem::CodegenInfo::instance().addEntry( "evalranges", 
-              ( storedRows.size() == 1 ), Fem :: evaluateCodegen, dimLocal, dimRange, numRows, numCols );
+              ( storedRows.size() == 1 ), Fem :: evaluateCodegen, dimDomain, dimRange, numRows, numCols );
         std::cout << "Generate code evalranges for (" << numRows << "," << numCols << ")" << std::endl;
       }
 #endif
@@ -826,7 +825,7 @@ namespace Dune
       {
         storedRows[ numRows ] = 
           Fem::CodegenInfo::instance().addEntry( "axpyranges", 
-              ( storedRows.size() == 1 ), Fem :: axpyCodegen, dimLocal, dimRange, numRows, numCols );
+              ( storedRows.size() == 1 ), Fem :: axpyCodegen, dimDomain, dimRange, numRows, numCols );
         std::cout << "Generate code axpyranges for (" << numRows << "," << numCols << ")" << std::endl;
       }
 #endif
@@ -1029,7 +1028,7 @@ namespace Dune
       {
         storedRows[ numRows ] = 
           Fem::CodegenInfo::instance().addEntry( "axpyjacobians", 
-              ( storedRows.size() == 1 ), Fem :: axpyJacobianCodegen, dimLocal, dimRange, numRows, numCols );
+              ( storedRows.size() == 1 ), Fem :: axpyJacobianCodegen, dimDomain, dimRange, numRows, numCols );
         std::cout << "Generate code axpyjacobians for (" << numRows << "," << numCols << ")" << std::endl;
       }
 #endif
