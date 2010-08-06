@@ -424,6 +424,13 @@ public:
 };
 
 
+class IERK45: public SIRK
+{
+public:
+  IERK45(Communicator &comm, Function &f, Function &fex);
+};
+
+
 
 } // namespace pardg
 

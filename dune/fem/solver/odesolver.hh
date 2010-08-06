@@ -25,6 +25,8 @@
 #include "pardg.hh"
 
 namespace DuneODE {
+
+#ifdef USE_PARDG_ODE_SOLVER
 struct ODEParameters
 : public LocalParameter< ODEParameters, ODEParameters >
 { 
@@ -34,6 +36,7 @@ struct ODEParameters
     sigma( Parameter::getValue< double >( "fem.ode.cflincrease" , 1.1 ) )
   {
   }
+
   virtual PARDG::IterativeLinearSolver *linearSolver(PARDG::Communicator & comm) const
   {
     int cycles = Parameter::getValue< int >( "fem.ode.gmrescycles" , 15 );
@@ -96,7 +99,7 @@ struct ODEParameters
   const int min_it,max_it;
   const double sigma;
 };
-#ifdef USE_PARDG_ODE_SOLVER
+
 template <class Operator>
 class OperatorWrapper : public PARDG::Function 
 {
@@ -570,6 +573,9 @@ protected:
       case 1: odeSolver = new PARDG::SemiImplicitEuler(comm_, impl_, expl_); break;
       case 2: odeSolver = new PARDG::IMEX_SSP222      (comm_, impl_, expl_); break;
       case 3: odeSolver = new PARDG::SIRK33           (comm_, impl_, expl_); break;
+              //odeSolver = new PARDG::IMEX_ARK34       (comm_, impl_, expl_); break;
+      case 4: odeSolver = new PARDG::IERK45           (comm_, impl_, expl_); break;
+              //odeSolver = new PARDG::IMEX_ARK46       (comm_, impl_, expl_); break;
       default : std::cerr << "Runge-Kutta method of this order not implemented" 
                           << std::endl;
                 abort();
