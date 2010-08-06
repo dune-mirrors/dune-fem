@@ -57,6 +57,13 @@ namespace Dune {
       time_( 0.0 )
     {}
 
+    ~DiscreteModelCallerDefault() {
+//#ifdef BASEFUNCTIONSET_CODEGEN_GENERATE
+      // leads to crashes when code is aborted 
+      data_.release();
+//#endif
+    }
+
     void setArgument(TotalArgumentType& arg) 
     {
       data_.reset(new DataStorage(arg));

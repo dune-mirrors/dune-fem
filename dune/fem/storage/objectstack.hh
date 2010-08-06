@@ -155,7 +155,10 @@ namespace Dune
     //! delete all objects on stack 
     ~ObjectStack ()
     {
+#ifndef BASEFUNCTIONSET_CODEGEN_GENERATE
+      // this assertion will fail during code generation 
       assert( numIssuedObjects_ == 0 );
+#endif
 
       while ( top_ != 0 )
       {

@@ -10,13 +10,13 @@
 
 
 //#define USE_BASEFUNCTIONSET_OPTIMIZED
+//#define USE_BASEFUNCTIONSET_CODEGEN
+//#define BASEFUNCTIONSET_CODEGEN_GENERATE
 
 #ifdef USE_BASEFUNCTIONSET_CODEGEN 
 #define USE_BASEFUNCTIONSET_OPTIMIZED
 #endif
 
-//#define USE_BASEFUNCTIONSET_CODEGEN
-//#define BASEFUNCTIONSET_CODEGEN_GENERATE
 
 #ifdef BASEFUNCTIONSET_CODEGEN_GENERATE
 #include <dune/fem/space/basefunctions/codegen.hh>
@@ -186,7 +186,8 @@ namespace Dune
     enum
     {
       dimDomain = FunctionSpaceType :: dimDomain,
-      dimRange = FunctionSpaceType :: dimRange
+      dimRange  = FunctionSpaceType :: dimRange,
+      dimLocal  = ScalarFunctionSpaceType :: dimDomain 
     };
     
     typedef RangeFieldType DofType;
@@ -554,7 +555,7 @@ namespace Dune
       {
         storedRows[ numRows ] = 
           Fem::CodegenInfo::instance().addEntry( "evalranges", 
-              ( storedRows.size() == 1 ), Fem :: evaluateCodegen, dimRange, numRows, numCols );
+              ( storedRows.size() == 1 ), Fem :: evaluateCodegen, dimLocal, dimRange, numRows, numCols );
         std::cout << "Generate code evalranges for (" << numRows << "," << numCols << ")" << std::endl;
       }
 #endif
@@ -825,7 +826,7 @@ namespace Dune
       {
         storedRows[ numRows ] = 
           Fem::CodegenInfo::instance().addEntry( "axpyranges", 
-              ( storedRows.size() == 1 ), Fem :: axpyCodegen, dimRange, numRows, numCols );
+              ( storedRows.size() == 1 ), Fem :: axpyCodegen, dimLocal, dimRange, numRows, numCols );
         std::cout << "Generate code axpyranges for (" << numRows << "," << numCols << ")" << std::endl;
       }
 #endif
@@ -1028,7 +1029,7 @@ namespace Dune
       {
         storedRows[ numRows ] = 
           Fem::CodegenInfo::instance().addEntry( "axpyjacobians", 
-              ( storedRows.size() == 1 ), Fem :: axpyJacobianCodegen, dimRange, numRows, numCols );
+              ( storedRows.size() == 1 ), Fem :: axpyJacobianCodegen, dimLocal, dimRange, numRows, numCols );
         std::cout << "Generate code axpyjacobians for (" << numRows << "," << numCols << ")" << std::endl;
       }
 #endif
@@ -1114,7 +1115,4 @@ namespace Dune
 
 } // end namespace Dune
 
-#undef USE_BASEFUNCTIONSET_OPTIMIZED
-#undef USE_BASEFUNCTIONSET_CODEGEN
-#undef BASEFUNCTIONSET_CODEGEN_GENERATE
 #endif

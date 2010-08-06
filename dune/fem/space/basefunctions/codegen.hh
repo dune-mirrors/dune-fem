@@ -8,10 +8,14 @@
 #include <sstream>
 #include <vector>
 
+#include <dune/common/exceptions.hh>
+
 namespace Dune
 {
 
 namespace Fem { 
+
+  class CodegenInfoFinished : public Dune :: Exception {};
 
   class CodegenInfo
   {
@@ -22,6 +26,7 @@ namespace Fem {
     int baseMin_;
 
     typedef void codegenfunc_t (std::ostream& out, 
+                                const int dim, 
                                 const int dimRange, 
                                 const size_t numRows, 
                                 const size_t numCols );
@@ -48,19 +53,19 @@ namespace Fem {
       {
         dumpInfo();
         std::cerr << "All automated code generated, bye, bye !! " << std::endl;
-        exit(EXIT_SUCCESS);
+        DUNE_THROW(CodegenInfoFinished,"All automated code generated, bye, bye !!");
       }
     }
 
     size_t addEntry(const std::string& fileprefix, 
                     const bool freshFile, codegenfunc_t* codegenfunc,
-                    const int dimRange, const int quadNop, const int numBase ) 
+                    const int dim, const int dimRange, const int quadNop, const int numBase ) 
     {
       std::stringstream filename;
       filename << fileprefix << dimRange << "_" << quadNop << "_" << numBase << ".hh";
       std::ofstream file( filename.str().c_str(), ( freshFile ) ? (std::ios::out) : (std::ios::app) );
       // call code generation function 
-      codegenfunc( file, dimRange, quadNop, numBase );
+      codegenfunc( file, dim, dimRange, quadNop, numBase );
  
       if( baseMin_ == 0 ) baseMin_ = numBase;
       if( nopMin_  == 0 ) nopMin_  = quadNop;
@@ -109,6 +114,7 @@ namespace Fem {
   };
 
   static void evaluateCodegen(std::ostream& out, 
+                              const int dim, 
                               const int dimRange, 
                               const size_t numRows, 
                               const size_t numCols ) 
@@ -168,7 +174,7 @@ namespace Fem {
   }
 
   static void axpyCodegen(std::ostream& out, 
-          const int dimRange, const size_t numRows, const size_t numCols ) 
+          const int dim, const int dimRange, const size_t numRows, const size_t numCols ) 
   {
     out << "template <class BaseFunctionSet>" << std::endl;
     out << "struct AxpyRanges<BaseFunctionSet, Fem :: EmptyGeometry, " << dimRange << ", " << numRows << ", " << numCols << ">" << std::endl;
@@ -262,7 +268,7 @@ namespace Fem {
   }
 
   static void axpyJacobianCodegen(std::ostream& out, 
-          const int dimRange, const size_t numRows, const size_t numCols ) 
+          const int dim, const int dimRange, const size_t numRows, const size_t numCols ) 
   {
     out << "template <class BaseFunctionSet>" << std::endl;
     out << "struct AxpyJacobians<BaseFunctionSet, Fem :: EmptyGeometry, " << dimRange << ", " << numRows << ", " << numCols << ">" << std::endl;
@@ -294,7 +300,6 @@ namespace Fem {
     out << "                    const JacobianRangeFactorType& jacFactors," << std::endl;
     out << "                    LocalDofVectorType& dofs)" << std::endl;
     out << "  {" << std::endl;
-    const int dim = 3 ;
     const int sseDimRange = (( dimRange % 2 ) == 0) ? dimRange : dimRange+1; 
     out << "    typedef typename Geometry::Jacobian GeometryJacobianType;" << std::endl;
     out << "    const GeometryJacobianType gjit = geometry.jacobianInverseTransposed( quad.point( 0 ) );" << std::endl << std::endl;
