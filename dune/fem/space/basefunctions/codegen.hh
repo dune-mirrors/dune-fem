@@ -321,9 +321,12 @@ namespace Fem {
 
     for( size_t col = 0, colR = 0; col < numCols; ++col ) 
     {
-      for( int d = 0, dr = 0 ; d < dim ; ++ d ) 
+      for( int d = 0 ; d < dim ; ++ d ) 
       {
         out << "      const field_type phi" << col << d << " = jacStorageRow[ " << col << " ][ 0 ][ " << d << " ];" << std::endl;
+      }
+      for( int d = 0, dr = 0 ; d < dim ; ++ d ) 
+      {
         for( int r = 0; r < sseDimRange; ++r, ++dr )
         {
           out << "      result[ " << colR+r << " ]  +=  phi" << col << d << " * jacFactorInv[ " << dr << " ];" << std::endl;
