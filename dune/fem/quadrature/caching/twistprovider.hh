@@ -237,6 +237,7 @@ namespace Dune {
     const GenericReferenceElement<ct, dim>& refElem_;
     mutable MatrixType mat_;
   };
+
   //! Implements the creator's functionality that depends on the underlying
   //! geometry. This is the special implementation for line.
   template <class ct, int dim>

@@ -196,10 +196,11 @@ namespace Dune {
   const typename TwistMapperStrategy<ct, dim>::MatrixType&
   PointTwistMapperStrategy<ct, dim>::buildTransformationMatrix(int twist) const 
   {
-    assert(twist == 0);
-    mat_[0] = refElem_.position(0, 1);
+    assert( twist == 0 );
+    mat_[ 0 ] = refElem_.position( 0, dim );
     return mat_;
   }
+
   template <class ct, int dim>
   LineTwistMapperStrategy<ct, dim>::
   LineTwistMapperStrategy(GeometryType geo) :
@@ -214,16 +215,9 @@ namespace Dune {
   const typename TwistMapperStrategy<ct, dim>::MatrixType&
   LineTwistMapperStrategy<ct, dim>::buildTransformationMatrix(int twist) const 
   {
-    assert(twist == 0 || twist == 1);
-    
-    if (twist == 0) {
-      mat_[0] = refElem_.position(0, 1);
-      mat_[1] = refElem_.position(1, 1);
-    }
-    else {
-      mat_[0] = refElem_.position(1, 1);
-      mat_[1] = refElem_.position(0, 1);
-    }
+    assert( (twist == 0) || (twist == 1) );
+    mat_[ twist   ] = refElem_.position( 0, dim );
+    mat_[ 1-twist ] = refElem_.position( 1, dim );
     return mat_;
   }
 
