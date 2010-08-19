@@ -11,12 +11,12 @@
 namespace Dune
 {
 
-/** \brief For a given grid entities are marked such that the level of
- non-conformity is adjusted to a given number, for example 1. 
- \param[inout] gridPart given grid part, i.e. grid to mark for 
- \param[in] levelDifference maximum allowed level difference 
- \param[in] verbose if true some output is given (default is false)
-*/
+/** \brief mark entities such that non-conformity is a given number
+ *
+ *  \param      gridPart         given grid part, i.e. grid to mark for 
+ *  \param[in]  levelDifference  maximum allowed level difference 
+ *  \param[in]  verbose          if true some output is given (default is false)
+ */
 template <class GridPartType>
 static inline void
 makeNonConformity(GridPartType& gridPart, 
