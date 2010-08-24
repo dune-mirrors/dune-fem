@@ -310,6 +310,15 @@ namespace Dune
       }
     }
 
+    template< class PointType, class RangeVectorType >
+    void evaluateAll ( const PointType &x, RangeVectorType &ret ) const
+    {
+      const int numBase = numBaseFunctions();
+      ret.resize( numBase );
+      for( int i = 0; i < numBase; ++i )
+        evaluate( i, x, ret[ i ] );
+    }
+
     /** \copydoc Dune::BaseFunctionSetInterface::jacobian(const int baseFunction,const PointType &x, JacobianRangeType &phi) const */
     template< class PointType >
     void jacobian ( const int baseFunction, const PointType &x, JacobianRangeType &phi ) const;
@@ -320,6 +329,12 @@ namespace Dune
                        const GeometryJacobianInverseType& gjit, 
                        const LocalDofVectorType& dofs, 
                        GlobalJacobianRangeType &ret ) const;
+
+    template< class PointType, class GeometryJacobianInverseType,
+              class GlobalJacobianRangeVectorType >
+    void jacobianAll ( const PointType &x,
+                       const GeometryJacobianInverseType& gjit, 
+                       GlobalJacobianRangeVectorType &ret ) const;
 
     template< class PointType >
     void hessian ( const int baseFunction, const PointType &x, HessianRangeType &hessian ) const;
@@ -551,6 +566,26 @@ namespace Dune
 
     for( int r = 0; r < dimRange; ++r )
       gjit.mv( refJacobian[ r ], ret[ r ] );
+  }
+
+
+  template< class TraitsImp >
+  template< class PointType, class GeometryJacobianInverseType,
+            class GlobalJacobianRangeVectorType >
+  inline void BaseFunctionSetDefault< TraitsImp >
+    ::jacobianAll ( const PointType &x,
+                    const GeometryJacobianInverseType& gjit, 
+                    GlobalJacobianRangeVectorType &ret ) const
+  {
+    const int numBase = numBaseFunctions();
+    ret.resize( numBase );
+    for( int i = 0; i < numBase; ++i )
+    {
+      JacobianRangeType grad;
+      jacobian( i, x, grad );
+      for( int r = 0; r < dimRange; ++r )
+        gjit.mv( grad[ r ], ret[ i ][ r ] );
+    }
   }
 
 

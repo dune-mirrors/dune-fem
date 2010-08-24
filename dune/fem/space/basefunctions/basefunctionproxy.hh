@@ -143,6 +143,13 @@ namespace Dune
       baseFunctionSet().evaluateAll( diffVariable, x, dofs, ret );
     }
 
+    template< class PointType, class RangeVectorType >
+    void evaluateAll ( const PointType &x, RangeVectorType &ret ) const
+    {
+      baseFunctionSet().evaluateAll( x, ret );
+    }
+
+
     template< class PointType, class GeometryJacobianInverseType,
               class GlobalJacobianRangeType, class LocalDofVectorType >
     inline void jacobianAll ( const PointType &x,
@@ -153,26 +160,14 @@ namespace Dune
       baseFunctionSet().jacobianAll( x, gjit, dofs, ret );
     }
 
-#if 0
-    /** \copydoc Dune::BaseFunctionSetInterface::evaluateSingle(const int baseFunction,const PointType &x,const RangeType &psi) const */
-    template< class PointType >
-    inline RangeFieldType evaluateSingle ( const int baseFunction,
-                                           const PointType &x,
-                                           const RangeType &psi ) const
+    template< class PointType, class GeometryJacobianInverseType,
+              class GlobalJacobianRangeVectorType >
+    void jacobianAll ( const PointType &x,
+                       const GeometryJacobianInverseType& gjit, 
+                       GlobalJacobianRangeVectorType &ret ) const
     {
-      return baseFunctionSet().evaluateSingle( baseFunction, x, psi );
+      baseFunctionSet().jacobianAll( x, gjit, ret );
     }
-
-     /** \copydoc Dune::BaseFunctionSetInterface::evaluateGradientSingle(const int baseFunction,const EntityType &entity,const PointType &x,const JacobianRangeType &psi) const */
-    template< class EntityType, class PointType >
-    inline RangeFieldType evaluateGradientSingle ( const int baseFunction,
-                                                   const EntityType &entity,
-                                                   const PointType &x,
-                                                   const JacobianRangeType &psi ) const
-    {
-      return baseFunctionSet().evaluateGradientSingle( baseFunction, entity, x, psi );
-    }
-#endif
 
     template< class PointType, class LocalDofVectorType >
     inline void axpy ( const PointType &x,

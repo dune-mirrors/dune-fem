@@ -311,6 +311,9 @@ namespace Dune
       }
     }
 
+    using BaseType::evaluateAll;
+    using BaseType::jacobianAll;
+
     template< class PointType, 
               class GeometryJacobianInverseType,
               class LocalDofVectorType, 
