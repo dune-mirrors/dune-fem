@@ -524,25 +524,8 @@ namespace Dune
                      const LocalDofVectorType& dofs,
                      RangeFactorType &rangeVector,
                      const unsigned int numRows,
-                     const unsigned int numCols)
+                     const unsigned int numCols )
     {
-#ifdef DUNE_FEM_BASEFUNC_USE_SSE
-      typedef typename StorageType :: RangeCacheMatrixType RangeCacheMatrixType;
-      const RangeCacheMatrixType& baseFunctionMatrix = storage_.getRangeMatrix( quad );
-
-      const bool faceCachingQuad = (QuadratureType :: codimension == 1) && 
-        Conversion< QuadratureType, CachingInterface > :: exists ;
-
-      if( faceCachingQuad ) 
-      {
-        // apply mapping of quadrature points 
-        baseFunctionMatrix.mv( dofs, rangeVector, quad, dimRange );
-      }
-      else 
-      {
-        baseFunctionMatrix.mv( dofs, rangeVector, dimRange );
-      }
-#else 
 #ifdef BASEFUNCTIONSET_CODEGEN_GENERATE
       static std::map< const size_t , size_t > storedRows; 
       typename std::map< const size_t , size_t > :: iterator it = storedRows.find( numRows );
@@ -554,16 +537,16 @@ namespace Dune
       {
         storedRows[ numRows ] = 
           Fem::CodegenInfo::instance().addEntry( "evalranges", 
-              ( storedRows.size() == 1 ), Fem :: evaluateCodegen, dimDomain, dimRange, numRows, numCols );
+              ( storedRows.size() == 1 ), Fem :: CodeGeneratorType :: evaluateCodegen, dimDomain, dimRange, numRows, numCols );
         std::cout << "Generate code evalranges for (" << numRows << "," << numCols << ")" << std::endl;
       }
 #endif
+
       assert( (int) numCols * dimRange == dofs.numDofs() );
 
       assert( rangeStorage.size() >= (int) numRows );
       for( size_t row = 0; row < numRows ; ++row )
       {
-        //const size_t baseRow = storage_.applyCaching( quad , row ); 
         const size_t baseRow = quad.cachingPoint( row ); 
 
         assert( rangeStorage.size() > (int) baseRow );
@@ -581,7 +564,6 @@ namespace Dune
           }
         }
       }
-#endif
     }
 
     ////////////////////////////////////////////////////////////////////
@@ -679,18 +661,13 @@ namespace Dune
       assert( (int) numCols * dimRange == dofs.numDofs() );
       assert( jacobianStorage.size() >= (int)numRows );
 
-      const bool affineGeometry = geometry.affine();
-      typedef typename Geometry::Jacobian GeometryJacobianType;
-      const GeometryJacobianType *gjit
-        = (affineGeometry ? &geometry.jacobianInverseTransposed( quad.point( 0 ) ) : 0);
-
       for( size_t row = 0; row < numRows ; ++row )
       {
         const size_t baseRow = quad.cachingPoint( row ); 
 
         // if geometry has non-affine mapping we need to update jacobian inverse
-        if( !affineGeometry ) 
-          gjit = &geometry.jacobianInverseTransposed( quad.point( row ) );
+        typedef typename Geometry::Jacobian GeometryJacobianType;
+        const GeometryJacobianType& gjit = geometry.jacobianInverseTransposed( quad.point( row ) );
 
         assert( jacobianStorage.size() > (int) baseRow );
         assert( jacobianStorage[ baseRow ].size() >= (int) numCols );
@@ -705,7 +682,7 @@ namespace Dune
 
         for( size_t col = 0, colR = 0; col < numCols; ++col ) 
         {
-          gjit->mv( jacobianStorage[ baseRow ][ col ][ 0 ], gradPhi );
+          gjit.mv( jacobianStorage[ baseRow ][ col ][ 0 ], gradPhi );
 
           for( int r = 0; r < dimRange; ++r, ++colR ) 
           {
@@ -798,22 +775,6 @@ namespace Dune
                              const unsigned int numRows, 
                              const unsigned int numCols )
     {
-#ifdef DUNE_FEM_BASEFUNC_USE_SSE
-      typedef typename StorageType :: RangeCacheMatrixType RangeCacheMatrixType;
-      const RangeCacheMatrixType& baseFunctionMatrix = storage_.getRangeMatrix( quad );
-
-      const bool faceCachingQuad = (QuadratureType :: codimension == 1) && 
-        Conversion< QuadratureType, CachingInterface > :: exists ;
-
-      if( faceCachingQuad ) 
-      {
-        // apply mapping of quadrature points 
-        baseFunctionMatrix.umtv( rangeFactors, dofs, quad, dimRange );
-      }
-      else 
-        baseFunctionMatrix.umtv( rangeFactors, dofs, dimRange );
-#else 
-
 #ifdef BASEFUNCTIONSET_CODEGEN_GENERATE
       static std::map< const size_t , size_t > storedRows; 
       typename std::map< const size_t , size_t > :: iterator it = storedRows.find( numRows );
@@ -825,7 +786,7 @@ namespace Dune
       {
         storedRows[ numRows ] = 
           Fem::CodegenInfo::instance().addEntry( "axpyranges", 
-              ( storedRows.size() == 1 ), Fem :: axpyCodegen, dimDomain, dimRange, numRows, numCols );
+              ( storedRows.size() == 1 ), Fem :: CodeGeneratorType :: axpyCodegen, dimDomain, dimRange, numRows, numCols );
         std::cout << "Generate code axpyranges for (" << numRows << "," << numCols << ")" << std::endl;
       }
 #endif
@@ -833,28 +794,6 @@ namespace Dune
       assert( numRows == quad.nop() );
       assert( (int) numCols * dimRange == dofs.numDofs() );
       assert( rangeStorage.size() >= (int) numRows );
-
-      /*
-      for( size_t row = 0; row < numRows ; ++row )
-      {
-        //const size_t baseRow = quad.cachingPoint( row );
-        const typename RangeVectorType :: value_type& rangeStorageRow 
-          = rangeStorage[ quad.cachingPoint( row ) ];
-
-        assert( rangeStorage.size() > (int) baseRow );
-        //assert( rangeStorage[ baseRow ].size() >= (int)numCols );
-        const RangeType& factor = rangeFactors[ row ]; 
-
-        for( size_t col = 0, colR = 0; col < numCols; ++col ) 
-        {
-          const ScalarRangeType& phi = rangeStorageRow[ col ];
-          for( int r = 0; r < dimRange; ++r , ++colR ) 
-          {
-            dofs[ colR ] += phi[ 0 ] * factor[ r ];
-          }
-        }
-      }
-      */
 
       // this way the codes seems faster 
       for( size_t col = 0, colR = 0; col < numCols; ++col ) 
@@ -867,7 +806,6 @@ namespace Dune
           }
         }
       }
-#endif
     }
 
     ///////////////////////////////////////////////////////////
@@ -962,61 +900,6 @@ namespace Dune
                                 const unsigned int numRows, 
                                 const unsigned int numCols )
     {
-      const bool affineGeometry = geometry.affine();
-      typedef typename Geometry::Jacobian GeometryJacobianType;
-      const GeometryJacobianType *gjit
-        = (affineGeometry ? &geometry.jacobianInverseTransposed( quad.point( 0 ) ) : 0);
-
-#ifdef DUNE_FEM_BASEFUNC_USE_SSE
-      typedef typename StorageType :: RangeCacheMatrixType RangeCacheMatrixType;
-      const RangeCacheMatrixType& baseFunctionMatrix = storage_.getJacobianMatrix( quad );
-
-      const size_t offset = GlobalJacobianRangeType::rows * GlobalJacobianRangeType::cols;
-      static MutableArray<double> jacFactorGlobal;
-      const int jacSize = numRows * offset;
-      if( jacFactorGlobal.size() < jacSize ) 
-        jacFactorGlobal.resize( jacSize );
-
-      if( affineGeometry ) 
-      {
-        for( size_t row = 0; row < numRows ; ++row )
-        {
-          // multiply jacobian factor with geometry inverse 
-          for( size_t r = 0; r < dimRange; ++r )
-          {
-            double * res = &jacFactorGlobal[ row + offset + r*GlobalJacobianRangeType::cols ] ;
-            gjit->mtv( jacVector[ row ][ r ], res );
-          }
-        }
-      }
-      else 
-      {
-        for( size_t row = 0; row < numRows ; ++row )
-        {
-          gjit = &geometry.jacobianInverseTransposed( quad.point( row ));
-  
-          // multiply jacobian factor with geometry inverse 
-          for( size_t r = 0; r < dimRange; ++r )
-          {
-            double * res = &jacFactorGlobal[ row + offset + r*GlobalJacobianRangeType::cols ] ;
-            gjit->mtv( jacVector[ row ][ r ], res );
-          }
-        }
-      }
-
-      const bool faceCachingQuad = (QuadratureType :: codimension == 1) && 
-        Conversion< QuadratureType, CachingInterface > :: exists ;
-      if( faceCachingQuad ) 
-      {
-        // apply mapping of quadrature points 
-        baseFunctionMatrix.umtv( jacFactorGlobal, dofs, quad, dimRange , true );
-      }
-      else 
-        baseFunctionMatrix.umtv( jacFactorGlobal, dofs, dimRange, true );
-
-      //delete [] jacFactorGlobal;
-#else 
-
 #ifdef BASEFUNCTIONSET_CODEGEN_GENERATE
       static std::map< const size_t , size_t > storedRows; 
       typename std::map< const size_t , size_t > :: iterator it = storedRows.find( numRows );
@@ -1028,65 +911,36 @@ namespace Dune
       {
         storedRows[ numRows ] = 
           Fem::CodegenInfo::instance().addEntry( "axpyjacobians", 
-              ( storedRows.size() == 1 ), Fem :: axpyJacobianCodegen, dimDomain, dimRange, numRows, numCols );
+              ( storedRows.size() == 1 ), Fem :: CodeGeneratorType :: axpyJacobianCodegen, dimDomain, dimRange, numRows, numCols );
         std::cout << "Generate code axpyjacobians for (" << numRows << "," << numCols << ")" << std::endl;
       }
 #endif
       assert( (int ) numCols * dimRange == dofs.numDofs() );
       assert( jacobianStorage.size() >= (int) numRows );
 
-      if( affineGeometry ) 
+      for( size_t row = 0; row < numRows ; ++row )
       {
-        for( size_t row = 0; row < numRows ; ++row )
+        const size_t baseRow = quad.cachingPoint( row ); 
+        assert( jacobianStorage.size() > (int)baseRow );
+        assert( jacobianStorage[ baseRow ].size() >= (int)numCols );
+
+        typedef typename Geometry::Jacobian GeometryJacobianType;
+        const GeometryJacobianType& gjit = geometry.jacobianInverseTransposed( quad.point( row ) );
+
+        JacobianRangeType jacFactorInv;
+
+        // multiply jacobian factor with geometry inverse 
+        for( size_t r = 0; r < dimRange; ++r )
+          gjit.mtv( jacVector[ row ][ r ], jacFactorInv[ r ] );
+
+        for( size_t col = 0, colR = 0; col < numCols; ++col ) 
         {
-          //const size_t baseRow = storage_.applyCaching( quad , row ); 
-          const size_t baseRow = quad.cachingPoint( row ); 
-          assert( jacobianStorage.size() > (int)baseRow );
-          assert( jacobianStorage[ baseRow ].size() >= (int)numCols );
-
-          JacobianRangeType jacFactorInv;
-
-          // multiply jacobian factor with geometry inverse 
-          for( size_t r = 0; r < dimRange; ++r )
-            gjit->mtv( jacVector[ row ][ r ], jacFactorInv[ r ] );
-
-          for( size_t col = 0, colR = 0; col < numCols; ++col ) 
+          for( int r = 0; r < dimRange; ++r, ++colR ) 
           {
-            for( int r = 0; r < dimRange; ++r, ++colR ) 
-            {
-              dofs[ colR ] += jacobianStorage[ baseRow ][ col ][ 0 ] * jacFactorInv[ r ];
-            }
+            dofs[ colR ] += jacobianStorage[ baseRow ][ col ][ 0 ] * jacFactorInv[ r ];
           }
         }
       }
-      else 
-      {
-        assert( jacobianStorage.size() >= (int) numRows );
-        for( size_t row = 0; row < numRows ; ++row )
-        {
-          const size_t baseRow = quad.cachingPoint( row ); 
-          assert( jacobianStorage.size() > (int)baseRow );
-          assert( jacobianStorage[ baseRow ].size() >= (int)numCols );
-
-          // if geometry has non-affine mapping we need to update jacobian inverse
-          gjit = &geometry.jacobianInverseTransposed( quad.point( row ) );
-
-          JacobianRangeType jacFactorInv;
-
-          // multiply jacobian factor with geometry inverse 
-          for( size_t r = 0; r < dimRange; ++r )
-            gjit->mtv( jacVector[ row ][ r ], jacFactorInv[ r ] );
-
-          for( size_t col = 0, colR = 0; col < numCols; ++col ) 
-          {
-            for( int r = 0; r < dimRange; ++r, ++colR ) 
-            {
-              dofs[ colR ] += jacobianStorage[ baseRow ][ col ][ 0 ] * jacFactorInv[ r ];
-            }
-          }
-        }
-      }
-#endif
     }
 
   protected:
