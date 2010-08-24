@@ -181,20 +181,34 @@ namespace Dune
     {
       ret = 0;
 
-      const int numScalarBase = numDifferentBaseFunctions ();
-      for( int i = 0, iR = 0; i < numScalarBase ; ++i )
+      const int numScalarBase = numDifferentBaseFunctions();
+      for( int i = 0, iR = 0; i < numScalarBase; ++i )
       {
         ScalarRangeType phi;
         evaluateScalar( i, x, phi ); 
-        for( int r = 0; r < dimRange; ++r , ++iR )
+        for( int r = 0; r < dimRange; ++r, ++iR )
         { 
           ret[ r ] += phi[ 0 ] * dofs[ iR ];
         }
       }
     }
 
-    using BaseType::evaluateAll;
-    using BaseType::jacobianAll;
+    template< class PointType, class RangeVectorType >
+    void evaluateAll ( const PointType &x, RangeVectorType &ret ) const
+    {
+      const int numScalarBase = numDifferentBaseFunctions();
+      ret.resize( dimRange*numScalarBase );
+      for( int i = 0, iR = 0; i < numScalarBase; ++i )
+      {
+        ScalarRangeType phi;
+        evaluateScalar( i, x, phi ); 
+        for( int r = 0; r < dimRange; ++r, ++iR )
+        { 
+          ret[ iR ] = 0;
+          ret[ iR ][ r ] = phi[ 0 ];
+        }
+      }
+    }
 
     template< class PointType, 
               class GeometryJacobianInverseType,
@@ -207,7 +221,7 @@ namespace Dune
     {
       ret = 0;
 
-      const int numScalarBase = numDifferentBaseFunctions ();
+      const int numScalarBase = numDifferentBaseFunctions();
       for( int i = 0, iR = 0; i < numScalarBase; ++i )
       {
         ScalarJacobianRangeType gradPhiRef;
@@ -222,7 +236,32 @@ namespace Dune
           ret[ r ].axpy( dofs[ iR ], gradPhi );
       }
     }
-    
+   
+    template< class PointType, class GeometryJacobianInverseType,
+              class GlobalJacobianRangeVectorType >
+    void jacobianAll ( const PointType &x,
+                       const GeometryJacobianInverseType& gjit, 
+                       GlobalJacobianRangeVectorType &ret ) const
+    {
+      const int numScalarBase = numDifferentBaseFunctions();
+      ret.resize( dimRange*numScalarBase );
+      for( int i = 0, iR = 0; i < numScalarBase; ++i )
+      {
+        ScalarJacobianRangeType gradPhiRef;
+        jacobianScalar( i, x, gradPhiRef );
+
+        const int iR0 = iR++;
+        ret[ iR0 ] = 0;
+        gjit.mv( gradPhiRef[ 0 ], ret[ iR0 ][ 0 ] );
+
+        for( int r = 1; r < dimRange; ++r, ++iR )
+        {
+          ret[ iR ] = 0;
+          ret[ iR ][ r ] = ret[ iR0 ][ 0 ];
+        }
+      }
+    }
+
     template< class PointType, class LocalDofVectorType >
     void axpy ( const PointType &x,
                 const RangeType &rangeFactor,
