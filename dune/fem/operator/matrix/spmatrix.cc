@@ -1007,7 +1007,6 @@ void SparseRowMatrix<T>::solveUMF(const T* b, T* x)
 
   const int nAll = n * nz_ ;
   int* Ai = new int [ nAll ];
-  int* Tj = new int [ nAll ];
   T*   Ax = new   T [ nAll ];
 
   int nZ = 0;
@@ -1030,21 +1029,19 @@ void SparseRowMatrix<T>::solveUMF(const T* b, T* x)
   double *null = (double *) NULL ;
   void *Symbolic, *Numeric;
 
-  // convert matrix 
-  umfpack_di_col_to_triplet(n,Ap,Tj);
-  umfpack_di_triplet_to_col(n,m,nZ,Ai,Tj,Ax,Ap,Ai,Ax,(int *) NULL );
-
   // call solver 
   umfpack_di_symbolic (n, m, Ap, Ai, Ax, &Symbolic, null, null) ;
   umfpack_di_numeric (Ap, Ai, Ax, Symbolic, &Numeric, null, null) ;
   umfpack_di_free_symbolic (&Symbolic) ;
-  umfpack_di_solve (UMFPACK_A, Ap, Ai, Ax, x, b, Numeric, null, null) ;
+
+  // solve A^T x = b (since UMFPACK needs column wise storage, we got
+  // row wise storage ) 
+  umfpack_di_solve (UMFPACK_At, Ap, Ai, Ax, x, b, Numeric, null, null) ;
   umfpack_di_free_numeric (&Numeric) ;
 
   // delete temp memory 
   delete [] Ap;
   delete [] Ax;
-  delete [] Tj;
   delete [] Ai;
 #endif
 }
