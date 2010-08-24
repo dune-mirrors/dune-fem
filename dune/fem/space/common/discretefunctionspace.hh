@@ -156,20 +156,19 @@ namespace Dune
     typedef CommunicationManager< DiscreteFunctionSpaceType > CommunicationManagerType;
 
     //! \brief typedef struct for defining the same discrete function space with a different function space 
-    template <class NewFunctionSpace>
-    class ToNewFunctionSpace
+    template< class NewFunctionSpace >
+    struct ToNewFunctionSpace
     {
-    public:  
-      //! type of my discrete function space with new function space  
+      //! type of my discrete function space with new function space
       typedef typename DifferentDiscreteFunctionSpace< DiscreteFunctionSpaceType, NewFunctionSpace> :: Type Type;
     };
 
     //! \brief typedef struct for defining the same discrete function space with a different dimRange
-    template <int newDimRange>
+    template< int newDimRange >
     class ToNewDimRange
     {
-      //! type of new functions space 
-      typedef typename ToNewDimRangeFunctionSpace< FunctionSpaceType , newDimRange> :: Type NewFunctionSpaceType;
+      typedef typename ToNewDimRangeFunctionSpace< FunctionSpaceType, newDimRange > :: Type NewFunctionSpaceType;
+
     public:  
       //! type of my discrete function space with new dim range 
       typedef typename ToNewFunctionSpace< NewFunctionSpaceType > :: Type  Type;
