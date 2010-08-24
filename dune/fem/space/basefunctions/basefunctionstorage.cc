@@ -218,61 +218,6 @@ namespace Dune
       }
     }
 
-#ifdef DUNE_FEM_BASEFUNC_USE_SSE
-    enum { dimRange  = FunctionSpaceImp :: dimRange };
-    enum { dimDomain = FunctionSpaceImp :: dimDomain };
-
-    const size_t numCol  = dimRange * numBaseFunctions;
-    RangeCacheMatrixType* matrixPtr  = new RangeCacheMatrixType( pointSize, numCol, quadSize);
-    RangeCacheMatrixType* matrixPtr2 = new RangeCacheMatrixType( pointSize, numCol, quadSize);
-    assert( matrixPtr && matrixPtr2 );
-
-    const size_t numGradCol = dimRange * dimDomain * numBaseFunctions;
-    RangeCacheMatrixType* jacPtr  = new RangeCacheMatrixType( pointSize, numGradCol, quadSize);
-    RangeCacheMatrixType* jacPtr2 = new RangeCacheMatrixType( pointSize, numGradCol, quadSize);
-
-    RangeCacheMatrixType& matrix = *matrixPtr; 
-    RangeCacheMatrixType& jacob  = *jacPtr; 
-    // copy entries 
-    for( size_t i = 0; i < pointSize; ++i) 
-    {
-      for (size_t j = 0, jR = 0, jD = 0; j < numBaseFunctions; ++j) 
-      {
-        for(int r = 0 ; r < dimRange; ++ r, ++jR )
-        {
-          matrix[ i ][ jR ] = ranges_[ quadId ][ i ][ j ][ r ];
-          for( int d = 0; d < dimDomain; ++d, ++jD ) 
-          {
-            jacob[ i ][ jD ] = jacobians_[quadId][ i ][ j ][ r ][ d ];
-          }
-        }
-      }
-    }
-
-    if( rangeMatrices_.size() <= quadId ) 
-    {
-      rangeMatrices_.resize( quadId + 10 );
-      jacobianMatrices_.resize( quadId + 10 );
-      const size_t rangeSize = rangeMatrices_.size(); 
-      for( size_t i = 0; i < rangeSize; ++i ) 
-      {
-        if( rangestored_.find(quadId) == rangestored_.end() )
-        {
-          RangeCacheMatrixType* dummy = 0;
-          rangeMatrices_[ i ] = std::make_pair( dummy, dummy );
-        }
-        if( jacobianstored_.find(quadId) == jacobianstored_.end() )
-        {
-          RangeCacheMatrixType* dummy = 0;
-          jacobianMatrices_[ i ] = std::make_pair( dummy, dummy );
-        }
-      }
-    }
-
-    rangeMatrices_[ quadId ]    = std::make_pair( matrixPtr , matrixPtr2 );
-    jacobianMatrices_[ quadId ] = std::make_pair( jacPtr , jacPtr2 );
-#endif
-
     return std::make_pair(rit, jit);
   }
 

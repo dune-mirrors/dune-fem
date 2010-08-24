@@ -1,8 +1,6 @@
 #ifndef DUNE_BASEFUNCTIONSTORAGE_HH
 #define DUNE_BASEFUNCTIONSTORAGE_HH
 
-//#define DUNE_FEM_BASEFUNC_USE_SSE
-
 #include <map>
 #include <vector>
 #include <list>
@@ -14,13 +12,6 @@
 #include <dune/fem/space/basefunctions/basefunctionfactory.hh>
 #include <dune/fem/space/basefunctions/storageinterface.hh>
 #include <dune/fem/quadrature/quadrature.hh>
-
-#ifdef DUNE_FEM_BASEFUNC_USE_SSE
-#ifndef NDEBUG 
-#warning "Using SSE basefunction evaluate methods"
-#endif
-#include <dune/fem/storage/ssematrixdynamic.hh>
-#endif
 
 namespace Dune
 {
@@ -87,28 +78,13 @@ namespace Dune
       const int numBase = storage.numBaseFunctions();
 
       FieldVector<int, 0> diffVar;
-#ifndef DUNE_FEM_BASEFUNC_USE_SSE
       ranges.resize( quadNop );
-#endif
       for( size_t qp = 0; qp < quadNop; ++qp ) 
       {
-#ifndef DUNE_FEM_BASEFUNC_USE_SSE
         ranges[ qp ].resize( numBase );
-#else 
-        int iR = 0;
-#endif
         for( int i = 0; i< numBase; ++i ) 
         {
-#ifndef DUNE_FEM_BASEFUNC_USE_SSE
           storage.evaluate( i, diffVar, quad[ qp ], ranges[ qp ][ i ] );
-#else 
-          RangeType val;
-          storage.evaluate( i, diffVar, quad[ qp ], val );
-          for( int r = 0 ; r < dimRange; ++r , ++iR )
-          {
-            ranges[ qp ][ iR ]  = val[ r ];
-          }
-#endif
         }
       }
     }
@@ -126,32 +102,13 @@ namespace Dune
       const size_t quadNop = quad.nop();
       const int numBase = storage.numBaseFunctions();
 
-      FieldVector<int, 0> diffVar;
-#ifndef DUNE_FEM_BASEFUNC_USE_SSE
       jacobians.resize( quadNop );
-#endif
       for( size_t qp = 0; qp < quadNop; ++qp ) 
       {
-#ifndef DUNE_FEM_BASEFUNC_USE_SSE
         jacobians[ qp ].resize( numBase );
-#else 
-        int iD = 0;
-#endif
         for( int i = 0; i< numBase; ++i ) 
         {
-#ifndef DUNE_FEM_BASEFUNC_USE_SSE
           storage.jacobian( i, quad[ qp ], jacobians[ qp ][ i ] );
-#else 
-          JacobianRangeType val;
-          storage.jacobian( i, quad[ qp ], val );
-          for( int r = 0 ; r < dimRange; ++r )
-          {
-            for( int d = 0; d < dimDomain; ++d , ++iD )
-            {
-              jacobians[ qp ][ iD ] = val[ r ][ d ];
-            }
-          }
-#endif
         }
       }
     }
@@ -275,11 +232,6 @@ namespace Dune
     typedef MutableArray< MutableArray<RangeType> >         RangeVectorType;
     typedef MutableArray< MutableArray<JacobianRangeType> > JacobianRangeVectorType;
 
-#ifdef DUNE_FEM_BASEFUNC_USE_SSE
-    typedef Fem :: SSEMatrix< typename FunctionSpaceType :: RangeFieldType > RangeCacheMatrixType ;
-    typedef std::vector< std::pair< RangeCacheMatrixType*, RangeCacheMatrixType* > > RangeCacheMatrixContainerType ;
-#endif
-
   private:
     typedef std::map<size_t, bool> RangeStoredType;
     typedef std::map<size_t, bool> JacobianRangeStoredType;
@@ -328,30 +280,6 @@ namespace Dune
       {
         storage.jacobian(baseFunct,quad.point(quadPoint),result); 
       }
-
-#ifdef DUNE_FEM_BASEFUNC_USE_SSE
-      static const RangeCacheMatrixType& 
-      evaluate(const ThisType& storage,
-               const QuadratureType& quad, 
-               RangeCacheMatrixContainerType& rangeMatrices)
-      {
-        assert( rangeMatrices[ quad.id() ].second );
-        RangeCacheMatrixType& matrix = * (rangeMatrices[ quad.id() ].second);
-        storage.fillRangeCache( storage, quad, matrix );
-        return matrix; 
-      }
-
-      static const RangeCacheMatrixType& 
-      jacobian(const ThisType& storage,
-               const QuadratureType& quad, 
-               RangeCacheMatrixContainerType& jacobianMatrices)
-      {
-        assert( rangeMatrices[ quad.id() ].second );
-        RangeCacheMatrixType& matrix = * (jacobianMatrices[ quad.id() ].second);
-        storage.fillJacobianCache( storage, quad, matrix );
-        return matrix; 
-      }
-#endif
 
       static const RangeVectorType& 
       evaluate(const ThisType& storage,
@@ -416,26 +344,6 @@ namespace Dune
       {
         result = jacobians[quad.id()][quad.cachingPoint(quadPoint)][baseFunct];
       }
-
-#ifdef DUNE_FEM_BASEFUNC_USE_SSE
-      static const RangeCacheMatrixType& 
-      evaluate(const ThisType& storage,
-               const QuadratureType& quad, 
-               const RangeCacheMatrixContainerType& rangeMatrices)
-      {
-        assert( rangeMatrices[ quad.id() ].first );
-        return * (rangeMatrices[ quad.id() ].first);
-      }
-
-      static const RangeCacheMatrixType& 
-      jacobian(const ThisType& storage,
-               const QuadratureType& quad, 
-               const RangeCacheMatrixContainerType& jacobianMatrices)
-      {
-        assert( jacobianMatrices[ quad.id() ].first );
-        return * (jacobianMatrices[ quad.id() ].first);
-      }
-#endif
 
       static const RangeVectorType& 
       evaluate(const ThisType& storage,
@@ -502,22 +410,6 @@ namespace Dune
                            const QuadraturePointWrapper< QuadratureType > &x,
                            JacobianRangeType &ret ) const;
 
-#ifdef DUNE_FEM_BASEFUNC_USE_SSE
-    template <class QuadratureType> 
-    const RangeCacheMatrixType& getRangeMatrix( const QuadratureType& quad ) const 
-    {
-      enum { cachable = Conversion< QuadratureType, CachingInterface > :: exists };
-      return Evaluate< QuadratureType, cachable > :: evaluate( *this, quad, rangeMatrices_ );
-    }
-
-    template <class QuadratureType> 
-    const RangeCacheMatrixType& getJacobianMatrix( const QuadratureType& quad ) const 
-    {
-      enum { cachable = Conversion< QuadratureType, CachingInterface > :: exists };
-      return Evaluate< QuadratureType, cachable > :: jacobian( *this, quad, jacobianMatrices_ );
-    }
-#endif
-
     template <class QuadratureType> 
     const RangeVectorType& getRangeStorage( const QuadratureType& quad ) const 
     {
@@ -578,11 +470,6 @@ namespace Dune
 
     mutable RangeStoredType rangestored_;
     mutable JacobianRangeStoredType jacobianstored_;
-
-#ifdef DUNE_FEM_BASEFUNC_USE_SSE
-    mutable RangeCacheMatrixContainerType rangeMatrices_;
-    mutable RangeCacheMatrixContainerType jacobianMatrices_;
-#endif
 
     mutable RangeVectorType rangeTmp_;
     mutable JacobianRangeVectorType jacobianTmp_;
