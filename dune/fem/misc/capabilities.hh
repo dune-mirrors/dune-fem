@@ -158,7 +158,7 @@ namespace Dune
     };
 
 
-
+#if DUNE_VERSION_NEWER(DUNE_GRID,2,1,0)
     // IsUnstructured
     // --------------
 
@@ -185,7 +185,7 @@ namespace Dune
     {
       static const bool v = false;
     };
-
+#endif
   }
 
 }
