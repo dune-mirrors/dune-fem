@@ -24,10 +24,13 @@
 // input and output of tuples 
 #include <dune/fem/io/file/iotuple.hh>
 
+#include <dune/fem/misc/capabilities.hh>
+
 // if grape was configured then include headers 
 #if HAVE_GRAPE
 #include <dune/grid/io/visual/grapedatadisplay.hh>
 #endif
+
 
 namespace Dune
 {
