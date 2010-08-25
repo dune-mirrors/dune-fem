@@ -157,6 +157,35 @@ namespace Dune
       static const bool v = true;
     };
 
+
+
+    // IsUnstructured
+    // --------------
+
+    template< class Grid >
+    struct IsUnstructured
+    {
+      static const bool v = true;
+    };
+
+    template< class Grid >
+    struct IsUnstructured< const Grid >
+    {
+      static const bool v = IsUnstructured< Grid >::v;
+    };
+
+    template< int dim >
+    struct IsUnstructured< YaspGrid< dim > >
+    {
+      static const bool v = false;
+    };
+
+    template< int dim, int dimw, class ctype >
+    struct IsUnstructured< SGrid< dim, dimw, ctype > >
+    {
+      static const bool v = false;
+    };
+
   }
 
 }
