@@ -7,12 +7,13 @@
 #include <dune/common/version.hh>
 #include <dune/common/geometrytype.hh>
 
-#include <dune/grid/common/capabilities.hh>
 #include <dune/grid/alugrid/interfaces.hh>
 
 #if HAVE_DUNE_GEOGRID
 #include <dune/grid/utility/hostgridaccess.hh>
 #endif
+
+#include <dune/fem/misc/capabilities.hh>
 
 namespace Dune
 {
