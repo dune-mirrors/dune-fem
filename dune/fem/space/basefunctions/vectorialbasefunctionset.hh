@@ -852,7 +852,7 @@ namespace Dune
         JacobianRangeType jacFactorInv;
 
         // multiply jacobian factor with geometry inverse 
-        for( size_t r = 0; r < dimRange; ++r )
+        for( int r = 0; r < dimRange; ++r )
           gjit.mtv( jacVector[ row ][ r ], jacFactorInv[ r ] );
 
         for( size_t col = 0, colR = 0; col < numCols; ++col ) 
