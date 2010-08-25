@@ -12,6 +12,7 @@ public:
   typedef ModelImp ModelType;
   typedef typename ModelType::Traits::DomainType DomainType;
 public:
+  DUNE_VERSION_DEPRECATED(1,2,remove) 
   LDGFlux(const ModelType& mod, 
           const double beta, 
           const double power,
@@ -170,6 +171,7 @@ class GradientFlux
 {
 public:
   //! constructor taking beta and power 
+  DUNE_VERSION_DEPRECATED(1,2,remove) 
   GradientFlux(const double beta, 
                const double power)
     : beta_(beta)
