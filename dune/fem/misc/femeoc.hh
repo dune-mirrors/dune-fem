@@ -226,7 +226,7 @@ class FemEoc
 
   void writeerr(double h,double size,double time,int counter,
                 double avgTimeStep,double minTimeStep,double maxTimeStep,
-		const int ils_num_iterations, const int ode_num_iterations)
+		const int newton_iterations, const int ils_iterations)
   {
     if (MPIManager::rank() != 0) return;
     if (initial_) {
@@ -254,8 +254,8 @@ class FemEoc
                 << avgTimeStep   << " & " 
                 << minTimeStep   << " & " 
                 << maxTimeStep   << " & " 
-                << ils_num_iterations   << " & " 
-                << ode_num_iterations 
+                << newton_iterations   << " & " 
+                << ils_iterations 
 		;
     for (unsigned int i=0;i<error_.size();++i) {
       outputFile_ << " & " << error_[i] << " & ";
@@ -393,8 +393,8 @@ class FemEoc
                 const double avgTimeStep,
                 const double minTimeStep,
                 const double maxTimeStep,
-		const int ils_num_iterations,
-		const int ode_num_iterations,
+		const int newton_iterations,
+		const int ils_iterations,
                 std::ostream& out) 
   {
     if (!Parameter::verbose()) return;
@@ -406,8 +406,8 @@ class FemEoc
 	  out << "avg. time step: " << avgTimeStep << std::endl;
 	  out << "min. time step: " << minTimeStep << std::endl;
 	  out << "max. time step: " << maxTimeStep << std::endl;
-	  out << "Newton iter.: " << ils_num_iterations << std::endl;
-	  out << "ILS iter.: " << ode_num_iterations << std::endl;
+	  out << "Newton iter.: " << newton_iterations << std::endl;
+	  out << "ILS iter.: " << ils_iterations << std::endl;
 
     for (unsigned int i=0;i<error_.size();++i) 
     {
@@ -586,12 +586,12 @@ class FemEoc
                     const double avgTimeStep,
                     const double minTimeStep,
                     const double maxTimeStep,
-                    const int ils_num_iterations,
-                    const int ode_num_iterations)
+                    const int newton_iterations,
+                    const int ils_iterations)
   {
     // now write to file 
     instance().writeerr(h,size,time,counter,avgTimeStep,minTimeStep,
-                        maxTimeStep,ils_num_iterations,ode_num_iterations);
+                        maxTimeStep,newton_iterations,ils_iterations);
   }
   static void write(const double h,
                     const double size,
@@ -600,17 +600,17 @@ class FemEoc
                     const double avgTimeStep,
                     const double minTimeStep,
                     const double maxTimeStep,
-                    const int ils_num_iterations,
-                    const int ode_num_iterations,
+                    const int newton_iterations,
+                    const int ils_iterations,
                     std::ostream& out) 
   {
     // print last line to out 
     instance().printerr( h, size, time, counter, avgTimeStep, minTimeStep, 
-                         maxTimeStep, ils_num_iterations, ode_num_iterations, out );
+                         maxTimeStep, newton_iterations, ils_iterations, out );
 
     // now write to file 
     instance().writeerr(h,size,time,counter,avgTimeStep,minTimeStep,
-                        maxTimeStep,ils_num_iterations,ode_num_iterations);
+                        maxTimeStep,newton_iterations,ils_iterations);
   }
 
 }; // end class FemEoc
