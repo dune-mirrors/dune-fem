@@ -69,12 +69,12 @@ void DIRK::resize(int new_size, int component)
 
 
 
-bool DIRK::step(double t, double dt, double *u)
+bool DIRK::step(double t, double dt, double *u,int& newton_iterations, int& ils_iterations)
 {
   dim = f.dim_of_value();
   new_size(dim);
 
-  const bool convergence =  step_iterative(t, dt, u);
+  const bool convergence =  step_iterative(t, dt, u, newton_iterations, ils_iterations);
 
   // update solution
   if (convergence){
@@ -88,8 +88,11 @@ bool DIRK::step(double t, double dt, double *u)
 }
 
 
-bool DIRK::step_iterative(double t, double dt, double *u)
+bool DIRK::step_iterative(double t, double dt, double *u, int& newton_iterations, int& ils_iterations)
 {
+  newton_iterations = 0;
+  ils_iterations = 0;
+
   for(int i=0; i<num_of_stages; i++){
     double *ui = U+i*dim;
 
@@ -106,8 +109,8 @@ bool DIRK::step_iterative(double t, double dt, double *u)
     for(int j=0; j<i; j++) cblas_daxpy(dim, alpha(i,j), U+j*dim, 1, Fpre, 1);
 
     // Newton iteration
-    int iterations = 0;
-    while (iterations < max_num_of_iterations){
+    int newton_iter = 0;
+    while (newton_iter < max_num_of_iterations){
       // setup f_tmp and F
       f(t + c[i]*dt, ui, f_tmp);
       const double lambda = alpha(i,i) * dt;
@@ -130,19 +133,22 @@ bool DIRK::step_iterative(double t, double dt, double *u)
 
       if (IterativeSolver::os){
 	*IterativeSolver::os << "Newton: iteration: "
-			     << iterations << "    "
+			     << newton_iter << "    "
 			     << "|p|: " << sqrt(global_dot) << "   "
            << "linear iterations: " 
            << ils->number_of_iterations()
 			     << std::endl;
       }
 
-      iterations++;    
+      newton_iter++;    
 
       if(sqrt(global_dot) < tolerance) break;      
     }
 
-    if (iterations >= max_num_of_iterations) return false;    
+    newton_iterations += newton_iter;
+    ils_iterations += ils->number_of_iterations();
+
+    if (newton_iter >= max_num_of_iterations) return false;    
   }
 
   return true;

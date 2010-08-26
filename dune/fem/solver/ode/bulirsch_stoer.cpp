@@ -167,17 +167,18 @@ ImplicitBulirschStoer::ImplicitBulirschStoer(Communicator &comm,
 
 
 
-bool ImplicitBulirschStoer::step(double t, double dt, double *u)
+bool ImplicitBulirschStoer::step(double t, double dt, double *u,
+                                 int& newton_interations, int& ils_iterations)
 {
   dim = f.dim_of_value();
   new_size(dim);
 
   if (dls){ // use direct linear solver, serial only
     assert( comm.size() == 1 );
-    return step_direct(t, dt, u);
+    return step_direct(t, dt, u, newton_interations, ils_iterations);
   }
   else if (ils){ // use iterative linear solver
-    return step_iterative(t, dt, u);
+    return step_iterative(t, dt, u, newton_interations, ils_iterations);
   }
   else assert(0); // linear solver needed
 
@@ -187,8 +188,12 @@ bool ImplicitBulirschStoer::step(double t, double dt, double *u)
 
 
 
-bool ImplicitBulirschStoer::step_iterative(double t, double dt, double *u)
+bool ImplicitBulirschStoer::step_iterative(double t, double dt, double *u,
+                                           int& newton_iterations, int& ils_iterations)
 {
+  newton_iterations = 0;
+  ils_iterations = 0;
+
   double *p = F + dim;
   this->t = t;
 
@@ -209,7 +214,7 @@ bool ImplicitBulirschStoer::step_iterative(double t, double dt, double *u)
     for(k=0; k<n; k++){
     
       if (true) cblas_dcopy(dim, z_km, 1, z_k, 1); // z_k = z_km
-      else { // z_k = z_km + dt/n f(t+(k+0.5)*dt/n, z_k) euler pedictor step
+      else { // z_k = z_km + dt/n f(t+(k+0.5)*dt/n, z_k) euler predictor step
 	f(t + (k+0.5)*dt_n, z_k, tmp);
 	dwaxpby(dim, 1.0, z_km, 1, dt_2n, tmp, 1, z_k, 1);
       }
@@ -239,6 +244,8 @@ bool ImplicitBulirschStoer::step_iterative(double t, double dt, double *u)
 	if (IterativeSolver::os){
 	  *IterativeSolver::os << "Newton: iteration: "
 			       << num_of_iterations << "    "
+			       << "linear iterations: " 
+			       << ils->number_of_iterations() << "    "
 			       << "|p|: " << dist << "   "
 			       << std::endl;
 	}
@@ -255,6 +262,9 @@ bool ImplicitBulirschStoer::step_iterative(double t, double dt, double *u)
 	num_of_iterations++;
       }
       // end of Newton iteration, approx solution is stored in z_km
+      
+      newton_iterations += num_of_iterations;
+      ils_iterations += ils->number_of_iterations();
 
       // store approx solution at (k+1)*dt/n in the right position
       // if it isnt (because of swapping of variables z_k and z_km)
@@ -286,8 +296,12 @@ bool ImplicitBulirschStoer::step_iterative(double t, double dt, double *u)
   
 
 
-bool ImplicitBulirschStoer::step_direct(double t, double dt, double *u)
+bool ImplicitBulirschStoer::step_direct(double t, double dt, double *u,
+                                        int& newton_iterations, int& ils_iterations)
 {
+  newton_iterations = 0;
+  ils_iterations = 0;
+
   double *DF = F + dim;
 
   for(int i=0; i<num_of_stages; i++){
@@ -341,6 +355,8 @@ bool ImplicitBulirschStoer::step_direct(double t, double dt, double *u)
 	if (IterativeSolver::os){
 	  *IterativeSolver::os << "Newton: iteration: "
 			       << num_of_iterations << "    "
+			       << "linear iterations: ??fix me??" 
+			       //<< dls->number_of_iterations() << "    "
 			       << "|du|: " << dist << "   "
 			       << std::endl;
 	}
@@ -357,6 +373,9 @@ bool ImplicitBulirschStoer::step_direct(double t, double dt, double *u)
 	num_of_iterations++;
       }
       // end of Newton iteration, approx solution is stored in z_km
+      
+      newton_iterations += num_of_iterations;
+      //dls_iterations += ils->number_of_iterations();
 
       // store approx solution at (k+1)*dt/n in the right position
       // if it isnt (because of swapping of variables z_k and z_km)

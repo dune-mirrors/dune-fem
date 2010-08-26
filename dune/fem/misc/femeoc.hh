@@ -225,6 +225,59 @@ class FemEoc
   }
 
   void writeerr(double h,double size,double time,int counter,
+                double avgTimeStep,double minTimeStep,double maxTimeStep,
+		const int ils_num_iterations, const int ode_num_iterations)
+  {
+    if (MPIManager::rank() != 0) return;
+    if (initial_) {
+	    outputFile_ << "\\begin{tabular}{|c|c|c|c|c|c|c|c|c|c|";
+      for (unsigned int i=0;i<error_.size();i++) {
+        outputFile_ << "|cc|";
+      }
+      outputFile_ << "}\n"
+	        << "\\hline \n"
+          << "level & h & size & CPU-time & counter & avg dt & min dt & max dt & Newton & ILS iter.";
+      for (unsigned int i=0;i<error_.size();i++) {
+        outputFile_ << " & " << description_[i]
+                    << " & EOC ";
+      }
+      outputFile_ << "\n \\tabularnewline\n"
+                  << "\\hline\n"
+                  << "\\hline\n";
+    }
+    outputFile_ <<  "\\hline \n"
+                << level_ << " & "
+                << h      << " & "
+                << size   << " & "
+                << time   << " & " 
+                << counter <<" & "
+                << avgTimeStep   << " & " 
+                << minTimeStep   << " & " 
+                << maxTimeStep   << " & " 
+                << ils_num_iterations   << " & " 
+                << ode_num_iterations 
+		;
+    for (unsigned int i=0;i<error_.size();++i) {
+      outputFile_ << " & " << error_[i] << " & ";
+      if (initial_) {
+        outputFile_ << " --- ";
+      }
+      else {
+        double factor = prevh_/h;
+        outputFile_ << log(prevError_[i]/error_[i])/log(factor);
+      }
+      prevError_[i]=error_[i];
+      error_[i] = -1;  // uninitialized
+    }
+    outputFile_ << "\n"
+                << "\\tabularnewline\n"
+                << "\\hline \n";
+    outputFile_.flush();
+    prevh_ = h;
+    level_++;
+    initial_ = false;
+  }
+  void writeerr(double h,double size,double time,int counter,
                 double avgTimeStep,double minTimeStep,double maxTimeStep) {
     if (MPIManager::rank() != 0) return;
     if (initial_) {
@@ -319,6 +372,42 @@ class FemEoc
 	  out << "avg. time step: " << avgTimeStep << std::endl;
 	  out << "min. time step: " << minTimeStep << std::endl;
 	  out << "max. time step: " << maxTimeStep << std::endl;
+
+    for (unsigned int i=0;i<error_.size();++i) 
+    {
+      out << description_[i] << ":       " << error_[i] << std::endl;
+      if (! initial_) 
+      {
+        const double factor = prevh_/h;
+        const double eoc = log(prevError_[i]/error_[i])/log(factor);
+
+        out << "EOC (" <<description_[i] << "): " << eoc << std::endl;
+      }
+      out << std::endl;
+    }
+  }
+  void printerr(const double h, 
+                const double size, 
+                const double time, 
+                const int counter,
+                const double avgTimeStep,
+                const double minTimeStep,
+                const double maxTimeStep,
+		const int ils_num_iterations,
+		const int ode_num_iterations,
+                std::ostream& out) 
+  {
+    if (!Parameter::verbose()) return;
+	  out << "level:   " << level_  << std::endl;
+	  out << "h        " << h << std::endl;
+	  out << "size:    " << size << std::endl;
+	  out << "time:    " << time << " sec. " << std::endl;
+	  out << "counter: " << counter << std::endl;
+	  out << "avg. time step: " << avgTimeStep << std::endl;
+	  out << "min. time step: " << minTimeStep << std::endl;
+	  out << "max. time step: " << maxTimeStep << std::endl;
+	  out << "Newton iter.: " << ils_num_iterations << std::endl;
+	  out << "ILS iter.: " << ode_num_iterations << std::endl;
 
     for (unsigned int i=0;i<error_.size();++i) 
     {
@@ -489,6 +578,39 @@ class FemEoc
 
     // now write to file 
     instance().writeerr(h,size,time,counter,avgTimeStep,minTimeStep,maxTimeStep);
+  }
+  static void write(const double h,
+                    const double size,
+                    const double time, 
+                    const int counter,
+                    const double avgTimeStep,
+                    const double minTimeStep,
+                    const double maxTimeStep,
+                    const int ils_num_iterations,
+                    const int ode_num_iterations)
+  {
+    // now write to file 
+    instance().writeerr(h,size,time,counter,avgTimeStep,minTimeStep,
+                        maxTimeStep,ils_num_iterations,ode_num_iterations);
+  }
+  static void write(const double h,
+                    const double size,
+                    const double time, 
+                    const int counter,
+                    const double avgTimeStep,
+                    const double minTimeStep,
+                    const double maxTimeStep,
+                    const int ils_num_iterations,
+                    const int ode_num_iterations,
+                    std::ostream& out) 
+  {
+    // print last line to out 
+    instance().printerr( h, size, time, counter, avgTimeStep, minTimeStep, 
+                         maxTimeStep, ils_num_iterations, ode_num_iterations, out );
+
+    // now write to file 
+    instance().writeerr(h,size,time,counter,avgTimeStep,minTimeStep,
+                        maxTimeStep,ils_num_iterations,ode_num_iterations);
   }
 
 }; // end class FemEoc

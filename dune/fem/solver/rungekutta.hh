@@ -77,7 +77,19 @@ public:
   /** \brief solve \f$\partial_t u = L(u)\f$ where \f$L\f$ is the internal operator.   
       \param[in] u unknown to solve for 
   */
-  virtual void solve(DestinationType& u) = 0;
+  virtual void solve(DestinationType& u)
+  {
+    std::cerr << "OdeSolverInterface::solve(DestinationType) should not be used." 
+              << std::endl;
+    abort();
+  }
+
+  virtual void solve(DestinationType& u, int& newton_iterations, int& ils_iterations)
+  {
+    std::cerr << "OdeSolverInterface::solve(DestinationType,int&,int&) should not be used." 
+              << std::endl;
+    abort();
+  }
 
   /** \brief print description of ODE solver to out stream */
   virtual void description(std::ostream&) const = 0;

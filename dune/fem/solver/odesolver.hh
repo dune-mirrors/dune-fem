@@ -272,7 +272,16 @@ public:
   virtual ~ExplicitOdeSolver() {}
  
   //! solve system 
-  void solve( DestinationType& U0 ) 
+  inline void solve( DestinationType& U0, int& newton_iterations, int& ils_iterations ) 
+  {
+    // no nonlinear system to solve for time step update
+    newton_iterations = 0;
+    ils_iterations = 0;
+
+    solve( U0 );
+  }
+
+  void solve( DestinationType& U0 )
   {
     // initialize 
     if( ! initialized_ ) 
@@ -293,8 +302,8 @@ public:
     double* u = U0.leakPointer();
     
     // call ode solver 
-    const bool convergence = odeSolver().step(time, dt , u);
-
+    const bool convergence = odeSolver().step(time, dt, u);
+    
     // set time step estimate of operator 
     timeProvider_.provideTimeStepEstimate( expl_.op().timeStepEstimate() );
     
@@ -445,7 +454,17 @@ protected:
   
 public:  
   //! solve 
-  void solve(DestinationType& U0) 
+  
+  inline void solve( DestinationType& U0 )
+  {
+    // dummy variables
+    int newton_iterations;
+    int ils_iterations;
+
+    solve( U0, newton_iterations, ils_iterations );
+  }
+
+  void solve(DestinationType& U0, int& newton_iterations, int& ils_iterations) 
   {
     // initialize 
     if( ! initialized_ ) 
@@ -460,13 +479,14 @@ public:
     // get pointer to solution
     double* u = U0.leakPointer();
       
-    const bool convergence = odeSolver().step(time , dt , u);
+    const bool convergence = odeSolver().step(time, dt, u, newton_iterations, ils_iterations);
 
     double factor;
     bool changed = parameter().cflFactor(odeSolver(),
                                          *(linsolver_),
                                          convergence, factor);
     cfl_ *= factor;
+
     if (convergence)
     {
       // timeProvider_.provideTimeStepEstimate( cfl_ * spaceOperator().timeStepEstimate() );
@@ -474,8 +494,8 @@ public:
 
       if( changed && verbose_ >= 1 )
         derr << " New cfl number is: "<< cfl_ << " (number of iterations ("
-             << "linear: " << linsolver_->number_of_iterations() 
-             << ", ode: " << numberOfIterations() 
+             << "ILS: " << ils_iterations
+             << ", Newton: " << newton_iterations 
              << ")"
              << std::endl;
     } 

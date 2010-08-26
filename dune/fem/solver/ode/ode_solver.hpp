@@ -1,6 +1,7 @@
 #ifndef ODE_SOLVER_HPP
 #define ODE_SOLVER_HPP
 
+#include <stdlib.h>
 #include <iostream>
 #include "communicator.hpp"
 #include "function.hpp"
@@ -25,7 +26,20 @@ public:
   void set_limiter(Limiter &limiter);
 
   // user-interface for solving
-  virtual bool step(double t, double dt, double *u) = 0; 
+  virtual bool step(double t, double dt, double *u, 
+                    int& newton_iterations, int& ils_iterations)
+  {
+    std::cerr << "ODESolver::step(double,double,double*,int&,int&) should not be used" 
+              << std::endl;
+    abort();
+  }
+
+  virtual bool step(double t, double dt, double *u)
+  {
+    std::cerr << "ODESolver::step(double,double,double*) should not be used" 
+              << std::endl;
+    abort();
+  }
 
 protected:
   // from DynamicalObject
@@ -51,7 +65,8 @@ public:
   void set_linear_solver(IterativeLinearSolver &ls);
 
   // from ODESolver
-  virtual bool step(double t, double dt, double *u);
+  virtual bool step(double t, double dt, double *u,
+                    int& newton_iterations, int& ils_iterations);
 
 protected:
   // from DynamicalObject
@@ -92,7 +107,7 @@ private:
   double *F, *Fpre, *y;
 
   // iterative solver
-  bool step_iterative(double t, double dt, double *u);
+  bool step_iterative(double t, double dt, double *u, int& newton_iterations, int& ils_iterations);
   IterativeLinearSolver *ils;
   LinearOperator op;
   double *u_tmp, *f_tmp; 
@@ -112,7 +127,8 @@ public:
   void set_linear_solver(IterativeLinearSolver &ls);
 
   // from ODESolver
-  virtual bool step(double t, double dt, double *u);
+  virtual bool step(double t, double dt, double *u,
+                    int& newton_iterations, int& ils_iterations);
 
 protected:
   // from DynamicalObject
@@ -157,7 +173,7 @@ private:
   double *F, *Fpre, *y;
 
   // iterative solver
-  bool step_iterative(double t, double dt, double *u);
+  bool step_iterative(double t, double dt, double *u, int& newton_iterations, int& ils_iterations);
   IterativeLinearSolver *ils;
   LinearOperator op;
   double *u_tmp, *f_tmp; 
@@ -211,7 +227,9 @@ public:
 			int num_of_stages, 
 			int (*seq)(int) = DoubleHarmonicSequence );
 
-  virtual bool step(double t, double dt, double *u);
+  virtual bool step(double t, double dt, double *u,
+                    int& newton_iterations, int& ils_iterations);
+
   void set_linear_solver(DirectLinearSolver &ls);
   void set_linear_solver(IterativeLinearSolver &ls);
 
@@ -246,11 +264,11 @@ private:
   int k;
 
   // direct solver
-  bool step_direct(double t, double dt, double *u);
+  bool step_direct(double t, double dt, double *u, int& newton_iterations, int& ils_iterations);
   DirectLinearSolver *dls;
 
   // iterative solver
-  bool step_iterative(double t, double dt, double *u);
+  bool step_iterative(double t, double dt, double *u, int& newton_iterations, int& ils_iterations);
   IterativeLinearSolver *ils;
   LinearOperator op;
 };
