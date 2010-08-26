@@ -137,7 +137,7 @@ namespace Fem {
       out << "    typedef typename ScalarRangeType :: field_type field_type;" << std::endl;
       out << "    typedef typename RangeVectorType :: value_type value_type;" << std::endl; 
       // make length sse conform 
-      const int sseDimRange = (( dimRange % 2 ) == 0) ? dimRange : dimRange+1; 
+      const int sseDimRange = dimRange + (dimRange % 2); 
       //out << "    typedef FieldVector< field_type, " << sseDimRange << " >  ResultType;" << std::endl;
       for( size_t row=0; row< numRows; ++row ) 
       {
@@ -270,6 +270,63 @@ namespace Fem {
       out << "};" << std::endl;
     }
 
+    static void evaluateJacobiansCodegen(std::ostream& out, 
+            const int dim, const int dimRange, const size_t numRows, const size_t numCols ) 
+    {
+      out << "template <class BaseFunctionSet>" << std::endl;
+      out << "struct EvaluateJacobians<BaseFunctionSet, Fem :: EmptyGeometry, " << dimRange << ", " << numRows << ", " << numCols << ">" << std::endl;
+      out << "{" << std::endl;
+      out << "  template< class QuadratureType,"<< std::endl;
+      out << "            class JacobianRangeVectorType," << std::endl;
+      out << "            class LocalDofVectorType," << std::endl;
+      out << "            class JacobianRangeFactorType>" << std::endl;
+      out << "  static void eval( const QuadratureType&," << std::endl;
+      out << "                    const Fem :: EmptyGeometry&," << std::endl; 
+      out << "                    const JacobianRangeVectorType&," << std::endl; 
+      out << "                    const LocalDofVectorType&," << std::endl;
+      out << "                    JacobianRangeFactorType &)" << std::endl;
+      out << "  {" << std::endl;
+      out << "    std::cerr << \"ERROR: wrong code generated for VectorialBaseFunctionSet::axpyJacobians\" << std::endl;" << std::endl;
+      out << "    abort();" << std::endl;
+      out << "  }" << std::endl;
+      out << "};" << std::endl << std::endl;
+      out << "template <class BaseFunctionSet, class Geometry>" << std::endl;
+      out << "struct EvaluateJacobians<BaseFunctionSet, Geometry, " << dimRange << ", " << numRows << ", " << numCols << ">" << std::endl;
+      out << "{" << std::endl;
+      out << "  template< class QuadratureType,"<< std::endl;
+      out << "            class JacobianRangeVectorType," << std::endl;
+      out << "            class LocalDofVectorType," << std::endl;
+      out << "            class JacobianRangeFactorType>" << std::endl;
+      out << "  static void eval( const QuadratureType& quad," << std::endl;
+      out << "                    const Geometry& geometry," << std::endl; 
+      out << "                    const JacobianRangeVectorType& jacStorage," << std::endl; 
+      out << "                    const LocalDofVectorType& dofs," << std::endl;
+      out << "                    JacobianRangeFactorType& jacFactors)" << std::endl;
+      out << "  {" << std::endl;
+      out << "    typedef typename JacobianRangeVectorType :: value_type  value_type;" << std::endl; 
+      out << "    typedef typename JacobianRangeType :: field_type field_type;" << std::endl;
+      out << "    for( size_t row = 0; row < " << numRows << " ; ++ row )" << std::endl;
+      out << "    {" << std::endl;
+      out << "      const value_type& jacStorageRow = jacStorage[ quad.cachingPoint( row ) ];" << std::endl;
+      out << "      typedef typename Geometry::Jacobian GeometryJacobianType;" << std::endl;
+      out << "      const GeometryJacobianType& gjit = geometry.jacobianInverseTransposed( quad.point( row ) );" << std::endl << std::endl;
+      out << "      GlobalJacobianRangeType& result = jacVector[ row ];" << std::endl;
+      out << "      result = 0;" << std::endl;
+      out << "      typedef typename GlobalJacobianRangeType :: row_type JacobianRangeType;" << std::endl;
+      out << "      JacobianRangeType gradPhi;" << std::endl;
+      for( size_t col = 0, colR = 0; col < numCols; ++col )
+      { 
+        out << "      gjit.mv( jacStorageRow[ "<< col << " ][ 0 ], gradPhi );" << std::endl;
+        for( int r = 0; r < dimRange; ++r, ++colR )
+        {
+          out << "      result[ " << r < " ].axpy( dofs[ "<< colR << " ], gradPhi );" << std::endl;
+        }
+      }
+      out << "    }" << std::endl;
+      out << "  }" << std::endl;
+      out << "};" << std::endl;
+    }
+
     static void axpyJacobianCodegen(std::ostream& out, 
             const int dim, const int dimRange, const size_t numRows, const size_t numCols ) 
     {
@@ -303,7 +360,7 @@ namespace Fem {
       out << "                    const JacobianRangeFactorType& jacFactors," << std::endl;
       out << "                    LocalDofVectorType& dofs)" << std::endl;
       out << "  {" << std::endl;
-      const int sseDimRange = (( dimRange % 2 ) == 0) ? dimRange : dimRange+1; 
+      const int sseDimRange = dimRange + (dimRange % 2); 
       out << "    typedef typename JacobianRangeVectorType :: value_type  value_type;" << std::endl; 
       out << "    typedef typename JacobianRangeType :: field_type field_type;" << std::endl;
       const size_t dofs = sseDimRange * numCols ;
