@@ -78,12 +78,14 @@ void SIRK::resize(int new_size, int component)
 
 
 
-bool SIRK::step(double t, double dt, double *u, int& newton_iterations, int& ils_iterations)
+bool SIRK::step(double t, double dt, double *u, int& newton_iterations, int& ils_iterations,
+                int& max_newton_iterations, int& max_ils_iterations)
 {
   dim = f.dim_of_value();
   new_size(dim);
 
-  const bool convergence =  step_iterative(t, dt, u, newton_iterations, ils_iterations);
+  const bool convergence =  step_iterative(t, dt, u, newton_iterations, ils_iterations,
+                                           max_newton_iterations, max_ils_iterations);
 
   // update solution
   if (convergence){
@@ -97,8 +99,9 @@ bool SIRK::step(double t, double dt, double *u, int& newton_iterations, int& ils
 }
 
 
-bool SIRK::step_iterative(double t, double dt, double *u, 
-                          int& newton_iterations, int& ils_iterations)
+bool SIRK::step_iterative(double t, double dt, double *u, int& newton_iterations, 
+                          int& ils_iterations, int& max_newton_iterations,
+			  int& max_ils_iterations)
 {
   newton_iterations = 0;
   ils_iterations = 0;
@@ -147,22 +150,29 @@ bool SIRK::step_iterative(double t, double dt, double *u,
       local_dot = cblas_ddot(dim, y, 1, y, 1);
       comm.allreduce(1, &local_dot, &global_dot, MPI_SUM);
 
+      int ils_iter = ils->number_of_iterations();
       if (IterativeSolver::os){
         *IterativeSolver::os << "Newton: iteration: "
            << newton_iter << "    "
            << "|p|: " << sqrt(global_dot) << "   "
            << "linear iterations: " 
-           << ils->number_of_iterations()
+           << ils_iter
            << std::endl;
       }
 
       newton_iter++;    
+
+      if( ils_iter > max_ils_iterations)
+       max_ils_iterations = ils_iter;
 
       if(sqrt(global_dot) < tolerance) break;      
     }
 
     newton_iterations += newton_iter;
     ils_iterations += ils->number_of_iterations();
+
+    if (newton_iter > max_newton_iterations)
+      max_newton_iterations = newton_iter;
 
     if (newton_iter >= max_num_of_iterations) return false;    
   }

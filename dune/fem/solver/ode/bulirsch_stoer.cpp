@@ -168,17 +168,20 @@ ImplicitBulirschStoer::ImplicitBulirschStoer(Communicator &comm,
 
 
 bool ImplicitBulirschStoer::step(double t, double dt, double *u,
-                                 int& newton_interations, int& ils_iterations)
+                                 int& newton_interations, int& ils_iterations,
+				 int& max_newton_iterations, int& max_ils_iterations)
 {
   dim = f.dim_of_value();
   new_size(dim);
 
   if (dls){ // use direct linear solver, serial only
     assert( comm.size() == 1 );
-    return step_direct(t, dt, u, newton_interations, ils_iterations);
+    return step_direct(t, dt, u, newton_interations, ils_iterations,
+                       max_newton_iterations, max_ils_iterations);
   }
   else if (ils){ // use iterative linear solver
-    return step_iterative(t, dt, u, newton_interations, ils_iterations);
+    return step_iterative(t, dt, u, newton_interations, ils_iterations,
+                          max_newton_iterations, max_ils_iterations);
   }
   else assert(0); // linear solver needed
 
@@ -189,7 +192,8 @@ bool ImplicitBulirschStoer::step(double t, double dt, double *u,
 
 
 bool ImplicitBulirschStoer::step_iterative(double t, double dt, double *u,
-                                           int& newton_iterations, int& ils_iterations)
+                                           int& newton_iterations, int& ils_iterations,
+			                   int& max_newton_iterations, int& max_ils_iterations)
 {
   newton_iterations = 0;
   ils_iterations = 0;
@@ -241,14 +245,19 @@ bool ImplicitBulirschStoer::step_iterative(double t, double dt, double *u,
 	comm.allreduce(1, &local_dot, &global_dot, MPI_SUM);
 	const double dist = sqrt(global_dot);
 
+        int ils_iter = ils->number_of_iterations();
 	if (IterativeSolver::os){
 	  *IterativeSolver::os << "Newton: iteration: "
 			       << num_of_iterations << "    "
 			       << "linear iterations: " 
-			       << ils->number_of_iterations() << "    "
+			       << ils_iter << "    "
 			       << "|p|: " << dist << "   "
 			       << std::endl;
 	}
+
+        // check the current ILS iteration every time ILS has been used
+	if (ils_iter > max_ils_iterations)
+	  max_ils_iterations = ils_iter;
 	
 	if (dist < tolerance){ // successful solving 
 	  double *z_kp = z_km;
@@ -263,14 +272,18 @@ bool ImplicitBulirschStoer::step_iterative(double t, double dt, double *u,
       }
       // end of Newton iteration, approx solution is stored in z_km
       
-      newton_iterations += num_of_iterations;
-      ils_iterations += ils->number_of_iterations();
-
       // store approx solution at (k+1)*dt/n in the right position
       // if it isnt (because of swapping of variables z_k and z_km)
       double *_U = U + (num_of_stages-1-i)*dim;
       if (z_km != _U) cblas_dcopy(dim, z_km, 1, _U, 1);
     }
+
+    // update statistical data at every stage of temporal scheme
+    newton_iterations += num_of_iterations;
+    ils_iterations += ils->number_of_iterations();
+
+    if (num_of_iterations > max_newton_iterations)
+      max_newton_iterations = num_of_iterations;
 
 
     // Extrapolation process
@@ -284,7 +297,7 @@ bool ImplicitBulirschStoer::step_iterative(double t, double dt, double *u,
       daxpby(dim, 1.0+alpha, U+(num_of_stages-1-i+j-1)*dim, 1,
              -alpha, U+(num_of_stages-1-i+j)*dim, 1);
     }
-  }
+  } // end of stage loop
 
 
   // update approximate solution, stored in U[num_of_stages-1] after
@@ -297,7 +310,8 @@ bool ImplicitBulirschStoer::step_iterative(double t, double dt, double *u,
 
 
 bool ImplicitBulirschStoer::step_direct(double t, double dt, double *u,
-                                        int& newton_iterations, int& ils_iterations)
+				        int& newton_iterations, int& ils_iterations,
+				        int& max_newton_iterations, int& max_dls_iterations)
 {
   newton_iterations = 0;
   ils_iterations = 0;
@@ -356,11 +370,10 @@ bool ImplicitBulirschStoer::step_direct(double t, double dt, double *u,
 	  *IterativeSolver::os << "Newton: iteration: "
 			       << num_of_iterations << "    "
 			       << "linear iterations: ??fix me??" 
-			       //<< dls->number_of_iterations() << "    "
 			       << "|du|: " << dist << "   "
 			       << std::endl;
 	}
-	
+
 	if (dist < tolerance){ // successful solving 
 	  double *z_kp = z_km;
 	  z_km = z_k;
@@ -374,14 +387,13 @@ bool ImplicitBulirschStoer::step_direct(double t, double dt, double *u,
       }
       // end of Newton iteration, approx solution is stored in z_km
       
-      newton_iterations += num_of_iterations;
-      //dls_iterations += ils->number_of_iterations();
-
       // store approx solution at (k+1)*dt/n in the right position
       // if it isnt (because of swapping of variables z_k and z_km)
       double *_U = U + (num_of_stages-1-i)*dim;
       if (z_km != _U) cblas_dcopy(dim, z_km, 1, _U, 1);
     }
+
+    newton_iterations += num_of_iterations;
 
 
     // Extrapolation process

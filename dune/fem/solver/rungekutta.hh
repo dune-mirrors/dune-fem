@@ -84,7 +84,8 @@ public:
     abort();
   }
 
-  virtual void solve(DestinationType& u, int& newton_iterations, int& ils_iterations)
+  virtual void solve(DestinationType& u, int& newton_iterations, int& ils_iterations,
+                     int& max_newton_iterations, int& max_ils_iterations)
   {
     std::cerr << "OdeSolverInterface::solve(DestinationType,int&,int&) should not be used." 
               << std::endl;

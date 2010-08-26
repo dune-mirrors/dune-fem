@@ -272,11 +272,14 @@ public:
   virtual ~ExplicitOdeSolver() {}
  
   //! solve system 
-  inline void solve( DestinationType& U0, int& newton_iterations, int& ils_iterations ) 
+  inline void solve( DestinationType& U0, int& newton_iterations, int& ils_iterations,
+                     int& max_newton_iterations, int& max_ils_iterations ) 
   {
     // no nonlinear system to solve for time step update
     newton_iterations = 0;
     ils_iterations = 0;
+    max_newton_iterations = 0;
+    max_ils_iterations = 0;
 
     solve( U0 );
   }
@@ -460,11 +463,14 @@ public:
     // dummy variables
     int newton_iterations;
     int ils_iterations;
+    int max_newton_iterations;
+    int max_ils_iterations;
 
-    solve( U0, newton_iterations, ils_iterations );
+    solve( U0, newton_iterations, ils_iterations, max_newton_iterations, max_ils_iterations );
   }
 
-  void solve(DestinationType& U0, int& newton_iterations, int& ils_iterations) 
+  void solve( DestinationType& U0, int& newton_iterations, int& ils_iterations,
+              int& max_newton_iterations, int& max_ils_iterations ) 
   {
     // initialize 
     if( ! initialized_ ) 
@@ -479,7 +485,9 @@ public:
     // get pointer to solution
     double* u = U0.leakPointer();
       
-    const bool convergence = odeSolver().step(time, dt, u, newton_iterations, ils_iterations);
+    const bool convergence = 
+      odeSolver().step( time, dt, u, newton_iterations, ils_iterations, 
+                        max_newton_iterations, max_ils_iterations );
 
     double factor;
     bool changed = parameter().cflFactor(odeSolver(),
