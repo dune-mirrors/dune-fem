@@ -1,6 +1,8 @@
 #ifndef DUNE_FEM_CAPABILITIES_HH
 #define DUNE_FEM_CAPABILITIES_HH
 
+#include <dune/common/version.hh>
+
 #include <dune/grid/common/capabilities.hh>
 #include <dune/grid/onedgrid.hh>
 
@@ -158,10 +160,10 @@ namespace Dune
     };
 
 
-#if DUNE_VERSION_NEWER(DUNE_GRID,2,1,0)
     // IsUnstructured
     // --------------
 
+#if DUNE_VERSION_NEWER(DUNE_GRID,2,1,0)
     template< class Grid >
     struct IsUnstructured
     {
@@ -185,7 +187,8 @@ namespace Dune
     {
       static const bool v = false;
     };
-#endif
+#endif // #if DUNE_VERSION_NEWER(DUNE_GRID,2,1,0)
+
   }
 
 }
