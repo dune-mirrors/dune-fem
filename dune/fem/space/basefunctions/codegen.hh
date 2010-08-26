@@ -303,14 +303,15 @@ namespace Fem {
       out << "                    const LocalDofVectorType& dofs," << std::endl;
       out << "                    JacobianRangeFactorType& jacFactors)" << std::endl;
       out << "  {" << std::endl;
-      out << "    evalNow( quad, geometry, jacStorage, dofs, jacFactors, jacFactors[ 0 ] );" << std::endl;
+      out << "    evalJac( quad, geometry, jacStorage, dofs, jacFactors, jacFactors[ 0 ] );" << std::endl;
       out << "  }" << std::endl;
+      out << "private:" << std::endl;
       out << "  template< class QuadratureType,"<< std::endl;
       out << "            class JacobianRangeVectorType," << std::endl;
       out << "            class LocalDofVectorType," << std::endl;
       out << "            class JacobianRangeFactorType," << std::endl;
       out << "            class GlobalJacobianRangeType>" << std::endl;
-      out << "  static void evalNow( const QuadratureType& quad," << std::endl;
+      out << "  static void evalJac( const QuadratureType& quad," << std::endl;
       out << "                       const Geometry& geometry," << std::endl; 
       out << "                       const JacobianRangeVectorType& jacStorage," << std::endl; 
       out << "                       const LocalDofVectorType& dofs," << std::endl;
