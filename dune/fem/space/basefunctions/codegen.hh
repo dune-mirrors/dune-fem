@@ -303,6 +303,20 @@ namespace Fem {
       out << "                    const LocalDofVectorType& dofs," << std::endl;
       out << "                    JacobianRangeFactorType& jacFactors)" << std::endl;
       out << "  {" << std::endl;
+      out << "    evalNow( quad, geometry, jacStorage, dofs, jacFactors, jacFactors[ 0 ] );" << std::endl;
+      out << "  }" << std::endl;
+      out << "  template< class QuadratureType,"<< std::endl;
+      out << "            class JacobianRangeVectorType," << std::endl;
+      out << "            class LocalDofVectorType," << std::endl;
+      out << "            class JacobianRangeFactorType," << std::endl;
+      out << "            class GlobalJacobianRangeType>" << std::endl;
+      out << "  static void evalNow( const QuadratureType& quad," << std::endl;
+      out << "                       const Geometry& geometry," << std::endl; 
+      out << "                       const JacobianRangeVectorType& jacStorage," << std::endl; 
+      out << "                       const LocalDofVectorType& dofs," << std::endl;
+      out << "                       JacobianRangeFactorType& jacVector," << std::endl;
+      out << "                       const GlobalJacobianRangeType& )" << std::endl;
+      out << "  {" << std::endl;
       out << "    typedef typename JacobianRangeVectorType :: value_type  value_type;" << std::endl; 
       out << "    typedef typename JacobianRangeType :: field_type field_type;" << std::endl;
       out << "    for( size_t row = 0; row < " << numRows << " ; ++ row )" << std::endl;
@@ -319,7 +333,7 @@ namespace Fem {
         out << "      gjit.mv( jacStorageRow[ "<< col << " ][ 0 ], gradPhi );" << std::endl;
         for( int r = 0; r < dimRange; ++r, ++colR )
         {
-          out << "      result[ " << r < " ].axpy( dofs[ "<< colR << " ], gradPhi );" << std::endl;
+          out << "      result[ " << r << " ].axpy( dofs[ "<< colR << " ], gradPhi );" << std::endl;
         }
       }
       out << "    }" << std::endl;
