@@ -65,6 +65,12 @@ namespace Dune
       return fields_[ row*cols() + col ];
     }
 
+    void add(const unsigned int row, const unsigned int col, const Field& value )
+    {
+      assert( (row < rows()) && (col < cols()) );
+      fields_[ row*cols() + col ] += value;
+    }
+
     Row< const Field > operator[] ( const unsigned int row ) const
     {
       assert( row < rows() );
@@ -106,6 +112,18 @@ namespace Dune
       }
       // Martin: Is clearing required, here?
       clear();
+    }
+
+    void print( std::ostream& out ) const 
+    {
+      for( unsigned int row = 0; row < rows(); ++row )
+      {
+        const Field *fields = fields_ + row*cols();
+        for( unsigned int col = 0; col < cols(); ++col )
+          out << fields[ col ] << " ";
+
+        out << std::endl;
+      }
     }
 
   private:
