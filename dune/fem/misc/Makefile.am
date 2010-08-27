@@ -41,4 +41,8 @@ misc_HEADERS = alugridwriter.hh \
                fmatrixconverter.hh \
                gridname.hh
 
+noinst_LTLIBRARIES = libmisc.la
+
+libmisc_la_SOURCES = femtimer.cc
+
 include $(top_srcdir)/am/global-rules
