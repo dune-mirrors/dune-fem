@@ -34,14 +34,6 @@
 namespace Dune
 {
 
-  // Internal Forward Declarations
-  // -----------------------------
-
-  template< class GridImp, class DataImp >
-  class DataOutput;
-
-
-
   /** \brief Parameter class for Dune::DataOutput
 
       Structure providing the main parameters used to setup the Dune::DataOutput.
