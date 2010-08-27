@@ -4,6 +4,8 @@
 #include <cassert>
 #include <cmath>
 
+#include <dune/fem/version.hh>
+
 // Numerical Upwind-Flux
 template <class ModelImp>
 class LDGFlux
