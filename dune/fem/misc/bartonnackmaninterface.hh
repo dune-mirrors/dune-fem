@@ -17,7 +17,7 @@ namespace Dune
     BartonNackmanInterface ()
     {
       dune_static_assert( (Conversion< Interface, ThisType >::exists), "Interface must be derived from BartonNackmanInterface." );
-      dune_static_assert( (Conversion< Interface, ThisType >::exists), "Implementation must be derived from its interface." );
+      //dune_static_assert( (Conversion< Implementation, Interface >::exists), "Implementation must be derived from its interface." );
     }
     
   protected:
