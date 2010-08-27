@@ -527,18 +527,12 @@ namespace Dune
       enum{ dimDomain = DiscreteFunctionSpaceType :: dimDomain };
       enum{ dimRange = DiscreteFunctionSpaceType :: dimRange };
 
-      // CachingQuadrature<GridPartType,0> quad(en_,df->space().order());
       LocalFunctionType lf = df->localFunction(en_);
-      // for( size_t i = 0; i < quad.nop(); ++i )
       {
-        //DomainType x = en_.geometry().global(quad_.point(i_));
-        // for (int k = 0; k < dimDomain; ++k) 
-        //   out_ << x[k] << " ";
         RangeType u;
-        lf.evaluate(quad_[i_],u);
-        for (int k = 0; k < dimRange; ++k) 
-          out_ << u[k] << "   ";
-        // out_ << std::endl;
+        lf.evaluate( quad_[ i_ ], u );
+        for( int k = 0; k < dimRange; ++k )
+          out_ << "  " << u[ k ];
       }
     }
 
@@ -820,30 +814,29 @@ namespace Dune
     std::string name = genFilename( path_, datapref_, writeStep_ );
     name += ".gnu";
     std::ofstream gnuout(name.c_str());
-    gnuout << std::scientific << std::setprecision(16);
+    gnuout << std::scientific << std::setprecision( 16 );
 
-    // generate adaptive leaf grid part 
-    // do not use leaf grid part since this will 
-    // create the grids leaf index set, which might not be wanted. 
-    typedef DGAdaptiveLeafGridPart< GridType > GridPartType; 
-    GridPartType gridPart( const_cast<GridType&> (grid_) );
+    // create HierarchicGridPart
+    // ! do not use LeafGridPart since this creates the grid's LeafIndexSet !
+    typedef HierarchicGridPart< GridType > GridPartType;
+    GridPartType gridPart( const_cast< GridType & >( grid_ ) );
+
     // start iteration
     typedef typename GridPartType::template Codim<0>::IteratorType IteratorType;
-    IteratorType endit = gridPart.template end<0>();
-    for (IteratorType it = gridPart.template begin<0>(); it != endit; ++it) {
-      CachingQuadrature<GridPartType,0> quad(*it,1);
+    IteratorType end = gridPart.template end< 0 >();
+    for( IteratorType it = gridPart.template begin< 0 >(); it != end; ++it )
+    {
+      CachingQuadrature< GridPartType, 0 > quad( *it, 1 );
       for( size_t i = 0; i < quad.nop(); ++i )
       {
         typedef typename IteratorType::Entity Entity;
-        const Entity& en = *it;
-        typename Entity::Geometry::GlobalCoordinate x = 
-          en.geometry().global(quad.point(i));
-        for (int k = 0; k < x.size; ++k) 
-           gnuout << x[k] << " ";
-        GnuplotOutputer< GridPartType > 
-                       io( gnuout,quad,i,en );
+        const Entity &entity = *it;
+        const typename Entity::Geometry::GlobalCoordinate x
+          = entity.geometry().global( quad.point( i ) );
+        for( int k = 0; k < x.size; ++k )
+          gnuout << (k > 0 ? " " : "") << x[ k ];
+        GnuplotOutputer< GridPartType > io( gnuout, quad, i, entity );
         io.forEach( data_ );
-
         gnuout << std::endl;
       }
     }
