@@ -6,7 +6,8 @@
 
 //- Dune includes
 #include <dune/common/misc.hh>
-#include <dune/grid/common/capabilities.hh>
+
+#include <dune/fem/misc/capabilities.hh>
 
 //- Local includes
 #include "pointmapper.hh"
