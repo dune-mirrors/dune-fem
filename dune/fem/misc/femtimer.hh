@@ -58,6 +58,16 @@ namespace Dune
       typedef enum { max, sum } operation;
 
     private:
+      struct TimerInfo
+      {
+        std::vector< double > startTimes, times;
+        std::string name;
+
+        TimerInfo ( const std::string &n, const unsigned int nr )
+        : startTimes( nr ), times( nr ), name( n )
+        {}
+      };
+
       Timer ();
       ~Timer ();
 
@@ -76,40 +86,44 @@ namespace Dune
 
       void start_timer( int id, int nr )
       {
-        startTimesV_[id][nr] = timer_.elapsed();
-        assert( startTimesV_[ id ][ 0 ] >= 0. );
+        timers_[ id ].startTimes[ nr ] = timer_.elapsed();
+        assert( timers_[ id ].startTimes[ 0 ] >= double( 0 ) );
       }
 
       double stop_timer ( int id, int nr, operation op )
       {
-        assert( (startTimesV_[ id ][ nr ] >= 0.) && (startTimesV_[ id ][ 0 ] >= 0.) );
-        double ret = timer_.elapsed() - startTimesV_[id][nr];
-        startTimesV_[ id ][ nr ] = -1.;
-        switch (op) {
-        case sum: timesV_[id][nr] += ret; 
-                  break;
-        case max: timesV_[id][nr] = std::max(ret,timesV_[id][nr]); 
-                  break;
+        TimerInfo &info = timers_[ id ];
+        assert( (info.startTimes[ nr ] >= double( 0 )) && (info.startTimes[ 0 ] >= double( 0 )) );
+        double elapsed = timer_.elapsed() - info.startTimes[ nr ];
+        info.startTimes[ nr ] = double( -1 );
+        switch( op )
+        {
+        case sum:
+          info.times[ nr ] += elapsed;
+          break;
+        case max:
+          info.times[ nr ] = std::max( info.times[ nr ], elapsed );
+          break;
         }
-        return ret;
+        return elapsed;
       }
 
       void reset_timer ( int id, int nr )
       {
-        timesV_[id][nr] = 0.;
-        startTimesV_[ id ][ nr ] = -1.;
+        timers_[ id ].times[ nr ] = double( 0 );
+        timers_[ id ].startTimes[ nr ] = double( -1 );
       }
 
       void reset_timer ( int id )
       {
-        for (unsigned int i=0;i<timesV_[id].size();++i)
-          reset_timer(id,i);
+        for( unsigned int i = 0; i < timers_[ id ].times.size(); ++i )
+          reset_timer( id, i );
       }
 
       void reset_timer ()
       {
-        for (unsigned int i=0;i<timesV_.size();++i)
-          reset_timer(i);
+        for( unsigned int i = 0; i < timers_.size(); ++i )
+          reset_timer( i );
       }
 
       void print_timer ( std::ostream &out, int id );
@@ -224,9 +238,7 @@ namespace Dune
     private:
       Dune::Timer timer_;
       std::stack< double > timesS_;
-      std::vector< std::vector< double > > startTimesV_;
-      std::vector< std::vector< double > > timesV_;
-      std::vector< std::string > timesVName_;
+      std::vector< TimerInfo > timers_;
       std::ofstream output_;
       int stepCount_;
       bool changed_;

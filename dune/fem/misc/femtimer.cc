@@ -10,10 +10,8 @@ namespace Dune
   {
 
     Timer< true >::Timer ()
-    : timesS_(), 
-      startTimesV_(),
-      timesV_(0),
-      timesVName_(0),
+    : timesS_(),
+      timers_(),
       output_(),
       stepCount_(0),
       changed_(true)
@@ -60,80 +58,81 @@ namespace Dune
 
     unsigned int Timer< true >::add ( const std::string &name, int nr )
     {
-      int id;
-      for (id=0;id<int(timesV_.size());++id) {
-        if (timesV_[id].size()==0) 
+      unsigned int id;
+      const unsigned int numTimers = timers_.size();
+      for( id = 0; id < numTimers; ++id )
+      {
+        if( timers_[ id ].times.empty() )
           break;
       }
-      if (id==int(timesV_.size())) {
-        startTimesV_.push_back(std::vector<double>(nr));
-        timesV_.push_back(std::vector<double>(nr));
-        timesVName_.push_back(name);
-      } else {
-        startTimesV_[id] = std::vector<double>(nr);
-        timesV_[id] = std::vector<double>(nr);
-        timesVName_[id] = name;
-      }
-      reset_timer(id);
-      changed_=true;
+
+      if( id == numTimers )
+        timers_.push_back( TimerInfo( name, nr ) );
+      else
+        timers_[ id ] = TimerInfo( name, nr );
+
+      reset_timer( id );
+      changed_ = true;
       return id;
     }
 
 
     void Timer< true >::remove ( unsigned int id )
     {
-      timesV_[id].clear();
-      startTimesV_[id].clear();
-      timesVName_[id] = "";
-      changed_=true;
+      timers_[ id ] = TimerInfo( "", 0 );
+      changed_ = true;
     }
 
 
     void Timer< true >::remove ()
     {
-      timesV_.clear();
-      startTimesV_.clear();
-      timesVName_.clear();
-      changed_=true;
+      timers_.clear();
+      changed_ = true;
     }
 
 
     void Timer< true >::print_timer ( std::ostream &out, int id )
     {
-      if (timesV_.size()>1) {
-        out << "(" << timesVName_[id] << ":";
-      }
-      out << timesV_[id][0];
-      for (unsigned int i=1;i<timesV_[id].size();++i)
-        out << "," << timesV_[id][i]/timesV_[id][0];
-      if (timesV_.size()>1) {
+      const TimerInfo &info = timers_[ id ];
+      const unsigned int numTimers = timers_.size();
+      if( numTimers > 1 )
+        out << "(" << info.name << ":";
+
+      out << info.times[ 0 ];
+      for( unsigned int i = 1; i < info.times.size(); ++i )
+        out << "," << info.times[ i ] / info.times[ 0 ];
+
+      if( numTimers > 1 )
         out << ") ";
-      }
     }
 
 
     void Timer< true >::print_timer ( std::ostream &out, const std::string &msg )
     {
       out << msg << " : ";
-      for (unsigned int i=0;i<timesV_.size();++i)
-        print_timer(out,i);
+      for( unsigned int i = 0; i < timers_.size(); ++i )
+        print_timer( out, i );
       out << std::endl;
     }
 
 
     void Timer< true >::printToFile ()
     {
-      for (unsigned int i=0;i<timesV_.size();++i) {
-        if (timesV_[i].size()>0) {
-          output_ << std::setw(6) << inMS(timesV_[i][0]);
-          if (timesV_[i].size()>1) {
-            output_ << " ( ";
-            for (unsigned int nr=1;nr<timesV_[i].size();++nr) {
-              output_ << std::setw(3) << inProz(timesV_[i][nr],timesV_[i][0])
-                      << "% ";
-            }
-            output_ << ") ";
-          }
+      std::cerr << "Printing FemTimer to file..." << std::endl;
+      for( unsigned int i = 0; i< timers_.size(); ++i )
+      {
+        const TimerInfo &info = timers_[ i ];
+        if( info.times.empty() )
+          continue;
+
+        output_ << std::setw( 6 ) << inMS( info.times[ 0 ] ) << "ms";
+        const unsigned int numTimes = info.times.size();
+        if( numTimes > 1 )
+        {
+          output_ << " ( ";
+          for( unsigned int nr = 1; nr < numTimes; ++nr )
+            output_ << std::setw( 3 ) << inProz( info.times[ nr ], info.times[ 0 ] ) << "% ";
+          output_ << ") ";
         }
       }
       output_ << std::endl;
@@ -148,20 +147,21 @@ namespace Dune
           DUNE_THROW( IOError, "FemTimer: Unable to open '" << fileName << "' for writing." );
         changed_=true;
       }
-      if (changed_) {
-        for (unsigned int i=0;i<timesV_.size();++i) {
-          if (timesV_[i].size()>0) 
-            output_ << std::setw(10+(timesV_[i].size()-1)*5) 
-                    << timesVName_[i];
+      if( changed_ )
+      {
+        for( unsigned int i = 0; i < timers_.size(); ++i )
+        {
+          const TimerInfo &info = timers_[ i ];
+          if( !info.times.empty() )
+            output_ << std::setw( 12 + (info.times.size()-1)*5 ) << info.name;
         }
         output_ << std::endl;
-        stepCount_=0;
-        changed_=false;
+        stepCount_ = 0;
+        changed_ = false;
       }
-      if (stepCount_%step==0) {
+      if( stepCount_ % step == 0 )
         printToFile();
-      }
-      stepCount_++;
+      ++stepCount_;
     }
 
 
@@ -173,25 +173,28 @@ namespace Dune
           DUNE_THROW( IOError, "FemTimer: Unable to open '" << fileName << "' for writing." );
         changed_=true;
       }
-      if (changed_) {
+      if( changed_ )
+      {
         output_ << std::endl << std::endl;
-        output_ << std::setw(12) << "Time" << " ";
-        output_ << std::setw(12) << "dt" << " ";
-        for (unsigned int i=0;i<timesV_.size();++i) {
-          if (timesV_[i].size()>0) 
-            output_ << std::setw(10+(timesV_[i].size()-1)*5) 
-                    << timesVName_[i];
+        output_ << std::setw( 12 ) << "Time" << " ";
+        output_ << std::setw( 12 ) << "dt" << " ";
+        for( unsigned int i = 0; i < timers_.size(); ++i )
+        {
+          const TimerInfo &info = timers_[ i ];
+          if( !info.times.empty() )
+            output_ << std::setw( 12+(info.times.size()-1)*5 ) << info.name;
         }
         output_ << std::endl;
-        stepCount_=0;
-        changed_=false;
+        stepCount_ = 0;
+        changed_ = false;
       }
-      if (stepCount_%step==0) {
-        output_ << std::setw(10) << std::scientific << tp.time() << " ";
-        output_ << std::setw(10) << std::scientific << tp.deltaT() << " ";
+      if( stepCount_ % step == 0 )
+      {
+        output_ << std::setw( 10 ) << std::scientific << tp.time() << " ";
+        output_ << std::setw( 10 ) << std::scientific << tp.deltaT() << " ";
         printToFile();
       }
-      stepCount_++;
+      ++stepCount_;
     }
 
   }
