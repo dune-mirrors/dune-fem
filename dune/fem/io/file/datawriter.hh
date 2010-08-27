@@ -228,7 +228,6 @@ protected:
   using BaseType :: writeStep_;
   using BaseType :: outputFormat_ ;
   using BaseType :: myRank_;
-  using BaseType :: verbose_;
   using BaseType :: grapeDisplay_;
 
   //! type of this class  
@@ -526,12 +525,15 @@ protected:
   //! read checkpoint file
   bool readCheckPoint(const bool warn = true)
   {
+    const bool verbose = Parameter::verbose(); 
+
+
     // read Checkpiont file 
-    if( readParameter(checkPointFile_,"LastCheckPoint",writeStep_, verbose_, warn ) )
+    if( readParameter(checkPointFile_,"LastCheckPoint",writeStep_, verbose, warn ) )
     {
       std::string recoverPath;
       // try to read recover path 
-      if( ! readParameter(checkPointFile_,"RecoverPath", recoverPath, verbose_) )
+      if( ! readParameter(checkPointFile_,"RecoverPath", recoverPath, verbose) )
       {
         // default value is output path
         recoverPath = path_;

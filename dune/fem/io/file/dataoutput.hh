@@ -270,7 +270,6 @@ namespace Dune
     const GridType& grid_;
     mutable OutPutDataType& data_; 
     const int myRank_;
-    bool verbose_;
 
     // name for data output 
     std::string path_;
@@ -615,9 +614,6 @@ namespace Dune
   template< class GridImp, class DataImp >
   inline void DataOutput< GridImp, DataImp >::init ( const DataOutputParameters &parameter )
   {
-    // read verbose parameter 
-    verbose_ = Parameter::verbose(); 
-
     IOInterface :: createGlobalPath ( grid_.comm(), Parameter::commonOutputPath() );
     path_ = Parameter::commonOutputPath()+"/"+parameter.path();
     // create path if not already exists 
