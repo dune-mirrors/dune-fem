@@ -78,15 +78,14 @@ class FemEoc
 
     std::string name = filename; 
 
-    // if needed add the time stamp to the file name 
-    // to prevent eoc results to be overwritten
-    if ( Parameter::getValue<int>("fem.io.eocFileTimeStamp", 0) )
+    // add time stamp to file name, if requested (prevents results from being overwritten)
+    if( Parameter::getValue< bool >( "fem.io.eocFileTimeStamp", false ) )
     {
       time_t seconds = time(0);
       struct tm *ptm = localtime( &seconds );
       char timeString[20];
       strftime( timeString, 20, "_%d%m%Y_%H%M%S", ptm );
-      name = filename + std::string(timeString); 
+      name += std::string( timeString );
     }
 
     if (!outputFile_.is_open()) 
@@ -464,14 +463,17 @@ class FemEoc
 
   /** \brief commit a line to the eoc file 
    *
-   *  \param h grid width (e.g. given by GridWith utitlity class)
-   *  \param size number of elements in the grid or number of dofs...
-   *  \param time computational time
-   *  \param counter number of time steps or iterations for a solver...
-   *  \param avgTimeStep average time step for a ODE solver for one run of the program...
-   *  \param minTimeStep minimal time step for a ODE solver for one run of the program...
-   *  \param maxTimeStep maximal time step for a ODE solver for one run of the program...
-   *  \param out std::ostream to print data to (e.g. std::cout) 
+   *  \param  h                      grid width (e.g. given by GridWith utitlity class)
+   *  \param  size                   number of elements in the grid or number of dofs...
+   *  \param  time                   computational time
+   *  \param  counter                number of time steps or iterations for a solver...
+   *  \param  avgTimeStep            average time step for a ODE solver for one run of the program...
+   *  \param  minTimeStep            minimal time step for a ODE solver for one run of the program...
+   *  \param  maxTimeStep            maximal time step for a ODE solver for one run of the program...
+   *  \param  newton_iterations      number of newton iterations
+   *  \param  ils_iterations         ???
+   *  \param  max_newton_iterations  maximal number of newton iterations
+   *  \param  max_ils_iterations     ???
    */
   static void write(const double h,
                     const double size,
@@ -490,6 +492,7 @@ class FemEoc
                         maxTimeStep,newton_iterations,ils_iterations,
 			max_newton_iterations, max_ils_iterations);
   }
+
   static void write(const double h,
                     const double size,
                     const double time, 
