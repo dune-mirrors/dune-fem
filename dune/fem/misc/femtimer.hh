@@ -1,4 +1,4 @@
-#ifndef DUME_FEMTIMER_HH
+#ifndef DUNE_FEMTIMER_HH
 #define DUNE_FEMTIMER_HH
 
 #include <stack>
