@@ -9,119 +9,98 @@
 namespace Dune
 {
 
+  // L2Norm
+  // ------
+
   template< class GridPart >
   class L2Norm
   {
+    typedef L2Norm< GridPart > ThisType;
+
   public:
     typedef GridPart GridPartType;
 
-  private:
-    typedef L2Norm< GridPartType > ThisType;
-
   protected:
     template< class Function >
-    class FunctionSquare;
+    struct FunctionSquare;
 
     template< class UFunction, class VFunction >
-    class FunctionDistance;
+    struct FunctionDistance;
 
-  protected:
-    typedef typename GridPartType :: template Codim< 0 > :: IteratorType
-      GridIteratorType;
-    typedef typename GridIteratorType :: Entity EntityType;
+    typedef typename GridPartType::template Codim< 0 >::IteratorType GridIteratorType;
+    typedef typename GridIteratorType::Entity EntityType;
     typedef CachingQuadrature< GridPartType, 0 > QuadratureType;
     typedef Integrator< QuadratureType > IntegratorType;
 
-  protected:
-    const GridPartType &gridPart_;
-
   public:
-    inline explicit L2Norm ( const GridPartType &gridPart );
-    inline L2Norm ( const ThisType &other );
+    explicit L2Norm ( const GridPartType &gridPart );
 
-  private:
-    // prohibit assignment
-    ThisType operator= ( const ThisType &other );
-
-  public:
     template< class DiscreteFunctionType >
-    inline typename DiscreteFunctionType :: RangeFieldType
+    typename DiscreteFunctionType::RangeFieldType
     norm ( const DiscreteFunctionType &u ) const;
     
     template< class UDiscreteFunctionType, class VDiscreteFunctionType >
-    inline typename UDiscreteFunctionType :: RangeFieldType
-    distance ( const UDiscreteFunctionType &u,
-               const VDiscreteFunctionType &v ) const;
+    typename UDiscreteFunctionType::RangeFieldType
+    distance ( const UDiscreteFunctionType &u, const VDiscreteFunctionType &v ) const;
 
   protected:
-    const GridPartType &gridPart () const
-    {
-      return gridPart_;
-    }
+    const GridPartType &gridPart () const { return gridPart_; }
 
-    typename GridPartType::GridType ::CollectiveCommunication comm () const
+    typename GridPartType::GridType::CollectiveCommunication comm () const
     {
       return gridPart().grid().comm();
     }
+
+  private:
+    const GridPartType &gridPart_;
   };
 
 
+
+  // WeightedL2Norm
+  // --------------
   
   template< class WeightFunction >
   class WeightedL2Norm
-  : public L2Norm
-    < typename WeightFunction :: DiscreteFunctionSpaceType :: GridPartType >
+  : public L2Norm< typename WeightFunction::DiscreteFunctionSpaceType::GridPartType >
   {
+    typedef WeightedL2Norm< WeightFunction > ThisType;
+    typedef L2Norm< typename WeightFunction::DiscreteFunctionSpaceType::GridPartType > BaseType;
+
   public:
     typedef WeightFunction WeightFunctionType;
 
-   public:
-    typedef typename WeightFunctionType :: DiscreteFunctionSpaceType
-      WeightFunctionSpaceType;
-    typedef typename WeightFunctionSpaceType :: GridPartType GridPartType;
+    typedef typename WeightFunctionType::DiscreteFunctionSpaceType WeightFunctionSpaceType;
+    typedef typename WeightFunctionSpaceType::GridPartType GridPartType;
    
-  private:
-    typedef WeightedL2Norm< WeightFunctionType > ThisType;
-    typedef L2Norm< GridPartType > BaseType;
-
   protected:
     template< class Function >
-    class WeightedFunctionSquare;
+    struct WeightedFunctionSquare;
     
-  protected:
-    typedef typename WeightFunctionType :: LocalFunctionType
-      LocalWeightFunctionType;
-    typedef typename WeightFunctionType :: RangeType WeightType;
+    typedef typename WeightFunctionType::LocalFunctionType LocalWeightFunctionType;
+    typedef typename WeightFunctionType::RangeType WeightType;
     
-    typedef typename BaseType :: GridIteratorType GridIteratorType;
-    typedef typename BaseType :: IntegratorType IntegratorType;
+    typedef typename BaseType::GridIteratorType GridIteratorType;
+    typedef typename BaseType::IntegratorType IntegratorType;
 
-    typedef typename GridIteratorType :: Entity EntityType;
+    typedef typename GridIteratorType::Entity EntityType;
 
-  protected:
-    const WeightFunctionType &weightFunction_;
-
-  protected:
-    using BaseType :: gridPart;
-    using BaseType :: comm;
+    using BaseType::gridPart;
+    using BaseType::comm;
 
   public:
-    inline explicit WeightedL2Norm ( const WeightFunctionType &weightFunction );
-    inline WeightedL2Norm ( const ThisType &other );
+    explicit WeightedL2Norm ( const WeightFunctionType &weightFunction );
 
-  private:
-    // prohibit assignment
-    ThisType operator= ( const ThisType &other );
-
-  public:
     template< class DiscreteFunctionType >
-    inline typename DiscreteFunctionType :: RangeFieldType
+    typename DiscreteFunctionType::RangeFieldType
     norm ( const DiscreteFunctionType &u ) const;
     
     template< class UDiscreteFunctionType, class VDiscreteFunctionType >
-    inline typename UDiscreteFunctionType :: RangeFieldType
-    distance ( const UDiscreteFunctionType &u,
-               const VDiscreteFunctionType &v ) const;
+    typename UDiscreteFunctionType::RangeFieldType
+    distance ( const UDiscreteFunctionType &u, const VDiscreteFunctionType &v ) const;
+
+  private:
+    const WeightFunctionType &weightFunction_;
   };
 
 
@@ -130,25 +109,19 @@ namespace Dune
   // ------------------------
   
   template< class GridPart >
-  inline L2Norm< GridPart > :: L2Norm ( const GridPartType &gridPart )
+  inline L2Norm< GridPart >::L2Norm ( const GridPartType &gridPart )
   : gridPart_( gridPart )
   {}
 
 
   template< class GridPart >
-  inline L2Norm< GridPart > :: L2Norm ( const ThisType &other )
-  : gridPart_( other.gridPart_ )
-  {}
-
-  
-  template< class GridPart >
   template< class DiscreteFunctionType >
-  inline typename DiscreteFunctionType :: RangeFieldType
-  L2Norm< GridPart > :: norm ( const DiscreteFunctionType &u ) const
+  inline typename DiscreteFunctionType::RangeFieldType
+  L2Norm< GridPart >::norm ( const DiscreteFunctionType &u ) const
   {
-    typedef typename DiscreteFunctionType :: RangeFieldType RangeFieldType;
+    typedef typename DiscreteFunctionType::RangeFieldType RangeFieldType;
 
-    typedef typename DiscreteFunctionType :: LocalFunctionType LocalFunctionType;
+    typedef typename DiscreteFunctionType::LocalFunctionType LocalFunctionType;
 
     unsigned int order = 2 * u.space().order();
     IntegratorType integrator( order );
@@ -171,21 +144,21 @@ namespace Dune
   
   template< class GridPart >
   template< class UDiscreteFunctionType, class VDiscreteFunctionType >
-  inline typename UDiscreteFunctionType :: RangeFieldType
-  L2Norm< GridPart > :: distance ( const UDiscreteFunctionType &u,
-                                   const VDiscreteFunctionType &v ) const
+  inline typename UDiscreteFunctionType::RangeFieldType
+  L2Norm< GridPart >
+    ::distance ( const UDiscreteFunctionType &u, const VDiscreteFunctionType &v ) const
   {
-    typedef typename UDiscreteFunctionType :: RangeFieldType RangeFieldType;
+    typedef typename UDiscreteFunctionType::RangeFieldType RangeFieldType;
 
-    typedef typename UDiscreteFunctionType :: LocalFunctionType ULocalFunctionType;
-    typedef typename VDiscreteFunctionType :: LocalFunctionType VLocalFunctionType;
+    typedef typename UDiscreteFunctionType::LocalFunctionType ULocalFunctionType;
+    typedef typename VDiscreteFunctionType::LocalFunctionType VLocalFunctionType;
 
     typedef FunctionDistance< ULocalFunctionType, VLocalFunctionType >
       LocalDistanceType;
 
     const unsigned int uorder = u.space().order();
     const unsigned int vorder = v.space().order();
-    const unsigned int order = 2 * std :: max( uorder, vorder );
+    const unsigned int order = 2 * std::max( uorder, vorder );
     IntegratorType integrator( order );
 
     FieldVector< RangeFieldType, 1 > sum( 0 );
@@ -209,59 +182,47 @@ namespace Dune
   
   template< class GridPart >
   template< class Function >
-  class L2Norm< GridPart > :: FunctionSquare
+  struct L2Norm< GridPart >::FunctionSquare
   {
-  public:
     typedef Function FunctionType;
 
-    typedef typename FunctionType :: RangeFieldType RangeFieldType;
+    typedef typename FunctionType::RangeFieldType RangeFieldType;
     typedef FieldVector< RangeFieldType, 1 > RangeType;
 
-  protected:
-    const FunctionType &function_;
-  
-  public:
-    inline explicit FunctionSquare ( const FunctionType &function )
+    explicit FunctionSquare ( const FunctionType &function )
     : function_( function )
     {}
     
     template< class Point >
-    inline void evaluate ( const Point &x,
-                           RangeType &ret ) const
+    void evaluate ( const Point &x, RangeType &ret ) const
     {
-      typename FunctionType :: RangeType phi;
+      typename FunctionType::RangeType phi;
       function_.evaluate( x, phi );
       ret = phi * phi;
     }
+
+  private:
+    const FunctionType &function_;
   };
 
 
   template< class GridPart >
   template< class UFunction, class VFunction >
-  class L2Norm< GridPart > :: FunctionDistance
+  struct L2Norm< GridPart >::FunctionDistance
   {
-  public:
     typedef UFunction UFunctionType;
     typedef VFunction VFunctionType;
 
-    typedef typename UFunctionType :: RangeFieldType RangeFieldType;
-    typedef typename UFunctionType :: RangeType RangeType;
-    typedef typename UFunctionType :: JacobianRangeType JacobianRangeType;
+    typedef typename UFunctionType::RangeFieldType RangeFieldType;
+    typedef typename UFunctionType::RangeType RangeType;
+    typedef typename UFunctionType::JacobianRangeType JacobianRangeType;
 
-  protected:
-    const UFunctionType &u_;
-    const VFunctionType &v_;
-  
-  public:
-    inline explicit FunctionDistance ( const UFunctionType &u,
-                                       const VFunctionType &v )
-    : u_( u ),
-      v_( v )
+    FunctionDistance ( const UFunctionType &u, const VFunctionType &v )
+    : u_( u ), v_( v )
     {}
     
     template< class Point >
-    inline void evaluate ( const Point &x,
-                           RangeType &ret ) const
+    void evaluate ( const Point &x, RangeType &ret ) const
     {
       RangeType phi;
       u_.evaluate( x, ret );
@@ -270,14 +231,17 @@ namespace Dune
     }
 
     template< class Point >
-    inline void jacobian ( const Point &x,
-                           JacobianRangeType &ret ) const
+    void jacobian ( const Point &x, JacobianRangeType &ret ) const
     {
       JacobianRangeType phi;
       u_.jacobian( x, ret );
       v_.jacobian( x, phi );
       ret -= phi;
     }
+
+  private:
+    const UFunctionType &u_;
+    const VFunctionType &v_;
   };
 
 
@@ -287,7 +251,7 @@ namespace Dune
   
   template< class WeightFunction >
   inline WeightedL2Norm< WeightFunction >
-    :: WeightedL2Norm ( const WeightFunctionType &weightFunction )
+    ::WeightedL2Norm ( const WeightFunctionType &weightFunction )
   : BaseType( weightFunction.space().gridPart ),
     weightFunction_( weightFunction )
   {
@@ -297,22 +261,14 @@ namespace Dune
 
 
   template< class WeightFunction >
-  inline WeightedL2Norm< WeightFunction >
-    :: WeightedL2Norm ( const ThisType &other )
-  : BaseType( other ),
-    weightFunction_( other.weightFunction_ )
-  {}
-
-  
-  template< class WeightFunction >
   template< class DiscreteFunctionType >
-  inline typename DiscreteFunctionType :: RangeFieldType
+  inline typename DiscreteFunctionType::RangeFieldType
   WeightedL2Norm< WeightFunction >
-    :: norm ( const DiscreteFunctionType &u ) const
+    ::norm ( const DiscreteFunctionType &u ) const
   {
-    typedef typename DiscreteFunctionType :: RangeFieldType RangeFieldType;
+    typedef typename DiscreteFunctionType::RangeFieldType RangeFieldType;
 
-    typedef typename DiscreteFunctionType :: LocalFunctionType LocalFunctionType;
+    typedef typename DiscreteFunctionType::LocalFunctionType LocalFunctionType;
 
     unsigned int order = 2 * u.space().order() + weightFunction_.space().order();
     IntegratorType integrator( order );
@@ -337,23 +293,22 @@ namespace Dune
   
   template< class WeightFunction >
   template< class UDiscreteFunctionType, class VDiscreteFunctionType >
-  inline typename UDiscreteFunctionType :: RangeFieldType
+  inline typename UDiscreteFunctionType::RangeFieldType
   WeightedL2Norm< WeightFunction >
-    :: distance ( const UDiscreteFunctionType &u,
-                  const VDiscreteFunctionType &v ) const
+    ::distance ( const UDiscreteFunctionType &u, const VDiscreteFunctionType &v ) const
   {
-    typedef typename UDiscreteFunctionType :: RangeFieldType RangeFieldType;
+    typedef typename UDiscreteFunctionType::RangeFieldType RangeFieldType;
 
-    typedef typename UDiscreteFunctionType :: LocalFunctionType ULocalFunctionType;
-    typedef typename VDiscreteFunctionType :: LocalFunctionType VLocalFunctionType;
+    typedef typename UDiscreteFunctionType::LocalFunctionType ULocalFunctionType;
+    typedef typename VDiscreteFunctionType::LocalFunctionType VLocalFunctionType;
 
-    typedef typename BaseType :: template FunctionDistance
+    typedef typename BaseType::template FunctionDistance
       < ULocalFunctionType, VLocalFunctionType >
       LocalDistanceType;
 
     const unsigned int uorder = u.space().order();
     const unsigned int vorder = v.space().order();
-    const unsigned int order = 2 * std :: max( uorder, vorder )
+    const unsigned int order = 2 * std::max( uorder, vorder )
                                + weightFunction_.space().order();
     IntegratorType integrator( order );
 
@@ -379,36 +334,33 @@ namespace Dune
   
   template< class WeightFunction >
   template< class Function >
-  class WeightedL2Norm< WeightFunction > :: WeightedFunctionSquare
+  struct WeightedL2Norm< WeightFunction >::WeightedFunctionSquare
   {
-  public:
     typedef Function FunctionType;
 
-    typedef typename FunctionType :: RangeFieldType RangeFieldType;
+    typedef typename FunctionType::RangeFieldType RangeFieldType;
     typedef FieldVector< RangeFieldType, 1 > RangeType;
 
-  protected:
-    const LocalWeightFunctionType &weightFunction_;
-    const FunctionType &function_;
-  
-  public:
-    inline WeightedFunctionSquare ( const LocalWeightFunctionType &weightFunction,
-                                    const FunctionType &function )
+    WeightedFunctionSquare ( const LocalWeightFunctionType &weightFunction,
+                             const FunctionType &function )
     : weightFunction_( weightFunction ),
       function_( function )
     {}
     
     template< class Point >
-    inline void evaluate ( const Point &x,
-                           RangeType &ret ) const
+    void evaluate ( const Point &x, RangeType &ret ) const
     {
       WeightType weight;
       weightFunction_.evaluate( x, weight );
 
-      typename FunctionType :: RangeType phi;
+      typename FunctionType::RangeType phi;
       function_.evaluate( x, phi );
       ret = weight[ 0 ] * (phi * phi);
     }
+
+  private:
+    const LocalWeightFunctionType &weightFunction_;
+    const FunctionType &function_;
   };
 
 }
