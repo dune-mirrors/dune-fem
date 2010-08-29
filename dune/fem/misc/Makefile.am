@@ -25,6 +25,7 @@ misc_HEADERS = alugridwriter.hh \
                h1norm.hh \
                l1error.hh \
                l2error.hh \
+	       l1norm.hh \
                l2norm.hh \
                longexample.cc \
                metaprogramming.hh \
