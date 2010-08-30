@@ -425,6 +425,7 @@ protected:
       case 1: odeSolver = new PARDG::ImplicitEuler(comm_, impl_); break;
       case 2: odeSolver = new PARDG::Gauss2(comm_, impl_); break;
       case 3: odeSolver = new PARDG::DIRK3 (comm_, impl_); break;
+      case 4: odeSolver = new PARDG::DIRK34 (comm_, impl_); break;
       default : std::cerr << "Runge-Kutta method of this order not implemented" 
                           << std::endl;
                 abort();

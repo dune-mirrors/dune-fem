@@ -216,6 +216,25 @@ void DIRK::LinearOperator::operator()(const double *p, double *DFu_p, int i)
 
 
 
+//class DIRK34
+// R. Alexander:  Diagonally Implicit Runge-Kutta Methods for Stiff ODEs (1977)
+static const double dirk34_alpha = 2.*std::cos(M_PI/18.)/std::sqrt(3.);
+static const double dirk34_alpha2 = dirk34_alpha * dirk34_alpha;
+static const double DIRK34_A[] =
+  {(1.+dirk34_alpha)*0.5, 0., 0.,
+   -0.5*dirk34_alpha, (1.+dirk34_alpha)*0.5, 0.,
+   1+dirk34_alpha, -(1+2*dirk34_alpha), (1.+dirk34_alpha)*0.5};
+static const double DIRK34_b[] = 
+  {1./(6.*dirk34_alpha2), 1.-1./(3.*dirk34_alpha2),
+  1./(6.*dirk34_alpha2)};
+static const double DIRK34_c[] = 
+  {(1.+dirk34_alpha)*0.5, 0.5, (1.-dirk34_alpha)*0.5};
+
+DIRK34::DIRK34(Communicator &comm, Function &f) :
+  DIRK(comm, 3, 4, f, DIRK34_A, DIRK34_b, DIRK34_c) {}
+
+
+
 //class DIRK3
 static const double delta_dirk = 1.0/2.0 + sqrt(3.0)/6.0;
 static const double DIRK3_A[] =

@@ -404,6 +404,12 @@ public:
   DIRK3(Communicator &comm, Function &f);
 };
 
+class DIRK34 : public DIRK
+{
+public:
+  DIRK34(Communicator &comm, Function &f);
+};
+
 
 
 
