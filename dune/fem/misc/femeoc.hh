@@ -237,7 +237,7 @@ class FemEoc
       outputFile_ << "}\n"
 	        << "\\hline \n"
           << "level & h & size & CPU-time & counter & avg dt & min dt & max dt \n"
-	  << "& Newton & ILS iter. & max_Newton/dt & max_ILS/linS";
+	  << "& Newton & ILS iter. & max{Newton/linS} & max{ILS/linS}";
       for (unsigned int i=0;i<error_.size();i++) {
         outputFile_ << " & " << description_[i]
                     << " & EOC ";
@@ -332,8 +332,8 @@ class FemEoc
 	  out << "max. time step: " << maxTimeStep << std::endl;
 	  out << "Newton iter.: " << newton_iterations << std::endl;
 	  out << "ILS iter.: " << ils_iterations << std::endl;
-	  out << "max_Newton/dt.: " << max_newton_iterations << std::endl;
-	  out << "max_ILS/linS: " << max_ils_iterations << std::endl;
+	  out << "max{Newton/dt}: " << max_newton_iterations << std::endl;
+	  out << "max{ILS/linS}: " << max_ils_iterations << std::endl;
 
     for (unsigned int i=0;i<error_.size();++i) 
     {
