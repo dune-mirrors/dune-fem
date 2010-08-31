@@ -14,9 +14,16 @@ namespace Dune
   namespace Fem
   {
 
-    // LineSegmentSampler
-    // ------------------
-
+    /** @brief class LineSegmentSampler samples values of discrete function along a given line
+     *         
+     *  Class LineSegmentSampler provides method for sampling the values
+     *  of given discrete function along arbitrary line intersecting the @sa GridPart.
+     *  The constructor takes grid part reference and two points (@a left and @a right) in 
+     *  n-dimensional world space in which the grid part resides. 
+     *  The method operator(@a f,@a samples) where @a f is discrete function
+     *  and @a samples is a standard vector of length @a m>1, calculates values of @a f in points
+     *  \f$ left + i * (right-left)/(m-1) \f$ for \f$ i=1,...,m-1 \f$.
+    */
     template< class GridPart >
     struct LineSegmentSampler
     {
@@ -41,9 +48,18 @@ namespace Dune
       : gridPart_( gridPart ), left_( left ), right_( right )
       {}
 
+      /** @brief operator() samples the values of provided discrete function along the line
+       *  @param f a @sa DiscreteFunction
+       *  @return samples a vector where the sampled values of function f are returned
+       *
+       *  Note that @a samples implicitly defines the number of sampling points. This number
+       *  is simply given as a length of vector @a samples
+      */
       template< class GridFunction >
       void operator() ( const GridFunction &f, std::vector< typename GridFunction::RangeType > &samples ) const;
 
+      /** @brief returns reference to grid part
+      */
       const GridPart &gridPart () const { return gridPart_; }
 
     private:
