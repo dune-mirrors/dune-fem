@@ -101,8 +101,9 @@ bool SIRK::step(double t, double dt, double *u, int& newton_iterations, int& ils
 
 bool SIRK::step_iterative(double t, double dt, double *u, int& newton_iterations, 
                           int& ils_iterations, int& max_newton_iterations,
-			  int& max_ils_iterations)
+                          int& max_ils_iterations)
 {
+  // number of iterations for the time step [t,t+dt]
   newton_iterations = 0;
   ils_iterations = 0;
 
@@ -139,6 +140,11 @@ bool SIRK::step_iterative(double t, double dt, double *u, int& newton_iterations
       dset(dim, 0.0, y, 1);
       op.setup(t+c[i]*dt, ui, lambda);
       const bool lin_solver_conv = ils->solve(op, y, F);
+
+      // add every ILS iteration performed for this time step
+      int ils_iter = ils->number_of_iterations();
+      ils_iterations += ils_iter;
+
       if (!lin_solver_conv) return false;
 
       // update ui & apply limiter
@@ -150,13 +156,11 @@ bool SIRK::step_iterative(double t, double dt, double *u, int& newton_iterations
       local_dot = cblas_ddot(dim, y, 1, y, 1);
       comm.allreduce(1, &local_dot, &global_dot, MPI_SUM);
 
-      int ils_iter = ils->number_of_iterations();
-      if (IterativeSolver::os){
-        *IterativeSolver::os << "Newton: iteration: "
-           << newton_iter << "    "
+      if (IterativeSolver::os)
+      {
+        *IterativeSolver::os << "Newton iteration: " << newton_iter << "    "
            << "|p|: " << sqrt(global_dot) << "   "
-           << "linear iterations: " 
-           << ils_iter
+           << "linear iterations: " << ils_iter
            << std::endl;
       }
 
@@ -169,7 +173,6 @@ bool SIRK::step_iterative(double t, double dt, double *u, int& newton_iterations
     }
 
     newton_iterations += newton_iter;
-    ils_iterations += ils->number_of_iterations();
 
     if (newton_iter > max_newton_iterations)
       max_newton_iterations = newton_iter;

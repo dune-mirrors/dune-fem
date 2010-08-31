@@ -169,7 +169,7 @@ ImplicitBulirschStoer::ImplicitBulirschStoer(Communicator &comm,
 
 bool ImplicitBulirschStoer::step(double t, double dt, double *u,
                                  int& newton_interations, int& ils_iterations,
-				 int& max_newton_iterations, int& max_ils_iterations)
+                                 int& max_newton_iterations, int& max_ils_iterations)
 {
   dim = f.dim_of_value();
   new_size(dim);
@@ -195,13 +195,15 @@ bool ImplicitBulirschStoer::step_iterative(double t, double dt, double *u,
                                            int& newton_iterations, int& ils_iterations,
 			                   int& max_newton_iterations, int& max_ils_iterations)
 {
+  // number of iterations for the time step [t,t+dt]
   newton_iterations = 0;
   ils_iterations = 0;
 
   double *p = F + dim;
   this->t = t;
 
-  for(int i=0; i<num_of_stages; i++){
+  for(int i=0; i<num_of_stages; i++)
+  {
     const int n = sequence(i); // n_i
 
     // compute u_{dt/n_i} (t+dt) by application of the implicit midpoint
@@ -215,76 +217,79 @@ bool ImplicitBulirschStoer::step_iterative(double t, double dt, double *u,
     cblas_dcopy(dim, u, 1, z_km, 1); // z_km = u^n
 
     // loop
-    for(k=0; k<n; k++){
-    
+    for(k=0; k<n; k++)
+    {    
       if (true) cblas_dcopy(dim, z_km, 1, z_k, 1); // z_k = z_km
       else { // z_k = z_km + dt/n f(t+(k+0.5)*dt/n, z_k) euler predictor step
-	f(t + (k+0.5)*dt_n, z_k, tmp);
-	dwaxpby(dim, 1.0, z_km, 1, dt_2n, tmp, 1, z_k, 1);
+	      f(t + (k+0.5)*dt_n, z_k, tmp);
+	      dwaxpby(dim, 1.0, z_km, 1, dt_2n, tmp, 1, z_k, 1);
       }
 
 
       // Newton iteration for solving 
       // z_k = z_km + dt/n * f(t + (k+0.5)*dt/n, 0.5*(z_k + z_km))
-      int num_of_iterations = 0;
+      int newton_iter = 0;
       double dist_old = DBL_MAX;
-      while (true) {
-	for(int l=0; l<dim; l++) tmp[l] = 0.5 * (z_k[l] + z_km[l]); 
-	f(t + (k+0.5)*dt_n, tmp, F);
-	for(int l=0; l<dim; l++) F[l] = z_k[l] - z_km[l] - dt_n*F[l];
+      while (true) 
+      {
+        for(int l=0; l<dim; l++) tmp[l] = 0.5 * (z_k[l] + z_km[l]); 
+        f(t + (k+0.5)*dt_n, tmp, F);
+        for(int l=0; l<dim; l++) F[l] = z_k[l] - z_km[l] - dt_n*F[l];
 
-	dset(dim, 0.0, p, 1);
-	bool lin_solver_conv = ils->solve(op, p, F);
-	if (!lin_solver_conv) return false;
+        dset(dim, 0.0, p, 1);
+        bool lin_solver_conv = ils->solve(op, p, F);
 
-	double global_dot, local_dot = 0.0;
-	for(int l=0; l<dim; l++){
-	  z_k[l] -= p[l];
-	  local_dot += p[l]*p[l];
-	}
-	comm.allreduce(1, &local_dot, &global_dot, MPI_SUM);
-	const double dist = sqrt(global_dot);
-
+        // add every ILS iteration performed for this time step
         int ils_iter = ils->number_of_iterations();
-	if (IterativeSolver::os){
-	  *IterativeSolver::os << "Newton: iteration: "
-			       << num_of_iterations << "    "
-			       << "linear iterations: " 
-			       << ils_iter << "    "
-			       << "|p|: " << dist << "   "
-			       << std::endl;
-	}
+        ils_iterations += ils_iter;
 
-        // check the current ILS iteration every time ILS has been used
-	if (ils_iter > max_ils_iterations)
-	  max_ils_iterations = ils_iter;
-	
-	if (dist < tolerance){ // successful solving 
-	  double *z_kp = z_km;
-	  z_km = z_k;
-	  z_k = z_kp;
-	  break;
-	}
-	else if (num_of_iterations >= max_num_of_iterations 
-		 || dist >= dist_old) return false; // not successful
-	dist_old = dist;
-	num_of_iterations++;
+        if (!lin_solver_conv) return false;
+
+        double global_dot, local_dot = 0.0;
+        for(int l=0; l<dim; l++){
+          z_k[l] -= p[l];
+          local_dot += p[l]*p[l];
+        }
+        comm.allreduce(1, &local_dot, &global_dot, MPI_SUM);
+        const double dist = sqrt(global_dot);
+
+        if (IterativeSolver::os)
+        {
+          *IterativeSolver::os << "Newton: iteration: " << num_of_iterations << "    "
+                   << "linear iterations: " << ils_iter << "    "
+                   << "|p|: " << dist
+                   << std::endl;
+        }
+
+        // check the current ILS iteration every time ILS has
+        // successfully converged
+        if (ils_iter > max_ils_iterations)
+          max_ils_iterations = ils_iter;
+        
+        if (dist < tolerance){ // successful solving 
+          double *z_kp = z_km;
+          z_km = z_k;
+          z_k = z_kp;
+          break;
+        }
+        else if (num_of_iterations >= max_num_of_iterations 
+           || dist >= dist_old) return false; // not successful
+
+        dist_old = dist;
+        newton_iter++;
       }
       // end of Newton iteration, approx solution is stored in z_km
+      
+      // update statistics after solving nonlinear system
+      newton_iterations += newton_iter;
+      if (newton_iter > max_newton_iterations)
+        max_newton_iterations = newton_iter;
       
       // store approx solution at (k+1)*dt/n in the right position
       // if it isnt (because of swapping of variables z_k and z_km)
       double *_U = U + (num_of_stages-1-i)*dim;
       if (z_km != _U) cblas_dcopy(dim, z_km, 1, _U, 1);
     }
-
-    // update statistical data at every stage of temporal scheme
-    newton_iterations += num_of_iterations;
-    ils_iterations += ils->number_of_iterations();
-
-    if (num_of_iterations > max_newton_iterations)
-      max_newton_iterations = num_of_iterations;
-
 
     // Extrapolation process
     // T_{i,0} = u_{dt/n_i} is stored in U[num_of_stages-1-i],
@@ -313,12 +318,14 @@ bool ImplicitBulirschStoer::step_direct(double t, double dt, double *u,
 				        int& newton_iterations, int& ils_iterations,
 				        int& max_newton_iterations, int& max_dls_iterations)
 {
+  // number of iterations for the time step [t,t+dt]
   newton_iterations = 0;
   ils_iterations = 0;
 
   double *DF = F + dim;
 
-  for(int i=0; i<num_of_stages; i++){
+  for(int i=0; i<num_of_stages; i++)
+  {
     const int n = sequence(i); // n_i
 
     // compute u_{dt/n_i} (t+dt) by application of the implicit midpoint
@@ -332,69 +339,71 @@ bool ImplicitBulirschStoer::step_direct(double t, double dt, double *u,
     cblas_dcopy(dim, u, 1, z_km, 1); // z_km = u^n
 
     // loop
-    for(k=0; k<n; k++){
-    
+    for(k=0; k<n; k++)
+    {
       if (true) cblas_dcopy(dim, z_km, 1, z_k, 1); // z_k = z_km
       else { // z_k = z_km + dt/n f(t+(k+0.5)*dt/n, z_k) euler pedictor step
-	f(t + (k+0.5)*dt_n, z_k, tmp);
-	dwaxpby(dim, 1.0, z_km, 1, dt_2n, tmp, 1, z_k, 1);
+	      f(t + (k+0.5)*dt_n, z_k, tmp);
+	      dwaxpby(dim, 1.0, z_km, 1, dt_2n, tmp, 1, z_k, 1);
       }
 
 
       // Newton iteration for solving 
       // z_k = z_km + dt/n * f(t + (k+0.5)*dt/n, 0.5*(z_k + z_km))
-      int num_of_iterations = 0;
+      int newton_iter = 0;
       double dist_old = DBL_MAX;
-      while (true) {
-	for(int l=0; l<dim; l++) tmp[l] = 0.5 * (z_k[l] + z_km[l]); 
-	f(t + (k+0.5)*dt_n, tmp, F);
-	for(int l=0; l<dim; l++) F[l] = z_k[l] - z_km[l] - dt_n*F[l];
+      while (true) 
+      {
+        for(int l=0; l<dim; l++) tmp[l] = 0.5 * (z_k[l] + z_km[l]); 
+        f(t + (k+0.5)*dt_n, tmp, F);
+        for(int l=0; l<dim; l++) F[l] = z_k[l] - z_km[l] - dt_n*F[l];
 
-	f(t + (k+0.5)*dt_2n, tmp, DF, 1);
-	for(int l=0; l<dim*dim; l++){
-	  if (l/dim == l%dim) DF[l] = (1.0 - dt_2n*DF[l]);
-	  else DF[l] *= -dt_2n;
-	}
+        f(t + (k+0.5)*dt_2n, tmp, DF, 1);
+        for(int l=0; l<dim*dim; l++){
+          if (l/dim == l%dim) DF[l] = (1.0 - dt_2n*DF[l]);
+          else DF[l] *= -dt_2n;
+	      }
 
-	dls->prepare(dim, DF);
-	dls->solve(F); // DF dz = F, dz stored in F
+        dls->prepare(dim, DF);
+        dls->solve(F); // DF dz = F, dz stored in F
 
-	double dist = 0.0;
-	for(int l=0; l<dim; l++){
-	  z_k[l] -= F[l];
-	  dist += F[l]*F[l];
-	}
-	dist = sqrt(dist);
+        double dist = 0.0;
+        for(int l=0; l<dim; l++){
+          z_k[l] -= F[l];
+          dist += F[l]*F[l];
+        }
+        dist = sqrt(dist);
 
-	if (IterativeSolver::os){
-	  *IterativeSolver::os << "Newton: iteration: "
-			       << num_of_iterations << "    "
-			       << "linear iterations: ??fix me??" 
-			       << "|du|: " << dist << "   "
-			       << std::endl;
-	}
+        if (IterativeSolver::os)
+        {
+          *IterativeSolver::os << "Newton iteration: " << newton_iter << "    "
+                   << "linear iterations: ??fix me??  " 
+                   << "|du|: " << dist << "   "
+                   << std::endl;
+        }
 
-	if (dist < tolerance){ // successful solving 
-	  double *z_kp = z_km;
-	  z_km = z_k;
-	  z_k = z_kp;
-	  break;
-	}
-	else if (num_of_iterations >= max_num_of_iterations 
-		 || dist >= dist_old) return false; // not successful
-	dist_old = dist;
-	num_of_iterations++;
+        if (dist < tolerance){ // successful solving 
+          double *z_kp = z_km;
+          z_km = z_k;
+          z_k = z_kp;
+          break;
+        }
+        else if (newton_iter >= max_num_of_iterations 
+           || dist >= dist_old) return false; // not successful
+
+        dist_old = dist;
+        newton_iter++;
       }
       // end of Newton iteration, approx solution is stored in z_km
       
+      // update statistics after solving nonlinear system
+      newton_iterations += newton_iter;
+
       // store approx solution at (k+1)*dt/n in the right position
       // if it isnt (because of swapping of variables z_k and z_km)
       double *_U = U + (num_of_stages-1-i)*dim;
       if (z_km != _U) cblas_dcopy(dim, z_km, 1, _U, 1);
     }
-
-    newton_iterations += num_of_iterations;
-
 
     // Extrapolation process
     // T_{i,0} = u_{dt/n_i} is stored in U[num_of_stages-1-i],

@@ -502,7 +502,7 @@ public:
       timeProvider_.provideTimeStepEstimate( timeStepEstimate(cfl_) );
 
       if( changed && verbose_ >= 1 )
-        derr << " New cfl number is: "<< cfl_ << " (number of iterations ("
+        derr << " New cfl number is: "<< cfl_ << ", iterations per time step("
              << "ILS: " << ils_iterations
              << ", Newton: " << newton_iterations 
              << ")"
