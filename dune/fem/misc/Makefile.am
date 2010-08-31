@@ -27,6 +27,7 @@ misc_HEADERS = alugridwriter.hh \
                l2error.hh \
 	       l1norm.hh \
                l2norm.hh \
+	       linesegmentsampler.hh \
                longexample.cc \
                metaprogramming.hh \
                mpimanager.hh \
