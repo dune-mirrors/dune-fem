@@ -14,16 +14,22 @@ namespace Dune
   namespace Fem
   {
 
-    /** @brief class LineSegmentSampler samples values of discrete function along a given line
+    // LineSegmentSampler
+    // ------------------
+
+    /** \class LineSegmentSampler
+     *  \brief samples values of a discrete function along a given line segment
      *         
-     *  Class LineSegmentSampler provides method for sampling the values
-     *  of given discrete function along arbitrary line intersecting the @sa GridPart.
-     *  The constructor takes grid part reference and two points (@a left and @a right) in 
-     *  n-dimensional world space in which the grid part resides. 
-     *  The method operator(@a f,@a samples) where @a f is discrete function
-     *  and @a samples is a standard vector of length @a m>1, calculates values of @a f in points
-     *  \f$ left + i * (right-left)/(m-1) \f$ for \f$ i=1,...,m-1 \f$.
-    */
+     *  The class LineSegmentSampler provides a method for sampling the values
+     *  of given discrete function along an arbitrary line contained in some
+     *  GridPart. The sampling points are always equidistant and include the
+     *  line segment's end points.
+     *
+     *  \note The grid is required to be flat, i.e., grid dimension and world
+     *        dimension must coincide.
+     *
+     *  \tparam  GridPart  type of grid part to sample on
+     */
     template< class GridPart >
     struct LineSegmentSampler
     {
@@ -44,22 +50,34 @@ namespace Dune
       typedef GenericReferenceElements< DomainFieldType, dimGrid > ReferenceElements;
 
     public:
+      /** \brief constructor
+       *
+       *  \param[in]  gridPart  the grid part to sample over
+       *  \param[in]  left      left end point of the line segment
+       *  \param[in]  right     right end point of the line segment
+       *
+       *  \note Actually, left and right can be exchanged. The order only
+       *        influences the parametrization of the line segment.
+       *  \note The entire line segment must be a subset of the grid part.
+       */
       LineSegmentSampler ( const GridPart &gridPart, const DomainType &left, const DomainType &right )
       : gridPart_( gridPart ), left_( left ), right_( right )
       {}
 
-      /** @brief operator() samples the values of provided discrete function along the line
-       *  @param f a @sa DiscreteFunction
-       *  @return samples a vector where the sampled values of function f are returned
+      /** \brief sample a given function
        *
-       *  Note that @a samples implicitly defines the number of sampling points. This number
-       *  is simply given as a length of vector @a samples
-      */
+       *  The operator() actually samples the values of a given grid function.
+       *
+       *  \param[in]   f        grid function to sample
+       *  \param[out]  samples  std::vector receiving the samples
+       *
+       *  \note The number of sampling points is determined from the size of @a
+       *        samples, which may not be less than 2.
+       */
       template< class GridFunction >
       void operator() ( const GridFunction &f, std::vector< typename GridFunction::RangeType > &samples ) const;
 
-      /** @brief returns reference to grid part
-      */
+      /** @brief obtain grid part on which the LineSegmentSampler works */
       const GridPart &gridPart () const { return gridPart_; }
 
     private:
