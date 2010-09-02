@@ -9,6 +9,7 @@
 
 #include <dune/common/fvector.hh>
 #include <dune/fem/io/file/iointerface.hh>
+#include <dune/fem/io/file/latextablewriter.hh>
 
 namespace Dune
 {
@@ -41,40 +42,53 @@ namespace Dune
  */
 class FemEoc
 {
-  std::ofstream outputFile_;
+  // level, h, size, time, counter, errors,
+  // [avgTimeStep, minTimeStep, maxTimeStep],
+  // [newton_iterations, ils_iterations, max_newton_iterations, max_ils_iterations]
+  typedef Tuple< int, double, double, double, int, std::vector< double >,
+                 array< double, 3 >, array< int, 4 > >
+    DataTuple;
+
+  typedef Fem::LatexTableWriter< DataTuple > TableWriter;
+
+  class ErrorColumnWriter;
+  class EOCColumnWriter;
+
+  template< int N >
+  class ArrayNumberColumnWriter;
+
+  TableWriter *tableWriter_;
+  std::string filename_;
   int level_;
-  std::vector<double> prevError_;
-  std::vector<double> error_;
-  std::vector<std::string> description_;
-  double prevh_;
-  bool initial_;
-  std::vector<int> pos_;
-  FemEoc() :
-    outputFile_()
-  , level_(0)
-  , prevError_(0)
-  , error_(0)
-  , description_(0)
-  , prevh_(0)
-  , initial_(true)
-  , pos_(0)
+  std::vector< double > error_;
+  std::vector< const EOCColumnWriter * > eocColumns_;
+  std::vector< std::string > description_;
+  std::vector< int > pos_;
+
+  FemEoc ()
+  : tableWriter_( 0 ),
+    level_( 0 )
+  {}
+
+  ~FemEoc()
   {
-  }
-  ~FemEoc() {
-    outputFile_.close();
+    if( tableWriter_ )
+      delete tableWriter_;
   }
 
-  void init(const std::string& path,
-            const std::string& name, const std::string& descript) 
+  void init ( const std::string& path, const std::string &name, const std::string &descript )
   {
-    if (MPIManager::rank() != 0) return;
-    IOInterface::createPath(path);
-    init(path+"/"+name,descript);
+    if( MPIManager::rank() == 0 )
+    {
+      IOInterface::createPath( path );
+      init( path + "/" + name, descript );
+    }
   }
 
-  void init(const std::string& filename, const std::string& descript)
+  void init ( const std::string &filename, const std::string &descript )
   {
-    if (MPIManager::rank() != 0) return;
+    if( MPIManager::rank() != 0 )
+      return;
 
     std::string name = filename; 
 
@@ -88,9 +102,11 @@ class FemEoc
       name += std::string( timeString );
     }
 
-    if (!outputFile_.is_open()) 
+    if( !tableWriter_ )
     {
-      std::ofstream main((name+"_main.tex").c_str());
+      filename_ = name + "_body.tex";
+      std::ofstream main( (name + "_main.tex").c_str() );
+
       if (!main) {
         std::cerr << "Could not open file : "
                   << (name+"_main.tex").c_str() 
@@ -98,9 +114,6 @@ class FemEoc
         abort();
       }
 
-      std::string filestreamBody;
-      filestreamBody = name + "_body.tex";
-      outputFile_.open(filestreamBody.c_str(), std::ios::out);
       main << "\\documentclass[12pt,english]{article}\n"
            << "\\usepackage[T1]{fontenc}\n"
 	         << "\\usepackage[latin1]{inputenc}\n"
@@ -114,16 +127,12 @@ class FemEoc
 	         << "\\begin{document}\n"
            << "\\begin{center}\\large\n"
            << "\n\\end{center}\n\n"
+           << descript
            << "\\input{"
-           << filestreamBody
-           << "}\n";
-      main << "\\end{tabular}\\\\\n\n"
-	         << "\\end{document}\n" << std::endl;
+           << filename_
+           << "}\n\n"
+           << "\\end{document}\n" << std::endl;
       main.close();	
-
-      // write together with table the description
-      // of the scheme and problem in the simulation
-      outputFile_ << descript;
     } 
     else 
     {
@@ -133,25 +142,26 @@ class FemEoc
       abort();
     }
   }
+
   template <class StrVectorType>
   size_t addentry(const StrVectorType& descript,size_t size) 
   {
-    if (!initial_) 
+    if( tableWriter_ )
       abort();
     pos_.push_back(error_.size());
     for (size_t i=0;i<size;++i) {
       error_.push_back(0);
-      prevError_.push_back(0);
       description_.push_back(descript[i]);  
     }
     return pos_.size()-1;
   }
-  size_t addentry(const std::string& descript) {
-    if (!initial_) 
+
+  size_t addentry ( const std::string &descript )
+  {
+    if( tableWriter_ )
       abort();
     pos_.push_back(error_.size());
     error_.push_back(0);
-    prevError_.push_back(0);
     description_.push_back(descript);  
     return pos_.size()-1;
   }
@@ -178,136 +188,18 @@ class FemEoc
     error_[pos] = err;
   }
 
-  void writeerr(double h,double size,double time,int counter) {
-    if (MPIManager::rank() != 0) return;
-    if (initial_) {
-	    outputFile_ << "\\begin{tabular}{|c|c|c|c|c|";
-      for (unsigned int i=0;i<error_.size();i++) {
-        outputFile_ << "|cc|";
-      }
-      outputFile_ << "}\n"
-	        << "\\hline \n"
-          << "level & h & size & CPU-time & counter";
-      for (unsigned int i=0;i<error_.size();i++) {
-        outputFile_ << " & " << description_[i]
-                    << " & EOC ";
-      }
-      outputFile_ << "\n \\tabularnewline\n"
-                  << "\\hline\n"
-                  << "\\hline\n";
-    }
-    outputFile_ <<  "\\hline \n"
-                << level_ << " & "
-                << h      << " & "
-                << size   << " & "
-                << time   << " & " 
-                << counter;
-    for (unsigned int i=0;i<error_.size();++i) {
-      outputFile_ << " & " << error_[i] << " & ";
-      if (initial_) {
-        outputFile_ << " --- ";
-      }
-      else {
-        double factor = prevh_/h;
-        outputFile_ << log(prevError_[i]/error_[i])/log(factor);
-      }
-      prevError_[i]=error_[i];
-      error_[i] = -1;  // uninitialized
-    }
-    outputFile_ << "\n"
-                << "\\tabularnewline\n"
-                << "\\hline \n";
-    outputFile_.flush();
-    prevh_ = h;
-    level_++;
-    initial_ = false;
-  }
-
+  void writeerr ( double h, double size, double time, int counter );
   void writeerr(double h,double size,double time,int counter,
                 double avgTimeStep,double minTimeStep,double maxTimeStep,
 		const int newton_iterations, const int ils_iterations,
-		const int max_newton_iterations, const int max_ils_iterations)
-  {
-    if (MPIManager::rank() != 0) return;
-    if (initial_) {
-	    outputFile_ << "\\begin{tabular}{|c|c|c|c|c|c|c|c|c|c|c|c|";
-      for (unsigned int i=0;i<error_.size();i++) {
-        outputFile_ << "|cc|";
-      }
-      outputFile_ << "}\n"
-	        << "\\hline \n"
-          << "level & h & size & CPU-time & counter & avg dt & min dt & max dt \n"
-	  << "& Newton & ILS iter. & max{Newton/linS} & max{ILS/linS}";
-      for (unsigned int i=0;i<error_.size();i++) {
-        outputFile_ << " & " << description_[i]
-                    << " & EOC ";
-      }
-      outputFile_ << "\n \\tabularnewline\n"
-                  << "\\hline\n"
-                  << "\\hline\n";
-    }
-    outputFile_ <<  "\\hline \n"
-                << level_ << " & "
-                << h      << " & "
-                << size   << " & "
-                << time   << " & " 
-                << counter <<" & "
-                << avgTimeStep   << " & " 
-                << minTimeStep   << " & " 
-                << maxTimeStep   << "\n & " 
-                << newton_iterations   << " & " 
-                << ils_iterations << " & "
-		<< max_newton_iterations << " & "
-		<< max_ils_iterations
-		;
-    for (unsigned int i=0;i<error_.size();++i) {
-      outputFile_ << " & " << error_[i] << " & ";
-      if (initial_) {
-        outputFile_ << " --- ";
-      }
-      else {
-        double factor = prevh_/h;
-        outputFile_ << log(prevError_[i]/error_[i])/log(factor);
-      }
-      prevError_[i]=error_[i];
-      error_[i] = -1;  // uninitialized
-    }
-    outputFile_ << "\n"
-                << "\\tabularnewline\n"
-                << "\\hline \n";
-    outputFile_.flush();
-    prevh_ = h;
-    level_++;
-    initial_ = false;
-  }
+		const int max_newton_iterations, const int max_ils_iterations);
 
   // do the same calculations as in write, but don't overwrite status 
   void printerr(const double h, 
                 const double size, 
                 const double time, 
                 const int counter,
-                std::ostream& out) 
-  {
-    if (!Parameter::verbose()) return;
-	  out << "level:   " << level_  << std::endl;
-	  out << "h        " << h << std::endl;
-	  out << "size:    " << size << std::endl;
-	  out << "time:    " << time << " sec. " << std::endl;
-	  out << "counter: " << counter << std::endl;
-
-    for (unsigned int i=0;i<error_.size();++i) 
-    {
-      out << description_[i] << ":       " << error_[i] << std::endl;
-      if (! initial_) 
-      {
-        const double factor = prevh_/h;
-        const double eoc = log(prevError_[i]/error_[i])/log(factor);
-
-        out << "EOC (" <<description_[i] << "): " << eoc << std::endl;
-      }
-      out << std::endl;
-    }
-  }
+                std::ostream& out);
   void printerr(const double h, 
                 const double size, 
                 const double time, 
@@ -319,36 +211,9 @@ class FemEoc
 		const int ils_iterations,
 		const int max_newton_iterations,
 		const int max_ils_iterations,
-                std::ostream& out) 
-  {
-    if (!Parameter::verbose()) return;
-	  out << "level:   " << level_  << std::endl;
-	  out << "h        " << h << std::endl;
-	  out << "size:    " << size << std::endl;
-	  out << "time:    " << time << " sec. " << std::endl;
-	  out << "counter: " << counter << std::endl;
-	  out << "avg. time step: " << avgTimeStep << std::endl;
-	  out << "min. time step: " << minTimeStep << std::endl;
-	  out << "max. time step: " << maxTimeStep << std::endl;
-	  out << "Newton iter.: " << newton_iterations << std::endl;
-	  out << "ILS iter.: " << ils_iterations << std::endl;
-	  out << "max{Newton/dt}: " << max_newton_iterations << std::endl;
-	  out << "max{ILS/linS}: " << max_ils_iterations << std::endl;
+                std::ostream& out);
 
-    for (unsigned int i=0;i<error_.size();++i) 
-    {
-      out << description_[i] << ":       " << error_[i] << std::endl;
-      if (! initial_) 
-      {
-        const double factor = prevh_/h;
-        const double eoc = log(prevError_[i]/error_[i])/log(factor);
-
-        out << "EOC (" <<description_[i] << "): " << eoc << std::endl;
-      }
-      out << std::endl;
-    }
-  }
- public:
+public:
   static FemEoc& instance() {
     static FemEoc instance_;
     return instance_;
@@ -519,5 +384,265 @@ class FemEoc
 
 }; // end class FemEoc
 
+
+class FemEoc::ErrorColumnWriter
+: public Fem::AbstractColumnWriter< FemEoc::DataTuple >
+{
+  typedef Fem::AbstractColumnWriter< FemEoc::DataTuple > BaseType;
+
+public:
+  ErrorColumnWriter ( const std::string &header, const int index )
+  : header_( header ),
+    index_( index )
+  {}
+
+  std::string entry ( const FemEoc::DataTuple &data ) const
+  {
+    return toString( error( data ) );
+  }
+
+  std::string header () const { return header_; }
+  
+protected:
+  double error ( const FemEoc::DataTuple &data ) const
+  {
+    return ElementAccess< 5 >::get( data )[ index_ ];
+  }
+
+  std::string toString ( const double &error ) const
+  {
+    std::ostringstream s;
+    s << "$" << error << "$";
+    return s.str();
+  }
+
+private:
+  std::string header_;
+  int index_;
+};
+
+
+class FemEoc::EOCColumnWriter
+: public FemEoc::ErrorColumnWriter
+{
+  typedef FemEoc::ErrorColumnWriter BaseType;
+
+public:
+  explicit EOCColumnWriter ( const int index )
+  : BaseType( "EOC", index ),
+    hOld_( std::numeric_limits< double >::infinity() )
+  {}
+
+  std::string entry ( const DataTuple &data ) const
+  {
+    const double h = ElementAccess< 1 >::get( data );
+    const double e = BaseType::error( data );
+
+    std::string entry = "---";
+    if( hOld_ < std::numeric_limits< double >::infinity() )
+      entry = BaseType::toString( eoc( h, e ) );
+    hOld_ = h;
+    eOld_ = e;
+    return entry;
+  }
+
+  double eoc ( const double h, const double e ) const
+  {
+    return std::log( e / eOld_ ) / std::log( h / hOld_ );
+  }
+
+private:
+  mutable double hOld_;
+  mutable double eOld_;
+};
+
+
+template< int N >
+class FemEoc::ArrayNumberColumnWriter
+: public Fem::AbstractColumnWriter< FemEoc::DataTuple >
+{
+  typedef Fem::AbstractColumnWriter< FemEoc::DataTuple > BaseType;
+
+public:
+  ArrayNumberColumnWriter ( const std::string &header, const int index )
+  : header_( header ),
+    index_( index )
+  {}
+
+  std::string entry ( const FemEoc::DataTuple &data ) const
+  {
+    return toString( ElementAccess< N >::get( data )[ index_ ] );
+  }
+
+  std::string header () const { return header_; }
+  
+protected:
+  std::string toString ( const double &error ) const
+  {
+    std::ostringstream s;
+    s << "$" << error << "$";
+    return s.str();
+  }
+
+private:
+  std::string header_;
+  int index_;
+};
+
+
+inline void FemEoc
+  ::writeerr ( double h, double size, double time, int counter )
+{
+  if( MPIManager::rank() != 0 )
+    return;
+
+  if( !tableWriter_ )
+  {
+    TableWriter::ColumnWriterVectorType columns;
+    columns.push_back( new Fem::NumberColumnWriter< DataTuple, 0 >( "level" ) );
+    columns.push_back( new Fem::NumberColumnWriter< DataTuple, 1 >( "h" ) );
+    columns.push_back( new Fem::NumberColumnWriter< DataTuple, 2 >( "size", 0 ) );
+    columns.push_back( new Fem::NumberColumnWriter< DataTuple, 3 >( "CPU-time", 2 ) );
+    columns.push_back( new Fem::NumberColumnWriter< DataTuple, 4 >( "counter" ) );
+    eocColumns_.resize( error_.size(), (const EOCColumnWriter *)0 );
+    for( unsigned int i = 0; i < error_.size(); ++i )
+    {
+      columns.push_back( 0 );
+      columns.push_back( new ErrorColumnWriter( description_[ i ], i ) );
+      eocColumns_[ i ] = new EOCColumnWriter( i );
+      columns.push_back( eocColumns_[ i ] );
+    }
+
+    tableWriter_ = new TableWriter( filename_, columns );
+  }
+
+  DataTuple data( level_, h, size, time, counter, error_, array< double, 3 >(), array< int, 4 >() );
+  tableWriter_->writeRow( data );
+  ++level_;
 }
-#endif
+
+
+inline void FemEoc
+  ::writeerr(double h,double size,double time,int counter,
+              double avgTimeStep,double minTimeStep,double maxTimeStep,
+              const int newton_iterations, const int ils_iterations,
+              const int max_newton_iterations, const int max_ils_iterations)
+{
+  if( MPIManager::rank() != 0 )
+    return;
+
+  if( !tableWriter_ )
+  {
+    TableWriter::ColumnWriterVectorType columns;
+    columns.push_back( new Fem::NumberColumnWriter< DataTuple, 0 >( "level" ) );
+    columns.push_back( new Fem::NumberColumnWriter< DataTuple, 1 >( "h" ) );
+    columns.push_back( new Fem::NumberColumnWriter< DataTuple, 2 >( "size" ) );
+    columns.push_back( new Fem::NumberColumnWriter< DataTuple, 3 >( "CPU-time" ) );
+    columns.push_back( new Fem::NumberColumnWriter< DataTuple, 4 >( "counter" ) );
+    columns.push_back( 0 );
+    columns.push_back( new ArrayNumberColumnWriter< 6 >( "avg dt", 0 ) );
+    columns.push_back( new ArrayNumberColumnWriter< 6 >( "min dt", 1 ) );
+    columns.push_back( new ArrayNumberColumnWriter< 6 >( "max dt", 2 ) );
+    columns.push_back( 0 );
+    columns.push_back( new ArrayNumberColumnWriter< 7 >( "Newton", 0 ) );
+    columns.push_back( new ArrayNumberColumnWriter< 7 >( "ILS", 1 ) );
+    columns.push_back( new ArrayNumberColumnWriter< 7 >( "max{Newton/linS}", 2 ) );
+    columns.push_back( new ArrayNumberColumnWriter< 7 >( "max{ILS/linS}", 3 ) );
+    eocColumns_.resize( error_.size(), (const EOCColumnWriter *)0 );
+    for( unsigned int i = 0; i < error_.size(); ++i )
+    {
+      columns.push_back( 0 );
+      columns.push_back( new ErrorColumnWriter( description_[ i ], i ) );
+      eocColumns_[ i ] = new EOCColumnWriter( i );
+      columns.push_back( eocColumns_[ i ] );
+    }
+
+    tableWriter_ = new TableWriter( filename_, columns );
+  }
+
+  array< double, 3 > dt;
+  dt[ 0 ] = avgTimeStep;
+  dt[ 1 ] = minTimeStep;
+  dt[ 2 ] = maxTimeStep;
+
+  array< int, 4 > newton_ils;
+  newton_ils[ 0 ] = newton_iterations;
+  newton_ils[ 1 ] = ils_iterations;
+  newton_ils[ 2 ] = max_newton_iterations;
+  newton_ils[ 3 ] = max_ils_iterations;
+
+  DataTuple data( level_, h, size, time, counter, error_, dt, newton_ils );
+  tableWriter_->writeRow( data );
+  ++level_;
+}
+
+
+inline void FemEoc
+  ::printerr(const double h, 
+              const double size, 
+              const double time, 
+              const int counter,
+              std::ostream& out) 
+{
+  if (!Parameter::verbose()) return;
+        out << "level:   " << level_  << std::endl;
+        out << "h        " << h << std::endl;
+        out << "size:    " << size << std::endl;
+        out << "time:    " << time << " sec. " << std::endl;
+        out << "counter: " << counter << std::endl;
+
+  for (unsigned int i=0;i<error_.size();++i) 
+  {
+    out << description_[i] << ":       " << error_[i] << std::endl;
+    if( tableWriter_ )
+    {
+      const double eoc = eocColumns_[ i ]->eoc( h, error_[ i ] );
+      out << "EOC (" <<description_[i] << "): " << eoc << std::endl;
+    }
+    out << std::endl;
+  }
+}
+
+inline void FemEoc
+  ::printerr(const double h, 
+              const double size, 
+              const double time, 
+              const int counter,
+              const double avgTimeStep,
+              const double minTimeStep,
+              const double maxTimeStep,
+              const int newton_iterations,
+              const int ils_iterations,
+              const int max_newton_iterations,
+              const int max_ils_iterations,
+              std::ostream& out) 
+{
+  if (!Parameter::verbose()) return;
+        out << "level:   " << level_  << std::endl;
+        out << "h        " << h << std::endl;
+        out << "size:    " << size << std::endl;
+        out << "time:    " << time << " sec. " << std::endl;
+        out << "counter: " << counter << std::endl;
+        out << "avg. time step: " << avgTimeStep << std::endl;
+        out << "min. time step: " << minTimeStep << std::endl;
+        out << "max. time step: " << maxTimeStep << std::endl;
+        out << "Newton iter.: " << newton_iterations << std::endl;
+        out << "ILS iter.: " << ils_iterations << std::endl;
+        out << "max{Newton/dt}: " << max_newton_iterations << std::endl;
+        out << "max{ILS/linS}: " << max_ils_iterations << std::endl;
+
+  for (unsigned int i=0;i<error_.size();++i) 
+  {
+    out << description_[i] << ":       " << error_[i] << std::endl;
+    if( tableWriter_ )
+    {
+      const double eoc = eocColumns_[ i ]->eoc( h, error_[ i ] );
+      out << "EOC (" <<description_[i] << "): " << eoc << std::endl;
+    }
+    out << std::endl;
+  }
+}
+
+} // end namespace Dune
+
+#endif // #ifndef DUNE_FEMEOC_HH
