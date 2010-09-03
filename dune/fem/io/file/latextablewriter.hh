@@ -18,6 +18,13 @@ namespace Dune
   namespace Fem
   {
 
+    // NoDataException
+    // ---------------
+
+    struct NoDataException {};
+
+
+
     // AbstractColumnWriter
     // --------------------
 
@@ -47,6 +54,102 @@ namespace Dune
 
 
 
+    // TupleDataSource
+    // ---------------
+
+    template< int N >
+    struct TupleDataSource
+    {
+      template< class DataTuple >
+      struct Value : public ElementType< N, DataTuple > {};
+
+      template< class DataTuple >
+      typename Value< DataTuple >::Type get ( const DataTuple &data ) const
+      throw ()
+      {
+        return ElementAccess< N >::get( data );
+      }
+    };
+
+
+
+    // ArrayDataSource
+    // ---------------
+
+    template< class DataSource >
+    struct ArrayDataSource
+    {
+      template< class DataTuple >
+      struct Value
+      {
+        typedef typename DataSource::template Value< DataTuple >::Type::value_type Type;
+      };
+
+      ArrayDataSource ( const int index, const DataSource &source = DataSource() )
+      : index_( index ), source_( source )
+      {}
+
+      template< class DataTuple >
+      typename Value< DataTuple >::Type get ( const DataTuple &data ) const
+      throw ()
+      {
+        return source_.get( data )[ index_ ];
+      }
+
+    private:
+      int index_;
+      DataSource source_;
+    };
+
+
+
+    // EOCDataSource
+    // -------------
+
+    template< class WidthDataSource, class ErrorDataSource >
+    struct EOCDataSource
+    {
+      template< class DataTuple >
+      struct Value
+      {
+        typedef double Type;
+      };
+
+      explicit EOCDataSource ( const WidthDataSource &widthSource = WidthDataSource(),
+                               const ErrorDataSource &errorSource = ErrorDataSource() )
+      : widthSource_( widthSource ),
+        errorSource_( errorSource ),
+        hOld_( std::numeric_limits< double >::infinity() )
+      {}
+
+      explicit EOCDataSource ( const ErrorDataSource &errorSource )
+      : errorSource_( errorSource ),
+        hOld_( std::numeric_limits< double >::infinity() )
+      {}
+
+      template< class DataTuple >
+      typename Value< DataTuple >::Type get ( const DataTuple &data ) const
+      throw ( NoDataException )
+      {
+        double h = widthSource_.get( data );
+        double e = errorSource_.get( data );
+        std::swap( h, hOld_ );
+        std::swap( e, eOld_ );
+        if( h < std::numeric_limits< double >::infinity() )
+          return std::log( eOld_ / e ) / std::log( hOld_ / h );
+        else
+          throw( NoDataException() );
+      }
+
+    private:
+      WidthDataSource widthSource_;
+      ErrorDataSource errorSource_;
+      mutable double hOld_;
+      mutable double eOld_;
+    };
+
+
+
     // NumberColumnWriter
     // ------------------
 
@@ -59,7 +162,7 @@ namespace Dune
      *  \tparam DataTuple The type of the data tuple
      *  \tparam N Index of the entry in the data tuple tp be extracted
      */
-    template< class DataTuple, int N >
+    template< class DataTuple, class DataSource >
     class NumberColumnWriter
     : public AbstractColumnWriter< DataTuple >
     {
@@ -70,9 +173,17 @@ namespace Dune
        *  \param[in] header Column titles in latex row format
        *  \param[in] decimals The precision of double for output to latex table
        */
-      explicit NumberColumnWriter ( const std::string &header, const int decimals = 6 )
+      explicit NumberColumnWriter ( const std::string &header, const int decimals = 6,
+                                    const DataSource &source = DataSource() )
       : header_( header ),
-        decimals_( decimals )
+        decimals_( decimals ),
+        source_( source )
+      {}
+
+      NumberColumnWriter ( const std::string &header, const DataSource &source )
+      : header_( header ),
+        decimals_( 6 ),
+        source_( source )
       {}
 
       //! set the aligment of the entries for this column in the latex table
@@ -87,8 +198,9 @@ namespace Dune
        *  \note @a N th element of @a data is assumed to be number
        */
       std::string entry ( const DataTuple &data ) const
+      throw (NoDataException)
       {
-        return toString( ElementAccess< N >::get( data ) );
+        return toString( source_.get( data ) );
       }
 
       //! return Column titles in latex row format
@@ -108,67 +220,7 @@ namespace Dune
     private:
       std::string header_;
       int decimals_;
-    };
-
-
-
-    // EOCColumnWriter
-    // ---------------
-
-    /** \class EOCColumnWriter
-     *  \brief calculates EOC from the @a Nh th and @a Ne th element of tuple
-     *
-     *  This class extracts the @a N th element of the tuple assuming
-     *  the @a N th element is a number
-     *
-     *  \tparam DataTuple The type of the data tuple
-     *  \tparam N Index of the entry in the data tuple tp be extracted
-     */
-    template< class DataTuple, int Nh, int Ne >
-    class EOCColumnWriter
-    : public NumberColumnWriter< DataTuple, Ne >
-    {
-      typedef NumberColumnWriter< DataTuple, Ne > BaseType;
-
-    public:
-      /** Constructor
-       *  \param[in] header Column titles in latex row format
-       *  \param[in] decimal Decimal placese for this column. Default 2.
-       */
-      explicit EOCColumnWriter ( const std::string &header, const int decimals = 2 )
-      : BaseType( header, decimals ),
-        hOld_( std::numeric_limits< double >::infinity() )
-      {}
-
-      /** \brief returns latex table entry 
-       *
-       *  \param[in] data Data tuple
-       *  
-       *  \return String representing EOC calculated from @a Nh th
-       *          and @a Ne th elements of the @a data tuple
-       *
-       *  \note @a Ne th and @a Nh th elements of data are assumed to
-       *        be numbers
-       */
-      std::string entry ( const DataTuple &data ) const
-      {
-        const double h = ElementAccess< Nh >::get( data );
-        const double e = ElementAccess< Ne >::get( data );
-
-        std::string entry = "---";
-        if( hOld_ < std::numeric_limits< double >::infinity() )
-        {
-          const double eoc = std::log( e / eOld_ ) / std::log( h / hOld_ );
-          entry = BaseType::toString( eoc );
-        }
-        hOld_ = h;
-        eOld_ = e;
-        return entry;
-      }
-
-    private:
-      mutable double hOld_;
-      mutable double eOld_;
+      DataSource source_;
     };
 
 
@@ -263,7 +315,16 @@ namespace Dune
         out_ << separator;
         separator = " & ";
         if( *it )
-          out_ << (*it)->entry( data );
+        {
+          try
+          {
+            out_ << (*it)->entry( data );
+          }
+          catch( const NoDataException & )
+          {
+            out_ << "---";
+          }
+        }
       }
       out_ << " \\\\" << std::endl;
     }
