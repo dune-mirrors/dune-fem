@@ -322,7 +322,7 @@ namespace Dune
           }
           catch( const NoDataException & )
           {
-            out_ << "---";
+            out_ << "\\multicolumn{1}{|c|}{---}";
           }
         }
       }
