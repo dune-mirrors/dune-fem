@@ -507,7 +507,7 @@ inline void FemEoc
     eocColumns_.resize( error_.size(), (const EOCColumnWriter *)0 );
     for( unsigned int i = 0; i < error_.size(); ++i )
     {
-      columns.push_back( 0 );
+      columns.push_back( (const TableWriter::ColumnWriterType *)0 );
       columns.push_back( new ErrorColumnWriter( description_[ i ], i ) );
       eocColumns_[ i ] = new EOCColumnWriter( i );
       columns.push_back( eocColumns_[ i ] );
@@ -539,11 +539,11 @@ inline void FemEoc
     columns.push_back( new Fem::NumberColumnWriter< DataTuple, 2 >( "size" ) );
     columns.push_back( new Fem::NumberColumnWriter< DataTuple, 3 >( "CPU-time" ) );
     columns.push_back( new Fem::NumberColumnWriter< DataTuple, 4 >( "counter" ) );
-    columns.push_back( 0 );
+    columns.push_back( (const TableWriter::ColumnWriterType *)0 );
     columns.push_back( new ArrayNumberColumnWriter< 6 >( "avg dt", 0 ) );
     columns.push_back( new ArrayNumberColumnWriter< 6 >( "min dt", 1 ) );
     columns.push_back( new ArrayNumberColumnWriter< 6 >( "max dt", 2 ) );
-    columns.push_back( 0 );
+    columns.push_back( (const TableWriter::ColumnWriterType *)0 );
     columns.push_back( new ArrayNumberColumnWriter< 7 >( "Newton", 0 ) );
     columns.push_back( new ArrayNumberColumnWriter< 7 >( "ILS", 1 ) );
     columns.push_back( new ArrayNumberColumnWriter< 7 >( "max{Newton/linS}", 2 ) );
@@ -551,7 +551,7 @@ inline void FemEoc
     eocColumns_.resize( error_.size(), (const EOCColumnWriter *)0 );
     for( unsigned int i = 0; i < error_.size(); ++i )
     {
-      columns.push_back( 0 );
+      columns.push_back( (const TableWriter::ColumnWriterType *)0 );
       columns.push_back( new ErrorColumnWriter( description_[ i ], i ) );
       eocColumns_[ i ] = new EOCColumnWriter( i );
       columns.push_back( eocColumns_[ i ] );
