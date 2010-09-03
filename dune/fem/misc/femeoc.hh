@@ -54,9 +54,6 @@ class FemEoc
   class ErrorColumnWriter;
   class EOCColumnWriter;
 
-  template< int N >
-  class ArrayNumberColumnWriter;
-
   TableWriter *tableWriter_;
   std::string filename_;
   int level_;
@@ -457,38 +454,6 @@ private:
 };
 
 
-template< int N >
-class FemEoc::ArrayNumberColumnWriter
-: public Fem::AbstractColumnWriter< FemEoc::DataTuple >
-{
-  typedef Fem::AbstractColumnWriter< FemEoc::DataTuple > BaseType;
-
-public:
-  ArrayNumberColumnWriter ( const std::string &header, const int index )
-  : header_( header ),
-    index_( index )
-  {}
-
-  std::string entry ( const FemEoc::DataTuple &data ) const
-  {
-    return toString( ElementAccess< N >::get( data )[ index_ ] );
-  }
-
-  std::string header () const { return header_; }
-  
-protected:
-  std::string toString ( const double &error ) const
-  {
-    std::ostringstream s;
-    s << "$" << error << "$";
-    return s.str();
-  }
-
-private:
-  std::string header_;
-  int index_;
-};
-
 
 inline void FemEoc
   ::writeerr ( double h, double size, double time, int counter )
@@ -499,11 +464,11 @@ inline void FemEoc
   if( !tableWriter_ )
   {
     TableWriter::ColumnWriterVectorType columns;
-    columns.push_back( new Fem::NumberColumnWriter< DataTuple, 0 >( "level" ) );
-    columns.push_back( new Fem::NumberColumnWriter< DataTuple, 1 >( "h" ) );
-    columns.push_back( new Fem::NumberColumnWriter< DataTuple, 2 >( "size", 0 ) );
-    columns.push_back( new Fem::NumberColumnWriter< DataTuple, 3 >( "CPU-time", 2 ) );
-    columns.push_back( new Fem::NumberColumnWriter< DataTuple, 4 >( "counter" ) );
+    columns.push_back( new Fem::NumberColumnWriter< DataTuple, Fem::TupleDataSource< 0 > >( "level" ) );
+    columns.push_back( new Fem::NumberColumnWriter< DataTuple, Fem::TupleDataSource< 1 > >( "h" ) );
+    columns.push_back( new Fem::NumberColumnWriter< DataTuple, Fem::TupleDataSource< 2 > >( "size" ) );
+    columns.push_back( new Fem::NumberColumnWriter< DataTuple, Fem::TupleDataSource< 3 > >( "CPU-time" ) );
+    columns.push_back( new Fem::NumberColumnWriter< DataTuple, Fem::TupleDataSource< 4 > >( "counter" ) );
     eocColumns_.resize( error_.size(), (const EOCColumnWriter *)0 );
     for( unsigned int i = 0; i < error_.size(); ++i )
     {
@@ -534,20 +499,22 @@ inline void FemEoc
   if( !tableWriter_ )
   {
     TableWriter::ColumnWriterVectorType columns;
-    columns.push_back( new Fem::NumberColumnWriter< DataTuple, 0 >( "level" ) );
-    columns.push_back( new Fem::NumberColumnWriter< DataTuple, 1 >( "h" ) );
-    columns.push_back( new Fem::NumberColumnWriter< DataTuple, 2 >( "size" ) );
-    columns.push_back( new Fem::NumberColumnWriter< DataTuple, 3 >( "CPU-time" ) );
-    columns.push_back( new Fem::NumberColumnWriter< DataTuple, 4 >( "counter" ) );
+    columns.push_back( new Fem::NumberColumnWriter< DataTuple, Fem::TupleDataSource< 0 > >( "level" ) );
+    columns.push_back( new Fem::NumberColumnWriter< DataTuple, Fem::TupleDataSource< 1 > >( "h" ) );
+    columns.push_back( new Fem::NumberColumnWriter< DataTuple, Fem::TupleDataSource< 2 > >( "size" ) );
+    columns.push_back( new Fem::NumberColumnWriter< DataTuple, Fem::TupleDataSource< 3 > >( "CPU-time" ) );
+    columns.push_back( new Fem::NumberColumnWriter< DataTuple, Fem::TupleDataSource< 4 > >( "counter" ) );
     columns.push_back( (const TableWriter::ColumnWriterType *)0 );
-    columns.push_back( new ArrayNumberColumnWriter< 6 >( "avg dt", 0 ) );
-    columns.push_back( new ArrayNumberColumnWriter< 6 >( "min dt", 1 ) );
-    columns.push_back( new ArrayNumberColumnWriter< 6 >( "max dt", 2 ) );
+    typedef Fem::ArrayDataSource< Fem::TupleDataSource< 6 > > TimeStepSource;
+    columns.push_back( new Fem::NumberColumnWriter< DataTuple, TimeStepSource >( "avg dt", TimeStepSource( 0 ) ) );
+    columns.push_back( new Fem::NumberColumnWriter< DataTuple, TimeStepSource >( "min dt", TimeStepSource( 1 ) ) );
+    columns.push_back( new Fem::NumberColumnWriter< DataTuple, TimeStepSource >( "max dt", TimeStepSource( 2 ) ) );
     columns.push_back( (const TableWriter::ColumnWriterType *)0 );
-    columns.push_back( new ArrayNumberColumnWriter< 7 >( "Newton", 0 ) );
-    columns.push_back( new ArrayNumberColumnWriter< 7 >( "ILS", 1 ) );
-    columns.push_back( new ArrayNumberColumnWriter< 7 >( "max{Newton/linS}", 2 ) );
-    columns.push_back( new ArrayNumberColumnWriter< 7 >( "max{ILS/linS}", 3 ) );
+    typedef Fem::ArrayDataSource< Fem::TupleDataSource< 7 > > NewtonILSSource;
+    columns.push_back( new Fem::NumberColumnWriter< DataTuple, NewtonILSSource >( "Newton", NewtonILSSource( 0 ) ) );
+    columns.push_back( new Fem::NumberColumnWriter< DataTuple, NewtonILSSource >( "ILS", NewtonILSSource( 1 ) ) );
+    columns.push_back( new Fem::NumberColumnWriter< DataTuple, NewtonILSSource >( "max{Newton/linS}", NewtonILSSource( 2 ) ) );
+    columns.push_back( new Fem::NumberColumnWriter< DataTuple, NewtonILSSource >( "max{ILS/linS}", NewtonILSSource( 3 ) ) );
     eocColumns_.resize( error_.size(), (const EOCColumnWriter *)0 );
     for( unsigned int i = 0; i < error_.size(); ++i )
     {
