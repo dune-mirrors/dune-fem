@@ -230,7 +230,7 @@ namespace Dune
     inline LatexTableWriter< DataTuple >
       ::LatexTableWriter ( const std::string &filename, const ColumnWriterVectorType &columnWriters )
     : columnWriters_( columnWriters ),
-      out_( filename )
+      out_( filename.c_str() )
     {
       if( !out_ )
       {
