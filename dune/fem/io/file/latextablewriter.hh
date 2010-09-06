@@ -31,9 +31,9 @@ namespace Dune
     /** \class AbstractColumnWriter
      *  \brief Class representing column writer in general
      *  
-     *  This class represents column writer.
+     *  The class represents column writer.
      *
-     * \tparam DataTuple Type of the data tuple
+     *  \tparam DataTuple Type of the data tuple
      */
     template< class DataTuple >
     struct AbstractColumnWriter
@@ -172,6 +172,7 @@ namespace Dune
       /** Constructor
        *  \param[in] header Column titles in latex row format
        *  \param[in] decimals The precision of double for output to latex table
+       *  \param[in] source The type of the data to be written in column(s)
        */
       explicit NumberColumnWriter ( const std::string &header, const int decimals = 6,
                                     const DataSource &source = DataSource() )
@@ -180,6 +181,11 @@ namespace Dune
         source_( source )
       {}
 
+      /** Constructor
+       *  \brief Constructor of @a NumberColumnWriter where decimal default to 6
+       *  \param[in] header Column titles in latex row format
+       *  \param[in] source The type of the data to be written in column(s)
+       */
       NumberColumnWriter ( const std::string &header, const DataSource &source )
       : header_( header ),
         decimals_( 6 ),
