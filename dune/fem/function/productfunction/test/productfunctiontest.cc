@@ -1,7 +1,6 @@
 #include <iostream>
 #include <config.h>
 
-// #include <dune/grid/io/file/dgfparser/dgfgridtype.hh>
 static const int dimw = Dune::GridSelector::dimworld; 
 static const int dimp = Dune::GridSelector::dimworld;
   
@@ -10,7 +9,6 @@ static const int dim2 = 3;
 
 //polynom order of second space
 // static const int polOrd2 = 4;
-//#include <dune/grid/io/file/dgfparser/dgfalu.hh>
 
 #include <dune/grid/io/file/dgfparser/dgfs.hh>
 
@@ -39,14 +37,14 @@ const int polOrd = POLORDER;
 */
 //***********************************************************************
 
-typedef Dune::GridSelector::GridType GridType;
+typedef Dune::GridSelector::GridType HGridType;
 
 // static const int dimworld = GRIDDIM;
 // static const int dimworld = dimworld;
 typedef SGrid  < dim2,dim2 > Grid2Type;
 // static const int refStepsForHalf = 1;
 //! the index set we are using 
-typedef HierarchicGridPart<GridType> GridPartType;
+typedef HierarchicGridPart<HGridType> GridPartType;
 typedef HierarchicGridPart<Grid2Type> GridPart2Type;
  
 //! define the function space, \f[ \R^2 \rightarrow \R \f]
@@ -57,7 +55,7 @@ typedef FunctionSpace < double , double, dim2 , 1 > FuncSpace2;
 //! see dune/fem/lagrangebase.hh
 
 //! Get the Dofmanager type
-typedef DofManager<GridType> DofManagerType;
+typedef DofManager<HGridType> DofManagerType;
 typedef DofManagerFactory<DofManagerType> DofManagerFactoryType; 
 
 template <int polOrd2> 
@@ -126,7 +124,7 @@ struct TestProdDF {
     template <class FunctionType>
     static void project (const FunctionType &f, DiscreteFunctionType &discFunc, int polOrd) 
     {
-      typedef typename DiscreteFunction1SpaceType::Traits::GridType GridType;
+      typedef typename DiscreteFunction1SpaceType::Traits::GridType HGridType;
       typedef typename DiscreteFunction1SpaceType::Traits::IteratorType Iterator;
     
       typedef typename DiscreteFunction2SpaceType::Traits::GridType Grid2Type;
@@ -179,7 +177,7 @@ struct TestProdDF {
         
 		  const BaseFunctionSetType& baseset = lf.baseFunctionSet();
 	
-		  const typename GridType::template Codim<0>::Entity::Geometry& 
+		  const typename HGridType::template Codim<0>::Entity::Geometry& 
 		    itGeom = (*it).geometry();
 	
 		  const int numDofs = lf.numDofs();
@@ -238,7 +236,7 @@ struct TestProdDF {
       const DiscreteFunction1SpaceType & space = discFunc.space();
       const DiscreteFunction2SpaceType& space2 =  discFunc.space2();
 
-      typedef typename DiscreteFunction1SpaceType::GridType GridType;
+      typedef typename DiscreteFunction1SpaceType::GridType HGridType;
       typedef typename DiscreteFunction1SpaceType::IteratorType IteratorType;
       typedef typename DiscreteFunction1Type::LocalFunctionType LocalFuncType;
       typedef typename DiscreteFunction2SpaceType::IteratorType Iterator2Type;
@@ -280,7 +278,7 @@ struct TestProdDF {
 		  std::cout << " y_loc = " << quad2.point(qP2) ;
 		  std::cout << " y = " << (*it2).geometry().global(quad2.point(qP2)) << std::endl;
 	
-		  GrapeDataDisplay < GridType > grape(space.grid()); 
+		  GrapeDataDisplay < HGridType > grape(space.grid()); 
 		  grape.dataDisplay( ldf );
      
 		  #endif 
@@ -315,7 +313,7 @@ struct TestProdDF {
 	
 	
 	
-      GrapeDataDisplay < GridType > grape(space.grid()); 
+      GrapeDataDisplay < HGridType > grape(space.grid()); 
       grape.dataDisplay( ldf );
      
       #endif
@@ -342,7 +340,7 @@ struct TestProdDF {
     }
   };
   // ********************************************************************
-  double algorithm (GridType& grid, Grid2Type& grid2 ,DiscreteFunctionType& solution  , int turn )
+  double algorithm (HGridType& grid, Grid2Type& grid2 ,DiscreteFunctionType& solution  , int turn )
   {
     GridPartType part ( grid );
     DiscreteFunction1SpaceType linFuncSpace ( part ); 
@@ -373,7 +371,7 @@ struct TestProdDF {
   //  main programm, run algorithm twice to calc EOC 
   //
   //**************************************************
-  double main (GridType& grid, Grid2Type& grid2) {
+  double main (HGridType& grid, Grid2Type& grid2) {
     try {
       GridPartType part ( grid );
       GridPart2Type part2 ( grid2 );
@@ -417,9 +415,9 @@ int main (int argc, char **argv)
   char tmp[16]; sprintf(tmp,"%d",dimp);
   std::string macroGridName (tmp); 
   macroGridName += "dgrid.dgf"; 
-  const int step = Dune::DGFGridInfo<GridType>::refineStepsForHalf();   //step=1
-  GridPtr<GridType> gridptr(macroGridName);
-  GridType& grid=*gridptr;
+  const int step = Dune::DGFGridInfo<HGridType>::refineStepsForHalf();   //step=1
+  GridPtr<HGridType> gridptr(macroGridName);
+  HGridType& grid=*gridptr;
   int *N = new int[dim2];
   sgrid_ctype * H = new sgrid_ctype[dim2];
   for(int i=0; i<dim2; i++) {
