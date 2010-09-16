@@ -11,14 +11,14 @@ namespace Dune
   class TestGrid
   {
     typedef TestGrid ThisType;
-    typedef Dune::GridSelector::GridType GridType;
+    typedef Dune::GridSelector::GridType HGridType;
 
   protected:
     TestGrid ()
     : gridptr_( macroGridName() )
     {
       /*
-      typedef GridType::Codim<0>::LeafIterator Iterator;
+      typedef HGridType::Codim<0>::LeafIterator Iterator;
       const Iterator end = gridptr_->leafend<0>();
       int count = 0;
       for (Iterator iter = gridptr_->leafbegin<0>();iter!=end;++iter) {
@@ -45,25 +45,25 @@ namespace Dune
       return staticInstance;
     }
 
-    static GridType &grid ()
+    static HGridType &grid ()
     {
       return *(instance().gridptr_);
     }
 
     static int refineStepsForHalf ()
     {
-      return DGFGridInfo< GridType >::refineStepsForHalf();
+      return DGFGridInfo< HGridType >::refineStepsForHalf();
     }
 
   protected:
     static std::string macroGridName ()
     {
       std::ostringstream s;
-      s << GridType::dimension << "dgrid.dgf";
+      s << HGridType::dimension << "dgrid.dgf";
       return s.str();
     }
 
-    GridPtr< GridType > gridptr_;
+    GridPtr< HGridType > gridptr_;
   };
   
 }
