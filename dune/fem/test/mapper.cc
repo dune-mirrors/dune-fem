@@ -122,7 +122,7 @@ try
   MPIManager :: initialize( argc, argv );
 
   MyGridType &grid = TestGrid :: grid();
-  const int step = TestGrid :: refineStepsForHalf();
+  // const int step = TestGrid :: refineStepsForHalf();
   // grid.globalRefine( 2*step );
 
   GridPartType gridPart( grid );
