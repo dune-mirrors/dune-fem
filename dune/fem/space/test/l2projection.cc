@@ -3,7 +3,6 @@
 #include <string>
 #include <sstream>
 
-// #include <dgfgridtype.hh>
 static const int dimw = Dune::GridSelector::dimworld;
 
 #include <dune/fem/operator/discreteoperatorimp.hh>
@@ -15,7 +14,6 @@ static const int dimw = Dune::GridSelector::dimworld;
 
 #include <dune/fem/gridpart/gridpart.hh>
 #include <dune/fem/gridpart/adaptiveleafgridpart.hh> 
-#include <dune/fem/space/dgspace/dgadaptiveleafgridpart.hh> 
 #include <dune/fem/space/common/adaptmanager.hh>
 
 #include <dune/fem/operator/projection/l2projection.hh>
