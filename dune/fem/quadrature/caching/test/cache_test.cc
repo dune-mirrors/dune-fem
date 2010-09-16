@@ -1,11 +1,9 @@
 #include <config.h>
 
 #include <dune/grid/sgrid.hh>
-#include "sgrid_fixture.hh"
 
 #ifdef ENABLE_ALUGRID
 #include <dune/grid/alugrid.hh>
-#include "alugrid_fixture.hh"
 #endif
 
 #ifdef ENABLE_ALBERTA
@@ -98,8 +96,7 @@ namespace Dune {
     const int dim = 3;
     const int codim = 1;
 
-    typedef ALUGridFixture<hexa> FixType;
-    typedef FixType::GridType GridType;
+    typedef ALUCubeGrid< 3, 3 > GridType;
     typedef CacheProvider<GridType, codim> CacheProviderType;
     typedef Quadrature< GridType :: ctype, GridType :: dimension-1> QuadratureType;
     //typedef CacheProviderType::QuadratureType QuadratureType;
@@ -147,8 +144,7 @@ namespace Dune {
     const int dim = 3;
     const int codim = 1;
 
-    typedef ALUGridFixture<tetra> FixType;
-    typedef FixType::GridType GridType;
+    typedef ALUSimplexGrid< 3, 3 > GridType;
     typedef CacheProvider<GridType, codim> CacheProviderType;
     //typedef CacheProviderType::QuadratureType QuadratureType;
     typedef Quadrature< GridType :: ctype, GridType :: dimension-1> QuadratureType;
@@ -239,8 +235,7 @@ namespace Dune {
     const int dim = 2;
     const int codim = 1;
 
-    typedef SGridFixture<dim, dim> FixType;
-    typedef FixType::GridType GridType;
+    typedef SGrid< dim, dim > GridType;
     typedef CacheProvider<GridType, codim> CacheProviderType;
     typedef Quadrature< GridType :: ctype, GridType :: dimension-1> QuadratureType;
     //typedef CacheProviderType::QuadratureType QuadratureType;
