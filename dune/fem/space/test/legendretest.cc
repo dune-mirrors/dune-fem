@@ -10,13 +10,13 @@ static const int dimw =2;
 #if S_GRID 
 #include<dune/grid/sgrid.hh> 
 
-typedef Dune::SGrid<dimw,dimw> GridType;
+typedef Dune::SGrid<dimw,dimw> HGridType;
 #endif
 
 #if YGRID
 #include<dune/grid/yaspgrid.hh> 
 
-typedef Dune::YaspGrid< dimw > GridType;
+typedef Dune::YaspGrid< dimw > HGridType;
 #endif
 
 #include <dune/fem/operator/discreteoperatorimp.hh>
@@ -54,9 +54,9 @@ const int polOrd =1;/*POLORDER;*/
 */
 //*********************************************************************** 
 
-  //typedef Dune::SGrid<dimw,dimw> GridType;
+  //typedef Dune::SGrid<dimw,dimw> HGridType;
 //! the index set we are using 
-typedef HierarchicGridPart<GridType> GridPartType;
+typedef HierarchicGridPart<HGridType> GridPartType;
 
 //! define the function space, \f[ \R^2 \rightarrow \R \f]
 // see dune/common/functionspace.hh
@@ -72,7 +72,7 @@ typedef  LegendreDiscontinuousGalerkinSpace<FuncSpace, GridPartType,
 typedef AdaptiveDiscreteFunction < DiscreteFunctionSpaceType > DiscreteFunctionType;
 
 //! Get the Dofmanager type
-typedef DofManager<GridType> DofManagerType;
+typedef DofManager<HGridType> DofManagerType;
 
 
 // the exact solution to the problem for EOC calculation 
@@ -161,7 +161,7 @@ class L2Projection
       const BaseFunctionSetType & baseset =
         lf.baseFunctionSet();
 
-      const typename GridType::template Codim<0>::Entity::Geometry& 
+      const typename HGridType::template Codim<0>::Entity::Geometry& 
         itGeom = (*it).geometry();
       
       const int quadNop = quad.nop();
@@ -329,7 +329,7 @@ template <class FunctionType>
   }
 };
 // ********************************************************************
-double algorithm (GridType& grid, DiscreteFunctionType& solution  , int turn )
+double algorithm (HGridType& grid, DiscreteFunctionType& solution  , int turn )
 {
    GridPartType part ( grid );
    DiscreteFunctionSpaceType linFuncSpace ( part );
@@ -355,7 +355,7 @@ double algorithm (GridType& grid, DiscreteFunctionType& solution  , int turn )
    // if Grape was found, then display last solution 
    if(0 && turn > 0)
    {
-     GrapeDataDisplay < GridType > grape(part); 
+     GrapeDataDisplay < HGridType > grape(part); 
      grape.dataDisplay( solution );
    }
 #endif
@@ -385,9 +385,9 @@ int main (int argc, char **argv)
 
 #if S_GRID
   Dune::FieldVector<int,dimw> N(2);
-  Dune::FieldVector<GridType::ctype,dimw> L(0.0);
-  Dune::FieldVector<GridType::ctype,dimw> H(1.0);
-  GridType grid(N,L,H);
+  Dune::FieldVector<HGridType::ctype,dimw> L(0.0);
+  Dune::FieldVector<HGridType::ctype,dimw> H(1.0);
+  HGridType grid(N,L,H);
 #endif
 
 #if YGRID
@@ -402,14 +402,14 @@ FieldVector<double, dimw> lang;
   for(int i=0;i<dimw;i++)
     per[i] = false; 
   
-  GridType grid(lang,anz,per,1);
+  HGridType grid(lang,anz,per,1);
 
 #endif
 
   
- //  GridPtr<GridType> gridptr(macroGridName);
-//   GridType& grid=*gridptr;
- //  const int step = Dune::DGFGridInfo<GridType>::refineStepsForHalf();
+ //  GridPtr<HGridType> gridptr(macroGridName);
+//   HGridType& grid=*gridptr;
+ //  const int step = Dune::DGFGridInfo<HGridType>::refineStepsForHalf();
 
   const int step =1;
 
