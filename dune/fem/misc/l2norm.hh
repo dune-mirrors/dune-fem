@@ -46,7 +46,7 @@ namespace Dune
   protected:
     const GridPartType &gridPart () const { return gridPart_; }
 
-    typename GridPartType::GridType::CollectiveCommunication comm () const
+    typename GridPartType::GridType::Traits::CollectiveCommunication comm () const
     {
       return gridPart().grid().comm();
     }
