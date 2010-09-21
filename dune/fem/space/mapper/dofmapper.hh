@@ -57,8 +57,8 @@ protected:
   using BaseType::asImp;
 
 public: 
-  //! return number of dofs for special function space and grid on
-  //! specified level
+  /** \brief  return number of dofs for special function space and grid on
+              specified level */
   int size () const 
   {
     CHECK_INTERFACE_IMPLEMENTATION(asImp().size());
@@ -222,7 +222,7 @@ public:
     return asImp().offSet(block);
   }
 
-  /** return number of supported blocks */
+  /** \brief return number of supported blocks */
   int numBlocks() const
   {
     CHECK_INTERFACE_IMPLEMENTATION(asImp().numBlocks());
