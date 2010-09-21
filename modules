@@ -138,6 +138,8 @@
       @ingroup OperatorCommon */
   /** @defgroup NonLinSolver Non linear solver
       @ingroup OperatorCommon */
+  /** @defgroup DirectSolver Direct solver
+      @ingroup OperatorCommon */
 
 /** @defgroup Integration Integration
     @ingroup FEM */
