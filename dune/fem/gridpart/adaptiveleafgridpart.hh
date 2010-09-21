@@ -208,7 +208,7 @@ namespace Dune
   };
 
   /** @addtogroup AdaptiveLeafGP
-      GridPart for Dune::AdaptiveLeafIndexSet. 
+      \brief GridPart for Dune::AdaptiveLeafIndexSet. 
       The underlying index set is
       singleton for each grid object.   
       Uses very efficient index sets specially
