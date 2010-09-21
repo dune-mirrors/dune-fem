@@ -69,7 +69,11 @@ namespace Dune
     //! use online grape display (fem.io.grapedisplay)
     virtual bool grapedisplay () const
     {
+#if USE_GRAPE
       return (Parameter::getValue( "fem.io.grapedisplay", 0 ) == 1);
+#else
+      return false;
+#endif
     }
 
     //! save data every savestep interval (fem.io.savestep)
