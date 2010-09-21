@@ -36,9 +36,9 @@ namespace Dune
 
     /** \brief constructor of UMFPACKOp
         \param[in] op Operator to invert 
-        \param[in] redEps realative tolerance for residual 
-        \param[in] absLimit absolut solving tolerance for residual 
-        \param[in] maxIter maximal number of iterations performed 
+        \param[in] redEps realative tolerance for residual (not used here)
+        \param[in] absLimit absolut solving tolerance for residual (not used here)
+        \param[in] maxIter maximal number of iterations performed (not used here)
         \param[in] verbose verbosity 
     */
     UMFPACKOp ( const OperatorType &op, 

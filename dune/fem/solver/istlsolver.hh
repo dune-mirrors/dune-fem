@@ -29,7 +29,7 @@ namespace Dune
   // --------------
 
   /** \brief BICG-stab scheme for block matrices (BCRSMatrix) 
-  and block vectors (BVector) from dune-istl. */
+      and block vectors (BVector) from DUNE-ISTL. */
   template< class DF, class Op >
   struct ISTLBICGSTABOp
   : public Operator< typename DF::RangeFieldType, typename DF::RangeFieldType, DF, DF >
@@ -88,7 +88,7 @@ namespace Dune
     /** \brief constructor
      *
      *  \param[in] op Mapping describing operator to invert
-     *  \param[in] redEps reduction epsilon
+     *  \param[in] reduction reduction epsilon
      *  \param[in] absLimit absolut limit of residual (not used here)
      *  \param[in] maxIter maximal iteration steps
      *  \param[in] verbose verbosity
@@ -112,7 +112,7 @@ namespace Dune
     /** \brief constructor
      *
      *  \param[in] op        mapping describing operator to invert
-     *  \param[in] redEps    reduction epsilon
+     *  \param[in] reduction    reduction epsilon
      *  \param[in] absLimit  absolut limit of residual (not used here)
      *  \param[in] maxIter   maximal iteration steps
      */
@@ -253,7 +253,7 @@ namespace Dune
     /** \brief constructor
      *
      *  \param[in] op Mapping describing operator to invert
-     *  \param[in] redEps reduction epsilon
+     *  \param[in] reduction reduction epsilon
      *  \param[in] absLimit absolut limit of residual (not used here)
      *  \param[in] maxIter maximal iteration steps
      *  \param[in] verbose verbosity
@@ -278,7 +278,7 @@ namespace Dune
     /** \brief constructor
      *
      *  \param[in] op        mapping describing operator to invert
-     *  \param[in] redEps    reduction epsilon
+     *  \param[in] reduction    reduction epsilon
      *  \param[in] absLimit  absolut limit of residual (not used here)
      *  \param[in] maxIter   maximal iteration steps
      */
@@ -420,7 +420,7 @@ namespace Dune
     /** \brief constructor
      *
      *  \param[in] op        mapping describing operator to invert
-     *  \param[in] redEps    reduction epsilon
+     *  \param[in] reduction    reduction epsilon
      *  \param[in] absLimit  absolut limit of residual (not used here)
      *  \param[in] maxIter   maximal iteration steps
      *  \param[in] verbose   verbosity
@@ -442,7 +442,7 @@ namespace Dune
     /** \brief constructor
      *
      *  \param[in] op        mapping describing operator to invert
-     *  \param[in] redEps    reduction epsilon
+     *  \param[in] reduction    reduction epsilon
      *  \param[in] absLimit  absolut limit of residual (not used here)
      *  \param[in] maxIter   maximal iteration steps
      */
