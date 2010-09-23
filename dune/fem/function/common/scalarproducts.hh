@@ -446,10 +446,9 @@ namespace Dune
       SlaveDofsType &slaveDofs = this->slaveDofs();
 
       RangeFieldType scp = 0;
-      int i = 0;
 
       const int numSlaves = slaveDofs.size();
-      for( int slave = 0; slave < numSlaves; ++slave )
+      for( int slave = 0, i = 0 ; slave < numSlaves; ++slave )
       {
         const int nextSlave = slaveDofs[ slave ];
         for(; i < nextSlave; ++i )
