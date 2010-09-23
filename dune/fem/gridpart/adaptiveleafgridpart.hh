@@ -263,7 +263,7 @@ namespace Dune
     };
 
     static const bool hasHierarchicIndexSet = Capabilities::hasHierarchicIndexSet< Grid >::v;
-#if HAVE_MPI && not defined DISABLE_ADAPTIVELEAFINDEXSET_FOR_YASPGRID
+#if HAVE_MPI && defined ENABLE_ADAPTIVELEAFINDEXSET_FOR_YASPGRID
     // also for Cartesian grids (e.g. YaspGrid) use adaptive leaf index set in parallel 
     typedef AdaptiveLeafIndexSetChooser<-1, onlyCodimensionZero > 
 #else 
