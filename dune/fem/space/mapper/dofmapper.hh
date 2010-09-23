@@ -338,24 +338,6 @@ protected:
   }
 
 public:
-  /** \copydoc Dune::DofMapper::mapEntityDofToGlobal(const Entity &entity,const int localDof) const
-   *  \note The default implementation associates all DoFs with codimension 0.
-   */
-  int mapEntityDofToGlobal ( const EntityType &entity, const int localDof ) const
-  {
-    return mapToGlobal( entity, localDof );
-  }
-  
-  /** \copydoc Dune::DofMapper::mapEntityDofToGlobal(const Entity &entity,const int localDof) const
-   *  \note The default implementation associates all DoFs with codimension 0.
-   */
-  template< class Entity > 
-  int mapEntityDofToGlobal ( const Entity &entity, const int localDof ) const
-  {
-    dune_static_assert( (Entity::codimension > 0), "Call specialization for codimension 0." );
-    return 0;
-  }
-
   /** \copydoc Dune::DofMapper::numDofs(const EntityType &entity) const
    *  \note This implementation just returns the maximal number of DoFs on an
    *        entity.
@@ -363,24 +345,6 @@ public:
   int numDofs ( const EntityType &entity ) const
   {
     return asImp().maxNumDofs();
-  }
-
-  /** \copydoc Dune::DofMapper::numEntityDofs(const Entity &entity) const
-   *  \note The default implementation associates all DoFs with codimension 0.
-   */
-  int numEntityDofs ( const EntityType &entity ) const
-  {
-    return numDofs( entity );
-  }
-
-  /** \copydoc Dune::DofMapper::numEntityDofs(const Entity &entity) const
-   *  \note The default implementation associates all DoFs with codimension 0.
-   */
-  template< class Entity >
-  int numEntityDofs ( const Entity &entity ) const
-  {
-    dune_static_assert( (Entity::codimension > 0), "Call specialization for codimension 0." );
-    return 0;
   }
 
   //! return old offsets for block number, default returns zero 

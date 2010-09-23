@@ -123,6 +123,39 @@ namespace Dune
         return indexSet_.subIndex( entity, localDof, codimension );
     }
 
+  protected:
+    template <int codim1, int codim>
+    struct IndexExtractor 
+    {
+      template <class Entity >
+      static inline int index(const IndexSetType& indexSet, const Entity& entity )
+      {
+        DUNE_THROW(InvalidStateException,"Wrong codimension selected"); 
+        return -1;
+      }
+    };
+
+    //! return index of entity (specialized because of Grids like Yasp which are not
+    //! supporting every codimension entity)
+    template <int codim>
+    struct IndexExtractor< codim, codim >
+    {
+      template< class Entity >
+      static inline int index(const IndexSetType& indexSet, const Entity& entity )
+      {
+        return indexSet.index( entity );
+      }
+    };
+
+  public:  
+    /** \copydoc DofMapper::mapEntityDofToGlobal */
+    template< class Entity >
+    int mapEntityDofToGlobal ( const Entity &entity, const int localDof ) const
+    {
+      assert( codimension == Entity::codimension );
+      return IndexExtractor< codimension,  Entity::codimension > :: index( indexSet_, entity ); 
+    }
+
     /** \copydoc DofMapper::maxNumDofs() const */
     int maxNumDofs () const
     {
