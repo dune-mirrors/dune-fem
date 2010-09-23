@@ -526,7 +526,7 @@ private:
       matrix_.multOEM( arg.leakPointer(), dest.leakPointer() );
 
       // communicate data 
-      rangeSpace_.communicate( dest );
+      dest.communicate();
     }
 
     //! apply transposed matrix to discrete function
@@ -537,7 +537,7 @@ private:
       matrix_.multOEM_t( arg.leakPointer(), dest.leakPointer() );
 
       // communicate data 
-      domainSpace_.communicate( dest );
+      dest.communicate();
     }
 
 
