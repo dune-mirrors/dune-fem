@@ -20,42 +20,6 @@ namespace Dune
     }
 
 
-    Timer< true >::~Timer ()
-    {
-      double totalTime = pop_time();
-
-      if( output_.is_open() )
-      {
-        output_ << "#  ******** TOTAL RUNTIME: " << totalTime
-                << "   ******** " << std::endl;
-        output_.close();
-      }
-
-      const MPIManager::CollectiveCommunication &comm = MPIManager::comm();
-      if( comm.rank() == 0 )
-      {
-        double *totalTimes = new double[ comm.size() ];
-        comm.gather( &totalTime, totalTimes, 1, 0 );
-        double avgTime = 0.0;
-        double minTime = std::numeric_limits< double >::max();
-        double maxTime = std::numeric_limits< double >::min();
-        for( int i = 0; i < comm.size(); ++i )
-        {
-          avgTime += totalTimes[ i ];
-          minTime = std::min( minTime, totalTimes[ i ] );
-          maxTime = std::max( maxTime, totalTimes[ i ] );
-        }
-        avgTime /= comm.size();
-        delete[] totalTimes;
-
-        std::cerr << "#  ******** TOTAL RUNTIME: average = " << avgTime
-                  << ", minimum = " << minTime << ", maximum = " << maxTime
-                  << "   ******** " << std::endl;
-      }
-      else comm.gather( &totalTime, (double *)0, 1, 0 );
-    }
-
-
     unsigned int Timer< true >::add ( const std::string &name, int nr )
     {
       unsigned int id;
@@ -115,10 +79,8 @@ namespace Dune
       out << std::endl;
     }
 
-
     void Timer< true >::printToFile ()
     {
-      std::cerr << "Printing FemTimer to file..." << std::endl;
       for( unsigned int i = 0; i< timers_.size(); ++i )
       {
         const TimerInfo &info = timers_[ i ];

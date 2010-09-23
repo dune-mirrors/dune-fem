@@ -1,5 +1,5 @@
-#ifndef DUNE_FEMTIMER_HH
-#define DUNE_FEMTIMER_HH
+#ifndef DUME_FEM_FEMTIMER_HH
+#define DUME_FEM_FEMTIMER_HH
 
 #include <stack>
 #include <vector>
@@ -8,9 +8,10 @@
 #include <iomanip>
 #include <limits>
 
-//#include <dune/common/exceptions.hh>
+#include <dune/common/exceptions.hh>
 #include <dune/common/timer.hh>
 
+#include <dune/fem/io/parameter.hh>
 #include <dune/fem/solver/timeprovider.hh>
 
 namespace Dune
@@ -220,7 +221,7 @@ namespace Dune
       //! @param step only add a line to the file each step calls of this method
       static void printFile ( const std::string &fileName, int step = 1 )
       {
-        instance().printToFile(fileName,step);
+        instance().printToFile(rankName(fileName, MPIManager::rank()),step);
       }
 
       //! print the values of all timers to a file
@@ -232,10 +233,17 @@ namespace Dune
       static void printFile ( const TimeProviderBase &tp,
                               const std::string &fileName, int step = 1 )
       {
-        instance().printToFile(tp,fileName,step);
+        instance().printToFile(tp,rankName(fileName, MPIManager::rank()),step);
       }
 
     private:
+      static std::string rankName( const std::string &fileName, const int rank ) 
+      {
+        std::stringstream newfilename; 
+        newfilename << fileName << "." << rank ;
+        return newfilename.str();
+      }
+
       Dune::Timer timer_;
       std::stack< double > timesS_;
       std::vector< TimerInfo > timers_;
@@ -244,7 +252,46 @@ namespace Dune
       bool changed_;
     };
 
-  }
+    // this method is defined inline 
+    // because is uses MPI stuff which 
+    // does not work when compiled into the lib 
+    inline Timer< true >::~Timer ()
+    {
+      double totalTime = pop_time();
+
+      if( output_.is_open() )
+      {
+        output_ << "#  ******** TOTAL RUNTIME: " << totalTime
+                << "   ******** " << std::endl;
+        output_.close();
+      }
+
+      const MPIManager::CollectiveCommunication &comm = MPIManager::comm();
+      if( comm.rank() == 0 )
+      {
+        double *totalTimes = new double[ comm.size() ];
+        comm.gather( &totalTime, totalTimes, 1, 0 );
+        double avgTime = 0.0;
+        double minTime = std::numeric_limits< double >::max();
+        double maxTime = std::numeric_limits< double >::min();
+        for( int i = 0; i < comm.size(); ++i )
+        {
+          avgTime += totalTimes[ i ];
+          minTime = std::min( minTime, totalTimes[ i ] );
+          maxTime = std::max( maxTime, totalTimes[ i ] );
+        }
+        avgTime /= comm.size();
+        delete[] totalTimes;
+
+        std::cerr << "#  ******** TOTAL RUNTIME: average = " << avgTime
+                  << ", minimum = " << minTime << ", maximum = " << maxTime
+                  << "   ******** " << std::endl;
+      }
+      else 
+        comm.gather( &totalTime, (double *)0, 1, 0 );
+    }
+
+  } // end namespace Fem 
 
 
 
