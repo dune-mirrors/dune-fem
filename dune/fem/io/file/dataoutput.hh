@@ -377,10 +377,17 @@ namespace Dune
 
     virtual void add(VTKIOType& vtkio) const 
     {
-      func_ = new NewFunctionType ( df_.name(), space_ );
-      WeightDefault<GridPartType> weight;
-      VtxProjectionImpl::project( df_, *func_, weight );
-      vtkio.addVertexData( *func_ );
+      if( df_.space().continuous() ) 
+      {
+        vtkio.addVertexData( df_ );
+      }
+      else 
+      {
+        func_ = new NewFunctionType ( df_.name()+"vtx-prj" , space_ );
+        WeightDefault<GridPartType> weight;
+        VtxProjectionImpl::project( df_, *func_, weight );
+        vtkio.addVertexData( *func_ );
+      }
       // vtkio.addVectorVertexData( *func_ );
     }
   };
