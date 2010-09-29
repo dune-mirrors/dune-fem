@@ -97,7 +97,12 @@ namespace Dune
     explicit VectorialBaseFunctionSet ( const FactoryType &factory )
     : storage_( factory ),
       util_( dimRange )
-    {}
+    {
+#ifdef BASEFUNCTIONSET_CODEGEN_GENERATE
+      // add my dimrange 
+      Fem::CodegenInfo::instance().addDimRange( dimRange );
+#endif
+    }
 
     const StorageType &storage () const { return storage_; }
 
@@ -386,7 +391,8 @@ namespace Dune
                         const LocalDofVectorType& dofs,
                         RangeFactorType &rangeFactors)
       {
-        std::cerr << "ERROR: wrong code generated for VectorialBaseFunctionSet::evaluateRanges" << std::endl;
+        std::cerr << "ERROR: wrong code generated for VectorialBaseFunctionSet::evaluateRanges< "
+                  << dimRange << " , " << numRows << " , " << numCols << " >!" << std::endl;
         abort();
       }
     };
@@ -406,7 +412,8 @@ namespace Dune
 #ifndef USE_BASEFUNCTIONSET_CODEGEN
         BaseFunctionSet::evaluateRanges( quad, rangeStorage, dofs, rangeFactors, numRows, numCols );
 #else 
-        std::cerr << "ERROR: wrong code generated for VectorialBaseFunctionSet::evaluateRanges" << std::endl;
+        std::cerr << "ERROR: wrong code generated for VectorialBaseFunctionSet::evaluateRanges< "
+                  << "EmptyGeo, " << dimRange << " , " << numRows << " , " << numCols << " >!" << std::endl;
         abort();
 #endif
       }
@@ -450,8 +457,8 @@ namespace Dune
                      const unsigned int numCols )
     {
 #ifdef BASEFUNCTIONSET_CODEGEN_GENERATE
-      static std::map< const size_t , size_t > storedRows; 
-      typename std::map< const size_t , size_t > :: iterator it = storedRows.find( numRows );
+      static std::map< const size_t, size_t > storedRows; 
+      typename std::map< const size_t, size_t > :: iterator it = storedRows.find( numRows );
       if( it != storedRows.end() ) 
       {
         Fem::CodegenInfo::instance().notify( (*it).second );
@@ -461,7 +468,7 @@ namespace Dune
         storedRows[ numRows ] = 
           Fem::CodegenInfo::instance().addEntry( "evalranges", 
               ( storedRows.size() == 1 ), Fem :: CodeGeneratorType :: evaluateCodegen, dimDomain, dimRange, numRows, numCols );
-        std::cout << "Generate code evalranges for (" << numRows << "," << numCols << ")" << std::endl;
+        std::cout << "Generate code evalranges for (" << dimRange << "," << numRows << "," << numCols << ")" << std::endl;
       }
 #endif
 
@@ -509,9 +516,15 @@ namespace Dune
                         const LocalDofVectorType& dofs,
                         JacobianRangeFactorType &jacFactors)
       {
+#ifndef USE_BASEFUNCTIONSET_CODEGEN
         BaseFunctionSet :: 
           evaluateJacobians( quad, geometry, jacobianStorage, dofs, jacFactors, 
                              jacFactors[ 0 ], numRows, numCols );
+#else 
+        std::cerr << "ERROR: wrong code generated for VectorialBaseFunctionSet::evaluateJacobians< "
+                  << dimRange << " , " << numRows << " , " << numCols << " >!" << std::endl;
+        abort();
+#endif
       }
     };
 
@@ -529,7 +542,8 @@ namespace Dune
                         const LocalDofVectorType&,
                         const JacobianRangeFactorType& )
       {
-        std::cerr << "ERROR: wrong code generated for VectorialBaseFunctionSet::evaluateJacobians" << std::endl;
+        std::cerr << "ERROR: wrong code generated for VectorialBaseFunctionSet::evaluateJacobians< "
+                  << "EmptyGeo, " << dimRange << " , " << numRows << " , " << numCols << " >!" << std::endl;
         abort();
       }
     };
@@ -649,7 +663,8 @@ namespace Dune
                         const RangeFactorType &rangeFactors,
                         LocalDofVectorType& dofs)
       {
-        std::cerr << "ERROR: wrong code generated for VectorialBaseFunctionSet::axpyRanges" << std::endl;
+        std::cerr << "ERROR: wrong code generated for VectorialBaseFunctionSet::axpyRanges <"
+                  << dimRange << " , " << numRows << " , " << numCols << " >!" << std::endl;
         abort();
       }
     };
@@ -670,7 +685,8 @@ namespace Dune
 #ifndef USE_BASEFUNCTIONSET_CODEGEN
         BaseFunctionSet::axpyRanges( quad, rangeStorage, rangeFactors, dofs, numRows, numCols );
 #else 
-        std::cerr << "ERROR: wrong code generated for VectorialBaseFunctionSet::evaluateRanges" << std::endl;
+        std::cerr << "ERROR: wrong code generated for VectorialBaseFunctionSet::axpyRanges <"
+                  << dimRange << " , " << numRows << " , " << numCols << " >!" << std::endl;
         abort();
 #endif
       }
