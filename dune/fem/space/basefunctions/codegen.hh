@@ -7,6 +7,7 @@
 #include <fstream>
 #include <sstream>
 #include <vector>
+#include <set>
 
 #include <dune/common/exceptions.hh>
 
