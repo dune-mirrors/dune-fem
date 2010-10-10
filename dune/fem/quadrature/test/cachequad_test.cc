@@ -38,16 +38,19 @@ namespace Dune {
     codim1UGTest();
 
 #ifdef ENABLE_ALUGRID 
-    // check ALUSimplexGrid<3,3> 
+    // check ALUCubeGrid<3,3> 
     codim1ALUGridTest( (ALUCubeGrid<3,3> *) 0 );
 
     // check ALUSimplexGrid<3,3> 
     codim1ALUGridTest( (ALUSimplexGrid<3,3> *) 0 );
 
+    // check ALUCubeGrid<2,2> 
+    codim1ALUGridTest( (ALUCubeGrid<2,2> *) 0 );
+
     // check ALUSimplexGrid<2,2> 
     codim1ALUGridTest( (ALUSimplexGrid<2,2> *) 0 );
 
-    // check ALUSimplexGrid<2,2> 
+    // check ALUConformGrid<2,2> 
     codim1ALUGridTest( (ALUConformGrid<2,2> *) 0 );
 #endif
     // check YaspGrid
