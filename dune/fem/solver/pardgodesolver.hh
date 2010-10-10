@@ -1,6 +1,8 @@
 #ifndef PARDG_ODE_SOLVER_HH
 #define PARDG_ODE_SOLVER_HH
 
+#error DO NOT USE : odesolver.hh is the right one
+
 // inlcude all used headers before, that they don not appear in DuneODE 
 
 //- system includes 
