@@ -19,10 +19,10 @@ int main ( int argc, char **argv )
   albertaGridFile << "../../../macrogrids/AlbertaGrid/" << ALBERTA_DIM << "dgrid.al";
 #endif
 
-  std::string aluGridHexaFile("../../../macrogrids/ALU3dGrid/cube.hexa");
-  std::string aluGridTetraFile("../../../macrogrids/ALU3dGrid/macro.small");
-  std::string dgf2DGridFile("../../../macrogrids/DGFMacrogrids/examplegrid5.dgf");
-  std::string dgf3DGridFile("../../../macrogrids/DGFMacrogrids/examplegrid6.dgf");
+  std::string aluGridHexaFile("../../../../macrogrids/ALU3dGrid/cube.hexa");
+  std::string aluGridTetraFile("../../../../macrogrids/ALU3dGrid/macro.small");
+  std::string dgf2DGridFile("../../../../macrogrids/DGFMacrogrids/examplegrid5.dgf");
+  std::string dgf3DGridFile("../../../../macrogrids/DGFMacrogrids/examplegrid6.dgf");
 
   Dune::Suite quadSuite("Tests for new quadratures");
   
