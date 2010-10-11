@@ -44,8 +44,10 @@ namespace Dune {
     // check ALUSimplexGrid<3,3> 
     codim1ALUGridTest( (ALUSimplexGrid<3,3> *) 0 );
 
+#ifdef ALUGRID_SURFACE_2D
     // check ALUCubeGrid<2,2> 
     codim1ALUGridTest( (ALUCubeGrid<2,2> *) 0 );
+#endif
 
     // check ALUSimplexGrid<2,2> 
     codim1ALUGridTest( (ALUSimplexGrid<2,2> *) 0 );
