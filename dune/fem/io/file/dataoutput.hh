@@ -61,7 +61,7 @@ namespace Dune
     virtual int outputformat () const
     {
       static const std::string formatTable[]
-        = { "binary", "vtk-cell", "vtk-vertex", "gnuplot" , "sub-vtk-cell"};
+        = { "binary", "vtk-cell", "vtk-vertex", "gnuplot" , "sub-vtk-cell", "none" };
       int format = Parameter::getEnum( "fem.io.outputformat", formatTable, 1 );
       return format;
     }
@@ -152,7 +152,7 @@ namespace Dune
     class GnuplotOutputer;
 
   protected:  
-    enum OutputFormat { binary = 0, vtk = 1, vtkvtx = 2, gnuplot = 3, subvtk = 4 };
+    enum OutputFormat { binary = 0, vtk = 1, vtkvtx = 2, gnuplot = 3, subvtk = 4 , none = 5 };
 
     //! \brief type of grid used 
     typedef GridImp GridType;
@@ -634,6 +634,7 @@ namespace Dune
       case 2: outputFormat_ = vtkvtx; break;
       case 3: outputFormat_ = gnuplot; break;
       case 4: outputFormat_ = subvtk; break;
+      case 5: outputFormat_ = none; break;
       default:
         DUNE_THROW(NotImplemented,"DataOutput::init: wrong output format");
     }
@@ -669,6 +670,8 @@ namespace Dune
     display(); 
     switch( outputFormat_ )
     {
+    // if no output was chosen just return  
+    case none: return ;
     case binary:   
       writeBinaryData( sequenceStamp );
       break;
