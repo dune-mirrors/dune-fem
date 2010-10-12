@@ -2,6 +2,7 @@
 #define DUNE_FUNCTIONSPACEINTERFACE_HH
 
 #include <dune/common/fvector.hh>
+#include <dune/common/fmatrix.hh>
 
 namespace Dune
 {
