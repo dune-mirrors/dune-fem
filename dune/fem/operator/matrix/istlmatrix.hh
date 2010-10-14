@@ -531,38 +531,21 @@ namespace Dune
           numRows_  = rowMapper_.numDofs(rowEntity);
           numCols_  = colMapper_.numDofs(colEntity);
           matrices_.resize( numRows_ );
-
-          MatrixType& matrix = matrixObj_.matrix();
-          for(int i=0; i<numRows_; ++i)
-          {
-            matrices_[i].resize( numCols_ );
-            const int rowIdx = rowMapper_.mapToGlobal(rowEntity,i);
-
-            // get row 
-            RowType& row = matrix[rowIdx];
-            for(int j=0; j<numCols_; ++j) 
-            {
-              const int colIdx = colMapper_.mapToGlobal(colEntity,j);
-              assert( matrix.exists( rowIdx, colIdx ));
-              matrices_[i][j] = &row[colIdx];
-            }
-          }
         }
-        else 
-        {
-          MatrixType& matrix = matrixObj_.matrix();
-          for(int i=0; i<numRows_; ++i)
-          {
-            const int rowIdx = rowMapper_.mapToGlobal(rowEntity,i);
 
-            // get row 
-            RowType& row = matrix[rowIdx];
-            for(int j=0; j<numCols_; ++j) 
-            {
-              const int colIdx = colMapper_.mapToGlobal(colEntity,j);
-              assert( matrix.exists( rowIdx, colIdx ));
-              matrices_[i][j] = &row[colIdx];
-            }
+        MatrixType& matrix = matrixObj_.matrix();
+        for(int i=0; i<numRows_; ++i)
+        {
+          matrices_[i].resize( numCols_ );
+          const int rowIdx = rowMapper_.mapToGlobal(rowEntity,i);
+
+          // get row 
+          RowType& row = matrix[rowIdx];
+          for(int j=0; j<numCols_; ++j) 
+          {
+            const int colIdx = colMapper_.mapToGlobal(colEntity,j);
+            assert( matrix.exists( rowIdx, colIdx ));
+            matrices_[i][j] = &row[colIdx];
           }
         }
       }
@@ -661,10 +644,15 @@ namespace Dune
             (*matrices_[i][j]) = (DofType) 0;
       }
 
-      //! empty as the little matrices are already sorted
-      void resort() 
+      //! set matrix row to zero
+      void clearRow ( const int localRow )
       {
+        DUNE_THROW( NotImplemented, "LocalMatrix::clearRow not implemented for ISTLMatrixObject." );
       }
+
+      //! empty as the little matrices are already sorted
+      void resort ()
+      {}
     };
 
   public:
