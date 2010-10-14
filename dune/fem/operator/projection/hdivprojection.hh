@@ -720,7 +720,7 @@ private:
     const bool nonSymetric = (cols != rows);
 
     // matrix type 
-    typedef DenseMatrix<double> MatrixType; 
+    typedef Fem::DenseMatrix<double> MatrixType; 
     MatrixType matrix(rows,cols);
     typedef typename MatrixType :: RowType RowType;
     // matrix type 

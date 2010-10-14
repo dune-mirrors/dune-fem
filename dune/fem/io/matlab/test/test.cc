@@ -24,7 +24,7 @@ int main()
   std :: cout << v << std :: endl;
   s << v;
 
-  DenseMatrix<double> m(4,3);
+  Fem::DenseMatrix<double> m(4,3);
   for( unsigned int i =0; i< 4; ++i )
   {
     for( unsigned int j = 0; j < 3; ++j )

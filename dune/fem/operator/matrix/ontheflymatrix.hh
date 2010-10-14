@@ -23,7 +23,7 @@ public:
   typedef OnTheFlyMatrix<T> ThisType;
 
 private:
-  typedef DenseMatrix<T> DenseMatrixType;
+  typedef Fem::DenseMatrix<T> DenseMatrixType;
   typedef SparseRowMatrix< DenseMatrixType * > OnTheFlyMatrixType;
 
   typedef std::stack< DenseMatrixType * > MatrixStackType;
@@ -179,7 +179,7 @@ public:
     typedef ColumnSpaceImp RangeSpaceType;
     typedef typename RowSpaceImp :: RangeFieldType RangeFieldType;
     typedef LocalMatrix<ThisType>  LocalMatrixType;
-    typedef DenseMatrix<RangeFieldType> LittleBlockType;
+    typedef Fem::DenseMatrix<RangeFieldType> LittleBlockType;
   };
 
   template <class MatrixObjectImp> 
@@ -197,7 +197,7 @@ public:
     typedef typename RowSpaceType :: RangeFieldType DofType;
 
     //! type of little blocks 
-    typedef DenseMatrix<DofType> LittleMatrixType;
+    typedef Fem::DenseMatrix<DofType> LittleMatrixType;
 
     //! type of row mapper 
     typedef typename MatrixObjectType :: RowMapperType RowMapperType;

@@ -53,7 +53,7 @@ namespace Dune
     }
 
     template< class T >
-    inline void write ( const DenseMatrix< T > &matrix )
+    inline void write ( const Fem::DenseMatrix< T > &matrix )
     {
       const unsigned int rows = matrix.rows();
       const unsigned int cols = matrix.cols();
@@ -127,8 +127,8 @@ namespace Dune
       const unsigned int numEntities = indexSet.size( 0 );
       const unsigned int numVertices = indexSet.size( dim );
 
-      DenseMatrix< typename GridType :: ctype > points( dimworld, numVertices );
-      DenseMatrix< unsigned int > triangles( dim+1, numEntities );
+      Fem::DenseMatrix< typename GridType::ctype > points( dimworld, numVertices );
+      Fem::DenseMatrix< unsigned int > triangles( dim+1, numEntities );
 
       const IteratorType end = gridPart.template end< 0 >();
       for( IteratorType it = gridPart.template begin< 0 >(); it != end; ++it )
@@ -213,7 +213,7 @@ namespace Dune
     }
 
     template< class T >
-    inline void read ( DenseMatrix< T > &matrix )
+    inline void read ( Fem::DenseMatrix< T > &matrix )
     {
       unsigned int rows ;
       unsigned int cols ;
