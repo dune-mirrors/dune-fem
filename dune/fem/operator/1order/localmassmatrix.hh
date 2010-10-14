@@ -55,7 +55,7 @@ protected:
   //! dummy caller 
   struct NoMassDummyCaller
   {
-    enum { dimRange = DiscreteFunctionSpaceType::DimRange };
+    enum { dimRange = DiscreteFunctionSpaceType::dimRange };
     typedef FieldMatrix<ctype, dimRange, dimRange> MassFactorType;
     // return false since we don;t have a mass term
     bool hasMass() const { return false; }
