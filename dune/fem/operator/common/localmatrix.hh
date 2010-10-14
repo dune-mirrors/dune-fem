@@ -1,11 +1,8 @@
 #ifndef DUNE_LOCALMATRIX_HH
 #define DUNE_LOCALMATRIX_HH
 
-//- system includes 
-//#include <vector> -- whatfor? 
-
 //- Dune includes 
-#include <dune/common/bartonnackmanifcheck.hh>
+#include <dune/fem/misc/bartonnackmaninterface.hh>
 
 namespace Dune 
 { 
@@ -17,15 +14,18 @@ namespace Dune
   /** \brief Interface for local matrix classes. */
   template< class LocalMatrixTraits >
   class LocalMatrixInterface 
+  : public BartonNackmanInterface< LocalMatrixInterface< LocalMatrixTraits >,
+                                   typename LocalMatrixTraits::LocalMatrixType >
   {
+    typedef LocalMatrixInterface< LocalMatrixTraits > ThisType;
+    typedef BartonNackmanInterface< LocalMatrixInterface< LocalMatrixTraits >,
+                                    typename LocalMatrixTraits::LocalMatrixType >
+      BaseType;
+
   public:  
     //! type of traits class 
     typedef LocalMatrixTraits Traits; 
-   
-  private:
-    typedef LocalMatrixInterface< Traits > ThisType;
 
-  public:
     //! type of this interface
     typedef ThisType LocalMatrixInterfaceType;
 
@@ -51,11 +51,13 @@ namespace Dune
 
     /*! type of block (i.e. FieldMatrix for BlockMatrices */
     typedef typename Traits :: LittleBlockType  LittleBlockType;
+
   protected:  
+    using BaseType::asImp;
+
     //! constructor 
-    inline LocalMatrixInterface ()
-    {
-    }
+    LocalMatrixInterface ()
+    {}
    
   public:
     /** \brief initialize the local matrix to entities
@@ -220,19 +222,6 @@ namespace Dune
       CHECK_INTERFACE_IMPLEMENTATION( asImp().rangeBaseFunctionSet() );
       return asImp().rangeBaseFunctionSet();
     }
-    
-  private:
-    //! Barton-Nackman Trick
-    inline LocalMatrixType &asImp ()
-    {
-      return static_cast<LocalMatrixType&> (*this);
-    }
-    
-    //! Barton-Nackman Trick
-    inline const LocalMatrixType& asImp () const
-    {
-      return static_cast<const LocalMatrixType&> (*this);
-    }
   };
  
 
@@ -242,14 +231,12 @@ namespace Dune
   class LocalMatrixDefault
   : public LocalMatrixInterface< LocalMatrixTraits >
   {
+    typedef LocalMatrixDefault< LocalMatrixTraits > ThisType;
+    typedef LocalMatrixInterface< LocalMatrixTraits > BaseType;
+
   public:
     typedef LocalMatrixTraits Traits;
 
-  private:
-    typedef LocalMatrixDefault< Traits > ThisType;
-    typedef LocalMatrixInterface< Traits > BaseType;
-
-  public:
     typedef typename BaseType :: DomainSpaceType DomainSpaceType;
     typedef typename BaseType :: RangeSpaceType RangeSpaceType;
 
@@ -365,5 +352,7 @@ namespace Dune
   };
 
 ///@} 
+
 } // end namespace Dune 
-#endif
+
+#endif // #ifndef DUNE_LOCALMATRIX_HH
