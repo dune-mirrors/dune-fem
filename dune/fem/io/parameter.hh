@@ -9,6 +9,8 @@
 
 #include <dune/common/exceptions.hh>
 
+#include <dune/grid/io/file/dgfparser/dgfparser.hh>
+
 #include <dune/fem/misc/validator.hh>
 #include <dune/fem/misc/mpimanager.hh>
 
