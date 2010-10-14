@@ -144,6 +144,8 @@ namespace Dune
       bool used, hasDefault, isDefault;
     };
 
+    struct DGFBlock;
+
     typedef std::map< std::string, Value > ParameterMapType;
 
     Parameter ()
@@ -175,6 +177,7 @@ namespace Dune
     template< class T >
     static bool parse ( const std::string &s, T &value );
 
+    void processDGF ( const std::string &filename );
     void processFile ( const std::string &filename );
     void processIncludes( std::queue< std::string > &includes );
 
@@ -190,6 +193,15 @@ namespace Dune
     static void append ( const std::string &filename )
     {
       instance().processFile( filename );
+    }
+
+    /** \brief add parameters from a file to the container
+     * 
+     * \param[in]  filename  name of the file containing the parameters
+     */
+    static void appendDGF ( const std::string &filename )
+    {
+      instance().processDGF( filename );
     }
 
     /** \brief clear all parameters
@@ -480,6 +492,22 @@ namespace Dune
 
 
 
+  // Parameter::DGFBlock
+  // -------------------
+
+  struct Parameter::DGFBlock
+  : dgf::BasicBlock
+  {
+    DGFBlock ( std::istream &in )
+    : BasicBlock( in, "FemParameter" )
+    {}
+
+    bool advance () { return getnextline(); }
+    std::string getLine () const { return line.str(); }
+  };
+
+
+
   // Private Methods
   // ---------------
 
@@ -685,6 +713,39 @@ namespace Dune
     in >> value >> eof;
     return in.eof();
   }
+
+
+  inline void
+  Parameter::processDGF ( const std::string &filename )
+  {
+    if( verbose() )
+      std::cout << "Parameter: Processing DGF '" << filename << "'..."
+                   << std::endl;
+
+    std::ifstream file( filename.c_str() );
+    if( file.is_open() )
+    {
+      curFileName_ = filename;
+      curLineNumber_ = 0;
+      DGFBlock block( file );
+      if( block.isactive() )
+      {
+        std::queue< std::string > includes;
+        while( block.advance() )
+        {
+          ++curLineNumber_;
+          const std::string line = stripComment( block.getLine() );
+          if( line.size() == 0 )
+            continue;
+          insert( line, includes );
+        }
+        processIncludes( includes );
+      }
+    }
+    else
+      std::cerr << "Warning: Unable to read DGF file '" << filename << "'" << std::endl;
+  }
+
 
   inline void
   Parameter::processFile ( const std::string &filename )
