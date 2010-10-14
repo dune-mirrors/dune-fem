@@ -1,3 +1,6 @@
+#ifndef DUNE_FEM_QUAD_TEST_HH
+#define DUNE_FEM_QUAD_TEST_HH
+
 #include "../../misc/test.hh"
 
 #include "../quadrature.hh"
@@ -53,3 +56,5 @@ namespace Dune {
   };
 
 }
+
+#endif
