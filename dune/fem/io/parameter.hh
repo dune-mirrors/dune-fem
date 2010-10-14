@@ -727,20 +727,23 @@ namespace Dune
     {
       curFileName_ = filename;
       curLineNumber_ = 0;
-      DGFBlock block( file );
-      if( block.isactive() )
+      std::queue< std::string > includes;
+      if( DuneGridFormatParser::isDuneGridFormat( file ) )
       {
-        std::queue< std::string > includes;
-        while( block.advance() )
+        DGFBlock block( file );
+        if( block.isactive() )
         {
-          ++curLineNumber_;
-          const std::string line = stripComment( block.getLine() );
-          if( line.size() == 0 )
-            continue;
-          insert( line, includes );
+          while( block.advance() )
+          {
+            ++curLineNumber_;
+            const std::string line = stripComment( block.getLine() );
+            if( line.size() == 0 )
+              continue;
+            insert( line, includes );
+          }
         }
-        processIncludes( includes );
       }
+      processIncludes( includes );
     }
     else
       std::cerr << "Warning: Unable to read DGF file '" << filename << "'" << std::endl;
