@@ -7,6 +7,7 @@ common_HEADERS = adaptmanager.hh \
      commoperations.hh \
      communicationmanager.hh \
      datacollector.hh \
+     defaultdatahandle.hh \
      discretefunctionspace.hh \
      dofmanager.hh \
      dofmapper.hh \
