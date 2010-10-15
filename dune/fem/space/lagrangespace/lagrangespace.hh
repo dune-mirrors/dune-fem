@@ -15,7 +15,7 @@
 #include <dune/fem/space/basefunctions/basefunctionstorage.hh>
 #include <dune/fem/space/basefunctions/basefunctionsets.hh>
 #include <dune/fem/space/basefunctions/basefunctionproxy.hh>
-#include <dune/fem/space/common/defaultdatahandle.hh>
+#include <dune/fem/space/common/defaultcommhandler.hh>
 
 //- local includes 
 #include "basefunctions.hh"

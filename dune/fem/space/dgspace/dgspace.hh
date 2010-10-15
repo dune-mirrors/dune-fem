@@ -24,7 +24,7 @@
 
 #include <dune/fem/space/dgspace/dgbasefunctions.hh>
 #include <dune/fem/space/dgspace/legendredgbasefunctions.hh>
-#include <dune/fem/space/dgspace/dgdatahandle.hh>
+#include <dune/fem/space/common/defaultcommhandler.hh>
 
 namespace Dune
 {
@@ -340,7 +340,7 @@ namespace Dune
     struct CommDataHandle
     {
       //! type of data handle 
-      typedef DGCommunicationHandler<DiscreteFunctionImp, OperationImp> Type;
+      typedef DefaultCommunicationHandler<DiscreteFunctionImp, OperationImp> Type;
       //! type of operation to perform on scatter 
       typedef OperationImp OperationType;
     };
@@ -508,7 +508,7 @@ namespace Dune
     struct CommDataHandle
     {
       //! type of data handle 
-      typedef DGCommunicationHandler<DiscreteFunctionImp,OperationImp> Type;
+      typedef DefaultCommunicationHandler<DiscreteFunctionImp,OperationImp> Type;
       //! type of operation to perform on scatter 
       typedef OperationImp OperationType;
     };
