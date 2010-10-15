@@ -20,8 +20,8 @@ namespace Dune
     typedef G Grid;
 
     typedef typename Grid::ctype ctype;
-    static const int dimensionworld = Grid::dimensionworld;
-    typedef FieldVector< ctype, dimensionworld > DomainVector;
+    static const int dimension = Grid::dimension;
+    typedef FieldVector< ctype, dimension > DomainVector;
 
     typedef typename Grid::template Codim< 0 >::Entity Entity;
 
@@ -54,8 +54,8 @@ namespace Dune
       const Entity &father = fatherFunction.entity();
       const Entity &son = sonFunction.entity();
 
-      const GenericReferenceElement< ctype, dimensionworld > &refSon
-        = GenericReferenceElements< ctype, dimensionworld >::general( son.type() );
+      const GenericReferenceElement< ctype, dimension > &refSon
+        = GenericReferenceElements< ctype, dimension >::general( son.type() );
 
       const LagrangePointSet &pointSet = lagrangePointSet( father );
       const LocalGeometry &geometryInFather = son.geometryInFather();
