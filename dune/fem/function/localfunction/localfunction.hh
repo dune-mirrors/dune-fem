@@ -273,7 +273,7 @@ namespace Dune
      *  \param[out]  ret           value of the function in the given point
      */
     template< int diffOrder, class PointType >
-    void evaluate ( const FieldVector< deriType, diffOrder > &diffVariable,
+    void evaluate ( const FieldVector< int, diffOrder > &diffVariable,
                     const PointType &x, RangeType &ret ) const
     {
       asImp().evaluate( diffVariable, x, ret );
@@ -468,9 +468,9 @@ namespace Dune
     template< class T >
     void axpy ( const RangeFieldType s, const LocalFunction< T > &lf );
 
-    /** \copydoc Dune::LocalFunction::evaluate(const FieldVector<deriType,diffOrder> &diffVariable,const PointType &x,RangeType &ret) const */
+    /** \copydoc Dune::LocalFunction::evaluate(const FieldVector<int,diffOrder> &diffVariable,const PointType &x,RangeType &ret) const */
     template< int diffOrder, class PointType >
-    void evaluate ( const FieldVector< deriType, diffOrder > &diffVariable,
+    void evaluate ( const FieldVector< int, diffOrder > &diffVariable,
                     const PointType &x, RangeType &ret ) const;
 
     /** \copydoc Dune::LocalFunction::evaluate(const PointType &x,RangeType &ret) const */
@@ -572,7 +572,7 @@ namespace Dune
   template< class DiscreteFunctionSpace, class LocalFunctionImp >
   template< int diffOrder, class PointType >
   inline void LocalFunctionDefault< DiscreteFunctionSpace, LocalFunctionImp >
-    ::evaluate ( const FieldVector< deriType, diffOrder > &diffVariable,
+    ::evaluate ( const FieldVector< int, diffOrder > &diffVariable,
                  const PointType &x, RangeType &ret ) const
   {
     asImp().baseFunctionSet().evaluateAll( diffVariable, x, asImp(), ret);

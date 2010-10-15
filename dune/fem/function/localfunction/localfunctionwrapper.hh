@@ -13,8 +13,6 @@ namespace Dune
 
   template< class DFTraits >
   class DiscreteFunctionDefault;
-//  template< class DiscreteFunctionSpaceType, class LocalFunctionImp >
-//  class LocalFunctionDefault;
 
   template< class LocalFunctionStorage >
   class LocalFunctionWrapper;
