@@ -215,19 +215,19 @@ namespace Dune
 
     ~DGBaseFunction() {}
 
-    virtual void evaluate(const FieldVector<deriType, 0>& diffVariable,
+    virtual void evaluate(const FieldVector<int, 0>& diffVariable,
                           const DomainType& x, RangeType& phi) const 
     {
       phi = this->eval_line(x);
     }
     
-    virtual void evaluate(const FieldVector<deriType, 1>& diffVariable,
+    virtual void evaluate(const FieldVector<int, 1>& diffVariable,
                           const DomainType& x, RangeType& phi) const 
     {
       phi = this->grad_line(diffVariable[0], x);
     }
 
-    virtual void evaluate(const FieldVector<deriType, 2>&diffVariable,
+    virtual void evaluate(const FieldVector<int, 2>&diffVariable,
                           const DomainType& x, RangeType& phi) const 
     {
       DUNE_THROW(NotImplemented,"hessian not implemented!");
@@ -264,18 +264,18 @@ namespace Dune
 
     ~DGBaseFunction() {}
 
-    virtual void evaluate(const FieldVector<deriType, 0>& diffVariable,
+    virtual void evaluate(const FieldVector<int, 0>& diffVariable,
                           const DomainType& x, RangeType& phi) const {
       phi = this->eval_triangle_2d(x);
     }
     
-    virtual void evaluate(const FieldVector<deriType, 1>& diffVariable,
+    virtual void evaluate(const FieldVector<int, 1>& diffVariable,
                           const DomainType& x, RangeType& phi) const 
     {
       phi = this->grad_triangle_2d(diffVariable[0], x);
     }
 
-    virtual void evaluate(const FieldVector<deriType, 2>&diffVariable,
+    virtual void evaluate(const FieldVector<int, 2>&diffVariable,
                           const DomainType& x, RangeType& phi) const 
     {
       int c=diffVariable[0]+diffVariable[1];
@@ -312,19 +312,19 @@ namespace Dune
 
     ~DGBaseFunction() {}
 
-    virtual void evaluate(const FieldVector<deriType, 0>& diffVariable,
+    virtual void evaluate(const FieldVector<int, 0>& diffVariable,
                           const DomainType& x, RangeType& phi) const 
     {
       phi = this->eval_quadrilateral_2d(x);
     }
     
-    virtual void evaluate(const FieldVector<deriType, 1>& diffVariable,
+    virtual void evaluate(const FieldVector<int, 1>& diffVariable,
                           const DomainType& x, RangeType& phi) const 
     {
       phi = this->grad_quadrilateral_2d(diffVariable[0], x);
     }
 
-    virtual void evaluate(const FieldVector<deriType, 2>&diffVariable,
+    virtual void evaluate(const FieldVector<int, 2>&diffVariable,
                           const DomainType& x, RangeType& phi) const 
     {
       DUNE_THROW(NotImplemented,"hessian not implemented!");
@@ -358,18 +358,18 @@ namespace Dune
 
     ~DGBaseFunction() {}
 
-    virtual void evaluate(const FieldVector<deriType, 0>& diffVariable,
+    virtual void evaluate(const FieldVector<int, 0>& diffVariable,
                           const DomainType& x, RangeType& phi) const {
       phi = this->eval_tetrahedron_3d(x);
     }
     
-    virtual void evaluate(const FieldVector<deriType, 1>& diffVariable,
+    virtual void evaluate(const FieldVector<int, 1>& diffVariable,
                           const DomainType& x, RangeType& phi) const 
     {
       phi = this->grad_tetrahedron_3d(diffVariable[0], x);
     }
 
-    virtual void evaluate(const FieldVector<deriType, 2>&diffVariable,
+    virtual void evaluate(const FieldVector<int, 2>&diffVariable,
                           const DomainType& x, RangeType& phi) const 
     {
       DUNE_THROW(NotImplemented,"hessian not implemented!");
@@ -404,19 +404,19 @@ namespace Dune
 
     ~DGBaseFunction() {}
 
-    virtual void evaluate(const FieldVector<deriType, 0>& diffVariable,
+    virtual void evaluate(const FieldVector<int, 0>& diffVariable,
                           const DomainType& x, RangeType& phi) const 
     {
       phi = this->eval_pyramid_3d(x);
     }
     
-    virtual void evaluate(const FieldVector<deriType, 1>& diffVariable,
+    virtual void evaluate(const FieldVector<int, 1>& diffVariable,
                           const DomainType& x, RangeType& phi) const 
     {
       phi = this->grad_pyramid_3d(diffVariable[0], x);
     }
 
-    virtual void evaluate(const FieldVector<deriType, 2>&diffVariable,
+    virtual void evaluate(const FieldVector<int, 2>&diffVariable,
                           const DomainType& x, RangeType& phi) const {
       DUNE_THROW(NotImplemented,"hessian not implemented!");
     }
@@ -450,18 +450,18 @@ namespace Dune
 
     ~DGBaseFunction() {}
 
-    virtual void evaluate(const FieldVector<deriType, 0>& diffVariable,
+    virtual void evaluate(const FieldVector<int, 0>& diffVariable,
                           const DomainType& x, RangeType& phi) const {
       phi = this->eval_prism_3d(x);
     }
     
-    virtual void evaluate(const FieldVector<deriType, 1>& diffVariable,
+    virtual void evaluate(const FieldVector<int, 1>& diffVariable,
                           const DomainType& x, RangeType& phi) const 
     {
       phi = this->grad_prism_3d(diffVariable[0], x );
     }
 
-    virtual void evaluate(const FieldVector<deriType, 2>&diffVariable,
+    virtual void evaluate(const FieldVector<int, 2>&diffVariable,
                           const DomainType& x, RangeType& phi) const {
       DUNE_THROW(NotImplemented,"hessian not implemented!");
     }
@@ -495,19 +495,19 @@ namespace Dune
 
     ~DGBaseFunction() {}
 
-    virtual void evaluate(const FieldVector<deriType, 0>& diffVariable,
+    virtual void evaluate(const FieldVector<int, 0>& diffVariable,
                           const DomainType& x, RangeType& phi) const 
     {
       phi = this->eval_hexahedron_3d(x);
     }
     
-    virtual void evaluate(const FieldVector<deriType, 1>& diffVariable,
+    virtual void evaluate(const FieldVector<int, 1>& diffVariable,
                           const DomainType& x, RangeType& phi) const 
     {
       phi = this->grad_hexahedron_3d(diffVariable[0], x);
     }
 
-    virtual void evaluate(const FieldVector<deriType, 2>&diffVariable,
+    virtual void evaluate(const FieldVector<int, 2>&diffVariable,
                           const DomainType& x, RangeType& phi) const {
       assert(false); // Not implemented
     }

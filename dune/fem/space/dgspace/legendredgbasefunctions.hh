@@ -91,20 +91,20 @@ template<int dim,int i,int PolOrd>
     
     ~LegendreDGBaseFunction() {}
 
-    virtual void evaluate(const FieldVector<deriType, 0>& diffVariable,
+    virtual void evaluate(const FieldVector<int, 0>& diffVariable,
                           const DomainType& x, RangeType& phi) const {
       phi = Eval<dim,dim,polOrd>::apply(lp,x,baseNum_);
    
     }
 
-    virtual void evaluate(const FieldVector<deriType, 1>& diffVariable,
+    virtual void evaluate(const FieldVector<int, 1>& diffVariable,
                           const DomainType& x, RangeType& phi) const 
     {
       phi = EvalD<dim,dim,polOrd>::apply(lp,x,diffVariable[0],baseNum_);
     
     }
 
-    virtual void evaluate(const FieldVector<deriType, 2>&diffVariable,
+    virtual void evaluate(const FieldVector<int, 2>&diffVariable,
                           const DomainType& x, RangeType& phi) const {
       assert(false); // Not implemented
       abort();

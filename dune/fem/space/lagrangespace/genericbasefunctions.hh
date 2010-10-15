@@ -53,7 +53,7 @@ namespace Dune
 
     template< class LocalDofCoordinateType, class LocalCoordinateType >
     inline static void evaluate ( LocalDofCoordinateType &dofCoordinate,
-                                  const FieldVector< deriType, 0 > &diffVariable,
+                                  const FieldVector< int, 0 > &diffVariable,
                                   DomainFieldType factor,
                                   const LocalCoordinateType &x,
                                   RangeType &phi )
@@ -63,7 +63,7 @@ namespace Dune
 
     template< class LocalDofCoordinateType, class LocalCoordinateType >
     inline static void evaluate ( LocalDofCoordinateType &dofCoordinate,
-                                  const FieldVector< deriType, 1 > &diffVariable,
+                                  const FieldVector< int, 1 > &diffVariable,
                                   DomainFieldType factor,
                                   const LocalCoordinateType &x,
                                   RangeType &phi )
@@ -73,7 +73,7 @@ namespace Dune
     
     template< class LocalDofCoordinateType, class LocalCoordinateType >
     inline static void evaluate ( LocalDofCoordinateType &dofCoordinate,
-                                  const FieldVector< deriType, 2 > &diffVariable,
+                                  const FieldVector< int, 2 > &diffVariable,
                                   DomainFieldType factor,
                                   const LocalCoordinateType &x,
                                   RangeType &phi )
@@ -83,7 +83,7 @@ namespace Dune
 
     template< int diffOrder >
     inline void
-    evaluate ( const FieldVector< deriType, diffOrder > &diffVariable,
+    evaluate ( const FieldVector< int, diffOrder > &diffVariable,
                const DomainType &x,
                RangeType &phi ) const
     {
@@ -135,7 +135,7 @@ namespace Dune
               class LocalCoordinateType,
               unsigned int porder >
     inline static void evaluate ( LocalDofCoordinateType &dofCoordinate,
-                                  const FieldVector< deriType, 0 > &diffVariable,
+                                  const FieldVector< int, 0 > &diffVariable,
                                   DomainFieldType factor,
                                   const LocalCoordinateType &x,
                                   RangeType &phi )
@@ -146,7 +146,7 @@ namespace Dune
     template< class LocalDofCoordinateType,
               class LocalCoordinateType >
     inline static void evaluate ( LocalDofCoordinateType &dofCoordinate,
-                                  const FieldVector< deriType, 0 > &diffVariable,
+                                  const FieldVector< int, 0 > &diffVariable,
                                   DomainFieldType factor,
                                   const LocalCoordinateType &x,
                                   RangeType &phi )
@@ -161,7 +161,7 @@ namespace Dune
               class LocalCoordinateType,
               unsigned int porder >
     inline static void evaluate ( LocalDofCoordinateType &dofCoordinate,
-                                  const FieldVector< deriType, 1 > &diffVariable,
+                                  const FieldVector< int, 1 > &diffVariable,
                                   DomainFieldType factor,
                                   const LocalCoordinateType &x,
                                   RangeType &phi )
@@ -172,7 +172,7 @@ namespace Dune
     template< class LocalDofCoordinateType,
               class LocalCoordinateType >
     inline static void evaluate ( LocalDofCoordinateType &dofCoordinate,
-                                  const FieldVector< deriType, 1 > &diffVariable,
+                                  const FieldVector< int, 1 > &diffVariable,
                                   DomainFieldType factor,
                                   const LocalCoordinateType &x,
                                   RangeType &phi )
@@ -187,7 +187,7 @@ namespace Dune
               class LocalCoordinateType,
               unsigned int porder >
     inline static void evaluate ( LocalDofCoordinateType &dofCoordinate,
-                                  const FieldVector< deriType, 2 > &diffVariable,
+                                  const FieldVector< int, 2 > &diffVariable,
                                   DomainFieldType factor,
                                   const LocalCoordinateType &x,
                                   RangeType &phi )
@@ -198,7 +198,7 @@ namespace Dune
     template< class LocalDofCoordinateType,
               class LocalCoordinateType >
     inline static void evaluate ( LocalDofCoordinateType &dofCoordinate,
-                                  const FieldVector< deriType, 2 > &diffVariable,
+                                  const FieldVector< int, 2 > &diffVariable,
                                   DomainFieldType factor,
                                   const LocalCoordinateType &x,
                                   RangeType &phi )
@@ -211,7 +211,7 @@ namespace Dune
 
     template< int diffOrder >
     inline void
-    evaluate ( const FieldVector< deriType, diffOrder > &diffVariable,
+    evaluate ( const FieldVector< int, diffOrder > &diffVariable,
                const DomainType &x,
                RangeType &phi ) const
     {
@@ -271,7 +271,7 @@ namespace Dune
               class LocalCoordinateType,
               unsigned int porder >
     inline static void evaluate ( LocalDofCoordinateType &dofCoordinate,
-                                  const FieldVector< deriType, 0 > &diffVariable,
+                                  const FieldVector< int, 0 > &diffVariable,
                                   DomainFieldType factor,
                                   const LocalCoordinateType &x,
                                   RangeType &phi )
@@ -312,7 +312,7 @@ namespace Dune
     template< class LocalDofCoordinateType,
               class LocalCoordinateType >
     inline static void evaluate ( LocalDofCoordinateType &dofCoordinate,
-                                  const FieldVector< deriType, 0 > &diffVariable,
+                                  const FieldVector< int, 0 > &diffVariable,
                                   DomainFieldType factor,
                                   const LocalCoordinateType &x,
                                   RangeType &phi )
@@ -326,7 +326,7 @@ namespace Dune
               class LocalCoordinateType,
               unsigned int porder >
     inline static void evaluate ( LocalDofCoordinateType &dofCoordinate,
-                                  const FieldVector< deriType, 1 > &diffVariable,
+                                  const FieldVector< int, 1 > &diffVariable,
                                   DomainFieldType factor,
                                   const LocalCoordinateType &x,
                                   RangeType &phi )
@@ -335,7 +335,7 @@ namespace Dune
       const DomainFieldType myfactor = porder / divisor;
       const RangeFieldType myshift = (porder - polynomialOrder) / divisor;
 
-      FieldVector< deriType, 0 > dv;
+      FieldVector< int, 0 > dv;
 
       if( LagrangePointType :: useDimReduction( dofCoordinate ) )
       {
@@ -381,7 +381,7 @@ namespace Dune
     template< class LocalDofCoordinateType,
               class LocalCoordinateType >
     inline static void evaluate ( LocalDofCoordinateType &dofCoordinate,
-                                  const FieldVector< deriType, 1 > &diffVariable,
+                                  const FieldVector< int, 1 > &diffVariable,
                                   DomainFieldType factor,
                                   const LocalCoordinateType &x,
                                   RangeType &phi )
@@ -395,7 +395,7 @@ namespace Dune
               class LocalCoordinateType,
               unsigned int porder >
     inline static void evaluate ( LocalDofCoordinateType &dofCoordinate,
-                                  const FieldVector< deriType, 2 > &diffVariable,
+                                  const FieldVector< int, 2 > &diffVariable,
                                   DomainFieldType factor,
                                   const LocalCoordinateType &x,
                                   RangeType &phi )
@@ -404,8 +404,8 @@ namespace Dune
       const DomainFieldType myfactor = porder / divisor;
       const RangeFieldType myshift = (porder - polynomialOrder) / divisor;
 
-      FieldVector< deriType, 1 > dv0( diffVariable[ 0 ] );
-      FieldVector< deriType, 1 > dv1( diffVariable[ 1 ] );
+      FieldVector< int, 1 > dv0( diffVariable[ 0 ] );
+      FieldVector< int, 1 > dv1( diffVariable[ 1 ] );
 
       if( LagrangePointType :: useDimReduction( dofCoordinate ) )
       {
@@ -460,7 +460,7 @@ namespace Dune
     template< class LocalDofCoordinateType,
               class LocalCoordinateType >
     inline static void evaluate ( LocalDofCoordinateType &dofCoordinate,
-                                  const FieldVector< deriType, 2 > &diffVariable,
+                                  const FieldVector< int, 2 > &diffVariable,
                                   DomainFieldType factor,
                                   const LocalCoordinateType &x,
                                   RangeType &phi )
@@ -473,7 +473,7 @@ namespace Dune
 
     template< int diffOrder >
     inline void
-    evaluate ( const FieldVector< deriType, diffOrder > &diffVariable,
+    evaluate ( const FieldVector< int, diffOrder > &diffVariable,
                const DomainType &x,
                RangeType &phi ) const
     {
@@ -535,7 +535,7 @@ namespace Dune
 
     template< class LocalDofCoordinateType, class LocalCoordinateType >
     inline static void evaluate ( LocalDofCoordinateType &dofCoordinate,
-                                  const FieldVector< deriType, 0 > &diffVariable,
+                                  const FieldVector< int, 0 > &diffVariable,
                                   DomainFieldType factor,
                                   const LocalCoordinateType &x,
                                   RangeType &phi )
@@ -550,12 +550,12 @@ namespace Dune
     
     template< class LocalDofCoordinateType, class LocalCoordinateType >
     inline static void evaluate ( LocalDofCoordinateType &dofCoordinate,
-                                  const FieldVector< deriType, 1 > &diffVariable,
+                                  const FieldVector< int, 1 > &diffVariable,
                                   DomainFieldType factor,
                                   const LocalCoordinateType &x,
                                   RangeType &phi )
     {
-      FieldVector< deriType, 0 > dv;
+      FieldVector< int, 0 > dv;
       RangeType psi1, psi2;
       
       FirstReductionType :: evaluate
@@ -573,14 +573,14 @@ namespace Dune
     
     template< class LocalDofCoordinateType, class LocalCoordinateType >
     inline static void evaluate ( LocalDofCoordinateType &dofCoordinate,
-                                  const FieldVector< deriType, 2 > &diffVariable,
+                                  const FieldVector< int, 2 > &diffVariable,
                                   DomainFieldType factor,
                                   const LocalCoordinateType &x,
                                   RangeType &phi )
     {
-      FieldVector< deriType, 0 > dv;
-      FieldVector< deriType, 1 > dv0( diffVariable[ 0 ] );
-      FieldVector< deriType, 1 > dv1( diffVariable[ 1 ] );
+      FieldVector< int, 0 > dv;
+      FieldVector< int, 1 > dv0( diffVariable[ 0 ] );
+      FieldVector< int, 1 > dv1( diffVariable[ 1 ] );
       RangeType psi1, psi2;
       
       FirstReductionType :: evaluate
@@ -610,7 +610,7 @@ namespace Dune
 
     template< int diffOrder >
     inline void
-    evaluate ( const FieldVector< deriType, diffOrder > &diffVariable,
+    evaluate ( const FieldVector< int, diffOrder > &diffVariable,
                const DomainType &x,
                RangeType &phi ) const
     {

@@ -114,10 +114,10 @@ namespace Dune
       entity_( &entity )
     {}
     
-    /** \copydoc Dune::BaseFunctionSetInterface::evaluate(const int baseFunction,const FieldVector<deriType,diffOrd> &diffVariable,const PointType &x,RangeType &phi) const */
+    /** \copydoc Dune::BaseFunctionSetInterface::evaluate(const int baseFunction,const FieldVector<int,diffOrd> &diffVariable,const PointType &x,RangeType &phi) const */
     template< int diffOrd, class PointType >
     void evaluate ( const int baseFunction,
-                    const FieldVector< deriType, diffOrd > &diffVariable,
+                    const FieldVector< int, diffOrd > &diffVariable,
                     const PointType &x,
                     RangeType &phi ) const;
 

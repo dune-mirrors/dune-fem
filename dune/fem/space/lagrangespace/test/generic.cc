@@ -130,7 +130,7 @@ int main( int argc, char **argv )
       point.local( x );
 
       RangeType phi;
-      FieldVector< deriType, 0 > derivative;
+      FieldVector< int, 0 > derivative;
       baseFunction.evaluate( derivative, x, phi );
       
       double expected = ((i == j) ? 1.0 : 0.0);
@@ -162,8 +162,8 @@ int main( int argc, char **argv )
       std :: cout << "Lagrange point " << i << ": " << x << std :: endl;
     #endif
 
-    for( deriType k = 0; k < DIMENSION; ++k ) {
-      FieldVector< deriType, 1 > derivative( k );
+    for( int k = 0; k < DIMENSION; ++k ) {
+      FieldVector< int, 1 > derivative( k );
 
       RangeType sum( 0 );
       for( unsigned int j = 0; j < numBaseFunctions; ++j )

@@ -20,7 +20,7 @@ namespace Dune
   template< class FunctionSpace, GeometryType :: BasicType type,
             unsigned int dim, unsigned int pOrder >
   void LagrangeBaseFunction< FunctionSpace, type, dim, pOrder >
-    :: evaluate ( const FieldVector< deriType, 0 > &diffVariable,
+    :: evaluate ( const FieldVector< int, 0 > &diffVariable,
                   const DomainType &x,
                   RangeType &phi ) const
   {
@@ -31,7 +31,7 @@ namespace Dune
   template< class FunctionSpace, GeometryType :: BasicType type,
             unsigned int dim, unsigned int pOrder >
   void LagrangeBaseFunction< FunctionSpace, type, dim, pOrder >
-    :: evaluate ( const FieldVector< deriType, 1 > &diffVariable,
+    :: evaluate ( const FieldVector< int, 1 > &diffVariable,
                   const DomainType &x,
                   RangeType &phi ) const
   {
@@ -42,7 +42,7 @@ namespace Dune
   template< class FunctionSpace, GeometryType :: BasicType type,
             unsigned int dim, unsigned int pOrder >
   void LagrangeBaseFunction< FunctionSpace, type, dim, pOrder >
-    :: evaluate ( const FieldVector< deriType, 2 > &diffVariable,
+    :: evaluate ( const FieldVector< int, 2 > &diffVariable,
                   const DomainType &x,
                   RangeType &phi ) const
   {

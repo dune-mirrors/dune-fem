@@ -10,7 +10,7 @@ namespace Dune
   template< int diffOrd, class PointType >
   inline void ReducedBasisBaseFunctionSet< BaseFunction >
     ::evaluate ( const int baseFunction,
-                 const FieldVector< deriType, diffOrd > &diffVariable,
+                 const FieldVector< int, diffOrd > &diffVariable,
                  const PointType &x,
                  RangeType &phi ) const
   {

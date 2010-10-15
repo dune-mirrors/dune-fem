@@ -33,15 +33,15 @@ namespace Dune
   public:
     LagrangeBaseFunction( unsigned int baseNum );
 
-    virtual void evaluate ( const FieldVector< deriType, 0 > &diffVariable,
+    virtual void evaluate ( const FieldVector< int, 0 > &diffVariable,
                             const DomainType &x,
                             RangeType &phi ) const;
     
-    virtual void evaluate ( const FieldVector< deriType, 1 > &diffVariable,
+    virtual void evaluate ( const FieldVector< int, 1 > &diffVariable,
                             const DomainType &x,
                             RangeType &phi ) const;
 
-    virtual void evaluate ( const FieldVector< deriType, 2 > &diffVariable,
+    virtual void evaluate ( const FieldVector< int, 2 > &diffVariable,
                             const DomainType &x,
                             RangeType &phi ) const;
 
