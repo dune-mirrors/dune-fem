@@ -569,7 +569,6 @@ namespace Dune
     DiscreteFunctionDefault ( const std::string &name,
                               const DiscreteFunctionSpaceType &dfSpace,
                               const LocalFunctionFactoryType &lfFactory );
-
   private:
     // prohibit copying and assignment
     inline DiscreteFunctionDefault ( const ThisType & );
@@ -644,16 +643,16 @@ namespace Dune
      *
      *  The default implementation just does
      *  \code
-     *  FieldVector< deriType, 0 > diffVariable;
+     *  FieldVector< int, 0 > diffVariable;
      *  asImp().evaluate( diffVariable, x, ret );
      *  \endcode
      */
     inline void evaluate ( const DomainType &x,
                            RangeType &ret ) const;
 
-    /** \copydoc Dune::Fem::Function::evaluate(const FieldVector<deriType,diffOrder> &diffVariable,const DomainType &x,RangeType &ret) const */
+    /** \copydoc Dune::Fem::Function::evaluate(const FieldVector<int,diffOrder> &diffVariable,const DomainType &x,RangeType &ret) const */
     template< int diffOrder >
-    inline void evaluate ( const FieldVector< deriType, diffOrder > &diffVariable,
+    inline void evaluate ( const FieldVector< int, diffOrder > &diffVariable,
                            const DomainType &x,
                            RangeType &ret ) const;
 

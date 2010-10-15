@@ -5,7 +5,6 @@
 
 #include <dune/grid/common/genericreferenceelements.hh>
 
-#include <dune/fem/io/file/asciiparser.hh>
 #include <dune/fem/io/streams/streams.hh>
 
 #include "discretefunction.hh"
@@ -25,9 +24,9 @@ namespace Dune
     lfStorage_( lfFactory ),
     name_( name ),
     scalarProduct_( dfSpace )
-  {}
+  {
+  }
 
-  
   template< class Traits >
   inline DiscreteFunctionDefault< Traits >::~DiscreteFunctionDefault ()
   {
@@ -55,7 +54,7 @@ namespace Dune
   DiscreteFunctionDefault< Traits >
     :: localFunction ( const EntityType &entity ) const
   {
-    return lfStorage_.localFunction( entity );
+    return localFunctionStorage().localFunction( entity );
   }
 
 
@@ -65,7 +64,7 @@ namespace Dune
   DiscreteFunctionDefault< Traits >
     :: localFunction ( const EntityType &entity )
   {
-    return lfStorage_.localFunction( entity );
+    return localFunctionStorage().localFunction( entity );
   }
 
 
@@ -186,7 +185,7 @@ namespace Dune
     :: evaluate ( const DomainType &x,
                   RangeType &ret ) const
   {
-    FieldVector< deriType, 0 > diffVariable;
+    FieldVector< int, 0 > diffVariable;
     BaseType :: evaluate( diffVariable, x, ret );
   }
 
@@ -194,7 +193,7 @@ namespace Dune
   template< class Traits >
   template< int diffOrder >
   inline void DiscreteFunctionDefault< Traits >
-    ::evaluate ( const FieldVector< deriType, diffOrder > &diffVariable,
+    ::evaluate ( const FieldVector< int, diffOrder > &diffVariable,
                  const DomainType &x,
                  RangeType &ret ) const
   {
