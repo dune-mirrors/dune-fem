@@ -4,9 +4,7 @@
 #include <iostream>
 #include <vector>
 
-#include <dune/fem/misc/deritype.hh>
-
-#include "vectorspace.hh"
+#include <dune/fem/operator/common/vectorspace.hh>
 
 namespace Dune
 {

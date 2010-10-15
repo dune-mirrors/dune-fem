@@ -7,7 +7,6 @@
 
 #include <dune/fem/version.hh>
 #include <dune/fem/misc/bartonnackmaninterface.hh>
-#include <dune/fem/misc/deritype.hh>
 
 namespace Dune
 {
