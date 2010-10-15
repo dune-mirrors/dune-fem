@@ -10,6 +10,7 @@
 #include <dune/common/fvector.hh>
 #include <dune/fem/io/io.hh>
 #include <dune/fem/io/file/latextablewriter.hh>
+#include <dune/fem/io/parameter.hh>
 
 namespace Dune
 {
@@ -411,7 +412,8 @@ protected:
   std::string toString ( const double &error ) const
   {
     std::ostringstream s;
-    s << "$" << error << "$";
+    // s << "$" << error << "$";
+    s << " " << error << " ";
     return s.str();
   }
 
