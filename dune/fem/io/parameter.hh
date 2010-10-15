@@ -188,6 +188,33 @@ namespace Dune
 #endif
 
   public:
+    /** \brief add parameters from the command line
+     *
+     *  This mehtod adds all parameters (strings containing a colon) in the
+     *  command line to the container. The parameters are then removed from the
+     *  command line.
+     * 
+     * \param[in]  argc  number of arguments (as given to main)
+     * \param[in]  argv  vector of arguments (as given to main)
+     */
+    static void append ( int &argc, char **argv );
+
+    /** \brief add a single parameter to the container
+     *
+     *  \param[in]  key    key of the parameter to add
+     *  \param[in]  value  value of the parameter to add
+     */
+    static void append ( const std::string &key, const std::string &value )
+    {
+      if( key != "paramfile" )
+      {
+        instance().curFileName_ = "program code";
+        instance().insert( key, value );
+      }
+      else
+        instance().processFile( value );
+    }
+
     /** \brief add parameters from a file to the container
      * 
      * \param[in]  filename  name of the file containing the parameters
@@ -197,9 +224,12 @@ namespace Dune
       instance().processFile( filename );
     }
 
-    /** \brief add parameters from a file to the container
+    /** \brief add parameters from a DGF file to the container
+     *
+     *  Parameters can also be read from a DGF file containing a 'FemParameter'
+     *  block.
      * 
-     * \param[in]  filename  name of the file containing the parameters
+     *  \param[in]  filename  name of the DGF file containing the parameters
      */
     static void appendDGF ( const std::string &filename )
     {
@@ -223,17 +253,6 @@ namespace Dune
     }
 #endif
 
-    /** \brief add parameters from the command line
-     *
-     *  This mehtod adds all parameters (strings containing a colon) in the
-     *  command line to the container. The parameters are then removed from the
-     *  command line.
-     * 
-     * \param[in]  argc  number of arguments (as given to main)
-     * \param[in]  argv  vector of arguments (as given to main)
-     */
-    static void append ( int &argc, char **argv );
-    
     /** \brief find out, whether a parameter is defined in the container
      *
      *  \param[in]   key    name of the parameter to check
