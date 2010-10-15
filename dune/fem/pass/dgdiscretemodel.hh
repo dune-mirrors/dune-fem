@@ -54,7 +54,7 @@ namespace Dune {
     typedef typename EntityType :: Geometry :: LocalCoordinate  LocalCoordinate;
 
     //! dimRange 
-    enum { dimRange = DiscreteFunctionSpaceType :: DimRange };
+    enum { dimRange = DiscreteFunctionSpaceType::dimRange };
 
     // mass factor type 
     template <class MatrixType> struct ExtractMatrix;
