@@ -135,7 +135,7 @@ namespace Dune
        *  \param[out] ret           value of the derivative in x 
        */    
       template< int diffOrder >
-      void evaluate ( const FieldVector< deriType, diffOrder > &diffVariable,
+      void evaluate ( const FieldVector< int, diffOrder > &diffVariable,
                       const DomainType &x,
                       RangeType &ret ) const
       {
