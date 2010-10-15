@@ -37,20 +37,20 @@ namespace Dune
       assert( (baseNum_ >= 0) && (baseNum_ < dimRange) );
     }
     
-    virtual void evaluate ( const FieldVector<deriType, 0> &diffVariable, 
+    virtual void evaluate ( const FieldVector<int, 0> &diffVariable, 
                             const DomainType & x, RangeType & phi) const 
     {
       phi = 0;
       phi[baseNum_] = 1;
     }
 
-    virtual void evaluate ( const FieldVector<deriType, 1> &diffVariable, 
+    virtual void evaluate ( const FieldVector<int, 1> &diffVariable, 
                             const DomainType & x, RangeType & phi) const 
     {
       phi = 0;
     }
 
-    virtual void evaluate ( const FieldVector<deriType, 2> &diffVariable, 
+    virtual void evaluate ( const FieldVector<int, 2> &diffVariable, 
                             const DomainType & x, RangeType & phi) const 
     {
       phi = 0;
