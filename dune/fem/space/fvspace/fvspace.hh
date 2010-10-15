@@ -16,7 +16,7 @@
 #include <dune/fem/space/mapper/codimensionmapper.hh>
 #include <dune/fem/space/mapper/nonblockmapper.hh>
 
-#include <dune/fem/space/dgspace/dgdatahandle.hh>
+#include <dune/fem/space/common/defaultcommhandler.hh>
 
 // * Note: the dofmanager could be removed from the space altogether now.
 // (Maybe this wouldn't be a clever move, though. In my view of a perfect Dune,
@@ -80,7 +80,7 @@ namespace Dune
     struct CommDataHandle
     {
       //! type of data handle 
-      typedef DGCommunicationHandler< DiscreteFunction, Operation > Type;
+      typedef DefaultCommunicationHandler< DiscreteFunction, Operation > Type;
       //! type of operation to perform on scatter 
       typedef Operation OperationType;
     };
