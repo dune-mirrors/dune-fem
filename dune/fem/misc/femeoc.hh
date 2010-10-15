@@ -8,7 +8,7 @@
 #include <vector>
 
 #include <dune/common/fvector.hh>
-#include <dune/fem/io/file/iointerface.hh>
+#include <dune/fem/io/io.hh>
 #include <dune/fem/io/file/latextablewriter.hh>
 
 namespace Dune
@@ -77,8 +77,10 @@ class FemEoc
   {
     if( MPIManager::rank() == 0 )
     {
-      IOInterface::createPath( path );
-      init( path + "/" + name, descript );
+      if( createDirectory( path ) )
+        init( path + "/" + name, descript );
+      else
+        std::cerr << "Error: Unable to create path '" << path << "'" << std::endl;
     }
   }
 

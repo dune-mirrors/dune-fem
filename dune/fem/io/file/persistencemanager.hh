@@ -343,14 +343,17 @@ namespace Dune
       fileCounter_ = 0;
       lineNo_ = 0;
 
-      IOInterface::createPath(path_);
-      
-      outAsciStream_.open((path_+ myTag()).c_str());  
-      outAsciStream_ << std::scientific;
-      outAsciStream_.precision(16);
-      outAsciStream_ << "Persistent Objects" << std::endl;
-      // write parameters 
-      Parameter::write( path_, "parameter", true );
+      if( createDirectory( path_ ) )
+      {
+        outAsciStream_.open((path_+ myTag()).c_str());  
+        outAsciStream_ << std::scientific;
+        outAsciStream_.precision(16);
+        outAsciStream_ << "Persistent Objects" << std::endl;
+        // write parameters 
+        Parameter::write( path_, "parameter", true );
+      }
+      else
+        std::cerr << "Error: Unable to create '" << path_ << "'" << std::endl;
     }
 
     void startRestore ( const std::string &path )

@@ -19,6 +19,7 @@
 #include <dune/fem/io/parameter.hh>
 
 // binary data io 
+#include <dune/fem/io/io.hh>
 #include <dune/fem/io/file/binarydataio.hh>
 
 // input and output of tuples 
@@ -189,31 +190,10 @@ public:
   }
 
   //! create given path in combination with rank 
-  static void createPath(const std::string& path)
+  static void createPath ( const std::string &path ) DUNE_DEPRECATED
   {
-    // try to open directory 
-    DIR * dir = opendir(path.c_str());
-    // if path does not exists, null pointer is returned
-    if( !dir )
-    {
-      // see <sys/stat.h> for definition 
-      // this stands for mode 755
-      mode_t mode = S_IRWXU|S_IRGRP|S_IXGRP|S_IROTH|S_IXOTH;
-      // try to create dicretory
-      // mkdir returns int < 0 if creation failed 
-      if( mkdir( path.c_str(), mode ) < 0) 
-      {
-        std::cerr << "Failed to create path `" << path << "' !" << std::endl;
-      }
-    }
-    else 
-    {
-      // close dir, if fails number < 0 is returned 
-      if( closedir(dir) < 0 )
-      {
-        std::cerr << "Couldn't close output path! " << std::endl;
-      }
-    }
+    if( !createDirectory( path ) )
+      std::cerr << "Failed to create path `" << path << "'." << std::endl;
   }
   
   //! create given path in combination with rank 
@@ -267,7 +247,8 @@ public:
     if( comm.rank() <= 0 )
     {
       // create directory 
-      createPath( path );
+      if( !createDirectory( path ) )
+        std::cerr << "Failed to create path `" << path << "'." << std::endl;
     }
 
     // wait for all procs to arrive here 
@@ -297,7 +278,8 @@ public:
     path = createPathName( path, comm.rank() );
     
     // create path if not exits 
-    createPath ( path );
+    if( !createDirectory( path ) )
+      std::cerr << "Failed to create path `" << path << "'." << std::endl;
     return path;
   }
   
