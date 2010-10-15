@@ -86,10 +86,10 @@ namespace Dune
       return geometryType_;
     }
  
-    /** \copydoc Dune::BaseFunctionSetInterface::evaluate(const int baseFunction,const FieldVector<deriType,diffOrd> &diffVariable,const PointType &x,RangeType &phi) const */ 
+    /** \copydoc Dune::BaseFunctionSetInterface::evaluate(const int baseFunction,const FieldVector<int,diffOrd> &diffVariable,const PointType &x,RangeType &phi) const */ 
     template< int diffOrd, class PointType >
     void evaluate ( const int baseFunction,
-                    const FieldVector< deriType, diffOrd > &diffVariable,
+                    const FieldVector< int, diffOrd > &diffVariable,
                     const PointType &x,
                     RangeType &phi ) const
     {
@@ -99,7 +99,7 @@ namespace Dune
 
     template< class PointType >
     void evaluate ( const int baseFunction,
-                    const FieldVector< deriType, 0 > &diffVariable,
+                    const FieldVector< int, 0 > &diffVariable,
                     const PointType &x,
                     RangeType &phi ) const
     {
@@ -111,7 +111,7 @@ namespace Dune
 
     template< class PointType >
     void evaluate ( const int baseFunction,
-                    const FieldVector< deriType, 1 > &diffVariable,
+                    const FieldVector< int, 1 > &diffVariable,
                     const PointType &x,
                     RangeType &phi ) const
     {

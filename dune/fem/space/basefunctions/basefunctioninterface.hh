@@ -3,8 +3,6 @@
 
 #include <dune/common/bartonnackmanifcheck.hh>
 
-#include <dune/fem/misc/deritype.hh>
-
 namespace Dune
 {
 
@@ -83,21 +81,21 @@ public:
      \param diffVariable description of the derivative to be returned
      \param phi return value
   */
-  virtual void evaluate ( const FieldVector<deriType, 0> &diffVariable, 
+  virtual void evaluate ( const FieldVector<int, 0> &diffVariable, 
                           const DomainType &x , RangeType &phi) const = 0;
 
   /** diffVariable contain the component of the gradient which is delivered.
       for example gradient of the basefunction x component ==>
       diffVariable[0] == 0, y component ==> diffVariable[0] == 1 ...
   */
-  virtual void evaluate ( const FieldVector<deriType, 1> &diffVariable, 
+  virtual void evaluate ( const FieldVector<int, 1> &diffVariable, 
                           const DomainType & , RangeType &) const = 0; 
 
   /** \brief diffVariable contain the component of the hessian which is delivered.
       for example hessian of the basefunction x component ==>
       diffVariable[0][0] == 0, y component ==> diffVariable[0][1] == 1 ...
   */
-  virtual void evaluate ( const FieldVector<deriType, 2> &diffVariable, 
+  virtual void evaluate ( const FieldVector<int, 2> &diffVariable, 
                           const DomainType & , RangeType &) const = 0;
 
   //! \todo who has this inserted? 

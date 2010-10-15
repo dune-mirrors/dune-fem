@@ -9,8 +9,6 @@
 
 namespace Dune {
 
-  typedef int deriType;
-
   template <class FunctionSpaceImp>
   class BaseFunctionStub : 
     public BaseFunctionInterface<FunctionSpaceImp>
@@ -26,7 +24,7 @@ namespace Dune {
 
     ~BaseFunctionStub() {}
 
-    virtual void evaluate(const FieldVector<deriType, 0>& diffVar,
+    virtual void evaluate(const FieldVector<int, 0>& diffVar,
                           const DomainType& x, RangeType& phi) const 
     {
       phi = 0;
@@ -38,7 +36,7 @@ namespace Dune {
       std::cout << "eval = " << phi << std::endl;
     }
     
-    virtual void evaluate(const FieldVector<deriType, 1>& diffVar,
+    virtual void evaluate(const FieldVector<int, 1>& diffVar,
                           const DomainType& x, RangeType& phi) const 
     {
       switch (diffVar[0]) {
@@ -57,7 +55,7 @@ namespace Dune {
       phi *= baseNum_;
     }
         
-    virtual void evaluate(const FieldVector<deriType, 2>&diffVar,
+    virtual void evaluate(const FieldVector<int, 2>&diffVar,
                           const DomainType& x, RangeType& phi) const {
       assert(false); // Not implemented
     }

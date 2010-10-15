@@ -98,7 +98,7 @@ namespace Dune
      */
     template< int diffOrd, class PointType >
     inline void evaluate ( const int baseFunction,
-                           const FieldVector< deriType, diffOrd > &diffVariable,
+                           const FieldVector< int, diffOrd > &diffVariable,
                            const PointType &x,
                            RangeType &phi ) const
     {
@@ -256,10 +256,10 @@ namespace Dune
   public:
     using BaseType::numBaseFunctions;
 
-    /** \copydoc Dune::BaseFunctionSetInterface::evaluate(const int baseFunction,const FieldVector<deriType,diffOrd> &diffVariable,const PointType &x,RangeType &phi) const */
+    /** \copydoc Dune::BaseFunctionSetInterface::evaluate(const int baseFunction,const FieldVector<int,diffOrd> &diffVariable,const PointType &x,RangeType &phi) const */
     template< int diffOrd, class PointType >
     inline void evaluate ( const int baseFunction,
-                           const FieldVector< deriType, diffOrd > &diffVariable,
+                           const FieldVector< int, diffOrd > &diffVariable,
                            const PointType &x,
                            RangeType &phi ) const
     {
@@ -270,7 +270,7 @@ namespace Dune
     template< class PointType >
     void evaluate ( const int baseFunction, const PointType &x, RangeType &phi ) const
     {
-      FieldVector< deriType, 0 > diffVar;
+      FieldVector< int, 0 > diffVar;
       asImp().evaluate( baseFunction, diffVar, x, phi );
     }
 
@@ -531,8 +531,8 @@ namespace Dune
   inline void BaseFunctionSetDefault< TraitsImp >
     ::jacobian ( const int baseFunction, const PointType &x, JacobianRangeType &phi ) const
   {
-    FieldVector< deriType, 1 > diffVar;
-    deriType &i = diffVar[ 0 ];
+    FieldVector< int, 1 > diffVar;
+    int &i = diffVar[ 0 ];
     // create temporary variable here 
     RangeType tmp;
     for( i = 0; i < dimCol; ++i )
@@ -594,9 +594,9 @@ namespace Dune
   inline void BaseFunctionSetDefault< TraitsImp >
     ::hessian ( const int baseFunction, const PointType &x, HessianRangeType &hessian ) const
   {
-    FieldVector< deriType, 2 > diffVar;
-    deriType &i = diffVar[ 0 ];
-    deriType &j = diffVar[ 1 ];
+    FieldVector< int, 2 > diffVar;
+    int &i = diffVar[ 0 ];
+    int &j = diffVar[ 1 ];
     RangeType tmp;
     for( i = 0; i < dimDomain; ++i )
     {
