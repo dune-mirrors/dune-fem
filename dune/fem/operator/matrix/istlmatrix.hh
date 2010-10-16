@@ -24,7 +24,7 @@ namespace Dune
 { 
 
   ///////////////////////////////////////////////////////
-  // --BlockMatrixHandle
+  // --ISTLMatrixHandle
   //////////////////////////////////////////////////////
   template <class LittleBlockType, 
             class RowDiscreteFunctionImp, 

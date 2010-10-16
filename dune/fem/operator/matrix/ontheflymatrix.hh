@@ -389,7 +389,7 @@ public:
   {
     if( rowSpace_.grid().comm().size() <= 1 ) return ;
 
-    DestinationType tmp("BlockMatrixObject::communicate_tmp",rowSpace_,arg);
+    DestinationType tmp("OnTheFlyMatrixObject::communicate_tmp",rowSpace_,arg);
     rowSpace_.communicate( tmp );
   }
 
