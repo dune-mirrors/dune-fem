@@ -624,14 +624,9 @@ namespace Dune
         const int row = (int) localRow / littleRows;
         const int lRow = localRow%littleRows;
 
-        // get number of columns  
-        const int col = this->columns();
-        for(int localCol=0; localCol<col; ++localCol) 
-        {
-          const int col = (int) localCol / littleCols;
-          const int lCol = localCol%littleCols;
-          (*matrices_[row][col])[lRow][lCol] = 0;
-        }
+        // clear row 
+        doClearRow( row, lRow );
+
         // set diagonal entry to 1 
         (*matrices_[row][row])[lRow][lRow] = 1;
       }
@@ -647,13 +642,32 @@ namespace Dune
       //! set matrix row to zero
       void clearRow ( const int localRow )
       {
-        DUNE_THROW( NotImplemented, "LocalMatrix::clearRow not implemented for ISTLMatrixObject." );
+        const int row = (int) localRow / littleRows;
+        const int lRow = localRow%littleRows;
+
+        // clear the row 
+        doClearRow( row, lRow );
       }
 
       //! empty as the little matrices are already sorted
       void resort ()
       {}
-    };
+
+  protected:  
+      //! set matrix row to zero
+      void doClearRow ( const int row, const int lRow )
+      {
+        // get number of columns  
+        const int col = this->columns();
+        for(int localCol=0; localCol<col; ++localCol) 
+        {
+          const int col = (int) localCol / littleCols;
+          const int lCol = localCol%littleCols;
+          (*matrices_[row][col])[lRow][lCol] = 0;
+        }
+      }
+
+    }; // end of class LocalMatrix 
 
   public:
     //! type of local matrix 
@@ -663,7 +677,7 @@ namespace Dune
     //! type of local matrix 
     typedef LocalMatrixWrapper< LocalMatrixStackType > LocalMatrixType;
 
-  private:  
+  protected:  
     const RowSpaceType & rowSpace_;
     const ColumnSpaceType & colSpace_;
 
