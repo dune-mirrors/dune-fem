@@ -71,7 +71,7 @@ namespace Dune
      *  \param[out] flux          variable to receive the evaluated flux
      */
     template< int diffOrder, class EntityType, class PointType >
-    inline void diffusiveFlux ( const FieldVector< deriType, diffOrder > &diffVariable,
+    inline void diffusiveFlux ( const FieldVector< int, diffOrder > &diffVariable,
                                 const EntityType &entity,
                                 const PointType &x,
                                 const JacobianRangeType &gradient,
@@ -142,7 +142,7 @@ namespace Dune
      *
      *  The default implementation calls
      *  \code
-     *  FieldVector< deriType, 0 > diffVar;
+     *  FieldVector< int, 0 > diffVar;
      *  diffusiveFlux( diffVar, entity, x, gradient, flux );
      *  \endcode
      */
@@ -152,11 +152,11 @@ namespace Dune
                                 const JacobianRangeType &gradient,
                                 JacobianRangeType &flux ) const
     {
-      FieldVector< deriType, 0 > diffVar;
+      FieldVector< int, 0 > diffVar;
       asImp().diffusiveFlux( diffVar, entity, x, gradient, flux );
     }
   };
 
 }
 
-#endif
+#endif // #ifndef DUNE_FEM_DIFFUSIONMODEL_HH
