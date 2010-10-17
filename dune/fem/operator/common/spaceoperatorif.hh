@@ -2,6 +2,8 @@
 #define DUNE_SPACEOPERATORIF_HH
 
 //- system includes 
+#include <cassert>
+#include <cstdlib>
 #include <limits>
 #include <utility>
 
