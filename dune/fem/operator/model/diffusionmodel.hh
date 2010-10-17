@@ -1,8 +1,9 @@
 #ifndef DUNE_FEM_DIFFUSIONMODEL_HH
 #define DUNE_FEM_DIFFUSIONMODEL_HH
 
+#include <dune/common/fvector.hh>
+
 #include <dune/fem/misc/bartonnackmaninterface.hh>
-#include <dune/fem/operator/common/mapping.hh>
 
 namespace Dune
 {

@@ -237,7 +237,7 @@ namespace Dune
      *
      *  The default implementation calls
      *  \code
-     *  FieldVector< deriType, 0 > diffVar;
+     *  FieldVector< int, 0 > diffVar;
      *  diffusiveFlux( diffVar, entity, x, gradient, flux );
      *  \endcode
      */
@@ -247,7 +247,7 @@ namespace Dune
                                 const JacobianRangeType &gradient,
                                 JacobianRangeType &flux ) const
     {
-      FieldVector< deriType, 0 > diffVar;
+      FieldVector< int, 0 > diffVar;
       asImp().diffusiveFlux( diffVar, entity, x, gradient, flux );
     }
    
