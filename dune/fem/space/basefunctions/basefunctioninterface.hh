@@ -3,6 +3,8 @@
 
 #include <dune/common/bartonnackmanifcheck.hh>
 
+#include <dune/common/fvector.hh>
+
 namespace Dune
 {
 
