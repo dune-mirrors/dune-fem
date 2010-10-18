@@ -2,7 +2,7 @@
 #define DUNE_DISCRETEFUNCTIONSPACE_HH
 
 //- system includes
-#include <assert.h>
+#include <cassert>
 
 //- Dune includes 
 #include <dune/common/bartonnackmanifcheck.hh>
