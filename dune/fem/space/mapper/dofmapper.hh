@@ -180,6 +180,13 @@ public:
     return asImp().numEntityDofs( entity );
   }
 
+  /** \brief Check, whether the data in a codimension has fixed size */
+  bool fixedDataSize ( int codim ) const
+  {
+    CHECK_INTERFACE_IMPLEMENTATION( asImp().fixedDataSize( codim ) );
+    return asImp().fixedDataSize( codim );
+  }
+
   /** \brief return number of holes for data block */
   int numberOfHoles(const int block) const 
   {
@@ -346,6 +353,9 @@ public:
   {
     return asImp().maxNumDofs();
   }
+
+  /** \brief Check, whether the data in a codimension has fixed size */
+  bool fixedDataSize ( int codim ) const { return false; }
 
   //! return old offsets for block number, default returns zero 
   int oldOffSet(const int block) const { return 0; }
