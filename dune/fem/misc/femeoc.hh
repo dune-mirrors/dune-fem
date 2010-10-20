@@ -412,8 +412,8 @@ protected:
   std::string toString ( const double &error ) const
   {
     std::ostringstream s;
-    // s << "$" << error << "$";
-    s << " " << error << " ";
+    s << "$" << error << "$";
+    // s << " " << error << " ";
     return s.str();
   }
 
