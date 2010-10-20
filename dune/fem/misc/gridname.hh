@@ -77,6 +77,7 @@ namespace Dune
         knownGrids.push_back( "OneDGrid" );
         knownGrids.push_back( "GeometryGrid" );
         knownGrids.push_back( "ParallelSimplexGrid" );
+        knownGrids.push_back( "SPGrid" );
 
         bool found = false ;
         for(size_t i=0; i<knownGrids.size(); ++i) 
@@ -90,7 +91,7 @@ namespace Dune
 
         if( ! found ) 
         {
-          std::cerr << "WARNING: Grid name " << name << "not found in list of known grids! Please add in file " << __FILE__ << std::endl;
+          std::cerr << "WARNING: Grid name `" << name << "' not found in list of known grids! Please add in file " << __FILE__ << std::endl;
         }
 #endif
 
