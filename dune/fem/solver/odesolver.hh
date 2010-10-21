@@ -39,8 +39,18 @@ struct ODEParameters
 
   virtual PARDG::IterativeLinearSolver *linearSolver(PARDG::Communicator & comm) const
   {
-    int cycles = Parameter::getValue< int >( "fem.ode.gmrescycles" , 15 );
-    PARDG::IterativeLinearSolver* solver = new PARDG::GMRES(comm,cycles);
+    PARDG::IterativeLinearSolver* solver = 0;
+    static const std::string methodTypeTable[]
+      = { "gmres", "cg" };
+    int method = Parameter::getEnum( "fem.ode.linersolver" , methodTypeTable,0 );
+    if (method == 0)
+    {
+      int cycles = Parameter::getValue< int >( "fem.ode.gmrescycles" , 15 );
+      solver = new PARDG::GMRES(comm,cycles);
+    }
+    else {
+      solver = new PARDG::CG(comm);
+    }
     double tol = Parameter::getValue< double >( "fem.ode.solver.tolerance" , 1e-8 );
     static const std::string errorTypeTable[]
       = { "absolute", "relative" };
@@ -441,6 +451,7 @@ protected:
     {
       odeSolver->IterativeSolver::set_output(cout);
       odeSolver->DynamicalObject::set_output(cout);
+      // linsolver_->IterativeSolver::set_output(cout);
     }
     return odeSolver;
   }
@@ -559,8 +570,6 @@ protected:
   using BaseType :: verbose_ ;
 
 public:
-  using BaseType::initialize;
-
   typedef typename BaseType :: OperatorType    OperatorType;
   typedef typename BaseType :: DestinationType DestinationType; 
 
@@ -582,6 +591,22 @@ public:
     expl_( explOp )
   {
   }
+
+  // initialize time step size 
+  void initialize ( const DestinationType& U0 ) 
+  {
+    // initialized dt on first call
+    if ( ! initialized_ )     
+    {
+      BaseType::initialize(U0);
+
+      // also apply implizit operator once 
+      impl_.op().initializeTimeStepSize( U0 );
+      // set initial time step 
+      timeProvider_.provideTimeStepEstimate( impl_.op().timeStepEstimate() );
+    }
+  }
+
 
 protected:  
   //! return name of ode solver 
@@ -620,6 +645,7 @@ protected:
     {
       odeSolver->IterativeSolver::set_output(cout);
       odeSolver->DynamicalObject::set_output(cout);
+      // linsolver_->set_output(cout);
     }
     return odeSolver;
   }
@@ -633,6 +659,7 @@ protected:
   virtual double timeStepEstimate(double cfl) 
   {
     // take the minimum of the explicit part and the implicit part scaled by the cfl number
+    // return spaceOperator().timeStepEstimate();
     return std::min( spaceOperator().timeStepEstimate(),
                      cfl * impl_.op().timeStepEstimate() ); 
   }
