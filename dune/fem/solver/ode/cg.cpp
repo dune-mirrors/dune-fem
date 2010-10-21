@@ -122,6 +122,9 @@ bool CG::solve(Function &op, double *x, const double *b)
 			 << iterations
 			 << std::endl;
   }
+
+  // update the global number of iterations from IterativeSolver
+  num_of_iterations += iterations;
   
   return (iterations < max_num_of_iterations)? true: false;
 }
