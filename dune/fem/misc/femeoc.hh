@@ -70,8 +70,14 @@ class FemEoc
 
   ~FemEoc()
   {
+    clearFile();
+  }
+
+  void clearFile()
+  {
     if( tableWriter_ )
       delete tableWriter_;
+    tableWriter_ = 0;
   }
 
   void init ( const std::string& path, const std::string &name, const std::string &descript )
@@ -147,7 +153,12 @@ class FemEoc
   size_t addentry(const StrVectorType& descript,size_t size) 
   {
     if( tableWriter_ )
+    {
+      std::cerr << "Trying to add a new entry to FemEoc although "
+                << "entries have already been writen to disk!"
+                << " ... ABORTING" << std::endl;
       abort();
+    }
     pos_.push_back(error_.size());
     for (size_t i=0;i<size;++i) {
       error_.push_back(0);
@@ -159,7 +170,12 @@ class FemEoc
   size_t addentry ( const std::string &descript )
   {
     if( tableWriter_ )
+    {
+      std::cerr << "Trying to add a new entry to FemEoc although "
+                << "entries have already been writen to disk!"
+                << " ... ABORTING" << std::endl;
       abort();
+    }
     pos_.push_back(error_.size());
     error_.push_back(0);
     description_.push_back(descript);  
@@ -217,6 +233,10 @@ public:
   static FemEoc& instance() {
     static FemEoc instance_;
     return instance_;
+  }
+  //! close file and allow FemEoc to used for a second run
+  static void clear() {
+    instance().clearFile();
   }
   //! open file path/name and write a description string into tex file
   static void initialize(const std::string& path, const std::string& name, const std::string& descript) {
