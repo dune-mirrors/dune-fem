@@ -568,6 +568,7 @@ protected:
   using BaseType :: parameter ;
   using BaseType :: impl_ ;
   using BaseType :: verbose_ ;
+  using BaseType :: cfl_;
 
 public:
   typedef typename BaseType :: OperatorType    OperatorType;
@@ -600,10 +601,13 @@ public:
     {
       BaseType::initialize(U0);
 
-      // also apply implizit operator once 
+      // also apply implizit operator once (explicit has already been applied)
       impl_.op().initializeTimeStepSize( U0 );
-      // set initial time step 
-      timeProvider_.provideTimeStepEstimate( impl_.op().timeStepEstimate() );
+      if ( impl_.op().timeStepEstimate() > 0 &&
+           expl_.op().timeStepEstimate() > impl_.op().timeStepEstimate() )
+        cfl_ = expl_.op().timeStepEstimate() / impl_.op().timeStepEstimate();
+      // initial time step already set to explicit time step
+      // timeProvider_.provideTimeStepEstimate( impl_.op().timeStepEstimate() );
     }
   }
 
