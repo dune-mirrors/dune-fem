@@ -920,17 +920,6 @@ public:
     return indexSetRestrictProlongNoResize_;
   }
 
-  //! returns the index set restriction and prolongation operator (deprecated) use indexSetRestrictProlong instead 
-  DUNE_VERSION_DEPRECATED(1,2,indexSetRestrictProlong) 
-  IndexSetRestrictProlongType & indexSetRPop () 
-  {
-    // hier muss statt dessen ein Combiniertes Object erzeugt werden. 
-    // dafuer sollte bei einhaengen der IndexSets ein Methoden Pointer
-    // erzeugt werden, welcher die den IndexSet mit einem anderen Object
-    // kombiniert 
-    return indexRPop_;
-  }
-
   //! if dofmanagers list is not empty return true 
   bool hasIndexSets() const 
   {

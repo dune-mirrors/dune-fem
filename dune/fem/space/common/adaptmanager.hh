@@ -276,24 +276,6 @@ public:
   typedef typename GridType :: Traits :: LocalIdSet LocalIdSet;
 
   /** \brief constructor of AdaptationManagerBase 
-     \param grid Grid that adaptation is done for 
-     \param rpOp restriction and prlongation operator that describes how the 
-      user data is projected to other grid levels
-     \param paramFile optional parameter file which contains 
-        the following two lines:
-        # 0 == none, 1 == generic, 2 == call back (only AlbertaGrid and ALUGrid)  
-        AdaptationMethod: 1 # default value 
-  */   
-  DUNE_VERSION_DEPRECATED(1,2,AdaptationManagerBase_no_param_file)
-  AdaptationManagerBase ( GridType &grid, RestProlOperatorImp &rpOp, std::string paramFile )
-  : BaseType( grid, paramFile ),
-    grid_( grid ),
-    dm_( DofManagerType::instance( grid_ ) ),
-    rpOp_( rpOp ),
-    adaptTime_( 0.0 )
-  {}
-
-  /** \brief constructor of AdaptationManagerBase 
      The following optional parameter can be used
         # 0 == none, 1 == generic, 2 == call back (only AlbertaGrid and ALUGrid)  
         AdaptationMethod: 1 # default value 
@@ -313,34 +295,6 @@ public:
   //! destructor 
   virtual ~AdaptationManagerBase () {}
 
-  /*! 
-   Add to AdaptationManagers means that the RestProlOperators will be combined.
-   See DiscreteOperatorImp. (deprecated method)
-   */
-  template <class RestProlOperatorType> 
-  DUNE_VERSION_DEPRECATED(1,2,no_method)
-  AdaptationManagerBase<GridType,
-  CombinedRestProl <RestProlOperatorImp,RestProlOperatorType> > & 
-  operator + (const AdaptationManagerBase<GridType,RestProlOperatorType> &op)
-  {
-    //std::cout << "Operator + of AdaptationManager\n";
-    typedef AdaptationManagerBase<GridType,RestProlOperatorType> CopyType;
-    typedef CombinedRestProl <RestProlOperatorImp,RestProlOperatorType> COType;
-     
-    COType *newRPOp = new COType ( rpOp_  , const_cast<CopyType &> (op).getRestProlOp() );
-
-    typedef AdaptationManagerBase < GridType, COType > OPType;
-   
-    OPType *adaptOp = new OPType ( grid_ , *newRPOp );    
-
-    // memorize this new generated object because is represents this
-    // operator and is deleted if this operator is deleted
-    saveObjPointer( adaptOp , newRPOp );
-   
-    //std::cout << "Created " << adaptOp << " \n";
-    return *adaptOp;
-  }
- 
   //! no public method, but has to be public, because all AdaptationManagers 
   //! must be able to call this method and the template parameters are
   //! allways different 

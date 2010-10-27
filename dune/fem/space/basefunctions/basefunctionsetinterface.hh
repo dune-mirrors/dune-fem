@@ -152,61 +152,6 @@ namespace Dune
       CHECK_AND_CALL_INTERFACE_IMPLEMENTATION
         ( asImp().jacobian( baseFunction, x, phi ) );
     }
-
-    
-    /** \brief evaluate the base function and multiply the result by a vector
-     *
-     *  It is quite common, that the base functions have the special structure
-     *  \f{displaymath}
-     *  \varphi( x ) = \sum_{k=1}^n \omega_k( x ) e_k,
-     *  \f}
-     *  where \f$e_k\f$ denotes the k-th unit vector. In this case, scalar
-     *  products by \f$\psi\f$ can be evaluated very efficiently, since
-     *  \f{displaymath}
-     *  \varphi( x ) \cdot \psi = \sum_{k=1}^n \omega_k( x ) e_k \cdot \psi
-     *                          = \sum_{k=1}^n \omega_k( x ) \psi_k.
-     *  \f}
-     *  This function provides the possibility to numerically use this
-     *  information.
-     *  
-     *  \param[in]  baseFunction  number of the base function to evaluate
-     *  \param[in]  x             point within reference element to evaluate
-     *                            the base function in
-     *  \param[in]  psi           vector to multiply the function value with
-     *
-     *  \returns the scalar product between the value of the base function and
-     *           the specified vector
-     */
-    template< class PointType >
-    DUNE_VERSION_DEPRECATED(1,2,remove)
-    RangeFieldType evaluateSingle ( const int baseFunction,
-                                    const PointType &x,
-                                    const RangeType &psi ) const
-    {
-      CHECK_INTERFACE_IMPLEMENTATION
-        ( asImp().evaluateSingle( baseFunction, x, psi ) );
-      return asImp().evaluateSingle( baseFunction, x, psi );
-    }
-
-    /** \brief evaluate gradient of basefunction on given entity (uses
-        jacobianInverseTransposed) and multiply with factor, return is RangeFieldType 
-        \param[in]  baseFunction  number of base functions to evaluate jacobian  
-        \param[in]  entity        entity gradient of base function is evaluated on 
-        \param[in]  x             local point in reference element 
-        \param[in]  psi           factor to multiply with 
-        \return return scalar product between gradient of base function and factor 
-    */
-    template< class EntityType, class PointType >
-    DUNE_VERSION_DEPRECATED(1,2,remove)
-    inline RangeFieldType evaluateGradientSingle( const int baseFunction,
-                                                  const EntityType &entity,
-                                                  const PointType &x,
-                                                  const JacobianRangeType &psi ) const
-    {
-      CHECK_INTERFACE_IMPLEMENTATION
-        ( asImp().evaluateGradientSingle( baseFunction, entity, x, psi ) );
-      return asImp().evaluateGradientSingle( baseFunction, entity, x, psi );
-    }
   };
 
 
@@ -341,49 +286,6 @@ namespace Dune
     template< class PointType, class Geometry, class LocalDofVectorType, class GlobalHessianRangeType >
     void hessianAll ( const PointType &x, const Geometry &geometry,
                       const LocalDofVectorType &dofs, GlobalHessianRangeType &ret ) const;
-
-    /** \copydoc Dune::BaseFunctionSetInterface::evaluateSingle(const int baseFunction,const PointType &x,const RangeType &psi) const */
-    template< class PointType >
-    DUNE_VERSION_DEPRECATED(1,2,remove)
-    inline RangeFieldType evaluateSingle ( const int baseFunction,
-                                           const PointType &x,
-                                           const RangeType &psi ) const
-    {
-      RangeType phi;
-      asImp().evaluate( baseFunction, x, phi );
-      return phi * psi;
-    }
-
-    /** \copydoc Dune::BaseFunctionSetInterface::evaluateGradientSingle(const int baseFunction,const EntityType &entity,const PointType &x,const JacobianRangeType &psi) const */
-    template< class EntityType, class PointType >
-    DUNE_VERSION_DEPRECATED(1,2,remove)
-    inline RangeFieldType evaluateGradientSingle( const int baseFunction,
-                                                  const EntityType &entity,
-                                                  const PointType &x,
-                                                  const JacobianRangeType &psi ) const
-    {
-      typedef typename EntityType :: Geometry GeometryType;
-      typedef FieldMatrix< typename GeometryType :: ctype,
-                           GeometryType :: mydimension,
-                           GeometryType :: mydimension >
-        GeometryJacobianType;
-
-      const GeometryType &geometry = entity.geometry();
-      const GeometryJacobianType &jacobianInverseTransposed
-        = geometry.jacobianInverseTransposed( coordinate( x ) );
- 
-      JacobianRangeType gradPhi;
-      asImp().jacobian( baseFunction, x, gradPhi );
-
-      RangeFieldType result = 0;
-      for( int i = 0; i < FunctionSpaceType :: dimRange; ++i )
-      {
-        DomainType gradScaled( 0 );
-        jacobianInverseTransposed.umv( gradPhi[ i ], gradScaled );
-        result += gradScaled * psi[ i ];
-      }
-      return result;
-    }
 
     template< class PointType, class LocalDofVectorType >
     void axpy ( const PointType &x,

@@ -107,8 +107,6 @@ namespace Dune
     const StorageType &storage () const { return storage_; }
 
     using BaseType::evaluate;
-    using BaseType::evaluateSingle;
-    using BaseType::evaluateGradientSingle;
     using BaseType::jacobian;
 
   private:
@@ -332,47 +330,6 @@ namespace Dune
       }
     }
  
-    /** \copydoc Dune::BaseFunctionSetInterface::evaluateSingle(const int baseFunction,const PointType &x,const RangeType &psi) const */
-    template< class PointType >
-    DUNE_VERSION_DEPRECATED(1,2,remove)
-    RangeFieldType evaluateSingle ( const int baseFunction,
-                                    const PointType &x,
-                                    const RangeType &psi ) const
-    {
-      ScalarRangeType phi;
-      const int scalarBaseFunction = util_.containedDof( baseFunction );
-
-      evaluateScalar( scalarBaseFunction, x, phi );
-      return psi[ util_.component( baseFunction ) ] * phi[ 0 ];
-    }
-
-    /** \copydoc Dune::BaseFunctionSetInterface::evaluateGradientSingle(const int baseFunction,const EntityType &entity,const PointType &x,const JacobianRangeType &psi) const */
-    template< class EntityType, class PointType >
-    DUNE_VERSION_DEPRECATED(1,2,remove)
-    RangeFieldType evaluateGradientSingle( const int baseFunction,
-                                           const EntityType &entity,
-                                           const PointType &x,
-                                           const JacobianRangeType &psi ) const
-    {
-      typedef typename EntityType :: Geometry GeometryType;
-      typedef FieldMatrix< typename GeometryType :: ctype,
-                           GeometryType :: mydimension,
-                           GeometryType :: mydimension >
-        GeometryJacobianType;
-
-      const GeometryType &geometry = entity.geometry();
-      const GeometryJacobianType &jacobianInverseTransposed
-        = geometry.jacobianInverseTransposed( coordinate( x ) );
-      
-      ScalarJacobianRangeType gradPhi;
-      const int scalarBaseFunction = util_.containedDof( baseFunction );
-      jacobianScalar( scalarBaseFunction, x, gradPhi );
-    
-      DomainType gradScaled( 0 );
-      jacobianInverseTransposed.umv( gradPhi[ 0 ], gradScaled );
-      return gradScaled * psi[ util_.component( baseFunction ) ];
-    }
-
     /////////////////////////////////////////////////////////////////////////
     //
     //  evaluate and store results in a vector 

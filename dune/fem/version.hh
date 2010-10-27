@@ -4,7 +4,6 @@
 #include <dune/common/deprecated.hh>
 
 // for all future versions use the usual DUNE_DEPRECATED
-#define DUNE_VERSION_DEPRECATED_1_2(m) DUNE_DEPRECATED
 #define DUNE_VERSION_DEPRECATED_1_3(m) DUNE_DEPRECATED
 #define DUNE_VERSION_DEPRECATED_1_4(m) DUNE_DEPRECATED
 #define DUNE_VERSION_DEPRECATED_1_5(m) DUNE_DEPRECATED
@@ -14,7 +13,7 @@
 #define DUNE_VERSION_DEPRECATED_1_9(m) DUNE_DEPRECATED
 
 // current version should fail 
-#define DUNE_VERSION_DEPRECATED_1_1(newmethod) \
+#define DUNE_VERSION_DEPRECATED_1_2(newmethod) \
   dune_remove_deprecated_method__use_##newmethod##_instead
 
 #define DUNE_VERSION_DEPRECATED(major,minor,newmethod) \
