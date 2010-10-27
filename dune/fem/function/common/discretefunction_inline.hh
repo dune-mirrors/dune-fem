@@ -21,16 +21,32 @@ namespace Dune
                                  const DiscreteFunctionSpaceType &dfSpace,
                                  const LocalFunctionFactoryType &lfFactory )
   : dfSpace_( dfSpace ),
+#ifdef _OPENMP
+    lfStorageVec_ ( omp_get_max_threads() ),
+#else 
     lfStorage_( lfFactory ),
+#endif
     name_( name ),
     scalarProduct_( dfSpace )
   {
+#ifdef _OPENMP
+    for( size_t i=0 ; i<lfStorageVec_.size(); ++i ) 
+    {
+      lfStorageVec_[ i ] = new LocalFunctionStorageType( lfFactory );
+    }
+#endif
   }
 
   template< class Traits >
   inline DiscreteFunctionDefault< Traits >::~DiscreteFunctionDefault ()
   {
     assert( !dofPointerLock_ );
+#ifdef _OPENMP
+    for( size_t i=0 ; i<lfStorageVec_.size(); ++i )
+    {
+      delete lfStorageVec_[ i ]; 
+    }
+#endif
   }
 
 
@@ -471,7 +487,11 @@ namespace Dune
   inline typename DiscreteFunctionDefault< Traits > :: LocalFunctionStorageType &
   DiscreteFunctionDefault< Traits > :: localFunctionStorage () const
   {
+#ifdef _OPENMP
+    return *(lfStorageVec_[ omp_get_thread_num() ]);
+#else 
     return lfStorage_;
+#endif
   }
 
 

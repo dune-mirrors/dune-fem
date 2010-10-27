@@ -774,7 +774,11 @@ namespace Dune
     const DiscreteFunctionSpaceType &dfSpace_;
 
     // the local function storage 
+#ifdef _OPENMP
+    mutable std::vector< LocalFunctionStorageType* > lfStorageVec_;
+#else 
     mutable LocalFunctionStorageType lfStorage_;
+#endif
 
     DebugLock dofPointerLock_;
 

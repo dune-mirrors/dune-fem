@@ -7,7 +7,7 @@
 namespace Dune
 {
   template< class DiscreteFunctionSpace,
-             class DofVector >
+            class DofVector >
   class ManagedDiscreteFunction
     < VectorDiscreteFunction< DiscreteFunctionSpace, DofVector > >
   : public VectorDiscreteFunction< DiscreteFunctionSpace, DofVector >

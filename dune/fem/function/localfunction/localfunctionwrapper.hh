@@ -48,7 +48,7 @@ namespace Dune
     //! type of the traits
     typedef LocalFunctionWrapperTraits< LocalFunctionStorage > Traits;
 
-    //! type of the local function storage
+    //! type of the local function storage (usually LocalFunctionStack, see below)
     typedef typename Traits :: LocalFunctionStorageType
       LocalFunctionStorageType;
 
