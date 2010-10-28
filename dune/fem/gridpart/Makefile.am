@@ -9,8 +9,6 @@ gridpart_HEADERS = adaptiveleafgridpart.hh \
                    gridpartview.hh \
                    idbasedleafgridpart.hh \
                    idbasedcodimindexset.hh \
-                   periodicgridpart.hh \
-                   periodicindexset.hh \
                    defaultindexsets.hh
 
 include $(top_srcdir)/am/global-rules
