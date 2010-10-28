@@ -14,7 +14,6 @@ misc_HEADERS = alugridwriter.hh \
                deritype.hh \
                double.hh \
                engineconcept.hh \
-               eoc.hh \
                femeoc.hh \
                field.hh \
                example.cc \
