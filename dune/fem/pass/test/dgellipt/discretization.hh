@@ -36,9 +36,6 @@
 // definition of L2Error 
 #include <dune/fem/misc/l2error.hh>
 
-// implementation of ldg flux 
-#include <dune/fem/pass/ldgflux.hh>
-
 #include <dune/fem/space/dgspace/dgadaptmanager.hh>
 
 using namespace Dune;
@@ -267,6 +264,7 @@ public:
         L2Error < DestinationType > l2errGrad;
         gradError[i] = l2errGrad.norm(model_.data().gradient() , velo);
 
+        /*
         HdivProjection< DestinationType > hdiv(velo.space());
         DestinationType tmp ( velo );
 
@@ -276,6 +274,7 @@ public:
         hdiv( tmp, velo );
         
         std::cout << "After Normal Jump = " << hdiv.normalJump( velo ) << "\n";
+        */
 
         errVelo[i] = l2errGrad.norm( model_.data().gradient() , velo);
         
@@ -283,7 +282,7 @@ public:
         if( disp_ )
         {
           GrapeDataDisplay < GridType > grape( gridPart_.grid() ); 
-          grape.addData( tmp );
+          //grape.addData( tmp );
           grape.addData( velo );
           grape.addData( dest );
           grape.display();
@@ -367,14 +366,8 @@ void simul(typename DiscrType::ModelType & model, std::string paramFile)
   typedef typename DiscrType::ModelType             ModelType;
   enum { polOrd = DiscrType::polyOrder };
 
-  // choice of fluxes 
-  typedef LDGFlux<ModelType> NumericalFluxType;
-  typedef GradientFlux GradientFluxType;
-  //typedef AverageFlux GradientFluxType;
-  
-
-  typedef LaplaceDiscreteModel  < ModelType, NumericalFluxType, polOrd, startPass > LaplaceModelType;
-  typedef VelocityDiscreteModel < ModelType, GradientFluxType, polOrd-1 , pressureId > VelocityModelType;
+  typedef LaplaceDiscreteModel  < ModelType, polOrd, startPass > LaplaceModelType;
+  typedef VelocityDiscreteModel < ModelType, polOrd-1 , pressureId > VelocityModelType;
   
   typedef MySpaceOperator <  LaplaceModelType,
                              VelocityModelType> 
@@ -407,27 +400,11 @@ void simul(typename DiscrType::ModelType & model, std::string paramFile)
   readParameter(paramfile,"display",display);
 
   // read parameter for LDGFlux 
-  double ldgbeta = 0.0;
-  if(!readParameter(paramfile,"LDGbeta",ldgbeta))
-  {
-    std::cout << "Using beta = "<< ldgbeta << "\n";
-  }
-  double power = 1.0;
-  if(!readParameter(paramfile,"power",power))
-  {
-    std::cout << "Using power of h = "<< power << "\n";
-  }
-  double eta = 1.0;
-  if(!readParameter(paramfile,"eta",eta))
-  {
-    std::cout << "Using eta = "<< eta << "\n";
-  }
+  int bplus = 0;
+  readParameter(paramfile,"B_{+,-}", bplus);
   
-  NumericalFluxType numericalFlux(model,ldgbeta,power,eta);
-  GradientFluxType gradFlux(ldgbeta,power);
-  
-  LaplaceModelType lpm(model, numericalFlux);
-  VelocityModelType vm(model, gradFlux );
+  LaplaceModelType lpm(model);
+  VelocityModelType vm(model, (bplus == 0));
 
   SpaceOperatorType spaceOp(grid , lpm , vm, paramfile );
   

@@ -80,10 +80,10 @@ namespace LDGExample
   //  --Laplace Traits 
   //
   ///////////////////////////////////////////////////////////
-  template <class Model,class NumFlux,int polOrd, int passId = -1 >
+  template <class Model,int polOrd, int passId = -1 >
   class LaplaceDiscreteModel;
 
-  template <class Model,class NumFlux,int polOrd, int passId = -1 >
+  template <class Model,int polOrd, int passId = -1 >
   struct LaplaceTraits
   {
     typedef typename Model::Traits ModelTraits;
@@ -114,7 +114,7 @@ namespace LDGExample
 #endif
     typedef DiscreteFunctionType DestinationType;
 
-    typedef LaplaceDiscreteModel< Model, NumFlux, polOrd, passId > DGDiscreteModelType;
+    typedef LaplaceDiscreteModel< Model, polOrd, passId > DGDiscreteModelType;
 
     template <class PreviousPassType>
     struct LocalOperatorSelector
@@ -149,14 +149,14 @@ namespace LDGExample
     };
   };
 
-  template< class Model, class NumFlux, int polOrd, int passId >
+  template< class Model, int polOrd, int passId >
   struct LaplaceDiscreteModel
   : public DGDiscreteModelDefaultWithInsideOutside
-    < LaplaceTraits< Model, NumFlux, polOrd, passId >, passId >
+    < LaplaceTraits< Model, polOrd, passId >, passId >
   { 
     enum { polynomialOrder = polOrd };
 
-    typedef LaplaceTraits< Model, NumFlux, polOrd, passId > Traits;
+    typedef LaplaceTraits< Model, polOrd, passId > Traits;
     typedef FieldVector<double, Traits::dimDomain> DomainType;
     typedef FieldVector<double, Traits::dimDomain-1> FaceDomainType;
 
@@ -173,9 +173,8 @@ namespace LDGExample
     enum { dimDomain = Traits::dimDomain }; 
 
   public:
-    LaplaceDiscreteModel(const Model& mod,const NumFlux& numf) :
-      model_(mod),
-      numflux_(numf)
+    LaplaceDiscreteModel(const Model& mod) :
+      model_(mod)
     {}
 
     const Model & data () const { return model_; }
@@ -186,107 +185,6 @@ namespace LDGExample
     bool hasFlux() const { return false; }
     bool hasCoefficient() const { return true; }
     bool hasRHS() const { return true; }
-
-    template <class ArgumentTuple> 
-    double numericalFlux(const IntersectionIterator& it,
-                         const double time, 
-                         const FaceDomainType& local,
-                         const ArgumentTuple& uLeft,
-                         const ArgumentTuple& uRight,
-                         RangeType & sigmaLeft, 
-                         RangeType & sigmaRight,
-                         RangeType & gLeft,
-                         RangeType & gRight) const 
-    {
-      // calculate unit normal and face volume  
-      DomainType unitNormal = it.integrationOuterNormal(local);
-      const double faceVol = unitNormal.two_norm();
-      unitNormal *= 1.0/faceVol;
-
-      RangeType tmpLeft(1.0);
-      RangeType tmpRight(1.0);
-
-      if( hasFlux() )
-      {
-        DomainType dom = it.intersectionGlobal().global(local);
-        // default is id matrix 
-        JacobianRangeType anaFluxLeft;
-        anaFluxLeft[0] = unitNormal;
-        JacobianRangeType anaFluxRight;
-        anaFluxRight[0] = unitNormal;
-
-        {
-          EntityPointerType ep = it.inside();
-          const EntityType & en = *ep;
-          analyticalFlux(en,time,dom,
-                         uLeft,anaFluxLeft);
-          anaFluxLeft.umv(unitNormal,tmpLeft); 
-        }
-                      
-        if( it.neighbor() )
-        {
-          EntityPointerType ep = it.outside();
-          const EntityType & en = *ep;
-          analyticalFlux(en,time,dom,
-                         uRight,anaFluxRight);
-          anaFluxRight.umv(unitNormal,tmpRight); 
-        }
-        
-        tmpLeft  = unitNormal * anaFluxLeft[0];
-        tmpRight = unitNormal * anaFluxRight[0];
-      }
-      
-      numflux_.sigmaFlux(unitNormal,faceVol,
-                         tmpLeft,tmpRight, 
-                         sigmaLeft,sigmaRight,
-                         gLeft,gRight);
-      return 0.0;
-    }
-
-
-    template <class ArgumentTuple> 
-    double boundaryFlux(const IntersectionIterator& it,
-                        const double time, 
-                        const FaceDomainType& local,
-                        const ArgumentTuple& uLeft,
-                        RangeType & sigmaLeft ) const 
-                      //, RangeType & gLeft) const 
-    {
-      // calculate unit normal and face volume  
-      DomainType unitNormal = it.integrationOuterNormal(local);
-      const double faceVol = unitNormal.two_norm();
-      unitNormal *= 1.0/faceVol;
-
-      RangeType sigmaRight;
-      RangeType gRight; 
-
-      RangeType tmpLeft(1.0);
-      
-      if( hasFlux() )
-      {
-        DomainType dom = it.intersectionGlobal().global(local);
-        // default is id matrix 
-        JacobianRangeType anaFluxLeft;
-        anaFluxLeft[0] = unitNormal;
-
-        {
-          EntityPointerType ep = it.inside();
-          const EntityType & en = *ep;
-          analyticalFlux(en,time,dom,
-                         uLeft,anaFluxLeft);
-          anaFluxLeft.umv(unitNormal,tmpLeft); 
-        }
-                      
-        tmpLeft  = unitNormal * anaFluxLeft[0];
-      }
-          
-      // don't apply beta stabilization at boundary 
-      numflux_.sigmaFluxBetaZero(unitNormal,faceVol,
-                                 tmpLeft,tmpLeft, 
-                                 sigmaLeft,sigmaRight);
-      
-      return 0.0;
-    }
 
     // returns true, when Dirichlet boundary, false when other boundary
     // (Neumann) 
@@ -371,14 +269,13 @@ namespace LDGExample
 
   private:
     const Model& model_;
-    const NumFlux& numflux_;
   };
 
-  template <class ModelImp, class NumFluxImp, int polOrd, int passId = -1 >
+  template <class ModelImp, int polOrd, int passId = -1 >
   class VelocityDiscreteModel;
 
   // DiscreteModelTraits
-  template <class ModelImp,class NumFluxImp, int polOrd, int passId = -1 >
+  template <class ModelImp, int polOrd, int passId = -1 >
   struct VelocityTraits
   {
     enum { myPolOrd = polOrd-1 };
@@ -419,20 +316,20 @@ namespace LDGExample
     typedef DiscreteFunctionType DestinationType;
 
 
-    typedef VelocityDiscreteModel< ModelImp, NumFluxImp, polOrd, passId > DGDiscreteModelType;
+    typedef VelocityDiscreteModel< ModelImp, polOrd, passId > DGDiscreteModelType;
   };
 
 
-  template <class ModelImp,class NumFluxImp,int polOrd, int passId >
+  template <class ModelImp,int polOrd, int passId >
   class VelocityDiscreteModel
   : public DGDiscreteModelDefaultWithInsideOutside
-    < VelocityTraits< ModelImp, NumFluxImp, polOrd, passId >, passId >
+    < VelocityTraits< ModelImp, polOrd, passId >, passId >
   {
     // do not copy this class 
     VelocityDiscreteModel(const VelocityDiscreteModel&);
 
   public:
-    typedef VelocityTraits< ModelImp, NumFluxImp, polOrd, passId > Traits;
+    typedef VelocityTraits< ModelImp, polOrd, passId > Traits;
     
     // select Pressure, which comes from pass before 
     typedef FieldVector<double, Traits::dimDomain> DomainType;
@@ -443,29 +340,27 @@ namespace LDGExample
     typedef typename Traits::GridPartType::IntersectionIteratorType IntersectionIteratorType;
     typedef typename IntersectionIteratorType :: Intersection Intersection;
     typedef typename GridType::template Codim<0>::Entity EntityType;
-    typedef NumFluxImp NumFluxType;
 
     enum { polynomialOrder = polOrd };
 
   public:
-    VelocityDiscreteModel ( const ModelImp &model, const NumFluxType &numFlux )
+    VelocityDiscreteModel ( const ModelImp &model, bool methodIP )
     : model_( model ),
-      numFlux_( numFlux )
+      methodIP_( methodIP )
     {}
 
     bool hasSource() const { return false; }
     bool hasFlux() const   { return true; }
 
-    template< class ArgumentTuple >
-    double numericalFlux ( const Intersection &it,
-                           double time, const FaceDomainType &x,
-                           const ArgumentTuple &uLeft,
-                           const ArgumentTuple &uRight,
-                           RangeType &gLeft,
-                           RangeType &gRight )
+    template <class ArgumentTuple>
+    double numericalFlux(const Intersection& it,
+                         double time, const FaceDomainType& x,
+                         const ArgumentTuple& uLeft,
+                         const ArgumentTuple& uRight,
+                         RangeType& gLeft,
+                         RangeType& gRight)
     {
       const DomainType normal = it.integrationOuterNormal(x);
-      const double faceVol = normal.two_norm();
 
       // get saturation 
       typedef typename ElementType<0, ArgumentTuple>::Type UType;
@@ -474,36 +369,25 @@ namespace LDGExample
 
       JacobianRangeType diffmatrix;
 
-      RangeType diffflux(0.);
-      gLeft  = 0.0;
-      gRight = 0.0;
+      RangeType average ( argULeft );
+      average += argURight ;
+      average *= 0.5;
 
-      UType result;
-        
-      // left value 
+      // + n * [ u ] = uL - uR (NIPG, BO)
+      if ( ! methodIP_ )
       {
-        // eval num flux 
-        numFlux_.uFlux(faceVol,argULeft,argURight,result);
-
-        // set diffmatrix 
-        model_.gradient( this->inside(),time,
-              it.geometryInInside().global(x),
-              result,diffmatrix);
-
-        diffmatrix.umv(normal,gLeft);
+        average += argULeft ;
+        average -= argURight ;
       }
-      
-      {
-        // eval num flux 
-        numFlux_.uFlux(faceVol,argURight,argULeft,result);
-        
-        // set diffmatrix 
-        model_.gradient( this->inside(),time,
-              it.geometryInInside().global(x),
-              result,diffmatrix);
 
-        diffmatrix.umv(normal,gRight);
-      }
+      // set diffmatrix 
+      model_.gradient( this->inside(),time,
+            it.geometryInInside().global(x),
+            average,diffmatrix);
+
+      diffmatrix.mv( normal, gLeft );
+      gRight = gLeft ;
+
       return 0.;
     }
 
@@ -519,7 +403,6 @@ namespace LDGExample
       const SType& argSLeft  = Element<0>::get(uLeft);
 
       JacobianRangeType diffmatrix;
-      gLeft = 0.0;
 
       {
         model_.gradient( this->inside(),time,
@@ -527,7 +410,7 @@ namespace LDGExample
             argSLeft,diffmatrix);
       }
 
-      diffmatrix.umv(normal,gLeft);
+      diffmatrix.mv(normal,gLeft);
       return 0.0;
     }
 
@@ -544,7 +427,7 @@ namespace LDGExample
 
   private:
     const ModelImp &model_;
-    const NumFluxType &numFlux_;
+    const bool methodIP_;
   };
 
 
