@@ -120,12 +120,6 @@ namespace Dune
                     const PointType &x,
                     RangeType &phi ) const;
 
-    /** \copydoc Dune::BaseFunctionSetInterface::evaluateSingle(const int baseFunction,const PointType &x,const RangeType &psi) const */
-    template< class PointType >
-    RangeFieldType evaluateSingle ( const int baseFunction,
-                                    const PointType &x,
-                                    RangeType &psi ) const;
-   
     /** \brief obtain the entity, this base function set belongs to */
     const ElementType &entity () const
     {
