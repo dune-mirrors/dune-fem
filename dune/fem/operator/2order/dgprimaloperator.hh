@@ -269,10 +269,8 @@ namespace Dune
         // scale with intel 
         rhsval_ *= intel;
 
-        //std::cout << rhsval_ << "\n";
-
-        for( int j = 0; j < numDofs_; ++j )
-          singleRhs_[ j ] += bsetEn_.evaluateSingle( j, volQuad[ l ], rhsval_ );
+        // add to right hand side 
+        singleRhs_.axpy(volQuad[l] , rhsval_);
       }
     };
 
@@ -1083,6 +1081,38 @@ protected:
       return betaEst ;
     }
 
+    template<class BaseFunctionSet, class PointType >
+    inline RangeFieldType evaluateGradientSingle( const BaseFunctionSet& baseSet,
+                                                  const int baseFunction,
+                                                  const EntityType &entity,
+                                                  const PointType &x,
+                                                  const JacobianRangeType &psi ) const
+    {
+      typedef typename EntityType :: Geometry GeometryType;
+      typedef FieldMatrix< typename GeometryType :: ctype,
+                           GeometryType :: mydimension,
+                           GeometryType :: mydimension >
+        GeometryJacobianType;
+
+      const GeometryType &geometry = entity.geometry();
+      const GeometryJacobianType &jacobianInverseTransposed
+        = geometry.jacobianInverseTransposed( coordinate( x ) );
+
+      JacobianRangeType gradPhi;
+      baseSet.jacobian( baseFunction, x, gradPhi );
+
+      RangeFieldType result = 0;
+      for( int i = 0; i < dimRange; ++i )
+      {
+        DomainType gradScaled;
+        jacobianInverseTransposed.mv( gradPhi[ i ], gradScaled );
+        result += gradScaled * psi[ i ];
+      }
+      return result;
+    }
+
+
+
     //! apply boundary integrals to matrix and right hand side 
     void applyLocalBoundary ( const IntersectionType &nit,
                               const EntityType &entity,
@@ -1168,7 +1198,7 @@ protected:
         for(int k=0; k<numDofs; ++k)
         { 
           // evaluate normal * grad phi 
-          tau_[ k ] = bsetEn.evaluateGradientSingle( k, entity, faceQuadInner[ l ], norm );
+          tau_[ k ] = evaluateGradientSingle( bsetEn, k, entity, faceQuadInner[ l ], norm );
           // evaluate phi 
           bsetEn.evaluate(k,faceQuadInner[l] , phi_[k]);
         }
@@ -1493,12 +1523,12 @@ protected:
           // eval base functions 
           bsetEn.evaluate(k,faceQuadInner[l], phi_[k]);
           // eval gradient for entity
-          tau_[ k ] = bsetEn.evaluateGradientSingle( k, entity, faceQuadInner[ l ], normEn );
+          tau_[ k ] = evaluateGradientSingle( bsetEn, k, entity, faceQuadInner[ l ], normEn );
 
           // neighbor stuff 
           bsetNeigh.evaluate(k,faceQuadOuter[l], phiNeigh_[k] );      
           // eval gradient for neighbor
-          tauNeigh_[ k ] = bsetNeigh.evaluateGradientSingle( k, neighbor, faceQuadOuter[ l ], normNb );
+          tauNeigh_[ k ] = evaluateGradientSingle( bsetNeigh, k, neighbor, faceQuadOuter[ l ], normNb );
         }
                
         // this terms dissapear if Babuska-Zlamal is used 
@@ -1589,12 +1619,12 @@ protected:
               // phi_j * phi_k on entity 
               phi_j    = phi_[j] * phi_[k]; 
               // product with neighbor
-              phiNeigh = phiNeigh_[j] * phi_[k]; //bsetNeigh.evaluateSingle(j,faceQuadOuter,l, phi_[k] );      
+              phiNeigh = phiNeigh_[j] * phi_[k]; 
               
               // phi_j * phi_k on neighbour  
-              phiNeigh_j = phiNeigh_[j] * phiNeigh_[k];//bsetNeigh.evaluateSingle(j,faceQuadOuter,l, phiNeigh_[k] );      
+              phiNeigh_j = phiNeigh_[j] * phiNeigh_[k];
               // product with neighbor
-              phiEn = phi_[j] * phiNeigh_[k]; //bsetEn.evaluateSingle(j,faceQuadInner,l, phiNeigh_[k]); 
+              phiEn = phi_[j] * phiNeigh_[k]; 
 
               // view from inner entity entity
               {
