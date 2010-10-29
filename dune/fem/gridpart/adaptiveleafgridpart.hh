@@ -8,10 +8,6 @@
 #include <dune/fem/storage/singletonlist.hh>
 #include <dune/fem/gridpart/adaptiveleafindexset.hh>
 
-#if DUNE_FEM_COMPATIBILITY
-#include <dune/fem/space/dgspace/dgadaptiveleafgridpart.hh>
-#endif
-
 namespace Dune
 {
 
