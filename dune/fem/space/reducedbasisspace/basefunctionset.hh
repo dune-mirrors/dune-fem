@@ -77,7 +77,6 @@ namespace Dune
 
   public:
     using BaseType::evaluate;
-    using BaseType::evaluateSingle;
 
     /** \brief default constructor */
     ReducedBasisBaseFunctionSet ()
