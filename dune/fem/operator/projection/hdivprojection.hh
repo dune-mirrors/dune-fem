@@ -193,13 +193,13 @@ class HdivProjection : public SpaceOperatorInterface<DiscreteFunctionType>
   {}
 
   //! return reference to space 
-  virtual const DiscreteFunctionSpaceType& space() const 
+  const DiscreteFunctionSpaceType& space() const 
   {
     return space_; 
   }
-  virtual void setTime(double) {
+  void setTime(double) {
   }
-  virtual double timeStepEstimate() const {
+  double timeStepEstimate() const {
     return 0.;
   }
 
@@ -521,7 +521,7 @@ private:
     template <class EntityType, class SpaceType> 
     static inline FaceBSetType faceBaseSet(const EntityType& en, const SpaceType& space) 
     {
-      return space.baseFunctionSet( *(en.template subEntity<1> (0) ));
+      return space.baseFunctionSet( (en.template subEntity<1> (0) )->type() );
     }
   };
 
