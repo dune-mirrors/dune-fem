@@ -264,7 +264,6 @@ public:
         L2Error < DestinationType > l2errGrad;
         gradError[i] = l2errGrad.norm(model_.data().gradient() , velo);
 
-        /*
         HdivProjection< DestinationType > hdiv(velo.space());
         DestinationType tmp ( velo );
 
@@ -274,7 +273,6 @@ public:
         hdiv( tmp, velo );
         
         std::cout << "After Normal Jump = " << hdiv.normalJump( velo ) << "\n";
-        */
 
         errVelo[i] = l2errGrad.norm( model_.data().gradient() , velo);
         
