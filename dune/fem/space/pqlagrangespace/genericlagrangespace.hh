@@ -13,7 +13,7 @@
 #include <dune/fem/space/mapper/genericdofmapper.hh>
 #include <dune/fem/space/basefunctions/genericbasefunctionsets.hh>
 #include <dune/fem/space/basefunctions/basefunctionproxy.hh>
-#include <dune/fem/space/lagrangespace/lagrangedatahandle.hh>
+#include <dune/fem/space/common/defaultcommhandler.hh>
 
 //- Dune-Localfunctions include
 #include  <dune/localfunctions/utility/field.hh>
@@ -124,8 +124,8 @@ namespace Dune
     struct CommDataHandle
     {
       //! type of data handle 
-      typedef LagrangeCommunicationHandler< DiscreteFunction,
-                                            Operation >              Type;
+      typedef DefaultCommunicationHandler< DiscreteFunction,
+                                           Operation >              Type;
       //! type of operatation to perform on scatter 
       typedef Operation                                              OperationType;
     };

@@ -11,7 +11,7 @@
 #include <dune/fem/space/mapper/genericdofmapper.hh>
 #include <dune/fem/space/basefunctions/genericbasefunctionsets.hh>
 #include <dune/fem/space/basefunctions/basefunctionproxy.hh>
-#include <dune/fem/space/lagrangespace/lagrangedatahandle.hh>
+#include <dune/fem/space/common/defaultcommhandler.hh>
 
 #include  <dune/localfunctions/lagrange/pk2d.hh>
 
@@ -123,7 +123,7 @@ namespace Dune
     template< class DiscreteFunction, class Operation = DFCommunicationOperation::Add >
     struct CommDataHandle
     {
-      typedef LagrangeCommunicationHandler< DiscreteFunction, Operation > Type;
+      typedef DefaultCommunicationHandler< DiscreteFunction, Operation > Type;
       typedef Operation OperationType;
     };
 
