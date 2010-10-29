@@ -62,6 +62,9 @@ namespace Dune
 #warning USING LAGRANGE
     typedef LagrangeDiscreteFunctionSpace< FunctionSpaceType, GridPartType, polOrder >
       DiscreteFunctionSpaceType;
+#elif defined USE_LEGENDRESPACE 
+    typedef LegendreDiscontinuousGalerkinSpace< FunctionSpaceType, GridPartType, polOrder >
+      DiscreteFunctionSpaceType;
 #else
     typedef DiscontinuousGalerkinSpace< FunctionSpaceType, GridPartType, polOrder >
       DiscreteFunctionSpaceType;
