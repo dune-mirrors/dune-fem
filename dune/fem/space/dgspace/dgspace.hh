@@ -112,7 +112,7 @@ namespace Dune
     typedef typename Traits::BlockMapperType BlockMapperType; 
 
     //! mapper factory 
-    typedef CodimensionMapperSingletonFactory< GridPartType, 0 > BlockMapperSingletonFactoryType;
+    typedef CodimensionMapperSingletonFactory< GridPartType, codimension > BlockMapperSingletonFactoryType;
 
     //! singleton list of mappers 
     typedef SingletonList
@@ -299,8 +299,8 @@ namespace Dune
 
     enum { dimRange  = FunctionSpaceType::dimRange };
     enum { dimDomain = FunctionSpaceType::dimDomain };
-    //enum { codimension = GridType :: dimensionworld - dimDomain }; 
-    enum { codimension = 0 };
+    enum { dimLocal  = GridType :: dimension };
+    enum { codimension = GridType :: dimensionworld - dimDomain }; 
 
     typedef typename GridPartType::IndexSetType IndexSetType;
     typedef typename GridPartType::template Codim<codimension>::IteratorType IteratorType;
@@ -314,7 +314,6 @@ namespace Dune
     typedef DiscontinuousGalerkinSpace<
       FunctionSpaceType, GridPartType, polOrd, BaseFunctionStorageImp > DiscreteFunctionSpaceType;
 
-    enum { dimLocal = GridType :: dimension };
 
     typedef typename ToLocalFunctionSpace< FunctionSpaceType, dimLocal> :: Type 
       BaseFunctionSpaceType;
@@ -467,8 +466,8 @@ namespace Dune
     typedef typename GridPartType::GridType GridType;
     enum { dimRange  = FunctionSpaceType::dimRange };
     enum { dimDomain = FunctionSpaceType::dimDomain };
-    //enum { codimension = GridType :: dimensionworld - dimDomain }; 
-    enum { codimension = 0 };
+    enum { dimLocal = GridType :: dimension };
+    enum { codimension = GridType :: dimensionworld - dimDomain }; 
 
     typedef typename GridPartType::IndexSetType IndexSetType;
     typedef typename GridPartType::template Codim<codimension>::IteratorType IteratorType;
@@ -482,7 +481,6 @@ namespace Dune
     typedef LegendreDiscontinuousGalerkinSpace<
       FunctionSpaceType, GridPartType, polOrd, BaseFunctionStorageImp> DiscreteFunctionSpaceType;
  
-    enum { dimLocal = GridType :: dimension };
 
     typedef typename ToLocalFunctionSpace< FunctionSpaceType, dimLocal> :: Type 
       BaseFunctionSpaceType;
@@ -617,7 +615,7 @@ namespace Dune
       SingletonProviderType::removeObject(set);
     }
 
-    // return cueb for all codims 
+    // return cube for all codims 
     const std::vector<GeometryType>& geomTypes(int codim) const 
     {
       // make sure grid only contains cube elements 
