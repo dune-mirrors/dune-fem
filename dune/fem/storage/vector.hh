@@ -387,7 +387,7 @@ namespace Dune
 
     ThisType &operator-= ( const ThisType &v )
     {
-      fieldVector_ += v.fieldVector_;
+      fieldVector_ -= v.fieldVector_;
       return *this;
     }
 
