@@ -156,9 +156,8 @@ inline void BlockVectorDiscreteFunction< DiscreteFunctionSpaceType >
   :: addScaled ( const DiscreteFunctionType &g,
                  const RangeFieldType &s )
 {
-  int length = dofVec_.size();
   const DofStorageType &gvec = g.dofVec_;
-  assert(length == gvec.size());
+  assert( dofVec_.size() == gvec.size() );
   dofVec_.axpy( s, gvec );
 }
 
@@ -171,4 +170,5 @@ enableDofCompression()
 }
 
 } // end namespace Dune 
+
 #endif
