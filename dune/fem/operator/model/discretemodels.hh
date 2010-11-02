@@ -9,7 +9,7 @@
 // Dune includes
 #include <dune/common/utility.hh>
 #include <dune/fem/gridpart/gridpart.hh>
-#include <dune/fem/space/dgspace/dgadaptiveleafgridpart.hh>
+#include <dune/fem/gridpart/adaptiveleafgridpart.hh>
 
 //- local includes 
 #include <dune/fem/space/dgspace.hh>
