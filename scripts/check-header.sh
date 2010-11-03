@@ -5,6 +5,16 @@ if test $# -lt 1 ; then
   exit 1
 fi
 
+# use new version of header check 
+make HEADER=$1 headercheck 1>/dev/null
+SUCCESS=$?
+
+exit $SUCCESS 
+
+#############################################
+# old version of header check
+#############################################
+
 PROJECTDIR=`pwd`
 cd `dirname $0`
 SCRIPTSDIR=`pwd`
