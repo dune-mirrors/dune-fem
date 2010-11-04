@@ -7,7 +7,6 @@
 #include <fstream>
 #include <sstream>
 #include <vector>
-#include <set>
 
 #include <dune/common/exceptions.hh>
 
@@ -26,25 +25,17 @@ namespace Fem {
     int baseMax_;
     int baseMin_;
 
-    typedef std::set< int > DimRangeSetType;
-    DimRangeSetType savedimRanges_; 
-    mutable DimRangeSetType dimRanges_; 
-
     typedef void codegenfunc_t (std::ostream& out, 
                                 const int dim, 
                                 const int dimRange, 
                                 const size_t numRows, 
                                 const size_t numCols );
 
-    typedef std::pair< std::string, int > EntryType;
+    typedef std::pair< std::string, bool > EntryType;
     std::vector< EntryType > filenames_;
 
-    mutable int counter_ ;
-    const int maxCount_ ;
-
     CodegenInfo() 
-      : nopMax_(0), nopMin_(0), baseMax_(0), baseMin_(0), 
-        dimRanges_(), filenames_(), counter_( 0 ), maxCount_ ( 128 ) 
+      : nopMax_(0), nopMin_(0), baseMax_(0), baseMin_(0), filenames_() 
     {}
 
   public: 
@@ -54,43 +45,24 @@ namespace Fem {
       return info;
     }
 
-    void addDimRange(const int dimRange) 
-    {
-      std::cout << "Add dimRange " << dimRange << std::endl;
-      dimRanges_.insert( dimRange ) ;
-    }
-
     void notify( const size_t pos ) 
     {
       assert( pos < filenames_.size() );
-      filenames_[ pos ].second = 0 ; 
+      filenames_[ pos ].second = true; 
       if ( checkAbort() ) 
       {
-        ++ counter_ ; 
-        if( counter_ > maxCount_ ) 
-        {
-          counter_ = 0 ;
-          dumpInfo();
-          std::cerr << "All automated code generated, bye, bye !! " << std::endl;
-          DUNE_THROW(CodegenInfoFinished,"All automated code generated, bye, bye !!");
-        }
+        dumpInfo();
+        std::cerr << "All automated code generated, bye, bye !! " << std::endl;
+        DUNE_THROW(CodegenInfoFinished,"All automated code generated, bye, bye !!");
       }
     }
 
     size_t addEntry(const std::string& fileprefix, 
-                    const bool freshFile ,
-                    codegenfunc_t* codegenfunc,
+                    const bool freshFile, codegenfunc_t* codegenfunc,
                     const int dim, const int dimRange, const int quadNop, const int numBase ) 
     {
-      // make sure dimRange was registered 
-      assert( dimRanges_.find( dimRange ) != dimRanges_.end() );
-
       std::stringstream filename;
       filename << fileprefix << dimRange << "_" << quadNop << "_" << numBase << ".hh";
-
-      int pos = exists( filename.str() ); 
-      if( pos >= 0 ) return pos ;
-
       std::ofstream file( filename.str().c_str(), ( freshFile ) ? (std::ios::out) : (std::ios::app) );
       // call code generation function 
       codegenfunc( file, dim, dimRange, quadNop, numBase );
@@ -98,7 +70,7 @@ namespace Fem {
       if( baseMin_ == 0 ) baseMin_ = numBase;
       if( nopMin_  == 0 ) nopMin_  = quadNop;
 
-      EntryType entry ( filename.str() , dimRange );
+      EntryType entry ( filename.str() , false );
       filenames_.push_back( entry );
       nopMax_ = std::max( quadNop, nopMax_ );
       nopMin_ = std::min( quadNop, nopMin_ );
@@ -107,17 +79,6 @@ namespace Fem {
 
       return filenames_.size() - 1 ;
     }
-
-    void finalize () const 
-    {
-      if( checkAbort() ) 
-      {
-        dumpInfo();
-        std::cerr << "All automated code generated, bye, bye !! " << std::endl;
-        DUNE_THROW(CodegenInfoFinished,"All automated code generated, bye, bye !!");
-      }
-    }
-
 
     void dumpInfo() const 
     {
@@ -141,37 +102,14 @@ namespace Fem {
       file << "#endif // CODEGEN_INCLUDEMAXNUMS" << std::endl;
     }
   protected:  
-    int exists( const std::string& filename ) const 
-    {
-      for( size_t i = 0; i < filenames_.size(); ++i ) 
-      {
-        if( filename == filenames_[ i ].first )
-          return i;
-      }
-      return -1;
-    }
-
     bool checkAbort() const 
     {
-      DimRangeSetType found ;
-      bool canAbort = true ;
       for( size_t i = 0; i < filenames_.size(); ++i ) 
       {
-        found.insert( filenames_[ i ].second );
-        if ( filenames_[ i ].second > 0 ) 
-        {
-          canAbort = false ;
-        }
+        if ( filenames_[ i ].second == false ) 
+          return false ;
       }
-      typedef DimRangeSetType :: iterator iterator ;
-      for( iterator it = found.begin(); it != found.end(); ++it ) 
-      {
-        dimRanges_.erase( *it );
-      }
-      if( canAbort && dimRanges_.size() == 0 )
-        return true ; 
-      else 
-        return false ;
+      return true;
     }
   };
 
@@ -193,47 +131,58 @@ namespace Fem {
       out << "            class LocalDofVectorType>" << std::endl;
       out << "  static void eval( const QuadratureType& quad," << std::endl;
       out << "                    const RangeVectorType& rangeStorage," << std::endl; 
-      out << "                    const LocalDofVectorType& dofs," << std::endl;
+      out << "                    const LocalDofVectorType& dofStorage," << std::endl;
       out << "                    RangeFactorType &rangeVector)" << std::endl;
       out << "  {" << std::endl;
       out << "    typedef typename ScalarRangeType :: field_type field_type;" << std::endl;
       out << "    typedef typename RangeVectorType :: value_type value_type;" << std::endl; 
       // make length sse conform 
-      const int sseDimRange = dimRange + (dimRange % 2); 
-      //out << "    typedef FieldVector< field_type, " << sseDimRange << " >  ResultType;" << std::endl;
-      for( size_t row=0; row< numRows; ++row ) 
+      //const int sseDimRange = dimRange + (dimRange % 2); 
+      const int sseDimRange = dimRange; // + (dimRange % 2); 
+      out << "    const field_type dofs[ " << numCols * dimRange << " ] = { " << std::endl;
+      for( size_t col = 0, colR = 0; col < numCols; ++ col )
       {
-        out << "    {" << std::endl;
-        out << "      const value_type& rangeStorageRow = rangeStorage[ quad.cachingPoint( " << row << " ) ];" << std::endl;
-        out << "      field_type result [ " << sseDimRange << " ] = { ";
-        for( int r = 0; r < sseDimRange-1; ++r )  out << " 0 ,";
-        out << " 0  };" << std::endl;
-        for( size_t col = 0, colR = 0; col < numCols; ++col ) 
+        out << "      ";
+        for( int r = 0; r < dimRange; ++ r , ++colR )
         {
-          //out << "      {" << std::endl;
-          out << "      const field_type phi"<< col << " = rangeStorageRow[ " << col << " ][ 0 ];" << std::endl;
-          for( int r = 0; r < dimRange; ++r , ++colR ) 
+          out << "dofStorage[ " << colR << " ]";    
+
+          if( colR < (numCols * dimRange) - 1 )
           {
-            out << "      result[ " << r << " ] += dofs[ " << colR << " ] * phi" << col << ";" << std::endl;
-            if( sseDimRange != dimRange && r == dimRange - 1 )
-            {
-              //out << "      result[ " << r+1 << " ] += 0.5 * phi" << col << ";" << std::endl;
-              if( (colR + 1) < numCols * dimRange )
-                out << "      result[ " << r+1 << " ] += dofs[ " << colR + 1 << " ] * phi" << col << ";" << std::endl;
-              else 
-                out << "      result[ " << r+1 << " ] += 0.5 * phi" << col << ";" << std::endl;
-            }
+            out << ","; 
+            if( r == dimRange - 1) out << std::endl;
           }
-          //out << "      }" << std::endl;
+          else out << " };" << std::endl;
         }
-        out << "      // store result in vector"  << std::endl;
-        out << "      RangeType& realResult = rangeVector[ " << row << " ];"  << std::endl;
-        for( int r = 0; r < dimRange; ++r) 
-        {
-          out << "      realResult[ " << r << " ] = result[ " << r << " ];" << std::endl;
-        }
-        out << "    }" << std::endl;
       }
+      out << "    for( size_t row=0; row<"<<numRows<<" ; ++row )"<<std::endl;
+      out << "    {" << std::endl;
+      out << "      const value_type& rangeStorageRow = rangeStorage[ quad.cachingPoint( row ) ];" << std::endl;
+      out << "      field_type result [ " << sseDimRange << " ] = { ";
+      for( int r = 0; r < sseDimRange-1; ++r )  out << " 0 ,";
+      out << " 0  };" << std::endl;
+      for( size_t col = 0, colR = 0; col < numCols; ++col ) 
+      {
+        out << "      const field_type phi"<< col << " = rangeStorageRow[ " << col << " ][ 0 ];" << std::endl;
+        for( int r = 0; r < dimRange; ++r , ++colR ) 
+        {
+          out << "      result[ " << r << " ] += dofs[ " << colR << " ] * phi" << col << ";" << std::endl;
+          if( sseDimRange != dimRange && r == dimRange - 1 )
+          {
+            if( (colR + 1) < numCols * dimRange )
+              out << "      result[ " << r+1 << " ] += dofs[ " << colR + 1 << " ] * phi" << col << ";" << std::endl;
+            else 
+              out << "      result[ " << r+1 << " ] += 0.5 * phi" << col << ";" << std::endl;
+          }
+        }
+      }
+      out << "      // store result in vector"  << std::endl;
+      out << "      RangeType& realResult = rangeVector[ row ];"  << std::endl;
+      for( int r = 0; r < dimRange; ++r) 
+      {
+        out << "      realResult[ " << r << " ] = result[ " << r << " ];" << std::endl;
+      }
+      out << "    }" << std::endl;
       out << "  }" << std::endl << std::endl;
       out << "};" << std::endl;
     }
@@ -253,38 +202,21 @@ namespace Fem {
       out << "                    const RangeFactorType &rangeFactors," << std::endl;
       out << "                    LocalDofVectorType& dofs)" << std::endl;
       out << "  {" << std::endl;
+      for( size_t row=0; row< numRows; ++row ) 
+      {
+        out << "    const RangeType& factor" << row  << " = rangeFactors[ " << row << " ];" << std::endl;
+      }
+      out << std::endl ;
+
       out << "    typedef typename RangeVectorType :: value_type value_type;" << std::endl; 
-      out << "    const value_type* const rangeStorageTmp[ " << numRows << " ] = {" << std::endl;
       for( size_t row = 0; row<numRows ; ++ row )
       {
-        out << "       &( rangeStorage[ quad.cachingPoint( " << row << " ) ] )";
-        if( row < numRows - 1 ) out << " ," << std::endl;
-        else out << "  };" << std::endl;
+        out << "    const value_type& rangeStorage"<<row<<" = rangeStorage[ quad.cachingPoint( " << row << " ) ];" << std::endl;
       }
       out << std::endl;
       out << "    typedef typename ScalarRangeType :: field_type field_type;" << std::endl;
-      /*
-      for( int row=0; row< numRows; ++row ) 
-      {
-        out << "    {" << std::endl;
-        out << "      const size_t baseRow = quad.cachingPoint( " << row << " );" << std::endl;
-        out << "      const RangeType& factor = rangeFactors[ " << row << " ];"  << std::endl;
-        out << "      const value_type& rangeStorageRow = rangeStorage[ baseRow ];" << std::endl;
-        for( size_t col = 0, colR = 0; col < numCols; ++col ) 
-        {
-          out << "      {" << std::endl;
-          out << "        const field_type phi = rangeStorageRow[ " << col << " ][ 0 ];" << std::endl;
-          for( int r = 0; r < dimRange; ++r , ++colR ) 
-          {
-            out << "        dofs[ " << colR << " ] += phi * factor[ " << r << " ];" << std::endl;
-          }
-          out << "      }" << std::endl;
-        }
-        out << "    }" << std::endl;
-      }
-      */
-      const int sseDimRange = (( dimRange % 2 ) == 0) ? dimRange : dimRange+1; 
-      for( size_t col = 0, colR = 0; col < numCols; ++col ) 
+      const int sseDimRange = dimRange + (dimRange % 2);
+      out << "    for( size_t col = 0, dof = 0; col <"<<numCols<< " ; ++col )" << std::endl;
       {
         out << "    {" << std::endl;
         out << "      field_type result [ " << sseDimRange << " ] = { ";
@@ -294,37 +226,22 @@ namespace Fem {
         out << "      const field_type phi[ " << numRows << " ] = {" << std::endl;
         for( size_t row=0; row< numRows; ++row ) 
         {
-          out << "        (*(rangeStorageTmp[ " << row << " ]))[ " << col << " ][ 0 ]";
+          out << "        rangeStorage" << row << "[ col ][ 0 ]";
           if( row < numRows - 1) 
             out << " ," << std::endl;
           else out << "  };" << std::endl;
         }
         for( size_t row=0; row< numRows; ++row ) 
         {
-          out << "      const RangeType& factor" << row  << " = rangeFactors[ " << row << " ];" << std::endl;
-        }
-        for( size_t row=0; row< numRows; ++row ) 
-        {
-          //out << "      const field_type phi" << row << " = (*(rangeStorageTmp[ " << row << " ]))[ " << col << " ][ 0 ];" << std::endl;
           for( int r = 0; r < dimRange; ++r ) 
           {
-            //out << "      result[ " << r << " ]  +=  factor" << row << "[ " << r << " ] * phi" << row << ";" << std::endl; 
-            //if( sseDimRange != dimRange && r == dimRange - 1 )
-            //  out << "      result[ " << r+1 << " ]  +=  0.5 * phi" << row << ";" << std::endl;
             out << "      result[ " << r << " ]  +=  factor" << row << "[ " << r << " ] * phi[ " << row << " ];" << std::endl; 
             if( sseDimRange != dimRange && r == dimRange - 1 )
               out << "      result[ " << r+1 << " ]  +=  0.5 * phi[ " << row << " ];" << std::endl;
-            //out << "      rangeStorage[ quad.cachingPoint( " << row << " ) ][ " << col << " ][ 0 ] * rangeFactors[ " << row << " ][ " << r << " ]"; 
-            /*
-            if( row < numRows - 1 ) 
-              out << " + " << std::endl;
-            else 
-              out << " ; " << std::endl;
-              */
           }
         }
-        for( int r = 0; r < dimRange; ++r , ++colR ) 
-          out << "      dofs[ " << colR << " ]  +=  result[ " << r << " ];" << std::endl;
+        for( int r = 0; r < dimRange; ++r ) //, ++colR ) 
+          out << "      dofs[ dof++ ]  +=  result[ " << r << " ];" << std::endl;
 
         out << "    }" << std::endl;
       }
@@ -438,6 +355,7 @@ namespace Fem {
       out << "                    LocalDofVectorType& dofs)" << std::endl;
       out << "  {" << std::endl;
       const int sseDimRange = dimRange + (dimRange % 2); 
+      //const int sseDimRange = dimRange;// + (dimRange % 2); 
       out << "    typedef typename JacobianRangeVectorType :: value_type  value_type;" << std::endl; 
       out << "    typedef typename JacobianRangeType :: field_type field_type;" << std::endl;
       const size_t dofs = sseDimRange * numCols ;
@@ -448,12 +366,13 @@ namespace Fem {
       out << "    {" << std::endl;
       out << "      const value_type& jacStorageRow = jacStorage[ quad.cachingPoint( row ) ];" << std::endl;
       out << "      typedef typename Geometry::Jacobian GeometryJacobianType;" << std::endl;
-      out << "      const GeometryJacobianType& gjit = geometry.jacobianInverseTransposed( quad.point( row ) );" << std::endl << std::endl;
+      out << "      const GeometryJacobianType gjit = geometry.jacobianInverseTransposed( quad.point( row ) );" << std::endl << std::endl;
       out << "      JacobianRangeType jacFactorTmp;" << std::endl;
       out << "      for( int r = 0; r < " << dimRange << " ; ++r )" << std::endl;
       out << "      {"<<std::endl; 
       out << "        gjit.mtv( jacFactors[ row ][ r ], jacFactorTmp[ r ] );" << std::endl;
-      out << "      }" << std::endl;
+      out << "      }" << std::endl << std::endl;
+      out << "      // calculate updates" << std::endl;
       out << "      // rearrange values to have linear memory walk through" << std::endl;
       out << "      const field_type jacFactorInv[ " << dim * sseDimRange << " ] = {" << std::endl;
       std::string delimiter("        ");
@@ -467,67 +386,64 @@ namespace Fem {
         }
         if( dimRange < sseDimRange ) 
         {
-          out << ", 0";
+          out << ", 0.5";
         }
         delimiter = ",\n        ";
       }
-      out << std::endl;
       out << "      };" << std::endl;
-      /*
-      out << "      field_type jacFactorInv[ " << dim * sseDimRange << " ];" << std::endl;
-      out << "      for( int r = 0; r < " << dimRange << " ; ++r )" << std::endl;
-      out << "      {"<<std::endl; 
-      out << "        for( size_t i = 0; i < GeometryJacobianType :: cols; ++i )" << std::endl;
-      out << "        {" << std::endl;
-      out << "          const size_t ir = i * " << sseDimRange << " + r ;" << std::endl;
-      out << "          jacFactorInv[ ir  ] = 0;" << std::endl;
-      out << "          for( size_t j = 0; j < GeometryJacobianType :: rows; ++j )" << std::endl;
-      out << "            jacFactorInv[ ir ] += gjit[ j ][ i ] * jacFactors[ row ][ r ][ j ];" << std::endl;
-      out << "        }" << std::endl;
-      out << "      }" << std::endl;
-      */
-
       for( size_t col = 0, colR = 0; col < numCols; ++col ) 
       {
-        for( int d = 0 ; d < dim ; ++ d ) 
+        out << "      {" << std::endl;
+        out << "        const field_type phi[ " << dim * sseDimRange << " ] = {" << std::endl;
+        delimiter = std::string("        ");
+        for( int d =0; d < dim; ++d )
         {
-          out << "      const field_type phi" << col << d << " = jacStorageRow[ " << col << " ][ 0 ][ " << d << " ];" << std::endl;
+          for( int r = 0; r < dimRange; ++ r ) 
+          {
+            out << delimiter;
+            delimiter = ", ";
+            out << "    jacStorageRow[ " << col << " ][ 0 ][ " << d << " ]";
+            //FactorTmp[ " << r  << " ][ " << i << " ]";
+          }
+          if( dimRange < sseDimRange ) 
+          {
+            out << ", 0.5";
+          }
+          delimiter = ",\n        ";
         }
+        out << std::endl;
+        out << "        };" << std::endl;
         for( int d = 0, dr = 0 ; d < dim ; ++ d ) 
         {
           for( int r = 0; r < sseDimRange; ++r, ++dr )
           {
-            out << "      result[ " << colR+r << " ]  +=  phi" << col << d << " * jacFactorInv[ " << dr << " ];" << std::endl;
+            out << "        result[ " << colR+r << " ]  +=  phi[ " << dr << " ] * jacFactorInv[ " << dr << " ];" << std::endl;
           }
         }
         colR += sseDimRange; 
+        out << "      }" << std::endl;
       }
-      out << "    }" << std::endl << std::endl;
-
       /*
-      for( size_t row = 0; row<numRows ; ++ row )
+      for( size_t col = 0, colR = 0; col < numCols; ++col ) 
       {
-        out << "    {" << std::endl;
-        out << "      const value_type& jacStorageRow = jacStorage[ quad.cachingPoint( " << row << " ) ];" << std::endl;
-        out << "      JacobianRangeType jacFactorInv;" << std::endl;
-        for( int r = 0; r < dimRange ; ++ r ) 
+        out << "      {" << std::endl;
+        for( int d = 0 ; d < dim ; ++ d ) 
         {
-          out << "      gjit.mtv( jacFactors[ " << row << " ][ " << r  << " ], jacFactorInv[ " << r << " ] );" << std::endl;
+          out << "        const field_type& phi"<< d << " = jacStorageRow[ " << col << " ][ 0 ][ " << d << " ];" << std::endl;
         }
-        for( size_t col = 0, colR = 0; col < numCols; ++col ) 
+        for( int r = 0; r < sseDimRange; ++r )
         {
-          int dim = 3 ;
-          for( int d = 0; d < dim; ++ d ) 
-            for( int r = 0; r < dimRange; ++r )
-            {
-              out << "      dofs[ " << colR+r << " ]  +=  jacStorageRow[ " << col << " ][ 0 ][ " << d << " ] * jacFactorInv[ " << r << " ][ " << d << "];" << std::endl;
-            }
-
-          colR += dimRange;
+          for( int d = 0 ; d < dim ; ++ d ) 
+          {
+            out << "        result[ " << colR+r << " ]  +=  phi" << d << " * jacFactorTmp[ " << r << " ][ " << d << " ];" << std::endl;
+          }
         }
-        out << "    }" << std::endl;
+        colR += sseDimRange; 
+        out << "      }" << std::endl;
       }
       */
+      out << "    }" << std::endl << std::endl;
+
       for( size_t col = 0, colD = 0, colR = 0; col < numCols; ++ col ) 
       {
         for(int r = 0; r < dimRange; ++ r, ++colD, ++colR )
