@@ -7,6 +7,7 @@
 #include <fstream>
 #include <sstream>
 #include <vector>
+#include <set>
 
 #include <dune/common/exceptions.hh>
 
@@ -25,17 +26,25 @@ namespace Fem {
     int baseMax_;
     int baseMin_;
 
+    typedef std::set< int > DimRangeSetType;
+    DimRangeSetType savedimRanges_; 
+    mutable DimRangeSetType dimRanges_; 
+
     typedef void codegenfunc_t (std::ostream& out, 
                                 const int dim, 
                                 const int dimRange, 
                                 const size_t numRows, 
                                 const size_t numCols );
 
-    typedef std::pair< std::string, bool > EntryType;
+    typedef std::pair< std::string, int > EntryType;
     std::vector< EntryType > filenames_;
 
+    mutable int counter_ ;
+    const int maxCount_ ;
+
     CodegenInfo() 
-      : nopMax_(0), nopMin_(0), baseMax_(0), baseMin_(0), filenames_() 
+      : nopMax_(0), nopMin_(0), baseMax_(0), baseMin_(0), 
+        dimRanges_(), filenames_(), counter_( 0 ), maxCount_ ( 128 ) 
     {}
 
   public: 
@@ -45,24 +54,43 @@ namespace Fem {
       return info;
     }
 
+    void addDimRange(const int dimRange) 
+    {
+      std::cout << "Add dimRange " << dimRange << std::endl;
+      dimRanges_.insert( dimRange ) ;
+    }
+
     void notify( const size_t pos ) 
     {
       assert( pos < filenames_.size() );
-      filenames_[ pos ].second = true; 
+      filenames_[ pos ].second = 0 ; 
       if ( checkAbort() ) 
       {
-        dumpInfo();
-        std::cerr << "All automated code generated, bye, bye !! " << std::endl;
-        DUNE_THROW(CodegenInfoFinished,"All automated code generated, bye, bye !!");
+        ++ counter_ ; 
+        if( counter_ > maxCount_ ) 
+        {
+          counter_ = 0 ;
+          dumpInfo();
+          std::cerr << "All automated code generated, bye, bye !! " << std::endl;
+          DUNE_THROW(CodegenInfoFinished,"All automated code generated, bye, bye !!");
+        }
       }
     }
 
     size_t addEntry(const std::string& fileprefix, 
-                    const bool freshFile, codegenfunc_t* codegenfunc,
+                    const bool freshFile ,
+                    codegenfunc_t* codegenfunc,
                     const int dim, const int dimRange, const int quadNop, const int numBase ) 
     {
+      // make sure dimRange was registered 
+      assert( dimRanges_.find( dimRange ) != dimRanges_.end() );
+
       std::stringstream filename;
       filename << fileprefix << dimRange << "_" << quadNop << "_" << numBase << ".hh";
+
+      int pos = exists( filename.str() ); 
+      if( pos >= 0 ) return pos ;
+
       std::ofstream file( filename.str().c_str(), ( freshFile ) ? (std::ios::out) : (std::ios::app) );
       // call code generation function 
       codegenfunc( file, dim, dimRange, quadNop, numBase );
@@ -70,7 +98,7 @@ namespace Fem {
       if( baseMin_ == 0 ) baseMin_ = numBase;
       if( nopMin_  == 0 ) nopMin_  = quadNop;
 
-      EntryType entry ( filename.str() , false );
+      EntryType entry ( filename.str() , dimRange );
       filenames_.push_back( entry );
       nopMax_ = std::max( quadNop, nopMax_ );
       nopMin_ = std::min( quadNop, nopMin_ );
@@ -79,6 +107,17 @@ namespace Fem {
 
       return filenames_.size() - 1 ;
     }
+
+    void finalize () const 
+    {
+      if( checkAbort() ) 
+      {
+        dumpInfo();
+        std::cerr << "All automated code generated, bye, bye !! " << std::endl;
+        DUNE_THROW(CodegenInfoFinished,"All automated code generated, bye, bye !!");
+      }
+    }
+
 
     void dumpInfo() const 
     {
@@ -102,14 +141,37 @@ namespace Fem {
       file << "#endif // CODEGEN_INCLUDEMAXNUMS" << std::endl;
     }
   protected:  
-    bool checkAbort() const 
+    int exists( const std::string& filename ) const 
     {
       for( size_t i = 0; i < filenames_.size(); ++i ) 
       {
-        if ( filenames_[ i ].second == false ) 
-          return false ;
+        if( filename == filenames_[ i ].first )
+          return i;
       }
-      return true;
+      return -1;
+    }
+
+    bool checkAbort() const 
+    {
+      DimRangeSetType found ;
+      bool canAbort = true ;
+      for( size_t i = 0; i < filenames_.size(); ++i ) 
+      {
+        found.insert( filenames_[ i ].second );
+        if ( filenames_[ i ].second > 0 ) 
+        {
+          canAbort = false ;
+        }
+      }
+      typedef DimRangeSetType :: iterator iterator ;
+      for( iterator it = found.begin(); it != found.end(); ++it ) 
+      {
+        dimRanges_.erase( *it );
+      }
+      if( canAbort && dimRanges_.size() == 0 )
+        return true ; 
+      else 
+        return false ;
     }
   };
 
