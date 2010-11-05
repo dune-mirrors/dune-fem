@@ -98,11 +98,16 @@ namespace Dune
     : storage_( factory ),
       util_( dimRange )
     {
-#ifdef BASEFUNCTIONSET_CODEGEN_GENERATE
-      // add my dimrange 
-      Fem::CodegenInfo::instance().addDimRange( dimRange );
-#endif
     }
+#ifdef BASEFUNCTIONSET_CODEGEN_GENERATE
+    void registerEntry() const 
+    {
+      // add my dimrange 
+      Fem::CodegenInfo::instance().addDimRange( this, dimRange );
+    }
+#else 
+    void registerEntry() const {}
+#endif
 
     const StorageType &storage () const { return storage_; }
 
@@ -396,6 +401,7 @@ namespace Dune
 
       baseEval.evaluateRanges( quad, dofs, rangeVector );
 #else 
+      registerEntry();
       evaluateRanges( quad, storage_.getRangeStorage( quad ), 
           dofs, rangeVector, quad.nop(), numDifferentBaseFunctions() );
 #endif
@@ -528,6 +534,7 @@ namespace Dune
       // call appropriate axpyJacobian method 
       baseEval.evaluateJacobians( quad, geometry, dofs, jacVector );
 #else 
+      registerEntry();
       evaluateJacobians( quad, geometry, 
                          storage_.getJacobianStorage( quad ),
                          dofs, jacVector, jacVector[ 0 ], 
@@ -670,6 +677,7 @@ namespace Dune
       // call appropriate axpyRanges method 
       baseEval.axpyRanges( quad, rangeFactors, dofs );
 #else 
+      registerEntry();
       axpyRanges( quad, storage_.getRangeStorage( quad ), 
           rangeFactors, dofs, quad.nop(), numDifferentBaseFunctions() );
 #endif
@@ -788,6 +796,7 @@ namespace Dune
       // call appropriate axpyJacobian method 
       baseEval.axpyJacobians( quad, geometry, jacVector, dofs );
 #else 
+      registerEntry();
       assert( jacVector.size() > 0 );
       axpyJacobians( quad, geometry,
                      storage_.getJacobianStorage( quad ),

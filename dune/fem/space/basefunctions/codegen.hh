@@ -27,8 +27,10 @@ namespace Fem {
     int baseMin_;
 
     typedef std::set< int > DimRangeSetType;
+    typedef std::set< void* > BaseSetPointerType;
     DimRangeSetType savedimRanges_; 
     mutable DimRangeSetType dimRanges_; 
+    BaseSetPointerType savedBaseSets_;
 
     typedef void codegenfunc_t (std::ostream& out, 
                                 const int dim, 
@@ -40,11 +42,11 @@ namespace Fem {
     std::vector< EntryType > filenames_;
 
     mutable int counter_ ;
-    const int maxCount_ ;
+    int maxCount_ ;
 
     CodegenInfo() 
       : nopMax_(0), nopMin_(0), baseMax_(0), baseMin_(0), 
-        dimRanges_(), filenames_(), counter_( 0 ), maxCount_ ( 128 ) 
+        dimRanges_(), savedBaseSets_(), filenames_(), counter_( 0 ), maxCount_ ( 1 ) 
     {}
 
   public: 
@@ -54,10 +56,18 @@ namespace Fem {
       return info;
     }
 
-    void addDimRange(const int dimRange) 
+    template <class BaseSet>
+    void addDimRange(const BaseSet* baseSet, 
+                     const int dimRange) 
     {
-      std::cout << "Add dimRange " << dimRange << std::endl;
-      dimRanges_.insert( dimRange ) ;
+      void* ptr = (void *) baseSet;
+      if( savedBaseSets_.find( ptr ) == savedBaseSets_.end() )
+      {
+        savedBaseSets_.insert( ptr );
+        std::cout << "Add dimRange " << dimRange << std::endl;
+        dimRanges_.insert( dimRange ) ;
+      }
+      if( dimRanges_.size() > 1 ) maxCount_ = 50 ;
     }
 
     void notify( const size_t pos ) 
@@ -168,6 +178,7 @@ namespace Fem {
       {
         dimRanges_.erase( *it );
       }
+
       if( canAbort && dimRanges_.size() == 0 )
         return true ; 
       else 
