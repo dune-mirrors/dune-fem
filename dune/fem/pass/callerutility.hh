@@ -5,6 +5,8 @@
 #include <dune/fem/misc/utility.hh>
 #include <dune/common/typetraits.hh>
 
+#include <dune/fem/function/localfunction/temporarylocalfunction.hh>
+
 #include "selection.hh"
 
 namespace Dune
@@ -89,7 +91,10 @@ namespace Dune
    */
   template <class DFType>
   struct DFTypeEvaluator {
-    typedef typename TypeTraits<DFType>::PointeeType::LocalFunctionType Type;
+    // old version uses local function of discrete function
+    //typedef typename TypeTraits<DFType>::PointeeType::LocalFunctionType Type;
+    typedef typename TypeTraits<DFType>::PointeeType DiscreteFunctionType;
+    typedef ConstLocalFunction< DiscreteFunctionType > Type;
   };
  
   /**
@@ -182,12 +187,13 @@ namespace Dune
   public:
     typedef typename ForEachType<
       DFTypeEvaluator, Pair<Head, Tail> >::Type ResultType;
-    typedef typename TypeTraits<
-      Head>::PointeeType::LocalFunctionType LocalFunctionType;
+    typedef typename TypeTraits<Head>::PointeeType DiscreteFunctionType;
+    typedef ConstLocalFunction< DiscreteFunctionType > LocalFunctionType;
 
   public:
     static inline ResultType apply(const Pair<Head, Tail>& pairs) {
-      LocalFunctionType tmp(pairs.first()->localFunctionStorage());
+      LocalFunctionType tmp( *pairs.first() );
+      //LocalFunctionType tmp(pairs.first()->localFunctionStorage());
       typename LocalFunctionCreator<Tail>::ResultType localFunc = LocalFunctionCreator<Tail>::apply(pairs.second());
       return ResultType(tmp,localFunc);
     }
@@ -203,12 +209,17 @@ namespace Dune
     friend class LocalFunctionCreator;
   
   public:
-    typedef typename TypeTraits<Head>::PointeeType::LocalFunctionType LocalFunctionType;
+    //typedef typename TypeTraits<Head>::PointeeType::LocalFunctionType LocalFunctionType;
+    typedef typename TypeTraits<Head>::PointeeType DiscreteFunctionType ;
+    //typedef typename DiscreteFunctionType :: LocalFunctionType  LocalFunctionType;
+    // old version uses local function of discrete function
+    typedef ConstLocalFunction< DiscreteFunctionType > LocalFunctionType;
     typedef Pair<LocalFunctionType, Nil> ResultType;
  
   public:
     static inline ResultType apply(const Pair<Head, Nil>& pairs) {
-      LocalFunctionType tmp(pairs.first()->localFunctionStorage());
+      //LocalFunctionType tmp(pairs.first()->localFunctionStorage());
+      LocalFunctionType tmp(*pairs.first());
       return ResultType(tmp, nullType());
     }
   };
