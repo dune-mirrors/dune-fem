@@ -153,16 +153,18 @@ namespace Dune
    *  \class ConstLocalFunction
    *  \brief A constant local function carrying values for one entity
    *
-   *  A ConstLocalFunction is a LocalFunction which is not associated with
-   *  any DiscreteFunction. It can be used when generating discrete functions
-   *  to temporarily store values for one entity.
+   *  A ConstLocalFunction is a LocalFunction which is basically doing the same as the 
+   *  LocalFunction of a discrete function. The difference is that the local dofs 
+   *  are not kept as references but are copied to a local storage. 
+   *  Therefore, this is a const local function and any modification of dofs is not
+   *  allowed. 
    *
    *  \note Local DoF numbers correspond directly to array indices. Hence it
-   *  may be more cache efficient to generate a TemporaryLocalFunction and then
-   *  do only one update step on the discrete function's LocalFunction.
+   *  may be more cache efficient to generate a ConstLocalFunction when only a 
+   *  const access to the local function is needed. 
    *
-   *  \param DiscreteFunctionSpaceImp type of the discrete function space, the
-   *                                  local function shall belong to
+   *  \param DiscreteFunction type of the discrete function, the
+                              local function shall belong to
    */
   template< class DiscreteFunction,
             template< class > class ArrayAllocator >
