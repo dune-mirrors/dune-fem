@@ -132,6 +132,36 @@ namespace Dune
 
 
   template< class DiscreteFunctionSpace, template< class > class ArrayAllocator >
+  template< class DiscreteFunctionType >
+  inline void TemporaryLocalFunctionImpl< DiscreteFunctionSpace, ArrayAllocator >
+    :: init ( const EntityType &entity , const DiscreteFunctionType& discreteFunction )
+  {
+    // initialize 
+    init( entity );
+
+    // copy dofs to local storage (modifying not allowed)
+    assert( numDofs() <= (int) dofs_.size() ); 
+    typedef typename DiscreteFunctionSpace :: BlockMapperType BlockMapperType;
+    typedef typename BlockMapperType :: DofMapIteratorType DofMapIteratorType;
+    typedef typename DiscreteFunctionType :: ConstDofBlockPtrType  ConstDofBlockPtrType;
+    enum { blockSize = DiscreteFunctionSpace :: localBlockSize };
+    assert( &discreteFunctionSpace_ == &discreteFunction.space() );
+    const BlockMapperType &mapper = discreteFunctionSpace_.blockMapper();
+    const DofMapIteratorType end = mapper.end( entity );
+    for( DofMapIteratorType it = mapper.begin( entity ); it != end; ++it )
+    {
+      assert( it.global() == mapper.mapToGlobal( entity, it.local() ) );
+
+      ConstDofBlockPtrType blockPtr = discreteFunction.block( it.global() );
+
+      const unsigned int localBlock = it.local() * blockSize;
+      for( unsigned int i = 0; i < blockSize; ++i )
+        dofs_[ localBlock + i ] = (*blockPtr)[ i ];
+    }
+  }
+
+
+  template< class DiscreteFunctionSpace, template< class > class ArrayAllocator >
   inline int TemporaryLocalFunctionImpl< DiscreteFunctionSpace, ArrayAllocator >
     :: numDofs () const
   {
