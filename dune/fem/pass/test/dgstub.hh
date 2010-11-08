@@ -58,6 +58,7 @@ namespace Dune
     typedef Traits::DiscreteFunctionSpaceType::RangeType RangeType;
     typedef Traits::DiscreteFunctionSpaceType::JacobianRangeType JacobianRangeType;
     typedef GridPartType :: IntersectionIteratorType IntersectionIterator;
+    typedef IntersectionIterator :: Intersection  Intersection;
     typedef GridType::Codim<0>::Entity EntityType;
 
     typedef BaseType :: MassFactorType MassFactorType; 
@@ -81,7 +82,7 @@ namespace Dune
     }
 
     template <class ArgumentTuple, class FaceDomainType>
-    double numericalFlux(IntersectionIterator& it,
+    double numericalFlux(const Intersection& it,
                          double time, const FaceDomainType& x,
                          const ArgumentTuple& uLeft, 
                          const ArgumentTuple& uRight,
@@ -93,7 +94,7 @@ namespace Dune
     }
 
     template <class ArgumentTuple, class FaceDomainType>
-    double boundaryFlux(IntersectionIterator& it,
+    double boundaryFlux(const Intersection& it,
                         double time, const FaceDomainType& x,
                         const ArgumentTuple& uLeft,
                         RangeType& boundaryFlux)
@@ -111,13 +112,15 @@ namespace Dune
     }
 
     template <class ArgumentTuple, class JacobianTuple>
-    void source(EntityType& en, 
-                double time, const DomainType& x,
-                const ArgumentTuple& u, 
-                const JacobianTuple& jac, 
-                RangeType& s)
+    double source(const EntityType& en, 
+                  const double time, 
+                  const DomainType& x,
+                  const ArgumentTuple& u, 
+                  const JacobianTuple& jac, 
+                  RangeType& s)
     {
       std::cout << "S()" << std::endl;
+      return 0.0;
     }
 
     template <class ArgumentTuple>
