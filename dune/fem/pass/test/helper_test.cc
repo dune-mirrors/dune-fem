@@ -4,6 +4,7 @@
 
 #include "helper_test.hh"
 //#include <dune/fem/quadrature/elementquadrature.hh>
+#include <dune/fem/function/localfunction/temporarylocalfunction.hh>
 
 namespace Dune {
   void PassHelper_Test::run() {
@@ -58,9 +59,12 @@ namespace Dune {
     typedef AdaptiveDiscreteFunction<Fix1::DiscreteFunctionSpaceType> DF1;
     typedef AdaptiveDiscreteFunction<Fix2::DiscreteFunctionSpaceType> DF2;
 
-    typedef DF0::LocalFunctionType LF0;
-    typedef DF1::LocalFunctionType LF1;
-    typedef DF2::LocalFunctionType LF2;
+    //typedef DF0::LocalFunctionType LF0;
+    //typedef DF1::LocalFunctionType LF1;
+    //typedef DF2::LocalFunctionType LF2;
+    typedef ConstLocalFunction< DF0 > LF0;
+    typedef ConstLocalFunction< DF1 > LF1;
+    typedef ConstLocalFunction< DF2 > LF2;
 
     typedef LF0::RangeType R0;
     typedef LF1::RangeType R1;
