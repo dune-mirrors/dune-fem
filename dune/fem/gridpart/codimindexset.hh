@@ -1,16 +1,16 @@
 #ifndef DUNE_CODIMINDEXSET_HH
 #define DUNE_CODIMINDEXSET_HH
 
+#include <algorithm>
+
 //- Dune includes 
 #include <dune/common/misc.hh>
 #include <dune/fem/space/common/arrays.hh>
 #include <dune/fem/gridpart/defaultindexsets.hh>
 
-#if DUNE_FEM_COMPATIBILITY
-#include <dune/fem/io/file/xdrio.hh>
-#endif
-
 #include <dune/fem/io/streams/xdrstreams.hh>
+
+#include <dune/fem/gridpart/persistentcontainer.hh>
 
 namespace Dune {
 
@@ -29,10 +29,9 @@ protected:
   typedef typename SelectorType :: HierarchicIndexSet PersistentIndexSetType;
 
 private:
-  //enum INDEXSTATE { NEW = 2 , USED = 1 , UNUSED = -1 };
-  static const char NEW    = 2;  // new indices 
-  static const char USED   = 1;  // used indices 
-  static const char UNUSED = 0; // unused indices 
+  enum INDEXSTATE { NEW    = 2,  //  new indices 
+                    USED   = 1,  // used indices
+                    UNUSED = 0 };// unused indices
 
   // reference to persistent index container 
   const PersistentIndexSetType& indexContainer_;
@@ -40,11 +39,11 @@ private:
   // array type for indices 
   typedef MutableArray<int> IndexArrayType;
 
-  // array type of state of indices 
-  typedef MutableArray<char> StateArrayType;
+  typedef std::pair< int, INDEXSTATE > IndexPair; 
+  typedef PersistentContainerVector< GridImp, IndexPair > IndexContainerType; 
 
   // the mapping of the global to leaf index 
-  IndexArrayType leafIndex_;
+  IndexContainerType leafIndex_;
 
   // stack for holes 
   IndexArrayType holes_; 
@@ -53,9 +52,6 @@ private:
   // holes (for compress of data)
   IndexArrayType oldIdx_; 
   IndexArrayType newIdx_; 
-
-  // the state of each index 
-  StateArrayType state_;
  
   // next index to give away 
   int nextFreeIndex_;
@@ -75,11 +71,10 @@ public:
                  const int codim, 
                  const double memoryFactor = 1.1) 
     : indexContainer_( SelectorType::hierarchicIndexSet( grid ) ) 
-    , leafIndex_(0)
+    , leafIndex_(grid, codim, IndexPair( -1, UNUSED) )
     , holes_(0)
     , oldIdx_(0)
     , newIdx_(0)
-    , state_(0)
     , nextFreeIndex_ (0)
     , lastSize_ (0)
     , myCodim_( codim ) 
@@ -91,8 +86,7 @@ public:
   //! set memory overestimation factor 
   void setMemoryFactor(const double memoryFactor)
   {
-    leafIndex_.setMemoryFactor(memoryFactor);
-    state_.setMemoryFactor(memoryFactor);
+    //leafIndex_.setMemoryFactor(memoryFactor);
     holes_.setMemoryFactor(memoryFactor);
     oldIdx_.setMemoryFactor(memoryFactor);
     newIdx_.setMemoryFactor(memoryFactor);
@@ -122,32 +116,17 @@ protected:
     const int oldSize = leafIndex_.size();
     if(oldSize > newSize) return;
 
-    leafIndex_.resize( newSize );
-    state_.resize( newSize );
-
-    // reset new created parts of the vector 
-    const int leafSize = leafIndex_.size();
-    for(int i=oldSize; i<leafSize; ++i)
-    {
-      leafIndex_[i] = -1;
-      state_[i] = UNUSED;
-    }
+    // adapt only when set is getting bigger 
+    // there is also one resize in compress 
+    leafIndex_.adapt( IndexPair(-1, UNUSED ) );
   }
 
 public:  
   //! clear set 
   void clear() 
   {
-    // remove all information 
-    {
-      const int size = state_.size();
-      for(int i=0; i<size; ++i) state_[i] = UNUSED;
-    }
-
-    {
-      const int size = leafIndex_.size();
-      for(int i=0; i<size; ++i) leafIndex_[i] = -1;
-    }
+    // set all values to -1 
+    std::fill( leafIndex_.begin(), leafIndex_.end(), IndexPair(-1, UNUSED ) );
     // reset next free index 
     nextFreeIndex_ = 0;
   }
@@ -155,8 +134,12 @@ public:
   //! set all entries to unused 
   void resetUsed() 
   {
-    const int size = state_.size();
-    for(int i=0; i<size; ++i) state_[i] = UNUSED;
+    typedef typename IndexContainerType :: Iterator Iterator;
+    const Iterator endit = leafIndex_.end();
+    for( Iterator it = leafIndex_.begin(); it != endit; ++it )
+    {
+      (*it).second = UNUSED;
+    }
   }
 
   //! clear holes, i.e. set number of holes to zero 
@@ -172,7 +155,7 @@ public:
   //! return true, if at least one hole was closed 
   bool compress ()
   {
-    const int sizeOfVecs = state_.size();
+    const int sizeOfVecs = leafIndex_.size();
     holes_.resize( sizeOfVecs );
 
     // true if a least one dof must be copied 
@@ -181,14 +164,17 @@ public:
     // mark holes 
     int actHole = 0;
     int newActSize = 0;
-    for(int i=0; i<sizeOfVecs; ++i)
+    typedef typename IndexContainerType :: Iterator Iterator;
+    const Iterator endit = leafIndex_.end();
+    for( Iterator it = leafIndex_.begin(); it != endit; ++it )
     {
-      if(leafIndex_[i] >= 0)
+      const IndexPair& leafIdx = *it;
+      if( leafIdx.first >= 0 )
       {
         // create vector with all holes 
-        if(state_[i] == UNUSED)
+        if( leafIdx.second == UNUSED )
         {
-          holes_[actHole] = leafIndex_[i];
+          holes_[actHole] = leafIdx.first;
           ++actHole;
         }
 
@@ -213,20 +199,23 @@ public:
       // NOTE: here the holes closing should be done in 
       // the opposite way. future work. 
       int holes = 0; // number of real holes 
-      for(int i=0; i<leafIndex_.size(); ++i)
-      { 
+      //size_t i = 0;
+      const Iterator endit = leafIndex_.end();
+      for( Iterator it = leafIndex_.begin(); it != endit; ++it )
+      {
+        IndexPair& leafIdx = *it;
         // a index that is used but larger then actual size 
         // has to move to a hole 
-        if(state_[i] == UNUSED) 
+        if( leafIdx.second == UNUSED) 
         {
           // all unused indices are reset to -1 
-          leafIndex_[i] = -1;
+          leafIdx.first = -1;
         }
         else 
         {
           // if used index lies behind size, then index has to move 
           // to one of the holes 
-          if(leafIndex_[i] >= actSize)
+          if(leafIdx.first >= actSize)
           {
             // serach next hole that is smaler than actual size 
             actHole--;
@@ -245,19 +234,19 @@ public:
             // only for none-ghost elements hole storage is applied
             // this is because ghost indices might have in introduced 
             // after the resize was done. 
-            if( state_[i] == USED ) 
+            if( leafIdx.second == USED ) 
 #endif
             {
               // remember old and new index 
-              oldIdx_[holes] = leafIndex_[i]; 
+              oldIdx_[holes] = leafIdx.first; 
               newIdx_[holes] = holes_[actHole];
               ++holes;
             }
             
-            leafIndex_[i] = holes_[actHole];
+            leafIdx.first = holes_[actHole];
 
             // means that dof manager has to copy the mem
-            state_[i] = NEW;
+            leafIdx.second = NEW;
             haveToCopy = true;
           }
         }
@@ -271,6 +260,9 @@ public:
    
     // store number of actual holes 
     numberHoles_ = oldIdx_.size();
+
+    // adjust size 
+    leafIndex_.adapt( IndexPair(-1, UNUSED) );
 
     // the next index that can be given away is equal to size
     nextFreeIndex_ = actSize;
@@ -297,7 +289,7 @@ public:
   int index ( const EntityType& entity ) const
   {
     assert( myCodim_ == EntityType :: codimension );
-    return indexIdx( indexContainer_.index( entity ) );
+    return leafIndex_[ entity ].first;
   }
   
   //! return leaf index for given entity   
@@ -306,7 +298,7 @@ public:
                  const int subNumber ) const 
   {
     assert( 0 == EntityType :: codimension );
-    return indexIdx( indexContainer_.subIndex( entity, subNumber, myCodim_ ) );
+    return leafIndex_( entity, subNumber ).first;
   }
   
   //! return state of index for given hierarchic number  
@@ -314,7 +306,7 @@ public:
   bool exists ( const EntityType& entity ) const
   {
     assert( myCodim_ == EntityType :: codimension );
-    return existsIdx( indexContainer_.index( entity ) );
+    return leafIndex_[ entity ].second != UNUSED;
   }
  
   //! return number of holes 
@@ -342,7 +334,7 @@ public:
   void insert (const EntityType& entity )
   {
     assert( myCodim_ == EntityType :: codimension );
-    return insertIdx( indexContainer_.index( entity ) );
+    insertIdx( leafIndex_[ entity ] );
   }
 
   // insert element and create index for element number 
@@ -351,7 +343,7 @@ public:
                         const int subNumber)  
   {
     assert( 0 == EntityType :: codimension );
-    insertIdx( indexContainer_.subIndex( entity, subNumber, myCodim_ ) );
+    insertIdx( leafIndex_( entity, subNumber ) );
   }
 
   // insert element as ghost and create index for element number 
@@ -359,7 +351,16 @@ public:
   void insertGhost (const EntityType& entity )
   {
     assert( myCodim_ == EntityType :: codimension );
-    insertGhostIdx( indexContainer_.index( entity ) );
+    // insert index 
+    IndexPair& leafIdx = leafIndex_[ entity ];
+    insertIdx( leafIdx );
+
+    // if index is also larger than lastSize
+    // mark as new to skip old-new index lists 
+    if( leafIdx.first >= lastSize_ ) 
+    {
+      leafIdx.second = NEW;
+    }
   }
 
   // insert element and create index for element number 
@@ -367,7 +368,7 @@ public:
   void markForRemoval( const EntityType& entity )
   {
     assert( myCodim_ == EntityType :: codimension );
-    removeIdx( indexContainer_.index( entity ) );
+    leafIndex_[ entity ].second = UNUSED;
   }
 
   // insert element as ghost and create index for element number 
@@ -375,102 +376,28 @@ public:
   bool validIndex (const EntityType& entity ) const
   {
     assert( myCodim_ == EntityType :: codimension );
-    return validIndexIdx( indexContainer_.index( entity ) );
+    return leafIndex_[ entity ].first >= 0; 
   }
 
 protected:
-  //! return true if index is valid 
-  bool validIndexIdx ( const int num ) const
-  {
-    return (leafIndex_[num] >= 0);
-  }
- 
-  //! return leaf index for given hierarchic number  
-  int indexIdx ( const int num ) const
-  {
-    // assert if index was not set yet 
-    return leafIndex_ [ num ];
-  }
-  
-  //! return state of index for given hierarchic number  
-  bool existsIdx ( const int num ) const
-  {
-    // assert if index was not set yet 
-    assert( num >= 0 );
-    assert( num < state_.size() );
-    return state_ [ num ] != UNUSED;
-  }
- 
   // insert element and create index for element number  
-  void insertIdx (const int num )
+  void insertIdx ( IndexPair& leafIdx )
   {
-    assert(num < leafIndex_.size() );
-    if(leafIndex_[num] < 0)
-    {
-      leafIndex_[num] = nextFreeIndex_;
-      ++nextFreeIndex_;
-    }
-    state_[num] = USED;
-  }
-  
-  // insert element as ghost and create index for element number  
-  void insertGhostIdx (const int num )
-  {
-    // insert index 
-    insertIdx( num );
+    if( leafIdx.first < 0 )
+      leafIdx.first = nextFreeIndex_ ++ ;
 
-    // if index is also larger than lastSize
-    // mark as new to skip old-new index lists 
-    if( leafIndex_[num] >= lastSize_ ) 
-    {
-      state_[num] = NEW;
-    }
+    leafIdx.second = USED;
   }
-  
-  // insert element and create index for element number  
-  void removeIdx (const int num)
-  {
-    assert(num < leafIndex_.size() );
-    state_[num] = UNUSED;
-  }
+
 public:  
-#if DUNE_FEM_COMPATIBILITY
-  // read/write from/to xdr stream 
-  bool processXdr(XDRStream& xdr)
-  {
-    // restore size of index set 
-    int ret = xdr.inout( nextFreeIndex_ );
-    bool ok = (ret == 1) ? true : false;
-    
-    // should always have the same length 
-    assert( leafIndex_.size() == state_.size() );
-
-    // backup/restore leafIndex 
-    ok |= leafIndex_.processXdr(xdr);
-    // backup/restore state 
-    ok |= state_.processXdr(xdr);
-
-    // should always have the same length 
-    assert( leafIndex_.size() == state_.size() );
-
-    return ok;
-  }
-#endif
-  
   // write to stream 
   template <class StreamTraits> 
   bool write(OutStreamInterface< StreamTraits >& out) const
   {
     out << nextFreeIndex_;
     
-    // should always have the same length 
-    assert( leafIndex_.size() == state_.size() );
-
     // backup leafIndex 
-    leafIndex_.write( out );
-
-    // backup state
-    state_.write( out );
+    //leafIndex_.write( out );
 
     return true;
   }
@@ -482,13 +409,7 @@ public:
     in >> nextFreeIndex_;
     
     // restore leafIndex 
-    leafIndex_.read( in );
-
-    // restore state
-    state_.read( in );
-
-    // should always have the same length 
-    assert( leafIndex_.size() == state_.size() );
+    //leafIndex_.read( in );
 
     return true;
   }
