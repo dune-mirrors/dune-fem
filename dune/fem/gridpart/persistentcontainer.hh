@@ -25,16 +25,20 @@ public:
   typedef typename StorageType :: const_iterator ConstIterator ;
 
   //! constructor 
-  PersistentContainerVector( const GridType& grid, const int codim , const Data& value = Data() ) 
+  PersistentContainerVector( const GridType& grid, const int codim ) 
     : indexSet_( grid.hierarchicIndexSet() )
     , codim_( codim )
     , data_()
   {
-    std::cout << "Create PersistentContainerVector " << std::endl;
-    // resize to current size 
+  }
+
+  //! constructor also adapting to current grid size 
+  PersistentContainerVector( const GridType& grid, const int codim, const Data& value ) 
+    : indexSet_( grid.hierarchicIndexSet() )
+    , codim_( codim )
+    , data_()
+  {
     adapt( value );
-    // set memory overestimation factor 
-    //data_.setMemoryFactor( 1.1 );
   }
 
   //! copy constructor 
@@ -186,7 +190,16 @@ public:
   typedef MyIterator< const_iterator > ConstIterator;
 
   //! constructor 
-  PersistentContainerMap( const GridType& grid, const int codim , const Data& value = Data() ) 
+  PersistentContainerMap( const GridType& grid, const int codim ) 
+    : grid_( grid )
+    , idSet_( grid_.localIdSet() )
+    , codim_( codim )
+    , data_()
+  {
+  }
+
+  //! constructor also adapting to current grid size 
+  PersistentContainerMap( const GridType& grid, const int codim , const Data& value ) 
     : grid_( grid )
     , idSet_( grid_.localIdSet() )
     , codim_( codim )
