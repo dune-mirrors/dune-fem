@@ -30,6 +30,7 @@ public:
     , codim_( codim )
     , data_()
   {
+    std::cout << "Create PersistentContainerVector " << std::endl;
     // resize to current size 
     adapt( value );
     // set memory overestimation factor 
@@ -43,12 +44,6 @@ public:
     , data_( other.data_ )  
   {}
 
-  //! returns vector with geometry tpyes this index set has indices for
-  const std::vector <GeometryType> & geomTypes () const
-  {
-    return indexSet_.geomTypes( codim_ );
-  }
-  
   PersistentConainerComplexity complexity() const { return O_1; }
 
   template <class Entity> 
@@ -125,6 +120,7 @@ protected:
   typedef typename Grid :: Traits :: LocalIdSet IdSetType;
   typedef typename IdSetType :: IdType  IdType;
   typedef Grid GridType;
+  typedef PersistentContainerMap< GridType, Data> ThisType;
 
   const GridType& grid_;
   const IdSetType& idSet_;
@@ -159,7 +155,31 @@ protected:
       return *this;
     }
   };
-  
+
+  template< int codim , bool gridHasCodim >
+  struct AdaptCodimBase
+  {
+    static void apply ( ThisType &container, const Data& value , const int myCodim)
+    {
+      if( codim == myCodim )
+        container.template adaptCodim< codim > ( value );
+    }
+  };
+
+  template< int codim >
+  struct AdaptCodimBase< codim, false >
+  {
+    static void apply ( ThisType &container, const Data& value , const int myCodim)
+    {
+    }
+  };
+
+  template< int codim >
+  struct AdaptCodim
+    : public AdaptCodimBase< codim, Capabilities :: hasEntity < GridType, codim > :: v >
+  {
+  };
+
 public:  
   typedef typename GridType :: template Codim< 0 > :: Entity ElementType; 
   typedef MyIterator< iterator > Iterator;
@@ -185,14 +205,6 @@ public:
 
   PersistentConainerComplexity complexity() const { return O_log_n; }
 
-  /*
-  //! returns vector with geometry tpyes this index set has indices for
-  const std::vector <GeometryType> & geomTypes () const
-  {
-    return indexContainer_.geomTypes( myCodim_ );
-  }
-  */
-  
   template <class Entity> 
   Data& operator [] (const Entity& entity ) 
   { 
@@ -274,6 +286,7 @@ public:
 
   void adapt( const Data& value = Data() )
   {
+    ForLoop< AdaptCodim, 0, GridType :: dimension > :: apply( *this, value, codim_ );
     adaptCodim< 0 > ( value );
     // clear old data 
     // grid traversal 

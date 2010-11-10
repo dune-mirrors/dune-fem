@@ -48,8 +48,10 @@ private:
     IndexPair() : BaseType( -1, UNUSED ) {}
   }; 
 
-  //typedef PersistentContainerMap< GridImp, IndexPair > IndexContainerType; 
-  typedef PersistentContainerVector< GridImp, IndexPair > IndexContainerType; 
+  // select persistent container for grid 
+  typedef typename SelectType< Capabilities::hasHierarchicIndexSet< GridImp >::v, 
+        PersistentContainerVector< GridImp, IndexPair >, 
+        PersistentContainerMap< GridImp, IndexPair > > :: Type  IndexContainerType ;
 
   // the mapping of the global to leaf index 
   IndexContainerType leafIndex_;
@@ -103,7 +105,7 @@ public:
   //! returns vector with geometry tpyes this index set has indices for
   const std::vector <GeometryType> & geomTypes () const
   {
-    return leafIndex_.geomTypes();
+    return indexContainer_.geomTypes( myCodim_ );
   }
 
   //! reallocate the vectors
