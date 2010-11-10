@@ -102,9 +102,9 @@ public:
   }
 
   //! \brief adjsut container to new size 
-  void resize(const Data& value = Data() )
+  void resize ( const Data &value = Data() )
   {
-    if( indexSet_.size( codim_ ) > (int) data_.size() ) 
+    if( indexSet_.size( codim_ ) > (typename IndexSetType::IndexType) data_.size() ) 
       adapt( value );
   }
 
