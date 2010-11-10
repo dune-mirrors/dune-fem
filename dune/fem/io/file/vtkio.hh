@@ -184,10 +184,13 @@ typedef VTKOptions VTK;
       vtkWriter_->clear();
     }
 
-    std::string write ( const std::string &name,
-                        VTK::OutputType type = VTK::ascii )
+    std::string write ( const std::string &name, VTK::OutputType type = VTK::ascii )
     {
-      return vtkWriter_->write( name, type );
+      size_t pos = name.find_last_of( '/' );
+      if( pos != name.npos )
+        return vtkWriter_->pwrite( name.substr( pos+1, name.npos ), name.substr( 0, pos ), "", type );
+      else
+        return vtkWriter_->write( name, type );
     }
 
     std::string pwrite ( const std::string &name,
@@ -195,7 +198,7 @@ typedef VTKOptions VTK;
                          const std::string &extendpath,
                          VTK::OutputType type = VTK::ascii )
     {
-      return vtkWriter_->pwrite( name.c_str(), path.c_str(), extendpath.c_str(), type );
+      return vtkWriter_->pwrite( name, path, extendpath, type );
     }
 
     std::string write ( const std::string &name,
