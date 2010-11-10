@@ -5,7 +5,7 @@
 
 namespace Dune {
 
-enum PersistentConainerComplexity { O_1 = 1, O_log_n = 2 };  
+enum PersistentConainerComplexity { O_1, O_log_n };  
 
 /** \brief class PersistentContainerVector */
 template <class Grid, class Data>  
@@ -48,7 +48,7 @@ public:
     , data_( other.data_ )  
   {}
 
-  PersistentConainerComplexity complexity() const { return O_1; }
+  static PersistentConainerComplexity complexity () { return O_1; }
 
   template <class Entity> 
   Data& operator [] (const Entity& entity ) 
@@ -120,11 +120,12 @@ public:
 template <class Grid, class Data>  
 class PersistentContainerMap
 {
+  typedef PersistentContainerMap< Grid, Data > ThisType;
+
 protected:
   typedef typename Grid :: Traits :: LocalIdSet IdSetType;
   typedef typename IdSetType :: IdType  IdType;
   typedef Grid GridType;
-  typedef PersistentContainerMap< GridType, Data> ThisType;
 
   const GridType& grid_;
   const IdSetType& idSet_;
@@ -216,7 +217,7 @@ public:
     , data_( other.data_ )  
   {}
 
-  PersistentConainerComplexity complexity() const { return O_log_n; }
+  static PersistentConainerComplexity complexity () { return O_log_n; }
 
   template <class Entity> 
   Data& operator [] (const Entity& entity ) 
@@ -267,11 +268,9 @@ public:
   template <int codim> 
   void adaptCodim( const Data& value )
   {
-    // make copy of data 
-    StorageType oldData( data_ );
-
-    // remove all data 
-    data_.clear();
+    // create empty map and swap it with current map (no need to copy twice)
+    StorageType oldData;
+    std::swap( oldData, data_ );
 
     typedef typename GridType :: template Codim< codim > :: LevelIterator LevelIterator ;
     typedef typename LevelIterator :: Entity  Entity; 
@@ -306,5 +305,6 @@ public:
   }
 };
 
-} // end namespace Dune   
+} // end namespace Dune
+
 #endif // end DUNE_PERSISTENTCONTAINER_HH
