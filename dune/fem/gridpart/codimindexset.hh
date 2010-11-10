@@ -29,9 +29,9 @@ protected:
   typedef typename SelectorType :: HierarchicIndexSet PersistentIndexSetType;
 
 private:
-  enum INDEXSTATE { NEW    = 2,  //  new indices 
+  enum INDEXSTATE { UNUSED = 0,  // unused indices
                     USED   = 1,  // used indices
-                    UNUSED = 0 };// unused indices
+                    NEW    = 2 };//  new indices 
 
   // reference to persistent index container 
   const PersistentIndexSetType& indexContainer_;
@@ -39,7 +39,16 @@ private:
   // array type for indices 
   typedef MutableArray<int> IndexArrayType;
 
-  typedef std::pair< int, INDEXSTATE > IndexPair; 
+  // Index pair that is stored, derive from pair to overload 
+  // default constructor which sets the correct default data 
+  struct IndexPair : public std::pair< int, INDEXSTATE > 
+  {
+    typedef std::pair< int, INDEXSTATE > BaseType;
+    // default constructor 
+    IndexPair() : BaseType( -1, UNUSED ) {}
+  }; 
+
+  //typedef PersistentContainerMap< GridImp, IndexPair > IndexContainerType; 
   typedef PersistentContainerVector< GridImp, IndexPair > IndexContainerType; 
 
   // the mapping of the global to leaf index 
@@ -71,7 +80,7 @@ public:
                  const int codim, 
                  const double memoryFactor = 1.1) 
     : indexContainer_( SelectorType::hierarchicIndexSet( grid ) ) 
-    , leafIndex_(grid, codim, IndexPair( -1, UNUSED) )
+    , leafIndex_(grid, codim)
     , holes_(0)
     , oldIdx_(0)
     , newIdx_(0)
@@ -86,7 +95,6 @@ public:
   //! set memory overestimation factor 
   void setMemoryFactor(const double memoryFactor)
   {
-    //leafIndex_.setMemoryFactor(memoryFactor);
     holes_.setMemoryFactor(memoryFactor);
     oldIdx_.setMemoryFactor(memoryFactor);
     newIdx_.setMemoryFactor(memoryFactor);
@@ -95,13 +103,13 @@ public:
   //! returns vector with geometry tpyes this index set has indices for
   const std::vector <GeometryType> & geomTypes () const
   {
-    return indexContainer_.geomTypes( myCodim_ );
+    return leafIndex_.geomTypes();
   }
 
   //! reallocate the vectors
   void resize ()
   {
-    resize( indexContainer_.size( myCodim_ ) );
+    leafIndex_.resize();
   }
 
   //! prepare for setup (nothing to do here)
@@ -109,24 +117,12 @@ public:
   {
   }
 
-protected: 
-  //! reallocate the vector for new size
-  void resize ( const int newSize )
-  {
-    const int oldSize = leafIndex_.size();
-    if(oldSize > newSize) return;
-
-    // adapt only when set is getting bigger 
-    // there is also one resize in compress 
-    leafIndex_.adapt( IndexPair(-1, UNUSED ) );
-  }
-
 public:  
   //! clear set 
   void clear() 
   {
     // set all values to -1 
-    std::fill( leafIndex_.begin(), leafIndex_.end(), IndexPair(-1, UNUSED ) );
+    std::fill( leafIndex_.begin(), leafIndex_.end(), IndexPair() );
     // reset next free index 
     nextFreeIndex_ = 0;
   }
@@ -139,6 +135,18 @@ public:
     for( Iterator it = leafIndex_.begin(); it != endit; ++it )
     {
       (*it).second = UNUSED;
+    }
+  }
+
+  //! set all entries to unused 
+  void checkConsecutive() 
+  {
+    typedef typename IndexContainerType :: Iterator Iterator;
+    const Iterator endit = leafIndex_.end();
+    for( Iterator it = leafIndex_.begin(); it != endit; ++it )
+    {
+      const int idx = (*it).first; 
+      assert( idx < nextFreeIndex_ );
     }
   }
 
@@ -262,10 +270,15 @@ public:
     numberHoles_ = oldIdx_.size();
 
     // adjust size 
-    leafIndex_.adapt( IndexPair(-1, UNUSED) );
-
+    leafIndex_.adapt();
+    
     // the next index that can be given away is equal to size
     nextFreeIndex_ = actSize;
+
+#ifndef NDEBUG
+    checkConsecutive();
+#endif
+
     return haveToCopy;
   }
 
