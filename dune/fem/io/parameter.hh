@@ -126,6 +126,67 @@ namespace Dune
 
 
 
+  // ParameterParser
+  // ---------------
+
+  template< class T >
+  struct ParameterParser
+  {
+    static bool parse ( const std::string &s, T &value )
+    {
+      std::istringstream in( s );
+      char eof;
+      in >> value >> eof;
+      return in.eof();
+    }
+
+
+    static std::string toString ( const T &value )
+    {
+      std::ostringstream out;
+      out << value;
+      return out.str();
+    }
+  };
+
+  template< class F, int m, int n >
+  struct ParameterParser< FieldMatrix< F, m, n > >
+  {
+    static bool parse ( const std::string &s, FieldMatrix< F, m, n > &value )
+    {
+      std::istringstream in( s );
+      char c;
+      for( int i = 0; i < m; ++i )
+      {
+        if( i > 0 )
+        {
+          in >> c;
+          if( c != ',' )
+            return false;
+        }
+
+        for( int j = 0; j < n; ++j )
+          in >> value[ i ][ j ];
+      }
+      in >> c; // read eof
+      return in.eof();
+    }
+
+    static std::string toString ( const FieldMatrix< F, m, n > &value )
+    {
+      std::ostringstream out;
+      for( int i = 0; i < m; ++i )
+      {
+        out << (i > 0 ? "," : "");
+        for( int j = 0; j< n; ++j )
+          out << " " << value[ i ][ j ];
+      }
+      return out.str();
+    }
+  };
+
+
+
   /** \class Parameter
    *  \brief Container for User Specified Parameters
    *
@@ -175,9 +236,6 @@ namespace Dune
     static std::string stripComment ( const std::string &line );
 
     bool insert ( const std::string &s, std::queue< std::string > &includes );
-
-    template< class T >
-    static bool parse ( const std::string &s, T &value );
 
     void processDGF ( const std::string &filename );
     void processFile ( const std::string &filename );
@@ -276,7 +334,7 @@ namespace Dune
     template< class T >
     static void get ( const std::string &key, T &value )
     {
-      if( !parse( instance().map( key ), value ) )
+      if( !ParameterParser< T >::parse( instance().map( key ), value ) )
         DUNE_THROW( ParameterInvalid, "Parameter '" << key << "' invalid." );
     }
     
@@ -562,11 +620,8 @@ namespace Dune
   inline const std::string &
   Parameter::map ( const std::string &key, const T &value )
   {
-    std::ostringstream out;
-    out << value;
-
     Value insVal;
-    insVal.value = out.str();
+    insVal.value = ParameterParser< T >::toString( value );
     insVal.fileName = "default";
     insVal.used = false;
 
@@ -589,10 +644,8 @@ namespace Dune
     }
     else
     {
-      std::istringstream in(val.value);
-      T setValue(value);
-      in >> setValue;
-      if (!in.fail())
+      T setValue( value );
+      if( ParameterParser< T >::parse( val.value, setValue ) )
         val.isDefault = (setValue == value);
     }
     val.used = true;
@@ -705,14 +758,14 @@ namespace Dune
       if( key == "fem.verbose" )
       {
         bool verbose;
-        parse( actual_value, verbose );
+        ParameterParser< bool >::parse( actual_value, verbose );
         verboseRank_ = (verbose ? MPIManager::rank() : -1);
         std::cout << "Warning: Using deprecated parameter 'fem.verbose'; "
                     << "use 'fem.verboserank' instead." << std::endl;
       }
       if( key == "fem.verboserank" )
       {
-        parse( actual_value, verboseRank_ );
+        ParameterParser< int >::parse( actual_value, verboseRank_ );
         if( (verboseRank_ < -1) || (verboseRank_ >= MPIManager::size() ) )
         {
           std::cout << "Warning: Parameter 'fem.verboserank' is neither a "
@@ -723,16 +776,6 @@ namespace Dune
     else
       includes.push( value );
     return true;
-  }
-
-  template< class T >
-  inline bool
-  Parameter::parse ( const std::string &s, T &value )
-  {
-    std::istringstream in( s );
-    char eof;
-    in >> value >> eof;
-    return in.eof();
   }
 
 
@@ -852,7 +895,7 @@ namespace Dune
   inline void
   Parameter::get ( const std::string &key, const T &defaultValue, T &value )
   {
-    if( !parse( instance().map( key, defaultValue ), value ) )
+    if( !ParameterParser< T >::parse( instance().map( key, defaultValue ), value ) )
       DUNE_THROW( ParameterInvalid, "Parameter '" << key << "' invalid." );
   }
 
@@ -868,7 +911,7 @@ namespace Dune
                         const Validator &validator,
                         T &value )
   {
-    if( !parse( instance().map( key ), value ) )
+    if( !ParameterParser< T >::parse( instance().map( key ), value ) )
       DUNE_THROW( ParameterInvalid, "Parameter '" << key << "' invalid." );
     if( !validator( value ) )
       DUNE_THROW( ParameterInvalid, "Parameter '" << key << "' invalid." );
@@ -882,7 +925,7 @@ namespace Dune
                         T &value )
   {
     bool valid = true ;
-    if( !parse( instance().map( key, defaultValue ), value ) ) valid = false;
+    if( !ParameterParser< T >::parse( instance().map( key, defaultValue ), value ) ) valid = false;
     if( !validator( value ) ) valid = false;
 
     if( ! valid ) 
@@ -939,7 +982,8 @@ namespace Dune
     }
 
     int j = -1;
-    if( ! parse( value, j ) ) j = -1;
+    if( !ParameterParser< int >::parse( value, j ) )
+      j = -1;
     if( (j < 0) || (j >= n) )
     {
       std::cerr << std::endl << "Parameter '" << key << "' invalid." << std::endl;
