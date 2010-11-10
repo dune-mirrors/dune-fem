@@ -1,7 +1,12 @@
 #ifndef DUNE_PERSISTENTCONTAINER_HH
 #define DUNE_PERSISTENTCONTAINER_HH
 
-#include <dune/fem/space/common/arrays.hh>
+#include <map>
+#include <vector>
+
+#include <dune/common/forloop.hh>
+
+#include <dune/grid/common/capabilities.hh>
 
 namespace Dune {
 
