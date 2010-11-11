@@ -5,8 +5,9 @@
 #include <vector>
 
 #include <dune/common/forloop.hh>
-
 #include <dune/grid/common/capabilities.hh>
+
+#include <dune/fem/space/common/arrays.hh>
 
 namespace Dune {
 
@@ -21,7 +22,8 @@ protected:
   typedef Grid GridType;
   const IndexSetType& indexSet_;
   const int codim_;
-  typedef std::vector< Data > StorageType;
+  //typedef std::vector< Data > StorageType;
+  typedef MutableArray< Data > StorageType;
   StorageType data_;
   
 public:  
@@ -39,6 +41,7 @@ public:
     , codim_( codim )
     , data_()
   {
+    data_.setMemoryFactor( 1.1 );
   }
 
   //! \brief constructor also adapting to current grid size 
@@ -47,6 +50,7 @@ public:
     , codim_( codim )
     , data_()
   {
+    data_.setMemoryFactor( 1.1 );
     adapt( value );
   }
 
