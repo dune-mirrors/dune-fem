@@ -310,23 +310,22 @@ public:
   //! \brief adjust container to correct size including compress 
   void adapt( const Data& value = Data() )
   {
+    // loop over all codimensions 
     ForLoop< AdaptCodim, 0, GridType :: dimension > :: apply( *this, value, codim_ );
-    adaptCodim< 0 > ( value );
-    // clear old data 
-    // grid traversal 
   }
 
 protected:  
   template <int codim> 
   void adaptCodim( const Data& value )
   {
+    assert( codim_ == codim );
     // create empty map and swap it with current map (no need to copy twice)
     StorageType oldData;
     std::swap( oldData, data_ );
 
+    const iterator olddataend = oldData.end();
     typedef typename GridType :: template Codim< codim > :: LevelIterator LevelIterator ;
     typedef typename LevelIterator :: Entity  Entity; 
-    const iterator olddataend = oldData.end();
     for(int l = 0; l <= grid_.maxLevel(); ++ l) 
     {
       const LevelIterator endit = grid_.template lend< codim > ( l );   
