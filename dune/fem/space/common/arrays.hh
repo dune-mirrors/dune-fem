@@ -213,8 +213,14 @@ public:
   //! DofIterator
   typedef GenericIterator<ThisType, T> DofIteratorType;
   
+  //! make compatible with std::vector 
+  typedef DofIteratorType iterator ;
+
   //! Const DofIterator
   typedef GenericIterator<const ThisType, const T> ConstDofIteratorType;
+
+  //! make compatible with std::vector 
+  typedef ConstDofIteratorType const_iterator ;
 
   //! create array of length size and store vec as pointer to memory 
   explicit StaticArray(const int size, T* vec) 
