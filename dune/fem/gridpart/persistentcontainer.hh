@@ -25,11 +25,15 @@ protected:
   StorageType data_;
   
 public:  
+  //! \brief entity of codimension 0 
   typedef typename GridType :: template Codim< 0 > :: Entity ElementType; 
+
+  //! \brief iterator type 
   typedef typename StorageType :: iterator Iterator ;
+  //! \brief const iterator type 
   typedef typename StorageType :: const_iterator ConstIterator ;
 
-  //! constructor 
+  //! \brief constructor creating empty container 
   PersistentContainerVector( const GridType& grid, const int codim ) 
     : indexSet_( grid.hierarchicIndexSet() )
     , codim_( codim )
@@ -37,7 +41,7 @@ public:
   {
   }
 
-  //! constructor also adapting to current grid size 
+  //! \brief constructor also adapting to current grid size 
   PersistentContainerVector( const GridType& grid, const int codim, const Data& value ) 
     : indexSet_( grid.hierarchicIndexSet() )
     , codim_( codim )
@@ -46,69 +50,83 @@ public:
     adapt( value );
   }
 
-  //! copy constructor 
+  //! \brief copy constructor 
   PersistentContainerVector( const PersistentContainerVector& other ) 
     : indexSet_( other.indexSet_ )
     , codim_( other.codim_ )
     , data_( other.data_ )  
   {}
 
+  //! \brief return complexity of random access 
   static PersistentConainerComplexity complexity () { return O_1; }
 
+  //! \brief random access to entity data with correct codimension 
   template <class Entity> 
   Data& operator [] (const Entity& entity ) 
   { 
     assert( Entity :: codimension == codim_ );
+    assert( indexSet_.index( entity ) < (typename IndexSetType::IndexType) data_.size() );
     return data_[ indexSet_.index( entity ) ];
   }
 
+  //! \brief random access to entity data with correct codimension 
   template <class Entity> 
   const Data& operator [] (const Entity& entity ) const
   { 
     assert( Entity :: codimension == codim_ );
+    assert( indexSet_.index( entity ) < (typename IndexSetType::IndexType) data_.size() );
     return data_[ indexSet_.index( entity ) ];
   }
 
+  //! \brief access for sub entity data
   Data& operator () (const ElementType& element, const int subEntity ) 
   {
+    assert( indexSet_.subIndex( element, subEntity, codim_ ) < (typename IndexSetType::IndexType) data_.size() );
     return data_[ indexSet_.subIndex( element, subEntity, codim_ ) ];
   }
 
+  //! \brief access for sub entity data
   const Data& operator () (const ElementType& element, const int subEntity ) const 
   {
+    assert( indexSet_.subIndex( element, subEntity, codim_ ) < (typename IndexSetType::IndexType) data_.size() );
     return data_[ indexSet_.subIndex( element, subEntity, codim_ ) ];
   }
 
+  //! \brief return size of allocated data 
   size_t size() const { return data_.size(); }
 
+  //! \brief const iterator begin 
   Iterator begin() 
   {
     return data_.begin();
   }
 
+  //! \brief const iterator begin 
   ConstIterator begin() const
   {
     return data_.begin();
   }
 
+  //! \brief iterator end 
   Iterator end() 
   {
     return data_.end();
   }
 
+  //! \brief const iterator end 
   ConstIterator end() const
   {
     return data_.end();
   }
 
-  //! \brief adjsut container to new size 
-  void resize ( const Data &value = Data() )
+  //! \brief enlarge container, compress is not necessary but could be done
+  void enlarge( const Data &value = Data() )
   {
     if( indexSet_.size( codim_ ) > (typename IndexSetType::IndexType) data_.size() ) 
       adapt( value );
   }
 
-  //! \brief adjsut container to new size 
+  //! \brief adjust container to correct size including compress 
   void adapt(const Data& value = Data() )
   {
     const size_t oldSize = data_.size();
@@ -195,7 +213,7 @@ public:
   typedef MyIterator< iterator > Iterator;
   typedef MyIterator< const_iterator > ConstIterator;
 
-  //! constructor 
+  //! \brief constructor creating empty container 
   PersistentContainerMap( const GridType& grid, const int codim ) 
     : grid_( grid )
     , idSet_( grid_.localIdSet() )
@@ -204,7 +222,7 @@ public:
   {
   }
 
-  //! constructor also adapting to current grid size 
+  //! \brief constructor also adapting to current grid size 
   PersistentContainerMap( const GridType& grid, const int codim , const Data& value ) 
     : grid_( grid )
     , idSet_( grid_.localIdSet() )
@@ -214,7 +232,7 @@ public:
     adapt( value );
   }
 
-  //! copy constructor 
+  //! \brief copy constructor 
   PersistentContainerMap( const PersistentContainerMap& other ) 
     : grid_( other.grid_ )
     , idSet_( other.idSet_ )
@@ -222,8 +240,10 @@ public:
     , data_( other.data_ )  
   {}
 
+  //! \brief return complexity of random access 
   static PersistentConainerComplexity complexity () { return O_log_n; }
 
+  //! \brief random access entity with correct codimension 
   template <class Entity> 
   Data& operator [] (const Entity& entity ) 
   { 
@@ -231,6 +251,7 @@ public:
     return data_[ idSet_.id( entity ) ];
   }
 
+  //! \brief random access entity with correct codimension 
   template <class Entity> 
   const Data& operator [] (const Entity& entity ) const
   { 
@@ -238,38 +259,60 @@ public:
     return data_[ idSet_.id( entity ) ];
   }
 
+  //! \brief access for sub entity data
   Data& operator () (const ElementType& element, const int subEntity ) 
   {
     return data_[ idSet_.subId( element, subEntity, codim_ ) ];
   }
 
+  //! \brief access for sub entity data
   const Data& operator () (const ElementType& element, const int subEntity ) const 
   {
     return data_[ idSet_.subId( element, subEntity, codim_ ) ];
   }
 
+  //! \brief return size of allocated data 
   size_t size() const { return data_.size(); }
 
+  //! \brief iterator begin 
   Iterator begin() 
   {
     return Iterator( data_.begin() );
   }
 
+  //! \brief const iterator begin 
   ConstIterator begin() const
   {
     return ConstIterator( data_.begin() );
   }
 
+  //! \brief iterator end  
   Iterator end() 
   {
     return Iterator( data_.end() );
   }
 
+  //! \brief const iterator end  
   ConstIterator end() const
   {
     return ConstIterator( data_.end() );
   }
 
+  //! \brief enlarge container, compress is not necessary but could be done
+  void enlarge( const Data& value = Data() )
+  {
+  }
+
+  //! \brief adjust container to correct size including compress 
+  void adapt( const Data& value = Data() )
+  {
+    ForLoop< AdaptCodim, 0, GridType :: dimension > :: apply( *this, value, codim_ );
+    adaptCodim< 0 > ( value );
+    // clear old data 
+    // grid traversal 
+  }
+
+protected:  
   template <int codim> 
   void adaptCodim( const Data& value )
   {
@@ -295,18 +338,6 @@ public:
           data = (*entry).second;
       }
     }
-  }
-
-  void resize( const Data& value = Data() )
-  {
-  }
-
-  void adapt( const Data& value = Data() )
-  {
-    ForLoop< AdaptCodim, 0, GridType :: dimension > :: apply( *this, value, codim_ );
-    adaptCodim< 0 > ( value );
-    // clear old data 
-    // grid traversal 
   }
 };
 

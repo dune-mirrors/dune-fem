@@ -111,7 +111,7 @@ public:
   //! reallocate the vectors
   void resize ()
   {
-    leafIndex_.resize();
+    leafIndex_.enlarge();
   }
 
   //! prepare for setup (nothing to do here)
