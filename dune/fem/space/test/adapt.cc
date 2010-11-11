@@ -210,8 +210,8 @@ void adapt( MyGridType &grid, DiscreteFunctionType &solution, int step )
 
   if( Parameter :: verbose() )
   {
-    std::cout << "Grid leaf size = " << grid.size( 0 ) << std::endl;
-    std::cout << "AdaptiveLeafIndexSet.size = " << space.indexSet().size( 0 ) << std::endl;
+    std::cout << "Grid leaf size:             " << grid.size( 0 ) << std::endl;
+    std::cout << "AdaptiveLeafIndexSet.size:  " << space.indexSet().size( 0 ) << std::endl;
   }
 
   for( int i = 0; i < count; ++i )
@@ -225,8 +225,8 @@ void adapt( MyGridType &grid, DiscreteFunctionType &solution, int step )
 
   if( Parameter :: verbose() )
   {
-    std::cout << "Grid leaf size = " << grid.size( 0 ) << std::endl;
-    std::cout << "AdaptiveLeafIndexSet.size = " << space.indexSet().size( 0 ) << std::endl;
+    std::cout << "Grid leaf size:             " << grid.size( 0 ) << std::endl;
+    std::cout << "AdaptiveLeafIndexSet.size:  " << space.indexSet().size( 0 ) << std::endl;
   }
   
 }
