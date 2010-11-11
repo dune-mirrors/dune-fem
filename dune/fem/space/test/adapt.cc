@@ -61,9 +61,9 @@ typedef DiscontinuousGalerkinSpace<FuncSpace, GridPartType,
   polOrd,CachingStorage> DiscreteFunctionSpaceType;
 
 //! define the type of discrete function we are using , see
-//typedef AdaptiveDiscreteFunction< DiscreteFunctionSpaceType > DiscreteFunctionType;
+typedef AdaptiveDiscreteFunction< DiscreteFunctionSpaceType > DiscreteFunctionType;
 //typedef ManagedDiscreteFunction< VectorDiscreteFunction< DiscreteFunctionSpaceType, DynamicVector< double > > > DiscreteFunctionType;
-typedef AttachedDiscreteFunction< DiscreteFunctionSpaceType > DiscreteFunctionType;
+//typedef AttachedDiscreteFunction< DiscreteFunctionSpaceType > DiscreteFunctionType;
 
 typedef DofManager< MyGridType > DofManagerType;
 typedef DofManagerFactory<DofManagerType> DofManagerFactoryType;
@@ -208,7 +208,12 @@ void adapt( MyGridType &grid, DiscreteFunctionType &solution, int step )
   else 
     message += "Refining...";
 
-  
+  if( Parameter :: verbose() )
+  {
+    std::cout << "Grid leaf size = " << grid.size( 0 ) << std::endl;
+    std::cout << "AdaptiveLeafIndexSet.size = " << space.indexSet().size( 0 ) << std::endl;
+  }
+
   for( int i = 0; i < count; ++i )
   {
     const Iterator end = space.end();
@@ -217,6 +222,13 @@ void adapt( MyGridType &grid, DiscreteFunctionType &solution, int step )
     adop.adapt();
     std::cout << message << std::endl;
   }
+
+  if( Parameter :: verbose() )
+  {
+    std::cout << "Grid leaf size = " << grid.size( 0 ) << std::endl;
+    std::cout << "AdaptiveLeafIndexSet.size = " << space.indexSet().size( 0 ) << std::endl;
+  }
+  
 }
 // ********************************************************************
 double algorithm ( MyGridType &grid, DiscreteFunctionType &solution, int step, int turn )
@@ -228,7 +240,9 @@ double algorithm ( MyGridType &grid, DiscreteFunctionType &solution, int step, i
     double new_error = l2err.norm<polOrd + 4> (f ,solution, 0.0);
     std::cout << "before ref." << new_error << "\n\n"; 
   }
+
   adapt(grid,solution,step);
+
 #if USE_GRAPE
   // if Grape was found, then display last solution 
   if(0 && turn > 0) {
