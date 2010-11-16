@@ -48,10 +48,7 @@ private:
     IndexPair() : BaseType( -1, UNUSED ) {}
   }; 
 
-  // select persistent container for grid 
-  typedef typename SelectType< Capabilities::hasHierarchicIndexSet< GridImp >::v, 
-        PersistentContainerVector< GridImp, IndexPair >, 
-        PersistentContainerMap< GridImp, IndexPair > > :: Type  IndexContainerType ;
+  typedef PersistentContainer< GridImp, IndexPair > IndexContainerType;
 
   // the mapping of the global to leaf index 
   IndexContainerType leafIndex_;

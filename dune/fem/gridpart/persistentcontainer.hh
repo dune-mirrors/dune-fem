@@ -9,7 +9,28 @@
 
 #include <dune/fem/space/common/arrays.hh>
 
-namespace Dune {
+namespace Dune
+{
+
+  // Extenal Forward Declarations
+  // ----------------------------
+
+  template< int dim, int dimworld >
+  class AlbertaGrid;
+
+  template< int dim, int dimworld >
+  class ALUConformGrid;
+
+  template< int dim, int dimworld >
+  class ALUCubeGrid;
+
+  template< int dim, int dimworld >
+  class ALUSimplexGrid;
+
+  template< class HostGrid, class CoordFunction, class Allocator >
+  class GeometryGrid;
+
+
 
 enum PersistentConainerComplexity { O_1, O_log_n };  
 
@@ -343,6 +364,209 @@ protected:
     }
   }
 };
+
+
+
+  // PersistentContainer
+  // -------------------
+
+  template< class Grid, class Data >
+  class PersistentContainer
+  : public PersistentContainerMap< Grid, Data >
+  {
+    typedef PersistentContainerMap< Grid, Data > BaseType;
+
+  public:
+    PersistentContainer ( const Grid &grid, const int codim )
+    : BaseType( grid, codim )
+    {}
+
+    PersistentContainer ( const Grid &grid, const int codim, const Data &value )
+    : BaseType( grid, codim, value )
+    {}
+  };
+
+
+
+  // PersistentContainer for AlbertaGrid
+  // -----------------------------------
+
+  template< int dim, int dimworld, class Data >
+  class PersistentContainer< AlbertaGrid< dim, dimworld >, Data >
+  : public PersistentContainerVector< AlbertaGrid< dim, dimworld >, Data >
+  {
+    typedef PersistentContainerVector< AlbertaGrid< dim, dimworld >, Data > BaseType;
+
+  public:
+    typedef AlbertaGrid< dim, dimworld > GridType;
+
+    PersistentContainer ( const GridType &grid, const int codim )
+    : BaseType( grid, codim )
+    {}
+
+    PersistentContainer ( const GridType &grid, const int codim, const Data &value )
+    : BaseType( grid, codim, value )
+    {}
+  };
+
+
+
+  // PersistentContainer for ALUGrid
+  // -------------------------------
+
+  template< int dim, int dimworld, class Data >
+  class PersistentContainer< ALUConformGrid< dim, dimworld >, Data >
+  : public PersistentContainerVector< ALUConformGrid< dim, dimworld >, Data >
+  {
+    typedef PersistentContainerVector< ALUConformGrid< dim, dimworld >, Data > BaseType;
+
+  public:
+    typedef ALUConformGrid< dim, dimworld > GridType;
+
+    PersistentContainer ( const GridType &grid, const int codim )
+    : BaseType( grid, codim )
+    {}
+
+    PersistentContainer ( const GridType &grid, const int codim, const Data &value )
+    : BaseType( grid, codim, value )
+    {}
+  };
+
+  template< int dim, int dimworld, class Data >
+  class PersistentContainer< ALUCubeGrid< dim, dimworld >, Data >
+  : public PersistentContainerVector< ALUCubeGrid< dim, dimworld >, Data >
+  {
+    typedef PersistentContainerVector< ALUCubeGrid< dim, dimworld >, Data > BaseType;
+
+  public:
+    typedef ALUCubeGrid< dim, dimworld > GridType;
+
+    PersistentContainer ( const GridType &grid, const int codim )
+    : BaseType( grid, codim )
+    {}
+
+    PersistentContainer ( const GridType &grid, const int codim, const Data &value )
+    : BaseType( grid, codim, value )
+    {}
+  };
+
+  template< int dim, int dimworld, class Data >
+  class PersistentContainer< ALUSimplexGrid< dim, dimworld >, Data >
+  : public PersistentContainerVector< ALUSimplexGrid< dim, dimworld >, Data >
+  {
+    typedef PersistentContainerVector< ALUSimplexGrid< dim, dimworld >, Data > BaseType;
+
+  public:
+    typedef ALUSimplexGrid< dim, dimworld > GridType;
+
+    PersistentContainer ( const GridType &grid, const int codim )
+    : BaseType( grid, codim )
+    {}
+
+    PersistentContainer ( const GridType &grid, const int codim, const Data &value )
+    : BaseType( grid, codim, value )
+    {}
+  };
+
+
+
+  // PersistentContainer for GeometryGrid
+  // ------------------------------------
+
+  template< class HostGrid, class CoordFunction, class Allocator, class Data >
+  class PersistentContainer< GeometryGrid< HostGrid, CoordFunction, Allocator >, Data >
+  {
+    typedef PersistentContainer< HostGrid, Data > HostContainer;
+
+  public:
+    typedef GeometryGrid< HostGrid, CoordFunction, Allocator > GridType;
+
+    typedef typename HostContainer::ConstIterator ConstIterator;
+    typedef typename HostContainer::Iterator Iterator;
+
+    typedef typename GridType::template Codim< 0 >::Entity ElementType;
+
+    PersistentContainer ( const GridType &grid, const int codim )
+    : hostContainer_( grid.hostGrid(), codim )
+    {}
+
+    PersistentContainer ( const GridType &grid, const int codim, const Data &value )
+    : hostContainer_( grid.hostGrid(), codim, value )
+    {}
+
+    static PersistentConainerComplexity complexity ()
+    {
+      return HostContainer::complexity();
+    }
+
+    template< class Entity >
+    const Data &operator[] ( const Entity &entity ) const
+    {
+      return data( GridType::getRealImplementation( entity ) );
+    }
+
+    template< class Entity > 
+    Data &operator[] ( const Entity &entity )
+    {
+      return data( GridType::getRealImplementation( entity ) );
+    }
+
+    const Data &operator() ( const ElementType &element, const int subEntity ) const
+    {
+      return hostContainer_( GridType::getRealImplementation( element ).hostEntity(), subEntity );
+    }
+
+    Data &operator() ( const ElementType &element, const int subEntity )
+    {
+      return hostContainer_( GridType::getRealImplementation( element ).hostEntity(), subEntity );
+    }
+
+    size_t size () const { return hostContainer_.size(); }
+
+    ConstIterator begin () const { return hostContainer_.begin(); }
+    Iterator begin () { return hostContainer_.begin(); }
+
+    ConstIterator end () const { return hostContainer_.end(); }
+    Iterator end () { return hostContainer_.end(); }
+
+    void enlarge ( const Data &value = Data() )
+    {
+      hostContainer_.enlarge( value );
+    }
+
+    void adapt ( const Data &value = Data() )
+    {
+      hostContainer_.adapt( value );
+    }
+
+  protected:
+    template< class EntityImpl >
+    const Data &data ( const EntityImpl &entity, Int2Type< false > ) const
+    {
+      return hostContainer_[ entity.hostEntity() ];
+    }
+
+    template< class EntityImpl >
+    Data &data ( const EntityImpl &entity, Int2Type< false > )
+    {
+      return hostContainer_[ entity.hostEntity() ];
+    }
+
+    template< class EntityImpl >
+    const Data &data ( const EntityImpl &entity, Int2Type< true > ) const
+    {
+      return hostContainer_( entity.hostElement(). entity.subEntity() );
+    }
+
+    template< class EntityImpl >
+    Data &data ( const EntityImpl &entity, Int2Type< true > )
+    {
+      return hostContainer_( entity.hostElement(). entity.subEntity() );
+    }
+
+  private:
+    HostContainer &hostContainer_;
+  };
 
 } // end namespace Dune
 
