@@ -147,7 +147,7 @@ public:
   //! \brief enlarge container, compress is not necessary but could be done
   void enlarge( const Data &value = Data() )
   {
-    if( indexSet_.size( codim_ ) > (typename IndexSetType::IndexType) data_.size() ) 
+    if( (typename IndexSetType::IndexType) indexSet_.size( codim_ ) > (typename IndexSetType::IndexType) data_.size() ) 
       adapt( value );
   }
 
