@@ -519,7 +519,7 @@ namespace Dune
   inline void LocalFunctionDefault< DiscreteFunctionSpace, LocalFunctionImp >
     ::operator+= ( const LocalFunction< T > &lf )
   {
-    asImp().axpy( 1, lf );
+    asImp().axpy( RangeFieldType(1), lf );
   }
 
 
@@ -529,7 +529,7 @@ namespace Dune
   inline void LocalFunctionDefault< DiscreteFunctionSpace, LocalFunctionImp >
     ::operator-= ( const LocalFunction< T > &lf )
   {
-    asImp().axpy( -1, lf );
+    asImp().axpy( RangeFieldType(-1), lf );
   }
 
 
