@@ -20,6 +20,7 @@ solver_HEADERS = inverseoperators.hh \
                  odesolver.hh \
                  oemsolver.hh \
                  multistep.hh \
+		 newtoninverseoperator.hh \
                  pardg.hh \
                  rungekutta.hh \
                  timeprovider.hh \
