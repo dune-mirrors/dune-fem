@@ -76,12 +76,12 @@ namespace Dune
         
       virtual void operator() ( const DomainFunctionType &u, RangeFunctionType &w ) const;
 
-      int numIterations () const
+      int iterations () const
       {
         return iterations_;
       }
 
-      int numLinearIterations () const
+      int linearIterations () const
       {
         return linearIterations_;
       }
