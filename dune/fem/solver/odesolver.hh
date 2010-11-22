@@ -413,6 +413,12 @@ public:
   {
   }
 
+  virtual ~ImplicitOdeSolver() 
+  {
+    delete linsolver_; linsolver_ = 0;
+    delete param_;     param_ = 0;
+  }
+
 protected:  
   //! return name of ode solver 
   virtual std::string name() const { return "ImplicitOdeSolver"; }
@@ -454,12 +460,6 @@ protected:
       // linsolver_->IterativeSolver::set_output(cout);
     }
     return odeSolver;
-  }
-  
-  virtual ~ImplicitOdeSolver() 
-  {
-    delete linsolver_; linsolver_ = 0;
-    delete param_;     param_ = 0;
   }
   
   virtual int numberOfIterations()
