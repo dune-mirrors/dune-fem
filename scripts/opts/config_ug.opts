@@ -1,6 +1,6 @@
 MODULEDIR=/hosts/raid5/aragorn/dune/modules/$HOSTTYPE
 CONFIGURE_FLAGS="CXX=g++ --disable-documentation \
---prefix=/hosts/morgoth/raid5/dune/src/dune \
+--prefix=/hosts/gandalf/raid5/morgoth/dune/src/dune \
 --with-grid-type=UGGRID \
 --with-grid-dim=2 \
 --with-ug=$MODULEDIR/UG_r8353 \

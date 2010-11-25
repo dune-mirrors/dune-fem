@@ -2,7 +2,7 @@
 # #AUTOGEN_FLAGS="--ac=2.59 --am=-1.8"
 MODULEDIR=/hosts/raid5/aragorn/dune/modules/$HOSTTYPE
 CONFIGURE_FLAGS="CXX=g++ \
---prefix=/hosts/morgoth/raid5/dune/src/dune \
+--prefix=/hosts/gandalf/raid5/morgoth/dune/src/dune \
 --with-grid-type=ALUGRID_CUBE \
 --with-grid-dim=3 \
 --with-alugrid=$MODULEDIR/alugrid \

@@ -2,6 +2,6 @@ CONFIGURE_FLAGS="CXX=g++ \
 --disable-documentation \
 --with-grid-dim=2 \
 --with-grid-type=YASPGRID \
---prefix=/hosts/morgoth/raid5/dune/src/dune"
+--prefix=/hosts/gandalf/raid5/morgoth/dune/src/dune"
 MAKE_FLAGS=
 
