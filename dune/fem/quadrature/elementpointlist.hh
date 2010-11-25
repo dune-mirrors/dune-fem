@@ -166,7 +166,11 @@ namespace Dune
     int faceNumber () const DUNE_DEPRECATED
     {
       typedef GenericGeometry::MapNumberingProvider< dimension > Numbering;
+#if DUNE_VERSION_NEWER(DUNE_COMMON,2,1,0)
+      const unsigned int tid = elementGeometry().id();
+#else
       const unsigned int tid = GenericGeometry::topologyId( elementGeometry() );
+#endif
       return Numbering::template generic2dune< 1 >( tid, localFaceIndex() );
     }
 

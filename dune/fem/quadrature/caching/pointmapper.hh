@@ -5,6 +5,7 @@
 #include <vector>
 
 //- Dune includes 
+#include <dune/common/version.hh>
 #include <dune/fem/quadrature/quadrature.hh>
 
 namespace Dune
