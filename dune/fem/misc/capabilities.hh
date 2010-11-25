@@ -4,7 +4,6 @@
 #include <dune/common/version.hh>
 
 #include <dune/grid/common/capabilities.hh>
-#include <dune/grid/onedgrid.hh>
 
 #include <dune/fem/misc/metaprogramming.hh>
 
@@ -22,6 +21,8 @@ namespace Dune
 
   template< int dim, int dimw >
   class ALUSimplexGrid;
+
+  class OneDGrid;
 
   template< int dim, int dimw, class ctype >
   class SGrid;
