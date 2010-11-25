@@ -9,17 +9,17 @@ namespace Dune
   // LagrangeBaseFunction
   // --------------------
   
-  template< class FunctionSpace, GeometryType :: BasicType type,
+  template< class FunctionSpace, unsigned int topologyId,
             unsigned int dim, unsigned int pOrder >
-  LagrangeBaseFunction< FunctionSpace, type, dim, pOrder >
+  LagrangeBaseFunction< FunctionSpace, topologyId, dim, pOrder >
     :: LagrangeBaseFunction ( unsigned int baseNum )
   : BaseType(),
     baseFunction_( baseNum )
   {}
   
-  template< class FunctionSpace, GeometryType :: BasicType type,
+  template< class FunctionSpace, unsigned int topologyId,
             unsigned int dim, unsigned int pOrder >
-  void LagrangeBaseFunction< FunctionSpace, type, dim, pOrder >
+  void LagrangeBaseFunction< FunctionSpace, topologyId, dim, pOrder >
     :: evaluate ( const FieldVector< int, 0 > &diffVariable,
                   const DomainType &x,
                   RangeType &phi ) const
@@ -28,9 +28,9 @@ namespace Dune
   }
   
   
-  template< class FunctionSpace, GeometryType :: BasicType type,
+  template< class FunctionSpace, unsigned int topologyId,
             unsigned int dim, unsigned int pOrder >
-  void LagrangeBaseFunction< FunctionSpace, type, dim, pOrder >
+  void LagrangeBaseFunction< FunctionSpace, topologyId, dim, pOrder >
     :: evaluate ( const FieldVector< int, 1 > &diffVariable,
                   const DomainType &x,
                   RangeType &phi ) const
@@ -39,9 +39,9 @@ namespace Dune
   }
   
   
-  template< class FunctionSpace, GeometryType :: BasicType type,
+  template< class FunctionSpace, unsigned int topologyId,
             unsigned int dim, unsigned int pOrder >
-  void LagrangeBaseFunction< FunctionSpace, type, dim, pOrder >
+  void LagrangeBaseFunction< FunctionSpace, topologyId, dim, pOrder >
     :: evaluate ( const FieldVector< int, 2 > &diffVariable,
                   const DomainType &x,
                   RangeType &phi ) const
@@ -50,9 +50,9 @@ namespace Dune
   }
 
   
-  template< class FunctionSpace, GeometryType :: BasicType type,
+  template< class FunctionSpace, unsigned int topologyId,
             unsigned int dim, unsigned int pOrder >
-  int LagrangeBaseFunction< FunctionSpace, type, dim, pOrder >
+  int LagrangeBaseFunction< FunctionSpace, topologyId, dim, pOrder >
     :: order () const
   {
     return pOrder;
@@ -60,15 +60,36 @@ namespace Dune
 
 
 
+  // LagrangeBaseFunctionFactory::TopologyId
+  // ---------------------------------------
+
+  template< class ScalarFunctionSpace, unsigned int dim, unsigned int pOrder >
+  template< class Topology >
+  struct LagrangeBaseFunctionFactory< ScalarFunctionSpace, dim, pOrder >::Switcher
+  {
+    typedef LagrangeBaseFunction< ScalarFunctionSpace, Topology::id, dim, pOrder > BaseFunction;
+
+    static void apply( int &numBaseFunctions )
+    {
+      numBaseFunctions = BaseFunction::GenericBaseFunctionType::numBaseFunctions; 
+    }
+
+    static void apply ( const int &i, BaseFunctionInterface< ScalarFunctionSpace > *&baseFunction )
+    {
+      baseFunction = new BaseFunction( i );
+    }
+  };
+
+
   // LagrangeBaseFunctionFactory
   // ---------------------------
 
   template< class ScalarFunctionSpace, unsigned int dim, unsigned int pOrder >
   LagrangeBaseFunctionFactory< ScalarFunctionSpace, dim, pOrder >
-    :: LagrangeBaseFunctionFactory ( GeometryType geometry )
+    ::LagrangeBaseFunctionFactory ( GeometryType geometry )
   : BaseType( geometry )
   {
-    assert( this->geometry().dim() == dim );
+    assert( geometry.dim() == dim );
   }
 
 
@@ -80,131 +101,33 @@ namespace Dune
 
   template< class ScalarFunctionSpace, unsigned int dim, unsigned int pOrder >
   BaseFunctionInterface< ScalarFunctionSpace > *
-  LagrangeBaseFunctionFactory< ScalarFunctionSpace, dim, pOrder >
-   :: baseFunction ( int i ) const
+  LagrangeBaseFunctionFactory< ScalarFunctionSpace, dim, pOrder >::baseFunction ( int i ) const
   {
-    const GeometryType :: BasicType basicType = this->geometry().basicType();
-
-    switch( basicType )
-    {
-    case GeometryType :: simplex:
-      return new LagrangeBaseFunction
-        < ScalarFunctionSpace, GeometryType :: simplex, dim, pOrder >( i );
-
-    case GeometryType :: cube:
-      return new LagrangeBaseFunction
-        < ScalarFunctionSpace, GeometryType :: cube, dim, pOrder >( i );
-
-    default:
-      DUNE_THROW( NotImplemented, "No such geometry type implemented." );
-    }
+    BaseFunctionInterface< ScalarFunctionSpace > *baseFunction;
+#if DUNE_VERSION_NEWER(DUNE_COMMON,2,1,0)
+    const unsigned int topologyId = geometry().id();
+#else
+    const unsigned int topologyId = GenericGeometry::topologyId( geometry() );
+#endif
+    GenericGeometry::IfTopology< Switcher, dim >::apply( topologyId, i, baseFunction );
+    return baseFunction;
   }
  
 
   template< class ScalarFunctionSpace, unsigned int dim, unsigned int pOrder >
-  int LagrangeBaseFunctionFactory< ScalarFunctionSpace, dim, pOrder >
-    :: numBaseFunctions () const
+  int
+  LagrangeBaseFunctionFactory< ScalarFunctionSpace, dim, pOrder >::numBaseFunctions () const
   {
-    const GeometryType :: BasicType basicType = this->geometry().basicType();
-
-    switch( basicType )
-    {
-    case GeometryType :: simplex:
-      return LagrangeBaseFunction
-               < ScalarFunctionSpace, GeometryType :: simplex, dim, pOrder >
-               :: GenericBaseFunctionType :: numBaseFunctions;
-
-    case GeometryType :: cube:
-      return LagrangeBaseFunction
-               < ScalarFunctionSpace, GeometryType :: cube, dim, pOrder >
-               :: GenericBaseFunctionType :: numBaseFunctions;
-
-    default:
-      DUNE_THROW( NotImplemented, "No such geometry type implemented." );
-    }
-  }
-
-
-
-  template< class ScalarFunctionSpace, unsigned int pOrder >
-  LagrangeBaseFunctionFactory< ScalarFunctionSpace, 3, pOrder >
-    :: LagrangeBaseFunctionFactory ( GeometryType geometry )
-  : BaseType( geometry )
-  {
-    assert( this->geometry().dim() == 3 );
-  }
-
-
-  template< class ScalarFunctionSpace, unsigned int pOrder >
-  LagrangeBaseFunctionFactory< ScalarFunctionSpace, 3, pOrder >
-    :: ~LagrangeBaseFunctionFactory ()
-  {}
-
-  
-  template< class ScalarFunctionSpace, unsigned int pOrder >
-  BaseFunctionInterface< ScalarFunctionSpace > *
-  LagrangeBaseFunctionFactory< ScalarFunctionSpace, 3, pOrder >
-    :: baseFunction ( int i ) const
-  {
-    const GeometryType :: BasicType basicType = this->geometry().basicType();
-
-    switch( basicType )
-    {
-    case GeometryType :: simplex:
-      return new LagrangeBaseFunction
-        < ScalarFunctionSpace, GeometryType :: simplex, 3, pOrder >( i );
-
-    case GeometryType :: cube:
-      return new LagrangeBaseFunction
-        < ScalarFunctionSpace, GeometryType :: cube, 3, pOrder >( i );
-
-    case GeometryType :: pyramid:
-      return new LagrangeBaseFunction
-        < ScalarFunctionSpace, GeometryType :: pyramid, 3, pOrder >( i );
-
-    case GeometryType :: prism:
-      return new LagrangeBaseFunction
-        < ScalarFunctionSpace, GeometryType :: prism, 3, pOrder >( i );
-
-    default:
-      DUNE_THROW( NotImplemented, "No such geometry type implemented." );
-    }
-  }
-
-  
-  template< class ScalarFunctionSpace, unsigned int pOrder >
-  int LagrangeBaseFunctionFactory< ScalarFunctionSpace, 3, pOrder >
-    :: numBaseFunctions () const
-  {
-    const GeometryType :: BasicType basicType = this->geometry().basicType();
-
-    switch( basicType )
-    {
-    case GeometryType :: simplex:
-      return LagrangeBaseFunction
-               < ScalarFunctionSpace, GeometryType :: simplex, 3, pOrder >
-               :: GenericBaseFunctionType :: numBaseFunctions;
-
-    case GeometryType :: cube:
-      return LagrangeBaseFunction
-               < ScalarFunctionSpace, GeometryType :: cube, 3, pOrder >
-               :: GenericBaseFunctionType :: numBaseFunctions;
-
-    case GeometryType :: pyramid:
-      return LagrangeBaseFunction
-               < ScalarFunctionSpace, GeometryType :: pyramid, 3, pOrder >
-               :: GenericBaseFunctionType :: numBaseFunctions;
-
-    case GeometryType :: prism:
-      return LagrangeBaseFunction
-               < ScalarFunctionSpace, GeometryType :: prism, 3, pOrder >
-               :: GenericBaseFunctionType :: numBaseFunctions;
-
-    default:
-      DUNE_THROW( NotImplemented, "No such geometry type implemented." );
-    }
+    int numBaseFunctions;
+#if DUNE_VERSION_NEWER(DUNE_COMMON,2,1,0)
+    const unsigned int topologyId = geometry().id();
+#else
+    const unsigned int topologyId = GenericGeometry::topologyId( geometry() );
+#endif
+    GenericGeometry::IfTopology< Switcher, dim >::apply( topologyId, numBaseFunctions );
+    return numBaseFunctions;
   }
 
 }
 
-#endif
+#endif // #ifndef DUNE_LAGRANGESPACE_BASEFUNCTIONS_INLINE_HH

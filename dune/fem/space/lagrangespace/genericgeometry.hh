@@ -161,195 +161,57 @@ namespace Dune
 
 
 
-  template< GeometryType::BasicType type, unsigned int dim >
-  class GeometryWrapper;
-
-
-
-  template< unsigned int dim >
-  class GeometryWrapper< GeometryType::simplex, dim >
+  template< unsigned int id, unsigned int dim >
+  class GeometryWrapper
   {
-    typedef GeometryWrapper< GeometryType::simplex, dim > ThisType;
-    typedef GeometryWrapper< GeometryType::simplex, dim-1 > DimensionReductionType;
-    
-    // disallow use for dim > 3
-    dune_static_assert( (dim <= 3), "Dimension must be less or equal to 3." );
+    dune_static_assert( (id < (1 << dim)), "id too large." );
+
+    static const bool isPrism = ((id >> (dim-1)) != 0);
+
+    typedef GeometryWrapper< (id & ~(1 << (dim-1))), dim-1 > DimensionReductionType;
+
+    template< bool >
+    struct Prism
+    {
+      typedef GeometryWrapper< (id & 1), 1 > LineGeometryType;
+      typedef ProductGeometry< typename DimensionReductionType::GenericGeometryType, typename LineGeometryType::GenericGeometryType >
+        GenericGeometryType;
+    };
+
+    template< bool >
+    struct Pyramid
+    {
+      typedef PyramidGeometry< typename DimensionReductionType::GenericGeometryType >
+        GenericGeometryType;
+    };
 
   public:
     static const unsigned int dimension = dim;
 
-    typedef PyramidGeometry< typename DimensionReductionType::GenericGeometryType > GenericGeometryType;
-    
-    static void duneSubEntity ( const unsigned int codim, unsigned int &subEntity )
-    {}
+    typedef typename SelectType< isPrism, Prism< true >, Pyramid< false > >::Type::GenericGeometryType
+      GenericGeometryType;
   };
 
-
-  
-  template<>
-  class GeometryWrapper< GeometryType::simplex, 0 >
+  template< unsigned int id >
+  class GeometryWrapper< id, 1 >
   {
-    typedef GeometryWrapper< GeometryType::simplex, 0 > ThisType;
+    dune_static_assert( (id < 2), "id too large." );
+
+  public:
+    static const unsigned int dimension = 1;
+
+    typedef PyramidGeometry< PointGeometry > GenericGeometryType;
+  };
+
+  template< unsigned int id >
+  class GeometryWrapper< id, 0 >
+  {
+    dune_static_assert( (id < 1), "id too large." );
 
   public:
     static const unsigned int dimension = 0;
 
     typedef PointGeometry GenericGeometryType;
-    
-    static void duneSubEntity ( const unsigned int codim, unsigned int &subEntity )
-    {}
-  };
-
-
-  
-  template<>
-  class GeometryWrapper< GeometryType::simplex, 2 >
-  {
-    typedef GeometryWrapper< GeometryType::simplex, 2 > ThisType;
-    typedef GeometryWrapper< GeometryType::simplex, 1 > DimensionReductionType;
-
-  public:
-    static const unsigned int dimension = 2;
-
-    typedef PyramidGeometry< DimensionReductionType::GenericGeometryType > GenericGeometryType;
-
-    static void duneSubEntity ( const unsigned int codim, unsigned int &subEntity )
-    {
-      subEntity = (codim == 1 ? 2 - subEntity : subEntity);
-    }
-  };
-  
-
-  
-  template<>
-  class GeometryWrapper< GeometryType::simplex, 3 >
-  {
-    typedef GeometryWrapper< GeometryType::simplex, 3 > ThisType;
-    typedef GeometryWrapper< GeometryType::simplex, 2 > DimensionReductionType;
-
-  public:
-    static const unsigned int dimension = 3;
-
-    typedef PyramidGeometry< DimensionReductionType::GenericGeometryType > GenericGeometryType;
-
-    static void duneSubEntity ( const unsigned int codim, unsigned int &subEntity )
-    {
-      if( codim == 1 )
-        subEntity = 3 - subEntity;
-      else if( codim == 2 )
-      {
-        if( subEntity == 1 )
-          subEntity = 2;
-        else if( subEntity == 2 )
-          subEntity = 1;
-      }
-    }
-  };
-
-
-
-  template< unsigned int dim >
-  class GeometryWrapper< GeometryType::cube, dim >
-  {
-    typedef GeometryWrapper< GeometryType::cube, dim > ThisType;
-    typedef GeometryWrapper< GeometryType::simplex, 1 > LineGeometryType;
-    typedef GeometryWrapper< GeometryType::cube, dim-1 > DimensionReductionType;
-
-  public:
-    static const unsigned int dimension = dim;
-
-    // disallow use for dim > 3
-    dune_static_assert( (dim <= 3), "Dimension must be less or equal to 3." );
-
-    typedef ProductGeometry< typename DimensionReductionType::GenericGeometryType, typename LineGeometryType::GenericGeometryType >
-      GenericGeometryType;
-
-    static void duneSubEntity ( const unsigned int codim, unsigned int &subEntity )
-    {}
-  };
-
-
-  
-  template<>
-  class GeometryWrapper< GeometryType::cube, 0 >
-  {
-    typedef GeometryWrapper< GeometryType::cube, 0 > ThisType;
-    typedef GeometryWrapper< GeometryType::simplex, 1 > LineGeometryType;
-
-  public:
-    static const unsigned int dimension = 0;
-    
-    typedef PointGeometry GenericGeometryType;
-    
-    static void duneSubEntity ( const unsigned int codim, unsigned int &subEntity )
-    {}
-  };
-
-
-  
-  template<>
-  class GeometryWrapper< GeometryType::cube, 3 >
-  {
-    typedef GeometryWrapper< GeometryType::cube, 3 > ThisType;
-    typedef GeometryWrapper< GeometryType::simplex, 1 > LineGeometryType;
-    typedef GeometryWrapper< GeometryType::cube, 2 > DimensionReductionType;
-
-  public:
-    static const unsigned int dimension = 3;
-
-    typedef ProductGeometry< DimensionReductionType::GenericGeometryType, LineGeometryType::GenericGeometryType >
-      GenericGeometryType;
-
-    static void duneSubEntity ( const unsigned int codim, unsigned int &subEntity )
-    {
-      if( codim != 2 )
-        return;
-
-      if( subEntity == 6 )
-        subEntity = 8;
-      else if( subEntity == 7 )
-        subEntity = 9;
-      else if( subEntity == 8 )
-        subEntity = 6;
-      else if( subEntity == 9 )
-        subEntity = 7;
-    }
-  };
-
-
-
-  template<>
-  class GeometryWrapper< GeometryType::pyramid, 3 >
-  {
-    typedef GeometryWrapper< GeometryType::pyramid, 3 > ThisType;
-    typedef GeometryWrapper< GeometryType::cube, 2 > BaseGeometryType;
-
-  public:
-    static const unsigned int dimension = 3;
-
-    typedef PyramidGeometry< BaseGeometryType::GenericGeometryType > GenericGeometryType;
-
-    static void duneSubEntity ( const unsigned int codim, unsigned int &subEntity )
-    {}
-  };
-
-
-
-  template<>
-  class GeometryWrapper< GeometryType::prism, 3 >
-  {
-    typedef GeometryWrapper< GeometryType::prism, 3 > ThisType;
-    typedef GeometryWrapper< GeometryType::simplex, 2 > FirstGeometryType;
-    typedef GeometryWrapper< GeometryType::simplex, 1 > SecondGeometryType;
-
-  public:
-    static const unsigned int dimension = 3;
-    
-    typedef ProductGeometry< FirstGeometryType::GenericGeometryType, SecondGeometryType::GenericGeometryType >
-      GenericGeometryType;
-
-    static void duneSubEntity ( const unsigned int codim, unsigned int &subEntity )
-    {}
   };
 
 
@@ -666,4 +528,4 @@ namespace Dune
 
 }
 
-#endif
+#endif // #ifndef DUNE_GENERICGEOMETRY_HH

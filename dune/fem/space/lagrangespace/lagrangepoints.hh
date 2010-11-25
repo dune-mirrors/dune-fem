@@ -18,17 +18,12 @@ namespace Dune
    * lagrange point is located. 
    *
    **/
-  template< GeometryType::BasicType type, unsigned int dim, unsigned int polOrder >
+  template< unsigned int topologyId, unsigned int dim, unsigned int polOrder >
   class LagrangePoint
-  : public GenericLagrangePoint
-    < typename GeometryWrapper< type, dim >::GenericGeometryType, polOrder >
+  : public GenericLagrangePoint< typename GeometryWrapper< topologyId, dim >::GenericGeometryType, polOrder >
   {
-    typedef LagrangePoint< type, dim, polOrder > ThisType;
-    typedef GenericLagrangePoint
-      < typename GeometryWrapper< type, dim >::GenericGeometryType, polOrder >
-      BaseType;
-
-    typedef GeometryWrapper< type, dim > GeometryWrapperType;
+    typedef LagrangePoint< topologyId, dim, polOrder > ThisType;
+    typedef GenericLagrangePoint< typename GeometryWrapper< topologyId, dim >::GenericGeometryType, polOrder > BaseType;
 
   public:
     static const unsigned int dimension = BaseType::dimension;
@@ -60,19 +55,16 @@ namespace Dune
     void dofSubEntity ( unsigned int &codim, unsigned int &subEntity )
     {
       BaseType::dofSubEntity( codim, subEntity );
-      //GeometryWrapperType::duneSubEntity( codim, subEntity );
     }
 
     void dofSubEntity ( unsigned int &codim, unsigned int &subEntity, unsigned int &dofNumber )
     {
       BaseType::dofSubEntity( codim, subEntity, dofNumber );
-      //GeometryWrapperType::duneSubEntity( codim, subEntity );
     }
 
     static unsigned int
     entityDofNumber ( unsigned int codim, unsigned int subEntity, unsigned int dof )
     {
-      //GeometryWrapperType::duneSubEntity( codim, subEntity );
       return BaseType::entityDofNumber( codim, subEntity, dof );
     }
   };
@@ -200,13 +192,13 @@ namespace Dune
 
 
 
-  template< class FieldImp,
-            GeometryType :: BasicType type,
-            unsigned int dim,
-            unsigned int polOrder >
+  template< class FieldImp, unsigned int topologyId, unsigned int dim, unsigned int polOrder >
   class LagrangePointListImplementation
   : public LagrangePointListInterface< FieldImp, dim, polOrder >
   {
+    typedef LagrangePointListImplementation< FieldImp, topologyId, dim, polOrder > ThisType;
+    typedef LagrangePointListInterface< FieldImp, dim, polOrder > BaseType;
+
   public:
     //! field type of points
     typedef FieldImp FieldType;
@@ -221,16 +213,9 @@ namespace Dune
     typedef FieldVector< FieldType, dimension > CoordinateType;
 
   private:
-    typedef LagrangePointListImplementation
-            < FieldType, type, dimension, polynomialOrder >
-      ThisType;
-    typedef LagrangePointListInterface< FieldType, dimension, polynomialOrder >
-      BaseType;
-
-    typedef LagrangePoint< type, dimension, polynomialOrder >
-      LagrangePointType;
+    typedef LagrangePoint< topologyId, dimension, polynomialOrder > LagrangePointType;
     
-    enum { numLagrangePoints = LagrangePointType :: numLagrangePoints };
+    enum { numLagrangePoints = LagrangePointType::numLagrangePoints };
 
   public:
     LagrangePointListImplementation ( const size_t id )
@@ -249,22 +234,21 @@ namespace Dune
       }
     }
     
-    LagrangePointListImplementation ( const GeometryType &geo,
-                                      const int order,
-                                      const size_t id )
+    LagrangePointListImplementation ( const GeometryType &geo, const int order, const size_t id )
     : BaseType( id )
     {
       assert( order <= polynomialOrder );
       assert( geo == this->geometry() );
          
-      for( unsigned int i = 0; i < numLagrangePoints; ++i ) {
+      for( unsigned int i = 0; i < numLagrangePoints; ++i )
+      {
         LagrangePointType pt( i );
         
         CoordinateType local;
         pt.local( local );
         this->addIntegrationPoint( local );
         
-        typename BaseType :: DofInfo dofInfo;
+        typename BaseType::DofInfo dofInfo;
         pt.dofSubEntity( dofInfo.codim, dofInfo.subEntity, dofInfo.dofNumber );
         this->addDofInfo( dofInfo );
       }
@@ -272,43 +256,44 @@ namespace Dune
 
   private:
     LagrangePointListImplementation ( const ThisType &other )
-    {
-    }
+    {}
 
   public:
-    virtual unsigned int entityDofNumber ( unsigned int codim,
-                                           unsigned int subEntity,
-                                           unsigned int dofNumber ) const
+    virtual unsigned int
+    entityDofNumber ( unsigned int codim, unsigned int subEntity, unsigned int dofNumber ) const
     {
-      return LagrangePointType :: entityDofNumber
-               ( codim, subEntity, dofNumber );
+      return LagrangePointType::entityDofNumber( codim, subEntity, dofNumber );
     }
 
     virtual GeometryType geometry () const
     {
-      return GeometryType( type, dimension );
+#if DUNE_VERSION_NEWER(DUNE_COMMON,2,1,0)
+      return GeometryType( topologyId, dimension );
+#else
+      return GenericGeometry::geometryType( topologyId, dimension );
+#endif
     }
 
     /** \copydoc Dune::LagrangePointListInterface::maxDofs
      */
     virtual unsigned int maxDofs ( unsigned int codim ) const
     {
-      return LagrangePointType :: maxDofs( codim );
+      return LagrangePointType::maxDofs( codim );
     }
 
     /** \copydoc Dune::LagrangePointListInterface::numDofs(unsigned int,unsigned int)
      */
-    virtual unsigned int numDofs ( unsigned int codim,
-                                   unsigned int subEntity ) const
+    virtual unsigned int
+    numDofs ( unsigned int codim, unsigned int subEntity ) const
     {
-      return LagrangePointType :: numDofs( codim, subEntity );
+      return LagrangePointType::numDofs( codim, subEntity );
     }
 
     /** \copydoc Dune::LagrangePointListInterface::numDofs(unsigned int)
      */
     virtual unsigned int numDofs ( unsigned int codim ) const
     {
-      return LagrangePointType :: numDofs( codim );
+      return LagrangePointType::numDofs( codim );
     }
   };
 
@@ -339,33 +324,26 @@ namespace Dune
     template< typename ct, int dim >
     struct PointListTraits
     {
-      typedef LagrangePointListImplementation
-              < ct, GeometryType :: simplex, dimension, polynomialOrder >
+      typedef LagrangePointListImplementation< ct, 0, 0, polynomialOrder >
         PointQuadratureType;
 
-      typedef LagrangePointListImplementation
-              < ct, GeometryType :: simplex, dimension, polynomialOrder >
+      typedef LagrangePointListImplementation< ct, 0, 1, polynomialOrder >
         LineQuadratureType;
       
-      typedef LagrangePointListImplementation
-              < ct, GeometryType :: simplex, dimension, polynomialOrder >
+      typedef LagrangePointListImplementation< ct, 0, dimension, polynomialOrder >
         SimplexQuadratureType;
  
-      typedef LagrangePointListImplementation
-              < ct, GeometryType :: cube, dimension, polynomialOrder >
+      typedef LagrangePointListImplementation< ct, (1 << dimension)-1, dimension, polynomialOrder >
         CubeQuadratureType;
       
-      typedef LagrangePointListImplementation
-              < ct, GeometryType :: prism, dimension, polynomialOrder >
+      typedef LagrangePointListImplementation< ct, (1 << (dimension-1)), dimension, polynomialOrder >
         PrismQuadratureType;
       
-      typedef LagrangePointListImplementation
-              < ct, GeometryType :: pyramid, dimension, polynomialOrder >
+      typedef LagrangePointListImplementation< ct, (1 << (dimension-1))-1, dimension, polynomialOrder >
         PyramidQuadratureType;
       
       //! type of integration point list implemementation 
-      typedef LagrangePointListInterface< ct, dim, polynomialOrder >
-        IntegrationPointListType; 
+      typedef LagrangePointListInterface< ct, dim, polynomialOrder > IntegrationPointListType; 
     }; 
 
     //! type of used integration point list 

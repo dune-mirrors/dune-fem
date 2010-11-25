@@ -9,28 +9,23 @@ namespace Dune
   // LagrangeBaseFunction
   // --------------------
    
-  template< class FunctionSpace, GeometryType :: BasicType type,
+  template< class FunctionSpace, unsigned int topologyId,
             unsigned int dim, unsigned int pOrder >
   class LagrangeBaseFunction
   : public BaseFunctionInterface< FunctionSpace >
   {
-    typedef LagrangeBaseFunction< FunctionSpace, type, dim, pOrder > ThisType;
+    typedef LagrangeBaseFunction< FunctionSpace, topologyId, dim, pOrder > ThisType;
     typedef BaseFunctionInterface< FunctionSpace > BaseType;
 
   public:
-    typedef typename GeometryWrapper< type, dim > :: GenericGeometryType
+    typedef typename GeometryWrapper< topologyId, dim >::GenericGeometryType
       GenericGeometryType;
-    typedef GenericLagrangeBaseFunction
-      < FunctionSpace, GenericGeometryType, pOrder >
+    typedef GenericLagrangeBaseFunction< FunctionSpace, GenericGeometryType, pOrder >
       GenericBaseFunctionType;
       
     typedef typename GenericBaseFunctionType :: DomainType DomainType;
     typedef typename GenericBaseFunctionType :: RangeType RangeType;
 
-  protected:
-    GenericBaseFunctionType baseFunction_;
-
-  public:
     LagrangeBaseFunction( unsigned int baseNum );
 
     virtual void evaluate ( const FieldVector< int, 0 > &diffVariable,
@@ -46,69 +41,72 @@ namespace Dune
                             RangeType &phi ) const;
 
     virtual int order () const;
+
+  protected:
+    GenericBaseFunctionType baseFunction_;
   };
 
 
 
 #ifndef COMPILE_FEMLIB
-  template< GeometryType :: BasicType type >
-  class LagrangeBaseFunction< FunctionSpace< double, double, 1, 1 >, type, 1, 1 >;
+  template< unsigned int topologyId >
+  class LagrangeBaseFunction< FunctionSpace< double, double, 1, 1 >, topologyId, 1, 1 >;
 
-  template< GeometryType :: BasicType type >
-  class LagrangeBaseFunction< FunctionSpace< double, double, 2, 1 >, type, 2, 1 >;
+  template< unsigned int topologyId >
+  class LagrangeBaseFunction< FunctionSpace< double, double, 2, 1 >, topologyId, 2, 1 >;
 
-  template< GeometryType :: BasicType type >
-  class LagrangeBaseFunction< FunctionSpace< double, double, 3, 1 >, type, 3, 1 >;
-
-
-  template< GeometryType :: BasicType type >
-  class LagrangeBaseFunction< FunctionSpace< float, float, 1, 1 >, type, 1, 1 >;
-
-  template< GeometryType :: BasicType type >
-  class LagrangeBaseFunction< FunctionSpace< float, float, 2, 1 >, type, 2, 1 >;
-
-  template< GeometryType :: BasicType type >
-  class LagrangeBaseFunction< FunctionSpace< float, float, 3, 1 >, type, 3, 1 >;
+  template< unsigned int topologyId >
+  class LagrangeBaseFunction< FunctionSpace< double, double, 3, 1 >, topologyId, 3, 1 >;
 
 
-  template< GeometryType :: BasicType type >
-  class LagrangeBaseFunction< FunctionSpace< double, double, 1, 1 >, type, 1, 2 >;
+  template< unsigned int topologyId >
+  class LagrangeBaseFunction< FunctionSpace< float, float, 1, 1 >, topologyId, 1, 1 >;
 
-  template< GeometryType :: BasicType type >
-  class LagrangeBaseFunction< FunctionSpace< double, double, 2, 1 >, type, 2, 2 >;
+  template< unsigned int topologyId >
+  class LagrangeBaseFunction< FunctionSpace< float, float, 2, 1 >, topologyId, 2, 1 >;
 
-  template< GeometryType :: BasicType type >
-  class LagrangeBaseFunction< FunctionSpace< double, double, 3, 1 >, type, 3, 2 >;
-
-
-  template< GeometryType :: BasicType type >
-  class LagrangeBaseFunction< FunctionSpace< float, float, 1, 1 >, type, 1, 2 >;
-
-  template< GeometryType :: BasicType type >
-  class LagrangeBaseFunction< FunctionSpace< float, float, 2, 1 >, type, 2, 2 >;
-
-  template< GeometryType :: BasicType type >
-  class LagrangeBaseFunction< FunctionSpace< float, float, 3, 1 >, type, 3, 2 >;
+  template< unsigned int topologyId >
+  class LagrangeBaseFunction< FunctionSpace< float, float, 3, 1 >, topologyId, 3, 1 >;
 
 
-  template< GeometryType :: BasicType type >
-  class LagrangeBaseFunction< FunctionSpace< double, double, 1, 1 >, type, 1, 3 >;
+  template< unsigned int topologyId >
+  class LagrangeBaseFunction< FunctionSpace< double, double, 1, 1 >, topologyId, 1, 2 >;
 
-  template< GeometryType :: BasicType type >
-  class LagrangeBaseFunction< FunctionSpace< double, double, 2, 1 >, type, 2, 3 >;
+  template< unsigned int topologyId >
+  class LagrangeBaseFunction< FunctionSpace< double, double, 2, 1 >, topologyId, 2, 2 >;
 
-  template< GeometryType :: BasicType type >
-  class LagrangeBaseFunction< FunctionSpace< double, double, 3, 1 >, type, 3, 3 >;
+  template< unsigned int topologyId >
+  class LagrangeBaseFunction< FunctionSpace< double, double, 3, 1 >, topologyId, 3, 2 >;
 
 
-  template< GeometryType :: BasicType type >
-  class LagrangeBaseFunction< FunctionSpace< float, float, 1, 1 >, type, 1, 3 >;
+  template< unsigned int topologyId >
+  class LagrangeBaseFunction< FunctionSpace< float, float, 1, 1 >, topologyId, 1, 2 >;
 
-  template< GeometryType :: BasicType type >
-  class LagrangeBaseFunction< FunctionSpace< float, float, 2, 1 >, type, 2, 3 >;
+  template< unsigned int topologyId >
+  class LagrangeBaseFunction< FunctionSpace< float, float, 2, 1 >, topologyId, 2, 2 >;
 
-  template< GeometryType :: BasicType type >
-  class LagrangeBaseFunction< FunctionSpace< float, float, 3, 1 >, type, 3, 3 >;
+  template< unsigned int topologyId >
+  class LagrangeBaseFunction< FunctionSpace< float, float, 3, 1 >, topologyId, 3, 2 >;
+
+
+  template< unsigned int topologyId >
+  class LagrangeBaseFunction< FunctionSpace< double, double, 1, 1 >, topologyId, 1, 3 >;
+
+  template< unsigned int topologyId >
+  class LagrangeBaseFunction< FunctionSpace< double, double, 2, 1 >, topologyId, 2, 3 >;
+
+  template< unsigned int topologyId >
+  class LagrangeBaseFunction< FunctionSpace< double, double, 3, 1 >, topologyId, 3, 3 >;
+
+
+  template< unsigned int topologyId >
+  class LagrangeBaseFunction< FunctionSpace< float, float, 1, 1 >, topologyId, 1, 3 >;
+
+  template< unsigned int topologyId >
+  class LagrangeBaseFunction< FunctionSpace< float, float, 2, 1 >, topologyId, 2, 3 >;
+
+  template< unsigned int topologyId >
+  class LagrangeBaseFunction< FunctionSpace< float, float, 3, 1 >, topologyId, 3, 3 >;
 #endif
 
 
@@ -124,28 +122,12 @@ namespace Dune
       ThisType;
     typedef BaseFunctionFactory< ScalarFunctionSpace > BaseType;
 
-  public:
-    explicit LagrangeBaseFunctionFactory ( GeometryType geometry );
-
-    virtual ~LagrangeBaseFunctionFactory ();
-
-    virtual BaseFunctionInterface< ScalarFunctionSpace > *
-    baseFunction ( int i ) const;
-
-    virtual int numBaseFunctions () const;
-  };
-
-
-
-  template< class ScalarFunctionSpace, unsigned int pOrder >
-  class LagrangeBaseFunctionFactory< ScalarFunctionSpace, 3, pOrder >
-  : public BaseFunctionFactory< ScalarFunctionSpace >
-  {
-    typedef LagrangeBaseFunctionFactory< ScalarFunctionSpace, 3, pOrder >
-      ThisType;
-    typedef BaseFunctionFactory< ScalarFunctionSpace > BaseType;
+    template< class Topology >
+    struct Switcher;
 
   public:
+    using BaseType::geometry;
+
     explicit LagrangeBaseFunctionFactory ( GeometryType geometry );
 
     virtual ~LagrangeBaseFunctionFactory ();
@@ -528,4 +510,4 @@ namespace Dune
 
 #include "basefunctions_inline.hh"
 
-#endif
+#endif // #ifndef DUNE_LAGRANGESPACE_BASEFUNCTIONS_HH
