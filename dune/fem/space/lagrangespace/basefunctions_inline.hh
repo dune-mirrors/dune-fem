@@ -1,6 +1,8 @@
 #ifndef DUNE_LAGRANGESPACE_BASEFUNCTIONS_INLINE_HH
 #define DUNE_LAGRANGESPACE_BASEFUNCTIONS_INLINE_HH
 
+#include <dune/common/version.hh>
+#include <dune/grid/genericgeometry/topologytypes.hh>
 #include "basefunctions.hh"
 
 namespace Dune
