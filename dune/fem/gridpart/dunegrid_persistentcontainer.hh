@@ -85,9 +85,9 @@ namespace Dune
       : codim_( codim )
       , index_( index )
       , overEstimate_( overEstimate )
-      , data_(index.size()*overEstimate)
+      , data_(index.size(0)*overEstimate)
     {
-      data_.resize(index.size());
+      data_.resize(index.size(0));
     }
 
     //! \brief copy constructor 
