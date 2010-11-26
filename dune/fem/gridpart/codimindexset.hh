@@ -108,7 +108,7 @@ public:
   //! reallocate the vectors
   void resize ()
   {
-    leafIndex_.enlarge();
+    leafIndex_.reserve();
   }
 
   //! prepare for setup (nothing to do here)
@@ -269,7 +269,7 @@ public:
     numberHoles_ = oldIdx_.size();
 
     // adjust size 
-    leafIndex_.adapt();
+    leafIndex_.update();
     
     // the next index that can be given away is equal to size
     nextFreeIndex_ = actSize;

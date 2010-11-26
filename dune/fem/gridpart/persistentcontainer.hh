@@ -1,3 +1,5 @@
+#include "dunegrid_persistentcontainer.hh"
+
 #ifndef DUNE_PERSISTENTCONTAINER_HH
 #define DUNE_PERSISTENTCONTAINER_HH
 
@@ -73,7 +75,7 @@ public:
     , data_()
   {
     data_.setMemoryFactor( 1.1 );
-    adapt( value );
+    update( value );
   }
 
   //! \brief copy constructor 
@@ -146,14 +148,14 @@ public:
   }
 
   //! \brief enlarge container, compress is not necessary but could be done
-  void enlarge( const Data &value = Data() )
+  void reserve( const Data &value = Data() )
   {
     if( (typename IndexSetType::IndexType) indexSet_.size( codim_ ) > (typename IndexSetType::IndexType) data_.size() ) 
-      adapt( value );
+      update( value );
   }
 
   //! \brief adjust container to correct size including compress 
-  void adapt(const Data& value = Data() )
+  void update(const Data& value = Data() )
   {
     const size_t oldSize = data_.size();
     const size_t dataSize = indexSet_.size( codim_ );
@@ -255,7 +257,7 @@ public:
     , codim_( codim )
     , data_()
   {
-    adapt( value );
+    update( value );
   }
 
   //! \brief copy constructor 
@@ -325,12 +327,12 @@ public:
   }
 
   //! \brief enlarge container, compress is not necessary but could be done
-  void enlarge( const Data& value = Data() )
+  void reserve( const Data& value = Data() )
   {
   }
 
   //! \brief adjust container to correct size including compress 
-  void adapt( const Data& value = Data() )
+  void update( const Data& value = Data() )
   {
     // loop over all codimensions 
     ForLoop< AdaptCodim, 0, GridType :: dimension > :: apply( *this, value, codim_ );
@@ -530,14 +532,14 @@ protected:
     ConstIterator end () const { return hostContainer_.end(); }
     Iterator end () { return hostContainer_.end(); }
 
-    void enlarge ( const Data &value = Data() )
+    void reserve ( const Data &value = Data() )
     {
-      hostContainer_.enlarge( value );
+      hostContainer_.reserve( value );
     }
 
-    void adapt ( const Data &value = Data() )
+    void update ( const Data &value = Data() )
     {
-      hostContainer_.adapt( value );
+      hostContainer_.update( value );
     }
 
   protected:
