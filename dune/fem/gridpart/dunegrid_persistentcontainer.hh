@@ -167,9 +167,8 @@ namespace Dune
     //! \brief adjust container to correct size and set all values to default
     void clear( )
     {
-      const size_t newSize = index_.size( codim_ );
-      data_.resize( newSize );
-      data_.clear();
+      update();
+      std::fill( data_.begin(), data_.end(), Data() );
     }
 
     //! \brief adjust container to correct size including compress 
