@@ -189,7 +189,7 @@ namespace Dune
     int numEntityDofs ( const Entity &entity ) const
     {
       const int codim = Entity::codimension;
-      const unsigned int topologyId = GenericGeometry::topologyId( entity.type() );
+      const unsigned int topologyId = entity.type().id(); // GenericGeometry::topologyId( entity.type() );
       const int blockIndex = blockIndex_[ codim ][ topologyId >> 1 ];
       return (blockIndex >= 0 ? blocks_[ blockIndex ].numDofs : 0);
     }
@@ -322,7 +322,7 @@ namespace Dune
   const typename GenericDofMapper< GridPart, LocalCoefficientsMap >::MapInfo &
   GenericDofMapper< GridPart, LocalCoefficientsMap >::mapInfo ( const Entity &entity ) const
   {
-    const unsigned int topologyId = GenericGeometry::topologyId( entity.type() );
+    const unsigned int topologyId = entity.type().id(); // GenericGeometry::topologyId( entity.type() );
     const unsigned int i = localCoefficientsMap_( entity );
     assert( i <= mapInfo_[ topologyId ].size() );
     return mapInfo_[ topologyId ][ i ];
@@ -360,7 +360,7 @@ namespace Dune
     ::mapEntityDofToGlobal ( const Entity &entity, const int localDof ) const
   {
     const int codim = Entity::codimension;
-    const unsigned int topologyId = GenericGeometry::topologyId( entity.type() );
+    const unsigned int topologyId = entity.type().id(); // GenericGeometry::topologyId( entity.type() );
     const int blockIndex = blockIndex_[ codim ][ topologyId >> 1 ];
     assert( blockIndex >= 0 );
 
@@ -381,12 +381,16 @@ namespace Dune
       Block &block = blocks_[ i ];
 
       unsigned int idxSize = 0;
+      const GeometryType type( block.topologyId, dimension - block.codim);
+      if (!type.isNone())
+        idxSize = indexSet().size( type );
+      /*
       if( GenericGeometry::hasGeometryType( block.topologyId, dimension - block.codim ) )
       {
         const GeometryType type = GenericGeometry::geometryType( block.topologyId, dimension - block.codim );
         idxSize = indexSet().size( type );
       }
-
+      */
       block.oldOffset = block.offset;
       block.offset = size_;
       size_ += idxSize * block.numDofs;
