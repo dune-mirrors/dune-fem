@@ -6,6 +6,7 @@
 
 //- Dune includes
 #include <dune/common/misc.hh>
+#include <dune/common/version.hh>
 
 #include <dune/fem/misc/capabilities.hh>
 
@@ -171,10 +172,12 @@ namespace Dune {
       
       if (it == mappers_.end()) 
       {
-        Int2Type< Capabilities::IsUnstructured<GridImp>::v> i2t;
-        it = CacheProvider<GridImp, 1>::createMapper(quad, 
-                                                     elementGeometry, 
-                                                     i2t);
+#if DUNE_VERSION_NEWER(DUNE_COMMON,2,1,0)
+        integral_constant< bool, Capabilities::IsUnstructured< GridImp >::v > i2t;
+#else
+        Int2Type< Capabilities::IsUnstructured< GridImp >::v > i2t;
+#endif
+        it = CacheProvider<GridImp, 1>::createMapper( quad, elementGeometry, i2t );
       }
       
       return it->second.getMapper(faceIndex, faceTwist);
@@ -190,14 +193,20 @@ namespace Dune {
     typedef typename MapperContainerType::iterator MapperIteratorType;
 
   private:
-    inline
-    static MapperIteratorType createMapper(const QuadratureType& quad,
-                                           GeometryType elementGeometry,
-                                           Int2Type<true>);
-    inline
-    static MapperIteratorType createMapper(const QuadratureType& quad,
-                                           GeometryType elementGeometry,
-                                           Int2Type<false>);
+#if DUNE_VERSION_NEWER(DUNE_COMMON,2,1,0)
+    static MapperIteratorType
+    createMapper ( const QuadratureType &quad, GeometryType elementGeometry, integral_constant< bool, true > );
+
+    static MapperIteratorType
+    createMapper ( const QuadratureType &quad, GeometryType elementGeometry, integral_constant< bool, false > );
+#else
+    static MapperIteratorType
+    createMapper ( const QuadratureType &quad, GeometryType elementGeometry, Int2Type< true > );
+
+    static MapperIteratorType
+    createMapper ( const QuadratureType &quad, GeometryType elementGeometry, Int2Type< false > );
+#endif
+
   private:
     static MapperContainerType mappers_;
   };
@@ -206,4 +215,4 @@ namespace Dune {
 
 #include "cacheprovider.cc"
 
-#endif
+#endif // #ifndef DUNE_CACHEPROVIDER_HH
