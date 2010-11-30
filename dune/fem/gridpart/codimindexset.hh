@@ -10,7 +10,11 @@
 
 #include <dune/fem/io/streams/xdrstreams.hh>
 
+#if DUNE_VERSION_NEWER(DUNE_GRID,2,1,0)
+#include <dune/grid/utility/persistentcontainer.hh>
+#else
 #include <dune/fem/gridpart/persistentcontainer.hh>
+#endif
 
 namespace Dune {
 

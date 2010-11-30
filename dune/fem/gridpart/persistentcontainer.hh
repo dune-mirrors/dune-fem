@@ -1,4 +1,7 @@
-#include "dunegrid_persistentcontainer.hh"
+#if DUNE_VERSION_NEWER(DUNE_GRID,2,1,0)
+#warning DO NOT USE PERSISTENTCONTAINER FROM DUNE-FEM; USE FROM dune/grid/utility instead
+#include <dune/grid/utility/persistentcontainer.hh>
+#else
 
 #ifndef DUNE_PERSISTENTCONTAINER_HH
 #define DUNE_PERSISTENTCONTAINER_HH
@@ -574,3 +577,4 @@ protected:
 } // end namespace Dune
 
 #endif // end DUNE_PERSISTENTCONTAINER_HH
+#endif // DUNE_VERSION_NEWER
