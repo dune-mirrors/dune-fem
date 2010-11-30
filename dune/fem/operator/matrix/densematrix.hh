@@ -435,7 +435,7 @@ namespace Dune
       const Iterator end = mapper.end( entity );
       for( Iterator it = mapper.begin( entity ); it != end; ++it )
       {
-        assert( it.global() == mapper.mapToGlobal( entity, it.local ) );
+        assert( it.global() == mapper.mapToGlobal( entity, it.local() ) );
         indices[ it.local() ] = it.global();
       }
     }
