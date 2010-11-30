@@ -8,6 +8,7 @@
 
 // Dune includes
 #include <dune/common/utility.hh>
+#include <dune/common/typetraits.hh>
 #include <dune/fem/gridpart/gridpart.hh>
 #include <dune/fem/gridpart/adaptiveleafgridpart.hh>
 
@@ -303,7 +304,11 @@ namespace Dune {
     public DGDiscreteModelDefault
       < AdvDiffTraits1< Model , NumFlux , polOrd , passId1 > , passId1 >
   {
+#if DUNE_VERSION_NEWER(DUNE_COMMON,2,1,0)
+    integral_constant<int, passId1 > uVar;
+#else
     Int2Type< passId1 > uVar;
+#endif
   public:
     typedef AdvDiffTraits1< Model , NumFlux , polOrd 
              , passId1
@@ -429,8 +434,13 @@ namespace Dune {
       < AdvDiffTraits2< Model , NumFlux , polOrd , passId1 , passId2 > 
         , passId1 , passId2 >
   {
+#if DUNE_VERSION_NEWER(DUNE_COMMON,2,1,0)
+    integral_constant<int, passId1 > uVar;
+    integral_constant<int, passId2 > vVar;
+#else
     Int2Type< passId1 > uVar;
     Int2Type< passId2 > vVar;
+#endif
   public:
     typedef AdvDiffTraits2<Model,NumFlux,polOrd
              , passId1
@@ -570,7 +580,11 @@ namespace Dune {
     public DGDiscreteModelDefault
       < AdvDiffTraits3< Model , NumFlux , polOrd , passId1 > , passId1 >
   {
-    Int2Type< passId1 > uVar;
+#if DUNE_VERSION_NEWER(DUNE_COMMON,2,1,0)
+    integral_constant<int, passId1 > uVar;
+#else
+    integral_constant<int, passId1 > uVar;
+#endif
 
   public:
     typedef AdvDiffTraits3< Model , NumFlux , polOrd , passId1 > Traits;
@@ -666,7 +680,11 @@ namespace Dune {
     public DGDiscreteModelDefault
       < AdvDiffTraits3WithSource< Model , NumFlux , polOrd , passId1 > , passId1 >
   {
+#if DUNE_VERSION_NEWER(DUNE_COMMON,2,1,0)
+    integral_constant<int, passId1 > uVar;
+#else
     Int2Type< passId1 > uVar;
+#endif
 
   public:
     typedef AdvDiffTraits3WithSource< Model , NumFlux , polOrd , passId1 > Traits;
@@ -779,8 +797,13 @@ namespace Dune {
              , passId2
              >
   {
+#if DUNE_VERSION_NEWER(DUNE_COMMON,2,1,0)
+    integral_constant<int, passId1 > uVar;
+    integral_constant<int, passId2 > vVar;
+#else
     Int2Type< passId1 > uVar;
     Int2Type< passId2 > vVar;
+#endif
   public:
     typedef AdvDiffTraits4< Model , NumFlux , polOrd 
              , passId1
@@ -900,7 +923,11 @@ namespace Dune {
     public DGDiscreteModelDefault
       < LimiterTraits1< Model , polOrd , passId1 > , passId1 >
   {
+#if DUNE_VERSION_NEWER(DUNE_COMMON,2,1,0)
+    integral_constant<int, passId1 > uVar;
+#else
     Int2Type< passId1 > uVar;
+#endif
     public:
     typedef LimiterTraits1< Model , polOrd
              , passId1
