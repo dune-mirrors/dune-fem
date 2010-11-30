@@ -618,8 +618,13 @@ namespace Dune
     typedef typename DofMapperType::EntityType EntityType;
     typedef typename DofMapperType::IndexSetType IndexSetType;
 
+#if DUNE_VERSION_NEWER(DUNE_COMMON,2,1,0)
+    typedef integral_constant<int, 0 > Begin;
+    typedef integral_constant<int, 1 > End;
+#else
     typedef Int2Type< 0 > Begin;
     typedef Int2Type< 1 > End;
+#endif
 
   private:
     typedef typename DofMapperType::SubEntityInfo SubEntityInfo;
