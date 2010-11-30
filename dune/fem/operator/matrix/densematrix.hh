@@ -394,12 +394,17 @@ namespace Dune
       matrix_( rowIndices_[ row ], colIndices_[ col ] ) = value;
     }
 
-    void unitRow ( const int row )
+    void clearRow ( const int row )
     {
       assert( (row >= 0) && (row < rows()) );
       const unsigned int rowIndex = rowIndices_[ row ];
       matrix_[ rowIndex ].clear();
-      matrix_( rowIndex, rowIndex ) = DofType( 1 );
+    }
+
+    void unitRow ( const int row )
+    {
+      clearRow( row );
+      set( row, row, DofType( 1 ) );
     }
 
     void clear ()
