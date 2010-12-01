@@ -9,7 +9,7 @@
 
 //- Dune includes 
 #include <dune/common/geometrytype.hh>
-#include <dune/fem/misc/ompmanager.hh>
+#include <dune/fem/misc/threadmanager.hh>
 
 namespace Dune {
 
@@ -55,13 +55,13 @@ namespace Dune {
         // if list pointer is 0 then create new object 
         if( ! storageListPtr() )
         {
-          if( OMPManager :: thread() == 0 )
+          if( ThreadManager :: isMaster() )
           {
             storageListPtr() = new StorageInterfaceListType();
           }
 
           // wait until object created 
-          OMPManager::barrier();
+          ThreadManager::barrier();
         }
 
         assert( storageListPtr() );
@@ -85,7 +85,7 @@ namespace Dune {
       //! Destructor, remove me from the list of storages 
       virtual ~StorageInterface() 
       {
-        if( OMPManager::thread() == 0 ) 
+        if( ThreadManager::isMaster() ) 
         {
           typedef typename StorageInterfaceListType::iterator IteratorType;
           IteratorType endit = storageList().end();
@@ -107,7 +107,7 @@ namespace Dune {
       template <class StorageImp>
       void cacheExistingQuadratures(StorageImp & storage)
       {
-        if( OMPManager::thread() == 0 ) 
+        if( ThreadManager::isMaster() ) 
         {
           typedef typename QuadratureListType::iterator IteratorType;
           IteratorType endit = quadratureList().end();
@@ -122,7 +122,7 @@ namespace Dune {
         }
 
         // wait until register is finished 
-        OMPManager::barrier();
+        ThreadManager::barrier();
       }
 
       //! cache quadrature for given id and codim 
@@ -145,7 +145,7 @@ namespace Dune {
       static void registerQuadratureToStorages(const QuadratureType & quad, 
                                                const size_t codim)
       {
-        if( OMPManager::thread() == 0 ) 
+        if( ThreadManager::isMaster() ) 
         {
           const size_t id = quad.id();
           const size_t quadSize = quad.nop();
@@ -165,7 +165,7 @@ namespace Dune {
         }
 
         // wait until register is finished 
-        OMPManager::barrier();
+        ThreadManager::barrier();
       }
   };
 
