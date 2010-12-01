@@ -40,7 +40,8 @@ misc_HEADERS = alugridwriter.hh \
                validator.hh \
                fmatrixconverter.hh \
                gridname.hh \
-               threaditerator.hh
+               threaditerator.hh \
+               threadmanager.hh
 
 noinst_LTLIBRARIES = libmisc.la
 
