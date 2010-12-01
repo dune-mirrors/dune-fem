@@ -3,6 +3,7 @@
 
 //- System includes
 #include <vector>
+#include <map>
 
 //- Dune includes
 #include <dune/common/misc.hh>
@@ -101,8 +102,10 @@ namespace Dune {
 
     const MapperType &getMapper ( int faceIndex, int faceTwist ) const
     {
+#ifndef NDEBUG 
       if( faceIndex >= (int)mappers_.size() )
         std::cerr << "Error: faceIndex = " << faceIndex << " >= " << mappers_.size() << " = mappers_.size()" << std::endl;
+#endif
       assert( (faceIndex >= 0) && (faceIndex < (int)mappers_.size()) );
       return mappers_[ faceIndex ];
     }
@@ -144,8 +147,6 @@ namespace Dune {
   template <class GridImp>
   class CacheProvider<GridImp, 1>
   {
-  public:
-  private:
     enum { codim = 1 };
     enum { dim = GridImp::dimension };
     typedef typename GridImp::ctype ct;
@@ -166,11 +167,12 @@ namespace Dune {
       // get quadrature implementation 
       const QuadratureType& quad = quadImpl.ipList();
       
-      QuadratureKeyType key (elementGeometry, quad.id() );
+      // create key 
+      const QuadratureKeyType key (elementGeometry, quad.id() );
       
       MapperIteratorType it = mappers_.find( key );
       
-      if (it == mappers_.end()) 
+      if( it == mappers_.end() ) 
       {
 #if DUNE_VERSION_NEWER(DUNE_COMMON,2,1,0)
         integral_constant< bool, Capabilities::IsUnstructured< GridImp >::v > i2t;
@@ -179,7 +181,7 @@ namespace Dune {
 #endif
         it = CacheProvider<GridImp, 1>::createMapper( quad, elementGeometry, i2t );
       }
-      
+
       return it->second.getMapper(faceIndex, faceTwist);
     }
 
