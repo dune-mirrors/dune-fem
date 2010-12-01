@@ -543,37 +543,43 @@ namespace Dune
     {
       const int maxBaseFunctions = DGNumberOfBaseFunctions< polOrd, dimDomain >::numBaseFunctions;
 
-      assert( (int) geometry().dim() == dimDomain );
+      const GeometryType geo = geometry();
+      assert( (int) geo.dim() == dimDomain );
 
       if( dimDomain == 1 )
         return BaseFunctionCreator< 1, GeometryType::cube, maxBaseFunctions, 0 >::create( i );
       else if( dimDomain == 2 )
       {
-        switch( geometry().basicType() )
+        if( geo.isSimplex() ) 
         {
-        case GeometryType::simplex:
           return BaseFunctionCreator< 2, GeometryType::simplex, maxBaseFunctions, 0 >::create( i );
-        case GeometryType::cube:
+        } 
+        else 
+        {
+          assert( geo.isCube() );
           return BaseFunctionCreator< 2, GeometryType::cube, maxBaseFunctions, 0 >::create( i );
-        default:
-          DUNE_THROW( InvalidStateException, "Invalid geometry type." );
         }
       }
       else if( dimDomain == 3 )
       {
-        switch( geometry().basicType() )
+        if( geo.isSimplex() )
         {
-        case GeometryType::simplex:
           return BaseFunctionCreator< 3, GeometryType::simplex, maxBaseFunctions, 0 >::create( i );
-        case GeometryType::cube:
-          return BaseFunctionCreator< 3, GeometryType::cube, maxBaseFunctions, 0 >::create( i );
-        case GeometryType::prism:
-          return BaseFunctionCreator< 3, GeometryType::prism, maxBaseFunctions, 0 >::create( i );
-        case GeometryType::pyramid:
-          return BaseFunctionCreator< 3, GeometryType::pyramid, maxBaseFunctions, 0 >::create( i );
-        default:
-          DUNE_THROW( InvalidStateException, "Invalid geometry type." );
         }
+        else if( geo.isCube() )
+        {
+          return BaseFunctionCreator< 3, GeometryType::cube, maxBaseFunctions, 0 >::create( i );
+        }
+        else if( geo.isPrism() ) 
+        {
+          return BaseFunctionCreator< 3, GeometryType::prism, maxBaseFunctions, 0 >::create( i );
+        }
+        else if( geo.isPyramid() )
+        {
+          return BaseFunctionCreator< 3, GeometryType::pyramid, maxBaseFunctions, 0 >::create( i );
+        }
+        else 
+          DUNE_THROW( InvalidStateException, "Invalid geometry type." );
       }
       else
         DUNE_THROW( NotImplemented, "DGBaseFunction only implemented for dim=1,2,3." );
