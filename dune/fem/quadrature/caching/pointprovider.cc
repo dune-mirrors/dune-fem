@@ -2,7 +2,7 @@
 #include <dune/grid/common/genericreferenceelements.hh>
 
 #include <dune/fem/space/basefunctions/storageinterface.hh>
-#include <dune/fem/misc/ompmanager.hh>
+#include <dune/fem/misc/threadmanager.hh>
 
 namespace Dune {
 
@@ -15,7 +15,7 @@ namespace Dune {
   registerQuadrature(const QuadratureType& quad)
   {
     // only register on thread 0 
-    if( Fem :: OMPManager :: thread() == 0 ) 
+    if( Fem :: ThreadManager :: thread() == 0 ) 
     {
       QuadratureKeyType key( quad.geometry(), quad.id() );
       
@@ -33,7 +33,7 @@ namespace Dune {
       }
     }
 
-    Fem :: OMPManager :: barrier();
+    Fem :: ThreadManager :: barrier();
   }
 
   template <class ct, int dim>
@@ -109,7 +109,7 @@ namespace Dune {
     QuadratureKeyType key ( elementGeo, quad.id() );
       
     MapperIteratorType mit ;
-    if( Fem::OMPManager::thread() == 0 )
+    if( Fem::ThreadManager::thread() == 0 )
     {
       const GenericReferenceElement<ct, dim>& refElem = 
         GenericReferenceElements<ct, dim>::general(elementGeo);
@@ -146,10 +146,10 @@ namespace Dune {
       Fem::StorageInterface<dim>::registerQuadratureToStorages(quad,1);
     }
     
-    Fem::OMPManager::barrier();
+    Fem::ThreadManager::barrier();
 
     // assign iterator for higher threads 
-    if( Fem::OMPManager::thread() > 0 )
+    if( Fem::ThreadManager::thread() > 0 )
       mit = mappers_.find( key );
 
     return mit;
