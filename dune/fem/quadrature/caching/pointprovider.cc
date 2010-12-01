@@ -15,7 +15,7 @@ namespace Dune {
   registerQuadrature(const QuadratureType& quad)
   {
     // only register on thread 0 
-    if( Fem :: ThreadManager :: thread() == 0 ) 
+    if( Fem :: ThreadManager :: isMaster() ) 
     {
       QuadratureKeyType key( quad.geometry(), quad.id() );
       
@@ -109,7 +109,7 @@ namespace Dune {
     QuadratureKeyType key ( elementGeo, quad.id() );
       
     MapperIteratorType mit ;
-    if( Fem::ThreadManager::thread() == 0 )
+    if( Fem::ThreadManager::isMaster() )
     {
       const GenericReferenceElement<ct, dim>& refElem = 
         GenericReferenceElements<ct, dim>::general(elementGeo);
@@ -149,7 +149,7 @@ namespace Dune {
     Fem::ThreadManager::barrier();
 
     // assign iterator for higher threads 
-    if( Fem::ThreadManager::thread() > 0 )
+    if( ! Fem::ThreadManager::isMaster() )
       mit = mappers_.find( key );
 
     return mit;

@@ -55,7 +55,7 @@ namespace Dune
         QuadPtr& quadPtr = storage_[ order ];
         if( quadPtr == 0 )
         {
-          if( Fem :: ThreadManager::thread() == 0 )
+          if( Fem :: ThreadManager::isMaster() )
           {
             quadPtr = new QuadImp( geometry, order, IdProvider :: instance().newId() );
           }
