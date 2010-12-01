@@ -108,13 +108,9 @@ namespace Dune {
     static const TwistStorageType& getTwistStorage(const QuadratureType& quad);
 
   private:
-    typedef std::map<size_t, const TwistStorageType*> MapperContainerType;
+    typedef std::vector< const TwistStorageType* > MapperContainerType;
     typedef typename MapperContainerType::iterator IteratorType;
     
-  private:
-    //! Gets called when a new mapper is created.
-    static IteratorType createMapper(const QuadratureType& quad);
-
   private:
     // singleton class holding map with storages 
     class MapperContainer
@@ -123,7 +119,8 @@ namespace Dune {
       MapperContainerType mappers_;
       
       //! cosntructor 
-      MapperContainer() : mappers_() {}
+      MapperContainer() : mappers_(100, (TwistStorageType*) 0) 
+      {}
 
       //! destructor  
       ~MapperContainer() 
@@ -131,10 +128,8 @@ namespace Dune {
         IteratorType endit = mappers_.end();
         for(IteratorType it = mappers_.begin(); it != endit; ++it)
         {
-          delete it->second;
-          it->second = 0;
+          delete (*it);
         }
-        
       }
       
     public:

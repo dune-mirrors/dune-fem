@@ -54,25 +54,18 @@ namespace Dune {
   const typename TwistProvider<ct, dim>::TwistStorageType& 
   TwistProvider<ct, dim>::getTwistStorage(const QuadratureType& quad)
   {
-    MapperContainerType& mappers = MapperContainer::instance();
-    IteratorType it = mappers.find(quad.id());
-    if (it == mappers.end()) {
-      it = TwistProvider<ct, dim>::createMapper(quad);
+    typedef const TwistStorageType* TwistStoragePtr; 
+    assert( quad.id() < MapperContainer::instance().size() );
+    TwistStoragePtr& ptr = MapperContainer::instance()[ quad.id() ];
+
+    if( ptr == 0 )
+    {
+      TwistMapperCreator<ct, dim> creator(quad);
+      ptr = creator.createStorage();
     }
     
-    assert(it->second);
-    return *(it->second);
-  }
-  
-  template <class ct, int dim>
-  typename TwistProvider<ct, dim>::IteratorType
-  TwistProvider<ct, dim>::createMapper(const QuadratureType& quad) 
-  {
-    MapperContainerType& mappers = MapperContainer::instance();
-    TwistMapperCreator<ct, dim> creator(quad);
-    const TwistStorageType* storage = creator.createStorage();
-
-    return mappers.insert(std::make_pair(quad.id(), storage)).first;
+    assert( ptr != 0 );
+    return *ptr ;
   }
   
   template <class ct, int dim>
