@@ -9,9 +9,11 @@
 
 //- Dune includes 
 #include <dune/common/geometrytype.hh>
+#include <dune/fem/misc/ompmanager.hh>
 
 namespace Dune {
 
+  namespace Fem {
   //! \brief Storage policy for base function sets.
   //! In a base function set, the base function values on quadrature points
   //! can either be cached or always recalculated. The storage policies
@@ -53,8 +55,15 @@ namespace Dune {
         // if list pointer is 0 then create new object 
         if( ! storageListPtr() )
         {
-          storageListPtr() = new StorageInterfaceListType();
+          if( OMPManager :: thread() == 0 )
+          {
+            storageListPtr() = new StorageInterfaceListType();
+          }
+
+          // wait until object created 
+          OMPManager::barrier();
         }
+
         assert( storageListPtr() );
         return *(storageListPtr());
       }
@@ -76,35 +85,44 @@ namespace Dune {
       //! Destructor, remove me from the list of storages 
       virtual ~StorageInterface() 
       {
-        typedef typename StorageInterfaceListType::iterator IteratorType;
-        IteratorType endit = storageList().end();
-        for(IteratorType it = storageList().begin(); it != endit; ++it)
+        if( OMPManager::thread() == 0 ) 
         {
-          if( (*it) == this )
+          typedef typename StorageInterfaceListType::iterator IteratorType;
+          IteratorType endit = storageList().end();
+          for(IteratorType it = storageList().begin(); it != endit; ++it)
           {
-            storageList().erase(it);
-            break;
+            if( (*it) == this )
+            {
+              storageList().erase(it);
+              break;
+            }
           }
-        }
 
-        // if list is empty, then delete list 
-        checkAndDeleteStorageList();
+          // if list is empty, then delete list 
+          checkAndDeleteStorageList();
+        }
       }
 
       //! for a newly created storage cache all existing quadratures 
       template <class StorageImp>
       void cacheExistingQuadratures(StorageImp & storage)
       {
-        typedef typename QuadratureListType::iterator IteratorType;
-        IteratorType endit = quadratureList().end();
-        for(IteratorType it = quadratureList().begin(); it != endit; ++it)
+        if( OMPManager::thread() == 0 ) 
         {
-          // get if and codim of quad 
-          const size_t id = (*it)[ ids ];
-          const size_t codim = (*it)[ codims ];
-          const size_t quadSize = (*it)[ sizes ];
-          storage.cacheQuadrature(id, codim, quadSize);
+          typedef typename QuadratureListType::iterator IteratorType;
+          IteratorType endit = quadratureList().end();
+          for(IteratorType it = quadratureList().begin(); it != endit; ++it)
+          {
+            // get if and codim of quad 
+            const size_t id = (*it)[ ids ];
+            const size_t codim = (*it)[ codims ];
+            const size_t quadSize = (*it)[ sizes ];
+            storage.cacheQuadrature(id, codim, quadSize);
+          }
         }
+
+        // wait until register is finished 
+        OMPManager::barrier();
       }
 
       //! cache quadrature for given id and codim 
@@ -127,23 +145,31 @@ namespace Dune {
       static void registerQuadratureToStorages(const QuadratureType & quad, 
                                                const size_t codim)
       {
-        const size_t id = quad.id();
-        const size_t quadSize = quad.nop();
-        // store quadrature 
-        QuadratureIdentifierType ident( sizeIndents );
-        ident[ ids ]    = id ;
-        ident[ codims ] = codim; 
-        ident[ sizes ]  = quadSize;
-        quadratureList().push_back(ident);
-
-        typedef typename StorageInterfaceListType::iterator IteratorType;
-        IteratorType endit = storageList().end();
-        for(IteratorType it = storageList().begin(); it != endit; ++it)
+        if( OMPManager::thread() == 0 ) 
         {
-          (*it)->cacheQuadrature(id, codim, quadSize);
+          const size_t id = quad.id();
+          const size_t quadSize = quad.nop();
+          // store quadrature 
+          QuadratureIdentifierType ident( sizeIndents );
+          ident[ ids ]    = id ;
+          ident[ codims ] = codim; 
+          ident[ sizes ]  = quadSize;
+          quadratureList().push_back(ident);
+
+          typedef typename StorageInterfaceListType::iterator IteratorType;
+          IteratorType endit = storageList().end();
+          for(IteratorType it = storageList().begin(); it != endit; ++it)
+          {
+            (*it)->cacheQuadrature(id, codim, quadSize);
+          }
         }
+
+        // wait until register is finished 
+        OMPManager::barrier();
       }
   };
+
+  } // namespace Fem 
 
 } // end namespace Dune                                                                                                                                                               
 #endif
