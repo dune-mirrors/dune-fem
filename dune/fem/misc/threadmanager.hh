@@ -11,6 +11,7 @@ namespace Dune
 
   struct ThreadManager 
   {
+    //! return maximal number of threads possbile in the current run 
     static int maxThreads() 
     {
 #ifdef _OPENMP
@@ -20,6 +21,7 @@ namespace Dune
 #endif
     }
 
+    //! return number of current threads 
     static int currentThreads() 
     {
 #ifdef _OPENMP
@@ -29,6 +31,7 @@ namespace Dune
 #endif
     }
 
+    //! return thread number 
     static int thread() 
     {
 #ifdef _OPENMP
@@ -38,6 +41,7 @@ namespace Dune
 #endif
     }
 
+    //! make all threads wait until all reached the barrier
     static void barrier () 
     {
 #ifdef _OPENMP
@@ -45,6 +49,12 @@ namespace Dune
 #pragma omp barrier 
       }
 #endif
+    }
+
+    //! return true if the current thread is the master thread (i.e. thread 0)
+    static bool isMaster() 
+    {
+      return thread() == 0 ;
     }
 
   }; // end class ThreadManager 
