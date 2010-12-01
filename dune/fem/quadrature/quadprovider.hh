@@ -4,6 +4,7 @@
 #include <dune/fem/storage/array.hh>
 #include <dune/fem/quadrature/quadratureimp.hh>
 #include <dune/fem/quadrature/idprovider.hh>
+#include <dune/fem/misc/ompmanager.hh>
 
 namespace Dune
 {
@@ -53,7 +54,16 @@ namespace Dune
         
         QuadPtr& quadPtr = storage_[ order ];
         if( quadPtr == 0 )
-          quadPtr = new QuadImp( geometry, order, IdProvider :: instance().newId() );
+        {
+          if( Fem :: OMPManager::thread() == 0 )
+          {
+            quadPtr = new QuadImp( geometry, order, IdProvider :: instance().newId() );
+          }
+
+          // make sure all threads wait here 
+          Fem :: OMPManager :: barrier();
+        }
+        assert( quadPtr != 0 );
         return *quadPtr;
       }      
     }; // end class QuadratureStorage 
