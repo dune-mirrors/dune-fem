@@ -9,7 +9,7 @@ namespace Dune
 {
   namespace Fem {
 
-  struct OMPManager 
+  struct ThreadManager 
   {
     static int maxThreads() 
     {
@@ -47,7 +47,7 @@ namespace Dune
 #endif
     }
 
-  }; // end class OMPManager 
+  }; // end class ThreadManager 
 
   } // namespace Fem 
 
