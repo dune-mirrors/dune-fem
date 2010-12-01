@@ -3,7 +3,7 @@
 
 #include <vector>
 
-#include <dune/fem/misc/ompmanager.hh>
+#include <dune/fem/misc/threadmanager.hh>
 
 namespace Dune {
   namespace Fem {
@@ -36,8 +36,8 @@ namespace Dune {
         , indexSet_( space_.indexSet() )
 #ifdef _OPENMP
         , sequence_( -1 )  
-        , iterators_( OMPManager::maxThreads() + 1 , space_.end() )
-        , threadId_( OMPManager::maxThreads() )
+        , iterators_( ThreadManager::maxThreads() + 1 , space_.end() )
+        , threadId_( ThreadManager::maxThreads() )
 #endif
       {
         update();

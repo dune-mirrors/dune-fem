@@ -57,6 +57,14 @@ namespace Dune
       return thread() == 0 ;
     }
 
+    //! set maximal number of threads available during run  
+    static void setMaxNumberThreads( const int numThreads ) 
+    {
+#ifdef _OPENMP
+      omp_set_num_threads( numThreads );
+#endif
+    }
+
   }; // end class ThreadManager 
 
   } // namespace Fem 
