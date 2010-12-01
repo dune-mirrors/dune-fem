@@ -24,9 +24,9 @@ misc_HEADERS = alugridwriter.hh \
                h1norm.hh \
                l1error.hh \
                l2error.hh \
-	       l1norm.hh \
+               l1norm.hh \
                l2norm.hh \
-	       linesegmentsampler.hh \
+               linesegmentsampler.hh \
                longexample.cc \
                metaprogramming.hh \
                mpimanager.hh \
@@ -39,7 +39,8 @@ misc_HEADERS = alugridwriter.hh \
                utility.hh \
                validator.hh \
                fmatrixconverter.hh \
-               gridname.hh
+               gridname.hh \
+               threaditerator.hh
 
 noinst_LTLIBRARIES = libmisc.la
 
