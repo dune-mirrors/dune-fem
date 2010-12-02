@@ -38,7 +38,11 @@ namespace Dune
               + (polOrder+1)*(polOrder+2)/2)/2 };
   };
 
-
+  //- do not use this elsewhere
+  struct DGBaseId 
+  {
+     enum { simplexId, cubeId, prismId, pyramidId }; 
+  };
 
   //! Wrapper interface for DG base functions
   template <class FunctionSpaceType, int baseNum >
@@ -188,12 +192,12 @@ namespace Dune
 
 
   //! Base class for DG base functions
-  template< class FunctionSpaceType, int dimDomain, GeometryType::BasicType basicGeo, int polOrd, int baseNum >
+  template< class FunctionSpaceType, int dimDomain, int basicGeo, int polOrd, int baseNum >
   class DGBaseFunction;
 
-  //! Specialisation for triangles
+  //! Specialisation for lines 
   template< class FunctionSpaceType, int polOrd, int baseNum >
-  class DGBaseFunction< FunctionSpaceType, 1, GeometryType::cube, polOrd, baseNum >
+  class DGBaseFunction< FunctionSpaceType, 1, DGBaseId::simplexId, polOrd, baseNum >
   : public BaseFunctionInterface< FunctionSpaceType >,
     private DGBaseFunctionWrapper< FunctionSpaceType, baseNum >
   {
@@ -238,11 +242,11 @@ namespace Dune
         numBaseFunctions(static_cast<int>(polOrd));
     }
 
-  }; // end class DGBaseFunction<FunctionSpaceType, triangle, polOrd>
+  }; // end class DGBaseFunction<FunctionSpaceType, line, polOrd>
 
   //! Specialisation for triangles
   template< class FunctionSpaceType, int polOrd, int baseNum >
-  class DGBaseFunction< FunctionSpaceType, 2, GeometryType::simplex, polOrd, baseNum >
+  class DGBaseFunction< FunctionSpaceType, 2, DGBaseId::simplexId, polOrd, baseNum >
   : public BaseFunctionInterface< FunctionSpaceType >,
     private DGBaseFunctionWrapper< FunctionSpaceType, baseNum >
   {
@@ -291,7 +295,7 @@ namespace Dune
 
   //! Specialisation for quadrilaterals
   template< class FunctionSpaceType, int polOrd, int baseNum >
-  class DGBaseFunction<FunctionSpaceType, 2, GeometryType::cube, polOrd, baseNum >
+  class DGBaseFunction<FunctionSpaceType, 2, DGBaseId::cubeId, polOrd, baseNum >
   : public BaseFunctionInterface< FunctionSpaceType >,
     private DGBaseFunctionWrapper< FunctionSpaceType, baseNum >
   {
@@ -338,7 +342,7 @@ namespace Dune
 
   //! Specialisation for tetrahedrons
   template< class FunctionSpaceType, int polOrd, int baseNum >
-  class DGBaseFunction< FunctionSpaceType, 3, GeometryType::simplex, polOrd, baseNum >
+  class DGBaseFunction< FunctionSpaceType, 3, DGBaseId::simplexId, polOrd, baseNum >
   : public BaseFunctionInterface< FunctionSpaceType >,
     private DGBaseFunctionWrapper< FunctionSpaceType, baseNum >
   {
@@ -384,7 +388,7 @@ namespace Dune
 
   //! Specialisation for pyramids
   template< class FunctionSpaceType, int polOrd, int baseNum >
-  class DGBaseFunction< FunctionSpaceType, 3, GeometryType::pyramid, polOrd, baseNum >
+  class DGBaseFunction< FunctionSpaceType, 3, DGBaseId::pyramidId, polOrd, baseNum >
   : public BaseFunctionInterface< FunctionSpaceType >,
     private DGBaseFunctionWrapper< FunctionSpaceType,baseNum >
   {
@@ -430,7 +434,7 @@ namespace Dune
 
   //! Specialisation for prisms
   template< class FunctionSpaceType, int polOrd, int baseNum >
-  class DGBaseFunction<FunctionSpaceType, 3, GeometryType::prism, polOrd, baseNum >
+  class DGBaseFunction<FunctionSpaceType, 3, DGBaseId::prismId, polOrd, baseNum >
   : public BaseFunctionInterface< FunctionSpaceType >,
     private DGBaseFunctionWrapper< FunctionSpaceType, baseNum >
   {
@@ -475,7 +479,7 @@ namespace Dune
 
   //! Specialisation for hexahedrons
   template< class FunctionSpaceType, int polOrd, int baseNum >
-  class DGBaseFunction<FunctionSpaceType, 3, GeometryType::cube, polOrd, baseNum >
+  class DGBaseFunction<FunctionSpaceType, 3, DGBaseId::cubeId, polOrd, baseNum >
   : public BaseFunctionInterface< FunctionSpaceType >,
     private DGBaseFunctionWrapper< FunctionSpaceType, baseNum >
   {
@@ -547,36 +551,36 @@ namespace Dune
       assert( (int) geo.dim() == dimDomain );
 
       if( dimDomain == 1 )
-        return BaseFunctionCreator< 1, GeometryType::cube, maxBaseFunctions, 0 >::create( i );
+        return BaseFunctionCreator< 1, DGBaseId::simplexId, maxBaseFunctions, 0 >::create( i );
       else if( dimDomain == 2 )
       {
         if( geo.isSimplex() ) 
         {
-          return BaseFunctionCreator< 2, GeometryType::simplex, maxBaseFunctions, 0 >::create( i );
+          return BaseFunctionCreator< 2, DGBaseId::simplexId, maxBaseFunctions, 0 >::create( i );
         } 
         else 
         {
           assert( geo.isCube() );
-          return BaseFunctionCreator< 2, GeometryType::cube, maxBaseFunctions, 0 >::create( i );
+          return BaseFunctionCreator< 2, DGBaseId::cubeId, maxBaseFunctions, 0 >::create( i );
         }
       }
       else if( dimDomain == 3 )
       {
         if( geo.isSimplex() )
         {
-          return BaseFunctionCreator< 3, GeometryType::simplex, maxBaseFunctions, 0 >::create( i );
+          return BaseFunctionCreator< 3, DGBaseId::simplexId, maxBaseFunctions, 0 >::create( i );
         }
         else if( geo.isCube() )
         {
-          return BaseFunctionCreator< 3, GeometryType::cube, maxBaseFunctions, 0 >::create( i );
+          return BaseFunctionCreator< 3, DGBaseId::cubeId, maxBaseFunctions, 0 >::create( i );
         }
         else if( geo.isPrism() ) 
         {
-          return BaseFunctionCreator< 3, GeometryType::prism, maxBaseFunctions, 0 >::create( i );
+          return BaseFunctionCreator< 3, DGBaseId::prismId, maxBaseFunctions, 0 >::create( i );
         }
         else if( geo.isPyramid() )
         {
-          return BaseFunctionCreator< 3, GeometryType::pyramid, maxBaseFunctions, 0 >::create( i );
+          return BaseFunctionCreator< 3, DGBaseId::pyramidId, maxBaseFunctions, 0 >::create( i );
         }
         else 
           DUNE_THROW( InvalidStateException, "Invalid geometry type." );
@@ -594,7 +598,7 @@ namespace Dune
     }
 
   protected:
-    template< int dimD, GeometryType::BasicType basicGeo, int maxBaseNum, int baseNum >
+    template< int dimD, int basicGeo, int maxBaseNum, int baseNum >
     struct BaseFunctionCreator
     {
       // create base function if i equals baseNum 
@@ -607,7 +611,7 @@ namespace Dune
       }
     };
     
-    template< int dimD, GeometryType::BasicType basicGeo, int maxBaseNum >
+    template< int dimD, int basicGeo, int maxBaseNum >
     struct BaseFunctionCreator< dimD, basicGeo, maxBaseNum, maxBaseNum >
     {
       static const int baseNum = maxBaseNum;
