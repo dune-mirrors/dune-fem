@@ -520,8 +520,6 @@ public:
       odeSolver().step( time, dt, u, newton_iterations, ils_iterations, 
                         max_newton_iterations, max_ils_iterations );
 
-    std::cout << "CFL: " << cfl_ << std::endl;
-
     double factor( 1 );
     bool changed = parameter().cflFactor( odeSolver(), *(linsolver_), convergence, factor );
     if( (factor >= std::numeric_limits< double >::min()) && (factor <= std::numeric_limits< double >::max()) )
