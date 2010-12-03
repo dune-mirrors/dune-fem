@@ -203,17 +203,7 @@ namespace Dune {
     //! (needed for the non-conservative contributions)
     //! \param s The source contribution (return value).
     template <class ArgumentTuple, class JacobianTuple>
-#ifndef DGPASS_WITHOUT_SOURCE_TIMESTEP
-#ifndef NDEBUG
-#warning "If your code DG code doesn't compile anymore, put #define DGPASS_WITHOUT_SOURCE_TIMESTEP to the top header file" 
-#endif
     double 
-#else 
-#ifndef NDEBUG
-#warning "Implement: method source of DiscreteModel should return time step estimate for source term!" 
-#endif
-    void 
-#endif
     source( const EntityType& en, 
             const double time, 
             const LocalCoordinate& x,
@@ -223,10 +213,7 @@ namespace Dune {
     { 
       CHECK_INTERFACE_IMPLEMENTATION(
           asImp().source(en, time, x, u, jac, s) ); 
-#ifndef DGPASS_WITHOUT_SOURCE_TIMESTEP
-      return 
-#endif
-        asImp().source(en, time, x, u, jac, s); 
+      return asImp().source(en, time, x, u, jac, s); 
     }
 
     //! \brief Implements the mass factor term of the problem.
@@ -440,11 +427,7 @@ namespace Dune {
     //! Empty implementation that fails if problem claims to have a source 
     //! term.
     template <class ArgumentTuple, class JacobianTuple>
-#ifndef DGPASS_WITHOUT_SOURCE_TIMESTEP
     double
-#else 
-    void 
-#endif
     source( const EntityType& en, 
             const double time,
             const LocalCoordinate& x,
@@ -454,9 +437,7 @@ namespace Dune {
     { 
       assert(!this->asImp().hasSource()); 
       s = 0.0;
-#ifndef DGPASS_WITHOUT_SOURCE_TIMESTEP
       return 0.0;
-#endif
     }
 
     //! empty implementation for mass factor 
