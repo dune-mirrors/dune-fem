@@ -54,7 +54,7 @@ struct ODEParameters
     double tol = Parameter::getValue< double >( "fem.ode.solver.tolerance" , 1e-8 );
     static const std::string errorTypeTable[]
       = { "absolute", "relative" };
-    int errorType = Parameter::getEnum( "fem.ode.solver.errormeassure", errorTypeTable, 0 );
+    int errorType = Parameter::getEnum( "fem.ode.solver.errormeasure", errorTypeTable, 0 );
     solver->set_tolerance(tol,(errorType==1));
     int maxIter = Parameter::getValue< int >( "fem.ode.solver.iterations" , 1000 );
     solver->set_max_number_of_iterations(maxIter);
