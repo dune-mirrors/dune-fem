@@ -106,6 +106,18 @@ struct ODEParameters
     }
     return changed;
   }
+
+  virtual void initTimeStepEstimate ( const double dtEstExpl, const double dtEstImpl, double &dtEst, double &cfl ) const
+  {
+    // initial time step already set to explicit time step
+    dtEst = dtEstExpl;
+
+    // heuristics for initial CFL number
+    cfl = 1.0;
+    if( (dtEstImpl > 0) && (dtEstExpl > dtEstImpl) )
+      cfl = dtEstExpl / dtEstImpl;
+  }
+
   const int min_it,max_it;
   const double sigma;
 };
@@ -183,7 +195,17 @@ protected:
     odeSolver_( 0 )
   {
   }
- 
+
+  void initializeOdeSolver ()
+  {
+    if( !initialized_ )
+    {
+      if( !odeSolver_ )
+        odeSolver_ = createOdeSolver();
+      initialized_ = true;
+    }
+  }
+
 public:  
   // initialize time step size 
   void initialize ( const DestinationType& U0 ) 
@@ -192,16 +214,13 @@ public:
     if ( ! initialized_ )     
     {
       // create instance of ode solver 
-      if( ! odeSolver_ ) odeSolver_ = createOdeSolver();
+      initializeOdeSolver();
 
       // apply operator once 
       spaceOperator().initializeTimeStepSize( U0 );
 
       // set initial time step 
       timeProvider_.provideTimeStepEstimate( spaceOperator().timeStepEstimate() );
-
-      // now it's initialized 
-      initialized_ = true;
     }
   }
 
@@ -501,23 +520,28 @@ public:
       odeSolver().step( time, dt, u, newton_iterations, ils_iterations, 
                         max_newton_iterations, max_ils_iterations );
 
-    double factor;
-    bool changed = parameter().cflFactor(odeSolver(),
-                                         *(linsolver_),
-                                         convergence, factor);
-    cfl_ *= factor;
+    std::cout << "CFL: " << cfl_ << std::endl;
+
+    double factor( 1 );
+    bool changed = parameter().cflFactor( odeSolver(), *(linsolver_), convergence, factor );
+    if( (factor >= std::numeric_limits< double >::min()) && (factor <= std::numeric_limits< double >::max()) )
+      cfl_ *= factor;
+    else
+      DUNE_THROW( InvalidStateException, "invalid cfl factor: " << factor );
 
     if (convergence)
     {
       // timeProvider_.provideTimeStepEstimate( cfl_ * spaceOperator().timeStepEstimate() );
       timeProvider_.provideTimeStepEstimate( timeStepEstimate(cfl_) );
 
-      if( changed && verbose_ >= 1 )
+      if( changed && (verbose_ >= 1) && (MPIManager::rank() == 0) )
+      {
         derr << " New cfl number is: "<< cfl_ << ", iterations per time step("
              << "ILS: " << ils_iterations
              << ", Newton: " << newton_iterations 
              << ")"
              << std::endl;
+      }
     } 
     else 
     {
@@ -525,10 +549,8 @@ public:
       timeProvider_.invalidateTimeStep();
      
       // output only in verbose mode 
-      if( verbose_ >= 1 )
-      {
-        derr << "No convergence: New cfl number is "<< cfl_ << std :: endl;
-      }
+      if( (verbose_ >= 1) && (MPIManager::rank() == 0) )
+        derr << "No convergence: New cfl number is " << cfl_ << std::endl;
     }
 
     linsolver_->reset_number_of_iterations();
@@ -597,17 +619,18 @@ public:
   void initialize ( const DestinationType& U0 ) 
   {
     // initialized dt on first call
-    if ( ! initialized_ )     
+    if( !initialized_ )     
     {
-      BaseType::initialize(U0);
+      BaseType::initializeOdeSolver();
 
-      // also apply implizit operator once (explicit has already been applied)
+      // apply operators once
+      expl_.op().initializeTimeStepSize( U0 );
       impl_.op().initializeTimeStepSize( U0 );
-      if ( impl_.op().timeStepEstimate() > 0 &&
-           expl_.op().timeStepEstimate() > impl_.op().timeStepEstimate() )
-        cfl_ = expl_.op().timeStepEstimate() / impl_.op().timeStepEstimate();
-      // initial time step already set to explicit time step
-      // timeProvider_.provideTimeStepEstimate( impl_.op().timeStepEstimate() );
+
+      // set initial time step 
+      double dtEst = std::numeric_limits< double >::max();
+      parameter().initTimeStepEstimate( expl_.op().timeStepEstimate(), impl_.op().timeStepEstimate(), dtEst, cfl_ );
+      timeProvider_.provideTimeStepEstimate( dtEst );
     }
   }
 
