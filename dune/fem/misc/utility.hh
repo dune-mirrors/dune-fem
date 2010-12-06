@@ -38,29 +38,23 @@ namespace Dune
    * the storage types of the tuple defined by the tuple ATuple.
    */
 
-#if 0
-  template< template< class > class TypeEvaluator, 
-            class T1, class T2, class T3, 
-            class T4, class T5, class T6, 
-            class T7, class T8, class T9 > 
-  struct ForEachType 
+  template< template< class > class TypeEvaluator, class TupleType >
+  struct ForEachTupleType 
   /** \cond */
-  : ForEachType< TypeEvaluator, 
-      typename Tuple< T1, T2, T3, T4, T5, T6, T7, T8, T9 > > :: FirstPair >
+  : ForEachTupleType< TypeEvaluator, typename TupleType :: FirstPair >
   /** \endcond */
   {};
-#endif
 
   // Specialisation for standard tuple element
   template <template <class> class TypeEvaluator, class Head, class Tail>
-  struct ForEachType<TypeEvaluator, Pair<Head, Tail> > {
+  struct ForEachTupleType<TypeEvaluator, Pair<Head, Tail> > {
     //! Defines type corresponding to the subtuple defined by Pair<Head, Tail>
     typedef Pair<typename TypeEvaluator<Head>::Type, 
-                 typename ForEachType<TypeEvaluator, Tail>::Type> Type;
+                 typename ForEachTupleType<TypeEvaluator, Tail>::Type> Type;
   };
   // Specialisation for last element
   template <template <class> class TypeEvaluator>
-  struct ForEachType<TypeEvaluator, Nil> {
+  struct ForEachTupleType<TypeEvaluator, Nil> {
     typedef Nil Type;
   };
 

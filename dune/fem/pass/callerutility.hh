@@ -121,8 +121,8 @@ namespace Dune
   struct LocalFunctionCreator2 {
     template <class Head, class Tail>
     struct Traits {
-      typedef typename ForEachType<DFTypeEvaluator, Tail>::Type TailType;
-      typedef typename ForEachType<
+      typedef typename ForEachTupleType<DFTypeEvaluator, Tail>::Type TailType;
+      typedef typename ForEachTupleType<
         DFTypeEvaluator, Pair<Head, Tail> >::Type ResultType;
       typedef typename TypeTraits<
         Head>::PointeeType::LocalFunctionType LocalFunctionType;
@@ -182,10 +182,10 @@ namespace Dune
   private: 
     template <class T>
     friend class LocalFunctionCreator;
-    typedef typename ForEachType<DFTypeEvaluator, Tail>::Type TailType;
+    typedef typename ForEachTupleType<DFTypeEvaluator, Tail>::Type TailType;
   
   public:
-    typedef typename ForEachType<
+    typedef typename ForEachTupleType<
       DFTypeEvaluator, Pair<Head, Tail> >::Type ResultType;
     typedef typename TypeTraits<Head>::PointeeType DiscreteFunctionType;
     typedef ConstLocalFunction< DiscreteFunctionType > LocalFunctionType;
@@ -263,10 +263,10 @@ namespace Dune
   private:
     template <template <class> class TE, class T>
     friend class Creator;
-    typedef typename ForEachType<TypeEvaluator, Tail>::Type TailType;
+    typedef typename ForEachTupleType<TypeEvaluator, Tail>::Type TailType;
   
   public:
-    typedef typename ForEachType<
+    typedef typename ForEachTupleType<
       TypeEvaluator, Pair<Head, Tail> >::Type ResultType;
     typedef typename TypeEvaluator<Head>::Type ValueType;
 
