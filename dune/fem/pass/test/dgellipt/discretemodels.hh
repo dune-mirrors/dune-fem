@@ -123,8 +123,6 @@ namespace LDGExample
 #else 
       typedef SparseRowMatrixTraits<DiscreteFunctionSpaceType,
                                     DiscreteFunctionSpaceType> MatrixObjectTraits; 
-      //typedef BlockMatrixTraits<DiscreteFunctionSpaceType,
-      //                          DiscreteFunctionSpaceType> MatrixObjectTraits; 
 #endif
       //! The pass id for DGPrimalOperator-pass should be something different than, 
       //! template-given passId, which is given for this template class.
