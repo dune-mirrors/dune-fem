@@ -429,7 +429,7 @@ namespace Dune
     template <class OutputTuple>
     void forEach(OutputTuple& data) 
     {
-      ForEachValue<OutputTuple> forEach(data); 
+      ForEachTupleValue<OutputTuple> forEach(data); 
       forEach.apply( *this );
     }
 
@@ -478,7 +478,7 @@ namespace Dune
     template <class OutputTuple>
     void forEach(OutputTuple& data) 
     {
-      ForEachValue<OutputTuple> forEach(data); 
+      ForEachTupleValue<OutputTuple> forEach(data); 
       forEach.apply( *this );
     }
 
@@ -543,7 +543,7 @@ namespace Dune
     template <class OutputTuple>
     void forEach(OutputTuple& data) 
     {
-      ForEachValue<OutputTuple> forEach(data); 
+      ForEachTupleValue<OutputTuple> forEach(data); 
       forEach.apply( *this );
     }
   };
