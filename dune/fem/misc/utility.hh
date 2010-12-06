@@ -1,12 +1,9 @@
 #ifndef DUNE_FEM_UTILITY_HH
 #define DUNE_FEM_UTILITY_HH
 
-#if defined DUNE_UTILITY_HH
-#error "Including <dune/fem/misc/utility.hh> prohibits including <dune/common/utility.hh>"
-#endif
-#define DUNE_UTILITY_HH
+#include <dune/common/tupleutility.hh>
 
-#include "femtuples.hh"
+#include <dune/fem/misc/femtuples.hh>
 
 namespace Dune
 {
@@ -21,107 +18,6 @@ namespace Dune
    * @brief Contain utility classes which can be used with tuples.
    */
 
-  
-
-  /**
-   * @brief A helper template that initializes a tuple consisting of pointers
-   * to NULL.
-   *
-   * A tuple of NULL pointers may be useful when you use a tuple of pointers
-   * in a class which you can only initialise in a later stage.
-   */
-  template <class PairT>
-  class NullPointerInitialiser {};
-  
-  /**
-   * @brief Specialisation for standard tuple element.
-   */
-  template <class Head, class Tail>
-  class NullPointerInitialiser<Pair<Head*, Tail> > {
-  public:
-    //! The subpart of the tuple which is handed back to the next instance
-    //! of the NullPointerInitialiser.
-    typedef Pair<Head*, Tail> ResultType;
-  public:
-    //! Static method to build up tuple.
-    static inline ResultType apply() {
-      return ResultType(0, NullPointerInitialiser<Tail>::apply());
-    }
-  };
-  
-  /**
-   * @brief Specialisation for last (Nil) element.
-   */
-  template <>
-  class NullPointerInitialiser<Nil> {
-  public:
-    //! The return type of the close is Nil.
-    typedef Nil ResultType;
-  public:
-    //! Provide closure of tuple
-    static inline ResultType apply() {
-      return Nil();
-    }
-  };
-  
-  /**
-   * @brief Deletes all objects pointed to in a tuple of pointers.
-   *
-   * \warning Pointers cannot be set to NULL, so calling the Deletor twice
-   * or accessing elements of a deleted tuple leads to unforeseeable results!
-   */
-  template <class PairT>
-  struct PointerPairDeletor {};
-  
-  /**
-   * @brief Specialisation for a standard tuple element.
-   */
-  template <class Head, class Tail>
-  struct PointerPairDeletor<Pair<Head*, Tail> > {
-    //! Deletes object pointed to by first element and triggers deletion on 
-    //! subsequent pairs.
-    static void apply(Pair<Head*, Tail>& p) {
-      delete p.first();
-      PointerPairDeletor<Tail>::apply(p.second());
-    }
-  };
-
-  /**
-   * @brief Specialisation for last (non-Nil) tuple element.
-   */
-  template <class Head>
-  struct PointerPairDeletor<Pair<Head*, Nil> > {
-    //! Deletes object pointed to by first element.
-    static void apply(Pair<Head*, Nil>& p) {
-      delete p.first();
-    }
-  };
-  
-  /**
-   * @brief Helper template to calculate length of a tuple.
-   */
-  template <class PairT>
-  struct Length {};
-
-  /**
-   * @brief Specialisation for a standard tuple element.
-   *
-   * The length of the tuple is stored by the enumeration value.
-   */
-  template <class Head, class Tail>
-  struct Length<Pair<Head, Tail> > {
-    //! The length of the (sub)tuple.
-    enum { value = 1 + Length<Tail>::value };
-  };
-
-  /**
-   * @brief Specialisation for the closure.
-   */
-  template <>
-  struct Length<Nil> {
-    //! The length of an empty tuple is zero by definition.
-    enum { value = 0 };
-  };
 
   /**
    * @brief Helper template to clone the type definition of a tuple with the
@@ -141,12 +37,19 @@ namespace Dune
    * Here, MyEvaluator is a helper struct that extracts the correct type from
    * the storage types of the tuple defined by the tuple ATuple.
    */
-  template< template< class > class TypeEvaluator, class TupleType >
-  struct ForEachType
+
+#if 0
+  template< template< class > class TypeEvaluator, 
+            class T1, class T2, class T3, 
+            class T4, class T5, class T6, 
+            class T7, class T8, class T9 > 
+  struct ForEachType 
   /** \cond */
-  : ForEachType< TypeEvaluator, typename TupleType :: FirstPair >
+  : ForEachType< TypeEvaluator, 
+      typename Tuple< T1, T2, T3, T4, T5, T6, T7, T8, T9 > > :: FirstPair >
   /** \endcond */
   {};
+#endif
 
   // Specialisation for standard tuple element
   template <template <class> class TypeEvaluator, class Head, class Tail>
@@ -201,12 +104,14 @@ namespace Dune
    std::cout << "Number of elements is: " << c.result_ << std::endl;
    \endcode
    */
+
   template <class TupleType>
-  class ForEachValue {
+  class ForEachTupleValue
+  {
   public:
     //! \brief Constructor
     //! \param tuple The tuple which we want to process.
-    ForEachValue(TupleType& tuple) : tuple_(tuple) {}
+    ForEachTupleValue(TupleType& tuple) : tuple_(tuple) {}
     
     //! \brief Applies a function object to each storage element of the tuple.
     //! \param f Function object.
@@ -249,12 +154,13 @@ namespace Dune
    * using ForEachType.
    */
   template <class TupleType1, class TupleType2>
-  class ForEachValuePair {
+  class ForEachTupleValuePair
+  {
   public:
     //! Constructor
     //! \param t1 First tuple.
     //! \param t2 Second tuple.
-    ForEachValuePair(TupleType1& t1, TupleType2& t2) :
+    ForEachTupleValuePair(TupleType1& t1, TupleType2& t2) :
       tuple1_(t1),
       tuple2_(t2)
     {}
@@ -284,47 +190,6 @@ namespace Dune
     TupleType1& tuple1_;
     TupleType2& tuple2_;
   };
-
-  //- Reverse element access
-  /**
-   * @brief Type for reverse element access.
-   *
-   * Counterpart to ElementType for reverse element access.
-   */
-  template <int N, class Tuple>
-  struct AtType {
-    typename ElementType<Length<Tuple>::value - N - 1, 
-                         Tuple>::Type Type;
-  };
-  
-  /**
-   * @brief Reverse element access.
-   *
-   * While Element<...> gives you the arguments beginning at the front of a
-   * tuple, At<...> starts at the end, which may be more convenient, depending
-   * on how you built your tuple.
-   */
-  template <int N>
-  struct At 
-  {
-    template <class T1, class T2>
-    static typename ElementType<Length<Pair<T1, T2> >::value - N - 1, 
-                                Pair<T1, T2> >::Type& 
-    get(Pair<T1, T2>& tuple) {
-      return Element<Length<Pair<T1, T2> >::value - N - 1>::get(tuple);
-    }
-
-    template <class T1, class T2>
-    static const typename ElementType<Length<Pair<T1, T2> >::value - N - 1, 
-                                      Pair<T1, T2> >::Type& 
-    get(const Pair<T1, T2>& tuple) {
-      return Element<Length<Pair<T1, T2> >::value - N - 1>::get(tuple);
-    }
-
-  };
-
-
-
 
   template <class T1,class T2>
   struct CombinePairs {
