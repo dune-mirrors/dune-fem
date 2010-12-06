@@ -219,7 +219,7 @@ namespace Dune {
 
     bool contains (int dim, int codim) const
     {
-      ForEachValue<DataHandlerTupleType> forEach(data_);
+      ForEachTupleValue<DataHandlerTupleType> forEach(data_);
       Contains dataContains(dim,codim);
       forEach.apply(dataContains);
       return dataContains.contains();
@@ -227,7 +227,7 @@ namespace Dune {
 
     bool fixedsize (int dim, int codim) const
     {
-      ForEachValue<DataHandlerTupleType> forEach(data_);
+      ForEachTupleValue<DataHandlerTupleType> forEach(data_);
       FixedSize dataFixedSize(dim,codim);
       forEach.apply(dataFixedSize);
       return dataFixedSize.fixedSize();
@@ -238,7 +238,7 @@ namespace Dune {
     template<class MessageBufferImp, class EntityType>
     void gather (MessageBufferImp& buff, const EntityType& en) const
     {
-      ForEachValue<DataHandlerTupleType> forEach(data_);
+      ForEachTupleValue<DataHandlerTupleType> forEach(data_);
       DataGather<MessageBufferImp,EntityType> gatherData(buff,en);
       forEach.apply(gatherData);
     }
@@ -248,7 +248,7 @@ namespace Dune {
     template<class MessageBufferImp, class EntityType>
     void scatter (MessageBufferImp& buff, const EntityType& en, size_t n)
     {
-      ForEachValue<DataHandlerTupleType> forEach(data_);
+      ForEachTupleValue<DataHandlerTupleType> forEach(data_);
       DataScatter<MessageBufferImp,EntityType> scatterData(buff,en,n);
       forEach.apply(scatterData);
     }
@@ -258,7 +258,7 @@ namespace Dune {
     template<class EntityType>
     size_t size (const EntityType& en) const
     {
-      ForEachValue<DataHandlerTupleType> forEach(data_);
+      ForEachTupleValue<DataHandlerTupleType> forEach(data_);
       DataSize<EntityType> dataSize(en);
       forEach.apply(dataSize);
       return dataSize.size();
