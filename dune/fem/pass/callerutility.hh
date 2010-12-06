@@ -116,7 +116,7 @@ namespace Dune
   };
 
 
-  // * Idea: can I do the same with ForEachValue?
+  // * Idea: can I do the same with ForEachTupleValue?
   // * Give tuple in constructor and get the rest with apply()
   struct LocalFunctionCreator2 {
     template <class Head, class Tail>

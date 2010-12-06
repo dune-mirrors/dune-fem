@@ -91,7 +91,7 @@ namespace Dune {
     void setQuad( const Entity& en, 
                   const QuadratureType& quad ) 
     {
-      ForEachValue<DiscreteFunctionTupleType> forEach(data_->discreteFunctions());
+      ForEachTupleValue<DiscreteFunctionTupleType> forEach(data_->discreteFunctions());
       DiscreteFunctionSetQuad<Entity,QuadratureType> eval(en,quad);
       forEach.apply(eval);
     }
@@ -99,7 +99,7 @@ namespace Dune {
     template <class QuadratureType>
     void setQuadSelf( const QuadratureType& quad ) 
     {
-      ForEachValue<LocalFunctionTupleType> forEach(data_->localFunctionsSelf());
+      ForEachTupleValue<LocalFunctionTupleType> forEach(data_->localFunctionsSelf());
       LocalDiscreteFunctionSetQuad<QuadratureType> eval(quad);
       forEach.apply(eval);
     }
@@ -107,7 +107,7 @@ namespace Dune {
     template <class QuadratureType>
     void setQuadNeigh( const QuadratureType& quad ) 
     {
-      ForEachValue<LocalFunctionTupleType> forEach(data_->localFunctionsNeigh());
+      ForEachTupleValue<LocalFunctionTupleType> forEach(data_->localFunctionsNeigh());
       LocalDiscreteFunctionSetQuad<QuadratureType> eval(quad);
       forEach.apply(eval);
     }
@@ -116,7 +116,7 @@ namespace Dune {
     void setter ( const Entity &entity, 
                   LocalFunctionTupleType &localFunctionTuple )
     {
-      ForEachValue< LocalFunctionTupleType > forEach( localFunctionTuple );
+      ForEachTupleValue< LocalFunctionTupleType > forEach( localFunctionTuple );
       LocalFunctionSetter< Entity > setter( entity );
       forEach.apply( setter );
     }
@@ -175,7 +175,7 @@ namespace Dune {
                         LocalFunctionTupleType &lfs, 
                         RangeTupleType &ranges )
     {
-      ForEachValuePair< LocalFunctionTupleType, RangeTupleType > forEach( lfs, ranges );
+      ForEachTupleValuePair< LocalFunctionTupleType, RangeTupleType > forEach( lfs, ranges );
       LocalFunctionEvaluateQuad< QuadratureType > eval( quadrature, quadPoint );
       forEach.apply(eval);
     }
@@ -186,7 +186,7 @@ namespace Dune {
                                 LocalFunctionTupleType &lfs,
                                 JacobianRangeTupleType& jacobianRanges )
     {
-      ForEachValuePair< LocalFunctionTupleType, JacobianRangeTupleType >
+      ForEachTupleValuePair< LocalFunctionTupleType, JacobianRangeTupleType >
         forEach( lfs,  jacobianRanges );
 
       LocalFunctionEvaluateJacobianQuad< QuadratureType >
@@ -250,7 +250,7 @@ namespace Dune {
       void setter( const Entity &entity, 
                    LocalFunctionTupleType &localFunctionTuple )
       {
-        ForEachValue< LocalFunctionTupleType > forEach( localFunctionTuple );
+        ForEachTupleValue< LocalFunctionTupleType > forEach( localFunctionTuple );
         LocalFunctionSetter< Entity > setter( entity );
         forEach.apply( setter );
       }
