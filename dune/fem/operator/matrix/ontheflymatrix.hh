@@ -5,7 +5,7 @@
 #include <stack>
 
 //- local includes 
-#include "blockmatrix.hh"
+#include <dune/fem/operator/matrix/blockmatrix.hh>
 
 namespace Dune
 {
