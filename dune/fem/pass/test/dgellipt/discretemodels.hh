@@ -9,7 +9,6 @@
 #include <dune/fem/space/combinedspace.hh>
 
 // Dune includes
-#include <dune/common/utility.hh>
 #include <dune/fem/space/combinedspace.hh>
 #include <dune/fem/function/adaptivefunction.hh>
 #include <dune/fem/gridpart/gridpart.hh>
