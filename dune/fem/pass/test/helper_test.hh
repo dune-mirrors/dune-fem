@@ -7,7 +7,7 @@
 #include "../callerutility.hh"
 
 #include <dune/fem/function/adaptivefunction.hh>
-#include <dune/common/utility.hh>
+#include <dune/fem/misc/femtuples.hh>
 
 #include "lagrange_fixture.hh"
 

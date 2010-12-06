@@ -77,9 +77,9 @@ namespace Dune
 
     RTupleType rt = Creator<RangeTypeEvaluator, LFPairType>::apply(lft);
 
-    ForEachValuePair<LFTupleType, RTupleType>  forEachLFandR(lft, rt);
+    ForEachTupleValuePair<LFTupleType, RTupleType>  forEachLFandR(lft, rt);
 
-    ForEachValue<LFTupleType> forEach(lft);
+    ForEachTupleValue<LFTupleType> forEach(lft);
     LocalFunctionSetter<Entity> setter(*it);      
     forEach.apply(setter);
 
