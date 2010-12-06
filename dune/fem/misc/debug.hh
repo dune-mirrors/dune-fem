@@ -6,6 +6,10 @@
 namespace Dune
 {
 
+#if not defined NDEBUG && not defined _OPENMP
+#define USE_DEBUG_CNT
+#endif
+
   /** \class DebugCounter
    *  \brief A counter only present if NDEBUG is not defined
    *
@@ -29,7 +33,7 @@ namespace Dune
     typedef DebugCounter< CounterType > ThisType;
 
   protected:
-#ifndef NDEBUG
+#ifdef USE_DEBUG_CNT
     CounterType count_;
 #endif
     
@@ -42,7 +46,7 @@ namespace Dune
      *  \param[in]  count  value to initialize the counter with (defaults to 0)
      */
     inline DebugCounter ( const CounterType count = 0 )
-#ifndef NDEBUG
+#ifdef USE_DEBUG_CNT
     : count_( count )
 #endif
     {
@@ -51,7 +55,7 @@ namespace Dune
     /** \brief copy constructor
      */
     inline DebugCounter ( const ThisType &other )
-#ifndef NDEBUG
+#ifdef USE_DEBUG_CNT
     : count_( other.count_ )
 #endif
     {
@@ -59,13 +63,13 @@ namespace Dune
 
     /** \brief increment operator
      *
-     *  If NDEBUG is not defined, the counter is incremented by 1. Otherwise
+     *  If USE_DEBUG_CNT is not defined, the counter is incremented by 1. Otherwise
      *  nothing happens (and the entire call will be removed during
      *  oprimization).
      */
     inline ThisType &operator++ ()
     {
-#ifndef NDEBUG
+#ifdef USE_DEBUG_CNT
       ++count_;
 #endif
       return *this;
@@ -73,13 +77,13 @@ namespace Dune
 
     /** \brief decrement operator
      *
-     *  If NDEBUG is not defined, the counter is decremented by 1. Otherwise
+     *  If USE_DEBUG_CNT is not defined, the counter is decremented by 1. Otherwise
      *  nothing happens (and the entire call will be removed during
      *  oprimization).
      */
     inline ThisType &operator-- ()
     {
-#ifndef NDEBUG
+#ifdef USE_DEBUG_CNT
       --count_;
 #endif
       return *this;
@@ -87,7 +91,7 @@ namespace Dune
 
     /** \brief comparison for equality
      *
-     *  Compares to DebugCounters for equality. If NDEBUG is defined, the
+     *  Compares to DebugCounters for equality. If USE_DEBUG_CNT is defined, the
      *  result will be true.
      *
      *  \note Due to the implicit conversion, the second argument may also be
@@ -95,11 +99,11 @@ namespace Dune
      *
      *  \param[in]  other  DebugCounter to compare this one to
      *
-     *  \returns true, if the counters equal or NDEBUG is defined
+     *  \returns true, if the counters equal or USE_DEBUG_CNT is defined
      */
     inline bool operator== ( const ThisType &other )
     {
-#ifndef NDEBUG
+#ifdef USE_DEBUG_CNT
       return count_ == other.count_;
 #else
       return true;
@@ -108,7 +112,7 @@ namespace Dune
 
     /** \brief comparison for inequality
      *
-     *  Compares to DebugCounters for inequality. If NDEBUG is defined, the
+     *  Compares to DebugCounters for inequality. If USE_DEBUG_CNT is defined, the
      *  result will be true.
      *
      *  \note Due to the implicit conversion, the second argument may also be
@@ -116,11 +120,11 @@ namespace Dune
      *
      *  \param[in]  other  DebugCounter to compare this one to
      *
-     *  \returns true, if the counters differ or NDEBUG is defined
+     *  \returns true, if the counters differ or USE_DEBUG_CNT is defined
      */
     inline bool operator!= ( const ThisType &other )
     {
-#ifndef NDEBUG
+#ifdef USE_DEBUG_CNT
       return count_ != other.count_;
 #else
       return true;
@@ -136,13 +140,13 @@ namespace Dune
     typedef DebugLock ThisType;
     
   protected:
-#ifndef NDEBUG
+#ifdef USE_DEBUG_CNT
     bool lock_;
 #endif
 
   public:
     inline DebugLock ()
-#ifndef NDEBUG
+#ifdef USE_DEBUG_CNT
     : lock_( false )
 #endif
     {
@@ -158,7 +162,7 @@ namespace Dune
   public:
     inline bool operator ! () const
     {
-#ifndef NDEBUG
+#ifdef USE_DEBUG_CNT
       return !lock_;
 #else
       return true;
@@ -167,7 +171,7 @@ namespace Dune
     
     inline void lock ()
     {
-#ifndef NDEBUG
+#ifdef USE_DEBUG_CNT
       assert( !lock_ );
       lock_ = true;
 #endif
@@ -175,7 +179,7 @@ namespace Dune
 
     inline void unlock ()
     {
-#ifndef NDEBUG
+#ifdef USE_DEBUG_CNT
       assert( lock_ );
       lock_ = false;
 #endif
