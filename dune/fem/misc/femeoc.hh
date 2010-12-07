@@ -46,7 +46,7 @@ class FemEoc
   // level, h, size, time, counter, errors,
   // [avgTimeStep, minTimeStep, maxTimeStep],
   // [newton_iterations, ils_iterations, max_newton_iterations, max_ils_iterations]
-  typedef Tuple< int, double, double, double, int, std::vector< double >,
+  typedef tuple< int, double, double, double, int, std::vector< double >,
                  array< double, 3 >, array< int, 4 > >
     DataTuple;
 
@@ -426,7 +426,7 @@ public:
 protected:
   double error ( const FemEoc::DataTuple &data ) const
   {
-    return ElementAccess< 5 >::get( data )[ index_ ];
+    return get< 5 >( data )[ index_ ];
   }
 
   std::string toString ( const double &error ) const
@@ -456,7 +456,7 @@ public:
 
   std::string entry ( const DataTuple &data ) const
   {
-    const double h = ElementAccess< 1 >::get( data );
+    const double h = get< 1 >( data );
     const double e = BaseType::error( data );
 
     std::string entry = "---";

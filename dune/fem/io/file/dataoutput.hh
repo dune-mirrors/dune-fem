@@ -125,7 +125,7 @@ namespace Dune
 
   protected:  
   #if USE_VTKWRITER
-    template< class Grid, class OutputTuple >
+    template< class Grid, class OutputTuple, int N = tuple_size< OutputTuple >::value >
     struct GridPartGetter;
 
     template< class VTKIOType >
@@ -256,7 +256,7 @@ namespace Dune
     }
 
   protected:  
-    void grapeDisplay ( Dune::Nil &data ) const {}
+    //void grapeDisplay ( Dune::Nil &data ) const {}
 
     //! display data with grape 
     template< class OutputTupleType >
@@ -296,10 +296,10 @@ namespace Dune
 
 #if USE_VTKWRITER
   template< class GridImp, class DataImp >
-  template< class Grid, class OutputTuple >
+  template< class Grid, class OutputTuple, int N >
   struct DataOutput< GridImp, DataImp >::GridPartGetter
   {
-    typedef typename TypeTraits< typename Dune::ElementType< 0, OutputTuple >::Type >::PointeeType DFType;
+    typedef typename TypeTraits< typename tuple_element< 0, OutputTuple >::type >::PointeeType DFType;
     typedef typename DFType :: DiscreteFunctionSpaceType :: GridPartType GridPartType;
 
     GridPartGetter ( const Grid &, const OutputTuple &data )
@@ -311,7 +311,7 @@ namespace Dune
   protected:
     static const GridPartType &getGridPart( const OutputTuple& data )
     {
-      const DFType *df = Element< 0 >::get( data );
+      const DFType *df = get< 0 >( data );
       assert( df );
       return df->space().gridPart();
     }
@@ -321,12 +321,12 @@ namespace Dune
 
 
   template< class GridImp, class DataImp >
-  template< class Grid >
-  struct DataOutput< GridImp, DataImp >::GridPartGetter< Grid, Dune::Nil >
+  template< class Grid, class OutputTuple >
+  struct DataOutput< GridImp, DataImp >::GridPartGetter< Grid, OutputTuple, 0 >
   {
     typedef HierarchicGridPart< Grid > GridPartType;
 
-    GridPartGetter ( const Grid &grid, const Dune::Nil & )
+    GridPartGetter ( const Grid &grid, const OutputTuple & )
     : gridPart_( const_cast< Grid & >( grid ) )
     {}
 
@@ -424,12 +424,10 @@ namespace Dune
       }
     }
 
-    void forEach(Dune::Nil& ) {} 
-
-    template <class OutputTuple>
-    void forEach(OutputTuple& data) 
+    template< class OutputTuple >
+    void forEach ( OutputTuple &data )
     {
-      ForEachTupleValue<OutputTuple> forEach(data); 
+      ForEachValue< OutputTuple > forEach( data );
       forEach.apply( *this );
     }
 
@@ -473,12 +471,10 @@ namespace Dune
       vec_.push_back( entry );
     }
 
-    void forEach(Dune::Nil& ) {} 
-
-    template <class OutputTuple>
-    void forEach(OutputTuple& data) 
+    template< class OutputTuple >
+    void forEach ( OutputTuple &data )
     {
-      ForEachTupleValue<OutputTuple> forEach(data); 
+      ForEachValue< OutputTuple > forEach( data );
       forEach.apply( *this );
     }
 
@@ -538,12 +534,10 @@ namespace Dune
       }
     }
 
-    void forEach(Dune::Nil& ) {} 
-
-    template <class OutputTuple>
-    void forEach(OutputTuple& data) 
+    template< class OutputTuple >
+    void forEach ( OutputTuple &data )
     {
-      ForEachTupleValue<OutputTuple> forEach(data); 
+      ForEachValue< OutputTuple > forEach( data );
       forEach.apply( *this );
     }
   };

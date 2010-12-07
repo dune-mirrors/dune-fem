@@ -9,8 +9,7 @@
 #include <vector>
 
 #include <dune/common/exceptions.hh>
-
-#include <dune/fem/misc/femtuples.hh>
+#include <dune/common/tuples.hh>
 
 namespace Dune
 {
@@ -61,13 +60,13 @@ namespace Dune
     struct TupleDataSource
     {
       template< class DataTuple >
-      struct Value : public ElementType< N, DataTuple > {};
+      struct Value { typedef typename tuple_element< N, DataTuple >::type Type; };
 
       template< class DataTuple >
       typename Value< DataTuple >::Type get ( const DataTuple &data ) const
       throw ()
       {
-        return ElementAccess< N >::get( data );
+        return Dune::get< N >( data );
       }
     };
 

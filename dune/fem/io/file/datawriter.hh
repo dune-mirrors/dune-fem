@@ -111,45 +111,21 @@ protected:
     writeMyBinaryData( sequenceStamp, writeStep_ , data_ );
   }
 
-  std::string writeMyBinaryData(const double sequenceStamp, 
-                                const int step, 
-                                Dune::Nil& data) const 
+  template< class OutputTuple >
+  std::string writeMyBinaryData ( const double sequenceStamp, const int step,
+                                  OutputTuple &data ) const
   {
+    // create new path for time step output
+    std::string timeStepPath = IOInterface::createPath( grid_.comm(), path_, datapref_, step );
 
-    // create new path for time step output 
-    std::string timeStepPath = IOInterface::createPath ( grid_.comm(),
-        path_, datapref_ , step );
+    // for structured grids copy grid
+    IOInterface::copyMacroGrid( grid_, path_, timeStepPath, datapref_ );
 
-    // for structured grids copy grid 
-    IOInterface::copyMacroGrid(grid_,path_, timeStepPath, datapref_);
+    // create binary io obj
+    BinaryDataIO< GridType > dataio;
 
-    // create binary io obj 
-    BinaryDataIO<GridType> dataio;
-
-    // call writeGrid of IOTupleBase
-    IOTupleBase::writeGrid(dataio, grid_ , sequenceStamp, step, timeStepPath, datapref_ );
-
-    return timeStepPath;
-  }
-
-  template <class OutputTupleType>
-  std::string writeMyBinaryData(const double sequenceStamp, 
-                                const int step, 
-                                OutputTupleType& data) const 
-  {
-    // create new path for time step output 
-    std::string timeStepPath = IOInterface::createPath ( grid_.comm(),
-        path_, datapref_ , step );
-
-    // for structured grids copy grid 
-    IOInterface::copyMacroGrid(grid_,path_, timeStepPath, datapref_);
-
-    // create binary io obj 
-    BinaryDataIO<GridType> dataio;
-
-    // call output of IOTuple 
-    IOTuple<OutputTupleType>::output(dataio, 
-       grid_ , sequenceStamp, step, timeStepPath , datapref_, data );
+    // call output of IOTuple
+    IOTuple< OutputTuple >::output( dataio, grid_, sequenceStamp, step, timeStepPath, datapref_, data );
 
     return timeStepPath;
   }
@@ -213,8 +189,9 @@ struct CheckPointerParameters : public DataWriterParameters
    of pointers to the discrete functions types
    to be stored.
 */    
-template <class GridImp, class DataImp = Dune::Nil > 
-class CheckPointer : public DataWriter<GridImp,DataImp> 
+template< class GridImp, class DataImp = tuple<> > 
+class CheckPointer
+: public DataWriter< GridImp, DataImp >
 {
 protected:
   //! type of base class 
@@ -303,7 +280,6 @@ protected:
     checkPointFile_ += parameter.prefix();
   }
 protected:  
-  friend class CheckPointer< GridType , Dune::Nil > ;
   /** \brief Constructor generating a checkpointer to restore data 
     \param grid corresponding grid 
     \param data Tuple containing discrete functions to write 
@@ -419,9 +395,9 @@ public:
    *  \param checkFile check point file 
   */
   static inline 
-  void restoreData(const GridType& grid, const std::string checkFile)
+  void restoreData ( const GridType &grid, const std::string checkFile )
   {
-    Dune::Nil fakeData;
+    tuple<> fakeData;
     restoreData( grid, fakeData, checkFile );
   }
 
@@ -467,22 +443,18 @@ protected:
     return path;
   }
 
-  void restoreUserData( Dune::Nil& ) 
-  {
-    // restore persistent data 
-    restorePersistentData();
-  }
-
-  template <class InputTupleType>
-  void restoreUserData(InputTupleType & data) 
+  template< class InputTuple >
+  void restoreUserData ( InputTuple &data )
   {
     // restore persistent data 
     std::string path = restorePersistentData();
 
     // restore user data 
-    BinaryDataIO<GridType> dataio;
-    IOTuple<OutPutDataType>::restoreData(data, dataio, 
-      grid_, writeStep_, path , datapref_ );
+    if( tuple_size< InputTuple >::value > 0 )
+    {
+      BinaryDataIO< GridType > dataio;
+      IOTuple< InputTuple >::restoreData( data, dataio, grid_, writeStep_, path , datapref_ );
+    }
   }
 
   void restoreData() 
