@@ -508,6 +508,12 @@ namespace Dune {
       : enVol_(-1.0) , nbVol_(-1.0) , en_(0) , nb_(0) 
     {}
 
+    //! \brief copy constructor 
+    DGDiscreteModelDefaultWithInsideOutside( const DGDiscreteModelDefaultWithInsideOutside& other)
+      : enVol_(other.enVol_) , nbVol_(other.nbVol_), 
+        en_(other.en_) , nb_(other.nb_) 
+    {}
+
     //! set entity and get volume  
     //! \brief method setting pointer of inside entity and getting volume 
     //! \param[in] en reference to inside entity 
