@@ -43,10 +43,13 @@ namespace Fem {
 
     mutable int counter_ ;
     int maxCount_ ;
+    bool autoBreak_ ;
 
     CodegenInfo() 
       : nopMax_(0), nopMin_(0), baseMax_(0), baseMin_(0), 
-        dimRanges_(), savedBaseSets_(), filenames_(), counter_( 0 ), maxCount_ ( 1 ) 
+        dimRanges_(), savedBaseSets_(), filenames_(), 
+        counter_( 0 ), maxCount_ ( 1 ), 
+        autoBreak_( true )
     {}
 
   public: 
@@ -55,6 +58,9 @@ namespace Fem {
       static CodegenInfo info;
       return info;
     }
+
+    //! disable automatic end of code generation 
+    void disableAutoBreak() { autoBreak_ = false ; }
 
     template <class BaseSet>
     void addDimRange(const BaseSet* baseSet, 
@@ -67,14 +73,14 @@ namespace Fem {
         std::cout << "Add dimRange " << dimRange << std::endl;
         dimRanges_.insert( dimRange ) ;
       }
-      if( dimRanges_.size() > 1 ) maxCount_ = 50 ;
+      if( dimRanges_.size() > 1 ) maxCount_ = 100 ;
     }
 
     void notify( const size_t pos ) 
     {
       assert( pos < filenames_.size() );
       filenames_[ pos ].second = 0 ; 
-      if ( checkAbort() ) 
+      if ( checkAbort() && autoBreak_ ) 
       {
         ++ counter_ ; 
         if( counter_ > maxCount_ ) 
