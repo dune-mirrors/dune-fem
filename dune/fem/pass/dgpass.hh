@@ -117,7 +117,9 @@ namespace Dune {
     LocalDGPass(DiscreteModelType& problem, 
                 PreviousPassType& pass, 
                 const DiscreteFunctionSpaceType& spc,
-    int volumeQuadOrd =-1,int faceQuadOrd=-1) :
+                const int volumeQuadOrd =-1,
+                const int faceQuadOrd=-1,
+                const bool notThreadParallel = true ) :
       BaseType(pass, spc),
       caller_(problem),
       problem_(problem),
@@ -134,13 +136,12 @@ namespace Dune {
       valNbVec_( 20 ),
       dtMin_(std::numeric_limits<double>::max()),
       minLimit_(2.0*std::numeric_limits<double>::min()),
-      //volumeQuadOrd_( 2 * spc_.order() ),
-      //faceQuadOrd_( 2 * spc_.order() + 1),
       volumeQuadOrd_( (volumeQuadOrd < 0) ? 
           ( 2 * spc_.order()) : volumeQuadOrd ),
       faceQuadOrd_( (faceQuadOrd < 0) ? 
         ( 2 * spc_.order()+1) : faceQuadOrd ),
-      localMassMatrix_( spc_ , volumeQuadOrd_ ) 
+      localMassMatrix_( spc_ , volumeQuadOrd_ ),
+      notThreadParallel_( notThreadParallel )
     {
       fMatVec_.setMemoryFactor( 1.1 );
       valEnVec_.setMemoryFactor( 1.1 );
@@ -177,10 +178,13 @@ namespace Dune {
       arg_ = const_cast<ArgumentType*>(&arg);
       dest_ = &dest;
 
-#ifndef _OPENMP
-      // clear destination 
-      dest_->clear();
+#ifdef _OPENMP 
+      if( notThreadParallel_ )
 #endif
+      {
+        // clear destination 
+        dest_->clear();
+      }
 
       // set arguments to caller 
       caller_.setArgument(*arg_);
@@ -201,10 +205,13 @@ namespace Dune {
     //! Some timestep size management.
     virtual void finalize(const ArgumentType& arg, DestinationType& dest) const
     {
-#ifndef _OPENMP
-      // communicate calculated function 
-      spc_.communicate( dest );
+#ifdef _OPENMP 
+      if( notThreadParallel_ )
 #endif
+      {
+        // communicate calculated function 
+        spc_.communicate( dest );
+      }
       
       // call finalize 
       caller_.finalize();
@@ -601,6 +608,7 @@ namespace Dune {
 
     const int volumeQuadOrd_, faceQuadOrd_;
     LocalMassMatrixType localMassMatrix_;
+    const bool notThreadParallel_;
   };
 //! @}  
 } // end namespace Dune
