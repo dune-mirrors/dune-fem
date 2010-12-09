@@ -169,7 +169,7 @@ namespace Dune {
       return dtMin_ / p;
     }
 
-  protected:
+  public:
     //! In the preparations, store pointers to the actual arguments and 
     //! destinations. Filter out the "right" arguments for this pass.
     virtual void prepare(const ArgumentType& arg, DestinationType& dest) const
@@ -177,8 +177,10 @@ namespace Dune {
       arg_ = const_cast<ArgumentType*>(&arg);
       dest_ = &dest;
 
+#ifndef _OPENMP
       // clear destination 
       dest_->clear();
+#endif
 
       // set arguments to caller 
       caller_.setArgument(*arg_);
@@ -199,11 +201,26 @@ namespace Dune {
     //! Some timestep size management.
     virtual void finalize(const ArgumentType& arg, DestinationType& dest) const
     {
+#ifndef _OPENMP
       // communicate calculated function 
       spc_.communicate( dest );
+#endif
       
       // call finalize 
       caller_.finalize();
+    }
+
+    struct DefaultNBChecker
+    {
+      bool operator ()(const EntityType& , const EntityType& ) const 
+      {
+        return true ;
+      }
+    };
+
+    void applyLocal( const EntityType& en) const 
+    {
+      applyLocal( en, DefaultNBChecker() );
     }
 
     void applyLocalMass( const EntityType& en) const 
@@ -215,20 +232,25 @@ namespace Dune {
       localMassMatrix_.applyInverse( caller_, en, function );
     }
 
-    void applyLocal( const EntityType& en) const 
+    //! local integration 
+    template <class NeighborChecker> 
+    void applyLocal( const EntityType& en, const NeighborChecker& nbChecker ) const 
     {
       // init local function 
       initLocalFunction( en , updEn_ );
 
       // call real apply local 
-      applyLocal(en, updEn_);
+      applyLocal(en, updEn_, nbChecker );
       
       // add update to real function 
       updateFunctionAndApplyMass(en, updEn_ );
     }
-
+  protected:  
     //! local integration 
-    void applyLocal( const EntityType& en, TemporaryLocalFunctionType& updEn) const
+    template <class NeighborChecker> 
+    void applyLocal( const EntityType& en, 
+                     TemporaryLocalFunctionType& updEn, 
+                     const NeighborChecker& nbChecker ) const
     {
       // only call geometry once, who know what is done in this function 
       const Geometry & geo = en.geometry();
@@ -284,6 +306,8 @@ namespace Dune {
             EntityPointerType ep = intersection.outside();
             EntityType & nb = *ep;
       
+            const bool canUpdateNeighbor = nbChecker( en, nb );
+
             if ( ! visited_[ indexSet_.index( nb ) ] ) 
             {
               // init local function 
@@ -297,7 +321,8 @@ namespace Dune {
                 nbvol = applyLocalNeighbor< false > 
                                     (intersection,en,nb,
                                      updEn, updNb_ , 
-                                     wspeedS);
+                                     wspeedS,
+                                     canUpdateNeighbor );
               }
               else
               { 
@@ -306,11 +331,9 @@ namespace Dune {
                 nbvol = applyLocalNeighbor< true > 
                                     (intersection,en,nb,
                                      updEn, updNb_ , 
-                                     wspeedS);
+                                     wspeedS,
+                                     canUpdateNeighbor );
               }
-
-              // add update to real function 
-              updateFunction(nb, updNb_ );
 
             } // end if do something 
               
@@ -478,7 +501,8 @@ namespace Dune {
                                 const EntityType &nb, 
                                 LocalFunctionImp &updEn,
                                 LocalFunctionImp &updNb,
-                                double &wspeedS ) const 
+                                double &wspeedS,
+                                const bool canUpdateNeighbor ) const 
     {
       // make sure we got the right conforming statement
       assert( intersection.conforming() == conforming );
@@ -532,7 +556,15 @@ namespace Dune {
         
       // add values to local functions 
       updEn.axpyQuadrature( faceQuadInner, valEnVec_ );
-      updNb.axpyQuadrature( faceQuadOuter, valNbVec_ );
+
+      // update on neighbor 
+      if( canUpdateNeighbor ) 
+      {
+        // add fluxes 
+        updNb.axpyQuadrature( faceQuadOuter, valNbVec_ );
+        // add update to real function 
+        updateFunction(nb, updNb );
+      }
 
       return nbvol;
     }
