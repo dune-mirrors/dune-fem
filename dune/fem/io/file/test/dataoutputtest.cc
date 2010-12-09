@@ -336,7 +336,7 @@ int main (int argc, char **argv)
   typedef LocalFunctionAdapter<AddLsgErrType> AddLsgErrFunction;
   AddLsgErrFunction addLsgErr("U",evalAddLsgErr,solution.space().gridPart());
   
-  typedef Tuple<AddLsgErrFunction*> OutputType;
+  typedef tuple<AddLsgErrFunction*> OutputType;
   OutputType out(&addLsgErr);
   
   {
