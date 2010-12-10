@@ -14,26 +14,26 @@ namespace Dune {
   void PointProvider<ct, dim, 0>::
   registerQuadrature(const QuadratureType& quad)
   {
-    // only register on thread 0 
-    if( Fem :: ThreadManager :: isMaster() ) 
+    QuadratureKeyType key( quad.geometry(), quad.id() );
+    
+    if (points_.find( key ) == points_.end() ) 
     {
-      QuadratureKeyType key( quad.geometry(), quad.id() );
-      
-      if (points_.find( key ) == points_.end() ) 
-      {
-        PointIteratorType it =
-          points_.insert(std::make_pair
-                         (key,
-                          GlobalPointVectorType(quad.nop()))
-                         ).first;
-        for (size_t i = 0; i < quad.nop(); ++i) {
-          it->second[i] = quad.point(i);
-        }
-        Fem::StorageInterface<dim>::registerQuadratureToStorages(quad);
-      }
-    }
+      // only register when in single thread mode 
+      assert( Fem :: ThreadManager :: singleThreadMode() );
 
-    Fem :: ThreadManager :: barrier();
+      PointIteratorType it =
+        points_.insert(std::make_pair
+                       (key,
+                        GlobalPointVectorType(quad.nop()))
+                       ).first;
+      for (size_t i = 0; i < quad.nop(); ++i) 
+      {
+        it->second[i] = quad.point(i);
+      }
+
+      // register quadrature to existing base function storages 
+      Fem::StorageInterface<dim>::registerQuadratureToStorages(quad);
+    }
   }
 
   template <class ct, int dim>
@@ -105,53 +105,48 @@ namespace Dune {
                                       const LocalPointVectorType& points,
                                       GeometryType elementGeo)
   {
+    // amke sure we are in single thread mode 
+    assert( Fem :: ThreadManager::singleThreadMode() );
+
     // generate key 
     QuadratureKeyType key ( elementGeo, quad.id() );
       
-    MapperIteratorType mit ;
-    if( Fem::ThreadManager::isMaster() )
-    {
-      const GenericReferenceElement<ct, dim>& refElem = 
-        GenericReferenceElements<ct, dim>::general(elementGeo);
 
-      const int numLocalPoints = points.size();
-      const int numFaces = refElem.size(codim);
-      const int numGlobalPoints = numFaces*numLocalPoints;
-      
-      PointIteratorType pit = 
-        points_.insert(std::make_pair(key, 
-                                      GlobalPointVectorType(numGlobalPoints))).first;
-      mit =
-        mappers_.insert(std::make_pair(key,
-                                       MapperVectorType(numFaces))).first;
-      int globalNum = 0;
-      for (int face = 0; face < numFaces; ++face) 
-      {
-        // Assumption: all faces have the same type
-        // (not true for pyramids and prisms)
-        //assert(sameGeometry(quad.geometry(), refElem.type(face, codim)));
-        MapperType pMap(numLocalPoints);
-          
-        for (int pt = 0; pt < numLocalPoints; ++pt, ++globalNum) {
-          // Store point on reference element
-          pit->second[globalNum] = 
-            refElem.template global<codim>(points[pt], face, codim);
-          
-          // Store point mapping
-          pMap[pt] = globalNum;
-        }
-        mit->second[face] = pMap;  // = face*numLocalPoints+pt
-      } // end for all faces
+    const GenericReferenceElement<ct, dim>& refElem = 
+      GenericReferenceElements<ct, dim>::general(elementGeo);
 
-      Fem::StorageInterface<dim>::registerQuadratureToStorages(quad,1);
-    }
+    const int numLocalPoints = points.size();
+    const int numFaces = refElem.size(codim);
+    const int numGlobalPoints = numFaces*numLocalPoints;
     
-    Fem::ThreadManager::barrier();
+    PointIteratorType pit = 
+      points_.insert(std::make_pair(key, 
+                                    GlobalPointVectorType(numGlobalPoints))).first;
+    MapperIteratorType mit =
+      mappers_.insert(std::make_pair(key,
+                                     MapperVectorType(numFaces))).first;
+    int globalNum = 0;
+    for (int face = 0; face < numFaces; ++face) 
+    {
+      // Assumption: all faces have the same type
+      // (not true for pyramids and prisms)
+      //assert(sameGeometry(quad.geometry(), refElem.type(face, codim)));
+      MapperType pMap(numLocalPoints);
+        
+      for (int pt = 0; pt < numLocalPoints; ++pt, ++globalNum) {
+        // Store point on reference element
+        pit->second[globalNum] = 
+          refElem.template global<codim>(points[pt], face, codim);
+        
+        // Store point mapping
+        pMap[pt] = globalNum;
+      }
+      mit->second[face] = pMap;  // = face*numLocalPoints+pt
+    } // end for all faces
 
-    // assign iterator for higher threads 
-    if( ! Fem::ThreadManager::isMaster() )
-      mit = mappers_.find( key );
-
+    // register quadrature to base function storages 
+    Fem::StorageInterface<dim>::registerQuadratureToStorages(quad,1);
+    
     return mit;
   }
 

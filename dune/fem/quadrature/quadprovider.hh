@@ -55,13 +55,9 @@ namespace Dune
         QuadPtr& quadPtr = storage_[ order ];
         if( quadPtr == 0 )
         {
-          if( Fem :: ThreadManager::isMaster() )
-          {
-            quadPtr = new QuadImp( geometry, order, IdProvider :: instance().newId() );
-          }
-
-          // make sure all threads wait here 
-          Fem :: ThreadManager :: barrier();
+          // make sure we work in single thread mode when quadrature is created 
+          assert( Fem :: ThreadManager:: singleThreadMode() );
+          quadPtr = new QuadImp( geometry, order, IdProvider :: instance().newId() );
         }
         assert( quadPtr != 0 );
         return *quadPtr;
