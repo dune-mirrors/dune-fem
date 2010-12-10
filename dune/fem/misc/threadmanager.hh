@@ -12,7 +12,7 @@ namespace Dune
   struct ThreadManager 
   {
     //! return maximal number of threads possbile in the current run 
-    static int maxThreads() 
+    static inline int maxThreads() 
     {
 #ifdef _OPENMP
       return omp_get_max_threads();
@@ -22,7 +22,7 @@ namespace Dune
     }
 
     //! return number of current threads 
-    static int currentThreads() 
+    static inline int currentThreads() 
     {
 #ifdef _OPENMP
       return omp_get_num_threads();
@@ -32,7 +32,7 @@ namespace Dune
     }
 
     //! return thread number 
-    static int thread() 
+    static inline int thread() 
     {
 #ifdef _OPENMP
       return omp_get_thread_num();
@@ -42,7 +42,7 @@ namespace Dune
     }
 
     //! make all threads wait until all reached the barrier
-    static void barrier () 
+    static inline void barrier () 
     {
 #ifdef _OPENMP
       {
@@ -52,17 +52,23 @@ namespace Dune
     }
 
     //! return true if the current thread is the master thread (i.e. thread 0)
-    static bool isMaster() 
+    static inline bool isMaster() 
     {
       return thread() == 0 ;
     }
 
     //! set maximal number of threads available during run  
-    static void setMaxNumberThreads( const int numThreads ) 
+    static inline void setMaxNumberThreads( const int numThreads ) 
     {
 #ifdef _OPENMP
       omp_set_num_threads( numThreads );
 #endif
+    }
+
+    //! returns true if program is operating on one thread currently
+    static inline bool singleThreadMode() 
+    {
+      return currentThreads() == 1 ;
     }
 
   }; // end class ThreadManager 
