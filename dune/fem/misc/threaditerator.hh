@@ -31,35 +31,46 @@ namespace Dune {
       std::vector< std::vector< int > > threadId_; 
 #endif
     public:  
+      //! contructor creating thread iterators 
       explicit ThreadIterator( const SpaceType& spc )
         : space_( spc )
         , indexSet_( space_.indexSet() )
 #ifdef _OPENMP
         , sequence_( -1 )  
         , iterators_( ThreadManager::maxThreads() + 1 , space_.end() )
+        , threadNum_( indexSet_.size( 0 ), -1 )
         , threadId_( ThreadManager::maxThreads() )
 #endif
       {
         update();
       }
 
+      //! return reference to space 
+      const SpaceType& space() const { return space_; }
+
+      //! update internal list of iterators 
       void update() 
       {
 #ifdef _OPENMP
+        // if grid got updated also update iterators 
         if( sequence_ != space_.sequence() )
         {
-          if( omp_get_num_threads() > 1 ) 
+          if( ! ThreadManager :: singleThreadMode() ) 
           {
             std::cerr << "Don't call ThreadIterator::update in a parallel environment!" << std::endl;
             assert( false );
             abort();
           }
 
-          const int maxThreads = omp_get_max_threads() ;
+          const int maxThreads = ThreadManager :: maxThreads() ;
           IteratorType it = space_.begin(); 
           const IteratorType endit = space_.end();
           if( it == endit ) 
           {
+            // set all iterators to end iterators 
+            for( int thread = 0; thread <= maxThreads; ++thread ) 
+              iterators_[ thread ] = endit ;
+
             // update sequence number 
             sequence_ = space_.sequence();
             return ;
@@ -96,28 +107,32 @@ namespace Dune {
 #endif
       }
 
+      //! return begin iterator for current thread 
       IteratorType begin() const 
       {
 #ifdef _OPENMP
-        return iterators_[ omp_get_thread_num() ];
+        return iterators_[ ThreadManager :: thread() ];
 #else 
-       return space_.begin();
+        return space_.begin();
 #endif
       }
 
+      //! return end iterator for current thread 
       IteratorType end() const 
       {
 #ifdef _OPENMP
-        return iterators_[ omp_get_thread_num() + 1 ];
+        return iterators_[ ThreadManager :: thread() + 1 ];
 #else 
-       return space_.end();
+        return space_.end();
 #endif
       }
 
+      //! return thread number this entity belongs to 
       int thread(const EntityType& entity ) const 
       {
 #ifdef _OPENMP
         assert( threadNum_.size() > indexSet_.index( entity ) );
+        assert( threadNum_[ indexSet_.index( entity ) ] >= 0 );
         return threadNum_[ indexSet_.index( entity ) ];
 #else 
         return 0;
@@ -175,7 +190,7 @@ namespace Dune {
         , indexSet_( space_.indexSet() )
 #ifdef _OPENMP
         , sequence_( -1 )  
-        , pointers_( omp_get_max_threads() + 1 )
+        , pointers_( ThreadManager :: maxThreads() + 1 )
 #endif
       {
         update();
@@ -186,14 +201,14 @@ namespace Dune {
 #ifdef _OPENMP
         if( sequence_ != space_.sequence() )
         {
-          if( omp_get_num_threads() > 1 ) 
+          if( ! ThreadManager :: singleThreadMode() ) 
           {
             std::cerr << "Don't call ThreadIterator::update in a parallel environment!" << std::endl;
             assert( false );
             abort();
           }
 
-          const int maxThreads = omp_get_max_threads() ;
+          const int maxThreads = ThreadManager :: maxThreads() ;
           typedef typename SpaceType :: IteratorType SpcIteratorType ;
           SpcIteratorType it = space_.begin(); 
           const SpcIteratorType endit = space_.end();
@@ -232,7 +247,7 @@ namespace Dune {
       Iterator begin() const 
       {
 #ifdef _OPENMP
-        return Iterator( pointers_[ omp_get_thread_num() ], 0 );
+        return Iterator( pointers_[ ThreadManager::thread() ], 0 );
 #else 
         return Iterator( pointers_[ 0 ], 0 );
 #endif
@@ -241,7 +256,8 @@ namespace Dune {
       Iterator end() const 
       {
 #ifdef _OPENMP
-        return Iterator( pointers_[ omp_get_thread_num() ], pointers_[ omp_get_thread_num() ].size() );
+        return Iterator( pointers_[ ThreadManager::thread() ], 
+                         pointers_[ ThreadManager::thread() ].size() );
 #else 
         return Iterator( pointers_[ 0 ], pointers_[ 0 ].size() );
 #endif
