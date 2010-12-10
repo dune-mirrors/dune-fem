@@ -3,6 +3,8 @@
 
 #include <vector>
 
+#include <dune/common/exceptions.hh>
+
 #include <dune/fem/space/common/arrays.hh>
 #include <dune/fem/misc/threadmanager.hh>
 
@@ -42,7 +44,9 @@ namespace Dune {
         , threadId_( ThreadManager::maxThreads() )
 #endif
       {
+#ifdef _OPENMP
         threadNum_.setMemoryFactor( 1.1 ); 
+#endif
         update();
       }
 
@@ -63,7 +67,7 @@ namespace Dune {
             abort();
           }
 
-          const int maxThreads = ThreadManager :: maxThreads() ;
+          const size_t maxThreads = ThreadManager :: maxThreads() ;
 
           // get end iterator
           const IteratorType endit = space_.end();
@@ -72,7 +76,7 @@ namespace Dune {
           if( it == endit ) 
           {
             // set all iterators to end iterators 
-            for( int thread = 0; thread <= maxThreads; ++thread ) 
+            for( size_t thread = 0; thread <= maxThreads; ++thread ) 
               iterators_[ thread ] = endit ;
 
             // free memory here 
@@ -86,22 +90,24 @@ namespace Dune {
           // thread 0 starts at begin 
           iterators_[ 0 ] = it ;
 
-          const int size = indexSet_.size( 0 );
-          //int size = 0;
-          // count number of elements (revise this) 
-          //for( IteratorType countit = space_.begin(); countit != endit; ++countit, ++size ) {}
+          // get size for index set 
+          const size_t size = indexSet_.size( 0 );
 
           // resize threads storage 
           threadNum_.resize( size );
-#ifndef NDEBUG
-          for(int i = 0; i<size; ++i) threadNum_[ i ] = -1;
-#endif
+          // set all values to default value 
+          for(size_t i = 0; i<size; ++i) threadNum_[ i ] = -1;
+
           // here use iterator to count 
-          const int roundOff = ((size % maxThreads) > 0) ? 1 : 0;
-          const int counter = ((int) size / maxThreads ) + roundOff;
-          for( int thread = 1; thread <= maxThreads; ++thread ) 
+          size_t checkSize = 0;
+          const size_t roundOff = (size % maxThreads);
+          const size_t counterBase = ((size_t) size / maxThreads );
+          for( size_t thread = 1; thread <= maxThreads; ++thread ) 
           {
-            int i = 0; 
+            size_t i = 0; 
+            const size_t counter = counterBase + (( (thread-1) < roundOff ) ? 1 : 0);
+            checkSize += counter ;
+            //std::cout << counter << " for thread " << thread-1 << std::endl;
             while( (i < counter) && (it != endit) )
             {
               assert( indexSet_.index( *it ) < (size_t) threadNum_.size() );
@@ -113,13 +119,17 @@ namespace Dune {
           }
           iterators_[ maxThreads ] = endit ;
 
+          if( checkSize != size ) 
+          {
+            assert( checkSize == size );
+            DUNE_THROW(InvalidStateException,"Partitioning inconsistent!"); 
+          }
+
           // update sequence number 
           sequence_ = space_.sequence();
-#ifndef NDEBUG
-          for(int i = 0; i<size; ++i ) 
-            assert( threadNum_[ i ] >= 0 );
+
+          //for(size_t i = 0; i<size; ++i ) 
           //  std::cout << threadNum_[ i ] << std::endl;
-#endif
         }
 #endif
       }
@@ -155,7 +165,8 @@ namespace Dune {
       {
 #ifdef _OPENMP
         assert( (size_t) threadNum_.size() > indexSet_.index( entity ) );
-        assert( threadNum_[ indexSet_.index( entity ) ] >= 0 );
+        // NOTE: this number can also be negative for ghost elements or elements
+        // that do not belong to the set covered by the space iterators 
         return threadNum_[ indexSet_.index( entity ) ];
 #else 
         return 0;
