@@ -114,6 +114,7 @@ namespace Dune {
     //! \param spc Space belonging to the discrete function local to this pass
     //! \param volumeQuadOrd defines the order of the volume quadrature which is by default 2* space polynomial order 
     //! \param faceQuadOrd defines the order of the face quadrature which is by default 2* space polynomial order 
+    //! \param notThreadParallel  true if pass is used in single thread mode 
     LocalDGPass(DiscreteModelType& problem, 
                 PreviousPassType& pass, 
                 const DiscreteFunctionSpaceType& spc,
@@ -317,9 +318,6 @@ namespace Dune {
 
             if ( ! visited_[ indexSet_.index( nb ) ] ) 
             {
-              // init local function 
-              initLocalFunction( nb, updNb_ );
-
               // for conforming situations apply Quadrature given
               if( ! GridPartType :: conforming && ! intersection.conforming() )
               {
@@ -567,6 +565,8 @@ namespace Dune {
       // update on neighbor 
       if( canUpdateNeighbor ) 
       {
+        // init local function 
+        initLocalFunction( nb, updNb );
         // add fluxes 
         updNb.axpyQuadrature( faceQuadOuter, valNbVec_ );
         // add update to real function 
