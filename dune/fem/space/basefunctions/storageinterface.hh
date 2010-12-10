@@ -55,13 +55,9 @@ namespace Dune {
         // if list pointer is 0 then create new object 
         if( ! storageListPtr() )
         {
-          if( ThreadManager :: isMaster() )
-          {
-            storageListPtr() = new StorageInterfaceListType();
-          }
-
-          // wait until object created 
-          ThreadManager::barrier();
+          // make sure we are in single thread mode 
+          assert( ThreadManager :: singleThreadMode() );
+          storageListPtr() = new StorageInterfaceListType();
         }
 
         assert( storageListPtr() );
@@ -85,44 +81,40 @@ namespace Dune {
       //! Destructor, remove me from the list of storages 
       virtual ~StorageInterface() 
       {
-        if( ThreadManager::isMaster() ) 
+        // make sure we are in single thread mode 
+        assert( ThreadManager :: singleThreadMode() );
+        typedef typename StorageInterfaceListType::iterator IteratorType;
+        IteratorType endit = storageList().end();
+        for(IteratorType it = storageList().begin(); it != endit; ++it)
         {
-          typedef typename StorageInterfaceListType::iterator IteratorType;
-          IteratorType endit = storageList().end();
-          for(IteratorType it = storageList().begin(); it != endit; ++it)
+          if( (*it) == this )
           {
-            if( (*it) == this )
-            {
-              storageList().erase(it);
-              break;
-            }
+            storageList().erase(it);
+            break;
           }
-
-          // if list is empty, then delete list 
-          checkAndDeleteStorageList();
         }
+
+        // if list is empty, then delete list 
+        checkAndDeleteStorageList();
       }
 
       //! for a newly created storage cache all existing quadratures 
       template <class StorageImp>
       void cacheExistingQuadratures(StorageImp & storage)
       {
-        if( ThreadManager::isMaster() ) 
-        {
-          typedef typename QuadratureListType::iterator IteratorType;
-          IteratorType endit = quadratureList().end();
-          for(IteratorType it = quadratureList().begin(); it != endit; ++it)
-          {
-            // get if and codim of quad 
-            const size_t id = (*it)[ ids ];
-            const size_t codim = (*it)[ codims ];
-            const size_t quadSize = (*it)[ sizes ];
-            storage.cacheQuadrature(id, codim, quadSize);
-          }
-        }
+        // make sure we are in single thread mode 
+        assert( ThreadManager :: singleThreadMode() );
 
-        // wait until register is finished 
-        ThreadManager::barrier();
+        typedef typename QuadratureListType::iterator IteratorType;
+        IteratorType endit = quadratureList().end();
+        for(IteratorType it = quadratureList().begin(); it != endit; ++it)
+        {
+          // get if and codim of quad 
+          const size_t id = (*it)[ ids ];
+          const size_t codim = (*it)[ codims ];
+          const size_t quadSize = (*it)[ sizes ];
+          storage.cacheQuadrature(id, codim, quadSize);
+        }
       }
 
       //! cache quadrature for given id and codim 
@@ -145,27 +137,24 @@ namespace Dune {
       static void registerQuadratureToStorages(const QuadratureType & quad, 
                                                const size_t codim)
       {
-        if( ThreadManager::isMaster() ) 
+        // make sure we are in single thread mode 
+        assert( ThreadManager :: singleThreadMode() );
+
+        const size_t id = quad.id();
+        const size_t quadSize = quad.nop();
+        // store quadrature 
+        QuadratureIdentifierType ident( sizeIndents );
+        ident[ ids ]    = id ;
+        ident[ codims ] = codim; 
+        ident[ sizes ]  = quadSize;
+        quadratureList().push_back(ident);
+
+        typedef typename StorageInterfaceListType::iterator IteratorType;
+        IteratorType endit = storageList().end();
+        for(IteratorType it = storageList().begin(); it != endit; ++it)
         {
-          const size_t id = quad.id();
-          const size_t quadSize = quad.nop();
-          // store quadrature 
-          QuadratureIdentifierType ident( sizeIndents );
-          ident[ ids ]    = id ;
-          ident[ codims ] = codim; 
-          ident[ sizes ]  = quadSize;
-          quadratureList().push_back(ident);
-
-          typedef typename StorageInterfaceListType::iterator IteratorType;
-          IteratorType endit = storageList().end();
-          for(IteratorType it = storageList().begin(); it != endit; ++it)
-          {
-            (*it)->cacheQuadrature(id, codim, quadSize);
-          }
+          (*it)->cacheQuadrature(id, codim, quadSize);
         }
-
-        // wait until register is finished 
-        ThreadManager::barrier();
       }
   };
 
