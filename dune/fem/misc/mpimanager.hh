@@ -38,8 +38,31 @@ namespace Dune
     {
       MPIHelper *&helper = instance().helper_;
       CollectiveCommunication *&comm = instance().comm_;
+#if HAVE_MPI && MPI_2 
+#ifdef _OPENMP
+      int provided;
+      // use MPI_Init_thread for hybrid parallel programs 
+      int is_initialized = MPI_Init_thread(&argc, &argv, MPI_THREAD_FUNNELED, &provided );
+
+      if( is_initialized != MPI_SUCCESS ) 
+        DUNE_THROW(InvalidStateException,"MPI_Init_thread failed!");
+
+#if not defined NDEBUG && defined DUNE_DEVEL_MODE
+      if( provided != MPI_THREAD_FUNNELED )
+      {
+        if( provided == MPI_THREAD_SINGLE )
+          dwarn << "MPI thread support = single (instead of funneled)!" << std::endl;
+        else
+          dwarn << "WARNING: MPI thread support = " << provided << " != MPI_THREAD_FUNNELED " << MPI_THREAD_FUNNELED << std::endl;
+      }
+
+#endif // end NDEBUG 
+#endif // end _OPENMP 
+#endif // end HAVE_MPI && MPI_2       
+
       if( (helper != 0) || (comm != 0) )
         DUNE_THROW( InvalidStateException, "MPIManager has already been initialized." );
+
       helper = &MPIHelper::instance( argc, argv );
       comm = new CollectiveCommunication( helper->getCommunicator() );
     }
