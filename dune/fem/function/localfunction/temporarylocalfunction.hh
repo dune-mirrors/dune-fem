@@ -191,8 +191,7 @@ namespace Dune
      *  localFunction.init( entity );
      *  \endcode
      *
-     *  \param[in] dfSpace discrete function space the local function shall
-     *                     belong to
+     *  \param[in] df discrete function the local function shall belong to
      */
     inline explicit
     ConstLocalFunction ( const DiscreteFunctionType &df )
@@ -210,7 +209,7 @@ namespace Dune
      *
      *  \note The degrees of freedom are not initialized by this function.
      *  
-     *  \param[in] dfSpace discrete function space the local function shall
+     *  \param[in] df      discrete function the local function shall
      *                     belong to
      *  \param[in] entity  entity for initialize the local function to
      */
