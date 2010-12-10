@@ -3,6 +3,7 @@
 
 #include <vector>
 
+#include <dune/fem/space/common/arrays.hh>
 #include <dune/fem/misc/threadmanager.hh>
 
 namespace Dune {
@@ -27,7 +28,7 @@ namespace Dune {
 #ifdef _OPENMP
       int sequence_;
       std::vector< IteratorType > iterators_;
-      std::vector< int > threadNum_;
+      MutableArray< int > threadNum_;
       std::vector< std::vector< int > > threadId_; 
 #endif
     public:  
@@ -38,10 +39,10 @@ namespace Dune {
 #ifdef _OPENMP
         , sequence_( -1 )  
         , iterators_( ThreadManager::maxThreads() + 1 , space_.end() )
-        , threadNum_( indexSet_.size( 0 ), -1 )
         , threadId_( ThreadManager::maxThreads() )
 #endif
       {
+        threadNum_.setMemoryFactor( 1.1 ); 
         update();
       }
 
@@ -63,34 +64,47 @@ namespace Dune {
           }
 
           const int maxThreads = ThreadManager :: maxThreads() ;
-          IteratorType it = space_.begin(); 
+
+          // get end iterator
           const IteratorType endit = space_.end();
+
+          IteratorType it = space_.begin(); 
           if( it == endit ) 
           {
             // set all iterators to end iterators 
             for( int thread = 0; thread <= maxThreads; ++thread ) 
               iterators_[ thread ] = endit ;
 
+            // free memory here 
+            threadNum_.resize( 0 );
+
             // update sequence number 
             sequence_ = space_.sequence();
             return ;
           }
+
           // thread 0 starts at begin 
           iterators_[ 0 ] = it ;
 
-          int size = 0;
+          const int size = indexSet_.size( 0 );
+          //int size = 0;
+          // count number of elements (revise this) 
+          //for( IteratorType countit = space_.begin(); countit != endit; ++countit, ++size ) {}
 
-          for( IteratorType countit = space_.begin(); countit != endit; ++countit, ++size ) {}
-          // resize threads 
+          // resize threads storage 
           threadNum_.resize( size );
-
-          // here ruse iterator to count 
-          const int counter = ((int) size / maxThreads );
+#ifndef NDEBUG
+          for(int i = 0; i<size; ++i) threadNum_[ i ] = -1;
+#endif
+          // here use iterator to count 
+          const int roundOff = ((size % maxThreads) > 0) ? 1 : 0;
+          const int counter = ((int) size / maxThreads ) + roundOff;
           for( int thread = 1; thread <= maxThreads; ++thread ) 
           {
             int i = 0; 
             while( (i < counter) && (it != endit) )
             {
+              assert( indexSet_.index( *it ) < (size_t) threadNum_.size() );
               threadNum_[ indexSet_.index( *it ) ] = thread - 1;
               ++i;
               ++it;
@@ -101,8 +115,11 @@ namespace Dune {
 
           // update sequence number 
           sequence_ = space_.sequence();
-          //for(int i = 0; i<size; ++i ) 
+#ifndef NDEBUG
+          for(int i = 0; i<size; ++i ) 
+            assert( threadNum_[ i ] >= 0 );
           //  std::cout << threadNum_[ i ] << std::endl;
+#endif
         }
 #endif
       }
@@ -128,10 +145,16 @@ namespace Dune {
       }
 
       //! return thread number this entity belongs to 
+      int index(const EntityType& entity ) const 
+      {
+        return indexSet_.index( entity );
+      }
+
+      //! return thread number this entity belongs to 
       int thread(const EntityType& entity ) const 
       {
 #ifdef _OPENMP
-        assert( threadNum_.size() > indexSet_.index( entity ) );
+        assert( (size_t) threadNum_.size() > indexSet_.index( entity ) );
         assert( threadNum_[ indexSet_.index( entity ) ] >= 0 );
         return threadNum_[ indexSet_.index( entity ) ];
 #else 
