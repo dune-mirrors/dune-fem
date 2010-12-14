@@ -561,6 +561,9 @@ namespace Dune
     //! return reference to filter 
     const FilterType & filter() const { return filter_; }
 
+    //! return reference to filter 
+    FilterType & filter() { return filter_; }
+
     //! return index set of this grid part 
     //! if IndexSetType is from GridPartImp the original index set is returned 
     const IndexSetType& indexSet() const 
