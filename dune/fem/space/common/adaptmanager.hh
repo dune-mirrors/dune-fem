@@ -16,6 +16,8 @@
 #include <dune/fem/storage/singletonlist.hh>
 
 #include <dune/fem/space/common/adaptcallbackhandle.hh>
+#include <dune/fem/misc/threadmanager.hh>
+
 
 namespace Dune
 {
@@ -312,6 +314,9 @@ public:
   */
   virtual void adapt ()
   {
+    // make sure this is only called in single thread mode 
+    assert( Fem :: ThreadManager :: singleThreadMode() );
+
     // get stopwatch 
     Timer timer; 
 

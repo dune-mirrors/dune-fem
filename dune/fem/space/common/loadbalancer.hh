@@ -16,7 +16,7 @@
 #include <dune/fem/io/file/asciiparser.hh>
 #include <dune/fem/io/parameter.hh>
 #include <dune/fem/io/file/persistencemanager.hh>
-
+#include <dune/fem/misc/threadmanager.hh>
 
 namespace Dune{
 
@@ -154,6 +154,9 @@ public:
   //! do load balance every balanceStep_ step 
   bool loadBalance () 
   {
+    // make sure this is only called in single thread mode 
+    assert( Fem :: ThreadManager :: singleThreadMode() );
+
     // get stopwatch 
     Timer timer ; 
     
