@@ -348,17 +348,17 @@ public:
 
   /** \brief commit a line to the eoc file 
    *
-   *  \param  h                      grid width (e.g. given by GridWith utitlity class)
-   *  \param  size                   number of elements in the grid or number of dofs...
+   *  \param  h                      grid width (e.g. given by GridWith utility class)
+   *  \param  size                   number of grid elements
    *  \param  time                   computational time
-   *  \param  counter                number of time steps or iterations for a solver...
-   *  \param  avgTimeStep            average time step for a ODE solver for one run of the program...
-   *  \param  minTimeStep            minimal time step for a ODE solver for one run of the program...
-   *  \param  maxTimeStep            maximal time step for a ODE solver for one run of the program...
+   *  \param  counter                number of time steps
+   *  \param  avgTimeStep            average time step for the ODE solver
+   *  \param  minTimeStep            minimal time step for the ODE solver
+   *  \param  maxTimeStep            maximal time step for the ODE solver
    *  \param  newton_iterations      number of newton iterations
-   *  \param  ils_iterations         ???
+   *  \param  ils_iterations         number of iteration of the iterative linear solver
    *  \param  max_newton_iterations  maximal number of newton iterations
-   *  \param  max_ils_iterations     ???
+   *  \param  max_ils_iterations     maximal number of iteration of the iterative linear solver
    */
   static void write(const double h,
                     const double size,
