@@ -13,6 +13,7 @@
 
 #include <dune/fem/io/parameter.hh>
 #include <dune/fem/solver/timeprovider.hh>
+#include <dune/fem/misc/threadmanager.hh>
 
 namespace Dune
 {
@@ -148,6 +149,8 @@ namespace Dune
       static Timer &instance ()
       {
         static Timer instance_;
+        // don't use this class in multi thread environment 
+        assert( ThreadManager :: singleThreadMode() );
         return instance_;
       }
 
