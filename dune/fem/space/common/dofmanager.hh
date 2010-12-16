@@ -24,6 +24,8 @@
 
 #include <dune/fem/space/common/datacollector.hh>
 #include <dune/fem/space/common/arrays.hh>
+#include <dune/fem/misc/threadmanager.hh>
+
 
 namespace Dune
 {
@@ -1173,6 +1175,7 @@ inline DofManager<GridType>::~DofManager ()
 
   if(indexList_.size() > 0)
   {
+    std::cerr << "ERROR: Not all index sets have been removed from DofManager yet!" << std::endl;
     while ( indexList_.rbegin() != indexList_.rend()) 
     {
       ManagedIndexSetInterface* iobj = (* indexList_.rbegin() );
@@ -1187,6 +1190,8 @@ template <class IndexSetType>
 inline void DofManager<GridType>::
 addIndexSet (const IndexSetType &iset)
 {
+  assert( Fem :: ThreadManager:: singleThreadMode() );
+
   typedef typename GridType::template Codim<0>::Entity EntityType;
   typedef ManagedIndexSet< IndexSetType, EntityType > ManagedIndexSetType;
 
@@ -1219,6 +1224,7 @@ template <class IndexSetType>
 inline void DofManager<GridType>::
 removeIndexSet ( const IndexSetType &iset )
 {
+  assert( Fem :: ThreadManager:: singleThreadMode() );
   typedef typename IndexListType::reverse_iterator IndexListIteratorType;
 
   // search index set list in reverse order to find latest index sets faster
@@ -1243,7 +1249,7 @@ removeIndexSet ( const IndexSetType &iset )
   }
 
   // we should never get here
-  DUNE_THROW(InvalidStateException,"Could not remove index set!");
+  DUNE_THROW(InvalidStateException,"Could not remove index from DofManager set!");
 }
 
 template <class GridType>
