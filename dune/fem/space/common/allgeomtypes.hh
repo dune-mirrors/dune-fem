@@ -7,6 +7,7 @@
 
 //- Dune includes 
 #include <dune/common/geometrytype.hh>
+#include <dune/grid/common/capabilities.hh>
 #include <dune/grid/common/genericreferenceelements.hh>
 
 namespace Dune
@@ -116,6 +117,7 @@ namespace Dune
     //! UGGrid might have different geom types 
     static bool multipleGeomTypes ()
     {
+      assert( Capabilities :: hasSingleGeometryType < GridType > :: v );
       return false;
     }
   };
