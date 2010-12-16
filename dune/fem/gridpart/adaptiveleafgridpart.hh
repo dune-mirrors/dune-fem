@@ -4,6 +4,7 @@
 #include <dune/common/typetraits.hh>
 
 #include <dune/fem/misc/capabilities.hh>
+#include <dune/fem/space/common/dofmanager.hh>
 #include <dune/fem/gridpart/gridpart.hh>
 #include <dune/fem/storage/singletonlist.hh>
 #include <dune/fem/gridpart/adaptiveleafindexset.hh>
@@ -105,10 +106,18 @@ namespace Dune
 
     // reference to index set 
     const IndexSetType& indexSet_;
+
+    // method to get DofManager instance to make sure the DofManager is delete after 
+    // the index set provider 
+    GridType &initDofManager(GridType &grid ) const 
+    {
+      DofManager< GridType > :: instance( grid );
+      return grid ;
+    }
   public:
     //! constructor
     explicit AdaptiveGridPartBase ( GridType &grid )
-    : BaseType( grid ), 
+    : BaseType( initDofManager( grid ) ), // dofManager needs to be initialized before index set provider 
       indexSet_( IndexSetProviderType::getObject( KeyType( asImp(), grid ) ) )
     {}
 
