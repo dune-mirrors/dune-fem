@@ -21,6 +21,8 @@
 #include <dune/fem/function/common/scalarproducts.hh>
 #include <dune/fem/function/localfunction/localfunctionwrapper.hh>
 #include <dune/fem/io/file/persistencemanager.hh>
+#include <dune/fem/misc/threadmanager.hh>
+
 
 namespace Dune
 {
@@ -636,6 +638,7 @@ namespace Dune
     /** \copydoc Dune::DiscreteFunctionInterface::communicate() */
     void communicate()
     {
+      assert( Fem :: ThreadManager :: singleThreadMode() );
       this->space().communicate( asImp() );
     }
  

@@ -6,6 +6,7 @@
 #include <dune/grid/common/genericreferenceelements.hh>
 
 #include <dune/fem/io/streams/streams.hh>
+#include <dune/fem/misc/threadmanager.hh>
 
 #include "discretefunction.hh"
 
@@ -22,7 +23,7 @@ namespace Dune
                                  const LocalFunctionFactoryType &lfFactory )
   : dfSpace_( dfSpace ),
 #ifdef _OPENMP
-    lfStorageVec_ ( omp_get_max_threads() ),
+    lfStorageVec_ ( Fem :: ThreadManager :: maxThreads() ),
 #else 
     lfStorage_( lfFactory ),
 #endif
@@ -488,7 +489,7 @@ namespace Dune
   DiscreteFunctionDefault< Traits > :: localFunctionStorage () const
   {
 #ifdef _OPENMP
-    return *(lfStorageVec_[ omp_get_thread_num() ]);
+    return *(lfStorageVec_[ Fem :: ThreadManager :: thread() ]);
 #else 
     return lfStorage_;
 #endif
