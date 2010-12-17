@@ -78,6 +78,10 @@ struct ODEParameters
   {
     return Parameter::getValue< double >( "fem.ode.cflStart" , 1);
   }
+  virtual double cflMax() const
+  {
+    return Parameter::getValue< double >( "fem.ode.cflMax" , std::numeric_limits<double>::max() );
+  }
   virtual bool cflFactor( const PARDG::ODESolver &ode,
                           const PARDG::IterativeLinearSolver &solver,
                           bool converged,
@@ -428,7 +432,8 @@ public:
     linsolver_( 0 ),
     param_( parameter.clone() ),
     verbose_( parameter.verbose() ),
-    cfl_( parameter.cflStart() )
+    cfl_( parameter.cflStart() ),
+    cflMax_( parameter.cflMax() )
   {
   }
 
@@ -522,8 +527,17 @@ public:
 
     double factor( 1 );
     bool changed = parameter().cflFactor( odeSolver(), *(linsolver_), convergence, factor );
-    if( (factor >= std::numeric_limits< double >::min()) && (factor <= std::numeric_limits< double >::max()) )
-      cfl_ *= factor;
+    if( (factor >= std::numeric_limits< double >::min()) && 
+        (factor <= std::numeric_limits< double >::max()) ) 
+    {
+      // only apply when factor is small or max cfl was not reached yet 
+      if( factor < 1.0 || cfl_ <= cflMax_ ) 
+      {
+        cfl_ *= factor;
+      }
+      else 
+        changed = false ;
+    }
     else
       DUNE_THROW( InvalidStateException, "invalid cfl factor: " << factor );
 
@@ -565,6 +579,7 @@ protected:
   const ODEParameters* param_;
   const int verbose_;
   double cfl_;
+  const double cflMax_;
 }; // end ImplicitOdeSolver
 
 
