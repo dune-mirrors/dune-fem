@@ -2,6 +2,7 @@
 #define DUNE_CHECKGEOMETRYAFFINITY_HH
 
 #include <dune/common/fvector.hh>
+#include <dune/grid/common/gridenums.hh>
 
 #include <dune/fem/space/common/allgeomtypes.hh>
 
@@ -54,9 +55,14 @@ protected:
     typedef typename GridType :: template Codim<0> :: EntityPointer  EntityPointerType; 
     typedef typename GridType :: template Codim<0> :: Entity  EntityType; 
     typedef typename GridType :: template Codim<0> :: Geometry Geometry; 
+
+    typedef typename GridType :: template Partition< All_Partition > :: LevelGridView  MacroGridView ;
     
-    const MacroIteratorType endit = grid.template lend<0> (0);
-    MacroIteratorType it = grid.template lbegin<0> (0);
+    // get macro grid view 
+    MacroGridView macroView = grid.levelView( 0 );
+
+    const MacroIteratorType endit = macroView.template end<0> ();
+    MacroIteratorType it = macroView.template begin<0> ();
 
     // empty grids are considerd as cartesian 
     if( it == endit ) return true;
@@ -92,7 +98,7 @@ protected:
     }
 
     // loop over all macro elements 
-    for(MacroIteratorType it = grid.template lbegin<0> (0); 
+    for(MacroIteratorType it = macroView.template begin<0> ();
         it != endit; ++it)
     {
       const EntityType& en = *it;
