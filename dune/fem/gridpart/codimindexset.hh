@@ -75,7 +75,7 @@ private:
   const int myCodim_; 
 
   // actual number of holes 
-  int numberHoles_;
+  size_t numberHoles_;
 
 public:
   //! Constructor taking memory factor (default = 1.1)
