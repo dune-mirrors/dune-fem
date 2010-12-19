@@ -369,14 +369,19 @@ private:
     typedef typename GridType::template Codim<0>::
       template Partition<pitype> :: LevelIterator LevelIterator;
 
+    typedef typename GridType::template Partition< All_Partition > :: LevelGridView  MacroGridView ;
+
     if(restr)
     {
+      // get macro grid view 
+      MacroGridView macroView = grid_.levelView( 0 );
+
       // make a hierarchical to insert all elements 
       // that are father of elements that might be coarsened 
       {
         // get macro iterator 
-        LevelIterator endit  = grid_.template lend<0,pitype>   ( 0 );
-        for(LevelIterator it = grid_.template lbegin<0,pitype> ( 0 );
+        LevelIterator endit  = macroView.template end<0,pitype>  ();
+        for(LevelIterator it = macroView.template begin<0,pitype>();
             it != endit; ++it )
         {
           hierarchicRestrict( *it , dm_.indexSetRestrictProlongNoResize() );
@@ -389,8 +394,8 @@ private:
       // now project all data to fathers 
       {
         // get macro iterator 
-        LevelIterator endit  = grid_.template lend<0,pitype>   ( 0 );
-        for(LevelIterator it = grid_.template lbegin<0,pitype> ( 0 );
+        LevelIterator endit  = macroView.template end<0,pitype>  ();
+        for(LevelIterator it = macroView.template begin<0,pitype>();
             it != endit; ++it )
         {
           hierarchicRestrict( *it , rpOp_ );
@@ -404,13 +409,16 @@ private:
 
     if(ref)
     {
+      // get macro grid view 
+      MacroGridView macroView = grid_.levelView( 0 );
+
       // resizes the index sets (insert all new indices) 
       // and resizes the memory
       dm_.resize();
 
       // make run through grid to project data 
-      LevelIterator endit = grid_.template lend<0,pitype> ( 0 );
-      for(LevelIterator it = grid_.template lbegin<0,pitype> ( 0 );
+      LevelIterator endit  = macroView.template end<0,pitype>  ();
+      for(LevelIterator it = macroView.template begin<0,pitype>();
           it != endit; ++it )
       {
         hierarchicProlong( *it , rpOp_ );
