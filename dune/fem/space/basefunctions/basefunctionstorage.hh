@@ -154,8 +154,10 @@ namespace Dune
     typedef typename FunctionSpaceType :: RangeType RangeType;
     typedef typename FunctionSpaceType :: JacobianRangeType JacobianRangeType;
 
-    typedef MutableArray< MutableArray<RangeType> >         RangeVectorType;
-    typedef MutableArray< MutableArray<JacobianRangeType> > JacobianRangeVectorType;
+    //typedef MutableArray< MutableArray<RangeType> >         RangeVectorType;
+    //typedef MutableArray< MutableArray<JacobianRangeType> > JacobianRangeVectorType;
+    typedef std::vector< std::vector<RangeType> >         RangeVectorType;
+    typedef std::vector< std::vector<JacobianRangeType> > JacobianRangeVectorType;
 
   public:
     using BaseType :: evaluate;
@@ -229,8 +231,10 @@ namespace Dune
     typedef typename FunctionSpaceType :: RangeType RangeType;
     typedef typename FunctionSpaceType :: JacobianRangeType JacobianRangeType;
 
-    typedef MutableArray< MutableArray<RangeType> >         RangeVectorType;
-    typedef MutableArray< MutableArray<JacobianRangeType> > JacobianRangeVectorType;
+    typedef std::vector< std::vector<RangeType> >         RangeVectorType;
+    typedef std::vector< std::vector<JacobianRangeType> > JacobianRangeVectorType;
+    //typedef MutableArray< MutableArray<RangeType> >         RangeVectorType;
+    //typedef MutableArray< MutableArray<JacobianRangeType> > JacobianRangeVectorType;
 
   private:
     typedef std::map<size_t, bool> RangeStoredType;
@@ -241,8 +245,10 @@ namespace Dune
       RangeIteratorType, JacobianRangeIteratorType> ReturnPairType;
 
 
-    typedef MutableArray< RangeVectorType >         RangeContainerType;
-    typedef MutableArray< JacobianRangeVectorType > JacobianRangeContainerType;
+    //typedef MutableArray< RangeVectorType >         RangeContainerType;
+    //typedef MutableArray< JacobianRangeVectorType > JacobianRangeContainerType;
+    typedef std::vector< RangeVectorType >         RangeContainerType;
+    typedef std::vector< JacobianRangeVectorType > JacobianRangeContainerType;
 
     //! evaluation, calls generic evaluate method
     //! used quad.point(quadPoint) for evaluation 
