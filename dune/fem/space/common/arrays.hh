@@ -196,7 +196,7 @@ protected:
   typedef StaticArray<T> ThisType;
 
   // size of array 
-  int size_;
+  size_t size_;
 
   // pointer to mem
   T * vec_;
@@ -223,7 +223,7 @@ public:
   typedef ConstDofIteratorType const_iterator ;
 
   //! create array of length size and store vec as pointer to memory 
-  explicit StaticArray(const int size, T* vec) 
+  explicit StaticArray(const size_t size, T* vec) 
     : size_(size)
     , vec_(vec) 
   {
@@ -231,7 +231,7 @@ public:
   }
 
   //! create array of length size and store vec as pointer to memory 
-  explicit StaticArray(const int size, const T* vec) 
+  explicit StaticArray(const size_t size, const T* vec) 
     : size_(size)
     , vec_( const_cast< T * > (vec) ) 
   {
@@ -259,10 +259,10 @@ public:
   }
 
   //! return number of enties of array 
-  int size () const { return size_; }  
+  size_t size () const { return size_; }  
 
 private:
-  void assertIndex ( int i ) const
+  void assertIndex ( const size_t i ) const
   {
 #ifndef NDEBUG
     if( (i < 0) || (i >= size()) )
@@ -277,14 +277,14 @@ private:
 
 public:
   //! return reference to entry i
-  T& operator [] ( int i )       
+  T& operator [] ( const size_t i )       
   { 
     assertIndex( i );
     return vec_[i]; 
   }
   
   //! return reference to const entry i
-  const T& operator [] ( int i ) const 
+  const T& operator [] ( const size_t i ) const 
   {
     assertIndex( i );
     return vec_[i]; 
@@ -302,9 +302,9 @@ public:
   ThisType& operator += (const ThisType & org)
   {
     assert(org.size_ >= size() );
-    const int s = size();
+    const size_t s = size();
     const T * ov = org.vec_;
-    for(int i=0; i<s; ++i) vec_[i] += ov[i];
+    for(size_t i=0; i<s; ++i) vec_[i] += ov[i];
     return *this;
   }
  
@@ -312,17 +312,17 @@ public:
   ThisType& operator -= (const ThisType& org)
   {
     assert(org.size() >= size() );
-    const int s = size();
+    const size_t s = size();
     const T * ov = org.vec_;
-    for(int i=0; i<s; ++i) vec_[i] -= ov[i];
+    for(size_t i=0; i<s; ++i) vec_[i] -= ov[i];
     return *this;
   }
  
   //! operator *= multiplies array with a scalar  
   ThisType& operator *= (const T scalar)
   {
-    const int s = size();
-    for(int i=0; i<s; ++i) vec_[i] *= scalar;
+    const size_t s = size();
+    for(size_t i=0; i<s; ++i) vec_[i] *= scalar;
     return *this;
   }
   
@@ -330,32 +330,32 @@ public:
   ThisType& operator /= (const T scalar)
   {
     const T scalar_1 = (((T) 1)/scalar); 
-    const int s = size();
-    for(int i=0; i<s; ++i) vec_[i] *= scalar_1;
+    const size_t s = size();
+    for(size_t i=0; i<s; ++i) vec_[i] *= scalar_1;
     return *this;
   }
   
   //! operator = assign all entrys to given scalar value  
   ThisType& operator= (const T scalar)
   {
-    const int s = size();
-    for(int i=0; i<s; ++i) vec_[i] = scalar;
+    const size_t s = size();
+    for(size_t i=0; i<s; ++i) vec_[i] = scalar;
     return *this;
   }
 
   //! axpy operation  
   void axpy (const ThisType& org, const T scalar)
   {
-    const int s = size();
+    const size_t s = size();
     const T * ov = org.vec_;
-    for(int i=0; i<s; ++i) vec_[i] += scalar*ov[i];
+    for(size_t i=0; i<s; ++i) vec_[i] += scalar*ov[i];
   }
  
   //! set all entries to zero 
   void clear () 
   {
-    const int s = size();
-    for(int i=0; i<s; ++i) vec_[i] = 0;
+    const size_t s = size();
+    for(size_t i=0; i<s; ++i) vec_[i] = 0;
   }
  
   //! move memory from old to new destination 
@@ -384,7 +384,7 @@ public:
   bool write(OutStreamInterface< StreamTraits >& out) const 
   {
     out << size_;
-    for(int i=0; i<size_; ++i)
+    for(size_t i=0; i<size_; ++i)
     {
       out << vec_[i];
     }
@@ -395,7 +395,7 @@ public:
   template <class StreamTraits> 
   bool read(InStreamInterface< StreamTraits >& in) 
   {
-    int len; 
+    size_t len; 
     in >> len;
     // when read check size 
     if( size_ != len )
@@ -403,7 +403,7 @@ public:
       DUNE_THROW(InvalidStateException,"StaticArray::read: internal size " << size_ << " and size to read " << len << " not equal!");
     }
 
-    for(int i=0; i<size_; ++i)
+    for(size_t i=0; i<size_; ++i)
     {
       in >> vec_[i];
     }
@@ -414,7 +414,7 @@ public:
   void print(std::ostream& s) const 
   {
     s << "Print StaticArray(addr = "<< this << ") (size = " << size_ << ")\n";
-    for(int i=0; i<size(); ++i)
+    for(size_t i=0; i<size(); ++i)
     {
       s << vec_[i] << "\n";
     }
@@ -441,7 +441,7 @@ protected:
   {
     // write/read all entries 
     int ret = 1;
-    for(int i=0; i<size_; ++i)
+    for(size_t i=0; i<size_; ++i)
     {
       ret |= xdr.inout( vec_[i] );
     }
@@ -458,9 +458,9 @@ inline void StaticArray<double>::axpy(const ThisType& org, const double scalar)
 #if HAVE_BLAS
   DuneCBlas :: daxpy( size() , scalar, org.vec_, 1 , vec_, 1);
 #else 
-  const int s = size();
+  const size_t s = size();
   const double* ov = org.vec_;
-  for(int i=0; i<s; ++i) vec_[i] += scalar * ov[i];
+  for(size_t i=0; i<s; ++i) vec_[i] += scalar * ov[i];
 #endif
 }
  
@@ -646,16 +646,18 @@ struct SpecialArrayFeatures<MutableArray<ValueType> >
     array.setMemoryFactor(memFactor);
   }
 
-  static void memMoveBackward(ArrayType& array, const int length,
-            const int oldStartIdx, const int newStartIdx)
+  static void memMoveBackward(ArrayType& array, 
+                              const size_t length,
+                              const size_t oldStartIdx, 
+                              const size_t newStartIdx)
   {
     assert( newStartIdx >= oldStartIdx );
     //array.memmove(length,oldStartIdx,newStartIdx);
     // get new end of block which is offSet + (length of block - 1) 
-    int newIdx = newStartIdx + length - 1; 
+    size_t newIdx = newStartIdx + length - 1; 
     assert( newIdx < array.size() );
     // copy all entries backwards 
-    for(int oldIdx = oldStartIdx + length-1; oldIdx >= oldStartIdx; --oldIdx, --newIdx )
+    for(size_t oldIdx = oldStartIdx + length-1; oldIdx >= oldStartIdx; --oldIdx, --newIdx )
     {
       assert( oldIdx < array.size() );
       // move value to new location 
@@ -666,15 +668,17 @@ struct SpecialArrayFeatures<MutableArray<ValueType> >
 #endif
     }
   }
-  static void memMoveForward(ArrayType& array, const int length,
-            const int oldStartIdx, const int newStartIdx)
+  static void memMoveForward(ArrayType& array, 
+                             const size_t length,
+                             const size_t oldStartIdx, 
+                             const size_t newStartIdx)
   {
     assert( newStartIdx <= oldStartIdx );
     //array.memmove(length,oldStartIdx,newStartIdx);
-    const int upperBound = oldStartIdx + length;
+    const size_t upperBound = oldStartIdx + length;
     // get new off set that should be smaller then old one
-    int newIdx = newStartIdx;
-    for(int oldIdx = oldStartIdx; oldIdx<upperBound; ++oldIdx, ++newIdx )
+    size_t newIdx = newStartIdx;
+    for(size_t oldIdx = oldStartIdx; oldIdx<upperBound; ++oldIdx, ++newIdx )
     {
       // copy to new location 
       array[newIdx] = array[oldIdx];

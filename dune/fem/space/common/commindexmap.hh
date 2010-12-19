@@ -30,9 +30,9 @@ namespace Dune
 
   public:
     //! return index map for entry i
-    const int operator [] ( const int i ) const
+    const int operator [] ( const size_t i ) const
     {
-      assert( (i >= 0) && (i < size()) );
+      assert( i < size() );
       return indices_[ i ];
     }
 
@@ -46,15 +46,15 @@ namespace Dune
     //! result is unsorted 
     void insert( const std :: vector< int > &idx )
     {
-      const int size = idx.size();
-      int count = indices_.size();
+      const size_t size = idx.size();
+      size_t  count = indices_.size();
 
       // reserve memory 
       resize( count + size );
       assert( indices_.size() == (count + size) );
 
       // copy indices to index vector 
-      for( int i = 0; i < size; ++i, ++count )
+      for( size_t i = 0; i < size; ++i, ++count )
       {
         assert( idx[ i ] >= 0 );
         indices_[ count ] = idx[ i ];
@@ -78,7 +78,7 @@ namespace Dune
     }
 
     //! return size of map
-    int size () const
+    size_t size () const
     {
       return indices_.size();
     }
@@ -86,9 +86,9 @@ namespace Dune
     //! print  map for debugging only 
     void print( std :: ostream &s, int rank ) const
     {
-      const int size = this->size();
+      const size_t size = this->size();
       s << "Start print: size = " << size << std :: endl;
-      for( int i = 0; i < size; ++i )
+      for( size_t i = 0; i < size; ++i )
         s << rank << " idx[ " << i << " ] = " << indices_[ i ] << std :: endl;
       s << "End of Array" << std :: endl;
     }
@@ -97,9 +97,9 @@ namespace Dune
     template <class CommBuffer> 
     void writeToBuffer(CommBuffer& buffer) const 
     {
-      const int idxSize = indices_.size(); 
+      const size_t idxSize = indices_.size(); 
       buffer.write( indices_.size() );
-      for(int i=0; i<idxSize; ++i) 
+      for(size_t i=0; i<idxSize; ++i) 
       {
         buffer.write( indices_[i] );
       }

@@ -352,13 +352,13 @@ namespace Dune {
             caller_.setBoundary(en, faceQuadInner);
 
             // cache number of quadrature points 
-            const int faceQuadInner_nop = faceQuadInner.nop();
+            const size_t faceQuadInner_nop = faceQuadInner.nop();
 
             if( valEnVec_.size() < faceQuadInner_nop )
               valEnVec_.resize( faceQuadInner_nop );
 
             // loop over quadrature points 
-            for (int l = 0; l < faceQuadInner_nop; ++l) 
+            for (size_t l = 0; l < faceQuadInner_nop; ++l) 
             {
               RangeType& flux = valEnVec_[ l ];
 
@@ -431,13 +431,13 @@ namespace Dune {
                                  const VolumeQuadratureType& volQuad,
                                  LocalFunctionImp& updEn ) const
     {
-      const int volQuad_nop = volQuad.nop();
+      const size_t volQuad_nop = volQuad.nop();
       if( fMatVec_.size() < volQuad_nop ) 
       {
         fMatVec_.resize( volQuad_nop );
       }
 
-      for (int l = 0; l < volQuad_nop; ++l) 
+      for (size_t l = 0; l < volQuad_nop; ++l) 
       {
         JacobianRangeType& flux = fMatVec_[ l ];
 
@@ -464,7 +464,7 @@ namespace Dune {
                                  const VolumeQuadratureType& volQuad,
                                  LocalFunctionImp& updEn ) const
     {
-      const int volQuad_nop = volQuad.nop();
+      const size_t volQuad_nop = volQuad.nop();
 
       if( fMatVec_.size() < volQuad_nop ) 
       {
@@ -476,7 +476,7 @@ namespace Dune {
         valEnVec_.resize( volQuad_nop );
       }
 
-      for (int l = 0; l < volQuad_nop; ++l) 
+      for (size_t l = 0; l < volQuad_nop; ++l) 
       {
         JacobianRangeType& flux = fMatVec_[ l ];
         RangeType& source = valEnVec_[ l ];
@@ -532,7 +532,7 @@ namespace Dune {
       // get neighbors volume 
       const double nbvol = nbGeo.volume(); 
       
-      const int faceQuadInner_nop = faceQuadInner.nop();
+      const size_t faceQuadInner_nop = faceQuadInner.nop();
       assert( faceQuadInner.nop() == faceQuadOuter.nop() );
 
       // check  valNbVec_ here, valEnVec_ might have been resized  
@@ -542,7 +542,7 @@ namespace Dune {
         valNbVec_.resize( faceQuadInner_nop );
       }
 
-      for (int l = 0; l < faceQuadInner_nop; ++l) 
+      for (size_t l = 0; l < faceQuadInner_nop; ++l) 
       {
         RangeType& fluxEn = valEnVec_[ l ];
         RangeType& fluxNb = valNbVec_[ l ];

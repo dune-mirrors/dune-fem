@@ -437,13 +437,13 @@ namespace Dune
 
       assert( (int) numCols * dimRange == dofs.numDofs() );
 
-      assert( rangeStorage.size() >= (int) numRows );
+      assert( rangeStorage.size() >= numRows );
       for( size_t row = 0; row < numRows ; ++row )
       {
         const size_t baseRow = quad.cachingPoint( row ); 
 
-        assert( rangeStorage.size() > (int) baseRow );
-        assert( rangeStorage[ baseRow ].size() >= (int) numCols );
+        assert( rangeStorage.size() > baseRow );
+        assert( rangeStorage[ baseRow ].size() >= numCols );
 
         RangeType& result = rangeVector[ row ]; 
         result = 0;
@@ -575,7 +575,7 @@ namespace Dune
 #endif
 
       assert( (int) numCols * dimRange == dofs.numDofs() );
-      assert( jacobianStorage.size() >= (int)numRows );
+      assert( jacobianStorage.size() >= numRows );
 
       for( size_t row = 0; row < numRows ; ++row )
       {
@@ -585,8 +585,8 @@ namespace Dune
         typedef typename Geometry::Jacobian GeometryJacobianType;
         const GeometryJacobianType& gjit = geometry.jacobianInverseTransposed( quad.point( row ) );
 
-        assert( jacobianStorage.size() > (int) baseRow );
-        assert( jacobianStorage[ baseRow ].size() >= (int) numCols );
+        assert( jacobianStorage.size() > baseRow );
+        assert( jacobianStorage[ baseRow ].size() >= numCols );
 
         GlobalJacobianRangeType& result = jacVector[ row ]; 
         result = 0;
@@ -712,7 +712,7 @@ namespace Dune
 
       assert( numRows == quad.nop() );
       assert( (int) numCols * dimRange == dofs.numDofs() );
-      assert( rangeStorage.size() >= (int) numRows );
+      assert( rangeStorage.size() >= numRows );
 
       // this way the codes seems faster 
       for( size_t col = 0, colR = 0; col < numCols; ++col ) 
@@ -836,13 +836,13 @@ namespace Dune
       }
 #endif
       assert( (int ) numCols * dimRange == dofs.numDofs() );
-      assert( jacobianStorage.size() >= (int) numRows );
+      assert( jacobianStorage.size() >= numRows );
 
       for( size_t row = 0; row < numRows ; ++row )
       {
         const size_t baseRow = quad.cachingPoint( row ); 
-        assert( jacobianStorage.size() > (int)baseRow );
-        assert( jacobianStorage[ baseRow ].size() >= (int)numCols );
+        assert( jacobianStorage.size() > baseRow );
+        assert( jacobianStorage[ baseRow ].size() >= numCols );
 
         typedef typename Geometry::Jacobian GeometryJacobianType;
         const GeometryJacobianType& gjit = geometry.jacobianInverseTransposed( quad.point( row ) );
