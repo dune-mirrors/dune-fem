@@ -104,6 +104,10 @@ namespace Dune
     // type of entity with codimension zero 
     typedef typename GridType :: template Codim< 0 > :: Entity EntityCodim0Type;
 
+    typedef typename GridType :: template Partition < All_Partition > :: LeafGridView LeafGridView;
+    // the leaf grid view 
+    LeafGridView leafView_ ; 
+
     // reference to index set 
     const IndexSetType& indexSet_;
 
@@ -118,12 +122,14 @@ namespace Dune
     //! constructor
     explicit AdaptiveGridPartBase ( GridType &grid )
     : BaseType( initDofManager( grid ) ), // dofManager needs to be initialized before index set provider 
+      leafView_( grid.leafView() ),
       indexSet_( IndexSetProviderType::getObject( KeyType( asImp(), grid ) ) )
     {}
 
     //! Copy Constructor
     AdaptiveGridPartBase ( const ThisType &other )
     : BaseType( other ),
+      leafView_( other.leafView_ ),
       indexSet_( IndexSetProviderType::getObject( KeyType( asImp(), other.grid() ) ) )
     {}
 
@@ -153,7 +159,7 @@ namespace Dune
     typename Codim< codim > :: template Partition< pitype > :: IteratorType
     begin () const
     {
-      return (*this).grid().template leafbegin< codim, pitype >();
+      return leafView_.template begin< codim, pitype >();
     }
 
     //! Begin iterator on the leaf level
@@ -169,7 +175,7 @@ namespace Dune
     typename Codim< codim > :: template Partition< pitype > :: IteratorType
     end () const
     {
-      return (*this).grid().template leafend< codim, pitype >();
+      return leafView_.template end< codim, pitype >();
     }
 
     //! ibegin of corresponding intersection iterator for given entity

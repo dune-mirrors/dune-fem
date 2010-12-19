@@ -775,8 +775,11 @@ namespace Dune
       ::template Codim< 0 >::template Partition< pt >::LevelIterator
       Iterator;
 
-    const Iterator macroend = grid_.template lend< 0, pt >( 0 );
-    for( Iterator macroit = grid_.template lbegin< 0, pt >( 0 ); 
+    typedef typename GridType :: template Partition< All_Partition > :: LevelGridView LevelGridView ;
+    LevelGridView macroView = grid_.levelView( 0 );
+
+    const Iterator macroend = macroView.template end< 0, pt >();
+    for( Iterator macroit = macroView.template begin< 0, pt >(); 
          macroit != macroend; ++macroit )
       checkHierarchy( *macroit, false );
   }

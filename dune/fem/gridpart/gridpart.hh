@@ -349,6 +349,8 @@ namespace Dune
 
     typedef typename IntersectionIteratorType::Intersection IntersectionType;
 
+    typedef typename GridType::template Partition< All_Partition > :: LevelGridView  LevelGridView;
+
   private:
     typedef typename GridType::template Codim<0>::Entity EntityCodim0Type;
 
@@ -357,6 +359,7 @@ namespace Dune
     //! Constructor
     LevelGridPart(GridType& grid, int level )
     : BaseType( grid ),
+      levelView_( grid.levelView( level ) ),
       isetWrapper_( grid, level ),
       level_( level )
     {}
@@ -364,6 +367,7 @@ namespace Dune
     //! Constructor, choosing maxLevel
     explicit LevelGridPart ( GridType &grid )
     : BaseType( grid ),
+      levelView_( grid.levelView( grid.maxLevel() ) ),
       isetWrapper_( grid, grid.maxLevel() ),
       level_( grid.maxLevel() )
     {}
@@ -371,6 +375,7 @@ namespace Dune
     //! copy constructor
     LevelGridPart ( const ThisType &other )
     : BaseType( other ),
+      levelView_( other.levelView_ ),
       isetWrapper_( other.grid(), other.level_ ),
       level_( other.level_ )
     {}
@@ -394,7 +399,7 @@ namespace Dune
     typename Traits :: template Codim< codim > :: template Partition< pitype > :: IteratorType
     begin () const
     {
-      return (*this).grid().template lbegin< codim, pitype >( level_ );
+      return levelView_.template begin< codim, pitype >( level_ );
     }
 
     //! Begin iterator on the GridPart's level
@@ -410,7 +415,7 @@ namespace Dune
     typename Traits :: template Codim< codim > :: template Partition< pitype > :: IteratorType
     end () const
     {
-      return (*this).grid().template lend< codim, pitype >( level_ );
+      return levelView_.template end< codim, pitype >( level_ );
     }
 
     //! ibegin of corresponding intersection iterator for given entity
@@ -442,6 +447,7 @@ namespace Dune
     }
 
   private:
+    LevelGridView levelView_;
     //! GridDefaultIndexSet Wrapper 
     IndexSetType isetWrapper_;
     const int level_;
@@ -506,7 +512,10 @@ namespace Dune
     typedef typename Traits::IntersectionIteratorType IntersectionIteratorType ;
 
     typedef typename IntersectionIteratorType::Intersection IntersectionType;
-    
+  
+    //! the leaf grid view from the grid 
+    typedef typename GridType :: template Partition < All_Partition > :: LeafGridView LeafGridView;
+
   private:
     typedef typename GridType::template Codim<0>::Entity EntityCodim0Type;
 
@@ -515,12 +524,14 @@ namespace Dune
     //! Constructor
     explicit LeafGridPart ( GridType &grid )
     : BaseType( grid ),
+      leafView_( grid.leafView() ),
       isetWrapper_( grid )
     {}
 
     //! copy constructor
     LeafGridPart ( const ThisType &other )
     : BaseType( other ),
+      leafView_( other.leafView_ ),
       isetWrapper_( other.grid() )
     {}
 
@@ -543,7 +554,7 @@ namespace Dune
     typename Traits :: template Codim< codim > :: template Partition< pitype > :: IteratorType
     begin () const
     {
-      return (*this).grid().template leafbegin< codim, pitype >();
+      return leafView_.template begin< codim, pitype >();
     }
 
     //! Begin iterator on the leaf level
@@ -559,7 +570,7 @@ namespace Dune
     typename Traits :: template Codim< codim > :: template Partition< pitype > :: IteratorType
     end () const
     {
-      return (*this).grid().template leafend< codim, pitype >();
+      return leafView_.template end< codim, pitype >();
     }
 
     //! ibegin of corresponding intersection iterator for given entity
@@ -591,6 +602,8 @@ namespace Dune
     }
 
   private: 
+    //! leaf grid view 
+    LeafGridView leafView_ ;
     //! GridDefaultIndexSet Wrapper 
     IndexSetType isetWrapper_;
   };
@@ -663,6 +676,9 @@ namespace Dune
     //! The corresponding IntersectionIterator 
     typedef typename Traits::IntersectionIteratorType IntersectionIteratorType ;
 
+    //! the leaf grid view from the grid 
+    typedef typename GridType :: template Partition < All_Partition > :: LeafGridView LeafGridView;
+
   private:
     typedef typename GridType::template Codim<0>::Entity EntityCodim0Type;
 
@@ -671,18 +687,21 @@ namespace Dune
     //! constructor 
     explicit HierarchicGridPart ( GridType &grid )
     : BaseType( grid ),
+      leafView_( grid.leafView() ),
       isetWrapper_( grid )
     {}
 
     //! constructor
     HierarchicGridPart ( GridType &grid, const IndexSetType & )
     : BaseType( grid ),
+      leafView_( grid.leafView() ),
       isetWrapper_( grid )
     {}
 
     //! copy constructor
     HierarchicGridPart ( const ThisType &other )
     : BaseType( other ),
+      leafView_( other.leafView_ ),
       isetWrapper_( other.grid() )
     {}
 
@@ -705,7 +724,7 @@ namespace Dune
     typename Traits :: template Codim< codim > :: template Partition< pitype > :: IteratorType
     begin () const
     {
-      return (*this).grid().template leafbegin< codim, pitype >();
+      return leafView_.template begin< codim, pitype >();
     }
 
     //! Begin iterator on the leaf level
@@ -721,7 +740,7 @@ namespace Dune
     typename Traits :: template Codim< codim > :: template Partition< pitype > :: IteratorType
     end () const
     {
-      return (*this).grid().template leafend< codim, pitype >();
+      return leafView_.template end< codim, pitype >();
     }
 
     //! ibegin of corresponding intersection iterator for given entity
@@ -753,6 +772,8 @@ namespace Dune
     }
 
   private: 
+    //! leaf grid view 
+    LeafGridView leafView_ ;
     //! GridDefaultIndexSet Wrapper 
     IndexSetType isetWrapper_;
   };
