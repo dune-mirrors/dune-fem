@@ -61,19 +61,20 @@ public:
   static T* realloc (T* oldMem, size_t oldSize , size_t nmemb)
   {
     assert(nmemb > 0);
-    T* p = DefaultDofAllocator<T> ::malloc(nmemb);
-    std::memcpy(p, oldMem, oldSize * sizeof(T) );
-    DefaultDofAllocator<T> :: free (oldMem);
+    assert(nmemb > oldSize); 
+    T* p = malloc(nmemb);
+    std::copy( oldMem, oldMem+oldSize, p );
+    free (oldMem);
     return p;
   }
 };
 
 //! allocator for simple structures like int, double and float
 //! using the C malloc,free, and realloc 
+template <typename T> 
 struct SimpleDofAllocator 
 {
   //! allocate array of nmemb objects of type T
-  template <typename T>
   static T* malloc (size_t nmemb)
   {
     assert(nmemb > 0);
@@ -83,7 +84,6 @@ struct SimpleDofAllocator
   }
 
   //! release memory previously allocated with malloc member
-  template <typename T>
   static void free (T* p)
   {
     assert(p);
@@ -91,7 +91,6 @@ struct SimpleDofAllocator
   }
   
   //! allocate array of nmemb objects of type T
-  template <typename T>
   static T* realloc (T* oldMem, size_t oldSize , size_t nmemb)
   {
     assert(nmemb > 0);
@@ -103,53 +102,33 @@ struct SimpleDofAllocator
 };
 
 template <>
-class DefaultDofAllocator<double> 
+struct DefaultDofAllocator<double> : public SimpleDofAllocator< double > 
 {
-  typedef double T;
-public:
-  //! allocate array of nmemb objects of type T
-  static T* malloc (size_t nmemb)
-  {
-    return SimpleDofAllocator::malloc<T> (nmemb);
-  }
-
-  //! release memory previously allocated with malloc member
-  static void free (T* p)
-  {
-    SimpleDofAllocator::free<T> (p);
-    return ;
-  }
-  
-  //! allocate array of nmemb objects of type T
-  static T* realloc (T* oldMem, size_t oldSize , size_t nmemb)
-  {
-    return SimpleDofAllocator::realloc<T> (oldMem,oldSize,nmemb);
-  }
 };
 
 template <>
-class DefaultDofAllocator<int> 
+struct DefaultDofAllocator< float > : public SimpleDofAllocator< float > 
 {
-  typedef int T;
-public:
-  //! allocate array of nmemb objects of type T
-  static T* malloc (size_t nmemb)
-  {
-    return SimpleDofAllocator::malloc<T> (nmemb);
-  }
+};
 
-  //! release memory previously allocated with malloc member
-  static void free (T* p)
-  {
-    SimpleDofAllocator::free<T> (p);
-    return ;
-  }
-  
-  //! allocate array of nmemb objects of type T
-  static T* realloc (T* oldMem, size_t oldSize , size_t nmemb)
-  {
-    return SimpleDofAllocator::realloc<T> (oldMem,oldSize,nmemb);
-  }
+template <>
+struct DefaultDofAllocator< int > : public SimpleDofAllocator< int > 
+{
+};
+
+template <>
+struct DefaultDofAllocator< size_t > : public SimpleDofAllocator< size_t > 
+{
+};
+
+template <>
+struct DefaultDofAllocator< char > : public SimpleDofAllocator< char > 
+{
+};
+
+template <>
+struct DefaultDofAllocator< bool > : public SimpleDofAllocator< bool > 
+{
 };
 
 //! specialisation for MutableArray<V> that uses std::copy for copying
@@ -178,8 +157,10 @@ public:
   static T* realloc (T* oldMem, size_t oldSize , size_t nmemb)
   {
     assert(nmemb > 0);
+    assert(nmemb > oldSize);
     T* p = DefaultDofAllocator<T> ::malloc(nmemb);
-    std::copy( oldMem->begin(), oldMem->end(), p->begin());
+    // copy memory 
+    std::copy( oldMem, oldMem+oldSize, p );
     DefaultDofAllocator<T> :: free (oldMem);
     return p;
   }
