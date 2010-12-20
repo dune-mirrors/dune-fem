@@ -75,14 +75,15 @@ namespace Dune
     {
       // for all quad points evaluate all basis functions 
       const size_t quadNop = quad.nop();
-      const int numBase = storage.numBaseFunctions();
+      const size_t numBase = storage.numBaseFunctions();
 
       FieldVector<int, 0> diffVar;
-      ranges.resize( quadNop );
+
+      resizeVector( quadNop , ranges );
       for( size_t qp = 0; qp < quadNop; ++qp ) 
       {
-        ranges[ qp ].resize( numBase );
-        for( int i = 0; i< numBase; ++i ) 
+        resizeVector( numBase,  ranges[ qp ] ); 
+        for( size_t i = 0; i< numBase; ++i ) 
         {
           storage.evaluate( i, diffVar, quad[ qp ], ranges[ qp ][ i ] );
         }
@@ -100,13 +101,13 @@ namespace Dune
     {
       // for all quad points evaluate all basis functions 
       const size_t quadNop = quad.nop();
-      const int numBase = storage.numBaseFunctions();
+      const size_t numBase = storage.numBaseFunctions();
 
-      jacobians.resize( quadNop );
+      resizeVector( quadNop , jacobians );
       for( size_t qp = 0; qp < quadNop; ++qp ) 
       {
-        jacobians[ qp ].resize( numBase );
-        for( int i = 0; i< numBase; ++i ) 
+        resizeVector( numBase, jacobians[ qp ] );
+        for( size_t i = 0; i< numBase; ++i ) 
         {
           storage.jacobian( i, quad[ qp ], jacobians[ qp ][ i ] );
         }
@@ -120,12 +121,19 @@ namespace Dune
       return quadraturePoint;
     } 
 
+  protected:  
+    template <class VectorType>
+    static void resizeVector(const size_t newSize, VectorType& vector)
+    {
+      vector.setMemoryFactor( 2.0 );
+      vector.resize( newSize );
+    }
+
   private:
     typedef typename FactoryType::BaseFunctionType BaseFunctionType;
 
   private:
-    const int storageSize_;
-    BaseFunctionType** storage_;
+    MutableArray< BaseFunctionType* > storage_;
     mutable FieldVector<int, 1> diffVar1_;
 
   protected:
@@ -154,10 +162,8 @@ namespace Dune
     typedef typename FunctionSpaceType :: RangeType RangeType;
     typedef typename FunctionSpaceType :: JacobianRangeType JacobianRangeType;
 
-    //typedef MutableArray< MutableArray<RangeType> >         RangeVectorType;
-    //typedef MutableArray< MutableArray<JacobianRangeType> > JacobianRangeVectorType;
-    typedef std::vector< std::vector<RangeType> >         RangeVectorType;
-    typedef std::vector< std::vector<JacobianRangeType> > JacobianRangeVectorType;
+    typedef MutableArray< MutableArray<RangeType> >         RangeVectorType;
+    typedef MutableArray< MutableArray<JacobianRangeType> > JacobianRangeVectorType;
 
   public:
     using BaseType :: evaluate;
@@ -231,10 +237,8 @@ namespace Dune
     typedef typename FunctionSpaceType :: RangeType RangeType;
     typedef typename FunctionSpaceType :: JacobianRangeType JacobianRangeType;
 
-    typedef std::vector< std::vector<RangeType> >         RangeVectorType;
-    typedef std::vector< std::vector<JacobianRangeType> > JacobianRangeVectorType;
-    //typedef MutableArray< MutableArray<RangeType> >         RangeVectorType;
-    //typedef MutableArray< MutableArray<JacobianRangeType> > JacobianRangeVectorType;
+    typedef MutableArray< MutableArray<RangeType> >         RangeVectorType;
+    typedef MutableArray< MutableArray<JacobianRangeType> > JacobianRangeVectorType;
 
   private:
     typedef std::map<size_t, bool> RangeStoredType;
@@ -245,10 +249,8 @@ namespace Dune
       RangeIteratorType, JacobianRangeIteratorType> ReturnPairType;
 
 
-    //typedef MutableArray< RangeVectorType >         RangeContainerType;
-    //typedef MutableArray< JacobianRangeVectorType > JacobianRangeContainerType;
-    typedef std::vector< RangeVectorType >         RangeContainerType;
-    typedef std::vector< JacobianRangeVectorType > JacobianRangeContainerType;
+    typedef MutableArray< RangeVectorType >         RangeContainerType;
+    typedef MutableArray< JacobianRangeVectorType > JacobianRangeContainerType;
 
     //! evaluation, calls generic evaluate method
     //! used quad.point(quadPoint) for evaluation 
