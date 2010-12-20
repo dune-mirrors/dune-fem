@@ -399,7 +399,7 @@ namespace Dune
     typename Traits :: template Codim< codim > :: template Partition< pitype > :: IteratorType
     begin () const
     {
-      return levelView_.template begin< codim, pitype >( level_ );
+      return levelView_.template begin< codim, pitype >();
     }
 
     //! Begin iterator on the GridPart's level
@@ -415,7 +415,7 @@ namespace Dune
     typename Traits :: template Codim< codim > :: template Partition< pitype > :: IteratorType
     end () const
     {
-      return levelView_.template end< codim, pitype >( level_ );
+      return levelView_.template end< codim, pitype >();
     }
 
     //! ibegin of corresponding intersection iterator for given entity
