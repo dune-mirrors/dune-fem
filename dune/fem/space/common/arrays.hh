@@ -21,9 +21,6 @@
 #include <dune/grid/alugrid/interfaces.hh>
 
 // include xdr wrapper 
-#if DUNE_FEM_COMPATIBILITY
-#include <dune/fem/io/file/xdrio.hh>
-#endif
 #include <dune/fem/io/streams/streams.hh>
 
 namespace Dune {
@@ -47,7 +44,7 @@ public:
   static T* malloc (size_t nmemb)
   {
     assert(nmemb > 0);
-    T* p = new T [ nmemb ];
+    T* p = new T [ nmemb ] ;
     assert( p );
     return p;
   }
@@ -143,11 +140,11 @@ class StaticArray
 protected:
   typedef StaticArray<T> ThisType;
 
-  // size of array 
-  size_t size_;
-
   // pointer to mem
   T * vec_;
+
+  // size of array 
+  size_t size_;
 
   StaticArray(const StaticArray&);
 public:
@@ -172,16 +169,16 @@ public:
 
   //! create array of length size and store vec as pointer to memory 
   explicit StaticArray(const size_t size, T* vec) 
-    : size_(size)
-    , vec_(vec) 
+    : vec_(vec) 
+    , size_(size)
   {
     assert( size_ >= 0 );
   }
 
   //! create array of length size and store vec as pointer to memory 
   explicit StaticArray(const size_t size, const T* vec) 
-    : size_(size)
-    , vec_( const_cast< T * > (vec) ) 
+    : vec_( const_cast< T * > (vec) ) 
+    , size_(size)
   {
     assert( size_ >= 0 );
   }
@@ -369,36 +366,6 @@ public:
       s << vec_[i] << "\n";
     }
   }
-
-#if DUNE_FEM_COMPATIBILITY
-  //! read and write xdr 
-  bool processXdr(XDRStream& xdr)
-  {
-    int len = size_;
-    xdr.inout( len );
-
-    // when read check size 
-    if( size_ != len )
-    {
-      DUNE_THROW(InvalidStateException,"StaticArray::processXdr: internal size " << size_ << " and size to read " << len << " not equal!");
-    }
-    return processXdrVector(xdr);
-  }
-
-protected:  
-  //! read and write vector as bytes using xdr method xdr_bytes  
-  bool processXdrVector(XDRStream& xdr)
-  {
-    // write/read all entries 
-    int ret = 1;
-    for(size_t i=0; i<size_; ++i)
-    {
-      ret |= xdr.inout( vec_[i] );
-    }
-    return (ret == 1) ? true : false;
-  }
-
-#endif
 };
 
 // specialisations of axpy 
@@ -445,19 +412,21 @@ protected:
   using BaseType :: size_ ;
   using BaseType :: vec_ ;
 
-  // actual capacity of array
-  size_t memSize_;
- 
   // make new memory memFactor larger 
   double memoryFactor_;
 
+  // actual capacity of array
+  size_t memSize_;
+ 
   MutableArray(const MutableArray&);
 public:
+  using BaseType :: size ;
+
   //! create array of length 0 
   MutableArray() 
     : BaseType(0, (T *) 0)
-    , memSize_(0) 
     , memoryFactor_(1.0)
+    , memSize_(0) 
   {
   }
   
@@ -466,8 +435,8 @@ public:
     : BaseType(size, 
                // only alloc memory if size > 0
                ((T *) (size == 0) ? 0 : AllocatorType :: malloc (size)))
-    , memSize_(size) 
     , memoryFactor_(1.0)
+    , memSize_(size) 
   {
   }
   
@@ -490,6 +459,7 @@ public:
   ThisType& operator= (const ThisType & org)
   {
     resize( org.size_ );
+    memoryFactor_ = org.memoryFactor_;
     assert( ( size_ > 0 ) ? vec_ != 0 : true );
     std::copy(org.vec_, org.vec_ + size_, vec_ );
     return *this;
@@ -514,7 +484,7 @@ public:
       return ;
     }
 
-    // reserve memory + overestimate 
+    // reserve or shrink to memory + overestimate 
     adjustMemory( nsize );
     // set new size 
     size_ = nsize;
@@ -535,28 +505,12 @@ public:
     // adjust memory accordingly 
     adjustMemory( mSize );
   }
+
   //! return size of vector in bytes 
   size_t usedMemorySize() const 
   {
     return memSize_ * sizeof(T) + sizeof(ThisType);
   } 
- 
-#if DUNE_FEM_COMPATIBILITY
-
-  //! read and write xdr, during read resize is done 
-  //! if sizes do not match  
-  bool processXdr(XDRStream& xdr)
-  {
-    int len = this->size();
-    xdr.inout( len );
-
-    // if actual size is smaller then resize vector  
-    if( len > this->size() ) resize ( len );
-
-    // write array 
-    return this->processXdrVector(xdr);
-  }
-#endif
 
 protected: 
   //! adjust the memory 

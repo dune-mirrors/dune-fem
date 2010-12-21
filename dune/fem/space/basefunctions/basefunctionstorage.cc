@@ -22,8 +22,8 @@ namespace Dune
     for (size_t i = 0; i <storage_.size(); ++i) 
     {
       // delete base functions 
-      delete storage_[i];
-      storage_[i] = 0;
+      delete storage_[ i ];
+      storage_[ i ] = 0;
     }
   }
 
