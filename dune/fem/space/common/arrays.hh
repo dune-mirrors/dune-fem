@@ -3,6 +3,7 @@
 
 //- System includes 
 #include <cassert>
+#include <cmath>
 #include <cstring>
 #include <cstdlib>
 #include <iostream>
@@ -46,7 +47,7 @@ public:
   static T* malloc (size_t nmemb)
   {
     assert(nmemb > 0);
-    T* p = new T[nmemb];
+    T* p = new T [ nmemb ];
     assert( p );
     return p;
   }
@@ -60,10 +61,11 @@ public:
   //! allocate array of nmemb objects of type T
   static T* realloc (T* oldMem, size_t oldSize , size_t nmemb)
   {
+    assert(oldMem);
     assert(nmemb > 0);
-    assert(nmemb > oldSize); 
     T* p = malloc(nmemb);
-    std::copy( oldMem, oldMem+oldSize, p );
+    const size_t copySize = std::min( oldSize, nmemb );
+    std::copy( oldMem, oldMem+copySize, p );
     free (oldMem);
     return p;
   }
@@ -129,41 +131,6 @@ struct DefaultDofAllocator< char > : public SimpleDofAllocator< char >
 template <>
 struct DefaultDofAllocator< bool > : public SimpleDofAllocator< bool > 
 {
-};
-
-//! specialisation for MutableArray<V> that uses std::copy for copying
-//! memory 
-template <class V>
-class DefaultDofAllocator<MutableArray<V> > 
-{
-  typedef MutableArray<V> T;
-public:
-  //! allocate array of nmemb objects of type T
-  static T* malloc (size_t nmemb)
-  {
-    assert(nmemb > 0);
-    T* p = new T[nmemb];
-    assert( p );
-    return p;
-  }
-
-  //! release memory previously allocated with malloc member
-  static void free (T* p)
-  {
-    delete [] p;
-  }
-  
-  //! allocate array of nmemb objects of type T
-  static T* realloc (T* oldMem, size_t oldSize , size_t nmemb)
-  {
-    assert(nmemb > 0);
-    assert(nmemb > oldSize);
-    T* p = DefaultDofAllocator<T> ::malloc(nmemb);
-    // copy memory 
-    std::copy( oldMem, oldMem+oldSize, p );
-    DefaultDofAllocator<T> :: free (oldMem);
-    return p;
-  }
 };
 
 /** \brief Static Array Wrapper for simple C Vectors like double* and
@@ -275,7 +242,9 @@ public:
   ThisType& operator= (const ThisType & org)
   {
     assert(org.size_ >= size() );
-    std::memcpy(vec_, org.vec_, size_ * sizeof(T));
+    assert( ( size_ > 0 ) ? vec_ != 0 : true );
+    // copy the entries 
+    std::copy(org.vec_, org.vec_ + size_, vec_ );
     return *this;
   }
  
@@ -469,12 +438,15 @@ inline void StaticArray<double>::clear()
 template <class T, class AllocatorType>
 class MutableArray : public StaticArray<T>
 {
-private:
+protected:
   typedef MutableArray<T, AllocatorType> ThisType;
   typedef StaticArray<T> BaseType;
 
+  using BaseType :: size_ ;
+  using BaseType :: vec_ ;
+
   // actual capacity of array
-  int memSize_;
+  size_t memSize_;
  
   // make new memory memFactor larger 
   double memoryFactor_;
@@ -490,11 +462,11 @@ public:
   }
   
   //! create array of length size
-  MutableArray(const int size) 
-    : BaseType((size < 0) ? 0 : size, 
+  MutableArray(const size_t size) 
+    : BaseType(size, 
                // only alloc memory if size > 0
-               ((T *) (size <= 0) ? 0 : AllocatorType :: malloc (size)))
-    , memSize_((size<=0) ? 0 : size) 
+               ((T *) (size == 0) ? 0 : AllocatorType :: malloc (size)))
+    , memSize_(size) 
     , memoryFactor_(1.0)
   {
   }
@@ -512,37 +484,46 @@ public:
   }
 
   //! return number of total enties of array 
-  int capacity () const { return memSize_; }  
+  size_t capacity () const { return memSize_; }  
+ 
+  //! assign arrays 
+  ThisType& operator= (const ThisType & org)
+  {
+    resize( org.size_ );
+    assert( ( size_ > 0 ) ? vec_ != 0 : true );
+    std::copy(org.vec_, org.vec_ + size_, vec_ );
+    return *this;
+  }
  
   //! resize vector with new size nsize
   //! if nsize is smaller then actual memSize, size is just set to new value
-  void resize ( int nsize )
+  void resize ( size_t nsize )
   {
     // just set size if nsize is smaller than memSize but larger the
     // half of memSize 
-    if( (nsize <= memSize_) && (nsize > (memSize_/2))) 
+    if( (nsize <= memSize_) && (nsize >= (memSize_/2)) ) 
     {
-      this->size_ = nsize;
+      size_ = nsize;
       return ;
     }
 
     // if nsize == 0 freeMemory
-    if( nsize <= 0 ) 
+    if( nsize == 0 ) 
     {
       freeMemory();
       return ;
     }
 
     // reserve memory + overestimate 
-    reserve( nsize );
+    adjustMemory( nsize );
     // set new size 
-    this->size_ = nsize;
+    size_ = nsize;
   }
 
   //! reserve vector size with new mSize 
   //! if mSize is smaller then actual memSize, 
   //! then nothing is done 
-  void reserve ( int mSize )
+  void reserve ( size_t mSize )
   {
     // check whether we already have the mem size 
     // and if just do nothing 
@@ -551,33 +532,11 @@ public:
       return ;
     }
 
-    assert( memoryFactor_ >= 1.0 );
-    const double overEstimate = memoryFactor_ * mSize;
-    const int nMemSize = (int) overEstimate;
-    assert( nMemSize >= mSize );
-
-    if( !this->vec_ )
-    {
-      // allocate new memory 
-      this->vec_ = AllocatorType :: malloc(nMemSize);
-    }
-    else 
-    {
-      assert( nMemSize > 0 );
-      // nsize is the minimum needed size of the vector 
-      // we double this size to reserve some memory and minimize
-      // reallocations 
-      assert( this->vec_ );
-
-      // reallocate memory 
-      this->vec_ = AllocatorType :: realloc (this->vec_,memSize_,nMemSize);
-    }
-    // set new mem size 
-    memSize_ = nMemSize;
+    // adjust memory accordingly 
+    adjustMemory( mSize );
   }
-
   //! return size of vector in bytes 
-  int usedMemorySize() const 
+  size_t usedMemorySize() const 
   {
     return memSize_ * sizeof(T) + sizeof(ThisType);
   } 
@@ -599,16 +558,45 @@ public:
   }
 #endif
 
-private: 
+protected: 
+  //! adjust the memory 
+  void adjustMemory( size_t mSize )
+  {
+    assert( memoryFactor_ >= 1.0 );
+    const double overEstimate = memoryFactor_ * mSize;
+    const size_t nMemSize = (size_t) std::ceil( overEstimate );
+    assert( nMemSize >= mSize );
+
+    if( !vec_ )
+    {
+      // allocate new memory 
+      vec_ = AllocatorType :: malloc(nMemSize);
+    }
+    else 
+    {
+      assert( nMemSize > 0 );
+      // nsize is the minimum needed size of the vector 
+      // we double this size to reserve some memory and minimize
+      // reallocations 
+      assert( vec_ );
+
+      // reallocate memory 
+      vec_ = AllocatorType :: realloc (vec_,memSize_,nMemSize);
+    }
+
+    // set new mem size 
+    memSize_ = nMemSize;
+  }
+
   // free memory and reset sizes 
   void freeMemory() 
   {
-    if( this->vec_ ) 
+    if( vec_ ) 
     {
-      AllocatorType :: free ( this->vec_ );
-      this->vec_ = 0;
+      AllocatorType :: free ( vec_ );
+      vec_ = 0;
     }
-    this->size_ = 0;
+    size_ = 0;
     memSize_ = 0;
   }
 };
