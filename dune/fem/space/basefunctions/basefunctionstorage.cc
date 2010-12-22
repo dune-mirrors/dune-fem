@@ -1,4 +1,5 @@
 #include <dune/fem/quadrature/caching/pointprovider.hh>
+#include <dune/fem/misc/threadmanager.hh>
 
 namespace Dune
 {
@@ -7,12 +8,20 @@ namespace Dune
   template <class FunctionSpaceImp>
   StorageBase<FunctionSpaceImp>::StorageBase(const FactoryType& factory) :
     storage_( factory.numBaseFunctions() ),
-    diffVar1_(0),
-    elementGeometry_(factory.geometry())
+    elementGeometry_(factory.geometry()),
+    rangeTmp_( Fem :: ThreadManager :: maxThreads() ),
+    jacobianTmp_( Fem :: ThreadManager :: maxThreads() )
   {
     for (int i = 0; i < factory.numBaseFunctions(); ++i) 
     {
       storage_[ i ] = factory.baseFunction(i);
+    }
+
+    // initialize quad ids with non-valid numbers
+    for( size_t i = 0; i<rangeTmp_.size(); ++i )
+    {
+      rangeTmp_[ i ].second = ~0u ;
+      jacobianTmp_[ i ].second = ~0u ;
     }
   }
 
@@ -51,9 +60,10 @@ namespace Dune
     assert(baseFunct >= 0 && baseFunct < numBaseFunctions());
     RangeType tmp;
     
+    FieldVector<int, 1> diffVar1( 0 );
     for (int i = 0; i < DomainType::dimension; ++i) {
-      diffVar1_[0] = i;
-      storage_[baseFunct]->evaluate(diffVar1_, xLocal, tmp);
+      diffVar1[0] = i;
+      storage_[baseFunct]->evaluate(diffVar1, xLocal, tmp);
       for (int j = 0; j < RangeType::dimension; ++j) {
         result[j][i] = tmp[j];
       }

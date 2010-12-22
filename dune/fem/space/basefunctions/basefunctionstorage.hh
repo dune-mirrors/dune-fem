@@ -13,6 +13,8 @@
 #include <dune/fem/space/basefunctions/storageinterface.hh>
 #include <dune/fem/quadrature/quadrature.hh>
 
+#include <dune/fem/misc/threadmanager.hh>
+
 namespace Dune
 {
 
@@ -31,6 +33,14 @@ namespace Dune
 
     enum { dimRange  = FunctionSpaceImp :: dimRange };
     enum { dimDomain = FunctionSpaceImp :: dimDomain };
+
+  protected:  
+    typedef MutableArray< MutableArray<RangeType> >         RangeVectorType;
+    typedef MutableArray< MutableArray<JacobianRangeType> > JacobianRangeVectorType;
+
+    typedef std::pair< RangeVectorType, size_t >         RangeVectorPairType;
+    typedef std::pair< JacobianRangeVectorType, size_t > JacobianRangeVectorPairType;
+
   public:
     //! Constructor
     explicit StorageBase( const FactoryType& factory );
@@ -84,8 +94,10 @@ namespace Dune
         ranges.second = quadId ;
       }
 
-      FieldVector<int, 0> diffVar;
+      assert( ranges.first.size() >= quadNop ); 
+      assert( ranges.first[ 0 ].size() >= numBase ); 
 
+      FieldVector<int, 0> diffVar;
       for( size_t qp = 0; qp < quadNop; ++qp ) 
       {
         for( size_t i = 0; i< numBase; ++i ) 
@@ -138,18 +150,16 @@ namespace Dune
       vector.resize( newRows );
       for( size_t i=0; i<newRows; ++i) 
         vector[ i ].resize( newCols );
-      //std::cout << vector.capacity() << "  " << vector.size() << std::endl;
     }
 
-  private:
-    typedef typename FactoryType::BaseFunctionType BaseFunctionType;
-
-  private:
-    MutableArray< BaseFunctionType* > storage_;
-    mutable FieldVector<int, 1> diffVar1_;
-
   protected:
+    typedef typename FactoryType::BaseFunctionType BaseFunctionType;
+    MutableArray< BaseFunctionType* > storage_;
+
     const GeometryType elementGeometry_;
+
+    mutable std::vector< RangeVectorPairType >         rangeTmp_;
+    mutable std::vector< JacobianRangeVectorPairType > jacobianTmp_;
   };
 
   /** \brief simple base function storage
@@ -174,23 +184,25 @@ namespace Dune
     typedef typename FunctionSpaceType :: RangeType RangeType;
     typedef typename FunctionSpaceType :: JacobianRangeType JacobianRangeType;
 
-    typedef MutableArray< MutableArray<RangeType> >         RangeVectorType;
-    typedef MutableArray< MutableArray<JacobianRangeType> > JacobianRangeVectorType;
+    typedef typename BaseType :: RangeVectorType             RangeVectorType ;
+    typedef typename BaseType :: JacobianRangeVectorType     JacobianRangeVectorType;
 
-    typedef std::pair< RangeVectorType, size_t >         RangeVectorPairType;
-    typedef std::pair< JacobianRangeVectorType, size_t > JacobianRangeVectorPairType;
+    typedef typename BaseType :: RangeVectorPairType         RangeVectorPairType;
+    typedef typename BaseType :: JacobianRangeVectorPairType JacobianRangeVectorPairType;
 
   public:
     using BaseType :: evaluate;
     using BaseType :: jacobian;
 
+  protected:  
+    using BaseType :: rangeTmp_;
+    using BaseType :: jacobianTmp_;
+   
   public:
     //! Constructor
     inline explicit SimpleStorage ( const FactoryType &factory )
     : BaseType( factory )
     {
-      rangeTmp_.second = ~0u ;
-      jacobianTmp_.second = ~0u ;
     }
 
     template< int diffOrder, class QuadratureType >
@@ -213,20 +225,19 @@ namespace Dune
     template <class QuadratureType> 
     const RangeVectorType& getRangeStorage( const QuadratureType& quad ) const 
     {
-      this->fillRangeCache( *this, quad, rangeTmp_ );
-      return rangeTmp_.first;
+      RangeVectorPairType& rangeTmp = rangeTmp_[ Fem :: ThreadManager :: thread() ];
+      this->fillRangeCache( *this, quad, rangeTmp );
+      return rangeTmp.first;
     }
 
     template <class QuadratureType> 
     const JacobianRangeVectorType& getJacobianStorage( const QuadratureType& quad ) const 
     {
-      this->fillJacobianCache( *this, quad, jacobianTmp_ );
-      return jacobianTmp_.first;
+      JacobianRangeVectorPairType& jacobianTmp = jacobianTmp_[ Fem :: ThreadManager :: thread() ];
+      this->fillJacobianCache( *this, quad, jacobianTmp );
+      return jacobianTmp.first;
     }
 
-  protected:  
-    mutable RangeVectorPairType rangeTmp_;
-    mutable JacobianRangeVectorPairType jacobianTmp_;
   };
 
 
@@ -254,20 +265,19 @@ namespace Dune
     typedef typename FunctionSpaceType :: RangeType RangeType;
     typedef typename FunctionSpaceType :: JacobianRangeType JacobianRangeType;
 
-    typedef MutableArray< MutableArray<RangeType> >         RangeVectorType;
-    typedef MutableArray< MutableArray<JacobianRangeType> > JacobianRangeVectorType;
+    typedef typename BaseType :: RangeVectorType             RangeVectorType ;
+    typedef typename BaseType :: JacobianRangeVectorType     JacobianRangeVectorType;
 
-    typedef std::pair< RangeVectorType, size_t >         RangeVectorPairType;
-    typedef std::pair< JacobianRangeVectorType, size_t > JacobianRangeVectorPairType;
+    typedef typename BaseType :: RangeVectorPairType         RangeVectorPairType;
+    typedef typename BaseType :: JacobianRangeVectorPairType JacobianRangeVectorPairType;
 
-  private:
+  protected:
     typedef std::map<size_t, bool> RangeStoredType;
     typedef std::map<size_t, bool> JacobianRangeStoredType;
     typedef typename RangeStoredType::iterator RangeIteratorType;
     typedef typename JacobianRangeStoredType::iterator JacobianRangeIteratorType;
     typedef std::pair<
       RangeIteratorType, JacobianRangeIteratorType> ReturnPairType;
-
 
     typedef MutableArray< RangeVectorType >         RangeContainerType;
     typedef MutableArray< JacobianRangeVectorType > JacobianRangeContainerType;
@@ -309,22 +319,26 @@ namespace Dune
         storage.jacobian(baseFunct,quad.point(quadPoint),result); 
       }
 
+      template <class RangeVectorPairTypeVector>
       static const RangeVectorType& 
       evaluate(const ThisType& storage,
                const QuadratureType& quad, 
                const RangeContainerType&,
-               RangeVectorPairType& rangeTmp )
+               RangeVectorPairTypeVector& rangeTmpVector )
       {
+        RangeVectorPairType& rangeTmp = rangeTmpVector[ Fem :: ThreadManager :: thread() ];
         storage.fillRangeCache( storage, quad, rangeTmp );
         return rangeTmp.first ;
       }
 
+      template <class JacobianRangePairTypeVector>
       static const JacobianRangeVectorType& 
       jacobian(const ThisType& storage,
                const QuadratureType& quad, 
                const JacobianRangeContainerType&,
-               JacobianRangeVectorPairType& jacobianTmp )
+               JacobianRangePairTypeVector& jacobianTmpVector )
       {
+        JacobianRangeVectorPairType& jacobianTmp = jacobianTmpVector[ Fem :: ThreadManager :: thread() ];
         storage.fillJacobianCache( storage, quad, jacobianTmp );
         return jacobianTmp.first;
       }
@@ -397,15 +411,16 @@ namespace Dune
     using BaseType :: cacheExistingQuadratures;
     using BaseType :: evaluate;
     using BaseType :: jacobian;
+
+  protected:  
+    using BaseType :: rangeTmp_;
+    using BaseType :: jacobianTmp_;
    
   public:
     //! Constructor
     inline explicit CachingStorage ( const FactoryType &factory )
     : BaseType( factory )
     {
-      // initialize with non-valid numbers
-      rangeTmp_.second = ~0u ;
-      jacobianTmp_.second = ~0u ;
       cacheExistingQuadratures( *this );
     }
     
@@ -451,30 +466,6 @@ namespace Dune
         jacobian( *this, quad, jacobians_, jacobianTmp_ );
     }
 
-    template < class QuadratureType, bool caching > 
-    struct ApplyCaching
-    {
-      static int apply(const QuadratureType& quad, const int i ) 
-      {
-        return i;
-      }
-    };
-
-    template < class QuadratureType > 
-    struct ApplyCaching< QuadratureType, true >
-    {
-      static int apply(const QuadratureType& quad, const int i ) 
-      {
-        return quad.cachingPoint( i );
-      }
-    };
-
-    template <class QuadratureType> 
-    int applyCaching (const QuadratureType& quad, const int i ) const 
-    {
-      enum { applyCache = Conversion< QuadratureType, CachingInterface > :: exists };
-      return ApplyCaching< QuadratureType, applyCache > :: apply( quad, i );
-    } 
   private:
     // caches the quadrature, see also addEntry.. 
     inline void cacheQuadrature(const size_t id, 
@@ -496,9 +487,6 @@ namespace Dune
 
     mutable RangeStoredType rangestored_;
     mutable JacobianRangeStoredType jacobianstored_;
-
-    mutable RangeVectorPairType         rangeTmp_;
-    mutable JacobianRangeVectorPairType jacobianTmp_;
   };
 
 } // end namespace Dune
