@@ -41,6 +41,9 @@ namespace Dune
     typedef std::pair< RangeVectorType, size_t >         RangeVectorPairType;
     typedef std::pair< JacobianRangeVectorType, size_t > JacobianRangeVectorPairType;
 
+    typedef std::vector< RangeVectorPairType >          RangeVectorPairTypeVector; 
+    typedef std::vector< JacobianRangeVectorPairType >  JacobianRangeVectorPairTypeVector;
+
   public:
     //! Constructor
     explicit StorageBase( const FactoryType& factory );
@@ -158,8 +161,8 @@ namespace Dune
 
     const GeometryType elementGeometry_;
 
-    mutable std::vector< RangeVectorPairType >         rangeTmp_;
-    mutable std::vector< JacobianRangeVectorPairType > jacobianTmp_;
+    mutable RangeVectorPairTypeVector         rangeTmp_;
+    mutable JacobianRangeVectorPairTypeVector jacobianTmp_;
   };
 
   /** \brief simple base function storage
@@ -272,6 +275,9 @@ namespace Dune
     typedef typename BaseType :: JacobianRangeVectorPairType JacobianRangeVectorPairType;
 
   protected:
+    typedef typename BaseType :: RangeVectorPairTypeVector          RangeVectorPairTypeVector; 
+    typedef typename BaseType :: JacobianRangeVectorPairTypeVector  JacobianRangeVectorPairTypeVector;
+
     typedef std::map<size_t, bool> RangeStoredType;
     typedef std::map<size_t, bool> JacobianRangeStoredType;
     typedef typename RangeStoredType::iterator RangeIteratorType;
@@ -319,7 +325,6 @@ namespace Dune
         storage.jacobian(baseFunct,quad.point(quadPoint),result); 
       }
 
-      template <class RangeVectorPairTypeVector>
       static const RangeVectorType& 
       evaluate(const ThisType& storage,
                const QuadratureType& quad, 
@@ -331,12 +336,11 @@ namespace Dune
         return rangeTmp.first ;
       }
 
-      template <class JacobianRangePairTypeVector>
       static const JacobianRangeVectorType& 
       jacobian(const ThisType& storage,
                const QuadratureType& quad, 
                const JacobianRangeContainerType&,
-               JacobianRangePairTypeVector& jacobianTmpVector )
+               JacobianRangeVectorPairTypeVector& jacobianTmpVector )
       {
         JacobianRangeVectorPairType& jacobianTmp = jacobianTmpVector[ Fem :: ThreadManager :: thread() ];
         storage.fillJacobianCache( storage, quad, jacobianTmp );
@@ -391,7 +395,7 @@ namespace Dune
       evaluate(const ThisType& storage,
                const QuadratureType& quad, 
                const RangeContainerType& ranges,
-               RangeVectorPairType& )
+               const RangeVectorPairTypeVector& )
       {
         return ranges[ quad.id() ];
       }
@@ -400,7 +404,7 @@ namespace Dune
       jacobian(const ThisType& storage,
                const QuadratureType& quad, 
                const JacobianRangeContainerType& jacobians,
-               JacobianRangeVectorPairType& )
+               const JacobianRangeVectorPairTypeVector& )
       {
         return jacobians[ quad.id() ];
       }
