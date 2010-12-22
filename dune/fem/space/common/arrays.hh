@@ -210,7 +210,7 @@ private:
   void assertIndex ( const size_t i ) const
   {
 #ifndef NDEBUG
-    if( (i < 0) || (i >= size()) )
+    if( i >= size() )
     {
       std::cerr << std::endl;
       std::cerr << "Error in StaticArray: Index out of Range: " << i << std::endl;
@@ -418,7 +418,6 @@ protected:
   // actual capacity of array
   size_t memSize_;
  
-  MutableArray(const MutableArray&);
 public:
   using BaseType :: size ;
 
@@ -429,7 +428,17 @@ public:
     , memSize_(0) 
   {
   }
-  
+
+  //! copy constructor
+  MutableArray(const MutableArray& other) 
+    : BaseType(0, (T *) 0),
+      memoryFactor_(1.0),
+      memSize_(0)
+  {
+    // assign vector 
+    *this = other;
+  }
+
   //! create array of length size
   MutableArray(const size_t size) 
     : BaseType(size, 
