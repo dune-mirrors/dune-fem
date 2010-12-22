@@ -35,6 +35,9 @@ namespace Dune
     //! type of the array elements
     typedef typename Traits::ElementType ElementType;
 
+    //! make consistent with std::vector 
+    typedef ElementType value_type ;
+
     //! type of constant iterator
     typedef typename Traits::ConstIteratorType ConstIteratorType;
 
