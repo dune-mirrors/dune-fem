@@ -263,6 +263,12 @@ namespace Dune
      \parametername \c fem.timeprovider.starttime \n
                     time used for initializing the starting time
                     defaults to zero.
+     \parametername \c fem.timeprovider.updatestep \n
+                    only do the update of the time step size 
+                    every 'updatestep' to avoid the 
+                    expensive communication to achieve this 
+                    (for testing only); 
+                    defaults to 1 
    */
   template< class CommProvider = DefaultCollectiveCommunicationType >
   class TimeProvider {
