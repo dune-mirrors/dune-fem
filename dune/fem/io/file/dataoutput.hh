@@ -641,12 +641,13 @@ namespace Dune
 
     writeStep_ = parameter.startcounter();
 
-    if (myRank_==0) {
+    if (myRank_ == 0 && outputFormat_ != none ) 
+    {
       std::string name = path_ + "/" + datapref_;
       name += ".series";
       std::cout << "opening file: " << name << std::endl;
       sequence_.open(name.c_str());
-      if (!sequence_)
+      if ( ! sequence_ )
         std::cout << "could not write sequence file" << std::endl;
     }
 
