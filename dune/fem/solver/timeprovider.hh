@@ -293,6 +293,8 @@ namespace Dune
   protected:
     const CollectiveCommunicationType &comm_;
     const double cfl_;
+    const int updateStep_;
+    int counter_; 
 
     using BaseType :: dt_;
     using BaseType :: dtEstimate_;
@@ -311,7 +313,10 @@ namespace Dune
     : BaseType(),
       comm_( comm ),
       cfl_( Parameter :: getValidValue( "fem.timeprovider.factor", (double)1.0,
-                                        ValidateGreater< double >( 0.0 ) ) )
+                                        ValidateGreater< double >( 0.0 ) ) ),
+      updateStep_( Parameter :: getValidValue( "fem.timeprovider.updatestep", (int)1,
+                                        ValidateGreater< int >( 0 ) ) ),
+      counter_( updateStep_ )
     {}
 
     /** \brief constructor taking start time
@@ -327,7 +332,10 @@ namespace Dune
     : BaseType( startTime ),
       comm_( comm ),
       cfl_( Parameter :: getValidValue( "fem.timeprovider.factor", (double)1.0,
-                                        ValidateGreater< double >( 0.0 ) ) )
+                                        ValidateGreater< double >( 0.0 ) ) ),
+      updateStep_( Parameter :: getValidValue( "fem.timeprovider.updatestep", (int)1,
+                                        ValidateGreater< int >( 0 ) ) ),
+      counter_( updateStep_ )
     {}
     
     /** \brief constructor taking start time and CFL constant
@@ -343,7 +351,9 @@ namespace Dune
                      = CollectiveCommHelperType :: defaultCommunication() )
     : BaseType( startTime ),
       comm_( comm ),
-      cfl_( cfl )
+      cfl_( cfl ),
+      updateStep_( 1 ),
+      counter_( updateStep_ )
     {}
 
     virtual~TimeProvider() {}
@@ -408,10 +418,18 @@ namespace Dune
 
     inline void initTimeStep (double dtEstimate)
     {
-      dt_ = std::min(cfl_ * dtEstimate,dtUpperBound_);
-      dt_ = comm_.min( dt_ );
-      //assert( dt_ > 0.0 );
-      valid_ = (dt_ > 0.0);
+      // increase counter 
+      ++counter_ ;
+
+      if( counter_ >= updateStep_ ) 
+      {
+        // set timestep estimate 
+        dt_ = std::min(cfl_ * dtEstimate,dtUpperBound_);
+        dt_ = comm_.min( dt_ );
+        valid_ = (dt_ > 0.0);
+        // reset counter 
+        counter_ = 0;
+      }
 
       initTimeStepEstimate();
     }
@@ -431,6 +449,7 @@ namespace Dune
     virtual void backup() const {
       BaseType::backup();
     }
+
     virtual void restore() {
       BaseType::restore();
       const_cast<double&>(cfl_) 
