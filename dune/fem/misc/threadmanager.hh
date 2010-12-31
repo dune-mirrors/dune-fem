@@ -32,9 +32,6 @@ namespace Dune
 #ifdef _OPENMP
   struct ThreadManager 
   {
-    //! set thread number to current thread 
-    static inline setThreadNumber(const int tn) {}
-
     //! return maximal number of threads possbile in the current run 
     static inline int maxThreads() 
     {
@@ -235,15 +232,6 @@ namespace Dune
 #else 
   struct ThreadManager 
   {
-    //! initialize single thread mode 
-    static inline void initSingleThreadMode() {}
-
-    //! initialize multi thread mode 
-    static inline void initMultiThreadMode( const int nThreads )  {}
-
-    //! set thread number to current thread 
-    static inline void setThreadNumber(const int tn) {}
-
     //! return maximal number of threads possbile in the current run 
     static inline int maxThreads() { return 1;  }
 
