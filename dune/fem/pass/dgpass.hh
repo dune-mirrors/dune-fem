@@ -179,7 +179,7 @@ namespace Dune {
       arg_ = const_cast<ArgumentType*>(&arg);
       dest_ = &dest;
 
-#ifdef _OPENMP 
+#ifdef USE_SMP_PARALLEL 
       if( notThreadParallel_ )
 #endif
       {
@@ -206,7 +206,7 @@ namespace Dune {
     //! Some timestep size management.
     virtual void finalize(const ArgumentType& arg, DestinationType& dest) const
     {
-#ifdef _OPENMP 
+#ifdef USE_SMP_PARALLEL
       if( notThreadParallel_ )
 #endif
       {

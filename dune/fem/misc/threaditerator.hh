@@ -27,7 +27,7 @@ namespace Dune {
       const SpaceType& space_ ;
       const IndexSetType& indexSet_;
 
-#ifdef _OPENMP
+#ifdef USE_SMP_PARALLEL
       int sequence_;
       std::vector< IteratorType > iterators_;
       MutableArray< int > threadNum_;
@@ -38,13 +38,13 @@ namespace Dune {
       explicit ThreadIterator( const SpaceType& spc )
         : space_( spc )
         , indexSet_( space_.indexSet() )
-#ifdef _OPENMP
+#ifdef USE_SMP_PARALLEL
         , sequence_( -1 )  
         , iterators_( ThreadManager::maxThreads() + 1 , space_.end() )
         , threadId_( ThreadManager::maxThreads() )
 #endif
       {
-#ifdef _OPENMP
+#ifdef USE_SMP_PARALLEL
         threadNum_.setMemoryFactor( 1.1 ); 
 #endif
         update();
@@ -56,7 +56,7 @@ namespace Dune {
       //! update internal list of iterators 
       void update() 
       {
-#ifdef _OPENMP
+#ifdef USE_SMP_PARALLEL
         // if grid got updated also update iterators 
         if( sequence_ != space_.sequence() )
         {
@@ -137,7 +137,7 @@ namespace Dune {
       //! return begin iterator for current thread 
       IteratorType begin() const 
       {
-#ifdef _OPENMP
+#ifdef USE_SMP_PARALLEL
         return iterators_[ ThreadManager :: thread() ];
 #else 
         return space_.begin();
@@ -147,7 +147,7 @@ namespace Dune {
       //! return end iterator for current thread 
       IteratorType end() const 
       {
-#ifdef _OPENMP
+#ifdef USE_SMP_PARALLEL
         return iterators_[ ThreadManager :: thread() + 1 ];
 #else 
         return space_.end();
@@ -163,7 +163,7 @@ namespace Dune {
       //! return thread number this entity belongs to 
       int thread(const EntityType& entity ) const 
       {
-#ifdef _OPENMP
+#ifdef USE_SMP_PARALLEL
         assert( (size_t) threadNum_.size() > indexSet_.index( entity ) );
         // NOTE: this number can also be negative for ghost elements or elements
         // that do not belong to the set covered by the space iterators 
@@ -222,7 +222,7 @@ namespace Dune {
       explicit ThreadIteratorPointer( const SpaceType& spc )
         : space_( spc )
         , indexSet_( space_.indexSet() )
-#ifdef _OPENMP
+#ifdef USE_SMP_PARALLEL
         , sequence_( -1 )  
         , pointers_( ThreadManager :: maxThreads() + 1 )
 #endif
@@ -232,7 +232,7 @@ namespace Dune {
 
       void update() 
       {
-#ifdef _OPENMP
+#ifdef USE_SMP_PARALLEL
         if( sequence_ != space_.sequence() )
         {
           if( ! ThreadManager :: singleThreadMode() ) 
@@ -280,7 +280,7 @@ namespace Dune {
 
       Iterator begin() const 
       {
-#ifdef _OPENMP
+#ifdef USE_SMP_PARALLEL
         return Iterator( pointers_[ ThreadManager::thread() ], 0 );
 #else 
         return Iterator( pointers_[ 0 ], 0 );
@@ -289,7 +289,7 @@ namespace Dune {
 
       Iterator end() const 
       {
-#ifdef _OPENMP
+#ifdef USE_SMP_PARALLEL
         return Iterator( pointers_[ ThreadManager::thread() ], 
                          pointers_[ ThreadManager::thread() ].size() );
 #else 

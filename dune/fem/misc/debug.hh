@@ -6,7 +6,7 @@
 namespace Dune
 {
 
-#if not defined NDEBUG && not defined _OPENMP
+#if not defined NDEBUG && not defined USE_SMP_PARALLEL
 #define USE_DEBUG_CNT
 #endif
 

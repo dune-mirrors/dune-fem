@@ -39,7 +39,7 @@ namespace Dune
       MPIHelper *&helper = instance().helper_;
       CollectiveCommunication *&comm = instance().comm_;
 #if HAVE_MPI && MPI_2 
-#ifdef _OPENMP
+#ifdef USE_SMP_PARALLEL 
       int provided;
       // use MPI_Init_thread for hybrid parallel programs 
       int is_initialized = MPI_Init_thread(&argc, &argv, MPI_THREAD_FUNNELED, &provided );
@@ -57,7 +57,7 @@ namespace Dune
       }
 
 #endif // end NDEBUG 
-#endif // end _OPENMP 
+#endif // end USE_SMP_PARALLEL
 #endif // end HAVE_MPI && MPI_2       
 
       if( (helper != 0) || (comm != 0) )
