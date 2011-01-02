@@ -54,9 +54,6 @@ namespace Dune
     
     enum { dimDomain = FunctionSpaceType::dimDomain };
 
-    // temporary variable for grad evaluation 
-    mutable double grad_[dimDomain];
-
     //- Local typedefs
     typedef typename FunctionSpaceType::DomainType DomainType;
     typedef typename FunctionSpaceType::RangeType RangeType;
@@ -104,8 +101,9 @@ namespace Dune
     // eval gradient 
     RangeFieldType grad_line(const int comp, const DomainType & xi) const
     {
-      OrthonormalBase_1D::grad_line(baseNum,&xi[0],grad_);
-      return grad_[comp];
+      double grad[dimDomain];
+      OrthonormalBase_1D::grad_line(baseNum,&xi[0],grad);
+      return grad[comp];
     }
 
     ///////////////////////////////////
@@ -123,8 +121,9 @@ namespace Dune
     
     RangeFieldType grad_triangle_2d (const int comp, const DomainType & xi) const
     {
-      OrthonormalBase_2D::grad_triangle_2d(baseNum,&xi[0],grad_);
-      return grad_[comp];
+      double grad[dimDomain];
+      OrthonormalBase_2D::grad_triangle_2d(baseNum,&xi[0],grad);
+      return grad[comp];
     }
 
     RangeFieldType hess_triangle_2d (const int comp, const DomainType & xi) const
@@ -136,8 +135,9 @@ namespace Dune
     
     RangeFieldType grad_quadrilateral_2d (const int comp, const DomainType & xi) const 
     {
-      OrthonormalBase_2D::grad_quadrilateral_2d(baseNum, &xi[0], grad_); 
-      return grad_[comp];
+      double grad[dimDomain];
+      OrthonormalBase_2D::grad_quadrilateral_2d(baseNum, &xi[0], grad); 
+      return grad[comp];
     }
 
     //////////////////////////////////////
@@ -165,26 +165,30 @@ namespace Dune
    
     RangeFieldType grad_tetrahedron_3d (const int comp, const DomainType & xi) const 
     {
-      OrthonormalBase_3D::grad_tetrahedron_3d(baseNum,&xi[0],grad_);
-      return grad_[comp];
+      double grad[dimDomain];
+      OrthonormalBase_3D::grad_tetrahedron_3d(baseNum,&xi[0],grad);
+      return grad[comp];
     }
     
     RangeFieldType grad_pyramid_3d (const int comp, const DomainType & xi) const
     {
-      OrthonormalBase_3D::grad_pyramid_3d(baseNum,&xi[0], grad_); 
-      return grad_[comp];
+      double grad[dimDomain];
+      OrthonormalBase_3D::grad_pyramid_3d(baseNum,&xi[0], grad); 
+      return grad[comp];
     }
 
     RangeFieldType grad_prism_3d (const int comp, const DomainType & xi) const 
     {
-      OrthonormalBase_3D::grad_prism_3d(baseNum,&xi[0], grad_ ); 
-      return grad_[comp];
+      double grad[dimDomain];
+      OrthonormalBase_3D::grad_prism_3d(baseNum,&xi[0], grad ); 
+      return grad[comp];
     }
 
     RangeFieldType grad_hexahedron_3d (const int comp, const DomainType & xi) const
     {
-      OrthonormalBase_3D::grad_hexahedron_3d(baseNum,&xi[0], grad_ ); 
-      return grad_[comp];
+      double grad[dimDomain];
+      OrthonormalBase_3D::grad_hexahedron_3d(baseNum,&xi[0], grad ); 
+      return grad[comp];
     }
 
   }; // end class DGBaseFunctionWrapper
