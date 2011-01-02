@@ -5,6 +5,7 @@
 #include <vector>
 #include <list>
 
+#include <dune/common/static_assert.hh>
 #include <dune/common/typetraits.hh>
 #include <dune/grid/common/grid.hh>
 
@@ -86,6 +87,9 @@ namespace Dune
                         const QuadratureType& quad, 
                         RangeMatrixPairType& ranges ) 
     {
+      enum { cachable = Conversion< QuadratureType, CachingInterface > :: exists };
+      dune_static_assert( cachable == false, "fillRangeCache cannot be used with CachingQuadratures!" );
+
       // for all quad points evaluate all basis functions 
       const size_t quadNop = quad.nop();
       const size_t numBase = storage.numBaseFunctions();
@@ -119,6 +123,9 @@ namespace Dune
                            const QuadratureType& quad, 
                            JacobianRangeVectorPairType& jacobians)
     {
+      enum { cachable = Conversion< QuadratureType, CachingInterface > :: exists };
+      dune_static_assert( cachable == false, "fillJacobianCache cannot be used with CachingQuadratures!" );
+
       // for all quad points evaluate all basis functions 
       const size_t quadNop = quad.nop();
       const size_t numBase = storage.numBaseFunctions();
