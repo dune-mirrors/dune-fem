@@ -8,9 +8,15 @@
 //- Dune includes 
 #include <dune/common/misc.hh>
 #include <dune/common/typetraits.hh>
+#include <dune/common/version.hh>
+
 #include <dune/grid/common/grid.hh>
 #include <dune/grid/common/adaptcallback.hh> // for compatibility only
+#if DUNE_VERSION_NEWER( DUNE_GRID, 2, 1, 0 )
+#include <dune/grid/alugrid/common/defaultindexsets.hh>
+#else
 #include <dune/grid/alugrid/defaultindexsets.hh>
+#endif
 
 #include <dune/fem/misc/capabilities.hh>
 #include <dune/fem/misc/mpimanager.hh>

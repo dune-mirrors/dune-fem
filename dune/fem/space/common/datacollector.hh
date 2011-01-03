@@ -9,8 +9,14 @@
 #include <utility>
 #include <iostream>
 
-//-Dune includes 
+//-Dune includes#
+#include <dune/common/version.hh>
+
+#if DUNE_VERSION_NEWER( DUNE_GRID, 2, 1, 0 )
+#include <dune/grid/alugrid/common/interfaces.hh>
+#else
 #include <dune/grid/alugrid/interfaces.hh>
+#endif
 
 //- local includes 
 #include <dune/fem/operator/common/objpointer.hh>

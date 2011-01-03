@@ -13,12 +13,17 @@
 //- Dune includes 
 #include <dune/common/genericiterator.hh>
 #include <dune/common/exceptions.hh>
+#include <dune/common/version.hh>
 
 #if HAVE_BLAS 
 // include BLAS for daxpy operation 
 #include <dune/fem/solver/oemsolver/cblas.h>
 #endif
+#if DUNE_VERSION_NEWER( DUNE_GRID, 2, 1, 0 )
+#include <dune/grid/alugrid/common/interfaces.hh>
+#else
 #include <dune/grid/alugrid/interfaces.hh>
+#endif
 
 // include xdr wrapper 
 #include <dune/fem/io/streams/streams.hh>
