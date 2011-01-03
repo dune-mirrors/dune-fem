@@ -93,6 +93,8 @@ namespace Dune
       inline void setThreadNumber(  const pthread_t& theadId, const int threadNum )
       {
         assert( isMaster() );
+        // thread number 0 is reserved for the master thread 
+        assert( threadNum > 0 );
         idmap_[ theadId ] = threadNum ;
       }
 
@@ -145,18 +147,23 @@ namespace Dune
       {
         // get thread id 
         const pthread_t self = pthread_self();
-        // if thread is master simply return 0
-        if( mg.master_ == self ) return 0 ;
-
-        // otherwise find mapped thread number 
-        ThreadIdMap :: iterator num = mg.idmap_.find( self ) ;
-        assert( num != mg.idmap_.end() );
-        return (*num).second ;
+        // the master thread has always the thread number 0 
+        if( mg.master_ == self ) 
+        {
+          return 0 ;
+        }
+        else 
+        {
+          // otherwise find mapped thread number 
+          ThreadIdMap :: iterator num = mg.idmap_.find( self ) ;
+          assert( num != mg.idmap_.end() );
+          return (*num).second ;
+        }
       }
 
       //! default constructor 
       Manager() 
-        : master_( pthread_self() ),
+        : master_( pthread_self() ), // get id of master thread 
           idmap_(), 
           threadNum_( &Manager :: singleThreadNumber ),
           maxThreads_( 1 ), activeThreads_( 1 )

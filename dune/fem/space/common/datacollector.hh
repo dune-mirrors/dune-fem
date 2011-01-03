@@ -15,7 +15,7 @@
 #if DUNE_VERSION_NEWER( DUNE_GRID, 2, 1, 0 )
 #include <dune/grid/alugrid/common/interfaces.hh>
 #else
-#include <dune/grid/alugrid/interfaces.hh>
+#include <dune/grid/alugrid/common/interfaces.hh>
 #endif
 
 //- local includes 
