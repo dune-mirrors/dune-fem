@@ -61,8 +61,31 @@ class OdeSolverInterface
 {
 protected:
   //! constructor
-  OdeSolverInterface () {}    
+  OdeSolverInterface () {}  
+
+  struct Monitor 
+  {
+    int newtonIterations_;
+    int linearSolverIterations_;
+    int maxNewtonIterations_;
+    int maxLinearSolverIterations_;
+
+    Monitor() { reset(); }
+
+    // reset all counters 
+    void reset() 
+    { 
+      newtonIterations_ = 0; 
+      linearSolverIterations_ = 0;
+      maxNewtonIterations_ = 0;
+      maxLinearSolverIterations_ = 0;
+    }
+  };
+
 public:
+  //! monitor type 
+  typedef Monitor MonitorType;
+
   //! type of destination 
   typedef DestinationImp DestinationType;
 
@@ -79,13 +102,15 @@ public:
   */
   virtual void solve(DestinationType& u)
   {
-    std::cerr << "OdeSolverInterface::solve(DestinationType) should not be used." 
-              << std::endl;
-    abort();
+    MonitorType monitor; 
+    solve( u, monitor );
   }
 
-  virtual void solve(DestinationType& u, int& newton_iterations, int& ils_iterations,
-                     int& max_newton_iterations, int& max_ils_iterations)
+  /** \brief solve \f$\partial_t u = L(u)\f$ where \f$L\f$ is the internal operator.   
+      \param[in] u unknown to solve for 
+      \param[in] monitor Monitor to get some inside information 
+  */
+  virtual void solve(DestinationType& u, MonitorType& monitor) 
   {
     std::cerr << "OdeSolverInterface::solve(DestinationType,int&,int&) should not be used." 
               << std::endl;
@@ -105,6 +130,8 @@ public:
   typedef DestinationImp DestinationType; 
   typedef SpaceOperatorInterface<DestinationImp> OperatorType;
   typedef typename DestinationType :: DiscreteFunctionSpaceType SpaceType;
+
+  typedef typename OdeSolverInterface<DestinationImp> :: MonitorType MonitorType ;
 protected:
   std::vector< std::vector<double> > a;
   std::vector<double> b;
@@ -201,8 +228,11 @@ public:
   }
   
   //! solve the system 
-  void solve(DestinationType& U0) 
+  void solve(DestinationType& U0, MonitorType& monitor ) 
   {
+    // no information here 
+    monitor.reset();
+
     // initialize 
     if( ! initialized_ ) 
     {

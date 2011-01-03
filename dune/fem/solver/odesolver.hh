@@ -188,6 +188,8 @@ public:
   //! type of discretization operator 
   typedef PARDGSpaceOperatorInterface<DestinationType> OperatorType;
 
+  //! type of monitor class 
+  typedef typename OdeSolverInterface<DestinationImp> :: MonitorType  MonitorType;
 protected:
   //! constructor
   ParDGOdeSolverBase(Dune::TimeProviderBase& tp, 
@@ -291,6 +293,7 @@ public:
 
   typedef typename BaseType :: OperatorType    OperatorType;
   typedef typename BaseType :: DestinationType DestinationType; 
+  typedef typename BaseType :: MonitorType     MonitorType;
 
   //! constructor 
   ExplicitOdeSolver(OperatorType& op, 
@@ -305,20 +308,12 @@ public:
   virtual ~ExplicitOdeSolver() {}
  
   //! solve system 
-  inline void solve( DestinationType& U0, int& newton_iterations, int& ils_iterations,
-                     int& max_newton_iterations, int& max_ils_iterations ) 
+  void solve( DestinationType& U0, 
+                     MonitorType& monitor )
   {
     // no nonlinear system to solve for time step update
-    newton_iterations = 0;
-    ils_iterations = 0;
-    max_newton_iterations = 0;
-    max_ils_iterations = 0;
+    monitor.reset() ;
 
-    solve( U0 );
-  }
-
-  void solve( DestinationType& U0 )
-  {
     // initialize 
     if( ! initialized_ ) 
     {
@@ -409,6 +404,7 @@ public:
 
   typedef typename BaseType :: OperatorType    OperatorType;
   typedef typename BaseType :: DestinationType DestinationType; 
+  typedef typename BaseType :: MonitorType     MonitorType;
 
   ImplicitOdeSolver(OperatorType& op, 
                     Dune::TimeProviderBase& tp,
@@ -493,20 +489,7 @@ protected:
   
 public:  
   //! solve 
-  
-  inline void solve( DestinationType& U0 )
-  {
-    // dummy variables
-    int newton_iterations;
-    int ils_iterations;
-    int max_newton_iterations;
-    int max_ils_iterations;
-
-    solve( U0, newton_iterations, ils_iterations, max_newton_iterations, max_ils_iterations );
-  }
-
-  void solve( DestinationType& U0, int& newton_iterations, int& ils_iterations,
-              int& max_newton_iterations, int& max_ils_iterations ) 
+  void solve( DestinationType& U0, MonitorType& monitor )
   {
     // initialize 
     if( ! initialized_ ) 
@@ -522,8 +505,11 @@ public:
     double* u = U0.leakPointer();
       
     const bool convergence = 
-      odeSolver().step( time, dt, u, newton_iterations, ils_iterations, 
-                        max_newton_iterations, max_ils_iterations );
+      odeSolver().step( time, dt, u, 
+                        monitor.newtonIterations_,
+                        monitor.linearSolverIterations_,
+                        monitor.maxNewtonIterations_,
+                        monitor.maxLinearSolverIterations_ );
 
     double factor( 1 );
     bool changed = parameter().cflFactor( odeSolver(), *(linsolver_), convergence, factor );
@@ -549,8 +535,8 @@ public:
       if( changed && (verbose_ >= 1) && (MPIManager::rank() == 0) )
       {
         derr << " New cfl number is: "<< cfl_ << ", iterations per time step("
-             << "ILS: " << ils_iterations
-             << ", Newton: " << newton_iterations 
+             << "ILS: " << monitor.linearSolverIterations_
+             << ", Newton: " << monitor.newtonIterations_ 
              << ")"
              << std::endl;
       }
