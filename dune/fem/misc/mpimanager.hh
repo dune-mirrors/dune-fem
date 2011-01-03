@@ -47,10 +47,10 @@ namespace Dune
       if( is_initialized != MPI_SUCCESS ) 
         DUNE_THROW(InvalidStateException,"MPI_Init_thread failed!");
 
-#if not defined NDEBUG && defined DUNE_DEVEL_MODE
       if( provided != MPI_THREAD_SINGLE ) 
         DUNE_THROW(InvalidStateException,"Wrong MPI mode initialized " << provided );
       /*
+#if not defined NDEBUG && defined DUNE_DEVEL_MODE
       if( provided != MPI_THREAD_FUNNELED )
       {
         if( provided == MPI_THREAD_SINGLE )
@@ -58,9 +58,9 @@ namespace Dune
         else
           dwarn << "WARNING: MPI thread support = " << provided << " != MPI_THREAD_FUNNELED " << MPI_THREAD_FUNNELED << std::endl;
       }
+#endif // end NDEBUG 
       */
 
-#endif // end NDEBUG 
 #endif // end USE_SMP_PARALLEL
 #endif // end HAVE_MPI && MPI_2       
 
