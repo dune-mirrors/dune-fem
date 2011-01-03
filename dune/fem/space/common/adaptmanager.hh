@@ -587,6 +587,7 @@ public:
     : BaseType(grid,rpOp) 
     , Base2Type( grid , rpOp , balanceCounter )
     , commList_(rpOp)
+    , balanceTime_( 0.0 )
     , referenceCounter_( ProviderType :: getObject( &grid ) )
   {
     ++ referenceCounter_;
