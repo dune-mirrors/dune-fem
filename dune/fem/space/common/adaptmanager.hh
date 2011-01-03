@@ -16,6 +16,7 @@
 #include <dune/fem/storage/singletonlist.hh>
 
 #include <dune/fem/space/common/adaptcallbackhandle.hh>
+#include <dune/fem/io/parameter.hh>
 #include <dune/fem/misc/threadmanager.hh>
 
 
@@ -143,7 +144,7 @@ public:
   AdaptationMethod(const GridType & grid) 
     : adaptationMethod_(generic) 
   {
-    const bool output = (grid.comm().rank() == 0);
+    const bool output = ( Parameter :: verbose() );
     int am = 1;
     const std::string methodNames [] = { "none", "generic", "callback" };
     am = Parameter::getEnum("fem.adaptation.method", methodNames, am);
