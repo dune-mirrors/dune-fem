@@ -132,6 +132,8 @@ public:
   typedef typename DestinationType :: DiscreteFunctionSpaceType SpaceType;
 
   typedef typename OdeSolverInterface<DestinationImp> :: MonitorType MonitorType ;
+
+  using OdeSolverInterface<DestinationImp> :: solve ;
 protected:
   std::vector< std::vector<double> > a;
   std::vector<double> b;

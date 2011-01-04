@@ -289,7 +289,8 @@ protected:
   using BaseType :: odeSolver ;
 
 public:
-  using BaseType::initialize;
+  using BaseType :: initialize;
+  using BaseType :: solve ;
 
   typedef typename BaseType :: OperatorType    OperatorType;
   typedef typename BaseType :: DestinationType DestinationType; 
@@ -400,7 +401,8 @@ protected:
   using BaseType :: odeSolver ;
 
 public:
-  using BaseType::initialize;
+  using BaseType :: initialize;
+  using BaseType :: solve ;
 
   typedef typename BaseType :: OperatorType    OperatorType;
   typedef typename BaseType :: DestinationType DestinationType; 
