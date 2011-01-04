@@ -8,6 +8,9 @@
 #include <list>
 #include <iostream>
 
+//- dune-fem includes 
+#include <dune/fem/misc/threadmanager.hh>
+
 namespace Dune
 {
 
@@ -83,6 +86,9 @@ namespace Dune
     //inline static ObjectType & getObject(KeyType key) 
     inline static ObjectType &getObject( const KeyType &key )
     {
+      // make sure this method is only called in single thread mode 
+      assert( Fem :: ThreadManager :: singleThreadMode() ); 
+
       ValueType objValue = getObjFromList( key );
 
       // if object exists, increase reference count and return it
@@ -105,6 +111,9 @@ namespace Dune
     //! if ref counter is zero, object is deleted 
     inline static void removeObject ( const ObjectType &object )
     {
+      // make sure this method is only called in single thread mode 
+      assert( Fem :: ThreadManager :: singleThreadMode() ); 
+
       ListIteratorType end = singletonList().end();
       for( ListIteratorType it = singletonList().begin(); it != end; ++it )
       {
