@@ -86,7 +86,7 @@ namespace Dune
     {
       const unsigned int numEntityDofs = mapper_.numEntityDofs( entity );
 
-      assert( n == numEntityDofs );
+      assert( n == blockSize * numEntityDofs );
       for( unsigned int i = 0; i < numEntityDofs; ++i )
       {
         const unsigned int index = mapper_.mapEntityDofToGlobal( entity, i );
