@@ -35,6 +35,7 @@ template <class IndexSetImp>
 class IndexSetWrapper : public DefaultEmptyIndexSet 
 {
 public:
+  typedef typename IndexSetImp :: IndexType  IndexType ; 
   //! The types of the iterator 
   template<int cd>
   struct Codim
