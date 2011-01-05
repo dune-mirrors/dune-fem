@@ -98,9 +98,11 @@ namespace Dune
     void writeToBuffer(CommBuffer& buffer) const 
     {
       const size_t idxSize = indices_.size(); 
-      buffer.write( indices_.size() );
+      buffer.write( idxSize );
+      //std::cout << "P[" << MPIManager ::rank() << " write Buffer size " << idxSize << std::endl;
       for(size_t i=0; i<idxSize; ++i) 
       {
+        //std::cout << "P[" << MPIManager ::rank() << " write idx " << indices_[i] << std::endl;
         buffer.write( indices_[i] );
       }
     }
@@ -109,12 +111,14 @@ namespace Dune
     template <class CommBuffer> 
     void readFromBuffer(CommBuffer& buffer) 
     {
-      int idxSize; 
+      size_t idxSize; 
       buffer.read( idxSize );
+      //std::cout << "P[" << MPIManager ::rank() << " read Buffer size " << idxSize << std::endl;
       indices_.resize( idxSize );
-      for(int i=0; i<idxSize; ++i) 
+      for(size_t i=0; i<idxSize; ++i) 
       {
         buffer.read( indices_[i] );
+        //std::cout << "P[" << MPIManager ::rank() << " read idx " << indices_[i] << std::endl;
       }
     }
 
