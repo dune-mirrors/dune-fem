@@ -147,7 +147,7 @@ double algorithm ( MyGridType &grid, DiscreteFunctionType &solution, int step, i
     ExactSolution f;
     DGL2ProjectionImpl :: project( f, solution );
     L2Error< DiscreteFunctionType > l2err;
-    double new_error = l2err.norm( f ,solution, 0.0, polOrd + 4)[ 0 ];
+    double new_error = l2err.norm( f ,solution, polOrd + 4, 0.0)[ 0 ];
     std::cout << "before ref." << new_error << "\n\n"; 
   }
 
@@ -167,7 +167,7 @@ double algorithm ( MyGridType &grid, DiscreteFunctionType &solution, int step, i
   // pol ord for calculation the error chould by higher than 
   // pol for evaluation the basefunctions 
   L2Error < DiscreteFunctionType > l2err;
-  double error = l2err.norm(f ,solution, 0.0, polOrd + 4)[ 0 ];
+  double error = l2err.norm(f ,solution, polOrd + 4, 0.0 )[ 0 ];
 
 #if USE_GRAPE
   // if Grape was found, then display last solution 
@@ -180,7 +180,7 @@ double algorithm ( MyGridType &grid, DiscreteFunctionType &solution, int step, i
   
   //! perform l2-projection to refined grid
   DGL2ProjectionImpl :: project ( f, solution );
-  double new_error = l2err.norm(f ,solution, 0.0, polOrd + 4)[ 0 ];
+  double new_error = l2err.norm(f ,solution, polOrd + 4, 0.0)[ 0 ];
   std::cout << "\nL2 Error : " << error << " on new grid " << new_error << "\n\n";
 #if USE_GRAPE
   // if Grape was found, then display last solution 
