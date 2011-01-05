@@ -16,8 +16,6 @@ using namespace Dune;
 #include <dune/fem/gridpart/gridpart.hh>
 #include <dune/fem/gridpart/adaptiveleafgridpart.hh>
 
-#include <dune/fem/operator/projection/dgl2projection.hh>
-
 #if HAVE_GRAPE && GRIDDIM > 1 
 #define USE_GRAPE 1
 #else 
@@ -85,6 +83,53 @@ struct ExactSolution
     ret = 2.; // maximum of function is 2
     for( int i = 0; i < DomainType::dimension; ++i )
       ret *= sin( x[ i ]*(1.0 -x[ i ])*4.);
+  }
+};
+
+// ********************************************************************
+class DGL2ProjectionAllPartitionNoComm
+{
+
+ public:
+  template <class FunctionType, class DiscreteFunctionType> 
+  static void project (const FunctionType &f, DiscreteFunctionType &discFunc, 
+                       int polOrd = -1 ) 
+  {
+    typedef typename DiscreteFunctionType::Traits::DiscreteFunctionSpaceType 
+      FunctionSpaceType;
+    typedef typename FunctionSpaceType::Traits::GridPartType GridPartType;
+    typedef typename GridPartType :: template Codim < 0 > :: 
+      template Partition< All_Partition > :: IteratorType IteratorType;
+
+    const FunctionSpaceType& space =  discFunc.space();
+
+    if( polOrd < 0 )  polOrd = 2 * space.order() + 2 ;
+
+    discFunc.clear();
+
+    typedef typename DiscreteFunctionType::LocalFunctionType LocalFuncType;
+
+    typename FunctionSpaceType::RangeType ret (0.0);
+    typename FunctionSpaceType::RangeType phi (0.0);
+
+    IteratorType it    = space.gridPart().template begin< 0, All_Partition > ();
+    IteratorType endit = space.gridPart().template end< 0, All_Partition > ();
+
+    // Get quadrature rule
+    CachingQuadrature<GridPartType,0> quad(*it, polOrd);
+
+    for( ; it != endit ; ++it) 
+    {
+      LocalFuncType lf = discFunc.localFunction(*it);
+      const typename MyGridType::template Codim<0>::Entity::Geometry &itGeom
+        = (*it).geometry();
+      for( size_t qP = 0; qP < quad.nop(); ++qP )
+      {
+        f.evaluate(itGeom.global(quad.point(qP)), ret);
+        ret *= quad.weight(qP) ;
+        lf.axpy( quad[qP], ret );
+      }
+    }
   }
 };
 
@@ -163,7 +208,7 @@ void resetNonInterior( DiscreteFunctionType &solution )
     }
   }
 
-  std::cout << "P[" << space.grid().comm().rank() << "] reset " << count << " entities "  << std::endl;
+  std::cout << "P[" << space.grid().comm().rank() << "]  reset " << count << " entities "  << std::endl;
             
 }
  
@@ -175,9 +220,9 @@ double algorithm ( MyGridType &grid, DiscreteFunctionType &solution, int step, i
   solution.clear();
 
   {
-    DGL2ProjectionImpl :: project( f, solution );
+    DGL2ProjectionAllPartitionNoComm :: project( f, solution );
     double new_error = l2err.norm(f ,solution);
-    std::cout << "P[" << grid.comm().rank() << "]  start comm: " << new_error << "\n\n"; 
+    std::cout << "P[" << grid.comm().rank() << "]  start comm: " << new_error << std::endl; 
   }
 
 #if USE_GRAPE
@@ -210,8 +255,6 @@ double algorithm ( MyGridType &grid, DiscreteFunctionType &solution, int step, i
   }
 #endif
   
-  DGL2ProjectionImpl :: project( f, solution );
-
   return error;
 }
 
