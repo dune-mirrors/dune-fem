@@ -71,6 +71,10 @@ namespace Fem {
       savedBaseSets_.clear();
       filenames_.clear();
       dimRanges_.clear();
+      nopMax_ = 0; 
+      nopMin_ = 0;
+      baseMax_ = 0; 
+      baseMin_ = 0;
     }
 
     //! disable automatic end of code generation 
