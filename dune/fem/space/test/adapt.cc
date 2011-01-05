@@ -17,6 +17,8 @@ using namespace Dune;
 #include <dune/fem/gridpart/adaptiveleafgridpart.hh>
 
 #include <dune/fem/space/lagrangespace.hh>
+#include <dune/fem/operator/projection/dgl2projection.hh>
+#include <dune/fem/misc/l2error.hh>
 
 #if HAVE_GRAPE && GRIDDIM > 1 
 #define USE_GRAPE 1
@@ -94,98 +96,6 @@ struct ExactSolution
 };
  
 // ********************************************************************
-template <class DiscreteFunctionType, class FunctionType, int polOrd>
-class L2Projection
-{
-  typedef typename DiscreteFunctionType::FunctionSpaceType FunctionSpaceType;
-
- public:
-  static void project (const FunctionType &f, DiscreteFunctionType &discFunc) {
-    typedef typename DiscreteFunctionType::Traits::DiscreteFunctionSpaceType 
-      FunctionSpaceType;
-    typedef typename FunctionSpaceType::Traits::GridPartType GridPartType;
-    typedef typename FunctionSpaceType::Traits::IteratorType Iterator;
-
-    const FunctionSpaceType& space =  discFunc.space();
-
-    discFunc.clear();
-
-    typedef typename DiscreteFunctionType::LocalFunctionType LocalFuncType;
-
-    typename FunctionSpaceType::RangeType ret (0.0);
-    typename FunctionSpaceType::RangeType phi (0.0);
-
-    Iterator it = space.begin();
-    Iterator endit = space.end();
-
-    // Get quadrature rule
-    CachingQuadrature<GridPartType,0> quad(*it, 2*polOrd);
-
-    for( ; it != endit ; ++it) {
-      LocalFuncType lf = discFunc.localFunction(*it);
-      const typename FunctionSpaceType::BaseFunctionSetType & baseset =
-        lf.baseFunctionSet();
-      const typename MyGridType::template Codim<0>::Entity::Geometry &itGeom
-        = (*it).geometry();
-      for( size_t qP = 0; qP < quad.nop(); ++qP )
-      {
-        f.evaluate(itGeom.global(quad.point(qP)), ret);
-        for(int i=0; i<lf.numDofs(); i++) 
-        {
-          baseset.evaluate( i, quad[qP], phi );
-          lf[i] += quad.weight(qP) * (ret * phi) ;
-        }
-      }
-    }
-  }
-};
-
-// calculates || u-u_h ||_L2
-template <class DiscreteFunctionType>
-class L2Error
-{
-  typedef typename DiscreteFunctionType::DiscreteFunctionSpaceType
-    DiscreteFunctionSpaceType;
-
-public:
-  template< int polOrd, class FunctionType >
-  double norm (FunctionType &f, DiscreteFunctionType &discFunc, double time)
-  {
-    const DiscreteFunctionSpaceType &space = discFunc.space();
-
-    typedef typename DiscreteFunctionSpaceType::GridPartType GridPartType;
-    typedef typename DiscreteFunctionSpaceType::IteratorType IteratorType;
-    typedef typename DiscreteFunctionSpaceType::RangeType RangeType;
-
-    typedef typename DiscreteFunctionType::LocalFunctionType LocalFuncType;
-
-    RangeType ret (0.0);
-    RangeType phi (0.0);
-
-    double sum = 0.0;
-
-    IteratorType it    = space.begin();
-    IteratorType endit = space.end();
-
-    // check whether grid is empty
-    assert( it != endit );
-
-    for(; it != endit ; ++it)
-    {
-      CachingQuadrature<GridPartType,0> quad(*it, polOrd);
-      LocalFuncType lf = discFunc.localFunction(*it);
-      for( size_t qP = 0; qP < quad.nop(); ++qP )
-      {
-        double det = (*it).geometry().integrationElement(quad.point(qP));
-        f.evaluate((*it).geometry().global(quad.point(qP)),time, ret);
-        lf.evaluate(quad[qP],phi);
-        sum += det * quad.weight(qP) * SQR(ret[0] - phi[0]);
-      }
-    }
-    return sqrt(sum);
-  }
-};
-// ********************************************************************
 void adapt( MyGridType &grid, DiscreteFunctionType &solution, int step )
 {
   typedef DiscreteFunctionType::DiscreteFunctionSpaceType::IteratorType Iterator;
@@ -235,9 +145,9 @@ double algorithm ( MyGridType &grid, DiscreteFunctionType &solution, int step, i
 {
   {
     ExactSolution f;
-    L2Projection< DiscreteFunctionType, ExactSolution, polOrd >::project( f, solution );
+    DGL2ProjectionImpl :: project( f, solution );
     L2Error< DiscreteFunctionType > l2err;
-    double new_error = l2err.norm<polOrd + 4> (f ,solution, 0.0);
+    double new_error = l2err.norm( f ,solution, 0.0, polOrd + 4)[ 0 ];
     std::cout << "before ref." << new_error << "\n\n"; 
   }
 
@@ -257,7 +167,7 @@ double algorithm ( MyGridType &grid, DiscreteFunctionType &solution, int step, i
   // pol ord for calculation the error chould by higher than 
   // pol for evaluation the basefunctions 
   L2Error < DiscreteFunctionType > l2err;
-  double error = l2err.norm<polOrd + 4> (f ,solution, 0.0);
+  double error = l2err.norm(f ,solution, 0.0, polOrd + 4)[ 0 ];
 
 #if USE_GRAPE
   // if Grape was found, then display last solution 
@@ -269,8 +179,8 @@ double algorithm ( MyGridType &grid, DiscreteFunctionType &solution, int step, i
 #endif
   
   //! perform l2-projection to refined grid
-  L2Projection<DiscreteFunctionType, ExactSolution, polOrd>::project( f, solution );
-  double new_error = l2err.norm<polOrd + 4> (f ,solution, 0.0);
+  DGL2ProjectionImpl :: project ( f, solution );
+  double new_error = l2err.norm(f ,solution, 0.0, polOrd + 4)[ 0 ];
   std::cout << "\nL2 Error : " << error << " on new grid " << new_error << "\n\n";
 #if USE_GRAPE
   // if Grape was found, then display last solution 
