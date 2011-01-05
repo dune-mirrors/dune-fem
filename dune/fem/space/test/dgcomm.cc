@@ -243,8 +243,7 @@ double algorithm ( MyGridType &grid, DiscreteFunctionType &solution, int step, i
 
   // calculate l2 error again 
   double error = l2err.norm(f ,solution);
-  std::cout << "P[" << grid.comm().rank() << "]  done comm: " << error << std::endl <<
-    std::endl ; 
+  std::cout << "P[" << grid.comm().rank() << "]  done comm: " << error << std::endl;
 
 #if USE_GRAPE
   // if Grape was found, then display last solution 
@@ -300,7 +299,7 @@ try {
   for(int i=0; i<ml; ++i )
   {
     if( grid.comm().rank() == 0) 
-      std::cout << "**** Start communication cycle " << i << "  ****" << std::endl;
+      std::cout << std::endl << "**** Start communication cycle " << i << "  ****" << std::endl;
     GlobalRefine :: apply( grid, step ); 
     error[ i ] = algorithm ( grid , solution, step, (i==ml-1));
   }
