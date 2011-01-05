@@ -36,26 +36,23 @@ namespace Dune
    */
   template< class TraitsImp >
   class OutStreamInterface
-  : public BartonNackmanInterface< OutStreamInterface< TraitsImp >,
-                                   typename TraitsImp :: OutStreamType >
+  : public BartonNackmanInterface< OutStreamInterface< TraitsImp >, typename TraitsImp::OutStreamType >
   {
+    typedef OutStreamInterface< TraitsImp > ThisType;
+    typedef BartonNackmanInterface< ThisType, typename TraitsImp::OutStreamType > BaseType;
+
   public:
     //! type of the traits
     typedef TraitsImp Traits;
 
     //! type of the implementation (Barton-Nackman)
-    typedef typename Traits :: OutStreamType OutStreamType;
+    typedef typename Traits::OutStreamType OutStreamType;
 
-  private:
-    typedef OutStreamInterface< Traits > ThisType;
-    typedef BartonNackmanInterface< ThisType, OutStreamType > BaseType;
-
-  public:
     //! type of the interface
     typedef ThisType OutStreamInterfaceType;
 
   protected:
-    using BaseType :: asImp;
+    using BaseType::asImp;
 
   public:
     /** \brief flush the stream
@@ -63,7 +60,7 @@ namespace Dune
      *  By calling the flush method, the user can ensure that the stream is
      *  actually transferred (e.g., written to disk)
      */
-    inline void flush ()
+    void flush ()
     {
       CHECK_AND_CALL_INTERFACE_IMPLEMENTATION( asImp().flush() );
     }
@@ -72,7 +69,7 @@ namespace Dune
      *
      * \param[in]  value  value to write to the stream
      */
-    inline void writeDouble ( const double value )
+    void writeDouble ( const double value )
     {
       CHECK_AND_CALL_INTERFACE_IMPLEMENTATION( asImp().writeDouble( value ) );
     }
@@ -81,7 +78,7 @@ namespace Dune
      *
      * \param[in]  value  value to write to the stream
      */
-    inline void writeFloat ( const float value )
+    void writeFloat ( const float value )
     {
       CHECK_AND_CALL_INTERFACE_IMPLEMENTATION( asImp().writeFloat( value ) );
     }
@@ -90,7 +87,7 @@ namespace Dune
      *
      * \param[in]  value  value to write to the stream
      */
-    inline void writeInt ( const int value )
+    void writeInt ( const int value )
     {
       CHECK_AND_CALL_INTERFACE_IMPLEMENTATION( asImp().writeInt( value ) );
     }
@@ -99,7 +96,7 @@ namespace Dune
      *
      * \param[in]  value  value to write to the stream
      */
-    inline void writeChar ( const char value )
+    void writeChar ( const char value )
     {
       CHECK_AND_CALL_INTERFACE_IMPLEMENTATION( asImp().writeChar( value ) );
     }
@@ -108,7 +105,7 @@ namespace Dune
      *
      * \param[in]  value  value to write to the stream
      */
-    inline void writeBool ( const bool value )
+    void writeBool ( const bool value )
     {
       CHECK_AND_CALL_INTERFACE_IMPLEMENTATION( asImp().writeBool( value ) );
     }
@@ -117,7 +114,7 @@ namespace Dune
      *
      * \param[in]  s  string to write to the stream
      */
-    inline void writeString ( const std :: string &s )
+    void writeString ( const std::string &s )
     {
       CHECK_AND_CALL_INTERFACE_IMPLEMENTATION( asImp().writeString( s ) );
     }
@@ -126,13 +123,22 @@ namespace Dune
      *
      * \param[in]  value  value to write to the stream
      */
-    inline void writeUnsignedInt ( unsigned int value )
+    void writeUnsignedInt ( unsigned int value )
     {
       CHECK_AND_CALL_INTERFACE_IMPLEMENTATION( asImp().writeUnsignedInt( value ) );
     }
 
+    /** \brief write an unsigned long to the stream
+     *
+     * \param[in]  value  value to write to the stream
+     */
+    void writeUnsignedLong ( unsigned long value )
+    {
+      CHECK_AND_CALL_INTERFACE_IMPLEMENTATION( asImp().writeUnsignedLong( value ) );
+    }
+
   protected:
-    inline void writeError () const
+    void writeError () const
     {
       DUNE_THROW( StreamError, "Unable to write to stream." );
     }
@@ -163,33 +169,30 @@ namespace Dune
    */
   template< class TraitsImp >
   class InStreamInterface
-  : public BartonNackmanInterface< InStreamInterface< TraitsImp >,
-                                   typename TraitsImp :: InStreamType >
+  : public BartonNackmanInterface< InStreamInterface< TraitsImp >, typename TraitsImp::InStreamType >
   {
+    typedef InStreamInterface< TraitsImp > ThisType;
+    typedef BartonNackmanInterface< ThisType, typename TraitsImp::InStreamType > BaseType;
+
   public:
     //! type of the traits
     typedef TraitsImp Traits;
 
     //! type of the implementation (Barton-Nackman)
-    typedef typename Traits :: InStreamType InStreamType;
+    typedef typename Traits::InStreamType InStreamType;
 
-  private:
-    typedef InStreamInterface< Traits > ThisType;
-    typedef BartonNackmanInterface< ThisType, InStreamType > BaseType;
-
-  public:
     //! type of the interface
     typedef ThisType InStreamInterfaceType;
 
   protected:
-    using BaseType :: asImp;
+    using BaseType::asImp;
     
   public:
     /** \brief read a double from the stream
      *
      *  \param[out]  value  reference to the variable to read from the stream
      */
-    inline void readDouble ( double &value )
+    void readDouble ( double &value )
     {
       CHECK_AND_CALL_INTERFACE_IMPLEMENTATION( asImp().readDouble( value ) );
     }
@@ -198,7 +201,7 @@ namespace Dune
      *
      *  \returns a double read from the stream
      */
-    inline double readDouble ()
+    double readDouble ()
     {
       double value;
       readDouble( value );
@@ -209,7 +212,7 @@ namespace Dune
      *
      *  \param[out]  value  reference to the variable to read from the stream
      */
-    inline void readFloat ( float &value )
+    void readFloat ( float &value )
     {
       CHECK_AND_CALL_INTERFACE_IMPLEMENTATION( asImp().readFloat( value ) );
     }
@@ -218,7 +221,7 @@ namespace Dune
      *
      *  \returns a double read from the stream
      */
-    inline float readFloat ()
+    float readFloat ()
     {
       float value;
       readFloat( value );
@@ -229,7 +232,7 @@ namespace Dune
      *
      *  \param[out]  value  reference to the variable to read from the stream
      */
-    inline void readInt ( int &value )
+    void readInt ( int &value )
     {
       CHECK_AND_CALL_INTERFACE_IMPLEMENTATION( asImp().readInt( value ) );
     }
@@ -238,7 +241,7 @@ namespace Dune
      *
      *  \returns an int read from the stream
      */
-    inline int readInt ()
+    int readInt ()
     {
       int value;
       readInt( value );
@@ -249,7 +252,7 @@ namespace Dune
      *
      *  \param[out]  value  reference to the variable to read from the stream
      */
-    inline void readChar ( char &value )
+    void readChar ( char &value )
     {
       CHECK_AND_CALL_INTERFACE_IMPLEMENTATION( asImp().readChar( value ) );
     }
@@ -258,7 +261,7 @@ namespace Dune
      *
      *  \returns a char read from the stream
      */  
-    inline int readChar ()
+    int readChar ()
     {
       char value;
       readChar( value );
@@ -270,7 +273,7 @@ namespace Dune
      *  \param[out]  value  reference to the variable to read from the stream
      *
      */
-    inline void readBool ( bool &value )
+    void readBool ( bool &value )
     {
       CHECK_AND_CALL_INTERFACE_IMPLEMENTATION( asImp().readBool( value ) );
     }
@@ -279,7 +282,7 @@ namespace Dune
      *
      *  \returns a bool read from the stream
      */  
-    inline bool readBool ()
+    bool readBool ()
     {
       bool value;
       readBool( value );
@@ -290,7 +293,7 @@ namespace Dune
      *
      *  \param[out]  s  reference to the string to read from the stream
      */
-    inline void readString ( std :: string &s )
+    void readString ( std::string &s )
     {
       CHECK_AND_CALL_INTERFACE_IMPLEMENTATION( asImp().readString( s ) );
     }
@@ -299,7 +302,7 @@ namespace Dune
      *
      *  \param[out]  value  reference to the variable to read from the stream
      */
-    inline void readUnsignedInt ( unsigned int &value )
+    void readUnsignedInt ( unsigned int &value )
     {
       CHECK_AND_CALL_INTERFACE_IMPLEMENTATION( asImp().readUnsignedInt( value ) );
     }
@@ -308,22 +311,42 @@ namespace Dune
      *
      *  \returns an unsigned int read from the stream
      */
-    inline unsigned int readUnsignedInt ()
+    unsigned int readUnsignedInt ()
     {
       unsigned int value;
       readUnsignedInt( value );
       return value;
     }
 
+    /** \brief read an unsigned long from the stream
+     *
+     *  \param[out]  value  reference to the variable to read from the stream
+     */
+    void readUnsignedLong ( unsigned long &value )
+    {
+      CHECK_AND_CALL_INTERFACE_IMPLEMENTATION( asImp().readUnsignedLong( value ) );
+    }
+
+    /** \brief read an unsigned long from the stream
+     *
+     *  \returns an unsigned long read from the stream
+     */
+    unsigned long readUnsignedLong ()
+    {
+      unsigned long value;
+      readUnsignedLong( value );
+      return value;
+    }
+
   protected:
-    inline void readError () const
+    void readError () const
     {
       DUNE_THROW( StreamError, "Unable to read from stream." );
     }
   };
 
-}
+} // end namespace Dune
 
 #include "streams_inline.hh"
 
-#endif
+#endif // #ifndef DUNE_FEM_STREAMS_HH

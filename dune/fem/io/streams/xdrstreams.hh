@@ -31,6 +31,9 @@ namespace Dune
   class XDRBasicOutStream
   : public OutStreamInterface< XDROutStreamTraits< OutStreamImp > >
   {
+    typedef XDRBasicOutStream< OutStreamImp > ThisType;
+    typedef OutStreamInterface< XDROutStreamTraits< OutStreamImp > > BaseType;
+
   public:
     //! type of the implementaton (Barton-Nackman)
     typedef OutStreamImp OutStreamType;
@@ -38,54 +41,49 @@ namespace Dune
     //! type of the traits
     typedef XDROutStreamTraits< OutStreamType > Traits;
 
-  private:
-    typedef XDRBasicOutStream< OutStreamType > ThisType;
-    typedef OutStreamInterface< Traits > BaseType;
-
     enum { maxStringSize = 2<<18 };
     
   protected:
     XDR xdrs_;
 
   protected:
-    using BaseType :: writeError;
+    using BaseType::writeError;
 
   protected:
-    inline XDRBasicOutStream ()
-    {
-    }
+    XDRBasicOutStream ()
+    {}
 
   public:
     /** \copydoc Dune::OutStreamInterface::writeDouble */
-    inline void writeDouble ( double value )
+    void writeDouble ( double value )
     {
       if( xdr_double( xdrs(), &value ) == 0 )
         writeError();
     }
 
     /** \copydoc Dune::OutStreamInterface::writeFloat */
-    inline void writeFloat ( float value )
+    void writeFloat ( float value )
     {
       if( xdr_float( xdrs(), &value ) == 0 )
         writeError();
     }
 
     /** \copydoc Dune::OutStreamInterface::writeInt */
-    inline void writeInt ( int value )
+    void writeInt ( int value )
     {
       if( xdr_int( xdrs(), &value ) == 0 )
         writeError();
     }
 
     /** \copydoc Dune::OutStreamInterface::writeChar */
-    inline void writeChar ( char value )
+    void writeChar ( char value )
     {
       if( xdr_char( xdrs(), &value ) == 0 )
         writeError();
     }
 
     /** \copydoc Dune::OutStreamInterface::writeBool */
-    inline void writeBool ( const bool value )
+    void writeBool ( const bool value )
     {
       // convert to character and write 
       char val = ( value == true ) ? 1 : 0;
@@ -93,7 +91,7 @@ namespace Dune
     }
 
     /** \copydoc Dune::OutStreamInterface::writeString */
-    inline void writeString ( const std :: string &s )
+    void writeString ( const std :: string &s )
     {
       assert( s.size() < maxStringSize );
       const char *cs = s.c_str();
@@ -102,14 +100,21 @@ namespace Dune
     }
 
     /** \copydoc Dune::OutStreamInterface::writeUnsignedInt */
-    inline void writeUnsignedInt ( unsigned int value )
+    void writeUnsignedInt ( unsigned int value )
     {
       if( xdr_u_int( xdrs(), &value ) == 0 )
         writeError();
     }
-    
+
+    /** \copydoc Dune::OutStreamInterface::writeUnsignedLong */
+    void writeUnsignedLong ( unsigned long value )
+    {
+      if( xdr_u_long( xdrs(), &value ) == 0 )
+        writeError();
+    }
+   
   protected:
-    inline XDR *xdrs ()
+    XDR *xdrs ()
     {
       return &xdrs_;
     }
@@ -138,6 +143,9 @@ namespace Dune
   class XDRBasicInStream
   : public InStreamInterface< XDRInStreamTraits< InStreamImp > >
   {
+    typedef XDRBasicInStream< InStreamImp > ThisType;
+    typedef InStreamInterface< XDRInStreamTraits< InStreamImp > > BaseType;
+
   public:
     //! type of the implementation (Barton-Nackman)
     typedef InStreamImp InStreamType;
@@ -146,32 +154,28 @@ namespace Dune
     typedef XDRInStreamTraits< InStreamType > Traits;
 
   private:
-    typedef XDRBasicInStream< InStreamType > ThisType;
-    typedef InStreamInterface< Traits > BaseType;
-
     enum { maxStringSize = 2<<18 };
 
   protected:
     XDR xdrs_;
 
   protected:
-    using BaseType :: readError;
+    using BaseType::readError;
 
   protected:
-    inline XDRBasicInStream ()
-    {
-    }
+    XDRBasicInStream ()
+    {}
 
   public:
     /** \copydoc Dune::InStreamInterface::readDouble */
-    inline void readDouble ( double &value )
+    void readDouble ( double &value )
     {
       if( xdr_double( xdrs(), &value ) == 0 )
         readError();
     }
 
     /** \copydoc Dune::InStreamInterface::readFloat */
-    inline void readFloat ( float &value )
+    void readFloat ( float &value )
     {
       if( xdr_float( xdrs(), &value ) == 0 )
         readError();
@@ -185,14 +189,14 @@ namespace Dune
     }
 
     /** \copydoc Dune::InStreamInterface::readChar */
-    inline void readChar ( char &value )
+    void readChar ( char &value )
     {
       if( xdr_char( xdrs(), &value ) == 0 )
         readError();
     }
 
     /** \copydoc Dune::InStreamInterface::readBool */
-    inline void readBool ( bool &value )
+    void readBool ( bool &value )
     {
       char val;
       readChar( val );
@@ -201,7 +205,7 @@ namespace Dune
     }
 
     /** \copydoc Dune::InStreamInterface::readString */
-    inline void readString ( std :: string &s )
+    void readString ( std::string &s )
     {
       char data[ maxStringSize ];
       char *cs = &(data[ 0 ]);
@@ -211,14 +215,21 @@ namespace Dune
     }
 
     /** \copydoc Dune::InStreamInterface::readUnsignedInt */
-    inline void readUnsignedInt ( unsigned int &value )
+    void readUnsignedInt ( unsigned int &value )
     {
       if( xdr_u_int( xdrs(), &value ) == 0 )
         readError();
     }
-    
+
+    /** \copydoc Dune::InStreamInterface::readUnsignedLong */
+    void readUnsignedLong ( unsigned long &value )
+    {
+      if( xdr_u_long( xdrs(), &value ) == 0 )
+        readError();
+    }
+
   protected:
-    inline XDR *xdrs ()
+    XDR *xdrs ()
     {
       return &xdrs_;
     }
@@ -315,6 +326,6 @@ namespace Dune
     }
   };
 
-}
+} // end namespace Dune
 
-#endif
+#endif // #ifndef DUNE_FEM_XDRSTREAMS_HH

@@ -33,27 +33,26 @@ namespace Dune
   class ASCIIOutStream
   : public OutStreamInterface< ASCIIOutStreamTraits >
   {
+    typedef ASCIIOutStream ThisType;
+    typedef OutStreamInterface< ASCIIOutStreamTraits > BaseType;
+
   public:
     //! type of the traits
     typedef ASCIIOutStreamTraits Traits;
     
-  private:
-    typedef ASCIIOutStream ThisType;
-    typedef OutStreamInterface< Traits > BaseType;
-
   protected:
-    std :: ostream &stream_;
+    std::ostream &stream_;
     bool mustFreeStream_;
 
   protected:
-    using BaseType :: writeError;
+    using BaseType::writeError;
 
   public:
     /** \brief constructor
      *
      *  \param[in]  stream  STL output stream to write to
      */
-    inline explicit ASCIIOutStream ( std :: ostream &stream )
+    explicit ASCIIOutStream ( std::ostream &stream )
     : stream_( stream ),
       mustFreeStream_( false )
     {}
@@ -62,26 +61,26 @@ namespace Dune
      *
      *  \param[in]  filename  name of a file to write to
      */
-    inline explicit ASCIIOutStream ( const std::string &filename )
+    explicit ASCIIOutStream ( const std::string &filename )
     : stream_( *(new std :: ofstream( filename.c_str() )) ),
       mustFreeStream_( true )
     {}
 
     /** \brief destructor */
-    inline ~ASCIIOutStream ()
+    ~ASCIIOutStream ()
     {
       if( mustFreeStream_ )
         delete &stream_;
     }
 
     /** \copydoc Dune::OutStreamInterface::flush */
-    inline void flush ()
+    void flush ()
     {
       stream_.flush();
     }
 
     /** \copydoc Dune::OutStreamInterface::writeDouble */
-    inline void writeDouble ( const double value )
+    void writeDouble ( const double value )
     {
       stream_.setf( std ::ios_base :: scientific, std :: ios_base :: floatfield );
       stream_ .precision( 16 );
@@ -91,7 +90,7 @@ namespace Dune
     }
 
     /** \copydoc Dune::OutStreamInterface::writeFloat */
-    inline void writeFloat ( const float value )
+    void writeFloat ( const float value )
     {
       stream_.setf( std ::ios_base :: scientific, std :: ios_base :: floatfield );
       stream_ .precision( 7 );
@@ -101,7 +100,7 @@ namespace Dune
     }
 
     /** \copydoc Dune::OutStreamInterface::writeInt */
-    inline void writeInt ( const int value )
+    void writeInt ( const int value )
     {
       stream_ << value << std :: endl;
       if( !valid () )
@@ -109,7 +108,7 @@ namespace Dune
     }
 
     /** \copydoc Dune::OutStreamInterface::writeChar */
-    inline void writeChar ( const char value )
+    void writeChar ( const char value )
     {
       // make sure char is written as number 
       int val = (int) value;
@@ -117,7 +116,7 @@ namespace Dune
     }
 
     /** \copydoc Dune::OutStreamInterface::writeChar */
-    inline void writeBool ( const bool value )
+    void writeBool ( const bool value )
     {
       std::string val( ( value == true ) ? "true" : "false" );
       writeString( val );
@@ -128,7 +127,7 @@ namespace Dune
      *  \note Strings containing newline characters will not be read back
      *        correctly.
      */
-    inline void writeString ( const std :: string &s )
+    void writeString ( const std::string &s )
     {
       const unsigned int length = s.length();
       stream_ << length;
@@ -140,15 +139,23 @@ namespace Dune
     }
 
     /** \copydoc Dune::OutStreamInterface::writeUnsignedInt */
-    inline void writeUnsignedInt ( unsigned int value )
+    void writeUnsignedInt ( unsigned int value )
     {
-      stream_ << value << std :: endl;
+      stream_ << value << std::endl;
+      if( !valid () )
+        writeError();
+    }
+
+    /** \copydoc Dune::OutStreamInterface::writeUnsignedLong */
+    void writeUnsignedLong ( unsigned long value )
+    {
+      stream_ << value << std::endl;
       if( !valid () )
         writeError();
     }
 
   protected:
-    inline bool valid () const
+    bool valid () const
     {
       return stream_.good() | stream_.eof();
     }
@@ -175,27 +182,26 @@ namespace Dune
   class ASCIIInStream
   : public InStreamInterface< ASCIIInStreamTraits >
   {
+    typedef ASCIIInStream ThisType;
+    typedef InStreamInterface< ASCIIInStreamTraits > BaseType;
+
   public:
     //! type of the traits
     typedef ASCIIInStreamTraits Traits;
     
-  private:
-    typedef ASCIIInStream ThisType;
-    typedef InStreamInterface< Traits > BaseType;
-
   protected:
-    std :: istream &stream_;
+    std::istream &stream_;
     bool mustFreeStream_;
 
   protected:
-    using BaseType :: readError;
+    using BaseType::readError;
 
   public:
     /** \brief constructor
      *
      *  \param[in]  stream  STL output stream to write to
      */
-    inline ASCIIInStream ( std :: istream &stream )
+    explicit ASCIIInStream ( std::istream &stream )
     : stream_( stream ),
       mustFreeStream_( false )
     {}
@@ -204,20 +210,20 @@ namespace Dune
      *
      *  \param[in]  filename  name of a file to write to
      */
-    inline ASCIIInStream ( const std::string &filename )
+    ASCIIInStream ( const std::string &filename )
     : stream_( *(new std :: ifstream( filename.c_str() )) ),
       mustFreeStream_( true )
     {}
 
     /** \brief destructor */
-    inline ~ASCIIInStream ()
+    ~ASCIIInStream ()
     {
       if( mustFreeStream_ )
         delete &stream_;
     }
 
     /** \copydoc Dune::InStreamInterface::readDouble */
-    inline void readDouble ( double &value )
+    void readDouble ( double &value )
     {
       stream_ >> value;
       if( !valid () )
@@ -225,7 +231,7 @@ namespace Dune
     }
 
     /** \copydoc Dune::InStreamInterface::readFloat */
-    inline void readFloat ( float &value )
+    void readFloat ( float &value )
     {
       stream_ >> value;
       if( !valid () )
@@ -233,7 +239,7 @@ namespace Dune
     }
 
     /** \copydoc Dune::InStreamInterface::readInt */
-    inline void readInt ( int &value )
+    void readInt ( int &value )
     {
       stream_ >> value;
       if( !valid () )
@@ -241,15 +247,15 @@ namespace Dune
     }
 
     /** \copydoc Dune::InStreamInterface::readChar */
-    inline void readChar ( char &value )
+    void readChar ( char &value )
     {
-      int val ;
+      int val;
       readInt( val );
       value = (char) val;
     }
 
     /** \copydoc Dune::InStreamInterface::readBool */
-    inline void readBool ( bool &value )
+    void readBool ( bool &value )
     {
       std::string val;
       readString( val );
@@ -267,7 +273,7 @@ namespace Dune
      *  \note Strings containing newline characters will not be read back
      *        correctly.
      */
-    inline void readString ( std :: string &s )
+    void readString ( std::string &s )
     {
       unsigned int length;
       stream_ >> length;
@@ -278,7 +284,15 @@ namespace Dune
     }
 
     /** \copydoc Dune::InStreamInterface::readUnsignedInt */
-    inline void readUnsignedInt ( unsigned int &value )
+    void readUnsignedInt ( unsigned int &value )
+    {
+      stream_ >> value;
+      if( !valid () )
+        readError();
+    }
+
+    /** \copydoc Dune::InStreamInterface::readUnsignedInt */
+    void readUnsignedLong ( unsigned int &value )
     {
       stream_ >> value;
       if( !valid () )
@@ -286,13 +300,12 @@ namespace Dune
     }
 
   protected:
-    inline bool valid () const
+    bool valid () const
     {
       return stream_.good() | stream_.eof();
     }
   };
 
-}
+} // end namespace Dune
 
-#endif
-
+#endif // #ifndef DUNE_FEM_ASCIISTREAMS_HH

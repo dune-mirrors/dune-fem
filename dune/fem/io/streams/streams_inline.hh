@@ -68,7 +68,16 @@ namespace Dune
     out.writeUnsignedInt( value );
     return out;
   }
- 
+
+  template< class Traits >
+  inline OutStreamInterface< Traits > &
+    operator<< ( OutStreamInterface< Traits > &out,
+                 const unsigned long value )
+  {
+    out.writeUnsignedLong( value );
+    return out;
+  }
+
   template< class Traits >
   inline InStreamInterface< Traits > &
     operator>> ( InStreamInterface< Traits > &in,
@@ -132,6 +141,15 @@ namespace Dune
     return in;
   }
 
+  template< class Traits >
+  inline InStreamInterface< Traits > &
+    operator>> ( InStreamInterface< Traits > &in,
+                 unsigned long &value )
+  {
+    in.readUnsignedLong( value );
+    return in;
+  }
+
 }
 
-#endif
+#endif // #ifndef DUNE_FEM_STREAMS_INLINE_HH

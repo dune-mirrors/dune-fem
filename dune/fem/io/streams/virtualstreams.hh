@@ -44,8 +44,9 @@ namespace Dune
     virtual void writeDouble ( double value ) = 0;
     virtual void writeFloat ( float value ) = 0;
     virtual void writeInt ( int value ) = 0;
-    virtual void writeString ( const std :: string &s ) = 0;
-    virtual void writeUnsignedInt( unsigned int value ) = 0;
+    virtual void writeString ( const std::string &s ) = 0;
+    virtual void writeUnsignedInt ( unsigned int value ) = 0;
+    virtual void writeUnsignedLong ( unsigned long value ) = 0;
   };
 
 
@@ -76,20 +77,20 @@ namespace Dune
     VirtualOutStreamObject *const stream_;
 
   private:
-    inline VirtualOutStream ( VirtualOutStreamObject *stream )
+    explicit VirtualOutStream ( VirtualOutStreamObject *stream )
     : stream_( stream )
     {
       ++stream_->refCount;
     }
 
   public:
-    inline VirtualOutStream ( const ThisType &other )
+    VirtualOutStream ( const ThisType &other )
     : stream_( other.stream_ )
     {
       ++stream_->refCount;
     }
 
-    inline virtual ~VirtualOutStream ()
+    virtual ~VirtualOutStream ()
     {
       if( --stream_->refCount == 0 )
         delete stream_;
@@ -99,34 +100,39 @@ namespace Dune
     ThisType &operator= ( const ThisType & );
 
   public:
-    inline void flush ()
+    void flush ()
     {
       stream_->flush();
     }
     
-    inline void writeDouble ( double value )
+    void writeDouble ( double value )
     {
       stream_->writeDouble( value );
     }
 
-    inline void writeFloat ( float value )
+    void writeFloat ( float value )
     {
       stream_->writeFloat( value );
     }
     
-    inline void writeInt ( int value )
+    void writeInt ( int value )
     {
       stream_->writeInt( value );
     }
     
-    inline void writeString ( const std :: string &s )
+    void writeString ( const std :: string &s )
     {
       stream_->writeString( s );
     }
 
-    inline void writeUnsignedInt( unsigned int value )
+    void writeUnsignedInt ( unsigned int value )
     {
       stream_->writeUnsignedInt( value );
+    }
+
+    void writeUnsignedLong ( unsigned int value )
+    {
+      stream_->writeUnsignedLong( value );
     }
   };
 
@@ -145,17 +151,19 @@ namespace Dune
     unsigned int refCount;
 
   protected:
-    inline VirtualInStreamObject ()
+    VirtualInStreamObject ()
     : refCount( 0 )
     {}
+
     virtual ~VirtualInStreamObject() {}
     
   public:
     virtual void readDouble ( double &value ) = 0;
     virtual void readFloat ( float &value ) = 0;
     virtual void readInt ( int &value ) = 0;
-    virtual void readString ( std :: string &s ) = 0;
-    virtual void readUnsignedInt( unsigned int &value ) = 0;
+    virtual void readString ( std::string &s ) = 0;
+    virtual void readUnsignedInt ( unsigned int &value ) = 0;
+    virtual void readUnsignedLong ( unsigned long &value ) = 0;
   };
 
 
@@ -186,20 +194,20 @@ namespace Dune
     VirtualInStreamObject *const stream_;
 
   private:
-    inline VirtualInStream ( VirtualInStreamObject *stream )
+    explicit VirtualInStream ( VirtualInStreamObject *stream )
     : stream_( stream )
     {
       ++stream_->refCount;
     }
 
   public:
-    inline VirtualInStream ( const ThisType &other )
+    VirtualInStream ( const ThisType &other )
     : stream_( other.stream_ )
     {
       ++stream_->refCount;
     }
 
-    inline virtual ~VirtualInStream ()
+    virtual ~VirtualInStream ()
     {
       if( --stream_->refCount == 0 )
         delete stream_;
@@ -209,29 +217,34 @@ namespace Dune
     ThisType &operator= ( const ThisType & );
 
   public:
-    inline void readDouble ( double &value )
+    void readDouble ( double &value )
     {
       stream_->readDouble( value );
     }
     
-    inline void readFloat ( float &value )
+    void readFloat ( float &value )
     {
       stream_->readFloat( value );
     }
     
-    inline void readInt ( int &value )
+    void readInt ( int &value )
     {
       stream_->readInt( value );
     }
     
-    inline void readString ( std :: string &s )
+    void readString ( std :: string &s )
     {
       stream_->readString( s );
     }
     
-    inline void readUnsignedInt( unsigned int &value )
+    void readUnsignedInt ( unsigned int &value )
     {
       stream_->readUnsignedInt( value );
+    }
+
+    void readUnsignedLong ( unsigned long &value )
+    {
+      stream_->readUnsignedLong( value );
     }
   };
 
@@ -257,7 +270,7 @@ namespace Dune
     StreamType &stream_;
 
   private:
-    inline explicit VirtualOutStreamWrapper ( StreamType &stream )
+    explicit VirtualOutStreamWrapper ( StreamType &stream )
     : stream_( stream )
     {}
 
@@ -318,7 +331,7 @@ namespace Dune
     StreamType &stream_;
 
   private:
-    inline explicit VirtualInStreamWrapper ( StreamType &stream )
+    explicit VirtualInStreamWrapper ( StreamType &stream )
     : stream_( stream )
     {}
 
@@ -371,4 +384,4 @@ namespace Dune
 
 }
 
-#endif
+#endif // #ifndef DUNE_FEM_VIRTUALSTREAMS_HH
