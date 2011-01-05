@@ -102,8 +102,10 @@ public:
     const DiscreteFunctionSpaceType &space = discFunc.space();
 
     typedef typename DiscreteFunctionSpaceType::GridPartType GridPartType;
-    typedef typename DiscreteFunctionSpaceType::IteratorType IteratorType;
     typedef typename DiscreteFunctionSpaceType::RangeType RangeType;
+
+    typedef typename GridPartType :: template Codim< 0 > :: 
+      template Partition< All_Partition > :: IteratorType IteratorType ;
 
     typedef typename DiscreteFunctionType::LocalFunctionType LocalFuncType;
 
@@ -114,8 +116,8 @@ public:
 
     double sum = 0.0;
 
-    IteratorType it    = space.begin();
-    IteratorType endit = space.end();
+    IteratorType it    = space.gridPart().template begin< 0, All_Partition > ();
+    IteratorType endit = space.gridPart().template end< 0, All_Partition > ();
 
     for(; it != endit ; ++it)
     {
@@ -139,22 +141,30 @@ void resetNonInterior( DiscreteFunctionType &solution )
   typedef DiscreteFunctionType :: LocalFunctionType LocalFunctionType;
   typedef DiscreteFunctionType :: DiscreteFunctionSpaceType
     DiscreteFunctionSpaceType;
-  typedef DiscreteFunctionType :: DiscreteFunctionSpaceType :: IteratorType
+  typedef DiscreteFunctionSpaceType :: GridPartType GridPartType ;
+  typedef GridPartType :: Codim< 0 > :: Partition< All_Partition > :: IteratorType
     IteratorType;
 
   typedef IteratorType :: Entity  EntityType ;
 
   const DiscreteFunctionSpaceType& space = solution.space();
 
-  const IteratorType end = space.end();
-  for( IteratorType it = space.begin(); it != end; ++ it ) 
+  IteratorType it    = space.gridPart().begin< 0, All_Partition > ();
+  IteratorType endit = space.gridPart().end< 0, All_Partition > ();
+
+  int count = 0;
+  for( ; it != endit; ++ it ) 
   {
     const EntityType& entity = * it ;
     if( entity.partitionType() != InteriorEntity ) 
     {
+      ++count ;
       solution.localFunction( entity ).clear();
     }
   }
+
+  std::cout << "P[" << space.grid().comm().rank() << "] reset " << count << " entities "  << std::endl;
+            
 }
  
 // ********************************************************************
@@ -166,7 +176,7 @@ double algorithm ( MyGridType &grid, DiscreteFunctionType &solution, int step, i
 
   {
     DGL2ProjectionImpl :: project( f, solution );
-    double new_error = l2err.norm(f ,solution, polOrd + 4);
+    double new_error = l2err.norm(f ,solution);
     std::cout << "P[" << grid.comm().rank() << "]  start comm: " << new_error << "\n\n"; 
   }
 
@@ -187,7 +197,7 @@ double algorithm ( MyGridType &grid, DiscreteFunctionType &solution, int step, i
   solution.communicate(); 
 
   // calculate l2 error again 
-  double error = l2err.norm(f ,solution, polOrd + 4);
+  double error = l2err.norm(f ,solution);
   std::cout << "P[" << grid.comm().rank() << "]  done comm: " << error << std::endl <<
     std::endl ; 
 
