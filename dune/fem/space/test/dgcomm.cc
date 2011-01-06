@@ -219,11 +219,9 @@ double algorithm ( MyGridType &grid, DiscreteFunctionType &solution, int step, i
   L2ErrorNoComm< DiscreteFunctionType > l2err;
   solution.clear();
 
-  {
-    DGL2ProjectionAllPartitionNoComm :: project( f, solution );
-    double new_error = l2err.norm(f ,solution);
-    std::cout << "P[" << grid.comm().rank() << "]  start comm: " << new_error << std::endl; 
-  }
+  DGL2ProjectionAllPartitionNoComm :: project( f, solution );
+  double new_error = l2err.norm(f ,solution);
+  std::cout << "P[" << grid.comm().rank() << "]  start comm: " << new_error << std::endl; 
 
 #if USE_GRAPE
   // if Grape was found, then display last solution 
@@ -253,6 +251,9 @@ double algorithm ( MyGridType &grid, DiscreteFunctionType &solution, int step, i
     grape.dataDisplay( solution );
   }
 #endif
+
+  if( std::abs( new_error - error ) > 1e-10 ) 
+    DUNE_THROW(InvalidStateException,"Communication not working correctly");
   
   return error;
 }
