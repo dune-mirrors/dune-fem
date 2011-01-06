@@ -307,6 +307,11 @@ namespace Dune
     {
       stream_.writeUnsignedInt( value );
     }
+    
+    virtual void writeUnsignedLong( unsigned long value )
+    {
+      stream_.writeUnsignedLong( value );
+    }
   };
 
 
@@ -362,6 +367,11 @@ namespace Dune
     virtual void readUnsignedInt( unsigned int &value )
     {
       stream_.readUnsignedInt( value );
+    }
+
+    virtual void readUnsignedLong( unsigned long &value )
+    {
+      stream_.readUnsignedLong( value );
     }
   };
 

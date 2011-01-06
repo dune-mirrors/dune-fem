@@ -291,8 +291,8 @@ namespace Dune
         readError();
     }
 
-    /** \copydoc Dune::InStreamInterface::readUnsignedInt */
-    void readUnsignedLong ( unsigned int &value )
+    /** \copydoc Dune::InStreamInterface::readUnsignedLong */
+    void readUnsignedLong (unsigned long &value )
     {
       stream_ >> value;
       if( !valid () )
