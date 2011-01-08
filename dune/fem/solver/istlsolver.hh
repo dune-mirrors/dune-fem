@@ -70,7 +70,7 @@ namespace Dune
           reduction = (residuum > 0) ? absLimit/ residuum : 1e-3;
 
           if( verbose ) 
-            std::cout << "ISTL CG-Solver: reduction: " << reduction << ", residuum: " << residuum << ", absolut limit: " << absLimit << std::endl;
+            std::cout << "ISTL BiCGSTAB-Solver: reduction: " << reduction << ", residuum: " << residuum << ", absolut limit: " << absLimit << std::endl;
         }
 
         BiCGSTABSolver< BlockVectorType >
