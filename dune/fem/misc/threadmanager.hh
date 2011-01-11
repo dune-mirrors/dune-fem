@@ -127,9 +127,6 @@ namespace Dune
 
         // set pointer to thread number function 
         threadNum_ = & Manager :: multiThreadNumber ;
-
-        // clear thread number map 
-        idmap_.clear();
       }
 
       inline int currentThreads() const { return activeThreads_; }
