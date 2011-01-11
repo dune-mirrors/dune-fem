@@ -107,11 +107,11 @@ public:
   }
 
   //! return index 
-  template <int codim, class EntityType> 
-  int index (const EntityType & en, int num) const
+  template< int codim, class Entity >
+  int DUNE_DEPRECATED index ( const Entity &entity, int i ) const
   {
-    enum { enCodim = EntityType::codimension };
-    return IndexWrapper<IndexSetImp,EntityType,enCodim,codim>::index(set_,en,num);
+    static const int cc = Entity::codimension;
+    return set_.subIndex( entity, i, codim );
   }
 
   /** @brief Iterator to first entity of given codimension and partition type.
