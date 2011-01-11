@@ -218,6 +218,8 @@ namespace Dune {
       caller_.finalize();
     }
 
+    size_t numberOfElements() const { return 0; }
+
     struct DefaultNBChecker
     {
       bool operator ()(const EntityType& , const EntityType& ) const 
