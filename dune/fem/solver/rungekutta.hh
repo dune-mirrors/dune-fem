@@ -65,6 +65,10 @@ protected:
 
   struct Monitor 
   {
+    double odeSolveTime_;
+    double operatorTime_;
+    size_t numberOfElements_;
+
     int newtonIterations_;
     int linearSolverIterations_;
     int maxNewtonIterations_;
@@ -75,6 +79,9 @@ protected:
     // reset all counters 
     void reset() 
     { 
+      odeSolveTime_ = 0;
+      operatorTime_ = 0;
+      numberOfElements_ = 0;
       newtonIterations_ = 0; 
       linearSolverIterations_ = 0;
       maxNewtonIterations_ = 0;
