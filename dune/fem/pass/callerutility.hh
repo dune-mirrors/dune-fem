@@ -6,6 +6,7 @@
 #include <dune/common/typetraits.hh>
 
 #include <dune/fem/function/localfunction/temporarylocalfunction.hh>
+#include <dune/fem/function/common/discretefunctionadapter.hh>
 
 #include "selection.hh"
 
@@ -84,6 +85,20 @@ namespace Dune
 
   //- Helper class for helper class below ;-)
   // ! Need to strip pointer first, then add it again
+  template <class DiscreteFunctionType>
+  struct LocalFunctionSelector
+  {
+    typedef ConstLocalFunction< DiscreteFunctionType > Type ;
+    //typedef typename DiscreteFunctionType :: LocalFunctionType  Type ;
+  };
+
+  template <class EvalImp>
+  struct LocalFunctionSelector< LocalFunctionAdapter< EvalImp> > 
+  {
+    // in case of LocalFunctionAdapter we need the internal local function type 
+    // because the hole thing is a fake 
+    typedef typename LocalFunctionAdapter< EvalImp> :: LocalFunctionType  Type ;
+  };
 
   /**
    * @brief Extracts the type of the LocalFunction pointers from a tuple of 
@@ -94,7 +109,7 @@ namespace Dune
     // old version uses local function of discrete function
     //typedef typename TypeTraits<DFType>::PointeeType::LocalFunctionType Type;
     typedef typename TypeTraits<DFType>::PointeeType DiscreteFunctionType;
-    typedef ConstLocalFunction< DiscreteFunctionType > Type;
+    typedef typename LocalFunctionSelector< DiscreteFunctionType > :: Type  Type;
   };
  
   /**
@@ -188,7 +203,7 @@ namespace Dune
     typedef typename ForEachTupleType<
       DFTypeEvaluator, Pair<Head, Tail> >::Type ResultType;
     typedef typename TypeTraits<Head>::PointeeType DiscreteFunctionType;
-    typedef ConstLocalFunction< DiscreteFunctionType > LocalFunctionType;
+    typedef typename LocalFunctionSelector< DiscreteFunctionType > :: Type  LocalFunctionType ;
 
   public:
     static inline ResultType apply(const Pair<Head, Tail>& pairs) {
@@ -209,17 +224,14 @@ namespace Dune
     friend class LocalFunctionCreator;
   
   public:
-    //typedef typename TypeTraits<Head>::PointeeType::LocalFunctionType LocalFunctionType;
     typedef typename TypeTraits<Head>::PointeeType DiscreteFunctionType ;
-    //typedef typename DiscreteFunctionType :: LocalFunctionType  LocalFunctionType;
-    // old version uses local function of discrete function
-    typedef ConstLocalFunction< DiscreteFunctionType > LocalFunctionType;
+    typedef typename LocalFunctionSelector< DiscreteFunctionType > :: Type  LocalFunctionType;
     typedef Pair<LocalFunctionType, Nil> ResultType;
  
   public:
     static inline ResultType apply(const Pair<Head, Nil>& pairs) {
       //LocalFunctionType tmp(pairs.first()->localFunctionStorage());
-      LocalFunctionType tmp(*pairs.first());
+      LocalFunctionType tmp( *pairs.first() );
       return ResultType(tmp, nullType());
     }
   };
@@ -551,13 +563,10 @@ namespace Dune
     LocalFunctionEvaluateJacobianQuad(const QuadratureImp& quad,
                                       const int quadPoint) :
       quadPoint_ ( quad[quadPoint] )
-    //  quad_(quad),
-    //  quadPoint_(quadPoint)
     {}
 
     template <class LFType, class JRangeType>
     void visit(LFType& lf, JRangeType& res) {
-      //lf.jacobian(quad_, quadPoint_, res);
       lf.jacobian(quadPoint_, res);
     }
 
@@ -569,8 +578,6 @@ namespace Dune
 
   private:
     const QuadraturePointWrapperType quadPoint_;
-    //const QuadratureImp& quad_;
-    //const int quadPoint_;
   };
 
   /**
