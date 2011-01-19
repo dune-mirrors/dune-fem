@@ -88,6 +88,13 @@ namespace Dune
       explicit Function ( const FunctionSpaceType &fSpace ) DUNE_DEPRECATED
       {}
 
+    protected:
+      // Disallow copying of function, but allow copying of derived classes 
+      Function ( const ThisType &other ) {} 
+    private:  
+      // Disallow assignment
+      ThisType &operator= ( const ThisType & );
+      
     public:
       //! destructor 
       virtual ~Function ()
