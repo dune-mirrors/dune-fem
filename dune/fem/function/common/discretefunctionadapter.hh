@@ -512,13 +512,15 @@ namespace Dune
    */
   template< class EvalImp >
   class LocalFunctionAdapter
-  : public Fem::Function< typename EvalImp::FunctionSpaceType, LocalFunctionAdapter< EvalImp > >,
-    public HasLocalFunction
+    : public Fem::Function< typename EvalImp::FunctionSpaceType, LocalFunctionAdapter< EvalImp > >
+    , public HasLocalFunction
   {
     typedef LocalFunctionAdapter< EvalImp > ThisType;
     typedef Fem::Function< typename EvalImp::FunctionSpaceType, ThisType > BaseType;
 
   public:  
+    typedef ThisType  DiscreteFunctionType ;
+
     //! Evaluate class
     typedef EvalImp EvalType;
 
@@ -533,7 +535,7 @@ namespace Dune
     
     //! type of discrete function
     typedef DiscreteFunctionSpaceAdapter< typename EvalType::FunctionSpaceType,
-                                          typename EvalType::GridPartType >
+                                          GridPartType >
       DiscreteFunctionSpaceType;
 
     //! type of grid 
@@ -605,6 +607,49 @@ namespace Dune
       return space_;
     }
 
+    /** \copydoc Dune::DiscreteFunctionInterface::operator+=(const DiscreteFunctionInterfaceType &g) */
+    template <class DFType>
+    DiscreteFunctionType &operator+= ( const DFType &g )
+    { 
+      DUNE_THROW( NotImplemented, "LocalFunctionAdapter::operator += is not implemented." );
+      return *this; 
+    }
+
+    /** \brief substract all degrees of freedom from given discrete function using the dof iterators 
+        \param[in] g discrete function which is substracted from this discrete function 
+        \return reference to this (i.e. *this)
+    */
+    template <class DFType>
+    DiscreteFunctionType& operator -= (const DFType& g)
+    { 
+      DUNE_THROW( NotImplemented, "LocalFunctionAdapter::operator -= is not implemented." );
+      return *this; 
+    }
+
+    /** \brief multiply all DoFs with a scalar factor
+     *
+     *  \param[in]  scalar  factor to multiply DoFs with
+     *  
+     *  \returns reference to this discrete function (i.e. *this)
+     */
+    inline DiscreteFunctionType &operator*= ( const RangeFieldType &scalar )
+    { 
+      DUNE_THROW( NotImplemented, "LocalFunctionAdapter::operator *= is not implemented." );
+      return *this; 
+    }
+
+    /** \brief devide all DoFs by a scalar factor
+     *
+     *  \param[in]  scalar  factor with which all dofs are devided
+     *  
+     *  \returns reference to this discrete function (i.e. *this)
+     */
+    inline DiscreteFunctionType &operator/= ( const RangeFieldType &scalar )
+    { 
+      DUNE_THROW( NotImplemented, "LocalFunctionAdapter::operator /= is not implemented." );
+      return *this; 
+    }
+
   private:    
     DiscreteFunctionSpaceType space_; 
     mutable EvalType& eval_;
@@ -656,11 +701,38 @@ namespace Dune
       eval_.jacobian( x, ret );
     }
 
+    template< class QuadratureType, class VectorType  >
+    void evaluateQuadrature( const QuadratureType &quad, 
+                             VectorType &result ) const
+    {
+      evaluateQuadrature( quad, result, result[ 0 ] );
+    }
+
     //! init local function
     void init(const EntityType& en)
     {
       eval_.init(en);
     } 
+
+  protected:  
+    template< class QuadratureType, class VectorType  >
+    void evaluateQuadrature( const QuadratureType &quad, 
+        VectorType &result, const RangeType& ) const
+    {
+      const size_t quadNop = quad.nop();
+      for(size_t i = 0; i<quadNop; ++i) 
+        evaluate( quad[ i ], result[ i ] );
+    }
+
+    template< class QuadratureType, class VectorType  >
+    void evaluateQuadrature( const QuadratureType &quad, 
+        VectorType &result, const JacobianRangeType& ) const
+    {
+      const size_t quadNop = quad.nop();
+      for(size_t i = 0; i<quadNop; ++i) 
+        jacobian( quad[ i ], result[ i ] );
+    }
+
   private:
     EvalType& eval_;
   };
