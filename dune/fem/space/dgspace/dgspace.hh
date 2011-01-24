@@ -451,7 +451,7 @@ namespace Dune
     typedef NonBlockMapper< typename BaseType :: BlockMapperType, localBlockSize > MapperType;
 
     typedef LegendreDGBaseFunctionFactory<
-      typename BaseType :: BaseFunctionSpaceType, polOrd> ScalarFactoryType;
+      typename BaseType :: BaseFunctionSpaceType :: ScalarFunctionSpaceType, polOrd> ScalarFactoryType;
 
     // type of DG space 
     typedef LegendreDiscontinuousGalerkinSpace<
