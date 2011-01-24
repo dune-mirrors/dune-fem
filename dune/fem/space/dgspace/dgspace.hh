@@ -25,9 +25,14 @@
 #include <dune/fem/space/dgspace/dgbasefunctions.hh>
 #include <dune/fem/space/dgspace/legendredgbasefunctions.hh>
 #include <dune/fem/space/common/defaultcommhandler.hh>
+#include <dune/fem/space/lagrangespace/basefunctions.hh>
 
 namespace Dune
 {
+
+  template< class FunctionSpace, unsigned int topologyId,
+            unsigned int dim, unsigned int pOrder >
+  class LagrangeBaseFunction;
 
   /** @addtogroup DGDSpace 
    DiscreteFunctionSpace for discontinuous functions 
@@ -45,7 +50,7 @@ namespace Dune
     public DiscreteFunctionSpaceDefault <SpaceImpTraits>
   {
     // - Local enums
-    enum { DGFSpaceId = 1 };
+    enum { DGFSpaceId = 0 };
   
     enum { MaxNumElType = 9 };
 
@@ -90,20 +95,27 @@ namespace Dune
       typename Traits::BaseFunctionSpaceType, polOrd> FactoryType;
 
     //! Dimension of the range vector field
-    enum { dimRange = Traits::FunctionSpaceType :: dimRange };
+    enum { dimRange = Traits::FunctionSpaceType::dimRange };
+
+    //! Dimension of the domain vector field
+    enum { dimDomain = Traits::FunctionSpaceType::dimDomain };
 
     //! codimension of space 
     enum { codimension = Traits :: codimension };
 
-    //! type of entity of this space 
-    typedef typename GridType :: template Codim< codimension > :: Entity  EntityType;
-
-    //! The polynom order of the base functions (deprecated)
-    enum { PolOrd = polOrd };
-    
     //! The polynom order of the base functions
     enum { polynomialOrder = polOrd };
     dune_static_assert( (polOrd >= 0), "Only use DGSpace with positive polOrd." );
+
+    //! size of local blocks 
+    enum { localBlockSize = Traits::localBlockSize };
+
+    //! dimensionworld of grid 
+    enum { dimensionworld = GridType :: dimensionworld };
+    dune_static_assert( (dimensionworld <= 3), "Use Legendre spaces for higher dimensions." );
+
+    //! type of entity of this space 
+    typedef typename GridType :: template Codim< codimension > :: Entity  EntityType;
 
     //! mapper used to implement mapToGlobal 
     typedef typename Traits::MapperType MapperType; 
@@ -118,6 +130,17 @@ namespace Dune
     typedef SingletonList
       < typename BlockMapperSingletonFactoryType::Key, BlockMapperType, BlockMapperSingletonFactoryType >
       BlockMapperProviderType;
+
+    // type of base function factory 
+    typedef typename Traits :: ScalarFactoryType ScalarFactoryType ;
+
+    // type of singleton factory 
+    typedef BaseFunctionSetSingletonFactory<const GeometryType,BaseFunctionSetImp,
+                ScalarFactoryType> SingletonFactoryType; 
+
+    // type of singleton list  
+    typedef SingletonList<const GeometryType, BaseFunctionSetImp,
+            SingletonFactoryType > SingletonProviderType;
 
   public:
     //! default communication interface 
@@ -219,7 +242,7 @@ namespace Dune
     /** @copydoc Dune::DiscreteFunctionSpaceInterface::order */
     int order () const
     {
-      return polOrd;
+      return polynomialOrder;
     }
     
     //! Return dof mapper of the space
@@ -247,24 +270,21 @@ namespace Dune
     DiscontinuousGalerkinSpaceBase& operator=(const DiscontinuousGalerkinSpaceBase&);
 
     /** \brief return BaseFunctionSetPointer 
-        \param en entity for which base function set is collected 
-        \return BaseFunctionSetImp pointer 
+        \param[in] type   geometry type base function set is requested for 
+        \return BaseFunctionSetImp reference  
     */
-    template <class EntityType>
-    BaseFunctionSetImp& setBaseFuncSetPointer(EntityType& en) 
+    static BaseFunctionSetImp& setBaseFuncSetPointer(const GeometryType& type) 
     {
-      // calls static method of actual implementation to create set
-      return DiscreteFunctionSpaceImp::setBaseFuncSetPointer(en);
+      return SingletonProviderType::getObject(type);
     }
 
     /** \brief remove BaseFunctionSetPointer in singleton list (if no
          other references exist, pointer is deleted  
-        \param set pointer to base function set 
+        \param[in] set   pointer of base function set to remove 
     */
-    void removeBaseFuncSetPointer(BaseFunctionSetImp& set) 
+    static void removeBaseFuncSetPointer(BaseFunctionSetImp& set) 
     {
-      // calls static method of actual implementation to remove set
-      DiscreteFunctionSpaceImp::removeBaseFuncSetPointer(set);
+      SingletonProviderType::removeObject(set);
     }
 
   protected:
@@ -280,17 +300,12 @@ namespace Dune
   };
 
 
-
-  //********************************************************
-  // DG Space with orthonormal basis functions 
-  //********************************************************
-  template <class FunctionSpaceImp, class GridPartImp, int polOrd,
-            template<class> class BaseFunctionStorageImp = CachingStorage >
-  class DiscontinuousGalerkinSpace;
-
-  //! Traits class for DiscontinuousGalerkinSpace
-  template <class FunctionSpaceImp, class GridPartImp, int polOrd, template <class> class BaseFunctionStorageImp>
-  struct DiscontinuousGalerkinSpaceTraits 
+  /////////////////////////////////////////////////
+  //! Common traits class for DG spaces 
+  /////////////////////////////////////////////////
+  template <class FunctionSpaceImp, class GridPartImp, 
+            int polOrd, template <class> class BaseFunctionStorageImp>
+  struct DiscontinuousGalerkinSpaceTraitsBase  
   {
     enum { polynomialOrder = polOrd };
     typedef FunctionSpaceImp FunctionSpaceType;
@@ -311,26 +326,15 @@ namespace Dune
     typedef typename FunctionSpaceType::DomainType DomainType;
     typedef typename FunctionSpaceType::JacobianRangeType JacobianRangeType;
 
-    typedef DiscontinuousGalerkinSpace<
-      FunctionSpaceType, GridPartType, polOrd, BaseFunctionStorageImp > DiscreteFunctionSpaceType;
-
-
     typedef typename ToLocalFunctionSpace< FunctionSpaceType, dimLocal> :: Type 
       BaseFunctionSpaceType;
  
     typedef VectorialBaseFunctionSet<BaseFunctionSpaceType, BaseFunctionStorageImp > BaseFunctionSetImp;
     typedef SimpleBaseFunctionProxy<BaseFunctionSetImp> BaseFunctionSetType;
     
-    //! number of base functions * dimRange (use dimLocal here)
-    enum { localBlockSize = dimRange * 
-        DGNumberOfBaseFunctions<polOrd,dimLocal>::numBaseFunctions }; 
-    
     //! mapper for block vector function 
     typedef CodimensionMapper< GridPartType, codimension > BlockMapperType;
 
-    //! type of DG mapper (based on BlockMapper)
-    typedef NonBlockMapper< BlockMapperType, localBlockSize > MapperType;
-    
     /** \brief defines type of data handle for communication 
         for this type of space.
     */
@@ -345,6 +349,38 @@ namespace Dune
     };
   };
 
+
+  //********************************************************
+  // DG Space with orthonormal basis functions 
+  //********************************************************
+  template <class FunctionSpaceImp, class GridPartImp, int polOrd,
+            template<class> class BaseFunctionStorageImp = CachingStorage >
+  class DiscontinuousGalerkinSpace;
+
+  //! Traits class for DiscontinuousGalerkinSpace
+  template <class FunctionSpaceImp, class GridPartImp, int polOrd, template <class> class BaseFunctionStorageImp>
+  struct DiscontinuousGalerkinSpaceTraits 
+  : public DiscontinuousGalerkinSpaceTraitsBase< FunctionSpaceImp, GridPartImp, polOrd, BaseFunctionStorageImp >
+  {
+    typedef DiscontinuousGalerkinSpaceTraitsBase< FunctionSpaceImp, GridPartImp, polOrd,
+                                                  BaseFunctionStorageImp > BaseType ;
+
+    //! number of base functions * dimRange (use dimLocal here)
+    enum { localBlockSize = BaseType :: dimRange * 
+        DGNumberOfBaseFunctions<polOrd, BaseType :: dimLocal>::numBaseFunctions }; 
+
+    //! type of DG mapper (based on BlockMapper)
+    typedef NonBlockMapper< typename BaseType :: BlockMapperType, localBlockSize > MapperType;
+
+    // type of base function factory 
+    typedef DiscontinuousGalerkinBaseFunctionFactory< 
+      typename BaseType :: BaseFunctionSpaceType :: ScalarFunctionSpaceType, polOrd> ScalarFactoryType;   
+
+    // type of DG space 
+    typedef DiscontinuousGalerkinSpace<
+      FunctionSpaceImp, GridPartImp, polOrd, BaseFunctionStorageImp > DiscreteFunctionSpaceType;
+  };
+
   //! \brief A discontinuous Galerkin space
   template <class FunctionSpaceImp, class GridPartImp, int polOrd, template <class> class BaseFunctionStorageImp >
   class DiscontinuousGalerkinSpace : 
@@ -353,8 +389,6 @@ namespace Dune
   {
     // - Local enums
     enum { DGFSpaceId = 1 };
-  
-    enum { MaxNumElType = 9 };
 
     // - Local typedefs
     // the type of this class
@@ -370,146 +404,58 @@ namespace Dune
 
     //! Exporting the interface type
     typedef DiscreteFunctionSpaceDefault<Traits> BaseType;
-    typedef typename Traits::BaseFunctionSetImp BaseFunctionSetImp;
-    //! Base function set type
-    typedef typename Traits::BaseFunctionSetType BaseFunctionSetType;
-    //! Domain vector type
-    typedef typename Traits::DomainType DomainType;
-    //! Range vector type
-    typedef typename Traits::RangeType RangeType;
-    //! Space iterator
-    typedef typename Traits::IteratorType IteratorType;
-    //! Grid type
-    typedef typename Traits::GridType GridType;
-    //! Index set of space
-    typedef typename Traits::IndexSetType IndexSetType;
 
-    //! Dimension of the range vector field
-    enum { dimRange = Traits::FunctionSpaceType::dimRange };
-
-    //! Dimension of the domain vector field
-    enum { dimDomain = Traits::FunctionSpaceType::dimDomain };
-
-    //! codimension of space 
-    enum { codimension = Traits :: codimension };
-
-    //! The polynom order of the base functions (deprecated)
-    enum { PolOrd = polOrd };
-    
-    //! The polynom order of the base functions
-    enum { polynomialOrder = polOrd };
-
-    //! size of local blocks 
-    enum { localBlockSize = Traits::localBlockSize };
-
-    //! dimensionworld of grid 
-    enum { dimensionworld = GridType :: dimensionworld };
-    dune_static_assert( (dimensionworld <= 3), "Use Legendre spaces for higher dimensions." );
-
-    //! scalar space type 
-    typedef typename Traits::BaseFunctionSpaceType  BaseFunctionSpaceType;
-
-    // type of base function factory 
-    typedef DiscontinuousGalerkinBaseFunctionFactory< 
-      typename BaseFunctionSpaceType :: ScalarFunctionSpaceType, polOrd> ScalarFactoryType;   
-
-    // type of singleton factory 
-    typedef BaseFunctionSetSingletonFactory<const GeometryType,BaseFunctionSetImp,
-                ScalarFactoryType> SingletonFactoryType; 
-
-    // type of singleton list  
-    typedef SingletonList<const GeometryType, BaseFunctionSetImp,
-            SingletonFactoryType > SingletonProviderType;
+    // for dimensions higher then 3 use LegendreDiscontinuousGalerkinSpace 
+    dune_static_assert( (GridPartImp :: GridType :: dimensionworld <= 3), 
+        "Use Legendre spaces for higher dimensions." );
 
   protected:
     typedef DiscontinuousGalerkinSpaceBase <Traits> BaseImpType;
 
     // set of geometry types 
-    typedef AllGeomTypes<IndexSetType,typename Traits::GridType> GeometryTypes;
-    
+    typedef AllGeomTypes<typename Traits :: IndexSetType,
+                         typename Traits :: GridType>   GeometryTypes;
   public:
     //- Constructors and destructors
     /** Constructor */
     DiscontinuousGalerkinSpace(GridPartImp& gridPart,
                                const InterfaceType commInterface = BaseImpType :: defaultInterface,
                                const CommunicationDirection commDirection = BaseImpType :: defaultDirection ) :
-      BaseImpType (gridPart, GeometryTypes(gridPart.indexSet()).geomTypes(codimension),
+      BaseImpType (gridPart, GeometryTypes(gridPart.indexSet()).geomTypes(BaseImpType :: codimension),
                    commInterface, commDirection)
     {}
-
-    /** \brief ! get object from singleton list 
-      \param[in] type 
-      \return BasefunctionSetImp
-    */
-    static BaseFunctionSetImp& setBaseFuncSetPointer(const GeometryType type) 
-    {
-      return SingletonProviderType::getObject(type);
-    }
-    //! remove object from singleton list 
-    static void removeBaseFuncSetPointer(BaseFunctionSetImp& set) 
-    {
-      SingletonProviderType::removeObject(set);
-    }
   };
 
+
+
+  //********************************************************
+  // DG Space with Legendre basis functions 
+  //********************************************************
   template <class FunctionSpaceImp, class GridPartImp, int polOrd, template <class> class BaseFunctionStorageImp = CachingStorage >
   class LegendreDiscontinuousGalerkinSpace; 
     
   //! Traits class for DiscontinuousGalerkinSpace
   template <class FunctionSpaceImp, class GridPartImp, int polOrd, template
     <class> class BaseFunctionStorageImp >
-  struct LegendreDiscontinuousGalerkinSpaceTraits {
-    typedef FunctionSpaceImp FunctionSpaceType;
-    typedef GridPartImp GridPartType;
-    enum { polynomialOrder = polOrd };
-
-    typedef typename GridPartType::GridType GridType;
-    enum { dimRange  = FunctionSpaceType::dimRange };
-    enum { dimDomain = FunctionSpaceType::dimDomain };
-    enum { dimLocal = GridType :: dimension };
-    enum { codimension = GridType :: dimensionworld - dimDomain }; 
-
-    typedef typename GridPartType::IndexSetType IndexSetType;
-    typedef typename GridPartType::template Codim<codimension>::IteratorType IteratorType;
-
-    typedef typename FunctionSpaceType::RangeFieldType RangeFieldType;
-    typedef typename FunctionSpaceType::DomainFieldType DomainFieldType;
-    typedef typename FunctionSpaceType::RangeType RangeType;
-    typedef typename FunctionSpaceType::DomainType DomainType;
-    typedef typename FunctionSpaceType::JacobianRangeType JacobianRangeType;
-
-    typedef LegendreDiscontinuousGalerkinSpace<
-      FunctionSpaceType, GridPartType, polOrd, BaseFunctionStorageImp> DiscreteFunctionSpaceType;
- 
-
-    typedef typename ToLocalFunctionSpace< FunctionSpaceType, dimLocal> :: Type 
-      BaseFunctionSpaceType;
- 
-    typedef VectorialBaseFunctionSet<BaseFunctionSpaceType, BaseFunctionStorageImp > BaseFunctionSetImp;
-    typedef SimpleBaseFunctionProxy< BaseFunctionSetImp > BaseFunctionSetType;
+  struct LegendreDiscontinuousGalerkinSpaceTraits 
+  : public DiscontinuousGalerkinSpaceTraitsBase< FunctionSpaceImp, GridPartImp, polOrd, BaseFunctionStorageImp >
+  {
+    typedef DiscontinuousGalerkinSpaceTraitsBase< FunctionSpaceImp, GridPartImp, polOrd,
+                                                  BaseFunctionStorageImp > BaseType ;
 
     //! number of base functions * dimRange 
-    enum { localBlockSize = dimRange * 
-        NumLegendreBaseFunctions<polOrd,dimDomain>::numBaseFct }; 
-
-    //! mapper for block vector function 
-    typedef CodimensionMapper< GridPartType, codimension > BlockMapperType;
+    enum { localBlockSize = BaseType :: dimRange * 
+        NumLegendreBaseFunctions<polOrd, BaseType :: dimLocal>::numBaseFct }; 
 
     //! type of DG mapper (based on BlockMapper)
-    typedef NonBlockMapper< BlockMapperType, localBlockSize > MapperType;
-    
-    /** \brief defines type of data handle for communication 
-        for this type of space.
-    */
-    template <class DiscreteFunctionImp, 
-              class OperationImp = DFCommunicationOperation :: Copy>
-    struct CommDataHandle
-    {
-      //! type of data handle 
-      typedef DefaultCommunicationHandler<DiscreteFunctionImp,OperationImp> Type;
-      //! type of operation to perform on scatter 
-      typedef OperationImp OperationType;
-    };
+    typedef NonBlockMapper< typename BaseType :: BlockMapperType, localBlockSize > MapperType;
+
+    typedef LegendreDGBaseFunctionFactory<
+      typename BaseType :: BaseFunctionSpaceType, polOrd> ScalarFactoryType;
+
+    // type of DG space 
+    typedef LegendreDiscontinuousGalerkinSpace<
+      FunctionSpaceImp, GridPartImp, polOrd, BaseFunctionStorageImp> DiscreteFunctionSpaceType;
   };
 
   /** \brief A discontinuous Galerkin space using tensor product base
@@ -524,8 +470,6 @@ namespace Dune
     // - Local enums
     enum { DGFSpaceId = 2 };
   
-    enum { MaxNumElType = 9 };
-
     // - Local typedefs
     // the type of this class
     typedef LegendreDiscontinuousGalerkinSpace<FunctionSpaceImp, GridPartImp, polOrd,BaseFunctionStorageImp> 
@@ -540,79 +484,19 @@ namespace Dune
 
     //! Exporting the interface type
     typedef DiscreteFunctionSpaceDefault<Traits> BaseType;
-    //! Base function set type
-    typedef typename Traits::BaseFunctionSetImp BaseFunctionSetImp;
-    //! Base function set type
-    typedef typename Traits::BaseFunctionSetType BaseFunctionSetType;
-    //! Domain vector type
-    typedef typename Traits::DomainType DomainType;
-    //! Range vector type
-    typedef typename Traits::RangeType RangeType;
-    //! Space iterator
-    typedef typename Traits::IteratorType IteratorType;
-    //! Grid type
-    typedef typename Traits::GridType GridType;
-    //! Index set of space
-    typedef typename Traits::IndexSetType IndexSetType;
-
-    typedef LegendreDGBaseFunctionFactory<
-      typename Traits::FunctionSpaceType, polOrd> FactoryType;
-
-    //! Dimension of the range vector field
-    enum { dimRange  = Traits::FunctionSpaceType::dimRange };
-    enum { dimDomain = Traits::FunctionSpaceType::dimDomain };
-
-    //! codimension of space 
-    enum { codimension = Traits :: codimension };
-
-    //! The polynom order of the base functions (deprecated)
-    enum { PolOrd = polOrd };
-    
-    //! The polynom order of the base functions
-    enum { polynomialOrder = polOrd };
-
-    //! type of scalar space 
-    typedef typename Traits::BaseFunctionSpaceType BaseFunctionSpaceType;
-    
-    // type of base function factory 
-    typedef LegendreDGBaseFunctionFactory< 
-        typename BaseFunctionSpaceType :: ScalarFunctionSpaceType, 
-        polOrd
-          > ScalarFactoryType;   
-
-    // type of singleton factory  
-    typedef BaseFunctionSetSingletonFactory<GeometryType,BaseFunctionSetImp,
-                ScalarFactoryType> SingletonFactoryType; 
-
-    // type of singleton list  
-    typedef SingletonList< GeometryType, BaseFunctionSetImp,
-            SingletonFactoryType > SingletonProviderType;
-
-    //! size of local blocks 
-    enum { localBlockSize = Traits::localBlockSize };
 
   protected:
     typedef DiscontinuousGalerkinSpaceBase <Traits> BaseImpType;
+
   public:
     //- Constructors and destructors
     /** Constructor */
     LegendreDiscontinuousGalerkinSpace(GridPartImp& gridPart,
                                const InterfaceType commInterface = BaseImpType :: defaultInterface ,
                                const CommunicationDirection commDirection = BaseImpType :: defaultDirection ) :
-      BaseImpType (gridPart, gridPart.indexSet().geomTypes(codimension) ,  
+      BaseImpType (gridPart, gridPart.indexSet().geomTypes( BaseImpType :: codimension ) ,  
                    commInterface, commDirection ) 
     {
-    }
-
-    //! get base set from singleton list 
-    static BaseFunctionSetImp& setBaseFuncSetPointer(GeometryType type) 
-    {
-      return SingletonProviderType::getObject(type);
-    }
-    //! remove base set 
-    static void removeBaseFuncSetPointer(BaseFunctionSetImp& set) 
-    {
-      SingletonProviderType::removeObject(set);
     }
 
     // return cube for all codims 
@@ -624,6 +508,93 @@ namespace Dune
       return this->indexSet().geomTypes(codim); 
     }
   };
+
+  //********************************************************
+  // DG Space with Lagrange basis functions 
+  //********************************************************
+  template <class FunctionSpaceImp, class GridPartImp, int polOrd,
+            template<class> class BaseFunctionStorageImp = CachingStorage >
+  class LagrangeDiscontinuousGalerkinSpace;
+
+  //! Traits class for DiscontinuousGalerkinSpace
+  template <class FunctionSpaceImp, class GridPartImp, int polOrd, template <class> class BaseFunctionStorageImp>
+  struct LagrangeDiscontinuousGalerkinSpaceTraits 
+  : public DiscontinuousGalerkinSpaceTraitsBase< FunctionSpaceImp, GridPartImp, polOrd, BaseFunctionStorageImp >
+  {
+    typedef DiscontinuousGalerkinSpaceTraitsBase< FunctionSpaceImp, GridPartImp, polOrd,
+                                                  BaseFunctionStorageImp > BaseType ;
+
+    typedef typename BaseType :: GridType  GridType;
+
+    // define Lagrange generic base function to get numBaseFunctions 
+    typedef typename GeometryWrapper< 
+          Capabilities :: hasSingleGeometryType < GridType > :: topologyId, 
+          GridType :: dimension >::GenericGeometryType   GenericGeometryType;
+
+    typedef GenericLagrangeBaseFunction< 
+          typename BaseType :: BaseFunctionSpaceType :: ScalarFunctionSpaceType, 
+          GenericGeometryType, polOrd >  GenericBaseFunctionType;
+
+    //! number of base functions * dimRange (use dimLocal here)
+    enum { localBlockSize = BaseType :: dimRange * GenericBaseFunctionType :: numBaseFunctions };
+
+    //! type of DG mapper (based on BlockMapper)
+    typedef NonBlockMapper< typename BaseType :: BlockMapperType, localBlockSize > MapperType;
+
+    // type of base function factory 
+    typedef LagrangeBaseFunctionFactory< 
+      typename BaseType :: BaseFunctionSpaceType :: ScalarFunctionSpaceType, GridType :: dimension, polOrd> ScalarFactoryType;   
+
+    // type of DG space 
+    typedef LagrangeDiscontinuousGalerkinSpace<
+      FunctionSpaceImp, GridPartImp, polOrd, BaseFunctionStorageImp > DiscreteFunctionSpaceType;
+  };
+
+  //! \brief A discontinuous Galerkin space
+  template <class FunctionSpaceImp, class GridPartImp, int polOrd, template <class> class BaseFunctionStorageImp >
+  class LagrangeDiscontinuousGalerkinSpace : 
+    public DiscontinuousGalerkinSpaceBase 
+  < LagrangeDiscontinuousGalerkinSpaceTraits<FunctionSpaceImp, GridPartImp,polOrd,BaseFunctionStorageImp> >
+  {
+    // - Local enums
+    enum { DGFSpaceId = 3 };
+  
+    // - Local typedefs
+    // the type of this class
+    typedef LagrangeDiscontinuousGalerkinSpace<FunctionSpaceImp, GridPartImp, polOrd,BaseFunctionStorageImp> 
+    ThisType;
+
+  public:
+    //- Public typedefs
+
+    //! The traits class
+    typedef LagrangeDiscontinuousGalerkinSpaceTraits<
+      FunctionSpaceImp, GridPartImp, polOrd, BaseFunctionStorageImp> Traits;
+
+    //! Exporting the interface type
+    typedef DiscreteFunctionSpaceDefault<Traits> BaseType;
+
+    //! Index set of space
+    typedef typename Traits::IndexSetType IndexSetType;
+
+  protected:
+    typedef DiscontinuousGalerkinSpaceBase <Traits> BaseImpType;
+
+    // set of geometry types 
+    typedef AllGeomTypes<typename Traits :: IndexSetType,
+                         typename Traits :: GridType>   GeometryTypes;
+    
+  public:
+    //- Constructors and destructors
+    /** Constructor */
+    LagrangeDiscontinuousGalerkinSpace(GridPartImp& gridPart,
+                                       const InterfaceType commInterface = BaseImpType :: defaultInterface,
+                                       const CommunicationDirection commDirection = BaseImpType :: defaultDirection ) :
+      BaseImpType (gridPart, GeometryTypes(gridPart.indexSet()).geomTypes( BaseImpType :: codimension ),
+                   commInterface, commDirection)
+    {}
+  };
+
   //@}
 } // end namespace Dune 
 
