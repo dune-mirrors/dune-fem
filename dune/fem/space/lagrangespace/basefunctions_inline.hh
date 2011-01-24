@@ -73,7 +73,7 @@ namespace Dune
 
     static void apply( int &numBaseFunctions )
     {
-      numBaseFunctions = BaseFunction::GenericBaseFunctionType::numBaseFunctions; 
+      numBaseFunctions = BaseFunction::numBaseFunctions; 
     }
 
     static void apply ( const int &i, BaseFunctionInterface< ScalarFunctionSpace > *&baseFunction )

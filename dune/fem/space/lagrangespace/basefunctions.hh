@@ -22,7 +22,9 @@ namespace Dune
       GenericGeometryType;
     typedef GenericLagrangeBaseFunction< FunctionSpace, GenericGeometryType, pOrder >
       GenericBaseFunctionType;
-      
+
+    enum { numBaseFunctions = GenericBaseFunctionType::numBaseFunctions };
+
     typedef typename GenericBaseFunctionType :: DomainType DomainType;
     typedef typename GenericBaseFunctionType :: RangeType RangeType;
 
