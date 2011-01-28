@@ -36,7 +36,8 @@ namespace Dune
   template< int dim, int dimworld >
   class AlbertaGrid;
 
-
+  template< class HostGrid, class CoordFunction, class Allocator >
+  class GeometryGrid;
 
   // Capabilities
   // ------------
@@ -100,6 +101,13 @@ namespace Dune
     };
 
 
+    template< class HostGrid, class CoordFunction, class Allocator >
+    struct hasHierarchicIndexSet< GeometryGrid< HostGrid, CoordFunction, Allocator > >
+    {
+      //static const bool v = hasHierarchicIndexSet< HostGrid > :: v;
+      static const bool v = false ;
+    };
+
 
 
     // hasAllCodimEntities
@@ -160,6 +168,12 @@ namespace Dune
       static const bool v = true;
     };
 
+    template< class HostGrid, class CoordFunction, class Allocator >
+    struct supportsCallbackAdaptation< GeometryGrid< HostGrid, CoordFunction, Allocator > >
+    {
+      static const bool v = supportsCallbackAdaptation< HostGrid > :: v;
+    };
+
 
     // IsUnstructured
     // --------------
@@ -188,6 +202,13 @@ namespace Dune
     {
       static const bool v = false;
     };
+
+    template< class HostGrid, class CoordFunction, class Allocator >
+    struct IsUnstructured< GeometryGrid< HostGrid, CoordFunction, Allocator > >
+    {
+      static const bool v = true ;
+    };
+
 #endif // #if DUNE_VERSION_NEWER(DUNE_GRID,2,1,0)
 
   }
