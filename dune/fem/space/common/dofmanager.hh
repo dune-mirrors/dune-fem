@@ -551,12 +551,12 @@ protected:
 };
 
 //! default implementation for creating a managed dof storage 
-template <class GridType, class MapperType, class DofStorageType>
+template< class DofStorageType, class GridType, class MapperType >
 static inline std::pair< DofStorageInterface* , DofStorageType* >
   allocateManagedDofStorage( const GridType& grid,
                              const MapperType& mapper,
                              const std::string& name,
-                             const DofStorageType* )
+                             const DofStorageType * = 0 )
 {
   // create managed dof storage 
   typedef ManagedDofStorage< GridType, MapperType,
