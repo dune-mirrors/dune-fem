@@ -64,6 +64,20 @@ namespace Dune
       jacobians_( JacobianCreator::apply() )
     {}
 
+    //! return true when a mass matrix has to be build  
+    bool hasMass () const  { return false; }
+
+    //! evaluate mass matrix factor 
+    template <class MassFactorType>
+    void mass(const Entity& en,
+              const VolumeQuadratureType& quad,
+              const int quadPoint,
+              MassFactorType& m)
+    {
+      m = 0;
+      abort();
+    }
+
     void setEntity ( const Entity &entity ) 
     {
       BaseType::setEntity( entity );
@@ -74,22 +88,6 @@ namespace Dune
     {
       BaseType::setNeighbor( neighbor );
       problem_.setNeighbor( neighbor );
-    }
-
-    // Ensure: entities set correctly before call
-    template <class QuadratureType, class CoefficientType>
-    DUNE_DEPRECATED 
-    void evaluateCoefficientFace(const IntersectionIterator& nit,
-                         const QuadratureType& quadInner, 
-                         const QuadratureType& quadOuter, 
-                         const int quadPoint,
-                         CoefficientType& coeffLeft, 
-                         CoefficientType& coeffRight) 
-    {
-      evaluateCoefficientFace( *nit, 
-                               quadInner, quadOuter,
-                               quadPoint, 
-                               coeffLeft, coeffRight);
     }
 
     // Ensure: entities set correctly before call
@@ -129,21 +127,6 @@ namespace Dune
                            this->valuesEn_, coeff);
     }
       
-    // Ensure: entities set correctly before call
-    template <class QuadratureType, class CoefficientType>
-    DUNE_DEPRECATED 
-    void evaluateCoefficientBoundary(const IntersectionIterator& nit,
-                         const QuadratureType& quadInner, 
-                         const int quadPoint,
-                         CoefficientType& coeff) 
-    {
-      this->evaluateQuad( quadInner, quadPoint,
-                         this->data_->localFunctionsSelf(), this->valuesEn_);
-      problem_.coefficient(this->data_->self(), 
-                           this->time_, quadInner.point(quadPoint), 
-                           this->valuesEn_, coeff);
-    }
-      
     template< class CoefficientType >
     void evaluateCoefficient( const Entity &entity,
                               const VolumeQuadratureType &quad, int quadPoint,
@@ -155,19 +138,10 @@ namespace Dune
                             this->valuesEn_, coeff );
     }
 
-    BoundaryIdentifierType
-    DUNE_DEPRECATED 
-    boundaryValue(const IntersectionIterator& nit,
-                  const FaceQuadratureType& quad,
-                  const int quadPoint,
-                  RangeType& value) 
-    {
-      return boundaryValue( *nit, quad, quadPoint, value);
-    }
-
+    template <class QuadratureType> 
     BoundaryIdentifierType
     boundaryValue(const Intersection& intersection,
-                  const FaceQuadratureType& quad,
+                  const QuadratureType& quad,
                   const int quadPoint,
                   RangeType& boundaryValue) 
     {
