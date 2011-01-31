@@ -40,17 +40,17 @@ public:
   typedef typename GeometryInformationType :: DomainType DomainType;
 protected:  
   const DiscreteFunctionSpaceType& spc_;
-  const int volumeQuadOrd_;
 
   GeometryInformationType geoInfo_;
+  const int volumeQuadOrd_;
+  const bool affine_;
 
   mutable MatrixType matrix_;
   mutable VectorType x_, rhs_;
 
-  mutable RangeType phi_[numDofs_];
+  mutable std::vector< RangeType > phi_;
   mutable RangeType phiMass_[numDofs_];
 
-  const bool affine_;
 
   //! dummy caller 
   struct NoMassDummyCaller
@@ -69,11 +69,12 @@ protected:
 
 public:
   //! constructor taking space and volume quadrature order 
-  LocalDGMassMatrix(const DiscreteFunctionSpaceType& spc, const int volQuadOrd ) 
+  LocalDGMassMatrix(const DiscreteFunctionSpaceType& spc, const int volQuadOrd = -1 ) 
     : spc_(spc) 
-    , volumeQuadOrd_ ( volQuadOrd )
     , geoInfo_( spc.indexSet() ) 
+    , volumeQuadOrd_ ( ( volQuadOrd < 0 ) ? ( spc.order() * 2 ) : volQuadOrd )
     , affine_ ( setup() )
+    , phi_( numDofs_ )
   {
     // only for DG spaces at the moment 
     assert( spc_.continuous() == false );
@@ -82,9 +83,10 @@ public:
   //! copy constructor 
   LocalDGMassMatrix(const LocalDGMassMatrix& org) 
     : spc_(org.spc_),
-      volumeQuadOrd_( org.volumeQuadOrd_ ),
       geoInfo_( org.geoInfo_),
-      affine_( org.affine_ )
+      volumeQuadOrd_( org.volumeQuadOrd_ ),
+      affine_( org.affine_ ),
+      phi_( org.phi_ )
   {
   }
 
@@ -132,11 +134,8 @@ public:
       // setup local mass matrix 
       buildMatrix( caller, en, geo, lf.baseFunctionSet(), matrix_ );
 
-      // invert matrix 
-      matrix_.invert();
-
-      // apply matrix 
-      matrix_.mv( rhs_ , x_ );
+      // solve linear system  
+      matrix_.solve(  x_, rhs_ );
 
       // copy back to local function 
       for(int l=0; l<numDofs_; ++l)
@@ -206,7 +205,10 @@ protected:
   {
     assert( numDofs_ == set.numBaseFunctions() );
 
+    // clear matrix 
     matrix = 0;
+
+    // create quadrature 
     VolumeQuadratureType volQuad(en, volumeQuadOrd_ );
 
     if( caller.hasMass() )
@@ -235,22 +237,18 @@ protected:
       const double intel = volQuad.weight(qp)
          * geo.integrationElement(volQuad.point(qp));
 
-      for(int m=0; m<numDofs_; ++m)
-      {  
-        // eval base functions 
-        set.evaluate(m, volQuad[qp], phi_[m] );
-      }
+      // eval base functions 
+      set.evaluateAll(volQuad[qp], phi_);
 
       for(int m=0; m<numDofs_; ++m)
       {
-        {
-          const ctype val = intel * (phi_[m] * phi_[m]);
-          matrix[m][m] += val;
-        }
-        
+        const RangeType& phi_m = phi_[m];
+        const ctype val = intel * (phi_m * phi_m);
+        matrix[m][m] += val;
+       
         for(int k=m+1; k<numDofs_; ++k) 
         {
-          const ctype val = intel * (phi_[m] * phi_[k]);
+          const ctype val = intel * (phi_m * phi_[k]);
           matrix[m][k] += val;
           matrix[k][m] += val;
         }
@@ -278,11 +276,8 @@ protected:
       const double intel = volQuad.weight(qp)
          * geo.integrationElement(volQuad.point(qp));
 
-      for(int m=0; m<numDofs_; ++m)
-      {  
-        // eval base functions 
-        set.evaluate(m, volQuad[qp], phi_[m] );
-      }
+      // eval base functions 
+      set.evaluateAll( volQuad[qp], phi_);
 
       // call mass factor 
       caller.mass( en, volQuad, qp, mass);
