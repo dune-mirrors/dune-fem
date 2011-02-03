@@ -1,6 +1,8 @@
 #ifndef DUNE_DISCRETEFUNCTIONADAPTER_HH
 #define DUNE_DISCRETEFUNCTIONADAPTER_HH
 
+#include <set>
+
 //- local includes 
 #include <dune/fem/function/common/discretefunction.hh>
 
@@ -496,6 +498,9 @@ namespace Dune
     typedef typename DiscreteFunctionType::LocalFunctionType LocalFunctionType;
   };
 
+  //! identifier to local function has initialize feature 
+  struct LocalFunctionHasInitialize {} ;
+
   /** \brief LocalFunctionAdapter wrapped a class with a local evaluate method
    *         into a grid function. 
    *
@@ -510,31 +515,31 @@ namespace Dune
    *  An instance of the EvalImp class is passed to the constructor of the
    *  wrapper and the entity to process is passed to a method init on EvalImp.
    */
-  template< class EvalImp >
+  template< class LocalFunctionImpl >
   class LocalFunctionAdapter
-    : public Fem::Function< typename EvalImp::FunctionSpaceType, LocalFunctionAdapter< EvalImp > >
+    : public Fem::Function< typename LocalFunctionImpl::FunctionSpaceType, LocalFunctionAdapter< LocalFunctionImpl > >
     , public HasLocalFunction
   {
-    typedef LocalFunctionAdapter< EvalImp > ThisType;
-    typedef Fem::Function< typename EvalImp::FunctionSpaceType, ThisType > BaseType;
+    typedef LocalFunctionAdapter< LocalFunctionImpl > ThisType;
+    typedef Fem::Function< typename LocalFunctionImpl::FunctionSpaceType, ThisType > BaseType;
 
   public:  
     typedef ThisType  DiscreteFunctionType ;
 
     //! Evaluate class
-    typedef EvalImp EvalType;
+    typedef LocalFunctionImpl  LocalFunctionImplType ;
 
     //! type of function 
     typedef typename BaseType::FunctionType FunctionType;
 
     //! traits class
-    typedef LocalFunctionAdapterTraits< EvalType > Traits;
+    typedef LocalFunctionAdapterTraits< LocalFunctionImplType > Traits;
 
     //! type of grid part 
-    typedef typename EvalImp::GridPartType GridPartType;
+    typedef typename LocalFunctionImplType::GridPartType GridPartType;
     
     //! type of discrete function
-    typedef DiscreteFunctionSpaceAdapter< typename EvalType::FunctionSpaceType,
+    typedef DiscreteFunctionSpaceAdapter< typename LocalFunctionImplType::FunctionSpaceType,
                                           GridPartType >
       DiscreteFunctionSpaceType;
 
@@ -556,27 +561,87 @@ namespace Dune
 
   private:
     struct LocalFunction;
-
   public:
     //! type of local function to export 
     typedef LocalFunction LocalFunctionType; 
 
+  protected:
+    //! set of created local functions  
+    typedef std::set< LocalFunctionType* > LocalFunctionListType; 
+
+    enum { localFunctionHasInitialize = 
+      Conversion< LocalFunctionImplType, LocalFunctionHasInitialize > :: exists };
+
+    template <class ArgumentType, bool hasInit > 
+    struct LocalFunctionInitializer 
+    {
+      static void init( const ArgumentType& , LocalFunctionListType& ) 
+      {
+        DUNE_THROW(NotImplemented,"LocalFunctionAdapter::initialize is not implemented");
+      }
+    };
+
+    template <class ArgumentType> 
+    struct LocalFunctionInitializer< ArgumentType, true >
+    {
+      static void init( const ArgumentType& arg, LocalFunctionListType& lfList) 
+      {
+        typedef typename LocalFunctionListType :: iterator iterator ;
+        const iterator endit = lfList.end();
+        for( iterator it = lfList.begin(); it != endit; ++it ) 
+        {
+          arg.initialize( (*it) );
+        }
+      }
+    };
+
+    // interface class for local function init 
+    struct ArgumentIF 
+    {
+      virtual void initialize( LocalFunctionType* lf ) const = 0;
+    };
+
+    // storage of argument reference to init local functions 
+    template <class ArgType> 
+    struct ArgumentInitializer : public ArgumentIF 
+    {
+      // store arg here, this is a tuple of discrete functions 
+      // that has to be copied 
+      const ArgType arg_;
+      // constructor storing argument  
+      ArgumentInitializer( const ArgType& arg ) : arg_( arg ) {}
+      virtual void initialize( LocalFunctionType* lf ) const 
+      {
+        lf->initialize( arg_ );
+      }
+    };
+
+  public:  
     //! constructer taking instance of EvalImp class 
     LocalFunctionAdapter ( const std::string &name,
-                           EvalType &eval,
+                           LocalFunctionImplType &eval,
                            const GridPartType &gridPart,
                            unsigned int order = DiscreteFunctionSpaceType::polynomialOrder )
     : space_( gridPart, order ),
-      eval_( eval ),
+      localFunctionImpl_( eval ),
+      lfList_(),
+      argInitializer_( 0 ),
       name_( name )
     {}
 
     // reference to function this local belongs to
     LocalFunctionAdapter( const ThisType &other )
     : space_( other.space_ ),
-      eval_( other.eval_ ),
+      localFunctionImpl_( other.localFunctionImpl_ ),
+      lfList_(),
+      argInitializer_( 0 ),
       name_( other.name_ )
     {}
+
+    ~LocalFunctionAdapter() 
+    {
+      delete argInitializer_ ;
+    }
 
     //! evaluate function on local coordinate local 
     void evaluate(const DomainType& global, RangeType& result) const 
@@ -650,15 +715,50 @@ namespace Dune
       return *this; 
     }
 
+    //! initialize local function with argument (see insertfunctionpass.hh)
+    template <class ArgumentType>
+    void initialize( const ArgumentType& arg )
+    {
+      if( localFunctionHasInitialize )
+      {
+        delete argInitializer_ ;
+        // makes a copy of arg, which is a tuple of discrete functions 
+        argInitializer_ = new ArgumentInitializer< ArgumentType > ( arg );
+        LocalFunctionInitializer< ArgumentIF, localFunctionHasInitialize > :: init( *argInitializer_, lfList_ );
+      }
+    }
+
+    //! add LocalFunction to list of local functions 
+    void registerLocalFunction( LocalFunctionType* lf ) const 
+    {
+      if( localFunctionHasInitialize )
+      {
+        if( argInitializer_ ) 
+          argInitializer_->initialize( lf );
+        lfList_.insert( lf );
+      }
+    }
+
+    //! remove LocalFunction to list of local functions 
+    void deleteLocalFunction( LocalFunctionType* lf ) const 
+    {
+      if( localFunctionHasInitialize )
+      {
+        lfList_.erase( lf );
+      }
+    }
+
   private:    
     DiscreteFunctionSpaceType space_; 
-    mutable EvalType& eval_;
+    const LocalFunctionImplType& localFunctionImpl_;
+    mutable LocalFunctionListType lfList_;
+    const ArgumentIF* argInitializer_ ;
     const std::string name_;
   };
 
 
-  template< class EvalImp >
-  struct LocalFunctionAdapter< EvalImp >::LocalFunction
+  template< class LocalFunctionImpl >
+  struct LocalFunctionAdapter< LocalFunctionImpl >::LocalFunction
   {
     //! domain type (from function space)
     typedef typename DiscreteFunctionSpaceType::DomainFieldType DomainFieldType ;
@@ -671,34 +771,56 @@ namespace Dune
     //! jacobian type (from function space)
     typedef typename DiscreteFunctionSpaceType::JacobianRangeType JacobianRangeType;
 
+    //! type of local function implementation 
+    typedef LocalFunctionImpl LocalFunctionImplType;
+
     //! constructor initializing local function 
     LocalFunction(const EntityType& en, const ThisType& a)
-    : eval_(a.eval_)
+    : adapter_( a ),
+      localFunctionImpl_(a.localFunctionImpl_)
     {
-      eval_.init(en);
+      // add local function to list
+      adapter_.registerLocalFunction( this );
+      localFunctionImpl_.init(en);
     }
 
+    //! constructor 
     LocalFunction(const ThisType& a)
-    : eval_(a.eval_) 
-    {}
+    : adapter_( a ),
+      localFunctionImpl_(a.localFunctionImpl_) 
+    {
+      // add local function to list
+      adapter_.registerLocalFunction( this );
+    }
 
     //! copy constructor 
     LocalFunction(const LocalFunction& org) 
-    : eval_(org.eval_) 
-    {}
+    : adapter_( org.adapter_ ),
+      localFunctionImpl_(org.localFunctionImpl_) 
+    {
+      // add local function to list
+      adapter_.registerLocalFunction( this );
+    }
+
+    //! destructor 
+    ~LocalFunction() 
+    {
+      // remove local function from list
+      adapter_.deleteLocalFunction( this );
+    }
 
     //! evaluate local function 
     template< class PointType >
     void evaluate ( const PointType &x, RangeType &ret ) const
     {
-      eval_.evaluate(x,ret);
+      localFunctionImpl_.evaluate(x,ret);
     }
 
     //! jacobian of local function 
     template< class PointType >
     void jacobian ( const PointType &x, JacobianRangeType &ret ) const
     {
-      eval_.jacobian( x, ret );
+      localFunctionImpl_.jacobian( x, ret );
     }
 
     template< class QuadratureType, class VectorType  >
@@ -711,8 +833,14 @@ namespace Dune
     //! init local function
     void init(const EntityType& en)
     {
-      eval_.init(en);
+      localFunctionImpl_.init(en);
     } 
+
+    template <class ArgumentType>
+    void initialize( const ArgumentType& arg )
+    {
+      localFunctionImpl_.initialize( arg );
+    }
 
   protected:  
     template< class QuadratureType, class VectorType  >
@@ -734,7 +862,8 @@ namespace Dune
     }
 
   private:
-    EvalType& eval_;
+    const ThisType& adapter_;
+    LocalFunctionImplType localFunctionImpl_;
   };
 
 } // end namespace Dune
