@@ -2,6 +2,7 @@
 #define DUNE_INSERTFUNCTIONPASS_HH
 
 #include <dune/fem/function/common/discretefunction.hh>
+#include <dune/fem/function/common/discretefunctionadapter.hh>
 #include <dune/fem/pass/pass.hh>
 
 namespace Dune
@@ -65,6 +66,25 @@ namespace Dune
 
     static const bool hasLocalFunction = Conversion< DiscreteFunction, HasLocalFunction >::exists;
     dune_static_assert( hasLocalFunction, "InsertFunctionPass can only insert grid functions." );
+
+  protected:
+    template <class DFType>
+    struct LocalFunctionInitializer
+    {
+      template <class ArgType> 
+      static void init( const ArgType&, DiscreteFunction& ) {}
+    };
+    
+    template <class LFType>
+    struct LocalFunctionInitializer< LocalFunctionAdapter< LFType > >
+    {
+      template <class ArgType> 
+      static void init( const ArgType& arg, DiscreteFunction& dest ) 
+      {
+        // call initialize on LocalFunctionAdapter 
+        dest.initialize( arg );
+      }
+    };
     
   public:
     //! type of discrete model for this class 
@@ -145,11 +165,15 @@ namespace Dune
     {
       destination_ = const_cast< DestinationType * >( &destination );
     }
-    
+
   protected:
     // empty method here
     void compute ( const ArgumentType &arg, DestinationType &dest ) const
-    {}
+    {
+      // in case DestinationType is a LocalFunctionAdapter
+      // call initialize 
+      LocalFunctionInitializer< DestinationType > :: init( arg, dest );
+    }
 
     using BaseType::destination_;
   }; // end class InsertFunctionPass
