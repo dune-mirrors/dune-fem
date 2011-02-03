@@ -1,8 +1,6 @@
 #include <config.h>
 #include <iostream>
 
-// #include <dune/grid/io/file/dgfparser/dgfgridtype.hh>
-
 #include<dune/grid/common/gridinfo.hh>
 
 #include <dune/fem/gridpart/gridpart.hh>
@@ -14,18 +12,18 @@
 
 using namespace Dune;
 
-template<class GridPartType, bool caching>
+template<class GridPartType, int codim, bool caching>
 struct QuadratureChooser;
 
-template<class GridPartType>
-struct QuadratureChooser<GridPartType,false>
+template<class GridPartType, int codim>
+struct QuadratureChooser<GridPartType,codim,false>
 {
-  typedef ElementQuadrature< GridPartType, 1 > Quadrature;
+  typedef ElementQuadrature< GridPartType, codim > Quadrature;
 };
-template<class GridPartType>
-struct QuadratureChooser<GridPartType,true>
+template<class GridPartType, int codim>
+struct QuadratureChooser<GridPartType,codim,true>
 {
-  typedef CachingQuadrature< GridPartType, 1 > Quadrature;
+  typedef CachingQuadrature< GridPartType, codim > Quadrature;
 };
 
 template<class GridPartType, bool caching>
@@ -36,22 +34,71 @@ private:
   typedef typename GridPartType :: template Codim<0> :: IteratorType IteratorType;
   typedef typename IteratorType :: Entity EntityType;
   typedef typename EntityType :: EntityPointer EntityPointerType;
+  typedef typename EntityType :: Geometry  Geometry;
   typedef typename GridPartType :: IntersectionIteratorType IntersectionIteratorType;
   typedef typename IntersectionIteratorType :: Intersection IntersectionType;
 
-  typedef typename QuadratureChooser<GridPartType,caching>::Quadrature FaceQuadratureType; 
+  typedef typename QuadratureChooser<GridPartType, 0, caching>::Quadrature VolumeQuadratureType; 
+  typedef ElementQuadrature< GridPartType, 0 > ElementQuadratureType;
+  typedef typename QuadratureChooser<GridPartType, 1, caching>::Quadrature FaceQuadratureType; 
 
   GridPartType & gridPart_;
   int order_;
   const double eps_;
+  const bool skipFaces_;
 
 public:
 
   TestCaching(GridPartType & gridPart, int order, const double eps = 1e-8) 
-    : gridPart_(gridPart), order_(order), eps_(eps) 
+    : gridPart_(gridPart), order_( std::abs(order) ), eps_(eps), skipFaces_( order < 0 )
   { }
 
   void runTest()
+  {
+    testElementQuadratures();
+    if( skipFaces_ ) 
+    {
+      std::cout << "Skipping faces due to fem.skipfaces "<<std::endl;
+      return ;
+    }
+    testFaceQuadratures();
+  }
+
+  void testElementQuadratures() 
+  {
+    typedef Dune::GridSelector::GridType GridType;
+
+    IteratorType endit = gridPart_.template end<0>();
+    for (IteratorType it = gridPart_.template begin<0>(); it != endit; ++it) 
+    {
+      const EntityType & entity = *it;
+      const Geometry& geo = entity.geometry();
+
+      VolumeQuadratureType cacheQuad( entity, order_ );
+      ElementQuadratureType elemQuad( entity, order_ );
+      if( cacheQuad.nop() != elemQuad.nop() ) 
+      {
+        std::cout << " Error: nops not equal: cachequad = " << cacheQuad.nop() 
+                  << "   elemQuad = " << elemQuad.nop() << std::endl;
+        return ;
+      }
+
+      const int quadNop = cacheQuad.nop();
+      for (int qp = 0; qp < quadNop; ++qp)
+      {
+        Dune::FieldVector<typename GridType::ctype,GridType::dimensionworld> globalElem, globalCache;
+        globalCache  = geo.global( cacheQuad.point( qp ) );
+        globalElem   = geo.global( elemQuad.point( qp ) );
+        if( (globalCache-globalElem).two_norm() > eps_) 
+        {
+          std::cout << " Error: x(cache) = " << globalCache << " != " 
+                    << globalElem << " = x(elem) " << std::endl;
+          break;
+        }
+      }
+    }
+  }
+  void testFaceQuadratures() 
   {
     typedef Dune::GridSelector::GridType GridType;
 
@@ -109,7 +156,9 @@ int main(int argc, char ** argv)
 
     typedef Dune::GridSelector::GridType GridType;
     std::string filename;
-    Parameter::get("fem.gridfile", filename);
+    std::stringstream fileKey ;
+    fileKey << "fem.gridfile" << GridType :: dimension ; 
+    Parameter::get( fileKey.str(), filename);
     Dune::GridPtr< GridType > gridptr( filename );
     GridType &grid = *gridptr;
 
@@ -118,6 +167,9 @@ int main(int argc, char ** argv)
     Dune::gridinfo(grid);
 
     int quadOrder = Parameter::getValue<int>("fem.quadorder");
+
+    if ( Parameter::getValue<bool>("fem.skipfaces", false ) )
+      quadOrder = -quadOrder ;
 
     typedef LeafGridPart< GridType > GridPartType;
     GridPartType gridPart( grid );
