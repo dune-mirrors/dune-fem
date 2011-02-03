@@ -128,32 +128,6 @@ namespace Dune
     else
       return 1;
   }
-
-
-
-  template<>
-  bool TwistUtility< UGGrid< 2 > >::conforming ( const GridType &grid, const LeafIntersection &it )
-  {
-    return (!it.neighbor() || (it.inside()->level() == it.outside()->level())); 
-  }
-
-  template<>
-  bool TwistUtility< UGGrid< 2 > >::conforming ( const LeafIntersection &it ) const
-  { 
-    return (!it.neighbor() || (it.inside()->level() == it.outside()->level())); 
-  }
-    
-  template<>
-  bool TwistUtility< UGGrid< 2 > >::conforming ( const GridType &grid, const LevelIntersection &it )
-  {
-    return (!it.neighbor() || (it.inside()->level() == it.outside()->level())); 
-  }
-
-  template<>
-  bool TwistUtility< UGGrid< 2 > >::conforming ( const LevelIntersection &it ) const
-  { 
-    return (!it.neighbor() || (it.inside()->level() == it.outside()->level())); 
-  }
 #endif // #if HAVE_UG
 
 
@@ -326,32 +300,6 @@ namespace Dune
   int TwistUtility< UGGrid< 3 > >::twistInNeighbor ( const LevelIntersection &it ) const
   {
     DUNE_THROW( NotImplemented, "not implemented because grid is missing!" );
-  }
-
-
-
-  template<>
-  bool TwistUtility< UGGrid< 3 > >::conforming ( const GridType &grid, const LeafIntersection &it )
-  {
-    return (!it.neighbor() || (it.inside()->level() == it.outside()->level())); 
-  }
-
-  template<>
-  bool TwistUtility< UGGrid< 3 > >::conforming ( const LeafIntersection &it ) const
-  { 
-    return (!it.neighbor() || (it.inside()->level() == it.outside()->level())); 
-  }
-  
-  template<>
-  bool TwistUtility< UGGrid< 3 > >::conforming ( const GridType &grid, const LevelIntersection &it )
-  {
-    return (!it.neighbor() || (it.inside()->level() == it.outside()->level())); 
-  }
-
-  template<>
-  bool TwistUtility< UGGrid< 3 > >::conforming ( const LevelIntersection &it ) const
-  { 
-    return (!it.neighbor() || (it.inside()->level() == it.outside()->level())); 
   }
 #endif // #if HAVE_UG
 

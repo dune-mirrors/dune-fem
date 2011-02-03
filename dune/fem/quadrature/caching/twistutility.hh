@@ -86,15 +86,6 @@ namespace Dune
       return 0;
     }
 
-    //! \brief return true if intersection is conform, default is true  
-    template <class IntersectionIterator> 
-    bool DUNE_DEPRECATED conforming (const IntersectionIterator& it) const { return true; }
-    
-    //! \brief return true if intersection is conform, default is true  
-    template <class IntersectionIterator> 
-    static bool DUNE_DEPRECATED
-    conforming (const GridType &, const IntersectionIterator&) { return true; }
-
     /** \brief return geometry type of inside or outside entity */
     template <class Intersection>  
     static inline GeometryType
@@ -172,21 +163,6 @@ namespace Dune
     int twistInNeighbor ( const LeafIntersection &it ) const
     {
       return twistInNeighbor( grid_, it );
-    }
-    
-    //! \brief return true if intersection is conform, default is true  
-    template <class IntersectionIterator> 
-    bool DUNE_DEPRECATED conforming (const IntersectionIterator& it) const
-    {
-      return true;
-    }
-    
-    //! \brief return true if intersection is conform, default is true  
-    template <class IntersectionIterator> 
-    static bool DUNE_DEPRECATED
-    conforming (const GridType & grid, const IntersectionIterator& it)
-    {
-      return true;
     }
     
     /** \brief return element geometry type of inside or outside entity 
@@ -278,21 +254,6 @@ namespace Dune
       return twistInNeighbor( grid_, it );
     }
 
-    //! \brief return true if intersection is conform, default is true  
-    template <class IntersectionIterator> 
-    bool DUNE_DEPRECATED conforming (const IntersectionIterator& it) const
-    { 
-      return grid_.getRealIntersectionIterator(it).conforming(); 
-    }
-
-    //! \brief return true if intersection is conform, default is true  
-    template <class IntersectionIterator> 
-    static bool DUNE_DEPRECATED
-    conforming (const GridType & grid, const IntersectionIterator& it)
-    { 
-      return grid.getRealIntersectionIterator(it).conforming(); 
-    }
-    
     /** \brief return element geometry type of inside or outside entity 
     */
     template <class Intersection>  
@@ -365,21 +326,6 @@ namespace Dune
       return twistInNeighbor( grid_, it);
     }
 
-    //! \brief return true if intersection is conform, default is true  
-    template <class IntersectionIterator> 
-    bool DUNE_DEPRECATED conforming (const IntersectionIterator& it) const
-    { 
-      return grid_.getRealIntersectionIterator(it).conforming(); 
-    }
-
-    //! \brief return true if intersection is conform, default is true  
-    template <class IntersectionIterator> 
-    static bool DUNE_DEPRECATED
-    conforming (const GridType & grid, const IntersectionIterator& it)
-    { 
-      return grid.getRealIntersectionIterator(it).conforming(); 
-    }
-    
     /** \brief return element geometry type of inside or outside entity 
     */
     template <class Intersection>  
@@ -442,21 +388,6 @@ namespace Dune
       return twistInNeighbor( grid_, it );
     }
 
-    //! \brief return true if intersection is conform, default is true  
-    template <class IntersectionIterator> 
-    bool DUNE_DEPRECATED conforming (const IntersectionIterator& it) const
-    { 
-      return grid_.getRealIntersectionIterator(it).conforming(); 
-    }
-    
-    //! \brief return true if intersection is conform, default is true  
-    template <class IntersectionIterator> 
-    static bool DUNE_DEPRECATED
-    conforming (const GridType & grid, const IntersectionIterator& it)
-    { 
-      return grid.getRealIntersectionIterator(it).conforming(); 
-    }
-    
     /** \brief return element geometry type of inside or outside entity 
     */
     template <class Intersection>  
@@ -507,11 +438,6 @@ namespace Dune
     int twistInNeighbor( const LeafIntersection &it ) const;
     static int twistInNeighbor ( const GridType &grid, const LevelIntersection &it );
     int twistInNeighbor( const LevelIntersection &it ) const;
-
-    static bool DUNE_DEPRECATED conforming ( const GridType &grid, const LeafIntersection &it );
-    bool DUNE_DEPRECATED conforming ( const LeafIntersection &it ) const;
-    static bool DUNE_DEPRECATED conforming ( const GridType &grid, const LevelIntersection &it );
-    bool DUNE_DEPRECATED conforming ( const LevelIntersection &it ) const;
 
     template< class Intersection >
     static GeometryType
@@ -573,15 +499,6 @@ namespace Dune
     }
 
     //! \brief return twist for inner face
-    template< class G, template< class > class II, template< class > class I >
-    static int DUNE_DEPRECATED
-    twistInSelf ( const GridType &grid,
-                  const IntersectionIterator< G, II, I > &intersectionIterator )
-    {
-      return twistInSelf( grid, *intersectionIterator );
-    }
-
-    //! \brief return twist for inner face
     template< class Intersection >
     int twistInSelf ( const Intersection &intersection ) const
     {
@@ -609,59 +526,12 @@ namespace Dune
       return HostTwistUtility :: twistInNeighbor( grid.hostGrid(), hostIntersection );
     }
 
-    //! \brief return twist for inner face
-    template< class G, template< class > class II, template< class > class I >
-    static int DUNE_DEPRECATED
-    twistInNeighbor ( const GridType &grid,
-                      const IntersectionIterator< G, II, I > &intersectionIterator )
-    {
-      return twistInNeighbor( grid, *intersectionIterator );
-    }
-
     //! \brief return twist for outer face
     template< class Intersection >
     int twistInNeighbor ( const Intersection &intersection ) const
     {
       return twistInNeighbor( grid_, intersection );
     }
-
-
-    //! \brief return true if intersection is conform
-    static bool DUNE_DEPRECATED
-    conforming ( const GridType &grid, const LeafIntersection &intersection )
-    {
-      typedef typename HostGridAccess :: HostLeafIntersection HostIntersection;
-      const HostIntersection &hostIntersection
-        = HostGridAccess :: getIntersection( intersection );
-      return HostTwistUtility :: conforming( grid.hostGrid(), hostIntersection );
-    }
-
-    //! \brief return true if intersection is conform
-    static bool DUNE_DEPRECATED
-    conforming ( const GridType &grid, const LevelIntersection &intersection )
-    {
-      typedef typename HostGridAccess :: HostLevelIntersection HostIntersection;
-      const HostIntersection &hostIntersection
-        = HostGridAccess :: getIntersection( intersection );
-      return HostTwistUtility :: conforming( grid.hostGrid(), hostIntersection );
-    }
-
-    //! \brief return true if intersection is conform
-    template< class G, template< class > class II, template< class > class I >
-    static bool DUNE_DEPRECATED
-    conforming ( const GridType &grid,
-                 const IntersectionIterator< G, II, I > &intersectionIterator )
-    {
-      return conforming( grid, *intersectionIterator );
-    }
-
-    //! \brief return true if intersection is conform
-    template< class Intersection >
-    bool DUNE_DEPRECATED conforming ( const Intersection &intersection ) const
-    {
-      return conforming( grid_, intersection );
-    }
-
 
     /** \brief return element geometry type of inside or outside entity */
     static GeometryType
@@ -681,15 +551,6 @@ namespace Dune
       const HostIntersection &hostIntersection
         = HostGridAccess :: getIntersection( intersection );
       return HostTwistUtility :: elementGeometry( hostIntersection, inside );
-    }
-
-    /** \brief return element geometry type of inside or outside entity */
-    template< class G, template< class > class II, template< class > class I >
-    static GeometryType DUNE_DEPRECATED
-    elementGeometry ( const IntersectionIterator< G, II, I > &intersectionIterator,
-                      bool inside )
-    {
-      return elementGeometry( *intersectionIterator, inside );
     }
 
   private:
