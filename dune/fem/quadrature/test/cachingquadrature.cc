@@ -8,7 +8,11 @@
 #include <dune/fem/quadrature/elementquadrature.hh>
 #include <dune/fem/quadrature/cachingquadrature.hh>
 
+#include <dune/grid/io/visual/grapegriddisplay.hh>
+
 #include <dune/fem/io/parameter.hh>
+
+#include "checkleafcodim1.hh"
 
 using namespace Dune;
 
@@ -32,6 +36,8 @@ class TestCaching
 private:
   // types of iterators, entities and intersection
   typedef typename GridPartType :: template Codim<0> :: IteratorType IteratorType;
+  typedef typename GridPartType :: GridType GridType ;
+  typedef typename GridPartType :: IndexSetType  IndexSetType ;
   typedef typename IteratorType :: Entity EntityType;
   typedef typename EntityType :: EntityPointer EntityPointerType;
   typedef typename EntityType :: Geometry  Geometry;
@@ -66,7 +72,6 @@ public:
 
   void testElementQuadratures() 
   {
-    typedef Dune::GridSelector::GridType GridType;
 
     IteratorType endit = gridPart_.template end<0>();
     for (IteratorType it = gridPart_.template begin<0>(); it != endit; ++it) 
@@ -98,9 +103,13 @@ public:
       }
     }
   }
+
   void testFaceQuadratures() 
   {
-    typedef Dune::GridSelector::GridType GridType;
+    // just another face check 
+    CachingQuadratureTest :: checkLeafsCodimOne( gridPart_, 4 );
+
+    const IndexSetType& indexSet = gridPart_.indexSet(); 
 
     IteratorType endit = gridPart_.template end<0>();
     for (IteratorType it = gridPart_.template begin<0>(); it != endit; ++it) 
@@ -130,6 +139,7 @@ public:
             globalOutside = outside.geometry().global(faceQuadOuter.point(qp));
             if( (globalInside-globalOutside).two_norm() > eps_) 
             {
+              std::cout << "On Element " << indexSet.index( entity ) << " with neighbor " << indexSet.index( outside ) << std::endl;
               std::cout << " Error: x(inside) = " << globalInside << " != " 
                         << globalOutside << " = x(outside) "
                         << " at intersection.indexInInside() = " << intersection.indexInInside()  
@@ -166,12 +176,18 @@ int main(int argc, char ** argv)
     grid.globalRefine( startlevel );
     Dune::gridinfo(grid);
 
+    if( Parameter::getValue<bool>("fem.io.grapedisplay", false ))
+    {
+      Dune::GrapeGridDisplay< GridType > grape( grid ) ;
+      grape.display();
+    }
+
     int quadOrder = Parameter::getValue<int>("fem.quadorder");
 
     if ( Parameter::getValue<bool>("fem.skipfaces", false ) )
       quadOrder = -quadOrder ;
 
-    typedef LeafGridPart< GridType > GridPartType;
+    typedef HierarchicGridPart< GridType > GridPartType;
     GridPartType gridPart( grid );
 
     const double eps = 1e-8;
