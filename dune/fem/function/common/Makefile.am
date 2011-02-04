@@ -5,6 +5,7 @@ common_HEADERS = discretefunction.hh \
                  dofblock.hh \
                  dofiterator.hh \
                  function.hh \
+                 localfunctionadapter.hh \
                  scalarproducts.hh
 
 include $(top_srcdir)/am/global-rules
