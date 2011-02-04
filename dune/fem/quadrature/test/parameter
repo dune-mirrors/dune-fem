@@ -6,4 +6,5 @@ fem.gridfile2: 2dgrid.dgf
 fem.startlevel: 0
 fem.quadorder: 3
 fem.skipfaces: 0
-fem.io.grapedisplay: 1
+fem.io.grapedisplay: 0
+fem.verboserank: 0

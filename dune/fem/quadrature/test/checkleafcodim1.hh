@@ -244,7 +244,7 @@ protected:
         if( dim > 2 )
         {
           // set this flag to true for output of twists that have been calculated 
-          const bool output = false ;
+          const bool output = Parameter :: verbose() ;
 
           const int twistFound = checkLocalIntersectionConsistency( *inter.inside(),
                                 inter.geometryInInside(), inter.indexInInside() , false, output);
@@ -291,11 +291,13 @@ protected:
                        geo.global(quad.localPoint(i))[d]);
           }
 
+          /*
           {
             std::cout << "nis: " << inter.indexInInside();
             std::cout << " pt " << i << ": " << points[quad.cachingPoint(i)]
                       << " == " << geo.global(quad.localPoint(i)) << std::endl;
           }
+          */
         }
 
         if( inter.neighbor ())
@@ -314,12 +316,14 @@ protected:
                            nGeo.global(outerQuad.localPoint(i))[d]);
               }
 
+              /*
               { 
                 std::cout << "nin: " << inter.indexInOutside();
                 std::cout << " nis: " << inter.indexInInside();
                 std::cout << " pt " << i << ": " << points[outerQuad.cachingPoint(i)]
                           << " == " << nGeo.global(outerQuad.localPoint(i)) << std::endl;
               }
+              */
             }
           }
         }
