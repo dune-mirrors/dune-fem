@@ -1,7 +1,7 @@
 #fem.gridfile3: WellMesh_1.msh.dgf
-fem.gridfile3: mesh.dgf
+#fem.gridfile3: mesh.dgf
 #fem.gridfile3: RandMesh4.msh.dgf
-#fem.gridfile3: 3dgrid.dgf
+fem.gridfile3: 3dgrid.dgf
 fem.gridfile2: 2dgrid.dgf
 fem.startlevel: 0
 fem.quadorder: 3
