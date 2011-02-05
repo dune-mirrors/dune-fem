@@ -241,11 +241,11 @@ protected:
         const Intersection& inter=*it;
         typedef TwistUtility<GridType> TwistUtilityType; 
 
+        // set this flag to true for output of twists that have been calculated 
+        const bool output = Parameter :: verbose() ;
+
         if( dim > 2 )
         {
-          // set this flag to true for output of twists that have been calculated 
-          const bool output = Parameter :: verbose() ;
-
           const int twistFound = checkLocalIntersectionConsistency( *inter.inside(),
                                 inter.geometryInInside(), inter.indexInInside() , false, output);
           const int twistInside = TwistUtilityType::twistInSelf( gridPart.grid(), inter);
@@ -275,11 +275,13 @@ protected:
           PointProviderType::getPoints(quad.id(), geomType);
 
         _test( points.size() == numFaces * quad.nop());
-        std::cout << points.size() << " ps | qnop " << numFaces * quad.nop() << "\n";
-
-        std::cout << "New Intersection: Twists: ";
-        std::cout << TwistUtilityType :: twistInSelf( gridPart.grid(), inter) << " ";
-        std::cout << TwistUtilityType :: twistInNeighbor( gridPart.grid(), inter) << "\n";
+        if ( output ) 
+        {
+          std::cout << points.size() << " ps | qnop " << numFaces * quad.nop() << "\n";
+          std::cout << "New Intersection: Twists: ";
+          std::cout << TwistUtilityType :: twistInSelf( gridPart.grid(), inter) << " ";
+          std::cout << TwistUtilityType :: twistInNeighbor( gridPart.grid(), inter) << "\n";
+        }
 
         for (size_t i = 0; i < quad.nop(); ++i) 
         {
