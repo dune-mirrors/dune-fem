@@ -1,7 +1,7 @@
 #include <config.h>
 
 #include <dune/grid/common/genericreferenceelements.hh>
-
+#include <dune/grid/alugrid/3d/topology.hh>
 #include <dune/fem/quadrature/caching/twistutility.hh>
 
 #if HAVE_UG
@@ -141,11 +141,69 @@ namespace Dune
 
     struct CubeTwists 
     {
-      static int twistInNeighbor ( const int face )
+      template <class ReferenceElement, class LocalGeometry>
+      static int twistInNeighbor ( const ReferenceElement& refElem, 
+                                   const LocalGeometry& localGeom, 
+                                   const int face )
       {
-        static const int twistInNeigh[6] = { 0, -2, -2,  0,  0, -1 };
+        assert( localGeom.type().isCube() );
+
+        enum { dim = 3 };
+        typedef typename LocalGeometry :: ctype ctype;
+
+        typedef FaceTopologyMapping<hexa>  CubeFaceMapping;
+
+        const int vxSize = refElem.size( face, 1, dim );
+        typedef typename LocalGeometry :: GlobalCoordinate CoordinateVectorType;
+
+        // now calculate twist by trial and error for all possible twists 
+        // the calculated twist is with respect to the ALUGrid 
+        // reference face, see twistprovider.cc  
+        int twistFound = -66;
+        for(int twist = -vxSize; twist<vxSize; ++twist)
+        {
+          bool twistOk = true;
+          // now check mapping with twist 
+          for(int i=0; i<vxSize; ++i)
+          {
+            const int twistedDuneIndex = CubeFaceMapping::twistedDuneIndex( i, twist );
+            // get face vertices of number in self face 
+            const int vxIdx = refElem.subEntity( face, 1 , twistedDuneIndex , dim);
+
+            // get position in reference element of vertex i
+            CoordinateVectorType refPos = refElem.position( vxIdx, dim );
+
+            // check coordinates again 
+            CoordinateVectorType localPos = localGeom.corner( i );
+            if( (refPos - localPos).infinity_norm() > 1e-8 )
+            {
+              twistOk = false;
+              break;
+            }
+          }
+
+          if( twistOk )
+          {
+            twistFound = twist;
+            break ;
+          }
+        }
+
+        // if no twist found, then something is wrong 
+        if( twistFound == -66 )
+        {
+          assert(false);
+          DUNE_THROW(GridError,"Not matching twist found");
+        }
+
+        return twistFound;
+
+        /*
+        //static const int twistInNeigh[6] = { 0, -2, -2,  0,  0, -1 };
+        static const int twistInNeigh[6] = { 3, -3, -2,  2,  3, -3 };
         assert( face >= 0 && face < 6 );
         return twistInNeigh[ face ];
+        */
       }
       
       static int twistInSelf( const int face )
@@ -270,7 +328,12 @@ namespace Dune
     else 
     {
       assert( it.outside()->type().isCube() );
-      return UG3::CubeTwists::twistInNeighbor( it.indexInOutside() );
+      typedef UGGrid< 3 > :: ctype ctype ;
+      static const GenericReferenceElement< ctype, 3 > &refElem =
+              GenericReferenceElements< ctype, 3 >::general( it.outside()->type() );
+
+      //return UG3::CubeTwists::twistInNeighbor( it.indexInOutside() );
+      return UG3::CubeTwists::twistInNeighbor( refElem, it.geometryInOutside(), it.indexInOutside() );
     }
   }
 
@@ -292,7 +355,12 @@ namespace Dune
     else 
     {
       assert( it.outside()->type().isCube() );
-      return UG3::CubeTwists::twistInNeighbor( it.indexInOutside() );
+      typedef UGGrid< 3 > :: ctype ctype ;
+      static const GenericReferenceElement< ctype, 3 > &refElem =
+              GenericReferenceElements< ctype, 3 >::general( it.outside()->type() );
+
+      //return UG3::CubeTwists::twistInNeighbor( it.indexInOutside() );
+      return UG3::CubeTwists::twistInNeighbor( refElem, it.geometryInOutside(), it.indexInOutside() );
     }
   }
 
