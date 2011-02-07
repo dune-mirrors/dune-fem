@@ -72,7 +72,6 @@ public:
 
   void testElementQuadratures() 
   {
-
     IteratorType endit = gridPart_.template end<0>();
     for (IteratorType it = gridPart_.template begin<0>(); it != endit; ++it) 
     {
@@ -107,9 +106,12 @@ public:
   void testFaceQuadratures() 
   {
     // just another face check 
-    CachingQuadratureTest :: checkLeafsCodimOne( gridPart_, 4 );
+    CachingQuadratureTest :: checkLeafsCodimOne( gridPart_, order_ );
 
     const IndexSetType& indexSet = gridPart_.indexSet(); 
+
+    std::set< int > insideTwists; 
+    std::set< int > outsideTwists; 
 
     IteratorType endit = gridPart_.template end<0>();
     for (IteratorType it = gridPart_.template begin<0>(); it != endit; ++it) 
@@ -134,11 +136,18 @@ public:
           const int faceQuadInner_nop = faceQuadInner.nop();
           for (int qp = 0; qp < faceQuadInner_nop; ++qp)
           {
+            typedef TwistUtility<GridType> TwistUtilityType;
             Dune::FieldVector<typename GridType::ctype,GridType::dimensionworld> globalInside, globalOutside;
             globalInside = inside.geometry().global(faceQuadInner.point(qp));
             globalOutside = outside.geometry().global(faceQuadOuter.point(qp));
             if( (globalInside-globalOutside).two_norm() > eps_) 
             {
+              const int twistInside  = TwistUtilityType::twistInSelf( gridPart_.grid(), intersection );
+              const int twistOutside = TwistUtilityType::twistInNeighbor( gridPart_.grid(), intersection );
+              insideTwists.insert( twistInside );
+              outsideTwists.insert( twistOutside );
+              //std::cout << "Inside  twist = " << twistInside << std::endl;
+              //std::cout << "Outside twist = " << twistOutside << std::endl;
               std::cout << "On Element " << indexSet.index( entity ) << " with neighbor " << indexSet.index( outside ) << std::endl;
               std::cout << " Error: x(inside) = " << globalInside << " != " 
                         << globalOutside << " = x(outside) "
@@ -149,6 +158,18 @@ public:
           }
         }
       }
+    }
+
+    typedef typename std::set<int> :: iterator iterator;
+    const iterator endin = insideTwists.end();
+    for( iterator it = insideTwists.begin(); it != endin; ++it ) 
+    {
+      std::cout << "Inside twst: " << (*it) << std::endl;
+    }
+    const iterator endout = outsideTwists.end();
+    for( iterator it = outsideTwists.begin(); it != endout; ++it ) 
+    {
+      std::cout << "Outside twst: " << (*it) << std::endl;
     }
   }
 };
@@ -173,8 +194,8 @@ int main(int argc, char ** argv)
     GridType &grid = *gridptr;
 
     int startlevel = Parameter::getValue<int>("fem.startlevel");
-    grid.globalRefine( startlevel );
-    Dune::gridinfo(grid);
+    //grid.globalRefine( startlevel );
+    //Dune::gridinfo(grid);
 
     if( Parameter::getValue<bool>("fem.io.grapedisplay", false ))
     {
@@ -187,20 +208,25 @@ int main(int argc, char ** argv)
     if ( Parameter::getValue<bool>("fem.skipfaces", false ) )
       quadOrder = -quadOrder ;
 
-    typedef HierarchicGridPart< GridType > GridPartType;
+    //typedef HierarchicGridPart< GridType > GridPartType;
+    typedef LeafGridPart< GridType > GridPartType;
     GridPartType gridPart( grid );
 
     const double eps = 1e-8;
  
+    for(int l=0; l<=startlevel; ++l )
     {
-      std::cout << "Testing ElementQuadratures: " << std::endl;
-      TestCaching<GridPartType,false> testCaching(gridPart, quadOrder, eps);
-      testCaching.runTest();
-    }
-    {
-      std::cout << "Testing CachingQuadratures: " << std::endl;
-      TestCaching<GridPartType,true> testCaching(gridPart, quadOrder, eps);
-      testCaching.runTest();
+      {
+        std::cout << "Testing ElementQuadratures: " << std::endl;
+        TestCaching<GridPartType,false> testCaching(gridPart, quadOrder, eps);
+        testCaching.runTest();
+      }
+      {
+        std::cout << "Testing CachingQuadratures: " << std::endl;
+        TestCaching<GridPartType,true> testCaching(gridPart, quadOrder, eps);
+        testCaching.runTest();
+      }
+      grid.globalRefine( 1 );
     }
     return 0;
   }
