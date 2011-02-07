@@ -193,8 +193,8 @@ int main(int argc, char ** argv)
     Dune::GridPtr< GridType > gridptr( filename );
     GridType &grid = *gridptr;
 
-    int startlevel = Parameter::getValue<int>("fem.startlevel");
-    //grid.globalRefine( startlevel );
+    int maxlevel = Parameter::getValue<int>("fem.maxlevel");
+    //grid.globalRefine( maxlevel );
     //Dune::gridinfo(grid);
 
     if( Parameter::getValue<bool>("fem.io.grapedisplay", false ))
@@ -214,7 +214,7 @@ int main(int argc, char ** argv)
 
     const double eps = 1e-8;
  
-    for(int l=0; l<=startlevel; ++l )
+    for(int l=0; l<=maxlevel; ++l )
     {
       {
         std::cout << "Testing ElementQuadratures: " << std::endl;
