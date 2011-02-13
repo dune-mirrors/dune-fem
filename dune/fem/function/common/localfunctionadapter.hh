@@ -431,8 +431,8 @@ namespace Dune
   protected:
     const ThisType& adapter_;
     typedef typename LocalFuncType<0, 
-       localFunctionHasInitialize> :: Type  LocalFuncStorageTpye;
-    LocalFuncStorageTpye  localFunctionImpl_;
+       localFunctionHasInitialize> :: Type  LocalFuncStorageType;
+    LocalFuncStorageType  localFunctionImpl_;
   };
 
 } // end namespace Dune
