@@ -61,6 +61,8 @@ namespace Dune
     //! The type of the coordinates in the codim-0 reference element.
     typedef typename FaceQuadratureType :: CoordinateType CoordinateType;
 
+    typedef typename FaceQuadratureType::LocalCoordinateType LocalCoordinateType;
+
     //! for compatibility
     typedef typename GridType::template Codim< 0 >::Entity EntityType;
     
@@ -84,6 +86,24 @@ namespace Dune
 
     //! \brief return reference to outside face quadrature 
     const FaceQuadratureType& outside() const { return outside_; }
+
+    size_t nop () const
+    {
+      assert( inside().nop() == outside().nop() );
+      return inside().nop();
+    }
+
+    const LocalCoordinateType &localPoint ( const int qp ) const
+    {
+      assert( inside().localPoint( qp ) == outside().localPoint( qp ) );
+      return inside().localPoint( qp );
+    }
+
+    const RealType &weight ( const int qp ) const
+    {
+      assert( inside().weight( qp ) == outside().weight( qp ) );
+      return inside().weight( qp );
+    }
 
   private:
     // prohibit copying 
