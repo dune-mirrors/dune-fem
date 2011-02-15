@@ -895,7 +895,7 @@ namespace Dune
   //! length of a tuple 
   template<class T>
   struct TupleLength  {
-    enum { value = 1 + TupleLength<typename T::Type2>::value };
+    enum { value = Length< T > :: value };
   };
 
   //! length of an empty tuple is zero  
