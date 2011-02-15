@@ -135,7 +135,10 @@ namespace Dune
 
     static const int length = tuple_size< Tuple >::value;
 
+
   public:
+    typedef Tuple ReturnType ;
+
     template <class DataIO,class GridType>
     static Tuple *input ( DataIO &dataio, GridType *&grid, double &t, int n,
                           const std::string &path, const std::string &name )
