@@ -207,6 +207,9 @@ protected:
   using BaseType :: myRank_;
   using BaseType :: grapeDisplay_;
 
+  // friendship for restoreData calls 
+  friend class CheckPointer< GridImp >;
+
   //! type of this class  
   typedef CheckPointer<GridImp,DataImp> ThisType;
   
@@ -221,6 +224,7 @@ protected:
   std::string checkPointFile_;
 
   const OutPutDataType* dataPtr_;
+  bool takeCareOfPersistenceManager_; 
 
 public: 
   /** \brief Constructor generating a checkpointer 
@@ -238,6 +242,7 @@ public:
     , checkPointStep_( parameter.checkPointStep() )
     , maxCheckPointNumber_( parameter.maxNumberOfCheckPoints() )
     , dataPtr_( 0 )
+    , takeCareOfPersistenceManager_( true )
   {
     initialize( parameter );
   }
@@ -255,6 +260,7 @@ public:
     , checkPointStep_( parameter.checkPointStep() )
     , maxCheckPointNumber_( parameter.maxNumberOfCheckPoints() )
     , dataPtr_( &data_ )
+    , takeCareOfPersistenceManager_( true )
   {
     initialize( parameter );
   }
@@ -296,11 +302,13 @@ protected:
   */
   CheckPointer(const GridType & grid, 
                OutPutDataType& data, 
-               const char * checkFile)
+               const char * checkFile,
+               const bool takeCareOfPersistenceManager = true )
     : BaseType(grid, data, CheckPointerParameters() ) 
     , checkPointStep_( 0 )
     , maxCheckPointNumber_( 0 )
     , dataPtr_( 0 )
+    , takeCareOfPersistenceManager_( takeCareOfPersistenceManager )
   {
     // output format can oinly be binary
     outputFormat_ = BaseType :: binary; 
@@ -334,7 +342,7 @@ protected:
     }
     else
     {
-      DUNE_THROW(InvalidStateException,"No CheckPoint file!");
+      initialize( CheckPointerParameters() );
     }
   }
 
@@ -437,8 +445,12 @@ protected:
     std::string path = IOInterface::createRecoverPath(
         path_, myRank_ , datapref_, writeStep_ );
 
-    // restore all persistent values kept by PersistenceManager 
-    PersistenceManager::restore( path );
+    // if true also restore PersistenceManager 
+    if( takeCareOfPersistenceManager_ ) 
+    {
+      // restore all persistent values kept by PersistenceManager 
+      PersistenceManager::restore( path );
+    }
 
     return path;
   }
@@ -447,7 +459,7 @@ protected:
   void restoreUserData ( InputTuple &data )
   {
     // restore persistent data 
-    std::string path = restorePersistentData();
+    std::string path = restorePersistentData( );
 
     // restore user data 
     if( tuple_size< InputTuple >::value > 0 )
@@ -457,7 +469,7 @@ protected:
     }
   }
 
-  void restoreData() 
+  void restoreData( ) 
   {
     restoreUserData( data_ );
   }
@@ -473,6 +485,16 @@ public:
     const int timestep = tp.timeStep();
     // only write data time > saveTime  
     return ( (checkPointStep_ > 0) && (((timestep % checkPointStep_) == 0) && timestep > 0) );
+  }
+
+  template <class OutputTuple> 
+  static void writeSingleCheckPoint(const GridType& grid, 
+                                    OutputTuple& data,
+                                    const double time,
+                                    const bool storePersistenceManager ) 
+  {
+    CheckPointer< GridType, OutputTuple > checkPointer( grid, data, 0, storePersistenceManager );
+    checkPointer.writeBinaryData( time );
   }
 
   virtual void writeBinaryData(const double time) const 
@@ -499,7 +521,6 @@ protected:
   {
     const bool verbose = Parameter::verbose(); 
 
-
     // read Checkpiont file 
     if( readParameter(checkPointFile_,"LastCheckPoint",writeStep_, verbose, warn ) )
     {
@@ -509,6 +530,12 @@ protected:
       {
         // default value is output path
         recoverPath = path_;
+      }
+
+      int storedPersistentManager = 0;
+      if( readParameter(checkPointFile_,"PersistenceManager", storedPersistentManager, verbose) )
+      {
+        takeCareOfPersistenceManager_ = ( storedPersistentManager > 0 );
       }
 
       // overwrite path with recover path 
@@ -554,6 +581,7 @@ protected:
       {
         file << "LastCheckPoint: " << savestep << std::endl;
         file << "Time: " << std::scientific << time << std::endl;
+        file << "PersistenceManager: " << takeCareOfPersistenceManager_ << std::endl;
         file << "# RecoverPath can be edited by hand if data has been moved!" << std::endl;
         file << "RecoverPath: " << path_ << std::endl;
         file.close();
