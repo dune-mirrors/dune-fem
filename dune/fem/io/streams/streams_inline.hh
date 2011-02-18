@@ -1,6 +1,8 @@
 #ifndef DUNE_FEM_STREAMS_INLINE_HH
 #define DUNE_FEM_STREAMS_INLINE_HH
 
+#include <vector>
+
 #include "streams.hh"
 
 namespace Dune
@@ -78,6 +80,18 @@ namespace Dune
     return out;
   }
 
+  template< class Traits, class T, class A >
+  inline OutStreamInterface< Traits > &
+    operator<< ( OutStreamInterface< Traits > &out,
+                 const std::vector< T, A > & value )
+  {
+    const size_t size = value.size();
+    out << size;
+    for( size_t i = 0; i < size; ++i )
+      out << value[ i ];
+    return out;
+  }
+
   template< class Traits >
   inline InStreamInterface< Traits > &
     operator>> ( InStreamInterface< Traits > &in,
@@ -147,6 +161,19 @@ namespace Dune
                  unsigned long &value )
   {
     in.readUnsignedLong( value );
+    return in;
+  }
+
+  template< class Traits, class T, class A >
+  inline InStreamInterface< Traits > &
+    operator>> ( InStreamInterface< Traits > &in,
+                 std::vector< T, A > & value )
+  {
+    size_t size = 0;
+    in >> size;    
+    value.resize( size );
+    for( size_t i = 0; i < size; ++i )
+      in >> value[ i ];
     return in;
   }
 
