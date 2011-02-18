@@ -47,7 +47,6 @@ public:
     data_( &discreteFunction_ ),
     hierarchicSearch_( grid(), gridPart_.indexSet() )
   {
-    assert( checkPointFile );
     // store grid pointer
     gridPtr_ = grid_;
     // restore data from checkpoint
