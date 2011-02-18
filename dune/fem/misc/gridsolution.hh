@@ -9,6 +9,15 @@ namespace Dune {
 
 namespace Fem {
   
+// GridSolution
+//-------------
+
+/** \class GridSolution
+ *  \brief creates a function with evaluate method from a check point
+ *
+ *  \tparam GridImp Grid type
+ *  \tparam DiscreteFunctionImp Discrete function type
+ */
 template <class GridImp, class DiscreteFunctionImp > 
 class GridSolution
 {
@@ -38,6 +47,7 @@ class GridSolution
 
   GridType& grid() { assert( grid_ ); return *grid_ ; }
 public:  
+  //! Constructor
   explicit GridSolution(const std::string checkPointFile) :
     grid_( CheckPointerType :: restoreGrid( checkPointFile ) ), 
     gridPtr_(),
@@ -53,12 +63,25 @@ public:
     CheckPointerType :: restoreData( grid(), data_, checkPointFile );
   }
 
+  /** \brief evaluates in a given space-time point
+   *  \param[in] x Point in global coordinates
+   *  \param[in] time Time
+   *  \param[out] result The value of the discrete function in space-time point \f[ (x,time)\f]
+   *
+   *  \tparam PointType The point type
+   */
   template <class PointType> 
   void evaluate(const PointType& x, const double time, RangeType& result) const 
   {
     evaluate(x, result );
   }
 
+  /** \brief evaluates in a given space point
+   *  \param[in] x Point in global coordinates
+   *  \param[out] result The value of the discrete function in space point @a x
+   *
+   *  \tparam PointType The point type
+   */
   template <class PointType> 
   void evaluate(const PointType& x, RangeType& result) const 
   {
@@ -72,6 +95,7 @@ public:
     discreteFunction_.localFunction( entity ).evaluate( local, result );
   }
 
+  //! \brief writes a discrete function 
   static void writeDiscreteFunction(const GridType& grid, 
                                     const DiscreteFunctionType& discreteFunction,
                                     const double time ) 
