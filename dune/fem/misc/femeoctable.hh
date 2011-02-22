@@ -39,9 +39,17 @@ namespace Dune
     to the eoc table.
  */
 
+/*
+//! Base Class of all eoc calculator types
+class BaseEocCalculator
+{
+  public:
+  static double calculate (double,double,double,double)=0;
+}
+*/
 
 //! Default eoc calculator, it can be re-implemented if another Eoc calulator is needed
-class DefaultEocCalculator
+class DefaultEocCalculator 
 {
   public:
   static double calculate (double &eold, double &enew, double &hold, double &hnew ) 
@@ -145,14 +153,20 @@ class FemEocTable
     return tabId;
   }
 
-  template <class StrVectorType>
-  size_t addentry(const int tabId, const StrVectorType& descript,size_t size) 
+  void checkTabId (const int tabId)
   {
     if (tabId > nrOfTabs_ || tabId <0)
     {
       std::cout<<"No table with id:"<<tabId<<" existing!"<<std::endl;
         abort();
     }
+  }
+
+  template <class StrVectorType>
+  size_t addentry(const int tabId, const StrVectorType& descript,size_t size) 
+  {
+    checkTabId(tabId);
+
     if (!initial_[tabId]) 
       abort();
     pos_[tabId].push_back(error_[tabId].size());
@@ -165,11 +179,8 @@ class FemEocTable
   }
 
   size_t addentry(const int tabId, const std::string& descript) {
-    if (tabId > nrOfTabs_ || tabId <0 )
-    {
-      std::cout<<"No table with id:"<<tabId<<" existing!"<<std::endl;
-      abort();
-    }
+
+    checkTabId(tabId);
         
     if (!initial_[tabId]) 
       abort();
@@ -183,11 +194,7 @@ class FemEocTable
   template <class VectorType>
   void seterrors(const int tabId, size_t id,const VectorType& err,size_t size) 
   {
-    if (tabId > nrOfTabs_ || tabId <0 )
-    {
-      std::cout<<"No table with id:"<<tabId<<" existing!"<<std::endl;
-        abort();
-    }
+    checkTabId(tabId);
 
     assert(id<pos_[tabId].size());
     int pos = pos_[tabId][ id ];
@@ -204,11 +211,7 @@ class FemEocTable
   }
   
   void seterrors(const int tabId, size_t id,const double& err) {
-    if (tabId > nrOfTabs_ || tabId <0 )
-    {
-      std::cout<<"No table with id:"<<tabId<<" existing!"<<std::endl;
-        abort();
-    }
+    checkTabId(tabId);
 
     int pos = pos_[tabId][id];
     error_[tabId][pos] = err;
@@ -219,20 +222,17 @@ class FemEocTable
   void writeerr( const int tabId,
                  std::vector<double> &vals,
                  std::vector<std::string> &descriptions,
-                 std::string header,
-                 std::string tableSpacer,
-                 std::string footer,
-                 std::string delimiter)
+                 std::string &delimiter,
+                 std::string &terminatingChar,
+                 std::string &header,
+                 std::string &tableSpacer,
+                 std::string &footer)
 
   {
 
     typedef EocCalculator EocCalculatorType;
 
-    if (tabId > nrOfTabs_ || tabId<0)
-    {
-      std::cout<<"No table with id:"<<tabId<<" existing!"<<std::endl;
-        abort();
-    }
+    checkTabId(tabId);
 
     assert(vals.size() == descriptions.size());
     if (MPIManager::rank() != 0) return;
@@ -247,7 +247,7 @@ class FemEocTable
       {
         *outputFile_[tabId] <<  description_[tabId][i] <<  delimiter << "EOC" << delimiter;
       }
-      *outputFile_[tabId] << "\n" << tableSpacer <<"\n";
+      *outputFile_[tabId] << terminatingChar << "\n" << tableSpacer <<"\n";
     }
     
     *outputFile_[tabId] << level_[tabId] << delimiter;
@@ -265,7 +265,7 @@ class FemEocTable
       prevError_[tabId][i]=error_[tabId][i];
       error_[tabId][i] = -1;  // uninitialized
     }    
-    *outputFile_[tabId] <<"\n" <<footer;
+    *outputFile_[tabId] << terminatingChar << footer;
     prevh_[tabId] = vals[0];
     level_[tabId] ++;
     initial_[tabId] = false;
@@ -279,11 +279,7 @@ class FemEocTable
   {
     typedef EocCalculator EocCalculatorType;
 
-    if (tabId > nrOfTabs_|| tabId <0 )
-    {
-      std::cout<<"No table with id:"<<tabId<<" existing!"<<std::endl;
-        abort();
-    }
+    checkTabId(tabId);
 
     assert(descriptions.size() == vals.size());
 
@@ -463,23 +459,24 @@ class FemEocTable
                     std::vector<double> &vals,
                     std::vector<std::string> &descriptions,
                     std::string delimiter = " ",
+                    std::string terminatingChar = "",
                     std::string header ="",
                     std::string tableSpacer ="",
-                    std::string footer =""
-                    ) 
+                    std::string footer ="" ) 
   {
-    instance().writeerr<DefaultEocCalculator> (tabId, vals, descriptions, header, tableSpacer, footer,  delimiter);
+    instance().writeerr<DefaultEocCalculator> (tabId, vals, descriptions, delimiter, terminatingChar, header, tableSpacer, footer);
   }
 
   static void write(std::vector<double> &vals,
                     std::vector<std::string> &descriptions,
                     std::string delimiter = " ",
+                    std::string terminatingChar ="",
                     std::string header ="",
                     std::string tableSpacer ="",
                     std::string footer =""
                     ) 
   {
-    instance().writeerr<DefaultEocCalculator> (0, vals, descriptions, header, tableSpacer, footer,  delimiter);
+    instance().writeerr<DefaultEocCalculator> (0, vals, descriptions, delimiter, terminatingChar, header, tableSpacer, footer);
   }
 
 
@@ -501,24 +498,26 @@ class FemEocTable
                     std::vector<double> &vals,
                     std::vector<std::string> &descriptions,
                     std::string delimiter = " ",
+                    std::string terminatingChar ="",
                     std::string header ="",
                     std::string tableSpacer ="",
                     std::string footer =""
                     ) 
   {
-    instance().template writeerr<EocCalculatorType>(tabId, vals, descriptions, header, tableSpacer, footer,  delimiter);
+    instance().template writeerr<EocCalculatorType>(tabId, vals, descriptions, delimiter, terminatingChar, header, tableSpacer, footer);
   }
 
   template<class EocCalculatorType>
   static void write(std::vector<double> &vals,
                     std::vector<std::string> &descriptions,
                     std::string delimiter = " ",
+                    std::string terminatingChar ="",
                     std::string header ="",
                     std::string tableSpacer ="",
                     std::string footer =""
                     ) 
   {
-    instance().template writeerr<EocCalculatorType>(0, vals, descriptions, header, tableSpacer, footer,  delimiter);
+    instance().template writeerr<EocCalculatorType>(0, vals, descriptions, delimiter, terminatingChar, header, tableSpacer, footer );
   }
 
   /** \brief commit a line to the eoc file 
@@ -538,6 +537,7 @@ class FemEocTable
                     std::vector<std::string> &descriptions,
                     std::ostream& out,
                     std::string delimiter = " ",
+                    std::string terminatingChar ="",
                     std::string header = "",
                     std::string tableSpacer = "",
                     std::string footer = "")
@@ -546,13 +546,14 @@ class FemEocTable
     instance().printerr<DefaultEocCalculator>( tabId, vals, descriptions, out );
 
     // now write to file 
-    instance().writeerr<DefaultEocCalculator>(tabId, vals, descriptions, header, tableSpacer, footer, delimiter);
+    instance().writeerr<DefaultEocCalculator>(tabId, vals, descriptions, delimiter, terminatingChar, header, tableSpacer, footer);
   }
 
   static void write(std::vector<double> &vals,
                     std::vector<std::string> &descriptions,
                     std::ostream& out,
                     std::string delimiter = " ",
+                    std::string terminatingChar ="",
                     std::string header = "",
                     std::string tableSpacer = "",
                     std::string footer = "")
@@ -561,7 +562,7 @@ class FemEocTable
     instance().printerr<DefaultEocCalculator>( 0, vals, descriptions, out );
 
     // now write to file 
-    instance().writeerr<DefaultEocCalculator>(0, vals, descriptions, header, tableSpacer, footer, delimiter);
+    instance().writeerr<DefaultEocCalculator>(0, vals, descriptions, delimiter, terminatingChar, header, tableSpacer, footer);
   }
 
 
@@ -583,6 +584,7 @@ class FemEocTable
                     std::vector<std::string> &descriptions,
                     std::ostream& out,
                     std::string delimiter = " ",
+                    std::string terminatingChar ="",                    
                     std::string header = "",
                     std::string tableSpacer = "",
                     std::string footer = "")
@@ -591,7 +593,7 @@ class FemEocTable
     instance().template printerr<EocCalculatorType>( tabId, vals, descriptions, out );
 
     // now write to file 
-    instance().template writeerr<EocCalculatorType>(tabId, vals, descriptions, header, tableSpacer, footer, delimiter);
+    instance().template writeerr<EocCalculatorType>(tabId, vals, descriptions, delimiter, terminatingChar, header, tableSpacer, footer);
   }
 
   template <class EocCalculatorType>
@@ -599,6 +601,7 @@ class FemEocTable
                     std::vector<std::string> &descriptions,
                     std::ostream& out,
                     std::string delimiter = " ",
+                    std::string terminatingChar ="",                    
                     std::string header = "",
                     std::string tableSpacer = "",
                     std::string footer = "")
@@ -607,7 +610,7 @@ class FemEocTable
     instance().template printerr<EocCalculatorType>(0, vals, descriptions, out );
 
     // now write to file 
-    instance().template writeerr<EocCalculatorType>(0, vals, descriptions, header, tableSpacer, footer, delimiter);
+    instance().template writeerr<EocCalculatorType>(0, vals, descriptions,delimiter, terminatingChar, header, tableSpacer, footer);
   }
 
 
