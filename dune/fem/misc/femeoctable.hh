@@ -265,7 +265,16 @@ class FemEocTable
       prevError_[tabId][i]=error_[tabId][i];
       error_[tabId][i] = -1;  // uninitialized
     }    
-    *outputFile_[tabId] << terminatingChar << footer;
+    *outputFile_[tabId] << terminatingChar<<"\n" << footer;
+
+    //! set back the put point in the stream to prohibit writing the footer each time in
+    // the file
+    outputFile_[tabId]->seekp(0,std::ios::end);
+    int length = outputFile_[tabId]->tellp();
+    length -= footer.length();
+    outputFile_[tabId]->seekp(length, std::ios::beg);
+
+          
     prevh_[tabId] = vals[0];
     level_[tabId] ++;
     initial_[tabId] = false;
