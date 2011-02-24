@@ -175,38 +175,20 @@ namespace Dune
     };
 
 
-    // IsUnstructured
+    // IsUnstructured (deprecated)
     // --------------
 
 #if DUNE_VERSION_NEWER(DUNE_GRID,2,1,0)
     template< class Grid >
     struct IsUnstructured
     {
-      static const bool v = true;
+      static const bool v = ! isCartesian< Grid > :: v ;
     };
 
     template< class Grid >
     struct IsUnstructured< const Grid >
     {
-      static const bool v = IsUnstructured< Grid >::v;
-    };
-
-    template< int dim >
-    struct IsUnstructured< YaspGrid< dim > >
-    {
-      static const bool v = false;
-    };
-
-    template< int dim, int dimw, class ctype >
-    struct IsUnstructured< SGrid< dim, dimw, ctype > >
-    {
-      static const bool v = false;
-    };
-
-    template< class HostGrid, class CoordFunction, class Allocator >
-    struct IsUnstructured< GeometryGrid< HostGrid, CoordFunction, Allocator > >
-    {
-      static const bool v = true ;
+      static const bool v = ! isCartesian< Grid > :: v;
     };
 
 #endif // #if DUNE_VERSION_NEWER(DUNE_GRID,2,1,0)
