@@ -93,7 +93,7 @@ namespace Dune
      *
      *  \returns the current time
      */
-    inline double time () const
+    double time () const
     {
       return time_;
     }
@@ -102,7 +102,7 @@ namespace Dune
      *
      *  \return the current time step counter
      */
-    inline int timeStep () const
+    int timeStep () const
     {
       assert( timeStepValid() );
       return timeStep_;
@@ -112,57 +112,66 @@ namespace Dune
      *
      *  \returns the size of the current time step
      */
-    inline double deltaT () const
+    double deltaT () const
     {
       assert( timeStepValid() );
       return dt_;
+    }
+
+    /** \brief obtain current estimate on time step
+     *
+     *  \returns the current estimate for the time step
+     */
+    double timeStepEstimate () const
+    {
+      return dtEstimate_;
     }
 
     /** \brief set time step estimate to minimum of given value and
                internal time step estiamte 
          \param[in] dtEstimate time step size estimate 
     */
-    inline void provideTimeStepEstimate ( const double dtEstimate )
+    void provideTimeStepEstimate ( const double dtEstimate )
     {
-      dtEstimate_ = std :: min( dtEstimate_, dtEstimate );
+      dtEstimate_ = std::min( dtEstimate_, dtEstimate );
       dtEstimateValid_ = true;
     }
     /** \brief set upper bound for time step to minimum of given value and
                internal bound
          \param[in] upperBound time step size estimate 
     */
-    inline void provideTimeStepUpperBound ( const double upperBound )
+    void provideTimeStepUpperBound ( const double upperBound )
     {
-      dtUpperBound_ = std :: min( dtUpperBound_, upperBound );
+      dtUpperBound_ = std::min( dtUpperBound_, upperBound );
       dtEstimateValid_ = true;
     }
     
     /** \brief count current time step a not valid */
-    inline void invalidateTimeStep ()
+    void invalidateTimeStep ()
     {
       valid_ = false;
     }
 
     /** \brief return if this time step should be used */
-    inline bool timeStepValid () const
+    bool timeStepValid () const
     {
       return valid_;
     }
    
-
   protected:
-    inline void advance ()
+    void advance ()
     {
-      if (timeStepValid()) {
+      if( timeStepValid() )
+      {
         time_ += deltaT();
         ++timeStep_;
       }
     }
 
-    inline void initTimeStepEstimate ()
+    void initTimeStepEstimate ()
     {
-      dtEstimate_ = std :: numeric_limits< double > :: max();
-      dtUpperBound_ = std :: numeric_limits< double > :: max();
+      dtEstimate_ = std::numeric_limits< double >::max();
+      dtUpperBound_ = std::numeric_limits< double >::max();
       dtEstimateValid_ = false;
     }
   };
