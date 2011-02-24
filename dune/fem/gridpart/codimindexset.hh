@@ -410,10 +410,19 @@ public:
   template <class StreamTraits> 
   bool write(OutStreamInterface< StreamTraits >& out) const
   {
-    out << nextFreeIndex_;
+    // store current index set size 
+    out << nextFreeIndex_ ;
     
-    // backup leafIndex 
-    //leafIndex_.write( out );
+    // for consistency checking 
+    out << leafIndex_.size() ;
+
+    // backup indices 
+    typedef typename IndexContainerType :: ConstIterator ConstIterator;
+    const ConstIterator endit = leafIndex_.end();
+    for( ConstIterator it = leafIndex_.begin(); it != endit; ++it )
+    {
+      out << (*it).first ;
+    }
 
     return true;
   }
@@ -422,10 +431,26 @@ public:
   template <class StreamTraits> 
   bool read(InStreamInterface< StreamTraits >& in)
   {
-    in >> nextFreeIndex_;
+    // read current index set size 
+    in >> nextFreeIndex_ ;
     
-    // restore leafIndex 
-    //leafIndex_.read( in );
+    // for consistency checking 
+    size_t storedSize = 0;
+    in >> storedSize ;
+
+    // the stored size can be larger (visualization of parallel grids in serial)
+    if( storedSize < leafIndex_.size() ) 
+    {
+      DUNE_THROW(InvalidStateException,"CodimIndexSet: size consistency check failed during restore!"); 
+    }
+
+    // restore indices  
+    typedef typename IndexContainerType :: Iterator Iterator;
+    const Iterator endit = leafIndex_.end();
+    for( Iterator it = leafIndex_.begin(); it != endit; ++it )
+    {
+      in >> (*it).first ;
+    }
 
     return true;
   }
