@@ -15,8 +15,31 @@
 #else
 #include <dune/fem/gridpart/persistentcontainer.hh>
 #endif
+#include <dune/grid/yaspgrid.hh>
 
 namespace Dune {
+
+  // PersistentContainer for YaspGrid
+  // -------------------------------
+
+  template< int dim, class Data, class Allocator >
+  class PersistentContainer< YaspGrid< dim >, Data, Allocator >
+  : public PersistentContainerVector< YaspGrid< dim >, 
+                                      typename YaspGrid< dim >::LeafIndexSet,
+                                      std::vector<Data,Allocator> >
+  {
+    typedef YaspGrid< dim > GridType;
+    typedef PersistentContainerVector< GridType, typename GridType::LeafIndexSet, std::vector<Data,Allocator> > BaseType;
+
+  public:
+    //! Constructor filling the container with values using the default constructor 
+    //! Depending on the implementation this could be achieved without allocating memory
+    PersistentContainer ( const GridType &grid, const int codim, const Allocator &allocator = Allocator() )
+    : BaseType( grid, codim, grid.leafIndexSet(), 1.0, allocator )
+    {}
+  };
+
+
 
 //***********************************************************************
 //
