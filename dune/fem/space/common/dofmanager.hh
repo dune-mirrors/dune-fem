@@ -763,6 +763,8 @@ public:
 
   typedef DataCollectorInterface<GridType, ObjectStreamType> DataCollectorType;
 
+  typedef typename GridType :: template Codim< 0 > :: Entity  ElementType ;
+
 private:  
   typedef std::list< ManagedDofStorageInterface* > ListType;
   typedef typename ListType::iterator ListIteratorType;
@@ -788,8 +790,7 @@ private:
   mutable DataCollectorType dataXtractor_;
 
   //! type of IndexSet change interfaces 
-  typedef LocalInterface<typename GridType::
-        template Codim<0>::Entity> LocalIndexSetObjectsType;
+  typedef LocalInterface< ElementType > LocalIndexSetObjectsType;
 
   mutable LocalIndexSetObjectsType indexSets_; 
 
@@ -993,21 +994,19 @@ public:
   }
 
   /** \brief Inserts entity to all index sets added to dof manager. */
-  template <class EntityType>
-  inline void insertEntity(EntityType & en )
+  inline void insertEntity( ElementType & elem )
   {
     // insert new index 
-    insertIndices_.apply( en );
+    insertIndices_.apply( elem );
 
     // resize memory 
     resizeMemory();
   }
           
   /** \brief Removes entity from all index sets added to dof manager. */
-  template <class EntityType>
-  inline void removeEntity(EntityType & en )
+  inline void removeEntity( ElementType & elem )
   {
-    removeIndices_.apply( en );
+    removeIndices_.apply( elem );
   }
 
 protected:  
@@ -1080,15 +1079,15 @@ public:
   }
 
   //! packs all data of this entity en and all child entities  
-  template <class ObjectStreamType, class EntityType>
-  void inlineData ( ObjectStreamType & str, EntityType & en )
+  template <class ObjectStreamType>
+  void inlineData ( ObjectStreamType & str, ElementType & en )
   {
     dataInliner_.apply(str,en);
   }
 
   //! unpacks all data of this entity from message buffer 
-  template <class ObjectStreamType, class EntityType>
-  void xtractData ( ObjectStreamType & str, EntityType & en, size_t newElements )
+  template <class ObjectStreamType>
+  void xtractData ( ObjectStreamType & str, ElementType & en, size_t newElements )
   {
     // reserve memory for new elements 
     reserveMemory(newElements , true );
@@ -1198,8 +1197,7 @@ addIndexSet (const IndexSetType &iset)
 {
   assert( Fem :: ThreadManager:: singleThreadMode() );
 
-  typedef typename GridType::template Codim<0>::Entity EntityType;
-  typedef ManagedIndexSet< IndexSetType, EntityType > ManagedIndexSetType;
+  typedef ManagedIndexSet< IndexSetType, ElementType > ManagedIndexSetType;
 
   typedef typename IndexListType::reverse_iterator IndexListIteratorType;
   
