@@ -52,16 +52,14 @@ class CodimIndexSet
 {
 protected:  
   typedef GridImp GridType;
-  typedef HierarchicIndexSetSelector< GridType > SelectorType;
-  typedef typename SelectorType :: HierarchicIndexSet PersistentIndexSetType;
 
 private:
   enum INDEXSTATE { UNUSED = 0,  // unused indices
                     USED   = 1,  // used indices
                     NEW    = 2 };//  new indices 
 
-  // reference to persistent index container 
-  const PersistentIndexSetType& indexContainer_;
+  // reference to grid 
+  const GridType& grid_;
 
   // array type for indices 
   typedef MutableArray<int> IndexArrayType;
@@ -105,7 +103,7 @@ public:
   CodimIndexSet (const GridType& grid, 
                  const int codim, 
                  const double memoryFactor = 1.1) 
-    : indexContainer_( SelectorType::hierarchicIndexSet( grid ) ) 
+    : grid_( grid ) 
     , leafIndex_(grid, codim)
     , holes_(0)
     , oldIdx_(0)
@@ -129,7 +127,7 @@ public:
   //! returns vector with geometry tpyes this index set has indices for
   const std::vector <GeometryType> & geomTypes () const
   {
-    return indexContainer_.geomTypes( myCodim_ );
+    return grid_.levelIndexSet( 0 ).geomTypes( myCodim_ );
   }
 
   //! reallocate the vectors
