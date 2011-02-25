@@ -15,8 +15,9 @@
 #else
 #include <dune/fem/gridpart/persistentcontainer.hh>
 #endif
-#include <dune/grid/yaspgrid.hh>
 
+#ifdef ENABLE_ADAPTIVELEAFINDEXSET_FOR_YASPGRID
+#include <dune/grid/yaspgrid.hh>
 namespace Dune {
 
   // PersistentContainer for YaspGrid
@@ -39,6 +40,11 @@ namespace Dune {
     {}
   };
 
+}
+#endif
+
+
+namespace Dune {
 
 
 //***********************************************************************
@@ -60,6 +66,24 @@ private:
 
   // reference to grid 
   const GridType& grid_;
+
+  template < class Grid, bool hasHierarchicIndexSet >
+  struct GeomTypes 
+  {
+    static const std::vector <GeometryType> & geomTypes( const Grid& grid , const int codim ) 
+    {
+      return grid.levelIndexSet( 0 ).geomTypes( codim );
+    }
+  };
+
+  template < class Grid >
+  struct GeomTypes< Grid, true >
+  {
+    static const std::vector <GeometryType> & geomTypes( const Grid& grid , const int codim ) 
+    {
+      return grid.hierarchicIndexSet( ).geomTypes( codim );
+    }
+  };
 
   // array type for indices 
   typedef MutableArray<int> IndexArrayType;
@@ -127,7 +151,9 @@ public:
   //! returns vector with geometry tpyes this index set has indices for
   const std::vector <GeometryType> & geomTypes () const
   {
-    return grid_.levelIndexSet( 0 ).geomTypes( myCodim_ );
+    return GeomTypes< GridType , 
+                      Capabilities :: hasHierarchicIndexSet< GridType > :: v >
+            :: geomTypes( grid_, myCodim_ );
   }
 
   //! reallocate the vectors
