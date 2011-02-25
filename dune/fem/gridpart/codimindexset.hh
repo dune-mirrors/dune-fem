@@ -18,10 +18,11 @@
 
 #ifdef ENABLE_ADAPTIVELEAFINDEXSET_FOR_YASPGRID
 #include <dune/grid/yaspgrid.hh>
+#include <dune/grid/sgrid.hh>
 namespace Dune {
 
   // PersistentContainer for YaspGrid
-  // -------------------------------
+  // --------------------------------
 
   template< int dim, class Data, class Allocator >
   class PersistentContainer< YaspGrid< dim >, Data, Allocator >
@@ -29,13 +30,33 @@ namespace Dune {
                                       typename YaspGrid< dim >::LeafIndexSet,
                                       std::vector<Data,Allocator> >
   {
-    typedef YaspGrid< dim > GridType;
-    typedef PersistentContainerVector< GridType, typename GridType::LeafIndexSet, std::vector<Data,Allocator> > BaseType;
+    typedef YaspGrid< dim > Grid;
+    typedef PersistentContainerVector< Grid, typename Grid::LeafIndexSet, std::vector<Data,Allocator> > BaseType;
 
   public:
     //! Constructor filling the container with values using the default constructor 
     //! Depending on the implementation this could be achieved without allocating memory
-    PersistentContainer ( const GridType &grid, const int codim, const Allocator &allocator = Allocator() )
+    PersistentContainer ( const Grid &grid, const int codim, const Allocator &allocator = Allocator() )
+    : BaseType( grid, codim, grid.leafIndexSet(), 1.0, allocator )
+    {}
+  };
+
+  // PersistentContainer for SGrid
+  // -------------------------------
+
+  template< int dim, int dimworld, class ctype, class Data, class Allocator >
+  class PersistentContainer< SGrid< dim, dimworld, ctype >, Data, Allocator >
+  : public PersistentContainerVector< SGrid< dim, dimworld, ctype >, 
+                                      typename SGrid< dim, dimworld, ctype >::LeafIndexSet,
+                                      std::vector<Data,Allocator> >
+  {
+    typedef SGrid< dim, dimworld, ctype > Grid ;
+    typedef PersistentContainerVector< Grid, typename Grid::LeafIndexSet, std::vector<Data,Allocator> > BaseType;
+
+  public:
+    //! Constructor filling the container with values using the default constructor 
+    //! Depending on the implementation this could be achieved without allocating memory
+    PersistentContainer ( const Grid &grid, const int codim, const Allocator &allocator = Allocator() )
     : BaseType( grid, codim, grid.leafIndexSet(), 1.0, allocator )
     {}
   };
