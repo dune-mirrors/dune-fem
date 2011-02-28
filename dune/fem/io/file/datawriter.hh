@@ -204,7 +204,6 @@ protected:
   using BaseType :: datapref_;
   using BaseType :: writeStep_;
   using BaseType :: outputFormat_ ;
-  using BaseType :: myRank_;
   using BaseType :: grapeDisplay_;
 
   // friendship for restoreData calls 
@@ -220,6 +219,7 @@ protected:
 
   const int checkPointStep_;
   const int maxCheckPointNumber_;
+  int myRank_;
 
   std::string checkPointFile_;
 
@@ -241,6 +241,7 @@ public:
     : BaseType(grid,data,tp,parameter)  
     , checkPointStep_( parameter.checkPointStep() )
     , maxCheckPointNumber_( parameter.maxNumberOfCheckPoints() )
+    , myRank_( grid.comm().rank() )  
     , dataPtr_( 0 )
     , takeCareOfPersistenceManager_( true )
   {
@@ -259,6 +260,7 @@ public:
     : BaseType(grid, *( new OutPutDataType () ), tp, parameter )  
     , checkPointStep_( parameter.checkPointStep() )
     , maxCheckPointNumber_( parameter.maxNumberOfCheckPoints() )
+    , myRank_( grid.comm().rank() )  
     , dataPtr_( &data_ )
     , takeCareOfPersistenceManager_( true )
   {
@@ -301,12 +303,14 @@ protected:
     fem.io.checkpointfile: checkpoint
   */
   CheckPointer(const GridType & grid, 
+               const int myRank,
                OutPutDataType& data, 
                const char * checkFile,
                const bool takeCareOfPersistenceManager = true )
     : BaseType(grid, data, CheckPointerParameters() ) 
     , checkPointStep_( 0 )
     , maxCheckPointNumber_( 0 )
+    , myRank_( myRank )  
     , dataPtr_( 0 )
     , takeCareOfPersistenceManager_( takeCareOfPersistenceManager )
   {
@@ -354,8 +358,9 @@ public:
     \return Pointer to restored grid instance 
   */
   static GridType* restoreGrid(const std::string checkFile,
-                               const int rank = MPIManager :: rank() ) 
+                               const int givenRank = -1 )
   {
+    const int rank = ( givenRank < 0 ) ? MPIManager :: rank() : givenRank ;
     std::string datapref( CheckPointerParameters::checkPointPrefix() );
     std::string path;
 
@@ -420,8 +425,12 @@ public:
   static inline 
   void restoreData(const GridType& grid, 
                    InputTupleType& data,
-                   const std::string checkFile)
+                   const std::string checkFile,
+                   const int rank = -1 )
   {
+    // make rank exchangable 
+    const int myRank = ( rank < 0 ) ? grid.comm().rank() : rank ;
+
     // check that check point is not empty 
     if( checkFile == "" ) 
     {
@@ -429,7 +438,7 @@ public:
     }
     
     // create temporary check pointer 
-    CheckPointer<GridType, InputTupleType> checker( grid, data, checkFile.c_str() );
+    CheckPointer<GridType, InputTupleType> checker( grid, myRank, data, checkFile.c_str() );
 
     // restore data 
     checker.restoreData();
@@ -493,7 +502,8 @@ public:
                                     const double time,
                                     const bool storePersistenceManager ) 
   {
-    CheckPointer< GridType, OutputTuple > checkPointer( grid, data, 0, storePersistenceManager );
+    CheckPointer< GridType, OutputTuple > checkPointer( grid, grid.comm().rank(),
+                                                        data, 0, storePersistenceManager );
     checkPointer.writeBinaryData( time );
   }
 
@@ -582,6 +592,7 @@ protected:
         file << "LastCheckPoint: " << savestep << std::endl;
         file << "Time: " << std::scientific << time << std::endl;
         file << "PersistenceManager: " << takeCareOfPersistenceManager_ << std::endl;
+        file << "NumberProcessors: " << grid_.comm().size() << std::endl;
         file << "# RecoverPath can be edited by hand if data has been moved!" << std::endl;
         file << "RecoverPath: " << path_ << std::endl;
         file.close();
