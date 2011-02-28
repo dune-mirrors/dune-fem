@@ -139,7 +139,6 @@ class GridSolutionVector
   {
     static bool isInside(const DomainType& x, const Grid& grid ) 
     {
-      abort();
       typedef typename Grid :: LevelGridView MacroView ;
       typedef typename MacroView :: template Codim< 0 > :: Iterator Iterator ;
       typedef typename Iterator :: Entity Entity;
@@ -158,6 +157,7 @@ class GridSolutionVector
         if( refElement.checkInside( geo.local( geo.center() ) ) )
           return true ;
       }
+      return false ;
     }
   };
 
