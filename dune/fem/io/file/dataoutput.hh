@@ -265,7 +265,6 @@ namespace Dune
     //! \brief type of this class 
     const GridType& grid_;
     mutable OutPutDataType& data_; 
-    const int myRank_;
 
     // name for data output 
     std::string path_;
@@ -553,7 +552,6 @@ namespace Dune
                   const DataOutputParameters& parameter )
   : grid_( grid ),
     data_( data ), 
-    myRank_(grid_.comm().rank()),
     writeStep_(0),
     writeCalls_(0),
     saveTime_(0.0),  // why 0.0?
@@ -574,7 +572,6 @@ namespace Dune
                    const DataOutputParameters &parameter )
     : grid_(grid),
       data_(data),
-      myRank_(grid_.comm().rank()),
       writeStep_(0),
       writeCalls_(0),
       saveTime_(0),
@@ -641,7 +638,7 @@ namespace Dune
 
     writeStep_ = parameter.startcounter();
 
-    if (myRank_ == 0 && outputFormat_ != none ) 
+    if ( Parameter :: verbose() && outputFormat_ != none ) 
     {
       std::string name = path_ + "/" + datapref_;
       name += ".series";
@@ -692,11 +689,11 @@ namespace Dune
                 << outstring
                 << std::endl;
 
-    if(myRank_ <= 0)
+    if( Parameter::verbose() )
     {
       // only write info for proc 0, otherwise on large number of procs
       // this is to much output 
-      std::cout << myClassName() << "[" << myRank_ << "]::write data"
+      std::cout << myClassName() << "[" << grid_.comm().rank() << "]::write data"
                 << " writestep=" << writeStep_
                 << " sequenceStamp=" << sequenceStamp
                 << outstring
