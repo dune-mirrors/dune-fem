@@ -152,7 +152,7 @@ class GridSolutionVector
         const GenericReferenceElement< typename Grid::ctype, Grid::dimensionworld > &refElement
              = GenericReferenceElements< typename Grid::ctype, Grid::dimensionworld >::general( entity.type() );
         
-        typedef typename Entity :; Geometry Geometry;
+        typedef typename Entity :: Geometry Geometry;
         const Geometry& geo = entity.geometry();
 
         if( refElement.checkInside( geo.local( geo.center() ) ) )
