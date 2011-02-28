@@ -1,11 +1,12 @@
 #ifndef DUNE_FEM_GRIDSOLUTION_HH
 #define DUNE_FEM_GRIDSOLUTION_HH
 
+#include <dune/common/exceptions.hh>
 #include <dune/grid/utility/hierarchicsearch.hh>
 #include <dune/fem/quadrature/cachingquadrature.hh>
 #include <dune/fem/io/file/datawriter.hh>
 
-#if HAVE_SPGRID 
+#if HAVE_DUNE_SPGRID 
 #include <dune/grid/spgrid.hh>
 #endif
 
@@ -138,7 +139,8 @@ class GridSolutionVector
   {
     static bool isInside(const DomainType& x, const Grid& grid ) 
     {
-      typedef typename Grid :: LevelView MacroView ;
+      abort();
+      typedef typename Grid :: LevelGridView MacroView ;
       typedef typename MacroView :: template Codim< 0 > :: Iterator Iterator ;
       typedef typename Iterator :: Entity Entity;
       const MacroView& macroView = grid.levelView( 0 );
@@ -150,13 +152,16 @@ class GridSolutionVector
         const GenericReferenceElement< typename Grid::ctype, Grid::dimensionworld > &refElement
              = GenericReferenceElements< typename Grid::ctype, Grid::dimensionworld >::general( entity.type() );
         
-        if( refElement.checkInside( entity.geometry().center() ) ) 
+        typedef typename Entity :; Geometry Geometry;
+        const Geometry& geo = entity.geometry();
+
+        if( refElement.checkInside( geo.local( geo.center() ) ) )
           return true ;
       }
     }
   };
 
-#if HAVE_SPGRID 
+#if HAVE_DUNE_SPGRID 
   template <class DomainType, class ct, int dim, SPRefinementStrategy strategy >
   struct CheckDomain< DomainType, SPGrid< ct, dim, strategy> > 
   {
@@ -167,6 +172,7 @@ class GridSolutionVector
     }
   };
 #endif
+
 
   const int numProcs_;
   std::vector< GridSolutionType* > solutions_; 
@@ -180,12 +186,12 @@ class GridSolutionVector
 public:  
   //! Constructor
   explicit GridSolutionVector(const std::string checkPointFile) :
-    solutions_(),
-    numProcs_( numProcs( checkPointFile ) )
+    numProcs_( numProcs( checkPointFile ) ),
+    solutions_( numProcs_, (GridSolutionType *) 0 )
   {
-    solutions_.resize( numProcs_ );
     for(int p=0; p<numProcs_; ++p)
     {
+      std::cout << "Reading Grid " << p << " from checkpoint" << std::endl;
       solutions_[ p ] = new GridSolutionType( checkPointFile, p );
     }
   }
@@ -226,8 +232,13 @@ public:
       if( isInDomain( x, gridSolution.grid() ) )
       {
         gridSolution.evaluate( x, result );
+        return ;
       }
     }
+
+    std::cerr << "Point in Grid not found" << std::endl;
+    assert( false );
+    abort();
   }
 
   bool isInDomain( const DomainType& x, const GridType& grid ) const 
