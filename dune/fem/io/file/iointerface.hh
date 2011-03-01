@@ -32,6 +32,9 @@
 #include <dune/grid/io/visual/grapedatadisplay.hh>
 #endif
 
+#if HAVE_DUNE_SPGRID
+#include <dune/grid/spgrid.hh>
+#endif
 
 namespace Dune
 {
@@ -310,8 +313,8 @@ public:
                              const std::string& path, 
                              const std::string& prefix) 
   {
-    // do nothing for unstructured grids 
-    if( Capabilities::IsUnstructured<GridImp>::v ) return;
+    // do nothing for non-cartesian grids  
+    if( ! Capabilities::isCartesian<GridImp>::v ) return;
 
     // create file descriptor 
     std::ifstream gridin(macroname.c_str());
@@ -334,9 +337,7 @@ public:
     filename += prefix;
     filename += "_grid";
 
-    enum { dimworld = GridImp :: dimensionworld };
-
-    saveMacroGridImp<dimworld> (grid.comm().rank(), interval, filename); 
+    saveCartesianGrid( grid, interval, filename); 
     return;
   }
 
@@ -369,7 +370,10 @@ public:
 
       // copy file to actual path 
       if( system( cmd.c_str() ) < 0 )
-        DUNE_THROW( IOError, "Unable to execute command: '" << cmd << "'." );
+      {
+        std::cerr << "Unable to execute command: '" << cmd << "'." << std::endl;
+        //DUNE_THROW( IOError, "Unable to execute command: '" << cmd << "'." );
+      }
     }
   }
 
@@ -382,15 +386,76 @@ protected:
     return tmp.str();
   }
 
-  //! write my partition as macro grid 
-  template <int dimworld> 
-  static void saveMacroGridImp (const int rank,
-                                dgf::IntervalBlock& intervalBlock,
-                                std::string filename )
+  template <class Grid> 
+  struct SaveParallelCartesianGrid
   {
+    typedef FieldVector<int, Grid::dimension> iTupel;
+
+    static void getCoordinates(const Grid&, iTupel& , iTupel&, iTupel& ,iTupel& )
+    {
+      DUNE_THROW(NotImplemented,"SaveParallelCartesianGrid not implemented for choosen GridType");
+    }
+  };
+
+  template < int dim > 
+  struct SaveParallelCartesianGrid< YaspGrid< dim > >
+  {
+    typedef YaspGrid< dim >  Grid;
+    typedef FieldVector<int, Grid::dimension> iTupel;
+
+    static void getCoordinates(const Grid& grid, const iTupel& anz, 
+                               iTupel& origin, iTupel& originInterior, 
+                               iTupel& lengthInterior )
+    {
+#if HAVE_MPI
+      // Yasp only can do origin = 0
+      origin = 0;
+
+      enum { dimworld = Grid :: dimensionworld };
+      enum { tag = MultiYGrid< dimworld, double> ::tag };
+      YLoadBalance< dimworld > loadBalancer;
+      Torus< dimworld > torus( MPI_COMM_WORLD, tag, anz, &loadBalancer );
+      torus.partition( torus.rank(), origin, anz, originInterior, lengthInterior );
+#endif
+    }
+  };
+
+  template < class ct, int dim, SPRefinementStrategy strategy , class Comm > 
+  struct SaveParallelCartesianGrid< SPGrid< ct, dim, strategy, Comm > >
+  {
+    typedef SPGrid< ct, dim, strategy, Comm > Grid;
+    typedef FieldVector<int, Grid::dimension> iTupel;
+
+    static void getCoordinates(const Grid& grid, const iTupel& anz, 
+                               iTupel& origin, iTupel& originInterior, 
+                               iTupel& lengthInterior )
+    {
+#if HAVE_MPI
+      typedef SPMultiIndex< dim > SPGridMultiIndex ;
+      SPGridMultiIndex begin = grid.gridLevel( 0 ).localMesh().begin();
+      SPGridMultiIndex end   = grid.gridLevel( 0 ).localMesh().end();
+      for( int i=0; i<dim; ++i) 
+      {
+        originInterior[ i ] = begin[ i ];
+        lengthInterior[ i ] = end[ i ] - begin[ i ];
+      }
+#endif
+    }
+  };
+
+  //! write my partition as macro grid 
+  template <class GridImp>
+  static void saveCartesianGrid (const GridImp& grid, 
+                                 dgf::IntervalBlock& intervalBlock,
+                                 std::string filename )
+  {
+    enum { dimworld = GridImp :: dimensionworld };
+    const int rank = grid.comm().rank();
+
     FieldVector<double,dimworld> lang;
     FieldVector<int,dimworld>    anz;
     FieldVector<double,dimworld>  h;
+    FieldVector<int,dimworld>    orig;
     
     if( intervalBlock.numIntervals() != 1 )
     {
@@ -402,6 +467,7 @@ protected:
     const Interval &interval = intervalBlock.get( 0 );
     for( int i = 0; i < dimworld; ++i )
     {
+      orig[ i ] = interval.p[ 0 ][ i ];
       lang[ i ] = interval.p[ 1 ][ i ] - interval.p[ 0 ][ i ];
       anz[ i ] = interval.n[ i ];
       h[ i ] = lang[ i ] / anz[ i ];
@@ -418,17 +484,18 @@ protected:
         typedef FieldVector<int,dimworld> iTupel;
 
         // origin is zero 
-        iTupel o(0);
+        iTupel o( orig );
 
         iTupel o_interior;
         iTupel s_interior;
 
-        enum { tag = MultiYGrid<dimworld,double> ::tag };
-        YLoadBalance< dimworld > loadBalancer;
-        Torus< dimworld > torus( MPI_COMM_WORLD, tag, anz, &loadBalancer );
-        torus.partition( torus.rank(), o,anz, o_interior, s_interior );
+        SaveParallelCartesianGrid< GridImp > :: 
+          getCoordinates( grid, anz, o, o_interior, s_interior );
 
-        FieldVector<double,dimworld> origin(0.0);
+        FieldVector<double,dimworld> origin;
+        for(int i=0; i<dimworld; ++i) 
+          origin[ i ] = o[ i ];
+
         FieldVector<double,dimworld> sublang(0.0);
         for(int i=0; i<dimworld; ++i)
         {
