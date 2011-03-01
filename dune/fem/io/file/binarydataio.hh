@@ -125,10 +125,11 @@ private:
   static const int dimGrid = GridType::dimension;
   static const int dimWorld = GridType::dimensionworld;
 
-  static const bool hasBackupRestore
-    = Capabilities::hasBackupRestoreFacilities< GridType >::v;
+  static const bool useRealBackupRestore
+    = Capabilities::hasBackupRestoreFacilities< GridType >::v && 
+      ! Capabilities::isCartesian< GridType > :: v ;
 
-  typedef BinaryDataIOImp< dimGrid, dimWorld, GridType, hasBackupRestore > Impl;
+  typedef BinaryDataIOImp< dimGrid, dimWorld, GridType, useRealBackupRestore > Impl;
 
 public:
   BinaryDataIO () {}
