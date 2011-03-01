@@ -34,7 +34,7 @@ public:
   typedef VolumeQuadratureImp VolumeQuadratureType;
 
   //! is true if grid is structured grid 
-  enum { StructuredGrid = ! Capabilities::IsUnstructured<GridType>::v };
+  enum { StructuredGrid = Capabilities::isCartesian< GridType >::v };
 
   typedef AllGeomTypes< typename GridPartType :: IndexSetType,GridType> GeometryInformationType;
   typedef typename GeometryInformationType :: DomainType DomainType;
