@@ -162,10 +162,10 @@ class GridSolutionVector
   };
 
 #if HAVE_DUNE_SPGRID 
-  template <class DomainType, class ct, int dim, SPRefinementStrategy strategy >
-  struct CheckDomain< DomainType, SPGrid< ct, dim, strategy> > 
+  template <class DomainType, class ct, int dim, SPRefinementStrategy strategy , class Comm>
+  struct CheckDomain< DomainType, SPGrid< ct, dim, strategy, Comm > > 
   {
-    typedef SPGrid< ct, dim, strategy>  Grid;
+    typedef SPGrid< ct, dim, strategy, Comm >  Grid;
     static bool isInside(const DomainType& x, const Grid& grid ) 
     {
       return grid.domain().contains( x );
