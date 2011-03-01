@@ -32,6 +32,7 @@
 #include <dune/grid/io/visual/grapedatadisplay.hh>
 #endif
 
+#include <dune/grid/yaspgrid.hh>
 #if HAVE_DUNE_SPGRID
 #include <dune/grid/spgrid.hh>
 #endif
@@ -420,6 +421,7 @@ protected:
     }
   };
 
+#if HAVE_DUNE_SPGRID
   template < class ct, int dim, SPRefinementStrategy strategy , class Comm > 
   struct SaveParallelCartesianGrid< SPGrid< ct, dim, strategy, Comm > >
   {
@@ -442,6 +444,7 @@ protected:
 #endif
     }
   };
+#endif
 
   //! write my partition as macro grid 
   template <class GridImp>
