@@ -104,23 +104,6 @@ namespace Dune {
     //! \return Speed of the fastest wave. This information is used to compute
     //! the maximum admissible timestep size.
     template <class ArgumentTuple, class FaceDomainType>
-    double DUNE_DEPRECATED
-    numericalFlux( IntersectionIterator &it,
-                   const double time, 
-                   const FaceDomainType& x,
-                   const ArgumentTuple& uLeft, 
-                   const ArgumentTuple& uRight,
-                   RangeType& gLeft,
-                   RangeType& gRight )
-    { 
-      CHECK_INTERFACE_IMPLEMENTATION( asImp().numericalFlux(it, time, x, 
-                                   uLeft, uRight, gLeft, gRight) );
-      return asImp().numericalFlux(it, time, x, 
-                                   uLeft, uRight, gLeft, gRight); 
-    }
-
-
-    template <class ArgumentTuple, class FaceDomainType>
     double numericalFlux ( const IntersectionType &intersection,
                            const double time, 
                            const FaceDomainType &x,
@@ -146,20 +129,6 @@ namespace Dune {
     //! (return value).
     //! \return Speed of the fastest wave. This information is used to compute
     //! the maximum admissible timestep size.
-    template <class ArgumentTuple, class FaceDomainType>
-    double DUNE_DEPRECATED
-    boundaryFlux ( const IntersectionIterator &it,
-                   const double time, 
-                   const FaceDomainType& x,
-                   const ArgumentTuple& uLeft,
-                   RangeType& gLeft )
-    { 
-      CHECK_INTERFACE_IMPLEMENTATION( 
-        asImp().boundaryFlux(it, time, x, uLeft, gLeft) );
-      return asImp().boundaryFlux(it, time, x, uLeft, gLeft);
-    }
-
-
     template <class ArgumentTuple, class FaceDomainType>
     double boundaryFlux ( const IntersectionType &intersection,
                           const double time,
@@ -350,23 +319,6 @@ namespace Dune {
     //! Empty implementation that fails if problem claims to have a flux
     //! contribution.
     template <class ArgumentTuple, class FaceDomainType>
-    double DUNE_DEPRECATED
-    numericalFlux ( const IntersectionIterator& it,
-                    const double time,
-                    const FaceDomainType& x,
-                    const ArgumentTuple& uLeft, 
-                    const ArgumentTuple& uRight,
-                    RangeType& gLeft,
-                    RangeType& gRight )
-    { 
-      assert(!this->asImp().hasFlux()); 
-      gLeft = 0.0;
-      gRight = 0.0;
-      return 0.0;
-    }
-
-
-    template <class ArgumentTuple, class FaceDomainType>
     double numericalFlux( const Intersection& it,
                           const double time,
                           const FaceDomainType& x,
@@ -384,20 +336,6 @@ namespace Dune {
 
     //! Empty implementation that fails if problem claims to have a flux
     //! contribution.
-    template <class ArgumentTuple, class FaceDomainType>
-    double DUNE_DEPRECATED
-    boundaryFlux ( const IntersectionIterator& it,
-                   const double time, 
-                   const FaceDomainType& x,
-                   const ArgumentTuple& uLeft,
-                   RangeType& gLeft )
-    {
-      assert(!this->asImp().hasFlux());
-      gLeft = 0.0;
-      return 0.0;
-    }
-
-
     template <class ArgumentTuple, class FaceDomainType>
     double boundaryFlux ( const Intersection &intersection,
                           const double time,
