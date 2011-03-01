@@ -216,36 +216,36 @@ namespace Dune
     {}
 
     //! \brief return twist for inner face 
-    template <class IntersectionIterator> 
+    template <class Intersection> 
     static inline int twistInSelf(const GridType & grid, 
-                           const IntersectionIterator& it)
+                                  const Intersection& intersection)
     {
-      return grid.getRealIntersectionIterator(it).twistInSelf();
+      return grid.getRealIntersection( intersection ).twistInSelf();
     }
     
     //! \brief return twist for inner face 
-    int twistInSelf(const LeafIntersection& it) const 
+    int twistInSelf(const LeafIntersection& intersection) const 
     {
-      return twistInSelf( grid_, it );
+      return twistInSelf( grid_, intersection );
     }
     
     //! \brief return twist for inner face 
-    int twistInSelf(const LevelIntersection& it) const {
-      return twistInSelf( grid_, it );
+    int twistInSelf(const LevelIntersection& intersection) const {
+      return twistInSelf( grid_, intersection );
     }
 
     //! \brief return twist for outer face 
-    template <class IntersectionIterator>
+    template <class Intersection>
     static inline int twistInNeighbor(const GridType & grid, 
-                               const IntersectionIterator& it) 
+                                      const Intersection& intersection) 
     {
-      return grid.getRealIntersectionIterator(it).twistInNeighbor();
+      return grid.getRealIntersection( intersection ).twistInNeighbor();
     }
     
     //! \brief return twist for outer face 
-    int twistInNeighbor(const LeafIntersection& it) const 
+    int twistInNeighbor(const LeafIntersection& intersection) const 
     {
-      return twistInNeighbor( grid_, it );
+      return twistInNeighbor( grid_, intersection );
     }
     
     //! \brief return twist for outer face 
@@ -289,41 +289,41 @@ namespace Dune
     {}
 
     //! \brief return twist for inner face 
-    template <class IntersectionIterator> 
+    template <class Intersection> 
     static inline int twistInSelf(const GridType & grid, 
-                                  const IntersectionIterator& it)
+                                  const Intersection& intersection)
     {
-      return grid.getRealIntersectionIterator(it).twistInSelf();
+      return grid.getRealIntersection( intersection ).twistInSelf();
     }
     
     //! \brief return twist for inner face 
-    int twistInSelf(const LeafIntersection& it) const {
-      return twistInSelf( grid_, it );
+    int twistInSelf(const LeafIntersection& intersection) const {
+      return twistInSelf( grid_, intersection );
     }
     
     //! \brief return twist for inner face 
-    int twistInSelf(const LevelIntersection& it) const {
-      return twistInSelf( grid_, it );
+    int twistInSelf(const LevelIntersection& intersection) const {
+      return twistInSelf( grid_, intersection );
     }
 
     //! \brief return twist for outer face 
-    template <class IntersectionIterator>
+    template <class Intersection>
     static inline int twistInNeighbor(const GridType & grid, 
-                                      const IntersectionIterator& it) 
+                                      const Intersection& intersection) 
     {
-      return grid.getRealIntersectionIterator(it).twistInNeighbor();
+      return grid.getRealIntersection( intersection ).twistInNeighbor();
     }
     
     //! \brief return twist for outer face 
-    int twistInNeighbor(const LeafIntersection& it) const 
+    int twistInNeighbor(const LeafIntersection& intersection) const 
     {
-      return twistInNeighbor( grid_, it);
+      return twistInNeighbor( grid_, intersection);
     }
     
     //! \brief return twist for outer face 
-    int twistInNeighbor(const LevelIntersection& it) const 
+    int twistInNeighbor(const LevelIntersection& intersection) const 
     {
-      return twistInNeighbor( grid_, it);
+      return twistInNeighbor( grid_, intersection);
     }
 
     /** \brief return element geometry type of inside or outside entity 
@@ -357,35 +357,35 @@ namespace Dune
     TwistUtility(const GridType& grid) : grid_(grid) {}
 
     //! \brief return twist for inner face 
-    static inline int twistInSelf(const GridType & grid, const LeafIntersection& it)
+    static inline int twistInSelf(const GridType & grid, const LeafIntersection& intersection)
     {
-      return grid.getRealIntersectionIterator(it).twistInSelf();
+      return grid.getRealIntersection( intersection ).twistInSelf();
     }
     
     //! \brief return twist for inner face 
-    int twistInSelf(const LeafIntersection& it) const {
-      return twistInSelf( grid_, it );
+    int twistInSelf(const LeafIntersection& intersection) const {
+      return twistInSelf( grid_, intersection );
     }
     
     //! \brief return twist for inner face 
-    int twistInSelf(const LevelIntersection& it) const {
-      return twistInSelf( grid_, it );
+    int twistInSelf(const LevelIntersection& intersection) const {
+      return twistInSelf( grid_, intersection );
     }
 
     //! \brief return twist for outer face 
-    static inline int twistInNeighbor(const GridType &grid, const LeafIntersection& it)
+    static inline int twistInNeighbor(const GridType &grid, const LeafIntersection& intersection )
     {
-      return grid.getRealIntersectionIterator(it).twistInNeighbor();
+      return grid.getRealIntersection( intersection ).twistInNeighbor();
     }
     
     //! \brief return twist for outer face 
-    int twistInNeighbor(const LeafIntersection& it) const {
-      return twistInNeighbor( grid_, it );
+    int twistInNeighbor(const LeafIntersection& intersection) const {
+      return twistInNeighbor( grid_, intersection );
     }
     
     //! \brief return twist for outer face 
-    int twistInNeighbor(const LevelIntersection& it) const {
-      return twistInNeighbor( grid_, it );
+    int twistInNeighbor(const LevelIntersection& intersection) const {
+      return twistInNeighbor( grid_, intersection );
     }
 
     /** \brief return element geometry type of inside or outside entity 
