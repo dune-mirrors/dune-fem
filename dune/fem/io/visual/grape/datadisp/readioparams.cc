@@ -102,10 +102,13 @@ inline int scanProcsPaths(const std::string globalPath,
   while ( true )
   {
     std::string path( IOInterface::
-        createRecoverPath(globalPath,procs,dataPrefix,step));
+        createRecoverPath(globalPath,procs,dataPrefix,step) );
     // if directory does not exist
     // return number of procs 
-    if( ! opendir(path.c_str()) )
+    DIR* directory = opendir(path.c_str());
+    const bool directoryExists = (directory != 0);
+    closedir( directory );
+    if( ! directoryExists  )
     {
       return procs;
     }
@@ -289,6 +292,11 @@ inline int readParameterList (int argc, char **argv, bool displayData = true )
   {
     // scan for max number of processor paths  
     int para = scanProcsPaths(path,info[k].name,i_start);
+
+    std::cout << "****************************************" << std::endl;
+    std::cout << "***   Start reading data for " << para << std::endl;
+    std::cout << "****************************************" << std::endl;
+
     // should be at least 1 
     if( para <= 0 )
     {
