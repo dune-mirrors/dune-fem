@@ -24,6 +24,7 @@
 #include <dune/fem/storage/singletonlist.hh>
 
 #include <dune/fem/io/parameter.hh>
+#include <dune/fem/io/streams/xdrstreams.hh>
 
 //- local includes 
 #include <dune/fem/space/mapper/dofmapper.hh>
@@ -133,6 +134,11 @@ public:
   //! read and write method of index sets 
   virtual void write_xdr(const char * filename, int timestep) const = 0;
 
+
+  //! new read/write methods 
+  virtual void write( XDRFileOutStream& out ) const = 0;
+  virtual void read( XDRFileInStream& out ) = 0;
+
   //! increase reference counter 
   void addReference () 
   {
@@ -233,6 +239,18 @@ public:
     indexSet_.read_xdr(filename,timestep); 
   }
   
+  //! new write method 
+  virtual void read( XDRFileInStream& in ) 
+  {
+    indexSet_.read( in ); 
+  }
+
+  //! new write method 
+  virtual void write( XDRFileOutStream& out ) const
+  {
+    indexSet_.write( out ); 
+  }
+
   //! call write_xdr of index set 
   virtual void write_xdr(const char * filename, int timestep) const
   {
@@ -1312,7 +1330,19 @@ template <class GridType>
 inline bool DofManager<GridType>::
 writeIndexSets(const std::string& filename , int timestep )
 {
+#if NEW_DUNE_FEM_READWRITE_METHODS
+  XDRFileOutStream out( filename );
+  // save module version for later changes 
+  unsigned int versionId = DUNE_MODULE_VERSION_ID(DUNE_FEM);
+  out << versionId;
+  IndexListIteratorType endit = indexList_.end();
+  for(IndexListIteratorType it = indexList_.begin(); it != endit; ++it)
+  {
+    (*it)->write( out );
+  }
+#else // old method 
   int count = 0;
+
   IndexListIteratorType endit = indexList_.end();
   for(IndexListIteratorType it = indexList_.begin(); it != endit; ++it)
   {
@@ -1320,6 +1350,7 @@ writeIndexSets(const std::string& filename , int timestep )
     (*it)->write_xdr(newFilename.c_str(),timestep); 
     ++ count;
   }
+#endif
   return true;
 }
 
@@ -1327,6 +1358,20 @@ template <class GridType>
 inline bool DofManager<GridType>::
 readIndexSets(const std::string& filename , int timestep )
 {
+#if NEW_DUNE_FEM_READWRITE_METHODS
+  XDRFileInStream in( filename );
+  // check version of file 
+  unsigned int versionId;
+  in >> versionId;
+  if( versionId < DUNE_VERSION_ID(1,1,0) )
+    DUNE_THROW( IOError, "Trying to read outdated file." );
+
+  IndexListIteratorType endit = indexList_.end();
+  for(IndexListIteratorType it = indexList_.begin(); it != endit; ++it)
+  {
+    (*it)->read( in );
+  }
+#else // old method 
   int count = 0;
   IndexListIteratorType endit = indexList_.end();
   for(IndexListIteratorType it = indexList_.begin(); it != endit; ++it)
@@ -1350,6 +1395,7 @@ readIndexSets(const std::string& filename , int timestep )
     }
     ++count;
   }
+#endif
   return true;
 }
 
