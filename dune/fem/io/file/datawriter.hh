@@ -63,6 +63,7 @@ protected:
   using BaseType :: outputFormat_ ;
 
   friend class DataOutput< GridImp, DataImp >;
+  mutable std::stringstream macroGrid_;
 
 public: 
 
@@ -119,7 +120,7 @@ protected:
     std::string timeStepPath = IOInterface::createPath( grid_.comm(), path_, datapref_, step );
 
     // for structured grids copy grid
-    IOInterface::copyMacroGrid( grid_, path_, timeStepPath, datapref_ );
+    IOInterface::copyMacroGrid( grid_, macroGrid_.str(), path_, timeStepPath, datapref_ );
 
     // create binary io obj
     BinaryDataIO< GridType > dataio;
@@ -135,7 +136,8 @@ protected:
   */
   virtual void saveMacroGrid(const std::string macroFileName) const 
   {
-    IOInterface :: writeMacroGrid( grid_, macroFileName, path_, datapref_);
+    IOInterface :: writeMacroGrid( grid_, macroGrid_, 
+                                   macroFileName, path_, datapref_);
   }
   
 }; // end class DataWriter 

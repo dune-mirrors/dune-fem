@@ -310,6 +310,7 @@ public:
   //! if grid is structured grid, write macro file 
   template <class GridImp>
   static void writeMacroGrid(const GridImp& grid, 
+                             std::ostream& out,
                              const std::string& macroname,
                              const std::string& path, 
                              const std::string& prefix) 
@@ -338,13 +339,14 @@ public:
     filename += prefix;
     filename += "_grid";
 
-    saveCartesianGrid( grid, interval, filename); 
+    saveCartesianGrid( grid, out, interval, filename); 
     return;
   }
 
   //! if grid is structured grid, write macro file 
   template <class GridImp>
   static void copyMacroGrid(const GridImp& g,
+                            const std::string& macroGrid,
                             const std::string& orgPath,
                             const std::string& destPath, 
                             const std::string& prefix) 
@@ -352,28 +354,20 @@ public:
     // do nothing for unstructured grids 
     if( Capabilities::IsUnstructured<GridImp>::v ) return;
 
+    if( macroGrid != "" )
     {
-      std::string filename(orgPath);
-      filename += "/";
-      filename += prefix;
-      filename += "_grid";
-      // add rank 
-      filename += strRank(g.comm().rank());
-
       std::string destFilename(destPath);
       destFilename += "/";
       destFilename += prefix;
       destFilename += "_grid.macro";
 
-      std::string cmd("cp ");
-      cmd += filename; cmd += " ";
-      cmd += destFilename;
-
-      // copy file to actual path 
-      if( system( cmd.c_str() ) < 0 )
+      std::ofstream file( destFilename.c_str() );
+      if( file.is_open() )
+        file << macroGrid;
+      else 
       {
-        std::cerr << "Unable to execute command: '" << cmd << "'." << std::endl;
-        //DUNE_THROW( IOError, "Unable to execute command: '" << cmd << "'." );
+        if( Parameter :: verbose () )
+          std::cerr << "Unable to open: '" << destFilename << "'." << std::endl;
       }
     }
   }
@@ -448,7 +442,8 @@ protected:
 
   //! write my partition as macro grid 
   template <class GridImp>
-  static void saveCartesianGrid (const GridImp& grid, 
+  static void saveCartesianGrid (const GridImp& grid,
+                                 std::ostream& out,
                                  dgf::IntervalBlock& intervalBlock,
                                  std::string filename )
   {
@@ -506,14 +501,14 @@ protected:
           sublang[i] = origin[i] + (s_interior[i] * h[i]);
         }
 
-        writeStructuredGrid(subfilename,origin,sublang,s_interior);
+        writeStructuredGrid(subfilename,out,origin,sublang,s_interior);
       }
 #else
       {
         // in serial this should be zero 
         assert( rank == 0 );
         FieldVector<double,dimworld> zero(0.0);
-        writeStructuredGrid(subfilename,zero,lang,anz);
+        writeStructuredGrid(subfilename,out,zero,lang,anz);
       }
 #endif
     }
@@ -524,45 +519,56 @@ protected:
       // write global file for recovery 
       filename += ".global";
       FieldVector<double,dimworld> zero(0.0);
-      writeStructuredGrid(filename,zero,lang,anz);
+      writeStructuredGrid(filename,out,zero,lang,anz);
     }
+  }
+
+  template <int dimworld>
+  static void writeToStream(std::ostream& file,
+                            const FieldVector<double,dimworld>& origin,
+                            const FieldVector<double,dimworld>& lang,
+                            const FieldVector<int,dimworld>& anz)
+  {
+    file << "DGF" << std::endl;
+    file << "Interval" << std::endl;
+    // write first point 
+    for(int i=0;i<dimworld; ++i)
+    {
+      file << origin[i] << " ";
+    }
+    file << std::endl;
+    // write second point 
+    for(int i=0;i<dimworld; ++i)
+    {
+      file << lang[i] << " ";
+    }
+    file << std::endl;
+    // write number of intervals in each direction 
+    for(int i=0;i<dimworld; ++i)
+    {
+      file << anz[i] << " ";
+    }
+    file << std::endl;
+    file << "#" << std::endl;
+
+    file << "BoundaryDomain" << std::endl;
+    file << "default 1" << std::endl;
+    file << "#" << std::endl;
   }
 
   //! write structured grid as DGF file 
   template <int dimworld>
   static void writeStructuredGrid(const std::string& filename,
-                           const FieldVector<double,dimworld>& origin,
-                           const FieldVector<double,dimworld>& lang,
-                           const FieldVector<int,dimworld>& anz)
+                                  std::ostream& out,
+                                  const FieldVector<double,dimworld>& origin,
+                                  const FieldVector<double,dimworld>& lang,
+                                  const FieldVector<int,dimworld>& anz)
   {
+    writeToStream( out, origin, lang, anz);
     std::ofstream file (filename.c_str());
     if( file.is_open())
     {
-      file << "DGF" << std::endl;
-      file << "Interval" << std::endl;
-      // write first point 
-      for(int i=0;i<dimworld; ++i)
-      {
-        file << origin[i] << " ";
-      }
-      file << std::endl;
-      // write second point 
-      for(int i=0;i<dimworld; ++i)
-      {
-        file << lang[i] << " ";
-      }
-      file << std::endl;
-      // write number of intervals in each direction 
-      for(int i=0;i<dimworld; ++i)
-      {
-        file << anz[i] << " ";
-      }
-      file << std::endl;
-      file << "#" << std::endl;
-
-      file << "BoundaryDomain" << std::endl;
-      file << "default 1" << std::endl;
-      file << "#" << std::endl;
+      writeToStream( file, origin, lang, anz);
     }
     else
     {
