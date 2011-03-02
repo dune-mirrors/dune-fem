@@ -449,6 +449,15 @@ BinaryDataIOImp< dim, dimworld, GridImp, false >
   {
     if( Parameter :: verbose () )
       std::cout << "Read grid from " << macroName << std::endl;
+
+    {
+      std::ifstream testfile ( macroName.c_str() );
+      if( ! testfile.is_open() ) 
+      {
+        std::cerr << "Macro grid file `" << macroName << "' not found!" << std::endl;
+      }
+    }
+
     // create macro grid 
     GridPtr<GridType> gridptr(macroName);
     std::cout << "Created Structured Macro Grid `" << macroName << "' !\n";
