@@ -39,6 +39,9 @@ namespace Dune
   template< class HostGrid, class CoordFunction, class Allocator >
   class GeometryGrid;
 
+  template< class HostGrid >
+  class CartesianGrid;
+
   // Capabilities
   // ------------
 
@@ -170,6 +173,12 @@ namespace Dune
 
     template< class HostGrid, class CoordFunction, class Allocator >
     struct supportsCallbackAdaptation< GeometryGrid< HostGrid, CoordFunction, Allocator > >
+    {
+      static const bool v = supportsCallbackAdaptation< HostGrid > :: v;
+    };
+
+    template< class HostGrid >
+    struct supportsCallbackAdaptation< CartesianGrid< HostGrid > >
     {
       static const bool v = supportsCallbackAdaptation< HostGrid > :: v;
     };
