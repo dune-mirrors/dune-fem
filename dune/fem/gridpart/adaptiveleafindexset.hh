@@ -860,29 +860,6 @@ namespace Dune
   inline bool AdaptiveIndexSetBase< TraitsImp >
     ::write_xdr ( const std::string &filename ) const
   {
-#if DUNE_FEM_COMPATIBILITY
-    // create write stream
-    XDRWriteStream xdr( filename );
-    bool success = true;
-
-    // write new verion tag 
-    int newVerion = myVersionTag;
-    success &= xdr.inout( newVerion );
-
-    // write my type
-    int typeVar = type();
-    success &= xdr.inout( typeVar );
-
-    // write whether codim is used 
-    for( int i = 0; i < numCodimensions; ++i )
-      success &= xdr.inout( codimUsed_[ i ] );
-
-    // write all sets 
-    for( int i = 0; i < numCodimensions; ++i )
-      success &= codimLeafSet( i ).processXdr( xdr );
-    
-    return success;
-#else 
     // new version using streams 
     try
     {
@@ -893,7 +870,6 @@ namespace Dune
     {
       return false;
     }
-#endif
   }
 
 
@@ -956,59 +932,6 @@ namespace Dune
   inline bool AdaptiveIndexSetBase< TraitsImp >
     ::read_xdr ( const std::string &filename )
   {
-#if DUNE_FEM_COMPATIBILITY
-    // create read stream 
-    XDRReadStream xdr( filename );
-    bool success = true;
-
-    // check new version tag
-    int newVersionTag = myVersionTag;
-    success &= xdr.inout( newVersionTag );
-    const bool newVersion = (newVersionTag == myVersionTag);
-
-    // if new version the read type, otherwise newVersionTag is the type info
-    int typeVar = (newVersion ? type() : newVersionTag);
-    if( newVersion )
-      success &= xdr.inout( typeVar );
-
-    // index set type check
-    if( (typeVar != 2) && (typeVar != type()) )
-    {
-      DUNE_THROW( InvalidStateException,
-                  "AdaptiveIndexSetBase::read_xdr: wrong type " << typeVar
-                  << " given (expected " << type() << ")." );
-    }
-
-    if( newVersion )
-    {
-      // read codim used 
-      for( int i = 0; i < numCodimensions; ++i )
-        success &= xdr.inout( codimUsed_[ i ] );
-    }
-    else 
-    {
-      // it depends on the type whether higher codims were stored
-      for( int i = 0; i < numCodimensions; ++i )
-        codimUsed_[ i ] = (typeVar == type());
-    }
-
-    if( typeVar == type() )
-    {
-      for( int i = 0; i < numCodimensions; ++i )
-      {
-        if( codimUsed_[ i ] )
-          success &= codimLeafSet( i ).processXdr( xdr );
-      }
-    }
-    else
-      success &= codimLeafSet( 0 ).processXdr( xdr );
-
-    // in parallel runs we have to compress here
-    if( grid_.comm().size() > 1 )
-      compressed_ = false;
-    
-    return success;
-#else
     // new version using streams 
     try
     {
@@ -1019,7 +942,6 @@ namespace Dune
     {
       return false;
     }
-#endif
   }
 
 
