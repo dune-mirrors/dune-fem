@@ -35,4 +35,13 @@ namespace Dune
     return (mkdir( name.c_str(), mode ) >= 0);
   }
 
+  bool directoryExists ( const std::string &name )
+  {
+    // if directory does not exist return false 
+    DIR* directory = opendir( name.c_str() );
+    const bool directoryExists = (directory != 0);
+    // close directory again 
+    closedir( directory );
+    return directoryExists;
+  }
 }

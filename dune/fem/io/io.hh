@@ -14,6 +14,13 @@ namespace Dune
    */
   bool createDirectory ( const std::string &name );
 
+  /** \brief check whether a directory exists 
+   *
+   *  \param[in]  name  name of the directory to create
+   *
+   *  \returns true if directory exists, false otherwise 
+   */
+  bool directoryExists ( const std::string &name );
 }
 
 #endif // #ifndef DUNE_FEM_IO_HH
