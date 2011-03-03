@@ -103,12 +103,9 @@ inline int scanProcsPaths(const std::string globalPath,
   {
     std::string path( IOInterface::
         createRecoverPath(globalPath,procs,dataPrefix,step) );
-    // if directory does not exist
-    // return number of procs 
-    DIR* directory = opendir(path.c_str());
-    const bool directoryExists = (directory != 0);
-    closedir( directory );
-    if( ! directoryExists  )
+
+    // check for directory 
+    if( ! directoryExists( path ) )
     {
       return procs;
     }
