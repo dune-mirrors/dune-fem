@@ -386,7 +386,7 @@ protected:
   {
     typedef FieldVector<int, Grid::dimension> iTupel;
 
-    static void getCoordinates(const Grid&, iTupel& , iTupel&, iTupel& ,iTupel& )
+    static void getCoordinates(const Grid&, const iTupel& , iTupel&, iTupel& ,iTupel& )
     {
       DUNE_THROW(NotImplemented,"SaveParallelCartesianGrid not implemented for choosen GridType");
     }
