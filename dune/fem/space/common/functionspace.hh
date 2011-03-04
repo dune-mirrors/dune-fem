@@ -218,9 +218,9 @@ struct MatrixSpaceTraits {
   typedef MatrixMapping<DomainFieldImp,RangeFieldImp, n, m1,m2> LinearMappingType;
   /** \brief scalar function space type */
   typedef MatrixFunctionSpace<DomainFieldImp,RangeFieldImp,n,1,1> ScalarFunctionSpaceType;
-  /** \brief dimension of domain vector space */
-  enum { dimRange = m1 * m2};
   /** \brief dimension of range vector space */
+  enum { dimRange = m1 * m2};
+  /** \brief dimension of domain vector space */
   enum { dimDomain = n };
 };
 
