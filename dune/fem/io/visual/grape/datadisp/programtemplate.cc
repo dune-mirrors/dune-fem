@@ -21,12 +21,11 @@ typedef IOTupleType GR_InputType;
 // approximation can be found in the apply method of the class
 // DisplayErrorFunction in file errordisplay.hh
 template <class GrapeDispType, 
-          class GR_GridType,
-          class DestinationType>
+          class GR_GridType>
 void postProcessing(const GrapeDispType& disp,
                     const GR_GridType& grid,
                     const double time,
-                    const DestinationType& Uh)
+                    const IOTupleType& data)
 {
 }
 

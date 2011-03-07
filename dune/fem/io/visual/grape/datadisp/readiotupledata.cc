@@ -74,7 +74,7 @@ inline GrapeDispType * readTupleData(const char * path, const char * filename,
   //Element<0> :: get( *tup );
   //    *(Element<0> :: get( *tup ))
   // do some post processing 
-  postProcessing(*disp,*grid,time,timestep,*(get<0>( *tup )));
+  postProcessing(*disp,*grid,time,timestep, *tup);
   return disp;
 }
 
