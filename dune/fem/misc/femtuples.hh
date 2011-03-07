@@ -212,7 +212,7 @@ namespace Dune
   {
     typedef Pair<T1,Nil> Type;
   };
-  
+
 } // end namespace Dune 
 #endif // end if HAVE_TUPLE || HAVE_TR1_TUPLE
 
@@ -892,11 +892,18 @@ namespace Dune
   //  TupleLength
   //
   ///////////////////////////////////////
-  
+
   //! length of a tuple 
   template<class T>
   struct TupleLength  {
-    enum { value = Length< T > :: value };
+    enum { value = TupleLength< typename T::FirstPair  > :: value  };
+  };
+
+  //! length of a tuple 
+  template<class T1, class T2>
+  struct TupleLength<Pair< T1, T2 > > 
+  {
+    enum { value = 1 + TupleLength< T2 > :: value };
   };
 
   //! length of an empty tuple is zero  
