@@ -396,7 +396,7 @@ protected:
   struct SaveParallelCartesianGrid< YaspGrid< dim > >
   {
     typedef YaspGrid< dim >  Grid;
-    typedef FieldVector<int, Grid::dimension> iTupel;
+    typedef FieldVector<int, dim> iTupel;
 
     static void getCoordinates(const Grid& grid, const iTupel& anz, 
                                iTupel& origin, iTupel& originInterior, 
@@ -406,10 +406,9 @@ protected:
       // Yasp only can do origin = 0
       origin = 0;
 
-      enum { dimworld = Grid :: dimensionworld };
-      enum { tag = MultiYGrid< dimworld, double> ::tag };
-      YLoadBalance< dimworld > loadBalancer;
-      Torus< dimworld > torus( MPI_COMM_WORLD, tag, anz, &loadBalancer );
+      enum { tag = MultiYGrid< dim, double> ::tag };
+      YLoadBalance< dim > loadBalancer;
+      Torus< dim > torus( MPI_COMM_WORLD, tag, anz, &loadBalancer );
       torus.partition( torus.rank(), origin, anz, originInterior, lengthInterior );
 #endif
     }
@@ -420,7 +419,7 @@ protected:
   struct SaveParallelCartesianGrid< SPGrid< ct, dim, strategy, Comm > >
   {
     typedef SPGrid< ct, dim, strategy, Comm > Grid;
-    typedef FieldVector<int, Grid::dimension> iTupel;
+    typedef FieldVector<int, dim> iTupel;
 
     static void getCoordinates(const Grid& grid, const iTupel& anz, 
                                iTupel& origin, iTupel& originInterior, 
@@ -447,13 +446,13 @@ protected:
                                  dgf::IntervalBlock& intervalBlock,
                                  std::string filename )
   {
-    enum { dimworld = GridImp :: dimensionworld };
+    enum { dimension = GridImp :: dimension };
     const int rank = grid.comm().rank();
 
-    FieldVector<double,dimworld> lang;
-    FieldVector<int,dimworld>    anz;
-    FieldVector<double,dimworld>  h;
-    FieldVector<int,dimworld>    orig;
+    FieldVector<double,dimension> lang;
+    FieldVector<int,dimension>    anz;
+    FieldVector<double,dimension>  h;
+    FieldVector<int,dimension>    orig;
     
     if( intervalBlock.numIntervals() != 1 )
     {
@@ -463,7 +462,7 @@ protected:
 
     typedef typename dgf::IntervalBlock::Interval Interval;
     const Interval &interval = intervalBlock.get( 0 );
-    for( int i = 0; i < dimworld; ++i )
+    for( int i = 0; i < dimension; ++i )
     {
       orig[ i ] = interval.p[ 0 ][ i ];
       lang[ i ] = interval.p[ 1 ][ i ] - interval.p[ 0 ][ i ];
@@ -479,7 +478,7 @@ protected:
 
 #if HAVE_MPI 
       {
-        typedef FieldVector<int,dimworld> iTupel;
+        typedef FieldVector<int,dimension> iTupel;
 
         // origin is zero 
         iTupel o( orig );
@@ -490,12 +489,12 @@ protected:
         SaveParallelCartesianGrid< GridImp > :: 
           getCoordinates( grid, anz, o, o_interior, s_interior );
 
-        FieldVector<double,dimworld> origin;
-        for(int i=0; i<dimworld; ++i) 
+        FieldVector<double,dimension> origin;
+        for(int i=0; i<dimension; ++i) 
           origin[ i ] = o[ i ];
 
-        FieldVector<double,dimworld> sublang(0.0);
-        for(int i=0; i<dimworld; ++i)
+        FieldVector<double,dimension> sublang(0.0);
+        for(int i=0; i<dimension; ++i)
         {
           origin[i] = o_interior[i] * h[i];
           sublang[i] = origin[i] + (s_interior[i] * h[i]);
@@ -507,7 +506,7 @@ protected:
       {
         // in serial this should be zero 
         assert( rank == 0 );
-        FieldVector<double,dimworld> zero(0.0);
+        FieldVector<double,dimension> zero(0.0);
         writeStructuredGrid(subfilename,out,zero,lang,anz);
       }
 #endif
@@ -518,33 +517,33 @@ protected:
     {
       // write global file for recovery 
       filename += ".global";
-      FieldVector<double,dimworld> zero(0.0);
+      FieldVector<double,dimension> zero(0.0);
       writeStructuredGrid(filename,out,zero,lang,anz);
     }
   }
 
-  template <int dimworld>
+  template <int dimension>
   static void writeToStream(std::ostream& file,
-                            const FieldVector<double,dimworld>& origin,
-                            const FieldVector<double,dimworld>& lang,
-                            const FieldVector<int,dimworld>& anz)
+                            const FieldVector<double,dimension>& origin,
+                            const FieldVector<double,dimension>& lang,
+                            const FieldVector<int,dimension>& anz)
   {
     file << "DGF" << std::endl;
     file << "Interval" << std::endl;
     // write first point 
-    for(int i=0;i<dimworld; ++i)
+    for(int i=0;i<dimension; ++i)
     {
       file << origin[i] << " ";
     }
     file << std::endl;
     // write second point 
-    for(int i=0;i<dimworld; ++i)
+    for(int i=0;i<dimension; ++i)
     {
       file << lang[i] << " ";
     }
     file << std::endl;
     // write number of intervals in each direction 
-    for(int i=0;i<dimworld; ++i)
+    for(int i=0;i<dimension; ++i)
     {
       file << anz[i] << " ";
     }
@@ -557,12 +556,12 @@ protected:
   }
 
   //! write structured grid as DGF file 
-  template <int dimworld>
+  template <int dimension>
   static void writeStructuredGrid(const std::string& filename,
                                   std::ostream& out,
-                                  const FieldVector<double,dimworld>& origin,
-                                  const FieldVector<double,dimworld>& lang,
-                                  const FieldVector<int,dimworld>& anz)
+                                  const FieldVector<double,dimension>& origin,
+                                  const FieldVector<double,dimension>& lang,
+                                  const FieldVector<int,dimension>& anz)
   {
     writeToStream( out, origin, lang, anz);
     std::ofstream file (filename.c_str());
