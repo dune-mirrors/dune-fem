@@ -354,7 +354,6 @@ public:
     // do nothing if SaveParallelCartesianGrid is not specified 
     if( ! SaveParallelCartesianGrid< GridImp > :: saveMacroGrid ) return ;
 
-
     if( macroGrid != "" )
     {
       std::string destFilename(destPath);
@@ -523,7 +522,8 @@ protected:
       // write global file for recovery 
       filename += ".global";
       FieldVector<double,dimension> zero(0.0);
-      writeStructuredGrid(filename,out,zero,lang,anz);
+      std::stringstream dummy; 
+      writeStructuredGrid(filename,dummy,zero,lang,anz);
     }
   }
 
