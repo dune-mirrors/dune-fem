@@ -317,6 +317,9 @@ public:
   {
     // do nothing for non-cartesian grids  
     if( ! Capabilities::isCartesian<GridImp>::v ) return;
+    
+    // do nothing if SaveParallelCartesianGrid is not specified 
+    if( ! SaveParallelCartesianGrid< GridImp > :: saveMacroGrid ) return ;
 
     // create file descriptor 
     std::ifstream gridin(macroname.c_str());
@@ -384,6 +387,7 @@ protected:
   template <class Grid> 
   struct SaveParallelCartesianGrid
   {
+    static const bool saveMacroGrid = false ;
     typedef FieldVector<int, Grid::dimension> iTupel;
 
     static void getCoordinates(const Grid&, const iTupel& , iTupel&, iTupel& ,iTupel& )
@@ -395,6 +399,7 @@ protected:
   template < int dim > 
   struct SaveParallelCartesianGrid< YaspGrid< dim > >
   {
+    static const bool saveMacroGrid = true  ;
     typedef YaspGrid< dim >  Grid;
     typedef FieldVector<int, dim> iTupel;
 
@@ -418,6 +423,8 @@ protected:
   template < class ct, int dim, SPRefinementStrategy strategy , class Comm > 
   struct SaveParallelCartesianGrid< SPGrid< ct, dim, strategy, Comm > >
   {
+    static const bool saveMacroGrid = true  ;
+
     typedef SPGrid< ct, dim, strategy, Comm > Grid;
     typedef FieldVector<int, dim> iTupel;
 
