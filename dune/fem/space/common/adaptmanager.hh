@@ -160,10 +160,13 @@ private:
     else adaptationMethod_ = none;
 
     // for structred grid adaptation is disabled 
-    if( ! Capabilities::isLocallyAdaptive<GridType>::v && output ) 
+    if( ! Capabilities::isLocallyAdaptive<GridType>::v ) 
     {
-      std::cerr << "WARNING: AdaptationMethod: adaptation disabled for structured grid! \n";
       adaptationMethod_ = none;
+      if( output )
+      {
+        std::cerr << "WARNING: AdaptationMethod: adaptation disabled for structured grid! \n";
+      }
     }
       
     if( output )
