@@ -366,7 +366,7 @@ namespace LDGExample
 
       JacobianRangeType diffmatrix;
 
-      RangeType average ( argULeft );
+      UType average ( argULeft );
       average += argURight ;
       average *= 0.5;
 
