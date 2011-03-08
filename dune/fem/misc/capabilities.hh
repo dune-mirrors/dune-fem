@@ -164,7 +164,6 @@ namespace Dune
       static const bool v = true;
     };
 
-
     template< int dim, int dimworld >
     struct supportsCallbackAdaptation< AlbertaGrid< dim, dimworld > >
     {
@@ -181,6 +180,71 @@ namespace Dune
     struct supportsCallbackAdaptation< CartesianGrid< HostGrid > >
     {
       static const bool v = supportsCallbackAdaptation< HostGrid > :: v;
+    };
+
+
+
+    // isLocallyAdaptive
+    // --------------------------
+
+    template< class Grid >
+    struct isLocallyAdaptive
+    {
+      static const bool v = false;
+    };
+
+    template< class Grid >
+    struct isLocallyAdaptive< const Grid >
+    {
+      static const bool v = Dune :: Capabilities :: isLocallyAdaptive< Grid > :: v;
+    };
+
+    template< int dim, int dimworld >
+    struct isLocallyAdaptive< ALUSimplexGrid< dim, dimworld > >
+    {
+      static const bool v = true;
+    };
+
+    template< int dim, int dimworld >
+    struct isLocallyAdaptive< ALUCubeGrid< dim, dimworld > >
+    {
+      static const bool v = true;
+    };
+
+    template< int dim, int dimworld >
+    struct isLocallyAdaptive< ALUConformGrid< dim, dimworld > >
+    {
+      static const bool v = true;
+    };
+
+    template< int dim, int dimworld >
+    struct isLocallyAdaptive< AlbertaGrid< dim, dimworld > >
+    {
+      static const bool v = true;
+    };
+
+    template< int dim >
+    struct isLocallyAdaptive< UGGrid< dim > >
+    {
+      static const bool v = true;
+    };
+
+    template<>
+    struct isLocallyAdaptive< OneDGrid >
+    {
+      static const bool v = true;
+    };
+
+    template< class HostGrid, class CoordFunction, class Allocator >
+    struct isLocallyAdaptive< GeometryGrid< HostGrid, CoordFunction, Allocator > >
+    {
+      static const bool v = isLocallyAdaptive< HostGrid > :: v;
+    };
+
+    template< class HostGrid >
+    struct isLocallyAdaptive< CartesianGrid< HostGrid > >
+    {
+      static const bool v = isLocallyAdaptive< HostGrid > :: v;
     };
 
 
