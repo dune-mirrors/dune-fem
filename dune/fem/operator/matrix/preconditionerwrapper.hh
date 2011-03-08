@@ -32,7 +32,7 @@ namespace Dune {
     struct Apply
     {
       inline static void apply(PreconditionerInterfaceType& preconder,
-			       XImp& v, const YImp& d)
+                               XImp& v, const YImp& d)
       {
       }
 
@@ -46,14 +46,14 @@ namespace Dune {
     {
 
       inline static void apply(PreconditionerInterfaceType& preconder,
-			       XImp& v, const XImp& d)
+                               XImp& v, const XImp& d)
       {
-	preconder.apply( v ,d );
+        preconder.apply( v ,d );
       }
 
       inline static void copy(X& v, const Y& d) 
       {
-	v = d;
+        v = d;
       }
     };
     
@@ -131,7 +131,7 @@ namespace Dune {
       }
       else 
       {
-	 Apply<X,Y>::copy( v, d );
+         Apply<X,Y>::copy( v, d );
       }
     }
 
