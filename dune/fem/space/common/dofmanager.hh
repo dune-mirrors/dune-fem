@@ -134,10 +134,11 @@ public:
   //! read and write method of index sets 
   virtual void write_xdr(const char * filename, int timestep) const = 0;
 
-
+#if NEW_DUNE_FEM_READWRITE_METHODS
   //! new read/write methods 
   virtual void write( XDRFileOutStream& out ) const = 0;
   virtual void read( XDRFileInStream& out ) = 0;
+#endif
 
   //! increase reference counter 
   void addReference () 
@@ -239,6 +240,13 @@ public:
     indexSet_.read_xdr(filename,timestep); 
   }
   
+  //! call write_xdr of index set 
+  virtual void write_xdr(const char * filename, int timestep) const
+  {
+    indexSet_.write_xdr(filename,timestep);
+  }
+
+#if NEW_DUNE_FEM_READWRITE_METHODS
   //! new write method 
   virtual void read( XDRFileInStream& in ) 
   {
@@ -250,12 +258,7 @@ public:
   {
     indexSet_.write( out ); 
   }
-
-  //! call write_xdr of index set 
-  virtual void write_xdr(const char * filename, int timestep) const
-  {
-    indexSet_.write_xdr(filename,timestep);
-  }
+#endif
 };
 
 /////////////////////////////////////////////////////////////
