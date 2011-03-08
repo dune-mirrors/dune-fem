@@ -315,9 +315,6 @@ public:
                              const std::string& path, 
                              const std::string& prefix) 
   {
-    // do nothing for non-cartesian grids  
-    if( ! Capabilities::isCartesian<GridImp>::v ) return;
-    
     // do nothing if SaveParallelCartesianGrid is not specified 
     if( ! SaveParallelCartesianGrid< GridImp > :: saveMacroGrid ) return ;
 
@@ -354,8 +351,9 @@ public:
                             const std::string& destPath, 
                             const std::string& prefix) 
   {
-    // do nothing for unstructured grids 
-    if( Capabilities::IsUnstructured<GridImp>::v ) return;
+    // do nothing if SaveParallelCartesianGrid is not specified 
+    if( ! SaveParallelCartesianGrid< GridImp > :: saveMacroGrid ) return ;
+
 
     if( macroGrid != "" )
     {
