@@ -134,7 +134,7 @@ public:
   //! read and write method of index sets 
   virtual void write_xdr(const char * filename, int timestep) const = 0;
 
-#if NEW_DUNE_FEM_READWRITE_METHODS
+#ifdef NEW_DUNE_FEM_READWRITE_METHODS
   //! new read/write methods 
   virtual void write( XDRFileOutStream& out ) const = 0;
   virtual void read( XDRFileInStream& out ) = 0;
@@ -246,7 +246,7 @@ public:
     indexSet_.write_xdr(filename,timestep);
   }
 
-#if NEW_DUNE_FEM_READWRITE_METHODS
+#ifdef NEW_DUNE_FEM_READWRITE_METHODS
   //! new write method 
   virtual void read( XDRFileInStream& in ) 
   {
@@ -1333,7 +1333,7 @@ template <class GridType>
 inline bool DofManager<GridType>::
 writeIndexSets(const std::string& filename , int timestep )
 {
-#if NEW_DUNE_FEM_READWRITE_METHODS
+#ifdef NEW_DUNE_FEM_READWRITE_METHODS
   XDRFileOutStream out( filename );
   // save module version for later changes 
   unsigned int versionId = DUNE_MODULE_VERSION_ID(DUNE_FEM);
@@ -1361,7 +1361,7 @@ template <class GridType>
 inline bool DofManager<GridType>::
 readIndexSets(const std::string& filename , int timestep )
 {
-#if NEW_DUNE_FEM_READWRITE_METHODS
+#ifdef NEW_DUNE_FEM_READWRITE_METHODS
   XDRFileInStream in( filename );
   // check version of file 
   unsigned int versionId;
