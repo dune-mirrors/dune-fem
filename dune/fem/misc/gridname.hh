@@ -59,7 +59,7 @@ namespace Dune
           name = std::string( endptr );
 
         // Grid seems to be followed by IL 
-        size_t pos = name.find( "GridIL" );
+        size_t pos = name.find( "GridI" );
         pos += 4; // add length of Grid to get pos of IL 
 
         if( pos < name.size() ) 
