@@ -125,7 +125,7 @@ private:
   static const int dimGrid = GridType::dimension;
   static const int dimWorld = GridType::dimensionworld;
 
-  // also check supportsCallbackAdaptation because of CartesianGrid
+  // also check isLocallyAdaptive because of CartesianGrid
   // with ALUgrid as HostGrid 
   static const bool cartesianAdaptive = Capabilities::isCartesian< GridType > :: v && Capabilities::isLocallyAdaptive< GridType > :: v ;
 
