@@ -153,7 +153,7 @@ namespace Dune
       }
       
       std::string dname( dataName(path,name) );
-      std::cout << "Reading data from " << dname << std::endl;
+      std::cout << "IOTuple: Reading data from " << dname << std::endl;
 
       // create all data
       Tuple *ret = new Tuple;

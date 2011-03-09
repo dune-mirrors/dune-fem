@@ -127,7 +127,7 @@ private:
 
   // also check supportsCallbackAdaptation because of CartesianGrid
   // with ALUgrid as HostGrid 
-  static const bool cartesianAdaptive = Capabilities::isCartesian< GridType > :: v && Capabilities::supportsCallbackAdaptation< GridType > :: v ;
+  static const bool cartesianAdaptive = Capabilities::isCartesian< GridType > :: v && Capabilities::isLocallyAdaptive< GridType > :: v ;
 
   static const bool useRealBackupRestore
     = Capabilities::hasBackupRestoreFacilities< GridType >::v && cartesianAdaptive ;
