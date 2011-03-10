@@ -106,6 +106,13 @@ namespace Dune
     {
       return write;
     }
+
+    //! return true if DataOutput was created for writing (only not true for
+    //!  CheckPoiinter on restore) 
+    virtual bool writeMode() const
+    {
+      return true ;
+    }
   };
 
 
@@ -549,7 +556,7 @@ namespace Dune
   template< class GridImp, class DataImp >
   inline DataOutput< GridImp, DataImp >
     ::DataOutput ( const GridType &grid, OutPutDataType &data,
-                  const DataOutputParameters& parameter )
+                   const DataOutputParameters& parameter )
   : grid_( grid ),
     data_( data ), 
     writeStep_(0),
@@ -606,14 +613,21 @@ namespace Dune
 
 
   template< class GridImp, class DataImp >
-  inline void DataOutput< GridImp, DataImp >::init ( const DataOutputParameters &parameter )
+  inline void DataOutput< GridImp, DataImp >::
+  init ( const DataOutputParameters &parameter ) 
   {
-    IOInterface :: createGlobalPath ( grid_.comm(), Parameter::commonOutputPath() );
-    path_ = Parameter::commonOutputPath()+"/"+parameter.path();
-    // create path if not already exists 
-    IOInterface :: createGlobalPath ( grid_.comm(), path_ );
+    const bool writeMode = parameter.writeMode();
+    if( writeMode ) 
+      IOInterface :: createGlobalPath ( grid_.comm(), Parameter::commonOutputPath() );
 
-    
+    path_ = Parameter::commonOutputPath()+"/"+parameter.path();
+
+    if( writeMode ) 
+    {
+      // create path if not already exists 
+      IOInterface :: createGlobalPath ( grid_.comm(), path_ );
+    }
+      
     // add prefix for data file
     datapref_ += parameter.prefix();
 
@@ -638,18 +652,21 @@ namespace Dune
 
     writeStep_ = parameter.startcounter();
 
-    if ( Parameter :: verbose() && outputFormat_ != none ) 
+    if( writeMode ) 
     {
-      std::string name = path_ + "/" + datapref_;
-      name += ".series";
-      std::cout << "opening file: " << name << std::endl;
-      sequence_.open(name.c_str());
-      if ( ! sequence_ )
-        std::cout << "could not write sequence file" << std::endl;
-    }
+      if ( Parameter :: verbose() && outputFormat_ != none ) 
+      {
+        std::string name = path_ + "/" + datapref_;
+        name += ".series";
+        std::cout << "opening file: " << name << std::endl;
+        sequence_.open(name.c_str());
+        if ( ! sequence_ )
+          std::cout << "could not write sequence file" << std::endl;
+      }
 
-    // write parameter file 
-    Parameter::write("parameter.log");
+      // write parameter file 
+      Parameter::write("parameter.log");
+    }
   }
 
 

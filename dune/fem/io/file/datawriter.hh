@@ -78,8 +78,11 @@ public:
              const DataWriterParameters& parameter = DataWriterParameters() )
     : BaseType( grid, data, parameter )
   {
-    // save macro grid for structured grids 
-    saveMacroGrid( parameter.macroGridName( GridType :: dimension ) );
+    if( parameter.writeMode() ) 
+    {
+      // save macro grid for structured grids 
+      saveMacroGrid( parameter.macroGridName( GridType :: dimension ) );
+    }
   }
 
   /** \brief Constructor creating data writer 
@@ -95,8 +98,11 @@ public:
              const DataWriterParameters& parameter = DataWriterParameters() )
     : BaseType( grid, data, tp, parameter )
   {
-    // save macro grid for structured grids 
-    saveMacroGrid( parameter.macroGridName( GridType :: dimension ) );
+    if( parameter.writeMode() ) 
+    {
+      // save macro grid for structured grids 
+      saveMacroGrid( parameter.macroGridName( GridType :: dimension ) );
+    }
   }
 
   //! destructor 
@@ -150,6 +156,14 @@ protected:
 
 struct CheckPointerParameters : public DataWriterParameters 
 {
+protected:
+  bool writeMode_;
+
+public:  
+  explicit CheckPointerParameters( const bool writeMode = true ) :
+    writeMode_( writeMode ) 
+  {}
+
   //! base of file name for data file (fem.io.datafileprefix)
   virtual std::string prefix () const
   {
@@ -173,7 +187,11 @@ struct CheckPointerParameters : public DataWriterParameters
   {
     return "checkpoint";
   }
-  
+
+  virtual bool writeMode() const 
+  {
+    return writeMode_;
+  }
 };
 
 /** @ingroup Checkpointing 
@@ -277,6 +295,7 @@ public:
       dataPtr_ = 0;
     }
   }
+
 protected:  
   void initialize( const CheckPointerParameters& parameter ) 
   {
@@ -289,6 +308,7 @@ protected:
     checkPointFile_ += "/"; 
     checkPointFile_ += parameter.prefix();
   }
+
 protected:  
   /** \brief Constructor generating a checkpointer to restore data 
     \param grid corresponding grid 
@@ -309,7 +329,7 @@ protected:
                OutPutDataType& data, 
                const char * checkFile,
                const bool takeCareOfPersistenceManager = true )
-    : BaseType(grid, data, CheckPointerParameters() ) 
+    : BaseType(grid, data, CheckPointerParameters( false ) ) // false = do not save macro grid 
     , checkPointStep_( 0 )
     , maxCheckPointNumber_( 0 )
     , myRank_( myRank )  
@@ -348,7 +368,7 @@ protected:
     }
     else
     {
-      initialize( CheckPointerParameters() );
+      initialize( CheckPointerParameters( false ) );
     }
   }
 
