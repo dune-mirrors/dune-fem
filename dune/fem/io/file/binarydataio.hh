@@ -338,28 +338,14 @@ inline bool BinaryDataIOImp< dim, dimworld, GridImp, false >
       file << "Precision: " << precision << std::endl;
       int writeDm = (hasDm)? 1 : 0;
       file << "DofManager: " << writeDm << std::endl; 
+      // also write time and maxLevel needed for restore 
+      file << "MaxLevel: " << grid.maxLevel() << std::endl;
+      file << "Time: " << std::scientific << time << std::endl;
       file.close();
-    }
-    else {
-      std::cerr << "Couldn't open file `" << fnprefix << "' ! \n";
-      return false;
-    }
-  }
-    
-  // write max level and current time to grid specific file 
-  { 
-    std::string fnstr = generateFilename(fnprefix,timestep,precision);
-    std::ofstream gridfile (fnstr.c_str());
-    
-    if( gridfile.is_open() )
-    {
-      gridfile << "MaxLevel: " << grid.maxLevel() << std::endl;
-      gridfile << "Time: " << std::scientific << time << std::endl;
-      gridfile.close();
     }
     else 
     {
-      std::cerr << "Couldn't open file `" << fnstr << "' ! \n";
+      std::cerr << "Couldn't open file `" << fnprefix << "' ! \n";
       return false;
     }
   }
@@ -402,28 +388,32 @@ inline bool BinaryDataIOImp< dim, dimworld, GridImp, false >
   int hasDm = 0;
   readParameter(fnprefix,"DofManager",hasDm);
 
+  // read stored maxLevel 
+  int maxLevel = 0;
+  const bool foundMaxLevel = readParameter(fnprefix,"MaxLevel",maxLevel);
+
+  // also read time 
+  readParameter(fnprefix,"Time",time);
+
+  // if we have old format 
+  if( ! foundMaxLevel ) 
   {
     std::string fnstr = generateFilename(fnprefix,timestep,precision);
-    
-    {
-      // read stored maxLevel 
-      int maxLevel = 0;
-      readParameter(fnstr,"MaxLevel",maxLevel);
-
-      // calculate level to achieve 
-      maxLevel -= grid.maxLevel();
-
-      if( maxLevel < 0 ) 
-      {
-        DUNE_THROW(InvalidStateException,"maxLevel of grid is already to big!");
-      }
-      else if ( maxLevel > 0 ) 
-      {
-        // refine grid 
-        grid.globalRefine( maxLevel );
-      }
-    }
     readParameter(fnstr,"Time",time);
+    readParameter(fnstr,"MaxLevel",maxLevel);
+  }
+
+  // calculate level to achieve 
+  maxLevel -= grid.maxLevel();
+
+  if( maxLevel < 0 ) 
+  {
+    DUNE_THROW(InvalidStateException,"maxLevel of grid is already to big!");
+  }
+  else if ( maxLevel > 0 ) 
+  {
+    // refine grid 
+    grid.globalRefine( maxLevel );
   }
   return true;
 }
