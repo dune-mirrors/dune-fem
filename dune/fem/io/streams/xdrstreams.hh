@@ -260,10 +260,14 @@ namespace Dune
     /** \brief constructor
      *
      *  \param[in]  filename  name of the file to write to
+     *  \param[in]  append    true if stream appends to file filename
+     *                        (default = false)
      */
-    inline explicit XDRFileOutStream ( const std::string &filename )
+    explicit XDRFileOutStream ( const std::string &filename,
+                                const bool append = false   )
     {
-      file_ = fopen( filename.c_str(), "wb" );
+      const char * flags = ( append ) ? "ab" : "wb";
+      file_ = fopen( filename.c_str(), flags );
       if( file_ == 0 )
         DUNE_THROW( IOError, "XDRFileOutStream: Unable to open file." );
       xdrstdio_create( xdrs(), file_, XDR_ENCODE );
@@ -308,12 +312,19 @@ namespace Dune
     /** \brief constructor
      *
      *  \param[in]  filename  name of the file to read from
+     *  \param[in]  pos       starting position for file read 
+     *                        (default = 0)
      */
-    inline explicit XDRFileInStream ( const std::string &filename )
+    explicit XDRFileInStream ( const std::string &filename,
+                               const size_t pos = 0 )
     {
       file_ = fopen( filename.c_str(), "rb" );
       if( file_ == 0 )
         DUNE_THROW( IOError, "XDRFileInStream: Unable to open file." );
+
+      // if pos = 0 this will do nothing 
+      fseek( file_, pos , SEEK_SET );
+
       xdrstdio_create( xdrs(), file_, XDR_DECODE );
     }
 
