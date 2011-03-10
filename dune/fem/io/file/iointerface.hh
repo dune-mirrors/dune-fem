@@ -313,7 +313,8 @@ public:
                              std::ostream& out,
                              const std::string& macroname,
                              const std::string& path, 
-                             const std::string& prefix) 
+                             const std::string& prefix,
+                             const bool writeSubFiles = false ) 
   {
     // do nothing if SaveParallelCartesianGrid is not specified 
     if( ! SaveParallelCartesianGrid< GridImp > :: saveMacroGrid ) return ;
@@ -339,7 +340,7 @@ public:
     filename += prefix;
     filename += "_grid";
 
-    saveCartesianGrid( grid, out, interval, filename); 
+    saveCartesianGrid( grid, out, interval, filename, writeSubFiles ); 
     return;
   }
 
@@ -448,7 +449,8 @@ protected:
   static void saveCartesianGrid (const GridImp& grid,
                                  std::ostream& out,
                                  dgf::IntervalBlock& intervalBlock,
-                                 std::string filename )
+                                 std::string filename,
+                                 const bool writeSubFiles )
   {
     enum { dimension = GridImp :: dimension };
     const int rank = grid.comm().rank();
@@ -476,9 +478,13 @@ protected:
 
     // write sub grid for this rank 
     {
-      std::string subfilename (filename);
-      // add rank 
-      subfilename += strRank(rank);
+      std::string subfilename;
+      if( writeSubFiles ) 
+      { 
+        subfilename = filename;
+        // add rank 
+        subfilename += strRank(rank);
+      }
 
 #if HAVE_MPI 
       {
@@ -569,14 +575,18 @@ protected:
                                   const FieldVector<int,dimension>& anz)
   {
     writeToStream( out, origin, lang, anz);
-    std::ofstream file (filename.c_str());
-    if( file.is_open())
+
+    if( filename != "" ) 
     {
-      writeToStream( file, origin, lang, anz);
-    }
-    else
-    {
-      std::cerr << "Couldn't open file `" << filename << "' !\n";
+      std::ofstream file (filename.c_str());
+      if( file.is_open())
+      {
+        writeToStream( file, origin, lang, anz);
+      }
+      else
+      {
+        std::cerr << "Couldn't open file `" << filename << "' !\n";
+      }
     }
   }
 }; // end class IOInterface 
