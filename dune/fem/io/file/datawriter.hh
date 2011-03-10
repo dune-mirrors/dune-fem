@@ -517,8 +517,12 @@ public:
     // write data 
     std::string path = this->writeMyBinaryData( time, writeStep_, data_ );
 
-    // backup all persistent values kept by PersistenceManager 
-    PersistenceManager::backup( path );
+    // if true also backup PersistenceManager 
+    if( takeCareOfPersistenceManager_ ) 
+    {
+      // backup all persistent values kept by PersistenceManager 
+      PersistenceManager::backup( path );
+    }
 
     // write checkpoint info 
     writeCheckPoint(path, time, 
