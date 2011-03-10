@@ -67,6 +67,7 @@ struct BinaryDataIOImp< dim, dimworld, GridImp, true >
 {
   typedef GridImp GridType;
 
+
    /** Write Grid with GridType file filename and time 
    *
    * This method uses the Grid Interface Method writeGrid 
@@ -74,16 +75,16 @@ struct BinaryDataIOImp< dim, dimworld, GridImp, true >
    * generated out of filename and timestep 
    */
   inline static bool writeGrid (const GridType & grid, 
-    const GrapeIOFileFormatType ftype, const GrapeIOStringType & fnprefix 
+    const GrapeIOFileFormatType ftype, const std::string & fnprefix 
       , double time=0.0, int timestep=0, int precision = 6);
 
   //! get Grid from file with time and timestep , return true if ok 
   inline static bool readGrid (GridType & grid, 
-      const GrapeIOStringType & fnprefix , double & time , int timestep, bool verbose = true );
+      const std::string & fnprefix , double & time , int timestep, bool verbose = true );
   
   //! get Grid from file with time and timestep , return grid pointer if ok 
   inline static GridType * restoreGrid (
-      const GrapeIOStringType & fnprefix , double & time , int timestep, bool verbose = false )
+      const std::string & fnprefix , double & time , int timestep, bool verbose = false )
   {
     // todo MPI_Comm pass to grid type 
     GridType * grid = new GridType (); 
@@ -104,16 +105,16 @@ struct BinaryDataIOImp< dim, dimworld, GridImp, false >
           the format must be Dune DGF. 
    */
   inline static bool writeGrid (const GridType & grid, 
-    const GrapeIOFileFormatType ftype, const GrapeIOStringType & fnprefix 
+    const GrapeIOFileFormatType ftype, const std::string & fnprefix 
       , double time=0.0, int timestep=0, int precision = 6);
 
   //! get Grid from file with time and timestep , return true if ok 
   inline static bool readGrid (GridType & grid, 
-      const GrapeIOStringType & fnprefix , double & time , int timestep, bool verbose = true );
+      const std::string & fnprefix , double & time , int timestep, bool verbose = true );
 
   //! get Grid from file with time and timestep , return true if ok 
   inline static GridType * restoreGrid (
-      const GrapeIOStringType & fnprefix , double & time , int timestep, bool verbose = false );
+      const std::string & fnprefix , double & time , int timestep, bool verbose = false );
 };
 
 template< class GridImp >
@@ -122,6 +123,7 @@ struct BinaryDataIO
   typedef GridImp GridType;
 
 private:
+  static const char endAsciiHeader = 0x00 ;
   static const int dimGrid = GridType::dimension;
   static const int dimWorld = GridType::dimensionworld;
 
@@ -144,7 +146,7 @@ public:
    *  generated out of filename and timestep 
    */
   inline bool writeGrid (const GridType & grid, 
-    const GrapeIOFileFormatType ftype, const GrapeIOStringType fnprefix 
+    const GrapeIOFileFormatType ftype, const std::string fnprefix 
       , double time=0.0, int timestep=0, int precision = 6) const
   {
     return Impl::writeGrid( grid, ftype, fnprefix, time, timestep, precision );
@@ -152,13 +154,13 @@ public:
 
   //! get Grid from file with time and timestep , return true if ok 
   inline bool readGrid (GridType & grid, 
-      const GrapeIOStringType fnprefix , double & time , int timestep, bool verbose = true )
+      const std::string fnprefix , double & time , int timestep, bool verbose = true )
   {
     return Impl::readGrid( grid, fnprefix, time, timestep );
   }
 
   //! get Grid from file with time and timestep , return true if ok 
-  inline GridType * restoreGrid(const GrapeIOStringType fnprefix , double & time , int timestep, bool verbose = false )
+  inline GridType * restoreGrid(const std::string fnprefix , double & time , int timestep, bool verbose = false )
   {
     return Impl::restoreGrid( fnprefix, time, timestep );
   }
@@ -171,13 +173,13 @@ public:
   //! discrete function
   template <class DiscreteFunctionType>
   inline bool writeData(const DiscreteFunctionType & df,
-     const GrapeIOFileFormatType ftype, const GrapeIOStringType filename, 
+     const GrapeIOFileFormatType ftype, const std::string filename, 
       int timestep, int precision = 6);
 
   //! same as write only read
   template <class DiscreteFunctionType>
   inline bool readData(DiscreteFunctionType & df,
-        const GrapeIOStringType filename, int timestep);
+        const std::string filename, int timestep);
 };
 
 
@@ -185,7 +187,7 @@ public:
 template< int dim, int dimworld, class GridImp >
 inline bool BinaryDataIOImp< dim, dimworld, GridImp, true >::writeGrid
 (const GridImp & grid,
-  const GrapeIOFileFormatType ftype, const GrapeIOStringType & fnprefix , 
+  const GrapeIOFileFormatType ftype, const std::string & fnprefix , 
   double time, int timestep, int precision )
 {
   bool hasDm = false;
@@ -209,7 +211,7 @@ inline bool BinaryDataIOImp< dim, dimworld, GridImp, true >::writeGrid
       int writeDm = (hasDm)? 1 : 0;
       file << "DofManager: " << writeDm << std::endl; 
 
-      GrapeIOStringType fnstr = generateFilename(fnprefix,timestep,precision);
+      std::string fnstr = generateFilename(fnprefix,timestep,precision);
       
       file.close();
       switch (ftype)
@@ -235,7 +237,7 @@ inline bool BinaryDataIOImp< dim, dimworld, GridImp, true >::writeGrid
 
 template< int dim, int dimworld, class GridImp >
 inline bool BinaryDataIOImp< dim, dimworld, GridImp, true >::readGrid 
-(GridImp & grid, const GrapeIOStringType & fnprefix , double & time , int timestep, bool verbose )
+(GridImp & grid, const std::string & fnprefix , double & time , int timestep, bool verbose )
 {
   int helpType = (int) xdr;
   std::string gridname;
@@ -272,7 +274,7 @@ inline bool BinaryDataIOImp< dim, dimworld, GridImp, true >::readGrid
 
   GrapeIOFileFormatType ftype = (GrapeIOFileFormatType) helpType;
 
-  GrapeIOStringType fn = generateFilename(fnprefix,timestep,precision);
+  std::string fn = generateFilename(fnprefix,timestep,precision);
   if( verbose ) 
   {
     std::cout << "Read file: fnprefix = `" << fn << "' \n";
@@ -313,7 +315,7 @@ inline bool BinaryDataIOImp< dim, dimworld, GridImp, true >::readGrid
 template< int dim, int dimworld, class GridImp >
 inline bool BinaryDataIOImp< dim, dimworld, GridImp, false >
   ::writeGrid ( const GridType &grid,
-                const GrapeIOFileFormatType ftype, const GrapeIOStringType &fnprefix,
+                const GrapeIOFileFormatType ftype, const std::string &fnprefix,
                 double time, int timestep, int precision )
 {
   // write dof manager, that corresponds to grid 
@@ -346,7 +348,7 @@ inline bool BinaryDataIOImp< dim, dimworld, GridImp, false >
     
   // write max level and current time to grid specific file 
   { 
-    GrapeIOStringType fnstr = generateFilename(fnprefix,timestep,precision);
+    std::string fnstr = generateFilename(fnprefix,timestep,precision);
     std::ofstream gridfile (fnstr.c_str());
     
     if( gridfile.is_open() )
@@ -368,7 +370,7 @@ inline bool BinaryDataIOImp< dim, dimworld, GridImp, false >
 template< int dim, int dimworld, class GridImp >
 inline bool BinaryDataIOImp< dim, dimworld, GridImp, false >
   ::readGrid ( GridType &grid,
-               const GrapeIOStringType &fnprefix,
+               const std::string &fnprefix,
                double &time, int timestep, bool verbose )
 {
   std::string gridname;
@@ -401,7 +403,7 @@ inline bool BinaryDataIOImp< dim, dimworld, GridImp, false >
   readParameter(fnprefix,"DofManager",hasDm);
 
   {
-    GrapeIOStringType fnstr = generateFilename(fnprefix,timestep,precision);
+    std::string fnstr = generateFilename(fnprefix,timestep,precision);
     
     {
       // read stored maxLevel 
@@ -430,7 +432,7 @@ inline bool BinaryDataIOImp< dim, dimworld, GridImp, false >
 template< int dim, int dimworld, class GridImp >
 inline typename BinaryDataIOImp< dim, dimworld, GridImp, false >::GridType *
 BinaryDataIOImp< dim, dimworld, GridImp, false >
-  ::restoreGrid ( const GrapeIOStringType &fnprefix, double &time, int timestep, bool verbose )
+  ::restoreGrid ( const std::string &fnprefix, double &time, int timestep, bool verbose )
 {
   std::string macroName (fnprefix);
 
@@ -474,8 +476,10 @@ BinaryDataIOImp< dim, dimworld, GridImp, false >
 template <class GridType>
 template <class DiscreteFunctionType> 
 inline bool BinaryDataIO<GridType> :: writeData(const DiscreteFunctionType & df, 
-const GrapeIOFileFormatType ftype, const GrapeIOStringType filename, int timestep, int  precision )
+const GrapeIOFileFormatType ftype, const std::string filename, int timestep, int  precision )
 {
+  const int multipleFiles = Parameter :: getValue< int > ("fem.io.multiplefiles", 0 );
+
   {
     typedef typename DiscreteFunctionType::FunctionSpaceType DiscreteFunctionSpaceType;
     typedef typename DiscreteFunctionSpaceType::DomainFieldType DomainFieldType;
@@ -486,11 +490,12 @@ const GrapeIOFileFormatType ftype, const GrapeIOStringType filename, int timeste
 
     std::ofstream file( filename.c_str() );
 
-    if( file.is_open())
+    if( file.is_open() )
     {
-      GrapeIOStringType d = typeIdentifier<DomainFieldType>();
-      GrapeIOStringType r = typeIdentifier<RangeFieldType>();
+      std::string d = typeIdentifier<DomainFieldType>();
+      std::string r = typeIdentifier<RangeFieldType>();
 
+      file << "DUNE-FEM-Version-Id: " << DUNE_MODULE_VERSION_ID(DUNE_FEM) << std::endl;
       file << "DomainField: " << d << std::endl;
       file << "RangeField: " << r << std::endl;
       file << "Dim_Domain: " << n << std::endl;
@@ -501,6 +506,9 @@ const GrapeIOFileFormatType ftype, const GrapeIOStringType filename, int timeste
       file << "Precision: " << precision << std::endl;
       file << "Polynom_order: " << df.space().order() << std::endl;
       file << "DataBase: " << df.name() << std::endl;
+      file << "MultipleFiles: " << multipleFiles << std::endl;
+      // write character code for end of ascii header 
+      file << endAsciiHeader ; 
       file.close();
     }
     else 
@@ -510,96 +518,155 @@ const GrapeIOFileFormatType ftype, const GrapeIOStringType filename, int timeste
     }
   }
 
-  GrapeIOStringType fn = generateFilename(filename,timestep,precision);
+  // for single file use XDR streams
+  if( ! multipleFiles ) 
+  {
+    // create xdr stream 
+    const bool append = true ;
+    XDRFileOutStream xdrOut( filename, append );
 
-  if(ftype == xdr)
-    return df.write_xdr(fn);
-  if(ftype == ascii)
-    return df.write_ascii(fn);
+    // write discrete function 
+    df.write( xdrOut );
+  }
+  else 
+  {
+    std::string fn = generateFilename(filename,timestep,precision);
 
-  DUNE_THROW( NotImplemented, "GrapeIOFileFormatType " << ftype
-                               << " currently not supported." );
+    if(ftype == xdr)
+      return df.write_xdr(fn);
+    if(ftype == ascii)
+      return df.write_ascii(fn);
+
+    DUNE_THROW( NotImplemented, "GrapeIOFileFormatType " << ftype
+                                 << " currently not supported." );
+  }
+
   return false;
 }
 
 template <class GridType>
 template <class DiscreteFunctionType> 
 inline bool BinaryDataIO<GridType> :: 
-readData(DiscreteFunctionType & df, const GrapeIOStringType filename, int timestep)
+readData(DiscreteFunctionType & df, const std::string filename, int timestep)
 {
-    typedef typename DiscreteFunctionType::DiscreteFunctionSpaceType DiscreteFunctionSpaceType;
-    typedef typename DiscreteFunctionSpaceType::DomainFieldType DomainFieldType;
-    typedef typename DiscreteFunctionSpaceType::RangeFieldType RangeFieldType;
+  typedef typename DiscreteFunctionType::DiscreteFunctionSpaceType DiscreteFunctionSpaceType;
+  typedef typename DiscreteFunctionSpaceType::DomainFieldType DomainFieldType;
+  typedef typename DiscreteFunctionSpaceType::RangeFieldType RangeFieldType;
 
-    enum { tn = DiscreteFunctionSpaceType::dimDomain };
-    enum { tm = DiscreteFunctionSpaceType::dimRange };
+  enum { tn = DiscreteFunctionSpaceType::dimDomain };
+  enum { tm = DiscreteFunctionSpaceType::dimRange };
 
-    int n,m;
-    GrapeIOStringType r,d;
-    GrapeIOStringType tr (typeIdentifier<RangeFieldType>());
-    GrapeIOStringType td (typeIdentifier<DomainFieldType>());
+  int n,m;
+  std::string r,d;
+  std::string tr (typeIdentifier<RangeFieldType>());
+  std::string td (typeIdentifier<DomainFieldType>());
 
-    std::ifstream check ( filename.c_str() );
-    if( !check )
+  std::ifstream check ( filename.c_str() );
+  if( !check )
+  {
+    std::cerr << "WARNING: Couldn't open file `"<< filename << "'! \n";
+    return false;
+  }
+
+  unsigned int versionId = 0;
+  readParameter(filename,"DUNE-FEM-Version-Id",versionId,false);
+
+  // check version 
+  unsigned int duneFemId = DUNE_MODULE_VERSION_ID(DUNE_FEM);
+  if( versionId != 0 && duneFemId < versionId ) 
+  {
+    std::cerr << "WARNING: DUNE-FEM-Version-Id from data set is newer than the program ones!" << std::endl;
+  }
+
+  readParameter(filename,"DomainField",d,false);
+  readParameter(filename,"RangeField",r,false);
+  readParameter(filename,"Dim_Domain",n,false);
+  readParameter(filename,"Dim_Range",m,false);
+  int space;
+  readParameter(filename,"Space",space,false);
+  int order; 
+  readParameter(filename,"Polynom_order",order,false);
+  if( space != (int) df.space().type() || (order != df.space().order()) )
+  {
+    derr << "BinaryDataIO::readData: Wrong SpaceType, read (space = " << space << ", order = " << order << ")";
+    derr << " but program has (space = "<< df.space().type() << ", order = ";
+    derr << df.space().order() << ") "<< std::endl; 
+    abort();
+  }
+  
+  std::string indexSetName;
+  if( ! readParameter(filename,"IndexSet",indexSetName,false) ) 
+  {
+    // if parameter not available skip test 
+    indexSetName = indexSetToName(df.space().indexSet());
+  }
+  if( indexSetName != indexSetToName(df.space().indexSet()) )
+  {
+    derr << "BinaryDataIO::readData: Wrong IndexSet, stored data type is `" << indexSetName;
+    derr << "' but type to restore is (change this type) `"<< indexSetToName(df.space().indexSet()) << "'."<< std::endl; 
+    abort();
+  }
+  
+  int filetype;
+  readParameter(filename,"Format",filetype,false);
+  GrapeIOFileFormatType ftype = static_cast<GrapeIOFileFormatType> (filetype);
+  int precision;
+  readParameter(filename,"Precision",precision,false);
+
+  if((d != td) || (r != tr) || (n != tn) || (m != tm) )
+  {
+    std::cerr << d << " | " << td << " DomainField in read!\n";
+    std::cerr << r << " | " << tr << " RangeField  in read!\n";
+    std::cerr << n << " | " << tn << " in read!\n";
+    std::cerr << m << " | " << tm << " in read!\n";
+    std::cerr << "Can not initialize DiscreteFunction with wrong FunctionSpace! \n";
+    abort();
+  }
+
+  int multipleFiles = 0;
+  readParameter(filename,"MultipleFiles",multipleFiles,false);
+
+  if( multipleFiles != 0 )
+  {
+    std::ifstream posSeek ( filename.c_str() );
+
+    // search for starting position 
+    char c = posSeek.get();
+    while( posSeek && c != endAsciiHeader ) 
     {
-      std::cerr << "WARNING: Couldn't open file `"<< filename << "'! \n";
-      return false;
+      c = posSeek.get();
     }
 
-    readParameter(filename,"DomainField",d,false);
-    readParameter(filename,"RangeField",r,false);
-    readParameter(filename,"Dim_Domain",n,false);
-    readParameter(filename,"Dim_Range",m,false);
-    int space;
-    readParameter(filename,"Space",space,false);
-    int order; 
-    readParameter(filename,"Polynom_order",order,false);
-    if( space != (int) df.space().type() || (order != df.space().order()) )
+    if( ! posSeek ) 
     {
-      derr << "BinaryDataIO::readData: Wrong SpaceType, read (space = " << space << ", order = " << order << ")";
-      derr << " but program has (space = "<< df.space().type() << ", order = ";
-      derr << df.space().order() << ") "<< std::endl; 
+      std::cerr << "BinaryDataIO::readData: reached unexpected end of file " << filename << std::endl; 
       abort();
     }
-    
-    std::string indexSetName;
-    if( ! readParameter(filename,"IndexSet",indexSetName,false) ) 
-    {
-      // if parameter not available skip test 
-      indexSetName = indexSetToName(df.space().indexSet());
-    }
-    if( indexSetName != indexSetToName(df.space().indexSet()) )
-    {
-      derr << "BinaryDataIO::readData: Wrong IndexSet, stored data type is `" << indexSetName;
-      derr << "' but type to restore is (change this type) `"<< indexSetToName(df.space().indexSet()) << "'."<< std::endl; 
-      abort();
-    }
-    
-    int filetype;
-    readParameter(filename,"Format",filetype,false);
-    GrapeIOFileFormatType ftype = static_cast<GrapeIOFileFormatType> (filetype);
-    int precision;
-    readParameter(filename,"Precision",precision,false);
 
-    if((d != td) || (r != tr) || (n != tn) || (m != tm) )
-    {
-      std::cerr << d << " | " << td << " DomainField in read!\n";
-      std::cerr << r << " | " << tr << " RangeField  in read!\n";
-      std::cerr << n << " | " << tn << " in read!\n";
-      std::cerr << m << " | " << tm << " in read!\n";
-      std::cerr << "Can not initialize DiscreteFunction with wrong FunctionSpace! \n";
-      abort();
-    }
+    // get current position 
+    const size_t pos = posSeek.tellg();
+    // close file
+    posSeek.close();
 
-  GrapeIOStringType fn = generateFilename(filename,timestep,precision);
+    // create xdr streams 
+    XDRFileInStream xdrIn( filename, pos );
 
-  if(ftype == xdr)
-    return df.read_xdr(fn);
-  if(ftype == ascii)
-    return df.read_ascii(fn);
+    // read discrete function
+    df.read( xdrIn );
+  }
+  else 
+  {
+    // old way of file reading 
+    std::string fn = generateFilename(filename,timestep,precision);
 
-  DUNE_THROW( NotImplemented, "GrapeIOFileFormatType " << ftype
-                               << " currently not supported." );
+    if(ftype == xdr)
+      return df.read_xdr(fn);
+    if(ftype == ascii)
+      return df.read_ascii(fn);
+
+    DUNE_THROW( NotImplemented, "GrapeIOFileFormatType " << ftype
+                                 << " currently not supported." );
+  }
   return false;
 }
 
