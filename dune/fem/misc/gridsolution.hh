@@ -95,7 +95,19 @@ public:
     EntityPointerType ep = hierarchicSearch_.findEntity( x );
     const EntityType& entity = *ep ;
 
-    const DomainType local = entity.geometry().local( x );
+    typedef typename EntityType :: Geometry Geometry;
+    const Geometry& geo = entity.geometry();
+
+    const DomainType local = geo.local( x );
+#ifndef NDEBUG
+    {
+      // check that corners are within the reference element of the given type
+      const GenericReferenceElement< typename GridType::ctype, GridType::dimensionworld > &refElement
+           = GenericReferenceElements< typename GridType::ctype, GridType::dimensionworld >::general( entity.type() );
+        
+      assert( refElement.checkInside( local ) );
+    }
+#endif
 
     // evaluate discrete function 
     discreteFunction_.localFunction( entity ).evaluate( local, result );
@@ -108,6 +120,7 @@ public:
   {
     typedef tuple< const DiscreteFunctionType* > OutputTuple;
     OutputTuple data( &discreteFunction );
+    // false means don't backup persistent objects 
     CheckPointerType :: writeSingleCheckPoint( grid, data, time, false );
   }
 };
@@ -139,6 +152,7 @@ class GridSolutionVector
   {
     static bool isInside(const DomainType& x, const Grid& grid ) 
     {
+      abort();
       typedef typename Grid :: LevelGridView MacroView ;
       typedef typename MacroView :: template Codim< 0 > :: Iterator Iterator ;
       typedef typename Iterator :: Entity Entity;
@@ -180,7 +194,7 @@ class GridSolutionVector
   const int numProcs(const std::string& checkPointFile) const 
   {
     int numProc = MPIManager :: size();
-    readParameter(checkPointFile,"NumberProcessors",numProc,Parameter::verbose ());
+    readParameter(checkPointFile, "NumberProcessors", numProc, Parameter::verbose () );
     return numProc;
   }
 public:  
@@ -191,7 +205,8 @@ public:
   {
     for(int p=0; p<numProcs_; ++p)
     {
-      std::cout << "Reading Grid " << p << " from checkpoint" << std::endl;
+      if( Parameter::verbose () )
+        std::cout << "GridSolutionVector: Reading Grid " << p << " from checkpoint" << std::endl;
       solutions_[ p ] = new GridSolutionType( checkPointFile, p );
     }
   }
@@ -231,12 +246,13 @@ public:
       const GridSolutionType& gridSolution = *(solutions_[ p ]);
       if( isInDomain( x, gridSolution.grid() ) )
       {
+        //std::cout << "Found grid " << p << " for x = " << x << std::endl;
         gridSolution.evaluate( x, result );
         return ;
       }
     }
 
-    std::cerr << "Point in Grid not found" << std::endl;
+    std::cerr << "GridSolutionVector::evaluate: no grid found for point " << x << std::endl;
     assert( false );
     abort();
   }
