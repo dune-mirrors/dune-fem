@@ -329,7 +329,7 @@ protected:
                OutPutDataType& data, 
                const char * checkFile,
                const bool takeCareOfPersistenceManager = true )
-    : BaseType(grid, data, CheckPointerParameters( false ) ) // false = do not save macro grid 
+    : BaseType(grid, data, CheckPointerParameters( checkFile == 0 ) ) // checkFile != 0 means read mode 
     , checkPointStep_( 0 )
     , maxCheckPointNumber_( 0 )
     , myRank_( myRank )  
@@ -368,7 +368,7 @@ protected:
     }
     else
     {
-      initialize( CheckPointerParameters( false ) );
+      initialize( CheckPointerParameters( checkFile == 0 ) );
     }
   }
 
