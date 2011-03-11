@@ -129,10 +129,17 @@ namespace Dune
     ::interpolateDiscreteFunction ( const FunctionType &function,
                                     DiscreteFunctionType &discreteFunction )
   {
+    typedef typename DiscreteFunctionType::DofType DofType;
+    typedef typename DiscreteFunctionType::DofIteratorType DofIteratorType;
     typedef typename DiscreteFunctionSpaceType::IteratorType IteratorType;
     static const int dimRange = DiscreteFunctionSpaceType::dimRange;
 
     typedef typename FunctionType::LocalFunctionType FunctionLocalFunctionType;
+
+    // set all DoFs to infinity
+    const DofIteratorType dend = discreteFunction.dend();
+    for( DofIteratorType dit = discreteFunction.dbegin(); dit != dend; ++dit )
+      *dit = std::numeric_limits< DofType >::infinity();
 
     const DiscreteFunctionSpaceType &dfSpace = discreteFunction.space();
 
@@ -144,16 +151,25 @@ namespace Dune
 
       FunctionLocalFunctionType f_local = function.localFunction( *it );
       LocalFunctionType df_local = discreteFunction.localFunction( *it );
-      
+
       // assume point based local dofs 
       const int nop = lagrangePointSet.nop();
       int k = 0;
       for( int qp = 0; qp < nop; ++qp )
       {
-        RangeType phi;
-        f_local.evaluate( lagrangePointSet[ qp ], phi );
-        for( int i = 0; i < dimRange; ++i, ++k )
-          df_local[ k ] = phi[ i ];
+        // if the first DoF for this point is already valid, continue
+        if( df_local[ k ] == std::numeric_limits< DofType >::infinity() )
+        {
+          // evaluate the function in the Lagrange point
+          RangeType phi;
+          f_local.evaluate( lagrangePointSet[ qp ], phi );
+
+          // assign the appropriate values to the DoFs
+          for( int i = 0; i < dimRange; ++i, ++k )
+            df_local[ k ] = phi[ i ];
+        }
+        else
+          k += dimRange;
       }
     }
   }
