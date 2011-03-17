@@ -90,7 +90,7 @@ namespace Dune {
     //! and outer element, since the framework allows for non-conservative
     //! terms. The non-conservative terms don't get evaluated over separate
     //! methods, but need to be implemented using the flux and source methods.
-    //! \param it Iterator of the face in consideration.
+    //! \param intersection The intersection in consideration.
     //! \param time Global time.
     //! \param x Local coordinate of the point where the numerical flux gets
     //! evaluated.
@@ -120,7 +120,7 @@ namespace Dune {
     //! \brief Computes the flux at the boundary
     //! Special kind of numerical flux. The intersection iterator provides
     //! the necessary information to identify the type of boundary.
-    //! \param it Iterator of the face in consideration.
+    //! \param intersection Intersection in consideration.
     //! \param time Global time.
     //! \param x Local coordinate of the point where the numerical flux gets
     //! evaluated.

@@ -312,10 +312,12 @@ protected:
 protected:  
   /** \brief Constructor generating a checkpointer to restore data 
     \param grid corresponding grid 
+    \param myRank rank of process 
     \param data Tuple containing discrete functions to write 
     \param checkFile filename for restoring state of program from
            previous runs 
-
+    \param takeCareOfPersistenceManager flag whether to keep persistent 
+           values by PersistenceManager (default true)
     \note In Addition to the parameters read by the DataWriter this class 
           reads the following parameters: 
 
@@ -375,7 +377,7 @@ protected:
 public:
   /** \brief restore grid from previous runs 
     \param[in] checkFile checkPoint filename 
-    \param[in] rank number of my process (defaults to MPIManager :: rank() )
+    \param[in] givenRank number of my process (defaults to MPIManager :: rank() )
 
     \return Pointer to restored grid instance 
   */
@@ -442,6 +444,7 @@ public:
    *  \param grid Grid the data belong to 
    *  \param data tuple of discrete functions to be additionally read during restore  
    *  \param checkFile check point file 
+   *  \param rank rank of process (defaults to grid.comm().rank())
   */
   template <class InputTupleType>
   static inline 
