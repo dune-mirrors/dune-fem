@@ -82,7 +82,19 @@ struct ODEParameters
   {
     return Parameter::getValue< double >( "fem.ode.cflMax" , std::numeric_limits<double>::max() );
   }
-  virtual bool cflFactor( const PARDG::ODESolver &ode,
+  
+  /** \brief return multiplication factor for the current cfl number
+   *  \param[in] imOpTimeStepEstimate Time step estimate of the first ode solver
+   *  \param[in] exOpTimeStepEstimate Time step estimate of the second ode solver
+   *  \param[in] solver Iterative linear solver (ILS)
+   *  \param[in] converged Convergence of the ILS
+   *  \param[out] factor Multiplication factor for the current cfl number
+   *
+   *  \note Do not increase the cfl number of the implicit solver if its time step 
+   *    estimate is already larger than the one of the explicit solver
+   */
+  virtual bool cflFactor( const double imOpTimeStepEstimate,
+                          const double exOpTimeStepEstimate,
                           const PARDG::IterativeLinearSolver &solver,
                           bool converged,
                           double &factor) const
@@ -94,8 +106,11 @@ struct ODEParameters
     {
       if (iter < min_it) 
       {
-        factor = sigma;
-        changed = true;
+        if( imOpTimeStepEstimate <= exOpTimeStepEstimate )
+        {
+          factor = sigma;
+          changed = true;
+        }
       }
       else if (iter > max_it) 
       {
@@ -514,7 +529,10 @@ public:
                         monitor.maxLinearSolverIterations_ );
 
     double factor( 1 );
-    bool changed = parameter().cflFactor( odeSolver(), *(linsolver_), convergence, factor );
+    bool changed = 
+      parameter().cflFactor( impl_.op().timeStepEstimate(), spaceOperator().timeStepEstimate(), 
+                             *(linsolver_), convergence, factor );
+
     if( (factor >= std::numeric_limits< double >::min()) && 
         (factor <= std::numeric_limits< double >::max()) ) 
     {
