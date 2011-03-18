@@ -145,8 +145,11 @@ public:
   typedef GridImp  GridType;
   typedef DiscreteFunctionImp DiscreteFunctionType;
 
-  typedef typename DiscreteFunctionType :: DiscreteFunctionSpaceType :: DomainType  DomainType;
-  typedef typename DiscreteFunctionType :: DiscreteFunctionSpaceType :: RangeType   RangeType;
+  typedef typename DiscreteFunctionType :: DiscreteFunctionSpaceType  DiscreteFunctionSpaceType;
+  typedef typename DiscreteFunctionSpaceType :: FunctionSpaceType     FunctionSpaceType;
+  typedef typename DiscreteFunctionSpaceType :: GridPartType          GridPartType;
+  typedef typename FunctionSpaceType :: DomainType                    DomainType;
+  typedef typename FunctionSpaceType :: RangeType                     RangeType;
 
   typedef GridSolution< GridType, DiscreteFunctionType > GridSolutionType ;
 
