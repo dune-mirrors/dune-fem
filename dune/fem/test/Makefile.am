@@ -19,6 +19,7 @@ TESTPROGS = lagrangeinterpolation_linear lagrangeinterpolation_quadratic \
             dgl2projection_adaptive      dgl2projection_filtered \
             dgl2projection_blockvector   dgl2projection_vector \
             dgl2projection_attached      dgl2projection_legendre \
+			dgl2projection_blockvectordiscretefunction \
             dgl2projection_fv      \
             vtxprojection_adaptive \
             mapper_dg                    mapper_fv    mapper_lagrange
@@ -54,6 +55,9 @@ dgl2projection_vector_CPPFLAGS = -DPOLORDER=1 -DUSE_VECTORFUNCTION $(AM_CPPFLAGS
 
 dgl2projection_attached_SOURCES = dgl2projection.cc
 dgl2projection_attached_CPPFLAGS = -DPOLORDER=1 -DUSE_ATTACHEDFUNCTION $(AM_CPPFLAGS)
+
+dgl2projection_blockvectordiscretefunction_SOURCES = dgl2projection.cc
+dgl2projection_blockvectordiscretefunction_CPPFLAGS = -DPOLORDER=1 -DUSE_BLOCKVECTORDISCRETEFUNCTION $(AM_CPPFLAGS)
 
 vtxprojection_adaptive_SOURCES = vtxprojection.cc
 vtxprojection_adaptive_CPPFLAGS = -DPOLORDER=1 -DCOUNT_FLOPS $(AM_CPPFLAGS)

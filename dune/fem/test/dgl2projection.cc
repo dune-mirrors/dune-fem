@@ -15,6 +15,9 @@
 #include <dune/fem/function/vectorfunction.hh>
 #elif defined USE_ATTACHEDFUNCTION
 #include <dune/fem/function/attachedfunction/function.hh>
+#elif defined DUSE_BLOCKVECTORDISCRETEFUNCTION
+#include <dune/fem/function/blockvectordiscretefunction.hh>
+#include <dune/fem/function/blockvectors/referenceblockvector.hh>
 #else
 #include <dune/fem/function/adaptivefunction.hh>
 #endif
@@ -55,6 +58,11 @@ typedef ManagedDiscreteFunction
   DiscreteFunctionType;
 #elif defined USE_ATTACHEDFUNCTION
 typedef AttachedDiscreteFunction< DiscreteFunctionSpaceType >
+  DiscreteFunctionType;
+#elif defined DUSE_BLOCKVECTORDISCRETEFUNCTION
+typedef Dune::Fem::ReferenceBlockVector< double, DiscreteFunctionSpaceType::localBlockSize > 
+  BlockVectorType;
+typedef Dune::Fem::BlockVectorDiscreteFunction< DiscreteFunctionSpaceType, BlockVectorType > 
   DiscreteFunctionType;
 #else
 typedef AdaptiveDiscreteFunction< DiscreteFunctionSpaceType >
