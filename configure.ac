@@ -83,6 +83,8 @@ AC_CONFIG_FILES([Makefile
      dune/fem/function/productfunction/Makefile
      dune/fem/function/productfunction/test/Makefile
      dune/fem/function/vectorfunction/Makefile
+     dune/fem/function/blockvectors/Makefile
+     dune/fem/function/blockvectordiscretefunction/Makefile
      dune/fem/operator/Makefile
      dune/fem/operator/common/Makefile
      dune/fem/operator/common/test/Makefile

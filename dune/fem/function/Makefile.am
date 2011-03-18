@@ -8,7 +8,9 @@ SUBDIRS = common \
           combinedfunction \
           blockvectorfunction \
           productfunction \
-          vectorfunction
+          vectorfunction \
+		  blockvectordiscretefunction \
+		  blockvectors
 
 functiondir =  $(includedir)/dune/fem/function
 function_HEADERS = adaptivefunction.hh \
@@ -17,7 +19,8 @@ function_HEADERS = adaptivefunction.hh \
                    combinedfunction.hh \
                    productfunction.hh \
                    vectorfunction.hh \
-                   subfunction.hh
+                   subfunction.hh \
+				   blockvectordiscretefunction.hh
 
 include $(top_srcdir)/am/global-rules
 
