@@ -26,6 +26,7 @@ namespace Fem {
 template <class GridImp, class DiscreteFunctionImp > 
 class GridSolution
 {
+public:
   typedef GridImp  GridType;
   typedef DiscreteFunctionImp DiscreteFunctionType;
   typedef typename DiscreteFunctionType :: DiscreteFunctionSpaceType  DiscreteFunctionSpaceType;
@@ -42,6 +43,7 @@ class GridSolution
 
   typedef tuple< DiscreteFunctionType* > IOTupleType;
 
+private:
   GridType* grid_;
   GridPtr< GridType > gridPtr_;
   GridPartType gridPart_;
@@ -139,6 +141,7 @@ public:
 template <class GridImp, class DiscreteFunctionImp > 
 class GridSolutionVector
 {
+public:
   typedef GridImp  GridType;
   typedef DiscreteFunctionImp DiscreteFunctionType;
 
@@ -147,6 +150,7 @@ class GridSolutionVector
 
   typedef GridSolution< GridType, DiscreteFunctionType > GridSolutionType ;
 
+private:
   template <class DomainType, class Grid>
   struct CheckDomain
   {
