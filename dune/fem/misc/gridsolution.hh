@@ -43,7 +43,7 @@ public:
 
   typedef tuple< DiscreteFunctionType* > IOTupleType;
 
-private:
+protected:
   GridType* grid_;
   GridPtr< GridType > gridPtr_;
   GridPartType gridPart_;
@@ -141,7 +141,7 @@ public:
 template <class GridImp, class DiscreteFunctionImp > 
 class GridSolutionVector
 {
-public:
+public:  
   typedef GridImp  GridType;
   typedef DiscreteFunctionImp DiscreteFunctionType;
 
@@ -150,7 +150,7 @@ public:
 
   typedef GridSolution< GridType, DiscreteFunctionType > GridSolutionType ;
 
-private:
+protected:
   template <class DomainType, class Grid>
   struct CheckDomain
   {
