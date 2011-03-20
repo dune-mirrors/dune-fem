@@ -7,8 +7,11 @@
 #include <fstream>
 #include <vector>
 
+#include <dune/common/exceptions.hh>
 #include <dune/common/fvector.hh>
-#include <dune/fem/io/file/iointerface.hh>
+
+#include <dune/fem/io/io.hh>
+#include <dune/fem/io/parameter.hh>
 
 namespace Dune
 {
@@ -109,7 +112,8 @@ class FemEocTable
            const std::string& name, const std::string& descript) 
   {
     if (MPIManager::rank() != 0) return -1;
-    IOInterface::createPath(path);
+    if( !createDirectory( path ) )
+      DUNE_THROW( IOError, "Failed to create path `" << path << "'." );
     return init(path+"/"+name,descript);
   }
 
@@ -122,12 +126,12 @@ class FemEocTable
 
     fileNames_.push_back("");
     level_.push_back(0);
-    prevError_.push_back(0);
-    error_.push_back(0);
-    description_.push_back(0);
+    prevError_.push_back( std::vector< double >() );
+    error_.push_back( std::vector< double >() );
+    description_.push_back( std::vector< std::string >() );
     prevh_.push_back(0);
     initial_.push_back(1);
-    pos_.push_back(0);    
+    pos_.push_back( std::vector< int >() );
 
     const int tabId = outputFile_.size() -1;
 
