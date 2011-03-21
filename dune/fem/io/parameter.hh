@@ -135,8 +135,11 @@ namespace Dune
     static bool parse ( const std::string &s, T &value )
     {
       std::istringstream in( s );
+      in >> value;
+      if( in.fail() )
+        return false;
       char eof;
-      in >> value >> eof;
+      in >> eof;
       return in.eof();
     }
 
