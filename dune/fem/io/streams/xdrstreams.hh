@@ -269,7 +269,7 @@ namespace Dune
       const char * flags = ( append ) ? "ab" : "wb";
       file_ = fopen( filename.c_str(), flags );
       if( file_ == 0 )
-        DUNE_THROW( IOError, "XDRFileOutStream: Unable to open file." );
+        DUNE_THROW( IOError, "XDRFileOutStream: Unable to open file '" << filename << "'." );
       xdrstdio_create( xdrs(), file_, XDR_ENCODE );
     }
 
@@ -320,7 +320,7 @@ namespace Dune
     {
       file_ = fopen( filename.c_str(), "rb" );
       if( file_ == 0 )
-        DUNE_THROW( IOError, "XDRFileInStream: Unable to open file." );
+        DUNE_THROW( IOError, "XDRFileInStream: Unable to open file '" << filename << "'." );
 
       // if pos = 0 this will do nothing 
       fseek( file_, pos , SEEK_SET );
