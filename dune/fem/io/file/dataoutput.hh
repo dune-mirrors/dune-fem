@@ -48,7 +48,7 @@ namespace Dune
     //! path where the data is stored (path are always relative to fem.commonOutputPath)
     virtual std::string path() const
     {
-      return Parameter::getValue< std::string >( "fem.io.path", "" );
+      return Parameter::getValue< std::string >( "fem.io.path", "./" );
     }
 
     //! base of file name for data file (fem.io.datafileprefix)
