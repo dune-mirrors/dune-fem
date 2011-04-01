@@ -13,6 +13,18 @@ namespace Dune
 // implementation of L2 projection for discontinuous spaces 
 class DGL2ProjectionImpl
 {
+  template <class DFImp>
+  struct IsFiniteVolumeSpace
+  {
+    enum {exists = false};
+  };
+  template <class FunctionSpaceImp, class GridPartImp, int polOrd,
+            template<class> class BaseFunctionStorageImp >
+  struct IsFiniteVolumeSpace< FiniteVolumeSpace< FunctionSpaceImp, GridPartImp, polOrd, BaseFunctionStorageImp> >
+  {
+    enum {exists = true};
+  };
+
   template <int dummy, bool hasLocalFunction> 
   struct ProjectChooser
   {
@@ -144,7 +156,7 @@ protected:
 
         // evaluate function 
         f.evaluate(quad[ qP ], value );
-        
+
         // apply weight 
         value *= intel;
 
@@ -157,6 +169,19 @@ protected:
       {
         massMatrix.applyInverse( en, lf );
       } 
+      else 
+      {
+        std::cout << "L2PROJECTION: " << IsFiniteVolumeSpace< DiscreteFunctionSpaceType > ::exists << std::endl;
+        if ( IsFiniteVolumeSpace< DiscreteFunctionSpaceType > ::exists )
+        {
+          typedef typename DiscreteFunctionSpaceType :: DomainType DomainType;
+          typedef Dune::GenericReferenceElements< typename DomainType::value_type, DomainType::dimension >
+            ReferenceElementContainerType;
+          const double refVolume = ReferenceElementContainerType::general(en.type()).volume();     
+          for (int i=0;i<lf.numDofs();++i)
+            lf[i] /= refVolume;
+        }
+      }
     }
   }
 };
