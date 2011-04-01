@@ -248,7 +248,7 @@ namespace Fem {
      */
     void assign (const ThisType& other)
     {
-      dofVector().assign(other.dofVector());
+      dofVector() = other.dofVector();
     }
   
     /** \brief Add scalar*v to *this
