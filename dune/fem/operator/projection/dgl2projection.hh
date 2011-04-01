@@ -171,7 +171,6 @@ protected:
       } 
       else 
       {
-        std::cout << "L2PROJECTION: " << IsFiniteVolumeSpace< DiscreteFunctionSpaceType > ::exists << std::endl;
         if ( IsFiniteVolumeSpace< DiscreteFunctionSpaceType > ::exists )
         {
           typedef typename DiscreteFunctionSpaceType :: DomainType DomainType;
