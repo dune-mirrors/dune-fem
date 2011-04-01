@@ -816,6 +816,11 @@ namespace Dune
           return asBase()->unitOuterNormal( local );
         }
 
+        NormalVector centerUnitOuterNormal( ) const
+        {
+          return asBase()->centerUnitOuterNormal( );
+        }
+
         //! type of Intersection 
         typedef ThisType Intersection;
         //! dereference operator 
