@@ -46,6 +46,9 @@ namespace Dune
     private:
       dune_static_assert( dimDomain == dimGrid, "LineSegmentSampler supports only flat grids." );
 
+      template< class Vector >
+      struct Reduce;
+
       typedef GenericReferenceElement< DomainFieldType, dimGrid > ReferenceElement;
       typedef GenericReferenceElements< DomainFieldType, dimGrid > ReferenceElements;
 
@@ -87,6 +90,24 @@ namespace Dune
 
 
 
+    // LineSegmentSampler::Reduce
+    // --------------------------
+
+    template< class GridPart >
+    template< class Vector >
+    struct LineSegmentSampler< GridPart >::Reduce
+    {
+      Vector operator() ( const Vector &a, const Vector &b ) const
+      {
+        Vector c;
+        for( int k = 0; k < Vector::dimension; ++k )
+          c[ k ] = std::min( a[ k ], b[ k ] );
+        return c;
+      }
+    };
+
+
+
     // Implementation of LineSegmentSampler
     // ------------------------------------
 
@@ -106,10 +127,10 @@ namespace Dune
       DomainType ds = right_ - left_;
       ds /= DomainFieldType( numSamples - 1 );
 
-      const typename GridFunction::RangeFieldType nan
-        = std::numeric_limits< typename GridFunction::RangeFieldType >::quiet_NaN();
+      const typename GridFunction::RangeFieldType invalid
+        = std::numeric_limits< typename GridFunction::RangeFieldType >::infinity();
       for( int i = 0; i < numSamples; ++i )
-        samples[ i ] = typename GridFunction::RangeType( nan );
+        samples[ i ] = typename GridFunction::RangeType( invalid );
 
       const IteratorType end = gridPart().template end< 0 >();
       for( IteratorType it = gridPart().template begin< 0 >(); it != end; ++it )
@@ -163,9 +184,12 @@ namespace Dune
         }
       }
 
+      typedef Reduce< typename GridFunction::RangeType > Op;
+      gridPart().grid().comm().template allreduce< Op >( &(samples[ 0 ]), numSamples );
+
       bool valid = true;
       for( int i = 0; i < numSamples; ++i )
-        valid &= (samples[ i ] == samples[ i ]);
+        valid &= (samples[ i ] != typename GridFunction::RangeType( invalid ));
       if( !valid )
         DUNE_THROW( InvalidStateException, "LineSegmentSampler could not find all samples." );
     }
