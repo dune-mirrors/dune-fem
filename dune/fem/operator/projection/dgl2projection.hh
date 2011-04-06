@@ -13,11 +13,8 @@ namespace Dune
   // External Forward Declarations
   // -----------------------------
 
-  template< class FunctionSpaceImp >
-  class CachingStorage;
-
   template <class FunctionSpaceImp, class GridPartImp, int polOrd,
-            template<class> class BaseFunctionStorageImp = CachingStorage >
+            template<class> class BaseFunctionStorageImp >
   class FiniteVolumeSpace;
 
 
