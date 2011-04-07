@@ -557,9 +557,8 @@ namespace Dune
     {
       if( df ) 
       {
-        typedef typename DFType :: Traits Traits;
-        typedef typename Traits :: LocalFunctionType LocalFunctionType;
-        typedef typename Traits :: DiscreteFunctionSpaceType DiscreteFunctionSpaceType;
+        typedef typename DFType::LocalFunctionType LocalFunctionType;
+        typedef typename DFType::DiscreteFunctionSpaceType DiscreteFunctionSpaceType;
         typedef typename DiscreteFunctionSpaceType :: IteratorType IteratorType;
         typedef typename DiscreteFunctionSpaceType :: GridPartType GridPartType;
 
