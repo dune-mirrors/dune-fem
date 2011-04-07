@@ -204,7 +204,8 @@ namespace Dune
       // make save step consistent
       consistentSaveStep( tp );
 
-      const bool writeStep  = (saveStep_ > 0) && (tp.time() >= saveTime_);
+      const double saveTimeEps = 2*std::numeric_limits< double >::epsilon()*saveTime_;
+      const bool writeStep  = (saveStep_ > 0) && (tp.time() - saveTime_ >= -saveTimeEps);
       const bool writeCount = (saveCount_ > 0) && (writeCalls_ % saveCount_ == 0);
       return param_->willWrite( writeStep || writeCount );
     }
