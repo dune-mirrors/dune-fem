@@ -10,6 +10,14 @@
 namespace Dune 
 {
 
+// External Forward Declarations
+// -----------------------------
+
+template <class FunctionSpaceImp, class GridPartImp, int polOrd,
+          template<class> class BaseFunctionStorageImp >
+class FiniteVolumeSpace;
+
+
 // implementation of L2 projection for discontinuous spaces 
 class DGL2ProjectionImpl
 {
