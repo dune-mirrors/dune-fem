@@ -448,15 +448,18 @@ namespace Dune
     template< class DFType >
     void visit ( DFType *df )
     {
-      if(df->space().order() > 0)
+      if( df ) 
       {
-        vtkOut_.addVertexData( *df );
-        // vtkOut_.addVectorVertexData( *df );
-      }
-      else 
-      {
-        vtkOut_.addCellData( *df ); 
-        // vtkOut_.addVectorCellData( *df );
+        if(df->space().order() > 0)
+        {
+          vtkOut_.addVertexData( *df );
+          // vtkOut_.addVectorVertexData( *df );
+        }
+        else 
+        {
+          vtkOut_.addCellData( *df ); 
+          // vtkOut_.addVectorCellData( *df );
+        }
       }
     }
 
@@ -501,10 +504,13 @@ namespace Dune
     template< class DFType >
     void visit ( DFType *df )
     {
-      typedef VTKFunc<VTKOut,DFType> EntryType; 
-      EntryType* entry = new EntryType(vtkOut_.gridPart(), *df);
-      entry->add( vtkOut_ );
-      vec_.push_back( entry );
+      if( df ) 
+      {
+        typedef VTKFunc<VTKOut,DFType> EntryType; 
+        EntryType* entry = new EntryType(vtkOut_.gridPart(), *df);
+        entry->add( vtkOut_ );
+        vec_.push_back( entry );
+      }
     }
 
     template< class OutputTuple >
@@ -549,24 +555,27 @@ namespace Dune
     template <class DFType>
     void visit(DFType* df) 
     {
-      typedef typename DFType :: Traits Traits;
-      typedef typename Traits :: LocalFunctionType LocalFunctionType;
-      typedef typename Traits :: DiscreteFunctionSpaceType DiscreteFunctionSpaceType;
-      typedef typename DiscreteFunctionSpaceType :: IteratorType IteratorType;
-      typedef typename DiscreteFunctionSpaceType :: GridPartType GridPartType;
-
-      typedef typename DiscreteFunctionSpaceType :: DomainType DomainType;
-      typedef typename DiscreteFunctionSpaceType :: RangeType RangeType;
- 
-      enum{ dimDomain = DiscreteFunctionSpaceType :: dimDomain };
-      enum{ dimRange = DiscreteFunctionSpaceType :: dimRange };
-
-      LocalFunctionType lf = df->localFunction(en_);
+      if( df ) 
       {
-        RangeType u;
-        lf.evaluate( quad_[ i_ ], u );
-        for( int k = 0; k < dimRange; ++k )
-          out_ << "  " << u[ k ];
+        typedef typename DFType :: Traits Traits;
+        typedef typename Traits :: LocalFunctionType LocalFunctionType;
+        typedef typename Traits :: DiscreteFunctionSpaceType DiscreteFunctionSpaceType;
+        typedef typename DiscreteFunctionSpaceType :: IteratorType IteratorType;
+        typedef typename DiscreteFunctionSpaceType :: GridPartType GridPartType;
+
+        typedef typename DiscreteFunctionSpaceType :: DomainType DomainType;
+        typedef typename DiscreteFunctionSpaceType :: RangeType RangeType;
+   
+        enum{ dimDomain = DiscreteFunctionSpaceType :: dimDomain };
+        enum{ dimRange = DiscreteFunctionSpaceType :: dimRange };
+
+        LocalFunctionType lf = df->localFunction(en_);
+        {
+          RangeType u;
+          lf.evaluate( quad_[ i_ ], u );
+          for( int k = 0; k < dimRange; ++k )
+            out_ << "  " << u[ k ];
+        }
       }
     }
 

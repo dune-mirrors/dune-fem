@@ -317,14 +317,18 @@ namespace Dune
     template< class DataIO >
     static void apply ( DataIO &dataio, const std::string &name, const int &n, const Tuple &tuple )
     {
-      std::stringstream dataname;
-      dataname << name << "_" << N;
-
-      // create lock file which is removed after sucessful backup 
-      FileIOLock lock( dataname.str() );
-
       const DiscreteFunction *df = get< N >( tuple );
-      dataio.writeData( *df, xdr, dataname.str(), n );
+      // if pointer is valid: write function
+      if( df ) 
+      {
+        std::stringstream dataname;
+        dataname << name << "_" << N;
+
+        // create lock file which is removed after sucessful backup 
+        FileIOLock lock( dataname.str() );
+
+        dataio.writeData( *df, xdr, dataname.str(), n );
+      }
     }
   };
 
