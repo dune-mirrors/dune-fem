@@ -108,7 +108,7 @@ namespace Dune
     }
 
     //! return true if DataOutput was created for writing (only not true for
-    //!  CheckPoiinter on restore) 
+    //!  CheckPointer on restore) 
     virtual bool writeMode() const
     {
       return true ;
