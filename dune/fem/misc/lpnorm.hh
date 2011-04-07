@@ -88,16 +88,18 @@ namespace Dune
   };
 
 
-#if 0
+
+
   // WeightedLPNorm
   // --------------
   
-  template< class WeightFunction >
+  template< class WeightFunction, class OrderCalculator = DefaultOrderCalculator >
   class WeightedLPNorm
-  : public LPNorm< typename WeightFunction::DiscreteFunctionSpaceType::GridPartType >
+  : public LPNorm< typename WeightFunction::DiscreteFunctionSpaceType::GridPartType,
+                   OrderCalculator >
   {
-    typedef WeightedLPNorm< WeightFunction > ThisType;
-    typedef LPNorm< typename WeightFunction::DiscreteFunctionSpaceType::GridPartType > BaseType;
+    typedef WeightedLPNorm< WeightFunction, OrderCalculator > ThisType;
+    typedef LPNorm< typename WeightFunction::DiscreteFunctionSpaceType::GridPartType, OrderCalculator> BaseType;
 
   public:
     typedef WeightFunction WeightFunctionType;
@@ -107,7 +109,7 @@ namespace Dune
    
   protected:
     template< class Function >
-    struct WeightedFunctionSquare;
+    struct WeightedFunctionMultiplication;
     
     typedef typename WeightFunctionType::LocalFunctionType LocalWeightFunctionType;
     typedef typename WeightFunctionType::RangeType WeightType;
@@ -121,7 +123,7 @@ namespace Dune
     using BaseType::comm;
 
   public:
-    explicit WeightedLPNorm ( const WeightFunctionType &weightFunction, const double p_ );
+    explicit WeightedLPNorm ( const WeightFunctionType &weightFunction, const double p );
 
     template< class DiscreteFunctionType >
     typename DiscreteFunctionType::RangeFieldType
@@ -136,7 +138,6 @@ namespace Dune
     const double p_;
   };
 
-#endif
 
   // Implementation of LPNorm
   // ------------------------
@@ -288,32 +289,32 @@ namespace Dune
   };
 
 
-#if 0
   // Implementation of WeightedL2Norm
   // --------------------------------
   
-  template< class WeightFunction >
-  inline WeightedLPNorm< WeightFunction >
-    ::WeightedLPNorm ( const WeightFunctionType &weightFunction )
-  : BaseType( weightFunction.space().gridPart ),
-    weightFunction_( weightFunction )
+  template< class WeightFunction, class OrderCalculator >
+  inline WeightedLPNorm< WeightFunction, OrderCalculator >
+    ::WeightedLPNorm ( const WeightFunctionType &weightFunction, double p )
+  : BaseType( weightFunction.space().gridPart, p ),
+    weightFunction_( weightFunction ),
+    p_(p)
   {
     dune_static_assert( (WeightFunctionSpaceType::dimRange == 1),
                         "Wight function must be scalar." );
   }
 
 
-  template< class WeightFunction >
+  template< class WeightFunction, class OrderCalculator >
   template< class DiscreteFunctionType >
   inline typename DiscreteFunctionType::RangeFieldType
-  WeightedL2Norm< WeightFunction >
+  WeightedL2Norm< WeightFunction, OrderCalculator >
     ::norm ( const DiscreteFunctionType &u ) const
   {
     typedef typename DiscreteFunctionType::RangeFieldType RangeFieldType;
 
     typedef typename DiscreteFunctionType::LocalFunctionType LocalFunctionType;
 
-    unsigned int order = 2 * u.space().order() + weightFunction_.space().order();
+    unsigned int order = order (u.space().order()) + weightFunction_.space().order();
     IntegratorType integrator( order );
 
     FieldVector< RangeFieldType, 1 > sum( 0 );
@@ -325,19 +326,19 @@ namespace Dune
       LocalWeightFunctionType wflocal = weightFunction_.localFunction( entity );
       LocalFunctionType ulocal = u.localFunction( entity );
      
-      WeightedFunctionSquare< LocalFunctionType > ulocal2( wflocal, ulocal );
+      WeightedFunctionMultiplicator< LocalFunctionType > ulocal2( wflocal, ulocal, p_ );
 
       integrator.integrateAdd( entity, ulocal2, sum );
     }
 
-    return sqrt( comm().sum( sum[ 0 ] ) );
+    return std::pow( comm().sum( sum[ 0 ] ), 1./p_ );
   }
  
   
-  template< class WeightFunction >
+  template< class WeightFunction,class OrderCalculator >
   template< class UDiscreteFunctionType, class VDiscreteFunctionType >
   inline typename UDiscreteFunctionType::RangeFieldType
-  WeightedL2Norm< WeightFunction >
+  WeightedL2Norm< WeightFunction, OrderCalculator >
     ::distance ( const UDiscreteFunctionType &u, const VDiscreteFunctionType &v ) const
   {
     typedef typename UDiscreteFunctionType::RangeFieldType RangeFieldType;
@@ -349,9 +350,9 @@ namespace Dune
       < ULocalFunctionType, VLocalFunctionType >
       LocalDistanceType;
 
-    const unsigned int uorder = u.space().order();
-    const unsigned int vorder = v.space().order();
-    const unsigned int order = 2 * std::max( uorder, vorder )
+    const unsigned int uorder = order(u.space().order());
+    const unsigned int vorder = order( v.space().order());
+    const unsigned int order = std::max( uorder, vorder )
                                + weightFunction_.space().order();
     IntegratorType integrator( order );
 
@@ -366,18 +367,18 @@ namespace Dune
       VLocalFunctionType vlocal = v.localFunction( entity );
      
       LocalDistanceType dist( ulocal, vlocal );
-      WeightedFunctionSquare< LocalDistanceType > dist2( wflocal, dist );
+      WeightedFunctionMultiplication< LocalDistanceType > dist2( wflocal, dist );
       
       integrator.integrateAdd( entity, dist2, sum );
     }
 
-    return sqrt( comm().sum( sum[ 0 ] ) );
+    return std::pow ( comm().sum( sum[ 0 ] ), 1./p_ );
   }
 
   
-  template< class WeightFunction >
+  template< class WeightFunction, class OrderCalculator>
   template< class Function >
-  struct WeightedL2Norm< WeightFunction >::WeightedFunctionSquare
+  struct WeightedL2Norm< WeightFunction, OrderCalculator>::WeightedFunctionMultiplicator
   {
     typedef Function FunctionType;
 
@@ -385,9 +386,11 @@ namespace Dune
     typedef FieldVector< RangeFieldType, 1 > RangeType;
 
     WeightedFunctionSquare ( const LocalWeightFunctionType &weightFunction,
-                             const FunctionType &function )
+                             const FunctionType &function,
+                             double p )
     : weightFunction_( weightFunction ),
-      function_( function )
+      function_( function ),
+      p_(p)
     {}
     
     template< class Point >
@@ -398,14 +401,15 @@ namespace Dune
 
       typename FunctionType::RangeType phi;
       function_.evaluate( x, phi );
-      ret = weight[ 0 ] * (phi * phi);
+      ret = weight[ 0 ] * std::pow ( phi.two_norm(), p_);
     }
 
   private:
     const LocalWeightFunctionType &weightFunction_;
     const FunctionType &function_;
+    double p_;
   };
-#endif
+
 }
 
-#endif // #ifndef DUNE_FEM_L2NORM_HH
+#endif // #ifndef DUNE_FEM_LPNORM_HH
