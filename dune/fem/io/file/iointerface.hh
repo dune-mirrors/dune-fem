@@ -13,6 +13,7 @@
 #include <dune/grid/yaspgrid.hh>
 #include <dune/grid/io/file/dgfparser/dgfparser.hh>
 
+
 // defines function readParameter 
 #include <dune/fem/io/file/asciiparser.hh>
 // defines Parameter 
@@ -39,6 +40,8 @@
 
 namespace Dune
 {
+
+  class TimeProviderBase;
 
 /** @addtogroup DiscFuncIO
    The package dune-fem provides a number 
@@ -157,6 +160,20 @@ protected:
 public: 
   //! destructor 
   virtual ~IOInterface () {}
+
+  /** \brief write data with a given sequence stamp
+      \param sequenceStamp stamp for the data set 
+  */
+  virtual void writeData ( double sequenceStamp ) const = 0;
+
+  /** \brief write given data to disc, evaluates parameter savecount and savestep
+      \param tp  time provider for time and step   
+  */
+  virtual void write( const TimeProviderBase& tp ) const = 0;
+
+  /** \brief write given data to disc, evaluates parameter savecount
+  */
+  virtual void write() const = 0;
 
   //! return FEM key for macro grid reading 
   static std::string defaultGridKey( const int dimension , const bool  check = true )

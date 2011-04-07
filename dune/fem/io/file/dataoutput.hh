@@ -217,24 +217,54 @@ namespace Dune
     }
 
     /** \brief write given data to disc, evaluates parameter savecount
+        \param outstring  pass additional string for naming  
     */
-    void write( const std::string& outstring="" ) const
+    void write( const std::string& outstring ) const
     {
       if( willWrite() )
         writeData( writeCalls_, outstring );
       ++writeCalls_;    
     }
 
-    /** \brief write given data to disc, evaluates parameter savecount and savestep
+    /** \brief write given data to disc, evaluates parameter savecount
     */
-    void write(const TimeProviderBase& tp, const std::string& outstring="") const
+    void write() const 
+    {
+      write( "" );
+    }
+
+    /** \brief write given data to disc, evaluates parameter savecount and savestep
+        \param tp  time provider for time and step   
+        \param outstring  pass additional string for naming  
+    */
+    void write(const TimeProviderBase& tp, const std::string& outstring ) const
     {
       if( willWrite(tp) )
         writeData( tp.time(), outstring );
       ++writeCalls_;    
     }
 
-    void writeData ( double sequenceStamp, const std::string &outstring = "" ) const;
+    /** \brief write given data to disc, evaluates parameter savecount and savestep
+        \param tp  time provider for time and step   
+    */
+    void write( const TimeProviderBase& tp ) const
+    {
+      write( tp, "" );
+    }
+
+    /** \brief write data with a given sequence stamp and outstring 
+        \param sequenceStamp stamp for the data set 
+        \param outstring pass additional string for naming 
+    */
+    void writeData ( double sequenceStamp, const std::string &outstring ) const;
+
+    /** \brief write data with a given sequence stamp
+        \param sequenceStamp stamp for the data set 
+    */
+    void writeData ( double sequenceStamp ) const
+    {
+      writeData( sequenceStamp, "" ); 
+    }
 
     //! print class name 
     virtual const char* myClassName () const { return "DataOutput"; }
