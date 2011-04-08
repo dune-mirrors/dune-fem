@@ -181,7 +181,7 @@ protected:
       {
         if ( IsFiniteVolumeSpace< DiscreteFunctionSpaceType > ::exists )
         {
-          typedef typename DiscreteFunctionSpaceType :: DomainType DomainType;
+          typedef typename GridType::template Codim<0>::Geometry :: LocalCoordinate DomainType; 
           typedef Dune::GenericReferenceElements< typename DomainType::value_type, DomainType::dimension >
             ReferenceElementContainerType;
           const double refVolume = ReferenceElementContainerType::general(en.type()).volume();     
