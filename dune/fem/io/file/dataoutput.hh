@@ -719,7 +719,7 @@ namespace Dune
     switch( outputFormat_ )
     {
     // if no output was chosen just return  
-    case none: return ;
+    case none: break ;
     case binary:   
       writeBinaryData( sequenceStamp );
       break;
@@ -738,22 +738,25 @@ namespace Dune
       DUNE_THROW(NotImplemented,"DataOutput::write: wrong output format");
     }
 
-    if (sequence_)
-      sequence_ << writeStep_ << " "
-                << filename << " "
-                << sequenceStamp
-                << outstring
-                << std::endl;
-
-    if( Parameter::verbose() )
+    if( outputFormat_ != none ) 
     {
-      // only write info for proc 0, otherwise on large number of procs
-      // this is to much output 
-      std::cout << myClassName() << "[" << grid_.comm().rank() << "]::write data"
-                << " writestep=" << writeStep_
-                << " sequenceStamp=" << sequenceStamp
-                << outstring
-                << std::endl;
+      if (sequence_)
+        sequence_ << writeStep_ << " "
+                  << filename << " "
+                  << sequenceStamp
+                  << outstring
+                  << std::endl;
+
+      if( Parameter::verbose() )
+      {
+        // only write info for proc 0, otherwise on large number of procs
+        // this is to much output 
+        std::cout << myClassName() << "[" << grid_.comm().rank() << "]::write data"
+                  << " writestep=" << writeStep_
+                  << " sequenceStamp=" << sequenceStamp
+                  << outstring
+                  << std::endl;
+      }
     }
 
     saveTime_ += saveStep_;
