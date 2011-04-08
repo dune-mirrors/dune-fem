@@ -15,7 +15,7 @@ misc_HEADERS = alugridwriter.hh \
                double.hh \
                engineconcept.hh \
                femeoc.hh \
-							 femeoctable.hh \
+               femeoctable.hh \
                field.hh \
                example.cc \
                femtimer.hh \
@@ -28,6 +28,7 @@ misc_HEADERS = alugridwriter.hh \
                l2error.hh \
                l1norm.hh \
                l2norm.hh \
+               lpnorm.hh \
                linesegmentsampler.hh \
                longexample.cc \
                metaprogramming.hh \
