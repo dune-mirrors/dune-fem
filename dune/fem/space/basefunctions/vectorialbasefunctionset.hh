@@ -295,7 +295,7 @@ namespace Dune
                 const GlobalJacobianRangeType &jacFactor,
                 LocalDofVectorType& dofs ) const
     {
-      GlobalJacobianRangeType jacFactorInv;
+      JacobianRangeType jacFactorInv;
       for( int r = 0; r < dimRange; ++r )
         gjit.mtv( jacFactor[ r ], jacFactorInv[ r ] );
 
@@ -319,7 +319,7 @@ namespace Dune
                 const GlobalJacobianRangeType &jacFactor,
                 LocalDofVectorType& dofs ) const
     {
-      GlobalJacobianRangeType jacFactorInv;
+      JacobianRangeType jacFactorInv;
       for( int r = 0; r < dimRange; ++r )
         gjit.mtv( jacFactor[ r ], jacFactorInv[ r ] );
 
