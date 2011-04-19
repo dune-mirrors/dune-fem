@@ -819,6 +819,7 @@ namespace Dune
     //! return matrix adapter object  
     MatrixAdapterType matrixAdapter() const 
     { 
+#ifndef DISABLE_ISTL_PRECONDITIONING
       // no preconditioner 
       if( preconditioning_ == none )
       {
@@ -870,6 +871,7 @@ namespace Dune
       {
         preConErrorMsg(preconditioning_);
       }
+#endif
       return MatrixAdapterType(matrix(),rowSpace_,colSpace_ );
     }
     

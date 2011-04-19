@@ -1,6 +1,5 @@
 #include <config.h>
 
-//#define USE_TWISTFREE_MAPPER
 
 #include <dune/common/fvector.hh>
 

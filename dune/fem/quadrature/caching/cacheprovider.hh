@@ -174,7 +174,7 @@ namespace Dune {
       
       if( it == mappers_.end() ) 
       {
-#if DUNE_VERSION_NEWER(DUNE_COMMON,2,1,0)
+#if DUNE_VERSION_NEWER_REV(DUNE_COMMON,2,1,0)
         integral_constant< bool, Capabilities::IsUnstructured< GridImp >::v > i2t;
 #else
         Int2Type< Capabilities::IsUnstructured< GridImp >::v > i2t;
@@ -195,7 +195,7 @@ namespace Dune {
     typedef typename MapperContainerType::iterator MapperIteratorType;
 
   private:
-#if DUNE_VERSION_NEWER(DUNE_COMMON,2,1,0)
+#if DUNE_VERSION_NEWER_REV(DUNE_COMMON,2,1,0)
     static MapperIteratorType
     createMapper ( const QuadratureType &quad, GeometryType elementGeometry, integral_constant< bool, true > );
 

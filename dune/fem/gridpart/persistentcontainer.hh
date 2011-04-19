@@ -1,5 +1,5 @@
 #include <dune/common/version.hh>
-#if DUNE_VERSION_NEWER(DUNE_GRID,2,1,0)
+#if DUNE_VERSION_NEWER_REV(DUNE_GRID,2,1,0)
 #warning DO NOT USE PERSISTENTCONTAINER FROM DUNE-FEM; USE FROM dune/grid/utility instead
 #include <dune/grid/utility/persistentcontainer.hh>
 #else
@@ -578,4 +578,4 @@ protected:
 } // end namespace Dune
 
 #endif // end DUNE_PERSISTENTCONTAINER_HH
-#endif // DUNE_VERSION_NEWER
+#endif // DUNE_VERSION_NEWER_REV

@@ -314,7 +314,7 @@ public:
   typedef typename Traits :: EntityType EntityType;
 
 private:
-  template< class IndexSetType, bool isFemIndexSet >
+  template< class IndexSetType, bool isFemIndexSet >  // wozu wird isFemIndexSet verwendet ???
   struct Consecutive
   {
     static bool check ( const IndexSetType &indexSet )

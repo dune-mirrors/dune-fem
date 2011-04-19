@@ -24,7 +24,7 @@ namespace Dune
   // Compatibility definiton
   // -----------------------
 
-#if ! DUNE_VERSION_NEWER(DUNE_GRID,2,1,0)
+#if ! DUNE_VERSION_NEWER_REV(DUNE_GRID,2,1,0)
 typedef VTKOptions VTK;
 #endif
 

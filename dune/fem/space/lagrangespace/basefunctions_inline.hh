@@ -106,7 +106,7 @@ namespace Dune
   LagrangeBaseFunctionFactory< ScalarFunctionSpace, dim, pOrder >::baseFunction ( int i ) const
   {
     BaseFunctionInterface< ScalarFunctionSpace > *baseFunction;
-#if DUNE_VERSION_NEWER(DUNE_COMMON,2,1,0)
+#if DUNE_VERSION_NEWER_REV(DUNE_COMMON,2,1,0)
     const unsigned int topologyId = geometry().id();
 #else
     const unsigned int topologyId = GenericGeometry::topologyId( geometry() );
@@ -121,7 +121,7 @@ namespace Dune
   LagrangeBaseFunctionFactory< ScalarFunctionSpace, dim, pOrder >::numBaseFunctions () const
   {
     int numBaseFunctions;
-#if DUNE_VERSION_NEWER(DUNE_COMMON,2,1,0)
+#if DUNE_VERSION_NEWER_REV(DUNE_COMMON,2,1,0)
     const unsigned int topologyId = geometry().id();
 #else
     const unsigned int topologyId = GenericGeometry::topologyId( geometry() );

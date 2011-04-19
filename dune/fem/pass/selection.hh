@@ -20,7 +20,7 @@ namespace Dune
   template <int N1, int N2, int N3, int N4, int N5, int N6, int N7, int N8, int N9>
   struct SelectorToPairs {
     typedef Pair<
-#if DUNE_VERSION_NEWER(DUNE_COMMON,2,1,0)
+#if DUNE_VERSION_NEWER_REV(DUNE_COMMON,2,1,0)
       integral_constant<int,N1>, 
 #else
       Int2Type<N1>, 
@@ -427,7 +427,7 @@ namespace Dune
 
     template< int id >
     inline const typename Get< id > :: Type &
-#if DUNE_VERSION_NEWER(DUNE_COMMON,2,1,0)
+#if DUNE_VERSION_NEWER_REV(DUNE_COMMON,2,1,0)
     operator[] ( const integral_constant<int, id > idVariable ) const
 #else
     operator[] ( const Int2Type< id > idVariable ) const
@@ -438,7 +438,7 @@ namespace Dune
 
     template< int id >
     inline typename Get< id > :: Type &
-#if DUNE_VERSION_NEWER(DUNE_COMMON,2,1,0)
+#if DUNE_VERSION_NEWER_REV(DUNE_COMMON,2,1,0)
     operator[] ( const integral_constant<int, id > idVariable )
 #else
     operator[] ( const Int2Type< id > idVariable )

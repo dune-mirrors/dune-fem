@@ -211,7 +211,7 @@ public:
   }
 
   //! create given path in combination with rank 
-  static void createPath ( const std::string &path ) DUNE_DEPRECATED
+  static void createPath ( const std::string &path )
   {
     if( !createDirectory( path ) )
       std::cerr << "Failed to create path `" << path << "'." << std::endl;

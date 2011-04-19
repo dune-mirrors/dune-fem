@@ -267,7 +267,7 @@ namespace Dune
 
     virtual GeometryType geometry () const
     {
-#if DUNE_VERSION_NEWER(DUNE_COMMON,2,1,0)
+#if DUNE_VERSION_NEWER_REV(DUNE_COMMON,2,1,0)
       return GeometryType( topologyId, dimension );
 #else
       return GenericGeometry::geometryType( topologyId, dimension );

@@ -251,7 +251,7 @@ namespace Dune
     // IsUnstructured (deprecated)
     // --------------
 
-#if DUNE_VERSION_NEWER(DUNE_GRID,2,1,0)
+#if DUNE_VERSION_NEWER_REV(DUNE_GRID,2,1,0)
     template< class Grid >
     struct IsUnstructured
     {
@@ -264,7 +264,7 @@ namespace Dune
       static const bool v = ! isCartesian< Grid > :: v;
     };
 
-#endif // #if DUNE_VERSION_NEWER(DUNE_GRID,2,1,0)
+#endif // #if DUNE_VERSION_NEWER_REV(DUNE_GRID,2,1,0)
 
   }
 

@@ -19,7 +19,7 @@
 // include BLAS for daxpy operation 
 #include <dune/fem/solver/oemsolver/cblas.h>
 #endif
-#if DUNE_VERSION_NEWER( DUNE_GRID, 2, 1, 0 )
+#if DUNE_VERSION_NEWER_REV( DUNE_GRID, 2, 1, 0 )
 #include <dune/grid/alugrid/common/interfaces.hh>
 #else
 #include <dune/grid/alugrid/interfaces.hh>
