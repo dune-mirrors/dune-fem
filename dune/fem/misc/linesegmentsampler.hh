@@ -78,8 +78,7 @@ namespace Dune
        *        samples, which may not be less than 2.
        */
       template< class GridFunction >
-      void operator() ( const GridFunction &f, std::vector< typename GridFunction::RangeType > &samples, 
-          std::vector<typename GridFunction::DomainType> &points) const;
+      void operator() ( const GridFunction &f, std::vector< typename GridFunction::RangeType > &samples ) const
 
       /** @brief obtain grid part on which the LineSegmentSampler works */
       const GridPart &gridPart () const { return gridPart_; }
@@ -181,7 +180,6 @@ namespace Dune
           {
             DomainType xi = left_;
             xi.axpy( DomainFieldType( i ), ds );
-            points[i] = xi;
             lf.evaluate( geometry.local( xi ), samples[ i ] );
           }
         }
