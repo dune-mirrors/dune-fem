@@ -7,6 +7,7 @@
 
 //- system headers  
 #include <iostream>
+#include <rpc/types.h>
 #include <rpc/xdr.h>
 #include <cassert>
 
