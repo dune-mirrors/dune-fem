@@ -152,7 +152,8 @@ namespace Dune
         // David: With this factor, the tolerance of CGInverseOp is the absolute
         //        rather than the relative error
         //        (see also dune-fem/dune/fem/solver/inverseoperators.hh)
-        const LinearInverseOperatorType jInv( jOp, reduction, absLimit / delta );
+        const int remLinearIts = maxLinearIterations_ - linearIterations_;
+        const LinearInverseOperatorType jInv( jOp, reduction, absLimit / delta, remLinearIts );
         
         dw.clear();
         jInv( residual, dw );
