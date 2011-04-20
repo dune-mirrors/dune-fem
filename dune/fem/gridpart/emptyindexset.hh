@@ -4,6 +4,7 @@
 //- system includes 
 #include <iostream>
 #include <string> 
+#include <rpc/types.h>
 #include <rpc/xdr.h>
 #include <cassert>
 
