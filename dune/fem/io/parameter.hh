@@ -143,12 +143,40 @@ namespace Dune
       return in.eof();
     }
 
-
     static std::string toString ( const T &value )
     {
       std::ostringstream out;
       out << value;
       return out.str();
+    }
+  };
+
+  template<>
+  struct ParameterParser< bool >
+  {
+    static bool parse ( const std::string &s, bool &value )
+    {
+      std::string w;
+      if( ParameterParser< std::string >::parse( s, w ) )
+      {
+        if( (w == std::string( "false" )) || (w == std::string( "no" )) || (w == std::string( "0" )) )
+        {
+          value = false;
+          return true;
+        }
+
+        if( (w == std::string( "true" )) || (w == std::string( "yes" )) || (w == std::string( "1" )) )
+        {
+          value = true;
+          return true;
+        }
+      }
+      return false;
+    }
+
+    static std::string toString ( const bool &value )
+    {
+      return std::string( value ? "true" : "false" );
     }
   };
 
