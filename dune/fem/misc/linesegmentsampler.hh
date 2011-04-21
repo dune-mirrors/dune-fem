@@ -78,7 +78,7 @@ namespace Dune
        *        samples, which may not be less than 2.
        */
       template< class GridFunction >
-      void operator() ( const GridFunction &f, std::vector< typename GridFunction::RangeType > &samples ) const
+      void operator() ( const GridFunction &f, std::vector< typename GridFunction::RangeType > &samples ) const;
 
       /** @brief obtain grid part on which the LineSegmentSampler works */
       const GridPart &gridPart () const { return gridPart_; }
@@ -114,8 +114,7 @@ namespace Dune
     template< class GridPart >
     template< class GridFunction >
     inline void LineSegmentSampler< GridPart >
-      ::operator() ( const GridFunction &f, std::vector< typename GridFunction::RangeType > &samples, 
-          std::vector<typename GridFunction::DomainType> &points ) const
+      ::operator() ( const GridFunction &f, std::vector< typename GridFunction::RangeType > &samples ) const 
     {
       typedef typename GridPartType::template Codim< 0 >::IteratorType IteratorType;
       typedef typename GridPartType::template Codim< 0 >::EntityType EntityType;
