@@ -742,6 +742,7 @@ protected:
     //! add value to matrix entry
     void add( int localRow, int localCol, const DofType value )
     {
+      assert( value == value );
       assert( (localRow >= 0) && (localRow < rows()) );
       assert( (localCol >= 0) && (localCol < columns()) );
 
