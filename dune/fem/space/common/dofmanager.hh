@@ -11,7 +11,7 @@
 #include <dune/common/exceptions.hh>
 #include <dune/common/version.hh>
 
-#if DUNE_VERSION_NEWER( DUNE_GRID, 2, 1, 0 )
+#if DUNE_VERSION_NEWER_REV( DUNE_GRID, 2, 1, 0 )
 #include <dune/grid/alugrid/common/interfaces.hh>
 #else
 #include <dune/grid/alugrid/interfaces.hh>
