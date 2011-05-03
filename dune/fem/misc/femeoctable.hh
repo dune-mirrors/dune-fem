@@ -69,15 +69,15 @@ class DefaultEocCalculator
 class FemEocTable
 {
   int nrOfTabs_;
-  std::vector<std::stringstream* > outputFile_;
-  std::vector<std::string> fileNames_;
-  std::vector<int> level_;
-  std::vector<std::vector<double>> prevError_;
-  std::vector<std::vector<double>> error_;
-  std::vector<std::vector<std::string>> description_;
-  std::vector<double> prevh_;
-  std::vector<bool> initial_;
-  std::vector<std::vector<int>> pos_;
+  std::vector< std::stringstream* > outputFile_;
+  std::vector< std::string > fileNames_;
+  std::vector< int > level_;
+  std::vector< std::vector< double > > prevError_;
+  std::vector< std::vector< double > > error_;
+  std::vector< std::vector< std::string > > description_;
+  std::vector< double > prevh_;
+  std::vector< bool > initial_;
+  std::vector< std::vector< int > > pos_;
 
   FemEocTable() :
     nrOfTabs_(0),
