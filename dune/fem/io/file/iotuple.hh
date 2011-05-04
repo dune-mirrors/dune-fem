@@ -342,16 +342,22 @@ namespace Dune
     static void apply ( Disp &disp, const DINFO *&dinf, const double &time, Tuple &tuple )
     {
       DiscreteFunction *df = get< N >( tuple );
-      assert( dinf->comp );
-      std::cout << "adding to display " << dinf->name << std::endl;
-      disp.addData( *df, dinf, time );
+      if( df ) 
+      {
+        assert( dinf->comp );
+        std::cout << "adding to display " << dinf->name << std::endl;
+        disp.addData( *df, dinf, time );
+      }
     }
 
     template< class Disp >
     static void apply ( Disp &disp, Tuple &tuple )
     {
       DiscreteFunction *df = get< N >( tuple );
-      disp.addData( *df );
+      if( df ) 
+      {
+        disp.addData( *df );
+      }
     }
   };
 
