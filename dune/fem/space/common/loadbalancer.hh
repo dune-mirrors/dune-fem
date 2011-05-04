@@ -230,7 +230,14 @@ public:
 
   //! add discrete function to data inliner/xtractor list 
   template <class DiscreteFunctionType> 
-  void addDiscreteFunction(DiscreteFunctionType& df) 
+  void addDiscreteFunction( DiscreteFunctionType& df ) 
+  {
+    addDiscreteFunction( df, df.defaultLoadBalanceContainsCheck() );
+  }
+
+  //! add discrete function to data inliner/xtractor list 
+  template <class DiscreteFunctionType, class ContainsCheck > 
+  void addDiscreteFunction(DiscreteFunctionType& df, const ContainsCheck& containsCheck ) 
   {
     dune_static_assert( (Conversion< DiscreteFunctionType, IsDiscreteFunction >::exists),
                         "Only valid for discrete functions" );
@@ -243,17 +250,14 @@ public:
       // insert into set 
       listOfFcts_.insert( fct );
 
-      // to be revised
-      const bool leaf = true; 
-      
       ////////////////////////////
       // data inliners 
       ////////////////////////////
       {
         const bool readData = false; // readData is described by false 
-        typedef DataInliner<DiscreteFunctionType> LocalInlinerType; 
+        typedef DataInliner<DiscreteFunctionType, ContainsCheck > LocalInlinerType; 
 
-        LocalInlinerType * di = new LocalInlinerType(df);
+        LocalInlinerType * di = new LocalInlinerType(df, containsCheck );
 
         // for later removal 
         localList_.push_back( di );
@@ -261,7 +265,7 @@ public:
         typedef DataCollector<GridType,LocalInlinerType> DataCollectorImp;
 
         DataCollectorImp* gdi = 
-          new DataCollectorImp( grid_, dm_ , *di , readData , leaf );
+          new DataCollectorImp( grid_, dm_ , *di , readData );
         
         // for later removal 
         collList_.push_back(gdi);
@@ -273,8 +277,8 @@ public:
       // data xtractors 
       ////////////////////////////
       {
-        typedef DataXtractor<DiscreteFunctionType> LocalXtractorType; 
-        LocalXtractorType * dx = new LocalXtractorType(df);
+        typedef DataXtractor< DiscreteFunctionType, ContainsCheck > LocalXtractorType; 
+        LocalXtractorType * dx = new LocalXtractorType(df, containsCheck );
 
         // for later removal 
         localList_.push_back( dx );
@@ -284,7 +288,7 @@ public:
         typedef DataCollector<GridType,LocalXtractorType> DataCollectorImp;
         
         DataCollectorImp* gdx = 
-          new DataCollectorImp( grid_, dm_ , *dx , writeData , leaf );
+          new DataCollectorImp( grid_, dm_ , *dx , writeData );
         
         // for later removal 
         collList_.push_back(gdx);

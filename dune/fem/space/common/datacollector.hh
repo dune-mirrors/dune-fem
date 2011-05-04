@@ -235,9 +235,8 @@ class DataCollectorInterface
   typedef ObjectStreamImp  ObjectStreamType;
   typedef typename GridType::template Codim<0>::Entity EntityType;
 
-  typedef DataCollectorInterface<GridType,ObjectStreamImp> MyType;
-  typedef std::pair < ObjectStreamType * , 
-          const typename GridType:: template Codim<0>::Entity  * >  DataCollectorParamType;
+  typedef DataCollectorInterface<GridType, ObjectStreamImp> MyType;
+  typedef std::pair < ObjectStreamType * , const EntityType * >  DataCollectorParamType;
   
 public:
   typedef LocalInterface<DataCollectorParamType> LocalInterfaceType;
@@ -256,10 +255,10 @@ public:
   //! all adaptation operators have this method which adapts the
   //! corresponding grid and organizes the restriction prolongation process
   //! of the underlying function spaces
-  virtual void apply (ObjectStreamType &str,EntityType & en) const 
+  virtual void apply (ObjectStreamType &str, const EntityType & entity ) const 
   {
     //std::cout << "apply on interface class \n";
-    if(dc_) (*dc_).apply(str,en);  
+    if(dc_) (*dc_).apply(str, entity );  
     else 
     {
       std::cerr << "WARNING: apply: did nothing! \n";
@@ -405,6 +404,7 @@ class DataCollector
 {  
   typedef typename GridObjectStreamOrDefault<GridType, DummyObjectStream > :: ObjectStreamType ObjectStreamType; 
   typedef typename GridType::template Codim<0>::Entity EntityType;
+
   typedef DataCollector<EntityType,LocalDataCollectImp> MyType;
   typedef DofManager<GridType> DofManagerType;
 
@@ -417,10 +417,9 @@ class DataCollector
 public:
   //! create DiscreteOperator with a LocalOperator 
   DataCollector (GridType & grid, DofManagerType & dm, LocalDataCollectImp & ldc, 
-                 bool read , bool leaf , int numChildren = 8) 
+                 bool read , int numChildren = 8) 
     : grid_(grid) , dm_ ( dm ), ldc_ (ldc) 
     , rwType_((read) ? (readData) : writeData )
-    , leaf_(leaf) 
     , numChildren_(numChildren) 
   {}
 
@@ -479,7 +478,7 @@ public:
     COType *newLDCOp = new COType ( ldc_ + op.getLocalInterfaceOp() );
     typedef DataCollector<GridType, COType> OPType;
    
-    OPType *dcOp = new OPType ( grid_ , dm_ , *newLDCOp , (rwType_ == readData) , leaf_ );    
+    OPType *dcOp = new OPType ( grid_ , dm_ , *newLDCOp , (rwType_ == readData) );    
 
     // memorize this new generated object because is represents this
     // operator and is deleted if this operator is deleted
@@ -514,26 +513,26 @@ public:
 
   //! apply, if this operator is in write status the inlineData is called
   //! else xtractData is called 
-  void apply (ObjectStreamType & str, EntityType & en) const 
+  void apply ( ObjectStreamType & str, const EntityType & entity ) const 
   {
     if(rwType_ == writeData) 
-      inlineData(str,en);
+      inlineData(str, entity );
     else 
-      xtractData(str,en);
+      xtractData(str, entity );
   }
 
   //! write all data of all entities blowe this Entity to the stream 
-  void inlineData (ObjectStreamType & str, EntityType & en) const 
+  void inlineData (ObjectStreamType & str, const EntityType & entity ) const 
   {
     const int mxlvl = grid_.maxLevel();
 
     // read/write macro element
-    inlineLocal(str,en);
+    inlineLocal(str, entity );
     
     {
       typedef typename EntityType::HierarchicIterator HierarchicIteratorType;
-      HierarchicIteratorType endit  = en.hend(mxlvl);
-      for(HierarchicIteratorType it = en.hbegin(mxlvl); 
+      const HierarchicIteratorType endit  = entity.hend( mxlvl );
+      for(HierarchicIteratorType it = entity.hbegin( mxlvl ); 
           it != endit; ++it )
       {
         inlineLocal(str, *it); 
@@ -542,17 +541,17 @@ public:
   }
 
   //! read all data of all entities blowe this Entity from the stream 
-  void xtractData (ObjectStreamType & str, EntityType & en) const 
+  void xtractData (ObjectStreamType & str, const EntityType & entity ) const 
   {
     const int mxlvl = grid_.maxLevel();
 
     // read/write macro element
-    xtractLocal(str,en);
+    xtractLocal(str, entity );
     
     {
       typedef typename EntityType::HierarchicIterator HierarchicIteratorType;
-      HierarchicIteratorType endit  = en.hend(mxlvl);
-      for(HierarchicIteratorType it = en.hbegin(mxlvl); 
+      const HierarchicIteratorType endit  = entity.hend( mxlvl );
+      for(HierarchicIteratorType it = entity.hbegin( mxlvl ); 
           it != endit; ++it )
       {
         xtractLocal(str, *it); 
@@ -570,7 +569,7 @@ private:
     COType *newLDCOp = new COType ( ldc_ );
     typedef DataCollector <GridType, COType> OPType;
    
-    OPType *dcOp = new OPType ( grid_ , dm_ , *newLDCOp , (rwType_ == readData), leaf_ );    
+    OPType *dcOp = new OPType ( grid_ , dm_ , *newLDCOp , (rwType_ == readData) );    
 
     // memorize this new generated object because is represents this
     // operator and is deleted if this operator is deleted
@@ -580,35 +579,21 @@ private:
   }
  
   // write data of entity 
-  void inlineLocal(ObjectStreamType & str, EntityType& en) const 
+  void inlineLocal(ObjectStreamType & str, const EntityType& entity ) const 
   {
     assert( rwType_ == writeData );
 
-    // if only leaf data is inlined then 
-    // check whether en is leaf element 
-    if( leaf_ && !en.isLeaf() ) return;
-
-    ParamType p( &str , &en );
+    ParamType p( &str , &entity );
     // apply local operators 
     ldc_.apply( p );
-
-    // remove entity from index sets 
-    dm_.removeEntity( en );
   }
   
   // read data of entity 
-  void xtractLocal(ObjectStreamType & str, EntityType& en) const 
+  void xtractLocal(ObjectStreamType & str, const EntityType& entity ) const 
   {
     assert( rwType_ == readData );
     
-    // if only leaf data is inlined then 
-    // check whether en is leaf element 
-    if( leaf_ && !en.isLeaf() ) return;
-
-    // insert entity into index sets 
-    dm_.insertEntity( en );
-
-    ParamType p( &str , &en );
+    ParamType p( &str , &entity );
     // apply local operators 
     ldc_.apply( p );
   }
@@ -625,9 +610,6 @@ private:
   //! determines whether data is read or written
   const ReadWriteType rwType_;
 
-  //! true if only leaf data is packed 
-  const bool leaf_;
-  
   // number of childs one element can have 
   const int numChildren_;
 };
@@ -653,17 +635,20 @@ struct DataInlinerTraits
     /** \brief ???
      * \todo Please doc me!
      */
-template< class DiscreteFunctionType >
+template< class DiscreteFunctionType, 
+          class ContainsCheck >
 class DataInliner
-: public LocalInlinePlus< DataInliner< DiscreteFunctionType >,
+: public LocalInlinePlus< DataInliner< DiscreteFunctionType, ContainsCheck >,
                           typename DataInlinerTraits< DiscreteFunctionType >::ParamType >
 {
-  typedef DataInliner< DiscreteFunctionType > ThisType;
+  typedef DataInliner< DiscreteFunctionType, ContainsCheck > ThisType;
   typedef LocalInlinePlus< ThisType, typename DataInlinerTraits< DiscreteFunctionType >::ParamType > BaseType;
 
 public:
   typedef DataInlinerTraits< DiscreteFunctionType > Traits;
   typedef typename Traits::ObjectStreamType ObjectStreamType;
+
+  typedef DofManager< typename DiscreteFunctionType :: GridType > DofManagerType ;
 
   typedef typename Traits::EntityType EntityType;
   typedef typename Traits::ParamType ParamType;
@@ -676,13 +661,18 @@ public:
   typedef typename DiscreteFunctionType::DomainType DomainType;
 
   //! constructor 
-  explicit DataInliner ( const DiscreteFunctionType & df ) 
-    : df_ (df) 
+  explicit DataInliner ( const DiscreteFunctionType & df, 
+                         const ContainsCheck& containsCheck ) 
+    : df_ (df),
+      dm_( DofManagerType :: instance( df.space().grid() ) ),
+      containsCheck_( containsCheck )
   {}
 
   //! copy constructor 
   DataInliner ( const DataInliner & other  ) 
-    : df_ (other.df_) 
+    : df_ (other.df_),
+      dm_( other.dm_ ),
+      containsCheck_( other.containsCheck_ )
   {}
 
   //! store data to stream  
@@ -693,20 +683,27 @@ public:
   }
 
   //! store data to stream  
-  void apply ( ObjectStreamType& str, const EntityType& en ) const 
+  void apply ( ObjectStreamType& str, const EntityType& entity ) const 
   {
-    assert( df_.space().indexSet().contains( en ) );
+    if( ! containsCheck_.contains ( entity ) ) return ;
+
+    assert( df_.space().indexSet().contains( entity ) );
     
-    const LocalFunctionType lf = df_.localFunction( en );
+    const LocalFunctionType lf = df_.localFunction( entity );
     const int numDofs = lf.numDofs();
     for(int l=0; l<numDofs; ++l)
     {
       str.write( lf[l] );
     }
+
+    // remove entity from index sets 
+    dm_.removeEntity( entity );
   }
 
 protected:
   const DiscreteFunctionType & df_;
+  DofManagerType& dm_ ;
+  const ContainsCheck containsCheck_;
 };
 
 
@@ -725,17 +722,20 @@ struct DataXtractorTraits
 };
 
 
-template< class DiscreteFunctionType >
+template< class DiscreteFunctionType,
+          class ContainsCheck >
 class DataXtractor
-: public LocalInlinePlus< DataXtractor< DiscreteFunctionType >,
+: public LocalInlinePlus< DataXtractor< DiscreteFunctionType, ContainsCheck >,
                           typename DataXtractorTraits< DiscreteFunctionType >::ParamType >
 {
-  typedef DataXtractor< DiscreteFunctionType > ThisType;
+  typedef DataXtractor< DiscreteFunctionType, ContainsCheck > ThisType;
   typedef LocalInlinePlus< ThisType, typename DataXtractorTraits< DiscreteFunctionType >::ParamType > BaseType;
 
 public:
   typedef DataXtractorTraits< DiscreteFunctionType > Traits;
   typedef typename Traits::ObjectStreamType ObjectStreamType;
+
+  typedef DofManager< typename DiscreteFunctionType :: GridType > DofManagerType ;
 
   typedef typename Traits::EntityType EntityType;
   typedef typename Traits::ParamType ParamType;
@@ -748,13 +748,17 @@ public:
   typedef typename DiscreteFunctionType::DomainType DomainType;
 
   //! constructor 
-  explicit DataXtractor ( DiscreteFunctionType & df ) 
-    : df_ (df) 
+  explicit DataXtractor ( DiscreteFunctionType & df, const ContainsCheck& containsCheck ) 
+    : df_ (df),
+      dm_( DofManagerType :: instance( df.space().grid() ) ),
+      containsCheck_( containsCheck )
     {}
 
   //! copy constructor 
   DataXtractor ( const DataXtractor & other ) 
-    : df_( other.df_ ) 
+    : df_( other.df_ ),
+      dm_( other.dm_ ),
+      containsCheck_( other.containsCheck_ )
   {}
 
   //! store data to stream  
@@ -765,12 +769,17 @@ public:
   }
 
   //! store data to stream  
-  void apply (ObjectStreamType & str, const EntityType & en ) const 
+  void apply (ObjectStreamType & str, const EntityType& entity ) const 
   {
-    // make sure entity is contained in set 
-    assert( df_.space().indexSet().contains( en ) );
+    if( ! containsCheck_.contains ( entity ) ) return ;
 
-    LocalFunctionType lf = df_.localFunction( en );
+    // insert entity into index sets 
+    dm_.insertEntity( entity );
+
+    // make sure entity is contained in set 
+    assert( df_.space().indexSet().contains( entity ) );
+
+    LocalFunctionType lf = df_.localFunction( entity );
     const int numDofs = lf.numDofs();
     for(int l=0; l<numDofs; ++l)
     {
@@ -780,6 +789,8 @@ public:
 
 protected:
   mutable DiscreteFunctionType & df_;
+  DofManagerType& dm_ ;
+  const ContainsCheck containsCheck_;
 };
 
 /** @} end documentation group */

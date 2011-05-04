@@ -335,6 +335,30 @@ namespace Dune {
       }
     };
   };
+
+  ////////////////////////////////////////////////////////////////
+  //
+  //  --LoadBalanceContainsCheck 
+  //
+  ////////////////////////////////////////////////////////////////
+
+  //! \brief check for sets of entities for the load balance procedure 
+  template <class DiscreteFunction>     
+  class LoadBalanceLeafData
+  {
+  public:
+    typedef DiscreteFunction DiscreteFunctionType ;
+    typedef typename DiscreteFunctionType :: DiscreteFunctionSpaceType :: IteratorType :: Entity Entity;
+
+    explicit LoadBalanceLeafData( const DiscreteFunctionType& df ) {}
+    /** \brief return true if the data of this entity should be transfered during load balance */
+    bool contains (const Entity& entity) const
+    {
+      return entity.isLeaf();
+    }
+  };
+
+  
  
 //@} 
 } // end namespace Dune

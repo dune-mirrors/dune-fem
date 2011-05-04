@@ -811,7 +811,9 @@ private:
   mutable DataCollectorType dataXtractor_;
 
   //! type of IndexSet change interfaces 
-  typedef LocalInterface< ElementType > LocalIndexSetObjectsType;
+  //// use const Entities as parameters (typedef here to avoid confusion)
+  typedef const ElementType  ConstElementType; 
+  typedef LocalInterface< ConstElementType > LocalIndexSetObjectsType;
 
   mutable LocalIndexSetObjectsType indexSets_; 
 
@@ -1015,7 +1017,7 @@ public:
   }
 
   /** \brief Inserts entity to all index sets added to dof manager. */
-  inline void insertEntity( ElementType & elem )
+  inline void insertEntity( ConstElementType & elem )
   {
     // insert new index 
     insertIndices_.apply( elem );
@@ -1025,7 +1027,7 @@ public:
   }
           
   /** \brief Removes entity from all index sets added to dof manager. */
-  inline void removeEntity( ElementType & elem )
+  inline void removeEntity( ConstElementType & elem )
   {
     removeIndices_.apply( elem );
   }
@@ -1101,20 +1103,20 @@ public:
 
   //! packs all data of this entity en and all child entities  
   template <class ObjectStreamType>
-  void inlineData ( ObjectStreamType & str, ElementType & en )
+  void inlineData ( ObjectStreamType& str, ConstElementType& element )
   {
-    dataInliner_.apply(str,en);
+    dataInliner_.apply(str, element);
   }
 
   //! unpacks all data of this entity from message buffer 
-  template <class ObjectStreamType>
-  void xtractData ( ObjectStreamType & str, ElementType & en, size_t newElements )
+  template <class ObjectStreamType >
+  void xtractData ( ObjectStreamType & str, ConstElementType& element, size_t newElements )
   {
     // reserve memory for new elements 
     reserveMemory(newElements , true );
     // here the elements already have been created 
     // that means we can xtract data
-    dataXtractor_.apply(str,en);
+    dataXtractor_.apply(str, element);
   }
 
   //********************************************************
@@ -1218,7 +1220,7 @@ addIndexSet (const IndexSetType &iset)
 {
   assert( Fem :: ThreadManager:: singleThreadMode() );
 
-  typedef ManagedIndexSet< IndexSetType, ElementType > ManagedIndexSetType;
+  typedef ManagedIndexSet< IndexSetType, ConstElementType > ManagedIndexSetType;
 
   typedef typename IndexListType::reverse_iterator IndexListIteratorType;
   
