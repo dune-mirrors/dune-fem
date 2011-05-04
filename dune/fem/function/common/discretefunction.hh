@@ -468,6 +468,14 @@ namespace Dune
     {
       asImp().enableDofCompression();
     }
+
+    // this needs to be revised, the definition should be in GridPart 
+    // further discussion needed 
+    typedef LoadBalanceLeafData< ThisType > DefaultLoadBalanceContainsCheckType;
+    inline DefaultLoadBalanceContainsCheckType defaultLoadBalanceContainsCheck() const 
+    {
+      return DefaultLoadBalanceContainsCheckType( *this );
+    }
   };
 
 
