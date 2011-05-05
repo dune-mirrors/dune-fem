@@ -11,11 +11,7 @@
 #include <dune/common/exceptions.hh>
 #include <dune/common/version.hh>
 
-#if DUNE_VERSION_NEWER_REV( DUNE_GRID, 2, 1, 0 )
 #include <dune/grid/alugrid/common/interfaces.hh>
-#else
-#include <dune/grid/alugrid/interfaces.hh>
-#endif
 
 #include <dune/fem/version.hh>
 
@@ -169,8 +165,9 @@ template <class IndexSetType, class EntityType> class RemoveIndicesFromSet;
 template <class IndexSetType, class EntityType> class InsertIndicesToSet;
 
 template <class IndexSetType, class EntityType>
-class ManagedIndexSet : public ManagedIndexSetInterface ,
-        public LocalInlinePlus < ManagedIndexSet<IndexSetType,EntityType> , EntityType >
+class ManagedIndexSet : 
+  public ManagedIndexSetInterface ,
+  public LocalInlinePlus < ManagedIndexSet<IndexSetType,EntityType> , EntityType >
 {
   typedef LocalInterface<EntityType> LocalIndexSetObjectsType;
 protected: 
@@ -178,8 +175,8 @@ protected:
   IndexSetType & indexSet_;
 
   // insertion and removal of indices 
-  InsertIndicesToSet   <IndexSetType,EntityType> insertIdxObj_;
-  RemoveIndicesFromSet <IndexSetType,EntityType> removeIdxObj_;
+  InsertIndicesToSet   <IndexSetType, EntityType> insertIdxObj_;
+  RemoveIndicesFromSet <IndexSetType, EntityType> removeIdxObj_;
 
   LocalIndexSetObjectsType & indexSetList_; 
   LocalIndexSetObjectsType & insertList_; 
@@ -190,10 +187,10 @@ public:
   typedef ManagedIndexSetInterface BaseType;
   
   //! Constructor of MemObject, only to call from DofManager 
-  ManagedIndexSet ( const IndexSetType & iset 
-      , LocalIndexSetObjectsType & indexSetList
-      , LocalIndexSetObjectsType & insertList 
-      , LocalIndexSetObjectsType & removeList) 
+  ManagedIndexSet ( const IndexSetType & iset,
+                    LocalIndexSetObjectsType & indexSetList,
+                    LocalIndexSetObjectsType & insertList,
+                    LocalIndexSetObjectsType & removeList ) 
    : BaseType( iset )
    , indexSet_ (const_cast<IndexSetType &> (iset)) 
    , insertIdxObj_(indexSet_), removeIdxObj_(indexSet_) 
@@ -610,18 +607,18 @@ private:
 
 public:  
   // Constructor of MemObject, only to call from DofManager 
-  RemoveIndicesFromSet ( IndexSetType & iset ) : indexSet_ (iset) {} 
+  explicit RemoveIndicesFromSet ( IndexSetType & iset ) : indexSet_ (iset) {} 
 
   //! apply wraps the removeEntity Method of the index set 
-  inline void apply ( EntityType & en )
+  inline void apply ( EntityType & entity )
   {
-    indexSet_.removeEntity( en );
+    indexSet_.removeEntity( entity );
   }
 };
 
 template <class IndexSetType, class EntityType>
 class InsertIndicesToSet 
-: public LocalInlinePlus < InsertIndicesToSet<IndexSetType,EntityType> , EntityType >
+: public LocalInlinePlus < InsertIndicesToSet< IndexSetType, EntityType > , EntityType >
 {
 private:
   // the dof set stores number of dofs on entity for each codim
@@ -629,12 +626,12 @@ private:
 
 public:  
   // Constructor of MemObject, only to call from DofManager 
-  InsertIndicesToSet ( IndexSetType & iset ) : indexSet_ (iset) {} 
+  explicit InsertIndicesToSet ( IndexSetType & iset ) : indexSet_ (iset) {} 
 
   //! apply wraps the insertEntity method of the index set
-  inline void apply ( EntityType & en )
+  inline void apply ( EntityType & entity )
   {
-    indexSet_.insertEntity( en );
+    indexSet_.insertEntity( entity );
   }
 };
 
@@ -779,10 +776,22 @@ public:
   typedef Grid GridType;
 
 public:
-  typedef typename GridObjectStreamOrDefault<
-    GridType, DummyObjectStream>::ObjectStreamType ObjectStreamType;
 
-  typedef DataCollectorInterface<GridType, ObjectStreamType> DataCollectorType;
+#if DUNE_VERSION_NEWER_REV(DUNE_GRID,2,2,0)
+  // types of inlining and xtraction stream types 
+  typedef typename GridObjectStreamOrDefault<
+    GridType, DummyObjectStream>::InStreamType  XtractStreamType;
+  typedef typename GridObjectStreamOrDefault<
+    GridType, DummyObjectStream>::OutStreamType InlineStreamType;
+#else 
+  typedef typename GridObjectStreamOrDefault<
+    GridType, DummyObjectStream>::ObjectStreamType InlineStreamType;
+  typedef InlineStreamType XtractStreamType ;
+#endif
+
+  // types of data collectors 
+  typedef DataCollectorInterface<GridType, XtractStreamType >   DataXtractorType;
+  typedef DataCollectorInterface<GridType, InlineStreamType  >  DataInlinerType;
 
   typedef typename GridType :: template Codim< 0 > :: Entity  ElementType ;
 
@@ -807,8 +816,8 @@ private:
   const GridType &grid_;
 
   // index set for mapping 
-  mutable DataCollectorType dataInliner_;
-  mutable DataCollectorType dataXtractor_;
+  mutable DataInlinerType  dataInliner_;
+  mutable DataXtractorType dataXtractor_;
 
   //! type of IndexSet change interfaces 
   //// use const Entities as parameters (typedef here to avoid confusion)
@@ -1017,19 +1026,19 @@ public:
   }
 
   /** \brief Inserts entity to all index sets added to dof manager. */
-  inline void insertEntity( ConstElementType & elem )
+  inline void insertEntity( ConstElementType & element )
   {
     // insert new index 
-    insertIndices_.apply( elem );
+    insertIndices_.apply( element );
 
     // resize memory 
     resizeMemory();
   }
-          
+
   /** \brief Removes entity from all index sets added to dof manager. */
-  inline void removeEntity( ConstElementType & elem )
+  inline void removeEntity( ConstElementType & element )
   {
-    removeIndices_.apply( elem );
+    removeIndices_.apply( element );
   }
 
 protected:  
@@ -1102,15 +1111,13 @@ public:
   }
 
   //! packs all data of this entity en and all child entities  
-  template <class ObjectStreamType>
-  void inlineData ( ObjectStreamType& str, ConstElementType& element )
+  void inlineData ( InlineStreamType& str, ConstElementType& element )
   {
     dataInliner_.apply(str, element);
   }
 
   //! unpacks all data of this entity from message buffer 
-  template <class ObjectStreamType >
-  void xtractData ( ObjectStreamType & str, ConstElementType& element, size_t newElements )
+  void xtractData ( XtractStreamType & str, ConstElementType& element, size_t newElements )
   {
     // reserve memory for new elements 
     reserveMemory(newElements , true );

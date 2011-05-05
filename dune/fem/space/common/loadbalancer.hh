@@ -73,12 +73,19 @@ class LoadBalancer
   // dof manager 
   typedef DofManager<GridType> DofManagerType; 
 
-  // type of data collector during load balance 
-  typedef typename DofManagerType :: DataCollectorType DataCollectorType; 
+  // type of data inlining during load balance 
+  typedef typename DofManagerType :: DataInlinerType DataInlinerType; 
+
+  // type of data extraction during load balance 
+  typedef typename DofManagerType :: DataXtractorType DataXtractorType; 
 
   // type of local data collector interface 
-  typedef typename DataCollectorType :: LocalInterfaceType
-    LocalDataCollectorInterfaceType;
+  typedef typename DataInlinerType :: LocalInterfaceType   LocalDataInlinerInterfaceType;
+  // type of local data collector interface 
+  typedef typename DataXtractorType :: LocalInterfaceType  LocalDataXtractorInterfaceType;
+
+  typedef std::pair< LocalDataInlinerInterfaceType*, LocalDataXtractorInterfaceType*  >  LocalDataCollectorPairType;
+  typedef std::pair< DataInlinerType* , DataXtractorType* > DataCollectorPairType;
 protected:
   /** \brief constructor of LoadBalancer  
      The following optional parameter is used from the Parameter class:
@@ -138,13 +145,15 @@ public:
     // remove data collectors 
     for(size_t i=0; i<collList_.size(); ++i)
     {
-      delete collList_[i];
+      delete collList_[ i ].first  ;
+      delete collList_[ i ].second ;
     }
      
     // remove local data handler 
     for(size_t i=0; i<localList_.size(); ++i)
     {
-      delete localList_[i];
+      delete localList_[ i ].first  ;
+      delete localList_[ i ].second ;
     }
   }
 
@@ -253,23 +262,17 @@ public:
       ////////////////////////////
       // data inliners 
       ////////////////////////////
+      LocalDataCollectorPairType localPair; 
+      DataCollectorPairType collPair; 
       {
-        const bool readData = false; // readData is described by false 
-        typedef DataInliner<DiscreteFunctionType, ContainsCheck > LocalInlinerType; 
-
+        typedef LocalDataInliner<DiscreteFunctionType, ContainsCheck > LocalInlinerType; 
         LocalInlinerType * di = new LocalInlinerType(df, containsCheck );
-
-        // for later removal 
-        localList_.push_back( di );
+        localPair.first = di ;
       
-        typedef DataCollector<GridType,LocalInlinerType> DataCollectorImp;
-
-        DataCollectorImp* gdi = 
-          new DataCollectorImp( grid_, dm_ , *di , readData );
+        typedef DataCollector<GridType, LocalInlinerType > DataCollectorImp;
+        DataCollectorImp* gdi = new DataCollectorImp( grid_, dm_ , *di, di->readWriteInfo() );
+        collPair.first = gdi ;
         
-        // for later removal 
-        collList_.push_back(gdi);
-
         dm_.addDataInliner( *gdi );
       }
      
@@ -277,24 +280,20 @@ public:
       // data xtractors 
       ////////////////////////////
       {
-        typedef DataXtractor< DiscreteFunctionType, ContainsCheck > LocalXtractorType; 
+        typedef LocalDataXtractor< DiscreteFunctionType, ContainsCheck > LocalXtractorType; 
         LocalXtractorType * dx = new LocalXtractorType(df, containsCheck );
+        localPair.second = dx ;
 
-        // for later removal 
-        localList_.push_back( dx );
-
-        const bool writeData = true; // writedata is described by true 
-        
         typedef DataCollector<GridType,LocalXtractorType> DataCollectorImp;
+        DataCollectorImp* gdx = new DataCollectorImp( grid_, dm_ , *dx, dx->readWriteInfo() );
+        collPair.second = gdx ;
         
-        DataCollectorImp* gdx = 
-          new DataCollectorImp( grid_, dm_ , *dx , writeData );
-        
-        // for later removal 
-        collList_.push_back(gdx);
-
         dm_.addDataXtractor( *gdx );
       }
+
+      // for later removal 
+      localList_.push_back( localPair );
+      collList_.push_back( collPair );
 
       // enable this discrete function for dof compression 
       df.enableDofCompression();
@@ -314,8 +313,8 @@ protected:
   int balanceCounter_;
 
   // list of created local data collectors 
-  std::vector<LocalDataCollectorInterfaceType*> localList_;
-  std::vector<DataCollectorType*> collList_;
+  std::vector< LocalDataCollectorPairType > localList_;
+  std::vector< DataCollectorPairType > collList_;
 
   // list of already added discrete functions 
   std::set< const IsDiscreteFunction * > listOfFcts_;

@@ -12,12 +12,6 @@
 //-Dune includes#
 #include <dune/common/version.hh>
 
-#if DUNE_VERSION_NEWER_REV( DUNE_GRID, 2, 1, 0 )
-#include <dune/grid/alugrid/common/interfaces.hh>
-#else
-#include <dune/grid/alugrid/common/interfaces.hh>
-#endif
-
 //- local includes 
 #include <dune/fem/operator/common/objpointer.hh>
 
@@ -41,6 +35,13 @@ template <class GridImp> class DofManager;
 
 template <class LocalOp, class ParamType> class LocalInlinePlus;
 
+
+// define read or write stream 
+struct DataCollectorTraits 
+{
+  enum ReadWriteType { readData , writeData };
+};
+
 #define PARAM_CLASSNAME CombinedLocalDataCollect 
 #define PARAM_INHERIT LocalInlinePlus  
 #define PARAM_FUNC_1 apply 
@@ -56,7 +57,21 @@ public:
     typedef ParamT ParamType;
   };
 
-private:
+  template <class PT> 
+  struct ObjectStreamExtractor 
+  {
+    typedef PT ObjectStreamType ;
+  };
+
+  template < class T1 , class T2 > 
+  struct ObjectStreamExtractor< std::pair< T1* , const T2* > > 
+  {
+    typedef T1 ObjectStreamType ;
+  };
+
+  typedef typename ObjectStreamExtractor< ParamT > :: ObjectStreamType ObjectStreamType;
+
+protected:
   typedef ParamT ParamType;
   typedef void FuncType(MyType &, ParamType & p); 
   typedef typename std::pair < MyType * ,  FuncType * > PairType;
@@ -81,7 +96,7 @@ private:
   };
 
   // copy list of op to this class 
-  static void copyList (ListType & vec , const MyType & op )
+  static void copyList (ListType & vec, const MyType & op )
   {
     const ListType & ve = op.vec_;
     if(ve.size() > 0)
@@ -96,7 +111,7 @@ private:
         vec[i] = ve[i-tmp.size()];
     }
   }
-  
+
 public:
   LocalInterface () : vec_ (0) {}
   
@@ -179,6 +194,7 @@ public:
  
 private:  
   mutable ListType vec_;
+  //ReadWriteType rwType_ ; 
 };
 
 template <class LocalOp, class ParamT>
@@ -232,7 +248,10 @@ class DummyObjectStream
 template <class GridType, class ObjectStreamImp = DummyObjectStream >
 class DataCollectorInterface 
 {
+public:  
   typedef ObjectStreamImp  ObjectStreamType;
+
+
   typedef typename GridType::template Codim<0>::Entity EntityType;
 
   typedef DataCollectorInterface<GridType, ObjectStreamImp> MyType;
@@ -388,6 +407,7 @@ public:
   }
 };
 
+
 /** \brief The DataCollector is an example for a grid walk done while load
  * balancing moves entities from one processor to another. 
  * The Communicator or grid should call the inlineData (write Data to
@@ -396,14 +416,19 @@ public:
  * does the hierarhic walk and calls its local pack operators which know
  * the discrete functions to pack to the stream. 
  */
-template <class GridType, class LocalDataCollectImp>
+template <class GridType, 
+          class LocalDataCollectImp > 
 class DataCollector
-: public DataCollectorInterface<GridType, 
-   typename GridObjectStreamOrDefault<GridType, DummyObjectStream > :: ObjectStreamType >  
+: public DataCollectorInterface< GridType, typename LocalDataCollectImp :: ObjectStreamType >  
 , public ObjPointerStorage 
 {  
-  typedef typename GridObjectStreamOrDefault<GridType, DummyObjectStream > :: ObjectStreamType ObjectStreamType; 
+public:  
+  typedef typename LocalDataCollectImp :: ObjectStreamType ObjectStreamType; 
   typedef typename GridType::template Codim<0>::Entity EntityType;
+
+protected:  
+  typedef DataCollectorInterface< GridType, ObjectStreamType > BaseType;
+  typedef typename DataCollectorTraits :: ReadWriteType ReadWriteType;
 
   typedef DataCollector<EntityType,LocalDataCollectImp> MyType;
   typedef DofManager<GridType> DofManagerType;
@@ -411,15 +436,18 @@ class DataCollector
   typedef typename std::pair < ObjectStreamType * , const EntityType * > ParamType;
   typedef LocalInterface<ParamType> LocalInterfaceType;
   
-  friend class DataCollectorInterface<GridType,ObjectStreamType>; 
-  typedef DataCollectorInterface<GridType,ObjectStreamType> DataCollectorInterfaceType;
+  friend class DataCollectorInterface<GridType, ObjectStreamType>; 
+  typedef DataCollectorInterface<GridType, ObjectStreamType> DataCollectorInterfaceType;
   
 public:
   //! create DiscreteOperator with a LocalOperator 
-  DataCollector (GridType & grid, DofManagerType & dm, LocalDataCollectImp & ldc, 
-                 bool read , int numChildren = 8) 
+  DataCollector (GridType & grid, 
+                 DofManagerType & dm, 
+                 LocalDataCollectImp & ldc, 
+                 const ReadWriteType rwType,
+                 int numChildren = 8) 
     : grid_(grid) , dm_ ( dm ), ldc_ (ldc) 
-    , rwType_((read) ? (readData) : writeData )
+    , rwType_( rwType )
     , numChildren_(numChildren) 
   {}
 
@@ -438,7 +466,7 @@ public:
     COType *newLDCOp = new COType ( ldc_  , const_cast<CopyType &> (op).getLocalOp() );
     typedef DataCollector <GridType, COType> OPType;
    
-    OPType *dcOp = new OPType ( grid_ , dm_ , *newLDCOp , (rwType_ == readData) );    
+    OPType *dcOp = new OPType ( grid_ , dm_ , *newLDCOp, rwType_ );    
 
     // memorize this new generated object because is represents this
     // operator and is deleted if this operator is deleted
@@ -458,7 +486,7 @@ public:
     COType *newLDCOp = new COType ( ldc_ + op.getLocalOp() );
     typedef DataCollector <GridType, COType> OPType;
    
-    OPType *dcOp = new OPType ( grid_ , dm_ , *newLDCOp , (rwType_ == readData) );    
+    OPType *dcOp = new OPType ( grid_ , dm_ , *newLDCOp, rwType_ );    
 
     // memorize this new generated object because is represents this
     // operator and is deleted if this operator is deleted
@@ -478,7 +506,7 @@ public:
     COType *newLDCOp = new COType ( ldc_ + op.getLocalInterfaceOp() );
     typedef DataCollector<GridType, COType> OPType;
    
-    OPType *dcOp = new OPType ( grid_ , dm_ , *newLDCOp , (rwType_ == readData) );    
+    OPType *dcOp = new OPType ( grid_ , dm_ , *newLDCOp, rwType_ );  
 
     // memorize this new generated object because is represents this
     // operator and is deleted if this operator is deleted
@@ -511,11 +539,14 @@ public:
     return ldc_;
   }
 
+  //! return true if data collector is writing data instead of reading 
+  bool writeData() const  { return rwType_ == DataCollectorTraits :: writeData ; }
+
   //! apply, if this operator is in write status the inlineData is called
   //! else xtractData is called 
   void apply ( ObjectStreamType & str, const EntityType & entity ) const 
   {
-    if(rwType_ == writeData) 
+    if( writeData() ) 
       inlineData(str, entity );
     else 
       xtractData(str, entity );
@@ -560,8 +591,6 @@ public:
   }
   
 private:
-  enum ReadWriteType { readData , writeData };
-  
   DataCollector<GridType,LocalInterface<ParamType> > * convert ()  
   {
     typedef LocalInterface<ParamType> COType;
@@ -569,7 +598,7 @@ private:
     COType *newLDCOp = new COType ( ldc_ );
     typedef DataCollector <GridType, COType> OPType;
    
-    OPType *dcOp = new OPType ( grid_ , dm_ , *newLDCOp , (rwType_ == readData) );    
+    OPType *dcOp = new OPType ( grid_ , dm_ , *newLDCOp, rwType_ );    
 
     // memorize this new generated object because is represents this
     // operator and is deleted if this operator is deleted
@@ -581,7 +610,7 @@ private:
   // write data of entity 
   void inlineLocal(ObjectStreamType & str, const EntityType& entity ) const 
   {
-    assert( rwType_ == writeData );
+    assert( writeData() );
 
     ParamType p( &str , &entity );
     // apply local operators 
@@ -591,7 +620,7 @@ private:
   // read data of entity 
   void xtractLocal(ObjectStreamType & str, const EntityType& entity ) const 
   {
-    assert( rwType_ == readData );
+    assert( ! writeData() );
     
     ParamType p( &str , &entity );
     // apply local operators 
@@ -618,37 +647,38 @@ private:
 //***********************************************************************
 
 template< class DiscreteFunctionType >
-struct DataInlinerTraits
+struct LocalDataInlinerTraits
 {
   typedef typename DiscreteFunctionType::DiscreteFunctionSpaceType
     DiscreteFunctionSpaceType;
   typedef typename DiscreteFunctionSpaceType::GridType GridType;
   typedef typename GridType::template Codim< 0 >::Entity EntityType;
 
-  typedef typename GridObjectStreamOrDefault< GridType, DummyObjectStream >::ObjectStreamType
-    ObjectStreamType;
+  typedef DofManager < GridType > DofManagerType ;
+  typedef typename DofManagerType :: InlineStreamType ObjectStreamType;
+
   typedef std::pair< ObjectStreamType *, const EntityType * > ParamType;
   typedef LocalInterface< ParamType > LocalInterfaceType;
 };
 
 
-    /** \brief ???
-     * \todo Please doc me!
-     */
+/** \brief ???
+ * \todo Please doc me!
+ */
 template< class DiscreteFunctionType, 
           class ContainsCheck >
-class DataInliner
-: public LocalInlinePlus< DataInliner< DiscreteFunctionType, ContainsCheck >,
-                          typename DataInlinerTraits< DiscreteFunctionType >::ParamType >
+class LocalDataInliner
+: public LocalInlinePlus< LocalDataInliner< DiscreteFunctionType, ContainsCheck >,
+                          typename LocalDataInlinerTraits< DiscreteFunctionType >::ParamType >
 {
-  typedef DataInliner< DiscreteFunctionType, ContainsCheck > ThisType;
-  typedef LocalInlinePlus< ThisType, typename DataInlinerTraits< DiscreteFunctionType >::ParamType > BaseType;
+  typedef LocalDataInliner< DiscreteFunctionType, ContainsCheck > ThisType;
+  typedef LocalInlinePlus< ThisType, typename LocalDataInlinerTraits< DiscreteFunctionType >::ParamType > BaseType;
 
 public:
-  typedef DataInlinerTraits< DiscreteFunctionType > Traits;
+  typedef LocalDataInlinerTraits< DiscreteFunctionType > Traits;
   typedef typename Traits::ObjectStreamType ObjectStreamType;
 
-  typedef DofManager< typename DiscreteFunctionType :: GridType > DofManagerType ;
+  typedef typename Traits :: DofManagerType  DofManagerType;
 
   typedef typename Traits::EntityType EntityType;
   typedef typename Traits::ParamType ParamType;
@@ -661,15 +691,15 @@ public:
   typedef typename DiscreteFunctionType::DomainType DomainType;
 
   //! constructor 
-  explicit DataInliner ( const DiscreteFunctionType & df, 
-                         const ContainsCheck& containsCheck ) 
+  LocalDataInliner ( const DiscreteFunctionType & df, 
+                     const ContainsCheck& containsCheck ) 
     : df_ (df),
       dm_( DofManagerType :: instance( df.space().grid() ) ),
       containsCheck_( containsCheck )
   {}
 
   //! copy constructor 
-  DataInliner ( const DataInliner & other  ) 
+  LocalDataInliner ( const LocalDataInliner & other  ) 
     : df_ (other.df_),
       dm_( other.dm_ ),
       containsCheck_( other.containsCheck_ )
@@ -679,11 +709,14 @@ public:
   void apply ( ParamType & p ) const 
   {
     assert( p.first && p.second );
-    this->apply( *p.first, *p.second );
+    inlineData( *p.first, *p.second );
   }
 
+  typename DataCollectorTraits :: ReadWriteType
+  readWriteInfo() const { return DataCollectorTraits :: writeData ; }
+protected:
   //! store data to stream  
-  void apply ( ObjectStreamType& str, const EntityType& entity ) const 
+  void inlineData ( ObjectStreamType& str, const EntityType& entity ) const 
   {
     if( ! containsCheck_.contains ( entity ) ) return ;
 
@@ -708,15 +741,16 @@ protected:
 
 
 template< class DiscreteFunctionType >
-struct DataXtractorTraits
+struct LocalDataXtractorTraits
 {
   typedef typename DiscreteFunctionType::DiscreteFunctionSpaceType
     DiscreteFunctionSpaceType;
   typedef typename DiscreteFunctionSpaceType::GridType GridType;
   typedef typename GridType::template Codim< 0 >::Entity EntityType;
 
-  typedef typename GridObjectStreamOrDefault< GridType, DummyObjectStream >::ObjectStreamType
-    ObjectStreamType;
+  typedef DofManager < GridType > DofManagerType ;
+  typedef typename DofManagerType :: XtractStreamType ObjectStreamType;
+
   typedef std::pair< ObjectStreamType *, const EntityType * > ParamType;
   typedef LocalInterface< ParamType > LocalInterfaceType;
 };
@@ -724,18 +758,18 @@ struct DataXtractorTraits
 
 template< class DiscreteFunctionType,
           class ContainsCheck >
-class DataXtractor
-: public LocalInlinePlus< DataXtractor< DiscreteFunctionType, ContainsCheck >,
-                          typename DataXtractorTraits< DiscreteFunctionType >::ParamType >
+class LocalDataXtractor
+: public LocalInlinePlus< LocalDataXtractor< DiscreteFunctionType, ContainsCheck >,
+                          typename LocalDataXtractorTraits< DiscreteFunctionType >::ParamType >
 {
-  typedef DataXtractor< DiscreteFunctionType, ContainsCheck > ThisType;
-  typedef LocalInlinePlus< ThisType, typename DataXtractorTraits< DiscreteFunctionType >::ParamType > BaseType;
+  typedef LocalDataXtractor< DiscreteFunctionType, ContainsCheck > ThisType;
+  typedef LocalInlinePlus< ThisType, typename LocalDataXtractorTraits< DiscreteFunctionType >::ParamType > BaseType;
 
 public:
-  typedef DataXtractorTraits< DiscreteFunctionType > Traits;
+  typedef LocalDataXtractorTraits< DiscreteFunctionType > Traits;
   typedef typename Traits::ObjectStreamType ObjectStreamType;
 
-  typedef DofManager< typename DiscreteFunctionType :: GridType > DofManagerType ;
+  typedef typename Traits :: DofManagerType  DofManagerType;
 
   typedef typename Traits::EntityType EntityType;
   typedef typename Traits::ParamType ParamType;
@@ -748,14 +782,15 @@ public:
   typedef typename DiscreteFunctionType::DomainType DomainType;
 
   //! constructor 
-  explicit DataXtractor ( DiscreteFunctionType & df, const ContainsCheck& containsCheck ) 
+  LocalDataXtractor ( DiscreteFunctionType & df, 
+                      const ContainsCheck& containsCheck ) 
     : df_ (df),
       dm_( DofManagerType :: instance( df.space().grid() ) ),
       containsCheck_( containsCheck )
     {}
 
   //! copy constructor 
-  DataXtractor ( const DataXtractor & other ) 
+  LocalDataXtractor ( const LocalDataXtractor & other ) 
     : df_( other.df_ ),
       dm_( other.dm_ ),
       containsCheck_( other.containsCheck_ )
@@ -765,11 +800,14 @@ public:
   void apply ( ParamType & p ) const 
   {
     assert( p.first && p.second );
-    this->apply( *p.first, *p.second );
+    xtractData( *p.first, *p.second );
   }
-
+  
+  typename DataCollectorTraits :: ReadWriteType
+  readWriteInfo() const { return DataCollectorTraits :: readData ; }
+protected:
   //! store data to stream  
-  void apply (ObjectStreamType & str, const EntityType& entity ) const 
+  void xtractData (ObjectStreamType & str, const EntityType& entity ) const 
   {
     if( ! containsCheck_.contains ( entity ) ) return ;
 
