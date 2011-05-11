@@ -334,7 +334,6 @@ class FemEocTable
 
   /** \brief add a vector of new eoc values  
    *
-   *  \param tabId Id of the table we inserte a value
    *  \tparam  StrVectorType a vector type with operator[] 
    *           returning a string (a C style array can be used)
    *           the size of the vector is given as parameter
@@ -352,7 +351,6 @@ class FemEocTable
 
   /** \brief add a vector of new eoc values  
    *
-   *  \param tabId Id of the table we inserte a value
    *  \tparam  StrVectorType a vector type with size() and operator[]
    *           returning a string
    *  \return  a unique index used to add the error values 
@@ -368,20 +366,19 @@ class FemEocTable
   }
   /** \brief add a single new eoc output  
    *
-   *  \param tabId Id of the table we want to add an entry
    *  \return  a unique index used to add the error values 
    */
   static size_t addEntry(const int tabId, const std::string& descript) {
     return instance().addentry(tabId, descript);
   }
 
+  
   static size_t addEntry(const std::string& descript) {
     return instance().addentry(0, descript);
   }
 
   /** \brief add a single new eoc output  
    *
-   *  \param tabId Id of the table we want to add an entry
    *  \return  a unique index used to add the error values 
    */
   static size_t addEntry(const int tabId, const char* descript) {
@@ -395,7 +392,6 @@ class FemEocTable
 
   /** \brief add a vector of error values for the given id (returned by
    *         addEntry)
-   *  \param tabId Id of the table we want to set errors
    *  \tparam  VectorType a vector type with an operator[] 
    *           returning a double (C style array can be used)
    */
@@ -414,7 +410,6 @@ class FemEocTable
 
   /** \brief add a vector of error values for the given id (returned by
    *         addEntry)
-   *  \param tabId Id of the table we want to set errors
    *  \tparam  VectorType a vector type with a size() and an operator[] 
    *           returning a double 
    */
@@ -431,7 +426,6 @@ class FemEocTable
 
   /** \brief add a vector in a FieldVector of error values for the given id (returned by
    *         addEntry)
-   *  \param tabId Id of the table we want to set errors
    */
   template <int SIZE>
   static void setErrors(const int tabId, size_t id,const FieldVector<double,SIZE>& err) {
@@ -444,7 +438,6 @@ class FemEocTable
   }
   /** \brief add a single error value for the given id (returned by
    *         addEntry)
-   *  \param tabId Id of the table we want to set errors
    */
   static void setErrors(const int tabId,size_t id,const double& err) {
     instance().seterrors(tabId,id,err);
@@ -461,10 +454,11 @@ class FemEocTable
    *  \param vals  std::vector of vals that should appear in the EOC table, vals[0]  is
    *         expected to be a charateristical value.
    *  \param descriptions std::vector with descriptions of the values that should appear
+   *  \param delimiter spacer between the entries, default =" "
+   *  \param terminatingChar character which end a line, default ="" 
    *  \param header header string for Latex output, default = ""
    *  \param tableSpacer spacer for empty columns in the table, default = ""
    *  \param footer footer string for Latex output, default = ""
-   *  \param delimiter spacer between the entries, default =" "
    *
    *
    */
@@ -500,10 +494,11 @@ class FemEocTable
   *  \param vals  std::vector of vals that should appear in the EOC table, vals[0]  is
   *         expected to be a charateristical value.
   *  \param descriptions std::vector with descriptions of the values that should appear
+  *  \param delimiter spacer between the entries, default =" "
+  *  \param terminatingChar character which end a line, default =""
   *  \param header header string for Latex output, default = ""
   *  \param tableSpacer spacer for empty columns in the table, default = ""
   *  \param footer footer string for Latex output, default = ""
-  *  \param delimiter spacer between the entries, default =" "
   *
   */
   template<class EocCalculatorType>
@@ -539,10 +534,11 @@ class FemEocTable
    *  \param vals  std::vector of vals that should appear in the EOC table 
    *  \param descriptions std::vector with descriptions of the values that should appear
    *  \param out std::ostream to print data to (e.g. std::cout)
+   *  \param delimiter spacer between the entries, default " "
+   *  \param terminatingChar character which ends a line, default =""
    *  \param header header string for Latex output, default = " "
    *  \param tableSpacer spacer for empty columns in the table, default = " "
    *  \param footer footer string for Latex output, default = " "
-   *  \param delimiter spacer between the entries, default " "
    * 
    */
   static void write(const int tabId,
@@ -585,10 +581,11 @@ class FemEocTable
    *  \param vals  std::vector of vals that should appear in the EOC table 
    *  \param descriptions std::vector with descriptions of the values that should appear
    *  \param out std::ostream to print data to (e.g. std::cout)
+   *  \param delimiter spacer between the entries, default " "
+   *  \param terminatingChar Character which end a line, default =""
    *  \param header header string for Latex output, default = " "
    *  \param tableSpacer spacer for empty columns in the table, default = " "
    *  \param footer footer string for Latex output, default = " "
-   *  \param delimiter spacer between the entries, default " "
    * 
    */
   template <class EocCalculatorType>
