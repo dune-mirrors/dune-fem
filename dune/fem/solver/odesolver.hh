@@ -31,13 +31,22 @@ namespace DuneODE {
 struct ODEParameters
 : public LocalParameter< ODEParameters, ODEParameters >
 { 
+  enum { noVerbosity = 0,  noConvergenceVerbosity = 1,
+         cflVerbosity = 2, fullVerbosity = 3 };
+
   ODEParameters() : 
+    // number of minimal iterations that the linear solver should do 
+    // if the number of iterations done is smaller then the cfl number is increased  
     min_it( Parameter::getValue< int >( "fem.ode.miniterations" , 14 ) ),
+    // number of maximal iterations that the linear solver should do 
+    // if the number of iterations larger then the cfl number is decreased   
     max_it( Parameter::getValue< int >( "fem.ode.maxiterations" , 16 ) ),
+    // factor for cfl number on increase (decrease is 0.5)
     sigma( Parameter::getValue< double >( "fem.ode.cflincrease" , 1.1 ) )
   {
   }
 
+  // choice of linear solver for the implicit ODE solver 
   virtual PARDG::IterativeLinearSolver *linearSolver(PARDG::Communicator & comm) const
   {
     PARDG::IterativeLinearSolver* solver = 0;
@@ -46,21 +55,27 @@ struct ODEParameters
     int method = Parameter::getEnum( "fem.ode.linersolver" , methodTypeTable,0 );
     if (method == 0)
     {
+      // number of gmres clycles that should be done 
       int cycles = Parameter::getValue< int >( "fem.ode.gmrescycles" , 15 );
       solver = new PARDG::GMRES(comm,cycles);
     }
     else {
       solver = new PARDG::CG(comm);
     }
+    // tolerance for the linear solver 
     double tol = Parameter::getValue< double >( "fem.ode.solver.tolerance" , 1e-8 );
     static const std::string errorTypeTable[]
       = { "absolute", "relative" };
+    // errormeassure used in the linear solver 
     int errorType = Parameter::getEnum( "fem.ode.solver.errormeasure", errorTypeTable, 0 );
     solver->set_tolerance(tol,(errorType==1));
+    // max iterations that the linear solver should do 
     int maxIter = Parameter::getValue< int >( "fem.ode.solver.iterations" , 1000 );
     solver->set_max_number_of_iterations(maxIter);
     return solver;
   }
+  /** \brief tolerance for the non-linear solver (should be larger than the tolerance for
+             the linear solver */
   virtual double tolerance() const
   {
     return Parameter::getValue< double >( "fem.ode.tolerance" , 1e-6 );
@@ -69,10 +84,11 @@ struct ODEParameters
   {
     return Parameter::getValue< int >( "fem.ode.iterations" , 1000 );
   }
+  /** \brief verbosity level ( none, noconv, cfl, full )  */
   virtual int verbose() const
   {
     static const std::string verboseTypeTable[]
-      = { "none", "cfl", "full" };
+      = { "none", "noconv", "cfl", "full" };
     return Parameter::getEnum( "fem.ode.verbose" , verboseTypeTable, 0 );
   }
   virtual double cflStart() const
@@ -491,7 +507,7 @@ protected:
     odeSolver->set_tolerance( parameter().tolerance() );
     odeSolver->set_max_number_of_iterations( parameter().iterations() );
     
-    if( verbose_ == 2 ) 
+    if( verbose_ == ODEParameters :: fullVerbosity ) 
     {
       odeSolver->IterativeSolver::set_output(cout);
       odeSolver->DynamicalObject::set_output(cout);
@@ -553,7 +569,7 @@ public:
       // timeProvider_.provideTimeStepEstimate( cfl_ * spaceOperator().timeStepEstimate() );
       timeProvider_.provideTimeStepEstimate( timeStepEstimate(cfl_) );
 
-      if( changed && (verbose_ >= 1) && (MPIManager::rank() == 0) )
+      if( changed && (verbose_ >= ODEParameters :: cflVerbosity ) && (MPIManager::rank() == 0) )
       {
         derr << " New cfl number is: "<< cfl_ << ", iterations per time step("
              << "ILS: " << monitor.linearSolverIterations_
@@ -568,7 +584,7 @@ public:
       timeProvider_.invalidateTimeStep();
      
       // output only in verbose mode 
-      if( (verbose_ >= 1) && (MPIManager::rank() == 0) )
+      if( (verbose_ >= ODEParameters :: noConvergenceVerbosity) && (MPIManager::rank() == 0) )
         derr << "No convergence: New cfl number is " << cfl_ << std::endl;
     }
 
@@ -688,7 +704,7 @@ protected:
     odeSolver->set_tolerance( parameter().tolerance() );
     odeSolver->set_max_number_of_iterations( parameter().iterations() );
     
-    if( verbose_ == 2 ) 
+    if( verbose_ == ODEParameters :: fullVerbosity ) 
     {
       odeSolver->IterativeSolver::set_output(cout);
       odeSolver->DynamicalObject::set_output(cout);
