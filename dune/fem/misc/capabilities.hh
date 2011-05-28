@@ -42,6 +42,9 @@ namespace Dune
   template< class HostGrid >
   class CartesianGrid;
 
+  template< int dim, int dimw, class ctype >
+  class P4estGrid;
+
   // Capabilities
   // ------------
 
@@ -182,6 +185,12 @@ namespace Dune
       static const bool v = supportsCallbackAdaptation< HostGrid > :: v;
     };
 
+    template< int dim, int dimworld, class ct >
+    struct supportsCallbackAdaptation< P4estGrid< dim, dimworld, ct> >
+    {
+      static const bool v = true;
+    };
+
 
 
     // isLocallyAdaptive
@@ -247,6 +256,11 @@ namespace Dune
       static const bool v = isLocallyAdaptive< HostGrid > :: v;
     };
 
+    template< int dim, int dimworld, class ct >
+    struct isLocallyAdaptive< P4estGrid< dim, dimworld, ct > >
+    {
+      static const bool v = true;
+    };
 
     // IsUnstructured (deprecated)
     // --------------

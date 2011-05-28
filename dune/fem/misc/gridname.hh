@@ -78,6 +78,7 @@ namespace Dune
         knownGrids.push_back( "GeometryGrid" );
         knownGrids.push_back( "ParallelSimplexGrid" );
         knownGrids.push_back( "SPGrid" );
+        knownGrids.push_back( "P4estGrid" );
 
         bool found = false ;
         for(size_t i=0; i<knownGrids.size(); ++i) 
