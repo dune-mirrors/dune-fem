@@ -18,14 +18,16 @@ namespace Dune
    *
    *  \param  Operator  type of the operator to invert
    */
-  template< class Operator >
+  template< class Operator>
   class ConjugateGradientSolver
   {
-    typedef ConjugateGradientSolver< Operator > ThisType;
+    typedef ConjugateGradientSolver< Operator> ThisType;
 
   public:
     //! type of the operators to invert
     typedef Operator OperatorType;
+   
+
 
     //! field type of the operator's domain vectors
     typedef typename OperatorType::DomainFieldType DomainFieldType;
@@ -36,6 +38,10 @@ namespace Dune
     typedef typename OperatorType::DomainFunctionType DomainFunctionType;
     //! type of the operator's range vectors
     typedef typename OperatorType::RangeFunctionType RangeFunctionType;
+
+    //! type of the preconditioner, maps from the range of the operator (the dual space) in it's domain
+    typedef Fem::Operator< RangeFunctionType, DomainFunctionType > PreconditionerType;
+
 
   private:
     dune_static_assert( (Conversion< DomainFunctionType, RangeFunctionType >::sameType),
@@ -56,6 +62,7 @@ namespace Dune
       verbose_( verbose ),
       averageCommTime_( 0.0 ),
       realCount_( 0 )
+      
     {}
 
     /** \brief constructor
@@ -71,6 +78,8 @@ namespace Dune
       averageCommTime_( 0.0 ),
       realCount_( 0 )
     {}
+  
+
 
   private:
     // prohibit copying
@@ -90,6 +99,9 @@ namespace Dune
      */
     void solve ( const OperatorType &op, const RangeFunctionType &b, DomainFunctionType &x ) const;
 
+    void solve ( const OperatorType &op, const PreconditionerType &precond,const RangeFunctionType &b, DomainFunctionType &x ) const;
+    
+
     //! number of iterations needed for last solve 
     unsigned int iterations () const 
     {
@@ -108,6 +120,7 @@ namespace Dune
     const bool verbose_;
     mutable double averageCommTime_;
     mutable unsigned int realCount_;
+
   };
 
 
@@ -121,7 +134,7 @@ namespace Dune
    */
   template< class DiscreteFunction >
   class CGInverseOperator
-  : public Fem::Operator< DiscreteFunction, DiscreteFunction >
+   : public Fem::Operator< DiscreteFunction, DiscreteFunction >
   {
     typedef Fem::Operator< DiscreteFunction, DiscreteFunction > BaseType;
     
@@ -129,7 +142,12 @@ namespace Dune
     typedef typename BaseType::DomainFunctionType DomainFunctionType;
     typedef typename BaseType::RangeFunctionType RangeFunctionType;
 
+    
+    //??? sollten hier auch Domain/Range Function stehen?
     typedef Fem::Operator< DiscreteFunction, DiscreteFunction > OperatorType;
+    
+    // Preconditioner is to approximate op^-1 !
+    typedef Fem::Operator< RangeFunctionType,DomainFunctionType > PrecondType;
 
   private:
     typedef ConjugateGradientSolver< OperatorType > SolverType;
@@ -147,6 +165,7 @@ namespace Dune
                         double redEps, double absLimit,
                         unsigned int maxIter, bool verbose )
     : operator_( op ),
+      precond_ ( 0 ),
       solver_( absLimit, maxIter, verbose )
     {}
 
@@ -160,9 +179,29 @@ namespace Dune
     CGInverseOperator ( const OperatorType &op,
                         double redEps, double absLimit,
                         unsigned int maxIter = std::numeric_limits< unsigned int >::max() )
-    : operator_( op ),
-      solver_( absLimit, maxIter )
+      : operator_( op ),
+	precond_ ( 0 ),
+	solver_( absLimit, maxIter )
     {}
+    
+    /** \brief constructor of CGInverseOperator
+     *
+     *  \param[in]  op       operator to invert
+     *  \param[in]  redEps   reduction epsilon
+     *  \param[in]  absLimit absolut limit of residual
+     *  \param[in]  maxIter  maximum number of iteration steps
+     */
+    CGInverseOperator ( const OperatorType &op,
+                        const PrecondType &precond,
+			double redEps, double absLimit,
+                        unsigned int maxIter = std::numeric_limits< unsigned int >::max() )
+      : operator_( op ),
+	precond_( &precond ),
+	solver_( absLimit, maxIter )
+    {}
+
+
+
 
     /** \brief application operator
      *
@@ -174,7 +213,10 @@ namespace Dune
      */
     virtual void operator() ( const DomainFunctionType &u, RangeFunctionType &w ) const
     {
-      solver_.solve( operator_, u, w );
+      if(precond_)
+	solver_.solve( operator_,*precond_, u, w );
+      else 
+	solver_.solve(operator_,u,w);
     }
 
     //! number of iterations needed for last solve 
@@ -191,23 +233,26 @@ namespace Dune
 
   protected:
     const OperatorType &operator_;
+    const PrecondType* precond_;
     SolverType solver_;
   };
 
 
-
+  //TODO Adapt to the concept of dualspaces
   /** \class   CGInverseOp
    *  \ingroup OEMSolver
    *  \brief   Inversion operator using CG algorithm, operator type is a
    *           template parameter.
    */
-  template< class DF, class Op >
+    template< class DF, class Op >
   struct CGInverseOp
   : public Operator< typename DF::RangeFieldType, typename DF::RangeFieldType, DF, DF >
   {
     typedef DF DiscreteFunctionType;
     typedef Op OperatorType;
-
+    typedef Fem::Operator< DiscreteFunctionType, DiscreteFunctionType > PrecondType;
+    
+    
     /** \brief constructor of CGInverseOperator
      *
      *  \param[in] op Mapping describing operator to invert
@@ -222,6 +267,7 @@ namespace Dune
                  int maxIter,
                  bool verbose )
     : operator_( op ),
+      precond_(op),
       solver_( absLimit, maxIter, verbose )
     {} 
 
@@ -237,8 +283,49 @@ namespace Dune
                  double absLimit,
                  unsigned int maxIter = std::numeric_limits< int >::max() )
     : operator_( op ),
+      precond_(0),
       solver_( absLimit, maxIter )
     {} 
+
+
+     /** \brief constructor of CGInverseOperator
+     *
+     *  \param[in] op Mapping describing operator to invert
+     *  \param[in] preconditioner
+     *  \param[in] redEps reduction epsilon
+     *  \param[in] absLimit absolut limit of residual
+     *  \param[in] maxIter maximal iteration steps
+     *  \param[in] verbose verbosity
+     */
+    CGInverseOp( const OperatorType &op,
+                 const PrecondType &precond,
+		 double redEps,
+                 double absLimit,
+                 int maxIter,
+                 bool verbose )
+    : operator_( op ),
+      precond_(&precond),
+      solver_( absLimit, maxIter, verbose )
+    {} 
+
+    /** \brief constructor of CGInverseOperator
+     *
+     *  \param[in] op Mapping describing operator to invert
+     *  \param[in] preconditioner
+     *  \param[in] redEps reduction epsilon
+     *  \param[in] absLimit absolut limit of residual
+     *  \param[in] maxIter maximal iteration steps
+     */
+    CGInverseOp( const OperatorType &op,
+                 const PrecondType &precond,
+		 double redEps,
+                 double absLimit,
+                 unsigned int maxIter = std::numeric_limits< int >::max() )
+    : operator_( op ),
+      precond_(&precond),
+      solver_( absLimit, maxIter )
+    {} 
+
 
     /** \brief solve the system 
         \param[in] arg right hand side 
@@ -247,7 +334,10 @@ namespace Dune
     virtual void operator() ( const DiscreteFunctionType &arg,
                               DiscreteFunctionType &dest ) const
     {
-      solver_.solve( operator_, arg, dest );
+      if(precond_)
+	solver_.solve( operator_,*precond_ ,arg, dest );
+      else
+	solver_.solve( operator_, arg, dest );
     }
     
     //! number of iterations needed for last solve 
@@ -264,6 +354,7 @@ namespace Dune
 
   protected:
     const OperatorType &operator_;
+    const PrecondType* precond_;
     const ConjugateGradientSolver< OperatorType > solver_;
   };
 
@@ -324,6 +415,75 @@ namespace Dune
     }
   }
 
+  // Implementation of PreconditionedConjugateGradientSolver
+  // -----------------------------------------
+
+  template< class Operator >
+  inline void ConjugateGradientSolver< Operator >
+  ::solve ( const OperatorType &op, const PreconditionerType &precond, const RangeFunctionType &b, DomainFunctionType &x ) const
+  {
+    const bool verbose = (verbose_ && (b.space().grid().comm().rank() == 0));
+    
+    const RangeFieldType tolerance = (epsilon_ * epsilon_) * b.scalarProductDofs( b ); 
+
+    averageCommTime_ = 0.0;
+    
+    RangeFunctionType h( b );
+    //h=Ax
+    op( x, h );
+
+    //r=Ax-b
+    RangeFunctionType r( h );
+    r -= b;
+ 
+    //p=b-A*x <= r_0 Deufelhard
+    RangeFunctionType p( b );
+    p -= h;
+    
+    //q=B*p <=q Deuf
+    RangeFunctionType q ( b );
+    precond(p,q);
+ 
+    RangeFunctionType s (q);
+    
+    RangeFieldType prevResiduum = 0;
+    RangeFieldType residuum = p.scalarProductDofs( q );//<p,Bp>
+ 
+    for( realCount_ = 0; (residuum > tolerance) && (realCount_ < maxIterations_); ++realCount_ )
+    {
+     
+      if( realCount_ > 0 )
+       { 
+	 const RangeFieldType beta=residuum/prevResiduum;
+	 q*=beta;
+	 q+=(s);
+       }
+      
+      op( q, h );
+      
+      const RangeFieldType alpha = residuum / q.scalarProductDofs( h );//<p,Bp>/<q,Aq>
+      x.addScaled( q, alpha );
+      
+      p.addScaled( h, -alpha );//r_k
+      
+      precond(p,s); //B*r_k
+      
+      prevResiduum = residuum;//<rk-1,B*rk-1>
+      
+      residuum = p.scalarProductDofs( s );//<rk,B*rk>
+      
+      double exchangeTime = h.space().communicator().exchangeTime();
+      if( verbose )
+      {
+        std::cerr << "CG-Iteration: " << realCount_ << ", Residuum: " << residuum << std::endl;
+        // only for parallel apps 
+        if( b.space().grid().comm().size() > 1 )
+          std::cerr << "Communication needed: " << exchangeTime << " s" << std::endl;
+      }
+      
+      averageCommTime_ += exchangeTime;
+    }
+  }
 } // end namespace Dune
 
 #endif // #ifndef DUNE_FEM_INVERSEOPERATORS_HH
