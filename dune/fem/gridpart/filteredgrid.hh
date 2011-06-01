@@ -426,6 +426,9 @@ namespace Dune
     // the codim 0 entities type
     typedef typename GridType::template Codim<0>::Entity EntityCodim0Type;
 
+    // overload grid view type 
+    typedef GridView< GridPartViewTraits< ThisType > > GridViewType;
+
     //! Struct providing types of the iterators on codimension cd
     template< int codim >
     struct Codim
@@ -458,6 +461,13 @@ namespace Dune
     {
       updateStatus();
       indexSetPtr_ = IndexSetSpecialization<0, useFilteredIndexSet > :: create( *this );
+    }
+    
+    //! return grid view of this grid part
+    GridViewType gridView () const
+    {
+      typedef typename GridViewType :: GridViewImp Impl;
+      return GridViewType( Impl(*this) );
     }
 
     //! Copy Constructor
