@@ -502,7 +502,7 @@ private:
       assert( !en.isLeaf() );
 
       // don't call this method on ghosts 
-      assert( en.partitionType() != GhostEntity );
+      // assert( en.partitionType() != GhostEntity );
       
       EntityType & son = *it; 
       if( son.isNew() )

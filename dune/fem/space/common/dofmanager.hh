@@ -484,7 +484,7 @@ public:
       // get old size (which we still have in array)
       const int oldSize = array_.size(); 
       // new size must be at least the same as old size 
-      assert( nSize <= oldSize );
+      // assert( nSize <= oldSize );
 
       // begin with block zero since closing of holes 
       // has to be done anyway if the mapper is consecutive
