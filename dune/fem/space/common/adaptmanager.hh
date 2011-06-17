@@ -501,9 +501,6 @@ private:
       // should only get here on non-leaf entities 
       assert( !en.isLeaf() );
 
-      // don't call this method on ghosts 
-      assert( en.partitionType() != GhostEntity );
-      
       EntityType & son = *it; 
       if( son.isNew() )
       {
