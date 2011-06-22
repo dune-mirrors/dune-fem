@@ -449,7 +449,8 @@ public:
     linsolver_( 0 ),
     param_( ODEParameters().clone() ),
     verbose_( param_->verbose() ),
-    cfl_(1.0)
+    cfl_(1.0),
+    cflMax_( param_->cflMax() )
   {
   }
 
