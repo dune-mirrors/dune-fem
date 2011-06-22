@@ -783,21 +783,12 @@ namespace Dune
       // generate adaptive leaf grid part 
       // do not use leaf grid part since this will 
       // create the grids leaf index set, which might not be wanted. 
-      typedef GridPartGetter< GridType, OutPutDataType> GridPartGetterType;
-      GridPartGetterType gp( grid_, data_ );
-
-      // create vtk output handler 
-      typedef VTKIO < typename GridPartGetterType :: GridPartType > VTKIOType; 
-      VTKIOType vtkio ( gp.gridPart() , VTKOptions::nonconforming );
-
-      /*
       typedef AdaptiveLeafGridPart< GridType > GridPartType; 
       GridPartType gridPart( const_cast<GridType&> (grid_) );
-      */
 
       // create vtk output handler 
-      //typedef VTKIO < GridPartType > VTKIOType; 
-      //VTKIOType vtkio ( gridPart, VTKOptions::conforming );
+      typedef VTKIO < GridPartType > VTKIOType; 
+      VTKIOType vtkio ( gridPart, VTKOptions::conforming );
 
       // add all functions 
       VTKOutputerLagrange< VTKIOType > io( vtkio );
