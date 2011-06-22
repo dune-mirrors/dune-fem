@@ -153,8 +153,8 @@ BlockVectorDiscreteFunction<DiscreteFunctionSpaceType>::dend ( ) const
 
 template< class DiscreteFunctionSpaceType >
 inline void BlockVectorDiscreteFunction< DiscreteFunctionSpaceType >
-  :: addScaled ( const DiscreteFunctionType &g,
-                 const RangeFieldType &s )
+  :: axpy ( const DiscreteFunctionType &g,
+            const RangeFieldType &s )
 {
   const DofStorageType &gvec = g.dofVec_;
   assert( dofVec_.size() == gvec.size() );

@@ -217,10 +217,10 @@ namespace Dune
       return *this;
     }
 
-    /** \copydoc Dune::DiscreteFunctionInterface::addScaled(const DiscreteFunctionInterfaceType &g,const RangeFieldType &s) */
-    void addScaled( const DiscreteFunctionInterfaceType &g, const RangeFieldType &s )
+    /** \copydoc Dune::DiscreteFunctionInterface::axpy(const DiscreteFunctionInterfaceType &g,const RangeFieldType &s) */
+    void axpy( const DiscreteFunctionInterfaceType &g, const RangeFieldType &s )
     {
-      Imp::addScaled( asImp( g ), s );
+      Imp::axpy( asImp( g ), s );
     }
 
   protected:
