@@ -75,9 +75,9 @@ namespace Dune {
     //! Set all elements to zero
     void clear();
 
-    //! daxpy operation
-    void addScaled(const ThisType& g,
-                   const RangeFieldType& c);
+    //! axpy operation
+    void axpy(const ThisType& g,
+              const RangeFieldType& c);
 
     //! Assignment
     void assignFunction(const ThisType& org);

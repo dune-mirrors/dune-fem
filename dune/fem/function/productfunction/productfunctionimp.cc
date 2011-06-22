@@ -88,7 +88,7 @@ inline void ProductDiscreteFunction<DiscreteFunctionSpaceType, DiscreteFunctionS
   const int map = space2().mapToGlobal( en2 , i );  
   bSet2.evaluate(i,quad2[pointNr],tmp_);
   DiscreteFunction1Type df = this->localFunction(map);
-	    discFunc.addScaled(df,tmp_);
+	    discFunc.axpy(df,tmp_);
  }
 	
 }
@@ -110,7 +110,7 @@ localFunction(const Entity2Type &en2, const PointType &pt, DiscreteFunction1Type
   const int map = space2().mapToGlobal( en2 , i );  
   bSet2.evaluate(pt,tmp_);
   DiscreteFunction1Type df = this->localFunction(map);
-	    discFunc.addScaled(df,tmp_);
+	    discFunc.axpy(df,tmp_);
  }
 }
 
@@ -144,7 +144,7 @@ ProductDiscreteFunction< DiscreteFunctionSpaceType, DiscreteFunctionSpace2Type>:
 
 template<class DiscreteFunctionSpaceType, class DiscreteFunctionSpace2Type>
 inline void ProductDiscreteFunction< DiscreteFunctionSpaceType, DiscreteFunctionSpace2Type>::
-addScaled( const ThisType &org, const RangeFieldType &c )
+axpy( const ThisType &org, const RangeFieldType &c )
 {
   dofVec_.axpy(org.dofVec_ , c);
 }

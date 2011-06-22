@@ -285,9 +285,9 @@ public:
   /** \copydoc Dune::DiscreteFunctionDefault::clear */
   void clear();
 
-  /** \copydoc Dune::DiscreteFunctionDefault::addScaled */
-  void addScaled ( const DiscreteFunctionType &g,
-                   const RangeFieldType &s ); 
+  /** \copydoc Dune::DiscreteFunctionDefault::axpy */
+  void axpy ( const DiscreteFunctionType &g,
+              const RangeFieldType &s ); 
  
   /** \copydoc Dune::DiscreteFunctionInterface::print */
   void print( std :: ostream &out ) const;

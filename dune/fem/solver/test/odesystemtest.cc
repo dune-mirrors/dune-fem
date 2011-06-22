@@ -55,6 +55,10 @@ public:
     (*this).axpy(l, other);
   }
   
+  void axpy(const myDest& other, RangeFieldType l) {
+    (*this).axpy(other, l);
+  }
+  
   double operator()(int i) const {
     if (i<0 || i>this->size-1) {
       std::cout << "ERROR: Accessing element " << i << std::endl;

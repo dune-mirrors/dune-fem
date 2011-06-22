@@ -155,7 +155,7 @@ public:
        \param[in] c scalar value to scale 
     */  
   inline
-  void addScaled (const ThisType & g, const RangeFieldType &c); 
+  void axpy (const ThisType & g, const RangeFieldType &c); 
       
    /** \brief print all degrees of freedom of this function to stream (for debugging purpose)
        \param[out] s std::ostream (e.g. std::cout)

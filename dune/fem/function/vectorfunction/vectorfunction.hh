@@ -169,14 +169,14 @@ namespace Dune
       return *this;
     }
 
-    void addScaled ( const RangeFieldType &s, const ThisType &u )
+    void axpy ( const RangeFieldType &s, const ThisType &u )
     {
       dofVector().addScaled( s, u.dofVector() );
     }
 
-    void addScaled ( const ThisType &u, const RangeFieldType &s )
+    void axpy ( const ThisType &u, const RangeFieldType &s )
     {
-      addScaled( s, u );
+      axpy( s, u );
     }
 
     void assign ( const ThisType &u )

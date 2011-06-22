@@ -278,7 +278,9 @@ namespace Fem {
      *  \param[in]  scalar  scalar by which v has to be multiplied before adding it to *this
      *  \param[in]  v       the other discrete function which has to be scaled and added
      */
+    DUNE_VERSION_DEPRECATED(1,3,axpy)
     void addScaled (const RangeFieldType& scalar, const ThisType& v) { axpy(scalar, v); } // TODO: make these methods DUNE_DEPRECATED?
+    DUNE_VERSION_DEPRECATED(1,3,axpy)
     void addScaled (const ThisType& v, const RangeFieldType& scalar) { axpy(scalar, v); }
 
     /** \brief Obtain the (modifiable) 'index'-th block

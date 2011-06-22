@@ -48,6 +48,9 @@ public:
   void addScaled(const myDest& other, RangeFieldType l) {
     d_ += other.d_*l;
   }
+  void axpy(const myDest& other, RangeFieldType l) {
+    d_ += other.d_*l;
+  }
   myDest& operator*=(RangeFieldType l) {
     d_ *= l;
     return *this;

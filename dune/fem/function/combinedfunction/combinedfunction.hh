@@ -245,8 +245,15 @@ namespace Dune
      */
     void addScaled( const DiscreteFunctionInterfaceType &g, const RangeFieldType &s )
     {
+      axpy( g, s );
+    }
+
+    /** \copydoc Dune::DiscreteFunctionInterface::addScaled
+     */
+    void axpy( const DiscreteFunctionInterfaceType &g, const RangeFieldType &s )
+    {
       for (int i=0; i<N; ++i)
-        func_[i]->addScaled( asImp( g ).subFunction( i ), s );
+        func_[i]->axpy( asImp( g ).subFunction( i ), s );
     }
 
     /** \copydoc Dune::DiscreteFunctionInterface::scalarProductDofs(const DiscreteFunctionInterfaceType &other) const */
