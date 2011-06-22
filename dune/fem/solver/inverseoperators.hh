@@ -267,7 +267,7 @@ namespace Dune
                  int maxIter,
                  bool verbose )
     : operator_( op ),
-      precond_(op),
+      precond_( 0 ),
       solver_( absLimit, maxIter, verbose )
     {} 
 
@@ -318,7 +318,7 @@ namespace Dune
      */
     CGInverseOp( const OperatorType &op,
                  const PrecondType &precond,
-		 double redEps,
+                 double redEps,
                  double absLimit,
                  unsigned int maxIter = std::numeric_limits< int >::max() )
     : operator_( op ),

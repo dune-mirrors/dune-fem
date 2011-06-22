@@ -17,10 +17,7 @@ namespace Dune
   //! \brief The Laplace operator
   template< class DiscreteFunction, class MatrixTraits, class Tensor >
   class LaplaceFEOp
-  : public Operator< typename DiscreteFunction :: RangeFieldType,
-                     typename DiscreteFunction :: RangeFieldType,
-                     DiscreteFunction,
-                     DiscreteFunction >,
+  : public Fem::Operator< DiscreteFunction, DiscreteFunction >,
     public OEMSolver::PreconditionInterface
   {
     // needs to be friend for conversion check 

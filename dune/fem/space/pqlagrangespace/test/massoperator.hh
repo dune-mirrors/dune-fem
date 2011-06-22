@@ -11,9 +11,7 @@ namespace Dune
 
   template< class DiscreteFunction >
   class MassOperator
-  : public Dune::Operator< typename DiscreteFunction::RangeFieldType,
-                           typename DiscreteFunction::RangeFieldType,
-                           DiscreteFunction, DiscreteFunction >
+  : public Dune::Fem::Operator< DiscreteFunction, DiscreteFunction >
   {
     typedef MassOperator< DiscreteFunction > ThisType;
 
