@@ -4,7 +4,7 @@
 #include <dune/fem/quadrature/cachingquadrature.hh>
 #include <dune/fem/operator/common/operator.hh>
 #include <dune/fem/function/common/discretefunction.hh>
-#include <dune/fem/function/common/discretefunctionadapter.hh>
+#include <dune/fem/function/common/gridfunctionadapter.hh>
 #include <dune/fem/operator/1order/localmassmatrix.hh>
 
 namespace Dune 
@@ -69,7 +69,7 @@ class DGL2ProjectionImpl
       // create function adapter in case of incorrect implementation 
       FunctionAdapterType af( f );
       // create discrete function adapter 
-      DiscreteFunctionAdapter< FunctionAdapterType, GridPartType> adapter(
+      GridFunctionAdapter< FunctionAdapterType, GridPartType> adapter(
           "DGL2projection::adapter" , f , discFunc.space().gridPart());
       
       DGL2ProjectionImpl::projectFunction(adapter, discFunc, polOrd);
