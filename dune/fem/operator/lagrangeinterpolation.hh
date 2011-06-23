@@ -2,7 +2,7 @@
 #define DUNE_FEM_LAGRANGEINTERPOLATION_HH
 
 #include <dune/common/typetraits.hh>
-#include <dune/fem/function/common/discretefunctionadapter.hh>
+#include <dune/fem/function/common/gridfunctionadapter.hh>
 
 namespace Dune 
 {
@@ -112,11 +112,11 @@ namespace Dune
       typedef typename DiscreteFunctionType::DiscreteFunctionSpaceType
         DiscreteFunctionSpaceType;
       typedef typename DiscreteFunctionSpaceType::GridPartType GridPartType;
-      typedef DiscreteFunctionAdapter< FunctionType, GridPartType >
-        DiscreteFunctionAdapterType;
+      typedef GridFunctionAdapter< FunctionType, GridPartType >
+        GridFunctionAdapterType;
 
       const DiscreteFunctionSpaceType &dfSpace = discreteFunction.space();
-      DiscreteFunctionAdapterType dfAdapter( "function", function, dfSpace.gridPart() );
+      GridFunctionAdapterType dfAdapter( "function", function, dfSpace.gridPart() );
       interpolateDiscreteFunction( dfAdapter, discreteFunction );
     }
   };
