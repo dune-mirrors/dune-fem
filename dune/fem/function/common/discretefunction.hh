@@ -827,5 +827,5 @@ namespace Dune
 
 #include "discretefunction_inline.hh"
 
-#include "discretefunctionadapter.hh"
+#include "gridfunctionadapter.hh"
 #endif
