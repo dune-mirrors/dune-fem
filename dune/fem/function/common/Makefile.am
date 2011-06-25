@@ -5,7 +5,7 @@ common_HEADERS = discretefunction.hh \
                  dofblock.hh \
                  dofiterator.hh \
                  function.hh \
-								 gridfunctionadapter.hh \
+                 gridfunctionadapter.hh \
                  localfunctionadapter.hh \
                  scalarproducts.hh
 
