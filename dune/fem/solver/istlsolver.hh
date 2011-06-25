@@ -11,6 +11,7 @@
 #if HAVE_DUNE_ISTL 
 #include <dune/istl/preconditioners.hh>
 #include <dune/istl/solvers.hh>
+#include <dune/istl/superlu.hh>
 
 namespace Dune
 {
@@ -521,6 +522,169 @@ namespace Dune
     mutable int iterations_;
     mutable double averageCommTime_;
   }; 
+
+
+
+  // ISTLSuperLUOp
+  // --------------
+
+  /** \brief SuperLU solver for block matrices (BCRSMatrix) 
+      and block vectors (BVector) from DUNE-ISTL.
+   
+      The solver is based in the 
+      well known <a href="http://crd.lbl.gov/~xiaoye/SuperLU/">SuperLU 
+      package</a>.
+  */
+  template< class DF, class Op >
+  struct ISTLSuperLU 
+  : public Operator< typename DF::RangeFieldType, typename DF::RangeFieldType, DF, DF >
+  {
+    typedef DF DiscreteFunctionType;
+    typedef Op OperatorType;
+
+  private:
+    template <class OperatorImp, bool hasPreconditioning>
+    struct SolverCaller
+    {
+      template <class DiscreteFunctionImp>
+      static std::pair< int, double >
+      call ( const OperatorImp &op,
+             const DiscreteFunctionImp &arg, DiscreteFunctionImp &dest,
+             bool verbose )
+      {
+        return solve( op.systemMatrix(), arg, dest, verbose );
+      }
+
+      template< class MatrixObjType, class DiscreteFunctionImp >
+      static std::pair< int, double >
+      solve ( const MatrixObjType &mObj,
+              const DiscreteFunctionImp &arg, DiscreteFunctionImp &dest,
+              bool verbose )
+      {
+        // we need the type of the BCRSMatrix for the SuperLU solver
+        typedef typename MatrixObjType::MatrixAdapterType MatrixAdapterType;
+        typedef typename MatrixAdapterType :: MatrixType ImprovedMatrixType ;
+
+        // we need the BCRSMatrix type here, since SuperLU is only working 
+        // with that explicit type 
+        typedef typename ImprovedMatrixType::BaseType MatrixType ;
+        MatrixAdapterType matrix = mObj.matrixAdapter();
+        
+        typedef typename DiscreteFunctionType :: DofStorageType BlockVectorType;
+
+        InverseOperatorResult returnInfo;
+#if HAVE_SUPERLU
+        // create solver 
+        SuperLU< MatrixType > solver( matrix.getmat(), verbose );
+        // solve the system 
+        solver.apply( dest.blockVector(), arg.blockVector(), returnInfo );
+#else 
+        DUNE_THROW(NotImplemented,"SuperLU solver not found in configure, please re-configure");
+#endif
+
+        // get information 
+        std::pair< int, double > p( returnInfo.iterations, matrix.averageCommTime() );
+        return p; 
+      }
+    };
+
+  public:
+    /** \brief constructor
+     *
+     *  \param[in] op Mapping describing operator to invert
+     *  \param[in] reduction reduction epsilon
+     *  \param[in] absLimit absolut limit of residual (not used here)
+     *  \param[in] maxIter maximal iteration steps
+     *  \param[in] verbose verbosity
+     *
+     *  \note ISTL SuperLU is only available when SuperLU package is found.
+     */
+    ISTLSuperLU ( const OperatorType &op,
+                  double  reduction,
+                  double absLimit,
+                  int maxIter,
+                  bool verbose )
+    : op_( op ),
+      verbose_( verbose ),
+      iterations_( 0 ),
+      averageCommTime_( 0.0 )
+    {}
+
+    /** \brief constructor
+     *
+     *  \param[in] op        mapping describing operator to invert
+     *  \param[in] reduction    reduction epsilon
+     *  \param[in] absLimit  absolut limit of residual (not used here)
+     *  \param[in] maxIter   maximal iteration steps
+     *
+     *  \note ISTL SuperLU is only available when SuperLU package is found.
+     */
+    ISTLSuperLU ( const OperatorType &op,
+                  double reduction,
+                  double absLimit,
+                  int maxIter = std::numeric_limits< int >::max() )
+    : op_( op ),
+      verbose_( Parameter::getValue< bool >( "fem.solver.verbose", false ) ),
+      iterations_( 0 ),
+      averageCommTime_( 0.0 )
+    {}
+
+    void prepare (const DiscreteFunctionType& Arg, DiscreteFunctionType& Dest) const
+    {}
+
+    void finalize () const
+    {}
+
+    void printTexInfo(std::ostream& out) const
+    {
+      out << "Solver: ISTL SuperLU  ";
+      out  << "\\\\ \n";
+    }
+
+    /** \brief solve the system 
+        \param[in] arg right hand side 
+        \param[out] dest solution 
+    */
+    void apply( const DiscreteFunctionType& arg, DiscreteFunctionType& dest ) const
+    {
+      typedef SolverCaller< OperatorType, true > Caller;
+
+      std::pair< int, double > info
+        = Caller::call( op_, arg, dest, verbose_ );
+
+      iterations_ = info.first;
+      averageCommTime_ = info.second;
+    }
+
+    // return number of iterations 
+    int iterations() const 
+    {
+      return iterations_;
+    }
+
+    //! return accumulated communication time
+    double averageCommTime() const 
+    {
+      return averageCommTime_;
+    }
+
+    /** \brief solve the system 
+        \param[in] arg right hand side 
+        \param[out] dest solution 
+    */
+    void operator() ( const DiscreteFunctionType& arg, DiscreteFunctionType& dest ) const
+    {
+      apply(arg,dest);
+    }
+
+  private:
+    const OperatorType &op_;
+    bool verbose_ ;
+    mutable int iterations_;
+    mutable double averageCommTime_;
+  }; 
+
+
 ///@}
 
 } // end namespace Dune 
