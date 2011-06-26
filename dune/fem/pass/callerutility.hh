@@ -6,7 +6,7 @@
 #include <dune/common/typetraits.hh>
 
 #include <dune/fem/function/localfunction/temporarylocalfunction.hh>
-#include <dune/fem/function/common/discretefunctionadapter.hh>
+#include <dune/fem/function/common/gridfunctionadapter.hh>
 
 #include "selection.hh"
 
