@@ -267,7 +267,7 @@ public:
       (Upd[ord_])->assign(U0);
       for (int j=0; j<i ; ++j) 
       {
-        (Upd[ord_])->axpy(*(Upd[j]),(a[i][j]*dt));
+        (Upd[ord_])->axpy((a[i][j]*dt), *(Upd[j]));
       }
 
       // set new time 
@@ -283,7 +283,7 @@ public:
     // Perform Update
     for (int j=0; j<ord_; ++j) 
     {
-      U0.axpy(*(Upd[j]),(b[j]*dt));
+      U0.axpy((b[j]*dt), *(Upd[j]));
     }
   }
 

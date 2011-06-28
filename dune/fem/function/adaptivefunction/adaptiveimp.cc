@@ -66,7 +66,7 @@ namespace Dune
   template <class DiscreteFunctionSpaceImp>
   inline void 
   AdaptiveFunctionImplementation<DiscreteFunctionSpaceImp>::
-  axpy(const ThisType& org, const RangeFieldType& c) 
+  axpy(const RangeFieldType& c, const ThisType& org) 
   {
     dofVec_.axpy(org.dofVec_ , c);
   }

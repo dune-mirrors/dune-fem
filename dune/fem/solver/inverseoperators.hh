@@ -396,8 +396,8 @@ namespace Dune
       op( p, h );
 
       const RangeFieldType alpha = residuum / p.scalarProductDofs( h );
-      x.axpy( p, alpha );
-      r.axpy( h, alpha );
+      x.axpy( alpha, p );
+      r.axpy( alpha, h );
 
       prevResiduum = residuum;
       residuum = r.scalarProductDofs( r );
@@ -462,9 +462,9 @@ namespace Dune
       op( q, h );
       
       const RangeFieldType alpha = residuum / q.scalarProductDofs( h );//<p,Bp>/<q,Aq>
-      x.axpy( q, alpha );
+      x.axpy( alpha, q );
       
-      p.axpy( h, -alpha );//r_k
+      p.axpy( -alpha, h );//r_k
       
       precond(p,s); //B*r_k
       

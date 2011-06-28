@@ -237,6 +237,7 @@ public:
   ~BlockVectorDiscreteFunction ();
 
   using BaseType :: name;
+  using BaseType :: axpy;
 
 #if 0
   /** \brief @copydoc DiscreteFunctionInterface::localFunction */ 
@@ -286,8 +287,7 @@ public:
   void clear();
 
   /** \copydoc Dune::DiscreteFunctionDefault::axpy */
-  void axpy ( const DiscreteFunctionType &g,
-              const RangeFieldType &s ); 
+  void axpy ( const RangeFieldType &s, const DiscreteFunctionType &g );
  
   /** \copydoc Dune::DiscreteFunctionInterface::print */
   void print( std :: ostream &out ) const;
