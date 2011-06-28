@@ -898,6 +898,18 @@ namespace Dune
         typedef SeqILU0<ISTLMatrixType,RowBlockVectorType,ColumnBlockVectorType> PreconditionerType;
         return createAMGMatrixAdapter( (PreconditionerType*)0, numIterations_ );
       }
+      // AMG ILU-n  
+      else if(preconditioning_ == amg_ilu_n)
+      {
+        typedef SeqILUn<ISTLMatrixType,RowBlockVectorType,ColumnBlockVectorType> PreconditionerType;
+        return createAMGMatrixAdapter( (PreconditionerType*)0, numIterations_ );
+      }
+      // AMG Jacobi   
+      else if(preconditioning_ == amg_jacobi)
+      {
+        typedef SeqJac<ISTLMatrixType,RowBlockVectorType,ColumnBlockVectorType> PreconditionerType;
+        return createAMGMatrixAdapter( (PreconditionerType*)0, numIterations_ );
+      }
       else 
       {
         preConErrorMsg(preconditioning_);
