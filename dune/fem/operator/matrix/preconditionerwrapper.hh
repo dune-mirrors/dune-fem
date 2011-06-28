@@ -6,11 +6,29 @@
 #if HAVE_DUNE_ISTL
 #include <dune/istl/operators.hh>
 #include <dune/istl/preconditioners.hh>
+
+#include <dune/istl/paamg/amg.hh>
+#include <dune/istl/paamg/pinfo.hh>
 #endif
 
 namespace Dune {
 
 #if HAVE_DUNE_ISTL
+  template<class M, class X, class Y, int l=1>
+  class FemSeqILU0 : public SeqILU0<M,X,Y,l>
+  {
+    typedef SeqILU0<M,X,Y,l>  BaseType ;
+  public:  
+    typedef typename X::field_type field_type;
+    FemSeqILU0 (const M& A, int iter, field_type w) 
+      : BaseType( A, w ) 
+    {}
+    FemSeqILU0 (const M& A, field_type w) 
+      : BaseType( A, w ) 
+    {}
+  };
+
+
   //! wrapper class to store perconditioner 
   //! as the interface class does not have to category 
   //! enum 
@@ -20,8 +38,8 @@ namespace Dune {
                             typename MatrixImp :: ColBlockVectorType>
   {
     typedef MatrixImp MatrixType;
-    typedef typename MatrixImp :: RowBlockVectorType X;
-    typedef typename MatrixImp :: ColBlockVectorType Y;
+    typedef typename MatrixType :: RowBlockVectorType X;
+    typedef typename MatrixType :: ColBlockVectorType Y;
             
     typedef Preconditioner<X,Y> PreconditionerInterfaceType;
     MatrixType& matrix_;
@@ -56,7 +74,6 @@ namespace Dune {
         v = d;
       }
     };
-    
   public:
     //! \brief The domain type of the preconditioner.
     typedef X domain_type;
@@ -69,7 +86,7 @@ namespace Dune {
       //! \brief The category the precondtioner is part of.
       category=SolverCategory::sequential };
 
-    //! set preconder to zero 
+    //! copy constructor  
     PreconditionerWrapper (const PreconditionerWrapper& org) 
       : matrix_(org.matrix_) 
       , preconder_(org.preconder_) 
@@ -77,7 +94,7 @@ namespace Dune {
     {
     }
     
-    //! set preconder to zero 
+    //! constructor for creating none-preconditioning wrapper 
     PreconditionerWrapper (MatrixType& m) 
       : matrix_(m) 
       , preconder_()
@@ -86,10 +103,12 @@ namespace Dune {
     
     //! create preconditioner of given type 
     template <class PreconditionerType>
-    PreconditionerWrapper(MatrixType & m,
-                            int iter, field_type relax, const PreconditionerType*) 
+    PreconditionerWrapper(MatrixType & m, 
+                          int iter,
+                          field_type relax, 
+                          const PreconditionerType* p )
       : matrix_(m)
-      , preconder_(new PreconditionerType(m,iter,relax))
+      , preconder_( new PreconditionerType( matrix_, iter, relax ) )
       , preEx_(true) 
     {
     }
@@ -97,9 +116,12 @@ namespace Dune {
     //! create preconditioner of given type 
     template <class PreconditionerType>
     PreconditionerWrapper(MatrixType & m, 
-                            field_type relax, const PreconditionerType*) 
+                          int iter,
+                          field_type relax, 
+                          const PreconditionerType* p ,
+                          const bool )
       : matrix_(m)
-      , preconder_(new PreconditionerType(m,relax))
+      , preconder_( createAMGPreconditioner(iter, relax, p) )
       , preEx_(true) 
     {
     }
@@ -131,7 +153,7 @@ namespace Dune {
       }
       else 
       {
-         Apply<X,Y>::copy( v, d );
+        Apply<X,Y>::copy( v, d );
       }
     }
 
@@ -148,6 +170,45 @@ namespace Dune {
         assert( std::abs( x.two_norm() - tmp.two_norm() ) < 1e-15);
       }
 #endif
+    }
+
+  protected:  
+    template <class S>
+    PreconditionerInterfaceType* 
+    createAMGPreconditioner( int iter, field_type relax, const S* ) 
+    {
+      // use BCRSMatrix type because of specializations in dune-istl
+      typedef typename MatrixType :: BaseType ISTLMatrixType ;
+
+      typedef Dune::Amg::CoarsenCriterion<
+        Dune::Amg::UnSymmetricCriterion<ISTLMatrixType,
+                                  Dune::Amg::FirstDiagonal> > Criterion;
+      
+      // preconditioner 
+      typedef S Smoother ;
+      //typedef SeqILUn< ISTLMatrixType, X, Y > Smoother;
+
+      typedef typename Dune::Amg::SmootherTraits<Smoother>::Arguments SmootherArgs;
+
+      SmootherArgs smootherArgs;
+
+      smootherArgs.iterations = iter;
+      smootherArgs.relaxationFactor = relax ;
+
+      // matrix adapter 
+      typedef MatrixAdapter< ISTLMatrixType, X, Y > OperatorType;
+      OperatorType op( matrix_ );
+
+      int coarsenTarget=1200;
+      Criterion criterion(15,coarsenTarget);
+      criterion.setDefaultValuesIsotropic(2);
+      criterion.setAlpha(.67);
+      criterion.setBeta(1.0e-8);
+      criterion.setMaxLevel(10);
+
+      // X or Y ???
+      typedef Dune::Amg::AMG<OperatorType, X, Smoother> AMG;
+      return new AMG(op, criterion, smootherArgs, 1, 1, 1, false);
     }
   };
 #endif // end HAVE_DUNE_ISTL 

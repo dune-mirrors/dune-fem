@@ -197,6 +197,7 @@ namespace Dune
                typename MatrixImp :: RowBlockVectorType,
                typename MatrixImp :: ColBlockVectorType>
   {
+    typedef LagrangeParallelMatrixAdapter< MatrixImp > ThisType;
   public:
     typedef MatrixImp MatrixType;
     typedef PreconditionerWrapper<MatrixType> PreconditionAdapterType;
@@ -222,7 +223,7 @@ namespace Dune
     enum { category=SolverCategory::sequential };
 
   public:  
-    //! constructor: just store a reference to a matrix
+    //! copy constructur 
     LagrangeParallelMatrixAdapter ( const LagrangeParallelMatrixAdapter &org )
     : matrix_( org.matrix_ ),
       rowSpace_( org.rowSpace_ ),
@@ -233,45 +234,16 @@ namespace Dune
     {}
 
     //! constructor: just store a reference to a matrix
-    LagrangeParallelMatrixAdapter ( MatrixType &matrix,
-                                    const RowSpaceType &rowSpace,
-                                    const ColSpaceType &colSpace )
-    : matrix_( matrix ),
-      rowSpace_( rowSpace ),
-      colSpace_( colSpace ),
-      scp_( colSpace ),
-      preconditioner_( matrix_ ),
-      averageCommTime_( 0 )
-    {}
-
-    //! constructor: just store a reference to a matrix
-    template< class PreconditionerType >
+    //! and the spaces as well as preconditioning method 
     LagrangeParallelMatrixAdapter ( MatrixType &matrix,
                                     const RowSpaceType &rowSpace,
                                     const ColSpaceType &colSpace,
-                                    int iter,
-                                    field_type relax,
-                                    const PreconditionerType *dummy )
+                                    const PreconditionAdapterType& precon ) 
     : matrix_( matrix ),
       rowSpace_( rowSpace ),
       colSpace_( colSpace ),
       scp_( colSpace_ ),
-      preconditioner_( matrix_, iter, relax, dummy ),
-      averageCommTime_( 0 )
-    {}
-
-    //! constructor: just store a reference to a matrix
-    template< class PreconditionerType >
-    LagrangeParallelMatrixAdapter ( MatrixType &matrix,
-                                    const RowSpaceType &rowSpace,
-                                    const ColSpaceType &colSpace,
-                                    field_type relax,
-                                    const PreconditionerType *dummy )
-    : matrix_( matrix ),
-      rowSpace_( rowSpace ),
-      colSpace_( colSpace ),
-      scp_( colSpace_ ),
-      preconditioner_( matrix_, relax, dummy ),
+      preconditioner_( precon ),
       averageCommTime_( 0 )
     {}
 

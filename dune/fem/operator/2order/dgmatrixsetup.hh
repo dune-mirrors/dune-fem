@@ -208,6 +208,7 @@ protected:
                typename MatrixImp :: RowBlockVectorType,
                typename MatrixImp :: ColBlockVectorType>
   {
+    typedef DGParallelMatrixAdapter< MatrixImp > ThisType ;
   public:
     typedef MatrixImp MatrixType;
     typedef PreconditionerWrapper<MatrixType> PreconditionAdapterType;
@@ -241,7 +242,7 @@ protected:
 
     PreconditionAdapterType preconditioner_;
     mutable double averageCommTime_;
-    
+
   public:  
     //! constructor: just store a reference to a matrix
     DGParallelMatrixAdapter (const DGParallelMatrixAdapter& org)
@@ -252,43 +253,17 @@ protected:
       , preconditioner_(org.preconditioner_)
       , averageCommTime_( org.averageCommTime_ )
     {}
-    //! constructor: just store a reference to a matrix
-    DGParallelMatrixAdapter (MatrixType& A,
-                             const RowSpaceType& rowSpace, 
-                             const ColSpaceType& colSpace) 
-      : matrix_(A) 
-      , rowSpace_(rowSpace)
-      , colSpace_(colSpace)
-      , scp_(colSpace)
-      , preconditioner_(matrix_)
-      , averageCommTime_( 0.0 )
-    {}
 
     //! constructor: just store a reference to a matrix
-    template <class PreconditionerType>
     DGParallelMatrixAdapter (MatrixType& A,
                              const RowSpaceType& rowSpace, 
                              const ColSpaceType& colSpace,
-                             int iter, field_type relax, const PreconditionerType* dummy) 
+                             const PreconditionAdapterType& precon )
       : matrix_(A) 
       , rowSpace_(rowSpace)
       , colSpace_(colSpace)
       , scp_(colSpace_)
-      , preconditioner_(matrix_,iter,relax,dummy)
-      , averageCommTime_( 0.0 )
-    {}
-
-    //! constructor: just store a reference to a matrix
-    template <class PreconditionerType>
-    DGParallelMatrixAdapter (MatrixType& A,
-                             const RowSpaceType& rowSpace, 
-                             const ColSpaceType& colSpace, 
-                             field_type relax, const PreconditionerType* dummy) 
-      : matrix_(A) 
-      , rowSpace_(rowSpace)
-      , colSpace_(colSpace)
-      , scp_(colSpace_)
-      , preconditioner_(matrix_,relax,dummy)
+      , preconditioner_( precon ) 
       , averageCommTime_( 0.0 )
     {}
 
