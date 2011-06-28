@@ -51,12 +51,8 @@ public:
     BaseType::operator=(other);
   }
   
-  void addScaled(const myDest& other, RangeFieldType l) {
-    (*this).axpy(l, other);
-  }
-  
-  void axpy(const myDest& other, RangeFieldType l) {
-    (*this).axpy(other, l);
+  void axpy(RangeFieldType l, const myDest& other) {
+    BaseType::axpy(l, other);
   }
   
   double operator()(int i) const {
