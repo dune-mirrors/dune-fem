@@ -44,8 +44,16 @@ namespace Dune {
     // use BCRSMatrix type because of specializations in dune-istl
     typedef typename MatrixType :: BaseType ISTLMatrixType ;
 
+    typedef typename MatrixType :: CollectiveCommunictionType
+      CollectiveCommunictionType;
+
     // matrix adapter for AMG 
+//#if HAVE_MPI
+//    typedef Dune::OverlappingSchwarzOperator<
+//     ISTLMatrixType, X, Y, CollectiveCommunictionType> OperatorType ;
+//#else 
     typedef MatrixAdapter< ISTLMatrixType, X, Y > OperatorType;
+//#endif
     mutable std::auto_ptr< OperatorType > op_;
 
     // auto pointer to preconditioning object 
@@ -128,9 +136,13 @@ namespace Dune {
                           int iter,
                           field_type relax, 
                           const PreconditionerType* p ,
-                          const bool )
+                          const CollectiveCommunictionType& comm )
+//#if HAVE_MPI
+//      : op_( new OperatorType( matrix, comm ) )
+//#else 
       : op_( new OperatorType( matrix ) )
-      , preconder_( createAMGPreconditioner(iter, relax, p) )
+//#endif
+      , preconder_( createAMGPreconditioner(comm, iter, relax, p) )
       , preEx_( 2 ) 
     {
     }
@@ -176,7 +188,8 @@ namespace Dune {
   protected:  
     template <class Smoother>
     PreconditionerInterfaceType* 
-    createAMGPreconditioner(int iter, field_type relax, const Smoother* ) 
+    createAMGPreconditioner(const CollectiveCommunictionType& comm, 
+              int iter, field_type relax, const Smoother* ) 
     {
       typedef Dune::Amg::CoarsenCriterion<
         Dune::Amg::UnSymmetricCriterion<ISTLMatrixType,
@@ -196,9 +209,22 @@ namespace Dune {
       criterion.setBeta(1.0e-8);
       criterion.setMaxLevel(10);
 
-      // X == Y is needed for AMG 
-      typedef Dune::Amg::AMG<OperatorType, X, Smoother> AMG;
-      return new AMG(*op_, criterion, smootherArgs, 1, 1, 1, false);
+      /*
+      if( comm.size() > 1 ) 
+      {
+        typedef Dune::OwnerOverlapCopyCommunication<int> ParallelInformation;
+        ParallelInformation pinfo(MPI_COMM_WORLD);
+        typedef Dune::Amg::AMG<OperatorType, X, Smoother, ParallelInformation> AMG;
+        return new AMG(*op_, criterion, smootherArgs, pinfo);
+      }
+      else 
+      */
+      {
+        // X == Y is needed for AMG 
+        typedef Dune::Amg::AMG<OperatorType, X, Smoother> AMG;
+        return new AMG(*op_, criterion, smootherArgs);
+        //return new AMG(*op_, criterion, smootherArgs, 1, 1, 1, false);
+      }
     }
   };
 #endif // end HAVE_DUNE_ISTL 

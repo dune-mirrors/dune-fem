@@ -89,6 +89,9 @@ namespace Dune
       //! type of column block vector 
       typedef typename ColDiscreteFunctionType :: DofStorageType  ColBlockVectorType; 
 
+      //! type of communication object 
+      typedef typename ColSpaceType :: GridType :: Traits :: CollectiveCommunication   CollectiveCommunictionType ;
+
     protected:  
       size_type nz_;
 
@@ -843,7 +846,7 @@ namespace Dune
                            size_t numIterations) const 
     {
       typedef typename MatrixAdapterType :: PreconditionAdapterType PreConType;
-      PreConType preconAdapter(matrix(), numIterations, relaxFactor_, preconditioning, true );
+      PreConType preconAdapter(matrix(), numIterations, relaxFactor_, preconditioning, rowSpace_.grid().comm() );
       return MatrixAdapterType(matrix(), rowSpace_, colSpace_, preconAdapter );
     }
 
