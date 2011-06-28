@@ -6,6 +6,9 @@
 //- system includes 
 #include <vector> 
 
+//- Dune common includes 
+#include <dune/common/exceptions.hh>
+
 //- Dune istl includes 
 #include <dune/istl/bvector.hh>
 #include <dune/istl/bcrsmatrix.hh>
@@ -848,6 +851,8 @@ namespace Dune
     MatrixAdapterType matrixAdapter() const 
     { 
 #ifndef DISABLE_ISTL_PRECONDITIONING
+      const size_t procs = rowSpace_.grid().comm().size();
+
       typedef typename MatrixType :: BaseType ISTLMatrixType ;
       typedef typename MatrixAdapterType :: PreconditionAdapterType PreConType;
       // no preconditioner 
@@ -858,42 +863,60 @@ namespace Dune
       // SSOR 
       else if( preconditioning_ == ssor )
       {
+        if( procs > 1 ) 
+          DUNE_THROW(InvalidStateException,"ISTL::SeqSSOR not working in parallel computations");
+
         typedef SeqSSOR<ISTLMatrixType,RowBlockVectorType,ColumnBlockVectorType> PreconditionerType;
         return createMatrixAdapter( (PreconditionerType*)0, numIterations_ );
       }
       // SOR 
       else if(preconditioning_ == sor )
       {
+        if( procs > 1 ) 
+          DUNE_THROW(InvalidStateException,"ISTL::SeqSOR not working in parallel computations");
+
         typedef SeqSOR<ISTLMatrixType,RowBlockVectorType,ColumnBlockVectorType> PreconditionerType;
         return createMatrixAdapter( (PreconditionerType*)0, numIterations_ );
       }
       // ILU-0 
       else if(preconditioning_ == ilu_0)
       {
+        if( procs > 1 ) 
+          DUNE_THROW(InvalidStateException,"ISTL::SeqILU0 not working in parallel computations");
+
         typedef FemSeqILU0<ISTLMatrixType,RowBlockVectorType,ColumnBlockVectorType> PreconditionerType;
         return createMatrixAdapter( (PreconditionerType*)0, numIterations_ );
       }
       // ILU-n
       else if(preconditioning_ == ilu_n)
       {
+        if( procs > 1 ) 
+          DUNE_THROW(InvalidStateException,"ISTL::SeqILUn not working in parallel computations");
+
         typedef SeqILUn<ISTLMatrixType,RowBlockVectorType,ColumnBlockVectorType> PreconditionerType;
         return createMatrixAdapter( (PreconditionerType*)0, numIterations_ );
       }
       // Gauss-Seidel
       else if(preconditioning_ == gauss_seidel)
       {
+        if( procs > 1 ) 
+          DUNE_THROW(InvalidStateException,"ISTL::SeqGS not working in parallel computations");
+
         typedef SeqGS<ISTLMatrixType,RowBlockVectorType,ColumnBlockVectorType> PreconditionerType;
         return createMatrixAdapter( (PreconditionerType*)0, numIterations_ );
       }
       // Jacobi 
       else if(preconditioning_ == jacobi)
       {
+        if( procs > 1 && numIterations_ > 1 ) 
+          DUNE_THROW(InvalidStateException,"ISTL::SeqJac only working with istl.preconditioning.iterations: 1 in parallel computations");
         typedef SeqJac<ISTLMatrixType,RowBlockVectorType,ColumnBlockVectorType> PreconditionerType;
         return createMatrixAdapter( (PreconditionerType*)0, numIterations_ );
       }
       // AMG ILU-0  
       else if(preconditioning_ == amg_ilu_0)
       {
+        // use original SeqILU0 because of some AMG traits classes.
         typedef SeqILU0<ISTLMatrixType,RowBlockVectorType,ColumnBlockVectorType> PreconditionerType;
         return createAMGMatrixAdapter( (PreconditionerType*)0, numIterations_ );
       }
