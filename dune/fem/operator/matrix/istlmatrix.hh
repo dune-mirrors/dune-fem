@@ -853,8 +853,7 @@ namespace Dune
       // no preconditioner 
       if( preconditioning_ == none )
       {
-        return MatrixAdapterType(matrix(),
-                  rowSpace_,colSpace_, PreConType( matrix() ) );
+        return MatrixAdapterType(matrix(), rowSpace_,colSpace_, PreConType() );
       }
       // SSOR 
       else if( preconditioning_ == ssor )
@@ -916,8 +915,7 @@ namespace Dune
       }
 #endif
 
-      return MatrixAdapterType(matrix(),
-                rowSpace_,colSpace_, PreConType( matrix() ) );
+      return MatrixAdapterType(matrix(), rowSpace_, colSpace_, PreConType() );
     }
     
     //! return true, because in case of no preconditioning we have empty
