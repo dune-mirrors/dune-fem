@@ -4,7 +4,7 @@
 #include <dune/fem/quadrature/cachingquadrature.hh>
 #include <dune/fem/operator/common/operator.hh>
 #include <dune/fem/function/common/discretefunction.hh>
-#include <dune/fem/function/common/discretefunctionadapter.hh>
+#include <dune/fem/function/common/gridfunctionadapter.hh>
 #include <dune/fem/operator/1order/localmassmatrix.hh>
 
 #include "dgl2projection.hh"
