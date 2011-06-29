@@ -2,7 +2,7 @@
 #ifndef DUNE_ORTHONORMALBASE_2D_CC
 #define DUNE_ORTHONORMALBASE_2D_CC
 
-#define PMAX2D 4
+#define PMAX2D 8
 
 #include <stdlib.h>
 #include <stdio.h>
