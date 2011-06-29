@@ -6,6 +6,9 @@
 //- system includes 
 #include <vector> 
 
+//- Dune common includes 
+#include <dune/common/exceptions.hh>
+
 //- Dune istl includes 
 #include <dune/istl/bvector.hh>
 #include <dune/istl/bcrsmatrix.hh>
@@ -18,6 +21,7 @@
 #include <dune/fem/operator/common/localmatrixwrapper.hh>
 #include <dune/fem/operator/common/operator.hh>
 #include <dune/fem/function/common/scalarproducts.hh>
+#include <dune/fem/operator/matrix/preconditionerwrapper.hh>
 #include <dune/fem/io/parameter.hh>
 
 namespace Dune
@@ -85,6 +89,9 @@ namespace Dune
       //! type of column block vector 
       typedef typename ColDiscreteFunctionType :: DofStorageType  ColBlockVectorType; 
 
+      //! type of communication object 
+      typedef typename ColSpaceType :: GridType :: Traits :: CollectiveCommunication   CollectiveCommunictionType ;
+
     protected:  
       size_type nz_;
 
@@ -108,6 +115,12 @@ namespace Dune
       {
       }
       
+      //! copy constructor, needed by ISTL preconditioners 
+      ImprovedBCRSMatrix( ) 
+        : BaseType ()
+        , nz_(0)
+      {}
+
       //! copy constructor, needed by ISTL preconditioners 
       ImprovedBCRSMatrix(const ImprovedBCRSMatrix& org) 
         : BaseType(org) 
@@ -703,7 +716,10 @@ namespace Dune
                         ilu_0 = 3 , // ILU-0 preconditioner 
                         ilu_n = 4 , // ILU-n preconditioner 
                         gauss_seidel= 5 , // Gauss-Seidel preconditioner 
-                        jacobi = 6  // Jacobi preconditioner 
+                        jacobi = 6,  // Jacobi preconditioner 
+                        amg_ilu_0 = 7,  // AMG with ILU-0 smoother 
+                        amg_ilu_n = 8,  // AMG with ILU-n smoother  
+                        amg_jacobi = 9  // AMG with Jacobi smoother  
     };
     
     PreConder_Id preconditioning_;
@@ -749,21 +765,19 @@ namespace Dune
       int preCon = 0;
       if(paramfile != "")
       {
-        const bool output = (rowSpace_.grid().comm().rank() == 0);
-        readParameter(paramfile,"Preconditioning",preCon, output);
-        readParameter(paramfile,"Pre-iteration",numIterations_, output);
-        readParameter(paramfile,"Pre-relaxation",relaxFactor_, output);
+        DUNE_THROW(InvalidStateException,"ISTLMatrixObject: old parameter method disabled");
       }
       else 
       {
         static const std::string preConTable[]
-          = { "none", "ssor", "sor", "ilu-0", "ilu-n", "gauss-seidel", "jacobi" };
+          = { "none", "ssor", "sor", "ilu-0", "ilu-n", "gauss-seidel", "jacobi",
+            "amg-ilu-0", "amg-ilu-n", "amg-jacobi" };
         preCon         = Parameter::getEnum( "istl.preconditioning.method", preConTable, preCon );
         numIterations_ = Parameter::getValue( "istl.preconditioning.iterations", numIterations_ );
         relaxFactor_   = Parameter::getValue( "istl.preconditioning.relaxation", relaxFactor_ );
       }
 
-      if( preCon >= 0 && preCon <= 6) 
+      if( preCon >= 0 && preCon <= 9) 
         preconditioning_ = (PreConder_Id) preCon;
       else 
         preConErrorMsg(preCon);
@@ -816,61 +830,116 @@ namespace Dune
       return tmp.str();
     }
     
+    template <class PreconditionerType> 
+    MatrixAdapterType 
+    createMatrixAdapter(const PreconditionerType* preconditioning,
+                        size_t numIterations) const 
+    {
+      typedef typename MatrixAdapterType :: PreconditionAdapterType PreConType;
+      PreConType preconAdapter(matrix(), numIterations, relaxFactor_, preconditioning );
+      return MatrixAdapterType(matrix(), rowSpace_, colSpace_, preconAdapter );
+    }
+
+    template <class PreconditionerType> 
+    MatrixAdapterType 
+    createAMGMatrixAdapter(const PreconditionerType* preconditioning,
+                           size_t numIterations) const 
+    {
+      typedef typename MatrixAdapterType :: PreconditionAdapterType PreConType;
+      PreConType preconAdapter(matrix(), numIterations, relaxFactor_, preconditioning, rowSpace_.grid().comm() );
+      return MatrixAdapterType(matrix(), rowSpace_, colSpace_, preconAdapter );
+    }
+
     //! return matrix adapter object  
     MatrixAdapterType matrixAdapter() const 
     { 
+      const size_t procs = rowSpace_.grid().comm().size();
+
+      typedef typename MatrixType :: BaseType ISTLMatrixType ;
+      typedef typename MatrixAdapterType :: PreconditionAdapterType PreConType;
       // no preconditioner 
       if( preconditioning_ == none )
       {
-        return MatrixAdapterType(matrix(),rowSpace_,colSpace_);
+        return MatrixAdapterType(matrix(), rowSpace_,colSpace_, PreConType() );
       }
       // SSOR 
       else if( preconditioning_ == ssor )
       {
-        typedef SeqSSOR<MatrixType,RowBlockVectorType,ColumnBlockVectorType> PreconditionerType;
-        return MatrixAdapterType(matrix(),rowSpace_,colSpace_,
-                                 numIterations_ , relaxFactor_,(PreconditionerType*)0);
+        if( procs > 1 ) 
+          DUNE_THROW(InvalidStateException,"ISTL::SeqSSOR not working in parallel computations");
+
+        typedef SeqSSOR<ISTLMatrixType,RowBlockVectorType,ColumnBlockVectorType> PreconditionerType;
+        return createMatrixAdapter( (PreconditionerType*)0, numIterations_ );
       }
       // SOR 
       else if(preconditioning_ == sor )
       {
-        typedef SeqSOR<MatrixType,RowBlockVectorType,ColumnBlockVectorType> PreconditionerType;
-        return MatrixAdapterType(matrix(),rowSpace_,colSpace_,
-                                 numIterations_ , relaxFactor_,(PreconditionerType*)0);
+        if( procs > 1 ) 
+          DUNE_THROW(InvalidStateException,"ISTL::SeqSOR not working in parallel computations");
+
+        typedef SeqSOR<ISTLMatrixType,RowBlockVectorType,ColumnBlockVectorType> PreconditionerType;
+        return createMatrixAdapter( (PreconditionerType*)0, numIterations_ );
       }
       // ILU-0 
       else if(preconditioning_ == ilu_0)
       {
-        typedef SeqILU0<MatrixType,RowBlockVectorType,ColumnBlockVectorType> PreconditionerType;
-        return MatrixAdapterType(matrix(),rowSpace_,colSpace_,
-                                 relaxFactor_,(PreconditionerType*)0);
+        if( procs > 1 ) 
+          DUNE_THROW(InvalidStateException,"ISTL::SeqILU0 not working in parallel computations");
+
+        typedef FemSeqILU0<ISTLMatrixType,RowBlockVectorType,ColumnBlockVectorType> PreconditionerType;
+        return createMatrixAdapter( (PreconditionerType*)0, numIterations_ );
       }
       // ILU-n
       else if(preconditioning_ == ilu_n)
       {
-        typedef SeqILUn<MatrixType,RowBlockVectorType,ColumnBlockVectorType> PreconditionerType;
-        return MatrixAdapterType(matrix(),rowSpace_,colSpace_,
-                                 numIterations_ , relaxFactor_,(PreconditionerType*)0);
+        if( procs > 1 ) 
+          DUNE_THROW(InvalidStateException,"ISTL::SeqILUn not working in parallel computations");
+
+        typedef SeqILUn<ISTLMatrixType,RowBlockVectorType,ColumnBlockVectorType> PreconditionerType;
+        return createMatrixAdapter( (PreconditionerType*)0, numIterations_ );
       }
       // Gauss-Seidel
       else if(preconditioning_ == gauss_seidel)
       {
-        typedef SeqGS<MatrixType,RowBlockVectorType,ColumnBlockVectorType> PreconditionerType;
-        return MatrixAdapterType(matrix(),rowSpace_,colSpace_,
-                                 numIterations_ , relaxFactor_,(PreconditionerType*)0);
+        if( procs > 1 ) 
+          DUNE_THROW(InvalidStateException,"ISTL::SeqGS not working in parallel computations");
+
+        typedef SeqGS<ISTLMatrixType,RowBlockVectorType,ColumnBlockVectorType> PreconditionerType;
+        return createMatrixAdapter( (PreconditionerType*)0, numIterations_ );
       }
       // Jacobi 
       else if(preconditioning_ == jacobi)
       {
-        typedef SeqJac<MatrixType,RowBlockVectorType,ColumnBlockVectorType> PreconditionerType;
-        return MatrixAdapterType(matrix(),rowSpace_,colSpace_,
-                                 numIterations_ , relaxFactor_,(PreconditionerType*)0);
+        if( procs > 1 && numIterations_ > 1 ) 
+          DUNE_THROW(InvalidStateException,"ISTL::SeqJac only working with istl.preconditioning.iterations: 1 in parallel computations");
+        typedef SeqJac<ISTLMatrixType,RowBlockVectorType,ColumnBlockVectorType> PreconditionerType;
+        return createMatrixAdapter( (PreconditionerType*)0, numIterations_ );
+      }
+      // AMG ILU-0  
+      else if(preconditioning_ == amg_ilu_0)
+      {
+        // use original SeqILU0 because of some AMG traits classes.
+        typedef SeqILU0<ISTLMatrixType,RowBlockVectorType,ColumnBlockVectorType> PreconditionerType;
+        return createAMGMatrixAdapter( (PreconditionerType*)0, numIterations_ );
+      }
+      // AMG ILU-n  
+      else if(preconditioning_ == amg_ilu_n)
+      {
+        typedef SeqILUn<ISTLMatrixType,RowBlockVectorType,ColumnBlockVectorType> PreconditionerType;
+        return createAMGMatrixAdapter( (PreconditionerType*)0, numIterations_ );
+      }
+      // AMG Jacobi   
+      else if(preconditioning_ == amg_jacobi)
+      {
+        typedef SeqJac<ISTLMatrixType,RowBlockVectorType,ColumnBlockVectorType> PreconditionerType;
+        return createAMGMatrixAdapter( (PreconditionerType*)0, numIterations_ );
       }
       else 
       {
         preConErrorMsg(preconditioning_);
       }
-      return MatrixAdapterType(matrix(),rowSpace_,colSpace_ );
+
+      return MatrixAdapterType(matrix(), rowSpace_, colSpace_, PreConType() );
     }
     
     //! return true, because in case of no preconditioning we have empty
