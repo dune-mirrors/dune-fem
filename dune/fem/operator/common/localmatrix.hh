@@ -6,10 +6,13 @@
 
 namespace Dune 
 { 
-
   /** @ingroup Matrix  
       @{ 
   **/
+
+  //- forward declaration of MatrixColumnObject, see below 
+  template <class Traits> 
+  class MatrixColumnObject ;
 
   /** \brief Interface for local matrix classes. */
   template< class LocalMatrixTraits >
@@ -52,6 +55,7 @@ namespace Dune
     /*! type of block (i.e. FieldMatrix for BlockMatrices */
     typedef typename Traits :: LittleBlockType  LittleBlockType;
 
+    typedef MatrixColumnObject< Traits >  MatrixColumnType ;
   protected:  
     using BaseType::asImp;
 
@@ -222,8 +226,18 @@ namespace Dune
       CHECK_INTERFACE_IMPLEMENTATION( asImp().rangeBaseFunctionSet() );
       return asImp().rangeBaseFunctionSet();
     }
+
+    /** \brief return column object for local matrix which contains axpy methods 
+               for convenience 
+        \param col  local column number 
+
+        \return object of type MatrixColumnObject 
+    */
+    MatrixColumnType column( const unsigned int col )  
+    {
+      return MatrixColumnType( asImp(), col );
+    }
   };
- 
 
 
   /** \brief Default implementation for local matrix classes. */
@@ -347,6 +361,131 @@ namespace Dune
         {
           rhs[i] += this->get(i,j) * lhs[j];
         }
+      }
+    }
+  };
+
+  template <class Traits> 
+  class MatrixColumnObject 
+  {
+  public:
+    //! type of local matrix implementation 
+    typedef typename Traits :: LocalMatrixType LocalMatrixType;
+
+    //! type of domain discrete function space
+    typedef typename Traits :: DomainSpaceType  DomainSpaceType;
+
+    //! type of range 
+    typedef typename DomainSpaceType :: RangeType          RangeType ;
+    //! type of jacobian range 
+    typedef typename DomainSpaceType :: JacobianRangeType  JacobianRangeType ;
+    //! type of range field 
+    typedef typename DomainSpaceType :: RangeFieldType     RangeFieldType ;
+
+  protected:
+    // reference to local matrix 
+    LocalMatrixType& localMatrix_;
+    // local column number 
+    const unsigned int column_;
+
+    //! constructor taking local matrix and column number 
+    MatrixColumnObject( LocalMatrixType& localMatrix, const unsigned int col ) 
+      : localMatrix_( localMatrix ),
+        column_( col ) 
+    {
+    }
+
+    // at the moment only allow LocalMatrixInterface to construct this object 
+    friend class LocalMatrixInterface< Traits >;
+
+  public:
+
+    /** \brief axpy operation for local matrices 
+     *
+     *  Denoting an entry of the local matrix by \f$a_{i,j}\f$ and the base
+     *  functions by \f$\varphi_i\f$, this function performs the following
+     *  operation:
+     *  \f[
+     *  a_{i,j} = a_{i,j} + weight * (factor \cdot \varphi_i( x ))
+     *  \f]
+     *  \param[in]  phi     evaluations of all base functions \f$\varphi_i( x )\f$
+     *  \param[in]  factor  axpy factor
+     *  \param[in]  weight  integration weight for quadrature point (default = 1)
+     */
+    template <class RangeVectorType>
+    void axpy( const RangeVectorType& phi, 
+               const RangeType& factor,
+               const RangeFieldType& weight = RangeFieldType(1) ) 
+    {
+      const unsigned int numBaseFunctions = localMatrix_.rows();
+      assert( phi.size() >= numBaseFunctions );
+      for( unsigned int row = 0; row < numBaseFunctions; ++ row )
+      {
+        RangeFieldType value = factor * phi[ row ];
+        localMatrix_.add( row, column_, weight * value );
+      }
+    }
+
+    /** \brief axpy operation for local matrices 
+     *
+     *  Denoting an entry of the local matrix by \f$a_{i,j}\f$ and 
+     *  the gradients of the  base functions by \f$\nabla \varphi_i\f$, 
+     *  this function performs the following operation:
+     *  \f[
+     *  a_{i,j} = a_{i,j} + weight * (jacobianFactor \cdot \nabla\varphi_i( x ))
+     *  \f]
+     *  \param[in]  dphi           evaluations of the jacobian of all base functions \f$\varphi_i( x )\f$
+     *  \param[in]  jacobianFactor axpy factor
+     *  \param[in]  weight         integration weight for quadrature point (default = 1)
+     */
+    template <class JacobianVectorType>
+    void axpy( const JacobianVectorType& dphi,
+               const JacobianRangeType& jacobianFactor,
+               const RangeFieldType& weight = RangeFieldType(1) ) 
+    {
+      const unsigned int numBaseFunctions = localMatrix_.rows();
+      assert( dphi.size() >= numBaseFunctions );
+      for( unsigned int row = 0; row < numBaseFunctions; ++ row )
+      {
+        RangeFieldType value = 0; 
+        for( int k = 0; k < jacobianFactor.rows; ++k )
+          value += jacobianFactor[ k ] * dphi[ row ][ k ];
+
+        localMatrix_.add( row, column_, weight * value );
+      }
+    }
+
+    /** \brief axpy operation for local matrices 
+     *
+     *  Denoting an entry of the local matrix by \f$a_{i,j}\f$ and 
+     *  the base functions by \f$\nabla \varphi_i\f$, 
+     *  this function performs the following operation:
+     *  \f[
+     *  a_{i,j} = a_{i,j} + weight (factor \cdot \varphi_i( x ) + jacobianFactor \cdot \nabla\varphi_i( x ))
+     *  \f]
+     *  \param[in]  phi            evaluations of all base functions \f$\varphi_i( x )\f$
+     *  \param[in]  dphi           evaluations of the jacobian of all base functions \f$\varphi_i( x )\f$
+     *  \param[in]  factor         axpy factor for phi 
+     *  \param[in]  jacobianFactor axpy factor for dphi 
+     *  \param[in]  weight         integration weight for quadrature point (default = 1)
+     */
+    template <class RangeVectorType, class JacobianVectorType>
+    void axpy( const RangeVectorType& phi, 
+               const JacobianVectorType& dphi,
+               const RangeType& factor,
+               const JacobianRangeType& jacobianFactor,
+               const RangeFieldType& weight = RangeFieldType(1) ) 
+    {
+      const unsigned int numBaseFunctions = localMatrix_.rows();
+      assert( phi.size() >= numBaseFunctions );
+      assert( dphi.size() >= numBaseFunctions );
+      for( unsigned int row = 0; row < numBaseFunctions; ++ row )
+      {
+        RangeFieldType value = factor * phi[ row ];
+        for( int k = 0; k < jacobianFactor.rows; ++k )
+          value += jacobianFactor[ k ] * dphi[ row ][ k ];
+
+        localMatrix_.add( row, column_, weight * value );
       }
     }
   };
