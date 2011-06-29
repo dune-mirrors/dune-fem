@@ -76,8 +76,7 @@ namespace Dune {
     void clear();
 
     //! axpy operation
-    void axpy(const ThisType& g,
-              const RangeFieldType& c);
+    void axpy(const RangeFieldType& c, const ThisType& g);
 
     //! Assignment
     void assignFunction(const ThisType& org);

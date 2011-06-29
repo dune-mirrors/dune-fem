@@ -106,6 +106,7 @@ namespace Dune
     typedef typename BaseType::DiscreteFunctionInterfaceType DiscreteFunctionInterfaceType;
 
     using BaseType::assign;
+    using BaseType::axpy;
 
   public:
     //- Typedefs and enums
@@ -217,10 +218,10 @@ namespace Dune
       return *this;
     }
 
-    /** \copydoc Dune::DiscreteFunctionInterface::axpy(const DiscreteFunctionInterfaceType &g,const RangeFieldType &s) */
-    void axpy( const DiscreteFunctionInterfaceType &g, const RangeFieldType &s )
+    /** \copydoc Dune::DiscreteFunctionInterface::axpy(const RangeFieldType &s,const DiscreteFunctionInterfaceType &g) */
+    void axpy( const RangeFieldType &s, const DiscreteFunctionInterfaceType &g )
     {
-      Imp::axpy( asImp( g ), s );
+      Imp::axpy( s, asImp( g ) );
     }
 
   protected:

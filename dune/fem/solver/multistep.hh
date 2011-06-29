@@ -292,10 +292,10 @@ public:
     #endif
     // Update
     U0 *= alpha[steps_-1];
-    U0.axpy(*(Fj[steps_-1]),beta[steps_-1]);
+    U0.axpy(beta[steps_-1], *(Fj[steps_-1]) );
     for (size_t i=0;i<steps_-1;i++) {
-      U0.axpy(*(Uj[i]), alpha[i]);
-      U0.axpy(*(Fj[i]), beta[i]);
+      U0.axpy(alpha[i], *(Uj[i]));
+      U0.axpy(beta[i],  *(Fj[i]));
     }
 
     DestinationType* Utmp = Uj[0];
@@ -332,7 +332,7 @@ public:
       Uval.assign(U0);
       for (int j=0; j<i ; ++j) 
       {
-        Uval.axpy(*(Fj[j]),(a[i][j]*dt));
+        Uval.axpy((a[i][j]*dt), *(Fj[j]));
       }
 
       // set new time 
@@ -348,7 +348,7 @@ public:
     // Perform Update
     for (int j=0; j<ord_; ++j) 
     {
-      U0.axpy(*(Fj[j]),(b[j]*dt));
+      U0.axpy((b[j]*dt), *(Fj[j]));
     }
   }
 

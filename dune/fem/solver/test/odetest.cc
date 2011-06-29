@@ -45,10 +45,7 @@ public:
   void assign(const myDest& other) {
     d_ = other.d_;
   }
-  void addScaled(const myDest& other, RangeFieldType l) {
-    d_ += other.d_*l;
-  }
-  void axpy(const myDest& other, RangeFieldType l) {
+  void axpy(RangeFieldType l, const myDest& other) {
     d_ += other.d_*l;
   }
   myDest& operator*=(RangeFieldType l) {

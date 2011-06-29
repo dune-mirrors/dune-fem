@@ -140,6 +140,7 @@ namespace Dune
     typedef typename Traits :: ConstDofBlockPtrType ConstDofBlockPtrType;
 
     using BaseType :: assign; // needs DofIterator!
+    using BaseType :: axpy;
 
     //- Public methods
     //! Constructor 
@@ -248,12 +249,12 @@ namespace Dune
       axpy( g, s );
     }
 
-    /** \copydoc Dune::DiscreteFunctionInterface::addScaled
+    /** \copydoc Dune::DiscreteFunctionInterface::axpy
      */
-    void axpy( const DiscreteFunctionInterfaceType &g, const RangeFieldType &s )
+    void axpy( const RangeFieldType &s, const DiscreteFunctionInterfaceType &g )
     {
       for (int i=0; i<N; ++i)
-        func_[i]->axpy( asImp( g ).subFunction( i ), s );
+        func_[i]->axpy( s, asImp( g ).subFunction( i ) );
     }
 
     /** \copydoc Dune::DiscreteFunctionInterface::scalarProductDofs(const DiscreteFunctionInterfaceType &other) const */

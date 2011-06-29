@@ -309,12 +309,18 @@ namespace Dune
      *
      *  Adds s * g to this discrete function.
      * 
-     *  \param[in]  g  discrete function to add
      *  \param[in]  s  scalar value to scale g with
+     *  \param[in]  g  discrete function to add
      */
+    void axpy( const RangeFieldType &s, const DiscreteFunctionInterfaceType &g )
+    {
+      asImp().axpy( s, g );
+    }
+
+    DUNE_VERSION_DEPRECATED(1,3,axpy)
     void axpy( const DiscreteFunctionInterfaceType &g, const RangeFieldType &s )
     {
-      asImp().axpy( g, s );
+      asImp().axpy( s, g );
     }
 
     /** \brief Scalar product between the DoFs of two discrete functions
@@ -631,11 +637,13 @@ namespace Dune
     DUNE_VERSION_DEPRECATED(1,3,axpy)
     void addScaled ( const DiscreteFunctionInterfaceType &g, const RangeFieldType &s )
     {
-      axpy( g, s );  
+      axpy( s, g );  
     }
     
-    /** \copydoc Dune::DiscreteFunctionInterface::axpy(const DiscreteFunctionInterfaceType &g,const RangeFieldType &s) */
-    void axpy ( const DiscreteFunctionInterfaceType &g, const RangeFieldType &s );
+    // use overloaded deprecated axpy method from BaseType
+    using BaseType :: axpy;
+    /** \copydoc Dune::DiscreteFunctionInterface::axpy(const RangeFieldType &s,const DiscreteFunctionInterfaceType &g) */
+    void axpy ( const RangeFieldType &s, const DiscreteFunctionInterfaceType &g );
     
     /** \copydoc Dune::DiscreteFunctionInterface::scalarProductDofs */
     inline RangeFieldType

@@ -130,7 +130,7 @@ namespace Dune
 
   template< class Traits >
   inline void DiscreteFunctionDefault< Traits >
-    ::axpy ( const DiscreteFunctionInterfaceType &g, const RangeFieldType &s )
+    ::axpy ( const RangeFieldType &s, const DiscreteFunctionInterfaceType &g )
   {
     assert( BaseType::size() == g.size() );
     const DofIteratorType end = BaseType::dend();
