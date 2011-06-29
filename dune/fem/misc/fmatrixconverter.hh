@@ -9,19 +9,73 @@ namespace Dune {
 template <class VectorType, class ConvertToType> 
 class FieldMatrixConverter;
 
+template< class K, int m > class FieldMatrixConverterRow;
+template< class K, int m >
+struct DenseMatVecTraits< FieldMatrixConverterRow<K,m> >
+{
+  typedef FieldMatrixConverterRow<K,m> derived_type;
+  typedef K* container_type;
+  typedef K value_type;
+  typedef size_t size_type;
+};
+
+// derive from dense vector to inherit functionality 
+template <class K, int m>  
+class FieldMatrixConverterRow : public DenseVector< FieldMatrixConverterRow< K , m > >
+{
+protected:  
+  K* ptr_;
+
+  typedef DenseVector< FieldMatrixConverterRow< K , m > >  BaseType ;
+public:  
+  using BaseType :: operator = ;
+
+  FieldMatrixConverterRow( K* ptr ) : ptr_( ptr ) 
+  {
+    assert( ptr_ );
+  }
+
+  FieldMatrixConverterRow& operator = ( const FieldMatrixConverterRow& other )
+  {
+    for(size_t i=0; i<vec_size(); ++i ) 
+    {
+      vec_access( i ) = other[ i ];
+    }
+    return *this;
+  }
+
+  template <class Impl> 
+  FieldMatrixConverterRow& operator = ( const DenseVector< Impl >& other )
+  {
+    assert( other.size() == vec_size() );
+    for(size_t i=0; i<vec_size(); ++i ) 
+    {
+      vec_access( i ) = other[ i ];
+    }
+    return *this;
+  }
+
+  // make this thing a vector
+  size_t vec_size() const { return m; }
+  K & vec_access(size_t i) { assert( i < vec_size() ); return ptr_[ i ]; }
+  const K & vec_access(size_t i) const { assert( i < vec_size() ); return ptr_[ i ]; }
+};
+
+
+
 //! convert a FieldVector with length n * m to a FieldMatrix with n rows and m cols 
 template <typename K, int n, int m> 
 class FieldMatrixConverter<FieldVector<K ,n * m> , FieldMatrix<K ,n, m> >
 {
 public:
+  //! internal storage of matrix 
   typedef FieldVector<K ,n * m> InteralVectorType;
 
-  typedef FieldVector<K , m > RowType;
+  //! type of class return upon operator [] which behaves like a reference 
+  typedef FieldMatrixConverterRow<K , m> RowType;
 
-  typedef FieldVector<K , n > ColType;
-
+  //! type of class return upon operator [] which behaves like a reference 
   typedef RowType row_type;
-  typedef ColType col_type;
 
   //! export the type representing the field
   typedef K field_type;
@@ -65,16 +119,16 @@ public:
   {}
 
   // return row 
-  RowType& operator [] (const size_t row) 
+  RowType operator [] (const size_t row) 
   {
     assert( mutableVec_ );
-    return *(( RowType*) (&vec_[ row * cols ]));
+    return RowType( (&vec_[ row * cols ]) );
   }
   
   // return row  
-  const RowType& operator [] (const size_t row) const 
+  RowType operator [] (const size_t row) const 
   {
-    return *(( const RowType*) (&vec_[ row * cols ]));
+    return RowType( (&vec_[ row * cols ]) );
   }
 
   template<class X, class Y>
@@ -151,7 +205,7 @@ public:
   }
 
 protected:
-  InteralVectorType& vec_;
+  mutable InteralVectorType& vec_;
 #ifndef NDEBUG 
   bool mutableVec_;
 #endif
