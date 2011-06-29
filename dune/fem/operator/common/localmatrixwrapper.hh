@@ -32,7 +32,7 @@ namespace Dune
 
   template< class LocalMatrixStackImp >
   class LocalMatrixWrapper
-  : LocalMatrixInterface< LocalMatrixWrapperTraits< LocalMatrixStackImp > >
+  : public LocalMatrixInterface< LocalMatrixWrapperTraits< LocalMatrixStackImp > >
   {
   public:
     //! type of the local matrix stack
