@@ -188,7 +188,7 @@ typedef AdaptiveDiscreteFunction< DiscreteFunctionSpaceType > DiscreteFunctionTy
 
 typedef ExactSolution< FunctionSpaceType > ExactSolutionType;
 
-typedef DiscreteFunctionAdapter< ExactSolutionType, GridPartType >
+typedef GridFunctionAdapter< ExactSolutionType, GridPartType >
   GridExactSolutionType;
 
 //! type of the DoF manager
