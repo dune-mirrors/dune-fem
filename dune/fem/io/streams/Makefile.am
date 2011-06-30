@@ -5,6 +5,7 @@ SUBDIRS = test
 
 streamsdir =  $(includedir)/dune/fem/io/streams
 streams_HEADERS = asciistreams.hh \
+                  binarystreams.hh \
                   streams.hh \
                   streams_inline.hh \
 		  virtualstreams.hh \
