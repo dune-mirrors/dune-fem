@@ -280,7 +280,7 @@ public:
   /** \copydoc Dune::DiscreteFunctionInterface::size */
   inline int size() const
   {
-    return dofVec_.size();
+    return dofVec_.size() * localBlockSize ;
   }
 
   /** \copydoc Dune::DiscreteFunctionDefault::clear */

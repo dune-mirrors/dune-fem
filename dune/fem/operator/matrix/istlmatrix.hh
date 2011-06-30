@@ -851,7 +851,15 @@ namespace Dune
     }
 
     //! return matrix adapter object  
-    MatrixAdapterType matrixAdapter() const 
+    const MatrixAdapterType& matrixAdapter() const 
+    {
+      if( matrixAdap_ == 0 ) 
+        matrixAdap_ = new MatrixAdapterType( matrixAdapterObject() );
+      return *matrixAdap_;
+    }
+
+  protected:  
+    MatrixAdapterType matrixAdapterObject() const 
     { 
       const size_t procs = rowSpace_.grid().comm().size();
 
@@ -942,6 +950,7 @@ namespace Dune
       return MatrixAdapterType(matrix(), rowSpace_, colSpace_, PreConType() );
     }
     
+  public:  
     //! return true, because in case of no preconditioning we have empty
     //! preconditioner (used by OEM methods)
     bool hasPreconditionMatrix() const { return (preconditioning_ != none); }
