@@ -149,7 +149,7 @@ namespace Dune
       }
 
       b_.assign( *u_ );
-      b_.addScaled( arg, eps );
+      b_.axpy( eps, arg );
       (*op_)( b_, dest );
       dest -= op_u_;
       dest *= RangeFieldType( 1 ) / eps;
