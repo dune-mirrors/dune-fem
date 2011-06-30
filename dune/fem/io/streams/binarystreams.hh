@@ -48,7 +48,7 @@ namespace Dune
      *  \param[in]  filename  name of a file to write to
      */
     explicit BinaryFileOutStream ( const std::string &filename )
-    : stream_( filename.c_str(), ios::binary )
+    : stream_( filename.c_str(), std::ios::binary )
     {}
 
     /** \copydoc Dune::OutStreamInterface::flush */
@@ -166,7 +166,7 @@ namespace Dune
      *  \param[in]  filename  name of a file to write to
      */
     BinaryFileInStream ( const std::string &filename )
-    : stream_( filename.c_str(), ios::binary )
+    : stream_( filename.c_str(), std::ios::binary )
     {}
 
     /** \copydoc Dune::InStreamInterface::readDouble */
@@ -236,7 +236,7 @@ namespace Dune
       union { T value; char bytes[ sizeof( T ) ]; } convert;
       stream_.read( convert.bytes, sizeof( T ) );
       value = convert.value;
-      if( !valid )
+      if( !valid() )
         readError();
     }
 
