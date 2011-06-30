@@ -334,14 +334,11 @@ protected:
                const int writeStep = 0 )
     : BaseType(grid, data, CheckPointerParameters( checkFile == 0 ) ) // checkFile != 0 means read mode 
     , checkPointStep_( 0 )
-    , maxCheckPointNumber_( 0 )
+    , maxCheckPointNumber_( writeStep + 1 )
     , myRank_( myRank )  
     , dataPtr_( 0 )
     , takeCareOfPersistenceManager_( takeCareOfPersistenceManager )
   {
-    // set write step counter 
-    writeStep_ = writeStep ;
-
     // output format can oinly be binary
     outputFormat_ = BaseType :: binary; 
     // do not display 
@@ -376,6 +373,9 @@ protected:
     {
       initialize( CheckPointerParameters( checkFile == 0 ) );
     }
+
+    // set write step counter to value given in constructor
+    writeStep_ = writeStep ;
   }
 
 public:
