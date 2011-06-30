@@ -54,11 +54,11 @@ namespace Dune {
 //#else 
     typedef MatrixAdapter< ISTLMatrixType, X, Y > OperatorType;
 //#endif
-    mutable std::auto_ptr< OperatorType > op_;
+    mutable std::shared_ptr< OperatorType > op_;
 
     // auto pointer to preconditioning object 
     typedef Preconditioner<X,Y> PreconditionerInterfaceType;
-    mutable std::auto_ptr<PreconditionerInterfaceType> preconder_; 
+    mutable std::shared_ptr<PreconditionerInterfaceType> preconder_; 
 
     // flag whether we have preconditioning, and if yes if it is AMG 
     const int preEx_;
