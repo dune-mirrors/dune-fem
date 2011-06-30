@@ -27,8 +27,6 @@ namespace Dune
     //! type of the operators to invert
     typedef Operator OperatorType;
    
-
-
     //! field type of the operator's domain vectors
     typedef typename OperatorType::DomainFieldType DomainFieldType;
     //! field type of the operator's range vectors
@@ -141,7 +139,6 @@ namespace Dune
   public:
     typedef typename BaseType::DomainFunctionType DomainFunctionType;
     typedef typename BaseType::RangeFunctionType RangeFunctionType;
-
     
     //??? sollten hier auch Domain/Range Function stehen?
     typedef Fem::Operator< DiscreteFunction, DiscreteFunction > OperatorType;
@@ -180,8 +177,8 @@ namespace Dune
                         double redEps, double absLimit,
                         unsigned int maxIter = std::numeric_limits< unsigned int >::max() )
       : operator_( op ),
-	precond_ ( 0 ),
-	solver_( absLimit, maxIter )
+        precond_ ( 0 ),
+        solver_( absLimit, maxIter )
     {}
     
     /** \brief constructor of CGInverseOperator
@@ -193,14 +190,12 @@ namespace Dune
      */
     CGInverseOperator ( const OperatorType &op,
                         const PrecondType &precond,
-			double redEps, double absLimit,
+                        double redEps, double absLimit,
                         unsigned int maxIter = std::numeric_limits< unsigned int >::max() )
       : operator_( op ),
-	precond_( &precond ),
-	solver_( absLimit, maxIter )
+        precond_( &precond ),
+        solver_( absLimit, maxIter )
     {}
-
-
 
 
     /** \brief application operator
@@ -214,9 +209,9 @@ namespace Dune
     virtual void operator() ( const DomainFunctionType &u, RangeFunctionType &w ) const
     {
       if(precond_)
-	solver_.solve( operator_,*precond_, u, w );
+        solver_.solve( operator_, *precond_, u, w );
       else 
-	solver_.solve(operator_,u,w);
+        solver_.solve(operator_,u,w);
     }
 
     //! number of iterations needed for last solve 
@@ -299,7 +294,7 @@ namespace Dune
      */
     CGInverseOp( const OperatorType &op,
                  const PrecondType &precond,
-		 double redEps,
+                 double redEps,
                  double absLimit,
                  int maxIter,
                  bool verbose )
@@ -335,9 +330,9 @@ namespace Dune
                               DiscreteFunctionType &dest ) const
     {
       if(precond_)
-	solver_.solve( operator_,*precond_ ,arg, dest );
+        solver_.solve( operator_,*precond_ ,arg, dest );
       else
-	solver_.solve( operator_, arg, dest );
+        solver_.solve( operator_, arg, dest );
     }
     
     //! number of iterations needed for last solve 
@@ -454,9 +449,9 @@ namespace Dune
      
       if( realCount_ > 0 )
        { 
-	 const RangeFieldType beta=residuum/prevResiduum;
-	 q*=beta;
-	 q+=(s);
+         const RangeFieldType beta=residuum/prevResiduum;
+         q*=beta;
+         q+=(s);
        }
       
       op( q, h );
