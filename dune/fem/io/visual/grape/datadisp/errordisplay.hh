@@ -1,7 +1,7 @@
 #ifndef DUNE_FEM_ERRORDISPLAY_HH
 #define DUNE_FEM_ERRORDISPLAY_HH
 
-#include <dune/fem/function/common/discretefunctionadapter.hh>
+#include <dune/fem/function/common/gridfunctionadapter.hh>
 
 namespace Dune
 {
