@@ -118,12 +118,13 @@ public:
   //! \brief writes a discrete function 
   static void writeDiscreteFunction(const GridType& grid, 
                                     const DiscreteFunctionType& discreteFunction,
-                                    const double time ) 
+                                    const double time, 
+                                    const int writeStep ) 
   {
     typedef tuple< const DiscreteFunctionType* > OutputTuple;
     OutputTuple data( &discreteFunction );
     // false means don't backup persistent objects 
-    CheckPointerType :: writeSingleCheckPoint( grid, data, time, false );
+    CheckPointerType :: writeSingleCheckPoint( grid, data, time, false, writeStep );
   }
 };
 
@@ -272,9 +273,10 @@ public:
   //! \brief writes a discrete function 
   static void writeDiscreteFunction(const GridType& grid, 
                                     const DiscreteFunctionType& discreteFunction,
-                                    const double time ) 
+                                    const double time,
+                                    const int writeStep = 0 ) 
   {
-    GridSolutionType :: writeDiscreteFunction( grid, discreteFunction, time );
+    GridSolutionType :: writeDiscreteFunction( grid, discreteFunction, time, writeStep );
   }
 };
 

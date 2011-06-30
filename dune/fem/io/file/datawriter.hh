@@ -330,7 +330,8 @@ protected:
                const int myRank,
                OutPutDataType& data, 
                const char * checkFile,
-               const bool takeCareOfPersistenceManager = true )
+               const bool takeCareOfPersistenceManager = true,
+               const int writeStep = 0 )
     : BaseType(grid, data, CheckPointerParameters( checkFile == 0 ) ) // checkFile != 0 means read mode 
     , checkPointStep_( 0 )
     , maxCheckPointNumber_( 0 )
@@ -338,6 +339,9 @@ protected:
     , dataPtr_( 0 )
     , takeCareOfPersistenceManager_( takeCareOfPersistenceManager )
   {
+    // set write step counter 
+    writeStep_ = writeStep ;
+
     // output format can oinly be binary
     outputFormat_ = BaseType :: binary; 
     // do not display 
@@ -525,10 +529,11 @@ public:
   static void writeSingleCheckPoint(const GridType& grid, 
                                     OutputTuple& data,
                                     const double time,
-                                    const bool storePersistenceManager ) 
+                                    const bool storePersistenceManager, 
+                                    const int writeStep = 0 )
   {
     CheckPointer< GridType, OutputTuple > checkPointer( grid, grid.comm().rank(),
-                                                        data, 0, storePersistenceManager );
+                                                        data, 0, storePersistenceManager, writeStep );
     checkPointer.writeBinaryData( time );
   }
 
