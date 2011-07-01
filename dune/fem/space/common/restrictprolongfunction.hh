@@ -151,8 +151,8 @@ namespace Dune
 
   private:
     template< class FineFunction, class CoarseLocalFunction >
-    void hierarchicProlong ( const FineFunction &fineFunction,
-                             CoarseLocalFunction &coarseLocalFunction ) const
+    void hierarchicRestrict ( const FineFunction &fineFunction,
+                              CoarseLocalFunction &coarseLocalFunction ) const
     {
       typedef typename FineFunction::LocalFunctionType FineLocalFunction;
 
