@@ -2,7 +2,7 @@
 #define DUNE_INSERTFUNCTIONPASS_HH
 
 #include <dune/fem/function/common/discretefunction.hh>
-#include <dune/fem/function/common/discretefunctionadapter.hh>
+#include <dune/fem/function/common/gridfunctionadapter.hh>
 #include <dune/fem/pass/pass.hh>
 
 namespace Dune
@@ -72,17 +72,17 @@ namespace Dune
     struct LocalFunctionInitializer
     {
       template <class ArgType> 
-      static void init( const ArgType&, DiscreteFunction& ) {}
+      static void init( const ArgType&, const double time, DiscreteFunction& ) {}
     };
     
     template <class LFType>
     struct LocalFunctionInitializer< LocalFunctionAdapter< LFType > >
     {
       template <class ArgType> 
-      static void init( const ArgType& arg, DiscreteFunction& dest ) 
+      static void init( const ArgType& arg, const double time, DiscreteFunction& dest ) 
       {
         // call initialize on LocalFunctionAdapter 
-        dest.initialize( arg );
+        dest.initialize( arg, time );
       }
     };
     
@@ -166,13 +166,15 @@ namespace Dune
       destination_ = const_cast< DestinationType * >( &destination );
     }
 
+    using BaseType::time;
+
   protected:
     // empty method here
     void compute ( const ArgumentType &arg, DestinationType &dest ) const
     {
       // in case DestinationType is a LocalFunctionAdapter
       // call initialize 
-      LocalFunctionInitializer< DestinationType > :: init( arg, dest );
+      LocalFunctionInitializer< DestinationType >::init( arg, time(), dest );
     }
 
     using BaseType::destination_;
