@@ -190,11 +190,11 @@ namespace Dune
   // DenseRowMatrixObject
   // --------------------
 
-  template< class DomainSpace, class RangeSpace >
+  template< class DomainSpace, class RangeSpace, class TraitsImp >
   class DenseRowMatrixObject
   : public OEMMatrix
   {
-    typedef DenseRowMatrixObject< DomainSpace, RangeSpace > This;
+    typedef DenseRowMatrixObject< DomainSpace, RangeSpace, TraitsImp > This;
 
   public:
     typedef DomainSpace DomainSpaceType;
@@ -206,6 +206,10 @@ namespace Dune
     typedef typename RangeSpace::GridType::template Codim< 0 >::Entity RowEntityType;
 
     typedef DenseRowMatrix< Field > MatrixType;
+    //! type of traits 
+    typedef TraitsImp Traits;
+    //! type of stencil class 
+    typedef typename Traits :: StencilType StencilType;
 
   private:
     class LocalMatrixTraits;
@@ -305,10 +309,10 @@ namespace Dune
   // DenseRowMatrixObject::LocalMatrixTraits
   // ---------------------------------------
 
-  template< class DomainSpace, class RangeSpace >
-  class DenseRowMatrixObject< DomainSpace, RangeSpace >::LocalMatrixTraits
+  template< class DomainSpace, class RangeSpace, class TraitsImp >
+  class DenseRowMatrixObject< DomainSpace, RangeSpace, TraitsImp >::LocalMatrixTraits
   {
-    typedef DenseRowMatrixObject< DomainSpace, RangeSpace > MatrixObject;
+    typedef DenseRowMatrixObject< DomainSpace, RangeSpace, TraitsImp > MatrixObject;
 
   public:
     typedef typename MatrixObject::DomainSpaceType DomainSpaceType;
@@ -325,11 +329,11 @@ namespace Dune
   // DenseRowMatrixObject::LocalMatrix
   // ---------------------------------
 
-  template< class DomainSpace, class RangeSpace >
-  class DenseRowMatrixObject< DomainSpace, RangeSpace >::LocalMatrix
+  template< class DomainSpace, class RangeSpace, class TraitsImp >
+  class DenseRowMatrixObject< DomainSpace, RangeSpace, TraitsImp >::LocalMatrix
   : public LocalMatrixDefault< LocalMatrixTraits >
   {
-    typedef DenseRowMatrixObject< DomainSpace, RangeSpace > MatrixObject;
+    typedef DenseRowMatrixObject< DomainSpace, RangeSpace, TraitsImp > MatrixObject;
 
     typedef LocalMatrix This;
     typedef LocalMatrixDefault< LocalMatrixTraits > Base;
@@ -461,10 +465,10 @@ namespace Dune
   // DenseRowMatrixObject::LocalMatrixFactory
   // ----------------------------------------
 
-  template< class DomainSpace, class RangeSpace >
-  class DenseRowMatrixObject< DomainSpace, RangeSpace >::LocalMatrixFactory
+  template< class DomainSpace, class RangeSpace, class TraitsImp >
+  class DenseRowMatrixObject< DomainSpace, RangeSpace, TraitsImp >::LocalMatrixFactory
   {
-    typedef DenseRowMatrixObject< DomainSpace, RangeSpace > MatrixObject;
+    typedef DenseRowMatrixObject< DomainSpace, RangeSpace, TraitsImp > MatrixObject;
 
   public:
     typedef LocalMatrix ObjectType;
@@ -487,13 +491,15 @@ namespace Dune
   // DenseRowMatrixOperator
   // ----------------------
 
-  template< class DomainFunction, class RangeFunction >
+  template< class DomainFunction, class RangeFunction , class TraitsImp >
   class DenseRowMatrixOperator
-  : public DenseRowMatrixObject< typename DomainFunction::DiscreteFunctionSpaceType, typename RangeFunction::DiscreteFunctionSpaceType >,
+  : public DenseRowMatrixObject< typename DomainFunction::DiscreteFunctionSpaceType, 
+                                 typename RangeFunction::DiscreteFunctionSpaceType,
+                                 TraitsImp >,
     public Operator< typename DomainFunction::RangeFieldType, typename RangeFunction::RangeFieldType, DomainFunction, RangeFunction >
   {
-    typedef DenseRowMatrixOperator< DomainFunction, RangeFunction > This;
-    typedef DenseRowMatrixObject< typename DomainFunction::DiscreteFunctionSpaceType, typename RangeFunction::DiscreteFunctionSpaceType > Base;
+    typedef DenseRowMatrixOperator< DomainFunction, RangeFunction, TraitsImp > This;
+    typedef DenseRowMatrixObject< typename DomainFunction::DiscreteFunctionSpaceType, typename RangeFunction::DiscreteFunctionSpaceType, TraitsImp > Base;
 
   public:
     typedef typename Base::DomainSpaceType DomainSpaceType;
