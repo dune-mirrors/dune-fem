@@ -19,10 +19,11 @@ TESTPROGS = lagrangeinterpolation_linear lagrangeinterpolation_quadratic \
             dgl2projection_adaptive      dgl2projection_filtered \
             dgl2projection_blockvector   dgl2projection_vector \
             dgl2projection_attached      dgl2projection_legendre \
-			dgl2projection_blockvectordiscretefunction \
+            dgl2projection_blockvectordiscretefunction \
             dgl2projection_fv      \
             vtxprojection_adaptive \
-            mapper_dg                    mapper_fv    mapper_lagrange
+            mapper_dg                    mapper_fv    mapper_lagrange \
+            intersectionindexset 
 
 
 TESTS = $(TESTPROGS)
@@ -70,5 +71,8 @@ mapper_lagrange_CPPFLAGS = -DUSE_LAGRANGESPACE -DPOLORDER=2 -DCOUNT_FLOPS $(AM_C
 
 mapper_fv_SOURCES = mapper.cc
 mapper_fv_CPPFLAGS = -DUSE_FVSPACE -DCOUNT_FLOPS $(AM_CPPFLAGS)
+
+intersectionindexset_SOURCES = intersectionindexset.cc
+intersectionindexset_CPPFLAGS = $(AM_CPPFLAGS)
 
 include $(top_srcdir)/am/global-rules
