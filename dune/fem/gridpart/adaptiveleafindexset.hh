@@ -42,11 +42,23 @@ namespace Dune
     //! number of supported codimensions 
     static const int numCodimensions = TraitsImp :: numCodimensions ;
 
+    //! number of supported codimensions 
+    static const int intersectionCodimension = TraitsImp :: intersectionCodimension ;
+
     //! type of index 
     typedef typename BaseType :: IndexType IndexType;
 
     //! type of codimension 0 Entity 
     typedef typename GridType::template Codim< 0 >::Entity ElementType;
+
+    //! type of codimension 0 Entity 
+    typedef typename GridType::template Codim< 0 >::EntityPointer ElementPointerType;
+
+    //! type of intersection iterator 
+    typedef typename GridPartType :: IntersectionIteratorType IntersectionIteratorType; 
+
+    //! type of intersections
+    typedef typename GridPartType :: IntersectionType   IntersectionType; 
 
   private:
     typedef typename TraitsImp :: CodimIndexSetType  CodimIndexSetType ;
@@ -163,7 +175,7 @@ namespace Dune
         if( ! indexSet.codimAvailable( codim ) ) return ;
 
         if( cd == codim )
-          indexSet.template setUpCodimSet< codim >();
+          indexSet.template setupCodimSet< codim >();
       }
     };
 
@@ -181,6 +193,40 @@ namespace Dune
       : public CallSetUpCodimSetBase< codim, Capabilities :: hasEntity < GridType, codim > :: v >
     {
     };
+
+
+    /////////////////////////////////////////////////////
+    //  subentity extractor 
+    /////////////////////////////////////////////////////
+
+    template < int codim, bool gridHasCodim > 
+    struct GetSubEntityBase
+    {
+      typedef typename GridType :: template Codim< codim > :: EntityPointer  EntityPointer ;
+      static EntityPointer subEntity( const ElementType& element, const int subEn ) 
+      {
+        return element.template subEntity< codim > ( subEn );
+      }
+    };
+
+    template < int codim > 
+    struct GetSubEntityBase< codim, false >
+    {
+      typedef typename GridType :: template Codim< 0 > :: EntityPointer  EntityPointer ;
+      static EntityPointer subEntity( const ElementType& element, const int subEn ) 
+      {
+        DUNE_THROW(NotImplemented,"stupid grid without entities of codim 1 used");
+        return element.template subEntity< 0 > ( 0 );
+      }
+    };
+
+    struct GetFaceEntity 
+      : public GetSubEntityBase< 1, Capabilities :: hasEntity < GridType, 1 > :: v  >
+    {
+    };
+
+    //! type of codimension 1 entity 
+    typedef typename GetFaceEntity :: EntityPointer FacePointerType ;
 
     //! is true if grid is structured grid 
     enum { StructuredGrid = ! Capabilities::IsUnstructured<GridType>::v };
@@ -211,7 +257,7 @@ namespace Dune
     // return true if codim is supported 
     const bool codimAvailable( const int codim ) const 
     {
-      return codim < numCodimensions ;
+      return codim < numCodimensions && codim >= 0 ;
     }
 
     CodimIndexSetType& codimLeafSet( const int codim ) const 
@@ -237,11 +283,14 @@ namespace Dune
 
       // all higher codims are not used by default
       for(int codim = 1; codim < numCodimensions; ++codim ) codimUsed_[ codim ] = false ;
-      
+
       // set the codim of each Codim Set. 
       for(int codim = 0; codim < numCodimensions; ++codim ) 
       {
-        codimLeafSet_[ codim ] = new CodimIndexSetType( grid_, codim );
+        if( codim == intersectionCodimension ) 
+          codimLeafSet_[ codim ] = new CodimIndexSetType( grid_, 1 );
+        else 
+          codimLeafSet_[ codim ] = new CodimIndexSetType( grid_, codim );
       }
 
       // build index set 
@@ -274,6 +323,7 @@ namespace Dune
     //****************************************************************
     //
     //  INTERFACE METHODS for DUNE INDEX SETS 
+    //  --size 
     //
     //****************************************************************
     //! return size of grid entities per level and codim 
@@ -297,6 +347,11 @@ namespace Dune
     //! return size of grid entities of given codim 
     IndexType size ( int codim ) const
     {
+      assert( codim < numCodimensions );
+      if( codim == intersectionCodimension ) 
+      {
+        return codimLeafSet( codim ).size();
+      }
       assert( codimLeafSet( codim ).geomTypes().size() == 1 ); 
       return size( codimLeafSet( codim ).geomTypes()[0] );
     }
@@ -391,12 +446,18 @@ namespace Dune
     bool compress ();
 
   public:
+    ////////////////////////////////////////////////////////
+    //  index methods 
+    //  --index
+    ///////////////////////////////////////////////////////
+    /* \brief return index for entity */
     template< class Entity >
     IndexType index ( const Entity &entity ) const
     {
       return index< Entity :: codimension >( entity );
     }
 
+    /* \brief return index for entity */
     template< int codim >
     IndexType
     index ( const typename GridType :: template Codim< codim > :: Entity &entity ) const
@@ -404,10 +465,10 @@ namespace Dune
       if( codimAvailable( codim ) ) 
       {
         if( (codim != 0) && ! codimUsed_[ codim ] )
-          setUpCodimSet< codim >();
+          setupCodimSet< codim >();
 
         const CodimIndexSetType &codimSet = codimLeafSet( codim );
-        const int idx = codimSet.index( entity );
+        const IndexType idx = codimSet.index( entity );
         assert( (idx >= 0) && (idx < codimSet.size()) );
         return idx;
       }
@@ -418,6 +479,7 @@ namespace Dune
       }
     }
 
+    /* \brief return index for sub entity of given entity and subEntityNumber */
     IndexType
     subIndex ( const typename GridType::template Codim< 0 >::Entity &entity,
                int subNumber, unsigned int codim ) const
@@ -428,7 +490,7 @@ namespace Dune
           ForLoop< CallSetUpCodimSet, 0, dimension >::apply( codim, *this );
         
         const CodimIndexSetType &codimSet = codimLeafSet( codim );
-        const int idx = codimSet.subIndex( entity, subNumber );
+        const IndexType idx = codimSet.subIndex( entity, subNumber );
         assert( (idx >= 0) && (idx < codimSet.size()) );
         return idx;
       }
@@ -438,6 +500,37 @@ namespace Dune
         return -1;
       }
     }
+
+    /* \brief return index for intersection */
+    IndexType index ( const IntersectionType &intersection ) const
+    {
+      enum { codim = intersectionCodimension };
+      if( codimAvailable( codim ) ) 
+      {
+        // this in only done on first call 
+        setupIntersections();
+
+        const CodimIndexSetType &codimSet = codimLeafSet( codim );
+
+        // get corresponding face entity pointer 
+        FacePointerType face = getIntersectionFace( intersection );
+        
+        const IndexType idx = codimSet.index( *face );
+        assert( (idx >= 0) && (idx < IndexType(codimSet.size())) );
+        return idx;
+      }
+      else 
+      {
+        DUNE_THROW( NotImplemented, (name() + " does not support indices for intersections, intersectionCodim = ") << codim );
+        return -1;
+      }
+    }
+
+    //////////////////////////////////////////////////////////
+    //
+    //  DoF adjustment methods
+    //
+    //////////////////////////////////////////////////////////
 
     //! return number of holes of the sets indices 
     int numberOfHoles ( const int codim ) const
@@ -485,6 +578,9 @@ namespace Dune
     // memorise index 
     void insertIndex ( const ElementType &entity );
 
+    // memorise indices for all intersections  
+    void insertIntersections ( const ElementType &entity ) const;
+
     // insert index temporarily
     void insertTemporary ( const ElementType &entity );
 
@@ -514,7 +610,10 @@ namespace Dune
     
     // mark indices that are still used (and give new indices to new elements)
     template< int codim >
-    void setUpCodimSet () const;
+    void setupCodimSet () const;
+
+    // mark indices that are still used (and give new indices to new intersections)
+    void setupIntersections () const;
 
     // count elements by iterating over grid and compare 
     // entities of given codim with given type 
@@ -539,6 +638,29 @@ namespace Dune
     bool read_xdr( const std::string &filename, int timestep );
     //! read index set from given xdr file 
     bool read_xdr( const std::string &filename );
+
+  protected:
+    FacePointerType getIntersectionFace( const IntersectionType& intersection ) const 
+    {
+      ElementPointerType inside = intersection.inside();
+      return getIntersectionFace( intersection, *inside );
+    }
+
+    FacePointerType getIntersectionFace( const IntersectionType& intersection, 
+                                         const ElementType& inside ) const 
+    {
+      if( ! intersection.conforming() && intersection.neighbor() ) 
+      {
+        const ElementPointerType outsideEp = intersection.outside();
+        const ElementType& outside = *outsideEp ;
+        // only if outside is more refined then inside 
+        if( inside.level() < outside.level() ) 
+          return GetFaceEntity :: subEntity( outside, intersection.indexInOutside() ); 
+      }
+
+      // default: get subentity of inside 
+      return GetFaceEntity :: subEntity( inside, intersection.indexInInside() );
+    }
   };
 
   template< class TraitsImp >
@@ -624,12 +746,38 @@ namespace Dune
       // only for index sets upporting more than one codim 
       if( numCodimensions > 1 )
         ForLoop< InsertSubEntities, 1, dimension >::apply( *this, entity );
+
     }
 
     assert( codimLeafSet( 0 ).exists( entity ) );
 
+    // insert intersections if this is enabled 
+    if( intersectionCodimension > 0 ) 
+    {
+      insertIntersections( entity );
+    }
+
     // now consecutivity is no longer guaranteed
     compressed_ = false;
+  }
+
+  template< class TraitsImp >
+  inline void
+  AdaptiveIndexSetBase< TraitsImp >::insertIntersections ( const ElementType &entity ) const
+  {
+    const IntersectionIteratorType endiit = gridPart_.iend( entity );
+    for( IntersectionIteratorType iit = gridPart_.ibegin( entity ); 
+         iit != endiit ; ++ iit ) 
+    {
+      // get intersection 
+      const IntersectionType& intersection = *iit ;
+
+      // get correct face pointer 
+      FacePointerType face = getIntersectionFace( intersection, entity );
+
+      // insert face into index set 
+      codimLeafSet( intersectionCodimension ).insert( *face );
+    }
   }
 
   template< class TraitsImp >
@@ -788,7 +936,7 @@ namespace Dune
   template< class TraitsImp >
   template< int codim >
   inline void
-  AdaptiveIndexSetBase< TraitsImp >::setUpCodimSet () const
+  AdaptiveIndexSetBase< TraitsImp >::setupCodimSet () const
   {
     // if codim is not available do nothing 
     if( ! codimAvailable( codim ) ) return ;
@@ -808,6 +956,34 @@ namespace Dune
     codimUsed_[ codim ] = true;
   }
 
+
+  template< class TraitsImp >
+  inline void
+  AdaptiveIndexSetBase< TraitsImp >::setupIntersections() const
+  {
+    // if intersectionCodimension < 0 then this feature is disabled 
+    if( intersectionCodimension < 0 ) return ;
+
+    // do nothing if insections are already available 
+    if( codimUsed_[ intersectionCodimension ] ) return ;
+
+    // resize if necessary 
+    codimLeafSet( intersectionCodimension ).resize();
+    
+    // walk over grid parts entity set and insert entities
+    typedef typename GridPartType
+      ::template Codim< 0 >::template Partition< pitype > :: IteratorType Iterator;
+
+    const Iterator end = gridPart_.template end< 0, pitype >();
+    for( Iterator it = gridPart_.template begin< 0, pitype >(); it != end; ++it )
+    {
+      // insert all intersections of this entity 
+      insertIntersections( *it );
+    }
+
+    // mark codimension as used
+    codimUsed_[ intersectionCodimension ] = true;
+  }
 
   template< class TraitsImp >
   template< int codim >
@@ -972,6 +1148,8 @@ namespace Dune
     enum { numCodimensions = GridType :: dimension + 1 };
     // first comdimension that is supported (not yet supported)
     enum { startingCodimension = 0 };
+    // intersection codimensions (this is usually dimension + 1 )
+    enum { intersectionCodimension = -1 };
     // type of codimension index set  
     typedef CodimIndexSet< GridType >  CodimIndexSetType; 
   };
@@ -1007,7 +1185,60 @@ namespace Dune
     }
   };
 
-#if ! DUNE_FEM_COMPATIBILITY
+
+  /////////////////////////////////////////////////////////////////////////
+  //
+  //  --IntersectionAdaptiveLeafIndexSet 
+  //
+  /////////////////////////////////////////////////////////////////////////
+  template< class GridPartImp >
+  struct IntersectionAdaptiveLeafIndexSetTraits
+  {   
+    // type of grid part  
+    typedef GridPartImp GridPartType;
+    // type of grid 
+    typedef typename GridPartType :: GridType GridType;
+    // number of codimensions 
+    enum { numCodimensions = GridType :: dimension + 2 };
+    // intersection codimensions (this is usually dimension + 1 )
+    enum { intersectionCodimension = numCodimensions - 1 };
+    // first comdimension that is supported (not yet supported)
+    enum { startingCodimension = 0 };
+    // type of codimension index set  
+    typedef CodimIndexSet< GridType >  CodimIndexSetType; 
+  };
+
+  /** \class AdaptiveLeafIndexSet
+   *  \brief consecutive, persistent index set for the leaf level based on the
+   *         grid's hierarchy index set
+   *
+   *  This index set generates a consecutive leaf index out of the unique global
+   *  index of each entity. It can be used instead of the default grid index sets
+   *  and can be generated for each grid implementation.
+   *
+   *  \note This index sets supports all indices for all codimensions of the grid. 
+   *
+   */
+  template < class GridPartImp >
+  class IntersectionAdaptiveLeafIndexSet
+  : public AdaptiveIndexSetBase< IntersectionAdaptiveLeafIndexSetTraits< GridPartImp > >
+  {
+    typedef AdaptiveIndexSetBase< IntersectionAdaptiveLeafIndexSetTraits< GridPartImp > > BaseType;
+  public:
+    typedef typename BaseType :: GridPartType GridPartType;
+    //! Constructor
+    IntersectionAdaptiveLeafIndexSet (const GridPartType & gridPart) 
+      : BaseType(gridPart) 
+    {
+    }
+
+    //! return name of index set 
+    virtual std::string name () const
+    {
+      return "IntersectionAdaptiveLeafIndexSet";
+    }
+  };
+
   /////////////////////////////////////////////////////////////////////////
   //
   //  --DGAdaptiveLeafIndexSet 
@@ -1024,6 +1255,8 @@ namespace Dune
     enum { numCodimensions = 1 };
     // first comdimension that is supported (not yet supported)
     enum { startingCodimension = 0 };
+    // intersection codimensions (this is usually dimension + 1 )
+    enum { intersectionCodimension = -1 };
     // type of codimension index set  
     typedef CodimIndexSet< GridType >  CodimIndexSetType; 
   };
@@ -1057,7 +1290,6 @@ namespace Dune
       return "DGAdaptiveLeafIndexSet";
     }
   };
-#endif
 
   /////////////////////////////////////////////////////////////////////////
   //
@@ -1075,6 +1307,8 @@ namespace Dune
     enum { numCodimensions = GridType :: dimension + 1 };
     // first comdimension that is supported (not yet supported)
     enum { startingCodimension = 0 };
+    // intersection codimensions (this is usually dimension + 1 )
+    enum { intersectionCodimension = -1 };
     // type of codimension index set  
     typedef IdBasedCodimIndexSet< GridType >  CodimIndexSetType; 
   };

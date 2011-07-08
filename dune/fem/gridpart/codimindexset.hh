@@ -369,6 +369,7 @@ public:
   }
 
   //! return leaf index for given entity   
+  //- --index 
   template <class EntityType>
   int index ( const EntityType& entity ) const
   {

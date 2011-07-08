@@ -328,7 +328,6 @@ namespace Dune
     }
   };
 
-#if ! DUNE_FEM_COMPATIBILITY // remove this #if in version 1.2
   /** @ingroup AdaptiveLeafGP
       \brief A grid part with an index set specially
       designed for adaptive calculations.
@@ -355,7 +354,6 @@ namespace Dune
     {
     }
   };
-#endif
 
 
   /** @ingroup AdaptiveLeafGP
@@ -395,6 +393,48 @@ namespace Dune
 
     //! copy constructor 
     inline IdBasedLeafGridPart ( const IdBasedLeafGridPart& other )
+    : BaseType( other )
+    {
+    }
+  };
+
+  template< class Grid, PartitionIteratorType idxpitype = All_Partition >
+  class IntersectionAdaptiveLeafGridPart ;
+
+  //! Type definitions for the LeafGridPart class
+  template< class Grid, PartitionIteratorType idxpitype >
+  class IntersectionAdaptiveLeafGridPartTraits : public AdaptiveLeafGridPartTraits< Grid, idxpitype, false>
+  {
+  public:
+    //! type of the grid part , i.e. this type 
+    typedef IntersectionAdaptiveLeafGridPart< Grid, idxpitype > GridPartType;
+
+    //! type of the index set 
+    typedef IntersectionAdaptiveLeafIndexSet< GridPartType > IndexSetType;
+  };
+
+  /** @ingroup AdaptiveLeafGP
+      \brief A grid part with an index set specially
+      designed for adaptive calculations.
+
+      The underlying \ref DGAdaptiveLeafIndexSet "index set" is defined 
+      only for codimension 0. 
+  */
+  template< class Grid, PartitionIteratorType idxpitype >
+  class IntersectionAdaptiveLeafGridPart
+  : public AdaptiveGridPartBase< IntersectionAdaptiveLeafGridPartTraits< Grid, idxpitype > > 
+  {
+    typedef AdaptiveGridPartBase< IntersectionAdaptiveLeafGridPartTraits< Grid, idxpitype > > BaseType;
+  public:  
+    typedef typename BaseType :: GridType GridType;
+    //! Constructor
+    inline explicit IntersectionAdaptiveLeafGridPart( GridType &grid )
+    : BaseType( grid )
+    {
+    }
+
+    //! copy constructor 
+    inline IntersectionAdaptiveLeafGridPart( const IntersectionAdaptiveLeafGridPart& other )
     : BaseType( other )
     {
     }
