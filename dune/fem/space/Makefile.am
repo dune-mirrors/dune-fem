@@ -13,11 +13,12 @@ basefunctions reducedbasisspace pqlagrangespace
 
 spacedir = $(includedir)/dune/fem/space
 space_HEADERS = adaptoperator.hh \
-		combinedspace.hh \
+                combinedspace.hh \
                 dgspace.hh \
-		fvspace.hh \
+                fvspace.hh \
                 lagrangespace.hh \
-                reducedbasisspace.hh
+                reducedbasisspace.hh \
+                padaptivespace.hh
 
 include $(top_srcdir)/am/global-rules
 
