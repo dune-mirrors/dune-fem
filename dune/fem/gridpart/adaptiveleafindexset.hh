@@ -469,7 +469,7 @@ namespace Dune
 
         const CodimIndexSetType &codimSet = codimLeafSet( codim );
         const IndexType idx = codimSet.index( entity );
-        assert( (idx >= 0) && (idx < codimSet.size()) );
+        assert( (idx >= 0) && (idx < IndexType(codimSet.size())) );
         return idx;
       }
       else 
@@ -491,7 +491,7 @@ namespace Dune
         
         const CodimIndexSetType &codimSet = codimLeafSet( codim );
         const IndexType idx = codimSet.subIndex( entity, subNumber );
-        assert( (idx >= 0) && (idx < codimSet.size()) );
+        assert( (idx >= 0) && (idx < IndexType(codimSet.size())) );
         return idx;
       }
       else 
