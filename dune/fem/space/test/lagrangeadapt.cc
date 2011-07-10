@@ -24,6 +24,7 @@ const int polOrder = POLORDER;
 #include <dune/fem/space/common/adaptmanager.hh>
 #include <dune/fem/space/lagrangespace.hh>
 #include <dune/fem/space/lagrangespace/adaptmanager.hh>
+//#include <dune/fem/space/padaptivespace.hh>
 #include <dune/fem/function/adaptivefunction.hh>
 #include <dune/fem/quadrature/cachingquadrature.hh>
 #include <dune/fem/operator/lagrangeinterpolation.hh>
@@ -182,6 +183,9 @@ typedef FunctionSpace< double, double, MyGridType::dimensionworld, 1 > FunctionS
 //! type of the discrete function space our unkown belongs to
 typedef LagrangeDiscreteFunctionSpace< FunctionSpaceType, GridPartType, polOrder >
   DiscreteFunctionSpaceType;
+//! type of the discrete function space our unkown belongs to
+//typedef PAdaptiveLagrangeSpace< FunctionSpaceType, GridPartType, polOrder >
+//  DiscreteFunctionSpaceType;
 
 //! type of the discrete function we are using
 typedef AdaptiveDiscreteFunction< DiscreteFunctionSpaceType > DiscreteFunctionType;
