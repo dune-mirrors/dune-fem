@@ -119,7 +119,7 @@ public:
   */
   virtual void solve(DestinationType& u, MonitorType& monitor) 
   {
-    std::cerr << "OdeSolverInterface::solve(DestinationType,int&,int&) should not be used." 
+    std::cerr << "OdeSolverInterface::solve(DestinationType&,MonitorType&) should not be used." 
               << std::endl;
     abort();
   }
