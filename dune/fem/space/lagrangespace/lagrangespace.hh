@@ -346,7 +346,7 @@ namespace Dune
         if( lagrangePointSet_.find( geometryType ) == lagrangePointSet_.end() )
         {
           const LagrangePointSetType *lagrangePointSet
-            = new LagrangePointSetType( geometryType );
+            = new LagrangePointSetType( geometryType, polynomialOrder );
           assert( lagrangePointSet != NULL );
           lagrangePointSet_[ geometryType ] = lagrangePointSet;
         }

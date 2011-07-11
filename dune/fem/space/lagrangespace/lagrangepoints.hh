@@ -69,79 +69,21 @@ namespace Dune
     }
   };
 
-
-
-  /** @ingroup LagrangeDiscreteFunctionSpace 
-   * \brief Set of lagrange points
-   *
-   * Interface class for a set of lagrange points.
-   * An instance of the lagrange points can be
-   * obtained from the 
-   * \ref Dune::LagrangeDiscreteFunctionSpace "lagrange function space".
-   * The set can be wrapped in a quadrature. 
-   *
-   **/
-  template< class FieldImp, unsigned int dim, unsigned int polOrder >
-  class LagrangePointListInterface
-  : public IntegrationPointListImp< FieldImp, dim >
+  template< unsigned int dim, unsigned int maxPolOrder >
+  class LagrangePointInterface 
   {
-  public:
-    //! field type of points
-    typedef FieldImp FieldType;
-
-    //! dimension of points
-    enum { dimension = dim };
-    
-    //! polynomial order of corresponding base functions
-    enum { polynomialOrder = polOrder };
-
-    //! type of points
-    typedef FieldVector< FieldType, dimension > CoordinateType;
-
-    struct DofInfo
-    {
-      unsigned int codim;
-      unsigned int subEntity;
-      unsigned int dofNumber;
-    };
-
-  private:
-    typedef LagrangePointListInterface< FieldType, dimension, polynomialOrder >
-      ThisType;
-    typedef IntegrationPointListImp< FieldType, dimension > BaseType;
-
-  private:
-    std :: vector< DofInfo > dofInfos_;
+    typedef LagrangePointInterface< dim, maxPolOrder > ThisType;
+  protected:
+    LagrangePointInterface() {}
 
   public:
-    LagrangePointListInterface( const size_t id )
-    : BaseType( id ),
-      dofInfos_()
-    {
-    }
+    static const unsigned int dimension = dim;
 
-  private:
-    LagrangePointListInterface ( const ThisType &other )
-    {
-    }
+    static const unsigned int maxPolynomialOrder = maxPolOrder;
 
-  public:
-    inline const DofInfo& dofInfo( unsigned int index ) const
-    {
-      return dofInfos_[ index ];
-    }
-    
-    inline void dofSubEntity( unsigned int index,
-                              unsigned int &codim, 
-                              unsigned int &subEntity,
-                              unsigned int &dofNumber ) const
-    {
-      const DofInfo &dofInfo = dofInfos_[ index ];
-      codim = dofInfo.codim;
-      subEntity = dofInfo.subEntity;
-      dofNumber = dofInfo.dofNumber;
-    }
-    
+    //! destructor 
+    virtual ~LagrangePointInterface() {}
+
     virtual unsigned int entityDofNumber ( unsigned int codim,
                                            unsigned int subEntity,
                                            unsigned int dofNumber ) const = 0;
@@ -158,7 +100,7 @@ namespace Dune
 
     inline static int maxOrder ()
     {
-      return polynomialOrder;
+      return maxPolynomialOrder;
     }
 
     /** \brief obtain the number of DoFs on one entity
@@ -180,85 +122,20 @@ namespace Dune
 
     virtual int order () const
     {
-      return polynomialOrder;
-    }
-
-  protected:
-    inline void addDofInfo( const DofInfo &dofInfo )
-    {
-      dofInfos_.push_back( dofInfo );
+      return maxPolynomialOrder;
     }
   };
 
-
-
-  template< class FieldImp, unsigned int topologyId, unsigned int dim, unsigned int polOrder >
-  class LagrangePointListImplementation
-  : public LagrangePointListInterface< FieldImp, dim, polOrder >
+  template< unsigned int topologyId, unsigned int dim, unsigned int maxPolOrder, int polOrder  >
+  class LagrangePointImplementation : 
+    public LagrangePointInterface< dim, maxPolOrder >
   {
-    typedef LagrangePointListImplementation< FieldImp, topologyId, dim, polOrder > ThisType;
-    typedef LagrangePointListInterface< FieldImp, dim, polOrder > BaseType;
-
+    typedef LagrangePoint< topologyId, dim, polOrder > LagrangePointType;
   public:
-    //! field type of points
-    typedef FieldImp FieldType;
+    LagrangePointImplementation() {}
 
-    //! dimension of points
-    enum { dimension = dim };
+    virtual ~LagrangePointImplementation() {}
 
-    //! polynomial order of corresponding base functions
-    enum { polynomialOrder = polOrder };
-
-    //! type of points
-    typedef FieldVector< FieldType, dimension > CoordinateType;
-
-  private:
-    typedef LagrangePoint< topologyId, dimension, polynomialOrder > LagrangePointType;
-    
-    enum { numLagrangePoints = LagrangePointType::numLagrangePoints };
-
-  public:
-    LagrangePointListImplementation ( const size_t id )
-    : BaseType( id )
-    {
-       for( unsigned int i = 0; i < numLagrangePoints; ++i ) {
-        LagrangePointType pt( i );
-        
-        CoordinateType local;
-        pt.local( local );
-        this->addIntegrationPoint( local );
-        
-        typename BaseType :: DofInfo dofInfo;
-        pt.dofSubEntity( dofInfo.codim, dofInfo.subEntity, dofInfo.dofNumber );
-        this->addDofInfo( dofInfo );
-      }
-    }
-    
-    LagrangePointListImplementation ( const GeometryType &geo, const int order, const size_t id )
-    : BaseType( id )
-    {
-      assert( order <= polynomialOrder );
-      assert( geo == this->geometry() );
-         
-      for( unsigned int i = 0; i < numLagrangePoints; ++i )
-      {
-        LagrangePointType pt( i );
-        
-        CoordinateType local;
-        pt.local( local );
-        this->addIntegrationPoint( local );
-        
-        typename BaseType::DofInfo dofInfo;
-        pt.dofSubEntity( dofInfo.codim, dofInfo.subEntity, dofInfo.dofNumber );
-        this->addDofInfo( dofInfo );
-      }
-    }
-
-  private:
-    LagrangePointListImplementation ( const ThisType &other )
-    {}
-
-  public:
     virtual unsigned int
     entityDofNumber ( unsigned int codim, unsigned int subEntity, unsigned int dofNumber ) const
     {
@@ -267,11 +144,7 @@ namespace Dune
 
     virtual GeometryType geometry () const
     {
-#if DUNE_VERSION_NEWER_REV(DUNE_COMMON,2,1,0)
-      return GeometryType( topologyId, dimension );
-#else
-      return GenericGeometry::geometryType( topologyId, dimension );
-#endif
+      return GeometryType( topologyId, dim );
     }
 
     /** \copydoc Dune::LagrangePointListInterface::maxDofs
@@ -295,8 +168,235 @@ namespace Dune
     {
       return LagrangePointType::numDofs( codim );
     }
+
+    virtual int order () const { return polOrder; }
   };
 
+  /** @ingroup LagrangeDiscreteFunctionSpace 
+   * \brief Set of lagrange points
+   *
+   * Interface class for a set of lagrange points.
+   * An instance of the lagrange points can be
+   * obtained from the 
+   * \ref Dune::LagrangeDiscreteFunctionSpace "lagrange function space".
+   * The set can be wrapped in a quadrature. 
+   *
+   **/
+  template< class FieldImp, unsigned int dim, unsigned int maxPolOrder >
+  class LagrangePointListInterface
+  : public IntegrationPointListImp< FieldImp, dim >
+  {
+  public:
+    //! field type of points
+    typedef FieldImp FieldType;
+
+    //! dimension of points
+    enum { dimension = dim };
+    
+    //! polynomial order of corresponding base functions
+    enum { maxPolynomialOrder = maxPolOrder };
+
+    //! type of points
+    typedef FieldVector< FieldType, dimension > CoordinateType;
+
+    struct DofInfo
+    {
+      unsigned int codim;
+      unsigned int subEntity;
+      unsigned int dofNumber;
+    };
+
+  private:
+    typedef LagrangePointListInterface< FieldType, dimension, maxPolynomialOrder >
+      ThisType;
+    typedef IntegrationPointListImp< FieldType, dimension > BaseType;
+
+    typedef LagrangePointInterface< dim, maxPolynomialOrder >
+      LagrangePointInterfaceType;
+  private:
+    std :: vector< DofInfo > dofInfos_;
+    const LagrangePointInterfaceType* lagrangePointImpl_;
+
+    const LagrangePointInterfaceType& lagrangePointImpl() const
+    {
+      assert( lagrangePointImpl_ ) ;
+      return *lagrangePointImpl_;
+    }
+
+  public:
+    LagrangePointListInterface( const size_t id )
+    : BaseType( id ),
+      dofInfos_(),
+      lagrangePointImpl_( 0 )
+    {}
+
+    ~LagrangePointListInterface() 
+    {
+      delete lagrangePointImpl_;
+    }
+  private:
+    // prohibit copy construction  
+    LagrangePointListInterface ( const ThisType &other );
+
+  public:
+    void setLagrangePointImpl( const LagrangePointInterfaceType* lpImpl ) 
+    {
+      assert( lagrangePointImpl_ == 0 );
+      lagrangePointImpl_ = lpImpl ;
+    }
+
+    inline const DofInfo& dofInfo( unsigned int index ) const
+    {
+      return dofInfos_[ index ];
+    }
+    
+    inline void dofSubEntity( unsigned int index,
+                              unsigned int &codim, 
+                              unsigned int &subEntity,
+                              unsigned int &dofNumber ) const
+    {
+      const DofInfo &dofInfo = dofInfos_[ index ];
+      codim = dofInfo.codim;
+      subEntity = dofInfo.subEntity;
+      dofNumber = dofInfo.dofNumber;
+    }
+    
+    inline unsigned int entityDofNumber ( unsigned int codim,
+                                          unsigned int subEntity,
+                                          unsigned int dofNumber ) const 
+    {
+      return lagrangePointImpl().entityDofNumber( codim, subEntity, dofNumber ); 
+    }
+    
+    inline GeometryType geometry () const 
+    {
+      return lagrangePointImpl().geometry();
+    }
+
+    /** \brief obtain the maximal number of DoFs in one entity of a codimension
+     *
+     *  \param[in]  codim  codimension, the information is desired for
+     *
+     *  \returns maximal number of DoFs for one entity in the codimension
+     */
+    inline unsigned int maxDofs ( unsigned int codim ) const 
+    {
+      return lagrangePointImpl().maxDofs( codim );
+    }
+
+    inline static int maxOrder ()
+    {
+      return LagrangePointInterfaceType :: maxOrder();
+    }
+
+    /** \brief obtain the number of DoFs on one entity
+     *
+     *  \param[in]  codim      codimension of the entity
+     *  \param[in]  subEntity  number of the subentity (of the given codimension)
+     *
+     *  \returns the number of DoFs associated with the specified entity
+     */
+    inline unsigned int numDofs ( unsigned int codim, unsigned int subEntity ) const 
+    {
+      return lagrangePointImpl().numDofs( codim, subEntity );
+    }
+
+    /** \brief obtain the total number of DoFs in a codimension
+     *
+     *  \param[in]  codim      codimension the information is desired for
+     *
+     *  \returns the number of DoFs associated with the codimension
+     */
+    inline unsigned int numDofs ( unsigned int codim ) const 
+    {
+      return lagrangePointImpl().numDofs( codim ); 
+    }
+
+    inline int order () const
+    {
+      return lagrangePointImpl().order();
+    }
+
+  protected:
+    inline void addDofInfo( const DofInfo &dofInfo )
+    {
+      dofInfos_.push_back( dofInfo );
+    }
+  };
+
+
+  template< class FieldImp, unsigned int topologyId, unsigned int dim, unsigned int maxPolOrder >
+  class LagrangePointListImplementation
+  : public LagrangePointListInterface< FieldImp, dim, maxPolOrder >
+  {
+    typedef LagrangePointListImplementation< FieldImp, topologyId, dim, maxPolOrder > ThisType;
+    typedef LagrangePointListInterface< FieldImp, dim, maxPolOrder > BaseType;
+
+  public:
+    //! field type of points
+    typedef FieldImp FieldType;
+
+    //! dimension of points
+    enum { dimension = dim };
+
+    //! polynomial order of corresponding base functions
+    enum { maxPolynomialOrder = maxPolOrder };
+
+    //! type of points
+    typedef FieldVector< FieldType, dimension > CoordinateType;
+
+  private:
+    template <int pOrd>
+    struct CreateLagrangePoint  
+    {
+      typedef LagrangePoint< topologyId, dimension, pOrd > LagrangePointType;
+      enum { numLagrangePoints = LagrangePointType::numLagrangePoints };
+
+      static void apply( ThisType& lp, const int order ) 
+      {
+        // if order is not equal to pOrd, do nothing 
+        if( order != pOrd ) return ;
+
+        std::cout << "Create LagrangePointListInterface with geo, order, id " << order << std::endl;
+        for( unsigned int i = 0; i < numLagrangePoints; ++i )
+        {
+          LagrangePointType pt( i );
+          
+          CoordinateType local;
+          pt.local( local );
+          lp.addIntegrationPoint( local );
+          
+          typename BaseType :: DofInfo dofInfo;
+          pt.dofSubEntity( dofInfo.codim, dofInfo.subEntity, dofInfo.dofNumber );
+          lp.addDofInfo( dofInfo );
+        }
+
+        typedef LagrangePointImplementation< topologyId, dim, maxPolynomialOrder, pOrd >
+            LagrangePointImplementationType;
+        lp.setLagrangePointImpl( new LagrangePointImplementationType() );
+      }
+    };
+  public:
+    LagrangePointListImplementation ( const size_t id )
+    : BaseType( id )
+    {
+      ForLoop< CreateLagrangePoint, 1, maxPolynomialOrder > :: apply( *this, maxPolynomialOrder );
+    }
+    
+    LagrangePointListImplementation ( const GeometryType &geo, const int order, const size_t id )
+    : BaseType( id )
+    {
+      ForLoop< CreateLagrangePoint, 1, maxPolOrder > :: apply( *this, order );
+
+      // assert this after lagrangePointImpl has been created since 
+      // this->geometry() uses this class
+      assert( order <= maxPolynomialOrder );
+      assert( geo == this->geometry() );
+    }
+
+  private:
+    LagrangePointListImplementation ( const ThisType &other );
+  };
 
   
   template< class GridPartImp, unsigned int polOrder >
@@ -658,13 +758,13 @@ namespace Dune
 
 
 
-  template< class GridPartImp, unsigned int polOrder >
+  template< class GridPartImp, unsigned int maxPolOrder >
   class LagrangePointSet
   : public CachingPointList< GridPartImp, 0, 
-                             LagrangePointSetTraits< GridPartImp, polOrder > >
+                             LagrangePointSetTraits< GridPartImp, maxPolOrder > >
   {
   public:
-    typedef LagrangePointSetTraits< GridPartImp, polOrder > Traits;
+    typedef LagrangePointSetTraits< GridPartImp, maxPolOrder > Traits;
 
     typedef typename Traits :: GridPartType GridPartType;
 
@@ -704,16 +804,16 @@ namespace Dune
 
   public:
     //! constructor
-    inline LagrangePointSet ( const GeometryType &geometry )
-    : BaseType( geometry, polynomialOrder ),
+    inline LagrangePointSet ( const GeometryType &geometry, const int order )
+    : BaseType( geometry, order ),
       lagrangePointList_( this->quadImp().ipList() )
     {
     }
 
     //! copy constructor
     inline LagrangePointSet ( const ThisType &other )
-      : BaseType( other ),
-        lagrangePointList_( this->quadImp().ipList() )
+    : BaseType( other ),
+      lagrangePointList_( this->quadImp().ipList() )
     {
     }
 
@@ -722,17 +822,10 @@ namespace Dune
     inline ThisType& operator=( const ThisType &other )
     {
       assert( false );
+      abort();
     }
 
   public:
-#if 0
-    //! obtain a Lagrange point
-    inline const PointType& operator[] ( unsigned int index ) const
-    {
-      return this->point( index );
-    }
-#endif
-
     inline const DofInfo& dofInfo( unsigned int index ) const
     {
       return lagrangePointList_.dofInfo( index );

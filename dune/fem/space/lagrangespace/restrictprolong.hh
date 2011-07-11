@@ -111,7 +111,7 @@ namespace Dune
       typedef typename LagrangePointSetMap::iterator Iterator;
       Iterator it = lagrangePointSet_.find( type );
       if( it == lagrangePointSet_.end() )
-        it = lagrangePointSet_.insert( it, std::make_pair( type, new LagrangePointSet( type ) ) );
+        it = lagrangePointSet_.insert( it, std::make_pair( type, new LagrangePointSet( type, ord ) ) );
       assert( it->second != 0 );
       return *(it->second);
     }
