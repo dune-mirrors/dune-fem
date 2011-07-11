@@ -277,12 +277,14 @@ namespace Dune
       BlockMapperProviderType;
 
     typedef std::vector<BaseFunctionMapType> BaseFunctionMapVectorType;
+    typedef std::vector<LagrangePointSetMapType> LagrangePointSetMapVectorType;
 
     template <int pOrd> 
     struct ConstructBaseFunctionSets
     {
       static void apply( BaseFunctionMapVectorType& baseFunctionSetVector, 
-                  const GeometryType& geometryType ) 
+                         LagrangePointSetMapVectorType& lagrangePointSetVector,
+                         const GeometryType& geometryType ) 
       {
         //std::cout << "Create baseFunctionSet of order " << pOrd << std::endl;
         typedef LagrangeBaseFunctionFactory
@@ -303,6 +305,7 @@ namespace Dune
         assert( k < baseFunctionSetVector.size() );
         BaseFunctionMapType& baseFunctionMap = baseFunctionSetVector[ k ];
 
+
         if( baseFunctionMap.find( geometryType ) == baseFunctionMap.end() )
         {
           const BaseFunctionSetImp *baseFunctionSet
@@ -310,6 +313,15 @@ namespace Dune
                :: getObject( geometryType ));
           assert( baseFunctionSet != NULL );
           baseFunctionMap[ geometryType ] = baseFunctionSet;
+        }
+
+        LagrangePointSetMapType& lpSet = lagrangePointSetVector[ k ];
+        if( lpSet.find( geometryType ) == lpSet.end() )
+        {
+          const LagrangePointSetType *lagrangePointSet
+            = new LagrangePointSetType( geometryType, k );
+          assert( lagrangePointSet != NULL );
+          lpSet[ geometryType ] = lagrangePointSet;
         }
       }
     };
@@ -326,10 +338,10 @@ namespace Dune
 
   private:
     //! map for the base function sets
-    mutable std::vector<BaseFunctionMapType> baseFunctionSet_;
+    mutable BaseFunctionMapVectorType baseFunctionSet_;
 
     //! map for the langrage point sets
-    mutable LagrangePointSetMapType lagrangePointSet_;
+    mutable LagrangePointSetMapVectorType lagrangePointSet_;
     
     //! corresponding mapper
     MapperType *mapper_;
@@ -359,7 +371,7 @@ namespace Dune
         const CommunicationDirection commDirection = defaultDirection )
     : BaseType( gridPart, commInterface, commDirection ),
       baseFunctionSet_( polynomialOrder+1 ),
-      lagrangePointSet_(),
+      lagrangePointSet_( polynomialOrder+1 ),
       mapper_( 0 ),
       blockMapper_( 0 )
     {
@@ -373,18 +385,10 @@ namespace Dune
         const GeometryType &geometryType = geometryTypes[ i ];
 
         ForLoop< ConstructBaseFunctionSets, 1, polynomialOrder > :: 
-          apply( baseFunctionSet_, geometryType );
-
-        if( lagrangePointSet_.find( geometryType ) == lagrangePointSet_.end() )
-        {
-          const LagrangePointSetType *lagrangePointSet
-            = new LagrangePointSetType( geometryType );
-          assert( lagrangePointSet != NULL );
-          lagrangePointSet_[ geometryType ] = lagrangePointSet;
-        }
+          apply( baseFunctionSet_, lagrangePointSet_, geometryType );
       }
 
-      MapperSingletonKeyType key( gridPart, lagrangePointSet_, polynomialOrder );
+      MapperSingletonKeyType key( gridPart, lagrangePointSet_[ polynomialOrder ], polynomialOrder );
       blockMapper_ = &BlockMapperProviderType :: getObject( key );
       assert( blockMapper_ != 0 );
       mapper_ = new MapperType( *blockMapper_ );
@@ -404,25 +408,29 @@ namespace Dune
       delete mapper_;
       BlockMapperProviderType::removeObject( *blockMapper_ );
 
-      /*
-      typedef typename BaseFunctionMapType :: iterator BFIteratorType;
-      BFIteratorType bfend = baseFunctionSet_.end();
-      for( BFIteratorType it = baseFunctionSet_.begin(); it != bfend; ++it ) 
+      for( size_t i = 0; i < baseFunctionSet_.size(); ++ i) 
       {
-        const BaseFunctionSetImp *baseFunctionSet = (*it).second;
-        if( baseFunctionSet != NULL )
-          BaseFunctionSetSingletonProviderType
-          :: removeObject( *baseFunctionSet );
+        typedef typename BaseFunctionMapType :: iterator BFIteratorType;
+        BFIteratorType bfend = baseFunctionSet_[ i ].end();
+        for( BFIteratorType it = baseFunctionSet_[ i ].begin(); it != bfend; ++it ) 
+        {
+          const BaseFunctionSetImp *baseFunctionSet = (*it).second;
+          if( baseFunctionSet != NULL )
+            BaseFunctionSetSingletonProviderType
+            :: removeObject( *baseFunctionSet );
+        }
       }
-      */
 
-      typedef typename LagrangePointSetMapType :: iterator LPIteratorType;
-      LPIteratorType lpend = lagrangePointSet_.end();
-      for( LPIteratorType it = lagrangePointSet_.begin(); it != lpend; ++it ) 
+      for( size_t i = 0; i < lagrangePointSet_.size(); ++ i) 
       {
-        const LagrangePointSetType *lagrangePointSet = (*it).second;
-        if( lagrangePointSet != NULL )
-          delete lagrangePointSet;
+        typedef typename LagrangePointSetMapType :: iterator LPIteratorType;
+        const LPIteratorType lpend = lagrangePointSet_[ i ].end();
+        for( LPIteratorType it = lagrangePointSet_[ i ].begin(); it != lpend; ++it ) 
+        {
+          const LagrangePointSetType *lagrangePointSet = (*it).second;
+          if( lagrangePointSet != NULL )
+            delete lagrangePointSet;
+        }
       }
     }
 
@@ -496,7 +504,8 @@ namespace Dune
     template< class EntityType >
     inline const LagrangePointSetType &lagrangePointSet ( const EntityType &entity ) const
     {
-      return this->lagrangePointSet( entity.type() );
+      return this->lagrangePointSet( entity.type(),
+                                     blockMapper_->polynomOrder( entity ) );
     }
 
     /** \brief provide access to the Lagrange point set for a geometry type
@@ -510,9 +519,29 @@ namespace Dune
      */
     inline const LagrangePointSetType &lagrangePointSet ( const GeometryType type ) const
     {
-      assert( lagrangePointSet_.find( type ) != lagrangePointSet_.end() );
-      assert( lagrangePointSet_[ type ] != NULL );
-      return *lagrangePointSet_[ type ];
+      LagrangePointSetMapType& lagrangePointSet = lagrangePointSet_[ polynomialOrder ];
+      abort();
+      assert( lagrangePointSet.find( type ) != lagrangePointSet.end() );
+      assert( lagrangePointSet[ type ] != NULL );
+      return *lagrangePointSet[ type ];
+    }
+
+    /** \brief provide access to the Lagrange point set for a geometry type
+     *
+     *  \note This method is not part of the DiscreteFunctionSpaceInterface. It
+     *        is unique to the PAdaptiveLagrangeSpace.
+     *
+     *  \param[in]  type  type of geometry the Lagrange point set is requested for
+     *  \param[in]  order polynomial order for given geometry type 
+     *
+     *  \returns LagrangePointSetType
+     */
+    inline const LagrangePointSetType &lagrangePointSet ( const GeometryType type, const int order ) const
+    {
+      LagrangePointSetMapType& lagrangePointSet = lagrangePointSet_[ order ];
+      assert( lagrangePointSet.find( type ) != lagrangePointSet.end() );
+      assert( lagrangePointSet[ type ] != NULL );
+      return *lagrangePointSet[ type ];
     }
 
     /** \brief get dimension of value
