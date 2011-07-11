@@ -68,7 +68,7 @@ namespace Dune
     enum { localBlockSize = dimRange };
 
     // mapper for block
-    typedef LagrangeMapper< GridPartType, polynomialOrder > BlockMapperType;
+    typedef PAdaptiveLagrangeMapper< GridPartType, polynomialOrder > BlockMapperType;
     typedef NonBlockMapper< BlockMapperType, localBlockSize > MapperType;
     
     // implementation of basefunction set 
@@ -92,16 +92,16 @@ namespace Dune
   };
 
   //! Key for Mapper singleton list 
-  template< class GridPartImp, class LagrangePointSetMapImp >
+  template< class GridPartImp, class LagrangePointSetMapVectorImp >
   class PAdaptiveMapperSingletonKey 
   {
     const GridPartImp & gridPart_; 
-    mutable LagrangePointSetMapImp& pointSet_;
+    mutable LagrangePointSetMapVectorImp& pointSet_;
     const int polOrd_;
   public:
     //! constructor taking index set and numDofs 
     PAdaptiveMapperSingletonKey(const GridPartImp & gridPart, 
-                               LagrangePointSetMapImp& pointSet,
+                               LagrangePointSetMapVectorImp& pointSet,
                                const int polOrd)
       : gridPart_(gridPart) ,  pointSet_(pointSet) , polOrd_(polOrd) 
     {}
@@ -119,7 +119,7 @@ namespace Dune
     //! return reference to index set 
     const GridPartImp & gridPart() const { return gridPart_; }
     //! return lagrange point map set  
-    LagrangePointSetMapImp& pointSet() const { return pointSet_; }
+    LagrangePointSetMapVectorImp& pointSet() const { return pointSet_; }
 
   };
 
@@ -258,8 +258,11 @@ namespace Dune
     //! type of DoF manager
     typedef DofManager< GridType > DofManagerType;
 
+    typedef std::vector<BaseFunctionMapType> BaseFunctionMapVectorType;
+    typedef std::vector<LagrangePointSetMapType> LagrangePointSetMapVectorType;
+
     //! mapper singleton key 
-    typedef PAdaptiveMapperSingletonKey< GridPartType, LagrangePointSetMapType >
+    typedef PAdaptiveMapperSingletonKey< GridPartType, LagrangePointSetMapVectorType >
       MapperSingletonKeyType;
 
     //! mapper factory 
@@ -275,9 +278,6 @@ namespace Dune
     typedef SingletonList
       < MapperSingletonKeyType, BlockMapperType, BlockMapperSingletonFactoryType >
       BlockMapperProviderType;
-
-    typedef std::vector<BaseFunctionMapType> BaseFunctionMapVectorType;
-    typedef std::vector<LagrangePointSetMapType> LagrangePointSetMapVectorType;
 
     template <int pOrd> 
     struct ConstructBaseFunctionSets
@@ -388,7 +388,7 @@ namespace Dune
           apply( baseFunctionSet_, lagrangePointSet_, geometryType );
       }
 
-      MapperSingletonKeyType key( gridPart, lagrangePointSet_[ polynomialOrder ], polynomialOrder );
+      MapperSingletonKeyType key( gridPart, lagrangePointSet_, polynomialOrder );
       blockMapper_ = &BlockMapperProviderType :: getObject( key );
       assert( blockMapper_ != 0 );
       mapper_ = new MapperType( *blockMapper_ );

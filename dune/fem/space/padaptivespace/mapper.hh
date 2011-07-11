@@ -1,5 +1,5 @@
-#ifndef DUNE_LAGRANGESPACE_MAPPER_HH
-#define DUNE_LAGRANGESPACE_MAPPER_HH
+#ifndef DUNE_PADAPTIVELAGRANGESPACE_MAPPER_HH
+#define DUNE_PADAPTIVELAGRANGESPACE_MAPPER_HH
 
 //- Dune includes 
 #include <dune/common/geometrytype.hh>
@@ -23,19 +23,19 @@ namespace Dune
 {
   
   template< class GridPart, int polOrder >
-  class LagrangeMapper;
+  class PAdaptiveLagrangeMapper;
 
 
   
   template< class GridPart, int polOrder >
-  struct LagrangeMapperTraits
+  struct PAdaptiveLagrangeMapperTraits
   {
     typedef GridPart GridPartType;
     
     static const int polynomialOrder = polOrder;
 
     typedef typename GridPartType::template Codim< 0 >::IteratorType::Entity EntityType;
-    typedef LagrangeMapper< GridPartType, polynomialOrder > DofMapperType;
+    typedef PAdaptiveLagrangeMapper< GridPartType, polynomialOrder > DofMapperType;
     typedef DefaultDofMapIterator< EntityType, DofMapperType > DofMapIteratorType;
   };
 
@@ -45,10 +45,10 @@ namespace Dune
   // ---------------------------
 
   template< class GridPart >
-  class LagrangeMapper< GridPart, 1 >
+  class PAdaptiveLagrangeMapper< GridPart, 1 >
   : public CodimensionMapper< GridPart, GridPart::GridType::dimension >
   {
-    typedef LagrangeMapper< GridPart, 1 > ThisType;
+    typedef PAdaptiveLagrangeMapper< GridPart, 1 > ThisType;
     typedef CodimensionMapper< GridPart, GridPart::GridType::dimension > BaseType;
 
   public:
@@ -77,9 +77,11 @@ namespace Dune
     typedef std::map< const GeometryType, const LagrangePointSetType* >
       LagrangePointSetMapType;
 
+    typedef std::vector< LagrangePointSetMapType > LagrangePointSetMapVectorType;
+
   public:
     //! constructor
-    LagrangeMapper ( const GridPartType &gridPart, LagrangePointSetMapType &lagrangePointSet )
+    PAdaptiveLagrangeMapper ( const GridPartType &gridPart, LagrangePointSetMapVectorType &lagrangePointSet )
     : BaseType( gridPart )
     {}
 
@@ -95,14 +97,14 @@ namespace Dune
   // ----------------------------
 
   template< class GridPart >
-  class LagrangeMapper< GridPart, 2 >
-  : public DofMapperDefault< LagrangeMapperTraits< GridPart, 2 > >
+  class PAdaptiveLagrangeMapper< GridPart, 2 >
+  : public DofMapperDefault< PAdaptiveLagrangeMapperTraits< GridPart, 2 > >
   {
-    typedef LagrangeMapper< GridPart, 2 > ThisType;
-    typedef DofMapperDefault< LagrangeMapperTraits< GridPart, 2 > > BaseType;
+    typedef PAdaptiveLagrangeMapper< GridPart, 2 > ThisType;
+    typedef DofMapperDefault< PAdaptiveLagrangeMapperTraits< GridPart, 2 > > BaseType;
 
   public:
-    typedef LagrangeMapperTraits< GridPart, 2 > Traits;
+    typedef PAdaptiveLagrangeMapperTraits< GridPart, 2 > Traits;
     
     //! type of the grid part
     typedef typename Traits::GridPartType GridPartType;
@@ -134,6 +136,8 @@ namespace Dune
     //! type of the map for the Lagrange point sets
     typedef std::map< const GeometryType, const LagrangePointSetType* >
       LagrangePointSetMapType;
+
+    typedef std::vector< LagrangePointSetMapType > LagrangePointSetMapVectorType;
 
     //! type of the DoF manager
     typedef DofManager< GridType > DofManagerType;
@@ -212,12 +216,12 @@ namespace Dune
 
   public:
     //! constructor
-    LagrangeMapper ( const GridPartType &gridPart,
-                     LagrangePointSetMapType &lagrangePointSet )
+    PAdaptiveLagrangeMapper ( const GridPartType &gridPart,
+                     LagrangePointSetMapVectorType &lagrangePointSetVector )
     : gridPart_( gridPart ),
       dm_( DofManagerType :: instance(gridPart.grid()) ),
       indexSet_( gridPart.indexSet() ),
-      lagrangePointSet_( lagrangePointSet ),
+      lagrangePointSet_( lagrangePointSetVector ),
       entityPolynomOrder_( gridPart.grid(), 0 ),
       dofContainer_( dimension+1, (DofContainerType *) 0 ),
       overShoot_( Parameter::getValidValue( "fem.lagrangemapper.overshoot", double( 1.5 ), ValidateNotLess< double >( 1.0 ) ) )
@@ -228,10 +232,11 @@ namespace Dune
       for( int codim = 0; codim <= dimension; ++codim )
         dofContainer_[ codim ] = new DofContainerType( gridPart.grid(), codim );
 
+      for( size_t i=0; i<lagrangePointSet_.size(); ++i ) 
       {
         typedef typename LagrangePointSetMapType :: iterator IteratorType;
-        IteratorType end = lagrangePointSet_.end();
-        for( IteratorType it = lagrangePointSet_.begin(); it != end; ++it )
+        IteratorType end = lagrangePointSet_[ i ].end();
+        for( IteratorType it = lagrangePointSet_[ i ].begin(); it != end; ++it )
         {
           const LagrangePointSetType *set = (*it).second;
           if( set == 0 )
@@ -263,11 +268,11 @@ namespace Dune
     lagrangePointSet( const int polOrd, const GeometryType type ) const 
     {
       // add polOrd here 
-      return lagrangePointSet_[ type ];
+      return lagrangePointSet_[ polOrd ][ type ];
     }
     
     //! destructor 
-    virtual ~LagrangeMapper ()
+    virtual ~PAdaptiveLagrangeMapper ()
     {
       dm_.removeIndexSet( *this );
     }
@@ -445,7 +450,7 @@ namespace Dune
 
   private:
     // prohibit copying and assignment
-    LagrangeMapper ( const ThisType & );
+    PAdaptiveLagrangeMapper ( const ThisType & );
     ThisType &operator=( const ThisType & );
 
     void computeOffsets ( const double overShoot = 1.0 )
@@ -468,7 +473,7 @@ namespace Dune
 
     const IndexSetType &indexSet_;
     
-    LagrangePointSetMapType &lagrangePointSet_;
+    LagrangePointSetMapVectorType &lagrangePointSet_;
 
     PolyOrderContainerType entityPolynomOrder_; 
 
@@ -493,14 +498,14 @@ namespace Dune
 
 #ifdef USE_TWISTFREE_MAPPER
   template< class GridPart, int polOrder >
-  class LagrangeMapper
-  : public DofMapperDefault< LagrangeMapperTraits< GridPart, polOrder > >
+  class PAdaptiveLagrangeMapper
+  : public DofMapperDefault< PAdaptiveLagrangeMapperTraits< GridPart, polOrder > >
   {
-    typedef LagrangeMapper< GridPart, polOrder > ThisType;
-    typedef DofMapperDefault< LagrangeMapperTraits< GridPart, polOrder > > BaseType;
+    typedef PAdaptiveLagrangeMapper< GridPart, polOrder > ThisType;
+    typedef DofMapperDefault< PAdaptiveLagrangeMapperTraits< GridPart, polOrder > > BaseType;
 
   public:
-    typedef LagrangeMapperTraits< GridPart, polOrder > Traits;
+    typedef PAdaptiveLagrangeMapperTraits< GridPart, polOrder > Traits;
     
     //! type of the grid part
     typedef typename Traits::GridPartType GridPartType;
@@ -549,7 +554,7 @@ namespace Dune
 
   public:
     //! constructor
-    LagrangeMapper ( const GridPartType &gridPart,
+    PAdaptiveLagrangeMapper ( const GridPartType &gridPart,
                      LagrangePointSetMapType &lagrangePointSet )
     : dm_( DofManagerType :: instance(gridPart.grid()) ),
       indexSet_( gridPart.indexSet() ),
@@ -579,7 +584,7 @@ namespace Dune
     }
     
     //! destructor 
-    virtual ~LagrangeMapper ()
+    virtual ~PAdaptiveLagrangeMapper ()
     {
       dm_.removeIndexSet( *this );
     }
@@ -744,7 +749,7 @@ namespace Dune
 
   private:
     // prohibit copying and assignment
-    LagrangeMapper ( const ThisType & );
+    PAdaptiveLagrangeMapper ( const ThisType & );
     ThisType &operator=( const ThisType & );
 
     void computeOffsets ( const double overShoot = 1.0 )
