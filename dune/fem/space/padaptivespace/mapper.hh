@@ -143,6 +143,8 @@ namespace Dune
     typedef DofManager< GridType > DofManagerType;
 
     enum { minOrder = 1 };
+    enum { maxOrder = polynomialOrder };
+    enum { numOrders = maxOrder - minOrder + 1 };
 
     struct EntityDofStorage
     {
@@ -161,13 +163,34 @@ namespace Dune
           used_[ i ] = 0;
       }
 
-      EntityDofStorage( const EntityDofStorage& other ) : 
-        dofs_( other.dofs_ ),
-        type_( other.type_ )
+      void assign( const EntityDofStorage& other ) 
       {
+        assert( dofs_.size() ==  other.dofs_.size() );
+        type_ = other.type_;
+
         // set used to zero 
-        for( int i=0; i<=polynomialOrder; ++i ) 
-          used_[ i ] = other.used_[ i ];
+        for( int k=0; k<=polynomialOrder; ++k ) 
+        {
+          used_[ k ] = other.used_[ k ];
+          DofVectorType& dofs = dofs_[ k ];
+          const DofVectorType& otherDofs = other.dofs_[ k ];
+          const int dofSize = otherDofs.size();
+          dofs.resize( dofSize );
+          for( int d = 0; d<dofSize; ++d ) 
+            dofs[ d ] = otherDofs[ d ];
+        }
+      }
+
+      EntityDofStorage( const EntityDofStorage& other ) 
+        : dofs_( polynomialOrder+1 )
+      {
+        assign( other );
+      }
+
+      EntityDofStorage& operator= ( const EntityDofStorage& other )
+      {
+        assign( other );
+        return *this;
       }
 
       bool exists( const int polOrd ) const 
@@ -227,6 +250,7 @@ namespace Dune
           else 
             dofNumber -= dofSize;
         }
+        // we should not get here 
         assert( false );
         abort();
         return -1;
@@ -427,7 +451,6 @@ namespace Dune
                      LagrangePointSetMapVectorType &lagrangePointSetVector )
     : gridPart_( gridPart ),
       dm_( DofManagerType :: instance(gridPart.grid()) ),
-      indexSet_( gridPart.indexSet() ),
       lagrangePointSet_( lagrangePointSetVector ),
       entityPolynomOrder_( gridPart.grid(), 0 ),
       dofContainer_( dimension+1, (DofContainerType *) 0 ),
@@ -437,12 +460,14 @@ namespace Dune
       size_(0),
       sequence_( dm_.sequence() )
     {
+      /*
       PolynomOrderStorage p;
       std::cout << sizeof( p ) << " size of polStorage" << std::endl;
       EntityDofStorage en;
       std::cout << sizeof( en ) << " size of enStorage" << std::endl;
+      */
 
-      numDofs_ = 0;
+      maxNumDofs_ = 0;
       for( int codim = 0; codim <= dimension; ++codim )
         dofContainer_[ codim ] = new DofContainerType( gridPart.grid(), codim );
 
@@ -455,7 +480,7 @@ namespace Dune
           const LagrangePointSetType *set = (*it).second;
           if( set == 0 ) continue;
           
-          numDofs_ = std :: max( numDofs_, set->size() );
+          maxNumDofs_ = std :: max( maxNumDofs_, set->size() );
         }
       }
 
@@ -536,7 +561,7 @@ namespace Dune
     /** \copydoc Dune::DofMapper::maxNumDofs() const */
     int maxNumDofs () const
     {
-      return numDofs_;
+      return maxNumDofs_;
     }
 
     /** \copydoc Dune::DofMapper::numDofs(const EntityType &entity) const */
@@ -832,8 +857,6 @@ namespace Dune
     // reference to dof manager
     DofManagerType& dm_;
 
-    const IndexSetType &indexSet_;
-    
     LagrangePointSetMapVectorType &lagrangePointSet_;
 
     PolyOrderContainerType entityPolynomOrder_; 
@@ -845,7 +868,7 @@ namespace Dune
     std::vector< int > newIndex_ ;
 
     mutable unsigned int size_;
-    unsigned int numDofs_;
+    unsigned int maxNumDofs_;
     int sequence_ ;
   };
 
