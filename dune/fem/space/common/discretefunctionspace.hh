@@ -412,7 +412,7 @@ namespace Dune
      *  \returns global DoF number
      */    
     inline int mapToGlobal ( const EntityType &entity,
-                             const int localDof ) const
+                             const int localDof ) const DUNE_DEPRECATED
     {
       CHECK_INTERFACE_IMPLEMENTATION( asImp().mapToGlobal( entity, localDof ) );
       return asImp().mapToGlobal( entity, localDof );
@@ -475,7 +475,7 @@ namespace Dune
      *
      *  \returns an upper bound for the number of local DoFs
      */
-    inline int maxNumLocalDofs () const
+    inline int maxNumLocalDofs () const DUNE_DEPRECATED
     {
       CHECK_INTERFACE_IMPLEMENTATION( asImp().maxNumDofs() );
       return asImp().maxNumDofs();
@@ -731,13 +731,13 @@ namespace Dune
 
     /** \copydoc Dune::DiscreteFunctionSpaceInterface::mapToGlobal(const EntityType &entity,const int localDof) const */
     inline int mapToGlobal ( const EntityType &entity,
-                             const int localDof ) const
+                             const int localDof ) const DUNE_DEPRECATED
     {
       return mapper().mapToGlobal( entity, localDof );
     }
 
     /** \copydoc Dune::DiscreteFunctionSpaceInterface::maxNumLocalDofs */
-    inline int maxNumLocalDofs () const
+    inline int maxNumLocalDofs () const DUNE_DEPRECATED
     {
       return mapper().maxNumDofs();
     }
