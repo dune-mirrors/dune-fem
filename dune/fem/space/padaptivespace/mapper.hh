@@ -142,21 +142,42 @@ namespace Dune
     //! type of the DoF manager
     typedef DofManager< GridType > DofManagerType;
 
+    enum { minOrder = 1 };
+
     struct EntityDofStorage
     {
+      typedef std::vector< int > DofVectorType;
+      std::vector< DofVectorType > dofs_;
+
       GeometryType type_;
-      std::vector< std::vector< int > > dofs_;
-      std::vector< int > used_;
+      char used_[ polynomialOrder+1 ];
 
       EntityDofStorage() : 
-        type_(),
         dofs_( polynomialOrder+1 ),
-        used_(  polynomialOrder+1, int(0) )
-      {}
+        type_()
+      {
+        // set used to zero 
+        for( int i=0; i<=polynomialOrder; ++i ) 
+          used_[ i ] = 0;
+      }
+
+      EntityDofStorage( const EntityDofStorage& other ) : 
+        dofs_( other.dofs_ ),
+        type_( other.type_ )
+      {
+        // set used to zero 
+        for( int i=0; i<=polynomialOrder; ++i ) 
+          used_[ i ] = other.used_[ i ];
+      }
 
       bool exists( const int polOrd ) const 
       {
         return dofs_[ polOrd ].size() > 0 ;
+      }
+
+      void use( const int polOrd ) 
+      {
+        ++used_[ polOrd ];
       }
 
       bool used ( const int polOrd ) const 
@@ -164,12 +185,13 @@ namespace Dune
         return used_[ polOrd ] > 0;
       }
 
-      void insert( const GeometryType type, const int polOrd, const int numDofs, const int startDof ) 
+      void insert( const GeometryType type, const int polOrd, 
+                   const int numDofs, const int startDof ) 
       {
+        use( polOrd );
         assert( ! exists ( polOrd ) );
         {
           type_ = type ;
-          ++used_[ polOrd ] ;
           dofs_[ polOrd ].resize( numDofs );
           for(int i=0, dof=startDof ; i<numDofs; ++i, ++dof ) 
             dofs_[ polOrd ][ i ] = dof;
@@ -180,8 +202,14 @@ namespace Dune
 
       void remove( const int polOrd ) 
       {
-        if( used_[ polOrd ]  > 0 ) 
+        if( used_[ polOrd ] > 0 ) 
           --used_[ polOrd ] ;
+      }
+
+      void reset() 
+      {
+        for( int k=0; k<=polynomialOrder; ++k ) 
+          used_[ k ] = 0;
       }
 
       int dof ( const int polOrd, const int dofNumber ) const 
@@ -215,37 +243,62 @@ namespace Dune
       }
 
       template <class VectorType> 
-      void fillHoles( VectorType& holes, int& actHoles, int& actSize ) 
+      void detectUnusedDofs( VectorType& holes, int& actHoles, int& actSize ) 
       {
         for( int k = 1; k<=polynomialOrder; ++k )
         {
-          const int dofSize = dofs_[ k ].size();
-          if( used_ [ k ] <= 0 && dofSize > 0 )
+          DofVectorType& dofs = dofs_[ k ];
+          const int dofSize = dofs.size();
+
+          if( used_[  k ] ) 
           {
-            for( int d = 0; d<dofSize; ++d, ++actHoles ) 
-            {
-              holes[ actHoles ] = dofs_[ k ][ d ];
-            }
-            dofs_[ k ].resize( 0 );
+            //for( int d = 0; d<dofSize; ++d ) 
+            //  std::cout << dofs[ d ] << " used dofs " << std::endl;
+            actSize += dofSize ;
           }
           else 
-            actSize += dofSize ;
+          {
+
+          //if( used_ [ k ] <= 0 && dofSize > 0 )
+          //{
+            for( int d = 0; d<dofSize; ++d ) 
+            {
+              holes[ actHoles++ ] = dofs[ d ];
+              //std::cout << "add dof " << dofs[ d ] << " to list" << std::endl;
+            }
+            dofs.resize( 0 );
+          }
+          //else 
+          //  actSize += dofSize ;
+        }
+      }
+
+      void printDofs() const 
+      {
+        for( int k = 1; k<=polynomialOrder; ++k )
+        {
+          const DofVectorType& dofs = dofs_[ k ];
+          const int dofSize = dofs.size();
+          for( int d = 0; d<dofSize; ++d ) 
+            std::cout << dofs[ d ] << " dofs " << std::endl;
         }
       }
 
       template <class VectorType> 
-      bool checkRanges( VectorType& oldIdx, VectorType& newIdx, 
+      bool removeHoles( VectorType& oldIdx, VectorType& newIdx, 
                         VectorType& holesVec, int& actHole, int& holes,
                         const int actSize ) 
       {
         bool haveToCopy = false ;
         for( int k=1; k<=polynomialOrder; ++k )
         {
-          const int dofSize = dofs_[ k ].size();
+          DofVectorType& dofs = dofs_[ k ];
+          const int dofSize = dofs.size();
           for( int dof = 0; dof<dofSize; ++dof ) 
           {
-            int& currDof = dofs_[ k ][ dof ] ;
-            if( currDof >= actSize)
+            assert( used_[ k ] );
+            int& currDof = dofs[ dof ] ;
+            if( currDof >= actSize ) 
             {
               // serach next hole that is smaler than actual size 
               --actHole;
@@ -280,13 +333,15 @@ namespace Dune
     {
       unsigned char k_;
       unsigned char active_ ;
-      PolynomOrderStorage() : k_( polynomialOrder ), active_( 1 ) {}
-      PolynomOrderStorage( const int k ) : k_( k ), active_( 1 ) {}
+      PolynomOrderStorage() : k_( polynomialOrder ), active_( 0 ) {}
+      PolynomOrderStorage( const int k ) : k_( k ), active_( 0 ) {}
       int order () const { return k_;}
-      bool deactivate ( int& polOrd ) 
+      void set ( const int k ) { k_ = k; active_ = 1 ; }
+      void activate() { active_ = 1; }
+      bool active () const { return active_; }
+      bool deactivate ( int& k ) 
       { 
-        polOrd = k_;
-        return true ;
+        k = k_;
         if( active_ ) 
         {
           active_ = 0 ;
@@ -307,6 +362,22 @@ namespace Dune
     template < int codim > 
     struct InsertSubEntities
     {
+      static void insertDofs( const EntityType& entity, 
+                              const LagrangePointSetType& set,
+                              const int polOrd,
+                              const int subEntity,
+                              unsigned int&  dofCounter,
+                              EntityDofStorage& entityDofs )
+      {
+        if( ! entityDofs.exists( polOrd ) ) 
+        {
+          const int numDofs = set.numDofs( codim, subEntity );
+          entityDofs.insert( entity.type(), polOrd, numDofs, dofCounter );
+          dofCounter += numDofs;
+        }
+        else 
+          entityDofs.use( polOrd );
+      }
       static void apply( const EntityType& entity, 
                          const LagrangePointSetType& set,
                          const int polOrd,
@@ -314,15 +385,18 @@ namespace Dune
                          std::vector< DofContainerType* > dofContainers ) 
       {
         DofContainerType& dofContainer = *dofContainers[ codim ];
-        const int count = entity.template count< codim > ();
-        for(int i=0; i<count; ++i ) 
+        if( codim == 0 ) 
         {
-          EntityDofStorage& entityDofs = dofContainer( entity, i );
-          if( ! entityDofs.exists( polOrd ) ) 
+          insertDofs( entity, set, polOrd, 0, dofCounter, 
+                      dofContainer[ entity ] );
+        }
+        else 
+        {
+          const int count = entity.template count< codim > ();
+          for(int i=0; i<count; ++i ) 
           {
-            const int numDofs = set.numDofs( codim, i );
-            entityDofs.insert( entity.type(), polOrd, numDofs, dofCounter );
-            dofCounter += numDofs;
+            insertDofs( entity, set, polOrd, i, dofCounter, 
+                        dofContainer( entity, i ) );
           }
         }
       }
@@ -357,10 +431,17 @@ namespace Dune
       lagrangePointSet_( lagrangePointSetVector ),
       entityPolynomOrder_( gridPart.grid(), 0 ),
       dofContainer_( dimension+1, (DofContainerType *) 0 ),
-      overShoot_( Parameter::getValidValue( "fem.lagrangemapper.overshoot", double( 1.5 ), ValidateNotLess< double >( 1.0 ) ) ),
+      numberOfHoles_( 0 ),
+      oldIndex_(),
+      newIndex_(),
       size_(0),
-      numberOfHoles_( 0 )
+      sequence_( dm_.sequence() )
     {
+      PolynomOrderStorage p;
+      std::cout << sizeof( p ) << " size of polStorage" << std::endl;
+      EntityDofStorage en;
+      std::cout << sizeof( en ) << " size of enStorage" << std::endl;
+
       numDofs_ = 0;
       for( int codim = 0; codim <= dimension; ++codim )
         dofContainer_[ codim ] = new DofContainerType( gridPart.grid(), codim );
@@ -372,8 +453,7 @@ namespace Dune
         for( IteratorType it = lagrangePointSet_[ i ].begin(); it != end; ++it )
         {
           const LagrangePointSetType *set = (*it).second;
-          if( set == 0 )
-            continue;
+          if( set == 0 ) continue;
           
           numDofs_ = std :: max( numDofs_, set->size() );
         }
@@ -387,6 +467,14 @@ namespace Dune
     int polynomOrder( const EntityType& entity ) const 
     {
       return entityPolynomOrder_[ entity ].order();
+    }
+
+    void setPolynomOrder( const EntityType& entity, const int polOrd ) const 
+    {
+      if( polOrd < 1 || polOrd > polynomialOrder ) 
+        return ;
+
+      entityPolynomOrder_[ entity ].set( polOrd );
     }
 
     DofContainerType& dofContainer( const size_t codim ) const 
@@ -536,13 +624,25 @@ namespace Dune
     void insertEntity ( const EntityType &entity )
     {
       resizeContainers();
-      const int polOrd = polynomOrder( entity );
+      insertEntityDofs( entity );
+    }
 
-      //std::cout << "Insert Entity " << indexSet_.index( entity ) << std::endl;
+    void insertEntityDofs( const EntityType &entity )
+    {
+      PolynomOrderStorageType& polyStorage = entityPolynomOrder_[ entity ];
+      if( ! polyStorage.active() )
+      {
+        const int polOrd = polyStorage.order();
 
-      const LagrangePointSetType *set = lagrangePointSet( polOrd, entity.type() );
-      ForLoop< InsertSubEntities, 0, dimension> :: 
-        apply( entity, *set, polOrd, size_, dofContainer_ );
+        //std::cout << "Insert Entity " << gridPart_.grid().localIdSet().id( entity ) << std::endl;
+
+        polyStorage.activate();
+        const LagrangePointSetType *set = lagrangePointSet( polOrd, entity.type() );
+        ForLoop< InsertSubEntities, 0, dimension> :: 
+          apply( entity, *set, polOrd, size_, dofContainer_ );
+
+        //printEntityDofs( entity );
+      }
     }
 
     void removeEntity ( const EntityType &entity )
@@ -550,8 +650,8 @@ namespace Dune
       int polOrd; 
       if( entityPolynomOrder_[ entity ].deactivate( polOrd ) )
       {
-        std::cout << "Remove Entity " << indexSet_.index( entity ) << " with " << polOrd
-          << std::endl;
+        //std::cout << "Remove Entity " << gridPart_.grid().localIdSet().id( entity ) << " with " << polOrd
+        //  << std::endl;
 
         const LagrangePointSetType *set = lagrangePointSet( polOrd, entity.type() );
         ForLoop< RemoveSubEntities, 0, dimension> :: 
@@ -562,30 +662,59 @@ namespace Dune
     void resize ()
     {
       resizeContainers();
+      insertAllUsed();
+    }
+
+    void insertAllUsed() 
+    {
+      setUnused();
+
       typedef typename GridPartType :: template Codim< 0 > :: IteratorType IteratorType;
       const IteratorType end = gridPart_.template end<0>();
       for( IteratorType it = gridPart_.template begin<0>(); 
            it != end ; ++it ) 
       {
-        insertEntity( *it );
+        insertEntityDofs( *it );
       }
 
-      std::cout << "Size " << size_ << std::endl;
+      //std::cout << "Size " << size_ << std::endl;
+      //printDofs();
     }
 
-    // --compress 
-    bool compress ()
+    void printDofs() const 
     {
-      numberOfHoles_ = 0;
-      const int sizeOfVecs = size_;
-      std::vector< int > holes_( sizeOfVecs, -1 ) ;
+      //std::cout << "Size " << size_ << std::endl;
+      typedef typename GridPartType :: template Codim< 0 > :: IteratorType IteratorType;
+      const IteratorType end = gridPart_.template end<0>();
+      for( IteratorType it = gridPart_.template begin<0>(); 
+           it != end ; ++it ) 
+      {
+        printEntityDofs( *it );
+      }
+    }
 
-      // true if a least one dof must be copied 
-      bool haveToCopy = false;
+    void printEntityDofs( const EntityType& entity ) const 
+    {
+      std::cout << "Print entity " << gridPart_.grid().localIdSet().id( entity ) << " with " << std::endl;
+      for( int i = 0; i<numDofs( entity ); ++i ) 
+      {
+        std::cout << "en[ " << i << " ] = " << mapToGlobal( entity, i ) << std::endl;
+      }
+    }
 
-      // mark holes 
-      int actHole = 0;
-      int newActSize = 0;
+    void setUnused() 
+    {
+      {
+        typedef typename PolyOrderContainerType :: Iterator Iterator;
+        const Iterator endit = entityPolynomOrder_.end();
+        for( Iterator it = entityPolynomOrder_.begin(); it != endit; ++it )
+        {
+          PolynomOrderStorageType& p = *it;
+          int pOrd; 
+          p.deactivate( pOrd );
+        }
+      }
+
       for( int codim = 0; codim <= dimension; ++codim ) 
       {
         DofContainerType& codimContainer = dofContainer( codim );
@@ -593,21 +722,36 @@ namespace Dune
         const Iterator endit = codimContainer.end();
         for( Iterator it = codimContainer.begin(); it != endit; ++it )
         {
-          EntityDofStorageType& dof = *it;
-          // store holes if unused dofs exits, otherwise increase actSize 
-          dof.fillHoles( holes_, actHole, newActSize );
+          it->reset();
         }
       }
+    }
 
-      oldIndex_.resize( actHole, -1) ;
-      newIndex_.resize( actHole, -1) ;
-
-      std::cout << "Current real size " << newActSize << std::endl;
-      //for( int i=0; i<actHole; ++i ) 
-      //  std::cout << "Hole[ " << i << " ] = " << holes_[ i ] << std::endl;
-
-      if( actHole > 0 ) 
+    // --compress 
+    bool compress ()
+    {
+      if( sequence_ == dm_.sequence() ) 
       {
+        numberOfHoles_ = 0;
+        return false ;
+      }
+
+      // make all dofs that are currently used 
+      insertAllUsed();
+
+      numberOfHoles_ = 0;
+      const int sizeOfVecs = size_;
+
+      // true if a least one dof must be copied 
+      bool haveToCopy = false;
+
+      int countValidHoles = 0;
+      int actHole = 0;
+      int newActSize = 0;
+      std::vector<int> validHoles; 
+      {
+        std::vector< int > allHoles( sizeOfVecs, -1 ) ;
+        // mark holes 
         for( int codim = 0; codim <= dimension; ++codim ) 
         {
           DofContainerType& codimContainer = dofContainer( codim );
@@ -616,24 +760,59 @@ namespace Dune
           for( Iterator it = codimContainer.begin(); it != endit; ++it )
           {
             EntityDofStorageType& dof = *it;
-            bool haveTo = dof.checkRanges( oldIndex_, newIndex_, holes_, actHole, numberOfHoles_, newActSize );
+            // store holes if unused dofs exits, otherwise increase actSize 
+            dof.detectUnusedDofs( allHoles, actHole, newActSize );
+          }
+        }
+
+        // check for real holes 
+        validHoles.resize( actHole, -1 );
+
+        // remove invalid holes from list 
+        for( int i=0; i<actHole; ++i ) 
+        {
+          // it's only a valid hole, if it is smaller then the current size 
+          if( allHoles[ i ] < newActSize ) 
+          {
+            validHoles[ countValidHoles ] = allHoles[ i ];
+            ++countValidHoles;
+          }
+        }
+      }
+
+      if( countValidHoles > 0 ) 
+      {
+        oldIndex_.resize( countValidHoles, -1) ;
+        newIndex_.resize( countValidHoles, -1) ;
+        for( int codim = 0; codim <= dimension; ++codim ) 
+        {
+          DofContainerType& codimContainer = dofContainer( codim );
+          typedef typename DofContainerType :: Iterator Iterator;
+          const Iterator endit = codimContainer.end();
+          for( Iterator it = codimContainer.begin(); it != endit; ++it )
+          {
+            EntityDofStorageType& dof = *it;
+            bool haveTo = dof.removeHoles( oldIndex_, newIndex_, validHoles, countValidHoles, numberOfHoles_, newActSize );
             if( haveTo ) haveToCopy = true ;
           }
         }
       }
 
-      oldIndex_.resize( numberOfHoles_ );
-      newIndex_.resize( numberOfHoles_ );
-
       size_ = newActSize;
-
+      /*
       for( int i=0; i<numberOfHoles_; ++i ) 
       {
         std::cout << "old[ " << i << " ] = " << oldIndex_[ i ];
         std::cout << " new[ " << i << " ] = " << newIndex_[ i ] <<std::endl;
       }
+      */
 
-      std::cout << "Size " << size_ << " holes " << numberOfHoles_ << std::endl;
+      //std::cout << "Size " << size_ << " holes " << numberOfHoles_ << std::endl;
+
+      //printDofs();
+
+      sequence_ = dm_.sequence();
+
       return haveToCopy;
     }
 
@@ -665,11 +844,9 @@ namespace Dune
     std::vector< int > oldIndex_ ;
     std::vector< int > newIndex_ ;
 
-    // memory overshoot 
-    const double overShoot_ ;
-
     mutable unsigned int size_;
     unsigned int numDofs_;
+    int sequence_ ;
   };
 
 } // end namespace Dune 
