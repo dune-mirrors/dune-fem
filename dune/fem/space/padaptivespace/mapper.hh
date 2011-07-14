@@ -96,15 +96,15 @@ namespace Dune
   // Second Order Lagrange Mapper
   // ----------------------------
 
-  template< class GridPart >
-  class PAdaptiveLagrangeMapper< GridPart, 2 >
-  : public DofMapperDefault< PAdaptiveLagrangeMapperTraits< GridPart, 2 > >
+  template< class GridPart, int polOrder >
+  class PAdaptiveLagrangeMapper 
+  : public DofMapperDefault< PAdaptiveLagrangeMapperTraits< GridPart, polOrder > >
   {
-    typedef PAdaptiveLagrangeMapper< GridPart, 2 > ThisType;
-    typedef DofMapperDefault< PAdaptiveLagrangeMapperTraits< GridPart, 2 > > BaseType;
+    typedef PAdaptiveLagrangeMapper< GridPart, polOrder > ThisType;
+    typedef DofMapperDefault< PAdaptiveLagrangeMapperTraits< GridPart, polOrder > > BaseType;
 
   public:
-    typedef PAdaptiveLagrangeMapperTraits< GridPart, 2 > Traits;
+    typedef PAdaptiveLagrangeMapperTraits< GridPart, polOrder > Traits;
     
     //! type of the grid part
     typedef typename Traits::GridPartType GridPartType;
