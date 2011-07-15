@@ -156,12 +156,24 @@ namespace Dune
         func_[i] = new ContainedDiscreteFunctionType(func);
       }
     }
+    CombinedDiscreteFunction(const std::string &name, 
+                             const ContainedDiscreteFunctionSpaceType& spc) 
+      : BaseType( "", spc_, lfFactory_ ),
+        spc_(const_cast<ContainedDiscreteFunctionSpaceType&>(spc).gridPart()),
+        lfFactory_( *this )
+    {
+      for (int i=0; i<N; ++i) 
+      {
+        func_[i] = new ContainedDiscreteFunctionType(name,spc);
+      }
+    }
 
     //! Copy constructor
     //! The copy constructor copies the dofs
     CombinedDiscreteFunction(const ThisType &other)
       : BaseType( "", other.space(), lfFactory_ ),
-        spc_(other.spc_),
+        spc_(const_cast<ContainedDiscreteFunctionSpaceType&>(other.subFunction(0).space()).gridPart()),
+        // spc_(other.spc_),
         lfFactory_( *this )
     {
       for (int i=0; i<N; ++i) 
@@ -183,7 +195,7 @@ namespace Dune
     
   public:
     /** \copydoc Dune::DiscreteFunctionInterface::name */
-    const std :: string &name () const
+    const std :: string name () const
     {
       return func_[0]->name() + std::string("<N>");
     }
