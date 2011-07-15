@@ -420,19 +420,8 @@ namespace Dune
                      const unsigned int numCols )
     {
 #ifdef BASEFUNCTIONSET_CODEGEN_GENERATE
-      static std::map< const size_t, size_t > storedRows; 
-      typename std::map< const size_t, size_t > :: iterator it = storedRows.find( numRows );
-      if( it != storedRows.end() ) 
-      {
-        Fem::CodegenInfo::instance().notify( (*it).second );
-      }
-      else 
-      {
-        storedRows[ numRows ] = 
-          Fem::CodegenInfo::instance().addEntry( "evalranges", 
-              ( storedRows.size() == 1 ), Fem :: CodeGeneratorType :: evaluateCodegen, dimDomain, dimRange, numRows, numCols );
-        std::cout << "Generate code evalranges for (" << dimRange << "," << numRows << "," << numCols << ")" << std::endl;
-      }
+      Fem::CodegenInfo::instance().addEntry( "evalranges", 
+            Fem :: CodeGeneratorType :: evaluateCodegen, dimDomain, dimRange, numRows, numCols );
 #endif
 
       assert( (int) numCols * dimRange == dofs.numDofs() );
@@ -559,19 +548,8 @@ namespace Dune
                         const unsigned int numCols )
     {
 #ifdef BASEFUNCTIONSET_CODEGEN_GENERATE
-      static std::map< const size_t , size_t > storedRows; 
-      typename std::map< const size_t , size_t > :: iterator it = storedRows.find( numRows );
-      if( it != storedRows.end() ) 
-      {
-        Fem::CodegenInfo::instance().notify( (*it).second );
-      }
-      else 
-      {
-        storedRows[ numRows ] = 
-          Fem::CodegenInfo::instance().addEntry( "evaljacobians", 
-              ( storedRows.size() == 1 ), Fem :: CodeGeneratorType :: evaluateJacobiansCodegen, dimDomain, dimRange, numRows, numCols );
-        std::cout << "Generate code evaljacobians for (" << numRows << "," << numCols << ")" << std::endl;
-      }
+        Fem::CodegenInfo::instance().addEntry( "evaljacobians", 
+            Fem :: CodeGeneratorType :: evaluateJacobiansCodegen, dimDomain, dimRange, numRows, numCols );
 #endif
 
       assert( (int) numCols * dimRange == dofs.numDofs() );
@@ -695,19 +673,8 @@ namespace Dune
                              const unsigned int numCols )
     {
 #ifdef BASEFUNCTIONSET_CODEGEN_GENERATE
-      static std::map< const size_t , size_t > storedRows; 
-      typename std::map< const size_t , size_t > :: iterator it = storedRows.find( numRows );
-      if( it != storedRows.end() ) 
-      {
-        Fem::CodegenInfo::instance().notify( (*it).second );
-      }
-      else 
-      {
-        storedRows[ numRows ] = 
-          Fem::CodegenInfo::instance().addEntry( "axpyranges", 
-              ( storedRows.size() == 1 ), Fem :: CodeGeneratorType :: axpyCodegen, dimDomain, dimRange, numRows, numCols );
-        std::cout << "Generate code axpyranges for (" << numRows << "," << numCols << ")" << std::endl;
-      }
+      Fem::CodegenInfo::instance().addEntry( "axpyranges", 
+            Fem :: CodeGeneratorType :: axpyCodegen, dimDomain, dimRange, numRows, numCols );
 #endif
 
       assert( numRows == quad.nop() );
@@ -821,19 +788,8 @@ namespace Dune
                                 const unsigned int numCols )
     {
 #ifdef BASEFUNCTIONSET_CODEGEN_GENERATE
-      static std::map< const size_t , size_t > storedRows; 
-      typename std::map< const size_t , size_t > :: iterator it = storedRows.find( numRows );
-      if( it != storedRows.end() ) 
-      {
-        Fem::CodegenInfo::instance().notify( (*it).second );
-      }
-      else 
-      {
-        storedRows[ numRows ] = 
-          Fem::CodegenInfo::instance().addEntry( "axpyjacobians", 
-              ( storedRows.size() == 1 ), Fem :: CodeGeneratorType :: axpyJacobianCodegen, dimDomain, dimRange, numRows, numCols );
-        std::cout << "Generate code axpyjacobians for (" << numRows << "," << numCols << ")" << std::endl;
-      }
+      Fem::CodegenInfo::instance().addEntry( "axpyjacobians", 
+              Fem :: CodeGeneratorType :: axpyJacobianCodegen, dimDomain, dimRange, numRows, numCols );
 #endif
       assert( (int ) numCols * dimRange == dofs.numDofs() );
       assert( jacobianStorage.size() >= numRows );
