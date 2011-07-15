@@ -20,8 +20,6 @@
 
 #include "mapper.hh"
 
-#warning "Combined space included" 
-
 namespace Dune
 {
   
