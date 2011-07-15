@@ -357,7 +357,6 @@ namespace Dune
         // if order is not equal to pOrd, do nothing 
         if( order != pOrd ) return ;
 
-        std::cout << "Create LagrangePointListInterface with geo, order, id " << order << std::endl;
         for( unsigned int i = 0; i < numLagrangePoints; ++i )
         {
           LagrangePointType pt( i );
