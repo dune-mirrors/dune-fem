@@ -40,7 +40,7 @@ dgl2projection_adaptive_SOURCES = dgl2projection.cc
 dgl2projection_adaptive_CPPFLAGS = -DPOLORDER=1 -DCOUNT_FLOPS $(AM_CPPFLAGS)
 
 dgl2projection_combined_SOURCES = dgl2projection.cc
-dgl2projection_combined_CPPFLAGS = -DPOLORDER=1 -DCOUNT_FLOPS $(AM_CPPFLAGS) -DUSE_COMBINEDSPACE
+dgl2projection_combined_CPPFLAGS = -DPOLORDER=1 -DCOUNT_FLOPS $(AM_CPPFLAGS) -DUSE_COMBINEDSPACE -DUSE_VARIABLEBASE
 
 # only run this test for YaspGrid
 dgl2projection_legendre_SOURCES = dgl2projection.cc
