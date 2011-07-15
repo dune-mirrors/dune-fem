@@ -447,6 +447,12 @@ namespace Dune
       return (polynomialOrder > 0);
     }
 
+    /** \brief this space has more than one base function set */
+    inline bool multipleBaseFunctionSets () const
+    {
+      return (polynomialOrder > 1);
+    }
+
     /** \brief get the type of this discrete function space 
         \return DFSpaceIdentifier
     **/
@@ -461,12 +467,18 @@ namespace Dune
       return polynomialOrder;
     }
 
+    template< class EntityType >
+    void setPolynomialOrder( const EntityType &entity, const int p ) const
+    {
+      blockMapper().setPolynomOrder( entity, p );
+    }
+
     /** \copydoc Dune::DiscreteFunctionSpaceInterface::baseFunctionSet(const EntityType &entity) const */
     template< class EntityType >
     inline const BaseFunctionSetType baseFunctionSet ( const EntityType &entity ) const
     {
       return baseFunctionSet( entity.type(), 
-                              blockMapper_->polynomOrder( entity ) );
+                              blockMapper().polynomOrder( entity ) );
     }
 
     /** \brief provide access to the base function set for a geometry type
@@ -505,7 +517,7 @@ namespace Dune
     inline const LagrangePointSetType &lagrangePointSet ( const EntityType &entity ) const
     {
       return this->lagrangePointSet( entity.type(),
-                                     blockMapper_->polynomOrder( entity ) );
+                                     blockMapper().polynomOrder( entity ) );
     }
 
     /** \brief provide access to the Lagrange point set for a geometry type
@@ -539,6 +551,7 @@ namespace Dune
     inline const LagrangePointSetType &lagrangePointSet ( const GeometryType type, const int order ) const
     {
       LagrangePointSetMapType& lagrangePointSet = lagrangePointSet_[ order ];
+      //std::cout << "Access LagrangePSet for " << order << std::endl;
       assert( lagrangePointSet.find( type ) != lagrangePointSet.end() );
       assert( lagrangePointSet[ type ] != NULL );
       return *lagrangePointSet[ type ];

@@ -152,14 +152,14 @@ namespace Dune
       std::vector< DofVectorType > dofs_;
 
       GeometryType type_;
-      char used_[ polynomialOrder+1 ];
+      char used_[ numOrders ];
 
       EntityDofStorage() : 
-        dofs_( polynomialOrder+1 ),
+        dofs_( numOrders ),
         type_()
       {
         // set used to zero 
-        for( int i=0; i<=polynomialOrder; ++i ) 
+        for( int i=0; i<numOrders; ++i ) 
           used_[ i ] = 0;
       }
 
@@ -169,7 +169,7 @@ namespace Dune
         type_ = other.type_;
 
         // set used to zero 
-        for( int k=0; k<=polynomialOrder; ++k ) 
+        for( int k=0; k<numOrders; ++k ) 
         {
           used_[ k ] = other.used_[ k ];
           DofVectorType& dofs = dofs_[ k ];
@@ -182,7 +182,7 @@ namespace Dune
       }
 
       EntityDofStorage( const EntityDofStorage& other ) 
-        : dofs_( polynomialOrder+1 )
+        : dofs_( numOrders )
       {
         assign( other );
       }
@@ -193,56 +193,66 @@ namespace Dune
         return *this;
       }
 
-      bool exists( const int polOrd ) const 
+      bool exists( const int codim, const int polOrd ) const 
       {
-        return dofs_[ polOrd ].size() > 0 ;
+        const int entry = determineVectorEntry( codim, polOrd );
+        return dofs_[ entry ].size() > 0 ;
       }
 
-      void use( const int polOrd ) 
+      void use( const int codim, const int polOrd ) 
       {
-        ++used_[ polOrd ];
+        ++used_[ determineVectorEntry( codim, polOrd ) ];
       }
 
-      bool used ( const int polOrd ) const 
-      {
-        return used_[ polOrd ] > 0;
-      }
-
-      void insert( const GeometryType type, const int polOrd, 
+      void insert( const GeometryType type, 
+                   const int codim,
+                   const int polOrd, 
                    const int numDofs, const int startDof ) 
       {
-        use( polOrd );
-        assert( ! exists ( polOrd ) );
+        use( codim, polOrd );
+        assert( ! exists ( codim, polOrd ) );
         {
           type_ = type ;
-          dofs_[ polOrd ].resize( numDofs );
+          DofVectorType& dofs = dofs_[ determineVectorEntry( codim, polOrd ) ];
+
+          dofs.resize( numDofs );
           for(int i=0, dof=startDof ; i<numDofs; ++i, ++dof ) 
-            dofs_[ polOrd ][ i ] = dof;
+            dofs[ i ] = dof;
         }
+      }
+
+      int determineVectorEntry( const int codim, const int polOrd ) const 
+      {
+        assert( codim >= 0 );
+        assert( codim <= dimension );
+        return (codim > 0 && codim < dimension) ? (polOrd-minOrder) : 0;
       }
 
       const GeometryType& type () const { return type_ ; }
 
-      void remove( const int polOrd ) 
+      void remove( const int codim, const int polOrd ) 
       {
-        if( used_[ polOrd ] > 0 ) 
-          --used_[ polOrd ] ;
+        const int entry = determineVectorEntry( codim, polOrd );
+        if( used_[ entry ] > 0 ) 
+          --used_[ entry ] ;
       }
 
       void reset() 
       {
-        for( int k=0; k<=polynomialOrder; ++k ) 
+        for( int k=0; k<numOrders; ++k ) 
           used_[ k ] = 0;
       }
 
-      int dof ( const int polOrd, const int dofNumber ) const 
+      int dof ( const int codim, const int polOrd, const size_t dofNumber ) const 
       { 
-        return dofs_[ polOrd ][ dofNumber ];
+        const int entry = determineVectorEntry( codim, polOrd );
+        assert( dofNumber < dofs_[ entry ].size() );
+        return dofs_[ entry ][ dofNumber ];
       }
 
       int entityDof ( int dofNumber ) const 
       { 
-        for( int k = 1; k<=polynomialOrder; ++k ) 
+        for( int k = 0; k<numOrders; ++k ) 
         {
           const int dofSize = dofs_[ k ].size();
           if( dofNumber < dofSize ) 
@@ -259,7 +269,7 @@ namespace Dune
       int entityDofs () const 
       {
         int dofSize = 0;
-        for( int k = 1; k<=polynomialOrder; ++k ) 
+        for( int k = 0; k<numOrders; ++k ) 
         {
           dofSize += dofs_[ k ].size();
         }
@@ -269,7 +279,7 @@ namespace Dune
       template <class VectorType> 
       void detectUnusedDofs( VectorType& holes, int& actHoles, int& actSize ) 
       {
-        for( int k = 1; k<=polynomialOrder; ++k )
+        for( int k=0; k<numOrders; ++k )
         {
           DofVectorType& dofs = dofs_[ k ];
           const int dofSize = dofs.size();
@@ -299,7 +309,7 @@ namespace Dune
 
       void printDofs() const 
       {
-        for( int k = 1; k<=polynomialOrder; ++k )
+        for( int k = 0; k<numOrders; ++k )
         {
           const DofVectorType& dofs = dofs_[ k ];
           const int dofSize = dofs.size();
@@ -314,7 +324,7 @@ namespace Dune
                         const int actSize ) 
       {
         bool haveToCopy = false ;
-        for( int k=1; k<=polynomialOrder; ++k )
+        for( int k=0; k<numOrders; ++k )
         {
           DofVectorType& dofs = dofs_[ k ];
           const int dofSize = dofs.size();
@@ -393,14 +403,14 @@ namespace Dune
                               unsigned int&  dofCounter,
                               EntityDofStorage& entityDofs )
       {
-        if( ! entityDofs.exists( polOrd ) ) 
+        if( ! entityDofs.exists( codim, polOrd ) ) 
         {
           const int numDofs = set.numDofs( codim, subEntity );
-          entityDofs.insert( entity.type(), polOrd, numDofs, dofCounter );
+          entityDofs.insert( entity.type(), codim, polOrd, numDofs, dofCounter );
           dofCounter += numDofs;
         }
         else 
-          entityDofs.use( polOrd );
+          entityDofs.use( codim, polOrd );
       }
       static void apply( const EntityType& entity, 
                          const LagrangePointSetType& set,
@@ -440,7 +450,7 @@ namespace Dune
         for(int i=0; i<count; ++i ) 
         {
           EntityDofStorage& entityDofs = dofContainer( entity, i );
-          entityDofs.remove( polOrd );
+          entityDofs.remove( codim, polOrd );
         }
       }
     };
@@ -460,12 +470,12 @@ namespace Dune
       size_(0),
       sequence_( dm_.sequence() )
     {
-      /*
       PolynomOrderStorage p;
       std::cout << sizeof( p ) << " size of polStorage" << std::endl;
       EntityDofStorage en;
       std::cout << sizeof( en ) << " size of enStorage" << std::endl;
-      */
+      GeometryType type;
+      std::cout << sizeof( type) << " size of GeomType " << std::endl;
 
       maxNumDofs_ = 0;
       for( int codim = 0; codim <= dimension; ++codim )
@@ -494,7 +504,7 @@ namespace Dune
       return entityPolynomOrder_[ entity ].order();
     }
 
-    void setPolynomOrder( const EntityType& entity, const int polOrd ) const 
+    void setPolynomOrder( const EntityType& entity, const int polOrd ) 
     {
       if( polOrd < 1 || polOrd > polynomialOrder ) 
         return ;
@@ -548,7 +558,7 @@ namespace Dune
       const unsigned int codim = dofInfo.codim;
       const unsigned int subEntity = dofInfo.subEntity;
 
-      return dofContainer( codim )( entity, subEntity ).dof( polOrd, dofInfo.dofNumber );
+      return dofContainer( codim )( entity, subEntity ).dof( codim, polOrd, dofInfo.dofNumber );
     }
 
     /** \copydoc Dune::DofMapper::mapEntityDofToGlobal */
@@ -660,7 +670,7 @@ namespace Dune
         const int polOrd = polyStorage.order();
 
         //std::cout << "Insert Entity " << gridPart_.grid().localIdSet().id( entity ) << std::endl;
-
+        
         polyStorage.activate();
         const LagrangePointSetType *set = lagrangePointSet( polOrd, entity.type() );
         ForLoop< InsertSubEntities, 0, dimension> :: 
