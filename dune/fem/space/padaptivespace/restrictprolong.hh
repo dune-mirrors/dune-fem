@@ -1,5 +1,5 @@
-#ifndef DUNE_LAGRANGESPACE_RESTRICTPROLONG_HH
-#define DUNE_LAGRANGESPACE_RESTRICTPROLONG_HH
+#ifndef DUNE_PLAGRANGESPACE_RESTRICTPROLONG_HH
+#define DUNE_PLAGRANGESPACE_RESTRICTPROLONG_HH
 
 #include <map>
 
@@ -14,8 +14,8 @@
 namespace Dune
 {
 
-  template< class G, int ord >
-  struct LagrangeLocalRestrictProlong
+  template< class G, class LagrangePointSetProvider >
+  struct PLagrangeLocalRestrictProlong
   {
     typedef G Grid;
 
@@ -25,7 +25,7 @@ namespace Dune
 
     typedef typename Grid::template Codim< 0 >::Entity Entity;
 
-    typedef Dune::LagrangePointSet< LeafGridPart< Grid >, ord > LagrangePointSet;
+    typedef typename LagrangePointSetProvider :: LagrangePointSetType  LagrangePointSet;
 
   private:
     typedef typename Entity::LocalGeometry LocalGeometry;
@@ -33,15 +33,10 @@ namespace Dune
     typedef typename LagrangePointSet::template Codim< 0 >::SubEntityIteratorType
       EntityDofIterator;
 
-    typedef std::map< const GeometryType, const LagrangePointSet * > LagrangePointSetMap;
-
   public:
-    ~LagrangeLocalRestrictProlong ()
+    PLagrangeLocalRestrictProlong (const LagrangePointSetProvider& lpsProvider ) 
+      : lpsProvider_( lpsProvider )
     {
-      typedef typename LagrangePointSetMap::iterator Iterator;
-      const Iterator end = lagrangePointSet_.end();
-      for( Iterator it = lagrangePointSet_.begin(); it != end; ++it )
-        delete it->second;
     }
 
     template< class FT, class ST >
@@ -97,27 +92,20 @@ namespace Dune
         typename LocalFunction< FT >::RangeType phi;
         fatherFunction.evaluate( pointInFather, phi );
         for( int coordinate = 0; coordinate < dimRange; ++coordinate )
-          sonFunction[ dimRange * dof + coordinate ] = phi[ coordinate ];
+        {
+          const int idx = dimRange * dof + coordinate  ;
+          sonFunction[ idx ] = phi[ coordinate ];
+        }
       }
     }
 
     const LagrangePointSet &lagrangePointSet ( const Entity &entity ) const
     {
-      return lagrangePointSet( entity.type() );
+      return lpsProvider_.lagrangePointSet( entity );
     }
 
-    const LagrangePointSet &lagrangePointSet ( const GeometryType &type ) const
-    {
-      typedef typename LagrangePointSetMap::iterator Iterator;
-      Iterator it = lagrangePointSet_.find( type );
-      if( it == lagrangePointSet_.end() )
-        it = lagrangePointSet_.insert( it, std::make_pair( type, new LagrangePointSet( type ) ) );
-      assert( it->second != 0 );
-      return *(it->second);
-    }
-
-  private:
-    mutable LagrangePointSetMap lagrangePointSet_;
+  protected:
+    const LagrangePointSetProvider& lpsProvider_;
   };
 
 }

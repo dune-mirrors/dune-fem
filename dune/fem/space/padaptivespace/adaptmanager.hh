@@ -4,9 +4,9 @@
 #include <dune/grid/common/capabilities.hh>
 
 #include <dune/fem/space/common/restrictprolonginterface.hh>
+#include <dune/fem/space/padaptivespace/restrictprolong.hh>
 
 #include <dune/fem/space/lagrangespace/lagrangespace.hh>
-#include <dune/fem/space/lagrangespace/restrictprolong.hh>
 
 namespace Dune
 {
@@ -51,7 +51,8 @@ namespace Dune
     //! constructor
     explicit
     RestrictProlongDefaultImplementation ( DiscreteFunctionType &discreteFunction )
-    : discreteFunction_( discreteFunction )
+    : discreteFunction_( discreteFunction ),
+      localRestrictProlong_( discreteFunction.space() )
     {}
 
     //! restrict data to the father
@@ -92,7 +93,7 @@ namespace Dune
 
   private:
     DiscreteFunctionType &discreteFunction_;
-    LagrangeLocalRestrictProlong< Grid, ord > localRestrictProlong_;
+    PLagrangeLocalRestrictProlong< Grid, DiscreteFunctionSpaceType > localRestrictProlong_;
   };
 
 }

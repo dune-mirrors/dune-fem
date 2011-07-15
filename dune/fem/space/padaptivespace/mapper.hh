@@ -367,7 +367,7 @@ namespace Dune
     {
       unsigned char k_;
       unsigned char active_ ;
-      PolynomOrderStorage() : k_( polynomialOrder ), active_( 0 ) {}
+      PolynomOrderStorage() : k_( maxOrder ), active_( 0 ) {}
       PolynomOrderStorage( const int k ) : k_( k ), active_( 0 ) {}
       int order () const { return k_;}
       void set ( const int k ) { k_ = k; active_ = 1 ; }
