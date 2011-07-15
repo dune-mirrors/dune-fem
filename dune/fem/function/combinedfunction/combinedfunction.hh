@@ -190,7 +190,7 @@ namespace Dune
       for (int i=0; i<N; ++i) 
         delete func_[i];
 
-      delete spc_; spc_ = 0;
+      delete &space();
     }
 
   private:
@@ -393,11 +393,10 @@ namespace Dune
 
     DiscreteFunctionSpaceType& createSpace( const GridPartType& gp )
     {
-      spc_ = new DiscreteFunctionSpaceType( const_cast< GridPartType& > ( gp ) );
-      return *spc_;
+      // we need to delete the space in the destructor 
+      return *(new DiscreteFunctionSpaceType( const_cast< GridPartType& > ( gp ) ));
     }
     
-    DiscreteFunctionSpaceType* spc_;
     const LocalFunctionFactoryType lfFactory_;
     ContainedDiscreteFunctionType* func_[N];
     friend class CombinedDiscreteFunctionDofIterator<ContainedDiscreteFunctionType,N>;
