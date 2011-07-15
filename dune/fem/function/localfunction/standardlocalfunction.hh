@@ -145,7 +145,7 @@ namespace Dune
   inline StandardLocalFunctionImpl< DiscreteFunction, DiscreteFunctionSpace >
     ::StandardLocalFunctionImpl ( DiscreteFunctionType &discreteFunction )
   : discreteFunction_( discreteFunction ),
-    values_( discreteFunction_.space().maxNumLocalDofs() ),
+    values_( DiscreteFunctionSpace::localBlockSize * discreteFunction_.space().blockMapper().maxNumDofs() ),
     baseFunctionSet_(),
     entity_( 0 ),
     numDofs_( 0 ),

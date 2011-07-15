@@ -12,7 +12,7 @@ namespace Dune
   : discreteFunctionSpace_( dfSpace ),
     entity_( 0 ),
     baseFunctionSet_(),
-    dofs_( discreteFunctionSpace_.maxNumLocalDofs() ),
+    dofs_( DiscreteFunctionSpace::localBlockSize * discreteFunctionSpace_.blockMapper().maxNumDofs() ),
     needCheckGeometry_( true )
   {}
 
@@ -25,7 +25,7 @@ namespace Dune
   : discreteFunctionSpace_( dfSpace ),
     entity_( &entity ),
     baseFunctionSet_( discreteFunctionSpace_.baseFunctionSet( entity ) ),
-    dofs_( discreteFunctionSpace_.maxNumLocalDofs() ),
+    dofs_( DiscreteFunctionSpace::localBlockSize * discreteFunctionSpace_.blockMapper().maxNumDofs() ),
     needCheckGeometry_( true )
   {}
 
