@@ -20,6 +20,8 @@
 
 #include "mapper.hh"
 
+#warning "Combined space included" 
+
 namespace Dune
 {
   
@@ -95,7 +97,7 @@ namespace Dune
   */
   
   // Forward declarations
-  template< class DiscreteFunctionSpaceImp, int N, DofStoragePolicy policy = PointBased >
+  template< class DiscreteFunctionSpaceImp, int N, DofStoragePolicy policy >
   class CombinedSpace;
 
 
@@ -155,6 +157,7 @@ namespace Dune
     typedef SimpleBaseFunctionProxy<BaseFunctionSetImp> BaseFunctionSetType;
 
     typedef CombinedMapper< ContainedMapperType, N, policy > MapperType;
+    typedef CombinedSubMapper< ContainedMapperType, N, policy > SubMapperType;
     
     enum { localBlockSize = BlockTraits :: localBlockSize };
     //enum { localBlockSize = N * ContainedSpaceTraits :: localBlockSize };
@@ -164,7 +167,7 @@ namespace Dune
     typedef typename FunctionSpaceType::DomainType DomainType;
     typedef typename FunctionSpaceType::JacobianRangeType JacobianRangeType;
 
-    typedef CombinedDofConversionUtility< ContainedMapperType, policy >
+    typedef CombinedDofConversionUtility< ContainedMapperType, N, policy >
       DofConversionType;
 
     enum { dimRange = FunctionSpaceType :: dimRange,
@@ -189,8 +192,6 @@ namespace Dune
     friend class CombinedMapper< ContainedMapperType, N, policy >;
   };
 
-
-  
 
   
 
@@ -255,7 +256,7 @@ namespace Dune
     typedef typename Traits::IndexSetType IndexSetType;
 
     typedef typename Traits::DofConversionType DofConversionType;
-    typedef CombinedSubMapper<ThisType> SubMapperType;
+    typedef typename Traits::SubMapperType  SubMapperType;
 
     enum { spaceId_ = 13 };
    
@@ -274,7 +275,30 @@ namespace Dune
     //! constructor
     explicit CombinedSpace( GridPartType &gridpart,
         const InterfaceType commInterface = defaultInterface ,
-        const CommunicationDirection commDirection = defaultDirection );
+        const CommunicationDirection commDirection = defaultDirection )
+    : BaseType( gridpart, commInterface, commDirection  ),
+      containedSpace_( gridpart ),
+      mapper_( containedSpace_.mapper() ),
+      blockMapper_( Traits :: BlockTraits :: containedBlockMapper( containedSpace_ ) ),
+      baseSetMap_(),
+      dm_( DofManagerType :: instance( containedSpace_.grid() ) )
+    {
+      const std::vector<GeometryType>& geomTypes = containedSpace_.geomTypes(0);
+      int maxNumDofs = -1;
+      // create mappers and base sets for all existing geom types
+      for(size_t i=0; i<geomTypes.size(); ++i)
+      {
+        if(baseSetMap_.find(geomTypes[i]) == baseSetMap_.end())
+        {
+          BaseFunctionSetImp* baseSet =
+            & SingletonProviderType::getObject(geomTypes[i]);
+          // store in map 
+          baseSetMap_[ geomTypes[i] ] = baseSet;
+          // calc max dofs 
+          maxNumDofs = std::max(maxNumDofs,baseSet->numBaseFunctions());
+        }
+      }
+    }
 
   private:
     // prohibit copying
@@ -282,7 +306,17 @@ namespace Dune
 
   public:
     //! destructor
-    ~CombinedSpace();
+    ~CombinedSpace()
+    {
+      typedef typename BaseFunctionMapType :: iterator iterator;
+      iterator end = baseSetMap_.end();
+      for (iterator it = baseSetMap_.begin(); it != end; ++it)
+      {
+        BaseFunctionSetImp * set = (BaseFunctionSetImp *) (*it).second;
+        SingletonProviderType::removeObject(*set);
+      }
+    }
+
 
     /** \copydoc Dune::DiscreteFunctionSpaceInterface::contains(const int codim) const */
     inline bool contains ( const int codim ) const
@@ -330,7 +364,6 @@ namespace Dune
 
     /** \copydoc Dune::DiscreteFunctionSpaceInterface::baseFunctionSet(const EntityType &entity) const */
     template< class EntityType >
-    DUNE_VERSION_DEPRECATED(1,2,remove)
     const BaseFunctionSetType baseFunctionSet ( const EntityType &entity ) const
     {
       return baseFunctionSet( entity.geometry().type() );
@@ -374,7 +407,10 @@ namespace Dune
       return containedSpace().mapper();
     }
 
+    const DiscreteFunctionSpaceImp& containedSpace() const { return containedSpace_; }
+
   protected:
+    DiscreteFunctionSpaceImp containedSpace_;
     mutable MapperType mapper_;
     mutable BlockMapperType blockMapper_;
 
@@ -405,7 +441,6 @@ namespace Dune
 
     typedef CombinedDofConversionUtility< 
       typename ContainedDiscreteFunctionSpaceType :: MapperType, N, policy >   DofConversionType;
-
 
     explicit CombinedSpace( GridPartType &gridPart,
         const InterfaceType commInterface = BaseType :: defaultInterface ,
@@ -440,7 +475,6 @@ namespace Dune
 } // end namespace Dune
 
 // include implementation
-#include "combinedspace.cc"
 #include "combinedadaptmanager.hh"
 
 #endif
