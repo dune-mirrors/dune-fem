@@ -477,8 +477,8 @@ namespace Dune
      */
     inline int maxNumLocalDofs () const DUNE_DEPRECATED
     {
-      CHECK_INTERFACE_IMPLEMENTATION( asImp().maxNumDofs() );
-      return asImp().maxNumDofs();
+      CHECK_INTERFACE_IMPLEMENTATION( asImp().maxNumLocalDofs() );
+      return asImp().maxNumLocalDofs();
     }
 
     /** \brief Creates DataHandle for given discrete function
