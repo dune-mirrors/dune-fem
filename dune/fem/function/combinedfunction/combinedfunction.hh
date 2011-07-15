@@ -59,6 +59,7 @@ namespace Dune
     typedef RangeFieldType DofType;
     typedef typename DiscreteFunctionSpaceType :: MapperType MapperType;
     typedef typename DiscreteFunctionSpaceType :: GridType GridType;
+    typedef typename DiscreteFunctionSpaceType :: GridPartType GridPartType;
     
     typedef CombinedDiscreteFunctionDofIterator< ContainedDiscreteFunctionType, N >
       DofIteratorType;
@@ -99,6 +100,9 @@ namespace Dune
 
     //! Grid implementation 
     typedef typename Traits::GridType GridType;
+    
+    //! GridPart implementation 
+    typedef typename Traits::GridPartType GridPartType;
     
     //! Discrete function type (identical to this type, 
     //! needed as Barton-Nackman parameter
@@ -141,14 +145,14 @@ namespace Dune
 
     using BaseType :: assign; // needs DofIterator!
     using BaseType :: axpy;
+    using BaseType :: space;
 
     //- Public methods
     //! Constructor 
     //! WARNING: here we have to use a const cast for the
     //! function space!
     CombinedDiscreteFunction(ContainedDiscreteFunctionType& func) 
-      : BaseType( "", spc_, lfFactory_ ),
-        spc_(const_cast<ContainedDiscreteFunctionSpaceType&>(func.space()).gridPart()),
+      : BaseType( "", createSpace( func.space().gridPart() ), lfFactory_ ),
         lfFactory_( *this )
     {
       for (int i=0; i<N; ++i) 
@@ -158,8 +162,7 @@ namespace Dune
     }
     CombinedDiscreteFunction(const std::string &name, 
                              const ContainedDiscreteFunctionSpaceType& spc) 
-      : BaseType( "", spc_, lfFactory_ ),
-        spc_(const_cast<ContainedDiscreteFunctionSpaceType&>(spc).gridPart()),
+      : BaseType( "", createSpace( spc.gridPart() ), lfFactory_ ),
         lfFactory_( *this )
     {
       for (int i=0; i<N; ++i) 
@@ -171,8 +174,7 @@ namespace Dune
     //! Copy constructor
     //! The copy constructor copies the dofs
     CombinedDiscreteFunction(const ThisType &other)
-      : BaseType( "", other.space(), lfFactory_ ),
-        spc_(const_cast<ContainedDiscreteFunctionSpaceType&>(other.subFunction(0).space()).gridPart()),
+      : BaseType( "", createSpace( other.space().gridPart() ), lfFactory_ ),
         lfFactory_( *this )
     {
       for (int i=0; i<N; ++i) 
@@ -187,6 +189,8 @@ namespace Dune
     {
       for (int i=0; i<N; ++i) 
         delete func_[i];
+
+      delete spc_; spc_ = 0;
     }
 
   private:
@@ -379,15 +383,21 @@ namespace Dune
 
     inline ContainedDiscreteFunctionSpaceType& subSpace() 
     {
-      return spc_.containedSpace();
+      return space().containedSpace();
     }
 
     //- Forbidden members
   private:
     typedef ThisType MyType;
     const MyType& interface() const { return *this; }
+
+    DiscreteFunctionSpaceType& createSpace( const GridPartType& gp )
+    {
+      spc_ = new DiscreteFunctionSpaceType( const_cast< GridPartType& > ( gp ) );
+      return *spc_;
+    }
     
-    DiscreteFunctionSpaceType spc_;
+    DiscreteFunctionSpaceType* spc_;
     const LocalFunctionFactoryType lfFactory_;
     ContainedDiscreteFunctionType* func_[N];
     friend class CombinedDiscreteFunctionDofIterator<ContainedDiscreteFunctionType,N>;
