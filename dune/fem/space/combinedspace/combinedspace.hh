@@ -18,14 +18,11 @@
 
 #include "combineddofstorage.hh"
 
-#ifdef USE_OLD_COMBINEDSPACE
 #include "mapper.hh"
-#endif
 
 namespace Dune
 {
   
-#ifdef USE_OLD_COMBINEDSPACE
   namespace CombinedSpaceHelper
   {
 
@@ -86,8 +83,6 @@ namespace Dune
     };
 
   }
-#endif
-
 
   
   /** @addtogroup CombinedSpace
@@ -104,9 +99,6 @@ namespace Dune
   class CombinedSpace;
 
 
-
-#ifdef USE_OLD_COMBINEDSPACE
-#warning "Using old imementation of CombinedSpace"
   //! Traits class for CombinedSpace
   template< class DiscreteFunctionSpaceImp, int N, DofStoragePolicy policy >
   struct CombinedSpaceTraits
@@ -205,12 +197,14 @@ namespace Dune
   /** @brief 
       Combined Space Function Space
       **/
-  template< class DiscreteFunctionSpaceImp, int N, DofStoragePolicy policy >
-  class CombinedSpace
+  template< class DiscreteFunctionSpaceImp, int N>
+  class CombinedSpace<DiscreteFunctionSpaceImp, N, VariableBased>
   : public DiscreteFunctionSpaceDefault
-    < CombinedSpaceTraits< DiscreteFunctionSpaceImp, N, policy > > 
+    < CombinedSpaceTraits< DiscreteFunctionSpaceImp, N, VariableBased > > 
   {
+    static const DofStoragePolicy policy = VariableBased ;
   public:
+
     typedef CombinedSpaceTraits< DiscreteFunctionSpaceImp, N, policy > Traits;
     
   private:
@@ -280,8 +274,7 @@ namespace Dune
     //! constructor
     explicit CombinedSpace( GridPartType &gridpart,
         const InterfaceType commInterface = defaultInterface ,
-        const CommunicationDirection commDirection = defaultDirection )
-    DUNE_VERSION_DEPRECATED(1,2,remove);
+        const CommunicationDirection commDirection = defaultDirection );
 
   private:
     // prohibit copying
@@ -389,13 +382,16 @@ namespace Dune
     mutable BaseFunctionMapType baseSetMap_; 
     const DofManagerType & dm_;
   }; // end class CombinedSpace  
-#else
+
+
   // new implementation (needed by AdaptiveDiscreteFunction to extract sub functions)
-  template< class DiscreteFunctionSpaceImp, int N, DofStoragePolicy policy >
-  class CombinedSpace
+  template< class DiscreteFunctionSpaceImp, int N >
+  class CombinedSpace< DiscreteFunctionSpaceImp, N, PointBased >
   : public DiscreteFunctionSpaceImp :: 
       template ToNewDimRange< DiscreteFunctionSpaceImp:: dimRange * N > :: Type 
   {
+    static const DofStoragePolicy policy = PointBased;
+
     typedef CombinedSpace< DiscreteFunctionSpaceImp, N, policy > ThisType;
   public:  
     typedef typename DiscreteFunctionSpaceImp :: 
@@ -438,17 +434,13 @@ namespace Dune
     //- Member data  
     ContainedDiscreteFunctionSpaceType containedSpace_;
   };
-#endif
 
   /** @} **/  
   
 } // end namespace Dune
 
-#ifdef USE_OLD_COMBINEDSPACE
 // include implementation
 #include "combinedspace.cc"
-#endif
-
 #include "combinedadaptmanager.hh"
 
 #endif
