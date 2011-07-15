@@ -255,8 +255,6 @@ namespace Dune
     typedef RangeFieldType DofType;
     //! dimension of a value
     enum { dimVal = 1 };
-    //! type of DoF manager
-    typedef DofManager< GridType > DofManagerType;
 
     //! mapper singleton key 
     typedef LagrangeMapperSingletonKey< GridPartType, LagrangePointSetMapType >
