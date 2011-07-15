@@ -442,6 +442,7 @@ namespace Dune
       return blockMapper().contains( codim );
     }
 
+
     /** \copydoc Dune::DiscreteFunctionSpaceInterface::continuous */
     inline bool continuous () const
     {
@@ -466,12 +467,6 @@ namespace Dune
     inline int order () const
     {
       return polynomialOrder;
-    }
-
-    template< class EntityType >
-    void setPolynomialOrder( const EntityType &entity, const int p ) const
-    {
-      blockMapper().setPolynomOrder( entity, p );
     }
 
     /** \copydoc Dune::DiscreteFunctionSpaceInterface::baseFunctionSet(const EntityType &entity) const */

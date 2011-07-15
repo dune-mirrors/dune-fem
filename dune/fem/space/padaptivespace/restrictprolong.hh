@@ -99,6 +99,32 @@ namespace Dune
       }
     }
 
+    template< class FT, class ST >
+    void localInterpolation ( const LocalFunction< FT > &oldFunction,
+                              LocalFunction< ST > &newFunction ) const
+    {
+      static const int dimRange = LocalFunction< ST >::dimRange;
+
+      const Entity &entity = newFunction.entity();
+
+      const LagrangePointSet &pointSet = lagrangePointSet( entity );
+
+      const EntityDofIterator send = pointSet.template endSubEntity< 0 >( 0 );
+      for( EntityDofIterator sit = pointSet.template beginSubEntity< 0 >( 0 ); sit != send; ++sit )
+      {
+        const unsigned int dof = *sit;
+        const DomainVector &localPoint = pointSet.point( dof );
+        
+        typename LocalFunction< FT >::RangeType phi;
+        oldFunction.evaluate( localPoint, phi );
+        for( int coordinate = 0; coordinate < dimRange; ++coordinate )
+        {
+          const int idx = dimRange * dof + coordinate  ;
+          newFunction[ idx ] = phi[ coordinate ];
+        }
+      }
+    }
+
     const LagrangePointSet &lagrangePointSet ( const Entity &entity ) const
     {
       return lpsProvider_.lagrangePointSet( entity );

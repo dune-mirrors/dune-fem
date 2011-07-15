@@ -7,6 +7,8 @@
 #include <dune/fem/space/padaptivespace/restrictprolong.hh>
 
 #include <dune/fem/space/lagrangespace/lagrangespace.hh>
+#include <dune/fem/function/adaptivefunction.hh>
+#include <dune/fem/operator/lagrangeinterpolation.hh>
 
 namespace Dune
 {
@@ -96,6 +98,51 @@ namespace Dune
     PLagrangeLocalRestrictProlong< Grid, DiscreteFunctionSpaceType > localRestrictProlong_;
   };
 
+
+  template <class DF, class Vector> 
+  void pAdaptation( DF& df, const Vector& polynomialOrders ) 
+  {
+    typedef typename DF :: DiscreteFunctionSpaceType  DiscreteFunctionSpaceType;
+    typedef typename DiscreteFunctionSpaceType :: GridPartType GridPartType;
+    typedef typename GridPartType :: GridType  GridType;
+    typedef typename DiscreteFunctionSpaceType :: IteratorType  IteratorType;
+
+    DiscreteFunctionSpaceType& newSpace = const_cast< DiscreteFunctionSpaceType& > (df.space());
+
+    DiscreteFunctionSpaceType oldSpace( df.space().gridPart() );
+
+    typedef DofManager< GridType > DofManagerType;
+
+    typedef typename IteratorType :: Entity  EntityType;
+
+    DofManagerType& dm = DofManagerType :: instance( newSpace.grid() );
+
+    const IteratorType endit = newSpace.end();
+    for( IteratorType it = newSpace.begin(); it != endit; ++it ) 
+    {
+      const EntityType& entity = *it;
+
+      oldSpace.blockMapper().setPolynomOrder( entity, newSpace.blockMapper().polynomOrder( entity ) ); 
+    }
+
+    dm.resize();
+    dm.compress();
+
+    AdaptiveDiscreteFunction< DiscreteFunctionSpaceType > tmp( "padaptation", oldSpace );
+    tmp.assign( df );
+
+    for( IteratorType it = newSpace.begin(); it != endit; ++it ) 
+    {
+      const EntityType& entity = *it;
+      newSpace.blockMapper().setPolynomOrder( entity, 
+              polynomialOrders[ newSpace.indexSet().index( entity ) ] );
+    }
+
+    dm.resize();
+    dm.compress();
+
+    LagrangeInterpolation< DF > :: interpolateFunction( tmp, df );
+  }
 }
 
 #endif // #ifndef DUNE_LAGRANGESPACE_ADAPTMANAGER_HH
