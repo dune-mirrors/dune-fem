@@ -173,7 +173,6 @@ namespace Dune
     CombinedDiscreteFunction(const ThisType &other)
       : BaseType( "", other.space(), lfFactory_ ),
         spc_(const_cast<ContainedDiscreteFunctionSpaceType&>(other.subFunction(0).space()).gridPart()),
-        // spc_(other.spc_),
         lfFactory_( *this )
     {
       for (int i=0; i<N; ++i) 
