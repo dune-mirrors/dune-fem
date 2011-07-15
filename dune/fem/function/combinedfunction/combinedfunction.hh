@@ -152,7 +152,7 @@ namespace Dune
     //! WARNING: here we have to use a const cast for the
     //! function space!
     CombinedDiscreteFunction(ContainedDiscreteFunctionType& func) 
-      : BaseType( "", createSpace( func.space().gridPart() ), lfFactory_ ),
+      : BaseType( "combined_"+func.name(), createSpace( func.space().gridPart() ), lfFactory_ ),
         lfFactory_( *this )
     {
       for (int i=0; i<N; ++i) 
@@ -160,9 +160,10 @@ namespace Dune
         func_[i] = new ContainedDiscreteFunctionType(func);
       }
     }
+
     CombinedDiscreteFunction(const std::string &name, 
                              const ContainedDiscreteFunctionSpaceType& spc) 
-      : BaseType( "", createSpace( spc.gridPart() ), lfFactory_ ),
+      : BaseType( "combined_"+name, createSpace( spc.gridPart() ), lfFactory_ ),
         lfFactory_( *this )
     {
       for (int i=0; i<N; ++i) 
@@ -174,7 +175,7 @@ namespace Dune
     //! Copy constructor
     //! The copy constructor copies the dofs
     CombinedDiscreteFunction(const ThisType &other)
-      : BaseType( "", createSpace( other.space().gridPart() ), lfFactory_ ),
+      : BaseType( other.name()+"_copy", createSpace( other.space().gridPart() ), lfFactory_ ),
         lfFactory_( *this )
     {
       for (int i=0; i<N; ++i) 
