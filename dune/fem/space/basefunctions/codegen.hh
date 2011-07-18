@@ -414,6 +414,7 @@ namespace Fem {
       out << "    {" << std::endl;
       out << "      const value_type& jacStorageRow = jacStorage[ quad.cachingPoint( row ) ];" << std::endl;
       out << "      typedef typename Geometry::Jacobian GeometryJacobianType;" << std::endl;
+      out << "      // use reference to GeometryJacobianType to make code compile with SPGrid Geometry" << std::endl;
       out << "      const GeometryJacobianType& gjit = geometry.jacobianInverseTransposed( quad.point( row ) );" << std::endl << std::endl;
       out << "      GlobalJacobianRangeType& result = jacVector[ row ];" << std::endl;
       out << "      result = 0;" << std::endl;
@@ -477,7 +478,8 @@ namespace Fem {
       out << "    {" << std::endl;
       out << "      const value_type& jacStorageRow = jacStorage[ quad.cachingPoint( row ) ];" << std::endl;
       out << "      typedef typename Geometry::Jacobian GeometryJacobianType;" << std::endl;
-      out << "      const GeometryJacobianType gjit = geometry.jacobianInverseTransposed( quad.point( row ) );" << std::endl << std::endl;
+      out << "      // use reference to GeometryJacobianType to make code compile with SPGrid Geometry" << std::endl;
+      out << "      const GeometryJacobianType& gjit = geometry.jacobianInverseTransposed( quad.point( row ) );" << std::endl << std::endl;
       out << "      JacobianRangeType jacFactorTmp;" << std::endl;
       out << "      for( int r = 0; r < " << dimRange << " ; ++r )" << std::endl;
       out << "      {"<<std::endl; 
