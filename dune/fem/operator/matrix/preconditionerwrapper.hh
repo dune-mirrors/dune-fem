@@ -2,6 +2,7 @@
 #define DUNE_PRECONDITIONERWRAPPER_HH
 
 #include <memory>
+#include <dune/common/shared_ptr.hh>
 
 #if HAVE_DUNE_ISTL
 #include <dune/istl/operators.hh>
@@ -74,7 +75,7 @@ namespace Dune {
       inline static void copy(XImp& v, const YImp& d)
       {
       }
-   };
+    };
 
     template <class XImp> 
     struct Apply<XImp,XImp>
