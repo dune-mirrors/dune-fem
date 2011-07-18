@@ -6,12 +6,9 @@
 #include <dune/common/static_assert.hh>
 #include <dune/common/version.hh>
 #include <dune/common/geometrytype.hh>
+#include <dune/grid/genericgeometry/topologytypes.hh>
 
-#if DUNE_VERSION_NEWER_REV( DUNE_GRID, 2, 1, 0 )
 #include <dune/grid/alugrid/common/interfaces.hh>
-#else
-#include <dune/grid/alugrid/interfaces.hh>
-#endif
 
 #if HAVE_DUNE_GEOGRID
 #include <dune/grid/utility/hostgridaccess.hh>
@@ -100,12 +97,14 @@ namespace Dune
       else 
       {
 #ifndef NDEBUG
-        GeometryType geoType( GeometryType::cube, GridType :: dimension );
+        GeometryType geoType( GenericGeometry::CubeTopology< GridType :: dimension >::type::id, 
+                              GridType :: dimension );
         GeometryType realType = (inside) ? intersection.inside()->type() :
                                            intersection.outside()->type();
         assert ( realType == geoType );
 #endif
-        return GeometryType( GeometryType::cube, GridType :: dimension );
+        return GeometryType( GenericGeometry::CubeTopology< GridType :: dimension >::type::id, 
+                             GridType :: dimension );
       }
     }
   };
