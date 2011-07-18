@@ -2,6 +2,7 @@
 #define DUNE_FEM_FEMQUADRATURES_HH
 
 #include <dune/common/geometrytype.hh>
+#include <dune/grid/genericgeometry/topologytypes.hh>
 
 #include <dune/fem/quadrature/quadratureimp.hh>
 
@@ -45,6 +46,8 @@ namespace Dune
 
   protected:
     int order_;
+
+    static const unsigned int topologyId = GenericGeometry::SimplexTopology< dim >::type::id ;
     
   public:
     /** \brief constructor filling the list of points and weights
@@ -59,7 +62,7 @@ namespace Dune
      */
     virtual GeometryType geometry () const
     {
-      return GeometryType( GeometryType :: simplex, dim );
+      return GeometryType( topologyId, dim );
     }
    
     /** \copydoc Dune::QuadratureImp::order
@@ -112,6 +115,8 @@ namespace Dune
   protected:
     int order_;
 
+    static const unsigned int topologyId = GenericGeometry::CubeTopology< dim >::type::id ;
+
   public:
     /** \brief constructor filling the list of points and weights
      *
@@ -124,7 +129,7 @@ namespace Dune
     /** \copydoc Dune::QuadratureImp::geometry */
     virtual GeometryType geometry () const
     {
-      return GeometryType( GeometryType :: cube, dim );
+      return GeometryType( topologyId, dim );
     }
 
     /** \copydoc Dune::QuadratureImp::order */
@@ -169,6 +174,8 @@ namespace Dune
   protected:
     int order_;
 
+    static const unsigned int topologyId = GenericGeometry::CubeTopology< 1 >::type::id ;
+
   public:
     /** \brief constructor filling the list of points and weights
      *
@@ -181,7 +188,7 @@ namespace Dune
     /** \copydoc Dune::QuadratureImp::geometry */
     virtual GeometryType geometry () const
     {
-      return GeometryType( GeometryType :: cube, 1 );
+      return GeometryType( topologyId, 1 );
     }
 
     /** copydoc Dune::QuadratureImp::order */
@@ -228,6 +235,8 @@ namespace Dune
   private:
     int order_;
 
+    static const unsigned int topologyId = GenericGeometry::SimplexTopology< 2 >::type::id ;
+
   public:
     /** \brief constructor filling the list of points and weights
      *
@@ -240,7 +249,7 @@ namespace Dune
     /** \copydoc Dune::QuadratureImp::geometry */
     virtual GeometryType geometry () const
     {
-      return GeometryType( GeometryType :: simplex, 2 );
+      return GeometryType( topologyId, 2 );
     }
 
     /** \copydoc Dune::QuadratureImp::order */
@@ -288,6 +297,8 @@ namespace Dune
   private:
     int order_;
 
+    static const unsigned int topologyId = GenericGeometry::CubeTopology< 2 >::type::id ;
+
   public:
     /** \brief constructor filling the list of points and weights
      *
@@ -300,7 +311,7 @@ namespace Dune
     /** \copydoc Dune::QuadratureImp::geometry */
     virtual GeometryType geometry () const
     {
-      return GeometryType( GeometryType :: cube, 2 );
+      return GeometryType( topologyId, 2 );
     }
 
     /** \copydoc Dune::QuadratureImp::order */
@@ -347,6 +358,8 @@ namespace Dune
   private:
     int order_;
 
+    static const unsigned int topologyId = GenericGeometry::SimplexTopology< 3 >::type::id ;
+
   public:
     /** \brief constructor filling the list of points and weights
      *
@@ -359,7 +372,7 @@ namespace Dune
     /** \copydoc Dune::QuadratureImp::geometry */
     virtual GeometryType geometry () const
     {
-      return GeometryType( GeometryType :: simplex, 3 );
+      return GeometryType( topologyId, 3 );
     }
 
     /** \copydoc Dune::QuadratureImp::order */
@@ -407,6 +420,8 @@ namespace Dune
   private:
     int order_;
 
+    static const unsigned int topologyId = GenericGeometry::CubeTopology< 3 >::type::id ;
+
   public:
     /** \brief constructor filling the list of points and weights
      *
@@ -419,7 +434,7 @@ namespace Dune
     /** \copydoc Dune::QuadratureImp::geometry */
     virtual GeometryType geometry () const
     {
-      return GeometryType( GeometryType :: cube, 3 );
+      return GeometryType( topologyId, 3 );
     }
 
     /** \copydoc Dune::QuadratureImp::order */
@@ -465,6 +480,8 @@ namespace Dune
   private:
     int order_;
 
+    static const unsigned int topologyId = GenericGeometry::PrismTopology< 3 >::type::id ;
+
   public:
     /** \brief constructor filling the list of points and weights
      *
@@ -477,7 +494,7 @@ namespace Dune
     /** \copydoc Dune::QuadratureImp::geometry */
     virtual GeometryType geometry () const
     {
-      return GeometryType( GeometryType :: prism, 3 );
+      return GeometryType( topologyId, 3 );
     }
 
     /** \copydoc Dune::QuadratureImp::order */
@@ -523,6 +540,8 @@ namespace Dune
   private:
     int order_;
 
+    static const unsigned int topologyId = GenericGeometry::PyramidTopology< 3 >::type::id ;
+
   public:
     /** \brief constructor filling the list of points and weights
      *
@@ -535,7 +554,7 @@ namespace Dune
     /** \copydoc Dune::QuadratureImp::geometry */
     virtual GeometryType geometry () const
     {
-      return GeometryType( GeometryType :: pyramid, 3 );
+      return GeometryType( topologyId, 3 );
     }
 
     /** \copydoc Dune::QuadratureImp::order */
