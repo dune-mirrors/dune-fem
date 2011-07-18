@@ -171,7 +171,8 @@ namespace Dune
     elementGeometry(const Intersection& intersection, 
                     const bool inside)
     {
-      return GeometryType( GeometryType::simplex, dimension );
+      return GeometryType( GenericGeometry::SimplexTopology< dimension >::type::id,
+                           dimension );
     }
   };
 #endif
@@ -260,7 +261,8 @@ namespace Dune
     elementGeometry(const Intersection& intersection, 
                     const bool inside)
     {
-      return GeometryType( GeometryType::simplex, dimension );
+      return GeometryType( GenericGeometry::SimplexTopology< dim >::type::id,
+                           dim );
     }
   private:
     TwistUtility(const TwistUtility&);
@@ -332,7 +334,8 @@ namespace Dune
     elementGeometry(const Intersection& intersection, 
                     const bool inside)
     {
-      return GeometryType( GeometryType::cube, GridType :: dimension );
+      return GeometryType( GenericGeometry::CubeTopology< dim >::type::id,
+                           dim );
     }
   private:
     TwistUtility(const TwistUtility&);
@@ -394,7 +397,8 @@ namespace Dune
     elementGeometry(const Intersection& intersection, 
                     const bool inside)
     {
-      return GeometryType( GeometryType::simplex, GridType :: dimension );
+      return GeometryType( GenericGeometry::SimplexTopology< dim >::type::id,
+                           dim );
     }
     
   private:
