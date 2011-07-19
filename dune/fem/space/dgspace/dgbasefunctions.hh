@@ -128,7 +128,7 @@ namespace Dune
 
     RangeFieldType hess_triangle_2d (const int comp, const DomainType & xi) const
     {
-      double h[3];
+      double h[ 3 ] = { 0,0,0 };
       OrthonormalBase_2D::hess_triangle_2d(baseNum,&xi[0],h);
       return h[comp];
     }
