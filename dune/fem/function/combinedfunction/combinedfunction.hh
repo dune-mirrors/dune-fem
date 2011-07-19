@@ -151,7 +151,7 @@ namespace Dune
     //! Constructor 
     //! WARNING: here we have to use a const cast for the
     //! function space!
-    CombinedDiscreteFunction(ContainedDiscreteFunctionType& func) 
+    CombinedDiscreteFunction( const ContainedDiscreteFunctionType& func ) 
       : BaseType( "combined_"+func.name(), createSpace( func.space().gridPart() ), lfFactory_ ),
         lfFactory_( *this )
     {
@@ -397,10 +397,10 @@ namespace Dune
     typedef ThisType MyType;
     const MyType& interface() const { return *this; }
 
-    DiscreteFunctionSpaceType& createSpace( const GridPartType& gp )
+    DiscreteFunctionSpaceType& createSpace( GridPartType& gp )
     {
       // we need to delete the space in the destructor 
-      return *(new DiscreteFunctionSpaceType( const_cast< GridPartType& > ( gp ) ));
+      return *(new DiscreteFunctionSpaceType( gp ));
     }
     
     const LocalFunctionFactoryType lfFactory_;
