@@ -868,6 +868,9 @@ namespace Dune
 
   } // end namespace Fem 
 
+  // for convenience 
+  using Fem :: FieldVectorAdapter ;
+
   // Capabilities
   // ------------
 
