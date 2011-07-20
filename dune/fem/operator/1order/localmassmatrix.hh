@@ -3,6 +3,7 @@
 
 //- Dune includes 
 #include <dune/common/fmatrix.hh>
+#include <dune/common/dynmatrix.hh>
 #include <dune/fem/quadrature/cachingquadrature.hh>
 #include <dune/fem/space/common/allgeomtypes.hh>
 #include <dune/fem/misc/checkgeomaffinity.hh>
@@ -19,9 +20,10 @@ class LocalDGMassMatrix
 {
 public:  
   typedef DiscreteFunctionSpaceImp DiscreteFunctionSpaceType;
-  enum { numDofs_ = DiscreteFunctionSpaceType :: localBlockSize };
   typedef typename DiscreteFunctionSpaceType :: RangeFieldType ctype;
   typedef typename DiscreteFunctionSpaceType :: RangeType RangeType;
+
+  enum { numDofs_ = DiscreteFunctionSpaceType :: localBlockSize };
   typedef FieldMatrix<ctype, numDofs_, numDofs_ > MatrixType;
   typedef FieldVector<ctype, numDofs_ > VectorType;
 
@@ -49,8 +51,7 @@ protected:
   mutable VectorType x_, rhs_;
 
   mutable std::vector< RangeType > phi_;
-  mutable RangeType phiMass_[numDofs_];
-
+  mutable std::vector< RangeType > phiMass_;
 
   //! dummy caller 
   struct NoMassDummyCaller
@@ -74,10 +75,9 @@ public:
     , geoInfo_( spc.indexSet() ) 
     , volumeQuadOrd_ ( ( volQuadOrd < 0 ) ? ( spc.order() * 2 ) : volQuadOrd )
     , affine_ ( setup() )
-    , phi_( numDofs_ )
+    , phi_( spc_.mapper().maxNumDofs() )
+    , phiMass_( spc_.mapper().maxNumDofs() )
   {
-    // only for DG spaces at the moment 
-    assert( spc_.continuous() == false );
   }
 
   //! copy constructor 
@@ -86,7 +86,8 @@ public:
       geoInfo_( org.geoInfo_),
       volumeQuadOrd_( org.volumeQuadOrd_ ),
       affine_( org.affine_ ),
-      phi_( org.phi_ )
+      phi_( org.phi_ ),
+      phiMass_( org.phiMass_ )
   {
   }
 
@@ -104,9 +105,19 @@ public:
                     const EntityType& en, 
                     LocalFunctionType& lf) const 
   {
+    if( spc_.continuous() ) 
+      applyInverseContinuous( caller, en, lf );
+    else 
+      applyInverseDiscontinuous( caller, en, lf );
+  }
+
+  template <class MassCallerType, class LocalFunctionType> 
+  void applyInverseDiscontinuous(MassCallerType& caller, 
+                                 const EntityType& en, 
+                                 LocalFunctionType& lf) const 
+  {
     // get geometry 
     const Geometry& geo = en.geometry();
-
     assert( numDofs_ == lf.numDofs() );
 
     // in case of affine mappings we only have to multiply with a factor 
@@ -132,7 +143,7 @@ public:
       }
 
       // setup local mass matrix 
-      buildMatrix( caller, en, geo, lf.baseFunctionSet(), matrix_ );
+      buildMatrix( caller, en, geo, lf.baseFunctionSet(), numDofs_, matrix_ );
 
       // solve linear system  
       matrix_.solve(  x_, rhs_ );
@@ -145,6 +156,44 @@ public:
 
       return; 
     }
+  }
+
+  //! apply local mass matrix to local function lf
+  //! using the massFactor method of the caller 
+  template <class MassCallerType, class LocalFunctionType> 
+  void applyInverseContinuous(MassCallerType& caller, 
+                              const EntityType& en, 
+                              LocalFunctionType& lf) const 
+  {
+    // get geometry 
+    const Geometry& geo = en.geometry();
+
+    const int numDofs = lf.numDofs();
+    DynamicVector< double > rhs( numDofs );
+    DynamicVector< double > x( numDofs );
+
+    // copy local function to right hand side 
+    for(int l=0; l<numDofs; ++l) 
+    {
+      // copy 
+      rhs[ l ] = lf[ l ];
+    }
+
+    // create matrix 
+    DynamicMatrix< double > matrix( numDofs, numDofs, 0.0 );
+
+    // setup local mass matrix 
+    buildMatrix( caller, en, geo, lf.baseFunctionSet(), numDofs, matrix );
+
+    // solve linear system  
+    matrix.solve( x, rhs );
+
+    for(int l=0; l<numDofs; ++l) 
+    {
+      // copy back
+      lf[ l ] = x[ l ];
+    }
+    return; 
   }
 
   //! apply local dg mass matrix to local function lf without mass factor 
@@ -196,14 +245,15 @@ protected:
   }
 
   //! build local mass matrix 
-  template <class MassCallerType> 
+  template <class MassCallerType, class Matrix> 
   void buildMatrix(MassCallerType& caller,
                    const EntityType& en,
                    const Geometry& geo, 
                    const BaseFunctionSetType& set,
-                   MatrixType& matrix) const 
+                   const int numDofs,
+                   Matrix& matrix) const 
   {
-    assert( numDofs_ == set.numBaseFunctions() );
+    assert( numDofs == set.numBaseFunctions() );
 
     // clear matrix 
     matrix = 0;
@@ -214,21 +264,23 @@ protected:
     if( caller.hasMass() )
     {
       // build matix with calling 
-      buildMatrixWithMassFactor(caller, en, geo, set, volQuad, matrix);
+      buildMatrixWithMassFactor(caller, en, geo, set, volQuad, numDofs, matrix);
     }
     else 
     {
-      buildMatrixNoMassFactor(en, geo, set, volQuad, matrix);
+      buildMatrixNoMassFactor(en, geo, set, volQuad, numDofs, matrix);
     }
   }
 
   //! build local mass matrix with mass factor 
+  template <class Matrix>
   void buildMatrixNoMassFactor(
                    const EntityType& en,
                    const Geometry& geo, 
                    const BaseFunctionSetType& set,
                    const VolumeQuadratureType& volQuad,
-                   MatrixType& matrix) const 
+                   const int numDofs,
+                   Matrix& matrix) const 
   {
     const int volNop = volQuad.nop();
     for(int qp=0; qp<volNop; ++qp) 
@@ -240,13 +292,13 @@ protected:
       // eval base functions 
       set.evaluateAll(volQuad[qp], phi_);
 
-      for(int m=0; m<numDofs_; ++m)
+      for(int m=0; m<numDofs; ++m)
       {
         const RangeType& phi_m = phi_[m];
         const ctype val = intel * (phi_m * phi_m);
         matrix[m][m] += val;
        
-        for(int k=m+1; k<numDofs_; ++k) 
+        for(int k=m+1; k<numDofs; ++k) 
         {
           const ctype val = intel * (phi_m * phi_[k]);
           matrix[m][k] += val;
@@ -257,14 +309,15 @@ protected:
   }
 
   //! build local mass matrix with mass factor 
-  template <class MassCallerType> 
+  template <class MassCallerType, class Matrix> 
   void buildMatrixWithMassFactor(
                    MassCallerType& caller,
                    const EntityType& en,
                    const Geometry& geo, 
                    const BaseFunctionSetType& set,
                    const VolumeQuadratureType& volQuad,
-                   MatrixType& matrix) const 
+                   const int numDofs,
+                   Matrix& matrix) const 
   {
     typedef typename MassCallerType :: MassFactorType MassFactorType;
     MassFactorType mass;
@@ -283,15 +336,15 @@ protected:
       caller.mass( en, volQuad, qp, mass);
 
       // apply mass matrix to all base functions 
-      for(int m=0; m<numDofs_; ++m)
+      for(int m=0; m<numDofs; ++m)
       {
         mass.mv( phi_[m], phiMass_[m] );
       }
 
       // add values to matrix 
-      for(int m=0; m<numDofs_; ++m)
+      for(int m=0; m<numDofs; ++m)
       {
-        for(int k=0; k<numDofs_; ++k) 
+        for(int k=0; k<numDofs; ++k) 
         {
           matrix[m][k] += intel * (phiMass_[m] * phi_[k]);
         }
