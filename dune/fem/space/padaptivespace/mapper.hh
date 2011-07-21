@@ -89,6 +89,15 @@ namespace Dune
     {
       return true;
     }
+
+    int polynomOrder( const EntityType& entity ) const 
+    {
+      return 1;
+    }
+
+    void setPolynomOrder( const EntityType& entity, const int polOrd ) 
+    {
+    }
   };
 
 
