@@ -230,6 +230,7 @@ int SparseRowMatrix<T>::colIndex(int row, int col)
   }
   
 #ifndef NDEBUG 
+#if 0
   if(whichCol == defaultCol ) 
   {
     std::cout << "Writing colIndex for, nz = " << nz_ <<  " , " << col << "\n";
@@ -239,6 +240,7 @@ int SparseRowMatrix<T>::colIndex(int row, int col)
     }
     std::cout << std::endl;
   }
+#endif
 #endif
 
   if (checkNonConstMethods) assert(checkConsistency());
