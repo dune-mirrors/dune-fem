@@ -510,7 +510,8 @@ namespace Dune
       int numCols_;
 
       // vector with pointers to local matrices 
-      std::vector< std::vector<LittleBlockType *> > matrices_;
+      typedef std::vector<LittleBlockType *> LittleMatrixRowStorageType ;
+      std::vector< LittleMatrixRowStorageType > matrices_;
 
       // matrix to build 
       const MatrixObjectType& matrixObj_;
@@ -547,18 +548,25 @@ namespace Dune
         }
 
         MatrixType& matrix = matrixObj_.matrix();
-        for(int i=0; i<numRows_; ++i)
+        typedef typename RowMapperType :: DofMapIteratorType RowMapIteratorType ;
+        typedef typename ColMapperType :: DofMapIteratorType ColMapIteratorType ;
+
+        const RowMapIteratorType endrow = rowMapper_.end( rowEntity );
+        for( RowMapIteratorType row = rowMapper_.begin( rowEntity );
+             row != endrow; ++row ) 
         {
-          matrices_[i].resize( numCols_ );
-          const int rowIdx = rowMapper_.mapToGlobal(rowEntity,i);
+          LittleMatrixRowStorageType& localMatRow = matrices_[ row.local() ];
+          localMatRow.resize( numCols_ );
 
           // get row 
-          RowType& row = matrix[rowIdx];
-          for(int j=0; j<numCols_; ++j) 
+          RowType& matRow = matrix[ row.global() ];
+
+          const ColMapIteratorType endcol = colMapper_.end( colEntity );
+          for( ColMapIteratorType col = colMapper_.begin( colEntity );
+               col != endcol; ++col ) 
           {
-            const int colIdx = colMapper_.mapToGlobal(colEntity,j);
-            assert( matrix.exists( rowIdx, colIdx ));
-            matrices_[i][j] = &row[colIdx];
+            assert( matrix.exists( row.global(), col.global() ) );
+            localMatRow[ col.local() ] = &matRow[ col.global() ];
           }
         }
       }
