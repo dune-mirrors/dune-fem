@@ -198,7 +198,7 @@ namespace Fem {
           file << "  {" << std::endl;
           file << "    typedef EvaluateRealImplementation< Traits, " << it->first << " , " << it->second << " >  BaseType;" << std::endl;
           file << "    typedef typename BaseType :: RangeVectorType  RangeVectorType;" << std::endl;
-          file << "    EvaluateCaller( const RangeVectorType& rv ) : BaseType ( rv ) {}" << std::endl;
+          file << "    EvaluateImplementation( const RangeVectorType& rv ) : BaseType ( rv ) {}" << std::endl;
           file << "  };"<< std::endl;
           file << std::endl;
         }
