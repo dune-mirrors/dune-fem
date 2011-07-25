@@ -773,6 +773,8 @@ namespace Dune
   inline void
   AdaptiveIndexSetBase< TraitsImp >::insertIntersections ( const ElementType &entity ) const
   {
+    codimLeafSet( intersectionCodimension ).resize();
+
     const IntersectionIteratorType endiit = gridPart_.iend( entity );
     for( IntersectionIteratorType iit = gridPart_.ibegin( entity ); 
          iit != endiit ; ++ iit ) 
