@@ -432,9 +432,11 @@ namespace Dune
     typedef ISTLMatrixObject<RowSpaceType,ColumnSpaceType,Traits> ThisType;
 
 
-  private:  
+  protected:  
     typedef typename RowSpaceType::GridType GridType; 
-    typedef typename GridType::template Codim<0>::Entity EntityType;
+
+    typedef typename ColumnSpaceType :: EntityType ColumnEntityType ;
+    typedef typename RowSpaceType :: EntityType RowEntityType ;
 
     enum { littleRows = RowSpaceType :: localBlockSize };
     enum { littleCols = ColumnSpaceType :: localBlockSize };
@@ -533,8 +535,8 @@ namespace Dune
       {
       }
 
-      void init(const EntityType & rowEntity,
-                const EntityType & colEntity)
+      void init(const RowEntityType & rowEntity,
+                const ColumnEntityType & colEntity)
       {
         if( geomType_ != rowEntity.type() ) 
         {
@@ -1136,8 +1138,8 @@ namespace Dune
     }
 
     //! return local matrix object 
-    LocalMatrixType localMatrix(const EntityType& rowEntity, 
-                                const EntityType& colEntity) const 
+    LocalMatrixType localMatrix(const RowEntityType& rowEntity, 
+                                const ColumnEntityType& colEntity) const 
     {
       return LocalMatrixType(localMatrixStack_,rowEntity,colEntity);
     }

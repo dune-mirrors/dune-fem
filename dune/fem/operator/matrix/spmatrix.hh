@@ -391,7 +391,9 @@ private:
 
   protected:
     typedef typename DomainSpaceType :: GridType GridType;
-    typedef typename GridType :: template Codim< 0 > :: Entity EntityType;
+
+    typedef typename DomainSpace :: EntityType  ColumnEntityType ;
+    typedef typename RangeSpace :: EntityType   RowEntityType ;
 
     template< class MatrixObject >
     struct LocalMatrixTraits;
@@ -459,8 +461,8 @@ private:
     }
 
     //! return local matrix 
-    inline LocalMatrixType localMatrix( const EntityType &rowEntity,
-                                        const EntityType &colEntity ) const
+    inline LocalMatrixType localMatrix( const RowEntityType &rowEntity,
+                                        const ColumnEntityType &colEntity ) const
     {
       return LocalMatrixType( localMatrixStack_, rowEntity, colEntity );
     }
@@ -702,7 +704,7 @@ protected:
     LocalMatrix( const LocalMatrix & );
 
   public:
-    void init( const EntityType &rowEntity, const EntityType &colEntity )
+    void init( const RowEntityType &rowEntity, const ColumnEntityType &colEntity )
     {
       // initialize base functions sets 
       BaseType :: init ( rowEntity , colEntity );
