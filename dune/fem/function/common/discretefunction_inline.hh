@@ -66,7 +66,6 @@ namespace Dune
   }
 
   template< class Traits >
-  template< class EntityType >
   inline const typename DiscreteFunctionDefault< Traits > ::  LocalFunctionType
   DiscreteFunctionDefault< Traits >
     :: localFunction ( const EntityType &entity ) const
@@ -76,7 +75,6 @@ namespace Dune
 
 
   template< class Traits >
-  template< class EntityType >
   inline typename DiscreteFunctionDefault< Traits > ::  LocalFunctionType
   DiscreteFunctionDefault< Traits >
     :: localFunction ( const EntityType &entity )
@@ -215,7 +213,7 @@ namespace Dune
                  RangeType &ret ) const
   {
     typedef typename DiscreteFunctionSpaceType::IteratorType Iterator;
-    typedef typename Iterator::Entity Entity;
+    typedef typename DiscreteFunctionSpaceType::EntityType   Entity;
     typedef typename Entity::Geometry Geometry;
     typedef typename Geometry :: LocalCoordinate LocalCoordinateType;
 

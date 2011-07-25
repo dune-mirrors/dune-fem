@@ -138,6 +138,9 @@ namespace Dune
         Type;
     };
 
+    //! type of entity local functions are defined on
+    typedef typename DiscreteFunctionSpaceType :: EntityType  EntityType;
+
   protected:
     using BaseType::asImp;
 
@@ -171,7 +174,6 @@ namespace Dune
      *  \param[in]  entity  Entity to focus view of discrete function on
      *  \returns a local function associated with the entity
      */
-    template< class EntityType >
     inline const LocalFunctionType localFunction ( const EntityType &entity ) const
     {
       return asImp().localFunction( entity );
@@ -182,7 +184,6 @@ namespace Dune
      *  \param[in]  entity  Entity to focus view of discrete function
      *  \returns a local function associated with the entity
      */
-    template< class EntityType >
     inline LocalFunctionType localFunction ( const EntityType &entity )
     {
       return asImp().localFunction( entity );
@@ -576,6 +577,8 @@ namespace Dune
     typedef typename Traits :: DofBlockPtrType DofBlockPtrType;
     typedef typename Traits :: ConstDofBlockPtrType ConstDofBlockPtrType;
 
+    typedef typename BaseType :: EntityType EntityType ;
+
     template< class Operation >
     struct CommDataHandle
     : public BaseType :: template CommDataHandle< Operation >
@@ -617,11 +620,9 @@ namespace Dune
     const DiscreteFunctionSpaceType &space () const;
 
     /** \copydoc Dune::DiscreteFunctionInterface::localFunction(const EntityType &entity) const */
-    template< class EntityType >
     const LocalFunctionType localFunction ( const EntityType &entity ) const;
     
     /** \copydoc Dune::DiscreteFunctionInterface::localFunction(const EntityType &entity) */
-    template< class EntityType >
     LocalFunctionType localFunction ( const EntityType &entity );
   
     /** \copydoc Dune::DiscreteFunctionInterface::clear() */
