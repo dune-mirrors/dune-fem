@@ -60,8 +60,8 @@ namespace Dune
     typedef typename DiscreteFunctionSpaceType::GridType GridType;
 
   public:
-    //! type of the entity, the local function lives on
-    typedef typename GridType::template Codim< 0 >::Entity EntityType;
+    //! type of the entity, the local function lives on is given by the space 
+    typedef typename  DiscreteFunctionSpaceType::EntityType  EntityType ;
 
     //! field type of the domain
     typedef typename DiscreteFunctionSpaceType::DomainFieldType DomainFieldType;
@@ -421,8 +421,8 @@ namespace Dune
     typedef typename DiscreteFunctionSpaceType::GridType GridType;
 
   public:
-    //! type of the entity, the local function lives on
-    typedef typename GridType::template Codim< 0 >::Entity EntityType;
+    //! type of the entity, the local function lives on is given by the space 
+    typedef typename DiscreteFunctionSpaceType::EntityType EntityType;
 
     //! field type of the domain
     typedef typename DiscreteFunctionSpaceType::DomainFieldType DomainFieldType;

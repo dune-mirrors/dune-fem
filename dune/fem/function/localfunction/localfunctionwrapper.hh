@@ -58,7 +58,7 @@ namespace Dune
     //! type of discrete function space 
     typedef typename Traits :: DiscreteFunctionSpaceType
       DiscreteFunctionSpaceType;
-    
+
   private:
     typedef LocalFunctionWrapper< LocalFunctionStorageType > ThisType;
     typedef LocalFunction< Traits > BaseType;
@@ -69,8 +69,8 @@ namespace Dune
     typedef typename DiscreteFunctionSpaceType :: GridType GridType;
 
   public:
-    //! type of the entity, the local function lives on
-    typedef typename GridType :: template Codim< 0 > :: Entity EntityType;
+    //! type of the entity, the local function lives on is given by the space
+    typedef typename DiscreteFunctionSpaceType :: EntityType  EntityType;
 
     enum {dimRange  = DiscreteFunctionSpaceType :: dimRange };
     enum {dimDomain = DiscreteFunctionSpaceType :: dimDomain };
