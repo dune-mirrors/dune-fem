@@ -526,6 +526,14 @@ namespace Dune
       }
     }
 
+    /* \brief return index for sub entity of given intersection and subEntityNumber */
+    IndexType
+    subIndex ( const IntersectionType &intersection,
+               int subNumber, unsigned int codim ) const
+    {
+      DUNE_THROW( NotImplemented, (name() + " does not support subIndices for intersections, intersectionCodim = ") << codim );
+      return -1;
+    }
     //////////////////////////////////////////////////////////
     //
     //  DoF adjustment methods
