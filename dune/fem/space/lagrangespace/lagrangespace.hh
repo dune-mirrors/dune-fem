@@ -53,6 +53,8 @@ namespace Dune
     typedef typename GridPartType :: template Codim< 0 > :: IteratorType
       IteratorType;
 
+    typedef typename IteratorType :: Entity EntityType;
+
     // get dimension of local coordinate 
     enum { dimLocal = GridType :: dimension };
 
