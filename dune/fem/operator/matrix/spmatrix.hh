@@ -490,9 +490,11 @@ private:
     {
       if( sequence_ != domainSpace_.sequence() )
       {
+#ifndef DUNE_FEM_DONT_CHECKITERATORS_OF_SPACE
         // if empty grid do nothing (can appear in parallel runs)
         if( (domainSpace_.begin() != domainSpace_.end())
             && (rangeSpace_.begin() != rangeSpace_.end()) )
+#endif
         {
           
           if( verbose )
