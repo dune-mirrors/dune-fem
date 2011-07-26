@@ -1,10 +1,9 @@
 #ifndef DUNE_FEM_FIELDMATRIXHELPER_HH
 #define DUNE_FEM_FIELDMATRIXHELPER_HH
 
-#warning "FieldMatrixHelper has been deprecated, use methods on FieldMatrix directly!"
-
 #include <dune/common/fvector.hh>
 #include <dune/common/fmatrix.hh>
+#include <dune/common/dynmatrix.hh>
 
 namespace Dune
 {
@@ -34,6 +33,34 @@ namespace Dune
                            const FieldMatrix< Field2, n, p > &B,
                            FieldMatrix< Field3, m, p > &C )
     {
+      for( int i = 0; i < m; ++i )
+      {
+        for( int j = 0; j < p; ++j )
+        {
+          Field3 &value = C[ i ][ j ];
+          
+          value = 0;
+          for( int k = 0; k < n; ++k )
+            value += A[ i ][ k ] * B[ k ][ j ];
+        }
+      }
+    }
+    
+    template< class Field1, class Field2, class Field3 >
+    inline void multiply ( const DynamicMatrix< Field1 >& A,
+                           const DynamicMatrix< Field2 >& B,
+                           DynamicMatrix< Field3 >& C )
+    {
+      const int m = A.rows();
+      const int n = A.cols();
+      const int p = B.cols();
+
+      C.resize( m, p );
+
+      assert( A.cols() == B.rows() );
+      assert( A.rows() == C.rows() );
+      assert( B.cols() == C.cols() );
+
       for( int i = 0; i < m; ++i )
       {
         for( int j = 0; j < p; ++j )
