@@ -75,7 +75,6 @@ namespace Dune
   }; // end class CombinedDiscreteFunctionTraits
 
 
-
   //! @ingroup CombinedDFunction
   //! A class for combining N discrete function of the same
   //! type to a vector valued function
@@ -171,14 +170,15 @@ namespace Dune
         func_[i] = new ContainedDiscreteFunctionType(name,spc);
       }
     }
+
     CombinedDiscreteFunction(const std::string &name, 
-                             const DiscreteFunctionSpaceType& spc) 
+                             const DiscreteFunctionSpaceType& spc ) 
       : BaseType( "combined_"+name, createSpace( spc.gridPart() ), lfFactory_ ),
         lfFactory_( *this )
     {
       for (int i=0; i<N; ++i) 
       {
-        func_[i] = new ContainedDiscreteFunctionType(name,spc.containedSpace());
+        func_[i] = new ContainedDiscreteFunctionType(name,space().containedSpace());
       }
     }
 
@@ -502,6 +502,13 @@ namespace Dune
     bool operator != (const ThisType & I ) const
     {
       return !((*this) == I);
+    }
+
+    void reset() 
+    {
+      comp_    = 0;
+      iter_    = df_.func_[ 0 ]->dbegin();
+      endIter_ = df_.func_[ 0 ]->dend();
     }
     
 private:
