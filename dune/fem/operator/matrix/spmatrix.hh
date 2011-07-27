@@ -519,6 +519,13 @@ private:
     template< class DomainFunction, class RangeFunction >
     void solveUMF( const DomainFunction &arg, RangeFunction &dest ) const
     {
+      DUNE_THROW(NotImplemented,"solveUMF only implemented for AdaptiveDiscreteFunctions");
+    }
+
+    //! solve A dest = arg using the UMFPACK direct solver 
+    void solveUMF ( const AdaptiveDiscreteFunction< DomainSpaceType > &arg, 
+                    AdaptiveDiscreteFunction< RangeSpaceType> &dest ) const
+    {
       matrix_.solveUMF( arg.leakPointer(), dest.leakPointer() );
     }
 
