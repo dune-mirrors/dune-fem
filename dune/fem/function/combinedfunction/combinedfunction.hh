@@ -322,7 +322,8 @@ namespace Dune
       const int containedSize = func_[ 0 ]->space().blockMapper().size();
       const int component = index / containedSize;
       const int containedIndex = index % containedSize;
-      return func_[ component ]->block( containedIndex );
+      const ContainedDiscreteFunctionType& func = *(func_[ component ]);
+      return func.block( containedIndex );
     }
     
     inline DofBlockPtrType block ( unsigned int index )
