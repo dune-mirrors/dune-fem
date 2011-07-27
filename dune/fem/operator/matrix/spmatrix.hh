@@ -257,8 +257,8 @@ public:
   void apply(const DiscFType &f, DiscFuncType &ret) const;
   
   //! A^T(f) = ret
-  template <class DiscFuncType>
-  void apply_t(const DiscFuncType &f, DiscFuncType &ret) const;
+  template <class ArgDFType, class DestDFType>
+  void apply_t(const ArgDFType& f, DestDFType &ret) const;
   
   //! A(f) = ret 
   template <class DiscFuncType> 
@@ -527,7 +527,8 @@ private:
     void apply ( const DomainFunction &arg, RangeFunction &dest ) const
     {
       // do matrix vector multiplication 
-      matrix_.multOEM( arg.leakPointer(), dest.leakPointer() );
+      //matrix_.multOEM( arg.leakPointer(), dest.leakPointer() );
+      matrix_.apply( arg, dest );
 
       // communicate data 
       dest.communicate();
@@ -538,7 +539,8 @@ private:
     void apply_t ( const RangeFunction &arg, DomainFunction &dest ) const
     {
       // do matrix vector multiplication 
-      matrix_.multOEM_t( arg.leakPointer(), dest.leakPointer() );
+      //matrix_.multOEM_t( arg.leakPointer(), dest.leakPointer() );
+      matrix_.apply_t( arg, dest );
 
       // communicate data 
       dest.communicate();

@@ -523,70 +523,39 @@ void SparseRowMatrix<T>::multOEM_t(const VECtype *x, VECtype *ret) const
 /*  Matrix-MV_Vector multiplication    */
 /***************************************/
 
-template <class T> template <class DiscFType , class DiscFuncType>
-void SparseRowMatrix<T>::apply(const DiscFType &f, DiscFuncType &ret) const 
+// apply to tranpose matrix 
+template <class T> template <class ArgDFType, class DestDFType>
+void SparseRowMatrix<T>::apply_t(const ArgDFType &f, DestDFType &ret) const 
 {
-  //multOEM(f.leakPointer(),ret.leakPointer());
-  
-  typedef typename DiscFuncType::DofIteratorType DofIteratorType;  
-  typedef typename DiscFuncType::ConstDofIteratorType ConstDofIteratorType;  
+  typedef typename ArgDFType::ConstDofIteratorType ConstDofIteratorType;
+
+  typedef typename DestDFType :: DofBlockPtrType DofBlockPtrType;
+  enum { blockSize = DestDFType :: DiscreteFunctionSpaceType :: localBlockSize };
 
   //! we assume that the dimension of the functionspace of f is the same as
   //! the size of the matrix 
-  DofIteratorType ret_it = ret.dbegin(); 
+  ret.clear();
+
   ConstDofIteratorType f_it = f.dbegin(); 
 
-  for(int row=0; row<dim_[0]; row++)
+  for(int row=0; row<dim_[0]; ++row)
   {
-    (*ret_it) = 0.0;
-    
-    //int thisCol = row*nz_ + firstCol ;
-
     //! DofIteratorType schould be the same 
-    //const T * localValues = &values_[thisCol];
-    //const int nonZero = nonZeros_[row];
-    for(int col=firstCol; col<nz_; col++)
+    for(int col=firstCol; col<nz_; ++col)
     {
-      int thisCol = row*nz_ + col;
-      int realCol = col_[thisCol];
+      const int thisCol = row * nz_ + col;
+      const int realCol = col_[thisCol];
       
       if( realCol == defaultCol ) continue;        
-      (*ret_it) += values_[thisCol] * (f_it[realCol]);
+
+      const int blockNr = realCol / blockSize ;
+      const int dofNr = realCol % blockSize ;
+      DofBlockPtrType retBlock = ret.block( blockNr );
+
+      (*retBlock)[ dofNr ] += values_[thisCol] * (*f_it);
     }
 
-    ++ret_it;
-  } 
-  return; 
-}
-
-
-// apply to tranpose matrix 
-template <class T> template <class DiscFuncType>
-void SparseRowMatrix<T>::apply_t(const DiscFuncType &f, DiscFuncType &ret) const 
-{
-  typedef typename DiscFuncType::DofIteratorType DofIteratorType;  
-  int level = f.getFunctionSpace().getGrid().maxlevel();
-
-  //! we assume that the dimension of the functionspace of f is the same as
-  //! the size of the matrix 
-  DofIteratorType ret_it = ret.dbegin(); 
-  const DofIteratorType f_it = f.dbegin(); 
-
-  for(int row=0; row<dim_[0]; row++)
-  {
-    (*ret_it) = 0.0;
-    
-    //! DofIteratorType schould be the same 
-    for(int col=firstCol; col<nz_; col++)
-    {
-      int thisCol = col * nz_ + row;
-      int realCol = col_[thisCol];
-      
-      if( realCol == defaultCol ) continue;        
-      (*ret_it) += values_[thisCol] * (f_it[realCol]);
-    }
-
-    ++ret_it;
+    ++f_it ;
   } 
   return; 
 }
