@@ -523,6 +523,41 @@ void SparseRowMatrix<T>::multOEM_t(const VECtype *x, VECtype *ret) const
 /*  Matrix-MV_Vector multiplication    */
 /***************************************/
 
+template <class T> template <class ArgDFType, class DestDFType>
+void SparseRowMatrix<T>::apply(const ArgDFType &f, DestDFType &ret) const 
+{
+  typedef typename DestDFType::DofIteratorType DofIteratorType;  
+
+  typedef typename ArgDFType :: ConstDofBlockPtrType ConstDofBlockPtrType;
+  enum { blockSize = ArgDFType :: DiscreteFunctionSpaceType :: localBlockSize };
+
+  //! we assume that the dimension of the functionspace of f is the same as
+  //! the size of the matrix 
+  DofIteratorType ret_it = ret.dbegin(); 
+
+  for(int row=0; row<dim_[0]; ++row)
+  {
+    (*ret_it) = 0.0;
+    
+    //! DofIteratorType schould be the same 
+    for(int col=firstCol; col<nz_; ++col)
+    {
+      const int thisCol = row*nz_ + col;
+      const int realCol = col_[thisCol];
+      
+      if( realCol == defaultCol ) continue;  
+
+      const int blockNr = realCol / blockSize ;
+      const int dofNr = realCol % blockSize ;
+      ConstDofBlockPtrType fBlock = f.block( blockNr );
+      (*ret_it) += values_[thisCol] * (*fBlock)[ dofNr ];
+    }
+
+    ++ret_it;
+  } 
+  return; 
+}
+
 // apply to tranpose matrix 
 template <class T> template <class ArgDFType, class DestDFType>
 void SparseRowMatrix<T>::apply_t(const ArgDFType &f, DestDFType &ret) const 

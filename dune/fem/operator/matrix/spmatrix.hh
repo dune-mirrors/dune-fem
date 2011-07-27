@@ -527,8 +527,18 @@ private:
     void apply ( const DomainFunction &arg, RangeFunction &dest ) const
     {
       // do matrix vector multiplication 
-      //matrix_.multOEM( arg.leakPointer(), dest.leakPointer() );
       matrix_.apply( arg, dest );
+
+      // communicate data 
+      dest.communicate();
+    }
+
+    //! apply matrix to discrete function
+    void apply ( const AdaptiveDiscreteFunction< DomainSpaceType > &arg, 
+                 AdaptiveDiscreteFunction< RangeSpaceType> &dest ) const
+    {
+      // do matrix vector multiplication 
+      matrix_.multOEM( arg.leakPointer(), dest.leakPointer() );
 
       // communicate data 
       dest.communicate();
@@ -539,8 +549,18 @@ private:
     void apply_t ( const RangeFunction &arg, DomainFunction &dest ) const
     {
       // do matrix vector multiplication 
-      //matrix_.multOEM_t( arg.leakPointer(), dest.leakPointer() );
       matrix_.apply_t( arg, dest );
+
+      // communicate data 
+      dest.communicate();
+    }
+
+    //! apply transposed matrix to discrete function
+    void apply_t ( const AdaptiveDiscreteFunction< RangeSpaceType > &arg, 
+                   AdaptiveDiscreteFunction< DomainSpaceType> &dest ) const
+    {
+      // do matrix vector multiplication 
+      matrix_.multOEM_t( arg.leakPointer(), dest.leakPointer() );
 
       // communicate data 
       dest.communicate();
