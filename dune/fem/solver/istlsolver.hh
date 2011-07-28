@@ -24,6 +24,26 @@ namespace Dune
       @{
   **/
 
+  struct ISTLSolverCall
+  {
+    template <class SolverType, class BlockVectorType>
+    static int  
+    solve( SolverType& solver, 
+           const BlockVectorType& arg, 
+           BlockVectorType& dest ) 
+    {
+      // copy right hand side since ISTL is overwriting it 
+      BlockVectorType rhs( arg );
+
+      InverseOperatorResult returnInfo;
+
+      // call solver 
+      solver.apply( dest, rhs, returnInfo );
+
+      // get information 
+      return returnInfo.iterations; 
+    }
+  };
 
 
   // ISTLBICGSTABOp
@@ -35,7 +55,9 @@ namespace Dune
   struct ISTLBICGSTABOp
   : public Operator< typename DF::RangeFieldType, typename DF::RangeFieldType, DF, DF >
   {
+  public:  
     typedef DF DiscreteFunctionType;
+    typedef DiscreteFunctionType  DestinationType;
     typedef Op OperatorType;
 
   private:
@@ -76,12 +98,10 @@ namespace Dune
 
         BiCGSTABSolver< BlockVectorType >
           solver( matrix, matrix.scp(), matrix.preconditionAdapter(), reduction, maxIter, verb );
-        InverseOperatorResult returnInfo;
-        solver.apply( dest.blockVector(), arg.blockVector(), returnInfo );
 
-        // get information 
-        std::pair< int, double > p( returnInfo.iterations, matrix.averageCommTime() );
-        return p; 
+        // call solver and return info
+        int iter = ISTLSolverCall::solve( solver, arg.blockVector(), dest.blockVector() );
+        return std::pair< int, double > ( iter, matrix.averageCommTime() );
       }
     };
 
@@ -200,8 +220,10 @@ namespace Dune
   struct ISTLGMResOp
   : public Operator< typename DF::RangeFieldType, typename DF::RangeFieldType, DF, DF >
   {
+  public:  
     typedef DF DiscreteFunctionType;
     typedef Op OperatorType;
+    typedef DiscreteFunctionType  DestinationType;
 
   private:
     template <class OperatorImp, bool hasPreconditioning>
@@ -241,12 +263,10 @@ namespace Dune
 
         RestartedGMResSolver< BlockVectorType >
           solver( matrix, matrix.scp(), matrix.preconditionAdapter(), reduction, restart, maxIter, verb );
-        InverseOperatorResult returnInfo;
-        solver.apply( dest.blockVector(), arg.blockVector(), returnInfo );
 
-        // get information 
-        std::pair< int, double > p( returnInfo.iterations, matrix.averageCommTime() );
-        return p; 
+        // call solver and return info
+        int iter = ISTLSolverCall::solve( solver, arg.blockVector(), dest.blockVector() );
+        return std::pair< int, double > ( iter, matrix.averageCommTime() );
       }
     };
 
@@ -367,8 +387,10 @@ namespace Dune
   struct ISTLCGOp
   : public Operator< typename DF::DomainFieldType, typename DF::RangeFieldType, DF, DF >
   {
+  public:  
     typedef DF DiscreteFunctionType;
     typedef Op OperatorType;
+    typedef DiscreteFunctionType  DestinationType;
 
   private:
     template< class OperatorImp, bool hasPreconditioning >
@@ -409,11 +431,10 @@ namespace Dune
 
         CGSolver< BlockVectorType >
           solver( matrix, matrix.scp(), matrix.preconditionAdapter(), reduction, maxIter, verb );
-        InverseOperatorResult returnInfo;
-        solver.apply( dest.blockVector(), arg.blockVector(), returnInfo );
 
-        std::pair< int, double > p( returnInfo.iterations, matrix.averageCommTime() );
-        return p;
+        // call solver and return info
+        int iter = ISTLSolverCall::solve( solver, arg.blockVector(), dest.blockVector() );
+        return std::pair< int, double > ( iter, matrix.averageCommTime() );
       }
     };
 
