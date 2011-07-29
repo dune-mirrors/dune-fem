@@ -499,11 +499,11 @@ private:
           
           if( verbose )
           {
-            int rowMaxNumbers = rangeSpace_.baseFunctionSet(*(domainSpace_.begin())).numBaseFunctions();
-            int colMaxNumbers = domainSpace_.baseFunctionSet(*(domainSpace_.begin())).numBaseFunctions();
+            const int rowMaxNumbers = rangeSpace_.mapper().maxNumDofs();
+            const int colMaxNumbers = domainSpace_.mapper().maxNumDofs();
 
             std::cout << "Reserve Matrix with (" << rangeSpace_.size() << "," << domainSpace_.size()<< ")\n";
-            std::cout << "Number of base functions = (" << rowMaxNumbers << "," << colMaxNumbers << ")\n";
+            std::cout << "Max number of base functions = (" << rowMaxNumbers << "," << colMaxNumbers << ")\n";
           }
 
           // upper estimate for number of non-zeros 
