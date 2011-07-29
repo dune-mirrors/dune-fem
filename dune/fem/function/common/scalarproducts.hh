@@ -216,12 +216,10 @@ namespace Dune
         LinkBuilderHandleType handle( *this, space_ , mapper_ );
 
         gridPart_.communicate
-          ( handle, 
-            space_.communicationInterface(), 
-            space_.communicationDirection() );
+          ( handle, GridPartType::indexSetInterfaceType, ForwardCommunication );
       }
       // catch possible exceptions here to have a clue where it happend 
-      catch ( Exception& e )
+      catch( const Exception &e )
       {
         std::cerr << e << std::endl;
         std::cerr << "Exception thrown in: " << __FILE__ << " line:" << __LINE__ << std::endl;
