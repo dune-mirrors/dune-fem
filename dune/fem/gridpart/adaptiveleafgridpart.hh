@@ -249,6 +249,7 @@ namespace Dune
       static const PartitionIteratorType indexSetPartitionType = idxpitype;
 #else
       static const PartitionIteratorType indexSetPartitionType = All_Partition;
+      static const InterfaceType indexSetInterfaceType = All_All_Interface;
 #endif
       typedef AdaptiveLeafIndexSet< GridPartType > IndexSetType;
     };
@@ -261,6 +262,7 @@ namespace Dune
       static const PartitionIteratorType indexSetPartitionType = idxpitype;
 #else
       static const PartitionIteratorType indexSetPartitionType = All_Partition;
+      static const InterfaceType indexSetInterfaceType = All_All_Interface;
 #endif
       typedef DGAdaptiveLeafIndexSet< GridPartType > IndexSetType;
     };
@@ -270,6 +272,7 @@ namespace Dune
     struct LeafIndexSetChooser
     {
       static const PartitionIteratorType indexSetPartitionType = All_Partition;
+      static const InterfaceType indexSetInterfaceType = All_All_Interface;
       typedef WrappedLeafIndexSet< Grid > IndexSetType;
     };
 
@@ -288,6 +291,7 @@ namespace Dune
     typedef typename IndexSetChooserType::IndexSetType IndexSetType;
 
     static const PartitionIteratorType indexSetPartitionType = IndexSetChooserType::indexSetPartitionType;
+    static const InterfaceType indexSetInterfaceType = IndexSetChooserType::indexSetInterfaceType;
 
     typedef typename GridType::template Codim< 0 >::Entity::LeafIntersectionIterator
       IntersectionIteratorType;
