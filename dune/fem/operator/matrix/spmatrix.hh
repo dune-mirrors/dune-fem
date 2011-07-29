@@ -461,10 +461,10 @@ private:
     }
 
     //! return local matrix 
-    inline LocalMatrixType localMatrix( const RowEntityType &rowEntity,
-                                        const ColumnEntityType &colEntity ) const
+    inline LocalMatrixType localMatrix( const ColumnEntityType &colEntity,
+                                        const RowEntityType &rowEntity ) const
     {
-      return LocalMatrixType( localMatrixStack_, rowEntity, colEntity );
+      return LocalMatrixType( localMatrixStack_, colEntity, rowEntity);
     }
 
     //! resize all matrices and clear them 
@@ -735,10 +735,10 @@ protected:
     LocalMatrix( const LocalMatrix & );
 
   public:
-    void init( const RowEntityType &rowEntity, const ColumnEntityType &colEntity )
+    void init( const ColumnEntityType &colEntity, const RowEntityType &rowEntity )
     {
       // initialize base functions sets 
-      BaseType :: init ( rowEntity , colEntity );
+      BaseType :: init ( colEntity, rowEntity );
         
       row_.resize( rangeSpace_.baseFunctionSet( rowEntity ).numBaseFunctions() );
       col_.resize( domainSpace_.baseFunctionSet( colEntity ).numBaseFunctions() );
