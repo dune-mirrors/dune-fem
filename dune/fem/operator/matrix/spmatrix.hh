@@ -395,8 +395,8 @@ private:
     /******************************************************************* 
     *   Rows belong to the DomainSpace and Columns to the RangeSpace   *
     *******************************************************************/    
-    typedef typename DomainSpace :: EntityType  RowEntityType ;
-    typedef typename RangeSpace :: EntityType   ColumnEntityType ;
+    typedef typename DomainSpace :: EntityType  DomainEntityType ;
+    typedef typename RangeSpace :: EntityType   RangeEntityType ;
 
     template< class MatrixObject >
     struct LocalMatrixTraits;
@@ -464,13 +464,13 @@ private:
     }
 
     //! return local matrix 
-    inline LocalMatrixType localMatrix( const RowEntityType &rowEntity,
-                                        const ColumnEntityType &colEntity ) const
+    inline LocalMatrixType localMatrix( const DomainEntityType &domainEntity,
+                                        const RangeEntityType &rangeEntity ) const
     {
       /******************************************************************* 
       *   Rows belong to the DomainSpace and Columns to the RangeSpace   *
       *******************************************************************/
-      return LocalMatrixType( localMatrixStack_, rowEntity, colEntity );
+      return LocalMatrixType( localMatrixStack_, domainEntity, rangeEntity );
     }
 
     //! resize all matrices and clear them 
@@ -717,10 +717,10 @@ protected:
   protected:
     MatrixType &matrix_; 
     
-    //! global row numbers 
-    std :: vector< int > row_;
-    //! global col numbers  
-    std :: vector< int > col_;
+    //! global index in the RangeSpace
+    std :: vector< int > rangeMapper_;
+    //! global index in the DomainSpace
+    std :: vector< int > domainMapper_;
 
     using BaseType :: domainSpace_;
     using BaseType :: rangeSpace_;
@@ -741,44 +741,44 @@ protected:
     LocalMatrix( const LocalMatrix & );
 
   public:
-    void init( const RowEntityType &rowEntity, const ColumnEntityType &colEntity )
+    void init( const DomainEntityType &domainEntity, const RangeEntityType &rangeEntity )
     {
       /******************************************************************* 
       *   Rows belong to the DomainSpace and Columns to the RangeSpace   *
       *******************************************************************/
       // initialize base functions sets 
-      BaseType :: init ( rowEntity, colEntity );
+      BaseType :: init ( domainEntity, rangeEntity );
         
-      col_.resize( rangeSpace_.baseFunctionSet( colEntity ).numBaseFunctions() );
-      row_.resize( domainSpace_.baseFunctionSet( rowEntity ).numBaseFunctions() );
+      rangeMapper_.resize( rangeSpace_.baseFunctionSet( rangeEntity ).numBaseFunctions() );
+      domainMapper_.resize( domainSpace_.baseFunctionSet( domainEntity ).numBaseFunctions() );
 
       typedef typename RangeSpaceType::MapperType::DofMapIteratorType RangeMapIterator;
-      const RangeMapIterator rmend = rangeSpace_.mapper().end( colEntity );
-      for( RangeMapIterator rmit = rangeSpace_.mapper().begin( colEntity ); rmit != rmend; ++rmit )
+      const RangeMapIterator rmend = rangeSpace_.mapper().end( rangeEntity );
+      for( RangeMapIterator rmit = rangeSpace_.mapper().begin( rangeEntity ); rmit != rmend; ++rmit )
       {
-        assert( rmit.global() == rangeSpace_.mapper().mapToGlobal( colEntity, rmit.local() ) );
-        col_[ rmit.local() ] = rmit.global();
+        assert( rmit.global() == rangeSpace_.mapper().mapToGlobal( rangeEntity, rmit.local() ) );
+        rangeMapper_[ rmit.local() ] = rmit.global();
       }
 
       typedef typename DomainSpaceType::MapperType::DofMapIteratorType DomainMapIterator;
-      const DomainMapIterator dmend = domainSpace_.mapper().end( rowEntity );
-      for( DomainMapIterator dmit = domainSpace_.mapper().begin( rowEntity ); dmit != dmend; ++dmit )
+      const DomainMapIterator dmend = domainSpace_.mapper().end( domainEntity );
+      for( DomainMapIterator dmit = domainSpace_.mapper().begin( domainEntity ); dmit != dmend; ++dmit )
       {
-        assert( dmit.global() == domainSpace_.mapper().mapToGlobal( rowEntity, dmit.local() ) );
-        row_[ dmit.local() ] = dmit.global();
+        assert( dmit.global() == domainSpace_.mapper().mapToGlobal( domainEntity, dmit.local() ) );
+        domainMapper_[ dmit.local() ] = dmit.global();
       }
     }
 
     //! return number of rows 
     int rows () const
     {
-      return row_.size();
+      return rangeMapper_.size();
     }
 
     //! return number of columns 
     int columns () const
     {
-      return col_.size();
+      return domainMapper_.size();
     }
 
     //! add value to matrix entry
@@ -788,7 +788,7 @@ protected:
       assert( (localRow >= 0) && (localRow < rows()) );
       assert( (localCol >= 0) && (localCol < columns()) );
 
-      matrix_.add( row_[ localRow ], col_[ localCol ], value );
+      matrix_.add( rangeMapper_[ localRow ], domainMapper_[ localCol ], value );
     }
 
     //! get matrix entry 
@@ -797,7 +797,7 @@ protected:
       assert( (localRow >= 0) && (localRow < rows()) );
       assert( (localCol >= 0) && (localCol < columns()) );
 
-      return matrix_( row_[ localRow ], col_[ localCol ] );
+      return matrix_( rangeMapper_[ localRow ], domainMapper_[ localCol ] );
     }
 
     //! set matrix entry to value 
@@ -806,28 +806,28 @@ protected:
       assert( (localRow >= 0) && (localRow < rows()) );
       assert( (localCol >= 0) && (localCol < columns()) );
 
-      matrix_.set( row_[ localRow ], col_[ localCol ], value );
+      matrix_.set( rangeMapper_[ localRow ], domainMapper_[ localCol ], value );
     }
 
     //! set matrix row to zero except diagonla entry 
     void unitRow( const int localRow )
     {
       assert( (localRow >= 0) && (localRow < rows()) );
-      matrix_.unitRow( row_[ localRow ] );
+      matrix_.unitRow( rangeMapper_[ localRow ] );
     }
 
     //! set matrix row to zero
     void clearRow( const int localRow )
     {
       assert( (localRow >= 0) && (localRow < rows()) );
-      matrix_.clearRow( row_[localRow]);
+      matrix_.clearRow( rangeMapper_[localRow]);
     }
 
     //! set matrix column to zero
     void clearCol ( const int localCol )
     {
       assert( (localCol >= 0) && (localCol < columns()) );
-      matrix_.clearCol( col_[localCol] );
+      matrix_.clearCol( domainMapper_[localCol] );
     }
 
     //! clear all entries belonging to local matrix 
@@ -835,7 +835,7 @@ protected:
     {
       const int row = rows();
       for( int i = 0; i < row; ++i )
-        matrix_.clearRow( row_[ i ] );
+        matrix_.clearRow( rangeMapper_[ i ] );
     }
 
     //! scale local matrix with a certain value 
@@ -843,7 +843,7 @@ protected:
     {
       const int row = rows();
       for( int i = 0; i < row; ++i )
-        matrix_.scaleRow( row_[ i ] , value );
+        matrix_.scaleRow( rangeMapper_[ i ] , value );
     }
 
     //! resort all global rows of matrix to have ascending numbering 
@@ -851,7 +851,7 @@ protected:
     {
       const int row = rows();
       for( int i = 0; i < row; ++i )
-        matrix_.resortRow( row_[ i ] );
+        matrix_.resortRow( rangeMapper_[ i ] );
     }
   };
 
