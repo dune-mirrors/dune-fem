@@ -392,8 +392,11 @@ private:
   protected:
     typedef typename DomainSpaceType :: GridType GridType;
 
-    typedef typename DomainSpace :: EntityType  ColumnEntityType ;
-    typedef typename RangeSpace :: EntityType   RowEntityType ;
+    /******************************************************************* 
+    *   Rows belong to the DomainSpace and Columns to the RangeSpace   *
+    *******************************************************************/    
+    typedef typename DomainSpace :: EntityType  RowEntityType ;
+    typedef typename RangeSpace :: EntityType   ColumnEntityType ;
 
     template< class MatrixObject >
     struct LocalMatrixTraits;
@@ -461,10 +464,13 @@ private:
     }
 
     //! return local matrix 
-    inline LocalMatrixType localMatrix( const ColumnEntityType &colEntity,
-                                        const RowEntityType &rowEntity ) const
+    inline LocalMatrixType localMatrix( const RowEntityType &rowEntity,
+                                        const ColumnEntityType &colEntity ) const
     {
-      return LocalMatrixType( localMatrixStack_, colEntity, rowEntity);
+      /******************************************************************* 
+      *   Rows belong to the DomainSpace and Columns to the RangeSpace   *
+      *******************************************************************/
+      return LocalMatrixType( localMatrixStack_, rowEntity, colEntity );
     }
 
     //! resize all matrices and clear them 
@@ -735,28 +741,31 @@ protected:
     LocalMatrix( const LocalMatrix & );
 
   public:
-    void init( const ColumnEntityType &colEntity, const RowEntityType &rowEntity )
+    void init( const RowEntityType &rowEntity, const ColumnEntityType &colEntity )
     {
+      /******************************************************************* 
+      *   Rows belong to the DomainSpace and Columns to the RangeSpace   *
+      *******************************************************************/
       // initialize base functions sets 
-      BaseType :: init ( colEntity, rowEntity );
+      BaseType :: init ( rowEntity, colEntity );
         
-      row_.resize( rangeSpace_.baseFunctionSet( rowEntity ).numBaseFunctions() );
-      col_.resize( domainSpace_.baseFunctionSet( colEntity ).numBaseFunctions() );
+      col_.resize( rangeSpace_.baseFunctionSet( colEntity ).numBaseFunctions() );
+      row_.resize( domainSpace_.baseFunctionSet( rowEntity ).numBaseFunctions() );
 
       typedef typename RangeSpaceType::MapperType::DofMapIteratorType RangeMapIterator;
-      const RangeMapIterator rmend = rangeSpace_.mapper().end( rowEntity );
-      for( RangeMapIterator rmit = rangeSpace_.mapper().begin( rowEntity ); rmit != rmend; ++rmit )
+      const RangeMapIterator rmend = rangeSpace_.mapper().end( colEntity );
+      for( RangeMapIterator rmit = rangeSpace_.mapper().begin( colEntity ); rmit != rmend; ++rmit )
       {
-        assert( rmit.global() == rangeSpace_.mapper().mapToGlobal( rowEntity, rmit.local() ) );
-        row_[ rmit.local() ] = rmit.global();
+        assert( rmit.global() == rangeSpace_.mapper().mapToGlobal( colEntity, rmit.local() ) );
+        col_[ rmit.local() ] = rmit.global();
       }
 
       typedef typename DomainSpaceType::MapperType::DofMapIteratorType DomainMapIterator;
-      const DomainMapIterator dmend = domainSpace_.mapper().end( colEntity );
-      for( DomainMapIterator dmit = domainSpace_.mapper().begin( colEntity ); dmit != dmend; ++dmit )
+      const DomainMapIterator dmend = domainSpace_.mapper().end( rowEntity );
+      for( DomainMapIterator dmit = domainSpace_.mapper().begin( rowEntity ); dmit != dmend; ++dmit )
       {
-        assert( dmit.global() == domainSpace_.mapper().mapToGlobal( colEntity, dmit.local() ) );
-        col_[ dmit.local() ] = dmit.global();
+        assert( dmit.global() == domainSpace_.mapper().mapToGlobal( rowEntity, dmit.local() ) );
+        row_[ dmit.local() ] = dmit.global();
       }
     }
 
