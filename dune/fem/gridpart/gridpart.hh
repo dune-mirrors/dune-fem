@@ -90,7 +90,9 @@ namespace Dune
 
     //! \brief Maximum Partition type, the index set provides indices for
     static const PartitionIteratorType indexSetPartitionType
-      = Traits :: indexSetPartitionType;
+      = Traits::indexSetPartitionType;
+    static const InterfaceType indexSetInterfaceType
+      = Traits::indexSetInterfaceType;
 
     //! \brief type of IntersectionIterator
     typedef typename Traits::IntersectionIteratorType IntersectionIteratorType;
@@ -467,6 +469,7 @@ namespace Dune
     typedef WrappedLevelIndexSet<GridType> IndexSetType;
 
     static const PartitionIteratorType indexSetPartitionType = All_Partition;
+    static const InterfaceType indexSetInterfaceType = All_All_Interface;
 
       /** \brief The appropriate intersection iterator */
     typedef typename GridType::template Codim<0>::Entity::LevelIntersectionIterator
@@ -622,6 +625,7 @@ namespace Dune
     typedef WrappedLeafIndexSet<GridType> IndexSetType;
 
     static const PartitionIteratorType indexSetPartitionType = All_Partition;
+    static const InterfaceType indexSetInterfaceType = All_All_Interface;
 
     /** \brief The appropriate intersection iterator */
     typedef typename GridType::template Codim<0>::Entity::LeafIntersectionIterator
@@ -791,6 +795,7 @@ namespace Dune
     typedef WrappedHierarchicIndexSet<GridType> IndexSetType;
 
     static const PartitionIteratorType indexSetPartitionType = All_Partition;
+    static const InterfaceType indexSetInterfaceType = All_All_Interface;
 
       /** \brief The appropriate intersection */
     typedef typename GridType::Traits::
