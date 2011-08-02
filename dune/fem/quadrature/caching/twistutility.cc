@@ -31,21 +31,6 @@ namespace Dune
   }
 
   template<>
-  int TwistUtility< UGGrid< 2 > >::twistInSelf ( const LeafIntersection &it ) const
-  {
-    // for simplex twist is 0 
-    // for cube twist is 1 for side 0 and 3 
-    // for 1 and 2 is 0 
-    if( it.inside()->type().isCube() )
-    {
-      const int face = it.indexInInside();
-      return ((face == 1) || (face == 2) ? 0 : 1);
-    }
-    else
-      return 0;
-  }
-
-  template<>
   int TwistUtility< UGGrid< 2 > >::twistInSelf ( const GridType &grid, const LevelIntersection &it )
   {
     // for simplex twist is 0 
@@ -61,23 +46,6 @@ namespace Dune
   }
 
   template<>
-  int TwistUtility< UGGrid< 2 > >::twistInSelf ( const LevelIntersection &it ) const
-  {
-    // for simplex twist is 0 
-    // for cube twist is 1 for side 0 and 3 
-    // for 1 and 2 is 0 
-    if( it.inside()->type().isCube() )
-    {
-      const int face = it.indexInInside();
-      return ((face == 1) || (face == 2) ? 0 : 1);
-    }
-    else
-      return 0;
-  }
-
-
-
-  template<>
   int TwistUtility< UGGrid< 2 > >::twistInNeighbor ( const GridType &grid, const LeafIntersection &it )
   {
     assert( it.neighbor() );
@@ -91,33 +59,7 @@ namespace Dune
   }
 
   template<>
-  int TwistUtility< UGGrid< 2 > >::twistInNeighbor ( const LeafIntersection &it ) const
-  {
-    assert( it.neighbor() );
-    if( it.outside()->type().isCube() )
-    {
-      const int face = it.indexInOutside();
-      return ((face == 1) || (face == 2) ? 1 : 0);
-    }
-    else
-      return 1;
-  }
-
-  template<>
   int TwistUtility< UGGrid< 2 > >::twistInNeighbor ( const GridType &grid, const LevelIntersection &it )
-  {
-    assert( it.neighbor() );
-    if( it.outside()->type().isCube() )
-    {
-      const int face = it.indexInOutside();
-      return ((face == 1) || (face == 2) ? 1 : 0);
-    }
-    else
-      return 1;
-  }
-
-  template<>
-  int TwistUtility< UGGrid< 2 > >::twistInNeighbor ( const LevelIntersection &it ) const
   {
     assert( it.neighbor() );
     if( it.outside()->type().isCube() )
@@ -288,12 +230,6 @@ namespace Dune
   }
 
   template<>
-  int TwistUtility< UGGrid< 3 > >::twistInSelf ( const LeafIntersection &it ) const
-  {
-    DUNE_THROW( NotImplemented, "not implemented because grid is missing!" );
-  }
-
-  template<>
   int TwistUtility< UGGrid< 3 > >::twistInSelf ( const GridType &grid, const LevelIntersection &it )
   {
     if( it.inside()->type().isSimplex() )
@@ -307,14 +243,6 @@ namespace Dune
       return UG3::CubeTwists::twistInSelf( it.indexInInside() );
     }
   }
-
-  template<>
-  int TwistUtility< UGGrid< 3 > >::twistInSelf ( const LevelIntersection &it ) const
-  {
-    DUNE_THROW( NotImplemented, "not implemented because grid is missing!" );
-  }
-
-
   
   template<>
   int TwistUtility< UGGrid< 3 > >::twistInNeighbor ( const GridType &grid, const LeafIntersection &it )
@@ -338,12 +266,6 @@ namespace Dune
   }
 
   template<>
-  int TwistUtility< UGGrid< 3 > >::twistInNeighbor ( const LeafIntersection &it ) const
-  {
-    DUNE_THROW( NotImplemented, "not implemented because grid is missing!" );
-  }
-
-  template<>
   int TwistUtility< UGGrid< 3 > >::twistInNeighbor ( const GridType &grid, const LevelIntersection &it )
   {
     assert( it.neighbor() );
@@ -362,12 +284,6 @@ namespace Dune
       //return UG3::CubeTwists::twistInNeighbor( it.indexInOutside() );
       return UG3::CubeTwists::twistInNeighbor( refElem, it.geometryInOutside(), it.indexInOutside() );
     }
-  }
-
-  template<>
-  int TwistUtility< UGGrid< 3 > >::twistInNeighbor ( const LevelIntersection &it ) const
-  {
-    DUNE_THROW( NotImplemented, "not implemented because grid is missing!" );
   }
 #endif // #if HAVE_UG
 
