@@ -79,7 +79,7 @@ public:
   {
     static T init () 
     { 
-      return std::numeric_limits< T >::min() ;
+      return std::numeric_limits< T >::max() ;
     }
   };
 
@@ -88,7 +88,7 @@ public:
   {
     static T init () 
     {
-      return std::numeric_limits< T >::max() ;
+      return std::numeric_limits< T >::min() ;
     }
   };
 
