@@ -11,10 +11,11 @@
 #include <dune/fem/space/common/allgeomtypes.hh>
 #include <dune/fem/gridpart/adaptiveleafgridpart.hh>
 #include <dune/fem/space/common/dofmanager.hh>
+#include <dune/common/binaryfunctions.hh>
 
 namespace Dune {
 
-template <class GridPartImp>
+template <class GridPartImp, class MinMax = Min<double> >
 class GridWidthProvider;
 
 //! utility functions for calculating the maximum grid width 
@@ -70,6 +71,27 @@ protected:
   }
 
 public:  
+  template <class MinMax>
+  struct MinMaxInit ;
+
+  template < class T > 
+  struct MinMaxInit< Min< T > > 
+  {
+    static T init () 
+    { 
+      return std::numeric_limits< T >::min() ;
+    }
+  };
+
+  template < class T > 
+  struct MinMaxInit< Max< T > > 
+  {
+    static T init () 
+    {
+      return std::numeric_limits< T >::max() ;
+    }
+  };
+
   /** \brief calculate minimal grid width as 
       \f$h_{E} :=\frac{|E|}{h^{E}_{m}}\f$ with \f$h^{E}_{m} := \min_{e \in \mathcal{I}_{E}} |e| \f$.
 
@@ -77,7 +99,7 @@ public:
       \param communicate do global communication to get minimal width for all processes
       (default = true)
   */
-  template <class GridPartType> 
+  template <class GridPartType, class MinMax = Min<double> > 
   static inline 
   double calcGridWidth (const GridPartType & gridPart, 
                         const bool communicate = true )
@@ -95,7 +117,9 @@ public:
     FaceGeometryInformationType faceGeoInfo( geoInfo.geomTypes(1) );
 
     // initialize with big value 
-    double width = std::numeric_limits<double>::max() ;
+    double width = MinMaxInit< MinMax > :: init() ;
+
+    MinMax minmax;
 
     // unstructured case 
     if( Capabilities::IsUnstructured<GridType>::v )
@@ -104,11 +128,11 @@ public:
       for(IteratorType it = gridPart.template begin<0> (); 
           it != endit; ++it )
       {
-        width = std::min( maxEdgeWidth(gridPart, 
-                                       *it, 
-                                       geoInfo,
-                                       faceGeoInfo ),
-                          width );
+        width = minmax( maxEdgeWidth(gridPart, 
+                                     *it, 
+                                     geoInfo,
+                                     faceGeoInfo ),
+                        width );
       }
     }
     else 
@@ -117,27 +141,30 @@ public:
       IteratorType it = gridPart.template begin<0> (); 
       if( it != gridPart.template end<0> () )
       {
-        width = std::min( maxEdgeWidth(gridPart, 
-                                       *it, 
-                                       geoInfo,
-                                       faceGeoInfo ),
-                          width );
+        width = minmax( maxEdgeWidth(gridPart, 
+                                     *it, 
+                                     geoInfo,
+                                     faceGeoInfo ),
+                        width );
       }
     }
 
     // calculate global minimum 
     if( communicate )
-      width = gridPart.grid().comm().min( width );
+    {
+      double w = width ;
+      gridPart.grid().comm().template allreduce<MinMax> ( &w, &width, 1 );
+    }
 
     return width;
   }   
 };
 
 //! utility functions for calculating the maximum grid width 
-template <class GridType>
+template <class GridType, class MinMax >
 class GridWidthProvider 
 {
-  typedef GridWidthProvider < GridType > ThisType;
+  typedef GridWidthProvider < GridType, MinMax > ThisType;
 public:
   //! type of singleton provider 
   typedef SingletonList< const GridType* , ThisType > ProviderType;
@@ -187,7 +214,7 @@ protected:
     if( dm_.sequence() != sequence_ )
     {
       // calculate grid width 
-      width_ = GridWidth :: calcGridWidth( gridPart_ , true );
+      width_ = GridWidth :: template calcGridWidth< MinMax > ( gridPart_ , true );
 
       assert( width_ > 0 );
       sequence_ = dm_.sequence();
