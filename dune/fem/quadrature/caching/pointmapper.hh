@@ -14,7 +14,7 @@ namespace Dune
   struct QuadratureKey  
   {
     QuadratureKey ( const GeometryType &geoType, const size_t id )
-    : id_( (topologyId( geoType ) << 16) + id )
+    : id_( ((topologyId( geoType ) >> 1) << 16) + id )
     {
       assert( id < (1 << 16) );
     }
@@ -27,6 +27,11 @@ namespace Dune
     bool operator== ( const QuadratureKey &other ) const
     {
       return (id_ == other.id_);
+    }
+
+    friend std::ostream &operator<< ( std::ostream &out, const QuadratureKey &key )
+    {
+      return out << "(topologyId " << ((key.id_ >> 16) << 1) << ", quadId " << (key.id_ & ((1u << 16)-1)) << ")";
     }
 
   protected:
