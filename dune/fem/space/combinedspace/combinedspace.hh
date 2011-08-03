@@ -22,7 +22,14 @@
 
 namespace Dune
 {
-  
+
+  template< class FunctionSpaceImp,
+            class GridPartImp,
+            int polOrder,
+            template< class > class BaseFunctionStorageImp >
+  class LagrangeDiscreteFunctionSpace;
+
+
   namespace CombinedSpaceHelper
   {
 
@@ -80,6 +87,29 @@ namespace Dune
         return space.blockMapper();
       }
 #endif
+    };
+
+    template <class DFSpace>
+    struct LagrangePointSetExporter
+    {
+      LagrangePointSetExporter( const DFSpace& spc ) {}
+    };
+
+    template <class FunctionSpaceImp, class GridPartImp, int polOrder, template <class> class BaseFunctionStorageImp >
+    struct LagrangePointSetExporter<
+        LagrangeDiscreteFunctionSpace< FunctionSpaceImp, GridPartImp, polOrder, BaseFunctionStorageImp > >
+    {
+      typedef LagrangeDiscreteFunctionSpace< FunctionSpaceImp, GridPartImp, polOrder, BaseFunctionStorageImp > LagrangeSpaceType;
+      typedef typename LagrangeSpaceType :: LagrangePointSetType LagrangePointSetType;
+
+      const LagrangeSpaceType& lagrangeSpace_;
+
+      LagrangePointSetExporter( const LagrangeSpaceType& spc ) : lagrangeSpace_( spc ) {}
+      template <class Entity>
+      const LagrangePointSetType& lagrangePointSet( const Entity& entity ) const
+      {
+        return lagrangeSpace_.lagrangePointSet( entity );
+      }
     };
 
   }
@@ -199,7 +229,8 @@ namespace Dune
   template< class DiscreteFunctionSpaceImp, int N>
   class CombinedSpace<DiscreteFunctionSpaceImp, N, VariableBased>
   : public DiscreteFunctionSpaceDefault
-    < CombinedSpaceTraits< DiscreteFunctionSpaceImp, N, VariableBased > > 
+        < CombinedSpaceTraits< DiscreteFunctionSpaceImp, N, VariableBased > >,
+    public CombinedSpaceHelper::LagrangePointSetExporter< DiscreteFunctionSpaceImp > 
   {
     static const DofStoragePolicy policy = VariableBased ;
   public:
@@ -208,6 +239,8 @@ namespace Dune
     
   private:
     typedef DiscreteFunctionSpaceDefault< Traits > BaseType;
+
+    typedef CombinedSpaceHelper::LagrangePointSetExporter< DiscreteFunctionSpaceImp > LagrangePointSetExporterType;
 
   public:
     // polynomial Order is the same as for the single space 
@@ -275,6 +308,7 @@ namespace Dune
         const InterfaceType commInterface = defaultInterface ,
         const CommunicationDirection commDirection = defaultDirection )
     : BaseType( gridpart, commInterface, commDirection  ),
+      LagrangePointSetExporterType( containedSpace_ ),
       containedSpace_( gridpart ),
       mapper_( containedSpace_.mapper() ),
       blockMapper_( Traits :: BlockTraits :: containedBlockMapper( containedSpace_ ) ),
