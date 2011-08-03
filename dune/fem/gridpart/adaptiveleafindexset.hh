@@ -262,7 +262,7 @@ namespace Dune
 
     CodimIndexSetType& codimLeafSet( const int codim ) const 
     {   
-      assert( codimLeafSet_ );
+      assert( codimLeafSet_[ codim ] );
       return *codimLeafSet_[ codim ];
     }
 
