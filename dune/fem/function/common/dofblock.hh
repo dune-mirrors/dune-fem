@@ -20,7 +20,7 @@ namespace Dune
    *  called "dof" (and it's constant counterpart) that provides access to the
    *  DoFs via an index.
    *
-   *  Use of the DofBlockProxy is show in VectorDiscreteFunction.
+   *  Use of the DofBlockProxy is shown in VectorDiscreteFunction.
    *
    *  \param  DiscreteFunction  type of the discrete function (for constant
    *                            DoF blocks, use the const version here)
@@ -36,6 +36,9 @@ namespace Dune
 
     friend class Envelope< ThisType >;
 
+    typedef DofBlockProxy< const DiscreteFunction, const Dof, Size > ConstDofBlockProxy;
+    typedef DofBlockProxy< typename remove_const< DiscreteFunction >::type, typename remove_const< Dof >::type, Size > NonConstDofBlockProxy;
+
   public:
     typedef DiscreteFunction DiscreteFunctionType;
 
@@ -45,47 +48,59 @@ namespace Dune
     
     typedef unsigned int size_type;
 
-    typedef std :: pair< DiscreteFunctionType*, size_type > KeyType;
+    typedef std::pair< DiscreteFunctionType *, size_type > KeyType;
 
   protected:
-    DiscreteFunctionType &discreteFunction_;
-    const size_type first_;
-
-  protected:
-    inline DofBlockProxy ( const KeyType &key )
+    DofBlockProxy ( const KeyType &key )
     : discreteFunction_( *(key.first) ),
       first_( size * key.second )
     {}
 
-    inline DofBlockProxy ( const DofBlockProxy &other )
+    DofBlockProxy ( const ConstDofBlockProxy &other )
+    : discreteFunction_( other.discreteFunction_ ),
+      first_( other.first_ )
+    {}
+
+    DofBlockProxy ( const NonConstDofBlockProxy &other )
     : discreteFunction_( other.discreteFunction_ ),
       first_( other.first_ )
     {}
 
   public:
-    inline DofBlockProxy &operator= ( const DofBlockProxy &other )
+    const ThisType &operator= ( const ConstDofBlockProxy &other )
     {
       for( size_type i = 0; i < size; ++i )
         (*this)[ i ] = other[ i ];
       return *this;
     }
-    
-    inline const DofType &operator[] ( size_type index ) const
+
+    const ThisType &operator= ( const NonConstDofBlockProxy &other )
+    {
+      for( size_type i = 0; i < size; ++i )
+        (*this)[ i ] = other[ i ];
+      return *this;
+    }
+
+    const DofType &operator[] ( size_type index ) const
     {
       return discreteFunction_.dof( first_ + index );
     }
     
-    inline DofType &operator[] ( size_type index )
+    DofType &operator[] ( size_type index )
     {
       return discreteFunction_.dof( first_ + index );
     }
    
-    inline size_type dim () const
+    size_type dim () const
     {
       return size;
     }
+
+  protected:
+    DiscreteFunctionType &discreteFunction_;
+    const size_type first_;
   };
 
-}
+} // namespace Dune
 
-#endif
+#endif // #ifndef DUNE_FEM_DOFBLOCK_HH
