@@ -23,50 +23,37 @@ namespace Dune
        such as Cartesian grids. 
   */
   template< class Grid > 
-  class TwistFreeTwistUtility
+  struct TwistFreeTwistUtility
   {
-  public:
     typedef Grid GridType;
 
     //! \brief return 0 for inner face 
-    template <class IntersectionIterator> 
-    static inline int twistInSelf(const GridType &, const IntersectionIterator&)
+    template< class Intersection >
+    static int twistInSelf ( const GridType &, const Intersection & )
     {
       return 0;
     }
     
     //! \brief return 0 for outer face 
-    template <class IntersectionIterator> 
-    static inline int twistInNeighbor(const GridType &, const IntersectionIterator&) 
+    template< class Intersection >
+    static int twistInNeighbor ( const GridType &, const Intersection & )
     {
       return 0;
     }
 
     /** \brief return geometry type of inside or outside entity */
-    template <class Intersection>  
-    static inline GeometryType
-    elementGeometry(const Intersection& intersection, 
-                    const bool inside) 
+    template< class Intersection >
+    static GeometryType elementGeometry ( const Intersection &intersection, const bool inside )
     {
-      if( Capabilities::IsUnstructured<GridType>::v ) 
-      {
-        return (inside) ? intersection.inside()->type() :  
-                          intersection.outside()->type();  
-      }
-      else 
-      {
-#ifndef NDEBUG
-        GeometryType geoType( GenericGeometry::CubeTopology< GridType :: dimension >::type::id, 
-                              GridType :: dimension );
-        GeometryType realType = (inside) ? intersection.inside()->type() :
-                                           intersection.outside()->type();
-        assert ( realType == geoType );
-#endif
-        return GeometryType( GenericGeometry::CubeTopology< GridType :: dimension >::type::id, 
-                             GridType :: dimension );
-      }
+      typedef Capabilities::hasSingleGeometryType< GridType > hasSingleGeometryType;
+      if( hasSingleGeometryType::v )
+        return GeometryType( hasSingleGeometryType::topologyId, GridType::dimension );
+      else
+        return (inside ? intersection.inside()->type() : intersection.outside()->type());
     }
   };
+
+
 
   /** \brief Utility to get twist from IntersectionIterator, 
       if provided by grid (i.e. AlbertaGrid, ALUGrid)
