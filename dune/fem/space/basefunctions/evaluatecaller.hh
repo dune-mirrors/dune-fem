@@ -4,6 +4,8 @@
 #include <cstdlib>
 #include <vector>
 
+#include <dune/common/exceptions.hh>
+
 #ifdef USE_BASEFUNCTIONSET_CODEGEN
 #define CODEGEN_INCLUDEMAXNUMS 
 // include max number definitions 

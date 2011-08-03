@@ -8,6 +8,7 @@
 #include <sstream>
 #include <vector>
 #include <set>
+#include <map>
 
 #include <dune/common/exceptions.hh>
 #include <dune/fem/io/io.hh>
