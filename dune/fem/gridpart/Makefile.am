@@ -7,8 +7,6 @@ gridpart_HEADERS = adaptiveleafgridpart.hh \
                    filteredgrid.hh \
                    gridpart.hh \
                    gridpartview.hh \
-                   idbasedleafgridpart.hh \
-                   idbasedcodimindexset.hh \
                    defaultindexsets.hh \
                    persistentcontainer.hh
 

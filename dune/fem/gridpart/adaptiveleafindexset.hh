@@ -3,9 +3,10 @@
 
 //- local includes 
 #include <dune/common/forloop.hh>
+
+#include <dune/fem/version.hh>
 #include <dune/fem/gridpart/dunefemindexsets.hh>
 #include <dune/fem/gridpart/codimindexset.hh>
-#include <dune/fem/gridpart/idbasedcodimindexset.hh>
 
 namespace Dune
 {
@@ -1320,7 +1321,7 @@ namespace Dune
     // intersection codimensions (this is usually dimension + 1 )
     enum { intersectionCodimension = -1 };
     // type of codimension index set  
-    typedef IdBasedCodimIndexSet< GridType >  CodimIndexSetType; 
+    typedef CodimIndexSet< GridType >  CodimIndexSetType; 
   };
 
   /** \class DGAdaptiveLeafIndexSet
@@ -1341,6 +1342,7 @@ namespace Dune
   public:
     typedef typename BaseType :: GridPartType GridPartType;
     //! Constructor
+    DUNE_VERSION_DEPRECATED(1,3,remove) 
     IdBasedLeafIndexSet (const GridPartType & gridPart) 
       : BaseType(gridPart) 
     {
