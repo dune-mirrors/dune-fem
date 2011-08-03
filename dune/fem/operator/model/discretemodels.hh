@@ -434,7 +434,7 @@ namespace Dune {
       < AdvDiffTraits2< Model , NumFlux , polOrd , passId1 , passId2 > 
         , passId1 , passId2 >
   {
-#if DUNE_VERSION_NEWER(DUNE_COMMON,2,1,0)
+#if DUNE_VERSION_NEWER_REV(DUNE_COMMON,2,1,0)
     integral_constant<int, passId1 > uVar;
     integral_constant<int, passId2 > vVar;
 #else
@@ -923,7 +923,7 @@ namespace Dune {
     public DGDiscreteModelDefault
       < LimiterTraits1< Model , polOrd , passId1 > , passId1 >
   {
-#if DUNE_VERSION_NEWER(DUNE_COMMON,2,1,0)
+#if DUNE_VERSION_NEWER_REV(DUNE_COMMON,2,1,0)
     integral_constant<int, passId1 > uVar;
 #else
     Int2Type< passId1 > uVar;
