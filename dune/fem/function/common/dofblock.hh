@@ -37,7 +37,7 @@ namespace Dune
     friend class Envelope< ThisType >;
 
     typedef DofBlockProxy< const DiscreteFunction, const Dof, Size > ConstDofBlockProxy;
-    typedef DofBlockProxy< typename remove_const< DiscreteFunction >::type, typename remove_const< Dof >::type, Size > NonConstDofBlockProxy;
+    typedef DofBlockProxy< typename std::remove_const< DiscreteFunction >::type, typename std::remove_const< Dof >::type, Size > NonConstDofBlockProxy;
 
   public:
     typedef DiscreteFunction DiscreteFunctionType;
