@@ -109,7 +109,7 @@ namespace Dune
    
   protected:
     template< class Function >
-    struct WeightedFunctionMultiplication;
+    struct WeightedFunctionMultiplicator;
     
     typedef typename WeightFunctionType::LocalFunctionType LocalWeightFunctionType;
     typedef typename WeightFunctionType::RangeType WeightType;
@@ -307,7 +307,7 @@ namespace Dune
   template< class WeightFunction, class OrderCalculator >
   template< class DiscreteFunctionType >
   inline typename DiscreteFunctionType::RangeFieldType
-  WeightedL2Norm< WeightFunction, OrderCalculator >
+  WeightedLPNorm< WeightFunction, OrderCalculator >
     ::norm ( const DiscreteFunctionType &u ) const
   {
     typedef typename DiscreteFunctionType::RangeFieldType RangeFieldType;
@@ -338,7 +338,7 @@ namespace Dune
   template< class WeightFunction,class OrderCalculator >
   template< class UDiscreteFunctionType, class VDiscreteFunctionType >
   inline typename UDiscreteFunctionType::RangeFieldType
-  WeightedL2Norm< WeightFunction, OrderCalculator >
+  WeightedLPNorm< WeightFunction, OrderCalculator >
     ::distance ( const UDiscreteFunctionType &u, const VDiscreteFunctionType &v ) const
   {
     typedef typename UDiscreteFunctionType::RangeFieldType RangeFieldType;
@@ -367,7 +367,7 @@ namespace Dune
       VLocalFunctionType vlocal = v.localFunction( entity );
      
       LocalDistanceType dist( ulocal, vlocal );
-      WeightedFunctionMultiplication< LocalDistanceType > dist2( wflocal, dist );
+      WeightedFunctionMultiplicator< LocalDistanceType > dist2( wflocal, dist );
       
       integrator.integrateAdd( entity, dist2, sum );
     }
@@ -378,16 +378,16 @@ namespace Dune
   
   template< class WeightFunction, class OrderCalculator>
   template< class Function >
-  struct WeightedL2Norm< WeightFunction, OrderCalculator>::WeightedFunctionMultiplicator
+  struct WeightedLPNorm< WeightFunction, OrderCalculator>::WeightedFunctionMultiplicator
   {
     typedef Function FunctionType;
 
     typedef typename FunctionType::RangeFieldType RangeFieldType;
     typedef FieldVector< RangeFieldType, 1 > RangeType;
 
-    WeightedFunctionSquare ( const LocalWeightFunctionType &weightFunction,
-                             const FunctionType &function,
-                             double p )
+    WeightedFunctionMultiplicator ( const LocalWeightFunctionType &weightFunction,
+                                    const FunctionType &function,
+                                    double p )
     : weightFunction_( weightFunction ),
       function_( function ),
       p_(p)
