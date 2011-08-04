@@ -22,6 +22,8 @@
 namespace Dune
 {
   
+  namespace Fem { 
+
   //- Forward declarations
   template <class DiscreteFunctionSpaceImp>
   class AdaptiveDiscreteFunction;
@@ -251,5 +253,10 @@ namespace Dune
     friend class SubFunctionStorage < ThisType >;
   }; // end class AdaptiveDiscreteFunction
  
+  } // end namespace Fem 
+
+  // for convenience, to be removed in the future
+  using Fem :: AdaptiveDiscreteFunction ;
+
 } // end namespace Dune
 #endif // #ifndef DUNE_ADAPTIVEFUNCTION_HH

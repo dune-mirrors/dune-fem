@@ -1,6 +1,8 @@
 namespace Dune
 {
   
+  namespace Fem { 
+
   template <class DiscreteFunctionSpaceImp>
   AdaptiveFunctionImplementation<DiscreteFunctionSpaceImp>
     :: AdaptiveFunctionImplementation ( const std :: string &name,
@@ -152,4 +154,6 @@ namespace Dune
       memObject_->enableDofCompression();
   }
   
+} // end namespace Fem 
+
 } // end namespace Dune

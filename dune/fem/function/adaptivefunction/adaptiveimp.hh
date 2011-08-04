@@ -14,6 +14,8 @@
 
 namespace Dune {
 
+  namespace Fem { 
+
   //- Forward declarations
   template <class DiscreteFunctionSpaceImp>
   class AdaptiveDiscreteFunction;
@@ -107,7 +109,11 @@ namespace Dune {
     
     inline DofBlockPtrType block ( unsigned int index )
     {
-      assert( blockSize * (index + 1) <= (unsigned int)size() );
+#ifndef NDEBUG
+      const size_t s = size();
+      const size_t bs = blockSize ;
+      assert( bs * (index + 1) <= (unsigned int)s );
+#endif
       return DofBlockPtrType( leakPointer() + (blockSize * index) );
     } 
     
@@ -271,6 +277,8 @@ namespace Dune {
       return size;
     }
   };
+
+} // end namespace Fem 
 
 } // end namespace Dune
 
