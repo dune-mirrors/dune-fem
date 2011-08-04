@@ -13,7 +13,7 @@ namespace Dune
 {
 
 class BlasVector
-: public VectorDefault< double, BlasVector >
+: public Fem :: VectorDefault< double, BlasVector >
 {
   bool owner_;
 
