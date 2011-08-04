@@ -102,7 +102,9 @@ public:
   template <class GridPartType, class MinMax = Min<double> > 
   static inline 
   double calcGridWidth (const GridPartType & gridPart, 
-                        const bool communicate = true )
+                        const bool communicate = true,
+                        const MinMax& minmax = MinMax () 
+                       )
   {     
     typedef typename GridPartType :: GridType GridType;
     typedef typename GridPartType :: template Codim<0> :: IteratorType IteratorType; 
@@ -118,8 +120,6 @@ public:
 
     // initialize with big value 
     double width = MinMaxInit< MinMax > :: init() ;
-
-    MinMax minmax;
 
     // unstructured case 
     if( Capabilities::IsUnstructured<GridType>::v )
@@ -214,7 +214,7 @@ protected:
     if( dm_.sequence() != sequence_ )
     {
       // calculate grid width 
-      width_ = GridWidth :: template calcGridWidth< MinMax > ( gridPart_ , true );
+      width_ = GridWidth :: calcGridWidth ( gridPart_ , true );
 
       assert( width_ > 0 );
       sequence_ = dm_.sequence();
