@@ -15,12 +15,13 @@ libsolver_la_LIBADD = ode/libodesolver.la
 # endif
 
 solverdir =  $(includedir)/dune/fem/solver
-solver_HEADERS = inverseoperators.hh \
+solver_HEADERS = diagonalpreconditioner.hh \
+                 inverseoperators.hh \
                  istlsolver.hh \
                  odesolver.hh \
                  oemsolver.hh \
                  multistep.hh \
-		 newtoninverseoperator.hh \
+                 newtoninverseoperator.hh \
                  pardg.hh \
                  rungekutta.hh \
                  timeprovider.hh \
