@@ -340,7 +340,7 @@ namespace Dune
     enum { dimension = dim };
 
     //! polynomial order of corresponding base functions
-    enum { maxPolynomialOrder = maxPolOrder };
+    static const int maxPolynomialOrder = maxPolOrder ;
 
     //! type of points
     typedef FieldVector< FieldType, dimension > CoordinateType;
@@ -385,7 +385,7 @@ namespace Dune
     LagrangePointListImplementation ( const GeometryType &geo, const int order, const size_t id )
     : BaseType( id )
     {
-      ForLoop< CreateLagrangePoint, 1, maxPolOrder > :: apply( *this, order );
+      ForLoop< CreateLagrangePoint, 1, maxPolynomialOrder > :: apply( *this, order );
 
       // assert this after lagrangePointImpl has been created since 
       // this->geometry() uses this class
