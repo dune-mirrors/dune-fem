@@ -1,6 +1,8 @@
 #ifndef DUNE_FEM_PQLAGRANGESPACE_PROBLEM_HH
 #define DUNE_FEM_PQLAGRANGESPACE_PROBLEM_HH
 
+#include <dune/fem/function/common/function.hh>
+
 namespace Dune
 {
 

@@ -21,6 +21,8 @@
 #include <dune/fem/misc/l2error.hh>
 #include "massoperator.hh"
 
+#include <dune/fem/misc/suite.hh>
+
 namespace Dune
 {
 

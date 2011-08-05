@@ -93,7 +93,7 @@ public:
   typedef Tensor< FunctionSpaceType >                                TensorType;
 
   //---- Adapter for exact solution ------------------------------------------
-  typedef DiscreteFunctionAdapter< ExactSolutionType, GridPartType > GridExactSolutionType;
+  typedef GridFunctionAdapter< ExactSolutionType, GridPartType > GridExactSolutionType;
 
   //---- DiscreteFunctionSpace -----------------------------------------------
   //! define the discrete function space our unkown belongs to

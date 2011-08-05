@@ -6,10 +6,14 @@
 #include <dune/common/timer.hh>
 
 #include <dune/fem/storage/array.hh>
-#include <dune/fem/quadrature/quadrature.hh>
+#include <dune/fem/quadrature/cachingquadrature.hh>
 #include <dune/fem/function/common/scalarproducts.hh>
 #include <dune/fem/operator/common/operator.hh>
 #include <dune/fem/operator/2order/lagrangematrixsetup.hh>
+
+#include <dune/fem/solver/oemsolver.hh>
+
+#include "problem.hh"
 
 namespace Dune
 {
