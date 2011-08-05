@@ -139,6 +139,8 @@ namespace Dune
   public:
     typedef typename BaseType::DomainFunctionType DomainFunctionType;
     typedef typename BaseType::RangeFunctionType RangeFunctionType;
+
+    typedef DomainFunctionType  DestinationType;
     
     //??? sollten hier auch Domain/Range Function stehen?
     typedef Fem::Operator< DiscreteFunction, DiscreteFunction > OperatorType;
