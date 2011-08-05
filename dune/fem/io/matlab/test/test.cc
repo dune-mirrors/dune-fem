@@ -16,9 +16,9 @@ int main()
   typedef Dune::GridSelector::GridType GridType;
   typedef LeafGridPart< GridType > GridPartType; 
   // test writing a vector and a matrix to 1 file
-  MatlabOutStream s( "test.data" );
+  Fem::MatlabOutStream s( "test.data" );
   
-  DynamicVector< double > v( 3 );
+  Fem :: DynamicVector< double > v( 3 );
   for( unsigned int i = 0; i < 3; ++i )
     v[ i ] = i * (i+1);
   std :: cout << v << std :: endl;
@@ -36,11 +36,11 @@ int main()
   // test writing out a grid
   GridType &grid = TestGrid :: grid();
   GridPartType gridPart( grid );
-  MatlabOutStream sg( "test.grid" );
+  Fem::MatlabOutStream sg( "test.grid" );
   sg << gridPart;
 
 
-  MatlabInStream in( "test.vector" );
+  Fem::MatlabInStream in( "test.vector" );
   in >> v;
 
 }

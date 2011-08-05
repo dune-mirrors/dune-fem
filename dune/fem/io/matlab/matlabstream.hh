@@ -11,6 +11,8 @@
 namespace Dune
 {
 
+  namespace Fem {
+
   class MatlabOutStream
   {
   protected:
@@ -254,6 +256,8 @@ namespace Dune
     return in;
   }
 
-}
+  } // end namespace Fem 
+
+} // end namespace Dune 
 
 #endif
