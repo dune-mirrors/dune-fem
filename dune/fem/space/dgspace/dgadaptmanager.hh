@@ -224,6 +224,30 @@ public:
   }
 };
 
+/** \brief specialization of RestrictProlongDefault for
+    LagrangeDiscontinuousGalerkinSpace.
+*/
+template <class DiscFunc,
+          class FunctionSpaceImp, 
+          class GridPartImp, 
+          int polOrd, 
+          template <class> class StorageImp> 
+class RestrictProlongDefaultImplementation<DiscFunc,
+ LagrangeDiscontinuousGalerkinSpace<FunctionSpaceImp, GridPartImp, polOrd,StorageImp> > 
+: public RestrictProlongDiscontinuousSpace<DiscFunc,polOrd >
+{
+public:
+  //! type of discrete function 
+  typedef DiscFunc DiscreteFunctionType;
+  //! type of base class  
+  typedef RestrictProlongDiscontinuousSpace<DiscreteFunctionType,polOrd> BaseType;
+public:  
+  //! Constructor
+  RestrictProlongDefaultImplementation( DiscreteFunctionType & df ) : 
+    BaseType(df) 
+  {
+  }
+};
 ///@}
 } // end namespace Dune 
 #endif
