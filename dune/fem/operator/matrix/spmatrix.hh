@@ -56,7 +56,7 @@ public:
   enum { defaultCol = -1 };
   enum { firstCol = defaultCol + 1 };
 
-private:
+protected:
   T* values_ ;      //! data values (nz_ * dim_[0] elements)
   int* col_;        //! row_ptr (dim_[0]+1 elements)
   int* nonZeros_;   //! row_ptr (dim_[0]+1 elements)
@@ -351,10 +351,12 @@ private:
 };
 
 
+  //! identifier for exchange type of SparseRowMatrixObject when necessary
+  struct OverloadedSparseRowMatrix {};
+
 
   // SparseRowMatrixObject
   // ---------------------
-
   template <class DomainSpace, class RangeSpace, class TraitsImp>
   class SparseRowMatrixObject;
 
@@ -404,8 +406,23 @@ private:
     template< class MatrixObject >
     class LocalMatrix;
     
+    template <class Traits, bool definesNewMatrix >
+    struct MatrixImpl
+    {
+      // type of matrix implementation 
+      typedef SparseRowMatrix< double > MatrixType;
+    };
+
+    // if Traits are derived from OverloadedSparseRowMatrix then we exchange the MatrixImpl
+    template <class Traits>
+    struct MatrixImpl<Traits, true>
+    {
+      typedef typename Traits :: MatrixType MatrixType;
+    };
+
   public:  
-    typedef SparseRowMatrix< double > MatrixType;
+    // extract matrix impl depending on traits 
+    typedef typename MatrixImpl< Traits, Conversion< Traits, OverloadedSparseRowMatrix> :: exists > :: MatrixType  MatrixType;
     typedef MatrixType PreconditionMatrixType;
 
   public:
