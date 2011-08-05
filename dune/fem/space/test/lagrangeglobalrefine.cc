@@ -90,7 +90,7 @@ typedef Dune::AdaptiveDiscreteFunction< DiscreteFunctionSpaceType > DiscreteFunc
 
 typedef ExactSolution< FunctionSpaceType > ExactSolutionType;
 
-typedef Dune::DiscreteFunctionAdapter< ExactSolutionType, GridPartType > GridExactSolutionType;
+typedef Dune::GridFunctionAdapter< ExactSolutionType, GridPartType > GridExactSolutionType;
 
 
 
