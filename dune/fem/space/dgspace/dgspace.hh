@@ -319,6 +319,7 @@ namespace Dune
 
     typedef typename GridPartType::IndexSetType IndexSetType;
     typedef typename GridPartType::template Codim<codimension>::IteratorType IteratorType;
+    typedef typename IteratorType :: Entity  EntityType ;
 
     typedef typename FunctionSpaceType::RangeFieldType RangeFieldType;
     typedef typename FunctionSpaceType::DomainFieldType DomainFieldType;
