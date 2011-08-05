@@ -342,7 +342,8 @@ namespace Dune
                           const EntityType &entity,
                           size_t n )
     {
-      assert( ( ! sendRank( entity ) ) ? (n > 0) : true);
+      // ERROR: An overlap cell may be overlay cell in another process
+      //assert( ( ! sendRank( entity ) ) ? (n > 0) : true);
       if( n == 1 )
       {
         int rank;
