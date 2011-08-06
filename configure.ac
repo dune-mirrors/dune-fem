@@ -67,6 +67,7 @@ AC_CONFIG_FILES([Makefile
      dune/fem/space/reducedbasisspace/Makefile
      dune/fem/space/reducedbasisspace/test/Makefile
      dune/fem/space/combinedspace/Makefile
+     dune/fem/space/padaptivespace/Makefile
      dune/fem/space/mapper/Makefile
      dune/fem/space/common/Makefile
      dune/fem/quadrature/Makefile
