@@ -7,6 +7,7 @@
 #include <dune/fem/space/padaptivespace/restrictprolong.hh>
 
 #include <dune/fem/space/lagrangespace/lagrangespace.hh>
+#include <dune/fem/space/padaptivespace/padaptivespace.hh>
 #include <dune/fem/function/adaptivefunction.hh>
 #include <dune/fem/operator/lagrangeinterpolation.hh>
 
