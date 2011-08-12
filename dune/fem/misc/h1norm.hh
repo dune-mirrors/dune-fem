@@ -67,7 +67,7 @@ namespace Dune
     template< class Point >
     void evaluate ( const Point &x, RangeType &ret ) const
     {
-      const int dimRange = FunctionType::RangeType::size;
+      const int dimRange = FunctionType::RangeType::dimension;
       
       typename FunctionType::RangeType phi;
       function_.evaluate( x, phi );
