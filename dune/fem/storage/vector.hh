@@ -423,7 +423,7 @@ namespace Dune
 
       unsigned int size () const
       {
-        return FieldVectorType :: size;
+        return FieldVectorType::dimension;
       }
 
       static const ThisType &adapt ( const FieldVectorType &v )
