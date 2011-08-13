@@ -99,9 +99,15 @@ namespace Dune
     PLagrangeLocalRestrictProlong< Grid, DiscreteFunctionSpaceType > localRestrictProlong_;
   };
 
+  template <class DF, class Vector, class DFS> 
+  void pAdaptation( DF& df, const Vector& polynomialOrders, const DFS &space ) 
+  {
+  }
 
-  template <class DF, class Vector> 
-  void pAdaptation( DF& df, const Vector& polynomialOrders ) 
+  template <class DF, class Vector,
+            class FS, class GP, int p,
+            template< class > class Storage >
+  void pAdaptation( DF& df, const Vector& polynomialOrders, const PAdaptiveLagrangeSpace<FS,GP,p,Storage> &space ) 
   {
     typedef typename DF :: DiscreteFunctionSpaceType  DiscreteFunctionSpaceType;
     typedef typename DiscreteFunctionSpaceType :: GridPartType GridPartType;
@@ -144,6 +150,13 @@ namespace Dune
 
     LagrangeInterpolation< DF > :: interpolateFunction( tmp, df );
   }
+
+  template <class DF, class Vector> 
+  void pAdaptation( DF& df, const Vector& polynomialOrders ) 
+  {
+    pAdaptation( df, polynomialOrders, df.space() );
+  }
+
 }
 
 #endif // #ifndef DUNE_LAGRANGESPACE_ADAPTMANAGER_HH
