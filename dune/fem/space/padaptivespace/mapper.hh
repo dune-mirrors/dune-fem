@@ -574,7 +574,7 @@ namespace Dune
     template< class Entity >
     int mapEntityDofToGlobal ( const Entity &entity, const int localDof ) const 
     {
-      return dofContainer( Entity :: codimension )( entity ).entityDof( localDof );
+      return dofContainer( Entity :: codimension )[ entity ].entityDof( localDof );
     }
     
     /** \copydoc Dune::DofMapper::maxNumDofs() const */
@@ -595,7 +595,7 @@ namespace Dune
     int numEntityDofs ( const Entity &entity ) const
     {
       // This implementation only works for nonhybrid grids (simplices or cubes)
-      return dofContainer( Entity :: codimension )( entity ).entityDofs();
+      return dofContainer( Entity :: codimension )[ entity ].entityDofs();
     }
     
     /** \brief Check, whether any DoFs are associated with a codimension */
