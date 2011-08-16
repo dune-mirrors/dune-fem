@@ -886,7 +886,7 @@ namespace Dune
         const Entity &entity = *it;
         const typename Entity::Geometry::GlobalCoordinate x
           = entity.geometry().global( quad.point( i ) );
-        for( int k = 0; k < x.size; ++k )
+        for( int k = 0; k < x.dimension; ++k )
           gnuout << (k > 0 ? " " : "") << x[ k ];
         GnuplotOutputer< GridPartType > io( gnuout, quad, i, entity );
         io.forEach( data_ );
