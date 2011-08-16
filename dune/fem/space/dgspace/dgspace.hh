@@ -594,6 +594,12 @@ namespace Dune
       BaseImpType (gridPart, GeometryTypes(gridPart.indexSet()).geomTypes( BaseImpType :: codimension ),
                    commInterface, commDirection)
     {}
+
+    /** @copydoc Dune::DiscreteFunctionSpaceInterface::continuous */
+    bool continuous () const
+    {
+      return true;
+    }
   };
 
   //@}
