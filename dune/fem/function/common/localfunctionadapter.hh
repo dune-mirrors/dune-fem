@@ -33,6 +33,7 @@ namespace Dune
     typedef typename FunctionSpaceType::RangeType RangeType;
     typedef typename FunctionSpaceType::DomainType DomainType;
     typedef typename FunctionSpaceType::JacobianRangeType JacobianRangeType;
+    typedef typename FunctionSpaceType::HessianRangeType HessianRangeType;
     typedef typename EvalImp :: GridPartType GridPartType;
     typedef typename GridPartType :: GridType GridType;
     typedef typename GridType :: template Codim<0> :: Entity EntityType;
@@ -322,6 +323,8 @@ namespace Dune
     typedef typename DiscreteFunctionSpaceType::RangeType RangeType ;
     //! jacobian type (from function space)
     typedef typename DiscreteFunctionSpaceType::JacobianRangeType JacobianRangeType;
+    //! hessian type (from function space)
+    typedef typename DiscreteFunctionSpaceType::HessianRangeType HessianRangeType;
 
     //! type of local function implementation 
     typedef LocalFunctionImpl LocalFunctionImplType;
@@ -388,6 +391,13 @@ namespace Dune
     void jacobian ( const PointType &x, JacobianRangeType &ret ) const
     {
       localFunctionImpl_.jacobian( x, ret );
+    }
+
+    // hessian of local function
+    template< class PointType >
+    void hessian ( const PointType &x, HessianRangeType &ret ) const
+    {
+      localFunctionImpl_.hessian( x, ret );
     }
 
     template< class QuadratureType, class VectorType  >
