@@ -102,8 +102,8 @@ public:
   template <class GridPartType, class MinMax = Min<double> > 
   static inline 
   double calcGridWidth (const GridPartType & gridPart, 
-                        const bool communicate = true,
-                        const MinMax& minmax = MinMax () 
+                        const bool communicate,
+                        const MinMax& minmax 
                        )
   {     
     typedef typename GridPartType :: GridType GridType;
@@ -158,6 +158,13 @@ public:
 
     return width;
   }   
+  template <class GridPartType, class MinMax = Min<double> > 
+  static inline 
+  double calcGridWidth (const GridPartType & gridPart, 
+                        const bool communicate = true)
+  {
+    calcGridWidth ( gridPart, communicate, MinMax() );
+  }
 };
 
 //! utility functions for calculating the maximum grid width 
