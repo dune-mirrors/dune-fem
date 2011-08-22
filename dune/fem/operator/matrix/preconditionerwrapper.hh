@@ -2,6 +2,8 @@
 #define DUNE_PRECONDITIONERWRAPPER_HH
 
 #include <memory>
+#include <dune/common/shared_ptr.hh>
+
 
 #if HAVE_DUNE_ISTL
 #include <dune/istl/operators.hh>
