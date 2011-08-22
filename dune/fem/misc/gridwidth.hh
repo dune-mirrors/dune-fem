@@ -99,7 +99,7 @@ public:
       \param communicate do global communication to get minimal width for all processes
       (default = true)
   */
-  template <class GridPartType, class MinMax = Min<double> > 
+  template <class GridPartType, class MinMax> 
   static inline 
   double calcGridWidth (const GridPartType & gridPart, 
                         const bool communicate,
@@ -158,12 +158,12 @@ public:
 
     return width;
   }   
-  template <class GridPartType, class MinMax = Min<double> > 
+  template <class GridPartType> 
   static inline 
   double calcGridWidth (const GridPartType & gridPart, 
                         const bool communicate = true)
   {
-    calcGridWidth ( gridPart, communicate, MinMax() );
+    return calcGridWidth ( gridPart, communicate, Min<double>() );
   }
 };
 
