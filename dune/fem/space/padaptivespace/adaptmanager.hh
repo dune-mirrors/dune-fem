@@ -104,10 +104,20 @@ namespace Dune
   {
   }
 
+  /** \brief pAdaptation 
+      \param df  discrete function to adapt 
+      \param polynomialOrders  vector containing polynomial orders for each cell 
+      \param space  type of space tp be adapted 
+      \param polOrderShift possible shift of polynomial order (i.e. in case of
+        Taylor-Hood put -1 for the pressure) (default = 0)
+  */
   template <class DF, class Vector,
             class FS, class GP, int p,
             template< class > class Storage >
-  void pAdaptation( DF& df, const Vector& polynomialOrders, const PAdaptiveLagrangeSpace<FS,GP,p,Storage> &space ) 
+  void pAdaptation( DF& df, 
+                    const Vector& polynomialOrders, 
+                    const PAdaptiveLagrangeSpace<FS,GP,p,Storage> &space,
+                    const int polOrderShift = 0 ) 
   {
     typedef typename DF :: DiscreteFunctionSpaceType  DiscreteFunctionSpaceType;
     typedef typename DiscreteFunctionSpaceType :: GridPartType GridPartType;
@@ -141,8 +151,8 @@ namespace Dune
     for( IteratorType it = newSpace.begin(); it != endit; ++it ) 
     {
       const EntityType& entity = *it;
-      newSpace.blockMapper().setPolynomOrder( entity, 
-              polynomialOrders[ newSpace.indexSet().index( entity ) ] );
+      const int polOrder = polynomialOrders[ newSpace.indexSet().index( entity ) ] + polOrderShift ;
+      newSpace.blockMapper().setPolynomOrder( entity, polOrder );
     }
 
     dm.resize();
@@ -151,10 +161,18 @@ namespace Dune
     LagrangeInterpolation< DF > :: interpolateFunction( tmp, df );
   }
 
+  /** \brief pAdaptation 
+      \param df  discrete function to adapt 
+      \param polynomialOrders  vector containing polynomial orders for each cell 
+      \param polOrderShift possible shift of polynomial order (i.e. in case of
+        Taylor-Hood put -1 for the pressure) (default = 0)
+  */
   template <class DF, class Vector> 
-  void pAdaptation( DF& df, const Vector& polynomialOrders ) 
+  void pAdaptation( DF& df, 
+                    const Vector& polynomialOrders,
+                    const int polOrderShift = 0 ) 
   {
-    pAdaptation( df, polynomialOrders, df.space() );
+    pAdaptation( df, polynomialOrders, df.space(), polOrderShift );
   }
 
 }
