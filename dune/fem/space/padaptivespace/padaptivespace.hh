@@ -232,9 +232,6 @@ namespace Dune
       < GeometryType, BaseFunctionSetImp, ScalarFactoryType >
       BaseFunctionSetSingletonFactoryType;
     //! type of singleton list (singleton provider) for base functions
-    typedef SingletonList
-      < GeometryType, BaseFunctionSetImp, BaseFunctionSetSingletonFactoryType >
-      BaseFunctionSetSingletonProviderType;
 
     //! type of a Lagrange point set
     typedef LagrangePointSet< GridPartType, polynomialOrder >
@@ -327,6 +324,40 @@ namespace Dune
       }
     };
 
+    template <int pOrd> 
+    struct DeleteBaseFunctionSets
+    {
+      static void apply( BaseFunctionMapVectorType& baseFunctionSetVector )
+      {
+        typedef LagrangeBaseFunctionFactory
+          < typename BaseFunctionSpaceType :: ScalarFunctionSpaceType, dimension, pOrd >
+          ScalarFactoryType;
+
+        //! type of singleton base function factory
+        typedef BaseFunctionSetSingletonFactory
+          < GeometryType, BaseFunctionSetImp, ScalarFactoryType >
+          BaseFunctionSetSingletonFactoryType;
+
+        //! type of singleton list (singleton provider) for base functions
+        typedef SingletonList
+          < GeometryType, BaseFunctionSetImp, BaseFunctionSetSingletonFactoryType >
+        BaseFunctionSetSingletonProviderType;
+
+        const size_t k = pOrd;
+        assert( k < baseFunctionSetVector.size() );
+        BaseFunctionMapType& baseFunctionMap = baseFunctionSetVector[ k ];
+
+        typedef typename BaseFunctionMapType :: iterator BFIteratorType;
+        BFIteratorType bfend = baseFunctionMap.end();
+        for( BFIteratorType it = baseFunctionMap.begin(); it != bfend; ++it ) 
+        {
+          const BaseFunctionSetImp *baseFunctionSet = (*it).second;
+          if( baseFunctionSet != 0 )
+            BaseFunctionSetSingletonProviderType :: removeObject( *baseFunctionSet );
+        }
+      }
+    };
+
   public:
     //! type of identifier for this discrete function space
     typedef int IdentifierType;
@@ -409,18 +440,9 @@ namespace Dune
       delete mapper_;
       BlockMapperProviderType::removeObject( *blockMapper_ );
 
-      for( size_t i = 0; i < baseFunctionSet_.size(); ++ i) 
-      {
-        typedef typename BaseFunctionMapType :: iterator BFIteratorType;
-        BFIteratorType bfend = baseFunctionSet_[ i ].end();
-        for( BFIteratorType it = baseFunctionSet_[ i ].begin(); it != bfend; ++it ) 
-        {
-          const BaseFunctionSetImp *baseFunctionSet = (*it).second;
-          if( baseFunctionSet != NULL )
-            BaseFunctionSetSingletonProviderType
-            :: removeObject( *baseFunctionSet );
-        }
-      }
+      // delete base function sets 
+      ForLoop< DeleteBaseFunctionSets, 1, polynomialOrder > :: 
+        apply( baseFunctionSet_ );
 
       for( size_t i = 0; i < lagrangePointSet_.size(); ++ i) 
       {

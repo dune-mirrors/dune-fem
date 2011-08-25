@@ -117,13 +117,13 @@ namespace Dune
       ListIteratorType end = singletonList().end();
       for( ListIteratorType it = singletonList().begin(); it != end; ++it )
       {
-        ValueType value = (*it).second;
-        if( value.first == &object )
+        if( (*it).second.first == &object )
         {
           eraseItem( it );
           return;
         }
       }
+
       std :: cerr << "Object could not be deleted, "
                   << "because it is not in the list anymore!" << std :: endl;
     }
