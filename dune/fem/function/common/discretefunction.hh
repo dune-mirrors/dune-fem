@@ -107,6 +107,9 @@ namespace Dune
     //! type of jacobian, i.e. type of evaluated gradient 
     typedef typename DiscreteFunctionSpaceType :: JacobianRangeType JacobianRangeType;
 
+    //! type of the underlying grid part
+    typedef typename DiscreteFunctionSpaceType::GridPartType GridPartType;
+
     //! Type of the underlying grid
     typedef typename DiscreteFunctionSpaceType :: GridType GridType;
 
@@ -167,6 +170,12 @@ namespace Dune
     const DiscreteFunctionSpaceType &space () const
     {
       return asImp().space();
+    }
+
+    /** \brief obtain a reference to the underlying grid part */
+    const GridPartType &gridPart () const
+    {
+      return asImp().gridPart();
     }
 
     /** \brief obtain a local function for an entity (read-only)
@@ -541,9 +550,11 @@ namespace Dune
   
   public:
     //! type of discrete function space
-    typedef typename DiscreteFunctionTraits :: DiscreteFunctionSpaceType
-      DiscreteFunctionSpaceType;
-    
+    typedef typename BaseType::DiscreteFunctionSpaceType DiscreteFunctionSpaceType;
+   
+    //! type of the underlying grid part
+    typedef typename BaseType::GridPartType GridPartType;
+
     //! type of domain vector
     typedef typename DiscreteFunctionSpaceType :: DomainType DomainType;
     //! type of range vector
@@ -614,10 +625,13 @@ namespace Dune
     // -----------------------
 
     /** \copydoc Dune::DiscreteFunctionInterface::name() const */
-    const std::string &name () const;
+    const std::string &name () const { return name_; }
 
     /** \copydoc Dune::DiscreteFunctionInterface::space() const */
-    const DiscreteFunctionSpaceType &space () const;
+    const DiscreteFunctionSpaceType &space () const { return dfSpace_; }
+
+    /** \brief obtain a reference to the underlying grid part */
+    const GridPartType &gridPart () const { return space().gridPart(); }
 
     /** \copydoc Dune::DiscreteFunctionInterface::localFunction(const EntityType &entity) const */
     const LocalFunctionType localFunction ( const EntityType &entity ) const;

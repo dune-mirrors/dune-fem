@@ -52,20 +52,6 @@ namespace Dune
 
 
   template< class Traits >
-  inline const std::string &DiscreteFunctionDefault< Traits >::name () const
-  {
-    return name_;
-  }
-
-
-  template< class Traits >
-  inline const typename DiscreteFunctionDefault< Traits >::DiscreteFunctionSpaceType &
-  DiscreteFunctionDefault< Traits >::space () const
-  {
-    return dfSpace_;
-  }
-
-  template< class Traits >
   inline const typename DiscreteFunctionDefault< Traits > ::  LocalFunctionType
   DiscreteFunctionDefault< Traits >
     :: localFunction ( const EntityType &entity ) const
