@@ -1,5 +1,5 @@
-#ifndef DUME_FEM_FEMTIMER_HH
-#define DUME_FEM_FEMTIMER_HH
+#ifndef DUNE_FEM_FEMTIMER_HH
+#define DUNE_FEM_FEMTIMER_HH
 
 #include <stack>
 #include <vector>
@@ -438,4 +438,4 @@ namespace Dune
 
 }
 
-#endif // #ifndef DUME_FEMTIMER_HH
+#endif // #ifndef DUNE_FEMTIMER_HH
