@@ -548,25 +548,25 @@ protected:
 
   protected:
     template< class EntityImpl >
-    const Data &data ( const EntityImpl &entity, Int2Type< false > ) const
+    const Data &data ( const EntityImpl &entity, integral_constant<int, false > ) const
     {
       return hostContainer_[ entity.hostEntity() ];
     }
 
     template< class EntityImpl >
-    Data &data ( const EntityImpl &entity, Int2Type< false > )
+    Data &data ( const EntityImpl &entity, integral_constant<int, false > )
     {
       return hostContainer_[ entity.hostEntity() ];
     }
 
     template< class EntityImpl >
-    const Data &data ( const EntityImpl &entity, Int2Type< true > ) const
+    const Data &data ( const EntityImpl &entity, integral_constant<int, true > ) const
     {
       return hostContainer_( entity.hostElement(). entity.subEntity() );
     }
 
     template< class EntityImpl >
-    Data &data ( const EntityImpl &entity, Int2Type< true > )
+    Data &data ( const EntityImpl &entity, integral_constant<int, true > )
     {
       return hostContainer_( entity.hostElement(). entity.subEntity() );
     }

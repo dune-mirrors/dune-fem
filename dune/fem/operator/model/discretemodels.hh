@@ -307,7 +307,7 @@ namespace Dune {
 #if DUNE_VERSION_NEWER_REV(DUNE_COMMON,2,1,0)
     integral_constant<int, passId1 > uVar;
 #else
-    Int2Type< passId1 > uVar;
+    integral_constant<int, passId1 > uVar;
 #endif
   public:
     typedef AdvDiffTraits1< Model , NumFlux , polOrd 
@@ -438,8 +438,8 @@ namespace Dune {
     integral_constant<int, passId1 > uVar;
     integral_constant<int, passId2 > vVar;
 #else
-    Int2Type< passId1 > uVar;
-    Int2Type< passId2 > vVar;
+    integral_constant<int, passId1 > uVar;
+    integral_constant<int, passId2 > vVar;
 #endif
   public:
     typedef AdvDiffTraits2<Model,NumFlux,polOrd
@@ -683,7 +683,7 @@ namespace Dune {
 #if DUNE_VERSION_NEWER_REV(DUNE_COMMON,2,1,0)
     integral_constant<int, passId1 > uVar;
 #else
-    Int2Type< passId1 > uVar;
+    integral_constant<int, passId1 > uVar;
 #endif
 
   public:
@@ -801,8 +801,8 @@ namespace Dune {
     integral_constant<int, passId1 > uVar;
     integral_constant<int, passId2 > vVar;
 #else
-    Int2Type< passId1 > uVar;
-    Int2Type< passId2 > vVar;
+    integral_constant<int, passId1 > uVar;
+    integral_constant<int, passId2 > vVar;
 #endif
   public:
     typedef AdvDiffTraits4< Model , NumFlux , polOrd 
@@ -926,7 +926,7 @@ namespace Dune {
 #if DUNE_VERSION_NEWER_REV(DUNE_COMMON,2,1,0)
     integral_constant<int, passId1 > uVar;
 #else
-    Int2Type< passId1 > uVar;
+    integral_constant<int, passId1 > uVar;
 #endif
     public:
     typedef LimiterTraits1< Model , polOrd

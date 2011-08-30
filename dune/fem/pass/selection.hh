@@ -23,7 +23,7 @@ namespace Dune
 #if DUNE_VERSION_NEWER_REV(DUNE_COMMON,2,1,0)
       integral_constant<int,N1>, 
 #else
-      Int2Type<N1>, 
+      integral_constant<int,N1>, 
 #endif
       typename SelectorToPairs<N2, N3, N4, N5, N6, N7, N8, N9, -1>::Type
     > Type;
@@ -430,7 +430,7 @@ namespace Dune
 #if DUNE_VERSION_NEWER_REV(DUNE_COMMON,2,1,0)
     operator[] ( const integral_constant<int, id > idVariable ) const
 #else
-    operator[] ( const Int2Type< id > idVariable ) const
+    operator[] ( const integral_constant<int, id > idVariable ) const
 #endif
     {
       return get< id >();
@@ -441,7 +441,7 @@ namespace Dune
 #if DUNE_VERSION_NEWER_REV(DUNE_COMMON,2,1,0)
     operator[] ( const integral_constant<int, id > idVariable )
 #else
-    operator[] ( const Int2Type< id > idVariable )
+    operator[] ( const integral_constant<int, id > idVariable )
 #endif
     {
       return get< id >();

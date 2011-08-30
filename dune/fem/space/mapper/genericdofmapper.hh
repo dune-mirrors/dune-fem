@@ -622,8 +622,8 @@ namespace Dune
     typedef integral_constant<int, 0 > Begin;
     typedef integral_constant<int, 1 > End;
 #else
-    typedef Int2Type< 0 > Begin;
-    typedef Int2Type< 1 > End;
+    typedef integral_constant<int, 0 > Begin;
+    typedef integral_constant<int, 1 > End;
 #endif
 
   private:

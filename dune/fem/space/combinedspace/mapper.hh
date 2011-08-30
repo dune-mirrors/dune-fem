@@ -238,11 +238,11 @@ namespace Dune
 
     inline static int chooseSize ( int pointBased,
                                    int variableBased,
-                                   Int2Type<PointBased> );
+                                   integral_constant<int,PointBased> );
 
     inline static int chooseSize ( int pointBased,
                                    int variableBased,
-                                   Int2Type<VariableBased> );
+                                   integral_constant<int,VariableBased> );
 
   }; // end class CombinedMapper
   

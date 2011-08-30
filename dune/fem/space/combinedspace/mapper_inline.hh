@@ -152,7 +152,7 @@ namespace Dune
       oldSize_*block/mapper_.numBlocks());
 
     DofConversionUtility<policy> 
-      tmpUtilGlobal(chooseSize(N, mapper_.size(), Int2Type<policy>()));
+      tmpUtilGlobal(chooseSize(N, mapper_.size(), integral_constant<int,policy>()));
 
     const int component = tmpUtilGlobal.component(hole);
     const int contained = tmpUtilGlobal.containedDof(hole);
@@ -249,7 +249,7 @@ namespace Dune
   inline int CombinedMapper< ContainedSpace, N, policy >
     :: chooseSize ( int pointBased,
                     int variableBased,
-                    Int2Type< PointBased > )
+                    integral_constant<int, PointBased > )
   {
     return pointBased;
   }
@@ -260,7 +260,7 @@ namespace Dune
   inline int CombinedMapper< ContainedSpace, N, policy >
     :: chooseSize ( int pointBased,
                     int variableBased,
-                    Int2Type< VariableBased > )
+                    integral_constant<int, VariableBased > )
   {
     return variableBased;
   }
