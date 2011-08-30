@@ -100,7 +100,7 @@ namespace Dune
   };
 
   template <class DF, class Vector, class DFS> 
-  void pAdaptation( DF& df, const Vector& polynomialOrders, const DFS &space ) 
+  void pAdaptation( DF& df, const Vector& polynomialOrders, const DFS &space, const int ) 
   {
   }
 
