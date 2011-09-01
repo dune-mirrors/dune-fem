@@ -115,7 +115,7 @@ int main() {
 
   // initialize solution vector, same initial data for all components
   DestinationType U;
-  for (int i=0; i<U.size; i++)
+  for (int i=0; i<U.size(); i++)
     U[i] = initialData;
 
   // initialize odesolver
