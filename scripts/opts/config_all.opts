@@ -9,6 +9,8 @@ CONFIGURE_FLAGS="CXX=g++ \
 --with-alberta=$MODULEDIR/alberta \
 --x-includes=/usr/X11R6/include \
 --x-libraries=/usr/X11R6/lib \
+--enable-fieldvector-size-is-method \
+--disable-documentation \
 --with-grape=$MODULEDIR/grape"
 #CONFIGURE_FLAGS="CXX=g++ --disable-documentation"
 MAKE_FLAGS=

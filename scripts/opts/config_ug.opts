@@ -6,6 +6,7 @@ CONFIGURE_FLAGS="CXX=g++ --disable-documentation \
 --with-ug=$MODULEDIR/UG_r8353 \
 --x-includes=/usr/X11R6/include \
 --x-libraries=/usr/X11R6/lib \
+--enable-fieldvector-size-is-method \
 --with-grape=$MODULEDIR/grape"
 MAKE_FLAGS=
 
