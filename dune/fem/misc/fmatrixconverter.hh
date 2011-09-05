@@ -177,6 +177,7 @@ public:
 #ifndef NDEBUG 
     mutableVec_ = other.mutableVec_;
 #endif
+    return *this;
   }
 
   FieldMatrixConverter& operator = (const FieldMatrix<K, n, m>& matrix) 
@@ -189,6 +190,7 @@ public:
         vec_[ i * cols + j ] = matrix[ i ][ j ];
       }
     }
+    return *this;
   }
 
   /** \brief Sends the matrix to an output stream */
