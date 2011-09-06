@@ -140,6 +140,11 @@ namespace Dune
     {
       function_.evaluate(global,result);  
     }
+    //! evaluate function on local coordinate local 
+    void jacobian(const DomainType& global, JacobianRangeType& result) const 
+    {
+      function_.jacobian(global,result);  
+    }
 
     /** \copydoc Dune::DiscreteFunctionInterface::localFunction(const EntityType &entity) const */ 
     const LocalFunctionType localFunction( const EntityType &entity ) const 
