@@ -63,7 +63,7 @@ protected:
     void mass(const EntityType&,
               const VolumeQuadratureType&,
               const int, 
-              const MassFactorType&) const
+              MassFactorType&) const
     {
     }
   };
@@ -101,7 +101,7 @@ public:
   //! apply local dg mass matrix to local function lf
   //! using the massFactor method of the caller 
   template <class MassCallerType, class LocalFunctionType> 
-  void applyInverse(MassCallerType& caller, 
+  void applyInverse(const MassCallerType& caller, 
                     const EntityType& en, 
                     LocalFunctionType& lf) const 
   {
@@ -112,7 +112,7 @@ public:
   }
 
   template <class MassCallerType, class LocalFunctionType> 
-  void applyInverseDiscontinuous(MassCallerType& caller, 
+  void applyInverseDiscontinuous(const MassCallerType& caller, 
                                  const EntityType& en, 
                                  LocalFunctionType& lf) const 
   {
@@ -161,7 +161,7 @@ public:
   //! apply local mass matrix to local function lf
   //! using the massFactor method of the caller 
   template <class MassCallerType, class LocalFunctionType> 
-  void applyInverseContinuous(MassCallerType& caller, 
+  void applyInverseContinuous(const MassCallerType& caller, 
                               const EntityType& en, 
                               LocalFunctionType& lf) const 
   {
@@ -246,7 +246,7 @@ protected:
 
   //! build local mass matrix 
   template <class MassCallerType, class Matrix> 
-  void buildMatrix(MassCallerType& caller,
+  void buildMatrix(const MassCallerType& caller,
                    const EntityType& en,
                    const Geometry& geo, 
                    const BaseFunctionSetType& set,
@@ -311,7 +311,7 @@ protected:
   //! build local mass matrix with mass factor 
   template <class MassCallerType, class Matrix> 
   void buildMatrixWithMassFactor(
-                   MassCallerType& caller,
+                   const MassCallerType& caller,
                    const EntityType& en,
                    const Geometry& geo, 
                    const BaseFunctionSetType& set,
