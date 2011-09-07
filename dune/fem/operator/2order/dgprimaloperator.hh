@@ -655,7 +655,7 @@ protected:
     void resizeCaches(const int numDofs) const
     {
       // resize caches 
-      if(tau_.size() != numDofs) 
+      if(tau_.size() != (unsigned int)(numDofs)) 
       { 
         tau_.resize(numDofs);
         tauNeigh_.resize(numDofs);

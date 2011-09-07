@@ -351,7 +351,7 @@ private:
     const int polOrd = 2 * space.order(); // + 2;
     
     const int cols = uLF.numDofs();
-    assert( uRets.size() == cols );
+    assert( uRets.size() == (unsigned int)cols );
 
     VolumeQuadratureType quad (en,polOrd);
     DomainType result;
