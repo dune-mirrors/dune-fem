@@ -236,7 +236,7 @@ namespace Dune {
     void mass(const Entity& en,
               const VolumeQuadratureType& quad,
               const int quadPoint,
-              MassFactorType& m)
+              MassFactorType& m) const
     {
       assert( enQuadId_ == quad.id() );
 
