@@ -265,7 +265,7 @@ namespace Dune
         if( done() ) 
           return;
 
-        if( !gridPart.contains( hostIterator ) )
+        if( !gridPart.contains( *(asBase())) )
           ++(*this);
       }
 
@@ -296,7 +296,7 @@ namespace Dune
       // return true for end iterator
       bool done () const
       {
-        return asBase().operator==( gridPart().template end< codim, pitype >().asBase() );
+        return asBase().operator==( gridPart().hostGridPart().template end< codim, pitype >() );
       }
 
       // reference to grid part
@@ -305,7 +305,7 @@ namespace Dune
         return gridPart_;
       }
 
-      const GridPartType gridPart_;
+      const GridPartType & gridPart_;
 
     }; // end class FilteredGridPartIterator
 
@@ -563,7 +563,7 @@ namespace Dune
 
       bool done () const
       {
-        return asBase().operator == ( gridPart().iend( *inside() ).asBase() );
+        return asBase().operator == ( gridPart().hostGridPart().iend( *inside() ) );
       }
 
       // return reference to base class 
@@ -901,7 +901,6 @@ namespace Dune
         return filter().contains( entityPointer );
       }
     
-    private: 
       HostGridPartType & hostGridPart ()
       {
         return *hostGridPart_;
@@ -912,6 +911,7 @@ namespace Dune
         return *hostGridPart_;
       }
 
+    private: 
       HostGridPartType * hostGridPart_;
       const bool deleteGridPart_;
       const FilterType & filter_;
