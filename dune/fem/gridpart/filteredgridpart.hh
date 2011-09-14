@@ -1,9 +1,10 @@
-#ifndef DUNE_FILTEREDGRID_HH
-#define DUNE_FILTEREDGRID_HH
+#ifndef DUNE_FEM_GRIDPART_FILTEREDGRIDPART_HH
+#define DUNE_FEM_GRIDPART_FILTEREDGRIDPART_HH
 
 //- system includes
 #include <vector>
 #include <cassert>
+#include <algorithm>
 
 //- dune-common includes 
 #include <dune/common/bartonnackmanifcheck.hh>
@@ -108,7 +109,7 @@ namespace Dune
       bool contains ( const typename Codim< cd >::EntityType & entity ) const
       {
         CHECK_INTERFACE_IMPLEMENTATION( asImp().contains( entity ) );
-        return asImp().contains( entity );
+        return asImp().contains< cd >( entity );
       }
 
       //! \brief returns true if the given entity of the pointer in the domain 
@@ -275,6 +276,76 @@ namespace Dune
       // base type
       typedef FilterDefaultImplementation< Traits > BaseType;
 
+      static const int dimension = GridPartType::GridType::dimension;
+
+      static const int nCodim = dimension;
+
+      template< int codim, PartitionIteratorType pitype, class GridPart, class BasicFilter >
+      struct UpdateContains
+      {
+        static inline void update ( const GridPart & gridPart, const BasicFilter & filter, std::vector< bool > & contains )
+        {
+          // type of index set
+          typedef typename GridPartType::IndexSetType IndexSetType;
+
+          // get index set
+          const IndexSetType & indexSet = gridPart.indexSet();
+
+          // resize vector
+          contains.resize( indexSet.size( codim ) );
+
+          // fill vector
+          typedef typename std::vector< bool >::iterator iterator_type;
+          iterator_type vit = contains.begin();
+          const iterator_type vend = contains.end();
+          std::fill( vit, vend, false );
+
+          // traverse grid
+          typedef typename GridPart::template Codim< 0 >::template Partition< pitype >::IteratorType IteratorType;
+          IteratorType it = gridPart.template begin< 0, pitype >();
+          const IteratorType end = gridPart.template end< 0, pitype >();
+          for( ; it != end; ++it )
+          {
+            if( !filter.contains( *it ) )
+              continue;
+            const typename IteratorType::Entity & entity = *it;
+            const int count = entity.template count< codim >();
+            for( int i = 0; i < count; ++i )
+            {
+              size_t subIndex = size_t( indexSet.subIndex( entity, i , codim ));
+              contains[ subIndex ] = true;
+            }
+          }
+        }
+      };
+
+      template< int codim, class GridPart, class BasicFilter >
+      struct Contains
+      {
+        typedef typename ThisType::template Codim< codim >::EntityType EntityType;
+
+        static inline bool value ( const EntityType & entity, const GridPart & gridPart, const BasicFilter & filter, std::vector< bool > & contains )
+        {
+          if( contains.empty() )
+            UpdateContains< codim, All_Partition, GridPart, BasicFilter >::update( gridPart, filter, contains );
+          typedef typename GridPartType::IndexSetType IndexSetType;
+          const IndexSetType & indexSet = gridPart.indexSet();
+          size_t index = size_t( indexSet.index( entity ) );
+          return contains[ index ];          
+        }
+      };
+
+      template< class GridPart, class BasicFilter >
+      struct Contains< 0, GridPart, BasicFilter >
+      {
+        typedef typename ThisType::template Codim< 0 >::EntityType EntityType;
+
+        static inline bool value ( const EntityType & entity, const GridPart & gridPart, const BasicFilter & filter, std::vector< bool > & contains )
+        {
+          return filter.contains( entity ); 
+        }
+      };
+
     public:
       //! \brief type of the filter implementation
       typedef typename Traits::FilterType FilterType;
@@ -288,8 +359,6 @@ namespace Dune
       //! \brief type of codim 0 entity 
       typedef typename Traits::EntityType EntityType;
        
-      using BaseType::contains;
-
       // constructor
       BasicFilterWrapper ( const GridPartType & gridPart, const BasicFilterType & filter = BasicFilterType() ) 
       : gridPart_( gridPart ),
@@ -300,13 +369,17 @@ namespace Dune
       BasicFilterWrapper ( const ThisType & other )
       : gridPart_( other.gridPart_ ),
         filter_( other.filter_ )
-      { }
+      { 
+        reset();
+      }
 
       // assignment operator 
       ThisType & operator= ( const ThisType & other )
       {
         gridPart_ = other.gridPart_;
         filter_ = other.filter_;
+        reset();
+        return *this;
       }
 
       //! \brief default implementation returns contains from neighbor
@@ -322,9 +395,17 @@ namespace Dune
       template< int cd >
       bool contains ( const typename Codim< cd >::EntityType & entity ) const
       {
-        return filter().contains( entity );
+        return Contains< cd, GridPartType, BasicFilterType >::value( entity, gridPart_, filter_, contains_[ cd ] );
       }
 
+      //! \brief returns true if the given entity of the pointer in the domain 
+      template< class Entity >
+      bool contains ( const Entity & entity ) const
+      {
+        enum { cc = Entity::codimension };
+        return contains< cc >( entity );
+      }
+ 
       //! \brief returns true if an intersection is a boundary intersection 
       template< class Intersection >
       bool intersectionBoundary( const Intersection & intersection ) const
@@ -352,9 +433,16 @@ namespace Dune
         return filter_;
       }
 
+      // reset cached values
+      void reset ()
+      {
+        for( int codim = 0; codim < nCodim; ++codim )
+          contains_[ codim ].clear();
+      }
+
       const GridPartType & gridPart_;
       BasicFilterType filter_;
-
+      mutable std::vector< bool > contains_[ nCodim ];
     };
 
     
@@ -1049,7 +1137,7 @@ namespace Dune
 
     private: 
       HostGridPartType & hostGridPart_;
-      const FilterType & filter_;
+      const FilterType filter_;
       const IndexSetType * indexSetPtr_; 
 
     }; // end FilteredGridPart
@@ -1058,4 +1146,4 @@ namespace Dune
 
 }  // end namespace Dune
 
-#endif
+#endif // #ifndef DUNE_FEM_GRIDPART_FILTEREDGRIDPART_HH
