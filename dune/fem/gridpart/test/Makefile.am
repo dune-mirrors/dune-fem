@@ -10,8 +10,8 @@ check_PROGRAMS = test-filteredgridpart
 LDADD = $(ALL_PKG_LDFLAGS) $(ALL_PKG_LIBS) $(LOCAL_LIBS)
 AM_CPPFLAGS = $(ALL_PKG_CPPFLAGS) 
 
-test_filteredgridpart_SOURCES = test-gridpart.cc
-test_filteredgridpart_CPPFLAGS = -DCOUNT_FLOPS $(AM_CPPFLAGS) -DUSE_FILTEREDGRID
+test_filteredgridpart_SOURCES = test-filteredgridpart.cc
+test_filteredgridpart_CPPFLAGS = -DCOUNT_FLOPS $(AM_CPPFLAGS) -DUSE_FILTEREDGRIDPART
 
 EXTRA_DIST = radialfilter.hh 
 

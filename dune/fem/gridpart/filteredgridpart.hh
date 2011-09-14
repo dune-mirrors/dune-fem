@@ -54,17 +54,11 @@ namespace Dune
       struct Codim 
       {
         //! \brief entity type
-        typedef typename GridPartType::template Codim< cd >::Entity EntityType;
-
-        //! \brief entity pointer type
-        typedef typename GridPartType::GridType::template Codim< cd >::EntityPointer EntityPointerType;
+        typedef typename GridPartType::template Codim< cd >::EntityType EntityType;
       };
 
       //! \brief entity type for codim 0 
-      typedef typename GridPartType::template Codim< 0 >::EntityType EntityType;   
-
-      //! \brief entity pointer type for codim 0 
-      typedef typename GridPartType::GridType::template Codim< 0 >::EntityPointer EntityPointerType;
+      typedef typename Codim< 0 >::EntityType EntityType;   
 
     }; // end DefaultFilterTraits
 
@@ -90,11 +84,14 @@ namespace Dune
       //! \brief type of original grid part 
       typedef typename FilterTraits :: GridPartType GridPartType;
 
-      //! \brief type of entity with codim=0
-      typedef typename FilterTraits::EntityType EntityType;
+      template< int cd >
+      struct Codim
+      {
+        typedef typename FilterTraits::template Codim< cd >::EntityType EntityType;
+      };
 
-      //! \brief type of entityPointer with codim=0 
-      typedef typename FilterTraits::EntityPointerType EntityPointerType;
+      //! \brief type of entity with codim=0
+      typedef typename Codim< 0 >::EntityType EntityType;
 
     private: 
       // constructor
@@ -107,18 +104,21 @@ namespace Dune
       ThisType & operator= ( const ThisType & );
 
     public:
-      //! \brief returns true if the given entity is in the domain 
-      bool contains ( const EntityPointerType & ep ) const
-      {
-        CHECK_INTERFACE_IMPLEMENTATION( asImp().contains( ep ) );
-        return asImp().contains( ep );
-      }
-      
       //! \brief returns true if the given entity of the pointer in the domain 
-      bool contains ( const EntityType & entity ) const
+      template< int cd >
+      bool contains ( const typename Codim< cd >::EntityType & entity ) const
       {
         CHECK_INTERFACE_IMPLEMENTATION( asImp().contains( entity ) );
         return asImp().contains( entity );
+      }
+
+      //! \brief returns true if the given entity of the pointer in the domain 
+      template< class Entity >
+      bool contains ( const Entity & entity ) const
+      {
+        enum { cc = Entity::codimension };
+        CHECK_INTERFACE_IMPLEMENTATION( asImp().contains< cc >( entity ) );
+        return asImp().contains< cc >( entity );
       }
       
       //! \brief returns true if an intersection is interior 
@@ -185,13 +185,16 @@ namespace Dune
 
       //! \brief type of original grid part 
       typedef typename BaseType::GridPartType GridPartType;
-      
+     
+      template< int cd >
+      struct Codim
+      {
+        typedef typename BaseType::template Codim< cd >::EntityType EntityType;
+      };
+
       //! \brief type of codim 0 entity 
       typedef typename BaseType::EntityType EntityType;
-
-      //! \brief type of codim 0 entity pointer 
-      typedef typename BaseType::EntityPointerType EntityPointerType;
-        
+       
     protected:
       // constructor
       FilterDefaultImplementation () { }
@@ -205,12 +208,15 @@ namespace Dune
       ThisType &operator= ( const ThisType & );
 
     public:
+      using BaseType::contains;
+
       //! \brief default implementation returns contains from neighbor
       template< class Intersection >
       bool interiorIntersection( const Intersection &intersection ) const
       {
+        typedef typename GridPartType::GridType::template Codim< 0 >::EntityPointer EntityPointerType;
         const EntityPointerType outside = intersection.outside();
-        return asImp().contains( outside );
+        return asImp().contains( *outside );
       }
 
       //! \brief default createObject method calling FilterType( gridPart )
@@ -218,12 +224,10 @@ namespace Dune
       {
         return FilterType( gridPart );
       }
-
-      //! \brief returns true if the given entity is in the domain 
-      bool contains ( const EntityPointerType & ) const;
-      
+     
       //! \brief returns true if the given entity of the pointer in the domain 
-      bool contains ( const EntityType & ) const;
+      template< int cd >
+      bool contains ( const typename Codim< cd >::EntityType & ) const;
 
       //! \brief returns true if an intersection is a boundary intersection 
       template< class Intersection >
@@ -243,7 +247,6 @@ namespace Dune
 
     template< int codim, PartitionIteratorType pitype, class GridPartImp, class HostIteratorImp >
     class FilteredGridPartIterator
-    : public HostIteratorImp
     {
       // type of this
       typedef FilteredGridPartIterator< codim, pitype, GridPartImp, HostIteratorImp > ThisType;
@@ -254,49 +257,72 @@ namespace Dune
       // host iterator type
       typedef HostIteratorImp HostIteratorType;
 
+      // entity pointer type
+      typedef typename GridPartType::GridType::template Codim< codim >::EntityPointer EntityPointerType;
+
     public:
       // type of entity
       typedef typename HostIteratorType::Entity Entity;
 
+      //! \brief constructor
       FilteredGridPartIterator ( const GridPartType & gridPart, const HostIteratorType & hostIterator )
-      : HostIteratorType( hostIterator ),
-        gridPart_( gridPart )
+      : gridPart_( gridPart ),
+        hostIterator_( hostIterator )
       {
         if( done() ) 
           return;
 
-        if( !gridPart.contains( *(asBase())) )
+        if( !gridPart.contains( *hostIterator_ ) )
           ++(*this);
       }
 
+      //! \brief increment
       ThisType & operator++ ()
       {
         assert( !done() );
-        asBase().operator++();
+        ++hostIterator_;
         if( done() )
           return *this;
-        if( !gridPart().contains( *(asBase())) )
+        if( !gridPart().contains( *hostIterator_ ) )
           ++(*this);
         return *this;
       }
 
-    private:
-      // return reference to base class 
-      inline HostIteratorType & asBase() 
-      { 
-        return static_cast< HostIteratorType & >( *this ); 
-      }
-
-      // return reference to base class 
-      inline const HostIteratorType & asBase () const
+      //! \brief return level
+      int level () const
       {
-        return static_cast< const HostIteratorType & >( *this );
+        return hostIterator_.level();
       }
 
+      //! \brief cast to entity pointer
+      operator EntityPointerType & ()
+      {
+        return hostIterator_;
+      }
+
+      //! \brief cast to const entity pointer
+      operator const EntityPointerType & () const
+      {
+        return hostIterator_;
+      }
+
+      //! \brief check for equality
+      bool operator== ( const ThisType & other ) const
+      {
+        return hostIterator_.operator==( other.hostIterator_ );
+      }
+
+      //! \brief check for inequality
+      bool operator != ( const ThisType & other ) const
+      {
+        return !(*(this)==other);
+      }
+
+    private:
       // return true for end iterator
       bool done () const
       {
-        return asBase().operator==( gridPart().hostGridPart().template end< codim, pitype >() );
+        return hostIterator_.operator==( gridPart().hostGridPart().template end< codim, pitype >() );
       }
 
       // reference to grid part
@@ -306,6 +332,7 @@ namespace Dune
       }
 
       const GridPartType & gridPart_;
+      HostIteratorType hostIterator_;
 
     }; // end class FilteredGridPartIterator
 
@@ -753,11 +780,11 @@ namespace Dune
         typedef typename GridType::template Codim< codim >::Entity EntityType;
       };
 
-    private:
-      typedef typename Traits::IndexSetSelectorType IndexSetSelectorType;
-
       // type of host grid part
       typedef typename Traits::HostGridPartType HostGridPartType;
+
+    private:
+      typedef typename Traits::IndexSetSelectorType IndexSetSelectorType;
 
       typedef typename Codim< 0 >::EntityType EntityType;
 
@@ -765,21 +792,11 @@ namespace Dune
       //- Public methods
       //! \brief constructor
       FilteredGridPart ( HostGridPartType & hostGridPart, const FilterType & filter ) 
-      : hostGridPart_( &hostGridPart ),
-        deleteGridPart_( false ),
+      : hostGridPart_( hostGridPart ),
         filter_( filter ),
         indexSetPtr_( 0 )
       {
         indexSetPtr_ = IndexSetSelectorType::create( hostGridPart_ );
-      }
-
-      FilteredGridPart( GridType & grid ) 
-      : hostGridPart_( new HostGridPartType( grid ) ),
-        deleteGridPart_( false ),
-        filter_( FilterType :: createObject( *hostGridPart_ ) ),
-        indexSetPtr_( 0 )
-      {
-        indexSetPtr_ = IndexSetSelectorType::create( *hostGridPart_ );
       }
 
       //! \brief destructor 
@@ -787,16 +804,13 @@ namespace Dune
       {
          if( indexSetPtr_ )
           delete indexSetPtr_; 
-         if( deleteGridPart_ )
-          delete hostGridPart_;
       }
 
       //! \brief copy constructor
       FilteredGridPart ( const FilteredGridPart & other )
       : hostGridPart_( other.hostGridPart_ ), 
-        deleteGridPart_( false ),
         filter_( other.filter_ ),
-        indexSetPtr_( IndexSetSelectorType::create( *hostGridPart_ ) )
+        indexSetPtr_( IndexSetSelectorType::create( hostGridPart_ ) )
       { }
 
       //! \brief return const reference to underlying grid
@@ -891,31 +905,26 @@ namespace Dune
         return filter_; 
       }
 
-      bool contains ( const typename Codim< 0 >::EntityType & entity ) const
+      template< class Entity >
+      bool contains ( const Entity & entity ) const
       {
         return filter().contains( entity );
-      }
-
-      bool contains ( const typename Codim< 0 >::EntityType::EntityPointer & entityPointer ) const
-      {
-        return filter().contains( entityPointer );
       }
     
       HostGridPartType & hostGridPart ()
       {
-        return *hostGridPart_;
+        return hostGridPart_;
       }
 
       const HostGridPartType & hostGridPart () const
       {
-        return *hostGridPart_;
+        return hostGridPart_;
       }
 
     private: 
-      HostGridPartType * hostGridPart_;
-      const bool deleteGridPart_;
+      HostGridPartType & hostGridPart_;
       const FilterType & filter_;
-      const IndexSetType* indexSetPtr_; 
+      const IndexSetType * indexSetPtr_; 
 
     }; // end FilteredGridPart
 

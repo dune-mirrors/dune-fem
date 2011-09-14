@@ -1,7 +1,11 @@
 #include<config.h>
 
-//- system includes
+// system includes
 #include <cassert>
+#include <iostream>
+
+// dune-common includes
+#include<dune/common/exceptions.hh>
 
 // dune-fem includes
 #include <dune/fem/gridpart/adaptiveleafgridpart.hh>
@@ -24,19 +28,15 @@ void testGridPart( const GridPartType & gridPart )
   std::cout << "entities visited: " << count << std::endl;
   
   typedef typename GridPartType::IndexSetType IndexSetType;
-  IndexSetType indexSet = gridPart.indexSet();
+  const IndexSetType & indexSet = gridPart.indexSet();
   std::cout << "entities in index set: " << indexSet.size( 0 ) << std::endl;
 }
 
 
 typedef Dune::GridSelector::GridType GridType;
 typedef Dune::DGAdaptiveLeafGridPart< GridType > ContainedGridPartType;
-#if defined  USE_FILTEREDGRIDPART
 typedef Dune::Fem::RadialFilter< ContainedGridPartType > FilterType;
 typedef Dune::Fem::FilteredGridPart< FilterType, true > GridPartType;
-#else
-typedef ContainedGridPartType GridPartType;
-#endif
 
 int main ( int argc, char ** argv )
 {
@@ -51,7 +51,10 @@ int main ( int argc, char ** argv )
     grid.globalRefine( 2*step );
 
     // crete grid part
-    GridPartType gridPart( grid );
+    ContainedGridPartType hostGridPart( grid );
+    FilterType::GlobalCoordinateType center( 0 );
+    FilterType filter( center, .25 );
+    GridPartType gridPart( hostGridPart, filter );
 
     // run test
     testGridPart( gridPart );

@@ -38,11 +38,16 @@ namespace Dune
       typedef typename BaseType::EntityType::Geometry GeometryType;
 
     public:
+      using BaseType::contains;
+
+      template< int cd >
+      struct Codim
+      {
+        typedef typename BaseType::template Codim< cd >::EntityType EntityType;
+      };
+      
       //! \brief type of entity
       typedef typename BaseType::EntityType EntityType;
-
-      //! \brief type of entity pointer
-      typedef typename BaseType::EntityPointerType EntityPointerType;
 
       //! \brief coordinate type
       typedef typename GeometryType::GlobalCoordinate GlobalCoordinateType;
@@ -55,14 +60,11 @@ namespace Dune
       { }
 
       //! \brief check whether barycenter is inside of circle 
-      inline bool contains ( const EntityPointerType & ep ) const
-      {
-        return contains( *ep );
-      }
-      
-      //! \brief check whether barycenter is inside of circle 
+      template< int cc >
       inline bool contains ( const EntityType & e ) const 
       {
+        if( cc != 0 )
+          DUNE_THROW( InvalidStateException, "RadialFilter::contains only available for codim 0 entities" );
         const GeometryType & geometry = e.geometry();
         double dist = (geometry.center() - center_).two_norm();
         return (dist <= radius_);
