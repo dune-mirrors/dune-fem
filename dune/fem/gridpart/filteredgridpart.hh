@@ -294,6 +294,16 @@ namespace Dune
         return hostIterator_.level();
       }
 
+      const Entity & operator* () const
+      {
+        return *hostIterator_;
+      }
+
+      const Entity * operator-> () const
+      {
+        return &(*hostIterator_);
+      }
+
       //! \brief cast to entity pointer
       operator EntityPointerType & ()
       {
@@ -341,7 +351,6 @@ namespace Dune
 
     template< class FilterType, class GridPartType, class HostIteratorType >
     class FilteredGridPartIntersectionIterator
-    : public HostIteratorType
     {
       // type of this
       typedef FilteredGridPartIntersectionIterator< FilterType, GridPartType, HostIteratorType > ThisType;
@@ -372,19 +381,19 @@ namespace Dune
       class NeighborInfo 
       {
         public:
-        inline NeighborInfo ()
+        NeighborInfo ()
         : boundaryId_( -1 ),
           boundary_( false ),
           neighbor_(false) 
         { }
         
-        inline NeighborInfo ( const NeighborInfo & org )
+        NeighborInfo ( const NeighborInfo & org )
         : boundaryId_( org.boundaryId_ ),
           boundary_( org.boundary_ ),
           neighbor_( org.neighbor_ )
         { }
         
-        inline NeighborInfo & operator = ( const NeighborInfo & org ) 
+        NeighborInfo & operator = ( const NeighborInfo & org ) 
         {
           boundary_   = org.boundary_;
           boundaryId_ = org.boundaryId_; 
@@ -395,14 +404,14 @@ namespace Dune
         int boundaryId_; 
         bool boundary_;
         bool neighbor_;        
-      } nInfo_;
+      };
 
       // write information for current intersection 
-      inline void writeNeighborInfo() 
+      void writeNeighborInfo () 
       {
-        if ( asBase()->neighbor() ) 
+        if ( hostIterator()->neighbor() ) 
         { 
-          if ( filter().interiorIntersection( *asBase() ) )
+          if ( filter().interiorIntersection( *hostIterator() ) )
           {
             nInfo_.boundary_   = false;
             nInfo_.boundaryId_ = 0;
@@ -411,16 +420,16 @@ namespace Dune
           else 
           {
             // otherwise get boundary information from filter 
-            nInfo_.boundary_   = filter().intersectionBoundary( *asBase() );
-            nInfo_.boundaryId_ = filter().intersectionBoundaryId( *asBase() );
-            nInfo_.neighbor_   = filter().intersectionNeighbor( *asBase() );
+            nInfo_.boundary_   = filter().intersectionBoundary( *hostIterator() );
+            nInfo_.boundaryId_ = filter().intersectionBoundaryId( *hostIterator() );
+            nInfo_.neighbor_   = filter().intersectionNeighbor( *hostIterator() );
           }
         }
         else 
         {
           // for real boundary get boundary from filter 
           nInfo_.boundary_   = true;
-          nInfo_.boundaryId_ = filter().intersectionBoundaryId( *asBase() );
+          nInfo_.boundaryId_ = filter().intersectionBoundaryId( *hostIterator() );
           nInfo_.neighbor_   = false;
         }    
       }
@@ -430,9 +439,9 @@ namespace Dune
       //! \brief constructor 
       FilteredGridPartIntersectionIterator( const GridPartType & gridPart, 
                                             const HostIteratorType & hostIterator )
-      : HostIteratorType( hostIterator ),
-        nInfo_(),
-        gridPart_( gridPart )
+      : gridPart_( gridPart ),
+        hostIterator_( hostIterator ),
+        nInfo_()
       {
         if( !done() )
           writeNeighborInfo();
@@ -440,35 +449,34 @@ namespace Dune
         
       //! \brief copy constructor 
       FilteredGridPartIntersectionIterator( const ThisType & other )
-      : HostIteratorType( other ),
-        nInfo_( other.nInfo_ ),
-        gridPart_( other.gridPart_ )
+      : gridPart_( other.gridPart_ ), 
+        hostIterator_( other.hostIterator_ ),
+        nInfo_( other.nInfo_ )
       { }
         
       //! \brief assignment operator 
       FilteredGridPartIntersectionIterator & operator = ( const ThisType & other ) 
       {
-        HostIteratorType::operator = ( other );
-        nInfo_    = other.nInfo_; 
         gridPart_ = other.gridPart_;
+        hostIterator_ = other.hostIterator_;
+        nInfo_    = other.nInfo_; 
         return *this;
       }
         
       //! \brief increment intersection iterator 
-      inline FilteredGridPartIntersectionIterator & operator++()
+      FilteredGridPartIntersectionIterator & operator++()
       { 
         assert( !done() );
-        asBase().operator++();
-        if( done() ) 
-          return *this; 
-        writeNeighborInfo();
+        ++hostIterator_;
+        if( !done() ) 
+          writeNeighborInfo();
         return *this;
       }
 
       //! \brief check for equality 
       bool operator== ( const FilteredGridPartIntersectionIterator & other ) const
       {
-        return asBase().operator==( other.asBase() );
+        return hostIterator_.operator==( other.hostIterator_ );
       }
 
       //! \brief check for inequality 
@@ -498,89 +506,89 @@ namespace Dune
       //! \brief return inside entity
       EntityPointer inside () const
       {
-        return asBase()->inside();
+        return hostIterator()->inside();
       }
 
       //! \brief return outside entity
       EntityPointer outside () const
       {
-        return asBase()->outside();
+        return hostIterator()->outside();
       }
 
       //! \brief 
       bool conforming () const
       {
-        return asBase()->conforming();
+        return hostIterator()->conforming();
       }
 
       //! \brief return inside entity
       const LocalGeometry &geometryInInside () const
       {
-        return asBase()->geometryInInside();
+        return hostIterator()->geometryInInside();
       }
 
       //! \brief return inside entity
       const LocalGeometry &geometryInOutside () const
       {
-        return asBase()->geometryInOutside();
+        return hostIterator()->geometryInOutside();
       }
 
       //! \brief return inside entity
       const Geometry &geometry () const
       {
-        return asBase()->geometry();
+        return hostIterator()->geometry();
       }
 
       //! \brief return inside entity
       GeometryType type () const
       {
-        return asBase()->type();
+        return hostIterator()->type();
       }
 
       //! \brief return inside entity
       int indexInInside () const
       {
-        return asBase()->indexInInside();
+        return hostIterator()->indexInInside();
       }
 
       //! \brief return inside entity
       int indexInOutside () const
       {
-        return asBase()->indexInOutside();
+        return hostIterator()->indexInOutside();
       }
 
       //! \brief return inside entity
       GlobalCoordinate outerNormal ( const LocalCoordinate & local ) const
       {
-        return asBase()->outerNormal( local );
+        return hostIterator()->outerNormal( local );
       }
 
       //! \brief return inside entity
       GlobalCoordinate integrationOuterNormal ( const LocalCoordinate & local ) const
       {
-        return asBase()->integrationOuterNormal( local );
+        return hostIterator()->integrationOuterNormal( local );
       }
 
       //! \brief return inside entity
       GlobalCoordinate unitOuterNormal( const LocalCoordinate & local ) const
       {
-        return asBase()->unitOuterNormal( local );
+        return hostIterator()->unitOuterNormal( local );
       }
 
       //! \brief return inside entity
       GlobalCoordinate centerUnitOuterNormal( ) const
       {
-        return asBase()->centerUnitOuterNormal( );
+        return hostIterator()->centerUnitOuterNormal( );
       }
 
       //! \brief type of Intersection 
       typedef ThisType Intersection;
 
       //! \brief dereference operator 
-      inline const Intersection& operator *() const { return *this; }
+      const Intersection& operator *() const { return *this; }
 
       //! \brief de-pointer operator 
-      inline const Intersection* operator ->() const { return this; }
+      const Intersection* operator ->() const { return this; }
 
     private:
       const GridPartType & gridPart () const
@@ -590,19 +598,19 @@ namespace Dune
 
       bool done () const
       {
-        return asBase().operator == ( gridPart().hostGridPart().iend( *inside() ) );
+        return hostIterator_.operator == ( gridPart().hostGridPart().iend( *inside() ) );
       }
 
       // return reference to base class 
-      inline HostIteratorType & asBase() 
+      HostIteratorType & hostIterator () 
       { 
-        return static_cast< HostIteratorType & >( *this ); 
+        return hostIterator_;
       }
 
       // return reference to base class 
-      inline const HostIteratorType & asBase () const
+      const HostIteratorType & hostIterator () const
       {
-        return static_cast< const HostIteratorType & >( *this );
+        return hostIterator_;
       }
 
       const FilterType & filter () const
@@ -611,6 +619,8 @@ namespace Dune
       }
       
       const GridPartType & gridPart_;
+      HostIteratorType hostIterator_;
+      NeighborInfo nInfo_;
 
     }; // end FilteredGridPartIntersectionIterator
 
@@ -628,7 +638,7 @@ namespace Dune
       }
 
       template < class IndexSetPtr >
-      static inline const IndexSetType & 
+      static const IndexSetType & 
       indexSet ( const HostGridPart & gridPart, const IndexSetPtr * idxSetPtr )
       {
         assert( idxSetPtr );
@@ -648,7 +658,7 @@ namespace Dune
       }
 
       template < class IndexSetPtr >
-      static inline const IndexSetType & 
+      static const IndexSetType & 
       indexSet ( const HostGridPart & gridPart, const IndexSetPtr * )
       {
         return gridPart.indexSet();
@@ -869,13 +879,13 @@ namespace Dune
       }
 
       //! \brief ibegin of corresponding intersection iterator for given entity
-      inline IntersectionIteratorType ibegin ( const EntityType & entity ) const 
+      IntersectionIteratorType ibegin ( const EntityType & entity ) const 
       {
         return typename ThisType::IntersectionIteratorType( *this, hostGridPart().ibegin( entity ) );
       }
       
       //! \brief iend of corresponding intersection iterator for given entity
-      inline IntersectionIteratorType iend ( const EntityType & entity ) const 
+      IntersectionIteratorType iend ( const EntityType & entity ) const 
       {
         return typename ThisType::IntersectionIteratorType( *this, hostGridPart().iend( entity ) );
       }
