@@ -25,15 +25,16 @@ namespace Dune
     // forward declarations
     // --------------------
 
-    template < class, class > struct DefaultFilterTraits;
+    template< class > struct DefaultFilterTraits;
     template< class > class FilterInterface;
     template< class > class FilterDefaultImplementation;
-    template< class, bool > struct FilteredGridPartTraits;
+    template< class, class, bool > struct FilteredGridPartTraits;
+    template< class, class > class BasicFilterWrapper;
 
     // filtered grid part
     // ------------------
 
-    template< class FilterImp, bool useFilteredIndexSet = false >
+    template< class HostGridPartImp, class FilterImp, bool useFilteredIndexSet = false >
     class FilteredGridPart;
 
 
@@ -41,23 +42,21 @@ namespace Dune
     // -------------------
 
     //! \brief type definitions 
-    template < class FilterImp, class GridPartImp >
+    template < class FilterImp >
     struct DefaultFilterTraits 
     {
       //! \brief filter type
       typedef FilterImp FilterType;
 
-      //! \brief grid part type
-      typedef GridPartImp GridPartType; 
-
+      //! \brief entity types
       template < int cd >
       struct Codim 
       {
-        //! \brief entity type
-        typedef typename GridPartType::template Codim< cd >::EntityType EntityType;
+        //! \brief entity type for given codimension
+        typedef typename FilterType::template Codim< cd >::EntityType EntityType;
       };
 
-      //! \brief entity type for codim 0 
+      //! \brief entity type for codimension 0 
       typedef typename Codim< 0 >::EntityType EntityType;   
 
     }; // end DefaultFilterTraits
@@ -77,17 +76,17 @@ namespace Dune
 
       friend class FilterDefaultImplementation< FilterTraits >;
 
+      typedef FilterTraits Traits;
+
     public:
-      //! \brief Type of the filter implementation
-      typedef typename FilterTraits :: FilterType FilterType;
+      //! \brief type of the filter implementation
+      typedef typename Traits :: FilterType FilterType;
 
-      //! \brief type of original grid part 
-      typedef typename FilterTraits :: GridPartType GridPartType;
-
+      //! \brief entity types
       template< int cd >
       struct Codim
       {
-        typedef typename FilterTraits::template Codim< cd >::EntityType EntityType;
+        typedef typename Traits::template Codim< cd >::EntityType EntityType;
       };
 
       //! \brief type of entity with codim=0
@@ -150,12 +149,6 @@ namespace Dune
         return asImp().intersectionNeighbor( intersection );
       }
 
-      //! \brief return object instance of filter for object creation  
-      static FilterType createObject( const GridPartType &gridPart )
-      {
-        return FilterType :: createObject( gridPart );
-      }
-
     protected:
       FilterType &asImp ()
       {
@@ -182,13 +175,12 @@ namespace Dune
     public:
       //! \brief type of the filter implementation
       typedef typename BaseType::FilterType FilterType;
-
-      //! \brief type of original grid part 
-      typedef typename BaseType::GridPartType GridPartType;
-     
+   
+      //! \brief entity types
       template< int cd >
       struct Codim
       {
+        //! \brief type of codim cd
         typedef typename BaseType::template Codim< cd >::EntityType EntityType;
       };
 
@@ -196,10 +188,10 @@ namespace Dune
       typedef typename BaseType::EntityType EntityType;
        
     protected:
+      using BaseType::asImp;
+
       // constructor
       FilterDefaultImplementation () { }
-
-      using BaseType :: asImp;
 
       // copy constructor
       FilterDefaultImplementation ( const ThisType & );
@@ -214,17 +206,11 @@ namespace Dune
       template< class Intersection >
       bool interiorIntersection( const Intersection &intersection ) const
       {
-        typedef typename GridPartType::GridType::template Codim< 0 >::EntityPointer EntityPointerType;
+        typedef typename Intersection::EntityPointer EntityPointerType;
         const EntityPointerType outside = intersection.outside();
         return asImp().contains( *outside );
       }
-
-      //! \brief default createObject method calling FilterType( gridPart )
-      static FilterType createObject( const GridPartType & gridPart )
-      {
-        return FilterType( gridPart );
-      }
-     
+    
       //! \brief returns true if the given entity of the pointer in the domain 
       template< int cd >
       bool contains ( const typename Codim< cd >::EntityType & ) const;
@@ -242,6 +228,136 @@ namespace Dune
       bool intersectionNeighbor ( const Intersection & ) const;
     };
 
+
+    template< class GridPartImp, class BasicFilterImp >
+    struct BasicFilterWrapperTraits
+    {
+      //! \brief grid part type
+      typedef GridPartImp GridPartType;
+
+      //! \brief export basic filter type
+      typedef BasicFilterImp BasicFilterType;
+
+      //! \brief filter type
+      typedef BasicFilterWrapper< GridPartType, BasicFilterType > FilterType;
+
+      //! \brief entity types
+      template < int cd >
+      struct Codim 
+      {
+        //! \brief entity type for given codimension
+        typedef typename GridPartType::template Codim< cd >::EntityType EntityType;
+      };
+
+      //! \brief entity type for codimension 0 
+      typedef typename Codim< 0 >::EntityType EntityType;   
+    };
+
+    // BasicFilterWrapper
+    // ------------------
+
+    template< class GridPartImp, class BasicFilterImp >
+    class BasicFilterWrapper
+    : public FilterDefaultImplementation< BasicFilterWrapperTraits< GridPartImp, BasicFilterImp > >
+    {
+      // basic filter type
+      typedef BasicFilterImp BasicFilterType;
+
+      // type of grid part 
+      typedef GridPartImp GridPartType;
+ 
+      // type of traits
+      typedef BasicFilterWrapperTraits< GridPartType, BasicFilterType > Traits;
+
+      // this type 
+      typedef BasicFilterWrapper< GridPartType, BasicFilterType > ThisType;
+      
+      // base type
+      typedef FilterDefaultImplementation< Traits > BaseType;
+
+    public:
+      //! \brief type of the filter implementation
+      typedef typename Traits::FilterType FilterType;
+    
+      template< int cd >
+      struct Codim
+      {
+        typedef typename Traits::template Codim< cd >::EntityType EntityType;
+      };
+
+      //! \brief type of codim 0 entity 
+      typedef typename Traits::EntityType EntityType;
+       
+      using BaseType::contains;
+
+      // constructor
+      BasicFilterWrapper ( const GridPartType & gridPart, const BasicFilterType & filter = BasicFilterType() ) 
+      : gridPart_( gridPart ),
+        filter_( filter )
+      { }
+
+      // copy constructor
+      BasicFilterWrapper ( const ThisType & other )
+      : gridPart_( other.gridPart_ ),
+        filter_( other.filter_ )
+      { }
+
+      // assignment operator 
+      ThisType & operator= ( const ThisType & other )
+      {
+        gridPart_ = other.gridPart_;
+        filter_ = other.filter_;
+      }
+
+      //! \brief default implementation returns contains from neighbor
+      template< class Intersection >
+      bool interiorIntersection( const Intersection &intersection ) const
+      {
+        typedef typename GridPartType::GridType::template Codim< 0 >::EntityPointer EntityPointerType;
+        const EntityPointerType outside = intersection.outside();
+        return contains( *outside );
+      }
+    
+      //! \brief returns true if the given entity of the pointer in the domain 
+      template< int cd >
+      bool contains ( const typename Codim< cd >::EntityType & entity ) const
+      {
+        return filter().contains( entity );
+      }
+
+      //! \brief returns true if an intersection is a boundary intersection 
+      template< class Intersection >
+      bool intersectionBoundary( const Intersection & intersection ) const
+      {
+        return filter().intersectionBoundary( intersection );
+      }
+     
+      //! \brief returns the boundary id for an intersection 
+      template< class Intersection >
+      int intersectionBoundaryId ( const Intersection & intersection ) const
+      {
+        return filter().intersectionBoundaryId( intersection );
+      }
+
+      //! \brief returns true if for an intersection a neighbor exsits 
+      template< class Intersection >
+      bool intersectionNeighbor ( const Intersection & intersection ) const
+      {
+        return filter().intersectionNeighbor( intersection );
+      }
+
+    private:
+      const BasicFilterType & filter () const
+      {
+        return filter_;
+      }
+
+      const GridPartType & gridPart_;
+      BasicFilterType filter_;
+
+    };
+
+    
     // FilteredGridPartIterator
     // ------------------------
 
@@ -669,14 +785,14 @@ namespace Dune
     // FilteredGridPartTraits
     // ----------------------
 
-    template< class FilterImp, bool useFilteredIndexSet >
+    template< class HostGridPartImp, class FilterImp, bool useFilteredIndexSet >
     struct FilteredGridPartTraits
     {
       //! \brief type of grid part
-      typedef FilteredGridPart< FilterImp, useFilteredIndexSet > GridPartType;
+      typedef FilteredGridPart< HostGridPartImp, FilterImp, useFilteredIndexSet > GridPartType;
 
       //! \brief grid part imp
-      typedef typename FilterImp::GridPartType HostGridPartType;
+      typedef HostGridPartImp HostGridPartType;
 
       //! \brief type of grid
       typedef typename HostGridPartType::GridType GridType;
@@ -747,20 +863,23 @@ namespace Dune
     **/ 
 
 
-    template< class FilterImp, bool useFilteredIndexSet > 
+    template< class HostGridPartImp, class FilterImp, bool useFilteredIndexSet > 
     class FilteredGridPart
-    : public GridPartInterface< FilteredGridPartTraits< FilterImp, useFilteredIndexSet > > 
+    : public GridPartInterface< FilteredGridPartTraits< HostGridPartImp, FilterImp, useFilteredIndexSet > > 
     {
       // type of this
-      typedef FilteredGridPart< FilterImp, useFilteredIndexSet > ThisType;
+      typedef FilteredGridPart< HostGridPartImp, FilterImp, useFilteredIndexSet > ThisType;
 
     public:
       //- Public typedefs and enums    
       //! \brief traits class
-      typedef FilteredGridPartTraits< FilterImp, useFilteredIndexSet > Traits;
+      typedef FilteredGridPartTraits< HostGridPartImp, FilterImp, useFilteredIndexSet > Traits;
       
       //! \brief type of filter
       typedef FilterImp FilterType;
+
+      // type of host grid part
+      typedef typename Traits::HostGridPartType HostGridPartType;
 
       //! \brief grid type
       typedef typename Traits::GridType GridType;
@@ -789,9 +908,6 @@ namespace Dune
         typedef typename Partition< InteriorBorder_Partition > :: IteratorType IteratorType;
         typedef typename GridType::template Codim< codim >::Entity EntityType;
       };
-
-      // type of host grid part
-      typedef typename Traits::HostGridPartType HostGridPartType;
 
     private:
       typedef typename Traits::IndexSetSelectorType IndexSetSelectorType;

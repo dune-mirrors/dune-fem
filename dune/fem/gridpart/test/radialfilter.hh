@@ -12,8 +12,7 @@ namespace Dune
     // forward declarations
     // --------------------
 
-    template < class, class > struct DefaultFilterTraits;
-    template< class > class FilterDefaultImplementation;
+    template< class > struct DefaultFilterTraits;
 
     // RadialFilter
     // ------------
@@ -23,34 +22,25 @@ namespace Dune
      */
     template < class GridPartType >
     class RadialFilter
-    : public FilterDefaultImplementation< DefaultFilterTraits< RadialFilter< GridPartType >, GridPartType > >
     {
-      // type of this
-      typedef RadialFilter< GridPartType > ThisType;
-
-      // traits
-      typedef DefaultFilterTraits< RadialFilter< GridPartType >, GridPartType > Traits;
-
-      // base type
-      typedef FilterDefaultImplementation< Traits > BaseType;
-
-      // geometry type
-      typedef typename BaseType::EntityType::Geometry GeometryType;
-
     public:
-      using BaseType::contains;
-
       template< int cd >
       struct Codim
       {
-        typedef typename BaseType::template Codim< cd >::EntityType EntityType;
+        typedef typename GridPartType::template Codim< cd >::EntityType EntityType;
       };
       
       //! \brief type of entity
-      typedef typename BaseType::EntityType EntityType;
+      typedef typename Codim< 0 >::EntityType EntityType;
+
+      //! \brief geometry type
+      typedef typename EntityType::Geometry GeometryType;
 
       //! \brief coordinate type
       typedef typename GeometryType::GlobalCoordinate GlobalCoordinateType;
+
+      // traits
+      typedef DefaultFilterTraits< RadialFilter< GridPartType > > Traits;
 
       //! \brief constructor
       RadialFilter( const GlobalCoordinateType & center, 
@@ -61,13 +51,20 @@ namespace Dune
 
       //! \brief check whether barycenter is inside of circle 
       template< int cc >
-      inline bool contains ( const EntityType & e ) const 
+      bool contains ( const EntityType & e ) const 
       {
         if( cc != 0 )
           DUNE_THROW( InvalidStateException, "RadialFilter::contains only available for codim 0 entities" );
         const GeometryType & geometry = e.geometry();
         double dist = (geometry.center() - center_).two_norm();
         return (dist <= radius_);
+      }
+
+      template< class Entity >
+      bool contains ( const Entity & entity ) const
+      {
+        static const int cc = Entity::codimension;
+        return contains< cc >( entity );
       }
       
       //! \brief return what boundary id we have in case of boundary intersection 
@@ -91,15 +88,6 @@ namespace Dune
       inline bool intersectionNeighbor( const IntersectionIteratorType & it ) const
       {
         return true;
-      }
-
-      //! \brief create default radial filter 
-      static ThisType createObject( const GridPartType & gridPart )
-      {
-        std::cerr << "Warning, creating default readial filter! " << std::endl;
-        GlobalCoordinateType  center( 0 );
-        double radius = 0.5;
-        return ThisType( center, radius );
       }
 
     private:
