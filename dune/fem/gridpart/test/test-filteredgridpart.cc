@@ -32,10 +32,28 @@ void testGridPart( const GridPartType & gridPart )
   std::cout << "entities in index set: " << indexSet.size( 0 ) << std::endl;
 }
 
+template< int codim, class GridPartType >
+void testSubEntities( const GridPartType & gridPart )
+{
+  int count = 0;
+  typedef typename GridPartType::template Codim< codim >::IteratorType IteratorType;
+  const IteratorType end = gridPart.template end< codim >();
+  for( IteratorType it = gridPart.template begin< codim >(); it != end; ++it )
+    ++count;
+
+  std::cout << "codim " << codim << " subentities visited: " << count << std::endl;
+
+  typedef typename GridPartType::IndexSetType IndexSetType;
+  const IndexSetType & indexSet = gridPart.indexSet();
+  std::cout << "entities in index set: " << indexSet.size( codim ) << std::endl;
+
+}
+
 
 typedef Dune::GridSelector::GridType GridType;
 typedef Dune::DGAdaptiveLeafGridPart< GridType > HostGridPartType;
-typedef Dune::Fem::RadialFilter< HostGridPartType > FilterType;
+typedef Dune::Fem::RadialFilter< GridType::ctype, GridType::dimensionworld > BasicFilterType;
+typedef Dune::Fem::BasicFilterWrapper< HostGridPartType, BasicFilterType > FilterType;
 typedef Dune::Fem::FilteredGridPart< HostGridPartType, FilterType, true > GridPartType;
 
 int main ( int argc, char ** argv )
@@ -52,12 +70,14 @@ int main ( int argc, char ** argv )
 
     // crete grid part
     HostGridPartType hostGridPart( grid );
-    FilterType::GlobalCoordinateType center( 0 );
-    FilterType filter( center, .25 );
+    BasicFilterType::GlobalCoordinateType center( 0 );
+    BasicFilterType basicFilter( center, .25 );
+    FilterType filter( hostGridPart, basicFilter );
     GridPartType gridPart( hostGridPart, filter );
 
     // run test
     testGridPart( gridPart );
+    testSubEntities< GridType::dimension >( gridPart );
 
   } catch (Dune::Exception &e) {
     std::cerr << e << std::endl;

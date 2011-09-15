@@ -1,18 +1,13 @@
 #ifndef DUNE_FEM_GRIDPART_TEST_RADIALFILTER_HH
 #define DUNE_FEM_GRIDPART_TEST_RADIALFILTER_HH
 
-// dune-fem includes
-#include <dune/fem/gridpart/filteredgridpart.hh>
+// dune-common includes
+#include <dune/common/fvector.hh>
 
 namespace Dune
 {
   namespace Fem
   {
-
-    // forward declarations
-    // --------------------
-
-    template< class > struct DefaultFilterTraits;
 
     // RadialFilter
     // ------------
@@ -20,51 +15,35 @@ namespace Dune
     /**! \brief example implementation; given center x and radius r, 
      *          filter is characteristic function of clos B_r( x )
      */
-    template < class GridPartType >
+    template < typename ct, int dimw >
     class RadialFilter
     {
     public:
-      template< int cd >
-      struct Codim
-      {
-        typedef typename GridPartType::template Codim< cd >::EntityType EntityType;
-      };
-      
-      //! \brief type of entity
-      typedef typename Codim< 0 >::EntityType EntityType;
+      //! \brief export template parameter
+      typedef ct ctype;
 
-      //! \brief geometry type
-      typedef typename EntityType::Geometry GeometryType;
+      //! \brief export dimension
+      static const int dimensionworld = dimw;
 
       //! \brief coordinate type
-      typedef typename GeometryType::GlobalCoordinate GlobalCoordinateType;
-
-      // traits
-      typedef DefaultFilterTraits< RadialFilter< GridPartType > > Traits;
+      typedef Dune::FieldVector< ct, dimw > GlobalCoordinateType; 
 
       //! \brief constructor
       RadialFilter( const GlobalCoordinateType & center, 
-                    const double radius ) 
+                    const ctype radius ) 
       : center_( center ),
         radius_( radius )
       { }
 
-      //! \brief check whether barycenter is inside of circle 
-      template< int cc >
-      bool contains ( const EntityType & e ) const 
-      {
-        if( cc != 0 )
-          DUNE_THROW( InvalidStateException, "RadialFilter::contains only available for codim 0 entities" );
-        const GeometryType & geometry = e.geometry();
-        double dist = (geometry.center() - center_).two_norm();
-        return (dist <= radius_);
-      }
-
+      //! \brief check whether entity center is inside of circle 
       template< class Entity >
       bool contains ( const Entity & entity ) const
       {
         static const int cc = Entity::codimension;
-        return contains< cc >( entity );
+        if( cc != 0 )
+          DUNE_THROW( InvalidStateException, "RadialFilter::contains only available for codim 0 entities" );
+        ctype dist = (entity.geometry().center() - center_).two_norm();
+        return (dist <= radius_);
       }
       
       //! \brief return what boundary id we have in case of boundary intersection 
@@ -92,7 +71,7 @@ namespace Dune
 
     private:
       const GlobalCoordinateType center_;
-      const double radius_;
+      const ctype radius_;
 
     }; // end RadialFilter
 

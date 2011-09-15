@@ -2,19 +2,17 @@
 #define DUNE_FEM_GRIDPART_FILTEREDGRIDPART_HH
 
 //- system includes
-#include <vector>
-#include <cassert>
 #include <algorithm>
+#include <cassert>
+#include <vector>
 
 //- dune-common includes 
 #include <dune/common/bartonnackmanifcheck.hh>
-#include <dune/common/typetraits.hh>
 
-// dune-grid includes
+//- dune-grid includes
 #include <dune/grid/common/datahandleif.hh>
-#include <dune/grid/utility/grapedataioformattypes.hh>
 
-// dune-fem includes
+//- dune-fem includes
 #include <dune/fem/gridpart/gridpart.hh>
 #include <dune/fem/gridpart/adaptiveleafindexset.hh>
 
@@ -278,12 +276,36 @@ namespace Dune
 
       static const int dimension = GridPartType::GridType::dimension;
 
-      static const int nCodim = dimension;
+      static const int nCodim = dimension+1;
 
-      template< int codim, PartitionIteratorType pitype, class GridPart, class BasicFilter >
-      struct UpdateContains
+      template< int codim, class GridPart, class BasicFilter >
+      struct Contains
       {
-        static inline void update ( const GridPart & gridPart, const BasicFilter & filter, std::vector< bool > & contains )
+        // entity type
+        typedef typename ThisType::template Codim< codim >::EntityType EntityType;
+
+        // return true, if entity is contained in filtered gridpart
+        static inline bool value ( const EntityType & entity, 
+                                   const GridPart & gridPart, 
+                                   const BasicFilter & filter, 
+                                   std::vector< bool > & contains )
+        {
+          if( contains.size() != size_t(gridPart.indexSet().size(codim)) )
+            update< All_Partition >( gridPart, filter, contains );
+
+          // get index of entity
+          typedef typename GridPartType::IndexSetType IndexSetType;
+          const IndexSetType & indexSet = gridPart.indexSet();
+          size_t index = size_t( indexSet.index( entity ) );
+
+          return contains[ index ];          
+        }
+
+        // update vector
+        template< PartitionIteratorType pitype >
+        static inline void update ( const GridPart & gridPart, 
+                                    const BasicFilter & filter, 
+                                    std::vector< bool > & contains )
         {
           // type of index set
           typedef typename GridPartType::IndexSetType IndexSetType;
@@ -295,52 +317,43 @@ namespace Dune
           contains.resize( indexSet.size( codim ) );
 
           // fill vector
-          typedef typename std::vector< bool >::iterator iterator_type;
-          iterator_type vit = contains.begin();
-          const iterator_type vend = contains.end();
-          std::fill( vit, vend, false );
+          std::fill( contains.begin(), contains.end(), false );
 
-          // traverse grid
+         // codim 0 iterator type
           typedef typename GridPart::template Codim< 0 >::template Partition< pitype >::IteratorType IteratorType;
+
+         // traverse grid
           IteratorType it = gridPart.template begin< 0, pitype >();
           const IteratorType end = gridPart.template end< 0, pitype >();
           for( ; it != end; ++it )
           {
-            if( !filter.contains( *it ) )
-              continue;
             const typename IteratorType::Entity & entity = *it;
+
+            // continue, if codim 0 entity is not contained in filtered grid part
+            if( !filter.contains( entity ) )
+              continue;
+
             const int count = entity.template count< codim >();
             for( int i = 0; i < count; ++i )
             {
-              size_t subIndex = size_t( indexSet.subIndex( entity, i , codim ));
+              size_t subIndex = size_t( indexSet.subIndex( entity, i , codim ) );
               contains[ subIndex ] = true;
             }
           }
         }
       };
 
-      template< int codim, class GridPart, class BasicFilter >
-      struct Contains
-      {
-        typedef typename ThisType::template Codim< codim >::EntityType EntityType;
-
-        static inline bool value ( const EntityType & entity, const GridPart & gridPart, const BasicFilter & filter, std::vector< bool > & contains )
-        {
-          if( contains.empty() )
-            UpdateContains< codim, All_Partition, GridPart, BasicFilter >::update( gridPart, filter, contains );
-          typedef typename GridPartType::IndexSetType IndexSetType;
-          const IndexSetType & indexSet = gridPart.indexSet();
-          size_t index = size_t( indexSet.index( entity ) );
-          return contains[ index ];          
-        }
-      };
-
       template< class GridPart, class BasicFilter >
       struct Contains< 0, GridPart, BasicFilter >
       {
+        // entity type
         typedef typename ThisType::template Codim< 0 >::EntityType EntityType;
 
-        static inline bool value ( const EntityType & entity, const GridPart & gridPart, const BasicFilter & filter, std::vector< bool > & contains )
+        // call BasicFilter::contains()
+        static inline bool value ( const EntityType & entity, 
+                                   const GridPart &, 
+                                   const BasicFilter & filter, 
+                                   std::vector< bool > & )
         {
           return filter.contains( entity ); 
         }
@@ -359,13 +372,13 @@ namespace Dune
       //! \brief type of codim 0 entity 
       typedef typename Traits::EntityType EntityType;
        
-      // constructor
+      //! \brief constructor
       BasicFilterWrapper ( const GridPartType & gridPart, const BasicFilterType & filter = BasicFilterType() ) 
       : gridPart_( gridPart ),
         filter_( filter )
       { }
 
-      // copy constructor
+      //! \brief copy constructor
       BasicFilterWrapper ( const ThisType & other )
       : gridPart_( other.gridPart_ ),
         filter_( other.filter_ )
@@ -373,7 +386,7 @@ namespace Dune
         reset();
       }
 
-      // assignment operator 
+      //! \brief assignment operator 
       ThisType & operator= ( const ThisType & other )
       {
         gridPart_ = other.gridPart_;
@@ -427,17 +440,18 @@ namespace Dune
         return filter().intersectionNeighbor( intersection );
       }
 
-    private:
-      const BasicFilterType & filter () const
-      {
-        return filter_;
-      }
-
-      // reset cached values
+      //! \brief reset cached values
       void reset ()
       {
         for( int codim = 0; codim < nCodim; ++codim )
           contains_[ codim ].clear();
+      }
+
+    private:
+      // reference to basic filter
+      const BasicFilterType & filter () const
+      {
+        return filter_;
       }
 
       const GridPartType & gridPart_;
@@ -936,12 +950,13 @@ namespace Dune
     // FilteredGridPart
     //
     /** @addtogroup FilterGridPart 
-     A FilteredGridPart is a subset of a GridPart and a GridPart itself 
-     (without iterators for codim \f$\neq\f$ 0). 
-     The codim 0 entities that belong to the FilteredGrid are defined by a 
-     filter class. On a codim 0 entitiy there is a method 
-       hasBoundaryIntersection().
-     This method will not work correctly since the entity is not wrapped. 
+     A FilteredGridPart is a subset of a GridPart and a GridPart itself. 
+     The entities that belong to the FilteredGrid are defined by a 
+     filter class. 
+     
+     Note that codim 0 entities have a method hasBoundaryIntersection().
+     In general, this method will be inconsistent with the intersections
+     returned by the filtered gridpart since entities are not wrapped. 
     **/
 
     /** @ingroup FilterGridPart
