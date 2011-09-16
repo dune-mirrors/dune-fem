@@ -9,6 +9,17 @@ namespace Dune {
 template <class VectorType, class ConvertToType> 
 class FieldMatrixConverter;
 
+template <class VectorType, class ConvertToType> 
+struct DenseMatVecTraits< FieldMatrixConverter<VectorType,ConvertToType> >
+{
+  typedef FieldMatrixConverter<VectorType,ConvertToType> derived_type;
+  typedef DenseMatVecTraits< ConvertToType > Traits;
+  typedef typename Traits::container_type container_type;
+  typedef typename Traits::value_type value_type;
+  typedef typename Traits::size_type size_type;
+  typedef typename Traits::row_type row_type;
+};
+
 template< class K, int m > class FieldMatrixConverterRow;
 template< class K, int m >
 struct DenseMatVecTraits< FieldMatrixConverterRow<K,m> >
@@ -62,10 +73,10 @@ public:
 };
 
 
-
 //! convert a FieldVector with length n * m to a FieldMatrix with n rows and m cols 
 template <typename K, int n, int m> 
-class FieldMatrixConverter<FieldVector<K ,n * m> , FieldMatrix<K ,n, m> >
+class FieldMatrixConverter<FieldVector<K ,n * m> , FieldMatrix<K ,n, m> > 
+  : public DenseMatrix< FieldMatrixConverter<FieldVector<K ,n * m> , FieldMatrix<K ,n, m> > >
 {
 public:
   //! internal storage of matrix 
