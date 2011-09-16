@@ -845,19 +845,19 @@ namespace Dune
     // FilteredGridPartIndexSetSelector
     // --------------------------------
 
-    template < class HostGridPart, bool useFilteredIndexSet > 
+    template < class FilteredGP, class HostGP, bool useFilteredIndexSet > 
     struct FilteredGridPartIndexSetSelector
     {
-      typedef AdaptiveLeafIndexSet< HostGridPart > IndexSetType;
+      typedef AdaptiveLeafIndexSet< FilteredGP > IndexSetType;
 
-      static IndexSetType* create (const HostGridPart & gridPart) 
+      static IndexSetType* create(const FilteredGP& gridPart) 
       {
         return new IndexSetType( gridPart );
       }
 
       template < class IndexSetPtr >
       static const IndexSetType & 
-      indexSet ( const HostGridPart & gridPart, const IndexSetPtr * idxSetPtr )
+      indexSet ( const FilteredGP & gridPart, const IndexSetPtr * idxSetPtr )
       {
         assert( idxSetPtr );
         return *idxSetPtr;
@@ -865,21 +865,21 @@ namespace Dune
     };
 
     //! \brief when index set from gridpartimp is used return 0 
-    template< class HostGridPart >
-    struct FilteredGridPartIndexSetSelector< HostGridPart, false >
+    template< class FilteredGP, class HostGP >
+    struct FilteredGridPartIndexSetSelector< FilteredGP, HostGP, false >
     {
-      typedef typename HostGridPart::IndexSetType IndexSetType;
+      typedef typename HostGP::IndexSetType IndexSetType;
 
-      static IndexSetType* create ( const HostGridPart & ) 
+      static IndexSetType* create(const FilteredGP& gridPart) 
       {
         return 0;
       }
 
       template < class IndexSetPtr >
       static const IndexSetType & 
-      indexSet ( const HostGridPart & gridPart, const IndexSetPtr * )
+      indexSet ( const FilteredGP & gridPart, const IndexSetPtr * )
       {
-        return gridPart.indexSet();
+        return gridPart.hostGridPart().indexSet();
       }
     };
 
@@ -906,7 +906,7 @@ namespace Dune
       typedef typename FilterType::EntityType EntityType;
 
       //! \brief index set use in this gridpart 
-      typedef FilteredGridPartIndexSetSelector< HostGridPartType, useFilteredIndexSet > IndexSetSelectorType;
+      typedef FilteredGridPartIndexSetSelector< GridPartType, HostGridPartType, useFilteredIndexSet > IndexSetSelectorType;
 
       //! \brief index set use in this gridpart 
       typedef typename IndexSetSelectorType::IndexSetType IndexSetType;
@@ -1025,13 +1025,13 @@ namespace Dune
         filter_( filter ),
         indexSetPtr_( 0 )
       {
-        indexSetPtr_ = IndexSetSelectorType::create( hostGridPart_ );
+        indexSetPtr_ = IndexSetSelectorType::create( *this );
       }
 
       //! \brief destructor 
       ~FilteredGridPart ()
       {
-         if( indexSetPtr_ )
+        if(  indexSetPtr_ )
           delete indexSetPtr_; 
       }
 
@@ -1039,7 +1039,7 @@ namespace Dune
       FilteredGridPart ( const FilteredGridPart & other )
       : hostGridPart_( other.hostGridPart_ ), 
         filter_( other.filter_ ),
-        indexSetPtr_( IndexSetSelectorType::create( hostGridPart_ ) )
+        indexSetPtr_ ( IndexSetSelectorType::create( *this ) )
       { }
 
       //! \brief return const reference to underlying grid
@@ -1058,7 +1058,7 @@ namespace Dune
       //         if IndexSetType is from host grid part the original index set is returned 
       const IndexSetType & indexSet() const 
       {
-        return IndexSetSelectorType::indexSet( hostGridPart(), indexSetPtr_ );
+        return IndexSetSelectorType::indexSet( *this, indexSetPtr_ );
       } 
  
       //! \brief Begin iterator on the leaf level
