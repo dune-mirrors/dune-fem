@@ -70,7 +70,7 @@ namespace Dune
       static void apply ( const ThisType &indexSet, const GeometryType &type, int &count )
       {
         if( type.dim() == dimension - codim )
-          count = indexSet.template countElements< codim >( type );
+          count = indexSet.template countElements< codim >( type, integral_constant<bool,true>() );
       }
     };
 
@@ -80,7 +80,7 @@ namespace Dune
       static void apply ( const ThisType &indexSet, const GeometryType &type, int &count )
       {
         if( type.dim() == dimension - codim )
-          count = 0 ;
+          count = indexSet.template countElements< codim >( type, integral_constant<bool,false>() );
       }
     };
 
@@ -176,7 +176,7 @@ namespace Dune
         if( ! indexSet.codimAvailable( codim ) ) return ;
 
         if( cd == codim )
-          indexSet.template setupCodimSet< codim >();
+          indexSet.template setupCodimSet< codim >(integral_constant<bool,true>());
       }
     };
 
@@ -185,7 +185,8 @@ namespace Dune
     {
       static void apply ( const int cd, const ThisType &indexSet )
       {
-        assert( ! indexSet.codimAvailable( codim ) );
+        if( cd == codim )
+          indexSet.template setupCodimSet< codim >(integral_constant<bool,false>());
       }
     };
 
@@ -264,6 +265,7 @@ namespace Dune
     CodimIndexSetType& codimLeafSet( const int codim ) const 
     {   
       assert( codimLeafSet_[ codim ] );
+      // assert( codimAvailable( codim ) );
       return *codimLeafSet_[ codim ];
     }
 
@@ -466,7 +468,7 @@ namespace Dune
       if( codimAvailable( codim ) ) 
       {
         if( (codim != 0) && ! codimUsed_[ codim ] )
-          setupCodimSet< codim >();
+          setupCodimSet< codim >(integral_constant<bool,true>());
 
         const CodimIndexSetType &codimSet = codimLeafSet( codim );
         const IndexType idx = codimSet.index( entity );
@@ -497,6 +499,13 @@ namespace Dune
       }
       else 
       {
+        if( (codim != 0) && !codimUsed_[ codim ] )
+          ForLoop< CallSetUpCodimSet, 0, dimension >::apply( codim, *this );
+        
+        const CodimIndexSetType &codimSet = codimLeafSet( codim );
+        const IndexType idx = codimSet.subIndex( entity, subNumber );
+        assert( (idx >= 0) && (idx < IndexType(codimSet.size())) );
+        return idx;
         DUNE_THROW( NotImplemented, (name() + " does not support indices for codim = ") << codim );
         return -1;
       }
@@ -619,7 +628,9 @@ namespace Dune
     
     // mark indices that are still used (and give new indices to new elements)
     template< int codim >
-    void setupCodimSet () const;
+    void setupCodimSet (const integral_constant<bool,true> &hasEntities) const;
+    template< int codim >
+    void setupCodimSet (const integral_constant<bool,false> &hasEntities) const;
 
     // mark indices that are still used (and give new indices to new intersections)
     void setupIntersections () const;
@@ -627,7 +638,9 @@ namespace Dune
     // count elements by iterating over grid and compare 
     // entities of given codim with given type 
     template< int codim >
-    inline int countElements ( GeometryType type ) const;
+    inline int countElements ( GeometryType type, const integral_constant<bool,true> &hasEntities ) const;
+    template< int codim >
+    inline int countElements ( GeometryType type, const integral_constant<bool,false> &hasEntities ) const;
     
   public:
     //! write indexset to stream  
@@ -947,7 +960,7 @@ namespace Dune
   template< class TraitsImp >
   template< int codim >
   inline void
-  AdaptiveIndexSetBase< TraitsImp >::setupCodimSet () const
+  AdaptiveIndexSetBase< TraitsImp >::setupCodimSet (const integral_constant<bool,true>&) const
   {
     // if codim is not available do nothing 
     if( ! codimAvailable( codim ) ) return ;
@@ -962,6 +975,33 @@ namespace Dune
     const Iterator end = gridPart_.template end< codim, pitype >();
     for( Iterator it = gridPart_.template begin< codim, pitype >(); it != end; ++it )
       codimLeafSet( codim ).insert( *it );
+
+    // mark codimension as used
+    codimUsed_[ codim ] = true;
+  }
+  template< class TraitsImp >
+  template< int codim >
+  inline void
+  AdaptiveIndexSetBase< TraitsImp >::setupCodimSet (const integral_constant<bool,false>&) const
+  {
+    // if codim is not available do nothing 
+    if( ! codimAvailable( codim ) ) return ;
+
+    // resize if necessary 
+    codimLeafSet( codim ).resize();
+
+    typedef typename GridPartType
+      ::template Codim< 0 >::template Partition< pitype > :: IteratorType Iterator;
+
+    const Iterator end = gridPart_.template end< 0, pitype >();
+    for( Iterator it = gridPart_.template begin< 0, pitype >(); it != end; ++it )
+    {
+      for (int i=0;i<it->template count<codim>();++i)
+      {
+        if (! codimLeafSet( codim ).exists( *it, i) )
+          codimLeafSet( codim ).insertSubEntity( *it,i );
+      }
+    }
 
     // mark codimension as used
     codimUsed_[ codim ] = true;
@@ -999,8 +1039,11 @@ namespace Dune
   template< class TraitsImp >
   template< int codim >
   inline int
-  AdaptiveIndexSetBase< TraitsImp >::countElements ( GeometryType type ) const
+  AdaptiveIndexSetBase< TraitsImp >::countElements ( GeometryType type, const integral_constant<bool,true>& ) const
   {
+    // resize if necessary 
+    codimLeafSet( codim ).resize();
+
     typedef typename GridPartType
       ::template Codim< codim > :: template Partition< pitype > :: IteratorType Iterator;
 
@@ -1012,6 +1055,35 @@ namespace Dune
       if( it->type() == type )
         ++count;
     }
+    return count; 
+  }
+  template< class TraitsImp >
+  template< int codim >
+  inline int
+  AdaptiveIndexSetBase< TraitsImp >::countElements ( GeometryType type, const integral_constant<bool,false>& ) const
+  {
+    typedef typename GridPartType
+      ::template Codim< 0 >::template Partition< pitype > :: IteratorType Iterator;
+
+    const Iterator end = gridPart_.template end< 0, pitype >();
+    int count = 0;
+    for( Iterator it = gridPart_.template begin< 0, pitype >(); it != end; ++it )
+    {
+      for (int i=0;i<it->template count<codim>();++i)
+      {
+        if (! codimLeafSet( codim ).exists( *it, i) )
+        {
+          codimLeafSet( codim ).insertSubEntity( *it,i );
+          if ( Dune::GenericReferenceElements< typename GridPartType::ctype, GridPartType::dimension >::
+             general( it->type() ).type( i,codim ) == type )
+            ++count;
+        }
+      }
+    }
+
+    // mark codimension as used
+    codimUsed_[ codim ] = true;
+
     return count; 
   }
 

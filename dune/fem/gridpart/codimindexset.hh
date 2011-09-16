@@ -394,6 +394,14 @@ public:
     return leafIndex_[ entity ].second != UNUSED;
   }
  
+  template <class EntityType> 
+  bool exists ( const EntityType& entity ,
+                const int subNumber ) const 
+  {
+    assert( 0 == EntityType :: codimension );
+    return leafIndex_( entity, subNumber).second != UNUSED;
+  }
+ 
   //! return number of holes 
   int numberOfHoles () const
   {
