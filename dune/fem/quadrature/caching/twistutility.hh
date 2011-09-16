@@ -186,10 +186,10 @@ namespace Dune
 
   /** \brief Specialization of TwistUtility for ALUGridSimplex. 
   */
-  template< int dim >
-  struct TwistUtility< ALUSimplexGrid< dim, dim > >
+  template< int dim, int dimw >
+  struct TwistUtility< ALUSimplexGrid< dim, dimw > >
   {
-    typedef ALUSimplexGrid< dim, dim > GridType;
+    typedef ALUSimplexGrid< dim, dimw > GridType;
 
     typedef typename GridType::Traits::LeafIntersectionIterator
       LeafIntersectionIterator;
@@ -235,10 +235,10 @@ namespace Dune
 
   /** \brief Specialization of TwistUtility for ALUGridSimplex. 
   */
-  template< int dim >
-  struct TwistUtility< ALUCubeGrid< dim, dim > >
+  template< int dim, int dimw >
+  struct TwistUtility< ALUCubeGrid< dim, dimw > >
   {
-    typedef ALUCubeGrid< dim, dim > GridType;
+    typedef ALUCubeGrid< dim, dimw > GridType;
     typedef typename GridType::Traits::LeafIntersectionIterator LeafIntersectionIterator;
     typedef typename LeafIntersectionIterator::Intersection LeafIntersection;
     typedef typename GridType::Traits::LevelIntersectionIterator LevelIntersectionIterator;
@@ -277,10 +277,10 @@ namespace Dune
     TwistUtility& operator=(const TwistUtility&);
   };
 
-  template< int dim >
-  struct TwistUtility< ALUConformGrid< dim, dim > >
+  template< int dim, int dimw >
+  struct TwistUtility< ALUConformGrid< dim, dimw > >
   {
-    typedef ALUConformGrid< dim, dim > GridType;
+    typedef ALUConformGrid< dim, dimw > GridType;
     typedef typename GridType::Traits::LeafIntersectionIterator LeafIntersectionIterator;
     typedef typename LeafIntersectionIterator::Intersection LeafIntersection;
     typedef typename GridType::Traits::LevelIntersectionIterator LevelIntersectionIterator;
