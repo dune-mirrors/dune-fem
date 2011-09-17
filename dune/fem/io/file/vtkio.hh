@@ -60,8 +60,10 @@ typedef VTKOptions VTK;
 
     //! constructor taking discrete function 
     VTKFunctionWrapper ( const DiscreteFunctionType& df,
+                         const std::string& dataName,
                          int component, bool vector )
     : discFunc_( df ),
+      name_( ( dataName.size() > 0 ) ? dataName : df.name() ),
       vector_( vector ),
       component_( component )
     {}
@@ -93,16 +95,17 @@ typedef VTKOptions VTK;
     {
       if (vector_) {
         std::stringstream ret_vec;
-        ret_vec << discFunc_.name() << "-vec-" << component_;
+        ret_vec << name_ << "-vec-" << component_;
         return ret_vec.str(); 
       }
       std::stringstream ret;
-      ret << discFunc_.name() << "-" << component_;
+      ret << name_ << "-" << component_;
       return ret.str();
     }
 
   private:
     const DiscreteFunctionType &discFunc_;
+    const std::string name_ ;
     const bool vector_;
     const int component_;
   };
@@ -152,31 +155,36 @@ typedef VTKOptions VTK;
     }
 
     template< class DF >
-    void addCellData( DF &df )
+    void addCellData( DF &df , const std::string& dataName = "" )
     {
       static const int dimRange = DF::FunctionSpaceType::dimRange;
       for( int i = 0;i < dimRange; ++i )
-        vtkWriter_->addCellData( new VTKFunctionWrapper< DF >( df, i, false ) );
+        vtkWriter_->addCellData( new VTKFunctionWrapper< DF >( df, dataName, i, false ) );
     }
 
     template< class DF >
-    void addVectorCellData( DF &df, int startPoint = 0 )
+    void addVectorCellData( DF &df, 
+                            const std::string& dataName = "" , 
+                            int startPoint = 0 )
     {
-      vtkWriter_->addCellData( new VTKFunctionWrapper< DF >( df, startPoint, true ) );
+      vtkWriter_->addCellData( new VTKFunctionWrapper< DF >( df, dataName, startPoint, true ) );
     }
 
     template< class DF >
-    void addVertexData( DF &df )
+    void addVertexData( DF &df, const std::string& dataName = "" )
     {
       static const int dimRange = DF::FunctionSpaceType::dimRange;
+      std::string name = ( dataName.size() > 0 ) ? dataName : df.name() ;
       for( int i = 0;i < dimRange; ++i )
-        vtkWriter_->addVertexData( new VTKFunctionWrapper< DF >( df, i, false ) );
+        vtkWriter_->addVertexData( new VTKFunctionWrapper< DF >( df, dataName, i, false ) );
     }
 
     template< class DF >
-    void addVectorVertexData( DF &df, int startPoint = 0 )
+    void addVectorVertexData( DF &df, 
+                              const std::string& dataName = "" , 
+                              int startPoint = 0 )
     {
-      vtkWriter_->addVertexData( new VTKFunctionWrapper< DF >( df, startPoint, true ) );
+      vtkWriter_->addVertexData( new VTKFunctionWrapper< DF >( df, dataName, startPoint, true ) );
     }
 
     void clear ()
