@@ -598,13 +598,14 @@ namespace Dune
     /** @copydoc Dune::DiscreteFunctionSpaceInterface::continuous */
     bool continuous () const
     {
-      return true;
+      return false;
     }
   };
 
   //@}
 } // end namespace Dune 
 
-#include "dgadaptmanager.hh"
+#include <dune/fem/space/dgspace/localdgmassmatrix.hh>
+#include <dune/fem/space/dgspace/dgadaptmanager.hh>
 
 #endif
