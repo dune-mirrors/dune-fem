@@ -495,6 +495,22 @@ namespace Dune
           ++(*this);
       }
 
+      //! \brief constructor
+      FilteredGridPartIterator ( const ThisType & other )
+      : gridPart_( other.gridPart_ ),
+        hostIterator_( other.hostIterator_ ),
+        hostEnd_( other.hostEnd_ )
+      { }
+
+      //! \brief assignment operator
+      ThisType & operator= ( const ThisType & other )
+      {
+        assert( &gridPart_ == &other.gridPart_ );
+        hostIterator_ = other.hostIterator_;
+        hostEnd_ = other.hostEnd_;
+        return *this;
+      }
+
       //! \brief increment
       ThisType & operator++ ()
       {
