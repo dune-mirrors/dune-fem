@@ -39,7 +39,10 @@ protected:
 
   typedef DenseVector< FieldMatrixConverterRow< K , m > >  BaseType ;
 public:  
+  typedef typename BaseType :: size_type size_type;
+
   using BaseType :: operator = ;
+  using BaseType :: operator * ;
 
   FieldMatrixConverterRow( K* ptr ) : ptr_( ptr ) 
   {
@@ -64,6 +67,18 @@ public:
       vec_access( i ) = other[ i ];
     }
     return *this;
+  }
+
+  template <class V>
+  K operator* ( const DenseVector< V >& x ) const 
+  {
+    assert( vec_size() == x.size() );
+    K result( 0 );
+    for(size_type i=0; i<vec_size(); ++i )
+    {
+      result += vec_access( i ) * x[ i ];
+    }
+    return result;
   }
 
   // make this thing a vector
