@@ -127,7 +127,7 @@ protected:
     // type of quadrature 
     typedef CachingQuadrature<GridPartType,0> QuadratureType; 
     // type of local mass matrix 
-    typedef LocalDGMassMatrix< DiscreteFunctionSpaceType, QuadratureType > LocalMassMatrixType;
+    typedef LocalMassMatrix< DiscreteFunctionSpaceType, QuadratureType > LocalMassMatrixType;
 
     const int quadOrd = (polOrd == -1) ? (2 * space.order()) : polOrd;
     
