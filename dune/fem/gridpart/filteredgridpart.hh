@@ -485,7 +485,8 @@ namespace Dune
       //! \brief constructor
       FilteredGridPartIterator ( const GridPartType & gridPart, const HostIteratorType & hostIterator )
       : gridPart_( gridPart ),
-        hostIterator_( hostIterator )
+        hostIterator_( hostIterator ),
+        hostEnd_( gridPart.hostGridPart().template end< codim >() )
       {
         if( done() ) 
           return;
@@ -498,11 +499,10 @@ namespace Dune
       ThisType & operator++ ()
       {
         assert( !done() );
-        ++hostIterator_;
-        if( done() )
-          return *this;
-        if( !gridPart().contains( *hostIterator_ ) )
-          ++(*this);
+        do
+        {
+          ++hostIterator_;
+        } while ( !done() && !contains() );
         return *this;
       }
 
@@ -550,7 +550,13 @@ namespace Dune
       // return true for end iterator
       bool done () const
       {
-        return hostIterator_.operator==( gridPart().hostGridPart().template end< codim, pitype >() );
+        return (hostIterator_ == hostEnd_ );
+      }
+
+      bool contains () const
+      {
+        assert( !done() );
+        return gridPart().contains( *hostIterator_ );
       }
 
       // reference to grid part
@@ -561,6 +567,7 @@ namespace Dune
 
       const GridPartType & gridPart_;
       HostIteratorType hostIterator_;
+      HostIteratorType hostEnd_;
 
     }; // end class FilteredGridPartIterator
 
