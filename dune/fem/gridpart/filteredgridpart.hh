@@ -486,7 +486,7 @@ namespace Dune
       FilteredGridPartIterator ( const GridPartType & gridPart, const HostIteratorType & hostIterator )
       : gridPart_( gridPart ),
         hostIterator_( hostIterator ),
-        hostEnd_( gridPart.hostGridPart().template end< codim >() )
+        hostEnd_( gridPart.hostGridPart().template end< codim, pitype >() )
       {
         if( done() ) 
           return;
