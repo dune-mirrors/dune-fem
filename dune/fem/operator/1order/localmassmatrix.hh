@@ -141,6 +141,17 @@ public:
   {
   }
 
+  ~LocalMassMatrixImplementation()
+  {
+    typedef typename MassMatrixStorageType :: iterator iterator ;
+    for (int i=0;i< localInverseMassMatrix_.size();++i)
+    {
+      const iterator end = localInverseMassMatrix_[i].end();
+      for ( iterator it =  localInverseMassMatrix_[i].begin();it != end; ++it )
+        delete (*it).second;
+    }
+  }
+
 public:  
   //! returns true if geometry mapping is affine 
   bool affine () const { return affine_; }
