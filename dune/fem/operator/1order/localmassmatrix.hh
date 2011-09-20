@@ -87,10 +87,10 @@ protected:
   };
 
   template <class BaseFunctionSetType> 
-  MatrixType& getLocalMassMatrix(const EntityType& en, 
-                                 const Geometry& geo,
-                                 const BaseFunctionSetType& baseSet,
-                                 const int numBaseFct ) const 
+  MatrixType& getLocalInverseMassMatrix(const EntityType& en, 
+                                        const Geometry& geo,
+                                        const BaseFunctionSetType& baseSet,
+                                        const int numBaseFct ) const 
   {
     const GeometryType geomType = geo.type();
     typedef typename MassMatrixStorageType :: iterator iterator ;
@@ -107,6 +107,7 @@ protected:
 
       // setup matrix 
       buildMatrixNoMassFactor(en, geo, baseSet, volQuad, numBaseFct, *matrix, false );
+      matrix->invert();
 
       return *matrix;
     }
@@ -312,7 +313,7 @@ protected:
 
     // get local inverted mass matrix 
     MatrixType& invMassMatrix = 
-      getLocalMassMatrix( en, geo, lf.baseFunctionSet(), numDofs );
+      getLocalInverseMassMatrix( en, geo, lf.baseFunctionSet(), numDofs );
 
     // resize vectors 
     rhs_.resize( numDofs );
