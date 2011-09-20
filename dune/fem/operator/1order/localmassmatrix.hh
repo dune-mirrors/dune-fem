@@ -145,7 +145,7 @@ public:
   ~LocalMassMatrixImplementation()
   {
     typedef typename MassMatrixStorageType :: iterator iterator ;
-    for (int i=0;i< localInverseMassMatrix_.size();++i)
+    for (unsigned int i=0;i< localInverseMassMatrix_.size();++i)
     {
       const iterator end = localInverseMassMatrix_[i].end();
       for ( iterator it =  localInverseMassMatrix_[i].begin();it != end; ++it )
