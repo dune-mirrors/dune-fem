@@ -109,7 +109,7 @@ namespace Dune
       \param polynomialOrders  vector containing polynomial orders for each cell 
       \param space  type of space tp be adapted 
       \param polOrderShift possible shift of polynomial order (i.e. in case of
-        Taylor-Hood put -1 for the pressure) (default = 0)
+                           Taylor-Hood put -1 for the pressure) (default = 0)
   */
   template <class DF, class Vector,
             class FS, class GP, int p,
@@ -119,6 +119,7 @@ namespace Dune
                     const PAdaptiveLagrangeSpace<FS,GP,p,Storage> &space,
                     const int polOrderShift = 0 ) 
   {
+    /*
     typedef typename DF :: DiscreteFunctionSpaceType  DiscreteFunctionSpaceType;
     typedef typename DiscreteFunctionSpaceType :: GridPartType GridPartType;
     typedef typename GridPartType :: GridType  GridType;
@@ -138,7 +139,6 @@ namespace Dune
     for( IteratorType it = newSpace.begin(); it != endit; ++it ) 
     {
       const EntityType& entity = *it;
-
       oldSpace.blockMapper().setPolynomOrder( entity, newSpace.blockMapper().polynomOrder( entity ) ); 
     }
 
@@ -146,6 +146,8 @@ namespace Dune
     dm.compress();
 
     AdaptiveDiscreteFunction< DiscreteFunctionSpaceType > tmp( "padaptation", oldSpace );
+
+    newSpace.adapt( tmp )
     tmp.assign( df );
 
     for( IteratorType it = newSpace.begin(); it != endit; ++it ) 
@@ -159,6 +161,7 @@ namespace Dune
     dm.compress();
 
     LagrangeInterpolation< DF > :: interpolateFunction( tmp, df );
+    */
   }
 
   /** \brief pAdaptation 

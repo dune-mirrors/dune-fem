@@ -467,7 +467,7 @@ namespace Dune
   public:
     //! constructor
     PAdaptiveLagrangeMapper ( const GridPartType &gridPart,
-                     LagrangePointSetMapVectorType &lagrangePointSetVector )
+                              LagrangePointSetMapVectorType &lagrangePointSetVector )
     : gridPart_( gridPart ),
       dm_( DofManagerType :: instance(gridPart.grid()) ),
       lagrangePointSet_( lagrangePointSetVector ),
@@ -477,16 +477,18 @@ namespace Dune
       oldIndex_(),
       newIndex_(),
       size_(0),
+      maxNumDofs_( 0 ),
       sequence_( dm_.sequence() )
     {
+      /*
       PolynomOrderStorage p;
       std::cout << sizeof( p ) << " size of polStorage" << std::endl;
       EntityDofStorage en;
       std::cout << sizeof( en ) << " size of enStorage" << std::endl;
       GeometryType type;
       std::cout << sizeof( type) << " size of GeomType " << std::endl;
+      */
 
-      maxNumDofs_ = 0;
       for( int codim = 0; codim <= dimension; ++codim )
         dofContainer_[ codim ] = new DofContainerType( gridPart.grid(), codim );
 
@@ -505,6 +507,27 @@ namespace Dune
 
       resize();
       // register to DofManager for adaptation 
+      dm_.addIndexSet( *this );
+    }
+
+    //! sort of copy constructor
+    PAdaptiveLagrangeMapper ( const PAdaptiveLagrangeMapper& other,
+                              LagrangePointSetMapVectorType &lagrangePointSetVector )
+    : gridPart_( other.gridPart_ ),
+      dm_( other.dm_ ),
+      lagrangePointSet_( lagrangePointSetVector ),
+      entityPolynomOrder_( other.entityPolynomOrder_ ),
+      dofContainer_( dimension+1, (DofContainerType *) 0 ),
+      numberOfHoles_( other.numberOfHoles_ ),
+      oldIndex_( other.oldIndex_ ),
+      newIndex_( other.newIndex_ ),
+      size_( other.size_ ),
+      maxNumDofs_( other.maxNumDofs_ ),
+      sequence_( other.sequence_ )
+    {
+      for( int codim = 0; codim <= dimension; ++codim )
+        dofContainer_[ codim ] = new DofContainerType( *(other.dofContainer_[ codim ]) );
+
       dm_.addIndexSet( *this );
     }
 
@@ -707,6 +730,14 @@ namespace Dune
     {
       resizeContainers();
       insertAllUsed();
+    }
+
+    //! adjust mapper to newly set polynomial orders 
+    void adapt()
+    {
+      resizeContainers();
+      sequence_ = -1;
+      compress();
     }
 
     void insertAllUsed() 

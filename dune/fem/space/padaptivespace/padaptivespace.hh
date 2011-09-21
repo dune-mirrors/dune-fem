@@ -18,6 +18,9 @@
 #include <dune/fem/space/basefunctions/basefunctionproxy.hh>
 #include <dune/fem/space/common/defaultcommhandler.hh>
 
+#include <dune/fem/function/adaptivefunction.hh>
+#include <dune/fem/operator/lagrangeinterpolation.hh>
+
 //- local includes 
 #include <dune/fem/space/lagrangespace/basefunctions.hh>
 #include "mapper.hh"
@@ -91,58 +94,7 @@ namespace Dune
       typedef Operation OperationType;
     };
   };
-
-  //! Key for Mapper singleton list 
-  template< class GridPartImp, class LagrangePointSetMapVectorImp >
-  class PAdaptiveMapperSingletonKey 
-  {
-    const GridPartImp & gridPart_; 
-    mutable LagrangePointSetMapVectorImp& pointSet_;
-    const int polOrd_;
-  public:
-    //! constructor taking index set and numDofs 
-    PAdaptiveMapperSingletonKey(const GridPartImp & gridPart, 
-                               LagrangePointSetMapVectorImp& pointSet,
-                               const int polOrd)
-      : gridPart_(gridPart) ,  pointSet_(pointSet) , polOrd_(polOrd) 
-    {}
-    //! copy constructor 
-    PAdaptiveMapperSingletonKey(const PAdaptiveMapperSingletonKey &org) 
-      : gridPart_(org.gridPart_) , pointSet_(org.pointSet_), polOrd_(org.polOrd_)
-    {}
-    //! returns true if indexSet pointer and numDofs are equal 
-    bool operator == (const PAdaptiveMapperSingletonKey & otherKey) const 
-    {
-      return ((&(gridPart_.indexSet()) == &(otherKey.gridPart().indexSet())) 
-              && (polOrd_ == otherKey.polOrd_));
-    }
-
-    //! return reference to index set 
-    const GridPartImp & gridPart() const { return gridPart_; }
-    //! return lagrange point map set  
-    LagrangePointSetMapVectorImp& pointSet() const { return pointSet_; }
-
-  };
-
-
   
-  // Factory class for SingletonList to tell how objects are created and
-  // how compared.
-  template< class Key, class Object >
-  struct PAdaptiveMapperSingletonFactory
-  {
-    static Object *createObject( const Key &key )
-    {
-      return new Object( key.gridPart(), key.pointSet() );
-    }
-    
-    static void deleteObject( Object *obj )
-    {
-      delete obj;
-    }
-  };
-
-
 
   /** \addtogroup PAdaptiveLagrangeSpace
    *
@@ -259,24 +211,6 @@ namespace Dune
     typedef std::vector<BaseFunctionMapType> BaseFunctionMapVectorType;
     typedef std::vector<LagrangePointSetMapType> LagrangePointSetMapVectorType;
 
-    //! mapper singleton key 
-    typedef PAdaptiveMapperSingletonKey< GridPartType, LagrangePointSetMapVectorType >
-      MapperSingletonKeyType;
-
-    //! mapper factory 
-    typedef PAdaptiveMapperSingletonFactory< MapperSingletonKeyType, MapperType >
-      MapperSingletonFactoryType;
-
-    //! mapper factory 
-    typedef PAdaptiveMapperSingletonFactory
-      < MapperSingletonKeyType, BlockMapperType >
-      BlockMapperSingletonFactoryType;
-
-    //! singleton list of mappers 
-    typedef SingletonList
-      < MapperSingletonKeyType, BlockMapperType, BlockMapperSingletonFactoryType >
-      BlockMapperProviderType;
-
     template <int pOrd> 
     struct ConstructBaseFunctionSets
     {
@@ -368,6 +302,77 @@ namespace Dune
     typedef PAdaptiveLagrangeSpaceType ThisType;
     typedef DiscreteFunctionSpaceDefault< Traits > BaseType;
 
+    typedef AdaptiveDiscreteFunction< ThisType >   IntermediateStorageFunctionType;
+
+    /// interface for list of p-adaptive functions 
+    class PAdaptiveDiscreteFunctionEntryInterface   
+    {
+    protected:
+      PAdaptiveDiscreteFunctionEntryInterface () {}
+    public:
+      virtual ~PAdaptiveDiscreteFunctionEntryInterface() {}
+      virtual bool equals( void * ) const = 0 ;
+      virtual void adaptFunction( IntermediateStorageFunctionType& tmp ) = 0;
+    };
+
+    template <class DF> 
+    class PAdaptiveDiscreteFunctionEntry 
+      : public PAdaptiveDiscreteFunctionEntryInterface
+    {
+      DF& df_;
+      DofManagerType& dm_;
+
+    public:
+      PAdaptiveDiscreteFunctionEntry ( DF& df ) 
+        : df_( df ),
+          dm_( DofManagerType :: instance( df.space().grid() ) )
+      {
+      }
+
+      virtual bool equals( void* ptr ) const  
+      {
+        return (((void *) &df_) == ptr );
+      }
+
+      virtual void adaptFunction( IntermediateStorageFunctionType& tmp ) 
+      {
+        //const int oldSize = tmp.space().size() ;
+        //const int newSize = df_.space().size() ;
+
+        //std::cout <<"Start adaptFct: old size " << tmp.space().size() 
+        //          << "  new size " << df_.space().size() << std::endl;
+
+        typedef typename IntermediateStorageFunctionType :: DofIteratorType
+          TmpIteratorType;
+        typedef typename DF :: DofIteratorType  DFIteratorType;
+
+        // copy dof to temporary storage 
+        DFIteratorType dfit = df_.dbegin();
+        const TmpIteratorType endtmp = tmp.dend();
+        for( TmpIteratorType it = tmp.dbegin(); it != endtmp; ++it, ++dfit )
+        {
+          assert( dfit != df_.dend() );
+          *it = *dfit;
+        }
+        assert( dfit == df_.dend() );
+
+        // adjust size of discrete function 
+        df_.resize(); 
+
+        //std::cout <<"End adaptFct: old size " << tmp.space().size() 
+        //          << "  new size " << df_.space().size() << std::endl;
+
+        // interpolate to new space 
+        LagrangeInterpolation< DF > :: interpolateFunction( tmp, df_ );
+      }
+    };
+
+    typedef std::list< PAdaptiveDiscreteFunctionEntryInterface* >
+      PAdaptiveDiscreteFunctionListType; 
+    typedef typename PAdaptiveDiscreteFunctionListType :: iterator DFListIteratorType;
+
+    mutable PAdaptiveDiscreteFunctionListType dfList_;
+
   private:
     //! map for the base function sets
     mutable BaseFunctionMapVectorType baseFunctionSet_;
@@ -420,16 +425,43 @@ namespace Dune
           apply( baseFunctionSet_, lagrangePointSet_, geometryType );
       }
 
-      MapperSingletonKeyType key( gridPart, lagrangePointSet_, polynomialOrder );
-      blockMapper_ = &BlockMapperProviderType :: getObject( key );
+      // create new block mapper, this mapper is unique for each space since 
+      // the polynomial degrees might be different for each element 
+      blockMapper_ = new BlockMapperType( gridPart, lagrangePointSet_ );
       assert( blockMapper_ != 0 );
+      // create non-blocking mapper 
       mapper_ = new MapperType( *blockMapper_ );
       assert( mapper_ != 0 );
     }
 
   private:
-    // forbid the copy constructor
-    PAdaptiveLagrangeSpace ( const ThisType& );
+    PAdaptiveLagrangeSpace( const PAdaptiveLagrangeSpace& other ) 
+    : BaseType( other.gridPart_, other.commInterface_, other.commDirection_ ),
+      baseFunctionSet_( polynomialOrder+1 ),
+      lagrangePointSet_( polynomialOrder+1 ),
+      mapper_( 0 ),
+      blockMapper_( 0 )
+    {
+      const IndexSetType &indexSet = gridPart().indexSet();
+
+      AllGeomTypes< IndexSetType, GridType > allGeometryTypes( indexSet );
+      const std :: vector< GeometryType >& geometryTypes
+        = allGeometryTypes.geomTypes( 0 );
+      for( unsigned int i = 0; i < geometryTypes.size(); ++i )
+      {
+        const GeometryType &geometryType = geometryTypes[ i ];
+
+        ForLoop< ConstructBaseFunctionSets, 1, polynomialOrder > :: 
+          apply( baseFunctionSet_, lagrangePointSet_, geometryType );
+      }
+
+      // copy construct BlockMapper but pass the LagrangePointSets of this space 
+      blockMapper_ = new BlockMapperType( other.blockMapper(), lagrangePointSet_ );
+      assert( blockMapper_ != 0 );
+      // create non-blocking mapper 
+      mapper_ = new MapperType( *blockMapper_ );
+      assert( mapper_ != 0 );
+    }
 
   public:
     /** \brief Destructor (freeing base functions and mapper)
@@ -437,8 +469,10 @@ namespace Dune
     **/
     ~PAdaptiveLagrangeSpace ()
     {
+      assert( dfList_.empty() );
+
       delete mapper_;
-      BlockMapperProviderType::removeObject( *blockMapper_ );
+      delete blockMapper_;
 
       // delete base function sets 
       ForLoop< DeleteBaseFunctionSets, 1, polynomialOrder > :: 
@@ -455,6 +489,89 @@ namespace Dune
             delete lagrangePointSet;
         }
       }
+    }
+
+    template <class DiscreteFunction> 
+    DFListIteratorType searchFunction( const DiscreteFunction& df ) const
+    {
+      assert( &df.space() == this );
+      const DFListIteratorType endDF = dfList_.end();
+      for( DFListIteratorType it = dfList_.begin(); it != endDF; ++it ) 
+      {
+        if( (*it)->equals( (void *) &df ) ) 
+          return it;
+      }
+      return endDF;
+    }
+
+    template <class DiscreteFunction> 
+    void addFunction( DiscreteFunction& df ) const
+    {
+      assert( searchFunction( df ) == dfList_.end() );
+      PAdaptiveDiscreteFunctionEntryInterface* entry = new
+        PAdaptiveDiscreteFunctionEntry< DiscreteFunction >( df ) ;
+      assert( entry );
+      dfList_.push_front( entry );
+    }
+
+    template <class DiscreteFunction> 
+    void removeFunction( const DiscreteFunction& df ) const
+    {
+      DFListIteratorType it = searchFunction( df );
+      if( it != dfList_.end() )
+      {
+        delete (*it);
+        dfList_.erase( it );
+      }
+    }
+
+    /** \brief pAdaptation 
+        \param polynomialOrders  vector containing polynomial orders for each cell 
+        \param polOrderShift possible shift of polynomial order (i.e. in case of
+                             Taylor-Hood put -1 for the pressure) (default = 0)
+    */
+    template <class Vector> 
+    void adapt( const Vector& polynomialOrders, const int polOrderShift = 0 ) const
+    {
+      typedef typename IteratorType :: Entity EntityType ;
+      const IteratorType endit = this->end();
+
+      // create a copy of this space (to be improved)
+      ThisType oldSpace( *this );
+
+      //std::cout << "Old space size = " << oldSpace.size() << std::endl;
+
+      // set new polynomial order for space  
+      for( IteratorType it = this->begin(); it != endit; ++it )
+      {
+        const EntityType& entity = *it;
+        const int polOrder = polynomialOrders[ this->indexSet().index( entity ) ] + polOrderShift ;
+        blockMapper().setPolynomOrder( entity, polOrder );
+      }
+
+      // adjust mapper 
+      blockMapper().adapt();
+
+      //std::cout << "New space size = " << blockMapper().size() << std::endl;
+
+      // Adapt space and then discrete functions 
+      AdaptiveDiscreteFunction< ThisType > tmp( "padapt-temp", oldSpace );
+      //std::cout << "created tmp with size = " << oldSpace.size() << " " << tmp.space().size() << std::endl;
+
+      const DFListIteratorType endDF = dfList_.end();
+      for( DFListIteratorType it = dfList_.begin(); it != endDF; ++it ) 
+      {
+        (*it)->adaptFunction( tmp );
+      }
+
+      DofManagerType& dm = DofManagerType :: instance( this->grid() );
+      // resize discrete functions (only functions belonging 
+      // to this space will be affected ), for convenience 
+      dm.resize();
+      dm.compress();
+
+      //std::cout <<"This spaces size = " << this->size() << std::endl;
+      //std::cout << std::endl;
     }
 
     /** \copydoc Dune::DiscreteFunctionSpaceInterface::contains */
