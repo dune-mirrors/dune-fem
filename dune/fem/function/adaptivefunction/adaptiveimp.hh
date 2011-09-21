@@ -154,6 +154,19 @@ namespace Dune {
     //! enable dof compressiion for this discrete function 
     void enableDofCompression(); 
 
+    //! needed for p-adaptation, not finished yet 
+    void resize()
+    {
+      // cast to ManagedDofStorageInterface, if cast returns NULL we are not allowed to
+      // call resize and dofCompress 
+      ManagedDofStorageInterface* managedObject = dynamic_cast< ManagedDofStorageInterface* > ( memObject_ );
+      if( managedObject ) 
+      {
+        managedObject->resize();
+        managedObject->dofCompress();
+      }
+    }
+
   protected:
     //! wrapper class to create fake DofStorage from double* 
     template <class VectorPointerType>

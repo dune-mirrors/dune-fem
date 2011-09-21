@@ -109,6 +109,7 @@ namespace Dune
 
     using BaseType::assign;
     using BaseType::axpy;
+    using BaseType::space;
 
   public:
     //- Typedefs and enums
@@ -166,7 +167,9 @@ namespace Dune
     : BaseType( name, spc, lfFactory_ ),
       Imp( name, spc ),
       lfFactory_( *this )
-    {}
+    {
+      spc.addFunction( *this );
+    }
 
     //! Constructor
     template <class VectorPointerType>
@@ -194,7 +197,15 @@ namespace Dune
     : BaseType( "copy of " + other.name(), other.space(), lfFactory_ ),
       Imp( BaseType :: name(), other ),
       lfFactory_( *this )
-    {}
+    {
+      space().addFunction( *this );
+    }
+  
+    //! destructor 
+    ~AdaptiveDiscreteFunction() 
+    {
+      space().removeFunction( *this );
+    }
 
   private:
     ThisType &operator= ( const ThisType &other );
@@ -241,6 +252,7 @@ namespace Dune
       return dofVec_[ index ];
     }
 
+    using Imp::resize ;
     using Imp::clear;
     using Imp::size;
     using Imp::dbegin;
