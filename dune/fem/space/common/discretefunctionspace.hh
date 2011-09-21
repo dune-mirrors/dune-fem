@@ -803,6 +803,18 @@ namespace Dune
         :: Type( discreteFunction );
     }
 
+    /** \brief default implementation of addFunction does nothing at the moment */
+    template <class DiscreteFunction>
+    void addFunction( DiscreteFunction& df ) const
+    {
+    }
+
+    /** \brief default implementation of removeFunction does nothing at the moment */
+    template <class DiscreteFunction>
+    void removeFunction( DiscreteFunction& df ) const
+    {
+    }
+
   protected:  
     /** \brief returns true if the grid has more than one geometry type
      *
