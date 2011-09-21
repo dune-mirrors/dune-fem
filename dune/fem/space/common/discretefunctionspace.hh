@@ -815,6 +815,13 @@ namespace Dune
     {
     }
 
+    /** \brief default implementation of adapt does nothing,
+               its only used in PAdaptiveLagrangeSpace */
+    template <class Vector>
+    void adapt( const Vector& polynomialOrders, const int polOrderShift = 0 ) const
+    {
+    }
+
   protected:  
     /** \brief returns true if the grid has more than one geometry type
      *
