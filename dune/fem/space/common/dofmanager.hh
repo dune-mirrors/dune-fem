@@ -276,7 +276,7 @@ public:
   virtual ~DofStorageInterface() {};
 
   //! enable dof compression for dof storage (default is empty)
-  virtual void enableDofCompression() { };
+  virtual void enableDofCompression() { }
 
   //! returns name of dof storage 
   virtual const std::string& name () const  = 0;
@@ -1011,6 +1011,7 @@ public:
   */
   int sequence () const { return sequence_; }
 
+  //- --resize
   /** \brief Resize index sets and memory due to what the mapper has as new size.
       \note This will increase the sequence counter by 1. 
   */
@@ -1053,6 +1054,7 @@ protected:
   }
   
 public:
+  //- --compress
   /** \brief Compress all data that is hold by this dofmanager 
       \note  This will increase the sequence counter by 1.
   */
