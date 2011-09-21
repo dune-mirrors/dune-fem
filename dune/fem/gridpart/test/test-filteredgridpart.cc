@@ -11,9 +11,10 @@
 // dune-fem includes
 #include <dune/fem/gridpart/adaptiveleafgridpart.hh>
 #include <dune/fem/gridpart/filteredgridpart.hh>
+#include <dune/fem/gridpart/filter/radialfilter.hh>
+#include <dune/fem/gridpart/filter/basicfilterwrapper.hh>
 
 // local includes
-#include"radialfilter.hh"
 #include"../../test/testgrid.hh"
 
 

@@ -1,5 +1,5 @@
-#ifndef DUNE_FEM_GRIDPART_TEST_RADIALFILTER_HH
-#define DUNE_FEM_GRIDPART_TEST_RADIALFILTER_HH
+#ifndef DUNE_FEM_GRIDPART_FILTER_RADIALFILTER_HH
+#define DUNE_FEM_GRIDPART_FILTER_RADIALFILTER_HH
 
 // dune-common includes
 #include <dune/common/fvector.hh>
@@ -35,6 +35,11 @@ namespace Dune
         radius_( radius )
       { }
 
+      RadialFilter ()
+      : center_( 0 ),
+        radius_( 0.25 )
+      { }
+
       //! \brief check whether entity center is inside of circle 
       template< class Entity >
       bool contains ( const Entity & entity ) const
@@ -43,7 +48,7 @@ namespace Dune
         if( cc != 0 )
           DUNE_THROW( InvalidStateException, "RadialFilter::contains only available for codim 0 entities" );
         ctype dist = (entity.geometry().center() - center_).two_norm();
-        return (dist <= radius_);
+        return (dist > radius_);
       }
       
       //! \brief return what boundary id we have in case of boundary intersection 
@@ -66,7 +71,7 @@ namespace Dune
       template <class IntersectionIteratorType>
       inline bool intersectionNeighbor( const IntersectionIteratorType & it ) const
       {
-        return true;
+        return false;
       }
 
     private:
@@ -79,5 +84,5 @@ namespace Dune
 
 }  // end namespace Dune
 
-#endif // #ifndef DUNE_FEM_GRIDPART_TEST_RADIALFILTER_HH
+#endif // #ifndef DUNE_FEM_GRIDPART_FILTER_RADIALFILTER_HH 
 
