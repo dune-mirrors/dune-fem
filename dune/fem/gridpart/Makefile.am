@@ -12,7 +12,8 @@ gridpart_HEADERS = adaptiveleafgridpart.hh \
                    gridpart.hh \
                    gridpartview.hh \
                    defaultindexsets.hh \
-                   persistentcontainer.hh
+                   persistentcontainer.hh \
+									 filter.hh
 
 include $(top_srcdir)/am/global-rules
 
