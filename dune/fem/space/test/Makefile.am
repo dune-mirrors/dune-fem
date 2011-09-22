@@ -3,12 +3,13 @@ WANT_GRAPE = 0
 WANT_CACHED = 1
 
 # set default grid type for make all
-GRIDTYPE=YASPGRID
-#GRIDTYPE=ALUGRID_SIMPLEX
+#GRIDTYPE=YASPGRID
+#GRIDTYPE=PARALLELGRID_ALUGRID_SIMPLEX
+GRIDTYPE=ALUGRID_SIMPLEX
 #GRIDTYPE=ALUGRID_CUBE
 GRIDDIM=2
 
-CXXFLAGS=-g -Wall
+#CXXFLAGS=-g -Wall -Wfatal-errors
 
 LDADD = $(ALL_PKG_LDFLAGS) $(ALL_PKG_LIBS) $(LOCAL_LIBS) $(MPI_LDFLAGS)
 AM_CPPFLAGS = $(ALL_PKG_CPPFLAGS) -DPOLORDER=$(POLORDER) -DWANT_GRAPE=$(WANT_GRAPE) \
@@ -16,10 +17,11 @@ AM_CPPFLAGS = $(ALL_PKG_CPPFLAGS) -DPOLORDER=$(POLORDER) -DWANT_GRAPE=$(WANT_GRA
 
 ADAPTPROG = lagrangeadapt adapt
 check_PROGRAMS = $(ADAPTPROG) l2projection lagrangeinterpolation legendretest \
-                 lagrangeglobalrefine arraytest dgcomm
+                 lagrangeglobalrefine arraytest dgcomm padapt
 
 l2projection_SOURCES = l2projection.cc
 adapt_SOURCES = adapt.cc
+padapt_SOURCES = padapt.cc
 lagrangeinterpolation_SOURCES = lagrangeinterpolation.cc
 lagrangeadapt_SOURCES = lagrangeadapt.cc
 lagrangeglobalrefine_SOURCES = lagrangeglobalrefine.cc
