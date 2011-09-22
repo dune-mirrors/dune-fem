@@ -247,9 +247,11 @@ namespace Dune
     public:
       //! \brief constructor 
       FilteredGridPartIntersectionIterator( const GridPartType & gridPart, 
+                                            const Entity &en,
                                             const HostIteratorType & hostIterator )
       : gridPart_( gridPart ),
         hostIterator_( hostIterator ),
+        endIterator_( gridPart.hostGridPart().iend( en ) ),
         nInfo_()
       {
         if( !done() )
@@ -260,6 +262,7 @@ namespace Dune
       FilteredGridPartIntersectionIterator( const ThisType & other )
       : gridPart_( other.gridPart_ ), 
         hostIterator_( other.hostIterator_ ),
+        endIterator_( other.endIterator_ ),
         nInfo_( other.nInfo_ )
       { }
         
@@ -407,7 +410,7 @@ namespace Dune
 
       bool done () const
       {
-        return hostIterator_.operator == ( gridPart().hostGridPart().iend( *inside() ) );
+        return hostIterator_.operator ==( endIterator_ );
       }
 
       // return reference to base class 
@@ -428,7 +431,7 @@ namespace Dune
       }
       
       const GridPartType & gridPart_;
-      HostIteratorType hostIterator_;
+      HostIteratorType hostIterator_, endIterator_;
       NeighborInfo nInfo_;
 
     }; // end FilteredGridPartIntersectionIterator
@@ -691,13 +694,13 @@ namespace Dune
       //! \brief ibegin of corresponding intersection iterator for given entity
       IntersectionIteratorType ibegin ( const EntityType & entity ) const 
       {
-        return typename ThisType::IntersectionIteratorType( *this, hostGridPart().ibegin( entity ) );
+        return typename ThisType::IntersectionIteratorType( *this, entity, hostGridPart().ibegin( entity ) );
       }
       
       //! \brief iend of corresponding intersection iterator for given entity
       IntersectionIteratorType iend ( const EntityType & entity ) const 
       {
-        return typename ThisType::IntersectionIteratorType( *this, hostGridPart().iend( entity ) );
+        return typename ThisType::IntersectionIteratorType( *this, entity, hostGridPart().iend( entity ) );
       }
 
       int boundaryId ( const IntersectionType & intersection ) const
