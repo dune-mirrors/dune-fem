@@ -14,6 +14,9 @@
 #include <dune/fem/gridpart/filter/radialfilter.hh>
 #include <dune/fem/gridpart/filter/basicfilterwrapper.hh>
 
+// dune-fem gridwidth
+#include <dune/fem/misc/gridwidth.hh>
+
 // local includes
 #include"../../test/testgrid.hh"
 
@@ -109,6 +112,40 @@ void testSubEntities( const GridPartType & gridPart )
   std::cout << "maximum value in index set: " << maxIndex << std::endl;
 }
 
+template< class GridPartType >
+void testIntersectionIterator( const GridPartType & gridPart )
+{
+  std::vector<int> index( gridPart.indexSet().size(0), 0 );
+  typedef typename GridPartType::template Codim< 0 >::IteratorType IteratorType;
+  const IteratorType end = gridPart.template end< 0 >();
+  for( IteratorType it = gridPart.template begin< 0 >(); it != end; ++it )
+    index[ gridPart.indexSet().index( * it ) ] = 1;
+  for( IteratorType it = gridPart.template begin< 0 >(); it != end; ++it )
+  {
+    typedef typename GridPartType::IntersectionIteratorType IntersectionIteratorType;
+    const IntersectionIteratorType iend = gridPart.iend( *it );
+    for ( IntersectionIteratorType inter = gridPart.ibegin( *it );
+          inter != iend; ++inter )
+    {
+      if (inter->neighbor())
+      {
+        typename GridPartType::IndexSetType::IndexType nbIndex = gridPart.indexSet().index( *(inter->outside()) );
+        if ( nbIndex >= index.size() )
+        {
+          std::cout << "An index on neighbor is too large" << std::endl;
+          continue;
+        }
+        if ( index[ nbIndex ] == 0 )
+        {
+          std::cout << "A neighbor is not part of the gridPart" << std::endl;
+          continue;
+        }
+      }
+    }
+  }
+}
+
+
 typedef Dune::GridSelector::GridType GridType;
 typedef Dune::DGAdaptiveLeafGridPart< GridType > HostGridPartType;
 typedef Dune::Fem::RadialFilter< GridType::ctype, GridType::dimensionworld > BasicFilterType;
@@ -142,6 +179,12 @@ int main ( int argc, char ** argv )
       std::cout << std::endl;
       std::cout << "Non consecutive inex set: test using codim=dimension iterator" << std::endl;
       testSubEntities< GridType::dimension >( gridPart );
+
+      /* ----------- added to test the intersection iterator ---------------*/
+      std::cout << std::endl;
+      std::cout << "gridWidth: " << Dune::GridWidth::calcGridWidth( gridPart ) << std::endl;
+      /* --------------------------*/
+
       std::cout << std::endl << std::endl;
     }
     {
@@ -154,6 +197,15 @@ int main ( int argc, char ** argv )
       std::cout << std::endl;
       std::cout << "Consecutive inex set: test using codim=dimension iterator" << std::endl;
       testSubEntities< GridType::dimension >( gridPart );
+
+      /* ----------- added to test the intersection iterator ---------------*/
+      std::cout << std::endl;
+      std::cout << "gridWidth: " << Dune::GridWidth::calcGridWidth( gridPart ) << std::endl;
+      /* --------------------------*/
+      
+      std::cout << "Testing intersection iterator" << std::endl;
+      testIntersectionIterator( gridPart );
+
       std::cout << std::endl << std::endl;
     }
 
