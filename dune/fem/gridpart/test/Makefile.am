@@ -13,6 +13,6 @@ AM_CPPFLAGS = $(ALL_PKG_CPPFLAGS)
 test_filteredgridpart_SOURCES = test-filteredgridpart.cc
 test_filteredgridpart_CPPFLAGS = -DCOUNT_FLOPS $(AM_CPPFLAGS) -DUSE_FILTEREDGRIDPART
 
-EXTRA_DIST = radialfilter.hh 
+EXTRA_DIST = 1dgrid.dgf 2dgrid.dgf 3dgrid.dgf
 
 include $(top_srcdir)/am/global-rules
