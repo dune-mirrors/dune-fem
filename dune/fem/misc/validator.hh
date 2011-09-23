@@ -5,11 +5,17 @@
 
 namespace Dune
 {
-  
+
+  // Internal Forward Declarations
+  // -----------------------------
+
   template< class T, class Impl >
   class ValidatorDefault;
 
 
+
+  // ValidatorInterface
+  // ------------------
 
   template< class T, class Impl >
   class ValidatorInterface
@@ -19,35 +25,38 @@ namespace Dune
     friend class ValidatorDefault< T, Impl >;
 
   private:
-    inline ValidatorInterface () {}
+    ValidatorInterface () {}
 
     ValidatorInterface ( const ThisType & );
     ThisType &operator= ( const ThisType & );
 
   public:
-    inline bool operator () ( const T &value ) const
+    bool operator () ( const T &value ) const
     {
       return asImp()( value );
     }
 
-    inline void print(std::ostream& s) const
+    void print(std::ostream& s) const
     {
       asImp().print( s );
     }
     
   protected:
-    inline const Impl &asImp () const
+    const Impl &asImp () const
     {
       return static_cast< const Impl & >( *this );
     }
 
-    inline Impl &asImp ()
+    Impl &asImp ()
     {
       return static_cast< Impl & >( *this );
     }
   };
 
 
+
+  // ValidatorDefault
+  // ----------------
 
   template< class T, class Impl >
   class ValidatorDefault
@@ -56,7 +65,7 @@ namespace Dune
     typedef ValidatorInterface< T, Impl > BaseType;
 
   protected:
-    inline ValidatorDefault () {}
+    ValidatorDefault () {}
 
   private:
     ValidatorDefault ( const ThisType & );
@@ -64,7 +73,7 @@ namespace Dune
 
   private:
     bool operator () ( const T &value ) const;
-    inline void print(std::ostream& s) const {}
+    void print ( std::ostream &s ) const;
   };
 
 
@@ -76,29 +85,28 @@ namespace Dune
     typedef ValidateGreater< T > ThisType;
     typedef ValidatorDefault< T, ThisType > BaseType;
 
-  protected:
-    const T threshold_;
-
   public:
-    inline ValidateGreater ( const T &threshold )
+    ValidateGreater ( const T &threshold )
     : threshold_( threshold )
     {}
 
-    inline ValidateGreater ( const ThisType &other )
+    ValidateGreater ( const ThisType &other )
     : threshold_( other.threshold_ )
     {}
 
   public:
-    inline bool operator() ( const T &value ) const
+    bool operator() ( const T &value ) const
     {
       return value > threshold_;
     }
 
-    inline void print(std::ostream& s) const
+    void print(std::ostream& s) const
     {
       s << "ValidateLess: valid values are: > " << threshold_ << std::endl << std::endl;
     }
 
+  protected:
+    const T threshold_;
   };
 
 
@@ -110,27 +118,27 @@ namespace Dune
     typedef ValidateLess< T > ThisType;
     typedef ValidatorDefault< T, ThisType > BaseType;
 
-  protected:
-    const T threshold_;
-
   public:
-    inline ValidateLess ( const T &threshold )
+    ValidateLess ( const T &threshold )
     : threshold_( threshold )
     {}
 
-    inline ValidateLess ( const ThisType &other )
+    ValidateLess ( const ThisType &other )
     : threshold_( other.threshold_ )
     {}
 
-    inline bool operator() ( const T &value ) const
+    bool operator() ( const T &value ) const
     {
       return value < threshold_;
     }
 
-    inline void print(std::ostream& s) const
+    void print(std::ostream& s) const
     {
       s << "ValidateLess: valid values are: < " << threshold_ << std::endl << std::endl;
     }
+
+  protected:
+    const T threshold_;
   };
 
 
@@ -142,28 +150,27 @@ namespace Dune
     typedef ValidateNotGreater< T > ThisType;
     typedef ValidatorDefault< T, ThisType > BaseType;
 
-  protected:
-    const T threshold_;
-
   public:
-    inline ValidateNotGreater ( const T &threshold )
+    ValidateNotGreater ( const T &threshold )
     : threshold_( threshold )
     {}
 
-    inline ValidateNotGreater ( const ThisType &other )
+    ValidateNotGreater ( const ThisType &other )
     : threshold_( other.threshold_ )
     {}
 
-    inline bool operator() ( const T &value ) const
+    bool operator() ( const T &value ) const
     {
       return value <= threshold_;
     }
 
-    inline void print(std::ostream& s) const
+    void print(std::ostream& s) const
     {
       s << "ValidateNotGreater: valid values are: <= " << threshold_ << std::endl << std::endl;
     }
 
+  protected:
+    const T threshold_;
   };
 
 
@@ -175,27 +182,27 @@ namespace Dune
     typedef ValidateNotLess< T > ThisType;
     typedef ValidatorDefault< T, ThisType > BaseType;
 
-  protected:
-    const T threshold_;
-
   public:
-    inline ValidateNotLess ( const T &threshold )
+    ValidateNotLess ( const T &threshold )
     : threshold_( threshold )
     {}
 
-    inline ValidateNotLess ( const ThisType &other )
+    ValidateNotLess ( const ThisType &other )
     : threshold_( other.threshold_ )
     {}
 
-    inline bool operator() ( const T &value ) const
+    bool operator() ( const T &value ) const
     {
       return value >= threshold_;
     }
 
-    inline void print(std::ostream& s) const
+    void print(std::ostream& s) const
     {
       s << "ValidateNotLess: valid values are: >= " << threshold_ << std::endl << std::endl;
     }
+
+  protected:
+    const T threshold_;
   };
 
 
@@ -207,21 +214,18 @@ namespace Dune
     typedef ValidateInterval< T, leftClosed, rightClosed > ThisType;
     typedef ValidatorDefault< T, ThisType > BaseType;
 
-  protected:
-    const T lThreshold_,rThreshold_;
-
   public:
-    inline ValidateInterval ( const T &lThreshold, const T &rThreshold )
+    ValidateInterval ( const T &lThreshold, const T &rThreshold )
     : lThreshold_( lThreshold ),
       rThreshold_( rThreshold )
     {}
 
-    inline ValidateInterval ( const ThisType &other )
+    ValidateInterval ( const ThisType &other )
     : lThreshold_( other.lThreshold_ ),
       rThreshold_( other.rThreshold_ )
     {}
 
-    inline bool operator() ( const T &value ) const
+    bool operator() ( const T &value ) const
     {
       bool ret = true;
       ret &= (leftClosed  ? value >= lThreshold_ : value > lThreshold_);
@@ -229,14 +233,47 @@ namespace Dune
       return ret;
     }
 
-    inline void print(std::ostream& s) const
+    void print(std::ostream& s) const
     {
       const char* left  = (leftClosed)  ? "[" : "(";
       const char* right = (rightClosed) ? "]" : ")";
       s << "ValidateInterval: valid values are " << left << lThreshold_ << "," <<
               rThreshold_ << right << std::endl << std::endl;
     }
+
+  protected:
+    const T lThreshold_, rThreshold_;
   };
 
-} // end namespace Dune 
-#endif
+
+
+  // NoWhiteSpaceValidator
+  // ---------------------
+
+  class NoWhiteSpaceValidator
+  : public ValidatorDefault< std::string, NoWhiteSpaceValidator >
+  {
+    typedef NoWhiteSpaceValidator ThisType;
+    typedef ValidatorDefault< std::string, ThisType > BaseType;
+
+  public:
+    NoWhiteSpaceValidator ()
+    {}
+
+    NoWhiteSpaceValidator ( const ThisType &other )
+    {}
+
+    bool operator() ( const std::string &value ) const
+    {
+      return (value.find_first_of( " \t" ) == std::string::npos);
+    }
+
+    void print ( std::ostream &s ) const
+    {
+      s << "NoWhiteSpaceValidator" << std::endl;
+    }
+  };
+
+} // namespace Dune 
+
+#endif // #ifndef DUNE_FEM_VALIDATOR_HH
