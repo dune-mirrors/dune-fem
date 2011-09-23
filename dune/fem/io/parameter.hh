@@ -152,6 +152,33 @@ namespace Dune
   };
 
   template<>
+  struct ParameterParser< std::string >
+  {
+    static bool parse ( const std::string &s, std::string &value )
+    {
+      size_t first = s.find_first_not_of(" \t");
+      size_t last = s.find_last_not_of(" \t");
+
+      if( first == std::string::npos )
+      {
+        assert( last == std::string::npos );
+        value = "";
+      }
+      else
+      {
+        assert( last != std::string::npos );
+        value = s.substr(first, last - first + 1);
+      }
+      return true;
+    }
+
+    static std::string toString ( const std::string &value )
+    {
+      return value;
+    }
+  };
+
+  template<>
   struct ParameterParser< bool >
   {
     static bool parse ( const std::string &s, bool &value )
@@ -233,9 +260,12 @@ namespace Dune
 
     struct Value
     {
-      Value() : used(false), hasDefault(false), isDefault(false) {}
+      enum ShadowStatus{ unresolved, resolved, resolving};
+      Value() : used(false), hasDefault(false), isDefault(false), shadowStatus(unresolved) {}
+
       std::string value, fileName, defaultValue;
       bool used, hasDefault, isDefault;
+      ShadowStatus shadowStatus;
     };
 
     struct DGFBlock;
@@ -243,7 +273,8 @@ namespace Dune
     typedef std::map< std::string, Value > ParameterMapType;
 
     Parameter ()
-    : verboseRank_( -1 )
+    : verboseRank_( -1 ),
+      enableShadows_( false )
     {}
 
     // Prohibit copying and assignment
@@ -258,7 +289,7 @@ namespace Dune
 
     Value *find ( const std::string &key );
 
-    const std::string &map ( const std::string &key );
+    const std::string &map ( const std::string &key, bool defaultChecker = true );
     template <class T>
     const std::string &map ( const std::string &key, const T &value );
 
@@ -598,6 +629,7 @@ namespace Dune
     int curLineNumber_;
     ParameterMapType params_;
     int verboseRank_;
+    bool enableShadows_;
   };
 
 
@@ -627,24 +659,67 @@ namespace Dune
     return (it != params_.end()) ? &(it->second) : 0;
   }
 
-  inline const std::string &Parameter::map ( const std::string &key )
+  inline const std::string &Parameter::map ( const std::string &key, bool defaultChecker )
   {
     Value *val = find( key );
+    std::string &realValue = val->value;
+
     if (!val)
-    {
-      std::ostringstream message;
-      message << "Parameter '" << key << "' not found.";
-      DUNE_THROW( ParameterNotFound, message.str() );
+      DUNE_THROW( ParameterNotFound, "Parameter '" << key << "' not found." ); 
+
+
+    if( val->shadowStatus != Value::resolved )
+    {      
+      if ( val->shadowStatus == Value::resolving )
+        DUNE_THROW( ParameterInvalid, "Parameter '" << key << "' invalid, contains infinite loop." );
+
+      val->shadowStatus = Value::resolving;
+      std::string realValueHelper;
+      realValue.swap(realValueHelper);
+
+      while( !realValueHelper.empty() )
+      {
+        size_t startPoint = realValueHelper.find_first_of('$');        
+        realValue += realValueHelper.substr( 0, startPoint );
+
+        if( startPoint == std::string::npos ) 
+          break;
+
+        if( realValueHelper.length() < startPoint+2 )
+          DUNE_THROW( ParameterInvalid, "Parameter '" << key << "' contains trailing '$'." );
+        
+        if( realValueHelper[startPoint+1] == '$' )
+        {
+           realValue += '$';
+           realValueHelper.replace( 0, startPoint+2, "" );
+        }
+        else if( realValueHelper[startPoint+1] == '('  ) 
+        {
+          size_t length = realValueHelper.find_first_of(')') - (startPoint +2);
+          if( length == std::string::npos)
+            DUNE_THROW( ParameterInvalid, "Parameter '" << key << "' invalid." );
+
+          std::string shadowValueKey = realValueHelper.substr( startPoint+2, length );
+          realValueHelper.replace(0, startPoint+length+3, ""); 
+          realValue += map( shadowValueKey, false );        
+        }
+        else
+        {
+          DUNE_THROW( ParameterInvalid, "Parameter '" << key << "' invalid." );
+        }
+      }
+      val->shadowStatus = Value::resolved;
     }
 
     if ( val->used )
     {
-      if (val->hasDefault)
+      if ( val->hasDefault && defaultChecker )
         DUNE_THROW( ParameterInvalid, "Parameter '" << key << "' used first with and then without default." );
     }
     val->used = true;
     val->hasDefault = false;
-    return val->value;
+
+    return realValue;
   }
 
   template <class T>
@@ -655,6 +730,7 @@ namespace Dune
     insVal.value = ParameterParser< T >::toString( value );
     insVal.fileName = "default";
     insVal.used = false;
+    insVal.shadowStatus = (enableShadows_ ? Value::unresolved : Value::resolved);
 
     std::pair< ParameterMapType::iterator, bool > info
       = params_.insert( std::make_pair( key, insVal ) );
@@ -668,7 +744,7 @@ namespace Dune
     }
     else if ( val.used )
     {
-      if (!val.hasDefault)
+      if (!val.hasDefault ) 
         DUNE_THROW( ParameterInvalid, "Parameter '" << key << "' used first without and then with default." );
       if ( val.defaultValue != insVal.value )
         DUNE_THROW( ParameterInvalid, "Parameter '" << key << "' used with different default values." );
@@ -682,8 +758,52 @@ namespace Dune
     val.used = true;
     val.hasDefault = true;
     val.defaultValue = insVal.value;
+    std::string &realValue = val.value;
 
-    return val.value;
+    if( val.shadowStatus != Value::resolved )
+    {      
+      if ( val.shadowStatus == Value::resolving )
+        DUNE_THROW( ParameterInvalid, "Parameter '" << key << "' invalid, contains infinite loop." );
+
+      val.shadowStatus = Value::resolving;
+      std::string realValueHelper;
+      realValue.swap(realValueHelper);
+
+      while( !realValueHelper.empty() )
+      {
+        size_t startPoint = realValueHelper.find_first_of('$');        
+        realValue += realValueHelper.substr( 0, startPoint );
+
+        if( startPoint == std::string::npos ) 
+          break;
+
+        if( realValueHelper.length() < startPoint+2 )
+          DUNE_THROW( ParameterInvalid, "Parameter '" << key << "' contains trailing '$'." );
+        
+        if( realValueHelper[startPoint+1] == '$' )
+        {
+           realValue += '$';
+           realValueHelper.replace( 0, startPoint+1, "" );
+        }
+        else if( realValueHelper[startPoint+1] == '('  ) 
+        {
+          size_t length = realValueHelper.find_first_of(')') - (startPoint +2);
+          if( length == std::string::npos)
+            DUNE_THROW( ParameterInvalid, "Parameter '" << key << "' invalid." );
+
+          std::string shadowValueKey = realValueHelper.substr( startPoint+2, length );
+          realValueHelper.replace(0, startPoint+length+3, ""); 
+          realValue += map( shadowValueKey, false );        
+        }
+        else
+        {
+          DUNE_THROW( ParameterInvalid, "Parameter '" << key << "' invalid." );
+        }
+      }
+      val.shadowStatus = Value::resolved;
+    }
+
+    return realValue;
   }
 
   inline const std::string &
@@ -693,6 +813,7 @@ namespace Dune
     insVal.value = value;
     insVal.fileName = curFileName_;
     insVal.used = false;
+    insVal.shadowStatus = (enableShadows_ ? Value::unresolved : Value::resolved);
 
     std::pair< ParameterMapType::iterator, bool > info
       = params_.insert( std::make_pair( key, insVal ) );
@@ -803,7 +924,9 @@ namespace Dune
                       << "valid rank nor -1." << std::endl;
         }
       }
-    }
+      if( key == "fem.resolvevariables" )
+         ParameterParser< bool >::parse( actual_value, enableShadows_ );
+      }
     else
       includes.push( value );
     return true;
