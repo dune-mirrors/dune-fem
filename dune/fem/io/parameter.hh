@@ -270,6 +270,8 @@ namespace Dune
 
     struct DGFBlock;
 
+    enum CheckDefaultType{ checkDefaultDisable, checkDefaultEnable };
+
     typedef std::map< std::string, Value > ParameterMapType;
 
     Parameter ()
@@ -289,7 +291,7 @@ namespace Dune
 
     Value *find ( const std::string &key );
 
-    const std::string &map ( const std::string &key, bool defaultChecker = true );
+    const std::string &map ( const std::string &key, const CheckDefaultType defaultChecker = checkDefaultEnable );
     template <class T>
     const std::string &map ( const std::string &key, const T &value );
 
@@ -309,6 +311,7 @@ namespace Dune
 
   public:
     /** \brief add parameters from the command line
+        RangeType gRight;
      *
      *  This mehtod adds all parameters (strings containing a colon) in the
      *  command line to the container. The parameters are then removed from the
@@ -659,7 +662,7 @@ namespace Dune
     return (it != params_.end()) ? &(it->second) : 0;
   }
 
-  inline const std::string &Parameter::map ( const std::string &key, bool defaultChecker )
+  inline const std::string &Parameter::map ( const std::string &key, const CheckDefaultType defaultChecker )
   {
     Value *val = find( key );
     std::string &realValue = val->value;
@@ -701,7 +704,7 @@ namespace Dune
 
           std::string shadowValueKey = realValueHelper.substr( startPoint+2, length );
           realValueHelper.replace(0, startPoint+length+3, ""); 
-          realValue += map( shadowValueKey, false );        
+          realValue += map( shadowValueKey, checkDefaultDisable );        
         }
         else
         {
@@ -713,7 +716,7 @@ namespace Dune
 
     if ( val->used )
     {
-      if ( val->hasDefault && defaultChecker )
+      if ( ( val->hasDefault ) && ( defaultChecker == checkDefaultEnable ) )
         DUNE_THROW( ParameterInvalid, "Parameter '" << key << "' used first with and then without default." );
     }
     val->used = true;
@@ -793,7 +796,7 @@ namespace Dune
 
           std::string shadowValueKey = realValueHelper.substr( startPoint+2, length );
           realValueHelper.replace(0, startPoint+length+3, ""); 
-          realValue += map( shadowValueKey, false );        
+          realValue += map( shadowValueKey, checkDefaultDisable );        
         }
         else
         {
