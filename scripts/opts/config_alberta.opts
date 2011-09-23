@@ -10,3 +10,5 @@ CONFIGURE_FLAGS="CXX=g++ \
 --with-grape=$MODULEDIR/grape"
 MAKE_FLAGS=
 
+# These flags are necessary to perform grid specific checks!
+MAKE_CHECK_FLAGS="GRIDTYPE=ALBERTAGRID GRIDDIM=2"
