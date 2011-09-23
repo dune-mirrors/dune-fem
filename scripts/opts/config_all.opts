@@ -15,3 +15,7 @@ CONFIGURE_FLAGS="CXX=g++ \
 #CONFIGURE_FLAGS="CXX=g++ --disable-documentation"
 MAKE_FLAGS=
 
+
+# These flags are necessary to perform grid specific checks!
+MAKE_CHECK_FLAGS="GRIDTYPE=ALUGRID_CUBE GRIDDIM=3"
+

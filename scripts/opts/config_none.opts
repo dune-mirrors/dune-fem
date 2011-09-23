@@ -6,3 +6,7 @@ CONFIGURE_FLAGS="CXX=g++ \
 --prefix=/hosts/gandalf/raid5/morgoth/dune/src/dune"
 MAKE_FLAGS=
 
+
+# These flags are necessary to perform grid specific checks!
+MAKE_CHECK_FLAGS="GRIDTYPE=YASPGRID GRIDDIM=2"
+
