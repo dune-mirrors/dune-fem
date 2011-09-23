@@ -152,33 +152,6 @@ namespace Dune
   };
 
   template<>
-  struct ParameterParser< std::string >
-  {
-    static bool parse ( const std::string &s, std::string &value )
-    {
-      size_t first = s.find_first_not_of(" \t");
-      size_t last = s.find_last_not_of(" \t");
-
-      if( first == std::string::npos )
-      {
-        assert( last == std::string::npos );
-        value = "";
-      }
-      else
-      {
-        assert( last != std::string::npos );
-        value = s.substr(first, last - first + 1);
-      }
-      return true;
-    }
-
-    static std::string toString ( const std::string &value )
-    {
-      return value;
-    }
-  };
-
-  template<>
   struct ParameterParser< bool >
   {
     static bool parse ( const std::string &s, bool &value )
