@@ -243,7 +243,7 @@ namespace Dune
 
     struct DGFBlock;
 
-    enum CheckDefaultType{ checkDefaultDisable, checkDefaultEnable };
+    enum CheckDefaultType { checkDefaultDisable, checkDefaultEnable };
 
     typedef std::map< std::string, Value > ParameterMapType;
 
@@ -264,7 +264,7 @@ namespace Dune
 
     Value *find ( const std::string &key );
 
-    const std::string &map ( const std::string &key, const CheckDefaultType defaultChecker = checkDefaultEnable );
+    const std::string &map ( const std::string &key, const CheckDefaultType checkDefault = checkDefaultEnable );
     template <class T>
     const std::string &map ( const std::string &key, const T &value );
 
@@ -635,14 +635,13 @@ namespace Dune
     return (it != params_.end()) ? &(it->second) : 0;
   }
 
-  inline const std::string &Parameter::map ( const std::string &key, const CheckDefaultType defaultChecker )
+  inline const std::string &Parameter::map ( const std::string &key, const CheckDefaultType checkDefault )
   {
     Value *val = find( key );
     std::string &realValue = val->value;
 
     if (!val)
       DUNE_THROW( ParameterNotFound, "Parameter '" << key << "' not found." ); 
-
 
     if( val->shadowStatus != Value::resolved )
     {      
@@ -680,25 +679,23 @@ namespace Dune
           realValue += map( shadowValueKey, checkDefaultDisable );        
         }
         else
-        {
           DUNE_THROW( ParameterInvalid, "Parameter '" << key << "' invalid." );
-        }
       }
       val->shadowStatus = Value::resolved;
     }
 
-    if ( val->used )
+    if( checkDefault == checkDefaultEnable )
     {
-      if ( ( val->hasDefault ) && ( defaultChecker == checkDefaultEnable ) )
+      if( val->used && val->hasDefault )
         DUNE_THROW( ParameterInvalid, "Parameter '" << key << "' used first with and then without default." );
+      val->used = true;
+      val->hasDefault = false;
     }
-    val->used = true;
-    val->hasDefault = false;
 
     return realValue;
   }
 
-  template <class T>
+  template< class T >
   inline const std::string &
   Parameter::map ( const std::string &key, const T &value )
   {
@@ -772,9 +769,7 @@ namespace Dune
           realValue += map( shadowValueKey, checkDefaultDisable );        
         }
         else
-        {
           DUNE_THROW( ParameterInvalid, "Parameter '" << key << "' invalid." );
-        }
       }
       val.shadowStatus = Value::resolved;
     }
