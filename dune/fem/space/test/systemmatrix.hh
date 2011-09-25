@@ -1,0 +1,179 @@
+#ifndef ELLIPTIC_HH
+#define ELLIPTIC_HH
+
+#include <dune/common/fmatrix.hh>
+
+#include <dune/fem/quadrature/cachingquadrature.hh>
+#include <dune/fem/operator/common/operator.hh>
+
+// EllipticOperator
+// ----------------
+
+template< class DiscreteFunction, class Model >
+struct EllipticOperator
+: public Dune::Fem::Operator< DiscreteFunction >
+{
+  typedef DiscreteFunction DiscreteFunctionType;
+  typedef Model ModelType;
+
+protected:
+  typedef typename DiscreteFunctionType::DiscreteFunctionSpaceType DiscreteFunctionSpaceType;
+  typedef typename DiscreteFunctionType::LocalFunctionType LocalFunctionType;
+  typedef typename LocalFunctionType::RangeType RangeType;
+  typedef typename LocalFunctionType::JacobianRangeType JacobianRangeType;
+
+  typedef typename DiscreteFunctionSpaceType::IteratorType IteratorType;
+  // typedef typename IteratorType::EntityPointer EntityPointerType;
+  typedef typename IteratorType::Entity EntityType;
+  typedef typename EntityType::Geometry GeometryType;
+
+  typedef typename DiscreteFunctionSpaceType::GridPartType GridPartType;
+  typedef typename DiscreteFunctionSpaceType :: DomainType DomainType; 
+
+  typedef typename GridPartType::IntersectionIteratorType IntersectionIteratorType;
+  typedef typename IntersectionIteratorType::Intersection IntersectionType;
+  typedef typename IntersectionType::Geometry IntersectionGeometryType;
+
+  typedef Dune::CachingQuadrature< GridPartType, 1 > FaceQuadratureType;
+  typedef Dune::CachingQuadrature< GridPartType, 0 > QuadratureType;
+
+  typedef typename GridPartType :: GridType :: template Codim< 0 > :: EntityPointer EntityPointerType;
+
+public:
+  explicit EllipticOperator ( const ModelType &model = Model() )
+  : model_( model )
+  {}
+      
+  virtual void
+  operator() ( const DiscreteFunctionType &u, DiscreteFunctionType &w ) const;
+
+private:
+  ModelType model_;
+  double beta_;
+};
+
+template< class DiscreteFunction, class Model >
+void EllipticOperator< DiscreteFunction, Model >
+  ::operator() ( const DiscreteFunctionType &u, DiscreteFunctionType &w ) const 
+{
+  w.clear();
+
+  const DiscreteFunctionSpaceType &dfSpace = w.space();
+
+  const IteratorType end = dfSpace.end();
+  for( IteratorType it = dfSpace.begin(); it != end; ++it )
+  {
+    const EntityType &entity = *it;
+    const GeometryType &geometry = entity.geometry();
+
+    const LocalFunctionType uLocal = u.localFunction( entity );
+    LocalFunctionType wLocal = w.localFunction( entity );
+
+    const int quadOrder = uLocal.order() + wLocal.order();
+
+    { // element integral
+      QuadratureType quadrature( entity, quadOrder );
+      const size_t numQuadraturePoints = quadrature.nop();
+      for( size_t pt = 0; pt < numQuadraturePoints; ++pt )
+      {
+        const typename QuadratureType::CoordinateType &x = quadrature.point( pt );
+        const double weight = quadrature.weight( pt ) * geometry.integrationElement( x );
+
+        RangeType vu, avu;
+        uLocal.evaluate( quadrature[ pt ], vu );
+        model_.massFlux( entity, quadrature[ pt ], vu, avu );
+
+        JacobianRangeType du, adu;
+        uLocal.jacobian( quadrature[ pt ], du );
+        model_.diffusiveFlux( entity, quadrature[ pt ], du, adu );
+
+        avu *= weight;
+        adu *= weight;
+        wLocal.axpy( quadrature[ pt ], avu, adu );
+      }
+    }
+  }
+  w.communicate();
+}
+
+// MassModel
+// --------------
+
+template< class FunctionSpace >
+struct MassModel
+{
+  typedef FunctionSpace FunctionSpaceType;
+
+  typedef typename FunctionSpaceType::DomainType DomainType;
+  typedef typename FunctionSpaceType::RangeType RangeType;
+  typedef typename FunctionSpaceType::JacobianRangeType JacobianRangeType;
+
+  typedef typename FunctionSpaceType::DomainFieldType DomainFieldType;
+  typedef typename FunctionSpaceType::RangeFieldType RangeFieldType;
+
+  template< class Entity, class Point >
+  void massFlux ( const Entity &entity, const Point &x,
+                  const RangeType &value, RangeType &flux ) const
+  {
+    flux = value;
+  }
+
+  template< class Entity, class Point >
+  void diffusiveFlux ( const Entity &entity, const Point &x,
+                       const JacobianRangeType &gradient,
+                       JacobianRangeType &flux ) const
+  {
+    flux = 0;
+  }
+};
+
+
+template< class Function, class DiscreteFunction >
+void assembleRHS ( const Function &function, DiscreteFunction &rhs )
+{
+  typedef typename DiscreteFunction::DiscreteFunctionSpaceType DiscreteFunctionSpaceType;
+  typedef typename DiscreteFunction::LocalFunctionType LocalFunctionType;
+
+  typedef typename DiscreteFunctionSpaceType::IteratorType IteratorType;
+  typedef typename IteratorType::Entity EntityType;
+  typedef typename EntityType::Geometry GeometryType;
+
+  typedef typename DiscreteFunctionSpaceType::GridPartType GridPartType;
+  typedef Dune::CachingQuadrature< GridPartType, 0 > QuadratureType;
+
+  rhs.clear();
+
+  const DiscreteFunctionSpaceType &dfSpace = rhs.space();
+
+  const IteratorType end = dfSpace.end();
+  for( IteratorType it = dfSpace.begin(); it != end; ++it )
+  {
+    const EntityType &entity = *it;
+    const GeometryType &geometry = entity.geometry();
+
+    typename Function::LocalFunctionType localFunction = 
+             function.localFunction( entity);
+    LocalFunctionType rhsLocal = rhs.localFunction( entity );
+    
+    QuadratureType quadrature( entity, 2*dfSpace.order()+1 );
+    const size_t numQuadraturePoints = quadrature.nop();
+    for( size_t pt = 0; pt < numQuadraturePoints; ++pt )
+    {
+      // obtain quadrature point
+      const typename QuadratureType::CoordinateType &x = quadrature.point( pt );
+
+      // evaluate f
+      typename Function::RangeType f;
+      localFunction.evaluate( quadrature[ pt ], f );
+
+      // multiply by quadrature weight
+      f *= quadrature.weight( pt ) * geometry.integrationElement( x );
+
+      // add f * phi_i to rhsLocal[ i ]
+      rhsLocal.axpy( quadrature[ pt ], f );
+    }
+  }
+  rhs.communicate();
+}
+
+#endif // #ifndef ELLIPTIC_HH

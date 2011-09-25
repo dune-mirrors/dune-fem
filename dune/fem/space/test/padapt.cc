@@ -30,6 +30,10 @@ const int polOrder = POLORDER;
 #include <dune/fem/misc/l2norm.hh>
 #include <dune/fem/misc/h1norm.hh>
 
+// include solvers
+#include <dune/fem/solver/inverseoperators.hh>
+#include <dune/fem/solver/oemsolver.hh>
+
 #if HAVE_GRAPE
   #define USE_GRAPE WANT_GRAPE
 #else
@@ -43,6 +47,8 @@ const int polOrder = POLORDER;
   #include <dune/grid/io/visual/grapedatadisplay.hh>
 #endif
 #include <dune/fem/io/parameter.hh>
+
+#include "systemmatrix.hh"
 
 
 // Check for unhealthy grids
@@ -163,18 +169,18 @@ typedef AdaptationManager< MyGridType, RestrictProlongOperatorType >
 
 void setPolOrder( const DiscreteFunctionSpaceType &space, bool increase ) 
 {
+  const int maxPol = 2;
+  const int minPol = 1;
   const int size = space.indexSet().size( 0 );
 
-  const int p = increase ? 1 : 2 ;
+  const int p = increase ? minPol : maxPol ;
   std::vector< int > polOrds( size, p );
 
-  /*
   for( int i=0; i<size/2; ++i ) 
   {
-    const int p = increase ? 2 : 1 ;
+    const int p = increase ? maxPol : minPol ;
     polOrds[ i ] = p;
   }
-  */
 
   std::cout << "Set polynomial order to " << p << std::endl;
   space.adapt( polOrds );
@@ -241,7 +247,7 @@ bool checkContinuous( DiscreteFunctionType &solution )
         IntersectionQuadratureType interQuad( solution.space().gridPart(), intersection, 4 );
         const QuadratureImp &quadInside  = interQuad.inside();
         const QuadratureImp &quadOutside = interQuad.outside();
-        for( int qp = 0; qp < quadInside.nop(); ++qp )
+        for( unsigned int qp = 0; qp < quadInside.nop(); ++qp )
 	      {
           typename DiscreteFunctionType::RangeType uIn,uOut;
           solution.localFunction(entity).evaluate(quadInside[qp], uIn);
@@ -254,13 +260,50 @@ bool checkContinuous( DiscreteFunctionType &solution )
   return (ret<1e-10);
 }
 
+template <class Function>
+void interpolate( const Function &f, DiscreteFunctionType &solution )
+{
+#if 0
+  std::cout << "Applying Lagrangeinterpolation:" << std::endl;
+  LagrangeInterpolation< DiscreteFunctionType > :: interpolateFunction( f, solution );
+#else
+  std::cout << "Applying L2-projection:" << std::endl;
+  // define Laplace operator
+  typedef MassModel< FunctionSpaceType > ModelType;
+  typedef EllipticOperator< DiscreteFunctionType, ModelType > EllipticOperatorType;
+  typedef Dune::CGInverseOperator< DiscreteFunctionType > LinearInverseOperatorType;
+  typedef typename DiscreteFunctionType::DiscreteFunctionSpaceType::GridPartType GridPartType;
+
+  // typedef Dune::GridFunctionAdapter< Function, GridPartType > GridRHSFunctionType;
+  // GridRHSFunctionType gridf( "grid rhs", f, solution.space().gridPart(), solution.space().order()+1 );
+  DiscreteFunctionType rhs( "rhs", solution.space() );
+  assembleRHS( f, rhs );
+  
+  EllipticOperatorType ellipticOp;
+
+  // create linear inverse operator
+  const double solverEps = Dune::Parameter::getValue< double >( "solvereps", 1e-8 );
+  LinearInverseOperatorType solver( ellipticOp, solverEps, solverEps );
+
+  solver( rhs, solution );
+#endif
+  bool continuous = checkContinuous( solution );
+
+  L2Norm< GridPartType > l2norm( solution.space().gridPart() );
+  H1Norm< GridPartType > h1norm( solution.space().gridPart() );
+  double preL2error = l2norm.distance( f, solution );
+  double preH1error = h1norm.distance( f, solution );
+
+  std::cout << "Solution is " << (continuous?"":"NOT") << " continuous" << std::endl;
+  std::cout << "L2 error before adaptation: " << preL2error << std::endl;
+  std::cout << "H1 error before adaptation: " << preH1error << std::endl; 
+}
 
 void algorithm ( GridPartType &gridPart,
                  DiscreteFunctionType &solution, 
                  int step,
                  int turn )
 {
-  bool continuous;
   std::cout << "********************************************************" << std::endl;
 
   const unsigned int polOrder
@@ -269,23 +312,13 @@ void algorithm ( GridPartType &gridPart,
   ExactSolutionType fexact;
   GridExactSolutionType f( "exact solution", fexact, gridPart, polOrder );
 
-  L2Norm< GridPartType > l2norm( gridPart );
-  H1Norm< GridPartType > h1norm( gridPart );
+  interpolate( f, solution );
   
-  LagrangeInterpolation< DiscreteFunctionType > :: interpolateFunction( f, solution );
-  continuous = checkContinuous( solution );
-
-  //solution.print( std::cout );
-  double preL2error = l2norm.distance( f, solution );
-  double preH1error = h1norm.distance( f, solution );
-
   std::cout << "Unknowns before adaptation: " << solution.space().size() << std::endl;
-  std::cout << "Solution is " << (continuous?"":"NOT") << " continuous" << std::endl;
-  std::cout << "L2 error before adaptation: " << preL2error << std::endl;
-  std::cout << "H1 error before adaptation: " << preH1error << std::endl; 
-  
   adapt( gridPart.grid(), solution, step );
   
+  L2Norm< GridPartType > l2norm( gridPart );
+  H1Norm< GridPartType > h1norm( gridPart );
   double postL2error = l2norm.distance( f, solution );
   double postH1error = h1norm.distance( f, solution );
 
@@ -308,14 +341,7 @@ void algorithm ( GridPartType &gridPart,
     }
   #endif
 
-  LagrangeInterpolation< DiscreteFunctionType > :: interpolateFunction( f, solution );
-  continuous = checkContinuous( solution );
-  double newL2error = l2norm.distance( f, solution );
-  double newH1error = h1norm.distance( f, solution );
-
-  std::cout << "Solution is " << (continuous?"":"NOT") << " continuous" << std::endl;
-  std :: cout << "L2 error for interpolation after adaption: " << newL2error << std :: endl;
-  std :: cout << "H1 error for interpolation after adaption: " << newH1error << std :: endl; 
+  interpolate( f, solution );
   
   #if USE_GRAPE && SHOW_INTERPOLATION
     //if( turn > 0 ) 
@@ -325,11 +351,13 @@ void algorithm ( GridPartType &gridPart,
     }
   #endif
 
+/*
   double l2eoc = -log( newL2error / preL2error) / M_LN2;
   double h1eoc = -log( newH1error / preH1error) / M_LN2;
 
   std :: cout << "L2 EOC: " << l2eoc << std :: endl;
   std :: cout << "H1 EOC: " << h1eoc << std :: endl;
+*/
 
   #if WRITE_DATA
     GrapeDataIO< MyGridType > dataio; 
