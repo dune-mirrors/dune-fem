@@ -137,11 +137,9 @@ typedef CheckGridEnabled< MyGridType >::GridPartType GridPartType;
 typedef FunctionSpace< double, double, MyGridType::dimensionworld, 1 > FunctionSpaceType;
 
 //! type of the discrete function space our unkown belongs to
-//typedef LagrangeDiscreteFunctionSpace< FunctionSpaceType, GridPartType, polOrder >
-//  DiscreteFunctionSpaceType;
+// typedef LagrangeDiscreteFunctionSpace< FunctionSpaceType, GridPartType, polOrder > DiscreteFunctionSpaceType;
 //! type of the discrete function space our unkown belongs to
-typedef PAdaptiveLagrangeSpace< FunctionSpaceType, GridPartType, polOrder >
-  DiscreteFunctionSpaceType;
+typedef PAdaptiveLagrangeSpace< FunctionSpaceType, GridPartType, polOrder > DiscreteFunctionSpaceType;
 
 //! type of the discrete function we are using
 typedef AdaptiveDiscreteFunction< DiscreteFunctionSpaceType > DiscreteFunctionType;
@@ -335,13 +333,36 @@ try
 
   setPolOrder( discreteFunctionSpace, false );
 
-  std :: cout << std :: endl << "Refining: " << std :: endl;
-  for( int i = 0; i < ml; ++i )
-    algorithm( gridPart, solution, step, (i == ml-1) );
-  
-  std :: cout << std :: endl << "Coarsening:" << std::endl;
-  for( int i = ml - 1; i >= 0; --i )
-    algorithm( gridPart, solution, -step, 1 );
+  for ( int r = 0; r < 4; ++r )
+  {
+    std :: cout << std :: endl << "Refining: " << std :: endl;
+    for( int i = 0; i < ml; ++i )
+      algorithm( gridPart, solution, step, (i == ml-1) );
+    
+    std :: cout << std :: endl << "Coarsening:" << std::endl;
+    for( int i = ml - 1; i >= 0; --i )
+      algorithm( gridPart, solution, -step, 1 );
+
+    if (r==0)
+    {
+      // Test grid ref. (polynomial order is max)
+      std :: cout << std :: endl << "Refine grid" << std::endl;
+      Dune::GlobalRefine::apply(*gridptr,1);
+    }
+		else if (r==1)
+    {
+      // Test grid ref. (but with polynomial order set to min)
+      std :: cout << std :: endl << "Refine grid" << std::endl;
+      setPolOrder( discreteFunctionSpace, true );
+      Dune::GlobalRefine::apply(*gridptr,1);
+    }
+    else if (r==2)
+    {
+      // Test grid coarsening (polynomial order set to max)
+      std :: cout << std :: endl << "Coarsen grid" << std::endl;
+      // Dune::GlobalRefine::apply(*gridptr,-1); // not workling yet
+    }
+  }
 
   return 0;
 }
