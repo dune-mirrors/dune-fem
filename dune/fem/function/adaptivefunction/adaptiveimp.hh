@@ -162,7 +162,6 @@ namespace Dune {
       ManagedDofStorageInterface* managedObject = dynamic_cast< ManagedDofStorageInterface* > ( memObject_ );
       if( managedObject ) 
       {
-        managedObject->resize();
         managedObject->dofCompress();
       }
     }
