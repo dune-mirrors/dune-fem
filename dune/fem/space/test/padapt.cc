@@ -21,9 +21,8 @@ const int polOrder = POLORDER;
 #include <dune/fem/gridpart/gridpart.hh>
 
 #include <dune/fem/gridpart/adaptiveleafgridpart.hh>
+#include <dune/fem/quadrature/intersectionquadrature.hh>
 #include <dune/fem/space/common/adaptmanager.hh>
-//#include <dune/fem/space/lagrangespace.hh>
-//#include <dune/fem/space/lagrangespace/adaptmanager.hh>
 #include <dune/fem/space/padaptivespace.hh>
 #include <dune/fem/function/adaptivefunction.hh>
 #include <dune/fem/quadrature/cachingquadrature.hh>
@@ -214,6 +213,44 @@ void adapt ( MyGridType &grid, DiscreteFunctionType &solution, int step )
   setPolOrder( discreteFunctionSpace, step > 0 );
 }
 
+bool checkContinuous( DiscreteFunctionType &solution )
+{
+  double ret = 0;
+  typedef typename DiscreteFunctionType :: DiscreteFunctionSpaceType DiscreteFunctionSpaceType;
+  typedef typename DiscreteFunctionSpaceType :: GridPartType GridPartType;
+  typedef typename DiscreteFunctionSpaceType :: IteratorType IteratorType ;
+  typedef typename IteratorType :: Entity  EntityType ;
+  typedef typename GridPartType :: IntersectionIteratorType IntersectionIteratorType;
+  typedef typename GridPartType :: IntersectionType         IntersectionType;
+  
+  const IteratorType endit = solution.space().end();
+  for( IteratorType it = solution.space().begin(); it != endit; ++it ) 
+  {
+    const EntityType& entity = *it;
+    const IntersectionIteratorType endiit = solution.space().gridPart().iend( entity );
+    for( IntersectionIteratorType iit = solution.space().gridPart().ibegin( entity ); iit != endiit ; ++ iit ) 
+    {
+      const IntersectionType& intersection = *iit ; 
+	    if( intersection.neighbor() && intersection.conforming() )
+      {
+        typedef CachingQuadrature< GridPartType, 1 > FaceQuadratureType;
+        typedef IntersectionQuadrature< FaceQuadratureType, true > IntersectionQuadratureType;
+        typedef typename IntersectionQuadratureType :: FaceQuadratureType QuadratureImp;
+        IntersectionQuadratureType interQuad( solution.space().gridPart(), intersection, 4 );
+        const QuadratureImp &quadInside  = interQuad.inside();
+        const QuadratureImp &quadOutside = interQuad.outside();
+        for( int qp = 0; qp < quadInside.nop(); ++qp )
+	      {
+          typename DiscreteFunctionType::RangeType uIn,uOut;
+          solution.localFunction(entity).evaluate(quadInside[qp], uIn);
+          solution.localFunction(*(intersection.outside())).evaluate(quadOutside[qp], uOut);
+          ret = std::max(ret, (uIn-uOut).two_norm());
+        }
+      }
+    }
+  }
+  return (ret<1e-10);
+}
 
 
 void algorithm ( GridPartType &gridPart,
@@ -221,6 +258,7 @@ void algorithm ( GridPartType &gridPart,
                  int step,
                  int turn )
 {
+  bool continuous;
   std::cout << "********************************************************" << std::endl;
 
   const unsigned int polOrder
@@ -233,12 +271,14 @@ void algorithm ( GridPartType &gridPart,
   H1Norm< GridPartType > h1norm( gridPart );
   
   LagrangeInterpolation< DiscreteFunctionType > :: interpolateFunction( f, solution );
+  continuous = checkContinuous( solution );
 
   //solution.print( std::cout );
   double preL2error = l2norm.distance( f, solution );
   double preH1error = h1norm.distance( f, solution );
 
   std::cout << "Unknowns before adaptation: " << solution.space().size() << std::endl;
+  std::cout << "Solution is " << (continuous?"":"NOT") << " continuous" << std::endl;
   std::cout << "L2 error before adaptation: " << preL2error << std::endl;
   std::cout << "H1 error before adaptation: " << preH1error << std::endl; 
   
@@ -267,9 +307,11 @@ void algorithm ( GridPartType &gridPart,
   #endif
 
   LagrangeInterpolation< DiscreteFunctionType > :: interpolateFunction( f, solution );
+  continuous = checkContinuous( solution );
   double newL2error = l2norm.distance( f, solution );
   double newH1error = h1norm.distance( f, solution );
 
+  std::cout << "Solution is " << (continuous?"":"NOT") << " continuous" << std::endl;
   std :: cout << "L2 error for interpolation after adaption: " << newL2error << std :: endl;
   std :: cout << "H1 error for interpolation after adaption: " << newH1error << std :: endl; 
   
