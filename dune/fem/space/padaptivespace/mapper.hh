@@ -412,14 +412,18 @@ namespace Dune
                               unsigned int&  dofCounter,
                               EntityDofStorage& entityDofs )
       {
-        if( ! entityDofs.exists( codim, polOrd ) ) 
+        const int numDofs = set.numDofs( codim, subEntity );
+        // only if dofs exists on this entity do something
+        if( numDofs > 0 ) 
         {
-          const int numDofs = set.numDofs( codim, subEntity );
-          entityDofs.insert( entity.type(), codim, polOrd, numDofs, dofCounter );
-          dofCounter += numDofs;
+          if( ! entityDofs.exists( codim, polOrd ) ) 
+          {
+            entityDofs.insert( entity.type(), codim, polOrd, numDofs, dofCounter );
+            dofCounter += numDofs;
+          }
+          else 
+            entityDofs.use( codim, polOrd );
         }
-        else 
-          entityDofs.use( codim, polOrd );
       }
       static void apply( const EntityType& entity, 
                          const LagrangePointSetType& set,
