@@ -3,7 +3,7 @@ DGF
 Interval
 0 0   % p0
 1 1   % p1
-8 8   % nx ny
+1 1   % nx ny
 #
 
 BoundaryDomain

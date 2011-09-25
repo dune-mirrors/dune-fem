@@ -66,50 +66,6 @@ struct CheckGridEnabled
   }
 };
 
-// disable YaspGrid
-namespace Dune
-{
-  template< int dim >
-  class YaspGrid;
-}
-
-template< int dim >
-struct CheckGridEnabled< Dune :: YaspGrid< dim > >
-{
-  typedef Dune :: YaspGrid< dim > GridType;
-  
-  typedef Dune :: LeafGridPart< GridType > GridPartType;
-
-  inline static int CallMain ( int argc, char **argv )
-  {
-    std :: cerr << "WARNING: Lagrange Adaptation test disabled, because YaspGrid sucks!"
-                << std :: endl;
-    return 0;
-  }
-};
-
-// disable UGGrid
-namespace Dune
-{
-  template< int dim >
-  class UGGrid;
-}
-
-template< int dim >
-struct CheckGridEnabled< Dune :: UGGrid< dim > >
-{
-  typedef Dune :: UGGrid< dim > GridType;
-
-  typedef Dune :: LeafGridPart< GridType > GridPartType;
-
-  inline static int CallMain ( int argc, char **argv )
-  {
-    std :: cerr << "WARNING: Lagrange Adaptation test disabled, because UGGrid sucks!"
-                << std :: endl;
-    return 0;
-  }
-};
-
 int main ( int argc, char **argv )
 {
   return CheckGridEnabled< Dune::GridSelector::GridType >::CallMain( argc, argv );
