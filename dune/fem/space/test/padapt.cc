@@ -224,12 +224,12 @@ void adapt ( MyGridType &grid, DiscreteFunctionType &solution, int step )
 bool checkContinuous( DiscreteFunctionType &solution )
 {
   double ret = 0;
-  typedef typename DiscreteFunctionType :: DiscreteFunctionSpaceType DiscreteFunctionSpaceType;
-  typedef typename DiscreteFunctionSpaceType :: GridPartType GridPartType;
-  typedef typename DiscreteFunctionSpaceType :: IteratorType IteratorType ;
-  typedef typename IteratorType :: Entity  EntityType ;
-  typedef typename GridPartType :: IntersectionIteratorType IntersectionIteratorType;
-  typedef typename GridPartType :: IntersectionType         IntersectionType;
+  typedef DiscreteFunctionType :: DiscreteFunctionSpaceType DiscreteFunctionSpaceType;
+  typedef DiscreteFunctionSpaceType :: GridPartType GridPartType;
+  typedef DiscreteFunctionSpaceType :: IteratorType IteratorType ;
+  typedef IteratorType :: Entity  EntityType ;
+  typedef GridPartType :: IntersectionIteratorType IntersectionIteratorType;
+  typedef GridPartType :: IntersectionType         IntersectionType;
   
   const IteratorType endit = solution.space().end();
   for( IteratorType it = solution.space().begin(); it != endit; ++it ) 
@@ -243,13 +243,13 @@ bool checkContinuous( DiscreteFunctionType &solution )
       {
         typedef CachingQuadrature< GridPartType, 1 > FaceQuadratureType;
         typedef IntersectionQuadrature< FaceQuadratureType, true > IntersectionQuadratureType;
-        typedef typename IntersectionQuadratureType :: FaceQuadratureType QuadratureImp;
+        typedef IntersectionQuadratureType :: FaceQuadratureType QuadratureImp;
         IntersectionQuadratureType interQuad( solution.space().gridPart(), intersection, 4 );
         const QuadratureImp &quadInside  = interQuad.inside();
         const QuadratureImp &quadOutside = interQuad.outside();
         for( unsigned int qp = 0; qp < quadInside.nop(); ++qp )
 	      {
-          typename DiscreteFunctionType::RangeType uIn,uOut;
+          DiscreteFunctionType::RangeType uIn,uOut;
           solution.localFunction(entity).evaluate(quadInside[qp], uIn);
           solution.localFunction(*(intersection.outside())).evaluate(quadOutside[qp], uOut);
           ret = std::max(ret, (uIn-uOut).two_norm());
