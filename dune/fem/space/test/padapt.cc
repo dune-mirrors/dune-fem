@@ -167,10 +167,12 @@ void setPolOrder( const DiscreteFunctionSpaceType &space, bool increase )
 
   const int p = increase ? 1 : 2 ;
   std::vector< int > polOrds( size, p );
+
   /*
   for( int i=0; i<size/2; ++i ) 
   {
-    polOrds[ i ] = 2;
+    const int p = increase ? 2 : 1 ;
+    polOrds[ i ] = p;
   }
   */
 
