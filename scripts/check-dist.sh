@@ -93,7 +93,7 @@ for OPTS in `cd $OPTSDIR ; ls *.opts` ; do
 
   cd $WORKINGDIR
   CHECKLOG="$WORKINGDIR/${OPTS%.opts}-check.out"
-  MAKE_CHECK_FLAGS="$(source $OPTS; echo $MAKE_CHECK_FLAGS)"
+  MAKE_CHECK_FLAGS="$(source $OPTSDIR/$OPTS; echo $MAKE_CHECK_FLAGS)"
   if ! $SCRIPTSDIR/check-tests.sh $TESTDIR/dune-fem "$MAKE_CHECK_FLAGS"; then
     echo "Error: Check failed with $OPTS (see $CHECKLOG)"
     errors=$((errors+1))
