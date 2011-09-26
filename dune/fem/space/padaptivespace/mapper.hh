@@ -334,8 +334,8 @@ namespace Dune
 
       template <class VectorType> 
       bool removeHoles( VectorType& oldIdx, VectorType& newIdx, 
-                        VectorType& holesVec, int actHole, int& holes,
-                        const int actSize ) 
+                        VectorType& holesVec, int& currentHole,  
+                        const int usedSize, int& holes ) 
       {
         bool haveToCopy = false ;
         for( int k=0; k<numOrders; ++k )
@@ -345,26 +345,26 @@ namespace Dune
           for( int dof = 0; dof<dofSize; ++dof ) 
           {
             assert( used_[ k ] );
+            // get global DoF number 
             int& currDof = dofs[ dof ] ;
-            if( currDof >= actSize ) 
+
+            // if dof >= usedSize it has to be migrated to a hole 
+            if( currDof >= usedSize ) 
             {
               // serach next hole that is smaler than actual size 
-              --actHole;
-              // if actHole < 0 then error, because we have index larger then
-              // actual size 
-              assert(actHole >= 0);
-              while ( holesVec[actHole] >= actSize )
-              {
-                --actHole;
-                if(actHole < 0) break;
-              }
+              --currentHole;
 
-              assert(actHole >= 0);
+              // if currentHole < 0 then error, because we have index larger then
+              // actual size 
+              assert(currentHole >= 0);
+              assert( holesVec[currentHole] < usedSize );
 
               // remember old and new index 
-              oldIdx[holes] = currDof;
-              currDof = holesVec[actHole];
-              newIdx[holes] = currDof ;
+              oldIdx[ holes ] = currDof;
+              currDof = holesVec[ currentHole ];
+              newIdx[ holes ] = currDof ;
+
+              // increase number of holes 
               ++holes;
 
               haveToCopy = true;
@@ -657,12 +657,14 @@ namespace Dune
     /** \copydoc Dune::DofMapper::oldIndex */
     int oldIndex ( const int hole, const int block ) const
     {
+      assert( oldIndex_[ hole ] >= 0 );
       return oldIndex_[ hole ];
     }
 
     /** \copydoc Dune::DofMapper::newIndex */
     int newIndex ( const int hole, const int block ) const
     {
+      assert( newIndex_[ hole ] >= 0 );
       return newIndex_[ hole ];
     }
 
@@ -715,6 +717,7 @@ namespace Dune
       insertEntityDofs( entity );
     }
 
+    // return number of local dofs that were not visited yet 
     unsigned int insertEntityDofs( const EntityType &entity )
     {
       PolynomOrderStorageType& polyStorage = entityPolynomOrder_[ entity ];
@@ -741,7 +744,6 @@ namespace Dune
 
     void removeEntity ( const EntityType &entity )
     {
-      abort();
       int polOrd; 
       if( entityPolynomOrder_[ entity ].deactivate( polOrd ) )
       {
@@ -768,9 +770,13 @@ namespace Dune
       compress();
     }
 
-    void insertAllUsed() 
+    //! return number of DoFs currently used for space
+    size_t insertAllUsed() 
     {
+      // reset all dof entries 
       setUnused();
+      
+      // count current size 
       size_t usedSize = 0;
 
       typedef typename GridPartType :: template Codim< 0 > :: IteratorType IteratorType;
@@ -782,10 +788,10 @@ namespace Dune
         usedSize += insertEntityDofs( *it );
       }
 
-      size_ = usedSize ;
       //std::cout << "Insert Size = " << size_ << std::endl;
       //printDofs();
       //std::cout << "Insert done! " << std::endl;
+      return usedSize ;
     }
 
     void printDofs() const 
@@ -809,6 +815,7 @@ namespace Dune
       }
     }
 
+    //! reset all used flags of all DoF entries 
     void setUnused() 
     {
       {
@@ -844,22 +851,20 @@ namespace Dune
       }
 
       // make all dofs that are currently used 
-      insertAllUsed();
+      // (corresponding to GridPart's iterator)
+      const size_t usedSize = insertAllUsed();
 
+      // reset number of holes 
       numberOfHoles_ = 0;
-      const int sizeOfVecs = size_;
 
       // true if a least one dof must be copied 
       bool haveToCopy = false;
-
-      int actHole = 0;
-      int newActSize = 0;
 
       std::vector<int> validHoles;
 
       {
         // default is true which means entry is hole
-        std::vector< bool > holeMarker( sizeOfVecs, true );
+        std::vector< bool > holeMarker( size_, true );
 
         // mark holes 
         for( int codim = 0; codim <= dimension; ++codim ) 
@@ -871,19 +876,16 @@ namespace Dune
           {
             EntityDofStorageType& dof = *it;
             // store holes if unused dofs exits, otherwise increase actSize 
-            dof.detectUnusedDofs( holeMarker, size_ );
+            dof.detectUnusedDofs( holeMarker, usedSize );
           }
         }
 
-        newActSize = size_ ;
         // check for real holes 
-        validHoles.reserve( size_ );
+        validHoles.reserve( usedSize );
         validHoles.resize( 0 );
 
-        //std::cout << "holes: " << actHole << " new size" << newActSize << std::endl;
-
         // check the vector of hole flags and store numbers
-        for( size_t i=0; i<size_; ++i ) 
+        for( int i=0; i<usedSize; ++i ) 
         {
           // it's only a valid hole, if it was not marked otherwise 
           if( holeMarker[ i ] )  
@@ -894,12 +896,15 @@ namespace Dune
         }
       }
 
-      const size_t countedValidHoles = validHoles.size();
-
-      if( countedValidHoles > 0 ) 
+      if( validHoles.size() > 0 ) 
       {
-        oldIndex_.resize( countedValidHoles, -1) ;
-        newIndex_.resize( countedValidHoles, -1) ;
+        // counter for current hole to use 
+        int currentHole = validHoles.size();
+
+        // resize old-new index storage to correct size 
+        oldIndex_.resize( currentHole, -1) ;
+        newIndex_.resize( currentHole, -1) ;
+
         for( int codim = 0; codim <= dimension; ++codim ) 
         {
           DofContainerType& codimContainer = dofContainer( codim );
@@ -907,15 +912,22 @@ namespace Dune
           const Iterator endit = codimContainer.end();
           for( Iterator it = codimContainer.begin(); it != endit; ++it )
           {
+            // get dof storage 
             EntityDofStorageType& dof = *it;
-            bool haveTo = dof.removeHoles( oldIndex_, newIndex_, validHoles, countedValidHoles, numberOfHoles_, newActSize );
-            if( haveTo ) haveToCopy = true ;
+
+            // replace DoF larger than size with DoF from holes 
+            // set haveToCopy to true if true is returned 
+            haveToCopy |= dof.removeHoles( oldIndex_, newIndex_, 
+                                           validHoles, currentHole, 
+                                           usedSize, numberOfHoles_ );
           }
         }
       }
 
-      //std::cout << "Size " << size_ << " holes " << numberOfHoles_ << std::endl;
+      // store new size 
+      size_ = usedSize ;
 
+      //std::cout << "Size " << size_ << " holes " << numberOfHoles_ << std::endl;
       //printDofs();
 
       sequence_ = dm_.sequence();
