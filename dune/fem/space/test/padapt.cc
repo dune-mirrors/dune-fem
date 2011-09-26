@@ -171,8 +171,10 @@ typedef AdaptationManager< MyGridType, RestrictProlongOperatorType >
 
 void setPolOrder( const DiscreteFunctionSpaceType &space, bool increase ) 
 {
-  const int maxPol = 2;
-  const int minPol = 1;
+  const int maxPol = POLORDER;
+  //const int maxPol = 2;
+  const int minPol = 2;
+  //const int minPol = 1;
   const int size = space.indexSet().size( 0 );
 
   const int p = increase ? minPol : maxPol ;
@@ -188,15 +190,24 @@ void setPolOrder( const DiscreteFunctionSpaceType &space, bool increase )
   space.adapt( polOrds );
 }
 
- 
-
-void adapt ( MyGridType &grid, DiscreteFunctionType &solution, int step )
+void polOrderAdapt( MyGridType &grid, DiscreteFunctionType &solution, int step) 
 {
+  setPolOrder( solution.space(), step > 0 );
+}
+
+void gridAdapt( MyGridType &grid, DiscreteFunctionType &solution, int step) 
+{
+  #if USE_GRAPE && SHOW_RESTRICT_PROLONG
+    //if( turn > 0 ) 
+    {
+      GrapeDataDisplay< MyGridType > grape( grid );
+      grape.dataDisplay( solution );
+    }
+  #endif
+
   typedef DiscreteFunctionSpaceType :: IteratorType IteratorType;
-  
   const DiscreteFunctionSpaceType &discreteFunctionSpace = solution.space();
-  
-  /*
+
   RestrictProlongOperatorType rp( solution );
 
   AdaptationManagerType adaptationManager( grid, rp );
@@ -216,11 +227,16 @@ void adapt ( MyGridType &grid, DiscreteFunctionType &solution, int step )
 
     // adapt grid 
     adaptationManager.adapt();
-
   }
-  */
 
-  setPolOrder( discreteFunctionSpace, step > 0 );
+  #if USE_GRAPE && SHOW_RESTRICT_PROLONG
+    //if( turn > 0 ) 
+    {
+      GrapeDataDisplay< MyGridType > grape( grid );
+      grape.dataDisplay( solution );
+    }
+  #endif
+
 }
 
 bool checkContinuous( DiscreteFunctionType &solution )
@@ -265,7 +281,7 @@ bool checkContinuous( DiscreteFunctionType &solution )
 template <class Function>
 void interpolate( const Function &f, DiscreteFunctionType &solution )
 {
-#if 0
+#if 1
   std::cout << "Applying Lagrangeinterpolation:" << std::endl;
   LagrangeInterpolation< DiscreteFunctionType > :: interpolateFunction( f, solution );
 #else
@@ -329,7 +345,7 @@ void algorithm ( GridPartType &gridPart,
   interpolate( f, solution );
   
   std::cout << "Unknowns before adaptation: " << solution.space().size() << std::endl;
-  adapt( gridPart.grid(), solution, step );
+  polOrderAdapt( gridPart.grid(), solution, step );
   
   L2Norm< GridPartType > l2norm( gridPart );
   H1Norm< GridPartType > h1norm( gridPart );
@@ -419,6 +435,10 @@ try
 
   setPolOrder( discreteFunctionSpace, false );
 
+  ExactSolutionType fexact;
+  GridExactSolutionType f( "exact solution", fexact, gridPart, polOrder );
+
+  interpolate( f, solution );
   for ( int r = 0; r < 4; ++r )
   {
     std :: cout << std :: endl << "Refining: " << std :: endl;
@@ -433,20 +453,20 @@ try
     {
       // Test grid ref. (polynomial order is max)
       std :: cout << std :: endl << "Refine grid" << std::endl;
-      Dune::GlobalRefine::apply(*gridptr,1);
+      gridAdapt( *gridptr, solution, step ) ;
     }
 		else if (r==1)
     {
       // Test grid ref. (but with polynomial order set to min)
       std :: cout << std :: endl << "Refine grid" << std::endl;
       setPolOrder( discreteFunctionSpace, true );
-      Dune::GlobalRefine::apply(*gridptr,1);
+      gridAdapt( *gridptr, solution, step ) ;
     }
     else if (r==2)
     {
       // Test grid coarsening (polynomial order set to max)
       std :: cout << std :: endl << "Coarsen grid" << std::endl;
-      // Dune::GlobalRefine::apply(*gridptr,-1); // not workling yet
+      gridAdapt( *gridptr, solution, -step ) ;
     }
   }
 
