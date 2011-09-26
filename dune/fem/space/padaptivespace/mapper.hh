@@ -409,17 +409,19 @@ namespace Dune
                               const LagrangePointSetType& set,
                               const int polOrd,
                               const int subEntity,
-                              unsigned int&  dofCounter,
+                              unsigned int& globalSize,
+                              unsigned int& localSize,
                               EntityDofStorage& entityDofs )
       {
         const int numDofs = set.numDofs( codim, subEntity );
         // only if dofs exists on this entity do something
         if( numDofs > 0 ) 
         {
+          localSize += numDofs;
           if( ! entityDofs.exists( codim, polOrd ) ) 
           {
-            entityDofs.insert( entity.type(), codim, polOrd, numDofs, dofCounter );
-            dofCounter += numDofs;
+            entityDofs.insert( entity.type(), codim, polOrd, numDofs, globalSize );
+            globalSize += numDofs;
           }
           else 
             entityDofs.use( codim, polOrd );
@@ -428,22 +430,23 @@ namespace Dune
       static void apply( const EntityType& entity, 
                          const LagrangePointSetType& set,
                          const int polOrd,
-                         unsigned int&  dofCounter,
+                         unsigned int& globalSize,
+                         unsigned int& localSize,
                          std::vector< DofContainerType* > dofContainers ) 
       {
         DofContainerType& dofContainer = *dofContainers[ codim ];
         if( codim == 0 ) 
         {
-          insertDofs( entity, set, polOrd, 0, dofCounter, 
-                      dofContainer[ entity ] );
+          insertDofs( entity, set, polOrd, 0, globalSize, 
+                      localSize, dofContainer[ entity ] );
         }
         else 
         {
           const int count = entity.template count< codim > ();
           for(int i=0; i<count; ++i ) 
           {
-            insertDofs( entity, set, polOrd, i, dofCounter, 
-                        dofContainer( entity, i ) );
+            insertDofs( entity, set, polOrd, i, globalSize, 
+                        localSize, dofContainer( entity, i ) );
           }
         }
       }
@@ -455,7 +458,6 @@ namespace Dune
       static void apply( const EntityType& entity, 
                          const LagrangePointSetType& set,
                          const int polOrd,
-                         unsigned int&  dofCounter,
                          std::vector< DofContainerType* > dofContainers ) 
       {
         DofContainerType& dofContainer = *dofContainers[ codim ];
@@ -704,13 +706,17 @@ namespace Dune
       if( ! polyStorage.active() )
       {
         const int polOrd = polyStorage.order();
+        unsigned int localSize = 0;
 
         //std::cout << "Insert Entity " << gridPart_.grid().localIdSet().id( entity ) << std::endl;
         
         polyStorage.activate();
         const LagrangePointSetType *set = lagrangePointSet( polOrd, entity.type() );
         ForLoop< InsertSubEntities, 0, dimension> :: 
-          apply( entity, *set, polOrd, size_, dofContainer_ );
+          apply( entity, *set, polOrd, size_, localSize, dofContainer_ );
+
+        // make sure local size is consistent 
+        assert( localSize == set->size() );
 
         //printEntityDofs( entity );
       }
@@ -726,7 +732,7 @@ namespace Dune
 
         const LagrangePointSetType *set = lagrangePointSet( polOrd, entity.type() );
         ForLoop< RemoveSubEntities, 0, dimension> :: 
-          apply( entity, *set, polOrd, size_, dofContainer_ );
+          apply( entity, *set, polOrd, dofContainer_ );
       }
     }
 
