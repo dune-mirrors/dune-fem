@@ -530,6 +530,7 @@ namespace Dune
         \param polOrderShift possible shift of polynomial order (i.e. in case of
                              Taylor-Hood put -1 for the pressure) (default = 0)
     */
+    //-  --adapt 
     template <class Vector> 
     void adapt( const Vector& polynomialOrders, const int polOrderShift = 0 ) const
     {
