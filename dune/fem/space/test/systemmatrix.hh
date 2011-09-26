@@ -47,6 +47,8 @@ public:
   virtual void
   operator() ( const DiscreteFunctionType &u, DiscreteFunctionType &w ) const;
 
+  template< class JacobianOperator >
+  void jacobian ( const DiscreteFunction &u, JacobianOperator &jOp ) const;
 private:
   ModelType model_;
   double beta_;
@@ -174,6 +176,61 @@ void assembleRHS ( const Function &function, DiscreteFunction &rhs )
     }
   }
   rhs.communicate();
+}
+template< class DiscreteFunction, class Model >
+template< class JacobianOperator >
+void EllipticOperator< DiscreteFunction, Model >
+  ::jacobian ( const DiscreteFunction &u, JacobianOperator &jOp ) const
+{
+  typedef typename JacobianOperator::LocalMatrixType LocalMatrixType;
+  typedef typename DiscreteFunctionSpaceType::BaseFunctionSetType BaseFunctionSetType;
+
+  const DiscreteFunctionSpaceType &dfSpace = u.space();
+
+  jOp.reserve();
+  jOp.clear();
+
+  std::vector< typename LocalFunctionType::RangeType > phi( dfSpace.mapper().maxNumDofs() );
+  std::vector< typename LocalFunctionType::JacobianRangeType > dphi( dfSpace.mapper().maxNumDofs() );
+
+  const IteratorType end = dfSpace.end();
+  for( IteratorType it = dfSpace.begin(); it != end; ++it )
+  {
+    const EntityType &entity = *it;
+    const GeometryType &geometry = entity.geometry();
+
+    LocalMatrixType jLocal = jOp.localMatrix( entity, entity );
+
+    const BaseFunctionSetType &baseSet = jLocal.domainBaseFunctionSet();
+    const unsigned int numBaseFunctions = baseSet.numBaseFunctions();
+          
+    QuadratureType quadrature( entity, 2*dfSpace.order() );
+    const size_t numQuadraturePoints = quadrature.nop();
+    for( size_t pt = 0; pt < numQuadraturePoints; ++pt )
+    {
+      const typename QuadratureType::CoordinateType &x = quadrature.point( pt );
+      const double weight = quadrature.weight( pt ) * geometry.integrationElement( x );
+
+      const typename GeometryType::Jacobian &gjit = geometry.jacobianInverseTransposed( x );
+
+      // evaluate all basis functions at given quadrature point 
+      baseSet.evaluateAll( quadrature[ pt ], phi );
+
+      // evaluate jacobians of all basis functions at given quadrature point
+      baseSet.jacobianAll( quadrature[ pt ], gjit, dphi );
+
+      for( unsigned int localCol = 0; localCol < numBaseFunctions; ++localCol )
+      {
+        typename LocalFunctionType::RangeType aphi;
+        model_.massFlux( entity, quadrature[ pt ], phi[ localCol ], aphi );
+        typename LocalFunctionType::JacobianRangeType adphi;
+        model_.diffusiveFlux( entity, quadrature[ pt ], dphi[ localCol ], adphi );
+
+        // get column object and call axpy method 
+        jLocal.column( localCol ).axpy( phi, dphi, aphi, adphi, weight );
+      }
+    }
+  }
 }
 
 #endif // #ifndef ELLIPTIC_HH

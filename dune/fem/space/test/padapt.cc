@@ -27,12 +27,14 @@ const int polOrder = POLORDER;
 #include <dune/fem/function/adaptivefunction.hh>
 #include <dune/fem/quadrature/cachingquadrature.hh>
 #include <dune/fem/operator/lagrangeinterpolation.hh>
+#include <dune/fem/operator/2order/lagrangematrixsetup.hh>
 #include <dune/fem/misc/l2norm.hh>
 #include <dune/fem/misc/h1norm.hh>
 
 // include solvers
 #include <dune/fem/solver/inverseoperators.hh>
 #include <dune/fem/solver/oemsolver.hh>
+#include <dune/fem/operator/matrix/spmatrix.hh>
 
 #if HAVE_GRAPE
   #define USE_GRAPE WANT_GRAPE
@@ -272,10 +274,14 @@ void interpolate( const Function &f, DiscreteFunctionType &solution )
   typedef MassModel< FunctionSpaceType > ModelType;
   typedef EllipticOperator< DiscreteFunctionType, ModelType > EllipticOperatorType;
   typedef Dune::CGInverseOperator< DiscreteFunctionType > LinearInverseOperatorType;
-  typedef typename DiscreteFunctionType::DiscreteFunctionSpaceType::GridPartType GridPartType;
+  typedef typename DiscreteFunctionType::DiscreteFunctionSpaceType DiscreteFunctionSpaceType;
+  typedef typename DiscreteFunctionSpaceType::GridPartType GridPartType;
 
-  // typedef Dune::GridFunctionAdapter< Function, GridPartType > GridRHSFunctionType;
-  // GridRHSFunctionType gridf( "grid rhs", f, solution.space().gridPart(), solution.space().order()+1 );
+  typedef Dune::SparseRowMatrixTraits < DiscreteFunctionSpaceType, DiscreteFunctionSpaceType > MatrixObjectTraits;
+  typedef LagrangeMatrixTraits< MatrixObjectTraits > MatrixTraits;
+  typedef Dune::SparseRowMatrixOperator< DiscreteFunctionType, DiscreteFunctionType, MatrixTraits >
+      LinearOperatorType;
+
   DiscreteFunctionType rhs( "rhs", solution.space() );
   assembleRHS( f, rhs );
   
@@ -283,9 +289,17 @@ void interpolate( const Function &f, DiscreteFunctionType &solution )
 
   // create linear inverse operator
   const double solverEps = Dune::Parameter::getValue< double >( "solvereps", 1e-8 );
+
+#if 1
   LinearInverseOperatorType solver( ellipticOp, solverEps, solverEps );
+#else
+  LinearOperatorType linearOp( "assempled elliptic operator", solution.space(), solution.space() );
+  ellipticOp.jacobian( solution, linearOp );
+  LinearInverseOperatorType solver( linearOp, solverEps, solverEps );
+#endif
 
   solver( rhs, solution );
+
 #endif
   bool continuous = checkContinuous( solution );
 
