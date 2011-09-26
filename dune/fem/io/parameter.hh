@@ -11,6 +11,7 @@
 
 #include <dune/grid/io/file/dgfparser/dgfparser.hh>
 
+#include <dune/fem/io/io.hh>
 #include <dune/fem/misc/validator.hh>
 #include <dune/fem/misc/mpimanager.hh>
 
@@ -82,6 +83,38 @@ namespace Dune
    *  \endcode
    *  If verbose is set, information concerning the parameters read will
    *  be output to stdout.
+   *
+   *  \b Parameter Substitution: \b
+   *  Parameter can consist of parts of other parameters. In order to resolve this
+   *  dependency, the  substituted parameter is put into $(NewParameter) brackets.
+   *  A smale example for this is
+   *  \code
+   *  N: 128
+   *  parameter1: macrogrid_$(N).dgf
+   *  \endcode
+   *  results in 
+   *  \code
+   *  parameter1: macrogrid_128.dgf
+   *  \endcode
+   *  This can be used when on parameter controls several other parameters, such like the
+   *  number of cells in the macrogrid.
+   *
+   *  \b Shell Program executions:\b
+   *  Out of the Parameter file shell scripts/commands can be called in order to
+   *  calculate the value of a parameter. The object which should be executed 
+   *  has to be put into $[command] brackets.
+   *  \code
+   *  parameter1: $[ ./script.sh]
+   *  \endcode
+   *  with the script.sh
+   *  \code
+   *  #!/bin/bash
+   *  echo 'HalloWorld';
+   *  \endcode
+   *  This smale example resolves the parameter to have the value 'HalloWorld'
+   *
+   *  If $ is used explicite in a parameter value, $$ kills the substitution
+   *  of the parameter.
    *
    *  Here is an example usage:
    *  \code
@@ -277,6 +310,10 @@ namespace Dune
     void processDGF ( const std::string &filename );
     void processFile ( const std::string &filename );
     void processIncludes( std::queue< std::string > &includes );
+
+    std::string resolveEscape ( const std::string &key, std::string &value );
+    void resolveShadows( const std::string &key, Value &val );
+    std::string getShadowKey( const std::string key, const char delimter, std::string &value );
 
 #if 0
     void replace ( const std::string &key, const std::string &value );
@@ -638,51 +675,12 @@ namespace Dune
   inline const std::string &Parameter::map ( const std::string &key, const CheckDefaultType checkDefault )
   {
     Value *val = find( key );
-    std::string &realValue = val->value;
 
     if (!val)
       DUNE_THROW( ParameterNotFound, "Parameter '" << key << "' not found." ); 
 
-    if( val->shadowStatus != Value::resolved )
-    {      
-      if ( val->shadowStatus == Value::resolving )
-        DUNE_THROW( ParameterInvalid, "Parameter '" << key << "' invalid, contains infinite loop." );
+    resolveShadows( key, *val );
 
-      val->shadowStatus = Value::resolving;
-      std::string realValueHelper;
-      realValue.swap(realValueHelper);
-
-      while( !realValueHelper.empty() )
-      {
-        size_t startPoint = realValueHelper.find_first_of('$');        
-        realValue += realValueHelper.substr( 0, startPoint );
-
-        if( startPoint == std::string::npos ) 
-          break;
-
-        if( realValueHelper.length() < startPoint+2 )
-          DUNE_THROW( ParameterInvalid, "Parameter '" << key << "' contains trailing '$'." );
-        
-        if( realValueHelper[startPoint+1] == '$' )
-        {
-           realValue += '$';
-           realValueHelper.replace( 0, startPoint+2, "" );
-        }
-        else if( realValueHelper[startPoint+1] == '('  ) 
-        {
-          size_t length = realValueHelper.find_first_of(')') - (startPoint +2);
-          if( length == std::string::npos)
-            DUNE_THROW( ParameterInvalid, "Parameter '" << key << "' invalid." );
-
-          std::string shadowValueKey = realValueHelper.substr( startPoint+2, length );
-          realValueHelper.replace(0, startPoint+length+3, ""); 
-          realValue += map( shadowValueKey, checkDefaultDisable );        
-        }
-        else
-          DUNE_THROW( ParameterInvalid, "Parameter '" << key << "' invalid." );
-      }
-      val->shadowStatus = Value::resolved;
-    }
 
     if( checkDefault == checkDefaultEnable )
     {
@@ -692,7 +690,7 @@ namespace Dune
       val->hasDefault = false;
     }
 
-    return realValue;
+    return val->value;
   }
 
   template< class T >
@@ -731,50 +729,10 @@ namespace Dune
     val.used = true;
     val.hasDefault = true;
     val.defaultValue = insVal.value;
-    std::string &realValue = val.value;
 
-    if( val.shadowStatus != Value::resolved )
-    {      
-      if ( val.shadowStatus == Value::resolving )
-        DUNE_THROW( ParameterInvalid, "Parameter '" << key << "' invalid, contains infinite loop." );
+    resolveShadows( key, val );
 
-      val.shadowStatus = Value::resolving;
-      std::string realValueHelper;
-      realValue.swap(realValueHelper);
-
-      while( !realValueHelper.empty() )
-      {
-        size_t startPoint = realValueHelper.find_first_of('$');        
-        realValue += realValueHelper.substr( 0, startPoint );
-
-        if( startPoint == std::string::npos ) 
-          break;
-
-        if( realValueHelper.length() < startPoint+2 )
-          DUNE_THROW( ParameterInvalid, "Parameter '" << key << "' contains trailing '$'." );
-        
-        if( realValueHelper[startPoint+1] == '$' )
-        {
-           realValue += '$';
-           realValueHelper.replace( 0, startPoint+1, "" );
-        }
-        else if( realValueHelper[startPoint+1] == '('  ) 
-        {
-          size_t length = realValueHelper.find_first_of(')') - (startPoint +2);
-          if( length == std::string::npos)
-            DUNE_THROW( ParameterInvalid, "Parameter '" << key << "' invalid." );
-
-          std::string shadowValueKey = realValueHelper.substr( startPoint+2, length );
-          realValueHelper.replace(0, startPoint+length+3, ""); 
-          realValue += map( shadowValueKey, checkDefaultDisable );        
-        }
-        else
-          DUNE_THROW( ParameterInvalid, "Parameter '" << key << "' invalid." );
-      }
-      val.shadowStatus = Value::resolved;
-    }
-
-    return realValue;
+    return val.value;
   }
 
   inline const std::string &
@@ -1124,6 +1082,87 @@ namespace Dune
     return j;
   }
 
+
+  inline std::string
+  Parameter::resolveEscape ( const std::string &key, std::string &value )
+  {
+    if( value.empty() )
+      DUNE_THROW( ParameterInvalid, "Parameter '" << key << "' contains trailing '$'." );
+
+    const char escapedChar = value[ 0 ];
+    value.replace( 0, 1, "" );
+
+    switch( escapedChar )
+    {
+    case '$':
+      return "$";
+
+    case '(':
+      return map( getShadowKey( key, ')', value ), checkDefaultDisable );
+
+    case '[':
+      return executeCommand( getShadowKey( key, ']', value ) );
+
+    default:
+      DUNE_THROW( ParameterInvalid, "Parameter '" << key << "' invalid." );
+    }
+  }
+
+
+
+  inline std::string 
+  Parameter::getShadowKey( const std::string key, const char delimiter, std::string &value )
+  {
+    std::string shadowKey; 
+
+    while( true )
+    {
+      size_t startPoint = value.find_first_of( std::string("$") + delimiter );        
+      
+      if( startPoint == std::string::npos ) 
+        DUNE_THROW( ParameterInvalid, "Parameter '" << key << "' invalid." );
+
+      shadowKey += value.substr( 0, startPoint );
+      const char startChar = value[ startPoint ];
+
+      value.replace(0, startPoint+1, "" );
+
+      if( startChar == delimiter ) 
+        return shadowKey;
+      assert( startChar == '$' );
+
+      shadowKey += resolveEscape( key, value );
+    }
+  }
+
+  inline void 
+  Parameter::resolveShadows ( const std::string &key, Value &val )
+  {
+    std::string &realValue = val.value;
+    if( val.shadowStatus != Value::resolved )
+    {      
+      if ( val.shadowStatus == Value::resolving )
+        DUNE_THROW( ParameterInvalid, "Parameter '" << key << "' invalid, contains infinite loop." );
+
+      val.shadowStatus = Value::resolving;
+      std::string realValueHelper;
+      realValue.swap(realValueHelper);
+
+      while( !realValueHelper.empty() )
+      {
+        size_t startPoint = realValueHelper.find_first_of('$');        
+        realValue += realValueHelper.substr( 0, startPoint );
+
+        if( startPoint == std::string::npos ) 
+          break;
+
+        realValueHelper.replace( 0, startPoint+1, "" );
+
+        realValue += resolveEscape( key, realValueHelper );
+      }
+      val.shadowStatus = Value::resolved;
+    }
+  }
 
   inline void
   Parameter::write ( const std::string &filename, bool writeAll )
