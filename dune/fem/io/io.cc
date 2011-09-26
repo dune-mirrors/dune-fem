@@ -52,18 +52,15 @@ namespace Dune
     std::string returnString;
     FILE *pipe = popen( command.c_str(), "r" );
 
-    /// !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-    /// seems to me that there are some more cases where 
-    /// popen should fail put no Exception is thrown
-    /// !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-
     if( !pipe )
       DUNE_THROW( IOError, "Unable to execute '" << command << "'." );
 
     char buffer[128];
     while( fgets( buffer, 128, pipe) )
       returnString += buffer;
-    pclose( pipe );
+    const int status = pclose( pipe );
+    if( status != 0 )
+      DUNE_THROW( IOError, "Command '" << command << "' returned unsuccessfully (" << status << ")." );
 
     return returnString;
   }
