@@ -50,7 +50,7 @@ const int polOrder = POLORDER;
 #endif
 #include <dune/fem/io/parameter.hh>
 
-#include "systemmatrix.hh"
+#include "systemmatrix.cc"
 
 
 // Check for unhealthy grids
