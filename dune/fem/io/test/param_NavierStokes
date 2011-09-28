@@ -1,0 +1,14 @@
+#parameters for the Navier Stokes Project
+
+#number of cells in the macro grid
+numberofcells: 8
+
+#macrogrid file
+macrogrid: macrogrid_$(numberofcells).dgf
+
+# velocity vector
+velocity: -1 5
+
+
+#diffusion
+diffusion: 1e-15

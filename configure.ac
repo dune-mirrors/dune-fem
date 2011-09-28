@@ -96,6 +96,7 @@ AC_CONFIG_FILES([Makefile
      dune/fem/operator/model/Makefile
      dune/fem/operator/projection/Makefile
      dune/fem/io/Makefile
+     dune/fem/io/test/Makefile
      dune/fem/io/file/Makefile
      dune/fem/io/file/test/Makefile
      dune/fem/io/streams/Makefile

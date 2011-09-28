@@ -1,0 +1,51 @@
+#paramterfile to shadow parameters
+
+# fem verbosrank
+fem.verboserank: -1 
+
+# has to be set to 1 / true if parameter substitution is enabled
+fem.resolvevariables: 0
+
+# get user from the shell, $$ is needed here to execute "echo $USER"
+# $ acts as an escaping char, to resolve pre-assigned char such as  "#%$"
+user: user
+
+# and actual date
+date: 11.09.28_12:00:00
+
+#s witch between the two projects
+project: NavierStokes
+
+# output path 
+outputpath: ./data_NavierStokes_11.09.28_12:00:00/
+
+#parameters for the Navier Stokes Project
+
+#macrogrid file
+macrogrid: macrogrid_8.dgf
+
+# velocity vector
+velocity: -1 5
+
+#diffusion
+diffusion: 1e-15
+
+
+# definition of the two projects
+project_1: NavierStokes
+project_2: DarcyStokes
+
+# two factors for the multiplication
+factor1: 15
+factor2: 2
+
+# just to show that even multiplications are possible here ;)
+multiplication: 30
+
+
+
+
+
+
+
+
