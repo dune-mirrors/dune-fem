@@ -304,6 +304,7 @@ namespace Dune
     const std::string &insert ( const std::string &key, const std::string &value );
 
     static std::string stripComment ( const std::string &line );
+    static std::string trim ( const std::string &s );
 
     bool insert ( const std::string &s, std::queue< std::string > &includes );
 
@@ -763,28 +764,37 @@ namespace Dune
 
   inline std::string Parameter::stripComment ( const std::string &line )
   {
-    const unsigned int size = line.size();
-    unsigned int begin = 0;
-    for( ; begin < size; ++begin )
+    size_t size = line.size();
+    size_t end = line.find_first_of ( "%#$" );
+
+    while( (end != std::string::npos) && (line[end] =='$') )
     {
-      if( (line[ begin ] != ' ') && (line[ begin ] != '\t') )
-        break;
+      if( end+2 < size ) 
+        end = line.find_first_of ( "%#$", end+2 );
+      else
+        end = std::string::npos;
     }
 
-    unsigned int end = begin;
-    for( unsigned int i = begin; i < size; ++i )
-    {
-      if( (line[ i ] == '%') || (line[ i ] == '#') )
-        break;
-      if( (line[ i ] != ' ') && (line[ i ] != '\t') )
-        end = i+1;
-    }
-
-    if( begin >= size )
-      return std::string( "" );
-    else
-      return line.substr( begin, end-begin );
+    return trim( line.substr( 0, end ) );
   }
+
+  inline std::string Parameter::trim( const std::string &s )
+  {
+    size_t first = s.find_first_not_of(" \t\n");
+    size_t last = s.find_last_not_of(" \t\n");
+
+    if( first == std::string::npos )
+    {
+      assert( last == std::string::npos );
+      return std::string("");
+    }
+    else
+    {
+      assert( last != std::string::npos );
+      return s.substr(first, last - first + 1);
+    }
+  }
+
 
   inline bool
   Parameter::insert ( const std::string &s, std::queue< std::string > &includes )
@@ -1100,13 +1110,15 @@ namespace Dune
     switch( escapedChar )
     {
     case '$':
-      return "$";
+    case '%':
+    case '#':
+      return std::string( "" ) + escapedChar;
 
     case '(':
       return map( getShadowKey( key, ')', value ), checkDefaultDisable );
 
     case '[':
-      return executeCommand( getShadowKey( key, ']', value ) );
+      return trim( executeCommand( getShadowKey( key, ']', value ) ) );
 
     default:
       DUNE_THROW( ParameterInvalid, "Parameter '" << key << "' invalid." );
