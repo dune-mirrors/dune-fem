@@ -934,9 +934,14 @@ namespace Dune
   {
     while( !includes.empty() )
     {
-      std::string filename = includes.front();
+      Value val;
+      val.value = includes.front();
       includes.pop();
-      processFile( filename );
+
+      val.shadowStatus = ( enableShadows_ ? Value::unresolved : Value::resolved );
+      resolveShadows( "paramfile", val );
+
+      processFile( val.value );
     }
   }
 
