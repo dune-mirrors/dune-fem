@@ -196,6 +196,18 @@ public:
     }
   }
 
+  K frobenius_norm() const
+  {
+    K ret(0);
+    for( size_type i = 0; i < cols; ++i )
+    {
+      for( size_type j = 0; j < rows; ++j )
+        ret += (*this)[ i ][ j ] * (*this)[ i ][ j ];
+    }
+    return std::sqrt(ret);
+  }
+    
+
   FieldMatrixConverter& operator = (const FieldMatrixConverter& other) 
   {
     assert( mutableVec_ );
