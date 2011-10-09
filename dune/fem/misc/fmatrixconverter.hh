@@ -230,6 +230,18 @@ public:
     }
     return *this;
   }
+  FieldMatrixConverter& operator += (const FieldMatrix<K, n, m>& matrix) 
+  {
+    assert( mutableVec_ );
+    for(size_t i=0; i< rows; ++i) 
+    {
+      for(size_t j=0; j<cols; ++j)
+      {
+        vec_[ i * cols + j ] += matrix[ i ][ j ];
+      }
+    }
+    return *this;
+  }
 
   /** \brief Sends the matrix to an output stream */
   friend std::ostream& operator<< (std::ostream& s, 
