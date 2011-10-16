@@ -116,11 +116,11 @@ template< class GridPartType >
 void testIntersectionIterator( const GridPartType & gridPart )
 {
   std::vector<int> index( gridPart.indexSet().size(0), 0 );
-  typedef typename GridPartType::template Codim< 0 >::IteratorType IteratorType;
-  const IteratorType end = gridPart.template end< 0 >();
-  for( IteratorType it = gridPart.template begin< 0 >(); it != end; ++it )
+  typedef typename GridPartType::template Codim< 0 >::template Partition<Dune::All_Partition>::IteratorType IteratorType;
+  const IteratorType end = gridPart.template end< 0,Dune::All_Partition >();
+  for( IteratorType it = gridPart.template begin< 0,Dune::All_Partition >(); it != end; ++it )
     index[ gridPart.indexSet().index( * it ) ] = 1;
-  for( IteratorType it = gridPart.template begin< 0 >(); it != end; ++it )
+  for( IteratorType it = gridPart.template begin< 0,Dune::All_Partition >(); it != end; ++it )
   {
     typedef typename GridPartType::IntersectionIteratorType IntersectionIteratorType;
     const IntersectionIteratorType iend = gridPart.iend( *it );
@@ -162,6 +162,7 @@ int main ( int argc, char ** argv )
     // refine grid
     const int step = Dune::TestGrid::refineStepsForHalf();
     grid.globalRefine( 2*step );
+    grid.loadBalance();
 
     // crete grid part
     HostGridPartType hostGridPart( grid );
