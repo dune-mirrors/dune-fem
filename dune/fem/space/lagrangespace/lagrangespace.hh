@@ -301,6 +301,7 @@ namespace Dune
 
   public:
     using BaseType :: gridPart;
+    using BaseType :: order;
 
   public:
     //! default communication interface 

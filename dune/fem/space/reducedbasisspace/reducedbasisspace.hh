@@ -97,6 +97,8 @@ namespace Dune
     typedef DiscreteFunctionSpaceDefault< Traits > BaseType;
 
   public:
+    using BaseType :: order;
+
     //! discrete function space, the base functions belong to
     typedef typename Traits :: BaseFunctionSpaceType BaseFunctionSpaceType;
     //! function space, the base functions belong to

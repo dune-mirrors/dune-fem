@@ -172,6 +172,8 @@ namespace Dune
     typedef typename Traits::BaseFunctionSpaceType BaseFunctionSpaceType;
 
   public:
+    using DefaultType :: order ;
+
     //! type of base function factory 
     typedef FVBaseFunctionFactory<typename BaseFunctionSpaceType ::
       ScalarFunctionSpaceType, polOrd> ScalarFactoryType;

@@ -77,6 +77,9 @@ public:
     // if father and son are copies, do nothing
     if( entitiesAreCopies( df_.space().indexSet(), father, son ) )
       return;
+
+    //std::cout << "Restrict " << df_.space().indexSet().index( father ) << "  "
+    //          << df_.space().indexSet().index( son ) << std::endl;
     
     assert( !father.isLeaf() );
     const DomainFieldType weight = (weight_ < 0.0) ? calcWeight( father, son ) : weight_;
@@ -115,6 +118,9 @@ public:
     // if father and son are copies, do nothing
     if( entitiesAreCopies( df_.space().indexSet(), father, son ) )
       return;
+    
+    //std::cout << "Prolong  " << df_.space().indexSet().index( father ) << "  "
+    //          << df_.space().indexSet().index( son ) << std::endl;
     
     LocalFunctionType vati = df_.localFunction( father);
     LocalFunctionType sohn = df_.localFunction( son   );

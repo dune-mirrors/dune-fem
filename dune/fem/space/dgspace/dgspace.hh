@@ -143,6 +143,8 @@ namespace Dune
             SingletonFactoryType > SingletonProviderType;
 
   public:
+    using BaseType :: order ;
+
     //! default communication interface 
     static const InterfaceType defaultInterface = InteriorBorder_All_Interface;
 

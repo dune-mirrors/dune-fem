@@ -261,6 +261,17 @@ namespace Dune
       return asImp().order();
     } 
   
+    /** \brief get global order of space
+     *  \param entity Entity for which we want to obtain the polynomial order
+     *
+     *  \return polorder of space on the given entity 
+     */
+    inline int order ( const EntityType& entity ) const 
+    { 
+      CHECK_INTERFACE_IMPLEMENTATION( asImp().order( entity ) );
+      return asImp().order( entity );
+    } 
+  
     /** \brief get a reference to the DoF mapper
      *
      *  \returns refernce to mapper
@@ -581,6 +592,7 @@ namespace Dune
 
   public:
     using BaseType :: mapper;
+    using BaseType :: order ;
 
     //! type of DoF manager
     typedef DofManager< GridType > DofManagerType;
@@ -635,6 +647,15 @@ namespace Dune
       return dofManager_.sequence();
     }
 
+    /** \brief default implementation of the method order 
+      *
+      *  \return returns max polynomial order for each entity using the method order()
+    */
+    inline int order ( const EntityType& entity ) const 
+    { 
+      return asImp().order();
+    } 
+  
     /** obtain a local function for an entity (to store intermediate values)
      *  
      *  \param[in]  entity  entity (of codim 0) for which a local function is
@@ -880,7 +901,7 @@ namespace Dune
       IteratorType;
     //- type of used entity
     typedef typename GridType :: template Codim< 0 > :: Entity EntityType;
-    
+
   protected:
     const GridPartType &gridPart_;
     const unsigned int order_;
@@ -944,6 +965,12 @@ namespace Dune
     inline int order () const
     {
       return order_;
+    }
+
+    /** \copydoc Dune::DiscreteFunctionSpaceInterface::order */
+    inline int order ( const EntityType& ) const
+    {
+      return order();
     }
 
     /** \copydoc Dune::DiscreteFunctionSpaceInterface::type */
