@@ -220,6 +220,7 @@ namespace Dune
    
   public:
     using BaseType::gridPart;
+    using BaseType::order;
 
   public:
     GenericLagrangeSpace ( GridPartType &gridPart, unsigned int polOrder )
