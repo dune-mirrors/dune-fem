@@ -604,9 +604,14 @@ namespace Dune
     }
 
     /** \copydoc Dune::DiscreteFunctionSpaceInterface::order */
-    inline int order () const
+    inline int order () const 
     {
       return polynomialOrder;
+    }
+    /** \copydoc Dune::DiscreteFunctionSpaceInterface::order */
+    inline int order (const typename BaseType::EntityType &entity) const 
+    {
+      return blockMapper().polynomOrder( entity );
     }
 
     /** \copydoc Dune::DiscreteFunctionSpaceInterface::baseFunctionSet(const EntityType &entity) const */
