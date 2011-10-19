@@ -130,23 +130,23 @@ namespace Dune
 
     //! type of the map for the Lagrange point sets
     typedef std::map< const GeometryType, const CompiledLocalKeyType* >
-      LagrangePointSetMapType;
+      CompiledLocalKeyMapType;
 
     //! to be revised 
-    typedef std::vector< LagrangePointSetMapType > LagrangePointSetMapVectorType;
+    typedef std::vector< CompiledLocalKeyMapType > CompiledLocalKeyVectorType;
 
   public:
     //! constructor
     PAdaptiveLagrangeMapper ( const GridPartType &gridPart,
-                              LagrangePointSetMapVectorType &compiledLocalKeys )
+                              CompiledLocalKeyVectorType &compiledLocalKeys )
       : BaseType( gridPart, compiledLocalKeys )
     {
     }
 
     //! sort of copy constructor
     PAdaptiveLagrangeMapper ( const PAdaptiveLagrangeMapper& other,
-                              LagrangePointSetMapVectorType &compiledLocalKeys )
-    : BaseType( other, compiledLocalKeys ) 
+                              CompiledLocalKeyVectorType &compiledLocalKeys )
+      : BaseType( other, compiledLocalKeys ) 
     {} 
   };
 
