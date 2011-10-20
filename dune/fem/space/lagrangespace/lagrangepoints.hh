@@ -88,7 +88,7 @@ namespace Dune
                                            unsigned int subEntity,
                                            unsigned int dofNumber ) const = 0;
     
-    virtual GeometryType geometry () const = 0;
+    virtual GeometryType geometryType () const = 0;
 
     /** \brief obtain the maximal number of DoFs in one entity of a codimension
      *
@@ -142,7 +142,7 @@ namespace Dune
       return LagrangePointType::entityDofNumber( codim, subEntity, dofNumber );
     }
 
-    virtual GeometryType geometry () const
+    virtual GeometryType geometryType () const
     {
       return GeometryType( topologyId, dim );
     }
@@ -268,9 +268,9 @@ namespace Dune
       return lagrangePointImpl().entityDofNumber( codim, subEntity, dofNumber ); 
     }
     
-    inline GeometryType geometry () const 
+    inline GeometryType geometryType () const 
     {
-      return lagrangePointImpl().geometry();
+      return lagrangePointImpl().geometryType();
     }
 
     /** \brief obtain the maximal number of DoFs in one entity of a codimension
@@ -390,7 +390,7 @@ namespace Dune
       // assert this after lagrangePointImpl has been created since 
       // this->geometry() uses this class
       assert( order <= maxPolynomialOrder );
-      assert( geo == this->geometry() );
+      assert( geo == this->geometryType() );
     }
 
   private:
@@ -853,11 +853,6 @@ namespace Dune
                                           unsigned int dofNumber ) const
     {
       return lagrangePointList_.entityDofNumber( codim, subEntity, dofNumber );
-    }
-
-    inline const GeometryType geometryType () const
-    {
-      return this->geometry();
     }
 
     inline unsigned int maxDofs ( unsigned int codim ) const
