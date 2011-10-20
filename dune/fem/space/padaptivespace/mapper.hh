@@ -36,7 +36,7 @@ namespace Dune
     public:  
       virtual ~FactoryIF () {}
       virtual Entry* getObject( const GeometryType& geomType ) const = 0;
-      virtual void removeObject( Entry& entry ) const = 0;
+      virtual void removeObjects( std::vector<Entry*>& entryStorage ) const = 0;
       virtual FactoryIF* clone() const = 0;
     };
 
@@ -52,9 +52,17 @@ namespace Dune
         return & SingletonProvider :: getObject( geomType );
       }
 
-      void removeObject( Entry& entry ) const 
+      void removeObjects( std::vector<Entry*>& entryStorage ) const 
       {
-        SingletonProvider :: removeObject( entry );
+        const size_t size = entryStorage.size();
+        for( size_t i=0; i<size; ++i )
+        {
+          if( entryStorage[ i ] )
+          {
+            SingletonProvider :: removeObject( *(entryStorage[ i ]) );
+            entryStorage[ i ] = 0 ;
+          }
+        }
       }
       
       FactoryIF* clone() const { return new FactoryImpl<SingletonProvider> (); }
@@ -94,7 +102,13 @@ namespace Dune
     //! destructor 
     ~BaseSetLocalKeyStorage() 
     {
-      remove();
+      if( entryStorage_.size() > 0 ) 
+      {
+        factory_->removeObjects( entryStorage_ );
+      }
+
+      delete factory_;
+      factory_ = 0;
     }
 
     unsigned int maxSize() const 
@@ -146,22 +160,6 @@ namespace Dune
       assert( GlobalGeometryTypeIndex :: index( geomType ) < entryStorage_.size() );
       assert( entryStorage_[ GlobalGeometryTypeIndex :: index( geomType ) ] != 0 );
       return *( entryStorage_[ GlobalGeometryTypeIndex :: index( geomType ) ]);
-    }
-
-  protected:  
-    void remove() 
-    {
-      const size_t size = entryStorage_.size();
-      if( size == 0 ) return ;
-
-      assert( factory_ );
-      for(size_t i=0; i<size; ++i)
-      {
-        if( entryStorage_[ i ] )
-          factory_->removeObject( *(entryStorage_[ i ]) );
-      } 
-      delete factory_; 
-      factory_ = 0 ;
     }
   };
 
