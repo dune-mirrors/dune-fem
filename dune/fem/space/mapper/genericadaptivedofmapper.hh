@@ -63,15 +63,11 @@ namespace Dune
     //! order of the Lagrange polynoms
     static const int polynomialOrder = Traits::polynomialOrder;
 
-    //! type of the Lagrange point set
-    typedef LagrangePointSet< GridPartType, polynomialOrder >
-      CompiledLocalKeyType;
-    //! type of the map for the Lagrange point sets
-    typedef std::map< const GeometryType, const CompiledLocalKeyType* >
-      CompiledLocalKeyMapType;
+    //! type of vector containing compiled local keys 
+    typedef typename Traits :: CompiledLocalKeyVectorType  CompiledLocalKeyVectorType;
 
-    typedef std::vector< CompiledLocalKeyMapType > 
-      CompiledLocalKeyVectorType;
+    //! compiled local key type 
+    typedef typename CompiledLocalKeyVectorType :: value_type :: value_type  CompiledLocalKeyType;
 
     //! type of the DoF manager
     typedef DofManager< GridType > DofManagerType;
@@ -440,15 +436,7 @@ namespace Dune
 
       for( size_t i=0; i<compiledLocalKeys_.size(); ++i ) 
       {
-        typedef typename CompiledLocalKeyMapType :: iterator IteratorType;
-        IteratorType end = compiledLocalKeys_[ i ].end();
-        for( IteratorType it = compiledLocalKeys_[ i ].begin(); it != end; ++it )
-        {
-          const CompiledLocalKeyType *clk = (*it).second;
-          if( clk == 0 ) continue;
-          
-          maxNumDofs_ = std :: max( maxNumDofs_, clk->size() );
-        }
+        maxNumDofs_ = std :: max( maxNumDofs_, compiledLocalKeys_[ i ].maxSize() );
       }
 
       resize();
@@ -496,7 +484,7 @@ namespace Dune
       return *(dofContainer_[ codim ]);
     }
 
-    const CompiledLocalKeyType* 
+    const CompiledLocalKeyType& 
     compiledLocalKey( const int polOrd, const GeometryType type ) const 
     {
       // add polOrd here 
@@ -531,7 +519,7 @@ namespace Dune
     int mapToGlobal ( const EntityType &entity, const int localDof ) const
     {
       const int polOrd = polynomOrder( entity );
-      const DofInfo &dofInfo = compiledLocalKey( polOrd, entity.type() )->dofInfo( localDof );
+      const DofInfo &dofInfo = compiledLocalKey( polOrd, entity.type() ).dofInfo( localDof );
 
       const unsigned int codim = dofInfo.codim;
       const unsigned int subEntity = dofInfo.subEntity;
@@ -556,7 +544,7 @@ namespace Dune
     int numDofs ( const EntityType &entity ) const
     {
       const int polOrd = polynomOrder( entity );
-      return compiledLocalKey( polOrd, entity.type() )->size();
+      return compiledLocalKey( polOrd, entity.type() ).size();
     }
 
     /** \copydoc Dune::DofMapper::numEntityDofs(const Entity &entity) const */
@@ -652,13 +640,13 @@ namespace Dune
 
         const int polOrd = polyStorage.order();
         // get lagrange point set 
-        const CompiledLocalKeyType *clk = compiledLocalKey( polOrd, entity.type() );
+        const CompiledLocalKeyType& clk = compiledLocalKey( polOrd, entity.type() );
 
         //std::cout << "Insert Entity " << gridPart_.grid().localIdSet().id( entity ) << std::endl;
         
         polyStorage.activate();
         ForLoop< InsertSubEntities, 0, dimension> :: 
-          apply( entity, *clk, polOrd, size_, notAlreadyCounted, dofContainer_ );
+          apply( entity, clk, polOrd, size_, notAlreadyCounted, dofContainer_ );
 
         //printEntityDofs( entity );
         return notAlreadyCounted ;
@@ -806,7 +794,7 @@ namespace Dune
         validHoles.resize( 0 );
 
         // check the vector of hole flags and store numbers
-        for( int i=0; i<usedSize; ++i ) 
+        for( size_t i=0; i<usedSize; ++i ) 
         {
           // it's only a valid hole, if it was not marked otherwise 
           if( holeMarker[ i ] )  

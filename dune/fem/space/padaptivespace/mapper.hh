@@ -24,6 +24,148 @@
 
 namespace Dune
 {
+
+  template< class Entry > 
+  class BaseSetLocalKeyStorage
+  {
+    // interface class for factory 
+    class FactoryIF 
+    {
+    protected:   
+      FactoryIF () {}
+    public:  
+      virtual ~FactoryIF () {}
+      virtual Entry* getObject( const GeometryType& geomType ) const = 0;
+      virtual void removeObject( Entry& entry ) const = 0;
+      virtual FactoryIF* clone() const = 0;
+    };
+
+    // factory implementation depends on type of singleton provider 
+    template <class SingletonProvider> 
+    class FactoryImpl : public FactoryIF 
+    {
+    public:  
+      FactoryImpl() {}
+
+      Entry* getObject( const GeometryType& geomType ) const 
+      {
+        return & SingletonProvider :: getObject( geomType );
+      }
+
+      void removeObject( Entry& entry ) const 
+      {
+        SingletonProvider :: removeObject( entry );
+      }
+      
+      FactoryIF* clone() const { return new FactoryImpl<SingletonProvider> (); }
+    };
+
+    // pointer to apropriate factory 
+    const FactoryIF* factory_; 
+    // vector caching singleton pointers 
+    std::vector< Entry* > entryStorage_;
+  public:
+    // export value type confomring to std::vector 
+    typedef Entry value_type ;
+
+    BaseSetLocalKeyStorage()
+      : factory_( 0 ) 
+      , entryStorage_()
+    {} 
+
+    BaseSetLocalKeyStorage( const BaseSetLocalKeyStorage& other )
+      : factory_( other.factory_ ? other.factory_->clone() : 0 )
+      , entryStorage_( other.entryStorage_.size(), ( Entry * ) 0 )
+    {
+      // make a copy of the vector 
+      const size_t size = entryStorage_.size();
+      for( size_t i=0; i<size; ++i ) 
+      {
+        Entry* otherEntry = other.entryStorage_[ i ];
+        if( otherEntry ) 
+        {
+          // we need the interface method geometry 
+          // (on base function sets and compiled local keys )
+          entryStorage_[ i ] = factory_->getObject( otherEntry->geometryType() );
+        }
+      }
+    }
+
+    //! destructor 
+    ~BaseSetLocalKeyStorage() 
+    {
+      remove();
+    }
+
+    unsigned int maxSize() const 
+    {
+      unsigned int maxSize = 0;
+      const size_t size = entryStorage_.size() ;
+      for( size_t i=0; i<size; ++i)
+      {
+        if( entryStorage_[ i ] ) 
+        {
+          unsigned int enSize = entryStorage_[ i ]->size();
+          maxSize = std::max( enSize , maxSize );
+        }
+      }
+      return maxSize;
+    }
+
+    //! insert entry to storage for given geometry type 
+    template <class SingletonProvider>
+    bool insert( const GeometryType geomType ) 
+    {
+      // create factory if not existing yet 
+      if( factory_ == 0 ) 
+      {
+        factory_ = new FactoryImpl< SingletonProvider > ();
+      }
+
+      // check that type of factory is correct 
+      //assert( typeid( factory_ ) == typeid( FactoryImpl< SingletonProvider >* ) );
+
+      // get geometry type index 
+      const size_t geomIndex = GlobalGeometryTypeIndex :: index( geomType ) ;
+
+      if( entryStorage_.size() <= geomIndex ) 
+        entryStorage_.resize( geomIndex + 1, (Entry* ) 0 );
+
+      // if entry is still not used, insert it  
+      if( entryStorage_[ geomIndex ] == 0 )
+      {
+        entryStorage_[ geomIndex ] = factory_->getObject( geomType );
+        return true ;
+      }
+      return false ;
+    }
+
+    //! access to stored entry with given geometry type 
+    const Entry& operator [] ( const GeometryType geomType ) const 
+    {
+      assert( GlobalGeometryTypeIndex :: index( geomType ) < entryStorage_.size() );
+      assert( entryStorage_[ GlobalGeometryTypeIndex :: index( geomType ) ] != 0 );
+      return *( entryStorage_[ GlobalGeometryTypeIndex :: index( geomType ) ]);
+    }
+
+  protected:  
+    void remove() 
+    {
+      const size_t size = entryStorage_.size();
+      if( size == 0 ) return ;
+
+      assert( factory_ );
+      for(size_t i=0; i<size; ++i)
+      {
+        if( entryStorage_[ i ] )
+          factory_->removeObject( *(entryStorage_[ i ]) );
+      } 
+      delete factory_; 
+      factory_ = 0 ;
+    }
+  };
+
+
   
   template< class GridPart, int polOrder >
   class PAdaptiveLagrangeMapper;
@@ -41,6 +183,9 @@ namespace Dune
 
     //! type of the compiled local key 
     typedef LagrangePointSet< GridPartType, polynomialOrder >  CompiledLocalKeyType;
+    typedef BaseSetLocalKeyStorage< CompiledLocalKeyType > BaseSetLocalKeyStorageType;
+
+    typedef std::vector< BaseSetLocalKeyStorageType > CompiledLocalKeyVectorType ;
   };
 
 
@@ -74,18 +219,14 @@ namespace Dune
     //! order of the Lagrange polynoms
     static const int polynomialOrder = 1; 
 
-    //! type of the Lagrange point set
-    typedef LagrangePointSet< GridPartType, polynomialOrder >
-      CompiledLocalKeyType;
-    //! type of the map for the Lagrange point sets
-    typedef std::map< const GeometryType, const CompiledLocalKeyType* >
-      LagrangePointSetMapType;
+    // my traits class 
+    typedef PAdaptiveLagrangeMapperTraits< GridPart, polynomialOrder > Traits;
 
-    typedef std::vector< LagrangePointSetMapType > LagrangePointSetMapVectorType;
+    typedef typename Traits :: CompiledLocalKeyVectorType  CompiledLocalKeyVectorType;
 
   public:
     //! constructor
-    PAdaptiveLagrangeMapper ( const GridPartType &gridPart, LagrangePointSetMapVectorType &lagrangePointSet )
+    PAdaptiveLagrangeMapper ( const GridPartType &gridPart, CompiledLocalKeyVectorType& )
     : BaseType( gridPart )
     {}
 
@@ -125,15 +266,8 @@ namespace Dune
     //! type of the grid part
     typedef typename Traits::GridPartType GridPartType;
 
-    //! type of the compiled local key 
-    typedef typename Traits :: CompiledLocalKeyType CompiledLocalKeyType;
-
-    //! type of the map for the Lagrange point sets
-    typedef std::map< const GeometryType, const CompiledLocalKeyType* >
-      CompiledLocalKeyMapType;
-
-    //! to be revised 
-    typedef std::vector< CompiledLocalKeyMapType > CompiledLocalKeyVectorType;
+    //! type of compiled local keys vector 
+    typedef typename Traits :: CompiledLocalKeyVectorType  CompiledLocalKeyVectorType;
 
   public:
     //! constructor
