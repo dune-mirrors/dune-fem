@@ -78,19 +78,19 @@ namespace Dune {
   {
     typedef std::auto_ptr<TwistMapperStrategy<ct, dim> > AutoPtrType;
     
+    const GeometryType geoType = quad.geometryType();
     if (dim == 0) {
       helper_ = AutoPtrType(new
-      PointTwistMapperStrategy<ct,dim>(quad.geometry()));
+              PointTwistMapperStrategy<ct,dim>( geoType ) );
     }
     else if (dim == 1) {
       helper_ = 
-        AutoPtrType(new LineTwistMapperStrategy<ct, dim>(quad.geometry()));
+        AutoPtrType(new LineTwistMapperStrategy<ct, dim>( geoType ));
     } 
     else 
     {
       assert (dim == 2);
 
-      const GeometryType geoType = quad.geometry();
       if(geoType.isTriangle()) 
       {
         helper_ = 

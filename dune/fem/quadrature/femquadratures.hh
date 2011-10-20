@@ -60,7 +60,7 @@ namespace Dune
     
     /** \copydoc Dune::QuadratureImp::geometry
      */
-    virtual GeometryType geometry () const
+    virtual GeometryType geometryType () const
     {
       return GeometryType( topologyId, dim );
     }
@@ -127,7 +127,7 @@ namespace Dune
     CubeQuadrature( const GeometryType &geometry, int order, size_t id );
     
     /** \copydoc Dune::QuadratureImp::geometry */
-    virtual GeometryType geometry () const
+    virtual GeometryType geometryType () const
     {
       return GeometryType( topologyId, dim );
     }
@@ -186,7 +186,7 @@ namespace Dune
     LineQuadrature( const GeometryType &geometry, int order, size_t id );
 
     /** \copydoc Dune::QuadratureImp::geometry */
-    virtual GeometryType geometry () const
+    virtual GeometryType geometryType () const
     {
       return GeometryType( topologyId, 1 );
     }
@@ -247,7 +247,7 @@ namespace Dune
     TriangleQuadrature ( const GeometryType &geometry, int order, size_t id );
 
     /** \copydoc Dune::QuadratureImp::geometry */
-    virtual GeometryType geometry () const
+    virtual GeometryType geometryType () const
     {
       return GeometryType( topologyId, 2 );
     }
@@ -309,7 +309,7 @@ namespace Dune
     QuadrilateralQuadrature( const GeometryType &geometry, int order, size_t id );
 
     /** \copydoc Dune::QuadratureImp::geometry */
-    virtual GeometryType geometry () const
+    virtual GeometryType geometryType () const
     {
       return GeometryType( topologyId, 2 );
     }
@@ -370,7 +370,7 @@ namespace Dune
     TetraQuadrature( const GeometryType &geometry, int order, size_t id );
 
     /** \copydoc Dune::QuadratureImp::geometry */
-    virtual GeometryType geometry () const
+    virtual GeometryType geometryType () const
     {
       return GeometryType( topologyId, 3 );
     }
@@ -432,7 +432,7 @@ namespace Dune
     HexaQuadrature( const GeometryType &geometry, int order, size_t id );
 
     /** \copydoc Dune::QuadratureImp::geometry */
-    virtual GeometryType geometry () const
+    virtual GeometryType geometryType () const
     {
       return GeometryType( topologyId, 3 );
     }
@@ -492,7 +492,7 @@ namespace Dune
     PrismQuadrature( const GeometryType &geometry, int order, size_t id );
 
     /** \copydoc Dune::QuadratureImp::geometry */
-    virtual GeometryType geometry () const
+    virtual GeometryType geometryType () const
     {
       return GeometryType( topologyId, 3 );
     }
@@ -552,7 +552,7 @@ namespace Dune
     PyramidQuadrature( const GeometryType &geometry, int order, size_t id );
 
     /** \copydoc Dune::QuadratureImp::geometry */
-    virtual GeometryType geometry () const
+    virtual GeometryType geometryType () const
     {
       return GeometryType( topologyId, 3 );
     }

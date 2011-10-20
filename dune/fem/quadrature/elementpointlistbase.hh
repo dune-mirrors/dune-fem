@@ -88,7 +88,14 @@ namespace Dune
      */
     GeometryType geometry () const
     {
-      return quadImp().geometry();
+      return quadImp().geometryType();
+    }
+    
+    /** \copydoc Dune::IntegrationPointList::geometry
+     */
+    GeometryType geometryType () const
+    {
+      return quadImp().geometryType();
     }
     
     /** \brief obtain GeometryType of the corresponding codim-0 the integration

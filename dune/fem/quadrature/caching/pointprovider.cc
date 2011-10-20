@@ -14,7 +14,7 @@ namespace Dune {
   void PointProvider<ct, dim, 0>::
   registerQuadrature(const QuadratureType& quad)
   {
-    QuadratureKeyType key( quad.geometry(), quad.id() );
+    QuadratureKeyType key( quad.geometryType(), quad.id() );
     
     if (points_.find( key ) == points_.end() ) 
     {
@@ -140,7 +140,7 @@ namespace Dune {
     {
       // Assumption: all faces have the same type
       // (not true for pyramids and prisms)
-      //assert(sameGeometry(quad.geometry(), refElem.type(face, codim)));
+      //assert(sameGeometry(quad.geometryType(), refElem.type(face, codim)));
       MapperType pMap(numLocalPoints);
         
       for (int pt = 0; pt < numLocalPoints; ++pt, ++globalNum) {

@@ -173,38 +173,38 @@ namespace Dune
     const IntegrationPointListType &ipList_;
 
   public:
-    /** \brief create a quadrature for a given geometry and order
+    /** \brief create a quadrature for a given geometry type and order
      *
      *  This constructor creates a quadrature for the specified geometry which
      *  is capable of integrating polynoms up the given order exactly.
      * 
      *  \note The order of the quadrature may be higher than the requested one.
      *
-     *  \param[in]  geometry  geometry type of the requested quadrature
-     *  \param[in]  order     order of the requested quadrature
+     *  \param[in]  geometryType  geometry type of the requested quadrature
+     *  \param[in]  order         order of the requested quadrature
      */
-    inline IntegrationPointList ( const GeometryType &geometry,
+    inline IntegrationPointList ( const GeometryType &geometryType,
                                   int order )
-    : ipList_( QuadratureProviderType :: getQuadrature( geometry, order ) )
+    : ipList_( QuadratureProviderType :: getQuadrature( geometryType, order ) )
     {
     }
 
-    /** \brief create a quadrature for a given geometry and order
+    /** \brief create a quadrature for a given geometry type and order
      *
      *  This constructor creates a quadrature for the specified geometry which
      *  is capable of integrating polynoms up the given order exactly.
      * 
      *  \note The order of the quadrature may be higher than the requested one.
      *
-     *  \param[in]  geometry  geometry type of the requested quadrature
+     *  \param[in]  geometryType     geometry type of the requested quadrature
      *  \param[in]  elementGeometry  geometry type of element that resulting 
      *              quadrature is used for (in case of face quadratures)
-     *  \param[in]  order     order of the requested quadrature
+     *  \param[in]  order            order of the requested quadrature
      */
-    inline IntegrationPointList ( const GeometryType &geometry,
+    inline IntegrationPointList ( const GeometryType &geometryType,
                                   const GeometryType &elementGeometry,
                                   int order )
-    : ipList_( QuadratureProviderType :: getQuadrature( geometry, elementGeometry, order ) )
+    : ipList_( QuadratureProviderType :: getQuadrature( geometryType, elementGeometry, order ) )
     {
     }
 
@@ -306,6 +306,14 @@ namespace Dune
     }
     
     /** \brief obtain GeometryType for this integration point list
+     *  \deprecated use method geometryType instead 
+     */  
+    DUNE_VERSION_DEPRECATED(1,3,remove) GeometryType geometry () const
+    {
+      return ipList_.geometryType();
+    }
+    
+    /** \brief obtain GeometryType for this integration point list
      *
      *  Integration point lists are specified in local coordinates, i.e.,
      *  coordinates with respect to the reference element. Hence, each 
@@ -317,9 +325,9 @@ namespace Dune
      *
      *  \returns GeometryType for this integration point list
      */
-    GeometryType geometry () const
+    GeometryType geometryType () const
     {
-      return ipList_.geometry();
+      return ipList_.geometryType();
     }
   };
 
@@ -381,11 +389,11 @@ namespace Dune
      * 
      *  \note The order of the quadrature may be higher than the requested one.
      *
-     *  \param[in]  geometry  geometry type of the requested quadrature
-     *  \param[in]  order     order of the requested quadrature
+     *  \param[in]  geometryType  geometry type of the requested quadrature
+     *  \param[in]  order         order of the requested quadrature
      */
-    inline Quadrature( const GeometryType &geometry, int order )
-    : BaseType( geometry, order )
+    inline Quadrature( const GeometryType &geometryType, int order )
+    : BaseType( geometryType, order )
     {
     }
 
@@ -396,18 +404,18 @@ namespace Dune
      * 
      *  \note The order of the quadrature may be higher than the requested one.
      *
-     *  \param[in]  geometry  geometry type of the requested quadrature
+     *  \param[in]  geometryType     geometry type of the requested quadrature
      *  \param[in]  elementGeometry  geometry type of element that resulting 
      *              quadrature is used for (in case of face quadratures)
-     *  \param[in]  order     order of the requested quadrature
+     *  \param[in]  order            order of the requested quadrature
      *
      *  \note This is a specialized constructor for constructing 
      *  face quadratures for UGGrid.
      */
-    inline Quadrature ( const GeometryType &geometry,
+    inline Quadrature ( const GeometryType &geometryType,
                         const GeometryType &elementGeometry,
                         int order )
-    : BaseType( geometry, elementGeometry, order )
+    : BaseType( geometryType, elementGeometry, order )
     {
     }
 

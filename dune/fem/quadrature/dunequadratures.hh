@@ -87,7 +87,7 @@ namespace Dune
     
     /** \copydoc Dune::QuadratureImp::geometry
      */
-    GeometryType geometry () const
+    GeometryType geometryType () const
     { 
       return elementGeometry_;
     }

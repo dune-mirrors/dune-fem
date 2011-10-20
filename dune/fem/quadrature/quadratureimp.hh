@@ -6,6 +6,8 @@
 #include <dune/common/fvector.hh>
 #include <dune/common/geometrytype.hh>
 
+#include <dune/fem/version.hh>
+
 #include <dune/fem/storage/array.hh>
 #include <dune/fem/quadrature/idprovider.hh>
 
@@ -134,6 +136,15 @@ namespace Dune
     virtual int order() const = 0;
 
     /** \brief obtain GeometryType for this integration point list
+     *  \deprecated use geometryType instead 
+     */
+    DUNE_VERSION_DEPRECATED(1,3,remove)
+    virtual GeometryType geometry () const 
+    {
+      return geometryType(); 
+    }
+
+    /** \brief obtain GeometryType for this integration point list
      *
      *  Integration point lists are specified in local coordinates, i.e.,
      *  coordinates with respect to the reference element. Hence, each 
@@ -142,7 +153,7 @@ namespace Dune
      *
      *  \returns GeometryType for this integration point list
      */
-    virtual GeometryType geometry () const = 0;
+    virtual GeometryType geometryType () const = 0;
 
   protected:
     /** \brief Adds an integration point to the list
@@ -153,7 +164,6 @@ namespace Dune
      */
     void addIntegrationPoint( const CoordinateType &point )
     {
-      //points_.push_back( point );
       points_.append( point );
     }
   };
@@ -189,7 +199,6 @@ namespace Dune
   private:
     // vector holding weights of each integration point 
     DynamicArray< FieldType > weights_;
-    //std :: vector< FieldType > weights_;
  
   protected:
     /** \brief Constructor
@@ -259,7 +268,6 @@ namespace Dune
                                      const FieldType weight )
     {
       addIntegrationPoint( point );
-      //weights_.push_back( weight );
       weights_.append( weight );
     }
   };
@@ -287,7 +295,7 @@ namespace Dune
     void newQuadraturePoint(const CoordinateType& c, ct weight);
 
     //! Desired geometry
-    virtual GeometryType geometry() const { return geo_; }
+    virtual GeometryType geometryType() const { return geo_; }
 
     //! Dummy order method
     virtual int order() const { return order_; }
