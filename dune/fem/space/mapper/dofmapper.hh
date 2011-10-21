@@ -242,60 +242,58 @@ public:
 template< class EntityImp, class DofMapperImp >
 class DefaultDofMapIterator
 {
+  typedef DefaultDofMapIterator< EntityImp, DofMapperImp > ThisType;
+
 public:
   typedef EntityImp EntityType;
   typedef DofMapperImp DofMapperType;
 
   enum IteratorType { beginIterator, endIterator };
-
-private:
-  typedef DefaultDofMapIterator< EntityType, DofMapperType > ThisType;
-
-protected:
-  const EntityType &entity_;
-  const DofMapperType &dofMapper_;
-  int dof_;
   
-public:
-  inline DefaultDofMapIterator ( const IteratorType type,
-                                 const EntityType &entity,
-                                 const DofMapperType &dofMapper )
+  DefaultDofMapIterator ( const IteratorType type,
+                          const EntityType &entity,
+                          const DofMapperType &dofMapper )
   : entity_( entity ),
     dofMapper_( dofMapper ),
     dof_( type == beginIterator ? 0 : dofMapper_.numDofs( entity ) )
   {}
 
-  inline DefaultDofMapIterator ( const ThisType &other )
+  DefaultDofMapIterator ( const ThisType &other )
   : entity_( other.entity_ ),
     dofMapper_( other.dofMapper_ ),
     dof_( other.dof_ )
   {}
 
-  inline ThisType &operator++ ()
+  const ThisType &operator++ ()
   {
     ++dof_;
     return *this;
   }
 
-  inline bool operator== ( const ThisType &other ) const
+  bool operator== ( const ThisType &other ) const
   {
     return dof_ == other.dof_;
   }
 
-  inline bool operator!= ( const ThisType &other ) const
+  bool operator!= ( const ThisType &other ) const
   {
     return dof_ != other.dof_;
   }
 
-  inline int local () const
+  int local () const
   {
     return dof_;
   }
 
-  inline int global () const
+  int global () const
   {
     return dofMapper_.mapToGlobal( entity_, dof_ );
   }
+
+protected:
+  const EntityType &entity_;
+  const DofMapperType &dofMapper_;
+  int dof_;
 };
 
 
