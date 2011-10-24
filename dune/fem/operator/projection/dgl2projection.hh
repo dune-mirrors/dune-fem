@@ -107,6 +107,14 @@ public:
       discFunc.communicate();
   }
 
+  //! project function to discrete space 
+  //- make interface equal to LagrangeInterpolation 
+  template <class FunctionImp, class DiscreteFunctionImp>
+  static void apply(const FunctionImp& f, DiscreteFunctionImp& discFunc )
+  {
+    project( f, discFunc );
+  }
+
 protected:  
   template <class FunctionImp, class DiscreteFunctionImp>
   static void projectFunction(const FunctionImp& func, 

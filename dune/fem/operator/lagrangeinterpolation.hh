@@ -53,6 +53,15 @@ namespace Dune
     static void interpolateFunction ( const FunctionType &function,
                                       DiscreteFunctionType &discreteFunction );
 
+    //! \copydoc interpolateFunction 
+    //- make interface equal to DGL2Projection 
+    template< class FunctionType >
+    static void apply( const FunctionType &function,
+                       DiscreteFunctionType &discreteFunction )
+    {
+      interpolateFunction( function, discreteFunction );
+    }
+
   private:
     template< class FunctionType, bool hasLocalFunction >
     struct CallInterpolateDiscreteFunction;
