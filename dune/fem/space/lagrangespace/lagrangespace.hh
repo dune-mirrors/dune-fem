@@ -16,6 +16,7 @@
 #include <dune/fem/space/basefunctions/basefunctionsets.hh>
 #include <dune/fem/space/basefunctions/basefunctionproxy.hh>
 #include <dune/fem/space/common/defaultcommhandler.hh>
+#include <dune/fem/space/common/basesetlocalkeystorage.hh>
 
 //- local includes 
 #include "basefunctions.hh"
@@ -75,10 +76,10 @@ namespace Dune
     
     // implementation of basefunction set 
     typedef VectorialBaseFunctionSet< BaseFunctionSpaceType, BaseFunctionStorage >
-        BaseFunctionSetImp;
+        ShapeFunctionSetType;
 
     // exported type 
-    typedef SimpleBaseFunctionProxy<BaseFunctionSetImp>  BaseFunctionSetType;
+    typedef SimpleBaseFunctionProxy< ShapeFunctionSetType >  BaseFunctionSetType;
 
     /** \brief defines type of communication data handle for this type of space
      */
@@ -218,12 +219,14 @@ namespace Dune
     enum { polynomialOrder = Traits :: polynomialOrder };
     
     //! type of the base function set(s)
-    typedef typename Traits :: BaseFunctionSetImp BaseFunctionSetImp;
+    typedef typename Traits :: ShapeFunctionSetType  ShapeFunctionSetType;
+    // deprecated name 
+    typedef ShapeFunctionSetType BaseFunctionSetImp;
     
     typedef typename Traits :: BaseFunctionSetType BaseFunctionSetType;
-    //! type of the base function set map
-    typedef std :: map< const GeometryType, const BaseFunctionSetImp* >
-      BaseFunctionMapType;
+    //! type of the shape function storage 
+    typedef Fem :: BaseSetLocalKeyStorage< ShapeFunctionSetType > ShapeSetStorageType;
+
     //! type of base function factory
     typedef LagrangeBaseFunctionFactory
       < typename BaseFunctionSpaceType :: ScalarFunctionSpaceType, dimension, polynomialOrder >
@@ -286,9 +289,9 @@ namespace Dune
     typedef LagrangeDiscreteFunctionSpaceType ThisType;
     typedef DiscreteFunctionSpaceDefault< Traits > BaseType;
 
-  private:
-    //! map for the base function sets
-    mutable BaseFunctionMapType baseFunctionSet_;
+  protected:
+    //! storage for shape function sets 
+    mutable ShapeSetStorageType shapeFunctionSets_;
 
     //! map for the langrage point sets
     mutable LagrangePointSetMapType lagrangePointSet_;
@@ -321,7 +324,7 @@ namespace Dune
         const InterfaceType commInterface = defaultInterface,
         const CommunicationDirection commDirection = defaultDirection )
     : BaseType( gridPart, commInterface, commDirection ),
-      baseFunctionSet_(),
+      shapeFunctionSets_(),
       lagrangePointSet_(),
       mapper_( 0 ),
       blockMapper_( 0 )
@@ -334,15 +337,9 @@ namespace Dune
       for( unsigned int i = 0; i < geometryTypes.size(); ++i )
       {
         const GeometryType &geometryType = geometryTypes[ i ];
-        
-        if( baseFunctionSet_.find( geometryType ) == baseFunctionSet_.end() )
-        {
-          const BaseFunctionSetImp *baseFunctionSet
-            = &(BaseFunctionSetSingletonProviderType
-                :: getObject( geometryType ));
-          assert( baseFunctionSet != NULL );
-          baseFunctionSet_[ geometryType ] = baseFunctionSet;
-        }
+        // insert shape function set for geometry type 
+        shapeFunctionSets_.
+          template insert< BaseFunctionSetSingletonProviderType > ( geometryType );
 
         if( lagrangePointSet_.find( geometryType ) == lagrangePointSet_.end() )
         {
@@ -372,16 +369,6 @@ namespace Dune
     {
       delete mapper_;
       BlockMapperProviderType::removeObject( *blockMapper_ );
-
-      typedef typename BaseFunctionMapType :: iterator BFIteratorType;
-      BFIteratorType bfend = baseFunctionSet_.end();
-      for( BFIteratorType it = baseFunctionSet_.begin(); it != bfend; ++it ) 
-      {
-        const BaseFunctionSetImp *baseFunctionSet = (*it).second;
-        if( baseFunctionSet != NULL )
-          BaseFunctionSetSingletonProviderType
-          :: removeObject( *baseFunctionSet );
-      }
 
       typedef typename LagrangePointSetMapType :: iterator LPIteratorType;
       LPIteratorType lpend = lagrangePointSet_.end();
@@ -435,9 +422,7 @@ namespace Dune
      */
     inline const BaseFunctionSetType baseFunctionSet ( const GeometryType type ) const
     {
-      assert( baseFunctionSet_.find( type ) != baseFunctionSet_.end() );
-      assert( baseFunctionSet_[ type ] != NULL );
-      return BaseFunctionSetType( baseFunctionSet_[ type ] );
+      return BaseFunctionSetType( & shapeFunctionSets_[ type ] );
     }
 
     /** \brief provide access to the Lagrange point set for an entity
