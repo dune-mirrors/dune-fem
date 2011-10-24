@@ -73,6 +73,16 @@ namespace Dune
       return asImp().numBaseFunctions();
     }
 
+    /** \brief number of base functions 
+        (for cenvenience with compiled local keys)
+        \return number of base functions 
+    */
+    inline unsigned int size () const 
+    {
+      CHECK_INTERFACE_IMPLEMENTATION(asImp().size());
+      return asImp().size();
+    }
+
     /** \brief obtain type of geometry
      * 
      *  \returns GeometryType of the base function set
@@ -199,6 +209,11 @@ namespace Dune
 
   public:
     using BaseType::numBaseFunctions;
+
+    /** \copydoc Dune::BaseFunctionSetInterface::size() */
+    unsigned int size() const {
+      return asImp().numBaseFunctions();
+    }
 
     /** \copydoc Dune::BaseFunctionSetInterface::evaluate(const int baseFunction,const FieldVector<int,diffOrd> &diffVariable,const PointType &x,RangeType &phi) const */
     template< int diffOrd, class PointType >
