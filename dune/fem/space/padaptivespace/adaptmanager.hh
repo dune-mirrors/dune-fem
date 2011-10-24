@@ -8,6 +8,7 @@
 
 #include <dune/fem/space/lagrangespace/lagrangespace.hh>
 #include <dune/fem/space/padaptivespace/padaptivespace.hh>
+#include <dune/fem/space/dgspace/dgadaptmanager.hh>
 #include <dune/fem/function/adaptivefunction.hh>
 #include <dune/fem/operator/lagrangeinterpolation.hh>
 
@@ -98,6 +99,37 @@ namespace Dune
     DiscreteFunctionType &discreteFunction_;
     PLagrangeLocalRestrictProlong< Grid, DiscreteFunctionSpaceType > localRestrictProlong_;
   };
+
+
+  /** @ingroup RestrictProlongImpl
+   *
+   *  \brief Restriction / prolongation operator for p-adaptive DG spacees
+   */
+  template <class DiscFunc,
+            class FunctionSpaceImp,
+            class GridPartImp,
+            int polOrd,
+            template <class> class StorageImp>
+  class RestrictProlongDefaultImplementation<
+          DiscFunc,
+          Fem::PAdaptiveDGSpace<FunctionSpaceImp, GridPartImp, polOrd,StorageImp>  
+        >
+    : public RestrictProlongDiscontinuousSpace< DiscFunc,polOrd >
+  {
+  public:
+    //! type of discrete function 
+    typedef DiscFunc DiscreteFunctionType;
+    //! type of base class  
+    typedef RestrictProlongDiscontinuousSpace<DiscreteFunctionType,polOrd>
+            BaseType;
+  public:
+    //! Constructor
+    RestrictProlongDefaultImplementation ( DiscreteFunctionType & df ) :
+      BaseType(df)
+    {
+    }
+  };
+
 
   template <class DF, class Vector, class DFS> 
   void pAdaptation( DF& df, const Vector& polynomialOrders, const DFS &space, const int ) 
