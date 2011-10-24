@@ -39,68 +39,6 @@ namespace Dune
               template< class > class BaseFunctionStorageImp = CachingStorage >
     class PAdaptiveLagrangeSpace;
 
-
-
-    template< class FunctionSpace, class GridPart, unsigned int polOrder,
-              template< class > class BaseFunctionStorage = CachingStorage >
-    struct PAdaptiveLagrangeSpaceTraits
-    {
-      dune_static_assert((polOrder > 0), "LagrangeSpace only defined for polOrder > 0" );
-      
-      typedef FunctionSpace FunctionSpaceType;
-      typedef typename FunctionSpaceType :: DomainFieldType DomainFieldType;
-      typedef typename FunctionSpaceType :: DomainType DomainType;
-      typedef typename FunctionSpaceType :: RangeFieldType RangeFieldType;
-      typedef typename FunctionSpaceType :: RangeType RangeType;
-      typedef typename FunctionSpaceType :: JacobianRangeType JacobianRangeType;
-
-      enum { dimRange = FunctionSpaceType :: dimRange };
-      
-      typedef GridPart GridPartType;
-      typedef typename GridPartType :: GridType GridType;
-      typedef typename GridPartType :: IndexSetType IndexSetType;
-      typedef typename GridPartType :: template Codim< 0 > :: IteratorType
-        IteratorType;
-
-      // get dimension of local coordinate 
-      enum { dimLocal = GridType :: dimension };
-
-      typedef typename ToLocalFunctionSpace< FunctionSpaceType, dimLocal > :: Type 
-        BaseFunctionSpaceType;
-
-      enum { polynomialOrder = polOrder };
-      
-      typedef PAdaptiveLagrangeSpace
-        < FunctionSpaceType, GridPartType, polynomialOrder, BaseFunctionStorage >
-        DiscreteFunctionSpaceType;
-
-      enum { localBlockSize = dimRange };
-
-      // mapper for block
-      typedef PAdaptiveLagrangeMapper< GridPartType, polynomialOrder > BlockMapperType;
-      typedef NonBlockMapper< BlockMapperType, localBlockSize > MapperType;
-      
-      // implementation of basefunction set 
-      typedef VectorialBaseFunctionSet< BaseFunctionSpaceType, BaseFunctionStorage >
-          BaseFunctionSetImp;
-
-      // exported type 
-      typedef SimpleBaseFunctionProxy<BaseFunctionSetImp>  BaseFunctionSetType;
-
-      /** \brief defines type of communication data handle for this type of space
-       */
-      template< class DiscreteFunction,
-                class Operation = DFCommunicationOperation :: Add >
-      struct CommDataHandle
-      {
-        //! type of data handle 
-        typedef DefaultCommunicationHandler< DiscreteFunction, Operation > Type;
-        //! type of operatation to perform on scatter 
-        typedef Operation OperationType;
-      };
-    };
-    
-
     /** \addtogroup PAdaptiveLagrangeSpace
      *
      *  Provides access to bse function sets for different element types in
@@ -117,35 +55,24 @@ namespace Dune
      *  AdaptiveLeafIndexSet.
      */
 
-    /** \class   PAdaptiveLagrangeSpace
+    /** \class   GenericDiscreteFunctionSpace 
      *  \ingroup PAdaptiveLagrangeSpace
      *  \brief   Lagrange discrete function space
      */
-    template< class FunctionSpaceImp,
-              class GridPartImp,
-              int polOrder,
-              template< class > class BaseFunctionStorageImp >
-    class PAdaptiveLagrangeSpace
-    : public DiscreteFunctionSpaceDefault
-             < PAdaptiveLagrangeSpaceTraits< FunctionSpaceImp,
-                                             GridPartImp,
-                                             polOrder,
-                                             BaseFunctionStorageImp > >
+    template< class SpaceImpTraits >
+    class GenericDiscreteFunctionSpace 
+      : public DiscreteFunctionSpaceDefault< SpaceImpTraits > 
     {
     public:
-      //! traits for the discrete function space
-      typedef PAdaptiveLagrangeSpaceTraits< FunctionSpaceImp,
-                                            GridPartImp,
-                                            polOrder,
-                                            BaseFunctionStorageImp >
-        Traits;
+      typedef SpaceImpTraits  Traits;
 
-      //! type of the discrete function space
-      typedef PAdaptiveLagrangeSpace< FunctionSpaceImp,
-                                      GridPartImp,
-                                      polOrder,
-                                      BaseFunctionStorageImp >
-              PAdaptiveLagrangeSpaceType;
+    protected:  
+      //! traits for the discrete function space
+      typedef GenericDiscreteFunctionSpace< Traits > ThisType;
+      typedef DiscreteFunctionSpaceDefault< Traits > BaseType;
+
+    public:  
+      typedef ThisType GenericDiscreteFunctionSpaceType;
 
       typedef typename Traits :: GridPartType GridPartType;
       typedef typename Traits :: GridType GridType;
@@ -172,19 +99,17 @@ namespace Dune
       //! maximum polynomial order of functions in this space
       enum { polynomialOrder = Traits :: polynomialOrder };
       
-      //! type of the base function set(s)
-      typedef typename Traits :: BaseFunctionSetImp BaseFunctionSetImp;
-      typedef typename Traits :: BaseFunctionSetImp ShapeFunctionSetType;
+      //! type of the shape function set (on reference element)
+      typedef typename Traits :: ShapeFunctionSetType ShapeFunctionSetType;
+
+      // deprecated name 
+      typedef ShapeFunctionSetType BaseFunctionSetImp ;
       
       //! type of BaseFunctionSet (entity dependent)
       typedef typename Traits :: BaseFunctionSetType BaseFunctionSetType;
 
-      //! type of a Lagrange point set
-      typedef LagrangePointSet< GridPartType, polynomialOrder >
-        LagrangePointSetType;
-
       //! type of compiled local key 
-      typedef LagrangePointSetType CompiledLocalKeyType;
+      typedef typename Traits :: CompiledLocalKeyType  CompiledLocalKeyType;
 
       //! mapper used to implement mapToGlobal
       typedef typename Traits :: MapperType MapperType;
@@ -200,17 +125,14 @@ namespace Dune
       //! dimension of a value
       enum { dimVal = 1 };
 
-      //! type of DoF manager
-      typedef DofManager< GridType > DofManagerType;
-
       //! type of storage class for base function sets 
-      typedef BaseSetLocalKeyStorage< ShapeFunctionSetType > BaseSetStorageType;
+      typedef BaseSetLocalKeyStorage< ShapeFunctionSetType > ShapeSetStorageType;
 
       //! type of storage class for compiled local keys 
       typedef BaseSetLocalKeyStorage< CompiledLocalKeyType > LocalKeyStorageType;
 
       // vector containing storages for each polynomial order 
-      typedef std::vector< BaseSetStorageType > BaseSetVectorType;
+      typedef std::vector< ShapeSetStorageType > BaseSetVectorType;
 
       // vector containing storages for each polynomial order 
       typedef std::vector< LocalKeyStorageType > LocalKeyVectorType;
@@ -278,9 +200,353 @@ namespace Dune
       //! identifier of this discrete function space
       static const IdentifierType id = 665;
       
+    protected:
+      //! storage for base function sets 
+      mutable BaseSetVectorType baseFunctionSets_;
+      
+      //! storage for compiled local keys  
+      mutable LocalKeyVectorType compiledLocalKeys_;
+      
+      //! corresponding mapper
+      BlockMapperType *blockMapper_;
+
+      //! corresponding mapper
+      mutable MapperType mapper_;
+
+    public:
+      using BaseType :: gridPart;
+
+    public:
+      /** \brief constructor
+       *
+       *  \param[in]  gridPart       grid part for the Lagrange space
+       *  \param[in]  commInterface  communication interface to use 
+       *  \param[in]  commDirection  communication direction to use
+       */
+      explicit GenericDiscreteFunctionSpace
+        ( GridPartType &gridPart,
+          const InterfaceType commInterface,
+          const CommunicationDirection commDirection )
+      : BaseType( gridPart, commInterface, commDirection ),
+        baseFunctionSets_( polynomialOrder+1 ),
+        compiledLocalKeys_( polynomialOrder+1 ),
+        blockMapper_( initialize() ),
+        mapper_( blockMapper() )
+      {
+      }
+
+    protected:
+      //! copy constructor needed for p-adaptation 
+      GenericDiscreteFunctionSpace( const GenericDiscreteFunctionSpace& other ) 
+      : BaseType( other.gridPart_, other.commInterface_, other.commDirection_ ),
+        baseFunctionSets_( polynomialOrder+1 ),
+        compiledLocalKeys_( polynomialOrder+1 ),
+        blockMapper_( initialize( &other.blockMapper() ) ),
+        mapper_( blockMapper() )
+      {
+      }
+
+      //! initialize space and create block mapper 
+      BlockMapperType* initialize( const BlockMapperType* otherMapper = 0 ) 
+      {
+        const IndexSetType &indexSet = gridPart().indexSet();
+
+        AllGeomTypes< IndexSetType, GridType > allGeometryTypes( indexSet );
+        const std :: vector< GeometryType >& geometryTypes
+          = allGeometryTypes.geomTypes( 0 );
+
+        for( unsigned int i = 0; i < geometryTypes.size(); ++i )
+        {
+          ForLoop< ConstructBaseFunctionSets, 1, polynomialOrder > :: 
+            apply( baseFunctionSets_, compiledLocalKeys_, geometryTypes[ i ] );
+        }
+
+        if( otherMapper ) 
+        {
+          // make a copy of the other block mapper 
+          return new BlockMapperType( *otherMapper, compiledLocalKeys_ );
+        }
+        else 
+        {
+          // create new block mapper, this mapper is unique for each space since 
+          // the polynomial degrees might be different for each element 
+          return new BlockMapperType( gridPart(), compiledLocalKeys_ );
+        }
+      }
+
+    public:
+      /** \brief Destructor (freeing base functions pointers and block mapper)
+          \return 
+      **/
+      ~GenericDiscreteFunctionSpace ()
+      {
+        delete blockMapper_;
+      }
+
+      /** \copydoc Dune::DiscreteFunctionSpaceInterface::contains */
+      inline bool contains ( const int codim ) const
+      {
+        // forward to mapper since this information is held there 
+        return blockMapper().contains( codim );
+      }
+
+      /** \copydoc Dune::DiscreteFunctionSpaceInterface::continuous */
+      inline bool continuous () const
+      {
+        return Traits :: continuousSpace;
+      }
+
+      /** \brief this space has more than one base function set */
+      inline bool multipleBaseFunctionSets () const
+      {
+        return (polynomialOrder > 1);
+      }
+
+      /** \brief get the type of this discrete function space 
+          \return DFSpaceIdentifier
+      **/
+      inline DFSpaceIdentifier type () const
+      {
+        return LagrangeSpace_id;
+      }
+
+      /** \copydoc Dune::DiscreteFunctionSpaceInterface::order */
+      inline int order () const 
+      {
+        return polynomialOrder;
+      }
+      /** \copydoc Dune::DiscreteFunctionSpaceInterface::order */
+      inline int order (const typename BaseType::EntityType &entity) const 
+      {
+        return blockMapper().polynomOrder( entity );
+      }
+
+      /** \copydoc Dune::DiscreteFunctionSpaceInterface::baseFunctionSet(const EntityType &entity) const */
+      template< class EntityType >
+      inline const BaseFunctionSetType baseFunctionSet ( const EntityType &entity ) const
+      {
+        return baseFunctionSet( entity.type(), 
+                                blockMapper().polynomOrder( entity ) );
+      }
+
+      /** \brief provide access to the base function set for a geometry type
+       *
+       *  \param[in]  type  type of geometry the base function set is requested for
+       *
+       *  \returns base function set for the specified geometry
+       */
+      inline const BaseFunctionSetType baseFunctionSet ( const GeometryType type ) const
+      {
+        return baseFunctionSet( type, polynomialOrder );
+      }
+
+      inline const BaseFunctionSetType baseFunctionSet ( const GeometryType type, const int k ) const
+      {
+        assert( k <= polynomialOrder );
+        assert( k > 0 );
+        return BaseFunctionSetType( &baseFunctionSets_[ k ][ type ] );
+      }
+
+      /** \brief provide access to the compiled local keys for an entity
+       *
+       *  \note This method is not part of the DiscreteFunctionSpaceInterface. It
+       *        is unique to the GenericDiscreteFunctionSpace.
+       *
+       *  \param[in]  entity  entity the Lagrange point set is requested for
+       *  
+       *  \returns CompiledLocalKey
+       */
+      template< class EntityType >
+      inline const CompiledLocalKeyType &compiledLocalKey( const EntityType &entity ) const
+      {
+        return compiledLocalKey( entity.type(),
+                                 blockMapper().polynomOrder( entity ) );
+      }
+
+      /** \brief provide access to the compiled local keys for a geometry type 
+       *
+       *  \note This method is not part of the DiscreteFunctionSpaceInterface. It
+       *        is unique to the GenericDiscreteFunctionSpace.
+       *
+       *  \param[in]  type  type of geometry the compiled local key is requested for
+       *
+       *  \returns CompiledLocalKey 
+       */
+      inline const CompiledLocalKeyType &compiledLocalKey( const GeometryType type ) const
+      {
+        return compiledLocalKey( type, polynomialOrder );
+      }
+
+      /** \brief provide access to the compiled local keys for a geometry type and polynomial order 
+       *
+       *  \note This method is not part of the DiscreteFunctionSpaceInterface. It
+       *        is unique to the GenericDiscreteFunctionSpace.
+       *
+       *  \param[in]  type  type of geometry the compiled local key is requested for
+       *  \param[in]  order polynomial order for given geometry type 
+       *
+       *  \returns CompiledLocalKey 
+       */
+      inline const CompiledLocalKeyType &compiledLocalKey( const GeometryType type, const int order ) const
+      {
+        return compiledLocalKeys_[ order ][ type ];
+      }
+
+      /** \brief get dimension of value
+          \return int
+      **/
+      inline int dimensionOfValue () const
+      {
+        return dimVal;
+      }
+
+      /** \copydoc Dune::DiscreteFunctionSpaceInterface::mapper */
+      MapperType &mapper () const
+      {
+        return mapper_;
+      }
+
+      /** \brief obtain the DoF block mapper of this space
+          \return BlockMapperType
+      **/
+      BlockMapperType &blockMapper () const
+      {
+        assert( blockMapper_ != 0 );
+        return *blockMapper_;
+      }
+    };
+
+
+    //- --padaptivetraits 
+    template< class FunctionSpace, class GridPart, unsigned int polOrder,
+              template< class > class BaseFunctionStorage = CachingStorage >
+    struct PAdaptiveLagrangeSpaceTraits
+    {
+      dune_static_assert((polOrder > 0), "LagrangeSpace only defined for polOrder > 0" );
+      
+      typedef FunctionSpace FunctionSpaceType;
+      typedef typename FunctionSpaceType :: DomainFieldType DomainFieldType;
+      typedef typename FunctionSpaceType :: DomainType DomainType;
+      typedef typename FunctionSpaceType :: RangeFieldType RangeFieldType;
+      typedef typename FunctionSpaceType :: RangeType RangeType;
+      typedef typename FunctionSpaceType :: JacobianRangeType JacobianRangeType;
+
+      enum { dimRange = FunctionSpaceType :: dimRange };
+      
+      typedef GridPart GridPartType;
+      typedef typename GridPartType :: GridType GridType;
+      typedef typename GridPartType :: IndexSetType IndexSetType;
+      typedef typename GridPartType :: template Codim< 0 > :: IteratorType
+        IteratorType;
+
+      // get dimension of local coordinate 
+      enum { dimLocal = GridType :: dimension };
+
+      typedef typename ToLocalFunctionSpace< FunctionSpaceType, dimLocal > :: Type 
+        BaseFunctionSpaceType;
+
+      enum { polynomialOrder = polOrder };
+      
+      typedef PAdaptiveLagrangeSpace
+        < FunctionSpaceType, GridPartType, polynomialOrder, BaseFunctionStorage >
+        DiscreteFunctionSpaceType;
+
+      enum { localBlockSize = dimRange };
+
+      //! this is a continuous space 
+      static const bool continuousSpace = true ;
+
+      // mapper for block
+      typedef PAdaptiveLagrangeMapper< GridPartType, polynomialOrder > BlockMapperType;
+      typedef NonBlockMapper< BlockMapperType, localBlockSize > MapperType;
+      
+      // implementation of shapefunction set 
+      typedef VectorialBaseFunctionSet< BaseFunctionSpaceType, BaseFunctionStorage >
+        ShapeFunctionSetType ;
+
+      // exported type of base function set 
+      typedef SimpleBaseFunctionProxy< ShapeFunctionSetType > BaseFunctionSetType;
+
+      //! type of a compiled local key 
+      typedef LagrangePointSet< GridPartType, polynomialOrder >
+        CompiledLocalKeyType;
+
+      /** \brief defines type of communication data handle for this type of space
+       */
+      template< class DiscreteFunction,
+                class Operation = DFCommunicationOperation :: Add >
+      struct CommDataHandle
+      {
+        //! type of data handle 
+        typedef DefaultCommunicationHandler< DiscreteFunction, Operation > Type;
+        //! type of operatation to perform on scatter 
+        typedef Operation OperationType;
+      };
+    };
+    
+
+    /** \class   PAdaptiveLagrangeSpace
+     *  \ingroup PAdaptiveLagrangeSpace
+     *  \brief   Lagrange discrete function space
+     */
+    template< class FunctionSpaceImp,
+              class GridPartImp,
+              int polOrder,
+              template< class > class BaseFunctionStorageImp >
+    class PAdaptiveLagrangeSpace
+    : public GenericDiscreteFunctionSpace
+             < PAdaptiveLagrangeSpaceTraits< FunctionSpaceImp,
+                                             GridPartImp,
+                                             polOrder,
+                                             BaseFunctionStorageImp > >
+    {
+    public:
+      //! traits for the discrete function space
+      typedef PAdaptiveLagrangeSpaceTraits< FunctionSpaceImp,
+                                            GridPartImp,
+                                            polOrder,
+                                            BaseFunctionStorageImp >
+        Traits;
+
+      //! type of the discrete function space
+      typedef PAdaptiveLagrangeSpace< FunctionSpaceImp,
+                                      GridPartImp,
+                                      polOrder,
+                                      BaseFunctionStorageImp >
+              PAdaptiveLagrangeSpaceType;
+
+      typedef typename Traits :: GridPartType GridPartType;
+      typedef typename Traits :: GridType GridType;
+      typedef typename Traits :: IndexSetType IndexSetType;
+      typedef typename Traits :: IteratorType IteratorType;
+
+      //! maximum polynomial order of functions in this space
+      enum { polynomialOrder = Traits :: polynomialOrder };
+      
+      //! type of compiled local key 
+      typedef typename Traits :: CompiledLocalKeyType  CompiledLocalKeyType;
+
+      // deprecated name 
+      typedef CompiledLocalKeyType LagrangePointSetType;
+
+      //! mapper used to implement mapToGlobal
+      typedef typename Traits :: MapperType MapperType;
+
+      //! mapper used to for block vector function 
+      typedef typename Traits :: BlockMapperType BlockMapperType;
+
+      //! size of local blocks
+      enum { localBlockSize = Traits :: localBlockSize };
+
+      //! dimension of a value
+      enum { dimVal = 1 };
+
+      //! type of DoF manager
+      typedef DofManager< GridType > DofManagerType;
+
     private:
       typedef PAdaptiveLagrangeSpaceType ThisType;
-      typedef DiscreteFunctionSpaceDefault< Traits > BaseType;
+      typedef GenericDiscreteFunctionSpace< Traits > BaseType;
 
       typedef AdaptiveDiscreteFunction< ThisType >   IntermediateStorageFunctionType;
 
@@ -353,21 +619,10 @@ namespace Dune
 
       mutable PAdaptiveDiscreteFunctionListType dfList_;
 
-    private:
-      //! storage for base function sets 
-      mutable BaseSetVectorType baseFunctionSets_;
-      
-      //! storage for compiled local keys  
-      mutable LocalKeyVectorType compiledLocalKeys_;
-      
-      //! corresponding mapper
-      MapperType *mapper_;
-
-      //! corresponding mapper
-      BlockMapperType *blockMapper_;
-
     public:
       using BaseType :: gridPart;
+      using BaseType :: blockMapper;
+      using BaseType :: compiledLocalKey;
 
     public:
       //! default communication interface 
@@ -386,62 +641,15 @@ namespace Dune
         ( GridPartType &gridPart,
           const InterfaceType commInterface = defaultInterface,
           const CommunicationDirection commDirection = defaultDirection )
-      : BaseType( gridPart, commInterface, commDirection ),
-        baseFunctionSets_( polynomialOrder+1 ),
-        compiledLocalKeys_( polynomialOrder+1 ),
-        mapper_( 0 ),
-        blockMapper_( 0 )
+      : BaseType( gridPart, commInterface, commDirection )
       {
-        const IndexSetType &indexSet = gridPart.indexSet();
-
-        AllGeomTypes< IndexSetType, GridType > allGeometryTypes( indexSet );
-        const std :: vector< GeometryType >& geometryTypes
-          = allGeometryTypes.geomTypes( 0 );
-
-        for( unsigned int i = 0; i < geometryTypes.size(); ++i )
-        {
-          const GeometryType &geometryType = geometryTypes[ i ];
-
-          ForLoop< ConstructBaseFunctionSets, 1, polynomialOrder > :: 
-            apply( baseFunctionSets_, compiledLocalKeys_, geometryType );
-        }
-
-        // create new block mapper, this mapper is unique for each space since 
-        // the polynomial degrees might be different for each element 
-        blockMapper_ = new BlockMapperType( gridPart, compiledLocalKeys_ );
-        assert( blockMapper_ != 0 );
-        // create non-blocking mapper 
-        mapper_ = new MapperType( *blockMapper_ );
-        assert( mapper_ != 0 );
       }
 
-    private:
+    protected:
+      //! copy constructor needed for p-adaption 
       PAdaptiveLagrangeSpace( const PAdaptiveLagrangeSpace& other ) 
-      : BaseType( other.gridPart_, other.commInterface_, other.commDirection_ ),
-        baseFunctionSets_( polynomialOrder+1 ),
-        compiledLocalKeys_( polynomialOrder+1 ),
-        mapper_( 0 ),
-        blockMapper_( 0 )
+      : BaseType( other )
       {
-        const IndexSetType &indexSet = gridPart().indexSet();
-
-        AllGeomTypes< IndexSetType, GridType > allGeometryTypes( indexSet );
-        const std :: vector< GeometryType >& geometryTypes
-          = allGeometryTypes.geomTypes( 0 );
-        for( unsigned int i = 0; i < geometryTypes.size(); ++i )
-        {
-          const GeometryType &geometryType = geometryTypes[ i ];
-
-          ForLoop< ConstructBaseFunctionSets, 1, polynomialOrder > :: 
-            apply( baseFunctionSets_, compiledLocalKeys_, geometryType );
-        }
-
-        // copy construct BlockMapper but pass the LagrangePointSets of this space 
-        blockMapper_ = new BlockMapperType( other.blockMapper(), compiledLocalKeys_ );
-        assert( blockMapper_ != 0 );
-        // create non-blocking mapper 
-        mapper_ = new MapperType( *blockMapper_ );
-        assert( mapper_ != 0 );
       }
 
     public:
@@ -451,9 +659,6 @@ namespace Dune
       ~PAdaptiveLagrangeSpace ()
       {
         assert( dfList_.empty() );
-
-        delete mapper_;
-        delete blockMapper_;
       }
 
       template <class DiscreteFunction> 
@@ -540,139 +745,26 @@ namespace Dune
         //std::cout << std::endl;
       }
 
-      /** \copydoc Dune::DiscreteFunctionSpaceInterface::contains */
-      inline bool contains ( const int codim ) const
-      {
-        // forward to mapper since this information is held there 
-        return blockMapper().contains( codim );
-      }
-
-
-      /** \copydoc Dune::DiscreteFunctionSpaceInterface::continuous */
-      inline bool continuous () const
-      {
-        return (polynomialOrder > 0);
-      }
-
-      /** \brief this space has more than one base function set */
-      inline bool multipleBaseFunctionSets () const
-      {
-        return (polynomialOrder > 1);
-      }
-
-      /** \brief get the type of this discrete function space 
-          \return DFSpaceIdentifier
-      **/
-      inline DFSpaceIdentifier type () const
-      {
-        return LagrangeSpace_id;
-      }
-
-      /** \copydoc Dune::DiscreteFunctionSpaceInterface::order */
-      inline int order () const 
-      {
-        return polynomialOrder;
-      }
-      /** \copydoc Dune::DiscreteFunctionSpaceInterface::order */
-      inline int order (const typename BaseType::EntityType &entity) const 
-      {
-        return blockMapper().polynomOrder( entity );
-      }
-
-      /** \copydoc Dune::DiscreteFunctionSpaceInterface::baseFunctionSet(const EntityType &entity) const */
+      //! deprecated method 
       template< class EntityType >
-      inline const BaseFunctionSetType baseFunctionSet ( const EntityType &entity ) const
+      inline const CompiledLocalKeyType &lagrangePointSet( const EntityType &entity ) const
       {
-        return baseFunctionSet( entity.type(), 
-                                blockMapper().polynomOrder( entity ) );
+        return compiledLocalKey( entity.type(),
+                                 blockMapper().polynomOrder( entity ) );
       }
 
-      /** \brief provide access to the base function set for a geometry type
-       *
-       *  \param[in]  type  type of geometry the base function set is requested for
-       *
-       *  \returns base function set for the specified geometry
-       */
-      inline const BaseFunctionSetType baseFunctionSet ( const GeometryType type ) const
+      //! deprecated method 
+      inline const CompiledLocalKeyType &lagrangePointSet( const GeometryType type ) const
       {
-        return baseFunctionSet( type, polynomialOrder );
+        return compiledLocalKey( type, polynomialOrder );
       }
 
-      inline const BaseFunctionSetType baseFunctionSet ( const GeometryType type, const int k ) const
+      //! deprecated method 
+      inline const CompiledLocalKeyType &lagrangePointSet( const GeometryType type, const int order ) const
       {
-        assert( k <= polynomialOrder );
-        assert( k > 0 );
-        return BaseFunctionSetType( &baseFunctionSets_[ k ][ type ] );
+        return compiledLocalKey( type, order );
       }
 
-      /** \brief provide access to the Lagrange point set for an entity
-       *
-       *  \note This method is not part of the DiscreteFunctionSpaceInterface. It
-       *        is unique to the PAdaptiveLagrangeSpace.
-       *
-       *  \param[in]  entity  entity the Lagrange point set is requested for
-       *  
-       *  \returns LagrangePointSet
-       */
-      template< class EntityType >
-      inline const LagrangePointSetType &lagrangePointSet ( const EntityType &entity ) const
-      {
-        return this->lagrangePointSet( entity.type(),
-                                       blockMapper().polynomOrder( entity ) );
-      }
-
-      /** \brief provide access to the Lagrange point set for a geometry type
-       *
-       *  \note This method is not part of the DiscreteFunctionSpaceInterface. It
-       *        is unique to the PAdaptiveLagrangeSpace.
-       *
-       *  \param[in]  type  type of geometry the Lagrange point set is requested for
-       *
-       *  \returns LagrangePointSetType
-       */
-      inline const LagrangePointSetType &lagrangePointSet ( const GeometryType type ) const
-      {
-        return compiledLocalKeys_[ polynomialOrder ][ type ];
-      }
-
-      /** \brief provide access to the Lagrange point set for a geometry type
-       *
-       *  \note This method is not part of the DiscreteFunctionSpaceInterface. It
-       *        is unique to the PAdaptiveLagrangeSpace.
-       *
-       *  \param[in]  type  type of geometry the Lagrange point set is requested for
-       *  \param[in]  order polynomial order for given geometry type 
-       *
-       *  \returns LagrangePointSetType
-       */
-      inline const LagrangePointSetType &lagrangePointSet ( const GeometryType type, const int order ) const
-      {
-        return compiledLocalKeys_[ order ][ type ];
-      }
-
-      /** \brief get dimension of value
-          \return int
-      **/
-      inline int dimensionOfValue () const
-      {
-        return dimVal;
-      }
-
-      /** \copydoc Dune::DiscreteFunctionSpaceInterface::mapper */
-      MapperType &mapper () const
-      {
-        assert( mapper_ != 0 );
-        return *mapper_;
-      }
-
-      /** \brief obtain the DoF block mapper of this space
-          \return BlockMapperType
-      **/
-      BlockMapperType &blockMapper () const
-      {
-        assert( blockMapper_ != 0 );
-        return *blockMapper_;
-      }
     };
   } // end namespace Fem
     
