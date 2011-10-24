@@ -20,13 +20,13 @@ namespace Dune
    *         function spaces
    */
   template< class DF, class FS, class GP, int ord, template< class > class S >
-  class RestrictProlongDefaultImplementation< DF, PAdaptiveLagrangeSpace< FS, GP, ord, S > >
+  class RestrictProlongDefaultImplementation< DF, Fem::PAdaptiveLagrangeSpace< FS, GP, ord, S > >
   : public RestrictProlongInterfaceDefault< RestrictProlongTraits
-      < RestrictProlongDefaultImplementation< DF, PAdaptiveLagrangeSpace< FS, GP, ord, S > >,
+      < RestrictProlongDefaultImplementation< DF, Fem::PAdaptiveLagrangeSpace< FS, GP, ord, S > >,
         typename GP::GridType::ctype > >
   {
     typedef RestrictProlongDefaultImplementation
-      < DF, PAdaptiveLagrangeSpace< FS, GP, ord, S > >
+      < DF, Fem::PAdaptiveLagrangeSpace< FS, GP, ord, S > >
       ThisType;
     typedef RestrictProlongInterfaceDefault< RestrictProlongTraits< ThisType, typename GP::GridType::ctype > >
       BaseType;
@@ -38,7 +38,7 @@ namespace Dune
     typedef DF DiscreteFunctionType;
 
     //! type of the discrete function space
-    typedef PAdaptiveLagrangeSpace< FS, GP, ord, S > DiscreteFunctionSpaceType;
+    typedef Fem::PAdaptiveLagrangeSpace< FS, GP, ord, S > DiscreteFunctionSpaceType;
 
   protected:
     using BaseType::entitiesAreCopies;
@@ -116,7 +116,7 @@ namespace Dune
             template< class > class Storage >
   void pAdaptation( DF& df, 
                     const Vector& polynomialOrders, 
-                    const PAdaptiveLagrangeSpace<FS,GP,p,Storage> &space,
+                    const Fem::PAdaptiveLagrangeSpace<FS,GP,p,Storage> &space,
                     const int polOrderShift = 0 ) 
   {
     /*
@@ -178,6 +178,6 @@ namespace Dune
     pAdaptation( df, polynomialOrders, df.space(), polOrderShift );
   }
 
-}
+} // end namespace Dune 
 
 #endif // #ifndef DUNE_LAGRANGESPACE_ADAPTMANAGER_HH
