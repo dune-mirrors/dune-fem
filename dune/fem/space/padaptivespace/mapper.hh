@@ -142,8 +142,61 @@ namespace Dune
       }
 
       //! sort of copy constructor
-      PAdaptiveLagrangeMapper ( const PAdaptiveLagrangeMapper& other,
+      PAdaptiveLagrangeMapper ( const ThisType& other,
                                 CompiledLocalKeyVectorType &compiledLocalKeys )
+        : BaseType( other, compiledLocalKeys ) 
+      {} 
+    };
+  
+    template< class GridPart, int polOrder >
+    class PAdaptiveDGMapper;
+
+    template< class GridPart, int polOrder >
+    struct PAdaptiveDGMapperTraits 
+      : public PAdaptiveLagrangeMapperTraits< GridPart, polOrder >
+    {
+      // this is a mapper for DG 
+      static const bool discontinuousMapper = true ;
+
+      typedef typename GridPart::template Codim< 0 >::IteratorType::Entity EntityType;
+      typedef PAdaptiveDGMapper< GridPart, polOrder > DofMapperType;
+      typedef DefaultDofMapIterator< EntityType, DofMapperType > DofMapIteratorType;
+    };
+
+
+    // Higher Order Adaptive DG Mapper
+    // -------------------------------
+
+    template< class GridPart, int polOrder >
+    class PAdaptiveDGMapper 
+      : public GenericAdaptiveDofMapper< PAdaptiveDGMapperTraits< GridPart, polOrder > >
+    {
+    public:   
+      // my traits class 
+      typedef PAdaptiveDGMapperTraits< GridPart, polOrder > Traits;
+
+    private:   
+      typedef PAdaptiveDGMapper< GridPart, polOrder > ThisType;
+      typedef GenericAdaptiveDofMapper< Traits > BaseType;
+
+    public:
+      //! type of the grid part
+      typedef typename Traits::GridPartType GridPartType;
+
+      //! type of compiled local keys vector 
+      typedef typename Traits :: CompiledLocalKeyVectorType  CompiledLocalKeyVectorType;
+
+    public:
+      //! constructor
+      PAdaptiveDGMapper ( const GridPartType &gridPart,
+                          CompiledLocalKeyVectorType &compiledLocalKeys )
+        : BaseType( gridPart, compiledLocalKeys )
+      {
+      }
+
+      //! sort of copy constructor
+      PAdaptiveDGMapper ( const ThisType& other,
+                          CompiledLocalKeyVectorType &compiledLocalKeys )
         : BaseType( other, compiledLocalKeys ) 
       {} 
     };

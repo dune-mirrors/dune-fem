@@ -20,6 +20,8 @@
 
 #include <dune/fem/function/adaptivefunction.hh>
 #include <dune/fem/operator/lagrangeinterpolation.hh>
+#include <dune/fem/operator/projection/dgl2projection.hh>
+
 #include <dune/fem/space/common/basesetlocalkeystorage.hh>
 
 //- local includes 
@@ -32,28 +34,6 @@ namespace Dune
 
   namespace Fem 
   {
-
-    template< class FunctionSpaceImp,
-              class GridPartImp,
-              int polOrder,
-              template< class > class BaseFunctionStorageImp = CachingStorage >
-    class PAdaptiveLagrangeSpace;
-
-    /** \addtogroup PAdaptiveLagrangeSpace
-     *
-     *  Provides access to bse function sets for different element types in
-     *  one grid and size of function space and maps from local to global dof
-     *  number.
-     *
-     *  \note This space can only be used with special index sets. If you want
-     *  to use the PAdaptiveLagrangeSpace with an index set only
-     *  supporting the index set interface you will have to use the
-     *  IndexSetWrapper class to provide the required functionality.
-     *
-     *  \note For adaptive calculations one has to use index sets that are
-     *  capable of adaption (i.e. the method adaptive returns true). See also
-     *  AdaptiveLeafIndexSet.
-     */
 
     /** \class   GenericDiscreteFunctionSpace 
      *  \ingroup PAdaptiveLagrangeSpace
@@ -200,21 +180,88 @@ namespace Dune
       //! identifier of this discrete function space
       static const IdentifierType id = 665;
       
-    protected:
-      //! storage for base function sets 
-      mutable BaseSetVectorType baseFunctionSets_;
-      
-      //! storage for compiled local keys  
-      mutable LocalKeyVectorType compiledLocalKeys_;
-      
-      //! corresponding mapper
-      BlockMapperType *blockMapper_;
+      //! type of DoF manager
+      typedef DofManager< GridType > DofManagerType;
 
-      //! corresponding mapper
-      mutable MapperType mapper_;
+    protected:
+      typedef typename Traits :: DiscreteFunctionSpaceType DiscreteFunctionSpaceType;
+      //! type of intermediate storage 
+      typedef AdaptiveDiscreteFunction< DiscreteFunctionSpaceType > 
+          IntermediateStorageFunctionType;
+
+      /// interface for list of p-adaptive functions 
+      class PAdaptiveDiscreteFunctionEntryInterface   
+      {
+      protected:
+        PAdaptiveDiscreteFunctionEntryInterface () {}
+      public:
+        virtual ~PAdaptiveDiscreteFunctionEntryInterface() {}
+        virtual bool equals( void * ) const = 0 ;
+        virtual void adaptFunction( IntermediateStorageFunctionType& tmp ) = 0;
+      };
+
+      template < class DF, class LocalInterpolation > 
+      class PAdaptiveDiscreteFunctionEntry 
+        : public PAdaptiveDiscreteFunctionEntryInterface
+      {
+        DF& df_;
+        DofManagerType& dm_;
+
+      public:
+        PAdaptiveDiscreteFunctionEntry ( DF& df ) 
+          : df_( df ),
+            dm_( DofManagerType :: instance( df.space().grid() ) )
+        {
+        }
+
+        virtual bool equals( void* ptr ) const  
+        {
+          return (((void *) &df_) == ptr );
+        }
+
+        virtual void adaptFunction( IntermediateStorageFunctionType& tmp ) 
+        {
+          //const int oldSize = tmp.space().size() ;
+          //const int newSize = df_.space().size() ;
+
+          //std::cout <<"Start adaptFct: old size " << tmp.space().size() 
+          //          << "  new size " << df_.space().size() << std::endl;
+
+          typedef typename IntermediateStorageFunctionType :: DofIteratorType
+            TmpIteratorType;
+          typedef typename DF :: DofIteratorType  DFIteratorType;
+
+          // copy dof to temporary storage 
+          DFIteratorType dfit = df_.dbegin();
+          const TmpIteratorType endtmp = tmp.dend();
+          for( TmpIteratorType it = tmp.dbegin(); it != endtmp; ++it, ++dfit )
+          {
+            assert( dfit != df_.dend() );
+            *it = *dfit;
+          }
+          assert( dfit == df_.dend() );
+
+          // adjust size of discrete function 
+          df_.resize(); 
+
+          //std::cout <<"End adaptFct: old size " << tmp.space().size() 
+          //          << "  new size " << df_.space().size() << std::endl;
+
+          // interpolate to new space, this can be a 
+          // Lagrange interpolation or a L2 projection
+          LocalInterpolation :: apply( tmp, df_ );
+          // interpolate to new space 
+          //LagrangeInterpolation< DF > :: interpolateFunction( tmp, df_ );
+        }
+      };
+
+      typedef std::list< PAdaptiveDiscreteFunctionEntryInterface* >
+        PAdaptiveDiscreteFunctionListType; 
+      typedef typename PAdaptiveDiscreteFunctionListType :: iterator DFListIteratorType;
 
     public:
       using BaseType :: gridPart;
+      using BaseType :: asImp;
 
     public:
       /** \brief constructor
@@ -280,7 +327,82 @@ namespace Dune
       **/
       ~GenericDiscreteFunctionSpace ()
       {
+        assert( dfList_.empty() );
         delete blockMapper_;
+      }
+
+      template <class DiscreteFunction> 
+      DFListIteratorType searchFunction( const DiscreteFunction& df ) const
+      {
+        assert( &df.space() == this );
+        const DFListIteratorType endDF = dfList_.end();
+        for( DFListIteratorType it = dfList_.begin(); it != endDF; ++it ) 
+        {
+          if( (*it)->equals( (void *) &df ) ) 
+            return it;
+        }
+        return endDF;
+      }
+
+      template <class DiscreteFunction> 
+      void removeFunction( const DiscreteFunction& df ) const
+      {
+        DFListIteratorType it = searchFunction( df );
+        if( it != dfList_.end() )
+        {
+          delete (*it);
+          dfList_.erase( it );
+        }
+      }
+
+      /** \brief pAdaptation 
+          \param polynomialOrders  vector containing polynomial orders for each cell 
+          \param polOrderShift possible shift of polynomial order (i.e. in case of
+                               Taylor-Hood put -1 for the pressure) (default = 0)
+      */
+      //-  --adapt 
+      template <class Vector> 
+      void adapt( const Vector& polynomialOrders, const int polOrderShift = 0 ) const
+      {
+        typedef typename IteratorType :: Entity EntityType ;
+        const IteratorType endit = this->end();
+
+        // create a copy of this space (to be improved)
+        DiscreteFunctionSpaceType oldSpace( asImp() );
+
+        //std::cout << "Old space size = " << oldSpace.size() << std::endl;
+
+        // set new polynomial order for space  
+        for( IteratorType it = this->begin(); it != endit; ++it )
+        {
+          const EntityType& entity = *it;
+          const int polOrder = polynomialOrders[ this->indexSet().index( entity ) ] + polOrderShift ;
+          blockMapper().setPolynomOrder( entity, polOrder );
+        }
+
+        // adjust mapper 
+        blockMapper().adapt();
+
+        //std::cout << "New space size = " << blockMapper().size() << std::endl;
+
+        // Adapt space and then discrete functions 
+        IntermediateStorageFunctionType tmp( "padapt-temp", oldSpace );
+        //std::cout << "created tmp with size = " << oldSpace.size() << " " << tmp.space().size() << std::endl;
+
+        const DFListIteratorType endDF = dfList_.end();
+        for( DFListIteratorType it = dfList_.begin(); it != endDF; ++it ) 
+        {
+          (*it)->adaptFunction( tmp );
+        }
+
+        DofManagerType& dm = DofManagerType :: instance( this->grid() );
+        // resize discrete functions (only functions belonging 
+        // to this space will be affected ), for convenience 
+        dm.resize();
+        dm.compress();
+
+        //std::cout <<"This spaces size = " << this->size() << std::endl;
+        //std::cout << std::endl;
       }
 
       /** \copydoc Dune::DiscreteFunctionSpaceInterface::contains */
@@ -414,9 +536,52 @@ namespace Dune
         assert( blockMapper_ != 0 );
         return *blockMapper_;
       }
+
+    protected:
+      //! storage for base function sets 
+      mutable BaseSetVectorType baseFunctionSets_;
+      
+      //! storage for compiled local keys  
+      mutable LocalKeyVectorType compiledLocalKeys_;
+      
+      //! corresponding mapper
+      BlockMapperType *blockMapper_;
+
+      //! corresponding mapper
+      mutable MapperType mapper_;
+
+      //! list of registered discrete functions 
+      mutable PAdaptiveDiscreteFunctionListType dfList_;
     };
 
 
+
+    /////////////////////////////////////////////////////////////////////
+    //
+    // --padaptive Lagrange space 
+    //
+    /////////////////////////////////////////////////////////////////////
+    template< class FunctionSpaceImp,
+              class GridPartImp,
+              int polOrder,
+              template< class > class BaseFunctionStorageImp = CachingStorage >
+    class PAdaptiveLagrangeSpace;
+
+    /** \addtogroup PAdaptiveLagrangeSpace
+     *
+     *  Provides access to base function sets for different element types in
+     *  one grid and size of function space and maps from local to global dof
+     *  number.
+     *
+     *  \note This space can only be used with special index sets. If you want
+     *  to use the PAdaptiveLagrangeSpace with an index set only
+     *  supporting the index set interface you will have to use the
+     *  IndexSetWrapper class to provide the required functionality.
+     *
+     *  \note For adaptive calculations one has to use index sets that are
+     *  capable of adaption (i.e. the method adaptive returns true). See also
+     *  AdaptiveLeafIndexSet.
+     */
     //- --padaptivetraits 
     template< class FunctionSpace, class GridPart, unsigned int polOrder,
               template< class > class BaseFunctionStorage = CachingStorage >
@@ -508,6 +673,8 @@ namespace Dune
                                             BaseFunctionStorageImp >
         Traits;
 
+      typedef GenericDiscreteFunctionSpace< Traits > BaseType ;
+
       //! type of the discrete function space
       typedef PAdaptiveLagrangeSpace< FunctionSpaceImp,
                                       GridPartImp,
@@ -544,87 +711,11 @@ namespace Dune
       //! type of DoF manager
       typedef DofManager< GridType > DofManagerType;
 
-    private:
-      typedef PAdaptiveLagrangeSpaceType ThisType;
-      typedef GenericDiscreteFunctionSpace< Traits > BaseType;
-
-      typedef AdaptiveDiscreteFunction< ThisType >   IntermediateStorageFunctionType;
-
-      /// interface for list of p-adaptive functions 
-      class PAdaptiveDiscreteFunctionEntryInterface   
-      {
-      protected:
-        PAdaptiveDiscreteFunctionEntryInterface () {}
-      public:
-        virtual ~PAdaptiveDiscreteFunctionEntryInterface() {}
-        virtual bool equals( void * ) const = 0 ;
-        virtual void adaptFunction( IntermediateStorageFunctionType& tmp ) = 0;
-      };
-
-      template <class DF> 
-      class PAdaptiveDiscreteFunctionEntry 
-        : public PAdaptiveDiscreteFunctionEntryInterface
-      {
-        DF& df_;
-        DofManagerType& dm_;
-
-      public:
-        PAdaptiveDiscreteFunctionEntry ( DF& df ) 
-          : df_( df ),
-            dm_( DofManagerType :: instance( df.space().grid() ) )
-        {
-        }
-
-        virtual bool equals( void* ptr ) const  
-        {
-          return (((void *) &df_) == ptr );
-        }
-
-        virtual void adaptFunction( IntermediateStorageFunctionType& tmp ) 
-        {
-          //const int oldSize = tmp.space().size() ;
-          //const int newSize = df_.space().size() ;
-
-          //std::cout <<"Start adaptFct: old size " << tmp.space().size() 
-          //          << "  new size " << df_.space().size() << std::endl;
-
-          typedef typename IntermediateStorageFunctionType :: DofIteratorType
-            TmpIteratorType;
-          typedef typename DF :: DofIteratorType  DFIteratorType;
-
-          // copy dof to temporary storage 
-          DFIteratorType dfit = df_.dbegin();
-          const TmpIteratorType endtmp = tmp.dend();
-          for( TmpIteratorType it = tmp.dbegin(); it != endtmp; ++it, ++dfit )
-          {
-            assert( dfit != df_.dend() );
-            *it = *dfit;
-          }
-          assert( dfit == df_.dend() );
-
-          // adjust size of discrete function 
-          df_.resize(); 
-
-          //std::cout <<"End adaptFct: old size " << tmp.space().size() 
-          //          << "  new size " << df_.space().size() << std::endl;
-
-          // interpolate to new space 
-          LagrangeInterpolation< DF > :: interpolateFunction( tmp, df_ );
-        }
-      };
-
-      typedef std::list< PAdaptiveDiscreteFunctionEntryInterface* >
-        PAdaptiveDiscreteFunctionListType; 
-      typedef typename PAdaptiveDiscreteFunctionListType :: iterator DFListIteratorType;
-
-      mutable PAdaptiveDiscreteFunctionListType dfList_;
-
     public:
       using BaseType :: gridPart;
       using BaseType :: blockMapper;
       using BaseType :: compiledLocalKey;
 
-    public:
       //! default communication interface 
       static const InterfaceType defaultInterface = InteriorBorder_InteriorBorder_Interface;
 
@@ -645,104 +736,235 @@ namespace Dune
       {
       }
 
-    protected:
       //! copy constructor needed for p-adaption 
       PAdaptiveLagrangeSpace( const PAdaptiveLagrangeSpace& other ) 
       : BaseType( other )
       {
       }
 
+    protected:
+      using BaseType :: dfList_ ;
+      using BaseType :: searchFunction ;
+
     public:
-      /** \brief Destructor (freeing base functions and mapper)
-          \return 
-      **/
-      ~PAdaptiveLagrangeSpace ()
-      {
-        assert( dfList_.empty() );
-      }
-
-      template <class DiscreteFunction> 
-      DFListIteratorType searchFunction( const DiscreteFunction& df ) const
-      {
-        assert( &df.space() == this );
-        const DFListIteratorType endDF = dfList_.end();
-        for( DFListIteratorType it = dfList_.begin(); it != endDF; ++it ) 
-        {
-          if( (*it)->equals( (void *) &df ) ) 
-            return it;
-        }
-        return endDF;
-      }
-
+      /*! \brief add function to discrete function space for p-adaptation 
+          (currently only supported by AdaptiveDiscreteFunction )
+       */
       template <class DiscreteFunction> 
       void addFunction( DiscreteFunction& df ) const
       {
         assert( searchFunction( df ) == dfList_.end() );
-        PAdaptiveDiscreteFunctionEntryInterface* entry = new
-          PAdaptiveDiscreteFunctionEntry< DiscreteFunction >( df ) ;
+        // select LagrangeInterpolation to be the LocalInterpolation 
+        typedef typename BaseType :: template PAdaptiveDiscreteFunctionEntry< 
+            DiscreteFunction, LagrangeInterpolation< DiscreteFunction > > RealEntryType ;
+        typedef typename BaseType :: PAdaptiveDiscreteFunctionEntryInterface
+          EntryInterface;
+        EntryInterface* entry = new RealEntryType( df );
+
         assert( entry );
         dfList_.push_front( entry );
       }
 
-      template <class DiscreteFunction> 
-      void removeFunction( const DiscreteFunction& df ) const
+      //! deprecated method 
+      template< class EntityType >
+      inline const CompiledLocalKeyType &lagrangePointSet( const EntityType &entity ) const
       {
-        DFListIteratorType it = searchFunction( df );
-        if( it != dfList_.end() )
-        {
-          delete (*it);
-          dfList_.erase( it );
-        }
+        return compiledLocalKey( entity.type(),
+                                 blockMapper().polynomOrder( entity ) );
       }
 
-      /** \brief pAdaptation 
-          \param polynomialOrders  vector containing polynomial orders for each cell 
-          \param polOrderShift possible shift of polynomial order (i.e. in case of
-                               Taylor-Hood put -1 for the pressure) (default = 0)
-      */
-      //-  --adapt 
-      template <class Vector> 
-      void adapt( const Vector& polynomialOrders, const int polOrderShift = 0 ) const
+      //! deprecated method 
+      inline const CompiledLocalKeyType &lagrangePointSet( const GeometryType type ) const
       {
-        typedef typename IteratorType :: Entity EntityType ;
-        const IteratorType endit = this->end();
+        return compiledLocalKey( type, polynomialOrder );
+      }
 
-        // create a copy of this space (to be improved)
-        ThisType oldSpace( *this );
+      //! deprecated method 
+      inline const CompiledLocalKeyType &lagrangePointSet( const GeometryType type, const int order ) const
+      {
+        return compiledLocalKey( type, order );
+      }
 
-        //std::cout << "Old space size = " << oldSpace.size() << std::endl;
+    };
 
-        // set new polynomial order for space  
-        for( IteratorType it = this->begin(); it != endit; ++it )
-        {
-          const EntityType& entity = *it;
-          const int polOrder = polynomialOrders[ this->indexSet().index( entity ) ] + polOrderShift ;
-          blockMapper().setPolynomOrder( entity, polOrder );
-        }
 
-        // adjust mapper 
-        blockMapper().adapt();
+    /////////////////////////////////////////////////////////////////////
+    //
+    // --padaptive DG space 
+    //
+    /////////////////////////////////////////////////////////////////////
 
-        //std::cout << "New space size = " << blockMapper().size() << std::endl;
+    template< class FunctionSpaceImp,
+              class GridPartImp,
+              int polOrder,
+              template< class > class BaseFunctionStorageImp = CachingStorage >
+    class PAdaptiveDGSpace;
 
-        // Adapt space and then discrete functions 
-        AdaptiveDiscreteFunction< ThisType > tmp( "padapt-temp", oldSpace );
-        //std::cout << "created tmp with size = " << oldSpace.size() << " " << tmp.space().size() << std::endl;
+    /** \addtogroup PAdaptiveDGSpace
+     *
+     *  Provides access to base function sets for different element types in
+     *  one grid and size of function space and maps from local to global dof
+     *  number.
+     *
+     *  \note This space can only be used with special index sets. If you want
+     *  to use the PAdaptiveDGSpace with an index set only
+     *  supporting the index set interface you will have to use the
+     *  IndexSetWrapper class to provide the required functionality.
+     *
+     *  \note For adaptive calculations one has to use index sets that are
+     *  capable of adaption (i.e. the method adaptive returns true). See also
+     *  AdaptiveLeafIndexSet.
+     */
+    //- --padaptivetraits 
+    template< class FunctionSpace, class GridPart, unsigned int polOrder,
+              template< class > class BaseFunctionStorage = CachingStorage >
+    struct PAdaptiveDGSpaceTraits 
+      : public PAdaptiveLagrangeSpaceTraits
+          < FunctionSpace, GridPart, polOrder, BaseFunctionStorage >
+    {
+      typedef PAdaptiveDGSpace
+        < FunctionSpace, GridPart, polOrder, BaseFunctionStorage >
+        DiscreteFunctionSpaceType;
 
-        const DFListIteratorType endDF = dfList_.end();
-        for( DFListIteratorType it = dfList_.begin(); it != endDF; ++it ) 
-        {
-          (*it)->adaptFunction( tmp );
-        }
+      enum { localBlockSize = FunctionSpace :: dimRange };
 
-        DofManagerType& dm = DofManagerType :: instance( this->grid() );
-        // resize discrete functions (only functions belonging 
-        // to this space will be affected ), for convenience 
-        dm.resize();
-        dm.compress();
+      //! this is a continuous space 
+      static const bool continuousSpace = false ;
 
-        //std::cout <<"This spaces size = " << this->size() << std::endl;
-        //std::cout << std::endl;
+      // mapper for block
+      typedef PAdaptiveDGMapper< GridPart, polOrder > BlockMapperType;
+      typedef NonBlockMapper< BlockMapperType, localBlockSize > MapperType;
+      
+      /** \brief defines type of communication data handle for this type of space
+       */
+      template< class DiscreteFunction,
+                class Operation = DFCommunicationOperation :: Copy >
+      struct CommDataHandle
+      {
+        //! type of data handle 
+        typedef DefaultCommunicationHandler< DiscreteFunction, Operation > Type;
+        //! type of operatation to perform on scatter 
+        typedef Operation OperationType;
+      };
+    };
+    
+
+    /** \class   PAdaptiveDGSpace
+     *  \ingroup PAdaptiveDGSpace
+     *  \brief   adaptive DG discrete function space
+     */
+    template< class FunctionSpaceImp,
+              class GridPartImp,
+              int polOrder,
+              template< class > class BaseFunctionStorageImp >
+    class PAdaptiveDGSpace
+    : public GenericDiscreteFunctionSpace
+             < PAdaptiveDGSpaceTraits< FunctionSpaceImp,
+                                       GridPartImp,
+                                       polOrder,
+                                       BaseFunctionStorageImp > >
+    {
+    public:
+      //! traits for the discrete function space
+      typedef PAdaptiveDGSpaceTraits< FunctionSpaceImp,
+                                      GridPartImp,
+                                      polOrder,
+                                      BaseFunctionStorageImp >
+        Traits;
+
+      //! type of the discrete function space
+      typedef PAdaptiveDGSpace< FunctionSpaceImp,
+                                GridPartImp,
+                                polOrder,
+                                BaseFunctionStorageImp >
+              PAdaptiveDGSpaceType;
+
+      typedef typename Traits :: GridPartType GridPartType;
+      typedef typename Traits :: GridType GridType;
+      typedef typename Traits :: IndexSetType IndexSetType;
+      typedef typename Traits :: IteratorType IteratorType;
+
+      //! maximum polynomial order of functions in this space
+      enum { polynomialOrder = Traits :: polynomialOrder };
+      
+      //! type of compiled local key 
+      typedef typename Traits :: CompiledLocalKeyType  CompiledLocalKeyType;
+
+      // deprecated name 
+      typedef CompiledLocalKeyType LagrangePointSetType;
+
+      //! mapper used to implement mapToGlobal
+      typedef typename Traits :: MapperType MapperType;
+
+      //! mapper used to for block vector function 
+      typedef typename Traits :: BlockMapperType BlockMapperType;
+
+      //! size of local blocks
+      enum { localBlockSize = Traits :: localBlockSize };
+
+      //! dimension of a value
+      enum { dimVal = 1 };
+
+      //! type of DoF manager
+      typedef DofManager< GridType > DofManagerType;
+
+    private:
+      typedef PAdaptiveDGSpaceType ThisType;
+      typedef GenericDiscreteFunctionSpace< Traits > BaseType;
+
+    public:
+      using BaseType :: gridPart;
+      using BaseType :: blockMapper;
+      using BaseType :: compiledLocalKey;
+
+    public:
+      //! default communication interface 
+      static const InterfaceType defaultInterface = InteriorBorder_All_Interface;
+
+      //! default communication direction 
+      static const CommunicationDirection defaultDirection = ForwardCommunication;
+
+      /** \brief constructor
+       *
+       *  \param[in]  gridPart       grid part for the Lagrange space
+       *  \param[in]  commInterface  communication interface to use (optional)
+       *  \param[in]  commDirection  communication direction to use (optional)
+       */
+      explicit PAdaptiveDGSpace
+        ( GridPartType &gridPart,
+          const InterfaceType commInterface = defaultInterface,
+          const CommunicationDirection commDirection = defaultDirection )
+      : BaseType( gridPart, commInterface, commDirection )
+      {
+      }
+
+      //! copy constructor needed for p-adaption 
+      PAdaptiveDGSpace( const PAdaptiveDGSpace& other ) 
+      : BaseType( other )
+      {
+      }
+
+    protected:
+      using BaseType :: dfList_;
+      using BaseType :: searchFunction;
+
+    public:
+      /*! \brief add function to discrete function space for p-adaptation 
+          (currently only supported by AdaptiveDiscreteFunction )
+       */
+      template <class DiscreteFunction> 
+      void addFunction( DiscreteFunction& df ) const
+      {
+        assert( searchFunction( df ) == dfList_.end() );
+        // select L2Porjection to be the LocalInterpolation 
+        typedef typename BaseType :: template PAdaptiveDiscreteFunctionEntry< 
+            DiscreteFunction, DGL2ProjectionImpl > RealEntryType ;
+        typedef typename BaseType :: PAdaptiveDiscreteFunctionEntryInterface
+          EntryInterface;
+
+        EntryInterface* entry = new RealEntryType( df );
+        assert( entry );
+        dfList_.push_front( entry );
       }
 
       //! deprecated method 
