@@ -149,14 +149,14 @@ namespace Dune
       return blockSize * blockMapper_.numberOfHoles( block );
     }
 
-    int oldIndex ( const int hole, const int block )
+    int oldIndex ( const int hole, const int block ) const
     {
       const int i = hole % blockSize;
       const int blockHole = hole / blockSize;
       return blockMapper_.oldIndex( blockHole, block ) * blockSize + i;
     }
 
-    int newIndex ( const int hole, const int block )
+    int newIndex ( const int hole, const int block ) const
     {
       const int i = hole % blockSize;
       const int blockHole = hole / blockSize;
