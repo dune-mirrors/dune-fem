@@ -768,10 +768,10 @@ protected:
       BaseType :: init ( domainEntity, rangeEntity );
         
       // number of rows is determined by the range space 
-      rowMapper_.resize( rangeSpace_.baseFunctionSet( rangeEntity ).numBaseFunctions() );
+      rowMapper_.resize( rangeSpace_.mapper().numDofs( rangeEntity ) );
       // number of columns is determined by the domain  space 
-      colMapper_.resize( domainSpace_.baseFunctionSet( domainEntity ).numBaseFunctions() );
-
+      colMapper_.resize( domainSpace_.mapper().numDofs( domainEntity ) );
+      
       // rows are determined by the range space 
       typedef typename RangeSpaceType::MapperType::DofMapIteratorType RangeMapIterator;
       const RangeMapIterator rmend = rangeSpace_.mapper().end( rangeEntity );
