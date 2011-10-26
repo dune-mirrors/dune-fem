@@ -41,9 +41,19 @@ namespace Dune {
   PointProvider<ct, dim, 0>::getPoints(const size_t id, const GeometryType& elementGeo) 
   {
     QuadratureKeyType key( elementGeo, id );
-    
-    assert(points_.find(key) != points_.end());
-    return points_.find(key)->second;
+
+    typename PointContainerType::const_iterator pos = points_.find( key );
+#ifndef NDEBUG
+    if( pos == points_.end() )
+    {
+      std::cerr << "Unable to find quadrature points in list (key = " << key << ")." << std::endl;
+      for( pos = points_.begin(); pos != points_.end(); ++pos )
+        std::cerr << "found key: " << pos->first << std::endl;
+      std::cerr << "Aborting..." << std::endl;
+      abort();
+    }
+#endif
+    return pos->second;
   }
 
   template <class ct, int dim>
