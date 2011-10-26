@@ -4,7 +4,11 @@ combinedspace_HEADERS = combinedadaptmanager.hh \
                         combineddofstorage.hh \
                         combinedspace.hh \
                         mapper.hh \
-                        mapper_inline.hh
+                        mapper_inline.hh \
+												combineddiscretefunctionspace.hh  \
+												combinedmapper.hh \
+												combinedbasefunctions.hh
+
 
 include $(top_srcdir)/am/global-rules
 
