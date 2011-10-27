@@ -174,12 +174,14 @@ namespace Dune
         shapeFunctionSets_.template insert< SingletonProviderType >( geomTypes[ i ] );
       }
 
+#ifndef NDEBUG
       int maxNumDofs = shapeFunctionSets_.maxSize();
 
       // check maxNumDofs 
       assert( maxNumDofs > 0 );
       // this should be the same 
       assert( maxNumDofs == mapper().maxNumDofs() );
+#endif
     }
 
     /** \brief Destructor */
