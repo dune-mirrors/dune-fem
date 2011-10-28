@@ -16,12 +16,12 @@ namespace Dune
   public:
     typedef GridPart GridPartType;
 
-  protected:
     template< class Function >
     struct FunctionJacobianSquare;
-
-    typedef typename BaseType::GridIteratorType GridIteratorType;
     typedef typename BaseType::IntegratorType IntegratorType;
+
+  protected:
+    typedef typename BaseType::GridIteratorType GridIteratorType;
 
     typedef typename GridIteratorType::Entity EntityType;
 
