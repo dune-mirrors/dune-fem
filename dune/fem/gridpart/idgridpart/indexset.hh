@@ -59,7 +59,7 @@ namespace Dune
       bool adaptive () const { return hostIndexSet().adaptive(); }
       bool persistent () const { return hostIndexSet().persistent(); }
 
-      int numberOfHoles ( const int codim ) const { return hostIndexSet().numberOfHoles(); }
+      int numberOfHoles ( const int codim ) const { return hostIndexSet().numberOfHoles( codim ); }
 
       int oldIndex ( const int hole, const int codim ) const
       {
