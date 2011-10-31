@@ -148,13 +148,17 @@ protected:
     // clear destination
     discFunc.clear();
 
+    // extract types from grid part 
+    typedef typename GridPartType::template Codim<0>::GeometryType Geometry;
+    typedef typename GridPartType::template Codim<0>::EntityType  EntityType ;
+
     const Iterator endit = space.end();
     for(Iterator it = space.begin(); it != endit ; ++it) 
     {
       // get entity 
-      const typename GridType::template Codim<0>::Entity& en = *it; 
+      const EntityType& en = *it; 
       // get geometry 
-      const typename GridType::template Codim<0>::Geometry& geo = en.geometry(); 
+      const Geometry& geo = en.geometry(); 
       
       // get quadrature 
       QuadratureType quad(en, quadOrd);
@@ -193,7 +197,7 @@ protected:
       {
         if ( IsFiniteVolumeSpace< DiscreteFunctionSpaceType > ::exists )
         {
-          typedef typename GridType::template Codim<0>::Geometry :: LocalCoordinate DomainType; 
+          typedef typename Geometry :: LocalCoordinate DomainType; 
           typedef Dune::GenericReferenceElements< typename DomainType::value_type, DomainType::dimension >
             ReferenceElementContainerType;
           const double refVolume = ReferenceElementContainerType::general(en.type()).volume();     
