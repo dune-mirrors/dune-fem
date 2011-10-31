@@ -101,13 +101,14 @@ namespace Dune
     typedef typename IntersectionIteratorType::Intersection IntersectionType;
 
     //! \brief is true if grid on this view only has conforming intersections 
-    static const bool conforming = Traits :: conforming;
+    static const bool conforming = Traits::conforming;
 
     typedef GridView< GridPartViewTraits< GridPartType > > GridViewType;
 
     typedef typename GridType::ctype ctype;
 
     static const int dimension = GridType::dimension;
+    static const int dimensionworld = GridType::dimensionworld;
 
     template< int codim >
     struct Codim
@@ -121,18 +122,21 @@ namespace Dune
 
       typedef typename Partition< InteriorBorder_Partition >::IteratorType IteratorType;
 
+      typedef typename GridType::template Codim< codim >::Geometry GeometryType;
+      typedef typename GridType::template Codim< codim >::LocalGeometry LocalGeometryType;
+
       typedef typename GridType::template Codim< codim >::Entity EntityType;
     };
     
   public:
     //! \brief Returns const reference to the underlying grid
-    const GridType & grid () const 
+    const GridType &grid () const
     { 
       CHECK_INTERFACE_IMPLEMENTATION((asImp().grid()));
       return asImp().grid(); 
     }
     //! \brief Returns reference to the underlying grid
-    GridType & grid () 
+    GridType &grid ()
     { 
       CHECK_INTERFACE_IMPLEMENTATION((asImp().grid()));
       return asImp().grid(); 
@@ -140,7 +144,7 @@ namespace Dune
 
     GridViewType gridView () const
     {
-      typedef typename GridViewType :: GridViewImp Impl;
+      typedef typename GridViewType::GridViewImp Impl;
       return GridViewType( Impl( asImp() ) );
     }
     
@@ -156,7 +160,7 @@ namespace Dune
      *  \tparam  codim  codimension for which the iterator is requested
      */
     template< int codim >
-    typename Codim< codim > :: IteratorType
+    typename Codim< codim >::IteratorType
     begin () const 
     { 
       CHECK_INTERFACE_IMPLEMENTATION( (asImp().template begin< codim >()) );
@@ -169,7 +173,7 @@ namespace Dune
      *  \tparam  pitype  requested partition iterator type
      */
     template< int codim, PartitionIteratorType pitype >
-    typename Codim< codim > :: template Partition< pitype > :: IteratorType
+    typename Codim< codim >::template Partition< pitype >::IteratorType
     begin () const 
     { 
       CHECK_INTERFACE_IMPLEMENTATION( (asImp().template begin< codim, pitype >()) );
@@ -181,7 +185,7 @@ namespace Dune
      *  \tparam  codim  codimension for which the iterator is requested
      */
     template< int codim >
-    typename Codim< codim > :: IteratorType
+    typename Codim< codim >::IteratorType
     end () const 
     { 
       CHECK_INTERFACE_IMPLEMENTATION( (asImp().template end< codim >()) );
@@ -194,7 +198,7 @@ namespace Dune
      *  \tparam  pitype  requested partition iterator type
      */
     template< int codim, PartitionIteratorType pitype >
-    typename Codim< codim > :: template Partition< pitype > :: IteratorType
+    typename Codim< codim >::template Partition< pitype >::IteratorType
     end () const 
     { 
       CHECK_INTERFACE_IMPLEMENTATION( (asImp().template end< codim, pitype >()) );
@@ -202,7 +206,7 @@ namespace Dune
     }
 
     //! \brief Level of the grid part
-    int level() const 
+    int level () const 
     { 
       CHECK_INTERFACE_IMPLEMENTATION((asImp().level()));
       return asImp().level(); 
@@ -230,11 +234,11 @@ namespace Dune
     }
 
     //! \brief corresponding communication method for grid part
-    template <class DataHandleImp,class DataType>
-    void communicate(CommDataHandleIF<DataHandleImp,DataType> & data, 
-                     InterfaceType iftype, CommunicationDirection dir) const 
+    template< class DataHandleImp, class DataType >
+    void communicate ( CommDataHandleIF< DataHandleImp, DataType > &data,
+                       InterfaceType iftype, CommunicationDirection dir ) const
     {
-      CHECK_AND_CALL_INTERFACE_IMPLEMENTATION((asImp().communicate(data,iftype,dir)));
+      CHECK_AND_CALL_INTERFACE_IMPLEMENTATION( (asImp().communicate( data, iftype, dir )) );
     }
 
   protected: 
@@ -242,15 +246,8 @@ namespace Dune
     GridPartInterface () {}  
 
   private:
-    // Barton-Nackman 
-    GridPartType& asImp() { 
-      return static_cast<GridPartType&>(*this); 
-    }
-    
-    // const Barton-Nackman 
-    const GridPartType& asImp() const { 
-      return static_cast<const GridPartType&>(*this);
-    }
+    GridPartType &asImp () { return static_cast< GridPartType & >( *this ); }
+    const GridPartType &asImp () const { return static_cast< const GridPartType & >( *this ); }
   };
 
 
@@ -265,9 +262,9 @@ namespace Dune
 
   public:
     //! Grid implementation
-    typedef typename BaseType :: GridType GridType;
+    typedef typename BaseType::GridType GridType;
     //! Index set implementation
-    typedef typename BaseType :: IndexSetType IndexSetType;
+    typedef typename BaseType::IndexSetType IndexSetType;
 
   protected:
     GridType &grid_;
@@ -299,10 +296,10 @@ namespace Dune
      *  \tparam  codim  codimension for which the iterator is requested
      */
     template< int codim >
-    typename BaseType :: template Codim< codim > :: IteratorType
+    typename BaseType::template Codim< codim >::IteratorType
     begin () const 
     { 
-      return BaseType :: template begin< codim, InteriorBorder_Partition >();
+      return BaseType::template begin< codim, InteriorBorder_Partition >();
     }
 
     /** \brief obtain end iterator for the interior-border partition
@@ -310,19 +307,19 @@ namespace Dune
      *  \tparam  codim  codimension for which the iterator is requested
      */
     template< int codim >
-    typename BaseType :: template Codim< codim > :: IteratorType
+    typename BaseType::template Codim< codim >::IteratorType
     end () const 
     {
-      return BaseType :: template end< codim, InteriorBorder_Partition >();
+      return BaseType::template end< codim, InteriorBorder_Partition >();
     }
 
   private:
     template< int codim, PartitionIteratorType pitype >
-    typename BaseType :: template Codim< codim > :: template Partition< pitype > :: IteratorType
+    typename BaseType::template Codim< codim >::template Partition< pitype >::IteratorType
     begin () const;
 
     template< int codim, PartitionIteratorType pitype >
-    typename BaseType :: template Codim< codim > :: template Partition< pitype > :: IteratorType
+    typename BaseType::template Codim< codim >::template Partition< pitype >::IteratorType
     end () const;
   };
 
@@ -357,9 +354,8 @@ namespace Dune
     typedef typename GridType::template Codim<0>::Entity EntityCodim0Type;
 
   public:
-    //- Public methods
     //! Constructor
-    LevelGridPart(GridType& grid, int level )
+    LevelGridPart ( GridType &grid, const int level )
     : BaseType( grid ),
       levelView_( grid.levelView( level ) ),
       isetWrapper_( grid, level ),
@@ -382,6 +378,8 @@ namespace Dune
       level_( other.level_ )
     {}
 
+    using BaseType::grid;
+
     //! Returns reference to index set of the underlying grid
     const IndexSetType &indexSet () const
     {
@@ -390,15 +388,15 @@ namespace Dune
 
     //! Begin iterator on the leaf level
     template< int codim >
-    typename BaseType :: template Codim< codim > :: IteratorType
+    typename BaseType::template Codim< codim >::IteratorType
     begin () const
     {
-      return BaseType :: template begin< codim >();
+      return BaseType::template begin< codim >();
     }
 
     //! Begin iterator on the leaf level
     template< int codim, PartitionIteratorType pitype >
-    typename Traits :: template Codim< codim > :: template Partition< pitype > :: IteratorType
+    typename Traits::template Codim< codim >::template Partition< pitype >::IteratorType
     begin () const
     {
       return levelView_.template begin< codim, pitype >();
@@ -406,30 +404,30 @@ namespace Dune
 
     //! Begin iterator on the GridPart's level
     template< int codim >
-    typename BaseType :: template Codim< codim > :: IteratorType
+    typename BaseType::template Codim< codim >::IteratorType
     end () const
     {
-      return BaseType :: template end< codim >();
+      return BaseType::template end< codim >();
     }
 
     //! End iterator on the GridPart's level
     template< int codim, PartitionIteratorType pitype >
-    typename Traits :: template Codim< codim > :: template Partition< pitype > :: IteratorType
+    typename Traits::template Codim< codim >::template Partition< pitype >::IteratorType
     end () const
     {
       return levelView_.template end< codim, pitype >();
     }
 
     //! ibegin of corresponding intersection iterator for given entity
-    IntersectionIteratorType ibegin(const EntityCodim0Type & en) const 
+    IntersectionIteratorType ibegin ( const EntityCodim0Type &entity ) const
     {
-      return en.ilevelbegin();
+      return levelView_.ibegin( entity );
     }
     
     //! iend of corresponding intersection iterator for given entity
-    IntersectionIteratorType iend(const EntityCodim0Type & en) const 
+    IntersectionIteratorType iend ( const EntityCodim0Type &entity ) const
     {
-      return en.ilevelend();
+      return levelView_.iend( entity );
     }
 
     int boundaryId ( const IntersectionType &intersection ) const
@@ -441,11 +439,11 @@ namespace Dune
     int level() const { return level_; }
 
     //! corresponding communication method for this grid part
-    template <class DataHandleImp,class DataType>
-    void communicate(CommDataHandleIF<DataHandleImp,DataType> & data, 
-                     InterfaceType iftype, CommunicationDirection dir) const 
+    template< class DataHandleImp, class DataType >
+    void communicate ( CommDataHandleIF< DataHandleImp, DataType > &data,
+                       InterfaceType iftype, CommunicationDirection dir ) const
     {
-      this->grid().communicate(data,iftype,dir,level());
+      levelView_communicate( data, iftype, dir );
     }
 
   private:
@@ -454,6 +452,8 @@ namespace Dune
     IndexSetType isetWrapper_;
     const int level_;
   };
+
+
 
   //! Type definitions for the LevelGridPart class
   template< class GridImp >
@@ -493,6 +493,8 @@ namespace Dune
     static const bool conforming = Capabilities::isLevelwiseConforming<GridType>::v;
   };
 
+
+
   //! \brief Selects the leaf level of a grid
   template< class GridImp >
   class LeafGridPart
@@ -517,7 +519,7 @@ namespace Dune
     typedef typename IntersectionIteratorType::Intersection IntersectionType;
   
     //! the leaf grid view from the grid 
-    typedef typename GridType :: template Partition < All_Partition > :: LeafGridView LeafGridView;
+    typedef typename GridType::template Partition< All_Partition >::LeafGridView LeafGridView;
 
   private:
     typedef typename GridType::template Codim<0>::Entity EntityCodim0Type;
@@ -538,6 +540,8 @@ namespace Dune
       isetWrapper_( other.grid() )
     {}
 
+    using BaseType::grid;
+
     //! Returns reference to index set of the underlying grid
     const IndexSetType &indexSet () const
     {
@@ -546,15 +550,15 @@ namespace Dune
 
     //! Begin iterator on the leaf level
     template< int codim >
-    typename BaseType :: template Codim< codim > :: IteratorType
+    typename BaseType::template Codim< codim >::IteratorType
     begin () const
     {
-      return BaseType :: template begin< codim >();
+      return BaseType::template begin< codim >();
     }
 
     //! Begin iterator on the leaf level
     template< int codim, PartitionIteratorType pitype >
-    typename Traits :: template Codim< codim > :: template Partition< pitype > :: IteratorType
+    typename Traits::template Codim< codim >::template Partition< pitype >::IteratorType
     begin () const
     {
       return leafView_.template begin< codim, pitype >();
@@ -562,30 +566,30 @@ namespace Dune
 
     //! Begin iterator on the leaf level
     template< int codim >
-    typename BaseType :: template Codim< codim > :: IteratorType
+    typename BaseType::template Codim< codim >::IteratorType
     end () const
     {
-      return BaseType :: template end< codim >();
+      return BaseType::template end< codim >();
     }
 
     //! End iterator on the leaf level
     template< int codim, PartitionIteratorType pitype >
-    typename Traits :: template Codim< codim > :: template Partition< pitype > :: IteratorType
+    typename Traits::template Codim< codim >::template Partition< pitype >::IteratorType
     end () const
     {
       return leafView_.template end< codim, pitype >();
     }
 
     //! ibegin of corresponding intersection iterator for given entity
-    IntersectionIteratorType ibegin(const EntityCodim0Type & en) const 
+    IntersectionIteratorType ibegin ( const EntityCodim0Type &entity ) const
     {
-      return en.ileafbegin();
+      return leafView_.ibegin( entity );
     }
     
     //! iend of corresponding intersection iterator for given entity
-    IntersectionIteratorType iend(const EntityCodim0Type & en) const 
+    IntersectionIteratorType iend ( const EntityCodim0Type &entity ) const
     {
-      return en.ileafend();
+      return leafView_.iend( entity );
     }
 
     int boundaryId ( const IntersectionType &intersection ) const
@@ -594,14 +598,14 @@ namespace Dune
     }
 
     //! Returns maxlevel of the grid
-    int level() const { return this->grid().maxLevel(); }
+    int level() const { return grid().maxLevel(); }
 
     //! corresponding communication method for this grid part
     template <class DataHandleImp,class DataType>
     void communicate(CommDataHandleIF<DataHandleImp,DataType> & data, 
                      InterfaceType iftype, CommunicationDirection dir) const 
     {
-      this->grid().communicate(data,iftype,dir);
+      leafView_.communicate( data, iftype, dir );
     }
 
   private: 
@@ -610,6 +614,8 @@ namespace Dune
     //! GridDefaultIndexSet Wrapper 
     IndexSetType isetWrapper_;
   };
+
+
 
   //! Type definitions for the LeafGridPart class
   template< class GridImp >
@@ -648,6 +654,7 @@ namespace Dune
     //! \brief is true if grid on this view only has conforming intersections 
     static const bool conforming = Capabilities::isLeafwiseConforming<GridType>::v;
   };
+
 
 
   //**************************************************************
