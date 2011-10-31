@@ -49,11 +49,11 @@ namespace Dune
     //! type of index 
     typedef typename BaseType :: IndexType IndexType;
 
-    //! type of codimension 0 Entity 
-    typedef typename GridType::template Codim< 0 >::Entity ElementType;
+    //! type of codimension 0 Entity (extract from GridPartType)
+    typedef typename GridPartType::template Codim< 0 >::EntityType   ElementType;
 
-    //! type of codimension 0 Entity 
-    typedef typename GridType::template Codim< 0 >::EntityPointer ElementPointerType;
+    //! type of codimension 0 EntityPointer (extract from GridPartType) 
+    typedef typename GridPartType::template Codim< 0 >::EntityPointerType  ElementPointerType;
 
     //! type of intersection iterator 
     typedef typename GridPartType :: IntersectionIteratorType IntersectionIteratorType; 
@@ -128,6 +128,9 @@ namespace Dune
     template< int codim , bool gridHasCodim >
     struct InsertGhostSubEntitiesBase
     {
+      typedef typename GridPartType::template Codim< codim >::EntityPointerType  EntityPointerType;
+      typedef typename GridPartType::template Codim< codim >::EntityType         EntityType;
+
       static void apply ( ThisType &indexSet, const ElementType &entity ,
                           const bool skipGhosts )
       {
@@ -141,11 +144,8 @@ namespace Dune
 
         for( int i = 0; i < entity.template count< codim >(); ++i )
         {
-          typedef typename GridType::template Codim< codim >::EntityPointer EntityPointer;
-          typedef typename GridType::template Codim< codim >::Entity Entity;
-
-          EntityPointer ptr = entity.template subEntity< codim >( i );
-          const Entity &subentity = *ptr;
+          EntityPointerType ptr = entity.template subEntity< codim >( i );
+          const EntityType &subentity = *ptr;
 
           if( !skipGhosts || (entity.partitionType() != GhostEntity) )
             codimSet.insertGhost( subentity );
@@ -204,7 +204,7 @@ namespace Dune
     template < int codim, bool gridHasCodim > 
     struct GetSubEntityBase
     {
-      typedef typename GridType :: template Codim< codim > :: EntityPointer  EntityPointer ;
+      typedef typename GridPartType :: template Codim< codim > :: EntityPointerType  EntityPointer ;
       static EntityPointer subEntity( const ElementType& element, const int subEn ) 
       {
         return element.template subEntity< codim > ( subEn );
@@ -214,7 +214,7 @@ namespace Dune
     template < int codim > 
     struct GetSubEntityBase< codim, false >
     {
-      typedef typename GridType :: template Codim< 0 > :: EntityPointer  EntityPointer ;
+      typedef typename GridPartType :: template Codim< 0 > :: EntityPointerType  EntityPointer ;
       static EntityPointer subEntity( const ElementType& element, const int subEn ) 
       {
         DUNE_THROW(NotImplemented,"stupid grid without entities of codim 1 used");
@@ -270,9 +270,6 @@ namespace Dune
     }
 
   public:
-    //! type traits of this class (see defaultindexsets.hh)
-    typedef DefaultLeafIteratorTypes<GridType> Traits; 
-
     //! Constructor
     //AdaptiveIndexSetBase (const GridPartType & gridPart) 
     AdaptiveIndexSetBase (const GridPartType & gridPart)
@@ -484,7 +481,7 @@ namespace Dune
 
     /* \brief return index for sub entity of given entity and subEntityNumber */
     IndexType
-    subIndex ( const typename GridType::template Codim< 0 >::Entity &entity,
+    subIndex ( const ElementType& element,
                int subNumber, unsigned int codim ) const
     {
       if( codimAvailable( codim ) ) 
@@ -493,7 +490,7 @@ namespace Dune
           ForLoop< CallSetUpCodimSet, 0, dimension >::apply( codim, *this );
         
         const CodimIndexSetType &codimSet = codimLeafSet( codim );
-        const IndexType idx = codimSet.subIndex( entity, subNumber );
+        const IndexType idx = codimSet.subIndex( element, subNumber );
         assert( (idx >= 0) && (idx < IndexType(codimSet.size())) );
         return idx;
       }
@@ -503,7 +500,7 @@ namespace Dune
           ForLoop< CallSetUpCodimSet, 0, dimension >::apply( codim, *this );
         
         const CodimIndexSetType &codimSet = codimLeafSet( codim );
-        const IndexType idx = codimSet.subIndex( entity, subNumber );
+        const IndexType idx = codimSet.subIndex( element, subNumber );
         assert( (idx >= 0) && (idx < IndexType(codimSet.size())) );
         return idx;
         DUNE_THROW( NotImplemented, (name() + " does not support indices for codim = ") << codim );

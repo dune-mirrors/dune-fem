@@ -11,7 +11,7 @@
 
 #include <dune/grid/common/grid.hh>
 #include <dune/grid/common/adaptcallback.hh> // for compatibility only
-#include <dune/grid/alugrid/common/defaultindexsets.hh>
+#include <dune/fem/gridpart/emptyindexset.hh>
 
 #include <dune/fem/misc/capabilities.hh>
 #include <dune/fem/misc/mpimanager.hh>
@@ -27,22 +27,23 @@ namespace Dune
   //! functions 
   template< class IndexSetImp >
   class IndexSetWrapper
-  : public DefaultEmptyIndexSet 
+  : public EmptyIndexSet 
   {
     typedef IndexSetWrapper< IndexSetImp > ThisType;
+    typedef EmptyIndexSet  BaseType ;
 
   public:
     typedef typename IndexSetImp::IndexType IndexType;
 
     //! store const reference to set 
-    IndexSetWrapper ( const IndexSetImp &set, bool adaptive = false )
-    : DefaultEmptyIndexSet( adaptive ),
+    IndexSetWrapper ( const IndexSetImp &set )
+    : BaseType(),
       set_( set )
     {}
     
     //! copy constructor
     IndexSetWrapper ( const ThisType &other )
-    : DefaultEmptyIndexSet( other.adaptive_ ),
+    : BaseType(),
       set_( other.set_ )
     {}
 
@@ -115,15 +116,6 @@ namespace Dune
    
     //! return type of index set (for input/output)
     static int type() { return myType; }
-
-#if 0
-    //! returns reference to singleton 
-    static ThisType &instance ( const GridType &grid )
-    { 
-      static ThisType set(grid,grid.maxLevel());
-      return set;
-    }
-#endif
   };
 
 
@@ -169,12 +161,6 @@ namespace Dune
     { 
       return IndexSetGetter::indexSet( grid );
     }
-
-    //! return true if index set can be used for adapitve calculations 
-    static bool adaptive ()
-    {
-      return hasHierarchicIndexSet;
-    }
   };
 
 
@@ -200,7 +186,7 @@ namespace Dune
 
     //! constructor 
     WrappedHierarchicIndexSet ( const GridType &grid, const int level =-1 )
-    : BaseType( SelectorType::hierarchicIndexSet( grid ), SelectorType::adaptive() )
+    : BaseType( SelectorType::hierarchicIndexSet( grid ) )
     {}
        
     //! return type (for Grape In/Output)
@@ -252,15 +238,6 @@ namespace Dune
 
     //! return type (for Grape In/Output)
     static int type() { return myType; }
-
-#if 0
-    //! returns reference to singleton 
-    static ThisType & instance (const GridType & grid)
-    { 
-      static ThisType set(grid,grid.maxLevel());
-      return set;
-    }
-#endif
   };
 
 } // namespace Dune 

@@ -98,7 +98,7 @@ namespace Dune
       < KeyType, IndexSetType, IndexSetFactory > IndexSetProviderType;
 
     // type of entity with codimension zero 
-    typedef typename GridType :: template Codim< 0 > :: Entity EntityCodim0Type;
+    typedef typename Codim< 0 > :: EntityType EntityCodim0Type;
 
     typedef typename GridType :: template Partition < All_Partition > :: LeafGridView LeafGridView;
     // the leaf grid view 
@@ -295,11 +295,11 @@ namespace Dune
     template< int codim >
     struct Codim
     {
-      typedef typename GridType::template Codim< codim >::Geometry GeometryType;
+      typedef typename GridType::template Codim< codim >::Geometry      GeometryType;
       typedef typename GridType::template Codim< codim >::LocalGeometry LocalGeometryType;
 
-      typedef typename GridType::template Codim< codim >::Entity EntityType;
       typedef typename GridType::template Codim< codim >::EntityPointer EntityPointerType;
+      typedef typename GridType::template Codim< codim >::Entity        EntityType;
 
       template< PartitionIteratorType pitype >
       struct Partition
