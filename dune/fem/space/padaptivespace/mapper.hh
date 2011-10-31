@@ -41,7 +41,7 @@ namespace Dune
       // if this is set to true the mapper behaves like a DG mapper
       static const bool discontinuousMapper = false;
 
-      typedef typename GridPartType::template Codim< 0 >::IteratorType::Entity EntityType;
+      typedef typename GridPartType::template Codim< 0 >::EntityType  EntityType;
       typedef PAdaptiveLagrangeMapper< GridPartType, polynomialOrder > DofMapperType;
       typedef DefaultDofMapIterator< EntityType, DofMapperType > DofMapIteratorType;
 
@@ -158,7 +158,7 @@ namespace Dune
       // this is a mapper for DG 
       static const bool discontinuousMapper = true ;
 
-      typedef typename GridPart::template Codim< 0 >::IteratorType::Entity EntityType;
+      typedef typename GridPart::template Codim< 0 >::EntityType  EntityType;
       typedef PAdaptiveDGMapper< GridPart, polOrder > DofMapperType;
       typedef DefaultDofMapIterator< EntityType, DofMapperType > DofMapIteratorType;
     };
