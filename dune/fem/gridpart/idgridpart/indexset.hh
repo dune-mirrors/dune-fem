@@ -56,7 +56,7 @@ namespace Dune
         return hostIndexSet().contains( entity.impl().hostEntity() );
       }
 
-      bool adaptive () const { return hostIndexSet().adaptive(); }
+      bool consecutive () const { return hostIndexSet().consecutive(); }
       bool persistent () const { return hostIndexSet().persistent(); }
 
       int numberOfHoles ( const int codim ) const { return hostIndexSet().numberOfHoles( codim ); }
