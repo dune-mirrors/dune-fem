@@ -11,6 +11,7 @@
 #include <dune/grid/utility/grapedataioformattypes.hh>
 
 #include <dune/fem/space/common/dofmanager.hh>
+#include <dune/fem/gridpart/defaultindexsets.hh>
 #include <dune/fem/misc/gridname.hh> 
 
 //- Local includes 
