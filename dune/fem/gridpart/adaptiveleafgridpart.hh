@@ -26,20 +26,16 @@ namespace Dune
       entities of all codimensions. 
   */
   template< class TraitsImp >
-  class AdaptiveGridPartBase : public GridPartDefault< TraitsImp >
+  class AdaptiveGridPartBase
+  : public GridPartDefault< TraitsImp >
   {
+    typedef AdaptiveGridPartBase< TraitsImp > ThisType;
+    typedef GridPartDefault< TraitsImp > BaseType;
+
   public:  
     //! Type definitions
-    typedef TraitsImp   Traits;
+    typedef TraitsImp Traits;
 
-  protected:  
-    // type of this pointer 
-    typedef AdaptiveGridPartBase< Traits > ThisType;
-
-    // type of base class 
-    typedef GridPartDefault< Traits > BaseType;
-
-  public:
     //! Grid implementation type
     typedef typename Traits :: GridPartType GridPartType;
     //! Grid implementation type
@@ -296,15 +292,19 @@ namespace Dune
     typedef typename GridType::template Codim< 0 >::Entity::LeafIntersectionIterator
       IntersectionIteratorType;
     
-    template< int cd >
+    template< int codim >
     struct Codim
     {
+      typedef typename GridType::template Codim< codim >::Geometry GeometryType;
+      typedef typename GridType::template Codim< codim >::LocalGeometry LocalGeometryType;
+
+      typedef typename GridType::template Codim< codim >::Entity EntityType;
+      typedef typename GridType::template Codim< codim >::EntityPointer EntityPointerType;
+
       template< PartitionIteratorType pitype >
       struct Partition
       {
-        typedef typename GridType
-          :: template Codim< cd > :: template Partition< pitype > :: LeafIterator
-          IteratorType;
+        typedef typename GridType::template Codim< codim >::template Partition< pitype >::LeafIterator IteratorType;
       };
     };
 
