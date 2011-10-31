@@ -113,11 +113,11 @@ namespace Dune
     template< int codim >
     struct Codim
     {
-      typedef typename Traits::template Codim< codim >::GeometryType GeometryType;
-      typedef typename Traits::template Codim< codim >::LocalGeometryType LocalGeometryType;
+      typedef typename Traits::template Codim< codim >::GeometryType       GeometryType;
+      typedef typename Traits::template Codim< codim >::LocalGeometryType  LocalGeometryType;
 
-      typedef typename Traits::template Codim< codim >::EntityPointerType EntityPointerType;
-      typedef typename Traits::template Codim< codim >::EntityType EntityType;
+      typedef typename Traits::template Codim< codim >::EntityPointerType  EntityPointerType;
+      typedef typename Traits::template Codim< codim >::EntityType         EntityType;
 
       template< PartitionIteratorType pitype >
       struct Partition
