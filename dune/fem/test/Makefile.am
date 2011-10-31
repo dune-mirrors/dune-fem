@@ -22,6 +22,7 @@ TESTPROGS = lagrangeinterpolation_linear lagrangeinterpolation_quadratic \
             dgl2projection_blockvectordiscretefunction \
             dgl2projection_combined \
             dgl2projection_fv      \
+            dgl2projection_idgridpart \
             vtxprojection_adaptive \
             mapper_dg                    mapper_fv    mapper_lagrange \
             intersectionindexset 
@@ -63,6 +64,9 @@ dgl2projection_attached_CPPFLAGS = -DPOLORDER=1 -DUSE_ATTACHEDFUNCTION $(AM_CPPF
 
 dgl2projection_blockvectordiscretefunction_SOURCES = dgl2projection.cc
 dgl2projection_blockvectordiscretefunction_CPPFLAGS = -DPOLORDER=1 -DUSE_BLOCKVECTORDISCRETEFUNCTION $(AM_CPPFLAGS)
+
+dgl2projection_idgridpart_SOURCES = dgl2projection.cc
+dgl2projection_idgridpart_CPPFLAGS = -DPOLORDER=1 -DCOUNT_FLOPS $(AM_CPPFLAGS) -DUSE_IDGRIDPART 
 
 vtxprojection_adaptive_SOURCES = vtxprojection.cc
 vtxprojection_adaptive_CPPFLAGS = -DPOLORDER=1 -DCOUNT_FLOPS $(AM_CPPFLAGS)

@@ -30,6 +30,9 @@
 #if defined  USE_FILTEREDGRID 
 #include <dune/fem/gridpart/filteredgrid.hh>
 #endif
+#if defined  USE_IDGRIDPART 
+#include <dune/fem/gridpart/idgridpart.hh>
+#endif
 
 #include "testgrid.hh"
 #include "dfspace.hh"
@@ -40,13 +43,14 @@ using namespace Dune;
 typedef GridSelector::GridType MyGridType;
 // typedef HierarchicGridPart< MyGridType >  ContainedGridPartType;
 typedef DGAdaptiveLeafGridPart< MyGridType > ContainedGridPartType;
+//typedef IdBasedLeafGridPart< MyGridType > ContainedGridPartType;
 
 // use filtered grid for testing 
 #if defined  USE_FILTEREDGRID 
   typedef RadialFilter< ContainedGridPartType > FilterType;
   typedef FilteredGridPart<ContainedGridPartType, FilterType, true > GridPartType;
-#else
-  typedef ContainedGridPartType GridPartType;
+#elif defined  USE_IDGRIDPART
+  typedef Fem:: IdGridPart< ContainedGridPartType > GridPartType;
 #endif
 
 typedef TestFunctionSpace FunctionSpaceType;
@@ -105,7 +109,13 @@ int main(int argc, char ** argv)
     const int step = TestGrid :: refineStepsForHalf();
     grid.globalRefine( 2*step );
 
+#ifdef USE_IDGRIDPART 
+    ContainedGridPartType hostGridPart( grid );
+    GridPartType gridPart( hostGridPart );
+#else 
     GridPartType gridPart( grid );
+#endif
+
     // add check for grid width 
     std::cout << "Grid width: " 
       << GridWidth :: calcGridWidth( gridPart ) << std::endl; 
