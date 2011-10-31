@@ -1,6 +1,6 @@
 gridpartdir = $(includedir)/dune/fem/gridpart
 
-SUBDIRS = filter  idgridpart  test
+SUBDIRS = common  filter  idgridpart  test
 
 gridpart_HEADERS = adaptiveleafgridpart.hh \
                    adaptiveleafindexset.hh \
@@ -12,7 +12,6 @@ gridpart_HEADERS = adaptiveleafgridpart.hh \
                    filteredgrid.hh \
                    filteredgridpart.hh \
                    gridpart.hh \
-                   gridpartview.hh \
                    idgridpart.hh \
                    persistentcontainer.hh
 

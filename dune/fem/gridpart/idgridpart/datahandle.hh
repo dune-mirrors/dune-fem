@@ -2,6 +2,7 @@
 #define DUNE_FEM_GRIDPART_IDGRIDPART_DATAHANDLE_HH
 
 #include <dune/common/typetraits.hh>
+
 #include <dune/grid/common/datahandleif.hh>
 
 #include <dune/fem/gridpart/idgridpart/entity.hh>

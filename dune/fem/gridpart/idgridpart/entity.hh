@@ -1,6 +1,9 @@
 #ifndef DUNE_FEM_GRIDPART_IDGRIDPART_ENTITY_HH
 #define DUNE_FEM_GRIDPART_IDGRIDPART_ENTITY_HH
 
+#include <dune/grid/common/entity.hh>
+#include <dune/grid/common/gridenums.hh>
+
 #include <dune/fem/gridpart/idgridpart/geometry.hh>
 
 namespace Dune

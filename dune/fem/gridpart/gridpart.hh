@@ -8,7 +8,7 @@
 #include <dune/common/bartonnackmanifcheck.hh>
 #include <dune/common/deprecated.hh>
 
-#include <dune/fem/gridpart/gridpartview.hh>
+#include <dune/fem/gridpart/common/gridpartview.hh>
 
 namespace Dune
 {

@@ -1,6 +1,7 @@
 #ifndef DUNE_FEM_GRIDPART_IDGRIDPART_HH
 #define DUNE_FEM_GRIDPART_IDGRIDPART_HH
 
+#include <dune/fem/gridpart/gridpart.hh>
 #include <dune/fem/gridpart/idgridpart/datahandle.hh>
 #include <dune/fem/gridpart/idgridpart/deaditerator.hh>
 #include <dune/fem/gridpart/idgridpart/entity.hh>
