@@ -374,7 +374,7 @@ namespace Dune
       const size_t quadNop = quad.nop();
       for( size_t qp = 0; qp < quadNop; ++qp )
       {
-        evaluate( quad[ qp ], dofs, rangeVector[ qp ] );
+        evaluateAll( quad[ qp ], dofs, rangeVector[ qp ] );
       }
     }
 
