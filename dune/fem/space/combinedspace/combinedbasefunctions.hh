@@ -146,8 +146,7 @@ namespace Dune
           phi[ r +dimRange1 ]  = phi2[ r ];
       }
     }
-
-
+    
     template< class PointType >
     void evaluate ( const int baseFunction,
                     const PointType &x,
