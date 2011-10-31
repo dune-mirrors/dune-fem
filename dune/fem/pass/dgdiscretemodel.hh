@@ -257,7 +257,7 @@ namespace Dune {
 
     typedef typename DiscreteFunctionSpaceType::GridPartType GridPartType; 
     typedef typename GridPartType::GridType GridType;
-    typedef typename GridType::template Codim<0>::Entity EntityType;
+    typedef typename BaseType :: EntityType EntityType;
     typedef typename GridPartType::IntersectionIteratorType IntersectionIterator;
     typedef typename IntersectionIterator::Intersection Intersection;
 
@@ -426,6 +426,7 @@ namespace Dune {
   class DGDiscreteModelDefaultWithInsideOutside :
     public DGDiscreteModelDefault<DGDiscreteModelTraits,N1,N2,N3,N4,N5,N6,N7,N8,N9>
   {
+    typedef DGDiscreteModelDefault<DGDiscreteModelTraits,N1,N2,N3,N4,N5,N6,N7,N8,N9>  BaseType ;
   public:
     typedef DGDiscreteModelTraits Traits;
     typedef typename Traits::DGDiscreteModelType DGDiscreteModelType;
@@ -436,7 +437,7 @@ namespace Dune {
 
     typedef typename DiscreteFunctionSpaceType::GridPartType GridPartType; 
     typedef typename GridPartType::GridType GridType;
-    typedef typename GridType::template Codim<0>::Entity EntityType;
+    typedef typename BaseType :: EntityType EntityType;
     typedef typename GridPartType::IntersectionIteratorType IntersectionIteratorType;
     typedef typename IntersectionIteratorType :: Intersection  IntersectionType;
 
