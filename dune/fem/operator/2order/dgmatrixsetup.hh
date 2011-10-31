@@ -58,7 +58,7 @@ public:
 
     // define used types 
     typedef typename GridPartType :: GridType GridType;
-    typedef typename GridType :: template Codim<0> :: Entity EntityType;
+    typedef typename GridPartType :: template Codim<0> :: EntityType    EntityType;
     typedef typename GridPartType :: template Codim<0> :: IteratorType  IteratorType;
 
     // clear map 
@@ -110,7 +110,7 @@ protected:
     }
 
     // insert neighbors 
-    typedef typename GridPartImp:: GridType :: template Codim<0>::EntityPointer EntityPointerType; 
+    typedef typename GridPartImp::template Codim<0>::EntityPointerType EntityPointerType; 
     typedef typename GridPartImp:: IntersectionIteratorType IntersectionIteratorType;
     typedef typename IntersectionIteratorType :: Intersection IntersectionType;
     IntersectionIteratorType endnit = gridPart.iend(en);

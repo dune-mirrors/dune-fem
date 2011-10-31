@@ -104,7 +104,7 @@ namespace Dune {
     typedef TemporaryLocalFunction< DiscreteFunctionSpaceType > TemporaryLocalFunctionType;
 
     //! type of local mass matrix 
-    typedef LocalDGMassMatrix< DiscreteFunctionSpaceType, VolumeQuadratureType > LocalMassMatrixType;
+    typedef LocalMassMatrix< DiscreteFunctionSpaceType, VolumeQuadratureType > LocalMassMatrixType;
 
   public:
     //- Public methods
