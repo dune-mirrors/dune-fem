@@ -517,6 +517,12 @@ namespace Dune
       template< int codim >
       struct Codim
       {
+        typedef typename  HostGridPartType::template Codim< codim >::GeometryType       GeometryType ;  
+        typedef typename  HostGridPartType::template Codim< codim >::LocalGeometryType  LocalGeometryType ;  
+
+        typedef typename  HostGridPartType::template Codim< codim >::EntityType         EntityType ;  
+        typedef typename  HostGridPartType::template Codim< codim >::EntityPointerType  EntityPointerType ;  
+
         template< PartitionIteratorType pitype >
         class Partition
         {
@@ -593,18 +599,10 @@ namespace Dune
       //! \brief grid view
       typedef GridView< GridPartViewTraits< ThisType > > GridViewType;
 
-      //! \brief grid part typedefs 
+      //! \brief grid part typedefs, use those of traits  
       template< int codim >
-      struct Codim
-      {
-        template< PartitionIteratorType pitype >
-        struct Partition
-        {
-          typedef typename Traits::template Codim< codim >::template Partition< pitype >::IteratorType IteratorType;
-        };
-        typedef typename Partition< InteriorBorder_Partition > :: IteratorType IteratorType;
-        typedef typename GridType::template Codim< codim >::Entity EntityType;
-      };
+      struct Codim : public Traits :: template Codim< codim > 
+      {};
 
     private:
       typedef typename Traits::IndexSetSelectorType IndexSetSelectorType;
