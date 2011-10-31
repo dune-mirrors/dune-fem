@@ -391,7 +391,7 @@ namespace Dune
       const size_t quadNop = quad.nop();
       for( size_t qp = 0; qp < quadNop; ++qp )
       {
-        jacobian( quad[ qp ], 
+        jacobianAll( quad[ qp ], 
                   geometry.jacobianInverseTransposed( quad.point( qp ) ),
                   dofs, 
                   jacVector[ qp ] );
