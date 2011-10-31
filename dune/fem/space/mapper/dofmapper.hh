@@ -338,7 +338,7 @@ protected:
   template< class IndexSetType >
   bool checkConsecutive ( const IndexSetType &indexSet ) const
   {
-    const bool isFemIndexSet = Conversion< IndexSetType, EmptyIndexSet > :: exists;
+    const bool isFemIndexSet = Conversion< IndexSetType, Fem :: EmptyIndexSet > :: exists;
     return Consecutive< IndexSetType, isFemIndexSet > :: check( indexSet );
   }
 

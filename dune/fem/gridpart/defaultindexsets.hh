@@ -27,10 +27,10 @@ namespace Dune
   //! functions 
   template< class IndexSetImp >
   class IndexSetWrapper
-  : public EmptyIndexSet 
+  : public Fem :: EmptyIndexSet 
   {
     typedef IndexSetWrapper< IndexSetImp > ThisType;
-    typedef EmptyIndexSet  BaseType ;
+    typedef Fem :: EmptyIndexSet  BaseType ;
 
   public:
     typedef typename IndexSetImp::IndexType IndexType;

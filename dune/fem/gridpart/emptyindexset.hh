@@ -8,14 +8,14 @@
 #include <rpc/xdr.h>
 #include <cassert>
 
-#include <dune/fem/gridpart/defaultindexsets.hh>
-
 /** @file
  @brief Provides default empty index set class for persistent index sets. 
 */
 
 namespace Dune
 {
+
+  namespace Fem { 
 
   /*!
     The EmptyIndexSet implements all additional method of a DUNE fem index set with 
@@ -155,6 +155,7 @@ namespace Dune
     }
   };
 
-} // end namespace Dune 
+  }  // end namespace Fem 
 
+} // end namespace Dune 
 #endif

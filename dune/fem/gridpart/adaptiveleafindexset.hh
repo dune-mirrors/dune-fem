@@ -34,7 +34,7 @@ namespace Dune
     typedef AdaptiveIndexSetBase< TraitsImp > ThisType;
     typedef ConsecutivePersistentIndexSet< GridType, ThisType > BaseType;
 
-    friend class Conversion< ThisType, EmptyIndexSet >;
+    friend class Conversion< ThisType, Fem :: EmptyIndexSet >;
 
   public:
     //! dimension of the grid 

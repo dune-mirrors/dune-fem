@@ -196,7 +196,7 @@ class RestrictProlongInterfaceDefault
   template< class IndexSetType >
   bool checkPersistent ( const IndexSetType &indexSet ) const
   {
-    const bool isFemIndexSet = Conversion< IndexSetType, EmptyIndexSet > :: exists;
+    const bool isFemIndexSet = Conversion< IndexSetType, Fem :: EmptyIndexSet > :: exists;
     return Persistent< IndexSetType, isFemIndexSet > :: check( indexSet );
   }
 

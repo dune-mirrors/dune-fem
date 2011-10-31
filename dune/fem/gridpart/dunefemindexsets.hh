@@ -30,7 +30,7 @@ namespace Dune
   template< class GridImp, class Imp >
   class DuneGridIndexSetAdapter 
   : public BartonNackmanInterface< DuneGridIndexSetAdapter< GridImp, Imp >, Imp >,
-    public EmptyIndexSet,
+    public Fem :: EmptyIndexSet,
     public IndexSet< GridImp, Imp >
   {
     typedef DuneGridIndexSetAdapter< GridImp, Imp > ThisType;
