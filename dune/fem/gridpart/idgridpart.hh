@@ -205,7 +205,8 @@ namespace Dune
       void communicate ( CommDataHandleIF< DataHandle, Data > &handle,
                          InterfaceType iftype, CommunicationDirection dir ) const
       {
-        IdDataHandle< GridFamily, DataHandle > handleWrapper( handle );
+        typedef CommDataHandleIF< DataHandle, Data >  HostHandleType ;
+        IdDataHandle< GridFamily, HostHandleType > handleWrapper( handle );
         hostGridPart_.communicate( handleWrapper, iftype, dir );
       }
 
