@@ -53,13 +53,13 @@ namespace Dune
     typedef FilterImp FilterType;
     typedef GridPartImp GridPartType; 
     typedef typename GridPartType :: GridType GridType;
-    typedef typename GridType::template Codim<0>::Entity EntityCodim0Type;   
-    typedef typename GridType::template Codim<0>::EntityPointer EntityPointerCodim0Type;
+    typedef typename GridPartType::template Codim<0>::EntityType         EntityCodim0Type;   
+    typedef typename GridPartType::template Codim<0>::EntityPointerType  EntityPointerCodim0Type;
 
     template <int cd>
     struct Codim {
-      typedef typename GridType::template Codim<cd>::Entity EntityType;
-      typedef typename GridType::template Codim<cd>::EntityPointer EntityPointerType;
+      typedef typename GridPartType::template Codim<cd>::EntityType        EntityType;
+      typedef typename GridPartType::template Codim<cd>::EntityPointerType EntityPointerType;
     };
   }; // end DefaultFilterTraits
 
@@ -87,14 +87,14 @@ namespace Dune
     //! \brief type of Grid implementation
     typedef typename GridPartType :: GridType GridType;
     //! \brief type of Entity with codim=0
-    typedef typename GridType :: template Codim< 0 > :: Entity EntityCodim0Type;
+    typedef typename GridPartType :: template Codim< 0 > :: EntityType        EntityCodim0Type;
     //! \brief type of EntityPointer with codim=0 
-    typedef typename GridType :: template Codim< 0 > :: EntityPointer EntityPointerCodim0Type;
+    typedef typename GridPartType :: template Codim< 0 > :: EntityPointerType EntityPointerCodim0Type;
       
     //! \brief type of Elements (i.e., Entities with codim=0)
-    typedef typename GridType :: template Codim< 0 > :: Entity ElementType;
+    typedef EntityCodim0Type ElementType;
     //! \brief type of Element Pointers (i.e. Entity Pointers with codim=0)
-    typedef typename GridType :: template Codim< 0 > :: EntityPointer ElementPointerType;
+    typedef EntityPointerCodim0Type ElementPointerType;
 
   private: 
     FilterInterface ()
@@ -260,7 +260,7 @@ namespace Dune
   private:
     typedef RadialFilter<GridPartType> ThisType;
 
-    typedef typename GridType::Traits::template Codim<0>::Geometry GeometryType;
+    typedef typename GridPartType::template Codim<0>::GeometryType  GeometryType;
     enum{dim = GeometryType::dimension};
     typedef typename Dune::FieldVector<typename GridType::ctype, dim> FieldVectorType;
 
@@ -423,18 +423,15 @@ namespace Dune
 
     typedef typename IntersectionIteratorType::Intersection IntersectionType;
 
-    // the codim 0 entities type
-    typedef typename GridType::template Codim<0>::Entity EntityCodim0Type;
-
     // overload grid view type 
     typedef GridView< GridPartViewTraits< ThisType > > GridViewType;
 
     //! Struct providing types of the iterators on codimension cd
     template< int codim >
-    struct Codim
+    struct Codim : public GridPartImp :: template Codim < codim > 
     {
       template< PartitionIteratorType pitype >
-      struct Partition
+      struct Partition 
       {
       private:
         typedef typename GridPartImp :: template Codim< codim >
@@ -447,6 +444,9 @@ namespace Dune
       typedef typename Partition< InteriorBorder_Partition > :: IteratorType
         IteratorType;
     };
+
+    // the codim 0 entities type
+    typedef typename Codim<0> :: EntityType  EntityCodim0Type;
 
   public:
     //- Public methods
@@ -606,8 +606,8 @@ namespace Dune
     : public IteratorType 
     {
       // type of codim 0 entity      
-      typedef typename GridPartType::GridType::template Codim<0>::EntityPointer EntityPointerCodim0Type;
-      typedef typename GridPartType::GridType::template Codim<0>::Entity EntityCodim0Type;
+      typedef typename GridPartType::template Codim<0>::EntityPointerType  EntityPointerCodim0Type;
+      typedef typename GridPartType::template Codim<0>::EntityType         EntityCodim0Type;
 
       typedef IntersectionIteratorWrapper<GridPartType,IteratorType>  ThisType;
       

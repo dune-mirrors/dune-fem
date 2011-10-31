@@ -8,6 +8,8 @@
 #include <rpc/xdr.h>
 #include <cassert>
 
+#include <dune/common/misc.hh>
+
 /** @file
  @brief Provides default empty index set class for persistent index sets. 
 */
