@@ -96,7 +96,7 @@ namespace Dune
     typedef typename IntegrationTraits :: CoordinateType CoordinateType;
     
     // for compatibility
-    typedef typename GridType::template Codim< 0 >::Entity EntityType;
+    typedef typename GridPartType::template Codim< 0 >::EntityType EntityType;
 
   protected:
     using BaseType::quadImp;

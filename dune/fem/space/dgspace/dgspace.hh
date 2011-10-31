@@ -120,7 +120,7 @@ namespace Dune
     dune_static_assert( (dimensionworld <= 3), "Use Legendre spaces for higher dimensions." );
 
     //! type of entity of this space 
-    typedef typename GridType :: template Codim< codimension > :: Entity  EntityType;
+    typedef typename GridPartType :: template Codim< codimension > :: EntityType  EntityType;
 
     //! mapper used to implement mapToGlobal 
     typedef typename Traits::MapperType MapperType; 

@@ -127,7 +127,7 @@ namespace Dune
     typedef typename GridPartType :: template Codim< 0 > :: IteratorType
       IteratorType;
     //! type of entity of codimension 0
-    typedef typename IteratorType :: Entity EntityType;
+    typedef typename GridPartType :: template Codim< 0 > :: EntityType EntityType;
 
     /** \brief defines type of data handle for communication
      *  \param  DiscreteFunction  type of \ref Dune::DiscreteFunctionInterface

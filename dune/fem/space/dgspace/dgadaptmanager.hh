@@ -45,7 +45,7 @@ public:
   typedef typename DiscreteFunctionSpaceType :: RangeType RangeType;
   typedef typename DiscreteFunctionSpaceType :: DomainType DomainType;
   typedef CachingQuadrature<GridPartType,0> QuadratureType;
-  typedef typename GridType::template Codim<0>::Entity::LocalGeometry LocalGeometry;
+  typedef typename GridPartType::template Codim<0>::EntityType::LocalGeometry LocalGeometry;
 
 protected:
   using BaseType :: calcWeight;

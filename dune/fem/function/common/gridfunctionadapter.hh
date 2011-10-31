@@ -45,7 +45,7 @@ namespace Dune
 
     typedef GridPartImp GridPartType;
     typedef typename GridPartType :: GridType GridType;
-    typedef typename GridType :: template Codim<0> :: Entity EntityType;
+    typedef typename GridPartType :: template Codim<0> :: EntityType EntityType;
     //! type of iterator 
     typedef typename GridPartType :: template Codim<0> :: IteratorType IteratorType; 
     //! type of IndexSet 
@@ -105,7 +105,7 @@ namespace Dune
     typedef typename DiscreteFunctionSpaceType::JacobianRangeType JacobianRangeType;
 
     //! type of codim 0 entity
-    typedef typename GridType::template Codim< 0 >::Entity EntityType; 
+    typedef typename Traits :: EntityType  EntityType; 
 
   private:
     class LocalFunction;
@@ -432,7 +432,7 @@ namespace Dune
     typedef typename DiscreteFunctionSpaceType::JacobianRangeType JacobianRangeType;
 
     //! type of codim 0 entity
-    typedef typename GridType :: template Codim<0> :: Entity EntityType; 
+    typedef typename GridPartType :: template Codim<0> :: EntityType  EntityType; 
 
     //! type of local function to export 
     typedef typename ConvertedType::LocalFunctionType LocalFunctionType; 
