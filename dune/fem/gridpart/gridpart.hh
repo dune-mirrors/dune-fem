@@ -113,6 +113,12 @@ namespace Dune
     template< int codim >
     struct Codim
     {
+      typedef typename Traits::template Codim< codim >::GeometryType GeometryType;
+      typedef typename Traits::template Codim< codim >::LocalGeometryType LocalGeometryType;
+
+      typedef typename Traits::template Codim< codim >::PointerType EntityPointerType;
+      typedef typename Traits::template Codim< codim >::EntityType EntityType;
+
       template< PartitionIteratorType pitype >
       struct Partition
       {
@@ -121,11 +127,6 @@ namespace Dune
       };
 
       typedef typename Partition< InteriorBorder_Partition >::IteratorType IteratorType;
-
-      typedef typename GridType::template Codim< codim >::Geometry GeometryType;
-      typedef typename GridType::template Codim< codim >::LocalGeometry LocalGeometryType;
-
-      typedef typename GridType::template Codim< codim >::Entity EntityType;
     };
     
   public:
@@ -351,7 +352,7 @@ namespace Dune
     typedef typename GridType::template Partition< All_Partition > :: LevelGridView  LevelGridView;
 
   private:
-    typedef typename GridType::template Codim<0>::Entity EntityCodim0Type;
+    typedef typename GridType::template Codim< 0 >::Entity EntityCodim0Type;
 
   public:
     //! Constructor
@@ -443,7 +444,7 @@ namespace Dune
     void communicate ( CommDataHandleIF< DataHandleImp, DataType > &data,
                        InterfaceType iftype, CommunicationDirection dir ) const
     {
-      levelView_communicate( data, iftype, dir );
+      levelView_.communicate( data, iftype, dir );
     }
 
   private:
@@ -479,18 +480,21 @@ namespace Dune
     template< int codim >
     struct Codim
     {
+      typedef typename GridType::template Codim< codim >::Geometry GeometryType;
+      typedef typename GridType::template Codim< codim >::LocalGeometry LocalGeometryType;
+
+      typedef typename GridType::template Codim< codim >::Entity EntityType;
+      typedef typename GridType::template Codim< codim >::EntityPointer EntityPointerType;
+
       template< PartitionIteratorType pitype >
       struct Partition
       {
-        /** \brief Iterators over the entities of codimension <tt>cd</tt> of this grid part */
-        typedef typename GridType :: template Codim< codim >
-          :: template Partition< pitype > :: LevelIterator
-          IteratorType;
+        typedef typename GridType::template Codim< codim >::template Partition< pitype >::LevelIterator IteratorType;
       };
     };
 
     //! \brief is true if grid on this view only has conforming intersections
-    static const bool conforming = Capabilities::isLevelwiseConforming<GridType>::v;
+    static const bool conforming = Capabilities::isLevelwiseConforming< GridType >::v;
   };
 
 
@@ -641,18 +645,22 @@ namespace Dune
     template< int codim >
     struct Codim
     {
+      typedef typename GridType::template Codim< codim >::Geometry GeometryType;
+      typedef typename GridType::template Codim< codim >::LocalGeometry LocalGeometryType;
+
+      typedef typename GridType::template Codim< codim >::Entity EntityType;
+      typedef typename GridType::template Codim< codim >::EntityPointer EntityPointerType;
+
       template< PartitionIteratorType pitype >
       struct Partition
       {
-        /** \brief Iterators over the entities of codimension <tt>cd</tt> of this grid part */
-        typedef typename GridType :: template Codim< codim >
-          :: template Partition< pitype > :: LeafIterator
+        typedef typename GridType::template Codim< codim >::template Partition< pitype >::LeafIterator
           IteratorType;
       };
     };
 
     //! \brief is true if grid on this view only has conforming intersections 
-    static const bool conforming = Capabilities::isLeafwiseConforming<GridType>::v;
+    static const bool conforming = Capabilities::isLeafwiseConforming< GridType >::v;
   };
 
 
@@ -816,18 +824,21 @@ namespace Dune
     template< int codim >
     struct Codim
     {
+      typedef typename GridType::template Codim< codim >::Geometry GeometryType;
+      typedef typename GridType::template Codim< codim >::LocalGeometry LocalGeometryType;
+
+      typedef typename GridType::template Codim< codim >::Entity EntityType;
+      typedef typename GridType::template Codim< codim >::EntityPointer EntityPointerType;
+
       template< PartitionIteratorType pitype >
       struct Partition
       {
-        /** \brief Iterators over the entities of codimension <tt>cd</tt> of this grid part */
-        typedef typename GridType :: template Codim< codim >
-          :: template Partition< pitype > :: LeafIterator
-          IteratorType;
+        typedef typename GridType::template Codim< codim >::template Partition< pitype >::LeafIterator IteratorType;
       };
     };
 
     //! \brief is true if grid on this view only has conforming intersections 
-    static const bool conforming = Capabilities::isLeafwiseConforming<GridType>::v;
+    static const bool conforming = Capabilities::isLeafwiseConforming< GridType >::v;
   };
 
 #undef CHECK_INTERFACE_IMPLEMENTATION
