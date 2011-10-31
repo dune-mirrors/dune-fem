@@ -311,35 +311,14 @@ public:
 
   typedef typename Traits :: EntityType EntityType;
 
-private:
-  template< class IndexSetType, bool isFemIndexSet >  // wozu wird isFemIndexSet verwendet ???
-  struct Consecutive
-  {
-    static bool check ( const IndexSetType &indexSet )
-    {
-      return indexSet.consecutive();
-    }
-  };
-  
-  template< class IndexSetType >
-  struct Consecutive< IndexSetType, false >
-  {
-    static bool check ( const IndexSetType &indexSet )
-    {
-      return indexSet.needsCompress();
-    }
-  };
-  
 protected:
   using BaseType :: asImp;
 
-  //! for index sets from dune call needsCompress 
   //! for dune-fem index set use new method consecutive
   template< class IndexSetType >
   bool checkConsecutive ( const IndexSetType &indexSet ) const
   {
-    const bool isFemIndexSet = Conversion< IndexSetType, Fem :: EmptyIndexSet > :: exists;
-    return Consecutive< IndexSetType, isFemIndexSet > :: check( indexSet );
+    return indexSet.consecutive();
   }
 
 public:
