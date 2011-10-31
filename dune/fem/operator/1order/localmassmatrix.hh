@@ -37,8 +37,8 @@ public:
   typedef typename DiscreteFunctionSpaceType :: GridPartType GridPartType;
   typedef typename DiscreteFunctionSpaceType :: BaseFunctionSetType BaseFunctionSetType; 
   typedef typename GridPartType :: GridType GridType;
-  typedef typename GridPartType :: template Codim<0> :: EntityType    EntityType;
-  typedef typename GridPartType :: template Codim<0> :: GeometryType  Geometry;
+  typedef typename DiscreteFunctionSpaceType :: EntityType  EntityType;
+  typedef typename EntityType :: Geometry  Geometry;
 
   typedef VolumeQuadratureImp VolumeQuadratureType;
 
