@@ -30,7 +30,10 @@ namespace Dune {
     typedef typename GridPartType :: GridType GridType;
     typedef typename GridPartType::IntersectionIteratorType IntersectionIterator;
     typedef typename IntersectionIterator :: Intersection  Intersection;
-    typedef typename GridType::template Codim<0>::Entity Entity;
+    typedef typename GridPartType::template Codim<0>::EntityType  EntityType ;
+
+    // deprecated type 
+    typedef EntityType  Entity; 
 
     typedef typename Traits::FaceQuadratureType FaceQuadratureType;
     typedef typename Traits::VolumeQuadratureType VolumeQuadratureType;
@@ -69,12 +72,12 @@ namespace Dune {
       data_.reset(new DataStorage(arg));
     }
 
-    void setEntity( const Entity& en ) 
+    void setEntity( const EntityType& en ) 
     {
       data_->setSelf(en);
     }
 
-    void setNeighbor( const Entity& nb ) 
+    void setNeighbor( const EntityType& nb ) 
     {
       data_->setNeighbor(nb);
     }
@@ -88,11 +91,11 @@ namespace Dune {
     }
 
     template <class QuadratureType>
-    void setQuad( const Entity& en, 
+    void setQuad( const EntityType& en, 
                   const QuadratureType& quad ) 
     {
       ForEachTupleValue<DiscreteFunctionTupleType> forEach(data_->discreteFunctions());
-      DiscreteFunctionSetQuad<Entity,QuadratureType> eval(en,quad);
+      DiscreteFunctionSetQuad<EntityType,QuadratureType> eval(en,quad);
       forEach.apply(eval);
     }
 
@@ -113,11 +116,11 @@ namespace Dune {
     }
 
   protected:
-    void setter ( const Entity &entity, 
+    void setter ( const EntityType &entity, 
                   LocalFunctionTupleType &localFunctionTuple )
     {
       ForEachTupleValue< LocalFunctionTupleType > forEach( localFunctionTuple );
-      LocalFunctionSetter< Entity > setter( entity );
+      LocalFunctionSetter< EntityType > setter( entity );
       forEach.apply( setter );
     }
 
@@ -222,36 +225,36 @@ namespace Dune {
       	return discreteFunctions_;
       }
 
-      const Entity& self () const
+      const EntityType& self () const
       {
         assert( self_ );
         return *self_;
       }
 
-      const Entity& neighbor () const
+      const EntityType& neighbor () const
       {
         assert( neighbor_ );
         return *neighbor_;
       }
 
-      void setSelf( const Entity &entity )
+      void setSelf( const EntityType &entity )
       {
         self_ = &entity;
         setter( entity, localFunctionsSelf_ );
       }
 
-      void setNeighbor( const Entity &entity )
+      void setNeighbor( const EntityType &entity )
       {
       	neighbor_ = &entity;
         setter( entity, localFunctionsNeigh_ );
       }
 
     private:
-      void setter( const Entity &entity, 
+      void setter( const EntityType &entity, 
                    LocalFunctionTupleType &localFunctionTuple )
       {
         ForEachTupleValue< LocalFunctionTupleType > forEach( localFunctionTuple );
-        LocalFunctionSetter< Entity > setter( entity );
+        LocalFunctionSetter< EntityType > setter( entity );
         forEach.apply( setter );
       }
 
@@ -260,8 +263,8 @@ namespace Dune {
       LocalFunctionTupleType localFunctionsSelf_;
       LocalFunctionTupleType localFunctionsNeigh_;
 
-      const Entity* self_;
-      const Entity* neighbor_;
+      const EntityType* self_;
+      const EntityType* neighbor_;
     };
 
   protected:  

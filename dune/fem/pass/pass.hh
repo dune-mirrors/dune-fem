@@ -274,7 +274,10 @@ namespace Dune {
     //! Iterator over the space
     typedef typename DiscreteFunctionSpaceType::IteratorType IteratorType;
     //! The codim 0 entity
-    typedef typename IteratorType::Entity Entity;
+    typedef typename DiscreteFunctionSpaceType::EntityType EntityType ;
+
+    // deprecated type 
+    typedef EntityType  Entity;
 
   public:
     //! Constructor
@@ -332,7 +335,7 @@ namespace Dune {
                           DestinationType& dest) const = 0;
     //! Actions to be taken on every element. To be overridden in a derived 
     //! class.
-    virtual void applyLocal( const Entity& en ) const = 0;
+    virtual void applyLocal( const EntityType& en ) const = 0;
 
   protected:
     //! The actual computations are performed as follows. First, prepare

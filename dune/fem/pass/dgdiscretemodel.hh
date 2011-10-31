@@ -48,7 +48,7 @@ namespace Dune {
     typedef typename GridPartType::IntersectionIteratorType IntersectionIterator;
     typedef typename IntersectionIterator::Intersection IntersectionType;
     //! Element (codim 0 entity) of the grid
-    typedef typename GridType::template Codim<0>::Entity EntityType;
+    typedef typename DiscreteFunctionSpaceType::EntityType  EntityType;
 
     //! type of local coordinate 
     typedef typename EntityType :: Geometry :: LocalCoordinate  LocalCoordinate;
