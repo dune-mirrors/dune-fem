@@ -1,25 +1,17 @@
-#include<config.h>
+#include <config.h>
 
-// system includes
 #include <cassert>
 #include <iostream>
 
-// dune-common includes
-#include<dune/common/exceptions.hh>
+#include <dune/common/exceptions.hh>
+
 #include <dune/grid/common/genericreferenceelements.hh>
 
-// dune-fem includes
 #include <dune/fem/gridpart/adaptiveleafgridpart.hh>
-#include <dune/fem/gridpart/filteredgridpart.hh>
-#include <dune/fem/gridpart/filter/radialfilter.hh>
-#include <dune/fem/gridpart/filter/basicfilterwrapper.hh>
-
-// dune-fem gridwidth
+#include <dune/fem/gridpart/idgridpart.hh>
 #include <dune/fem/misc/gridwidth.hh>
 
-// local includes
-#include"../../test/testgrid.hh"
-
+#include "../../test/testgrid.hh"
 
 template< class GridPartType >
 void testGridPart( const GridPartType & gridPart )
@@ -146,79 +138,49 @@ void testIntersectionIterator( const GridPartType & gridPart )
 }
 
 
+
 typedef Dune::GridSelector::GridType GridType;
 typedef Dune::DGAdaptiveLeafGridPart< GridType > HostGridPartType;
-typedef Dune::Fem::RadialFilter< GridType::ctype, GridType::dimensionworld > BasicFilterType;
-typedef Dune::Fem::BasicFilterWrapper< HostGridPartType, BasicFilterType > FilterType;
+typedef Dune::Fem::IdGridPart< HostGridPartType > GridPartType;
 
 int main ( int argc, char ** argv )
+try
 {
-  Dune::MPIManager :: initialize( argc, argv );
-  try
-  {
-    // create grid
-    GridType & grid = Dune::TestGrid::grid();
+  Dune::MPIManager::initialize( argc, argv );
 
-    // refine grid
-    const int step = Dune::TestGrid::refineStepsForHalf();
-    grid.globalRefine( 2*step );
-    grid.loadBalance();
+  // create grid
+  GridType &grid = Dune::TestGrid::grid();
 
-    // create grid part
-    HostGridPartType hostGridPart( grid );
-    BasicFilterType::GlobalCoordinateType center( 0 );
-    BasicFilterType basicFilter( center, .25 );
-    FilterType filter( hostGridPart, basicFilter );
+  // refine grid
+  const int step = Dune::TestGrid::refineStepsForHalf();
+  grid.globalRefine( 2*step );
+  grid.loadBalance();
 
-    {
-      // allow non consecutive index set
-      typedef Dune::Fem::FilteredGridPart< HostGridPartType, FilterType, false > GridPartType;
-      GridPartType gridPart( hostGridPart, filter );
-      // run test
-      std::cout << "Non consecutive index set: test using codim=0 iterator" << std::endl;
-      testGridPart( gridPart );
-      std::cout << std::endl;
-      std::cout << "Non consecutive index set: test using codim=dimension iterator" << std::endl;
-      testSubEntities< GridType::dimension >( gridPart );
+  // create grid part
+  HostGridPartType hostGridPart( grid );
+  GridPartType gridPart( hostGridPart );
 
-      /* ----------- added to test the intersection iterator ---------------*/
-      std::cout << std::endl;
-      std::cout << "gridWidth: " << Dune::GridWidth::calcGridWidth( gridPart ) << std::endl;
-      /* --------------------------*/
+  // run test
+  std::cout << "test using codim=0 iterator" << std::endl;
+  testGridPart( gridPart );
+  std::cout << std::endl;
+  std::cout << "test using codim=dimension iterator" << std::endl;
+  testSubEntities< GridType::dimension >( gridPart );
 
-      std::cout << std::endl << std::endl;
-    }
-    {
-      // force consecutive index set
-      typedef Dune::Fem::FilteredGridPart< HostGridPartType, FilterType, true > GridPartType;
-      GridPartType gridPart( hostGridPart, filter );
-      // run test
-      std::cout << "Consecutive index set: test using codim=0 iterator" << std::endl;
-      testGridPart( gridPart );
-      std::cout << std::endl;
-      std::cout << "Consecutive index set: test using codim=dimension iterator" << std::endl;
-      testSubEntities< GridType::dimension >( gridPart );
+  std::cout << std::endl;
+  std::cout << "gridWidth: " << Dune::GridWidth::calcGridWidth( gridPart ) << std::endl;
 
-      /* ----------- added to test the intersection iterator ---------------*/
-      std::cout << std::endl;
-      std::cout << "gridWidth: " << Dune::GridWidth::calcGridWidth( gridPart ) << std::endl;
-      /* --------------------------*/
-      
-      std::cout << "Testing intersection iterator" << std::endl;
-      testIntersectionIterator( gridPart );
-
-      std::cout << std::endl << std::endl;
-    }
-
-  } catch (Dune::Exception &e) {
-    std::cerr << e << std::endl;
-    return 1;
-  } catch (...) {
-    std::cerr << "Generic exception!" << std::endl;
-    return 2;
-  }
+  std::cout << std::endl << std::endl;
 
   return 0;
 }
-
-
+catch( const Dune::Exception &e )
+{
+  std::cerr << e << std::endl;
+  return 1;
+}
+catch( ... )
+{
+  std::cerr << "Generic exception!" << std::endl;
+  return 2;
+}
