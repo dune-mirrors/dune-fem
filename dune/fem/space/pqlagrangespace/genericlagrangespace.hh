@@ -52,6 +52,8 @@ namespace Dune
     typedef typename GridPartType :: IndexSetType                    IndexSetType;
     typedef typename GridPartType :: template Codim< 0 >
               :: IteratorType                                        IteratorType;
+    typedef typename GridPartType :: template Codim< 0 >
+              :: EntityType                                          EntityType;
 
     /*
     static const int polynomialOrder = polOrder;
@@ -165,6 +167,7 @@ namespace Dune
     typedef typename Traits :: GridType                              GridType;
     typedef typename Traits :: IndexSetType                          IndexSetType;
     typedef typename Traits :: IteratorType                          IteratorType;
+    typedef typename Traits :: EntityType                            EntityType;
     //! dimension of the grid (not the world)
     enum { dimension = GridType :: dimension };
 
