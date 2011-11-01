@@ -55,7 +55,7 @@ namespace Dune
     typedef typename DiscreteFunctionSpaceType::BaseFunctionSetType  BaseFunctionSetType;
 
     //! type of codim 0 entities
-    typedef typename GridType :: template Codim< 0 > :: Entity       EntityType;
+    typedef typename DiscreteFunctionSpaceType :: EntityType         EntityType;
 
   public:
     //! constructor

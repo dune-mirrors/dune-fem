@@ -294,7 +294,7 @@ namespace Dune
       BaseFunctionSetType;
 
     //! type of the entity, this local function is associated with
-    typedef typename GridType :: template Codim< 0 > :: Entity EntityType;
+    typedef typename DiscreteFunctionSpaceType :: EntityType EntityType;
 
     //! type of domain vectors
     typedef typename DiscreteFunctionSpaceType :: DomainType DomainType;
