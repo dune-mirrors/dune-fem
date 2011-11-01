@@ -651,8 +651,8 @@ struct LocalDataInlinerTraits
 {
   typedef typename DiscreteFunctionType::DiscreteFunctionSpaceType
     DiscreteFunctionSpaceType;
-  typedef typename DiscreteFunctionSpaceType::GridType GridType;
-  typedef typename GridType::template Codim< 0 >::Entity EntityType;
+  typedef typename DiscreteFunctionSpaceType::GridType   GridType;
+  typedef typename DiscreteFunctionSpaceType::EntityType EntityType;
 
   typedef DofManager < GridType > DofManagerType ;
   typedef typename DofManagerType :: InlineStreamType ObjectStreamType;
@@ -745,8 +745,8 @@ struct LocalDataXtractorTraits
 {
   typedef typename DiscreteFunctionType::DiscreteFunctionSpaceType
     DiscreteFunctionSpaceType;
-  typedef typename DiscreteFunctionSpaceType::GridType GridType;
-  typedef typename GridType::template Codim< 0 >::Entity EntityType;
+  typedef typename DiscreteFunctionSpaceType::GridType   GridType;
+  typedef typename DiscreteFunctionSpaceType::EntityType EntityType;
 
   typedef DofManager < GridType > DofManagerType ;
   typedef typename DofManagerType :: XtractStreamType ObjectStreamType;
