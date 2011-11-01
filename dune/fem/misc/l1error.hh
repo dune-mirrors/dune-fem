@@ -40,8 +40,8 @@ namespace Dune
     typedef typename DiscreteFunctionSpaceType::IteratorType IteratorType;
     typedef typename DiscreteFunctionSpaceType::GridType GridType;
     typedef typename DiscreteFunctionSpaceType::GridPartType GridPartType;
-    typedef typename GridType::template Codim<0>::Entity EntityType;
-    typedef typename GridType::template Codim<0>::Geometry EnGeometryType;
+    typedef typename GridPartType::template Codim<0>::EntityTpye    EntityType;
+    typedef typename GridPartType::template Codim<0>::GeometryType  EnGeometryType;
     typedef typename EntityType::ctype coordType;
     
     typedef typename DiscreteFunctionType::LocalFunctionType LocalFunctionType;
