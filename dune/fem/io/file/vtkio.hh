@@ -8,7 +8,7 @@
 
 #include <dune/fem/version.hh>
 #include <dune/fem/misc/field.hh>
-#include <dune/fem/gridpart/gridpartview.hh>
+#include <dune/fem/gridpart/common/gridpartview.hh>
 
 namespace Dune
 {
