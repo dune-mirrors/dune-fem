@@ -71,6 +71,8 @@ namespace Dune
         return hostIndexSet().newIndex( hole, codim );
       }
 
+      std::string name () const { return "IdGridPart::IndexSet" ; }
+
     private:
       const HostIndexSet &hostIndexSet () const
       {
