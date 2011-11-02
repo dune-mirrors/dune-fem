@@ -7,7 +7,9 @@ combinedspace_HEADERS = combinedadaptmanager.hh \
                         mapper_inline.hh \
 												combineddiscretefunctionspace.hh  \
 												combinedmapper.hh \
-												combinedbasefunctions.hh
+												combinedbasefunctions.hh \
+												adaptmanager.hh
+
 
 
 include $(top_srcdir)/am/global-rules
