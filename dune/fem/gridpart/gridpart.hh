@@ -880,7 +880,7 @@ namespace Dune
       return entity;
     }
 
-  } // end namespace Dune
+  } // end namespace Fem
 
 } // end namespace Dune
 
