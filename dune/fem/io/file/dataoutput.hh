@@ -131,10 +131,10 @@ namespace Dune
     typedef DataOutput< GridImp, DataImp > ThisType;
 
   protected:  
-  #if USE_VTKWRITER
     template< class Grid, class OutputTuple, int N = tuple_size< OutputTuple >::value >
     struct GridPartGetter;
 
+  #if USE_VTKWRITER
     template< class VTKIOType >
     struct VTKListEntry 
     {
@@ -331,7 +331,6 @@ namespace Dune
   // DataOutput::GridPartGetter
   // --------------------------
 
-#if USE_VTKWRITER
   template< class GridImp, class DataImp >
   template< class Grid, class OutputTuple, int N >
   struct DataOutput< GridImp, DataImp >::GridPartGetter
@@ -372,7 +371,6 @@ namespace Dune
   protected:
     const GridPartType gridPart_;
   };
-#endif // #if USE_VTKWRITER
 
 
 
@@ -560,14 +558,14 @@ namespace Dune
       {
         typedef typename DFType::LocalFunctionType LocalFunctionType;
         typedef typename DFType::DiscreteFunctionSpaceType DiscreteFunctionSpaceType;
-        typedef typename DiscreteFunctionSpaceType :: IteratorType IteratorType;
-        typedef typename DiscreteFunctionSpaceType :: GridPartType GridPartType;
+        typedef typename DiscreteFunctionSpaceType::IteratorType IteratorType;
+        typedef typename DiscreteFunctionSpaceType::GridPartType GridPartType;
 
-        typedef typename DiscreteFunctionSpaceType :: DomainType DomainType;
-        typedef typename DiscreteFunctionSpaceType :: RangeType RangeType;
+        typedef typename DiscreteFunctionSpaceType::DomainType DomainType;
+        typedef typename DiscreteFunctionSpaceType::RangeType RangeType;
    
-        enum{ dimDomain = DiscreteFunctionSpaceType :: dimDomain };
-        enum{ dimRange = DiscreteFunctionSpaceType :: dimRange };
+        //static const int dimDomain = DiscreteFunctionSpaceType::dimDomain;
+        static const int dimRange = DiscreteFunctionSpaceType::dimRange;
 
         LocalFunctionType lf = df->localFunction(en_);
         {
@@ -869,10 +867,11 @@ namespace Dune
     std::ofstream gnuout(name.c_str());
     gnuout << std::scientific << std::setprecision( 16 );
 
-    // create HierarchicGridPart
-    // ! do not use LeafGridPart since this creates the grid's LeafIndexSet !
-    typedef HierarchicGridPart< GridType > GridPartType;
-    GridPartType gridPart( const_cast< GridType & >( grid_ ) );
+    typedef GridPartGetter< GridType, OutPutDataType > GridPartGetterType;
+    GridPartGetterType gp( grid_, data_ );
+
+    typedef typename GridPartGetterType::GridPartType GridPartType;
+    const GridPartType &gridPart = gp.gridPart();
 
     // start iteration
     typedef typename GridPartType::template Codim<0>::IteratorType IteratorType;
