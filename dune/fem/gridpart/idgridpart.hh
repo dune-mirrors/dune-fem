@@ -218,8 +218,8 @@ namespace Dune
       }
 
       //! convert a grid entity to a grid part entity 
-      template <class Entity> 
-      const typename Codim< Entity::codimension > :: EntityType& 
+      template < class Entity > 
+      MakeableInterfaceObject< typename Codim< Entity::codimension > :: EntityType >
       convert( const Entity& entity ) const 
       {
         // create a grid part entity from a given grid entity 
