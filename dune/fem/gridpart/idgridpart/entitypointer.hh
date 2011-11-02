@@ -17,8 +17,8 @@ namespace Dune
 
 
 
-    // EntityPointerTraits
-    // -------------------
+    // IdEntityPointerTraits
+    // ---------------------
     
     template< int codim, class GridFamily >
     struct IdEntityPointerTraits

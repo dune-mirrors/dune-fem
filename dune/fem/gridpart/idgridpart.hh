@@ -2,6 +2,7 @@
 #define DUNE_FEM_GRIDPART_IDGRIDPART_HH
 
 #include <dune/fem/gridpart/gridpart.hh>
+#include <dune/fem/gridpart/common/deadintersectioniterator.hh>
 #include <dune/fem/gridpart/idgridpart/datahandle.hh>
 #include <dune/fem/gridpart/idgridpart/deaditerator.hh>
 #include <dune/fem/gridpart/idgridpart/entity.hh>
@@ -211,7 +212,7 @@ namespace Dune
       void communicate ( CommDataHandleIF< DataHandle, Data > &handle,
                          InterfaceType iftype, CommunicationDirection dir ) const
       {
-        typedef CommDataHandleIF< DataHandle, Data >  HostHandleType ;
+        typedef CommDataHandleIF< DataHandle, Data >  HostHandleType;
         IdDataHandle< GridFamily, HostHandleType > handleWrapper( handle );
         hostGridPart_.communicate( handleWrapper, iftype, dir );
       }
