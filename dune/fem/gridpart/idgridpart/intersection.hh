@@ -92,6 +92,16 @@ namespace Dune
         return hostIntersection().conforming();
       }
           
+      int twistInSelf() const 
+      { 
+        return hostIntersection().impl().twistInSelf(); 
+      }
+      
+      int twistInNeighbor() const 
+      { 
+        return hostIntersection().impl().twistInNeighbor(); 
+      }
+          
       bool neighbor () const
       {
         return hostIntersection().neighbor();
@@ -101,7 +111,7 @@ namespace Dune
       {
         return hostIntersection().boundaryId();
       }
-          
+
       size_t boundarySegmentIndex () const
       {
         return hostIntersection().boundarySegmentIndex();
