@@ -6,6 +6,7 @@
 #include <cassert>
 
 //- Dune includes
+#include <dune/fem/version.hh>
 
 #include <dune/grid/common/grid.hh>
 #include <dune/common/bartonnackmanifcheck.hh>
@@ -191,6 +192,7 @@ namespace Dune
     typedef typename BaseType :: ElementPointerType ElementPointerType;
       
   protected:
+    DUNE_VERSION_DEPRECATED(1,3,use_FilteredGridPart_instead) 
     FilterDefaultImplementation ()
     {}
 
