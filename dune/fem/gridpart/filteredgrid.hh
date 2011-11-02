@@ -453,6 +453,7 @@ namespace Dune
   public:
     //- Public methods
     //! Constructor
+    DUNE_VERSION_DEPRECATED(1,3,use_FilteredGridPart_instead) 
     FilteredGridPart(GridType& grid, const FilterType& filter) :
       GridPartImp(grid),   // This is only legal for LeafGridPart and HierarchicGridParts!
                            // A constructor LevelGridPart(GridType grid) exists, but will  
