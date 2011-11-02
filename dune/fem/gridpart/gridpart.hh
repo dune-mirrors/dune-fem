@@ -2,8 +2,10 @@
 #define DUNE_FEM_GRIDPART_HH
 
 #include <dune/grid/common/grid.hh>
-#include <dune/fem/gridpart/defaultindexsets.hh>
 #include <dune/grid/common/datahandleif.hh>
+#include <dune/grid/common/entity.hh>
+
+#include <dune/fem/gridpart/defaultindexsets.hh>
 
 #include <dune/common/bartonnackmanifcheck.hh>
 #include <dune/common/deprecated.hh>
@@ -867,6 +869,18 @@ namespace Dune
 #undef CHECK_INTERFACE_IMPLEMENTATION
 #undef CHECK_AND_CALL_INTERFACE_IMPLEMENTATION
   /** @} */
+
+  namespace Fem
+  {
+
+    template< int codim, int dim, class Grid, template< int, int, class > class EntityImpl >
+    const Dune::Entity< codim, dim, Grid, EntityImpl > &
+    gridEntity ( const Dune::Entity< codim, dim, Grid, EntityImpl > &entity )
+    {
+      return entity;
+    }
+
+  } // end namespace Dune
 
 } // end namespace Dune
 
