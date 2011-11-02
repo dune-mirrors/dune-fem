@@ -241,10 +241,10 @@ namespace Dune
     // -------------------------
 
     template< int codim, int dim, class GridFamily >
-    const typename GridFamily::HostGridPartType::template Codim< codim >::EntityType &
-    gridEntity ( const Dune::Entity< codim, dim, GridFamily, IdEntity > &entity )
+    const typename Dune::Entity< codim, dim, GridFamily, ::Dune::Fem::IdEntity >::Implementation::HostEntityType &
+    gridEntity ( const Dune::Entity< codim, dim, GridFamily, ::Dune::Fem::IdEntity > &entity )
     {
-      return entity.impl().hostEntity();
+      return gridEntity( entity.impl().hostEntity() );
     }
 
   } // namespace Fem
