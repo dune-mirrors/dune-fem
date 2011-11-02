@@ -645,19 +645,19 @@ private:
 
 
 //***********************************************************************
-
 template< class DiscreteFunctionType >
 struct LocalDataInlinerTraits
 {
   typedef typename DiscreteFunctionType::DiscreteFunctionSpaceType
     DiscreteFunctionSpaceType;
-  typedef typename DiscreteFunctionSpaceType::GridType   GridType;
-  typedef typename DiscreteFunctionSpaceType::EntityType EntityType;
+  typedef typename DiscreteFunctionSpaceType::GridType        GridType;
+  typedef typename DiscreteFunctionSpaceType::EntityType      EntityType;
+  typedef typename GridType :: template Codim< 0 > :: Entity  GridEntityType;
 
   typedef DofManager < GridType > DofManagerType ;
   typedef typename DofManagerType :: InlineStreamType ObjectStreamType;
 
-  typedef std::pair< ObjectStreamType *, const EntityType * > ParamType;
+  typedef std::pair< ObjectStreamType *, const GridEntityType * > ParamType;
   typedef LocalInterface< ParamType > LocalInterfaceType;
 };
 
@@ -680,7 +680,8 @@ public:
 
   typedef typename Traits :: DofManagerType  DofManagerType;
 
-  typedef typename Traits::EntityType EntityType;
+  typedef typename Traits::EntityType     EntityType;
+  typedef typename Traits::GridEntityType GridEntityType;
   typedef typename Traits::ParamType ParamType;
 
   typedef LocalInterface<ParamType> LocalInterfaceType;
@@ -709,14 +710,17 @@ public:
   void apply ( ParamType & p ) const 
   {
     assert( p.first && p.second );
-    inlineData( *p.first, *p.second );
+    const EntityType& entity = df_.space().gridPart().convert( *p.second );
+    inlineData( *p.first, entity, *p.second );
   }
 
   typename DataCollectorTraits :: ReadWriteType
   readWriteInfo() const { return DataCollectorTraits :: writeData ; }
 protected:
   //! store data to stream  
-  void inlineData ( ObjectStreamType& str, const EntityType& entity ) const 
+  void inlineData ( ObjectStreamType& str, 
+                    const EntityType& entity, 
+                    const GridEntityType& gridEntity ) const 
   {
     if( ! containsCheck_.contains ( entity ) ) return ;
 
@@ -730,7 +734,7 @@ protected:
     }
 
     // remove entity from index sets 
-    dm_.removeEntity( entity );
+    dm_.removeEntity( gridEntity );
   }
 
 protected:
@@ -745,13 +749,14 @@ struct LocalDataXtractorTraits
 {
   typedef typename DiscreteFunctionType::DiscreteFunctionSpaceType
     DiscreteFunctionSpaceType;
-  typedef typename DiscreteFunctionSpaceType::GridType   GridType;
-  typedef typename DiscreteFunctionSpaceType::EntityType EntityType;
+  typedef typename DiscreteFunctionSpaceType::GridType        GridType;
+  typedef typename DiscreteFunctionSpaceType::EntityType      EntityType;
+  typedef typename GridType :: template Codim< 0 > :: Entity  GridEntityType;
 
   typedef DofManager < GridType > DofManagerType ;
   typedef typename DofManagerType :: XtractStreamType ObjectStreamType;
 
-  typedef std::pair< ObjectStreamType *, const EntityType * > ParamType;
+  typedef std::pair< ObjectStreamType *, const GridEntityType * > ParamType;
   typedef LocalInterface< ParamType > LocalInterfaceType;
 };
 
@@ -771,7 +776,8 @@ public:
 
   typedef typename Traits :: DofManagerType  DofManagerType;
 
-  typedef typename Traits::EntityType EntityType;
+  typedef typename Traits::EntityType     EntityType;
+  typedef typename Traits::GridEntityType GridEntityType;
   typedef typename Traits::ParamType ParamType;
 
   typedef LocalInterface<ParamType> LocalInterfaceType;
@@ -800,19 +806,22 @@ public:
   void apply ( ParamType & p ) const 
   {
     assert( p.first && p.second );
-    xtractData( *p.first, *p.second );
+    const EntityType& entity = df_.space().gridPart().convert( *p.second );
+    xtractData( *p.first, entity, *p.second );
   }
   
   typename DataCollectorTraits :: ReadWriteType
   readWriteInfo() const { return DataCollectorTraits :: readData ; }
 protected:
   //! store data to stream  
-  void xtractData (ObjectStreamType & str, const EntityType& entity ) const 
+  void xtractData (ObjectStreamType & str, 
+                   const EntityType& entity,
+                   const GridEntityType& gridEntity ) const 
   {
     if( ! containsCheck_.contains ( entity ) ) return ;
 
     // insert entity into index sets 
-    dm_.insertEntity( entity );
+    dm_.insertEntity( gridEntity );
 
     // make sure entity is contained in set 
     assert( df_.space().indexSet().contains( entity ) );

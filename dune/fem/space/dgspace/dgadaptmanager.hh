@@ -45,8 +45,13 @@ public:
   typedef typename DiscreteFunctionSpaceType :: RangeType RangeType;
   typedef typename DiscreteFunctionSpaceType :: DomainType DomainType;
   typedef CachingQuadrature<GridPartType,0> QuadratureType;
-  typedef typename GridPartType::template Codim<0>::EntityType::LocalGeometry LocalGeometry;
 
+  // grid part entity 
+  typedef typename GridPartType::template Codim<0>::EntityType  EntityType ;
+  // grid entity 
+  typedef typename GridType::template Codim<0>::Entity  GridEntityType ;
+
+  typedef typename EntityType::LocalGeometry LocalGeometry;
 protected:
   using BaseType :: calcWeight;
   using BaseType :: entitiesAreCopies;
@@ -71,9 +76,12 @@ public:
   }
 
   //! restrict data to father 
-  template< class EntityType >
-  void restrictLocal ( const EntityType &father, const EntityType &son, bool initialize ) const
+  void restrictLocal ( const GridEntityType &dad, const GridEntityType &filius, bool initialize ) const
   {
+    // convert from grid entities to grid part entities 
+    const EntityType& father = df_.space().gridPart().convert( dad ); 
+    const EntityType& son    = df_.space().gridPart().convert( filius ); 
+      
     // if father and son are copies, do nothing
     if( entitiesAreCopies( df_.space().indexSet(), father, son ) )
       return;
@@ -112,9 +120,12 @@ public:
   }
 
   //! prolong data to children 
-  template< class EntityType >
-  void prolongLocal ( const EntityType &father, const EntityType &son, bool initialize ) const
+  void prolongLocal ( const GridEntityType &dad, const GridEntityType &filius, bool initialize ) const
   {
+    // convert from grid entities to grid part entities 
+    const EntityType& father = df_.space().gridPart().convert( dad ); 
+    const EntityType& son    = df_.space().gridPart().convert( filius ); 
+      
     // if father and son are copies, do nothing
     if( entitiesAreCopies( df_.space().indexSet(), father, son ) )
       return;

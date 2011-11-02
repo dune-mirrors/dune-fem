@@ -174,32 +174,6 @@ template< class TraitsImp >
 class RestrictProlongInterfaceDefault 
 : public RestrictProlongInterface< TraitsImp >
 {
-  template< class IndexSetType, bool isFemIndexSet >
-  struct Persistent
-  {
-    static bool check ( const IndexSetType &indexSet )
-    {
-      return indexSet.persistent();
-    }
-  };
-
-  template< class IndexSetType >
-  struct Persistent< IndexSetType, false >
-  {
-    static bool check ( const IndexSetType &indexSet )
-    {
-      return indexSet.adaptive();
-    }
-  };
-
-  //! check persistence of index set (also includes backward compatibility) 
-  template< class IndexSetType >
-  bool checkPersistent ( const IndexSetType &indexSet ) const
-  {
-    const bool isFemIndexSet = Conversion< IndexSetType, Fem :: EmptyIndexSet > :: exists;
-    return Persistent< IndexSetType, isFemIndexSet > :: check( indexSet );
-  }
-
 protected:
   //! return true if father and son have the same index
   template< class IndexSetType, class EntityType >
@@ -207,7 +181,7 @@ protected:
                            const EntityType &father,
                            const EntityType &son ) const
   {
-    assert( checkPersistent( indexSet ) );
+    assert( indexSet.persistent() );
     return (indexSet.index( father ) == indexSet.index( son ));
   }
 
@@ -307,8 +281,12 @@ public:
   
   //! restrict data to father 
   template< class EntityType >
-  void restrictLocal ( const EntityType &father, const EntityType &son, bool initialize ) const
+  void restrictLocal ( const EntityType &dad, const EntityType &filius, bool initialize ) const
   {
+    // convert from grid entities to grid part entities 
+    const EntityType& father = df_.space().gridPart().convert( dad );
+    const EntityType& son    = df_.space().gridPart().convert( filius );
+
     // if father and son are copies, do nothing
     if( entitiesAreCopies( df_.space().indexSet(), father, son ) )
       return;
@@ -337,8 +315,12 @@ public:
 
   //! prolong data to children 
   template< class EntityType >
-  void prolongLocal ( const EntityType &father, const EntityType &son, bool initialize ) const
+  void prolongLocal ( const EntityType &dad, const EntityType &filius, bool initialize ) const
   {
+    // convert from grid entities to grid part entities 
+    const EntityType& father = df_.space().gridPart().convert( dad );
+    const EntityType& son    = df_.space().gridPart().convert( filius );
+
     // if father and son are copies, do nothing
     if( entitiesAreCopies( df_.space().indexSet(), father, son ) )
       return;
