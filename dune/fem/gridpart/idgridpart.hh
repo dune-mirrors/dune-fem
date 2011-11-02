@@ -237,15 +237,21 @@ namespace Dune
 
 
 
-    // gridEntity for IdGridPart
-    // -------------------------
+    // GridEntityAccess for IdEntity
+    // -----------------------------
 
     template< int codim, int dim, class GridFamily >
-    const typename Dune::Entity< codim, dim, GridFamily, ::Dune::Fem::IdEntity >::Implementation::HostEntityType &
-    gridEntity ( const Dune::Entity< codim, dim, GridFamily, ::Dune::Fem::IdEntity > &entity )
+    struct GridEntityAccess< Dune::Entity< codim, dim, GridFamily, IdEntity > >
     {
-      return gridEntity( entity.impl().hostEntity() );
-    }
+      typedef Dune::Entity< codim, dim, GridFamily, IdEntity > EntityType;
+      typedef GridEntityAccess< typename EntityType::Implementation::HostEntityType > HostAccessType;
+      typedef typename HostAccessType::GridEntityType GridEntityType;
+
+      static const GridEntityType &gridEntity ( const EntityType &entity )
+      {
+        return HostAccessType::gridEntity( entity.impl().hostEntity() );
+      }
+    };
 
   } // namespace Fem
 

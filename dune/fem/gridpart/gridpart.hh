@@ -873,11 +873,26 @@ namespace Dune
   namespace Fem
   {
 
+    template< class Entity >
+    struct GridEntityAccess;
+
     template< int codim, int dim, class Grid, template< int, int, class > class EntityImpl >
-    const Dune::Entity< codim, dim, Grid, EntityImpl > &
-    gridEntity ( const Dune::Entity< codim, dim, Grid, EntityImpl > &entity )
+    struct GridEntityAccess< Dune::Entity< codim, dim, Grid, EntityImpl > >
     {
-      return entity;
+      typedef Dune::Entity< codim, dim, Grid, EntityImpl > EntityType;
+      typedef Dune::Entity< codim, dim, Grid, EntityImpl > GridEntityType;
+
+      static const GridEntityType &gridEntity ( const EntityType &entity )
+      {
+        return entity;
+      }
+    };
+
+    template< class Entity >
+    const typename GridEntityAccess< Entity >::GridEntityType &
+    gridEntity ( const Entity &entity )
+    {
+      return GridEntityAccess< Entity >::gridEntity( entity );
     }
 
   } // end namespace Fem
