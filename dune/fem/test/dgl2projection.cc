@@ -109,12 +109,7 @@ int main(int argc, char ** argv)
     const int step = TestGrid :: refineStepsForHalf();
     grid.globalRefine( 2*step );
 
-#ifdef USE_IDGRIDPART 
-    ContainedGridPartType hostGridPart( grid );
-    GridPartType gridPart( hostGridPart );
-#else 
     GridPartType gridPart( grid );
-#endif
 
     // add check for grid width 
     std::cout << "Grid width: " 
