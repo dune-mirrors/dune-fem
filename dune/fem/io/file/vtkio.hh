@@ -53,7 +53,7 @@ typedef VTKOptions VTK;
     typedef typename DiscreteFunctionSpaceType::RangeType RangeType;
 
     typedef typename DiscreteFunctionSpaceType::GridPartType GridPartType;
-    typedef typename DiscreteFunctionSpaceType::IteratorType::Entity EntityType;
+    typedef typename DiscreteFunctionSpaceType::GridPartType::template Codim< 0 >::EntityType EntityType;
 
     typedef typename EntityType::Geometry::LocalCoordinate LocalCoordinateType;
 
@@ -80,7 +80,8 @@ typedef VTKOptions VTK;
 
     //! evaluate single component comp in
     //! the entity
-    virtual double evaluate (int comp, const EntityType& e, const LocalCoordinateType& xi) const {
+    virtual double evaluate ( int comp, const EntityType &e, const LocalCoordinateType &xi ) const
+    {
       const LocalFunctionType lf = discFunc_.localFunction(e);
       RangeType val;
       lf.evaluate(xi,val);
@@ -225,7 +226,7 @@ typedef VTKOptions VTK;
 
 
   // VTKIOBase::VTKWriter
-  // -----------------------
+  // --------------------
 
   template< class GridPart, bool subsampling >
   class VTKIOBase< GridPart, subsampling >::VTKWriter
@@ -248,7 +249,7 @@ typedef VTKOptions VTK;
 
 
   // VTKIOBase::SubSamplingVTKWriter
-  // --------------------------
+  // -------------------------------
 
   template< class GridPart, bool subsampling >
   class VTKIOBase< GridPart, subsampling >::SubsamplingVTKWriter
