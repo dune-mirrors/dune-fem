@@ -24,7 +24,7 @@ namespace Dune
  * \class L1Error
  * \brief The L1Error class provides methods for error computation
  *
- * The class calculates || u-u_h ||_L2
+ * The class calculates || u-u_h ||_L1
  *
  * Currently only error between a Function and a DiscreteFunction can be
  * computed or the error between two DiscreteFunctions.
@@ -40,7 +40,7 @@ namespace Dune
     typedef typename DiscreteFunctionSpaceType::IteratorType IteratorType;
     typedef typename DiscreteFunctionSpaceType::GridType GridType;
     typedef typename DiscreteFunctionSpaceType::GridPartType GridPartType;
-    typedef typename GridPartType::template Codim<0>::EntityTpye    EntityType;
+    typedef typename GridPartType::template Codim<0>::EntityType    EntityType;
     typedef typename GridPartType::template Codim<0>::GeometryType  EnGeometryType;
     typedef typename EntityType::ctype coordType;
     
@@ -66,7 +66,7 @@ namespace Dune
  * \param time the time, at which the functions should
  * be evaluated
  *
- * \return the norm of the L2-Error as RangeType of DiscreteFunction
+ * \return the norm of the L1-Error as RangeType of DiscreteFunction
  */
 /*======================================================================*/
     
