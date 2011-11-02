@@ -251,7 +251,8 @@ namespace Dune
     template <class Entity> 
     const Entity& convert( const Entity& entity ) const 
     {
-      return entity;
+      CHECK_INTERFACE_IMPLEMENTATION( asImp().convert( entity ) );
+      return asImp().convert( entity );
     }
 
   protected: 
@@ -324,6 +325,16 @@ namespace Dune
     end () const 
     {
       return BaseType::template end< codim, InteriorBorder_Partition >();
+    }
+
+    /* \brief \copydoc GridPartInterface::convert 
+       
+       The default implementation does nothing but return the same entity 
+     */
+    template <class Entity> 
+    const Entity& convert( const Entity& entity ) const 
+    {
+      return entity;
     }
 
   private:
