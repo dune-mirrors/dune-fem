@@ -235,6 +235,18 @@ namespace Dune
       IndexSetType indexSet_;
     };
 
+
+
+    // gridEntity for IdGridPart
+    // -------------------------
+
+    template< int codim, int dim, class GridFamily >
+    const typename GridFamily::HostGridPartType::template Codim< codim >::EntityType &
+    gridEntity ( const Dune::Entity< codim, dim, GridFamily, IdEntity > &entity )
+    {
+      return entity.impl().hostEntity();
+    }
+
   } // namespace Fem
 
 } // namespace Dune
