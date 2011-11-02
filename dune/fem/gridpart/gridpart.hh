@@ -105,7 +105,7 @@ namespace Dune
     //! \brief is true if grid on this view only has conforming intersections 
     static const bool conforming = Traits::conforming;
 
-    typedef GridView< GridPartViewTraits< GridPartType > > GridViewType;
+    typedef GridView< Fem::GridPartViewTraits< GridPartType > > GridViewType;
 
     typedef typename GridType::ctype ctype;
 
