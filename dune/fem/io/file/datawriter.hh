@@ -12,14 +12,11 @@
 #include <dune/fem/function/adaptivefunction.hh>
 #include <dune/fem/quadrature/cachingquadrature.hh>
 #include <dune/fem/io/file/persistencemanager.hh>
-
-#ifndef USE_GRAPE 
-// define whether to use grape of not 
-#define USE_GRAPE HAVE_GRAPE
-#endif
-
-#include <dune/grid/io/visual/grapedatadisplay.hh>
 #include <dune/fem/io/file/dataoutput.hh>
+
+#if USE_GRAPE
+#include <dune/grid/io/visual/grapedatadisplay.hh>
+#endif
 
 namespace Dune {
 
