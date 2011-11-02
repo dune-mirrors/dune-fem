@@ -242,6 +242,18 @@ namespace Dune
       CHECK_AND_CALL_INTERFACE_IMPLEMENTATION( (asImp().communicate( data, iftype, dir )) );
     }
 
+    /*! \brief convert the grid's entity to a grid part entity
+        Usually the parameter is GridType :: Codim< codim > :: Entity  
+        and the return is Codim< codim > :: EntityType. 
+        In general these types are the same, but for overloaded entities on grid parts
+        this can differ. 
+      */
+    template <class Entity> 
+    const Entity& convert( const Entity& entity ) const 
+    {
+      return entity;
+    }
+
   protected: 
     //! do not create explicit instances of this class 
     GridPartInterface () {}  

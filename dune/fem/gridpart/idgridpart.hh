@@ -132,7 +132,12 @@ namespace Dune
       : public BaseType::template Codim< codim >
       {};
 
-      IdGridPart ( HostGridPart &hostGridPart )
+      IdGridPart ( GridType& grid )
+      : hostGridPart_( grid ),
+        indexSet_( hostGridPart_.indexSet() )
+      {}
+
+      IdGridPart ( const HostGridPart &hostGridPart )
       : hostGridPart_( hostGridPart ),
         indexSet_( hostGridPart_.indexSet() )
       {}
@@ -211,8 +216,21 @@ namespace Dune
         hostGridPart_.communicate( handleWrapper, iftype, dir );
       }
 
+      //! convert a grid entity to a grid part entity 
+      template <class Entity> 
+      const typename Codim< Entity::codimension > :: EntityType& 
+      convert( const Entity& entity ) const 
+      {
+        // create a grid part entity from a given grid entity 
+        typedef typename Codim< Entity::codimension > :: EntityType EntityType;
+        typedef typename EntityType :: Implementation  Implementation ;
+        typedef MakeableInterfaceObject< EntityType > EntityObj; 
+        // here, grid part information can be passed, if necessary 
+        return EntityObj( Implementation( entity ) ); 
+      }
+
     private:
-      HostGridPart &hostGridPart_;
+      HostGridPart hostGridPart_;
       IndexSetType indexSet_;
     };
 
