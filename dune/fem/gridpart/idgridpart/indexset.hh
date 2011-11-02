@@ -52,7 +52,6 @@ namespace Dune
       template< class Entity >
       bool contains ( const Entity &entity ) const
       {
-        static const int cc = Entity::codimension;
         return hostIndexSet().contains( entity.impl().hostEntity() );
       }
 
