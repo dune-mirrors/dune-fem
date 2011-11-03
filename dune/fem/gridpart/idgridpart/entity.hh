@@ -41,7 +41,7 @@ namespace Dune
     private:
       typedef typename HostGridPartType::template Codim< codimension >::GeometryType HostGeometryType;
 
-      typedef IdGeometry< mydimension, dimensionworld, GridFamily > GeometryImpl;
+      typedef typename Geometry::Implementation GeometryImpl;
 
     public:
       IdEntity () 

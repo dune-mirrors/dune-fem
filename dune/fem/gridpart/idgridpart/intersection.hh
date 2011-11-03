@@ -34,8 +34,8 @@ namespace Dune
     private:
       typedef typename Traits::template Codim< 0 >::EntityPointerImpl EntityPointerImpl;
 
-      typedef IdGeometry< dimension-1, dimensionworld, GridFamily > GeometryImpl;
-      typedef IdLocalGeometry< dimension-1, dimension, GridFamily > LocalGeometryImpl;
+      typedef typename Geometry::Implementation GeometryImpl;
+      typedef typename LocalGeometry::Implementation LocalGeometryImpl;
 
       typedef typename HostGridPartType::IntersectionType HostIntersectionType;
 
@@ -72,14 +72,14 @@ namespace Dune
 
       operator bool () const { return bool( hostIntersection_ ); }
 
-      const EntityPointer inside () const
+      EntityPointer inside () const
       {
-        return EntityPointer( EntityPointerImpl( hostIntersection().inside() ) );
+        return EntityPointerImpl( hostIntersection().inside() );
       }
       
       EntityPointer outside () const
       {
-        return EntityPointer( EntityPointerImpl( hostIntersection().outside() ) );
+        return EntityPointerImpl( hostIntersection().outside() );
       }
 
       bool boundary () const
