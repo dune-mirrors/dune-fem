@@ -32,8 +32,7 @@ namespace Dune
       typedef typename Traits::template Codim< 1 >::LocalGeometry LocalGeometry;
 
     private:
-      typedef typename Traits::template Codim< 0 >::EntityPointerImpl EntityPointerImpl;
-
+      typedef typename EntityPointer::Implementation EntityPointerImpl;
       typedef typename Geometry::Implementation GeometryImpl;
       typedef typename LocalGeometry::Implementation LocalGeometryImpl;
 
