@@ -422,12 +422,12 @@ namespace Dune
 
     //! number of base functions * dimRange 
     enum { localBlockSize = BaseType :: dimRange * 
-        NumLegendreBaseFunctions<polOrd, BaseType :: dimLocal>::numBaseFct }; 
+        Fem :: NumLegendreBaseFunctions<polOrd, BaseType :: dimLocal>::numBaseFct }; 
 
     //! type of DG mapper (based on BlockMapper)
     typedef NonBlockMapper< typename BaseType :: BlockMapperType, localBlockSize > MapperType;
 
-    typedef LegendreDGBaseFunctionFactory<
+    typedef Fem :: LegendreDGBaseFunctionFactory<
       typename BaseType :: BaseFunctionSpaceType :: ScalarFunctionSpaceType, polOrd> ScalarFactoryType;
 
     // type of DG space 
