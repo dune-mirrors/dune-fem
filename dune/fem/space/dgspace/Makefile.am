@@ -14,7 +14,6 @@ dgspace_HEADERS = dgadaptiveleafgridpart.hh \
                   dgadaptmanager.hh \
                   dgadaptoperator.hh \
                   dgbasefunctions.hh \
-                  dgleafindexset.hh \
                   dgspace.hh \
                   legendredgbasefunctions.hh \
                   legendrepoly.hh \
