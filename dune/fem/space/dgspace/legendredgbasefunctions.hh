@@ -140,7 +140,7 @@ namespace Dune
 
     // true if hierarchical ordering of basis functions 
     // should be used 
-    static const bool hierarchical = ( dim == 2 ) ? true : false ;
+    static const bool hierarchical = true ; 
 
     typedef BaseFunctionInterface<FunctionSpaceType> BaseFunctionType;
 
@@ -179,7 +179,8 @@ namespace Dune
         {
           if( sum+p == term ) 
           {
-            baseMap[ oldBaseNum ] = newBaseNum ++;
+            baseMap[ newBaseNum ] = oldBaseNum;
+            ++newBaseNum;
           }
         }
       }
@@ -201,12 +202,13 @@ namespace Dune
         const int terms = Power_m_p<polOrd,dim>::power ;
         int newBaseNum = 0;
         // check for all terms the number of base functions 
-        for(int count=0; count <= terms; ++count )
+        for(int term=0; term <= terms; ++term )
         {
+          // initialize oldBaseNum counter new for each term 
           int oldBaseNum = 0;
-          // construct mapping 
+          // construct mapping for this term 
           DimLoop<polOrd, dim-1> :: 
-            loop( count, 0, baseFunctionMap_, oldBaseNum, newBaseNum );
+            loop( term, 0, baseFunctionMap_, oldBaseNum, newBaseNum );
         }
       }
 
