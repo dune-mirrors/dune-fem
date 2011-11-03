@@ -744,7 +744,7 @@ namespace Dune
 
     private: 
       HostGridPartType & hostGridPart_;
-      const FilterType filter_;
+      FilterType filter_;
       const IndexSetType * indexSetPtr_; 
 
     }; // end FilteredGridPart
