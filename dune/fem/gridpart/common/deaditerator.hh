@@ -1,6 +1,7 @@
 #ifndef DUNE_FEM_GRIDPART_COMMON_DEADINTERSECTIONITERATOR_HH
 #define DUNE_FEM_GRIDPART_COMMON_DEADINTERSECTIONITERATOR_HH
 
+#include <dune/grid/common/entityiterator.hh>
 #include <dune/grid/common/intersection.hh>
 #include <dune/grid/common/intersectioniterator.hh>
 
@@ -9,6 +10,26 @@ namespace Dune
 
   namespace Fem
   {
+
+    // DeadIterator
+    // ------------
+    
+    template< class EntityPointer >
+    struct DeadIterator
+    : public EntityPointer
+    {
+      template< class T >
+      explicit DeadIterator ( const T &t )
+      : EntityPointer( t )
+      {}
+      
+      void increment ()
+      {
+        DUNE_THROW( InvalidStateException, "Trying to increment a dead iterator." );
+      }
+    };
+
+
 
     // DeadIntersection
     // ----------------

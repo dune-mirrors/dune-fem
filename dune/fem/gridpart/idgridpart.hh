@@ -2,9 +2,8 @@
 #define DUNE_FEM_GRIDPART_IDGRIDPART_HH
 
 #include <dune/fem/gridpart/gridpart.hh>
-#include <dune/fem/gridpart/common/deadintersectioniterator.hh>
+#include <dune/fem/gridpart/common/deaditerator.hh>
 #include <dune/fem/gridpart/idgridpart/datahandle.hh>
-#include <dune/fem/gridpart/idgridpart/deaditerator.hh>
 #include <dune/fem/gridpart/idgridpart/entity.hh>
 #include <dune/fem/gridpart/idgridpart/entitypointer.hh>
 #include <dune/fem/gridpart/idgridpart/geometry.hh>
@@ -66,7 +65,7 @@ namespace Dune
           typedef Dune::IntersectionIterator< const GridFamily, DeadIntersectionIterator, DeadIntersection > LeafIntersectionIterator;
           typedef Dune::IntersectionIterator< const GridFamily, DeadIntersectionIterator, DeadIntersection > LevelIntersectionIterator;
 
-          typedef Dune::EntityIterator< 0, const GridFamily, DeadIterator< 0, const GridFamily > > HierarchicIterator;
+          typedef Dune::EntityIterator< 0, const GridFamily, DeadIterator< typename Codim< 0 >::EntityPointerImpl > > HierarchicIterator;
         };
 
         template< int codim >
