@@ -2,8 +2,8 @@
 #define DUNE_LEGENDREDGBASEFUNCTIONS_HH
 
 #include <dune/common/misc.hh>
-
-#include <dune/grid/common/grid.hh>
+#include <dune/common/static_assert.hh>
+#include <dune/common/array.hh>
 
 #include <dune/fem/space/basefunctions/basefunctioninterface.hh>
 #include <dune/fem/space/basefunctions/basefunctionfactory.hh>
@@ -14,57 +14,6 @@ namespace Dune
 {
   
   namespace Fem {  
-
-  //Template Meta Programm for evaluating tensorproduct polynomial in arbitrary dimensions
-  template<int dim,int i,int PolOrd>
-  class Eval
-  {
-  public:
-    template <class FieldVectorType>
-    static double apply(const LegendrePoly& lp, const FieldVectorType& x, const int idx)
-    {
-      assert( x.dimension == dim );
-      const int num = idx % (PolOrd+1);
-      // LegendrePoly lp=LegendrePoly(num);
-      return lp.evaluate(num,x[i-1]) * Eval<dim, i-1, PolOrd>::apply(lp,x,(idx-num)/(PolOrd+1));
-    }
-  };
-
-  template<int dim,int PolOrd>
-  class Eval<dim,0,PolOrd>
-  {
-  public:
-    template <class FieldVectorType>
-    static double apply(const LegendrePoly& lp, const FieldVectorType& x, const int idx)
-    {
-      return 1.0;
-    }
-  };
-
-  //Template Meta Programm for evaluating the partial derivative of tensorproduct polynomials in arbitrary dimensions
-  template<int dim,int i,int PolOrd>
-  class EvalD{
-  public:
-    template <class FieldVectorType>
-    static double apply(const LegendrePoly& lp, const FieldVectorType& x, const int j, const int idx)
-    {
-      const int num=idx%(PolOrd+1);
-      if( (i-1) != j )
-        return lp.evaluate(num,x[i-1]) * EvalD<dim,i-1,PolOrd>::apply(lp,x, j, (idx-num)/(PolOrd+1));
-      else
-        return lp.jacobian(num,x[i-1]) * EvalD<dim,i-1,PolOrd>::apply(lp,x, j, (idx-num)/(PolOrd+1));
-    }
-  };
-
-  template<int dim,int PolOrd>
-  class EvalD<dim,0,PolOrd>{
-  public:
-    template <class FieldVectorType>
-    static double apply(const LegendrePoly& lp, const FieldVectorType& x, const int j, const int idx)
-    {
-      return 1.0;
-    }
-  };
 
 
   //! number of legendre base functions for given polord and dim 
@@ -78,6 +27,56 @@ namespace Dune
   class LegendreDGBaseFunction :
     public BaseFunctionInterface<FunctionSpaceType>
   {
+    //Template Meta Programm for evaluating tensorproduct polynomial in arbitrary dimensions
+    template<int dim,int i,int PolOrd>
+    struct Eval
+    {
+      template <class FieldVectorType>
+      static double apply(const LegendrePoly& lp, const FieldVectorType& x, const int idx)
+      {
+        assert( int(x.dimension) == int(dim) );
+        const int num = idx % (PolOrd+1);
+        // LegendrePoly lp=LegendrePoly(num);
+        return lp.evaluate(num,x[i-1]) * Eval<dim, i-1, PolOrd>::apply(lp,x,(idx-num)/(PolOrd+1));
+      }
+    };
+
+    template<int dim,int PolOrd>
+    struct Eval<dim,0,PolOrd>
+    {
+      template <class FieldVectorType>
+      static double apply(const LegendrePoly& lp, const FieldVectorType& x, const int idx)
+      {
+        return 1.0;
+      }
+    };
+
+    //Template Meta Programm for evaluating the partial derivative of tensorproduct polynomials in arbitrary dimensions
+    template<int dim,int i,int PolOrd>
+    struct EvalD
+    {
+      template <class FieldVectorType>
+      static double apply(const LegendrePoly& lp, const FieldVectorType& x, const int j, const int idx)
+      {
+        assert( int(x.dimension) == int(dim) );
+        const int num=idx%(PolOrd+1);
+        if( (i-1) != j )
+          return lp.evaluate(num,x[i-1]) * EvalD<dim,i-1,PolOrd>::apply(lp,x, j, (idx-num)/(PolOrd+1));
+        else
+          return lp.jacobian(num,x[i-1]) * EvalD<dim,i-1,PolOrd>::apply(lp,x, j, (idx-num)/(PolOrd+1));
+      }
+    };
+
+    template<int dim,int PolOrd>
+    struct EvalD<dim,0,PolOrd>
+    {
+      template <class FieldVectorType>
+      static double apply(const LegendrePoly& lp, const FieldVectorType& x, const int j, const int idx)
+      {
+        return 1.0;
+      }
+    };
+
   protected:
     //- Local typedefs
     typedef typename FunctionSpaceType::DomainType DomainType;
@@ -126,7 +125,7 @@ namespace Dune
     // reference to legendre polynomials 
     const LegendrePoly& lp_;
 
-    // my number of basis function
+    // my number in the set of basis functions
     const int baseNum_;
   };
 
@@ -135,17 +134,90 @@ namespace Dune
     public BaseFunctionFactory<ScalarFunctionSpaceImp> 
   {
   public:
+    typedef ScalarFunctionSpaceImp FunctionSpaceType;
+    dune_static_assert(FunctionSpaceType::dimRange == 1,"only scalar functions spaces allowed" ) ;
+    enum { dim = FunctionSpaceType::dimDomain };
+
     // true if hierarchical ordering of basis functions 
     // should be used 
-    static const bool hierarchical = true ;
+    static const bool hierarchical = ( dim == 2 ) ? true : false ;
 
-    // Add compile time checker: only scalar functions allowed
-    typedef ScalarFunctionSpaceImp FunctionSpaceType;
     typedef BaseFunctionInterface<FunctionSpaceType> BaseFunctionType;
+
+    // number of basis functions 
+    enum { numBaseFct = NumLegendreBaseFunctions<polOrd,dim>::numBaseFct };
+
+  protected:  
+    typedef array<int, numBaseFct> BaseNumberMapType;
+
+    template<int pOrd, int d>
+    struct DimLoop 
+    {
+      static void loop( const int term, 
+                        const int sum, 
+                        BaseNumberMapType& baseMap, 
+                        int& oldBaseNum,
+                        int& newBaseNum )
+      {
+        for( int p=0; p<=pOrd; ++p) 
+        {
+          DimLoop< pOrd, d-1> :: loop( term, sum+p, baseMap, oldBaseNum, newBaseNum );
+        }
+      }
+    };
+
+    template<int pOrd>
+    struct DimLoop<pOrd, 0>
+    {
+      static void loop( const int term, 
+                        const int sum, 
+                        BaseNumberMapType& baseMap, 
+                        int& oldBaseNum,
+                        int& newBaseNum )
+      {
+        for( int p=0; p<=pOrd; ++p, ++oldBaseNum) 
+        {
+          if( sum+p == term ) 
+          {
+            baseMap[ oldBaseNum ] = newBaseNum ++;
+          }
+        }
+      }
+    };
+
+    // map for renumbering of basis functions to have a hierarchical basis 
+    BaseNumberMapType baseFunctionMap_;
   public:
     //! constructor creating basis function factory 
     LegendreDGBaseFunctionFactory(const GeometryType& geo) :
-      BaseFunctionFactory<ScalarFunctionSpaceImp>( geo ) {}
+      BaseFunctionFactory<ScalarFunctionSpaceImp>( geo ),
+      baseFunctionMap_()
+    {
+      baseFunctionMap_.fill( -1 );
+
+      // switch numbering 
+      if( hierarchical ) 
+      {
+        const int terms = Power_m_p<polOrd,dim>::power ;
+        int newBaseNum = 0;
+        // check for all terms the number of base functions 
+        for(int count=0; count <= terms; ++count )
+        {
+          int oldBaseNum = 0;
+          // construct mapping 
+          DimLoop<polOrd, dim-1> :: 
+            loop( count, 0, baseFunctionMap_, oldBaseNum, newBaseNum );
+        }
+      }
+
+#ifndef NDEBUG 
+      for( int i=0; i<numBaseFct; ++i ) 
+      {
+        //std::cout << "bsae " << i << " is " << baseFunctionMap_[ i ] << std::endl;
+        assert( baseFunctionMap_[ i ] >= 0 );
+      }
+#endif
+    }
 
     virtual BaseFunctionType* baseFunction(int i) const 
     {
@@ -154,12 +226,15 @@ namespace Dune
       {
         DUNE_THROW(NotImplemented,"LegendreBaseFunctions only implemented for cubes!");
       }
-      return new LegendreDGBaseFunction<FunctionSpaceType ,polOrd> ( i );
+
+      // if hierarchical is enabled then switch numbering 
+      const int baseNum = ( hierarchical ) ? baseFunctionMap_[ i ] : i;
+      return new LegendreDGBaseFunction<FunctionSpaceType, polOrd> ( baseNum );
     }
     
     virtual int numBaseFunctions() const 
     {
-      return NumLegendreBaseFunctions<polOrd,FunctionSpaceType::dimDomain>::numBaseFct;
+      return numBaseFct;
     }
   };
 
