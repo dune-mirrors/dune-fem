@@ -426,7 +426,7 @@ namespace Dune
     typedef typename IntersectionIteratorType::Intersection IntersectionType;
 
     // overload grid view type 
-    typedef GridView< GridPartViewTraits< ThisType > > GridViewType;
+    typedef GridView< Fem::GridPartViewTraits< ThisType > > GridViewType;
 
     //! Struct providing types of the iterators on codimension cd
     template< int codim >
