@@ -18,11 +18,10 @@ namespace Dune
     struct DeadIterator
     : public EntityPointer
     {
-      template< class T >
-      explicit DeadIterator ( const T &t )
-      : EntityPointer( t )
+      explicit DeadIterator ( const EntityPointer &entityPointer )
+      : EntityPointer( entityPointer )
       {}
-      
+
       void increment ()
       {
         DUNE_THROW( InvalidStateException, "Trying to increment a dead iterator." );
