@@ -1,8 +1,8 @@
 DGF
 Interval
-0 0 0  #p0
-1 1 1  #p1
-1 1 1  #nx ny nz
+-0.3 -0.3 -0.3  #p0
+ 0.3  0.3  0.3  #p1
+6 6 6  #nx ny nz
 #
 
 BOUNDARYDOMAIN
