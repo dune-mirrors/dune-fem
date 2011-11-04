@@ -50,7 +50,16 @@ namespace Dune
         ctype dist = (entity.geometry().center() - center_).two_norm();
         return (dist > radius_);
       }
-      
+     
+      //! \brief default implementation returns contains from neighbor
+      template< class Intersection >
+      bool interiorIntersection( const Intersection &intersection ) const
+      {
+        typedef typename Intersection::EntityPointer EntityPointerType;
+        const EntityPointerType outside = intersection.outside();
+        return contains( *outside );
+      }
+
       //! \brief return what boundary id we have in case of boundary intersection 
       //         which is either it.boundary == true or contains (it.ouside()) == false 
       //         so here true is a good choice 
