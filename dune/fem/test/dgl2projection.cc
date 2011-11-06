@@ -51,6 +51,8 @@ typedef DGAdaptiveLeafGridPart< MyGridType > ContainedGridPartType;
   typedef FilteredGridPart<ContainedGridPartType, FilterType, true > GridPartType;
 #elif defined  USE_IDGRIDPART
   typedef Fem:: IdGridPart< ContainedGridPartType > GridPartType;
+#else 
+  typedef ContainedGridPartType  GridPartType ;
 #endif
 
 typedef TestFunctionSpace FunctionSpaceType;
