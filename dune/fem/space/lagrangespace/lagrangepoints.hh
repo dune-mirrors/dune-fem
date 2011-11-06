@@ -397,7 +397,13 @@ namespace Dune
     LagrangePointListImplementation ( const ThisType &other );
   };
 
-  
+
+  template< class FieldImp, unsigned int topologyId, unsigned int dim, unsigned int maxPolOrder >
+  const int LagrangePointListImplementation< FieldImp, topologyId, dim, maxPolOrder >::maxPolynomialOrder;
+
+
+
+
   template< class GridPartImp, unsigned int polOrder >
   struct LagrangePointSetTraits
   {
