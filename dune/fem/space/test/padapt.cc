@@ -19,17 +19,17 @@ const int polOrder = POLORDER;
 #include <dune/common/stdstreams.cc>
 
 #include <dune/fem/gridpart/gridpart.hh>
-
 #include <dune/fem/gridpart/adaptiveleafgridpart.hh>
+
 #include <dune/fem/quadrature/intersectionquadrature.hh>
 #include <dune/fem/space/common/adaptmanager.hh>
-#include <dune/fem/space/padaptivespace.hh>
 #include <dune/fem/function/adaptivefunction.hh>
 #include <dune/fem/quadrature/cachingquadrature.hh>
 #include <dune/fem/operator/lagrangeinterpolation.hh>
 #include <dune/fem/operator/2order/lagrangematrixsetup.hh>
 #include <dune/fem/misc/l2norm.hh>
 #include <dune/fem/misc/h1norm.hh>
+#include <dune/fem/space/padaptivespace.hh>
 
 // include solvers
 #include <dune/fem/solver/inverseoperators.hh>
@@ -49,8 +49,6 @@ const int polOrder = POLORDER;
   #include <dune/grid/io/visual/grapedatadisplay.hh>
 #endif
 #include <dune/fem/io/parameter.hh>
-
-#include "systemmatrix.cc"
 
 
 // Check for unhealthy grids
@@ -146,7 +144,8 @@ typedef FunctionSpace< double, double, MyGridType::dimensionworld, 1 > FunctionS
 //! type of the discrete function space our unkown belongs to
 // typedef LagrangeDiscreteFunctionSpace< FunctionSpaceType, GridPartType, polOrder > DiscreteFunctionSpaceType;
 //! type of the discrete function space our unkown belongs to
-typedef PAdaptiveLagrangeSpace< FunctionSpaceType, GridPartType, polOrder > DiscreteFunctionSpaceType;
+//typedef LagrangeDiscreteFunctionSpace< FunctionSpaceType, GridPartType, polOrder > DiscreteFunctionSpaceType;
+typedef Fem :: PAdaptiveLagrangeSpace< FunctionSpaceType, GridPartType, polOrder > DiscreteFunctionSpaceType;
 
 //! type of the discrete function we are using
 typedef AdaptiveDiscreteFunction< DiscreteFunctionSpaceType > DiscreteFunctionType;
