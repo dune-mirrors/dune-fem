@@ -199,7 +199,7 @@ namespace Dune
       // switch numbering 
       if( hierarchical ) 
       {
-        const int terms = Power_m_p<polOrd,dim>::power ;
+        const int terms = polOrd * dim;
         int newBaseNum = 0;
         // check for all terms the number of base functions 
         for(int term=0; term <= terms; ++term )
@@ -213,6 +213,7 @@ namespace Dune
       }
 
 #ifndef NDEBUG 
+      //std::cout << numBaseFct << std::endl;
       for( int i=0; i<numBaseFct; ++i ) 
       {
         //std::cout << "bsae " << i << " is " << baseFunctionMap_[ i ] << std::endl;
