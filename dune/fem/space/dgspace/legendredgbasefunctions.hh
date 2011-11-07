@@ -148,20 +148,23 @@ namespace Dune
     enum { numBaseFct = NumLegendreBaseFunctions<polOrd,dim>::numBaseFct };
 
   protected:  
-    typedef array<int, numBaseFct> BaseNumberMapType;
+    typedef array<int, 2*numBaseFct> BaseNumberMapType;
 
     template<int pOrd, int d>
     struct DimLoop 
     {
+      template < class A >
       static void loop( const int term, 
-                        const int sum, 
+                        A& polOrders,
                         BaseNumberMapType& baseMap, 
                         int& oldBaseNum,
                         int& newBaseNum )
       {
+        // go through all p because of old base counter
         for( int p=0; p<=pOrd; ++p) 
         {
-          DimLoop< pOrd, d-1> :: loop( term, sum+p, baseMap, oldBaseNum, newBaseNum );
+          polOrders[ d ] = p ;
+          DimLoop< pOrd, d-1> :: loop( term, polOrders, baseMap, oldBaseNum, newBaseNum );
         }
       }
     };
@@ -169,16 +172,35 @@ namespace Dune
     template<int pOrd>
     struct DimLoop<pOrd, 0>
     {
+      template< class A >
+      static bool checkEntries( const A& array, const int p ) 
+      {
+        bool found = false ;
+        for( int i=0; i<array.size(); ++i) 
+        {
+          if( array[ i ] == p ) found = true ;
+          if( array[ i ] > p ) return false ;
+        }
+        return found ;
+      }
+
+      template< class A > 
       static void loop( const int term, 
-                        const int sum, 
+                        A& polOrders,
                         BaseNumberMapType& baseMap, 
                         int& oldBaseNum,
                         int& newBaseNum )
       {
+        // go through all p because of old base counter
         for( int p=0; p<=pOrd; ++p, ++oldBaseNum) 
         {
-          if( sum+p == term ) 
+          polOrders[ 0 ] = p ;
+
+          // at least one of the entries has to be of order p
+          // non of the entries must be larger than p 
+          if( checkEntries( polOrders, term ) )
           {
+            assert( newBaseNum < int(numBaseFct) );
             baseMap[ newBaseNum ] = oldBaseNum;
             ++newBaseNum;
           }
@@ -199,16 +221,20 @@ namespace Dune
       // switch numbering 
       if( hierarchical ) 
       {
-        const int terms = polOrd * dim;
+
+        // small array to store the curently used pol ords 
+        array<int, dim> polStorage ;
+        polStorage.fill( -1 );
+
         int newBaseNum = 0;
         // check for all terms the number of base functions 
-        for(int term=0; term <= terms; ++term )
+        for(int term=0; term <= polOrd; ++term )
         {
           // initialize oldBaseNum counter new for each term 
           int oldBaseNum = 0;
           // construct mapping for this term 
           DimLoop<polOrd, dim-1> :: 
-            loop( term, 0, baseFunctionMap_, oldBaseNum, newBaseNum );
+            loop( term, polStorage, baseFunctionMap_, oldBaseNum, newBaseNum );
         }
       }
 
