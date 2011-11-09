@@ -601,9 +601,12 @@ namespace Dune
      *        on rank 0.
      *
      *  \param[in]  filename  name of the file to store the parameters in; prefix() is used.
+     *  \param[in]  fileextension  file extension if you want to have time stemps in the log files,
+     *              ! must contain the "." dot for fileextensions !
      *  \param[in]  writeAll default is true
      */
-    static void write ( const std::string &filename, bool writeAll = true );
+    static void write ( const std::string &filename, const std::string &fileextension ="", bool writeAll = true );
+
     /** \brief write the parameter database to a stream
      *
      *  This method writes paramters to the given stream.
@@ -637,7 +640,7 @@ namespace Dune
      *  \param[in]  writeAll default is true
      */
     static void write ( const std::string& path, const std::string &filename, 
-                        bool writeAll = true  );
+                        const std::string& fileextension, bool writeAll = true  );
   private:
     std::string curFileName_;
     int curLineNumber_;
@@ -1182,22 +1185,35 @@ namespace Dune
   }
 
   inline void
-  Parameter::write ( const std::string &filename, bool writeAll )
+  Parameter::write ( const std::string &filename, const std::string &fileextension, bool writeAll )
   {
     // only write one parameter log file
     // to the common path 
     if( MPIManager::rank() != 0 ) return;
 
-    write( commonOutputPath(), filename, writeAll );
+    write( commonOutputPath(), filename, fileextension, writeAll );
   }
 
   inline void
   Parameter::write ( const std::string &path, 
-                     const std::string &filename , bool writeAll ) 
+                     const std::string &filename,
+                     const std::string &fileextension, 
+                     bool writeAll ) 
   {
     std::string fullname( path );
     fullname += "/";
     fullname += filename;
+
+    if( Parameter::getValue< bool >( "fem.io.parameterFileTimeStamp", false ) )
+    {
+      time_t seconds = time(0);
+      struct tm *ptm = localtime( &seconds );
+      char timeString[20];
+      strftime( timeString, 20, "_%d%m%Y_%H%M%S", ptm );
+      fullname += std::string( timeString );
+    } 
+
+    fullname += fileextension;
 
     std::ofstream file( fullname.c_str() );
     if( !file.is_open() )
