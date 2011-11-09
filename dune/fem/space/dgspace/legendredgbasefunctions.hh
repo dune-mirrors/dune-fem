@@ -175,8 +175,10 @@ namespace Dune
       template< class A >
       static bool checkEntries( const A& array, const int p ) 
       {
+        // at least one array entry has to be of order p
+        // in addition no entry must be larger than order p 
         bool found = false ;
-        for( int i=0; i<array.size(); ++i) 
+        for(typename A::size_type i=0; i<array.size(); ++i) 
         {
           if( array[ i ] == p ) found = true ;
           if( array[ i ] > p ) return false ;
