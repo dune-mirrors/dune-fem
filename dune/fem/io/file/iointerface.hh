@@ -448,18 +448,18 @@ protected:
                                iTupel& lengthInterior )
     {
 #if HAVE_MPI
-      typedef SPMultiIndex< dim > SPGridMultiIndex ;
-      SPGridMultiIndex begin = grid.gridLevel( 0 ).localMesh().begin();
-      SPGridMultiIndex end   = grid.gridLevel( 0 ).localMesh().end();
+      typedef Cartesian::MultiIndex< dim > MultiIndex ;
+      MultiIndex begin = grid.gridLevel( 0 ).localMesh().begin();
+      MultiIndex end   = grid.gridLevel( 0 ).localMesh().end();
       for( int i=0; i<dim; ++i) 
       {
         originInterior[ i ] = begin[ i ];
         lengthInterior[ i ] = end[ i ] - begin[ i ];
       }
-#endif
+#endif // #if HAVE_MPI
     }
   };
-#endif
+#endif // #if HAVE_DUNE_SPGRID
 
   //! write my partition as macro grid 
   template <class GridImp>
