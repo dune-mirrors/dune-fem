@@ -1,7 +1,11 @@
 #ifndef DUNE_FEM_BASEFUNCTIONFACTORY_HH
 #define DUNE_FEM_BASEFUNCTIONFACTORY_HH
 
+#if HAVE_DUNE_GEOMETRY
+#include <dune/geometry/type.hh>
+#else
 #include <dune/common/geometrytype.hh>
+#endif
 
 #include <dune/fem/space/basefunctions/basefunctioninterface.hh>
 

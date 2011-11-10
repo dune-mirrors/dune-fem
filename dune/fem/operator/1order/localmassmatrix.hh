@@ -4,7 +4,11 @@
 //- Dune includes 
 #include <dune/common/fmatrix.hh>
 #include <dune/common/dynmatrix.hh>
+#if HAVE_DUNE_GEOMETRY
+#include <dune/geometry/typeindex.hh>
+#else
 #include <dune/common/geometrytypeindex.hh>
+#endif
 
 #include <dune/fem/version.hh>
 

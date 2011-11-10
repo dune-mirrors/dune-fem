@@ -6,9 +6,14 @@
 #include <map>
 
 //- Dune includes 
-#include <dune/common/geometrytype.hh>
-#include <dune/grid/common/capabilities.hh>
+#if HAVE_DUNE_GEOMETRY
+#include <dune/geometry/genericreferenceelements.hh>
+#include <dune/geometry/type.hh>
+#else
 #include <dune/grid/common/genericreferenceelements.hh>
+#include <dune/common/geometrytype.hh>
+#endif
+#include <dune/grid/common/capabilities.hh>
 
 namespace Dune
 {

@@ -2,8 +2,13 @@
 #define DUNE_FEM_BASESETLOCALKEYSTORAGE_HH
 
 //- Dune includes 
+#if HAVE_DUNE_GEOMETRY
+#include <dune/geometry/type.hh>
+#include <dune/geometry/typeindex.hh>
+#else
 #include <dune/common/geometrytype.hh>
-#include <dune/common/geometrytypeindex.hh>
+#include <dune/geometry/geometrytypeindex.hh>
+#endif
 #include <dune/common/exceptions.hh>
 
 //- Fem includes 

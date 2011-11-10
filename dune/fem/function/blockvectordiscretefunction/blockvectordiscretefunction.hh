@@ -15,7 +15,11 @@
 #include <dune/common/exceptions.hh>
 #include <dune/common/fvector.hh> 
 
+#if HAVE_DUNE_GEOMETRY
+#include <dune/geometry/genericreferenceelements.hh>
+#else
 #include <dune/grid/common/genericreferenceelements.hh>
+#endif
 
 namespace Dune {
 namespace Fem {

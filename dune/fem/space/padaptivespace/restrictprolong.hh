@@ -3,9 +3,14 @@
 
 #include <map>
 
+#if HAVE_DUNE_GEOMETRY
+#include <dune/geometry/type.hh>
+#include <dune/geometry/genericreferenceelements.hh>
+#else
 #include <dune/common/geometrytype.hh>
-
 #include <dune/grid/common/genericreferenceelements.hh>
+#endif
+
 
 #include <dune/fem/gridpart/gridpart.hh>
 #include <dune/fem/function/localfunction/localfunction.hh>

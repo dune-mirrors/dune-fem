@@ -5,8 +5,13 @@
 
 #include <dune/grid/common/indexidset.hh>
 
+#if HAVE_DUNE_GEOMETRY
+#include <dune/geometry/genericgeometry/conversion.hh>
+#include <dune/geometry/genericgeometry/referencetopologies.hh>
+#else
 #include <dune/grid/genericgeometry/conversion.hh>
 #include <dune/grid/genericgeometry/referencetopologies.hh>
+#endif
 
 #include <dune/localfunctions/common/localkey.hh>
 

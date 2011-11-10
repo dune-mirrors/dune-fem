@@ -2,8 +2,12 @@
 #define DUNE_GENERICPADAPTIVEDOFMAPPER_HH
 
 //- Dune includes 
-#include <dune/common/geometrytype.hh>
 #include <dune/common/exceptions.hh>
+#if HAVE_DUNE_GEOMETRY
+#include <dune/geometry/type.hh>
+#else
+#include <dune/common/geometrytype.hh>
+#endif
 
 //- Dune-Fem includes 
 #include <dune/fem/misc/capabilities.hh>

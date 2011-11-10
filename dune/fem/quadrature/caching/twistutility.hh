@@ -5,8 +5,13 @@
 
 #include <dune/common/static_assert.hh>
 #include <dune/common/version.hh>
+#if HAVE_DUNE_GEOMETRY
+#include <dune/geometry/type.hh>
+#include <dune/geometry/genericgeometry/topologytypes.hh>
+#else
 #include <dune/common/geometrytype.hh>
 #include <dune/grid/genericgeometry/topologytypes.hh>
+#endif
 
 #include <dune/grid/alugrid/common/interfaces.hh>
 

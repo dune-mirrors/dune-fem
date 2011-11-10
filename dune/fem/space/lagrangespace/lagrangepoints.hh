@@ -1,7 +1,11 @@
 #ifndef DUNE_LAGRANGESPACE_LAGRANGEPOINTS_HH
 #define DUNE_LAGRANGESPACE_LAGRANGEPOINTS_HH
 
+#if HAVE_DUNE_GEOMETRY
+#include <dune/geometry/genericreferenceelements.hh>
+#else
 #include <dune/grid/common/genericreferenceelements.hh>
+#endif
 #include <dune/fem/quadrature/cachingpointlist.hh>
 
 #include "genericgeometry.hh"

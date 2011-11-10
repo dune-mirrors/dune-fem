@@ -1,5 +1,9 @@
 #include <cassert>
+#if HAVE_DUNE_GEOMETRY
+#include <dune/geometry/genericreferenceelements.hh>
+#else
 #include <dune/grid/common/genericreferenceelements.hh>
+#endif
 
 #include <dune/fem/space/basefunctions/storageinterface.hh>
 #include <dune/fem/misc/threadmanager.hh>

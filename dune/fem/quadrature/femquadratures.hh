@@ -1,8 +1,13 @@
 #ifndef DUNE_FEM_FEMQUADRATURES_HH
 #define DUNE_FEM_FEMQUADRATURES_HH
 
+#if HAVE_DUNE_GEOMETRY
+#include <dune/geometry/type.hh>
+#include <dune/geometry/genericgeometry/topologytypes.hh>
+#else
 #include <dune/common/geometrytype.hh>
 #include <dune/grid/genericgeometry/topologytypes.hh>
+#endif
 
 #include <dune/fem/quadrature/quadratureimp.hh>
 

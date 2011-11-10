@@ -2,7 +2,11 @@
 #define DUNE_GENERICGEOMETRY_HH
 
 #include <dune/common/fvector.hh>
+#if HAVE_DUNE_GEOMETRY
+#include <dune/geometry/type.hh>
+#else
 #include <dune/common/geometrytype.hh>
+#endif
 #include <dune/common/static_assert.hh>
 
 #include <dune/fem/misc/metaprogramming.hh>

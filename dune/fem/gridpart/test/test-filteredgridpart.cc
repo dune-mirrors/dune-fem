@@ -6,7 +6,11 @@
 
 // dune-common includes
 #include<dune/common/exceptions.hh>
+#if HAVE_DUNE_GEOMETRY
+#include <dune/geometry/genericreferenceelements.hh>
+#else
 #include <dune/grid/common/genericreferenceelements.hh>
+#endif
 
 // dune-fem includes
 #include <dune/fem/gridpart/adaptiveleafgridpart.hh>

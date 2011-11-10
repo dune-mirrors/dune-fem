@@ -1,6 +1,10 @@
 #include <config.h>
 
+#if HAVE_DUNE_GEOMETRY
+#include <dune/geometry/genericreferenceelements.hh>
+#else
 #include <dune/grid/common/genericreferenceelements.hh>
+#endif
 #include <dune/grid/alugrid/3d/topology.hh>
 #include <dune/fem/quadrature/caching/twistutility.hh>
 

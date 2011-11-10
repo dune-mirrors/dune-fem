@@ -2,7 +2,11 @@
 #define DUNE_LAGRANGESPACE_BASEFUNCTIONS_INLINE_HH
 
 #include <dune/common/version.hh>
+#if HAVE_DUNE_GEOMETRY
+#include <dune/geometry/genericgeometry/topologytypes.hh>
+#else
 #include <dune/grid/genericgeometry/topologytypes.hh>
+#endif
 #include "basefunctions.hh"
 
 namespace Dune

@@ -1,7 +1,11 @@
 #ifndef DUNE_REFERENCEELEMENTPROVIDER_HH
 #define DUNE_REFERENCEELEMENTPROVIDER_HH
 
+#if HAVE_DUNE_GEOMETRY
+#include <dune/geometry/genericreferenceelements.hh>
+#else
 #include <dune/grid/common/genericreferenceelements.hh>
+#endif
 
 namespace Dune
 {

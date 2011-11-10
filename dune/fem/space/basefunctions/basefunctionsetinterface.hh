@@ -3,7 +3,11 @@
 
 #include <dune/common/fvector.hh>
 #include <dune/common/fmatrix.hh>
+#if HAVE_DUNE_GEOMETRY
+#include <dune/geometry/type.hh>
+#else
 #include <dune/common/geometrytype.hh>
+#endif
 
 #include <dune/fem/version.hh>
 #include <dune/fem/misc/bartonnackmaninterface.hh>

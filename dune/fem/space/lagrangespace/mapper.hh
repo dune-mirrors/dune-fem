@@ -2,7 +2,11 @@
 #define DUNE_LAGRANGESPACE_MAPPER_HH
 
 //- Dune includes 
+#if HAVE_DUNE_GEOMETRY
+#include <dune/geometry/type.hh>
+#else
 #include <dune/common/geometrytype.hh>
+#endif
 #include <dune/common/exceptions.hh>
 
 //- Dune-Fem includes 
