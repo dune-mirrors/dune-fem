@@ -5,6 +5,9 @@
 #define USE_VTKWRITER 1
 #endif
 
+//#define USE_GRAPE 0
+//#define ENABLE_VTXPROJECTION 0
+
 //- Dune includes
 #include <dune/fem/io/file/iointerface.hh>
 #include <dune/fem/io/file/iotuple.hh>
@@ -17,10 +20,17 @@
 #include <dune/fem/quadrature/cachingquadrature.hh>
 #include <dune/fem/gridpart/adaptiveleafgridpart.hh>
 
+#ifndef ENABLE_VTKPROJECTION
+#define ENABLE_VTXPROJECTION 1
+#endif
+
 #if USE_VTKWRITER
 #include <dune/fem/io/file/vtkio.hh>
+#if ENABLE_VTXPROJECTION
+#include <dune/fem/operator/lagrangeinterpolation.hh>
 #include <dune/fem/operator/projection/vtxprojection.hh>
-#endif
+#endif // #if ENABLE_VTXPROJECTION
+#endif // #if USE_VTKWRITER
 
 #ifndef USE_GRAPE 
 // define whether to use grape of not 
@@ -383,24 +393,17 @@ namespace Dune
   class DataOutput< GridImp, DataImp >::VTKFunc
   : public VTKListEntry< VTKIOType >
   {
-    typedef typename VTKIOType :: GridPartType GridPartType ;
-    typedef typename DFType :: DiscreteFunctionSpaceType :: FunctionSpaceType FunctionSpaceType;
+    typedef typename VTKIOType::GridPartType GridPartType;
+    typedef typename DFType::DiscreteFunctionSpaceType::FunctionSpaceType FunctionSpaceType;
 
-    typedef LagrangeDiscreteFunctionSpace< FunctionSpaceType,
-            GridPartType, 1> LagrangeSpaceType;
-    typedef AdaptiveDiscreteFunction< LagrangeSpaceType >  NewFunctionType;
-
-    const DFType& df_;
-    LagrangeSpaceType space_;
-    mutable NewFunctionType* func_;
-    
-    VTKFunc( const VTKFunc&) ; 
+    typedef LagrangeDiscreteFunctionSpace< FunctionSpaceType, GridPartType, 1 > LagrangeSpaceType;
+    typedef AdaptiveDiscreteFunction< LagrangeSpaceType > NewFunctionType;
 
   public:
-    VTKFunc( const GridPartType& gridPart, const DFType& df ) 
-      : df_ (df) 
-      , space_( const_cast<GridPartType&> (gridPart) )
-      , func_(0)
+    VTKFunc ( const GridPartType &gridPart, const DFType &df )
+    : df_( df ),
+      space_( const_cast< GridPartType & >( gridPart ) ),
+      func_( 0 )
     {
       // space_.setDescription(df.space().getDescription());
     }
@@ -410,21 +413,28 @@ namespace Dune
       delete func_;
     }
 
-    virtual void add(VTKIOType& vtkio) const 
+    virtual void add ( VTKIOType &vtkio ) const
     {
+      func_ = new NewFunctionType( df_.name()+"vtx-prj" , space_ );
       if( df_.space().continuous() ) 
       {
-        vtkio.addVertexData( df_ );
+        // vtkio.addVertexData( df_ );
+        LagrangeInterpolation< NewFunctionType >::interpolateFunction( df_, *func_ );
       }
       else 
       {
-        func_ = new NewFunctionType ( df_.name()+"vtx-prj" , space_ );
         WeightDefault<GridPartType> weight;
         VtxProjectionImpl::project( df_, *func_, weight );
-        vtkio.addVertexData( *func_ );
       }
-      // vtkio.addVectorVertexData( *func_ );
+      vtkio.addVertexData( *func_ );
     }
+
+  private:
+    VTKFunc ( const VTKFunc & );
+
+    const DFType& df_;
+    LagrangeSpaceType space_;
+    mutable NewFunctionType *func_;
   };
 #endif // #if USE_VTKWRITER
 
@@ -486,16 +496,17 @@ namespace Dune
   {
     //! Constructor
     explicit VTKOutputerLagrange ( VTKOut &vtkOut )
-    : vtkOut_( vtkOut ), vec_()
+    : vtkOut_( vtkOut ),
+      vec_()
     {}
 
     //! destructor, delete entries of list 
     ~VTKOutputerLagrange () 
     {
-      for(size_t i=0; i<vec_.size(); ++i)
+      for( size_t i = 0; i < vec_.size(); ++i )
       {
-        delete vec_[i];
-        vec_[i] = 0;
+        delete vec_[ i ];
+        vec_[ i ] = 0;
       }
     }
 
@@ -505,8 +516,8 @@ namespace Dune
     {
       if( df ) 
       {
-        typedef VTKFunc<VTKOut,DFType> EntryType; 
-        EntryType* entry = new EntryType(vtkOut_.gridPart(), *df);
+        typedef VTKFunc< VTKOut, DFType > EntryType; 
+        EntryType *entry = new EntryType( vtkOut_.gridPart(), *df );
         entry->add( vtkOut_ );
         vec_.push_back( entry );
       }
@@ -521,7 +532,7 @@ namespace Dune
 
   private:
     VTKOut &vtkOut_;
-    typedef VTKListEntry<VTKOut> VTKListEntryType;
+    typedef VTKListEntry< VTKOut > VTKListEntryType;
     std::vector< VTKListEntryType * > vec_;
   };
 #endif // #if USE_VTKWRITER
@@ -778,6 +789,7 @@ namespace Dune
 
     if( vertexData ) 
     {
+#if ENABLE_VTXPROJECTION
       // generate adaptive leaf grid part 
       // do not use leaf grid part since this will 
       // create the grids leaf index set, which might not be wanted. 
@@ -802,6 +814,7 @@ namespace Dune
         // write all data serial 
         filename = vtkio.write( name, Dune::VTKOptions::binaryappended );
       }
+#endif
     }
     else if ( outputFormat_ == vtk )
     {
