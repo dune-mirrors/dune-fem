@@ -21,21 +21,12 @@ namespace Dune
 
 
 
-  // Compatibility definiton
-  // -----------------------
-
-#if ! DUNE_VERSION_NEWER_REV(DUNE_GRID,2,1,0)
-typedef VTKOptions VTK;
-#endif
-
-
-
   // VTKFunctionWrapper
   // ------------------
 
   template< class DF >
   class VTKFunctionWrapper
-  : public VTKWriter< typename DF::DiscreteFunctionSpaceType::GridPartType::GridViewType >::VTKFunction
+  : public VTKFunction< typename DF::DiscreteFunctionSpaceType::GridPartType::GridViewType >
   {
     typedef VTKFunctionWrapper< DF > ThisType;
 
