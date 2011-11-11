@@ -5,7 +5,7 @@ GRIDTYPE=YASPGRID
 GRIDDIM=2
 
 # test programs 
-check_PROGRAMS = test-filteredgridpart lagrangeinterpolation test-idgridpart
+check_PROGRAMS = test-filteredgridpart lagrangeinterpolation test-idgridpart test-geogridpart
 
 LDADD = $(ALL_PKG_LDFLAGS) $(ALL_PKG_LIBS) $(LOCAL_LIBS)
 AM_CPPFLAGS = $(ALL_PKG_CPPFLAGS) 
@@ -16,6 +16,7 @@ test_filteredgridpart_SOURCES = test-filteredgridpart.cc
 test_filteredgridpart_CPPFLAGS = -DCOUNT_FLOPS $(AM_CPPFLAGS) -DUSE_FILTEREDGRIDPART
 
 test_idgridpart_SOURCES = test-idgridpart.cc
+test_geogridpart_SOURCES = test-geogridpart.cc
 
 EXTRA_DIST = 1dgrid.dgf 2dgrid.dgf 3dgrid.dgf
 

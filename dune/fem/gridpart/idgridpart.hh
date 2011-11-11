@@ -147,7 +147,6 @@ namespace Dune
         return hostGridPart_.grid();
       }
 
-      //! \brief Returns reference to the underlying grid
       GridType &grid ()
       { 
         return hostGridPart_.grid();
@@ -186,7 +185,6 @@ namespace Dune
         return IdIterator< codim, pitype, const GridFamily >( hostGridPart_.template end< codim, pitype >() );
       }
 
-      //! \brief Level of the grid part
       int level () const 
       {
         return hostGridPart_.level();

@@ -25,7 +25,7 @@ namespace Dune
     public:
       typedef typename HostIndexSet::IndexType IndexType;
 
-      IdIndexSet ( const HostIndexSet &hostIndexSet )
+      explicit IdIndexSet ( const HostIndexSet &hostIndexSet )
       : hostIndexSet_( &hostIndexSet )
       {}
 
