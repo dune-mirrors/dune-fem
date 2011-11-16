@@ -73,10 +73,6 @@ namespace Dune
   public:
     typedef typename BaseType :: EntityType EntityType;
 
-  protected:
-    LocalFunctionImpType impl_;
-
-  public:
     /** \brief constructor creating a local function without binding it to an 
      *         entity
      *
@@ -91,11 +87,9 @@ namespace Dune
      *  \param[in] dfSpace discrete function space the local function shall
      *                     belong to
      */
-    inline explicit
-    TemporaryLocalFunction ( const DiscreteFunctionSpaceType &dfSpace )
+    explicit TemporaryLocalFunction ( const DiscreteFunctionSpaceType &dfSpace )
     : impl_( dfSpace )
-    {
-    }
+    {}
     
     /** \brief constructor creating a local function and binding it to an
      *         entity
@@ -110,11 +104,10 @@ namespace Dune
      *                     belong to
      *  \param[in] entity  entity for initialize the local function to
      */
-    inline TemporaryLocalFunction ( const DiscreteFunctionSpaceType &dfSpace,
-                                    const EntityType &entity )
+    TemporaryLocalFunction ( const DiscreteFunctionSpaceType &dfSpace,
+                             const EntityType &entity )
     : impl_( dfSpace, entity )
-    {
-    }
+    {}
 
     /** \brief copy constructor
      *
@@ -127,10 +120,9 @@ namespace Dune
      * 
      *  \param[in]  other  TemporaryLocalFunction to copy
      */
-    inline TemporaryLocalFunction ( const ThisType &other )
+    TemporaryLocalFunction ( const ThisType &other )
     : impl_( other.impl_ )
-    {
-    }
+    {}
 
   protected:
     const LocalFunctionImpType &asImp () const
@@ -142,6 +134,8 @@ namespace Dune
     {
       return impl_;
     } 
+
+    LocalFunctionImpType impl_;
   };
 
   template< class DiscreteFunctionSpace,
@@ -193,12 +187,10 @@ namespace Dune
      *
      *  \param[in] df discrete function the local function shall belong to
      */
-    inline explicit
-    ConstLocalFunction ( const DiscreteFunctionType &df )
-    : BaseType( df.space() )
-    , discreteFunction_( df )
-    {
-    }
+    explicit ConstLocalFunction ( const DiscreteFunctionType &df )
+    : BaseType( df.space() ),
+      discreteFunction_( df )
+    {}
     
     /** \brief constructor creating a local function and binding it to an
      *         entity
@@ -213,12 +205,10 @@ namespace Dune
      *                     belong to
      *  \param[in] entity  entity for initialize the local function to
      */
-    inline ConstLocalFunction ( const DiscreteFunctionType &df,
-                                const EntityType &entity )
-    : BaseType( df.space(), entity )
-    , discreteFunction_( df )
-    {
-    }
+    ConstLocalFunction ( const DiscreteFunctionType &df, const EntityType &entity )
+    : BaseType( df.space(), entity ),
+      discreteFunction_( df )
+    {}
 
     /** \brief copy constructor
      *
@@ -231,16 +221,15 @@ namespace Dune
      * 
      *  \param[in]  other  TemporaryLocalFunction to copy
      */
-    inline ConstLocalFunction ( const ThisType &other )
-    : BaseType( other )
-    , discreteFunction_( other.discreteFunction_ )
-    {
-    }
+    ConstLocalFunction ( const ThisType &other )
+    : BaseType( other ),
+      discreteFunction_( other.discreteFunction_ )
+    {}
 
-    using BaseType :: operator [];
+    using BaseType::operator [];
 
     /** \copydoc Dune::LocalFunction :: init */
-    inline void init ( const EntityType &entity )
+    void init ( const EntityType &entity )
     {
       asImp().init( entity, discreteFunction_ );
     }
@@ -257,12 +246,12 @@ namespace Dune
       return asImp()[ num ];
     }
 
-    using BaseType :: clear;
-    using BaseType :: asImp; 
-    using BaseType :: assign; 
-    using BaseType :: operator +=;
-    using BaseType :: operator -=;
-    using BaseType :: axpy;
+    using BaseType::clear;
+    using BaseType::asImp; 
+    using BaseType::assign; 
+    using BaseType::operator +=;
+    using BaseType::operator -=;
+    using BaseType::axpy;
   };
 
 
@@ -315,16 +304,6 @@ namespace Dune
   protected:
     typedef DynamicArray< RangeFieldType, ArrayAllocator > DofArrayType;
 
-  protected:
-    const DiscreteFunctionSpaceType &discreteFunctionSpace_;
-    const EntityType *entity_;
-
-    BaseFunctionSetType baseFunctionSet_;
-
-    DofArrayType dofs_;
-
-    bool needCheckGeometry_;
-
   public:
     /** \brief constructor creating a local function without binding it to an 
      *         entity
@@ -340,8 +319,7 @@ namespace Dune
      *  \param[in] dfSpace discrete function space the local function shall
      *                     belong to
      */
-    inline explicit
-    TemporaryLocalFunctionImpl ( const DiscreteFunctionSpaceType &dfSpace );
+    explicit TemporaryLocalFunctionImpl ( const DiscreteFunctionSpaceType &dfSpace );
     
     /** \brief constructor creating a local function and binding it to an
      *         entity
@@ -356,8 +334,8 @@ namespace Dune
      *                     belong to
      *  \param[in] entity  entity for initialize the local function to
      */
-    inline TemporaryLocalFunctionImpl ( const DiscreteFunctionSpaceType &dfSpace,
-                                        const EntityType &entity );
+    TemporaryLocalFunctionImpl ( const DiscreteFunctionSpaceType &dfSpace,
+                                 const EntityType &entity );
 
     /** \brief copy constructor
      *
@@ -370,22 +348,22 @@ namespace Dune
      * 
      *  \param[in]  other  TemporaryLocalFunction to copy
      */
-    inline TemporaryLocalFunctionImpl ( const ThisType &other );
+    TemporaryLocalFunctionImpl ( const ThisType &other );
 
     /** \copydoc Dune::LocalFunction::operator[]( const int num ) const */
-    inline const RangeFieldType &operator[] ( const int num ) const;
+    const RangeFieldType &operator[] ( const int num ) const;
 
     /** \copydoc Dune::LocalFunction::operator[]( const int num ) */
-    inline RangeFieldType &operator[] ( const int num );
+    RangeFieldType &operator[] ( const int num );
 
     /** \copydoc Dune::LocalFunction::order() const */
-    inline int order () const;
+    int order () const;
 
     /** \copydoc Dune::LocalFunction::baseFunctionSet() const */
-    inline const BaseFunctionSetType &baseFunctionSet () const;
+    const BaseFunctionSetType &baseFunctionSet () const;
 
     /** \copydoc Dune::LocalFunction::entity() const */
-    inline const EntityType &entity () const;
+    const EntityType &entity () const;
 
     /** \brief initialize the local function for an entity
      *
@@ -399,7 +377,7 @@ namespace Dune
      *
      *  \param[in] entity entity to bind the local function to
      */
-    inline void init ( const EntityType &entity );
+    void init ( const EntityType &entity );
 
     /** \brief initialize the local function for an entity
      *
@@ -417,11 +395,21 @@ namespace Dune
      *
      *  \note The dofs of the discrete function are not modified in any way. 
      */
-    template <class DiscreteFunction> 
-    inline void init ( const EntityType &entity , const DiscreteFunction& discreteFunction );
+    template< class DiscreteFunction >
+    void init ( const EntityType &entity, const DiscreteFunction& discreteFunction );
 
     /** \copydoc Dune::LocalFunction::numDofs() const */
-    inline int numDofs () const;
+    int numDofs () const;
+
+  protected:
+    const DiscreteFunctionSpaceType &discreteFunctionSpace_;
+    const EntityType *entity_;
+
+    BaseFunctionSetType baseFunctionSet_;
+
+    DofArrayType dofs_;
+
+    bool needCheckGeometry_;
   };
 
 
@@ -442,24 +430,21 @@ namespace Dune
     typedef TemporaryLocalFunctionImpl< DiscreteFunctionSpaceType, ArrayAllocator >
       ObjectType;
 
-  protected:
-    const DiscreteFunctionSpaceType &discreteFunctionSpace_;
-
-  public:
-    inline explicit
-    TemporaryLocalFunctionFactory ( const DiscreteFunctionSpaceType &dfSpace )
+    explicit TemporaryLocalFunctionFactory ( const DiscreteFunctionSpaceType &dfSpace )
     : discreteFunctionSpace_( dfSpace )
-    {
-    }
+    {}
 
-    inline ObjectType *newObject () const
+    ObjectType *newObject () const
     {
       return new ObjectType( discreteFunctionSpace_ );
     }
+
+  protected:
+    const DiscreteFunctionSpaceType &discreteFunctionSpace_;
   };
 
-}
+} // namespace Dune
 
 #include "temporarylocalfunction_inline.hh"
 
-#endif
+#endif // #ifndef DUNE_FEM_TEMPORARYLOCALFUNCTION_HH
