@@ -2,7 +2,7 @@
 #define DUNE_ELEMENTPOINTLISTBASE_HH
 
 #if HAVE_DUNE_GEOMETRY
-#include <dune/geometry/genericreferenceelements.hh>
+#include <dune/geometry/referenceelements.hh>
 #else
 #include <dune/grid/common/genericreferenceelements.hh>
 #endif
