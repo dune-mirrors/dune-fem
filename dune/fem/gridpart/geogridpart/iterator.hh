@@ -1,7 +1,7 @@
 #ifndef DUNE_FEM_GRIDPART_GEOGRIDPART_ITERATOR_HH
 #define DUNE_FEM_GRIDPART_GEOGRIDPART_ITERATOR_HH
 
-#include <dune/geometry/genericreferenceelements.hh>
+#include <dune/geometry/referenceelements.hh>
 
 #include <dune/grid/common/entityiterator.hh>
 
