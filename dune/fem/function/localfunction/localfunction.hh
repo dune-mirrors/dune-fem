@@ -351,7 +351,7 @@ namespace Dune
     template< class QuadratureType, class VectorType >
     void axpyQuadrature ( const QuadratureType &quad, const VectorType &factorVec )
     {
-      assert( quad.nop() > 0 );
+      assert( factorVec.size() > 0 );
       axpyQuadrature( quad, factorVec, factorVec[ 0 ] );
     }
 
@@ -367,7 +367,7 @@ namespace Dune
     template< class QuadratureType, class VectorType  >
     void evaluateQuadrature( const QuadratureType &quad, VectorType &result ) const
     {
-      assert( quad.nop() > 0 );
+      assert( result.size() > 0 );
       evaluateQuadrature( quad, result, result[ 0 ] );
     }
 
