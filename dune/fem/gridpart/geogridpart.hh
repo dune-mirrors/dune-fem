@@ -205,7 +205,7 @@ namespace Dune
 
       GridType &grid ()
       { 
-        return remove_const< GridType & >( hostGridPart().grid() );
+        return const_cast< GridType & >( hostGridPart().grid() );
       }
 
       const IndexSetType &indexSet () const
@@ -266,7 +266,7 @@ namespace Dune
                          InterfaceType iftype, CommunicationDirection dir ) const
       {
         typedef CommDataHandleIF< DataHandle, Data >  HostHandleType;
-        GeoDataHandle< GridPartFamily, HostHandleType > handleWrapper( handle );
+        GeoDataHandle< GridPartFamily, HostHandleType > handleWrapper( coordFunction_, handle );
         hostGridPart().communicate( handleWrapper, iftype, dir );
       }
 
