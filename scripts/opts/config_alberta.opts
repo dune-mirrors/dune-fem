@@ -1,6 +1,7 @@
 MODULEDIR=/hosts/raid5/aragorn/dune/modules/$HOSTTYPE
 CONFIGURE_FLAGS="\
 --disable-documentation \
+--enable-experimental-grid-extensions \
 --prefix=/hosts/gandalf/raid5/morgoth/dune/src/dune \
 --with-alberta=$MODULEDIR/alberta \
 --x-includes=/usr/X11R6/include \

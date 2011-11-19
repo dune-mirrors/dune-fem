@@ -1,3 +1,4 @@
 CONFIGURE_FLAGS="--disable-documentation \
---enable-fieldvector-size-is-method"
+--enable-fieldvector-size-is-method \
+--enable-experimental-grid-extensions"
 MAKE_FLAGS=
