@@ -4,6 +4,7 @@ MODULEDIR=/hosts/raid5/aragorn/dune/modules/$HOSTTYPE
 CONFIGURE_FLAGS="\
 --enable-experimental-grid-extensions \
 --enable-fieldvector-size-is-method \
+--without-gmp \
 --prefix=/hosts/gandalf/raid5/morgoth/dune/src/dune \
 --with-alugrid=$MODULEDIR/alugrid \
 --with-alberta=$MODULEDIR/alberta \

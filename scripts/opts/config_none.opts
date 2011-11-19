@@ -2,6 +2,7 @@ CONFIGURE_FLAGS="\
 --disable-documentation \
 --enable-fieldvector-size-is-method \
 --enable-experimental-grid-extensions \
+--without-gmp \
 --prefix=/hosts/gandalf/raid5/morgoth/dune/src/dune"
 MAKE_FLAGS=
 
