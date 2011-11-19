@@ -1,4 +1,8 @@
-#undef NDEBUG
+#if defined ALUGRID_CUBE || defined ALUGRID_SIMPLEX 
+#if GRIDDIM == 3 
+#define COMPILE_TEST 
+#endif
+#endif
 
 #include <config.h>
 #include <iostream>
@@ -30,10 +34,10 @@ using namespace Dune;
   const int polOrder = 1;
 #endif
 
-#if HAVE_ALUGRID
+#ifdef COMPILE_TEST
 #include <dune/grid/alugrid.hh>
 #include <dune/grid/io/file/dgfparser/dgfalu.hh>
-  typedef Dune::ALUCubeGrid< 3, 3 > MyGridType;
+  typedef Dune :: GridSelector :: GridType MyGridType;
 
   typedef AdaptiveLeafGridPart< MyGridType > HostGridPartType;
   typedef Fem::RadialFilter< MyGridType::ctype, MyGridType::dimensionworld > BasicFilterType;
