@@ -1,9 +1,8 @@
-#ifndef DUNE_LOCALFUNCTIONADAPTER_HH
-#define DUNE_LOCALFUNCTIONADAPTER_HH
+#ifndef DUNE_FEM_LOCALFUNCTIONADAPTER_HH
+#define DUNE_FEM_LOCALFUNCTIONADAPTER_HH
 
 #include <set>
 
-//- local includes 
 #include <dune/fem/function/common/discretefunction.hh>
 
 namespace Dune
@@ -19,37 +18,47 @@ namespace Dune
       instance.
       @{
   */
-  template <class EvalImp>
+  template< class LocalFunctionImpl >
   class LocalFunctionAdapter;
+
+  template< class LocalFunctionImpl >
+  class LocalFunctionAdapterLocalFunction;
+
+  //! identifier to local function has initialize feature 
+  struct LocalFunctionAdapterHasInitialize {} ;
+
 
 
   //! traits of DiscreteFunctionAdapter 
-  template <class EvalImp>
+  template< class LocalFunctionImpl >
   struct LocalFunctionAdapterTraits 
   {
-    typedef typename EvalImp :: FunctionSpaceType FunctionSpaceType;
+    typedef typename LocalFunctionImpl::FunctionSpaceType FunctionSpaceType;
+    typedef typename LocalFunctionImpl::GridPartType GridPartType;
+
+    static const bool localFunctionHasInitialize = Conversion< LocalFunctionImpl, LocalFunctionAdapterHasInitialize >::exists;
+
     typedef typename FunctionSpaceType::RangeFieldType RangeFieldType;
     typedef typename FunctionSpaceType::DomainFieldType DomainFieldType;
     typedef typename FunctionSpaceType::RangeType RangeType;
     typedef typename FunctionSpaceType::DomainType DomainType;
     typedef typename FunctionSpaceType::JacobianRangeType JacobianRangeType;
     typedef typename FunctionSpaceType::HessianRangeType HessianRangeType;
-    typedef typename EvalImp :: GridPartType GridPartType;
+
     typedef typename GridPartType :: GridType GridType;
-    typedef typename GridType :: template Codim<0> :: Entity EntityType;
+    typedef typename GridPartType::template Codim< 0 >::EntityType EntityType;
     //! type of iterator 
-    typedef typename GridPartType :: template Codim<0> :: IteratorType IteratorType; 
+    typedef typename GridPartType::template Codim< 0 >::IteratorType IteratorType;
     //! type of IndexSet 
     typedef typename GridPartType :: IndexSetType IndexSetType; 
-    typedef DiscreteFunctionSpaceAdapter<FunctionSpaceType,GridPartType>
-            DiscreteFunctionSpaceType;
 
-    typedef LocalFunctionAdapter<EvalImp> DiscreteFunctionType;
-    typedef typename DiscreteFunctionType::LocalFunctionType LocalFunctionType;
+    typedef DiscreteFunctionSpaceAdapter< FunctionSpaceType, GridPartType > DiscreteFunctionSpaceType;
+
+    typedef LocalFunctionAdapter< LocalFunctionImpl > DiscreteFunctionType;
+    typedef LocalFunctionAdapterLocalFunction< LocalFunctionImpl > LocalFunctionType;
   };
 
-  //! identifier to local function has initialize feature 
-  struct LocalFunctionAdapterHasInitialize {} ;
+
 
   /** \brief LocalFunctionAdapter wrapped a class with a local evaluate method
    *         into a grid function. 
@@ -58,7 +67,7 @@ namespace Dune
    *  EvalImp which holds the evaluate method for the local function:
    *    template< class PointType >
    *    EvalImp::evaluate(const PointType& x,RangeType& val)
-   *  Required type in EvalImp are:
+   *  Required type in LocalFunctionImpl are:
    *  FunctionSpaceType which is derived from the functionspace interface provides
    *                    and provides the RangeType 
    *  GridPartType providing the EntityType
@@ -67,17 +76,19 @@ namespace Dune
    */
   template< class LocalFunctionImpl >
   class LocalFunctionAdapter
-    : public Fem::Function< typename LocalFunctionImpl::FunctionSpaceType, LocalFunctionAdapter< LocalFunctionImpl > >
-    , public HasLocalFunction
+  : public Fem::Function< typename LocalFunctionImpl::FunctionSpaceType, LocalFunctionAdapter< LocalFunctionImpl > >,
+    public HasLocalFunction
   {
     typedef LocalFunctionAdapter< LocalFunctionImpl > ThisType;
     typedef Fem::Function< typename LocalFunctionImpl::FunctionSpaceType, ThisType > BaseType;
 
+    friend class LocalFunctionAdapterLocalFunction< LocalFunctionImpl >;
+
   public:  
-    typedef ThisType  DiscreteFunctionType ;
+    typedef ThisType  DiscreteFunctionType;
 
     //! Evaluate class
-    typedef LocalFunctionImpl  LocalFunctionImplType ;
+    typedef LocalFunctionImpl LocalFunctionImplType;
 
     //! type of function 
     typedef typename BaseType::FunctionType FunctionType;
@@ -85,49 +96,39 @@ namespace Dune
     //! traits class
     typedef LocalFunctionAdapterTraits< LocalFunctionImplType > Traits;
 
-    //! type of grid part 
-    typedef typename LocalFunctionImplType::GridPartType GridPartType;
+    //! type of grid part
+    typedef typename Traits::GridPartType GridPartType;
     
-    //! type of discrete function
-    typedef DiscreteFunctionSpaceAdapter< typename LocalFunctionImplType::FunctionSpaceType,
-                                          GridPartType >
-      DiscreteFunctionSpaceType;
+    //! type of discrete function space
+    typedef typename Traits::DiscreteFunctionSpaceType DiscreteFunctionSpaceType;
 
-    //! type of grid 
-    typedef typename DiscreteFunctionSpaceType :: GridType GridType;
-    //! domain type (from function space)
-    typedef typename DiscreteFunctionSpaceType::DomainFieldType DomainFieldType ;
-    //! range type (from function space)
-    typedef typename DiscreteFunctionSpaceType::RangeFieldType RangeFieldType ;
-    //! domain type (from function space)
-    typedef typename DiscreteFunctionSpaceType::DomainType DomainType ;
-    //! range type (from function space)
-    typedef typename DiscreteFunctionSpaceType::RangeType RangeType ;
-    //! jacobian type (from function space)
-    typedef typename DiscreteFunctionSpaceType::JacobianRangeType 
-            JacobianRangeType;
+    //! type of grid
+    typedef typename Traits::GridType GridType;
+    //! domain type
+    typedef typename Traits::DomainFieldType DomainFieldType ;
+    //! range type
+    typedef typename Traits::RangeFieldType RangeFieldType ;
+    //! domain type
+    typedef typename Traits::DomainType DomainType;
+    //! range type
+    typedef typename Traits::RangeType RangeType;
+    //! jacobian type
+    typedef typename Traits::JacobianRangeType JacobianRangeType;
     //! type of codim 0 entity
-    typedef typename GridType :: template Codim<0> :: Entity EntityType; 
+    typedef typename Traits::EntityType EntityType; 
 
-  private:
-    struct LocalFunction;
-  public:
     //! type of local function to export 
-    typedef LocalFunction LocalFunctionType; 
+    typedef typename Traits::LocalFunctionType LocalFunctionType; 
 
   protected:
     //! set of created local functions  
-    typedef std::set< LocalFunctionType* > LocalFunctionListType; 
-
-    enum { localFunctionHasInitialize = 
-      Conversion< LocalFunctionImplType, LocalFunctionAdapterHasInitialize > :: exists };
+    typedef std::set< LocalFunctionType * > LocalFunctionListType; 
 
     template <class ArgumentType, bool hasInit > 
     struct LocalFunctionInitializer 
     {
       static void init( const ArgumentType& , LocalFunctionListType& ) 
-      {
-      }
+      {}
     };
 
     template <class ArgumentType> 
@@ -157,11 +158,17 @@ namespace Dune
       // store arg here, this is a tuple of discrete functions 
       // that has to be copied 
       const ArgType arg_;
+      const double time_;
+
       // constructor storing argument  
-      ArgumentInitializer( const ArgType& arg ) : arg_( arg ) {}
+      ArgumentInitializer( const ArgType& arg, const double time )
+      : arg_( arg ),
+        time_( time )
+      {}
+
       virtual void initialize( LocalFunctionType* lf ) const 
       {
-        lf->initialize( arg_ );
+        lf->initialize( arg_, time_ );
       }
     };
 
@@ -265,15 +272,15 @@ namespace Dune
     }
 
     //! initialize local function with argument (see insertfunctionpass.hh)
-    template <class ArgumentType>
-    void initialize( const ArgumentType& arg )
+    template< class ArgumentType >
+    void initialize( const ArgumentType &arg, const double time )
     {
-      if( localFunctionHasInitialize )
+      if( Traits::localFunctionHasInitialize )
       {
         delete argInitializer_ ;
         // makes a copy of arg, which is a tuple of discrete functions 
-        argInitializer_ = new ArgumentInitializer< ArgumentType > ( arg );
-        LocalFunctionInitializer< ArgumentIF, localFunctionHasInitialize > :: init( *argInitializer_, lfList_ );
+        argInitializer_ = new ArgumentInitializer< ArgumentType >( arg, time );
+        LocalFunctionInitializer< ArgumentIF, Traits::localFunctionHasInitialize > :: init( *argInitializer_, lfList_ );
       }
       else
       {
@@ -284,7 +291,7 @@ namespace Dune
     //! add LocalFunction to list of local functions 
     void registerLocalFunction( LocalFunctionType* lf ) const 
     {
-      if( localFunctionHasInitialize )
+      if( Traits::localFunctionHasInitialize )
       {
         if( argInitializer_ ) 
           argInitializer_->initialize( lf );
@@ -295,7 +302,7 @@ namespace Dune
     //! remove LocalFunction to list of local functions 
     void deleteLocalFunction( LocalFunctionType* lf ) const 
     {
-      if( localFunctionHasInitialize )
+      if( Traits::localFunctionHasInitialize )
       {
         lfList_.erase( lf );
       }
@@ -303,7 +310,7 @@ namespace Dune
 
   protected:    
     DiscreteFunctionSpaceType space_; 
-    LocalFunctionImplType& localFunctionImpl_;
+    LocalFunctionImplType &localFunctionImpl_;
     mutable LocalFunctionListType lfList_;
     const ArgumentIF* argInitializer_ ;
     const std::string name_;
@@ -311,23 +318,33 @@ namespace Dune
 
 
   template< class LocalFunctionImpl >
-  struct LocalFunctionAdapter< LocalFunctionImpl >::LocalFunction
+  class LocalFunctionAdapterLocalFunction
   {
-    //! domain type (from function space)
-    typedef typename DiscreteFunctionSpaceType::DomainFieldType DomainFieldType ;
-    //! range type (from function space)
-    typedef typename DiscreteFunctionSpaceType::RangeFieldType RangeFieldType ;
-    //! domain type (from function space)
-    typedef typename DiscreteFunctionSpaceType::DomainType DomainType ;
-    //! range type (from function space)
-    typedef typename DiscreteFunctionSpaceType::RangeType RangeType ;
-    //! jacobian type (from function space)
-    typedef typename DiscreteFunctionSpaceType::JacobianRangeType JacobianRangeType;
-    //! hessian type (from function space)
-    typedef typename DiscreteFunctionSpaceType::HessianRangeType HessianRangeType;
+    typedef LocalFunctionAdapterLocalFunction< LocalFunctionImpl > ThisType;
 
+  public:
     //! type of local function implementation 
     typedef LocalFunctionImpl LocalFunctionImplType;
+
+    //! type of the traits class
+    typedef LocalFunctionAdapterTraits< LocalFunctionImplType > Traits;
+
+    //! domain type
+    typedef typename Traits::DomainFieldType DomainFieldType;
+    //! range type
+    typedef typename Traits::RangeFieldType RangeFieldType;
+    //! domain type
+    typedef typename Traits::DomainType DomainType;
+    //! range type
+    typedef typename Traits::RangeType RangeType;
+    //! jacobian type
+    typedef typename Traits::JacobianRangeType JacobianRangeType;
+    //! hessian type
+    typedef typename Traits::HessianRangeType HessianRangeType;
+
+
+    typedef typename Traits::DiscreteFunctionType DiscreteFunctionType;
+    typedef typename Traits::EntityType EntityType;
 
     // default is reference 
     template <int, bool hasInit > 
@@ -343,37 +360,36 @@ namespace Dune
       typedef LocalFunctionImplType Type;       
     };
 
-
     //! constructor initializing local function 
-    LocalFunction(const EntityType& en, const ThisType& a)
-    : adapter_( a ),
-      localFunctionImpl_(a.localFunctionImpl_)
+    LocalFunctionAdapterLocalFunction ( const EntityType &entity, const DiscreteFunctionType &adapter )
+    : adapter_( adapter ),
+      localFunctionImpl_( adapter.localFunctionImpl_ )
     {
       // add local function to list
       adapter_.registerLocalFunction( this );
-      localFunctionImpl_.init(en);
+      localFunctionImpl_.init( entity );
     }
 
     //! constructor 
-    LocalFunction(const ThisType& a)
-    : adapter_( a ),
-      localFunctionImpl_(a.localFunctionImpl_) 
+    explicit LocalFunctionAdapterLocalFunction ( const DiscreteFunctionType &adapter )
+    : adapter_( adapter ),
+      localFunctionImpl_( adapter.localFunctionImpl_ )
     {
       // add local function to list
       adapter_.registerLocalFunction( this );
     }
 
     //! copy constructor 
-    LocalFunction(const LocalFunction& org) 
-    : adapter_( org.adapter_ ),
-      localFunctionImpl_(org.localFunctionImpl_) 
+    LocalFunctionAdapterLocalFunction ( const ThisType &other )
+    : adapter_( other.adapter_ ),
+      localFunctionImpl_( other.localFunctionImpl_ )
     {
       // add local function to list
       adapter_.registerLocalFunction( this );
     }
 
     //! destructor 
-    ~LocalFunction() 
+    ~LocalFunctionAdapterLocalFunction ()
     {
       // remove local function from list
       adapter_.deleteLocalFunction( this );
@@ -414,9 +430,9 @@ namespace Dune
     } 
 
     template <class ArgumentType>
-    void initialize( const ArgumentType& arg )
+    void initialize ( const ArgumentType& arg, const double time )
     {
-      localFunctionImpl_.initialize( arg );
+      localFunctionImpl_.initialize( arg, time );
     }
 
   protected:  
@@ -439,14 +455,13 @@ namespace Dune
     }
 
   protected:
-    const ThisType& adapter_;
-    typedef typename LocalFuncType<0, 
-       localFunctionHasInitialize> :: Type  LocalFuncStorageType;
-    LocalFuncStorageType  localFunctionImpl_;
+    const DiscreteFunctionType &adapter_;
+    typedef typename LocalFuncType< 0, Traits::localFunctionHasInitialize >::Type LocalFuncStorageType;
+    LocalFuncStorageType localFunctionImpl_;
   };
 
-} // end namespace Dune
+} // namespace Dune
 
 //@}
 
-#endif // #ifndef DUNE_DISCRETEFUNCTIONADAPTER_HH
+#endif // #ifndef DUNE_FEM_LOCALFUNCTIONADAPTER_HH
