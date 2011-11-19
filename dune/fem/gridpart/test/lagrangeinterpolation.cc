@@ -33,126 +33,129 @@ using namespace Dune;
 #if HAVE_ALUGRID
 #include <dune/grid/alugrid.hh>
 #include <dune/grid/io/file/dgfparser/dgfalu.hh>
-typedef Dune::ALUCubeGrid< 3, 3 > MyGridType;
-#else
-#error TEST SHOULD USE ALUGRID BECAUSE IT TESTS THE FILTEREDGP IN PARALLEL
-#endif
+  typedef Dune::ALUCubeGrid< 3, 3 > MyGridType;
 
-typedef AdaptiveLeafGridPart< MyGridType > HostGridPartType;
-typedef Fem::RadialFilter< MyGridType::ctype, MyGridType::dimensionworld > BasicFilterType;
-typedef Fem::BasicFilterWrapper< HostGridPartType, BasicFilterType > FilterType;
-typedef Fem::FilteredGridPart< HostGridPartType, FilterType, true > GridPartType;
-// typedef AdaptiveLeafGridPart< MyGridType > GridPartType;
+  typedef AdaptiveLeafGridPart< MyGridType > HostGridPartType;
+  typedef Fem::RadialFilter< MyGridType::ctype, MyGridType::dimensionworld > BasicFilterType;
+  typedef Fem::BasicFilterWrapper< HostGridPartType, BasicFilterType > FilterType;
+  typedef Fem::FilteredGridPart< HostGridPartType, FilterType, true > GridPartType;
+  // typedef AdaptiveLeafGridPart< MyGridType > GridPartType;
 
-typedef FunctionSpace< double, double, MyGridType::dimensionworld, 1 > FunctionSpaceType;
+  typedef FunctionSpace< double, double, MyGridType::dimensionworld, 1 > FunctionSpaceType;
 
-typedef LagrangeDiscreteFunctionSpace< FunctionSpaceType, GridPartType, polOrder >
-  DiscreteFunctionSpaceType;
+  typedef LagrangeDiscreteFunctionSpace< FunctionSpaceType, GridPartType, polOrder >
+    DiscreteFunctionSpaceType;
 
-typedef AdaptiveDiscreteFunction< DiscreteFunctionSpaceType > DiscreteFunctionType;
+  typedef AdaptiveDiscreteFunction< DiscreteFunctionSpaceType > DiscreteFunctionType;
 
-typedef ExactSolution< FunctionSpaceType > ExactSolutionType;
+  typedef ExactSolution< FunctionSpaceType > ExactSolutionType;
 
 
 
-void writeOut ( VirtualOutStream out, const DiscreteFunctionType &solution )
-{
-  out << solution;
-  out.flush();
-}
-
-void readBack ( VirtualInStream in, DiscreteFunctionType &solution )
-{
-  solution.clear();
-  in >> solution;
-}
-
-template <class HGridType>
-class TestGrid
-{
-  typedef TestGrid<HGridType> ThisType;
-
-protected:
-  TestGrid ()
-  : gridptr_( macroGridName() )
+  void writeOut ( VirtualOutStream out, const DiscreteFunctionType &solution )
   {
-    gridptr_->loadBalance();
+    out << solution;
+    out.flush();
   }
 
-private:
-  TestGrid ( const ThisType & );
-
-  ThisType &operator= ( const ThisType & );
-
-public:
-  static ThisType &instance ()
+  void readBack ( VirtualInStream in, DiscreteFunctionType &solution )
   {
-    static ThisType staticInstance;
-    return staticInstance;
-  }
-
-  static HGridType &grid ()
-  {
-    return *(instance().gridptr_);
-  }
-
-  static int refineStepsForHalf ()
-  {
-    return DGFGridInfo< HGridType >::refineStepsForHalf();
-  }
-
-protected:
-  static std::string macroGridName ()
-  {
-    std::ostringstream s;
-    s << HGridType::dimension << "dgrid.dgf";
-    return s.str();
-  }
-
-  GridPtr< HGridType > gridptr_;
-};
-
-
-int main(int argc, char ** argv) 
-{
-  MPIManager :: initialize( argc, argv );
-  try
-  {
-    MyGridType &grid = TestGrid<MyGridType> :: grid();
-    const int step = TestGrid<MyGridType> :: refineStepsForHalf();
-    HostGridPartType hostGridPart (grid );
-    BasicFilterType::GlobalCoordinateType center( 0 );
-    BasicFilterType basicFilter( center, .25 );
-    FilterType filter( hostGridPart, basicFilter );
-    GridPartType gridPart( hostGridPart, filter );
-    // GridPartType gridPart ( grid );
-
-    grid.globalRefine( 2*step );
-
-    DiscreteFunctionSpaceType discreteFunctionSpace( gridPart );
-    ExactSolutionType f;
-    DiscreteFunctionType solution( "solution", discreteFunctionSpace );
     solution.clear();
+    in >> solution;
+  }
 
-    std :: cout << "maxDofs = " << discreteFunctionSpace.mapper().maxNumDofs() << std :: endl;
+  template <class HGridType>
+  class TestGrid
+  {
+    typedef TestGrid<HGridType> ThisType;
 
-    //! perform Lagrange interpolation
-    LagrangeInterpolation< DiscreteFunctionType >
-      :: interpolateFunction( f, solution );
-    solution.communicate();
+  protected:
+    TestGrid ()
+    : gridptr_( macroGridName() )
+    {
+      gridptr_->loadBalance();
+    }
 
-    // output to vtk file
-    VTKIO<GridPartType> vtkWriter(gridPart);
-    vtkWriter.addVertexData(solution);
-    vtkWriter.pwrite("vtxprojection",
-                      Parameter::commonOutputPath().c_str(),"",
-                      Dune::VTKOptions::ascii);
+  private:
+    TestGrid ( const ThisType & );
+
+    ThisType &operator= ( const ThisType & );
+
+  public:
+    static ThisType &instance ()
+    {
+      static ThisType staticInstance;
+      return staticInstance;
+    }
+
+    static HGridType &grid ()
+    {
+      return *(instance().gridptr_);
+    }
+
+    static int refineStepsForHalf ()
+    {
+      return DGFGridInfo< HGridType >::refineStepsForHalf();
+    }
+
+  protected:
+    static std::string macroGridName ()
+    {
+      std::ostringstream s;
+      s << HGridType::dimension << "dgrid.dgf";
+      return s.str();
+    }
+
+    GridPtr< HGridType > gridptr_;
+  };
+
+
+  int main(int argc, char ** argv) 
+  {
+    MPIManager :: initialize( argc, argv );
+    try
+    {
+      MyGridType &grid = TestGrid<MyGridType> :: grid();
+      const int step = TestGrid<MyGridType> :: refineStepsForHalf();
+      HostGridPartType hostGridPart (grid );
+      BasicFilterType::GlobalCoordinateType center( 0 );
+      BasicFilterType basicFilter( center, .25 );
+      FilterType filter( hostGridPart, basicFilter );
+      GridPartType gridPart( hostGridPart, filter );
+      // GridPartType gridPart ( grid );
+
+      grid.globalRefine( 2*step );
+
+      DiscreteFunctionSpaceType discreteFunctionSpace( gridPart );
+      ExactSolutionType f;
+      DiscreteFunctionType solution( "solution", discreteFunctionSpace );
+      solution.clear();
+
+      std :: cout << "maxDofs = " << discreteFunctionSpace.mapper().maxNumDofs() << std :: endl;
+
+      //! perform Lagrange interpolation
+      LagrangeInterpolation< DiscreteFunctionType >
+        :: interpolateFunction( f, solution );
+      solution.communicate();
+
+      // output to vtk file
+      VTKIO<GridPartType> vtkWriter(gridPart);
+      vtkWriter.addVertexData(solution);
+      vtkWriter.pwrite("vtxprojection",
+                        Parameter::commonOutputPath().c_str(),"",
+                        Dune::VTKOptions::ascii);
+      return 0;
+    }
+    catch( Exception e )
+    {
+      std :: cerr << e.what() << std :: endl;
+      return 1;
+    }
+  }
+#else 
+  // no ALUGrid, no test 
+  int main(int argc, char ** argv) 
+  {
     return 0;
   }
-  catch( Exception e )
-  {
-    std :: cerr << e.what() << std :: endl;
-    return 1;
-  }
-}
-
+#endif
