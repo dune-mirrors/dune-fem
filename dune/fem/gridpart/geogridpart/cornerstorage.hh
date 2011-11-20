@@ -70,7 +70,7 @@ namespace Dune
 
       unsigned int numCorners () const
       {
-        return dimRange * hostEntity_.template count< dimension >();
+        return hostEntity_.template count< dimension >();
       }
 
     private:
