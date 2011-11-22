@@ -96,18 +96,17 @@ namespace Dune
 
   //! Key for Mapper singleton list 
   template< class GridPartImp, class LagrangePointSetMapImp >
-  class LagrangeMapperSingletonKey 
+  struct LagrangeMapperSingletonKey 
   {
-    const GridPartImp & gridPart_; 
-    mutable LagrangePointSetMapImp& pointSet_;
-    const int polOrd_;
-  public:
     //! constructor taking index set and numDofs 
-    LagrangeMapperSingletonKey(const GridPartImp & gridPart, 
-                               LagrangePointSetMapImp& pointSet,
-                               const int polOrd)
-      : gridPart_(gridPart) ,  pointSet_(pointSet) , polOrd_(polOrd) 
+    LagrangeMapperSingletonKey ( const GridPartImp & gridPart, 
+                                 LagrangePointSetMapImp& pointSet,
+                                 const int polOrd)
+    : gridPart_( gridPart ),
+      pointSet_( pointSet ),
+      polOrd_( polOrd )
     {}
+
     //! copy constructor 
     LagrangeMapperSingletonKey(const LagrangeMapperSingletonKey &org) 
       : gridPart_(org.gridPart_) , pointSet_(org.pointSet_), polOrd_(org.polOrd_)
@@ -124,6 +123,10 @@ namespace Dune
     //! return lagrange point map set  
     LagrangePointSetMapImp& pointSet() const { return pointSet_; }
 
+  private:
+    const GridPartImp &gridPart_; 
+    LagrangePointSetMapImp &pointSet_;
+    const int polOrd_;
   };
 
 
