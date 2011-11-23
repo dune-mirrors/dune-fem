@@ -607,22 +607,20 @@ namespace Dune
     const DiscreteFunctionSpaceType & space_; 
 
     // is singleton per space 
-    mutable SlaveDofsType& slaveDofs_;
+    SlaveDofsType &slaveDofs_;
 
-    ParallelScalarProduct(const ThisType& org);
+    ParallelScalarProduct ( const ThisType &org );
   public:  
     //! constructor taking space 
-    ParallelScalarProduct(const DiscreteFunctionSpaceType& space) 
-      : space_(space)
-      , slaveDofs_(
-          SlaveDofsProviderType::getObject(KeyType(space_,space_.blockMapper()))) 
-    {
-    }
+    ParallelScalarProduct ( const DiscreteFunctionSpaceType &space )
+    : space_( space ),
+      slaveDofs_( SlaveDofsProviderType::getObject( KeyType( space_, space_.blockMapper() ) ) )
+    {}
 
     //! remove object comm
-    ~ParallelScalarProduct() 
+    ~ParallelScalarProduct () 
     {
-      SlaveDofsProviderType::removeObject(slaveDofs_);
+      SlaveDofsProviderType::removeObject( slaveDofs_ );
     }
 
     //! return build proxy for setup slave dofs 

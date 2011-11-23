@@ -320,7 +320,7 @@ private:
   DofStorageInterface* memObject_;
 
   //! the dofs stored in an array
-  mutable DofStorageType& dofVec_;
+  DofStorageType &dofVec_;
 
   //! leak pointer converting block vector to straight vector 
   LeakPointerType leakPtr_; 
