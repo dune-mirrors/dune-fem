@@ -138,27 +138,25 @@ namespace Dune
       dimension = n * m 
     };
 
-    FieldMatrixConverter(InteralVectorType& v) 
-      : vec_( v )
-  #ifndef NDEBUG 
+    FieldMatrixConverter ( InteralVectorType &v )
+    : vec_( &v )
+#ifndef NDEBUG 
       , mutableVec_( true )
-  #endif
-    {
-    }
+#endif
+    {}
 
-    FieldMatrixConverter(const InteralVectorType& v) 
-      : vec_(const_cast<InteralVectorType&> (v) )
-  #ifndef NDEBUG 
+    FieldMatrixConverter ( const InteralVectorType &v )
+    : vec_( const_cast< InteralVectorType * >( &v ) )
+#ifndef NDEBUG 
       , mutableVec_( false )
-  #endif
-    {
-    }
+#endif
+    {}
 
-    FieldMatrixConverter(const FieldMatrixConverter& other) 
-      : vec_( other.vec_ )
-  #ifndef NDEBUG 
+    FieldMatrixConverter ( const FieldMatrixConverter &other )
+    : vec_( other.vec_ )
+#ifndef NDEBUG 
       , mutableVec_( other.mutableVec_ )
-  #endif
+#endif
     {}
 
 #if 0
@@ -243,7 +241,7 @@ namespace Dune
       {
         for(size_t j=0; j<cols; ++j)
         {
-          vec_[ i * cols + j ] = matrix[ i ][ j ];
+          (*vec_)[ i * cols + j ] = matrix[ i ][ j ];
         }
       }
       return *this;
@@ -255,7 +253,7 @@ namespace Dune
       {
         for(size_t j=0; j<cols; ++j)
         {
-          vec_[ i * cols + j ] += matrix[ i ][ j ];
+          (*vec_)[ i * cols + j ] += matrix[ i ][ j ];
         }
       }
       return *this;
@@ -281,17 +279,17 @@ namespace Dune
     row_reference mat_access ( size_type i )
     {
       assert( i < rows );
-      return row_reference( (&vec_[ i * cols ]) );
+      return row_reference( (&(*vec_)[ i * cols ]) );
     }
 
     const_row_reference mat_access ( size_type i ) const
     {
       assert( i < rows );
-      return const_row_reference( (&vec_[ i * cols ]) );
+      return const_row_reference( (&(*vec_)[ i * cols ]) );
     }
 
   protected:
-    mutable InteralVectorType& vec_;
+    InteralVectorType *vec_;
   #ifndef NDEBUG 
     bool mutableVec_;
   #endif
