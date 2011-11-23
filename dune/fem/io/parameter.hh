@@ -851,7 +851,7 @@ namespace Dune
       const std::string &actual_value = insert( key, value );
       if( key == "fem.verbose" )
       {
-        bool verbose;
+        bool verbose = false;
         ParameterParser< bool >::parse( actual_value, verbose );
         verboseRank_ = (verbose ? MPIManager::rank() : -1);
         std::cout << "Warning: Using deprecated parameter 'fem.verbose'; "
