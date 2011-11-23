@@ -22,6 +22,8 @@ class Communicator;
 
 class Buffer
 {
+  friend class Communicator;
+
 public:
   Buffer();
   ~Buffer();
