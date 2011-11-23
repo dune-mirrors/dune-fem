@@ -340,7 +340,7 @@ public:
   }
 
 private:
-  mutable DiscreteFunctionType & df_;
+  DiscreteFunctionType & df_;
   mutable DomainFieldType weight_;
 };
 

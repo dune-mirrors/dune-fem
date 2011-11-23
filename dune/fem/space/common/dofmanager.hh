@@ -335,10 +335,10 @@ private:
   typedef DofManager<GridImp> DofManagerType;
 
   // reference to dof manager 
-  DofManagerType& dm_;
+  DofManagerType &dm_;
 
   // the dof set stores number of dofs on entity for each codim
-  mutable MapperType &mapper_;
+  MapperType &mapper_;
 
   // Array which the dofs are stored in 
   DofArrayType array_;

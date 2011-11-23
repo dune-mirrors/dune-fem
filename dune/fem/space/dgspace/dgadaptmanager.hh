@@ -158,14 +158,14 @@ public:
   }
 
   //! add discrete function to communicator 
-  template <class CommunicatorImp>
-  void addToList(CommunicatorImp& comm)
+  template< class CommunicatorImp >
+  void addToList ( CommunicatorImp &comm )
   {
-    comm.addToList(df_);
+    comm.addToList( df_ );
   }
 
 private:
-  mutable DiscreteFunctionType & df_;
+  DiscreteFunctionType &df_;
   const int quadord_;
   mutable DomainFieldType weight_;
 };

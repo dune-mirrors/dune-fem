@@ -628,13 +628,13 @@ private:
   }
   
   //! corresponding grid 
-  mutable GridType & grid_;
+  GridType &grid_;
 
   //! DofManager corresponding to grid
-  mutable DofManagerType & dm_;
+  DofManagerType &dm_;
   
   //! Local Data Writer and Reader 
-  mutable LocalDataCollectImp & ldc_;
+  LocalDataCollectImp &ldc_;
 
   //! determines whether data is read or written
   const ReadWriteType rwType_;
@@ -835,8 +835,8 @@ protected:
   }
 
 protected:
-  mutable DiscreteFunctionType & df_;
-  DofManagerType& dm_ ;
+  DiscreteFunctionType &df_;
+  DofManagerType &dm_;
   const ContainsCheck containsCheck_;
 };
 

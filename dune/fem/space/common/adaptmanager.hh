@@ -513,13 +513,13 @@ private:
  
 protected:  
   //! corresponding grid 
-  mutable GridType & grid_;
+  GridType &grid_;
 
   //! DofManager corresponding to grid
-  mutable DofManagerType & dm_;
+  DofManagerType &dm_;
   
   //! Restriction and Prolongation Operator 
-  mutable RestProlOperatorImp & rpOp_;
+  RestProlOperatorImp &rpOp_;
 
   //! time that adaptation took 
   double adaptTime_;
