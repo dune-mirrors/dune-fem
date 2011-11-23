@@ -449,8 +449,8 @@ protected:
     {
 #if HAVE_MPI
       typedef Cartesian::MultiIndex< dim > MultiIndex ;
-      MultiIndex begin = grid.gridLevel( 0 ).localMesh().begin();
-      MultiIndex end   = grid.gridLevel( 0 ).localMesh().end();
+      MultiIndex begin = grid.gridLevel( 0 ).localCube().begin();
+      MultiIndex end   = grid.gridLevel( 0 ).localCube().end();
       for( int i=0; i<dim; ++i) 
       {
         originInterior[ i ] = begin[ i ];
