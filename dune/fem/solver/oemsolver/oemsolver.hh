@@ -988,7 +988,7 @@ private:
   mutable SolverType solver_;
   
   // wrapper to fit interface of FGMRES operator 
-  mutable OperatorType & op_;
+  OperatorType &op_;
   
   typename DiscreteFunctionType::RangeFieldType epsilon_;
   int maxIter_;
@@ -1133,7 +1133,7 @@ private:
   mutable SolverType solver_;
   
   // wrapper to fit interface of FGMRES operator 
-  mutable OperatorType & op_;
+  OperatorType &op_;
   
   typename DiscreteFunctionType::RangeFieldType epsilon_;
   int maxIter_;
@@ -1277,7 +1277,7 @@ private:
   typedef PARDG::BICGSTAB SolverType;
   mutable SolverType solver_;
   // wrapper to fit interface of GMRES operator 
-  mutable OperatorType & op_; 
+  OperatorType &op_; 
   
   typename DiscreteFunctionType::RangeFieldType epsilon_;
   int maxIter_;
