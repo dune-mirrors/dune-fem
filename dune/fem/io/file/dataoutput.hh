@@ -312,7 +312,7 @@ namespace Dune
 
     //! \brief type of this class 
     const GridType& grid_;
-    mutable OutPutDataType& data_; 
+    OutPutDataType &data_; 
 
     // name for data output 
     std::string path_;
