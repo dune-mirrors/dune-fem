@@ -6,7 +6,6 @@
 #endif
 
 //#define USE_GRAPE 0
-//#define ENABLE_VTXPROJECTION 0
 
 //- Dune includes
 #include <dune/fem/io/file/iointerface.hh>
@@ -20,7 +19,7 @@
 #include <dune/fem/quadrature/cachingquadrature.hh>
 #include <dune/fem/gridpart/adaptiveleafgridpart.hh>
 
-#ifndef ENABLE_VTKPROJECTION
+#ifndef ENABLE_VTXPROJECTION
 #define ENABLE_VTXPROJECTION 1
 #endif
 
@@ -144,7 +143,7 @@ namespace Dune
     template< class Grid, class OutputTuple, int N = tuple_size< OutputTuple >::value >
     struct GridPartGetter;
 
-  #if USE_VTKWRITER
+#if USE_VTKWRITER
     template< class VTKIOType >
     struct VTKListEntry 
     {
@@ -155,15 +154,17 @@ namespace Dune
       VTKListEntry () {}
     };
 
+#if ENABLE_VTXPROJECTION
     template< class VTKIOType, class DFType >
     class VTKFunc;
 
     template< class VTKOut >
-    struct VTKOutputerDG;
+    struct VTKOutputerLagrange;
+#endif // #if ENABLE_VTXPROJECTION
 
     template< class VTKOut >
-    struct VTKOutputerLagrange;
-  #endif
+    struct VTKOutputerDG;
+#endif // #if USE_VTKWRITER
 
     template< class GridPartType >
     class GnuplotOutputer;
@@ -388,6 +389,7 @@ namespace Dune
   // -------------------
 
 #if USE_VTKWRITER
+#if ENABLE_VTXPROJECTION
   template< class GridImp, class DataImp >
   template< class VTKIOType, class DFType >
   class DataOutput< GridImp, DataImp >::VTKFunc
@@ -436,6 +438,7 @@ namespace Dune
     LagrangeSpaceType space_;
     mutable NewFunctionType *func_;
   };
+#endif // #if ENABLE_VTXPROJECTION
 #endif // #if USE_VTKWRITER
 
 
@@ -490,6 +493,7 @@ namespace Dune
   // -------------------------------
 
 #if USE_VTKWRITER
+#if ENABLE_VTXPROJECTION
   template< class GridImp, class DataImp >
   template< class VTKOut >
   struct DataOutput< GridImp, DataImp >::VTKOutputerLagrange
@@ -535,6 +539,7 @@ namespace Dune
     typedef VTKListEntry< VTKOut > VTKListEntryType;
     std::vector< VTKListEntryType * > vec_;
   };
+#endif // #if ENABLE_VTXPROJECTION
 #endif // #if USE_VTKWRITER
 
 
