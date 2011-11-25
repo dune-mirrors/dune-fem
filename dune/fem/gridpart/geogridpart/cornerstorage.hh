@@ -299,6 +299,12 @@ namespace Dune
         coords.calculate( coords_ );
       }
 
+      template< class LCFTraits >
+      explicit GeoCornerStorage ( const GeoLocalCoordVector< mydimension, GridFamily, LCFTraits > &coords )
+      {
+        coords.calculate( coords_ );
+      }
+
       explicit GeoCornerStorage ( const GeoIntersectionCoordVector< GridFamily > &coords )
       {
         coords.calculate( coords_ );

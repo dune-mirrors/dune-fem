@@ -76,34 +76,46 @@ namespace Dune
         hostIterator_( hostIterator )
       {}
 
+      // warning: copying the entity copies the wrong pointer to the host entity!
       GeoEntityPointer ( const EntityImpl &entity )
-      : entity_( EntityImpl( entity.coordFunction() ) ),
-        hostIterator_( entity.hostEntity() )
-      {}
-
-      template< class LCFTraits >
-      GeoEntityPointer ( const EntityImpl &entity, const LocalFunction< LCFTraits > &localCoordFunction )
-      : entity_( EntityImpl( entity.coordFunction ) ),
+      : entity_( entity ),
         hostIterator_( entity.hostEntity() )
       {
-        entity_.impl() = EntityImpl( entity_.impl().coordFunction(), *hostIterator(), localCoordFunction );
+        entity_.impl().setHostEntity( *hostIterator() );
       }
 
-      GeoEntityPointer ( const ThisType &other )
-      : entity_( EntityImpl( other.entity_.impl().coordFunction() ) ),
-        hostIterator_( other.hostIterator_ )
-      {}
+      // warning: copying the entity copies the wrong pointer to the host entity!
+      template< class LCFTraits >
+      GeoEntityPointer ( const EntityImpl &entity, const LocalFunction< LCFTraits > &localCoordFunction )
+      : entity_( EntityImpl( entity, localCoordFunction ) ),
+        hostIterator_( entity.hostEntity() )
+      {
+        entity_.impl().setHostEntity( *hostIterator() );
+      }
 
+      // warning: copying the entity copies the wrong pointer to the host entity!
+      GeoEntityPointer ( const ThisType &other )
+      : entity_( other.entity_.impl() ),
+        hostIterator_( other.hostIterator_ )
+      {
+        entity_.impl().setHostEntity( *hostIterator() );
+      }
+
+      // warning: copying the entity copies the wrong pointer to the host entity!
       template< class T >
       explicit GeoEntityPointer ( const GeoEntityPointer< T > &other )
-      : entity_( EntityImpl( other.entity_.impl().coordFunction() ) ),
+      : entity_( other.entity_.impl() ),
         hostIterator_( other.hostIterator_ )
-      {}
+      {
+        entity_.impl().setHostEntity( *hostIterator() );
+      }
       
+      // warning: copying the entity copies the wrong pointer to the host entity!
       ThisType &operator= ( const ThisType &other )
       {
-        entity_.impl() = EntityImpl( other.entity_.impl().coordFunction() );
+        entity_.impl() = other.entity_.impl();
         hostIterator_ = other.hostIterator_;
+        entity_.impl().setHostEntity( *hostIterator() );
         return *this;
       }
 
@@ -121,7 +133,7 @@ namespace Dune
       Entity &dereference () const
       {
         if( !entity_.impl() )
-          entity_.impl() = EntityImpl( entity_.impl().coordFunction(), *hostIterator() );
+          entity_.impl().setHostEntity( *hostIterator() );
         return entity_;
       }
       

@@ -111,6 +111,11 @@ namespace Dune
         return *coordFunction_;
       }
 
+      void setHostEntity ( const HostEntityType &hostEntity )
+      {
+        hostEntity_ = &hostEntity;
+      }
+
     private:
       const CoordFunctionType *coordFunction_;
       const HostEntityType *hostEntity_;
@@ -168,22 +173,21 @@ namespace Dune
         geo_( GeometryImpl() )
       {}
 
-      template< class LCFTraits >
-      GeoEntity ( const CoordFunctionType &coordFunction, const HostEntityType &hostEntity,
-                  const LocalFunction< LCFTraits > &localCoordFunction )
-      : coordFunction_( coordFunction ),
-        hostEntity_( &hostEntity ),
-        geo_( GeometryImpl() )
-      {
-        GeoLocalCoordVector< mydimension, GridFamily, LCFTraits > coords( localCoordFunction );
-        geo_.impl() = GeometryImpl( type(), coords );
-      }
-
       GeoEntity ( const GeoEntity &other )
       : coordFunction_( other.coordFunction_ ),
         hostEntity_( other.hostEntity_ ),
         geo_( other.geo_.impl() )
       {}
+
+      template< class LCFTraits >
+      GeoEntity ( const GeoEntity &other, const LocalFunction< LCFTraits > &localCoordFunction )
+      : coordFunction_( other.coordFunction_ ),
+        hostEntity_( other.hostEntity_ ),
+        geo_( GeometryImpl() )
+      {
+        GeoLocalCoordVector< mydimension, GridFamily, LCFTraits > coords( localCoordFunction );
+        geo_.impl() = GeometryImpl( type(), coords );
+      }
 
       const GeoEntity &operator= ( const GeoEntity &other )
       {
@@ -317,6 +321,11 @@ namespace Dune
       {
         assert( coordFunction_ );
         return *coordFunction_;
+      }
+
+      void setHostEntity ( const HostEntityType &hostEntity )
+      {
+        hostEntity_ = &hostEntity;
       }
 
     private:

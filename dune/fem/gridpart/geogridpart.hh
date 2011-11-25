@@ -273,9 +273,9 @@ namespace Dune
       template< class LCFTraits >
       typename Codim< 0 >::EntityPointerType
       exchangeGeometry ( const typename Codim< 0 >::EntityType &entity,
-                         const LocalFunction< LCFTraits > &localCoordFunction )
+                         const LocalFunction< LCFTraits > &localCoordFunction ) const
       {
-        return typename Codim< 0 >::EntityPointerImpl( entity.impl(), localCoordFunction );
+        return typename Codim< 0 >::EntityPointerType::Implementation( entity.impl(), localCoordFunction );
       }
 
       // convert a grid entity to a grid part entity ("Gurke!")

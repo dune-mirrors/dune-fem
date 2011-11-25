@@ -12,6 +12,7 @@
 #endif
 
 #include <dune/fem/function/adaptivefunction.hh>
+#include <dune/fem/function/localfunction/temporarylocalfunction.hh>
 #include <dune/fem/gridpart/adaptiveleafgridpart.hh>
 #include <dune/fem/gridpart/geogridpart.hh>
 #include <dune/fem/misc/gridwidth.hh>
@@ -162,6 +163,46 @@ public:
 };
 
 
+template< class GridPart, class LocalFunction >
+void testExchangeGeometry ( const GridPart &gridPart, LocalFunction &localFunction )
+{
+  typedef typename GridPart::template Codim< 0 >::IteratorType IteratorType;
+  typedef typename GridPart::template Codim< 0 >::EntityType EntityType;
+  typedef typename GridPart::template Codim< 0 >::EntityPointerType EntityPointerType;
+  typedef typename GridPart::template Codim< 0 >::GeometryType GeometryType;
+
+  typedef Dune::GenericReferenceElement< typename GridPart::ctype, GridPart::dimension > RefElementType;
+  typedef Dune::GenericReferenceElements< typename GridPart::ctype, GridPart::dimension > RefElementsType;
+
+
+  const IteratorType end = gridPart.template end< 0 >();
+  for( IteratorType it = gridPart.template begin< 0 >(); it != end; ++it )
+  {
+    const EntityType &entity = *it;
+
+    const RefElementType &refElement = RefElementsType::general( entity.type() );
+    localFunction.init( entity.impl().hostEntity() );
+    for( int i = 0; i < refElement.size( GridPart::dimension ); ++i )
+    {
+      for( int k = 0; k < GridPart::dimensionworld; ++k )
+        localFunction[ i*GridPart::dimensionworld + k ] = refElement.position( i, GridPart::dimension )[ k ];
+    }
+
+    const EntityPointerType xchgEntityPointer = gridPart.exchangeGeometry( entity, localFunction );
+    const EntityType &xchgEntity = *xchgEntityPointer;
+
+    const GeometryType &xchgGeometry = xchgEntity.geometry();
+    if( xchgGeometry.type() != entity.type() )
+      DUNE_THROW( Dune::InvalidStateException, "exchangeGeometry returns wrong geometry type." );
+    if( (xchgGeometry.center() - refElement.position( 0, 0 )).two_norm() > 1e-8 )
+    {
+      std::cerr << "exchangeGeometry returns wrong center: " << xchgGeometry.center() << std::endl;
+      std::cerr << "(real geometry center is: " << entity.geometry().center() << ")." << std::endl;
+    }
+  }
+};
+
+
 typedef Dune::GridSelector::GridType GridType;
 typedef Dune::AdaptiveLeafGridPart< GridType > HostGridPartType;
 typedef Dune::FunctionSpace< GridType::ctype, GridType::ctype, GridType::dimensionworld, GridType::dimensionworld > CoordFunctionSpaceType;
@@ -200,6 +241,9 @@ try
 
   std::cout << std::endl;
   std::cout << "gridWidth: " << Dune::GridWidth::calcGridWidth( gridPart ) << std::endl;
+
+  Dune::TemporaryLocalFunction< DiscreteCoordFunctionSpaceType > tlf( coordFunctionSpace );
+  testExchangeGeometry( gridPart, tlf );
 
   std::cout << std::endl << std::endl;
 
