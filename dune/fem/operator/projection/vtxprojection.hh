@@ -24,134 +24,129 @@ struct WeightDefault {
   
 struct VtxProjectionImpl
 {
-  template <class ArgFunctionImp, class DiscreteFunctionImp,class WeightType>
-  static void project(const ArgFunctionImp& f, DiscreteFunctionImp& discFunc,
-                      WeightType& weight) 
+  template< class Function, class DiscreteFunction, class Weight >
+  static void project ( const Function &f, DiscreteFunction &u, Weight &weight )
   {
-    typedef typename ArgFunctionImp::FunctionSpaceType ArgFunctionSpaceType;
-    typedef typename ArgFunctionImp::LocalFunctionType ArgLocalFuncType;
+    typedef typename Function::FunctionSpaceType FunctionSpaceType;
+    typedef typename Function::LocalFunctionType LocalFunctionType;
 
-    typedef typename DiscreteFunctionImp::DiscreteFunctionSpaceType
-      DiscreteFunctionSpaceType;
-    typedef typename DiscreteFunctionImp::LocalFunctionType LocalFunctionType;
+    typedef typename DiscreteFunction::DiscreteFunctionSpaceType DiscreteFunctionSpaceType;
+    typedef typename DiscreteFunction::LocalFunctionType LocalDiscreteFunctionType;
 
-    typedef typename DiscreteFunctionSpaceType::Traits::GridPartType GridPartType;
-    typedef typename DiscreteFunctionSpaceType::Traits::IteratorType Iterator;
-    typedef typename DiscreteFunctionSpaceType::BaseFunctionSetType BaseFunctionSetType ; 
-    typedef CommunicationManager< DiscreteFunctionSpaceType > CommunicationManagerType;
-    // typedef typename GridPartType::GridType GridType;
+    typedef typename DiscreteFunctionSpaceType::GridPartType GridPartType;
+    typedef typename DiscreteFunctionSpaceType::IteratorType IteratorType;
+    typedef typename DiscreteFunctionSpaceType::BaseFunctionSetType BaseFunctionSetType;
+    typedef typename DiscreteFunctionSpaceType::LagrangePointSetType LagrangePointSetType;
 
-    typename ArgFunctionSpaceType::RangeType val;
-    typedef typename ArgFunctionSpaceType::DomainType DomainType;
+    typedef typename GridPartType::IntersectionIteratorType IntersectionIteratorType;
+    typedef typename GridPartType::IntersectionType IntersectionType;
+    typedef typename GridPartType::template Codim< 0 >::EntityType EntityType;
+    typedef typename GridPartType::template Codim< 0 >::EntityPointerType EntityPointerType;
+    typedef typename GridPartType::template Codim< 0 >::GeometryType GeometryType;;
 
-    const unsigned int dimRange = ArgFunctionSpaceType :: dimRange;
-    const DiscreteFunctionSpaceType& space =  discFunc.space();
-    typedef typename DiscreteFunctionSpaceType :: LagrangePointSetType
-            LagrangePointSetType;
-    typedef typename LagrangePointSetType :: template Codim< 0 >
-                     :: SubEntityIteratorType
-            EntityDofIteratorType;
-    typedef typename LagrangePointSetType :: template Codim< 1 >
-                     :: SubEntityIteratorType
-            FaceDofIteratorType;
+    typedef typename LagrangePointSetType::template Codim< 0 >::SubEntityIteratorType EntityDofIteratorType;
+    typedef typename LagrangePointSetType::template Codim< 1 >::SubEntityIteratorType FaceDofIteratorType;
 
-    typedef typename Iterator::Entity              EntityType;
-    typedef typename EntityType :: EntityPointer   EntityPointer;
-    typedef typename EntityType :: Geometry        Geometry;
-    typedef typename Geometry :: LocalCoordinate   LocalCoordinate;
+    typedef typename FunctionSpaceType::RangeFieldType RangeFieldType;
+    typedef typename FunctionSpaceType::DomainType DomainType;
+    typedef typename FunctionSpaceType::RangeType RangeType;
+    typedef typename GeometryType::LocalCoordinate LocalCoordinateType;
 
-    discFunc.clear();
-    DiscreteFunctionImp weightDF("weight",space);
-    weightDF.clear();
+    const unsigned int dimRange = FunctionSpaceType::dimRange;
+    const DiscreteFunctionSpaceType &space = u.space();
 
-    const Iterator endit = space.end();
-    for(Iterator it = space.begin(); it != endit ; ++it) 
+    u.clear();
+    DiscreteFunction w ( "weight", space );
+    w.clear();
+
+    const IteratorType end = space.end();
+    for ( IteratorType it = space.begin(); it != end; ++it )
     {
-      const EntityType& en = *it;
-      weight.setEntity(en);
+      const EntityType &entity = *it;
+      weight.setEntity( entity );
 
-      LocalFunctionType lw  = weightDF.localFunction(en);
-      LocalFunctionType ldf = discFunc.localFunction(en);
+      LocalDiscreteFunctionType lw = w.localFunction( entity );
+      LocalDiscreteFunctionType lu = u.localFunction( entity );
 
-      const ArgLocalFuncType larg = f.localFunction(en);
-      const LagrangePointSetType &lagrangePointSet = space.lagrangePointSet( en );
+      const LocalFunctionType lf = f.localFunction( entity );
+      const LagrangePointSetType &lagrangePointSet = space.lagrangePointSet( entity );
 
       const unsigned int numPoints = lagrangePointSet.nop();
       for( unsigned int pt = 0; pt < numPoints; ++pt )
       {
-        larg.evaluate( lagrangePointSet[ pt ], val );
-        double w = weight( lagrangePointSet.point( pt ) );
+        RangeType val;
+        lf.evaluate( lagrangePointSet[ pt ], val );
+
+        double wght = weight( lagrangePointSet.point( pt ) );
+
         for( unsigned int coordinate = 0; coordinate < dimRange; ++coordinate )
         {
-          ldf[ dimRange * pt + coordinate ] += w * val[ coordinate];
-          lw[ dimRange * pt + coordinate ] += w;
+          lu[ dimRange*pt + coordinate ] += wght*val[ coordinate ];
+          lw[ dimRange*pt + coordinate ] += wght;
         }
       }
     }
     
-    discFunc.communicate();
-    weightDF.communicate();
+    u.communicate();
+    w.communicate();
 
-    typedef typename DiscreteFunctionImp :: DofIteratorType  DofIteratorType;
+    typedef typename DiscreteFunction::DofIteratorType DofIteratorType;
 
-    DofIteratorType        itdof = discFunc.dbegin();
-    const DofIteratorType enddof = discFunc.dend();
-    DofIteratorType       itwdof = weightDF.dbegin();
-
-    for (;itdof != enddof;++itdof,++itwdof) 
+    const DofIteratorType udend = u.dend();
+    DofIteratorType udit = u.dbegin();
+    DofIteratorType wdit = w.dbegin();
+    for( ; udit != udend; ++udit, ++wdit )
     {
-      if (*itwdof>0) 
-      {
-        *itdof /= *itwdof;
-      }
-      assert(*itwdof>0 || *itdof == 0);
+      assert( (*wdit > 0) || (*udit == 0) );
+      *udit /= (*wdit > 0 ? *wdit : RangeFieldType( 1 ));
     }
 
     // make function continuous over hanging nodes
 
-    if( ! GridPartType::conforming )
+    if( !GridPartType::conforming )
     {
       const GridPartType &gridPart =  space.gridPart();
-      for( Iterator it = space.begin(); it != endit ; ++it )
+      for( IteratorType it = space.begin(); it != end; ++it )
       {
         const EntityType &entity = *it;
-        typedef typename GridPartType::IntersectionIteratorType IntersectionIteratorType;
+
+        const LagrangePointSetType &lagrangePointSet = space.lagrangePointSet( entity );
+
         const IntersectionIteratorType iend = gridPart.iend( entity );
         for( IntersectionIteratorType iit = gridPart.ibegin( entity ); iit != iend; ++iit )
         {
-          typedef typename IntersectionIteratorType::Intersection IntersectionType;
           const IntersectionType &intersection = *iit;
+
           if( intersection.neighbor() )
           {
             // get neighbor 
-            EntityPointer ep = intersection.outside();
-            const EntityType&  neighbor = *ep;
+            EntityPointerType outside = intersection.outside();
+            const EntityType &neighbor = *outside;
+
             // if non-conforming situation 
             if( entity.level() > neighbor.level() )
             {
               const int indexInInside = intersection.indexInInside();
-              const LagrangePointSetType &lagrangePointSet = space.lagrangePointSet( entity );
-              FaceDofIteratorType itPoint
-                 = lagrangePointSet.template beginSubEntity< 1 >( indexInInside );
-              const FaceDofIteratorType enditPoint
-                 = lagrangePointSet.template endSubEntity< 1 >( indexInInside );
 
-              typedef typename IntersectionType :: LocalGeometry   LocalGeometry;
-              const LocalGeometry &geoIn  = intersection.geometryInInside();
-              const LocalGeometry &geoOut = intersection.geometryInOutside();
+              typedef typename IntersectionType::LocalGeometry LocalGeometryType;
+              const LocalGeometryType &geoIn  = intersection.geometryInInside();
+              const LocalGeometryType &geoOut = intersection.geometryInOutside();
 
-              LocalFunctionType ldfIn  = discFunc.localFunction( entity );
-              LocalFunctionType ldfOut = discFunc.localFunction( neighbor );
+              LocalDiscreteFunctionType uIn  = u.localFunction( entity );
+              LocalDiscreteFunctionType uOut = u.localFunction( neighbor );
 
-              for( ; itPoint != enditPoint; ++itPoint )
+              const FaceDofIteratorType fdend = lagrangePointSet.template endSubEntity< 1 >( indexInInside );
+              FaceDofIteratorType fdit = lagrangePointSet.template beginSubEntity< 1 >( indexInInside );
+              for( ; fdit != fdend; ++fdit )
               {
-                const unsigned int dof = *itPoint;
-                const LocalCoordinate& point = lagrangePointSet.point( dof );
-                const LocalCoordinate x = geoOut.global( geoIn.local( point ) );
+                const LocalCoordinateType &xIn = lagrangePointSet.point( *fdit );
+                const LocalCoordinateType xOut = geoOut.global( geoIn.local( xIn ) );
 
-                ldfOut.evaluate( x, val );
+                RangeType val;
+                uOut.evaluate( xOut, val );
+
                 for( unsigned int coordinate = 0; coordinate < dimRange; ++coordinate )
-                  ldfIn[ dimRange * dof + coordinate ] = val[ coordinate ];
+                  uIn[ dimRange*(*fdit) + coordinate ] = val[ coordinate ];
               }
             }
           }
