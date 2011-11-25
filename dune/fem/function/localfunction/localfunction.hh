@@ -56,12 +56,8 @@ namespace Dune
     //! type of the user implementation (Barton-Nackman)
     typedef typename Traits::LocalFunctionUserType LocalFunctionUserType;
 
-  private:
-    typedef typename DiscreteFunctionSpaceType::GridType GridType;
-
-  public:
     //! type of the entity, the local function lives on is given by the space 
-    typedef typename  DiscreteFunctionSpaceType::EntityType  EntityType ;
+    typedef typename DiscreteFunctionSpaceType::EntityType EntityType;
 
     //! field type of the domain
     typedef typename DiscreteFunctionSpaceType::DomainFieldType DomainFieldType;
@@ -417,10 +413,6 @@ namespace Dune
     //! type of  discrete function space the local function belongs to
     typedef DiscreteFunctionSpace DiscreteFunctionSpaceType;
 
-  private:
-    typedef typename DiscreteFunctionSpaceType::GridType GridType;
-
-  public:
     //! type of the entity, the local function lives on is given by the space 
     typedef typename DiscreteFunctionSpaceType::EntityType EntityType;
 

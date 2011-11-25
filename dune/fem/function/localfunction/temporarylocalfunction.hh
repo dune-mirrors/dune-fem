@@ -20,12 +20,9 @@ namespace Dune
   struct TemporaryLocalFunctionTraits
   {
     typedef DiscreteFunctionSpace DiscreteFunctionSpaceType;
-    typedef TemporaryLocalFunctionImpl
-      < DiscreteFunctionSpaceType, ArrayAllocator >
-      LocalFunctionImpType;
-    typedef TemporaryLocalFunction
-      < DiscreteFunctionSpaceType, ArrayAllocator >
-      LocalFunctionUserType;
+
+    typedef TemporaryLocalFunctionImpl< DiscreteFunctionSpace, ArrayAllocator > LocalFunctionImpType;
+    typedef TemporaryLocalFunction< DiscreteFunctionSpace, ArrayAllocator > LocalFunctionUserType;
   };
 
 
