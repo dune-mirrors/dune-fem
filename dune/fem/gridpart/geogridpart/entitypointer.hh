@@ -81,6 +81,14 @@ namespace Dune
         hostIterator_( entity.hostEntity() )
       {}
 
+      template< class LCFTraits >
+      GeoEntityPointer ( const EntityImpl &entity, const LocalFunction< LCFTraits > &localCoordFunction )
+      : entity_( EntityImpl( entity.coordFunction ) ),
+        hostIterator_( entity.hostEntity() )
+      {
+        entity_.impl() = EntityImpl( entity_.impl().coordFunction(), *hostIterator(), localCoordFunction );
+      }
+
       GeoEntityPointer ( const ThisType &other )
       : entity_( EntityImpl( other.entity_.impl().coordFunction() ) ),
         hostIterator_( other.hostIterator_ )

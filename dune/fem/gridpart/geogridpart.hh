@@ -270,6 +270,14 @@ namespace Dune
         hostGridPart().communicate( handleWrapper, iftype, dir );
       }
 
+      template< class LCFTraits >
+      typename Codim< 0 >::EntityPointerType
+      exchangeGeometry ( const typename Codim< 0 >::EntityType &entity,
+                         const LocalFunction< LCFTraits > &localCoordFunction )
+      {
+        return typename Codim< 0 >::EntityPointerImpl( entity.impl(), localCoordFunction );
+      }
+
       // convert a grid entity to a grid part entity ("Gurke!")
       template< class Entity > 
       MakeableInterfaceObject< typename Codim< Entity::codimension >::EntityType >

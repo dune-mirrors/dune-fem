@@ -183,6 +183,49 @@ namespace Dune
 
 
 
+    // GeoLocalCoordVector
+    // -------------------
+
+    template< int mydim, class GridFamily, class LCFTraits >
+    class GeoLocalCoordVector
+    {
+      typedef typename remove_const< GridFamily >::type::Traits Traits;
+
+      typedef typename remove_const< GridFamily >::type::ctype ctype;
+
+      static const int dimension = remove_const< GridFamily >::type::dimension;
+      static const int mydimension = mydim;
+      static const int codimension = dimension - mydimension;
+      static const int dimensionworld = remove_const< GridFamily >::type::dimensionworld;
+
+      typedef FieldVector< ctype, dimensionworld > Coordinate;
+
+    public:
+      typedef LocalFunction< LCFTraits > LocalCoordFunctionType;
+
+      explicit GeoLocalCoordVector ( const LocalCoordFunctionType &localCoordFunction )
+      : localCoordFunction_( localCoordFunction )
+      {}
+
+      template< unsigned int numCorners >
+      void calculate ( Coordinate (&corners)[ numCorners ] ) const
+      {
+        assert( numCorners * dimensionworld == localCoordFunction_.numDofs() );
+        for( unsigned int i = 0; i < numCorners; ++i )
+        {
+          for( int k = 0; k < dimensionworld; ++k )
+            corners[ i ][ k ] = localCoordFunction_[ i*dimensionworld + k ];
+        }
+      }
+
+    private:
+      dune_static_assert( LocalCoordFunctionType::dimRange == dimensionworld, "Invalid local coordinate function." );
+
+      const LocalCoordFunctionType &localCoordFunction_;
+    };
+
+
+
     // IntersectionCoordVector
     // -----------------------
 

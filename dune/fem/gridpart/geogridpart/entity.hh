@@ -168,6 +168,17 @@ namespace Dune
         geo_( GeometryImpl() )
       {}
 
+      template< class LCFTraits >
+      GeoEntity ( const CoordFunctionType &coordFunction, const HostEntityType &hostEntity,
+                  const LocalFunction< LCFTraits > &localCoordFunction )
+      : coordFunction_( coordFunction ),
+        hostEntity_( &hostEntity ),
+        geo_( GeometryImpl() )
+      {
+        GeoLocalCoordVector< mydimension, GridFamily, LCFTraits > coords( localCoordFunction );
+        geo_.impl() = GeometryImpl( type(), coords );
+      }
+
       GeoEntity ( const GeoEntity &other )
       : coordFunction_( other.coordFunction_ ),
         hostEntity_( other.hostEntity_ ),
