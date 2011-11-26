@@ -8,6 +8,8 @@
 #include <dune/grid/geometrygrid/hostcorners.hh>
 #include <dune/grid/geometrygrid/coordfunction.hh>
 
+#include <dune/fem/function/localfunction/localfunction.hh>
+
 namespace Dune
 {
 
