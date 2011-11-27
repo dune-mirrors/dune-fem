@@ -2,6 +2,7 @@
 #define DUNE_FEM_GRIDPART_GEOGRIDPART_ENTITYPOINTER_HH
 
 #include <dune/grid/common/entitypointer.hh>
+#include <dune/fem/function/localfunction/localfunction.hh>
 
 namespace Dune
 {
