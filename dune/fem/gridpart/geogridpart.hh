@@ -287,8 +287,9 @@ namespace Dune
         typedef typename Codim< Entity::codimension >::EntityType EntityType;
         typedef typename EntityType::Implementation Implementation;
         typedef MakeableInterfaceObject< EntityType > EntityObj;
+
         // here, grid part information can be passed, if necessary
-        return EntityObj( Implementation( entity ) );
+        return EntityObj( Implementation( coordFunction_, entity ) );
       }
 
     private:
