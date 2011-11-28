@@ -54,6 +54,21 @@ namespace Dune
    *  mechanism. Whenever a parameter with key "paramfile" is encountered, the
    *  value is interpreted as a paramter file to include.
    *
+   *  Fem parameters can also be appended to the parameter list via an DGF file.
+   *  The method 
+   *  \code
+   *  appendDGF( "macrogrid.dgf" );
+   *  \endcode
+   *  reads in the DGF-block: 
+   *  \code
+   *  FemParameter
+   *
+   *  #
+   *  \endcode
+   *  from file "macrogrid.dgf". All parameters defined within this block are appended
+   *  to the parameter list.
+   *
+   *
    *  If a parameter is defined multiply, the first definition is added to the
    *  database. All later definitions are ignored. Therefore it is important to
    *  know the exact behaviour of the "paramfile" parameter:
