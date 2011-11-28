@@ -82,7 +82,8 @@ namespace Dune
       : entity_( entity ),
         hostIterator_( entity.hostEntity() )
       {
-        entity_.impl().setHostEntity( *hostIterator() );
+        if( entity_.impl() )
+          entity_.impl().setHostEntity( *hostIterator() );
       }
 
       // warning: copying the entity copies the wrong pointer to the host entity!
@@ -91,7 +92,8 @@ namespace Dune
       : entity_( EntityImpl( entity, localCoordFunction ) ),
         hostIterator_( entity.hostEntity() )
       {
-        entity_.impl().setHostEntity( *hostIterator() );
+        if( entity_.impl() )
+          entity_.impl().setHostEntity( *hostIterator() );
       }
 
       // warning: copying the entity copies the wrong pointer to the host entity!
@@ -99,7 +101,8 @@ namespace Dune
       : entity_( other.entity_.impl() ),
         hostIterator_( other.hostIterator_ )
       {
-        entity_.impl().setHostEntity( *hostIterator() );
+        if( entity_.impl() )
+          entity_.impl().setHostEntity( *hostIterator() );
       }
 
       // warning: copying the entity copies the wrong pointer to the host entity!
@@ -108,7 +111,8 @@ namespace Dune
       : entity_( other.entity_.impl() ),
         hostIterator_( other.hostIterator_ )
       {
-        entity_.impl().setHostEntity( *hostIterator() );
+        if( entity_.impl() )
+         entity_.impl().setHostEntity( *hostIterator() );
       }
       
       // warning: copying the entity copies the wrong pointer to the host entity!
@@ -116,7 +120,8 @@ namespace Dune
       {
         entity_.impl() = other.entity_.impl();
         hostIterator_ = other.hostIterator_;
-        entity_.impl().setHostEntity( *hostIterator() );
+        if( entity_.impl() )
+          entity_.impl().setHostEntity( *hostIterator() );
         return *this;
       }
 
