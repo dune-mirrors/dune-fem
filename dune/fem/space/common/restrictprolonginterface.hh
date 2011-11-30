@@ -297,6 +297,12 @@ public:
     const EntityType& father = df_.space().gridPart().convert( dad );
     const EntityType& son    = df_.space().gridPart().convert( filius );
 
+    // if father and son are copies, do nothing
+    if( entitiesAreCopies( df_.space().indexSet(), father, son ) )
+      return;
+
+    assert( !father.isLeaf() );
+
     restrictLocal( father, son, filius.geometryInFather(), initialize );
   }
   
@@ -307,12 +313,6 @@ public:
                        const LocalGeometry& geometryInFather,
                        bool initialize ) const
   {
-    // if father and son are copies, do nothing
-    if( entitiesAreCopies( df_.space().indexSet(), father, son ) )
-      return;
-
-    assert( !father.isLeaf() );
-
     constFct_.init( son );
     LocalFunctionType lfFather = df_.localFunction( father );
 
@@ -352,6 +352,10 @@ public:
     const EntityType& father = df_.space().gridPart().convert( dad );
     const EntityType& son    = df_.space().gridPart().convert( filius );
 
+    // if father and son are copies, do nothing
+    if( entitiesAreCopies( df_.space().indexSet(), father, son ) )
+      return;
+
     prolongLocal( father, son, filius.geometryInFather(), initialize );
   }
 
@@ -362,10 +366,6 @@ public:
                       const LocalGeometry& geometryInFather,
                       bool initialize ) const
   {
-    // if father and son are copies, do nothing
-    if( entitiesAreCopies( df_.space().indexSet(), father, son ) )
-      return;
-    
     constFct_.init( father );
     LocalFunctionType lfSon = df_.localFunction( son );
 
