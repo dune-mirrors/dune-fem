@@ -711,7 +711,7 @@ namespace Dune
       void communicate( CommDataHandleIF< DataHandleImp, DataType > & data, 
                         InterfaceType iftype, CommunicationDirection dir ) const 
       {
-        this->grid().communicate( data, iftype, dir );
+        hostGridPart().communicate( data, iftype, dir );
       }
 
       //! \brief return reference to filter 
