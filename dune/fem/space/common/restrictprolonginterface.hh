@@ -8,6 +8,7 @@
 //- local includes 
 #include <dune/fem/misc/combineinterface.hh>
 #include <dune/fem/gridpart/emptyindexset.hh>
+#include <dune/fem/function/localfunction/temporarylocalfunction.hh>
 
 namespace Dune{
 /** @addtogroup RestrictProlongInterface 
@@ -135,20 +136,21 @@ public:
   : PairOfInterfaces<I1,I2>(i1,i2)
   {}
   
-  //! if weight is set, then ists assumend that we have always the same
-  //! proportion between fahter and son volume 
+  //! \copydoc RestrictProlongInterface::setFatherChildWeight 
   void setFatherChildWeight (const DomainFieldType& val) const {
     this->first().setFatherChildWeight(val);
     this->second().setFatherChildWeight(val);    
   }
-  //! restrict data to father 
+
+  //! \copydoc RestrictProlongInterface::restrictLocal 
   template <class EntityType>
   void restrictLocal ( EntityType &father, EntityType &son, 
 		       bool initialize ) const {
     this->first().restrictLocal(father,son,initialize);
     this->second().restrictLocal(father,son,initialize);    
   }
-  //! prolong data to children 
+
+  //! \copydoc RestrictProlongInterface::prolongLocal 
   template <class EntityType>
   void prolongLocal ( EntityType &father, EntityType &son, 
 		      bool initialize ) const {
@@ -156,7 +158,7 @@ public:
     this->second().prolongLocal(father,son,initialize);    
   }
   
-  //! prolong data to children 
+  //! \copydoc RestrictProlongInterface::addToList 
   template <class CommunicatorImp>
   void addToList(CommunicatorImp& comm) 
   {
@@ -226,8 +228,10 @@ class RestrictProlongDefault
            typename DiscreteFunctionType::DiscreteFunctionSpaceType >
   BaseType;
 public:
-  RestrictProlongDefault(DiscreteFunctionType& discreteFunction) :
-    BaseType(discreteFunction) {
+  RestrictProlongDefault(DiscreteFunctionType& discreteFunction) 
+    : BaseType(discreteFunction) 
+  {
+    // enable dof compression for this discrete function
     discreteFunction.enableDofCompression();
   }
 private:
@@ -254,6 +258,8 @@ public:
 
   typedef typename GridType::ctype DomainFieldType;
 
+  typedef ConstLocalFunction< DiscreteFunctionType > ConstLocalFunctionType ;
+
 protected:
   typedef RestrictProlongInterfaceDefault
     < RestrictProlongTraits< RestrictProlongPieceWiseConstantData< DiscreteFunctionType >, DomainFieldType > >
@@ -265,7 +271,9 @@ protected:
 public:  
   //! Constructor
   explicit RestrictProlongPieceWiseConstantData( DiscreteFunctionType &df ) 
-  : df_ (df), weight_( -1.0 )
+  : df_ (df), 
+    constFct_( df_ ),
+    weight_( -1.0 )
   {}
 
   /** \brief explicit set volume ratio of son and father
@@ -278,27 +286,50 @@ public:
   {
     weight_ = weight;
   }
-  
+
   //! restrict data to father 
   template< class EntityType >
-  void restrictLocal ( const EntityType &dad, const EntityType &filius, bool initialize ) const
+  void restrictLocal ( const EntityType &dad, 
+                       const EntityType &filius, 
+                       bool initialize ) const
   {
     // convert from grid entities to grid part entities 
     const EntityType& father = df_.space().gridPart().convert( dad );
     const EntityType& son    = df_.space().gridPart().convert( filius );
 
+    restrictLocal( father, son, filius.geometryInFather(), initialize );
+  }
+  
+  //! restrict data to father 
+  template< class EntityType, class LocalGeometry >
+  void restrictLocal ( const EntityType &father, 
+                       const EntityType &son, 
+                       const LocalGeometry& geometryInFather,
+                       bool initialize ) const
+  {
     // if father and son are copies, do nothing
     if( entitiesAreCopies( df_.space().indexSet(), father, son ) )
       return;
 
     assert( !father.isLeaf() );
 
-    const DomainFieldType weight = (weight_ < 0.0) ? calcWeight( father, son ) : weight_; 
+    constFct_.init( son );
+    LocalFunctionType lfFather = df_.localFunction( father );
+
+    restrictLocalFunction( lfFather,  constFct_, geometryInFather, initialize );
+  }
+
+  //! restrict data to father 
+  template <class LFFather, class LFSon, class LocalGeom>
+  void restrictLocalFunction ( LFFather& lfFather, 
+                               const LFSon& lfSon, 
+                               const LocalGeom& geometryInFather,
+                               bool initialize ) const
+  {
+    const DomainFieldType weight = (weight_ < 0.0) ? calcWeight( lfFather.entity(), lfSon.entity() ) : weight_; 
 
     assert( weight > 0.0 );
-    
-    LocalFunctionType lfFather = df_.localFunction( father );
-    LocalFunctionType lfSon = df_.localFunction( son );
+    assert( std::abs( geometryInFather.volume() - weight ) < 1e-8 );
 
     const int numDofs = lfFather.numDofs();
     if( initialize )
@@ -321,12 +352,33 @@ public:
     const EntityType& father = df_.space().gridPart().convert( dad );
     const EntityType& son    = df_.space().gridPart().convert( filius );
 
+    prolongLocal( father, son, filius.geometryInFather(), initialize );
+  }
+
+  //! prolong data to children 
+  template< class EntityType, class LocalGeometry >
+  void prolongLocal ( const EntityType &father, 
+                      const EntityType &son, 
+                      const LocalGeometry& geometryInFather,
+                      bool initialize ) const
+  {
     // if father and son are copies, do nothing
     if( entitiesAreCopies( df_.space().indexSet(), father, son ) )
       return;
     
-    LocalFunctionType lfFather = df_.localFunction( father );
+    constFct_.init( father );
     LocalFunctionType lfSon = df_.localFunction( son );
+
+    prolongLocalFunction( constFct_, lfSon, geometryInFather, initialize );
+  }
+
+  //! prolong data to children 
+  template < class LFFather, class LFSon, class LocalGeom >
+  void prolongLocalFunction ( const LFFather& lfFather, 
+                              LFSon& lfSon, 
+                              const LocalGeom& geometryInFather, 
+                              bool initialize ) const
+  {
     const int numDofs = lfFather.numDofs();
     for( int i = 0; i < numDofs; ++i )
       lfSon[ i ] = lfFather[ i ];
@@ -339,8 +391,9 @@ public:
     comm.addToList(df_);
   }
 
-private:
+protected:
   DiscreteFunctionType & df_;
+  mutable ConstLocalFunctionType constFct_;
   mutable DomainFieldType weight_;
 };
 

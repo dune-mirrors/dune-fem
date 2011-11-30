@@ -4,6 +4,7 @@
 //- local includes  
 #include <dune/fem/space/common/adaptmanager.hh>
 #include <dune/fem/quadrature/cachingquadrature.hh>
+#include <dune/fem/function/localfunction/temporarylocalfunction.hh>
 
 //- local includes 
 #include "dgspace.hh"
@@ -40,7 +41,9 @@ public:
   typedef typename DiscreteFunctionType::DiscreteFunctionSpaceType DiscreteFunctionSpaceType;
   typedef typename DiscreteFunctionSpaceType :: GridPartType GridPartType;
   typedef typename DiscreteFunctionSpaceType :: GridType GridType;
+
   typedef typename DiscreteFunctionType::LocalFunctionType LocalFunctionType;
+  typedef ConstLocalFunction< DiscreteFunctionType > ConstLocalFunctionType;
 
   typedef typename DiscreteFunctionSpaceType :: RangeType RangeType;
   typedef typename DiscreteFunctionSpaceType :: DomainType DomainType;
@@ -60,6 +63,7 @@ public:
   //! Constructor
   explicit RestrictProlongDiscontinuousSpace( DiscreteFunctionType &df )
   : df_( df ),
+    constFct_( df_ ),
     quadord_( 2 * df.space().order() ),
     weight_( -1.0 )
   {}
@@ -90,32 +94,43 @@ public:
     //          << df_.space().indexSet().index( son ) << std::endl;
     
     assert( !father.isLeaf() );
-    const DomainFieldType weight = (weight_ < 0.0) ? calcWeight( father, son ) : weight_;
 
-    LocalFunctionType vati = df_.localFunction( father);
-    LocalFunctionType sohn = df_.localFunction( son   );
+    // get local function of son as a constant function
+    // in case father and son are not children (GeoGridPart)
+    constFct_.init( son );
 
-    const LocalGeometry& geometryInFather = son.geometryInFather();
+    // get father function 
+    LocalFunctionType fatherLf = df_.localFunction( father);
+
+    restrictLocal( son.geometryInFather(), constFct_, fatherLf, initialize );
+  }
+
+  //! restrict data to father 
+  template < class LocalGeom, class LFSon, class LFFather>
+  void restrictLocal ( const LocalGeom& geometryInFather,
+                       const LFSon& sonLf, LFFather& fatherLf, bool initialize ) const 
+  {
+    const DomainFieldType weight = (weight_ < 0.0) ? calcWeight( fatherLf.entity(), sonLf.entity() ) : weight_;
 
     // clear father on initialize 
     if( initialize )
     {
-      vati.clear();
+      fatherLf.clear();
     }
     
     RangeType value ;
-    QuadratureType quad( son, quadord_ );
+    QuadratureType quad( sonLf.entity(), quadord_ );
     const int nop = quad.nop();
     for( int qP = 0; qP < nop; ++qP )
     {
       // evaluate son function 
-      sohn.evaluate( quad[ qP ], value );
+      sonLf.evaluate( quad[ qP ], value );
 
       // apply weight 
       value *= quad.weight( qP ) * weight ;
 
       // add to father 
-      vati.axpy( geometryInFather.global(quad.point(qP) ), value );
+      fatherLf.axpy( geometryInFather.global(quad.point(qP) ), value );
     }
   }
 
@@ -133,27 +148,34 @@ public:
     //std::cout << "Prolong  " << df_.space().indexSet().index( father ) << "  "
     //          << df_.space().indexSet().index( son ) << std::endl;
     
-    LocalFunctionType vati = df_.localFunction( father);
-    LocalFunctionType sohn = df_.localFunction( son   );
+    constFct_.init( father );
+    LocalFunctionType sonLf = df_.localFunction( son );
 
+    // call prolongLocal method 
+    prolongLocal( son.geometryInFather(), constFct_, sonLf, initialize );
+  }
+
+  //! prolong data to children 
+  template < class LocalGeom, class LFFather, class LFSon>
+  void prolongLocal ( const LocalGeom& geometryInFather,
+                      const LFFather& fatherLf, LFSon& sonLf, bool initialize ) const 
+  {
     // clear son 
-    sohn.clear();
-
-    const LocalGeometry& geometryInFather = son.geometryInFather();
+    sonLf.clear();
 
     RangeType value ;
-    QuadratureType quad( son, quadord_ );
+    QuadratureType quad( sonLf.entity(), quadord_ );
     const int nop = quad.nop();
     for( int qP = 0; qP < nop; ++qP )
     {
       // evaluate father 
-      vati.evaluate(geometryInFather.global(quad.point(qP)), value );
+      fatherLf.evaluate(geometryInFather.global(quad.point(qP)), value );
       
       // apply weight 
       value *= quad.weight( qP );
 
       // add to son 
-      sohn.axpy( quad[ qP ], value );
+      sonLf.axpy( quad[ qP ], value );
     }
   }
 
@@ -164,8 +186,9 @@ public:
     comm.addToList( df_ );
   }
 
-private:
+protected:
   DiscreteFunctionType &df_;
+  mutable ConstLocalFunctionType constFct_;
   const int quadord_;
   mutable DomainFieldType weight_;
 };
