@@ -175,6 +175,8 @@ namespace Dune
       return space_;
     }
 
+    const GridPartType &gridPart () const { return space().gridPart(); }
+
   protected:    
     DiscreteFunctionSpaceType space_;
     mutable LocalFunctionStorageType localFunctionStorage_;
