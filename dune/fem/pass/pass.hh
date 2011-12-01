@@ -53,11 +53,9 @@ namespace Dune {
 
     //! StartPass does not need a time 
     void setTime(const double) {}
-
-    //! time step estimate here is max 
-    double timeStepEstimateImpl () const 
-    { 
-      return std::numeric_limits<double>::max(); 
+    double timeStepEstimate() const 
+    {
+       return std::numeric_limits<double>::max(); 
     }
   };
 
@@ -175,7 +173,6 @@ namespace Dune {
       const TotalArgumentType totalArg(&arg, prevArg);
       this->compute(totalArg, dest);
     }
-
     //! Allocates the local memory of a pass, if needed.
     //! If memory is allocated, then deleteHandler must be set for removal of
     //! memory to avoid leaks 
@@ -193,9 +190,10 @@ namespace Dune {
          Make sure to overload the method timeStepEstimateImpl in your
          implementation if this method really does something. */
     double timeStepEstimate() const 
-    {
-      return std::min( previousPass_.timeStepEstimateImpl(),
+    { 
+      double ret= std::min( previousPass_.timeStepEstimate(),
                        this->timeStepEstimateImpl() );
+      return ret;
     }
 
     //! return current time of calculation 
