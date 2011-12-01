@@ -33,10 +33,10 @@ namespace Dune
     static const int codimension = 0;
 
     //! coordinate type 
-    typedef typename GridPartType::GridType::ctype RealType;
+    typedef typename GridPartType::ctype RealType;
 
     //! dimension of the grid
-    static const int dimension = GridPartType::GridType::dimension;
+    static const int dimension = GridPartType::dimension;
 
     //! type of the integration point list 
     typedef typename IntegrationTraits::IntegrationPointListType IntegrationPointListType;
