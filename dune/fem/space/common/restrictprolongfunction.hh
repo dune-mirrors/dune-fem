@@ -21,11 +21,6 @@ namespace Dune
     //! type of the local restriction and prolongation operator
     typedef LRP LocalRestrictProlong;
 
-  private:
-    typedef typename LocalRestrictProlong::Entity Entity;
-    typedef typename Entity::HierarchicIterator HierarchicIterator;
-
-  public:
     /** \brief prolong a discrete function to finer grid level
      *
      *  \note The grid parts modelling the levels need not be of same type.
@@ -47,7 +42,7 @@ namespace Dune
       const CoarseIterator end = coarseSpace.end();
       for( CoarseIterator it = coarseSpace.begin(); it != end; ++it )
       {
-        const Entity &entity = *it;
+        const typename CoarseIterator::Entity &entity = *it;
         CoarseLocalFunction coarseLocalFunction = coarseFunction.localFunction( entity );
 
         if( isDefinedOn( fineFunction, entity ) )
@@ -65,6 +60,8 @@ namespace Dune
     void hierarchicProlong ( const CoarseLocalFunction &coarseLocalFunction,
                              FineFunction &fineFunction ) const
     {
+      typedef typename CoarseLocalFunction::EntityType Entity;
+      typedef typename Entity::HierarchicIterator HierarchicIterator;
       typedef typename FineFunction::LocalFunctionType FineLocalFunction;
 
       const Entity &father = coarseLocalFunction.entity();
@@ -85,16 +82,17 @@ namespace Dune
     }
 
     template< class Function >
-    static bool isDefinedOn ( const Function &function, const Entity &entity )
+    static bool isDefinedOn ( const Function &function, const typename Function::GridPartType::template Codim< 0 >::EntityType &entity )
     {
-      typedef typename Function::DiscreteFunctionSpaceType::GridPartType::IndexSetType IndexSet;
-      const IndexSet &indexSet = function.space().gridPart().indexSet();
+      typedef typename Function::GridPartType::IndexSetType IndexSet;
+      const IndexSet &indexSet = function.gridPart().indexSet();
       return indexSet.contains( entity );
     }
 
   private:
     LocalRestrictProlong localRestrictProlong_;
   };
+
 
 
   /** \class   RestrictFunction
@@ -109,10 +107,6 @@ namespace Dune
   {
     //! type of the local restriction and prolongation operator
     typedef LRP LocalRestrictProlong;
-
-  private:
-    typedef typename LocalRestrictProlong::Entity Entity;
-    typedef typename Entity::HierarchicIterator HierarchicIterator;
 
   public:
     /** \brief restrict a discrete function to coarser grid level
@@ -136,7 +130,7 @@ namespace Dune
       const CoarseIterator end = coarseSpace.end();
       for( CoarseIterator it = coarseSpace.begin(); it != end; ++it )
       {
-        const Entity &entity = *it;
+        const typename CoarseIterator::Entity &entity = *it;
         CoarseLocalFunction coarseLocalFunction = coarseFunction.localFunction( entity );
 
         if( isDefinedOn( fineFunction, entity ) )
@@ -154,6 +148,8 @@ namespace Dune
     void hierarchicRestrict ( const FineFunction &fineFunction,
                               CoarseLocalFunction &coarseLocalFunction ) const
     {
+      typedef typename CoarseLocalFunction::EntityType Entity;
+      typedef typename Entity::HierarchicIterator HierarchicIterator;
       typedef typename FineFunction::LocalFunctionType FineLocalFunction;
 
       const Entity &father = coarseLocalFunction.entity();
@@ -176,17 +172,16 @@ namespace Dune
     }
 
     template< class Function >
-    static bool isDefinedOn ( const Function &function, const Entity &entity )
+    static bool isDefinedOn ( const Function &function, const typename Function::GridPartType::template Codim< 0 >::EntityType &entity )
     {
-      typedef typename Function::DiscreteFunctionSpaceType::GridPartType::IndexSetType IndexSet;
-      const IndexSet &indexSet = function.space().gridPart().indexSet();
+      typedef typename Function::GridPartType::IndexSetType IndexSet;
+      const IndexSet &indexSet = function.gridPart().indexSet();
       return indexSet.contains( entity );
     }
 
   private:
     LocalRestrictProlong localRestrictProlong_;
   };
-
 
 } // namespace Dune
 
