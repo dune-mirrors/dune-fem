@@ -144,9 +144,10 @@ namespace Dune
              < CombinedDiscreteFunctionSpaceTraits< DFSpace1,
                                                     DFSpace2 > >
     {
+    public:
       typedef DFSpace1    DiscreteFunctionSpaceType1;
       typedef DFSpace2    DiscreteFunctionSpaceType2;
-    public:
+
       //! traits for the discrete function space
       typedef CombinedDiscreteFunctionSpaceTraits< DFSpace1,
                                                    DFSpace2 > 
