@@ -102,7 +102,7 @@ namespace Dune
      */
     virtual unsigned int maxDofs ( unsigned int codim ) const = 0;
 
-    inline static int maxOrder ()
+    static int maxOrder ()
     {
       return maxPolynomialOrder;
     }
@@ -186,19 +186,22 @@ namespace Dune
    * The set can be wrapped in a quadrature. 
    *
    **/
-  template< class FieldImp, unsigned int dim, unsigned int maxPolOrder >
+  template< class FieldImp, int dim, unsigned int maxPolOrder >
   class LagrangePointListInterface
   : public IntegrationPointListImp< FieldImp, dim >
   {
+    typedef LagrangePointListInterface< FieldImp, dim, maxPolOrder > ThisType;
+    typedef IntegrationPointListImp< FieldImp, dim > BaseType;
+
   public:
     //! field type of points
     typedef FieldImp FieldType;
 
     //! dimension of points
-    enum { dimension = dim };
+    static const int dimension = dim;
     
     //! polynomial order of corresponding base functions
-    enum { maxPolynomialOrder = maxPolOrder };
+    static const unsigned int maxPolynomialOrder = maxPolOrder;
 
     //! type of points
     typedef FieldVector< FieldType, dimension > CoordinateType;
@@ -211,53 +214,47 @@ namespace Dune
     };
 
   private:
-    typedef LagrangePointListInterface< FieldType, dimension, maxPolynomialOrder >
-      ThisType;
-    typedef IntegrationPointListImp< FieldType, dimension > BaseType;
-
     typedef LagrangePointInterface< dim, maxPolynomialOrder >
       LagrangePointInterfaceType;
-  private:
-    std :: vector< DofInfo > dofInfos_;
-    const LagrangePointInterfaceType* lagrangePointImpl_;
 
-    const LagrangePointInterfaceType& lagrangePointImpl() const
+    const LagrangePointInterfaceType &lagrangePointImpl () const
     {
       assert( lagrangePointImpl_ ) ;
       return *lagrangePointImpl_;
     }
 
   public:
-    LagrangePointListInterface( const size_t id )
+    explicit LagrangePointListInterface ( const size_t id )
     : BaseType( id ),
       dofInfos_(),
       lagrangePointImpl_( 0 )
     {}
 
-    ~LagrangePointListInterface() 
+    ~LagrangePointListInterface () 
     {
       delete lagrangePointImpl_;
     }
+
   private:
     // prohibit copy construction  
     LagrangePointListInterface ( const ThisType &other );
 
   public:
-    void setLagrangePointImpl( const LagrangePointInterfaceType* lpImpl ) 
+    void setLagrangePointImpl ( const LagrangePointInterfaceType* lpImpl ) 
     {
       assert( lagrangePointImpl_ == 0 );
       lagrangePointImpl_ = lpImpl ;
     }
 
-    inline const DofInfo& dofInfo( unsigned int index ) const
+    const DofInfo &dofInfo ( unsigned int index ) const
     {
       return dofInfos_[ index ];
     }
     
-    inline void dofSubEntity( unsigned int index,
-                              unsigned int &codim, 
-                              unsigned int &subEntity,
-                              unsigned int &dofNumber ) const
+    void dofSubEntity ( unsigned int index,
+                        unsigned int &codim, 
+                        unsigned int &subEntity,
+                        unsigned int &dofNumber ) const
     {
       const DofInfo &dofInfo = dofInfos_[ index ];
       codim = dofInfo.codim;
@@ -265,14 +262,14 @@ namespace Dune
       dofNumber = dofInfo.dofNumber;
     }
     
-    inline unsigned int entityDofNumber ( unsigned int codim,
-                                          unsigned int subEntity,
-                                          unsigned int dofNumber ) const 
+    unsigned int entityDofNumber ( unsigned int codim,
+                                   unsigned int subEntity,
+                                   unsigned int dofNumber ) const 
     {
       return lagrangePointImpl().entityDofNumber( codim, subEntity, dofNumber ); 
     }
     
-    inline GeometryType geometryType () const 
+    GeometryType geometryType () const 
     {
       return lagrangePointImpl().geometryType();
     }
@@ -283,14 +280,14 @@ namespace Dune
      *
      *  \returns maximal number of DoFs for one entity in the codimension
      */
-    inline unsigned int maxDofs ( unsigned int codim ) const 
+    unsigned int maxDofs ( unsigned int codim ) const 
     {
       return lagrangePointImpl().maxDofs( codim );
     }
 
-    inline static int maxOrder ()
+    static int maxOrder ()
     {
-      return LagrangePointInterfaceType :: maxOrder();
+      return LagrangePointInterfaceType::maxOrder();
     }
 
     /** \brief obtain the number of DoFs on one entity
@@ -300,7 +297,7 @@ namespace Dune
      *
      *  \returns the number of DoFs associated with the specified entity
      */
-    inline unsigned int numDofs ( unsigned int codim, unsigned int subEntity ) const 
+    unsigned int numDofs ( unsigned int codim, unsigned int subEntity ) const 
     {
       return lagrangePointImpl().numDofs( codim, subEntity );
     }
@@ -311,21 +308,25 @@ namespace Dune
      *
      *  \returns the number of DoFs associated with the codimension
      */
-    inline unsigned int numDofs ( unsigned int codim ) const 
+    unsigned int numDofs ( unsigned int codim ) const 
     {
       return lagrangePointImpl().numDofs( codim ); 
     }
 
-    inline int order () const
+    int order () const
     {
       return lagrangePointImpl().order();
     }
 
   protected:
-    inline void addDofInfo( const DofInfo &dofInfo )
+    void addDofInfo ( const DofInfo &dofInfo )
     {
       dofInfos_.push_back( dofInfo );
     }
+
+  private:
+    std::vector< DofInfo > dofInfos_;
+    const LagrangePointInterfaceType* lagrangePointImpl_;
   };
 
 
@@ -408,29 +409,23 @@ namespace Dune
 
 
 
-  template< class GridPartImp, unsigned int polOrder >
+  template< class Field, int dim, unsigned int polOrder >
   struct LagrangePointSetTraits
   {
-    //! type of grid partition
-    typedef GridPartImp GridPartType;
+    //! field type of coordinates
+    typedef Field FieldType;
 
     //! polynomial order of corresponding base functions
-    enum { polynomialOrder = polOrder };
-
-    //! type of grid
-    typedef typename GridPartType :: GridType GridType;
-    
-    //! field type of coordinates
-    typedef typename GridType :: ctype FieldType;
+    static const unsigned int polynomialOrder = polOrder;
 
     //! dimension of points
-    enum { dimension = GridType :: dimension };
+    static const int dimension = dim;
 
     //! codimension of point set
-    enum { codimension = 0 };
+    static const int codimension = 0;
 
     //! default defines for used point lists
-    template< typename ct, int dim >
+    template< typename ct, int quaddim >
     struct PointListTraits
     {
       typedef LagrangePointListImplementation< ct, 0, 0, polynomialOrder >
@@ -452,14 +447,14 @@ namespace Dune
         PyramidQuadratureType;
       
       //! type of integration point list implemementation 
-      typedef LagrangePointListInterface< ct, dim, polynomialOrder > IntegrationPointListType; 
+      typedef LagrangePointListInterface< ct, quaddim, polynomialOrder > IntegrationPointListType; 
     }; 
 
     //! type of used integration point list 
     typedef IntegrationPointList< FieldType, dimension, PointListTraits > IntegrationPointListType;
 
     //! type of global coordinate 
-    typedef typename IntegrationPointListType :: CoordinateType CoordinateType;
+    typedef typename IntegrationPointListType::CoordinateType CoordinateType;
   };
 
 
@@ -514,7 +509,7 @@ namespace Dune
     unsigned int dofNumber_, numDofs_;
 
   private:
-    inline SubEntityLagrangePointIterator
+    SubEntityLagrangePointIterator
       ( const LagrangePointSetType &lagrangePointSet,
         const unsigned int subEntity,
         const bool beginIterator )
@@ -538,7 +533,7 @@ namespace Dune
     }
   
   public:
-    inline SubEntityLagrangePointIterator ()
+    SubEntityLagrangePointIterator ()
     : refElementContainer_( &ReferenceElementContainerType :: instance () )
     {
       lagrangePointSet_ = NULL;
@@ -549,7 +544,7 @@ namespace Dune
       dofNumber_ = 0;
     }
     
-    inline SubEntityLagrangePointIterator ( const ThisType &other )
+    SubEntityLagrangePointIterator ( const ThisType &other )
     : refElementContainer_( &ReferenceElementContainerType :: instance () )
     {
       lagrangePointSet_ = other.lagrangePointSet_;
@@ -565,7 +560,7 @@ namespace Dune
       numDofs_ = other.numDofs_;
     }
 
-    inline ThisType& operator= ( const ThisType &other )
+    ThisType& operator= ( const ThisType &other )
     {
       lagrangePointSet_ = other.lagrangePointSet_;
       subEntity_ = other.subEntity_;
@@ -580,7 +575,7 @@ namespace Dune
       numDofs_ = other.numDofs_;
     }
 
-    inline unsigned int operator* () const
+    unsigned int operator* () const
     {
       assert( lagrangePointSet_ != NULL );
       assert( codim_ <= dimension );
@@ -589,7 +584,7 @@ namespace Dune
                ( codim_, subSubEntity_, dofNumber_ );
     }
 
-    inline ThisType& operator++ ()
+    ThisType& operator++ ()
     {
       if( codim_ <= dimension ) {
         ++dofNumber_;
@@ -598,7 +593,7 @@ namespace Dune
       return *this;
     }
 
-    inline bool operator== ( const ThisType& other ) const
+    bool operator== ( const ThisType& other ) const
     {
       if( (other.codim_ != codim_)
           || (other.subIndex_ != subIndex_)
@@ -609,19 +604,19 @@ namespace Dune
              && (other.subEntity_ == subEntity_);
     }
 
-    inline bool operator!= ( const ThisType& other ) const
+    bool operator!= ( const ThisType& other ) const
     {
       return !(this->operator==( other ));
     }
  
     
-    inline static ThisType begin( const LagrangePointSetType &lagrangePointSet,
+    static ThisType begin( const LagrangePointSetType &lagrangePointSet,
                                   unsigned int subEntity )
     {
       return ThisType( lagrangePointSet, subEntity, true );
     }
 
-    inline static ThisType end( const LagrangePointSetType &lagrangePointSet,
+    static ThisType end( const LagrangePointSetType &lagrangePointSet,
                                 unsigned int subEntity )
     {
       return ThisType( lagrangePointSet, subEntity, false );
@@ -634,7 +629,7 @@ namespace Dune
       return (*refElementContainer_)( geo );
     }
 
-    inline void assertDof ()
+    void assertDof ()
     {
       assert( lagrangePointSet_ != NULL );
         
@@ -658,8 +653,7 @@ namespace Dune
  
 
 
-  template< class GridPartImp,
-            unsigned int polOrder >
+  template< class GridPartImp, unsigned int polOrder >
   class SubEntityLagrangePointIterator< GridPartImp, 0, polOrder >
   {
   public:
@@ -690,7 +684,7 @@ namespace Dune
     unsigned int index_, numDofs_;
 
   private:
-    inline SubEntityLagrangePointIterator
+    SubEntityLagrangePointIterator
       ( const LagrangePointSetType &lagrangePointSet,
         const unsigned int subEntity,
         const bool beginIterator )
@@ -703,14 +697,14 @@ namespace Dune
     }
   
   public:
-    inline SubEntityLagrangePointIterator ()
+    SubEntityLagrangePointIterator ()
     {
       lagrangePointSet_ = NULL;
       index_ = 0;
       numDofs_ = 0;
     }
     
-    inline SubEntityLagrangePointIterator ( const ThisType &other )
+    SubEntityLagrangePointIterator ( const ThisType &other )
     {
       lagrangePointSet_ = other.lagrangePointSet_;
 
@@ -718,7 +712,7 @@ namespace Dune
       numDofs_ = other.numDofs_;
     }
 
-    inline ThisType& operator= ( const ThisType &other )
+    ThisType& operator= ( const ThisType &other )
     {
       lagrangePointSet_ = other.lagrangePointSet_;
 
@@ -726,39 +720,39 @@ namespace Dune
       numDofs_ = other.numDofs_;
     }
 
-    inline unsigned int operator* () const
+    unsigned int operator* () const
     {
       assert( lagrangePointSet_ != NULL );
       assert( index_ < numDofs_ );
       return index_;
     }
 
-    inline ThisType& operator++ ()
+    ThisType& operator++ ()
     {
       if( index_ < numDofs_ )
         ++index_;
       return *this;
     }
 
-    inline bool operator== ( const ThisType& other ) const
+    bool operator== ( const ThisType& other ) const
     {
       return (other.index_ == index_)
              && (other.lagrangePointSet_ == lagrangePointSet_);
     }
 
-    inline bool operator!= ( const ThisType& other ) const
+    bool operator!= ( const ThisType& other ) const
     {
       return !(this->operator==( other ));
     }
  
     
-    inline static ThisType begin( const LagrangePointSetType &lagrangePointSet,
+    static ThisType begin( const LagrangePointSetType &lagrangePointSet,
                                   unsigned int subEntity )
     {
       return ThisType( lagrangePointSet, subEntity, true );
     }
 
-    inline static ThisType end( const LagrangePointSetType &lagrangePointSet,
+    static ThisType end( const LagrangePointSetType &lagrangePointSet,
                                 unsigned int subEntity )
     {
       return ThisType( lagrangePointSet, subEntity, false );
@@ -767,60 +761,52 @@ namespace Dune
 
 
 
-  template< class GridPartImp, unsigned int maxPolOrder >
+  template< class GridPart, unsigned int maxPolOrder >
   class LagrangePointSet
-  : public CachingPointList< GridPartImp, 0, 
-                             LagrangePointSetTraits< GridPartImp, maxPolOrder > >
+  : public CachingPointList< GridPart, 0, LagrangePointSetTraits< typename GridPart::ctype, GridPart::dimension, maxPolOrder > >
   {
+    typedef LagrangePointSet< GridPart, maxPolOrder > ThisType;
+    typedef CachingPointList< GridPart, 0, LagrangePointSetTraits< typename GridPart::ctype, GridPart::dimension, maxPolOrder > > BaseType;
+
   public:
-    typedef LagrangePointSetTraits< GridPartImp, maxPolOrder > Traits;
+    typedef LagrangePointSetTraits< typename GridPart::ctype, GridPart::dimension, maxPolOrder > Traits;
 
-    typedef typename Traits :: GridPartType GridPartType;
+    typedef GridPart GridPartType;
 
-    typedef typename Traits :: FieldType FieldType;
+    typedef typename GridPartType::ctype FieldType;
 
-    enum { dimension = Traits :: dimension };
-    
-    enum { polynomialOrder = Traits :: polynomialOrder };
+    static const int dimension = BaseType::dimension;
 
-    typedef typename Traits :: CoordinateType CoordinateType;
-    typedef typename Traits :: CoordinateType PointType;
+    enum { polynomialOrder = Traits::polynomialOrder };
+
+    typedef typename BaseType::CoordinateType CoordinateType;
+    typedef typename Traits::CoordinateType PointType;
 
     template< unsigned int codim >
     struct Codim
     {
       //! type of iterator over DoF numbers in a subentity
-      typedef SubEntityLagrangePointIterator< GridPartType, 
-                                              codim,
-                                              polynomialOrder >
+      typedef SubEntityLagrangePointIterator< GridPartType, codim, polynomialOrder >
         SubEntityIteratorType;
     };
    
   private:
-    typedef LagrangePointSet< GridPartType, polynomialOrder >
-      ThisType;
-    typedef CachingPointList< GridPartType, 0, Traits > BaseType;
-
-    typedef typename BaseType :: IntegrationPointListType
-                              :: IntegrationPointListType
+    typedef typename BaseType::IntegrationPointListType::IntegrationPointListType
       LagrangePointListType;
 
   public:
-    typedef typename LagrangePointListType :: DofInfo DofInfo;
-
-  private:
-    const LagrangePointListType &lagrangePointList_;
+    typedef typename LagrangePointListType::DofInfo DofInfo;
 
   public:
     //! constructor
-    inline LagrangePointSet ( const GeometryType &geometry, const int order )
+    LagrangePointSet ( const GeometryType &geometry, const int order )
     : BaseType( geometry, order ),
       lagrangePointList_( this->quadImp().ipList() )
     {
     }
 
     //! copy constructor
-    inline LagrangePointSet ( const ThisType &other )
+    LagrangePointSet ( const ThisType &other )
     : BaseType( other ),
       lagrangePointList_( this->quadImp().ipList() )
     {
@@ -828,19 +814,19 @@ namespace Dune
 
   private:
     // kill the assignment operator
-    inline ThisType& operator=( const ThisType &other )
+    ThisType& operator=( const ThisType &other )
     {
       assert( false );
       abort();
     }
 
   public:
-    inline const DofInfo& dofInfo( unsigned int index ) const
+    const DofInfo& dofInfo( unsigned int index ) const
     {
       return lagrangePointList_.dofInfo( index );
     }
 
-    inline void dofSubEntity ( unsigned int index,
+    void dofSubEntity ( unsigned int index,
                                unsigned int &codim,
                                unsigned int &subEntity ) const
     {
@@ -849,7 +835,7 @@ namespace Dune
                ( index, codim, subEntity, dofNumber );
     }
  
-    inline void dofSubEntity ( unsigned int index,
+    void dofSubEntity ( unsigned int index,
                                unsigned int &codim,
                                unsigned int &subEntity,
                                unsigned int &dofNumber ) const
@@ -858,50 +844,54 @@ namespace Dune
              ( index, codim, subEntity, dofNumber );
     }
  
-    inline unsigned int entityDofNumber ( unsigned int codim,
+    unsigned int entityDofNumber ( unsigned int codim,
                                           unsigned int subEntity,
                                           unsigned int dofNumber ) const
     {
       return lagrangePointList_.entityDofNumber( codim, subEntity, dofNumber );
     }
 
-    inline unsigned int maxDofs ( unsigned int codim ) const
+    unsigned int maxDofs ( unsigned int codim ) const
     {
       return lagrangePointList_.maxDofs( codim );
     }
     
-    inline unsigned int numDofs ( unsigned int codim,
+    unsigned int numDofs ( unsigned int codim,
                                   unsigned int subEntity ) const
     {
       return lagrangePointList_.numDofs( codim, subEntity );
     }
 
-    inline unsigned int numDofs ( unsigned int codim ) const
+    unsigned int numDofs ( unsigned int codim ) const
     {
       return lagrangePointList_.numDofs( codim );
     }
 
     //! get number of Lagrange points
-    inline unsigned int size () const
+    unsigned int size () const
     {
       return this->nop();
     }
 
   public:
     template< unsigned int codim >
-    inline typename Codim< codim > :: SubEntityIteratorType
+    typename Codim< codim >::SubEntityIteratorType
       beginSubEntity ( unsigned int subEntity ) const
     {
-      return Codim< codim > :: SubEntityIteratorType :: begin( *this, subEntity );
+      return Codim< codim >::SubEntityIteratorType::begin( *this, subEntity );
     }
 
     template< unsigned int codim >
-    inline typename Codim< codim > :: SubEntityIteratorType
+    typename Codim< codim >::SubEntityIteratorType
       endSubEntity ( unsigned int subEntity ) const
     {
-      return Codim< codim > :: SubEntityIteratorType :: end( *this, subEntity );
+      return Codim< codim >::SubEntityIteratorType::end( *this, subEntity );
     }
+
+  private:
+    const LagrangePointListType &lagrangePointList_;
   };
 
-} // end namespace dune 
-#endif
+} // namespace Dune
+
+#endif // #ifndef DUNE_LAGRANGESPACE_LAGRANGEPOINTS_HH

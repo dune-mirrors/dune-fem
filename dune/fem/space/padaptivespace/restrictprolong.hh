@@ -39,14 +39,17 @@ namespace Dune
       EntityDofIterator;
 
   public:
-    PLagrangeLocalRestrictProlong (const LagrangePointSetProvider& lpsProvider ) 
-      : lpsProvider_( lpsProvider )
-    {
-    }
+    PLagrangeLocalRestrictProlong ( const LagrangePointSetProvider &lpsProvider )
+    : lpsProvider_( lpsProvider )
+    {}
 
-    template< class FT, class ST >
+    template< class DomainField >
+    void setFatherChildWeight ( const DomainField &weight ) {}
+
+    template< class FT, class ST, class LocalGeometry >
     void restrictLocal ( LocalFunction< FT > &fatherFunction,
                          const LocalFunction< ST > &sonFunction,
+                        const LocalGeometry &geometryInFather,
                          const bool initialize ) const
     {
       static const int dimRange = LocalFunction< ST >::dimRange;
@@ -58,7 +61,6 @@ namespace Dune
         = GenericReferenceElements< ctype, dimension >::general( son.type() );
 
       const LagrangePointSet &pointSet = lagrangePointSet( father );
-      const LocalGeometry &geometryInFather = son.geometryInFather();
 
       const EntityDofIterator send = pointSet.template endSubEntity< 0 >( 0 );
       for( EntityDofIterator sit = pointSet.template beginSubEntity< 0 >( 0 ); sit != send; ++sit )
@@ -76,16 +78,17 @@ namespace Dune
       }
     }
 
-    template< class FT, class ST >
+    template< class FT, class ST, class LocalGeometry >
     void prolongLocal ( const LocalFunction< FT > &fatherFunction,
-                        LocalFunction< ST > &sonFunction ) const
+                        LocalFunction< ST > &sonFunction,
+                        const LocalGeometry &geometryInFather,
+                        bool initialize ) const
     {
       static const int dimRange = LocalFunction< FT >::dimRange;
 
       const Entity &son = sonFunction.entity();
 
       const LagrangePointSet &pointSet = lagrangePointSet( son );
-      const LocalGeometry &geometryInFather = son.geometryInFather();
 
       const EntityDofIterator send = pointSet.template endSubEntity< 0 >( 0 );
       for( EntityDofIterator sit = pointSet.template beginSubEntity< 0 >( 0 ); sit != send; ++sit )
@@ -129,6 +132,8 @@ namespace Dune
         }
       }
     }
+
+    bool needCommunication () const { return false; }
 
     const LagrangePointSet &lagrangePointSet ( const Entity &entity ) const
     {

@@ -17,6 +17,7 @@ common_HEADERS = adaptmanager.hh \
      functionspace.hh \
      functionspaceinterface.hh \
      loadbalancer.hh \
+     localrestrictprolong.hh \
      restrictprolongfunction.hh \
      restrictprolonginterface.hh \
      adaptcallbackhandle.hh

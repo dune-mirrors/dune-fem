@@ -256,32 +256,23 @@ namespace Dune
   }; // end class FiniteVolumeSpace
 
 
-/** \brief This is a restriction/prolongation operator for FV data of order zero.
- */
-template <class DiscreteFunctionImp,
-          class FunctionSpaceImp, 
-          class GridPartImp, 
-          template <class> class StorageImp> 
-class RestrictProlongDefaultImplementation< 
-  DiscreteFunctionImp,
-  FiniteVolumeSpace<FunctionSpaceImp, GridPartImp, 0,StorageImp> 
-  > :
-public RestrictProlongPieceWiseConstantData<DiscreteFunctionImp> 
-{
-public:
-  typedef DiscreteFunctionImp DiscreteFunctionType;
-  typedef RestrictProlongPieceWiseConstantData<DiscreteFunctionImp> BaseType; 
-public:  
-  //! Constructor
-  RestrictProlongDefaultImplementation( DiscreteFunctionType & df ) : 
-    BaseType ( df ) 
-  {
-  }
-};
 
-/** @} **/  
-} // end namespace Dune
+  // DefaultLocalRestrictProlong for FiniteVolumeSpace
+  // -------------------------------------------------
+
+  template< class FunctionSpaceImp, class GridPartImp, template< class > class StorageImp >
+  struct DefaultLocalRestrictProlong< FiniteVolumeSpace< FunctionSpaceImp, GridPartImp, 0, StorageImp > >
+  : public ConstantLocalRestrictProlong< FiniteVolumeSpace< FunctionSpaceImp, GridPartImp, 0, StorageImp > >
+  {
+    DefaultLocalRestrictProlong ( const FiniteVolumeSpace< FunctionSpaceImp, GridPartImp, 0, StorageImp > & )
+    {}
+  };
+
+/** @} **/
+
+} // namespace Dune
 
 // contains the implementation of FiniteVolumeSpace
 #include "fvspace_inline.hh"
-#endif
+
+#endif // #ifndef DUNE_FVSPACE_HH

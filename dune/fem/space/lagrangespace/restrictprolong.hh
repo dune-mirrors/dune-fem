@@ -21,19 +21,16 @@ namespace Dune
   template< class G, int ord >
   struct LagrangeLocalRestrictProlong
   {
-    typedef G Grid;
+    typedef G GridType;
 
-    typedef typename Grid::ctype ctype;
-    static const int dimension = Grid::dimension;
+    typedef typename GridType::ctype ctype;
+    static const int dimension = GridType::dimension;
+
     typedef FieldVector< ctype, dimension > DomainVector;
 
-    typedef typename Grid::template Codim< 0 >::Entity Entity;
-
-    typedef Dune::LagrangePointSet< LeafGridPart< Grid >, ord > LagrangePointSet;
+    typedef Dune::LagrangePointSet< LeafGridPart< GridType >, ord > LagrangePointSet;
 
   private:
-    typedef typename Entity::LocalGeometry LocalGeometry;
-
     typedef typename LagrangePointSet::template Codim< 0 >::SubEntityIteratorType
       EntityDofIterator;
 
@@ -48,21 +45,21 @@ namespace Dune
         delete it->second;
     }
 
-    template< class FT, class ST >
-    void restrictLocal ( LocalFunction< FT > &fatherFunction,
-                         const LocalFunction< ST > &sonFunction,
+    template< class DomainField >
+    void setFatherChildWeight ( const DomainField &weight ) {}
+
+    template< class FT, class ST, class LocalGeometry >
+    void restrictLocal ( LocalFunction< FT > &lfFather,
+                         const LocalFunction< ST > &lfSon,
+                         const LocalGeometry &geometryInFather,
                          const bool initialize ) const
     {
       static const int dimRange = LocalFunction< ST >::dimRange;
 
-      const Entity &father = fatherFunction.entity();
-      const Entity &son = sonFunction.entity();
-
       const GenericReferenceElement< ctype, dimension > &refSon
-        = GenericReferenceElements< ctype, dimension >::general( son.type() );
+        = GenericReferenceElements< ctype, dimension >::general( lfSon.entity().type() );
 
-      const LagrangePointSet &pointSet = lagrangePointSet( father );
-      const LocalGeometry &geometryInFather = son.geometryInFather();
+      const LagrangePointSet &pointSet = lagrangePointSet( lfFather.entity() );
 
       const EntityDofIterator send = pointSet.template endSubEntity< 0 >( 0 );
       for( EntityDofIterator sit = pointSet.template beginSubEntity< 0 >( 0 ); sit != send; ++sit )
@@ -73,23 +70,21 @@ namespace Dune
         if( refSon.checkInside( pointInSon ) )
         {
           typename LocalFunction< ST >::RangeType phi;
-          sonFunction.evaluate( pointInSon, phi );
+          lfSon.evaluate( pointInSon, phi );
           for( int coordinate = 0; coordinate < dimRange; ++coordinate )
-            fatherFunction[ dimRange * dof + coordinate ] = phi[ coordinate ];
+            lfFather[ dimRange * dof + coordinate ] = phi[ coordinate ];
         }
       }
     }
 
-    template< class FT, class ST >
-    void prolongLocal ( const LocalFunction< FT > &fatherFunction,
-                        LocalFunction< ST > &sonFunction ) const
+    template< class FT, class ST, class LocalGeometry >
+    void prolongLocal ( const LocalFunction< FT > &lfFather, LocalFunction< ST > &lfSon,
+                        const LocalGeometry &geometryInFather,
+                        bool initialize ) const
     {
       static const int dimRange = LocalFunction< FT >::dimRange;
 
-      const Entity &son = sonFunction.entity();
-
-      const LagrangePointSet &pointSet = lagrangePointSet( son );
-      const LocalGeometry &geometryInFather = son.geometryInFather();
+      const LagrangePointSet &pointSet = lagrangePointSet( lfSon.entity() );
 
       const EntityDofIterator send = pointSet.template endSubEntity< 0 >( 0 );
       for( EntityDofIterator sit = pointSet.template beginSubEntity< 0 >( 0 ); sit != send; ++sit )
@@ -99,12 +94,16 @@ namespace Dune
         const DomainVector pointInFather = geometryInFather.global( pointInSon );
         
         typename LocalFunction< FT >::RangeType phi;
-        fatherFunction.evaluate( pointInFather, phi );
+        lfFather.evaluate( pointInFather, phi );
         for( int coordinate = 0; coordinate < dimRange; ++coordinate )
-          sonFunction[ dimRange * dof + coordinate ] = phi[ coordinate ];
+          lfSon[ dimRange * dof + coordinate ] = phi[ coordinate ];
       }
     }
 
+    bool needCommunication () const { return false; }
+
+  protected:
+    template< class Entity >
     const LagrangePointSet &lagrangePointSet ( const Entity &entity ) const
     {
       return lagrangePointSet( entity.type() );
@@ -124,6 +123,6 @@ namespace Dune
     mutable LagrangePointSetMap lagrangePointSet_;
   };
 
-}
+} // namespace Dune
 
 #endif // #ifndef DUNE_LAGRANGESPACE_RESTRICTPROLONG_HH

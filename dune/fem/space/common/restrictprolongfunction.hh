@@ -77,7 +77,7 @@ namespace Dune
         if( isDefinedOn( fineFunction, son ) )
         {
           FineLocalFunction fineLocalFunction = fineFunction.localFunction( son );
-          localRestrictProlong_.prolongLocal( coarseLocalFunction, fineLocalFunction );
+          localRestrictProlong_.prolongLocal( coarseLocalFunction, fineLocalFunction, son.geometryInFather(), true );
         }
         else
           DUNE_THROW( GridError, "Cannot prolong over more than one level." );
@@ -167,7 +167,7 @@ namespace Dune
         if( isDefinedOn( fineFunction, son ) )
         {
           FineLocalFunction fineLocalFunction = fineFunction.localFunction( son );
-          localRestrictProlong_.restrictLocal( coarseLocalFunction, fineLocalFunction, initialize );
+          localRestrictProlong_.restrictLocal( coarseLocalFunction, fineLocalFunction, son.geometryInFather(), initialize );
           initialize = false;
         }
         else

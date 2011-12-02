@@ -3,138 +3,54 @@
 
 #include <dune/grid/common/capabilities.hh>
 
-#include <dune/fem/space/common/restrictprolonginterface.hh>
-#include <dune/fem/space/padaptivespace/restrictprolong.hh>
-
-#include <dune/fem/space/lagrangespace/lagrangespace.hh>
-#include <dune/fem/space/padaptivespace/padaptivespace.hh>
-#include <dune/fem/space/dgspace/dgadaptmanager.hh>
 #include <dune/fem/function/adaptivefunction.hh>
 #include <dune/fem/operator/lagrangeinterpolation.hh>
+#include <dune/fem/space/common/localrestrictprolong.hh>
+#include <dune/fem/space/dgspace/dgadaptmanager.hh>
+#include <dune/fem/space/lagrangespace/lagrangespace.hh>
+#include <dune/fem/space/padaptivespace/padaptivespace.hh>
+#include <dune/fem/space/padaptivespace/restrictprolong.hh>
 
 namespace Dune
 {
 
-  /** @ingroup RestrictProlongImpl
-   *
-   *  \brief Restriction / prolongation operator for Lagrange discrete
-   *         function spaces
-   */
-  template< class DF, class FS, class GP, int ord, template< class > class S >
-  class RestrictProlongDefaultImplementation< DF, Fem::PAdaptiveLagrangeSpace< FS, GP, ord, S > >
-  : public RestrictProlongInterfaceDefault< RestrictProlongTraits
-      < RestrictProlongDefaultImplementation< DF, Fem::PAdaptiveLagrangeSpace< FS, GP, ord, S > >,
-        typename GP::GridType::ctype > >
+  // DefaultLocalRestrictProlong
+  // ---------------------------
+
+  template< class FS, class GP, int ord, template< class > class S >
+  struct DefaultLocalRestrictProlong< Fem::PAdaptiveLagrangeSpace< FS, GP, ord, S > >
+  : public PLagrangeLocalRestrictProlong< typename GP::GridType, Fem::PAdaptiveLagrangeSpace< FS, GP, ord, S > >
   {
-    typedef RestrictProlongDefaultImplementation
-      < DF, Fem::PAdaptiveLagrangeSpace< FS, GP, ord, S > >
-      ThisType;
-    typedef RestrictProlongInterfaceDefault< RestrictProlongTraits< ThisType, typename GP::GridType::ctype > >
-      BaseType;
-
-    typedef typename GP::GridType::ctype DomainFieldType;
-
-  public:
-    //! type of the discrete function
-    typedef DF DiscreteFunctionType;
-
-    //! type of the discrete function space
-    typedef Fem::PAdaptiveLagrangeSpace< FS, GP, ord, S > DiscreteFunctionSpaceType;
-
-  protected:
-    using BaseType::entitiesAreCopies;
-
-  public:
-    //! type of the local functions
-    typedef typename DiscreteFunctionType::LocalFunctionType LocalFunctionType;
-
-    //! type of the grid
-    typedef typename DiscreteFunctionSpaceType::GridType Grid;
-
-  public:
-    //! constructor
-    explicit
-    RestrictProlongDefaultImplementation ( DiscreteFunctionType &discreteFunction )
-    : discreteFunction_( discreteFunction ),
-      localRestrictProlong_( discreteFunction.space() )
+    DefaultLocalRestrictProlong ( const Fem::PAdaptiveLagrangeSpace< FS, GP, ord, S > &space )
+    : PLagrangeLocalRestrictProlong< typename GP::GridType, Fem::PAdaptiveLagrangeSpace< FS, GP, ord, S > >( space )
     {}
-
-    //! restrict data to the father
-    template< class Entity >
-    void restrictLocal ( const Entity &father, const Entity &son, bool initialize ) const
-    {
-      if( !entitiesAreCopies( discreteFunction_.space().indexSet(), father, son ) )
-      {
-        LocalFunctionType fatherFunction = discreteFunction_.localFunction( father );
-        LocalFunctionType sonFunction = discreteFunction_.localFunction( son );
-
-        localRestrictProlong_.restrictLocal( fatherFunction, sonFunction, initialize );
-      }
-    }
-
-    //! prolong data to children
-    template< class Entity >
-    void prolongLocal ( const Entity &father, const Entity &son, bool initialize ) const
-    {
-      if( !entitiesAreCopies( discreteFunction_.space().indexSet(), father, son ) )
-      {
-        LocalFunctionType fatherFunction = discreteFunction_.localFunction( father );
-        LocalFunctionType sonFunction = discreteFunction_.localFunction( son );
-
-        localRestrictProlong_.prolongLocal( fatherFunction, sonFunction );
-      }
-    }
-
-    //! add discrete function to communicator 
-    template< class Communicator >
-    void addToList ( Communicator &comm )
-    {
-      // for Lagrange spaces this communication is not needed (since
-      // data on ghosts is neglected 
-
-      //  comm.addToList( discreteFunction_ );
-    }
-
-  private:
-    DiscreteFunctionType &discreteFunction_;
-    PLagrangeLocalRestrictProlong< Grid, DiscreteFunctionSpaceType > localRestrictProlong_;
   };
 
 
-  /** @ingroup RestrictProlongImpl
-   *
-   *  \brief Restriction / prolongation operator for p-adaptive DG spacees
-   */
-  template <class DiscFunc,
-            class FunctionSpaceImp,
-            class GridPartImp,
-            int polOrd,
-            template <class> class StorageImp>
-  class RestrictProlongDefaultImplementation<
-          DiscFunc,
-          Fem::PAdaptiveDGSpace<FunctionSpaceImp, GridPartImp, polOrd,StorageImp>  
-        >
-    : public RestrictProlongDiscontinuousSpace< DiscFunc,polOrd >
+  template< class FunctionSpaceImp, class GridPartImp, int polOrd, template< class > class StorageImp >
+  struct DefaultLocalRestrictProlong< Fem::PAdaptiveDGSpace< FunctionSpaceImp, GridPartImp, polOrd, StorageImp > >
+  : public DiscontinuousGalerkinLocalRestrictProlong< Fem::PAdaptiveDGSpace< FunctionSpaceImp, GridPartImp, polOrd, StorageImp > >
   {
-  public:
-    //! type of discrete function 
-    typedef DiscFunc DiscreteFunctionType;
-    //! type of base class  
-    typedef RestrictProlongDiscontinuousSpace<DiscreteFunctionType,polOrd>
-            BaseType;
-  public:
-    //! Constructor
-    RestrictProlongDefaultImplementation ( DiscreteFunctionType & df ) :
-      BaseType(df)
-    {
-    }
+    DefaultLocalRestrictProlong ( const Fem::PAdaptiveDGSpace< FunctionSpaceImp, GridPartImp, polOrd, StorageImp > & )
+    {}
   };
 
+  template< class FunctionSpaceImp, class GridPartImp, template< class > class StorageImp >
+  struct DefaultLocalRestrictProlong< Fem::PAdaptiveDGSpace< FunctionSpaceImp, GridPartImp, 0, StorageImp > >
+  : public ConstantLocalRestrictProlong< Fem::PAdaptiveDGSpace< FunctionSpaceImp, GridPartImp, 0, StorageImp > >
+  {
+    DefaultLocalRestrictProlong ( const Fem::PAdaptiveDGSpace< FunctionSpaceImp, GridPartImp, 0, StorageImp > & )
+    {}
+  };
+
+
+
+  // pAdaptation
+  // -----------
 
   template <class DF, class Vector, class DFS> 
   void pAdaptation( DF& df, const Vector& polynomialOrders, const DFS &space, const int ) 
-  {
-  }
+  {}
 
   /** \brief pAdaptation 
       \param df  discrete function to adapt 
@@ -210,6 +126,6 @@ namespace Dune
     pAdaptation( df, polynomialOrders, df.space(), polOrderShift );
   }
 
-} // end namespace Dune 
+} // namespace Dune
 
 #endif // #ifndef DUNE_LAGRANGESPACE_ADAPTMANAGER_HH
