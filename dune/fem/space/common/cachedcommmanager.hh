@@ -35,6 +35,11 @@ namespace Dune
   
   // only if ALUGrid found and was build for parallel runs 
 #if HAVE_ALUGRID && ALU3DGRID_PARALLEL 
+
+#ifdef ALUGRID_PERIODIC_BOUNDARY_PARALLEL
+#define ALUGRID_HAS_NONBLOCKING_COMM
+#endif
+
   //! class to build up a map of all dofs of entities to be exchanged
   //! during a communication procedure. This speeds up the communication
   //! procedure, because no grid traversal is necessary to exchange data.
@@ -70,7 +75,7 @@ namespace Dune
     // type of communication implementation
     typedef ALU3DSPACE MpAccessMPI MPAccessImplType;
     
-     //! type of communication buffer vector 
+    //! type of communication buffer vector 
     typedef std :: vector< ObjectStreamType > ObjectStreamVectorType;
   
   protected:
@@ -94,9 +99,6 @@ namespace Dune
     // ALUGrid communicatior Class 
     MPAccessInterfaceType *mpAccess_;
 
-    //! communication buffers 
-    ObjectStreamVectorType buffer_;
-
     //! number of links 
     int nLinks_;
 
@@ -111,6 +113,130 @@ namespace Dune
   protected:
     template< class LinkStorage, class IndexMapVector, InterfaceType CommInterface >
     class LinkBuilder;
+
+    class NonBlockingCommunication 
+    {
+      typedef DependencyCache < Space > DependencyCacheType ;
+
+#ifdef ALUGRID_HAS_NONBLOCKING_COMM
+      typedef MPAccessInterfaceType :: NonBlockingExchange  NonBlockingExchange;
+#else 
+      typedef int NonBlockingExchange;
+#endif
+
+      // create an unique tag for the communication 
+      static int getTag()
+      {
+        enum { initial = 200 };
+        static int tagCounter = initial ;
+        ++ tagCounter;
+        int tag = tagCounter ;
+
+        // avoid overflow 
+        if( tag < 0 )
+        {
+          tag = initial ;
+          tagCounter = initial ;
+        }
+        return tag;
+      }
+
+    public:
+      NonBlockingCommunication( DependencyCacheType& dependencyCache,
+                                const int mySize )
+        : dependencyCache_( dependencyCache ),
+          nonBlockingExchange_( 0 ),
+          exchangeTime_( 0.0 ),
+          mySize_( mySize ),
+          buffer_()
+      {
+      }
+
+      template < class DiscreteFunction >   
+      void send( DiscreteFunction& discreteFunction )
+      {
+        // check that object is in non-sent state 
+        assert( nonBlockingExchange_ == 0 );
+
+        // on serial runs: do nothing 
+        if( mySize_ <= 1 ) return;
+
+        // update cache (if necessary )
+        dependencyCache_.rebuild();
+
+        // take time 
+        Timer sendTimer ;
+
+#ifdef ALUGRID_HAS_NONBLOCKING_COMM
+        // get non-blocking exchange object from mpAccess including message tag
+        nonBlockingExchange_ = dependencyCache_.mpAccess().nonBlockingExchange( getTag() );
+#endif
+
+        // this variable can change during rebuild 
+        const int nLinks = dependencyCache_.nlinks();
+        
+        buffer_.resize( nLinks );
+
+        // write buffers 
+        for( int link = 0; link < nLinks; ++link )
+        {
+          buffer_[ link ].clear();
+          dependencyCache_.writeBuffer( link, buffer_[ link ], discreteFunction );
+        }
+
+#ifdef ALUGRID_HAS_NONBLOCKING_COMM
+        // perform send operation 
+        nonBlockingExchange_->send( buffer_ );
+#endif
+
+        // store time needed for sending
+        exchangeTime_ = sendTimer.elapsed();
+      }
+
+      template < class DiscreteFunction, class Operation >   
+      double receive( DiscreteFunction& discreteFunction, const Operation* operation )
+      {
+        // on serial runs: do nothing 
+        if( mySize_ <= 1 ) return 0.0;
+
+        // this variable can change during rebuild 
+        const int nLinks = buffer_.size();
+
+        // take time 
+        Timer recvTimer ;
+
+#ifdef ALUGRID_HAS_NONBLOCKING_COMM
+        // overwrite buffer (other method not working correctly)
+        buffer_ = nonBlockingExchange_->receive();
+#else 
+        // use exchange for older ALUGrid versions  
+        dependencyCache_.mpAccess().exchange( buffer_ );
+#endif
+
+        // read buffers and store to discrete function 
+        for( int link = 0; link < nLinks; ++link )
+        {
+          dependencyCache_.readBuffer( link, buffer_[ link ], discreteFunction, operation );
+        }
+
+        // store time needed for sending
+        exchangeTime_ += recvTimer.elapsed();
+
+#ifdef ALUGRID_HAS_NONBLOCKING_COMM
+        delete nonBlockingExchange_;
+        nonBlockingExchange_ = 0;
+#endif
+
+        return exchangeTime_;
+      }
+
+    protected:
+      DependencyCacheType& dependencyCache_; 
+      NonBlockingExchange* nonBlockingExchange_ ;
+      double exchangeTime_ ;
+      const int mySize_;
+      ObjectStreamVectorType buffer_; 
+    };
 
   public:
     //! constructor taking space 
@@ -127,10 +253,6 @@ namespace Dune
       recvIndexMap_( new IndexMapType[ mySize_ ] ),
       sendIndexMap_( new IndexMapType[ mySize_ ] ),
       linkRank_(),
-      // create mpAccess with world communicator  
-      // only when size > 1 
-      // mpAccess_( (mySize_ > 1) ? 
-      //    (new MPAccessImplType( MPIHelper::getCommunicator() )) : 0),
       mpAccess_( new MPAccessImplType( MPIHelper::getCommunicator() ) ),
       nLinks_( 0 ),
       sequence_( -1 ),
@@ -247,7 +369,7 @@ namespace Dune
       return *mpAccess_;
     }
     
-  private:  
+  protected:  
     // write data of DataImp& vector to object stream 
     // --writeBuffer 
     template< class DiscreteFunction >
@@ -611,10 +733,6 @@ namespace Dune
 
     // remember number of links
     nLinks_ = mpAccess().nlinks();
-
-    // resize buffer to number of links
-    buffer_.resize( nLinks_ );
-
   }
 
   template< class Space >
@@ -625,27 +743,29 @@ namespace Dune
     // consistency check 
     /////////////////////////////
 
+    ObjectStreamVectorType buffer( nLinks_ );
+
     // check that order and size are consistent 
     for(int l=0; l<nLinks_; ++l) 
     {
-      buffer_[l].clear();
+      buffer[l].clear();
       const int sendSize = sendIndexMap_[ linkRank_[ l ] ].size();
-      buffer_[l].write( sendSize );
+      buffer[l].write( sendSize );
       for(int i=0; i<sendSize; ++i) 
       {
-        buffer_[l].write( i );
+        buffer[l].write( i );
       }
     }
 
     // exchange data to other procs 
-    buffer_ = mpAccess().exchange( buffer_  );
+    buffer = mpAccess().exchange( buffer );
   
     // check that order and size are consistent 
     for(int l=0; l<nLinks_; ++l) 
     {
       const int recvSize = recvIndexMap_[ linkRank_[ l ] ].size();
       int sendedSize;
-      buffer_[l].read( sendedSize );
+      buffer[l].read( sendedSize );
 
       // compare sizes, must be the same 
       if( recvSize != sendedSize )
@@ -656,7 +776,7 @@ namespace Dune
       for(int i=0; i<recvSize; ++i) 
       {
         int idx;
-        buffer_[l].read( idx );
+        buffer[l].read( idx );
         
         // ordering should be the same on both sides 
         if( i != idx ) 
@@ -674,33 +794,16 @@ namespace Dune
                   const Operation *operation )
   {
     // on serial runs: do nothing 
-    if( mySize_ <= 1 )
-      return;
+    if( mySize_ <= 1 ) return;
 
-    // update cache 
-    rebuild();
-    
-    // take timer needed for exchange  
-    Timer exchangeTime;
-      
-    const int numLinks = nlinks();
+    // create non-blocking communication object 
+    NonBlockingCommunication nbc( *this, mySize_ );
 
-    // write buffers 
-    for( int link = 0; link < numLinks; ++link )
-    {
-      buffer_[ link ].clear();
-      writeBuffer( link, buffer_[ link ], discreteFunction );
-    }
+    // perform send operation 
+    nbc.send( discreteFunction );
 
-    // exchange data to other procs 
-    buffer_ = mpAccess().exchange( buffer_  );
-   
-    // read buffers 
-    for( int link = 0; link < numLinks; ++link )
-      readBuffer( link, buffer_[ link ], discreteFunction, operation );
-
-    // store time for exchange 
-    exchangeTime_ = exchangeTime.elapsed();
+    // store time for send and receive of data 
+    exchangeTime_ = nbc.receive( discreteFunction, operation );
   }
 
 
