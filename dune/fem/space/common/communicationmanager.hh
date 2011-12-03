@@ -93,7 +93,7 @@ namespace Dune
 
       //! send data for given discrete function 
       template < class DiscreteFunction >
-      void send( DiscreteFunction& discreteFunction )
+      void send( const DiscreteFunction& discreteFunction )
       {
         // nothing to do here, since DUNE does not support 
         // non-blocking communcation yet  

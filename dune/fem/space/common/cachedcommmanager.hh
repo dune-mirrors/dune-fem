@@ -157,7 +157,7 @@ namespace Dune
       }
 
       template < class DiscreteFunction >   
-      void send( DiscreteFunction& discreteFunction )
+      void send( const DiscreteFunction& discreteFunction )
       {
         // check that object is in non-sent state 
         assert( nonBlockingExchange_ == 0 );
