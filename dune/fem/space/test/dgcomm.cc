@@ -11,7 +11,6 @@ using namespace Dune;
 #include <dune/fem/function/attachedfunction.hh>
 #include <dune/fem/space/dgspace.hh>
 #include <dune/fem/quadrature/cachingquadrature.hh>
-#include <dune/fem/space/dgspace/dgadaptmanager.hh>
 
 #include <dune/fem/gridpart/gridpart.hh>
 #include <dune/fem/gridpart/adaptiveleafgridpart.hh>
@@ -223,15 +222,6 @@ double algorithm ( MyGridType &grid, DiscreteFunctionType &solution, int step, i
   double new_error = l2err.norm(f ,solution);
   std::cout << "P[" << grid.comm().rank() << "]  start comm: " << new_error << std::endl; 
 
-#if USE_GRAPE
-  // if Grape was found, then display last solution 
-  if(0 && turn > 0) {
-    std::cerr << "GRAPE 1" << std::endl;
-    GrapeDataDisplay < MyGridType > grape(grid); 
-    grape.dataDisplay( solution );
-  }
-#endif
-
   // reset all non-interior entities, 
   // these should be restored during communication
   resetNonInterior( solution );
@@ -243,16 +233,35 @@ double algorithm ( MyGridType &grid, DiscreteFunctionType &solution, int step, i
   double error = l2err.norm(f ,solution);
   std::cout << "P[" << grid.comm().rank() << "]  done comm: " << error << std::endl;
 
-#if USE_GRAPE
-  // if Grape was found, then display last solution 
-  if(0 && turn > 0) {
-    std::cerr << "GRAPE 2" << std::endl;
-    GrapeDataDisplay< MyGridType > grape(grid); 
-    grape.dataDisplay( solution );
-  }
-#endif
-
   if( std::abs( new_error - error ) > 1e-10 ) 
+    DUNE_THROW(InvalidStateException,"Communication not working correctly");
+  
+  ///////////////////////////////////////////////////
+  //  test non-blocking communication 
+  ///////////////////////////////////////////////////
+
+  typedef DiscreteFunctionType :: DiscreteFunctionSpaceType :: CommunicationManagerType
+    :: NonBlockingCommunicationType  NonBlockingCommunicationType;
+
+  NonBlockingCommunicationType nonBlocking = 
+    solution.space().communicator().nonBlockingCommunication();
+
+  // send data 
+  nonBlocking.send( solution );
+
+  // do some work, 
+  // reset all non-interior entities, 
+  // these should be restored during communication
+  resetNonInterior( solution );
+
+  // receive data 
+  nonBlocking.receive( solution );
+
+  // calculate l2 error again 
+  double nonBlock = l2err.norm(f ,solution);
+  std::cout << "P[" << grid.comm().rank() << "]  non-blocking: " << nonBlock << std::endl;
+
+  if( std::abs( new_error - nonBlock ) > 1e-10 ) 
     DUNE_THROW(InvalidStateException,"Communication not working correctly");
   
   return error;
@@ -295,12 +304,13 @@ try {
   const int step = DGFGridInfo< MyGridType >::refineStepsForHalf();
 
   GridPartType part ( grid );
-  DiscreteFunctionSpaceType linFuncSpace ( part );
-  DiscreteFunctionType solution ( "sol", linFuncSpace );
+  DiscreteFunctionSpaceType space( part );
+  DiscreteFunctionType solution ( "sol", space );
   for(int i=0; i<ml; ++i )
   {
     if( grid.comm().rank() == 0) 
       std::cout << std::endl << "**** Start communication cycle " << i << "  ****" << std::endl;
+
     GlobalRefine :: apply( grid, step ); 
     error[ i ] = algorithm ( grid , solution, step, (i==ml-1));
   }
