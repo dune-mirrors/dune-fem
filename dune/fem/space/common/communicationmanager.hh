@@ -71,6 +71,70 @@ namespace Dune
     typedef Space SpaceType; 
 
   protected:
+    typedef DefaultCommunicationManager< Space > ThisType;
+
+    /////////////////////////////////////////////////////////////////
+    //  begin NonBlockingCommunication
+    /////////////////////////////////////////////////////////////////
+    class NonBlockingCommunication
+    {
+      const SpaceType& space_;
+      const InterfaceType interface_;
+      const CommunicationDirection dir_;
+
+    public:
+      NonBlockingCommunication( const SpaceType& space,
+                                InterfaceType interface,
+                                CommunicationDirection dir ) 
+        : space_( space ),
+          interface_( interface ),
+          dir_ ( dir )
+      {}
+
+      //! send data for given discrete function 
+      template < class DiscreteFunction >
+      void send( DiscreteFunction& discreteFunction )
+      {
+        // nothing to do here, since DUNE does not support 
+        // non-blocking communcation yet  
+      }
+
+      //! receive data for discrete function and given operation 
+      template < class DiscreteFunction, class Operation >
+      double receive( DiscreteFunction& discreteFunction, const Operation* operation )
+      {
+        // get type of data handle from the discrete function space
+        typedef typename DiscreteFunction
+          :: template CommDataHandle< Operation > :: Type
+          DataHandleType;
+        
+        // on serial runs: do nothing
+        if( space_.grid().comm().size() <= 1 )
+          return 0.0;
+
+        // get stopwatch 
+        Timer exchangeT;
+      
+        // communicate data
+        DataHandleType dataHandle = discreteFunction.dataHandle( operation );
+        space_.gridPart().communicate( dataHandle, interface_ , dir_ );
+
+        // store time 
+        return exchangeT.elapsed();
+      }
+
+      //! receive method with default operation  
+      template < class DiscreteFunction >
+      double receive( DiscreteFunction& discreteFunction )
+      {
+        // get type of default operation 
+        typedef typename DiscreteFunction :: DiscreteFunctionSpaceType
+          :: template CommDataHandle< DiscreteFunction > :: OperationType  DefaultOperationType;
+        return receive( discreteFunction, (DefaultOperationType *) 0 );
+      }
+
+    };
+
     const SpaceType& space_;
 
     const InterfaceType interface_;
@@ -79,6 +143,8 @@ namespace Dune
     mutable double exchangeTime_;
     
   public:
+    typedef NonBlockingCommunication  NonBlockingCommunicationType;
+
     //! constructor taking space and communication interface/direction
     explicit DefaultCommunicationManager
       ( const SpaceType &space,
@@ -118,6 +184,15 @@ namespace Dune
     */
     double exchangeTime() const { return exchangeTime_; }
 
+    /** \brief return object for non-blocking communication 
+     
+        \return NonBlockingCommunicationType containing send and receive facilities
+      */
+    NonBlockingCommunicationType nonBlockingCommunication() const
+    {
+      return NonBlockingCommunicationType( space_, interface_, dir_ );
+    }
+
     /** \brief exchange data for a discrete function using the copy operation
      *  
      *  \param  discreteFunction  discrete function to communicate
@@ -144,24 +219,16 @@ namespace Dune
     inline void exchange ( DiscreteFunction &discreteFunction,
                            const Operation *operation ) const
     {
-      // get type of data handle from the discrete function space
-      typedef typename DiscreteFunction
-        :: template CommDataHandle< Operation > :: Type
-        DataHandleType;
-      
       // on serial runs: do nothing
       if( space_.grid().comm().size() <= 1 )
         return;
 
-      // get stopwatch 
-      Timer exchangeT;
-    
-      // communicate data
-      DataHandleType dataHandle = discreteFunction.dataHandle( operation );
-      space_.gridPart().communicate( dataHandle, interface_ , dir_ );
+      NonBlockingCommunicationType nbc( space_, interface_, dir_ );
 
-      // store time 
-      exchangeTime_ = exchangeT.elapsed();
+      // send data (probably done in receive)
+      nbc.send( discreteFunction );
+
+      exchangeTime_ = nbc.receive( discreteFunction, operation );
     }
   };
 

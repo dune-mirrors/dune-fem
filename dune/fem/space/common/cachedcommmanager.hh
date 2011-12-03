@@ -114,6 +114,10 @@ namespace Dune
     template< class LinkStorage, class IndexMapVector, InterfaceType CommInterface >
     class LinkBuilder;
 
+    /////////////////////////////////////////////////////////////////
+    //  begin NonBlockingCommunication
+    /////////////////////////////////////////////////////////////////
+
     class NonBlockingCommunication 
     {
       typedef DependencyCache < Space > DependencyCacheType ;
@@ -194,6 +198,7 @@ namespace Dune
         exchangeTime_ = sendTimer.elapsed();
       }
 
+      //! receive data for discrete function and given operation 
       template < class DiscreteFunction, class Operation >   
       double receive( DiscreteFunction& discreteFunction, const Operation* operation )
       {
@@ -231,6 +236,16 @@ namespace Dune
         return exchangeTime_;
       }
 
+      //! receive method with default operation  
+      template < class DiscreteFunction >   
+      double receive( DiscreteFunction& discreteFunction )
+      {
+        // get type of default operation 
+        typedef typename DiscreteFunction :: DiscreteFunctionSpaceType
+          :: template CommDataHandle< DiscreteFunction > :: OperationType  DefaultOperationType;
+        return receive( discreteFunction, (DefaultOperationType *) 0 );
+      }
+
     protected:
       DependencyCacheType& dependencyCache_; 
       NonBlockingExchange* nonBlockingExchange_ ;
@@ -238,6 +253,19 @@ namespace Dune
       const int mySize_;
       ObjectStreamVectorType buffer_; 
     };
+
+  public:
+    typedef NonBlockingCommunication  NonBlockingCommunicationType;
+
+    //! return object for non-blocking communication 
+    NonBlockingCommunicationType nonBlockingCommunication () 
+    {
+      // create non-blocking communication object 
+      return NonBlockingCommunicationType( *this, mySize_ );
+    }
+    /////////////////////////////////////////////////////////////////
+    //  end NonBlockingCommunication
+    /////////////////////////////////////////////////////////////////
 
   public:
     //! constructor taking space 
@@ -798,7 +826,7 @@ namespace Dune
     if( mySize_ <= 1 ) return;
 
     // create non-blocking communication object 
-    NonBlockingCommunication nbc( *this, mySize_ );
+    NonBlockingCommunicationType nbc( *this, mySize_ );
 
     // perform send operation 
     nbc.send( discreteFunction );
@@ -916,6 +944,9 @@ namespace Dune
     DependencyCacheType &cache_;
     CommunicationManager(const ThisType& org);
   public:  
+    // type of non-blocking communication object 
+    typedef typename DependencyCacheType :: NonBlockingCommunicationType  NonBlockingCommunicationType;
+
     //! constructor taking space and communication interface/direction 
     CommunicationManager(const SpaceType & space,
                          const InterfaceType interface,
@@ -962,6 +993,12 @@ namespace Dune
     double exchangeTime() const { return cache_.exchangeTime(); }
 
     MPAccessInterfaceType& mpAccess() { return cache_.mpAccess(); }
+
+    //! return object for non-blocking communication 
+    NonBlockingCommunicationType nonBlockingCommunication() const
+    {
+      return cache_.nonBlockingCommunication();
+    }
 
     //! exchange discrete function to all procs we share data 
     //! using the copy operation 
