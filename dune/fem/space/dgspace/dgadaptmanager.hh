@@ -132,6 +132,25 @@ namespace Dune
     {}
   };
 
+  // DefaultLocalRestrictProlong for LagrangeDiscontinuousGalerkinSpace
+  // ------------------------------------------------------------------
+
+  template< class FunctionSpaceImp, class GridPartImp, int polOrd, template< class > class StorageImp >
+  struct DefaultLocalRestrictProlong< LagrangeDiscontinuousGalerkinSpace< FunctionSpaceImp, GridPartImp, polOrd, StorageImp > >
+  : public DiscontinuousGalerkinLocalRestrictProlong< LagrangeDiscontinuousGalerkinSpace< FunctionSpaceImp, GridPartImp, polOrd, StorageImp > >
+  {
+    DefaultLocalRestrictProlong ( const LagrangeDiscontinuousGalerkinSpace< FunctionSpaceImp, GridPartImp, polOrd, StorageImp > & )
+    {}
+  };
+
+  template< class FunctionSpaceImp, class GridPartImp, template< class > class StorageImp >
+  struct DefaultLocalRestrictProlong< LagrangeDiscontinuousGalerkinSpace< FunctionSpaceImp, GridPartImp, 0, StorageImp > >
+  : public ConstantLocalRestrictProlong< LagrangeDiscontinuousGalerkinSpace< FunctionSpaceImp, GridPartImp, 0, StorageImp > >
+  {
+    DefaultLocalRestrictProlong ( const LagrangeDiscontinuousGalerkinSpace< FunctionSpaceImp, GridPartImp, 0, StorageImp > & )
+    {}
+  };
+
   ///@}
 
 } // namespace Dune
