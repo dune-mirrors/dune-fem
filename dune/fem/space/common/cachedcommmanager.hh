@@ -175,6 +175,7 @@ namespace Dune
         // this variable can change during rebuild 
         const int nLinks = dependencyCache_.nlinks();
         
+        // resize buffer vector 
         buffer_.resize( nLinks );
 
         // write buffers 
@@ -210,7 +211,7 @@ namespace Dune
         buffer_ = nonBlockingExchange_->receive();
 #else 
         // use exchange for older ALUGrid versions  
-        dependencyCache_.mpAccess().exchange( buffer_ );
+        buffer_ = dependencyCache_.mpAccess().exchange( buffer_ );
 #endif
 
         // read buffers and store to discrete function 
