@@ -11,7 +11,6 @@ using namespace Dune;
 #include <dune/fem/function/attachedfunction.hh>
 #include <dune/fem/space/dgspace.hh>
 #include <dune/fem/quadrature/cachingquadrature.hh>
-#include <dune/fem/space/dgspace/dgadaptmanager.hh>
 
 #include <dune/fem/gridpart/gridpart.hh>
 #include <dune/fem/gridpart/adaptiveleafgridpart.hh>
@@ -60,10 +59,17 @@ typedef DGAdaptiveLeafGridPart< MyGridType > GridPartType;
 //! see dune/fem/lagrangebase.hh
 typedef FunctionSpace < double , double, GRIDDIM , 5 > FuncSpace;
 typedef DiscontinuousGalerkinSpace<FuncSpace, GridPartType, 
-  polOrd,CachingStorage> DiscreteFunctionSpaceType;
+                  polOrd,CachingStorage> DiscreteFunctionSpaceType;
+
+//typedef LegendreDiscontinuousGalerkinSpace<FuncSpace, GridPartType, 
+//                  polOrd,CachingStorage> DiscreteFunctionSpaceType;
+
+//typedef LagrangeDiscontinuousGalerkinSpace<FuncSpace, GridPartType, 
+//                  polOrd,CachingStorage> DiscreteFunctionSpaceType;
 
 //! define the type of discrete function we are using , see
 typedef AdaptiveDiscreteFunction< DiscreteFunctionSpaceType > DiscreteFunctionType;
+
 //typedef ManagedDiscreteFunction< VectorDiscreteFunction< DiscreteFunctionSpaceType, DynamicVector< double > > > DiscreteFunctionType;
 //typedef AttachedDiscreteFunction< DiscreteFunctionSpaceType > DiscreteFunctionType;
 
