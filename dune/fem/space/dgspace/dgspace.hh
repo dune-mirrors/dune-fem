@@ -582,6 +582,6 @@ namespace Dune
 } // end namespace Dune 
 
 #include <dune/fem/space/dgspace/localdgmassmatrix.hh>
-#include <dune/fem/space/dgspace/dgadaptmanager.hh>
+#include <dune/fem/space/dgspace/localrestrictprolong.hh>
 
 #endif
