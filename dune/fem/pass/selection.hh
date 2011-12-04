@@ -82,10 +82,10 @@ namespace Dune
   };
 
 
-  template< class Argument, int startPassId, int id >
-  struct FindPass< StartPass< Argument, startPassId >, id >
+  template< class Argument, int startPassId, class NonBlockingComm, int id >
+  struct FindPass< StartPass< Argument, startPassId, NonBlockingComm >, id >
   {
-    typedef StartPass< Argument, startPassId > Pass;
+    typedef StartPass< Argument, startPassId, NonBlockingComm > Pass;
     static const int passNum = ((int)Pass::passId == id ? 0 : -1);
   };
 

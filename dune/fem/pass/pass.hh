@@ -15,6 +15,16 @@
 
 namespace Dune {
 
+  // empty non-blocking communication for start pass as default argument
+  struct EmptyNonBlockingComm 
+  {
+    template <class Destination>
+    void initComm( const Destination& ) const {}
+
+    template <class Destination>
+    void finalizeComm( const Destination& ) const {}
+  };
+
   /*! @addtogroup Pass 
    *
    */
@@ -22,12 +32,15 @@ namespace Dune {
    * @brief End marker for a compile-time list of passes.
    *
    */
-  template < class ArgumentImp , int passIdImp  = -1 >
-  class StartPass {
+  template < class ArgumentImp , int passIdImp  = -1,
+             class NonBlockingCommunication = EmptyNonBlockingComm  >
+  class StartPass 
+  {
+    NonBlockingCommunication nonBlockingComm_;
   public:
     //- Enums and typedefs
     //! The start pass has index 0.
-    enum {passNum=0};
+    enum{ passNum=0 };
     enum{ passId = passIdImp };
     //! The argument (and destination) type of the overall operator
     typedef ArgumentImp GlobalArgumentType;
@@ -36,26 +49,38 @@ namespace Dune {
     
   public:
     //! empty constructor 
-    StartPass() {} 
+    StartPass() : nonBlockingComm_() {} 
     //! copy constructor 
-    StartPass(const StartPass&) {}
+    StartPass(const StartPass&) : nonBlockingComm_() {}
     
     //- Public methods
     //! The pass method does nothing.
-    void pass(const GlobalArgumentType& arg) const {
+    void pass( const GlobalArgumentType& arg ) const 
+    {
+      nonBlockingComm_.initComm( arg );
     }
-    void printTexInfo(std::ostream& out) const {
+
+    void finalizeCommunication( const GlobalArgumentType& arg ) const 
+    {
+      nonBlockingComm_.finalizeComm( arg );
     }
+
+    // dummy printTexInfo method 
+    void printTexInfo(std::ostream& out) const {}
+
     //! Returns the closure of the destination tuple.
     NextArgumentType localArgument() const { return nullType(); }
+
     //! No memory needs to be allocated.
     void allocateLocalMemory() {}
 
     //! StartPass does not need a time 
     void setTime(const double) {}
+
+    //! return time step estimate 
     double timeStepEstimate() const 
     {
-       return std::numeric_limits<double>::max(); 
+      return std::numeric_limits<double>::max(); 
     }
   };
 
@@ -117,6 +142,9 @@ namespace Dune {
     //! type of mem handler, which deletes destination 
     typedef DeleteHandler<DestinationType> DeleteHandlerType;
 
+    typedef typename DestinationType :: DiscreteFunctionSpaceType :: CommunicationManagerType
+          :: NonBlockingCommunicationType  NonBlockingCommunicationType;
+
     //! Type of the discrete function which is passed to the overall operator
     //! by the user
     typedef typename PreviousPassType::GlobalArgumentType GlobalArgumentType;
@@ -131,7 +159,7 @@ namespace Dune {
     typedef Pair<DestinationType*, LocalArgumentType> NextArgumentType;
 
   public:
-    // * Hack!!!! Remove again
+    // return pass number
     int passNumber() const { return passNum; }
 
     //- Public methods
@@ -169,7 +197,7 @@ namespace Dune {
     void operator()(const GlobalArgumentType& arg, DestinationType& dest) const
     {
       previousPass_.pass(arg);
-      typename PreviousPassType::NextArgumentType prevArg=previousPass_.localArgument();
+      typename PreviousPassType::NextArgumentType prevArg = previousPass_.localArgument();
       const TotalArgumentType totalArg(&arg, prevArg);
       this->compute(totalArg, dest);
     }
@@ -192,7 +220,7 @@ namespace Dune {
     double timeStepEstimate() const 
     { 
       double ret= std::min( previousPass_.timeStepEstimate(),
-                       this->timeStepEstimateImpl() );
+                            this->timeStepEstimateImpl() );
       return ret;
     }
 
@@ -210,7 +238,10 @@ namespace Dune {
     //! Same as application operator, but uses own memory instead of the
     //! discrete function provided by the client. This method is called on all
     //! passes except the last one.
-    void pass(const GlobalArgumentType& arg) const {
+    void pass(const GlobalArgumentType& arg) const 
+    {
+      // send my destination data needed by the next pass 
+      initComm();
       operator()(arg, *destination_);
     }
 
@@ -218,6 +249,20 @@ namespace Dune {
     NextArgumentType localArgument() const {
       typename PreviousPassType :: NextArgumentType nextArg( previousPass_.localArgument() );
       return NextArgumentType(destination_, nextArg );
+    }
+
+    /** \brief finalizeCommunication collects possbily initiated non-blocking
+               communications for all passes including the global argument 
+               this method will be called from the next pass 
+    */
+    void finalizeCommunication(const GlobalArgumentType& arg) const 
+    {
+      // we only need the first argument
+      // the other argument are known to the previous passes 
+      previousPass_.finalizeCommunication( arg );
+
+      // this method has to be overloaded in the pass implementation 
+      finalizeComm();
     }
 
   protected:
@@ -233,9 +278,34 @@ namespace Dune {
       return std::numeric_limits<double>::max(); 
     }
 
+    /** \brief finalizeCommunication collects possbily initiated non-blocking
+               communications for all passes 
+    */
+    void finalizeCommunication( const TotalArgumentType& totalArg ) const 
+    {
+      // this method is called on the last pass which needs no 
+      // finalizing of communication, so call the correct method 
+      // on the previous pass 
+      // totalArg.first() is the global argument type 
+      previousPass_.finalizeCommunication( *totalArg.first() );
+    }
+
+    /** \brief initializeCommunication of this pass, this will send  
+               the communication of destination_ and has to be overloaded in 
+               the implementation 
+    */
+    virtual void initComm() const {}
+
+    /** \brief finalizeCommunication of this pass, this will collect 
+               the communication of destination_ and has to be overloaded in 
+               the implementation 
+    */
+    virtual void finalizeComm() const {}
+
   protected:
-    // ? Really do this? Can't you allocate the memory directly?
+    //! destination (might be set from outside) 
     DestinationType* destination_;
+
     //! object to delete destination_ 
     DeleteHandlerType* deleteHandler_; 
 
@@ -252,7 +322,6 @@ namespace Dune {
   template <class DiscreteModelImp, class PreviousPassImp , int passIdImp >
   class LocalPass :
     public Pass< DiscreteModelImp , PreviousPassImp , passIdImp>
-    //public Pass<DiscreteModelImp, PreviousPassImp>::DeleteHandler
   {
   public:
     //! Type of the preceding pass
@@ -347,7 +416,8 @@ namespace Dune {
       prepare(arg, dest);
       
       IteratorType endit = spc_.end();
-      for (IteratorType it = spc_.begin(); it != endit; ++it) {
+      for (IteratorType it = spc_.begin(); it != endit; ++it) 
+      {
         applyLocal(*it);
       }
 

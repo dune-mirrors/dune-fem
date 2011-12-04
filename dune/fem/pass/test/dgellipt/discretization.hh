@@ -36,8 +36,6 @@
 // definition of L2Error 
 #include <dune/fem/misc/l2error.hh>
 
-#include <dune/fem/space/dgspace/dgadaptmanager.hh>
-
 using namespace Dune;
 
 namespace LDGExample { 
