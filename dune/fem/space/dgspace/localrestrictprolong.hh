@@ -6,6 +6,7 @@
 #include <dune/fem/space/common/adaptmanager.hh>
 #include <dune/fem/space/common/localrestrictprolong.hh>
 #include <dune/fem/space/dgspace/dgspace.hh>
+#include <dune/fem/space/dgspace/localdgmassmatrix.hh>
 
 namespace Dune
 {
