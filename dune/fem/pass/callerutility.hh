@@ -391,6 +391,7 @@ namespace Dune
   public:
     typedef typename VectorTupleType :: value_type TupleType;
     typedef typename ElementType<passId, TupleType> :: Type ValueType;
+    typedef ValueType value_type ;
 
     TupleToVectorConverter(VectorTupleType& vec)
       : vector_( vec )
