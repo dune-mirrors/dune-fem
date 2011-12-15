@@ -31,7 +31,12 @@ namespace Dune
   struct DefaultLocalRestrictProlong< Fem::PAdaptiveDGSpace< FunctionSpaceImp, GridPartImp, polOrd, StorageImp > >
   : public DiscontinuousGalerkinLocalRestrictProlong< Fem::PAdaptiveDGSpace< FunctionSpaceImp, GridPartImp, polOrd, StorageImp >, false > // invert mass matrix or not 
   {
-    DefaultLocalRestrictProlong ( const Fem::PAdaptiveDGSpace< FunctionSpaceImp, GridPartImp, polOrd, StorageImp > & )
+    typedef DiscontinuousGalerkinLocalRestrictProlong< Fem::PAdaptiveDGSpace<
+                                                       FunctionSpaceImp, 
+                                                       GridPartImp, 
+                                                       polOrd, StorageImp >, false > BaseType ;
+    DefaultLocalRestrictProlong ( const Fem::PAdaptiveDGSpace< FunctionSpaceImp, GridPartImp, polOrd, StorageImp > & space ) 
+      : BaseType( space )
     {}
   };
 
