@@ -1,34 +1,32 @@
 #ifndef DUNE_LAGRANGESPACE_LAGRANGESPACE_HH
 #define DUNE_LAGRANGESPACE_LAGRANGESPACE_HH
 
-//- system includes 
 #include <algorithm>
+#include <vector>
 
-//- Dune includes 
 #include <dune/common/misc.hh>
-#include <dune/grid/common/grid.hh>
+#include <dune/common/nullptr.hh>
 
-//- Dune-Fem includes 
-#include <dune/fem/space/common/dofmanager.hh>
-#include <dune/fem/space/mapper/nonblockmapper.hh>
-#include <dune/fem/space/common/discretefunctionspace.hh>
-#include <dune/fem/space/basefunctions/basefunctionstorage.hh>
-#include <dune/fem/space/basefunctions/basefunctionsets.hh>
+#include <dune/geometry/type.hh>
+#include <dune/geometry/typeindex.hh>
+
+#include <dune/grid/common/gridenums.hh>
+
 #include <dune/fem/space/basefunctions/basefunctionproxy.hh>
-#include <dune/fem/space/common/defaultcommhandler.hh>
+#include <dune/fem/space/basefunctions/basefunctionsets.hh>
+#include <dune/fem/space/basefunctions/basefunctionstorage.hh>
 #include <dune/fem/space/common/basesetlocalkeystorage.hh>
-
-//- local includes 
-#include "basefunctions.hh"
-#include "mapper.hh"
+#include <dune/fem/space/common/defaultcommhandler.hh>
+#include <dune/fem/space/common/discretefunctionspace.hh>
+#include <dune/fem/space/common/dofmanager.hh>
+#include <dune/fem/space/lagrangespace/basefunctions.hh>
+#include <dune/fem/space/lagrangespace/mapper.hh>
+#include <dune/fem/space/mapper/nonblockmapper.hh>
 
 namespace Dune
 {
 
-  template< class FunctionSpaceImp,
-            class GridPartImp,
-            int polOrder,
-            template< class > class BaseFunctionStorageImp = CachingStorage >
+  template< class FunctionSpace, class GridPart, int polOrder, template< class > class Storage = CachingStorage >
   class LagrangeDiscreteFunctionSpace;
 
 
@@ -46,29 +44,28 @@ namespace Dune
     typedef typename FunctionSpaceType :: RangeType RangeType;
     typedef typename FunctionSpaceType :: JacobianRangeType JacobianRangeType;
 
-    enum { dimRange = FunctionSpaceType :: dimRange };
+    static const int dimRange = FunctionSpaceType::dimRange;
     
     typedef GridPart GridPartType;
-    typedef typename GridPartType :: GridType GridType;
-    typedef typename GridPartType :: IndexSetType IndexSetType;
-    typedef typename GridPartType :: template Codim< 0 > :: IteratorType
-      IteratorType;
+    typedef typename GridPartType::GridType GridType;
+    typedef typename GridPartType::IndexSetType IndexSetType;
 
-    typedef typename GridPartType :: template Codim< 0 > :: EntityType EntityType;
+    typedef typename GridPartType::template Codim< 0 >::IteratorType IteratorType;
+    typedef typename GridPartType::template Codim< 0 >::EntityType EntityType;
 
     // get dimension of local coordinate 
-    enum { dimLocal = GridType :: dimension };
+    static const int dimLocal = GridPartType::dimension;
 
     typedef typename ToLocalFunctionSpace< FunctionSpaceType, dimLocal > :: Type 
       BaseFunctionSpaceType;
 
-    enum { polynomialOrder = polOrder };
+    static const int polynomialOrder = polOrder;
     
     typedef LagrangeDiscreteFunctionSpace
       < FunctionSpaceType, GridPartType, polynomialOrder, BaseFunctionStorage >
       DiscreteFunctionSpaceType;
 
-    enum { localBlockSize = dimRange };
+    static const int localBlockSize = dimRange;
 
     // mapper for block
     typedef LagrangeMapper< GridPartType, polynomialOrder > BlockMapperType;
@@ -94,54 +91,59 @@ namespace Dune
     };
   };
 
-  //! Key for Mapper singleton list 
-  template< class GridPartImp, class LagrangePointSetMapImp >
+
+  // LagrangeMapperSingletonKey
+  // --------------------------
+
+  template< class GridPart, class LagrangePointSetContainer >
   struct LagrangeMapperSingletonKey 
   {
-    //! constructor taking index set and numDofs 
-    LagrangeMapperSingletonKey ( const GridPartImp & gridPart, 
-                                 LagrangePointSetMapImp& pointSet,
-                                 const int polOrd)
+    typedef LagrangeMapperSingletonKey< GridPart, LagrangePointSetContainer > ThisType;
+
+    LagrangeMapperSingletonKey ( const GridPart &gridPart, LagrangePointSetContainer &pointSet, const int polOrd )
     : gridPart_( gridPart ),
       pointSet_( pointSet ),
       polOrd_( polOrd )
     {}
 
-    //! copy constructor 
-    LagrangeMapperSingletonKey(const LagrangeMapperSingletonKey &org) 
-      : gridPart_(org.gridPart_) , pointSet_(org.pointSet_), polOrd_(org.polOrd_)
-    {}
-    //! returns true if indexSet pointer and numDofs are equal 
-    bool operator == (const LagrangeMapperSingletonKey & otherKey) const 
+    bool operator == ( const ThisType &other ) const
     {
-      return ((&(gridPart_.indexSet()) == &(otherKey.gridPart().indexSet())) 
-              && (polOrd_ == otherKey.polOrd_));
+      return ((&indexSet() == &other.indexSet()) && (polOrd_ == other.polOrd_));
+    }
+
+    bool operator != ( const ThisType &other ) const
+    {
+      return ((&indexSet() != &other.indexSet()) || (polOrd_ != other.polOrd_));
     }
 
     //! return reference to index set 
-    const GridPartImp & gridPart() const { return gridPart_; }
+    const GridPart &gridPart () const { return gridPart_; }
+
+    const typename GridPart::IndexSetType &indexSet () const { return gridPart_.indexSet(); }
+
     //! return lagrange point map set  
-    LagrangePointSetMapImp& pointSet() const { return pointSet_; }
+    LagrangePointSetContainer &pointSet () const { return pointSet_; }
 
   private:
-    const GridPartImp &gridPart_; 
-    LagrangePointSetMapImp &pointSet_;
+    const GridPart &gridPart_; 
+    LagrangePointSetContainer &pointSet_;
     const int polOrd_;
   };
 
 
   
-  // Factory class for SingletonList to tell how objects are created and
-  // how compared.
+  // LagrangeMapperSingletonFactory
+  // ------------------------------
+
   template< class Key, class Object >
   struct LagrangeMapperSingletonFactory
   {
-    static Object *createObject( const Key &key )
+    static Object *createObject ( const Key &key )
     {
       return new Object( key.gridPart(), key.pointSet() );
     }
     
-    static void deleteObject( Object *obj )
+    static void deleteObject ( Object *obj )
     {
       delete obj;
     }
@@ -166,106 +168,94 @@ namespace Dune
    */
 
 
+  // LagrangeDiscreteFunctionSpace
+  // -----------------------------
 
   /** \class   LagrangeDiscreteFunctionSpace
    *  \ingroup LagrangeDiscreteFunctionSpace
    *  \brief   Lagrange discrete function space
    */
-  template< class FunctionSpaceImp,
-            class GridPartImp,
-            int polOrder,
-            template< class > class BaseFunctionStorageImp >
+  template< class FunctionSpace, class GridPart, int polOrder, template< class > class Storage >
   class LagrangeDiscreteFunctionSpace
-  : public DiscreteFunctionSpaceDefault
-           < LagrangeDiscreteFunctionSpaceTraits< FunctionSpaceImp,
-                                                  GridPartImp,
-                                                  polOrder,
-                                                  BaseFunctionStorageImp > >
+  : public DiscreteFunctionSpaceDefault< LagrangeDiscreteFunctionSpaceTraits< FunctionSpace, GridPart, polOrder, Storage > >
   {
+    typedef LagrangeDiscreteFunctionSpace< FunctionSpace, GridPart, polOrder, Storage > ThisType;
+    typedef DiscreteFunctionSpaceDefault< LagrangeDiscreteFunctionSpaceTraits< FunctionSpace, GridPart, polOrder, Storage > > BaseType;
+
   public:
     //! traits for the discrete function space
-    typedef LagrangeDiscreteFunctionSpaceTraits< FunctionSpaceImp,
-                                                 GridPartImp,
-                                                 polOrder,
-                                                 BaseFunctionStorageImp >
-      Traits;
+    typedef LagrangeDiscreteFunctionSpaceTraits< FunctionSpace, GridPart, polOrder, Storage > Traits;
 
     //! type of the discrete function space
-    typedef LagrangeDiscreteFunctionSpace< FunctionSpaceImp,
-                                           GridPartImp,
-                                           polOrder,
-                                           BaseFunctionStorageImp >
-     LagrangeDiscreteFunctionSpaceType;
+    typedef ThisType LagrangeDiscreteFunctionSpaceType;
 
-    typedef typename Traits :: GridPartType GridPartType;
-    typedef typename Traits :: GridType GridType;
-    typedef typename Traits :: IndexSetType IndexSetType;
-    typedef typename Traits :: IteratorType IteratorType;
+    typedef typename Traits::GridPartType GridPartType;
+    typedef typename Traits::GridType GridType;
+    typedef typename Traits::IndexSetType IndexSetType;
+    typedef typename Traits::IteratorType IteratorType;
+
     //! dimension of the grid (not the world)
-    enum { dimension = GridType :: dimension };
+    static const int dimension = GridPartType::dimension;
 
-    typedef typename Traits :: FunctionSpaceType FunctionSpaceType;
+    typedef typename Traits::FunctionSpaceType FunctionSpaceType;
     //! field type for function space's domain
-    typedef typename Traits :: DomainFieldType DomainFieldType;
+    typedef typename Traits::DomainFieldType DomainFieldType;
     //! type for function space's domain
-    typedef typename Traits :: DomainType DomainType;
+    typedef typename Traits::DomainType DomainType;
     //! field type for function space's range
-    typedef typename Traits :: RangeFieldType RangeFieldType;
+    typedef typename Traits::RangeFieldType RangeFieldType;
     //! type for function space's range
-    typedef typename Traits :: RangeType RangeType;
+    typedef typename Traits::RangeType RangeType;
     //! dimension of function space's range
-    enum { dimRange = FunctionSpaceType :: dimRange };
+    static const int dimRange = Traits::dimRange;
     //! type of scalar function space
-    typedef typename Traits :: BaseFunctionSpaceType BaseFunctionSpaceType;
+    typedef typename Traits::BaseFunctionSpaceType BaseFunctionSpaceType;
    
     //! maximum polynomial order of functions in this space
-    enum { polynomialOrder = Traits :: polynomialOrder };
+    static const int polynomialOrder = Traits::polynomialOrder;
     
     //! type of the base function set(s)
-    typedef typename Traits :: ShapeFunctionSetType  ShapeFunctionSetType;
+    typedef typename Traits::ShapeFunctionSetType ShapeFunctionSetType;
     // deprecated name 
     typedef ShapeFunctionSetType BaseFunctionSetImp;
-    
-    typedef typename Traits :: BaseFunctionSetType BaseFunctionSetType;
+
+    typedef typename Traits::BaseFunctionSetType BaseFunctionSetType;
     //! type of the shape function storage 
-    typedef Fem :: BaseSetLocalKeyStorage< ShapeFunctionSetType > ShapeSetStorageType;
+    typedef Fem::BaseSetLocalKeyStorage< ShapeFunctionSetType > ShapeSetStorageType;
 
     //! type of base function factory
-    typedef LagrangeBaseFunctionFactory
-      < typename BaseFunctionSpaceType :: ScalarFunctionSpaceType, dimension, polynomialOrder >
+    typedef LagrangeBaseFunctionFactory< typename BaseFunctionSpaceType::ScalarFunctionSpaceType, dimension, polynomialOrder >
       ScalarFactoryType;
     //! type of singleton base function factory
-    typedef BaseFunctionSetSingletonFactory
-      < GeometryType, BaseFunctionSetImp, ScalarFactoryType >
+    typedef BaseFunctionSetSingletonFactory< GeometryType, ShapeFunctionSetType, ScalarFactoryType >
       BaseFunctionSetSingletonFactoryType;
     //! type of singleton list (singleton provider) for base functions
-    typedef SingletonList
-      < GeometryType, BaseFunctionSetImp, BaseFunctionSetSingletonFactoryType >
+    typedef SingletonList< GeometryType, ShapeFunctionSetType, BaseFunctionSetSingletonFactoryType >
       BaseFunctionSetSingletonProviderType;
 
     //! type of a Lagrange point set
-    typedef LagrangePointSet< GridPartType, polynomialOrder >
-      LagrangePointSetType;
-    //! type of Lagrange point set map
-    typedef std :: map< const GeometryType, const LagrangePointSetType* >
-      LagrangePointSetMapType;
+    typedef LagrangePointSet< GridPartType, polynomialOrder > LagrangePointSetType;
 
+  private:
+    typedef std::vector< const LagrangePointSetType * > LagrangePointSetContainerType;
+
+  public:
     //! mapper used to implement mapToGlobal
-    typedef typename Traits :: MapperType MapperType;
+    typedef typename Traits::MapperType MapperType;
 
     //! mapper used to for block vector function 
-    typedef typename Traits :: BlockMapperType BlockMapperType;
+    typedef typename Traits::BlockMapperType BlockMapperType;
 
     //! size of local blocks
-    enum { localBlockSize = Traits :: localBlockSize };
+    static const int localBlockSize = Traits::localBlockSize;
 
     //! type for DoF
     typedef RangeFieldType DofType;
     //! dimension of a value
-    enum { dimVal = 1 };
+    static const int dimVal = 1;
 
     //! mapper singleton key 
-    typedef LagrangeMapperSingletonKey< GridPartType, LagrangePointSetMapType >
+    typedef LagrangeMapperSingletonKey< GridPartType, LagrangePointSetContainerType >
       MapperSingletonKeyType;
 
     //! mapper factory 
@@ -273,14 +263,10 @@ namespace Dune
       MapperSingletonFactoryType;
 
     //! mapper factory 
-    typedef LagrangeMapperSingletonFactory
-      < MapperSingletonKeyType, BlockMapperType >
-      BlockMapperSingletonFactoryType;
+    typedef LagrangeMapperSingletonFactory< MapperSingletonKeyType, BlockMapperType > BlockMapperSingletonFactoryType;
 
     //! singleton list of mappers 
-    typedef SingletonList
-      < MapperSingletonKeyType, BlockMapperType, BlockMapperSingletonFactoryType >
-      BlockMapperProviderType;
+    typedef SingletonList< MapperSingletonKeyType, BlockMapperType, BlockMapperSingletonFactoryType > BlockMapperProviderType;
 
   public:
     //! type of identifier for this discrete function space
@@ -288,26 +274,9 @@ namespace Dune
     //! identifier of this discrete function space
     static const IdentifierType id = 665;
     
-  private:
-    typedef LagrangeDiscreteFunctionSpaceType ThisType;
-    typedef DiscreteFunctionSpaceDefault< Traits > BaseType;
-
-  protected:
-    //! storage for shape function sets 
-    mutable ShapeSetStorageType shapeFunctionSets_;
-
-    //! map for the langrage point sets
-    mutable LagrangePointSetMapType lagrangePointSet_;
-    
-    //! corresponding mapper
-    MapperType *mapper_;
-
-    //! corresponding mapper
-    BlockMapperType *blockMapper_;
-
   public:
-    using BaseType :: gridPart;
-    using BaseType :: order;
+    using BaseType::gridPart;
+    using BaseType::order;
 
   public:
     //! default communication interface 
@@ -328,33 +297,29 @@ namespace Dune
         const CommunicationDirection commDirection = defaultDirection )
     : BaseType( gridPart, commInterface, commDirection ),
       shapeFunctionSets_(),
-      lagrangePointSet_(),
+      lagrangePointSetContainer_( LocalGeometryTypeIndex::size( dimension ), nullptr ),
       mapper_( 0 ),
       blockMapper_( 0 )
     {
       const IndexSetType &indexSet = gridPart.indexSet();
 
       AllGeomTypes< IndexSetType, GridType > allGeometryTypes( indexSet );
-      const std :: vector< GeometryType >& geometryTypes
-        = allGeometryTypes.geomTypes( 0 );
+      const std::vector< GeometryType > &geometryTypes = allGeometryTypes.geomTypes( 0 );
       for( unsigned int i = 0; i < geometryTypes.size(); ++i )
       {
-        const GeometryType &geometryType = geometryTypes[ i ];
+        const GeometryType &gt = geometryTypes[ i ];
         // insert shape function set for geometry type 
-        shapeFunctionSets_.
-          template insert< BaseFunctionSetSingletonProviderType > ( geometryType );
+        shapeFunctionSets_.template insert< BaseFunctionSetSingletonProviderType >( gt );
 
-        if( lagrangePointSet_.find( geometryType ) == lagrangePointSet_.end() )
-        {
-          const LagrangePointSetType *lagrangePointSet
-            = new LagrangePointSetType( geometryType, polynomialOrder );
-          assert( lagrangePointSet != NULL );
-          lagrangePointSet_[ geometryType ] = lagrangePointSet;
-        }
+        const LagrangePointSetType *&lagrangePointSet
+          = lagrangePointSetContainer_[ LocalGeometryTypeIndex::index( gt ) ];
+        if( !lagrangePointSet )
+          lagrangePointSet = new LagrangePointSetType( gt, polynomialOrder );
+        assert( lagrangePointSet );
       }
 
-      MapperSingletonKeyType key( gridPart, lagrangePointSet_, polynomialOrder );
-      blockMapper_ = &BlockMapperProviderType :: getObject( key );
+      MapperSingletonKeyType key( gridPart, lagrangePointSetContainer_, polynomialOrder );
+      blockMapper_ = &BlockMapperProviderType::getObject( key );
       assert( blockMapper_ != 0 );
       mapper_ = new MapperType( *blockMapper_ );
       assert( mapper_ != 0 );
@@ -373,46 +338,46 @@ namespace Dune
       delete mapper_;
       BlockMapperProviderType::removeObject( *blockMapper_ );
 
-      typedef typename LagrangePointSetMapType :: iterator LPIteratorType;
-      LPIteratorType lpend = lagrangePointSet_.end();
-      for( LPIteratorType it = lagrangePointSet_.begin(); it != lpend; ++it ) 
+      typedef typename LagrangePointSetContainerType::const_iterator IteratorType;
+      const IteratorType end = lagrangePointSetContainer_.end();
+      for( IteratorType it = lagrangePointSetContainer_.begin(); it != end; ++it )
       {
-        const LagrangePointSetType *lagrangePointSet = (*it).second;
-        if( lagrangePointSet != NULL )
+        const LagrangePointSetType *lagrangePointSet = *it;
+        if( lagrangePointSet )
           delete lagrangePointSet;
       }
     }
 
     /** \copydoc Dune::DiscreteFunctionSpaceInterface::contains */
-    inline bool contains ( const int codim ) const
+    bool contains ( const int codim ) const
     {
       // forward to mapper since this information is held there 
       return blockMapper().contains( codim );
     }
 
     /** \copydoc Dune::DiscreteFunctionSpaceInterface::continuous */
-    inline bool continuous () const
+    bool continuous () const
     {
       return (polynomialOrder > 0);
     }
 
-    /** \brief get the type of this discrete function space 
-        \return DFSpaceIdentifier
-    **/
-    inline DFSpaceIdentifier type () const
+    /** \brief get the type of this discrete function space
+     *  \return DFSpaceIdentifier
+     */
+    DFSpaceIdentifier type () const
     {
       return LagrangeSpace_id;
     }
 
     /** \copydoc Dune::DiscreteFunctionSpaceInterface::order */
-    inline int order () const
+    int order () const
     {
       return polynomialOrder;
     }
 
     /** \copydoc Dune::DiscreteFunctionSpaceInterface::baseFunctionSet(const EntityType &entity) const */
     template< class EntityType >
-    inline const BaseFunctionSetType baseFunctionSet ( const EntityType &entity ) const
+    const BaseFunctionSetType baseFunctionSet ( const EntityType &entity ) const
     {
       return baseFunctionSet( entity.type() );
     }
@@ -423,7 +388,7 @@ namespace Dune
      *
      *  \returns base function set for the specified geometry
      */
-    inline const BaseFunctionSetType baseFunctionSet ( const GeometryType type ) const
+    const BaseFunctionSetType baseFunctionSet ( const GeometryType type ) const
     {
       return BaseFunctionSetType( & shapeFunctionSets_[ type ] );
     }
@@ -438,9 +403,9 @@ namespace Dune
      *  \returns LagrangePointSet
      */
     template< class EntityType >
-    inline const LagrangePointSetType &lagrangePointSet ( const EntityType &entity ) const
+    const LagrangePointSetType &lagrangePointSet ( const EntityType &entity ) const
     {
-      return this->lagrangePointSet( entity.type() );
+      return lagrangePointSet( entity.type() );
     }
 
     /** \brief provide access to the Lagrange point set for a geometry type
@@ -452,17 +417,18 @@ namespace Dune
      *
      *  \returns LagrangePointSetType
      */
-    inline const LagrangePointSetType &lagrangePointSet ( const GeometryType type ) const
+    const LagrangePointSetType &lagrangePointSet ( const GeometryType type ) const
     {
-      assert( lagrangePointSet_.find( type ) != lagrangePointSet_.end() );
-      assert( lagrangePointSet_[ type ] != NULL );
-      return *lagrangePointSet_[ type ];
+      const LagrangePointSetType *lagrangePointSet
+        = lagrangePointSetContainer_[ LocalGeometryTypeIndex::index( type ) ];
+      assert( lagrangePointSet );
+      return *lagrangePointSet;
     }
 
     /** \brief get dimension of value
         \return int
     **/
-    inline int dimensionOfValue () const
+    int dimensionOfValue () const
     {
       return dimVal;
     }
@@ -482,11 +448,17 @@ namespace Dune
       assert( blockMapper_ != 0 );
       return *blockMapper_;
     }
+
+  protected:
+    mutable ShapeSetStorageType shapeFunctionSets_;
+    mutable LagrangePointSetContainerType lagrangePointSetContainer_;
+    MapperType *mapper_;
+    BlockMapperType *blockMapper_;
   };
   
-} // end Dune namespace  
+} // namespace Dune
 
 // include definition of RestrictProlongDefault for Lagrange Space.
-#include "adaptmanager.hh"
+#include <dune/fem/space/lagrangespace/adaptmanager.hh>
 
 #endif // #ifndef DUNE_LAGRANGESPACE_LAGRANGESPACE_HH

@@ -1,25 +1,20 @@
 #ifndef DUNE_LAGRANGESPACE_MAPPER_HH
 #define DUNE_LAGRANGESPACE_MAPPER_HH
 
-//- Dune includes 
-#if HAVE_DUNE_GEOMETRY
-#include <dune/geometry/type.hh>
-#else
-#include <dune/common/geometrytype.hh>
-#endif
+#include <vector>
+
 #include <dune/common/exceptions.hh>
 
-//- Dune-Fem includes 
+#include <dune/geometry/type.hh>
+#include <dune/geometry/typeindex.hh>
+
 #include <dune/fem/misc/capabilities.hh>
 #include <dune/fem/misc/codimmap.hh>
 #include <dune/fem/misc/metaprogramming.hh>
 #include <dune/fem/space/common/dofmanager.hh>
-
+#include <dune/fem/space/lagrangespace/lagrangepoints.hh>
 #include <dune/fem/space/mapper/dofmapper.hh>
 #include <dune/fem/space/mapper/codimensionmapper.hh>
-
-//- local includes 
-#include "lagrangepoints.hh"
 
 namespace Dune
 {
@@ -73,15 +68,13 @@ namespace Dune
     static const int polynomialOrder = 1; 
 
     //! type of the Lagrange point set
-    typedef LagrangePointSet< GridPartType, polynomialOrder >
-      LagrangePointSetType;
+    typedef LagrangePointSet< GridPartType, polynomialOrder > LagrangePointSetType;
     //! type of the map for the Lagrange point sets
-    typedef std::map< const GeometryType, const LagrangePointSetType* >
-      LagrangePointSetMapType;
+    typedef std::vector< const LagrangePointSetType * > LagrangePointSetContainerType;
 
   public:
     //! constructor
-    LagrangeMapper ( const GridPartType &gridPart, LagrangePointSetMapType &lagrangePointSet )
+    LagrangeMapper ( const GridPartType &gridPart, const LagrangePointSetContainerType & )
     : BaseType( gridPart )
     {}
 
@@ -134,8 +127,7 @@ namespace Dune
     typedef LagrangePointSet< GridPartType, polynomialOrder >
       LagrangePointSetType;
     //! type of the map for the Lagrange point sets
-    typedef std::map< const GeometryType, const LagrangePointSetType* >
-      LagrangePointSetMapType;
+    typedef std::vector< const LagrangePointSetType * > LagrangePointSetContainerType;
 
     //! type of the DoF manager
     typedef DofManager< GridType > DofManagerType;
@@ -146,27 +138,27 @@ namespace Dune
   public:
     //! constructor
     LagrangeMapper ( const GridPartType &gridPart,
-                     LagrangePointSetMapType &lagrangePointSet )
+                     const LagrangePointSetContainerType &lagrangePointSetContainer )
     : dm_( DofManagerType :: instance(gridPart.grid()) ),
       indexSet_( gridPart.indexSet() ),
-      lagrangePointSet_( lagrangePointSet ),
+      lagrangePointSetContainer_( lagrangePointSetContainer ),
       overShoot_( Parameter::getValidValue( "fem.lagrangemapper.overshoot", double( 1.5 ), ValidateNotLess< double >( 1.0 ) ) )
     {
       numDofs_ = 0;
       for( int codim = 0; codim <= dimension; ++codim )
         maxDofs_[ codim ] = 0;
       
-      typedef typename LagrangePointSetMapType :: iterator IteratorType;
-      IteratorType end = lagrangePointSet_.end();
-      for( IteratorType it = lagrangePointSet_.begin(); it != end; ++it )
+      typedef typename LagrangePointSetContainerType::const_iterator IteratorType;
+      IteratorType end = lagrangePointSetContainer_.end();
+      for( IteratorType it = lagrangePointSetContainer_.begin(); it != end; ++it )
       {
-        const LagrangePointSetType *set = (*it).second;
-        if( set == 0 )
-          continue;
-        
-        numDofs_ = std :: max( numDofs_, set->size() );
-        for( int codim = 0; codim <= dimension; ++codim )
-          maxDofs_[ codim ] = std::max( maxDofs_[ codim ], set->maxDofs( codim ) );
+        const LagrangePointSetType *lagrangePointSet = *it;
+        if( lagrangePointSet )
+        {
+          numDofs_ = std::max( numDofs_, lagrangePointSet->size() );
+          for( int codim = 0; codim <= dimension; ++codim )
+            maxDofs_[ codim ] = std::max( maxDofs_[ codim ], lagrangePointSet->maxDofs( codim ) );
+        }
       }
 
       computeOffsets();
@@ -200,9 +192,7 @@ namespace Dune
     /** \copydoc Dune::DofMapper::mapToGlobal */
     int mapToGlobal ( const EntityType &entity, const int localDof ) const
     {
-      const LagrangePointSetType *set = lagrangePointSet_[ entity.type() ];
-      const DofInfo &dofInfo = set->dofInfo( localDof );
-
+      const DofInfo &dofInfo = lagrangePointSet( entity.type() ).dofInfo( localDof );
       const unsigned int codim = dofInfo.codim;
       return offset_[ codim ] + indexSet_.subIndex( entity, dofInfo.subEntity, codim );
     }
@@ -225,7 +215,7 @@ namespace Dune
     /** \copydoc Dune::DofMapper::numDofs(const EntityType &entity) const */
     int numDofs ( const EntityType &entity ) const
     {
-      return lagrangePointSet_[ entity.type() ]->size();
+      return lagrangePointSet( entity.type() ).size();
     }
 
     /** \copydoc Dune::DofMapper::numEntityDofs(const Entity &entity) const */
@@ -353,12 +343,20 @@ namespace Dune
       }
     }
 
+    const LagrangePointSetType &lagrangePointSet ( const GeometryType type ) const
+    {
+      const LagrangePointSetType *lagrangePointSet
+        = lagrangePointSetContainer_[ LocalGeometryTypeIndex::index( type ) ];
+      assert( lagrangePointSet );
+      return *lagrangePointSet;
+    }
+
     // reference to dof manager
-    DofManagerType& dm_;
+    DofManagerType &dm_;
 
     const IndexSetType &indexSet_;
     
-    LagrangePointSetMapType &lagrangePointSet_;
+    const LagrangePointSetContainerType &lagrangePointSetContainer_;
 
     // memory overshoot 
     const double overShoot_ ;
@@ -416,8 +414,7 @@ namespace Dune
     typedef LagrangePointSet< GridPartType, polynomialOrder >
       LagrangePointSetType;
     //! type of the map for the Lagrange point sets
-    typedef std::map< const GeometryType, const LagrangePointSetType* >
-      LagrangePointSetMapType;
+    typedef std::vector< const LagrangePointSetType * > LagrangePointSetContainerType;
 
     //! type of the DoF manager
     typedef DofManager< GridType > DofManagerType;
@@ -436,28 +433,27 @@ namespace Dune
   public:
     //! constructor
     LagrangeMapper ( const GridPartType &gridPart,
-                     LagrangePointSetMapType &lagrangePointSet )
-    : dm_( DofManagerType :: instance(gridPart.grid()) ),
+                     const LagrangePointSetContainerType &lagrangePointSetContainer )
+    : dm_( DofManagerType::instance(gridPart.grid()) ),
       indexSet_( gridPart.indexSet() ),
-      lagrangePointSet_( lagrangePointSet ),
+      lagrangePointSetContainer_( lagrangePointSetContainer ),
       overShoot_( Parameter::getValidValue( "fem.lagrangemapper.overshoot", double( 1.5 ), ValidateNotLess< double >( 1.0 ) ) )
     {
       numDofs_ = 0;
       for( int codim = 0; codim <= dimension; ++codim )
         maxDofs_[ codim ] = 0;
       
-      typedef typename LagrangePointSetMapType :: iterator IteratorType;
-      IteratorType end = lagrangePointSet_.end();
-      for( IteratorType it = lagrangePointSet_.begin(); it != end; ++it )
+      typedef typename LagrangePointSetContainerType::iterator IteratorType;
+      IteratorType end = lagrangePointSetContainer_.end();
+      for( IteratorType it = lagrangePointSetContainer_.begin(); it != end; ++it )
       {
-        const LagrangePointSetType *set = (*it).second;
-        if( set == 0 )
-          continue;
-
-        numDofs_ = std::max( numDofs_, set->size() );
-        for( int codim = 0; codim <= dimension; ++codim )
-          maxDofs_[ codim ]
-            = std::max( maxDofs_[ codim ], set->maxDofs( codim ) );
+        const LagrangePointSetType *lagrangePointSet = *it;
+        if( lagrangePointSet )
+        {
+          numDofs_ = std::max( numDofs_, lagrangePointSet->size() );
+          for( int codim = 0; codim <= dimension; ++codim )
+            maxDofs_[ codim ] = std::max( maxDofs_[ codim ], lagrangePointSet->maxDofs( codim ) );
+        }
       }
 
       computeOffsets();
@@ -492,9 +488,8 @@ namespace Dune
     int mapToGlobal ( const EntityType &entity, const int localDof ) const
     {
       // unsigned int codim, subEntity;
-      const LagrangePointSetType *set = lagrangePointSet_[ entity.type() ];
-      const DofInfo& dofInfo = set->dofInfo( localDof );
-      
+      const DofInfo& dofInfo = lagrangePointSet( entity.type() ).dofInfo( localDof );
+
       const unsigned int codim = dofInfo.codim;
       const int subIndex = indexSet_.subIndex( entity, dofInfo.subEntity, codim );
 
@@ -519,7 +514,7 @@ namespace Dune
     /** \copydoc Dune::DofMapper::numDofs(const EntityType &entity) const */
     int numDofs ( const EntityType &entity ) const
     {
-      return lagrangePointSet_[ entity.type() ]->size();
+      return lagrangePointSet( entity.type() ).size();
     }
 
     /** \copydoc Dune::DofMapper::numEntityDofs(const Entity &entity) const */
@@ -647,12 +642,20 @@ namespace Dune
       }
     }
 
+    const LagrangePointSetType &lagrangePointSet ( const GeometryType type ) const
+    {
+      const LagrangePointSetType *lagrangePointSet
+        = lagrangePointSetContainer_[ LocalGeometryTypeIndex::index( type ) ];
+      assert( lagrangePointSet );
+      return *lagrangePointSet;
+    }
+
     // reference to dof manager needed for debug issues 
-    DofManagerType& dm_;
+    DofManagerType &dm_;
 
     const IndexSetType &indexSet_;
     
-    LagrangePointSetMapType &lagrangePointSet_;
+    const LagrangePointSetContainerType &lagrangePointSetContainer_;
 
     // memory overshoot 
     const double overShoot_ ;
