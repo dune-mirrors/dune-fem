@@ -149,7 +149,7 @@ namespace Dune
         maxDofs_[ codim ] = 0;
       
       typedef typename LagrangePointSetContainerType::const_iterator IteratorType;
-      IteratorType end = lagrangePointSetContainer_.end();
+      const IteratorType end = lagrangePointSetContainer_.end();
       for( IteratorType it = lagrangePointSetContainer_.begin(); it != end; ++it )
       {
         const LagrangePointSetType *lagrangePointSet = *it;
@@ -443,8 +443,8 @@ namespace Dune
       for( int codim = 0; codim <= dimension; ++codim )
         maxDofs_[ codim ] = 0;
       
-      typedef typename LagrangePointSetContainerType::iterator IteratorType;
-      IteratorType end = lagrangePointSetContainer_.end();
+      typedef typename LagrangePointSetContainerType::const_iterator IteratorType;
+      const IteratorType end = lagrangePointSetContainer_.end();
       for( IteratorType it = lagrangePointSetContainer_.begin(); it != end; ++it )
       {
         const LagrangePointSetType *lagrangePointSet = *it;
