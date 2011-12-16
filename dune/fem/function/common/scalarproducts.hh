@@ -179,7 +179,7 @@ namespace Dune
     const IteratorType endit = gridPart_.template end< 0, idxpitype >();
     for( IteratorType it = gridPart_.template begin< 0, idxpitype >(); it != endit; ++it )
     {
-      typedef typename GridPartType :: GridType :: template Codim< 0 > :: Entity
+      typedef typename GridPartType :: template Codim< 0 > :: EntityType
         EntityType;
       
       const EntityType &entity = *it;
