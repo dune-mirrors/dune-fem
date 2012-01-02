@@ -242,7 +242,7 @@ namespace Dune
     template< class CallerType >
     class CoefficientCallerRHS 
     {
-      mutable SingleLFType &singleRhs_;
+      SingleLFType &singleRhs_;
       const BaseFunctionSetType &bsetEn_;
       mutable RangeType rhsval_;
       const int numDofs_ ;

@@ -189,7 +189,7 @@ public:
   bool printInfo () const { return printMsg_; }
   
   //! Local operator which represents the numerical scheme
-  mutable LocalOperatorImp & localOp_;
+  LocalOperatorImp & localOp_;
     
   //! if true use LeafIterator else LevelIterator
   mutable bool leaf_;

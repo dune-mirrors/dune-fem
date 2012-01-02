@@ -205,7 +205,7 @@ public:
   }
 
 protected:
-  mutable InteralVectorType& vec_;
+  InteralVectorType& vec_;
 #ifndef NDEBUG 
   bool mutableVec_;
 #endif

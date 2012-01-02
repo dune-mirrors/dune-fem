@@ -148,7 +148,7 @@ public:
   }
 
 private:
-  mutable DiscreteFunctionType & df_;
+  DiscreteFunctionType & df_;
   const int quadord_;
   mutable DomainFieldType weight_;
 };

@@ -588,7 +588,7 @@ namespace Dune
     //! type of communication manager 
     typedef CommunicationManager< DiscreteFunctionSpaceType > CommunicationManagerType;
   protected:
-    mutable GridPartType &gridPart_;
+    GridPartType &gridPart_;
 
     const LocalFunctionFactoryType lfFactory_;
     mutable LocalFunctionStorageType lfStorage_;

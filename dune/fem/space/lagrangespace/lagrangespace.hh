@@ -96,7 +96,7 @@ namespace Dune
   class LagrangeMapperSingletonKey 
   {
     const GridPartImp & gridPart_; 
-    mutable LagrangePointSetMapImp& pointSet_;
+    LagrangePointSetMapImp& pointSet_;
     const int polOrd_;
   public:
     //! constructor taking index set and numDofs 
