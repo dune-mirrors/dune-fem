@@ -112,7 +112,8 @@ namespace Dune
     {
       // use u_int64_t since xdr_u_long is buggy
       u_int64_t val = value ;
-      if( xdr_uint64_t( xdrs(), &val ) == 0 )
+      // XDR_UINT64_FUNC is defined in config.h 
+      if( XDR_UINT64_FUNC( xdrs(), &val ) == 0 )
         writeError();
     }
    
@@ -229,7 +230,8 @@ namespace Dune
     {
       // use u_int64_t since xdr_u_long is buggy
       u_int64_t val ;
-      if( xdr_uint64_t( xdrs(), &val ) == 0 )
+      // XDR_UINT64_FUNC is defined in config.h 
+      if( XDR_UINT64_FUNC( xdrs(), &val ) == 0 )
         readError();
       else 
         value = val;

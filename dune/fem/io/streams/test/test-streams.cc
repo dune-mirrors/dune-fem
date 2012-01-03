@@ -101,7 +101,7 @@ int main ()
     Data data;
     data.my_string = "Hello, World!";
     data.my_uint = 42;
-    data.my_ulong = -4 ; // make it a big number 
+    data.my_ulong = -4 ; // this results in 18446744073709551612 
     data.my_double = 1.2345678901234;
     data.my_int = -767;
     data.my_float = 1.23456;
