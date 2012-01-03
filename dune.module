@@ -1,5 +1,5 @@
 Module: dune-fem
-Version: 1.2.0
+Version: 1.2.1
 Maintainer: dune@mathematik.uni-freiburg.de
 Depends: dune-common (>= 2.1) dune-grid (>= 2.1)
 Suggests: dune-istl (>= 2.1) dune-localfunctions (>= 2.1)
