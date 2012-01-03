@@ -10,6 +10,7 @@ struct Data
 {
   std :: string my_string;
   unsigned int my_uint;
+  unsigned long my_ulong;
   double my_double;
   int my_int;
   float my_float;
@@ -26,7 +27,7 @@ void write ( OutStreamInterface< Traits > &out, const Data &data )
   out << DUNE_MODULE_VERSION_ID(DUNE_FEM);
   // out << DUNE_FEM_VERSION;
   
-  out << data.my_string << data.my_uint << data.my_double
+  out << data.my_string << data.my_uint << data.my_ulong << data.my_double
       << data.my_int << data.my_float << data.my_char << data.my_bool;
 
   // out << DuneFEM :: versionId();
@@ -60,10 +61,12 @@ bool read ( InStreamInterface< Traits > &in, const Data &data )
   */
 
   Data check;
-  in >> check.my_string >> check.my_uint >> check.my_double
+  in >> check.my_string >> check.my_uint >> check.my_ulong >> check.my_double
      >> check.my_int >> check.my_float >> check.my_char >> check.my_bool;
 
-  std :: cerr << "Data: " << check.my_string << ", " << check.my_uint
+  std :: cerr << "Data: " << check.my_string 
+              << ", " << check.my_uint
+              << ", " << check.my_ulong
               << ", " << check.my_double << ", " << check.my_int
               << ", " << check.my_float 
               << ", " << (int)check.my_char
@@ -82,6 +85,7 @@ bool read ( InStreamInterface< Traits > &in, const Data &data )
   bool equal = true;
   equal &= (data.my_string == check.my_string);
   equal &= (data.my_uint == check.my_uint);
+  equal &= (data.my_ulong == check.my_ulong);
   equal &= (data.my_double == check.my_double);
   equal &= (data.my_int == check.my_int);
   equal &= (data.my_float == check.my_float);
@@ -97,6 +101,7 @@ int main ()
     Data data;
     data.my_string = "Hello, World!";
     data.my_uint = 42;
+    data.my_ulong = -4 ; // this results in 18446744073709551612 
     data.my_double = 1.2345678901234;
     data.my_int = -767;
     data.my_float = 1.23456;
