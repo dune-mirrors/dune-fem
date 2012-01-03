@@ -5,6 +5,7 @@
 #include <rpc/types.h>
 #include <rpc/xdr.h>
 
+#include <dune/common/exceptions.hh>
 #include <dune/fem/io/streams/streams.hh>
 
 namespace Dune
@@ -110,11 +111,15 @@ namespace Dune
     /** \copydoc Dune::OutStreamInterface::writeUnsignedLong */
     void writeUnsignedLong ( unsigned long value )
     {
+#ifdef XDR_UINT64_FUNC
       // use u_int64_t since xdr_u_long is buggy
       u_int64_t val = value ;
       // XDR_UINT64_FUNC is defined in config.h 
       if( XDR_UINT64_FUNC( xdrs(), &val ) == 0 )
         writeError();
+#else 
+      DUNE_THROW(NotImplemented,"xdr_uint64_t is missing");
+#endif
     }
    
   protected:
@@ -228,6 +233,7 @@ namespace Dune
     /** \copydoc Dune::InStreamInterface::readUnsignedLong */
     void readUnsignedLong ( unsigned long &value )
     {
+#ifdef XDR_UINT64_FUNC
       // use u_int64_t since xdr_u_long is buggy
       u_int64_t val ;
       // XDR_UINT64_FUNC is defined in config.h 
@@ -235,6 +241,9 @@ namespace Dune
         readError();
       else 
         value = val;
+#else 
+      DUNE_THROW(NotImplemented,"xdr_uint64_t is missing");
+#endif
     }
 
   protected:
