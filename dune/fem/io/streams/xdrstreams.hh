@@ -110,7 +110,9 @@ namespace Dune
     /** \copydoc Dune::OutStreamInterface::writeUnsignedLong */
     void writeUnsignedLong ( unsigned long value )
     {
-      if( xdr_u_long( xdrs(), &value ) == 0 )
+      // use u_int64_t since xdr_u_long is buggy
+      u_int64_t val = value ;
+      if( xdr_uint64_t( xdrs(), &val ) == 0 )
         writeError();
     }
    
@@ -225,8 +227,12 @@ namespace Dune
     /** \copydoc Dune::InStreamInterface::readUnsignedLong */
     void readUnsignedLong ( unsigned long &value )
     {
-      if( xdr_u_long( xdrs(), &value ) == 0 )
+      // use u_int64_t since xdr_u_long is buggy
+      u_int64_t val ;
+      if( xdr_uint64_t( xdrs(), &val ) == 0 )
         readError();
+      else 
+        value = val;
     }
 
   protected:
