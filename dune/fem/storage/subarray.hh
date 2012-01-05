@@ -122,7 +122,7 @@ namespace Dune
   // SubVector
   template< class BaseVectorImp, class IndexMapperImp >
   class SubVector
-  : public VectorDefault< typename BaseVectorImp :: FieldType,
+  : public Fem :: VectorDefault< typename BaseVectorImp :: FieldType,
                           SubVector< BaseVectorImp, IndexMapperImp > >
   {
   public:
@@ -137,7 +137,7 @@ namespace Dune
       
   private:
     typedef SubVector< BaseVectorType, IndexMapperType > ThisType;
-    typedef VectorDefault< FieldType, ThisType > BaseType;
+    typedef Fem :: VectorDefault< FieldType, ThisType > BaseType;
       
   private:
     BaseVectorType &baseVector_;

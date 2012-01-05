@@ -15,9 +15,14 @@
 #include <dune/fem/function/vectorfunction.hh>
 #elif defined USE_ATTACHEDFUNCTION
 #include <dune/fem/function/attachedfunction/function.hh>
-#elif defined DUSE_BLOCKVECTORDISCRETEFUNCTION
+#elif defined USE_BLOCKVECTORDISCRETEFUNCTION
 #include <dune/fem/function/blockvectordiscretefunction.hh>
 #include <dune/fem/function/blockvectors/referenceblockvector.hh>
+#elif defined USE_COMBINEDFUNCTION
+#undef DIMRANGE 
+#define DIMRANGE 1
+#include <dune/fem/function/adaptivefunction.hh>
+#include <dune/fem/function/combinedfunction.hh>
 #else
 #include <dune/fem/function/adaptivefunction.hh>
 #endif
@@ -54,15 +59,20 @@ typedef BlockVectorDiscreteFunction< DiscreteFunctionSpaceType >
 typedef ManagedDiscreteFunction
   < VectorDiscreteFunction
     < DiscreteFunctionSpaceType,
-      DynamicVector< FunctionSpaceType :: RangeFieldType > > >
+      Fem :: DynamicVector< FunctionSpaceType :: RangeFieldType > > >
   DiscreteFunctionType;
 #elif defined USE_ATTACHEDFUNCTION
 typedef AttachedDiscreteFunction< DiscreteFunctionSpaceType >
   DiscreteFunctionType;
-#elif defined DUSE_BLOCKVECTORDISCRETEFUNCTION
+#elif defined USE_BLOCKVECTORDISCRETEFUNCTION
 typedef Dune::Fem::ReferenceBlockVector< double, DiscreteFunctionSpaceType::localBlockSize > 
   BlockVectorType;
 typedef Dune::Fem::BlockVectorDiscreteFunction< DiscreteFunctionSpaceType, BlockVectorType > 
+  DiscreteFunctionType;
+#elif defined USE_COMBINEDFUNCTION
+typedef AdaptiveDiscreteFunction< DiscreteFunctionSpaceType >
+  ContainedDiscreteFunctionType;
+typedef Dune::CombinedDiscreteFunction< ContainedDiscreteFunctionType, DIMRANGE >
   DiscreteFunctionType;
 #else
 typedef AdaptiveDiscreteFunction< DiscreteFunctionSpaceType >

@@ -37,6 +37,9 @@ lagrangeinterpolation_quadratic_CPPFLAGS = -DPOLORDER=2 -DCOUNT_FLOPS $(AM_CPPFL
 dgl2projection_adaptive_SOURCES = dgl2projection.cc
 dgl2projection_adaptive_CPPFLAGS = -DPOLORDER=1 -DCOUNT_FLOPS $(AM_CPPFLAGS)
 
+dgl2projection_combined_SOURCES = dgl2projection.cc
+dgl2projection_combined_CPPFLAGS = -DPOLORDER=1 -DCOUNT_FLOPS $(AM_CPPFLAGS) -DUSE_COMBINEDSPACE -DUSE_VARIABLEBASE -DUSE_COMBINEDFUNCTION -DWANT_CACHED_COMM_MANAGER=0
+
 # only run this test for YaspGrid
 dgl2projection_legendre_SOURCES = dgl2projection.cc
 dgl2projection_legendre_CPPFLAGS = -DPOLORDER=1 -DGRIDDIM=$(GRIDDIM) -DYASPGRID -DUSE_LEGENDRESPACE -DCOUNT_FLOPS $(CPPFLAGS) $(DUNEMPICPPFLAGS)
