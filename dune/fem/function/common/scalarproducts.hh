@@ -608,7 +608,7 @@ namespace Dune
     const DiscreteFunctionSpaceType & space_; 
 
     // is singleton per space 
-    mutable SlaveDofsType& slaveDofs_;
+    SlaveDofsType& slaveDofs_;
 
     ParallelScalarProduct(const ThisType& org);
   public:  

@@ -809,7 +809,7 @@ namespace Dune
     typedef ALU3DSPACE MpAccessLocal MPAccessInterfaceType; 
     
     // is singleton per space 
-    mutable DependencyCacheType &cache_;
+    DependencyCacheType &cache_;
     CommunicationManager(const ThisType& org);
   public:  
     //! constructor taking space and communication interface/direction 
