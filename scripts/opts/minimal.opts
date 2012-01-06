@@ -1,2 +1,2 @@
-CONFIGURE_FLAGS=
+CONFIGURE_FLAGS="--disable-documentation"
 MAKE_FLAGS=
