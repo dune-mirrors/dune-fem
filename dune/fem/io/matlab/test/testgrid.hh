@@ -3,9 +3,6 @@
 
 #include <sstream>
 
-#include <dune/grid/io/file/dgfparser/dgfgridtype.hh>
-#include <dune/grid/io/file/dgfparser/dgfparser.hh>
-
 namespace Dune
 {
 
