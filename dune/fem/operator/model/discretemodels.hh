@@ -7,7 +7,7 @@
 #include <dune/fem/solver/timeprovider.hh>
 
 // Dune includes
-#include <dune/common/utility.hh>
+#include <dune/common/tupleutility.hh>
 #include <dune/common/typetraits.hh>
 #include <dune/fem/gridpart/gridpart.hh>
 #include <dune/fem/gridpart/adaptiveleafgridpart.hh>
