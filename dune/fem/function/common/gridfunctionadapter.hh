@@ -216,32 +216,25 @@ namespace Dune
     //! constructor initializing local function 
     LocalFunction ( const EntityType &entity, const DiscreteFunctionType &df )
     : function_( &df.function_ ),
-      geometry_( 0 )
-    {
-      init( entity );
-    }
+      entity_( &entity )
+    {}
 
     LocalFunction ( const DiscreteFunctionType &df )
     : function_( &df.function_ ),
-      geometry_( 0 )
+      entity_( 0 )
     {}
 
     LocalFunction ( LocalFunctionStorage &storage )
     : function_( &storage.function().function_ ),
-      geometry_( 0 )
+      entity_( 0 )
     {}
-
-    ~LocalFunction ()
-    {
-      if( geometry_ )
-        geometry_->~GeometryType();
-    }
 
     //! evaluate local function 
     template< class PointType >
     void evaluate ( const PointType &x, RangeType &ret ) const
     {
-      DomainType global = geometry().global( coordinate( x ) );
+      const GeometryType geometry = entity().geometry();
+      DomainType global = geometry.global( coordinate( x ) );
       function().evaluate( global, ret );
     }
 
@@ -249,14 +242,16 @@ namespace Dune
     template< class PointType >
     void jacobian ( const PointType &x, JacobianRangeType &ret ) const
     {
+      const GeometryType geometry = entity().geometry();
+
       const typename GeometryType::LocalCoordinate cx = coordinate( x );
-      DomainType global = geometry().global( cx );
+      DomainType global = geometry.global( cx );
       function().jacobian( global, ret );
 
       if( dimLocal != dimDomain )
       {
-        const typename GeometryType::JacobianTransposed &gjt = geometry().jacobianTransposed( cx );
-        const typename GeometryType::Jacobian &gjit = geometry().jacobianInverseTransposed( cx );
+        const typename GeometryType::JacobianTransposed &gjt = geometry.jacobianTransposed( cx );
+        const typename GeometryType::Jacobian &gjit = geometry.jacobianInverseTransposed( cx );
 
         FieldVector< RangeFieldType, dimLocal > tmp;
         for( int i = 0; i < dimRange; ++i )
@@ -270,9 +265,7 @@ namespace Dune
     //! init local function
     void init ( const EntityType &entity )
     {
-      if( geometry_ )
-        geometry_->~GeometryType();
-      geometry_ = new (memory) GeometryType( entity.geometry() );
+      entity_ = &entity;
     } 
 
   private:
@@ -281,15 +274,14 @@ namespace Dune
       return *function_;
     }
 
-    const GeometryType &geometry () const
+    const EntityType &entity () const
     {
-      assert( geometry_ );
-      return *geometry_;
+      assert( entity_ );
+      return *entity_;
     }
 
     const FunctionType *function_;
-    const GeometryType *geometry_;
-    char memory[ sizeof( GeometryType ) ];
+    const EntityType *entity_;
   };
 
 
