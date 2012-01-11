@@ -216,8 +216,10 @@ namespace Dune
     //! constructor initializing local function 
     LocalFunction ( const EntityType &entity, const DiscreteFunctionType &df )
     : function_( &df.function_ ),
-      geometry_( &entity.geometry() )
-    {}
+      geometry_( 0 )
+    {
+      init( entity );
+    }
 
     LocalFunction ( const DiscreteFunctionType &df )
     : function_( &df.function_ ),
@@ -228,6 +230,12 @@ namespace Dune
     : function_( &storage.function().function_ ),
       geometry_( 0 )
     {}
+
+    ~LocalFunction ()
+    {
+      if( geometry_ )
+        geometry_->~GeometryType();
+    }
 
     //! evaluate local function 
     template< class PointType >
@@ -262,7 +270,9 @@ namespace Dune
     //! init local function
     void init ( const EntityType &entity )
     {
-      geometry_ = &entity.geometry();
+      if( geometry_ )
+        geometry_->~GeometryType();
+      geometry_ = new (memory) GeometryType( entity.geometry() );
     } 
 
   private:
@@ -273,11 +283,13 @@ namespace Dune
 
     const GeometryType &geometry () const
     {
+      assert( geometry_ );
       return *geometry_;
     }
 
     const FunctionType *function_;
     const GeometryType *geometry_;
+    char memory[ sizeof( GeometryType ) ];
   };
 
 
