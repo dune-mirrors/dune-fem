@@ -140,7 +140,8 @@ namespace Dune
                                   const IntersectionType &intersection, 
                                   const int order,
                                   const typename Base :: Side side )
-    : Base( getPointList( intersection, order, side ) )
+    : Base( getPointList( intersection, order, side ) ),
+      referenceGeometry_( side == Base::INSIDE ? intersection.geometryInInside() : intersection.geometryInOutside() )
     {}
 
     const QuadraturePointWrapperType operator[] ( size_t i ) const
@@ -152,7 +153,7 @@ namespace Dune
      */
     const CoordinateType &point ( size_t i ) const
     {
-      dummy_ = referenceGeometry_->global( localPoint( i ) );
+      dummy_ = referenceGeometry_.global( localPoint( i ) );
       return dummy_;
     }
 
@@ -181,14 +182,12 @@ namespace Dune
       switch( side )
       {
         case Base :: INSIDE:
-          referenceGeometry_ = &(intersection.geometryInInside());
           return Base( TwistUtilityType::elementGeometry( intersection, true ),
-                       referenceGeometry_->type(), intersection.indexInInside(), order );
+                       intersection.type(), intersection.indexInInside(), order );
 
         case Base ::OUTSIDE:
-          referenceGeometry_ = &(intersection.geometryInOutside());
           return Base( TwistUtilityType::elementGeometry( intersection, false ),
-                       referenceGeometry_->type(), intersection.indexInOutside(), order );
+                       intersection.type(), intersection.indexInOutside(), order );
 
         default:
           DUNE_THROW( InvalidStateException, "ElementIntegrationPointList: side must either be INSIDE or OUTSIDE." );
@@ -198,7 +197,7 @@ namespace Dune
   private:
     typedef typename IntersectionIteratorType::Intersection::LocalGeometry ReferenceGeometry;
 
-    const ReferenceGeometry *referenceGeometry_;
+    ReferenceGeometry referenceGeometry_;
     mutable CoordinateType dummy_;
   };
 
