@@ -77,7 +77,7 @@ namespace Dune
   protected:
     LocalFunctionType lUh_;
     const SolutionType &initU0_;
-    const GeometryType *geometry_;
+    const Entity *entity_;
     const double time_;
     bool initialized_;
 
@@ -87,17 +87,18 @@ namespace Dune
             double time = 0 )
     : lUh_( Uh ), 
       initU0_( solution ),
-      geometry_( 0 ),
+      entity_( 0 ),
       time_( time ),
       initialized_( false )
     {}
+
 
     template< class PointType >
     void evaluate ( const PointType &x, RangeType& ret) const
     {
       assert(initialized_);
       lUh_.evaluate( x, ret );
-      DomainType global = geometry_->global( coordinate( x ) );
+      DomainType global = entity().geometry().global( coordinate( x ) );
       RangeType phi;
       initU0_.evaluate( time_, global, phi );
       ret -= phi;
@@ -111,9 +112,15 @@ namespace Dune
 
     void init ( const EntityType &entity )
     {
+      entity_ = &entity;
       lUh_.init( entity );
-      geometry_ = &( entity.geometry() );
       initialized_ = true;
+    }
+  private:
+    const Entity &entity () const
+    {
+      assert( entity_ );
+      return *entity_;
     }
   };
   /** \endcond */
@@ -158,7 +165,7 @@ namespace Dune
     protected:
       LocalFunctionType lUh_;
       const SolutionType &initU0_;
-      const GeometryType *geometry_;
+      const Entity *entity_;
       bool initialized_;
 
     public:
@@ -166,7 +173,7 @@ namespace Dune
               const SolutionType &solution )
       : lUh_( Uh ),
         initU0_( solution ),
-        geometry_( 0 ),
+        entity_( 0 ),
         initialized_( false )
       {}
 
@@ -175,7 +182,7 @@ namespace Dune
       {
         assert(initialized_);
         lUh_.evaluate( x, ret );
-        DomainType global = geometry_->global( coordinate( x ) );
+        DomainType global = entity().geometry().global( coordinate( x ) );
         RangeType phi;
         initU0_.evaluate( global, phi );
         ret -= phi;
@@ -189,9 +196,15 @@ namespace Dune
 
       inline void init ( const EntityType &entity )
       {
+        entity_ = &entity;
         lUh_.init( entity );
-        geometry_ = &( entity.geometry() );
         initialized_ = true;
+      }
+    private:
+      const Entity &entity() const
+      {
+        assert( entity_ );
+        return *entity_;
       }
     };
     /** \endcond */
