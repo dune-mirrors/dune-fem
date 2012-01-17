@@ -33,41 +33,17 @@ namespace Dune
 
     private:
       typedef typename EntityPointer::Implementation EntityPointerImpl;
-      typedef typename Geometry::Implementation GeometryImpl;
-      typedef typename LocalGeometry::Implementation LocalGeometryImpl;
 
       typedef typename HostGridPartType::IntersectionType HostIntersectionType;
 
     public:
       IdIntersection ()
-      : hostIntersection_( 0 ),
-        geo_( GeometryImpl() ),
-        geoInInside_( LocalGeometryImpl() ),
-        geoInOutside_( LocalGeometryImpl() )
+      : hostIntersection_( 0 )
       {}
 
       explicit IdIntersection ( const HostIntersectionType &hostIntersection )
-      : hostIntersection_( &hostIntersection ),
-        geo_( GeometryImpl() ),
-        geoInInside_( LocalGeometryImpl() ),
-        geoInOutside_( LocalGeometryImpl() )
+      : hostIntersection_( &hostIntersection )
       {}
-
-      IdIntersection ( const IdIntersection &other )
-      : hostIntersection_( other.hostIntersection_ ),
-        geo_( other.geo_.impl() ),
-        geoInInside_( other.geoInInside_.impl() ),
-        geoInOutside_( other.geoInOutside_.impl() )
-      {}
-
-      const IdIntersection &operator= ( const IdIntersection &other )
-      {
-        hostIntersection_ = other.hostIntersection_;
-        geo_.impl() = other.geo_.impl();
-        geoInInside_.impl() = other.geoInInside_.impl();
-        geoInOutside_.impl() = other.geoInOutside_.impl();
-        return *this;
-      }
 
       operator bool () const { return bool( hostIntersection_ ); }
 
@@ -116,28 +92,19 @@ namespace Dune
         return hostIntersection().boundarySegmentIndex();
       }
           
-      const LocalGeometry &geometryInInside () const
+      LocalGeometry geometryInInside () const
       {
-        LocalGeometryImpl &geo = geoInInside_.impl();
-        if( !geo )
-          geo = LocalGeometryImpl( hostIntersection().geometryInInside() );
-        return geoInInside_;
+        return LocalGeometry( hostIntersection().geometryInInside() );
       }
       
-      const LocalGeometry &geometryInOutside () const
+      LocalGeometry geometryInOutside () const
       {
-        LocalGeometryImpl &geo = geoInOutside_.impl();
-        if( !geo )
-          geo = LocalGeometryImpl( hostIntersection().geometryInOutside() );
-        return geoInOutside_;
+        return LocalGeometry( hostIntersection().geometryInOutside() );
       }
      
-      const Geometry &geometry () const
+      Geometry geometry () const
       {
-        GeometryImpl &geo = geo_.impl();
-        if( !geo )
-          geo = GeometryImpl( hostIntersection().geometry() );
-        return geo_;
+        return Geometry( hostIntersection().geometry() );
       }
 
       GeometryType type () const
@@ -186,9 +153,6 @@ namespace Dune
 
     private:
       const HostIntersectionType *hostIntersection_;
-      mutable Geometry geo_;
-      mutable LocalGeometry geoInInside_;
-      mutable LocalGeometry geoInOutside_;
     };
 
   } // namespace Fem

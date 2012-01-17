@@ -248,8 +248,10 @@ namespace Dune
       typedef typename Traits::template Codim< 0 >::Geometry ElementGeometryType;
       typedef typename Traits::template Codim< codimension >::LocalGeometry HostLocalGeometryType;
 
+      typedef typename ElementGeometryType::Implementation ElementGeometryImplType;
+
     public:
-      GeoIntersectionCoordVector ( const ElementGeometryType &elementGeometry,
+      GeoIntersectionCoordVector ( const ElementGeometryImplType &elementGeometry,
                                    const HostLocalGeometryType &hostLocalGeometry )
       : elementGeometry_( elementGeometry ),
         hostLocalGeometry_( hostLocalGeometry )
@@ -264,8 +266,8 @@ namespace Dune
       }
 
     private:
-      const ElementGeometryType &elementGeometry_;
-      const HostLocalGeometryType &hostLocalGeometry_;
+      const ElementGeometryImplType &elementGeometry_;
+      HostLocalGeometryType hostLocalGeometry_;
     };
 
 
