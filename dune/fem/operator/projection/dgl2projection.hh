@@ -25,18 +25,6 @@ namespace Dune
 // implementation of L2 projection for discontinuous spaces 
 class DGL2ProjectionImpl
 {
-  template <class DFImp>
-  struct IsFiniteVolumeSpace
-  {
-    enum {exists = false};
-  };
-  template <class FunctionSpaceImp, class GridPartImp, int polOrd,
-            template<class> class BaseFunctionStorageImp >
-  struct IsFiniteVolumeSpace< FiniteVolumeSpace< FunctionSpaceImp, GridPartImp, polOrd, BaseFunctionStorageImp> >
-  {
-    enum {exists = true};
-  };
-
   template <int dummy, bool hasLocalFunction> 
   struct ProjectChooser
   {
@@ -71,7 +59,6 @@ class DGL2ProjectionImpl
       // create discrete function adapter 
       GridFunctionAdapter< FunctionAdapterType, GridPartType> adapter(
           "DGL2projection::adapter" , f , discFunc.space().gridPart());
-      
       DGL2ProjectionImpl::projectFunction(adapter, discFunc, polOrd);
     }
   };
@@ -142,9 +129,6 @@ protected:
     // create local mass matrix object
     LocalMassMatrixType massMatrix( space, quadOrd );
 
-    // check whether geometry mappings are affine or not 
-    const bool affineMapping = massMatrix.affine();
-
     // clear destination
     discFunc.clear();
 
@@ -174,9 +158,8 @@ protected:
 
       for(int qP = 0; qP < quadNop ; ++qP) 
       {
-        const double intel = (affineMapping) ? 
-             quad.weight(qP) : // affine case 
-             quad.weight(qP) * geo.integrationElement( quad.point(qP) ); // general case 
+        const double intel = 
+             quad.weight(qP) * geo.integrationElement( quad.point(qP) );
 
         // evaluate function 
         f.evaluate(quad[ qP ], value );
@@ -188,23 +171,7 @@ protected:
         lf.axpy( quad[ qP ], value );
       }
 
-      // in case of non-linear mapping apply inverse 
-      if ( ! affineMapping ) 
-      {
-        massMatrix.applyInverse( en, lf );
-      } 
-      else 
-      {
-        if ( IsFiniteVolumeSpace< DiscreteFunctionSpaceType > ::exists )
-        {
-          typedef typename Geometry :: LocalCoordinate DomainType; 
-          typedef Dune::GenericReferenceElements< typename DomainType::value_type, DomainType::dimension >
-            ReferenceElementContainerType;
-          const double refVolume = ReferenceElementContainerType::general(en.type()).volume();     
-          for (int i=0;i<lf.numDofs();++i)
-            lf[i] /= refVolume;
-        }
-      }
+      massMatrix.applyInverse( en, lf );
     }
   }
 };
