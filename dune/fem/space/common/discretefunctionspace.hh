@@ -937,6 +937,15 @@ namespace Dune
       return gridPart_.template end< 0 >();
     }
 
+    /** \copydoc Dune::DiscreteFunctionSpaceInterface::forEach(FunctorType &f) const */
+    template< class FunctorType >
+    inline void forEach ( FunctorType &f ) const
+    {
+      const IteratorType endit = end();
+      for( IteratorType it = begin(); it != endit; ++it )
+        f( *it );
+    }
+
     /** \copydoc Dune::DiscreteFunctionSpaceInterface::gridPart */
     inline const GridPartType &gridPart () const
     {
