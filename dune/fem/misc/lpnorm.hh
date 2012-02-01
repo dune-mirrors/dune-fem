@@ -6,13 +6,170 @@
 #include <dune/fem/quadrature/cachingquadrature.hh>
 #include <dune/fem/quadrature/integrator.hh>
 
+#include <dune/common/bartonnackmanifcheck.hh>
+#include <dune/fem/misc/bartonnackmaninterface.hh>
+
 namespace Dune
 {
+
+  // LPNormBase 
+  // ----------
+
+  template< class GridPart, class NormImplementation >
+  class LPNormBase 
+    : public BartonNackmanInterface< LPNormBase< GridPart, NormImplementation >, 
+                                     NormImplementation > 
+  {
+    typedef BartonNackmanInterface< LPNormBase< GridPart, NormImplementation >,
+                                    NormImplementation >  BaseType ;
+    typedef LPNormBase< GridPart, NormImplementation > ThisType;
+
+  public:
+    typedef GridPart GridPartType;
+
+  protected:
+    using BaseType :: asImp ;
+
+    typedef typename GridPartType::template Codim< 0 >::IteratorType GridIteratorType;
+    typedef typename GridIteratorType::Entity EntityType;
+
+    template < class ReturnType,
+               class UDiscreteFunctionType, 
+               class VDiscreteFunctionType >
+    struct NormOnEntityFunctor
+    {
+      const ThisType& norm_;
+      const UDiscreteFunctionType& u_;
+      const VDiscreteFunctionType* v_; 
+      const unsigned int order_ ;
+      ReturnType sum_;
+
+      unsigned int getOrder( const UDiscreteFunctionType& u, 
+                             const VDiscreteFunctionType& v ) const 
+      {
+        const unsigned int uorder = u.space().order();
+        const unsigned int vorder = v.space().order();
+        const unsigned int order = 2 * std::max( uorder, vorder );
+        return order;
+      }
+
+      NormOnEntityFunctor( const ThisType& norm,
+                    const UDiscreteFunctionType& u,
+                    const unsigned int order = 0 ) 
+        : norm_( norm ),
+          u_( u ),
+          v_( 0 ),
+          order_( ( order == 0 ) ? ( getOrder( u, u ) ) : order ),
+          sum_( 0 )
+      {}
+
+      NormOnEntityFunctor( const ThisType& norm,
+                    const UDiscreteFunctionType& u,
+                    const VDiscreteFunctionType& v,
+                    const unsigned int order = 0 ) 
+        : norm_( norm ),
+          u_( u ),
+          v_( &v ),
+          order_( ( order == 0 ) ? ( getOrder( u, v ) ) : order ),
+          sum_( 0 )
+      {
+      }
+
+      // apply norm operation on entity 
+      void operator() ( const EntityType& entity ) 
+      { 
+        // if v is not zero apply distance 
+        if( v_ ) 
+          norm_.distanceLocal( entity, order_, u_, *v_, sum_ );
+        else   
+          norm_.normLocal( entity, order_, u_, sum_ ); 
+      }
+
+      ReturnType result() const { return sum_; }
+    };
+
+    template <class DiscreteFunctionType, class ReturnType> 
+    ReturnType forEach ( const DiscreteFunctionType& u,  
+                         const ReturnType& initialValue,
+                         const unsigned int order = 0 
+                        ) const 
+    {
+      typedef NormOnEntityFunctor< ReturnType, DiscreteFunctionType, DiscreteFunctionType >
+        ForEachFunctorType;
+
+      // create functor 
+      ForEachFunctorType normOnEntity( *this, u, order );
+
+      // do grid part traversal and apply action on entity 
+      u.space().forEach( normOnEntity );
+
+      return normOnEntity.result();
+    }
+
+    template <class UDiscreteFunctionType, class VDiscreteFunctionType, class ReturnType> 
+    ReturnType forEach ( const UDiscreteFunctionType& u,  
+                         const VDiscreteFunctionType& v, 
+                         const ReturnType& initialValue,
+                         const unsigned int order = 0 
+                       ) const 
+    {
+      typedef NormOnEntityFunctor< ReturnType, UDiscreteFunctionType, VDiscreteFunctionType >
+        ForEachFunctorType;
+
+      // create functor 
+      ForEachFunctorType normOnEntity( *this, u, v, order );
+
+      // do grid part traversal and apply action on entity 
+      u.space().forEach( normOnEntity );
+
+      return normOnEntity.result();
+    }
+
+  public:
+    explicit LPNormBase ( const GridPartType &gridPart )
+      : gridPart_( gridPart )
+    {}
+
+  protected:
+    template< class UDiscreteFunctionType, 
+              class VDiscreteFunctionType,
+              class ReturnType >
+    inline void 
+    distanceLocal ( const EntityType& entity, const unsigned int order, 
+                    const UDiscreteFunctionType &u,
+                    const VDiscreteFunctionType &v,
+                    ReturnType& sum ) const 
+    {
+      CHECK_AND_CALL_INTERFACE_IMPLEMENTATION( asImp().distanceLocal( entity, order, u, v, sum ) );
+    }
+    
+    template< class UDiscreteFunctionType, 
+              class ReturnType >
+    inline void 
+    normLocal ( const EntityType& entity, const unsigned int order, 
+                const UDiscreteFunctionType &u,
+                ReturnType& sum ) const 
+    {
+      CHECK_AND_CALL_INTERFACE_IMPLEMENTATION( asImp().normLocal( entity, order, u, sum ) );
+    }
+    
+    const GridPartType &gridPart () const { return gridPart_; }
+
+    typename GridPartType::GridType::Traits::CollectiveCommunication comm () const
+    {
+      return gridPart().grid().comm();
+    }
+
+  private:
+    const GridPartType &gridPart_;
+  };
+
+
 
   // TODO weighte LP norm might be adapted later
   // LPNorm
   //
-  // !!!!! It is not cleared which quadratur order have to be applied for p > 2!!!!
+  // !!!!! It is not cleared which quadrature order have to be applied for p > 2!!!!
   // !!!!! For p = 1 this norm does not work !!!!
   // ------
 

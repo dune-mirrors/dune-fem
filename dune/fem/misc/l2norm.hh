@@ -6,6 +6,8 @@
 #include <dune/fem/quadrature/cachingquadrature.hh>
 #include <dune/fem/quadrature/integrator.hh>
 
+#include <dune/fem/misc/lpnorm.hh>
+
 namespace Dune
 {
 
@@ -13,20 +15,24 @@ namespace Dune
   // ------
 
   template< class GridPart >
-  class L2Norm
+  class L2Norm : public LPNormBase< GridPart, L2Norm< GridPart > >
   {
+    typedef LPNormBase< GridPart, L2Norm< GridPart > > BaseType ;
     typedef L2Norm< GridPart > ThisType;
 
   public:
     typedef GridPart GridPartType;
 
-  protected:
+    using BaseType :: gridPart ;
+    using BaseType :: comm ;
+
     template< class Function >
     struct FunctionSquare;
 
     template< class UFunction, class VFunction >
     struct FunctionDistance;
 
+  protected:
     typedef typename GridPartType::template Codim< 0 >::IteratorType GridIteratorType;
     typedef typename GridIteratorType::Entity EntityType;
     typedef CachingQuadrature< GridPartType, 0 > QuadratureType;
@@ -43,66 +49,22 @@ namespace Dune
     typename UDiscreteFunctionType::RangeFieldType
     distance ( const UDiscreteFunctionType &u, const VDiscreteFunctionType &v ) const;
 
-  protected:
-    const GridPartType &gridPart () const { return gridPart_; }
-
-    typename GridPartType::GridType::Traits::CollectiveCommunication comm () const
-    {
-      return gridPart().grid().comm();
-    }
-
-  private:
-    const GridPartType &gridPart_;
+    template< class UDiscreteFunctionType, 
+              class VDiscreteFunctionType,
+              class ReturnType >
+    inline void 
+    distanceLocal ( const EntityType& entity, const unsigned int order, 
+                    const UDiscreteFunctionType &u,
+                    const VDiscreteFunctionType &v,
+                    ReturnType& sum ) const ;
+    
+    template< class UDiscreteFunctionType, 
+              class ReturnType >
+    inline void 
+    normLocal ( const EntityType& entity, const unsigned int order, 
+                    const UDiscreteFunctionType &u,
+                    ReturnType& sum ) const ;
   };
-
-
-
-  // WeightedL2Norm
-  // --------------
-  
-  template< class WeightFunction >
-  class WeightedL2Norm
-  : public L2Norm< typename WeightFunction::DiscreteFunctionSpaceType::GridPartType >
-  {
-    typedef WeightedL2Norm< WeightFunction > ThisType;
-    typedef L2Norm< typename WeightFunction::DiscreteFunctionSpaceType::GridPartType > BaseType;
-
-  public:
-    typedef WeightFunction WeightFunctionType;
-
-    typedef typename WeightFunctionType::DiscreteFunctionSpaceType WeightFunctionSpaceType;
-    typedef typename WeightFunctionSpaceType::GridPartType GridPartType;
-   
-  protected:
-    template< class Function >
-    struct WeightedFunctionSquare;
-    
-    typedef typename WeightFunctionType::LocalFunctionType LocalWeightFunctionType;
-    typedef typename WeightFunctionType::RangeType WeightType;
-    
-    typedef typename BaseType::GridIteratorType GridIteratorType;
-    typedef typename BaseType::IntegratorType IntegratorType;
-
-    typedef typename GridIteratorType::Entity EntityType;
-
-    using BaseType::gridPart;
-    using BaseType::comm;
-
-  public:
-    explicit WeightedL2Norm ( const WeightFunctionType &weightFunction );
-
-    template< class DiscreteFunctionType >
-    typename DiscreteFunctionType::RangeFieldType
-    norm ( const DiscreteFunctionType &u ) const;
-    
-    template< class UDiscreteFunctionType, class VDiscreteFunctionType >
-    typename UDiscreteFunctionType::RangeFieldType
-    distance ( const UDiscreteFunctionType &u, const VDiscreteFunctionType &v ) const;
-
-  private:
-    const WeightFunctionType &weightFunction_;
-  };
-
 
 
   // Implementation of L2Norm
@@ -110,7 +72,7 @@ namespace Dune
   
   template< class GridPart >
   inline L2Norm< GridPart >::L2Norm ( const GridPartType &gridPart )
-  : gridPart_( gridPart )
+  : BaseType( gridPart )
   {}
 
 
@@ -120,24 +82,12 @@ namespace Dune
   L2Norm< GridPart >::norm ( const DiscreteFunctionType &u ) const
   {
     typedef typename DiscreteFunctionType::RangeFieldType RangeFieldType;
+    typedef FieldVector< RangeFieldType, 1 > ReturnType ;
 
-    typedef typename DiscreteFunctionType::LocalFunctionType LocalFunctionType;
+    // calculate integral over each element 
+    ReturnType sum = BaseType :: forEach( u, ReturnType(0) );
 
-    unsigned int order = 2 * u.space().order();
-    IntegratorType integrator( order );
-
-    FieldVector< RangeFieldType, 1 > sum( 0 );
-    const GridIteratorType end = gridPart().template end< 0 >();
-    for( GridIteratorType it = gridPart().template begin< 0 >(); it != end; ++it )
-    {
-      const EntityType &entity = *it;
-
-      LocalFunctionType ulocal = u.localFunction( entity );
-      FunctionSquare< LocalFunctionType > ulocal2( ulocal );
-
-      integrator.integrateAdd( entity, ulocal2, sum );
-    }
-
+    // return result, e.g. sqrt of calculated sum 
     return sqrt( comm().sum( sum[ 0 ] ) );
   }
 
@@ -149,34 +99,58 @@ namespace Dune
     ::distance ( const UDiscreteFunctionType &u, const VDiscreteFunctionType &v ) const
   {
     typedef typename UDiscreteFunctionType::RangeFieldType RangeFieldType;
+    typedef FieldVector< RangeFieldType, 1 > ReturnType ;
 
+    // calculate integral over each element 
+    ReturnType sum = BaseType :: forEach( u, v, ReturnType(0) );
+
+    // return result, e.g. sqrt of calculated sum 
+    return sqrt( comm().sum( sum[ 0 ] ) );
+  }
+
+  template< class GridPart >
+  template< class DiscreteFunctionType, class ReturnType >
+  inline void 
+  L2Norm< GridPart >::normLocal ( const EntityType& entity, const unsigned int order, 
+                                  const DiscreteFunctionType &u,
+                                  ReturnType& sum ) const
+  {
+    typedef typename DiscreteFunctionType::LocalFunctionType LocalFunctionType;
+    // evaluate norm locally 
+    
+    IntegratorType integrator( order );
+
+    LocalFunctionType ulocal = u.localFunction( entity );
+    FunctionSquare< LocalFunctionType > ulocal2( ulocal );
+
+    integrator.integrateAdd( entity, ulocal2, sum );
+  }
+
+  template< class GridPart >
+  template< class UDiscreteFunctionType, 
+            class VDiscreteFunctionType,
+            class ReturnType >
+  inline void 
+  L2Norm< GridPart >::distanceLocal ( const EntityType& entity, const unsigned int order, 
+                                      const UDiscreteFunctionType &u,
+                                      const VDiscreteFunctionType &v,
+                                      ReturnType& sum ) const
+  {
     typedef typename UDiscreteFunctionType::LocalFunctionType ULocalFunctionType;
     typedef typename VDiscreteFunctionType::LocalFunctionType VLocalFunctionType;
 
-    typedef FunctionDistance< ULocalFunctionType, VLocalFunctionType >
-      LocalDistanceType;
-
-    const unsigned int uorder = u.space().order();
-    const unsigned int vorder = v.space().order();
-    const unsigned int order = 2 * std::max( uorder, vorder );
+    // evaluate norm locally 
     IntegratorType integrator( order );
 
-    FieldVector< RangeFieldType, 1 > sum( 0 );
-    const GridIteratorType end = gridPart().template end< 0 >();
-    for( GridIteratorType it = gridPart().template begin< 0 >(); it != end; ++it )
-    {
-      const EntityType &entity = *it;
+    ULocalFunctionType ulocal = u.localFunction( entity );
+    VLocalFunctionType vlocal = v.localFunction( entity );
 
-      ULocalFunctionType ulocal = u.localFunction( entity );
-      VLocalFunctionType vlocal = v.localFunction( entity );
+    typedef FunctionDistance< ULocalFunctionType, VLocalFunctionType > LocalDistanceType;
 
-      LocalDistanceType dist( ulocal, vlocal );
-      FunctionSquare< LocalDistanceType > dist2( dist );
-      
-      integrator.integrateAdd( entity, dist2, sum );
-    }
-
-    return sqrt( comm().sum( sum[ 0 ] ) );
+    LocalDistanceType dist( ulocal, vlocal );
+    FunctionSquare< LocalDistanceType > dist2( dist );
+     
+    integrator.integrateAdd( entity, dist2, sum );
   }
 
   
@@ -243,6 +217,55 @@ namespace Dune
     const UFunctionType &u_;
     const VFunctionType &v_;
   };
+
+
+
+  // WeightedL2Norm
+  // --------------
+  
+  template< class WeightFunction >
+  class WeightedL2Norm
+  : public L2Norm< typename WeightFunction::DiscreteFunctionSpaceType::GridPartType >
+  {
+    typedef WeightedL2Norm< WeightFunction > ThisType;
+    typedef L2Norm< typename WeightFunction::DiscreteFunctionSpaceType::GridPartType > BaseType;
+
+  public:
+    typedef WeightFunction WeightFunctionType;
+
+    typedef typename WeightFunctionType::DiscreteFunctionSpaceType WeightFunctionSpaceType;
+    typedef typename WeightFunctionSpaceType::GridPartType GridPartType;
+   
+  protected:
+    template< class Function >
+    struct WeightedFunctionSquare;
+    
+    typedef typename WeightFunctionType::LocalFunctionType LocalWeightFunctionType;
+    typedef typename WeightFunctionType::RangeType WeightType;
+    
+    typedef typename BaseType::GridIteratorType GridIteratorType;
+    typedef typename BaseType::IntegratorType IntegratorType;
+
+    typedef typename GridIteratorType::Entity EntityType;
+
+    using BaseType::gridPart;
+    using BaseType::comm;
+
+  public:
+    explicit WeightedL2Norm ( const WeightFunctionType &weightFunction );
+
+    template< class DiscreteFunctionType >
+    typename DiscreteFunctionType::RangeFieldType
+    norm ( const DiscreteFunctionType &u ) const;
+    
+    template< class UDiscreteFunctionType, class VDiscreteFunctionType >
+    typename UDiscreteFunctionType::RangeFieldType
+    distance ( const UDiscreteFunctionType &u, const VDiscreteFunctionType &v ) const;
+
+  private:
+    const WeightFunctionType &weightFunction_;
+  };
+
 
 
 
@@ -361,8 +384,8 @@ namespace Dune
   private:
     const LocalWeightFunctionType &weightFunction_;
     const FunctionType &function_;
-  };
+  }; 
 
-}
+} // end namespace Dune 
 
 #endif // #ifndef DUNE_FEM_L2NORM_HH
