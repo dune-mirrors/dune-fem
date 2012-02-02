@@ -6,13 +6,242 @@
 #include <dune/fem/quadrature/cachingquadrature.hh>
 #include <dune/fem/quadrature/integrator.hh>
 
+#include <dune/fem/function/common/gridfunctionadapter.hh>
+
+#include <dune/common/bartonnackmanifcheck.hh>
+#include <dune/fem/misc/bartonnackmaninterface.hh>
+
 namespace Dune
 {
+
+  // LPNormBase 
+  // ----------
+
+  template< class GridPart, class NormImplementation >
+  class LPNormBase 
+    : public BartonNackmanInterface< LPNormBase< GridPart, NormImplementation >, 
+                                     NormImplementation > 
+  {
+    typedef BartonNackmanInterface< LPNormBase< GridPart, NormImplementation >,
+                                    NormImplementation >  BaseType ;
+    typedef LPNormBase< GridPart, NormImplementation > ThisType;
+
+  public:
+    typedef GridPart GridPartType;
+
+  protected:
+    using BaseType :: asImp ;
+
+    typedef typename GridPartType::template Codim< 0 >::IteratorType GridIteratorType;
+    typedef typename GridIteratorType::Entity EntityType;
+
+    template < class ReturnType,
+               class UDiscreteFunctionType, 
+               class VDiscreteFunctionType >
+    struct NormOnEntityFunctor
+    {
+      const ThisType& norm_;
+      const UDiscreteFunctionType& u_;
+      const VDiscreteFunctionType* v_; 
+      const unsigned int order_ ;
+      ReturnType sum_;
+
+      unsigned int getOrder( const UDiscreteFunctionType& u, 
+                             const VDiscreteFunctionType& v ) const 
+      {
+        const unsigned int uorder = u.space().order();
+        const unsigned int vorder = v.space().order();
+        const unsigned int order = 2 * std::max( uorder, vorder );
+        return order;
+      }
+
+      NormOnEntityFunctor( const ThisType& norm,
+                    const UDiscreteFunctionType& u,
+                    const unsigned int order = 0 ) 
+        : norm_( norm ),
+          u_( u ),
+          v_( 0 ),
+          order_( ( order == 0 ) ? ( getOrder( u, u ) ) : order ),
+          sum_( 0 )
+      {}
+
+      NormOnEntityFunctor( const ThisType& norm,
+                    const UDiscreteFunctionType& u,
+                    const VDiscreteFunctionType& v,
+                    const unsigned int order = 0 ) 
+        : norm_( norm ),
+          u_( u ),
+          v_( &v ),
+          order_( ( order == 0 ) ? ( getOrder( u, v ) ) : order ),
+          sum_( 0 )
+      {
+      }
+
+      // apply norm operation on entity 
+      void operator() ( const EntityType& entity ) 
+      { 
+        // if v is not zero apply distance 
+        if( v_ ) 
+          norm_.distanceLocal( entity, order_, u_, *v_, sum_ );
+        else   
+          norm_.normLocal( entity, order_, u_, sum_ ); 
+      }
+
+      const ReturnType& result() const { return sum_; }
+    };
+
+    template <bool uDiscrete, bool vDiscrete>
+    struct ForEachCaller
+    {
+      template <class UDiscreteFunctionType, 
+                class VDiscreteFunctionType, 
+                class ReturnType>
+      static 
+      const ReturnType& forEach ( const ThisType& norm,
+                                  const UDiscreteFunctionType& u, 
+                                  const VDiscreteFunctionType& v, 
+                                  const ReturnType& initialValue, 
+                                  const unsigned int order )
+      {
+        dune_static_assert( uDiscrete && vDiscrete, "Distance can only be calculated between GridFunctions" );
+
+        typedef NormOnEntityFunctor< ReturnType, UDiscreteFunctionType, VDiscreteFunctionType >
+          ForEachFunctorType;
+
+        // create functor 
+        ForEachFunctorType normOnEntity( norm, u, v, order );
+
+        // do grid part traversal and apply action on entity 
+        u.space().forEach( normOnEntity );
+
+        return normOnEntity.result();
+      }
+    };
+
+    // this specialization creates a grid function adapter 
+    template <bool vDiscrete>
+    struct ForEachCaller<false, vDiscrete>
+    {
+      template <class F, 
+                class VDiscreteFunctionType, 
+                class ReturnType>
+      static 
+      const ReturnType& forEach ( const ThisType& norm,
+                                  const F& f, const VDiscreteFunctionType& v, 
+                                  const ReturnType& initialValue, 
+                                  const unsigned int order )
+      {
+        typedef GridFunctionAdapter< F, GridPartType>  GridFunction ;
+        GridFunction u( "LPNorm::adapter" , f , v.space().gridPart(), v.space().order() ); 
+
+        return ForEachCaller< true, vDiscrete > :: 
+          forEach( norm, u, v, initialValue, order );
+      }
+    };
+
+    // this specialization simply switches arguments 
+    template <bool uDiscrete>
+    struct ForEachCaller<uDiscrete, false>
+    {
+      template <class UDiscreteFunctionType, 
+                class F, 
+                class ReturnType>
+      static 
+      const ReturnType& forEach ( const ThisType& norm,
+                                  const UDiscreteFunctionType& u, 
+                                  const F& f, 
+                                  const ReturnType& initialValue, 
+                                  const unsigned int order )
+      {
+        return ForEachCaller< false, uDiscrete > :: 
+          forEach( norm, f, u, initialValue, order );
+      }
+    };
+
+    template <class DiscreteFunctionType, class ReturnType> 
+    const ReturnType& 
+    forEach ( const DiscreteFunctionType& u,  
+              const ReturnType& initialValue,
+              const unsigned int order = 0 ) const 
+    {
+      dune_static_assert( (Conversion<DiscreteFunctionType, HasLocalFunction>::exists), 
+                          "Norm only implemented for GridFunctions" );
+
+      typedef NormOnEntityFunctor< ReturnType, DiscreteFunctionType, DiscreteFunctionType >
+        ForEachFunctorType;
+
+      // create functor 
+      ForEachFunctorType normOnEntity( *this, u, order );
+
+      // do grid part traversal and apply action on entity 
+      u.space().forEach( normOnEntity );
+
+      return normOnEntity.result();
+    }
+
+    template <class UDiscreteFunctionType, 
+              class VDiscreteFunctionType, 
+              class ReturnType> 
+    const ReturnType& 
+    forEach ( const UDiscreteFunctionType& u,  
+              const VDiscreteFunctionType& v, 
+              const ReturnType& initialValue,
+              const unsigned int order = 0 ) const 
+    {
+      enum { uDiscrete = Conversion<UDiscreteFunctionType, HasLocalFunction>::exists };
+      enum { vDiscrete = Conversion<VDiscreteFunctionType, HasLocalFunction>::exists };
+
+      // call forEach depending on which argument is a grid function, 
+      // i.e. has a local function 
+      return ForEachCaller< uDiscrete, vDiscrete > :: 
+                forEach( *this, u, v, initialValue, order );
+    }
+
+  public:
+    explicit LPNormBase ( const GridPartType &gridPart )
+      : gridPart_( gridPart )
+    {}
+
+  protected:
+    template< class UDiscreteFunctionType, 
+              class VDiscreteFunctionType,
+              class ReturnType >
+    inline void 
+    distanceLocal ( const EntityType& entity, const unsigned int order, 
+                    const UDiscreteFunctionType &u,
+                    const VDiscreteFunctionType &v,
+                    ReturnType& sum ) const 
+    {
+      CHECK_AND_CALL_INTERFACE_IMPLEMENTATION( asImp().distanceLocal( entity, order, u, v, sum ) );
+    }
+    
+    template< class UDiscreteFunctionType, 
+              class ReturnType >
+    inline void 
+    normLocal ( const EntityType& entity, const unsigned int order, 
+                const UDiscreteFunctionType &u,
+                ReturnType& sum ) const 
+    {
+      CHECK_AND_CALL_INTERFACE_IMPLEMENTATION( asImp().normLocal( entity, order, u, sum ) );
+    }
+    
+    const GridPartType &gridPart () const { return gridPart_; }
+
+    typename GridPartType::GridType::Traits::CollectiveCommunication comm () const
+    {
+      return gridPart().grid().comm();
+    }
+
+  private:
+    const GridPartType &gridPart_;
+  };
+
+
 
   // TODO weighte LP norm might be adapted later
   // LPNorm
   //
-  // !!!!! It is not cleared which quadratur order have to be applied for p > 2!!!!
+  // !!!!! It is not cleared which quadrature order have to be applied for p > 2!!!!
   // !!!!! For p = 1 this norm does not work !!!!
   // ------
 
@@ -41,12 +270,16 @@ namespace Dune
   };
 
   template< class GridPart, class OrderCalculator = DefaultOrderCalculator >
-  class LPNorm
+  class LPNorm : public LPNormBase < GridPart, LPNorm< GridPart, OrderCalculator > > 
   {
-    typedef LPNorm< GridPart > ThisType;
+    typedef LPNorm< GridPart, OrderCalculator > ThisType;
+    typedef LPNormBase< GridPart, ThisType > BaseType ;
 
   public:
     typedef GridPart GridPartType;
+
+    using BaseType::gridPart;
+    using BaseType::comm;
 
   protected:
     template< class Function >
@@ -71,20 +304,27 @@ namespace Dune
     typename UDiscreteFunctionType::RangeFieldType
     distance ( const UDiscreteFunctionType &u, const VDiscreteFunctionType &v ) const;
 
-  protected:
-    const GridPartType &gridPart () const { return gridPart_; }
+    template< class UDiscreteFunctionType,
+              class VDiscreteFunctionType,
+              class ReturnType >
+    inline void
+    distanceLocal ( const EntityType& entity, const unsigned int order,
+                    const UDiscreteFunctionType &u,
+                    const VDiscreteFunctionType &v,
+                    ReturnType& sum ) const ;
 
-    typename GridPartType::GridType::Traits::CollectiveCommunication comm () const
-    {
-      return gridPart().grid().comm();
-    }
+    template< class UDiscreteFunctionType,
+              class ReturnType >
+    inline void
+    normLocal ( const EntityType& entity, const unsigned int order,
+                    const UDiscreteFunctionType &u,
+                    ReturnType& sum ) const ;
 
     int order ( const int spaceOrder ) const ;
 
-  private:
-    const GridPartType &gridPart_;
+  protected:
     double p_ ;
-    OrderCalculator *orderCalc;
+    OrderCalculator *orderCalc_;
   };
 
 
@@ -144,16 +384,16 @@ namespace Dune
  
   template< class GridPart, class OrderCalculator >
   inline LPNorm< GridPart, OrderCalculator >::LPNorm ( const GridPartType &gridPart, const double p )
-  : gridPart_( gridPart ),
-    p_(p)
+    :  BaseType( gridPart ),
+       p_(p),
+       orderCalc_( new OrderCalculator() )    
   {
-    orderCalc = new OrderCalculator();
   }
 
   template< class GridPart, class OrderCalculator>
   inline int LPNorm< GridPart, OrderCalculator>::order(const int spaceOrder) const
   {
-    return spaceOrder * orderCalc->operator() (p_);
+    return spaceOrder * orderCalc_->operator() (p_);
   }
 
 
@@ -163,25 +403,13 @@ namespace Dune
   LPNorm< GridPart, OrderCalculator >::norm ( const DiscreteFunctionType &u ) const
   {
     typedef typename DiscreteFunctionType::RangeFieldType RangeFieldType;
+    typedef FieldVector< RangeFieldType, 1 > ReturnType ;
 
-    typedef typename DiscreteFunctionType::LocalFunctionType LocalFunctionType;
+    // calculate integral over each element 
+    ReturnType sum = BaseType :: forEach( u, ReturnType(0) );
 
-    unsigned int order = order( u.space() );
-    IntegratorType integrator( order );
-
-    FieldVector< RangeFieldType, 1 > sum( 0 );
-    const GridIteratorType end = gridPart().template end< 0 >();
-    for( GridIteratorType it = gridPart().template begin< 0 >(); it != end; ++it )
-    {
-      const EntityType &entity = *it;
-
-      LocalFunctionType ulocal = u.localFunction( entity );
-      FunctionMultiplicator< LocalFunctionType > ulocalp( ulocal, p_ );
-
-      integrator.integrateAdd( entity, ulocalp, sum );
-    }
-
-    return std::pow (  comm().sum( sum[ 0 ] ), 1./p_ );
+    // return result
+    return std::pow (  comm().sum( sum[ 0 ] ), (1.0 / p_) );
   }
 
   template< class GridPart, class OrderCalculator >
@@ -191,34 +419,61 @@ namespace Dune
     ::distance ( const UDiscreteFunctionType &u, const VDiscreteFunctionType &v ) const
   {
     typedef typename UDiscreteFunctionType::RangeFieldType RangeFieldType;
+    typedef FieldVector< RangeFieldType, 1 > ReturnType ;
 
+    // calculate integral over each element 
+    ReturnType sum = BaseType :: forEach( u, v, ReturnType(0) );
+
+    // return result 
+    return std::pow( comm().sum( sum[ 0 ] ), (1.0/p_) );
+  }
+
+  template< class GridPart, class OrderCalculator >
+  template< class DiscreteFunctionType, class ReturnType >
+  inline void
+  LPNorm< GridPart, OrderCalculator >::
+  normLocal ( const EntityType& entity, 
+              const unsigned int order,
+              const DiscreteFunctionType &u,
+              ReturnType& sum ) const
+  {
+    typedef typename DiscreteFunctionType::LocalFunctionType LocalFunctionType;
+
+    IntegratorType integrator( order );
+
+    LocalFunctionType ulocal = u.localFunction( entity );
+    FunctionMultiplicator< LocalFunctionType > ulocalp( ulocal, p_ );
+
+    integrator.integrateAdd( entity, ulocalp, sum );
+  }
+
+  template< class GridPart, class OrderCalculator >
+  template< class UDiscreteFunctionType,
+            class VDiscreteFunctionType,
+            class ReturnType >
+  inline void
+  LPNorm< GridPart, OrderCalculator >::
+  distanceLocal ( const EntityType& entity, 
+                  const unsigned int order,
+                  const UDiscreteFunctionType &u,
+                  const VDiscreteFunctionType &v,
+                  ReturnType& sum ) const
+  {
     typedef typename UDiscreteFunctionType::LocalFunctionType ULocalFunctionType;
     typedef typename VDiscreteFunctionType::LocalFunctionType VLocalFunctionType;
 
     typedef FunctionDistance< ULocalFunctionType, VLocalFunctionType >
       LocalDistanceType;
 
-    const unsigned int uorder = order( u.space().order() );
-    const unsigned int vorder = order( v.space().order() );
-    const unsigned int order = std::max( uorder, vorder );
     IntegratorType integrator( order );
 
-    FieldVector< RangeFieldType, 1 > sum( 0 );
-    const GridIteratorType end = gridPart().template end< 0 >();
-    for( GridIteratorType it = gridPart().template begin< 0 >(); it != end; ++it )
-    {
-      const EntityType &entity = *it;
+    ULocalFunctionType ulocal = u.localFunction( entity );
+    VLocalFunctionType vlocal = v.localFunction( entity );
 
-      ULocalFunctionType ulocal = u.localFunction( entity );
-      VLocalFunctionType vlocal = v.localFunction( entity );
-
-      LocalDistanceType dist( ulocal, vlocal );
-      FunctionMultiplicator< LocalDistanceType > distp( dist, p_ );
+    LocalDistanceType dist( ulocal, vlocal );
+    FunctionMultiplicator< LocalDistanceType > distp( dist, p_ );
       
-      integrator.integrateAdd( entity, distp, sum );
-    }
-
-    return std::pow( comm().sum( sum[ 0 ] ), 1./p_ );
+    integrator.integrateAdd( entity, distp, sum );
   }
 
  

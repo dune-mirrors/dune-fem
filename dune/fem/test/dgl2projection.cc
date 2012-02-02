@@ -8,6 +8,10 @@
 #include <dune/fem/operator/projection/l2projection.hh>
 #include <dune/fem/misc/gridwidth.hh>
 
+#include <dune/fem/misc/l1norm.hh>
+#include <dune/fem/misc/l2norm.hh>
+#include <dune/fem/misc/h1norm.hh>
+
 #if defined USE_BLOCKVECTORFUNCTION
 #include <dune/fem/function/blockvectorfunction.hh>
 #elif defined USE_VECTORFUNCTION
@@ -125,6 +129,40 @@ int main(int argc, char ** argv)
     // perform the L2Projection
     DGL2Projection< ExactSolutionType, DiscreteFunctionType > dgl2; 
     dgl2( exactSolution, solution );
+
+    LPNorm< GridPartType > lpnorm( gridPart, 2.0 );
+    L2Norm< GridPartType > l2norm( gridPart );
+    L1Norm< GridPartType > l1norm( gridPart );
+    H1Norm< GridPartType > h1norm( gridPart );
+
+    {
+      // check lp norm 
+      double lperror  = lpnorm.distance( exactSolution, solution );
+      double lperror2 = lpnorm.distance( solution, exactSolution );
+      assert( std::abs( lperror - lperror2 ) < 1e-10 );
+
+      // check l2 norm 
+      double error  = l2norm.distance( exactSolution, solution );
+      double error2 = l2norm.distance( solution, exactSolution );
+      assert( std::abs( error - error2 ) < 1e-10 );
+
+      // compare lp(p=2) and l2 norm 
+      assert( std::abs( lperror - error ) < 1e-10 );
+    }
+
+    // check l1 norm 
+    {
+      double error  = l1norm.distance( exactSolution, solution );
+      double error2 = l1norm.distance( solution, exactSolution );
+      assert( std::abs( error - error2 ) < 1e-10 );
+    }
+
+    // check h1 norm 
+    {
+      double error  = h1norm.distance( exactSolution, solution );
+      double error2 = h1norm.distance( solution, exactSolution );
+      assert( std::abs( error - error2 ) < 1e-10 );
+    }
 
     return 0;
   }

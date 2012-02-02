@@ -6,6 +6,8 @@
 #include <dune/fem/quadrature/cachingquadrature.hh>
 #include <dune/fem/quadrature/integrator.hh>
 
+#include <dune/fem/misc/lpnorm.hh>
+
 namespace Dune
 {
 
@@ -13,12 +15,16 @@ namespace Dune
   // ------
 
   template< class GridPart >
-  class L1Norm
+  class L1Norm : public LPNormBase< GridPart, L1Norm< GridPart > >
   {
+    typedef LPNormBase< GridPart, L1Norm< GridPart > > BaseType ;
     typedef L1Norm< GridPart > ThisType;
 
   public:
     typedef GridPart GridPartType;
+
+    using BaseType :: gridPart ;
+    using BaseType :: comm ;
 
   protected:
     template< class Function >
@@ -41,16 +47,21 @@ namespace Dune
     typename UDiscreteFunctionType::RangeFieldType
     distance ( const UDiscreteFunctionType &u, const VDiscreteFunctionType &v ) const;
 
-  protected:
-    const GridPartType &gridPart () const { return gridPart_; }
+    template< class UDiscreteFunctionType,
+              class VDiscreteFunctionType,
+              class ReturnType >
+    inline void
+    distanceLocal ( const EntityType& entity, const unsigned int order,
+                    const UDiscreteFunctionType &u,
+                    const VDiscreteFunctionType &v,
+                    ReturnType& sum ) const ;
 
-    typename GridPartType::GridType::Traits::CollectiveCommunication comm () const
-    {
-      return gridPart().grid().comm();
-    }
-
-  private:
-    const GridPartType &gridPart_;
+    template< class UDiscreteFunctionType,
+              class ReturnType >
+    inline void
+    normLocal ( const EntityType& entity, const unsigned int order,
+                    const UDiscreteFunctionType &u,
+                    ReturnType& sum ) const ;
   };
 
 
@@ -60,7 +71,7 @@ namespace Dune
   
   template< class GridPart >
   inline L1Norm< GridPart >::L1Norm ( const GridPartType &gridPart )
-  : gridPart_( gridPart )
+  : BaseType( gridPart )
   {}
 
 
@@ -70,24 +81,12 @@ namespace Dune
   L1Norm< GridPart >::norm ( const DiscreteFunctionType &u ) const
   {
     typedef typename DiscreteFunctionType::RangeFieldType RangeFieldType;
+    typedef FieldVector< RangeFieldType, 1 > ReturnType ;
 
-    typedef typename DiscreteFunctionType::LocalFunctionType LocalFunctionType;
+    // calculate integral over each element 
+    ReturnType sum = BaseType :: forEach( u, ReturnType(0) );
 
-    unsigned int order = u.space().order();
-    Integrator< QuadratureType > integrator( order );
-
-    FieldVector< RangeFieldType, 1 > sum( 0 );
-    const GridIteratorType end = gridPart().template end< 0 >();
-    for( GridIteratorType it = gridPart().template begin< 0 >(); it != end; ++it )
-    {
-      const EntityType &entity = *it;
-
-      LocalFunctionType ulocal = u.localFunction( entity );
-      FunctionAbs< LocalFunctionType > ulocalAbs( ulocal );
-
-      integrator.integrateAdd( entity, ulocalAbs, sum );
-    }
-
+    // return result, e.g. sum
     return comm().sum( sum[ 0 ] );
   }
 
@@ -99,34 +98,56 @@ namespace Dune
     ::distance ( const UDiscreteFunctionType &u, const VDiscreteFunctionType &v ) const
   {
     typedef typename UDiscreteFunctionType::RangeFieldType RangeFieldType;
+    typedef FieldVector< RangeFieldType, 1 > ReturnType ;
 
+    // calculate integral over each element 
+    ReturnType sum = BaseType :: forEach( u, v, ReturnType(0) );
+
+    // return result, e.g. sum
+    return comm().sum( sum[ 0 ] );
+  }
+
+  template< class GridPart >
+  template< class DiscreteFunctionType, class ReturnType >
+  inline void
+  L1Norm< GridPart >::normLocal ( const EntityType& entity, const unsigned int order,
+                                  const DiscreteFunctionType &u,
+                                  ReturnType& sum ) const
+  {
+    typedef typename DiscreteFunctionType::LocalFunctionType LocalFunctionType;
+    Integrator< QuadratureType > integrator( order );
+
+    LocalFunctionType ulocal = u.localFunction( entity );
+    FunctionAbs< LocalFunctionType > ulocalAbs( ulocal );
+
+    integrator.integrateAdd( entity, ulocalAbs, sum );
+  }
+
+  template< class GridPart >
+  template< class UDiscreteFunctionType,
+            class VDiscreteFunctionType,
+            class ReturnType >
+  inline void
+  L1Norm< GridPart >::distanceLocal ( const EntityType& entity, const unsigned int order,
+                                      const UDiscreteFunctionType &u,
+                                      const VDiscreteFunctionType &v,
+                                      ReturnType& sum ) const
+  {
     typedef typename UDiscreteFunctionType::LocalFunctionType ULocalFunctionType;
     typedef typename VDiscreteFunctionType::LocalFunctionType VLocalFunctionType;
+
+    Integrator< QuadratureType > integrator( order );
+
+    ULocalFunctionType ulocal = u.localFunction( entity );
+    VLocalFunctionType vlocal = v.localFunction( entity );
 
     typedef FunctionDistance< ULocalFunctionType, VLocalFunctionType >
       LocalDistanceType;
 
-    const unsigned int uorder = u.space().order();
-    const unsigned int vorder = v.space().order();
-    const unsigned int order = std::max( uorder, vorder );
-    Integrator< QuadratureType > integrator( order );
-
-    FieldVector< RangeFieldType, 1 > sum( 0 );
-    const GridIteratorType end = gridPart().template end< 0 >();
-    for( GridIteratorType it = gridPart().template begin< 0 >(); it != end; ++it )
-    {
-      const EntityType &entity = *it;
-
-      ULocalFunctionType ulocal = u.localFunction( entity );
-      VLocalFunctionType vlocal = v.localFunction( entity );
-
-      LocalDistanceType dist( ulocal, vlocal );
-      FunctionAbs< LocalDistanceType > distAbs( dist );
-      
-      integrator.integrateAdd( entity, distAbs, sum );
-    }
-
-    return comm().sum( sum[ 0 ] );
+    LocalDistanceType dist( ulocal, vlocal );
+    FunctionAbs< LocalDistanceType > distAbs( dist );
+    
+    integrator.integrateAdd( entity, distAbs, sum );
   }
 
   
