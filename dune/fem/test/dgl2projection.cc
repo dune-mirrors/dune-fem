@@ -130,15 +130,24 @@ int main(int argc, char ** argv)
     DGL2Projection< ExactSolutionType, DiscreteFunctionType > dgl2; 
     dgl2( exactSolution, solution );
 
+    LPNorm< GridPartType > lpnorm( gridPart, 2.0 );
     L2Norm< GridPartType > l2norm( gridPart );
     L1Norm< GridPartType > l1norm( gridPart );
     H1Norm< GridPartType > h1norm( gridPart );
 
-    // check l2 norm 
     {
+      // check lp norm 
+      double lperror  = lpnorm.distance( exactSolution, solution );
+      double lperror2 = lpnorm.distance( solution, exactSolution );
+      assert( std::abs( lperror - lperror2 ) < 1e-10 );
+
+      // check l2 norm 
       double error  = l2norm.distance( exactSolution, solution );
       double error2 = l2norm.distance( solution, exactSolution );
       assert( std::abs( error - error2 ) < 1e-10 );
+
+      // compare lp(p=2) and l2 norm 
+      assert( std::abs( lperror - error ) < 1e-10 );
     }
 
     // check l1 norm 
