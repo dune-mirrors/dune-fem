@@ -6,6 +6,8 @@
 #include <dune/fem/quadrature/cachingquadrature.hh>
 #include <dune/fem/quadrature/integrator.hh>
 
+#include <dune/fem/function/common/gridfunctionadapter.hh>
+
 #include <dune/common/bartonnackmanifcheck.hh>
 #include <dune/fem/misc/bartonnackmaninterface.hh>
 
@@ -85,15 +87,86 @@ namespace Dune
           norm_.normLocal( entity, order_, u_, sum_ ); 
       }
 
-      ReturnType result() const { return sum_; }
+      const ReturnType& result() const { return sum_; }
+    };
+
+    template <bool uDiscrete, bool vDiscrete>
+    struct ForEachCaller
+    {
+      template <class UDiscreteFunctionType, 
+                class VDiscreteFunctionType, 
+                class ReturnType>
+      static 
+      const ReturnType& forEach ( const ThisType& norm,
+                                  const UDiscreteFunctionType& u, 
+                                  const VDiscreteFunctionType& v, 
+                                  const ReturnType& initialValue, 
+                                  const unsigned int order )
+      {
+        dune_static_assert( uDiscrete && vDiscrete, "Distance can only be calculated between GridFunctions" );
+
+        typedef NormOnEntityFunctor< ReturnType, UDiscreteFunctionType, VDiscreteFunctionType >
+          ForEachFunctorType;
+
+        // create functor 
+        ForEachFunctorType normOnEntity( norm, u, v, order );
+
+        // do grid part traversal and apply action on entity 
+        u.space().forEach( normOnEntity );
+
+        return normOnEntity.result();
+      }
+    };
+
+    // this specialization creates a grid function adapter 
+    template <bool vDiscrete>
+    struct ForEachCaller<false, vDiscrete>
+    {
+      template <class F, 
+                class VDiscreteFunctionType, 
+                class ReturnType>
+      static 
+      const ReturnType& forEach ( const ThisType& norm,
+                                  const F& f, const VDiscreteFunctionType& v, 
+                                  const ReturnType& initialValue, 
+                                  const unsigned int order )
+      {
+        typedef GridFunctionAdapter< F, GridPartType>  GridFunction ;
+        GridFunction u( "LPNorm::adapter" , f , v.space().gridPart(), v.space().order() ); 
+
+        return ForEachCaller< true, vDiscrete > :: 
+          forEach( norm, u, v, initialValue, order );
+      }
+    };
+
+    // this specialization simply switches arguments 
+    template <bool uDiscrete>
+    struct ForEachCaller<uDiscrete, false>
+    {
+      template <class UDiscreteFunctionType, 
+                class F, 
+                class ReturnType>
+      static 
+      const ReturnType& forEach ( const ThisType& norm,
+                                  const UDiscreteFunctionType& u, 
+                                  const F& f, 
+                                  const ReturnType& initialValue, 
+                                  const unsigned int order )
+      {
+        return ForEachCaller< false, uDiscrete > :: 
+          forEach( norm, f, u, initialValue, order );
+      }
     };
 
     template <class DiscreteFunctionType, class ReturnType> 
-    ReturnType forEach ( const DiscreteFunctionType& u,  
-                         const ReturnType& initialValue,
-                         const unsigned int order = 0 
-                        ) const 
+    const ReturnType& 
+    forEach ( const DiscreteFunctionType& u,  
+              const ReturnType& initialValue,
+              const unsigned int order = 0 ) const 
     {
+      dune_static_assert( (Conversion<DiscreteFunctionType, HasLocalFunction>::exists), 
+                          "Norm only implemented for GridFunctions" );
+
       typedef NormOnEntityFunctor< ReturnType, DiscreteFunctionType, DiscreteFunctionType >
         ForEachFunctorType;
 
@@ -106,23 +179,22 @@ namespace Dune
       return normOnEntity.result();
     }
 
-    template <class UDiscreteFunctionType, class VDiscreteFunctionType, class ReturnType> 
-    ReturnType forEach ( const UDiscreteFunctionType& u,  
-                         const VDiscreteFunctionType& v, 
-                         const ReturnType& initialValue,
-                         const unsigned int order = 0 
-                       ) const 
+    template <class UDiscreteFunctionType, 
+              class VDiscreteFunctionType, 
+              class ReturnType> 
+    const ReturnType& 
+    forEach ( const UDiscreteFunctionType& u,  
+              const VDiscreteFunctionType& v, 
+              const ReturnType& initialValue,
+              const unsigned int order = 0 ) const 
     {
-      typedef NormOnEntityFunctor< ReturnType, UDiscreteFunctionType, VDiscreteFunctionType >
-        ForEachFunctorType;
+      enum { uDiscrete = Conversion<UDiscreteFunctionType, HasLocalFunction>::exists };
+      enum { vDiscrete = Conversion<VDiscreteFunctionType, HasLocalFunction>::exists };
 
-      // create functor 
-      ForEachFunctorType normOnEntity( *this, u, v, order );
-
-      // do grid part traversal and apply action on entity 
-      u.space().forEach( normOnEntity );
-
-      return normOnEntity.result();
+      // call forEach depending on which argument is a grid function, 
+      // i.e. has a local function 
+      return ForEachCaller< uDiscrete, vDiscrete > :: 
+                forEach( *this, u, v, initialValue, order );
     }
 
   public:
