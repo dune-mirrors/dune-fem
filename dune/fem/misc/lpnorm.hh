@@ -363,15 +363,21 @@ namespace Dune
     using BaseType::comm;
 
   public:
+    using BaseType::norm;
+    using BaseType::distance;
+
     explicit WeightedLPNorm ( const WeightFunctionType &weightFunction, const double p );
 
-    template< class DiscreteFunctionType >
-    typename DiscreteFunctionType::RangeFieldType
-    norm ( const DiscreteFunctionType &u ) const;
-    
-    template< class UDiscreteFunctionType, class VDiscreteFunctionType >
-    typename UDiscreteFunctionType::RangeFieldType
-    distance ( const UDiscreteFunctionType &u, const VDiscreteFunctionType &v ) const;
+    template< class UDiscreteFunctionType, class ReturnType >
+    void normLocal ( const EntityType &entity, const int order,
+            const UDiscreteFunctionType &u,
+            ReturnType& sum ) const;
+
+    template< class UDiscreteFunctionType, class VDiscreteFunctionType, class ReturnType >
+    void distanceLocal ( const EntityType &entity, const int order,
+            const UDiscreteFunctionType &u,
+            const VDiscreteFunctionType &v,
+            ReturnType& sum ) const;
 
   private:
     const WeightFunctionType &weightFunction_;
@@ -550,7 +556,7 @@ namespace Dune
   template< class WeightFunction, class OrderCalculator >
   inline WeightedLPNorm< WeightFunction, OrderCalculator >
     ::WeightedLPNorm ( const WeightFunctionType &weightFunction, double p )
-  : BaseType( weightFunction.space().gridPart, p ),
+  : BaseType( weightFunction.space().gridPart(), p ),
     weightFunction_( weightFunction ),
     p_(p)
   {
@@ -560,44 +566,36 @@ namespace Dune
 
 
   template< class WeightFunction, class OrderCalculator >
-  template< class DiscreteFunctionType >
-  inline typename DiscreteFunctionType::RangeFieldType
+  template< class UDiscreteFunctionType, class ReturnType >
+  inline void
   WeightedLPNorm< WeightFunction, OrderCalculator >
-    ::norm ( const DiscreteFunctionType &u ) const
+    ::normLocal ( const EntityType &entity, const int order, 
+        const UDiscreteFunctionType &u, 
+        ReturnType &sum ) const
   {
-    typedef typename DiscreteFunctionType::RangeFieldType RangeFieldType;
+    typedef typename UDiscreteFunctionType::LocalFunctionType LocalFunctionType;
 
-    typedef typename DiscreteFunctionType::LocalFunctionType LocalFunctionType;
-
-    unsigned int order = order (u.space().order()) + weightFunction_.space().order();
+    // !!!! order !!!!
     IntegratorType integrator( order );
 
-    FieldVector< RangeFieldType, 1 > sum( 0 );
-    const GridIteratorType end = gridPart().template end< 0 >();
-    for( GridIteratorType it = gridPart().template begin< 0 >(); it != end; ++it )
-    {
-      const EntityType &entity = *it;
+    LocalWeightFunctionType wflocal = weightFunction_.localFunction( entity );
+    LocalFunctionType ulocal = u.localFunction( entity );
+   
+    WeightedFunctionMultiplicator< LocalFunctionType > ulocal2( wflocal, ulocal, p_ );
 
-      LocalWeightFunctionType wflocal = weightFunction_.localFunction( entity );
-      LocalFunctionType ulocal = u.localFunction( entity );
-     
-      WeightedFunctionMultiplicator< LocalFunctionType > ulocal2( wflocal, ulocal, p_ );
-
-      integrator.integrateAdd( entity, ulocal2, sum );
-    }
-
-    return std::pow( comm().sum( sum[ 0 ] ), 1./p_ );
+    integrator.integrateAdd( entity, ulocal2, sum );
   }
  
   
   template< class WeightFunction,class OrderCalculator >
-  template< class UDiscreteFunctionType, class VDiscreteFunctionType >
-  inline typename UDiscreteFunctionType::RangeFieldType
+  template< class UDiscreteFunctionType, class VDiscreteFunctionType, class ReturnType >
+  inline void
   WeightedLPNorm< WeightFunction, OrderCalculator >
-    ::distance ( const UDiscreteFunctionType &u, const VDiscreteFunctionType &v ) const
+    ::distanceLocal ( const EntityType &entity, const int order,
+        const UDiscreteFunctionType &u, 
+        const VDiscreteFunctionType &v, 
+        ReturnType &sum ) const
   {
-    typedef typename UDiscreteFunctionType::RangeFieldType RangeFieldType;
-
     typedef typename UDiscreteFunctionType::LocalFunctionType ULocalFunctionType;
     typedef typename VDiscreteFunctionType::LocalFunctionType VLocalFunctionType;
 
@@ -605,29 +603,17 @@ namespace Dune
       < ULocalFunctionType, VLocalFunctionType >
       LocalDistanceType;
 
-    const unsigned int uorder = order(u.space().order());
-    const unsigned int vorder = order( v.space().order());
-    const unsigned int order = std::max( uorder, vorder )
-                               + weightFunction_.space().order();
+    // !!!! order !!!!
     IntegratorType integrator( order );
 
-    FieldVector< RangeFieldType, 1 > sum( 0 );
-    const GridIteratorType end = gridPart().template end< 0 >();
-    for( GridIteratorType it = gridPart().template begin< 0 >(); it != end; ++it )
-    {
-      const EntityType &entity = *it;
-
-      LocalWeightFunctionType wflocal = weightFunction_.localFunction( entity );
-      ULocalFunctionType ulocal = u.localFunction( entity );
-      VLocalFunctionType vlocal = v.localFunction( entity );
-     
-      LocalDistanceType dist( ulocal, vlocal );
-      WeightedFunctionMultiplicator< LocalDistanceType > dist2( wflocal, dist );
-      
-      integrator.integrateAdd( entity, dist2, sum );
-    }
-
-    return std::pow ( comm().sum( sum[ 0 ] ), 1./p_ );
+    LocalWeightFunctionType wflocal = weightFunction_.localFunction( entity );
+    ULocalFunctionType ulocal = u.localFunction( entity );
+    VLocalFunctionType vlocal = v.localFunction( entity );
+   
+    LocalDistanceType dist( ulocal, vlocal );
+    WeightedFunctionMultiplicator< LocalDistanceType > dist2( wflocal, dist );
+    
+    integrator.integrateAdd( entity, dist2, sum );
   }
 
   
