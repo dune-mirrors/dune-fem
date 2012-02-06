@@ -8,6 +8,7 @@ EXTRA_DIST = 2dgrid.dgf \
              3dgrid.dgf \
              dfspace.hh \
              exactsolution.hh \
+						 weightfunction.hh \
              testgrid.hh
 
 # linker flags

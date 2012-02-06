@@ -41,6 +41,7 @@
 #include "testgrid.hh"
 #include "dfspace.hh"
 #include "exactsolution.hh"
+#include "weightfunction.hh"
 
 using namespace Dune;
 
@@ -90,6 +91,8 @@ typedef AdaptiveDiscreteFunction< DiscreteFunctionSpaceType >
 #endif
 
 typedef ExactSolution< FunctionSpaceType > ExactSolutionType;
+typedef FunctionSpace< double, double, GridSelector::dimworld, 1 > WeightFunctionSpaceType;
+typedef WeightFunction< WeightFunctionSpaceType > WeightFunctionType;
 
 // dummy class for easier use of L2 Projection 
 template< class Domain, class Range >
@@ -135,6 +138,17 @@ int main(int argc, char ** argv)
     L1Norm< GridPartType > l1norm( gridPart );
     H1Norm< GridPartType > h1norm( gridPart );
 
+    // weighted norm stuff
+    WeightFunctionType weightFunctionExact;
+    typedef GridFunctionAdapter< WeightFunctionType, GridPartType>
+      DiscreteWeightFunctionType;
+      
+    DiscreteWeightFunctionType weightFunction( "weight", weightFunctionExact, gridPart );
+
+    WeightedLPNorm< DiscreteWeightFunctionType > wLpnorm( weightFunction, 2.0 );
+    WeightedL2Norm< DiscreteWeightFunctionType > wL2norm( weightFunction );
+
+    // check all norms
     {
       // check lp norm 
       double lperror  = lpnorm.distance( exactSolution, solution );
@@ -162,6 +176,22 @@ int main(int argc, char ** argv)
       double error  = h1norm.distance( exactSolution, solution );
       double error2 = h1norm.distance( solution, exactSolution );
       assert( std::abs( error - error2 ) < 1e-10 );
+    }
+
+    // check weighted lp norm
+    {
+      // check lp norm 
+      double lperror  = wLpnorm.distance( exactSolution, solution );
+      double lperror2 = wLpnorm.distance( solution, exactSolution );
+      assert( std::abs( lperror - lperror2 ) < 1e-10 );
+
+      // check l2 norm 
+      double error  = wL2norm.distance( exactSolution, solution );
+      double error2 = wL2norm.distance( solution, exactSolution );
+      assert( std::abs( error - error2 ) < 1e-10 );
+
+      // compare lp(p=2) and l2 norm 
+      assert( std::abs( lperror - error ) < 1e-10 );
     }
 
     return 0;
