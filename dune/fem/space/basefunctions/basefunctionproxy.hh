@@ -48,33 +48,27 @@ namespace Dune
     typedef typename FunctionSpaceType::RangeType RangeType;
     typedef typename FunctionSpaceType::JacobianRangeType JacobianRangeType;
 
-  protected:
-    // base function set 
-    const BaseFunctionSetImp *baseSet_; 
-
   public:
-    inline SimpleBaseFunctionProxy ()
-    : baseSet_( NULL )
-    {
-    }
+    SimpleBaseFunctionProxy ()
+    : baseSet_( 0 )
+    {}
       
-    inline SimpleBaseFunctionProxy ( const BaseFunctionSetImp* baseSet )
+    SimpleBaseFunctionProxy ( const BaseFunctionSetImp* baseSet )
     : baseSet_( baseSet ) 
-    {
-    }
+    {}
 
+#if 0
     //! Constructor creating empty local function 
-    inline SimpleBaseFunctionProxy( const ThisType& org )
+    SimpleBaseFunctionProxy( const ThisType& org )
     : baseSet_( org.baseSet_ )
-    {
-    }
+    {}
 
     //! asignment operator 
     SimpleBaseFunctionProxy &operator= ( const ThisType& org )
     {
       baseSet_ = org.baseSet_; 
       return *this;
-    }   
+    }
 
     //! destructor 
     ~SimpleBaseFunctionProxy() 
@@ -82,6 +76,7 @@ namespace Dune
       // unset pointer to be sure its gone 
       baseSet_ = 0;
     }
+#endif
 
     /** \copydoc Dune::BaseFunctionSetInterface::numBaseFunctions */
     size_t size () const
@@ -90,44 +85,44 @@ namespace Dune
     }
     
     /** \copydoc Dune::BaseFunctionSetInterface::geometryType */
-    inline GeometryType geometryType () const
+    GeometryType geometryType () const
     {
       return baseFunctionSet().geometryType();
     }
    
     /** \copydoc Dune::BaseFunctionSetInterface::evaluate(const int baseFunction,const FieldVector<int,diffOrd> &diffVariable,const PointType &x,RangeType &phi) const */
     template< int diffOrd, class PointType >
-    inline void evaluate ( const int baseFunction,
-                           const FieldVector< int, diffOrd > &diffVariable,
-                           const PointType &x,
-                           RangeType &phi ) const
+    void evaluate ( const int baseFunction,
+                    const FieldVector< int, diffOrd > &diffVariable,
+                    const PointType &x,
+                    RangeType &phi ) const
     {
       baseFunctionSet().evaluate( baseFunction, diffVariable, x, phi );
     }
 
     /** \copydoc Dune::BaseFunctionSetInterface::evaluate(const int baseFunction,const PointType &x,RangeType &phi) const */
     template< class PointType >
-    inline void evaluate ( const int baseFunction,
-                           const PointType &x,
-                           RangeType &phi ) const
+    void evaluate ( const int baseFunction,
+                    const PointType &x,
+                    RangeType &phi ) const
     {
       baseFunctionSet().evaluate( baseFunction, x, phi );
     }
 
     /** \copydoc Dune::BaseFunctionSetDefault::jacobian(const int baseFunction,const PointType &x,JacobianRangeType &phi) const */
     template< class PointType >
-    inline void jacobian( const int baseFunction,
-                          const PointType &x,
-                          JacobianRangeType &phi ) const
+    void jacobian( const int baseFunction,
+                   const PointType &x,
+                   JacobianRangeType &phi ) const
     {
       baseFunctionSet().jacobian( baseFunction, x, phi );
     }
 
     template< class PointType, 
               class LocalDofVectorType >
-    inline void evaluateAll ( const PointType &x,
-                              const LocalDofVectorType& dofs,
-                              RangeType& ret) const
+    void evaluateAll ( const PointType &x,
+                       const LocalDofVectorType& dofs,
+                       RangeType& ret) const
     {
       baseFunctionSet().evaluateAll( x, dofs, ret );
     }
@@ -135,10 +130,10 @@ namespace Dune
     template< int diffOrder, 
               class PointType, 
               class LocalDofVectorType >
-    inline void evaluateAll ( const FieldVector<int, diffOrder>& diffVariable,
-                              const PointType &x,
-                              const LocalDofVectorType& dofs,
-                              RangeType& ret) const
+    void evaluateAll ( const FieldVector<int, diffOrder>& diffVariable,
+                       const PointType &x,
+                       const LocalDofVectorType& dofs,
+                       RangeType& ret) const
     {
       baseFunctionSet().evaluateAll( diffVariable, x, dofs, ret );
     }
@@ -152,10 +147,10 @@ namespace Dune
 
     template< class PointType, class GeometryJacobianInverseType,
               class GlobalJacobianRangeType, class LocalDofVectorType >
-    inline void jacobianAll ( const PointType &x,
-                              const GeometryJacobianInverseType& gjit,   
-                              const LocalDofVectorType& dofs,
-                              GlobalJacobianRangeType& ret) const
+    void jacobianAll ( const PointType &x,
+                       const GeometryJacobianInverseType& gjit,   
+                       const LocalDofVectorType& dofs,
+                       GlobalJacobianRangeType& ret) const
     {
       baseFunctionSet().jacobianAll( x, gjit, dofs, ret );
     }
@@ -170,9 +165,9 @@ namespace Dune
     }
 
     template< class PointType, class LocalDofVectorType >
-    inline void axpy ( const PointType &x,
-                       const RangeType& factor,
-                       LocalDofVectorType& dofs) const
+    void axpy ( const PointType &x,
+                const RangeType& factor,
+                LocalDofVectorType& dofs) const
     {
       baseFunctionSet().axpy( x, factor, dofs );
     }
@@ -180,10 +175,9 @@ namespace Dune
     template< class QuadratureType, 
               class LocalDofVectorType,
               class RangeVectorType>
-    inline void 
-    evaluateRanges ( const QuadratureType& quad,
-                     const LocalDofVectorType& dofs,
-                     RangeVectorType& rangeVector) const
+    void evaluateRanges ( const QuadratureType& quad,
+                          const LocalDofVectorType& dofs,
+                          RangeVectorType& rangeVector) const
     {
       baseFunctionSet().evaluateRanges( quad, dofs, rangeVector );
     }
@@ -192,11 +186,10 @@ namespace Dune
               class Geometry,
               class LocalDofVectorType,
               class JacobianRangeVectorType>
-    inline void 
-    evaluateJacobians( const QuadratureType& quad,
-                       const Geometry& geometry, 
-                       const LocalDofVectorType& dofs,
-                       JacobianRangeVectorType& jacVector) const
+    void evaluateJacobians( const QuadratureType& quad,
+                            const Geometry& geometry, 
+                            const LocalDofVectorType& dofs,
+                            JacobianRangeVectorType& jacVector) const
     {
       baseFunctionSet().evaluateJacobians( quad, geometry, dofs, jacVector );
     }
@@ -204,9 +197,9 @@ namespace Dune
     template< class QuadratureType, 
               class RangeVectorType,
               class LocalDofVectorType >
-    inline void axpyRanges ( const QuadratureType& quad,
-                             const RangeVectorType& factorVec,
-                             LocalDofVectorType& dofs) const
+    void axpyRanges ( const QuadratureType& quad,
+                      const RangeVectorType& factorVec,
+                      LocalDofVectorType& dofs) const
     {
       baseFunctionSet().axpyRanges( quad, factorVec, dofs );
     }
@@ -215,45 +208,49 @@ namespace Dune
               class Geometry,
               class JacobianRangeVectorType,
               class LocalDofVectorType >
-    inline void axpyJacobians( const QuadratureType& quad,
-                               const Geometry& geometry,
-                               const JacobianRangeVectorType& factorVec,
-                               LocalDofVectorType& dofs) const
+    void axpyJacobians( const QuadratureType& quad,
+                        const Geometry& geometry,
+                        const JacobianRangeVectorType& factorVec,
+                        LocalDofVectorType& dofs) const
     {
       baseFunctionSet().axpyJacobians( quad, geometry, factorVec, dofs );
     }
 
     template< class PointType, class GeometryJacobianInverseType,
               class GlobalJacobianRangeType, class LocalDofVectorType >
-    inline void axpy ( const PointType &x,
-                       const GeometryJacobianInverseType& gjit,   
-                       const GlobalJacobianRangeType& factor,
-                       LocalDofVectorType& dofs) const
+    void axpy ( const PointType &x,
+                const GeometryJacobianInverseType& gjit,   
+                const GlobalJacobianRangeType& factor,
+                LocalDofVectorType& dofs) const
     {
       baseFunctionSet().axpy( x, gjit, factor, dofs );
     }
 
     template< class PointType, class GeometryJacobianInverseType,
               class GlobalJacobianRangeType, class LocalDofVectorType >
-    inline void axpy ( const PointType &x,
-                       const GeometryJacobianInverseType& gjit,
-                       const RangeType& factor1,
-                       const GlobalJacobianRangeType& factor2,
-                       LocalDofVectorType& dofs) const
+    void axpy ( const PointType &x,
+                const GeometryJacobianInverseType& gjit,
+                const RangeType& factor1,
+                const GlobalJacobianRangeType& factor2,
+                LocalDofVectorType& dofs) const
     {
       baseFunctionSet().axpy( x, gjit, factor1, factor2, dofs );
     }
 
   protected:
-    inline const BaseFunctionSetImp &baseFunctionSet () const
+    const BaseFunctionSetImp &baseFunctionSet () const
     {
       assert( baseSet_ );
       return *baseSet_;
     }
+
+  protected:
+    // base function set 
+    const BaseFunctionSetImp *baseSet_; 
   }; // end SimpleBaseFunctionProxy 
 
   /** \} */
 
-} // end namespace Dune
+} // namespace Dune
 
-#endif
+#endif // #ifndef DUNE_BASEFUNCTIONPROXY_HH
