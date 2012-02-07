@@ -190,7 +190,7 @@ protected:
     typedef SPGrid< ct, dim, strategy, Comm >  Grid;
     static bool isInside(const DomainType& x, const Grid& grid ) 
     {
-      return grid.domain().contains( x );
+      return grid.contains( x );
     }
   };
 #endif
