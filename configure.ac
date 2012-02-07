@@ -43,11 +43,6 @@ CPPFLAGS="$DUNE_CPPFLAGS"
 LDFLAGS="$DUNE_LDFLAGS"
 LIBS="$DUNE_LIBS $BLAS_LIBS"
 
-AC_CHECK_FILE([dune/fem/pass/test/Makefile.am],
-              [AC_CONFIG_FILES([dune/fem/pass/test/Makefile
-                                dune/fem/pass/test/dgellipt/Makefile])],
-              [])
-              
 AC_CONFIG_FILES([Makefile
      doc/Makefile
      doc/doxygen/Makefile
@@ -55,6 +50,8 @@ AC_CONFIG_FILES([Makefile
      dune/Makefile
      dune/fem/Makefile
      dune/fem/pass/Makefile
+     dune/fem/pass/test/Makefile
+     dune/fem/pass/test/dgellipt/Makefile
      dune/fem/space/Makefile
      dune/fem/space/test/Makefile
      dune/fem/space/basefunctions/Makefile
