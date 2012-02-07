@@ -84,9 +84,9 @@ namespace Dune
     }
 
     /** \copydoc Dune::BaseFunctionSetInterface::numBaseFunctions */
-    inline int numBaseFunctions() const 
+    size_t size () const
     {
-      return baseFunctionSet().numBaseFunctions(); 
+      return baseFunctionSet().size();
     }
     
     /** \copydoc Dune::BaseFunctionSetInterface::geometryType */

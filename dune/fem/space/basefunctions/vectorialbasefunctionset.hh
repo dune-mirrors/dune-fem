@@ -121,7 +121,7 @@ namespace Dune
   public:
     GeometryType geometryType () const { return storage_.geometryType(); }
     
-    int numBaseFunctions () const { return dimRange*numDifferentBaseFunctions(); }
+    size_t size () const { return dimRange*numDifferentBaseFunctions(); }
     int numDifferentBaseFunctions () const { return storage_.numBaseFunctions(); }
 
     /** \copydoc Dune::BaseFunctionSetInterface::evaluate(const int,const FieldVector<int,diffOrd>&,const PointType&,RangeType&) const */

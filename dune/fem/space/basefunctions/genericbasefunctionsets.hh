@@ -74,8 +74,8 @@ namespace Dune
       geometryType_( geometryType )
     {}
 
-    /** \copydoc Dune::BaseFunctionSetInterface::numBaseFunctions */
-    int numBaseFunctions () const
+    /** \copydoc Dune::BaseFunctionSetInterface::size */
+    size_t size () const
     {
       return localBasis_.size();
     }

@@ -97,8 +97,8 @@ namespace Dune
     {
     }
 
-    /** \copydoc Dune::BaseFunctionSetInterface::numBaseFunctions */
-    inline int numBaseFunctions () const
+    /** \copydoc Dune::BaseFunctionSetInterface::size */
+    size_t size () const
     {
       return storage_.numBaseFunctions();
     }
