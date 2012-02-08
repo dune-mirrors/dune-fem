@@ -162,9 +162,8 @@ namespace Dune
     }
 
     /** \brief \todo please doc me */
-    template< class Point, class Geometry, class DofVector, class GlobalHessianRangeArray >
-    void hessianAll ( const Point &x, const Geometry &geometry,
-                      GlobalHessianRangeArray &hessians ) const
+    template< class Point, class Geometry, class GlobalHessianRangeArray >
+    void hessianAll ( const Point &x, const Geometry &geometry, GlobalHessianRangeArray &hessians ) const
     {
       CHECK_AND_CALL_INTERFACE_IMPLEMENTATION
         ( asImp().hessianAll( x, geometry, hessians ) );
@@ -422,9 +421,8 @@ namespace Dune
     void hessianAll ( const Point &x, const Geometry &geometry,
                       const DofVector &dofs, GlobalHessianRange &hessian ) const;
 
-    template< class Point, class Geometry, class DofVector, class GlobalHessianRangeArray >
-    void hessianAll ( const Point &x, const Geometry &geometry,
-                      GlobalHessianRangeArray &hessians ) const;
+    template< class Point, class Geometry, class GlobalHessianRangeArray >
+    void hessianAll ( const Point &x, const Geometry &geometry, GlobalHessianRangeArray &hessians ) const;
 
     template< class Point, class DofVector >
     void axpy ( const Point &x, const RangeType &valueFactor, DofVector &dofs ) const
@@ -679,10 +677,9 @@ namespace Dune
   }
 
   template< class TraitsImp >
-  template< class Point, class Geometry, class DofVector, class GlobalHessianRangeArray >
+  template< class Point, class Geometry, class GlobalHessianRangeArray >
   inline void BaseFunctionSetDefault< TraitsImp >
-   ::hessianAll ( const Point &x, const Geometry &geometry,
-                  GlobalHessianRangeArray &hessians ) const
+   ::hessianAll ( const Point &x, const Geometry &geometry, GlobalHessianRangeArray &hessians ) const
   {
     const int numBaseFunctions = size();
     hessians.resize( numBaseFunctions );
