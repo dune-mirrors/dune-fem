@@ -404,6 +404,7 @@ namespace Dune
 
     /** \copydoc Dune::BaseFunctionSetInterface::jacobian(const int baseFunction,const Point &x, JacobianRangeType &phi) const */
     template< class Point >
+    DUNE_DEPRECATED
     void jacobian ( const int baseFunction, const Point &x, JacobianRangeType &jacobian ) const;
 
     template< class Point, class GeometryJacobianInverse, class DofVector, class GlobalJacobianRange >
@@ -460,7 +461,7 @@ namespace Dune
                 const RangeType &valueFactor, const GlobalJacobianRange &jacobianFactor,
                 DofVector &dofs ) const
     {
-      GlobalJacobianRange tmpJacobianFactor;
+      JacobianRangeType tmpJacobianFactor;
       for( int r = 0; r < dimRange; ++r )
         gjit.mtv( jacobianFactor[ r ], tmpJacobianFactor[ r ] );
 
