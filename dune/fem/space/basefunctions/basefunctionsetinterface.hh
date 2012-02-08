@@ -442,7 +442,7 @@ namespace Dune
     void axpy ( const Point &x, const GeometryJacobianInverse &gjit,
                 const GlobalJacobianRange &jacobianFactor, DofVector &dofs ) const
     {
-      GlobalJacobianRange tmpJacobianFactor;
+      JacobianRangeType tmpJacobianFactor;
       for( int r = 0; r < dimRange; ++r )
         gjit.mtv( jacobianFactor[ r ], tmpJacobianFactor[ r ] );
 
