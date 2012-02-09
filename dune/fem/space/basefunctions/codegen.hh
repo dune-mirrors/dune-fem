@@ -185,6 +185,13 @@ namespace Fem {
         file << "#define MIN_NUMBER_OF_QUAD_POINTS " << nopMin_ << std::endl;
         file << "#define MAX_NUMBER_OF_BASE_FCT    " << baseMax_ << std::endl;
         file << "#define MIN_NUMBER_OF_BASE_FCT    " << baseMin_ << std::endl << std::endl;
+        file << "/* include all headers with inner loop extern declarations */" << std::endl;
+        file << "#define CODEGEN_COMPILE_INNERLOOPS 1" << std::endl;
+        for( size_t i = 0; i < filenames_.size(); ++i ) 
+        {
+          file << "#include \""<< filenames_[ i ].first << "\"" << std::endl;
+        }
+        file << "#undef CODEGEN_COMPILE_INNERLOOPS" << std::endl;
         file << "#endif // CODEGEN_INCLUDEMAXNUMS_INCLUDED" << std::endl << std::endl;
         file << "#elif defined CODEGEN_INCLUDEEVALCALLERS" << std::endl;
         file << "#ifndef CODEGEN_EVALCALLERS_INCLUDED" << std::endl;
@@ -213,6 +220,18 @@ namespace Fem {
         }
         file << "#endif  // CODEGEN_INCLUDE_IMPLEMENTATION" << std::endl << std::endl;
         file << "#endif // CODEGEN_INCLUDEMAXNUMS" << std::endl;
+
+        // write C file with implementation of inner loop functions 
+        filename += ".c";
+        std::ofstream Cfile( filename.c_str() );
+
+        Cfile << "#include <stdlib.h>" << std::endl;
+        Cfile << "/* include all headers with inner loop implementation */" << std::endl;
+        Cfile << "#define CODEGEN_COMPILE_INNERLOOPS 2" << std::endl;
+        for( size_t i = 0; i < filenames_.size(); ++i ) 
+        {
+          Cfile << "#include \""<< filenames_[ i ].first << "\"" << std::endl;
+        }
       }
     }
   protected:  
