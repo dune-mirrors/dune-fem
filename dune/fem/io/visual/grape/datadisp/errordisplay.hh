@@ -1,6 +1,8 @@
 #ifndef DUNE_FEM_ERRORDISPLAY_HH
 #define DUNE_FEM_ERRORDISPLAY_HH
 
+#include <dune/common/exceptions.hh>
+
 #include <dune/fem/function/common/gridfunctionadapter.hh>
 
 namespace Dune
@@ -30,11 +32,6 @@ namespace Dune
 
     typedef LocalFunctionAdapter< Error > ErrorFunctionType;
     
-  protected:
-    const GridPartType &gridPart_;
-    Error error_;
-    ErrorFunctionType errorFunction_;
-    
   public:
     template< class GrapeDispType >
     DisplayErrorFunction ( GrapeDispType &disp,
@@ -51,6 +48,11 @@ namespace Dune
   private:
     DisplayErrorFunction ( const ThisType & );
     ThisType &operator= ( const ThisType & );
+
+  protected:
+    const GridPartType &gridPart_;
+    Error error_;
+    ErrorFunctionType errorFunction_;
   };
 
 
@@ -70,16 +72,8 @@ namespace Dune
     static const int dimRange = DiscreteFunctionSpaceType :: dimRange;
 
   protected:
-    typedef typename GridPartType :: template Codim< 0 > :: IteratorType :: Entity
-      EntityType;
-    typedef typename EntityType :: Geometry GeometryType;
-
-  protected:
-    LocalFunctionType lUh_;
-    const SolutionType &initU0_;
-    const GeometryType *geometry_;
-    const double time_;
-    bool initialized_;
+    typedef typename GridPartType::template Codim< 0 >::EntityType EntityType;
+    typedef typename GridPartType::template Codim< 0 >::GeometryType GeometryType;
 
   public:
     Error ( const DiscreteFunctionType &Uh,
@@ -87,17 +81,16 @@ namespace Dune
             double time = 0 )
     : lUh_( Uh ), 
       initU0_( solution ),
-      geometry_( 0 ),
-      time_( time ),
-      initialized_( false )
+      entity_( 0 ),
+      time_( time )
     {}
 
     template< class PointType >
     void evaluate ( const PointType &x, RangeType& ret) const
     {
-      assert(initialized_);
+      assert( initialized() );
       lUh_.evaluate( x, ret );
-      DomainType global = geometry_->global( coordinate( x ) );
+      DomainType global = entity().geometry().global( coordinate( x ) );
       RangeType phi;
       initU0_.evaluate( time_, global, phi );
       ret -= phi;
@@ -106,15 +99,28 @@ namespace Dune
     template< class PointType >
     void jacobian ( const PointType &x, JacobianRangeType &ret ) const
     {
-      abort();
+      DUNE_THROW( NotImplemented, "DisplayErrorFunction::jacobian is not implemented." );
     }
 
     void init ( const EntityType &entity )
     {
+      entity_ = &entity;
       lUh_.init( entity );
-      geometry_ = &( entity.geometry() );
-      initialized_ = true;
     }
+
+  protected:
+    const EntityType &entity () const
+    {
+      assert( entity_ );
+      return *entity_;
+    }
+
+    bool initialized () const { return entity_; }
+
+    LocalFunctionType lUh_;
+    const SolutionType &initU0_;
+    const EntityType *entity_;
+    const double time_;
   };
   /** \endcond */
 
@@ -151,31 +157,23 @@ namespace Dune
       static const int dimRange = DiscreteFunctionSpaceType :: dimRange;
 
     protected:
-      typedef typename GridPartType :: template Codim< 0 > :: IteratorType :: Entity
-        EntityType;
-      typedef typename EntityType :: Geometry GeometryType;
-
-    protected:
-      LocalFunctionType lUh_;
-      const SolutionType &initU0_;
-      const GeometryType *geometry_;
-      bool initialized_;
+      typedef typename GridPartType::template Codim< 0 >::EntityType EntityType;
+      typedef typename GridPartType::template Codim< 0 >::GeometryType GeometryType;
 
     public:
       Error ( const DiscreteFunctionType &Uh,
               const SolutionType &solution )
       : lUh_( Uh ),
         initU0_( solution ),
-        geometry_( 0 ),
-        initialized_( false )
+        entity_( 0 )
       {}
 
       template< class PointType >
       void evaluate ( const PointType &x, RangeType& ret) const
       {
-        assert(initialized_);
+        assert( initialized() );
         lUh_.evaluate( x, ret );
-        DomainType global = geometry_->global( coordinate( x ) );
+        DomainType global = entity().geometry().global( coordinate( x ) );
         RangeType phi;
         initU0_.evaluate( global, phi );
         ret -= phi;
@@ -184,15 +182,27 @@ namespace Dune
       template< class PointType >
       void jacobian ( const PointType &x, JacobianRangeType &ret ) const
       {
-        abort();
+        DUNE_THROW( NotImplemented, "DisplayErrorFunction::jacobian is not implemented." );
       }
 
-      inline void init ( const EntityType &entity )
+      void init ( const EntityType &entity )
       {
+        entity_ = &entity;
         lUh_.init( entity );
-        geometry_ = &( entity.geometry() );
-        initialized_ = true;
       }
+
+    protected:
+      const EntityType &entity () const
+      {
+        assert( entity_ );
+        return *entity_;
+      }
+
+      bool initialized () const { return entity_; }
+
+      LocalFunctionType lUh_;
+      const SolutionType &initU0_;
+      const EntityType *entity_;
     };
     /** \endcond */
 
@@ -225,7 +235,6 @@ namespace Dune
     ThisType &operator= ( const ThisType & );
   };
 
-}
+} // namespace Dune
 
 #endif // DUNE_FEM_ERRORDISPLAY_HH
-

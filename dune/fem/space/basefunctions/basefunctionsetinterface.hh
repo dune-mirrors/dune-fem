@@ -3,6 +3,7 @@
 
 #include <dune/common/fvector.hh>
 #include <dune/common/fmatrix.hh>
+
 #if HAVE_DUNE_GEOMETRY
 #include <dune/geometry/type.hh>
 #else
@@ -15,108 +16,214 @@
 namespace Dune
 {
 
-  /** \addtogroup BaseFunction
-   *  \{
-   */
-
-  //------------------------------------------------------------------------
-  //-
-  //-  --BaseFunctionSetInterface
-  //-
-  //------------------------------------------------------------------------
+  // BaseFunctionSetInterface
+  // ------------------------
 
   /** \class BaseFunctionSetInterface
+   *  \ingroup BaseFunction
    *  \brief interface class for base function sets
-   */  
+   */ 
   template< class TraitsImp > 
   class BaseFunctionSetInterface
-  : public BartonNackmanInterface< BaseFunctionSetInterface< TraitsImp >,
-                                   typename TraitsImp :: BaseFunctionSetType >
+  : public BartonNackmanInterface< BaseFunctionSetInterface< TraitsImp >, typename TraitsImp::BaseFunctionSetType >
   {
+    typedef BaseFunctionSetInterface< TraitsImp > ThisType;
+    typedef BartonNackmanInterface< BaseFunctionSetInterface< TraitsImp >, typename TraitsImp::BaseFunctionSetType > BaseType;
+
   public:
     //! type of the traits
     typedef TraitsImp Traits;
 
     //! type of base function set implementation (Barton-Nackman) 
-    typedef typename Traits :: BaseFunctionSetType BaseFunctionSetType;
+    typedef typename Traits::BaseFunctionSetType BaseFunctionSetType;
 
-  private:
-    typedef BaseFunctionSetInterface< Traits > ThisType;
-    typedef BartonNackmanInterface< ThisType, BaseFunctionSetType > BaseType;
-    
-  public:
     //! type of function space 
-    typedef typename Traits :: FunctionSpaceType FunctionSpaceType;
+    typedef typename Traits::FunctionSpaceType FunctionSpaceType;
     //! type of domain vector, i.e. element of R^dimDomain 
     typedef typename FunctionSpaceType::DomainType DomainType;
     //! type of range vector, i.e. element of R^dimRange 
     typedef typename FunctionSpaceType::RangeType RangeType;
-    //! type of domain vector components, i.e. double 
+    //! type of domain vector components, e.g., double 
     typedef typename FunctionSpaceType::DomainFieldType DomainFieldType;
-    //! type of range vector components, i.e. double 
+    //! type of range vector components, e.g., double 
     typedef typename FunctionSpaceType::RangeFieldType RangeFieldType;
     //! range type of gradient 
     typedef typename FunctionSpaceType::JacobianRangeType JacobianRangeType;
     //! range type of second derivate 
     typedef typename FunctionSpaceType::HessianRangeType  HessianRangeType;
-    //! dimension of domain 
-    enum { dimDomain = FunctionSpaceType :: dimDomain };
-    //! dimension of range 
-    enum { dimRange  = FunctionSpaceType :: dimRange };
+
+    //! dimension of domain
+    static const int dimDomain = FunctionSpaceType::dimDomain;
+    //! dimension of range
+    static const int dimRange  = FunctionSpaceType::dimRange;
 
   protected:
-    using BaseType :: asImp;
+    using BaseType::asImp;
 
   public:
-    /** \brief number of base functions 
-        \return number of base functions 
-    */
-    inline int numBaseFunctions () const 
+    /** \todo please doc me */
+    template< class Point, class DofVector >
+    void axpy ( const Point &x, const RangeType &valueFactor, DofVector &dofs ) const
     {
-      CHECK_INTERFACE_IMPLEMENTATION(asImp().numBaseFunctions());
-      return asImp().numBaseFunctions();
+      CHECK_AND_CALL_INTERFACE_IMPLEMENTATION( asImp().axpy( x, valueFactor, dofs ) );
     }
 
-    /** \brief number of base functions 
-        (for cenvenience with compiled local keys)
-        \return number of base functions 
-    */
-    inline unsigned int size () const 
+    /** \todo please doc me */
+    template< class Point, class GeometryJacobianInverse, class GlobalJacobianRange, class DofVector >
+    void axpy ( const Point &x, const GeometryJacobianInverse &gjit,
+                const GlobalJacobianRange &jacobianFactor, DofVector &dofs ) const
     {
-      CHECK_INTERFACE_IMPLEMENTATION(asImp().size());
-      return asImp().size();
+      CHECK_AND_CALL_INTERFACE_IMPLEMENTATION( asImp().axpy( x, gjit, jacobianFactor, dofs ) );
+    }
+
+    /** \todo please doc me */
+    template< class Point, class GeometryJacobianInverse, class GlobalJacobianRange, class DofVector >
+    void axpy ( const Point &x, const GeometryJacobianInverse &gjit,
+                const RangeType &valueFactor, const GlobalJacobianRange &jacobianFactor,
+                DofVector &dofs ) const
+    {
+      CHECK_AND_CALL_INTERFACE_IMPLEMENTATION( asImp().axpy( x, gjit, valueFactor, jacobianFactor, dofs ) );
+    }
+
+    /** \brief evaluate all base function
+     *
+     *  Evaluates all base functions in a point (specified in local
+     *  coordinates).
+     *  
+     *  \param[in]   x             point within reference element to evaluate the
+     *                             base function in
+     *  \param[out]  values        values of all base functions
+     */
+    template< class Point, class RangeArray >
+    void evaluateAll ( const Point &x, RangeArray &values ) const
+    {
+      CHECK_AND_CALL_INTERFACE_IMPLEMENTATION( asImp().evaluateAll( x, values ) );
+    }
+
+    /** \brief evaluate derivative of a linear combination
+     *
+     *  Evaluates a partial derivative of a linear combination of the base
+     *  functions in a point (specified in local coordinates).
+     *  If the derivative is of order 0, the base functions themselves are
+     *  evaluated.
+     *
+     *  \note This method only makes sense for shape function sets.
+     *
+     *  \param[in]   diffVariable  vector describing the partial derivative to
+     *                             evaluate
+     *  \param[in]   x             point within reference element to evaluate the
+     *                             base function in
+     *  \param[in]   dofs          local degree of freedom
+     *  \param[out]  value         value of the derivative of the linear
+     *                             combination
+     */
+    template< int diffOrder, class Point, class DofVector >
+    void evaluateAll ( const FieldVector< int, diffOrder > &diffVariable,
+                       const Point &x, const DofVector &dofs, RangeType &value ) const
+    {
+      CHECK_AND_CALL_INTERFACE_IMPLEMENTATION
+        ( asImp().evaluateAll( diffVariable, x, dofs, value ) );
+    }
+
+    /** \brief evaluate a linear combination
+     *
+     *  Evaluates a linear combination of the base functions in a point
+     *  (specified in local coordinates).
+     *  
+     *  \param[in]   x             point within reference element to evaluate the
+     *                             base function in
+     *  \param[in]   dofs          local degree of freedom
+     *  \param[out]  value         value of the linear combination
+     */
+    template< class Point, class DofVector >
+    void evaluateAll ( const Point &x, const DofVector &dofs, RangeType &value ) const
+    {
+      CHECK_AND_CALL_INTERFACE_IMPLEMENTATION
+        ( asImp().evaluateAll( x, dofs, value ) );
     }
 
     /** \brief obtain type of geometry
      * 
      *  \returns GeometryType of the base function set
      */
-    inline GeometryType geometryType () const
+    GeometryType geometryType () const
     {
       CHECK_INTERFACE_IMPLEMENTATION( asImp().geometryType() );
       return asImp().geometryType();
     }
 
-    /** \brief evaluate a derivative of the base function
+    /** \brief \todo please doc me */
+    template< class Point, class Geometry, class DofVector, class GlobalHessianRange >
+    void hessianAll ( const Point &x, const Geometry &geometry,
+                      const DofVector &dofs, GlobalHessianRange &hessian ) const
+    {
+      CHECK_AND_CALL_INTERFACE_IMPLEMENTATION
+        ( asImp().hessianAll( x, geometry, dofs, hessian ) );
+    }
+
+    /** \brief \todo please doc me */
+    template< class Point, class Geometry, class GlobalHessianRangeArray >
+    void hessianAll ( const Point &x, const Geometry &geometry, GlobalHessianRangeArray &hessians ) const
+    {
+      CHECK_AND_CALL_INTERFACE_IMPLEMENTATION
+        ( asImp().hessianAll( x, geometry, hessians ) );
+    }
+
+    /** \brief \todo please doc me */
+    template< class Point, class GeometryJacobianInverse, class DofVector, class GlobalJacobianRange >
+    void jacobianAll ( const Point &x, const GeometryJacobianInverse &gjit, 
+                       const DofVector &dofs, GlobalJacobianRange &jacobian ) const
+    {
+      CHECK_AND_CALL_INTERFACE_IMPLEMENTATION
+        ( asImp().evaluateAll( x, gjit, dofs, jacobian ) );
+    }
+
+    /** \brief \todo please doc me */
+    template< class Point, class GeometryJacobianInverse, class GlobalJacobianRangeArray >
+    void jacobianAll ( const Point &x, const GeometryJacobianInverse &gjit,
+                       GlobalJacobianRangeArray &jacobians ) const
+    {
+      CHECK_AND_CALL_INTERFACE_IMPLEMENTATION
+        ( asImp().evaluateAll( x, gjit, jacobians ) );
+    }
+
+    /** \brief size of this base function set
+     *  \returns number of base functions
+     */
+    size_t size () const
+    {
+      CHECK_INTERFACE_IMPLEMENTATION( asImp().size() );
+      return asImp().size();
+    }
+
+
+    // deprecated methods
+
+    /** \brief evaluate a derivative of a base function
      *
-     *  Evaluates a partial derivative of the base function. If the derivative is
-     *  of order 0, the base function itself is evaluated.
+     *  Evaluates a partial derivative of a base function in a point (specified
+     *  in local coordinates).
+     *  If the derivative is  of order 0, the base function itself is
+     *  evaluated.
      *  
+     *  \note This method only makes sense for shape function sets.
+     *
      *  \param[in]   baseFunction  number of base function to evaluate
      *  \param[in]   diffVariable  vector describing the partial derivative to
      *                             evaluate
      *  \param[in]   x             point within reference element to evaluate the
      *                             base function in
-     *  \param[out]  phi           return value, i.e., value of the base function
+     *  \param[out]  value         return value, i.e., value of the base function
      */
-    template< int diffOrd, class PointType >
-    inline void evaluate ( const int baseFunction,
-                           const FieldVector< int, diffOrd > &diffVariable,
-                           const PointType &x,
-                           RangeType &phi ) const
+    template< int diffOrder, class Point >
+    DUNE_DEPRECATED
+    void evaluate ( const int baseFunction,
+                    const FieldVector< int, diffOrder > &diffVariable,
+                    const Point &x,
+                    RangeType &value ) const
     {
       CHECK_AND_CALL_INTERFACE_IMPLEMENTATION
-        ( asImp().evaluate( baseFunction, diffVariable, x, phi ) );
+        ( asImp().evaluate( baseFunction, diffVariable, x, value ) );
     }
 
     /** \brief evaluate the base function
@@ -126,15 +233,22 @@ namespace Dune
      *  \param[in]   baseFunction  number of base function to evaluate
      *  \param[in]   x             point within reference element to evaluate the
      *                             base function in
-     *  \param[out]  phi           return value, i.e., value of the base function
+     *  \param[out]  value         return value, i.e., value of the base function
      */
-    template< class PointType >
-    inline void evaluate ( const int baseFunction,
-                           const PointType &x,
-                           RangeType &phi ) const
+    template< class Point >
+    DUNE_DEPRECATED
+    void evaluate ( const int baseFunction, const Point &x, RangeType &value ) const
     {
       CHECK_AND_CALL_INTERFACE_IMPLEMENTATION
-        ( asImp().evaluate( baseFunction, x , phi ) );
+        ( asImp().evaluate( baseFunction, x , value ) );
+    }
+
+    /** \brief \todo please doc me */
+    template< class Point >
+    void hessian ( const int baseFunction, const Point &x, HessianRangeType &hessian ) const
+    {
+      CHECK_AND_CALL_INTERFACE_IMPLEMENTATION
+        ( asImp().hessian( baseFunction, x, hessian ) );
     }
 
     /** \brief evaluate the Jacobian of the base function
@@ -156,43 +270,51 @@ namespace Dune
      *  \param[in]   baseFunction  number of base function to evaluate
      *  \param[in]   x             point within reference element to evaluate the
      *                             Jacobian in
-     *  \param[out]  phi           return value, i.e., value of the Jacobian
+     *  \param[out]  jacobian      return value, i.e., value of the Jacobian
      */
-    template< class PointType >
-    inline void jacobian ( const int baseFunction,
-                           const PointType &x,
-                           JacobianRangeType &phi ) const 
+    template< class Point >
+    DUNE_DEPRECATED
+    void jacobian ( const int baseFunction, const Point &x, JacobianRangeType &jacobian ) const
     {
       CHECK_AND_CALL_INTERFACE_IMPLEMENTATION
-        ( asImp().jacobian( baseFunction, x, phi ) );
+        ( asImp().jacobian( baseFunction, x, jacobian ) );
+    }
+
+    /** \brief number of base functions 
+        \return number of base functions 
+    */
+    DUNE_DEPRECATED
+    int numBaseFunctions () const
+    {
+      return size();
     }
   };
 
 
 
-  //------------------------------------------------------------------------
-  //-  
-  //-  --BaseFunctionSetDefault
-  //-
-  //------------------------------------------------------------------------
-  /** \brief default implementation of the BaseFunctionSetInterface */
+  // BaseFunctionSetDefault
+  // ----------------------
+
+  /** \class BaseFunctionSetDefault
+   *  \ingroup BaseFunction
+   *  \brief default implementation of the BaseFunctionSetInterface
+   */
   template< class TraitsImp >
   class BaseFunctionSetDefault
   : public BaseFunctionSetInterface< TraitsImp >
   {
+    typedef BaseFunctionSetDefault< TraitsImp > ThisType;
+    typedef BaseFunctionSetInterface< TraitsImp > BaseType;
+
   public:
     //! type of the traits
     typedef TraitsImp Traits;
 
-  private:
-    typedef BaseFunctionSetDefault< Traits > ThisType;
-    typedef BaseFunctionSetInterface< Traits > BaseType;
+    typedef typename BaseType::BaseFunctionSetType BaseFunctionSetType;
+    typedef typename BaseType::FunctionSpaceType FunctionSpaceType;
 
-  public:
-    typedef typename Traits :: BaseFunctionSetType BaseFunctionSetType;
-    typedef typename Traits :: FunctionSpaceType FunctionSpaceType;
-    typedef typename FunctionSpaceType::JacobianRangeType JacobianRangeType;
-    typedef typename FunctionSpaceType::HessianRangeType  HessianRangeType;
+    typedef typename BaseType::JacobianRangeType JacobianRangeType;
+    typedef typename BaseType::HessianRangeType  HessianRangeType;
 
     static const int dimDomain = BaseType::dimDomain;
     static const int dimRange = BaseType::dimRange;
@@ -212,165 +334,153 @@ namespace Dune
     using BaseType::asImp;
 
   public:
-    using BaseType::numBaseFunctions;
+    using BaseType::size;
 
-    /** \copydoc Dune::BaseFunctionSetInterface::size() */
-    unsigned int size() const {
-      return asImp().numBaseFunctions();
-    }
-
-    /** \copydoc Dune::BaseFunctionSetInterface::evaluate(const int baseFunction,const FieldVector<int,diffOrd> &diffVariable,const PointType &x,RangeType &phi) const */
-    template< int diffOrd, class PointType >
-    inline void evaluate ( const int baseFunction,
-                           const FieldVector< int, diffOrd > &diffVariable,
-                           const PointType &x,
-                           RangeType &phi ) const
+    /** \copydoc Dune::BaseFunctionSetInterface::evaluate(const int baseFunction,const FieldVector<int,diffOrder> &diffVariable,const Point &x,RangeType &value) const */
+    template< int diffOrder, class Point >
+    DUNE_DEPRECATED
+    void evaluate ( const int baseFunction,
+                    const FieldVector< int, diffOrder > &diffVariable,
+                    const Point &x,
+                    RangeType &value ) const
     {
-      asImp().evaluate( baseFunction, diffVariable, coordinate( x ), phi );
+      asImp().evaluate( baseFunction, diffVariable, coordinate( x ), value );
     }
     
-    /** \copydoc Dune::BaseFunctionSetInterface::evaluate(const int baseFunction,const PointType &x,RangeType &phi) const */
-    template< class PointType >
-    void evaluate ( const int baseFunction, const PointType &x, RangeType &phi ) const
+    /** \copydoc Dune::BaseFunctionSetInterface::evaluate(const int baseFunction,const Point &x,RangeType &value) const */
+    template< class Point >
+    DUNE_DEPRECATED
+    void evaluate ( const int baseFunction, const Point &x, RangeType &value ) const
     {
-      FieldVector< int, 0 > diffVar;
-      asImp().evaluate( baseFunction, diffVar, x, phi );
+      FieldVector< int, 0 > diffVariable;
+      asImp().evaluate( baseFunction, diffVariable, x, value );
     }
 
+#if 0
     // This declaration is only to avoid a problem with specialization
-    template< class PointType >
-    void evaluate ( const unsigned int baseFunction, const PointType &x, RangeType &phi ) const
+    template< class Point >
+    void evaluate ( const unsigned int baseFunction, const Point &x, RangeType &value ) const DUNE_DEPRECATED
     {
-      evaluate( int( baseFunction ), x, phi );
+      evaluate( int( baseFunction ), x, value );
     }
+#endif
 
-    template< int diffOrder, class PointType, class LocalDofVectorType >
+    template< int diffOrder, class Point, class DofVector >
     void evaluateAll ( const FieldVector< int, diffOrder > &diffVariable,
-                       const PointType &x, const LocalDofVectorType& dofs, RangeType &ret ) const
+                       const Point &x, const DofVector &dofs, RangeType &value ) const
     {
-      ret = 0;
-
-      const int numBase = numBaseFunctions();
-      for( int i = 0; i < numBase; ++i )
+      value = RangeType( 0 );
+      const size_t numBaseFunctions = size();
+      for( size_t i = 0; i < numBaseFunctions; ++i )
       {
         RangeType phi;
-        evaluate( i, diffVariable, x, phi );
-        ret.axpy( dofs[ i ], phi );
+        asImp().evaluate( i, diffVariable, x, phi );
+        value.axpy( dofs[ i ], phi );
       }
     }
 
-    template< class PointType, class LocalDofVectorType >
-    void evaluateAll ( const PointType &x, const LocalDofVectorType &dofs, RangeType &ret ) const
+    template< class Point, class DofVector >
+    void evaluateAll ( const Point &x, const DofVector &dofs, RangeType &value ) const
     {
-      ret = 0;
-
-      const int numBase = numBaseFunctions();
-      for( int i = 0; i < numBase; ++i )
-      {
-        RangeType phi;
-        evaluate( i, x, phi );
-        ret.axpy( dofs[ i ], phi );
-      }
-    }
-
-    template< class PointType, class RangeVectorType >
-    void evaluateAll ( const PointType &x, RangeVectorType &ret ) const
-    {
-      const int numBase = numBaseFunctions();
-      ret.resize( numBase );
-      for( int i = 0; i < numBase; ++i )
-        evaluate( i, x, ret[ i ] );
-    }
-
-    /** \copydoc Dune::BaseFunctionSetInterface::jacobian(const int baseFunction,const PointType &x, JacobianRangeType &phi) const */
-    template< class PointType >
-    void jacobian ( const int baseFunction, const PointType &x, JacobianRangeType &phi ) const;
-
-    template< class PointType, class GeometryJacobianInverseType,
-              class LocalDofVectorType, class GlobalJacobianRangeType >
-    void jacobianAll ( const PointType &x,
-                       const GeometryJacobianInverseType& gjit, 
-                       const LocalDofVectorType& dofs, 
-                       GlobalJacobianRangeType &ret ) const;
-
-    template< class PointType, class GeometryJacobianInverseType,
-              class GlobalJacobianRangeVectorType >
-    void jacobianAll ( const PointType &x,
-                       const GeometryJacobianInverseType& gjit, 
-                       GlobalJacobianRangeVectorType &ret ) const;
-
-    template< class PointType >
-    void hessian ( const int baseFunction, const PointType &x, HessianRangeType &hessian ) const;
-
-    template< class PointType, class Geometry, class LocalDofVectorType, class GlobalHessianRangeType >
-    void hessianAll ( const PointType &x, const Geometry &geometry,
-                      const LocalDofVectorType &dofs, GlobalHessianRangeType &ret ) const;
-
-    template< class PointType, class LocalDofVectorType >
-    void axpy ( const PointType &x,
-                const RangeType &rangeFactor,
-                LocalDofVectorType& dofs ) const
-    {
-      const int numBase = numBaseFunctions();
-      for( int i = 0; i < numBase; ++i )
+      value = RangeType( 0 );
+      const size_t numBaseFunctions = size();
+      for( size_t i = 0; i < numBaseFunctions; ++i )
       {
         RangeType phi;
         evaluate( i, x, phi );
-        dofs[ i ] += phi * rangeFactor;
+        value.axpy( dofs[ i ], phi );
       }
     }
 
-    template< class PointType, class GeometryJacobianInverseType, 
-              class GlobalJacobianRangeType, class LocalDofVectorType >
-    void axpy ( const PointType &x,
-                const GeometryJacobianInverseType& gjit,
-                const GlobalJacobianRangeType &jacFactor,
-                LocalDofVectorType& dofs ) const
+    template< class Point, class RangeArray >
+    void evaluateAll ( const Point &x, RangeArray &values ) const
     {
-      GlobalJacobianRangeType jacFactorInv;
+      const size_t numBaseFunctions = size();
+      values.resize( numBaseFunctions );
+      for( size_t i = 0; i < numBaseFunctions; ++i )
+        evaluate( i, x, values[ i ] );
+    }
+
+    /** \copydoc Dune::BaseFunctionSetInterface::jacobian(const int baseFunction,const Point &x, JacobianRangeType &phi) const */
+    template< class Point >
+    DUNE_DEPRECATED
+    void jacobian ( const int baseFunction, const Point &x, JacobianRangeType &jacobian ) const;
+
+    template< class Point, class GeometryJacobianInverse, class DofVector, class GlobalJacobianRange >
+    void jacobianAll ( const Point &x, const GeometryJacobianInverse &gjit, 
+                       const DofVector &dofs, GlobalJacobianRange &jacobian ) const;
+
+    template< class Point, class GeometryJacobianInverse, class GlobalJacobianRangeArray >
+    void jacobianAll ( const Point &x, const GeometryJacobianInverse &gjit,
+                       GlobalJacobianRangeArray &jacobians ) const;
+
+    template< class Point >
+    void hessian ( const int baseFunction, const Point &x, HessianRangeType &hessian ) const;
+
+    template< class Point, class Geometry, class DofVector, class GlobalHessianRange >
+    void hessianAll ( const Point &x, const Geometry &geometry,
+                      const DofVector &dofs, GlobalHessianRange &hessian ) const;
+
+    template< class Point, class Geometry, class GlobalHessianRangeArray >
+    void hessianAll ( const Point &x, const Geometry &geometry, GlobalHessianRangeArray &hessians ) const;
+
+    template< class Point, class DofVector >
+    void axpy ( const Point &x, const RangeType &valueFactor, DofVector &dofs ) const
+    {
+      const size_t numBaseFunctions = size();
+      for( size_t i = 0; i < numBaseFunctions; ++i )
+      {
+        RangeType tmpValue;
+        evaluate( i, x, tmpValue );
+        dofs[ i ] += tmpValue * valueFactor;
+      }
+    }
+
+    template< class Point, class GeometryJacobianInverse, class GlobalJacobianRange, class DofVector >
+    void axpy ( const Point &x, const GeometryJacobianInverse &gjit,
+                const GlobalJacobianRange &jacobianFactor, DofVector &dofs ) const
+    {
+      JacobianRangeType tmpJacobianFactor;
       for( int r = 0; r < dimRange; ++r )
-        gjit.mtv( jacFactor[ r ], jacFactorInv[ r ] );
+        gjit.mtv( jacobianFactor[ r ], tmpJacobianFactor[ r ] );
 
-      const int numBase = numBaseFunctions();
-      for( int i = 0; i < numBase; ++i )
+      const size_t numBaseFunctions = size();
+      for( size_t i = 0; i < numBaseFunctions; ++i )
       {
-        JacobianRangeType grad;
-        jacobian( i, x, grad );
+        JacobianRangeType tmpJacobian;
+        jacobian( i, x, tmpJacobian );
         for( int r = 0; r < dimRange; ++r )
-          dofs[ i ] += grad[ r ] * jacFactorInv[ r ];
+          dofs[ i ] += tmpJacobian[ r ] * tmpJacobianFactor[ r ];
       }
     }
  
-    template< class PointType, class GeometryJacobianInverseType, 
-              class GlobalJacobianRangeType, class LocalDofVectorType >
-    void axpy ( const PointType &x,
-                const GeometryJacobianInverseType& gjit, 
-                const RangeType &rangeFactor,
-                const GlobalJacobianRangeType &jacFactor,
-                LocalDofVectorType& dofs ) const
+    template< class Point, class GeometryJacobianInverse, class GlobalJacobianRange, class DofVector >
+    void axpy ( const Point &x, const GeometryJacobianInverse &gjit,
+                const RangeType &valueFactor, const GlobalJacobianRange &jacobianFactor,
+                DofVector &dofs ) const
     {
-      GlobalJacobianRangeType jacFactorInv;
+      JacobianRangeType tmpJacobianFactor;
       for( int r = 0; r < dimRange; ++r )
-        gjit.mtv( jacFactor[ r ], jacFactorInv[ r ] );
+        gjit.mtv( jacobianFactor[ r ], tmpJacobianFactor[ r ] );
 
-      const int numBase = numBaseFunctions();
-      for( int i = 0; i < numBase; ++i )
+      const size_t numBaseFunctions = size();
+      for( size_t i = 0; i < numBaseFunctions; ++i )
       {
-        RangeType phi;
-        evaluate( i, x, phi );
-        dofs[ i ] += phi * rangeFactor;
+        RangeType tmpValue;
+        evaluate( i, x, tmpValue );
+        dofs[ i ] += tmpValue * valueFactor;
 
-        JacobianRangeType grad;
-        jacobian( i, x, grad );
+        JacobianRangeType tmpJacobian;
+        jacobian( i, x, tmpJacobian );
         for( int r = 0; r < dimRange; ++r )
-          dofs[ i ] += grad[ r ] * jacFactorInv[ r ];
+          dofs[ i ] += tmpJacobian[ r ] * tmpJacobianFactor[ r ];
       }
     }
 
     template< class QuadratureType,
               class LocalDofVectorType,
               class RangeVectorType>
-    inline void
+    void
     evaluateRanges ( const QuadratureType& quad,
                      const LocalDofVectorType& dofs,
                      RangeVectorType &rangeVector) const
@@ -386,7 +496,7 @@ namespace Dune
               class Geometry,
               class LocalDofVectorType,
               class JacobianRangeVectorType>
-    inline void
+    void
     evaluateJacobians ( const QuadratureType& quad,
                         const Geometry& geometry,
                         const LocalDofVectorType& dofs,
@@ -408,7 +518,7 @@ namespace Dune
     template< class QuadratureType,
               class RangeVectorType,
               class LocalDofVectorType >
-    inline void axpyRanges ( const QuadratureType& quad,
+    void axpyRanges ( const QuadratureType& quad,
                              const RangeVectorType &rangeFactors,
                              LocalDofVectorType& dofs ) const
     {
@@ -423,7 +533,7 @@ namespace Dune
               class Geometry,
               class JacobianVectorType,
               class LocalDofVectorType >
-    inline void axpyJacobians ( const QuadratureType& quad,
+    void axpyJacobians ( const QuadratureType& quad,
                                 const Geometry& geometry,
                                 const JacobianVectorType &jacVector,
                                 LocalDofVectorType& dofs) const
@@ -439,80 +549,72 @@ namespace Dune
     }
   };
 
-  /** \} */
-
 
 
   // Implementation of BaseFunctionSetDefault
   // ----------------------------------------
 
   template< class TraitsImp >
-  template< class PointType >
+  template< class Point >
   inline void BaseFunctionSetDefault< TraitsImp >
-    ::jacobian ( const int baseFunction, const PointType &x, JacobianRangeType &phi ) const
+    ::jacobian ( const int baseFunction, const Point &x, JacobianRangeType &jacobian ) const
   {
-    FieldVector< int, 1 > diffVar;
-    int &i = diffVar[ 0 ];
-    // create temporary variable here 
-    RangeType tmp;
+    FieldVector< int, 1 > diffVariable;
+    int &i = diffVariable[ 0 ];
     for( i = 0; i < dimCol; ++i )
     {
-      asImp().evaluate( baseFunction, diffVar, x, tmp );
-      for( int j = 0; j < dimRow; ++j )
-        phi[ j ][ i ] = tmp[ j ];
+      RangeType tmp;
+      asImp().evaluate( baseFunction, diffVariable, x, tmp );
+      for( int j = 0; j < dimRange; ++j )
+        jacobian[ j ][ i ] = tmp[ j ];
     }
   }
 
 
   template< class TraitsImp >
-  template< class PointType, class GeometryJacobianInverseType,
-            class LocalDofVectorType, class GlobalJacobianRangeType >
+  template< class Point, class GeometryJacobianInverse, class DofVector, class GlobalJacobianRange >
   inline void BaseFunctionSetDefault< TraitsImp >
-    ::jacobianAll ( const PointType &x,
-                    const GeometryJacobianInverseType &gjit, 
-                    const LocalDofVectorType &dofs, 
-                    GlobalJacobianRangeType &ret ) const
+    ::jacobianAll ( const Point &x, const GeometryJacobianInverse &gjit, 
+                    const DofVector &dofs, GlobalJacobianRange &jacobian ) const
   {
     JacobianRangeType refJacobian( 0 );
-    const int numBase = numBaseFunctions();
-    for( int i = 0; i < numBase; ++i )
+    const size_t numBaseFunctions = size();
+    for( size_t i = 0; i < numBaseFunctions; ++i )
     {
-      JacobianRangeType grad;
-      jacobian( i, x, grad );
+      JacobianRangeType tmp;
+      asImp().jacobian( i, x, tmp );
       
       for( int r = 0; r < dimRange; ++r )
-        refJacobian[ r ].axpy( dofs[ i ], grad[ r ] );
+        refJacobian[ r ].axpy( dofs[ i ], tmp[ r ] );
     }
 
     for( int r = 0; r < dimRange; ++r )
-      gjit.mv( refJacobian[ r ], ret[ r ] );
+      gjit.mv( refJacobian[ r ], jacobian[ r ] );
   }
 
 
   template< class TraitsImp >
-  template< class PointType, class GeometryJacobianInverseType,
-            class GlobalJacobianRangeVectorType >
+  template< class Point, class GeometryJacobianInverse, class GlobalJacobianRangeArray >
   inline void BaseFunctionSetDefault< TraitsImp >
-    ::jacobianAll ( const PointType &x,
-                    const GeometryJacobianInverseType& gjit, 
-                    GlobalJacobianRangeVectorType &ret ) const
+    ::jacobianAll ( const Point &x, const GeometryJacobianInverse &gjit,
+                    GlobalJacobianRangeArray &jacobians ) const
   {
-    const int numBase = numBaseFunctions();
-    ret.resize( numBase );
-    for( int i = 0; i < numBase; ++i )
+    const int numBaseFunctions = size();
+    jacobians.resize( numBaseFunctions );
+    for( size_t i = 0; i < numBaseFunctions; ++i )
     {
-      JacobianRangeType grad;
-      jacobian( i, x, grad );
+      JacobianRangeType tmp;
+      asImp().jacobian( i, x, tmp );
       for( int r = 0; r < dimRange; ++r )
-        gjit.mv( grad[ r ], ret[ i ][ r ] );
+        gjit.mv( tmp[ r ], jacobians[ i ][ r ] );
     }
   }
 
 
   template< class TraitsImp >
-  template< class PointType >
+  template< class Point >
   inline void BaseFunctionSetDefault< TraitsImp >
-    ::hessian ( const int baseFunction, const PointType &x, HessianRangeType &hessian ) const
+    ::hessian ( const int baseFunction, const Point &x, HessianRangeType &hessian ) const
   {
     FieldVector< int, 2 > diffVar;
     int &i = diffVar[ 0 ];
@@ -537,34 +639,34 @@ namespace Dune
 
 
   template< class TraitsImp >
-  template< class PointType, class Geometry, class LocalDofVectorType, class GlobalHessianRangeType >
+  template< class Point, class Geometry, class DofVector, class GlobalHessianRange >
   inline void BaseFunctionSetDefault< TraitsImp >
-    ::hessianAll ( const PointType &x, const Geometry &geometry,
-                   const LocalDofVectorType &dofs, GlobalHessianRangeType &ret ) const
+    ::hessianAll ( const Point &x, const Geometry &geometry,
+                   const DofVector &dofs, GlobalHessianRange &hessian ) const
   {
-    const int numBase = numBaseFunctions();
+    const size_t numBaseFunctions = size();
 
     HessianRangeType refHessian( typename HessianRangeType::field_type( 0 ) );
-    for( int b = 0; b < numBase; ++b )
+    for( size_t b = 0; b < numBaseFunctions; ++b )
     {
-      HessianRangeType H;
-      hessian( b, x, H );
+      HessianRangeType tmp;
+      asImp().hessian( b, x, tmp );
       for( int r = 0; r < dimRange; ++r )
-        refHessian[ r ].axpy( dofs[ b ], H[ r ] );
+        refHessian[ r ].axpy( dofs[ b ], tmp[ r ] );
     }
 
-    const typename Geometry::Jacobian &Jgeo
+    const typename Geometry::Jacobian &gjit
       = geometry.jacobianInverseTransposed( coordinate( x ) );
-    ret = typename GlobalHessianRangeType::field_type( 0 );
-    for( int i = 0; i < Geometry::coorddimension; ++i )
+    hessian = typename HessianRangeType::field_type( 0 );
+    for( int j = 0; j < Geometry::coorddimension; ++j )
     {
-      for( int j = 0; j < dimDomain; ++j )
+      for( int k = 0; k < dimDomain; ++k )
       {
         for( int r = 0; r < dimRange; ++r )
         {
           FieldVector< RangeFieldType, Geometry::coorddimension > tmp;
-          Jgeo.mv( refHessian[ r ][ j ], tmp );
-          ret[ r ][ i ].axpy( Jgeo[ i ][ j ], tmp );
+          gjit.mv( refHessian[ r ][ k ], tmp );
+          hessian[ r ][ j ].axpy( gjit[ j ][ k ], tmp );
         }
       }
     }
@@ -572,6 +674,35 @@ namespace Dune
     // for nonaffine geometries we have to add Du D^2 F^-1
     if( !geometry.affine() )
       DUNE_THROW( NotImplemented, "hessianAll: not implemented for nonaffine geometries." );
+  }
+
+  template< class TraitsImp >
+  template< class Point, class Geometry, class GlobalHessianRangeArray >
+  inline void BaseFunctionSetDefault< TraitsImp >
+   ::hessianAll ( const Point &x, const Geometry &geometry, GlobalHessianRangeArray &hessians ) const
+  {
+    const int numBaseFunctions = size();
+    hessians.resize( numBaseFunctions );
+    const typename Geometry::Jacobian &gjit
+      = geometry.jacobianInverseTransposed( coordinate( x ) );
+    for( size_t i = 0; i < numBaseFunctions; ++i )
+    {
+      HessianRangeType refHessian;
+      asImp().hessian( i, x, refHessian );
+      hessians[ i ] = typename HessianRangeType::field_type( 0 );
+      for( int j = 0; j < Geometry::coorddimension; ++j )
+      {
+        for( int k = 0; k < dimDomain; ++k )
+        {
+          for( int r = 0; r < dimRange; ++r )
+          {
+            FieldVector< RangeFieldType, Geometry::coorddimension > tmp;
+            gjit.mv( refHessian[ r ][ k ], tmp );
+            hessians[ i ][ r ][ j ].axpy( gjit[ j ][ k ], tmp );
+          }
+        }
+      }
+    }
   }
 
 } // end namespace Dune 

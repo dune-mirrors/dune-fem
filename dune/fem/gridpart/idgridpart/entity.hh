@@ -38,33 +38,13 @@ namespace Dune
       typedef typename HostGridPartType::template Codim< codimension >::EntityType HostEntityType;
       typedef typename HostGridPartType::template Codim< codimension >::EntityPointerType HostEntityPointerType;
 
-    private:
-      typedef typename HostGridPartType::template Codim< codimension >::GeometryType HostGeometryType;
-
-      typedef typename Geometry::Implementation GeometryImpl;
-
-    public:
       IdEntity () 
-      : hostEntity_( 0 ),
-        geo_( GeometryImpl() )
+      : hostEntity_( 0 )
       {}
 
       explicit IdEntity ( const HostEntityType &hostEntity )
-      : hostEntity_( &hostEntity ),
-        geo_( GeometryImpl() )
+      : hostEntity_( &hostEntity )
       {}
-
-      IdEntity ( const IdEntity &other )
-      : hostEntity_( other.hostEntity_ ),
-        geo_( other.geo_.impl() )
-      {}
-
-      const IdEntity &operator= ( const IdEntity &other )
-      {
-        hostEntity_ = other.hostEntity_;
-        geo_.impl() = other.geo_.impl();
-        return *this;
-      }
 
       operator bool () const { return bool( hostEntity_ ); }
 
@@ -83,12 +63,9 @@ namespace Dune
         return hostEntity().partitionType();
       }
 
-      const Geometry &geometry () const
+      Geometry geometry () const
       {
-        GeometryImpl &geo = geo_.impl();
-        if( !geo )
-          geo = GeometryImpl( hostEntity().geometry() );
-        return geo_;
+        return Geometry( hostEntity().geometry() );
       }
 
       EntitySeed seed () const { return EntitySeed( hostEntity().seed() ); }
@@ -101,7 +78,6 @@ namespace Dune
 
     private:
       const HostEntityType *hostEntity_;
-      mutable Geometry geo_;
     };
 
 
@@ -138,33 +114,14 @@ namespace Dune
       typedef typename HostGridPartType::template Codim< codimension >::EntityType HostEntityType;
       typedef typename HostGridPartType::template Codim< codimension >::EntityPointerType HostEntityPointerType;
 
-    private:
-      typedef typename HostGridPartType::template Codim< codimension >::GeometryType HostGeometryType;
-
-      typedef IdGeometry< mydimension, dimensionworld, const GridFamily > GeometryImpl;
-
     public:
       IdEntity ()
-      : hostEntity_( 0 ),
-        geo_( GeometryImpl() )
+      : hostEntity_( 0 )
       {}
 
       explicit IdEntity ( const HostEntityType &hostEntity )
-      : hostEntity_( &hostEntity ),
-        geo_( GeometryImpl() )
+      : hostEntity_( &hostEntity )
       {}
-
-      IdEntity ( const IdEntity &other )
-      : hostEntity_( other.hostEntity_ ),
-        geo_( other.geo_.impl() )
-      {}
-
-      const IdEntity &operator= ( const IdEntity &other )
-      {
-        hostEntity_ = other.hostEntity_;
-        geo_.impl() = other.geo_.impl();
-        return *this;
-      }
 
       operator bool () const { return bool( hostEntity_ ); }
 
@@ -183,12 +140,9 @@ namespace Dune
         return hostEntity().partitionType();
       }
 
-      const Geometry &geometry () const
+      Geometry geometry () const
       {
-        GeometryImpl &geo = geo_.impl();
-        if( !geo )
-          geo = GeometryImpl( hostEntity().geometry() );
-        return geo_;
+        return Geometry( hostEntity().geometry() );
       }
 
       EntitySeed seed () const { return EntitySeed( hostEntity().seed() ); }
@@ -285,7 +239,6 @@ namespace Dune
 
     private:
       const HostEntityType *hostEntity_;
-      mutable Geometry geo_;
     };
 
   } // namespace Fem

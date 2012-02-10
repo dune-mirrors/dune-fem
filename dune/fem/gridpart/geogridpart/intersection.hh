@@ -33,8 +33,9 @@ namespace Dune
       typedef typename Traits::CoordFunctionType CoordFunctionType;
 
     private:
-      typedef typename EntityPointer::Implementation EntityPointerImpl;
-      typedef typename Geometry::Implementation GeometryImpl;
+      typedef typename EntityPointer::Implementation EntityPointerImplType;
+      typedef typename ElementGeometry::Implementation ElementGeometryImplType;
+      typedef typename Geometry::Implementation GeometryImplType;
 
       typedef typename Traits::HostGridPartType HostGridPartType;
       typedef typename HostGridPartType::IntersectionType HostIntersectionType;
@@ -45,35 +46,19 @@ namespace Dune
       GeoIntersection ( const CoordFunctionType &coordFunction, const ElementGeometry &insideGeo )
       : coordFunction_( &coordFunction ),
         insideGeo_( insideGeo.impl() ),
-        hostIntersection_( 0 ),
-        geo_( GeometryImpl() )
+        hostIntersection_( 0 )
       {}
-
-      GeoIntersection ( const GeoIntersection &other )
-      : coordFunction_( other.coordFunction_ ),
-        insideGeo_( other.insideGeo_.impl() ),
-        hostIntersection_( other.hostIntersection_ ),
-        geo_( other.geo_.impl() )
-      {}
-
-      const GeoIntersection &operator= ( const GeoIntersection &other )
-      {
-        coordFunction_ = other.coordFunction_;
-        insideGeo_.impl() = other.insideGeo_.impl();
-        invalidate();
-        return *this;
-      }
 
       operator bool () const { return bool( hostIntersection_ ); }
 
       EntityPointer inside () const
       {
-        return EntityPointerImpl( coordFunction(), hostIntersection().inside() );
+        return EntityPointerImplType( coordFunction(), hostIntersection().inside() );
       }
       
       EntityPointer outside () const
       {
-        return EntityPointerImpl( coordFunction(), hostIntersection().outside() );
+        return EntityPointerImplType( coordFunction(), hostIntersection().outside() );
       }
 
       bool boundary () const
@@ -101,26 +86,21 @@ namespace Dune
         return hostIntersection().boundarySegmentIndex();
       }
           
-      const LocalGeometry &geometryInInside () const
+      LocalGeometry geometryInInside () const
       {
         return hostIntersection().geometryInInside();
       }
       
-      const LocalGeometry &geometryInOutside () const
+      LocalGeometry geometryInOutside () const
       {
         return hostIntersection().geometryInOutside();
       }
      
-      const Geometry &geometry () const
+      Geometry geometry () const
       {
-        GeometryImpl &geo = geo_.impl();
-        if( !geo )
-        {
-          const LocalGeometry &localGeo = geometryInInside();
-          CoordVectorType coords( insideGeometry(), localGeo );
-          geo = GeometryImpl( type(), coords );
-        }
-        return geo_;
+        const LocalGeometry &localGeo = geometryInInside();
+        CoordVectorType coords( insideGeo_, localGeo );
+        return Geometry( GeometryImplType( type(), coords ) );
       }
 
       GeometryType type () const
@@ -141,14 +121,12 @@ namespace Dune
       FieldVector< ctype, dimensionworld >
       integrationOuterNormal ( const FieldVector< ctype, dimension-1 > &local ) const
       {
-        const ElementGeometry &geo = insideGeometry();
-
         const GenericReferenceElement< ctype, dimension > &refElement
-          = GenericReferenceElements< ctype, dimension>::general( geo.type() );
+          = GenericReferenceElements< ctype, dimension>::general( insideGeo_.type() );
 
         FieldVector< ctype, dimension > x( geometryInInside().global( local ) );
-        typedef typename ElementGeometry::Implementation::JacobianInverseTransposed JacobianInverseTransposed;
-        const JacobianInverseTransposed &jit = geo.impl().jacobianInverseTransposed( x );
+        typedef typename ElementGeometryImplType::JacobianInverseTransposed JacobianInverseTransposed;
+        const JacobianInverseTransposed &jit = insideGeo_.jacobianInverseTransposed( x );
         const FieldVector< ctype, dimension > &refNormal = refElement.volumeOuterNormal( indexInInside() );
 
         FieldVector< ctype, dimensionworld > normal;
@@ -160,14 +138,12 @@ namespace Dune
       FieldVector< ctype, dimensionworld >
       outerNormal ( const FieldVector< ctype, dimension-1 > &local ) const
       {
-        const ElementGeometry &geo = insideGeometry();
-
         const GenericReferenceElement< ctype, dimension > &refElement
-          = GenericReferenceElements< ctype, dimension>::general( geo.type() );
+          = GenericReferenceElements< ctype, dimension>::general( insideGeo_.type() );
 
         FieldVector< ctype, dimension > x( geometryInInside().global( local ) );
-        typedef typename ElementGeometry::Implementation::JacobianInverseTransposed JacobianInverseTransposed;
-        const JacobianInverseTransposed &jit = geo.impl().jacobianInverseTransposed( x );
+        typedef typename ElementGeometryImplType::JacobianInverseTransposed JacobianInverseTransposed;
+        const JacobianInverseTransposed &jit = insideGeo_.jacobianInverseTransposed( x );
         const FieldVector< ctype, dimension > &refNormal = refElement.volumeOuterNormal( indexInInside() );
 
         FieldVector< ctype, dimensionworld > normal;
@@ -199,7 +175,6 @@ namespace Dune
       void invalidate ()
       {
         hostIntersection_ = 0;
-        geo_.impl() = GeometryImpl();
       }
 
       void initialize ( const HostIntersectionType &hostIntersection )
@@ -215,12 +190,9 @@ namespace Dune
       }
 
     private:
-      const ElementGeometry &insideGeometry () const { return insideGeo_; }
-
       const CoordFunctionType *coordFunction_;
-      ElementGeometry insideGeo_;
+      ElementGeometryImplType insideGeo_;
       const HostIntersectionType *hostIntersection_;
-      mutable Geometry geo_;
     };
 
   } // namespace Fem

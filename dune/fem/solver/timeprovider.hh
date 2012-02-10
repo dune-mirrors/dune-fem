@@ -305,32 +305,18 @@ namespace Dune
     typedef CollectiveCommunicationHelper< CollectiveCommunicationType >
       CollectiveCommHelperType;
     
-  protected:
-    const CollectiveCommunicationType &comm_;
-    const double cfl_;
-    const int updateStep_;
-    int counter_; 
-
-    using BaseType :: dt_;
-    using BaseType :: dtEstimate_;
-    using BaseType :: dtUpperBound_;
-    using BaseType :: valid_;
-    using BaseType :: timeStep_;
-
   public:
     /** \brief default constructor
      *
      *  \param[in]  comm  collective communication (optional)
      */
-    inline explicit
+    explicit
     TimeProvider ( const CollectiveCommunicationType &comm
-                     = CollectiveCommHelperType :: defaultCommunication() )
+                     = CollectiveCommHelperType::defaultCommunication() )
     : BaseType(),
       comm_( comm ),
-      cfl_( Parameter :: getValidValue( "fem.timeprovider.factor", (double)1.0,
-                                        ValidateGreater< double >( 0.0 ) ) ),
-      updateStep_( Parameter :: getValidValue( "fem.timeprovider.updatestep", (int)1,
-                                        ValidateGreater< int >( 0 ) ) ),
+      cfl_( Parameter::getValidValue( "fem.timeprovider.factor", (double)1.0, ValidateGreater< double >( 0.0 ) ) ),
+      updateStep_( Parameter::getValidValue( "fem.timeprovider.updatestep", (int)1, ValidateGreater< int >( 0 ) ) ),
       counter_( updateStep_ )
     {}
 
@@ -340,16 +326,14 @@ namespace Dune
      *  \param[in]  comm       collective communication (optional)
      
      */
-    inline explicit
+    explicit
     TimeProvider ( const double startTime,
                    const CollectiveCommunicationType &comm
-                     = CollectiveCommHelperType :: defaultCommunication() )
+                     = CollectiveCommHelperType::defaultCommunication() )
     : BaseType( startTime ),
       comm_( comm ),
-      cfl_( Parameter :: getValidValue( "fem.timeprovider.factor", (double)1.0,
-                                        ValidateGreater< double >( 0.0 ) ) ),
-      updateStep_( Parameter :: getValidValue( "fem.timeprovider.updatestep", (int)1,
-                                        ValidateGreater< int >( 0 ) ) ),
+      cfl_( Parameter::getValidValue( "fem.timeprovider.factor", (double)1.0, ValidateGreater< double >( 0.0 ) ) ),
+      updateStep_( Parameter::getValidValue( "fem.timeprovider.updatestep", (int)1, ValidateGreater< int >( 0 ) ) ),
       counter_( updateStep_ )
     {}
     
@@ -359,7 +343,6 @@ namespace Dune
      *  \param[in]  cfl        CFL constant
      *  \param[in]  comm       collective communication (optional)
      */
-    inline
     TimeProvider ( const double startTime,
                    const double cfl,
                    const CollectiveCommunicationType &comm
@@ -380,18 +363,19 @@ namespace Dune
   public:
     /** \brief init dt with time step estimate
      */
-    void init() 
+    void init ()
     {
-      initTimeStep(dtEstimate_);
+      initTimeStep( dtEstimate_ );
     }
+
     /** \brief init dt with provided time step
      *
      *  \param[in]  timeStep  value of the first time step (is multiplied with
      *                        factor)
      */
-    void init( double timeStep ) 
+    void init ( const double timeStep )
     {
-      initTimeStep(timeStep);
+      initTimeStep( timeStep );
     }
     
     /** \brief goto next time step
@@ -399,12 +383,13 @@ namespace Dune
      * Sets the size of the next time step to the current time step estimate
      * and sets the estimate to infinity.
      */
-    void next ( ) 
+    void next () 
     {
-      assert(this->dtEstimateValid_);
+      assert( this->dtEstimateValid_ );
       advance();
-      initTimeStep(dtEstimate_);
+      initTimeStep( dtEstimate_ );
     }
+
     /** \brief goto next time step
      * 
      * Sets the size of the next time step to the provided time step value
@@ -413,7 +398,7 @@ namespace Dune
      *  \param[in]  timeStep  value of the next time step (is multiplied with
      *                        factor)
      */
-    void next ( double timeStep ) 
+    void next ( const double timeStep ) 
     {
       advance();
       initTimeStep(timeStep);
@@ -428,10 +413,10 @@ namespace Dune
     }
 
   protected:
-    using BaseType :: advance;
-    using BaseType :: initTimeStepEstimate;
+    using BaseType::advance;
+    using BaseType::initTimeStepEstimate;
 
-    inline void initTimeStep (double dtEstimate)
+    void initTimeStep ( const double dtEstimate )
     {
       // increase counter 
       ++counter_ ;
@@ -455,22 +440,35 @@ namespace Dune
          \param[in] time new time 
          \param[in] timeStep new time step counter 
     */
-    void restore(const double time, const int timeStep )  
+    void restore ( const double time, const int timeStep )
     { 
       time_ = time; 
       timeStep_ = timeStep;
     }
     
-    virtual void backup() const {
+    virtual void backup () const
+    {
       BaseType::backup();
     }
 
-    virtual void restore() {
+    virtual void restore ()
+    {
       BaseType::restore();
-      const_cast<double&>(cfl_) 
-        =  Parameter :: getValidValue<double>( "fem.timeprovider.factor",
-                           ValidateGreater< double >( 0.0 ) ) ;
+      const_cast< double & >( cfl_ ) 
+        =  Parameter::getValidValue<double>( "fem.timeprovider.factor", ValidateGreater< double >( 0.0 ) );
     }
+
+  protected:
+    using BaseType::dt_;
+    using BaseType::dtEstimate_;
+    using BaseType::dtUpperBound_;
+    using BaseType::valid_;
+    using BaseType::timeStep_;
+
+    const CollectiveCommunicationType &comm_;
+    const double cfl_;
+    const int updateStep_;
+    int counter_; 
   };
 
   /** \class   GridTimeProvider
@@ -482,37 +480,32 @@ namespace Dune
    */
   template< class Grid >
   class GridTimeProvider
-  : public TimeProvider
-    < typename Grid :: Traits :: CollectiveCommunication >
+  : public TimeProvider< typename Grid::Traits::CollectiveCommunication >
   {
     typedef GridTimeProvider< Grid > ThisType;
-    typedef TimeProvider
-      < typename Grid :: Traits :: CollectiveCommunication >
-      BaseType;
+    typedef TimeProvider< typename Grid::Traits::CollectiveCommunication > BaseType;
 
   public:
-    typedef typename Grid :: Traits :: CollectiveCommunication
-      CollectiveCommunicationType;
+    typedef typename Grid::Traits::CollectiveCommunication CollectiveCommunicationType;
 
-  public:
-    inline explicit GridTimeProvider ( const Grid &grid )
+    explicit GridTimeProvider ( const Grid &grid )
     : BaseType( grid.comm() )
     {}
 
-    inline GridTimeProvider ( const double startTime,
-                              const Grid &grid )
+    GridTimeProvider ( const double startTime,
+                       const Grid &grid )
     : BaseType( startTime, grid.comm() )
     {}
     
-    inline GridTimeProvider ( const double startTime,
-                              const double cfl,
-                              const Grid &grid )
+    GridTimeProvider ( const double startTime,
+                       const double cfl,
+                       const Grid &grid )
     : BaseType( startTime, cfl, grid.comm() )
     {}
     
     virtual ~GridTimeProvider() {}
   };
 
-} // end namespace Dune
+} // namespace Dune
 
-#endif
+#endif // #ifndef DUNE_FEM_TIMEPROVIDER_HH

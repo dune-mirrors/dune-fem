@@ -331,6 +331,11 @@ namespace Dune
       return asImp().numDofs();
     }
 
+    size_t size () const
+    {
+      return asImp().numDofs();
+    }
+
     /** \brief obtain the number of local DoFs in the scalar case 
      *
      *  Obtain the number of local DoFs of the scalar case 

@@ -225,7 +225,7 @@ struct AddLsgErr {
     space_(Uh.space()),
     lUh_(Uh), 
     time_(time),
-    geometry_(0),
+    entity_(0),
     initialized_(false) {
   }
   ~AddLsgErr() {
@@ -236,7 +236,7 @@ struct AddLsgErr {
     ConsRangeType u;
     lUh_.evaluate(x,u);
     ConsRangeType u0;
-    DomainType global = geometry_->global( coordinate( x ) );
+    DomainType global = entity().geometry().global( coordinate( x ) );
     ExactSolution f( time_ ); 
     f.evaluate(global,u0);
     const int d = ConsRangeType::dimension;
@@ -253,16 +253,22 @@ struct AddLsgErr {
   //! init local function
   void init(const EntityType& en)
   {
+    entity_ = &en;
     lUh_.init(en);
-    geometry_ = &(en.geometry());
     initialized_ = true;
   }
 private:
+  const EntityType &entity() const
+  {
+    assert( entity_ );
+    return *entity_;
+  }
+
   typedef typename ConsType::LocalFunctionType ConsLocalFunctionType;
   const DiscreteFunctionSpaceType& space_;
   ConsLocalFunctionType lUh_;
   double time_;
-  const GeometryImp* geometry_;
+  const EntityType* entity_;
   bool initialized_;
 };
 

@@ -38,49 +38,39 @@ namespace Dune
       typedef typename HostGeometryType::Jacobian JacobianInverseTransposed;
       typedef JacobianInverseTransposed Jacobian;
 
-      IdBasicGeometry ()
-      : hostGeometry_( 0 )
-      {}
-
-      explicit IdBasicGeometry ( const HostGeometryType &hostGeometry )
-      : hostGeometry_( &hostGeometry )
+      IdBasicGeometry ( const HostGeometryType &hostGeometry )
+      : hostGeometry_( hostGeometry )
       {}
 
       operator bool () const { return bool( hostGeometry_ ); }
 
-      GeometryType type () const { return hostGeometry().type(); }
-      bool affine () const { return hostGeometry().affine(); }
+      GeometryType type () const { return hostGeometry_.type(); }
+      bool affine () const { return hostGeometry_.affine(); }
 
-      int corners () const { return hostGeometry().corners(); }
-      GlobalVector corner ( const int i ) const { return hostGeometry().corner( i ); }
-      GlobalVector center () const { return hostGeometry().center(); }
+      int corners () const { return hostGeometry_.corners(); }
+      GlobalVector corner ( const int i ) const { return hostGeometry_.corner( i ); }
+      GlobalVector center () const { return hostGeometry_.center(); }
 
-      GlobalVector global ( const LocalVector &local ) const { return hostGeometry().global( local ); }
-      LocalVector local ( const GlobalVector &global ) const { return hostGeometry().local( global ); }
+      GlobalVector global ( const LocalVector &local ) const { return hostGeometry_.global( local ); }
+      LocalVector local ( const GlobalVector &global ) const { return hostGeometry_.local( global ); }
 
-      ctype integrationElement ( const LocalVector &local ) const { return hostGeometry().integrationElement( local ); }
-      ctype volume () const { return hostGeometry().volume(); }
+      ctype integrationElement ( const LocalVector &local ) const { return hostGeometry_.integrationElement( local ); }
+      ctype volume () const { return hostGeometry_.volume(); }
 
       const JacobianTransposed &
       jacobianTransposed ( const LocalVector &local ) const
       {
-        return hostGeometry().jacobianTransposed( local );
+        return hostGeometry_.jacobianTransposed( local );
       }
 
       const JacobianInverseTransposed &
       jacobianInverseTransposed ( const LocalVector &local ) const
       {
-        return hostGeometry().jacobianInverseTransposed( local );
+        return hostGeometry_.jacobianInverseTransposed( local );
       }
 
     private:
-      const HostGeometryType &hostGeometry () const
-      {
-        assert( hostGeometry_ );
-        return *hostGeometry_;
-      }
-
-      const HostGeometryType *hostGeometry_;
+      HostGeometryType hostGeometry_;
     };
 
 
@@ -117,7 +107,7 @@ namespace Dune
       IdGeometry ()
       {}
 
-      explicit IdGeometry ( const HostGeometryType &hostGeometry )
+      IdGeometry ( const HostGeometryType &hostGeometry )
       : Base( hostGeometry )
       {}
     };
@@ -156,7 +146,7 @@ namespace Dune
       IdLocalGeometry ()
       {}
 
-      explicit IdLocalGeometry ( const HostGeometryType &hostGeometry )
+      IdLocalGeometry ( const HostGeometryType &hostGeometry )
       : Base( hostGeometry )
       {}
     };
