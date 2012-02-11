@@ -114,7 +114,7 @@ namespace Dune
         baseFunctionSet_ = space.baseFunctionSet( entity );
 
         // note, do not use baseFunctionSet() here, entity might no have been set
-        numDofs_ = baseFunctionSet_.numBaseFunctions();
+        numDofs_ = baseFunctionSet_.size();
 
         needCheckGeometry_ = space.multipleGeometryTypes();
       }

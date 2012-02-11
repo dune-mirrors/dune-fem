@@ -123,7 +123,7 @@ namespace Dune
         needCheckGeometry_ = discreteFunctionSpace_.multipleGeometryTypes();
       }
     }
-    assert( (unsigned int)baseFunctionSet_.numBaseFunctions() <= dofs_.size() );
+    assert( baseFunctionSet_.size() <= dofs_.size() );
 
     entity_ = &entity;
     assert( baseFunctionSet_.geometryType() == entity.type() );
@@ -165,7 +165,7 @@ namespace Dune
   inline int TemporaryLocalFunctionImpl< DiscreteFunctionSpace, ArrayAllocator >
     :: numDofs () const
   {
-    return baseFunctionSet_.numBaseFunctions();
+    return baseFunctionSet_.size();
   }
 
 }
