@@ -35,7 +35,7 @@ namespace Dune
       typedef typename Traits::HostGridPartType HostGridPartType;
       typedef typename Traits::CoordFunctionType CoordFunctionType;
 
-      typedef typename Geometry::Implementation GeometryImpl;
+      typedef typename Geometry::Implementation GeometryImplType;
 
       typedef GeoCoordVector< mydimension, GridFamily > CoordVectorType;
 
@@ -45,29 +45,13 @@ namespace Dune
 
       explicit GeoEntity ( const CoordFunctionType &coordFunction ) 
       : coordFunction_( &coordFunction ),
-        hostEntity_( 0 ),
-        geo_( GeometryImpl() )
+        hostEntity_( 0 )
       {}
 
       GeoEntity ( const CoordFunctionType &coordFunction, const HostEntityType &hostEntity )
       : coordFunction_( &coordFunction ),
-        hostEntity_( &hostEntity ),
-        geo_( GeometryImpl() )
+        hostEntity_( &hostEntity )
       {}
-
-      GeoEntity ( const GeoEntity &other )
-      : coordFunction_( other.coordFunction_ ),
-        hostEntity_( other.hostEntity_ ),
-        geo_( other.geo_.impl() )
-      {}
-
-      const GeoEntity &operator= ( const GeoEntity &other )
-      {
-        coordFunction_ = other.coordFunction_;
-        hostEntity_ = other.hostEntity_;
-        geo_.impl() = other.geo_.impl();
-        return *this;
-      }
 
       operator bool () const { return bool( hostEntity_ ); }
 
@@ -86,15 +70,14 @@ namespace Dune
         return hostEntity().partitionType();
       }
 
-      const Geometry &geometry () const
+      Geometry geometry () const
       {
-        GeometryImpl &geo = geo_.impl();
-        if( !geo )
+        if( !geo_ )
         {
           CoordVectorType coords( coordFunction(), hostEntity() );
-          geo = GeometryImpl( type(), coords );
+          geo_ = GeometryImplType( type(), coords );
         }
-        return geo_;
+        return Geometry( geo_ );
       }
 
       EntitySeed seed () const { return EntitySeed( hostEntity().seed() ); }
@@ -119,7 +102,7 @@ namespace Dune
     private:
       const CoordFunctionType *coordFunction_;
       const HostEntityType *hostEntity_;
-      mutable Geometry geo_;
+      mutable GeometryImplType geo_;
     };
 
 
@@ -153,7 +136,7 @@ namespace Dune
       typedef typename Traits::HostGridPartType HostGridPartType;
       typedef typename Traits::CoordFunctionType CoordFunctionType;
 
-      typedef Dune::GenericGeometry::Geometry< mydimension, dimensionworld, const GridFamily > GeometryImpl;
+      typedef Dune::GenericGeometry::Geometry< mydimension, dimensionworld, const GridFamily > GeometryImplType;
 
       typedef GeoCoordVector< mydimension, GridFamily > CoordVectorType;
 
@@ -163,38 +146,21 @@ namespace Dune
 
       explicit GeoEntity ( const CoordFunctionType &coordFunction ) 
       : coordFunction_( &coordFunction ),
-        hostEntity_( 0 ),
-        geo_( GeometryImpl() )
+        hostEntity_( 0 )
       {}
 
       GeoEntity ( const CoordFunctionType &coordFunction, const HostEntityType &hostEntity )
       : coordFunction_( &coordFunction ),
-        hostEntity_( &hostEntity ),
-        geo_( GeometryImpl() )
-      {}
-
-      GeoEntity ( const GeoEntity &other )
-      : coordFunction_( other.coordFunction_ ),
-        hostEntity_( other.hostEntity_ ),
-        geo_( other.geo_.impl() )
+        hostEntity_( &hostEntity )
       {}
 
       template< class LCFTraits >
       GeoEntity ( const GeoEntity &other, const LocalFunction< LCFTraits > &localCoordFunction )
       : coordFunction_( other.coordFunction_ ),
-        hostEntity_( other.hostEntity_ ),
-        geo_( GeometryImpl() )
+        hostEntity_( other.hostEntity_ )
       {
         GeoLocalCoordVector< mydimension, GridFamily, LCFTraits > coords( localCoordFunction );
-        geo_.impl() = GeometryImpl( type(), coords );
-      }
-
-      const GeoEntity &operator= ( const GeoEntity &other )
-      {
-        coordFunction_ = other.coordFunction_;
-        hostEntity_ = other.hostEntity_;
-        geo_.impl() = other.geo_.impl();
-        return *this;
+        geo_ = GeometryImplType( type(), coords );
       }
 
       operator bool () const { return bool( hostEntity_ ); }
@@ -214,15 +180,14 @@ namespace Dune
         return hostEntity().partitionType();
       }
 
-      const Geometry &geometry () const
+      Geometry geometry () const
       {
-        GeometryImpl &geo = geo_.impl();
-        if( !geo )
+        if( !geo_ )
         {
           CoordVectorType coords( coordFunction(), hostEntity() );
-          geo = GeometryImpl( type(), coords );
+          geo_ = GeometryImplType( type(), coords );
         }
-        return geo_;
+        return Geometry( geo_ );
       }
 
       EntitySeed seed () const { return EntitySeed( hostEntity().seed() ); }
@@ -281,7 +246,7 @@ namespace Dune
         DUNE_THROW( InvalidStateException, "Trying to access hierarchy information from a grid part." );
       }
         
-      const LocalGeometry &geometryInFather () const
+      LocalGeometry geometryInFather () const
       {
         DUNE_THROW( InvalidStateException, "Trying to access hierarchy information from a grid part." );
       }
@@ -331,7 +296,7 @@ namespace Dune
     private:
       const CoordFunctionType *coordFunction_;
       const HostEntityType *hostEntity_;
-      mutable Geometry geo_;
+      mutable GeometryImplType geo_;
     };
 
   } // namespace Fem
