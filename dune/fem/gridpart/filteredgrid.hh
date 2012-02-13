@@ -784,17 +784,17 @@ namespace Dune
           return asBase()->conforming();
         }
 
-        const LocalGeometry &geometryInInside () const
+        LocalGeometry geometryInInside () const
         {
           return asBase()->geometryInInside();
         }
 
-        const LocalGeometry &geometryInOutside () const
+        LocalGeometry geometryInOutside () const
         {
           return asBase()->geometryInOutside();
         }
 
-        const Geometry &geometry () const
+        Geometry geometry () const
         {
           return asBase()->geometry();
         }

@@ -334,19 +334,19 @@ namespace Dune
       }
 
       //! \brief return inside entity
-      const LocalGeometry &geometryInInside () const
+      LocalGeometry geometryInInside () const
       {
         return hostIterator()->geometryInInside();
       }
 
       //! \brief return inside entity
-      const LocalGeometry &geometryInOutside () const
+      LocalGeometry geometryInOutside () const
       {
         return hostIterator()->geometryInOutside();
       }
 
       //! \brief return inside entity
-      const Geometry &geometry () const
+      Geometry geometry () const
       {
         return hostIterator()->geometry();
       }
