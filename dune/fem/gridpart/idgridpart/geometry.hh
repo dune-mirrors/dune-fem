@@ -15,7 +15,31 @@ namespace Dune
     template< int, int, class > class IdGeometry;
     template< int, int, class > class IdLocalGeometry;
 
+  } // namespace Fem
 
+
+  
+  namespace FacadeOptions
+  {
+
+    template< int mydim, int cdim, class GridFamily >
+    struct StoreGeometryReference< mydim, cdim, GridFamily, Fem::IdGeometry >
+    {
+      static const bool v = false;
+    };
+
+    template< int mydim, int cdim, class GridFamily >
+    struct StoreGeometryReference< mydim, cdim, GridFamily, Fem::IdLocalGeometry >
+    {
+      static const bool v = false;
+    };
+
+  } // namespace FacadeOptions
+
+
+
+  namespace Fem
+  {
 
     // IdBasicGeometry
     // ---------------
