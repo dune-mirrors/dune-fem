@@ -387,7 +387,7 @@ namespace Dune
       for( size_t i = 0; i < numBaseFunctions; ++i )
       {
         RangeType phi;
-        evaluate( i, x, phi );
+        asImp().evaluate( i, x, phi );
         value.axpy( dofs[ i ], phi );
       }
     }
@@ -398,7 +398,7 @@ namespace Dune
       const size_t numBaseFunctions = size();
       values.resize( numBaseFunctions );
       for( size_t i = 0; i < numBaseFunctions; ++i )
-        evaluate( i, x, values[ i ] );
+        asImp().evaluate( i, x, values[ i ] );
     }
 
     /** \copydoc Dune::BaseFunctionSetInterface::jacobian(const int baseFunction,const Point &x, JacobianRangeType &phi) const */
@@ -431,7 +431,7 @@ namespace Dune
       for( size_t i = 0; i < numBaseFunctions; ++i )
       {
         RangeType tmpValue;
-        evaluate( i, x, tmpValue );
+        asImp().evaluate( i, x, tmpValue );
         dofs[ i ] += tmpValue * valueFactor;
       }
     }
@@ -448,7 +448,7 @@ namespace Dune
       for( size_t i = 0; i < numBaseFunctions; ++i )
       {
         JacobianRangeType tmpJacobian;
-        jacobian( i, x, tmpJacobian );
+        asImp().jacobian( i, x, tmpJacobian );
         for( int r = 0; r < dimRange; ++r )
           dofs[ i ] += tmpJacobian[ r ] * tmpJacobianFactor[ r ];
       }
@@ -467,11 +467,11 @@ namespace Dune
       for( size_t i = 0; i < numBaseFunctions; ++i )
       {
         RangeType tmpValue;
-        evaluate( i, x, tmpValue );
+        asImp().evaluate( i, x, tmpValue );
         dofs[ i ] += tmpValue * valueFactor;
 
         JacobianRangeType tmpJacobian;
-        jacobian( i, x, tmpJacobian );
+        asImp().jacobian( i, x, tmpJacobian );
         for( int r = 0; r < dimRange; ++r )
           dofs[ i ] += tmpJacobian[ r ] * tmpJacobianFactor[ r ];
       }
@@ -488,7 +488,7 @@ namespace Dune
       const size_t quadNop = quad.nop();
       for( size_t qp = 0; qp < quadNop; ++qp )
       {
-        evaluateAll( quad[ qp ], dofs, rangeVector[ qp ] );
+        asImp().evaluateAll( quad[ qp ], dofs, rangeVector[ qp ] );
       }
     }
 
@@ -505,10 +505,10 @@ namespace Dune
       const size_t quadNop = quad.nop();
       for( size_t qp = 0; qp < quadNop; ++qp )
       {
-        jacobianAll( quad[ qp ], 
-                  geometry.jacobianInverseTransposed( quad.point( qp ) ),
-                  dofs, 
-                  jacVector[ qp ] );
+        asImp().jacobianAll( quad[ qp ], 
+                             geometry.jacobianInverseTransposed( quad.point( qp ) ),
+                             dofs, 
+                             jacVector[ qp ] );
       }
     }
 
@@ -524,9 +524,7 @@ namespace Dune
     {
       const size_t quadNop = quad.nop();
       for( size_t qp = 0; qp < quadNop; ++qp )
-      {
-        axpy( quad[ qp ], rangeFactors[ qp ], dofs );
-      }
+        asImp().axpy( quad[ qp ], rangeFactors[ qp ], dofs );
     }
 
     template< class QuadratureType,
@@ -541,10 +539,10 @@ namespace Dune
       const size_t quadNop = quad.nop();
       for( size_t qp = 0; qp < quadNop; ++qp )
       {
-        axpy( quad[ qp ], 
-              geometry.jacobianInverseTransposed( quad.point( qp ) ),
-              jacVector[ qp ],
-              dofs );
+        asImp().axpy( quad[ qp ], 
+                      geometry.jacobianInverseTransposed( quad.point( qp ) ),
+                      jacVector[ qp ],
+                      dofs );
       }
     }
   };
@@ -566,7 +564,7 @@ namespace Dune
       RangeType tmp;
       asImp().evaluate( baseFunction, diffVariable, x, tmp );
       for( int j = 0; j < dimRange; ++j )
-        jacobian[ j ][ i ] = tmp[ j ];
+        asImp().jacobian[ j ][ i ] = tmp[ j ];
     }
   }
 
