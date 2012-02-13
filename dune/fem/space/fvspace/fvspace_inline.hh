@@ -34,9 +34,9 @@ makeFunctionSpace (GridPartType& gridPart)
             allGeomTypes(gridPart.indexSet());
   
   const std::vector<GeometryType>& geomTypes = allGeomTypes.geomTypes(0);
-  int maxDofs = 0;
+  std::size_t maxDofs = 0;
 
-  for(size_t i=0; i<geomTypes.size(); ++i)
+  for( std::size_t i = 0; i < geomTypes.size(); ++i )
   {
     const GeometryType & geoType = geomTypes[i];
     if(baseFuncSet_.find( geoType ) == baseFuncSet_.end() ) 
@@ -46,10 +46,10 @@ makeFunctionSpace (GridPartType& gridPart)
         & SingletonProviderType::getObject(geoType);
       
       baseFuncSet_[ geoType ] = baseSet; 
-      maxDofs = std::max( maxDofs , baseSet->numBaseFunctions() );
+      maxDofs = std::max( maxDofs, baseSet->size() );
     }
   }
-  assert( mapper().maxNumDofs() == maxDofs );
+  assert( std::size_t( mapper().maxNumDofs() ) == maxDofs );
 }
   
 template <class FunctionSpaceImp, class GridPartImp, int polOrd, template <class> class BaseFunctionStorageImp >
