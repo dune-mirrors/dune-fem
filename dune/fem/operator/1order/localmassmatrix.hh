@@ -377,10 +377,10 @@ protected:
                    const EntityType& en,
                    const Geometry& geo, 
                    const BaseFunctionSetType& set,
-                   const int numDofs,
+                   const std::size_t numDofs,
                    Matrix& matrix) const 
   {
-    assert( numDofs == set.numBaseFunctions() );
+    assert( numDofs == set.size() );
 
     // clear matrix 
     matrix = 0;
