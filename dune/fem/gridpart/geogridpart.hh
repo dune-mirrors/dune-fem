@@ -71,6 +71,19 @@ namespace Dune
 
 
 
+  namespace FacadeOptions
+  {
+
+    template< int mydim, int cdim, class CoordFunction >
+    struct StoreGeometryReference< mydim, cdim, const Fem::GeoGridPartFamily< CoordFunction >, Dune::GenericGeometry::Geometry >
+    {
+      static const bool v = false;
+    };
+
+  } // namespace FacadeOptions
+
+
+
   namespace Fem
   {
 
