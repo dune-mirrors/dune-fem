@@ -114,6 +114,7 @@ AC_CONFIG_FILES([Makefile
      dune/fem/gridpart/Makefile
      dune/fem/gridpart/common/Makefile
      dune/fem/gridpart/filter/Makefile
+     dune/fem/gridpart/filteredgridpart/Makefile
      dune/fem/gridpart/geogridpart/Makefile
      dune/fem/gridpart/idgridpart/Makefile
      dune/fem/gridpart/test/Makefile
