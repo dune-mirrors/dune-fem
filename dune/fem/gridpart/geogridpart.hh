@@ -3,6 +3,7 @@
 
 #include <dune/fem/gridpart/gridpart.hh>
 #include <dune/fem/gridpart/common/deaditerator.hh>
+#include <dune/fem/gridpart/geogridpart/capabilities.hh>
 #include <dune/fem/gridpart/geogridpart/datahandle.hh>
 #include <dune/fem/gridpart/geogridpart/entity.hh>
 #include <dune/fem/gridpart/geogridpart/entitypointer.hh>
