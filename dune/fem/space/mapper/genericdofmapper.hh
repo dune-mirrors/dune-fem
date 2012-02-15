@@ -5,13 +5,7 @@
 
 #include <dune/grid/common/indexidset.hh>
 
-#if HAVE_DUNE_GEOMETRY
-#include <dune/geometry/genericgeometry/conversion.hh>
-#include <dune/geometry/genericgeometry/referencetopologies.hh>
-#else
-#include <dune/grid/genericgeometry/conversion.hh>
 #include <dune/grid/genericgeometry/referencetopologies.hh>
-#endif
 
 #include <dune/localfunctions/common/localkey.hh>
 
@@ -194,11 +188,7 @@ namespace Dune
     int numEntityDofs ( const Entity &entity ) const
     {
       const int codim = Entity::codimension;
-#if DUNE_VERSION_NEWER_REV(DUNE_COMMON,2,1,0)
       const unsigned int topologyId = entity.type().id();
-#else
-      const unsigned int topologyId = GenericGeometry::topologyId( entity.type() );
-#endif
       const int blockIndex = blockIndex_[ codim ][ topologyId >> 1 ];
       return (blockIndex >= 0 ? blocks_[ blockIndex ].numDofs : 0);
     }
@@ -331,11 +321,7 @@ namespace Dune
   const typename GenericDofMapper< GridPart, LocalCoefficientsMap >::MapInfo &
   GenericDofMapper< GridPart, LocalCoefficientsMap >::mapInfo ( const Entity &entity ) const
   {
-#if DUNE_VERSION_NEWER_REV(DUNE_COMMON,2,1,0)
     const unsigned int topologyId = entity.type().id(); 
-#else
-    const unsigned int topologyId = GenericGeometry::topologyId( entity.type() );
-#endif
     const unsigned int i = localCoefficientsMap_( entity );
     assert( i <= mapInfo_[ topologyId ].size() );
     return mapInfo_[ topologyId ][ i ];
@@ -373,11 +359,7 @@ namespace Dune
     ::mapEntityDofToGlobal ( const Entity &entity, const int localDof ) const
   {
     const int codim = Entity::codimension;
-#if DUNE_VERSION_NEWER_REV(DUNE_COMMON,2,1,0)
     const unsigned int topologyId = entity.type().id();
-#else
-    const unsigned int topologyId = GenericGeometry::topologyId( entity.type() );
-#endif
     const int blockIndex = blockIndex_[ codim ][ topologyId >> 1 ];
     assert( blockIndex >= 0 );
 
@@ -399,16 +381,8 @@ namespace Dune
 
       unsigned int idxSize = 0;
       const GeometryType type( block.topologyId, dimension - block.codim);
-#if DUNE_VERSION_NEWER_REV(DUNE_COMMON,2,1,0)
       if (!type.isNone())
         idxSize = indexSet().size( type );
-#else
-      if( GenericGeometry::hasGeometryType( block.topologyId, dimension - block.codim ) )
-      {
-        const GeometryType type = GenericGeometry::geometryType( block.topologyId, dimension - block.codim );
-        idxSize = indexSet().size( type );
-      }
-#endif
       block.oldOffset = block.offset;
       block.offset = size_;
       size_ += idxSize * block.numDofs;
@@ -623,13 +597,8 @@ namespace Dune
     typedef typename DofMapperType::EntityType EntityType;
     typedef typename DofMapperType::IndexSetType IndexSetType;
 
-#if DUNE_VERSION_NEWER_REV(DUNE_COMMON,2,1,0)
     typedef integral_constant<int, 0 > Begin;
     typedef integral_constant<int, 1 > End;
-#else
-    typedef integral_constant<int, 0 > Begin;
-    typedef integral_constant<int, 1 > End;
-#endif
 
   private:
     typedef typename DofMapperType::SubEntityInfo SubEntityInfo;
@@ -710,7 +679,7 @@ namespace Dune
     unsigned int dof_;
   };
 
-}
+} // namespace Dune
 
 #endif // #if HAVE_DUNE_LOCALFUNCTIONS
 
