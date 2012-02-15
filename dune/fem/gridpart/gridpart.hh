@@ -10,6 +10,7 @@
 #include <dune/common/bartonnackmanifcheck.hh>
 #include <dune/common/deprecated.hh>
 
+#include <dune/fem/gridpart/common/capabilities.hh>
 #include <dune/fem/gridpart/common/gridpartview.hh>
 
 namespace Dune
