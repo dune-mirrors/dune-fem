@@ -10,29 +10,6 @@
 
 namespace Dune 
 {
-
-#if 0
-  template< int dimW >
-  class YaspGrid;
-
-  template< int dim, int dimW , class ctype >
-  class SGrid;
-
-#ifdef ENABLE_ALBERTA
-  template< int dim, int dimW >
-  class AlbertaGrid;
-#endif
-  
-#ifdef ENABLE_ALUGRID
-  template< int dim, int dimW >
-  class ALUCubeGrid;
-  template< int dim, int dimW >
-  class ALUSimplexGrid;
-  template< int dim, int dimW >
-  class ALUConformGrid;
-#endif
-#endif
-
   namespace Fem 
   {
     
@@ -70,6 +47,7 @@ namespace Dune
         knownGrids.push_back( "ALUSimplexGrid" ); 
         knownGrids.push_back( "ALUConformGrid" );
         knownGrids.push_back( "ALUCubeGrid" ); 
+        knownGrids.push_back( "ALUGrid" ); 
         knownGrids.push_back( "SGrid" );
         knownGrids.push_back( "YaspGrid" );
         knownGrids.push_back( "PrismGrid" );
@@ -105,66 +83,6 @@ namespace Dune
         return name;
       }
     };
-
-#if 0
-    template < int dimworld > 
-    struct GridName< YaspGrid<dimworld> >
-    {
-      static std::string name(const YaspGrid<dimworld>& ) 
-      {
-        std::string name ( typeid( YaspGrid<dimworld> ).name() ); 
-
-        //return std::string( "YaspGrid" );
-      }
-    };
-
-    template <int dim, int dimworld, class ctype > 
-    struct GridName< SGrid<dim, dimworld, ctype> >
-    {
-      static std::string name(const SGrid<dim, dimworld, ctype>& ) 
-      {
-        return std::string( "SGrid" );
-      }
-    };
-
-#ifdef ENABLE_ALBERTA
-    template <int dim, int dimworld> 
-    struct GridName< AlbertaGrid<dim, dimworld> >
-    {
-      static std::string name(const AlbertaGrid<dim, dimworld>& ) 
-      {
-        return std::string( "AlbertaGrid" );
-      }
-    };
-#endif
-
-#ifdef ENABLE_ALUGRID
-    template <int dim, int dimworld> 
-    struct GridName< ALUCubeGrid<dim, dimworld> >
-    {
-      static std::string name(const ALUCubeGrid<dim, dimworld>& ) 
-      {
-        return std::string( "ALUCubeGrid" );
-      }
-    };
-    template <int dim, int dimworld> 
-    struct GridName< ALUSimplexGrid<dim, dimworld> >
-    {
-      static std::string name(const ALUSimplexGrid<dim, dimworld>& ) 
-      {
-        return std::string( "ALUSimplexGrid" );
-      }
-    };
-    template <int dim, int dimworld> 
-    struct GridName< ALUConformGrid<dim, dimworld> >
-    {
-      static std::string name(const ALUConformGrid<dim, dimworld>& ) 
-      {
-        return std::string( "ALUConformGrid" );
-      }
-    };
-#endif
-#endif
 
     template <class GridImp>
     inline std::string gridName(const GridImp& grid) 
