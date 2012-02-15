@@ -338,7 +338,6 @@ namespace Dune
 
     /** \copydoc Dune::BaseFunctionSetInterface::evaluate(const int baseFunction,const FieldVector<int,diffOrder> &diffVariable,const Point &x,RangeType &value) const */
     template< int diffOrder, class Point >
-    DUNE_DEPRECATED
     void evaluate ( const int baseFunction,
                     const FieldVector< int, diffOrder > &diffVariable,
                     const Point &x,
@@ -349,7 +348,6 @@ namespace Dune
     
     /** \copydoc Dune::BaseFunctionSetInterface::evaluate(const int baseFunction,const Point &x,RangeType &value) const */
     template< class Point >
-    DUNE_DEPRECATED
     void evaluate ( const int baseFunction, const Point &x, RangeType &value ) const
     {
       FieldVector< int, 0 > diffVariable;
