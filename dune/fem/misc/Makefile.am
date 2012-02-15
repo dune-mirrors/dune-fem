@@ -21,6 +21,7 @@ misc_HEADERS = alugridwriter.hh \
                femtimer.hh \
                femtuples.hh \
                fieldmatrixhelper.hh \
+               griddeclaration.hh \
                gridsolution.hh \
                gridwidth.hh \
                h1norm.hh \

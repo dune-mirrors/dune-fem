@@ -7,41 +7,11 @@
 
 #include <dune/fem/misc/metaprogramming.hh>
 
+// include forward declarations of standard grids 
+#include <dune/fem/misc/griddeclaration.hh>
+
 namespace Dune
 {
-
-  // Forward Declarations for all Standard Grids
-  // -------------------------------------------
-
-  template< int dim, int dimw >
-  class ALUConformGrid;
-
-  template< int dim, int dimw >
-  class ALUCubeGrid;
-
-  template< int dim, int dimw >
-  class ALUSimplexGrid;
-
-  class OneDGrid;
-
-  template< int dim, int dimw, class ctype >
-  class SGrid;
-
-  template< int dim >
-  class UGGrid;
-
-  template< int dim >
-  class YaspGrid;
-
-  template< int dim, int dimworld >
-  class AlbertaGrid;
-
-  template< class HostGrid, class CoordFunction, class Allocator >
-  class GeometryGrid;
-
-  template< class HostGrid >
-  class CartesianGrid;
-
   // Capabilities
   // ------------
 
@@ -75,6 +45,12 @@ namespace Dune
 
     template< int dim, int dimw >
     struct hasHierarchicIndexSet< ALUSimplexGrid< dim, dimw > >
+    {
+      static const bool v = true;
+    };
+
+    template< int dim, int dimw, ALUGridElementType elType, ALUGridRefinementType refineType >
+    struct hasHierarchicIndexSet< ALUGrid< dim, dimw, elType, refineType > >
     {
       static const bool v = true;
     };
@@ -162,6 +138,12 @@ namespace Dune
       static const bool v = true;
     };
 
+    template< int dim, int dimworld, ALUGridElementType elType, ALUGridRefinementType refineType >
+    struct supportsCallbackAdaptation< ALUGrid< dim, dimworld, elType, refineType > >
+    {
+      static const bool v = true;
+    };
+
     template< int dim, int dimworld >
     struct supportsCallbackAdaptation< AlbertaGrid< dim, dimworld > >
     {
@@ -209,6 +191,12 @@ namespace Dune
 
     template< int dim, int dimworld >
     struct isLocallyAdaptive< ALUConformGrid< dim, dimworld > >
+    {
+      static const bool v = true;
+    };
+
+    template< int dim, int dimworld, ALUGridElementType elType, ALUGridRefinementType refineType >
+    struct isLocallyAdaptive< ALUGrid< dim, dimworld, elType, refineType > >
     {
       static const bool v = true;
     };
