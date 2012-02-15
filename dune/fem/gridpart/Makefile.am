@@ -13,7 +13,6 @@ gridpart_HEADERS = adaptiveleafgridpart.hh \
                    filteredgridpart.hh \
                    geogridpart.hh \
                    gridpart.hh \
-                   idgridpart.hh \
-                   persistentcontainer.hh
+                   idgridpart.hh
 
 include $(top_srcdir)/am/global-rules
