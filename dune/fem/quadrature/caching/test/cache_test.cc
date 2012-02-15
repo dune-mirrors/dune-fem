@@ -19,7 +19,7 @@
 //#include <dune/prismgrid/dgfgridtype.hh> 
 #endif
 
-#include <dune/grid/common/genericreferenceelements.hh>
+#include <dune/geometry/referenceelements.hh>
 
 #include "cache_test.hh"
 

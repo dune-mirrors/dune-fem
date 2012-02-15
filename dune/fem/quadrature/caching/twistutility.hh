@@ -19,6 +19,7 @@
 #include <dune/grid/utility/hostgridaccess.hh>
 #endif
 
+// this also includes the forward declarations 
 #include <dune/fem/misc/capabilities.hh>
 
 namespace Dune
@@ -93,9 +94,6 @@ namespace Dune
   // Specialization for YaspGrid
   // ------------------------------
   
-  template< int dimw >
-  class YaspGrid;
-  
   template< int dimw  > 
   struct TwistUtility< YaspGrid< dimw > > 
     : public TwistFreeTwistUtility< YaspGrid< dimw > >
@@ -106,9 +104,6 @@ namespace Dune
   // Specialization for SGrid
   // ------------------------------
   
-  template <int dim, int dimworld, class ctype >
-  class SGrid;
-  
   template< int dim, int dimworld, class ctype > 
   struct TwistUtility< SGrid<dim, dimworld, ctype> > 
     : public TwistFreeTwistUtility< SGrid<dim, dimworld, ctype> >
@@ -118,8 +113,6 @@ namespace Dune
 
   // Specialization for OneDGrid
   // ------------------------------
-  
-  class OneDGrid;
   
   template <> 
   struct TwistUtility< OneDGrid > 
@@ -132,9 +125,6 @@ namespace Dune
   // ------------------------------
   
 #if HAVE_ALBERTA
-  template< int dim, int dimW >
-  class AlbertaGrid;
-  
   /** \brief Specialization of TwistUtility for AlbertaGrid. 
   */
   template< int dim, int dimW >
@@ -180,15 +170,6 @@ namespace Dune
   // --------------------------
 
 #if HAVE_ALUGRID
-  template< int dim, int dimW >
-  class ALUSimplexGrid;
-
-  template< int dim, int dimW >
-  class ALUCubeGrid;
-
-  template< int dim, int dimW >
-  class ALUConformGrid;
-
   /** \brief Specialization of TwistUtility for ALUGridSimplex. 
   */
   template< int dim, int dimw >
@@ -238,7 +219,7 @@ namespace Dune
     TwistUtility& operator=(const TwistUtility&);
   };
 
-  /** \brief Specialization of TwistUtility for ALUGridSimplex. 
+  /** \brief Specialization of TwistUtility for ALUSimplexGrid. 
   */
   template< int dim, int dimw >
   struct TwistUtility< ALUCubeGrid< dim, dimw > >
@@ -282,6 +263,8 @@ namespace Dune
     TwistUtility& operator=(const TwistUtility&);
   };
 
+  /** \brief Specialization of TwistUtility for ALUConformGrid. 
+  */
   template< int dim, int dimw >
   struct TwistUtility< ALUConformGrid< dim, dimw > >
   {
@@ -319,6 +302,47 @@ namespace Dune
     TwistUtility(const TwistUtility&);
     TwistUtility& operator=(const TwistUtility&);
   };
+
+
+  /** \brief Specialization of TwistUtility for ALUGrid. 
+  */
+  template< int dim, int dimw, ALUGridElementType elType, ALUGridRefinementType refineType >
+  struct TwistUtility< ALUGrid< dim, dimw, elType, refineType > >
+  {
+    typedef ALUGrid< dim, dimw, elType, refineType > GridType;
+    typedef typename GridType::Traits::LeafIntersectionIterator LeafIntersectionIterator;
+    typedef typename LeafIntersectionIterator::Intersection LeafIntersection;
+    typedef typename GridType::Traits::LevelIntersectionIterator LevelIntersectionIterator;
+    typedef typename LevelIntersectionIterator::Intersection LevelIntersection;
+
+  public:
+    //! \brief return twist for inner face 
+    static inline int twistInSelf(const GridType & grid, const LeafIntersection& intersection)
+    {
+      return grid.getRealIntersection( intersection ).twistInSelf();
+    }
+    
+    //! \brief return twist for outer face 
+    static inline int twistInNeighbor(const GridType &grid, const LeafIntersection& intersection )
+    {
+      return grid.getRealIntersection( intersection ).twistInNeighbor();
+    }
+    
+    /** \brief return element geometry type of inside or outside entity 
+    */
+    template <class Intersection>  
+    static inline GeometryType
+    elementGeometry(const Intersection& intersection, 
+                    const bool inside)
+    {
+      return GeometryType( Capabilities :: hasSingleGeometryType< GridType > :: topologyId, 
+                           dim );
+    }
+    
+  private:
+    TwistUtility(const TwistUtility&);
+    TwistUtility& operator=(const TwistUtility&);
+  };
 #endif
 
 
@@ -327,9 +351,6 @@ namespace Dune
   // -------------------------
 
 #if HAVE_UG
-  template< int dim >
-  class UGGrid;
-
   template< int dim >
   struct TwistUtility< UGGrid< dim > >
   {
@@ -361,9 +382,6 @@ namespace Dune
   // --------------------------
 
 #if HAVE_DUNE_GEOGRID
-  template< class HostGrid, class CoordFunction >
-  class GeometryGrid;
-
   template< class HostGrid, class CoordFunction >
   struct TwistUtility< GeometryGrid< HostGrid, CoordFunction > >
   {
