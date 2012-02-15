@@ -267,34 +267,31 @@ namespace Dune
     RangeBaseFunctionSetType rangeBaseSet_;
 
   protected:
-    inline LocalMatrixDefault ( const DomainSpaceType &domainSpace,
-                                const RangeSpaceType &rangeSpace )
+    LocalMatrixDefault ( const DomainSpaceType &domainSpace,
+                         const RangeSpaceType &rangeSpace )
     : domainSpace_( domainSpace ),
       rangeSpace_( rangeSpace ),
       domainBaseSet_(),
       rangeBaseSet_()
-    {
-    }
+    {}
 
     template< class DomainEntityType, class RangeEntityType >
-    inline LocalMatrixDefault ( const DomainSpaceType &domainSpace,
-                                const RangeSpaceType &rangeSpace,
-                                const DomainEntityType &domainEntity,
-                                const RangeEntityType &rangeEntity )
+    LocalMatrixDefault ( const DomainSpaceType &domainSpace,
+                         const RangeSpaceType &rangeSpace,
+                         const DomainEntityType &domainEntity,
+                         const RangeEntityType &rangeEntity )
     : domainSpace_( domainSpace ),
       rangeSpace_( rangeSpace ),
       domainBaseSet_( domainSpace.baseFunctionSet( domainEntity ) ),
       rangeBaseSet_( rangeSpace.baseFunctionSet( rangeEntity ) )
-    {
-    }
+    {}
 
-    inline LocalMatrixDefault ( const LocalMatrixDefault& org )
+    LocalMatrixDefault ( const LocalMatrixDefault& org )
     : domainSpace_( org.domainSpace_ ),
       rangeSpace_( org.rangeSpace_ ),
       domainBaseSet_( org.domainBaseSet_ ),
       rangeBaseSet_( org.rangeBaseSet_ )
-    {
-    }
+    {}
 
   public:
     /** \copydoc Dune::LocalMatrixInterface::init */
@@ -307,42 +304,28 @@ namespace Dune
     }
 
     /** \copydoc Dune::LocalMatrixInterface::resort */
-    inline void resort ()
-    {
-    }
-    
+    void resort () {}
+
     /** \copydoc Dune::LocalMatrixInterface::rows */
-    inline int rows () const
-    {
-      return rangeBaseSet_.numBaseFunctions();
-    }
+    int rows () const { return rangeBaseSet_.size(); }
     
     /** \copydoc Dune::LocalMatrixInterface::columns */
-    inline int columns () const
-    {
-      return domainBaseSet_.numBaseFunctions();
-    }
+    int columns () const { return domainBaseSet_.size(); }
 
     /** \copydoc Dune::LocalMatrixInterface::domainSpace */
-    inline const DomainSpaceType &domainSpace () const
-    {
-      return domainSpace_;
-    }
+    const DomainSpaceType &domainSpace () const { return domainSpace_; }
     
     /** \copydoc Dune::LocalMatrixInterface::rangeSpace */
-    inline const RangeSpaceType &rangeSpace () const
-    {
-      return rangeSpace_;
-    }
+    const RangeSpaceType &rangeSpace () const { return rangeSpace_; }
 
     /** \copydoc Dune::LocalMatrixInterface::domainBaseFunctionSet */
-    inline const DomainBaseFunctionSetType &domainBaseFunctionSet () const
+    const DomainBaseFunctionSetType &domainBaseFunctionSet () const
     {
       return domainBaseSet_;
     }
     
     /** \copydoc Dune::LocalMatrixInterface::rangeBaseFunctionSet */
-    inline const RangeBaseFunctionSetType &rangeBaseFunctionSet () const
+    const RangeBaseFunctionSetType &rangeBaseFunctionSet () const
     {
       return rangeBaseSet_;
     }
