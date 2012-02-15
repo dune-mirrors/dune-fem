@@ -1,50 +1,44 @@
-#ifndef DUNE_GENERICPADAPTIVEDOFMAPPER_HH
-#define DUNE_GENERICPADAPTIVEDOFMAPPER_HH
+#ifndef DUNE_FEM_GENERICPADAPTIVEDOFMAPPER_HH
+#define DUNE_FEM_GENERICPADAPTIVEDOFMAPPER_HH
 
-//- Dune includes 
 #include <dune/common/exceptions.hh>
-#if HAVE_DUNE_GEOMETRY
-#include <dune/geometry/type.hh>
-#else
-#include <dune/common/geometrytype.hh>
-#endif
 
-//- Dune-Fem includes 
+#include <dune/geometry/type.hh>
+
+#include <dune/grid/utility/persistentcontainer.hh>
+
 #include <dune/fem/misc/capabilities.hh>
 #include <dune/fem/misc/codimmap.hh>
 #include <dune/fem/misc/metaprogramming.hh>
 #include <dune/fem/space/common/dofmanager.hh>
-
+#include <dune/fem/space/lagrangespace/lagrangepoints.hh>
 #include <dune/fem/space/mapper/dofmapper.hh>
 #include <dune/fem/space/mapper/codimensionmapper.hh>
 
-//- local includes 
-#include <dune/fem/space/lagrangespace/lagrangepoints.hh>
-
-#include <dune/grid/utility/persistentcontainer.hh>
-
 namespace Dune
 {
+
   namespace Fem 
   {
 
-    // Generic adaptive dof mapper 
-    // ----------------------------
+    // GenericAdaptiveDofMapper
+    // ------------------------
 
     template< class TraitsImp >
     class GenericAdaptiveDofMapper 
     : public DofMapperDefault< TraitsImp > 
     {
+      typedef GenericAdaptiveDofMapper< TraitsImp > ThisType;
+      typedef DofMapperDefault< TraitsImp > BaseType;
+
     public:
       typedef TraitsImp Traits;
+
       // true if all dofs are associated with entities of codim 0
       static const bool discontinuousMapper = Traits :: discontinuousMapper ;
 
     protected:  
-      typedef GenericAdaptiveDofMapper< Traits > ThisType;
-      typedef DofMapperDefault< Traits > BaseType;
-
-      using BaseType :: asImp;
+      using BaseType::asImp;
 
     public:
       //! type of the grid part
@@ -939,10 +933,10 @@ namespace Dune
       mutable unsigned int size_;
       unsigned int maxNumDofs_;
       int sequence_ ;
-    }; // end GenericAdaptiveDofMapper
+    }; // class GenericAdaptiveDofMapper
 
-  } // end namespace Fem 
+  } // namespace Fem 
 
-} // end namespace Dune 
+} // namespace Dune 
 
-#endif // #ifndef DUNE_LAGRANGESPACE_MAPPER_HH
+#endif // #ifndef DUNE_FEM_GENERICPADAPTIVEDOFMAPPER_HH
