@@ -7,7 +7,6 @@
 #include <config.h>
 #include <iostream>
 
-#include <dune/fem/gridpart/gridpart.hh>
 #include <dune/fem/gridpart/adaptiveleafgridpart.hh>
 #include <dune/fem/gridpart/filteredgridpart.hh>
 #include <dune/fem/gridpart/filter/radialfilter.hh>

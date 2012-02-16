@@ -12,9 +12,12 @@
 #endif
 
 #include <dune/fem/gridpart/adaptiveleafgridpart.hh>
+#include <dune/fem/gridpart/hierarchicgridpart.hh>
 #include <dune/fem/gridpart/idgridpart.hh>
 #include <dune/fem/misc/gridwidth.hh>
 
+#include "./failure.hh"
+#include "./checkseed.hh"
 #include "../../test/testgrid.hh"
 
 template< class GridPartType >
@@ -175,6 +178,11 @@ try
   std::cout << "gridWidth: " << Dune::GridWidth::calcGridWidth( gridPart ) << std::endl;
 
   std::cout << std::endl << std::endl;
+
+  // check entity seed
+  typedef Dune::DefaultFailureHandler FailureHandlerType;
+  FailureHandlerType failureHandler;
+  Dune::Fem::Check< GridPartType, FailureHandlerType >::checkEntitySeed( gridPart, failureHandler );
 
   return 0;
 }

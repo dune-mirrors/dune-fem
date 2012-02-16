@@ -18,6 +18,7 @@ test_filteredgridpart_CPPFLAGS = -DCOUNT_FLOPS $(AM_CPPFLAGS) -DUSE_FILTEREDGRID
 test_idgridpart_SOURCES = test-idgridpart.cc
 test_geogridpart_SOURCES = test-geogridpart.cc
 
-EXTRA_DIST = 1dgrid.dgf 2dgrid.dgf 3dgrid.dgf
+EXTRA_DIST = 1dgrid.dgf 2dgrid.dgf 3dgrid.dgf \
+	     checkseed.hh  failure.hh
 
 include $(top_srcdir)/am/global-rules

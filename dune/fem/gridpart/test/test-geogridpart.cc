@@ -19,6 +19,8 @@
 #include <dune/fem/operator/lagrangeinterpolation.hh>
 #include <dune/fem/space/lagrangespace.hh>
 
+#include "./failure.hh"
+#include "./checkseed.hh"
 #include "../../test/testgrid.hh"
 
 template< class GridPartType >
@@ -246,6 +248,11 @@ try
   testExchangeGeometry( gridPart, tlf );
 
   std::cout << std::endl << std::endl;
+
+  // check entity seed
+  typedef Dune::DefaultFailureHandler FailureHandlerType;
+  FailureHandlerType failureHandler;
+  Dune::Fem::Check< GridPartType, FailureHandlerType >::checkEntitySeed( gridPart, failureHandler );
 
   return 0;
 }
