@@ -37,6 +37,7 @@ misc_HEADERS = alugridwriter.hh \
                nonconformitylevel.hh \
                referenceelementprovider.hh \
                selectvalue.hh \
+               subobjects.hh \
                suite.cc \
                suite.hh \
                test.cc \
