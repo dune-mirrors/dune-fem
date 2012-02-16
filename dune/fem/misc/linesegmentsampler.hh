@@ -44,7 +44,7 @@ namespace Dune
       static const int dimDomain = GridPartType::GridType::dimensionworld;
       static const int dimGrid = GridPartType::GridType::dimension;
 
-      typedef FieldVector< DomainFieldType, dimDomain  > DomainType;
+      typedef FieldVector< DomainFieldType, dimDomain > DomainType;
       typedef FieldVector< DomainFieldType, dimGrid > LocalDomainType;
 
     private:
@@ -83,6 +83,17 @@ namespace Dune
        */
       template< class GridFunction >
       void operator() ( const GridFunction &f, std::vector< typename GridFunction::RangeType > &samples ) const;
+          
+      /** \brief returns sampling points 
+       * 
+       *  The operator() actually samples the values of a given grid function.
+       *
+       *  \param[out]  points  std::vector receiving the points
+       *
+       *  \note The number of sampling points is determined from the size of @a
+       *        points, which may not be less than 2.
+       */
+      void samplePoints( std::vector< DomainType > &points ) const;
 
       /** @brief obtain grid part on which the LineSegmentSampler works */
       const GridPart &gridPart () const { return gridPart_; }
@@ -118,7 +129,7 @@ namespace Dune
     template< class GridPart >
     template< class GridFunction >
     inline void LineSegmentSampler< GridPart >
-      ::operator() ( const GridFunction &f, std::vector< typename GridFunction::RangeType > &samples ) const 
+      ::operator() ( const GridFunction &f, std::vector< typename GridFunction::RangeType > &samples ) const
     {
       typedef typename GridPartType::template Codim< 0 >::IteratorType IteratorType;
       typedef typename GridPartType::template Codim< 0 >::EntityType EntityType;
@@ -198,8 +209,26 @@ namespace Dune
         DUNE_THROW( InvalidStateException, "LineSegmentSampler could not find all samples." );
     }
 
-  }
 
-}
+    template< class GridPart >
+    inline void LineSegmentSampler< GridPart >
+      :: samplePoints ( std::vector< DomainType > &points ) const 
+    {
+      const int numSamples = points.size();
+      if( numSamples < 2 )
+        DUNE_THROW( InvalidStateException, "LineSegmentSampler cannot sample less than 2 points." );
+      DomainType ds = right_ - left_;
+      ds /= DomainFieldType( numSamples - 1 );
+
+      for( int i = 0; i < numSamples; ++i )
+      {
+        points[ i ] = left_;
+        points[ i ].axpy( DomainFieldType( i ), ds );
+      }
+    }
+
+  } // namespace Fem
+
+} // namespace Dune
 
 #endif // #ifndef DUNE_FEM_LINESEGMENTSAMPLER_HH
