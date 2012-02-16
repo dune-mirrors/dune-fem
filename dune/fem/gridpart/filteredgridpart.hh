@@ -9,10 +9,10 @@
 
 //- dune-fem includes
 #include <dune/fem/gridpart/adaptiveleafindexset.hh>
+#include <dune/fem/gridpart/common/gridpart.hh>
 #include <dune/fem/gridpart/filteredgridpart/capabilities.hh>
-#include <dune/fem/gridpart/filteredgridpart/iterator.hh>
 #include <dune/fem/gridpart/filteredgridpart/intersectioniterator.hh>
-#include <dune/fem/gridpart/gridpart.hh>
+#include <dune/fem/gridpart/filteredgridpart/iterator.hh>
 
 
 namespace Dune

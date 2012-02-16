@@ -100,9 +100,9 @@ namespace Dune
 
       /*
        * forward
-       *   GridPartCapabilities::Something< const Grid >
+       *   GridPartCapabilities::Something< const GridPartType >
        * to
-       *   GridPartCapabilities::Something< Grid >
+       *   GridPartCapabilities::Something< GridPartType >
        */
 
       template< class GridPartType >
@@ -153,96 +153,6 @@ namespace Dune
       struct isConforming< const GridPartType >
       {
         static const bool v = Dune::Fem::GridPartCapabilities::isConforming< GridPartType >::v;
-      };
-
-
-
-      /*
-       * forward
-       *   GridPartCapabilities::Something< GridPartDefault< Traits > >
-       * to
-       *   Dune::Capabilities::Something< GridPartDefault::GridType >
-       */
-
-      template< class Traits >
-      struct hasGrid< GridPartDefault< Traits > >
-      {
-        static const bool v = true; 
-      };
-
-
-      template< class Traits >
-      struct hasSingleGeometryType< GridPartDefault< Traits > >
-      {
-        typedef typename GridPartDefault< Traits >::GridType GridType;
-
-        static const bool v = Dune::Capabilities::hasSingleGeometryType< GridType >::v;
-        static const unsigned int topologyId 
-          = Dune::Capabilities::hasSingleGeometryType< GridType >::topologyId;;
-      };
-
-
-      template< class Traits >
-      struct isCartesian< GridPartDefault< Traits > >
-      {
-        typedef typename GridPartDefault< Traits >::GridType GridType;
-
-        static const bool v = Dune::Capabilities::isCartesian< GridType >::v;
-      };
-
-
-      template< class Traits, int codim  >
-      struct hasEntity< GridPartDefault< Traits >, codim >
-      {
-        typedef typename GridPartDefault< Traits >::GridType GridType;
-
-        static const bool v = Dune::Capabilities::hasEntity< GridType, codim >::v;
-      };
-
-
-      template< class Traits >
-      struct isParallel< GridPartDefault< Traits > >
-      {
-        typedef typename GridPartDefault< Traits >::GridType GridType;
-
-        static const bool v = Dune::Capabilities::isParallel< GridType >::v;
-      };
-
-
-      template< class Traits, int codim >
-      struct canCommunicate< GridPartDefault< Traits >, codim >
-      {
-        typedef typename GridPartDefault< Traits >::GridType GridType;
-
-        static const bool v = Dune::Capabilities::canCommunicate< GridType, codim >::v;
-      };
-
-
-      template< class GridType, PartitionIteratorType pitype , bool onlyCodimensionZero >
-      struct isConforming< AdaptiveLeafGridPart< GridType, pitype, onlyCodimensionZero > >
-      {
-        static const bool v = Dune::Capabilities::isLeafwiseConforming< GridType >::v;
-      };
-
-
-      template< class GridType >
-      struct isConforming< HierarchicGridPart< GridType > >
-      {
-        static const bool v = Dune::Capabilities::isLeafwiseConforming< GridType >::v;
-      };
-
-
-      template< class GridType >
-      struct isConforming< LeafGridPart< GridType > >
-      {
-        static const bool v = Dune::Capabilities::isLeafwiseConforming< GridType >::v;
-      };
-
-
-      template< class GridType >
-      struct isConforming< LevelGridPart< GridType > >
-      {
-        static const bool v = Dune::Capabilities::isLevelwiseConforming< GridType >::v;
       };
 
     } // end namespace GridPartCapabilities
