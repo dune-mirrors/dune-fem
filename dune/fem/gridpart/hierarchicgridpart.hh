@@ -97,7 +97,7 @@ namespace Dune
     typename BaseType :: template Codim< codim > :: IteratorType
     begin () const
     {
-      return BaseType :: template begin< codim >();
+      return begin< codim, InteriorBorder_Partition >();
     }
 
     //! Begin iterator on the leaf level
@@ -113,7 +113,7 @@ namespace Dune
     typename BaseType :: template Codim< codim > :: IteratorType
     end () const
     {
-      return BaseType :: template end< codim >();
+      return end< codim, InteriorBorder_Partition >();
     }
 
     //! End iterator on the leaf level

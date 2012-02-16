@@ -274,13 +274,13 @@ Dune::Fem::GridPartCapabilities::isConforming< GridPartType >::v
   : public GridPartInterface< GridPartTraits >
   {
     typedef GridPartDefault< GridPartTraits > ThisType;
-    typedef GridPartInterface< GridPartTraits > BaseType;
+    typedef GridPartTraits Traits;
 
   public:
     //! Grid implementation
-    typedef typename BaseType::GridType GridType;
+    typedef typename Traits::GridType GridType;
     //! Index set implementation
-    typedef typename BaseType::IndexSetType IndexSetType;
+    typedef typename Traits::IndexSetType IndexSetType;
 
   protected:
     GridType &grid_;
@@ -288,13 +288,11 @@ Dune::Fem::GridPartCapabilities::isConforming< GridPartType >::v
   protected:
     //! constructor
     GridPartDefault ( GridType &grid )
-    : BaseType(),
-      grid_( grid )
+    : grid_( grid )
     {}
 
     GridPartDefault ( const ThisType &other )
-    : BaseType(),
-      grid_( other.grid_ )
+    : grid_( other.grid_ )
     {}
 
     ~GridPartDefault ()
@@ -307,28 +305,6 @@ Dune::Fem::GridPartCapabilities::isConforming< GridPartType >::v
     //! Returns reference to the underlying grid
     GridType &grid () { return grid_; }
 
-    /** \brief obtain begin iterator for the interior-border partition
-     *
-     *  \tparam  codim  codimension for which the iterator is requested
-     */
-    template< int codim >
-    typename BaseType::template Codim< codim >::IteratorType
-    begin () const 
-    { 
-      return BaseType::template begin< codim, InteriorBorder_Partition >();
-    }
-
-    /** \brief obtain end iterator for the interior-border partition
-     *
-     *  \tparam  codim  codimension for which the iterator is requested
-     */
-    template< int codim >
-    typename BaseType::template Codim< codim >::IteratorType
-    end () const 
-    {
-      return BaseType::template end< codim, InteriorBorder_Partition >();
-    }
-
     /* \brief \copydoc GridPartInterface::convert 
        
        The default implementation does nothing but return the same entity 
@@ -339,14 +315,6 @@ Dune::Fem::GridPartCapabilities::isConforming< GridPartType >::v
       return entity;
     }
 
-  private:
-    template< int codim, PartitionIteratorType pitype >
-    typename BaseType::template Codim< codim >::template Partition< pitype >::IteratorType
-    begin () const;
-
-    template< int codim, PartitionIteratorType pitype >
-    typename BaseType::template Codim< codim >::template Partition< pitype >::IteratorType
-    end () const;
   };
 
 
