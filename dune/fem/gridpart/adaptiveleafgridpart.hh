@@ -1,13 +1,17 @@
 #ifndef DUNE_ADAPTIVELEAFGRIDPART_HH
 #define DUNE_ADAPTIVELEAFGRIDPART_HH
 
+//- dune-common includes
 #include <dune/common/typetraits.hh>
 
+//- dune-fem includes
+#include <dune/fem/gridpart/adaptiveleafindexset.hh>
+#include <dune/fem/gridpart/common/capabilities.hh>
+#include <dune/fem/gridpart/common/gridpart.hh>
+#include <dune/fem/gridpart/defaultindexsets.hh>
 #include <dune/fem/misc/capabilities.hh>
 #include <dune/fem/space/common/dofmanager.hh>
-#include <dune/fem/gridpart/gridpart.hh>
 #include <dune/fem/storage/singletonlist.hh>
-#include <dune/fem/gridpart/adaptiveleafindexset.hh>
 
 namespace Dune
 {
@@ -443,6 +447,212 @@ namespace Dune
     {
     }
   };
+
+
+
+  // Capabilities
+  // ------------
+
+  namespace Fem
+  {
+
+    namespace GridPartCapabilities
+    {
+
+      // Capabilities for AdaptiveLeafGridPart
+      // -------------------------------------
+
+      template< class Grid, PartitionIteratorType idxpitype, bool onlyCodimensionZero >
+      struct hasGrid< AdaptiveLeafGridPart< Grid, idxpitype, onlyCodimensionZero > >
+      {
+        static const bool v = true;
+      };
+
+      template< class Grid, PartitionIteratorType idxpitype, bool onlyCodimensionZero >
+      struct hasSingleGeometryType< AdaptiveLeafGridPart< Grid, idxpitype, onlyCodimensionZero > >
+      {
+        static const bool v = Dune::Capabilities::hasSingleGeometryType< Grid >::v;
+        static const unsigned int topologyId
+          = Dune::Capabilities::hasSingleGeometryType< Grid >::topologyId;;
+      };
+
+      template< class Grid, PartitionIteratorType idxpitype, bool onlyCodimensionZero >
+      struct isCartesian< AdaptiveLeafGridPart< Grid, idxpitype, onlyCodimensionZero > >
+      {
+        static const bool v = Dune::Capabilities::isCartesian< Grid >::v;
+      };
+
+      template< class Grid, PartitionIteratorType idxpitype, bool onlyCodimensionZero, int codim  >
+      struct hasEntity< AdaptiveLeafGridPart< Grid, idxpitype, onlyCodimensionZero >, codim >
+      {
+        static const bool v = Dune::Capabilities::hasEntity< Grid, codim >::v;
+      };
+
+      template< class Grid, PartitionIteratorType idxpitype, bool onlyCodimensionZero >
+      struct isParallel< AdaptiveLeafGridPart< Grid, idxpitype, onlyCodimensionZero > >
+      {
+        static const bool v = Dune::Capabilities::isParallel< Grid >::v;
+      };
+
+      template< class Grid, PartitionIteratorType idxpitype, bool onlyCodimensionZero, int codim >
+      struct canCommunicate< AdaptiveLeafGridPart< Grid, idxpitype, onlyCodimensionZero >, codim >
+      {
+        static const bool v = Dune::Capabilities::canCommunicate< Grid, codim >::v;
+      };
+
+      template< class Grid, PartitionIteratorType idxpitype, bool onlyCodimensionZero >
+      struct isConforming< AdaptiveLeafGridPart< Grid, idxpitype, onlyCodimensionZero > >
+      {
+        static const bool v = Dune::Capabilities::isLeafwiseConforming< Grid >::v;
+      };
+
+
+      // Capabilities for DGAdaptiveLeafGridPart
+      // ---------------------------------------
+
+      template< class Grid, PartitionIteratorType idxpitype >
+      struct hasGrid< DGAdaptiveLeafGridPart< Grid, idxpitype > >
+      {
+        static const bool v = true;
+      };
+
+      template< class Grid, PartitionIteratorType idxpitype >
+      struct hasSingleGeometryType< DGAdaptiveLeafGridPart< Grid, idxpitype > >
+      {
+        static const bool v = Dune::Capabilities::hasSingleGeometryType< Grid >::v;
+        static const unsigned int topologyId
+          = Dune::Capabilities::hasSingleGeometryType< Grid >::topologyId;;
+      };
+
+      template< class Grid, PartitionIteratorType idxpitype >
+      struct isCartesian< DGAdaptiveLeafGridPart< Grid, idxpitype > >
+      {
+        static const bool v = Dune::Capabilities::isCartesian< Grid >::v;
+      };
+
+      template< class Grid, PartitionIteratorType idxpitype, int codim  >
+      struct hasEntity< DGAdaptiveLeafGridPart< Grid, idxpitype >, codim >
+      {
+        static const bool v = Dune::Capabilities::hasEntity< Grid, codim >::v;
+      };
+
+      template< class Grid, PartitionIteratorType idxpitype >
+      struct isParallel< DGAdaptiveLeafGridPart< Grid, idxpitype > >
+      {
+        static const bool v = Dune::Capabilities::isParallel< Grid >::v;
+      };
+
+      template< class Grid, PartitionIteratorType idxpitype, int codim >
+      struct canCommunicate< DGAdaptiveLeafGridPart< Grid, idxpitype >, codim >
+      {
+        static const bool v = Dune::Capabilities::canCommunicate< Grid, codim >::v;
+      };
+
+      template< class Grid, PartitionIteratorType idxpitype >
+      struct isConforming< DGAdaptiveLeafGridPart< Grid, idxpitype > >
+      {
+        static const bool v = Dune::Capabilities::isLeafwiseConforming< Grid >::v;
+      };
+
+
+      // Capabilities for IdBasedLeafGridPart
+      // ------------------------------------
+
+      template< class Grid, PartitionIteratorType idxpitype >
+      struct hasGrid< IdBasedLeafGridPart< Grid, idxpitype > >
+      {
+        static const bool v = true;
+      };
+
+      template< class Grid, PartitionIteratorType idxpitype >
+      struct hasSingleGeometryType< IdBasedLeafGridPart< Grid, idxpitype > >
+      {
+        static const bool v = Dune::Capabilities::hasSingleGeometryType< Grid >::v;
+        static const unsigned int topologyId
+          = Dune::Capabilities::hasSingleGeometryType< Grid >::topologyId;;
+      };
+
+      template< class Grid, PartitionIteratorType idxpitype >
+      struct isCartesian< IdBasedLeafGridPart< Grid, idxpitype > >
+      {
+        static const bool v = Dune::Capabilities::isCartesian< Grid >::v;
+      };
+
+      template< class Grid, PartitionIteratorType idxpitype, int codim  >
+      struct hasEntity< IdBasedLeafGridPart< Grid, idxpitype >, codim >
+      {
+        static const bool v = Dune::Capabilities::hasEntity< Grid, codim >::v;
+      };
+
+      template< class Grid, PartitionIteratorType idxpitype >
+      struct isParallel< IdBasedLeafGridPart< Grid, idxpitype > >
+      {
+        static const bool v = Dune::Capabilities::isParallel< Grid >::v;
+      };
+
+      template< class Grid, PartitionIteratorType idxpitype, int codim >
+      struct canCommunicate< IdBasedLeafGridPart< Grid, idxpitype >, codim >
+      {
+        static const bool v = Dune::Capabilities::canCommunicate< Grid, codim >::v;
+      };
+
+      template< class Grid, PartitionIteratorType idxpitype >
+      struct isConforming< IdBasedLeafGridPart< Grid, idxpitype > >
+      {
+        static const bool v = Dune::Capabilities::isLeafwiseConforming< Grid >::v;
+      };
+
+
+      // Capbilities for IntersectionAdaptiveLeafGridPart
+      // ------------------------------------------------
+
+      template< class Grid, PartitionIteratorType idxpitype >
+      struct hasGrid< IntersectionAdaptiveLeafGridPart< Grid, idxpitype > >
+      {
+        static const bool v = true;
+      };
+
+      template< class Grid, PartitionIteratorType idxpitype >
+      struct hasSingleGeometryType< IntersectionAdaptiveLeafGridPart< Grid, idxpitype > >
+      {
+        static const bool v = Dune::Capabilities::hasSingleGeometryType< Grid >::v;
+        static const unsigned int topologyId
+          = Dune::Capabilities::hasSingleGeometryType< Grid >::topologyId;;
+      };
+
+      template< class Grid, PartitionIteratorType idxpitype >
+      struct isCartesian< IntersectionAdaptiveLeafGridPart< Grid, idxpitype > >
+      {
+        static const bool v = Dune::Capabilities::isCartesian< Grid >::v;
+      };
+
+      template< class Grid, PartitionIteratorType idxpitype, int codim  >
+      struct hasEntity< IntersectionAdaptiveLeafGridPart< Grid, idxpitype >, codim >
+      {
+        static const bool v = Dune::Capabilities::hasEntity< Grid, codim >::v;
+      };
+
+      template< class Grid, PartitionIteratorType idxpitype >
+      struct isParallel< IntersectionAdaptiveLeafGridPart< Grid, idxpitype > >
+      {
+        static const bool v = Dune::Capabilities::isParallel< Grid >::v;
+      };
+
+      template< class Grid, PartitionIteratorType idxpitype, int codim >
+      struct canCommunicate< IntersectionAdaptiveLeafGridPart< Grid, idxpitype >, codim >
+      {
+        static const bool v = Dune::Capabilities::canCommunicate< Grid, codim >::v;
+      };
+
+      template< class Grid, PartitionIteratorType idxpitype >
+      struct isConforming< IntersectionAdaptiveLeafGridPart< Grid, idxpitype > >
+      {
+        static const bool v = Dune::Capabilities::isLeafwiseConforming< Grid >::v;
+      };
+
+    } // end namespace GridPartCapabilities
+
+  } // end namespace Fem
 
 } // end namespace Dune
 
