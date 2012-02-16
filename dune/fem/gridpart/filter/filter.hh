@@ -9,9 +9,6 @@
 //- dune-common includes 
 #include <dune/common/bartonnackmanifcheck.hh>
 
-//- dune-fem includes
-#include <dune/fem/gridpart/gridpart.hh>
-#include <dune/fem/gridpart/adaptiveleafindexset.hh>
 
 namespace Dune
 {
