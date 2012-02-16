@@ -3,7 +3,7 @@
 
 //- dune-fem includes
 #include <dune/fem/gridpart/common/capabilities.hh>
-#include <dune/fem/gridpart/common/gridpartview.hh>
+#include <dune/fem/gridpart/common/gridpart.hh>
 #include <dune/fem/gridpart/defaultindexsets.hh>
 
 

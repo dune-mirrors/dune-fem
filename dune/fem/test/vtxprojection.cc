@@ -3,7 +3,7 @@
 #include <config.h>
 #include <iostream>
 
-#include <dune/fem/gridpart/gridpart.hh>
+#include <dune/fem/gridpart/hierarchicgridpart.hh>
 #include <dune/fem/misc/mpimanager.hh>
 #include <dune/fem/operator/projection/vtxprojection.hh>
 #include <dune/fem/operator/projection/l2projection.hh>

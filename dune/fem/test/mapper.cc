@@ -3,7 +3,7 @@
 #include <config.h>
 #include <iostream>
 
-#include <dune/fem/gridpart/gridpart.hh>
+#include <dune/fem/gridpart/hierarchicgridpart.hh>
 #include <dune/fem/function/adaptivefunction.hh>
 
 #include "testgrid.hh"

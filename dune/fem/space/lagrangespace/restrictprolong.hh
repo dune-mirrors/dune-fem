@@ -11,7 +11,7 @@
 #include <dune/grid/common/genericreferenceelements.hh>
 #endif
 
-#include <dune/fem/gridpart/gridpart.hh>
+#include <dune/fem/gridpart/leafgridpart.hh>
 #include <dune/fem/function/localfunction/localfunction.hh>
 #include <dune/fem/space/lagrangespace/lagrangepoints.hh>
 

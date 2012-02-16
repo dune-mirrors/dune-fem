@@ -9,6 +9,7 @@
 #include <iostream>
 
 // dune includes
+#include <dune/fem/misc/mpimanager.hh>
 #include <dune/fem/solver/timeprovider.hh>
 #include <dune/fem/operator/common/spaceoperatorif.hh>
 #include <dune/fem/solver/rungekutta.hh>
@@ -93,7 +94,10 @@ private:
 };
 
 
-int main() {
+int main( int argc, char ** argv )
+{
+  Dune::MPIManager::initialize( argc, argv );
+
   // problem data
   const double initialData = 1.0;
   const double startTime = -2.0;

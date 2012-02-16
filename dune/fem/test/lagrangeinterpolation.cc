@@ -3,7 +3,6 @@
 #include <config.h>
 #include <iostream>
 
-#include <dune/fem/gridpart/gridpart.hh>
 #include <dune/fem/gridpart/adaptiveleafgridpart.hh>
 
 #include <dune/fem/misc/double.hh>

@@ -6,7 +6,7 @@
 #include <config.h>
 #include <iostream>
 
-#include <dune/fem/gridpart/gridpart.hh>
+#include <dune/fem/gridpart/hierarchicgridpart.hh>
 #include <dune/fem/gridpart/adaptiveleafgridpart.hh>
 #include <dune/fem/misc/gridwidth.hh>
 
