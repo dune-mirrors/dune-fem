@@ -370,10 +370,10 @@ namespace Dune
                    GlobalJacobianRangeArray &jacobians ) const
   {
     std::vector< JacobianRangeType1 > phi1;
-    baseSet1_.jacobianAll( x, phi1 );        
+    baseSet1_.jacobianAll( x, gjit, phi1 );        
 
     std::vector< JacobianRangeType2 > phi2;
-    baseSet2_.jacobianAll( x, phi2 );       
+    baseSet2_.jacobianAll( x, gjit, phi2 );       
     const int size = size1_ + size2_;
 
     jacobians.resize( size );
