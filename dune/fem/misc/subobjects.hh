@@ -77,7 +77,7 @@ namespace Dune
   template <class DomainObject, class RangeObject, int offset >
   class SubObject 
   {
-    typedef DomainObject DomainObjectType
+    typedef DomainObject DomainObjectType;
     typedef RangeObject RangeObjectType;
 
     typedef typename Dune::RowType< RangeObject > :: Type RowType;
