@@ -274,12 +274,13 @@ Dune::Fem::GridPartCapabilities::isConforming< GridPartType >::v
   : public GridPartInterface< GridPartTraits >
   {
     typedef GridPartDefault< GridPartTraits > ThisType;
-    typedef GridPartTraits Traits;
 
   public:
-    //! Grid implementation
+    //! \brief Type of the Traits
+    typedef GridPartTraits Traits;
+    //! \brief Grid implementation
     typedef typename Traits::GridType GridType;
-    //! Index set implementation
+    //! \brief Index set implementation
     typedef typename Traits::IndexSetType IndexSetType;
 
   protected:
