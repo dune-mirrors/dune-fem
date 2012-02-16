@@ -121,6 +121,8 @@ Dune::Fem::GridPartCapabilities::isConforming< GridPartType >::v
       typedef typename Traits::template Codim< codim >::EntityPointerType  EntityPointerType;
       typedef typename Traits::template Codim< codim >::EntityType         EntityType;
 
+      typedef typename Traits::template Codim< codim >::EntitySeedType     EntitySeedType;
+
       template< PartitionIteratorType pitype >
       struct Partition
       {
@@ -244,6 +246,15 @@ Dune::Fem::GridPartCapabilities::isConforming< GridPartType >::v
       CHECK_AND_CALL_INTERFACE_IMPLEMENTATION( (asImp().communicate( data, iftype, dir )) );
     }
 
+    //! \brief obtain entity pointer from entity seed
+    template < class EntitySeed >
+    typename Codim< EntitySeed::codimension >::EntityPointerType
+    entityPointer ( const EntitySeed &seed ) const
+    {
+      CHECK_INTERFACE_IMPLEMENTATION( asImp().entityPointer( seed ) );
+      return asImp().entityPointer( seed );
+    }
+
     /*! \brief convert the grid's entity to a grid part entity
         Usually the parameter is GridType :: Codim< codim > :: Entity  
         and the return is Codim< codim > :: EntityType. 
@@ -306,6 +317,20 @@ Dune::Fem::GridPartCapabilities::isConforming< GridPartType >::v
     //! Returns reference to the underlying grid
     GridType &grid () { return grid_; }
 
+    /* \brief \copydoc GridPartInterface::entityPointer
+     *
+     * \tparam  EntitySeed  entity seed from which to create entity pointer 
+     *
+     * The default implementation simply forwards to the corresponding 
+     * method on the grid.
+     */
+    template < class EntitySeed >
+    typename Traits::template Codim< EntitySeed::codimension >::EntityPointerType
+    entityPointer ( const EntitySeed &seed ) const
+    {
+      return grid().entityPointer( seed );
+    }
+
     /* \brief \copydoc GridPartInterface::convert 
        
        The default implementation does nothing but return the same entity 
@@ -315,7 +340,6 @@ Dune::Fem::GridPartCapabilities::isConforming< GridPartType >::v
     {
       return entity;
     }
-
   };
 
 

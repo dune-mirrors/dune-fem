@@ -305,6 +305,8 @@ namespace Dune
       typedef typename GridType::template Codim< codim >::EntityPointer EntityPointerType;
       typedef typename GridType::template Codim< codim >::Entity        EntityType;
 
+      typedef typename GridType::template Codim< codim >::EntitySeed    EntitySeedType;
+
       template< PartitionIteratorType pitype >
       struct Partition
       {

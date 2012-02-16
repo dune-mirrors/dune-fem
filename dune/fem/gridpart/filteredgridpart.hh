@@ -117,6 +117,8 @@ namespace Dune
         typedef typename  HostGridPartType::template Codim< codim >::EntityType         EntityType ;  
         typedef typename  HostGridPartType::template Codim< codim >::EntityPointerType  EntityPointerType ;  
 
+        typedef typename  HostGridPartType::template Codim< codim >::EntitySeedType     EntitySeedType ;  
+
         template< PartitionIteratorType pitype >
         class Partition
         {
@@ -307,6 +309,14 @@ namespace Dune
                         InterfaceType iftype, CommunicationDirection dir ) const 
       {
         hostGridPart().communicate( data, iftype, dir );
+      }
+
+      //! \brief construct entity pointer from entity seed 
+      template < class EntitySeed >
+      typename Codim< EntitySeed::codimension >::EntityPointerType
+      entityPointer ( const EntitySeed &seed ) const
+      {
+        return hostGridPart_.entityPointer( seed );
       }
 
       //! \brief return reference to filter 

@@ -98,6 +98,8 @@ namespace Dune
         typedef typename GridFamily::Traits::template Codim< codim >::EntityPointer EntityPointerType;
         typedef typename GridFamily::Traits::template Codim< codim >::Entity EntityType;
 
+        typedef typename GridFamily::Traits::template Codim< codim >::EntitySeed EntitySeedType;
+
         template< PartitionIteratorType pitype >
         struct Partition
         {
@@ -213,6 +215,14 @@ namespace Dune
         typedef CommDataHandleIF< DataHandle, Data >  HostHandleType;
         IdDataHandle< GridFamily, HostHandleType > handleWrapper( handle );
         hostGridPart_.communicate( handleWrapper, iftype, dir );
+      }
+
+      template < class EntitySeed >
+      typename Codim< EntitySeed::codimension >::EntityPointerType
+      entityPointer ( const EntitySeed &seed ) const
+      {
+        typedef typename Codim< EntitySeed::codimension >::EntityPointerType::Implementation EntityPointerImp;
+        return EntityPointerImp( hostGridPart_.entityPointer( seed ) );
       }
 
       // convert a grid entity to a grid part entity ("Gurke!")

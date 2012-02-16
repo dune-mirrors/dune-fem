@@ -168,6 +168,8 @@ namespace Dune
         typedef typename GridPartFamily::Traits::template Codim< codim >::EntityPointer EntityPointerType;
         typedef typename GridPartFamily::Traits::template Codim< codim >::Entity EntityType;
 
+        typedef typename GridPartFamily::Traits::template Codim< codim >::EntitySeed EntitySeedType;
+
         template< PartitionIteratorType pitype >
         struct Partition
         {
@@ -290,6 +292,14 @@ namespace Dune
                          const LocalFunction< LCFTraits > &localCoordFunction ) const
       {
         return typename Codim< 0 >::EntityPointerType::Implementation( entity.impl(), localCoordFunction );
+      }
+
+      template < class EntitySeed >
+      typename Codim< EntitySeed::codimension >::EntityPointerType
+      entityPointer ( const EntitySeed &seed ) const
+      {
+        return Codim< EntitySeed::codimension >::EntityPointerType
+                 ::Implementation( coordFunction_, hostGridPart().entityPointer( seed ) );
       }
 
       // convert a grid entity to a grid part entity ("Gurke!")
