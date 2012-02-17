@@ -26,7 +26,7 @@ typedef Dune::YaspGrid< dimw > HGridType;
 #include <dune/fem/space/lagrangespace.hh>
 #include <dune/fem/quadrature/cachingquadrature.hh> 
 
-#include <dune/fem/gridpart/gridpart.hh>
+#include <dune/fem/gridpart/hierarchicgridpart.hh>
 #include <dune/fem/gridpart/adaptiveleafgridpart.hh> 
 
 #if HAVE_GRAPE

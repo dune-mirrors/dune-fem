@@ -6,7 +6,7 @@ const int polOrder = POLORDER;
 #include <iostream>
 #include <sstream>
 
-#include <dune/fem/gridpart/gridpart.hh>
+#include <dune/fem/gridpart/levelgridpart.hh>
 // #include <dgfgridtype.hh>
 
 #include <dune/fem/space/lagrangespace/lagrangespace.hh>

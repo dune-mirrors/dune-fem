@@ -13,8 +13,8 @@ static const int dimw = Dune::GridSelector::dimworld;
 #include <dune/fem/space/lagrangespace.hh>
 #include <dune/fem/quadrature/cachingquadrature.hh>
 
-#include <dune/fem/gridpart/gridpart.hh>
 #include <dune/fem/gridpart/adaptiveleafgridpart.hh> 
+#include <dune/fem/gridpart/hierarchicgridpart.hh>
 
 #include <dune/fem/misc/double.hh>
 
