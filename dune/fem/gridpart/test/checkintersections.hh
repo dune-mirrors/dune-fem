@@ -114,8 +114,11 @@ namespace Dune
       IntersectionIteratorType it2 = it;
       if( it != it2 )
         failureHandler( failure );
-      if( it->inside() != it2->inside() || it->outside() != it2->outside() )
+      if( it->inside() != it2->inside() )
         failureHandler( failure );
+      if( it->neighbor() )
+        if( !it->neighbor() || it->outside() != it2->outside() )
+          failureHandler( failure );
 
       // now increment second iterator
       ++it2;
@@ -172,6 +175,7 @@ namespace Dune
                                FailureHandler &failureHandler )
     {
       LocalGeometryType geometryInInside = intersection.geometryInInside();
+      geometryInInside.type();
       Dune::checkLocalGeometry( geometryInInside, entity.type(), "geometryInInside" );
 
       if( intersection.neighbor() )
@@ -237,8 +241,7 @@ namespace Dune
       /** \brief write message to stream */
       virtual void writeTo ( std::ostream &out ) const
       {
-        assert( *this );
-
+        assert( failed() );
         out <<  __FILE__
           << ":" << __LINE__ << ": Failure :"
           << "Summation of normals fails for " 
