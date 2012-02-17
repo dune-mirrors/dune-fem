@@ -18,6 +18,7 @@
 #include <dune/fem/function/adaptivefunction.hh>
 #include <dune/fem/quadrature/cachingquadrature.hh>
 #include <dune/fem/gridpart/adaptiveleafgridpart.hh>
+#include <dune/fem/gridpart/hierarchicgridpart.hh>
 
 #ifndef ENABLE_VTXPROJECTION
 #define ENABLE_VTXPROJECTION 1
