@@ -11,7 +11,6 @@
 // Dune includes
 #include <dune/fem/space/combinedspace.hh>
 #include <dune/fem/function/adaptivefunction.hh>
-#include <dune/fem/gridpart/gridpart.hh>
 #include <dune/fem/quadrature/cachingquadrature.hh>
 
 #include <dune/fem/misc/boundaryidentifier.hh>
@@ -28,6 +27,7 @@
 #include <dune/fem/solver/inverseoperators.hh>
 
 #include <dune/fem/gridpart/adaptiveleafgridpart.hh>
+#include <dune/fem/gridpart/leafgridpart.hh>
 
 #include <dune/fem/operator/2order/dgprimaloperator.hh>
 

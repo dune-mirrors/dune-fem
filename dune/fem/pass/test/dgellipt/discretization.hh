@@ -11,7 +11,7 @@
 // choose discrete function type
 #include <dune/fem/space/lagrangespace.hh>
 
-#include <dune/fem/gridpart/gridpart.hh>
+#include <dune/fem/gridpart/leafgridpart.hh>
 
 // ascii parser for parameter files 
 #include <dune/fem/io/file/asciiparser.hh>
