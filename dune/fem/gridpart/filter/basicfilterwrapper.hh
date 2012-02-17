@@ -1,15 +1,16 @@
 #ifndef DUNE_FEM_GRIDPART_FILTER_BASICFILTERWRAPPER_HH
 #define DUNE_FEM_GRIDPART_FILTER_BASICFILTERWRAPPER_HH
 
-//- system includes
 #include <algorithm>
 #include <vector>
 
-//- dune-fem includes
+#include <dune/grid/common/gridenums.hh>
+
 #include <dune/fem/gridpart/filter/filter.hh>
 
 namespace Dune
 {
+
   namespace Fem
   {
 
@@ -253,8 +254,8 @@ namespace Dune
       mutable std::vector< bool > contains_[ nCodim ];
     };
 
-  }  // end namespace Fem
+  }  // namespace Fem
 
-}  // end namespace Dune
+}  // namespace Dune
 
 #endif // #ifndef DUNE_FEM_GRIDPART_FILTER_BASICFILTERWRAPPER_HH
