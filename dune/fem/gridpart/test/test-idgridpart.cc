@@ -18,6 +18,7 @@
 
 #include "./failure.hh"
 #include "./checkseed.hh"
+#include "./checkgeometry.hh"
 #include "../../test/testgrid.hh"
 
 template< class GridPartType >
@@ -182,7 +183,8 @@ try
   // check entity seed
   typedef Dune::DefaultFailureHandler FailureHandlerType;
   FailureHandlerType failureHandler;
-  Dune::Fem::Check< GridPartType, FailureHandlerType >::checkEntitySeed( gridPart, failureHandler );
+  Dune::Fem::CheckEntitySeed< GridPartType, FailureHandlerType >::check( gridPart, failureHandler );
+  Dune::Fem::CheckGeometry< GridPartType, FailureHandlerType >::check( gridPart, failureHandler );
 
   return 0;
 }

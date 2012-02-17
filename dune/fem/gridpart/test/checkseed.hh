@@ -61,7 +61,7 @@ namespace Dune
      */
 
     template< class GridPartType, class FailureHandler >
-    class Check 
+    class CheckEntitySeed 
     {
       template< class GridPart, bool >
       struct If
@@ -104,7 +104,7 @@ namespace Dune
     public:
       static const int dimension = GridPartType::dimension;
 
-      static void checkEntitySeed ( const GridPartType &gridPart, FailureHandler &failureHandler )
+      static void check ( const GridPartType &gridPart, FailureHandler &failureHandler )
       {
         // generic for loop over all codimensions
         Dune::ForLoop< CheckCodim, 0, dimension >::apply( gridPart, failureHandler );

@@ -24,6 +24,7 @@
 // local includes
 #include "./failure.hh"
 #include "./checkseed.hh"
+#include "./checkgeometry.hh"
 #include "../../test/testgrid.hh"
 
 
@@ -192,12 +193,14 @@ int main ( int argc, char ** argv )
       std::cout << "gridWidth: " << Dune::GridWidth::calcGridWidth( gridPart ) << std::endl;
       /* --------------------------*/
 
-      /* ----------- added to test the entity seeds ---------------*/
+      /* ----------- new test suite methods ---------------*/
       std::cout << std::endl;
-      std::cout << "Testing entity seeds" << std::endl;
       typedef Dune::DefaultFailureHandler FailureHandlerType;
       FailureHandlerType failureHandler;
-      Dune::Fem::Check< GridPartType, FailureHandlerType >::checkEntitySeed( gridPart, failureHandler );
+      std::cout << "Testing entity seeds" << std::endl;
+      Dune::Fem::CheckEntitySeed< GridPartType, FailureHandlerType >::check( gridPart, failureHandler );
+      std::cout << "Testing geometies" << std::endl;
+      Dune::Fem::CheckGeometry< GridPartType, FailureHandlerType >::check( gridPart, failureHandler );
       /* --------------------------*/
 
       std::cout << std::endl << std::endl;
@@ -218,12 +221,14 @@ int main ( int argc, char ** argv )
       std::cout << "gridWidth: " << Dune::GridWidth::calcGridWidth( gridPart ) << std::endl;
       /* --------------------------*/
 
-      /* ----------- added to test the entity seeds ---------------*/
+      /* ----------- new test suite methods ---------------*/
       std::cout << std::endl;
-      std::cout << "Testing entity seeds" << std::endl;
       typedef Dune::DefaultFailureHandler FailureHandlerType;
       FailureHandlerType failureHandler;
-      Dune::Fem::Check< GridPartType, FailureHandlerType >::checkEntitySeed( gridPart, failureHandler );
+      std::cout << "Testing entity seeds" << std::endl;
+      Dune::Fem::CheckEntitySeed< GridPartType, FailureHandlerType >::check( gridPart, failureHandler );
+      std::cout << "Testing geometies" << std::endl;
+      Dune::Fem::CheckGeometry< GridPartType, FailureHandlerType >::check( gridPart, failureHandler );
       /* --------------------------*/
 
       std::cout << "Testing intersection iterator" << std::endl;
