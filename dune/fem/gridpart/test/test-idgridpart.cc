@@ -19,6 +19,7 @@
 #include "./failure.hh"
 #include "./checkseed.hh"
 #include "./checkgeometry.hh"
+#include "./checkintersections.hh"
 #include "../../test/testgrid.hh"
 
 template< class GridPartType >
@@ -185,6 +186,7 @@ try
   FailureHandlerType failureHandler;
   Dune::Fem::CheckEntitySeed< GridPartType, FailureHandlerType >::check( gridPart, failureHandler );
   Dune::Fem::CheckGeometry< GridPartType, FailureHandlerType >::check( gridPart, failureHandler );
+  Dune::Fem::CheckIntersections< GridPartType, FailureHandlerType >::check( gridPart, failureHandler );
 
   return 0;
 }

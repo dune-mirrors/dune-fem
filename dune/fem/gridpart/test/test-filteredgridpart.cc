@@ -25,6 +25,7 @@
 #include "./failure.hh"
 #include "./checkseed.hh"
 #include "./checkgeometry.hh"
+#include "./checkintersections.hh"
 #include "../../test/testgrid.hh"
 
 
@@ -201,6 +202,8 @@ int main ( int argc, char ** argv )
       Dune::Fem::CheckEntitySeed< GridPartType, FailureHandlerType >::check( gridPart, failureHandler );
       std::cout << "Testing geometies" << std::endl;
       Dune::Fem::CheckGeometry< GridPartType, FailureHandlerType >::check( gridPart, failureHandler );
+      std::cout << "Testing intersections" << std::endl;
+      Dune::Fem::CheckIntersections< GridPartType, FailureHandlerType >::check( gridPart, failureHandler );
       /* --------------------------*/
 
       std::cout << std::endl << std::endl;
@@ -229,6 +232,8 @@ int main ( int argc, char ** argv )
       Dune::Fem::CheckEntitySeed< GridPartType, FailureHandlerType >::check( gridPart, failureHandler );
       std::cout << "Testing geometies" << std::endl;
       Dune::Fem::CheckGeometry< GridPartType, FailureHandlerType >::check( gridPart, failureHandler );
+      std::cout << "Testing intersections" << std::endl;
+      Dune::Fem::CheckIntersections< GridPartType, FailureHandlerType >::check( gridPart, failureHandler );
       /* --------------------------*/
 
       std::cout << "Testing intersection iterator" << std::endl;
