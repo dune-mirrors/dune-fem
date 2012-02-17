@@ -55,6 +55,8 @@ AC_CONFIG_FILES([Makefile
      dune/fem/space/Makefile
      dune/fem/space/test/Makefile
      dune/fem/space/basefunctions/Makefile
+     dune/fem/space/common/Makefile
+     dune/fem/space/dofmapper/Makefile
      dune/fem/space/dgspace/Makefile
      dune/fem/space/fvspace/Makefile
      dune/fem/space/lagrangespace/Makefile
@@ -66,7 +68,6 @@ AC_CONFIG_FILES([Makefile
      dune/fem/space/combinedspace/Makefile
      dune/fem/space/padaptivespace/Makefile
      dune/fem/space/mapper/Makefile
-     dune/fem/space/common/Makefile
      dune/fem/quadrature/Makefile
      dune/fem/quadrature/test/Makefile
      dune/fem/quadrature/caching/Makefile

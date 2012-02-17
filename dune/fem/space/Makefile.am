@@ -1,5 +1,16 @@
-# don't follow the full GNU-standard; we definitely need automake >= 1.5
-AUTOMAKE_OPTIONS = foreign 1.5
+spacedir = $(includedir)/dune/fem/space
+space_HEADERS = adaptoperator.hh \
+                combineddiscretefunctionspace.hh \
+                combinedspace.hh \
+                dgspace.hh \
+                fvspace.hh \
+                lagrangespace.hh \
+                padaptivespace.hh \
+                reducedbasisspace.hh
+
+SUBDIRS = basefunctions common dofmapper mapper test dgspace fvspace \
+          lagrangespace combinedspace reducedbasisspace pqlagrangespace \
+          padaptivespace
 
 noinst_LTLIBRARIES = libspace.la
 
@@ -8,18 +19,4 @@ libspace_la_SOURCES =
 libspace_la_LIBADD = dgspace/libdgspace.la \
                      lagrangespace/liblagrangespace.la
 
-SUBDIRS = common mapper test dgspace fvspace lagrangespace combinedspace \
-basefunctions reducedbasisspace pqlagrangespace padaptivespace
-
-spacedir = $(includedir)/dune/fem/space
-space_HEADERS = adaptoperator.hh \
-                combinedspace.hh \
-                dgspace.hh \
-                fvspace.hh \
-                lagrangespace.hh \
-                reducedbasisspace.hh \
-                padaptivespace.hh	\
-								combineddiscretefunctionspace.hh
-
 include $(top_srcdir)/am/global-rules
-

@@ -12,6 +12,7 @@
 #include <dune/fem/misc/codimmap.hh>
 #include <dune/fem/misc/metaprogramming.hh>
 #include <dune/fem/space/common/dofmanager.hh>
+#include <dune/fem/space/dofmapper/localkey.hh>
 #include <dune/fem/space/lagrangespace/lagrangepoints.hh>
 #include <dune/fem/space/mapper/dofmapper.hh>
 #include <dune/fem/space/mapper/codimensionmapper.hh>
@@ -132,9 +133,6 @@ namespace Dune
     //! type of the DoF manager
     typedef DofManager< GridType > DofManagerType;
 
-  protected:
-    typedef typename LagrangePointSetType::DofInfo DofInfo;
-
   public:
     //! constructor
     LagrangeMapper ( const GridPartType &gridPart,
@@ -192,9 +190,9 @@ namespace Dune
     /** \copydoc Dune::DofMapper::mapToGlobal */
     int mapToGlobal ( const EntityType &entity, const int localDof ) const
     {
-      const DofInfo &dofInfo = lagrangePointSet( entity.type() ).dofInfo( localDof );
-      const unsigned int codim = dofInfo.codim;
-      return offset_[ codim ] + indexSet_.subIndex( entity, dofInfo.subEntity, codim );
+      const Fem::LocalKey &dofInfo = lagrangePointSet( entity.type() ).dofInfo( localDof );
+      const unsigned int codim = dofInfo.codim();
+      return offset_[ codim ] + indexSet_.subIndex( entity, dofInfo.subEntity(), codim );
     }
 
     /** \copydoc Dune::DofMapper::mapEntityDofToGlobal */
@@ -419,17 +417,6 @@ namespace Dune
     //! type of the DoF manager
     typedef DofManager< GridType > DofManagerType;
 
-  protected:
-    typedef typename LagrangePointSetType::DofInfo DofInfo;
-
-  private:
-    struct CodimCallInterface;
-    
-    template< unsigned int codim >
-    struct CodimCall;
-
-    typedef CodimMap< dimension+1, CodimCall > CodimCallMapType;
-
   public:
     //! constructor
     LagrangeMapper ( const GridPartType &gridPart,
@@ -488,12 +475,12 @@ namespace Dune
     int mapToGlobal ( const EntityType &entity, const int localDof ) const
     {
       // unsigned int codim, subEntity;
-      const DofInfo& dofInfo = lagrangePointSet( entity.type() ).dofInfo( localDof );
+      const Fem::LocalKey &dofInfo = lagrangePointSet( entity.type() ).dofInfo( localDof );
 
-      const unsigned int codim = dofInfo.codim;
-      const int subIndex = indexSet_.subIndex( entity, dofInfo.subEntity, codim );
+      const unsigned int codim = dofInfo.codim();
+      const int subIndex = indexSet_.subIndex( entity, dofInfo.subEntity(), codim );
 
-      return offset_[ codim ] + subIndex * maxDofs_[ codim ] + dofInfo.dofNumber;
+      return offset_[ codim ] + subIndex * maxDofs_[ codim ] + dofInfo.index();
     }
 
     /** \copydoc Dune::DofMapper::mapEntityDofToGlobal */

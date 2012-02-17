@@ -1,12 +1,10 @@
 #ifndef DUNE_LAGRANGESPACE_LAGRANGEPOINTS_HH
 #define DUNE_LAGRANGESPACE_LAGRANGEPOINTS_HH
 
-#if HAVE_DUNE_GEOMETRY
 #include <dune/geometry/referenceelements.hh>
-#else
-#include <dune/grid/common/genericreferenceelements.hh>
-#endif
+
 #include <dune/fem/quadrature/cachingpointlist.hh>
+#include <dune/fem/space/dofmapper/localkey.hh>
 
 #include "genericgeometry.hh"
 #include "genericlagrangepoints.hh"
@@ -206,13 +204,6 @@ namespace Dune
     //! type of points
     typedef FieldVector< FieldType, dimension > CoordinateType;
 
-    struct DofInfo
-    {
-      unsigned int codim;
-      unsigned int subEntity;
-      unsigned int dofNumber;
-    };
-
   private:
     typedef LagrangePointInterface< dim, maxPolynomialOrder >
       LagrangePointInterfaceType;
@@ -246,7 +237,7 @@ namespace Dune
       lagrangePointImpl_ = lpImpl ;
     }
 
-    const DofInfo &dofInfo ( unsigned int index ) const
+    const Fem::LocalKey &dofInfo ( unsigned int index ) const
     {
       return dofInfos_[ index ];
     }
@@ -256,10 +247,10 @@ namespace Dune
                         unsigned int &subEntity,
                         unsigned int &dofNumber ) const
     {
-      const DofInfo &dofInfo = dofInfos_[ index ];
-      codim = dofInfo.codim;
-      subEntity = dofInfo.subEntity;
-      dofNumber = dofInfo.dofNumber;
+      const Fem::LocalKey &dofInfo = this->dofInfo( index );
+      codim = dofInfo.codim();
+      subEntity = dofInfo.subEntity();
+      dofNumber = dofInfo.index();
     }
     
     unsigned int entityDofNumber ( unsigned int codim,
@@ -319,13 +310,13 @@ namespace Dune
     }
 
   protected:
-    void addDofInfo ( const DofInfo &dofInfo )
+    void addDofInfo ( const Fem::LocalKey &dofInfo )
     {
       dofInfos_.push_back( dofInfo );
     }
 
   private:
-    std::vector< DofInfo > dofInfos_;
+    std::vector< Fem::LocalKey > dofInfos_;
     const LagrangePointInterfaceType* lagrangePointImpl_;
   };
 
@@ -369,10 +360,10 @@ namespace Dune
           CoordinateType local;
           pt.local( local );
           lp.addIntegrationPoint( local );
-          
-          typename BaseType :: DofInfo dofInfo;
-          pt.dofSubEntity( dofInfo.codim, dofInfo.subEntity, dofInfo.dofNumber );
-          lp.addDofInfo( dofInfo );
+         
+          unsigned int codim, subEntity, dofNumber;
+          pt.dofSubEntity( codim, subEntity, dofNumber );
+          lp.addDofInfo( Fem::LocalKey( subEntity, codim, dofNumber ) );
         }
 
         typedef LagrangePointImplementation< topologyId, dim, maxPolynomialOrder, pOrd >
@@ -795,9 +786,6 @@ namespace Dune
       LagrangePointListType;
 
   public:
-    typedef typename LagrangePointListType::DofInfo DofInfo;
-
-  public:
     //! constructor
     LagrangePointSet ( const GeometryType &geometry, const int order )
     : BaseType( geometry, order ),
@@ -821,7 +809,7 @@ namespace Dune
     }
 
   public:
-    const DofInfo& dofInfo( unsigned int index ) const
+    const Fem::LocalKey &dofInfo( unsigned int index ) const
     {
       return lagrangePointList_.dofInfo( index );
     }

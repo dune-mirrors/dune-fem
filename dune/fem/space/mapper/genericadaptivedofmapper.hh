@@ -11,6 +11,7 @@
 #include <dune/fem/misc/codimmap.hh>
 #include <dune/fem/misc/metaprogramming.hh>
 #include <dune/fem/space/common/dofmanager.hh>
+#include <dune/fem/space/dofmapper/localkey.hh>
 #include <dune/fem/space/lagrangespace/lagrangepoints.hh>
 #include <dune/fem/space/mapper/dofmapper.hh>
 #include <dune/fem/space/mapper/codimensionmapper.hh>
@@ -331,8 +332,6 @@ namespace Dune
 
       typedef PersistentContainer< GridType, PolynomOrderStorageType > PolyOrderContainerType ;
     protected:
-      typedef typename CompiledLocalKeyType::DofInfo DofInfo;
-
       template <int codim, bool dg>
       struct NumDofs
       {
@@ -563,12 +562,12 @@ namespace Dune
           const int polOrd = polynomOrder( entity );
 
           // get dof info for entity and local dof 
-          const DofInfo &dofInfo = compiledLocalKey( polOrd, entity.type() ).dofInfo( localDof );
+          const Fem::LocalKey &dofInfo = compiledLocalKey( polOrd, entity.type() ).dofInfo( localDof );
 
-          const unsigned int codim = dofInfo.codim;
-          const unsigned int subEntity = dofInfo.subEntity;
+          const unsigned int codim = dofInfo.codim();
+          const unsigned int subEntity = dofInfo.subEntity();
 
-          return dofContainer( codim )( entity, subEntity ).dof( codim, polOrd, dofInfo.dofNumber );
+          return dofContainer( codim )( entity, subEntity ).dof( codim, polOrd, dofInfo.index() );
         }
       }
 
