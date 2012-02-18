@@ -118,8 +118,13 @@ namespace Dune
       };
 
       typedef typename Partition< InteriorBorder_Partition >::IteratorType IteratorType;
+      typedef typename GridType::template Codim< codim >::Geometry       GeometryType;
+      typedef typename GridType::template Codim< codim >::LocalGeometry  LocalGeometryType;
 
-      typedef typename GridType::template Codim< codim >::Entity EntityType;
+      typedef typename GridType::template Codim< codim >::EntityPointer  EntityPointerType;
+      typedef typename GridType::template Codim< codim >::Entity         EntityType;
+
+      typedef typename GridType::template Codim< codim >::EntitySeed     EntitySeedType;
     };
     
   public:
@@ -821,6 +826,33 @@ namespace Dune
 #undef CHECK_INTERFACE_IMPLEMENTATION
 #undef CHECK_AND_CALL_INTERFACE_IMPLEMENTATION
   /** @} */
+
+  namespace Fem
+  {
+
+    template< class Entity >
+    struct GridEntityAccess;
+
+    template< int codim, int dim, class Grid, template< int, int, class > class EntityImpl >
+    struct GridEntityAccess< Dune::Entity< codim, dim, Grid, EntityImpl > >
+    {
+      typedef Dune::Entity< codim, dim, Grid, EntityImpl > EntityType;
+      typedef Dune::Entity< codim, dim, Grid, EntityImpl > GridEntityType;
+
+      static const GridEntityType &gridEntity ( const EntityType &entity )
+      {
+        return entity;
+      }
+    };
+
+    template< class Entity >
+    const typename GridEntityAccess< Entity >::GridEntityType &
+    gridEntity ( const Entity &entity )
+    {
+      return GridEntityAccess< Entity >::gridEntity( entity );
+    }
+
+  } // end namespace Fem
 
 } // end namespace Dune
 
