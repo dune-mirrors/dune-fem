@@ -127,14 +127,14 @@ namespace Dune
                     const GridPartType &gridPart,
                     FailureHandler &failureHandler )
     {
-      int count = 0;
+      unsigned int count = 0;
 
       typedef typename Codim< codim >::IteratorType IteratorType;
       const IteratorType end = gridPart.template end< codim >();
       for( IteratorType it = gridPart.template begin< codim >(); it != end; ++it )
         ++count;
 
-      if( indexSet.size( codim ) != count )
+      if( (unsigned int) indexSet.size( codim ) != count )
       {
         SizeFailure failure( indexSet.size( codim ), count, codim );
         failureHandler( failure );
