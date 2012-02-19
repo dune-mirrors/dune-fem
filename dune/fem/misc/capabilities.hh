@@ -49,8 +49,8 @@ namespace Dune
       static const bool v = true;
     };
 
-    template< int dim, int dimw, ALUGridElementType elType, ALUGridRefinementType refineType >
-    struct hasHierarchicIndexSet< ALUGrid< dim, dimw, elType, refineType > >
+    template< int dim, int dimw, ALUGridElementType elType, ALUGridRefinementType refineType, class Comm >
+    struct hasHierarchicIndexSet< ALUGrid< dim, dimw, elType, refineType, Comm > >
     {
       static const bool v = true;
     };
@@ -138,8 +138,8 @@ namespace Dune
       static const bool v = true;
     };
 
-    template< int dim, int dimworld, ALUGridElementType elType, ALUGridRefinementType refineType >
-    struct supportsCallbackAdaptation< ALUGrid< dim, dimworld, elType, refineType > >
+    template< int dim, int dimworld, ALUGridElementType elType, ALUGridRefinementType refineType, class Comm >
+    struct supportsCallbackAdaptation< ALUGrid< dim, dimworld, elType, refineType, Comm > >
     {
       static const bool v = true;
     };
@@ -195,8 +195,8 @@ namespace Dune
       static const bool v = true;
     };
 
-    template< int dim, int dimworld, ALUGridElementType elType, ALUGridRefinementType refineType >
-    struct isLocallyAdaptive< ALUGrid< dim, dimworld, elType, refineType > >
+    template< int dim, int dimworld, ALUGridElementType elType, ALUGridRefinementType refineType, class Comm >
+    struct isLocallyAdaptive< ALUGrid< dim, dimworld, elType, refineType, Comm > >
     {
       static const bool v = true;
     };
