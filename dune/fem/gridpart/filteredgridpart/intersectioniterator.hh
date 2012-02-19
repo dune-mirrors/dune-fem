@@ -25,6 +25,13 @@ namespace Dune
       typedef typename HostIteratorType::Intersection HostIntersection;
 
     public:
+      //! \brief dimension
+      static const int dimension = HostIntersection::dimension;
+      //! \brief world dimension
+      static const int dimensionworld = HostIntersection::dimensionworld;
+      //! \brief single coordinate type
+      typedef typename HostIntersection::ctype ctype;
+
       //! \brief entity type
       typedef typename HostIntersection::Entity Entity;
 
