@@ -306,10 +306,10 @@ namespace Dune
 
   /** \brief Specialization of TwistUtility for ALUGrid. 
   */
-  template< int dim, int dimw, ALUGridElementType elType, ALUGridRefinementType refineType >
-  struct TwistUtility< ALUGrid< dim, dimw, elType, refineType > >
+  template< int dim, int dimw, ALUGridElementType elType, ALUGridRefinementType refineType, class Comm >
+  struct TwistUtility< ALUGrid< dim, dimw, elType, refineType, Comm > >
   {
-    typedef ALUGrid< dim, dimw, elType, refineType > GridType;
+    typedef ALUGrid< dim, dimw, elType, refineType, Comm > GridType;
     typedef typename GridType::Traits::LeafIntersectionIterator LeafIntersectionIterator;
     typedef typename LeafIntersectionIterator::Intersection LeafIntersection;
     typedef typename GridType::Traits::LevelIntersectionIterator LevelIntersectionIterator;
