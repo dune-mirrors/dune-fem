@@ -96,37 +96,41 @@ namespace Dune
   // --------------------------
 
   template< class GridPart, class LagrangePointSetContainer >
-  struct LagrangeMapperSingletonKey 
+  class LagrangeMapperSingletonKey 
   {
     typedef LagrangeMapperSingletonKey< GridPart, LagrangePointSetContainer > ThisType;
 
-    LagrangeMapperSingletonKey ( const GridPart &gridPart, LagrangePointSetContainer &pointSet, const int polOrd )
+  public:
+    typedef GridPart GridPartType;
+    typedef LagrangePointSetContainer LagrangePointSetContainerType;
+
+    LagrangeMapperSingletonKey ( const GridPartType &gridPart,
+                                 LagrangePointSetContainerType &pointSet,
+                                 const int polOrd )
     : gridPart_( gridPart ),
       pointSet_( pointSet ),
       polOrd_( polOrd )
     {}
 
-    bool operator == ( const ThisType &other ) const
+    bool operator== ( const ThisType &other ) const
     {
       return ((&indexSet() == &other.indexSet()) && (polOrd_ == other.polOrd_));
     }
 
-    bool operator != ( const ThisType &other ) const
+    bool operator!= ( const ThisType &other ) const
     {
       return ((&indexSet() != &other.indexSet()) || (polOrd_ != other.polOrd_));
     }
 
-    //! return reference to index set 
-    const GridPart &gridPart () const { return gridPart_; }
+    const GridPartType &gridPart () const { return gridPart_; }
 
-    const typename GridPart::IndexSetType &indexSet () const { return gridPart_.indexSet(); }
+    const typename GridPartType::IndexSetType &indexSet () const { return gridPart_.indexSet(); }
 
-    //! return lagrange point map set  
-    LagrangePointSetContainer &pointSet () const { return pointSet_; }
+    LagrangePointSetContainerType &pointSet () const { return pointSet_; }
 
   private:
-    const GridPart &gridPart_; 
-    LagrangePointSetContainer &pointSet_;
+    const GridPartType &gridPart_; 
+    LagrangePointSetContainerType &pointSet_;
     const int polOrd_;
   };
 
