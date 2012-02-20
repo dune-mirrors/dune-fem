@@ -26,6 +26,9 @@ namespace Dune
   };
 
 
+
+  // TemporaryLocalFunction
+  // ----------------------
   
   /** \ingroup LocalFunction
    *  \class TemporaryLocalFunction
@@ -253,6 +256,8 @@ namespace Dune
 
 
 
+  // TemporaryLocalFunctionImpl
+  // --------------------------
 
   template< class DiscreteFunctionSpace,
             template< class > class ArrayAllocator >
@@ -261,6 +266,9 @@ namespace Dune
     < DiscreteFunctionSpace,
       TemporaryLocalFunctionImpl< DiscreteFunctionSpace, ArrayAllocator > >
   {
+    template< class DiscreteFunction >
+    struct AssignDofs;
+
   public:
     //! type of the discrete function space
     typedef DiscreteFunctionSpace DiscreteFunctionSpaceType;
@@ -410,6 +418,39 @@ namespace Dune
   };
 
 
+
+  // TemporaryLocalFunctionImpl::AssignDofs
+  // --------------------------------------
+
+  template< class DiscreteFunctionSpace, template< class > class ArrayAllocator >
+  template< class DiscreteFunction >
+  struct TemporaryLocalFunctionImpl< DiscreteFunctionSpace, ArrayAllocator >::AssignDofs
+  {
+    AssignDofs ( const DiscreteFunction &discreteFunction, DofArrayType &dofs )
+    : discreteFunction_( discreteFunction ), dofs_( dofs )
+    {}
+
+    void operator () ( std::size_t local, std::size_t global )
+    {
+      typedef typename DiscreteFunction::ConstDofBlockPtrType ConstDofBlockPtrType;
+      static const unsigned int blockSize = DiscreteFunctionSpaceType::localBlockSize;
+    
+      ConstDofBlockPtrType blockPtr = discreteFunction_.block( global );
+      for( unsigned int i = 0; i < blockSize; ++i )
+        dofs_[ (local*blockSize) + i ] = (*blockPtr)[ i ];
+    }
+
+  private:
+    const DiscreteFunction &discreteFunction_;
+    DofArrayType &dofs_;
+  };
+
+
+
+
+
+  // TemporaryLocalFunctionFactory
+  // -----------------------------
   
   template< class DiscreteFunctionSpace,
             template< class > class ArrayAllocator = DefaultArrayAllocator >
@@ -440,8 +481,150 @@ namespace Dune
     const DiscreteFunctionSpaceType &discreteFunctionSpace_;
   };
 
-} // namespace Dune
 
-#include "temporarylocalfunction_inline.hh"
+
+  // Implementation of TemporaryLocalFunctionImpl
+  // --------------------------------------------
+
+  template< class DiscreteFunctionSpace, template< class > class ArrayAllocator >
+  inline TemporaryLocalFunctionImpl< DiscreteFunctionSpace, ArrayAllocator >
+    :: TemporaryLocalFunctionImpl ( const DiscreteFunctionSpaceType &dfSpace )
+  : discreteFunctionSpace_( dfSpace ),
+    entity_( 0 ),
+    baseFunctionSet_(),
+    dofs_( DiscreteFunctionSpace::localBlockSize * discreteFunctionSpace_.blockMapper().maxNumDofs() ),
+    needCheckGeometry_( true )
+  {}
+
+
+  template< class DiscreteFunctionSpace, template< class > class ArrayAllocator >
+  inline TemporaryLocalFunctionImpl< DiscreteFunctionSpace, ArrayAllocator >
+    :: TemporaryLocalFunctionImpl ( const DiscreteFunctionSpaceType &dfSpace,
+                                    const EntityType &entity )
+  : discreteFunctionSpace_( dfSpace ),
+    entity_( &entity ),
+    baseFunctionSet_( discreteFunctionSpace_.baseFunctionSet( entity ) ),
+    dofs_( DiscreteFunctionSpace::localBlockSize * discreteFunctionSpace_.blockMapper().maxNumDofs() ),
+    needCheckGeometry_( true )
+  {}
+
+
+  template< class DiscreteFunctionSpace, template< class > class ArrayAllocator >
+  inline TemporaryLocalFunctionImpl< DiscreteFunctionSpace, ArrayAllocator >
+    :: TemporaryLocalFunctionImpl ( const ThisType &other )
+  : discreteFunctionSpace_( other.discreteFunctionSpace_ ),
+    entity_( other.entity_ ),
+    baseFunctionSet_( other.baseFunctionSet_ ),
+    dofs_( other.dofs_ ),
+    needCheckGeometry_( true )
+  {}
+
+  
+  template< class DiscreteFunctionSpace, template< class > class ArrayAllocator >
+  inline
+  const typename TemporaryLocalFunctionImpl< DiscreteFunctionSpace, ArrayAllocator >
+    :: RangeFieldType &
+  TemporaryLocalFunctionImpl< DiscreteFunctionSpace, ArrayAllocator >
+    :: operator[] ( const int num ) const
+  {
+    assert( num < numDofs() );
+    return dofs_[ num ];
+  }
+
+
+  template< class DiscreteFunctionSpace, template< class > class ArrayAllocator >
+  inline
+  typename TemporaryLocalFunctionImpl< DiscreteFunctionSpace, ArrayAllocator >
+    :: RangeFieldType &
+  TemporaryLocalFunctionImpl< DiscreteFunctionSpace, ArrayAllocator >
+    :: operator[] ( const int num )
+  {
+    assert( num < numDofs() );
+    return dofs_[ num ];
+  }
+
+
+  template< class DiscreteFunctionSpace, template< class > class ArrayAllocator >
+  inline int
+  TemporaryLocalFunctionImpl< DiscreteFunctionSpace, ArrayAllocator >::order () const
+  {
+    return discreteFunctionSpace_.order();
+  }
+
+
+  template< class DiscreteFunctionSpace, template< class > class ArrayAllocator >
+  inline
+  const typename TemporaryLocalFunctionImpl< DiscreteFunctionSpace, ArrayAllocator >
+    :: BaseFunctionSetType &
+  TemporaryLocalFunctionImpl< DiscreteFunctionSpace, ArrayAllocator >
+    :: baseFunctionSet () const
+  {
+    assert( entity_ != 0 );
+    return baseFunctionSet_;
+  }
+
+  
+  template< class DiscreteFunctionSpace, template< class > class ArrayAllocator >
+  inline
+  const typename TemporaryLocalFunctionImpl< DiscreteFunctionSpace, ArrayAllocator >
+    :: EntityType &
+  TemporaryLocalFunctionImpl< DiscreteFunctionSpace, ArrayAllocator >
+    :: entity () const
+  {
+    assert( entity_ != 0 );
+    return *entity_;
+  }
+
+
+  template< class DiscreteFunctionSpace, template< class > class ArrayAllocator >
+  inline void TemporaryLocalFunctionImpl< DiscreteFunctionSpace, ArrayAllocator >
+    :: init ( const EntityType &entity )
+  {
+    const bool multipleBaseSets = discreteFunctionSpace_.multipleBaseFunctionSets();
+
+    if( multipleBaseSets || needCheckGeometry_ )
+    {
+      // if multiple base sets skip geometry call
+      bool updateBaseSet = true;
+      if( !multipleBaseSets && (entity_ != 0) )
+        updateBaseSet = (baseFunctionSet_.geometryType() != entity.type());
+      
+      if( multipleBaseSets || updateBaseSet )
+      {
+        baseFunctionSet_ = discreteFunctionSpace_.baseFunctionSet( entity );
+        needCheckGeometry_ = discreteFunctionSpace_.multipleGeometryTypes();
+      }
+    }
+    assert( baseFunctionSet_.size() <= dofs_.size() );
+
+    entity_ = &entity;
+    assert( baseFunctionSet_.geometryType() == entity.type() );
+  }
+
+
+  template< class DiscreteFunctionSpace, template< class > class ArrayAllocator >
+  template< class DiscreteFunction >
+  inline void TemporaryLocalFunctionImpl< DiscreteFunctionSpace, ArrayAllocator >
+    ::init ( const EntityType &entity, const DiscreteFunction &discreteFunction )
+  {
+    // initialize 
+    init( entity );
+
+    // copy dofs to local storage (modifying not allowed)
+    assert( numDofs() <= (int) dofs_.size() ); 
+    assert( &discreteFunctionSpace_ == &discreteFunction.space() );
+    AssignDofs< DiscreteFunction > assignDofs( discreteFunction, dofs_ );
+    discreteFunctionSpace_.blockMapper().mapEach( entity, assignDofs );
+  }
+
+
+  template< class DiscreteFunctionSpace, template< class > class ArrayAllocator >
+  inline int TemporaryLocalFunctionImpl< DiscreteFunctionSpace, ArrayAllocator >
+    :: numDofs () const
+  {
+    return baseFunctionSet_.size();
+  }
+
+} // namespace Dune
 
 #endif // #ifndef DUNE_FEM_TEMPORARYLOCALFUNCTION_HH

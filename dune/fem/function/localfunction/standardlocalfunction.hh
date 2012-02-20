@@ -1,9 +1,9 @@
 #ifndef DUNE_FEM_STANDARDLOCALFUNCTION_HH
 #define DUNE_FEM_STANDARDLOCALFUNCTION_HH
 
-#include <dune/fem/storage/array.hh>
-#include <dune/fem/space/common/dofstorage.hh>
 #include <dune/fem/function/localfunction/localfunction.hh>
+#include <dune/fem/space/common/dofstorage.hh>
+#include <dune/fem/storage/array.hh>
 
 namespace Dune
 {
@@ -21,6 +21,8 @@ namespace Dune
   {
     typedef StandardLocalFunctionImpl< DiscreteFunction, DiscreteFunctionSpace > ThisType;
     typedef LocalFunctionDefault< DiscreteFunctionSpace, ThisType > BaseType;
+
+    struct AssignDofs;
 
   public:
     //! type of discrete function the local function belongs to
@@ -93,7 +95,7 @@ namespace Dune
     DiscreteFunctionType &discreteFunction_;
     
     // array holding pointer to local dofs 
-    DynamicArray< RangeFieldType* > values_;
+    DynamicArray< RangeFieldType * > values_;
 
      // base function set 
     BaseFunctionSetType baseFunctionSet_;
@@ -105,6 +107,33 @@ namespace Dune
     unsigned int numDofs_;
 
     bool needCheckGeometry_;
+  };
+
+
+
+  // StandardLocalFunctionImpl::AssignDofs
+  // -------------------------------------
+
+  template< class DiscreteFunction, class DiscreteFunctionSpace >
+  struct StandardLocalFunctionImpl< DiscreteFunction, DiscreteFunctionSpace >::AssignDofs
+  {
+    AssignDofs ( DiscreteFunctionType &discreteFunction, DynamicArray< RangeFieldType * > &values )
+    : discreteFunction_( discreteFunction ), values_( values )
+    {}
+
+    void operator () ( std::size_t local, std::size_t global )
+    {
+      typedef typename DiscreteFunctionType::DofBlockPtrType DofBlockPtrType;
+      static const unsigned int blockSize = DiscreteFunctionSpaceType::localBlockSize;
+    
+      DofBlockPtrType blockPtr = discreteFunction_.block( global );
+      for( unsigned int i = 0; i < blockSize; ++i )
+        values_[ (local*blockSize) + i ] = &((*blockPtr)[ i ]);
+    }
+
+  private:
+    DiscreteFunctionType &discreteFunction_;
+    DynamicArray< RangeFieldType * > &values_;
   };
 
 
@@ -223,10 +252,7 @@ namespace Dune
   {
     typedef typename DiscreteFunctionSpaceType :: BlockMapperType BlockMapperType;
     typedef typename BlockMapperType :: DofMapIteratorType DofMapIteratorType;
-    enum { blockSize = DiscreteFunctionSpaceType :: localBlockSize };
 
-    typedef typename DiscreteFunctionType :: DofBlockPtrType DofBlockPtrType;
-    
     const DiscreteFunctionSpaceType &space = discreteFunction_.space();
     const bool multipleBaseSets = space.multipleBaseFunctionSets();
 
@@ -253,18 +279,7 @@ namespace Dune
     assert( baseFunctionSet_.geometryType() == entity.type() );
 
     assert( numDofs_ <= values_.size() );
-    const BlockMapperType &mapper = space.blockMapper();
-    const DofMapIteratorType end = mapper.end( entity );
-    for( DofMapIteratorType it = mapper.begin( entity ); it != end; ++it )
-    {
-      assert( it.global() == mapper.mapToGlobal( entity, it.local() ) );
-      
-      DofBlockPtrType blockPtr = discreteFunction_.block( it.global() );
-      
-      const unsigned int localBlock = it.local() * blockSize;
-      for( unsigned int i = 0; i < blockSize; ++i )
-        values_[ localBlock + i ] = &((*blockPtr)[ i ]);
-    }
+    space.blockMapper().mapEach( entity, AssignDofs( discreteFunction_, values_ ) );
   }
 
 
@@ -275,6 +290,6 @@ namespace Dune
     return numDofs_;
   }
 
-}
+} // namespace Dune
 
 #endif // #ifndef DUNE_FEM_STANDARDLOCALFUNCTION_HH
