@@ -236,6 +236,9 @@ namespace Dune
     // my type, to be revised 
     enum { myType = ( numCodimensions == 1 ) ? ( (StructuredGrid) ? -1 : 665 ) : 6 };
 
+    // max num of codimension (to avoid compiler warnings)
+    enum { maxNumCodimension = ((dimension + 1) > numCodimensions) ? dimension + 2 : numCodimensions+1 };
+
     //! default partition iterator type 
     static const PartitionIteratorType pitype = GridPartType :: indexSetPartitionType ;
 
@@ -244,7 +247,7 @@ namespace Dune
     // Codimension leaf index sets 
     mutable CodimIndexSetType* codimLeafSet_[ numCodimensions ];
     // flag for codim is in use or not 
-    mutable bool codimUsed_ [ numCodimensions ];
+    mutable bool codimUsed_ [ maxNumCodimension ];
     
     // actual sequence number 
     int sequence_;
@@ -282,7 +285,7 @@ namespace Dune
       codimUsed_[ 0 ] = true;
 
       // all higher codims are not used by default
-      for(int codim = 1; codim < numCodimensions; ++codim ) codimUsed_[ codim ] = false ;
+      for(int codim = 1; codim < maxNumCodimension; ++codim ) codimUsed_[ codim ] = false ;
 
       // set the codim of each Codim Set. 
       for(int codim = 0; codim < numCodimensions; ++codim ) 
@@ -496,8 +499,10 @@ namespace Dune
       }
       else 
       {
-        if( (codim != 0) && !codimUsed_[ codim ] )
+        if( (codim != 0) && ! codimUsed_[ codim ] )
+        {
           ForLoop< CallSetUpCodimSet, 0, dimension >::apply( codim, *this );
+        }
         
         const CodimIndexSetType &codimSet = codimLeafSet( codim );
         const IndexType idx = codimSet.subIndex( element, subNumber );
