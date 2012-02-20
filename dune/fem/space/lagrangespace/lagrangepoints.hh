@@ -730,9 +730,15 @@ namespace Dune
     }
 
   public:
-    const Fem::LocalKey &dofInfo( unsigned int index ) const
+    const Fem::LocalKey &localKey ( unsigned int index ) const
     {
       return lagrangePointList_.dofInfo( index );
+    }
+
+    DUNE_DEPRECATED
+    const Fem::LocalKey &dofInfo ( unsigned int index ) const
+    {
+      return localKey( index );
     }
 
     void dofSubEntity ( unsigned int index,

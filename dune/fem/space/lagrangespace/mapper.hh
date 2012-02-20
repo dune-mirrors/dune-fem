@@ -190,7 +190,7 @@ namespace Dune
     /** \copydoc Dune::DofMapper::mapToGlobal */
     int mapToGlobal ( const EntityType &entity, const int localDof ) const
     {
-      const Fem::LocalKey &dofInfo = lagrangePointSet( entity.type() ).dofInfo( localDof );
+      const Fem::LocalKey &dofInfo = lagrangePointSet( entity.type() ).localKey( localDof );
       const unsigned int codim = dofInfo.codim();
       return offset_[ codim ] + indexSet_.subIndex( entity, dofInfo.subEntity(), codim );
     }
@@ -475,7 +475,7 @@ namespace Dune
     int mapToGlobal ( const EntityType &entity, const int localDof ) const
     {
       // unsigned int codim, subEntity;
-      const Fem::LocalKey &dofInfo = lagrangePointSet( entity.type() ).dofInfo( localDof );
+      const Fem::LocalKey &dofInfo = lagrangePointSet( entity.type() ).localKey( localDof );
 
       const unsigned int codim = dofInfo.codim();
       const int subIndex = indexSet_.subIndex( entity, dofInfo.subEntity(), codim );
