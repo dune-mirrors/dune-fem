@@ -112,7 +112,33 @@ public:
     CHECK_INTERFACE_IMPLEMENTATION( asImp().contains( codim ) );
     return asImp().contains( codim );
   }
-  
+
+  /** \brief map each local DoF number to a global one
+   *
+   *  \param[in]  element  element, the DoFs belong to
+   *  \param[in]  f        functor to call for each DoF
+   *
+   *  The functor has to be a copyable object satisfying the following
+   *  interface:
+   *  \code
+   *  struct Functor
+   *  {
+   *    // application operator
+   *    void operator() ( int localDoF, int globalDoF );
+   *  };
+   *  \endcode
+   *
+   *  For each DoF to be mapped, this method will call the application operator
+   *  once.
+   *  
+   *  \note There is no guarantee on the order, in which the functor is applied.
+   */
+  template< class Functor >
+  void mapEach ( const ElementType &element, Functor f ) const
+  {
+    CHECK_AND_CALL_INTERFACE_IMPLEMENTATION( asImp().mapEach( element, f ) );
+  }
+
   /** \brief map a local DoF number to a global one
    *
    *  \param[in]  entity    entity the DoF belongs to
@@ -133,7 +159,7 @@ public:
    *
    *  \returns global number of the DoF
    */
-  template< class Entity > 
+  template< class Entity >
   int mapEntityDofToGlobal ( const Entity &entity, const int localDof ) const
   {
     CHECK_INTERFACE_IMPLEMENTATION
@@ -151,14 +177,14 @@ public:
 
   /** \brief obtain number of DoFs on an entity
    * 
-   *  \param[in]  entity  entity of codimension 0
+   *  \param[in]  element  entity of codimension 0
    *  
    *  \returns number of DoFs on the entity
    */
-  int numDofs ( const ElementType &entity ) const
+  int numDofs ( const ElementType &element ) const
   {
-    CHECK_INTERFACE_IMPLEMENTATION( asImp().numDofs( entity ) );
-    return asImp().numDofs( entity );
+    CHECK_INTERFACE_IMPLEMENTATION( asImp().numDofs( element ) );
+    return asImp().numDofs( element );
   }
 
   /** \brief obtain number of DoFs actually belonging to an entity
@@ -324,15 +350,6 @@ protected:
   }
 
 public:
-  /** \copydoc Dune::DofMapper::numDofs(const ElementType &entity) const
-   *  \note This implementation just returns the maximal number of DoFs on an
-   *        entity.
-   */
-  int numDofs ( const ElementType &entity ) const
-  {
-    return asImp().maxNumDofs();
-  }
-
   /** \brief Check, whether the data in a codimension has fixed size */
   bool fixedDataSize ( int codim ) const { return false; }
 

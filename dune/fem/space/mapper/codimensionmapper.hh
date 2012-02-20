@@ -117,6 +117,20 @@ namespace Dune
       return DofMapIteratorType( DofMapIteratorType::endIterator, entity, *this );
     }
 
+    /** \copydoc DofMapper::mapEach */
+    template< class Functor >
+    void mapEach ( const ElementType &element, Functor f ) const
+    {
+      if( codimension >= 0 )
+      {
+        const int n = numDofs( element );
+        for( int i = 0; i < n; ++i )
+          f( i, indexSet_.subIndex( element, i, codimension ) );
+      }
+      else
+        f( 0, indexSet_.index( element ) );
+    }
+
     /** \copydoc DofMapper::mapToGlobal */
     int mapToGlobal ( const ElementType &entity, const int localDof ) const
     {
@@ -152,7 +166,7 @@ namespace Dune
       }
     };
 
-  public:  
+  public:
     /** \copydoc DofMapper::mapEntityDofToGlobal */
     template< class Entity >
     int mapEntityDofToGlobal ( const Entity &entity, const int localDof ) const
@@ -167,10 +181,10 @@ namespace Dune
       return maxNumberOfDofs_;
     }
 
-    /** \copydoc Dune::DofMapper::numDofs(const ElementType &entity) const */
-    int numDofs ( const ElementType &entity ) const
+    /** \copydoc Dune::DofMapper::numDofs(const ElementType &element) const */
+    int numDofs ( const ElementType &element ) const
     {
-      return entity.template count< codimension >();
+      return element.template count< codimension >();
     }
 
     /** \copydoc Dune::DofMapper::numEntityDofs(const Entity &entity) const */

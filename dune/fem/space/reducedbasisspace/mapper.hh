@@ -16,16 +16,14 @@ namespace Dune
   {
     typedef GridPartImp GridPartType;
     
-    typedef typename GridPartType :: template Codim< 0 > :: IteratorType :: Entity
-      EntityType;
+    typedef typename GridPartType::template Codim< 0 >::EntityType ElementType;
     
     typedef BaseFunctionListImp BaseFunctionListType;
 
     typedef ReducedBasisMapper< GridPartType, BaseFunctionListType >
       DofMapperType;
     
-    typedef DefaultDofMapIterator< EntityType, DofMapperType >
-      DofMapIteratorType;
+    typedef DefaultDofMapIterator< ElementType, DofMapperType > DofMapIteratorType;
   };
 
 
@@ -58,48 +56,62 @@ namespace Dune
     const BaseFunctionListType &baseFunctionList_;
 
   public:
-    inline explicit ReducedBasisMapper ( const BaseFunctionListType &baseFunctionList )
+    explicit ReducedBasisMapper ( const BaseFunctionListType &baseFunctionList )
     : baseFunctionList_( baseFunctionList )
-    {
-    }
+    {}
 
     /** \copydoc Dune::DofMapper::begin(const EntityType &entity) const */
-    inline DofMapIteratorType begin ( const EntityType &entity ) const
+    DofMapIteratorType begin ( const EntityType &entity ) const
     {
       return DofMapIteratorType
         ( DofMapIteratorType :: beginIterator, entity, *this );
     }
     
     /** \copydoc Dune::DofMapper::end(const EntityType &entity) const */
-    inline DofMapIteratorType end ( const EntityType &entity ) const
+    DofMapIteratorType end ( const EntityType &entity ) const
     {
       return DofMapIteratorType
         ( DofMapIteratorType :: endIterator, entity, *this );
     }
 
+    /** \copydoc Dune::DofMapper::mapEach */
+    template< class Functor >
+    void mapEach ( const ElementType &element, Functor f ) const
+    {
+      const int n = size();
+      for( int i = 0; i < n; ++i )
+        f( i, i );
+    }
+
     /** \copydoc Dune::DofMapper::mapToGlobal(const EntityType &entity,const int localDof) const */
-    inline int mapToGlobal ( const EntityType &entity, const int localDof ) const
+    int mapToGlobal ( const EntityType &entity, const int localDof ) const
     {
       return localDof;
     }
 
     /** \copydoc Dune::DofMapper::mapEntityDofToGlobal(const Entity &entity,const int localDof) const */
     template< class Entity >
-    inline int mapEntityDofToGlobal ( const Entity &entity, const int localDof ) const
+    int mapEntityDofToGlobal ( const Entity &entity, const int localDof ) const
     {
       DUNE_THROW( NotImplemented, "ReducedBasisSpace cannot map entity DoFs." );
       return 0;
     }
 
+    /** \copydoc Dune::DofMapper::numDofs(const ElementType &element) const */
+    int numDofs ( const ElementType &element ) const
+    {
+      return size();
+    }
+
     /** \copydoc Dune::DofMapper::maxNumDofs() const */
-    inline int maxNumDofs () const
+    int maxNumDofs () const
     {
       return size();
     }
 
     /** \copydoc Dune::DofMapper::numEntityDofs(const Entity &entity) const */
     template< class Entity >
-    inline int numEntityDofs ( const Entity &entity ) const
+    int numEntityDofs ( const Entity &entity ) const
     {
       DUNE_THROW( NotImplemented, "ReducedBasisSpace cannot map entity DoFs." );
       return 0;
@@ -136,6 +148,6 @@ namespace Dune
     }
   };
   
-};
+} // namespace Dune
 
-#endif
+#endif // #ifndef DUNE_FEM_REDUCEDBASISSPACE_MAPPER_HH
