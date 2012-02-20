@@ -37,7 +37,7 @@ namespace Dune
       template< class Element >
       void operator() ( const std::size_t i, const Element &e )
       {
-        assign( e, array_[ i ] );
+        assign_( e, array_[ i ] );
       }
 
     private:
