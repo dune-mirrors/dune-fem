@@ -8,6 +8,7 @@
 
 //- local includes 
 #include <dune/fem/function/adaptivefunction/adaptivefunction.hh>
+#include <dune/fem/misc/functor.hh>
 #include <dune/fem/operator/common/localmatrix.hh> 
 #include <dune/fem/operator/common/localmatrixwrapper.hh> 
 #include <dune/fem/io/parameter.hh>
@@ -770,11 +771,11 @@ protected:
         
       // rows are determined by the range space
       rowMapper_.resize( rangeSpace_.mapper().numDofs( rangeEntity ) );
-      rangespace_.mapper().mapEach( rangeEntity, AssignFunctor< std::vector< int > >( rowMapper_ ) );
+      rangeSpace_.mapper().mapEach( rangeEntity, Fem::AssignFunctor< std::vector< int > >( rowMapper_ ) );
 
       // columns are determind by the domain space
       colMapper_.resize( domainSpace_.mapper().numDofs( domainEntity ) );
-      domainSpace_.mapper().mapEach( domainEntity, AssignFunctor< std::vector< int > >( colMapper_ ) );
+      domainSpace_.mapper().mapEach( domainEntity, Fem::AssignFunctor< std::vector< int > >( colMapper_ ) );
     }
 
     //! return number of rows 

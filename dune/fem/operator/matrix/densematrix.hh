@@ -4,6 +4,7 @@
 #include <dune/fem/storage/objectstack.hh>
 #include <dune/fem/solver/oemsolver.hh>
 #include <dune/fem/function/adaptivefunction.hh>
+#include <dune/fem/misc/functor.hh>
 #include <dune/fem/operator/common/localmatrix.hh>
 #include <dune/fem/operator/common/localmatrixwrapper.hh>
 
@@ -440,7 +441,7 @@ namespace Dune
     void map ( const Mapper &mapper, const Entity &entity, std::vector< unsigned int > &indices )
     {
       indices.resize( mapper.numDofs( entity ) );
-      mapper.mapEach( entity, AssignFunctor< std::vector< unsigned int > >( indices ) );
+      mapper.mapEach( entity, Fem::AssignFunctor< std::vector< unsigned int > >( indices ) );
     }
 
   protected:
