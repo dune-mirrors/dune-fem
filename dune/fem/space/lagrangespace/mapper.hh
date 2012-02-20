@@ -32,9 +32,9 @@ namespace Dune
     
     static const int polynomialOrder = polOrder;
 
-    typedef typename GridPartType::template Codim< 0 >::IteratorType::Entity EntityType;
+    typedef typename GridPartType::template Codim< 0 >::EntityType ElementType;
     typedef LagrangeMapper< GridPartType, polynomialOrder > DofMapperType;
-    typedef DefaultDofMapIterator< EntityType, DofMapperType > DofMapIteratorType;
+    typedef DefaultDofMapIterator< ElementType, DofMapperType > DofMapIteratorType;
   };
 
 
@@ -54,7 +54,7 @@ namespace Dune
     typedef typename BaseType::GridPartType GridPartType;
 
     //! type of entities (codim 0)
-    typedef typename BaseType::EntityType EntityType;
+    typedef typename BaseType::ElementType ElementType;
 
     //! type of the underlying grid
     typedef typename GridPartType::GridType GridType;
@@ -104,7 +104,7 @@ namespace Dune
     typedef typename Traits::GridPartType GridPartType;
 
     //! type of entities (codim 0)
-    typedef typename Traits::EntityType EntityType;
+    typedef typename Traits::ElementType ElementType;
 
     //! type of DofMapIterator
     typedef typename Traits::DofMapIteratorType DofMapIteratorType;
@@ -175,20 +175,20 @@ namespace Dune
       return size_;
     }
 
-    /** \copydoc Dune::DofMapper::begin(const EntityType &entity) const */
-    DofMapIteratorType begin ( const EntityType &entity ) const
+    /** \copydoc Dune::DofMapper::begin(const ElementType &entity) const */
+    DofMapIteratorType begin ( const ElementType &entity ) const
     {
       return DofMapIteratorType( DofMapIteratorType::beginIterator, entity, *this );
     }
     
-    /** \copydoc Dune::DofMapper::end(const EntityType &entity) const */
-    DofMapIteratorType end ( const EntityType &entity ) const
+    /** \copydoc Dune::DofMapper::end(const ElementType &entity) const */
+    DofMapIteratorType end ( const ElementType &entity ) const
     {
       return DofMapIteratorType( DofMapIteratorType::endIterator, entity, *this );
     }
 
     /** \copydoc Dune::DofMapper::mapToGlobal */
-    int mapToGlobal ( const EntityType &entity, const int localDof ) const
+    int mapToGlobal ( const ElementType &entity, const int localDof ) const
     {
       const Fem::LocalKey &dofInfo = lagrangePointSet( entity.type() ).localKey( localDof );
       const unsigned int codim = dofInfo.codim();
@@ -210,8 +210,8 @@ namespace Dune
       return numDofs_;
     }
 
-    /** \copydoc Dune::DofMapper::numDofs(const EntityType &entity) const */
-    int numDofs ( const EntityType &entity ) const
+    /** \copydoc Dune::DofMapper::numDofs(const ElementType &entity) const */
+    int numDofs ( const ElementType &entity ) const
     {
       return lagrangePointSet( entity.type() ).size();
     }
@@ -286,7 +286,7 @@ namespace Dune
 
     // Adaptation Methods (as for Index Sets)
 
-    void insertEntity ( const EntityType &entity )
+    void insertEntity ( const ElementType &entity )
     {
       // check, whether we need to enlarge any block and compute oversized block size
       unsigned int oldUpperBound = size_;
@@ -300,7 +300,7 @@ namespace Dune
       }
     }
 
-    void removeEntity ( const EntityType &entity )
+    void removeEntity ( const ElementType &entity )
     {}
 
     void resize ()
@@ -388,7 +388,7 @@ namespace Dune
     typedef typename Traits::GridPartType GridPartType;
 
     //! type of entities (codim 0)
-    typedef typename Traits::EntityType EntityType;
+    typedef typename Traits::ElementType ElementType;
 
     //! type of DofMapIterator
     typedef typename Traits::DofMapIteratorType DofMapIteratorType;
@@ -459,20 +459,20 @@ namespace Dune
       return size_;
     }
 
-    /** \copydoc Dune::DofMapper::begin(const EntityType &entity) const */
-    DofMapIteratorType begin ( const EntityType &entity ) const
+    /** \copydoc Dune::DofMapper::begin(const ElementType &entity) const */
+    DofMapIteratorType begin ( const ElementType &entity ) const
     {
       return DofMapIteratorType( DofMapIteratorType::beginIterator, entity, *this );
     }
     
-    /** \copydoc Dune::DofMapper::end(const EntityType &entity) const */
-    DofMapIteratorType end ( const EntityType &entity ) const
+    /** \copydoc Dune::DofMapper::end(const ElementType &entity) const */
+    DofMapIteratorType end ( const ElementType &entity ) const
     {
       return DofMapIteratorType( DofMapIteratorType::endIterator, entity, *this );
     }
 
     /** \copydoc Dune::DofMapper::mapToGlobal */
-    int mapToGlobal ( const EntityType &entity, const int localDof ) const
+    int mapToGlobal ( const ElementType &entity, const int localDof ) const
     {
       // unsigned int codim, subEntity;
       const Fem::LocalKey &dofInfo = lagrangePointSet( entity.type() ).localKey( localDof );
@@ -498,8 +498,8 @@ namespace Dune
       return numDofs_;
     }
 
-    /** \copydoc Dune::DofMapper::numDofs(const EntityType &entity) const */
-    int numDofs ( const EntityType &entity ) const
+    /** \copydoc Dune::DofMapper::numDofs(const ElementType &entity) const */
+    int numDofs ( const ElementType &entity ) const
     {
       return lagrangePointSet( entity.type() ).size();
     }
@@ -574,7 +574,7 @@ namespace Dune
 
     // Adaptation Methods (as for Index Sets)
 
-    void insertEntity ( const EntityType &entity )
+    void insertEntity ( const ElementType &entity )
     {
       // check, whether we need to enlarge any block and compute oversized block size
       unsigned int oldUpperBound = size_;
@@ -588,7 +588,7 @@ namespace Dune
       }
     }
 
-    void removeEntity ( const EntityType &entity )
+    void removeEntity ( const ElementType &entity )
     {}
 
     void resize ()

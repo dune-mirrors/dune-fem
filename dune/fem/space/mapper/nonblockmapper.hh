@@ -72,9 +72,9 @@ namespace Dune
   {
     typedef NonBlockMapper< BlockMapper, blockSize > DofMapperType;
 
-    typedef typename BlockMapper::Traits::EntityType EntityType;
+    typedef typename BlockMapper::ElementType ElementType;
 
-    typedef NonBlockDofMapIterator< typename BlockMapper::Traits::DofMapIteratorType, blockSize >
+    typedef NonBlockDofMapIterator< typename BlockMapper::DofMapIteratorType, blockSize >
       DofMapIteratorType;
   };
 
@@ -91,7 +91,7 @@ namespace Dune
     typedef DofMapper< NonBlockMapperTraits< BlockMapper, blockSize > > BaseType;
 
   public:
-    typedef typename BaseType::EntityType EntityType;
+    typedef typename BaseType::ElementType ElementType;
     typedef typename BaseType::DofMapIteratorType DofMapIteratorType;
 
     explicit NonBlockMapper ( BlockMapper &blockMapper )
@@ -103,17 +103,17 @@ namespace Dune
       return blockSize * blockMapper_.size();
     }
 
-    DofMapIteratorType begin ( const EntityType &entity ) const
+    DofMapIteratorType begin ( const ElementType &entity ) const
     {
       return DofMapIteratorType( blockMapper_.begin(entity) );
     }
 
-    DofMapIteratorType end ( const EntityType &entity ) const
+    DofMapIteratorType end ( const ElementType &entity ) const
     {
       return DofMapIteratorType( blockMapper_.end(entity) );
     }
 
-    int mapToGlobal ( const EntityType &entity, const int localDof ) const
+    int mapToGlobal ( const ElementType &entity, const int localDof ) const
     {
       const int i = localDof % blockSize;
       const int blockDof = localDof / blockSize;
@@ -133,7 +133,7 @@ namespace Dune
       return blockSize * blockMapper_.maxNumDofs();
     }
 
-    int numDofs ( const EntityType &entity ) const
+    int numDofs ( const ElementType &entity ) const
     {
       return blockSize * blockMapper_.numDofs( entity );
     }
@@ -192,6 +192,6 @@ namespace Dune
     BlockMapper &blockMapper_;
   };
 
-}
+} // namespace Dune
 
 #endif // #ifndef DUNE_FEM_NONBLOCKMAPPER_HH

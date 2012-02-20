@@ -13,44 +13,48 @@
 namespace Dune
 {
 
-  template< class GridPartImp, int codim >
+  // Internal Forward Declarations
+  // -----------------------------
+
+  template< class GridPart, int codim >
   class CodimensionMapper;
 
-  template <class EntityType, class DofMapperType> 
+  template< class Element, class DofMapper >
   class CodimensionDofMapIterator;
 
 
-  template< class GridPartImp, int codim >
+
+  // CodimensionMapperTraits
+  // -----------------------
+
+  template< class GridPart, int codim >
   struct CodimensionMapperTraits
   {
-    typedef GridPartImp GridPartType;
+    typedef GridPart GridPartType;
 
-    // we still need entities of codimension 0 here 
-    typedef typename GridPartType :: template Codim< 0 > :: IteratorType :: Entity
-      EntityType;
+    // we still need entities of codimension 0 here
+    typedef typename GridPartType::template Codim< 0 >::EntityType ElementType;
 
-    typedef typename GridPartType :: IndexSetType IndexSetType;
+    typedef typename GridPartType::IndexSetType IndexSetType;
     
-    typedef CodimensionMapper< GridPartType, codim >  DofMapperType;
+    typedef CodimensionMapper< GridPartType, codim > DofMapperType;
 
-    typedef DefaultDofMapIterator< EntityType, DofMapperType > DofMapIteratorType;
+    typedef DefaultDofMapIterator< ElementType, DofMapperType > DofMapIteratorType;
   };
 
 
-  template< class GridPartImp >
-  struct CodimensionMapperTraits< GridPartImp, 0 >
+  template< class GridPart >
+  struct CodimensionMapperTraits< GridPart, 0 >
   {
-    typedef GridPartImp GridPartType;
+    typedef GridPart GridPartType;
 
-    // we still need entities of codimension 0 here 
-    typedef typename GridPartType :: template Codim< 0 > :: IteratorType :: Entity
-      EntityType;
+    typedef typename GridPartType::template Codim< 0 >::EntityType ElementType;
 
-    typedef typename GridPartType :: IndexSetType IndexSetType;
+    typedef typename GridPartType::IndexSetType IndexSetType;
     
-    typedef CodimensionMapper< GridPartType, 0 >  DofMapperType;
+    typedef CodimensionMapper< GridPartType, 0 > DofMapperType;
 
-    typedef CodimensionDofMapIterator<EntityType, DofMapperType>  DofMapIteratorType;
+    typedef CodimensionDofMapIterator< ElementType, DofMapperType > DofMapIteratorType;
   };
 
 
@@ -58,32 +62,29 @@ namespace Dune
   /** \class CodimensionMapper
    *  \brief mapper allocating one DoF per subentity of a given codimension
    *
-   *  \tparam  GridPartImp  grid part, the mapper shall be used on
-   *  \tparam  cdim         codimension
+   *  \tparam  GridPart  grid part, the mapper shall be used on
+   *  \tparam  cdim      codimension
    */
-  template< class GridPartImp, int cdim >
+  template< class GridPart, int cdim >
   class CodimensionMapper
-  : public DofMapperDefault< CodimensionMapperTraits< GridPartImp, cdim > >
+  : public DofMapperDefault< CodimensionMapperTraits< GridPart, cdim > >
   {
-    typedef CodimensionMapper< GridPartImp, cdim > ThisType;
-    typedef DofMapperDefault< CodimensionMapperTraits< GridPartImp, cdim > > BaseType;
+    typedef CodimensionMapper< GridPart, cdim > ThisType;
+    typedef DofMapperDefault< CodimensionMapperTraits< GridPart, cdim > > BaseType;
 
   public:
     typedef typename BaseType::Traits Traits;
 
-    typedef typename Traits :: EntityType EntityType;
+    typedef typename Traits::ElementType ElementType;
 
-    typedef typename Traits :: GridPartType GridPartType;
+    typedef typename Traits::GridPartType GridPartType;
 
-    typedef typename Traits :: IndexSetType IndexSetType;
+    typedef typename Traits::IndexSetType IndexSetType;
 
-    typedef typename Traits :: DofMapIteratorType DofMapIteratorType;
-
-    //! type of grid, this mapper belongs to
-    typedef typename GridPartType::GridType GridType;
+    typedef typename Traits::DofMapIteratorType DofMapIteratorType;
 
     //! dimension of the grid
-    static const int dimension = GridType::dimension;
+    static const int dimension = GridPartType::dimension;
 
     //! codimension that is mapped 
     static const int codimension = cdim;
@@ -104,20 +105,20 @@ namespace Dune
       return indexSet_.size( codimension );
     }
 
-    /** \copydoc Dune::DofMapper::begin(const EntityType &entity) const */
-    DofMapIteratorType begin ( const EntityType &entity ) const
+    /** \copydoc Dune::DofMapper::begin(const ElementType &entity) const */
+    DofMapIteratorType begin ( const ElementType &entity ) const
     {
       return DofMapIteratorType( DofMapIteratorType::beginIterator, entity, *this );
     }
     
-    /** \copydoc Dune::DofMapper::end(const EntityType &entity) const */
-    DofMapIteratorType end ( const EntityType &entity ) const
+    /** \copydoc Dune::DofMapper::end(const ElementType &entity) const */
+    DofMapIteratorType end ( const ElementType &entity ) const
     {
       return DofMapIteratorType( DofMapIteratorType::endIterator, entity, *this );
     }
 
     /** \copydoc DofMapper::mapToGlobal */
-    int mapToGlobal ( const EntityType &entity, const int localDof ) const
+    int mapToGlobal ( const ElementType &entity, const int localDof ) const
     {
       // we only have one local dof 
       assert( localDof < maxNumDofs() );
@@ -166,8 +167,8 @@ namespace Dune
       return maxNumberOfDofs_;
     }
 
-    /** \copydoc Dune::DofMapper::numDofs(const EntityType &entity) const */
-    int numDofs ( const EntityType &entity ) const
+    /** \copydoc Dune::DofMapper::numDofs(const ElementType &entity) const */
+    int numDofs ( const ElementType &entity ) const
     {
       return entity.template count< codimension >();
     }
@@ -214,16 +215,16 @@ namespace Dune
   };
 
 
-  template< class GridPartImp, int cdim >
-  inline CodimensionMapper< GridPartImp, cdim >
+  template< class GridPart, int cdim >
+  inline CodimensionMapper< GridPart, cdim >
     ::CodimensionMapper( const GridPartType &gridPart )
   : indexSet_( gridPart.indexSet() ),
     maxNumberOfDofs_( 0 )
   {
-    typedef typename GridType::ctype ctype;
+    typedef typename GridPartType::ctype ctype;
     typedef GenericReferenceElements< ctype, dimension > RefElements;
 
-    AllGeomTypes< IndexSetType, GridType > allTypes( indexSet_ );
+    AllGeomTypes< IndexSetType, typename GridPartType::GridType > allTypes( indexSet_ );
     const std::vector< GeometryType > &types = allTypes.geomTypes( 0 );
     const unsigned int numTypes = types.size();
     for( unsigned int i = 0; i < numTypes; ++i )
@@ -241,19 +242,21 @@ namespace Dune
   // CodimensionDofMapIterator
   // -------------------------
 
-  template< class EntityType, class DofMapperType >
+  template< class Element, class DofMapper >
   class CodimensionDofMapIterator
   {
-    typedef CodimensionDofMapIterator< EntityType, DofMapperType > ThisType;
+    typedef CodimensionDofMapIterator< Element, DofMapper > ThisType;
 
   public:
+    typedef Element ElementType;
+    typedef DofMapper DofMapperType;
+
     enum IteratorType { beginIterator, endIterator };
 
     CodimensionDofMapIterator ( const IteratorType type,
-                                const EntityType& entity,
-                                const DofMapperType& mapper)
-    : baseIndex_( (type == endIterator) ? -1 : 
-                   mapper.mapToGlobal( entity, 0 ) ),
+                                const ElementType &entity,
+                                const DofMapperType &mapper )
+    : baseIndex_( (type == endIterator) ? -1 : mapper.mapToGlobal( entity, 0 ) ),
       dof_( (type == endIterator) ? mapper.numDofs( entity ) : 0 )
     {}
 
@@ -298,14 +301,14 @@ namespace Dune
   // CodimensionMapperSingletonFactory
   // ---------------------------------
 
-  template< class GridPartImp, int cdim >
+  template< class GridPart, int cdim >
   struct CodimensionMapperSingletonFactory
   {
-    typedef CodimensionMapper< GridPartImp, cdim > Object;
+    typedef CodimensionMapper< GridPart, cdim > Object;
 
     struct Key
     {
-      Key ( const GridPartImp &gp )
+      Key ( const GridPart &gp )
       : gridPart( gp )
       {}
 
@@ -314,7 +317,7 @@ namespace Dune
         return (&gridPart.indexSet() == &other.gridPart.indexSet() );
       }
 
-      const GridPartImp &gridPart;
+      const GridPart &gridPart;
     };
 
     //! create new mapper  
@@ -330,6 +333,6 @@ namespace Dune
     }
   };
 
-} // end namespace Dune
+} // namespace Dune
 
 #endif // #ifndef DUNE_FEM_CODIMENSIONMAPPER_HH

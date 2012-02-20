@@ -48,7 +48,9 @@ public:
   typedef typename Traits::DofMapperType DofMapperType;
  
   //! type of codimension 0 entities
-  typedef typename Traits::EntityType EntityType;
+  typedef typename Traits::ElementType ElementType;
+
+  typedef ElementType EntityType;
 
   //! type of the dof map iterator
   typedef typename Traits::DofMapIteratorType DofMapIteratorType;
@@ -76,7 +78,7 @@ public:
    *
    *  \returns begin iterator for the local DoF mapping
    */
-  DofMapIteratorType begin ( const EntityType &entity ) const
+  DofMapIteratorType begin ( const ElementType &entity ) const
   {
     CHECK_INTERFACE_IMPLEMENTATION( asImp().begin( entity ) );
     return asImp().begin( entity );
@@ -93,7 +95,7 @@ public:
    *
    *  \returns end iterator for the local DoF mapping
    */
-  DofMapIteratorType end ( const EntityType &entity ) const
+  DofMapIteratorType end ( const ElementType &entity ) const
   {
     CHECK_INTERFACE_IMPLEMENTATION( asImp().end( entity ) );
     return asImp().end( entity );
@@ -118,7 +120,7 @@ public:
    *
    *  \returns global number of the DoF
    */
-  int mapToGlobal ( const EntityType &entity, const int localDof ) const
+  int mapToGlobal ( const ElementType &entity, const int localDof ) const
   {
     CHECK_INTERFACE_IMPLEMENTATION(asImp().mapToGlobal(entity ,localDof));
     return asImp().mapToGlobal( entity , localDof );
@@ -153,7 +155,7 @@ public:
    *  
    *  \returns number of DoFs on the entity
    */
-  int numDofs ( const EntityType &entity ) const
+  int numDofs ( const ElementType &entity ) const
   {
     CHECK_INTERFACE_IMPLEMENTATION( asImp().numDofs( entity ) );
     return asImp().numDofs( entity );
@@ -239,19 +241,19 @@ public:
 
 
 
-template< class EntityImp, class DofMapperImp >
+template< class Element, class DofMapper >
 class DefaultDofMapIterator
 {
-  typedef DefaultDofMapIterator< EntityImp, DofMapperImp > ThisType;
+  typedef DefaultDofMapIterator< Element, DofMapper > ThisType;
 
 public:
-  typedef EntityImp EntityType;
-  typedef DofMapperImp DofMapperType;
+  typedef Element ElementType;
+  typedef DofMapper DofMapperType;
 
   enum IteratorType { beginIterator, endIterator };
   
   DefaultDofMapIterator ( const IteratorType type,
-                          const EntityType &entity,
+                          const ElementType &entity,
                           const DofMapperType &dofMapper )
   : entity_( entity ),
     dofMapper_( dofMapper ),
@@ -291,7 +293,7 @@ public:
   }
 
 protected:
-  const EntityType &entity_;
+  const ElementType &entity_;
   const DofMapperType &dofMapper_;
   int dof_;
 };
@@ -309,7 +311,7 @@ class DofMapperDefault
 public:
   typedef DofMapperTraits Traits;
 
-  typedef typename Traits :: EntityType EntityType;
+  typedef typename Traits::ElementType ElementType;
 
 protected:
   using BaseType :: asImp;
@@ -322,11 +324,11 @@ protected:
   }
 
 public:
-  /** \copydoc Dune::DofMapper::numDofs(const EntityType &entity) const
+  /** \copydoc Dune::DofMapper::numDofs(const ElementType &entity) const
    *  \note This implementation just returns the maximal number of DoFs on an
    *        entity.
    */
-  int numDofs ( const EntityType &entity ) const
+  int numDofs ( const ElementType &entity ) const
   {
     return asImp().maxNumDofs();
   }
