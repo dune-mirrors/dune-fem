@@ -52,7 +52,7 @@ struct ODEParameters
     PARDG::IterativeLinearSolver* solver = 0;
     static const std::string methodTypeTable[]
       = { "gmres", "cg" };
-    int method = Parameter::getEnum( "fem.ode.linersolver" , methodTypeTable,0 );
+    int method = Parameter::getEnum( "fem.ode.linearsolver" , methodTypeTable,0 );
     if (method == 0)
     {
       // number of gmres clycles that should be done 
