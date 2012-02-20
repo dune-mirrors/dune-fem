@@ -764,31 +764,17 @@ protected:
       /******************************************************************* 
       *   Rows belong to the DomainSpace and Columns to the RangeSpace   *
       *******************************************************************/
-      // initialize base functions sets 
-      BaseType :: init ( domainEntity, rangeEntity );
-        
-      // number of rows is determined by the range space 
-      rowMapper_.resize( rangeSpace_.mapper().numDofs( rangeEntity ) );
-      // number of columns is determined by the domain  space 
-      colMapper_.resize( domainSpace_.mapper().numDofs( domainEntity ) );
-      
-      // rows are determined by the range space 
-      typedef typename RangeSpaceType::MapperType::DofMapIteratorType RangeMapIterator;
-      const RangeMapIterator rmend = rangeSpace_.mapper().end( rangeEntity );
-      for( RangeMapIterator rmit = rangeSpace_.mapper().begin( rangeEntity ); rmit != rmend; ++rmit )
-      {
-        assert( rmit.global() == rangeSpace_.mapper().mapToGlobal( rangeEntity, rmit.local() ) );
-        rowMapper_[ rmit.local() ] = rmit.global();
-      }
 
-      // columns are determind by the domain space 
-      typedef typename DomainSpaceType::MapperType::DofMapIteratorType DomainMapIterator;
-      const DomainMapIterator dmend = domainSpace_.mapper().end( domainEntity );
-      for( DomainMapIterator dmit = domainSpace_.mapper().begin( domainEntity ); dmit != dmend; ++dmit )
-      {
-        assert( dmit.global() == domainSpace_.mapper().mapToGlobal( domainEntity, dmit.local() ) );
-        colMapper_[ dmit.local() ] = dmit.global();
-      }
+      // initialize base functions sets 
+      BaseType::init( domainEntity, rangeEntity );
+        
+      // rows are determined by the range space
+      rowMapper_.resize( rangeSpace_.mapper().numDofs( rangeEntity ) );
+      rangespace_.mapper().mapEach( rangeEntity, AssignFunctor< std::vector< int > >( rowMapper_ ) );
+
+      // columns are determind by the domain space
+      colMapper_.resize( domainSpace_.mapper().numDofs( domainEntity ) );
+      domainSpace_.mapper().mapEach( domainEntity, AssignFunctor< std::vector< int > >( colMapper_ ) );
     }
 
     //! return number of rows 

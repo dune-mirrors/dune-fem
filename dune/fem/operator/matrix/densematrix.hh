@@ -439,14 +439,8 @@ namespace Dune
     template< class Mapper, class Entity >
     void map ( const Mapper &mapper, const Entity &entity, std::vector< unsigned int > &indices )
     {
-      typedef typename Mapper::DofMapIteratorType Iterator;
       indices.resize( mapper.numDofs( entity ) );
-      const Iterator end = mapper.end( entity );
-      for( Iterator it = mapper.begin( entity ); it != end; ++it )
-      {
-        assert( it.global() == mapper.mapToGlobal( entity, it.local() ) );
-        indices[ it.local() ] = it.global();
-      }
+      mapper.mapEach( entity, AssignFunctor< std::vector< unsigned int > >( indices ) );
     }
 
   protected:
