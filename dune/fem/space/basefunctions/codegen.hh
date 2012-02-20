@@ -191,7 +191,9 @@ namespace Fem {
         {
           file << "#include \""<< filenames_[ i ].first << "\"" << std::endl;
         }
-        file << "#undef CODEGEN_COMPILE_INNERLOOPS" << std::endl;
+        file << "#undef CODEGEN_COMPILE_INNERLOOPS" << std::endl << std::endl;
+        file << "#include \"" << filename << ".c\"" <<std::endl;
+
         file << "#endif // CODEGEN_INCLUDEMAXNUMS_INCLUDED" << std::endl << std::endl;
         file << "#elif defined CODEGEN_INCLUDEEVALCALLERS" << std::endl;
         file << "#ifndef CODEGEN_EVALCALLERS_INCLUDED" << std::endl;
@@ -214,6 +216,7 @@ namespace Fem {
         file << "#else" << std::endl << std::endl ;
         file << "#ifndef CODEGEN_INCLUDE_IMPLEMENTATION" << std::endl;
         file << "#define CODEGEN_INCLUDE_IMPLEMENTATION" << std::endl;
+        file << "#undef CODEGEN_COMPILE_INNERLOOPS" << std::endl;
         for( size_t i = 0; i < filenames_.size(); ++i ) 
         {
           file << "#include \""<< filenames_[ i ].first << "\"" << std::endl;
