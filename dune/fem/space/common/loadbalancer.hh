@@ -101,7 +101,7 @@ protected:
                  int balanceCounter = 0 )
   : grid_( grid ),
     dm_ ( DofManagerType::instance( grid_ ) ),
-    balanceStep_( Parameter::getValue< int >( "BalanceStep", balanceCounter ) ),
+    balanceStep_( getBalanceStep( balanceCounter ) ),
     balanceCounter_( balanceCounter ),
     localList_(),
     collList_(),
@@ -124,7 +124,7 @@ protected:
                           int balanceCounter = 0 )
   : grid_( grid ),
     dm_ ( DofManagerType::instance( grid_ ) ),
-    balanceStep_( Parameter::getValue< int >( "BalanceStep", balanceCounter ) ),
+    balanceStep_( getBalanceStep( balanceCounter ) ),
     balanceCounter_( balanceCounter ),
     localList_(),
     collList_(),
@@ -132,6 +132,20 @@ protected:
   {
     if( Parameter::verbose() )
       std::cout << "Created LoadBalancer: balanceStep = " << balanceStep_ << std::endl;
+  }
+
+  int getBalanceStep( int balanceCounter ) const 
+  {
+    int step = balanceCounter;
+    if( Parameter :: exists("BalanceStep") )
+    {
+      std::cout << "Warning: deprecated parameter 'BalanceStep', please use 'fem.loadbalancing.step' instead!" << std::endl;
+      step = Parameter::getValue< int >( "BalanceStep", balanceCounter );
+    }
+    else 
+      step = Parameter::getValue< int >( "fem.loadbalancing.step", balanceCounter );
+
+    return step;
   }
 
 public:  
