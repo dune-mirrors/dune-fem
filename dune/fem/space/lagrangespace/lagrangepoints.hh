@@ -455,132 +455,72 @@ namespace Dune
 
   
 
-  template< class GridPartImp,
-            unsigned int codim,
-            unsigned int polOrder >
+  // SubEntityLagrangePointIterator
+  // ------------------------------
+
+  template< class GridPart, int codim, unsigned int polOrder >
   class SubEntityLagrangePointIterator
   {
+    typedef SubEntityLagrangePointIterator< GridPart, codim, polOrder > ThisType;
+
   public:
-    typedef GridPartImp GridPartType;
+    typedef GridPart GridPartType;
 
-    typedef typename GridPartType :: GridType GridType;
+    typedef typename GridPartType::ctype FieldType;
 
-    typedef typename GridType :: ctype FieldType;
+    static const int dimension = GridPartType::dimension;
+    static const int codimension = codim;
 
-    enum { dimension = GridType :: dimension };
-    enum { codimension = codim };
-
-    enum { polynomialOrder = polOrder };
+    static const unsigned int polynomialOrder = polOrder;
 
     typedef FieldVector< FieldType, dimension > pointType;
 
-  private:
-    typedef SubEntityLagrangePointIterator< GridPartType,
-                                            codimension,
-                                            polynomialOrder >
-      ThisType;
-
-    typedef LagrangePointSet< GridPartType, polynomialOrder >
-      LagrangePointSetType;
-
-    typedef GenericReferenceElementContainer< FieldType, dimension >
-      ReferenceElementContainerType;
-    typedef typename ReferenceElementContainerType :: value_type
-      ReferenceElementType;
+    typedef LagrangePointSet< GridPartType, polynomialOrder > LagrangePointSetType;
 
   private:
-    const ReferenceElementContainerType *refElementContainer_;
-    
-    const LagrangePointSetType *lagrangePointSet_;
-    unsigned int subEntity_;
+    typedef GenericReferenceElement< FieldType, dimension > ReferenceElementType;
+    typedef GenericReferenceElements< FieldType, dimension > ReferenceElementsType;
 
-    unsigned int codim_;
-    unsigned int subIndex_, numSubIndices_;
-    unsigned int subSubEntity_;
-    unsigned int dofNumber_, numDofs_;
-
-  private:
-    SubEntityLagrangePointIterator
-      ( const LagrangePointSetType &lagrangePointSet,
-        const unsigned int subEntity,
-        const bool beginIterator )
-    : refElementContainer_( &ReferenceElementContainerType :: instance () )
+    SubEntityLagrangePointIterator ( const LagrangePointSetType &lagrangePointSet,
+                                     const unsigned int subEntity,
+                                     const bool beginIterator )
+    : lagrangePointSet_( &lagrangePointSet ),
+      refElement_( &ReferenceElementsType::general( lagrangePointSet_->geometryType() ) ),
+      subEntity_( subEntity ),
+      codim_( beginIterator ? codimension : dimension+1 ),
+      subIndex_( 0 ),
+      numSubIndices_( 1 ),
+      subSubEntity_( subEntity_ ),
+      dofNumber_( 0 ),
+      numDofs_( lagrangePointSet_->numDofs( codimension, subSubEntity_ ) )
     {
-      lagrangePointSet_ = &lagrangePointSet;
-      subEntity_ = subEntity;
-
-      subIndex_ = 0;
-      numSubIndices_ = 1;
-      subSubEntity_ = subEntity_;
-        
-      dofNumber_ = 0;
-      numDofs_ = lagrangePointSet_->numDofs( codimension, subSubEntity_ );
-        
-      if( beginIterator ) {
-        codim_ = codimension;
+      if( beginIterator )
         assertDof();
-      } else
-        codim_ = dimension+1;
     }
   
   public:
     SubEntityLagrangePointIterator ()
-    : refElementContainer_( &ReferenceElementContainerType :: instance () )
-    {
-      lagrangePointSet_ = NULL;
-      subEntity_ = 0;
-
-      codim_ = dimension + 1;
-      subIndex_ = 0;
-      dofNumber_ = 0;
-    }
-    
-    SubEntityLagrangePointIterator ( const ThisType &other )
-    : refElementContainer_( &ReferenceElementContainerType :: instance () )
-    {
-      lagrangePointSet_ = other.lagrangePointSet_;
-      subEntity_ = other.subEntity_;
-
-      codim_ = other.codim_;
-      
-      subIndex_ = other.subIndex_;
-      numSubIndices_ = other.numSubIndices_;
-      subSubEntity_ = other.subSubEntity_;
-      
-      dofNumber_ = other.dofNumber_;
-      numDofs_ = other.numDofs_;
-    }
-
-    ThisType& operator= ( const ThisType &other )
-    {
-      lagrangePointSet_ = other.lagrangePointSet_;
-      subEntity_ = other.subEntity_;
-
-      codim_ = other.codim_;
-      
-      subIndex_ = other.subIndex_;
-      numSubIndices_ = other.numSubIndices_;
-      subSubEntity_ = other.subSubEntity_;
-      
-      dofNumber_ = other.dofNumber_;
-      numDofs_ = other.numDofs_;
-    }
+    : lagrangePointSet_( 0 ),
+      refElement_( 0 ),
+      codim_( dimension+1 ),
+      subEntity_( 0 ),
+      subIndex_( 0 ),
+      dofNumber_( 0 )
+    {}
 
     unsigned int operator* () const
     {
-      assert( lagrangePointSet_ != NULL );
+      assert( lagrangePointSet_ );
       assert( codim_ <= dimension );
 
-      return lagrangePointSet_->entityDofNumber
-               ( codim_, subSubEntity_, dofNumber_ );
+      return lagrangePointSet_->entityDofNumber( codim_, subSubEntity_, dofNumber_ );
     }
 
-    ThisType& operator++ ()
+    ThisType &operator++ ()
     {
-      if( codim_ <= dimension ) {
-        ++dofNumber_;
-        assertDof();
-      }
+      assert( codim_ <= dimension );
+      ++dofNumber_;
+      assertDof();
       return *this;
     }
 
@@ -597,131 +537,108 @@ namespace Dune
 
     bool operator!= ( const ThisType& other ) const
     {
-      return !(this->operator==( other ));
+      return !(*this == other);
     }
- 
     
-    static ThisType begin( const LagrangePointSetType &lagrangePointSet,
-                                  unsigned int subEntity )
+    static ThisType begin ( const LagrangePointSetType &lagrangePointSet,
+                            unsigned int subEntity )
     {
       return ThisType( lagrangePointSet, subEntity, true );
     }
 
-    static ThisType end( const LagrangePointSetType &lagrangePointSet,
-                                unsigned int subEntity )
+    static ThisType end ( const LagrangePointSetType &lagrangePointSet,
+                          unsigned int subEntity )
     {
       return ThisType( lagrangePointSet, subEntity, false );
     }
 
   private:
-    const ReferenceElementType & referenceElement ( const GeometryType& geo) const
-    {
-      assert( refElementContainer_ );
-      return (*refElementContainer_)( geo );
-    }
-
     void assertDof ()
     {
-      assert( lagrangePointSet_ != NULL );
-        
-      while( dofNumber_ >= numDofs_ ) {
-        const ReferenceElementType &refElement = referenceElement( lagrangePointSet_->geometryType() );
+      assert( lagrangePointSet_ );
+      assert( refElement_ );
+
+      while( dofNumber_ >= numDofs_ )
+      {
+        const ReferenceElementType &refElement = *refElement_;
           
         dofNumber_ = 0;
         ++subIndex_;
-        while( subIndex_ >= numSubIndices_ ) {
+        while( subIndex_ >= numSubIndices_ ) 
+        {
           subIndex_ = 0;
           if( ++codim_ > dimension )
             return;
           numSubIndices_ = refElement.size( subEntity_, codimension, codim_ );
         }
-        subSubEntity_ = refElement.subEntity( subEntity_, codimension,
-                                              subIndex_, codim_ );
+        subSubEntity_ = refElement.subEntity( subEntity_, codimension, subIndex_, codim_ );
         numDofs_ = lagrangePointSet_->numDofs( codim_, subSubEntity_ );
       }
     }
+
+    const LagrangePointSetType *lagrangePointSet_;
+    const ReferenceElementType *refElement_;
+    unsigned int subEntity_;
+
+    int codim_;
+    unsigned int subIndex_, numSubIndices_;
+    unsigned int subSubEntity_;
+    unsigned int dofNumber_, numDofs_;
   };
  
 
 
-  template< class GridPartImp, unsigned int polOrder >
-  class SubEntityLagrangePointIterator< GridPartImp, 0, polOrder >
+  // SubEntityLagrangePointIterator for codimension 0
+  // ------------------------------------------------
+
+  template< class GridPart, unsigned int polOrder >
+  class SubEntityLagrangePointIterator< GridPart, 0, polOrder >
   {
+    typedef SubEntityLagrangePointIterator< GridPart, 0, polOrder > ThisType;
+
   public:
-    typedef GridPartImp GridPartType;
+    typedef GridPart GridPartType;
 
-    typedef typename GridPartType :: GridType GridType;
+    typedef typename GridPartType::ctype FieldType;
 
-    typedef typename GridType :: ctype FieldType;
+    static const int dimension = GridPartType::dimension;
+    static const int codimension = 0;
 
-    enum { dimension = GridType :: dimension };
-    enum { codimension = 0 };
-
-    enum { polynomialOrder = polOrder };
+    static const unsigned int polynomialOrder = polOrder;
 
     typedef FieldVector< FieldType, dimension > pointType;
 
-  private:
-    typedef SubEntityLagrangePointIterator< GridPartType,
-                                            codimension,
-                                            polynomialOrder >
-      ThisType;
-
-    typedef LagrangePointSet< GridPartType, polynomialOrder >
-      LagrangePointSetType;
+    typedef LagrangePointSet< GridPartType, polynomialOrder > LagrangePointSetType;
 
   private:
-    const LagrangePointSetType *lagrangePointSet_;
-    unsigned int index_, numDofs_;
-
-  private:
-    SubEntityLagrangePointIterator
-      ( const LagrangePointSetType &lagrangePointSet,
-        const unsigned int subEntity,
-        const bool beginIterator )
+    SubEntityLagrangePointIterator ( const LagrangePointSetType &lagrangePointSet,
+                                     const unsigned int subEntity,
+                                     const bool beginIterator )
+    : lagrangePointSet_( &lagrangePointSet ),
+      numDofs_( lagrangePointSet_->size() ),
+      index_( beginIterator ? 0 : numDofs_ )
     {
-      lagrangePointSet_ = &lagrangePointSet;
       assert( subEntity == 0 );
-
-      numDofs_ = lagrangePointSet_->size();
-      index_ = (beginIterator ? 0 : numDofs_);
     }
   
   public:
     SubEntityLagrangePointIterator ()
-    {
-      lagrangePointSet_ = NULL;
-      index_ = 0;
-      numDofs_ = 0;
-    }
+    : lagrangePointSet_( 0 ),
+      numDofs_( 0 ),
+      index_( 0 )
+    {}
     
-    SubEntityLagrangePointIterator ( const ThisType &other )
-    {
-      lagrangePointSet_ = other.lagrangePointSet_;
-
-      index_ = other.index_;
-      numDofs_ = other.numDofs_;
-    }
-
-    ThisType& operator= ( const ThisType &other )
-    {
-      lagrangePointSet_ = other.lagrangePointSet_;
-
-      index_ = other.index_;
-      numDofs_ = other.numDofs_;
-    }
-
     unsigned int operator* () const
     {
-      assert( lagrangePointSet_ != NULL );
+      assert( lagrangePointSet_ );
       assert( index_ < numDofs_ );
       return index_;
     }
 
     ThisType& operator++ ()
     {
-      if( index_ < numDofs_ )
-        ++index_;
+      assert( index_ < numDofs_ );
+      ++index_;
       return *this;
     }
 
@@ -733,21 +650,25 @@ namespace Dune
 
     bool operator!= ( const ThisType& other ) const
     {
-      return !(this->operator==( other ));
+      return !(*this == other);
     }
  
     
-    static ThisType begin( const LagrangePointSetType &lagrangePointSet,
-                                  unsigned int subEntity )
+    static ThisType begin ( const LagrangePointSetType &lagrangePointSet,
+                            unsigned int subEntity )
     {
       return ThisType( lagrangePointSet, subEntity, true );
     }
 
-    static ThisType end( const LagrangePointSetType &lagrangePointSet,
-                                unsigned int subEntity )
+    static ThisType end ( const LagrangePointSetType &lagrangePointSet,
+                          unsigned int subEntity )
     {
       return ThisType( lagrangePointSet, subEntity, false );
     }
+
+  private:
+    const LagrangePointSetType *lagrangePointSet_;
+    unsigned int numDofs_, index_;
   };
 
 
