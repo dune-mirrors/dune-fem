@@ -1,32 +1,28 @@
 #include<config.h>
 
-// system includes
+//- system includes
 #include <cassert>
 #include <iostream>
 
-// dune-common includes
+//- dune-common includes
 #include<dune/common/exceptions.hh>
-#if HAVE_DUNE_GEOMETRY
-#include <dune/geometry/referenceelements.hh>
-#else
-#include <dune/grid/common/genericreferenceelements.hh>
-#endif
 
-// dune-fem includes
+//- dune-geometry includes
+#include <dune/geometry/referenceelements.hh>
+
+//- dune-fem includes
 #include <dune/fem/gridpart/adaptiveleafgridpart.hh>
 #include <dune/fem/gridpart/filteredgridpart.hh>
 #include <dune/fem/gridpart/filter/radialfilter.hh>
 #include <dune/fem/gridpart/filter/basicfilterwrapper.hh>
-
-// dune-fem gridwidth
 #include <dune/fem/misc/gridwidth.hh>
 
-// local includes
-#include "./failure.hh"
-#include "./checkseed.hh"
-#include "./checkgeometry.hh"
-#include "./checkintersections.hh"
-#include "../../test/testgrid.hh"
+//- dune-fem test includes
+#include <dune/fem/gridpart/test/failure.hh>
+#include <dune/fem/gridpart/test/checkseed.hh>
+#include <dune/fem/gridpart/test/checkgeometry.hh>
+#include <dune/fem/gridpart/test/checkintersections.hh>
+#include <dune/fem/test/testgrid.hh>
 
 
 template< class GridPartType >
@@ -252,5 +248,3 @@ int main ( int argc, char ** argv )
 
   return 0;
 }
-
-

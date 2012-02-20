@@ -10,6 +10,9 @@
 #include <dune/geometry/quadraturerules/gaussquadrature.hh>
 #include <dune/geometry/referenceelements.hh>
 
+//- dune-grid includes
+#include <dune/grid/test/checkgeometry.cc>
+
 //- dune-fem includes
 #include <dune/fem/gridpart/test/failure.hh>
 
@@ -202,6 +205,8 @@ namespace Dune
       }
     };
 
+
+
     template< class GridPartType, class FailureHandler >
     struct CheckIntersections< GridPartType, FailureHandler >::SumNormalFailure
     : public Failure
@@ -210,13 +215,13 @@ namespace Dune
       typedef typename GridPartType::template Codim< 0 >::EntityType EntityType;
 
       /** \brief tolerance */
-      static const double tolerance = 1e-8;
+      static const double tolerance;
 
     protected:
       /** \brief constructor */
       SumNormalFailure ()
       : fails_( 0 )
-      { }
+      {}
 
     public:
       /** \brief return instance of singleton */
@@ -251,6 +256,11 @@ namespace Dune
     private:
       int fails_;
     };
+
+
+
+    template< class GridPartType, class FailureHandler >
+    const double CheckIntersections< GridPartType, FailureHandler >::SumNormalFailure::tolerance = 1e-8;
 
   } // end namespace Fem
 
