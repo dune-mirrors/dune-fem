@@ -263,10 +263,6 @@ namespace Dune
       MapperSingletonKeyType;
 
     //! mapper factory 
-    typedef LagrangeMapperSingletonFactory< MapperSingletonKeyType, MapperType >
-      MapperSingletonFactoryType;
-
-    //! mapper factory 
     typedef LagrangeMapperSingletonFactory< MapperSingletonKeyType, BlockMapperType > BlockMapperSingletonFactoryType;
 
     //! singleton list of mappers 
