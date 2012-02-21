@@ -36,6 +36,8 @@ namespace Dune
         std::size_t offset, oldOffset;
       };
 
+      enum CodimType { CodimEmpty, CodimFixedSize, CodimVariableSize };
+
       struct BuildFunctor;
 
       template< class Functor >
@@ -81,9 +83,9 @@ namespace Dune
 
       // assignment of DoFs to entities
 
-      bool contains ( int codim ) const { return true; }
+      bool contains ( int codim ) const { return (codimType_[ codim ] != CodimEmpty); }
 
-      bool fixedDataSize ( int codim ) const { return false; }
+      bool fixedDataSize ( int codim ) const { return (codimType_[ codim ] == CodimFixedSize); }
 
       template< class Entity, class Functor >
       void mapEachEntityDof ( const Entity &entity, Functor f ) const;
@@ -154,6 +156,7 @@ namespace Dune
       std::size_t size_;
       std::vector< SubEntityInfo > subEntityInfo_;
       BlockMapType blockMap_;
+      CodimType codimType_[ dimension+1 ];
     };
 
 
@@ -257,10 +260,23 @@ namespace Dune
         code( BuildFunctor( subEntityInfo_ ) );
       }
 
+      for( int codim = 0; codim <= dimension; ++codim )
+        codimType_[ codim ] = CodimEmpty;
+
+      unsigned int codimDofs[ dimension+1 ];
       for( unsigned int i = 0; i < subEntityInfo_.size(); ++i )
       {
-        if( subEntityInfo_[ i ].numDofs > 0 )
-          blockMap_.push_back( gt[ i ] );
+        const SubEntityInfo &info = subEntityInfo_[ i ];
+        if( info.numDofs == 0 )
+          continue;
+
+        if( codimType_[ info.codim ] == CodimEmpty )
+          codimType_[ info.codim ] = CodimFixedSize;
+        else if( codimDofs[ info.codim ] != info.numDofs )
+          codimType_[ info.codim ] = CodimVariableSize;
+
+        codimDofs[ info.codim ] = info.numDofs;
+        blockMap_.push_back( gt[ i ] );
       }
 
       update();
