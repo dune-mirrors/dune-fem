@@ -5,10 +5,9 @@
 
 namespace Dune
 {
-
   template< class GridPart >
   class H1Norm
-  : public LPNormBase< GridPart, H1Norm< GridPart> >
+  : public LPNormBase< GridPart, H1Norm< GridPart > >
   {
     typedef H1Norm< GridPart > ThisType;
     typedef LPNormBase< GridPart, H1Norm< GridPart> > BaseType;
@@ -19,13 +18,12 @@ namespace Dune
     template< class Function >
     struct FunctionJacobianSquare;
 
-  protected:
+  public:
     typedef typename BaseType::GridIteratorType GridIteratorType;
 
     typedef typename GridIteratorType::Entity EntityType;
 
     typedef CachingQuadrature< GridPartType, 0 > QuadratureType;
-  public:
     typedef Integrator< QuadratureType > IntegratorType;
 
 
