@@ -5,6 +5,7 @@ miscdir =  $(includedir)/dune/fem/misc
 misc_HEADERS = alugridwriter.hh \
                bartonnackmaninterface.hh \
                boundaryidentifier.hh \
+               boundaryidprovider.hh \
                capabilities.hh \
                checkgeomaffinity.hh \
                codimmap.hh \
