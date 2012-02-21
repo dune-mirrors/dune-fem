@@ -81,6 +81,10 @@ namespace Dune
 
       // assignment of DoFs to entities
 
+      bool contains ( int codim ) const { return true; }
+
+      bool fixedDataSize ( int codim ) const { return false; }
+
       template< class Entity, class Functor >
       void mapEachEntityDof ( const Entity &entity, Functor f ) const;
 
