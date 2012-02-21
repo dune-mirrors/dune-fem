@@ -41,10 +41,10 @@ namespace Dune
   public:
     typedef typename BaseType::Traits Traits;
 
-    typedef typename BaseType::GridPartType GridPartType;
     typedef typename BaseType::ElementType ElementType;
     typedef typename BaseType::DofMapIteratorType DofMapIteratorType;
    
+    typedef typename Traits::GridPartType GridPartType;
     typedef typename Traits::BaseFunctionListType BaseFunctionListType;
 
   public:

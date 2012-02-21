@@ -3,28 +3,22 @@
 #define USE_GRAPE HAVE_GRAPE
 
 #ifndef POLORDER
-  #define POLORDER 1
-#endif
+#define POLORDER 1
+#endif // #ifndef POLORDER
 
-//- system includes
 #include <iostream>
 
-//- dune includes
-#include <dune/fem/gridpart/gridpart.hh>
-// #include <dune/grid/io/file/dgfparser/dgfgridtype.hh>
-
-#include <dune/fem/space/lagrangespace.hh>
 #include <dune/fem/function/adaptivefunction.hh>
-#include <dune/fem/quadrature/cachingquadrature.hh>
+#include <dune/fem/gridpart/leafgridpart.hh>
 #include <dune/fem/operator/lagrangeinterpolation.hh>
+#include <dune/fem/quadrature/cachingquadrature.hh>
+#include <dune/fem/space/lagrangespace.hh>
 
 #if USE_GRAPE
 #include <dune/grid/io/visual/grapedatadisplay.hh>
 #endif
 
-//- local includes
 #include "sinespace.hh"
-
 
 
 using namespace Dune;
@@ -126,7 +120,7 @@ public:
       LocalFunctionType localFunction = discreteFunction.localFunction( *it );
       
       const BaseFunctionSetType &baseFunctionSet = localFunction.baseFunctionSet();
-      const unsigned int numBaseFunctions = baseFunctionSet.numBaseFunctions();
+      const unsigned int numBaseFunctions = baseFunctionSet.size();
 
       QuadratureType quadrature( *it, 2*dfSpace.order() + 2);
       const unsigned int numQuadraturePoints = quadrature.nop();
