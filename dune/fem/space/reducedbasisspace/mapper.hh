@@ -6,22 +6,20 @@
 namespace Dune
 {
 
-  template< class GridPartImp, class BaseFunctionListImp >
+  template< class GridPart, class BaseFunctionList >
   class ReducedBasisMapper;
 
 
 
-  template< class GridPartImp, class BaseFunctionListImp >
+  template< class GridPart, class BaseFunctionList >
   struct ReducedBasisMapperTraits
   {
-    typedef GridPartImp GridPartType;
+    typedef ReducedBasisMapper< GridPart, BaseFunctionList > DofMapperType;
+
+    typedef GridPart GridPartType;
+    typedef BaseFunctionList BaseFunctionListType;
     
     typedef typename GridPartType::template Codim< 0 >::EntityType ElementType;
-    
-    typedef BaseFunctionListImp BaseFunctionListType;
-
-    typedef ReducedBasisMapper< GridPartType, BaseFunctionListType >
-      DofMapperType;
     
     typedef DefaultDofMapIterator< ElementType, DofMapperType > DofMapIteratorType;
   };
@@ -33,45 +31,37 @@ namespace Dune
    *
    *  This mapper just performs the identity mapping.
    */
-  template< class GridPartImp, class BaseFunctionListImp >
+  template< class GridPart, class BaseFunctionList >
   class ReducedBasisMapper
-  : public DofMapperDefault
-    < ReducedBasisMapperTraits< GridPartImp, BaseFunctionListImp > >
+  : public DofMapperDefault< ReducedBasisMapperTraits< GridPart, BaseFunctionList > >
   {
+    typedef ReducedBasisMapper< GridPart, BaseFunctionList > ThisType;
+    typedef DofMapperDefault< ReducedBasisMapperTraits< GridPart, BaseFunctionList > > BaseType;
+
   public:
-    typedef ReducedBasisMapperTraits< GridPartImp, BaseFunctionListImp >
-      Traits;
+    typedef typename BaseType::Traits Traits;
+
+    typedef typename BaseType::GridPartType GridPartType;
+    typedef typename BaseType::ElementType ElementType;
+    typedef typename BaseType::DofMapIteratorType DofMapIteratorType;
    
-    typedef typename Traits :: BaseFunctionListType BaseFunctionListType;
-    
-    typedef typename Traits :: GridPartType GridPartType;
-    typedef typename Traits :: EntityType EntityType;
-    typedef typename Traits :: DofMapIteratorType DofMapIteratorType;
-
-  private:
-    typedef ReducedBasisMapper< GridPartType, BaseFunctionListType > ThisType;
-    typedef DofMapperDefault< Traits > BaseType;
-
-  protected:
-    const BaseFunctionListType &baseFunctionList_;
+    typedef typename Traits::BaseFunctionListType BaseFunctionListType;
 
   public:
     explicit ReducedBasisMapper ( const BaseFunctionListType &baseFunctionList )
     : baseFunctionList_( baseFunctionList )
     {}
 
-    /** \copydoc Dune::DofMapper::begin(const EntityType &entity) const */
-    DofMapIteratorType begin ( const EntityType &entity ) const
+    /** \copydoc Dune::DofMapper::begin(const ElementType &entity) const */
+    DofMapIteratorType begin ( const ElementType &entity ) const
     {
-      return DofMapIteratorType
-        ( DofMapIteratorType :: beginIterator, entity, *this );
+      return DofMapIteratorType( DofMapIteratorType::beginIterator, entity, *this );
     }
     
-    /** \copydoc Dune::DofMapper::end(const EntityType &entity) const */
-    DofMapIteratorType end ( const EntityType &entity ) const
+    /** \copydoc Dune::DofMapper::end(const ElementType &entity) const */
+    DofMapIteratorType end ( const ElementType &entity ) const
     {
-      return DofMapIteratorType
-        ( DofMapIteratorType :: endIterator, entity, *this );
+      return DofMapIteratorType( DofMapIteratorType::endIterator, entity, *this );
     }
 
     /** \copydoc Dune::DofMapper::mapEach */
@@ -83,8 +73,8 @@ namespace Dune
         f( i, i );
     }
 
-    /** \copydoc Dune::DofMapper::mapToGlobal(const EntityType &entity,const int localDof) const */
-    int mapToGlobal ( const EntityType &entity, const int localDof ) const
+    /** \copydoc Dune::DofMapper::mapToGlobal(const ElementType &entity,const int localDof) const */
+    int mapToGlobal ( const ElementType &entity, const int localDof ) const
     {
       return localDof;
     }
@@ -146,6 +136,9 @@ namespace Dune
     {
       return baseFunctionList_.size();
     }
+
+  protected:
+    const BaseFunctionListType &baseFunctionList_;
   };
   
 } // namespace Dune
