@@ -46,10 +46,9 @@ namespace Dune
       // if this is set to true the mapper behaves like a DG mapper
       static const bool discontinuousMapper = false;
 
-      typedef typename GridPartType::template Codim< 0 >::EntityType  EntityType;
-      typedef EntityType  ElementType;
+      typedef typename GridPartType::template Codim< 0 >::EntityType ElementType;
       typedef PAdaptiveLagrangeMapper< GridPartType, polynomialOrder > DofMapperType;
-      typedef DefaultDofMapIterator< EntityType, DofMapperType > DofMapIteratorType;
+      typedef DefaultDofMapIterator< ElementType, DofMapperType > DofMapIteratorType;
 
       //! type of the compiled local key 
       typedef LagrangePointSet< GridPartType, polynomialOrder >  CompiledLocalKeyType;
@@ -75,7 +74,7 @@ namespace Dune
       typedef typename BaseType::GridPartType GridPartType;
 
       //! type of entities (codim 0)
-      typedef typename BaseType::EntityType EntityType;
+      typedef typename BaseType::ElementType ElementType;
 
       //! type of the underlying grid
       typedef typename GridPartType::GridType GridType;
@@ -105,12 +104,12 @@ namespace Dune
         return true;
       }
 
-      int polynomOrder( const EntityType& entity ) const 
+      int polynomOrder( const ElementType& entity ) const 
       {
         return 1;
       }
 
-      void setPolynomOrder( const EntityType& entity, const int polOrd ) 
+      void setPolynomOrder( const ElementType& entity, const int polOrd ) 
       {
       }
     };
@@ -164,9 +163,9 @@ namespace Dune
       // this is a mapper for DG 
       static const bool discontinuousMapper = true ;
 
-      typedef typename GridPart::template Codim< 0 >::EntityType  EntityType;
+      typedef typename GridPart::template Codim< 0 >::EntityType ElementType;
       typedef PAdaptiveDGMapper< GridPart, polOrder > DofMapperType;
-      typedef DefaultDofMapIterator< EntityType, DofMapperType > DofMapIteratorType;
+      typedef DefaultDofMapIterator< ElementType, DofMapperType > DofMapIteratorType;
     };
 
 

@@ -46,7 +46,7 @@ namespace Dune
       typedef typename Traits::GridPartType GridPartType;
 
       //! type of entities (codim 0)
-      typedef typename Traits::EntityType EntityType;
+      typedef typename Traits::ElementType ElementType;
 
       //! type of DofMapIterator
       typedef typename Traits::DofMapIteratorType DofMapIteratorType;
@@ -335,7 +335,7 @@ namespace Dune
       template <int codim, bool dg>
       struct NumDofs
       {
-        static int numDofs( const EntityType& entity,
+        static int numDofs( const ElementType& entity,
                             const CompiledLocalKeyType& clk,
                             const int subEntity ) 
         {
@@ -346,7 +346,7 @@ namespace Dune
       template <int codim> 
       struct NumDofs<codim, true>
       {
-        static int numDofs( const EntityType& entity,
+        static int numDofs( const ElementType& entity,
                             const CompiledLocalKeyType& clk,
                             const int subEntity ) 
         {
@@ -360,7 +360,7 @@ namespace Dune
       template < int codim > 
       struct InsertSubEntities
       {
-        static void insertDofs( const EntityType& entity, 
+        static void insertDofs( const ElementType& entity, 
                                 const CompiledLocalKeyType& clk,
                                 const int polOrd,
                                 const int subEntity,
@@ -394,7 +394,7 @@ namespace Dune
           }
         }
 
-        static void apply( const EntityType& entity, 
+        static void apply( const ElementType& entity, 
                            const CompiledLocalKeyType& clk,
                            const int polOrd,
                            unsigned int& globalSize,
@@ -422,7 +422,7 @@ namespace Dune
       template < int codim > 
       struct RemoveSubEntities
       {
-        static void apply( const EntityType& entity, 
+        static void apply( const ElementType& entity, 
                            const int polOrd,
                            std::vector< DofContainerType* > dofContainers ) 
         {
@@ -495,12 +495,12 @@ namespace Dune
         dm_.addIndexSet( asImp() );
       }
 
-      int polynomOrder( const EntityType& entity ) const 
+      int polynomOrder( const ElementType& entity ) const 
       {
         return entityPolynomOrder_[ entity ].order();
       }
 
-      void setPolynomOrder( const EntityType& entity, const int polOrd ) 
+      void setPolynomOrder( const ElementType& entity, const int polOrd ) 
       {
         if( polOrd < 1 || polOrd > polynomialOrder ) 
           return ;
@@ -533,20 +533,20 @@ namespace Dune
         return size_;
       }
 
-      /** \copydoc Dune::DofMapper::begin(const EntityType &entity) const */
-      DofMapIteratorType begin ( const EntityType &entity ) const
+      /** \copydoc Dune::DofMapper::begin(const ElementType &entity) const */
+      DofMapIteratorType begin ( const ElementType &entity ) const
       {
         return DofMapIteratorType( DofMapIteratorType::beginIterator, entity, asImp() );
       }
       
-      /** \copydoc Dune::DofMapper::end(const EntityType &entity) const */
-      DofMapIteratorType end ( const EntityType &entity ) const
+      /** \copydoc Dune::DofMapper::end(const ElementType &entity) const */
+      DofMapIteratorType end ( const ElementType &entity ) const
       {
         return DofMapIteratorType( DofMapIteratorType::endIterator, entity, asImp() );
       }
 
       /** \copydoc Dune::DofMapper::mapToGlobal */
-      int mapToGlobal ( const EntityType &entity, const int localDof ) const
+      int mapToGlobal ( const ElementType &entity, const int localDof ) const
       {
         if( discontinuousMapper ) 
         {
@@ -584,8 +584,8 @@ namespace Dune
         return maxNumDofs_;
       }
 
-      /** \copydoc Dune::DofMapper::numDofs(const EntityType &entity) const */
-      int numDofs ( const EntityType &entity ) const
+      /** \copydoc Dune::DofMapper::numDofs(const ElementType &entity) const */
+      int numDofs ( const ElementType &entity ) const
       {
         const int polOrd = polynomOrder( entity );
         return compiledLocalKey( polOrd, entity.type() ).size();
@@ -679,14 +679,14 @@ namespace Dune
         }
       }
 
-      void insertEntity ( const EntityType &entity )
+      void insertEntity ( const ElementType &entity )
       {
         resizeContainers();
         insertEntityDofs( entity );
       }
 
       // return number of local dofs that were not visited yet 
-      unsigned int insertEntityDofs( const EntityType &entity )
+      unsigned int insertEntityDofs( const ElementType &entity )
       {
         PolynomOrderStorageType& polyStorage = entityPolynomOrder_[ entity ];
         if( ! polyStorage.active() )
@@ -713,7 +713,7 @@ namespace Dune
         return 0;
       }
 
-      void removeEntity ( const EntityType &entity )
+      void removeEntity ( const ElementType &entity )
       {
         int polOrd; 
         // polOrd ist set on call of deactivate 
@@ -774,7 +774,7 @@ namespace Dune
         }
       }
 
-      void printEntityDofs( const EntityType& entity ) const 
+      void printEntityDofs( const ElementType& entity ) const 
       {
         std::cout << "Print entity " << gridPart_.grid().localIdSet().id( entity ) << " with " << std::endl;
         for( int i = 0; i<numDofs( entity ); ++i ) 
