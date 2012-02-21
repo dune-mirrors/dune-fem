@@ -19,8 +19,11 @@
 #include <dune/fem/space/common/defaultcommhandler.hh>
 #include <dune/fem/space/common/discretefunctionspace.hh>
 #include <dune/fem/space/common/dofmanager.hh>
+#include <dune/fem/space/dofmapper/dofmapper.hh>
 #include <dune/fem/space/lagrangespace/basefunctions.hh>
-#include <dune/fem/space/lagrangespace/mapper.hh>
+#include <dune/fem/space/lagrangespace/dofmappercode.hh>
+#include <dune/fem/space/lagrangespace/lagrangepoints.hh>
+//#include <dune/fem/space/lagrangespace/mapper.hh>
 #include <dune/fem/space/mapper/nonblockmapper.hh>
 
 namespace Dune
@@ -68,7 +71,8 @@ namespace Dune
     static const int localBlockSize = dimRange;
 
     // mapper for block
-    typedef LagrangeMapper< GridPartType, polynomialOrder > BlockMapperType;
+    //typedef LagrangeMapper< GridPartType, polynomialOrder > BlockMapperType;
+    typedef Fem::DofMapper< GridPartType > BlockMapperType;
     typedef NonBlockMapper< BlockMapperType, localBlockSize > MapperType;
     
     // implementation of basefunction set 
@@ -142,9 +146,13 @@ namespace Dune
   template< class Key, class Object >
   struct LagrangeMapperSingletonFactory
   {
+    typedef typename Key::LagrangePointSetContainerType LagrangePointSetContainerType;
+
     static Object *createObject ( const Key &key )
     {
-      return new Object( key.gridPart(), key.pointSet() );
+      LagrangeDofMapperCodeFactory< LagrangePointSetContainerType > codeFactory( key.pointSet() );
+      return new Object( key.gridPart(), codeFactory );
+      //return new Object( key.gridPart(), key.pointSet() );
     }
     
     static void deleteObject ( Object *obj )
@@ -263,7 +271,8 @@ namespace Dune
       MapperSingletonKeyType;
 
     //! mapper factory 
-    typedef LagrangeMapperSingletonFactory< MapperSingletonKeyType, BlockMapperType > BlockMapperSingletonFactoryType;
+    typedef LagrangeMapperSingletonFactory< MapperSingletonKeyType, BlockMapperType >
+      BlockMapperSingletonFactoryType;
 
     //! singleton list of mappers 
     typedef SingletonList< MapperSingletonKeyType, BlockMapperType, BlockMapperSingletonFactoryType > BlockMapperProviderType;

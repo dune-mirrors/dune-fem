@@ -450,7 +450,7 @@ namespace Dune
 
 
 
-  template< class GridPartImp, unsigned int polOrder >
+  template< class GridPart, unsigned int polOrder >
   class LagrangePointSet;
 
   
@@ -711,15 +711,13 @@ namespace Dune
     LagrangePointSet ( const GeometryType &geometry, const int order )
     : BaseType( geometry, order ),
       lagrangePointList_( this->quadImp().ipList() )
-    {
-    }
+    {}
 
     //! copy constructor
     LagrangePointSet ( const ThisType &other )
     : BaseType( other ),
       lagrangePointList_( this->quadImp().ipList() )
-    {
-    }
+    {}
 
   private:
     // kill the assignment operator
@@ -741,27 +739,21 @@ namespace Dune
       return localKey( index );
     }
 
-    void dofSubEntity ( unsigned int index,
-                               unsigned int &codim,
-                               unsigned int &subEntity ) const
+    void dofSubEntity ( unsigned int index, unsigned int &codim,
+                        unsigned int &subEntity ) const
     {
       unsigned int dofNumber;
-      lagrangePointList_.dofSubEntity
-               ( index, codim, subEntity, dofNumber );
+      lagrangePointList_.dofSubEntity( index, codim, subEntity, dofNumber );
     }
  
-    void dofSubEntity ( unsigned int index,
-                               unsigned int &codim,
-                               unsigned int &subEntity,
-                               unsigned int &dofNumber ) const
+    void dofSubEntity ( unsigned int index, unsigned int &codim,
+                        unsigned int &subEntity, unsigned int &dofNumber ) const
     {
-      lagrangePointList_.dofSubEntity
-             ( index, codim, subEntity, dofNumber );
+      lagrangePointList_.dofSubEntity( index, codim, subEntity, dofNumber );
     }
  
-    unsigned int entityDofNumber ( unsigned int codim,
-                                          unsigned int subEntity,
-                                          unsigned int dofNumber ) const
+    unsigned int entityDofNumber ( unsigned int codim, unsigned int subEntity,
+                                   unsigned int dofNumber ) const
     {
       return lagrangePointList_.entityDofNumber( codim, subEntity, dofNumber );
     }
@@ -771,8 +763,7 @@ namespace Dune
       return lagrangePointList_.maxDofs( codim );
     }
     
-    unsigned int numDofs ( unsigned int codim,
-                                  unsigned int subEntity ) const
+    unsigned int numDofs ( unsigned int codim, unsigned int subEntity ) const
     {
       return lagrangePointList_.numDofs( codim, subEntity );
     }
@@ -783,12 +774,11 @@ namespace Dune
     }
 
     //! get number of Lagrange points
-    unsigned int size () const
+    std::size_t size () const
     {
       return this->nop();
     }
 
-  public:
     template< unsigned int codim >
     typename Codim< codim >::SubEntityIteratorType
       beginSubEntity ( unsigned int subEntity ) const
