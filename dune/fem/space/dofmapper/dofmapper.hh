@@ -83,10 +83,6 @@ namespace Dune
 
       // assignment of DoFs to entities
 
-      bool contains ( int codim ) const { return (codimType_[ codim ] != CodimEmpty); }
-
-      bool fixedDataSize ( int codim ) const { return (codimType_[ codim ] == CodimFixedSize); }
-
       template< class Entity, class Functor >
       void mapEachEntityDof ( const Entity &entity, Functor f ) const;
 
@@ -101,6 +97,10 @@ namespace Dune
 
 
       // global information
+
+      bool contains ( int codim ) const { return (codimType_[ codim ] != CodimEmpty); }
+
+      bool fixedDataSize ( int codim ) const { return (codimType_[ codim ] == CodimFixedSize); }
 
       std::size_t size () const { return size_; }
 
