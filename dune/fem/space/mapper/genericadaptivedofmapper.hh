@@ -545,6 +545,14 @@ namespace Dune
         return DofMapIteratorType( DofMapIteratorType::endIterator, entity, asImp() );
       }
 
+      template< class Functor >
+      void mapEach ( const ElementType &element, Functor f ) const
+      {
+        const int n = numDofs( element );
+        for( int i = 0; i < n; ++i )
+          f( i, mapToGlobal( element, i ) );
+      }
+
       /** \copydoc Dune::DofMapper::mapToGlobal */
       int mapToGlobal ( const ElementType &entity, const int localDof ) const
       {
