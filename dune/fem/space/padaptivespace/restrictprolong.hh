@@ -12,7 +12,6 @@
 #endif
 
 
-#include <dune/fem/gridpart/gridpart.hh>
 #include <dune/fem/function/localfunction/localfunction.hh>
 #include <dune/fem/space/lagrangespace/lagrangepoints.hh>
 
