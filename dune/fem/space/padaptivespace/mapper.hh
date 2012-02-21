@@ -47,6 +47,7 @@ namespace Dune
       static const bool discontinuousMapper = false;
 
       typedef typename GridPartType::template Codim< 0 >::EntityType  EntityType;
+      typedef EntityType  ElementType;
       typedef PAdaptiveLagrangeMapper< GridPartType, polynomialOrder > DofMapperType;
       typedef DefaultDofMapIterator< EntityType, DofMapperType > DofMapIteratorType;
 
