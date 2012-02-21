@@ -570,7 +570,7 @@ namespace Dune
           const int polOrd = polynomOrder( entity );
 
           // get dof info for entity and local dof 
-          const Fem::LocalKey &dofInfo = compiledLocalKey( polOrd, entity.type() ).dofInfo( localDof );
+          const Fem::LocalKey &dofInfo = compiledLocalKey( polOrd, entity.type() ).localKey( localDof );
 
           const unsigned int codim = dofInfo.codim();
           const unsigned int subEntity = dofInfo.subEntity();
