@@ -167,7 +167,7 @@ namespace Dune
     template< class GridPart >
     struct DofMapper< GridPart >::BuildFunctor
     {
-      BuildFunctor ( std::vector< SubEntityInfo > &subEntityInfo )
+      explicit BuildFunctor ( std::vector< SubEntityInfo > &subEntityInfo )
       : subEntityInfo_( subEntityInfo )
       {}
 
@@ -175,7 +175,7 @@ namespace Dune
       void operator() ( unsigned int gtIndex, unsigned int subEntity, Iterator it, Iterator end )
       {
         SubEntityInfo &info = subEntityInfo_[ gtIndex ];
-        unsigned int numDofs = end - it;
+        const unsigned int numDofs = end - it;
         if( info.numDofs == 0 )
           info.numDofs = numDofs;
         else if( info.numDofs != numDofs )
