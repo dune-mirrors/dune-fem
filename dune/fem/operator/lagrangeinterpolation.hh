@@ -10,12 +10,14 @@ namespace Dune
   /** \class LagrangeInterpolation
    *  \brief Generates the Lagrange Interpolation of an analytic function
    */
-  template< class DiscreteFunctionImp >
+  template< class DiscreteFunction >
   class LagrangeInterpolation
   {
+    typedef LagrangeInterpolation< DiscreteFunction > ThisType;
+
   public:
     //! type of discrete functions
-    typedef DiscreteFunctionImp DiscreteFunctionType;
+    typedef DiscreteFunction DiscreteFunctionType;
 
     //! type of discrete function space
     typedef typename DiscreteFunctionType::DiscreteFunctionSpaceType
@@ -26,8 +28,6 @@ namespace Dune
 
     //! type of grid partition
     typedef typename DiscreteFunctionSpaceType::GridPartType GridPartType;
-    //! type of grid
-    typedef typename DiscreteFunctionSpaceType::GridType GridType;
 
     //! type of Lagrange point set
     typedef typename DiscreteFunctionSpaceType::LagrangePointSetType
@@ -49,21 +49,21 @@ namespace Dune
      *  \param[out] discreteFunction discrete function to receive the
      *              interpolation
      */
-    template< class FunctionType >
-    static void interpolateFunction ( const FunctionType &function,
+    template< class Function >
+    static void interpolateFunction ( const Function &function,
                                       DiscreteFunctionType &discreteFunction );
 
     //! \copydoc interpolateFunction 
     //- make interface equal to DGL2Projection 
-    template< class FunctionType >
-    static void apply( const FunctionType &function,
-                       DiscreteFunctionType &discreteFunction )
+    template< class Function >
+    static void apply ( const Function &function,
+                        DiscreteFunctionType &discreteFunction )
     {
       interpolateFunction( function, discreteFunction );
     }
 
   private:
-    template< class FunctionType, bool hasLocalFunction >
+    template< class Function, bool hasLocalFunction >
     struct CallInterpolateDiscreteFunction;
 
   protected:
@@ -78,51 +78,49 @@ namespace Dune
      *  \param[out] discreteFunction discrete function to receive the
      *              interpolation
      */
-    template< class FunctionType >
+    template< class Function >
     static void
-    interpolateDiscreteFunction ( const FunctionType &function,
+    interpolateDiscreteFunction ( const Function &function,
                                   DiscreteFunctionType &discreteFunction );
   };
 
 
 
-  template< class DiscreteFunctionImp >    
-  template< class FunctionType >
-  inline void LagrangeInterpolation< DiscreteFunctionImp >
-    :: interpolateFunction ( const FunctionType &function,
+  template< class DiscreteFunction >
+  template< class Function >
+  inline void LagrangeInterpolation< DiscreteFunction >
+    ::interpolateFunction ( const Function &function,
                              DiscreteFunctionType &discreteFunction )
   {
-    const bool hasLocalFunction = Conversion< FunctionType, HasLocalFunction >::exists;
-    CallInterpolateDiscreteFunction< FunctionType, hasLocalFunction >::call( function, discreteFunction );
+    const bool hasLocalFunction = Conversion< Function, HasLocalFunction >::exists;
+    CallInterpolateDiscreteFunction< Function, hasLocalFunction >::call( function, discreteFunction );
   }
 
 
 
-  template< class DiscreteFunctionType >
-  template< class FunctionType >
-  struct LagrangeInterpolation< DiscreteFunctionType >
-    ::CallInterpolateDiscreteFunction< FunctionType, true >
+  template< class DiscreteFunction >
+  template< class Function >
+  struct LagrangeInterpolation< DiscreteFunction >
+    ::CallInterpolateDiscreteFunction< Function, true >
   {
-    static void call( const FunctionType &function,
-                      DiscreteFunctionType &discreteFunction )
+    static void call( const Function &function,
+                      DiscreteFunction &discreteFunction )
     {
       interpolateDiscreteFunction( function, discreteFunction );
     }
   };
 
-  template< class DiscreteFunctionType >
-  template< class FunctionType >
-  struct LagrangeInterpolation< DiscreteFunctionType >
-    ::CallInterpolateDiscreteFunction< FunctionType, false >
+  template< class DiscreteFunction >
+  template< class Function >
+  struct LagrangeInterpolation< DiscreteFunction >
+    ::CallInterpolateDiscreteFunction< Function, false >
   {
-    static void call( const FunctionType &function,
-                      DiscreteFunctionType &discreteFunction )
+    static void call ( const Function &function,
+                       DiscreteFunction &discreteFunction )
     {
-      typedef typename DiscreteFunctionType::DiscreteFunctionSpaceType
-        DiscreteFunctionSpaceType;
+      typedef typename DiscreteFunction::DiscreteFunctionSpaceType DiscreteFunctionSpaceType;
       typedef typename DiscreteFunctionSpaceType::GridPartType GridPartType;
-      typedef GridFunctionAdapter< FunctionType, GridPartType >
-        GridFunctionAdapterType;
+      typedef GridFunctionAdapter< Function, GridPartType > GridFunctionAdapterType;
 
       const DiscreteFunctionSpaceType &dfSpace = discreteFunction.space();
       GridFunctionAdapterType dfAdapter( "function", function, dfSpace.gridPart() );
@@ -132,10 +130,10 @@ namespace Dune
 
 
   
-  template< class DiscreteFunctionImp >
-  template< class FunctionType >
-  inline void LagrangeInterpolation< DiscreteFunctionImp >
-    ::interpolateDiscreteFunction ( const FunctionType &function,
+  template< class DiscreteFunction >
+  template< class Function >
+  inline void LagrangeInterpolation< DiscreteFunction >
+    ::interpolateDiscreteFunction ( const Function &function,
                                     DiscreteFunctionType &discreteFunction )
   {
     typedef typename DiscreteFunctionType::DofType DofType;
@@ -143,7 +141,7 @@ namespace Dune
     typedef typename DiscreteFunctionSpaceType::IteratorType IteratorType;
     static const int dimRange = DiscreteFunctionSpaceType::dimRange;
 
-    typedef typename FunctionType::LocalFunctionType FunctionLocalFunctionType;
+    typedef typename Function::LocalFunctionType FunctionLocalFunctionType;
 
     // set all DoFs to infinity
     const DofIteratorType dend = discreteFunction.dend();
@@ -183,6 +181,6 @@ namespace Dune
     }
   }
 
-}
+} // namespace Dune
 
 #endif // #ifndef DUNE_FEM_LAGRANGEINTERPOLATION_HH
