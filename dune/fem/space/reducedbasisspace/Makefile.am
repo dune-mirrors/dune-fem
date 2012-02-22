@@ -4,9 +4,9 @@ AUTOMAKE_OPTIONS = foreign 1.5
 SUBDIRS = test
 reducedbasisspacedir = $(includedir)/dune/fem/space/reducedbasisspace
 reducedbasisspace_HEADERS = basefunctionset.hh \
-			    commdatahandle.hh \
-			    mapper.hh \
-			    reducedbasisspace.hh
+                            commdatahandle.hh \
+                            mapper.hh \
+                            reducedbasisspace.hh \
+                            reducedbasisspace_inline.hh
 
 include $(top_srcdir)/am/global-rules
-
