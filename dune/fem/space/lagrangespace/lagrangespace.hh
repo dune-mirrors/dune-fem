@@ -23,7 +23,6 @@
 #include <dune/fem/space/lagrangespace/basefunctions.hh>
 #include <dune/fem/space/lagrangespace/dofmappercode.hh>
 #include <dune/fem/space/lagrangespace/lagrangepoints.hh>
-//#include <dune/fem/space/lagrangespace/mapper.hh>
 #include <dune/fem/space/mapper/nonblockmapper.hh>
 
 namespace Dune
@@ -71,7 +70,6 @@ namespace Dune
     static const int localBlockSize = dimRange;
 
     // mapper for block
-    //typedef LagrangeMapper< GridPartType, polynomialOrder > BlockMapperType;
     typedef Fem::DofMapper< GridPartType > BlockMapperType;
     typedef NonBlockMapper< BlockMapperType, localBlockSize > MapperType;
     
@@ -152,7 +150,6 @@ namespace Dune
     {
       LagrangeDofMapperCodeFactory< LagrangePointSetContainerType > codeFactory( key.pointSet() );
       return new Object( key.gridPart(), codeFactory );
-      //return new Object( key.gridPart(), key.pointSet() );
     }
     
     static void deleteObject ( Object *obj )

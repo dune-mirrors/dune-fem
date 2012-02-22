@@ -8,7 +8,7 @@ lagrangespace_HEADERS = adaptmanager.hh  basefunctions.hh \
                         genericbasefunctions.hh \
                         genericgeometry.hh  genericlagrangepoints.hh \
                         lagrangepoints.hh \
-                        lagrangespace.hh  mapper.hh  restrictprolong.hh
+                        lagrangespace.hh  restrictprolong.hh
 
 noinst_LTLIBRARIES = liblagrangespace.la
 
