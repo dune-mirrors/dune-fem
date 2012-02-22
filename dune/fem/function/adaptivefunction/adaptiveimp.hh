@@ -154,15 +154,16 @@ namespace Dune {
     //! enable dof compressiion for this discrete function 
     void enableDofCompression(); 
 
-    //! needed for p-adaptation, not finished yet 
-    void resize()
+    //! needed for p-adaptation, (inofficial method, do not use) 
+    void resize( )
     {
       // cast to ManagedDofStorageInterface, if cast returns NULL we are not allowed to
       // call resize and dofCompress 
       ManagedDofStorageInterface* managedObject = dynamic_cast< ManagedDofStorageInterface* > ( memObject_ );
       if( managedObject ) 
       {
-        managedObject->dofCompress();
+        // resize function 
+        managedObject->resize();
       }
     }
 
