@@ -27,12 +27,11 @@ namespace Dune
 
       // we still need entities of codimension 0 here 
       typedef typename Mapper1 :: EntityType EntityType;
+      typedef EntityType ElementType;
 
       static const int polynomialOrder1 = Mapper1 :: polynomialOrder;
       static const int polynomialOrder2 = Mapper2 :: polynomialOrder;
       static const int polynomialOrder = ( polynomialOrder1 > polynomialOrder2 ) ? polynomialOrder1 : polynomialOrder2;
-
-  //    typedef typename Mapper1 :: IndexSetType IndexSetType;
 
       typedef CombinedMapper< Grid, Mapper1, Mapper2 >  DofMapperType;
 
@@ -56,17 +55,10 @@ namespace Dune
       public:
       typedef typename BaseType :: Traits Traits;
       typedef typename BaseType :: EntityType EntityType;
+      typedef typename BaseType :: ElementType ElementType;
 
-  //    typedef typename Traits :: GridPartType GridPartType;
-  //    typedef typename Traits :: IndexSetType IndexSetType;
       typedef typename Traits :: DofMapIteratorType DofMapIteratorType;
 
-      //! type of the underlying grid
-  //    typedef typename GridPartType::GridType GridType;
-      //! type of coordinates within the grid
-  //    typedef typename GridType::ctype FieldType;
-      //! dimension of the grid
-  //    static const int dimension = GridType::dimension;
       //! order of the Lagrange polynoms
       static const int polynomialOrder1 = Traits :: polynomialOrder1;
       static const int polynomialOrder2 = Traits :: polynomialOrder2;
@@ -159,6 +151,34 @@ namespace Dune
       int maxNumDofs () const
       {
         return mapper1_.maxNumDofs() + mapper2_.maxNumDofs();
+      }
+
+      /** \brief map each local DoF number to a global one
+       *
+       *  \param[in]  element  element, the DoFs belong to
+       *  \param[in]  f        functor to call for each DoF
+       *
+       *  The functor has to be a copyable object satisfying the following
+       *  interface:
+       *  \code
+       *  struct Functor
+       *  {
+       *    // application operator
+       *    void operator() ( int localDoF, int globalDoF );
+       *  };
+       *  \endcode
+       *
+       *  For each DoF to be mapped, this method will call the application operator
+       *  once.
+       *  
+       *  \note There is no guarantee on the order, in which the functor is applied.
+       */
+      template< class Functor >
+      void mapEach ( const ElementType &element, Functor f ) const
+      {
+        const int n = numDofs( element );
+        for( int i = 0; i < n; ++i )
+          f( i, mapToGlobal( element, i ) );
       }
 
       /** \brief obtain number of DoFs on an entity
