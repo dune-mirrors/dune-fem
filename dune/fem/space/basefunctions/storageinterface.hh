@@ -10,8 +10,10 @@
 //- Dune includes 
 #if HAVE_DUNE_GEOMETRY
 #include <dune/geometry/type.hh>
+#include <dune/geometry/typeindex.hh>
 #else
 #include <dune/common/geometrytype.hh>
+#include <dune/geometry/geometrytypeindex.hh>
 #endif
 #include <dune/fem/misc/threadmanager.hh>
 
@@ -34,7 +36,7 @@ namespace Dune {
       typedef std::vector< size_t > QuadratureIdentifierType;
       typedef std::list< QuadratureIdentifierType > QuadratureListType;
 
-      enum { ids = 0, codims = 1, sizes = 2, sizeIndents = 3 };
+      enum { ids = 0, codims = 1, sizes = 2, geoIndex, sizeIndents = 4 };
 
       // return reference to list singleton pointer 
       static StorageInterfaceListPointer& storageListPtr () 
@@ -113,11 +115,14 @@ namespace Dune {
         IteratorType endit = quadratureList().end();
         for(IteratorType it = quadratureList().begin(); it != endit; ++it)
         {
-          // get if and codim of quad 
-          const size_t id = (*it)[ ids ];
-          const size_t codim = (*it)[ codims ];
-          const size_t quadSize = (*it)[ sizes ];
-          storage.cacheQuadrature(id, codim, quadSize);
+          if ( (*it)[geoIndex] == GlobalGeometryTypeIndex :: index( storage.geometryType() ) )
+          {
+            // get if and codim of quad 
+            const size_t id = (*it)[ ids ];
+            const size_t codim = (*it)[ codims ];
+            const size_t quadSize = (*it)[ sizes ];
+            storage.cacheQuadrature(id, codim, quadSize);
+          }
         }
       }
 
@@ -148,16 +153,19 @@ namespace Dune {
         const size_t quadSize = quad.nop();
         // store quadrature 
         QuadratureIdentifierType ident( sizeIndents );
+        GeometryType geoType = quad.geometryType();
         ident[ ids ]    = id ;
         ident[ codims ] = codim; 
         ident[ sizes ]  = quadSize;
+        ident[ geoIndex ] = GlobalGeometryTypeIndex :: index( geoType ) ;
         quadratureList().push_back(ident);
 
         typedef typename StorageInterfaceListType::iterator IteratorType;
         IteratorType endit = storageList().end();
         for(IteratorType it = storageList().begin(); it != endit; ++it)
         {
-          (*it)->cacheQuadrature(id, codim, quadSize);
+          if (geoType == (*it)->geometryType())
+            (*it)->cacheQuadrature(id, codim, quadSize);
         }
       }
   };
