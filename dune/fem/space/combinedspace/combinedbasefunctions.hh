@@ -103,15 +103,6 @@ namespace Dune
         offset_( 0 )
     {}
 
-#if 0
-    //! copy constructor
-    CombinedBaseFunctionSet( const ThisType &other )
-      : baseSet1_( other.baseSet1_ ),
-        baseSet2_( other.baseSet2_ ),
-        offset_( other.offSet_ )
-    {}
-#endif
-    
     size_t size()  const
     {
       return size1_ + size2_; 
@@ -123,8 +114,6 @@ namespace Dune
       return baseSet1_.geometryType();
     }
 
-
-    // evaluate methods
     template< int diffOrd, class PointType >
     DUNE_DEPRECATED
     void evaluate ( const int baseFunction,
@@ -160,7 +149,6 @@ namespace Dune
 
 
     // axpy methods
-
     template< class Point, class DofVector >
     void axpy ( const Point &x, const RangeType &valueFactor, DofVector &dofs ) const;
 

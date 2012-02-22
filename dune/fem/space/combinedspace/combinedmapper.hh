@@ -15,19 +15,12 @@ namespace Dune
     template< class Grid,  class Mapper1, class Mapper2 >
     class CombinedMapper;
 
-
-    //! CombinedDofMapIterator 
-    template<class EntityType, class DofMapperType >
-    class CombinedDofMapIterator;
-
     //! Traits 
     template< class Grid, class Mapper1, class Mapper2 >
     struct CombinedMapperTraits
     {
-
       // we still need entities of codimension 0 here 
-      typedef typename Mapper1 :: EntityType EntityType;
-      typedef EntityType ElementType;
+      typedef typename Mapper1 :: ElementType ElementType;
 
       static const int polynomialOrder1 = Mapper1 :: polynomialOrder;
       static const int polynomialOrder2 = Mapper2 :: polynomialOrder;
@@ -36,10 +29,8 @@ namespace Dune
       typedef CombinedMapper< Grid, Mapper1, Mapper2 >  DofMapperType;
 
       // Later on write an new dofIterator
-      typedef DefaultDofMapIterator< EntityType, DofMapperType > DofMapIteratorType;
+      typedef DefaultDofMapIterator< ElementType, DofMapperType > DofMapIteratorType;
     };
-
-
 
     template< class Grid, class Mapper1, class Mapper2 >
     class CombinedMapper
@@ -52,9 +43,28 @@ namespace Dune
       typedef Mapper1 MapperType1;
       typedef Mapper2 MapperType2;
 
+      template< class Functor >
+      struct FunctorWrapper
+      {
+
+        FunctorWrapper( Functor functor, int localOffset, int globalOffset ) :
+          functor_( functor ) ,         
+          localOffset_(  localOffset ) ,
+          globalOffset_( globalOffset )
+        {}
+
+        void operator() ( int localDof, int globalDof ) 
+        {
+          functor_( localDof + localOffset_, globalDof + globalOffset_);
+        }
+        private:
+          Functor functor_;
+          int localOffset_;
+          int globalOffset_;
+      };
+
       public:
       typedef typename BaseType :: Traits Traits;
-      typedef typename BaseType :: EntityType EntityType;
       typedef typename BaseType :: ElementType ElementType;
 
       typedef typename Traits :: DofMapIteratorType DofMapIteratorType;
@@ -96,49 +106,53 @@ namespace Dune
         dm_.addIndexSet( *this );
       }
 
-
+      /** \copydoc Dune::DofMapper::size() const */
       int size () const 
       {
         return mapper1_.size() + mapper2_.size();
       }
 
-      // needs to be reimpl
-      DofMapIteratorType begin ( const EntityType &entity ) const   
+      /** \copydoc Dune::DofMapper::begin( const ElementType &element ) const */
+      DofMapIteratorType begin ( const ElementType &element ) const   
       {
-        return DofMapIteratorType( DofMapIteratorType::beginIterator, entity, *this );
+        return DofMapIteratorType( DofMapIteratorType::beginIterator, element, *this );
       }
       
-      DofMapIteratorType end ( const EntityType &entity ) const
+      /** \copydoc Dune::DofMapper::end( const ElementType &element ) const */
+      DofMapIteratorType end ( const ElementType &element ) const
       {
-        return DofMapIteratorType( DofMapIteratorType::endIterator, entity, *this );
+        return DofMapIteratorType( DofMapIteratorType::endIterator, element, *this );
       }
 
+      /** \copydoc Dune::DofMapper::contains( const int codim ) const */
       bool contains ( const int codim ) const    
       {
         return ( mapper1_.contains( codim ) || mapper2_.contains( codim ) );
       }
-      
-      int mapToGlobal ( const EntityType &entity, const int localDof ) const
+
+      /** \copydoc Dune::DofMapper::mapTpGlobal( const ElementType &element, const int localDof) const */
+      int mapToGlobal ( const ElementType &element, const int localDof ) const
       {
         assert( mapper1_.size() == globalOffset_ );
-        const int localOffset = mapper1_.numDofs(entity);
+        const int localOffset = mapper1_.numDofs(element);
 
         int index;
 
         if( localDof - localOffset  < 0 )
-          index = mapper1_.mapToGlobal( entity, localDof );
+          index = mapper1_.mapToGlobal( element, localDof );
         else
-          index = mapper2_.mapToGlobal( entity, localDof - localOffset ) + globalOffset_;
+          index = mapper2_.mapToGlobal( element, localDof - localOffset ) + globalOffset_;
           
         assert( (0 <= index) && (index < size()) );
         return index;
       }
       
+      /** \copydoc Dune::DofMapper::mapEntityDofToGlobal( const Entity &entity, const int localDof ) const */
       template< class Entity > 
       int mapEntityDofToGlobal ( const Entity &entity, const int localDof ) const
       {
         assert( mapper1_.size() == globalOffset_ );
-        const int numEntityDofs =  mapper1_.numEntityDofs(entity);
+        const int numEntityDofs =  mapper1_.numEntityDofs( entity);
 
         if( localDof - numEntityDofs < 0 )
           return mapper1_.mapEntityDofToGlobal( entity, localDof );
@@ -146,81 +160,43 @@ namespace Dune
           return mapper2_.mapEntityDofToGlobal( entity, localDof - numEntityDofs ) + globalOffset_;
       }
       
-      /** \brief obtain maximal number of DoFs on one entity
-       */
+      /** \copydoc Dune::DofMapper::maxNumDofs() const */
       int maxNumDofs () const
       {
         return mapper1_.maxNumDofs() + mapper2_.maxNumDofs();
       }
 
-      /** \brief map each local DoF number to a global one
-       *
-       *  \param[in]  element  element, the DoFs belong to
-       *  \param[in]  f        functor to call for each DoF
-       *
-       *  The functor has to be a copyable object satisfying the following
-       *  interface:
-       *  \code
-       *  struct Functor
-       *  {
-       *    // application operator
-       *    void operator() ( int localDoF, int globalDoF );
-       *  };
-       *  \endcode
-       *
-       *  For each DoF to be mapped, this method will call the application operator
-       *  once.
-       *  
-       *  \note There is no guarantee on the order, in which the functor is applied.
-       */
+
+      /** \copydoc Dune::DofMapper::mapEach( const ElementType &element, Functor f ) const */
       template< class Functor >
       void mapEach ( const ElementType &element, Functor f ) const
       {
-        const int n = numDofs( element );
-        for( int i = 0; i < n; ++i )
-          f( i, mapToGlobal( element, i ) );
+        mapper1_.mapEach( element, FunctorWrapper< Functor > (f, 0, 0) );
+        mapper2_.mapEach( element, FunctorWrapper< Functor > (f, mapper1_.numDofs( element ), globalOffset_) );
       }
 
-      /** \brief obtain number of DoFs on an entity
-       * 
-       *  \param[in]  entity  entity of codimension 0
-       *  
-       *  \returns number of DoFs on the entity
-       */
-      int numDofs ( const EntityType &entity ) const
+      /** \copydoc Dune::DofMapper::numDofs( const ElementType &element ) const */
+      int numDofs ( const ElementType &element ) const
       {
-        int nDofs = mapper1_.numDofs( entity ) + mapper2_.numDofs( entity );
+        int nDofs = mapper1_.numDofs( element ) + mapper2_.numDofs( element );
   //      assert( (nDofs >=0) && (nDofs < size()) );
         return nDofs;
       }
 
-      /** \brief obtain number of DoFs actually belonging to an entity
-       *
-       *  In contrast to numDofs, this method returns the number of DoFs actually
-       *  associated with an entity (usually a subentity). We have the following
-       *  relation for an entity \f$E\f$ of codimension 0:
-       *  \f[
-       *  \mathrm{numDofs}( E ) = \sum_{e \subset E} \mathrm{numEntityDofs}( e ),
-       *  \f]
-       *  where \f$\subset\f$ denotes the subentity relation.
-       * 
-       *  \param[in]  entity  entity of codimension
-       *  
-       *  \returns number of DoFs on the entity
-       */
+      /** \copydoc Dune::DofMapper::numEntityDofs( const Entity &entity ) const */
       template< class Entity >
       int numEntityDofs ( const Entity &entity ) const
       {
         return mapper1_.numEntityDofs( entity ) + mapper2_.numEntityDofs( entity );
       }
 
-      /** \brief Check, whether the data in a codimension has fixed size */
+      /** \copydoc Dune::DofMapper::fixedSize( int codim ) const */
       bool fixedDataSize ( int codim ) const
       {
         return mapper1_.fixedDataSize( codim ) && mapper2_.fixedDataSize( codim );
       }
 
-      /** \brief return number of holes for data block */
+      /** \copydoc Dune::DofMapper::numerOfHoles( const int block ) const */
       int numberOfHoles(const int block) const 
       {
         const int numBlock1 = mapper1_.numBlocks(); 
@@ -230,7 +206,7 @@ namespace Dune
           return mapper2_.numberOfHoles( block - numBlock1 );
       }
       
-      /** \brief return old index of hole for data block (with resprect to new offset) */
+      /** \copydoc Dune::DofMapper::oldIndex( const int hole, const int block ) const */
       int oldIndex (const int hole, const int block) const 
       { 
         const int numBlock1 = mapper1_.numBlocks(); 
@@ -240,7 +216,7 @@ namespace Dune
           return mapper2_.oldIndex( hole, block - numBlock1 );
       }
         
-      /** \brief return new index of hole for data block (with resprect to new offset) */
+      /** \copydoc Dune::DofMapper::newIndex( const int hole, const int block ) const */
       int newIndex (const int hole, const int block) const 
       { 
         const int numBlock1 = mapper1_.numBlocks(); 
@@ -250,13 +226,13 @@ namespace Dune
           return mapper2_.newIndex( hole, block - numBlock1 );
       }
 
-      /** \brief return true if compress will affect data */
+      /** \copydoc Dune::DofMapper::consecutive() const */
       bool consecutive () const 
       {
         return mapper1_.consecutive() && mapper2_.consecutive();
       }
 
-      /** \brief return old offsets for given block */
+      /** \copydoc Dune::DofMapper::oldOffSet( const int block ) const */
       int oldOffSet(const int block) const
       {
         const int numBlock1 = mapper1_.numBlocks();
@@ -266,7 +242,7 @@ namespace Dune
           return mapper2_.oldOffSet( block - numBlock1 ) + oldGlobalOffset_;
       }
 
-      /** \brief return current offsets for given block */
+      /** \copydoc Dune::DofMapper::OffSet( const int block ) const */
       int offSet(const int block) const
       {
         assert( globalOffset_ == mapper1_.size() );
@@ -277,26 +253,25 @@ namespace Dune
           return mapper2_.offSet( block - numBlock1 ) + globalOffset_;
       }
 
-      /** \brief return number of supported blocks */
+      /** \copydoc Dune::DofMapper::numBlocks() const */
       int numBlocks() const
       {
         return mapper1_.numBlocks() + mapper2_.numBlocks();
       }
 
-      /** \brief return number of supported blocks */
+      /** \copydoc Dune::DofMapper::resize() */
       void resize ()
       {
         oldGlobalOffset_ = globalOffset_;
         globalOffset_ = mapper1_.size();      
       }
 
-      /** \brief return number of supported blocks */
+      /** \copydoc Dune::DofMapper::compress() */
       bool compress ()
       {
         resize();
         return true;
       }
-
 
       void read_xdr ( const char *filename, int timestep )
       {
@@ -306,12 +281,14 @@ namespace Dune
       void write_xdr ( const char *filename, int timestep )
       {}
 
-      void insertEntity ( const EntityType &entity )
+      /** \copydoc Dune::DofMapper::insertEntity( const ElementType &element ) */
+      void insertEntity ( const ElementType &element )
       {
         resize();
       }
 
-      void removeEntity ( const EntityType &entity )
+      /** \copydoc Dune::DofMapper::removeEntity( const ElementType &element ) */
+      void removeEntity ( const ElementType &element )
       {
         resize();
       }
@@ -325,99 +302,6 @@ namespace Dune
       int globalOffset_;
       int oldGlobalOffset_;
     };
-
-
-    template<class EntityType, class DofMapperType >
-    class CombinedDofMapIterator
-    {
-      typedef CombinedDofMapIterator< EntityType, DofMapperType > ThisType;
-
-    public:
-      enum IteratorType { beginIterator, endIterator };
-
-      CombinedDofMapIterator ( const IteratorType type,
-                               const EntityType& entity,
-                               const DofMapperType& mapper)
-      : baseIndex_( (type == endIterator) ? -1 : 
-                     mapper.mapToGlobal( entity, 0 ) ),
-        dof_( (type == endIterator) ? mapper.numDofs( entity ) : 0 )
-      {}
-
-      CombinedDofMapIterator ( const ThisType &other )
-      : baseIndex_( other.baseIndex_ ),
-        dof_( other.dof_ )
-      {}
-
-      const ThisType &operator++ ()
-      {
-        ++dof_;
-        return *this;
-      }
-
-      bool operator== ( const ThisType &other ) const
-      {
-        return dof_ == other.dof_;
-      }
-
-      bool operator!= ( const ThisType &other ) const
-      {
-        return dof_ != other.dof_;
-      }
-
-      int local () const
-      {
-        return dof_;
-      }
-
-      int global () const
-      {
-        return baseIndex_ + dof_;
-      }
-
-    protected:
-      const int baseIndex_;
-      int dof_;
-
-    };
-
-#if 0
-    // ComobinedMapperSingletonFactory
-    // ---------------------------------
-
-    template<class Grid, class Mapper1, class Mapper2 >
-    struct CombinedMapperSingletonFactory
-    {
-      typedef CombinedMapper< Grid, Mapper1, Mapper2 > Object;
-
-      struct Key
-      {
-        Key ( const Mapper1 &mp1, const Mapper2 &mp2 )
-        : mp1_( mp1 ),
-          mp2_( mp2 )
-        {}
-
-        bool operator== ( const Key &other )
-        {
-          return ((&mp1_ == &other.mp1_) && (&mp2_ == &other.mp2_))  ;
-        }
-
-        const Mapper1 &mp1_;
-        const Mapper2 &mp2_;
-      };
-
-      //! create new mapper  
-      static Object *createObject ( const Key &key )
-      {
-        return new Object ( key.mp1_, key.mp2_ );
-      }
-
-      //! delete mapper object 
-      static void deleteObject ( Object *object )
-      {
-        delete object;
-      }
-    };
-#endif
 
   }   // end namespace Fem  
 } // end namespace Dune

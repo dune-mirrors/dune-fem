@@ -33,7 +33,6 @@ namespace Dune
     class CombinedDiscreteFunctionSpace;
 
 
-
     template< class DFunctionSpace1, class DFunctionSpace2> 
     struct CombinedDiscreteFunctionSpaceTraits
     {
@@ -84,27 +83,25 @@ namespace Dune
       enum { localBlockSize = 1 };
 
       private:
-      // mapper for block
+      //! mapper for block
       typedef typename DiscreteFunctionSpace1 :: MapperType     MapperType1;
       typedef typename DiscreteFunctionSpace2 :: MapperType     MapperType2;
 
-      // get base function sets of the two spaces
+      //! get base function sets of the two spaces
       typedef typename DiscreteFunctionSpace1 :: BaseFunctionSetType   BaseFunctionSetType1;
       typedef typename DiscreteFunctionSpace2 :: BaseFunctionSetType   BaseFunctionSetType2;
 
       public:
-      // atm no other possibility
+      //! define a combined DofMapper and the block mapper
       typedef CombinedMapper< GridType, MapperType1, MapperType2 > BlockMapperType;
       typedef BlockMapperType MapperType;
 
-      // implementation of basefunction set 
+      //! implementation of basefunction set 
       typedef CombinedBaseFunctionSet< FunctionSpaceType, BaseFunctionSetType1, BaseFunctionSetType2 >
           BaseFunctionSetType;   
 
-      /** \brief defines type of communication data handle for this type of space
-       */
       template< class DiscreteFunction,
-                class Operation = DFCommunicationOperation :: Add >
+                class Operation = DFCommunicationOperation :: Copy >
       struct CommDataHandle
       {
         //! type of data handle 
@@ -116,27 +113,20 @@ namespace Dune
 
 
 
-    /** \addtogroup LagrangeDiscreteFunctionSpace
+    /** \addtogroup CombinedDiscreteFunctionSpace
      *
-     *  Provides access to bse function sets for different element types in
-     *  one grid and size of function space and maps from local to global dof
-     *  number.
+     *  Provides a DiscreteFunctionSpace combined from two arbitrary 
+     *  DiscreteFunctionSpaces U_h and V_h into a single DFSpace ( U_h times V_h ). 
      *
-     *  \note This space can only be used with special index sets. If you want
-     *  to use the LagrangeDiscreteFunctionSpace with an index set only
-     *  supporting the index set interface you will have to use the
-     *  IndexSetWrapper class to provide the required functionality.
+     *  \note It is assumed that the spaces U_h and V_h  are constructed on the same
+     *        gridpart!!!
      *
-     *  \note For adaptive calculations one has to use index sets that are
-     *  capable of adaption (i.e. the method adaptive returns true). See also
-     *  AdaptiveLeafIndexSet.
+     *  \note adaptivity is not yet implemented!!!
      */
 
-
-
-    /** \class   LagrangeDiscreteFunctionSpace
-     *  \ingroup LagrangeDiscreteFunctionSpace
-     *  \brief   Lagrange discrete function space
+    /** \class   CombinedDiscreteFunctionSpace
+     *  \ingroup CombinedDiscreteFunctionSpace
+     *  \brief   Combined discrete function space
      */
     template< class DFSpace1, class DFSpace2 >
     class CombinedDiscreteFunctionSpace
@@ -145,6 +135,7 @@ namespace Dune
                                                     DFSpace2 > >
     {
     public:
+      //! types of Discrete Subspace 
       typedef DFSpace1    DiscreteFunctionSpaceType1;
       typedef DFSpace2    DiscreteFunctionSpaceType2;
 
@@ -158,13 +149,17 @@ namespace Dune
                                              DFSpace2 >
        CombinedDiscreteFunctionSpaceType;
 
+      //! extract grid informations, it is assumed the both spaces are living on the
+      //! same gridPart
       typedef typename Traits :: GridPartType GridPartType;
       typedef typename Traits :: GridType GridType;
+      //! extract informations about IndexSet and Iterators
       typedef typename Traits :: IndexSetType IndexSetType;
       typedef typename Traits :: IteratorType IteratorType;
       //! dimension of the grid (not the world)
       enum { dimension = GridType :: dimension };
 
+      //! the underlaying Analytical function space
       typedef typename Traits :: FunctionSpaceType FunctionSpaceType;
       //! field type for function space's domain
       typedef typename Traits :: DomainFieldType DomainFieldType;
@@ -188,31 +183,9 @@ namespace Dune
       //! type of the base function set(s)
       typedef typename Traits :: BaseFunctionSetType BaseFunctionSetType;
 
+      //! types of the dof mapper for the two subspaces
       typedef typename DiscreteFunctionSpaceType1 :: MapperType MapperType1;
       typedef typename DiscreteFunctionSpaceType2 :: MapperType MapperType2;
-
-#if 0
-      //! type of base function factory
-      typedef CombinedBaseFunctionFactory
-        < typename BaseFunctionSpaceType :: ScalarFunctionSpaceType, dimension, polynomialOrder >
-        ScalarFactoryType;
-      //! type of singleton base function factory
-      typedef BaseFunctionSetSingletonFactory
-        < GeometryType, BaseFunctionSetImp, ScalarFactoryType >
-        BaseFunctionSetSingletonFactoryType;
-      //! type of singleton list (singleton provider) for base functions
-      typedef SingletonList
-        < GeometryType, BaseFunctionSetImp, BaseFunctionSetSingletonFactoryType >
-        BaseFunctionSetSingletonProviderType;
-
-
-      //! type of a Lagrange point set
-      typedef LagrangePointSet< GridPartType, polynomialOrder >
-        LagrangePointSetType;
-      //! type of Lagrange point set map
-      typedef std :: map< const GeometryType, const LagrangePointSetType* >
-        LagrangePointSetMapType;
-#endif
 
       //! mapper used to implement mapToGlobal
       typedef typename Traits :: MapperType MapperType;
@@ -228,25 +201,11 @@ namespace Dune
       //! dimension of a value
       enum { dimVal = 1 };
 
-#if 0
-      //! mapper factory 
-      typedef CombinedMapperSingletonFactory
-        < BlockMapperType1, BlockMapperType2 >
-        BlockMapperSingletonFactoryType;
-
-      typedef typename BlockMapperSingletonFactoryType :: Key KeyType;
-
-      //! singleton list of mappers 
-      typedef SingletonList
-        < KeyType, BlockMapperType, BlockMapperSingletonFactoryType >
-        BlockMapperProviderType;
-#endif
-
     public:
       //! type of identifier for this discrete function space
       typedef int IdentifierType;
       //! identifier of this discrete function space
-      static const IdentifierType id = 667;
+      static const IdentifierType id = 669;
       
     private:
       typedef CombinedDiscreteFunctionSpaceType ThisType;
@@ -257,7 +216,7 @@ namespace Dune
       using BaseType :: gridPart;
 
       //! default communication interface 
-      static const InterfaceType defaultInterface = InteriorBorder_InteriorBorder_Interface;
+      static const InterfaceType defaultInterface = InteriorBorder_All_Interface;
 
       //! default communication direction 
       static const CommunicationDirection defaultDirection = ForwardCommunication;
@@ -277,36 +236,6 @@ namespace Dune
         space2_( gridPart, commInterface, commDirection ),
         mapper_( 0 )
       {
-#if 0
-        const IndexSetType &indexSet = gridPart.indexSet();
-
-        AllGeomTypes< IndexSetType, GridType > allGeometryTypes( indexSet );
-        const std :: vector< GeometryType >& geometryTypes
-          = allGeometryTypes.geomTypes( 0 );
-        for( unsigned int i = 0; i < geometryTypes.size(); ++i )
-        {
-          const GeometryType &geometryType = geometryTypes[ i ];
-          
-          if( baseFunctionSet_.find( geometryType ) == baseFunctionSet_.end() )
-          {
-            const BaseFunctionSetImp *baseFunctionSet; 
-            baseFunctionSet = new BaseFunctionSetImp( 
-                space1_.baseFunctionSet( geometryType ), 
-                space2_.baseFunctionSet( geometryType ) );
-            /*
-              = &(BaseFunctionSetSingletonProviderType
-                  :: getObject( geometryType ));
-            assert( baseFunctionSet != NULL );
-            */
-            baseFunctionSet_[ geometryType ] = baseFunctionSet;
-          }
-        }
-#endif
-
-        /*
-        MapperSingletonKeyType key( gridPart, lagrangePointSet_, polynomialOrder );
-        blockMapper_ = &BlockMapperProviderType :: getObject( key );
-        */
         mapper_ = new MapperType( gridPart.grid(), space1_.mapper(), space2_.mapper());
         assert( mapper_ != 0 );
       }
@@ -322,24 +251,6 @@ namespace Dune
       ~CombinedDiscreteFunctionSpace ()
       {
         delete mapper_;
-  /*
-        BlockMapperProviderType::removeObject( *blockMapper_ );
-        */
-
-#if 0
-        typedef typename BaseFunctionMapType :: iterator BFIteratorType;
-        BFIteratorType bfend = baseFunctionSet_.end();
-        for( BFIteratorType it = baseFunctionSet_.begin(); it != bfend; ++it ) 
-        {
-          const BaseFunctionSetImp *baseFunctionSet = (*it).second;        
-          if( baseFunctionSet != NULL )
-            delete baseFunctionSet;
-          /*
-            BaseFunctionSetSingletonProviderType
-            :: removeObject( *baseFunctionSet );
-            */
-        }
-#endif
       }
 
       /** \copydoc Dune::DiscreteFunctionSpaceInterface::contains */
@@ -352,6 +263,7 @@ namespace Dune
       /** \copydoc Dune::DiscreteFunctionSpaceInterface::continuous */
       inline bool continuous () const
       {
+        // forward to the subsapces
         return space1_.continuous() && space2_.continuous();
       }
 
@@ -399,11 +311,17 @@ namespace Dune
         return mapper();
       }
 
+      /** \brief obtain the first subspace
+       *  \return DiscreteFunctionSpaceType1
+       **/
       const DiscreteFunctionSpaceType1 &space1 () const
       {
         return space1_;
       }
 
+      /** \brief obtain the second subspace
+       *  \return DiscreteFunctionSpaceType2
+       **/
       const DiscreteFunctionSpaceType2 &space2 () const
       {
         return space2_;
@@ -415,16 +333,14 @@ namespace Dune
       //! space 2
       DiscreteFunctionSpaceType2  space2_;
 
-#if 0
-      //! map for the base function sets
-      mutable BaseFunctionMapType baseFunctionSet_;
-#endif
-
       //! corresponding mapper
       MapperType *mapper_;
     };
 
   } // end namespace Fem
+
+
+  //! specialization of DifferentDiscreteFunctionSpace for CombinedDiscreteFunctionSpace
   template< class DFunctionSpaceImp1,
             class DFunctionSpaceImp2,
             class NewFunctionSpace >
@@ -445,7 +361,6 @@ namespace Dune
     public:
     typedef Fem::CombinedDiscreteFunctionSpace< Type1, Type2 > Type;
   };
+
 } // end namespace Dune 
-
-
 #endif // #ifndef DUNE_COMBINDEDDISCRETFUNCTIONSPACE_HH
