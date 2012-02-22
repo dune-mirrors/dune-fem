@@ -15,6 +15,7 @@
 #include <dune/common/geometrytype.hh>
 #include <dune/geometry/geometrytypeindex.hh>
 #endif
+
 #include <dune/fem/misc/threadmanager.hh>
 
 namespace Dune {
@@ -115,7 +116,9 @@ namespace Dune {
         IteratorType endit = quadratureList().end();
         for(IteratorType it = quadratureList().begin(); it != endit; ++it)
         {
-          if ( (*it)[geoIndex] == GlobalGeometryTypeIndex :: index( storage.geometryType() ) )
+          // only cache base functions for quadratures with same geometry type 
+          if ( (*it)[geoIndex] == 
+                  GlobalGeometryTypeIndex :: index( storage.geometryType() ) )
           {
             // get if and codim of quad 
             const size_t id = (*it)[ ids ];
@@ -153,7 +156,10 @@ namespace Dune {
         const size_t quadSize = quad.nop();
         // store quadrature 
         QuadratureIdentifierType ident( sizeIndents );
-        GeometryType geoType = quad.geometryType();
+
+        // get geometry type of quadrature 
+        const GeometryType geoType = quad.geometryType();
+
         ident[ ids ]    = id ;
         ident[ codims ] = codim; 
         ident[ sizes ]  = quadSize;
@@ -164,6 +170,8 @@ namespace Dune {
         IteratorType endit = storageList().end();
         for(IteratorType it = storageList().begin(); it != endit; ++it)
         {
+          // make sure that only base functions and quadratures 
+          // with same type are cached 
           if (geoType == (*it)->geometryType())
             (*it)->cacheQuadrature(id, codim, quadSize);
         }
