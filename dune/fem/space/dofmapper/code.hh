@@ -2,6 +2,7 @@
 #define DUNE_FEM_DOFMAPPER_CODE_HH
 
 #include <algorithm>
+#include <cassert>
 #include <iostream>
 
 namespace Dune
