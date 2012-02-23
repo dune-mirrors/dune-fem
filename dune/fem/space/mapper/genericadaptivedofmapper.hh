@@ -76,8 +76,6 @@ namespace Dune
       //! compiled local key type 
       typedef typename CompiledLocalKeyVectorType :: value_type :: value_type  CompiledLocalKeyType;
 
-      typedef typename GridType :: template Codim< dimension > :: EntityPointer   VertexPointerType ;
-
       //! type of the DoF manager
       typedef DofManager< GridType > DofManagerType;
 
@@ -593,14 +591,11 @@ namespace Dune
             assert( vxSize == 2 );
 #endif
             const int vx[ 2 ] = { refElem.subEntity ( subEntity, codim, 0, dimension ),
-                                  refElem.subEntity ( subEntity, codim, 1, dimension) };
+                                  refElem.subEntity ( subEntity, codim, 1, dimension ) };
 
-            // get first vertex 
-            VertexPointerType vx0 = entity.template subEntity< dimension > ( vx[ 0 ] );
-            VertexPointerType vx1 = entity.template subEntity< dimension > ( vx[ 1 ] );
-
-            // flip index if face is twsited 
-            if( gridPart_.grid().localIdSet().id( *vx0 ) > gridPart_.grid().localIdSet().id( *vx1 ) )
+            // flip index if face is twisted 
+            if( gridPart_.grid().localIdSet().subId( entity, vx[ 0 ], dimension ) > 
+                gridPart_.grid().localIdSet().subId( entity, vx[ 1 ], dimension ) )
             {
               const int numDofsSubEntity = compLocalKey.numDofs( codim, subEntity );
               index = numDofsSubEntity - index - 1;
