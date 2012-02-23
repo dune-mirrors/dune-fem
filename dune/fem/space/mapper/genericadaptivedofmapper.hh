@@ -48,6 +48,7 @@ namespace Dune
       //! type of entities (codim 0)
       typedef typename Traits::ElementType ElementType;
 
+
       //! type of DofMapIterator
       typedef typename Traits::DofMapIteratorType DofMapIteratorType;
    
@@ -74,6 +75,8 @@ namespace Dune
 
       //! compiled local key type 
       typedef typename CompiledLocalKeyVectorType :: value_type :: value_type  CompiledLocalKeyType;
+
+      typedef typename GridType :: template Codim< dimension > :: EntityPointer   VertexPointerType ;
 
       //! type of the DoF manager
       typedef DofManager< GridType > DofManagerType;
@@ -569,13 +572,41 @@ namespace Dune
           // the continuous case 
           const int polOrd = polynomOrder( entity );
 
+          const CompiledLocalKeyType& compLocalKey = compiledLocalKey( polOrd, entity.type() );
           // get dof info for entity and local dof 
-          const Fem::LocalKey &dofInfo = compiledLocalKey( polOrd, entity.type() ).localKey( localDof );
+          const Fem::LocalKey &dofInfo = compLocalKey.localKey( localDof );
 
           const unsigned int codim = dofInfo.codim();
           const unsigned int subEntity = dofInfo.subEntity();
 
-          return dofContainer( codim )( entity, subEntity ).dof( codim, polOrd, dofInfo.index() );
+          unsigned int index = dofInfo.index() ;
+
+          // account for possible twists in the grid (only 2d)
+          if( dimension == 2 && codim == 1 ) 
+          {
+            const GenericReferenceElement< FieldType, dimension > &refElem
+                = GenericReferenceElements< FieldType, dimension >::general( entity.type() );
+
+            const int vxSize = refElem.size( subEntity, codim, dimension );
+            // two vertices per edge in 2d 
+            assert( vxSize == 2 );
+            const int vx[ 2 ] = { refElem.subEntity ( subEntity, codim, 0, dimension ),
+                                  refElem.subEntity ( subEntity, codim, vx, dimension) };
+
+            // get first vertex 
+            VertexPointerType vx0 = entity.template subEntity< dimension > ( vx[ 0 ] );
+            VertexPointerType vx1 = entity.template subEntity< dimension > ( vx[ 1 ] );
+
+            // flip index if face is twsited 
+            if( gridPart_.grid().localIdSet().id( *vx0 ) > gridPart_.grid().localIdSet().id( *vx1 ) )
+            {
+              const int numDofsSubEntity = compLocalKey.numDofs( codim, subEntity );
+              index = numDofsSubEntity - index - 1;
+            }
+          }
+
+          assert( index < compLocalKey.numDofs( codim, subEntity ) );
+          return dofContainer( codim )( entity, subEntity ).dof( codim, polOrd, index );
         }
       }
 
@@ -829,6 +860,9 @@ namespace Dune
         // make all dofs that are currently used 
         // (corresponding to GridPart's iterator)
         const size_t usedSize = insertAllUsed();
+
+        //std::cout << "Size " << size_ << " holes " << numberOfHoles_ << std::endl;
+        //printDofs();
 
         // reset number of holes 
         numberOfHoles_ = 0;
