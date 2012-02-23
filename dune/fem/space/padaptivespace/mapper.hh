@@ -62,6 +62,7 @@ namespace Dune
     // First Order Lagrange Mapper
     // ---------------------------
 
+#if 0
     template< class GridPart >
     class PAdaptiveLagrangeMapper< GridPart, 1 >
     : public CodimensionMapper< GridPart, GridPart::GridType::dimension >
@@ -112,8 +113,10 @@ namespace Dune
       void setPolynomOrder( const ElementType& entity, const int polOrd ) 
       {
       }
-    };
 
+      void adapt() {}
+    };
+#endif
 
 
     // Higher Order Lagrange Mapper
