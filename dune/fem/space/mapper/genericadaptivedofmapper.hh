@@ -496,11 +496,6 @@ namespace Dune
         dm_.addIndexSet( asImp() );
       }
 
-      bool conformingRefinement () const 
-      {
-        return DGFGridInfo< GridType > :: refineStepsForHalf() > 1; 
-      }
-
       int polynomOrder( const ElementType& entity ) const 
       {
         return entityPolynomOrder_[ entity ].order();
@@ -798,6 +793,12 @@ namespace Dune
           }
         }
         return 0;
+      }
+
+      //! return true if elements can be refined more than once during adaptation 
+      bool conformingRefinement () const 
+      {
+        return DGFGridInfo< GridType > :: refineStepsForHalf() > 1; 
       }
 
       //! return number of DoFs currently used for space
