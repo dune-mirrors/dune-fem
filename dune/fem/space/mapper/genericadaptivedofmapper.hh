@@ -587,11 +587,13 @@ namespace Dune
             const GenericReferenceElement< FieldType, dimension > &refElem
                 = GenericReferenceElements< FieldType, dimension >::general( entity.type() );
 
+#ifndef NDEBUG
             const int vxSize = refElem.size( subEntity, codim, dimension );
             // two vertices per edge in 2d 
             assert( vxSize == 2 );
+#endif
             const int vx[ 2 ] = { refElem.subEntity ( subEntity, codim, 0, dimension ),
-                                  refElem.subEntity ( subEntity, codim, vx, dimension) };
+                                  refElem.subEntity ( subEntity, codim, 1, dimension) };
 
             // get first vertex 
             VertexPointerType vx0 = entity.template subEntity< dimension > ( vx[ 0 ] );
