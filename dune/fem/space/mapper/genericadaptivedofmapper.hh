@@ -496,6 +496,11 @@ namespace Dune
         dm_.addIndexSet( asImp() );
       }
 
+      bool conformingRefinement () const 
+      {
+        return DGFGridInfo< GridType > :: refineStepsForHalf() > 1; 
+      }
+
       int polynomOrder( const ElementType& entity ) const 
       {
         return entityPolynomOrder_[ entity ].order();
@@ -597,7 +602,7 @@ namespace Dune
             if( gridPart_.grid().localIdSet().subId( entity, vx[ 0 ], dimension ) > 
                 gridPart_.grid().localIdSet().subId( entity, vx[ 1 ], dimension ) )
             {
-              const int numDofsSubEntity = compLocalKey.numDofs( codim, subEntity );
+              const unsigned int numDofsSubEntity = compLocalKey.numDofs( codim, subEntity );
               index = numDofsSubEntity - index - 1;
             }
           }
@@ -774,6 +779,27 @@ namespace Dune
         compress();
       }
 
+      // insert father element when conforming refinement is enabled 
+      // (due to refinement of more than one level)
+      unsigned int insertFather( const ElementType &entity )
+      {
+        if( entity.level() > 0 ) 
+        {
+          typedef typename ElementType :: EntityPointer ElementPointerType;
+          ElementPointerType father = entity.father();
+          const ElementType& dad = *father ;
+          // if father is a new element, insert it 
+          if( dad.isNew() ) 
+          {
+            unsigned int usedSize = insertEntityDofs( dad );
+            // also insert dad's fathers 
+            usedSize += insertFather( dad );
+            return usedSize;
+          }
+        }
+        return 0;
+      }
+
       //! return number of DoFs currently used for space
       size_t insertAllUsed() 
       {
@@ -783,11 +809,19 @@ namespace Dune
         // count current size 
         size_t usedSize = 0;
 
+        const bool confRefinement = conformingRefinement(); 
+
         typedef typename GridPartType :: template Codim< 0 > :: IteratorType IteratorType;
         const IteratorType end = gridPart_.template end<0>();
         for( IteratorType it = gridPart_.template begin<0>(); 
              it != end ; ++it ) 
         {
+          if( confRefinement ) 
+          {
+            // insert father elements (conforming grids only)
+            usedSize += insertFather( *it ); 
+          }
+
           // number of new dofs (not already counted) is returned 
           usedSize += insertEntityDofs( *it );
         }
