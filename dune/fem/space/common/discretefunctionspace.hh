@@ -165,11 +165,10 @@ namespace Dune
 
     //! \brief typedef struct for defining the same discrete function space with a different dimRange
     template< int newDimRange >
-    class ToNewDimRange
+    struct ToNewDimRange
     {
       typedef typename ToNewDimRangeFunctionSpace< FunctionSpaceType, newDimRange > :: Type NewFunctionSpaceType;
 
-    public:  
       //! type of my discrete function space with new dim range 
       typedef typename ToNewFunctionSpace< NewFunctionSpaceType > :: Type  Type;
     };
