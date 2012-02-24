@@ -37,7 +37,7 @@ namespace Dune {
       typedef std::vector< size_t > QuadratureIdentifierType;
       typedef std::list< QuadratureIdentifierType > QuadratureListType;
 
-      enum { ids = 0, codims = 1, sizes = 2, geoIndex, sizeIndents = 4 };
+      enum { ids = 0, codims = 1, sizes = 2, geoIndex = 3, sizeIndents = 4 };
 
       // return reference to list singleton pointer 
       static StorageInterfaceListPointer& storageListPtr () 
@@ -112,13 +112,15 @@ namespace Dune {
         // make sure we are in single thread mode 
         assert( ThreadManager :: singleThreadMode() );
 
+        // get geometry index of storage  
+        const unsigned int storageIndex = GlobalGeometryTypeIndex :: index( storage.geometryType() );
+
         typedef typename QuadratureListType::iterator IteratorType;
         IteratorType endit = quadratureList().end();
         for(IteratorType it = quadratureList().begin(); it != endit; ++it)
         {
           // only cache base functions for quadratures with same geometry type 
-          if ( (*it)[geoIndex] == 
-                  GlobalGeometryTypeIndex :: index( storage.geometryType() ) )
+          if ( (*it)[geoIndex] == storageIndex )
           {
             // get if and codim of quad 
             const size_t id = (*it)[ ids ];
@@ -141,12 +143,13 @@ namespace Dune {
       static void registerQuadratureToStorages(const QuadratureType & quad)
       {
         const size_t codim = QuadratureType :: codimension;
-        registerQuadratureToStorages(quad,codim);
+        registerQuadratureToStorages(quad, quad.geometryType(), codim);
       }
 
       //! register quadrature for all existing storages 
       template <class QuadratureType>
       static void registerQuadratureToStorages(const QuadratureType & quad, 
+                                               const GeometryType& geoType,   
                                                const size_t codim)
       {
         // make sure we are in single thread mode 
@@ -156,9 +159,6 @@ namespace Dune {
         const size_t quadSize = quad.nop();
         // store quadrature 
         QuadratureIdentifierType ident( sizeIndents );
-
-        // get geometry type of quadrature 
-        const GeometryType geoType = quad.geometryType();
 
         ident[ ids ]    = id ;
         ident[ codims ] = codim; 
@@ -171,8 +171,8 @@ namespace Dune {
         for(IteratorType it = storageList().begin(); it != endit; ++it)
         {
           // make sure that only base functions and quadratures 
-          // with same type are cached 
-          if (geoType == (*it)->geometryType())
+          // with same geometry type are cached 
+          if ( geoType == (*it)->geometryType() )
             (*it)->cacheQuadrature(id, codim, quadSize);
         }
       }

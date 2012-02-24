@@ -159,7 +159,7 @@ namespace Dune {
     } // end for all faces
 
     // register quadrature to base function storages 
-    Fem::StorageInterface<dim>::registerQuadratureToStorages(quad,1);
+    Fem::StorageInterface<dim>::registerQuadratureToStorages(quad, elementGeo, 1);
     
     return mit;
   }
