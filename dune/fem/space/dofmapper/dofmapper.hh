@@ -363,7 +363,7 @@ namespace Dune
     inline std::size_t DofMapper< GridPart >
       ::mapEntityDofToGlobal ( const Entity &entity, const int i ) const
     {
-      assert( (i >= 0) && (i < numEntityDofs( entity )) );
+      assert( (i >= 0) && (i < int( numEntityDofs( entity ) ) ) );
       const SubEntityInfo &info = subEntityInfo( entity );
       return info.offset + info.numDofs*indexSet().index( entity ) + i;
     }
