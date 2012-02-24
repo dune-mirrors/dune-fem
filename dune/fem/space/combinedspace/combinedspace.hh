@@ -327,7 +327,7 @@ namespace Dune
           // store in map 
           baseSetMap_[ geomTypes[i] ] = baseSet;
           // calc max dofs 
-          maxNumDofs = std::max(maxNumDofs,baseSet->numBaseFunctions());
+          maxNumDofs = std::max(maxNumDofs,int( baseSet->size() ));
         }
       }
     }
