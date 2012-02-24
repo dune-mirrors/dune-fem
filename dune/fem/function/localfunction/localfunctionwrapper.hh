@@ -114,11 +114,22 @@ namespace Dune
     {
     }
 
-    //! Copy constructor
+    /** \brief copy constructor (does a shallow copy)
+      
+        \note this copy constructor must only called once, 
+              i.e. on call of the method localFunction on the DiscreteFunction class,
+              since this does only a shallow copy
+     */
     inline LocalFunctionWrapper ( const ThisType &other )
     : lfptr_( other.lfptr_ ),
       lf_( *lfptr_ )
     {
+      // make sure that we only got one reference of the lf_ object
+      // otherwise it is not clear that changes will be correct 
+      // if this assertion fails an unauthorized copy was done 
+      // (i.e. copy-constructing a local function)
+       
+      // assert( lfptr_.referenceCounter() == 1 ); 
     }
 
   private:
