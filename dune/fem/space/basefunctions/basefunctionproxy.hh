@@ -92,6 +92,7 @@ namespace Dune
    
     /** \copydoc Dune::BaseFunctionSetInterface::evaluate(const int baseFunction,const FieldVector<int,diffOrd> &diffVariable,const PointType &x,RangeType &phi) const */
     template< int diffOrd, class PointType >
+    DUNE_DEPRECATED
     void evaluate ( const int baseFunction,
                     const FieldVector< int, diffOrd > &diffVariable,
                     const PointType &x,
@@ -102,6 +103,7 @@ namespace Dune
 
     /** \copydoc Dune::BaseFunctionSetInterface::evaluate(const int baseFunction,const PointType &x,RangeType &phi) const */
     template< class PointType >
+    DUNE_DEPRECATED
     void evaluate ( const int baseFunction,
                     const PointType &x,
                     RangeType &phi ) const
@@ -111,6 +113,7 @@ namespace Dune
 
     /** \copydoc Dune::BaseFunctionSetDefault::jacobian(const int baseFunction,const PointType &x,JacobianRangeType &phi) const */
     template< class PointType >
+    DUNE_DEPRECATED
     void jacobian( const int baseFunction,
                    const PointType &x,
                    JacobianRangeType &phi ) const
