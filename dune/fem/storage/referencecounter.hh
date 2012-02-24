@@ -207,6 +207,9 @@ namespace Dune
         const_cast< ReferenceCounterType& >( asImp() ).deleteObject();
     }
 
+    /** \brief return current reference count */
+    unsigned int referenceCounter () const { return refcount_; }
+
   protected:
     mutable unsigned int refcount_;
   };
@@ -298,6 +301,9 @@ namespace Dune
       assert( object_ != 0 );
       return object_->getObject();
     }
+
+    /** \brief return current reference count */
+    unsigned int referenceCounter () const { return object_->referenceCounter(); }
 
   protected:
     ReferenceCounterType *object_;
