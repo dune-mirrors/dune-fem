@@ -129,7 +129,7 @@ namespace Dune
       // if this assertion fails an unauthorized copy was done 
       // (i.e. copy-constructing a local function)
        
-      // assert( lfptr_.referenceCounter() == 1 ); 
+      assert( lfptr_.referenceCounter() == 1 ); 
     }
 
   private:
