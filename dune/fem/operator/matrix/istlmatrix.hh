@@ -81,7 +81,7 @@ namespace Dune
       typedef typename BaseType :: ConstRowIterator ConstRowIterator;
 
       //! type of discrete function space 
-      typedef typename ColDiscreteFunctionType :: DiscreteFunctionSpaceType ColSpaceType;
+      typedef typename ColDiscreteFunctionType :: DiscreteFunctionSpaceType RangeSpaceType;
 
       //! type of row block vector 
       typedef typename RowDiscreteFunctionType :: DofStorageType  RowBlockVectorType; 
@@ -90,7 +90,7 @@ namespace Dune
       typedef typename ColDiscreteFunctionType :: DofStorageType  ColBlockVectorType; 
 
       //! type of communication object 
-      typedef typename ColSpaceType :: GridType :: Traits :: CollectiveCommunication   CollectiveCommunictionType ;
+      typedef typename RangeSpaceType :: GridType :: Traits :: CollectiveCommunication   CollectiveCommunictionType ;
 
     protected:  
       size_type nz_;
@@ -132,7 +132,7 @@ namespace Dune
       //! setup matrix entires 
       template <class RowMapperType, class ColMapperType,
                 class StencilCreatorImp> 
-      void setup(const ColSpaceType& colSpace, 
+      void setup(const RangeSpaceType& colSpace, 
                  const RowMapperType & rowMapper, 
                  const ColMapperType & colMapper,
                  const StencilCreatorImp& stencil, 
@@ -377,6 +377,38 @@ namespace Dune
         } // end create 
       }
 
+      //! extract diagonal of matrix to block vector 
+      void extractDiagonal( ColBlockVectorType& diag ) const
+      { 
+        ConstRowIterator endi = this->end();
+        for (ConstRowIterator i = this->begin(); i!=endi; ++i)
+        {
+          const size_t row = i.index();
+          const ConstColIterator endj = (*i).end();
+          for (ConstColIterator j=(*i).begin(); j!=endj; ++j)
+          {
+            if( j.index() == row ) 
+            {
+              const LittleBlockType& block = (*j);
+              enum { blockSize = LittleBlockType :: rows };
+              for( int l=0; l<blockSize; ++l )
+              {
+                diag[ row ][ l ] = block[ l ][ l ]; 
+              }
+            }
+          }
+        }
+        /*
+        assert( this->M() == this->N() );
+        assert( this->M() == diag.size() );
+        const size_t diagSize = diag.size();
+        for( size_t i=0; i<diagSize; ++ i ) 
+        {
+          diag[ i ] = (*this)[ i ][ i ];
+        }
+        */
+      }
+
       //! print matrix 
       void print(std::ostream & s) const 
       {
@@ -399,19 +431,19 @@ namespace Dune
   template <class RowSpaceImp, class ColSpaceImp = RowSpaceImp>
   struct ISTLMatrixTraits
   {
-    typedef RowSpaceImp RowSpaceType; 
-    typedef ColSpaceImp ColumnSpaceType; 
-    typedef ISTLMatrixTraits<RowSpaceType,ColumnSpaceType> ThisType;  
+    typedef RowSpaceImp DomainSpaceType; 
+    typedef ColSpaceImp RangeSpaceType; 
+    typedef ISTLMatrixTraits<DomainSpaceType,RangeSpaceType> ThisType;  
     
     template <class OperatorTraits>
     struct MatrixObject 
     {
-      typedef ISTLMatrixObject<RowSpaceType,ColumnSpaceType,OperatorTraits> MatrixObjectType; 
+      typedef ISTLMatrixObject<DomainSpaceType,RangeSpaceType,OperatorTraits> MatrixObjectType; 
     };
   };
 
   //! MatrixObject handling an istl matrix 
-  template <class RowSpaceImp, class ColSpaceImp, class TraitsImp> 
+  template <class DomainSpaceImp, class RangeSpaceImp, class TraitsImp> 
   class ISTLMatrixObject
   {
   public:  
@@ -422,39 +454,41 @@ namespace Dune
     typedef typename Traits :: StencilType StencilType;
     
     //! type of space defining row structure 
-    typedef RowSpaceImp RowSpaceType; 
-    //typedef typename Traits :: RowSpaceType RowSpaceType;
+    typedef DomainSpaceImp DomainSpaceType; 
+    //typedef typename Traits :: DomainSpaceType DomainSpaceType;
     //! type of space defining column structure 
-    typedef ColSpaceImp ColumnSpaceType; 
-    //typedef typename Traits :: ColumnSpaceType ColumnSpaceType;
+    typedef RangeSpaceImp RangeSpaceType; 
+    //typedef typename Traits :: RangeSpaceType RangeSpaceType;
 
     //! type of this pointer 
-    typedef ISTLMatrixObject<RowSpaceType,ColumnSpaceType,Traits> ThisType;
+    typedef ISTLMatrixObject<DomainSpaceType,RangeSpaceType,Traits> ThisType;
 
 
   protected:  
-    typedef typename RowSpaceType::GridType GridType; 
+    typedef typename DomainSpaceType::GridType GridType; 
 
-    typedef typename ColumnSpaceType :: EntityType ColumnEntityType ;
-    typedef typename RowSpaceType :: EntityType RowEntityType ;
+    typedef typename RangeSpaceType :: EntityType ColumnEntityType ;
+    typedef typename DomainSpaceType :: EntityType RowEntityType ;
 
-    enum { littleRows = RowSpaceType :: localBlockSize };
-    enum { littleCols = ColumnSpaceType :: localBlockSize };
+    enum { littleRows = DomainSpaceType :: localBlockSize };
+    enum { littleCols = RangeSpaceType :: localBlockSize };
     
-    typedef typename RowSpaceType :: RangeFieldType RangeFieldType;
+    typedef typename DomainSpaceType :: RangeFieldType RangeFieldType;
     
     typedef FieldMatrix<RangeFieldType, littleRows, littleCols> LittleBlockType; 
 
-    typedef BlockVectorDiscreteFunction< RowSpaceType >     RowDiscreteFunctionType; 
+  public:
+    typedef BlockVectorDiscreteFunction< DomainSpaceType >     RowDiscreteFunctionType; 
     typedef typename RowDiscreteFunctionType :: LeakPointerType  RowLeakPointerType;
-    typedef BlockVectorDiscreteFunction< ColumnSpaceType >  ColumnDiscreteFunctionType; 
+    typedef BlockVectorDiscreteFunction< RangeSpaceType >  ColumnDiscreteFunctionType; 
     typedef typename ColumnDiscreteFunctionType :: LeakPointerType  ColumnLeakPointerType;
     
+  protected:  
     typedef typename RowDiscreteFunctionType :: DofStorageType    RowBlockVectorType; 
     typedef typename ColumnDiscreteFunctionType :: DofStorageType ColumnBlockVectorType; 
 
-    typedef typename RowSpaceType :: BlockMapperType RowMapperType; 
-    typedef typename ColumnSpaceType :: BlockMapperType ColMapperType; 
+    typedef typename DomainSpaceType :: BlockMapperType RowMapperType; 
+    typedef typename RangeSpaceType :: BlockMapperType ColMapperType; 
 
   public:
     //! type of used matrix 
@@ -471,9 +505,9 @@ namespace Dune
 
     struct LocalMatrixTraits
     {
-      typedef RowSpaceType DomainSpaceType ;
-      typedef ColumnSpaceType RangeSpaceType;
-      typedef typename RowSpaceType :: RangeFieldType RangeFieldType;
+      typedef DomainSpaceImp DomainSpaceType ;
+      typedef RangeSpaceImp  RangeSpaceType;
+      typedef typename DomainSpaceType :: RangeFieldType RangeFieldType;
       typedef LocalMatrix<ThisType> LocalMatrixType;
       typedef typename MatrixType:: block_type LittleBlockType;
     };
@@ -493,7 +527,7 @@ namespace Dune
       //! type of little blocks 
       typedef typename MatrixType:: block_type LittleBlockType;
       //! type of entries of little blocks 
-      typedef typename RowSpaceType :: RangeFieldType DofType;
+      typedef typename DomainSpaceType :: RangeFieldType DofType;
 
       typedef typename MatrixType::row_type RowType; 
 
@@ -523,8 +557,8 @@ namespace Dune
       
     public:  
       LocalMatrix(const MatrixObjectType & mObj,
-                  const RowSpaceType & rowSpace,
-                  const ColumnSpaceType & colSpace)
+                  const DomainSpaceType & rowSpace,
+                  const RangeSpaceType & colSpace)
         : BaseType( rowSpace, colSpace )
         , rowMapper_(mObj.rowMapper())
         , colMapper_(mObj.colMapper())
@@ -701,8 +735,8 @@ namespace Dune
     typedef LocalMatrixWrapper< LocalMatrixStackType > LocalMatrixType;
 
   protected:  
-    const RowSpaceType & rowSpace_;
-    const ColumnSpaceType & colSpace_;
+    const DomainSpaceType & domainSpace_;
+    const RangeSpaceType & rangeSpace_;
 
     // sepcial row mapper 
     RowMapperType& rowMapper_;
@@ -750,11 +784,11 @@ namespace Dune
     //!         - Preconditioning: {0,1,2,3,4,5,6} put -1 to get info
     //!         - Pre-iteration: number of iteration of preconditioner
     //!         - Pre-relaxation: relaxation factor   
-    ISTLMatrixObject ( const RowSpaceType &rowSpace,
-                       const ColumnSpaceType &colSpace,
+    ISTLMatrixObject ( const DomainSpaceType &rowSpace,
+                       const RangeSpaceType &colSpace,
                        const std :: string &paramfile = "" )
-      : rowSpace_(rowSpace)
-      , colSpace_(colSpace)
+      : domainSpace_(rowSpace)
+      , rangeSpace_(colSpace)
       // create scp to have at least one instance 
       // otherwise instance will be deleted during setup
       // get new mappers with number of dofs without considerung block size 
@@ -763,7 +797,7 @@ namespace Dune
       , size_(-1)
       , sequence_(-1)
       , matrix_(0)
-      , scp_(colSpace_)
+      , scp_(rangeSpace())
       , numIterations_(5)
       , relaxFactor_(1.1)
       , preconditioning_(none)
@@ -799,7 +833,7 @@ namespace Dune
     //! destructor 
     ~ISTLMatrixObject() 
     {
-      removeObj();
+      removeObj( true );
     }
 
     //! return reference to system matrix 
@@ -847,7 +881,7 @@ namespace Dune
     {
       typedef typename MatrixAdapterType :: PreconditionAdapterType PreConType;
       PreConType preconAdapter(matrix(), numIterations, relaxFactor_, preconditioning );
-      return MatrixAdapterType(matrix(), rowSpace_, colSpace_, preconAdapter );
+      return MatrixAdapterType(matrix(), domainSpace(), rangeSpace(), preconAdapter );
     }
 
     template <class PreconditionerType> 
@@ -856,8 +890,8 @@ namespace Dune
                            size_t numIterations) const 
     {
       typedef typename MatrixAdapterType :: PreconditionAdapterType PreConType;
-      PreConType preconAdapter(matrix(), numIterations, relaxFactor_, preconditioning, rowSpace_.grid().comm() );
-      return MatrixAdapterType(matrix(), rowSpace_, colSpace_, preconAdapter );
+      PreConType preconAdapter(matrix(), numIterations, relaxFactor_, preconditioning, domainSpace().grid().comm() );
+      return MatrixAdapterType(matrix(), domainSpace(), rangeSpace(), preconAdapter );
     }
 
     //! return matrix adapter object  
@@ -872,14 +906,14 @@ namespace Dune
     MatrixAdapterType matrixAdapterObject() const 
     { 
 #ifndef DISABLE_ISTL_PRECONDITIONING
-      const size_t procs = rowSpace_.grid().comm().size();
+      const size_t procs = domainSpace().grid().comm().size();
 
       typedef typename MatrixType :: BaseType ISTLMatrixType ;
       typedef typename MatrixAdapterType :: PreconditionAdapterType PreConType;
       // no preconditioner 
       if( preconditioning_ == none )
       {
-        return MatrixAdapterType(matrix(), rowSpace_,colSpace_, PreConType() );
+        return MatrixAdapterType(matrix(), domainSpace(),rangeSpace(), PreConType() );
       }
       // SSOR 
       else if( preconditioning_ == ssor )
@@ -929,10 +963,22 @@ namespace Dune
       // Jacobi 
       else if(preconditioning_ == jacobi)
       {
-        if( procs > 1 && numIterations_ > 1 ) 
-          DUNE_THROW(InvalidStateException,"ISTL::SeqJac only working with istl.preconditioning.iterations: 1 in parallel computations");
-        typedef SeqJac<ISTLMatrixType,RowBlockVectorType,ColumnBlockVectorType> PreconditionerType;
-        return createMatrixAdapter( (PreconditionerType*)0, numIterations_ );
+        if( numIterations_ == 1 ) // diagonal preconditioning 
+        {
+          typedef FemDiagonalPreconditioner< ThisType, RowBlockVectorType,ColumnBlockVectorType > PreconditionerType;
+          typedef typename MatrixAdapterType :: PreconditionAdapterType PreConType;
+          PreConType preconAdapter( matrix(), new PreconditionerType( *this ) );
+          return MatrixAdapterType( matrix(), domainSpace(), rangeSpace(), preconAdapter );
+        }
+        else if ( procs == 1 )
+        {
+          typedef SeqJac<ISTLMatrixType,RowBlockVectorType,ColumnBlockVectorType> PreconditionerType;
+          return createMatrixAdapter( (PreconditionerType*)0, numIterations_ );
+        }
+        else 
+        {
+          DUNE_THROW(InvalidStateException,"ISTL::SeqJac(Jacobi) only working with istl.preconditioning.iterations: 1 in parallel computations");
+        }
       }
       // AMG ILU-0  
       else if(preconditioning_ == amg_ilu_0)
@@ -959,7 +1005,7 @@ namespace Dune
       }
 #endif
 
-      return MatrixAdapterType(matrix(), rowSpace_, colSpace_, PreConType() );
+      return MatrixAdapterType(matrix(), domainSpace(), rangeSpace(), PreConType() );
     }
     
   public:  
@@ -974,21 +1020,23 @@ namespace Dune
     void clear()
     {
       matrix().clear();
+      // clean matrix adapter and other helper classes 
+      removeObj( false );
     }
 
     //! reserve matrix with right size 
     void reserve(bool verbose = false) 
     {
       // if grid sequence number changed, rebuild matrix 
-      if(sequence_ != rowSpace_.sequence())
+      if(sequence_ != domainSpace().sequence())
       {
-        removeObj();
+        removeObj( true );
 
         StencilType stencil; 
         matrix_ = new MatrixType(rowMapper_.size(),colMapper_.size());
-        matrix().setup(colSpace_,rowMapper(),colMapper(),stencil,verbose);
+        matrix().setup(rangeSpace(),rowMapper(),colMapper(),stencil,verbose);
 
-        sequence_ = rowSpace_.sequence();
+        sequence_ = domainSpace().sequence();
       }
     }
 
@@ -1003,9 +1051,17 @@ namespace Dune
       newMatrix->setup( *matrix_ , hangingNodes );
 
       // remove old matrix 
-      removeObj();
+      removeObj( true );
       // store new matrix 
       matrix_ = newMatrix;
+    }
+
+    //! extract diagonal entries of the matrix to a discrete function of type
+    //! BlockVectorDiscreteFunction 
+    void extractDiagonal( ColumnDiscreteFunctionType& diag ) const
+    {
+      // extract diagonal entries 
+      matrix().extractDiagonal( diag.blockVector() );
     }
 
     //! we only have right precondition
@@ -1101,8 +1157,8 @@ namespace Dune
 
 #if HAVE_MPI 
       // in parallel use scalar product of discrete functions 
-      BlockVectorDiscreteFunction< RowSpaceType    > vF("ddotOEM:vF", rowSpace_, V ); 
-      BlockVectorDiscreteFunction< ColumnSpaceType > wF("ddotOEM:wF", colSpace_, W ); 
+      BlockVectorDiscreteFunction< DomainSpaceType    > vF("ddotOEM:vF", domainSpace(), V ); 
+      BlockVectorDiscreteFunction< RangeSpaceType > wF("ddotOEM:wF", rangeSpace(), W ); 
       return vF.scalarProductDofs( wF );
 #else 
       return V * W;
@@ -1126,6 +1182,9 @@ namespace Dune
       matrix().print(std::cout);
     }
 
+    const DomainSpaceType& domainSpace() const { return domainSpace_; }
+    const RangeSpaceType&  rangeSpace() const  { return rangeSpace_; }
+
     const RowMapperType& rowMapper() const { return rowMapper_; }
     const ColMapperType& colMapper() const { return colMapper_; }
 
@@ -1133,8 +1192,8 @@ namespace Dune
     ObjectType* newObject() const 
     {
       return new ObjectType(*this,
-                            rowSpace_,
-                            colSpace_);
+                            domainSpace(),
+                            rangeSpace());
     }
 
     //! return local matrix object 
@@ -1161,12 +1220,13 @@ namespace Dune
       exit(1);
     }
 
-    void removeObj() 
+    void removeObj( const bool alsoClearMatrix ) 
     {
       delete Dest_; Dest_ = 0;
       delete Arg_;  Arg_ = 0;
       delete matrixAdap_; matrixAdap_ = 0;
-      delete matrix_; matrix_ = 0;
+      if( alsoClearMatrix ) 
+        delete matrix_; matrix_ = 0;
     }
 
     // copy double to block vector 
@@ -1239,8 +1299,8 @@ namespace Dune
     typedef ISTLMatrixObject< typename DomainFunction::DiscreteFunctionSpaceType, typename RangeFunction::DiscreteFunctionSpaceType, TraitsImp > Base;
 
   public:
-    typedef typename Base::ColumnSpaceType DomainSpaceType;
-    typedef typename Base::RowSpaceType RangeSpaceType;
+    typedef typename Base::DomainSpaceType DomainSpaceType;
+    typedef typename Base::RangeSpaceType RangeSpaceType;
 
     using Base::apply;
 

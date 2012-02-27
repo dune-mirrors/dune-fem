@@ -4,6 +4,9 @@
 #include <memory>
 #include <dune/common/shared_ptr.hh>
 
+// standard diagonal preconditioner 
+#include <dune/fem/solver/diagonalpreconditioner.hh>
+
 
 #if HAVE_DUNE_ISTL
 #include <dune/istl/operators.hh>
@@ -28,6 +31,36 @@ namespace Dune {
     FemSeqILU0 (const M& A, field_type w) 
       : BaseType( A, w ) 
     {}
+  };
+
+
+  template< class MatrixObject, class X, class Y >
+  class FemDiagonalPreconditioner : public Preconditioner<X,Y>
+  {
+  public:  
+    typedef typename MatrixObject :: ColumnDiscreteFunctionType DiscreteFunctionType ;
+    typedef DiagonalPreconditioner< DiscreteFunctionType, MatrixObject > PreconditionerType ;
+
+  protected:
+    PreconditionerType diagonalPrecon_;
+
+  public:  
+    typedef typename X::field_type field_type;
+    FemDiagonalPreconditioner( const MatrixObject& mObj ) 
+      : diagonalPrecon_( mObj )
+    {}
+
+    //! \copydoc Preconditioner 
+    virtual void pre (X& x, Y& b) {}
+
+    //! \copydoc Preconditioner 
+    virtual void apply (X& v, const Y& d)
+    {
+      diagonalPrecon_.applyToISTLBlockVector( d, v );
+    }
+
+    //! \copydoc Preconditioner 
+    virtual void post (X& x) {}
   };
 
 
@@ -128,6 +161,18 @@ namespace Dune {
                           const PreconditionerType* p )
       : op_()
       , preconder_( new PreconditionerType( matrix, iter, relax ) )
+      , preEx_( 1 ) 
+    {
+    }
+    
+    
+    //! create preconditioner with given preconditioner object 
+    //! owner ship is taken over here 
+    template <class PreconditionerType>
+    PreconditionerWrapper(MatrixType & matrix, 
+                          PreconditionerType* p )
+      : op_()
+      , preconder_( p )
       , preEx_( 1 ) 
     {
     }
