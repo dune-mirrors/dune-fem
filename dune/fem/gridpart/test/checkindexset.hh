@@ -156,7 +156,7 @@ namespace Dune
       {
         unsigned int topologyId 
           = GridPartCapabilities::hasSingleGeometryType< GridPartType >::topologyId;
-        geomTypes[ 0 ].push_back( GeometryType::GeometryType( topologyId, dimension ) );
+        geomTypes[ 0 ].push_back( GeometryType( topologyId, dimension ) );
       }
       else
       {
