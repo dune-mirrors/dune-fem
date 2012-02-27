@@ -99,8 +99,20 @@ namespace Dune
      */
     void solve ( const OperatorType &op, const RangeFunctionType &b, DomainFunctionType &x ) const;
 
-    void solve ( const OperatorType &op, const PreconditionerType &precond,const RangeFunctionType &b, DomainFunctionType &x ) const;
-    
+    /** \brief solve \f$op( x ) = b\f$
+     *
+     *  \note The CG algorithm also works for positive semidefinite operators.
+     *        In this case, \f$x \cdot v = b \cdot v\f$ for all \f$v\f$ in the
+     *        operator's kernel.
+     *
+     *  \param[in]   op  linear operator to invert (must be symmetic and
+     *                   positive definite)
+     *  \param[in]   p   (lef) preconditioning operator  
+     *  \param[in]   b   right hand side
+     *  \param       x   solution (must be initialized to a start value)
+     */
+    void solve ( const OperatorType &op, const PreconditionerType &p, 
+                 const RangeFunctionType &b, DomainFunctionType &x ) const;
 
     //! number of iterations needed for last solve 
     unsigned int iterations () const 
