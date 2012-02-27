@@ -754,19 +754,19 @@ namespace Dune
     int numIterations_; 
     double relaxFactor_; 
       
-    enum PreConder_Id { none  = 0 , // no preconditioner 
-                        ssor  = 1 , // SSOR preconditioner 
-                        sor   = 2 , // SOR preconditioner 
-                        ilu_0 = 3 , // ILU-0 preconditioner 
-                        ilu_n = 4 , // ILU-n preconditioner 
-                        gauss_seidel= 5 , // Gauss-Seidel preconditioner 
-                        jacobi = 6,  // Jacobi preconditioner 
-                        amg_ilu_0 = 7,  // AMG with ILU-0 smoother 
-                        amg_ilu_n = 8,  // AMG with ILU-n smoother  
-                        amg_jacobi = 9  // AMG with Jacobi smoother  
+    enum ISTLPreConder_Id { none  = 0 ,      // no preconditioner 
+                            ssor  = 1 ,      // SSOR preconditioner 
+                            sor   = 2 ,      // SOR preconditioner 
+                            ilu_0 = 3 ,      // ILU-0 preconditioner 
+                            ilu_n = 4 ,      // ILU-n preconditioner 
+                            gauss_seidel= 5, // Gauss-Seidel preconditioner 
+                            jacobi = 6,      // Jacobi preconditioner 
+                            amg_ilu_0 = 7,   // AMG with ILU-0 smoother 
+                            amg_ilu_n = 8,   // AMG with ILU-n smoother  
+                            amg_jacobi = 9   // AMG with Jacobi smoother  
     };
     
-    PreConder_Id preconditioning_;
+    ISTLPreConder_Id preconditioning_;
 
     mutable LocalMatrixStackType localMatrixStack_;
 
@@ -822,7 +822,7 @@ namespace Dune
       }
 
       if( preCon >= 0 && preCon <= 9) 
-        preconditioning_ = (PreConder_Id) preCon;
+        preconditioning_ = (ISTLPreConder_Id) preCon;
       else 
         preConErrorMsg(preCon);
 
@@ -1225,8 +1225,12 @@ namespace Dune
       delete Dest_; Dest_ = 0;
       delete Arg_;  Arg_ = 0;
       delete matrixAdap_; matrixAdap_ = 0;
+      
       if( alsoClearMatrix ) 
-        delete matrix_; matrix_ = 0;
+      {
+        delete matrix_; 
+        matrix_ = 0;
+      }
     }
 
     // copy double to block vector 
