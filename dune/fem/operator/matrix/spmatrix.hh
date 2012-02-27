@@ -226,7 +226,7 @@ public:
   
   //! add value to row,col entry 
   void add(int row, int col, T val);
-
+      
   //! muliply with scalar value 
   void multScalar(int row, int col, T val);
   
@@ -469,6 +469,12 @@ private:
       preconditioning_ = (precon > 0) ? true : false;
     }
 
+    //! return domain space (i.e. space that builds the rows)
+    const DomainSpaceType& domainSpace() const { return domainSpace_; }
+
+    //! return range space (i.e. space that builds the columns)
+    const RangeSpaceType& rangeSpace() const { return rangeSpace_; }
+
     //! return reference to stability matrix
     inline MatrixType &matrix () const
     {
@@ -626,6 +632,23 @@ private:
 
     void createPreconditionMatrix()
     { 
+    }
+
+    //! extract diagonal entries from matrix into discrete function 
+    template < class DiscreteFunctionType > 
+    void extractDiagonal( DiscreteFunctionType& diag ) const
+    {
+      // this only works for matrices with same number of rows,cols
+      assert( matrix_.rows() == matrix_.cols() );
+      typedef typename DiscreteFunctionType :: DofIteratorType DofIteratorType ;
+      const DofIteratorType dofEnd = diag.dend();
+      unsigned int row = 0;
+      for( DofIteratorType dofIt = diag.dbegin(); 
+           dofIt != dofEnd; ++ dofIt, ++row ) 
+      {
+        assert( row < matrix_.rows() );
+        (*dofIt) = matrix_( row, row );
+      }
     }
 
     /** \brief delete all row belonging to a hanging node and rebuild them */
