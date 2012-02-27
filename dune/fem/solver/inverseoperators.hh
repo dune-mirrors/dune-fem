@@ -6,6 +6,8 @@
 #include <dune/fem/function/common/discretefunction.hh>
 #include <dune/fem/operator/common/operator.hh>
 
+#include <dune/fem/solver/diagonalpreconditioner.hh>
+
 namespace Dune
 {
 
@@ -130,7 +132,8 @@ namespace Dune
    *  \ingroup OEMSolver
    *  \brief   Inverse operator base on CG method
    */
-  template< class DiscreteFunction >
+  template< class DiscreteFunction, 
+            class Op = Fem::Operator< DiscreteFunction, DiscreteFunction > >
   class CGInverseOperator
    : public Fem::Operator< DiscreteFunction, DiscreteFunction >
   {
@@ -142,11 +145,11 @@ namespace Dune
 
     typedef DomainFunctionType  DestinationType;
     
-    //??? sollten hier auch Domain/Range Function stehen?
-    typedef Fem::Operator< DiscreteFunction, DiscreteFunction > OperatorType;
+    //! type of operator 
+    typedef Op OperatorType ;
     
     // Preconditioner is to approximate op^-1 !
-    typedef Fem::Operator< RangeFunctionType,DomainFunctionType > PrecondType;
+    typedef Fem::Operator< RangeFunctionType,DomainFunctionType > PreconditioningType;
 
   private:
     typedef ConjugateGradientSolver< OperatorType > SolverType;
@@ -160,13 +163,17 @@ namespace Dune
      *  \param[in]  maxIter  maximum number of iteration steps
      *  \param[in]  verbose  verbosity
      */
-    CGInverseOperator ( const OperatorType &op,
+    template <class LinearOperator>
+    CGInverseOperator ( const LinearOperator &op,
                         double redEps, double absLimit,
                         unsigned int maxIter, bool verbose )
-    : operator_( op ),
-      precond_ ( 0 ),
-      solver_( absLimit, maxIter, verbose )
-    {}
+      : operator_( op ),
+        preconditioner_ ( 0 ),
+        precondObj_( 0 ),
+        solver_( absLimit, maxIter, verbose )
+    {
+      checkPreconditioning( op );
+    }
 
     /** \brief constructor of CGInverseOperator
      *
@@ -175,13 +182,17 @@ namespace Dune
      *  \param[in]  absLimit absolut limit of residual
      *  \param[in]  maxIter  maximum number of iteration steps
      */
-    CGInverseOperator ( const OperatorType &op,
+    template <class LinearOperator>
+    CGInverseOperator ( const LinearOperator &op,
                         double redEps, double absLimit,
                         unsigned int maxIter = std::numeric_limits< unsigned int >::max() )
       : operator_( op ),
-        precond_ ( 0 ),
+        preconditioner_ ( 0 ),
+        precondObj_( 0 ),
         solver_( absLimit, maxIter )
-    {}
+    {
+      checkPreconditioning( op );
+    }
     
     /** \brief constructor of CGInverseOperator
      *
@@ -191,13 +202,20 @@ namespace Dune
      *  \param[in]  maxIter  maximum number of iteration steps
      */
     CGInverseOperator ( const OperatorType &op,
-                        const PrecondType &precond,
+                        const PreconditioningType &precond,
                         double redEps, double absLimit,
                         unsigned int maxIter = std::numeric_limits< unsigned int >::max() )
       : operator_( op ),
-        precond_( &precond ),
+        preconditioner_( &precond ),
+        precondObj_( 0 ),
         solver_( absLimit, maxIter )
     {}
+
+    /** \brief destrcutor */
+    ~CGInverseOperator() 
+    {
+      delete precondObj_ ;
+    }
 
 
     /** \brief application operator
@@ -210,8 +228,8 @@ namespace Dune
      */
     virtual void operator() ( const DomainFunctionType &u, RangeFunctionType &w ) const
     {
-      if(precond_)
-        solver_.solve( operator_, *precond_, u, w );
+      if(preconditioner_)
+        solver_.solve( operator_, *preconditioner_, u, w );
       else 
         solver_.solve(operator_,u,w);
     }
@@ -229,133 +247,28 @@ namespace Dune
     }
 
   protected:
+    template <class LinearOperatorType>
+    void checkPreconditioning( const LinearOperatorType& linearOp )
+    {
+      const bool preconditioning = Parameter :: getValue< bool > ("fem.preconditioning", false );
+      if( preconditioning ) 
+      {
+        // create diagonal preconditioner 
+        precondObj_ = new DiagonalPreconditioner< DomainFunctionType, LinearOperatorType> ( linearOp );
+        preconditioner_ = precondObj_; 
+      }
+    }
+
     const OperatorType &operator_;
-    const PrecondType* precond_;
+    const PreconditioningType* preconditioner_;
+    PreconditioningType* precondObj_;
     SolverType solver_;
   };
 
-
-  //TODO Adapt to the concept of dualspaces
-  /** \class   CGInverseOp
-   *  \ingroup OEMSolver
-   *  \brief   Inversion operator using CG algorithm, operator type is a
-   *           template parameter.
-   */
-    template< class DF, class Op >
-  struct CGInverseOp
-  : public Operator< typename DF::RangeFieldType, typename DF::RangeFieldType, DF, DF >
-  {
-    typedef DF DiscreteFunctionType;
-    typedef Op OperatorType;
-    typedef Fem::Operator< DiscreteFunctionType, DiscreteFunctionType > PrecondType;
-    
-    
-    /** \brief constructor of CGInverseOperator
-     *
-     *  \param[in] op Mapping describing operator to invert
-     *  \param[in] redEps reduction epsilon
-     *  \param[in] absLimit absolut limit of residual
-     *  \param[in] maxIter maximal iteration steps
-     *  \param[in] verbose verbosity
-     */
-    CGInverseOp( const OperatorType &op,
-                 double redEps,
-                 double absLimit,
-                 int maxIter,
-                 bool verbose )
-    : operator_( op ),
-      precond_( 0 ),
-      solver_( absLimit, maxIter, verbose )
-    {} 
-
-    /** \brief constructor of CGInverseOperator
-     *
-     *  \param[in] op Mapping describing operator to invert
-     *  \param[in] redEps reduction epsilon
-     *  \param[in] absLimit absolut limit of residual
-     *  \param[in] maxIter maximal iteration steps
-     */
-    CGInverseOp( const OperatorType &op,
-                 double redEps,
-                 double absLimit,
-                 unsigned int maxIter = std::numeric_limits< int >::max() )
-    : operator_( op ),
-      precond_(0),
-      solver_( absLimit, maxIter )
-    {} 
-
-
-     /** \brief constructor of CGInverseOperator
-     *
-     *  \param[in] op Mapping describing operator to invert
-     *  \param[in] preconditioner
-     *  \param[in] redEps reduction epsilon
-     *  \param[in] absLimit absolut limit of residual
-     *  \param[in] maxIter maximal iteration steps
-     *  \param[in] verbose verbosity
-     */
-    CGInverseOp( const OperatorType &op,
-                 const PrecondType &precond,
-                 double redEps,
-                 double absLimit,
-                 int maxIter,
-                 bool verbose )
-    : operator_( op ),
-      precond_(&precond),
-      solver_( absLimit, maxIter, verbose )
-    {} 
-
-    /** \brief constructor of CGInverseOperator
-     *
-     *  \param[in] op Mapping describing operator to invert
-     *  \param[in] preconditioner
-     *  \param[in] redEps reduction epsilon
-     *  \param[in] absLimit absolut limit of residual
-     *  \param[in] maxIter maximal iteration steps
-     */
-    CGInverseOp( const OperatorType &op,
-                 const PrecondType &precond,
-                 double redEps,
-                 double absLimit,
-                 unsigned int maxIter = std::numeric_limits< int >::max() )
-    : operator_( op ),
-      precond_(&precond),
-      solver_( absLimit, maxIter )
-    {} 
-
-
-    /** \brief solve the system 
-        \param[in] arg right hand side 
-        \param[out] dest solution 
-    */
-    virtual void operator() ( const DiscreteFunctionType &arg,
-                              DiscreteFunctionType &dest ) const
-    {
-      if(precond_)
-        solver_.solve( operator_,*precond_ ,arg, dest );
-      else
-        solver_.solve( operator_, arg, dest );
-    }
-    
-    //! number of iterations needed for last solve 
-    unsigned int iterations () const 
-    {
-      return solver_.iterations();
-    }
-
-    //! return average communication time during last solve 
-    double averageCommTime() const 
-    {
-      return solver_.averageCommTime();
-    }
-
-  protected:
-    const OperatorType &operator_;
-    const PrecondType* precond_;
-    const ConjugateGradientSolver< OperatorType > solver_;
-  };
-
-
+#ifdef DUNE_FEM_COMPATIBILITY
+// to be removed after release of version 1.3 
+#define CGInverseOp  CGInverseOperator
+#endif
 
   // Implementation of ConjugateGradientSolver
   // -----------------------------------------
