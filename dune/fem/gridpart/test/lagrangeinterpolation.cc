@@ -38,7 +38,8 @@ using namespace Dune;
 #include <dune/grid/io/file/dgfparser/dgfalu.hh>
   typedef Dune :: GridSelector :: GridType MyGridType;
 
-  typedef AdaptiveLeafGridPart< MyGridType > HostGridPartType;
+  // typedef AdaptiveLeafGridPart< MyGridType > HostGridPartType;
+  typedef LeafGridPart< MyGridType > HostGridPartType;
   typedef Fem::RadialFilter< MyGridType::ctype, MyGridType::dimensionworld > BasicFilterType;
   typedef Fem::BasicFilterWrapper< HostGridPartType, BasicFilterType > FilterType;
   typedef Fem::FilteredGridPart< HostGridPartType, FilterType, true > GridPartType;
@@ -120,6 +121,7 @@ using namespace Dune;
     {
       MyGridType &grid = TestGrid<MyGridType> :: grid();
       const int step = TestGrid<MyGridType> :: refineStepsForHalf();
+      grid.globalRefine( 2*step );
       HostGridPartType hostGridPart (grid );
       BasicFilterType::GlobalCoordinateType center( 0 );
       BasicFilterType basicFilter( center, .25 );
@@ -127,7 +129,6 @@ using namespace Dune;
       GridPartType gridPart( hostGridPart, filter );
       // GridPartType gridPart ( grid );
 
-      grid.globalRefine( 2*step );
 
       DiscreteFunctionSpaceType discreteFunctionSpace( gridPart );
       ExactSolutionType f;
