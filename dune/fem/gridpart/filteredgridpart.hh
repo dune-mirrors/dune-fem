@@ -11,6 +11,7 @@
 #include <dune/fem/gridpart/adaptiveleafindexset.hh>
 #include <dune/fem/gridpart/common/gridpart.hh>
 #include <dune/fem/gridpart/filteredgridpart/capabilities.hh>
+#include <dune/fem/gridpart/filteredgridpart/datahandle.hh>
 #include <dune/fem/gridpart/filteredgridpart/intersectioniterator.hh>
 #include <dune/fem/gridpart/filteredgridpart/iterator.hh>
 
@@ -305,10 +306,12 @@ namespace Dune
 
       //! \brief corresponding communication method for this grid part
       template < class DataHandleImp, class DataType >
-      void communicate( CommDataHandleIF< DataHandleImp, DataType > &data, 
+      void communicate( CommDataHandleIF< DataHandleImp, DataType > &dataHandle, 
                         InterfaceType iftype, CommunicationDirection dir ) const 
       {
-        hostGridPart().communicate( data, iftype, dir );
+        typedef CommDataHandleIF< DataHandleImp, DataType >  HostHandleType;
+        FilteredGridPartDataHandle< const ThisType, HostHandleType > handleWrapper( dataHandle, *this );
+        hostGridPart().communicate( handleWrapper, iftype, dir );
       }
 
       //! \brief construct entity pointer from entity seed 
