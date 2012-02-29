@@ -27,6 +27,7 @@ namespace Dune
 
     template< class WrappedHandle, class GridPart >
     class FilteredGridPartDataHandle
+    : public CommDataHandleIF< FilteredGridPartDataHandle< WrappedHandle, GridPart >, typename WrappedHandle::DataType >
     {
       typedef GridPart GridPartType;
       typedef typename remove_const< GridPartType >::type::Traits Traits;

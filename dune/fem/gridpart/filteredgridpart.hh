@@ -310,7 +310,7 @@ namespace Dune
                         InterfaceType iftype, CommunicationDirection dir ) const 
       {
         typedef CommDataHandleIF< DataHandleImp, DataType >  HostHandleType;
-        FilteredGridPartDataHandle< const ThisType, HostHandleType > handleWrapper( dataHandle, *this );
+        FilteredGridPartDataHandle< HostHandleType, ThisType > handleWrapper( dataHandle, *this );
         hostGridPart().communicate( handleWrapper, iftype, dir );
       }
 
