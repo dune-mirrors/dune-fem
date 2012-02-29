@@ -29,6 +29,8 @@ namespace Dune
     class FilteredGridPartDataHandle
     : public CommDataHandleIF< FilteredGridPartDataHandle< WrappedHandle, GridPart >, typename WrappedHandle::DataType >
     {
+      typedef CommDataHandleIF< FilteredGridPartDataHandle< WrappedHandle, GridPart >,
+              typename WrappedHandle::DataType > BaseType;
       typedef GridPart GridPartType;
       typedef typename remove_const< GridPartType >::type::Traits Traits;
 
@@ -45,7 +47,7 @@ namespace Dune
 
       bool fixedsize ( int dim, int codim ) const
       {
-        return wrappedHandle_.fixedsize( dim, codim );
+        return false; 
       }
 
       template< class HostEntity >
@@ -69,6 +71,12 @@ namespace Dune
       {
         if( gridPart().contains( hostEntity ) )          
           wrappedHandle_.scatter( buffer, hostEntity, size );
+        else
+        {
+          typename BaseType::DataType tmp;
+          for (size_t i=0;i<size;++i) 
+            buffer.read(tmp);
+        }
       }
 
     protected:
