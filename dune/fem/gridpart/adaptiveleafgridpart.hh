@@ -102,7 +102,7 @@ namespace Dune
       < KeyType, IndexSetType, IndexSetFactory > IndexSetProviderType;
 
     // type of entity with codimension zero 
-    typedef typename Codim< 0 > :: EntityType EntityCodim0Type;
+    typedef typename Codim< 0 > :: EntityType ElementType;
 
     typedef typename GridType :: template Partition < All_Partition > :: LeafGridView LeafGridView;
     // the leaf grid view 
@@ -180,14 +180,14 @@ namespace Dune
 
     //! ibegin of corresponding intersection iterator for given entity
     inline IntersectionIteratorType
-    ibegin ( const EntityCodim0Type &entity ) const
+    ibegin ( const ElementType &entity ) const
     {
       return entity.ileafbegin();
     }
     
     //! iend of corresponding intersection iterator for given entity
     inline IntersectionIteratorType
-    iend ( const EntityCodim0Type &entity ) const
+    iend ( const ElementType &entity ) const
     {
       return entity.ileafend();
     }
@@ -254,7 +254,6 @@ namespace Dune
       typedef AdaptiveLeafIndexSet< GridPartType > IndexSetType;
     };
 
-#if ! DUNE_FEM_COMPATIBILITY // remove this #if in version 1.2
     template <int dummy> 
     struct AdaptiveLeafIndexSetChooser<dummy, true >
     {
@@ -266,25 +265,9 @@ namespace Dune
 #endif
       typedef DGAdaptiveLeafIndexSet< GridPartType > IndexSetType;
     };
-#endif
 
-    // choose the LeafIndexSet
-    struct LeafIndexSetChooser
-    {
-      static const PartitionIteratorType indexSetPartitionType = All_Partition;
-      static const InterfaceType indexSetInterfaceType = All_All_Interface;
-      typedef WrappedLeafIndexSet< Grid > IndexSetType;
-    };
-
-    static const bool hasHierarchicIndexSet = Capabilities::hasHierarchicIndexSet< Grid >::v;
-#if defined ENABLE_ADAPTIVELEAFINDEXSET_FOR_YASPGRID
     // also for Cartesian grids (e.g. YaspGrid) use adaptive leaf index set in parallel 
-    typedef AdaptiveLeafIndexSetChooser<-1, onlyCodimensionZero > 
-#else 
-    typedef typename SelectType< hasHierarchicIndexSet, 
-            AdaptiveLeafIndexSetChooser<-1, onlyCodimensionZero >, LeafIndexSetChooser>::Type
-#endif
-      IndexSetChooserType;
+    typedef AdaptiveLeafIndexSetChooser<-1, onlyCodimensionZero > IndexSetChooserType;
 
   public:  
     //! type of the index set 
@@ -347,9 +330,9 @@ namespace Dune
   */
   template< class Grid, PartitionIteratorType idxpitype = All_Partition >
   class DGAdaptiveLeafGridPart
-  : public AdaptiveGridPartBase< AdaptiveLeafGridPartTraits< Grid, idxpitype, false > > 
+  : public AdaptiveGridPartBase< AdaptiveLeafGridPartTraits< Grid, idxpitype, true > > 
   {
-    typedef AdaptiveGridPartBase< AdaptiveLeafGridPartTraits< Grid, idxpitype, false > > BaseType;
+    typedef AdaptiveGridPartBase< AdaptiveLeafGridPartTraits< Grid, idxpitype, true > > BaseType;
   public:  
     typedef typename BaseType :: GridType GridType;
     //! Constructor

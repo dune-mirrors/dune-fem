@@ -248,6 +248,9 @@ namespace Dune
     mutable CodimIndexSetType* codimLeafSet_[ numCodimensions ];
     // flag for codim is in use or not 
     mutable bool codimUsed_ [ maxNumCodimension ];
+
+    // vector holding geometry types 
+    std::vector< std::vector< GeometryType > > geomTypes_;
     
     // actual sequence number 
     int sequence_;
@@ -296,6 +299,18 @@ namespace Dune
           codimLeafSet_[ codim ] = new CodimIndexSetType( grid_, codim );
       }
 
+      // get level-0 view, this is alrady used in GridPtr (DFG parser)
+      typedef typename GridType :: LevelGridView MacroViewType;
+      MacroViewType macroView = grid_.levelView( 0 );
+
+      // resize vector of geometry types 
+      geomTypes_.resize( dimension+1 );
+      for(int codim=0; codim <= dimension; ++codim ) 
+      {
+        // copy geometry types 
+        geomTypes_[ codim ] = macroView.indexSet().geomTypes( codim ); 
+      }
+
       // build index set 
       setupIndexSet();
     }
@@ -341,7 +356,7 @@ namespace Dune
           return codimLeafSet( codim ).size();
       }
 
-      assert( codimLeafSet( codim ).geomTypes().size() == 1 );
+      assert( geomTypes( codim ).size() == 1 ); 
       int count = 0;
       ForLoop< CountElements, 0, dimension > :: apply( *this, type, count );
       return count;
@@ -355,14 +370,15 @@ namespace Dune
       {
         return codimLeafSet( codim ).size();
       }
-      assert( codimLeafSet( codim ).geomTypes().size() == 1 ); 
-      return size( codimLeafSet( codim ).geomTypes()[0] );
+      assert( geomTypes( codim ).size() == 1 ); 
+      return size( geomTypes( codim )[0] );
     }
     
     //! returns vector with geometry tpyes this index set has indices for
     const std::vector <GeometryType> & geomTypes (const int codim) const 
     {
-      return codimLeafSet( codim ).geomTypes();
+      assert( codim >= 0 && codim < int(geomTypes_.size()) );
+      return geomTypes_[ codim ];
     }
    
     //! \brief returns true if entity is contained in index set 

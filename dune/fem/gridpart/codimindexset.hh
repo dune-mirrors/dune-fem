@@ -83,24 +83,6 @@ private:
   // reference to grid 
   const GridType& grid_;
 
-  template < class Grid, bool hasHierarchicIndexSet >
-  struct GeomTypes 
-  {
-    static const std::vector <GeometryType> & geomTypes( const Grid& grid , const int codim ) 
-    {
-      return grid.levelIndexSet( 0 ).geomTypes( codim );
-    }
-  };
-
-  template < class Grid >
-  struct GeomTypes< Grid, true >
-  {
-    static const std::vector <GeometryType> & geomTypes( const Grid& grid , const int codim ) 
-    {
-      return grid.hierarchicIndexSet( ).geomTypes( codim );
-    }
-  };
-
   // array type for indices 
   typedef MutableArray<int> IndexArrayType;
 
@@ -162,14 +144,6 @@ public:
     holes_.setMemoryFactor(memoryFactor);
     oldIdx_.setMemoryFactor(memoryFactor);
     newIdx_.setMemoryFactor(memoryFactor);
-  }
-
-  //! returns vector with geometry tpyes this index set has indices for
-  const std::vector <GeometryType> & geomTypes () const
-  {
-    return GeomTypes< GridType , 
-                      Capabilities :: hasHierarchicIndexSet< GridType > :: v >
-            :: geomTypes( grid_, myCodim_ );
   }
 
   //! reallocate the vectors
