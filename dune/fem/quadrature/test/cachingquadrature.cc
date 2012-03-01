@@ -1,9 +1,9 @@
 #include <config.h>
 #include <iostream>
 
-#include<dune/grid/common/gridinfo.hh>
+#include <dune/grid/common/gridinfo.hh>
 
-#include <dune/fem/gridpart/gridpart.hh>
+#include <dune/fem/gridpart/leafgridpart.hh>
 
 #include <dune/fem/quadrature/elementquadrature.hh>
 #include <dune/fem/quadrature/cachingquadrature.hh>

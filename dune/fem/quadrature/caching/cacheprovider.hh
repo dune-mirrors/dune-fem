@@ -19,10 +19,14 @@
 namespace Dune {
 
   //! Storage class for mappers.
-  template <class ct, int dim, bool unstructured>
+  template <class ct, int dim, bool hasTwists>
   class CacheStorage;
 
+
+
   //! Specialisation for grids with twist (i.e. unstructured ones).
+  //---------------------------------------------------------------
+
   template <class ct, int dim>
   class CacheStorage<ct, dim, true>
   {
@@ -75,6 +79,11 @@ namespace Dune {
   private:
     MapperContainerType mappers_;
   };
+
+
+
+  //! Specialisation for grids without any twists (i.e. Cartesian ones).
+  //-------------------------------------------------------------------
 
   template <class ct, int dim>
   class CacheStorage<ct, dim, false>
@@ -152,6 +161,8 @@ namespace Dune {
     typedef typename GridImp::ctype ct;
     typedef CachingTraits<ct, dim-codim> Traits;
 
+    // true if grid could have twists 
+    static const bool hasTwists = ! Capabilities::isCartesian<GridImp>::v ;
   public:
     typedef typename Traits::QuadratureType QuadratureType;
     typedef typename Traits::MapperType MapperType;
@@ -174,11 +185,7 @@ namespace Dune {
       
       if( it == mappers_.end() ) 
       {
-#if DUNE_VERSION_NEWER_REV(DUNE_COMMON,2,1,0)
-        integral_constant< bool, Capabilities::IsUnstructured< GridImp >::v > i2t;
-#else
-        integral_constant<int, Capabilities::IsUnstructured< GridImp >::v > i2t;
-#endif
+        integral_constant< bool, hasTwists > i2t;
         it = CacheProvider<GridImp, 1>::createMapper( quad, elementGeometry, i2t );
       }
 
@@ -186,28 +193,18 @@ namespace Dune {
     }
 
   private:
-    typedef CacheStorage<
-      ct, dim-codim,
-       Capabilities::IsUnstructured<GridImp>::v> 
-        CacheStorageType; 
+    typedef CacheStorage< ct, dim-codim, hasTwists>  CacheStorageType; 
+
     typedef typename Traits::MapperVectorType MapperVectorType;
     typedef std::map<const QuadratureKeyType, CacheStorageType> MapperContainerType;
     typedef typename MapperContainerType::iterator MapperIteratorType;
 
   private:
-#if DUNE_VERSION_NEWER_REV(DUNE_COMMON,2,1,0)
     static MapperIteratorType
     createMapper ( const QuadratureType &quad, GeometryType elementGeometry, integral_constant< bool, true > );
 
     static MapperIteratorType
     createMapper ( const QuadratureType &quad, GeometryType elementGeometry, integral_constant< bool, false > );
-#else
-    static MapperIteratorType
-    createMapper ( const QuadratureType &quad, GeometryType elementGeometry, integral_constant<int, true > );
-
-    static MapperIteratorType
-    createMapper ( const QuadratureType &quad, GeometryType elementGeometry, integral_constant<int, false > );
-#endif
 
   private:
     static MapperContainerType mappers_;
