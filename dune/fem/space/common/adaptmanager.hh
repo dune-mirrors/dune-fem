@@ -295,7 +295,8 @@ public:
     grid_( grid ),
     dm_( DofManagerType::instance( grid_ ) ),
     rpOp_( rpOp ),
-    adaptTime_( 0.0 )
+    adaptTime_( 0.0 ),
+    doRestriction_( false )
   {}
 
   //! destructor 
@@ -382,6 +383,9 @@ private:
 
       // make a hierarchical to insert all elements 
       // that are father of elements that might be coarsened 
+
+      // flag to check for at least one restriction 
+      doRestriction_ = false ;
       {
         // get macro iterator 
         LevelIterator endit  = macroView.template end<0,pitype>  ();
@@ -392,26 +396,29 @@ private:
         }
       }
 
-      // now resize memory 
-      dm_.resizeForRestrict();
-
-      // now project all data to fathers 
+      if( doRestriction_ )
       {
-        // get macro iterator 
-        LevelIterator endit  = macroView.template end<0,pitype>  ();
-        for(LevelIterator it = macroView.template begin<0,pitype>();
-            it != endit; ++it )
+        // now resize memory 
+        dm_.resizeForRestrict();
+
+        // now project all data to fathers 
         {
-          hierarchicRestrict( *it , rpOp_ );
+          // get macro iterator 
+          LevelIterator endit  = macroView.template end<0,pitype>  ();
+          for(LevelIterator it = macroView.template begin<0,pitype>();
+              it != endit; ++it )
+          {
+            hierarchicRestrict( *it , rpOp_ );
+          }
         }
       }
     }
     
     // adapt grid due to preset markers
     // returns true if at least one element was refined 
-    bool ref = grid_.adapt();
+    const bool refined = grid_.adapt();
 
-    if(ref)
+    if( refined )
     {
       // get macro grid view 
       MacroGridView macroView = grid_.levelView( 0 );
@@ -430,11 +437,14 @@ private:
     }
 
     // if grid was coarsend or refined, do dof compress 
-    if(restr || ref)
+    if(restr || refined)
     {
       // compress index sets and data 
       dm_.compress();
     }
+
+    // make sequence counter globally equal 
+    dm_.globalFinalize();
 
     // do cleanup 
     grid_.postAdapt();
@@ -466,6 +476,9 @@ private:
       // if doRestrict is still true, restrict data 
       if(doRestrict)
       {
+        // we did at least one restriction 
+        doRestriction_ = true; 
+
         // true for first child, otherwise false 
         bool initialize = true;
         const HierarchicIterator endit = en.hend( childLevel );
@@ -523,6 +536,9 @@ protected:
 
   //! time that adaptation took 
   double adaptTime_;
+
+  //! flag for restriction 
+  mutable bool doRestriction_; 
 };
 
 //! factory class to create adaptation manager reference counter 

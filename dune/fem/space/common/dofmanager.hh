@@ -997,7 +997,8 @@ public:
   */ 
   void reserveMemory (int nsize, bool useNsize = false ) 
   {
-    ++sequence_;
+    //++sequenceTemporary_;
+    //++sequence_;
     int localChunkSize = (useNsize) ? nsize : std::max(nsize, defaultChunkSize_ );
     assert( localChunkSize > 0 );
 
@@ -1086,6 +1087,13 @@ public:
         (*it)->dofCompress () ;
       }
     }
+  }
+
+  //! communicate new sequence number 
+  void globalFinalize () 
+  {
+    // assure that sequence is the same on all cores 
+    sequence_ = grid_.comm().max( sequence_ );
   }
 
   //! add data handler for data inlining to dof manager

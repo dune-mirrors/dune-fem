@@ -27,31 +27,50 @@ namespace Dune
     DofManager &dofManager_;
     RestrictProlongOperator &rpOp_;
 
+    // flag that is set to true when at least one entity was coarsend or refined 
+    mutable bool wasChanged_ ;
+
   public:
     typedef typename Base::Entity Entity;
 
     RestrictProlongWrapper ( DofManager &dofManager, RestrictProlongOperator &rpOp )
     : dofManager_( dofManager ),
-      rpOp_( rpOp )
+      rpOp_( rpOp ),
+      wasChanged_( false )
     {}
 
     RestrictProlongWrapper ( const RestrictProlongWrapper& org ) 
     : dofManager_( org.dofManager_ ), 
-      rpOp_( org.rpOp_ )
+      rpOp_( org.rpOp_ ),
+      wasChanged_( false )
     {}
 
     void preAdapt ( const unsigned int estimatedAdditionalElements )
     {
+      // unset was changed 
+      wasChanged_ = false;
       dofManager_.reserveMemory( estimatedAdditionalElements );
     }
 
     void postAdapt ()
     {
-      dofManager_.compress();
+      // is something was changed we need to call compress 
+      // don't call any communication in DofManager::compress
+      if( wasChanged_ )
+      {
+        dofManager_.compress();
+        // unset was changed 
+        wasChanged_ = false;
+      }
+
+      // call dofmanger finalize to make flags know globally 
+      dofManager_.globalFinalize();
     }
 
     void preCoarsening ( const Entity &father ) const
     {
+      wasChanged_ = true ;
+
       typedef typename Entity::HierarchicIterator HIterator;
 
       bool initialize = true;
@@ -66,12 +85,16 @@ namespace Dune
     
     void restrictLocal ( const Entity &father, const Entity &son, bool initialize ) const
     {
+      wasChanged_ = true ;
+
       dofManager_.indexSetRestrictProlong().restrictLocal( const_cast< Entity & >( father ), const_cast< Entity & >( son ), initialize );
       rpOp_.restrictLocal( const_cast< Entity & >( father ), const_cast< Entity & >( son ), initialize );
     }
 
     void postRefinement ( const Entity &father ) const
     {
+      wasChanged_ = true ;
+
       typedef typename Entity::HierarchicIterator HIterator;
 
       bool initialize = true;
@@ -86,6 +109,8 @@ namespace Dune
 
     void prolongLocal ( const Entity &father, const Entity &son, bool initialize ) const
     {
+      wasChanged_ = true ;
+
       dofManager_.indexSetRestrictProlong().prolongLocal( const_cast< Entity & >( father ), const_cast< Entity & >( son ), initialize );
       rpOp_.prolongLocal( const_cast< Entity & >( father ), const_cast< Entity & >( son ), initialize );
     }
