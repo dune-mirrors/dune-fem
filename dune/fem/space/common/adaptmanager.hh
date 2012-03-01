@@ -296,7 +296,7 @@ public:
     dm_( DofManagerType::instance( grid_ ) ),
     rpOp_( rpOp ),
     adaptTime_( 0.0 ),
-    doRestriction_( false )
+    wasChanged_( false )
   {}
 
   //! destructor 
@@ -376,6 +376,9 @@ private:
 
     typedef typename GridType::template Partition< All_Partition > :: LevelGridView  MacroGridView ;
 
+    // reset flag 
+    wasChanged_ = false ;
+
     if(restr)
     {
       // get macro grid view 
@@ -384,8 +387,6 @@ private:
       // make a hierarchical to insert all elements 
       // that are father of elements that might be coarsened 
 
-      // flag to check for at least one restriction 
-      doRestriction_ = false ;
       {
         // get macro iterator 
         LevelIterator endit  = macroView.template end<0,pitype>  ();
@@ -396,9 +397,11 @@ private:
         }
       }
 
-      if( doRestriction_ )
+      // if at least one element was found for restriction 
+      if( wasChanged_ )
       {
         // now resize memory 
+        // this will increase the sequence counter
         dm_.resizeForRestrict();
 
         // now project all data to fathers 
@@ -436,15 +439,18 @@ private:
       }
     }
 
-    // if grid was coarsend or refined, do dof compress 
-    if(restr || refined)
+    // if grid was changed, then do compression 
+    // make sure that no MPI calls are done in 
+    // the compress method
+    if( wasChanged_ )
     {
       // compress index sets and data 
+      // this will increase the sequence counter
       dm_.compress();
     }
 
-    // make sequence counter globally equal 
-    dm_.globalFinalize();
+    // make sequence counter equal on all cores 
+    dm_.notifySequence();
 
     // do cleanup 
     grid_.postAdapt();
@@ -477,7 +483,7 @@ private:
       if(doRestrict)
       {
         // we did at least one restriction 
-        doRestriction_ = true; 
+        wasChanged_ = true; 
 
         // true for first child, otherwise false 
         bool initialize = true;
@@ -538,7 +544,7 @@ protected:
   double adaptTime_;
 
   //! flag for restriction 
-  mutable bool doRestriction_; 
+  mutable bool wasChanged_; 
 };
 
 //! factory class to create adaptation manager reference counter 

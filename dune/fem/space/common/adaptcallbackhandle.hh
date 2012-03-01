@@ -55,16 +55,18 @@ namespace Dune
     void postAdapt ()
     {
       // is something was changed we need to call compress 
-      // don't call any communication in DofManager::compress
       if( wasChanged_ )
       {
+        // make sure that no communication calls 
+        // are done during DofManager::compress
         dofManager_.compress();
+
         // unset was changed 
         wasChanged_ = false;
       }
 
-      // call dofmanger finalize to make flags know globally 
-      dofManager_.globalFinalize();
+      // make sequence counter globally equal 
+      dofManager_.notifySequence();
     }
 
     void preCoarsening ( const Entity &father ) const

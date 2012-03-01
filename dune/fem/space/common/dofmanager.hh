@@ -997,7 +997,6 @@ public:
   */ 
   void reserveMemory (int nsize, bool useNsize = false ) 
   {
-    //++sequenceTemporary_;
     //++sequence_;
     int localChunkSize = (useNsize) ? nsize : std::max(nsize, defaultChunkSize_ );
     assert( localChunkSize > 0 );
@@ -1019,7 +1018,7 @@ public:
   void resize()
   {
     // new number in grid series 
-    ++sequence_;
+    // ++sequence_;
 
     IndexListIteratorType endit = indexList_.end();
     for(IndexListIteratorType it = indexList_.begin(); it != endit; ++it)
@@ -1090,9 +1089,12 @@ public:
   }
 
   //! communicate new sequence number 
-  void globalFinalize () 
+  void notifySequence() 
   {
     // assure that sequence is the same on all cores 
+    // NOTE: this is important since some communication calls 
+    //       depend on this. An non-equal sequence can lead to 
+    //       communication deadlocks 
     sequence_ = grid_.comm().max( sequence_ );
   }
 
