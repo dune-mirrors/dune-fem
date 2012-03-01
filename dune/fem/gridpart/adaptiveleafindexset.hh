@@ -230,11 +230,12 @@ namespace Dune
     //! type of codimension 1 entity 
     typedef typename GetFaceEntity :: EntityPointer FacePointerType ;
 
-    //! is true if grid is structured grid 
-    enum { StructuredGrid = ! Capabilities::IsUnstructured<GridType>::v };
+    //! is true if grid is a Cartesian, non-adaptive grid (i.e. YaspGrid, SPGrid)
+    enum { CartesianNonAdaptiveGrid =   Capabilities :: isCartesian<GridType>::v && 
+                                      ! Capabilities :: isLocallyAdaptive<GridType>::v };
 
     // my type, to be revised 
-    enum { myType = ( numCodimensions == 1 ) ? ( (StructuredGrid) ? -1 : 665 ) : 6 };
+    enum { myType = ( numCodimensions == 1 ) ? ( (CartesianNonAdaptiveGrid) ? -1 : 665 ) : 6 };
 
     // max num of codimension (to avoid compiler warnings)
     enum { maxNumCodimension = ((dimension + 1) > numCodimensions) ? dimension + 2 : numCodimensions+1 };
@@ -299,16 +300,19 @@ namespace Dune
           codimLeafSet_[ codim ] = new CodimIndexSetType( grid_, codim );
       }
 
-      // get level-0 view, this is alrady used in GridPtr (DFG parser)
-      typedef typename GridType :: LevelGridView MacroViewType;
-      MacroViewType macroView = grid_.levelView( 0 );
-
-      // resize vector of geometry types 
-      geomTypes_.resize( dimension+1 );
-      for(int codim=0; codim <= dimension; ++codim ) 
+      /// get geometry types (not working for hybrid grids, like to whole set itself)
       {
-        // copy geometry types 
-        geomTypes_[ codim ] = macroView.indexSet().geomTypes( codim ); 
+        // get level-0 view, this is alrady used in GridPtr (DFG parser)
+        typedef typename GridType :: LevelGridView MacroViewType;
+        MacroViewType macroView = grid_.levelView( 0 );
+
+        // resize vector of geometry types 
+        geomTypes_.resize( dimension+1 );
+        for(int codim=0; codim <= dimension; ++codim ) 
+        {
+          // copy geometry types 
+          geomTypes_[ codim ] = macroView.indexSet().geomTypes( codim ); 
+        }
       }
 
       // build index set 
@@ -318,7 +322,7 @@ namespace Dune
     //! Destructor
     virtual ~AdaptiveIndexSetBase ()
     {
-      // set the codim of each Codim Set. 
+      // delete all the codim sets 
       for(int codim = 0; codim < numCodimensions; ++codim ) 
       {
         delete codimLeafSet_[ codim ];
@@ -426,7 +430,7 @@ namespace Dune
       resizeVectors();
 
   #if HAVE_MPI
-      if( StructuredGrid  &&
+      if( CartesianNonAdaptiveGrid  &&
           grid_.comm().size() > 1 )
       {
         // only done for structured grids 
@@ -908,7 +912,7 @@ namespace Dune
     // for structured grids clear all information 
     // this in only done when setting up grids or after 
     // read of parallel data on serial grids 
-    if( StructuredGrid )
+    if( CartesianNonAdaptiveGrid )
     {
       // mark all indices as unused
       for( int codim = 0; codim < numCodimensions; ++codim )
@@ -932,7 +936,7 @@ namespace Dune
 #if HAVE_MPI
     // for YaspGrid we need all interior indices first 
     // so we can use SGrid for the visualization :(
-    if( StructuredGrid  &&
+    if( CartesianNonAdaptiveGrid  &&
         grid_.comm().size() > 1 )
     {
       // we should only get here for YaspGrid
