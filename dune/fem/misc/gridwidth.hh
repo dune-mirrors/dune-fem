@@ -122,7 +122,8 @@ public:
     double width = MinMaxInit< MinMax > :: init() ;
 
     // cartesian case 
-    if( Capabilities::isCartesian<GridType>::v )
+    if(  Capabilities::isCartesian<GridType>::v && 
+       ! Capabilities::isLocallyAdaptive<GridType>::v  )
     {
       // here we only need to check one element 
       IteratorType it = gridPart.template begin<0> (); 
