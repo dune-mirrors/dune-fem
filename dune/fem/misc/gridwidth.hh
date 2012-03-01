@@ -121,12 +121,12 @@ public:
     // initialize with big value 
     double width = MinMaxInit< MinMax > :: init() ;
 
-    // unstructured case 
-    if( Capabilities::IsUnstructured<GridType>::v )
+    // cartesian case 
+    if( Capabilities::isCartesian<GridType>::v )
     {
-      const IteratorType endit = gridPart.template end<0> (); 
-      for(IteratorType it = gridPart.template begin<0> (); 
-          it != endit; ++it )
+      // here we only need to check one element 
+      IteratorType it = gridPart.template begin<0> (); 
+      if( it != gridPart.template end<0> () )
       {
         width = minmax( maxEdgeWidth(gridPart, 
                                      *it, 
@@ -137,9 +137,10 @@ public:
     }
     else 
     {
-      // here we only need to check one element 
-      IteratorType it = gridPart.template begin<0> (); 
-      if( it != gridPart.template end<0> () )
+      // unstructured case 
+      const IteratorType endit = gridPart.template end<0> (); 
+      for(IteratorType it = gridPart.template begin<0> (); 
+          it != endit; ++it )
       {
         width = minmax( maxEdgeWidth(gridPart, 
                                      *it, 
