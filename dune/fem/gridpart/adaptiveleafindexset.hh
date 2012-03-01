@@ -1059,9 +1059,6 @@ namespace Dune
   inline int
   AdaptiveIndexSetBase< TraitsImp >::countElements ( GeometryType type, const integral_constant<bool,true>& ) const
   {
-    // resize if necessary 
-    codimLeafSet( codim ).resize();
-
     typedef typename GridPartType
       ::template Codim< codim > :: template Partition< pitype > :: IteratorType Iterator;
 
@@ -1080,6 +1077,12 @@ namespace Dune
   inline int
   AdaptiveIndexSetBase< TraitsImp >::countElements ( GeometryType type, const integral_constant<bool,false>& ) const
   {
+    // make sure codimension is enabled 
+    assert( codimAvailable( codim ) );
+
+    // resize if necessary 
+    codimLeafSet( codim ).resize();
+
     typedef typename GridPartType
       ::template Codim< 0 >::template Partition< pitype > :: IteratorType Iterator;
 
