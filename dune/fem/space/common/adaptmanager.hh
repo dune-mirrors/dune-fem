@@ -403,7 +403,6 @@ private:
       if( wasChanged_ )
       {
         // now resize memory 
-        // this will increase the sequence counter
         dm_.resizeForRestrict();
 
         // now project all data to fathers 
@@ -441,18 +440,13 @@ private:
       }
     }
 
-    // if grid was changed, then do compression 
-    // make sure that no MPI calls are done in 
-    // the compress method
-    if( wasChanged_ )
+    // notifyGlobalChange make wasChanged equal on all cores 
+    if( dm_.notifyGlobalChange( wasChanged_ ) )
     {
       // compress index sets and data 
       // this will increase the sequence counter
       dm_.compress();
     }
-
-    // make sequence counter equal on all cores 
-    dm_.notifySequence();
 
     // do cleanup 
     grid_.postAdapt();

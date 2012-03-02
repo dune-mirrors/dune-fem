@@ -986,7 +986,6 @@ public:
   */ 
   void resizeForRestrict () 
   {
-    ++sequence_;
     resizeMemory();
   }
   
@@ -997,7 +996,6 @@ public:
   */ 
   void reserveMemory (int nsize, bool useNsize = false ) 
   {
-    //++sequence_;
     int localChunkSize = (useNsize) ? nsize : std::max(nsize, defaultChunkSize_ );
     assert( localChunkSize > 0 );
 
@@ -1018,7 +1016,6 @@ public:
   void resize()
   {
     // new number in grid series 
-    // ++sequence_;
 
     IndexListIteratorType endit = indexList_.end();
     for(IndexListIteratorType it = indexList_.begin(); it != endit; ++it)
@@ -1063,6 +1060,9 @@ public:
     // mark next sequence 
     ++sequence_;
 
+    // check that sequence number is the same for all processes
+    assert( sequence_ == grid_.comm().max( sequence_ ) );
+
     // compress indexsets first 
     {
       IndexListIteratorType endit  = indexList_.end();
@@ -1089,13 +1089,11 @@ public:
   }
 
   //! communicate new sequence number 
-  void notifySequence() 
+  bool notifyGlobalChange( const bool wasChanged ) const 
   {
-    // assure that sequence is the same on all cores 
-    // NOTE: this is important since some communication calls 
-    //       depend on this. An non-equal sequence can lead to 
-    //       communication deadlocks 
-    sequence_ = grid_.comm().max( sequence_ );
+    // make sure that wasChanged is the same on all cores 
+    int wasChangedCounter = int( wasChanged );
+    return bool( grid_.comm().max( wasChangedCounter ) );
   }
 
   //! add data handler for data inlining to dof manager

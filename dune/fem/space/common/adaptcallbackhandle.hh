@@ -51,7 +51,8 @@ namespace Dune
       wasChanged_ = true ;
 
       // ghosts are not valid for restriction/prolongation
-      return entity.partitionType() != GhostEntity ;
+      assert( entity.partitionType() != GhostEntity );
+      return true ;
     }
 
     void preAdapt ( const unsigned int estimatedAdditionalElements )
@@ -64,8 +65,8 @@ namespace Dune
 
     void postAdapt ()
     {
-      // is something was changed we need to call compress 
-      if( wasChanged_ )
+      // notifyGlobalChange make wasChanged equal on all cores
+      if( dofManager_.notifyGlobalChange( wasChanged_ ) )
       {
         // make sure that no communication calls 
         // are done during DofManager::compress
@@ -74,9 +75,6 @@ namespace Dune
         // unset was changed flag
         wasChanged_ = false;
       }
-
-      // make sequence counter globally equal 
-      dofManager_.notifySequence();
     }
 
     void preCoarsening ( const Entity &father ) const
