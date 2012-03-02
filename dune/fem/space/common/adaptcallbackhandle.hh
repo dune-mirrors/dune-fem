@@ -45,10 +45,13 @@ namespace Dune
       wasChanged_( org.wasChanged_ )
     {}
 
-    void notifyGridChanged() const
+    bool isValidEntity( const Entity& entity ) const
     {
       // grid was changed, if this method is called
       wasChanged_ = true ;
+
+      // ghosts are not valid for restriction/prolongation
+      return entity.partitionType() != GhostEntity ;
     }
 
     void preAdapt ( const unsigned int estimatedAdditionalElements )
@@ -78,50 +81,54 @@ namespace Dune
 
     void preCoarsening ( const Entity &father ) const
     {
-      notifyGridChanged();
-
-      typedef typename Entity::HierarchicIterator HIterator;
-
-      bool initialize = true;
-      const int childLevel = father.level() + 1;
-      const HIterator end = father.hend( childLevel );
-      for( HIterator it = father.hbegin( childLevel ); it != end; ++it )
+      if( isValidEntity( father ) )
       {
-        restrictLocal( father, *it, initialize );
-        initialize = false;
+        typedef typename Entity::HierarchicIterator HIterator;
+
+        bool initialize = true;
+        const int childLevel = father.level() + 1;
+        const HIterator end = father.hend( childLevel );
+        for( HIterator it = father.hbegin( childLevel ); it != end; ++it )
+        {
+          restrictLocal( father, *it, initialize );
+          initialize = false;
+        }
       }
     }
     
     void restrictLocal ( const Entity &father, const Entity &son, bool initialize ) const
     {
-      notifyGridChanged();
-
-      dofManager_.indexSetRestrictProlong().restrictLocal( const_cast< Entity & >( father ), const_cast< Entity & >( son ), initialize );
-      rpOp_.restrictLocal( const_cast< Entity & >( father ), const_cast< Entity & >( son ), initialize );
+      if( isValidEntity( father ) )
+      {
+        dofManager_.indexSetRestrictProlong().restrictLocal( const_cast< Entity & >( father ), const_cast< Entity & >( son ), initialize );
+        rpOp_.restrictLocal( const_cast< Entity & >( father ), const_cast< Entity & >( son ), initialize );
+      }
     }
 
     void postRefinement ( const Entity &father ) const
     {
-      notifyGridChanged();
-
-      typedef typename Entity::HierarchicIterator HIterator;
-
-      bool initialize = true;
-      const int childLevel = father.level() + 1;
-      const HIterator end = father.hend( childLevel );
-      for( HIterator it = father.hbegin( childLevel ); it != end; ++it )
+      if( isValidEntity( father ) )
       {
-        prolongLocal( father, *it, initialize );
-        initialize = false;
+        typedef typename Entity::HierarchicIterator HIterator;
+
+        bool initialize = true;
+        const int childLevel = father.level() + 1;
+        const HIterator end = father.hend( childLevel );
+        for( HIterator it = father.hbegin( childLevel ); it != end; ++it )
+        {
+          prolongLocal( father, *it, initialize );
+          initialize = false;
+        }
       }
     }
 
     void prolongLocal ( const Entity &father, const Entity &son, bool initialize ) const
     {
-      notifyGridChanged();
-
-      dofManager_.indexSetRestrictProlong().prolongLocal( const_cast< Entity & >( father ), const_cast< Entity & >( son ), initialize );
-      rpOp_.prolongLocal( const_cast< Entity & >( father ), const_cast< Entity & >( son ), initialize );
+      if( isValidEntity( father ) ) 
+      {
+        dofManager_.indexSetRestrictProlong().prolongLocal( const_cast< Entity & >( father ), const_cast< Entity & >( son ), initialize );
+        rpOp_.prolongLocal( const_cast< Entity & >( father ), const_cast< Entity & >( son ), initialize );
+      }
     }
   };
 
