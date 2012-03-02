@@ -34,6 +34,7 @@ misc_HEADERS = alugridwriter.hh \
                lpnorm.hh \
                linesegmentsampler.hh \
                longexample.cc \
+               mapgeomtype.hh \
                metaprogramming.hh \
                mpimanager.hh \
                nonconformitylevel.hh \
