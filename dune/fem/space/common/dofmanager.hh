@@ -700,7 +700,7 @@ public:
 
   //! restrict data to father and resize memory if doResize is true 
   template <class EntityType>
-  inline void restrictLocal ( EntityType & father, EntityType & son , bool initialize ) const
+  inline void restrictLocal ( const EntityType & father, const EntityType & son , bool initialize ) const
   {
     // insert index of father
     insert_.apply( father );
@@ -716,7 +716,7 @@ public:
 
   //! prolong data to children and resize memory if doResize is true 
   template <class EntityType>
-  inline void prolongLocal ( EntityType & father, EntityType & son , bool initialize ) const
+  inline void prolongLocal ( const EntityType & father, const EntityType & son , bool initialize ) const
   {
     // mark index of father for removal
     remove_.apply( father );

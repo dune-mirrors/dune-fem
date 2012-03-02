@@ -266,6 +266,9 @@ class AdaptationManagerBase
       // use generic adapt method 
       if(adaptMethod != BaseType :: none ) 
       {
+        // use partition type All_Partition, 
+        // since we also need to iterate on ghosts 
+        // for wasChanged information gathering
         am.template genericAdapt<All_Partition> ();
         return ;
       }
@@ -370,11 +373,10 @@ private:
     // one element is marked for coarsening 
     bool restr = grid_.preAdapt();  
 
-    // get macro grid iterator 
-    typedef typename GridType::template Codim<0>::
-      template Partition<pitype> :: LevelIterator LevelIterator;
-
+    // get macro grid view  
     typedef typename GridType::template Partition< All_Partition > :: LevelGridView  MacroGridView ;
+    typedef typename MacroGridView :: template Codim<0>::
+            template Partition<pitype> :: Iterator MacroIterator;
 
     // reset flag 
     wasChanged_ = false ;
@@ -389,8 +391,8 @@ private:
 
       {
         // get macro iterator 
-        LevelIterator endit  = macroView.template end<0,pitype>  ();
-        for(LevelIterator it = macroView.template begin<0,pitype>();
+        MacroIterator endit  = macroView.template end<0,pitype>  ();
+        for(MacroIterator it = macroView.template begin<0,pitype>();
             it != endit; ++it )
         {
           hierarchicRestrict( *it , dm_.indexSetRestrictProlongNoResize() );
@@ -407,8 +409,8 @@ private:
         // now project all data to fathers 
         {
           // get macro iterator 
-          LevelIterator endit  = macroView.template end<0,pitype>  ();
-          for(LevelIterator it = macroView.template begin<0,pitype>();
+          MacroIterator endit  = macroView.template end<0,pitype>  ();
+          for(MacroIterator it = macroView.template begin<0,pitype>();
               it != endit; ++it )
           {
             hierarchicRestrict( *it , rpOp_ );
@@ -431,8 +433,8 @@ private:
       dm_.resize();
 
       // make run through grid to project data 
-      LevelIterator endit  = macroView.template end<0,pitype>  ();
-      for(LevelIterator it = macroView.template begin<0,pitype>();
+      MacroIterator endit  = macroView.template end<0,pitype>  ();
+      for(MacroIterator it = macroView.template begin<0,pitype>();
           it != endit; ++it )
       {
         hierarchicProlong( *it , rpOp_ );
@@ -459,21 +461,24 @@ private:
 private:
   //! make hierarchic walk trough for restriction 
   template <class EntityType, class RestrictOperatorType  >
-  bool hierarchicRestrict ( EntityType& en, RestrictOperatorType & restop ) const 
+  bool hierarchicRestrict ( const EntityType& entity, RestrictOperatorType & restop ) const 
   {
-    if( ! en.isLeaf() )
+    if( ! entity.isLeaf() )
     {
       // true means we are going to restrict data 
       bool doRestrict = true;
+
+      // check partition type 
+      const bool isGhost = entity.partitionType() == GhostEntity ;
       
       // if the children have children then we have to go deeper 
-      const int childLevel = en.level() + 1;
+      const int childLevel = entity.level() + 1;
       typedef typename EntityType::HierarchicIterator HierarchicIterator; 
       
       // check all children first 
       {
-        const HierarchicIterator endit = en.hend( childLevel );
-        for(HierarchicIterator it = en.hbegin( childLevel ); it != endit; ++it)
+        const HierarchicIterator endit = entity.hend( childLevel );
+        for(HierarchicIterator it = entity.hbegin( childLevel ); it != endit; ++it)
         {
           doRestrict &= hierarchicRestrict( *it , restop );
         }
@@ -485,24 +490,32 @@ private:
         // we did at least one restriction 
         wasChanged_ = true; 
 
-        // true for first child, otherwise false 
-        bool initialize = true;
-        const HierarchicIterator endit = en.hend( childLevel );
-        for(HierarchicIterator it = en.hbegin( childLevel ); it != endit; ++it)
+        // do not restrict the solution on ghosts, this will 
+        // fail, but we still need the wasChanged info, so simply 
+        // calling hierarchicRestrict on interior won't work either
+        if( ! isGhost ) 
         {
-          restop.restrictLocal( en , *it , initialize);     
-          initialize = false;
+          // true for first child, otherwise false 
+          bool initialize = true;
+          const HierarchicIterator endit = entity.hend( childLevel );
+          for(HierarchicIterator it = entity.hbegin( childLevel ); it != endit; ++it)
+          {
+            // restrict solution 
+            restop.restrictLocal( entity, *it , initialize);
+            // reset initialize flag 
+            initialize = false;
+          }
         }
       }
     }
 
     // if all children return mightBeCoarsened,
     // then doRestrict on father remains true 
-    return en.mightVanish();
+    return entity.mightVanish();
   }
 
   template <class EntityType, class ProlongOperatorType >
-  void hierarchicProlong ( EntityType &en, ProlongOperatorType & prolop ) const 
+  void hierarchicProlong ( const EntityType &entity, ProlongOperatorType & prolop ) const 
   {
     typedef typename EntityType::HierarchicIterator HierarchicIterator; 
     typedef typename GridType :: template Codim<0> :: EntityPointer EntityPointerType; 
@@ -512,20 +525,35 @@ private:
     
     // first call on this element 
     bool initialize = true;
+
+    // check partition type 
+    const bool isGhost = entity.partitionType() == GhostEntity ;
     
     const int maxLevel = grid_.maxLevel();
-    const HierarchicIterator endit = en.hend( maxLevel );
-    for( HierarchicIterator it = en.hbegin( maxLevel ); it != endit; ++it )
+    const HierarchicIterator endit = entity.hend( maxLevel );
+    for( HierarchicIterator it = entity.hbegin( maxLevel ); it != endit; ++it )
     {
       // should only get here on non-leaf entities 
-      assert( !en.isLeaf() );
+      assert( !entity.isLeaf() );
 
-      EntityType & son = *it; 
+      const EntityType & son = *it; 
       if( son.isNew() )
       {
-        EntityPointerType vati = son.father();
-        prolop.prolongLocal( *vati , son , initialize ); 
-        initialize = false;
+        // the grid was obviously changed if we get here
+        wasChanged_ = true ;
+
+        // do not prolong the solution on ghosts, this will 
+        // fail, but we still need the wasChanged info, so simply 
+        // calling hierarchicRestrict on interior won't work either
+        if( ! isGhost ) 
+        {
+          // get father entity 
+          EntityPointerType vati = son.father();
+
+          // do prolongation 
+          prolop.prolongLocal( *vati , son , initialize ); 
+          initialize = false;
+        }
       }
     }
   }

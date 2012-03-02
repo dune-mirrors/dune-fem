@@ -42,13 +42,20 @@ namespace Dune
     RestrictProlongWrapper ( const RestrictProlongWrapper& org ) 
     : dofManager_( org.dofManager_ ), 
       rpOp_( org.rpOp_ ),
-      wasChanged_( false )
+      wasChanged_( org.wasChanged_ )
     {}
+
+    void notifyGridChanged() const
+    {
+      // grid was changed, if this method is called
+      wasChanged_ = true ;
+    }
 
     void preAdapt ( const unsigned int estimatedAdditionalElements )
     {
       // unset was changed 
       wasChanged_ = false;
+      // reserve memory 
       dofManager_.reserveMemory( estimatedAdditionalElements );
     }
 
@@ -61,7 +68,7 @@ namespace Dune
         // are done during DofManager::compress
         dofManager_.compress();
 
-        // unset was changed 
+        // unset was changed flag
         wasChanged_ = false;
       }
 
@@ -71,7 +78,7 @@ namespace Dune
 
     void preCoarsening ( const Entity &father ) const
     {
-      wasChanged_ = true ;
+      notifyGridChanged();
 
       typedef typename Entity::HierarchicIterator HIterator;
 
@@ -87,7 +94,7 @@ namespace Dune
     
     void restrictLocal ( const Entity &father, const Entity &son, bool initialize ) const
     {
-      wasChanged_ = true ;
+      notifyGridChanged();
 
       dofManager_.indexSetRestrictProlong().restrictLocal( const_cast< Entity & >( father ), const_cast< Entity & >( son ), initialize );
       rpOp_.restrictLocal( const_cast< Entity & >( father ), const_cast< Entity & >( son ), initialize );
@@ -95,7 +102,7 @@ namespace Dune
 
     void postRefinement ( const Entity &father ) const
     {
-      wasChanged_ = true ;
+      notifyGridChanged();
 
       typedef typename Entity::HierarchicIterator HIterator;
 
@@ -111,7 +118,7 @@ namespace Dune
 
     void prolongLocal ( const Entity &father, const Entity &son, bool initialize ) const
     {
-      wasChanged_ = true ;
+      notifyGridChanged();
 
       dofManager_.indexSetRestrictProlong().prolongLocal( const_cast< Entity & >( father ), const_cast< Entity & >( son ), initialize );
       rpOp_.prolongLocal( const_cast< Entity & >( father ), const_cast< Entity & >( son ), initialize );
