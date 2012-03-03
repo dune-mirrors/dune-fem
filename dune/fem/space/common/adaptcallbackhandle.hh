@@ -1,6 +1,7 @@
 #ifndef DUNE_ADAPTCALLBACKHANDLE_HH
 #define DUNE_ADAPTCALLBACKHANDLE_HH
 
+#include <dune/grid/common/gridenums.hh>
 #include <dune/grid/common/adaptcallback.hh>
 
 /** \file
