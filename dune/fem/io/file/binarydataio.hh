@@ -128,14 +128,10 @@ private:
   static const int dimGrid = GridType::dimension;
   static const int dimWorld = GridType::dimensionworld;
 
-  // also check isLocallyAdaptive because of CartesianGrid
-  // with ALUgrid as HostGrid 
-  static const bool cartesianAdaptive = Capabilities::isCartesian< GridType > :: v && Capabilities::isLocallyAdaptive< GridType > :: v ;
+  static const bool useBackupRestore
+    = Capabilities::hasBackupRestoreFacilities< GridType >::v ;
 
-  static const bool useRealBackupRestore
-    = Capabilities::hasBackupRestoreFacilities< GridType >::v && cartesianAdaptive ;
-
-  typedef BinaryDataIOImp< dimGrid, dimWorld, GridType, useRealBackupRestore > Impl;
+  typedef BinaryDataIOImp< dimGrid, dimWorld, GridType, useBackupRestore > Impl;
 
 public:
   BinaryDataIO () {}
