@@ -197,7 +197,8 @@ inline bool BinaryDataIOImp< dim, dimworld, GridImp, true >::writeGrid
     hasDm = DofManagerType :: write(grid,dmname,timestep);
   }
  
-  // write Grid itself 
+  // write Grid info only on rank 0 to avoid to many files 
+  if( grid.comm().rank() == 0 )
   {
     std::fstream file (fnprefix.c_str(),std::ios::out);
     if( file.is_open() )
@@ -207,28 +208,29 @@ inline bool BinaryDataIOImp< dim, dimworld, GridImp, true >::writeGrid
       file << "Precision: " << precision << std::endl;
       int writeDm = (hasDm)? 1 : 0;
       file << "DofManager: " << writeDm << std::endl; 
-
-      std::string fnstr = generateFilename(fnprefix,timestep,precision);
-      
-      file.close();
-      switch (ftype)
-      {
-        case xdr  :   return grid.template writeGrid<xdr>  (fnstr,time);
-        case ascii:   return grid.template writeGrid<ascii>(fnstr,time);
-        default:
-            {
-              std::cerr << ftype << " GrapeIOFileFormatType not supported at the moment! " << __FILE__ << __LINE__ << "\n";
-              assert(false);
-              abort();
-              return false;
-            }
-      }
     }
     else 
     {
       std::cerr << "Couldn't open file `" << fnprefix << "' ! \n";
       return false;
     }
+
+    file.close();
+  }
+
+  std::string fnstr = generateFilename(fnprefix,timestep,precision);
+  
+  switch (ftype)
+  {
+    case xdr  :   return grid.template writeGrid<xdr>  (fnstr,time);
+    case ascii:   return grid.template writeGrid<ascii>(fnstr,time);
+    default:
+      {
+        std::cerr << ftype << " GrapeIOFileFormatType not supported at the moment! " << __FILE__ << __LINE__ << "\n";
+        assert(false);
+        abort();
+        return false;
+      }
   }
 }
 
@@ -237,40 +239,39 @@ inline bool BinaryDataIOImp< dim, dimworld, GridImp, true >::readGrid
 (GridImp & grid, const std::string & fnprefix , double & time , int timestep, bool verbose )
 {
   int helpType = (int) xdr;
-  std::string gridname;
-
-  bool readGridName = readParameter(fnprefix,"Grid",gridname, verbose);
-  if(! readGridName ) 
-  {
-    if(grid.comm().rank() == 0)
-    {
-      std::cerr << "P["<< grid.comm().rank() << "] ERROR: Couldn't open file '"<<fnprefix<<"' !" << std::endl;
-      abort();
-    }
-    else if( verbose )
-    {
-      // on all other procs on print warning
-      std::cerr << "P["<< grid.comm().rank() << "] WARNING: Couldn't open file '"<<fnprefix<<"' !" << std::endl;
-    }
-  }
-  else 
-  {
-    std::string grName ( Fem::gridName( grid ) );
-    if( grName != gridname)
-    {
-      std::cerr << "\nERROR: '" << grName << "' tries to read '" << gridname << "' file. \n";
-      abort();
-    }
-  }
-
   int precision = 6;
-  int hasDm = 0;
-  readParameter(fnprefix,"Format",    helpType, verbose);
-  readParameter(fnprefix,"Precision", precision,verbose);
-  readParameter(fnprefix,"DofManager",hasDm,    verbose);
+  int hasDm = 1;
+
+  if( grid.comm().rank() == 0 )
+  {
+    std::string gridname;
+    bool readGridName = readParameter(fnprefix,"Grid",gridname, verbose);
+    if( ! readGridName ) 
+    {
+      if( verbose )
+      {
+        // on all other procs on print warning
+        std::cerr << "P["<< grid.comm().rank() << "] WARNING: Couldn't open file '"<<fnprefix<<"' !" << std::endl;
+      }
+    }
+    else 
+    {
+      std::string grName ( Fem::gridName( grid ) );
+      if( grName != gridname)
+      {
+        std::cerr << "\nWARNING: '" << grName << "' tries to read '" << gridname << "' file. \n";
+      }
+    }
+
+    if( readGridName ) 
+    {
+      readParameter(fnprefix,"Format",    helpType, verbose);
+      readParameter(fnprefix,"Precision", precision,verbose);
+      readParameter(fnprefix,"DofManager",hasDm,    verbose);
+    }
+  }
 
   GrapeIOFileFormatType ftype = (GrapeIOFileFormatType) helpType;
-
   std::string fn = generateFilename(fnprefix,timestep,precision);
   if( verbose ) 
   {
@@ -283,28 +284,14 @@ inline bool BinaryDataIOImp< dim, dimworld, GridImp, true >::readGrid
     case xdr  :   succeded = grid.template readGrid<xdr>  (fn,time); break;
     case ascii:   succeded = grid.template readGrid<ascii>(fn,time); break;
     default:
-        {
-          std::cerr << ftype << " GrapeIOFileFormatType not supported at the moment! \n";
-          assert(false);
-          abort();
-          return false;
-        }
+      {
+        std::cerr << ftype << " GrapeIOFileFormatType not supported at the moment! \n";
+        assert(false);
+        abort();
+        return false;
+      }
   }
  
-  // write dof manager, that corresponds to grid 
-  /*
-  if(hasDm)
-  {
-    typedef DofManager<GridImp> DofManagerType; 
-    
-    std::string dmname(fn);
-    dmname += "_dm";
-    //std::cout << "Read DofManager from file " << dmname << "\n";
-    // this call creates DofManager if not already existing 
-    DofManagerType :: instance(grid);
-    succeded = DofManagerType :: write(grid,dmname,timestep);
-  }
-  */
   return succeded;
 }
 
@@ -325,7 +312,8 @@ inline bool BinaryDataIOImp< dim, dimworld, GridImp, false >
     hasDm = DofManagerType :: write(grid,dmname,timestep);
   }
  
-  // write Grid itself 
+  // only write grid info on rank 0 
+  if( grid.comm().rank() == 0 )
   {
     std::ofstream file (fnprefix.c_str());
     if( file.is_open() )
@@ -358,60 +346,66 @@ inline bool BinaryDataIOImp< dim, dimworld, GridImp, false >
 {
   std::string gridname;
 
-  bool readGridName = readParameter(fnprefix,"Grid",gridname);
-  if(! readGridName ) 
-  {
-    std::cerr << "P["<< grid.comm().rank() << "] ERROR: Couldn't open file '"<<fnprefix<<"' !" << std::endl;
-    return false;
-  }
-
-  std::string grName ( Fem::gridName( grid ) );
-  if( grName != gridname )
-  {
-    if( (grName == "SGrid") && (gridname == "YaspGrid") ) 
-    {
-      std::cerr << "WARNING: YaspGrid is read as SGrid! \n";
-    }
-    else 
-    {
-      std::cerr << "\nERROR: '" << grName << "' tries to read '" << gridname << "' file. \n";
-      abort();
-    }
-  }
-
-  int precision = 6;
-  readParameter(fnprefix,"Precision",precision);
-
-  int hasDm = 0;
-  readParameter(fnprefix,"DofManager",hasDm);
+  const int rank = grid.comm().rank() ;
 
   // read stored maxLevel 
   int maxLevel = 0;
-  const bool foundMaxLevel = readParameter(fnprefix,"MaxLevel",maxLevel);
 
-  // also read time 
-  readParameter(fnprefix,"Time",time);
-
-  // if we have old format 
-  if( ! foundMaxLevel ) 
+  if( rank == 0 ) 
   {
-    std::string fnstr = generateFilename(fnprefix,timestep,precision);
-    readParameter(fnstr,"Time",time);
-    readParameter(fnstr,"MaxLevel",maxLevel);
+    bool readGridName = readParameter(fnprefix,"Grid",gridname);
+    if( ! readGridName )  
+    {
+      std::cerr << "P["<< rank << "] ERROR: Couldn't open file '"<<fnprefix<<"' !" << std::endl;
+      abort();
+    }
+
+    std::string grName ( Fem::gridName( grid ) );
+    if( grName != gridname )
+    {
+      if( (grName == "SGrid") && (gridname == "YaspGrid") ) 
+      {
+        std::cerr << "WARNING: YaspGrid is read as SGrid! \n";
+      }
+      else 
+      {
+        std::cerr << "\nWARNING: '" << grName << "' tries to read '" << gridname << "' file. \n";
+      }
+    }
+
+    int precision = 6;
+    readParameter(fnprefix,"Precision",precision);
+
+    int hasDm = 0;
+    readParameter(fnprefix,"DofManager",hasDm);
+
+    const bool foundMaxLevel = readParameter(fnprefix,"MaxLevel",maxLevel);
+
+    // also read time 
+    readParameter(fnprefix,"Time",time);
+
+    // if we have old format 
+    if( ! foundMaxLevel ) 
+    {
+      std::string fnstr = generateFilename(fnprefix,timestep,precision);
+      readParameter(fnstr,"Time",time);
+      readParameter(fnstr,"MaxLevel",maxLevel);
+    }
+
+    // calculate level to achieve 
+    maxLevel -= grid.maxLevel();
   }
 
-  // calculate level to achieve 
-  maxLevel -= grid.maxLevel();
+  // get max level for each core 
+  maxLevel = grid.comm().max( maxLevel );
 
   if( maxLevel < 0 ) 
   {
     DUNE_THROW(InvalidStateException,"maxLevel of grid is already to big!");
   }
-  else if ( maxLevel > 0 ) 
-  {
-    // refine grid 
-    grid.globalRefine( maxLevel );
-  }
+
+  // refine grid 
+  grid.globalRefine( maxLevel );
   return true;
 }
 
