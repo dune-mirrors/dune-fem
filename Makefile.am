@@ -21,4 +21,6 @@ SOURCEFILE_MASK = -name \*.h -o -name \*.hh -o -name \*.c -o -name \*.cc
 
 # add library name, authors list, and license to progam files
 dist-hook:
-	find $(distdir) \( $(SOURCEFILE_MASK) \) -exec scripts/addauthors.sh ./AUTHORS {} \;
+	if test -f scripts/addauthors.sh ; then \
+		find $(distdir) \( $(SOURCEFILE_MASK) \) -exec scripts/addauthors.sh ./AUTHORS {} \; ; \
+	fi
