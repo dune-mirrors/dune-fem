@@ -5,6 +5,7 @@
 #include <dune/fem/misc/test.hh>
 #include <dune/fem/misc/test.cc>
 #include <dune/fem/misc/suite.cc>
+#include <dune/fem/io/parameter.hh>
 
 #include <dune/fem/quadrature/cachingquadrature.hh>
 
