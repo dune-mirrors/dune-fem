@@ -224,8 +224,8 @@ namespace Dune
           //const int oldSize = tmp.space().size() ;
           //const int newSize = df_.space().size() ;
 
-          //std::cout <<"Start adaptFct: old size " << tmp.space().size() 
-          //          << "  new size " << df_.space().size() << std::endl;
+          //std::cout << " Start adaptFct: old size " << tmp.space().size() 
+          //          << "                 new size " << df_.space().size() << std::endl;
 
           typedef typename IntermediateStorageFunctionType :: DofIteratorType
             TmpIteratorType;
@@ -244,14 +244,12 @@ namespace Dune
           // adjust size of discrete function 
           df_.resize(); 
 
-          //std::cout <<"End adaptFct: old size " << tmp.space().size() 
-          //          << "  new size " << df_.space().size() << std::endl;
+          //std::cout << " End adaptFct: old size " << tmp.space().size() 
+          //          << "               new size " << df_.space().size() << std::endl;
 
           // interpolate to new space, this can be a 
           // Lagrange interpolation or a L2 projection
           LocalInterpolation :: apply( tmp, df_ );
-          // interpolate to new space 
-          //LagrangeInterpolation< DF > :: interpolateFunction( tmp, df_ );
         }
       };
 
@@ -384,6 +382,8 @@ namespace Dune
         blockMapper().adapt();
 
         //std::cout << "New space size = " << blockMapper().size() << std::endl;
+        //for(size_t i=0; i<polynomialOrders.size(); ++i)
+        //  std::cout << "   " << polynomialOrders[ i ] << std::endl;
 
         // Adapt space and then discrete functions 
         IntermediateStorageFunctionType tmp( "padapt-temp", oldSpace );
