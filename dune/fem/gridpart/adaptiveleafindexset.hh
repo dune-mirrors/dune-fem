@@ -91,10 +91,10 @@ namespace Dune
     };
 
 
-    template< int codim , bool gridHasCodim >
-    struct InsertSubEntitiesBase
+    template< int codim >
+    struct InsertSubEntities 
     {
-      static void apply ( ThisType &indexSet, const ElementType &entity )
+      static void apply ( ThisType &indexSet, const ElementType &element )
       {
         // if codimension is not available return 
         if( ! indexSet.codimAvailable( codim ) ) return ;
@@ -104,25 +104,12 @@ namespace Dune
         
         CodimIndexSetType &codimSet = indexSet.codimLeafSet( codim );
 
-        for( int i = 0; i < entity.template count< codim >(); ++i )
+        const int count = element.template count< codim >();
+        for( int i = 0; i < count; ++i )
         {
-          codimSet.insertSubEntity( entity, i );
+          codimSet.insertSubEntity( element, i );
         }
       }
-    };
-
-    template< int codim >
-    struct InsertSubEntitiesBase< codim , false >
-    {
-      static void apply ( ThisType &indexSet, const ElementType &entity )
-      {
-      }
-    };
-
-    template< int codim >
-    struct InsertSubEntities 
-      : public InsertSubEntitiesBase< codim , Capabilities :: hasEntity < GridType, codim > :: v >
-    {
     };
 
     template< int codim , bool gridHasCodim >
@@ -1090,17 +1077,21 @@ namespace Dune
     typedef typename GridPartType
       ::template Codim< 0 >::template Partition< pitype > :: IteratorType Iterator;
 
+    typedef typename GridPartType::ctype ctype;
+
     const Iterator end = gridPart_.template end< 0, pitype >();
     int count = 0;
     for( Iterator it = gridPart_.template begin< 0, pitype >(); it != end; ++it )
     {
-      for (int i=0;i<it->template count<codim>();++i)
+      const ElementType& element = *it ;
+      const int subEntities = element.template count<codim>();
+      for (int i=0; i < subEntities; ++i)
       {
-        if (! codimLeafSet( codim ).exists( *it, i) )
+        if (! codimLeafSet( codim ).exists( element, i) )
         {
-          codimLeafSet( codim ).insertSubEntity( *it,i );
-          if ( Dune::GenericReferenceElements< typename GridPartType::ctype, GridPartType::dimension >::
-             general( it->type() ).type( i,codim ) == type )
+          codimLeafSet( codim ).insertSubEntity( element,i );
+          if ( Dune::GenericReferenceElements< ctype, dimension >::
+             general( element.type() ).type( i, codim ) == type )
             ++count;
         }
       }
