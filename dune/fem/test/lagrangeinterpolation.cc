@@ -64,9 +64,14 @@ int main(int argc, char ** argv)
   {
     MyGridType &grid = TestGrid :: grid();
     const int step = TestGrid :: refineStepsForHalf();
-    GridPartType gridPart( grid );
 
     grid.globalRefine( 2*step );
+
+    ////////////////////////////////////////////////////////
+    // create data structures (after grid has been refined)
+    ////////////////////////////////////////////////////////
+
+    GridPartType gridPart( grid );
 
     DiscreteFunctionSpaceType discreteFunctionSpace( gridPart );
     ExactSolutionType f;
