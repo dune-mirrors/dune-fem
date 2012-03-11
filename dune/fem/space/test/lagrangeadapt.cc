@@ -89,28 +89,6 @@ struct CheckGridEnabled< Dune :: YaspGrid< dim > >
   }
 };
 
-// disable UGGrid
-namespace Dune
-{
-  template< int dim >
-  class UGGrid;
-}
-
-template< int dim >
-struct CheckGridEnabled< Dune :: UGGrid< dim > >
-{
-  typedef Dune :: UGGrid< dim > GridType;
-
-  typedef Dune :: LeafGridPart< GridType > GridPartType;
-
-  inline static int CallMain ( int argc, char **argv )
-  {
-    std :: cerr << "WARNING: Lagrange Adaptation test disabled, because UGGrid sucks!"
-                << std :: endl;
-    return 0;
-  }
-};
-
 int main ( int argc, char **argv )
 {
   return CheckGridEnabled< Dune::GridSelector::GridType >::CallMain( argc, argv );
@@ -264,7 +242,8 @@ void algorithm ( GridPartType &gridPart,
   
   adapt( gridPart.grid(), solution, step );
   
-  double postL2error = l2norm.distance( f, solution );
+  //double postL2error = l2norm.distance( fexact, solution );
+  double postL2error = l2norm.distance( solution, fexact );
   double postH1error = h1norm.distance( f, solution );
 
   std::cout << "Unknowns after "
