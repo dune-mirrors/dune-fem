@@ -128,6 +128,8 @@ namespace Dune
       IteratorType;
     //! type of entity of codimension 0
     typedef typename GridPartType :: template Codim< 0 > :: EntityType EntityType;
+    //! type of the intersections
+    typedef typename GridPartType :: IntersectionType IntersectionType;
 
     /** \brief defines type of data handle for communication
      *  \param  DiscreteFunction  type of \ref Dune::DiscreteFunctionInterface
@@ -271,6 +273,26 @@ namespace Dune
       return asImp().order( entity );
     } 
   
+    /** \brief returns true if discrete functions over this space have zero jump
+     *         over the given intersection.
+     *
+     *  For example, a \ref Dune::LagrangeDiscreteFunctionSpace
+     *  "Lagrange space" returns \b true iff the intersection is conforming while a \ref
+     *  Dune::DiscontinuousGalerkinSpace "discontiuous Galerkin space" always returns
+     *  \b false.
+     *
+     *  \param intersection Intersection for which we want to know the continuety 
+     *  \returns \b true  if the space contians functions which are continuous over the
+     *                    intersection,
+     *           \b false otherwise
+     */
+    inline bool continuous (const IntersectionType &intersection) const
+    { 
+      CHECK_INTERFACE_IMPLEMENTATION( asImp().continuous(intersection) );
+      return asImp().continuous(intersection); 
+    }
+
+
     /** \brief get a reference to the DoF mapper
      *
      *  \returns refernce to mapper
@@ -900,6 +922,8 @@ namespace Dune
       IteratorType;
     //- type of used entity
     typedef typename GridType :: template Codim< 0 > :: Entity EntityType;
+    //- type of intersections
+    typedef typename GridPartType :: IntersectionType IntersectionType;
 
   protected:
     const GridPartType &gridPart_;
@@ -966,6 +990,11 @@ namespace Dune
     /** \copydoc Dune::DiscreteFunctionSpaceInterface::continuous */
     inline bool continuous () const
     {
+      return true;
+    }
+    /** \copydoc Dune::DiscreteFunctionSpaceInterface::continuous */
+    inline bool continuous (const IntersectionType &intersection) const
+    { 
       return true;
     }
 

@@ -26,6 +26,7 @@
 #include <dune/fem/space/dgspace/legendredgbasefunctions.hh>
 #include <dune/fem/space/common/defaultcommhandler.hh>
 #include <dune/fem/space/lagrangespace/basefunctions.hh>
+#include <dune/fem/space/lagrangespace/lagrangepoints.hh>
 #include <dune/fem/space/common/basesetlocalkeystorage.hh>
 
 namespace Dune
@@ -121,6 +122,9 @@ namespace Dune
 
     //! type of entity of this space 
     typedef typename GridPartType :: template Codim< codimension > :: EntityType  EntityType;
+
+    //! type of intersections
+    typedef typename BaseType ::IntersectionType IntersectionType;
 
     //! mapper used to implement mapToGlobal 
     typedef typename Traits::MapperType MapperType; 
@@ -228,6 +232,11 @@ namespace Dune
     /** @copydoc Dune::DiscreteFunctionSpaceInterface::continuous */
     bool continuous () const
     {
+      return false;
+    }
+    /** @copydoc Dune::DiscreteFunctionSpaceInterface::continuous */
+    inline bool continuous (const IntersectionType &intersection) const
+    { 
       return false;
     }
   
@@ -554,6 +563,11 @@ namespace Dune
     //! Index set of space
     typedef typename Traits::IndexSetType IndexSetType;
 
+    //! type of intersections
+    typedef typename BaseType ::IntersectionType IntersectionType;
+
+    typedef LagrangePointSet< GridPartImp, polOrd > LagrangePointSetType;
+
   protected:
     typedef DiscontinuousGalerkinSpaceBase <Traits> BaseImpType;
 
@@ -574,6 +588,11 @@ namespace Dune
     /** @copydoc Dune::DiscreteFunctionSpaceInterface::continuous */
     bool continuous () const
     {
+      return false;
+    }
+    /** @copydoc Dune::DiscreteFunctionSpaceInterface::continuous */
+    inline bool continuous (const IntersectionType &intersection) const
+    { 
       return false;
     }
   };

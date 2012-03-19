@@ -203,6 +203,9 @@ namespace Dune
     typedef typename Traits::IndexSetType IndexSetType;
     typedef typename Traits::IteratorType IteratorType;
 
+    //! type of intersections
+    typedef typename BaseType ::IntersectionType IntersectionType;
+
     //! dimension of the grid (not the world)
     static const int dimension = GridPartType::dimension;
 
@@ -365,6 +368,11 @@ namespace Dune
     bool continuous () const
     {
       return (polynomialOrder > 0);
+    }
+    /** @copydoc Dune::DiscreteFunctionSpaceInterface::continuous */
+    inline bool continuous (const IntersectionType &intersection) const
+    { 
+      return ( (polynomialOrder > 0) && intersection.conforming() );
     }
 
     /** \brief get the type of this discrete function space

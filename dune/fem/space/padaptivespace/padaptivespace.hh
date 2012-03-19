@@ -711,10 +711,14 @@ namespace Dune
       //! type of DoF manager
       typedef DofManager< GridType > DofManagerType;
 
+      //! type of intersections
+      typedef typename BaseType ::IntersectionType IntersectionType;
+
     public:
       using BaseType :: gridPart;
       using BaseType :: blockMapper;
       using BaseType :: compiledLocalKey;
+      using BaseType :: order;
 
       //! default communication interface 
       static const InterfaceType defaultInterface = InteriorBorder_InteriorBorder_Interface;
@@ -785,6 +789,20 @@ namespace Dune
         return compiledLocalKey( type, order );
       }
 
+      using BaseType::continuous;
+      /** @copydoc Dune::DiscreteFunctionSpaceInterface::continuous */
+      inline bool continuous (const IntersectionType &intersection) const
+      { 
+        if ( order() > 0 && intersection.conforming())
+        {
+          return true;
+          if (intersection.neighbor())
+            return (order(*(intersection.inside())) == order(*(intersection.outside())));
+          else
+            return true;
+        }
+        return false;
+      }
     };
 
 
@@ -871,7 +889,6 @@ namespace Dune
                                       polOrder,
                                       BaseFunctionStorageImp >
         Traits;
-
       //! type of the discrete function space
       typedef PAdaptiveDGSpace< FunctionSpaceImp,
                                 GridPartImp,
@@ -879,10 +896,16 @@ namespace Dune
                                 BaseFunctionStorageImp >
               PAdaptiveDGSpaceType;
 
+    private:
+      typedef GenericDiscreteFunctionSpace< Traits > BaseType;
+      typedef PAdaptiveDGSpaceType ThisType;
+    public:
+
       typedef typename Traits :: GridPartType GridPartType;
       typedef typename Traits :: GridType GridType;
       typedef typename Traits :: IndexSetType IndexSetType;
       typedef typename Traits :: IteratorType IteratorType;
+      typedef typename BaseType ::IntersectionType IntersectionType;
 
       //! maximum polynomial order of functions in this space
       enum { polynomialOrder = Traits :: polynomialOrder };
@@ -908,16 +931,10 @@ namespace Dune
       //! type of DoF manager
       typedef DofManager< GridType > DofManagerType;
 
-    private:
-      typedef PAdaptiveDGSpaceType ThisType;
-      typedef GenericDiscreteFunctionSpace< Traits > BaseType;
-
-    public:
       using BaseType :: gridPart;
       using BaseType :: blockMapper;
       using BaseType :: compiledLocalKey;
 
-    public:
       //! default communication interface 
       static const InterfaceType defaultInterface = InteriorBorder_All_Interface;
 
@@ -985,6 +1002,13 @@ namespace Dune
       inline const CompiledLocalKeyType &lagrangePointSet( const GeometryType type, const int order ) const
       {
         return compiledLocalKey( type, order );
+      }
+
+      using BaseType::continuous;
+      /** @copydoc Dune::DiscreteFunctionSpaceInterface::continuous */
+      inline bool continuous (const IntersectionType &intersection) const
+      { 
+        return false;
       }
 
     };
