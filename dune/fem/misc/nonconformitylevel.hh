@@ -57,7 +57,7 @@ makeNonConformity(GridPartType& gridPart,
       // get entity 
       const EntityType & en = *it; 
       // get marker 
-      const int enMarker = grid.getMark(it); 
+      const int enMarker = grid.getMark(en); 
 
 #ifndef NDEBUG
       {
@@ -89,11 +89,13 @@ makeNonConformity(GridPartType& gridPart,
       for(IntersectionIteratorType nit = gridPart.ibegin(en); 
           nit != endnit; ++nit)
       {
-        if(nit.neighbor())
+        const typename IntersectionIteratorType::Intersection &intersec = *nit;
+        if(intersec.neighbor())
         {
           assert( enMarker <= 0 );
-          EntityPointerType ep = nit.outside();
-          const int nbMarker = grid.getMark(ep); 
+          EntityPointerType ep = intersec.outside();
+          EntityType &nb = *ep;
+          const int nbMarker = grid.getMark(nb); 
           const int levelDiff = ep->level() - en.level();
 
           // if level difference and refine on neighbor also refine here 
@@ -104,7 +106,7 @@ makeNonConformity(GridPartType& gridPart,
             // check whether we have to iterate once more 
             finished = (enMarker == newMarker) ? finished : false;
             // mark entity with new marker 
-            grid.mark(newMarker, it);
+            grid.mark(newMarker, en);
 
             // in case of refinement break 
             if( newMarker > 0 ) break;
@@ -116,7 +118,7 @@ makeNonConformity(GridPartType& gridPart,
             // check whether we have to iterate once more 
             finished = (enMarker == newMarker) ? finished : false;
             // mark entity with new marker 
-            grid.mark(newMarker, it);
+            grid.mark(newMarker, en);
         
             // in case of refinement break 
             if( newMarker > 0 ) break;
