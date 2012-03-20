@@ -66,10 +66,11 @@ makeNonConformity(GridPartType& gridPart,
         for(IntersectionIteratorType nit = gridPart.ibegin(en);
             nit != endnit; ++nit)
         {
+          const typename IntersectionIteratorType::Intersection &intersec = *nit;
           // check level difference 
-          if(nit.neighbor())
+          if(intersec.neighbor())
           {
-            int diff = std::abs(nit.outside().level() - en.level());
+            int diff = std::abs(intersec.outside().level() - en.level());
             assert( diff <= levelDifference ); 
             if( diff > levelDifference ) 
             {
