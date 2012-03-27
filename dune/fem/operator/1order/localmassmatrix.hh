@@ -39,7 +39,12 @@ public:
   typedef FieldVector<ctype, dgNumDofs >            DGVectorType;
 
   typedef typename DiscreteFunctionSpaceType :: GridPartType GridPartType;
+
+  typedef typename DiscreteFunctionSpaceType :: IndexSetType IndexSetType; 
+  typedef typename IndexSetType :: IndexType   IndexType;
+
   typedef typename DiscreteFunctionSpaceType :: BaseFunctionSetType BaseFunctionSetType; 
+
   typedef typename GridPartType :: GridType GridType;
   typedef typename DiscreteFunctionSpaceType :: EntityType  EntityType;
   typedef typename EntityType :: Geometry  Geometry;
@@ -55,6 +60,7 @@ public:
 
 protected:  
   const DiscreteFunctionSpaceType& spc_;
+  const IndexSetType& indexSet_;
 
   GeometryInformationType geoInfo_;
   const int volumeQuadOrd_;
@@ -64,7 +70,6 @@ protected:
   mutable DGVectorType dgX_, dgRhs_;
 
   mutable DynamicVector< RangeFieldType > rhs_;
-  mutable DynamicVector< RangeFieldType > x_;
   mutable MatrixType matrix_;
 
   mutable std::vector< RangeType > phi_;
@@ -74,6 +79,11 @@ protected:
   typedef std::vector< MassMatrixStorageType > LocalInverseMassMatrixStorageType;
 
   mutable LocalInverseMassMatrixStorageType localInverseMassMatrix_;
+
+  // index of entity from index set, don't setup mass matrix for the same entity twice 
+  mutable IndexType lastEntityIndex_; 
+  // sequence number (obtained from DofManager via the space)
+  mutable int sequence_; 
 
   //! dummy caller 
   struct NoMassDummyCaller
@@ -123,26 +133,33 @@ public:
   //! constructor taking space and volume quadrature order 
   LocalMassMatrixImplementation(const DiscreteFunctionSpaceType& spc, const int volQuadOrd = -1 ) 
     : spc_(spc) 
-    , geoInfo_( spc.indexSet() ) 
+    , indexSet_( spc.indexSet() )  
+    , geoInfo_( indexSet_ ) 
     , volumeQuadOrd_ ( ( volQuadOrd < 0 ) ? ( spc.order() * 2 ) : volQuadOrd )
     , affine_ ( setup() )
-    , rhs_(), x_(), matrix_() 
+    , rhs_(), matrix_() 
     , phi_( spc_.mapper().maxNumDofs() )
     , phiMass_( spc_.mapper().maxNumDofs() )
     , localInverseMassMatrix_( GlobalGeometryTypeIndex :: size( GridType::dimension ) )
+    , lastEntityIndex_( -1 )
+    , sequence_( -1 )  
   {
   }
 
   //! copy constructor 
   LocalMassMatrixImplementation(const LocalMassMatrixImplementation& org) 
     : spc_(org.spc_),
-      geoInfo_( org.geoInfo_),
+      indexSet_( spc_.indexSet() ),  
+      geoInfo_( indexSet_ ),
       volumeQuadOrd_( org.volumeQuadOrd_ ),
       affine_( org.affine_ ),
-      rhs_( org.rhs_ ), x_( org.x_ ), matrix_( org.matrix_ ),
+      rhs_( org.rhs_ ), matrix_( org.matrix_ ),
       phi_( org.phi_ ),
+      matrix_( org.matrix_ ),
       phiMass_( org.phiMass_ ),
-      localInverseMassMatrix_( GlobalGeometryTypeIndex :: size( GridType::dimension ) )
+      localInverseMassMatrix_( GlobalGeometryTypeIndex :: size( GridType::dimension ) ),
+      lastEntityIndex_( org.lastEntityIndex_ ),
+      sequence_( org.sequence_ )  
   {
   }
 
@@ -262,6 +279,27 @@ protected:
     }
   }
 
+  //! returns true if the entity has been changed 
+  bool entityHasChanged( const EntityType& entity ) const 
+  {
+    // don't compute matrix new for the same entity 
+    const int currentSequence   = spc_.sequence();
+    const IndexType entityIndex = indexSet_.index( entity ) ;
+
+    // check whether sequence has been updated 
+    if( sequence_ != currentSequence || lastEntityIndex_ != entityIndex ) 
+    {
+      // update identifiers 
+      lastEntityIndex_ = entityIndex ;
+      sequence_ = currentSequence;
+
+      return true ;
+    }
+    else 
+      // the entity did not change
+      return false ;
+  }
+
   ///////////////////////////////////////////////////////////
   //  standard applyInverse method 
   ///////////////////////////////////////////////////////////
@@ -269,37 +307,69 @@ protected:
   //! using the massFactor method of the caller 
   template <class MassCallerType, class LocalFunctionType> 
   void applyInverseDefault(MassCallerType& caller, 
-                           const EntityType& en, 
+                           const EntityType& entity, 
                            const Geometry& geo,
                            LocalFunctionType& lf) const 
   {
     const int numDofs = lf.numDofs();
 
-    rhs_.resize( numDofs );
-    x_.resize( numDofs );
+    // if sequence changed or entity index changed 
+    // compute mass matrix new 
+    if( entityHasChanged( entity ) )
+    {
+      // resize temporary memory if necessary 
+      if( numDofs != int(matrix_.rows()) ) 
+      {
+        // resize vectors 
+        rhs_.resize( numDofs );
+
+        // resize matrix 
+        matrix_.resize( numDofs, numDofs );
+      }
+
+      // setup local mass matrix 
+      buildMatrix( caller, entity, geo, lf.baseFunctionSet(), numDofs, matrix_ );
+
+      // invert mass matrix 
+      matrix_.invert();
+    }
+
+    // make sure that rhs_ has the correct size
+    assert( int(rhs_.size()) == numDofs );
 
     // copy local function to right hand side 
     for(int l=0; l<numDofs; ++l) 
     {
-      // copy 
       rhs_[ l ] = lf[ l ];
     }
 
-    // resize matrix 
-    matrix_.resize( numDofs, numDofs );
+    // apply inverse to right hand side and store in lf 
+    multiply( numDofs, matrix_, rhs_, lf );
+  }
 
-    // setup local mass matrix 
-    buildMatrix( caller, en, geo, lf.baseFunctionSet(), numDofs, matrix_ );
-
-    // solve linear system  
-    matrix_.solve( x_, rhs_ );
-
-    for(int l=0; l<numDofs; ++l) 
+  //! implement matvec with matrix (mv of densematrix is too stupid)
+  template <class Matrix, class Rhs, class X> 
+  void multiply( const int size, 
+                 const Matrix& matrix, 
+                 const Rhs& rhs, 
+                 X& x ) const 
+  {
+    for( int row = 0; row < size; ++ row ) 
     {
-      // copy back
-      lf[ l ] = x_[ l ];
+      RangeFieldType sum = 0;
+      // get matrix row 
+      typedef typename Matrix :: const_row_reference  MatRow;
+      MatRow& matRow = matrix[ row ];
+
+      // multiply row with right hand side
+      for( int col = 0; col < size; ++ col ) 
+      {
+        sum += matRow[ col ] * rhs[ col ];        
+      }
+
+      // set to result to result vector 
+      x[ row ] = sum;
     }
-    return; 
   }
 
   ///////////////////////////////////////////////////////////
@@ -321,27 +391,18 @@ protected:
 
     // resize vectors 
     rhs_.resize( numDofs );
-    x_.resize( numDofs );
 
     const double massVolInv = getAffineMassFactor( geo );
 
     // copy local function to right hand side 
+    // and apply inverse mass volume fraction 
     for(int l=0; l<numDofs; ++l) 
     {
-      // copy 
-      rhs_[ l ] = lf[ l ];
+      rhs_[ l ] = lf[ l ] * massVolInv ;
     }
 
-    // apply local inverse mass matrix
-    invMassMatrix.mv( rhs_, x_ );
-
-    for(int l=0; l<numDofs; ++l) 
-    {
-      // copy back
-      lf[ l ] = x_[ l ] * massVolInv ;
-    }
-
-    return; 
+    // apply inverse local mass matrix and store in lf 
+    multiply( numDofs, invMassMatrix,  rhs_, lf );
   }
 
   //! setup and return affinity 
