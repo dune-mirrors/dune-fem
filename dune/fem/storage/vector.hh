@@ -884,7 +884,7 @@ namespace Dune
     
   }
   
-}
+} // end namespace Dune 
 
 #include "vector_inline.hh"
 
