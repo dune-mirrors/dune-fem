@@ -15,7 +15,8 @@
 
 namespace Dune
 {
-  
+  namespace Fem
+  {  
   /** \brief IntersectionQuadrature is a helper class for creating the appropriate face quadratures 
              for integrating over intersections. */
   template< typename FaceQuadrature, bool conforming  >
@@ -113,6 +114,14 @@ namespace Dune
     const FaceQuadratureType inside_;
     const FaceQuadratureType outside_;
   };
+
+  } // end namespace Fem
+
+  // #if DUNE_FEM_COMPATIBILITY  
+  // put this in next version 1.4 
+
+  using Fem :: IntersectionQuadrature ;
+  // #endif // DUNE_FEM_COMPATIBILITY
 
 } // end namespace Dune 
 

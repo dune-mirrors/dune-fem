@@ -10,6 +10,8 @@
 
 namespace Dune {
 
+  namespace Fem {
+
   template <class ct, int dim>
   typename PointProvider<ct, dim, 0>::PointContainerType
   PointProvider<ct, dim, 0>::points_;
@@ -36,7 +38,7 @@ namespace Dune {
       }
 
       // register quadrature to existing base function storages 
-      Fem::StorageInterface<dim>::registerQuadratureToStorages(quad);
+      StorageInterface<dim>::registerQuadratureToStorages(quad);
     }
   }
 
@@ -159,7 +161,7 @@ namespace Dune {
     } // end for all faces
 
     // register quadrature to base function storages 
-    Fem::StorageInterface<dim>::registerQuadratureToStorages(quad, elementGeo, 1);
+    StorageInterface<dim>::registerQuadratureToStorages(quad, elementGeo, 1);
     
     return mit;
   }
@@ -170,4 +172,5 @@ namespace Dune {
   {
     return geo1 == geo2;
   }  
+  } // end namespace Fem
 } // end namespace Dune

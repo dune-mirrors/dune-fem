@@ -4,6 +4,7 @@
 #include "quad_test.hh"
 
 namespace Dune {
+  namespace Fem {
 
   void Quad_Test::run() {
     
@@ -278,4 +279,5 @@ namespace Dune {
     Quadrature<double, 1> quadTemp(line, 5);
     _test(quadTemp.id() == id);
   }
-}
+  } // end namespace Fem
+} // end namespace Dune

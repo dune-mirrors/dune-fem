@@ -3,7 +3,8 @@
 #include "refelem_test.hh"
 
 namespace Dune {
-  
+  namespace Fem {
+
   void ReferenceElement_Test::run() 
   {
 #if 0
@@ -135,4 +136,5 @@ namespace Dune {
   }
 #endif
 
+  } // end namespace Fem
 } // end namespace Dune

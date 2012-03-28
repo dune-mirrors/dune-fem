@@ -5,6 +5,8 @@
 
 namespace Dune
 {
+  namespace Fem
+  {
   inline GaussPts :: GaussPts ()
   {
     int m = 0;
@@ -150,5 +152,6 @@ namespace Dune
     W[m][9] = 0.033335672154344068796784404946665896428932417160079072564347440806706;
     O[m] = 19;
   }
+  } // end namespace Fem
 } // end namespace Dune 
 #endif 

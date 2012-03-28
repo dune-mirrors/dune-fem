@@ -5,7 +5,8 @@
 
 namespace Dune
 {
-
+  namespace Fem
+  {
 #define SimplexPointsAdapter ParDGSimplexPointsAdapter
 
 // only if we use dune-fem quadratures  
@@ -74,7 +75,7 @@ namespace Dune
     QuadratureImp<double, 0>(id),
     order_((order <= 0) ? 1 : order)
   {
-	    typedef double ct;
+      typedef double ct;
     typedef FieldVector<ct, 0> CoordinateType;
 
     order_ = 20;
@@ -107,9 +108,9 @@ namespace Dune
     }
     if (m==0) DUNE_THROW(NotImplemented, "order not implemented");
     order_ = gp.order(m);
-	  
+    
     // fill in all the gauss points
-		int n = gp.power(m,1);		
+    int n = gp.power(m,1);    
     for (int i = 0; i < n; ++i) {
       CoordinateType local(0.0);
 
@@ -248,7 +249,7 @@ namespace Dune
     SimplexPointsAdapter<2> simplexPoints(order);
     int simplexOrder = simplexPoints.order();
 
-		const GaussPts& gp = GaussPts::instance();
+    const GaussPts& gp = GaussPts::instance();
     // find the right Gauss Rule from given order
     int m = 0;
     for (int i = 0; i <= GaussPts::MAXP; i++) {
@@ -259,27 +260,27 @@ namespace Dune
     }
     if (m==0) DUNE_THROW(NotImplemented, "order not implemented");
     
-		int gaussOrder = gp.order(m);
+    int gaussOrder = gp.order(m);
     int minOrder = ((simplexOrder < gaussOrder) ? simplexOrder : gaussOrder);
     order_ = minOrder;
   
     int numSimplexPoints = simplexPoints.numPoints();
     int numGaussPoints = gp.power(m,1);
 
-		FieldVector<ct, 3> local;
-		double weight, simplexWeight;
+    FieldVector<ct, 3> local;
+    double weight, simplexWeight;
     
     for (int i = 0; i < numSimplexPoints; ++i) {
-			local[0] = simplexPoints.point(i)[0];
-			local[1] = simplexPoints.point(i)[1];
-			simplexWeight = simplexPoints.weight(i);
+      local[0] = simplexPoints.point(i)[0];
+      local[1] = simplexPoints.point(i)[1];
+      simplexWeight = simplexPoints.weight(i);
       for (int j = 0; j < numGaussPoints; ++j) {
-				local[2] = gp.point(m,j);
-				weight = simplexWeight;
-				weight *= gp.weight(m,j);
+        local[2] = gp.point(m,j);
+        weight = simplexWeight;
+        weight *= gp.weight(m,j);
         this->addQuadraturePoint(local, weight);
       }    
-		}
+    }
   }
 
   template <class ct>
@@ -306,6 +307,7 @@ namespace Dune
     }
   }
   
+  } // end namespace Fem
 } // end namespace Dune
 
 #endif

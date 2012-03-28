@@ -18,6 +18,8 @@
 
 namespace Dune {
 
+  namespace Fem {
+
   //! Storage class for mappers.
   template <class ct, int dim, bool hasTwists>
   class CacheStorage;
@@ -210,7 +212,8 @@ namespace Dune {
     static MapperContainerType mappers_;
   };
 
-}
+  } // end namespace Fem
+} // end namespace Dune
 
 #include "cacheprovider.cc"
 

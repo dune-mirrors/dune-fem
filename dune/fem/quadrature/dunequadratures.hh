@@ -9,7 +9,8 @@
 
 namespace Dune
 {
-
+  namespace Fem
+  {
   /** \class QuadratureRulesFactory
    *  \ingroup Quadrature
    *  \brief quadrature implementation based on the standard DUNE quadratures
@@ -139,6 +140,7 @@ namespace Dune
     typedef QuadratureImp< FieldType, 3 > IntegrationPointListType;
   };
 
+  } // end namespace Fem
 } // end namespace Dune 
 
 #endif

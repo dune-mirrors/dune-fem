@@ -15,6 +15,7 @@
 #include "checkleafcodim1.hh"
 
 using namespace Dune;
+  using namespace Fem ;
 
 template<class GridPartType, int codim, bool caching>
 struct QuadratureChooser;
@@ -209,7 +210,7 @@ int main(int argc, char ** argv)
       quadOrder = -quadOrder ;
 
     //typedef HierarchicGridPart< GridType > GridPartType;
-    typedef LeafGridPart< GridType > GridPartType;
+    typedef Dune :: LeafGridPart< GridType > GridPartType;
     GridPartType gridPart( grid );
 
     const double eps = 1e-8;

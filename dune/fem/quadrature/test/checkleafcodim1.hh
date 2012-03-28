@@ -10,6 +10,7 @@
 #include <dune/fem/quadrature/cachingquadrature.hh>
 
 namespace Dune {
+  namespace Fem {
 
 struct CachingQuadratureTest : public Test 
 {
@@ -385,6 +386,7 @@ protected:
 #endif
 };
 
+  } // end namespace Fem
 } // namespace Dune 
 
 #endif

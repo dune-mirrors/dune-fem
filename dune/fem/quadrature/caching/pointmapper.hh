@@ -10,6 +10,8 @@
 
 namespace Dune
 {
+  namespace Fem 
+  {
 
   struct QuadratureKey  
   {
@@ -63,7 +65,7 @@ namespace Dune
 
   };
   
-
+  } // end namespace Fem
 } // end namespace Dune
 
 #endif

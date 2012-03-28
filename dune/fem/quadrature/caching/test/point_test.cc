@@ -3,6 +3,7 @@
 #include "point_test.hh"
 
 namespace Dune {
+  namespace Fem {
 
   void PointProvider_Test::run() 
   {
@@ -200,4 +201,6 @@ namespace Dune {
     }
     return false;
   }
-}
+
+  } // end namespace Fem
+} // end namespace Dune

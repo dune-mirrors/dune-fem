@@ -13,6 +13,8 @@
 
 namespace Dune
 {
+  namespace Fem
+  {
 
   class ReferenceElement_Test
   : public Test 
@@ -61,6 +63,7 @@ namespace Dune
 #endif
   };
 
+  } // end namespace Fem
 } // end namespace Dune
 
 #endif

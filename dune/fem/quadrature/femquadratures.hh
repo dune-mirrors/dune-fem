@@ -18,6 +18,8 @@
 
 namespace Dune
 {
+  namespace Fem
+  {
 
   struct SimplexMaxOrder 
   {
@@ -575,6 +577,7 @@ namespace Dune
     }
   };
 
+  } // end namespace Fem
 } // end namespace Dune
 
 #include "femquadratures_inline.hh"

@@ -8,6 +8,8 @@
 
 namespace Dune
 {
+  namespace Fem
+  {
 
   /*! \class QuadCreator
    *  \ingroup Quadrature
@@ -436,5 +438,6 @@ namespace Dune
     QuadratureProvider &operator=( const ThisType& );
   };
 
+  } // end namespace Fem
 } // end namespace Dune 
 #endif

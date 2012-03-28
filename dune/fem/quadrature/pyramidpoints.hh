@@ -4,6 +4,7 @@
 #include <dune/common/fvector.hh>
 
 namespace Dune {
+  namespace Fem {
 
   //! Single point of reference for the quadrature points for pyramids.
   //! This class is a singleton, i.e. all points for all quadratures are
@@ -107,6 +108,7 @@ namespace Dune {
     int N[numQuads];          // number of points in quadrature rule
 
   };
-}
+  } // end namespace Fem
+}  // end namespace Dune
 
 #endif

@@ -5,6 +5,8 @@
 
 namespace Dune
 {
+  namespace Fem
+  {
   
   template <class ct, int dim>
   inline TestQuadrature<ct, dim>::TestQuadrature(const GeometryType& geo, int order) :
@@ -20,6 +22,7 @@ namespace Dune
     this->addQuadraturePoint(c, w);
   }
 
+  } // end namespace Fem
 } // end namespace Dune
 
 #endif

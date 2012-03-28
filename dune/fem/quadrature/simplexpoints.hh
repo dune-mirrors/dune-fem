@@ -11,6 +11,7 @@
 #include <dune/fem/solver/pardg.hh>
 
 namespace Dune {
+  namespace Fem {
 
   //! Adapter to the quadratures defined by parDG.
   template <int dim>
@@ -65,5 +66,6 @@ namespace Dune {
     const int order_;
   };
 
+  } // end namespace Fem
 } // end namespace Dune
 #endif

@@ -11,7 +11,8 @@
 
 namespace Dune
 {
-  
+	namespace Fem
+	{  
   /** \brief ElementPointListBase */
   template< class GridPartImp, int codim, class IntegrationTraits >
   class ElementPointListBase;
@@ -305,6 +306,7 @@ namespace Dune
     int localFaceIndex_;
   };
 
+	} // end namespace Fem
 } // end namespace Dune
 
 #endif // #ifndef DUNE_ELEMENTPOINTLISTBASE_HH

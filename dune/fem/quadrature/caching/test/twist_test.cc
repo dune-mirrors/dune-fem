@@ -5,6 +5,7 @@
 #include "../../quadrature.hh"
 
 namespace Dune {
+  namespace Fem {
   
   void TwistProvider_Test::run() 
   {
@@ -263,4 +264,5 @@ namespace Dune {
     _test(m1[0] == 1);
   
   }
-}
+  } // end namespace Fem
+} // end namespace Dune

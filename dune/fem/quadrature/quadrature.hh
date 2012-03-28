@@ -16,7 +16,8 @@
 
 namespace Dune
 {
-
+  namespace Fem 
+  {
   /** \addtogroup Quadrature 
    *
    *  In dune-fem, quadratures are a set of quadrature points and corresponding
@@ -462,7 +463,17 @@ namespace Dune
       return ipList().weight( i );
     }
   };
+  
+  } //end namespace Fem
 
-}
+  // #if DUNE_FEM_COMPATIBILITY  
+  // put this in next version 1.4 
+
+  using Fem :: QuadraturePointWrapper ;
+  using Fem :: Quadrature ;
+  using Fem :: coordinate ;
+  // #endif // DUNE_FEM_COMPATIBILITY
+
+} //end namespace Dune
 
 #endif

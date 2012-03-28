@@ -6,7 +6,8 @@
 
 namespace Dune
 {
-  
+  namespace Fem
+  {  
   /*! \class ElementIntegrationPointList
    *  \ingroup Quadrature
    *  \brief integration point list on the codim-0 reference element
@@ -167,11 +168,7 @@ namespace Dune
     int faceNumber () const DUNE_DEPRECATED
     {
       typedef GenericGeometry::MapNumberingProvider< dimension > Numbering;
-#if DUNE_VERSION_NEWER_REV(DUNE_COMMON,2,1,0)
       const unsigned int tid = elementGeometry().id();
-#else
-      const unsigned int tid = GenericGeometry::topologyId( elementGeometry() );
-#endif
       return Numbering::template generic2dune< 1 >( tid, localFaceIndex() );
     }
 
@@ -201,6 +198,8 @@ namespace Dune
     mutable CoordinateType dummy_;
   };
 
-}
+  } //end namespace Fem
+
+} // end namespace Dune
 
 #endif // #ifndef DUNE_ELEMENTPOINTLIST_HH

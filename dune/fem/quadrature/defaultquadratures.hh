@@ -24,7 +24,8 @@
 
 namespace Dune
 {
-
+  namespace Fem
+  {
   // default defines for used quadratures 
   template< typename FieldType, int dim >
   struct DefaultQuadratureTraits
@@ -104,6 +105,7 @@ namespace Dune
     typedef QuadratureImp< FieldType, 3 > IntegrationPointListType;
   };
 
+  } // end namespace Fem
 } // end namespace Dune
 
 #undef USE_DUNE_QUADRATURES

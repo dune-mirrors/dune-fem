@@ -5,6 +5,7 @@
 #include "../pointprovider.hh"
 
 namespace Dune {
+  namespace Fem {
 
   class PointProvider_Test : public Test 
   {
@@ -20,6 +21,7 @@ namespace Dune {
     bool findPoint(const PointType& p, const std::vector<PointType>& vec);
   };
 
+  } // end namespace Fem
 } // end namespace Dune
 
 #endif

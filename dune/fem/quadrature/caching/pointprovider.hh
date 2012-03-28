@@ -13,6 +13,8 @@
 
 namespace Dune
 {
+  namespace Fem
+  {
 
   template< class ct, int dim, int codim >
   class PointProvider 
@@ -95,7 +97,8 @@ namespace Dune
     static PointContainerType points_;
     static MapperContainerType mappers_;
   };
-
+  
+  } // end namespace Fem
 } // end namespace Dune
 
 #include "pointprovider.cc"

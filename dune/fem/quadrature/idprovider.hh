@@ -4,6 +4,7 @@
 #include <cstdlib>
 
 namespace Dune {
+  namespace Fem {
   //! Singleton that manages a globally unique identifier.
   class IdProvider {
   public:
@@ -32,6 +33,7 @@ namespace Dune {
     size_t lowestFreeId_;
   };
 
+  } // end namespace Fem
 } // end namespace Dune
 
 // #include "idprovider.cc"

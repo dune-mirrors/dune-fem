@@ -6,7 +6,8 @@
 
 namespace Dune
 {
-
+  namespace Fem
+  {
   /** \addtogroup Integrators
    * 
    *  Integrators are able to integrate a function.
@@ -116,7 +117,15 @@ namespace Dune
       integrateAdd( entity, function, ret );
     }
   };
-  
-}
+
+  } // end namespace Fem  
+
+  // #if DUNE_FEM_COMPATIBILITY  
+  // put this in next version 1.4 
+
+  using Fem :: Integrator ;
+  // #endif // DUNE_FEM_COMPATIBILITY
+
+} // end namespace Dune
 
 #endif

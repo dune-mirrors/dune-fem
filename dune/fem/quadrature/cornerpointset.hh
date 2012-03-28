@@ -8,7 +8,8 @@
 
 namespace Dune
 {
-
+  namespace Fem
+  {
   // Internal Forward Declarations
   // -----------------------------
 
@@ -146,6 +147,7 @@ namespace Dune
     }
   }
 
-}
+  } //end namespace Fem
+} //end namespace Dune
 
 #endif // #ifndef DUNE_FEM_CORNERPOINTSET_HH

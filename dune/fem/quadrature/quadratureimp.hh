@@ -17,6 +17,8 @@
 
 namespace Dune
 {
+  namespace Fem
+  {
 
   /** \class IntegrationPointListImp
    *  \ingroup Quadrature
@@ -312,6 +314,7 @@ namespace Dune
     int order_;
   };
 
+  } // end namespace Fem
 } // end namespace Dune
 
 #include "quadratureimp_inline.hh"

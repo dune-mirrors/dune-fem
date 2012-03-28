@@ -1,4 +1,5 @@
 namespace Dune {
+  namespace Fem {
 
   template <class ct, int dim>
   TwistStorage<ct, dim>::TwistStorage(int minTwist, int maxTwist) :
@@ -265,4 +266,5 @@ namespace Dune {
     return mat_;
   }
 
+  } // end namespace Fem
 } // end namespace Dune

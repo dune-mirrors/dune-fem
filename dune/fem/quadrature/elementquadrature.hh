@@ -6,7 +6,8 @@
 
 namespace Dune
 {
-  
+  namespace Fem
+  {  
   /*! \class ElementQuadrature
    *  \ingroup Quadrature
    *  \brief quadrature on the codim-0 reference element
@@ -215,6 +216,14 @@ namespace Dune
       return quadImp().weight( i );
     }
   };
+
+  } // end namespace Fem
+
+  // #if DUNE_FEM_COMPATIBILITY  
+  // put this in next version 1.4 
+  
+  using Fem :: ElementQuadrature ;
+  // #endif // DUNE_FEM_COMPATIBILITY
 
 } // end namespace Dune
 #endif

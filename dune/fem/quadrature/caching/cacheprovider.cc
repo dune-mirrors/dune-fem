@@ -1,24 +1,16 @@
 namespace Dune {
+  namespace Fem {
 
   template <class GridImp>
   typename CacheProvider<GridImp, 1>::MapperContainerType
   CacheProvider<GridImp, 1>::mappers_;
 
 
-
-#if DUNE_VERSION_NEWER_REV(DUNE_COMMON,2,1,0)
   template <class GridImp>
   typename CacheProvider<GridImp, 1>::MapperIteratorType
   CacheProvider<GridImp, 1>::createMapper(const QuadratureType& quad,
                                           GeometryType elementGeometry,
                                           integral_constant< bool, true > )
-#else
-  template <class GridImp>
-  typename CacheProvider<GridImp, 1>::MapperIteratorType
-  CacheProvider<GridImp, 1>::createMapper(const QuadratureType& quad,
-                                          GeometryType elementGeometry,
-                                          Int2Type< true > )
-#endif
   {
     typedef TwistProvider<ct, dim-codim> TwistProviderType;
     typedef typename TwistProviderType::TwistStorageType TwistStorageType;
@@ -53,19 +45,11 @@ namespace Dune {
 
 
 
-#if DUNE_VERSION_NEWER_REV(DUNE_COMMON,2,1,0)
   template <class GridImp>
   typename CacheProvider<GridImp, 1>::MapperIteratorType
   CacheProvider<GridImp, 1>::createMapper(const QuadratureType& quad,
                                           GeometryType elementGeometry,
                                           integral_constant< bool, false > )
-#else
-  template <class GridImp>
-  typename CacheProvider<GridImp, 1>::MapperIteratorType
-  CacheProvider<GridImp, 1>::createMapper(const QuadratureType& quad,
-                                          GeometryType elementGeometry,
-                                          Int2Type< false > )
-#endif
   {
     const MapperVectorType pointMappers =
       PointProvider<ct, dim, codim>::getMappers(quad, elementGeometry);
@@ -85,5 +69,6 @@ namespace Dune {
 
     return it;
   }
-
+  
+  } // end namespace Fem
 } // end namespace Dune

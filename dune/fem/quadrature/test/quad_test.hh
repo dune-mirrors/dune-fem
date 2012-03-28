@@ -7,6 +7,7 @@
 //#include <dune/quadrature/fixedorder.hh>
 
 namespace Dune {
+  namespace Fem {
   
   class Quad_Test : public Test 
   {
@@ -55,6 +56,7 @@ namespace Dune {
   private:
   };
 
-}
+  } // end namespace Fem  
+} // end namespace Dune
 
 #endif

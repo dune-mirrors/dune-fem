@@ -20,6 +20,7 @@
 #include "pointmapper.hh"
 
 namespace Dune {
+  namespace Fem {
 
   // Forward declaration
   template <class ct, int dim>
@@ -306,6 +307,7 @@ namespace Dune {
     mutable MatrixType mat_;
   };
 
+  } // end namespace Fem
 } // end namespace Dune
 
 #include "twistprovider.cc"

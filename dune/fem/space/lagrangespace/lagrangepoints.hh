@@ -186,10 +186,10 @@ namespace Dune
    **/
   template< class FieldImp, int dim, unsigned int maxPolOrder >
   class LagrangePointListInterface
-  : public IntegrationPointListImp< FieldImp, dim >
+  : public Fem::IntegrationPointListImp< FieldImp, dim >
   {
     typedef LagrangePointListInterface< FieldImp, dim, maxPolOrder > ThisType;
-    typedef IntegrationPointListImp< FieldImp, dim > BaseType;
+    typedef Fem::IntegrationPointListImp< FieldImp, dim > BaseType;
 
   public:
     //! field type of points
@@ -442,7 +442,7 @@ namespace Dune
     }; 
 
     //! type of used integration point list 
-    typedef IntegrationPointList< FieldType, dimension, PointListTraits > IntegrationPointListType;
+    typedef Fem::IntegrationPointList< FieldType, dimension, PointListTraits > IntegrationPointListType;
 
     //! type of global coordinate 
     typedef typename IntegrationPointListType::CoordinateType CoordinateType;
@@ -675,10 +675,10 @@ namespace Dune
 
   template< class GridPart, unsigned int maxPolOrder >
   class LagrangePointSet
-  : public CachingPointList< GridPart, 0, LagrangePointSetTraits< typename GridPart::ctype, GridPart::dimension, maxPolOrder > >
+  : public Fem::CachingPointList< GridPart, 0, LagrangePointSetTraits< typename GridPart::ctype, GridPart::dimension, maxPolOrder > >
   {
     typedef LagrangePointSet< GridPart, maxPolOrder > ThisType;
-    typedef CachingPointList< GridPart, 0, LagrangePointSetTraits< typename GridPart::ctype, GridPart::dimension, maxPolOrder > > BaseType;
+    typedef Fem::CachingPointList< GridPart, 0, LagrangePointSetTraits< typename GridPart::ctype, GridPart::dimension, maxPolOrder > > BaseType;
 
   public:
     typedef LagrangePointSetTraits< typename GridPart::ctype, GridPart::dimension, maxPolOrder > Traits;

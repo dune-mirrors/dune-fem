@@ -18,9 +18,11 @@
 
 namespace Dune
 {
-
-  //! forward deklaration for CachingInterface 
-  class CachingInterface;
+  namespace Fem 
+  { 
+    //! forward deklaration for CachingInterface 
+    class CachingInterface;
+  }
 
   template <class FunctionSpaceImp>
   class StorageBase : public Fem::StorageInterface<FunctionSpaceImp::dimDomain> 
@@ -87,7 +89,7 @@ namespace Dune
                         const QuadratureType& quad, 
                         RangeMatrixPairType& ranges ) 
     {
-      enum { cachable = Conversion< QuadratureType, CachingInterface > :: exists };
+      enum { cachable = Conversion< QuadratureType, Fem::CachingInterface > :: exists };
       dune_static_assert( cachable == false, "fillRangeCache cannot be used with CachingQuadratures!" );
 
       // for all quad points evaluate all basis functions 
@@ -123,7 +125,7 @@ namespace Dune
                            const QuadratureType& quad, 
                            JacobianRangeVectorPairType& jacobians)
     {
-      enum { cachable = Conversion< QuadratureType, CachingInterface > :: exists };
+      enum { cachable = Conversion< QuadratureType, Fem::CachingInterface > :: exists };
       dune_static_assert( cachable == false, "fillJacobianCache cannot be used with CachingQuadratures!" );
 
       // for all quad points evaluate all basis functions 
@@ -465,14 +467,14 @@ namespace Dune
     template <class QuadratureType> 
     const RangeVectorType& getRangeStorage( const QuadratureType& quad ) const 
     {
-      enum { cachable = Conversion< QuadratureType, CachingInterface > :: exists };
+      enum { cachable = Conversion< QuadratureType, Fem::CachingInterface > :: exists };
       return Evaluate< QuadratureType, cachable > :: evaluate( *this, quad, ranges_, rangeTmp_ );
     }
 
     template <class QuadratureType> 
     const JacobianRangeVectorType& getJacobianStorage( const QuadratureType& quad ) const 
     {
-      enum { cachable = Conversion< QuadratureType, CachingInterface > :: exists };
+      enum { cachable = Conversion< QuadratureType, Fem::CachingInterface > :: exists };
       return Evaluate< QuadratureType, cachable > :: 
         jacobian( *this, quad, jacobians_, jacobianTmp_ );
     }

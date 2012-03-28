@@ -5,6 +5,7 @@
 #include "../twistprovider.hh"
 
 namespace Dune {
+  namespace Fem {
 
   class TwistProvider_Test : public Test
   {
@@ -19,6 +20,7 @@ namespace Dune {
   private:
   };
 
+  } // end namespace Fem
 } // end namespace Dune
 
 #endif

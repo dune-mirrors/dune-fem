@@ -12,7 +12,8 @@
 
 namespace Dune
 {
-
+  namespace Fem
+  {
   /** \class CachingInterface
    *  \brief interface a cachable quadrature has to implement
    */
@@ -168,8 +169,8 @@ namespace Dune
     typedef typename CachingTraits< RealType, dimension >::MapperType MapperType;
     typedef typename CachingTraits< RealType, dimension >::PointVectorType PointVectorType;
 
-    typedef Dune::CacheProvider< GridType, codimension > CacheProvider;
-    typedef Dune::PointProvider< RealType, dimension, codimension> PointProvider;
+    typedef CacheProvider< GridType, codimension >            CacheProviderType;
+    typedef PointProvider< RealType, dimension, codimension>  PointProviderType;
 
     using Base::localFaceIndex;
     using Base::quadImp;
@@ -194,10 +195,9 @@ namespace Dune
                        const IntersectionType &intersection,
                        int order, const typename Base :: Side side )
       : Base( getPointList( gridPart, intersection, order, side ) ),
-        mapper_( CacheProvider::getMapper( quadImp(), elementGeometry(), localFaceIndex(), twist_ ) ),
-        points_( PointProvider::getPoints( quadImp().ipList().id(), elementGeometry() ) )
+        mapper_( CacheProviderType::getMapper( quadImp(), elementGeometry(), localFaceIndex(), twist_ ) ),
+        points_( PointProviderType::getPoints( quadImp().ipList().id(), elementGeometry() ) )
     {
-      //assert( intersection.conforming() );
     }
 
     const QuadraturePointWrapperType operator[] ( const size_t i ) const
@@ -262,6 +262,8 @@ namespace Dune
     const PointVectorType &points_;
   };
 
-}
+  } //end namespace Fem
+
+} //end namespace Dune
 
 #endif // #ifndef DUNE_CACHINGPOINTLIST_HH

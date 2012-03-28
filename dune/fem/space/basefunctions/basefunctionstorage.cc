@@ -83,7 +83,7 @@ namespace Dune
                  const QuadraturePointWrapper< QuadratureType > &x,
                  RangeType &ret ) const
   {
-    enum { cachable = Conversion< QuadratureType, CachingInterface > :: exists };
+    enum { cachable = Conversion< QuadratureType, Fem::CachingInterface > :: exists };
     const QuadratureType &quad = x.quadrature();
     const int pt = x.point();
 
@@ -102,7 +102,7 @@ namespace Dune
                  const QuadraturePointWrapper< QuadratureType > &x,
                  RangeType &ret ) const
   {
-    enum { cachable = Conversion< QuadratureType, CachingInterface > :: exists };
+    enum { cachable = Conversion< QuadratureType, Fem::CachingInterface > :: exists };
     const QuadratureType &quad = x.quadrature();
     const int pt = x.point();
 
@@ -131,7 +131,7 @@ namespace Dune
                  const QuadraturePointWrapper< QuadratureType > &x,
                  JacobianRangeType &ret ) const
   {
-    enum { cachable = Conversion< QuadratureType, CachingInterface > :: exists };
+    enum { cachable = Conversion< QuadratureType, Fem::CachingInterface > :: exists };
     const QuadratureType &quad = x.quadrature();
     const int pt = x.point();
 
@@ -185,7 +185,7 @@ namespace Dune
     enum { dimension = DomainType::dimension };
 
     typedef typename FunctionSpaceImp :: DomainFieldType DomainFieldType;
-    typedef PointProvider<DomainFieldType, dimension, codimension> PointProviderType;
+    typedef Fem::PointProvider<DomainFieldType, dimension, codimension> PointProviderType;
     typedef typename PointProviderType::GlobalPointVectorType PointVectorType;
 
     const PointVectorType& points = 

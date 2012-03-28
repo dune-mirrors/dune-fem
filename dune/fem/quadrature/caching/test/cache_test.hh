@@ -6,6 +6,7 @@
 
 
 namespace Dune {
+  namespace Fem {
 
   class CacheProvider_Test : public Test 
   {
@@ -19,6 +20,7 @@ namespace Dune {
     void quadTest();
   };
 
+  } // end namespace Fem
 } // end namespace Dune
 
 #endif

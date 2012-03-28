@@ -12,10 +12,10 @@ using namespace Dune;
 int main() {
 
   Suite suite("Tests for caching");
-  suite.addTest(new ReferenceElement_Test());
-  suite.addTest(new TwistProvider_Test());
-  suite.addTest(new PointProvider_Test());
-  suite.addTest(new CacheProvider_Test());
+  suite.addTest(new Fem::ReferenceElement_Test());
+  suite.addTest(new Fem::TwistProvider_Test());
+  suite.addTest(new Fem::PointProvider_Test());
+  suite.addTest(new Fem::CacheProvider_Test());
 
   suite.run();
   suite.report();

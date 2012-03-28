@@ -24,6 +24,7 @@
 #include "cache_test.hh"
 
 namespace Dune {
+  namespace Fem {
   
   void CacheProvider_Test::run() 
   {
@@ -274,4 +275,5 @@ namespace Dune {
     }
   }
 
+  } // end namespace Fem
 } // end namespace Dune

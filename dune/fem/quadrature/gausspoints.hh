@@ -5,7 +5,8 @@
 
 namespace Dune
 {
-
+  namespace Fem
+  {
   /*! \class GaussPts
    *  \ingroup Quadrature
    *  \brief one-dimensional Gauss points and their weights
@@ -100,7 +101,8 @@ namespace Dune
       return m;
     }
   };
-
+  
+  } // end namespace Fem
 } // end namespace Dune
 
 #include "gausspoints_implementation.hh"
