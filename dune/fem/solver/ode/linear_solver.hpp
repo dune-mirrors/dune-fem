@@ -49,6 +49,10 @@ public:
   // solve Au = b,   A = linear_operator
   // return convergence
   virtual bool solve(Function &op, double *u, const double *b) = 0;
+  int dimension() const
+  {
+    return dim;
+  }
 
 protected:
   // Communicator

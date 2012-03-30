@@ -130,6 +130,7 @@ bool DIRK::step_iterative(double t, double dt, double *u,
       // add every ILS iteration performed for this time step
       int ils_iter = ils->number_of_iterations();
       ils_iterations += ils_iter;
+      ils->reset_number_of_iterations();
 
       if (!lin_solver_conv) return false;
 
@@ -199,7 +200,7 @@ void DIRK::LinearOperator::setup(double t, const double *u, double lambda)
 
 void DIRK::LinearOperator::operator()(const double *p, double *DFu_p, int i)
 {
-
+  const double DBLEPSILON = DBL_EPSILON;
   double local_dot[2], global_dot[2];
   local_dot[0] = cblas_ddot(dim, u, 1, u, 1);
   local_dot[1] = cblas_ddot(dim, p, 1, p, 1);
@@ -207,8 +208,8 @@ void DIRK::LinearOperator::operator()(const double *p, double *DFu_p, int i)
   const double norm_u = sqrt(global_dot[0]);
   const double norm_p_sq = global_dot[1];
 
-  const double eps = (norm_p_sq > DBL_EPSILON)?
-    sqrt( (1.0+norm_u)*DBL_EPSILON / norm_p_sq ) : sqrt(DBL_EPSILON);
+  const double eps = (norm_p_sq > DBLEPSILON)?
+    sqrt( (1.0+norm_u)*DBLEPSILON / norm_p_sq ) : sqrt(DBLEPSILON);
   const double lambda_eps = lambda / eps; 
 
   dwaxpby(dim, 1.0, u, 1, eps, p, 1, u_tmp, 1);

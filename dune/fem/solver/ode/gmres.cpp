@@ -95,6 +95,10 @@ bool GMRES::solve(Function &op, double *u, const double *b)
     local_dot[0] = cblas_ddot(dim, v, 1, v, 1);
     comm.allreduce(1, local_dot, global_dot, MPI_SUM);      
     double res = sqrt(global_dot[0]); 
+    if (IterativeSolver::os)
+    {
+      *IterativeSolver::os << "GMRES "<< comm.id() << " outer iteration : " << res << std::endl; 
+    }
     if (res < _tolerance) break;
     g[0] = -res;
     for(int i=1; i<=m; i++) g[i] = 0.0;

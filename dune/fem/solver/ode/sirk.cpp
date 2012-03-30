@@ -144,6 +144,7 @@ bool SIRK::step_iterative(double t, double dt, double *u, int& newton_iterations
       // add every ILS iteration performed for this time step
       int ils_iter = ils->number_of_iterations();
       ils_iterations += ils_iter;
+      ils->reset_number_of_iterations();
 
       if (!lin_solver_conv) return false;
 
@@ -374,7 +375,7 @@ static const double SIRK33_b[] =
   {1.0/8.0, 1.0/8.0, 3.0/4.0};
 
 SIRK33::SIRK33(Communicator &comm, Function &f, Function &fex) :
-  SIRK(comm, 3, 2, f, fex, SIRK33_A, SIRK33_b, SIRK33_c, 
+  SIRK(comm, 3, 3, f, fex, SIRK33_A, SIRK33_b, SIRK33_c, 
        SIRK33_Aex, SIRK33_cex) 
 {}
 
