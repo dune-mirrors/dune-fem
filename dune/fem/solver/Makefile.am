@@ -15,7 +15,8 @@ libsolver_la_LIBADD = ode/libodesolver.la
 # endif
 
 solverdir =  $(includedir)/dune/fem/solver
-solver_HEADERS = diagonalpreconditioner.hh \
+solver_HEADERS = cginverseoperator.hh \
+                 diagonalpreconditioner.hh \
                  inverseoperators.hh \
                  istlsolver.hh \
                  odesolver.hh \
