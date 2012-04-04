@@ -143,8 +143,7 @@ bool SIRK::step_iterative(double t, double dt, double *u, int& newton_iterations
 
       // add every ILS iteration performed for this time step
       int ils_iter = ils->number_of_iterations();
-      ils_iterations += ils_iter;
-      ils->reset_number_of_iterations();
+      ils_iterations = ils_iter;
 
       if (!lin_solver_conv) return false;
 
