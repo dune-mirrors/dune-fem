@@ -1,5 +1,6 @@
 #include <config.h>
 
+#include <fstream>
 #include <iostream>
 #include <cstdio>
 
@@ -37,6 +38,14 @@ namespace Dune
     return (mkdir( name.c_str(), mode ) >= 0);
   }
 
+
+  bool fileExists ( const std::string &name )
+  {
+    std::ifstream file( name.c_str() );
+    return file.is_open();
+  }
+
+
   bool directoryExists ( const std::string &name )
   {
     // if directory does not exist return false 
@@ -46,6 +55,7 @@ namespace Dune
     closedir( directory );
     return directoryExists;
   }
+
 
   std::string executeCommand ( const std::string &command )
   {
@@ -64,4 +74,5 @@ namespace Dune
 
     return returnString;
   }
-}
+
+} // namespace Dune

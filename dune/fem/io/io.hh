@@ -14,14 +14,21 @@ namespace Dune
    */
   bool createDirectory ( const std::string &name );
 
+  /** \brief check whether a file exists
+   *
+   *  \param[in]  name  name of the file to check
+   *
+   *  \return true if the file exists, false otherwise
+   */
+  bool fileExists ( const std::string &name );
+
   /** \brief check whether a directory exists 
    *
-   *  \param[in]  name  name of the directory to create
+   *  \param[in]  name  name of the directory to check
    *
-   *  \returns true if directory exists, false otherwise 
+   *  \returns true if the directory exists, false otherwise 
    */
   bool directoryExists ( const std::string &name );
-
 
   /** \brief executes a command and return the output  
    *
@@ -33,6 +40,7 @@ namespace Dune
    *         returns unsuccsessfully.
    */
   std::string executeCommand ( const std::string &command );
-}
+
+} // namespace Dune
 
 #endif // #ifndef DUNE_FEM_IO_HH

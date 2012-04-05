@@ -646,7 +646,7 @@ private:
       for( DofIteratorType dofIt = diag.dbegin(); 
            dofIt != dofEnd; ++ dofIt, ++row ) 
       {
-        assert( row < matrix_.rows() );
+        assert( row < ( unsigned int )matrix_.rows() );
         (*dofIt) = matrix_( row, row );
       }
     }
