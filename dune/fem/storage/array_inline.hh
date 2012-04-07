@@ -5,6 +5,8 @@
 
 namespace Dune
 {
+  namespace Fem
+  {
 
   template< class T >
   inline void moveBackward ( ArrayInterface< T > &array,
@@ -42,7 +44,8 @@ namespace Dune
     else
       moveForward( array, oldOffset, newOffset, length );
   }
-  
-}
+
+  } // end namespace Fem  
+} // end namespace Dune
 
 #endif

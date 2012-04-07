@@ -13,6 +13,8 @@
 
 namespace Dune
 {
+  namespace Fem
+  {
 
   template< class Key, class Object >
   struct DefaultSingletonFactory
@@ -202,6 +204,16 @@ namespace Dune
       delete val.second;
     }
   };
+
+  } // end namespace Fem
+
+  // #if DUNE_FEM_COMPATIBILITY  
+  // put this in next version 1.4 
+
+  using Fem :: SingletonList ;
+  using Fem :: DefaultSingletonFactory ;
+
+  // #endif // DUNE_FEM_COMPATIBILITY
 
 } // end namespace Dune
 

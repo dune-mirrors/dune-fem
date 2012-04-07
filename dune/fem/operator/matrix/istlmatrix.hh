@@ -398,15 +398,6 @@ namespace Dune
             }
           }
         }
-        /*
-        assert( this->M() == this->N() );
-        assert( this->M() == diag.size() );
-        const size_t diagSize = diag.size();
-        for( size_t i=0; i<diagSize; ++ i ) 
-        {
-          diag[ i ] = (*this)[ i ][ i ];
-        }
-        */
       }
 
       //! print matrix 
@@ -730,7 +721,7 @@ namespace Dune
     //! type of local matrix 
     typedef LocalMatrix<ThisType> ObjectType;
     typedef ThisType LocalMatrixFactoryType;
-    typedef ObjectStack< LocalMatrixFactoryType > LocalMatrixStackType;
+    typedef Fem :: ObjectStack< LocalMatrixFactoryType > LocalMatrixStackType;
     //! type of local matrix 
     typedef LocalMatrixWrapper< LocalMatrixStackType > LocalMatrixType;
 

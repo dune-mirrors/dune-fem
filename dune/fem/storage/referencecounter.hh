@@ -7,6 +7,8 @@
 
 namespace Dune
 {
+  namespace Fem
+  {
 
   /** \class ReferenceCounterInterface
    *  \brief interface for objects capable of reference counting
@@ -309,6 +311,7 @@ namespace Dune
     ReferenceCounterType *object_;
   };
 
-}
+  } // end namespace Fem
+} // end namespace Dune
 
 #endif // #ifndef DUNE_FEM_REFERENCECOUNTER_HH

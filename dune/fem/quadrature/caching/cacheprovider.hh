@@ -164,7 +164,7 @@ namespace Dune {
     typedef CachingTraits<ct, dim-codim> Traits;
 
     // true if grid could have twists 
-    static const bool hasTwists = ! Capabilities::isCartesian<GridImp>::v ;
+    static const bool hasTwists = ! Dune::Capabilities::isCartesian<GridImp>::v ;
   public:
     typedef typename Traits::QuadratureType QuadratureType;
     typedef typename Traits::MapperType MapperType;

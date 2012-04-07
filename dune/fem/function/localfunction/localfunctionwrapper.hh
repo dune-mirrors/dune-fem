@@ -152,14 +152,14 @@ namespace Dune
 
   template< class LocalFunctionFactoryImp >
   class LocalFunctionStack
-  : public ObjectStack< LocalFunctionFactoryImp >
+  : public Fem :: ObjectStack< LocalFunctionFactoryImp >
   {
   public:
     typedef LocalFunctionFactoryImp LocalFunctionFactoryType;
 
   private:
     typedef LocalFunctionStack< LocalFunctionFactoryType > ThisType;
-    typedef ObjectStack< LocalFunctionFactoryImp > BaseType;
+    typedef Fem :: ObjectStack< LocalFunctionFactoryImp > BaseType;
 
   public:
     typedef LocalFunctionWrapper< ThisType > LocalFunctionType;

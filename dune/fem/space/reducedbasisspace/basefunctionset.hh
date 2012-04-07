@@ -70,7 +70,7 @@ namespace Dune
     static const int dimDomain = FunctionSpaceType::dimDomain;
     static const int dimRange = FunctionSpaceType::dimRange;
 
-    typedef DynamicArray< BaseFunctionType* > BaseFunctionListType;
+    typedef Fem :: DynamicArray< BaseFunctionType* > BaseFunctionListType;
 
   private:
     typedef typename GridPartType::GridType::template Codim< 0 >::Entity ElementType;

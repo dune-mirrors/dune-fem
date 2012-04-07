@@ -10,6 +10,8 @@
 
 namespace Dune
 {
+  namespace Fem 
+  {
 
   /** \class ArrayInterface
    *  \ingroup VectorClasses
@@ -617,7 +619,7 @@ namespace Dune
     }
   };
 
-
+  } // end namespace Fem
 
   // Capabilities
   // ------------
@@ -631,13 +633,13 @@ namespace Dune
     {};
 
     template< class Element, template< class > class ArrayAllocator >
-    struct HasLeakPointer< DynamicArray< Element, ArrayAllocator > >
+    struct HasLeakPointer< Fem :: DynamicArray< Element, ArrayAllocator > >
     : public MetaBool< true >
     {};
 
   }
 
-}
+} // end namespace Dune
 
 #include "array_inline.hh"
 

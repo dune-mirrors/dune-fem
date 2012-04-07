@@ -59,8 +59,8 @@ namespace Dune
     typedef DofBlockProxy
       < const DiscreteFunctionType, const DofType, blockSize >
       ConstDofBlockType;
-    typedef Envelope< DofBlockType > DofBlockPtrType;
-    typedef Envelope< ConstDofBlockType > ConstDofBlockPtrType;
+    typedef Fem::Envelope< DofBlockType > DofBlockPtrType;
+    typedef Fem::Envelope< ConstDofBlockType > ConstDofBlockPtrType;
   };
 
 

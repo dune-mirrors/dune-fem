@@ -7,6 +7,8 @@
 
 namespace Dune
 {
+  namespace Fem
+  {
 
   template< class ElementImp, class RealImp >
   class STLArrayIterator
@@ -197,6 +199,7 @@ namespace Dune
     }
   };
 
-}
+  } // end namespace Fem
+} // end namespace Dune
 
 #endif

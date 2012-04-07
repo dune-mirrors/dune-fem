@@ -97,7 +97,7 @@ namespace Dune
     std::vector< unsigned int > indices_;
 
     // array holding pointer to local dofs 
-    DynamicArray< RangeFieldType* > values_;
+    Fem :: DynamicArray< RangeFieldType* > values_;
 
      // base function set 
     BaseFunctionSetType baseFunctionSet_;

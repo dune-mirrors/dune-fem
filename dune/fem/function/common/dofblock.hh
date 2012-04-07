@@ -36,7 +36,7 @@ namespace Dune
   {
     typedef DofBlockProxy< DiscreteFunction, Dof, Size > ThisType;
 
-    friend class Envelope< ThisType >;
+    friend class Fem :: Envelope< ThisType >;
 
     typedef DofBlockProxy< const DiscreteFunction, const Dof, Size > ConstDofBlockProxy;
     typedef DofBlockProxy< typename remove_const< DiscreteFunction >::type, typename remove_const< Dof >::type, Size > NonConstDofBlockProxy;

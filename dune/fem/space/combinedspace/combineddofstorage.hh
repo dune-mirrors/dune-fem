@@ -95,7 +95,7 @@ namespace Dune
   
   template< class MapperImp, int N, DofStoragePolicy policy  >
   class CombinedSubMapper
-  : public IndexMapperInterface< CombinedSubMapper< MapperImp, N, policy > >
+  : public Fem :: IndexMapperInterface< CombinedSubMapper< MapperImp, N, policy > >
   {
   public:
     //- original mapper 

@@ -6,6 +6,8 @@
 
 namespace Dune
 {
+  namespace Fem
+  {
 
   template< class ObjectFactoryImp >
   class ObjectStack;
@@ -207,6 +209,7 @@ namespace Dune
     }
   };
 
+  } // end namespace Fem
 } // end namespace Dune
 
 #endif

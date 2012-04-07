@@ -18,7 +18,7 @@ namespace Dune
   private:
     class DofArray;
 
-    typedef DynamicArray< DofArray > DofStorageType;
+    typedef Fem :: DynamicArray< DofArray > DofStorageType;
 
   public:
     typedef DofArray value_type;
@@ -29,8 +29,8 @@ namespace Dune
   private:
     const unsigned int granularity_;
     unsigned int dofsUsed_;
-    DynamicArray< DofArray > dofArrays_;
-    DynamicArray< unsigned int > freeDofs_;
+    DofStorageType dofArrays_;
+    Fem :: DynamicArray< unsigned int > freeDofs_;
 
   public:
     inline explicit AttachedDiscreteFunctionStorage ( unsigned int size )

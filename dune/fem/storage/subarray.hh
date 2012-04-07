@@ -8,6 +8,8 @@
 
 namespace Dune
 {
+  namespace Fem
+  {
 
   //! Abstract index mapper interface
   template< class IM >
@@ -178,6 +180,7 @@ namespace Dune
     }
   };
   
-}
+  } // end namespace Fem
+} // end namespace Dune
 
 #endif // #ifndef DUNE_FEM_SUBARRAY_HH

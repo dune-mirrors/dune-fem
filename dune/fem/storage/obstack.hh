@@ -9,6 +9,8 @@
 
 namespace Dune
 {
+  namespace Fem
+  {
 
   #define obstack_chunk_alloc &std::malloc
   #define obstack_chunk_free &std::free
@@ -131,6 +133,7 @@ namespace Dune
     }
   };
 
-}
+  } // end namespace Fem
+} // end namespace Dune
 
 #endif

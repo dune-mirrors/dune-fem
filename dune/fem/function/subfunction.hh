@@ -27,7 +27,7 @@ namespace Dune {
       typedef typename SpaceType :: template ToNewDimRange < 1 > :: Type  SubSpaceType;  
 
       typedef CombinedSubMapper< typename SubSpaceType :: MapperType , dimRange, PointBased >  SubMapperType;
-      typedef SubVector< DofStorageType, SubMapperType >                  SubDofVectorType;
+      typedef Fem :: SubVector< DofStorageType, SubMapperType >                  SubDofVectorType;
       typedef VectorDiscreteFunction< SubSpaceType, SubDofVectorType >    SubDiscreteFunctionType;
 
       //! constructor storing the discrete function 

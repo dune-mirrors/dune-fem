@@ -22,7 +22,6 @@ namespace Dune
     typedef StandardLocalFunctionImpl< DiscreteFunction, DiscreteFunctionSpace > ThisType;
     typedef LocalFunctionDefault< DiscreteFunctionSpace, ThisType > BaseType;
 
-    struct AssignDofs;
 
   public:
     //! type of discrete function the local function belongs to
@@ -60,6 +59,12 @@ namespace Dune
     //! entity type is specified by space 
     typedef typename DiscreteFunctionSpaceType::EntityType EntityType;
 
+  protected:
+    typedef  Fem :: DynamicArray< RangeFieldType * > ValuesArrayType ;
+
+    struct AssignDofs;
+
+  public:  
     //! constructor
     explicit StandardLocalFunctionImpl ( DiscreteFunctionType &discreteFunction );
     
@@ -95,7 +100,7 @@ namespace Dune
     DiscreteFunctionType &discreteFunction_;
     
     // array holding pointer to local dofs 
-    DynamicArray< RangeFieldType * > values_;
+    ValuesArrayType values_;
 
      // base function set 
     BaseFunctionSetType baseFunctionSet_;
@@ -117,7 +122,7 @@ namespace Dune
   template< class DiscreteFunction, class DiscreteFunctionSpace >
   struct StandardLocalFunctionImpl< DiscreteFunction, DiscreteFunctionSpace >::AssignDofs
   {
-    AssignDofs ( DiscreteFunctionType &discreteFunction, DynamicArray< RangeFieldType * > &values )
+    AssignDofs ( DiscreteFunctionType &discreteFunction, ValuesArrayType &values )
     : discreteFunction_( discreteFunction ), values_( values )
     {}
 
@@ -133,7 +138,7 @@ namespace Dune
 
   private:
     DiscreteFunctionType &discreteFunction_;
-    DynamicArray< RangeFieldType * > &values_;
+    ValuesArrayType &values_;
   };
 
 

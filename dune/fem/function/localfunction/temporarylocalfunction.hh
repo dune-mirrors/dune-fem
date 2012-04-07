@@ -6,7 +6,8 @@
 
 namespace Dune
 {
-  
+  namespace Fem {
+
   template< class DiscreteFunctionSpace,
             template< class > class ArrayAllocator = DefaultArrayAllocator >
   class TemporaryLocalFunctionImpl;
@@ -624,6 +625,17 @@ namespace Dune
   {
     return baseFunctionSet_.size();
   }
+
+  } // namespace Fem 
+
+  // #if DUNE_FEM_COMPATIBILITY  
+  // put this in next version 1.4 
+
+  using Fem :: TemporaryLocalFunction ;
+  using Fem :: TemporaryLocalFunctionFactory ;
+  using Fem :: ConstLocalFunction ;
+
+  // #endif // DUNE_FEM_COMPATIBILITY
 
 } // namespace Dune
 

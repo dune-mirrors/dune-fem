@@ -5,6 +5,8 @@
 
 namespace Dune
 {
+  namespace Fem
+  {
 
   template< class RowImp, class RectArrayImp >
   class RectArrayInterface
@@ -147,6 +149,7 @@ namespace Dune
     }
   };
 
-}
+  } // end namespace Fem
+} // end namespace Dune
 
 #endif

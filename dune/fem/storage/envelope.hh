@@ -3,6 +3,8 @@
 
 namespace Dune
 {
+  namespace Fem
+  {
 
   template< class Object >
   class Envelope
@@ -44,6 +46,7 @@ namespace Dune
     }
   };
 
-}
+  } // end namespace Fem
+} // end namespace Dune
 
 #endif

@@ -7,6 +7,8 @@
 
 namespace Dune
 {
+  namespace Fem
+  {
  
   template< class Traits >
   class ArrayAllocatorInterface
@@ -417,6 +419,7 @@ namespace Dune
   {};
 #endif
 
-}
+  } // end namespace Fem
+} // end namespace Dune
 
 #endif
