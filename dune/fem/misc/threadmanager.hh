@@ -32,7 +32,9 @@ namespace Dune
 #ifdef _OPENMP
   struct ThreadManager 
   {
-    //! return maximal number of threads possbile in the current run 
+    /** return maximal number of threads possbile in the current run 
+        \note can be set by the OMP_NUM_THREADS environment variable 
+              from outside of the code */
     static inline int maxThreads() 
     {
       return omp_get_max_threads();

@@ -1,15 +1,3 @@
-/**************************************************************************
-**       Title: L2Error class
-**    $RCSfile$
-**   $Revision$$Name$
-**       $Date$
-**   Copyright: GPL $Author$
-** Description: L2 error class, which computes the error between a function
-**              and a discrete function. Extracted class from
-**              Roberts poisson-example 
-**
-**************************************************************************/
-
 #ifndef DUNE_L2ERROR_HH
 #define DUNE_L2ERROR_HH
 
