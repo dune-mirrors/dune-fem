@@ -18,9 +18,15 @@ namespace Dune {
   // empty non-blocking communication for start pass as default argument
   struct EmptyNonBlockingComm 
   {
+    // initialize communication 
     template <class Destination>
     void initComm( const Destination& ) const {}
 
+    // receive data of previously initialized communication
+    template <class Destination>
+    void receiveComm( const Destination& ) const {}
+
+    // cleanup overwritten data, i.e. ghost values
     template <class Destination>
     void finalizeComm( const Destination& ) const {}
   };
@@ -54,12 +60,19 @@ namespace Dune {
     StartPass(const StartPass&) : nonBlockingComm_() {}
     
     //- Public methods
-    //! The pass method does nothing.
+    //! The pass method initialized the communication only 
     void pass( const GlobalArgumentType& arg ) const 
     {
       nonBlockingComm_.initComm( arg );
     }
 
+    //! receive data for previously initialized communication
+    void receiveCommunication( const GlobalArgumentType& arg ) const 
+    {
+      nonBlockingComm_.receiveComm( arg );
+    }
+
+    //! cleanup of overwritten data. i.e. ghost values if neccessary 
     void finalizeCommunication( const GlobalArgumentType& arg ) const 
     {
       nonBlockingComm_.finalizeComm( arg );
@@ -169,7 +182,8 @@ namespace Dune {
       destination_(0),
       deleteHandler_(0),
       previousPass_(pass),
-      time_(0.0)
+      time_(0.0),
+      finalizeCommunication_( true )
     {
       // this ensures that the last pass doesn't allocate temporary memory
       // (its destination discrete function is provided from outside).
@@ -200,6 +214,11 @@ namespace Dune {
       typename PreviousPassType::NextArgumentType prevArg = previousPass_.localArgument();
       const TotalArgumentType totalArg(&arg, prevArg);
       this->compute(totalArg, dest);
+
+      // if initComm has not been called for this pass, we have to 
+      // call finalizeCommunication for all previous passes
+      if( finalizeCommunication_ ) 
+        finalizeCommunication( arg );
     }
     //! Allocates the local memory of a pass, if needed.
     //! If memory is allocated, then deleteHandler must be set for removal of
@@ -242,6 +261,9 @@ namespace Dune {
     {
       // send my destination data needed by the next pass 
       initComm();
+      // since initComm was called we are not the last pass 
+      // and thus must not call finalizeCommunication 
+      finalizeCommunication_ = false ; 
       operator()(arg, *destination_);
     }
 
@@ -263,6 +285,22 @@ namespace Dune {
 
       // this method has to be overloaded in the pass implementation 
       finalizeComm();
+      // reset finalizeCommunication flag 
+      finalizeCommunication_ = true; 
+    }
+
+    /** \brief finalizeCommunication collects possbily initiated non-blocking
+               communications for all passes including the global argument 
+               this method will be called from the next pass 
+    */
+    void receiveCommunication(const GlobalArgumentType& arg) const 
+    {
+      // we only need the first argument
+      // the other argument are known to the previous passes 
+      previousPass_.receiveCommunication( arg );
+
+      // this method has to be overloaded in the pass implementation 
+      receiveComm();
     }
 
   protected:
@@ -290,7 +328,19 @@ namespace Dune {
       previousPass_.finalizeCommunication( *totalArg.first() );
     }
 
-    /** \brief initializeCommunication of this pass, this will send  
+    /** \brief receiveCommunication collects possbily initiated non-blocking
+               communications for all passes 
+    */
+    void receiveCommunication( const TotalArgumentType& totalArg ) const 
+    {
+      // this method is called on the last pass which needs no 
+      // finalizing of communication, so call the correct method 
+      // on the previous pass 
+      // totalArg.first() is the global argument type 
+      previousPass_.receiveCommunication( *totalArg.first() );
+    }
+
+    /** \brief initializeCommunication of this pass, this will initialize   
                the communication of destination_ and has to be overloaded in 
                the implementation 
     */
@@ -301,6 +351,13 @@ namespace Dune {
                the implementation 
     */
     virtual void finalizeComm() const {}
+
+    /** \brief receiveCommunication of this pass, 
+               which will reset changes the communication 
+               did to the destination_ and has to be overloaded in 
+               the implementation 
+    */
+    virtual void receiveComm() const {}
 
   protected:
     //! destination (might be set from outside) 
@@ -314,6 +371,9 @@ namespace Dune {
 
     // current calculation time 
     double time_;
+
+    // flag whether we are the last pass, i.e. we have to finalize the communication
+    mutable bool finalizeCommunication_ ;
   }; // end class Pass
 
 
