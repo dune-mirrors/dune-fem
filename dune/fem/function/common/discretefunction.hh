@@ -218,11 +218,19 @@ namespace Dune
       return asImp().size();
     }
     
+    /** \brief obtain pointer to block of discrete function with block number index 
+     *
+     *  \returns a DoFBlockPtrType pointing to block index 
+     */
     inline ConstDofBlockPtrType block ( unsigned int index ) const
     {
       return asImp().block( index );
     }
     
+    /** \brief obtain pointer to block of discrete function with block number index (read-only)
+     *
+     *  \returns a DoFBlockPtrType pointing to block index (read-only)
+     */
     inline DofBlockPtrType block ( unsigned int index )
     {
       return asImp().block( index );
