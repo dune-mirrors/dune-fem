@@ -217,7 +217,7 @@ namespace Dune
     class LocalMatrix;
     class LocalMatrixFactory;
 
-    typedef ObjectStack< LocalMatrixFactory > LocalMatrixStack;
+    typedef Fem :: ObjectStack< LocalMatrixFactory > LocalMatrixStack;
 
   public:
     typedef LocalMatrixWrapper< LocalMatrixStack > LocalMatrixType;

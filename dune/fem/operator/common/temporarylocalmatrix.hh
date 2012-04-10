@@ -67,7 +67,7 @@ namespace Dune
     typedef typename Traits :: RangeFieldType RangeFieldType;
 
   protected:
-    DynamicArray< RangeFieldType > fields_;
+    Fem :: DynamicArray< RangeFieldType > fields_;
 
   public:
     inline TemporaryLocalMatrix ( const DomainSpaceType &domainSpace,

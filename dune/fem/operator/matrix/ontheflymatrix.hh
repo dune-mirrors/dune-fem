@@ -303,7 +303,7 @@ public:
   //! type of local matrix 
   typedef LocalMatrix<ThisType> ObjectType;
   typedef ThisType LocalMatrixFactoryType;
-  typedef ObjectStack< LocalMatrixFactoryType > LocalMatrixStackType;
+  typedef Fem :: ObjectStack< LocalMatrixFactoryType > LocalMatrixStackType;
   //! type of local matrix 
   typedef LocalMatrixWrapper< LocalMatrixStackType > LocalMatrixType;
 

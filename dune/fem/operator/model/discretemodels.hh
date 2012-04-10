@@ -9,7 +9,7 @@
 // Dune includes
 #include <dune/common/tupleutility.hh>
 #include <dune/common/typetraits.hh>
-#include <dune/fem/gridpart/gridpart.hh>
+#include <dune/fem/gridpart/common/gridpart.hh>
 #include <dune/fem/gridpart/adaptiveleafgridpart.hh>
 
 //- local includes 
