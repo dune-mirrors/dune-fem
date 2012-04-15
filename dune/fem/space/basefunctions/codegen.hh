@@ -284,6 +284,7 @@ namespace Fem {
                                 const size_t numRows, 
                                 const size_t numCols ) 
     {
+      out << "#if ! CODEGEN_COMPILE_INNERLOOPS" << std::endl;
       out << "template <class BaseFunctionSet>" << std::endl;
       out << "struct EvaluateRanges<BaseFunctionSet, Fem :: EmptyGeometry, " << dimRange << ", " << numRows << ", " << numCols << ">" << std::endl;
       out << "{" << std::endl;
@@ -347,11 +348,13 @@ namespace Fem {
       out << "    }" << std::endl;
       out << "  }" << std::endl << std::endl;
       out << "};" << std::endl;
+      out << "#endif" << std::endl;
     }
 
     static void axpyCodegen(std::ostream& out, 
             const int dim, const int dimRange, const size_t numRows, const size_t numCols ) 
     {
+      out << "#if ! CODEGEN_COMPILE_INNERLOOPS" << std::endl;
       out << "template <class BaseFunctionSet>" << std::endl;
       out << "struct AxpyRanges<BaseFunctionSet, Fem :: EmptyGeometry, " << dimRange << ", " << numRows << ", " << numCols << ">" << std::endl;
       out << "{" << std::endl;
@@ -409,11 +412,13 @@ namespace Fem {
       }
       out << "  }" << std::endl << std::endl;
       out << "};" << std::endl;
+      out << "#endif" << std::endl;
     }
 
     static void evaluateJacobiansCodegen(std::ostream& out, 
             const int dim, const int dimRange, const size_t numRows, const size_t numCols ) 
     {
+      out << "#if ! CODEGEN_COMPILE_INNERLOOPS" << std::endl;
       out << "template <class BaseFunctionSet>" << std::endl;
       out << "struct EvaluateJacobians<BaseFunctionSet, Fem :: EmptyGeometry, " << dimRange << ", " << numRows << ", " << numCols << ">" << std::endl;
       out << "{" << std::endl;
@@ -482,11 +487,13 @@ namespace Fem {
       out << "    }" << std::endl;
       out << "  }" << std::endl;
       out << "};" << std::endl;
+      out << "#endif" << std::endl;
     }
 
     static void axpyJacobianCodegen(std::ostream& out, 
             const int dim, const int dimRange, const size_t numRows, const size_t numCols ) 
     {
+      out << "#if ! CODEGEN_COMPILE_INNERLOOPS" << std::endl;
       out << "template <class BaseFunctionSet>" << std::endl;
       out << "struct AxpyJacobians<BaseFunctionSet, Fem :: EmptyGeometry, " << dimRange << ", " << numRows << ", " << numCols << ">" << std::endl;
       out << "{" << std::endl;
@@ -618,6 +625,7 @@ namespace Fem {
       }
       out << "  }" << std::endl << std::endl;
       out << "};" << std::endl;
+      out << "#endif" << std::endl;
     }
   };
 
