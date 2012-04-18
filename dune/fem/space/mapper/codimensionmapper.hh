@@ -121,7 +121,7 @@ namespace Dune
     template< class Functor >
     void mapEach ( const ElementType &element, Functor f ) const
     {
-      if( codimension >= 0 )
+      if( codimension > 0 )
       {
         const int n = numDofs( element );
         for( int i = 0; i < n; ++i )
