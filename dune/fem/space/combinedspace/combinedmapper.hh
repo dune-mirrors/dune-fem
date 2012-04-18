@@ -281,14 +281,14 @@ namespace Dune
       void write_xdr ( const char *filename, int timestep )
       {}
 
-      /** \copydoc Dune::DofMapper::insertEntity( const ElementType &element ) */
-      void insertEntity ( const ElementType &element )
+      template< class Entity >
+      void insertEntity ( const Entity &)
       {
         resize();
       }
 
-      /** \copydoc Dune::DofMapper::removeEntity( const ElementType &element ) */
-      void removeEntity ( const ElementType &element )
+      template< class Entity >
+      void removeEntity ( const Entity & )
       {
         resize();
       }
