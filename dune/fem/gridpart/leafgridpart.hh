@@ -20,9 +20,7 @@ namespace Dune
   // --------------------
 
   template< class >
-  class GridPartDefault;
-  template< class >
-  class LeafGridPartTraits;
+  struct LeafGridPartTraits;
 
 
 
