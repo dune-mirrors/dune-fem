@@ -86,7 +86,7 @@ namespace Dune
       \note This class needs to be explicitly specialized for each grid! 
   */
   template< class Grid > 
-  class TwistUtility;
+  struct TwistUtility;
   //{
   //  dune_static_assert( false, "TwistUtility not specialized, please specialize TwistUtility!");
   //};
