@@ -925,6 +925,9 @@ namespace Dune
     //- type of intersections
     typedef typename GridPartType :: IntersectionType IntersectionType;
 
+    //! type of communication manager (only the default communication is valid here) 
+    typedef DefaultCommunicationManager< ThisType > CommunicationManagerType;
+
   protected:
     const GridPartType &gridPart_;
     const unsigned int order_;
