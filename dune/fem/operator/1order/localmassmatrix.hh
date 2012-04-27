@@ -155,7 +155,6 @@ public:
       affine_( org.affine_ ),
       rhs_( org.rhs_ ), matrix_( org.matrix_ ),
       phi_( org.phi_ ),
-      matrix_( org.matrix_ ),
       phiMass_( org.phiMass_ ),
       localInverseMassMatrix_( GlobalGeometryTypeIndex :: size( GridType::dimension ) ),
       lastEntityIndex_( org.lastEntityIndex_ ),
