@@ -6,10 +6,11 @@ SUBDIRS = test
 streamsdir =  $(includedir)/dune/fem/io/streams
 streams_HEADERS = asciistreams.hh \
                   binarystreams.hh \
+                  datastreams.hh \
                   streams.hh \
                   streams_inline.hh \
-		  virtualstreams.hh \
-		  xdrstreams.hh
+                  virtualstreams.hh \
+                  xdrstreams.hh
 
 include $(top_srcdir)/am/global-rules
 
