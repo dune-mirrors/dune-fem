@@ -3,6 +3,7 @@
 #include <dune/fem/version.hh>
 #include <dune/fem/io/streams/asciistreams.hh>
 #include <dune/fem/io/streams/xdrstreams.hh>
+#include <dune/fem/io/streams/datastreams.hh>
 
 using namespace Dune;
 
@@ -27,7 +28,8 @@ void write ( OutStreamInterface< Traits > &out, const Data &data )
   out << DUNE_MODULE_VERSION_ID(DUNE_FEM);
   // out << DUNE_FEM_VERSION;
   
-  out << data.my_string << data.my_uint << data.my_ulong << data.my_double
+  out << data.my_string 
+      << data.my_uint << data.my_ulong << data.my_double
       << data.my_int << data.my_float << data.my_char << data.my_bool;
 
   // out << DuneFEM :: versionId();
@@ -61,7 +63,8 @@ bool read ( InStreamInterface< Traits > &in, const Data &data )
   */
 
   Data check;
-  in >> check.my_string >> check.my_uint >> check.my_ulong >> check.my_double
+  in >> check.my_string 
+     >> check.my_uint >> check.my_ulong >> check.my_double
      >> check.my_int >> check.my_float >> check.my_char >> check.my_bool;
 
   std :: cerr << "Data: " << check.my_string 
@@ -123,6 +126,17 @@ int main ()
     XDRFileInStream xin( "test.xdr" );
     if( !read( xin, data ) )
       return 1;
+
+#if HAVE_ALUGRID
+    std :: cerr << "Checking Data streams..." << std :: endl;
+    Fem :: DataOutStream dout( "test.data" );
+    write( dout, data );
+    dout.flush();
+    Fem :: DataInStream din( "test.data" );
+    if( ! read( din, data ) )
+      return 1;  
+#endif
+
   }
   catch( Exception e )
   {

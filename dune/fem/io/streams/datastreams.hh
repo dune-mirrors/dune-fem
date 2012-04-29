@@ -183,6 +183,35 @@ namespace Dune
     };
 
 
+    struct DataObjectStream 
+#if HAVE_ALUGRID
+      : public ALU3DSPACE ObjectStream 
+#endif
+    {
+#if HAVE_ALUGRID
+      typedef ALU3DSPACE ObjectStream BaseType ;
+      using BaseType :: _buf ;
+      using BaseType :: operator =;
+#else 
+      DataObjectStream () 
+      {
+        DUNE_THROW(NotImplemented,"DataOutStream only working with ALUGrid enabled!");
+      }
+
+      char* _buf ;
+      size_t size() const { return 0; }
+
+      DataObjectStream& operator = (std::pair< char* , int > & osvec)
+      {
+        return *this;
+      }
+#endif
+      // return pointer to buffer 
+      char* buffer () { return _buf; }
+      // return pointer to buffer (const)
+      const char* buffer () const { return _buf; }
+    };
+
 
     /** \class XDRFileOutStream
      *  \ingroup InOutStreams
@@ -198,9 +227,7 @@ namespace Dune
       typedef DataBasicOutStream< ThisType > BaseType;
 
     protected:
-#if HAVE_ALUGRID
-      ALU3DSPACE ObjectStream outstream_;
-#endif
+      DataObjectStream outstream_;
       const std::string filename_;
 
     public:
@@ -242,23 +269,20 @@ namespace Dune
 #endif
       }
 
-#if HAVE_ALUGRID
       /** \brief return size of internal buffer */
       size_t size() const { return outstream_.size(); }
       
       /** \brief return pointer to buffer  */
+      char* buffer() { return outstream_.buffer() ; }
       const char* buffer() const { return outstream_.buffer() ; }
-#endif 
 
       /** \copydoc Dune::OutStreamInterface::flush */
       inline void flush ()
       {
-#if HAVE_ALUGRID
         Dune :: XDRFileOutStream xdr( filename_ ); 
-        char* buffer = (char *) outstream_.buffer();
+        char* buffer = outstream_.buffer();
         xdr.writeCharBuffer( buffer, outstream_.size() ); 
         xdr.flush();
-#endif
       }
     };
 
@@ -277,9 +301,7 @@ namespace Dune
       typedef DataBasicInStream< ThisType > BaseType;
 
     protected:
-#if HAVE_ALUGRID
-      ALU3DSPACE ObjectStream instream_;
-#endif
+      DataObjectStream instream_;
 
     public:
       /** \brief constructor
@@ -291,16 +313,12 @@ namespace Dune
       explicit DataInStream ( const std::string &filename,
                               const size_t pos = 0 )
       {
-#if HAVE_ALUGRID
         XDRFileInStream xdr( filename );
         // read from xdr to buffer 
         unsigned int size = 0;
         char* buffer = xdr.readCharBuffer( size );
         std::pair< char* , int > buff( buffer, int(size) );
         instream_ = buff ;
-#else 
-        DUNE_THROW(NotImplemented,"DataOutStream only working with ALUGrid enabled!");
-#endif
       }
 
       /** \copydoc Dune::InStreamInterface::readString */
