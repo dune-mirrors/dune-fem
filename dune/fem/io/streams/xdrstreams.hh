@@ -121,14 +121,6 @@ namespace Dune
       DUNE_THROW(NotImplemented,"xdr_uint64_t is missing");
 #endif
     }
-   
-    /** \brief write an char* buffer with given size */
-    void writeCharBuffer( char*& buffer, unsigned int size ) 
-    {
-      writeUnsignedInt( size );
-      if( xdr_bytes(xdrs(), &buffer, &size, size ) == 0 ) 
-        writeError();
-    }
 
   protected:
     XDR *xdrs ()
@@ -252,20 +244,6 @@ namespace Dune
 #else 
       DUNE_THROW(NotImplemented,"xdr_uint64_t is missing");
 #endif
-    }
-
-    /** \brief read an char* buffer with size to be determined */
-    char* readCharBuffer( unsigned int& size ) 
-    {
-      readUnsignedInt( size );
-      // allocate correct size of buffer 
-      char* buffer = (char *) std::malloc( size * sizeof( char ) );
-      if( ! buffer ) 
-        readError();
-      if( xdr_bytes(xdrs(), &buffer, &size, size ) == 0 ) 
-        readError();
-
-      return buffer ;
     }
 
   protected:

@@ -3,10 +3,10 @@
 
 #include <cassert>
 #include <string>
+#include <fstream>
 
 #include <dune/common/exceptions.hh>
 #include <dune/fem/io/streams/streams.hh>
-#include <dune/fem/io/streams/xdrstreams.hh>
 
 #if HAVE_ALUGRID
 // inlcude alugrid to have to communicator class from ALUGrid 
@@ -192,6 +192,7 @@ namespace Dune
       typedef ALU3DSPACE ObjectStream BaseType ;
       using BaseType :: _buf ;
       using BaseType :: operator =;
+      using BaseType :: write2Stream ;
 #else 
       DataObjectStream () 
       {
@@ -205,6 +206,8 @@ namespace Dune
       {
         return *this;
       }
+
+      void write2Stream(const char * buff, const size_t length ) {}
 #endif
       // return pointer to buffer 
       char* buffer () { return _buf; }
@@ -263,7 +266,10 @@ namespace Dune
       void write( const T& value ) 
       {
 #if HAVE_ALUGRID
-        outstream_.write( value );
+        const size_t size = sizeof( T ) ;
+        union { T value; char bytes[ size ]; } convert;
+        convert.value = value;
+        outstream_.write2Stream( &convert.bytes[ 0 ], size );
 #else
         DUNE_THROW(NotImplemented,"DataOutStream only working with ALUGrid enabled!");
 #endif
@@ -279,10 +285,11 @@ namespace Dune
       /** \copydoc Dune::OutStreamInterface::flush */
       inline void flush ()
       {
-        Dune :: XDRFileOutStream xdr( filename_ ); 
+        std::ofstream file ( filename_.c_str(), std::ios::binary );
+        file << size();
         char* buffer = outstream_.buffer();
-        xdr.writeCharBuffer( buffer, outstream_.size() ); 
-        xdr.flush();
+        file.write( buffer, size() );
+        file.flush();
       }
     };
 
@@ -313,10 +320,11 @@ namespace Dune
       explicit DataInStream ( const std::string &filename,
                               const size_t pos = 0 )
       {
-        XDRFileInStream xdr( filename );
-        // read from xdr to buffer 
-        unsigned int size = 0;
-        char* buffer = xdr.readCharBuffer( size );
+        std::ifstream file( filename.c_str(), std::ios::binary );
+        size_t size = 0 ;
+        file >> size ;
+        char* buffer = DataObjectStream :: allocateBuffer( size );
+        file.read( buffer, size );
         std::pair< char* , int > buff( buffer, int(size) );
         instream_ = buff ;
       }
@@ -338,7 +346,12 @@ namespace Dune
       void read( T& value ) 
       {
 #if HAVE_ALUGRID
-        instream_.read( value );
+        const size_t size = sizeof( T ) ;
+        union { T value; char bytes[ size ]; } convert;
+        for( size_t i=0; i<size; ++i ) 
+          instream_.read( convert.bytes[ i ] );
+        value = convert.value;
+       // instream_.read( value );
 #else
         DUNE_THROW(NotImplemented,"DataOutStream only working with ALUGrid enabled!");
 #endif
