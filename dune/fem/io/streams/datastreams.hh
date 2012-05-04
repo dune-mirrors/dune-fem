@@ -5,8 +5,11 @@
 #include <string>
 #include <fstream>
 
+#include <endian.h>
+
 #include <dune/common/exceptions.hh>
 #include <dune/fem/io/streams/streams.hh>
+#include <dune/fem/io/streams/binarystreams.hh>
 
 #if HAVE_ALUGRID
 // inlcude alugrid to have to communicator class from ALUGrid 
@@ -266,10 +269,14 @@ namespace Dune
       void write( const T& value ) 
       {
 #if HAVE_ALUGRID
-        const size_t size = sizeof( T ) ;
-        union { T value; char bytes[ size ]; } convert;
+        const size_t tsize = sizeof( T ) ;
+        union { T value; char bytes[ tsize ]; } convert;
         convert.value = value;
-        outstream_.write2Stream( &convert.bytes[ 0 ], size );
+        outstream_.reserve( outstream_.size() + tsize );
+        for( size_t i=0; i<tsize; ++i ) 
+        {
+          outstream_.write( convert.bytes[ ByteOrder :: map( i, tsize ) ] );
+        }
 #else
         DUNE_THROW(NotImplemented,"DataOutStream only working with ALUGrid enabled!");
 #endif
@@ -340,18 +347,17 @@ namespace Dune
         for( size_t i=0; i<size; ++i ) 
           read( s[i] );
       }
-      
+
       //! write data to stream 
       template <class T> 
       void read( T& value ) 
       {
 #if HAVE_ALUGRID
-        const size_t size = sizeof( T ) ;
-        union { T value; char bytes[ size ]; } convert;
-        for( size_t i=0; i<size; ++i ) 
-          instream_.read( convert.bytes[ i ] );
+        const size_t tsize = sizeof( T ) ;
+        union { T value; char bytes[ tsize ]; } convert;
+        for( size_t i=0; i<tsize; ++i ) 
+          instream_.read( convert.bytes[ ByteOrder :: map( i, tsize ) ] );
         value = convert.value;
-       // instream_.read( value );
 #else
         DUNE_THROW(NotImplemented,"DataOutStream only working with ALUGrid enabled!");
 #endif
