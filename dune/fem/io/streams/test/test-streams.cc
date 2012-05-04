@@ -2,8 +2,9 @@
 
 #include <dune/fem/version.hh>
 #include <dune/fem/io/streams/asciistreams.hh>
-#include <dune/fem/io/streams/xdrstreams.hh>
+#include <dune/fem/io/streams/binarystreams.hh>
 #include <dune/fem/io/streams/datastreams.hh>
+#include <dune/fem/io/streams/xdrstreams.hh>
 
 using namespace Dune;
 
@@ -117,6 +118,14 @@ int main ()
     aout.flush();
     ASCIIInStream ain( "test.ascii" );
     if( !read( ain, data ) )
+      return 1;
+
+    std :: cerr << "Checking Binary streams..." << std :: endl;
+    BinaryFileOutStream bout( "test.binary" );
+    write( bout, data );
+    bout.flush();
+    BinaryFileInStream bin( "test.binary" );
+    if( !read( bin, data ) )
       return 1;
 
     std :: cerr << "Checking XDR streams..." << std :: endl;
