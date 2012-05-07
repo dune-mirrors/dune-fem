@@ -889,6 +889,53 @@ namespace Dune
 
   ///////////////////////////////////////
   //  
+  //  operator<< and >> for fem streams 
+  //
+  ///////////////////////////////////////
+  template <class StreamTraits> 
+  class OutStreamInterface;
+
+  template <class StreamTraits> 
+  class InStreamInterface;
+
+  template<class StreamTraits, typename T1, typename T2>
+  inline OutStreamInterface< StreamTraits >& 
+  operator<<( OutStreamInterface< StreamTraits >& os, const Pair<T1,T2>& pair)
+  {
+    os << pair.first();
+    os << pair.second();
+    return os;
+  }
+
+  template<class StreamTraits, typename T1 >
+  inline OutStreamInterface< StreamTraits >& 
+  operator<<( OutStreamInterface< StreamTraits >& os, const Pair<T1,Nil>& pair)
+  {
+    os << pair.first();
+    return os;
+  }
+
+  template<class StreamTraits, typename T1, typename T2>
+  inline InStreamInterface< StreamTraits >& 
+  operator>>( InStreamInterface< StreamTraits >& is, Pair<T1,T2>& pair)
+  {
+    is >> pair.first();
+    is >> pair.second();
+    return is;
+  }
+
+  template<class StreamTraits, typename T1>
+  inline InStreamInterface< StreamTraits >& 
+  operator>>( InStreamInterface< StreamTraits >& is, Pair<T1,Nil>& pair)
+  {
+    is >> pair.first();
+    return is;
+  }
+
+
+
+  ///////////////////////////////////////
+  //  
   //  TupleLength
   //
   ///////////////////////////////////////
