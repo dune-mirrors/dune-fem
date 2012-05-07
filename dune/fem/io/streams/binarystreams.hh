@@ -13,22 +13,31 @@ namespace Dune
   {
     struct ByteOrder 
     {
-      static const bool swap = 
+      static const char order = 
 #if __BYTE_ORDER == __LITTLE_ENDIAN
-          true ;
+          0 ;
 #elif __BYTE_ORDER == __BIG_ENDIAN
-          false ;
+          1 ;
 #endif 
 
-      static inline size_t map( const size_t pos, const size_t size )
+      static inline size_t map( const char storedOrder, 
+                                const size_t pos, 
+                                const size_t size )
       {
-        return swap ? ( size - pos - 1 ) : pos ;
+        // if byte order differs, swap 
+        return ( order == storedOrder ) ? pos : ( size - pos - 1 );
+      }
+
+      static inline size_t map( const size_t pos, 
+                                const size_t size )
+      {
+        // if byte order is not big endian, swap 
+        return map( 1, pos, size );
       }
     };
 
     class BinaryFileOutStream;
     class BinaryFileInStream;
-
     
     
     struct BinaryFileOutStreamTraits
@@ -67,7 +76,10 @@ namespace Dune
        */
       explicit BinaryFileOutStream ( const std::string &filename )
       : stream_( filename.c_str(), std::ios::binary )
-      {}
+      {
+        // write byte order used to write to stream 
+        writeChar( ByteOrder :: order );
+      }
 
       /** \copydoc Dune::OutStreamInterface::flush */
       void flush ()
@@ -141,17 +153,6 @@ namespace Dune
         // copy  value 
         convert.value = value;
 
-        // if byte order needs a swap 
-        if( ByteOrder :: swap ) 
-        { 
-          union { T value; char bytes[ tsize ]; } convswap;
-          convswap.value = convert.value; 
-          for( size_t i=0; i<tsize; ++i ) 
-          {
-            convert.bytes[ i ] = convswap.bytes[ ByteOrder :: map( i, tsize ) ];
-          }
-        } 
-
         // write value 
         stream_.write( convert.bytes, tsize );
         if( !valid () )
@@ -200,8 +201,12 @@ namespace Dune
        *  \param[in]  filename  name of a file to write to
        */
       BinaryFileInStream ( const std::string &filename )
-      : stream_( filename.c_str(), std::ios::binary )
-      {}
+      : stream_( filename.c_str(), std::ios::binary ),
+        storedOrder_( ByteOrder :: order )
+      {
+        // read byte order of stream 
+        readChar( storedOrder_ );
+      }
 
       /** \copydoc Dune::InStreamInterface::readDouble */
       void readDouble ( double &value )
@@ -274,13 +279,13 @@ namespace Dune
         stream_.read( convert.bytes, tsize );
 
         // if byte order needs a swap 
-        if( ByteOrder :: swap ) 
+        if( ByteOrder :: order != storedOrder_ ) 
         { 
           union { T value; char bytes[ tsize ]; } convswap;
           convswap.value = convert.value; 
           for( size_t i=0; i<tsize; ++i ) 
           {
-            convert.bytes[ i ] = convswap.bytes[ ByteOrder :: map( i, tsize ) ];
+            convert.bytes[ i ] = convswap.bytes[ ByteOrder :: map( storedOrder_, i, tsize ) ];
           }
         } 
 
@@ -293,6 +298,7 @@ namespace Dune
 
     protected:
       std::ifstream stream_;
+      char storedOrder_ ;
     };
 
   } // end namespace Fem   
