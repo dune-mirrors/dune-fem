@@ -147,14 +147,13 @@ namespace Dune
       template< class T >
       void writePrimitive ( const T &value )
       {
-        const size_t tsize = sizeof( T ) ;
-        union { T value; char bytes[ tsize ]; } convert;
+        union { T value; char bytes[  sizeof( T ) ]; } convert;
 
         // copy  value 
         convert.value = value;
 
         // write value 
-        stream_.write( convert.bytes, tsize );
+        stream_.write( convert.bytes, sizeof( T ) );
         if( !valid () )
           writeError();
       }
