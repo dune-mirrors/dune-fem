@@ -276,6 +276,21 @@ public:
     comm.barrier ();
   }
 
+  // copy path to filename and add a slash if necessary 
+  static std::string copyPathToFilename( const std::string& path ) 
+  {
+    // first proc creates directory 
+    std::string filename( path );
+
+    const char lastToken = filename.c_str()[ filename.size() - 1 ];
+    const char* slash = "/";
+    // add / if necessary 
+    if( lastToken != slash[0] )
+      filename += "/";
+
+    return filename;
+  }
+
   // creates path and processor sub pathes 
   template <class CommunicatorType>
   static std::string createPath(const CommunicatorType& comm,
@@ -285,8 +300,8 @@ public:
           const bool alsoCreateRankPath = true )
   {
     // first proc creates directory 
-    std::string filename(pathPrefix);
-    filename += "/";
+    std::string filename( copyPathToFilename( pathPrefix ));
+
     filename += dataPrefix;
     std::string path = genFilename("",filename,step);
 
@@ -318,8 +333,8 @@ public:
           const bool alsoUseRankPath = true )
   {
     // first proc creates directory 
-    std::string filename(pathPrefix);
-    filename += "/";
+    std::string filename( copyPathToFilename( pathPrefix ));
+
     filename += dataPrefix;
     std::string path = genFilename("",filename,step);
 
