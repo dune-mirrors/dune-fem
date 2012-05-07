@@ -398,9 +398,8 @@ namespace Dune
   void DiscreteFunctionDefault< Traits >
     :: backup() const
   {
-    // get my unique file name 
-    std::string filename ( PersistenceManager :: uniqueFileName( name() ) );
-    asImp().write_xdr( filename );
+    // get backup stream from persistence manager and write to it 
+    write( PersistenceManager :: backupStream() );
   }
 
 
@@ -408,9 +407,8 @@ namespace Dune
   void DiscreteFunctionDefault< Traits >
     :: restore()
   {
-    // get my unique file name 
-    std::string filename ( PersistenceManager :: uniqueFileName( name() ) );
-    asImp().read_xdr( filename );
+    // get restore stream from persistence manager and read from it 
+    read( PersistenceManager :: restoreStream() );
   }
 
   template< class Traits >

@@ -13,6 +13,7 @@
 #include <dune/fem/quadrature/cachingquadrature.hh>
 #include <dune/fem/io/file/persistencemanager.hh>
 #include <dune/fem/io/file/dataoutput.hh>
+#include <dune/fem/misc/gridname.hh>
 
 #if USE_GRAPE
 #include <dune/grid/io/visual/grapedatadisplay.hh>
@@ -26,6 +27,12 @@ struct DataWriterParameters : public DataOutputParameters
   virtual std::string macroGridName (const int dim) const
   {
     return Parameter::getValue< std::string >( IOInterface::defaultGridKey( dim ) );
+  }
+
+  //! return true if all data should be written to a spearate path per rank 
+  virtual bool separateRankPath () const 
+  { 
+    return true; 
   }
 };
 
@@ -61,6 +68,7 @@ protected:
 
   friend class DataOutput< GridImp, DataImp >;
   mutable std::stringstream macroGrid_;
+  const bool separateRankPath_ ;
 
 public: 
 
@@ -73,7 +81,8 @@ public:
   DataWriter(const GridType & grid,
              OutPutDataType& data,
              const DataWriterParameters& parameter = DataWriterParameters() )
-    : BaseType( grid, data, parameter )
+    : BaseType( grid, data, parameter ),
+      separateRankPath_( parameter.separateRankPath() )
   {
     if( parameter.writeMode() ) 
     {
@@ -93,7 +102,8 @@ public:
              OutPutDataType& data,
              const TimeProviderBase& tp,
              const DataWriterParameters& parameter = DataWriterParameters() )
-    : BaseType( grid, data, tp, parameter )
+    : BaseType( grid, data, tp, parameter ),
+      separateRankPath_( parameter.separateRankPath() )
   {
     if( parameter.writeMode() ) 
     {
@@ -120,16 +130,22 @@ protected:
                                   OutputTuple &data ) const
   {
     // create new path for time step output
-    std::string timeStepPath = IOInterface::createPath( grid_.comm(), path_, datapref_, step );
+    std::string timeStepPath = IOInterface::createPath( grid_.comm(), path_, datapref_, step, separateRankPath_ );
 
-    // for structured grids copy grid
-    IOInterface::copyMacroGrid( grid_, macroGrid_.str(), path_, timeStepPath, datapref_ );
+    typedef IOTuple< OutputTuple > IOTupleType ;
 
-    // create binary io obj
-    BinaryDataIO< GridType > dataio;
+    // if data is given, use BinaryDataIO to write it 
+    //if( IOTupleType :: length > 0 ) 
+    {
+      // for structured grids copy grid
+      IOInterface::copyMacroGrid( grid_, macroGrid_.str(), path_, timeStepPath, datapref_ );
 
-    // call output of IOTuple
-    IOTuple< OutputTuple >::output( dataio, grid_, sequenceStamp, step, timeStepPath, datapref_, data );
+      // create binary io obj
+      BinaryDataIO< GridType > dataio;
+
+      // call output of IOTuple
+      IOTupleType :: output( dataio, grid_, sequenceStamp, step, timeStepPath, datapref_, data );
+    }
 
     return timeStepPath;
   }
@@ -185,9 +201,16 @@ public:
     return "checkpoint";
   }
 
+  //! writeMode, true when checkpointer is in backup mode 
   virtual bool writeMode() const 
   {
     return writeMode_;
+  }
+
+  //! return true if all data should be written to a spearate path per rank 
+  virtual bool separateRankPath () const 
+  { 
+    return false; 
   }
 };
 
@@ -211,6 +234,48 @@ class CheckPointer
 : public DataWriter< GridImp, DataImp >
 {
 protected:
+  //! used grid type 
+  typedef GridImp GridType;
+
+  //! if no backup and restore facility is available, do nothing
+  template < int, bool hasBackupRestore>  
+  struct GridPersistentObject 
+  {
+    GridPersistentObject( const GridType& ) {}
+  };
+
+  //! call appropriate backup and restore methods on the grid class 
+  template < int dummy >  
+  struct GridPersistentObject< dummy, true > : public AutoPersistentObject 
+  {
+    const GridType& grid_ ;
+    const std::string name_;
+    
+    //! constructor storing grid 
+    GridPersistentObject( const GridType& grid ) 
+      : grid_( grid ),
+        name_( Fem :: gridName( grid_ ) ) 
+    {
+    }
+
+    //! backup grid 
+    virtual void backup() const 
+    {
+      std::string filename( PersistenceManager :: uniqueFileName( name_ ) );
+      double time = 0;
+      grid_.template writeGrid<xdr>  (filename, time);
+    }
+
+    //! restore grid 
+    virtual void restore () 
+    {
+      std::string filename( PersistenceManager :: uniqueFileName( name_ ) );
+      double time;
+      GridType& grid = const_cast< GridType & > (grid_);
+      grid.template readGrid<xdr> (filename,time);  
+    } 
+  };
+
   //! type of base class 
   typedef DataWriter<GridImp,DataImp> BaseType;
 
@@ -222,6 +287,7 @@ protected:
   using BaseType :: writeStep_;
   using BaseType :: outputFormat_ ;
   using BaseType :: grapeDisplay_;
+  using BaseType :: separateRankPath_;
 
   // friendship for restoreData calls 
   friend class CheckPointer< GridImp >;
@@ -229,10 +295,11 @@ protected:
   //! type of this class  
   typedef CheckPointer<GridImp,DataImp> ThisType;
   
-  //! used grid type 
-  typedef GridImp GridType;
   //! used data tuple 
   typedef DataImp OutPutDataType; 
+
+  typedef GridPersistentObject< 0, Capabilities :: hasBackupRestoreFacilities< GridType > :: v > PersistentGridObjectType;
+  PersistentGridObjectType* persistentGridObject_ ;
 
   const int checkPointStep_;
   const int maxCheckPointNumber_;
@@ -240,7 +307,6 @@ protected:
 
   std::string checkPointFile_;
 
-  const OutPutDataType* dataPtr_;
   bool takeCareOfPersistenceManager_; 
 
 public: 
@@ -256,10 +322,10 @@ public:
                const TimeProviderBase& tp,
                const CheckPointerParameters& parameter = CheckPointerParameters() ) 
     : BaseType(grid,data,tp,parameter)  
+    , persistentGridObject_( new PersistentGridObjectType( grid_ ) ) 
     , checkPointStep_( parameter.checkPointStep() )
     , maxCheckPointNumber_( parameter.maxNumberOfCheckPoints() )
     , myRank_( grid.comm().rank() )  
-    , dataPtr_( 0 )
     , takeCareOfPersistenceManager_( true )
   {
     initialize( parameter );
@@ -275,10 +341,10 @@ public:
                 const TimeProviderBase& tp,
                 const CheckPointerParameters& parameter = CheckPointerParameters() )
     : BaseType(grid, *( new OutPutDataType () ), tp, parameter )  
+    , persistentGridObject_( new PersistentGridObjectType( grid_ ) ) 
     , checkPointStep_( parameter.checkPointStep() )
     , maxCheckPointNumber_( parameter.maxNumberOfCheckPoints() )
     , myRank_( grid.comm().rank() )  
-    , dataPtr_( &data_ )
     , takeCareOfPersistenceManager_( true )
   {
     initialize( parameter );
@@ -286,11 +352,9 @@ public:
 
   ~CheckPointer() 
   {
-    if( dataPtr_ ) 
-    {
-      delete dataPtr_;
-      dataPtr_ = 0;
-    }
+    // remove persistent grid object from PersistenceManager
+    delete persistentGridObject_;
+    persistentGridObject_ = 0;
   }
 
 protected:  
@@ -330,10 +394,10 @@ protected:
                const bool takeCareOfPersistenceManager = true,
                const int writeStep = 0 )
     : BaseType(grid, data, CheckPointerParameters( checkFile == 0 ) ) // checkFile != 0 means read mode 
+    , persistentGridObject_( 0 ) // do not create a persistent object here, since we are in read mode
     , checkPointStep_( 0 )
     , maxCheckPointNumber_( writeStep + 1 )
     , myRank_( myRank )  
-    , dataPtr_( 0 )
     , takeCareOfPersistenceManager_( takeCareOfPersistenceManager )
   {
     // output format can oinly be binary
@@ -383,10 +447,12 @@ public:
     \return Pointer to restored grid instance 
   */
   static GridType* restoreGrid(const std::string checkFile,
-                               const int givenRank = -1 )
+                               const int givenRank = -1,
+                               const CheckPointerParameters& parameter = CheckPointerParameters() )
   {
+
     const int rank = ( givenRank < 0 ) ? MPIManager :: rank() : givenRank ;
-    std::string datapref( CheckPointerParameters::checkPointPrefix() );
+    std::string datapref( parameter.checkPointPrefix() );
     std::string path;
 
     const bool verbose = (rank == 0);
@@ -401,7 +467,7 @@ public:
       std::string checkPointFile = path;
       // try out default checkpoint file 
       checkPointFile += "/"; 
-      checkPointFile += CheckPointerParameters :: checkPointPrefix(); 
+      checkPointFile += parameter.checkPointPrefix(); 
       readParameter(checkPointFile,"LastCheckPoint",checkPointNumber, verbose);
     }
     else
@@ -413,9 +479,9 @@ public:
       }
     }
 
-    // now add timestamp and rank 
+    // now add timestamp (and rank) 
     path = IOInterface::createRecoverPath(
-        path, rank, datapref, checkPointNumber );
+        path, rank, datapref, checkPointNumber, parameter.separateRankPath() );
 
     // time is set during grid restore (not needed here)
     double time = 0.0; 
@@ -478,7 +544,7 @@ protected:
   {
     // now add timestamp and rank 
     std::string path = IOInterface::createRecoverPath(
-        path_, myRank_ , datapref_, writeStep_ );
+        path_, myRank_ , datapref_, writeStep_, separateRankPath_ );
 
     // if true also restore PersistenceManager 
     if( takeCareOfPersistenceManager_ ) 
@@ -496,11 +562,13 @@ protected:
     // restore persistent data 
     std::string path = restorePersistentData( );
 
+    typedef IOTuple< InputTuple > IOTupleType ;
+
     // restore user data 
-    if( tuple_size< InputTuple >::value > 0 )
+    if( IOTupleType :: length > 0 ) 
     {
       BinaryDataIO< GridType > dataio;
-      IOTuple< InputTuple >::restoreData( data, dataio, grid_, writeStep_, path , datapref_ );
+      IOTupleType :: restoreData( data, dataio, grid_, writeStep_, path , datapref_ );
     }
   }
 
@@ -540,7 +608,7 @@ public:
     if( writeStep_ >= maxCheckPointNumber_ ) writeStep_ = 0;
 
     // write data 
-    std::string path = this->writeMyBinaryData( time, writeStep_, data_ );
+    std::string path = writeMyBinaryData( time, writeStep_, data_ );
 
     // if true also backup PersistenceManager 
     if( takeCareOfPersistenceManager_ ) 
@@ -593,27 +661,8 @@ protected:
                         const int savestep ) const 
   {   
     // write some needed informantion to current checkpoint file 
-    {
-      std::string filepref(path);
-      filepref += "/";
-      filepref += datapref_;
-
-      std::string filename = genFilename("",filepref,savestep);
-
-      std::ofstream file (filename.c_str());
-      if( file.is_open() )
-      {
-        file << "Time: "      << std::scientific << time << std::endl;
-        file << "SaveCount: " << savestep << std::endl;
-      }
-      else
-      {
-        std::cerr << "Couldn't open file `" << filename << "' ! " << std::endl;
-      }
-    }
-    
-    // only proc 0 writes global checkpoint file 
-    if( myRank_ <= 0)
+    // only proc 0 writes the global checkpoint file 
+    if( myRank_ <= 0 )
     {
       // write last checkpoint to filename named like the checkpoint files 
       // but with no extentions 
@@ -621,7 +670,9 @@ protected:
       if( file.is_open() )
       {
         file << "LastCheckPoint: " << savestep << std::endl;
+        file.precision( 16 );
         file << "Time: " << std::scientific << time << std::endl;
+        file << "SaveCount: " << savestep << std::endl;
         file << "PersistenceManager: " << takeCareOfPersistenceManager_ << std::endl;
         file << "NumberProcessors: " << grid_.comm().size() << std::endl;
         file << "# RecoverPath can be edited by hand if data has been moved!" << std::endl;

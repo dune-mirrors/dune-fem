@@ -8,13 +8,15 @@
 #include <dune/common/typetraits.hh>
 
 #include <dune/fem/io/streams/virtualstreams.hh>
+#include <dune/fem/io/streams/binarystreams.hh>
 #include <dune/fem/io/file/asciiparser.hh>
 #include <dune/fem/io/file/iointerface.hh>
 #include <dune/fem/io/parameter.hh>
 
 namespace Dune
 {
-  
+//  namespace Fem { 
+
 /** @addtogroup Checkpointing
  *  
  *  The Dune::PersistenceManager manages a list of persistent
@@ -137,6 +139,16 @@ namespace Dune
     template <class ObjectType,bool isPersistent>
     struct WrapObject;
 
+  public:  
+    // make backup and restore streams exchangeable 
+#ifdef FEM_PERSISTENCEMANAGERSTREAMTRAITS
+    typedef FEM_PERSISTENCEMANAGERSTREAMTRAITS :: BackupStreamType  BackupStreamType;
+    typedef FEM_PERSISTENCEMANAGERSTREAMTRAITS :: RestoreStreamType RestoreStreamType;
+#else 
+    typedef BinaryFileOutStream  BackupStreamType ;
+    typedef BinaryFileInStream   RestoreStreamType ;
+#endif
+
   private:
     typedef std::list< std::pair< PersistentObject *, unsigned int > > PersistentType;
     typedef PersistentType::iterator IteratorType;
@@ -147,17 +159,34 @@ namespace Dune
     std::ifstream inAsciStream_;
     std::ofstream outAsciStream_;
     bool closed_,invalid_;
+
+    BackupStreamType*  backupStream_; 
+    RestoreStreamType* restoreStream_;
     
     PersistenceManager ()
     : fileCounter_( 0 ),
       lineNo_(),
       path_(), 
       closed_( false ),
-      invalid_( false )
+      invalid_( false ),
+      backupStream_( 0 ),
+      restoreStream_( 0 )
     {}
 
     PersistenceManager ( const ThisType & );
     ThisType &operator= ( const ThisType & );
+
+    BackupStreamType& backupStreamObj () 
+    { 
+      assert( backupStream_ );
+      return *backupStream_ ;
+    }
+
+    RestoreStreamType& restoreStreamObj () 
+    { 
+      assert( restoreStream_ );
+      return *restoreStream_ ;
+    }
 
   public:
     template< class ObjectType >
@@ -229,7 +258,7 @@ namespace Dune
       for( IteratorType it = objects_.begin(); it != objects_.end(); ++it )
         it->first->backup();
 
-      closeAscii();
+      closeStreams();
     }
     
     void restoreObjects ( const std::string &path )
@@ -249,7 +278,7 @@ namespace Dune
       for( IteratorType it = objects_.begin(); it != objects_.end(); ++it )
         it->first->restore( );
 
-      closeAscii();
+      closeStreams();
     }
 
     std::string getUniqueFileName (const std::string& tag )
@@ -257,37 +286,28 @@ namespace Dune
       return genFilename( path_, tag, ++fileCounter_ );
     }
 
+    std::string getUniqueTag(const std::string& tag )
+    { 
+      return genFilename( "", tag, ++fileCounter_ );
+    }
+
     template< class T >
     void backup ( const std::string &token, const T &value )
     {
-      outAsciStream_ << token << ": " << value << std::endl;
+      backupStreamObj() << token;
+      backupStreamObj() << value;  
     }
 
     template< class T >
     void restore ( const std::string &token, T &value )
     {
-      std::string linestring;
-      int startLine=lineNo_;
-      bool found;
-      do { 
-        std::getline(inAsciStream_,linestring);
-        std::stringstream line(linestring);
-        /*
-        std::cout << "  " << lineNo_ 
-                  << " : " << linestring 
-                  << " , " << line << std::endl;
-        */
-        if (!(inAsciStream_)) {
-          std::cout << "Error in restore process! " 
-                    << "The token " << token << " was not found "
-                    << "in file " << path_+myTag() << " "
-                    << "after line number " << startLine
-                    << std::endl;
-          abort();
-        }
-        lineNo_++;
-        found = Dune::readParameter(line,token,value,false,false);
-      } while (!found);
+      std::string readToken ;
+      restoreStreamObj() >> readToken;
+      restoreStreamObj() >> value; 
+      if( token != readToken ) 
+      {
+        DUNE_THROW(InvalidStateException,"wrong object restored in PersistenceManager" << token << " " << readToken );
+      }
     }
 
   public:
@@ -295,6 +315,16 @@ namespace Dune
     {
       static PersistenceManager theInstance;
       return theInstance;
+    }
+
+    static BackupStreamType& backupStream() 
+    {
+      return instance ().backupStreamObj();
+    }
+
+    static RestoreStreamType& restoreStream() 
+    {
+      return instance ().restoreStreamObj();
     }
 
     static void insert ( PersistentObject &object )
@@ -322,6 +352,11 @@ namespace Dune
       return instance().getUniqueFileName( tag );
     }
 
+    static std::string uniqueTag(const std::string& tag = "" )
+    {
+      return instance().getUniqueTag( tag );
+    }
+
     template< class T >
     static void backupValue ( const std::string &token, const T &value )
     {
@@ -337,20 +372,35 @@ namespace Dune
   private:
     const char* myTag() const { return "persistentobjects"; }
 
+    // create filename for persistent objects 
+    std::string createFilename( const std::string& path, const int rank ) const 
+    {
+      std::stringstream s;
+      s << path << myTag() << "." << rank;
+      return s.str();
+    }
+
     void startBackup ( const std::string &path )
     {
       path_ = path + "/";
-      fileCounter_ = 0;
-      lineNo_ = 0;
 
       if( createDirectory( path_ ) )
       {
-        outAsciStream_.open((path_+ myTag()).c_str());  
-        outAsciStream_ << std::scientific;
-        outAsciStream_.precision(16);
-        outAsciStream_ << "Persistent Objects" << std::endl;
-        // write parameters 
-        Parameter::write( path_, "parameter", true );
+        const int rank = MPIManager :: rank() ;
+        std::string filename( createFilename( path_, rank ) );
+
+        assert( backupStream_ == 0 );
+        backupStream_ = new BackupStreamType( filename );
+
+        if( rank == 0 ) 
+        {
+          std::ofstream paramfile( (path_ + "parameter").c_str() );
+          if( paramfile ) 
+          {
+            // write parameters on rank 0
+            Parameter::write( paramfile, true );
+          }
+        }
       }
       else
         std::cerr << "Error: Unable to create '" << path_ << "'" << std::endl;
@@ -358,32 +408,40 @@ namespace Dune
 
     void startRestore ( const std::string &path )
     {
-      path_=path + "/";
-      fileCounter_ = 0;
-      lineNo_ = 0;
-      inAsciStream_.open((path_+myTag()).c_str());  
-      if (!inAsciStream_) {
+      path_ = path + "/";
+      const int rank = MPIManager :: rank();
+      std::string filename( createFilename( path_, rank ) );
+      assert( restoreStream_ == 0 );
+      restoreStream_ = new RestoreStreamType( filename );
+
+      std::cout << "Restore from " << filename << std::endl;
+
+      if( ! restoreStream_ ) 
+      {
         std::cout << "Error opening global stream: " << path_+myTag()
                   << std::endl;
         abort();
       }
-      std::string tmp;
-      inAsciStream_ >> tmp;
-      std::cout << tmp << " ";
-      inAsciStream_ >> tmp;
-      std::cout << tmp << " ";
-      std::cout << std::endl;
 
+      // restore parameter 
       Parameter::clear();
-      Parameter::append(path_+"parameter");
+      Parameter::append(path_ + "parameter");
     }
 
-    void closeAscii ()
+    void closeStreams ()
     {
-      if( outAsciStream_.is_open() )
-        outAsciStream_.close();
-      if( inAsciStream_.is_open() )
-        inAsciStream_.close();
+      if( backupStream_ ) 
+      {
+        backupStream_->flush();
+        delete backupStream_;
+        backupStream_ = 0;
+      }
+
+      if( restoreStream_ ) 
+      {
+        delete restoreStream_; 
+        restoreStream_ = 0;
+      }
     }
   };
   
@@ -442,12 +500,12 @@ namespace Dune
     
     virtual void backup () const
     {
-      PersistenceManager::backupValue( "_token"+PersistenceManager::uniqueFileName(), obj_ );
+      PersistenceManager::backupValue( "_token"+PersistenceManager::uniqueTag(), obj_ );
     }
     
     virtual void restore ()
     {
-      PersistenceManager::restoreValue( "_token"+PersistenceManager::uniqueFileName(), obj_ );
+      PersistenceManager::restoreValue( "_token"+PersistenceManager::uniqueTag(), obj_ );
     }
     
   protected:
@@ -492,6 +550,8 @@ namespace Dune
     }
   };
 
-}
+//  } // end namespace Fem 
+
+} // end namespace Dune 
 
 #endif // #ifndef DUNE_FEM_PERSISTENCEMANAGER_HH

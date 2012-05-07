@@ -244,27 +244,20 @@ namespace Dune
     /** \copydoc Dune::PersistentObject :: backup */
     virtual void backup() const 
     {
-      std::string filename ( PersistenceManager :: uniqueFileName ( "indexset" ) );
-#ifndef NDEBUG 
-      bool success = 
-#endif
-        write_xdr( filename );
-      assert( success );
+      // write data to backup stream of persistence manager 
+      asImp().write( PersistenceManager :: backupStream() );
     }
 
     /** \copydoc Dune::PersistentObject :: restore */
     virtual void restore() 
     {
-      std::string filename ( PersistenceManager :: uniqueFileName ( "indexset" ) );
-#ifndef NDEBUG 
-      bool success = 
-#endif
-        read_xdr( filename );
-      assert( success );
+      // read data from restore stream of persistence manager 
+      asImp().read( PersistenceManager :: restoreStream() );
     }
 
     //! write index set to file 
     virtual bool write_xdr( const std::string & ) const { return false; }
+
     //! read index set from file 
     virtual bool read_xdr( const std::string & ) { return false; }
 
