@@ -281,7 +281,8 @@ public:
   static std::string createPath(const CommunicatorType& comm,
           const std::string& pathPrefix, 
           const std::string& dataPrefix,
-          const int step)
+          const int step,
+          const bool alsoCreateRankPath = true )
   {
     // first proc creates directory 
     std::string filename(pathPrefix);
@@ -292,15 +293,19 @@ public:
     // create global path 
     createGlobalPath( comm, path );
     
-    // append path with p for proc 
-    path += "/p";
+    // also create path for each rank 
+    if( alsoCreateRankPath ) 
+    {
+      // append path with p for proc 
+      path += "/p";
 
-    // create path if not exists 
-    path = createPathName( path, comm.rank() );
-    
-    // create path if not exits 
-    if( !createDirectory( path ) )
-      std::cerr << "Failed to create path `" << path << "'." << std::endl;
+      // create path if not exists 
+      path = createPathName( path, comm.rank() );
+      
+      // create path if not exits 
+      if( !createDirectory( path ) )
+        std::cerr << "Failed to create path `" << path << "'." << std::endl;
+    }
     return path;
   }
   
@@ -309,7 +314,8 @@ public:
           const std::string& pathPrefix, 
           const int rank,
           const std::string& dataPrefix,
-          const int step)
+          const int step,
+          const bool alsoUseRankPath = true )
   {
     // first proc creates directory 
     std::string filename(pathPrefix);
@@ -317,11 +323,16 @@ public:
     filename += dataPrefix;
     std::string path = genFilename("",filename,step);
 
-    // append path with p for proc 
-    path += "/p";
+    if( alsoUseRankPath ) 
+    {
+      // append path with p for proc 
+      path += "/p";
 
-    // create proc dir 
-    return createPathName( path , rank );
+      // create proc dir 
+      return createPathName( path , rank );
+    }
+    else 
+      return path;
   }
 
   //! if grid is structured grid, write macro file 
