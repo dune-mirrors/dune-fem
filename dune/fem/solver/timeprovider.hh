@@ -304,6 +304,16 @@ namespace Dune
   protected:
     typedef CollectiveCommunicationHelper< CollectiveCommunicationType >
       CollectiveCommHelperType;
+
+    double getCflFactor() const 
+    {
+      return Parameter::getValidValue( "fem.timeprovider.factor", (double)1.0, ValidateGreater< double >( 0.0 ) );
+    }
+    
+    int getUpdateStep () const 
+    {
+      return Parameter::getValidValue( "fem.timeprovider.updatestep", (int)1, ValidateGreater< int >( 0 ) );
+    }
     
   public:
     /** \brief default constructor
@@ -315,8 +325,8 @@ namespace Dune
                      = CollectiveCommHelperType::defaultCommunication() )
     : BaseType(),
       comm_( comm ),
-      cfl_( Parameter::getValidValue( "fem.timeprovider.factor", (double)1.0, ValidateGreater< double >( 0.0 ) ) ),
-      updateStep_( Parameter::getValidValue( "fem.timeprovider.updatestep", (int)1, ValidateGreater< int >( 0 ) ) ),
+      cfl_( getCflFactor() ),
+      updateStep_( getUpdateStep() ),
       counter_( updateStep_ )
     {}
 
@@ -332,8 +342,8 @@ namespace Dune
                      = CollectiveCommHelperType::defaultCommunication() )
     : BaseType( startTime ),
       comm_( comm ),
-      cfl_( Parameter::getValidValue( "fem.timeprovider.factor", (double)1.0, ValidateGreater< double >( 0.0 ) ) ),
-      updateStep_( Parameter::getValidValue( "fem.timeprovider.updatestep", (int)1, ValidateGreater< int >( 0 ) ) ),
+      cfl_( getCflFactor() ),
+      updateStep_( getUpdateStep() ),
       counter_( updateStep_ )
     {}
     
@@ -454,8 +464,7 @@ namespace Dune
     virtual void restore ()
     {
       BaseType::restore();
-      const_cast< double & >( cfl_ ) 
-        =  Parameter::getValidValue<double>( "fem.timeprovider.factor", ValidateGreater< double >( 0.0 ) );
+      const_cast< double & >( cfl_ ) = getCflFactor();
     }
 
   protected:
