@@ -133,8 +133,8 @@ namespace Dune
     template< int N > struct AddToDisplayOrRemove;
     template< int N > struct RemoveData;
 
+  public:  
     static const int length = tuple_size< Tuple >::value;
-
 
   public:
     typedef Tuple ReturnType ;
@@ -236,6 +236,19 @@ namespace Dune
       ForLoop< Output, 0, length-1 >::apply( dataio, dname, n, tuple );
     }
     
+    //! write grid and data to given out stream 
+    template< class StreamTraits, class GridType >
+    static void output ( OutStreamInterface< StreamTraits >& out, 
+                         GridType &grid,
+                         const Tuple &tuple )
+    {
+      // write grid to stream 
+      grid.write( out );
+
+      // write data
+      ForLoop< Output, 0, length-1 >::apply( out, tuple );
+    }
+    
     template< class Disp, class DINFO >
     static void addToDisplay ( Disp &disp, const DINFO *dinf, double time, Tuple &tuple )
     {
@@ -330,6 +343,18 @@ namespace Dune
         dataio.writeData( *df, xdr, dataname.str(), n );
       }
     }
+
+    //! apply function writing to stream 
+    template< class StreamTraits >
+    static void apply ( OutStreamInterface< StreamTraits > &outStream, const Tuple &tuple )
+    {
+      const DiscreteFunction *df = get< N >( tuple );
+      // if pointer is valid: write function to stream 
+      if( df ) 
+      {
+        df->write( outStream );
+      }
+    }
   };
 
   template< class Tuple >
@@ -410,6 +435,8 @@ namespace Dune
     typedef tuple<> Tuple;
 
   public:
+    static const int length = 0;
+
     template <class DataIO,class GridType>
     static Tuple *input ( DataIO &dataio, GridType *&grid, double &t, int n,
                           const std::string &path, const std::string &name )
@@ -423,9 +450,6 @@ namespace Dune
         grid = IOTupleBase::restoreGrid(dataio,t,n,path,name);
       }
       
-      std::string dname( dataName(path,name) );
-      std::cout << "Reading data from " << dname << std::endl;
-
       // create all data
       Tuple *ret = new Tuple;
 
@@ -490,11 +514,6 @@ namespace Dune
     {
       // write grid first 
       writeGrid( dataio, grid, t, n, path, name );
-
-      std::string dname( dataName(path, name ) );
-
-      if( Parameter::verbose() ) 
-        std::cout << "Writing data to " << dname << std::endl;
     }
     
     template< class Disp, class DINFO >
