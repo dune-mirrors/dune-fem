@@ -173,10 +173,30 @@ public:
      const GrapeIOFileFormatType ftype, const std::string filename, 
       int timestep, int precision = 6);
 
+  /**
+    Write data file header   
+  */ 
+  //! write disc func information file and write dofs to file+timestep
+  //! this method use the write method of the implementation of the
+  //! discrete function
+  template <class StreamType, class DiscreteFunctionType>
+  inline void writeDataHeader(StreamType& out, 
+                              const DiscreteFunctionType & df,
+                              const GrapeIOFileFormatType ftype,
+                              const int multipleFiles,
+                              const int precision = 6 ) const;
+
+  //! check header of data file 
+  template <class DiscreteFunctionType>
+  inline bool checkDataHeader(const DiscreteFunctionType & df,
+                              const std::string& filename, 
+                              GrapeIOFileFormatType& ftype,
+                              int& precision, int& multipleFiles ) const;
+
   //! same as write only read
   template <class DiscreteFunctionType>
   inline bool readData(DiscreteFunctionType & df,
-        const std::string filename, int timestep);
+                       const std::string filename, int timestep);
 };
 
 
@@ -453,6 +473,40 @@ BinaryDataIOImp< dim, dimworld, GridImp, false >
 }
 /** \endcond */
 
+template <class GridType>
+template <class StreamType, class DiscreteFunctionType> 
+inline void BinaryDataIO<GridType> :: 
+writeDataHeader( StreamType& file, 
+                 const DiscreteFunctionType & df, 
+                 const GrapeIOFileFormatType ftype,
+                 const int multipleFiles,
+                 const int precision ) const
+{
+  typedef typename DiscreteFunctionType::FunctionSpaceType DiscreteFunctionSpaceType;
+  typedef typename DiscreteFunctionSpaceType::DomainFieldType DomainFieldType;
+  typedef typename DiscreteFunctionSpaceType::RangeFieldType RangeFieldType;
+
+  enum { n = DiscreteFunctionSpaceType::dimDomain };
+  enum { m = DiscreteFunctionSpaceType::dimRange };
+
+  std::string d = typeIdentifier<DomainFieldType>();
+  std::string r = typeIdentifier<RangeFieldType>();
+
+  file << "DUNE-FEM-Version-Id: " << DUNE_MODULE_VERSION_ID(DUNE_FEM) << std::endl;
+  file << "DomainField: " << d << std::endl;
+  file << "RangeField: " << r << std::endl;
+  file << "Dim_Domain: " << n << std::endl;
+  file << "Dim_Range: " << m << std::endl;
+  file << "Space: " << df.space().type() << std::endl;
+  file << "IndexSet: " << indexSetToName(df.space().indexSet()) << std::endl;
+  file << "Format: " << ftype << std::endl;
+  file << "Precision: " << precision << std::endl;
+  file << "Polynom_order: " << df.space().order() << std::endl;
+  file << "DataBase: " << df.name() << std::endl;
+  file << "MultipleFiles: " << multipleFiles << std::endl;
+  // write character code for end of ascii header 
+  file << endAsciiHeader ; 
+}
 
 template <class GridType>
 template <class DiscreteFunctionType> 
@@ -462,35 +516,10 @@ const GrapeIOFileFormatType ftype, const std::string filename, int timestep, int
   const int multipleFiles = Parameter :: getValue< int > ("fem.io.multiplefiles", 0 );
 
   {
-    typedef typename DiscreteFunctionType::FunctionSpaceType DiscreteFunctionSpaceType;
-    typedef typename DiscreteFunctionSpaceType::DomainFieldType DomainFieldType;
-    typedef typename DiscreteFunctionSpaceType::RangeFieldType RangeFieldType;
-
-    enum { n = DiscreteFunctionSpaceType::dimDomain };
-    enum { m = DiscreteFunctionSpaceType::dimRange };
-
     std::ofstream file( filename.c_str() );
-
     if( file.is_open() )
     {
-      std::string d = typeIdentifier<DomainFieldType>();
-      std::string r = typeIdentifier<RangeFieldType>();
-
-      file << "DUNE-FEM-Version-Id: " << DUNE_MODULE_VERSION_ID(DUNE_FEM) << std::endl;
-      file << "DomainField: " << d << std::endl;
-      file << "RangeField: " << r << std::endl;
-      file << "Dim_Domain: " << n << std::endl;
-      file << "Dim_Range: " << m << std::endl;
-      file << "Space: " << df.space().type() << std::endl;
-      file << "IndexSet: " << indexSetToName(df.space().indexSet()) << std::endl;
-      file << "Format: " << ftype << std::endl;
-      file << "Precision: " << precision << std::endl;
-      file << "Polynom_order: " << df.space().order() << std::endl;
-      file << "DataBase: " << df.name() << std::endl;
-      file << "MultipleFiles: " << multipleFiles << std::endl;
-      // write character code for end of ascii header 
-      file << endAsciiHeader ; 
-      file.close();
+      writeDataHeader( file, df, ftype, multipleFiles, precision );
     }
     else 
     {
@@ -500,7 +529,7 @@ const GrapeIOFileFormatType ftype, const std::string filename, int timestep, int
   }
 
   // for single file use XDR streams
-  if( ! multipleFiles ) 
+  if( multipleFiles == 0 ) 
   {
     // create xdr stream 
     const bool append = true ;
@@ -528,7 +557,10 @@ const GrapeIOFileFormatType ftype, const std::string filename, int timestep, int
 template <class GridType>
 template <class DiscreteFunctionType> 
 inline bool BinaryDataIO<GridType> :: 
-readData(DiscreteFunctionType & df, const std::string filename, int timestep)
+checkDataHeader(const DiscreteFunctionType & df, 
+                const std::string& filename, 
+                GrapeIOFileFormatType& ftype,
+                int& precision, int& multipleFiles ) const
 {
   typedef typename DiscreteFunctionType::DiscreteFunctionSpaceType DiscreteFunctionSpaceType;
   typedef typename DiscreteFunctionSpaceType::DomainFieldType DomainFieldType;
@@ -541,13 +573,6 @@ readData(DiscreteFunctionType & df, const std::string filename, int timestep)
   std::string r,d;
   std::string tr (typeIdentifier<RangeFieldType>());
   std::string td (typeIdentifier<DomainFieldType>());
-
-  std::ifstream check ( filename.c_str() );
-  if( !check )
-  {
-    std::cerr << "WARNING: Couldn't open file `"<< filename << "'! \n";
-    return false;
-  }
 
   unsigned int versionId = 0;
   readParameter(filename,"DUNE-FEM-Version-Id",versionId,false);
@@ -590,8 +615,7 @@ readData(DiscreteFunctionType & df, const std::string filename, int timestep)
   
   int filetype;
   readParameter(filename,"Format",filetype,false);
-  GrapeIOFileFormatType ftype = static_cast<GrapeIOFileFormatType> (filetype);
-  int precision;
+  ftype = static_cast<GrapeIOFileFormatType> (filetype);
   readParameter(filename,"Precision",precision,false);
 
   if((d != td) || (r != tr) || (n != tn) || (m != tm) )
@@ -604,10 +628,30 @@ readData(DiscreteFunctionType & df, const std::string filename, int timestep)
     abort();
   }
 
-  int multipleFiles = 0;
   readParameter(filename,"MultipleFiles",multipleFiles,false);
 
-  if( multipleFiles != 0 )
+  return true ;
+}
+
+template <class GridType>
+template <class DiscreteFunctionType> 
+inline bool BinaryDataIO<GridType> :: 
+readData(DiscreteFunctionType & df, const std::string filename, int timestep)
+{
+  std::ifstream check ( filename.c_str() );
+  if( !check )
+  {
+    std::cerr << "WARNING: Couldn't open file `"<< filename << "'! \n";
+    return false;
+  }
+
+  GrapeIOFileFormatType ftype = xdr ;
+  int precision = 6 ;
+  int multipleFiles = 0 ;
+
+  checkDataHeader( df, filename, ftype, precision, multipleFiles );
+
+  if( multipleFiles == 0 )
   {
     std::ifstream posSeek ( filename.c_str() );
 
