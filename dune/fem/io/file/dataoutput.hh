@@ -674,7 +674,11 @@ namespace Dune
     if( writeMode ) 
       IOInterface :: createGlobalPath ( grid_.comm(), Parameter::commonOutputPath() );
 
-    path_ = Parameter::commonOutputPath()+"/"+parameter.path();
+    path_ = Parameter::commonOutputPath() + "/";
+
+    std::string paramPath = parameter.path();
+    if( paramPath != "./" ) 
+      path_ += paramPath;
 
     if( writeMode ) 
     {
