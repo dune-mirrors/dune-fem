@@ -81,6 +81,9 @@ namespace Dune
         writeChar( ByteOrder :: order );
       }
 
+      /** return reference to internal ostream */
+      std::ostream& stream() { return stream_; }
+
       /** \copydoc Dune::OutStreamInterface::flush */
       void flush ()
       {
@@ -206,6 +209,9 @@ namespace Dune
         // read byte order of stream 
         readChar( storedOrder_ );
       }
+
+      /** return reference to internal ostream */
+      std::istream& stream() { return stream_; }
 
       /** \copydoc Dune::InStreamInterface::readDouble */
       void readDouble ( double &value )
