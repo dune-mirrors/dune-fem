@@ -190,7 +190,7 @@ namespace Dune
 
   public:
     template< class ObjectType >
-    void insertObject( ObjectType &object )
+    void insertObject( ObjectType &object, const bool pushFront = false  )
     {
       IteratorType end = objects_.end();
       for( IteratorType it = objects_.begin(); it != end; ++it )
@@ -211,9 +211,14 @@ namespace Dune
       PersistentObject *obj = 
         WrapObject< ObjectType, IsPersistent< ObjectType > :: value >
         :: apply( object );
+
       // insert possible sub data 
       obj->insertSubData();
-      objects_.push_back( std :: make_pair( obj, 1 ) );
+
+      if( pushFront ) 
+        objects_.push_front( std :: make_pair( obj, 1 ) );
+      else 
+        objects_.push_back( std :: make_pair( obj, 1 ) );
     }
 
     template< class ObjectType >
@@ -271,8 +276,8 @@ namespace Dune
         #endif
         return;
       }
-      closed_=true;
-      startRestore(path);
+      closed_ = true;
+      startRestoreImpl( path );
       typedef PersistentType :: iterator IteratorType;
 
       for( IteratorType it = objects_.begin(); it != objects_.end(); ++it )
@@ -327,9 +332,9 @@ namespace Dune
       return instance ().restoreStreamObj();
     }
 
-    static void insert ( PersistentObject &object )
+    static void insert ( PersistentObject &object, const bool pushFront = false )
     {
-      instance().insertObject( object );
+      instance().insertObject( object, pushFront );
     }
 
     static void remove ( PersistentObject &object )
@@ -345,6 +350,11 @@ namespace Dune
     static void restore ( const std::string& path )
     {
       instance().restoreObjects( path );
+    }
+
+    static void startRestore ( const std::string& path )
+    {
+      instance().startRestoreImpl( path );
     }
 
     static std::string uniqueFileName(const std::string& tag = "" )
@@ -406,26 +416,28 @@ namespace Dune
         std::cerr << "Error: Unable to create '" << path_ << "'" << std::endl;
     }
 
-    void startRestore ( const std::string &path )
+    void startRestoreImpl ( const std::string &path )
     {
-      path_ = path + "/";
-      const int rank = MPIManager :: rank();
-      std::string filename( createFilename( path_, rank ) );
-      assert( restoreStream_ == 0 );
-      restoreStream_ = new RestoreStreamType( filename );
-
-      std::cout << "Restore from " << filename << std::endl;
-
-      if( ! restoreStream_ ) 
+      if( restoreStream_ == 0 ) 
       {
-        std::cout << "Error opening global stream: " << path_+myTag()
-                  << std::endl;
-        abort();
-      }
+        path_ = path + "/";
+        const int rank = MPIManager :: rank();
+        std::string filename( createFilename( path_, rank ) );
+        restoreStream_ = new RestoreStreamType( filename );
 
-      // restore parameter 
-      Parameter::clear();
-      Parameter::append(path_ + "parameter");
+        std::cout << "Restore from " << filename << std::endl;
+
+        if( ! restoreStream_ ) 
+        {
+          std::cout << "Error opening global stream: " << path_+myTag()
+                    << std::endl;
+          abort();
+        }
+
+        // restore parameter 
+        Parameter::clear();
+        Parameter::append(path_ + "parameter");
+      }
     }
 
     void closeStreams ()
