@@ -14,6 +14,7 @@
 #include <dune/fem/io/file/persistencemanager.hh>
 #include <dune/fem/io/file/dataoutput.hh>
 #include <dune/fem/misc/gridname.hh>
+#include <dune/grid/common/backuprestore.hh>
 
 #if USE_GRAPE
 #include <dune/grid/io/visual/grapedatadisplay.hh>
@@ -135,7 +136,7 @@ protected:
     typedef IOTuple< OutputTuple > IOTupleType ;
 
     // if data is given, use BinaryDataIO to write it 
-    //if( IOTupleType :: length > 0 ) 
+    if( IOTupleType :: length > 0 ) 
     {
       // for structured grids copy grid
       IOInterface::copyMacroGrid( grid_, macroGrid_.str(), path_, timeStepPath, datapref_ );
@@ -246,7 +247,7 @@ protected:
 
   //! call appropriate backup and restore methods on the grid class 
   template < int dummy >  
-  struct GridPersistentObject< dummy, true > : public AutoPersistentObject 
+  struct GridPersistentObject< dummy, true > : public PersistentObject 
   {
     const GridType& grid_ ;
     const std::string name_;
@@ -254,25 +255,36 @@ protected:
     //! constructor storing grid 
     GridPersistentObject( const GridType& grid ) 
       : grid_( grid ),
-        name_( Fem :: gridName( grid_ ) ) 
+        name_( Fem :: gridName( grid_ ) )
     {
+      // we nned to push the grid at the front position of the PersistenceManager list 
+      const bool pushFront = true ;
+      // add grid at first position 
+      PersistenceManager::insert( *this, pushFront );
     }
+
+    //! destructor removing grid object 
+    ~GridPersistentObject() { PersistenceManager::remove( *this ); }
 
     //! backup grid 
     virtual void backup() const 
     {
-      std::string filename( PersistenceManager :: uniqueFileName( name_ ) );
-      double time = 0;
-      grid_.template writeGrid<xdr>  (filename, time);
+      try 
+      { 
+        std::ostream& stream = PersistenceManager :: backupStream().stream();
+        Dune::BackupRestoreFacility< GridType > :: backup( grid_, stream );
+      } 
+      catch ( Dune :: BackupRestoreStreamsMissing ) 
+      {
+        std::string filename( PersistenceManager :: uniqueFileName( name_ ) );
+        Dune::BackupRestoreFacility< GridType > :: backup( grid_, filename, "" ); 
+      }
     }
 
     //! restore grid 
     virtual void restore () 
     {
-      std::string filename( PersistenceManager :: uniqueFileName( name_ ) );
-      double time;
-      GridType& grid = const_cast< GridType & > (grid_);
-      grid.template readGrid<xdr> (filename,time);  
+      // restore is done below in method restoreGrid 
     } 
   };
 
@@ -450,7 +462,6 @@ public:
                                const int givenRank = -1,
                                const CheckPointerParameters& parameter = CheckPointerParameters() )
   {
-
     const int rank = ( givenRank < 0 ) ? MPIManager :: rank() : givenRank ;
     std::string datapref( parameter.checkPointPrefix() );
     std::string path;
@@ -483,12 +494,27 @@ public:
     path = IOInterface::createRecoverPath(
         path, rank, datapref, checkPointNumber, parameter.separateRankPath() );
 
-    // time is set during grid restore (not needed here)
-    double time = 0.0; 
+    // initialize PersistenceManager 
+    PersistenceManager :: startRestore ( path ); 
 
-    BinaryDataIO<GridType> dataio;
-    GridType* grid = IOTupleBase::restoreGrid(dataio, time, checkPointNumber, path, datapref);
-    assert( grid );
+    GridType* grid = 0;
+    try 
+    {
+      std::istream& stream = PersistenceManager :: restoreStream().stream();
+      grid = Dune::BackupRestoreFacility< GridType > :: restore( stream );
+    }
+    catch ( Dune :: BackupRestoreStreamsMissing ) 
+    {
+      std::string name ( Fem :: gridName( *grid ) );
+      std::string filename( PersistenceManager :: uniqueFileName( name ) );
+      grid = Dune::BackupRestoreFacility< GridType > :: restore( filename, "" ); 
+    }
+
+    if( grid == 0 ) 
+    {
+      DUNE_THROW(InvalidStateException,"Could not recover grid");
+    }
+
     return grid;
   }
 
