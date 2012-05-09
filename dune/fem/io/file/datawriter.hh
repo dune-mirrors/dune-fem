@@ -257,7 +257,9 @@ protected:
       : grid_( grid ),
         name_( Fem :: gridName( grid_ ) )
     {
-      // we nned to push the grid at the front position of the PersistenceManager list 
+      // we need to push the grid at the 
+      // front position of the PersistenceManager list 
+      // since we have to read it first on restore
       const bool pushFront = true ;
       // add grid at first position 
       PersistenceManager::insert( *this, pushFront );
@@ -274,7 +276,7 @@ protected:
         std::ostream& stream = PersistenceManager :: backupStream().stream();
         Dune::BackupRestoreFacility< GridType > :: backup( grid_, stream );
       } 
-      catch ( Dune :: BackupRestoreStreamsMissing ) 
+      catch ( Dune :: NotImplemented ) 
       {
         std::string filename( PersistenceManager :: uniqueFileName( name_ ) );
         Dune::BackupRestoreFacility< GridType > :: backup( grid_, filename, "" ); 
@@ -503,7 +505,7 @@ public:
       std::istream& stream = PersistenceManager :: restoreStream().stream();
       grid = Dune::BackupRestoreFacility< GridType > :: restore( stream );
     }
-    catch ( Dune :: BackupRestoreStreamsMissing ) 
+    catch ( Dune :: NotImplemented ) 
     {
       std::string name ( Fem :: gridName( *grid ) );
       std::string filename( PersistenceManager :: uniqueFileName( name ) );
