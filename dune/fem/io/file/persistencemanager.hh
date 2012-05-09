@@ -200,14 +200,19 @@ namespace Dune
         ++it->second;
         return;
       }
-      if (closed_) {
-        #ifndef NDEBUG 
+
+      // for objects like the grid 
+      // we need to allow to add this later 
+      if ( closed_ && ! pushFront ) 
+      {
+#ifndef NDEBUG 
         std::cerr << "WARNING: new object added to PersistenceManager "
                   << "although backup/restore has been called - "
                   << "Object will be ignored!" << std::endl;
-        #endif
+#endif
         return;
       }
+
       PersistentObject *obj = 
         WrapObject< ObjectType, IsPersistent< ObjectType > :: value >
         :: apply( object );
