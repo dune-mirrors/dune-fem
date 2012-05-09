@@ -195,7 +195,6 @@ namespace Dune
       typedef ALU3DSPACE ObjectStream BaseType ;
       using BaseType :: _buf ;
       using BaseType :: operator =;
-      using BaseType :: write2Stream ;
 #else 
       DataObjectStream () 
       {
@@ -209,8 +208,6 @@ namespace Dune
       {
         return *this;
       }
-
-      void write2Stream(const char * buff, const size_t length ) {}
 #endif
       // return pointer to buffer 
       char* buffer () { return _buf; }

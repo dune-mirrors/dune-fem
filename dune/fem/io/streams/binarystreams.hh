@@ -2,7 +2,10 @@
 #define DUNE_FEM_BINARYSTREAMS_HH
 
 #include <fstream>
-#include <endian.h>
+
+#ifdef SYSTEM_ENDIAN_HEADER 
+#include SYSTEM_ENDIAN_HEADER
+#endif
 
 #include <dune/fem/io/streams/streams.hh>
 
@@ -13,11 +16,14 @@ namespace Dune
   {
     struct ByteOrder 
     {
+      static const char defaultEndian = 0;
       static const char order = 
 #if __BYTE_ORDER == __LITTLE_ENDIAN
           0 ;
 #elif __BYTE_ORDER == __BIG_ENDIAN
           1 ;
+#else 
+          0 ; // default is zero (in case no endian header was found)
 #endif 
 
       static inline size_t map( const char storedOrder, 
