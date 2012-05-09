@@ -238,16 +238,8 @@ protected:
   //! used grid type 
   typedef GridImp GridType;
 
-  //! if no backup and restore facility is available, do nothing
-  template < int, bool hasBackupRestore>  
-  struct GridPersistentObject 
-  {
-    GridPersistentObject( const GridType& ) {}
-  };
-
   //! call appropriate backup and restore methods on the grid class 
-  template < int dummy >  
-  struct GridPersistentObject< dummy, true > : public PersistentObject 
+  struct GridPersistentObject : public PersistentObject 
   {
     const GridType& grid_ ;
     const std::string name_;
@@ -271,6 +263,7 @@ protected:
     //! backup grid 
     virtual void backup() const 
     {
+      // try backup using stream method first 
       try 
       { 
         std::ostream& stream = PersistenceManager :: backupStream().stream();
@@ -278,8 +271,20 @@ protected:
       } 
       catch ( Dune :: NotImplemented ) 
       {
-        std::string filename( PersistenceManager :: uniqueFileName( name_ ) );
-        Dune::BackupRestoreFacility< GridType > :: backup( grid_, filename, "" ); 
+#ifndef NDEBUG
+        if( Parameter :: verbose () )
+          std::cerr << "GridPersistentObject::backup: cannot use stream backup." << std::endl;
+#endif
+
+        // try method given a filename 
+        try {
+          std::string filename( PersistenceManager :: uniqueFileName( name_ ) );
+          Dune::BackupRestoreFacility< GridType > :: backup( grid_, filename, "" ); 
+        }
+        catch ( Dune :: NotImplemented )
+        {
+          std::cerr << "ERROR: GridPersistentObject::backup: not possible!" << std::endl;
+        }
       }
     }
 
@@ -312,7 +317,7 @@ protected:
   //! used data tuple 
   typedef DataImp OutPutDataType; 
 
-  typedef GridPersistentObject< 0, Capabilities :: hasBackupRestoreFacilities< GridType > :: v > PersistentGridObjectType;
+  typedef GridPersistentObject PersistentGridObjectType;
   PersistentGridObjectType* persistentGridObject_ ;
 
   const int checkPointStep_;
@@ -507,9 +512,19 @@ public:
     }
     catch ( Dune :: NotImplemented ) 
     {
-      std::string name ( Fem :: gridName( *grid ) );
-      std::string filename( PersistenceManager :: uniqueFileName( name ) );
-      grid = Dune::BackupRestoreFacility< GridType > :: restore( filename, "" ); 
+#ifndef NDEBUG
+      if( Parameter :: verbose () )
+        std::cerr << "GridPersistentObject::restore: cannot use stream restore." << std::endl;
+#endif
+      try {
+        std::string name ( Fem :: gridName( *grid ) );
+        std::string filename( PersistenceManager :: uniqueFileName( name ) );
+        grid = Dune::BackupRestoreFacility< GridType > :: restore( filename, "" ); 
+      }
+      catch ( Dune :: NotImplemented )
+      {
+        std::cerr << "ERROR: GridPersistentObject::restore: not possible!" << std::endl;
+      }
     }
 
     if( grid == 0 ) 
