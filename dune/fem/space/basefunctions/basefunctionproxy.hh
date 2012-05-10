@@ -57,27 +57,6 @@ namespace Dune
     : baseSet_( baseSet ) 
     {}
 
-#if 0
-    //! Constructor creating empty local function 
-    SimpleBaseFunctionProxy( const ThisType& org )
-    : baseSet_( org.baseSet_ )
-    {}
-
-    //! asignment operator 
-    SimpleBaseFunctionProxy &operator= ( const ThisType& org )
-    {
-      baseSet_ = org.baseSet_; 
-      return *this;
-    }
-
-    //! destructor 
-    ~SimpleBaseFunctionProxy() 
-    { 
-      // unset pointer to be sure its gone 
-      baseSet_ = 0;
-    }
-#endif
-
     /** \copydoc Dune::BaseFunctionSetInterface::numBaseFunctions */
     size_t size () const
     {
