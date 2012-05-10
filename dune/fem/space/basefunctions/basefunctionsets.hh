@@ -10,10 +10,6 @@
 
 #include <dune/fem/space/basefunctions/vectorialbasefunctionset.hh>
 
-//#define USE_BASEFUNCTIONSET_OPTIMIZED
-//#define USE_BASEFUNCTIONSET_CODEGEN
-//#define BASEFUNCTIONSET_CODEGEN_GENERATE
-
 #ifdef USE_BASEFUNCTIONSET_CODEGEN 
 #define USE_BASEFUNCTIONSET_OPTIMIZED
 #endif
