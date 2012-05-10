@@ -92,41 +92,29 @@ namespace Dune
       //! type of communication object 
       typedef typename RangeSpaceType :: GridType :: Traits :: CollectiveCommunication   CollectiveCommunictionType ;
 
-    protected:  
-      size_type nz_;
-
-      int localRows_; 
-      int localCols_;
-
       typedef typename BaseType :: BuildMode BuildMode ;
 
     public:
       //! constructor used by ISTLMatrixObject
       ImprovedBCRSMatrix(size_type rows, size_type cols) 
         : BaseType (rows,cols, BaseType :: row_wise)
-        , nz_(0)
       {
       }
 
       //! constuctor used by ILU preconditioner 
       ImprovedBCRSMatrix(size_type rows, size_type cols, size_type nz) 
         : BaseType (rows,cols, BaseType :: row_wise)
-        , nz_(nz)
       {
       }
       
       //! copy constructor, needed by ISTL preconditioners 
       ImprovedBCRSMatrix( ) 
         : BaseType ()
-        , nz_(0)
       {}
 
       //! copy constructor, needed by ISTL preconditioners 
       ImprovedBCRSMatrix(const ImprovedBCRSMatrix& org) 
         : BaseType(org) 
-        , nz_(org.nz_)
-        , localRows_(org.localRows_)
-        , localCols_(org.localCols_)
       {}
 
       //! setup matrix entires 
@@ -142,10 +130,6 @@ namespace Dune
         if( colSpace.begin() == colSpace.end() ) return ;
         
         {
-          // initialize some values 
-          localRows_ = rowMapper.maxNumDofs(); 
-          localCols_ = colMapper.maxNumDofs(); 
-
           // map of indices 
           // necessary because element traversal not necessaryly is in
           // ascending order 
