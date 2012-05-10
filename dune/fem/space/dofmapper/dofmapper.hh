@@ -195,9 +195,13 @@ namespace Dune
     template< class Functor >
     struct DofMapper< GridPart >::MapFunctor
     {
-      MapFunctor ( const IndexSetType &indexSet, const std::vector< SubEntityInfo > &subEntityInfo,
+      static const bool isCartesian = Capabilities ::
+        isCartesian< typename GridPart :: GridType > :: v ;
+
+      MapFunctor ( const GridPart&  gridPart, const std::vector< SubEntityInfo > &subEntityInfo,
                    const ElementType &element, Functor functor )
-      : indexSet_( indexSet ),
+      : gridPart_( gridPart ),
+        indexSet_( gridPart_.indexSet() ),
         subEntityInfo_( subEntityInfo ),
         element_( element ),
         functor_( functor )
@@ -206,14 +210,66 @@ namespace Dune
       template< class Iterator >
       void operator() ( unsigned int gtIndex, unsigned int subEntity, Iterator it, Iterator end )
       {
+        enum { dimension = GridPart :: dimension };
+
         const SubEntityInfo &info = subEntityInfo_[ gtIndex ];
         const std::size_t subIndex = indexSet_.subIndex( element_, subEntity, info.codim );
         std::size_t index = info.offset + std::size_t( info.numDofs ) * subIndex;
+
+        const std::size_t codim = info.codim ;
+
+        const size_t numDofs = info.numDofs ;
+        // for non-Cartesian grids check twist if on codim 1 noDofs > 1 
+        // this should be the case for polOrder > 2  
+        if( ! isCartesian && dimension == 2 && codim == 1 && numDofs > 1 ) 
+        {
+          typedef typename GridPart::ctype FieldType ;
+          const GenericReferenceElement< FieldType, dimension > &refElem
+              = GenericReferenceElements< FieldType, dimension >::general( element_.type() );
+
+#ifndef NDEBUG
+          const int vxSize = refElem.size( subEntity, codim, dimension );
+          // two vertices per edge in 2d 
+          assert( vxSize == 2 );
+#endif
+          const int vx[ 2 ] = { refElem.subEntity ( subEntity, codim, 0, dimension ),
+                                refElem.subEntity ( subEntity, codim, 1, dimension ) };
+
+          // flip index if face is twisted 
+          if( gridPart_.grid().localIdSet().subId( element_, vx[ 0 ], dimension ) >
+              gridPart_.grid().localIdSet().subId( element_, vx[ 1 ], dimension ) )
+          {
+            std::size_t global[ numDofs ];
+            std::size_t local[ numDofs ];
+
+            std::size_t count = 0 ;
+            while( it != end )
+            {
+              global[ count ] = index++;
+              local [ count ] = *(it++);
+              ++count ;
+            }
+
+            size_t reverse = numDofs - 1;
+            for( std::size_t i=0; i<numDofs; ++ i, --reverse )
+            {
+              functor_( local[ i ], global[ reverse ] ); 
+            }
+
+            // already did mapping, then return  
+            return ;
+          }
+        }
+
+        // standard mapping  
         while( it != end )
+        {
           functor_( *(it++), index++ );
+        }
       }
 
     private:
+      const GridPart& gridPart_;
       const IndexSetType &indexSet_;
       const std::vector< SubEntityInfo > &subEntityInfo_;
       const ElementType &element_;
@@ -296,7 +352,7 @@ namespace Dune
     inline void DofMapper< GridPart >
       ::mapEach ( const ElementType &element, Functor f ) const
     {
-      code( element )( MapFunctor< Functor >( indexSet(), subEntityInfo_, element, f ) );
+      code( element )( MapFunctor< Functor >( gridPart_, subEntityInfo_, element, f ) );
     }
 
 
@@ -313,7 +369,7 @@ namespace Dune
     inline std::size_t DofMapper< GridPart >
       ::mapToGlobal ( const ElementType &element, int i ) const
     {
-      std::size_t index;
+      std::size_t index = 0;
       mapEach( element, AssignSingleFunctor< std::size_t >( i, index ) );
       return index;
     }
