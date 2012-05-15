@@ -295,12 +295,21 @@ namespace Dune
       std :: cerr << "Warning: Reading discrete function from newer version: "
                   << versionId << std :: endl;
 
+    // read name 
     in >> name_;
-    
-    if( in.readInt() != BaseType :: size() && 
-        BaseType :: size() != this->space().size() ) // only read compressed vectors 
-      DUNE_THROW( IOError, "Trying to read discrete function of different size." );
 
+    // read size as integer 
+    int mysize;
+    in >> mysize ;
+    
+    // check size 
+    if( mysize != BaseType :: size() && 
+        BaseType :: size() != this->space().size() ) // only read compressed vectors 
+    {
+      DUNE_THROW( IOError, "Trying to read discrete function of different size." );
+    }
+
+    // read all dofs 
     const DofIteratorType end = BaseType :: dend();
     for( DofIteratorType it = BaseType :: dbegin(); it != end; ++it )
       in >> *it;
@@ -319,8 +328,11 @@ namespace Dune
     if( BaseType :: size() != this->space().size() )
       DUNE_THROW(InvalidStateException,"Writing DiscreteFunction in uncompressed state!");
     
-    out << BaseType :: size();
+    // write size as integer 
+    const int mysize = BaseType :: size();
+    out << mysize;
 
+    // write all dofs 
     const ConstDofIteratorType end = BaseType :: dend();
     for( ConstDofIteratorType it = BaseType :: dbegin(); it != end; ++it )
       out << *it;
