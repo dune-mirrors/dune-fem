@@ -279,7 +279,7 @@ protected:
         // try method given a filename 
         try {
           std::string filename( PersistenceManager :: uniqueFileName( name_ ) );
-          Dune::BackupRestoreFacility< GridType > :: backup( grid_, filename, "" ); 
+          Dune::BackupRestoreFacility< GridType > :: backup( grid_, filename ); 
         }
         catch ( Dune :: NotImplemented )
         {
@@ -519,7 +519,7 @@ public:
       try {
         std::string name ( Fem :: gridName( *grid ) );
         std::string filename( PersistenceManager :: uniqueFileName( name ) );
-        grid = Dune::BackupRestoreFacility< GridType > :: restore( filename, "" ); 
+        grid = Dune::BackupRestoreFacility< GridType > :: restore( filename ); 
       }
       catch ( Dune :: NotImplemented )
       {
