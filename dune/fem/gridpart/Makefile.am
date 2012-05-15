@@ -9,7 +9,6 @@ gridpart_HEADERS = adaptiveleafgridpart.hh \
 		   dunefemindexsets.hh \
 		   emptyindexset.hh \
 		   filter.hh \
-		   filteredgrid.hh \
 		   filteredgridpart.hh \
 		   geogridpart.hh \
 		   gridpart.hh \
