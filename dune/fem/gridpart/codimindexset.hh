@@ -460,7 +460,8 @@ public:
     out << nextFreeIndex_ ;
     
     // for consistency checking 
-    out << leafIndex_.size() ;
+    const size_t mysize = leafIndex_.size();
+    out << mysize ;
 
     // backup indices 
     typedef typename IndexContainerType :: ConstIterator ConstIterator;
