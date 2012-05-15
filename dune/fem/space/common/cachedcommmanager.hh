@@ -15,8 +15,8 @@
 #include <dune/grid/common/datahandleif.hh>
 
 #if HAVE_ALUGRID
-// inlcude alugrid to have to communicator class from ALUGrid 
-#include <dune/grid/alugrid.hh>
+// include alugrid headers to have to communicator class from ALUGrid 
+#include <dune/grid/alugrid/3d/alu3dinclude.hh>
 #endif
 
 //- Dune-fem includes 
