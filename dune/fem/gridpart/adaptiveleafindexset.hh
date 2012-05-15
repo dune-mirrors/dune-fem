@@ -774,7 +774,7 @@ namespace Dune
 #endif // HAVE_MPI
     {
       codimLeafSet( 0 ).insert( entity );
-      // only for index sets upporting more than one codim 
+      // only for index sets supporting more than one codim 
       if( numCodimensions > 1 )
         ForLoop< InsertSubEntities, 1, dimension >::apply( *this, entity );
 
@@ -1198,7 +1198,7 @@ namespace Dune
     // in parallel runs we have to compress here
     if( grid_.comm().size() > 1 )
       compressed_ = false;
-    
+
     // if we got until here reading was sucessful 
     return true;
   }
