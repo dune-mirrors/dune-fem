@@ -1,27 +1,12 @@
 #ifndef DUNE_FEM_GRIDPART_CAPABILITIES_HH
 #define DUNE_FEM_GRIDPART_CAPABILITIES_HH
 
-//- dune-grid includes
-#include <dune/grid/common/capabilities.hh>
-#include <dune/grid/common/gridenums.hh>
-
 
 namespace Dune
 {
 
   namespace Fem
   {
-
-    // Forward declaration
-    // -------------------
-
-    template< class > class GridPartDefault;
-    template< class, PartitionIteratorType, bool > class AdaptiveLeafGridPart;
-    template< class > class HierarchicGridPart;
-    template< class > class LeafGridPart;
-    template< class > class LevelGridPart;
-
-
 
     namespace GridPartCapabilities
     {
