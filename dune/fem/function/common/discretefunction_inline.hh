@@ -434,7 +434,7 @@ namespace Dune
     {
       // this marks the index set in the DofManager's list of index set as persistent
       PersistentIndexSetInterface& indexSet = (PersistentIndexSetInterface &) space().indexSet();
-      indexSet.addPersistent();
+      indexSet.addBackupRestore();
     }
   }
 
@@ -448,7 +448,7 @@ namespace Dune
     {
       // this unmarks the index set in the DofManager's list of index set as persistent
       PersistentIndexSetInterface& indexSet = (PersistentIndexSetInterface &) space().indexSet();
-      indexSet.removePersistent();
+      indexSet.removeBackupRestore();
     }
   }
 

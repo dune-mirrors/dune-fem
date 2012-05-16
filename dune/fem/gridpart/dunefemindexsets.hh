@@ -192,8 +192,8 @@ namespace Dune
       PersistentIndexSetInterface () {}
     public:  
       virtual ~PersistentIndexSetInterface () {}
-      virtual void addPersistent() = 0;
-      virtual void removePersistent() = 0;
+      virtual void addBackupRestore() = 0;
+      virtual void removeBackupRestore() = 0;
   };
 
   /** \brief ConsecutivePersistentIndexSet is the base class for 
@@ -224,7 +224,8 @@ namespace Dune
     explicit PersistentIndexSet ( const GridType &grid )
       // here false, because methods have to be overloaded
       : BaseType(grid),
-        dofManager_( DofManagerType::instance( grid ) )
+        dofManager_( DofManagerType::instance( grid ) ),
+        backupRestoreCounter_( 0 )
     {
       // add persistent index set to dofmanagers list 
       dofManager_.addIndexSet( asImp() );
@@ -250,35 +251,44 @@ namespace Dune
     friend class PersistenceManager ;
 
   public:  
-    /** \brief mark the index set as persistent in the list of the DofManager */
-    virtual void addPersistent() 
+    /** \brief mark the index set to need backup/restore */
+    virtual void addBackupRestore() 
     { 
-      // add persistent flag from dofmanagers list of index sets 
-      dofManager_.addPersistent( asImp() );
+      // increase counter for backup/restore
+      ++ backupRestoreCounter_ ;
     }
 
-    /** \brief unmark the index set as persistent in the list of the DofManager */
-    virtual void removePersistent() 
+    /** \brief unmark the index set to need backup/restore */
+    virtual void removeBackupRestore() 
     {
-      // remove persistent flag from dofmanagers list of index sets 
-      dofManager_.removePersistent( asImp() );
+      // decrease counter for backup/restore
+      -- backupRestoreCounter_ ;
     }
 
     /** \copydoc Dune::PersistentObject :: backup */
     virtual void backup() const 
     {
-      // write data to backup stream of persistence manager 
-      asImp().write( PersistenceManager :: backupStream() );
+      if( backupRestoreNeeded() )
+      {
+        // write data to backup stream of persistence manager 
+        asImp().write( PersistenceManager :: backupStream() );
+      }
     }
 
     /** \copydoc Dune::PersistentObject :: restore */
     virtual void restore() 
     {
-      // read data from restore stream of persistence manager 
-      asImp().read( PersistenceManager :: restoreStream() );
+      if( backupRestoreNeeded() )
+      {
+        // read data from restore stream of persistence manager 
+        asImp().read( PersistenceManager :: restoreStream() );
+      }
     }
 
   protected:  
+    //! return if index set is marked for backup/restore 
+    bool backupRestoreNeeded() const { return backupRestoreCounter_ > 0 ; }
+
     //! write index set to file 
     virtual bool write_xdr( const std::string & ) const { return false; }
 
@@ -289,6 +299,9 @@ namespace Dune
 
     // reference to dof manager 
     DofManagerType& dofManager_;
+
+    // reference counter for backup/restore 
+    int backupRestoreCounter_ ; 
   };
 
 

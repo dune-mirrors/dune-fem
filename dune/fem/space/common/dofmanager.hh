@@ -113,14 +113,11 @@ protected:
   IdentifierType setPtr_;
   // reference counter 
   size_t referenceCounter_;
-  // persistent counter 
-  int persistentCounter_;
 
   template< class IndexSet >
   explicit ManagedIndexSetInterface ( const IndexSet &iset )
   : setPtr_( getIdentifier( iset ) ), 
-    referenceCounter_( 1 ),
-    persistentCounter_( 0 )
+    referenceCounter_( 1 )
   {
   }
 
@@ -153,15 +150,6 @@ public:
   {
     return (--referenceCounter_ == 0);
   }
-  
-  //! increase reference counter 
-  void addPersistent () { ++ persistentCounter_ ; }
-    
-  //! increase reference counter 
-  void removePersistent () { -- persistentCounter_ ; }
-    
-  //! returns true if index set should be considered on backup/restore
-  bool persistent () const { return persistentCounter_ > 0 ; }
   
   template< class IndexSet >
   bool equals ( const IndexSet &iset ) const
@@ -946,32 +934,6 @@ public:
   template <class IndexSetType>
   inline void removeIndexSet (const IndexSetType &iset ); 
 
-  /** \brief mark an index set of the dof manager's list of index sets 
-   *         as persistent 
-   *
-   *  \param[in]  iset  index set to mark as persistent 
-   */
-  template <class IndexSetType>
-  inline void addPersistent (const IndexSetType &iset )
-  {
-    addRemovePersistent( iset, true ); 
-  } 
-
-  /** \brief unmark an index set of the dof manager's list of index sets 
-   *         as persistent
-   *
-   *  \param[in]  iset  index set to add to list
-   */
-  template <class IndexSetType>
-  inline void removePersistent (const IndexSetType &iset )
-  {
-    addRemovePersistent( iset, false ); 
-  }
-
-protected:  
-  template <class IndexSetType>
-  inline void addRemovePersistent (const IndexSetType &iset, const bool add );
-
 public:  
   /** \brief add a managed dof storage to the dof manager. 
       \param dofStorage  dof storage to add which must fulfill the 
@@ -1196,10 +1158,7 @@ public:
     ConstIndexListIteratorType endit = indexList_.end();
     for(ConstIndexListIteratorType it = indexList_.begin(); it != endit; ++it)
     {
-      if( (*it)->persistent() )
-      {
-        (*it)->backup();
-      }
+      (*it)->backup();
     }
   }
 
@@ -1210,10 +1169,7 @@ public:
     IndexListIteratorType endit = indexList_.end();
     for(IndexListIteratorType it = indexList_.begin(); it != endit; ++it)
     {
-      if( (*it)->persistent() )
-      {
-        (*it)->restore();
-      }
+      (*it)->restore();
     }
 
     // make all index sets consistent
@@ -1419,31 +1375,6 @@ removeIndexSet ( const IndexSetType &iset )
 
   // we should never get here
   DUNE_THROW(InvalidStateException,"Could not remove index from DofManager set!");
-}
-
-template <class GridType>
-template <class IndexSetType>
-inline void DofManager<GridType>::
-addRemovePersistent (const IndexSetType &iset, const bool add )
-{
-  assert( Fem :: ThreadManager:: singleThreadMode() );
-
-  typedef typename IndexListType::reverse_iterator IndexListIteratorType;
-  
-  // search index set list in reverse order to find latest index sets faster
-  IndexListIteratorType endit = indexList_.rend();
-  for( IndexListIteratorType it = indexList_.rbegin(); it != endit; ++it )
-  {
-    ManagedIndexSetInterface *set = *it;
-    if( set->equals( iset ) )
-    {
-      if( add ) 
-        set->addPersistent();
-      else 
-        set->removePersistent();
-      break ;
-    }
-  }
 }
 
 template <class GridType>
