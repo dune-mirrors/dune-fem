@@ -21,7 +21,7 @@
 
 #include <dune/fem/io/parameter.hh>
 #include <dune/fem/io/streams/xdrstreams.hh>
-#include <dune/fem/io/streams/binarystreams.hh>
+#include <dune/fem/io/streams/standardstreams.hh>
 
 //- local includes 
 #include <dune/fem/space/mapper/dofmapper.hh>
@@ -139,8 +139,8 @@ public:
   virtual void read( XDRFileInStream& out ) = 0;
 
   //! new read/write methods using binary streams
-  virtual void write( BinaryFileOutStream& out ) const = 0;
-  virtual void read( BinaryFileInStream& out ) = 0;
+  virtual void write( StandardOutStream& out ) const = 0;
+  virtual void read( StandardInStream& out ) = 0;
 
   //! increase reference counter 
   void addReference ( ) { ++referenceCounter_; } 
@@ -254,10 +254,10 @@ public:
   virtual void write( XDRFileOutStream& out ) const { indexSet_.write( out ); }
 
   //! new write method 
-  virtual void read( BinaryFileInStream& in ) { indexSet_.read( in ); }
+  virtual void read( StandardInStream& in ) { indexSet_.read( in ); }
 
   //! new write method 
-  virtual void write( BinaryFileOutStream& out ) const { indexSet_.write( out ); }
+  virtual void write( StandardOutStream& out ) const { indexSet_.write( out ); }
 };
 
 /////////////////////////////////////////////////////////////
