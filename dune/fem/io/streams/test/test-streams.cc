@@ -1,10 +1,13 @@
 #include <config.h>
 
 #include <dune/fem/version.hh>
+#include <dune/fem/misc/mpimanager.hh>
+
 #include <dune/fem/io/streams/asciistreams.hh>
 #include <dune/fem/io/streams/binarystreams.hh>
 #include <dune/fem/io/streams/datastreams.hh>
 #include <dune/fem/io/streams/xdrstreams.hh>
+#include <dune/fem/io/streams/sionlibstreams.hh>
 
 using namespace Dune;
 
@@ -23,17 +26,13 @@ struct Data
 template< class Traits >
 void write ( OutStreamInterface< Traits > &out, const Data &data )
 {
-  // out << DuneFEM :: versionId();
-  // out << DuneFEM :: version();
-
-  out << DUNE_MODULE_VERSION_ID(DUNE_FEM);
-  // out << DUNE_FEM_VERSION;
+  unsigned int versionId = DUNE_MODULE_VERSION_ID(DUNE_FEM);
+  out << versionId;
   
   out << data.my_string 
       << data.my_uint << data.my_ulong << data.my_double
       << data.my_int << data.my_float << data.my_char << data.my_bool;
 
-  // out << DuneFEM :: versionId();
   out << DUNE_MODULE_VERSION_ID(DUNE_FEM);
 }
 
@@ -41,7 +40,6 @@ template< class Traits >
 bool read ( InStreamInterface< Traits > &in, const Data &data )
 {
   unsigned int versionId = in.readUnsignedInt();
-  // if( versionId != DuneFEM :: versionId() )
   if( versionId != DUNE_MODULE_VERSION_ID(DUNE_FEM) )
   {
     std :: cerr << "Incorrect versionId read back: "
@@ -49,19 +47,6 @@ bool read ( InStreamInterface< Traits > &in, const Data &data )
                 << std :: endl;
     return false;
   }
-
-  /*
-  std :: string version;
-  in >> version;
-  // if( version != DuneFEM :: version() )
-  if( version != DUNE_FEM_VERSION )
-  {
-    std :: cerr << "Incorrect version read back: "
-                << version << " != " << DUNE_FEM_VERSION
-                << std :: endl;
-    return false;
-  }
-  */
 
   Data check;
   in >> check.my_string 
@@ -98,8 +83,10 @@ bool read ( InStreamInterface< Traits > &in, const Data &data )
   return equal;
 }
 
-int main ()
+int main ( int argc, char** argv )
 {
+  MPIManager::initialize( argc, argv );
+
   try
   {
     Data data;
@@ -112,38 +99,57 @@ int main ()
     data.my_char  = 123;
     data.my_bool  = true;
     
-    std :: cerr << "Checking ASCII streams..." << std :: endl;
-    ASCIIOutStream aout( "test.ascii" );
-    write( aout, data );
-    aout.flush();
-    ASCIIInStream ain( "test.ascii" );
-    if( !read( ain, data ) )
-      return 1;
+    {
+      std :: cerr << "Checking ASCII streams..." << std :: endl;
+      ASCIIOutStream aout( "test.ascii" );
+      write( aout, data );
+      aout.flush();
+      ASCIIInStream ain( "test.ascii" );
+      if( !read( ain, data ) )
+        return 1;
 
-    std :: cerr << "Checking Binary streams..." << std :: endl;
-    BinaryFileOutStream bout( "test.binary" );
-    write( bout, data );
-    bout.flush();
-    BinaryFileInStream bin( "test.binary" );
-    if( !read( bin, data ) )
-      return 1;
+      std :: cerr << "Checking Binary streams..." << std :: endl;
+      BinaryFileOutStream bout( "test.binary" );
+      write( bout, data );
+      bout.flush();
+      BinaryFileInStream bin( "test.binary" );
+      if( !read( bin, data ) )
+        return 1;
 
-    std :: cerr << "Checking XDR streams..." << std :: endl;
-    XDRFileOutStream xout( "test.xdr" );
-    write( xout, data );
-    xout.flush();
-    XDRFileInStream xin( "test.xdr" );
-    if( !read( xin, data ) )
-      return 1;
+      std :: cerr << "Checking XDR streams..." << std :: endl;
+      XDRFileOutStream xout( "test.xdr" );
+      write( xout, data );
+      xout.flush();
+      XDRFileInStream xin( "test.xdr" );
+      if( !read( xin, data ) )
+        return 1;
 
 #if HAVE_ALUGRID
-    std :: cerr << "Checking Data streams..." << std :: endl;
-    Fem :: DataOutStream dout( "test.data" );
-    write( dout, data );
-    dout.flush();
-    Fem :: DataInStream din( "test.data" );
-    if( ! read( din, data ) )
-      return 1;  
+      std :: cerr << "Checking Data streams..." << std :: endl;
+      Fem :: DataOutStream dout( "test.data" );
+      write( dout, data );
+      dout.flush();
+      Fem :: DataInStream din( "test.data" );
+      if( ! read( din, data ) )
+        return 1;  
+#endif
+    }
+
+#if HAVE_SIONLIB
+    {
+      std :: cerr << "Checking SIONlib streams..." << std :: endl;
+      std::stringstream str ; 
+      {
+        Fem :: SIONlibOutStream sionout( "test.sion" );
+        write( sionout, data );
+        sionout.flush();
+      }
+      {
+        Fem :: SIONlibInStream sionin( "test.sion" );
+        if( ! read( sionin, data ) )
+          return 1;  
+      }
+    }
 #endif
 
   }
