@@ -471,6 +471,7 @@ namespace Dune
      *
      *  \return \b true if operation was successful
      */
+    DUNE_VERSION_DEPRECATED(1,4,remove)
     virtual bool read_xdr ( const std :: string filename ) = 0;
    
     /** \brief write discrete function to file using XDR encoding
@@ -479,6 +480,7 @@ namespace Dune
      *
      *  \return \b true if operation was successful
      */
+    DUNE_VERSION_DEPRECATED(1,4,remove)
     virtual bool write_xdr ( const std :: string filename ) const = 0;
     
     /** \brief read discrete function from file using ASCII decoding
@@ -487,6 +489,7 @@ namespace Dune
      *
      *  \returns \b true if operation was successful
      */
+    DUNE_VERSION_DEPRECATED(1,4,remove)
     virtual bool read_ascii ( const std :: string filename ) = 0;
 
     /** \brief write discrete function to file using ASCII encoding
@@ -495,6 +498,7 @@ namespace Dune
      *  
      *  \returns \b true if operation was successful
      */
+    DUNE_VERSION_DEPRECATED(1,4,remove)
     virtual bool write_ascii ( const std :: string filename ) const = 0;
 
     /** \brief Enable this discrete function for dof compression, 
