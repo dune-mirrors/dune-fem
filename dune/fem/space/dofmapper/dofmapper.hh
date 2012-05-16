@@ -134,9 +134,17 @@ namespace Dune
 
       bool compress () { update(); return true; }
 
-      void read_xdr ( const char *filename, int timestep ) { update(); }
-      void write_xdr ( const char *filename, int timestep ) const {}
+      template <class StreamTraits> 
+      void write( OutStreamInterface< StreamTraits >& out ) const {} 
 
+      template <class StreamTraits> 
+      void read( InStreamInterface< StreamTraits >& in )  
+      {
+        update();
+      } 
+
+      void backup () const {} 
+      void restore () {}
 
     protected:
       typedef typename GridPartType::IndexSetType IndexSetType;
