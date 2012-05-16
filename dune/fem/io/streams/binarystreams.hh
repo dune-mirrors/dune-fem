@@ -83,6 +83,9 @@ namespace Dune
       explicit BinaryFileOutStream ( const std::string &filename )
       : stream_( filename.c_str(), std::ios::binary )
       {
+        if( ! stream_ ) 
+          DUNE_THROW( Dune::IOError, "Unable to open file: " << filename );
+
         // write byte order used to write to stream 
         writeChar( ByteOrder :: order );
       }
@@ -212,6 +215,9 @@ namespace Dune
       : stream_( filename.c_str(), std::ios::binary ),
         storedOrder_( ByteOrder :: order )
       {
+        if( ! stream_ ) 
+          DUNE_THROW( Dune::IOError, "Unable to open file: " << filename );
+
         // read byte order of stream 
         readChar( storedOrder_ );
       }
