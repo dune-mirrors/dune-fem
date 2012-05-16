@@ -298,7 +298,7 @@ namespace Dune
       typename Codim< EntitySeed::codimension >::EntityPointerType
       entityPointer ( const EntitySeed &seed ) const
       {
-        return Codim< EntitySeed::codimension >::EntityPointerType
+        return typename Codim< EntitySeed::codimension >::EntityPointerType
                  ::Implementation( coordFunction_, hostGridPart().entityPointer( seed ) );
       }
 
