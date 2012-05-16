@@ -59,13 +59,13 @@ namespace Dune
     }
 
     // return name with rank 
-    static std::string rankName(const std::string& path, const std::string& name, const int rank) 
+    static std::string rankName(const std::string& path, const std::string& name, 
+                                const int rank, const int size ) 
     {
       std::stringstream rankStr; 
+      const int number = ( singleBackupRestoreFile ) ? size : rank ;
       // add rank if output/input is with different files
-      if( ! singleBackupRestoreFile ) 
-        rankStr << "." << rank;
-
+      rankStr << "." << number ;
       return pathAndName(path,name,rankStr.str());
     }
 
@@ -166,6 +166,7 @@ namespace Dune
     template < class GridType >
     static Tuple *input ( GridType *&grid,
                           const int rank,
+                          const int size,
                           const std::string &path, 
                           const std::string &name )
     {
@@ -174,13 +175,13 @@ namespace Dune
       assert( newGrid );
 
       // get filename 
-      std::string filename = rankName( path, name, rank );
+      std::string filename = rankName( path, name, rank, size );
 
       if( Parameter :: verbose () )
         std::cout << "IOTuple: Reading data from " << filename << std::endl;
 
       // create binary stream 
-      InStreamType inStream( filename );
+      InStreamType inStream( filename, MPIHelper::getCommunicator(), rank );
 
       if( newGrid ) 
       {
@@ -226,7 +227,8 @@ namespace Dune
                               const std::string &name ) 
     {
       // get filename 
-      std::string filename = rankName( path, name, grid.comm().rank() );
+      std::string filename = 
+        rankName( path, name, grid.comm().rank(), grid.comm().size() );
 
       // create binary stream 
       InStreamType inStream( filename );
@@ -243,7 +245,8 @@ namespace Dune
                          const Tuple &tuple )
     {
       // get filename 
-      std::string filename = rankName( path, name, grid.comm().rank() );
+      std::string filename = 
+        rankName( path, name, grid.comm().rank(), grid.comm().size() );
 
       // create binary stream 
       OutStreamType outStream( filename );
@@ -439,7 +442,8 @@ namespace Dune
                          const Tuple &tuple )
     {
       // get filename 
-      std::string filename = rankName( path, name, grid.comm().rank() );
+      std::string filename = 
+        rankName( path, name, grid.comm().rank(), grid.comm().size() );
 
       // create binary stream 
       OutStreamType outStream( filename );

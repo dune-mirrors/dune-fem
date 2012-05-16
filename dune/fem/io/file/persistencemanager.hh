@@ -391,12 +391,13 @@ namespace Dune
     const char* myTag() const { return "persistentobjects"; }
 
     // create filename for persistent objects 
-    std::string createFilename( const std::string& path, const int rank ) const 
+    std::string createFilename( const std::string& path, 
+                                const int rank,
+                                const int size ) const 
     {
       std::stringstream s;
-      s << path << myTag();
-      if( ! singleBackupRestoreFile ) 
-        s << "." << rank;
+      const int number = ( singleBackupRestoreFile ) ? size : rank ;
+      s << path << myTag() << "." << number ;
       return s.str();
     }
 
@@ -407,7 +408,8 @@ namespace Dune
       if( createDirectory( path_ ) )
       {
         const int rank = MPIManager :: rank() ;
-        std::string filename( createFilename( path_, rank ) );
+        const int size = MPIManager :: size() ;
+        std::string filename( createFilename( path_, rank, size ) );
 
         assert( backupStream_ == 0 );
         backupStream_ = new BackupStreamType( filename );
@@ -432,7 +434,8 @@ namespace Dune
       {
         path_ = path + "/";
         const int rank = MPIManager :: rank();
-        std::string filename( createFilename( path_, rank ) );
+        const int size = MPIManager :: size();
+        std::string filename( createFilename( path_, rank, size ) );
         restoreStream_ = new RestoreStreamType( filename );
 
         std::cout << "Restore from " << filename << std::endl;

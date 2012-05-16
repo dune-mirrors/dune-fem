@@ -130,22 +130,21 @@ inline int scanProcsFiles(const std::string globalPath,
                           const std::string dataPrefix,
                           int step)
 {
-  std::cout << globalPath << " globalpath" << std::endl;
-  int procs = 0;
+  const bool singleBackupRestoreFile = PersistenceManager :: singleBackupRestoreFile ;
+
+  int procs = 0; 
   std::string path( IOInterface::
       createRecoverPath(globalPath,procs,dataPrefix,step, false ) );
 
-  const bool multipleBackupRestoreFiles = ! PersistenceManager :: singleBackupRestoreFile ;
   while ( true )
   {
     std::stringstream filename; 
-    filename << path << "/" << dataPrefix;
+    filename << path << "/" << dataPrefix << "." << procs;
 
-    if( multipleBackupRestoreFiles )
-      filename << "." << procs;
+    // check for file 
+    const bool fileOk = fileExists( filename.str() ) ;
 
-    // check for directory 
-    if( ! fileExists( filename.str() ) )
+    if( (singleBackupRestoreFile && fileOk) || (! singleBackupRestoreFile && ! fileOk ) ) 
     {
       return procs;
     }
