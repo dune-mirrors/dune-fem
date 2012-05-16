@@ -439,6 +439,7 @@ namespace Dune
     static Tuple *input ( DataIO &dataio, GridType *&grid, double &t, int n,
                           const std::string &path, const std::string &name )
     {
+      return new Tuple();
     }
 
     //! restore all data in tupel 
