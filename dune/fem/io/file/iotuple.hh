@@ -107,7 +107,7 @@ namespace Dune
     //! write grid and data to given directory 
     template < class GridType >
     static 
-    void writeGrid( GridType& grid,
+    void writeGrid( const GridType& grid,
                     BinaryFileOutStream& binaryStream, 
                     const std::string& filename )
     {
@@ -125,10 +125,13 @@ namespace Dune
       }
 
       // type of DofManager 
-      typedef DofManager<GridType> DofManagerType;
+      typedef DofManager< GridType > DofManagerType;
+
+      // get DofManager reference  
+      DofManagerType& dm = DofManagerType :: instance ( grid );
 
       // write DofManager's index sets 
-      DofManagerType :: instance ( grid ).write( binaryStream );
+      dm.write( binaryStream );
     }
   };
 
@@ -229,7 +232,7 @@ namespace Dune
 
     //! write grid and data to given directory 
     template< class GridType >
-    static void output ( GridType &grid,
+    static void output ( const GridType &grid,
                          const std::string &path,
                          const std::string &name,
                          const Tuple &tuple )
@@ -256,7 +259,7 @@ namespace Dune
     template< class Disp, class DINFO >
     static void addToDisplayOrRemove ( Disp &disp, const DINFO *dinf, double time, Tuple &tuple )
     {
-      // ForLoop< AddToDisplayOrRemove, 0, length-1 >::apply( disp, dinf, time, tuple );
+      ForLoop< AddToDisplayOrRemove, 0, length-1 >::apply( disp, dinf, time, tuple );
     }
 
     template< class Disp >
@@ -454,7 +457,7 @@ namespace Dune
     
     //! write grid and data to given directory 
     template< class GridType >
-    static void output ( GridType &grid,
+    static void output ( const GridType &grid,
                          const std::string &path,
                          const std::string &name,
                          const Tuple &tuple )
