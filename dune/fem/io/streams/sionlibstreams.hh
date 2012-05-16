@@ -176,8 +176,9 @@ namespace Dune
     protected:  
       std::istream& readFile( const std::string& filename, MPICommunicatorType mpiComm )
       {
+        data_ = new std::stringstream();
+        assert( data_ );
 #if HAVE_SIONLIB && HAVE_MPI
-        data_ = 0;
 
         // this is set by sion_paropen_mpi 
         sion_int64 chunkSize = 0;
@@ -225,8 +226,8 @@ namespace Dune
         // close file 
         sion_parclose_mpi( sid );
 
-        return *data_;
 #endif
+        return *data_;
       }
       //! standard file stream 
       std::stringstream* data_;  
