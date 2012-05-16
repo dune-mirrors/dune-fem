@@ -247,9 +247,6 @@ namespace Dune
     //! return true if the index set is persistent 
     bool persistent () const { return true; }
 
-    // friendship is needed for backup/restore to avoid abuse 
-    friend class PersistenceManager ;
-
   public:  
     /** \brief mark the index set to need backup/restore */
     virtual void addBackupRestore() 
