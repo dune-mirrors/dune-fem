@@ -12,15 +12,25 @@
 //- Dune includes 
 #include <dune/fem/misc/femtuples.hh>
 #include <dune/fem/io/file/iointerface.hh>
+#include <dune/fem/io/file/datawriter.hh>
+
 
 inline bool readDataInfo(std::string path, DATAINFO * dinf, 
-    const int timestamp, const int dataSet) 
+                         const int timestamp, const int dataSet) 
 {
+  static const bool useRankPath = Dune :: DataWriterParameters().separateRankPath();
   std::cout << "Reading data base for " << dinf->name << "! \n";
-  std::string dataname = 
-    IOTupleBase::dataName( 
-      IOInterface::createRecoverPath(path,0, dinf->name, timestamp),
-      dinf->name);
+  std::string dataname; 
+  if( useRankPath )  
+  {
+    dataname = IOTupleBase::dataName( 
+                  IOInterface::createRecoverPath(path,0, dinf->name, timestamp, useRankPath ),
+                  dinf->name);
+  }
+  else 
+  {
+    return true ;
+  }
 
   {
     std::stringstream dummy; 
@@ -106,6 +116,31 @@ inline int scanProcsPaths(const std::string globalPath,
 
     // check for directory 
     if( ! directoryExists( path ) )
+    {
+      return procs;
+    }
+    ++procs;
+  }
+
+  return procs;
+}
+
+// return number of procs of data set 
+inline int scanProcsFiles(const std::string globalPath, 
+                          const std::string dataPrefix,
+                          int step)
+{
+  std::cout << globalPath << " globalpath" << std::endl;
+  int procs = 0;
+  std::string path( IOInterface::
+      createRecoverPath(globalPath,procs,dataPrefix,step, false ) );
+  while ( true )
+  {
+    std::stringstream filename; 
+    filename << path << "/" << dataPrefix << "." << procs;
+
+    // check for directory 
+    if( ! fileExists( filename.str() ) )
     {
       return procs;
     }
@@ -285,14 +320,17 @@ inline int readParameterList (int argc, char **argv, bool displayData = true )
  
   // scan for max number of processor paths  
   int numberProcessors = 0;
+  static const bool useRankPath = Dune :: DataWriterParameters().separateRankPath();
   for(int k=0; k<n; k++) 
   {
     // scan for max number of processor paths  
-    int para = scanProcsPaths(path,info[k].name,i_start);
+    int para = ( useRankPath ) ? 
+          scanProcsPaths(path,info[k].name,i_start) : 
+          scanProcsFiles(path,info[k].name,i_start) ;
 
-    std::cout << "****************************************" << std::endl;
-    std::cout << "***   Start reading data for " << para << std::endl;
-    std::cout << "****************************************" << std::endl;
+    std::cout << "*******************************************" << std::endl;
+    std::cout << "***   Start reading data for " << para << " procs." << std::endl;
+    std::cout << "*******************************************" << std::endl;
 
     // should be at least 1 
     if( para <= 0 )

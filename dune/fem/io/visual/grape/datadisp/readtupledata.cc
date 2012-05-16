@@ -9,9 +9,9 @@
 
 //- include grape io stuff 
 #include <dune/fem/io/file/asciiparser.hh>
-#include <dune/fem/io/file/binarydataio.hh>
 #include <dune/fem/io/file/iotuple.hh>
 #include <dune/fem/io/file/iointerface.hh>
+#include <dune/fem/io/file/datawriter.hh>
 
 #include <dune/fem/io/visual/grape/datadisp/grcommon.hh>
 
@@ -69,7 +69,7 @@ inline void readTupleData(const char * path, const char * filename,
   std::string fn (filename);
 
   IOTuple<GR_DiscFuncType>::ReturnType* tup = 
-    IOTuple<GR_DiscFuncType>::input(dataIO,grid,time,timestep,path,fn);
+    IOTuple<GR_DiscFuncType>::input(grid,myRank,path,fn);
   std::cout << "Finished reading grid" << std::endl;
 
   // push all new grids to grid stack 
@@ -92,6 +92,8 @@ inline INFO * readData(INFO * info , const char * path, int i_start, int i_end,
   double t_end = -t_start, t_act = 0.0;
   int  ntime, n_step = 0;
 
+  const bool useRankPath = Dune :: DataWriterParameters().separateRankPath();
+
   for (ntime = i_start; ntime <= i_end; ntime += i_delta)
   {
     printf("timestep = %d | last timestep = %d | stepsize = %d\n", ntime, i_end, i_delta);
@@ -107,7 +109,7 @@ inline INFO * readData(INFO * info , const char * path, int i_start, int i_end,
         {
           // use standard procedure to create path name 
           std::string newpath = 
-            IOInterface::createRecoverPath(path,proc,info[i].name,ntime);
+            IOInterface::createRecoverPath(path,proc,info[i].name,ntime, useRankPath);
 
           readTupleData(newpath.c_str(), info[i].name, 
                         t_act , i , ntime, proc, numProcs, info);

@@ -59,7 +59,7 @@ inline GrapeDispType * readTupleData(const char * path, const char * filename,
   DATAINFO * dinf = info[n].datinf;
 
   IOTuple<GR_DiscFuncType>::ReturnType* tup = 
-    IOTuple<GR_DiscFuncType>::input(dataIO,grid,time,timestep,path,fn);
+    IOTuple<GR_DiscFuncType>::input(grid,myRank,path,fn);
   std::cout << "Finished reading grid" << std::endl;
 
   // push all new grids to grid stack 
