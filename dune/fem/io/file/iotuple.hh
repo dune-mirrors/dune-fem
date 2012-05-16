@@ -9,12 +9,16 @@
 #include <dune/common/typetraits.hh>
 #include <dune/common/tuples.hh>
 
+//- Dune grid includes 
+#include <dune/grid/common/backuprestore.hh>
+
 //- Dune fem includes 
 #include <dune/fem/space/common/dofmanager.hh>
 #include <dune/fem/space/common/communicationmanager.hh>
 #include <dune/fem/io/file/iolock.hh>
 #include <dune/fem/io/file/iointerface.hh>
 #include <dune/fem/io/parameter.hh>
+#include <dune/grid/common/backuprestore.hh>
 
 namespace Dune
 {
@@ -25,7 +29,7 @@ namespace Dune
   struct IOTupleBase 
   {
     // return path/ prefix name as one string   
-    static std::string pathAndName(const std::string& path, const std::string& name, const std::string suffix) 
+    static std::string pathAndName(const std::string& path, const std::string& name, const std::string& suffix) 
     {
       std::string comboname;
       if (path != "") 
@@ -51,69 +55,80 @@ namespace Dune
       return pathAndName(path,name,"_data");
     }
 
-    template <class DataIO>
-    static typename DataIO :: GridType*  
-    restoreGrid(DataIO& dataio,
-                double& t,int n,
-                std::string path,
-                std::string name) 
+    // return name with rank 
+    static std::string rankName(const std::string& path, const std::string& name, const int rank) 
     {
-      std::string gname ( gridName(path,name) );
-      // check if lock file exists, and if exit 
-      FileIOCheckError check( gname );
-        
-      // grid is created inside of restore grid method
-      return dataio.restoreGrid( gname, t, n); 
+      std::stringstream rankStr; 
+      rankStr << "." << rank;
+      return pathAndName(path,name,rankStr.str());
+    }
+
+    template < class GridType > 
+    static void  
+    restoreGrid(GridType *&grid, 
+                BinaryFileInStream& binaryStream,
+                const std::string& filename )
+    {
+      try 
+      { 
+        // get standard istream
+        std::istream& stream = binaryStream.stream();
+        // restore grid from stream (grid implementation has to take care of byte order)
+        grid = BackupRestoreFacility< GridType > :: restore( stream );
+      }
+      catch ( NotImplemented ) 
+      {
+        // write grid to file with filename + extension 
+        grid = BackupRestoreFacility< GridType > :: restore( filename );
+      }
+
+      if( grid == 0 ) 
+        DUNE_THROW(IOError,"Unable to restore grid" );
     }
 
     template <class GridType>
     static void
-    restoreDofManager ( const GridType& grid, int n,
-                        const std::string &path, const std::string &name )
+    restoreDofManager ( const GridType& grid, 
+                        BinaryFileInStream& binaryStream )
     {
-      if( Parameter :: verbose() ) 
-        std::cout << "Reading Dof Manager" << std::endl;
-      
+      // type of DofManager 
       typedef DofManager<GridType> DofManagerType;
 
-      std::string dmname;
-      dmname = gridName(path,name) + "_dm";
-      DofManagerType& dm = DofManagerType :: instance(grid);
-
-      if( Parameter :: verbose() ) 
-        std::cout << "    from file " << dmname << std::endl;
-
-      // read dofmanager, i.e. read all index sets 
-      DofManagerType :: read(grid,dmname,n);
+      // read DofManager's index sets 
+      DofManagerType& dm =  DofManagerType :: instance ( grid );
       
-      // resize all data because size of index set might have changed  
-      // NOTE: avoid resize of index sets by using resizeForRestict 
+      // read data 
+      dm.read( binaryStream );
+
+      // resize data 
       dm.resizeForRestrict();
     }
 
     //! write grid and data to given directory 
-    template <class DataIO,class GridType>
-    static void 
-    writeGrid(DataIO& dataio,GridType& grid,
-              double t,int n,
-              const std::string& path,
-              const std::string& name) 
+    template < class GridType >
+    static 
+    void writeGrid( GridType& grid,
+                    BinaryFileOutStream& binaryStream, 
+                    const std::string& filename )
     {
-      std::string gname( gridName( path, name ) );
-      
-      if( Parameter :: verbose() ) 
+      try 
+      { 
+        // get standard ostream
+        std::ostream& stream = binaryStream.stream();
+        // write grid to stream (grid implementation has to take care of byte order)
+        BackupRestoreFacility< GridType > :: backup( grid, stream );
+      }
+      catch ( NotImplemented ) 
       {
-        std::cout << "Writing grid to " << gname << std::endl;
+        // write grid to file with filename + extension 
+        BackupRestoreFacility< GridType > :: backup( grid, filename );
       }
 
-      // extra braces to destroy lock before data is written 
-      {
-        // create lock file which is removed after sucessful backup 
-        FileIOLock lock( gname );
-        
-        // write grid 
-        dataio.writeGrid(grid, xdr, gname, t, n);
-      }
+      // type of DofManager 
+      typedef DofManager<GridType> DofManagerType;
+
+      // write DofManager's index sets 
+      DofManagerType :: instance ( grid ).write( binaryStream );
     }
   };
 
@@ -128,7 +143,8 @@ namespace Dune
   {
     template< int N > struct CreateData;
     template< int N > struct Restore;
-    template< int N > struct Output;
+    template< int N > struct RestoreStream;
+    template< int N > struct OutputStream;
     template< int N > struct AddToDisplay;
     template< int N > struct AddToDisplayOrRemove;
     template< int N > struct RemoveData;
@@ -139,34 +155,43 @@ namespace Dune
   public:
     typedef Tuple ReturnType ;
 
-    template <class DataIO,class GridType>
-    static Tuple *input ( DataIO &dataio, GridType *&grid, double &t, int n,
-                          const std::string &path, const std::string &name )
+    template < class GridType >
+    static Tuple *input ( GridType *&grid,
+                          const int rank,
+                          const std::string &path, 
+                          const std::string &name )
     {
       // true if grid has to be read 
       const bool newGrid = (grid == 0);
+      assert( newGrid );
+
+      // get filename 
+      std::string filename = rankName( path, name, rank );
+
+      if( Parameter :: verbose () )
+        std::cout << "IOTuple: Reading data from " << filename << std::endl;
+
+      // create binary stream 
+      BinaryFileInStream binaryStream( filename );
 
       if( newGrid ) 
       {
         // create and read grid 
-        grid = IOTupleBase::restoreGrid(dataio,t,n,path,name);
+        IOTupleBase::restoreGrid( grid, binaryStream, filename );
       }
       
-      std::string dname( dataName(path,name) );
-      std::cout << "IOTuple: Reading data from " << dname << std::endl;
-
       // create all data
       Tuple *ret = new Tuple;
-      ForLoop< CreateData, 0, length-1 >::apply( dataio, dname, n, *grid, *ret );
+      ForLoop< CreateData, 0, length-1 >::apply( *grid, *ret );
       
       if( newGrid ) 
       {
         // now read dofmanager and index sets 
-        IOTupleBase::restoreDofManager(*grid,n,path,name);
+        IOTupleBase::restoreDofManager(*grid, binaryStream );
       }
 
       // now read all data 
-      ForLoop< Restore, 0, length-1 >::apply( *ret, dataio, dname, n );
+      ForLoop< RestoreStream, 0, length-1 >::apply( binaryStream, *ret );
       
       if( newGrid ) 
       {
@@ -179,74 +204,47 @@ namespace Dune
         dm.compress();
       }
       
-      std::cout << "    FINISHED!" << std::endl;
+      if( Parameter :: verbose() )
+        std::cout << "    FINISHED!" << std::endl;
+
       return ret;
     }
 
     //! restore all data in tupel 
-    template< class DataIO, class GridType >
+    template< class GridType >
     static void restoreData ( Tuple &data,
-                              DataIO &dataio, const GridType &grid, int n,
+                              const GridType &grid, 
                               const std::string &path,
                               const std::string &name ) 
     {
-      std::string dname( dataName(path,name) );
-      if( Parameter :: verbose() )
-      {
-        std::cout << "P["<< grid.comm().rank()<< "] Reading data from " << dname << std::endl;
-      }
+      // get filename 
+      std::string filename = rankName( path, name, grid.comm().rank() );
 
-      // read dofmanager and index sets 
-      IOTupleBase::restoreDofManager(grid,n,path,name);
+      // create binary stream 
+      BinaryFileInStream binaryStream( filename );
 
       // read all data now 
-      ForLoop< Restore, 0, length-1 >::apply( data, dataio, dname, n );
-
-      typedef DofManager<GridType> DofManagerType;
-
-      // get dof manager 
-      DofManagerType& dm = DofManagerType :: instance(grid);
-      
-      // compress all data 
-      dm.compress();
-
-      if( Parameter :: verbose() ) 
-      {
-        std::cout << "P["<<grid.comm().rank()<< "]  FINISHED!" << std::endl;
-      }
+      ForLoop< RestoreStream, 0, length-1 >::apply( binaryStream, data );
     }
 
     //! write grid and data to given directory 
-    template< class DataIO, class GridType >
-    static void output ( DataIO &dataio, GridType &grid,
-                         double t, int n,
+    template< class GridType >
+    static void output ( GridType &grid,
                          const std::string &path,
                          const std::string &name,
                          const Tuple &tuple )
     {
-      // write grid first 
-      writeGrid( dataio, grid, t, n, path, name );
+      // get filename 
+      std::string filename = rankName( path, name, grid.comm().rank() );
 
-      std::string dname( dataName(path, name ) );
+      // create binary stream 
+      BinaryFileOutStream binaryStream( filename );
 
-      if( Parameter::verbose() ) 
-        std::cout << "Writing data to " << dname << std::endl;
-      
-      // write data
-      ForLoop< Output, 0, length-1 >::apply( dataio, dname, n, tuple );
-    }
-    
-    //! write grid and data to given out stream 
-    template< class StreamTraits, class GridType >
-    static void output ( OutStreamInterface< StreamTraits >& out, 
-                         GridType &grid,
-                         const Tuple &tuple )
-    {
-      // write grid to stream 
-      grid.write( out );
+      // write grid, either to binaryStream or with given filename 
+      writeGrid( grid, binaryStream, filename );
 
-      // write data
-      ForLoop< Output, 0, length-1 >::apply( out, tuple );
+      // write data to stream 
+      ForLoop< OutputStream, 0, length-1 >::apply( binaryStream, tuple );
     }
     
     template< class Disp, class DINFO >
@@ -258,7 +256,7 @@ namespace Dune
     template< class Disp, class DINFO >
     static void addToDisplayOrRemove ( Disp &disp, const DINFO *dinf, double time, Tuple &tuple )
     {
-      ForLoop< AddToDisplayOrRemove, 0, length-1 >::apply( disp, dinf, time, tuple );
+      // ForLoop< AddToDisplayOrRemove, 0, length-1 >::apply( disp, dinf, time, tuple );
     }
 
     template< class Disp >
@@ -282,8 +280,8 @@ namespace Dune
     typedef typename DiscreteFunction::DiscreteFunctionSpaceType DiscreteFunctionSpace;
     typedef typename DiscreteFunctionSpace::GridPartType GridPart;
 
-    template< class DataIO, class Grid >
-    static void apply ( DataIO &dataio, const std::string &name, const int &n, Grid &grid, Tuple &tuple )
+    template< class Grid >
+    static void apply ( Grid &grid, Tuple &tuple )
     {
       GridPart *gridPart = new GridPart( grid );
       DiscreteFunctionSpace *space = new DiscreteFunctionSpace( *gridPart );
@@ -320,29 +318,29 @@ namespace Dune
     }
   };
 
-
   template< class Tuple >
   template< int N >
-  struct IOTuple< Tuple >::Output
+  struct IOTuple< Tuple >::RestoreStream
   {
     typedef typename TypeTraits< typename tuple_element< N, Tuple >::type >::PointeeType DiscreteFunction;
 
-    template< class DataIO >
-    static void apply ( DataIO &dataio, const std::string &name, const int &n, const Tuple &tuple )
+    template< class StreamTraits >
+    static void apply ( InStreamInterface< StreamTraits > &inStream, Tuple &tuple ) 
     {
-      const DiscreteFunction *df = get< N >( tuple );
-      // if pointer is valid: write function
+      DiscreteFunction *df = get< N >( tuple );
+      // if pointer is valid: write function to stream 
       if( df ) 
       {
-        std::stringstream dataname;
-        dataname << name << "_" << N;
-
-        // create lock file which is removed after sucessful backup 
-        FileIOLock lock( dataname.str() );
-
-        dataio.writeData( *df, xdr, dataname.str(), n );
+        df->read( inStream );
       }
     }
+  };
+
+  template< class Tuple >
+  template< int N >
+  struct IOTuple< Tuple >::OutputStream
+  {
+    typedef typename TypeTraits< typename tuple_element< N, Tuple >::type >::PointeeType DiscreteFunction;
 
     //! apply function writing to stream 
     template< class StreamTraits >
@@ -441,79 +439,33 @@ namespace Dune
     static Tuple *input ( DataIO &dataio, GridType *&grid, double &t, int n,
                           const std::string &path, const std::string &name )
     {
-      // true if grid has to be read 
-      const bool newGrid = (grid == 0);
-
-      if( newGrid ) 
-      {
-        // create and read grid 
-        grid = IOTupleBase::restoreGrid(dataio,t,n,path,name);
-      }
-      
-      // create all data
-      Tuple *ret = new Tuple;
-
-      if( newGrid ) 
-      {
-        // now read dofmanager and index sets 
-        IOTupleBase::restoreDofManager(*grid,n,path,name);
-      }
-
-      if( newGrid ) 
-      {
-        typedef DofManager<GridType> DofManagerType;
-
-        // get dof manager 
-        DofManagerType& dm = DofManagerType :: instance(*grid);
-     
-        // compress all data 
-        dm.compress();
-      }
-      
-      std::cout << "    FINISHED!" << std::endl;
-      return ret;
     }
 
     //! restore all data in tupel 
-    template< class DataIO, class GridType >
+    template< class GridType >
     static void restoreData ( Tuple &data,
-                              DataIO &dataio, const GridType &grid, int n,
+                              const GridType &grid,
                               const std::string &path,
                               const std::string &name ) 
     {
-      std::string dname( dataName(path,name) );
-      if( Parameter :: verbose() )
-      {
-        std::cout << "P["<< grid.comm().rank()<< "] Reading data from " << dname << std::endl;
-      }
-
-      // read dofmanager and index sets 
-      IOTupleBase::restoreDofManager(grid,n,path,name);
-
-      typedef DofManager<GridType> DofManagerType;
-
-      // get dof manager 
-      DofManagerType& dm = DofManagerType :: instance(grid);
-      
-      // compress all data 
-      dm.compress();
-
-      if( Parameter :: verbose() ) 
-      {
-        std::cout << "P["<<grid.comm().rank()<< "]  FINISHED!" << std::endl;
-      }
+      // nothing to do here  
     }
-
+    
     //! write grid and data to given directory 
-    template< class DataIO, class GridType >
-    static void output ( DataIO &dataio, GridType &grid,
-                         double t, int n,
+    template< class GridType >
+    static void output ( GridType &grid,
                          const std::string &path,
                          const std::string &name,
                          const Tuple &tuple )
     {
-      // write grid first 
-      writeGrid( dataio, grid, t, n, path, name );
+      // get filename 
+      std::string filename = rankName( path, name, grid.comm().rank() );
+
+      // create binary stream 
+      BinaryFileOutStream binaryStream( filename );
+
+      // write grid, either to binaryStream or with given filename 
+      writeGrid( grid, binaryStream, filename );
     }
     
     template< class Disp, class DINFO >

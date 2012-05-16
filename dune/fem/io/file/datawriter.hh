@@ -33,7 +33,7 @@ struct DataWriterParameters : public DataOutputParameters
   //! return true if all data should be written to a spearate path per rank 
   virtual bool separateRankPath () const 
   { 
-    return true; 
+    return false; 
   }
 };
 
@@ -139,13 +139,10 @@ protected:
     if( IOTupleType :: length > 0 ) 
     {
       // for structured grids copy grid
-      IOInterface::copyMacroGrid( grid_, macroGrid_.str(), path_, timeStepPath, datapref_ );
-
-      // create binary io obj
-      BinaryDataIO< GridType > dataio;
+      // IOInterface::copyMacroGrid( grid_, macroGrid_.str(), path_, timeStepPath, datapref_ );
 
       // call output of IOTuple
-      IOTupleType :: output( dataio, grid_, sequenceStamp, step, timeStepPath, datapref_, data );
+      IOTupleType :: output( grid_, timeStepPath, datapref_, data );
     }
 
     return timeStepPath;
@@ -238,6 +235,8 @@ protected:
   //! used grid type 
   typedef GridImp GridType;
 
+  typedef DofManager< GridType > DofManagerType ;
+
   //! call appropriate backup and restore methods on the grid class 
   struct GridPersistentObject : public PersistentObject 
   {
@@ -258,7 +257,11 @@ protected:
     }
 
     //! destructor removing grid object 
-    ~GridPersistentObject() { PersistenceManager::remove( *this ); }
+    ~GridPersistentObject() 
+    { 
+      // remove myself
+      PersistenceManager::remove( *this ); 
+    }
 
     //! backup grid 
     virtual void backup() const 
@@ -286,12 +289,17 @@ protected:
           std::cerr << "ERROR: GridPersistentObject::backup: not possible!" << std::endl;
         }
       }
+
+      // backup dof manager 
+      DofManagerType :: instance( grid_ ).backup();
     }
 
     //! restore grid 
     virtual void restore () 
     {
-      // restore is done below in method restoreGrid 
+      // restore of the grid is done below in method restoreGrid 
+      // here we only need to restore the DofManager 
+      DofManagerType :: instance( grid_ ).restore();
     } 
   };
 
@@ -611,8 +619,11 @@ protected:
     if( IOTupleType :: length > 0 ) 
     {
       BinaryDataIO< GridType > dataio;
-      IOTupleType :: restoreData( data, dataio, grid_, writeStep_, path , datapref_ );
+      IOTupleType :: restoreData( data, grid_, path , datapref_ );
     }
+
+    // make data consecutive at the end of the restore process 
+    DofManagerType :: instance( grid_ ).compress();
   }
 
   void restoreData( ) 
