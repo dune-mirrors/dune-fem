@@ -21,8 +21,6 @@
 
 namespace Dune
 {
-  class PersistenceManager ;
-
   // IOTupleBase
   // -----------
 
@@ -31,6 +29,7 @@ namespace Dune
     // take binary stream types from PersistenceManager (overload with define)
     typedef PersistenceManager :: BackupStreamType   OutStreamType ;   
     typedef PersistenceManager :: RestoreStreamType  InStreamType ;   
+    static const bool singleBackupRestoreFile = PersistenceManager :: singleBackupRestoreFile;
 
     // return path/ prefix name as one string   
     static std::string pathAndName(const std::string& path, const std::string& name, const std::string& suffix) 
@@ -63,7 +62,10 @@ namespace Dune
     static std::string rankName(const std::string& path, const std::string& name, const int rank) 
     {
       std::stringstream rankStr; 
-      rankStr << "." << rank;
+      // add rank if output/input is with different files
+      if( ! singleBackupRestoreFile ) 
+        rankStr << "." << rank;
+
       return pathAndName(path,name,rankStr.str());
     }
 

@@ -134,10 +134,15 @@ inline int scanProcsFiles(const std::string globalPath,
   int procs = 0;
   std::string path( IOInterface::
       createRecoverPath(globalPath,procs,dataPrefix,step, false ) );
+
+  const bool multipleBackupRestoreFiles = ! PersistenceManager :: singleBackupRestoreFile ;
   while ( true )
   {
     std::stringstream filename; 
-    filename << path << "/" << dataPrefix << "." << procs;
+    filename << path << "/" << dataPrefix;
+
+    if( multipleBackupRestoreFiles )
+      filename << "." << procs;
 
     // check for directory 
     if( ! fileExists( filename.str() ) )

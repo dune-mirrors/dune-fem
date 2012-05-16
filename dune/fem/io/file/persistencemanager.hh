@@ -144,9 +144,12 @@ namespace Dune
 #ifdef FEM_PERSISTENCEMANAGERSTREAMTRAITS
     typedef FEM_PERSISTENCEMANAGERSTREAMTRAITS :: BackupStreamType  BackupStreamType;
     typedef FEM_PERSISTENCEMANAGERSTREAMTRAITS :: RestoreStreamType RestoreStreamType;
+    static const bool singleBackupRestoreFile = FEM_PERSISTENCEMANAGERSTREAMTRAITS ::
+      singleBackupRestoreFile ;
 #else 
     typedef BinaryFileOutStream  BackupStreamType ;
     typedef BinaryFileInStream   RestoreStreamType ;
+    static const bool singleBackupRestoreFile = false ;
 #endif
 
   private:
@@ -391,7 +394,9 @@ namespace Dune
     std::string createFilename( const std::string& path, const int rank ) const 
     {
       std::stringstream s;
-      s << path << myTag() << "." << rank;
+      s << path << myTag();
+      if( ! singleBackupRestoreFile ) 
+        s << "." << rank;
       return s.str();
     }
 
