@@ -183,7 +183,18 @@ namespace Dune
     using BaseType::asImp;
   };
 
-
+  /** \brief base class for persistent index sets, the feature is mainly used in the 
+   *         PersistentObject implementation of the DiscreteFunction.
+   */
+  class PersistentIndexSetInterface 
+  {
+    protected:
+      PersistentIndexSetInterface () {}
+    public:  
+      virtual ~PersistentIndexSetInterface () {}
+      virtual void addPersistent() = 0;
+      virtual void removePersistent() = 0;
+  };
 
   /** \brief ConsecutivePersistentIndexSet is the base class for 
       all index sets that are persistent. Implementations of this type
@@ -192,7 +203,7 @@ namespace Dune
   template< class GridImp, class Imp >
   class PersistentIndexSet
   : public DuneGridIndexSetAdapter< GridImp, Imp > ,
-    public PersistentObject 
+    public PersistentIndexSetInterface
   {
     typedef PersistentIndexSet< GridImp, Imp > ThisType;
     typedef DuneGridIndexSetAdapter< GridImp, Imp > BaseType;
@@ -233,13 +244,25 @@ namespace Dune
     }
 
     //! return true if the index set is persistent 
-    bool persistent () const
-    {
-      return true;
+    bool persistent () const { return true; }
+
+    // friendship is needed for backup/restore to avoid abuse 
+    friend class PersistenceManager ;
+
+  public:  
+    /** \brief mark the index set as persistent in the list of the DofManager */
+    virtual void addPersistent() 
+    { 
+      // add persistent flag from dofmanagers list of index sets 
+      dofManager_.addPersistent( asImp() );
     }
 
-  protected:
-    friend class PersistenceManager ;
+    /** \brief unmark the index set as persistent in the list of the DofManager */
+    virtual void removePersistent() 
+    {
+      // remove persistent flag from dofmanagers list of index sets 
+      dofManager_.removePersistent( asImp() );
+    }
 
     /** \copydoc Dune::PersistentObject :: backup */
     virtual void backup() const 
@@ -255,6 +278,7 @@ namespace Dune
       asImp().read( PersistenceManager :: restoreStream() );
     }
 
+  protected:  
     //! write index set to file 
     virtual bool write_xdr( const std::string & ) const { return false; }
 

@@ -21,6 +21,7 @@
 
 #include <dune/fem/io/parameter.hh>
 #include <dune/fem/io/streams/xdrstreams.hh>
+#include <dune/fem/io/streams/binarystreams.hh>
 
 //- local includes 
 #include <dune/fem/space/mapper/dofmapper.hh>
@@ -112,11 +113,16 @@ protected:
   IdentifierType setPtr_;
   // reference counter 
   size_t referenceCounter_;
-  
+  // persistent counter 
+  int persistentCounter_;
+
   template< class IndexSet >
   explicit ManagedIndexSetInterface ( const IndexSet &iset )
-  : setPtr_( getIdentifier( iset ) ), referenceCounter_( 1 )
-  {}
+  : setPtr_( getIdentifier( iset ) ), 
+    referenceCounter_( 1 ),
+    persistentCounter_( 0 )
+  {
+  }
 
 public:
   virtual ~ManagedIndexSetInterface () {}
@@ -125,27 +131,37 @@ public:
   virtual void resize () = 0; 
   //! compress of index set 
   virtual bool compress () = 0;
-  //! read and write method of index sets 
-  virtual void read_xdr(const char * filename, int timestep) = 0;
-  //! read and write method of index sets 
-  virtual void write_xdr(const char * filename, int timestep) const = 0;
 
-#ifdef NEW_DUNE_FEM_READWRITE_METHODS
-  //! new read/write methods 
+  /** \copydoc Dune::PersistentObject :: backup */ 
+  virtual void backup() const = 0;
+  /** \copydoc Dune::PersistentObject :: restore */ 
+  virtual void restore() = 0;
+
+  //! new read/write methods using xdr streams
   virtual void write( XDRFileOutStream& out ) const = 0;
   virtual void read( XDRFileInStream& out ) = 0;
-#endif
+
+  //! new read/write methods using binary streams
+  virtual void write( BinaryFileOutStream& out ) const = 0;
+  virtual void read( BinaryFileInStream& out ) = 0;
 
   //! increase reference counter 
-  void addReference () 
-  {
-    ++referenceCounter_;
-  } 
+  void addReference ( ) { ++referenceCounter_; } 
 
-  bool removeReference ()
+  //! decrease reference counter and return true if zero reached 
+  bool removeReference ( )
   {
     return (--referenceCounter_ == 0);
   }
+  
+  //! increase reference counter 
+  void addPersistent () { ++ persistentCounter_ ; }
+    
+  //! increase reference counter 
+  void removePersistent () { -- persistentCounter_ ; }
+    
+  //! returns true if index set should be considered on backup/restore
+  bool persistent () const { return persistentCounter_ > 0 ; }
   
   template< class IndexSet >
   bool equals ( const IndexSet &iset ) const
@@ -231,31 +247,29 @@ public:
     return indexSet_.compress(); 
   }
 
-  //! call read_xdr of index set 
-  virtual void read_xdr(const char * filename, int timestep)
-  {
-    indexSet_.read_xdr(filename,timestep); 
-  }
-  
-  //! call write_xdr of index set 
-  virtual void write_xdr(const char * filename, int timestep) const
-  {
-    indexSet_.write_xdr(filename,timestep);
+  // forward backup call to indexSet 
+  virtual void backup () const 
+  { 
+    indexSet_.backup();
   }
 
-#ifdef NEW_DUNE_FEM_READWRITE_METHODS
-  //! new write method 
-  virtual void read( XDRFileInStream& in ) 
-  {
-    indexSet_.read( in ); 
+  // forward restore call to indexSet 
+  virtual void restore () 
+  { 
+    indexSet_.restore();
   }
 
   //! new write method 
-  virtual void write( XDRFileOutStream& out ) const
-  {
-    indexSet_.write( out ); 
-  }
-#endif
+  virtual void read( XDRFileInStream& in ) { indexSet_.read( in ); }
+
+  //! new write method 
+  virtual void write( XDRFileOutStream& out ) const { indexSet_.write( out ); }
+
+  //! new write method 
+  virtual void read( BinaryFileInStream& in ) { indexSet_.read( in ); }
+
+  //! new write method 
+  virtual void write( BinaryFileOutStream& out ) const { indexSet_.write( out ); }
 };
 
 /////////////////////////////////////////////////////////////
@@ -766,7 +780,8 @@ class DofManError : public Exception {};
 // --DofManager 
 template< class Grid > 
 class DofManager
-: public IsDofManager 
+: public IsDofManager
+  // public AutoPersistentObject  
 {
   typedef DofManager< Grid > ThisType;
 
@@ -912,14 +927,14 @@ public:
    *  void removeEntity ( const Element & );
    *  void resize();
    *  bool compress();
-   *  void read_xdr();
-   *  void write_xdr();
+   *  void write( OutStreamInterface<Traits>& );
+   *  void read( InStreamInterface<Traits>& ) 
    *  \endcode
    *
    *  \param[in]  iset  index set to add to list
    */
   template <class IndexSetType>
-  inline void addIndexSet (const IndexSetType &iset); 
+  inline void addIndexSet (const IndexSetType &iset ); 
 
   /** \brief removed index set from dof manager's list of index sets
    *
@@ -929,7 +944,39 @@ public:
    *  \param[in]  iset  index set to add to list
    */
   template <class IndexSetType>
-  inline void removeIndexSet (const IndexSetType &iset); 
+  inline void removeIndexSet (const IndexSetType &iset ); 
+
+  /** \brief mark an index set of the dof manager's list of index sets 
+   *         as persistent 
+   *
+   *  \param[in]  iset  index set to mark as persistent 
+   */
+  template <class IndexSetType>
+  inline void addPersistent (const IndexSetType &iset )
+  {
+    addRemovePersistent( iset, true ); 
+  } 
+
+  /** \brief unmark an index set of the dof manager's list of index sets 
+   *         as persistent
+   *
+   *  \param[in]  iset  index set to add to list
+   */
+  template <class IndexSetType>
+  inline void removePersistent (const IndexSetType &iset )
+  {
+    addRemovePersistent( iset, false ); 
+  }
+
+protected:  
+  template <class IndexSetType>
+  inline void addRemovePersistent (const IndexSetType &iset, const bool add );
+
+public:  
+  /** \brief add a managed dof storage to the dof manager. 
+      \param dofStorage  dof storage to add which must fulfill the 
+             ManagedDofStorageInterface 
+  */
 
   /** \brief add a managed dof storage to the dof manager. 
       \param dofStorage  dof storage to add which must fulfill the 
@@ -1139,6 +1186,46 @@ public:
   }
 
   //********************************************************
+  // Interface for PersistentObjects 
+  //********************************************************
+  
+  /** \copydoc Dune::PersistentObject :: backup */
+  virtual void backup () const 
+  {
+    // backup all index sets marked as persistent
+    ConstIndexListIteratorType endit = indexList_.end();
+    for(ConstIndexListIteratorType it = indexList_.begin(); it != endit; ++it)
+    {
+      if( (*it)->persistent() )
+      {
+        (*it)->backup();
+      }
+    }
+  }
+
+  /** \copydoc Dune::PersistentObject :: restore */
+  virtual void restore () 
+  {
+    // restore all index sets marked as persistent
+    IndexListIteratorType endit = indexList_.end();
+    for(IndexListIteratorType it = indexList_.begin(); it != endit; ++it)
+    {
+      if( (*it)->persistent() )
+      {
+        (*it)->restore();
+      }
+    }
+
+    // make all index sets consistent
+    // before any data is read this can be 
+    // assured since DofManager is an 
+    // AutoPersistentObject and thus in the 
+    // beginning of the list, fater the grid of course
+    resize();
+    compress();
+  }
+  
+  //********************************************************
   // Interface for DofManager access 
   //********************************************************
   
@@ -1235,7 +1322,7 @@ inline DofManager<GridType>::~DofManager ()
 template <class GridType>
 template <class IndexSetType>
 inline void DofManager<GridType>::
-addIndexSet (const IndexSetType &iset)
+addIndexSet (const IndexSetType &iset )
 {
   assert( Fem :: ThreadManager:: singleThreadMode() );
 
@@ -1253,6 +1340,7 @@ addIndexSet (const IndexSetType &iset)
     if( set->equals( iset ) )
     {
       set->addReference();
+
       indexSet = static_cast< ManagedIndexSetType * >( set );
       break;
     }
@@ -1296,6 +1384,31 @@ removeIndexSet ( const IndexSetType &iset )
 
   // we should never get here
   DUNE_THROW(InvalidStateException,"Could not remove index from DofManager set!");
+}
+
+template <class GridType>
+template <class IndexSetType>
+inline void DofManager<GridType>::
+addRemovePersistent (const IndexSetType &iset, const bool add )
+{
+  assert( Fem :: ThreadManager:: singleThreadMode() );
+
+  typedef typename IndexListType::reverse_iterator IndexListIteratorType;
+  
+  // search index set list in reverse order to find latest index sets faster
+  IndexListIteratorType endit = indexList_.rend();
+  for( IndexListIteratorType it = indexList_.rbegin(); it != endit; ++it )
+  {
+    ManagedIndexSetInterface *set = *it;
+    if( set->equals( iset ) )
+    {
+      if( add ) 
+        set->addPersistent();
+      else 
+        set->removePersistent();
+      break ;
+    }
+  }
 }
 
 template <class GridType>
@@ -1354,7 +1467,6 @@ template <class GridType>
 inline bool DofManager<GridType>::
 writeIndexSets(const std::string& filename , int timestep )
 {
-#ifdef NEW_DUNE_FEM_READWRITE_METHODS
   XDRFileOutStream out( filename );
   // save module version for later changes 
   unsigned int versionId = DUNE_MODULE_VERSION_ID(DUNE_FEM);
@@ -1364,17 +1476,6 @@ writeIndexSets(const std::string& filename , int timestep )
   {
     (*it)->write( out );
   }
-#else // old method 
-  int count = 0;
-
-  IndexListIteratorType endit = indexList_.end();
-  for(IndexListIteratorType it = indexList_.begin(); it != endit; ++it)
-  {
-    std::string newFilename = generateIndexSetName(filename, count);
-    (*it)->write_xdr(newFilename.c_str(),timestep); 
-    ++ count;
-  }
-#endif
   return true;
 }
 
@@ -1382,7 +1483,6 @@ template <class GridType>
 inline bool DofManager<GridType>::
 readIndexSets(const std::string& filename , int timestep )
 {
-#ifdef NEW_DUNE_FEM_READWRITE_METHODS
   XDRFileInStream in( filename );
   // check version of file 
   unsigned int versionId;
@@ -1395,31 +1495,6 @@ readIndexSets(const std::string& filename , int timestep )
   {
     (*it)->read( in );
   }
-#else // old method 
-  int count = 0;
-  IndexListIteratorType endit = indexList_.end();
-  for(IndexListIteratorType it = indexList_.begin(); it != endit; ++it)
-  {
-    // create filename 
-    std::string newFilename = generateIndexSetName(filename, count);
-    
-    // create filename that is used by index sets 
-    std::string fileToRead = genFilename("", newFilename.c_str(), timestep);
-      
-    // check if file exists, and skip if not 
-    FILE * testfile = fopen(fileToRead.c_str(),"r");
-    if( testfile )
-    {
-      fclose( testfile );
-      (*it)->read_xdr(newFilename.c_str(),timestep);
-    }
-    else if( Parameter :: verbose() )
-    {
-      std::cout << "WARNING: Skipping " << newFilename << " in DofManager::read_xdr!" << std::endl;
-    }
-    ++count;
-  }
-#endif
   return true;
 }
 

@@ -11,6 +11,7 @@
 
 #include <dune/fem/io/streams/streams.hh>
 #include <dune/fem/misc/threadmanager.hh>
+#include <dune/fem/gridpart/dunefemindexsets.hh>
 
 #include "discretefunction.hh"
 
@@ -427,12 +428,13 @@ namespace Dune
   void DiscreteFunctionDefault< Traits >
     :: insertSubData()
   {
-    // if indexset is persistent it is also 
-    // derived from PersistentObject 
+    // if indexset is persistent it must be  
+    // derived from PersistentIndexSetInterface 
     if( space().indexSet().persistent() )
     {
-      PersistentObject& object = (PersistentObject &) space().indexSet();
-      persistenceManager << object;
+      // this marks the index set in the DofManager's list of index set as persistent
+      PersistentIndexSetInterface& indexSet = (PersistentIndexSetInterface &) space().indexSet();
+      indexSet.addPersistent();
     }
   }
 
@@ -440,12 +442,13 @@ namespace Dune
   void DiscreteFunctionDefault< Traits >
     :: removeSubData()
   {
-    // if indexset is persistent it is also
-    // derived from PersistentObject 
+    // if indexset is persistent it must be 
+    // derived from PersistentIndexSetInterface 
     if( space().indexSet().persistent() )
     {
-      PersistentObject& object = (PersistentObject &) space().indexSet();
-      persistenceManager >> object;
+      // this unmarks the index set in the DofManager's list of index set as persistent
+      PersistentIndexSetInterface& indexSet = (PersistentIndexSetInterface &) space().indexSet();
+      indexSet.removePersistent();
     }
   }
 
