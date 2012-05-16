@@ -182,7 +182,9 @@ inline int readParameterList (int argc, char **argv, bool displayData = true )
     info[n].name = solprefix.c_str();
     info[n].datinf = 0;
     info[n].fix_mesh = 0;
-    for (int df=0;df< tuple_size<GR_DiscFuncType>::value;++df)  {
+    const int tupleSize = tuple_size<GR_DiscFuncType>::value ;
+    for (int df = 0; df < tupleSize; ++df )
+    {
       DATAINFO * dinf = (DATAINFO *) std::malloc(sizeof(DATAINFO));
       assert(dinf);
       dinf->name = solprefix.c_str();
@@ -248,7 +250,8 @@ inline int readParameterList (int argc, char **argv, bool displayData = true )
       info[n].name = argv[i+1];
       info[n].datinf = 0;
       info[n].fix_mesh = 0;
-      for (int df=0;df<tuple_size<GR_DiscFuncType>::value;++df) 
+      const int tupleSize = tuple_size<GR_DiscFuncType>::value ;
+      for (int df = 0; df < tupleSize; ++df ) 
       {
         DATAINFO * dinf = (DATAINFO *) std::malloc(sizeof(DATAINFO));
         assert(dinf);

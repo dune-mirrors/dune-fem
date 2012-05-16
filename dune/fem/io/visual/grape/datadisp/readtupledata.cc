@@ -35,19 +35,6 @@ inline void dataDispErrorExit(std::string msg)
   exit(EXIT_FAILURE);
 }
 
-#if !HAVE_GRAPE
-inline void removeWarnings() 
-{
-  // this is to remove compiler warnings 
-  maxlevelButton = 0;
-  minMaxColorbar = 0;
-  iteratorButton = 0;
-  defaultIteratorValue = 0;
-  partitionTypeButton = 0;
-  globalTsc = 0;
-}
-#endif
-
 inline void readTupleData(const char * path, const char * filename, 
             double & time , 
             const int n, 
@@ -126,9 +113,6 @@ inline INFO * readData(INFO * info , const char * path, int i_start, int i_end,
     if (timestep > 0) t_act += timestep*i_delta;
     n_step++;
   }
-#if !HAVE_GRAPE
-  removeWarnings();
-#endif
   return info;
 }
 
