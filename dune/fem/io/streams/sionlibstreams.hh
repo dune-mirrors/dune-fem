@@ -41,8 +41,10 @@ namespace Dune
       typedef SIONlibOutStream   ThisType;
       typedef StandardOutStream  BaseType;
 
-      typedef MPIHelper :: MPICommunicator MPICommunicatorType;
-      typedef CollectiveCommunication< MPICommunicatorType > CommunicatorType ;
+      typedef MPIHelper  :: MPICommunicator          MPICommunicatorType;
+
+      // don't allow copying because of interal pointers 
+      SIONlibOutStream( const SIONlibOutStream& ) ;
     public:
       /** \brief constructor
        *
@@ -59,6 +61,7 @@ namespace Dune
       {
       }
 
+      /** \brief destructor writing internal data buffer to the file via SIONlib */
       ~SIONlibOutStream () 
       { 
         writeFile();
@@ -155,12 +158,17 @@ namespace Dune
       typedef SIONlibInStream  ThisType;
       typedef StandardInStream  BaseType;
 
-      typedef MPIHelper :: MPICommunicator MPICommunicatorType;
-      typedef CollectiveCommunication< MPICommunicatorType > CommunicatorType ;
+      typedef MPIHelper  :: MPICommunicator          MPICommunicatorType;
+
+      // don't allow copying because of interal pointers 
+      SIONlibInStream( const SIONlibInStream& ) ;
     public:
       /** \brief constructor
        *
        *  \param[in]  filename  name of a file to read from 
+       *  \param[in]  mpiComm   MPI communicator (defaults to MPIHelper :: getCommunicator() )
+       *
+       *  \note The filename must be the same on all ranks. 
        */
       SIONlibInStream ( const std::string &filename,
                         MPICommunicatorType mpiComm = MPIHelper :: getCommunicator() )
@@ -168,6 +176,7 @@ namespace Dune
       {
       }
 
+      /** \brief destructor deleting interal data buffer */
       ~SIONlibInStream () 
       { 
         delete data_; data_ = 0;
