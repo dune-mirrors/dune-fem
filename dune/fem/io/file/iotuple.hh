@@ -14,20 +14,24 @@
 
 //- Dune fem includes 
 #include <dune/fem/space/common/dofmanager.hh>
-#include <dune/fem/space/common/communicationmanager.hh>
-#include <dune/fem/io/file/iolock.hh>
+#include <dune/fem/io/file/persistencemanager.hh>
 #include <dune/fem/io/file/iointerface.hh>
 #include <dune/fem/io/parameter.hh>
 #include <dune/grid/common/backuprestore.hh>
 
 namespace Dune
 {
+  class PersistenceManager ;
 
   // IOTupleBase
   // -----------
 
   struct IOTupleBase 
   {
+    // take binary stream types from PersistenceManager (overload with define)
+    typedef PersistenceManager :: BackupStreamType   OutStreamType ;   
+    typedef PersistenceManager :: RestoreStreamType  InStreamType ;   
+
     // return path/ prefix name as one string   
     static std::string pathAndName(const std::string& path, const std::string& name, const std::string& suffix) 
     {
@@ -66,13 +70,13 @@ namespace Dune
     template < class GridType > 
     static void  
     restoreGrid(GridType *&grid, 
-                BinaryFileInStream& binaryStream,
+                InStreamType& inStream, 
                 const std::string& filename )
     {
       try 
       { 
         // get standard istream
-        std::istream& stream = binaryStream.stream();
+        std::istream& stream = inStream.stream();
         // restore grid from stream (grid implementation has to take care of byte order)
         grid = BackupRestoreFacility< GridType > :: restore( stream );
       }
@@ -89,7 +93,7 @@ namespace Dune
     template <class GridType>
     static void
     restoreDofManager ( const GridType& grid, 
-                        BinaryFileInStream& binaryStream )
+                        InStreamType& inStream )
     {
       // type of DofManager 
       typedef DofManager<GridType> DofManagerType;
@@ -98,7 +102,7 @@ namespace Dune
       DofManagerType& dm =  DofManagerType :: instance ( grid );
       
       // read data 
-      dm.read( binaryStream );
+      dm.read( inStream );
 
       // resize data 
       dm.resizeForRestrict();
@@ -108,13 +112,13 @@ namespace Dune
     template < class GridType >
     static 
     void writeGrid( const GridType& grid,
-                    BinaryFileOutStream& binaryStream, 
+                    OutStreamType& outStream, 
                     const std::string& filename )
     {
       try 
       { 
         // get standard ostream
-        std::ostream& stream = binaryStream.stream();
+        std::ostream& stream = outStream.stream();
         // write grid to stream (grid implementation has to take care of byte order)
         BackupRestoreFacility< GridType > :: backup( grid, stream );
       }
@@ -131,7 +135,7 @@ namespace Dune
       DofManagerType& dm = DofManagerType :: instance ( grid );
 
       // write DofManager's index sets 
-      dm.write( binaryStream );
+      dm.write( outStream );
     }
   };
 
@@ -145,7 +149,6 @@ namespace Dune
   : public IOTupleBase 
   {
     template< int N > struct CreateData;
-    template< int N > struct Restore;
     template< int N > struct RestoreStream;
     template< int N > struct OutputStream;
     template< int N > struct AddToDisplay;
@@ -175,12 +178,12 @@ namespace Dune
         std::cout << "IOTuple: Reading data from " << filename << std::endl;
 
       // create binary stream 
-      BinaryFileInStream binaryStream( filename );
+      InStreamType inStream( filename );
 
       if( newGrid ) 
       {
         // create and read grid 
-        IOTupleBase::restoreGrid( grid, binaryStream, filename );
+        IOTupleBase::restoreGrid( grid, inStream, filename );
       }
       
       // create all data
@@ -190,11 +193,11 @@ namespace Dune
       if( newGrid ) 
       {
         // now read dofmanager and index sets 
-        IOTupleBase::restoreDofManager(*grid, binaryStream );
+        IOTupleBase::restoreDofManager(*grid, inStream );
       }
 
       // now read all data 
-      ForLoop< RestoreStream, 0, length-1 >::apply( binaryStream, *ret );
+      ForLoop< RestoreStream, 0, length-1 >::apply( inStream, *ret );
       
       if( newGrid ) 
       {
@@ -224,10 +227,10 @@ namespace Dune
       std::string filename = rankName( path, name, grid.comm().rank() );
 
       // create binary stream 
-      BinaryFileInStream binaryStream( filename );
+      InStreamType inStream( filename );
 
       // read all data now 
-      ForLoop< RestoreStream, 0, length-1 >::apply( binaryStream, data );
+      ForLoop< RestoreStream, 0, length-1 >::apply( inStream, data );
     }
 
     //! write grid and data to given directory 
@@ -241,13 +244,13 @@ namespace Dune
       std::string filename = rankName( path, name, grid.comm().rank() );
 
       // create binary stream 
-      BinaryFileOutStream binaryStream( filename );
+      OutStreamType outStream( filename );
 
       // write grid, either to binaryStream or with given filename 
-      writeGrid( grid, binaryStream, filename );
+      writeGrid( grid, outStream, filename );
 
       // write data to stream 
-      ForLoop< OutputStream, 0, length-1 >::apply( binaryStream, tuple );
+      ForLoop< OutputStream, 0, length-1 >::apply( outStream, tuple );
     }
     
     template< class Disp, class DINFO >
@@ -289,35 +292,6 @@ namespace Dune
       GridPart *gridPart = new GridPart( grid );
       DiscreteFunctionSpace *space = new DiscreteFunctionSpace( *gridPart );
       get< N >( tuple ) = new DiscreteFunction( "", *space );
-    }
-  };
-
-
-  template< class Tuple >
-  template< int N >
-  struct IOTuple< Tuple >::Restore
-  {
-    typedef typename TypeTraits< typename tuple_element< N, Tuple >::type >::PointeeType DiscreteFunction;
-
-    template< class DataIO >
-    static void apply ( const Tuple &tuple, DataIO &dataio, const std::string &name, const int &n )
-    {
-      std::stringstream dataname;
-      dataname << name << "_" << N; 
-      if( Parameter :: verbose() ) 
-        std::cout << "    Dataset from " << dataname.str() << std::endl;
-
-      DiscreteFunction *df = get< N >( tuple );
-      assert( df );
-      
-      // check if lock file exists, and if exit
-      FileIOCheckError check( dataname.str() );
-
-      // make sure dof compression is applied 
-      df->enableDofCompression();
-
-      // read data 
-      dataio.readData( *df, dataname.str(), n );
     }
   };
 
@@ -466,10 +440,10 @@ namespace Dune
       std::string filename = rankName( path, name, grid.comm().rank() );
 
       // create binary stream 
-      BinaryFileOutStream binaryStream( filename );
+      OutStreamType outStream( filename );
 
       // write grid, either to binaryStream or with given filename 
-      writeGrid( grid, binaryStream, filename );
+      writeGrid( grid, outStream, filename );
     }
     
     template< class Disp, class DINFO >

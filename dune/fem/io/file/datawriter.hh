@@ -618,7 +618,6 @@ protected:
     // restore user data 
     if( IOTupleType :: length > 0 ) 
     {
-      BinaryDataIO< GridType > dataio;
       IOTupleType :: restoreData( data, grid_, path , datapref_ );
     }
 

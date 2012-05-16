@@ -21,10 +21,6 @@
 
 // binary data io 
 #include <dune/fem/io/io.hh>
-#include <dune/fem/io/file/binarydataio.hh>
-
-// input and output of tuples 
-#include <dune/fem/io/file/iotuple.hh>
 
 #include <dune/fem/misc/capabilities.hh>
 
