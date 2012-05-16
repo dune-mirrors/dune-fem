@@ -23,8 +23,6 @@ typedef GR_InputType GR_DiscFuncType;
 
 static std::stack<GR_GridType *> gridStack;
 
-static BinaryDataIO <GR_GridType> dataIO;
-
 template <class T> 
 inline void deleteObjects(std::stack<T *> & stack);
 
