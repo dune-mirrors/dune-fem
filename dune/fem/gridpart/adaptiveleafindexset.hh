@@ -1172,9 +1172,12 @@ namespace Dune
 
       if( myname != storedName ) 
       {
+        size_t length = std::min( myname.size(), storedName.size() );
+        // only print the first character of whatever storedName is 
+        std::string found = storedName.substr(0, length-1 ); 
         DUNE_THROW( InvalidStateException,
-                    "AdaptiveIndexSetBase::read: got " << storedName 
-                    << " (expected " << storedName << ")." );
+                    "AdaptiveIndexSetBase::read: got  " << found 
+                    << " (expected " << myname << ")." );
       }
     }
 
