@@ -1222,7 +1222,37 @@ public:
     // AutoPersistentObject and thus in the 
     // beginning of the list, fater the grid of course
     resize();
-    compress();
+  }
+
+  //********************************************************
+  // read/write using fem streams 
+  //********************************************************
+  /** \brief write all index sets to a given stream 
+   *
+   *  \param[out]  out  stream to write to 
+   */
+  template < class OutStream >
+  void write( OutStream& out ) const 
+  {
+    ConstIndexListIteratorType endit = indexList_.end();
+    for(ConstIndexListIteratorType it = indexList_.begin(); it != endit; ++it)
+    {
+      (*it)->write( out );
+    }
+  }
+  
+  /** \brief read all index sets from a given stream 
+   *
+   *  \param[in] in  stream to read from 
+   */
+  template < class InStream >
+  void read( InStream& in ) 
+  {
+    IndexListIteratorType endit = indexList_.end();
+    for(IndexListIteratorType it = indexList_.begin(); it != endit; ++it)
+    {
+      (*it)->read( in );
+    }
   }
   
   //********************************************************
@@ -1242,6 +1272,7 @@ public:
   }
 
   //! writes DofManager of corresponding grid, when DofManager exists 
+  DUNE_VERSION_DEPRECATED(1,4,remove)
   inline static bool
   write(const GridType & grid, const std::string filename, int timestep)
   {
@@ -1250,6 +1281,7 @@ public:
   }
 
   //! reads DofManager of corresponding grid, when DofManager exists 
+  DUNE_VERSION_DEPRECATED(1,4,remove)
   inline static bool
   read(const GridType & grid, const std::string filename, int timestep, bool verbose = true )
   {
@@ -1264,11 +1296,14 @@ private:
   //********************************************************
 
   //! writes all underlying index sets to a file 
+  DUNE_VERSION_DEPRECATED(1,4,remove)
   bool writeIndexSets(const std::string& filename, int timestep);
   //! reads all underlying index sets from a file 
+  DUNE_VERSION_DEPRECATED(1,4,remove)
   bool readIndexSets(const std::string& filename, int timestep);
 
   // generate index set filename 
+  DUNE_VERSION_DEPRECATED(1,4,remove)
   std::string generateIndexSetName(const std::string& filename,
                                    const int count) const
   {
