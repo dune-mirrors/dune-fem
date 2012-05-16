@@ -86,9 +86,9 @@ namespace Dune
           // get data buffer 
           std::string data ( data_->str() );
 
-          // get max chunk size for all procs 
+          // get chunk size  
           size_t maxSize = data.size() + sizeof( int ); 
-          maxSize = MPIManager::comm().max( maxSize );
+          // maxSize = MPIManager::comm().max( maxSize );
 
           sion_int64 chunkSize = maxSize;
           std::string fileMode( "wb" );
@@ -105,7 +105,7 @@ namespace Dune
                               &numFiles, // numFiles (0 means 1 file)
                               mpiComm_, // global comm 
                               &mpiComm_, // local comm 
-                              &chunkSize, 
+                              &chunkSize, // maximal size of data to be written 
                               &blockSize, // default block size
                               &rank, // my rank 
                               &file, // file pointer that is set by sion lib
@@ -171,8 +171,9 @@ namespace Dune
        *  \note The filename must be the same on all ranks. 
        */
       SIONlibInStream ( const std::string &filename,
-                        MPICommunicatorType mpiComm = MPIHelper :: getCommunicator() )
-        : BaseType( readFile( filename , mpiComm ) )
+                        MPICommunicatorType mpiComm = MPIHelper :: getCommunicator(),
+                        const int rank = MPIManager :: rank() )
+        : BaseType( readFile( filename , mpiComm, rank ) )
       {
       }
 
@@ -183,37 +184,60 @@ namespace Dune
       }
 
     protected:  
-      std::istream& readFile( const std::string& filename, MPICommunicatorType mpiComm )
+      std::istream& readFile( const std::string& filename, 
+                              MPICommunicatorType mpiComm,
+                              int rank )
       {
         data_ = new std::stringstream();
         assert( data_ );
-#if HAVE_SIONLIB && HAVE_MPI
-
-        // this is set by sion_paropen_mpi 
+#if HAVE_SIONLIB 
+        // chunkSize is set by sion_paropen_mpi 
         sion_int64 chunkSize = 0;
         std::string fileMode( "rb" );
 
         int numFiles = 1;
         int blockSize = -1;
-        int rank = MPIManager::rank();
         FILE* file = 0;
 
-        // open sion file 
-        int sid = 
-          :: sion_paropen_mpi( (char *) filename.c_str(),
-                            (char *) fileMode.c_str(), 
-                            &numFiles, // numFiles (0 means 1 file)
-                            mpiComm, // global comm 
-                            &mpiComm, // local comm 
-                            &chunkSize, 
-                            &blockSize, // default block size
-                            &rank, // my rank 
-                            &file, // file pointer that is set by sion lib
-                            NULL 
-                          ); 
+        // if MPI is avaialbe use sion_paropen_mpi
+        const int mpiSize = MPIManager :: size () ;
+        // sion file handle 
+        int sid = 0;
+#if HAVE_MPI
+        if( mpiSize > 1 )
+        {
+          // open sion file 
+          sid = sion_paropen_mpi( (char *) filename.c_str(),
+                                  (char *) fileMode.c_str(), 
+                                  &numFiles, // numFiles (0 means 1 file)
+                                  mpiComm, // global comm 
+                                  &mpiComm, // local comm 
+                                  &chunkSize, // is set by library
+                                  &blockSize, // default block size
+                                  &rank, // my rank 
+                                  &file, // file pointer that is set by sion lib
+                                  NULL 
+                                ); 
 
-        if( sid == -1 ) 
-          DUNE_THROW( IOError, "opening sion_paropen_mpi for reading failed!" << filename );
+          if( sid == -1 ) 
+            DUNE_THROW( IOError, "opening sion_paropen_mpi for reading failed!" << filename );
+        }
+        else 
+#endif
+        // serial open of file
+        {
+          // open sion file for reading only rank information 
+          sid = sion_open_rank( (char *) filename.c_str(),
+                                (char *) fileMode.c_str(), 
+                                &chunkSize, // is set by library 
+                                &blockSize, // default block size
+                                &rank, // my rank 
+                                &file  // file pointer that is set by sion lib
+                              ); 
+
+          if( sid == -1 ) 
+            DUNE_THROW( IOError, "opening sion_ropen for reading failed!" << filename );
+        }
 
         assert( file );
 
@@ -232,10 +256,19 @@ namespace Dune
         data_ = new std::stringstream();
         (*data_) << data ;
 
+#if HAVE_MPI
         // close file 
-        sion_parclose_mpi( sid );
-
+        if( mpiSize > 1 ) 
+        {
+          sion_parclose_mpi( sid );
+        }
+        else 
 #endif
+        {
+          sion_close( sid );
+        }
+#endif // HAVE_SIONLIB
+
         return *data_;
       }
       //! standard file stream 
