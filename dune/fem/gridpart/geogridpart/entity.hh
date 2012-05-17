@@ -196,7 +196,7 @@ namespace Dune
       subEntity ( int i ) const
       {
         typedef typename Traits::template Codim< codim >::EntityPointerImpl EntityPointerImpl;
-        return EntityPointerImpl( hostEntity().template subEntity< codim >( i ) );
+        return EntityPointerImpl( *coordFunction_, hostEntity().template subEntity< codim >( i ) );
       }
 
       bool hasBoundaryIntersections () const
