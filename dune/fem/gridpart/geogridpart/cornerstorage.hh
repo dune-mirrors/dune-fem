@@ -56,7 +56,7 @@ namespace Dune
       void evaluate ( unsigned int i, RangeType &y ) const
       {
         const int index = coordFunction_.gridPart().indexSet().subIndex( hostEntity_, i, dimension );
-        assert( (index >= 0) && (index < coordFunction_.space().blockMapper().size()) );
+        assert( (index >= 0) && (index < (int)(coordFunction_.space().blockMapper().size())) );
 
         typedef typename CoordFunctionType::ConstDofBlockPtrType ConstDofBlockPtrType;
         ConstDofBlockPtrType block = coordFunction_.block( index );
@@ -72,7 +72,9 @@ namespace Dune
 
       unsigned int numCorners () const
       {
-        return hostEntity_.template count< dimension >();
+        // return hostEntity_.template count< dimension >();
+        // return GenericReferenceElements< typename GridPartType::GridType::ctype, dimension >::general( type() ).size(dimension);
+        return GenericReferenceElements< double, dimension >::general( type() ).size(dimension);
       }
 
     private:

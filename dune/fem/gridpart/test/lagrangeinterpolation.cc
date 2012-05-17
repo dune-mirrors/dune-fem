@@ -128,12 +128,17 @@ using namespace Dune;
       FilterType filter( hostGridPart, basicFilter );
       GridPartType gridPart( hostGridPart, filter );
       // GridPartType gridPart ( grid );
-
-
+      //
+      
       DiscreteFunctionSpaceType discreteFunctionSpace( gridPart );
       ExactSolutionType f;
       DiscreteFunctionType solution( "solution", discreteFunctionSpace );
       solution.clear();
+
+      std::cout << "codim c=" << 0 << " : " << gridPart.indexSet().size(0) << " " 
+                << hostGridPart.indexSet().size(0) << std::endl;
+      std::cout << "codim c=" << 3 << " : " << gridPart.indexSet().size(3) << " " 
+                << hostGridPart.indexSet().size(3) << std::endl;
 
       std :: cout << "maxDofs = " << discreteFunctionSpace.mapper().maxNumDofs() << std :: endl;
 

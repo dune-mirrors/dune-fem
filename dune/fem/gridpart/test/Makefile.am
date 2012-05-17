@@ -1,8 +1,9 @@
 # IGNORE_HEADERS
 
 # set default grid type for make all
-GRIDTYPE=YASPGRID
-GRIDDIM=2
+GRIDTYPE=ALUGRID_SIMPLEX
+GRIDDIM=3
+WORLDDIM=3
 
 # test programs 
 check_PROGRAMS = test-filteredgridpart lagrangeinterpolation test-idgridpart test-geogridpart
