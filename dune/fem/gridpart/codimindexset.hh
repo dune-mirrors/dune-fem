@@ -76,7 +76,6 @@ protected:
   typedef GridImp GridType;
 
 private:
-public:
   enum INDEXSTATE { UNUSED = 0,  // unused indices
                     USED   = 1,  // used indices
                     NEW    = 2 };//  new indices 
@@ -94,7 +93,6 @@ public:
     typedef std::pair< int, INDEXSTATE > BaseType;
     // default constructor 
     IndexPair() : BaseType( -1, UNUSED ) {}
-    // friend std::ostream & operator<<(std::ostream &os, const IndexPair& p);
   }; 
 
   typedef PersistentContainer< GridImp, IndexPair > IndexContainerType;
@@ -345,7 +343,6 @@ public:
   int index ( const EntityType& entity ) const
   {
     assert( myCodim_ == EntityType :: codimension );
-    assert(exists(entity));
     return leafIndex_[ entity ].first;
   }
   
@@ -355,7 +352,6 @@ public:
                  const int subNumber ) const 
   {
     assert( 0 == EntityType :: codimension );
-    assert(exists(entity,subNumber));
     return leafIndex_( entity, subNumber ).first;
   }
   
@@ -451,6 +447,7 @@ protected:
   {
     if( leafIdx.first < 0 )
       leafIdx.first = nextFreeIndex_ ++ ;
+
     leafIdx.second = USED;
   }
 

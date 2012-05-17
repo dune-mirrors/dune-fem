@@ -247,13 +247,8 @@ try
   std::cout << std::endl;
   std::cout << "gridWidth: " << Dune::GridWidth::calcGridWidth( gridPart ) << std::endl;
 
-  /*
-  if (GridType::dimension == GridType::dimensionworld)
-  {
-    Dune::TemporaryLocalFunction< DiscreteCoordFunctionSpaceType > tlf( coordFunctionSpace );
-    testExchangeGeometry( gridPart, tlf );
-  }
-  */
+  Dune::TemporaryLocalFunction< DiscreteCoordFunctionSpaceType > tlf( coordFunctionSpace );
+  testExchangeGeometry( gridPart, tlf );
 
   std::cout << std::endl << std::endl;
 
