@@ -97,7 +97,7 @@ namespace Dune
     {
       typedef typename CoordFunction::RangeFieldType ctype;
 
-      static const int dimension = CoordFunction::FunctionSpaceType::dimDomain;
+      static const int dimension = CoordFunction::GridPartType::dimension;
       static const int dimensionworld = CoordFunction::FunctionSpaceType::dimRange;
 
       typedef GeoGridPartFamily< CoordFunction > GridPartFamily;

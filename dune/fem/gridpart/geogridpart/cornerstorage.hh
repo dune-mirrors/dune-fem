@@ -45,7 +45,7 @@ namespace Dune
       typedef typename CoordFunctionType::RangeType RangeType;
 
       static const int dimRange = CoordFunctionType::FunctionSpaceType::dimRange;
-      static const int dimension = CoordFunctionType::FunctionSpaceType::dimDomain;
+      static const int dimension = HostEntityType::dimension;
 
       GeoDiscreteCoordFunctionCaller ( const CoordFunction &coordFunction,
                                        const HostEntityType &hostEntity )
