@@ -82,7 +82,7 @@ namespace Dune
       {
         typedef typename GridPart :: IntersectionIteratorType IntersectionIteratorType;
         typedef typename IntersectionIteratorType :: Intersection IntersectionType;
-        typedef typename GridPart :: GridType :: template Codim<0> :: EntityPointer EntityPointer;
+        typedef typename GridPart :: template Codim<0> :: EntityPointerType EntityPointer;
 
         const IntersectionIteratorType endit = gridPart.iend( entity );
         for( IntersectionIteratorType it = gridPart.ibegin( entity );
