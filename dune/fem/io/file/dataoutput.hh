@@ -800,11 +800,13 @@ namespace Dune
     if( vertexData ) 
     {
 #if ENABLE_VTXPROJECTION
-      // generate adaptive leaf grid part 
-      // do not use leaf grid part since this will 
-      // create the grids leaf index set, which might not be wanted. 
-      typedef AdaptiveLeafGridPart< GridType > GridPartType; 
-      GridPartType gridPart( const_cast<GridType&> (grid_) );
+      // get gridpart from first discrete function in tuple
+      typedef GridPartGetter< GridType, OutPutDataType > GridPartGetterType;              
+      GridPartGetterType gp( grid_, data_ );                                              
+                                                                                          
+      typedef typename GridPartGetterType::GridPartType GridPartType;                     
+      const GridPartType &gridPart = gp.gridPart();                                       
+
 
       // create vtk output handler 
       typedef VTKIO < GridPartType > VTKIOType; 
