@@ -7,7 +7,6 @@
 #include <dune/common/static_assert.hh>
 #include <dune/common/typetraits.hh>
 
-#include <dune/fem/io/streams/virtualstreams.hh>
 #include <dune/fem/io/streams/binarystreams.hh>
 #include <dune/fem/io/file/asciiparser.hh>
 #include <dune/fem/io/file/iointerface.hh>
@@ -147,8 +146,8 @@ namespace Dune
     static const bool singleBackupRestoreFile = FEM_PERSISTENCEMANAGERSTREAMTRAITS ::
       singleBackupRestoreFile ;
 #else 
-    typedef BinaryFileOutStream  BackupStreamType ;
-    typedef BinaryFileInStream   RestoreStreamType ;
+    typedef Fem :: BinaryFileOutStream  BackupStreamType ;
+    typedef Fem :: BinaryFileInStream   RestoreStreamType ;
     static const bool singleBackupRestoreFile = false ;
 #endif
 
@@ -412,7 +411,7 @@ namespace Dune
         std::string filename( createFilename( path_, rank, size ) );
 
         assert( backupStream_ == 0 );
-        backupStream_ = new BackupStreamType( filename );
+        backupStream_ = Fem :: StreamFactory<BackupStreamType> :: create( filename );
 
         if( rank == 0 ) 
         {
@@ -436,9 +435,11 @@ namespace Dune
         const int rank = MPIManager :: rank();
         const int size = MPIManager :: size();
         std::string filename( createFilename( path_, rank, size ) );
-        restoreStream_ = new RestoreStreamType( filename );
+        // create strema with stream factory 
+        restoreStream_ = Fem :: StreamFactory<RestoreStreamType> :: create( filename );
 
-        std::cout << "Restore from " << filename << std::endl;
+        if( Parameter :: verbose () )
+          std::cout << "Restore from " << filename << std::endl;
 
         if( ! restoreStream_ ) 
         {

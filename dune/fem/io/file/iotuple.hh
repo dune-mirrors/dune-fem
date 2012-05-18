@@ -181,7 +181,7 @@ namespace Dune
         std::cout << "IOTuple: Reading data from " << filename << std::endl;
 
       // create binary stream 
-      InStreamType inStream( filename, MPIHelper::getCommunicator(), rank );
+      InStreamType& inStream = *(Fem :: StreamFactory< InStreamType > :: create( filename, rank ));
 
       if( newGrid ) 
       {
@@ -216,6 +216,9 @@ namespace Dune
       if( Parameter :: verbose() )
         std::cout << "    FINISHED!" << std::endl;
 
+      // delete stream which was created by the StreamFactory
+      delete &inStream;
+
       return ret;
     }
 
@@ -249,13 +252,16 @@ namespace Dune
         rankName( path, name, grid.comm().rank(), grid.comm().size() );
 
       // create binary stream 
-      OutStreamType outStream( filename );
+      OutStreamType& outStream = *(Fem :: StreamFactory< OutStreamType > :: create( filename ));
 
       // write grid, either to binaryStream or with given filename 
       writeGrid( grid, outStream, filename );
 
       // write data to stream 
       ForLoop< OutputStream, 0, length-1 >::apply( outStream, tuple );
+
+      // delete stream create by StreamFactory
+      delete &outStream; 
     }
     
     template< class Disp, class DINFO >
