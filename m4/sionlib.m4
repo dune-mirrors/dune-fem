@@ -70,7 +70,7 @@ if test x$SIONLIBYES = x1 ; then
   AC_CHECK_HEADERS([sion.h], 
      [SIONLIB_CPPFLAGS="$SIONLIB_INC_FLAG"
     HAVE_SIONLIB="1"],
-    AC_MSG_WARN([sionlib.h not found in $SIONLIB_INCLUDE_PATH]))
+    AC_MSG_WARN([sion.h not found in $SIONLIB_INCLUDE_PATH]))
    
   CPPFLAGS="$REM_CPPFLAGS"
   REM_CPPFLAGS=
@@ -80,10 +80,18 @@ if test x$SIONLIBYES = x1 ; then
   # if header is found...
   if test x$HAVE_SIONLIB = x1 ; then
     AC_CHECK_LIB(sion_64,[main],
-    [SIONLIB_LIBS="-lsion_64 -lsionser_64"
+    [SIONLIB_LIBS="-lsion_64"
            SIONLIB_LDFLAGS="-L$SIONLIB_LIB_PATH"],
 	  [HAVE_SIONLIB="0"
-	  AC_MSG_WARN(libsionlib not found!)])
+	  AC_MSG_WARN(libsion_64 not found!)])
+  fi
+
+  if test x$HAVE_SIONLIB = x1 ; then
+    AC_CHECK_LIB(sionser_64,[main],
+    [SIONLIB_LIBS="$SIONLIB_LIBS -lsionser_64"
+     SIONLIB_LDFLAGS="-L$SIONLIB_LIB_PATH"],
+	  [HAVE_SIONLIB="0"
+	  AC_MSG_WARN(libsionser_64 not found!)])
   fi
 
   LDFLAGS=$REM_LDFLAGS
