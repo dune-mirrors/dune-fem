@@ -86,9 +86,6 @@ namespace Dune
       {
         if( ! stream ) 
           DUNE_THROW( Dune::IOError, "Stream not valid!" );
-
-        // write byte order used to write to stream 
-        writeChar( ByteOrder :: order );
       }
 
       /** return reference to internal ostream */
@@ -160,13 +157,18 @@ namespace Dune
       template< class T >
       void writePrimitive ( const T &value )
       {
-        union { T value; char bytes[  sizeof( T ) ]; } convert;
+        const size_t tsize = sizeof( T );
+        union { T value; char bytes[ tsize ]; } convert;
 
         // copy  value 
         convert.value = value;
 
-        // write value 
-        stream_.write( convert.bytes, sizeof( T ) );
+        // write according to byte order 
+        for( size_t i=0; i<tsize; ++i ) 
+        {
+          stream_.put( convert.bytes[ ByteOrder :: map( i, tsize ) ] );
+        }
+
         if( !valid () )
           writeError();
       }
@@ -212,14 +214,10 @@ namespace Dune
        *  \param[in]  stream  std::istream to read from 
        */
       explicit StandardInStream ( std::istream& stream )
-      : stream_( stream ),
-        storedOrder_( ByteOrder :: order )
+      : stream_( stream )
       {
         if( ! valid() ) 
           DUNE_THROW( Dune::IOError, "Stream not valid!" );
-
-        // read byte order of stream 
-        readChar( storedOrder_ );
       }
 
       /** return reference to internal istream */
@@ -260,11 +258,11 @@ namespace Dune
       {
         unsigned int length;
         readPrimitive( length );
+        // resize string 
+        s.resize( length );
         for( unsigned int i = 0; i < length; ++i )
         {
-          char c;
-          readPrimitive( c );
-          s += c;
+          readPrimitive( s[ i ] );
         }
       }
 
@@ -292,19 +290,11 @@ namespace Dune
         const size_t tsize = sizeof( T ) ;
         union { T value; char bytes[ tsize ]; } convert;
 
-        // read value 
-        stream_.read( convert.bytes, tsize );
-
-        // if byte order needs a swap 
-        if( ByteOrder :: order != storedOrder_ ) 
-        { 
-          union { T value; char bytes[ tsize ]; } convswap;
-          convswap.value = convert.value; 
-          for( size_t i=0; i<tsize; ++i ) 
-          {
-            convert.bytes[ i ] = convswap.bytes[ ByteOrder :: map( storedOrder_, i, tsize ) ];
-          }
-        } 
+        // read according to byte order 
+        for( size_t i=0; i<tsize; ++i ) 
+        {
+          convert.bytes[ ByteOrder :: map( i, tsize ) ] = stream_.get();
+        }
 
         // store result to value 
         value = convert.value;
