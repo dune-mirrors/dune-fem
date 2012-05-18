@@ -85,14 +85,17 @@ namespace Dune
 #if HAVE_SIONLIB && HAVE_MPI
         if( data_ ) 
         {
-          assert( data_ );
           // get data buffer 
           std::string data ( data_->str() );
 
+          // size of data stream 
+          const int dataSize = data.size();
+
           // get chunk size for this process 
           // use sionlib int64 
-          sion_int64 chunkSize = data.size() + sizeof( int );
+          sion_int64 chunkSize = dataSize + sizeof( int );
 
+          // file mode is: write byte 
           const char* fileMode = "wb";
 
           int numFiles = 1;
@@ -118,7 +121,6 @@ namespace Dune
 
           assert( file );
 
-          const int dataSize = data.size();
           // write size 
           int ret = fprintf(file, "%d", dataSize );
 
@@ -197,23 +199,30 @@ namespace Dune
 #if HAVE_SIONLIB 
         // chunkSize is set by sion_paropen_mpi 
         sion_int64 chunkSize = 0;
-        std::string fileMode( "rb" );
+        // file mode is: read byte 
+        const char* fileMode = "rb";
 
-        int numFiles = 1;
+        // blockSize, -1 means use systems default blocksize 
         int blockSize = -1;
+
+        // file handle 
         FILE* file = 0;
+
+        // sion file handle 
+        int sid = 0;
+
+#if HAVE_MPI
+        // number of files to create 
+        int numFiles = 1;
 
         // if MPI is avaialbe use sion_paropen_mpi
         const int mpiSize = MPIManager :: size () ;
 
-        // sion file handle 
-        int sid = 0;
-#if HAVE_MPI
         if( mpiSize > 1 )
         {
           // open sion file 
           sid = sion_paropen_mpi( (char *) filename.c_str(),
-                                  (char *) fileMode.c_str(), 
+                                  (char *) fileMode, 
                                   &numFiles, // numFiles (0 means 1 file)
                                   mpiComm, // global comm 
                                   &mpiComm, // local comm 
@@ -233,7 +242,7 @@ namespace Dune
         {
           // open sion file for reading only rank information 
           sid = sion_open_rank( (char *) filename.c_str(),
-                                (char *) fileMode.c_str(), 
+                                (char *) fileMode, 
                                 &chunkSize, // is set by library 
                                 &blockSize, // default block size
                                 &rank, // my rank 
