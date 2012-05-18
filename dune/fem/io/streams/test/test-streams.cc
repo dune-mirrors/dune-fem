@@ -89,6 +89,8 @@ int main ( int argc, char** argv )
 
   try
   {
+    const bool writeStreams = ( argc > 1 ) ? false : true ;
+
     Data data;
     data.my_string = "Hello, World!";
     data.my_uint = 42;
@@ -99,46 +101,68 @@ int main ( int argc, char** argv )
     data.my_char  = 123;
     data.my_bool  = true;
     
+    std::stringstream filestr;
+    filestr << "test." << MPIManager :: rank() << ".";
     {
+      std::string filename( filestr.str() + "ascii" );
       std :: cerr << "Checking ASCII streams..." << std :: endl;
-      Fem :: ASCIIOutStream aout( "test.ascii" );
-      write( aout, data );
-      aout.flush();
-      Fem :: ASCIIInStream ain( "test.ascii" );
+      if( writeStreams ) 
+      {
+        Fem :: ASCIIOutStream aout( filename.c_str() );
+        write( aout, data );
+        aout.flush();
+      }
+      Fem :: ASCIIInStream ain( filename.c_str() );
       if( !read( ain, data ) )
         return 1;
+    }
 
+    {
+      std::string filename( filestr.str() + "binary" );
       std :: cerr << "Checking Binary streams..." << std :: endl;
-      Fem :: BinaryFileOutStream bout( "test.binary" );
-      write( bout, data );
-      bout.flush();
-      Fem :: BinaryFileInStream bin( "test.binary" );
+      if( writeStreams ) 
+      {
+        Fem :: BinaryFileOutStream bout( filename.c_str() );
+        write( bout, data );
+        bout.flush();
+      }
+      Fem :: BinaryFileInStream bin( filename.c_str() );
       if( !read( bin, data ) )
         return 1;
+    }
 
+    {
+      std::string filename( filestr.str() + "xdr" );
       std :: cerr << "Checking XDR streams..." << std :: endl;
-      Fem :: XDRFileOutStream xout( "test.xdr" );
-      write( xout, data );
-      xout.flush();
-      Fem :: XDRFileInStream xin( "test.xdr" );
+      if( writeStreams ) 
+      {
+        Fem :: XDRFileOutStream xout( filename.c_str() );
+        write( xout, data );
+        xout.flush();
+      }
+      Fem :: XDRFileInStream xin( filename.c_str() );
       if( !read( xin, data ) )
         return 1;
+    }
 
 #if HAVE_ALUGRID
+    {
+      std::string filename( filestr.str() + "data" );
       std :: cerr << "Checking Data streams..." << std :: endl;
-      Fem :: DataOutStream dout( "test.data" );
+      Fem :: DataOutStream dout( filename.c_str() );
       write( dout, data );
       dout.flush();
-      Fem :: DataInStream din( "test.data" );
+      Fem :: DataInStream din( filename.c_str() );
       if( ! read( din, data ) )
         return 1;  
-#endif
     }
+#endif
 
 #if HAVE_SIONLIB
     {
       std :: cerr << "Checking SIONlib streams..." << std :: endl;
       std::stringstream str ; 
+      if( writeStreams ) 
       {
         Fem :: SIONlibOutStream sionout( "test.sion" );
         write( sionout, data );
