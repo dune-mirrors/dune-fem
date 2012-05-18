@@ -32,7 +32,9 @@
 #endif
 
 #if defined  USE_FILTEREDGRID 
-#include <dune/fem/gridpart/filteredgrid.hh>
+#include <dune/fem/gridpart/filter/radialfilter.hh>
+#include <dune/fem/gridpart/filter/basicfilterwrapper.hh>
+#include <dune/fem/gridpart/filteredgridpart.hh>
 #endif
 #if defined  USE_IDGRIDPART 
 #include <dune/fem/gridpart/idgridpart.hh>
@@ -52,8 +54,9 @@ typedef DGAdaptiveLeafGridPart< MyGridType > ContainedGridPartType;
 
 // use filtered grid for testing 
 #if defined  USE_FILTEREDGRID 
-  typedef RadialFilter< ContainedGridPartType > FilterType;
-  typedef FilteredGridPart<ContainedGridPartType, FilterType, true > GridPartType;
+  typedef Fem :: RadialFilter< double, MyGridType :: dimensionworld > FilterImplType;
+  typedef Fem :: BasicFilterWrapper< ContainedGridPartType, FilterImplType > FilterType ;
+  typedef Fem :: FilteredGridPart<ContainedGridPartType, FilterType, true > GridPartType;
 #elif defined  USE_IDGRIDPART
   typedef Fem:: IdGridPart< ContainedGridPartType > GridPartType;
 #else 
@@ -118,7 +121,13 @@ int main(int argc, char ** argv)
     const int step = TestGrid :: refineStepsForHalf();
     grid.globalRefine( 2*step );
 
+#ifdef  USE_FILTEREDGRID 
+    ContainedGridPartType containedGridPart( grid );
+    FilterType filter( containedGridPart );
+    GridPartType gridPart( containedGridPart, filter );
+#else 
     GridPartType gridPart( grid );
+#endif
 
     // add check for grid width 
     std::cout << "Grid width: " 
