@@ -244,8 +244,8 @@ namespace Dune
                                 refElem.subEntity ( subEntity, codim, 1, dimension ) };
 
           // flip index if face is twisted 
-          if( gridPart_.grid().localIdSet().subId( element_, vx[ 0 ], dimension ) >
-              gridPart_.grid().localIdSet().subId( element_, vx[ 1 ], dimension ) )
+          if( gridPart_.grid().localIdSet().subId( gridEntity( element_ ), vx[ 0 ], dimension )
+              > gridPart_.grid().localIdSet().subId( gridEntity( element_ ), vx[ 1 ], dimension ) )
           {
             std::size_t global[ numDofs ];
             std::size_t local[ numDofs ];
