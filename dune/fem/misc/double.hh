@@ -15,6 +15,8 @@
 namespace Dune
 {
 
+namespace Fem 
+{
 #ifdef COUNT_FLOPS
 
   template< class FloatImp >
@@ -889,40 +891,43 @@ namespace Dune
     f2 = f1.value_;
   }
 
-}
+} // end namespace Fem 
 
+using Fem :: Double ;
+
+} // end namespace Dune 
 
 
 namespace std
 {
 
-  inline Dune::Double abs ( const Dune::Double &a )
+  inline Dune::Fem::Double abs ( const Dune::Fem::Double &a )
   {
-    return Dune::abs( a );
+    return Dune::Fem::abs( a );
   }
 
   // wrap of std power 
-  inline double min (const Dune::Double& v, const double p)
+  inline double min (const Dune::Fem::Double& v, const double p)
   {
-    return Dune::min(v,p);
+    return Dune::Fem::min(v,p);
   }
 
   // wrap of std power 
-  inline double min (const double v, const Dune::Double& p)
+  inline double min (const double v, const Dune::Fem::Double& p)
   {
-    return Dune::min(v,p);
+    return Dune::Fem::min(v,p);
   }
 
   // wrap of std power 
-  inline double max (const Dune::Double& v, const double p) 
+  inline double max (const Dune::Fem::Double& v, const double p) 
   {
-    return Dune::max(v,p);
+    return Dune::Fem::max(v,p);
   }
 
   // wrap of std power 
-  inline double max (const double v, const Dune::Double& p) 
+  inline double max (const double v, const Dune::Fem::Double& p) 
   {
-    return Dune::max(v,p);
+    return Dune::Fem::max(v,p);
   }
 
 
@@ -931,7 +936,7 @@ namespace std
   // --------------
 
   template<>
-  struct numeric_limits< Dune :: Double >
+  struct numeric_limits< Dune::Fem::Double >
   {
     static const bool is_specialized = true;
 
@@ -943,44 +948,44 @@ namespace std
     static const bool is_integer = numeric_limits< double > :: is_integer;
     static const bool is_exact = numeric_limits< double > :: is_exact;
 
-    inline static Dune :: Double min () throw ()
+    inline static Dune::Fem::Double min () throw ()
     {
-      return Dune :: Double( numeric_limits< double > :: min() );
+      return Dune::Fem::Double( numeric_limits< double > :: min() );
     }
 
-    inline static Dune :: Double max () throw ()
+    inline static Dune::Fem::Double max () throw ()
     {
-      return Dune :: Double( numeric_limits< double > :: max() );
+      return Dune::Fem::Double( numeric_limits< double > :: max() );
     }
 
-    inline static Dune :: Double epsilon () throw ()
+    inline static Dune::Fem::Double epsilon () throw ()
     {
-      return Dune :: Double( numeric_limits< double > :: epsilon() );
+      return Dune::Fem::Double( numeric_limits< double > :: epsilon() );
     }
 
-    inline static Dune :: Double round_error () throw ()
+    inline static Dune::Fem::Double round_error () throw ()
     {
-      return Dune :: Double( numeric_limits< double > :: round_error() );
+      return Dune::Fem::Double( numeric_limits< double > :: round_error() );
     }
 
-    inline static Dune :: Double infinity () throw ()
+    inline static Dune::Fem::Double infinity () throw ()
     {
-      return Dune :: Double( numeric_limits< double > :: infinity() );
+      return Dune::Fem::Double( numeric_limits< double > :: infinity() );
     }
 
-    inline static Dune :: Double quiet_NaN () throw ()
+    inline static Dune::Fem::Double quiet_NaN () throw ()
     {
-      return Dune :: Double( numeric_limits< double > :: quiet_NaN() );
+      return Dune::Fem::Double( numeric_limits< double > :: quiet_NaN() );
     }
 
-    inline static Dune :: Double signaling_NaN () throw ()
+    inline static Dune::Fem::Double signaling_NaN () throw ()
     {
-      return Dune :: Double( numeric_limits< double > :: signaling_NaN() );
+      return Dune::Fem::Double( numeric_limits< double > :: signaling_NaN() );
     }
 
-    inline static Dune :: Double denorm_min () throw ()
+    inline static Dune::Fem::Double denorm_min () throw ()
     {
-      return Dune :: Double( numeric_limits< double > :: denorm_min() );
+      return Dune::Fem::Double( numeric_limits< double > :: denorm_min() );
     }
 
     static const int min_exponent = numeric_limits< double > :: min_exponent;
@@ -1003,6 +1008,7 @@ namespace std
     static const float_round_style round_style
       = numeric_limits< double > :: round_style;
   };
-}
+} // end namespace std  
+
 
 #endif
