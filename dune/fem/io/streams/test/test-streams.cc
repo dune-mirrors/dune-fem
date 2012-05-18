@@ -3,6 +3,7 @@
 #include <dune/fem/version.hh>
 #include <dune/fem/misc/mpimanager.hh>
 
+#include <dune/fem/io/parameter.hh>
 #include <dune/fem/io/streams/asciistreams.hh>
 #include <dune/fem/io/streams/binarystreams.hh>
 #include <dune/fem/io/streams/datastreams.hh>
@@ -102,7 +103,7 @@ int main ( int argc, char** argv )
     data.my_bool  = true;
     
     std::stringstream filestr;
-    filestr << "test." << MPIManager :: rank() << ".";
+    filestr << Dune :: Parameter :: commonOutputPath() << "/test." << MPIManager :: rank() << ".";
     {
       std::string filename( filestr.str() + "ascii" );
       std :: cerr << "Checking ASCII streams..." << std :: endl;
@@ -161,18 +162,37 @@ int main ( int argc, char** argv )
 #if HAVE_SIONLIB
     {
       std :: cerr << "Checking SIONlib streams..." << std :: endl;
-      std::stringstream str ; 
+      std::stringstream file;
+      file << Dune :: Parameter::commonOutputPath() << "/test.sion." << MPIManager :: size() ;
+      std::string filename( file.str() );
       if( writeStreams ) 
       {
-        Fem :: SIONlibOutStream sionout( "test.sion" );
+        Fem :: SIONlibOutStream sionout( filename.c_str() );
         write( sionout, data );
         sionout.flush();
       }
+      // check parallel read 
       {
-        Fem :: SIONlibInStream sionin( "test.sion" );
+        Fem :: SIONlibInStream sionin( filename.c_str() );
         if( ! read( sionin, data ) )
           return 1;  
       }
+
+      if( MPIManager :: size () == 1 ) 
+      {
+        int size = (argc > 2) ? atoi( argv[ 2 ] ) : MPIManager :: size();
+        std::cout << "Check serial read for " << size << " procs" << std::endl;
+        std::stringstream file;
+        file << Dune :: Parameter::commonOutputPath() << "/test.sion." << size ;
+        // check serial read
+        for( int rank=0; rank<size; ++rank ) 
+        {
+          Fem :: SIONlibInStream sionin( filename.c_str(), rank );
+          if( ! read( sionin, data ) )
+            return 1;  
+        }
+      }
+
     }
 #endif
 
