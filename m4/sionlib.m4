@@ -5,6 +5,8 @@ AC_DEFUN([DUNE_PATH_SIONLIB],[
 
   AC_ARG_WITH(sionlib,
     AC_HELP_STRING([--with-sionlib=PATH],[directory with SIONLIB inside]))
+  AC_ARG_WITH(sionlibsuffix,
+    AC_HELP_STRING([--with-sionlibsuffixe=SUFFIX],[suffix to the library name , e.g. gcc or something (default = "_64")]))
   AC_ARG_WITH(sionlib-includedir,
     AC_HELP_STRING([--with-sionlib-includedir=PATH],[directory with SIONLIB headers inside]))
   AC_ARG_WITH(sionlib-libdir,
@@ -19,6 +21,11 @@ SIONLIBYES=0
 ## do nothing if no --with-sionlib was supplied
 if test x$with_sionlib != x && test x$with_sionlib != xno ; then
   SIONLIBYES=1
+fi
+SIONLIBSUFFIX="_64"
+## do nothing if no --with-sionlibnsuffix was supplied
+if test x$with_sionlibsuffix != x ; then
+  SIONLIBSUFFIX=$with_sionlibsuffix
 fi
 if test x$with_sionlib_includedir != x && test x$with_sionlib_includedir != xno ; then
   SIONLIBYES=1
@@ -79,19 +86,21 @@ if test x$SIONLIBYES = x1 ; then
 
   # if header is found...
   if test x$HAVE_SIONLIB = x1 ; then
-    AC_CHECK_LIB(sion_64,[main],
-    [SIONLIB_LIBS="-lsion_64"
+    LIBNAME="sion""$SIONLIBSUFFIX"
+    AC_CHECK_LIB($LIBNAME,[main],
+    [SIONLIB_LIBS="-l$LIBNAME"
            SIONLIB_LDFLAGS="-L$SIONLIB_LIB_PATH"],
 	  [HAVE_SIONLIB="0"
-	  AC_MSG_WARN(libsion_64 not found!)])
+	  AC_MSG_WARN(lib$LIBNAME not found!)])
   fi
 
   if test x$HAVE_SIONLIB = x1 ; then
-    AC_CHECK_LIB(sionser_64,[main],
-    [SIONLIB_LIBS="$SIONLIB_LIBS -lsionser_64"
+    LIBNAME="sionser""$SIONLIBSUFFIX"
+    AC_CHECK_LIB($LIBNAME,[main],
+    [SIONLIB_LIBS="$SIONLIB_LIBS -l$LIBNAME"
      SIONLIB_LDFLAGS="-L$SIONLIB_LIB_PATH"],
 	  [HAVE_SIONLIB="0"
-	  AC_MSG_WARN(libsionser_64 not found!)])
+	  AC_MSG_WARN(lib$LIBNAME not found!)])
   fi
 
   LDFLAGS=$REM_LDFLAGS
