@@ -9,10 +9,11 @@
 namespace Dune
 {
 
+namespace Fem 
+{
+
   class ASCIIOutStream;
   class ASCIIInStream;
-
-  
   
   struct ASCIIOutStreamTraits
   {
@@ -305,6 +306,16 @@ namespace Dune
       return stream_.good() | stream_.eof();
     }
   };
+
+} // end namespace Fem 
+
+// #if DUNE_FEM_COMPATIBILITY  
+// put this in next version 1.4 
+
+using Fem :: ASCIIOutStream ;
+using Fem :: ASCIIInStream ;
+
+// #endif // DUNE_FEM_COMPATIBILITY
 
 } // end namespace Dune
 
