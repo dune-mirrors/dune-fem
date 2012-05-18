@@ -7,12 +7,15 @@
 #include <dune/common/exceptions.hh>
 
 #include <dune/fem/misc/bartonnackmaninterface.hh>
+#include <dune/fem/misc/mpimanager.hh>
 
 namespace Dune
 {
 
-  class StreamError : public Exception {};
+namespace Fem 
+{
 
+  class StreamError : public Exception {};
 
   
   /** \class OutStreamInterface
@@ -344,6 +347,39 @@ namespace Dune
       DUNE_THROW( StreamError, "Unable to read from stream." );
     }
   };
+
+  /** \brief Factory class for Fem Streams to deal with different constructor 
+   *         parameters. 
+   */
+  template <class StreamImpl> 
+  struct StreamFactory
+  {
+    //! type of MPI communicator 
+    typedef typename MPIHelper :: MPICommunicator MPICommunicatorType;
+
+    /** \brief return pointer to stream object created by new. 
+     *  
+     *  \param[in] filename  name of file that the stream read/writes
+     *  \param[in] rank      rank of process data is read/written (defaults to MPIManager::rank())
+     *  \param[in] mpiComm   MPI communicator (defaults to MPIHelper :: getCommunicator())
+     */
+    static StreamImpl* create( const std::string& filename, 
+                               const int rank = MPIManager::rank(),
+                               const MPICommunicatorType& mpiComm = MPIHelper :: getCommunicator() )
+    {
+      return new StreamImpl( filename );
+    }
+  };
+
+} // end namespace Fem 
+
+// #if DUNE_FEM_COMPATIBILITY  
+// put this in next version 1.4 
+
+using Fem :: OutStreamInterface ;
+using Fem :: InStreamInterface  ;
+
+// #endif // DUNE_FEM_COMPATIBILITY
 
 } // end namespace Dune
 

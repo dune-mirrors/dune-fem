@@ -8,6 +8,9 @@
 namespace Dune
 {
 
+namespace Fem 
+{
+
   template< class Traits >
   inline OutStreamInterface< Traits > &
     operator<< ( OutStreamInterface< Traits > &out,
@@ -177,6 +180,8 @@ namespace Dune
     return in;
   }
 
-}
+} // end Namespace Fem   
+
+} // end namespace Dune 
 
 #endif // #ifndef DUNE_FEM_STREAMS_INLINE_HH

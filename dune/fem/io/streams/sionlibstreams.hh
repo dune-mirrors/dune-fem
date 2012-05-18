@@ -49,15 +49,18 @@ namespace Dune
       /** \brief constructor
        *
        *  \param[in]  filename  name of a global file to write to
+       *  \param[in]  rank      process rank (defaults to MPIManager::rank())
        *  \param[in]  mpiComm   MPI communicator (defaults to MPIHelper :: getCommunicator() )
        *
        *  \note The filename must be the same on all ranks. 
        */
       SIONlibOutStream ( const std::string &filename,
+                         const int rank = MPIManager::rank(),
                          MPICommunicatorType mpiComm = MPIHelper :: getCommunicator() )
         : BaseType( dataStream() ),
-          mpiComm_( mpiComm ),
-          filename_( filename )
+          filename_( filename ),
+          rank_( rank ),
+          mpiComm_( mpiComm )
       {
       }
 
@@ -71,7 +74,7 @@ namespace Dune
     protected:  
       std::ostream& dataStream() 
       {
-        // init file 
+        // init data stream  
         data_ = new std::stringstream();
         assert( data_ );
         return *data_;  
@@ -86,22 +89,21 @@ namespace Dune
           // get data buffer 
           std::string data ( data_->str() );
 
-          // get chunk size  
-          size_t maxSize = data.size() + sizeof( int ); 
-          // maxSize = MPIManager::comm().max( maxSize );
+          // get chunk size for this process 
+          // use sionlib int64 
+          sion_int64 chunkSize = data.size() + sizeof( int );
 
-          sion_int64 chunkSize = maxSize;
-          std::string fileMode( "wb" );
+          const char* fileMode = "wb";
 
           int numFiles = 1;
           int blockSize = -1;
-          int rank = MPIManager::rank();
+          int rank = rank_;
           FILE* file = 0;
 
           // open sion file 
           int sid = 
             sion_paropen_mpi( (char *) filename_.c_str(),
-                              (char *) fileMode.c_str(), 
+                              (char *) fileMode, 
                               &numFiles, // numFiles (0 means 1 file)
                               mpiComm_, // global comm 
                               &mpiComm_, // local comm 
@@ -118,13 +120,13 @@ namespace Dune
 
           const int dataSize = data.size();
           // write size 
-          fprintf(file, "%d", dataSize );
+          int ret = fprintf(file, "%d", dataSize );
 
           const char* buffer = data.c_str();
           // write data 
           for( int i=0; i<dataSize; ++i ) 
           {
-            fprintf(file,"%c", buffer[ i ] ); 
+            ret = fprintf(file,"%c", buffer[ i ] ); 
           }
 
           // close file 
@@ -135,8 +137,9 @@ namespace Dune
 #endif
       }
 
-      MPICommunicatorType mpiComm_;
       const std::string filename_;
+      const int rank_;
+      MPICommunicatorType mpiComm_;
 
       //! standard file stream 
       std::stringstream* data_;  
@@ -166,14 +169,15 @@ namespace Dune
       /** \brief constructor
        *
        *  \param[in]  filename  name of a file to read from 
+       *  \param[in]  rank      process rank data is read for 
        *  \param[in]  mpiComm   MPI communicator (defaults to MPIHelper :: getCommunicator() )
        *
        *  \note The filename must be the same on all ranks. 
        */
       SIONlibInStream ( const std::string &filename,
-                        MPICommunicatorType mpiComm = MPIHelper :: getCommunicator(),
-                        const int rank = MPIManager :: rank() )
-        : BaseType( readFile( filename , mpiComm, rank ) )
+                        const int rank = MPIManager :: rank(),
+                        MPICommunicatorType mpiComm = MPIHelper :: getCommunicator() )
+        : BaseType( readFile( filename , rank, mpiComm ) )
       {
       }
 
@@ -185,8 +189,8 @@ namespace Dune
 
     protected:  
       std::istream& readFile( const std::string& filename, 
-                              MPICommunicatorType mpiComm,
-                              int rank )
+                              int rank,
+                              MPICommunicatorType mpiComm )
       {
         data_ = new std::stringstream();
         assert( data_ );
@@ -201,6 +205,7 @@ namespace Dune
 
         // if MPI is avaialbe use sion_paropen_mpi
         const int mpiSize = MPIManager :: size () ;
+
         // sion file handle 
         int sid = 0;
 #if HAVE_MPI
@@ -243,14 +248,14 @@ namespace Dune
 
         // write size 
         int dataSize = chunkSize - sizeof( int );
-        fscanf(file, "%d", &dataSize );
+        int ret = fscanf(file, "%d", &dataSize );
         // write data 
         std::string data ; 
         data.resize( dataSize );
         char* buffer = (char *) data.c_str();
         for( int i=0; i<dataSize; ++i ) 
         {
-          fscanf(file, "%c", &buffer[ i ] ); 
+          ret = fscanf(file, "%c", &buffer[ i ] ); 
         }
 
         data_ = new std::stringstream();
@@ -271,18 +276,35 @@ namespace Dune
 
         return *data_;
       }
+
       //! standard file stream 
       std::stringstream* data_;  
     };
 
+    /** \brief Factory class for Fem Streams to deal with different constructor 
+     *         parameters. 
+     */
+    template <> 
+    struct StreamFactory< SIONlibInStream >
+    {
+      //! type of MPI communicator 
+      typedef MPIHelper :: MPICommunicator MPICommunicatorType;
+
+      /** \brief return pointer to stream object created by new. 
+       *  
+       *  \param[in] filename  name of file that the stream read/writes
+       *  \param[in] rank      rank of process data is read/written (defaults to MPIManager::rank())
+       *  \param[in] mpiComm   MPI communicator (defaults to MPIHelper :: getCommunicator())
+       */
+      static SIONlibInStream* create( const std::string& filename,
+                                 const int rank = MPIManager::rank(),
+                                 const MPICommunicatorType& mpiComm = MPIHelper :: getCommunicator() )
+      {
+        return new SIONlibInStream( filename, rank, mpiComm );
+      }
+    };
+
   } // end namespace Fem   
-
-  // #if DUNE_FEM_COMPATIBILITY  
-  // put this in next version 1.4 
-
-  using Fem :: SIONlibOutStream ;
-  using Fem :: SIONlibInStream ;
-  // #endif // DUNE_FEM_COMPATIBILITY
 
 } // end namespace Dune
 

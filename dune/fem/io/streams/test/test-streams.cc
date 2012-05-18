@@ -101,26 +101,26 @@ int main ( int argc, char** argv )
     
     {
       std :: cerr << "Checking ASCII streams..." << std :: endl;
-      ASCIIOutStream aout( "test.ascii" );
+      Fem :: ASCIIOutStream aout( "test.ascii" );
       write( aout, data );
       aout.flush();
-      ASCIIInStream ain( "test.ascii" );
+      Fem :: ASCIIInStream ain( "test.ascii" );
       if( !read( ain, data ) )
         return 1;
 
       std :: cerr << "Checking Binary streams..." << std :: endl;
-      BinaryFileOutStream bout( "test.binary" );
+      Fem :: BinaryFileOutStream bout( "test.binary" );
       write( bout, data );
       bout.flush();
-      BinaryFileInStream bin( "test.binary" );
+      Fem :: BinaryFileInStream bin( "test.binary" );
       if( !read( bin, data ) )
         return 1;
 
       std :: cerr << "Checking XDR streams..." << std :: endl;
-      XDRFileOutStream xout( "test.xdr" );
+      Fem :: XDRFileOutStream xout( "test.xdr" );
       write( xout, data );
       xout.flush();
-      XDRFileInStream xin( "test.xdr" );
+      Fem :: XDRFileInStream xin( "test.xdr" );
       if( !read( xin, data ) )
         return 1;
 
