@@ -163,10 +163,11 @@ namespace Dune
         // copy  value 
         convert.value = value;
 
+        assert( sizeof(char) == 1 ) ;
         // write according to byte order 
         for( size_t i=0; i<tsize; ++i ) 
         {
-          stream_.put( convert.bytes[ ByteOrder :: map( i, tsize ) ] );
+          stream_.write( &convert.bytes[ ByteOrder :: map( i, tsize ) ], 1 );
         }
 
         if( !valid () )
@@ -290,10 +291,11 @@ namespace Dune
         const size_t tsize = sizeof( T ) ;
         union { T value; char bytes[ tsize ]; } convert;
 
+        assert( sizeof(char) == 1 ) ;
         // read according to byte order 
         for( size_t i=0; i<tsize; ++i ) 
         {
-          convert.bytes[ ByteOrder :: map( i, tsize ) ] = stream_.get();
+          stream_.read( &convert.bytes[ ByteOrder :: map( i, tsize ) ], 1 );
         }
 
         // store result to value 
