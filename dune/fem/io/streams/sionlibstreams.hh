@@ -260,6 +260,7 @@ namespace Dune
 
         // write data to stream 
         data_ = new std::stringstream();
+        assert( data_ );
         data_->write( buffer, chunkSize );
 
 #if HAVE_MPI
