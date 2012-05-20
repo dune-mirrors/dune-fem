@@ -8,14 +8,7 @@ namespace Dune
   namespace Fem 
   {
     /** \class BinaryFileOutStream
-     *  \ingroup InOutStreams
-     *  \brief output stream writing into a file in binary form
-     *
-     *  \note This stream directly stores the binary representation of the data.
-     *        The binary representation of the stored data is always that big endian. 
-     *        On read/write the data is converted accordingly on little endian machines.
-     *
-     *  \newimplementation
+     *  \copydoc StandardOutStream 
      */
     class BinaryFileOutStream : public StandardOutStream 
     {
@@ -56,14 +49,7 @@ namespace Dune
     };
 
     /** \class BinaryFileInStream
-     *  \ingroup InOutStreams
-     *  \brief input stream reading from a file in binary form
-     *
-     *  \note This stream directly stores the binary representation of the data.
-     *        The binary representation might differ between different machines
-     *        (e.g., little endian vs. big endian).
-     *
-     *  \newimplementation
+     *  \copydoc StandardInStream 
      */
     class BinaryFileInStream: public StandardInStream 
     {

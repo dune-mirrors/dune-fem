@@ -49,8 +49,8 @@ namespace Dune
      *  \brief output stream writing into a given std::ostream 
      *
      *  \note This stream directly stores the binary representation of the data.
-     *        The binary representation of the stored data is always that of the
-     *        current machine. On read the data is converted accordingly on machines 
+     *        The binary representation of the stored data is always little endian.
+     *        On write the data is converted accordingly on machines 
      *        with different endianess.
      *
      *  \newimplementation
@@ -184,8 +184,8 @@ namespace Dune
      *  \brief input stream reading from a given std::istream 
      *
      *  \note This stream directly stores the binary representation of the data.
-     *        The binary representation of the stored data is always that of the
-     *        current machine. On read the data is converted accordingly on machines 
+     *        The binary representation of the stored data is always little endian.
+     *        On read the data is converted accordingly on machines 
      *        with different endianess.
      *
      *  \newimplementation
