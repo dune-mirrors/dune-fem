@@ -18,6 +18,7 @@ namespace Dune
   {
     struct ByteOrder 
     {
+      // the default endianess is little, e.g. 0
       static const char defaultEndian = 0;
       static const char order = 
 #if __BYTE_ORDER == __LITTLE_ENDIAN
@@ -27,20 +28,11 @@ namespace Dune
 #else 
           0 ; // default is zero (in case no endian header was found)
 #endif 
-
-      static inline size_t map( const char storedOrder, 
-                                const size_t pos, 
-                                const size_t size )
-      {
-        // if byte order differs, swap 
-        return ( order == storedOrder ) ? pos : ( size - pos - 1 );
-      }
-
       static inline size_t map( const size_t pos, 
                                 const size_t size )
       {
-        // if byte order is not big endian, swap 
-        return map( 1, pos, size );
+        // if byte order is not little endian, swap bytes 
+        return ( order == defaultEndian ) ? pos : ( size - pos - 1 );
       }
     };
 
@@ -163,11 +155,13 @@ namespace Dune
         // copy  value 
         convert.value = value;
 
+        // make sure that char is only one byte
         assert( sizeof(char) == 1 ) ;
-        // write according to byte order 
+
+        // write with byte order little endian 
         for( size_t i=0; i<tsize; ++i ) 
         {
-          stream_.write( &convert.bytes[ ByteOrder :: map( i, tsize ) ], 1 );
+          stream_.put( convert.bytes[ ByteOrder :: map( i, tsize ) ] );
         }
 
         if( !valid () )
@@ -259,6 +253,7 @@ namespace Dune
       {
         unsigned int length;
         readPrimitive( length );
+
         // resize string 
         s.resize( length );
         for( unsigned int i = 0; i < length; ++i )
@@ -291,11 +286,13 @@ namespace Dune
         const size_t tsize = sizeof( T ) ;
         union { T value; char bytes[ tsize ]; } convert;
 
+        // char should be only 1 byte 
         assert( sizeof(char) == 1 ) ;
-        // read according to byte order 
+
+        // read from stream with byte order little endian 
         for( size_t i=0; i<tsize; ++i ) 
         {
-          stream_.read( &convert.bytes[ ByteOrder :: map( i, tsize ) ], 1 );
+          convert.bytes[ ByteOrder :: map( i, tsize ) ] = stream_.get();
         }
 
         // store result to value 
@@ -307,7 +304,6 @@ namespace Dune
 
     protected:
       std::istream& stream_;
-      char storedOrder_ ;
     };
 
   } // end namespace Fem   
