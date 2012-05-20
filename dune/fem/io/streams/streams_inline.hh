@@ -75,49 +75,49 @@ namespace Fem
   }
 
   template <class ulongint, class uint64>  
-  struct SelectUnsignedInt64Integer 
+  struct SelectUnsignedLongInteger 
   {
     // select uint64_t int 
-    typedef ulongint UnsignedInt64IntType;
+    typedef ulongint UnsignedLongIntType;
 
     template < class Traits >
     static void write( OutStreamInterface< Traits > &out,
-                       const UnsignedInt64IntType& value ) 
+                       const UnsignedLongIntType& value ) 
     {
       // in case uint64_t int and uint64_t are not the same 
       // convert long to uint64_t, there will be no information loss
       assert( sizeof(ulongint) <= sizeof(uint64) );
       uint64 value64 = value ;
-      out.writeUsignedLong( value64 );
+      out.writeUnsignedInt64( value64 );
     }
 
     template < class Traits >
     static void read( InStreamInterface< Traits > &in,
-                      UnsignedInt64IntType& value ) 
+                      UnsignedLongIntType& value ) 
     {
       assert( sizeof(ulongint) <= sizeof(uint64) );
       // always read uint64_t int as uin64_t, since it is always written this way 
       uint64 value64; 
-      in.readUsignedLong( value64 );
+      in.readUnsignedInt64( value64 );
       value = value64;
     }
   };
 
   //- in case uint64_t int and uint64_t are the same, do nothing 
   template <class ulongint>  
-  struct SelectUnsignedInt64Integer< ulongint, ulongint >
+  struct SelectUnsignedLongInteger< ulongint, ulongint >
   {
-    struct UnsignedInt64IntType {};
+    struct UnsignedLongIntType {};
     template < class Traits >
     static void write( OutStreamInterface< Traits > &out,
-                       const UnsignedInt64IntType value ) 
+                       const UnsignedLongIntType value ) 
     {
       DUNE_THROW(NotImplemented,"method not implemented");
     }
 
     template < class Traits >
     static void read( InStreamInterface< Traits > &in,
-                      UnsignedInt64IntType& value ) 
+                      UnsignedLongIntType& value ) 
     {
       DUNE_THROW(NotImplemented,"method not implemented");
     }
@@ -135,9 +135,9 @@ namespace Fem
   template< class Traits >
   inline OutStreamInterface< Traits > &
     operator<< ( OutStreamInterface< Traits > &out,
-                 const typename SelectUnsignedInt64Integer<uint64_t, uint64_t>::UnsignedInt64IntType& value )
+                 const typename SelectUnsignedLongInteger<unsigned long, uint64_t>::UnsignedLongIntType& value )
   {
-    SelectUnsignedInt64Integer<uint64_t, uint64_t>::write( out, value );
+    SelectUnsignedLongInteger<unsigned long, uint64_t>::write( out, value );
     return out;
   }
 
@@ -228,9 +228,9 @@ namespace Fem
   template< class Traits >
   inline InStreamInterface< Traits > &
     operator>> ( InStreamInterface< Traits > &in,
-                 typename SelectUnsignedInt64Integer<uint64_t, uint64_t>::UnsignedInt64IntType& value )
+                 typename SelectUnsignedLongInteger<unsigned long, uint64_t>::UnsignedLongIntType& value )
   {
-    SelectUnsignedInt64Integer<uint64_t, uint64_t>::read( in, value );
+    SelectUnsignedLongInteger<unsigned long, uint64_t>::read( in, value );
     return in;
   }
 
