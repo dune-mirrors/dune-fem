@@ -88,18 +88,15 @@ namespace Dune
           // get data buffer 
           std::string data ( data_->str() );
 
-          // size of data stream 
-          const int dataSize = data.size();
-
           // get chunk size for this process 
           // use sionlib int64 
-          sion_int64 chunkSize = dataSize + sizeof( int );
+          sion_int64 chunkSize = data.size();
 
           // file mode is: write byte 
           const char* fileMode = "wb";
 
           int numFiles = 1;
-          int blockSize = -1;
+          int blockSize = 64;
           int rank = rank_;
           FILE* file = 0;
 
@@ -121,15 +118,11 @@ namespace Dune
 
           assert( file );
 
-          // write size 
-          int ret = fprintf(file, "%d", dataSize );
-
+          // get pointer to buffer 
           const char* buffer = data.c_str();
           // write data 
-          for( int i=0; i<dataSize; ++i ) 
-          {
-            ret = fprintf(file,"%c", buffer[ i ] ); 
-          }
+          assert( sizeof(char) == 1 );
+          sion_fwrite( buffer, 1, chunkSize, sid); 
 
           // close file 
           sion_parclose_mpi( sid );
@@ -203,7 +196,7 @@ namespace Dune
         const char* fileMode = "rb";
 
         // blockSize, -1 means use systems default blocksize 
-        int blockSize = -1;
+        int blockSize = 64;
 
         // file handle 
         FILE* file = 0;
@@ -255,20 +248,19 @@ namespace Dune
 
         assert( file );
 
-        // write size 
-        int dataSize = chunkSize - sizeof( int );
-        int ret = fscanf(file, "%d", &dataSize );
-        // write data 
-        std::string data ; 
-        data.resize( dataSize );
-        char* buffer = (char *) data.c_str();
-        for( int i=0; i<dataSize; ++i ) 
-        {
-          ret = fscanf(file, "%c", &buffer[ i ] ); 
-        }
+        // create buffer 
+        std::string data;
+        data.resize( chunkSize );
 
+        // get pointer to buffer 
+        char* buffer = (char *) data.c_str();
+        assert( sizeof(char) == 1 );
+        // read data 
+        sion_fread( buffer, 1, chunkSize, sid );
+
+        // write data to stream 
         data_ = new std::stringstream();
-        (*data_) << data ;
+        data_->write( buffer, chunkSize );
 
 #if HAVE_MPI
         // close file 
