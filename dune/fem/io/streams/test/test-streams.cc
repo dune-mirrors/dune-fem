@@ -12,11 +12,14 @@
 
 using namespace Dune;
 
+
+
 struct Data
 {
   std :: string my_string;
   unsigned int my_uint;
-  unsigned long my_ulong;
+  uint64_t my_uint64;
+  unsigned long int my_ulong;
   double my_double;
   int my_int;
   float my_float;
@@ -31,8 +34,10 @@ void write ( OutStreamInterface< Traits > &out, const Data &data )
   out << versionId;
   
   out << data.my_string 
-      << data.my_uint << data.my_ulong << data.my_double
-      << data.my_int << data.my_float << data.my_char << data.my_bool;
+      << data.my_uint << data.my_uint64 
+      << data.my_ulong << data.my_double
+      << data.my_int << data.my_float 
+      << data.my_char << data.my_bool;
 
   out << DUNE_MODULE_VERSION_ID(DUNE_FEM);
 }
@@ -51,11 +56,13 @@ bool read ( InStreamInterface< Traits > &in, const Data &data )
 
   Data check;
   in >> check.my_string 
-     >> check.my_uint >> check.my_ulong >> check.my_double
+     >> check.my_uint >> check.my_uint64
+     >> check.my_ulong >> check.my_double
      >> check.my_int >> check.my_float >> check.my_char >> check.my_bool;
 
   std :: cerr << "Data: " << check.my_string 
               << ", " << check.my_uint
+              << ", " << check.my_uint64
               << ", " << check.my_ulong
               << ", " << check.my_double << ", " << check.my_int
               << ", " << check.my_float 
@@ -68,13 +75,16 @@ bool read ( InStreamInterface< Traits > &in, const Data &data )
   {
     std :: cerr << "Incorrect versionId read back: "
                 << versionId << " != " << DUNE_MODULE_VERSION_ID(DUNE_FEM)
-                << std :: endl;
+                << std :: endl << std::endl;
     return false;
   }
+
+  std::cerr << std :: endl ;
 
   bool equal = true;
   equal &= (data.my_string == check.my_string);
   equal &= (data.my_uint == check.my_uint);
+  equal &= (data.my_uint64 == check.my_uint64);
   equal &= (data.my_ulong == check.my_ulong);
   equal &= (data.my_double == check.my_double);
   equal &= (data.my_int == check.my_int);
@@ -94,15 +104,18 @@ int main ( int argc, char** argv )
 
     Data data;
     data.my_string = "Hello, World!";
-    data.my_uint = 42;
-    data.my_ulong = -4 ; // this results in 18446744073709551612 
+    data.my_uint   = 42;
+    data.my_uint64 = -4 ; // this results in 18446744073709551612 
+    data.my_ulong  = uint32_t(-4) ; // this results in 4294967292 
     data.my_double = 1.2345678901234;
-    data.my_int = -767;
-    data.my_float = 1.23456;
-    data.my_char  = 123;
-    data.my_bool  = true;
+    data.my_int    = -767;
+    data.my_float  = 1.23456;
+    data.my_char   = 123;
+    data.my_bool   = true;
     
+    bool failed = false ;
     std::stringstream filestr;
+    std::cout << "Path: "<< Dune :: Parameter :: commonOutputPath() << std::endl;
     filestr << Dune :: Parameter :: commonOutputPath() << "/test." << MPIManager :: rank() << ".";
     {
       std::string filename( filestr.str() + "ascii" );
@@ -115,7 +128,7 @@ int main ( int argc, char** argv )
       }
       Fem :: ASCIIInStream ain( filename.c_str() );
       if( !read( ain, data ) )
-        return 1;
+        failed = true ;
     }
 
     {
@@ -129,7 +142,7 @@ int main ( int argc, char** argv )
       }
       Fem :: BinaryFileInStream bin( filename.c_str() );
       if( !read( bin, data ) )
-        return 1;
+        failed = true ;
     }
 
     {
@@ -143,7 +156,7 @@ int main ( int argc, char** argv )
       }
       Fem :: XDRFileInStream xin( filename.c_str() );
       if( !read( xin, data ) )
-        return 1;
+        failed = true ;
     }
 
 #if HAVE_ALUGRID
@@ -155,7 +168,7 @@ int main ( int argc, char** argv )
       dout.flush();
       Fem :: DataInStream din( filename.c_str() );
       if( ! read( din, data ) )
-        return 1;  
+        failed = true ;
     }
 #endif
 
@@ -175,7 +188,7 @@ int main ( int argc, char** argv )
       {
         Fem :: SIONlibInStream sionin( filename.c_str() );
         if( ! read( sionin, data ) )
-          return 1;  
+          failed = true ;
       }
 
       if( MPIManager :: size () == 1 ) 
@@ -189,12 +202,14 @@ int main ( int argc, char** argv )
         {
           Fem :: SIONlibInStream sionin( filename.c_str(), rank );
           if( ! read( sionin, data ) )
-            return 1;  
+            failed = true ;
         }
       }
 
     }
 #endif
+
+    if( failed ) return 1;
 
   }
   catch( Exception e )

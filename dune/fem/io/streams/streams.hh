@@ -3,6 +3,7 @@
 
 #include <string>
 #include <fstream>
+#include <cstdint>
 
 #include <dune/common/exceptions.hh>
 
