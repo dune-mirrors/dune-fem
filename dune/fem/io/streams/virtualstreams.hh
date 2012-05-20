@@ -46,7 +46,7 @@ namespace Dune
     virtual void writeInt ( int value ) = 0;
     virtual void writeString ( const std::string &s ) = 0;
     virtual void writeUnsignedInt ( unsigned int value ) = 0;
-    virtual void writeUnsignedLong ( unsigned long value ) = 0;
+    virtual void writeUnsignedInt64 ( uint64_t value ) = 0;
   };
 
 
@@ -130,9 +130,9 @@ namespace Dune
       stream_->writeUnsignedInt( value );
     }
 
-    void writeUnsignedLong ( unsigned int value )
+    void writeUnsignedInt64 ( unsigned int value )
     {
-      stream_->writeUnsignedLong( value );
+      stream_->writeUnsignedInt64( value );
     }
   };
 
@@ -163,7 +163,7 @@ namespace Dune
     virtual void readInt ( int &value ) = 0;
     virtual void readString ( std::string &s ) = 0;
     virtual void readUnsignedInt ( unsigned int &value ) = 0;
-    virtual void readUnsignedLong ( unsigned long &value ) = 0;
+    virtual void readUnsignedInt64 ( uint64_t &value ) = 0;
   };
 
 
@@ -242,9 +242,9 @@ namespace Dune
       stream_->readUnsignedInt( value );
     }
 
-    void readUnsignedLong ( unsigned long &value )
+    void readUnsignedInt64 ( uint64_t &value )
     {
-      stream_->readUnsignedLong( value );
+      stream_->readUnsignedInt64( value );
     }
   };
 
@@ -308,9 +308,9 @@ namespace Dune
       stream_.writeUnsignedInt( value );
     }
     
-    virtual void writeUnsignedLong( unsigned long value )
+    virtual void writeUnsignedInt64( uint64_t value )
     {
-      stream_.writeUnsignedLong( value );
+      stream_.writeUnsignedInt64( value );
     }
   };
 
@@ -369,9 +369,9 @@ namespace Dune
       stream_.readUnsignedInt( value );
     }
 
-    virtual void readUnsignedLong( unsigned long &value )
+    virtual void readUnsignedInt64( uint64_t &value )
     {
-      stream_.readUnsignedLong( value );
+      stream_.readUnsignedInt64( value );
     }
   };
 

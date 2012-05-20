@@ -97,8 +97,8 @@ namespace Dune
         asImp().write( value );
       }
 
-      /** \copydoc Dune::OutStreamInterface::writeUnsignedLong */
-      void writeUnsignedLong ( unsigned long value )
+      /** \copydoc Dune::OutStreamInterface::writeUnsignedInt64 */
+      void writeUnsignedInt64 ( uint64_t value )
       {
         asImp().write( value );
       }
@@ -178,8 +178,8 @@ namespace Dune
         asImp().read( value );
       }
 
-      /** \copydoc Dune::InStreamInterface::readUnsignedLong */
-      void readUnsignedLong ( unsigned long &value )
+      /** \copydoc Dune::InStreamInterface::readUnsignedInt64 */
+      void readUnsignedInt64 ( uint64_t &value )
       {
         asImp().read( value );
       }

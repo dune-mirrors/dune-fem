@@ -142,8 +142,8 @@ namespace Dune
         writePrimitive( value );
       }
 
-      /** \copydoc Dune::OutStreamInterface::writeUnsignedLong */
-      void writeUnsignedLong ( unsigned long value )
+      /** \copydoc Dune::OutStreamInterface::writeUnsignedInt64 */
+      void writeUnsignedInt64 ( uint64_t value )
       {
         writePrimitive( value );
       }
@@ -273,8 +273,8 @@ namespace Dune
         readPrimitive( value );
       }
 
-      /** \copydoc Dune::InStreamInterface::readUnsignedLong */
-      void readUnsignedLong ( unsigned long &value )
+      /** \copydoc Dune::InStreamInterface::readUnsignedInt64 */
+      void readUnsignedInt64 ( uint64_t &value )
       {
         readPrimitive( value );
       }

@@ -111,8 +111,8 @@ namespace Fem
         writeError();
     }
 
-    /** \copydoc Dune::OutStreamInterface::writeUnsignedLong */
-    void writeUnsignedLong ( unsigned long value )
+    /** \copydoc Dune::OutStreamInterface::writeUnsignedInt64 */
+    void writeUnsignedInt64 ( uint64_t value )
     {
 #ifdef XDR_UINT64_FUNC
       // use u_int64_t since xdr_u_long is buggy
@@ -233,8 +233,8 @@ namespace Fem
         readError();
     }
 
-    /** \copydoc Dune::InStreamInterface::readUnsignedLong */
-    void readUnsignedLong ( unsigned long &value )
+    /** \copydoc Dune::InStreamInterface::readUnsignedInt64 */
+    void readUnsignedInt64 ( uint64_t &value )
     {
 #ifdef XDR_UINT64_FUNC
       // use u_int64_t since xdr_u_long is buggy

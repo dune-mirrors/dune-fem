@@ -132,13 +132,13 @@ namespace Fem
       CHECK_AND_CALL_INTERFACE_IMPLEMENTATION( asImp().writeUnsignedInt( value ) );
     }
 
-    /** \brief write an unsigned long to the stream
+    /** \brief write an uint64_t to the stream
      *
      * \param[in]  value  value to write to the stream
      */
-    void writeUnsignedLong ( unsigned long value )
+    void writeUnsignedInt64 ( uint64_t value )
     {
-      CHECK_AND_CALL_INTERFACE_IMPLEMENTATION( asImp().writeUnsignedLong( value ) );
+      CHECK_AND_CALL_INTERFACE_IMPLEMENTATION( asImp().writeUnsignedInt64( value ) );
     }
 
   protected:
@@ -322,23 +322,23 @@ namespace Fem
       return value;
     }
 
-    /** \brief read an unsigned long from the stream
+    /** \brief read an uint64_t from the stream
      *
      *  \param[out]  value  reference to the variable to read from the stream
      */
-    void readUnsignedLong ( unsigned long &value )
+    void readUnsignedInt64 ( uint64_t &value )
     {
-      CHECK_AND_CALL_INTERFACE_IMPLEMENTATION( asImp().readUnsignedLong( value ) );
+      CHECK_AND_CALL_INTERFACE_IMPLEMENTATION( asImp().readUnsignedInt64( value ) );
     }
 
-    /** \brief read an unsigned long from the stream
+    /** \brief read an uint64_t from the stream
      *
-     *  \returns an unsigned long read from the stream
+     *  \returns an uint64_t read from the stream
      */
-    unsigned long readUnsignedLong ()
+    uint64_t readUnsignedInt64 ()
     {
-      unsigned long value;
-      readUnsignedLong( value );
+      uint64_t value;
+      readUnsignedInt64( value );
       return value;
     }
 
