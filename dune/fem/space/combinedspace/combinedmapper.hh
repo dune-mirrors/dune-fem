@@ -273,12 +273,22 @@ namespace Dune
         return true;
       }
 
-      void read_xdr ( const char *filename, int timestep )
+      void backup() const
+      {}
+
+      void restore() 
       {
         resize();
       }
 
-      void write_xdr ( const char *filename, int timestep )
+      template< class IOStream >
+      void read ( IOStream &in )
+      {
+        resize();
+      }
+
+      template< class IOStream >
+      void write ( IOStream &out ) const
       {}
 
       template< class Entity >
