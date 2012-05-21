@@ -34,6 +34,12 @@ namespace Dune
       /** \brief field type of the operator's range */
       typedef typename RangeFunctionType::RangeFieldType RangeFieldType;
 
+      /** \brief assembled = 
+       *          - \b true:  a method systemMatrix is present to 
+       *                      access a matrix struct of type MatrixObject
+       *          - \b false (default) no method systemMatrix, i.e. no matrix object  */
+      static const bool assembled = false ;
+
       virtual ~Operator () {}
 
       /** \brief application operator

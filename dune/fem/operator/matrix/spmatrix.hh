@@ -904,6 +904,9 @@ protected:
     typedef typename Base::DomainSpaceType DomainSpaceType;
     typedef typename Base::RangeSpaceType RangeSpaceType;
 
+    /** \copydoc Fem::Operator::assembled */ 
+    static const bool assembled = true ;
+
     using Base::apply;
 
     SparseRowMatrixOperator ( const std::string &name,

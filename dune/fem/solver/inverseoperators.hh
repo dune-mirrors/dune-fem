@@ -95,7 +95,7 @@ namespace Dune
     void checkPreconditioning( const LinearOperator &linearOp )
     {
       const bool preconditioning = Parameter::getValue< bool >( "fem.preconditioning", false );
-      if( preconditioning ) 
+      if( preconditioning && LinearOperator :: assembled ) 
       {
         // create diagonal preconditioner 
         precondObj_ = new DiagonalPreconditioner< DomainFunctionType, LinearOperator >( linearOp );
