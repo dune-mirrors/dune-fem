@@ -324,6 +324,7 @@ namespace Dune
       explicit DataInStream ( const std::string &filename,
                               const size_t pos = 0 )
       {
+#ifdef HAVE_ALUGRID
         std::ifstream file( filename.c_str(), std::ios::binary );
         size_t size = 0 ;
         file >> size ;
@@ -331,6 +332,9 @@ namespace Dune
         file.read( buffer, size );
         std::pair< char* , int > buff( buffer, int(size) );
         instream_ = buff ;
+#else
+        DUNE_THROW(NotImplemented,"DataInStream only working with ALUGrid enabled!");
+#endif
       }
 
       /** \copydoc Dune::InStreamInterface::readString */
@@ -356,7 +360,7 @@ namespace Dune
           instream_.read( convert.bytes[ ByteOrder :: map( i, tsize ) ] );
         value = convert.value;
 #else
-        DUNE_THROW(NotImplemented,"DataOutStream only working with ALUGrid enabled!");
+        DUNE_THROW(NotImplemented,"DataInStream only working with ALUGrid enabled!");
 #endif
       }
 
