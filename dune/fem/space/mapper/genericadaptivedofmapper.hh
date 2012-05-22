@@ -974,14 +974,21 @@ namespace Dune
 
         sequence_ = dm_.sequence();
 
-        return haveToCopy;
+        return haveToCopy;      
       }
 
-      void read_xdr ( const char *filename, int timestep )
-      {
-      }
+      void backup () const
+      {}
 
-      void write_xdr ( const char *filename, int timestep )
+      void restore () 
+      {}
+
+      template< class InStream >
+      void read ( InStream &in )
+      {}
+
+      template< class OutStream >
+      void write ( OutStream &out )
       {}
 
     private:
