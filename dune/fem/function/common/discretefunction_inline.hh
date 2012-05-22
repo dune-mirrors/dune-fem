@@ -322,7 +322,8 @@ namespace Dune
   inline void DiscreteFunctionDefault< Traits >
     :: write ( OutStreamInterface< StreamTraits > &out ) const
   {
-    out << DUNE_MODULE_VERSION_ID(DUNE_FEM);
+    unsigned int versionId = DUNE_MODULE_VERSION_ID(DUNE_FEM);
+    out << versionId ;
     out << name_;
   
     // only allow write when vector is compressed 
