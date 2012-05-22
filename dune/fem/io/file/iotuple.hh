@@ -324,10 +324,15 @@ namespace Dune
     static void apply ( InStreamInterface< StreamTraits > &inStream, Tuple &tuple ) 
     {
       DiscreteFunction *df = get< N >( tuple );
-      // if pointer is valid: write function to stream 
-      if( df ) 
+      bool readDF = false ;
+      inStream >> readDF ;
+      // if discrete function was written, we can read it 
+      if( readDF ) 
       {
-        df->read( inStream );
+        if( df ) 
+          df->read( inStream );
+        else 
+          DUNE_THROW(InvalidStateException,"no discrete function on input");
       }
     }
   };
@@ -343,8 +348,13 @@ namespace Dune
     static void apply ( OutStreamInterface< StreamTraits > &outStream, const Tuple &tuple )
     {
       const DiscreteFunction *df = get< N >( tuple );
+      const bool writeDF = ( df != 0 );
+
+      // write flag whether discrete function was written, for later restore 
+      outStream << writeDF ;
+
       // if pointer is valid: write function to stream 
-      if( df ) 
+      if( writeDF ) 
       {
         df->write( outStream );
       }
