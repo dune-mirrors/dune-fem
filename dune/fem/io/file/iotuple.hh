@@ -165,6 +165,7 @@ namespace Dune
 
     template < class GridType >
     static Tuple *input ( GridType *&grid,
+                          double& time, 
                           const int rank,
                           const int size,
                           const std::string &path, 
@@ -188,7 +189,7 @@ namespace Dune
         // create and read grid 
         IOTupleBase::restoreGrid( grid, inStream, filename );
       }
-      
+
       // create all data
       Tuple *ret = new Tuple;
       ForLoop< CreateData, 0, length-1 >::apply( *grid, *ret );
@@ -199,6 +200,9 @@ namespace Dune
         IOTupleBase::restoreDofManager(*grid, inStream );
       }
 
+      // get simulation time of data 
+      inStream >> time ;
+      
       // now read all data 
       ForLoop< RestoreStream, 0, length-1 >::apply( inStream, *ret );
       
@@ -243,6 +247,7 @@ namespace Dune
     //! write grid and data to given directory 
     template< class GridType >
     static void output ( const GridType &grid,
+                         const double time, 
                          const std::string &path,
                          const std::string &name,
                          const Tuple &tuple )
@@ -256,6 +261,9 @@ namespace Dune
 
       // write grid, either to binaryStream or with given filename 
       writeGrid( grid, outStream, filename );
+
+      // save simulation time of data 
+      outStream << time; 
 
       // write data to stream 
       ForLoop< OutputStream, 0, length-1 >::apply( outStream, tuple );
@@ -443,6 +451,7 @@ namespace Dune
     //! write grid and data to given directory 
     template< class GridType >
     static void output ( const GridType &grid,
+                         const double time, 
                          const std::string &path,
                          const std::string &name,
                          const Tuple &tuple )
@@ -456,6 +465,9 @@ namespace Dune
 
       // write grid, either to binaryStream or with given filename 
       writeGrid( grid, outStream, filename );
+
+      // save simulation time of data 
+      outStream << time ;
     }
     
     template< class Disp, class DINFO >

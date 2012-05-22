@@ -142,7 +142,7 @@ protected:
       // IOInterface::copyMacroGrid( grid_, macroGrid_.str(), path_, timeStepPath, datapref_ );
 
       // call output of IOTuple
-      IOTupleType :: output( grid_, timeStepPath, datapref_, data );
+      IOTupleType :: output( grid_, sequenceStamp, timeStepPath, datapref_, data );
     }
 
     return timeStepPath;
