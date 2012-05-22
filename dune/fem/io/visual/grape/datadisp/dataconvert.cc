@@ -32,6 +32,10 @@ int main(int argc, char **argv)
   MPIManager::initialize(argc,argv);
   try {
     Parameter::append(argc,argv);
+#ifdef PARAMETER_APPEND_FUNCTION
+    PARAMETER_APPEND_FUNCTION();
+#endif
+
     if (argc < 2)
     {
       print_help(argv[0]);
