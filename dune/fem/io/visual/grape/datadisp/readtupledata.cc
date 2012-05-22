@@ -55,7 +55,6 @@ inline void readTupleData(const char * path, const char * filename,
 
   IOTuple<GR_DiscFuncType>::ReturnType* tup = 
     IOTuple<GR_DiscFuncType>::input(grid,time,myRank,numProcs,path,fn);
-  std::cout << "Finished reading grid" << std::endl;
 
   // push all new grids to grid stack 
   if( newGrid ) gridStack.push(grid);
