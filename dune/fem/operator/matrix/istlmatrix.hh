@@ -804,6 +804,10 @@ namespace Dune
       assert( rowMapper_.size() == colMapper_.size() );
     }
 
+    /** \copydoc Fem::Operator::assembled */
+    static const bool assembled = true ;
+
+    const ThisType& systemMatrix() const { return *this; }
   public:  
     //! destructor 
     ~ISTLMatrixObject() 
@@ -940,7 +944,7 @@ namespace Dune
       {
         if( numIterations_ == 1 ) // diagonal preconditioning 
         {
-          typedef FemDiagonalPreconditioner< ThisType, RowBlockVectorType,ColumnBlockVectorType > PreconditionerType;
+          typedef FemDiagonalPreconditioner< ThisType, RowBlockVectorType, ColumnBlockVectorType > PreconditionerType;
           typedef typename MatrixAdapterType :: PreconditionAdapterType PreConType;
           PreConType preconAdapter( matrix(), new PreconditionerType( *this ) );
           return MatrixAdapterType( matrix(), domainSpace(), rangeSpace(), preconAdapter );
