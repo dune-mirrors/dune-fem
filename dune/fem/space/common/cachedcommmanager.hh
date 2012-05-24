@@ -412,8 +412,8 @@ namespace Dune
       typedef typename DiscreteFunction :: DofType DofType;
       enum { blockSize = DiscreteFunction :: 
               DiscreteFunctionSpaceType :: localBlockSize };
-      // reserve buffer memory at once 
-      str.reserve( str.size() + (size * blockSize * sizeof( DofType )) );
+      // reserve write buffer for storage of dofs 
+      str.reserve( (size * blockSize * sizeof( DofType )) );
 
       // dirty hack to have faster access to stream 
       UnsaveObjectStream &os = (UnsaveObjectStream &)str;
