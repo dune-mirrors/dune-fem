@@ -684,9 +684,10 @@ namespace Dune
     inline void writeUnsave (const T & a)
     {
       T & val = *((T *) this->getBuff( this->_wb) );
-      val = a;
+      // increase size and make sure that buffer size is ok 
       this->_wb += sizeof(T) ;
       assert( this->_wb <= this->_len );
+      val = a;
       return ;
     } 
     
@@ -695,9 +696,10 @@ namespace Dune
     inline void readUnsave (T & a)
     {
       const T & val = *((const T *) this->getBuff(this->_rb) );
-      a = val;
-      this->_rb += sizeof(T);
+      // make sure that buffer size is ok
       assert( this->_rb <= this->_wb ); 
+      this->_rb += sizeof(T);
+      a = val;
       return ;
     }
   };
