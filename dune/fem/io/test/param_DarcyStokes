@@ -1,0 +1,13 @@
+#parameters for the Darcy Stokes Project
+
+numberofcells: 128
+
+# macrogrid file
+macrogrid: macrogrid_$(numberofcells).dgf
+
+#velocity vector
+velocity: 0 0
+
+#diffusion coefficiant
+diffusion: 1.0
+

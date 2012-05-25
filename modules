@@ -1,0 +1,208 @@
+/* This file determines the order how things appear in the doxygen
+   documentation within the Grid group. It works like this:
+
+   @defgroup commands appear only in this file here which is
+   parsed before the other files (because it is mentioned first 
+   in the Doxyfile).
+
+   Only @addtogroup is used in the code documentation.
+*/
+  
+/** 
+   @defgroup GridPart View of grid for defining discrete functions
+   @ingroup FEM 
+*/
+  /**
+   @defgroup AdaptiveLeafGP Adaptive leaf grid part
+   @ingroup GridPart */
+  /**
+   @defgroup FilterGridPart Filtered grid part
+   @ingroup GridPart */
+  /**
+   @defgroup PeriodicGridPart Periodic grid part
+   @ingroup GridPart */
+
+/** \defgroup GenericGeometry Generic Geometries
+ *  \ingroup GridPart
+ */
+
+/**
+	 @defgroup FunctionCommon Function and function spaces
+   @ingroup FEM
+
+   Functions are mappings from one finite
+   dimensional vector space into another, e.g.,
+   \f$K^n\f$ into \f$L^m\f$ where
+   \f$K\f$ and \f$L\f$ are fields.
+   They are therefore special instances of
+   general vector space \ref Mapping "mappings".
+
+   The domain and the range are defined by 
+   a \ref Dune::FunctionSpaceInterface "function space".
+   
+   \ref Dune::DiscreteFunctionInterface "Discrete function" 
+   are special functions defined on a grid and
+   belong to corresponding 
+   \ref Dune::DiscreteFunctionSpaceInterface "discrete function space".
+*/
+  /** @defgroup FunctionSpace Analytical function spaces 
+      @ingroup FunctionCommon */
+  /** @defgroup Functions Analytical functions
+      @ingroup FunctionCommon */
+  /** @defgroup DiscreteFunctionSpace Discrete Function space
+      @ingroup FunctionCommon */
+      /** @defgroup DGDSpace Discontinuous Galerkin Space 
+          @ingroup DiscreteFunctionSpace */
+      /** @defgroup FVDFSpace Finite Volume Function Space
+          @ingroup DiscreteFunctionSpace */
+      /** @defgroup LagrangeDiscreteFunctionSpace Lagrange  Discrete Function Space
+          @ingroup DiscreteFunctionSpace */
+      /** @defgroup CombinedSpace Wrapper from scalar to vector valued spaces 
+          @ingroup DiscreteFunctionSpace */
+      /** @defgroup RBSpace Reduced Basis Space
+          @ingroup DiscreteFunctionSpace */
+      /** @defgroup BaseFunction Base functions and base functiton sets
+          @ingroup DiscreteFunctionSpace */
+      /** @defgroup DofMapper DOF mapper 
+          @ingroup DiscreteFunctionSpace */
+    
+  /** @defgroup DiscreteFunction Discrete functions 
+      @ingroup FunctionCommon */
+      /** @defgroup AdaptiveDFunction An efficient implementation for vector valued functions on adaptive grids
+          @ingroup DiscreteFunction */
+      /** @defgroup BlockVectorDFunction An implementation using dune-istl block vectors
+          @ingroup DiscreteFunction */
+      /** @defgroup ProductDFunction A discrete function for product spaces
+          @ingroup DiscreteFunction */
+      /** @defgroup SubDFunction A discrete function for extraction of scalar functions 
+            from a discrete function holding vectorial data
+          @ingroup DiscreteFunction */
+      /** @defgroup LocalFunction Local function on an entity
+          @ingroup DiscreteFunction */
+      /** @defgroup DiscreteFunctionAdapter Wrapping analytical function into discrete functions 
+          @ingroup DiscreteFunction */
+      /** @defgroup DofManager Handling DOFs 
+          @ingroup DiscreteFunction */
+       
+/** 
+   @defgroup OperatorCommon Operators
+   @ingroup FEM 
+*/
+  /** @defgroup Concept Concept behind the dune-fem operators 
+      @ingroup OperatorCommon */
+  /** @defgroup Mapping Mapping
+      @ingroup OperatorCommon */
+  /** @defgroup DiscreteOperator Discrete operators 
+      @ingroup OperatorCommon */
+    /** @defgroup LocalOperator Operator acting on an entity
+        @ingroup DiscreteOperator */
+    /** @defgroup LinearDiscOperators Linear discrete operators
+        @ingroup DiscreteOperator */
+    /** @defgroup DifferentiableOperators Operator with defined jacobian
+        @ingroup DiscreteOperator */
+  /** @defgroup OperatorWrappers Wrappers for operators
+      @ingroup OperatorCommon */
+    /** @defgroup DiscOperatorWrapper Discrete to general operator
+        @ingroup OperatorWrappers */
+    /** @defgroup InversOperatorWrapper Inverting operator
+        @ingroup OperatorWrappers */
+    /** @defgroup CachOperatorWrapper Caching for linear operators 
+        @ingroup OperatorWrappers */
+  /** @defgroup Pass Pass operators
+      @ingroup OperatorCommon */
+    /** @defgroup PassHyp Local Discontinous Galerkin for first order hyperbolic equations
+        @ingroup Pass */
+      /** @defgroup PassLimit Limiting operation
+          @ingroup PassHyp */
+    /** @defgroup PassEllipt Local Discontinous Galerkin for second order elliptic equations 
+        @ingroup Pass */
+  /** @defgroup Operator0 Projection and interpolation operatos
+      @ingroup OperatorCommon */
+    /** @defgroup L2ProjectionOperator L2-projection 
+        @ingroup Operator0 */
+    /** @defgroup VtxProjectionOperator Projection from DG to lagrange space 
+        @ingroup Operator0 */
+    /** @defgroup HdivProjectionOperator Projection from DG to H-div space 
+        @ingroup Operator0 */
+  /** @defgroup Operator1 First order spatial operatos
+      @ingroup OperatorCommon */
+    /** @defgroup GradientOperator Gradient operator
+        @ingroup Operator1 */
+  /** @defgroup Operator2 Second order spatial operatos
+      @ingroup OperatorCommon */
+    /** @defgroup EllipticOperator Elliptic operator
+        @ingroup Operator2 */
+  /** @defgroup ODESolver ODE solver
+      @ingroup OperatorCommon */
+  /** @defgroup OEMSolver Linear solver
+      @ingroup OperatorCommon */
+  /** @defgroup NonLinSolver Non linear solver
+      @ingroup OperatorCommon */
+  /** @defgroup DirectSolver Direct solver
+      @ingroup OperatorCommon */
+
+/** @defgroup Integration Integration
+    @ingroup FEM */
+  /** @defgroup Quadrature Quadratures
+      @ingroup Integration */
+  /** @defgroup Integrators Integrators
+      @ingroup Integration */
+
+/** 
+   @defgroup Adaptation Adaptation and Parallelization
+   @ingroup FEM 
+*/
+  /** @defgroup RestrictProlongInterface Restriction and prolongation
+      @ingroup Adaptation */
+  /** @defgroup Communication Communication
+      @ingroup Adaptation */
+    /** @defgroup DFComm Discrete Function data handlers
+        @ingroup Communication */
+  /** @defgroup LoadBalancer Load balancing
+      @ingroup Adaptation */
+    /** @defgroup DataCollectors Data collectors
+        @ingroup LoadBalancer */
+
+/** 
+   @defgroup IOGroup Input and output
+   @ingroup FEM 
+      There is direct support for saving and visualizing data using the GraPE
+      library, for generating VTK output, and Matlab data files.
+      - GraPE: Data can be either visualized directly during a computation
+        using the \ref Dune::DataWriter "DataWriter" class. The same format is
+        also used for \ref Checkpointing "checkpointing". It can be visualized
+        through the \ref Visualization "datadisp program" which can also read a
+        time series of data.
+      - VTK: Discrete functions can be written to a file
+        either as element data (piecewise constant function)
+        or as vertex data (piecewise linear function)
+        on a flat grid. Again, the \ref Dune::DataWriter "DataWriter" is used.
+        Note that the resulting files cannot be used for checkpointing since
+        the grid hierarchy is lost. 
+      - Matlab: Discrete functions and SparseRowMatrix
+        can be written to disk using the \ref Dune::MatlabHelper "MatlabHelper"
+        class. Utility functions for Matlab are available in "fem/io/matlab".
+*/
+  /** @defgroup DiscFuncIO I/O for discrete functions
+      @ingroup IOGroup */
+  /** @defgroup Checkpointing Managing of persistent objects for checkpointing
+      @ingroup IOGroup */
+  /** @defgroup Parameter Concept for run time parameter
+      @ingroup IOGroup */
+  /** @defgroup Visualization Visualization
+      @ingroup IOGroup */
+  /** @defgroup InOutStreams Input and output streams
+      @ingroup IOGroup */
+
+/** 
+   @defgroup HelperClasses Utility classes
+   @ingroup FEM 
+*/
+  /** @defgroup VectorClasses Array and Vector interfaces
+      @ingroup HelperClasses */
+  /** @defgroup InterfaceHelper Interface helper methods
+      @ingroup HelperClasses */
+  /** \defgroup EngineConcept The Engine Concept
+      \ingroup HelperClasses */
+  /** @defgroup Testing Testing facilities
+      @ingroup HelperClasses */

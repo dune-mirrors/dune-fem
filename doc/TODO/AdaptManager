@@ -1,0 +1,6 @@
+1) needs (static) method global refine so that global
+   refinement with dof adaptation can be performed
+2) remove parameterfile (use Parameter)
+3) make empty RPOp default argument, so that AdpatManger
+   can be used to adapt grid (e.g. globalRefine) without 
+   Data but with IndexSets

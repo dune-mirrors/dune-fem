@@ -1,0 +1,31 @@
+/** \page ChangeLog Change Log
+ *
+ *  The change log lists the major steps taken between the different releases.
+ *
+ *  \section Changes from 0.9.1 to 0.10
+ *  - Lagrange base functions have been fixed.
+ *  .
+ 
+ *  \section Changes from 0.9.1 to 0.9.2
+ *  - Pass now has 3rd template argument passId, which is by default set to
+ *    -1
+ *  - in addition to new Pass, new CreatePass isn't compatible any more 
+ *    with old passes. To plug a pass into new CreatePass one must use new Pass
+ *  - in addition to new Pass, class Selector that is given to the class
+ *    DiscreteModelCaller as a third template parameter, has to be wrapped 
+ *    by CombinedSelector< ThisType , Selector >, and then the class
+ *    DiscreteModelCaller must take this wrapper instead of the class Selector
+ *  .
+ 
+ *
+ *  \section Changes from 0.9 to 0.9.1
+ *  - The evaluation methods taking a Quadrature and an int as arguments are
+ *    now mere fronts for the evaluate methods taking a PointType.
+ *  - Local functions now use an \ref EngineConcept "engine concept".
+ *  - The method scalarProductDofs in \ref Dune::DiscreteFunctionInterface
+ *    "discrete functions" is now parallelized (do not communicate afterwards).
+ *  - Communication managers now support different communication operations
+ *    (i.e., copy, add, etc.) and different communication interfaces and
+ *    directions. Communication of higher codims should also work.
+ *  .
+ */

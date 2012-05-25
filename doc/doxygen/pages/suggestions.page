@@ -1,0 +1,69 @@
+/** \page suggestions Suggestions
+ *
+ *  On this page, suggestions to improve dune-fem are collected. So feel free
+ *  to add any suggestions or comment on them...
+ *
+ *  \section before10 ... that Should Be Implemented Before 1.0
+ *
+ *  - Revisit quadratures (either implement a quadrature interface using
+ *    the Barton-Nackman trick or implement an engine concept). Both would
+ *    allow the operator[] to be default implemented.
+ *  - Have a stack of discrete functions (which might be cleared on adaption
+ *    and limited to hold only a small number of discrete functions)
+ *  - Write a ConstLocalFunction class
+ *  - Write class hierarchy 
+ *    FunctionSpace -> GridFunctionSpace -> DiscreteFunctionSpace
+ *    Function -> GridFunction -> DiscreteFunction
+ *    (GridFunction has a ConstLocalFunction method but no localfunction)
+ *  - base everything in dune-fem on GridParts (e.g. EntityType from
+ *    GridPart...)
+ *  - Allow the use of different floating point types (especially of higher
+ *    precision than double). Maybe implement a Float< precision > class that
+ *    gives a default implementation for the desired precision.
+ *    Also, the concept should be checked to allow for complex numbers (at
+ *    least as RangeFieldType).
+ *  - more documentation for I/O
+ *  - Extend <fem/misc/eoc> and make errors stored in FieldVector possible.
+ *  - Unify the naming and parameter ordering of axpy operations. Maybe the
+ *    best choice is to use the following:
+ *    \code
+ *    ThisType &axpy ( const FieldType &a, const ThisType &x );
+ *    \endcode
+ *    This is the way its done in FieldVector.
+ *  .
+ *
+ *  \section after10 ... that Should Be Implemented After 1.0
+ *
+ *  \section brainstorm ... that Might Be of Interest
+ *
+ *  - Make LocalFunctionStorages singleton
+ *  - Add a LocalFunctionSpace to discrete function spaces. This way, some
+ *    specializations need not be done in the local function. The local
+ *    function space should at least provide the following features:
+ *    - the base function set
+ *    - the entity
+ *    - a method mapToGlobal
+ *    .
+ *    Then, the localFunction method on the discrete function can be called
+ *    with the local function space. Therefore, the base function set and the
+ *    Dof mappings need only be fetched once (the caching part could even be
+ *    done in a wrapper).
+ *  - Have method for stiffness and mass matrix on basefunctionsets.
+ *  - DG method for non orthonormal basefunctionsets
+ *  - Continuous Galerkin for order > 3 and mixed finite element spaces
+ *    (proof concept...)
+ *  - write evaluate on localfunctions as matrix matrix multiplication 
+ *  - DGspace with gemeralized Lagrangebasefunctionsets (Gauss-Labatto)
+ *  - Revisit operator concept
+ *  - A GridPart with all classes wrapped (i.e. Entities, Geometry...)
+ *  - IndexSets build using GridPart
+ *  - Improved DG Limiter Pass
+ *  - Compact LDG Operator 
+ *  - Clarify which jacobian method operates on the reference element and which one
+ *    on real elements.
+ *  - Implement a quadrature that reads its points from an ASCII file. This way,
+ *    we do not need a quadrature for every floating point type.
+ *  - Description of norms/metrics and default implementation of error functionals
+ *    induced by norms/metrics.
+ *  .
+ */

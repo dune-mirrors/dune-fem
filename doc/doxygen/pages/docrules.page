@@ -1,0 +1,156 @@
+/**
+<!---------------------------------------------->
+\page DocRules Some Basic Remarks Concerning Documentation
+<!---------------------------------------------->
+In the following some remarks on how to add to the Doxygen documentation of
+dune-fem. Details on doxygen can be found on the Doxygen homepage (see link at
+bottom of each page). Warnings concerning faullty documentation are recorded in
+dune-fem/doc/doxygen.out. So this file should be empty...
+
+- Mathematical formulas can be inserted into the documentation quite easily
+  using a latex style notation.
+- References to other classes or groups are automatically inserted if the name
+  of the class or group is used in the text.\n
+  Specific references can be added using the \\ref command followed by the text
+  which should be highlighted using quotes ("...").
+- The documentation of classes, typedefs, members, etc. always preceed the
+  actual statement in the code.
+- For deprecated members the command \\deprecated should be included in the
+  documentation. For deprecated files the \\deprecated command can be inserted
+  into a file documentation. All thus marked blocks will be linked into a
+  related page.
+- A new implementation can be marked as such by adding \\newimplementation to
+  the documentation. This helps others to get an overview over new additions.
+  Again, a related page linking all new classes is generated.
+- Global parameters (using the Dune::Parameter class) should be
+  documented (e.g. in the documentation of the class using this
+  parameter) through the command 
+  \c femparameter
+  This command takes three arguments: 
+  first argument is the name of the parameter, e.g., \c fem.timeprovider.factor,
+  the second argument is a brief description and the third argument
+  is a default value (if present, otherwise use two arguments).
+  Example:
+  \code
+    \femparameter{fem.timeprovider.factor,a global factor for reducing the
+                  timestep,1.}
+    \femparameter{fem.example, a parmeter without default}
+  \endcode
+  Note the comma for seperating parameters for the command. If the
+  description needs a comma in the text use \c \\,.
+.
+
+The following are of course only guidlines - please add to them.
+
+
+<!---------------------------------------------->
+\section DocGroups Grouping Documentation
+<!---------------------------------------------->
+All groups are defined in the fem/modules file using \\defgroup; subgrouping is
+done by adding \\ingroup.
+
+The order of these group definitions determines the order in which the groups
+appear in the "Modules" page of the documentation. Only the major groups which
+have no obvious class attached to them are documented in the modules file. All
+others are just declared. Their documentation should be in some obvious header
+file for example before the namespace Dune is opened or directly following.
+Preceed the documentation by
+\verbatim
+\addtogroup Groupname 
+\endverbatim
+
+If a group combines all implementations for a spesific interface then the
+documentation for the group should be in the header file containing the
+interface class and the documentation should refer to this interface class,
+e.g.,
+\verbatim
+\remark The interface is defined through the class InterfaceClass
+\endverbatim
+
+Classes that should appear direcly on the page with the group documentation,
+e.g., all implementation classes (if they do not belong to a subgroup) should
+have a \\ingroup GroupName in the documentation of the class. It's probably
+better to have a very short \\brief documentation for these classes since this
+appears on the module page. After the \\brief statements, a detailed
+documentation should follow (after a blank line).
+
+Important classes - either from the user or the implementers point of view
+- that just don't seem to fit anywhere can be added to the group HelperClasses
+or not included in any group (they will always appear in the "Classes" list of
+the documentation).
+
+Depricated classes or methods should be tagged with a \\deprecated command in
+the documentation followed by a short remark on the reason for removing this
+part of the code or alternatives enclosed in quotes.
+
+
+<!---------------------------------------------->
+\section DocInterfaces Documentation of Interface Classes
+<!---------------------------------------------->
+All methods and typedefs should be documented using \\brief. For methods, the
+arguments and the return type should be documented using
+- \\param[in] for input parameters,
+- \\param[out] for return value parameters,
+- \\return (or \\returns) for the return value.
+
+For the typedefs a reference to a corresponding interface class for this type
+should be included - if one exists. This could be done by, for example, using
+the \\ref command:
+\verbatim
+\ref MappingInterface "mapping type".
+\endverbatim
+
+
+<!---------------------------------------------->
+\section DocImplementation Documentation of Implementation Classes
+<!---------------------------------------------->
+By using the \\copydoc command the documentation
+from the interface class can be repeated in the
+implementation class:
+\verbatim
+/** \copydoc KlassenNameOhneTemplates::funktionOhneParameter */
+\endverbatim
+
+If the function has been overloaded, the complete function declaration must be
+given, like this:
+\verbatim
+/** \copydoc Dune::LocalFunctionInterface::evaluate(const QuadratureType &quadrature,const int quadPoint,RangeType &ret) const */
+\endverbatim
+Please note that the trailing "const" is important (otherwise Doxygen will look
+for a non-nonst version of the member).
+
+\note Doxygen is quite picky about spaces within references. They should be
+      left out whereever possible (see the above example). Moreover, line breaks
+      within references are disallowed.
+\note Type names and Variable names have to be identical to those in the copied
+      documentation.
+\note Template parameters need not be declared as such. But its name has to be
+      identicial to the name declaration whose documentation is copied.
+
+
+
+\section DocAddRelPage Adding Related Pages
+
+To add a related page, you write a file containing one big C++ doxygen comment.
+This comment starts with \\page, to declare the related page. Then just add the
+information, the page shall contain. So, the basic structure of the file is as
+follows:
+\verbatim
+/** \page MyPageLabel My Page Title
+ *
+ *  \section My First Section
+ *
+ *  This is what I have to say ...
+ *
+ *  \section My Second Section
+ *
+ *  ... and some more information ...
+ */
+\endverbatim
+
+The file should be placed in "dune-fem/doc/doxygen/pages". Use either ".dev"
+for development documentation or ".dist" for general documentation as a file
+extension. Note that developer documentation is not taken over into the
+distribution.
+
+*/

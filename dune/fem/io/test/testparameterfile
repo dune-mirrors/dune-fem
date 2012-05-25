@@ -1,0 +1,44 @@
+#paramterfile to shadow parameters
+
+# fem verbosrank
+fem.verboserank: -1 
+
+# has to be set to 1 / true if parameter substitution is enabled
+fem.resolvevariables: 1
+
+# get user from the shell, $$ is needed here to execute "echo $USER"
+# $ acts as an escaping char, to resolve pre-assigned char such as  "#%$"
+user: $[echo $$USER]
+
+# and actual date
+date: $[./date.sh]
+
+#s witch between the two projects
+N: $[echo 1] 
+project: $(project_$(N))
+
+# output path 
+outputpath: ./data_$(project)_$(date)/
+
+#include special parameter file for the project
+paramfile: param_$(project)
+
+
+# definition of the two projects
+project_1: NavierStokes
+project_2: DarcyStokes
+
+# two factors for the multiplication
+factor1: 15 
+factor2: 2
+
+# just to show that even multiplications are possible here ;)
+multiplication: $[ echo $(factor1)*$(factor2) | bc ] 
+
+
+
+
+
+
+
+

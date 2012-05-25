@@ -1,0 +1,20 @@
+DGF
+Interval
+0  0        % first corner 
+1  1        % second corner
+8  8        % 1 cells in x and 1 in y direction
+#
+
+Simplex
+#
+
+%Simplexgenerator
+%display 0    % show result using Triangle viewer
+% to use Triangle from a certain path, uncomment path line
+%path $HOME/bin   % path to Triangle
+%#
+
+BOUNDARYDOMAIN
+default 1     % default boundary id
+#BOUNDARYDOMAIN
+# grid.dgf

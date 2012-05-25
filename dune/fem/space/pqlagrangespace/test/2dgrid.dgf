@@ -1,0 +1,15 @@
+DGF
+
+Interval
+0 0   % p0
+1 1   % p1
+8 8   % nx ny
+#
+
+BoundaryDomain
+1    -1 -1   30 30
+#
+
+GridParameter
+name 2d-unit-cube(8x8)
+#

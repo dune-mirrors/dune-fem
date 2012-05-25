@@ -1,0 +1,170 @@
+/** \mainpage dune-fem Automatic Documentation
+
+<!---------------------------------------------->
+\section intro Introduction
+<!---------------------------------------------->
+
+Welcome to the %dune-fem documentation pages. This documentation has been
+generated using Doxygen, a free source code documentation system for
+documenting C/C++ code.
+
+The best way to start is from the page \ref modules which gives
+you access to the documentation by category; a list
+of the central interface classes can be found
+\ref interfaceclass "here". 
+
+A summary of the
+main features and concepts can be found \ref Intro "here".
+Newly added implementations are linked on
+\ref newimplementation "this page".
+
+**/
+
+/** 
+  @addtogroup FEM
+  @{
+**/
+
+/**
+<!---------------------------------------------->
+\page Intro Introduction to the dune-fem package
+<!---------------------------------------------->
+
+<!---------------------------------------------->
+\section concept Concept
+<!---------------------------------------------->
+
+The dune-fem module is based on the dune-grid interface library. extending
+the grid interface by a number of discretization algorithms for solving
+non-linear systems of partial differential equations.
+
+The main notion is that of a "spatial discrete operator"
+which models a mapping
+between two \ref DiscreteFunctionSpace "discrete function spaces": 
+\f$ L_h : U_h \to V_h \f$.
+This operator might for example be a second order elliptic operator, a
+first order hyperbolic operator, or a projector operator. Basic
+operators can be combined to construct more complex operators. In addition to
+standard vector space operations, the most flexible construction process
+is the \ref Pass "pass concept",
+which implements the nesting of operators allowing to
+define operators \f$ L_h : U_h \to V_h \f$ of the form 
+\f{eqnarray*} 
+L_h(u_h) =  \Pi_h L_{h,n}(L_{h,n-1}(\dots L_1(u_h)\dots) 
+\f}
+build from `simple' discrete operators 
+\f{eqnarray*} 
+  L_{i+1} : U_{h,i}\times\dots\times U_{h,1}\times U_h \to
+             U_{h,i+1}\times U_{h,i}\times\dots\times U_{h,1}\times U_h
+\f} 
+and a projection 
+\f$ \Pi_h : U_{h,n}\times\dots\times U_{h,1}\times U_h \to V_h \f$.
+By inverting the discrete operator using non-linear or linear solvers
+(see \ref OEMSolver) or by plugging
+\f$ L_h \f$ into an \ref ODESolver "ode solver" a wide range of applications can
+be tackled
+(http://www.mathematik.uni-freiburg.de/IAM/homepages/mario/postscript/paper_bddko.pdf).
+
+Here is a short list of available simple operators:
+
+- continuous and discontinuous Galerkin Finite-Element
+  methods for second order elliptic problems (up to 2. order continuous
+  and up to order 10 discontinuous).
+- discontinuous Galerkin method for first order hyperbolic balance laws 
+  (up to order 10).
+- Lagrange and L2 Type projections
+.
+
+By combining these operators in the fashion describt above
+and using (non)-linear solvers or ode time stepping
+schemes, very complex problem can be solved, e.g.,
+non-linear elliptic and parabolic problems,
+advection diffusion or even dispersion equations.
+Available solvers at this time are
+- Preconditioned Krylov space methods (CG, BiCGStab, GMRes)
+- Newton type solvers
+- explicit, implicit, or IMEX Runge-Kutta schemes. 
+.
+
+Discrete operators are constructed by choosing a 
+continuous \ref FunctionSpace "function space",
+a set of \ref BaseFunction "base functions",
+and a \ref GridPart "view" of the underlying grid which determines 
+that part of the dune grid on which the functions are to be defined. 
+Implementations for 
+\ref DGDSpace "discontinuous" and 
+\ref LagrangeDiscreteFunctionSpace "Lagrange" finite element spaces
+are available so far.
+
+<!---------------------------------------------->
+\section Local Adaptation and Parallelization
+<!---------------------------------------------->
+
+Handling of the degrees of freedom (dof) on locally 
+adapted and parallel grids - 
+including dynamic load balancing - 
+is automatically performed by the 
+Dune::DofManager so that very little additional coding 
+is required from the user. 
+The Dune::AdaptiveLeafIndexSet implements an efficient 
+reorganization of the dofs during adaptation and grid 
+reorganization. To use this
+feature the Dune::AdaptationManager should be used. 
+
+For handling parallel tasks the
+Dune::CommunicationManager is available which
+performs the required communication for a given set of 
+discrete functions. 
+Mostly the operators, the ode, the linear, and the 
+non-linear solvers are
+implemented for use in a parallel environment so that 
+the step from serial to
+parallel is almost effortless for the user. 
+
+<!---------------------------------------------->
+\section QuadSec Quadrature and Caching
+<!---------------------------------------------->
+
+Quadratures are available from the dune-grid
+module and for efficiency caching is performed
+for the basis functions at the quadrature points.
+
+<!---------------------------------------------->
+\section IOSec Input and Output
+<!---------------------------------------------->
+
+Output routines of simulation results are available
+for Grape and in vtk - as used for example by
+paraview.
+Furthermore checkpointing of the data and the underlying
+grid structure can be used.
+
+*/
+
+/*
+
+<!---------------------------------------------->
+\section ExampleSec Example
+<!---------------------------------------------->
+
+The following code solves the laplace problem
+\f{eqnarray*}
+  -\triangle u &=& 0 \quad\;\mbox{in}\;\Omega \\
+           u &=& g \quad\;\mbox{on}\;\partial\Omega
+\f}
+using the local DG method and the standard galerkin approach. 
+The domain \f$\Omega\f$ is defined through the
+grid constructed using a dgf file passed as argument to the program and we
+assume, that \f$g\f$ is a given harmonic function on \f$\Omega\f$.
+An approximation \f$u_h\f$ is computed on a series of globally refined grids
+and the experimental order of convergence is determined. The polynomial
+order and the grid implementation can be chosen during the compilation process.
+
+*/
+
+/**
+  @}
+**/
+
+/** \page modules Modules
+*/

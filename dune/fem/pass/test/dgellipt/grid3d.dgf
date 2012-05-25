@@ -1,0 +1,12 @@
+DGF
+
+Interval
+0 0 0          % first corner 
+1 1 1          % second corner
+2 2 2          % 2 cells in each direction 
+#
+simplex 
+#
+BOUNDARYDOMAIN
+default 1      % default boundary id
+#grid3d

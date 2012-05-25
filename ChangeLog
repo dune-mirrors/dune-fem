@@ -1,0 +1,22 @@
+25.01.2010: Fem::Function no longer stores a function space.
+
+            The reference to a function space has been removed from
+            Fem::Function. Along with it, the method space and the old
+            constructor have been deprecated. Functions are now created
+            by the default constructor.
+
+            Note: The type FunctionSpaceType within the discrete function
+            spaces is now an actual FunctionSpace. Many dune-fem codes
+            assumed FunctionSpaceType and DiscreteFunctionSpaceType to be
+            equal. This is no longer true.
+
+25.01.2010: Moved Function into namespace Dune::Fem
+
+	    dune-common also contains a Function, now. To resolve the name
+            clash, dune-fem declares its function in the namespace Dune::Fem
+            now.
+
+            Note: This is a subtle change. The compiler errors will not be
+            very clear.
+
+# vi: set et ts=8 sw=2 sts=2:

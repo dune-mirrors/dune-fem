@@ -1,0 +1,18 @@
+burriad's TODO list
+-------------------
+Caching:
+- Add method on intersection iterator to identify non-conforming intersections
+- Switch off caching on those intersections (only on unrefined sides)
+- Enhance implementation so that it is able to deal with prisms and pyramids
+
+Quadrature:
+- in ElementQuadrature and CachingQuadrature: rename point -> globalPoint and localPoint -> point in order to adhere to the naming scheme of Quadrature
+- make sure to change the method names in all other files as well!
+
+DGPass:
+- Remove assumption of orthonormal base functions by replacing vol by massMatrix
+- Remove hard-coded quadrature order
+
+Base functions:
+- Add methods to efficiently calculate massMatrix and its inverse
+- Make sure that you don't get name clashes with the classes in dune/fem/common
