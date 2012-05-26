@@ -171,7 +171,7 @@ namespace Dune
     class GnuplotOutputer;
 
   protected:  
-    enum OutputFormat { binary = 0, vtk = 1, vtkvtx = 2, gnuplot = 3, subvtk = 4 , none = 5 };
+    enum OutputFormat { vtk = 0, vtkvtx = 1, subvtk = 2 , binary = 3, gnuplot = 4, none = 5 };
 
     //! \brief type of grid used 
     typedef GridImp GridType;
@@ -712,7 +712,8 @@ namespace Dune
 
     if( writeMode ) 
     {
-      if ( Parameter :: verbose() && outputFormat_ != none ) 
+      // only write series file for VTK output
+      if ( Parameter :: verbose() && outputFormat_ < binary ) 
       {
         std::string name = path_ + "/" + datapref_;
         name += ".series";
