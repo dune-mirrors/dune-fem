@@ -389,6 +389,7 @@ namespace Dune
       // only in parallel we have to do something 
       if( mySize_ <= 1 ) return;
 
+      // make sure all non-blocking communications have been finished by now
       assert( noOpenCommunications () );
 #ifndef NDEBUG
       // make sure buildMaps is called on every process 
