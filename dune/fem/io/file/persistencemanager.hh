@@ -276,11 +276,11 @@ namespace Dune
     void restoreObjects ( const std::string &path )
     {
       if (invalid_) {
-        #ifndef NDEBUG 
+#ifndef NDEBUG 
         std::cerr << "WARNING: restore called although objects "
                   << "have been removed from the PersistenceManager! "
                   << "Restore ignored!" << std::endl;
-        #endif
+#endif
         return;
       }
       closed_ = true;
@@ -513,11 +513,14 @@ namespace Dune
     typedef WrapObject< ObjectType, false > ThisType;
     typedef PersistentObject BaseType;
 
-  private:
+  protected:
     ObjectType& obj_;
+    std::string token_;
     
     WrapObject( ObjectType &obj )
-    : obj_( obj )
+    : obj_( obj ),
+      // store unique token of this object 
+      token_( "_token"+PersistenceManager::uniqueTag() ) 
     {}
     
   public:
@@ -526,12 +529,12 @@ namespace Dune
     
     virtual void backup () const
     {
-      PersistenceManager::backupValue( "_token"+PersistenceManager::uniqueTag(), obj_ );
+      PersistenceManager::backupValue( token_, obj_ );
     }
     
     virtual void restore ()
     {
-      PersistenceManager::restoreValue( "_token"+PersistenceManager::uniqueTag(), obj_ );
+      PersistenceManager::restoreValue( token_, obj_ );
     }
     
   protected:
