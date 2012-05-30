@@ -90,7 +90,8 @@ private:
   // default constructor which sets the correct default data 
   struct IndexPair : public std::pair< int, INDEXSTATE > 
   {
-    typedef std::pair< int, INDEXSTATE > BaseType;
+    typedef int IndexType ;
+    typedef std::pair< IndexType, INDEXSTATE > BaseType;
     // default constructor 
     IndexPair() : BaseType( -1, UNUSED ) {}
   }; 
@@ -494,10 +495,17 @@ public:
     // restore indices  
     typedef typename IndexContainerType :: Iterator Iterator;
     const Iterator endit = leafIndex_.end();
-    for( Iterator it = leafIndex_.begin(); it != endit; ++it )
+    size_t count = 0 ;
+    for( Iterator it = leafIndex_.begin(); it != endit; ++it, ++count )
     {
       in >> (*it).first ;
     }
+
+    // also read indices that were stored but are not needed on read 
+    typename IndexPair :: IndexType value ;
+    const int leftOver = storedSize - count ;
+    for( int i = 0; i < leftOver; ++i ) 
+      in >> value ;
 
     return true;
   }
