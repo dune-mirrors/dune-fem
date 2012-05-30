@@ -197,7 +197,7 @@ namespace Dune
       if( newGrid ) 
       {
         // now read dofmanager and index sets 
-        IOTupleBase::restoreDofManager(*grid, inStream );
+        IOTupleBase::restoreDofManager( *grid, inStream );
       }
 
       // get simulation time of data 
@@ -205,17 +205,6 @@ namespace Dune
       
       // now read all data 
       ForLoop< RestoreStream, 0, length-1 >::apply( inStream, *ret );
-      
-      if( newGrid ) 
-      {
-        typedef DofManager<GridType> DofManagerType;
-
-        // get dof manager 
-        DofManagerType& dm = DofManagerType :: instance(*grid);
-     
-        // compress all data 
-        dm.compress();
-      }
       
       if( Parameter :: verbose() )
         std::cout << "    FINISHED!" << std::endl;
