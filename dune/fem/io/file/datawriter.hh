@@ -717,36 +717,39 @@ protected:
     // only proc 0 writes the global checkpoint file 
     if( myRank_ <= 0 )
     {
-      // write last checkpoint to filename named like the checkpoint files 
-      // but with no extentions 
-      std::ofstream file (checkPointFile_.c_str());
-      if( file.is_open() )
+      std::string checkpointstr ; 
       {
-        file << "LastCheckPoint: " << savestep << std::endl;
-        file.precision( 16 );
-        file << "Time: " << std::scientific << time << std::endl;
-        file << "SaveCount: " << savestep << std::endl;
-        file << "PersistenceManager: " << takeCareOfPersistenceManager_ << std::endl;
-        file << "NumberProcessors: " << grid_.comm().size() << std::endl;
-        file << "# RecoverPath can be edited by hand if data has been moved!" << std::endl;
-        file << "RecoverPath: " << path_ << std::endl;
-        file.close();
+        std::stringstream checkpoint; 
+        checkpoint << "LastCheckPoint: " << savestep << std::endl;
+        checkpoint.precision( 16 );
+        checkpoint << "Time: " << std::scientific << time << std::endl;
+        checkpoint << "SaveCount: " << savestep << std::endl;
+        checkpoint << "PersistenceManager: " << takeCareOfPersistenceManager_ << std::endl;
+        checkpoint << "NumberProcessors: " << grid_.comm().size() << std::endl;
+        checkpoint << "# RecoverPath can be edited by hand if data has been moved!" << std::endl;
+        checkpoint << "RecoverPath: " << path_ << std::endl;
+        checkpointstr = checkpoint.str();
+      }
 
-        // copy checkpoint file to checkpoint path 
-        std::string cmd("cp "); 
-        cmd += checkPointFile_;
-        cmd += " "; 
-        cmd += path; 
-
-        // execute cmd 
-        if(0 != system ( cmd.c_str() ) ) 
+      // overwrite the last checkpoint file 
+      {
+        std::ofstream file (checkPointFile_.c_str());
+        if( file.is_open() )
         {
-          std::cerr << "WARNING: copying of checkpointfile might not have been scuessful!" << std::endl;
+          file << checkpointstr;
         }
       }
-      else
+
+      // write check point file for this checkpoint
       {
-        std::cerr << "Couldn't open file `" << checkPointFile_ << "' ! " << std::endl;
+        std::string checkPointStepFile( path );
+        checkPointStepFile += "/" + datapref_;
+
+        std::ofstream file ( checkPointStepFile.c_str() );
+        if( file.is_open() )
+        {
+          file << checkpointstr;
+        }
       }
     }
   }
