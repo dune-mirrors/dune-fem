@@ -20,6 +20,7 @@ struct Data
   unsigned int my_uint;
   uint64_t my_uint64;
   unsigned long int my_ulong;
+  size_t my_sizet; 
   double my_double;
   int my_int;
   float my_float;
@@ -34,10 +35,15 @@ void write ( OutStreamInterface< Traits > &out, const Data &data )
   out << versionId;
   
   out << data.my_string 
-      << data.my_uint << data.my_uint64 
-      << data.my_ulong << data.my_double
-      << data.my_int << data.my_float 
-      << data.my_char << data.my_bool;
+      << data.my_uint 
+      << data.my_uint64 
+      << data.my_ulong 
+      << data.my_sizet
+      << data.my_double 
+      << data.my_int 
+      << data.my_float 
+      << data.my_char 
+      << data.my_bool;
 
   out << DUNE_MODULE_VERSION_ID(DUNE_FEM);
 }
@@ -57,14 +63,17 @@ bool read ( InStreamInterface< Traits > &in, const Data &data )
   Data check;
   in >> check.my_string 
      >> check.my_uint >> check.my_uint64
-     >> check.my_ulong >> check.my_double
+     >> check.my_ulong >> check.my_sizet
+     >> check.my_double
      >> check.my_int >> check.my_float >> check.my_char >> check.my_bool;
 
   std :: cerr << "Data: " << check.my_string 
               << ", " << check.my_uint
               << ", " << check.my_uint64
               << ", " << check.my_ulong
-              << ", " << check.my_double << ", " << check.my_int
+              << ", " << check.my_sizet
+              << ", " << check.my_double 
+              << ", " << check.my_int
               << ", " << check.my_float 
               << ", " << (int)check.my_char
               << ", " << check.my_bool
@@ -86,6 +95,7 @@ bool read ( InStreamInterface< Traits > &in, const Data &data )
   equal &= (data.my_uint == check.my_uint);
   equal &= (data.my_uint64 == check.my_uint64);
   equal &= (data.my_ulong == check.my_ulong);
+  equal &= (data.my_sizet == check.my_sizet);
   equal &= (data.my_double == check.my_double);
   equal &= (data.my_int == check.my_int);
   equal &= (data.my_float == check.my_float);
@@ -107,6 +117,7 @@ int main ( int argc, char** argv )
     data.my_uint   = 42;
     data.my_uint64 = -4 ; // this results in 18446744073709551612 
     data.my_ulong  = uint32_t(-4) ; // this results in 4294967292 
+    data.my_sizet  = uint32_t(-16) ; // this results in 4294967292 
     data.my_double = 1.2345678901234;
     data.my_int    = -767;
     data.my_float  = 1.23456;

@@ -74,7 +74,7 @@ namespace Fem
     return out;
   }
 
-  template <class ulongint, class uint64>  
+  template <class ulongint, class uint64, int id >  
   struct SelectUnsignedLongInteger 
   {
     // select uint64_t int 
@@ -104,8 +104,8 @@ namespace Fem
   };
 
   //- in case uint64_t int and uint64_t are the same, do nothing 
-  template <class ulongint>  
-  struct SelectUnsignedLongInteger< ulongint, ulongint >
+  template <class ulongint, int id >  
+  struct SelectUnsignedLongInteger< ulongint, ulongint, id >
   {
     struct UnsignedLongIntType {};
     template < class Traits >
@@ -135,9 +135,18 @@ namespace Fem
   template< class Traits >
   inline OutStreamInterface< Traits > &
     operator<< ( OutStreamInterface< Traits > &out,
-                 const typename SelectUnsignedLongInteger<unsigned long, uint64_t>::UnsignedLongIntType& value )
+                 const typename SelectUnsignedLongInteger<unsigned long, uint64_t, 0>::UnsignedLongIntType& value )
   {
-    SelectUnsignedLongInteger<unsigned long, uint64_t>::write( out, value );
+    SelectUnsignedLongInteger<unsigned long, uint64_t, 0>::write( out, value );
+    return out;
+  }
+
+  template< class Traits >
+  inline OutStreamInterface< Traits > &
+    operator<< ( OutStreamInterface< Traits > &out,
+                 const typename SelectUnsignedLongInteger<size_t, uint64_t, 1>::UnsignedLongIntType& value )
+  {
+    SelectUnsignedLongInteger<size_t, uint64_t, 1>::write( out, value );
     return out;
   }
 
@@ -228,9 +237,19 @@ namespace Fem
   template< class Traits >
   inline InStreamInterface< Traits > &
     operator>> ( InStreamInterface< Traits > &in,
-                 typename SelectUnsignedLongInteger<unsigned long, uint64_t>::UnsignedLongIntType& value )
+                 typename SelectUnsignedLongInteger<unsigned long, uint64_t, 0>::UnsignedLongIntType& value )
   {
-    SelectUnsignedLongInteger<unsigned long, uint64_t>::read( in, value );
+    SelectUnsignedLongInteger<unsigned long, uint64_t, 0>::read( in, value );
+    return in;
+  }
+
+  template< class Traits >
+  inline InStreamInterface< Traits > &
+    operator>> ( InStreamInterface< Traits > &in,
+                 typename SelectUnsignedLongInteger<size_t, uint64_t, 1>::UnsignedLongIntType& value )
+  {
+    std::cout << "Reading size_t " << std::endl;
+    SelectUnsignedLongInteger<size_t, uint64_t, 1>::read( in, value );
     return in;
   }
 
