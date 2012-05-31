@@ -461,7 +461,7 @@ public:
     out << nextFreeIndex_ ;
     
     // for consistency checking 
-    const unsigned int = leafIndex_.size();
+    const unsigned int mysize = leafIndex_.size();
     out << mysize ;
 
     // backup indices 
