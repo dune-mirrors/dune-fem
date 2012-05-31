@@ -460,8 +460,8 @@ public:
     // store current index set size 
     out << nextFreeIndex_ ;
     
-    // for consistency checking 
-    const unsigned int mysize = leafIndex_.size();
+    // for consistency checking, write size as 64bit integer
+    const uint64_t mysize = leafIndex_.size();
     out << mysize ;
 
     // backup indices 
@@ -483,11 +483,12 @@ public:
     in >> nextFreeIndex_ ;
     
     // for consistency checking 
-    unsigned int storedSize = 0;
+    uint64_t storedSize = 0;
     in >> storedSize ;
 
+    uint64_t leafsize = leafIndex_.size() ;
     // the stored size can be larger (visualization of parallel grids in serial)
-    if( storedSize < leafIndex_.size() ) 
+    if( storedSize < leafsize ) 
     {
       DUNE_THROW(InvalidStateException,"CodimIndexSet: size consistency check failed during restore!"); 
     }
@@ -495,17 +496,20 @@ public:
     // restore indices  
     typedef typename IndexContainerType :: Iterator Iterator;
     const Iterator endit = leafIndex_.end();
-    size_t count = 0 ;
+    uint64_t count = 0 ;
     for( Iterator it = leafIndex_.begin(); it != endit; ++it, ++count )
     {
       in >> (*it).first ;
     }
 
     // also read indices that were stored but are not needed on read 
-    typename IndexPair :: IndexType value ;
-    const int leftOver = storedSize - count ;
-    for( int i = 0; i < leftOver; ++i ) 
-      in >> value ;
+    if( count < storedSize )
+    {
+      typename IndexPair :: IndexType value ;
+      const uint64_t leftOver = storedSize - count ;
+      for( uint64_t i = 0; i < leftOver; ++i ) 
+        in >> value ;
+    }
 
     return true;
   }
