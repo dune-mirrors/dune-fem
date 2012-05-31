@@ -84,22 +84,44 @@ namespace Fem
     static void write( OutStreamInterface< Traits > &out,
                        const UnsignedLongIntType& value ) 
     {
-      // in case uint64_t int and uint64_t are not the same 
-      // convert long to uint64_t, there will be no information loss
-      assert( sizeof(ulongint) <= sizeof(uint64) );
-      uint64 value64 = value ;
-      out.writeUnsignedInt64( value64 );
+      if( sizeof( uint64 ) == 8 ) 
+      {
+        // in case uint64_t int and uint64_t are not the same 
+        // convert long to uint64_t, there will be no information loss
+        assert( sizeof(ulongint) <= sizeof(uint64) );
+        uint64 value64 = value ;
+        out.writeUnsignedInt64( value64 );
+      }
+      else 
+      {
+        // in case uint64_t int and uint64_t are not the same 
+        // convert long to uint64_t, there will be no information loss
+        assert( sizeof(uint64) == 4 );
+        unsigned int value32 = value ;
+        out.writeUnsignedInt( value32 );
+      }
     }
 
     template < class Traits >
     static void read( InStreamInterface< Traits > &in,
                       UnsignedLongIntType& value ) 
     {
-      assert( sizeof(ulongint) <= sizeof(uint64) );
-      // always read uint64_t int as uin64_t, since it is always written this way 
-      uint64 value64; 
-      in.readUnsignedInt64( value64 );
-      value = value64;
+      if( sizeof( uint64 ) == 8 ) 
+      {
+        assert( sizeof(ulongint) <= sizeof(uint64) );
+        // always read uint64_t int as uin64_t, since it is always written this way 
+        uint64 value64; 
+        in.readUnsignedInt64( value64 );
+        value = value64;
+      }
+      else
+      {
+        assert( sizeof(uint64) == 4 );
+        // always read uint64_t int as uin64_t, since it is always written this way 
+        unsigned int value32; 
+        in.readUnsignedInt( value32 );
+        value = value32;
+      }
     }
   };
 
@@ -107,7 +129,11 @@ namespace Fem
   template <class ulongint, int id >  
   struct SelectUnsignedLongInteger< ulongint, ulongint, id >
   {
-    struct UnsignedLongIntType {};
+    template <int i> 
+    struct DefUnsignedLongIntType {};
+
+    typedef DefUnsignedLongIntType< id >  UnsignedLongIntType;
+    
     template < class Traits >
     static void write( OutStreamInterface< Traits > &out,
                        const UnsignedLongIntType value ) 
@@ -144,9 +170,9 @@ namespace Fem
   template< class Traits >
   inline OutStreamInterface< Traits > &
     operator<< ( OutStreamInterface< Traits > &out,
-                 const typename SelectUnsignedLongInteger<size_t, uint64_t, 1>::UnsignedLongIntType& value )
+                 const typename SelectUnsignedLongInteger<size_t, unsigned int, 1>::UnsignedLongIntType& value )
   {
-    SelectUnsignedLongInteger<size_t, uint64_t, 1>::write( out, value );
+    SelectUnsignedLongInteger<size_t, unsigned int, 1>::write( out, value );
     return out;
   }
 
@@ -246,10 +272,9 @@ namespace Fem
   template< class Traits >
   inline InStreamInterface< Traits > &
     operator>> ( InStreamInterface< Traits > &in,
-                 typename SelectUnsignedLongInteger<size_t, uint64_t, 1>::UnsignedLongIntType& value )
+                 typename SelectUnsignedLongInteger<size_t, unsigned int, 1>::UnsignedLongIntType& value )
   {
-    std::cout << "Reading size_t " << std::endl;
-    SelectUnsignedLongInteger<size_t, uint64_t, 1>::read( in, value );
+    SelectUnsignedLongInteger<size_t, unsigned int, 1>::read( in, value );
     return in;
   }
 
