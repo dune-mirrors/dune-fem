@@ -461,7 +461,7 @@ public:
     out << nextFreeIndex_ ;
     
     // for consistency checking 
-    const size_t mysize = leafIndex_.size();
+    const unsigned int = leafIndex_.size();
     out << mysize ;
 
     // backup indices 
@@ -483,7 +483,7 @@ public:
     in >> nextFreeIndex_ ;
     
     // for consistency checking 
-    size_t storedSize = 0;
+    unsigned int storedSize = 0;
     in >> storedSize ;
 
     // the stored size can be larger (visualization of parallel grids in serial)
