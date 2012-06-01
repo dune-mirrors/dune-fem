@@ -74,6 +74,7 @@ class CodimIndexSet
 {
 protected:  
   typedef GridImp GridType;
+  typedef CodimIndexSet < GridType >  ThisType;
 
 private:
   enum INDEXSTATE { UNUSED = 0,  // unused indices
@@ -83,18 +84,27 @@ private:
   // reference to grid 
   const GridType& grid_;
 
-  // array type for indices 
-  typedef MutableArray<int> IndexArrayType;
+public:
+  // type of exported index 
+  typedef int IndexType ;
+
+protected:  
+  // indices in this status have not been initialized 
+  static IndexType invalidIndex() { return -1; }
 
   // Index pair that is stored, derive from pair to overload 
   // default constructor which sets the correct default data 
-  struct IndexPair : public std::pair< int, INDEXSTATE > 
+  struct IndexPair : public std::pair< IndexType, INDEXSTATE > 
   {
-    typedef int IndexType ;
     typedef std::pair< IndexType, INDEXSTATE > BaseType;
     // default constructor 
-    IndexPair() : BaseType( -1, UNUSED ) {}
+    IndexPair() 
+      : BaseType( ThisType::invalidIndex(), UNUSED ) {}
   }; 
+
+
+  // array type for indices 
+  typedef MutableArray< IndexType > IndexArrayType;
 
   typedef PersistentContainer< GridImp, IndexPair > IndexContainerType;
 
@@ -110,18 +120,19 @@ private:
   IndexArrayType newIdx_; 
  
   // next index to give away 
-  int nextFreeIndex_;
+  IndexType nextFreeIndex_;
 
   // last size of set before compress (needed in parallel runs) 
-  int lastSize_;
+  IndexType lastSize_;
 
   // codim for which index is provided 
   const int myCodim_; 
 
   // actual number of holes 
-  size_t numberHoles_;
+  IndexType numberHoles_;
 
 public:
+
   //! Constructor taking memory factor (default = 1.1)
   CodimIndexSet (const GridType& grid, 
                  const int codim, 
@@ -162,7 +173,7 @@ public:
   //! clear set 
   void clear() 
   {
-    // set all values to -1 
+    // set all values to invalidIndex  
     std::fill( leafIndex_.begin(), leafIndex_.end(), IndexPair() );
     // reset next free index 
     nextFreeIndex_ = 0;
@@ -257,8 +268,8 @@ public:
         // has to move to a hole 
         if( leafIdx.second == UNUSED) 
         {
-          // all unused indices are reset to -1 
-          leafIdx.first = -1;
+          // all unused indices are reset to invalidIndex  
+          leafIdx.first = invalidIndex() ;
         }
         else 
         {
@@ -324,16 +335,16 @@ public:
   }
 
   //! return how much extra memory is needed for restriction 
-  int additionalSizeEstimate () const { return nextFreeIndex_; }
+  IndexType additionalSizeEstimate () const { return nextFreeIndex_; }
 
   //! return size of grid entities per level and codim 
-  int size () const
+  IndexType size () const
   {
     return nextFreeIndex_;
   }
   
   //! return size of grid entities per level and codim 
-  int realSize () const
+  IndexType realSize () const
   {
     return leafIndex_.size();
   }
@@ -341,18 +352,20 @@ public:
   //! return leaf index for given entity   
   //- --index 
   template <class EntityType>
-  int index ( const EntityType& entity ) const
+  IndexType index ( const EntityType& entity ) const
   {
     assert( myCodim_ == EntityType :: codimension );
+    assert( checkValidIndex( leafIndex_[ entity ].first ) );
     return leafIndex_[ entity ].first;
   }
   
   //! return leaf index for given entity   
   template <class EntityType>
-  int subIndex ( const EntityType& entity,
-                 const int subNumber ) const 
+  IndexType subIndex ( const EntityType& entity,
+                       const int subNumber ) const 
   {
     assert( 0 == EntityType :: codimension );
+    assert( checkValidIndex( leafIndex_( entity, subNumber ).first ) );
     return leafIndex_( entity, subNumber ).first;
   }
   
@@ -373,20 +386,20 @@ public:
   }
  
   //! return number of holes 
-  int numberOfHoles () const
+  IndexType numberOfHoles () const
   {
     return numberHoles_;
   }
 
   //! return old index, for dof manager only 
-  int oldIndex (int elNum ) const
+  IndexType oldIndex (int elNum ) const
   {
     assert( numberHoles_ == oldIdx_.size() );
     return oldIdx_[elNum]; 
   }
 
   //! return new index, for dof manager only returns index 
-  int newIndex (int elNum) const
+  IndexType newIndex (int elNum) const
   {
     assert( numberHoles_ == newIdx_.size() );
     return newIdx_[elNum]; 
@@ -442,11 +455,30 @@ public:
     return leafIndex_[ entity ].first >= 0; 
   }
 
+  void print( std::ostream& out ) const 
+  {
+    typedef typename IndexContainerType :: ConstIterator Iterator;
+    const Iterator endit = leafIndex_.end();
+    for( Iterator it = leafIndex_.begin(); it != endit; ++it )
+    {
+      const IndexPair& leafIdx = *it;
+      out << "idx: " << leafIdx.first << "  stat: " << leafIdx.second << std::endl;
+    }
+  }
+
 protected:
+  // return true if the index idx is valid 
+  bool checkValidIndex( const IndexType& idx ) const 
+  {
+    assert( idx != invalidIndex() );
+    assert( idx  < size() );
+    return (idx != invalidIndex() ) && ( idx < size() );
+  }
+
   // insert element and create index for element number  
   void insertIdx ( IndexPair& leafIdx )
   {
-    if( leafIdx.first < 0 )
+    if( leafIdx.first == invalidIndex() )
       leafIdx.first = nextFreeIndex_ ++ ;
 
     leafIdx.second = USED;
@@ -505,7 +537,7 @@ public:
     // also read indices that were stored but are not needed on read 
     if( count < storedSize )
     {
-      typename IndexPair :: IndexType value ;
+      IndexType value ;
       const uint64_t leftOver = storedSize - count ;
       for( uint64_t i = 0; i < leftOver; ++i ) 
         in >> value ;
