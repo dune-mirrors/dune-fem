@@ -71,7 +71,7 @@ namespace Dune
     virtual int outputformat () const
     {
       static const std::string formatTable[]
-        = { "binary", "vtk-cell", "vtk-vertex", "gnuplot" , "sub-vtk-cell", "none" };
+        = { "vtk-cell", "vtk-vertex", "sub-vtk-cell", "binary" , "gnuplot" , "none" };
       int format = Parameter::getEnum( "fem.io.outputformat", formatTable, 1 );
       return format;
     }
@@ -692,11 +692,11 @@ namespace Dune
     int outputFormat = parameter.outputformat();
     switch( outputFormat ) 
     {
-      case 0: outputFormat_ = binary; break;
-      case 1: outputFormat_ = vtk; break;
-      case 2: outputFormat_ = vtkvtx; break;
-      case 3: outputFormat_ = gnuplot; break;
-      case 4: outputFormat_ = subvtk; break;
+      case 0: outputFormat_ = vtk; break;
+      case 1: outputFormat_ = vtkvtx; break;
+      case 2: outputFormat_ = subvtk; break;
+      case 3: outputFormat_ = binary; break;
+      case 4: outputFormat_ = gnuplot; break;
       case 5: outputFormat_ = none; break;
       default:
         DUNE_THROW(NotImplemented,"DataOutput::init: wrong output format");
