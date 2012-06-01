@@ -36,6 +36,7 @@ namespace Dune
 
     friend class Conversion< ThisType, Fem :: EmptyIndexSet >;
 
+    typedef typename TraitsImp :: CodimIndexSetType  CodimIndexSetType ;
   public:
     //! dimension of the grid 
     static const int dimension = GridType::dimension;
@@ -62,7 +63,6 @@ namespace Dune
     typedef typename GridPartType :: IntersectionType   IntersectionType; 
 
   private:
-    typedef typename TraitsImp :: CodimIndexSetType  CodimIndexSetType ;
 
     template< int codim , bool gridHasCodim >
     struct CountElementsBase
@@ -477,10 +477,7 @@ namespace Dune
         if( (codim != 0) && ! codimUsed_[ codim ] )
           setupCodimSet< codim >(integral_constant<bool,true>());
 
-        const CodimIndexSetType &codimSet = codimLeafSet( codim );
-        const IndexType idx = codimSet.index( entity );
-        assert( (idx >= 0) && (idx < IndexType(codimSet.size())) );
-        return idx;
+        return codimLeafSet( codim ).index( entity );
       }
       else 
       {
@@ -499,22 +496,10 @@ namespace Dune
         if( (codim != 0) && !codimUsed_[ codim ] )
           ForLoop< CallSetUpCodimSet, 0, dimension >::apply( codim, *this );
         
-        const CodimIndexSetType &codimSet = codimLeafSet( codim );
-        const IndexType idx = codimSet.subIndex( element, subNumber );
-        assert( (idx >= 0) && (idx < IndexType(codimSet.size())) );
-        return idx;
+        return codimLeafSet( codim ).subIndex( element, subNumber );
       }
       else 
       {
-        if( (codim != 0) && ! codimUsed_[ codim ] )
-        {
-          ForLoop< CallSetUpCodimSet, 0, dimension >::apply( codim, *this );
-        }
-        
-        const CodimIndexSetType &codimSet = codimLeafSet( codim );
-        const IndexType idx = codimSet.subIndex( element, subNumber );
-        assert( (idx >= 0) && (idx < IndexType(codimSet.size())) );
-        return idx;
         DUNE_THROW( NotImplemented, (name() + " does not support indices for codim = ") << codim );
         return -1;
       }
@@ -529,14 +514,10 @@ namespace Dune
         // this in only done on first call 
         setupIntersections();
 
-        const CodimIndexSetType &codimSet = codimLeafSet( codim );
-
         // get corresponding face entity pointer 
         FacePointerType face = getIntersectionFace( intersection );
         
-        const IndexType idx = codimSet.index( *face );
-        assert( (idx >= 0) && (idx < IndexType(codimSet.size())) );
-        return idx;
+        return codimLeafSet( codim ).index( *face );
       }
       else 
       {
