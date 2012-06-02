@@ -767,9 +767,7 @@ class DofManError : public Exception {};
 */
 // --DofManager 
 template< class Grid > 
-class DofManager
-: public IsDofManager
-  // public AutoPersistentObject  
+class DofManager : public IsDofManager
 {
   typedef DofManager< Grid > ThisType;
 
