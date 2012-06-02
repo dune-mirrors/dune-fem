@@ -150,6 +150,9 @@ namespace Dune
           exchangeTime_( 0.0 ),
           mySize_( mySize )
       {
+        // update cache ( if necessary )
+        dependencyCache_.rebuild();
+
         // notify dependency cache of open communication 
         dependencyCache_.attachComm();
       }
