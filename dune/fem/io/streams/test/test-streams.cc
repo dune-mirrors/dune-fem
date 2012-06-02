@@ -117,7 +117,7 @@ int main ( int argc, char** argv )
     data.my_uint   = 42;
     data.my_uint64 = -4 ; // this results in 18446744073709551612 
     data.my_ulong  = uint32_t(-4) ; // this results in 4294967292 
-    data.my_sizet  = uint32_t(-16) ; // this results in 4294967292 
+    data.my_sizet  = uint32_t(-16) ; // this results in 4294967280 
     data.my_double = 1.2345678901234;
     data.my_int    = -767;
     data.my_float  = 1.23456;
