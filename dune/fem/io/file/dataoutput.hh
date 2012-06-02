@@ -798,6 +798,9 @@ namespace Dune
     // generate filename, with path only for serial run  
     std::string name = genFilename( (parallel) ? "" : path_, datapref_, writeStep_ );
 
+    // choose output format type (i.e. ascii or raw binary)
+    VTK :: OutputType vtkOutputType = VTK :: appendedraw ;
+
     if( vertexData ) 
     {
 #if ENABLE_VTXPROJECTION
@@ -811,7 +814,7 @@ namespace Dune
 
       // create vtk output handler 
       typedef VTKIO < GridPartType > VTKIOType; 
-      VTKIOType vtkio ( gridPart, VTKOptions::conforming );
+      VTKIOType vtkio ( gridPart, VTK::conforming );
 
       // add all functions 
       VTKOutputerLagrange< VTKIOType > io( vtkio );
@@ -820,12 +823,12 @@ namespace Dune
       if( parallel )
       {
         // write all data for parallel runs  
-        filename = vtkio.pwrite( name, path_, "." , Dune::VTKOptions::binaryappended );
+        filename = vtkio.pwrite( name, path_, "." , vtkOutputType );
       }
       else
       {
         // write all data serial 
-        filename = vtkio.write( name, Dune::VTKOptions::binaryappended );
+        filename = vtkio.write( name, vtkOutputType );
       }
 #endif
     }
@@ -836,7 +839,7 @@ namespace Dune
 
       // create vtk output handler 
       typedef VTKIO < typename GridPartGetterType :: GridPartType > VTKIOType; 
-      VTKIOType vtkio ( gp.gridPart() , VTKOptions::nonconforming );
+      VTKIOType vtkio ( gp.gridPart() , VTK::nonconforming );
 
       // add all functions 
       VTKOutputerDG< VTKIOType > io( vtkio );
@@ -846,12 +849,12 @@ namespace Dune
       if( parallel )
       {
         // write all data for parallel runs  
-        filename = vtkio.pwrite( name, path_, "." , Dune::VTKOptions::binaryappended );
+        filename = vtkio.pwrite( name, path_, "." , vtkOutputType );
       }
       else
       {
         // write all data serial 
-        filename = vtkio.write( name, Dune::VTKOptions::binaryappended );
+        filename = vtkio.write( name, vtkOutputType );
       }
     }
     else if ( outputFormat_ == subvtk )
@@ -871,12 +874,12 @@ namespace Dune
       if( parallel )
       {
         // write all data for parallel runs  
-        filename = vtkio.pwrite( name, path_, "." , Dune::VTKOptions::binaryappended );
+        filename = vtkio.pwrite( name, path_, "." , vtkOutputType );
       }
       else
       {
         // write all data serial 
-        filename = vtkio.write( name, Dune::VTKOptions::binaryappended );
+        filename = vtkio.write( name, vtkOutputType );
       }
     }
     return filename;
