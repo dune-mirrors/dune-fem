@@ -122,6 +122,41 @@ namespace Dune
     typedef typename SelectType< subsampling, SubsamplingVTKWriter, VTKWriter >::Type
       VTKWriterType;
 
+    class PartitioningData 
+      : public VTKFunction< GridViewType >
+    {
+      typedef PartitioningData   ThisType;
+
+    public:
+      typedef typename GridViewType :: template Codim< 0 >::Entity EntityType;
+      typedef typename EntityType::Geometry::LocalCoordinate LocalCoordinateType;
+
+      //! constructor taking discrete function 
+      PartitioningData( const int rank ) : rank_( rank ) {}
+
+      //! virtual destructor
+      virtual ~PartitioningData () {}
+
+      //! return number of components
+      virtual int ncomps () const { return 1; }
+
+      //! evaluate single component comp in
+      //! the entity
+      virtual double evaluate ( int comp, const EntityType &e, const LocalCoordinateType &xi ) const
+      {
+        return double( rank_ );
+      }
+
+      //! get name
+      virtual std::string name () const
+      {
+        return std::string( "rank" );
+      }
+
+    private:
+      const int rank_;
+    };
+
   public:
     typedef GridPart GridPartType;
 
@@ -131,8 +166,19 @@ namespace Dune
   protected :
     VTKIOBase ( const GridPartType &gridPart, VTKWriterType *vtkWriter )
     : gridPart_( gridPart ),
-      vtkWriter_( vtkWriter )
-    {}
+      vtkWriter_( vtkWriter ),
+      addPartition_( Dune :: Parameter :: getValue< bool > ("fem.io.partitioning", false ) )
+    {
+    }
+
+    void addPartitionData() 
+    {
+      if( addPartition_ ) 
+      {
+        vtkWriter_->addCellData( new PartitioningData( gridPart_.grid().comm().rank() ) );
+        addPartition_ = false ;
+      }
+    }
 
   public:
     ~VTKIOBase ()
@@ -152,6 +198,7 @@ namespace Dune
       static const int dimRange = DF::FunctionSpaceType::dimRange;
       for( int i = 0;i < dimRange; ++i )
         vtkWriter_->addCellData( new VTKFunctionWrapper< DF >( df, dataName, i, false ) );
+      addPartitionData();
     }
 
     template< class DF >
@@ -160,6 +207,7 @@ namespace Dune
                             int startPoint = 0 )
     {
       vtkWriter_->addCellData( new VTKFunctionWrapper< DF >( df, dataName, startPoint, true ) );
+      addPartitionData();
     }
 
     template< class DF >
@@ -169,6 +217,7 @@ namespace Dune
       std::string name = ( dataName.size() > 0 ) ? dataName : df.name() ;
       for( int i = 0;i < dimRange; ++i )
         vtkWriter_->addVertexData( new VTKFunctionWrapper< DF >( df, dataName, i, false ) );
+      addPartitionData();
     }
 
     template< class DF >
@@ -177,6 +226,7 @@ namespace Dune
                               int startPoint = 0 )
     {
       vtkWriter_->addVertexData( new VTKFunctionWrapper< DF >( df, dataName, startPoint, true ) );
+      addPartitionData();
     }
 
     void clear ()
@@ -212,6 +262,7 @@ namespace Dune
   private:
     const GridPartType &gridPart_;
     VTKWriterType *vtkWriter_;
+    bool addPartition_;
   };
 
 
