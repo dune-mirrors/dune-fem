@@ -4,11 +4,13 @@
 #include <dune/common/typetraits.hh>
 
 #include <dune/grid/io/file/vtk/vtkwriter.hh>
+#include <dune/grid/io/file/vtk/vtkwriter.hh>
 #include <dune/grid/io/file/vtk/subsamplingvtkwriter.hh>
 
 #include <dune/fem/version.hh>
 #include <dune/fem/misc/field.hh>
 #include <dune/fem/gridpart/common/gridpartview.hh>
+#include <dune/fem/io/parameter.hh>
 
 namespace Dune
 {
@@ -167,15 +169,16 @@ namespace Dune
     VTKIOBase ( const GridPartType &gridPart, VTKWriterType *vtkWriter )
     : gridPart_( gridPart ),
       vtkWriter_( vtkWriter ),
-      addPartition_( Dune :: Parameter :: getValue< bool > ("fem.io.partitioning", false ) )
+      addPartition_( Parameter :: getValue< bool > ("fem.io.partitioning", false ) )
     {
     }
 
-    void addPartitionData() 
+    void addPartitionData( const int myRank = -1 ) 
     {
       if( addPartition_ ) 
       {
-        vtkWriter_->addCellData( new PartitioningData( gridPart_.grid().comm().rank() ) );
+        const int rank = ( myRank < 0 ) ? gridPart_.grid().comm().rank() : myRank ;
+        vtkWriter_->addCellData( new PartitioningData( rank ) );
         addPartition_ = false ;
       }
     }
@@ -198,7 +201,6 @@ namespace Dune
       static const int dimRange = DF::FunctionSpaceType::dimRange;
       for( int i = 0;i < dimRange; ++i )
         vtkWriter_->addCellData( new VTKFunctionWrapper< DF >( df, dataName, i, false ) );
-      addPartitionData();
     }
 
     template< class DF >
@@ -207,7 +209,6 @@ namespace Dune
                             int startPoint = 0 )
     {
       vtkWriter_->addCellData( new VTKFunctionWrapper< DF >( df, dataName, startPoint, true ) );
-      addPartitionData();
     }
 
     template< class DF >
@@ -217,7 +218,6 @@ namespace Dune
       std::string name = ( dataName.size() > 0 ) ? dataName : df.name() ;
       for( int i = 0;i < dimRange; ++i )
         vtkWriter_->addVertexData( new VTKFunctionWrapper< DF >( df, dataName, i, false ) );
-      addPartitionData();
     }
 
     template< class DF >
@@ -226,7 +226,6 @@ namespace Dune
                               int startPoint = 0 )
     {
       vtkWriter_->addVertexData( new VTKFunctionWrapper< DF >( df, dataName, startPoint, true ) );
-      addPartitionData();
     }
 
     void clear ()
@@ -236,6 +235,7 @@ namespace Dune
 
     std::string write ( const std::string &name, VTK::OutputType type = VTK::ascii )
     {
+      addPartitionData();
       size_t pos = name.find_last_of( '/' );
       if( pos != name.npos )
         return vtkWriter_->pwrite( name.substr( pos+1, name.npos ), name.substr( 0, pos ), "", type );
@@ -248,6 +248,7 @@ namespace Dune
                          const std::string &extendpath,
                          VTK::OutputType type = VTK::ascii )
     {
+      addPartitionData();
       return vtkWriter_->pwrite( name, path, extendpath, type );
     }
 
@@ -256,6 +257,7 @@ namespace Dune
                         const int rank, 
                         const int size )
     {
+      addPartitionData( rank );
       return vtkWriter_->write( name, type, rank, size );
     }
 
