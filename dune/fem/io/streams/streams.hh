@@ -3,7 +3,9 @@
 
 #include <string>
 #include <fstream>
-#include <cstdint>
+// we would use cstdint, 
+// if it would be available for all compilers, e.g. clang
+#include <stdint.h>
 
 #include <dune/common/exceptions.hh>
 
