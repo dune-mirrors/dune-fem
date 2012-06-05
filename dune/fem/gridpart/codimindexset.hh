@@ -394,14 +394,14 @@ public:
   //! return old index, for dof manager only 
   IndexType oldIndex (int elNum ) const
   {
-    assert( numberHoles_ == oldIdx_.size() );
+    assert( numberHoles_ == IndexType(oldIdx_.size()) );
     return oldIdx_[elNum]; 
   }
 
   //! return new index, for dof manager only returns index 
   IndexType newIndex (int elNum) const
   {
-    assert( numberHoles_ == newIdx_.size() );
+    assert( numberHoles_ == IndexType(newIdx_.size()) );
     return newIdx_[elNum]; 
   }
 
