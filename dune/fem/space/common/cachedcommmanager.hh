@@ -506,7 +506,7 @@ namespace Dune
 
       const int size = indexMap.size();
       // make sure that the receive buffer has the correct size 
-      assert( size * blockSize * sizeof( DofType ) <= str.size() );
+      assert( size_t(size * blockSize * sizeof( DofType )) <= size_t(str.size()) );
       for( int i = 0; i < size; ++i )
       {
         // get dof block 
