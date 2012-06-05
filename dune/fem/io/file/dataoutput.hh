@@ -575,13 +575,8 @@ namespace Dune
       {
         typedef typename DFType::LocalFunctionType LocalFunctionType;
         typedef typename DFType::DiscreteFunctionSpaceType DiscreteFunctionSpaceType;
-        typedef typename DiscreteFunctionSpaceType::IteratorType IteratorType;
-        typedef typename DiscreteFunctionSpaceType::GridPartType GridPartType;
-
-        typedef typename DiscreteFunctionSpaceType::DomainType DomainType;
         typedef typename DiscreteFunctionSpaceType::RangeType RangeType;
    
-        //static const int dimDomain = DiscreteFunctionSpaceType::dimDomain;
         static const int dimRange = DiscreteFunctionSpaceType::dimRange;
 
         LocalFunctionType lf = df->localFunction(en_);
