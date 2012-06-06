@@ -8,6 +8,9 @@
 namespace Dune
 {
 
+  namespace Fem 
+  {
+
   /** @addtogroup DiscreteFunctionAdapter
 
       Similar to DiscreteFunctionAdapter but here we provide a LocalFunction 
@@ -76,11 +79,11 @@ namespace Dune
    */
   template< class LocalFunctionImpl >
   class LocalFunctionAdapter
-  : public Fem::Function< typename LocalFunctionImpl::FunctionSpaceType, LocalFunctionAdapter< LocalFunctionImpl > >,
+  : public Function< typename LocalFunctionImpl::FunctionSpaceType, LocalFunctionAdapter< LocalFunctionImpl > >,
     public HasLocalFunction
   {
     typedef LocalFunctionAdapter< LocalFunctionImpl > ThisType;
-    typedef Fem::Function< typename LocalFunctionImpl::FunctionSpaceType, ThisType > BaseType;
+    typedef Function< typename LocalFunctionImpl::FunctionSpaceType, ThisType > BaseType;
 
     friend class LocalFunctionAdapterLocalFunction< LocalFunctionImpl >;
 
@@ -459,6 +462,14 @@ namespace Dune
     typedef typename LocalFuncType< 0, Traits::localFunctionHasInitialize >::Type LocalFuncStorageType;
     LocalFuncStorageType localFunctionImpl_;
   };
+
+  } // end namespace Fem 
+
+  // #if DUNE_FEM_COMPATIBILITY  
+  // put this in next version 1.4 
+
+  using Fem :: LocalFunctionAdapter ;
+  // #endif // DUNE_FEM_COMPATIBILITY
 
 } // namespace Dune
 

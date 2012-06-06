@@ -10,6 +10,8 @@
 
 namespace Dune
 {
+  namespace Fem 
+  {
 
   /** @addtogroup GridFunctionAdapter
 
@@ -63,15 +65,15 @@ namespace Dune
    */
   template< class FunctionImp, class GridPartImp >
   class GridFunctionAdapter 
-  : public Fem::Function< typename FunctionImp::FunctionSpaceType,
-                          GridFunctionAdapter< FunctionImp, GridPartImp > >,
+  : public Function< typename FunctionImp::FunctionSpaceType,
+                     GridFunctionAdapter< FunctionImp, GridPartImp > >,
     public HasLocalFunction
   {
     typedef GridFunctionAdapter< FunctionImp, GridPartImp > ThisType;
-    typedef Fem::Function< typename FunctionImp::FunctionSpaceType, ThisType > BaseType;
+    typedef Function< typename FunctionImp::FunctionSpaceType, ThisType > BaseType;
 
     // Make sure the function is not a discrete functon
-    dune_static_assert( !(Conversion< FunctionImp, HasLocalFunction >::exists),
+    dune_static_assert( !(Dune::Conversion< FunctionImp, HasLocalFunction >::exists),
                         "FunctionType may not be a discrete function type." );
 
   public:  
@@ -359,7 +361,7 @@ namespace Dune
       typedef ConvertDFTypeHelper<FunctionImp,GridPartType,true> 
         ThisType;
       enum {compatible =
-        Conversion<GridPartType,typename
+        Dune::Conversion<GridPartType,typename
           FunctionImp::DiscreteFunctionSpaceType::GridPartType>::exists};
       typedef FunctionImp FunctionType;
       typedef typename FunctionType::DiscreteFunctionSpaceType DFSType;
@@ -400,15 +402,15 @@ namespace Dune
 
   template< class FunctionImp, class GridPartImp >
   class ConvertToGridFunction
-  : public Fem::Function< typename FunctionImp::FunctionSpaceType,
-                          ConvertToGridFunction< FunctionImp, GridPartImp > >,
+  : public Function< typename FunctionImp::FunctionSpaceType,
+                     ConvertToGridFunction< FunctionImp, GridPartImp > >,
     public HasLocalFunction
   {
     typedef ConvertToGridFunction< FunctionImp, GridPartImp > ThisType;
-    typedef Fem::Function< typename FunctionImp::FunctionSpaceType, ThisType > BaseType;
+    typedef Function< typename FunctionImp::FunctionSpaceType, ThisType > BaseType;
 
     static const bool hasLocalFunction
-      = Conversion< FunctionImp, HasLocalFunction >::exists;
+      = Dune::Conversion< FunctionImp, HasLocalFunction >::exists;
 
     typedef ConvertDFTypeHelper< FunctionImp, GridPartImp, hasLocalFunction >
       Helper;
@@ -498,6 +500,16 @@ namespace Dune
   {
     return ConvertToGridFunction< Function, GridPart >( name, function, gridPart );
   }
+
+  } // end namespace Fem 
+
+  // #if DUNE_FEM_COMPATIBILITY  
+  // put this in next version 1.4 
+
+  using Fem :: GridFunctionAdapter ;
+  using Fem :: ConvertToGridFunction ;
+
+  // #endif // DUNE_FEM_COMPATIBILITY
 
 } // end namespace Dune
 
