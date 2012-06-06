@@ -75,6 +75,7 @@ namespace Dune
                 InStreamType& inStream, 
                 const std::string& filename )
     {
+#if DUNE_VERSION_NEWER_REV(DUNE_GRID,2,3,0)
       try 
       { 
         // get standard istream
@@ -90,6 +91,9 @@ namespace Dune
 
       if( grid == 0 ) 
         DUNE_THROW(IOError,"Unable to restore grid" );
+#else 
+      DUNE_THROW(NotImplemented,"use dune-grid >= 2.3.x for binary output");
+#endif
     }
 
     template <class GridType>
@@ -117,6 +121,7 @@ namespace Dune
                     OutStreamType& outStream, 
                     const std::string& filename )
     {
+#if DUNE_VERSION_NEWER_REV(DUNE_GRID,2,3,0)
       try 
       { 
         // get standard ostream
@@ -138,6 +143,9 @@ namespace Dune
 
       // write DofManager's index sets 
       dm.write( outStream );
+#else 
+      DUNE_THROW(NotImplemented,"use dune-grid >= 2.3.x for binary output");
+#endif
     }
   };
 

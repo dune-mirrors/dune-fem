@@ -266,6 +266,9 @@ protected:
     //! backup grid 
     virtual void backup() const 
     {
+#if DUNE_VERSION_NEWER_REV(DUNE_GRID,2,3,0)
+      // this feature is available in dune-grid 2.3.x and later 
+
       // try backup using stream method first 
       try 
       { 
@@ -292,6 +295,7 @@ protected:
 
       // backup dof manager 
       DofManagerType :: instance( grid_ ).backup();
+#endif
     }
 
     //! restore grid 
@@ -513,6 +517,8 @@ public:
     PersistenceManager :: startRestore ( path ); 
 
     GridType* grid = 0;
+#if DUNE_VERSION_NEWER_REV(DUNE_GRID,2,3,0)
+    // this is only available in dune-grid 2.3.x and later
     try 
     {
       std::istream& stream = PersistenceManager :: restoreStream().stream();
@@ -534,6 +540,7 @@ public:
         std::cerr << "ERROR: GridPersistentObject::restore: not possible!" << std::endl;
       }
     }
+#endif
 
     if( grid == 0 ) 
     {
