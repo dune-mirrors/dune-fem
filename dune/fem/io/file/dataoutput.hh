@@ -44,6 +44,9 @@
 namespace Dune
 {
 
+  namespace Fem 
+  {
+
   /** \brief Parameter class for Dune::DataOutput
 
       Structure providing the main parameters used to setup the Dune::DataOutput.
@@ -422,7 +425,7 @@ namespace Dune
       if( df_.space().continuous() ) 
       {
         // vtkio.addVertexData( df_ );
-        LagrangeInterpolation< NewFunctionType >::interpolateFunction( df_, *func_ );
+        LagrangeInterpolation< DFType, NewFunctionType >::interpolateFunction( df_, *func_ );
       }
       else 
       {
@@ -937,6 +940,16 @@ namespace Dune
     std::cerr << "WARNING: HAVE_GRAPE == 0, but grapeDisplay == true, recompile with grape support for online display!" << std::endl;
   }
 #endif // #else // #if USE_GRAPE
+
+  } // end namespace Fem 
+
+  // #if DUNE_FEM_COMPATIBILITY  
+  // put this in next version 1.4 
+
+  using Fem :: DataOutput ;
+  using Fem :: DataOutputParameters ;
+
+  // #endif // DUNE_FEM_COMPATIBILITY
 
 } // end namespace Dune 
 
