@@ -4,11 +4,13 @@
 #include <dune/common/typetraits.hh>
 
 #include <dune/grid/io/file/vtk/vtkwriter.hh>
+#include <dune/grid/io/file/vtk/vtkwriter.hh>
 #include <dune/grid/io/file/vtk/subsamplingvtkwriter.hh>
 
 #include <dune/fem/version.hh>
 #include <dune/fem/misc/field.hh>
 #include <dune/fem/gridpart/common/gridpartview.hh>
+#include <dune/fem/io/parameter.hh>
 
 namespace Dune
 {
@@ -122,6 +124,41 @@ namespace Dune
     typedef typename SelectType< subsampling, SubsamplingVTKWriter, VTKWriter >::Type
       VTKWriterType;
 
+    class PartitioningData 
+      : public VTKFunction< GridViewType >
+    {
+      typedef PartitioningData   ThisType;
+
+    public:
+      typedef typename GridViewType :: template Codim< 0 >::Entity EntityType;
+      typedef typename EntityType::Geometry::LocalCoordinate LocalCoordinateType;
+
+      //! constructor taking discrete function 
+      PartitioningData( const int rank ) : rank_( rank ) {}
+
+      //! virtual destructor
+      virtual ~PartitioningData () {}
+
+      //! return number of components
+      virtual int ncomps () const { return 1; }
+
+      //! evaluate single component comp in
+      //! the entity
+      virtual double evaluate ( int comp, const EntityType &e, const LocalCoordinateType &xi ) const
+      {
+        return double( rank_ );
+      }
+
+      //! get name
+      virtual std::string name () const
+      {
+        return std::string( "rank" );
+      }
+
+    private:
+      const int rank_;
+    };
+
   public:
     typedef GridPart GridPartType;
 
@@ -131,8 +168,20 @@ namespace Dune
   protected :
     VTKIOBase ( const GridPartType &gridPart, VTKWriterType *vtkWriter )
     : gridPart_( gridPart ),
-      vtkWriter_( vtkWriter )
-    {}
+      vtkWriter_( vtkWriter ),
+      addPartition_( Parameter :: getValue< bool > ("fem.io.partitioning", false ) )
+    {
+    }
+
+    void addPartitionData( const int myRank = -1 ) 
+    {
+      if( addPartition_ ) 
+      {
+        const int rank = ( myRank < 0 ) ? gridPart_.grid().comm().rank() : myRank ;
+        vtkWriter_->addCellData( new PartitioningData( rank ) );
+        addPartition_ = false ;
+      }
+    }
 
   public:
     ~VTKIOBase ()
@@ -186,6 +235,7 @@ namespace Dune
 
     std::string write ( const std::string &name, VTK::OutputType type = VTK::ascii )
     {
+      addPartitionData();
       size_t pos = name.find_last_of( '/' );
       if( pos != name.npos )
         return vtkWriter_->pwrite( name.substr( pos+1, name.npos ), name.substr( 0, pos ), "", type );
@@ -198,6 +248,7 @@ namespace Dune
                          const std::string &extendpath,
                          VTK::OutputType type = VTK::ascii )
     {
+      addPartitionData();
       return vtkWriter_->pwrite( name, path, extendpath, type );
     }
 
@@ -206,12 +257,14 @@ namespace Dune
                         const int rank, 
                         const int size )
     {
+      addPartitionData( rank );
       return vtkWriter_->write( name, type, rank, size );
     }
 
   private:
     const GridPartType &gridPart_;
     VTKWriterType *vtkWriter_;
+    bool addPartition_;
   };
 
 

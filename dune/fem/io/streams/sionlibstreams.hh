@@ -1,6 +1,7 @@
 #ifndef DUNE_FEM_SIONLIBSTREAMS_HH
 #define DUNE_FEM_SIONLIBSTREAMS_HH
 
+#include <dune/fem/io/parameter.hh>
 #include <dune/fem/io/streams/standardstreams.hh>
 
 #include <dune/fem/misc/mpimanager.hh>
@@ -59,8 +60,8 @@ namespace Dune
                          MPICommunicatorType mpiComm = MPIHelper :: getCommunicator() )
         : BaseType( dataStream() ),
           filename_( filename ),
-          rank_( rank ),
-          mpiComm_( mpiComm )
+          mpiComm_( mpiComm ),
+          rank_( rank )
       {
       }
 
@@ -95,20 +96,26 @@ namespace Dune
           // file mode is: write byte 
           const char* fileMode = "wb";
 
-          int numFiles = 1;
-          int blockSize = 64;
+          // number of physical files to be created 
+          int numFiles = Dune :: Parameter :: getValue< int >( "fem.io.sionlib.numfiles", 1 );
+
+          // block size of filesystem, -1 use system default 
+          int blockSize = Dune :: Parameter :: getValue< int >( "fem.io.sionlib.blocksize", -1 );
+
+          // my rank 
           int rank = rank_;
+          // file pointer 
           FILE* file = 0;
 
           // open sion file 
           int sid = 
             sion_paropen_mpi( (char *) filename_.c_str(),
                               (char *) fileMode, 
-                              &numFiles, // numFiles (0 means 1 file)
+                              &numFiles, // number of physical files 
                               mpiComm_, // global comm 
                               &mpiComm_, // local comm 
                               &chunkSize, // maximal size of data to be written 
-                              &blockSize, // default block size
+                              &blockSize, // filesystem block size
                               &rank, // my rank 
                               &file, // file pointer that is set by sion lib
                               NULL 
@@ -132,12 +139,13 @@ namespace Dune
 #endif
       }
 
-      const std::string filename_;
-      const int rank_;
-      MPICommunicatorType mpiComm_;
-
       //! standard file stream 
       std::stringstream* data_;  
+
+      const std::string filename_;
+      MPICommunicatorType mpiComm_;
+
+      const int rank_;
     };
 
     /** \class SIONlibInStream
@@ -195,8 +203,8 @@ namespace Dune
         // file mode is: read byte 
         const char* fileMode = "rb";
 
-        // blockSize, -1 means use systems default blocksize 
-        int blockSize = 64;
+        // blockSize, is recovered from stored files 
+        int blockSize = -1;
 
         // file handle 
         FILE* file = 0;
@@ -205,7 +213,7 @@ namespace Dune
         int sid = 0;
 
 #if HAVE_MPI
-        // number of files to create 
+        // number of files, is overwritten by sion_open 
         int numFiles = 1;
 
         // if MPI is avaialbe use sion_paropen_mpi
@@ -216,11 +224,11 @@ namespace Dune
           // open sion file 
           sid = sion_paropen_mpi( (char *) filename.c_str(),
                                   (char *) fileMode, 
-                                  &numFiles, // numFiles (0 means 1 file)
+                                  &numFiles, // numFiles 
                                   mpiComm, // global comm 
                                   &mpiComm, // local comm 
                                   &chunkSize, // is set by library
-                                  &blockSize, // default block size
+                                  &blockSize, // block size
                                   &rank, // my rank 
                                   &file, // file pointer that is set by sion lib
                                   NULL 
@@ -237,7 +245,7 @@ namespace Dune
           sid = sion_open_rank( (char *) filename.c_str(),
                                 (char *) fileMode, 
                                 &chunkSize, // is set by library 
-                                &blockSize, // default block size
+                                &blockSize, // block size
                                 &rank, // my rank 
                                 &file  // file pointer that is set by sion lib
                               ); 

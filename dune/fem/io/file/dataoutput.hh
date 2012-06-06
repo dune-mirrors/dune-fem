@@ -71,7 +71,7 @@ namespace Dune
     virtual int outputformat () const
     {
       static const std::string formatTable[]
-        = { "binary", "vtk-cell", "vtk-vertex", "gnuplot" , "sub-vtk-cell", "none" };
+        = { "vtk-cell", "vtk-vertex", "sub-vtk-cell", "binary" , "gnuplot" , "none" };
       int format = Parameter::getEnum( "fem.io.outputformat", formatTable, 1 );
       return format;
     }
@@ -171,7 +171,7 @@ namespace Dune
     class GnuplotOutputer;
 
   protected:  
-    enum OutputFormat { binary = 0, vtk = 1, vtkvtx = 2, gnuplot = 3, subvtk = 4 , none = 5 };
+    enum OutputFormat { vtk = 0, vtkvtx = 1, subvtk = 2 , binary = 3, gnuplot = 4, none = 5 };
 
     //! \brief type of grid used 
     typedef GridImp GridType;
@@ -575,13 +575,8 @@ namespace Dune
       {
         typedef typename DFType::LocalFunctionType LocalFunctionType;
         typedef typename DFType::DiscreteFunctionSpaceType DiscreteFunctionSpaceType;
-        typedef typename DiscreteFunctionSpaceType::IteratorType IteratorType;
-        typedef typename DiscreteFunctionSpaceType::GridPartType GridPartType;
-
-        typedef typename DiscreteFunctionSpaceType::DomainType DomainType;
         typedef typename DiscreteFunctionSpaceType::RangeType RangeType;
    
-        //static const int dimDomain = DiscreteFunctionSpaceType::dimDomain;
         static const int dimRange = DiscreteFunctionSpaceType::dimRange;
 
         LocalFunctionType lf = df->localFunction(en_);
@@ -692,11 +687,11 @@ namespace Dune
     int outputFormat = parameter.outputformat();
     switch( outputFormat ) 
     {
-      case 0: outputFormat_ = binary; break;
-      case 1: outputFormat_ = vtk; break;
-      case 2: outputFormat_ = vtkvtx; break;
-      case 3: outputFormat_ = gnuplot; break;
-      case 4: outputFormat_ = subvtk; break;
+      case 0: outputFormat_ = vtk; break;
+      case 1: outputFormat_ = vtkvtx; break;
+      case 2: outputFormat_ = subvtk; break;
+      case 3: outputFormat_ = binary; break;
+      case 4: outputFormat_ = gnuplot; break;
       case 5: outputFormat_ = none; break;
       default:
         DUNE_THROW(NotImplemented,"DataOutput::init: wrong output format");
@@ -712,7 +707,8 @@ namespace Dune
 
     if( writeMode ) 
     {
-      if ( Parameter :: verbose() && outputFormat_ != none ) 
+      // only write series file for VTK output
+      if ( Parameter :: verbose() && outputFormat_ < binary ) 
       {
         std::string name = path_ + "/" + datapref_;
         name += ".series";
@@ -797,6 +793,9 @@ namespace Dune
     // generate filename, with path only for serial run  
     std::string name = genFilename( (parallel) ? "" : path_, datapref_, writeStep_ );
 
+    // choose output format type (i.e. ascii or raw binary)
+    VTK :: OutputType vtkOutputType = VTK :: appendedraw ;
+
     if( vertexData ) 
     {
 #if ENABLE_VTXPROJECTION
@@ -810,7 +809,7 @@ namespace Dune
 
       // create vtk output handler 
       typedef VTKIO < GridPartType > VTKIOType; 
-      VTKIOType vtkio ( gridPart, VTKOptions::conforming );
+      VTKIOType vtkio ( gridPart, VTK::conforming );
 
       // add all functions 
       VTKOutputerLagrange< VTKIOType > io( vtkio );
@@ -819,12 +818,12 @@ namespace Dune
       if( parallel )
       {
         // write all data for parallel runs  
-        filename = vtkio.pwrite( name, path_, "." , Dune::VTKOptions::binaryappended );
+        filename = vtkio.pwrite( name, path_, "." , vtkOutputType );
       }
       else
       {
         // write all data serial 
-        filename = vtkio.write( name, Dune::VTKOptions::binaryappended );
+        filename = vtkio.write( name, vtkOutputType );
       }
 #endif
     }
@@ -835,7 +834,7 @@ namespace Dune
 
       // create vtk output handler 
       typedef VTKIO < typename GridPartGetterType :: GridPartType > VTKIOType; 
-      VTKIOType vtkio ( gp.gridPart() , VTKOptions::nonconforming );
+      VTKIOType vtkio ( gp.gridPart() , VTK::nonconforming );
 
       // add all functions 
       VTKOutputerDG< VTKIOType > io( vtkio );
@@ -845,12 +844,12 @@ namespace Dune
       if( parallel )
       {
         // write all data for parallel runs  
-        filename = vtkio.pwrite( name, path_, "." , Dune::VTKOptions::binaryappended );
+        filename = vtkio.pwrite( name, path_, "." , vtkOutputType );
       }
       else
       {
         // write all data serial 
-        filename = vtkio.write( name, Dune::VTKOptions::binaryappended );
+        filename = vtkio.write( name, vtkOutputType );
       }
     }
     else if ( outputFormat_ == subvtk )
@@ -870,12 +869,12 @@ namespace Dune
       if( parallel )
       {
         // write all data for parallel runs  
-        filename = vtkio.pwrite( name, path_, "." , Dune::VTKOptions::binaryappended );
+        filename = vtkio.pwrite( name, path_, "." , vtkOutputType );
       }
       else
       {
         // write all data serial 
-        filename = vtkio.write( name, Dune::VTKOptions::binaryappended );
+        filename = vtkio.write( name, vtkOutputType );
       }
     }
     return filename;

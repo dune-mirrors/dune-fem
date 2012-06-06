@@ -93,22 +93,18 @@ namespace Dune
     IndexMapType *recvIndexMap_;
     IndexMapType *sendIndexMap_;
 
-    // vector containing the links of this process 
-    std :: vector< int > linkRank_;
-
     // ALUGrid communicatior Class 
     MPAccessInterfaceType *mpAccess_;
 
-    //! number of links 
-    int nLinks_;
-
-    //! know grid sequence number 
-    int sequence_; 
-    
     // exchange time 
     double exchangeTime_;
     // setup time 
     double buildTime_;
+
+    //! know grid sequence number 
+    int sequence_; 
+    
+    int nonBlockingObjects_ ;
 
   protected:
     template< class LinkStorage, class IndexMapVector, InterfaceType CommInterface >
@@ -129,20 +125,20 @@ namespace Dune
 #endif
 
       // create an unique tag for the communication 
-      static int getTag()
+      static int getMessageTag()
       {
-        enum { initial = 200 };
+        enum { initial = 665 };
         static int tagCounter = initial ;
         ++ tagCounter;
-        int tag = tagCounter ;
+        int messageTag = tagCounter ;
 
         // avoid overflow 
-        if( tag < 0 )
+        if( messageTag < 0 )
         {
-          tag = initial ;
+          messageTag = initial ;
           tagCounter = initial ;
         }
-        return tag;
+        return messageTag;
       }
 
     public:
@@ -150,10 +146,38 @@ namespace Dune
                                 const int mySize )
         : dependencyCache_( dependencyCache ),
           nonBlockingExchange_( 0 ),
+          buffer_(), 
           exchangeTime_( 0.0 ),
-          mySize_( mySize ),
-          buffer_()
+          mySize_( mySize )
       {
+        // update cache ( if necessary )
+        dependencyCache_.rebuild();
+
+        // notify dependency cache of open communication 
+        dependencyCache_.attachComm();
+      }
+
+      // copy constructor 
+      NonBlockingCommunication( const NonBlockingCommunication& other ) 
+        : dependencyCache_( other.dependencyCache_ ),
+          nonBlockingExchange_( 0 ),
+          buffer_(),
+          exchangeTime_( 0.0 ),
+          mySize_( other.mySize_ )
+      {
+        // update cache ( if necessary )
+        dependencyCache_.rebuild();
+
+        // notify dependency cache of open communication 
+        dependencyCache_.attachComm();
+      }
+
+      ~NonBlockingCommunication() 
+      {
+        // if this assertion fails some communication has not been finished 
+        assert( nonBlockingExchange_ == 0  );
+        // notify dependency cache that comm is finished 
+        dependencyCache_.detachComm() ;
       }
 
       template < class DiscreteFunction >   
@@ -165,15 +189,12 @@ namespace Dune
         // on serial runs: do nothing 
         if( mySize_ <= 1 ) return;
 
-        // update cache (if necessary )
-        dependencyCache_.rebuild();
-
         // take time 
         Timer sendTimer ;
 
 #ifdef ALUGRID_HAS_NONBLOCKING_COMM
         // get non-blocking exchange object from mpAccess including message tag
-        nonBlockingExchange_ = dependencyCache_.mpAccess().nonBlockingExchange( getTag() );
+        nonBlockingExchange_ = dependencyCache_.mpAccess().nonBlockingExchange( getMessageTag() );
 #endif
 
         // this variable can change during rebuild 
@@ -249,9 +270,9 @@ namespace Dune
     protected:
       DependencyCacheType& dependencyCache_; 
       NonBlockingExchange* nonBlockingExchange_ ;
+      ObjectStreamVectorType buffer_; 
       double exchangeTime_ ;
       const int mySize_;
-      ObjectStreamVectorType buffer_; 
     };
 
   public:
@@ -281,12 +302,11 @@ namespace Dune
       linkStorage_(),
       recvIndexMap_( new IndexMapType[ mySize_ ] ),
       sendIndexMap_( new IndexMapType[ mySize_ ] ),
-      linkRank_(),
       mpAccess_( new MPAccessImplType( MPIHelper::getCommunicator() ) ),
-      nLinks_( 0 ),
-      sequence_( -1 ),
       exchangeTime_( 0.0 ),
-      buildTime_( 0.0 )
+      buildTime_( 0.0 ),
+      sequence_( -1 ),
+      nonBlockingObjects_( 0 )
     {
     }
 
@@ -329,6 +349,23 @@ namespace Dune
     // build linkage and index maps 
     inline void buildMaps ();
 
+    // notify for open non-blocking communications 
+    void attachComm() 
+    { 
+      ++ nonBlockingObjects_; 
+    }
+
+    // notify for finished non-blocking communication 
+    void detachComm() 
+    { 
+      --nonBlockingObjects_; 
+      assert( nonBlockingObjects_ >= 0 );
+    }
+
+    bool noOpenCommunications() const 
+    {
+      return nonBlockingObjects_ == 0;
+    }
   protected:
     // check consistency of maps 
     inline void checkConsistency ();
@@ -337,10 +374,16 @@ namespace Dune
     inline void buildMaps ( LinkBuilder< LS, IMV, CI > &handle );
 
   public:
+    //! return MPI rank of link 
+    inline int dest( const int link ) const
+    {
+      return mpAccess().dest()[ link ];
+    }
+
     //! return number of links
     inline int nlinks () const
     {
-      return nLinks_;
+      return mpAccess().nlinks();
     }
 
     //! check if grid has changed and rebuild cache if necessary 
@@ -349,6 +392,8 @@ namespace Dune
       // only in parallel we have to do something 
       if( mySize_ <= 1 ) return;
 
+      // make sure all non-blocking communications have been finished by now
+      assert( noOpenCommunications () );
 #ifndef NDEBUG
       // make sure buildMaps is called on every process 
       // otherwise the programs wait here until forever 
@@ -398,6 +443,13 @@ namespace Dune
       return *mpAccess_;
     }
     
+    //! return reference to mpAccess object
+    inline const MPAccessInterfaceType &mpAccess () const 
+    {
+      assert( mpAccess_ );
+      return *mpAccess_;
+    }
+    
   protected:  
     // write data of DataImp& vector to object stream 
     // --writeBuffer 
@@ -406,12 +458,14 @@ namespace Dune
                               ObjectStreamType &str,
                               const DiscreteFunction &discreteFunction ) const
     {
-      const IndexMapType &indexMap = sendIndexMap_[ linkRank_[link ] ];
+      assert( sequence_ == space_.sequence() );
+      const IndexMapType &indexMap = sendIndexMap_[ dest( link ) ];
       const int size = indexMap.size();
 
       typedef typename DiscreteFunction :: DofType DofType;
       enum { blockSize = DiscreteFunction :: 
-              DiscreteFunctionSpaceType :: localBlockSize };
+                     DiscreteFunctionSpaceType :: localBlockSize } ;
+
       // reserve write buffer for storage of dofs 
       str.reserve( (size * blockSize * sizeof( DofType )) );
 
@@ -439,17 +493,20 @@ namespace Dune
                              DiscreteFunction &discreteFunction,
                              const Operation * ) const 
     {
+      assert( sequence_ == space_.sequence() );
       typedef typename DiscreteFunction :: DofType DofType;
 
       enum { blockSize = DiscreteFunction :: 
-              DiscreteFunctionSpaceType :: localBlockSize };
+              DiscreteFunctionSpaceType :: localBlockSize } ;
 
       UnsaveObjectStream &os = (UnsaveObjectStream &)str;
 
       // get index map of rank belonging to link  
-      const IndexMapType &indexMap = recvIndexMap_[ linkRank_[ link ] ];
+      const IndexMapType &indexMap = recvIndexMap_[ dest( link ) ];
 
       const int size = indexMap.size();
+      // make sure that the receive buffer has the correct size 
+      assert( size_t(size * blockSize * sizeof( DofType )) <= size_t(str.size()) );
       for( int i = 0; i < size; ++i )
       {
         // get dof block 
@@ -696,9 +753,9 @@ namespace Dune
     inline void readUnsave (T & a)
     {
       const T & val = *((const T *) this->getBuff(this->_rb) );
+      this->_rb += sizeof(T);
       // make sure that buffer size is ok
       assert( this->_rb <= this->_wb ); 
-      this->_rb += sizeof(T);
       a = val;
       return ;
     }
@@ -758,12 +815,6 @@ namespace Dune
     mpAccess().removeLinkage();
     // create new linkage
     mpAccess().insertRequestSymetric ( linkStorage_ );
-
-    // get real rank numbers for each link 
-    linkRank_ = mpAccess().dest();
-
-    // remember number of links
-    nLinks_ = mpAccess().nlinks();
   }
 
   template< class Space >
@@ -773,14 +824,15 @@ namespace Dune
     /////////////////////////////
     // consistency check 
     /////////////////////////////
+    const int nLinks = nlinks();
 
-    ObjectStreamVectorType buffer( nLinks_ );
+    ObjectStreamVectorType buffer( nLinks );
 
     // check that order and size are consistent 
-    for(int l=0; l<nLinks_; ++l) 
+    for(int l=0; l<nLinks; ++l) 
     {
       buffer[l].clear();
-      const int sendSize = sendIndexMap_[ linkRank_[ l ] ].size();
+      const int sendSize = sendIndexMap_[ dest( l ) ].size();
       buffer[l].write( sendSize );
       for(int i=0; i<sendSize; ++i) 
       {
@@ -792,9 +844,9 @@ namespace Dune
     buffer = mpAccess().exchange( buffer );
   
     // check that order and size are consistent 
-    for(int l=0; l<nLinks_; ++l) 
+    for(int l=0; l<nLinks; ++l) 
     {
-      const int recvSize = recvIndexMap_[ linkRank_[ l ] ].size();
+      const int recvSize = recvIndexMap_[ dest( l ) ].size();
       int sendedSize;
       buffer[l].read( sendedSize );
 

@@ -332,7 +332,8 @@ public:
   template <class StreamTraits> 
   bool write(OutStreamInterface< StreamTraits >& out) const 
   {
-    out << size_;
+    const uint64_t len = size_;
+    out << len;
     for(size_t i=0; i<size_; ++i)
     {
       out << vec_[i];
@@ -344,7 +345,7 @@ public:
   template <class StreamTraits> 
   bool read(InStreamInterface< StreamTraits >& in) 
   {
-    size_t len; 
+    uint64_t len; 
     in >> len;
     // when read check size 
     if( size_ != len )

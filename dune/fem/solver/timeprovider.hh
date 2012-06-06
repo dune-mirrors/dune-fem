@@ -13,6 +13,7 @@
 #include <dune/fem/io/file/asciiparser.hh>
 #include <dune/fem/io/file/persistencemanager.hh>
 #include <dune/fem/misc/femtuples.hh>
+#include <dune/fem/space/common/dofmanager.hh>
 
 namespace Dune
 {
@@ -494,25 +495,58 @@ namespace Dune
     typedef GridTimeProvider< Grid > ThisType;
     typedef TimeProvider< typename Grid::Traits::CollectiveCommunication > BaseType;
 
+    // type of DofManager for sequence number 
+    typedef DofManager < Grid > DofManagerType ;
+
   public:
     typedef typename Grid::Traits::CollectiveCommunication CollectiveCommunicationType;
 
     explicit GridTimeProvider ( const Grid &grid )
-    : BaseType( grid.comm() )
+    : BaseType( grid.comm() ),
+      dm_( DofManagerType ::instance( grid ) ),
+      sequence_( -1 )
     {}
 
     GridTimeProvider ( const double startTime,
                        const Grid &grid )
-    : BaseType( startTime, grid.comm() )
+    : BaseType( startTime, grid.comm() ),
+      dm_( DofManagerType ::instance( grid ) ),
+      sequence_( -1 )
     {}
     
     GridTimeProvider ( const double startTime,
                        const double cfl,
                        const Grid &grid )
-    : BaseType( startTime, cfl, grid.comm() )
+    : BaseType( startTime, cfl, grid.comm() ),
+      dm_( DofManagerType ::instance( grid ) ),
+      sequence_( -1 )
     {}
     
     virtual ~GridTimeProvider() {}
+
+  protected:
+    using BaseType :: counter_ ;
+    using BaseType :: updateStep_ ;
+
+    // this initTimeStep method also check the sequence number 
+    // in case the grid has changed due to adaptivity 
+    void initTimeStep ( const double dtEstimate )
+    {
+      const int currentSequence = dm_.sequence();
+      // check sequence number
+      if( sequence_ != currentSequence )
+      {
+        // if sequence number changed, update in any case 
+        counter_  = updateStep_ ; 
+        sequence_ = currentSequence ;
+      }
+
+      // call initTimeStep on base class 
+      BaseType :: initTimeStep( dtEstimate );
+    }
+
+    const DofManagerType& dm_; 
+    int sequence_ ;
   };
 
 } // namespace Dune

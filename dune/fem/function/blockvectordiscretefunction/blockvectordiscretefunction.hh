@@ -510,7 +510,11 @@ namespace Fem {
 
       in >> name_;
       
-      if( static_cast< SizeType >( in.readInt() ) != size() && 
+      uint64_t mysize64; 
+      in >> mysize64 ;
+      const SizeType mysize = mysize64 ;
+
+      if( mysize != size() && 
           size() != static_cast< SizeType >( space().size() ) ) // only read compressed vectors 
         DUNE_THROW( IOError, "Trying to read discrete function of different size." );
 
@@ -577,8 +581,11 @@ namespace Fem {
       // only allow write when vector is compressed 
       if( size() != static_cast< SizeType >( space().size() ) )
         DUNE_THROW(InvalidStateException,"Writing DiscreteFunction in uncompressed state!");
-      
-      out << size();
+     
+      // write size as 64bit integer to avoid problems between 
+      // 32bit and 64bit machines 
+      const uint64_t mysize = size();
+      out << mysize;
 
       const ConstDofIteratorType end = dend();
       for( ConstDofIteratorType it = dbegin(); it != end; ++it )

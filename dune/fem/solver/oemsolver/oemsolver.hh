@@ -357,6 +357,7 @@ private:
   typename DiscreteFunctionType::RangeFieldType epsilon_;
   int maxIter_;
   bool verbose_ ;
+  mutable int iterations_;
 
   typedef std::pair < int , double > ReturnValueType;
 
@@ -426,7 +427,8 @@ public:
   : op_(op),
     epsilon_( absLimit ),
     maxIter_(maxIter ),
-    verbose_( verbose )
+    verbose_( verbose ),
+    iterations_( 0 )
   {
   }
 
@@ -437,7 +439,8 @@ public:
   : op_( op ),
     epsilon_( absLimit ),
     maxIter_( maxIter ),
-    verbose_( Parameter::getValue< bool >( "fem.solver.verbose", false ) )
+    verbose_( Parameter::getValue< bool >( "fem.solver.verbose", false ) ),
+    iterations_( 0 )
   {
   }
 
@@ -447,6 +450,11 @@ public:
 
   void finalize () const
   {
+  }
+
+  int iterations ()  const
+  {
+    return iterations_;
   }
 
   /** \brief solve the system 
@@ -466,6 +474,8 @@ public:
                    Conversion<OperatorType, OEMSolver::PreconditionInterface > ::exists >::
                      // call solver, see above 
                      call(op_,arg,dest,epsilon_,verbose_);
+
+    iterations_ = val.first;
 
     if(arg.space().grid().comm().rank() == 0)
     {
@@ -502,6 +512,7 @@ private:
   typename DiscreteFunctionType::RangeFieldType epsilon_;
   int maxIter_;
   bool verbose_ ;
+  mutable int iterations_;
 
   typedef std::pair < int , double > ReturnValueType;
   
@@ -563,7 +574,8 @@ public:
   : op_(op),
     epsilon_( absLimit ),
     maxIter_( maxIter ),
-    verbose_( verbose )
+    verbose_( verbose ),
+    iterations_( 0 )
   {
   }
 
@@ -574,7 +586,8 @@ public:
   : op_( op ),
     epsilon_( absLimit ),
     maxIter_( maxIter ),
-    verbose_( Parameter::getValue< bool >( "fem.solver.verbose", false ) )
+    verbose_( Parameter::getValue< bool >( "fem.solver.verbose", false ) ),
+    iterations_( 0 )
   {
   }  
 
@@ -585,6 +598,12 @@ public:
   void finalize () const
   {
   }
+
+  int iterations () const 
+  {
+    return iterations_;
+  }
+
 
   /** \brief solve the system 
       \param[in] arg right hand side 
@@ -605,7 +624,9 @@ public:
                    Conversion<OperatorType, OEMSolver::PreconditionInterface > ::exists >::
                      // call solver, see above 
                      call(op_,arg,dest,epsilon_,verbose_);
-    
+
+    iterations_ = val.first;
+
     if(arg.space().grid().comm().rank() == 0)
     {
       std::cout << "OEM-BICGstab: " << val.first << " iterations! Error: " << val.second << "\n";
@@ -645,6 +666,7 @@ private:
   typename DiscreteFunctionType::RangeFieldType epsilon_;
   int maxIter_;
   bool verbose_ ;
+  mutable int iterations_;
 
 public:
   /** \brief constructor of OEM-BiCG-SQ 
@@ -662,7 +684,8 @@ public:
   : op_(op),
     epsilon_( absLimit ),
     maxIter_( maxIter ),
-    verbose_( verbose )
+    verbose_( verbose ), 
+    iterations_( 0 )
   {
   }
 
@@ -673,7 +696,8 @@ public:
   : op_( op ),
     epsilon_( absLimit ),
     maxIter_( maxIter ),
-    verbose_( Parameter::getValue< bool >( "fem.solver.verbose", false ) )
+    verbose_( Parameter::getValue< bool >( "fem.solver.verbose", false ) ),
+    iterations_( 0 )
   {
   }
 
@@ -683,6 +707,11 @@ public:
 
   void finalize () const
   {
+  }
+
+  int iterations () const
+  {
+    return iterations_;
   }
 
   /** \brief solve the system 
@@ -700,6 +729,8 @@ public:
 
     int iter = OEMSolver::bicgsq(size,op_.systemMatrix(),
         arg.leakPointer(),dest.leakPointer(),epsilon_,verbose_);
+    
+    iterations_ = iter;
 
     std::cout << "OEM-BICGGsq: " << iter << " iterations!\n";
     // finalize operator  
@@ -815,7 +846,8 @@ public:
     epsilon_( absLimit ),
     maxIter_( maxIter ),
     restart_( Parameter::getValue< int >( "oemsolver.gmres.restart", 20 ) ),
-    verbose_( verbose )
+    verbose_( verbose ),
+    iterations_( 0 )    
   {}
 
   OEMGMRESOp ( OperatorType &op,
@@ -826,7 +858,8 @@ public:
     epsilon_( absLimit ),
     maxIter_( maxIter ),
     restart_( Parameter::getValue< int >( "oemsolver.gmres.restart", 20 ) ),
-    verbose_( Parameter::getValue< bool >( "fem.solver.verbose", false ) )
+    verbose_( Parameter::getValue< bool >( "fem.solver.verbose", false ) ),
+    iterations_( 0 )    
   {}
 
   void prepare (const DiscreteFunctionType& Arg, DiscreteFunctionType& Dest) const
@@ -835,6 +868,11 @@ public:
 
   void finalize () const
   {
+  }
+
+  int iterations() const
+  {
+    return iterations_;
   }
 
   /** \brief solve the system 
@@ -857,6 +895,8 @@ public:
                    Conversion<OperatorType, OEMSolver::PreconditionInterface > ::exists >::
                      // call solver, see above 
                      call(op_,arg,dest,inner,epsilon_,verbose_);
+
+    iterations_ = val.first;
 
     if(arg.space().grid().comm().rank() == 0)
     {
@@ -883,6 +923,7 @@ private:
   int maxIter_;
   int restart_;
   bool verbose_ ;
+  mutable int iterations_;    
 };
 
 /**
@@ -993,14 +1034,14 @@ private:
   typename DiscreteFunctionType::RangeFieldType epsilon_;
   int maxIter_;
   bool verbose_ ;
+  mutable int iterations_;
 
-  typedef std::pair < int , double > ReturnValueType;
-  
 public:
   GMRESOp( OperatorType & op , double  redEps , double absLimit , int maxIter , bool verbose )
       : solver_(PARDG::Communicator::instance(),20)
       , op_(op) , epsilon_ ( absLimit ) 
-      , maxIter_ (maxIter ) , verbose_ ( verbose ) 
+      , maxIter_ (maxIter ) , verbose_ ( verbose )
+      , iterations_ ( 0 )
   {
   }
 
@@ -1010,6 +1051,11 @@ public:
 
   void finalize () const
   {
+  }
+
+  int iterations () const
+  {
+    return iterations_;
   }
 
   /** \brief solve the system 
@@ -1036,7 +1082,9 @@ public:
                    Conversion<OperatorType, OEMSolver::PreconditionInterface > ::exists >::
                    // call solver, see above 
                    call(solver_,op_.systemMatrix(),arg,dest);
-      
+  
+    iterations_ = solver_.number_of_iterations();
+
     // finalize operator  
     finalize ();
   }
@@ -1138,14 +1186,14 @@ private:
   typename DiscreteFunctionType::RangeFieldType epsilon_;
   int maxIter_;
   bool verbose_ ;
-
-  typedef std::pair < int , double > ReturnValueType;
+  mutable int iterations_;
   
 public:
   FGMRESOp( OperatorType & op , double  redEps , double absLimit , int maxIter , bool verbose )
       : solver_(PARDG::Communicator::instance(),20)
       , op_(op) , epsilon_ ( absLimit ) 
       , maxIter_ (maxIter ) , verbose_ ( verbose ) 
+      , iterations_( 0 )
   {
   }
 
@@ -1155,6 +1203,11 @@ public:
 
   void finalize () const
   {
+  }
+
+  int iterations () const
+  {
+    return iterations_;
   }
 
   //! solve the system 
@@ -1178,6 +1231,8 @@ public:
                    Conversion<OperatorType, OEMSolver::PreconditionInterface > ::exists >::
                    // call solver, see above 
                    call(solver_,op_,arg,dest);
+
+    iterations_ = solver_.number_of_iterations();
       
     // finalize operator  
     finalize ();
@@ -1282,14 +1337,14 @@ private:
   typename DiscreteFunctionType::RangeFieldType epsilon_;
   int maxIter_;
   bool verbose_ ;
-
-  typedef std::pair < int , double > ReturnValueType;
+  mutable int iterations_;
   
 public:
   BICGSTABOp( OperatorType & op , double  redEps , double absLimit , int maxIter , bool verbose )
       : solver_(PARDG::Communicator::instance())
       , op_(op), epsilon_ ( absLimit ) 
-      , maxIter_ (maxIter ) , verbose_ ( verbose ) 
+      , maxIter_ (maxIter ) , verbose_ ( verbose )
+      , iterations_( 0 )
   {
   }
 
@@ -1299,6 +1354,11 @@ public:
 
   void finalize () const
   {
+  }
+
+  int iterations () const
+  {
+    return iterations_;
   }
 
   //! solve the system 
@@ -1322,7 +1382,9 @@ public:
                    Conversion<OperatorType, OEMSolver::PreconditionInterface > ::exists >::
                    // call solver, see above 
                    call(solver_,op_,arg,dest);
-      
+
+    iterations_ = solver_.number_of_iterations();
+
     // finalize operator  
     finalize ();
   }
