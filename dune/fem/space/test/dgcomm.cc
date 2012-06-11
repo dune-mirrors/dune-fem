@@ -63,7 +63,6 @@ typedef AdaptiveDiscreteFunction< DiscreteFunctionSpaceType > DiscreteFunctionTy
 //typedef AttachedDiscreteFunction< DiscreteFunctionSpaceType > DiscreteFunctionType;
 
 typedef DofManager< MyGridType > DofManagerType;
-typedef DofManagerFactory<DofManagerType> DofManagerFactoryType;
 
 typedef AdaptationManager< MyGridType, RestrictProlongDefault< DiscreteFunctionType > > AdaptationManagerType;
 

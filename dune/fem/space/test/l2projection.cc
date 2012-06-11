@@ -83,7 +83,6 @@ typedef AdaptiveDiscreteFunction < DiscreteFunctionSpaceType > DiscreteFunctionT
 
 //! Get the Dofmanager type
 typedef DofManager< MyGridType > DofManagerType;
-typedef DofManagerFactory<DofManagerType> DofManagerFactoryType;
 
 
 // the exact solution to the problem for EOC calculation 

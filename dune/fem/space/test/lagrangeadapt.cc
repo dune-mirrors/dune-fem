@@ -176,8 +176,6 @@ typedef GridFunctionAdapter< ExactSolutionType, GridPartType >
 
 //! type of the DoF manager
 typedef DofManager< MyGridType > DofManagerType;
-//! type of the DoF manager factory
-typedef DofManagerFactory< DofManagerType > DofManagerFactoryType;
 
 //! type of restrict-prolong operator
 typedef RestrictProlongDefault< DiscreteFunctionType >

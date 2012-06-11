@@ -126,7 +126,7 @@ void algorithm ( MyGridType &grid, int level )
   Dune::L2Norm< GridPartType > sonL2norm( sonGrid );
   Dune::H1Norm< GridPartType > sonH1norm( sonGrid );
 
-  Dune::ProlongFunction< Dune::LagrangeLocalRestrictProlong< MyGridType, polOrder > > prolongFunction;
+  Dune::ProlongFunction< Dune::Fem::LagrangeLocalRestrictProlong< MyGridType, polOrder > > prolongFunction;
   prolongFunction( fatherFunction, sonFunction );
   double sonL2error = sonL2norm.distance( sonExact, sonFunction );
   double sonH1error = sonH1norm.distance( sonExact, sonFunction );
