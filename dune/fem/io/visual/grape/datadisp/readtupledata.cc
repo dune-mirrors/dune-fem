@@ -53,8 +53,8 @@ inline void readTupleData(const char * path, const char * filename,
   assert(filename);
   std::string fn (filename);
 
-  IOTuple<GR_DiscFuncType>::ReturnType* tup = 
-    IOTuple<GR_DiscFuncType>::input(grid,time,myRank,numProcs,path,fn);
+  Fem::IOTuple<GR_DiscFuncType>::ReturnType* tup = 
+    Fem::IOTuple<GR_DiscFuncType>::input(grid,time,myRank,numProcs,path,fn);
 
   // push all new grids to grid stack 
   if( newGrid ) gridStack.push(grid);
@@ -62,7 +62,7 @@ inline void readTupleData(const char * path, const char * filename,
   // do some processing 
   process(*grid,*tup,time,timestep,myRank,numProcs);
 
-  IOTuple<GR_DiscFuncType>::removeData(*tup);
+  Fem::IOTuple<GR_DiscFuncType>::removeData(*tup);
   delete tup;
   
   if( ! fixedMesh ) delete grid;

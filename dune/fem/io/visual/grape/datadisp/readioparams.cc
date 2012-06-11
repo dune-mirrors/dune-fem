@@ -23,7 +23,7 @@ inline bool readDataInfo(std::string path, DATAINFO * dinf,
   std::string dataname; 
   if( useRankPath )  
   {
-    dataname = IOTupleBase::dataName( 
+    dataname = Fem::IOTupleBase::dataName( 
                   IOInterface::createRecoverPath(path,0, dinf->name, timestamp, useRankPath ),
                   dinf->name);
   }
