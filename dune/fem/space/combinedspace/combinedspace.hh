@@ -23,6 +23,9 @@
 namespace Dune
 {
 
+  namespace Fem 
+  {
+
   template< class FunctionSpaceImp,
             class GridPartImp,
             int polOrder,
@@ -504,6 +507,8 @@ namespace Dune
 
   /** @} **/  
   
+  } // end namespace Fem
+
 } // end namespace Dune
 
 // include implementation

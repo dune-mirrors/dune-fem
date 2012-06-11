@@ -27,6 +27,9 @@
 
 namespace Dune {
 
+namespace Fem 
+{
+
 // forward declarations 
 template <class T>
 class DefaultDofAllocator;
@@ -624,6 +627,16 @@ struct SpecialArrayFeatures<MutableArray<ValueType> >
     }
   }
 };
+
+} // end namespace Fem
+
+// #if DUNE_FEM_COMPATIBILITY  
+// put this in next version 1.4 
+
+using Fem :: StaticArray ;
+using Fem :: MutableArray ;
+
+// #endif // DUNE_FEM_COMPATIBILITY
 
 } // end namespace Dune 
 #endif

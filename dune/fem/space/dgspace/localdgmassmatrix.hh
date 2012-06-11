@@ -5,6 +5,8 @@
 
 namespace Dune
 {
+  namespace Fem 
+  {
 
   // External Forward Declarations
   // -----------------------------
@@ -55,6 +57,8 @@ namespace Dune
       : BaseType( spc, volQuadOrd )
     {}
   };
+
+  } // end namespace Fem 
 
 } // namespace Dune 
 

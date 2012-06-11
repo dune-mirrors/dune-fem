@@ -13,6 +13,9 @@
 namespace Dune
 {
 
+  namespace Fem
+  {
+
   template< class GenericGeometryType, unsigned int order, bool bottom = true >
   class GenericLagrangePoint;
 
@@ -924,6 +927,7 @@ namespace Dune
   };
   /** \endcond */
 
-}
+  } // namespace Fem
+} // namespace Dune
 
 #endif // #ifndef DUNE_LAGRANGESPACE_GENERICLAGRANGEPOINTS_HH

@@ -4,6 +4,9 @@
 namespace Dune
 {
 
+  namespace Fem
+  {
+
   //- class SimpleStorage
   template <class FunctionSpaceImp>
   StorageBase<FunctionSpaceImp>::StorageBase(const FactoryType& factory) :
@@ -228,4 +231,6 @@ namespace Dune
     return std::make_pair(rit, jit);
   }
 
+  } // end namespace Fem
+  
 } // end namespace Dune

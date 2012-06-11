@@ -10,6 +10,9 @@
 
 namespace Dune
 {
+
+  namespace Fem
+  {
   
   template< class ContainedMapper, int N, DofStoragePolicy policy >
   class CombinedMapper;
@@ -542,6 +545,8 @@ namespace Dune
     return variableBased;
   }
 #endif
+
+  } // end namespace Fem
 
 } // end namespace Dune
 

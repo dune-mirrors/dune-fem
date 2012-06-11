@@ -14,6 +14,9 @@
 namespace Dune
 {
 
+  namespace Fem
+  {
+
   template< class FunctionSpace, class GeometryType, unsigned int order >
   class GenericLagrangeBaseFunction;
  
@@ -619,6 +622,8 @@ namespace Dune
       evaluate( point.dofCoordinate_, diffVariable, 1, xlocal, phi );
     }
   };
-}
+
+  } // namespace Fem 
+} // namespace Dune
 
 #endif

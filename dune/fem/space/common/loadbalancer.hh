@@ -20,6 +20,8 @@
 
 namespace Dune{
 
+namespace Fem {
+
 /** @addtogroup LoadBalancer 
     In this module a concept for calling the grids load balance method
     is described and implemented.
@@ -338,5 +340,8 @@ protected:
 };
 
 /** @} end documentation group */
+
+} // end namespace Fem 
+
 } // end namespace Dune 
 #endif

@@ -11,6 +11,8 @@
 
 namespace Dune
 {
+  namespace Fem
+  {
 
   /** @ingroup LagrangeDiscreteFunctionSpace 
    * \brief A single lagrange point
@@ -149,14 +151,14 @@ namespace Dune
       return GeometryType( topologyId, dim );
     }
 
-    /** \copydoc Dune::LagrangePointListInterface::maxDofs
+    /** \copydoc Dune::Fem::LagrangePointListInterface::maxDofs
      */
     virtual unsigned int maxDofs ( unsigned int codim ) const
     {
       return LagrangePointType::maxDofs( codim );
     }
 
-    /** \copydoc Dune::LagrangePointListInterface::numDofs(unsigned int,unsigned int)
+    /** \copydoc Dune::Fem::LagrangePointListInterface::numDofs(unsigned int,unsigned int)
      */
     virtual unsigned int
     numDofs ( unsigned int codim, unsigned int subEntity ) const
@@ -164,7 +166,7 @@ namespace Dune
       return LagrangePointType::numDofs( codim, subEntity );
     }
 
-    /** \copydoc Dune::LagrangePointListInterface::numDofs(unsigned int)
+    /** \copydoc Dune::Fem::LagrangePointListInterface::numDofs(unsigned int)
      */
     virtual unsigned int numDofs ( unsigned int codim ) const
     {
@@ -180,16 +182,16 @@ namespace Dune
    * Interface class for a set of lagrange points.
    * An instance of the lagrange points can be
    * obtained from the 
-   * \ref Dune::LagrangeDiscreteFunctionSpace "lagrange function space".
+   * \ref Dune::Fem::LagrangeDiscreteFunctionSpace "lagrange function space".
    * The set can be wrapped in a quadrature. 
    *
    **/
   template< class FieldImp, int dim, unsigned int maxPolOrder >
   class LagrangePointListInterface
-  : public Fem::IntegrationPointListImp< FieldImp, dim >
+  : public IntegrationPointListImp< FieldImp, dim >
   {
     typedef LagrangePointListInterface< FieldImp, dim, maxPolOrder > ThisType;
-    typedef Fem::IntegrationPointListImp< FieldImp, dim > BaseType;
+    typedef IntegrationPointListImp< FieldImp, dim > BaseType;
 
   public:
     //! field type of points
@@ -237,7 +239,7 @@ namespace Dune
       lagrangePointImpl_ = lpImpl ;
     }
 
-    const Fem::LocalKey &dofInfo ( unsigned int index ) const
+    const LocalKey &dofInfo ( unsigned int index ) const
     {
       return dofInfos_[ index ];
     }
@@ -247,7 +249,7 @@ namespace Dune
                         unsigned int &subEntity,
                         unsigned int &dofNumber ) const
     {
-      const Fem::LocalKey &dofInfo = this->dofInfo( index );
+      const LocalKey &dofInfo = this->dofInfo( index );
       codim = dofInfo.codim();
       subEntity = dofInfo.subEntity();
       dofNumber = dofInfo.index();
@@ -310,13 +312,13 @@ namespace Dune
     }
 
   protected:
-    void addDofInfo ( const Fem::LocalKey &dofInfo )
+    void addDofInfo ( const LocalKey &dofInfo )
     {
       dofInfos_.push_back( dofInfo );
     }
 
   private:
-    std::vector< Fem::LocalKey > dofInfos_;
+    std::vector< LocalKey > dofInfos_;
     const LagrangePointInterfaceType* lagrangePointImpl_;
   };
 
@@ -363,7 +365,7 @@ namespace Dune
          
           unsigned int codim, subEntity, dofNumber;
           pt.dofSubEntity( codim, subEntity, dofNumber );
-          lp.addDofInfo( Fem::LocalKey( subEntity, codim, dofNumber ) );
+          lp.addDofInfo( LocalKey( subEntity, codim, dofNumber ) );
         }
 
         typedef LagrangePointImplementation< topologyId, dim, maxPolynomialOrder, pOrd >
@@ -675,10 +677,10 @@ namespace Dune
 
   template< class GridPart, unsigned int maxPolOrder >
   class LagrangePointSet
-  : public Fem::CachingPointList< GridPart, 0, LagrangePointSetTraits< typename GridPart::ctype, GridPart::dimension, maxPolOrder > >
+  : public CachingPointList< GridPart, 0, LagrangePointSetTraits< typename GridPart::ctype, GridPart::dimension, maxPolOrder > >
   {
     typedef LagrangePointSet< GridPart, maxPolOrder > ThisType;
-    typedef Fem::CachingPointList< GridPart, 0, LagrangePointSetTraits< typename GridPart::ctype, GridPart::dimension, maxPolOrder > > BaseType;
+    typedef CachingPointList< GridPart, 0, LagrangePointSetTraits< typename GridPart::ctype, GridPart::dimension, maxPolOrder > > BaseType;
 
   public:
     typedef LagrangePointSetTraits< typename GridPart::ctype, GridPart::dimension, maxPolOrder > Traits;
@@ -728,13 +730,13 @@ namespace Dune
     }
 
   public:
-    const Fem::LocalKey &localKey ( unsigned int index ) const
+    const LocalKey &localKey ( unsigned int index ) const
     {
       return lagrangePointList_.dofInfo( index );
     }
 
     DUNE_DEPRECATED
-    const Fem::LocalKey &dofInfo ( unsigned int index ) const
+    const LocalKey &dofInfo ( unsigned int index ) const
     {
       return localKey( index );
     }
@@ -796,6 +798,8 @@ namespace Dune
   private:
     const LagrangePointListType &lagrangePointList_;
   };
+
+  } // namespace Fem
 
 } // namespace Dune
 

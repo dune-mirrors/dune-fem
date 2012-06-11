@@ -6,11 +6,14 @@
 namespace Dune
 {
 
+  namespace Fem 
+  {
+
   // DefaultLocalRestrictProlong
   // ---------------------------
 
   template< class DiscreteFunctionSpace >
-  struct DefaultLocalRestrictProlong;
+  class DefaultLocalRestrictProlong;
 
 
 
@@ -129,6 +132,8 @@ namespace Dune
     //! do discrete functions need a communication after restriction / prolongation?
     bool needCommunication () const { return false; }
   };
+
+  } // namespace Fem 
 
 } // namespace Dune
 

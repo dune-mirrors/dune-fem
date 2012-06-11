@@ -7,6 +7,9 @@
 namespace Dune
 {
 
+  namespace Fem
+  {
+
   template< class BaseFunctionImp >
   class ReducedBasisBaseFunctionSet;
 
@@ -164,6 +167,8 @@ namespace Dune
       = (*baseFunctionList_)[ baseFunction ]->localFunction( entity() );
     localBaseFunction.evaluate( diffVariable, x, phi );
   }
+
+  } // namespace Fem
 
 } // namespace Dune
 

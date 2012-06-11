@@ -18,14 +18,14 @@
 
 namespace Dune
 {
-  namespace Fem 
-  { 
-    //! forward deklaration for CachingInterface 
-    class CachingInterface;
-  }
+
+namespace Fem 
+{ 
+  //! forward deklaration for CachingInterface 
+  class CachingInterface;
 
   template <class FunctionSpaceImp>
-  class StorageBase : public Fem::StorageInterface<FunctionSpaceImp::dimDomain> 
+  class StorageBase : public StorageInterface<FunctionSpaceImp::dimDomain> 
 
   {
   public:
@@ -89,7 +89,7 @@ namespace Dune
                         const QuadratureType& quad, 
                         RangeMatrixPairType& ranges ) 
     {
-      enum { cachable = Conversion< QuadratureType, Fem::CachingInterface > :: exists };
+      enum { cachable = Conversion< QuadratureType, CachingInterface > :: exists };
       dune_static_assert( cachable == false, "fillRangeCache cannot be used with CachingQuadratures!" );
 
       // for all quad points evaluate all basis functions 
@@ -125,7 +125,7 @@ namespace Dune
                            const QuadratureType& quad, 
                            JacobianRangeVectorPairType& jacobians)
     {
-      enum { cachable = Conversion< QuadratureType, Fem::CachingInterface > :: exists };
+      enum { cachable = Conversion< QuadratureType, CachingInterface > :: exists };
       dune_static_assert( cachable == false, "fillJacobianCache cannot be used with CachingQuadratures!" );
 
       // for all quad points evaluate all basis functions 
@@ -269,7 +269,7 @@ namespace Dune
     typedef CachingStorage< FunctionSpaceType > ThisType;
     typedef StorageBase< FunctionSpaceType > BaseType;
     
-    friend class Fem::StorageInterface< FunctionSpaceType :: dimDomain >;
+    friend class StorageInterface< FunctionSpaceType :: dimDomain >;
     
   public:
     typedef BaseFunctionFactory< FunctionSpaceType > FactoryType;
@@ -467,14 +467,14 @@ namespace Dune
     template <class QuadratureType> 
     const RangeVectorType& getRangeStorage( const QuadratureType& quad ) const 
     {
-      enum { cachable = Conversion< QuadratureType, Fem::CachingInterface > :: exists };
+      enum { cachable = Conversion< QuadratureType, CachingInterface > :: exists };
       return Evaluate< QuadratureType, cachable > :: evaluate( *this, quad, ranges_, rangeTmp_ );
     }
 
     template <class QuadratureType> 
     const JacobianRangeVectorType& getJacobianStorage( const QuadratureType& quad ) const 
     {
-      enum { cachable = Conversion< QuadratureType, Fem::CachingInterface > :: exists };
+      enum { cachable = Conversion< QuadratureType, CachingInterface > :: exists };
       return Evaluate< QuadratureType, cachable > :: 
         jacobian( *this, quad, jacobians_, jacobianTmp_ );
     }
@@ -501,6 +501,15 @@ namespace Dune
     mutable RangeStoredType rangestored_;
     mutable JacobianRangeStoredType jacobianstored_;
   };
+
+} // end namespace Fem 
+
+// #if DUNE_FEM_COMPATIBILITY  
+// put this in next version 1.4 
+
+using Fem :: SimpleStorage ;
+using Fem :: CachingStorage ;
+// #endif // DUNE_FEM_COMPATIBILITY
 
 } // end namespace Dune
 

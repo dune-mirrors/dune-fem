@@ -10,6 +10,9 @@
 namespace Dune
 {
 
+  namespace Fem 
+  {
+
   /** \class   DefaultCommunicationHandler
    *  \ingroup DFComm
    *  \brief   Default communication handler for discrete functions
@@ -114,6 +117,8 @@ namespace Dune
     const MapperType &mapper_;
   };
   
+  } // end namespace Fem 
+
 } // end namespace Dune
 
 #endif // #ifndef DUNE_FEM_DEFAULTDATAHANDLE_HH

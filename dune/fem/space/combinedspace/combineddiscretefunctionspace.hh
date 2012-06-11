@@ -337,30 +337,29 @@ namespace Dune
       MapperType *mapper_;
     };
 
+    //! specialization of DifferentDiscreteFunctionSpace for CombinedDiscreteFunctionSpace
+    template< class DFunctionSpaceImp1,
+              class DFunctionSpaceImp2,
+              class NewFunctionSpace >
+    class DifferentDiscreteFunctionSpace< Fem::CombinedDiscreteFunctionSpace<
+          DFunctionSpaceImp1, DFunctionSpaceImp2 >, NewFunctionSpace >
+    {
+      static const int dimRange1 = DFunctionSpaceImp1 :: dimRange;
+      static const int dimRange2 = DFunctionSpaceImp2 :: dimRange;
+      static const int newDimRange = NewFunctionSpace :: dimRange;
+
+      static const int newDimRange1 = (newDimRange * dimRange1)/( dimRange1 + dimRange2 );
+      static const int newDimRange2 = (newDimRange * dimRange2)/( dimRange1 + dimRange2 );
+
+      //////////  Gurke in gruen /////////
+      typedef typename DFunctionSpaceImp1 :: template ToNewDimRange< newDimRange1 > :: Type Type1;
+      typedef typename DFunctionSpaceImp2 :: template ToNewDimRange< newDimRange2 > :: Type Type2;
+
+      public:
+      typedef Fem::CombinedDiscreteFunctionSpace< Type1, Type2 > Type;
+    };
+
   } // end namespace Fem
-
-
-  //! specialization of DifferentDiscreteFunctionSpace for CombinedDiscreteFunctionSpace
-  template< class DFunctionSpaceImp1,
-            class DFunctionSpaceImp2,
-            class NewFunctionSpace >
-  class DifferentDiscreteFunctionSpace< Fem::CombinedDiscreteFunctionSpace<
-        DFunctionSpaceImp1, DFunctionSpaceImp2 >, NewFunctionSpace >
-  {
-    static const int dimRange1 = DFunctionSpaceImp1 :: dimRange;
-    static const int dimRange2 = DFunctionSpaceImp2 :: dimRange;
-    static const int newDimRange = NewFunctionSpace :: dimRange;
-
-    static const int newDimRange1 = (newDimRange * dimRange1)/( dimRange1 + dimRange2 );
-    static const int newDimRange2 = (newDimRange * dimRange2)/( dimRange1 + dimRange2 );
-
-    //////////  Gurke in gruen /////////
-    typedef typename DFunctionSpaceImp1 :: template ToNewDimRange< newDimRange1 > :: Type Type1;
-    typedef typename DFunctionSpaceImp2 :: template ToNewDimRange< newDimRange2 > :: Type Type2;
-
-    public:
-    typedef Fem::CombinedDiscreteFunctionSpace< Type1, Type2 > Type;
-  };
 
 } // end namespace Dune 
 #endif // #ifndef DUNE_COMBINDEDDISCRETFUNCTIONSPACE_HH

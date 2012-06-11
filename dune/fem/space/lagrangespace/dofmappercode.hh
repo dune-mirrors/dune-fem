@@ -13,6 +13,9 @@
 namespace Dune
 {
 
+  namespace Fem 
+  {
+
   template< class LagrangePointSetContainer >
   struct LagrangeDofMapperCodeFactory
   {
@@ -33,6 +36,8 @@ namespace Dune
   private:
     const LagrangePointSetContainer &lagrangePointSets_;
   };
+
+  } // namespace Fem 
 
 } // namespace Dune
 

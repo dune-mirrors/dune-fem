@@ -14,6 +14,9 @@
 namespace Dune
 {
 
+  namespace Fem 
+  {
+
   /** @addtogroup RestrictProlongInterface 
 
       Interface for restriction and prolongation operation of data 
@@ -325,6 +328,14 @@ namespace Dune
     mutable LocalRestrictProlongType localRP_;
   };
   ///@} 
+
+  } // namespace Fem  
+
+  // #if DUNE_FEM_COMPATIBILITY  
+  // put this in next version 1.4 
+
+  using Fem :: RestrictProlongDefault ;
+  // #endif // DUNE_FEM_COMPATIBILITY
 
 } // namespace Dune 
 

@@ -6,6 +6,9 @@
 namespace Dune
 {
 
+  namespace Fem 
+  {
+
   template class DiscontinuousGalerkinBaseFunctionFactory
     < FunctionSpace< double, double, 2, 1 >, 0 >;
   template class DiscontinuousGalerkinBaseFunctionFactory
@@ -15,4 +18,5 @@ namespace Dune
   template class DiscontinuousGalerkinBaseFunctionFactory
     < FunctionSpace< double, double, 2, 1 >, 3 >;
   
+  } 
 }

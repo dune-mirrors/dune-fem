@@ -6,6 +6,9 @@
 namespace Dune
 {
 
+  namespace Fem 
+  {
+
   template< class GridPart, class BaseFunctionList >
   class ReducedBasisMapper;
 
@@ -140,6 +143,8 @@ namespace Dune
   protected:
     const BaseFunctionListType &baseFunctionList_;
   };
+
+  } // namespace Fem
   
 } // namespace Dune
 

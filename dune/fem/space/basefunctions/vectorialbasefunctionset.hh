@@ -24,6 +24,9 @@
 namespace Dune
 {
 
+  namespace Fem 
+  {
+
   // Internal Forward Declarations
   // -----------------------------
   template< class FunctionSpace, template< class > class Storage >
@@ -843,6 +846,8 @@ namespace Dune
     StorageType storage_;
     PointBasedDofConversionUtility< dimRange > util_;
   };
+
+  } // end namespace Fem 
 
 } // end namespace Dune
 

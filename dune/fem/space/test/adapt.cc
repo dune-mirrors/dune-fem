@@ -7,8 +7,8 @@ using namespace Dune;
 
 #include <dune/fem/operator/discreteoperatorimp.hh>
 #include <dune/fem/function/adaptivefunction.hh>
-#include <dune/fem/function/vectorfunction.hh>
-#include <dune/fem/function/attachedfunction.hh>
+//#include <dune/fem/function/vectorfunction.hh>
+//#include <dune/fem/function/attachedfunction.hh>
 #include <dune/fem/space/dgspace.hh>
 #include <dune/fem/quadrature/cachingquadrature.hh>
 
@@ -74,7 +74,6 @@ typedef AdaptiveDiscreteFunction< DiscreteFunctionSpaceType > DiscreteFunctionTy
 //typedef AttachedDiscreteFunction< DiscreteFunctionSpaceType > DiscreteFunctionType;
 
 typedef DofManager< MyGridType > DofManagerType;
-typedef DofManagerFactory<DofManagerType> DofManagerFactoryType;
 
 typedef AdaptationManager< MyGridType, RestrictProlongDefault< DiscreteFunctionType > > AdaptationManagerType;
 

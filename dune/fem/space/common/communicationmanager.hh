@@ -55,6 +55,9 @@
 namespace Dune
 {
   
+namespace Fem 
+{
+
 /** @addtogroup Communication Communication 
     @{
 **/
@@ -351,6 +354,8 @@ namespace Dune
   // end toggle AULGrid yes/no
 #endif 
   //@}
+
+} // end namespace Fem
   
 } // end namespace Dune
 

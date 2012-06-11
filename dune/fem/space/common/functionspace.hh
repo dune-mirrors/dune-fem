@@ -7,6 +7,8 @@
 namespace Dune
 {
 
+namespace Fem {  
+
 // Forward declaration of
 // base class for vector valued function spaces.
 template< class DomainField, class RangeField, int dimD, int dimR>
@@ -280,6 +282,15 @@ struct ToNewDimRangeFunctionSpace<
 {
   typedef FunctionSpace<DomainFieldImp, RangeFieldImp, dimDomain, newDimRange> Type;
 };
+
+} // end namespace Fem 
+
+// #if DUNE_FEM_COMPATIBILITY  
+// put this in next version 1.4 
+
+using Fem :: FunctionSpace ;
+
+// #endif // DUNE_FEM_COMPATIBILITY
 
 } // end namespace Dune 
 #endif

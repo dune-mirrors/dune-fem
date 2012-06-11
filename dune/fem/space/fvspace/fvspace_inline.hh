@@ -11,6 +11,8 @@
 
 namespace Dune {
 
+namespace Fem {
+
 template <class FunctionSpaceImp, class GridPartImp, int polOrd, template <class> class BaseFunctionStorageImp >
 inline FiniteVolumeSpace<FunctionSpaceImp, GridPartImp, polOrd, BaseFunctionStorageImp>::
 FiniteVolumeSpace (GridPartType & gridPart,
@@ -107,5 +109,7 @@ FiniteVolumeSpace<FunctionSpaceImp, GridPartImp, polOrd, BaseFunctionStorageImp>
   return blockMapper_;
 }
    
+} // end namespace Fem  
+
 } // end namespace Dune 
 #endif

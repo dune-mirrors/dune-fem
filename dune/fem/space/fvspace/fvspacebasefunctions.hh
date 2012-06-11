@@ -12,6 +12,9 @@
 namespace Dune
 {
 
+  namespace Fem 
+  {
+
   //! definition of FVBaseFunction, implementation via specialization 
   template< class FunctionSpaceType, int polOrd >
   class FVBaseFunction;
@@ -86,6 +89,8 @@ namespace Dune
       return dimRange;
     }
   };
+
+  } // end namespace Fem 
 
 } // end namespace Dune
 

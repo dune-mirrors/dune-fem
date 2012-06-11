@@ -25,6 +25,9 @@
 
 namespace Dune
 {
+  namespace Fem
+  {
+
   /** \addtogroup BaseFunction
    *  \{
    */
@@ -132,6 +135,8 @@ namespace Dune
   };
 
   /** \} */
+
+  } // end namespace Fem
 
 } // end namespace Dune
 

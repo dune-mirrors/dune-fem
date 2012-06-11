@@ -8,6 +8,9 @@
 namespace Dune
 {
 
+  namespace Fem
+  {
+
   //! Utility class that helps in the transformation between dofs in the
   //! combined space and its enclosed spaces
   template< class ContainedMapper, int N, DofStoragePolicy policy >
@@ -148,6 +151,8 @@ namespace Dune
     const unsigned int component_;
     mutable DofConversionType utilGlobal_;
   };
+
+  } // end namespace Fem
 
 } // end namespace Dune
 

@@ -23,6 +23,9 @@
 namespace Dune
 {
 
+namespace Fem 
+{
+
 /** @addtogroup Adaptation Adaptation 
     Here the interfaces and algorithms for adapatation of a grid are
     described and implemented. 
@@ -218,10 +221,10 @@ protected:
  */
 template <class GridType, class RestProlOperatorImp >
 class AdaptationManagerBase
-: public Dune :: AdaptationMethod< GridType >,
+: public AdaptationMethod< GridType >,
   public ObjPointerStorage 
 {  
-  typedef Dune :: AdaptationMethod< GridType > BaseType;
+  typedef AdaptationMethod< GridType > BaseType;
   typedef typename BaseType :: AdaptationMethodType AdaptationMethodType; 
   
   template <class AdaptManager, class GridImp, bool isGoodGrid> 
@@ -743,6 +746,18 @@ struct LocalRefine
 };
 
 /** @} end documentation group */
+
+} // namespace Fem
+
+// #if DUNE_FEM_COMPATIBILITY  
+// put this in next version 1.4 
+
+using Fem :: AdaptationMethod ;
+using Fem :: AdaptationManager ;
+using Fem :: LocalRefine ;
+using Fem :: GlobalRefine ;
+
+// #endif // DUNE_FEM_COMPATIBILITY
 
 } // end namespace Dune 
 

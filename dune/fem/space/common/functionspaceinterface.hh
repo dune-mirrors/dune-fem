@@ -7,6 +7,8 @@
 namespace Dune
 {
 
+  namespace Fem {
+
   /** \addtogroup FunctionSpace
    * 
    *  This provides the interfaces for analytical function spaces.
@@ -79,6 +81,7 @@ namespace Dune
       ScalarFunctionSpaceType;
   };
 
+  } // end namespace Fem 
 
 } // end namespace Dune 
 

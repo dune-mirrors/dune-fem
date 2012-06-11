@@ -12,6 +12,9 @@
 namespace Dune
 {
   
+  namespace Fem 
+  {
+
   // Number of DG Base Functions
   // ---------------------------
 
@@ -861,6 +864,8 @@ namespace Dune
     virtual int numBaseFunctions () const;
   };
 #endif // #ifndef COMPILE_LIB
+
+} // end namespace Fem 
 
 } // end namespace Dune
 

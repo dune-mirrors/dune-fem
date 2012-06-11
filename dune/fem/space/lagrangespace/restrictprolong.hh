@@ -17,6 +17,8 @@
 
 namespace Dune
 {
+  namespace Fem
+  {
 
   template< class G, int ord >
   struct LagrangeLocalRestrictProlong
@@ -28,18 +30,18 @@ namespace Dune
 
     typedef FieldVector< ctype, dimension > DomainVector;
 
-    typedef Dune::LagrangePointSet< LeafGridPart< GridType >, ord > LagrangePointSet;
+    typedef LagrangePointSet< LeafGridPart< GridType >, ord > LagrangePointSetType;
 
   private:
-    typedef typename LagrangePointSet::template Codim< 0 >::SubEntityIteratorType
+    typedef typename LagrangePointSetType::template Codim< 0 >::SubEntityIteratorType
       EntityDofIterator;
 
-    typedef std::map< const GeometryType, const LagrangePointSet * > LagrangePointSetMap;
+    typedef std::map< const GeometryType, const LagrangePointSetType * > LagrangePointSetMapType;
 
   public:
     ~LagrangeLocalRestrictProlong ()
     {
-      typedef typename LagrangePointSetMap::iterator Iterator;
+      typedef typename LagrangePointSetMapType::iterator Iterator;
       const Iterator end = lagrangePointSet_.end();
       for( Iterator it = lagrangePointSet_.begin(); it != end; ++it )
         delete it->second;
@@ -59,7 +61,7 @@ namespace Dune
       const GenericReferenceElement< ctype, dimension > &refSon
         = GenericReferenceElements< ctype, dimension >::general( lfSon.entity().type() );
 
-      const LagrangePointSet &pointSet = lagrangePointSet( lfFather.entity() );
+      const LagrangePointSetType &pointSet = lagrangePointSet( lfFather.entity() );
 
       const EntityDofIterator send = pointSet.template endSubEntity< 0 >( 0 );
       for( EntityDofIterator sit = pointSet.template beginSubEntity< 0 >( 0 ); sit != send; ++sit )
@@ -84,7 +86,7 @@ namespace Dune
     {
       static const int dimRange = LocalFunction< FT >::dimRange;
 
-      const LagrangePointSet &pointSet = lagrangePointSet( lfSon.entity() );
+      const LagrangePointSetType &pointSet = lagrangePointSet( lfSon.entity() );
 
       const EntityDofIterator send = pointSet.template endSubEntity< 0 >( 0 );
       for( EntityDofIterator sit = pointSet.template beginSubEntity< 0 >( 0 ); sit != send; ++sit )
@@ -104,24 +106,26 @@ namespace Dune
 
   protected:
     template< class Entity >
-    const LagrangePointSet &lagrangePointSet ( const Entity &entity ) const
+    const LagrangePointSetType &lagrangePointSet ( const Entity &entity ) const
     {
       return lagrangePointSet( entity.type() );
     }
 
-    const LagrangePointSet &lagrangePointSet ( const GeometryType &type ) const
+    const LagrangePointSetType &lagrangePointSet ( const GeometryType &type ) const
     {
-      typedef typename LagrangePointSetMap::iterator Iterator;
+      typedef typename LagrangePointSetMapType::iterator Iterator;
       Iterator it = lagrangePointSet_.find( type );
       if( it == lagrangePointSet_.end() )
-        it = lagrangePointSet_.insert( it, std::make_pair( type, new LagrangePointSet( type, ord ) ) );
+        it = lagrangePointSet_.insert( it, std::make_pair( type, new LagrangePointSetType( type, ord ) ) );
       assert( it->second != 0 );
       return *(it->second);
     }
 
   private:
-    mutable LagrangePointSetMap lagrangePointSet_;
+    mutable LagrangePointSetMapType lagrangePointSet_;
   };
+
+  } // namespace Fem 
 
 } // namespace Dune
 

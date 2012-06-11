@@ -17,6 +17,8 @@
 
 namespace Dune{
 
+namespace Fem {
+
 /** @addtogroup DataCollectors 
     
   @{
@@ -842,6 +844,8 @@ protected:
 
 /** @} end documentation group */
 
-}
+} // namespace Fem 
+
+} // namespace Dune 
 
 #endif
