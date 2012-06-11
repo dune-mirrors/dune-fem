@@ -8,6 +8,8 @@
 
 namespace Dune {
 
+namespace Fem {  
+
 /*! @addtogroup HelperClasses
  ** @{
  */
@@ -213,6 +215,8 @@ public:
     return (val == 1) ? true : false;
   }
 };
+
+} // end namespace Fem 
 
 //! @}  
 } // end namespace Dune 

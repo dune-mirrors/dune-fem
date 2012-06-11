@@ -15,6 +15,9 @@
 namespace Dune
 {
 
+  namespace Fem 
+  {
+
 /**  
     @ingroup HelperClasses
     \brief Write a self contained tex table 
@@ -633,6 +636,15 @@ inline void FemEoc
     out << std::endl;
   }
 }
+
+} // end namespace Fem 
+
+
+// #if DUNE_FEM_COMPATIBILITY  
+// put this in next version 1.4 
+
+using Fem :: FemEoc ;
+// #endif // DUNE_FEM_COMPATIBILITY
 
 } // end namespace Dune
 
