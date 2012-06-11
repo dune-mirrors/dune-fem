@@ -13,6 +13,9 @@
 namespace Dune
 {
 
+  namespace Fem 
+  {
+
   /** @addtogroup DirectSolver  
       
       In this section implementations of direct solvers 
@@ -29,7 +32,7 @@ namespace Dune
    */
   template< class DF, class Op >
   struct UMFPACKOp
-  : public Operator< typename DF::DomainFieldType, typename DF::RangeFieldType, DF, DF >
+  : public Operator< DF, DF >
   {
     typedef DF DiscreteFunctionType;
     typedef Op OperatorType;
@@ -122,6 +125,14 @@ namespace Dune
     bool verbose_ ;
   };
 
-}
+  } // end namespace Fem 
+
+  // #if DUNE_FEM_COMPATIBILITY  
+  // put this in next version 1.4 
+
+  using Fem :: UMFPACKOp ;
+  // #endif // DUNE_FEM_COMPATIBILITY
+
+} // end namespace Dune 
 
 #endif // #ifndef DUNE_UMFPACKSOLVER_HH

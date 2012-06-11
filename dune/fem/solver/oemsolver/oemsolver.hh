@@ -20,6 +20,8 @@
 
 namespace Dune
 {
+  namespace Fem 
+  {
 
   /** \class   OEMMatrix
    *  \ingroup OEMSolver  
@@ -54,7 +56,9 @@ namespace Dune
 #endif
   };
 
-}
+  } // end namespace Fem 
+
+} // end namespace Dune 
 
 
 
@@ -331,6 +335,8 @@ public:
 
 namespace Dune 
 {
+  namespace Fem 
+  {
   /** @addtogroup OEMSolver  
       
       In this section implementations of Orthogonal Error Methods (OEM) for solving linear 
@@ -341,1061 +347,1060 @@ namespace Dune
       @{
    **/
 
-/** \brief OEM-CG scheme after Hestenes and Stiefel */
-template <class DiscreteFunctionType, class OpType >
-class OEMCGOp : public Operator<
-      typename DiscreteFunctionType::DomainFieldType,
-      typename DiscreteFunctionType::RangeFieldType,
-            DiscreteFunctionType,DiscreteFunctionType>
-{
-public:
-  typedef OpType OperatorType;
-
-private:
-  // no const reference, we make const later 
-  OperatorType &op_;
-  typename DiscreteFunctionType::RangeFieldType epsilon_;
-  int maxIter_;
-  bool verbose_ ;
-  mutable int iterations_;
-
-  typedef std::pair < int , double > ReturnValueType;
-
-  template <class OperatorImp, bool hasPreconditioning> 
-  struct SolverCaller 
+  /** \brief OEM-CG scheme after Hestenes and Stiefel */
+  template <class DiscreteFunctionType, class OpType >
+  class OEMCGOp : public Operator<
+              DiscreteFunctionType,DiscreteFunctionType>
   {
-    template <class DiscreteFunctionImp> 
-    static ReturnValueType call(OperatorImp & op, 
-                     const DiscreteFunctionImp & arg, 
-                     DiscreteFunctionImp & dest, 
-                     double eps, bool verbose)
-    {
-      // use communication class of grid
-      // see dune-common/common/collectivecommunication.hh 
-      // for interface 
-      int size = arg.space().size();
+  public:
+    typedef OpType OperatorType;
 
-      if(op.hasPreconditionMatrix())
+  private:
+    // no const reference, we make const later 
+    OperatorType &op_;
+    typename DiscreteFunctionType::RangeFieldType epsilon_;
+    int maxIter_;
+    bool verbose_ ;
+    mutable int iterations_;
+
+    typedef std::pair < int , double > ReturnValueType;
+
+    template <class OperatorImp, bool hasPreconditioning> 
+    struct SolverCaller 
+    {
+      template <class DiscreteFunctionImp> 
+      static ReturnValueType call(OperatorImp & op, 
+                       const DiscreteFunctionImp & arg, 
+                       DiscreteFunctionImp & dest, 
+                       double eps, bool verbose)
       {
-        return OEMSolver::cghs(arg.space().grid().comm(),
-                   size,op.systemMatrix(),op.preconditionMatrix(),
-                   arg.leakPointer(),dest.leakPointer(),eps,verbose);
+        // use communication class of grid
+        // see dune-common/common/collectivecommunication.hh 
+        // for interface 
+        int size = arg.space().size();
+
+        if(op.hasPreconditionMatrix())
+        {
+          return OEMSolver::cghs(arg.space().grid().comm(),
+                     size,op.systemMatrix(),op.preconditionMatrix(),
+                     arg.leakPointer(),dest.leakPointer(),eps,verbose);
+        }
+        else 
+        {
+          return OEMSolver::cghs(arg.space().grid().comm(),
+                    size,op.systemMatrix(),
+                    arg.leakPointer(),dest.leakPointer(),eps,verbose);
+        }
       }
-      else 
+    };
+
+    //! without any preconditioning 
+    template <class OperatorImp> 
+    struct SolverCaller<OperatorImp,false> 
+    {
+      template <class DiscreteFunctionImp> 
+      static ReturnValueType call(OperatorImp & op, 
+                       const DiscreteFunctionImp & arg, 
+                       DiscreteFunctionImp & dest, 
+                       double eps, bool verbose)
       {
+        // use communication class of grid
+        // see dune-common/common/collectivecommunication.hh 
+        // for interface 
+        int size = arg.space().size();
         return OEMSolver::cghs(arg.space().grid().comm(),
                   size,op.systemMatrix(),
                   arg.leakPointer(),dest.leakPointer(),eps,verbose);
       }
-    }
-  };
+    };
 
-  //! without any preconditioning 
-  template <class OperatorImp> 
-  struct SolverCaller<OperatorImp,false> 
-  {
-    template <class DiscreteFunctionImp> 
-    static ReturnValueType call(OperatorImp & op, 
-                     const DiscreteFunctionImp & arg, 
-                     DiscreteFunctionImp & dest, 
-                     double eps, bool verbose)
+  public:
+
+    /** \brief constructor of OEM-CG 
+        \param[in] op Operator to invert 
+        \param[in] redEps realative tolerance for residual 
+        \param[in] absLimit absolut solving tolerance for residual 
+        \param[in] maxIter maximal number of iterations performed 
+        \param[in] verbose verbosity 
+    */
+    OEMCGOp( OperatorType &op,
+             double redEps,
+             double absLimit,
+             int maxIter,
+             bool verbose )
+    : op_(op),
+      epsilon_( absLimit ),
+      maxIter_(maxIter ),
+      verbose_( verbose ),
+      iterations_( 0 )
     {
-      // use communication class of grid
-      // see dune-common/common/collectivecommunication.hh 
-      // for interface 
-      int size = arg.space().size();
-      return OEMSolver::cghs(arg.space().grid().comm(),
-                size,op.systemMatrix(),
-                arg.leakPointer(),dest.leakPointer(),eps,verbose);
-    }
-  };
-
-public:
-
-  /** \brief constructor of OEM-CG 
-      \param[in] op Operator to invert 
-      \param[in] redEps realative tolerance for residual 
-      \param[in] absLimit absolut solving tolerance for residual 
-      \param[in] maxIter maximal number of iterations performed 
-      \param[in] verbose verbosity 
-  */
-  OEMCGOp( OperatorType &op,
-           double redEps,
-           double absLimit,
-           int maxIter,
-           bool verbose )
-  : op_(op),
-    epsilon_( absLimit ),
-    maxIter_(maxIter ),
-    verbose_( verbose ),
-    iterations_( 0 )
-  {
-  }
-
-  OEMCGOp( OperatorType &op,
-           double redEps,
-           double absLimit,
-           int maxIter = std::numeric_limits< int >::max() )
-  : op_( op ),
-    epsilon_( absLimit ),
-    maxIter_( maxIter ),
-    verbose_( Parameter::getValue< bool >( "fem.solver.verbose", false ) ),
-    iterations_( 0 )
-  {
-  }
-
-  void prepare (const DiscreteFunctionType& Arg, DiscreteFunctionType& Dest) const
-  {
-  }
-
-  void finalize () const
-  {
-  }
-
-  int iterations ()  const
-  {
-    return iterations_;
-  }
-
-  /** \brief solve the system 
-      \param[in] arg right hand side 
-      \param[out] dest solution 
-  */
-  void apply( const DiscreteFunctionType& arg, DiscreteFunctionType& dest ) const
-  {
-    // prepare operator 
-    prepare ( arg, dest );
-
-    ReturnValueType val = 
-      SolverCaller<OperatorType,
-                   // check wheter operator has precondition methods 
-                   // to enable preconditioning derive your operator from 
-                   // OEMSolver::PreconditionInterface
-                   Conversion<OperatorType, OEMSolver::PreconditionInterface > ::exists >::
-                     // call solver, see above 
-                     call(op_,arg,dest,epsilon_,verbose_);
-
-    iterations_ = val.first;
-
-    if(arg.space().grid().comm().rank() == 0)
-    {
-      std::cout << "OEM-CG: " << val.first << " iterations! Error: " << val.second << "\n";
     }
 
-    // finalize operator  
-    finalize ();
-  }
-
-  /** \brief solve the system 
-      \param[in] arg right hand side 
-      \param[out] dest solution 
-  */
-  void operator ()( const DiscreteFunctionType& arg, DiscreteFunctionType& dest ) const
-  {
-    apply(arg,dest);
-  }
-};
-
-/** \brief BiCG-stab solver */
-template <class DiscreteFunctionType, class OpType>
-class OEMBICGSTABOp : public Operator<
-      typename DiscreteFunctionType::DomainFieldType,
-      typename DiscreteFunctionType::RangeFieldType,
-            DiscreteFunctionType,DiscreteFunctionType>
-{
-public:
-  typedef OpType OperatorType;
-
-private:
-  // no const reference, we make const later 
-  OperatorType &op_;
-  typename DiscreteFunctionType::RangeFieldType epsilon_;
-  int maxIter_;
-  bool verbose_ ;
-  mutable int iterations_;
-
-  typedef std::pair < int , double > ReturnValueType;
-  
-  template <class OperatorImp, bool hasPreconditioning> 
-  struct SolverCaller 
-  {
-    template <class DiscreteFunctionImp> 
-    static ReturnValueType call(OperatorImp & op, 
-                     const DiscreteFunctionImp & arg, 
-                     DiscreteFunctionImp & dest, 
-                     double eps, bool verbose)
+    OEMCGOp( OperatorType &op,
+             double redEps,
+             double absLimit,
+             int maxIter = std::numeric_limits< int >::max() )
+    : op_( op ),
+      epsilon_( absLimit ),
+      maxIter_( maxIter ),
+      verbose_( Parameter::getValue< bool >( "fem.solver.verbose", false ) ),
+      iterations_( 0 )
     {
-      int size = arg.space().size();
-      if(op.hasPreconditionMatrix())
+    }
+
+    void prepare (const DiscreteFunctionType& Arg, DiscreteFunctionType& Dest) const
+    {
+    }
+
+    void finalize () const
+    {
+    }
+
+    int iterations ()  const
+    {
+      return iterations_;
+    }
+
+    /** \brief solve the system 
+        \param[in] arg right hand side 
+        \param[out] dest solution 
+    */
+    void apply( const DiscreteFunctionType& arg, DiscreteFunctionType& dest ) const
+    {
+      // prepare operator 
+      prepare ( arg, dest );
+
+      ReturnValueType val = 
+        SolverCaller<OperatorType,
+                     // check wheter operator has precondition methods 
+                     // to enable preconditioning derive your operator from 
+                     // OEMSolver::PreconditionInterface
+                     Conversion<OperatorType, OEMSolver::PreconditionInterface > ::exists >::
+                       // call solver, see above 
+                       call(op_,arg,dest,epsilon_,verbose_);
+
+      iterations_ = val.first;
+
+      if(arg.space().grid().comm().rank() == 0)
       {
-        return OEMSolver::bicgstab(arg.space().grid().comm(),
-                  size,op.systemMatrix(),op.preconditionMatrix(),
-                  arg.leakPointer(),dest.leakPointer(),eps,verbose);
+        std::cout << "OEM-CG: " << val.first << " iterations! Error: " << val.second << "\n";
       }
-      else 
+
+      // finalize operator  
+      finalize ();
+    }
+
+    /** \brief solve the system 
+        \param[in] arg right hand side 
+        \param[out] dest solution 
+    */
+    void operator ()( const DiscreteFunctionType& arg, DiscreteFunctionType& dest ) const
+    {
+      apply(arg,dest);
+    }
+  };
+
+  /** \brief BiCG-stab solver */
+  template <class DiscreteFunctionType, class OpType>
+  class OEMBICGSTABOp : public Operator<
+              DiscreteFunctionType,DiscreteFunctionType>
+  {
+  public:
+    typedef OpType OperatorType;
+
+  private:
+    // no const reference, we make const later 
+    OperatorType &op_;
+    typename DiscreteFunctionType::RangeFieldType epsilon_;
+    int maxIter_;
+    bool verbose_ ;
+    mutable int iterations_;
+
+    typedef std::pair < int , double > ReturnValueType;
+    
+    template <class OperatorImp, bool hasPreconditioning> 
+    struct SolverCaller 
+    {
+      template <class DiscreteFunctionImp> 
+      static ReturnValueType call(OperatorImp & op, 
+                       const DiscreteFunctionImp & arg, 
+                       DiscreteFunctionImp & dest, 
+                       double eps, bool verbose)
       {
+        int size = arg.space().size();
+        if(op.hasPreconditionMatrix())
+        {
+          return OEMSolver::bicgstab(arg.space().grid().comm(),
+                    size,op.systemMatrix(),op.preconditionMatrix(),
+                    arg.leakPointer(),dest.leakPointer(),eps,verbose);
+        }
+        else 
+        {
+          return OEMSolver::bicgstab(arg.space().grid().comm(),
+                    size,op.systemMatrix(),
+                    arg.leakPointer(),dest.leakPointer(),eps,verbose);
+        }
+      }
+    };
+
+    //! without any preconditioning 
+    template <class OperatorImp> 
+    struct SolverCaller<OperatorImp,false> 
+    {
+      template <class DiscreteFunctionImp> 
+      static ReturnValueType call(OperatorImp & op, 
+                       const DiscreteFunctionImp & arg, 
+                       DiscreteFunctionImp & dest, 
+                       double eps, bool verbose)
+      {
+        int size = arg.space().size();
         return OEMSolver::bicgstab(arg.space().grid().comm(),
                   size,op.systemMatrix(),
                   arg.leakPointer(),dest.leakPointer(),eps,verbose);
       }
-    }
-  };
+    };
 
-  //! without any preconditioning 
-  template <class OperatorImp> 
-  struct SolverCaller<OperatorImp,false> 
-  {
-    template <class DiscreteFunctionImp> 
-    static ReturnValueType call(OperatorImp & op, 
-                     const DiscreteFunctionImp & arg, 
-                     DiscreteFunctionImp & dest, 
-                     double eps, bool verbose)
+  public:
+    /** \brief constructor of OEM-BiCG-stab 
+        \param[in] op Operator to invert 
+        \param[in] redEps realative tolerance for residual 
+        \param[in] absLimit absolut solving tolerance for residual 
+        \param[in] maxIter maximal number of iterations performed 
+        \param[in] verbose verbosity 
+    */
+    OEMBICGSTABOp( OperatorType& op,
+                   double redEps,
+                   double absLimit,
+                   int maxIter,
+                   bool verbose )
+    : op_(op),
+      epsilon_( absLimit ),
+      maxIter_( maxIter ),
+      verbose_( verbose ),
+      iterations_( 0 )
     {
-      int size = arg.space().size();
-      return OEMSolver::bicgstab(arg.space().grid().comm(),
-                size,op.systemMatrix(),
-                arg.leakPointer(),dest.leakPointer(),eps,verbose);
     }
+
+    OEMBICGSTABOp( OperatorType &op,
+                   double redEps,
+                   double absLimit,
+                   int maxIter = std::numeric_limits< int >::max() )
+    : op_( op ),
+      epsilon_( absLimit ),
+      maxIter_( maxIter ),
+      verbose_( Parameter::getValue< bool >( "fem.solver.verbose", false ) ),
+      iterations_( 0 )
+    {
+    }  
+
+    void prepare (const DiscreteFunctionType& Arg, DiscreteFunctionType& Dest) const
+    {
+    }
+
+    void finalize () const
+    {
+    }
+
+    int iterations () const 
+    {
+      return iterations_;
+    }
+
+
+    /** \brief solve the system 
+        \param[in] arg right hand side 
+        \param[out] dest solution 
+    */
+    void apply( const DiscreteFunctionType& arg, DiscreteFunctionType& dest ) const
+    {
+      typedef typename DiscreteFunctionType::FunctionSpaceType FunctionSpaceType;
+
+      // prepare operator 
+      prepare ( arg, dest );
+
+      ReturnValueType val = 
+        SolverCaller<OperatorType,
+                     // check wheter operator has precondition methods 
+                     // to enable preconditioning derive your operator from 
+                     // OEMSolver::PreconditionInterface
+                     Conversion<OperatorType, OEMSolver::PreconditionInterface > ::exists >::
+                       // call solver, see above 
+                       call(op_,arg,dest,epsilon_,verbose_);
+
+      iterations_ = val.first;
+
+      if(arg.space().grid().comm().rank() == 0)
+      {
+        std::cout << "OEM-BICGstab: " << val.first << " iterations! Error: " << val.second << "\n";
+      }
+
+      // finalize operator  
+      finalize ();
+    }
+
+    /** \brief solve the system 
+        \param[in] arg right hand side 
+        \param[out] dest solution 
+    */
+    void operator ()( const DiscreteFunctionType& arg, DiscreteFunctionType& dest ) const
+    {
+      apply(arg,dest);
+    }
+
   };
 
-public:
-  /** \brief constructor of OEM-BiCG-stab 
-      \param[in] op Operator to invert 
-      \param[in] redEps realative tolerance for residual 
-      \param[in] absLimit absolut solving tolerance for residual 
-      \param[in] maxIter maximal number of iterations performed 
-      \param[in] verbose verbosity 
-  */
-  OEMBICGSTABOp( OperatorType& op,
+  ////////////////////////////////
+  // BICG SQ scheme 
+  ////////////////////////////////
+  /** \brief BiCG-SQ method */
+  template <class DiscreteFunctionType, class OpType>
+  class OEMBICGSQOp : public Operator<
+              DiscreteFunctionType,DiscreteFunctionType>
+  {
+  public:
+    typedef OpType OperatorType;
+
+  private:
+    // no const reference, we make const later 
+    OperatorType &op_;
+    typename DiscreteFunctionType::RangeFieldType epsilon_;
+    int maxIter_;
+    bool verbose_ ;
+    mutable int iterations_;
+
+  public:
+    /** \brief constructor of OEM-BiCG-SQ 
+        \param[in] op Operator to invert 
+        \param[in] redEps realative tolerance for residual 
+        \param[in] absLimit absolut solving tolerance for residual 
+        \param[in] maxIter maximal number of iterations performed 
+        \param[in] verbose verbosity 
+    */
+    OEMBICGSQOp( OperatorType &op,
                  double redEps,
                  double absLimit,
                  int maxIter,
                  bool verbose )
-  : op_(op),
-    epsilon_( absLimit ),
-    maxIter_( maxIter ),
-    verbose_( verbose ),
-    iterations_( 0 )
-  {
-  }
+    : op_(op),
+      epsilon_( absLimit ),
+      maxIter_( maxIter ),
+      verbose_( verbose ), 
+      iterations_( 0 )
+    {
+    }
 
-  OEMBICGSTABOp( OperatorType &op,
+    OEMBICGSQOp( OperatorType &op,
+                 double redEps,
+                 double absLimit,
+                 int maxIter =  std::numeric_limits< int >::max() )
+    : op_( op ),
+      epsilon_( absLimit ),
+      maxIter_( maxIter ),
+      verbose_( Parameter::getValue< bool >( "fem.solver.verbose", false ) ),
+      iterations_( 0 )
+    {
+    }
+
+    void prepare (const DiscreteFunctionType& Arg, DiscreteFunctionType& Dest) const
+    {
+    }
+
+    void finalize () const
+    {
+    }
+
+    int iterations () const
+    {
+      return iterations_;
+    }
+
+    /** \brief solve the system 
+        \param[in] arg right hand side 
+        \param[out] dest solution 
+    */
+    void apply( const DiscreteFunctionType& arg, DiscreteFunctionType& dest ) const
+    {
+      typedef typename DiscreteFunctionType::FunctionSpaceType FunctionSpaceType;
+
+      // prepare operator 
+      prepare ( arg, dest );
+
+      int size = arg.space().size();
+
+      int iter = OEMSolver::bicgsq(size,op_.systemMatrix(),
+          arg.leakPointer(),dest.leakPointer(),epsilon_,verbose_);
+      
+      iterations_ = iter;
+
+      std::cout << "OEM-BICGGsq: " << iter << " iterations!\n";
+      // finalize operator  
+      finalize ();
+    }
+
+    /** \brief solve the system 
+        \param[in] arg right hand side 
+        \param[out] dest solution 
+    */
+    void operator ()( const DiscreteFunctionType& arg, DiscreteFunctionType& dest ) const
+    {
+      apply(arg,dest);
+    }
+
+  };
+
+
+  /** \brief GMRES solver */
+  template< class DiscreteFunctionType, class Op >
+  class OEMGMRESOp
+  : public Operator< DiscreteFunctionType, DiscreteFunctionType >
+  {
+    typedef OEMGMRESOp< DiscreteFunctionType, Op > This;
+
+  public:
+    typedef Op OperatorType;
+
+  private:
+    // type of internal projector if no preconditioner given 
+    typedef OEMSolver :: FakeConditioner FakeConditionerType;
+    
+    typedef std::pair < int , double > ReturnValueType;
+    
+    template <class OperatorImp, bool hasPreconditioning> 
+    struct SolverCaller 
+    {
+      template <class DiscreteFunctionImp> 
+      static ReturnValueType call(OperatorImp & op, 
+                       const DiscreteFunctionImp & arg, 
+                       DiscreteFunctionImp & dest, 
+                       int inner, double eps, bool verbose)
+      {
+        int size = arg.space().size();
+        if(op.hasPreconditionMatrix())
+        {
+          return OEMSolver::gmres(arg.space().grid().comm(),
+                   inner,size,op.systemMatrix(),op.preconditionMatrix(),
+                   arg.leakPointer(),dest.leakPointer(),eps,verbose);
+        }
+        // in parallel case we need special treatment, if no preconditoner exist
+        else if( arg.space().grid().comm().size() > 1 )
+        {
+          OEMSolver::SolverInterfaceImpl<OperatorImp> opSolve(op); 
+          FakeConditionerType preConditioner(size,opSolve);
+          return OEMSolver::gmres(arg.space().grid().comm(),
+                   inner,size,op.systemMatrix(),preConditioner,
+                   arg.leakPointer(),dest.leakPointer(),eps,verbose);
+        }
+        else 
+        {
+          return OEMSolver::gmres(arg.space().grid().comm(),
+                   inner,size,op.systemMatrix(),
+                   arg.leakPointer(),dest.leakPointer(),eps,verbose);
+        }
+      }
+    };
+
+    // without any preconditioning 
+    template <class OperatorImp> 
+    struct SolverCaller<OperatorImp,false>
+    {
+      template <class DiscreteFunctionImp> 
+      static ReturnValueType call(OperatorImp & op, 
+                       const DiscreteFunctionImp & arg, 
+                       DiscreteFunctionImp & dest, 
+                       int inner, double eps, bool verbose)
+      {
+        int size = arg.space().size();
+        if( arg.space().grid().comm().size() > 1 )
+        {
+          OEMSolver::SolverInterfaceImpl<OperatorImp> opSolve(op); 
+          FakeConditionerType preConditioner(size,opSolve);
+          return OEMSolver::gmres(arg.space().grid().comm(),
+                   inner,size,op.systemMatrix(),preConditioner,
+                   arg.leakPointer(),dest.leakPointer(),eps,verbose);
+        }
+        else 
+        {
+          return OEMSolver::gmres(arg.space().grid().comm(),
+                   inner,size,op.systemMatrix(),
+                   arg.leakPointer(),dest.leakPointer(),eps,verbose);
+        }
+      }
+    };
+
+  public:
+    /** \brief constructor of OEM-GMRES 
+        \param[in] op Operator to invert 
+        \param[in] redEps realative tolerance for residual 
+        \param[in] absLimit absolut solving tolerance for residual 
+        \param[in] maxIter maximal number of iterations performed 
+        \param[in] verbose verbosity 
+    */
+    OEMGMRESOp ( OperatorType &op,
+                 double redEps,
+                 double absLimit,
+                 int maxIter,
+                 bool verbose )
+    : op_( op ),
+      epsilon_( absLimit ),
+      maxIter_( maxIter ),
+      restart_( Parameter::getValue< int >( "oemsolver.gmres.restart", 20 ) ),
+      verbose_( verbose ),
+      iterations_( 0 )    
+    {}
+
+    OEMGMRESOp ( OperatorType &op,
                  double redEps,
                  double absLimit,
                  int maxIter = std::numeric_limits< int >::max() )
-  : op_( op ),
-    epsilon_( absLimit ),
-    maxIter_( maxIter ),
-    verbose_( Parameter::getValue< bool >( "fem.solver.verbose", false ) ),
-    iterations_( 0 )
-  {
-  }  
+    : op_( op ),
+      epsilon_( absLimit ),
+      maxIter_( maxIter ),
+      restart_( Parameter::getValue< int >( "oemsolver.gmres.restart", 20 ) ),
+      verbose_( Parameter::getValue< bool >( "fem.solver.verbose", false ) ),
+      iterations_( 0 )    
+    {}
 
-  void prepare (const DiscreteFunctionType& Arg, DiscreteFunctionType& Dest) const
-  {
-  }
-
-  void finalize () const
-  {
-  }
-
-  int iterations () const 
-  {
-    return iterations_;
-  }
-
-
-  /** \brief solve the system 
-      \param[in] arg right hand side 
-      \param[out] dest solution 
-  */
-  void apply( const DiscreteFunctionType& arg, DiscreteFunctionType& dest ) const
-  {
-    typedef typename DiscreteFunctionType::FunctionSpaceType FunctionSpaceType;
-
-    // prepare operator 
-    prepare ( arg, dest );
-
-    ReturnValueType val = 
-      SolverCaller<OperatorType,
-                   // check wheter operator has precondition methods 
-                   // to enable preconditioning derive your operator from 
-                   // OEMSolver::PreconditionInterface
-                   Conversion<OperatorType, OEMSolver::PreconditionInterface > ::exists >::
-                     // call solver, see above 
-                     call(op_,arg,dest,epsilon_,verbose_);
-
-    iterations_ = val.first;
-
-    if(arg.space().grid().comm().rank() == 0)
+    void prepare (const DiscreteFunctionType& Arg, DiscreteFunctionType& Dest) const
     {
-      std::cout << "OEM-BICGstab: " << val.first << " iterations! Error: " << val.second << "\n";
     }
 
-    // finalize operator  
-    finalize ();
-  }
-
-  /** \brief solve the system 
-      \param[in] arg right hand side 
-      \param[out] dest solution 
-  */
-  void operator ()( const DiscreteFunctionType& arg, DiscreteFunctionType& dest ) const
-  {
-    apply(arg,dest);
-  }
-
-};
-
-////////////////////////////////
-// BICG SQ scheme 
-////////////////////////////////
-/** \brief BiCG-SQ method */
-template <class DiscreteFunctionType, class OpType>
-class OEMBICGSQOp : public Operator<
-      typename DiscreteFunctionType::DomainFieldType,
-      typename DiscreteFunctionType::RangeFieldType,
-            DiscreteFunctionType,DiscreteFunctionType>
-{
-public:
-  typedef OpType OperatorType;
-
-private:
-  // no const reference, we make const later 
-  OperatorType &op_;
-  typename DiscreteFunctionType::RangeFieldType epsilon_;
-  int maxIter_;
-  bool verbose_ ;
-  mutable int iterations_;
-
-public:
-  /** \brief constructor of OEM-BiCG-SQ 
-      \param[in] op Operator to invert 
-      \param[in] redEps realative tolerance for residual 
-      \param[in] absLimit absolut solving tolerance for residual 
-      \param[in] maxIter maximal number of iterations performed 
-      \param[in] verbose verbosity 
-  */
-  OEMBICGSQOp( OperatorType &op,
-               double redEps,
-               double absLimit,
-               int maxIter,
-               bool verbose )
-  : op_(op),
-    epsilon_( absLimit ),
-    maxIter_( maxIter ),
-    verbose_( verbose ), 
-    iterations_( 0 )
-  {
-  }
-
-  OEMBICGSQOp( OperatorType &op,
-               double redEps,
-               double absLimit,
-               int maxIter =  std::numeric_limits< int >::max() )
-  : op_( op ),
-    epsilon_( absLimit ),
-    maxIter_( maxIter ),
-    verbose_( Parameter::getValue< bool >( "fem.solver.verbose", false ) ),
-    iterations_( 0 )
-  {
-  }
-
-  void prepare (const DiscreteFunctionType& Arg, DiscreteFunctionType& Dest) const
-  {
-  }
-
-  void finalize () const
-  {
-  }
-
-  int iterations () const
-  {
-    return iterations_;
-  }
-
-  /** \brief solve the system 
-      \param[in] arg right hand side 
-      \param[out] dest solution 
-  */
-  void apply( const DiscreteFunctionType& arg, DiscreteFunctionType& dest ) const
-  {
-    typedef typename DiscreteFunctionType::FunctionSpaceType FunctionSpaceType;
-
-    // prepare operator 
-    prepare ( arg, dest );
-
-    int size = arg.space().size();
-
-    int iter = OEMSolver::bicgsq(size,op_.systemMatrix(),
-        arg.leakPointer(),dest.leakPointer(),epsilon_,verbose_);
-    
-    iterations_ = iter;
-
-    std::cout << "OEM-BICGGsq: " << iter << " iterations!\n";
-    // finalize operator  
-    finalize ();
-  }
-
-  /** \brief solve the system 
-      \param[in] arg right hand side 
-      \param[out] dest solution 
-  */
-  void operator ()( const DiscreteFunctionType& arg, DiscreteFunctionType& dest ) const
-  {
-    apply(arg,dest);
-  }
-
-};
-
-
-/** \brief GMRES solver */
-template< class DiscreteFunctionType, class Op >
-class OEMGMRESOp
-: public Operator< typename DiscreteFunctionType::DomainFieldType,
-                   typename DiscreteFunctionType::RangeFieldType,
-                   DiscreteFunctionType, DiscreteFunctionType >
-{
-  typedef OEMGMRESOp< DiscreteFunctionType, Op > This;
-
-public:
-  typedef Op OperatorType;
-
-private:
-  // type of internal projector if no preconditioner given 
-  typedef OEMSolver :: FakeConditioner FakeConditionerType;
-  
-  typedef std::pair < int , double > ReturnValueType;
-  
-  template <class OperatorImp, bool hasPreconditioning> 
-  struct SolverCaller 
-  {
-    template <class DiscreteFunctionImp> 
-    static ReturnValueType call(OperatorImp & op, 
-                     const DiscreteFunctionImp & arg, 
-                     DiscreteFunctionImp & dest, 
-                     int inner, double eps, bool verbose)
+    void finalize () const
     {
+    }
+
+    int iterations() const
+    {
+      return iterations_;
+    }
+
+    /** \brief solve the system 
+        \param[in] arg right hand side 
+        \param[out] dest solution 
+    */
+    void apply( const DiscreteFunctionType& arg, DiscreteFunctionType& dest ) const
+    {
+      // prepare operator 
+      prepare ( arg, dest );
+
       int size = arg.space().size();
-      if(op.hasPreconditionMatrix())
+      int inner = std::min( size, restart_ );
+
+      ReturnValueType val = 
+        SolverCaller<OperatorType,
+                     // check wheter operator has precondition methods 
+                     // to enable preconditioning derive your operator from 
+                     // OEMSolver::PreconditionInterface
+                     Conversion<OperatorType, OEMSolver::PreconditionInterface > ::exists >::
+                       // call solver, see above 
+                       call(op_,arg,dest,inner,epsilon_,verbose_);
+
+      iterations_ = val.first;
+
+      if(arg.space().grid().comm().rank() == 0)
       {
-        return OEMSolver::gmres(arg.space().grid().comm(),
-                 inner,size,op.systemMatrix(),op.preconditionMatrix(),
-                 arg.leakPointer(),dest.leakPointer(),eps,verbose);
+        std::cout << "OEM-GMRES: " << val.first << " iterations! Error: " << val.second << "\n";
       }
-      // in parallel case we need special treatment, if no preconditoner exist
-      else if( arg.space().grid().comm().size() > 1 )
-      {
-        OEMSolver::SolverInterfaceImpl<OperatorImp> opSolve(op); 
-        FakeConditionerType preConditioner(size,opSolve);
-        return OEMSolver::gmres(arg.space().grid().comm(),
-                 inner,size,op.systemMatrix(),preConditioner,
-                 arg.leakPointer(),dest.leakPointer(),eps,verbose);
-      }
-      else 
-      {
-        return OEMSolver::gmres(arg.space().grid().comm(),
-                 inner,size,op.systemMatrix(),
-                 arg.leakPointer(),dest.leakPointer(),eps,verbose);
-      }
+
+      // finalize operator  
+      finalize ();
     }
+
+    /** \brief solve the system 
+        \param[in] arg right hand side 
+        \param[out] dest solution 
+    */
+    void operator ()( const DiscreteFunctionType& arg, DiscreteFunctionType& dest ) const
+    {
+      apply(arg,dest);
+    }
+
+  private:
+    // no const reference, we make const later 
+    OperatorType &op_;
+    typename DiscreteFunctionType::RangeFieldType epsilon_;
+    int maxIter_;
+    int restart_;
+    bool verbose_ ;
+    mutable int iterations_;    
   };
 
-  // without any preconditioning 
-  template <class OperatorImp> 
-  struct SolverCaller<OperatorImp,false>
-  {
-    template <class DiscreteFunctionImp> 
-    static ReturnValueType call(OperatorImp & op, 
-                     const DiscreteFunctionImp & arg, 
-                     DiscreteFunctionImp & dest, 
-                     int inner, double eps, bool verbose)
-    {
-      int size = arg.space().size();
-      if( arg.space().grid().comm().size() > 1 )
-      {
-        OEMSolver::SolverInterfaceImpl<OperatorImp> opSolve(op); 
-        FakeConditionerType preConditioner(size,opSolve);
-        return OEMSolver::gmres(arg.space().grid().comm(),
-                 inner,size,op.systemMatrix(),preConditioner,
-                 arg.leakPointer(),dest.leakPointer(),eps,verbose);
-      }
-      else 
-      {
-        return OEMSolver::gmres(arg.space().grid().comm(),
-                 inner,size,op.systemMatrix(),
-                 arg.leakPointer(),dest.leakPointer(),eps,verbose);
-      }
-    }
-  };
-
-public:
-  /** \brief constructor of OEM-GMRES 
-      \param[in] op Operator to invert 
-      \param[in] redEps realative tolerance for residual 
-      \param[in] absLimit absolut solving tolerance for residual 
-      \param[in] maxIter maximal number of iterations performed 
-      \param[in] verbose verbosity 
-  */
-  OEMGMRESOp ( OperatorType &op,
-               double redEps,
-               double absLimit,
-               int maxIter,
-               bool verbose )
-  : op_( op ),
-    epsilon_( absLimit ),
-    maxIter_( maxIter ),
-    restart_( Parameter::getValue< int >( "oemsolver.gmres.restart", 20 ) ),
-    verbose_( verbose ),
-    iterations_( 0 )    
-  {}
-
-  OEMGMRESOp ( OperatorType &op,
-               double redEps,
-               double absLimit,
-               int maxIter = std::numeric_limits< int >::max() )
-  : op_( op ),
-    epsilon_( absLimit ),
-    maxIter_( maxIter ),
-    restart_( Parameter::getValue< int >( "oemsolver.gmres.restart", 20 ) ),
-    verbose_( Parameter::getValue< bool >( "fem.solver.verbose", false ) ),
-    iterations_( 0 )    
-  {}
-
-  void prepare (const DiscreteFunctionType& Arg, DiscreteFunctionType& Dest) const
-  {
-  }
-
-  void finalize () const
-  {
-  }
-
-  int iterations() const
-  {
-    return iterations_;
-  }
-
-  /** \brief solve the system 
-      \param[in] arg right hand side 
-      \param[out] dest solution 
-  */
-  void apply( const DiscreteFunctionType& arg, DiscreteFunctionType& dest ) const
-  {
-    // prepare operator 
-    prepare ( arg, dest );
-
-    int size = arg.space().size();
-    int inner = std::min( size, restart_ );
-
-    ReturnValueType val = 
-      SolverCaller<OperatorType,
-                   // check wheter operator has precondition methods 
-                   // to enable preconditioning derive your operator from 
-                   // OEMSolver::PreconditionInterface
-                   Conversion<OperatorType, OEMSolver::PreconditionInterface > ::exists >::
-                     // call solver, see above 
-                     call(op_,arg,dest,inner,epsilon_,verbose_);
-
-    iterations_ = val.first;
-
-    if(arg.space().grid().comm().rank() == 0)
-    {
-      std::cout << "OEM-GMRES: " << val.first << " iterations! Error: " << val.second << "\n";
-    }
-
-    // finalize operator  
-    finalize ();
-  }
-
-  /** \brief solve the system 
-      \param[in] arg right hand side 
-      \param[out] dest solution 
-  */
-  void operator ()( const DiscreteFunctionType& arg, DiscreteFunctionType& dest ) const
-  {
-    apply(arg,dest);
-  }
-
-private:
-  // no const reference, we make const later 
-  OperatorType &op_;
-  typename DiscreteFunctionType::RangeFieldType epsilon_;
-  int maxIter_;
-  int restart_;
-  bool verbose_ ;
-  mutable int iterations_;    
-};
-
-/**
-   @}
-**/
+  /**
+     @}
+  **/
 #ifdef USE_PARDG_ODE_SOLVER
-/////////////////////////////////////////////////////////////////
-//
-//  GMRES Version of Dennis code
-//
-/////////////////////////////////////////////////////////////////
-// \brief GMRES implementation from Dennis D.
-template <class DiscreteFunctionType, class OperatorType>
-class GMRESOp : public Operator<
-      typename DiscreteFunctionType::DomainFieldType,
-      typename DiscreteFunctionType::RangeFieldType,
-            DiscreteFunctionType,DiscreteFunctionType> 
-{
-private:
-  typedef OEMSolver :: FakeConditioner FakeConditioner;
-
-  template <class SolverType, bool hasPreconditioning> 
-  struct SolverCaller 
+  /////////////////////////////////////////////////////////////////
+  //
+  //  GMRES Version of Dennis code
+  //
+  /////////////////////////////////////////////////////////////////
+  // \brief GMRES implementation from Dennis D.
+  template <class DiscreteFunctionType, class OperatorType>
+  class GMRESOp : public Operator<
+              DiscreteFunctionType,DiscreteFunctionType> 
   {
-    template <class OperatorImp, class PreConMatrix, class DiscreteFunctionImp> 
-    static void solve(SolverType & solver, 
-               OperatorImp & op, 
-               const PreConMatrix & pm, 
-               const DiscreteFunctionImp & arg, 
-               DiscreteFunctionImp & dest) 
+  private:
+    typedef OEMSolver :: FakeConditioner FakeConditioner;
+
+    template <class SolverType, bool hasPreconditioning> 
+    struct SolverCaller 
     {
-      int size = arg.space().size();
-      solver.set_max_number_of_iterations(size);
-
-      OEMSolver::SolverInterfaceImpl<OperatorImp> opSolve(op,size); 
-
-      // in parallel runs we need fake pre conditioner to 
-      // project vectors onto interior  
-      if(op.hasPreconditionMatrix())
+      template <class OperatorImp, class PreConMatrix, class DiscreteFunctionImp> 
+      static void solve(SolverType & solver, 
+                 OperatorImp & op, 
+                 const PreConMatrix & pm, 
+                 const DiscreteFunctionImp & arg, 
+                 DiscreteFunctionImp & dest) 
       {
+        int size = arg.space().size();
+        solver.set_max_number_of_iterations(size);
+
+        OEMSolver::SolverInterfaceImpl<OperatorImp> opSolve(op,size); 
+
+        // in parallel runs we need fake pre conditioner to 
+        // project vectors onto interior  
+        if(op.hasPreconditionMatrix())
+        {
+          OEMSolver::PreconditionerImpl<PreConMatrix> pre(pm,size); 
+          solver.set_preconditioner(pre);
+          
+          // note argument and destination are toggled 
+          solver.solve(opSolve, dest.leakPointer() , arg.leakPointer() );
+
+          solver.unset_preconditioner();
+        }
+        else 
+        {
+          // note argument and destination are toggled 
+          solver.solve(opSolve, dest.leakPointer() , arg.leakPointer() );
+        }
+      }
+      
+      template <class OperatorImp, class DiscreteFunctionImp> 
+      static void call(SolverType & solver, 
+                       OperatorImp & op, 
+                       const DiscreteFunctionImp & arg, 
+                       DiscreteFunctionImp & dest)
+      {
+        solve(solver,op,op.preconditionMatrix(),arg,dest); 
+      }
+    };
+
+    // without any preconditioning 
+    template <class SolverType> 
+    struct SolverCaller<SolverType,false>
+    {
+      template <class OperatorImp, class DiscreteFunctionImp> 
+      static void call(SolverType & solver, 
+                       OperatorImp & op, 
+                       const DiscreteFunctionImp & arg, 
+                       DiscreteFunctionImp & dest)
+      {
+        int size = arg.space().size();
+        OEMSolver::SolverInterfaceImpl<OperatorImp> opSolve(op,size); 
+        
+        solver.set_max_number_of_iterations(size);
+
+        // in parallel runs we need fake pre conditioner to 
+        // project vectors onto interior  
+        if(arg.space().grid().comm().size() > 1)
+        {
+          FakeConditioner fake(size,opSolve);
+          OEMSolver::SolverInterfaceImpl<FakeConditioner> pre(fake);
+          solver.set_preconditioner(pre);
+
+          // note argument and destination are toggled 
+          solver.solve(opSolve, dest.leakPointer() , arg.leakPointer() );
+          solver.unset_preconditioner();
+        }
+        else 
+        {
+          // note argument and destination are toggled 
+          solver.solve(opSolve, dest.leakPointer() , arg.leakPointer() );
+        }
+      }
+    };
+
+    // solver 
+    typedef PARDG::GMRES SolverType;
+    mutable SolverType solver_;
+    
+    // wrapper to fit interface of FGMRES operator 
+    OperatorType &op_;
+    
+    typename DiscreteFunctionType::RangeFieldType epsilon_;
+    int maxIter_;
+    bool verbose_ ;
+    mutable int iterations_;
+
+  public:
+    GMRESOp( OperatorType & op , double  redEps , double absLimit , int maxIter , bool verbose )
+        : solver_(PARDG::Communicator::instance(),20)
+        , op_(op) , epsilon_ ( absLimit ) 
+        , maxIter_ (maxIter ) , verbose_ ( verbose )
+        , iterations_ ( 0 )
+    {
+    }
+
+    void prepare (const DiscreteFunctionType& Arg, DiscreteFunctionType& Dest) const
+    {
+    }
+
+    void finalize () const
+    {
+    }
+
+    int iterations () const
+    {
+      return iterations_;
+    }
+
+    /** \brief solve the system 
+        \param[in] arg right hand side 
+        \param[out] dest solution 
+    */
+    void apply( const DiscreteFunctionType& arg, DiscreteFunctionType& dest ) const
+    {
+      // prepare operator 
+      prepare ( arg, dest );
+
+      solver_.set_tolerance(epsilon_);
+
+      if(verbose_)
+      {
+        solver_.IterativeSolver::set_output(std::cout);
+        solver_.DynamicalObject::set_output(std::cout);
+      }
+
+      SolverCaller<SolverType,
+                     // check wheter operator has precondition methods 
+                     // to enable preconditioning derive your operator from 
+                     // OEMSolver::PreconditionInterface
+                     Conversion<OperatorType, OEMSolver::PreconditionInterface > ::exists >::
+                     // call solver, see above 
+                     call(solver_,op_.systemMatrix(),arg,dest);
+    
+      iterations_ = solver_.number_of_iterations();
+
+      // finalize operator  
+      finalize ();
+    }
+
+    /** \brief solve the system 
+        \param[in] arg right hand side 
+        \param[out] dest solution 
+    */
+    void operator ()( const DiscreteFunctionType& arg, DiscreteFunctionType& dest ) const
+    {
+      apply(arg,dest);
+    }
+  };
+
+  template <class DiscreteFunctionType, class OperatorType>
+  class FGMRESOp : public Operator<
+              DiscreteFunctionType,DiscreteFunctionType> 
+  {
+
+  private:
+    typedef OEMSolver :: FakeConditioner FakeConditionerType;
+
+    template <class SolverType, bool hasPreconditioning> 
+    struct SolverCaller 
+    {
+      template <class OperatorImp, class PreConMatrix, class DiscreteFunctionImp> 
+      static void solve(SolverType & solver, 
+                 OperatorImp & op, 
+                 const PreConMatrix & pm, 
+                 const DiscreteFunctionImp & arg, 
+                 DiscreteFunctionImp & dest) 
+      {
+        int size = arg.space().size();
+        OEMSolver::SolverInterfaceImpl<OperatorImp> opSolve(op,size); 
         OEMSolver::PreconditionerImpl<PreConMatrix> pre(pm,size); 
         solver.set_preconditioner(pre);
         
+        solver.set_max_number_of_iterations(size);
+
         // note argument and destination are toggled 
         solver.solve(opSolve, dest.leakPointer() , arg.leakPointer() );
-
         solver.unset_preconditioner();
       }
-      else 
-      {
-        // note argument and destination are toggled 
-        solver.solve(opSolve, dest.leakPointer() , arg.leakPointer() );
-      }
-    }
-    
-    template <class OperatorImp, class DiscreteFunctionImp> 
-    static void call(SolverType & solver, 
-                     OperatorImp & op, 
-                     const DiscreteFunctionImp & arg, 
-                     DiscreteFunctionImp & dest)
-    {
-      solve(solver,op,op.preconditionMatrix(),arg,dest); 
-    }
-  };
-
-  // without any preconditioning 
-  template <class SolverType> 
-  struct SolverCaller<SolverType,false>
-  {
-    template <class OperatorImp, class DiscreteFunctionImp> 
-    static void call(SolverType & solver, 
-                     OperatorImp & op, 
-                     const DiscreteFunctionImp & arg, 
-                     DiscreteFunctionImp & dest)
-    {
-      int size = arg.space().size();
-      OEMSolver::SolverInterfaceImpl<OperatorImp> opSolve(op,size); 
       
-      solver.set_max_number_of_iterations(size);
-
-      // in parallel runs we need fake pre conditioner to 
-      // project vectors onto interior  
-      if(arg.space().grid().comm().size() > 1)
+      template <class OperatorImp, class DiscreteFunctionImp> 
+      static void call(SolverType & solver, 
+                       OperatorImp & op, 
+                       const DiscreteFunctionImp & arg, 
+                       DiscreteFunctionImp & dest)
       {
-        FakeConditioner fake(size,opSolve);
-        OEMSolver::SolverInterfaceImpl<FakeConditioner> pre(fake);
+        if(op.hasPreconditionMatrix() )
+        {
+          solve(solver,op.systemMatrix(),op.preconditionMatrix(),arg,dest); 
+        }
+        else 
+        {
+          SolverCaller<SolverType,false>::call(solver,op,arg,dest);
+        }
+      }
+    };
+
+    // without any preconditioning 
+    template <class SolverType> 
+    struct SolverCaller<SolverType,false>
+    {
+      template <class OperatorImp, class DiscreteFunctionImp> 
+      static void solve(SolverType & solver, 
+                 OperatorImp & op, 
+                 const DiscreteFunctionImp & arg, 
+                 DiscreteFunctionImp & dest) 
+      {
+        int size = arg.space().size();
+        OEMSolver::SolverInterfaceImpl<OperatorImp> opSolve(op,size); 
+        FakeConditionerType fake(size,opSolve);
+        SolverCaller<SolverType,true>::solve(solver,op,fake,arg,dest);
+      }
+      
+      template <class OperatorImp, class DiscreteFunctionImp> 
+      static void call(SolverType & solver, 
+                       OperatorImp & op, 
+                       const DiscreteFunctionImp & arg, 
+                       DiscreteFunctionImp & dest)
+      {
+        // not working yet 
+        assert( false ); 
+        solve(solver,op.systemMatrix(),arg,dest);
+      }
+    };
+
+    // solver 
+    typedef PARDG::FGMRES SolverType;
+    mutable SolverType solver_;
+    
+    // wrapper to fit interface of FGMRES operator 
+    OperatorType &op_;
+    
+    typename DiscreteFunctionType::RangeFieldType epsilon_;
+    int maxIter_;
+    bool verbose_ ;
+    mutable int iterations_;
+    
+  public:
+    FGMRESOp( OperatorType & op , double  redEps , double absLimit , int maxIter , bool verbose )
+        : solver_(PARDG::Communicator::instance(),20)
+        , op_(op) , epsilon_ ( absLimit ) 
+        , maxIter_ (maxIter ) , verbose_ ( verbose ) 
+        , iterations_( 0 )
+    {
+    }
+
+    void prepare (const DiscreteFunctionType& Arg, DiscreteFunctionType& Dest) const
+    {
+    }
+
+    void finalize () const
+    {
+    }
+
+    int iterations () const
+    {
+      return iterations_;
+    }
+
+    //! solve the system 
+    void apply( const DiscreteFunctionType& arg, DiscreteFunctionType& dest ) const
+    {
+      // prepare operator 
+      prepare ( arg, dest );
+
+      solver_.set_tolerance(epsilon_);
+
+      if(verbose_)
+      {
+        solver_.IterativeSolver::set_output(std::cout);
+        solver_.DynamicalObject::set_output(std::cout);
+      }
+
+      SolverCaller<SolverType,
+                     // check wheter operator has precondition methods 
+                     // to enable preconditioning derive your operator from 
+                     // OEMSolver::PreconditionInterface
+                     Conversion<OperatorType, OEMSolver::PreconditionInterface > ::exists >::
+                     // call solver, see above 
+                     call(solver_,op_,arg,dest);
+
+      iterations_ = solver_.number_of_iterations();
+        
+      // finalize operator  
+      finalize ();
+    }
+
+    //! solve the system 
+    void operator ()( const DiscreteFunctionType& arg, DiscreteFunctionType& dest ) const
+    {
+      apply(arg,dest);
+    }
+
+  };
+   
+  /////////////////////////////////////////////////////////////////
+  //
+  //  BICGstab Version of Dennis code
+  //
+  /////////////////////////////////////////////////////////////////
+  /* 
+    \interface
+    \brief BICG-stab implementation from Dennis D.
+  */
+  template <class DiscreteFunctionType, class OperatorType>
+  class BICGSTABOp : public Operator<
+              DiscreteFunctionType,DiscreteFunctionType> 
+  {
+  private:
+    template <class SolverType, bool hasPreconditioning> 
+    struct SolverCaller 
+    {
+      template <class OperatorImp, class PreConMatrix, class DiscreteFunctionImp> 
+      static void solve(SolverType & solver, 
+                 OperatorImp & op, 
+                 const PreConMatrix & pm, 
+                 const DiscreteFunctionImp & arg, 
+                 DiscreteFunctionImp & dest) 
+      {
+        int size = arg.space().size();
+        OEMSolver::SolverInterfaceImpl<OperatorImp> opSolve(op,size); 
+        solver.set_max_number_of_iterations(size);
+
+        OEMSolver::PreconditionerImpl<PreConMatrix> pre(pm,size); 
         solver.set_preconditioner(pre);
 
         // note argument and destination are toggled 
         solver.solve(opSolve, dest.leakPointer() , arg.leakPointer() );
         solver.unset_preconditioner();
       }
-      else 
+      
+      template <class OperatorImp, class DiscreteFunctionImp> 
+      static void call(SolverType & solver, 
+                       OperatorImp & op, 
+                       const DiscreteFunctionImp & arg, 
+                       DiscreteFunctionImp & dest)
       {
+        if(op.hasPreconditionMatrix())
+        {
+          solve(solver,op.systemMatrix(),op.preconditionMatrix(),arg,dest); 
+        }
+        else 
+        {
+          SolverCaller<SolverType,false>::call(solver,op,arg,dest);
+        }
+      }
+    };
+
+    // without any preconditioning 
+    template <class SolverType> 
+    struct SolverCaller<SolverType,false>
+    {
+      template <class OperatorImp, class DiscreteFunctionImp> 
+      static void solve(SolverType & solver, 
+                 OperatorImp & op, 
+                 const DiscreteFunctionImp & arg, 
+                 DiscreteFunctionImp & dest) 
+      {
+        int size = arg.space().size();
+        OEMSolver::SolverInterfaceImpl<OperatorImp> opSolve(op,size); 
+        solver.set_max_number_of_iterations(size);
+
         // note argument and destination are toggled 
         solver.solve(opSolve, dest.leakPointer() , arg.leakPointer() );
       }
-    }
-  };
+      template <class OperatorImp, class DiscreteFunctionImp> 
+      static void call(SolverType & solver, 
+                       OperatorImp & op, 
+                       const DiscreteFunctionImp & arg, 
+                       DiscreteFunctionImp & dest)
+      {
+        solve(solver,op.systemMatrix(),arg,dest); 
+      }
+    };
 
-  // solver 
-  typedef PARDG::GMRES SolverType;
-  mutable SolverType solver_;
-  
-  // wrapper to fit interface of FGMRES operator 
-  OperatorType &op_;
-  
-  typename DiscreteFunctionType::RangeFieldType epsilon_;
-  int maxIter_;
-  bool verbose_ ;
-  mutable int iterations_;
-
-public:
-  GMRESOp( OperatorType & op , double  redEps , double absLimit , int maxIter , bool verbose )
-      : solver_(PARDG::Communicator::instance(),20)
-      , op_(op) , epsilon_ ( absLimit ) 
-      , maxIter_ (maxIter ) , verbose_ ( verbose )
-      , iterations_ ( 0 )
-  {
-  }
-
-  void prepare (const DiscreteFunctionType& Arg, DiscreteFunctionType& Dest) const
-  {
-  }
-
-  void finalize () const
-  {
-  }
-
-  int iterations () const
-  {
-    return iterations_;
-  }
-
-  /** \brief solve the system 
-      \param[in] arg right hand side 
-      \param[out] dest solution 
-  */
-  void apply( const DiscreteFunctionType& arg, DiscreteFunctionType& dest ) const
-  {
-    // prepare operator 
-    prepare ( arg, dest );
-
-    solver_.set_tolerance(epsilon_);
-
-    if(verbose_)
-    {
-      solver_.IterativeSolver::set_output(std::cout);
-      solver_.DynamicalObject::set_output(std::cout);
-    }
-
-    SolverCaller<SolverType,
-                   // check wheter operator has precondition methods 
-                   // to enable preconditioning derive your operator from 
-                   // OEMSolver::PreconditionInterface
-                   Conversion<OperatorType, OEMSolver::PreconditionInterface > ::exists >::
-                   // call solver, see above 
-                   call(solver_,op_.systemMatrix(),arg,dest);
-  
-    iterations_ = solver_.number_of_iterations();
-
-    // finalize operator  
-    finalize ();
-  }
-
-  /** \brief solve the system 
-      \param[in] arg right hand side 
-      \param[out] dest solution 
-  */
-  void operator ()( const DiscreteFunctionType& arg, DiscreteFunctionType& dest ) const
-  {
-    apply(arg,dest);
-  }
-};
-
-template <class DiscreteFunctionType, class OperatorType>
-class FGMRESOp : public Operator<
-      typename DiscreteFunctionType::DomainFieldType,
-      typename DiscreteFunctionType::RangeFieldType,
-            DiscreteFunctionType,DiscreteFunctionType> 
-{
-
-private:
-  typedef OEMSolver :: FakeConditioner FakeConditionerType;
-
-  template <class SolverType, bool hasPreconditioning> 
-  struct SolverCaller 
-  {
-    template <class OperatorImp, class PreConMatrix, class DiscreteFunctionImp> 
-    static void solve(SolverType & solver, 
-               OperatorImp & op, 
-               const PreConMatrix & pm, 
-               const DiscreteFunctionImp & arg, 
-               DiscreteFunctionImp & dest) 
-    {
-      int size = arg.space().size();
-      OEMSolver::SolverInterfaceImpl<OperatorImp> opSolve(op,size); 
-      OEMSolver::PreconditionerImpl<PreConMatrix> pre(pm,size); 
-      solver.set_preconditioner(pre);
-      
-      solver.set_max_number_of_iterations(size);
-
-      // note argument and destination are toggled 
-      solver.solve(opSolve, dest.leakPointer() , arg.leakPointer() );
-      solver.unset_preconditioner();
-    }
+    // solver 
+    typedef PARDG::BICGSTAB SolverType;
+    mutable SolverType solver_;
+    // wrapper to fit interface of GMRES operator 
+    OperatorType &op_; 
     
-    template <class OperatorImp, class DiscreteFunctionImp> 
-    static void call(SolverType & solver, 
-                     OperatorImp & op, 
-                     const DiscreteFunctionImp & arg, 
-                     DiscreteFunctionImp & dest)
-    {
-      if(op.hasPreconditionMatrix() )
-      {
-        solve(solver,op.systemMatrix(),op.preconditionMatrix(),arg,dest); 
-      }
-      else 
-      {
-        SolverCaller<SolverType,false>::call(solver,op,arg,dest);
-      }
-    }
-  };
-
-  // without any preconditioning 
-  template <class SolverType> 
-  struct SolverCaller<SolverType,false>
-  {
-    template <class OperatorImp, class DiscreteFunctionImp> 
-    static void solve(SolverType & solver, 
-               OperatorImp & op, 
-               const DiscreteFunctionImp & arg, 
-               DiscreteFunctionImp & dest) 
-    {
-      int size = arg.space().size();
-      OEMSolver::SolverInterfaceImpl<OperatorImp> opSolve(op,size); 
-      FakeConditionerType fake(size,opSolve);
-      SolverCaller<SolverType,true>::solve(solver,op,fake,arg,dest);
-    }
+    typename DiscreteFunctionType::RangeFieldType epsilon_;
+    int maxIter_;
+    bool verbose_ ;
+    mutable int iterations_;
     
-    template <class OperatorImp, class DiscreteFunctionImp> 
-    static void call(SolverType & solver, 
-                     OperatorImp & op, 
-                     const DiscreteFunctionImp & arg, 
-                     DiscreteFunctionImp & dest)
+  public:
+    BICGSTABOp( OperatorType & op , double  redEps , double absLimit , int maxIter , bool verbose )
+        : solver_(PARDG::Communicator::instance())
+        , op_(op), epsilon_ ( absLimit ) 
+        , maxIter_ (maxIter ) , verbose_ ( verbose )
+        , iterations_( 0 )
     {
-      // not working yet 
-      assert( false ); 
-      solve(solver,op.systemMatrix(),arg,dest);
-    }
-  };
-
-  // solver 
-  typedef PARDG::FGMRES SolverType;
-  mutable SolverType solver_;
-  
-  // wrapper to fit interface of FGMRES operator 
-  OperatorType &op_;
-  
-  typename DiscreteFunctionType::RangeFieldType epsilon_;
-  int maxIter_;
-  bool verbose_ ;
-  mutable int iterations_;
-  
-public:
-  FGMRESOp( OperatorType & op , double  redEps , double absLimit , int maxIter , bool verbose )
-      : solver_(PARDG::Communicator::instance(),20)
-      , op_(op) , epsilon_ ( absLimit ) 
-      , maxIter_ (maxIter ) , verbose_ ( verbose ) 
-      , iterations_( 0 )
-  {
-  }
-
-  void prepare (const DiscreteFunctionType& Arg, DiscreteFunctionType& Dest) const
-  {
-  }
-
-  void finalize () const
-  {
-  }
-
-  int iterations () const
-  {
-    return iterations_;
-  }
-
-  //! solve the system 
-  void apply( const DiscreteFunctionType& arg, DiscreteFunctionType& dest ) const
-  {
-    // prepare operator 
-    prepare ( arg, dest );
-
-    solver_.set_tolerance(epsilon_);
-
-    if(verbose_)
-    {
-      solver_.IterativeSolver::set_output(std::cout);
-      solver_.DynamicalObject::set_output(std::cout);
     }
 
-    SolverCaller<SolverType,
-                   // check wheter operator has precondition methods 
-                   // to enable preconditioning derive your operator from 
-                   // OEMSolver::PreconditionInterface
-                   Conversion<OperatorType, OEMSolver::PreconditionInterface > ::exists >::
-                   // call solver, see above 
-                   call(solver_,op_,arg,dest);
-
-    iterations_ = solver_.number_of_iterations();
-      
-    // finalize operator  
-    finalize ();
-  }
-
-  //! solve the system 
-  void operator ()( const DiscreteFunctionType& arg, DiscreteFunctionType& dest ) const
-  {
-    apply(arg,dest);
-  }
-
-};
- 
-/////////////////////////////////////////////////////////////////
-//
-//  BICGstab Version of Dennis code
-//
-/////////////////////////////////////////////////////////////////
-/* 
-  \interface
-  \brief BICG-stab implementation from Dennis D.
-*/
-template <class DiscreteFunctionType, class OperatorType>
-class BICGSTABOp : public Operator<
-      typename DiscreteFunctionType::DomainFieldType,
-      typename DiscreteFunctionType::RangeFieldType,
-            DiscreteFunctionType,DiscreteFunctionType> 
-{
-private:
-  template <class SolverType, bool hasPreconditioning> 
-  struct SolverCaller 
-  {
-    template <class OperatorImp, class PreConMatrix, class DiscreteFunctionImp> 
-    static void solve(SolverType & solver, 
-               OperatorImp & op, 
-               const PreConMatrix & pm, 
-               const DiscreteFunctionImp & arg, 
-               DiscreteFunctionImp & dest) 
+    void prepare (const DiscreteFunctionType& Arg, DiscreteFunctionType& Dest) const
     {
-      int size = arg.space().size();
-      OEMSolver::SolverInterfaceImpl<OperatorImp> opSolve(op,size); 
-      solver.set_max_number_of_iterations(size);
-
-      OEMSolver::PreconditionerImpl<PreConMatrix> pre(pm,size); 
-      solver.set_preconditioner(pre);
-
-      // note argument and destination are toggled 
-      solver.solve(opSolve, dest.leakPointer() , arg.leakPointer() );
-      solver.unset_preconditioner();
     }
-    
-    template <class OperatorImp, class DiscreteFunctionImp> 
-    static void call(SolverType & solver, 
-                     OperatorImp & op, 
-                     const DiscreteFunctionImp & arg, 
-                     DiscreteFunctionImp & dest)
+
+    void finalize () const
     {
-      if(op.hasPreconditionMatrix())
+    }
+
+    int iterations () const
+    {
+      return iterations_;
+    }
+
+    //! solve the system 
+    void apply( const DiscreteFunctionType& arg, DiscreteFunctionType& dest ) const
+    {
+      // prepare operator 
+      prepare ( arg, dest );
+
+      solver_.set_tolerance(epsilon_);
+
+      if(verbose_)
       {
-        solve(solver,op.systemMatrix(),op.preconditionMatrix(),arg,dest); 
+        solver_.IterativeSolver::set_output(std::cout);
+        solver_.DynamicalObject::set_output(std::cout);
       }
-      else 
-      {
-        SolverCaller<SolverType,false>::call(solver,op,arg,dest);
-      }
+
+      SolverCaller<SolverType,
+                     // check wheter operator has precondition methods 
+                     // to enable preconditioning derive your operator from 
+                     // OEMSolver::PreconditionInterface
+                     Conversion<OperatorType, OEMSolver::PreconditionInterface > ::exists >::
+                     // call solver, see above 
+                     call(solver_,op_,arg,dest);
+
+      iterations_ = solver_.number_of_iterations();
+
+      // finalize operator  
+      finalize ();
     }
+
+    //! solve the system 
+    void operator ()( const DiscreteFunctionType& arg, DiscreteFunctionType& dest ) const
+    {
+      apply(arg,dest);
+    }
+
   };
-
-  // without any preconditioning 
-  template <class SolverType> 
-  struct SolverCaller<SolverType,false>
-  {
-    template <class OperatorImp, class DiscreteFunctionImp> 
-    static void solve(SolverType & solver, 
-               OperatorImp & op, 
-               const DiscreteFunctionImp & arg, 
-               DiscreteFunctionImp & dest) 
-    {
-      int size = arg.space().size();
-      OEMSolver::SolverInterfaceImpl<OperatorImp> opSolve(op,size); 
-      solver.set_max_number_of_iterations(size);
-
-      // note argument and destination are toggled 
-      solver.solve(opSolve, dest.leakPointer() , arg.leakPointer() );
-    }
-    template <class OperatorImp, class DiscreteFunctionImp> 
-    static void call(SolverType & solver, 
-                     OperatorImp & op, 
-                     const DiscreteFunctionImp & arg, 
-                     DiscreteFunctionImp & dest)
-    {
-      solve(solver,op.systemMatrix(),arg,dest); 
-    }
-  };
-
-  // solver 
-  typedef PARDG::BICGSTAB SolverType;
-  mutable SolverType solver_;
-  // wrapper to fit interface of GMRES operator 
-  OperatorType &op_; 
-  
-  typename DiscreteFunctionType::RangeFieldType epsilon_;
-  int maxIter_;
-  bool verbose_ ;
-  mutable int iterations_;
-  
-public:
-  BICGSTABOp( OperatorType & op , double  redEps , double absLimit , int maxIter , bool verbose )
-      : solver_(PARDG::Communicator::instance())
-      , op_(op), epsilon_ ( absLimit ) 
-      , maxIter_ (maxIter ) , verbose_ ( verbose )
-      , iterations_( 0 )
-  {
-  }
-
-  void prepare (const DiscreteFunctionType& Arg, DiscreteFunctionType& Dest) const
-  {
-  }
-
-  void finalize () const
-  {
-  }
-
-  int iterations () const
-  {
-    return iterations_;
-  }
-
-  //! solve the system 
-  void apply( const DiscreteFunctionType& arg, DiscreteFunctionType& dest ) const
-  {
-    // prepare operator 
-    prepare ( arg, dest );
-
-    solver_.set_tolerance(epsilon_);
-
-    if(verbose_)
-    {
-      solver_.IterativeSolver::set_output(std::cout);
-      solver_.DynamicalObject::set_output(std::cout);
-    }
-
-    SolverCaller<SolverType,
-                   // check wheter operator has precondition methods 
-                   // to enable preconditioning derive your operator from 
-                   // OEMSolver::PreconditionInterface
-                   Conversion<OperatorType, OEMSolver::PreconditionInterface > ::exists >::
-                   // call solver, see above 
-                   call(solver_,op_,arg,dest);
-
-    iterations_ = solver_.number_of_iterations();
-
-    // finalize operator  
-    finalize ();
-  }
-
-  //! solve the system 
-  void operator ()( const DiscreteFunctionType& arg, DiscreteFunctionType& dest ) const
-  {
-    apply(arg,dest);
-  }
-
-};
 #endif
+
+  } // end namespace Fem 
+
+  // #if DUNE_FEM_COMPATIBILITY  
+  // put this in next version 1.4 
+
+  using Fem :: OEMCGOp ;
+  using Fem :: OEMGMRESOp ;
+  using Fem :: OEMBICGSTABOp ;
+
+  // #endif // DUNE_FEM_COMPATIBILITY
+
+
 } // end namespace Dune 
 #endif

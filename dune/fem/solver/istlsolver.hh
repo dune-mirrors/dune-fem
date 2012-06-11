@@ -16,6 +16,8 @@
 namespace Dune
 {
 
+  namespace Fem {
+
   //=====================================================================
   // Implementation for ISTL-matrix based operator
   //=====================================================================
@@ -53,7 +55,7 @@ namespace Dune
       and block vectors (BVector) from DUNE-ISTL. */
   template< class DF, class Op >
   struct ISTLBICGSTABOp
-  : public Operator< typename DF::RangeFieldType, typename DF::RangeFieldType, DF, DF >
+  : public Operator< DF, DF >
   {
   public:  
     typedef DF DiscreteFunctionType;
@@ -218,7 +220,7 @@ namespace Dune
    */
   template< class DF, class Op >
   struct ISTLGMResOp
-  : public Operator< typename DF::RangeFieldType, typename DF::RangeFieldType, DF, DF >
+  : public Operator< DF, DF >
   {
   public:  
     typedef DF DiscreteFunctionType;
@@ -385,7 +387,7 @@ namespace Dune
   and block vectors (BVector) from dune-istl. */
   template< class DF, class Op >
   struct ISTLCGOp
-  : public Operator< typename DF::DomainFieldType, typename DF::RangeFieldType, DF, DF >
+  : public Operator< DF, DF >
   {
   public:  
     typedef DF DiscreteFunctionType;
@@ -558,7 +560,7 @@ namespace Dune
   */
   template< class DF, class Op >
   struct ISTLSuperLU 
-  : public Operator< typename DF::RangeFieldType, typename DF::RangeFieldType, DF, DF >
+  : public Operator< DF, DF >
   {
     typedef DF DiscreteFunctionType;
     typedef Op OperatorType;
@@ -707,6 +709,17 @@ namespace Dune
 
 
 ///@}
+
+  } // end namespace Fem 
+
+  // #if DUNE_FEM_COMPATIBILITY  
+  // put this in next version 1.4 
+
+  using Fem :: ISTLBICGSTABOp ;
+  using Fem :: ISTLCGOp ;
+  using Fem :: ISTLGMResOp ;
+  using Fem :: ISTLSuperLU ;
+  // #endif // DUNE_FEM_COMPATIBILITY
 
 } // end namespace Dune 
 
