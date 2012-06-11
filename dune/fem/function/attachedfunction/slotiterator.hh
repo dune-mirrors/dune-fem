@@ -4,6 +4,9 @@
 namespace Dune
 {
 
+  namespace Fem
+  {
+
   namespace
   {
 
@@ -83,6 +86,8 @@ namespace Dune
     }
   };
 
-}
+  } // namespace Fem
 
+} // namespace Dune
+ 
 #endif

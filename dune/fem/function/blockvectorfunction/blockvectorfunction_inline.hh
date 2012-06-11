@@ -78,11 +78,11 @@ BlockVectorDiscreteFunction< DiscreteFunctionSpaceType > :: allocateDofStorage()
   if( memObject_ != 0 ) 
     DUNE_THROW(InvalidStateException,"DofStorage already allocated!");
   
-  std::pair< DofStorageInterface*, DofStorageType* > memPair
-    = allocateManagedDofStorage( this->space().grid(),
-                                 mapper_ ,
-                                 this->name(),
-                                 (DofStorageType *) 0 );
+  std::pair< Fem::DofStorageInterface*, DofStorageType* > memPair
+    = Fem::allocateManagedDofStorage( this->space().grid(),
+                                      mapper_ ,
+                                      this->name(),
+                                      (DofStorageType *) 0 );
   // store memory 
   memObject_ = memPair.first;
 

@@ -10,6 +10,9 @@
 namespace Dune
 {
 
+  namespace Fem
+  {
+
   template< class Dof, class Grid, class Mapper >
   class AttachedDiscreteFunctionContainer
   {
@@ -191,6 +194,8 @@ namespace Dune
     }
   };
 
-}
+  } // namespace Fem
+
+} // namespace Dune
 
 #endif

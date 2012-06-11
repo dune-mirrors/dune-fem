@@ -26,6 +26,9 @@
 
 namespace Dune
 {
+  
+namespace Fem
+{
 
   /** @addtogroup DiscreteFunction 
       The DiscreteFunction is responsible for the dof storage. This can be
@@ -73,14 +76,14 @@ namespace Dune
   */
   template< class TraitsImp >
   class DiscreteFunctionInterface
-  : public Fem::Function< typename TraitsImp::DiscreteFunctionSpaceType::FunctionSpaceType,
-                          typename TraitsImp::DiscreteFunctionType >,
+  : public Function< typename TraitsImp::DiscreteFunctionSpaceType::FunctionSpaceType,
+                     typename TraitsImp::DiscreteFunctionType >,
     public IsDiscreteFunction, 
     public HasLocalFunction
   {
     typedef DiscreteFunctionInterface< TraitsImp > ThisType;
-    typedef Fem::Function< typename TraitsImp::DiscreteFunctionSpaceType::FunctionSpaceType,
-                           typename TraitsImp::DiscreteFunctionType >
+    typedef Function< typename TraitsImp::DiscreteFunctionSpaceType::FunctionSpaceType,
+                      typename TraitsImp::DiscreteFunctionType >
       BaseType;
 
   public:
@@ -857,7 +860,18 @@ namespace Dune
   template< class DiscreteFunction >
   class ManagedDiscreteFunction;
   
-///@} 
+///@}
+
+} // end namespace Fem
+
+// #if DUNE_FEM_COMPATIBILITY  
+// put this in next version 1.4 
+
+using Fem :: IsDiscreteFunction ;
+using Fem :: HasLocalFunction ;
+
+// #endif // DUNE_FEM_COMPATIBILITY
+
 } // end namespace Dune
 
 #include "discretefunction_inline.hh"
