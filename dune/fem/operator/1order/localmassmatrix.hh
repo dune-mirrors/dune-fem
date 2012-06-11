@@ -427,7 +427,7 @@ protected:
   //! check whether all geometry mappings are affine 
   bool checkAffinity() const 
   {
-    return GeometryAffinityCheck<VolumeQuadratureType> :: 
+    return Fem::GeometryAffinityCheck<VolumeQuadratureType> :: 
       checkAffinity( spc_.begin(), spc_.end(), volumeQuadOrd_);
   }
 
