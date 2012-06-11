@@ -9,7 +9,7 @@
 
 namespace Dune {
 
-//  namespace Fem {
+namespace Fem {
 
     //! @ingroup SubDFunction
     //! A class for extracting sub functions from a 
@@ -83,6 +83,6 @@ namespace Dune {
       mutable std::vector< SubDiscreteFunctionType* > subDiscreteFunction_;
     };
 
-//  }
-}
+  } // namespace Fem 
+} // namespace Dune
 #endif
