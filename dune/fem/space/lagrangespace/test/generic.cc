@@ -26,13 +26,13 @@ typedef FunctionSpace< double, double, DIMENSION, 1 > FunctionSpaceType;
 typedef FunctionSpaceType :: DomainType DomainType;
 typedef FunctionSpaceType :: RangeType RangeType;
 
-typedef LagrangeBaseFunctionFactory< FunctionSpaceType, DIMENSION, POLORDER >
+typedef Fem::LagrangeBaseFunctionFactory< FunctionSpaceType, DIMENSION, POLORDER >
   BaseFunctionFactoryType;
 typedef BaseFunctionInterface< FunctionSpaceType > BaseFunctionType;
 
-typedef LagrangePoint< GeometryType :: GEOMETRYTYPE, DIMENSION, POLORDER >
+typedef Fem::LagrangePoint< GeometryType :: GEOMETRYTYPE, DIMENSION, POLORDER >
   LagrangePointType;
-typedef LagrangePointListImplementation
+typedef Fem::LagrangePointListImplementation
   < double, GeometryType :: GEOMETRYTYPE, DIMENSION, POLORDER >
   LagrangePointListType;
 
