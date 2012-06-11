@@ -760,7 +760,7 @@ namespace Dune
         assert( searchFunction( df ) == dfList_.end() );
         // select LagrangeInterpolation to be the LocalInterpolation 
         typedef typename BaseType :: template PAdaptiveDiscreteFunctionEntry< 
-            DiscreteFunction, LagrangeInterpolation< DiscreteFunction > > RealEntryType ;
+            DiscreteFunction, LagrangeInterpolation< DiscreteFunction, DiscreteFunction > > RealEntryType ;
         typedef typename BaseType :: PAdaptiveDiscreteFunctionEntryInterface
           EntryInterface;
         EntryInterface* entry = new RealEntryType( df );

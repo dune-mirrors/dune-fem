@@ -13,6 +13,8 @@
 
 namespace Dune
 {
+  namespace Fem
+  {
 
   // DefaultLocalRestrictProlong
   // ---------------------------
@@ -130,6 +132,8 @@ namespace Dune
   {
     pAdaptation( df, polynomialOrders, df.space(), polOrderShift );
   }
+
+  } // namespace Fem
 
 } // namespace Dune
 
