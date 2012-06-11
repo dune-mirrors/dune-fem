@@ -329,7 +329,7 @@ public:
     assert( Fem :: ThreadManager :: singleThreadMode() );
 
     // get stopwatch 
-    Timer timer; 
+    Dune::Timer timer; 
 
     const bool supportsCallback = Capabilities :: supportsCallbackAdaptation< GridType > :: v;
     CallAdaptationMethod< ThisType, GridType, supportsCallback >
@@ -680,7 +680,7 @@ public:
     if( this->adaptive() )
     {
       // get stopwatch 
-      Timer timer; 
+      Dune::Timer timer; 
     
       // do load balancing 
       loadBalance ();
@@ -752,6 +752,7 @@ struct LocalRefine
 // #if DUNE_FEM_COMPATIBILITY  
 // put this in next version 1.4 
 
+using Fem :: AdaptationManagerInterface ;
 using Fem :: AdaptationMethod ;
 using Fem :: AdaptationManager ;
 using Fem :: LocalRefine ;

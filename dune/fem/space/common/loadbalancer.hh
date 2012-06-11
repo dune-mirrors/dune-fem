@@ -183,7 +183,7 @@ public:
     assert( Fem :: ThreadManager :: singleThreadMode() );
 
     // get stopwatch 
-    Timer timer ; 
+    Dune::Timer timer ; 
     
     bool changed = false;
 

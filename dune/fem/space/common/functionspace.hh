@@ -289,6 +289,8 @@ struct ToNewDimRangeFunctionSpace<
 // put this in next version 1.4 
 
 using Fem :: FunctionSpace ;
+using Fem :: ToNewDimRangeFunctionSpace ;
+using Fem :: ToLocalFunctionSpace ;
 
 // #endif // DUNE_FEM_COMPATIBILITY
 
