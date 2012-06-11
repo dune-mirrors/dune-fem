@@ -52,7 +52,7 @@ class L2Projection : public Operator<DFieldType, RFieldType,DType , RType> {
     if( discFunc.space().continuous() )
       DUNE_THROW(NotImplemented,"L2-Projection not implemented for contiuous spaces!"); 
     else 
-      DGL2ProjectionImpl::project(f,discFunc,polOrd_);
+      Fem::DGL2ProjectionImpl::project(f,discFunc,polOrd_);
   }
 
 protected:
