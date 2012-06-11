@@ -289,6 +289,7 @@ struct ToNewDimRangeFunctionSpace<
 // put this in next version 1.4 
 
 using Fem :: FunctionSpace ;
+using Fem :: MatrixFunctionSpace ;
 using Fem :: ToNewDimRangeFunctionSpace ;
 using Fem :: ToLocalFunctionSpace ;
 

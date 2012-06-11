@@ -49,7 +49,7 @@ namespace Fem
   };
 
 
-  struct GenericDiscreteFunctionSpace
+  struct isGenericDiscreteFunctionSpace
   {};
 
   template< class DiscreteFunctionSpaceImp, 

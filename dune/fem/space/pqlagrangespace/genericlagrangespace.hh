@@ -152,7 +152,7 @@ namespace Dune
   template< class FunctionSpaceImp, class GridPartImp, class SpaceTraits >
   class GenericLagrangeSpace
   : public DiscreteFunctionSpaceDefault< SpaceTraits >,
-    public GenericDiscreteFunctionSpace
+    public isGenericDiscreteFunctionSpace
   {
     typedef GenericLagrangeSpace< FunctionSpaceImp, GridPartImp,
                                   SpaceTraits >                      ThisType;
