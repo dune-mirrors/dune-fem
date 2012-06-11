@@ -104,10 +104,10 @@ bool DIRK::step_iterative(double t, double dt, double *u,
 
     // prediction uf ui, todo: extrapolation or something...
     // Euler predictor
-    //f(t+c[i]*dt, u, f_tmp);
-    //dwaxpby(dim, c[i]*dt, f_tmp, 1, 1.0, u, 1, ui, 1);    
+    f(t+c[i]*dt, u, f_tmp);
+    dwaxpby(dim, c[i]*dt, f_tmp, 1, 1.0, u, 1, ui, 1);    
     // ui = u^n
-    cblas_dcopy(dim, u, 1, ui, 1);
+    //cblas_dcopy(dim, u, 1, ui, 1);
 
     // setup of Fpre
     const double _gamma = gamma[i];
