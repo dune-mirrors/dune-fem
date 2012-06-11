@@ -13,7 +13,6 @@ static const int dimw = Dune::GridSelector::dimworld;
 #include <dune/fem/space/lagrangespace.hh>
 #include <dune/fem/quadrature/cachingquadrature.hh>
 
-#include <dune/fem/gridpart/gridpart.hh>
 #include <dune/fem/gridpart/adaptiveleafgridpart.hh> 
 #include <dune/fem/space/common/adaptmanager.hh>
 #include <dune/fem/function/common/gridfunctionadapter.hh>
@@ -119,11 +118,6 @@ typedef DiscontinuousGalerkinSpace<FuncSpace, GridPartType,
 //! define the type of discrete function we are using , see
 //! dune/fem/discfuncarray.hh
 typedef AdaptiveDiscreteFunction < DiscreteFunctionSpaceType > DiscreteFunctionType;
-
-//! Get the Dofmanager type
-typedef DofManager<GridType> DofManagerType;
-typedef DofManagerFactory<DofManagerType> DofManagerFactoryType;
-
 
 // the exact solution to the problem for EOC calculation 
 struct ExactSolution
