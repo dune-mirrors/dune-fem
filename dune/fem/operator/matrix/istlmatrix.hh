@@ -1276,7 +1276,7 @@ namespace Dune
   template< class DomainFunction, class RangeFunction, class TraitsImp >
   class ISTLMatrixOperator
   : public ISTLMatrixObject< typename DomainFunction::DiscreteFunctionSpaceType, typename RangeFunction::DiscreteFunctionSpaceType, TraitsImp >,
-    public Operator< typename DomainFunction::RangeFieldType, typename RangeFunction::RangeFieldType, DomainFunction, RangeFunction >
+    public Fem::AssembledOperator< DomainFunction, RangeFunction >
   {
     typedef ISTLMatrixOperator< DomainFunction, RangeFunction, TraitsImp > This;
     typedef ISTLMatrixObject< typename DomainFunction::DiscreteFunctionSpaceType, typename RangeFunction::DiscreteFunctionSpaceType, TraitsImp > Base;
