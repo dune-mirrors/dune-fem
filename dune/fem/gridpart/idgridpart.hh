@@ -3,6 +3,7 @@
 
 #include <dune/fem/gridpart/common/gridpart.hh>
 #include <dune/fem/gridpart/common/deaditerator.hh>
+#include <dune/fem/gridpart/common/metatwistutility.hh>
 #include <dune/fem/gridpart/idgridpart/capabilities.hh>
 #include <dune/fem/gridpart/idgridpart/datahandle.hh>
 #include <dune/fem/gridpart/idgridpart/entity.hh>
@@ -26,7 +27,6 @@ namespace Dune
     class IdGridPart;
 
 
-
     // IdGridPartTraits
     // ----------------
 
@@ -34,6 +34,9 @@ namespace Dune
     struct IdGridPartTraits
     {
       typedef IdGridPart< HostGridPart > GridPartType;
+
+      //! type of twist utility 
+      typedef MetaTwistUtility< typename HostGridPart :: TwistUtilityType >  TwistUtilityType; 
 
       // Traits for dune-grid facades ("Gen-Gurke!")
       struct GridFamily

@@ -151,9 +151,6 @@ namespace Dune
     //! type of quadrature used for non-conforming intersections  
     typedef ElementQuadrature< GridPartImp, codimension > NonConformingQuadratureType; 
 
-    //! type of twist utility 
-    typedef TwistUtility< GridType > TwistUtilityType;
-    
   public:
     /** \brief constructor
      *

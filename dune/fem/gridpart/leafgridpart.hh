@@ -162,6 +162,9 @@ namespace Dune
     /** \brief The type of the corresponding grid part class */
     typedef LeafGridPart< GridImp > GridPartType;
 
+    /** \brief The type of the corresponding TwistUtility */
+    typedef TwistUtility< GridType >  TwistUtilityType ;
+
     /** \brief The appropriate index set */
     typedef WrappedLeafIndexSet<GridType> IndexSetType;
 

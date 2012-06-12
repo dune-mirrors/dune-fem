@@ -161,7 +161,7 @@ namespace Dune
 
     // for compatibility
     typedef typename GridPartType::GridType GridType;
-    typedef TwistUtility< GridType > TwistUtilityType;
+    typedef typename GridPartType::TwistUtilityType  TwistUtilityType;
     typedef IntersectionIteratorType IntersectionIterator;
 
 

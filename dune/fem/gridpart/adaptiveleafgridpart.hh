@@ -239,6 +239,9 @@ namespace Dune
     //! type of the grid part , i.e. this type 
     typedef AdaptiveLeafGridPart< GridType, idxpitype, onlyCodimensionZero > GridPartType;
 
+    /** \brief The type of the corresponding TwistUtility */
+    typedef TwistUtility< GridType >  TwistUtilityType ;
+
   protected:  
     // choose the AdaptiveIndexSet (based on the HierarchicIndexSet)
     // to be revised
