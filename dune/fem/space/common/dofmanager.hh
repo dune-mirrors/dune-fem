@@ -1151,7 +1151,7 @@ public:
   //********************************************************
   
   /** \copydoc Dune::PersistentObject :: backup */
-  virtual void backup () const 
+  void backup () const 
   {
     // backup all index sets marked as persistent
     ConstIndexListIteratorType endit = indexList_.end();
@@ -1162,7 +1162,7 @@ public:
   }
 
   /** \copydoc Dune::PersistentObject :: restore */
-  virtual void restore () 
+  void restore () 
   {
     // restore all index sets marked as persistent
     IndexListIteratorType endit = indexList_.end();
