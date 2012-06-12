@@ -128,7 +128,7 @@ namespace Dune
       static void call( const Function &function,
                         DiscreteFunction &discreteFunction )
       {
-        interpolateDiscreteFunction( function, discreteFunction );
+	LagrangeInterpolation<F, DiscreteFunction>::interpolateDiscreteFunction( function, discreteFunction );
       }
     };
 
