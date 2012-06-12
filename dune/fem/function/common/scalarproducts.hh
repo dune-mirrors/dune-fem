@@ -27,6 +27,14 @@
 
 namespace Dune
 {
+
+#if HAVE_DUNE_ISTL
+  template< class DiscreteFunctionSpaceImp >
+  class BlockVectorDiscreteFunction;
+#endif
+
+namespace Fem
+{
   
 /** @addtogroup Communication Communication 
     @{
@@ -533,9 +541,6 @@ namespace Dune
 #endif
 
 #if HAVE_DUNE_ISTL
-  template< class DiscreteFunctionSpaceImp >
-  class BlockVectorDiscreteFunction;
-
   //! Proxy class to evaluate ScalarProduct 
   //! holding SlaveDofs which is singleton per space and mapper 
   template< class DiscreteFunctionSpaceImp >
@@ -719,5 +724,15 @@ namespace Dune
 #endif
 
   //@}
+
+} // end namespace Fem 
+
+// #if DUNE_FEM_COMPATIBILITY  
+// put this in next version 1.4 
+
+using Fem :: SlaveDofs ;
+using Fem :: ParallelScalarProduct ;
+// #endif // DUNE_FEM_COMPATIBILITY
+
 } // end namespace Dune 
 #endif

@@ -10,6 +10,8 @@
 
 namespace Dune
 {
+  namespace Fem 
+  {
 
   template< class DFTraits >
   class DiscreteFunctionDefault;
@@ -193,6 +195,8 @@ namespace Dune
       return LocalFunctionType( entity, *this );
     }
   };
+  
+  } // end namespace Fem
 
 } // end namespace Dune
 #endif

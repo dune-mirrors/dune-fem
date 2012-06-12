@@ -7,6 +7,8 @@
 
 namespace Dune
 {
+  namespace Fem
+  {
   
   // StandardLocalFunctionImpl
   // -------------------------
@@ -294,6 +296,8 @@ namespace Dune
   {
     return numDofs_;
   }
+
+  } // namespace Fem
 
 } // namespace Dune
 

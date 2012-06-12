@@ -7,7 +7,9 @@
 
 namespace Dune
 {
-  
+  namespace Fem
+  {
+
   /** \class GenericLocalFunctionImpl
    *  \brief implementation of a local function based on a generic
    *  localfunction space
@@ -141,7 +143,9 @@ namespace Dune
     DiscreteFunctionType &discreteFunction_;
   };
   
-}
+  } // namespace Fem 
+
+} // namespace Dune 
 
 #include "genericlocalfunction_inline.hh"
 

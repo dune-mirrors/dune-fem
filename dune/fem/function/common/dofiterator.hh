@@ -5,6 +5,8 @@
 
 namespace Dune
 {
+  namespace Fem
+  {
 
   /** \class   DofIteratorInterface
    *  \ingroup DofManager
@@ -286,6 +288,8 @@ namespace Dune
       return it_.vector();
     }
   }; // end class DofIteratorDefault
+
+  } // end namespace Fem
 
 } // end namespace Dune 
 
