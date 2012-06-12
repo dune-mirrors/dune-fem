@@ -113,6 +113,12 @@ namespace Dune
     struct AssembledOperator
       : public LinearOperator<DomainFunction, RangeFunction>
     {
+      /** \deprecated
+       *   \brief assembled = 
+       *          - \b true:  a method systemMatrix is present to 
+       *                      access a matrix struct of type MatrixObject
+       *          - \b false (default) no method systemMatrix, i.e. no matrix object  */
+      static const bool assembled DUNE_DEPRECATED_MSG("Please derive from Dune:Fem::AssembledOperator") = true;
     };
 	      
   } // end namespace Dune::Fem
