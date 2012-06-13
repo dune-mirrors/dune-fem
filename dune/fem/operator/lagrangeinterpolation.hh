@@ -146,7 +146,7 @@ namespace Dune
 
         const DiscreteFunctionSpaceType &dfSpace = discreteFunction.space();
         GridFunctionAdapterType dfAdapter( "function", function, dfSpace.gridPart() );
-        LagrangeInterpolation<GridFunctionAdapterType, DiscreteFunction>::
+        LagrangeInterpolation<F, DiscreteFunction>::
           interpolateDiscreteFunction( dfAdapter, discreteFunction );
       }
     };
