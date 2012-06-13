@@ -193,7 +193,7 @@ namespace Fem
         if( mySize_ <= 1 ) return;
 
         // take time 
-        Timer sendTimer ;
+        Dune::Timer sendTimer ;
 
 #ifdef ALUGRID_HAS_NONBLOCKING_COMM
         // get non-blocking exchange object from mpAccess including message tag
@@ -233,7 +233,7 @@ namespace Fem
         const int nLinks = buffer_.size();
 
         // take time 
-        Timer recvTimer ;
+        Dune::Timer recvTimer ;
 
 #ifdef ALUGRID_HAS_NONBLOCKING_COMM
         // overwrite buffer (other method not working correctly)
@@ -413,7 +413,7 @@ namespace Fem
       if( sequence_ != space_.sequence() )
       {
         // take timer needed for rebuild 
-        Timer buildTime;
+        Dune::Timer buildTime;
 
         buildMaps();
         sequence_ = space_.sequence();
