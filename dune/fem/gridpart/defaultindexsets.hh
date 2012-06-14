@@ -23,6 +23,9 @@
 namespace Dune
 {
 
+  namespace Fem 
+  {
+
   //! Wraps the interface methods of indexsets and adds the addiotnal needed
   //! functions 
   template< class IndexSetImp >
@@ -239,6 +242,8 @@ namespace Dune
     //! return type (for Grape In/Output)
     static int type() { return myType; }
   };
+
+  } // namespace Fem
 
 } // namespace Dune 
 

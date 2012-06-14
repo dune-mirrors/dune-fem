@@ -15,6 +15,8 @@
 
 namespace Dune
 {
+  namespace Fem
+  {
 
   /////////////////////////////////////////////////////////////////////////
   //
@@ -438,11 +440,8 @@ namespace Dune
 
 
 
-  // Capabilities
-  // ------------
-
-  namespace Fem
-  {
+    // Capabilities
+    // ------------
 
     namespace GridPartCapabilities
     {
@@ -641,6 +640,14 @@ namespace Dune
     } // end namespace GridPartCapabilities
 
   } // end namespace Fem
+
+  // #if DUNE_FEM_COMPATIBILITY  
+  // put this in next version 1.4 
+
+  using Fem :: AdaptiveLeafGridPart ;
+  using Fem :: DGAdaptiveLeafGridPart ;
+  using Fem :: IntersectionAdaptiveLeafGridPart ;
+  // #endif // DUNE_FEM_COMPATIBILITY
 
 } // end namespace Dune
 

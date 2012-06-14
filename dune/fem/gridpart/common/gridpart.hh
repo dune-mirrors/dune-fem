@@ -17,6 +17,8 @@
 
 namespace Dune
 {
+  namespace Fem
+  {
 
   /** \addtogroup GridPart
    *
@@ -350,9 +352,6 @@ Dune::Fem::GridPartCapabilities::isConforming< GridPartType >::v
 #undef CHECK_INTERFACE_IMPLEMENTATION
 #undef CHECK_AND_CALL_INTERFACE_IMPLEMENTATION
   /** @} */
-
-  namespace Fem
-  {
 
     template< class Entity >
     struct GridEntityAccess;
