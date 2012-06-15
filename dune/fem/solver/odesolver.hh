@@ -342,7 +342,7 @@ public:
  
   //! solve system 
   void solve( DestinationType& U0, 
-                     MonitorType& monitor )
+              MonitorType& monitor )
   {
     // no nonlinear system to solve for time step update
     monitor.reset() ;
@@ -375,7 +375,8 @@ public:
     if(! convergence ) 
     {
       timeProvider_.invalidateTimeStep();
-      std::cerr << "No Convergence of ExplicitOdeSolver! \n";
+      if( comm_.id() == 0 )
+        std::cerr << "No Convergence of ExplicitOdeSolver! \n";
     }
   }
 
@@ -500,8 +501,11 @@ protected:
       case 2: odeSolver = new PARDG::Gauss2(comm_, impl_); break;
       case 3: odeSolver = new PARDG::DIRK3 (comm_, impl_); break;
       case 4: odeSolver = new PARDG::DIRK34 (comm_, impl_); break;
-      default : std::cerr << "Runge-Kutta method of this order not implemented" 
-                          << std::endl;
+      default : if( comm_.id() == 0 )
+                {
+                  std::cerr << "Runge-Kutta method of this order not implemented" 
+                            << std::endl;
+                }
                 abort();
     }
 
@@ -715,8 +719,11 @@ protected:
               //odeSolver = new PARDG::IMEX_ARK34       (comm_, impl_, expl_); break;
       case 4: odeSolver = new PARDG::IERK45           (comm_, impl_, expl_); break;
               //odeSolver = new PARDG::IMEX_ARK46       (comm_, impl_, expl_); break;
-      default : std::cerr << "Runge-Kutta method of this order not implemented" 
-                          << std::endl;
+      default : if( comm_.id() == 0 ) 
+                {
+                  std::cerr << "Runge-Kutta method of this order not implemented" 
+                            << std::endl;
+                }
                 abort();
     }
 
