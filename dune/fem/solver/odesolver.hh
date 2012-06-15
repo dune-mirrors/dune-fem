@@ -397,9 +397,12 @@ protected:
       case 3  : odeSolver = new PARDG::ExplicitTVD3 (comm_, expl_); break;
       case 4  : odeSolver = new PARDG::ExplicitRK4  (comm_, expl_); break;
       default : odeSolver = new PARDG::ExplicitBulirschStoer(comm_, expl_, 7);
-                std::cerr << "Runge-Kutta method of this order not implemented.\n" 
-                          << "Using 7-stage Bulirsch-Stoer scheme.\n"
-                          << std::endl;
+                if( comm_.id() == 0 )
+                {
+                  std::cerr << "Runge-Kutta method of this order not implemented.\n" 
+                            << "Using 7-stage Bulirsch-Stoer scheme.\n"
+                            << std::endl;
+                }
     }
 
     if( verbose_ )
