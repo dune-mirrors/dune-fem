@@ -38,19 +38,22 @@ namespace Dune
     {
       MPIHelper *&helper = instance().helper_;
       CollectiveCommunication *&comm = instance().comm_;
+
+      // the following initalization is only enabled for 
+      // MPI-thread parallel programs 
 #if HAVE_MPI && MPI_2 
 #ifdef USE_SMP_PARALLEL 
       int provided;
       // use MPI_Init_thread for hybrid parallel programs 
-      int is_initialized = MPI_Init_thread(&argc, &argv, MPI_THREAD_SINGLE, &provided );
+      int is_initialized = MPI_Init_thread(&argc, &argv, MPI_THREAD_FUNNELED, &provided );
 
       if( is_initialized != MPI_SUCCESS ) 
         DUNE_THROW(InvalidStateException,"MPI_Init_thread failed!");
 
-      if( provided != MPI_THREAD_SINGLE ) 
-        DUNE_THROW(InvalidStateException,"Wrong MPI mode initialized " << provided );
-      /*
 #if not defined NDEBUG && defined DUNE_DEVEL_MODE
+      // for OpenMPI provided seems to be MPI_THREAD_SINGLE 
+      // but the bybrid version still works. On BlueGene systems 
+      // the MPI_THREAD_FUNNELED is really needed 
       if( provided != MPI_THREAD_FUNNELED )
       {
         if( provided == MPI_THREAD_SINGLE )
@@ -59,7 +62,6 @@ namespace Dune
           dwarn << "WARNING: MPI thread support = " << provided << " != MPI_THREAD_FUNNELED " << MPI_THREAD_FUNNELED << std::endl;
       }
 #endif // end NDEBUG 
-      */
 
 #endif // end USE_SMP_PARALLEL
 #endif // end HAVE_MPI && MPI_2       
@@ -67,6 +69,7 @@ namespace Dune
       if( (helper != 0) || (comm != 0) )
         DUNE_THROW( InvalidStateException, "MPIManager has already been initialized." );
 
+      // if not already called, this will call MPI_Init 
       helper = &MPIHelper::instance( argc, argv );
       comm = new CollectiveCommunication( helper->getCommunicator() );
     }
