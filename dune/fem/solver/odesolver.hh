@@ -623,11 +623,7 @@ template<class DestinationImp>
 class SemiImplicitOdeSolver : 
   public ImplicitOdeSolver< DestinationImp >
 {
-  typedef ImplicitOdeSolver< DestinationImp > BaseType;
-
-private:
-  const int explOrder_;
-
+  typedef ImplicitOdeSolver< DestinationImp > BaseType; 
 protected:
   using BaseType :: order_;
   using BaseType :: comm_;
@@ -649,8 +645,7 @@ public:
                         Dune::TimeProviderBase& tp,
                         const int order, const bool verbose ) DUNE_DEPRECATED :
     BaseType( implOp, tp, order, ODEParameters() ),
-    expl_( explOp ),
-    explOrder_( order )
+    expl_( explOp )
   {
   }
 
@@ -660,20 +655,7 @@ public:
                         const int order,
                         const ODEParameters& parameter=ODEParameters()) :
     BaseType( implOp, tp, order, parameter ),
-    expl_( explOp ),
-    explOrder_( order )
-  {
-  }
-
-  SemiImplicitOdeSolver(OperatorType& explOp, 
-                        OperatorType& implOp, 
-                        Dune::TimeProviderBase& tp,
-                        const int explOrder,
-                        const int implOrder,
-                        const ODEParameters& parameter=ODEParameters()) :
-    BaseType( implOp, tp, implOrder, parameter ),
-    expl_( explOp ),
-    explOrder_( explOrder )
+    expl_( explOp )
   {
   }
 
@@ -711,7 +693,7 @@ protected:
     assert( linsolver_ );
 
     PARDG::SIRK* odeSolver = 0;
-    switch ( explOrder_ ) 
+    switch ( order_ ) 
     {
       case 1: odeSolver = new PARDG::SemiImplicitEuler(comm_, impl_, expl_); break;
       case 2: odeSolver = new PARDG::IMEX_SSP222      (comm_, impl_, expl_); break;
