@@ -44,7 +44,7 @@ struct BlockVectorDiscreteFunctionTraits
 #if HAVE_DUNE_ISTL
   typedef BlockVector< DofBlockType > DofStorageType;
 #else 
-  typedef MutableArray < DofBlockType > DofStorageType;
+  typedef Fem :: MutableArray < DofBlockType > DofStorageType;
 #endif
 
   typedef DiscreteFunctionSpaceImp DiscreteFunctionSpaceType;
@@ -142,11 +142,11 @@ protected:
 //**********************************************************************
 template< class DiscreteFunctionSpaceImp >
 class BlockVectorDiscreteFunction 
-: public DiscreteFunctionDefault
+: public Fem::DiscreteFunctionDefault
   < BlockVectorDiscreteFunctionTraits< DiscreteFunctionSpaceImp > > 
 {
   typedef BlockVectorDiscreteFunction< DiscreteFunctionSpaceImp > ThisType;
-  typedef DiscreteFunctionDefault
+  typedef Fem::DiscreteFunctionDefault
     < BlockVectorDiscreteFunctionTraits< DiscreteFunctionSpaceImp > >
     BaseType;
 
@@ -317,7 +317,7 @@ private:
   MapperType& mapper_;
 
   // DofStorage that manages the memory for the dofs of this function
-  DofStorageInterface* memObject_;
+  Fem::DofStorageInterface* memObject_;
 
   //! the dofs stored in an array
   DofStorageType &dofVec_;
@@ -444,22 +444,26 @@ private:
   mutable size_t idx_;
 
 }; // end DofIteratorBlockVectorDiscreteFunction 
-template <class DiscreteFunctionSpaceImp>
-class ManagedDiscreteFunction<BlockVectorDiscreteFunction<DiscreteFunctionSpaceImp> > :
-public BlockVectorDiscreteFunction<DiscreteFunctionSpaceImp> {
-  typedef BlockVectorDiscreteFunction<DiscreteFunctionSpaceImp> BaseType;
-public:
-  typedef DiscreteFunctionSpaceImp DiscreteFunctionSpaceType;
-  typedef ManagedDiscreteFunction<BaseType> ThisType;
-  //! \brief Constructor makes Discrete Function  
-  ManagedDiscreteFunction ( const DiscreteFunctionSpaceType & f ) : BaseType(f) {}
-  //! \brief Constructor makes Discrete Function with name 
-  ManagedDiscreteFunction ( const std::string name, const DiscreteFunctionSpaceType & f ) : BaseType(name,f) {}
-  //! \brief Constructor makes Discrete Function  
-  ManagedDiscreteFunction ( const std::string name, const DiscreteFunctionSpaceType & f, const typename BaseType::DofStorageType & data ) : BaseType(name,f,data) {}
-  //! \brief Constructor makes Discrete Function from copy 
-  ManagedDiscreteFunction (const ThisType & df) : BaseType(df) {}
-};
+
+namespace Fem
+{
+  template <class DiscreteFunctionSpaceImp>
+  class ManagedDiscreteFunction<BlockVectorDiscreteFunction<DiscreteFunctionSpaceImp> > :
+  public BlockVectorDiscreteFunction<DiscreteFunctionSpaceImp> {
+    typedef BlockVectorDiscreteFunction<DiscreteFunctionSpaceImp> BaseType;
+  public:
+    typedef DiscreteFunctionSpaceImp DiscreteFunctionSpaceType;
+    typedef ManagedDiscreteFunction<BaseType> ThisType;
+    //! \brief Constructor makes Discrete Function  
+    ManagedDiscreteFunction ( const DiscreteFunctionSpaceType & f ) : BaseType(f) {}
+    //! \brief Constructor makes Discrete Function with name 
+    ManagedDiscreteFunction ( const std::string name, const DiscreteFunctionSpaceType & f ) : BaseType(name,f) {}
+    //! \brief Constructor makes Discrete Function  
+    ManagedDiscreteFunction ( const std::string name, const DiscreteFunctionSpaceType & f, const typename BaseType::DofStorageType & data ) : BaseType(name,f,data) {}
+    //! \brief Constructor makes Discrete Function from copy 
+    ManagedDiscreteFunction (const ThisType & df) : BaseType(df) {}
+  };
+} // end namespace Fem
 
 } // end namespace Dune
 

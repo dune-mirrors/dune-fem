@@ -18,6 +18,9 @@
 
 namespace Dune {
 
+namespace Fem 
+{
+
 /*! @addtogroup PassHyp
  *  ** @{
 */
@@ -427,7 +430,7 @@ protected:
   //! check whether all geometry mappings are affine 
   bool checkAffinity() const 
   {
-    return GeometryAffinityCheck<VolumeQuadratureType> :: 
+    return Fem::GeometryAffinityCheck<VolumeQuadratureType> :: 
       checkAffinity( spc_.begin(), spc_.end(), volumeQuadOrd_);
   }
 
@@ -620,5 +623,16 @@ public:
 };
 
 //! @}  
+
+} // end namespace Fem  
+
+// #if DUNE_FEM_COMPATIBILITY  
+// put this in next version 1.4 
+
+using Fem :: LocalDGMassMatrix ;
+using Fem :: LocalMassMatrix ;
+
+// #endif // DUNE_FEM_COMPATIBILITY
+
 } // end namespace Dune 
 #endif

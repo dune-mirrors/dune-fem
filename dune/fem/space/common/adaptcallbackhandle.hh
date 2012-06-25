@@ -13,6 +13,8 @@
 namespace Dune
 {
 
+  namespace Fem {
+
   // RestrictProlongWrapper
   // ----------------------
 
@@ -130,6 +132,8 @@ namespace Dune
       }
     }
   };
+
+  } // end namespace Fem 
 
 } // end namespace Dune 
 

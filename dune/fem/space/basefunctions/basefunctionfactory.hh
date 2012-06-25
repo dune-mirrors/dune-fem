@@ -12,6 +12,9 @@
 namespace Dune
 {
 
+  namespace Fem 
+  {
+
   //! \brief Interface class for the generation of base functions.
   //! For every concrete set of base functions, derive your own concrete
   //! base function factory.
@@ -41,6 +44,8 @@ namespace Dune
   private:
     GeometryType geo_;
   };
+
+  } // namespace Fem 
 
 } // namespace Dune
 

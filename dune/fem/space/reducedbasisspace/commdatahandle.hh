@@ -7,6 +7,8 @@
 
 namespace Dune
 {
+  namespace Fem
+  {
 
   template< class DiscreteFunction, class Operation >
   class ReducedBasisCommDataHandle
@@ -74,7 +76,9 @@ namespace Dune
       return 0;
     }
   };
+
+  } // namespace Fem
   
-}
+} // namespace Dune 
 
 #endif

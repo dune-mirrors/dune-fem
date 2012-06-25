@@ -12,7 +12,6 @@ dgspacedir =  $(includedir)/dune/fem/space/dgspace
 dgspace_HEADERS = dgadaptiveleafgridpart.hh \
                   dgadaptiveleafindexset.hh \
                   dgadaptmanager.hh \
-                  dgadaptoperator.hh \
                   dgbasefunctions.hh \
                   dgspace.hh \
                   legendredgbasefunctions.hh \

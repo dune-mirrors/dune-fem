@@ -29,6 +29,9 @@
 namespace Dune
 {
   
+namespace Fem 
+{
+
 /** @addtogroup Communication Communication 
     @{
 **/
@@ -1286,6 +1289,8 @@ namespace Dune
   };
 #endif 
   //@}
+ 
+} // end namespace Fem
   
 } // end namespace Dune 
 #endif

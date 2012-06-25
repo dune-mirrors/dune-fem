@@ -5,6 +5,8 @@
 
 namespace Dune
 {
+  namespace Fem
+  {
 
   /** \addtogroup BaseFunction
    *  \{
@@ -232,6 +234,8 @@ namespace Dune
   }; // end SimpleBaseFunctionProxy 
 
   /** \} */
+
+  } // namespace Fem
 
 } // namespace Dune
 

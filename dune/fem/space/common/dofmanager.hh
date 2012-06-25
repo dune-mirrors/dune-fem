@@ -34,6 +34,7 @@
 namespace Dune
 {
 
+namespace Fem {  
 /** @addtogroup DofManager  
 
     @{
@@ -1544,6 +1545,14 @@ readIndexSets(const std::string& filename , int timestep )
     }
   };
 
+} // namespace Fem 
+
+// #if DUNE_FEM_COMPATIBILITY  
+// put this in next version 1.4 
+
+using Fem :: DofManager ;
+
+// #endif // DUNE_FEM_COMPATIBILITY
 
 } // end namespace Dune 
 

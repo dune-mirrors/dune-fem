@@ -98,7 +98,7 @@ namespace Dune
       if( preconditioning && LinearOperator :: assembled ) 
       {
         // create diagonal preconditioner 
-        precondObj_ = new DiagonalPreconditioner< DomainFunctionType, LinearOperator >( linearOp );
+        precondObj_ = new Fem::DiagonalPreconditioner< DomainFunctionType, LinearOperator >( linearOp );
         preconditioner_ = precondObj_;
       }
     }

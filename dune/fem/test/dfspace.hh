@@ -53,7 +53,7 @@ namespace Dune
 #endif
 
 #if defined USE_COMBINEDSPACE
-    typedef CombinedSpace< SingleDiscreteFunctionSpaceType, dimRange, policy >
+    typedef Fem::CombinedSpace< SingleDiscreteFunctionSpaceType, dimRange, policy >
       DiscreteFunctionSpaceType;
 #elif defined USE_FVSPACE
     typedef FiniteVolumeSpace< FunctionSpaceType, GridPartType, 0 >

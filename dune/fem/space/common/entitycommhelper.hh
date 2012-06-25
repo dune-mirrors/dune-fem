@@ -6,6 +6,9 @@
 namespace Dune
 {
 
+namespace Fem
+{
+
   template< InterfaceType iftype >
   struct EntityCommHelper;
 
@@ -90,6 +93,8 @@ namespace Dune
     }
   };
 
-}
+} // end namespace Fem
+
+} // end namespace Dune
 
 #endif // #ifndef DUNE_FEM_ENTITYCOMMHELPER_HH

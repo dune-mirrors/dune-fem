@@ -6,6 +6,9 @@
 namespace Dune
 {
 
+  namespace Fem
+  {
+
   // ReducedBasisSpace
   // -----------------
 
@@ -237,6 +240,8 @@ namespace Dune
     return in;
   }
   
-}
+  } // namespace Fem
+
+} // namespace Dune
 
 #endif

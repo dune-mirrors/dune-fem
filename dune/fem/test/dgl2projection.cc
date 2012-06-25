@@ -86,7 +86,7 @@ typedef Dune::Fem::BlockVectorDiscreteFunction< DiscreteFunctionSpaceType, Block
 #elif defined USE_COMBINEDFUNCTION
 typedef AdaptiveDiscreteFunction< DiscreteFunctionSpaceType >
   ContainedDiscreteFunctionType;
-typedef Dune::CombinedDiscreteFunction< ContainedDiscreteFunctionType, DIMRANGE >
+typedef CombinedDiscreteFunction< ContainedDiscreteFunctionType, DIMRANGE >
   DiscreteFunctionType;
 #else
 typedef AdaptiveDiscreteFunction< DiscreteFunctionSpaceType >
@@ -96,20 +96,6 @@ typedef AdaptiveDiscreteFunction< DiscreteFunctionSpaceType >
 typedef ExactSolution< FunctionSpaceType > ExactSolutionType;
 typedef FunctionSpace< double, double, GridSelector::dimworld, 1 > WeightFunctionSpaceType;
 typedef WeightFunction< WeightFunctionSpaceType > WeightFunctionType;
-
-// dummy class for easier use of L2 Projection 
-template< class Domain, class Range >
-class DGL2Projection : 
-  public L2Projection< typename Range :: DomainFieldType ,
-                       typename Range :: RangeFieldType , 
-                       Domain , Range > 
-{
-  typedef L2Projection< typename Range :: DomainFieldType ,
-                       typename Range :: RangeFieldType , 
-                       Domain , Range >  BaseType; 
-public:
-  DGL2Projection() : BaseType() {} 
-};
 
 // main program 
 int main(int argc, char ** argv) 
@@ -139,7 +125,7 @@ int main(int argc, char ** argv)
     solution.clear();
   
     // perform the L2Projection
-    DGL2Projection< ExactSolutionType, DiscreteFunctionType > dgl2; 
+    Fem :: L2Projection< ExactSolutionType, DiscreteFunctionType > dgl2; 
     dgl2( exactSolution, solution );
 
     LPNorm< GridPartType > lpnorm( gridPart, 2.0 );

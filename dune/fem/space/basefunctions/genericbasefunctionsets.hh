@@ -9,6 +9,9 @@
 namespace Dune
 {
   
+  namespace Fem 
+  {
+
   // Internal Forward Declarations
   // -----------------------------
 
@@ -141,6 +144,8 @@ namespace Dune
     GeometryType geometryType_;
   };
 
-}
+  } // end namespace Fem
+
+} // end namespace Dune
 
 #endif // #ifndef DUNE_GENERICBASEFUNCTIONSETS_HH

@@ -58,8 +58,8 @@ namespace Fem {
     typedef typename DiscreteFunctionSpaceType::DomainType                      DomainType;
     typedef typename DiscreteFunctionSpaceType::RangeType                       RangeType;
     typedef BlockVectorDiscreteFunction< DiscreteFunctionSpace, BlockVector >   DiscreteFunctionType;
-    typedef Dune::StandardLocalFunctionFactory< ThisType >                      LocalFunctionFactoryType;
-    typedef Dune::LocalFunctionStack< LocalFunctionFactoryType >                LocalFunctionStorageType;
+    typedef StandardLocalFunctionFactory< ThisType >                      LocalFunctionFactoryType;
+    typedef LocalFunctionStack< LocalFunctionFactoryType >                LocalFunctionStorageType;
     typedef typename LocalFunctionStorageType::LocalFunctionType                LocalFunctionType;
     typedef typename DofVectorType::IteratorType                                DofIteratorType;
     typedef typename DofVectorType::ConstIteratorType                           ConstDofIteratorType;
@@ -79,7 +79,7 @@ namespace Fem {
   */
   template< typename DiscreteFunctionSpace, typename BlockVector >
   class BlockVectorDiscreteFunction
-  : public ::Dune::DiscreteFunctionInterface< BlockVectorDiscreteFunctionTraits< DiscreteFunctionSpace, BlockVector > >,
+  : public DiscreteFunctionInterface< BlockVectorDiscreteFunctionTraits< DiscreteFunctionSpace, BlockVector > >,
     public IsBlockVectorDiscreteFunction
   {
 
@@ -314,7 +314,7 @@ namespace Fem {
        dofVector().clear();
     }
 
-    /** \copydoc Dune::DiscreteFunctionInterface::communicate() */
+    /** \copydoc Dune::Fem::DiscreteFunctionInterface::communicate() */
     void communicate()
     {
       // Works only in singleThreadMode currently
@@ -322,7 +322,7 @@ namespace Fem {
       space().communicate( *this );
     }
   
-    /** \copydoc Dune::DiscreteFunctionInterface::dataHandle */
+    /** \copydoc Dune::Fem::DiscreteFunctionInterface::dataHandle */
     template< class Operation >
     typename DiscreteFunctionSpaceType :: template CommDataHandle< ThisType, Operation > :: Type 
     dataHandle ( const Operation *operation )
@@ -355,7 +355,7 @@ namespace Fem {
     DofIteratorType dend () { return dofVector().dend(); }
 
 
-    /** \copydoc Dune::DiscreteFunctionInterface::dofsValid */
+    /** \copydoc Dune::Fem::DiscreteFunctionInterface::dofsValid */
     bool dofsValid () const
     {
       // check for NaN or inf...
@@ -387,7 +387,7 @@ namespace Fem {
       return *memPair_.second;
     }
 
-    /** \copydoc Dune::DiscreteFunctionInterface::enableDofCompression()
+    /** \copydoc Dune::Fem::DiscreteFunctionInterface::enableDofCompression()
      */
     void enableDofCompression ()
     {
@@ -435,14 +435,14 @@ namespace Fem {
       DUNE_THROW( RangeError, "DiscreteFunctionDefault::evaluate: x is not within domain." );
     }
 
-    /** \copydoc Dune::DiscreteFunctionInterface::localFunction(const EntityType &entity) */
+    /** \copydoc Dune::Fem::DiscreteFunctionInterface::localFunction(const EntityType &entity) */
     template< class EntityType >
     LocalFunctionType localFunction ( const EntityType &entity )
     {
       return localFunctionStorage().localFunction( entity );
     }
 
-    /** \copydoc Dune::DiscreteFunctionInterface::localFunction(const EntityType &entity) const */
+    /** \copydoc Dune::Fem::DiscreteFunctionInterface::localFunction(const EntityType &entity) const */
     template< class EntityType >
     const LocalFunctionType localFunction ( const EntityType &entity ) const
     {
@@ -450,7 +450,7 @@ namespace Fem {
     }
 
 
-    /** \copydoc Dune::DiscreteFunctionInterface::name() const */
+    /** \copydoc Dune::Fem::DiscreteFunctionInterface::name() const */
     const std::string& name () const { return name_; }
 
     /** \brief Add another discrete function to this one
@@ -497,7 +497,7 @@ namespace Fem {
       return *this;
     }
 
-    /** \copydoc Dune::DiscreteFunctionInterface::read */
+    /** \copydoc Dune::Fem::DiscreteFunctionInterface::read */
     template< class StreamTraits >
     void read ( InStreamInterface< StreamTraits > &in )
     {
@@ -523,7 +523,7 @@ namespace Fem {
         in >> *it;
     }
 
-    /** \copydoc Dune::DiscreteFunctionInterface::read_xdr */
+    /** \copydoc Dune::Fem::DiscreteFunctionInterface::read_xdr */
     bool read_xdr ( const std :: string filename )
     {
       // TODO: do we want to implement this?
@@ -539,7 +539,7 @@ namespace Fem {
       }
     }
 
-    /** \copydoc Dune::DiscreteFunctionInterface::read_ascii */
+    /** \copydoc Dune::Fem::DiscreteFunctionInterface::read_ascii */
     bool read_ascii ( const std :: string filename )
     {
       // TODO: do we want to implement this?
@@ -556,7 +556,7 @@ namespace Fem {
     }
  
   
-    /** \copydoc Dune::DiscreteFunctionInterface::scalarProductDofs */
+    /** \copydoc Dune::Fem::DiscreteFunctionInterface::scalarProductDofs */
     DofType scalarProductDofs ( const ThisType &other ) const
     {
       return scalarProduct_.scalarProductDofs( *this, other );
@@ -568,10 +568,10 @@ namespace Fem {
      */
     SizeType size () const { return dofVector().size(); }
 
-    /** \copydoc Dune::DiscreteFunctionInterface::space() const */
+    /** \copydoc Dune::Fem::DiscreteFunctionInterface::space() const */
     const DiscreteFunctionSpaceType& space () const { return dfSpace_; }
 
-    /** \copydoc Dune::DiscreteFunctionInterface::write */
+    /** \copydoc Dune::Fem::DiscreteFunctionInterface::write */
     template< class StreamTraits >
     void write ( OutStreamInterface< StreamTraits > &out ) const
     {
@@ -592,7 +592,7 @@ namespace Fem {
         out << *it;
     }
 
-    /** \copydoc Dune::DiscreteFunctionInterface::write_ascii */
+    /** \copydoc Dune::Fem::DiscreteFunctionInterface::write_ascii */
     bool write_ascii ( const std :: string filename ) const
     {
       // TODO: do we want to implement this?
@@ -608,7 +608,7 @@ namespace Fem {
       }
     }
 
-    /** \copydoc Dune::DiscreteFunctionInterface::write_xdr */
+    /** \copydoc Dune::Fem::DiscreteFunctionInterface::write_xdr */
     bool write_xdr ( const std :: string filename ) const
     {
       // TODO: do we want to implement this here?

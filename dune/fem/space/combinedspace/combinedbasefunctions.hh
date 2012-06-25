@@ -8,6 +8,9 @@
 namespace Dune
 {
 
+  namespace Fem 
+  {
+
   // forward declaration
   template<class CombFunctSpace, class BaseSetType1, class BaseSetType2>
   class CombinedBaseFunctionSet;
@@ -432,5 +435,8 @@ namespace Dune
     baseSet2_.axpy(x, gjit, valueFactor2, jacobianFactor2, dofs2);
   }
 
-}
+  } // end namespace Fem
+
+} // end namespace Dune 
+
 #endif // header guards

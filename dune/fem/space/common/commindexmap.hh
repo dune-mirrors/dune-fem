@@ -11,6 +11,9 @@
 namespace Dune
 {
 
+namespace Fem
+{
+
   class CommunicationIndexMap
   {
   private:
@@ -136,6 +139,8 @@ namespace Dune
     
   };
 
-}
+} // end namespace Fem
+
+} // end namespace Dune
 
 #endif

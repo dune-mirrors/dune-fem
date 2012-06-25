@@ -8,6 +8,9 @@
 namespace Dune
 {
 
+  namespace Fem 
+  {
+
   template< class FS, class GP, int ord, template< class > class S >
   struct DefaultLocalRestrictProlong< LagrangeDiscreteFunctionSpace< FS, GP, ord, S > >
   : public LagrangeLocalRestrictProlong< typename GP::GridType, ord >
@@ -15,6 +18,8 @@ namespace Dune
     DefaultLocalRestrictProlong ( const LagrangeDiscreteFunctionSpace< FS, GP, ord, S > & )
     {}
   };
+
+  } // namespace Fem 
 
 } // namespace Dune
 

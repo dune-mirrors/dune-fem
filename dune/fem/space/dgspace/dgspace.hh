@@ -32,6 +32,9 @@
 namespace Dune
 {
 
+  namespace Fem 
+  {
+
   template< class FunctionSpace, unsigned int topologyId,
             unsigned int dim, unsigned int pOrder >
   class LagrangeBaseFunction;
@@ -598,6 +601,18 @@ namespace Dune
   };
 
   //@}
+
+  } // namespace Fem 
+
+  // #if DUNE_FEM_COMPATIBILITY  
+  // put this in next version 1.4 
+
+  using Fem :: DiscontinuousGalerkinSpace ;
+  using Fem :: LegendreDiscontinuousGalerkinSpace ;
+  using Fem :: LagrangeDiscontinuousGalerkinSpace ;
+
+  // #endif // DUNE_FEM_COMPATIBILITY
+  
 } // end namespace Dune 
 
 #include <dune/fem/space/dgspace/localdgmassmatrix.hh>

@@ -34,6 +34,8 @@ namespace Dune
   class UGGrid;
 #endif // #ifdef ENABLE_UG 
 
+  namespace Fem
+  {
 
 
 /** 
@@ -1317,5 +1319,7 @@ private:
   }
 };
 
-} // end namespace 
+} // end namespace Fem
+
+} // end namespace Dune
 #endif

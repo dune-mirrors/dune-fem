@@ -37,598 +37,610 @@
 namespace Dune
 {
 
+  namespace Fem 
+  {
+
   class TimeProviderBase;
 
-/** @addtogroup DiscFuncIO
-   The package dune-fem provides a number 
-   of possibilities to write data to disk either
-   for visualization and debugging purposes or
-   for checkpointing. 
-   Visualization output of discrete functions
-   is provided at the moment for
-   - GraPE   
-   - VTK, e.g., for paraview
-   - Matlab 
-   .
-   In addition data can be visualized in GraPE online during 
-   a simulation by setting the parameter
-   \b fem.io.grapedisplay to one.
-   With the exception of Matlab output
-   the Dune::DataWritter or the 
-   Dune::Checkpointer 
-   are used, the format is choosen through the parameter
-   \b fem.io.outputformat;
-   values are
-   - 0: write data in GraPE format which can also
-        be used for checkpointing - this format
-        is basicly lossless.
-   - 1: VTK cell data
-   - 2: VTK vertex data
-   .
-   Utilities for Matlab output are availabe
-   through the Dune::MatlabHelper.
-  
-   The \ref Dune::CheckPointer "checkpointing facility" 
-   writes both the grid state, a number of
-   discrete function, and other parameters
-   provided by the user. This information can
-   then be read from disc to continue the simulation
-   from the saved state. Using the \ref Visualization
-   "datadisp" programm the checkpoint files can also
-   be used for visualization purposes.
+  /** @addtogroup DiscFuncIO
+     The package dune-fem provides a number 
+     of possibilities to write data to disk either
+     for visualization and debugging purposes or
+     for checkpointing. 
+     Visualization output of discrete functions
+     is provided at the moment for
+     - GraPE   
+     - VTK, e.g., for paraview
+     - Matlab 
+     .
+     In addition data can be visualized in GraPE online during 
+     a simulation by setting the parameter
+     \b fem.io.grapedisplay to one.
+     With the exception of Matlab output
+     the Dune::DataWritter or the 
+     Dune::Checkpointer 
+     are used, the format is choosen through the parameter
+     \b fem.io.outputformat;
+     values are
+     - 0: write data in GraPE format which can also
+          be used for checkpointing - this format
+          is basicly lossless.
+     - 1: VTK cell data
+     - 2: VTK vertex data
+     .
+     Utilities for Matlab output are availabe
+     through the Dune::MatlabHelper.
+    
+     The \ref Dune::CheckPointer "checkpointing facility" 
+     writes both the grid state, a number of
+     discrete function, and other parameters
+     provided by the user. This information can
+     then be read from disc to continue the simulation
+     from the saved state. Using the \ref Visualization
+     "datadisp" programm the checkpoint files can also
+     be used for visualization purposes.
 
-   \remark The interface class for general output
-           of DiscreteFunctions to disc is given
-           by IOInterface. A general purpose data writter
-           is provided by the class Dune::DataWriter.
+     \remark The interface class for general output
+             of DiscreteFunctions to disc is given
+             by IOInterface. A general purpose data writter
+             is provided by the class Dune::DataWriter.
 
-   Since the GraPE output format is lossless
-   it is also used by the Dune::CheckPointer
-   class which also writes data to files
-   but alternates between to filenames -
-   while the Dune::DataWriter should be used
-   to store data for postprocessing, the
-   Dune::CheckPointer facility should be used 
-   to be able to restart computations after
-   a unexpected termination of a simulation.
+     Since the GraPE output format is lossless
+     it is also used by the Dune::CheckPointer
+     class which also writes data to files
+     but alternates between to filenames -
+     while the Dune::DataWriter should be used
+     to store data for postprocessing, the
+     Dune::CheckPointer facility should be used 
+     to be able to restart computations after
+     a unexpected termination of a simulation.
+     
+     Data files are generated in the directory
+     given by the \b fem.prefix parameter and
+     with the file prefix chosen via the parameter
+     \b fem.io.datafileprefix. The data to be
+     saved to disk is given to the Dune::DataWriter instance
+     through a reference to a Dune::Tuple of 
+     discrete function pointer.
    
-   Data files are generated in the directory
-   given by the \b fem.prefix parameter and
-   with the file prefix chosen via the parameter
-   \b fem.io.datafileprefix. The data to be
-   saved to disk is given to the Dune::DataWriter instance
-   through a reference to a Dune::Tuple of 
-   discrete function pointer.
- 
-   For a time series, data can be either written for a fixed
-   time step, or after a fixed number of iterations using the
-   parameters
-   \b fem.io.savestep or \b fem.io.savecount,
-   respectivly.
-   If a series of data is to be written without a real
-   time variable available, e.g., a series of refined grids,
-   startTime=0, endTime=100,
-   \b fem.io.savestep=-1 and \b fem.io.savecount=1
-   is a good choice to make; data is then written
-   using \b datawriter.write(step,step).
- 
-   The following code snippet demonstrated the
-   general usage of the Dune::DataWriter:
-   \code
-   typedef Dune::Tuple< DestinationType > IOTupleType;
-   IOTupleType dataTup ( &U );
-   typedef DataWriter< GridType, IOTupleType > DataWriterType;
-   DataWriterType dataWriter( grid,gridfilename,dataTup,startTime,endTime );
-   for (counter=0;time<endTime;counter++) {
-     ...
-     dataWriter.write(time,counter);
-   }
-   \endcode
+     For a time series, data can be either written for a fixed
+     time step, or after a fixed number of iterations using the
+     parameters
+     \b fem.io.savestep or \b fem.io.savecount,
+     respectivly.
+     If a series of data is to be written without a real
+     time variable available, e.g., a series of refined grids,
+     startTime=0, endTime=100,
+     \b fem.io.savestep=-1 and \b fem.io.savecount=1
+     is a good choice to make; data is then written
+     using \b datawriter.write(step,step).
+   
+     The following code snippet demonstrated the
+     general usage of the Dune::DataWriter:
+     \code
+     typedef Dune::Tuple< DestinationType > IOTupleType;
+     IOTupleType dataTup ( &U );
+     typedef DataWriter< GridType, IOTupleType > DataWriterType;
+     DataWriterType dataWriter( grid,gridfilename,dataTup,startTime,endTime );
+     for (counter=0;time<endTime;counter++) {
+       ...
+       dataWriter.write(time,counter);
+     }
+     \endcode
 
-    \femparam{fem.prefix, path used for all file output, ./}
-    \femparam{fem.io.datafileprefix, prefix used for all data files}
-    \femparam{fem.io.outputformat, output format, 0} 
-              values are: 
-                   - 0 = GRAPE (lossless format), 
-                   - 1 = VTK, 
-                   - 2 = VTK vertex data, 
-                   - 3 = gnuplot
-                   .
-    \femparam{fem.io.grapedisplay, use grape for online visualization; default is 0 (no)}
-    \femparam{fem.io.savestep, interval for writting data files}
-     use value <0 to deativate
-    \femparam{fem.io.savecount, number of time steps between writting
-                                file}
-    use value <0 to deactivate
-**/
+      \femparam{fem.prefix, path used for all file output, ./}
+      \femparam{fem.io.datafileprefix, prefix used for all data files}
+      \femparam{fem.io.outputformat, output format, 0} 
+                values are: 
+                     - 0 = GRAPE (lossless format), 
+                     - 1 = VTK, 
+                     - 2 = VTK vertex data, 
+                     - 3 = gnuplot
+                     .
+      \femparam{fem.io.grapedisplay, use grape for online visualization; default is 0 (no)}
+      \femparam{fem.io.savestep, interval for writting data files}
+       use value <0 to deativate
+      \femparam{fem.io.savecount, number of time steps between writting
+                                  file}
+      use value <0 to deactivate
+  **/
 
 
-/** @ingroup DiscFuncIO
- \brief IOInterface to write data to hard disk 
- \interfaceclass
-*/ 
-class IOInterface {
+  /** @ingroup DiscFuncIO
+   \brief IOInterface to write data to hard disk 
+   \interfaceclass
+  */ 
+  class IOInterface {
 
-protected: 
-  //! default constructor 
-  IOInterface() {}
-  
-public: 
-  //! destructor 
-  virtual ~IOInterface () {}
-
-  /** \brief write data with a given sequence stamp
-      \param sequenceStamp stamp for the data set 
-  */
-  virtual void writeData ( double sequenceStamp ) const = 0;
-
-  /** \brief write given data to disc, evaluates parameter savecount and savestep
-      \param tp  time provider for time and step   
-  */
-  virtual void write( const TimeProviderBase& tp ) const = 0;
-
-  /** \brief write given data to disc, evaluates parameter savecount
-  */
-  virtual void write() const = 0;
-
-  //! return FEM key for macro grid reading 
-  static std::string defaultGridKey( const int dimension , const bool  check = true )
-  {
-    const std::string oldGridKey( "fem.io.macroGridFile" );
+  protected: 
+    //! default constructor 
+    IOInterface() {}
     
-    std::ostringstream gridKeyStream;
-    gridKeyStream << oldGridKey << "_" << dimension << "d";
-    const std::string newGridKey( gridKeyStream.str() );
+  public: 
+    //! destructor 
+    virtual ~IOInterface () {}
 
-    // check for old parameter 
-    if( Parameter::exists( oldGridKey ) )
+    /** \brief write data with a given sequence stamp
+        \param sequenceStamp stamp for the data set 
+    */
+    virtual void writeData ( double sequenceStamp ) const = 0;
+
+    /** \brief write given data to disc, evaluates parameter savecount and savestep
+        \param tp  time provider for time and step   
+    */
+    virtual void write( const TimeProviderBase& tp ) const = 0;
+
+    /** \brief write given data to disc, evaluates parameter savecount
+    */
+    virtual void write() const = 0;
+
+    //! return FEM key for macro grid reading 
+    static std::string defaultGridKey( const int dimension , const bool  check = true )
     {
-      if( Parameter::exists( newGridKey ) )
-      {
-        std::cerr << "WARNING: ignoring `" << oldGridKey << "' because `"
-                  << newGridKey << "' was also found in parameter file." << std::endl;
-        return newGridKey;
-      }
-      else
-      {
-        std::cerr << "WARNING: change `" << oldGridKey << "' to `"  << newGridKey
-                  << "' in parameter file." << std::endl;
-        return oldGridKey;
-      }
-    }
-
-    // check for parameter with dimension 
-    if( check && !Parameter::exists( newGridKey ) )
-    {
-      std::cerr << "ERROR: Parameter `" << newGridKey << "' not found." << std::endl;
-      DUNE_THROW( ParameterNotFound, "Parameter `" << newGridKey << "' not found." );
-    }
-    return newGridKey;
-  }
-
-  //! create given path in combination with rank 
-  static void createPath ( const std::string &path )
-  {
-    if( !createDirectory( path ) )
-      std::cerr << "Failed to create path `" << path << "'." << std::endl;
-  }
-  
-  //! create given path in combination with rank 
-  static std::string createPathName(const std::string& pathPref, int rank )
-  {
-    std::string path(pathPref);
-    
-    // add proc number to path 
-    {
-      path += "_";
-      std::stringstream rankDummy;
-      rankDummy << rank; 
-      path += rankDummy.str();
-    }
-    return path;
-  }
-  
-  //! standard path reading and creation method 
-  //! rank is added to output path 
-  static std::string readPath()
-  {
-    return Parameter::commonOutputPath();
-  }
-
-  //! standard path reading and creation method 
-  //! rank is added to output path 
-  static std::string readPath(const std::string& paramfile) DUNE_DEPRECATED
-  {
-    std::string path;
-
-    // read output path from parameter file 
-    if( readParameter(paramfile,"OutputPath",path) ) 
-    {
-      return path;
-    }
-    else 
-    {
-      std::cerr << "Couldn't read output path, exiting... " << std::endl;
-    }
-    // default path is current directory 
-    path = ".";
-    return path;
-  }
-  
-  /** \brief create global path for data output */
-  template <class CommunicatorType>
-  static void createGlobalPath(const CommunicatorType& comm,
-          const std::string& path) 
-  {
-    // only rank 0 creates global dir 
-    if( comm.rank() <= 0 )
-    {
-      // create directory 
-      if( !createDirectory( path ) )
-        std::cerr << "Failed to create path `" << path << "'." << std::endl;
-    }
-
-    // wait for all procs to arrive here 
-    comm.barrier ();
-  }
-
-  // copy path to filename and add a slash if necessary 
-  static std::string copyPathToFilename( const std::string& path ) 
-  {
-    // first proc creates directory 
-    std::string filename( path );
-
-    const char lastToken = filename.c_str()[ filename.size() - 1 ];
-    const char* slash = "/";
-    // add / if necessary 
-    if( lastToken != slash[0] )
-      filename += "/";
-
-    return filename;
-  }
-
-  // creates path and processor sub pathes 
-  template <class CommunicatorType>
-  static std::string createPath(const CommunicatorType& comm,
-          const std::string& pathPrefix, 
-          const std::string& dataPrefix,
-          const int step,
-          const bool alsoCreateRankPath = true )
-  {
-    // first proc creates directory 
-    std::string filename( copyPathToFilename( pathPrefix ));
-
-    filename += dataPrefix;
-    std::string path = genFilename("",filename,step);
-
-    // create global path 
-    createGlobalPath( comm, path );
-    
-    // also create path for each rank 
-    if( alsoCreateRankPath ) 
-    {
-      // append path with p for proc 
-      path += "/p";
-
-      // create path if not exists 
-      path = createPathName( path, comm.rank() );
+      const std::string oldGridKey( "fem.io.macroGridFile" );
       
-      // create path if not exits 
+      std::ostringstream gridKeyStream;
+      gridKeyStream << oldGridKey << "_" << dimension << "d";
+      const std::string newGridKey( gridKeyStream.str() );
+
+      // check for old parameter 
+      if( Parameter::exists( oldGridKey ) )
+      {
+        if( Parameter::exists( newGridKey ) )
+        {
+          std::cerr << "WARNING: ignoring `" << oldGridKey << "' because `"
+                    << newGridKey << "' was also found in parameter file." << std::endl;
+          return newGridKey;
+        }
+        else
+        {
+          std::cerr << "WARNING: change `" << oldGridKey << "' to `"  << newGridKey
+                    << "' in parameter file." << std::endl;
+          return oldGridKey;
+        }
+      }
+
+      // check for parameter with dimension 
+      if( check && !Parameter::exists( newGridKey ) )
+      {
+        std::cerr << "ERROR: Parameter `" << newGridKey << "' not found." << std::endl;
+        DUNE_THROW( ParameterNotFound, "Parameter `" << newGridKey << "' not found." );
+      }
+      return newGridKey;
+    }
+
+    //! create given path in combination with rank 
+    static void createPath ( const std::string &path )
+    {
       if( !createDirectory( path ) )
         std::cerr << "Failed to create path `" << path << "'." << std::endl;
     }
-    return path;
-  }
-  
-  // creates path and processor sub pathes 
-  static std::string createRecoverPath(
-          const std::string& pathPrefix, 
-          const int rank,
-          const std::string& dataPrefix,
-          const int step,
-          const bool alsoUseRankPath = true )
-  {
-    // first proc creates directory 
-    std::string filename( copyPathToFilename( pathPrefix ));
-
-    filename += dataPrefix;
-    std::string path = genFilename("",filename,step);
-
-    if( alsoUseRankPath ) 
+    
+    //! create given path in combination with rank 
+    static std::string createPathName(const std::string& pathPref, int rank )
     {
-      // append path with p for proc 
-      path += "/p";
-
-      // create proc dir 
-      return createPathName( path , rank );
-    }
-    else 
+      std::string path(pathPref);
+      
+      // add proc number to path 
+      {
+        path += "_";
+        std::stringstream rankDummy;
+        rankDummy << rank; 
+        path += rankDummy.str();
+      }
       return path;
-  }
-
-  //! if grid is structured grid, write macro file 
-  template <class GridImp>
-  static void writeMacroGrid(const GridImp& grid, 
-                             std::ostream& out,
-                             const std::string& macroname,
-                             const std::string& path, 
-                             const std::string& prefix,
-                             const bool writeSubFiles = false ) 
-  {
-    // do nothing if SaveParallelCartesianGrid is not specified 
-    if( ! SaveParallelCartesianGrid< GridImp > :: saveMacroGrid ) return ;
-
-    // create file descriptor 
-    std::ifstream gridin(macroname.c_str());
-    if( !gridin) 
-    {
-      std::cerr << "Couldn't open file `" << macroname << "' ! \n";
-      return ;
-    } 
-        
-    // read interval information of structured grid 
-    dgf::IntervalBlock interval(gridin);
-    if(!interval.isactive()) 
-    {
-      std::cerr<<"Did not find IntervalBlock in macro grid file `" << macroname << "' ! \n";
-      return;
     }
     
-    std::string filename(path);
-    filename += "/";
-    filename += prefix;
-    filename += "_grid";
-
-    saveCartesianGrid( grid, out, interval, filename, writeSubFiles ); 
-    return;
-  }
-
-  //! if grid is structured grid, write macro file 
-  template <class GridImp>
-  static void copyMacroGrid(const GridImp& g,
-                            const std::string& macroGrid,
-                            const std::string& orgPath,
-                            const std::string& destPath, 
-                            const std::string& prefix) 
-  {
-    // do nothing if SaveParallelCartesianGrid is not specified 
-    if( ! SaveParallelCartesianGrid< GridImp > :: saveMacroGrid ) return ;
-
-    if( macroGrid != "" )
+    //! standard path reading and creation method 
+    //! rank is added to output path 
+    static std::string readPath()
     {
-      std::string destFilename(destPath);
-      destFilename += "/";
-      destFilename += prefix;
-      destFilename += "_grid.macro";
+      return Parameter::commonOutputPath();
+    }
 
-      std::ofstream file( destFilename.c_str() );
-      if( file.is_open() )
-        file << macroGrid;
+    //! standard path reading and creation method 
+    //! rank is added to output path 
+    static std::string readPath(const std::string& paramfile) DUNE_DEPRECATED
+    {
+      std::string path;
+
+      // read output path from parameter file 
+      if( readParameter(paramfile,"OutputPath",path) ) 
+      {
+        return path;
+      }
       else 
       {
-        if( Parameter :: verbose () )
-          std::cerr << "Unable to open: '" << destFilename << "'." << std::endl;
+        std::cerr << "Couldn't read output path, exiting... " << std::endl;
+      }
+      // default path is current directory 
+      path = ".";
+      return path;
+    }
+    
+    /** \brief create global path for data output */
+    template <class CommunicatorType>
+    static void createGlobalPath(const CommunicatorType& comm,
+            const std::string& path) 
+    {
+      // only rank 0 creates global dir 
+      if( comm.rank() <= 0 )
+      {
+        // create directory 
+        if( !createDirectory( path ) )
+          std::cerr << "Failed to create path `" << path << "'." << std::endl;
+      }
+
+      // wait for all procs to arrive here 
+      comm.barrier ();
+    }
+
+    // copy path to filename and add a slash if necessary 
+    static std::string copyPathToFilename( const std::string& path ) 
+    {
+      // first proc creates directory 
+      std::string filename( path );
+
+      const char lastToken = filename.c_str()[ filename.size() - 1 ];
+      const char* slash = "/";
+      // add / if necessary 
+      if( lastToken != slash[0] )
+        filename += "/";
+
+      return filename;
+    }
+
+    // creates path and processor sub pathes 
+    template <class CommunicatorType>
+    static std::string createPath(const CommunicatorType& comm,
+            const std::string& pathPrefix, 
+            const std::string& dataPrefix,
+            const int step,
+            const bool alsoCreateRankPath = true )
+    {
+      // first proc creates directory 
+      std::string filename( copyPathToFilename( pathPrefix ));
+
+      filename += dataPrefix;
+      std::string path = genFilename("",filename,step);
+
+      // create global path 
+      createGlobalPath( comm, path );
+      
+      // also create path for each rank 
+      if( alsoCreateRankPath ) 
+      {
+        // append path with p for proc 
+        path += "/p";
+
+        // create path if not exists 
+        path = createPathName( path, comm.rank() );
+        
+        // create path if not exits 
+        if( !createDirectory( path ) )
+          std::cerr << "Failed to create path `" << path << "'." << std::endl;
+      }
+      return path;
+    }
+    
+    // creates path and processor sub pathes 
+    static std::string createRecoverPath(
+            const std::string& pathPrefix, 
+            const int rank,
+            const std::string& dataPrefix,
+            const int step,
+            const bool alsoUseRankPath = true )
+    {
+      // first proc creates directory 
+      std::string filename( copyPathToFilename( pathPrefix ));
+
+      filename += dataPrefix;
+      std::string path = genFilename("",filename,step);
+
+      if( alsoUseRankPath ) 
+      {
+        // append path with p for proc 
+        path += "/p";
+
+        // create proc dir 
+        return createPathName( path , rank );
+      }
+      else 
+        return path;
+    }
+
+    //! if grid is structured grid, write macro file 
+    template <class GridImp>
+    static void writeMacroGrid(const GridImp& grid, 
+                               std::ostream& out,
+                               const std::string& macroname,
+                               const std::string& path, 
+                               const std::string& prefix,
+                               const bool writeSubFiles = false ) 
+    {
+      // do nothing if SaveParallelCartesianGrid is not specified 
+      if( ! SaveParallelCartesianGrid< GridImp > :: saveMacroGrid ) return ;
+
+      // create file descriptor 
+      std::ifstream gridin(macroname.c_str());
+      if( !gridin) 
+      {
+        std::cerr << "Couldn't open file `" << macroname << "' ! \n";
+        return ;
+      } 
+          
+      // read interval information of structured grid 
+      dgf::IntervalBlock interval(gridin);
+      if(!interval.isactive()) 
+      {
+        std::cerr<<"Did not find IntervalBlock in macro grid file `" << macroname << "' ! \n";
+        return;
+      }
+      
+      std::string filename(path);
+      filename += "/";
+      filename += prefix;
+      filename += "_grid";
+
+      saveCartesianGrid( grid, out, interval, filename, writeSubFiles ); 
+      return;
+    }
+
+    //! if grid is structured grid, write macro file 
+    template <class GridImp>
+    static void copyMacroGrid(const GridImp& g,
+                              const std::string& macroGrid,
+                              const std::string& orgPath,
+                              const std::string& destPath, 
+                              const std::string& prefix) 
+    {
+      // do nothing if SaveParallelCartesianGrid is not specified 
+      if( ! SaveParallelCartesianGrid< GridImp > :: saveMacroGrid ) return ;
+
+      if( macroGrid != "" )
+      {
+        std::string destFilename(destPath);
+        destFilename += "/";
+        destFilename += prefix;
+        destFilename += "_grid.macro";
+
+        std::ofstream file( destFilename.c_str() );
+        if( file.is_open() )
+          file << macroGrid;
+        else 
+        {
+          if( Parameter :: verbose () )
+            std::cerr << "Unable to open: '" << destFilename << "'." << std::endl;
+        }
       }
     }
-  }
 
-protected:
-  //! create string containing rank 
-  static std::string strRank(const int rank)
-  {
-    std::stringstream tmp;
-    tmp << "." << rank;
-    return tmp.str();
-  }
-
-  template <class Grid> 
-  struct SaveParallelCartesianGrid
-  {
-    static const bool saveMacroGrid = false ;
-    typedef FieldVector<int, Grid::dimension> iTupel;
-
-    static void getCoordinates(const Grid&, const iTupel& , iTupel&, iTupel& ,iTupel& )
+  protected:
+    //! create string containing rank 
+    static std::string strRank(const int rank)
     {
-      DUNE_THROW(NotImplemented,"SaveParallelCartesianGrid not implemented for choosen GridType");
+      std::stringstream tmp;
+      tmp << "." << rank;
+      return tmp.str();
     }
-  };
 
-  template < int dim > 
-  struct SaveParallelCartesianGrid< YaspGrid< dim > >
-  {
-    static const bool saveMacroGrid = true  ;
-    typedef YaspGrid< dim >  Grid;
-    typedef FieldVector<int, dim> iTupel;
-
-    static void getCoordinates(const Grid& grid, const iTupel& anz, 
-                               iTupel& origin, iTupel& originInterior, 
-                               iTupel& lengthInterior )
+    template <class Grid> 
+    struct SaveParallelCartesianGrid
     {
+      static const bool saveMacroGrid = false ;
+      typedef FieldVector<int, Grid::dimension> iTupel;
+
+      static void getCoordinates(const Grid&, const iTupel& , iTupel&, iTupel& ,iTupel& )
+      {
+        DUNE_THROW(NotImplemented,"SaveParallelCartesianGrid not implemented for choosen GridType");
+      }
+    };
+
+    template < int dim > 
+    struct SaveParallelCartesianGrid< YaspGrid< dim > >
+    {
+      static const bool saveMacroGrid = true  ;
+      typedef YaspGrid< dim >  Grid;
+      typedef FieldVector<int, dim> iTupel;
+
+      static void getCoordinates(const Grid& grid, const iTupel& anz, 
+                                 iTupel& origin, iTupel& originInterior, 
+                                 iTupel& lengthInterior )
+      {
 #if HAVE_MPI
-      // Yasp only can do origin = 0
-      origin = 0;
+        // Yasp only can do origin = 0
+        origin = 0;
 
-      enum { tag = MultiYGrid< dim, double> ::tag };
-      YLoadBalance< dim > loadBalancer;
-      Torus< dim > torus( MPI_COMM_WORLD, tag, anz, &loadBalancer );
-      torus.partition( torus.rank(), origin, anz, originInterior, lengthInterior );
+        enum { tag = MultiYGrid< dim, double> ::tag };
+        YLoadBalance< dim > loadBalancer;
+        Torus< dim > torus( MPI_COMM_WORLD, tag, anz, &loadBalancer );
+        torus.partition( torus.rank(), origin, anz, originInterior, lengthInterior );
 #endif
-    }
-  };
+      }
+    };
 
 #if HAVE_DUNE_SPGRID
-  template < class ct, int dim, SPRefinementStrategy strategy , class Comm > 
-  struct SaveParallelCartesianGrid< SPGrid< ct, dim, strategy, Comm > >
-  {
-    static const bool saveMacroGrid = true  ;
-
-    typedef SPGrid< ct, dim, strategy, Comm > Grid;
-    typedef FieldVector<int, dim> iTupel;
-
-    static void getCoordinates(const Grid& grid, const iTupel& anz, 
-                               iTupel& origin, iTupel& originInterior, 
-                               iTupel& lengthInterior )
+    template < class ct, int dim, SPRefinementStrategy strategy , class Comm > 
+    struct SaveParallelCartesianGrid< SPGrid< ct, dim, strategy, Comm > >
     {
-#if HAVE_MPI
-      typedef Cartesian::MultiIndex< dim > MultiIndex ;
-      MultiIndex begin = grid.gridLevel( 0 ).localCube().begin();
-      MultiIndex end   = grid.gridLevel( 0 ).localCube().end();
-      for( int i=0; i<dim; ++i) 
+      static const bool saveMacroGrid = true  ;
+
+      typedef SPGrid< ct, dim, strategy, Comm > Grid;
+      typedef FieldVector<int, dim> iTupel;
+
+      static void getCoordinates(const Grid& grid, const iTupel& anz, 
+                                 iTupel& origin, iTupel& originInterior, 
+                                 iTupel& lengthInterior )
       {
-        originInterior[ i ] = begin[ i ];
-        lengthInterior[ i ] = end[ i ] - begin[ i ];
-      }
+#if HAVE_MPI
+        typedef Cartesian::MultiIndex< dim > MultiIndex ;
+        MultiIndex begin = grid.gridLevel( 0 ).localCube().begin();
+        MultiIndex end   = grid.gridLevel( 0 ).localCube().end();
+        for( int i=0; i<dim; ++i) 
+        {
+          originInterior[ i ] = begin[ i ];
+          lengthInterior[ i ] = end[ i ] - begin[ i ];
+        }
 #endif // #if HAVE_MPI
-    }
-  };
+      }
+    };
 #endif // #if HAVE_DUNE_SPGRID
 
-  //! write my partition as macro grid 
-  template <class GridImp>
-  static void saveCartesianGrid (const GridImp& grid,
-                                 std::ostream& out,
-                                 dgf::IntervalBlock& intervalBlock,
-                                 std::string filename,
-                                 const bool writeSubFiles )
-  {
-    enum { dimension = GridImp :: dimension };
-    const int rank = grid.comm().rank();
-
-    FieldVector<double,dimension> lang;
-    FieldVector<int,dimension>    anz;
-    FieldVector<double,dimension>  h;
-    FieldVector<int,dimension>    orig;
-    
-    if( intervalBlock.numIntervals() != 1 )
+    //! write my partition as macro grid 
+    template <class GridImp>
+    static void saveCartesianGrid (const GridImp& grid,
+                                   std::ostream& out,
+                                   dgf::IntervalBlock& intervalBlock,
+                                   std::string filename,
+                                   const bool writeSubFiles )
     {
-      std::cerr << "Warning: Only 1 interval block is handled by "
-                << "IOInterface::saveMacroGridImp" << std::endl;
-    }
+      enum { dimension = GridImp :: dimension };
+      const int rank = grid.comm().rank();
 
-    typedef typename dgf::IntervalBlock::Interval Interval;
-    const Interval &interval = intervalBlock.get( 0 );
-    for( int i = 0; i < dimension; ++i )
-    {
-      orig[ i ] = interval.p[ 0 ][ i ];
-      lang[ i ] = interval.p[ 1 ][ i ] - interval.p[ 0 ][ i ];
-      anz[ i ] = interval.n[ i ];
-      h[ i ] = lang[ i ] / anz[ i ];
-    }
-
-    // write sub grid for this rank 
-    {
-      std::string subfilename;
-      if( writeSubFiles ) 
-      { 
-        subfilename = filename;
-        // add rank 
-        subfilename += strRank(rank);
+      FieldVector<double,dimension> lang;
+      FieldVector<int,dimension>    anz;
+      FieldVector<double,dimension>  h;
+      FieldVector<int,dimension>    orig;
+      
+      if( intervalBlock.numIntervals() != 1 )
+      {
+        std::cerr << "Warning: Only 1 interval block is handled by "
+                  << "IOInterface::saveMacroGridImp" << std::endl;
       }
 
-#if HAVE_MPI 
+      typedef typename dgf::IntervalBlock::Interval Interval;
+      const Interval &interval = intervalBlock.get( 0 );
+      for( int i = 0; i < dimension; ++i )
       {
-        typedef FieldVector<int,dimension> iTupel;
+        orig[ i ] = interval.p[ 0 ][ i ];
+        lang[ i ] = interval.p[ 1 ][ i ] - interval.p[ 0 ][ i ];
+        anz[ i ] = interval.n[ i ];
+        h[ i ] = lang[ i ] / anz[ i ];
+      }
 
-        // origin is zero 
-        iTupel o( orig );
-
-        iTupel o_interior;
-        iTupel s_interior;
-
-        SaveParallelCartesianGrid< GridImp > :: 
-          getCoordinates( grid, anz, o, o_interior, s_interior );
-
-        FieldVector<double,dimension> origin;
-        for(int i=0; i<dimension; ++i) 
-          origin[ i ] = o[ i ];
-
-        FieldVector<double,dimension> sublang(0.0);
-        for(int i=0; i<dimension; ++i)
-        {
-          origin[i] = o_interior[i] * h[i];
-          sublang[i] = origin[i] + (s_interior[i] * h[i]);
+      // write sub grid for this rank 
+      {
+        std::string subfilename;
+        if( writeSubFiles ) 
+        { 
+          subfilename = filename;
+          // add rank 
+          subfilename += strRank(rank);
         }
 
-        writeStructuredGrid(subfilename,out,origin,sublang,s_interior);
-      }
+#if HAVE_MPI 
+        {
+          typedef FieldVector<int,dimension> iTupel;
+
+          // origin is zero 
+          iTupel o( orig );
+
+          iTupel o_interior;
+          iTupel s_interior;
+
+          SaveParallelCartesianGrid< GridImp > :: 
+            getCoordinates( grid, anz, o, o_interior, s_interior );
+
+          FieldVector<double,dimension> origin;
+          for(int i=0; i<dimension; ++i) 
+            origin[ i ] = o[ i ];
+
+          FieldVector<double,dimension> sublang(0.0);
+          for(int i=0; i<dimension; ++i)
+          {
+            origin[i] = o_interior[i] * h[i];
+            sublang[i] = origin[i] + (s_interior[i] * h[i]);
+          }
+
+          writeStructuredGrid(subfilename,out,origin,sublang,s_interior);
+        }
 #else
-      {
-        // in serial this should be zero 
-        assert( rank == 0 );
-        FieldVector<double,dimension> zero(0.0);
-        writeStructuredGrid(subfilename,out,zero,lang,anz);
-      }
+        {
+          // in serial this should be zero 
+          assert( rank == 0 );
+          FieldVector<double,dimension> zero(0.0);
+          writeStructuredGrid(subfilename,out,zero,lang,anz);
+        }
 #endif
-    }
-
-    // write global grid on rank 0 
-    if (rank == 0 )
-    {
-      // write global file for recovery 
-      filename += ".global";
-      FieldVector<double,dimension> zero(0.0);
-      std::stringstream dummy; 
-      writeStructuredGrid(filename,dummy,zero,lang,anz);
-    }
-  }
-
-  template <int dimension>
-  static void writeToStream(std::ostream& file,
-                            const FieldVector<double,dimension>& origin,
-                            const FieldVector<double,dimension>& lang,
-                            const FieldVector<int,dimension>& anz)
-  {
-    file << "DGF" << std::endl;
-    file << "Interval" << std::endl;
-    // write first point 
-    for(int i=0;i<dimension; ++i)
-    {
-      file << origin[i] << " ";
-    }
-    file << std::endl;
-    // write second point 
-    for(int i=0;i<dimension; ++i)
-    {
-      file << lang[i] << " ";
-    }
-    file << std::endl;
-    // write number of intervals in each direction 
-    for(int i=0;i<dimension; ++i)
-    {
-      file << anz[i] << " ";
-    }
-    file << std::endl;
-    file << "#" << std::endl;
-
-    file << "BoundaryDomain" << std::endl;
-    file << "default 1" << std::endl;
-    file << "#" << std::endl;
-  }
-
-  //! write structured grid as DGF file 
-  template <int dimension>
-  static void writeStructuredGrid(const std::string& filename,
-                                  std::ostream& out,
-                                  const FieldVector<double,dimension>& origin,
-                                  const FieldVector<double,dimension>& lang,
-                                  const FieldVector<int,dimension>& anz)
-  {
-    writeToStream( out, origin, lang, anz);
-
-    if( filename != "" ) 
-    {
-      std::ofstream file (filename.c_str());
-      if( file.is_open())
-      {
-        writeToStream( file, origin, lang, anz);
       }
-      else
+
+      // write global grid on rank 0 
+      if (rank == 0 )
       {
-        std::cerr << "Couldn't open file `" << filename << "' !\n";
+        // write global file for recovery 
+        filename += ".global";
+        FieldVector<double,dimension> zero(0.0);
+        std::stringstream dummy; 
+        writeStructuredGrid(filename,dummy,zero,lang,anz);
       }
     }
-  }
-}; // end class IOInterface 
+
+    template <int dimension>
+    static void writeToStream(std::ostream& file,
+                              const FieldVector<double,dimension>& origin,
+                              const FieldVector<double,dimension>& lang,
+                              const FieldVector<int,dimension>& anz)
+    {
+      file << "DGF" << std::endl;
+      file << "Interval" << std::endl;
+      // write first point 
+      for(int i=0;i<dimension; ++i)
+      {
+        file << origin[i] << " ";
+      }
+      file << std::endl;
+      // write second point 
+      for(int i=0;i<dimension; ++i)
+      {
+        file << lang[i] << " ";
+      }
+      file << std::endl;
+      // write number of intervals in each direction 
+      for(int i=0;i<dimension; ++i)
+      {
+        file << anz[i] << " ";
+      }
+      file << std::endl;
+      file << "#" << std::endl;
+
+      file << "BoundaryDomain" << std::endl;
+      file << "default 1" << std::endl;
+      file << "#" << std::endl;
+    }
+
+    //! write structured grid as DGF file 
+    template <int dimension>
+    static void writeStructuredGrid(const std::string& filename,
+                                    std::ostream& out,
+                                    const FieldVector<double,dimension>& origin,
+                                    const FieldVector<double,dimension>& lang,
+                                    const FieldVector<int,dimension>& anz)
+    {
+      writeToStream( out, origin, lang, anz);
+
+      if( filename != "" ) 
+      {
+        std::ofstream file (filename.c_str());
+        if( file.is_open())
+        {
+          writeToStream( file, origin, lang, anz);
+        }
+        else
+        {
+          std::cerr << "Couldn't open file `" << filename << "' !\n";
+        }
+      }
+    }
+  }; // end class IOInterface 
+
+  } // end namespace Fem 
+
+  // #if DUNE_FEM_COMPATIBILITY  
+  // put this in next version 1.4 
+
+  using Fem :: IOInterface ;
+
+  // #endif // DUNE_FEM_COMPATIBILITY
 
 } // end namespace Dune  
 #endif

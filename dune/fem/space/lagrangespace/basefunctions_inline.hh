@@ -12,6 +12,9 @@
 namespace Dune
 {
 
+  namespace Fem 
+  {
+
   // LagrangeBaseFunction
   // --------------------
   
@@ -110,11 +113,7 @@ namespace Dune
   LagrangeBaseFunctionFactory< ScalarFunctionSpace, dim, pOrder >::baseFunction ( int i ) const
   {
     BaseFunctionInterface< ScalarFunctionSpace > *baseFunction;
-#if DUNE_VERSION_NEWER_REV(DUNE_COMMON,2,1,0)
     const unsigned int topologyId = geometry().id();
-#else
-    const unsigned int topologyId = GenericGeometry::topologyId( geometry() );
-#endif
     GenericGeometry::IfTopology< Switcher, dim >::apply( topologyId, i, baseFunction );
     return baseFunction;
   }
@@ -125,15 +124,13 @@ namespace Dune
   LagrangeBaseFunctionFactory< ScalarFunctionSpace, dim, pOrder >::numBaseFunctions () const
   {
     int numBaseFunctions;
-#if DUNE_VERSION_NEWER_REV(DUNE_COMMON,2,1,0)
     const unsigned int topologyId = geometry().id();
-#else
-    const unsigned int topologyId = GenericGeometry::topologyId( geometry() );
-#endif
     GenericGeometry::IfTopology< Switcher, dim >::apply( topologyId, numBaseFunctions );
     return numBaseFunctions;
   }
 
-}
+  } // namespace Fem 
+
+} // namespace Dune 
 
 #endif // #ifndef DUNE_LAGRANGESPACE_BASEFUNCTIONS_INLINE_HH

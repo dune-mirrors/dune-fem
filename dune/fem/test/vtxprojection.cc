@@ -56,20 +56,6 @@ typedef ExactSolution< FunctionSpaceType > ExactSolutionType;
 
 #include <dune/fem/io/file/vtkio.hh>
 
-// dummy class for easier use of L2 Projection 
-template< class Domain, class Range >
-class DGL2Projection :
-  public L2Projection< typename Range :: DomainFieldType ,
-                       typename Range :: RangeFieldType ,
-                       Domain , Range >
-{
-  typedef L2Projection< typename Range :: DomainFieldType ,
-                       typename Range :: RangeFieldType ,
-                       Domain , Range >  BaseType;
-public:
-  DGL2Projection() : BaseType() {}
-};
-
 // main program 
 int main(int argc, char ** argv) 
 {
@@ -90,7 +76,7 @@ int main(int argc, char ** argv)
 
     // perform the L2Projection
     DiscreteFunctionType solution( "solution", discreteFunctionSpace );
-    DGL2Projection< ExactSolutionType,  DiscreteFunctionType > dgl2; 
+    Fem::L2Projection< ExactSolutionType,  DiscreteFunctionType > dgl2; 
     dgl2( exactSolution, solution );
     
     LagrangeFunctionType contSolution("contSolution",lagspace);

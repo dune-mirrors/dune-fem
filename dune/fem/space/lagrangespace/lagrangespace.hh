@@ -28,6 +28,9 @@
 namespace Dune
 {
 
+  namespace Fem 
+  {
+
   template< class FunctionSpace, class GridPart, int polOrder, template< class > class Storage = CachingStorage >
   class LagrangeDiscreteFunctionSpace;
 
@@ -470,6 +473,14 @@ namespace Dune
     BlockMapperType *blockMapper_;
   };
   
+} // namespace Fem 
+
+// #if DUNE_FEM_COMPATIBILITY  
+// put this in next version 1.4 
+
+using Fem :: LagrangeDiscreteFunctionSpace ;
+// #endif // DUNE_FEM_COMPATIBILITY
+
 } // namespace Dune
 
 // include definition of RestrictProlongDefault for Lagrange Space.

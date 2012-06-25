@@ -11,6 +11,8 @@
 namespace Dune
 {
 
+  namespace Fem {
+
   /** @ingroup RestrictProlongImpl
       @{
   **/
@@ -207,6 +209,8 @@ namespace Dune
   };
 
   ///@}
+
+  } // end namespace Fem 
 
 } // namespace Dune
 

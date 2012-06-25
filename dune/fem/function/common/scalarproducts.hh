@@ -51,7 +51,7 @@ namespace Dune
     typedef Mapper MapperType;
 
   protected:
-    typedef CommunicationIndexMap IndexMapType;
+    typedef Fem :: CommunicationIndexMap IndexMapType;
 
   protected:
     const SpaceType &space_;

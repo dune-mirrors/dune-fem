@@ -8,6 +8,9 @@
 
 namespace Dune {
 
+namespace Fem 
+{
+
 /** @addtogroup DFComm  
     @{
 **/
@@ -358,8 +361,9 @@ namespace Dune {
     }
   };
 
-  
- 
 //@} 
+
+} // namespace Fem 
+
 } // end namespace Dune
 #endif

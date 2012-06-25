@@ -7,6 +7,9 @@
 namespace Dune
 {
 
+  namespace Fem
+  {
+
   template< class Dof >
   class AttachedDiscreteFunctionStorage
   {
@@ -223,6 +226,8 @@ namespace Dune
     }
   };
 
-}
+  } // namespace Fem
+
+} // namespace Dune
 
 #endif

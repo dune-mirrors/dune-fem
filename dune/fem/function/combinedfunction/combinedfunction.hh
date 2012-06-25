@@ -17,6 +17,9 @@
 
 namespace Dune
 {
+
+namespace Fem 
+{
   
   //- Forward declarations
   template< class ContainedDiscreteFunction, int N >
@@ -519,6 +522,13 @@ private:
     mutable ContainedDofIteratorType iter_,endIter_;
 }; // end DofIteratorCombinedDiscreteFunction 
 
+} // end namespace Fem 
+
+// #if DUNE_FEM_COMPATIBILITY  
+// put this in next version 1.4 
+
+using Fem :: CombinedDiscreteFunction ;
+// #endif // DUNE_FEM_COMPATIBILITY
 
 } // end namespace Dune
 

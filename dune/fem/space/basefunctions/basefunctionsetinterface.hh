@@ -15,6 +15,8 @@
 
 namespace Dune
 {
+  namespace Fem 
+  {
 
   // BaseFunctionSetInterface
   // ------------------------
@@ -700,6 +702,8 @@ namespace Dune
       }
     }
   }
+
+  } // end namespace Fem
 
 } // end namespace Dune 
 

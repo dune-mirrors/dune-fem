@@ -6,6 +6,9 @@
 namespace Dune
 {
 
+  namespace Fem 
+  {
+
   // LagrangeBaseFunction
   // --------------------
    
@@ -98,6 +101,8 @@ namespace Dune
   extern template class LagrangeBaseFunctionFactory< FunctionSpace< float, float, 1, 1 >, 1, 3 >;
   extern template class LagrangeBaseFunctionFactory< FunctionSpace< float, float, 2, 1 >, 2, 3 >;
   extern template class LagrangeBaseFunctionFactory< FunctionSpace< float, float, 3, 1 >, 3, 3 >;
+
+  } // namespace Fem 
 
 } // namespace Dune
 

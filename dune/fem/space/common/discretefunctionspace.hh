@@ -22,6 +22,9 @@
 namespace Dune
 {
 
+namespace Fem
+{
+
   /** @addtogroup DiscreteFunctionSpace 
       This provides the interfaces for discrete function spaces. 
       Discrete function spaces contain functions
@@ -1044,6 +1047,15 @@ namespace Dune
       delete obj;
     }
   };
+
+} // end namespace Fem 
+
+// #if DUNE_FEM_COMPATIBILITY  
+// put this in next version 1.4 
+
+using Fem :: DifferentDiscreteFunctionSpace ;
+
+// #endif // DUNE_FEM_COMPATIBILITY
   
 } // end namespace Dune 
 #endif

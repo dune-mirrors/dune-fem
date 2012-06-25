@@ -58,8 +58,8 @@ inline GrapeDispType * readTupleData(const char * path, const char * filename,
   std::string fn (filename);
   DATAINFO * dinf = info[n].datinf;
 
-  IOTuple<GR_DiscFuncType>::ReturnType* tup = 
-    IOTuple<GR_DiscFuncType>::input(grid,myRank,path,fn);
+  Fem::IOTuple<GR_DiscFuncType>::ReturnType* tup = 
+    Fem::IOTuple<GR_DiscFuncType>::input(grid,myRank,path,fn);
   std::cout << "Finished reading grid" << std::endl;
 
   // push all new grids to grid stack 
@@ -69,7 +69,7 @@ inline GrapeDispType * readTupleData(const char * path, const char * filename,
   dispStack.push(disp);
   
   // discrete functions of non-valid data are removed 
-  IOTuple<GR_DiscFuncType>::addToDisplayOrRemove(*disp,dinf,time,*tup);
+  Fem::IOTuple<GR_DiscFuncType>::addToDisplayOrRemove(*disp,dinf,time,*tup);
 
   //Element<0> :: get( *tup );
   //    *(Element<0> :: get( *tup ))

@@ -18,6 +18,9 @@
 namespace Dune 
 {
  
+namespace Fem 
+{
+
   // DiscreteFunctionDefault 
   // -----------------------
 
@@ -558,6 +561,8 @@ namespace Dune
     df.read( in );
     return in;
   }
+
+} // end namespace Fem
 
 } // end namespace Dune
 #endif

@@ -377,7 +377,7 @@ private:
 
   template< class DomainSpace, class RangeSpace, class TraitsImp >
   class SparseRowMatrixObject
-  : public OEMMatrix
+  : public Fem :: OEMMatrix
   {
   public:
     //! type of traits 
