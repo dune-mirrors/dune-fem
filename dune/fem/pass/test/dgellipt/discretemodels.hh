@@ -107,7 +107,7 @@ namespace LDGExample
 
 #if USE_DUNE_ISTL
     //! only working for DGSpace     
-    typedef BlockVectorDiscreteFunction<DiscreteFunctionSpaceType> DiscreteFunctionType;
+    typedef Fem::ISTLBlockVectorDiscreteFunction<DiscreteFunctionSpaceType> DiscreteFunctionType;
 #else 
     typedef typename Traits::DiscreteFunctionType DiscreteFunctionType;
 #endif

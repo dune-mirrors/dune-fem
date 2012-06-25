@@ -170,7 +170,7 @@ namespace Dune
 
   // specialization for ISTL matrices 
   template <class RowSpaceImp, class ColSpaceImp, bool addNonConformingNeighbors>
-  struct LagrangeMatrixTraits<ISTLMatrixTraits<RowSpaceImp,ColSpaceImp>,addNonConformingNeighbors>
+  struct LagrangeMatrixTraits< Fem::ISTLMatrixTraits<RowSpaceImp,ColSpaceImp>, addNonConformingNeighbors >
   {
     typedef RowSpaceImp RowSpaceType;
     typedef ColSpaceImp ColumnSpaceType;
