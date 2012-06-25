@@ -88,6 +88,9 @@ namespace Dune
       //! \brief type of grid
       typedef typename HostGridPartType::GridType GridType;
 
+      /** \brief The type of the corresponding TwistUtility */
+      typedef TwistUtility< GridType >  TwistUtilityType ;
+
       //! \brief export filter type
       typedef FilterImp FilterType;
 

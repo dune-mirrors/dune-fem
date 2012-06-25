@@ -3,6 +3,7 @@
 
 #include <dune/fem/gridpart/common/gridpart.hh>
 #include <dune/fem/gridpart/common/deaditerator.hh>
+#include <dune/fem/gridpart/common/metatwistutility.hh>
 #include <dune/fem/gridpart/geogridpart/capabilities.hh>
 #include <dune/fem/gridpart/geogridpart/datahandle.hh>
 #include <dune/fem/gridpart/geogridpart/entity.hh>
@@ -151,6 +152,9 @@ namespace Dune
       typedef typename GridPartFamily::Traits::HostGridPartType HostGridPartType;
 
       typedef typename HostGridPartType::GridType GridType;
+
+      //! type of twist utility 
+      typedef MetaTwistUtility< typename HostGridPartType :: TwistUtilityType >  TwistUtilityType;      
 
       typedef IdIndexSet< typename HostGridPartType::IndexSetType > IndexSetType;
 

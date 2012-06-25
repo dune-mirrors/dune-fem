@@ -166,13 +166,16 @@ namespace Dune
   template< class GridImp >
   struct LevelGridPartTraits
   {
-      /** \brief The type of the grid */
+    /** \brief The type of the grid */
     typedef GridImp GridType;
 
-      /** \brief The type of the corresponding grid part class */
+    /** \brief The type of the corresponding grid part class */
     typedef LevelGridPart< GridImp > GridPartType;
 
-      /** \brief The appropriate index set */
+    /** \brief The type of the corresponding TwistUtility */
+    typedef TwistUtility< GridType >  TwistUtilityType ;
+
+    /** \brief The appropriate index set */
     typedef WrappedLevelIndexSet<GridType> IndexSetType;
 
     static const PartitionIteratorType indexSetPartitionType = All_Partition;

@@ -173,6 +173,9 @@ namespace Dune
     /** \brief The type of the corresponding grid part class */
     typedef HierarchicGridPart< GridImp > GridPartType;
 
+    /** \brief The type of the corresponding TwistUtility */
+    typedef TwistUtility< GridType >  TwistUtilityType ;
+
     /** \brief The appropriate index set */
     typedef WrappedHierarchicIndexSet<GridType> IndexSetType;
 

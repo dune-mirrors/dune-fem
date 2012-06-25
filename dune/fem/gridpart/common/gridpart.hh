@@ -13,6 +13,7 @@
 //- dune-fem includes
 #include <dune/fem/gridpart/common/capabilities.hh>
 #include <dune/fem/gridpart/common/gridpartview.hh>
+#include <dune/fem/quadrature/caching/twistutility.hh>
 
 namespace Dune
 {
@@ -83,6 +84,9 @@ namespace Dune
 
     //! \brief Index set implementation
     typedef typename Traits::IndexSetType IndexSetType;
+
+    //! \brief Twist utility type 
+    typedef typename Traits::TwistUtilityType TwistUtilityType;
 
     //! \brief Maximum Partition type, the index set provides indices for
     static const PartitionIteratorType indexSetPartitionType
