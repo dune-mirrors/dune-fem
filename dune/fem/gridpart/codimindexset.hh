@@ -62,6 +62,8 @@ namespace Dune {
 
 namespace Dune {
 
+namespace Fem
+{
 
 //***********************************************************************
 //
@@ -547,6 +549,8 @@ public:
   }
   
 }; // end of CodimIndexSet  
+
+} // end namespace Fem
 
 } // end namespace Dune 
 #endif

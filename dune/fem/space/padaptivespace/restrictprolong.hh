@@ -17,6 +17,8 @@
 
 namespace Dune
 {
+  namespace Fem
+  {
 
   template< class G, class LagrangePointSetProvider >
   struct PLagrangeLocalRestrictProlong
@@ -143,6 +145,8 @@ namespace Dune
     const LagrangePointSetProvider& lpsProvider_;
   };
 
-}
+  } // namespace Fem
+
+} // namespace Dune 
 
 #endif // #ifndef DUNE_LAGRANGESPACE_RESTRICTPROLONG_HH

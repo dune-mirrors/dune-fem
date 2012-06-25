@@ -9,6 +9,8 @@
 
 namespace Dune
 {
+  namespace Fem
+  {
 
   /** 
    * @addtogroup GridPart
@@ -210,11 +212,8 @@ namespace Dune
 
   /** @} */
 
-  // Level grid part capabilities
-  // ----------------------------
-
-  namespace Fem
-  {
+    // Level grid part capabilities
+    // ----------------------------
 
     namespace GridPartCapabilities
     {
@@ -266,6 +265,12 @@ namespace Dune
     } // end namespace GridPartCapabilities
 
   } // end namespace Fem
+
+  // #if DUNE_FEM_COMPATIBILITY  
+  // put this in next version 1.4 
+
+  using Fem :: LevelGridPart ;
+  // #endif // DUNE_FEM_COMPATIBILITY
 
 } // end namespace Dune
 

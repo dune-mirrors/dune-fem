@@ -10,6 +10,9 @@
 namespace Dune
 {
 
+  namespace Fem 
+  {
+
   /** 
    * @addtogroup GridPart
    *
@@ -204,9 +207,6 @@ namespace Dune
   // Leaf grid part capabilities
   // ---------------------------
 
-  namespace Fem
-  {
-
     namespace GridPartCapabilities
     {
 
@@ -259,6 +259,12 @@ namespace Dune
   } // end namespace Fem
 
   /** @} */
+
+  // #if DUNE_FEM_COMPATIBILITY  
+  // put this in next version 1.4 
+
+  using Fem :: LeafGridPart ;
+  // #endif // DUNE_FEM_COMPATIBILITY
 
 } // end namespace Dune
 

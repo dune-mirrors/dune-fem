@@ -29,6 +29,8 @@ inline std::string generateFilename(const std::string& fn,
   return genFilename(fakePath,fn,ntime,precision);
 }
 
+namespace Fem 
+{
 ///////////////////////////////////////////////////
 //
 //  IndexSet Names
@@ -58,6 +60,7 @@ std::string indexSetToName(const WrappedHierarchicIndexSet<GridImp>& set)
   return "HierarchicIndexSet";
 }
 
+} // end namespace Fem
 
 template< int dim, int dimworld, class GridImp, bool hasBackupRestore >
 struct BinaryDataIOImp;
@@ -498,7 +501,7 @@ writeDataHeader( StreamType& file,
   file << "Dim_Domain: " << n << std::endl;
   file << "Dim_Range: " << m << std::endl;
   file << "Space: " << df.space().type() << std::endl;
-  file << "IndexSet: " << indexSetToName(df.space().indexSet()) << std::endl;
+  file << "IndexSet: " << Fem::indexSetToName(df.space().indexSet()) << std::endl;
   file << "Format: " << ftype << std::endl;
   file << "Precision: " << precision << std::endl;
   file << "Polynom_order: " << df.space().order() << std::endl;
@@ -604,12 +607,12 @@ checkDataHeader(const DiscreteFunctionType & df,
   if( ! readParameter(filename,"IndexSet",indexSetName,false) ) 
   {
     // if parameter not available skip test 
-    indexSetName = indexSetToName(df.space().indexSet());
+    indexSetName = Fem::indexSetToName(df.space().indexSet());
   }
-  if( indexSetName != indexSetToName(df.space().indexSet()) )
+  if( indexSetName != Fem::indexSetToName(df.space().indexSet()) )
   {
     derr << "BinaryDataIO::readData: Wrong IndexSet, stored data type is `" << indexSetName;
-    derr << "' but type to restore is (change this type) `"<< indexSetToName(df.space().indexSet()) << "'."<< std::endl; 
+    derr << "' but type to restore is (change this type) `"<< Fem::indexSetToName(df.space().indexSet()) << "'."<< std::endl; 
     abort();
   }
   

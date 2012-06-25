@@ -120,7 +120,7 @@ int main(int argc, char ** argv)
     vtkWriter.addVertexData(solution);
     vtkWriter.pwrite("vtxprojection",
                       Parameter::commonOutputPath().c_str(),"",
-                      Dune::VTKOptions::ascii);
+                      Dune::VTK::ascii);
     return 0;
   }
   catch( Exception e )

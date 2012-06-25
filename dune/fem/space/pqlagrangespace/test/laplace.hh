@@ -90,7 +90,6 @@ namespace Dune
     class Assembler;
 
     typedef DofManager< GridType >                                   DofManagerType;
-    typedef DofManagerFactory< DofManagerType >                      DofManagerFactoryType;
    
   protected:
     const DiscreteFunctionSpaceType &discreteFunctionSpace_;
@@ -292,7 +291,7 @@ namespace Dune
   protected:
     const LaplaceFEOpType &feop_;
 
-    mutable DynamicArray< JacobianRangeType > gradCache_;
+    mutable Fem :: DynamicArray< JacobianRangeType > gradCache_;
     mutable RangeFieldType weight_;
  
   public:

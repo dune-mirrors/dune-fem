@@ -116,7 +116,7 @@ namespace Fem
           return 0.0;
 
         // get stopwatch 
-        Timer exchangeT;
+        Dune::Timer exchangeT;
       
         // communicate data
         DataHandleType dataHandle = discreteFunction.dataHandle( operation );

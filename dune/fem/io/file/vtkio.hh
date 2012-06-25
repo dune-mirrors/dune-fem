@@ -15,6 +15,9 @@
 namespace Dune
 {
 
+  namespace Fem 
+  {
+
   // Internal Forward Declarations
   // -----------------------------
 
@@ -79,9 +82,9 @@ namespace Dune
       RangeType val;
       lf.evaluate(xi,val);
       if (vector_)
-        return (comp > dimDomain ? 0.0 : field_cast< double >( val[ comp + component_ ] ));
+        return (comp > dimDomain ? 0.0 : Dune::field_cast< double >( val[ comp + component_ ] ));
       else 
-        return field_cast< double >( val[component_] );
+        return Dune::field_cast< double >( val[component_] );
     }
 
     //! get name
@@ -383,6 +386,15 @@ namespace Dune
     {}
   };
 
-}
+  } // namespace Fem
+
+  // #if DUNE_FEM_COMPATIBILITY  
+  // put this in next version 1.4 
+
+  using Fem :: VTKIO  ;
+  using Fem :: SubsamplingVTKIO  ;
+  // #endif // DUNE_FEM_COMPATIBILITY
+
+} // namespace Dune
 
 #endif // #ifndef DUNE_FEM_VTKIO_HH

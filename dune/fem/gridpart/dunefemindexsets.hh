@@ -21,6 +21,8 @@
 
 namespace Dune
 {
+  namespace Fem 
+  {
 
   /** \brief  class implementing the DUNE grid index set interface for any DUNE
               fem index set. However, one should not cast to this class as
@@ -347,6 +349,8 @@ namespace Dune
     // use asImp from BaseType
     using BaseType::asImp;
   };
+
+  } // end namespace Fem
 
 } // end namespace Dune
 

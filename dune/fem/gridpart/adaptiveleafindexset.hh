@@ -10,6 +10,9 @@
 
 namespace Dune
 {
+  namespace Fem
+  {
+
   /** \class AdaptiveIndexSetBase
    *  \brief consecutive, persistent index set for the leaf level based on the
    *         grid's hierarchy index set
@@ -1426,6 +1429,8 @@ namespace Dune
       return "IdBasedLeafIndexSet";
     }
   };
+
+  } // end namespace Fem
 
 } // end namespace Dune 
 
