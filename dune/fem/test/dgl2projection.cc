@@ -49,7 +49,7 @@ using namespace Dune;
 
 typedef GridSelector::GridType MyGridType;
 // typedef HierarchicGridPart< MyGridType >  ContainedGridPartType;
-typedef DGAdaptiveLeafGridPart< MyGridType > ContainedGridPartType;
+typedef Fem :: DGAdaptiveLeafGridPart< MyGridType > ContainedGridPartType;
 //typedef IdBasedLeafGridPart< MyGridType > ContainedGridPartType;
 
 // use filtered grid for testing 
@@ -67,16 +67,16 @@ typedef TestFunctionSpace FunctionSpaceType;
 typedef TestDiscreteFunctionSpace< GridPartType > DiscreteFunctionSpaceType;
 
 #if defined USE_BLOCKVECTORFUNCTION
-typedef BlockVectorDiscreteFunction< DiscreteFunctionSpaceType >
+typedef Fem :: ISTLBlockVectorDiscreteFunction< DiscreteFunctionSpaceType >
   DiscreteFunctionType;
 #elif defined USE_VECTORFUNCTION
-typedef ManagedDiscreteFunction
-  < VectorDiscreteFunction
+typedef Fem :: ManagedDiscreteFunction
+  < Fem :: VectorDiscreteFunction
     < DiscreteFunctionSpaceType,
       Fem :: DynamicVector< FunctionSpaceType :: RangeFieldType > > >
   DiscreteFunctionType;
 #elif defined USE_ATTACHEDFUNCTION
-typedef AttachedDiscreteFunction< DiscreteFunctionSpaceType >
+typedef Fem :: AttachedDiscreteFunction< DiscreteFunctionSpaceType >
   DiscreteFunctionType;
 #elif defined USE_BLOCKVECTORDISCRETEFUNCTION
 typedef Dune::Fem::ReferenceBlockVector< double, DiscreteFunctionSpaceType::localBlockSize > 
@@ -84,17 +84,17 @@ typedef Dune::Fem::ReferenceBlockVector< double, DiscreteFunctionSpaceType::loca
 typedef Dune::Fem::BlockVectorDiscreteFunction< DiscreteFunctionSpaceType, BlockVectorType > 
   DiscreteFunctionType;
 #elif defined USE_COMBINEDFUNCTION
-typedef AdaptiveDiscreteFunction< DiscreteFunctionSpaceType >
+typedef Fem :: AdaptiveDiscreteFunction< DiscreteFunctionSpaceType >
   ContainedDiscreteFunctionType;
-typedef CombinedDiscreteFunction< ContainedDiscreteFunctionType, DIMRANGE >
+typedef Fem :: CombinedDiscreteFunction< ContainedDiscreteFunctionType, DIMRANGE >
   DiscreteFunctionType;
 #else
-typedef AdaptiveDiscreteFunction< DiscreteFunctionSpaceType >
+typedef Fem :: AdaptiveDiscreteFunction< DiscreteFunctionSpaceType >
   DiscreteFunctionType;
 #endif
 
 typedef ExactSolution< FunctionSpaceType > ExactSolutionType;
-typedef FunctionSpace< double, double, GridSelector::dimworld, 1 > WeightFunctionSpaceType;
+typedef Fem :: FunctionSpace< double, double, GridSelector::dimworld, 1 > WeightFunctionSpaceType;
 typedef WeightFunction< WeightFunctionSpaceType > WeightFunctionType;
 
 // main program 
