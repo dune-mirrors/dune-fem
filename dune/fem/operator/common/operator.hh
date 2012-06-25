@@ -34,11 +34,12 @@ namespace Dune
       /** \brief field type of the operator's range */
       typedef typename RangeFunctionType::RangeFieldType RangeFieldType;
 
-      /** \brief assembled = 
+      /** \deprecated
+       *   \brief assembled = 
        *          - \b true:  a method systemMatrix is present to 
        *                      access a matrix struct of type MatrixObject
        *          - \b false (default) no method systemMatrix, i.e. no matrix object  */
-      static const bool assembled = false ;
+      static const bool assembled DUNE_DEPRECATED_MSG("Please derive from Dune:Fem::AssembledOperator") = false ;
 
       virtual ~Operator () {}
 
@@ -52,6 +53,74 @@ namespace Dune
       virtual void operator() ( const DomainFunctionType &u, RangeFunctionType &w ) const = 0;
     };
 
+    /** \class LinearOperator
+     *  \brief abstract affine-linear operator
+     *
+     *  Operators map a discrete function onto another discrete
+     *  function. Their interface is described by the abstract class
+     *  Operator. Implementation should derive from LinearOperator to
+     *  indicate that they model an affine linear operator of the form
+     *
+     *  @f[
+     *  u\mapsto A\,u + b
+     *  @f]
+     *
+     *  with a linear Operator @f$A@f$ and an affine translation @f$b@f$.
+     *
+     *  \tparam  DomainFunction  type of discrete function for the domain
+     *  \tparam  RangeFunction   type of discrete function for the range
+     *                           (defaults to DomainFunction)
+     *
+     *  \interfaceclass
+     */
+    template< class DomainFunction, class RangeFunction = DomainFunction >
+    struct LinearOperator
+      : public Operator<DomainFunction, RangeFunction>
+    {
+
+      /**Return @c true if the Operator is symmetric. */
+      virtual bool symmetric() const {
+	return false;
+      }
+      /**Return @c true if the Operator is positive definite. */
+      virtual bool positiveDefinite() const {
+	return false;
+      }
+    };
+
+    /** \class AssembledOperator
+     *  \brief abstract matrix operator
+     *
+     *  Operators map a discrete function onto another discrete
+     *  function. Their interface is described by the abstract class
+     *  Operator. Implementation should derive from AssembledOperator to
+     *  indicate that they model an affine linear operator of the form
+     *
+     *  @f[
+     *  u\mapsto A\,u
+     *  @f]
+     *
+     *  with a matrix @f$A@f$. Jacobians of LinearOperator classes,
+     *  for instance, could be modelled as matrices.
+     *
+     *  \tparam  DomainFunction  type of discrete function for the domain
+     *  \tparam  RangeFunction   type of discrete function for the range
+     *                           (defaults to DomainFunction)
+     *
+     *  \interfaceclass
+     */
+    template< class DomainFunction, class RangeFunction = DomainFunction >
+    struct AssembledOperator
+      : public LinearOperator<DomainFunction, RangeFunction>
+    {
+      /** \deprecated
+       *   \brief assembled = 
+       *          - \b true:  a method systemMatrix is present to 
+       *                      access a matrix struct of type MatrixObject
+       *          - \b false (default) no method systemMatrix, i.e. no matrix object  */
+      static const bool assembled DUNE_DEPRECATED_MSG("Please derive from Dune:Fem::AssembledOperator") = true;
+    };
+	      
   } // end namespace Dune::Fem
 
 
