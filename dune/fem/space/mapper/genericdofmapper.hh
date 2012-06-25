@@ -34,7 +34,7 @@ namespace Dune
   {
     typedef GenericDofMapper< GridPart, LocalCoefficientsMap > DofMapperType;
 
-    typedef typename GridPart::GridType::template Codim< 0 >::Entity EntityType;
+    typedef typename GridPart::template Codim< 0 >::EntityType EntityType;
 
     typedef GenericDofMapIterator< GridPart, LocalCoefficientsMap > DofMapIteratorType;
   };
