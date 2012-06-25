@@ -7,6 +7,8 @@
 
 namespace Dune
 {
+  namespace Fem
+  {
 
   /** \addtogroup LocalFunction
    *
@@ -640,6 +642,7 @@ namespace Dune
           factor1, factor2, asImp() );
   }
 
+  } // end namespace Fem
 
 } // end namespace Dune 
 

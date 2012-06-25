@@ -9,6 +9,8 @@
 
 namespace Dune
 {
+  namespace Fem 
+  {
 
   /** \class   DofBlockProxy
    *  \ingroup DiscreteFunction
@@ -102,6 +104,8 @@ namespace Dune
     DiscreteFunctionType &discreteFunction_;
     const size_type first_;
   };
+
+  } // namespace Fem
 
 } // namespace Dune
 

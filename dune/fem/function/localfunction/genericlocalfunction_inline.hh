@@ -5,6 +5,8 @@
 
 namespace Dune
 {
+  namespace Fem
+  {
 
   // GenericLocalFunctionImpl
   // -------------------------
@@ -142,6 +144,8 @@ namespace Dune
     return numDofs_;
   }
 
-}
+  } // namespace Fem
+
+} // namespace Dune
 
 #endif // DUNE_FEM_GENERICLOCALFUNCTION_INLINE_HH

@@ -58,13 +58,13 @@ struct BlockVectorDiscreteFunctionTraits
   typedef BlockVectorDiscreteFunction<DiscreteFunctionSpaceType> DiscreteFunctionType;
  
   typedef DofIteratorBlockVectorDiscreteFunction<DofStorageType,RangeFieldType> DofIteratorType;
-  typedef ConstDofIteratorDefault<DofIteratorType> ConstDofIteratorType;
+  typedef Fem :: ConstDofIteratorDefault<DofIteratorType> ConstDofIteratorType;
 
   typedef BlockVectorDiscreteFunctionTraits<DiscreteFunctionSpaceImp> ThisType;
   
-  typedef StandardLocalFunctionFactory< ThisType > LocalFunctionFactoryType;
+  typedef Fem :: StandardLocalFunctionFactory< ThisType > LocalFunctionFactoryType;
 
-  typedef LocalFunctionStack< LocalFunctionFactoryType > LocalFunctionStorageType;
+  typedef Fem :: LocalFunctionStack< LocalFunctionFactoryType > LocalFunctionStorageType;
   typedef typename LocalFunctionStorageType :: LocalFunctionType LocalFunctionType;
 
   typedef StraightenBlockVector<DofStorageType,RangeFieldType> LeakPointerType;
@@ -150,8 +150,7 @@ class BlockVectorDiscreteFunction
     < BlockVectorDiscreteFunctionTraits< DiscreteFunctionSpaceImp > >
     BaseType;
 
-  typedef DiscreteFunctionDefault<BlockVectorDiscreteFunctionTraits <DiscreteFunctionSpaceImp> >
-  DiscreteFunctionDefaultType;
+  typedef BaseType  DiscreteFunctionDefaultType;
 
 public:  
   //! type of discrete functions space 
@@ -340,8 +339,8 @@ private:
       \todo Please doc me!
   */
 template < class DofStorageImp, class DofImp >
-class DofIteratorBlockVectorDiscreteFunction : public
-DofIteratorDefault < DofImp , DofIteratorBlockVectorDiscreteFunction < DofStorageImp, DofImp > >
+class DofIteratorBlockVectorDiscreteFunction : 
+  public Fem :: DofIteratorDefault < DofImp , DofIteratorBlockVectorDiscreteFunction < DofStorageImp, DofImp > >
 {
 public:
   typedef DofImp DofType;

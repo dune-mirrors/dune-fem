@@ -8,9 +8,6 @@
 
 //- Dune includes 
 #include <dune/fem/io/streams/streams.hh>
-#if DUNE_FEM_COMPATIBILITY
-#include <dune/fem/io/file/xdrio.hh>
-#endif
 
 namespace Dune
 {
@@ -869,22 +866,6 @@ namespace Fem
   {
     return std::cos(v.value_);
   }
-
-
-#if DUNE_FEM_COMPATIBILITY
-  // XdrIO
-  // -----
-  
-  template<>
-  struct XdrIO< Double >
-  {
-    static inline int io( XDR *xdrs, Double &a )
-    {
-      return XdrIO< double > :: io( xdrs, a.value_ );
-    }
-  };
-#endif
-
 
   inline void field_cast ( const Double &f1, double &f2 )
   {
