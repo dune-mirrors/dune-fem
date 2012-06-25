@@ -23,15 +23,18 @@
 namespace Dune
 {
 
+namespace Fem 
+{
+
 // forward declarations 
-template <class DiscreteFunctionSpaceType> class BlockVectorDiscreteFunction;
+template <class DiscreteFunctionSpaceType> class ISTLBlockVectorDiscreteFunction;
 template <class DofStorageImp,class DofImp> class DofIteratorBlockVectorDiscreteFunction;
 template< class Traits > class BlockVectorLocalFunction;
 template< class Traits > class BlockVectorLocalFunctionFactory;
 template <class BlockVectorImp, class DofImp> class StraightenBlockVector;
 
 template <class DiscreteFunctionSpaceImp>
-struct BlockVectorDiscreteFunctionTraits 
+struct ISTLBlockVectorDiscreteFunctionTraits 
 {
   enum { localBlockSize = DiscreteFunctionSpaceImp :: localBlockSize };
   typedef typename DiscreteFunctionSpaceImp :: RangeFieldType RangeFieldType;
@@ -55,12 +58,12 @@ struct BlockVectorDiscreteFunctionTraits
   //! needs additional mapper because of block structure 
   typedef typename DiscreteFunctionSpaceType :: BlockMapperType MapperType;
 
-  typedef BlockVectorDiscreteFunction<DiscreteFunctionSpaceType> DiscreteFunctionType;
+  typedef ISTLBlockVectorDiscreteFunction<DiscreteFunctionSpaceType> DiscreteFunctionType;
  
   typedef DofIteratorBlockVectorDiscreteFunction<DofStorageType,RangeFieldType> DofIteratorType;
   typedef Fem :: ConstDofIteratorDefault<DofIteratorType> ConstDofIteratorType;
 
-  typedef BlockVectorDiscreteFunctionTraits<DiscreteFunctionSpaceImp> ThisType;
+  typedef ISTLBlockVectorDiscreteFunctionTraits<DiscreteFunctionSpaceImp> ThisType;
   
   typedef Fem :: StandardLocalFunctionFactory< ThisType > LocalFunctionFactoryType;
 
@@ -134,20 +137,20 @@ protected:
 
 //**********************************************************************
 //! @ingroup BlockVectorDFunction
-//  --BlockVectorDiscreteFunction 
+//  --ISTLBlockVectorDiscreteFunction 
 //
 //! this is one special implementation of a discrete function using an
 //! array for storing the dofs.  
 //!
 //**********************************************************************
 template< class DiscreteFunctionSpaceImp >
-class BlockVectorDiscreteFunction 
+class ISTLBlockVectorDiscreteFunction 
 : public Fem::DiscreteFunctionDefault
-  < BlockVectorDiscreteFunctionTraits< DiscreteFunctionSpaceImp > > 
+  < ISTLBlockVectorDiscreteFunctionTraits< DiscreteFunctionSpaceImp > > 
 {
-  typedef BlockVectorDiscreteFunction< DiscreteFunctionSpaceImp > ThisType;
+  typedef ISTLBlockVectorDiscreteFunction< DiscreteFunctionSpaceImp > ThisType;
   typedef Fem::DiscreteFunctionDefault
-    < BlockVectorDiscreteFunctionTraits< DiscreteFunctionSpaceImp > >
+    < ISTLBlockVectorDiscreteFunctionTraits< DiscreteFunctionSpaceImp > >
     BaseType;
 
   typedef BaseType  DiscreteFunctionDefaultType;
@@ -157,7 +160,7 @@ public:
   typedef DiscreteFunctionSpaceImp DiscreteFunctionSpaceType;
 
   //! traits of this type 
-  typedef BlockVectorDiscreteFunctionTraits<DiscreteFunctionSpaceType> Traits;
+  typedef ISTLBlockVectorDiscreteFunctionTraits<DiscreteFunctionSpaceType> Traits;
   
   //! size of local blocks  
   enum { localBlockSize = Traits :: localBlockSize };
@@ -175,7 +178,7 @@ public:
   typedef typename Traits :: DofStorageType DofStorageType;
 
   //! my type 
-  typedef BlockVectorDiscreteFunction <DiscreteFunctionSpaceType> DiscreteFunctionType;
+  typedef ISTLBlockVectorDiscreteFunction <DiscreteFunctionSpaceType> DiscreteFunctionType;
   
   //! Type of the range field
   typedef typename DiscreteFunctionSpaceType::RangeFieldType RangeFieldType;
@@ -218,22 +221,22 @@ public:
 
 public:
   //! \brief Constructor makes Discrete Function  
-  BlockVectorDiscreteFunction ( const DiscreteFunctionSpaceType &f );
+  ISTLBlockVectorDiscreteFunction ( const DiscreteFunctionSpaceType &f );
   
   //! \brief Constructor makes Discrete Function with name 
-  BlockVectorDiscreteFunction ( const std :: string &name,
+  ISTLBlockVectorDiscreteFunction ( const std :: string &name,
                                 const DiscreteFunctionSpaceType &f );
   
   //! \brief Constructor makes Discrete Function  
-  BlockVectorDiscreteFunction ( const std :: string &name,
+  ISTLBlockVectorDiscreteFunction ( const std :: string &name,
                                 const DiscreteFunctionSpaceType &f,
                                 const DofStorageType &data );
   
   //! \brief Constructor makes Discrete Function from copy 
-  BlockVectorDiscreteFunction ( const ThisType &other ); 
+  ISTLBlockVectorDiscreteFunction ( const ThisType &other ); 
 
   /**  \brief delete stack of free local functions belonging to this discrete function */
-  ~BlockVectorDiscreteFunction ();
+  ~ISTLBlockVectorDiscreteFunction ();
 
   using BaseType :: name;
   using BaseType :: axpy;
@@ -326,7 +329,7 @@ private:
 
   //! hold one object for addLocal and setLocal and so on 
   LocalFunctionImp localFunc_;
-}; // end class BlockVectorDiscreteFunction
+}; // end class ISTLBlockVectorDiscreteFunction
 
 
 
@@ -444,12 +447,10 @@ private:
 
 }; // end DofIteratorBlockVectorDiscreteFunction 
 
-namespace Fem
-{
   template <class DiscreteFunctionSpaceImp>
-  class ManagedDiscreteFunction<BlockVectorDiscreteFunction<DiscreteFunctionSpaceImp> > :
-  public BlockVectorDiscreteFunction<DiscreteFunctionSpaceImp> {
-    typedef BlockVectorDiscreteFunction<DiscreteFunctionSpaceImp> BaseType;
+  class ManagedDiscreteFunction<ISTLBlockVectorDiscreteFunction<DiscreteFunctionSpaceImp> > :
+  public ISTLBlockVectorDiscreteFunction<DiscreteFunctionSpaceImp> {
+    typedef ISTLBlockVectorDiscreteFunction<DiscreteFunctionSpaceImp> BaseType;
   public:
     typedef DiscreteFunctionSpaceImp DiscreteFunctionSpaceType;
     typedef ManagedDiscreteFunction<BaseType> ThisType;
