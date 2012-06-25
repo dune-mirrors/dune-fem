@@ -28,14 +28,14 @@
 namespace Dune
 {
 
-#if HAVE_DUNE_ISTL
-  template< class DiscreteFunctionSpaceImp >
-  class BlockVectorDiscreteFunction;
-#endif
-
 namespace Fem
 {
   
+#if HAVE_DUNE_ISTL
+  template< class DiscreteFunctionSpaceImp >
+  class ISTLBlockVectorDiscreteFunction;
+#endif
+
 /** @addtogroup Communication Communication 
     @{
 **/
@@ -545,9 +545,9 @@ namespace Fem
   //! holding SlaveDofs which is singleton per space and mapper 
   template< class DiscreteFunctionSpaceImp >
   class ParallelScalarProduct
-    < BlockVectorDiscreteFunction< DiscreteFunctionSpaceImp > > 
+    < ISTLBlockVectorDiscreteFunction< DiscreteFunctionSpaceImp > > 
   : public ScalarProduct
-    < typename BlockVectorDiscreteFunction< DiscreteFunctionSpaceImp >
+    < typename ISTLBlockVectorDiscreteFunction< DiscreteFunctionSpaceImp >
         :: DofStorageType >
   {
     //! class for building scalar product dofs used in DGMatrixSetup
@@ -576,7 +576,7 @@ namespace Fem
     };
 
     //! discrete function type 
-    typedef BlockVectorDiscreteFunction<DiscreteFunctionSpaceImp> DiscreteFunctionType;
+    typedef ISTLBlockVectorDiscreteFunction<DiscreteFunctionSpaceImp> DiscreteFunctionType;
     //! type of this class 
     typedef ParallelScalarProduct<DiscreteFunctionType> ThisType;
     //! type of BlockVector 

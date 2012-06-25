@@ -30,25 +30,25 @@ using namespace Dune;
 
 typedef GridSelector::GridType MyGridType;
 // typedef HierarchicGridPart< MyGridType > GridPartType;
-typedef AdaptiveLeafGridPart< MyGridType > GridPartType;
+typedef Fem::AdaptiveLeafGridPart< MyGridType > GridPartType;
 
 typedef TestFunctionSpace FunctionSpaceType;
 typedef TestDiscreteFunctionSpace< GridPartType > DiscreteFunctionSpaceType;
 
 #if defined USE_BLOCKVECTORFUNCTION
-typedef BlockVectorDiscreteFunction< DiscreteFunctionSpaceType >
+typedef Fem :: ISTLBlockVectorDiscreteFunction< DiscreteFunctionSpaceType >
   DiscreteFunctionType;
 #elif defined USE_VECTORFUNCTION
-typedef ManagedDiscreteFunction
+typedef Fem :: ManagedDiscreteFunction
   < VectorDiscreteFunction
     < DiscreteFunctionSpaceType,
       DynamicVector< FunctionSpaceType :: RangeFieldType > > >
   DiscreteFunctionType;
 #elif defined USE_ATTACHEDFUNCTION
-typedef AttachedDiscreteFunction< DiscreteFunctionSpaceType >
+typedef Fem :: AttachedDiscreteFunction< DiscreteFunctionSpaceType >
   DiscreteFunctionType;
 #else
-typedef AdaptiveDiscreteFunction< DiscreteFunctionSpaceType >
+typedef Fem :: AdaptiveDiscreteFunction< DiscreteFunctionSpaceType >
   DiscreteFunctionType;
 #endif
 
