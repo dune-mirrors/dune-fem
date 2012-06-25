@@ -193,7 +193,7 @@ namespace Dune
 
   template< class DomainSpace, class RangeSpace, class TraitsImp >
   class DenseRowMatrixObject
-  : public OEMMatrix
+  : public Fem :: OEMMatrix
   {
     typedef DenseRowMatrixObject< DomainSpace, RangeSpace, TraitsImp > This;
 

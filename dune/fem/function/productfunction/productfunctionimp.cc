@@ -8,6 +8,9 @@
 // values!
 namespace Dune {
 
+namespace Fem 
+{
+
 // Constructor making discrete function  
 template<class DiscreteFunctionSpaceType, class DiscreteFunctionSpace2Type>
   inline ProductDiscreteFunction< DiscreteFunctionSpaceType, DiscreteFunctionSpace2Type>::
@@ -85,10 +88,10 @@ inline void ProductDiscreteFunction<DiscreteFunctionSpaceType, DiscreteFunctionS
  
  for(int i = 0; i< numOfDofs; i++) 
  {
-  const int map = space2().mapToGlobal( en2 , i );  
-  bSet2.evaluate(i,quad2[pointNr],tmp_);
-  DiscreteFunction1Type df = this->localFunction(map);
-	    discFunc.axpy(df,tmp_);
+   const int map = space2().mapToGlobal( en2 , i );  
+   bSet2.evaluate(i,quad2[pointNr],tmp_);
+   DiscreteFunction1Type df = this->localFunction(map);
+	   discFunc.axpy(tmp_, df);
  }
 	
 }
@@ -107,10 +110,10 @@ localFunction(const Entity2Type &en2, const PointType &pt, DiscreteFunction1Type
  
  for(int i = 0; i< numOfDofs; i++) 
  {
-  const int map = space2().mapToGlobal( en2 , i );  
-  bSet2.evaluate(pt,tmp_);
-  DiscreteFunction1Type df = this->localFunction(map);
-	    discFunc.axpy(df,tmp_);
+   const int map = space2().mapToGlobal( en2 , i );  
+   bSet2.evaluate(pt,tmp_);
+   DiscreteFunction1Type df = this->localFunction(map);
+	    discFunc.axpy(tmp_, df);
  }
 }
 
@@ -150,5 +153,7 @@ axpy( const ThisType &org, const RangeFieldType &c )
 }
 
 
-} // end namespace 
+} // end namespace Fem
+
+} // end namespace Dune
 #endif

@@ -57,7 +57,6 @@ typedef FunctionSpace < double , double, dim2 , 1 > FuncSpace2;
 
 //! Get the Dofmanager type
 typedef DofManager<HGridType> DofManagerType;
-typedef DofManagerFactory<DofManagerType> DofManagerFactoryType; 
 
 template <int polOrd2> 
 struct TestProdDF {
@@ -71,7 +70,7 @@ struct TestProdDF {
 					     polOrd2 ,CachingStorage> DiscreteFunction2SpaceType; 
   //! define the type of discrete function we are using , see
   //! dune/fem/discfuncarray.hh
-  typedef ProductDiscreteFunction < DiscreteFunction1SpaceType, DiscreteFunction2SpaceType > DiscreteFunctionType;
+  typedef Fem :: ProductDiscreteFunction < DiscreteFunction1SpaceType, DiscreteFunction2SpaceType > DiscreteFunctionType;
   typedef typename DiscreteFunctionType::DiscreteFunction1Type  DiscreteFunction1Type;
   //! the exact solution to the problem for EOC calculation 
   struct ExactSolution

@@ -1,8 +1,8 @@
 #include <config.h>
 
 #include <iostream>
-#include <dune/fem/gridpart/gridpart.hh>
 
+#include <dune/fem/gridpart/leafgridpart.hh>
 #include <dune/fem/operator/matrix/blockmatrix.hh>
 #include <dune/fem/io/matlab/matlabstream.hh>
 

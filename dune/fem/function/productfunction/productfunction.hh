@@ -16,6 +16,10 @@
 #include <dune/fem/space/common/dofmanager.hh>
 
 namespace Dune{
+
+namespace Fem 
+{
+
   template <class DiscreteFunctionSpaceImp,class DiscreteFunctionSpace2Imp> class ProductDiscreteFunction;
 
   template <class DiscreteFunctionSpaceImp>
@@ -203,6 +207,8 @@ private:
 
 }; // end class ProductDiscreteFunction 
 
+
+} // end namespace Fem
 
 } // end namespace Dune
 
