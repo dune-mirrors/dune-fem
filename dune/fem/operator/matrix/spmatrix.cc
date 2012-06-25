@@ -1,6 +1,9 @@
 namespace Dune 
 {
 
+namespace Fem
+{
+
 // where is the following used?? 
 // it is not used in this class => commented out
 // #define EPS 1.0E-15
@@ -1052,5 +1055,6 @@ void SparseRowMatrix<T>::solveUMF(const T* b, T* x)
 #endif
 }
 
+} // end namespace Fem
 
 } // end namespace Dune
