@@ -1,8 +1,8 @@
 #ifndef DUNE_FEM_CORNERPOINTSET_HH
 #define DUNE_FEM_CORNERPOINTSET_HH
 
-#include <dune/grid/genericgeometry/conversion.hh>
-#include <dune/grid/genericgeometry/referencedomain.hh>
+#include <dune/geometry/genericgeometry/conversion.hh>
+#include <dune/geometry/genericgeometry/referencedomain.hh>
 
 #include <dune/fem/quadrature/cachingpointlist.hh>
 

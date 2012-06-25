@@ -3,7 +3,7 @@
 
 //- Dune includes 
 #include <dune/geometry/type.hh>
-#include <dune/grid/common/quadraturerules.hh>
+#include <dune/geometry/quadraturerules.hh>
 
 #include <dune/fem/quadrature/quadratureimp.hh>
 
