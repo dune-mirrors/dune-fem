@@ -21,6 +21,9 @@
 
 namespace Dune
 {
+
+  namespace Fem 
+  {
   
   //! anonymous namespace, such that variable is only known within 
   //! SparseRowMatrix and other classes located here
@@ -926,6 +929,16 @@ protected:
       return *this;
     }
   };
+
+  } // end namespace Fem 
+
+  // #if DUNE_FEM_COMPATIBILITY  
+  // put this in next version 1.4 
+
+  using Fem :: SparseRowMatrixOperator ;
+  using Fem :: SparseRowMatrixObject ;
+
+  // #endif // DUNE_FEM_COMPATIBILITY
 
 } // end namespace Dune 
 
