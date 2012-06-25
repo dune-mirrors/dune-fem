@@ -109,6 +109,8 @@ namespace Dune
     using BaseType::assign;
     using BaseType::axpy;
     using BaseType::space;
+    using BaseType::asImp;
+    
 
   public:
     //- Typedefs and enums

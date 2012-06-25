@@ -113,7 +113,7 @@ namespace Dune
     template< class Function, class DiscreteFunction >
     inline void LagrangeInterpolation< Function, DiscreteFunction >
       ::interpolateFunction ( const Function &function,
-                               DiscreteFunctionType &discreteFunction )
+                              DiscreteFunctionType &discreteFunction )
     {
       const bool hasLocalFunction = Conversion< Function, HasLocalFunction >::exists;
       CallInterpolateDiscreteFunction< Function, hasLocalFunction >::call( function, discreteFunction );
@@ -128,7 +128,7 @@ namespace Dune
       static void call( const Function &function,
                         DiscreteFunction &discreteFunction )
       {
-        interpolateDiscreteFunction( function, discreteFunction );
+        LagrangeInterpolation<F, DiscreteFunction>::interpolateDiscreteFunction( function, discreteFunction );
       }
     };
 
@@ -146,7 +146,8 @@ namespace Dune
 
         const DiscreteFunctionSpaceType &dfSpace = discreteFunction.space();
         GridFunctionAdapterType dfAdapter( "function", function, dfSpace.gridPart() );
-        interpolateDiscreteFunction( dfAdapter, discreteFunction );
+        LagrangeInterpolation<GridFunctionAdapterType, DiscreteFunction>::
+          interpolateDiscreteFunction( dfAdapter, discreteFunction );
       }
     };
 

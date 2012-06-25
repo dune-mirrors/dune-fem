@@ -217,7 +217,7 @@ public:
     std::cout << "operator + of LocalInlinePlus \n";
     typedef CombinedLocalDataCollect<LocalOp,B> CombinedType;
     CombinedType * combo = new CombinedType ( asImp() , b );
-    saveObjPointer( combo );   
+    this->saveObjPointer( combo );
     return *combo;
   }
   LocalOp & asImp() { return static_cast<LocalOp &> (*this); }
