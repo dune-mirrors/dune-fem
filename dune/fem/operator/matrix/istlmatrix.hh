@@ -26,6 +26,8 @@
 
 namespace Dune
 { 
+  namespace Fem
+  {
 
   ///////////////////////////////////////////////////////
   // --ISTLMatrixHandle
@@ -453,9 +455,9 @@ namespace Dune
     typedef FieldMatrix<RangeFieldType, littleRows, littleCols> LittleBlockType; 
 
   public:
-    typedef BlockVectorDiscreteFunction< DomainSpaceType >     RowDiscreteFunctionType; 
+    typedef ISTLBlockVectorDiscreteFunction< DomainSpaceType >     RowDiscreteFunctionType; 
     typedef typename RowDiscreteFunctionType :: LeakPointerType  RowLeakPointerType;
-    typedef BlockVectorDiscreteFunction< RangeSpaceType >  ColumnDiscreteFunctionType; 
+    typedef ISTLBlockVectorDiscreteFunction< RangeSpaceType >  ColumnDiscreteFunctionType; 
     typedef typename ColumnDiscreteFunctionType :: LeakPointerType  ColumnLeakPointerType;
     
   protected:  
@@ -1136,8 +1138,8 @@ namespace Dune
 
 #if HAVE_MPI 
       // in parallel use scalar product of discrete functions 
-      BlockVectorDiscreteFunction< DomainSpaceType    > vF("ddotOEM:vF", domainSpace(), V ); 
-      BlockVectorDiscreteFunction< RangeSpaceType > wF("ddotOEM:wF", rangeSpace(), W ); 
+      ISTLBlockVectorDiscreteFunction< DomainSpaceType > vF("ddotOEM:vF", domainSpace(), V ); 
+      ISTLBlockVectorDiscreteFunction< RangeSpaceType  > wF("ddotOEM:wF", rangeSpace(), W ); 
       return vF.scalarProductDofs( wF );
 #else 
       return V * W;
@@ -1307,6 +1309,16 @@ namespace Dune
       return *this;
     }
   };
+
+  } // end namespace Fem
+
+  // #if DUNE_FEM_COMPATIBILITY  
+  // put this in next version 1.4 
+
+  using Fem :: ISTLMatrixOperator ;
+  using Fem :: ISTLMatrixObject ;
+
+  // #endif // DUNE_FEM_COMPATIBILITY
 
 } // end namespace Dune 
 
