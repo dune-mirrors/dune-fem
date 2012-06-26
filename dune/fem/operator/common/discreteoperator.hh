@@ -7,8 +7,11 @@
 #include "objpointer.hh"
 #include "localoperator.hh"
 
-namespace Dune{
+namespace Dune
+{
 
+  namespace Fem
+  {
 
 /** @addtogroup DiscreteOperator 
 
@@ -27,9 +30,7 @@ namespace Dune{
 template <class LocalOperatorImp, class DFDomainType, class DFRangeType ,
           template <class,class,class> class DiscreteOperatorImp >
 class DiscreteOperatorDefault
-: public Operator <typename DFDomainType::RangeFieldType, 
-                   typename DFRangeType::RangeFieldType, 
-                   DFDomainType , DFRangeType>
+: public Operator < DFDomainType , DFRangeType >
 , public ObjPointerStorage 
 {
 
@@ -168,6 +169,15 @@ private:
 }; // end class DiscreteOperatorDefault 
 
 /** @} end documentation group */
+
+  } // end namespace Fem
+
+  // #if DUNE_FEM_COMPATIBILITY  
+  // put this in next version 1.4 
+
+  using Fem :: DiscreteOperatorDefault ;
+
+  // #endif // DUNE_FEM_COMPATIBILITY
 
 } // end namespace Dune 
 

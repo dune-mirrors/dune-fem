@@ -8,6 +8,9 @@
 namespace Dune 
 {
 
+  namespace Fem
+  {
+
 //***********************************************************************
 //
 /*! @addtogroup LocalOperator 
@@ -513,6 +516,16 @@ inline void ScaledLocalOperator<A,ScalarType>::applyLocal(EntityType &en1, Entit
 }
 
 
+  } // end namespace Fem
+
+  // #if DUNE_FEM_COMPATIBILITY  
+  // put this in next version 1.4 
+
+  using Fem :: LocalOperatorDefault ;
+  using Fem :: CombinedLocalOperator ;
+  using Fem :: ScaledLocalOperator ;
+
+  // #endif // DUNE_FEM_COMPATIBILITY
 
 } // end namespace Dune
 
