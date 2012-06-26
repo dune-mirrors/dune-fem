@@ -165,15 +165,15 @@ struct VtxProjectionImpl
  *         discontinuous function in the Lagrangepoints
  */
 /*======================================================================*/
-template <typename DFieldType, typename RFieldType,
-          typename DType , typename RType>
-class VtxProjection : public Operator<DFieldType, RFieldType,DType , RType> {
+template < typename DType, typename RType >
+class VtxProjection : public Operator< DType, RType > 
+{
  public:
   typedef DType DomainType;
-  typedef RType  RangeType;
-  typedef DFieldType DomainFieldType;
-  typedef RFieldType RangeFieldType;
-  typedef typename RType::DiscreteFunctionSpaceType::GridPartType GridPartType;
+  typedef RType RangeType;
+  typedef typename DomainType :: RangeFieldType DomainFieldType;
+  typedef typename RType :: RangeFieldType  RangeFieldType;
+  typedef typename RType :: DiscreteFunctionSpaceType :: GridPartType GridPartType;
   //! Constructor 
   VtxProjection() {}
 
