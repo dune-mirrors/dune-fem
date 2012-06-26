@@ -8,6 +8,8 @@
 
 namespace Dune 
 {
+  namespace Fem 
+  {
 
 template <class GridPartType>
 struct WeightDefault {
@@ -192,5 +194,15 @@ class VtxProjection : public Operator<DFieldType, RFieldType,DType , RType> {
 private:
 };
 
-}
-#endif
+  } // end namespace Fem
+
+  // #if DUNE_FEM_COMPATIBILITY  
+  // put this in next version 1.4 
+
+  using Fem :: VtxProjection ;
+
+  // #endif // DUNE_FEM_COMPATIBILITY
+
+} // end name space Dune
+
+#endif 

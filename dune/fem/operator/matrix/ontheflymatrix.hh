@@ -9,6 +9,8 @@
 
 namespace Dune
 {
+  namespace Fem
+  {
 
 //*****************************************************************
 //
@@ -23,7 +25,7 @@ public:
   typedef OnTheFlyMatrix<T> ThisType;
 
 private:
-  typedef Fem::DenseMatrix<T> DenseMatrixType;
+  typedef DenseMatrix<T> DenseMatrixType;
   typedef SparseRowMatrix< DenseMatrixType * > OnTheFlyMatrixType;
 
   typedef std::stack< DenseMatrixType * > MatrixStackType;
@@ -429,8 +431,14 @@ public:
   }
 };
 
+  } // end namespace Fem
 
+  // #if DUNE_FEM_COMPATIBILITY  
+  // put this in next version 1.4 
 
+  using Fem :: OnTheFlyMatrixObject ;
 
+  // #endif // DUNE_FEM_COMPATIBILITY
+  
 } // end namespace Dune 
 #endif  
