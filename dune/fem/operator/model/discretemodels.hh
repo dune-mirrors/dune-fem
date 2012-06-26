@@ -23,7 +23,13 @@
 #include <dune/fem/quadrature/cachingquadrature.hh>
 
 //*************************************************************
-namespace Dune {  
+
+// is this file still needed ???
+namespace Dune 
+{  
+
+  namespace Fem
+  {
   
   //declarations
   template < class Model , class NumFlux , int polOrd 
@@ -304,11 +310,7 @@ namespace Dune {
     public DGDiscreteModelDefault
       < AdvDiffTraits1< Model , NumFlux , polOrd , passId1 > , passId1 >
   {
-#if DUNE_VERSION_NEWER_REV(DUNE_COMMON,2,1,0)
     integral_constant<int, passId1 > uVar;
-#else
-    integral_constant<int, passId1 > uVar;
-#endif
   public:
     typedef AdvDiffTraits1< Model , NumFlux , polOrd 
              , passId1
@@ -322,7 +324,7 @@ namespace Dune {
     typedef typename Traits::GridType GridType;
     typedef typename Traits::JacobianRangeType JacobianRangeType;
     typedef typename Traits::GridPartType::IntersectionIteratorType IntersectionIterator;
-    typedef typename GridType::template Codim<0>::Entity EntityType;
+    typedef typename GridPartType::template Codim<0>::EntityType EntityType;
     
   public:
     AdvDiffDModel1(const DomainType& upwind,
@@ -434,13 +436,8 @@ namespace Dune {
       < AdvDiffTraits2< Model , NumFlux , polOrd , passId1 , passId2 > 
         , passId1 , passId2 >
   {
-#if DUNE_VERSION_NEWER_REV(DUNE_COMMON,2,1,0)
     integral_constant<int, passId1 > uVar;
     integral_constant<int, passId2 > vVar;
-#else
-    integral_constant<int, passId1 > uVar;
-    integral_constant<int, passId2 > vVar;
-#endif
   public:
     typedef AdvDiffTraits2<Model,NumFlux,polOrd
              , passId1
@@ -456,7 +453,7 @@ namespace Dune {
     typedef typename Traits::GridType GridType;
     typedef typename Traits::JacobianRangeType JacobianRangeType;
     typedef typename Traits::GridPartType::IntersectionIteratorType IntersectionIterator;
-    typedef typename GridType::template Codim<0>::Entity EntityType;
+    typedef typename GridPartType::template Codim<0>::EntityType EntityType;
 
   public:
     AdvDiffDModel2(const DomainType& upwind,
@@ -580,11 +577,7 @@ namespace Dune {
     public DGDiscreteModelDefault
       < AdvDiffTraits3< Model , NumFlux , polOrd , passId1 > , passId1 >
   {
-#if DUNE_VERSION_NEWER_REV(DUNE_COMMON,2,1,0)
     integral_constant<int, passId1 > uVar;
-#else
-    integral_constant<int, passId1 > uVar;
-#endif
 
   public:
     typedef AdvDiffTraits3< Model , NumFlux , polOrd , passId1 > Traits;
@@ -597,7 +590,7 @@ namespace Dune {
     typedef typename Traits::GridType GridType;
     typedef typename Traits::JacobianRangeType JacobianRangeType;
     typedef typename Traits::GridPartType::IntersectionIteratorType IntersectionIterator;
-    typedef typename GridType::template Codim<0>::Entity EntityType;
+    typedef typename GridPartType::template Codim<0>::EntityType EntityType;
 
   public:
     AdvDiffDModel3(const Model& mod,const NumFlux& numf) :
@@ -680,11 +673,7 @@ namespace Dune {
     public DGDiscreteModelDefault
       < AdvDiffTraits3WithSource< Model , NumFlux , polOrd , passId1 > , passId1 >
   {
-#if DUNE_VERSION_NEWER_REV(DUNE_COMMON,2,1,0)
     integral_constant<int, passId1 > uVar;
-#else
-    integral_constant<int, passId1 > uVar;
-#endif
 
   public:
     typedef AdvDiffTraits3WithSource< Model , NumFlux , polOrd , passId1 > Traits;
@@ -697,7 +686,7 @@ namespace Dune {
     typedef typename Traits::GridType GridType;
     typedef typename Traits::JacobianRangeType JacobianRangeType;
     typedef typename Traits::GridPartType::IntersectionIteratorType IntersectionIterator;
-    typedef typename GridType::template Codim<0>::Entity EntityType;
+    typedef typename GridPartType::template Codim<0>::EntityType EntityType;
 
   public:
     AdvDiffDModel3WithSource(const Model& mod,const NumFlux& numf) :
@@ -797,13 +786,8 @@ namespace Dune {
              , passId2
              >
   {
-#if DUNE_VERSION_NEWER_REV(DUNE_COMMON,2,1,0)
     integral_constant<int, passId1 > uVar;
     integral_constant<int, passId2 > vVar;
-#else
-    integral_constant<int, passId1 > uVar;
-    integral_constant<int, passId2 > vVar;
-#endif
   public:
     typedef AdvDiffTraits4< Model , NumFlux , polOrd 
              , passId1
@@ -818,7 +802,7 @@ namespace Dune {
     typedef typename Traits::GridType GridType;
     typedef typename Traits::JacobianRangeType JacobianRangeType;
     typedef typename Traits::GridPartType::IntersectionIteratorType IntersectionIterator;
-    typedef typename GridType::template Codim<0>::Entity EntityType;
+    typedef typename GridPartType::template Codim<0>::EntityType EntityType;
 
   public:
     AdvDiffDModel4(const DomainType& upwind,
@@ -941,7 +925,7 @@ namespace Dune {
     typedef typename Traits::GridType GridType;
     typedef typename Traits::JacobianRangeType JacobianRangeType;
     typedef typename Traits::GridPartType::IntersectionIteratorType IntersectionIterator;
-    typedef typename GridType::template Codim<0>::Entity EntityType;
+    typedef typename GridPartType::template Codim<0>::EntityType EntityType;
     
   public:
     LimiterDiscreteModel1(const Model& mod) :
@@ -954,5 +938,19 @@ namespace Dune {
     const Model& model_;
   };
 
-}
+  } // end namespace Fem
+
+  // #if DUNE_FEM_COMPATIBILITY  
+  // put this in next version 1.4 
+
+  using Fem :: AdvDiffDModel1 ;
+  using Fem :: AdvDiffDModel2 ;
+  using Fem :: AdvDiffDModel3WithSource ;
+  using Fem :: AdvDiffDModel3 ;
+  using Fem :: AdvDiffDModel4 ;
+  using Fem :: LimiterDiscreteModel1 ; 
+
+  // #endif // DUNE_FEM_COMPATIBILITY
+
+} // end namespace Dune
 #endif

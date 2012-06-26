@@ -8,6 +8,10 @@
 namespace Dune
 {
 
+  namespace Fem 
+  {
+
+
   /*! \ingroup EllipticOperator
    *  \class DiffusionModelInterface
    *  \brief Interface for a mathematical model of a DiffusionOperator
@@ -158,6 +162,15 @@ namespace Dune
     }
   };
 
-}
+  } // end namespace Fem
+
+  // #if DUNE_FEM_COMPATIBILITY  
+  // put this in next version 1.4 
+
+  using Fem :: DiffusionModelDefault ;
+
+  // #endif // DUNE_FEM_COMPATIBILITY
+  
+} // end namespace Dune
 
 #endif // #ifndef DUNE_FEM_DIFFUSIONMODEL_HH
