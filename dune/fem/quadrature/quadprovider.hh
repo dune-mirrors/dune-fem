@@ -243,7 +243,7 @@ namespace Dune
       assert( order >= 0 );
       // we need here to distinguish between the basic types 
       // otherwise the this won't work for UGGrid 
-      return ( elementGeometry.basicType() == GeometryType :: simplex ) ? 
+      return ( elementGeometry.isSimplex() ) ? 
         QuadCreator< 0 > :: template provideQuad< LineQuadratureType > ( geometry, order ) :
         QuadCreator< 1 > :: template provideQuad< LineQuadratureType > ( geometry, order ) ;
     }
