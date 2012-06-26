@@ -16,7 +16,11 @@
 #include <dune/istl/paamg/pinfo.hh>
 #endif
 
-namespace Dune {
+namespace Dune 
+{
+
+  namespace Fem
+  {
 
 #if HAVE_DUNE_ISTL
   template<class M, class X, class Y, int l=1>
@@ -275,6 +279,17 @@ namespace Dune {
     }
   };
 #endif // end HAVE_DUNE_ISTL 
+
+  } // end namespace Fem
+
+  // #if DUNE_FEM_COMPATIBILITY  
+  // put this in next version 1.4 
+
+#if HAVE_DUNE_ISTL
+  using Fem :: PreconditionerWrapper ;
+#endif
+
+  // #endif // DUNE_FEM_COMPATIBILITY
 
 } // end namespace Dune 
 #endif

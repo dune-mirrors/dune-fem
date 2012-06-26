@@ -3,7 +3,11 @@
 
 #include <dune/fem/storage/singletonlist.hh>
 
-namespace Dune {
+namespace Dune 
+{
+
+  namespace Fem
+  {
 
 //! Key for CommManager singleton list 
 template <class RowSpaceImp, class ColSpaceImp>
@@ -136,6 +140,16 @@ private:
   // reference to matrix object 
   MatrixObjectType& matrixObj_;
 };
+
+  } // end namespace Fem
+  // #if DUNE_FEM_COMPATIBILITY  
+  // put this in next version 1.4 
+
+  using Fem :: MatrixObjectSingleton ;
+  using Fem :: MatrixObjectSingletonKey ;
+  using Fem :: MatrixObjectSingletonFactory ;
+
+  // #endif // DUNE_FEM_COMPATIBILITY
 
 } // end namespace Dune 
 #endif
