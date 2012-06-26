@@ -119,7 +119,7 @@ namespace LDGExample
     struct LocalOperatorSelector
     {
 #if USE_DUNE_ISTL                                
-      typedef ISTLMatrixTraits<DiscreteFunctionSpaceType> MatrixObjectTraits;
+      typedef Fem::ISTLMatrixTraits<DiscreteFunctionSpaceType> MatrixObjectTraits;
 #else 
       typedef SparseRowMatrixTraits<DiscreteFunctionSpaceType,
                                     DiscreteFunctionSpaceType> MatrixObjectTraits; 
