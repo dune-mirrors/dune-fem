@@ -80,7 +80,7 @@ int main(int argc, char ** argv)
     dgl2( exactSolution, solution );
     
     LagrangeFunctionType contSolution("contSolution",lagspace);
-    VtxProjection<double,double,DiscreteFunctionType,LagrangeFunctionType> projection;
+    VtxProjection< DiscreteFunctionType,LagrangeFunctionType > projection;
     projection(solution,contSolution);
 
     LagrangeFunctionType lagrangeSolution("lagrangeSolution",lagspace);
