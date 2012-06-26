@@ -17,6 +17,8 @@
 
 namespace Dune
 {
+  namespace Fem
+  {
 
 /*! @ingroup GradientOperator 
  * Description: Solver for equations of the form
@@ -227,7 +229,16 @@ namespace Dune
     mutable std::vector<RangeFieldType> massMatrix_;
   };
 
-//! @}  
+//! @} 
+  } // end namespace Fem
+
+  // #if DUNE_FEM_COMPATIBILITY  
+  // put this in next version 1.4 
+
+  using Fem :: LocalDGMassPass ;
+
+  // #endif // DUNE_FEM_COMPATIBILITY
+
 } // end namespace Dune
 
 #endif
