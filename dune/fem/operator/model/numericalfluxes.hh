@@ -4,9 +4,14 @@
 #include <iostream>
 
 // *** Numerical fluxes ***
+//
+// needed in here ?? 
 
 namespace Dune
 {
+
+  namespace Fem
+  {
 
   // local Lax-Friedrichs flux
   template< class Model >
@@ -699,6 +704,16 @@ namespace Dune
   private:
     Model& model_;
   }; // end of WDLLFFlux
+
+  } // end namespace Fem
+
+  // #if DUNE_FEM_COMPATIBILITY  
+  // put this in next version 1.4 
+
+  using Fem :: LLFFlux ;
+  using Fem :: WDLLFFlux ;
+
+  // #endif // DUNE_FEM_COMPATIBILITY
 
 } // end namespace Dune
 

@@ -14,6 +14,9 @@
 namespace Dune
 {
 
+  namespace Fem
+  {
+
 /** @ingroup OperatorCommon
   \brief ODESpaceOperatorInterface for Operators that work with PARDG ODE solvers 
   of the type \f$L: X \longrightarrow X\f$ where \f$X\f$ is a discrete function space.
@@ -310,6 +313,16 @@ inline void SpaceOperatorInterface< DiscreteFunction >
   // call operator
   (*this)( U0, tmp );
 }
+  } // end namespace Fem
+
+  // #if DUNE_FEM_COMPATIBILITY  
+  // put this in next version 1.4 
+
+  using Fem :: PARDGSpaceOperatorInterface ;
+  using Fem :: SpaceOperatorInterface ;
+  using Fem :: SpaceOperatorWrapper ;
+
+  // #endif // DUNE_FEM_COMPATIBILITY
 
 } // end namespace Dune 
 

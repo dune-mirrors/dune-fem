@@ -4,7 +4,11 @@
 #include <dune/common/fvector.hh>
 #include <dune/common/fmatrix.hh>
 
-namespace Dune {
+namespace Dune 
+{
+
+  namespace Fem
+  {
 
   // *** ModelTraits class
   template <class GridPart,int dimRange2,
@@ -22,8 +26,18 @@ namespace Dune {
     typedef FieldMatrix<double,dimRange,dimDomain> FluxRangeType;
     typedef FieldMatrix<double,dimGradRange,dimDomain> DiffusionRangeType;
     typedef typename GridPartType::IntersectionIteratorType IntersectionIterator;
-    typedef typename GridType::template Codim<0>::Entity EntityType;
+    typedef typename GridPartType::template Codim<0>::EntityType EntityType;
    };
+
+  } // end namespace Fem
+
+  // #if DUNE_FEM_COMPATIBILITY  
+  // put this in next version 1.4 
+
+  using Fem :: ModelTraits ;
+
+  // #endif // DUNE_FEM_COMPATIBILITY
+  
 
 } // end namespace Dune
 

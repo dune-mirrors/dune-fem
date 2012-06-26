@@ -4,7 +4,11 @@
 #include "common/discreteoperator.hh"
 #include "common/localoperator.hh"
 
-namespace Dune{
+namespace Dune
+{
+
+  namespace Fem
+  {
 
 /** @ingroup DiscreteOperator
 
@@ -200,7 +204,15 @@ public:
   bool printMsg_;
 };
 
+  } // end namespace Fem
 
-}
+  // #if DUNE_FEM_COMPATIBILITY  
+  // put this in next version 1.4 
+
+  using Fem :: DiscreteOperator ;
+
+  // #endif // DUNE_FEM_COMPATIBILITY
+
+} // end namespace Dune
 
 #endif

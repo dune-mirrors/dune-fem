@@ -1,6 +1,8 @@
 #ifndef DUNE_VECTORSPACE_HH
 #define DUNE_VECTORSPACE_HH
 
+// is this file still needed ???
+
 namespace Dune{
 
  /** \ingroup Mapping 
