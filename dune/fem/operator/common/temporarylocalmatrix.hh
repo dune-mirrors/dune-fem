@@ -7,6 +7,9 @@
 namespace Dune
 {
 
+  namespace Fem 
+  {
+
   /** \ingroup Matrix
    *  \class TemporaryLocalMatrix
    *  \brief A local matrix with a small array as storage
@@ -131,7 +134,16 @@ namespace Dune
       fields_.assign( 0 );
     }
   };
+
+  } // end namespace Fem
+
+  // #if DUNE_FEM_COMPATIBILITY  
+  // put this in next version 1.4 
+
+  using Fem :: TemporaryLocalMatrix ;
+
+  // #endif // DUNE_FEM_COMPATIBILITY
   
-}
+} // end namespace Dune
 
 #endif

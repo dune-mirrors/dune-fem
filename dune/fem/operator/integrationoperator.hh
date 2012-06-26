@@ -8,6 +8,10 @@
 namespace Dune
 {
 
+  namespace Fem 
+  {
+
+
   template< class LocalOperatorImp, class RangeDiscreteFunctionImp >
   class DefaultIntegrationOperatorTraits
   {
@@ -42,9 +46,7 @@ namespace Dune
 
   template< class TraitsImp >
   class IntegrationOperator< TraitsImp, true >
-  : public Operator< typename TraitsImp :: DomainFieldType,
-                     typename TraitsImp :: RangeFieldType,
-                     typename TraitsImp :: DomainFunctionType,
+  : public Operator< typename TraitsImp :: DomainFunctionType,
                      typename TraitsImp :: RangeFunctionType >
   {
   public:
@@ -190,9 +192,7 @@ namespace Dune
   
   template< class TraitsImp >
   class IntegrationOperator< TraitsImp, false >
-  : public Operator< typename TraitsImp :: DomainFieldType,
-                     typename TraitsImp :: RangeFieldType,
-                     typename TraitsImp :: DomainFunctionType,
+  : public Operator< typename TraitsImp :: DomainFunctionType,
                      typename TraitsImp :: RangeFunctionType >
   {
   public:
@@ -262,7 +262,16 @@ namespace Dune
       }
     }
   };
-  
-}
+
+  } // end namespace Fem
+
+  // #if DUNE_FEM_COMPATIBILITY  
+  // put this in next version 1.4 
+
+  using Fem :: IntegrationOperator ;
+
+  // #endif // DUNE_FEM_COMPATIBILITY
+
+} //  end namespace Dune
 
 #endif
