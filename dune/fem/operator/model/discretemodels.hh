@@ -322,6 +322,7 @@ namespace Dune
     typedef FieldVector<double, Traits::dimDomain-1> FaceDomainType;
     typedef typename Traits::RangeType RangeType;
     typedef typename Traits::GridType GridType;
+    typedef typename Traits::GridPartType GridPartType;
     typedef typename Traits::JacobianRangeType JacobianRangeType;
     typedef typename Traits::GridPartType::IntersectionIteratorType IntersectionIterator;
     typedef typename GridPartType::template Codim<0>::EntityType EntityType;
@@ -451,6 +452,7 @@ namespace Dune
     
     typedef typename Traits::RangeType RangeType;
     typedef typename Traits::GridType GridType;
+    typedef typename Traits::GridPartType GridPartType;
     typedef typename Traits::JacobianRangeType JacobianRangeType;
     typedef typename Traits::GridPartType::IntersectionIteratorType IntersectionIterator;
     typedef typename GridPartType::template Codim<0>::EntityType EntityType;
@@ -588,6 +590,7 @@ namespace Dune
     
     typedef typename Traits::RangeType RangeType;
     typedef typename Traits::GridType GridType;
+    typedef typename Traits::GridPartType GridPartType;
     typedef typename Traits::JacobianRangeType JacobianRangeType;
     typedef typename Traits::GridPartType::IntersectionIteratorType IntersectionIterator;
     typedef typename GridPartType::template Codim<0>::EntityType EntityType;
@@ -684,6 +687,7 @@ namespace Dune
     
     typedef typename Traits::RangeType RangeType;
     typedef typename Traits::GridType GridType;
+    typedef typename Traits::GridPartType GridPartType;
     typedef typename Traits::JacobianRangeType JacobianRangeType;
     typedef typename Traits::GridPartType::IntersectionIteratorType IntersectionIterator;
     typedef typename GridPartType::template Codim<0>::EntityType EntityType;
@@ -800,6 +804,7 @@ namespace Dune
     
     typedef typename Traits::RangeType RangeType;
     typedef typename Traits::GridType GridType;
+    typedef typename Traits::GridPartType GridPartType;
     typedef typename Traits::JacobianRangeType JacobianRangeType;
     typedef typename Traits::GridPartType::IntersectionIteratorType IntersectionIterator;
     typedef typename GridPartType::template Codim<0>::EntityType EntityType;
@@ -923,6 +928,7 @@ namespace Dune
     typedef FieldVector<double, Traits::dimDomain-1> FaceDomainType;
     typedef typename Traits::RangeType RangeType;
     typedef typename Traits::GridType GridType;
+    typedef typename Traits::GridPartType GridPartType;
     typedef typename Traits::JacobianRangeType JacobianRangeType;
     typedef typename Traits::GridPartType::IntersectionIteratorType IntersectionIterator;
     typedef typename GridPartType::template Codim<0>::EntityType EntityType;
