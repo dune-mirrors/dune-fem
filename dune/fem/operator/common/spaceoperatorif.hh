@@ -321,6 +321,8 @@ inline void SpaceOperatorInterface< DiscreteFunction >
   using Fem :: PARDGSpaceOperatorInterface ;
   using Fem :: SpaceOperatorInterface ;
   using Fem :: SpaceOperatorWrapper ;
+  using Fem :: SpaceOperatorPtr ;
+  using Fem :: SpaceOperatorStorage ; 
 
   // #endif // DUNE_FEM_COMPATIBILITY
 
