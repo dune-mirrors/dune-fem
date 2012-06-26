@@ -181,7 +181,7 @@ protected:
 
   // specialization for ISTL matrices 
   template <class RowSpaceImp, class ColSpaceImp>
-  struct DGMatrixTraits<ISTLMatrixTraits<RowSpaceImp,ColSpaceImp> >
+  struct DGMatrixTraits<Fem::ISTLMatrixTraits<RowSpaceImp,ColSpaceImp> >
   {
     typedef RowSpaceImp RowSpaceType;
     typedef ColSpaceImp ColumnSpaceType;

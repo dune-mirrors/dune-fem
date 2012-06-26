@@ -6,6 +6,9 @@
 namespace Dune
 {
 
+  namespace Fem
+  {
+
   template< class LocalMatrixStackImp >
   class LocalMatrixWrapper;
 
@@ -229,7 +232,16 @@ namespace Dune
       return localMatrix_;
     }
   };
+
+  } // end namespace Fem
+
+  // #if DUNE_FEM_COMPATIBILITY  
+  // put this in next version 1.4 
+
+  using Fem :: LocalMatrixWrapper ;
+
+  // #endif // DUNE_FEM_COMPATIBILITY
   
-}
+} //  end namespace Dune
 
 #endif

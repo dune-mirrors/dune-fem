@@ -1,7 +1,11 @@
 #ifndef DUNE_OBJPOINTER_HH
 #define DUNE_OBJPOINTER_HH
 
-namespace Dune {
+namespace Dune 
+{
+
+  namespace Fem
+  {
 
 //! storage class for newly generated operators during operator + on
 //! DiscreteOperator
@@ -67,6 +71,16 @@ private:
   ObjPointerType * item_;
 
 };
+
+  } // end namespace Fem
+
+  // #if DUNE_FEM_COMPATIBILITY  
+  // put this in next version 1.4 
+
+  using Fem :: ObjPointerStorage ;
+  using Fem :: ObjPointer ;
+
+  // #endif // DUNE_FEM_COMPATIBILITY
 
 } // end namespace Dune
 

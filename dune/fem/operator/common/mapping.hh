@@ -9,6 +9,10 @@
 namespace Dune
 {
 
+  namespace Fem
+  {
+
+
 /** @addtogroup Mapping
 
     Mappings in Dune always map from one vector space into another vector space.
@@ -401,6 +405,16 @@ operator /(const RFieldType& factor,
 {
   return MappingOperators::divideMapping(mapping,factor);
 }
+
+  } // end namespace Fem
+
+  // #if DUNE_FEM_COMPATIBILITY  
+  // put this in next version 1.4 
+
+  using Fem :: Mapping ;
+  using Fem :: MappingOperators ;
+
+  // #endif // DUNE_FEM_COMPATIBILITY
 
 } // end namespace Dune 
 #endif
