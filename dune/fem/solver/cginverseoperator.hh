@@ -6,6 +6,8 @@
 #include <dune/fem/function/common/discretefunction.hh>
 #include <dune/fem/operator/common/operator.hh>
 
+#include <dune/fem/solver/diagonalpreconditioner.hh>
+
 namespace Dune
 {
 
@@ -337,7 +339,7 @@ namespace Dune
         if( preconditioning && LinearOperator :: assembled ) 
         {
           // create diagonal preconditioner 
-          precondObj_ = new Fem::DiagonalPreconditioner< DomainFunctionType, LinearOperator >( linearOp );
+          precondObj_ = new DiagonalPreconditioner< DomainFunctionType, LinearOperator >( linearOp );
           preconditioner_ = precondObj_;
         }
       }
