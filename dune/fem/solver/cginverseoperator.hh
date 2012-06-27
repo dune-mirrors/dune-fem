@@ -134,31 +134,144 @@ namespace Dune
     };
 
 
+    namespace Solver 
+    {
+      // CGInverseOperator
+      // -----------------
+     
+      /** \class   CGInverseOperator
+       *  \ingroup OEMSolver
+       *  \brief   Inverse operator base on CG method. This is the base class for the
+       *           cg solver and does not imvolve any runtime parametrization
+       */
+      template< class DiscreteFunction > 
+      class CGInverseOperator
+      : public Fem::Operator< DiscreteFunction, DiscreteFunction >
+      {
+        typedef Fem::Operator< DiscreteFunction, DiscreteFunction > BaseType;
+        
+      public:
+        typedef typename BaseType::DomainFunctionType DomainFunctionType;
+        typedef typename BaseType::RangeFunctionType RangeFunctionType;
+
+        typedef Fem::Operator< DomainFunctionType, RangeFunctionType > OperatorType;
+        typedef Fem::Operator< RangeFunctionType, DomainFunctionType > PreconditionerType;
+        
+      private:
+        typedef ConjugateGradientSolver< OperatorType > SolverType;
+
+      public:
+        /** \brief constructor of CGInverseOperator
+         *
+         *  \param[in]  op       operator to invert
+         *  \param[in]  redEps   reduction epsilon
+         *  \param[in]  absLimit absolut limit of residual
+         *  \param[in]  maxIter  maximum number of iteration steps
+         *  \param[in]  verbose  verbosity
+         */
+        CGInverseOperator ( const OperatorType &op,
+                            double redEps, double absLimit,
+                            unsigned int maxIter, bool verbose )
+          : operator_( op ),
+            preconditioner_ ( 0 ),
+            solver_( absLimit, maxIter, verbose )
+        {}
+
+        /** \brief constructor of CGInverseOperator
+         *
+         *  \param[in]  op       operator to invert
+         *  \param[in]  redEps   reduction epsilon
+         *  \param[in]  absLimit absolut limit of residual
+         *  \param[in]  maxIter  maximum number of iteration steps
+         */
+        CGInverseOperator ( const OperatorType &op,
+                            double redEps, double absLimit,
+                            unsigned int maxIter = std::numeric_limits< unsigned int >::max() )
+          : operator_( op ),
+            preconditioner_ ( 0 ),
+            solver_( absLimit, maxIter )
+        {}
+        
+        /** \brief constructor of CGInverseOperator
+         *
+         *  \param[in]  op       operator to invert
+         *  \param[in]  redEps   reduction epsilon
+         *  \param[in]  absLimit absolut limit of residual
+         *  \param[in]  maxIter  maximum number of iteration steps
+         */
+        CGInverseOperator ( const OperatorType &op,
+                            const PreconditionerType &precond,
+                            double redEps, double absLimit,
+                            unsigned int maxIter = std::numeric_limits< unsigned int >::max() )
+          : operator_( op ),
+            preconditioner_( &precond ),
+            solver_( absLimit, maxIter )
+        {}
+
+        /** \brief application operator
+         *
+         *  The application operator actually solves the linear system
+         *  \f$op(w) = u\f$ using the CG method.
+         *
+         *  \param[in]   u  argument discrete function
+         *  \param[out]  w  destination discrete function
+         */
+        virtual void operator() ( const DomainFunctionType &u, RangeFunctionType &w ) const
+        {
+          if(preconditioner_)
+            solver_.solve( operator_, *preconditioner_, u, w );
+          else 
+            solver_.solve(operator_,u,w);
+        }
+
+        //! number of iterations needed for last solve 
+        unsigned int iterations () const 
+        {
+          return solver_.iterations();
+        }
+        
+        //! return average communication time during last solve 
+        double averageCommTime() const 
+        {
+          return solver_.averageCommTime();
+        }
+
+      protected:
+        const OperatorType &operator_;
+        const PreconditionerType *preconditioner_;
+        SolverType solver_;
+      };
+    }
 
     // CGInverseOperator
     // -----------------
    
     /** \class   CGInverseOperator
      *  \ingroup OEMSolver
-     *  \brief   Inverse operator base on CG method
+     *  \brief   Inverse operator base on CG method. Uses a runtime parameter
+     *           fem.preconditioning which enables diagonal preconditioning if
+     *           diagonal matrix entries are available, i.e.,
+     *           Op :: assembled is true.
      */
-    template< class DiscreteFunction > 
+    template< class DiscreteFunction, 
+              class Op = Fem::Operator< DiscreteFunction, DiscreteFunction > >
     class CGInverseOperator
-    : public Fem::Operator< DiscreteFunction, DiscreteFunction >
+    : public Fem::Solver::CGInverseOperator< DiscreteFunction >
     {
-      typedef Fem::Operator< DiscreteFunction, DiscreteFunction > BaseType;
+      typedef Fem::Solver::CGInverseOperator< DiscreteFunction > BaseType;
       
     public:
       typedef typename BaseType::DomainFunctionType DomainFunctionType;
       typedef typename BaseType::RangeFunctionType RangeFunctionType;
 
-      typedef Fem::Operator< DomainFunctionType, RangeFunctionType > OperatorType;
-      typedef Fem::Operator< RangeFunctionType, DomainFunctionType > PreconditionerType;
+      typedef DomainFunctionType DestinationType;
       
-    private:
-      typedef ConjugateGradientSolver< OperatorType > SolverType;
+      //! type of operator 
+      typedef Op OperatorType;
+      
+      // Preconditioner is to approximate op^-1 !
+      typedef Fem::Operator< RangeFunctionType,DomainFunctionType > PreconditioningType;
 
-    public:
       /** \brief constructor of CGInverseOperator
        *
        *  \param[in]  op       operator to invert
@@ -167,13 +280,15 @@ namespace Dune
        *  \param[in]  maxIter  maximum number of iteration steps
        *  \param[in]  verbose  verbosity
        */
-      CGInverseOperator ( const OperatorType &op,
+      template <class LinearOperator>
+      CGInverseOperator ( const LinearOperator &op,
                           double redEps, double absLimit,
                           unsigned int maxIter, bool verbose )
-        : operator_( op ),
-          preconditioner_ ( 0 ),
-          solver_( absLimit, maxIter, verbose )
-      {}
+      : BaseType( op, redEps, absLimit, maxIter, verbose ),
+        precondObj_( 0 )
+      {
+        checkPreconditioning( op );
+      }
 
       /** \brief constructor of CGInverseOperator
        *
@@ -182,13 +297,15 @@ namespace Dune
        *  \param[in]  absLimit absolut limit of residual
        *  \param[in]  maxIter  maximum number of iteration steps
        */
-      CGInverseOperator ( const OperatorType &op,
+      template <class LinearOperator>
+      CGInverseOperator ( const LinearOperator &op,
                           double redEps, double absLimit,
                           unsigned int maxIter = std::numeric_limits< unsigned int >::max() )
-        : operator_( op ),
-          preconditioner_ ( 0 ),
-          solver_( absLimit, maxIter )
-      {}
+      : BaseType( op, redEps, absLimit, maxIter ),
+        precondObj_( 0 )
+      {
+        checkPreconditioning( op );
+      }
       
       /** \brief constructor of CGInverseOperator
        *
@@ -198,49 +315,36 @@ namespace Dune
        *  \param[in]  maxIter  maximum number of iteration steps
        */
       CGInverseOperator ( const OperatorType &op,
-                          const PreconditionerType &precond,
+                          const PreconditioningType &precond,
                           double redEps, double absLimit,
                           unsigned int maxIter = std::numeric_limits< unsigned int >::max() )
-        : operator_( op ),
-          preconditioner_( &precond ),
-          solver_( absLimit, maxIter )
+      : BaseType( op, precond, redEps, absLimit, maxIter ),
+        precondObj_( 0 )
       {}
 
-      /** \brief application operator
-       *
-       *  The application operator actually solves the linear system
-       *  \f$op(w) = u\f$ using the CG method.
-       *
-       *  \param[in]   u  argument discrete function
-       *  \param[out]  w  destination discrete function
-       */
-      virtual void operator() ( const DomainFunctionType &u, RangeFunctionType &w ) const
+      /** \brief destructor */
+      ~CGInverseOperator ()
       {
-        if(preconditioner_)
-          solver_.solve( operator_, *preconditioner_, u, w );
-        else 
-          solver_.solve(operator_,u,w);
-      }
-
-      //! number of iterations needed for last solve 
-      unsigned int iterations () const 
-      {
-        return solver_.iterations();
-      }
-      
-      //! return average communication time during last solve 
-      double averageCommTime() const 
-      {
-        return solver_.averageCommTime();
+        if( precondObj_ )
+          delete precondObj_;
       }
 
     protected:
-      const OperatorType &operator_;
-      const PreconditionerType *preconditioner_;
-      SolverType solver_;
+      template< class LinearOperator >
+      void checkPreconditioning( const LinearOperator &linearOp )
+      {
+        const bool preconditioning = Parameter::getValue< bool >( "fem.preconditioning", false );
+        if( preconditioning && LinearOperator :: assembled ) 
+        {
+          // create diagonal preconditioner 
+          precondObj_ = new Fem::DiagonalPreconditioner< DomainFunctionType, LinearOperator >( linearOp );
+          preconditioner_ = precondObj_;
+        }
+      }
+
+      using BaseType::preconditioner_;
+      PreconditioningType *precondObj_;
     };
-
-
 
     // Implementation of ConjugateGradientSolver
     // -----------------------------------------
@@ -366,6 +470,11 @@ namespace Dune
 
   } // namespace Fem
 
+  // #if DUNE_FEM_COMPATIBILITY  
+  // put this in next version 1.4 
+
+  using Fem :: CGInverseOperator;
+  // #endif // DUNE_FEM_COMPATIBILITY
 } // namespace Dune
 
 #endif // #ifndef DUNE_FEM_CGINVERSEOPERATOR_HH
