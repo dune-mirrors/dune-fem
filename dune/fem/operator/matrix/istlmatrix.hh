@@ -707,7 +707,7 @@ namespace Dune
     //! type of local matrix 
     typedef LocalMatrix<ThisType> ObjectType;
     typedef ThisType LocalMatrixFactoryType;
-    typedef Fem :: ObjectStack< LocalMatrixFactoryType > LocalMatrixStackType;
+    typedef ObjectStack< LocalMatrixFactoryType > LocalMatrixStackType;
     //! type of local matrix 
     typedef LocalMatrixWrapper< LocalMatrixStackType > LocalMatrixType;
 
@@ -806,7 +806,7 @@ namespace Dune
       assert( rowMapper_.size() == colMapper_.size() );
     }
 
-    /** \copydoc Fem::Operator::assembled */
+    /** \copydoc Operator::assembled */
     static const bool assembled = true ;
 
     const ThisType& systemMatrix() const { return *this; }
@@ -1278,7 +1278,7 @@ namespace Dune
   template< class DomainFunction, class RangeFunction, class TraitsImp >
   class ISTLMatrixOperator
   : public ISTLMatrixObject< typename DomainFunction::DiscreteFunctionSpaceType, typename RangeFunction::DiscreteFunctionSpaceType, TraitsImp >,
-    public Fem::AssembledOperator< DomainFunction, RangeFunction >
+    public AssembledOperator< DomainFunction, RangeFunction >
   {
     typedef ISTLMatrixOperator< DomainFunction, RangeFunction, TraitsImp > This;
     typedef ISTLMatrixObject< typename DomainFunction::DiscreteFunctionSpaceType, typename RangeFunction::DiscreteFunctionSpaceType, TraitsImp > Base;
@@ -1287,7 +1287,7 @@ namespace Dune
     typedef typename Base::DomainSpaceType DomainSpaceType;
     typedef typename Base::RangeSpaceType RangeSpaceType;
 
-    /** \copydoc Fem::Operator::assembled */
+    /** \copydoc Operator::assembled */
     static const bool assembled = true ;
 
     using Base::apply;
