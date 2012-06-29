@@ -52,6 +52,10 @@ namespace Fem
   public:
     //! type of discrete function space 
     typedef Space SpaceType; 
+
+    //! for convenience 
+    typedef SpaceType DiscreteFunctionSpaceType ;
+
     //! type of grid part 
     typedef typename SpaceType :: GridPartType GridPartType;
 
@@ -156,7 +160,10 @@ namespace Fem
         finalize();
       }
     }
-    
+
+    //! return reference to discrete function space 
+    const SpaceType& space () const { return space_; }
+
   protected:  
     // build linkage and index maps 
     inline void buildMaps ()
@@ -385,27 +392,19 @@ namespace Fem
     }
   };
 
-
-#if HAVE_MPI
   //! Proxy class to evaluate ScalarProduct 
   //! holding SlaveDofs which is singleton per space and mapper 
-  template< class DiscreteFunction >
-  class ParallelScalarProduct 
+  template< class DiscreteFunctionSpace >
+  class SlaveDofsProvider 
   {
   public:
-    typedef DiscreteFunction DiscreteFunctionType;
+    //! type of the discrete function space
+    typedef DiscreteFunctionSpace DiscreteFunctionSpaceType;
 
   private:
-    typedef ParallelScalarProduct< DiscreteFunctionType > ThisType;
+    typedef SlaveDofsProvider< DiscreteFunctionSpaceType > ThisType;
 
   public:
-    //! type of the discrete function space
-    typedef typename DiscreteFunctionType :: DiscreteFunctionSpaceType
-      DiscreteFunctionSpaceType;
-
-    //! type of range field 
-    typedef typename DiscreteFunctionSpaceType :: RangeFieldType  RangeFieldType;
-
     //! type of used mapper 
     typedef typename DiscreteFunctionSpaceType :: BlockMapperType MapperType;
     
@@ -418,9 +417,6 @@ namespace Fem
     typedef SingletonList< SlaveDofsKeyType, SlaveDofsType >
       SlaveDofsProviderType;
 
-    typedef typename DiscreteFunctionType :: ConstDofBlockPtrType
-      ConstDofBlockPtrType;
-
   protected:
     const DiscreteFunctionSpaceType &space_; 
 
@@ -429,7 +425,7 @@ namespace Fem
 
   public:  
     //! constructor taking space 
-    inline ParallelScalarProduct ( const DiscreteFunctionSpaceType &space )
+    inline SlaveDofsProvider ( const DiscreteFunctionSpaceType &space )
     : space_( space ),
       slaveDofs_( getSlaveDofs( space_ ) )
     {
@@ -437,15 +433,75 @@ namespace Fem
 
   private:
     // prohibit copying
-    ParallelScalarProduct( const ThisType & );
+    SlaveDofsProvider( const ThisType & );
 
   public:
+    //! return discrete function space 
+    const DiscreteFunctionSpaceType& space() const { return space_; }
+
     //! remove object comm
-    inline ~ParallelScalarProduct ()
+    inline ~SlaveDofsProvider ()
     {
       SlaveDofsProviderType :: removeObject( *slaveDofs_ );
     }
 
+    inline SlaveDofsType &slaveDofs () const
+    {
+      // rebuild slave dofs if grid was changed
+      slaveDofs_->rebuild();
+      return *slaveDofs_;
+    }
+    
+  protected:
+    inline static SlaveDofsType *getSlaveDofs ( const DiscreteFunctionSpaceType &space )
+    {
+      SlaveDofsKeyType key( space, space.blockMapper() );
+      return &(SlaveDofsProviderType :: getObject( key ));
+    }
+  };
+
+#if HAVE_MPI
+  //! Proxy class to evaluate ScalarProduct 
+  //! holding SlaveDofs which is singleton per space and mapper 
+  template< class DiscreteFunction >
+  class ParallelScalarProduct 
+    : public SlaveDofsProvider< typename DiscreteFunction :: DiscreteFunctionSpaceType >
+  {
+  public:
+    typedef DiscreteFunction DiscreteFunctionType;
+
+    //! type of the discrete function space
+    typedef typename DiscreteFunctionType :: DiscreteFunctionSpaceType
+      DiscreteFunctionSpaceType;
+
+  private:
+    typedef ParallelScalarProduct< DiscreteFunctionType > ThisType;
+    typedef SlaveDofsProvider< DiscreteFunctionSpaceType > BaseType;
+
+  public:
+    //! type of range field 
+    typedef typename DiscreteFunctionSpaceType :: RangeFieldType  RangeFieldType;
+
+    //! type of used mapper 
+    typedef typename DiscreteFunctionSpaceType :: BlockMapperType MapperType;
+    
+    enum { blockSize = DiscreteFunctionSpaceType :: localBlockSize };
+
+    // type of communication manager object which does communication
+    typedef SlaveDofs< DiscreteFunctionSpaceType, MapperType > SlaveDofsType;
+
+    typedef typename DiscreteFunctionType :: ConstDofBlockPtrType
+      ConstDofBlockPtrType;
+
+    //! constructor taking space 
+    inline ParallelScalarProduct ( const DiscreteFunctionSpaceType &space )
+    : BaseType( space )
+    {
+    }
+
+    using BaseType :: space;
+
+  public:
     //! evaluate scalar product and omit slave nodes 
     inline RangeFieldType scalarProductDofs ( const DiscreteFunctionType &x,
                                               const DiscreteFunctionType &y ) const
@@ -471,22 +527,8 @@ namespace Fem
       }
 
       // do global sum 
-      scp = space_.grid().comm().sum( scp );
+      scp = space().grid().comm().sum( scp );
       return scp;
-    }
-
-  protected:
-    inline SlaveDofsType &slaveDofs () const
-    {
-      // rebuild slave dofs if grid was changed
-      slaveDofs_->rebuild();
-      return *slaveDofs_;
-    }
-    
-    inline static SlaveDofsType *getSlaveDofs ( const DiscreteFunctionSpaceType &space )
-    {
-      SlaveDofsKeyType key( space, space.blockMapper() );
-      return &(SlaveDofsProviderType :: getObject( key ));
     }
   };
 #else
