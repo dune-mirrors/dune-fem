@@ -9,7 +9,8 @@ file_HEADERS = asciiparser.hh \
          iotuple.hh \
          latextablewriter.hh \
          persistencemanager.hh \
-         vtkio.hh
+         vtkio.hh \
+				 xdrio.hh
 
 include $(top_srcdir)/am/global-rules
 
