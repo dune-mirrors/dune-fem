@@ -24,8 +24,8 @@ namespace Dune
      */
     template< class JacobianOperator >
     class DifferentiableOperator
-    : public Dune::Fem::Operator< typename JacobianOperator::DomainFunctionType,
-                                  typename JacobianOperator::RangeFunctionType >
+    : public virtual Dune::Fem::Operator< typename JacobianOperator::DomainFunctionType,
+                                          typename JacobianOperator::RangeFunctionType >
     {
       typedef Dune::Fem::Operator< typename JacobianOperator::DomainFunctionType,
                                    typename JacobianOperator::RangeFunctionType > BaseType;
