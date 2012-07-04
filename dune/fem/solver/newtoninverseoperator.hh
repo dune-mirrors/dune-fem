@@ -56,6 +56,8 @@ namespace Dune
       explicit NewtonInverseOperator ( OperatorType &op )
       : op_( op ),
         tolerance_( toleranceParameter() ),
+        linAbsTol_( linAbsTolParameter( tolerance_ ) ),
+        linReduction_( linReductionParameter( tolerance_ ) ),
         verbose_( verbosityParameter() ),
         maxIterations_( maxIterationsParameter() ),
         maxLinearIterations_( maxLinearIterationsParameter() )
@@ -69,6 +71,8 @@ namespace Dune
       NewtonInverseOperator ( OperatorType &op, const DomainFieldType &epsilon )
       : op_( op ),
         tolerance_( epsilon ),
+        linAbsTol_( linAbsTolParameter( tolerance_ ) ),
+        linReduction_( linReductionParameter( tolerance_ ) ),
         verbose_( verbosityParameter() ),
         maxIterations_( maxIterationsParameter() ),
         maxLinearIterations_( maxLinearIterationsParameter() )
@@ -97,6 +101,16 @@ namespace Dune
         return Dune::Parameter::getValue< DomainFieldType >( "fem.solver.newton.tolerance", 1e-6 );
       }
 
+      static DomainFieldType linAbsTolParameter ( const DomainFieldType &tolerance )
+      {
+        return Dune::Parameter::getValue< DomainFieldType >( "fem.solver.newton.linabstol", tolerance / 8 );
+      }
+
+      static DomainFieldType linReductionParameter ( const DomainFieldType &tolerance )
+      {
+        return Dune::Parameter::getValue< DomainFieldType >( "fem.solver.newton.linreduction", tolerance / 8 );
+      }
+
       static bool verbosityParameter ()
       {
         const bool v = Parameter::getValue< bool >( "fem.solver.verbose", false );
@@ -114,7 +128,7 @@ namespace Dune
       }
 
       OperatorType &op_;
-      const DomainFieldType tolerance_;
+      const DomainFieldType tolerance_, linAbsTol_, linReduction_;;
       const bool verbose_;
       const int maxIterations_;
       const int maxLinearIterations_;
@@ -129,9 +143,6 @@ namespace Dune
     inline void NewtonInverseOperator< Op, LInvOp >
       ::operator() ( const DomainFunctionType &u, RangeFunctionType &w ) const
     {
-      const DomainFieldType reduction = tolerance_ / 8;
-      const DomainFieldType absLimit = tolerance_ / 8;
-
       DomainFunctionType residual( u );
       RangeFunctionType dw( w );
       JacobianOperatorType jOp( "jacobianOperator", dw.space(), u.space() );
@@ -153,7 +164,7 @@ namespace Dune
         //        rather than the relative error
         //        (see also dune-fem/dune/fem/solver/inverseoperators.hh)
         const int remLinearIts = maxLinearIterations_ - linearIterations_;
-        const LinearInverseOperatorType jInv( jOp, reduction, absLimit / delta, remLinearIts );
+        const LinearInverseOperatorType jInv( jOp, linReduction_, linAbsTol_ / delta, remLinearIts );
         
         dw.clear();
         jInv( residual, dw );
