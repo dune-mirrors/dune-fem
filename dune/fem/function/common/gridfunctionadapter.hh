@@ -59,7 +59,7 @@ namespace Dune
 
 
   // GridFunctionAdapter
-  // -----------------------
+  // -------------------
 
   /** \brief GridFunctionAdapter provides local functions for a Function. 
    */
@@ -130,7 +130,7 @@ namespace Dune
     {}
 
     // reference to function this local belongs to
-    GridFunctionAdapter( const ThisType &other ) 
+    GridFunctionAdapter ( const ThisType &other ) 
     : space_( other.space_ ),
       localFunctionStorage_( *this ),
       function_( other.function_ ),
@@ -138,24 +138,25 @@ namespace Dune
     {}
 
     //! evaluate function on local coordinate local 
-    void evaluate(const DomainType& global, RangeType& result) const 
+    void evaluate ( const DomainType &global, RangeType &result ) const
     {
-      function_.evaluate(global,result);  
+      function_.evaluate( global, result );
     }
+
     //! evaluate function on local coordinate local 
-    void jacobian(const DomainType& global, JacobianRangeType& result) const 
+    void jacobian ( const DomainType &global, JacobianRangeType &result ) const
     {
       function_.jacobian(global,result);  
     }
 
     /** \copydoc Dune::DiscreteFunctionInterface::localFunction(const EntityType &entity) const */ 
-    const LocalFunctionType localFunction( const EntityType &entity ) const 
+    const LocalFunctionType localFunction ( const EntityType &entity ) const 
     {
       return localFunctionStorage().localFunction( entity );
     }
 
     /** \copydoc Dune::DiscreteFunctionInterface::localFunction(const EntityType &entity) */ 
-    LocalFunctionType localFunction( const EntityType &entity )
+    LocalFunctionType localFunction ( const EntityType &entity )
     {
       return localFunctionStorage().localFunction( entity );
     }
@@ -189,7 +190,7 @@ namespace Dune
 
 
   // GridFunctionAdapter::LocalFunction
-  // --------------------------------------
+  // ----------------------------------
 
   template< class Function, class GridPart >
   class GridFunctionAdapter< Function, GridPart >::LocalFunction
@@ -218,17 +219,20 @@ namespace Dune
     //! constructor initializing local function 
     LocalFunction ( const EntityType &entity, const DiscreteFunctionType &df )
     : function_( &df.function_ ),
-      entity_( &entity )
+      entity_( &entity ),
+      order_( df.space().order() )
     {}
 
     LocalFunction ( const DiscreteFunctionType &df )
     : function_( &df.function_ ),
-      entity_( 0 )
+      entity_( 0 ),
+      order_( df.space().order() )
     {}
 
     LocalFunction ( LocalFunctionStorage &storage )
     : function_( &storage.function().function_ ),
-      entity_( 0 )
+      entity_( 0 ),
+      order_( storage.function().space().order() )
     {}
 
     //! evaluate local function 
@@ -264,6 +268,8 @@ namespace Dune
       }
     }
 
+    int order () const { return order_; }
+
     //! init local function
     void init ( const EntityType &entity )
     {
@@ -284,6 +290,7 @@ namespace Dune
 
     const FunctionType *function_;
     const EntityType *entity_;
+    int order_;
   };
 
 
