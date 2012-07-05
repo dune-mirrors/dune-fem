@@ -5,6 +5,7 @@
 
 namespace Dune
 {
+
   namespace Fem
   {
 
@@ -65,7 +66,7 @@ namespace Dune
   inline int
   GenericLocalFunctionImpl< DiscreteFunction, DiscreteFunctionSpace >::order () const
   {
-    return discreteFunction_.space().order();
+    return discreteFunction_.space().order( entity() );
   }
 
 
@@ -84,10 +85,8 @@ namespace Dune
   
   template< class DiscreteFunction, class DiscreteFunctionSpace >
   inline
-  const typename GenericLocalFunctionImpl< DiscreteFunction, DiscreteFunctionSpace >
-    :: EntityType &
-  GenericLocalFunctionImpl< DiscreteFunction, DiscreteFunctionSpace >
-    :: entity () const
+  const typename GenericLocalFunctionImpl< DiscreteFunction, DiscreteFunctionSpace >::EntityType &
+  GenericLocalFunctionImpl< DiscreteFunction, DiscreteFunctionSpace >::entity () const
   {
     assert( entity_ != 0 );
     return *entity_;
@@ -96,8 +95,7 @@ namespace Dune
 
 
   template< class DiscreteFunction, class DiscreteFunctionSpace >
-  inline void GenericLocalFunctionImpl< DiscreteFunction, DiscreteFunctionSpace >
-    ::init ( const EntityType &entity )
+  inline void GenericLocalFunctionImpl< DiscreteFunction, DiscreteFunctionSpace >::init ( const EntityType &entity )
   {
     typedef typename DiscreteFunctionSpaceType::MapperType MapperType;
    
