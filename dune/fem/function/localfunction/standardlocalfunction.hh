@@ -202,10 +202,8 @@ namespace Dune
 
 
   template< class DiscreteFunction, class DiscreteFunctionSpace >
-  inline const typename StandardLocalFunctionImpl< DiscreteFunction, DiscreteFunctionSpace >
-    ::RangeFieldType &
-  StandardLocalFunctionImpl< DiscreteFunction, DiscreteFunctionSpace >
-    ::operator[] ( const int num ) const
+  inline const typename StandardLocalFunctionImpl< DiscreteFunction, DiscreteFunctionSpace >::RangeFieldType &
+  StandardLocalFunctionImpl< DiscreteFunction, DiscreteFunctionSpace >::operator[] ( const int num ) const
   {
     assert( (num >= 0) && (num < numDofs()) );
     return *(values_[ num ]);
@@ -227,15 +225,13 @@ namespace Dune
   inline int
   StandardLocalFunctionImpl< DiscreteFunction, DiscreteFunctionSpace >::order () const
   {
-    return discreteFunction_.space().order();
+    return discreteFunction_.space().order( entity() );
   }
 
 
   template< class DiscreteFunction, class DiscreteFunctionSpace >
-  inline const typename StandardLocalFunctionImpl< DiscreteFunction, DiscreteFunctionSpace >
-    ::BaseFunctionSetType &
-  StandardLocalFunctionImpl< DiscreteFunction, DiscreteFunctionSpace >
-    :: baseFunctionSet () const
+  inline const typename StandardLocalFunctionImpl< DiscreteFunction, DiscreteFunctionSpace >::BaseFunctionSetType &
+  StandardLocalFunctionImpl< DiscreteFunction, DiscreteFunctionSpace >::baseFunctionSet () const
   {
     assert( entity_ != 0 );
     return baseFunctionSet_;
@@ -243,8 +239,7 @@ namespace Dune
 
   
   template< class DiscreteFunction, class DiscreteFunctionSpace >
-  inline const typename StandardLocalFunctionImpl< DiscreteFunction, DiscreteFunctionSpace >
-    ::EntityType &
+  inline const typename StandardLocalFunctionImpl< DiscreteFunction, DiscreteFunctionSpace >::EntityType &
   StandardLocalFunctionImpl< DiscreteFunction, DiscreteFunctionSpace >::entity () const
   {
     assert( entity_ != 0 );
@@ -254,8 +249,7 @@ namespace Dune
 
   template< class DiscreteFunction, class DiscreteFunctionSpace >
   inline void
-  StandardLocalFunctionImpl< DiscreteFunction, DiscreteFunctionSpace >
-    ::init ( const EntityType &entity )
+  StandardLocalFunctionImpl< DiscreteFunction, DiscreteFunctionSpace >::init ( const EntityType &entity )
   {
     typedef typename DiscreteFunctionSpaceType :: BlockMapperType BlockMapperType;
     typedef typename BlockMapperType :: DofMapIteratorType DofMapIteratorType;

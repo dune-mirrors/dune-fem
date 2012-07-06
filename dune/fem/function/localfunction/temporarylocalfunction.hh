@@ -549,7 +549,7 @@ namespace Dune
   inline int
   TemporaryLocalFunctionImpl< DiscreteFunctionSpace, ArrayAllocator >::order () const
   {
-    return discreteFunctionSpace_.order();
+    return discreteFunctionSpace_.order( entity() );
   }
 
 
