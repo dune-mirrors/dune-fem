@@ -276,16 +276,16 @@ namespace Dune
       entity_ = &entity;
     } 
 
-  private:
-    const FunctionType &function () const
-    {
-      return *function_;
-    }
-
     const EntityType &entity () const
     {
       assert( entity_ );
       return *entity_;
+    }
+
+  private:
+    const FunctionType &function () const
+    {
+      return *function_;
     }
 
     const FunctionType *function_;
