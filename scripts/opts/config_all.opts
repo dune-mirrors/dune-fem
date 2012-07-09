@@ -10,8 +10,7 @@ CONFIGURE_FLAGS="\
 --with-alberta=$MODULEDIR/alberta \
 --x-includes=/usr/X11R6/include \
 --x-libraries=/usr/X11R6/lib \
---enable-fieldvector-size-is-method \
---disable-documentation \
+--enable-documentation \
 --with-grape=$MODULEDIR/grape"
 MAKE_FLAGS=
 
