@@ -161,17 +161,6 @@ namespace Dune
   protected:
     using Base::localFaceIndex;
 
-    /** \brief return local face number 
-     *
-     *  \todo switch to generic numbering
-     */
-    int faceNumber () const DUNE_DEPRECATED
-    {
-      typedef GenericGeometry::MapNumberingProvider< dimension > Numbering;
-      const unsigned int tid = elementGeometry().id();
-      return Numbering::template generic2dune< 1 >( tid, localFaceIndex() );
-    }
-
   protected:
     Base getPointList ( const IntersectionType &intersection, const int order, 
                         const typename Base :: Side side )
