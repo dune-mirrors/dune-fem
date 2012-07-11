@@ -211,26 +211,26 @@ namespace Fem
     ThisType &operator= ( const ThisType &other );
     
   public:
-    /** \copydoc Dune::DiscreteFunctionInterface::clear */
+    /** \copydoc Dune::Fem::DiscreteFunctionInterface::clear */
     inline void clear() {
       for (int i=0; i<N; ++i)
         func_[i]->clear();
     }
 
-    /** \copydoc Dune::DiscreteFunctionInterface::assign(const DiscreteFunctionInterfaceType &g) */
+    /** \copydoc Dune::Fem::DiscreteFunctionInterface::assign(const DiscreteFunctionInterfaceType &g) */
     void assign( const DiscreteFunctionInterfaceType &g )
     {
       for( int i=0; i<N; ++i)
         func_[i]->assign( asImp( g ).subFunction( i ) );
     }
 
-    /** \copydoc Dune::DiscreteFunctionInterface::size() const */ 
+    /** \copydoc Dune::Fem::DiscreteFunctionInterface::size() const */ 
     int size() const
     {
       return func_[0]->size()*N;
     }
 
-    /** \copydoc Dune::DiscreteFunctionInterface::operator+=(const DiscreteFunctionInterfaceType &g) */
+    /** \copydoc Dune::Fem::DiscreteFunctionInterface::operator+=(const DiscreteFunctionInterfaceType &g) */
     ThisType &operator+= ( const DiscreteFunctionInterfaceType &g )
     {
       for (int i=0; i<N; ++i)
@@ -238,7 +238,7 @@ namespace Fem
       return *this;
     }
 
-    /** \copydoc Dune::DiscreteFunctionInterface::operator-=
+    /** \copydoc Dune::Fem::DiscreteFunctionInterface::operator-=
      */ 
     using BaseType::operator-=;
     ThisType &operator-= ( const DiscreteFunctionInterfaceType &g )
@@ -250,7 +250,7 @@ namespace Fem
      return *this;
     }
 
-    /** \copydoc Dune::DiscreteFunctionInterface::operator*=(const RangeFieldType &scalar) */    
+    /** \copydoc Dune::Fem::DiscreteFunctionInterface::operator*=(const RangeFieldType &scalar) */    
     DiscreteFunctionType& operator *= (const RangeFieldType &scalar)
     {
       for (int i=0; i<N; ++i)
@@ -258,7 +258,7 @@ namespace Fem
       return *this;
     }
 
-    /** \copydoc Dune::DiscreteFunctionInterface::operator*=(const RangeFieldType &scalar) */
+    /** \copydoc Dune::Fem::DiscreteFunctionInterface::operator*=(const RangeFieldType &scalar) */
     DiscreteFunctionType& operator /= (const RangeFieldType &scalar)
     {
       for (int i=0; i<N; ++i)
@@ -266,14 +266,14 @@ namespace Fem
       return *this;
     }
 
-    /** \copydoc Dune::DiscreteFunctionInterface::addScaled
+    /** \copydoc Dune::Fem::DiscreteFunctionInterface::addScaled
      */
     void addScaled( const DiscreteFunctionInterfaceType &g, const RangeFieldType &s )
     {
       axpy( g, s );
     }
 
-    /** \copydoc Dune::DiscreteFunctionInterface::axpy
+    /** \copydoc Dune::Fem::DiscreteFunctionInterface::axpy
      */
     void axpy( const RangeFieldType &s, const DiscreteFunctionInterfaceType &g )
     {
@@ -281,7 +281,7 @@ namespace Fem
         func_[i]->axpy( s, asImp( g ).subFunction( i ) );
     }
 
-    /** \copydoc Dune::DiscreteFunctionInterface::scalarProductDofs(const DiscreteFunctionInterfaceType &other) const */
+    /** \copydoc Dune::Fem::DiscreteFunctionInterface::scalarProductDofs(const DiscreteFunctionInterfaceType &other) const */
     RangeFieldType scalarProductDofs ( const DiscreteFunctionInterfaceType &other ) const
     {
       RangeFieldType ret( 0 );
@@ -290,14 +290,14 @@ namespace Fem
       return ret;
     }
 
-    /** \copydoc Dune::DiscreteFunctionInterface::read */
+    /** \copydoc Dune::Fem::DiscreteFunctionInterface::read */
     template< class StreamTraits >
     inline void read ( InStreamInterface< StreamTraits >& in)
     {
       for (int i=0; i<N; ++i)
         func_[i]->read(in);
     }
-    /** \copydoc Dune::DiscreteFunctionInterface::write */
+    /** \copydoc Dune::Fem::DiscreteFunctionInterface::write */
     template< class StreamTraits >
     inline void write ( OutStreamInterface< StreamTraits >& out) const
     {
@@ -305,13 +305,13 @@ namespace Fem
         func_[i]->write(out);
     }
 
-    /** \copydoc Dune::DiscreteFunctionInterface::print(std::ostream &out) const */
+    /** \copydoc Dune::Fem::DiscreteFunctionInterface::print(std::ostream &out) const */
     inline void print( std :: ostream &out ) const {
       for (int i=0; i<N; ++i)
         func_[i]->print(out);
     }
 
-    /** \copydoc Dune::DiscreteFunctionInterface::dofsValid() const */
+    /** \copydoc Dune::Fem::DiscreteFunctionInterface::dofsValid() const */
     inline bool dofsValid () const {
       bool ret = func_[0]->dofsValid();
       for (int i=1;i<N;i++)
@@ -360,22 +360,22 @@ namespace Fem
       return func_[variable]->dof(point);
     }
     
-    /** \copydoc Dune::DiscreteFunctionInterface::dbegin() const */
+    /** \copydoc Dune::Fem::DiscreteFunctionInterface::dbegin() const */
     inline ConstDofIteratorType dbegin () const
     {
       return ConstDofIteratorType(DofIteratorType(*this));
     }
-    /** \copydoc Dune::DiscreteFunctionInterface::dend() const */
+    /** \copydoc Dune::Fem::DiscreteFunctionInterface::dend() const */
     inline ConstDofIteratorType dend () const
     {
       return ConstDofIteratorType(DofIteratorType(false,*this));
     }
-    /** \copydoc Dune::DiscreteFunctionInterface::dbegin() */
+    /** \copydoc Dune::Fem::DiscreteFunctionInterface::dbegin() */
     inline DofIteratorType dbegin ()
     {
       return DofIteratorType(*this);
     }
-    /** \copydoc Dune::DiscreteFunctionInterface::dend() */
+    /** \copydoc Dune::Fem::DiscreteFunctionInterface::dend() */
     inline DofIteratorType dend ()
     {
       return DofIteratorType(false,*this);

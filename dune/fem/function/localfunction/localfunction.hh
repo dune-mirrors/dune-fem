@@ -450,11 +450,11 @@ namespace Dune
     typedef typename EntityType::Geometry GeometryType;
 
   public:
-    /** \copydoc Dune::LocalFunction::operator+=(const LocalFunction<T> &lf) */
+    /** \copydoc Dune::Fem::LocalFunction::operator+=(const LocalFunction<T> &lf) */
     template< class T >
     void operator+= ( const LocalFunction< T > &lf );
 
-    /** \copydoc Dune::LocalFunction::operator-=(const LocalFunction<T> &lf) */
+    /** \copydoc Dune::Fem::LocalFunction::operator-=(const LocalFunction<T> &lf) */
     template< class T >
     void operator-= ( const LocalFunction< T > &lf );
 
@@ -463,35 +463,35 @@ namespace Dune
 
     void clear ( );
     
-    /** \copydoc Dune::LocalFunction::axpy(const RangeFieldType s,const LocalFunction<T> &lf) */
+    /** \copydoc Dune::Fem::LocalFunction::axpy(const RangeFieldType s,const LocalFunction<T> &lf) */
     template< class T >
     void axpy ( const RangeFieldType s, const LocalFunction< T > &lf );
 
-    /** \copydoc Dune::LocalFunction::evaluate(const FieldVector<int,diffOrder> &diffVariable,const PointType &x,RangeType &ret) const */
+    /** \copydoc Dune::Fem::LocalFunction::evaluate(const FieldVector<int,diffOrder> &diffVariable,const PointType &x,RangeType &ret) const */
     template< int diffOrder, class PointType >
     void evaluate ( const FieldVector< int, diffOrder > &diffVariable,
                     const PointType &x, RangeType &ret ) const;
 
-    /** \copydoc Dune::LocalFunction::evaluate(const PointType &x,RangeType &ret) const */
+    /** \copydoc Dune::Fem::LocalFunction::evaluate(const PointType &x,RangeType &ret) const */
     template< class PointType >
     void evaluate ( const PointType &x, RangeType &ret ) const;
 
-    /** \copydoc Dune::LocalFunction::jacobian(const PointType &x,JacobianRangeType &ret) const */
+    /** \copydoc Dune::Fem::LocalFunction::jacobian(const PointType &x,JacobianRangeType &ret) const */
     template< class PointType >
     void jacobian ( const PointType &x, JacobianRangeType &ret ) const;
 
     template< class PointType >
     void hessian ( const PointType &x, HessianRangeType &hessian ) const;
 
-    /** \copydoc Dune::LocalFunction::axpy(const PointType &x,const RangeType &factor) */
+    /** \copydoc Dune::Fem::LocalFunction::axpy(const PointType &x,const RangeType &factor) */
     template< class PointType >
     void axpy( const PointType &x, const RangeType &factor );
 
-    /** \copydoc Dune::LocalFunction::axpy(const PointType &x,const JacobianRangeType &factor) */
+    /** \copydoc Dune::Fem::LocalFunction::axpy(const PointType &x,const JacobianRangeType &factor) */
     template< class PointType >
     void axpy( const PointType &x, const JacobianRangeType &factor );
 
-    /** \copydoc Dune::LocalFunction::axpy(const PointType &x,const RangeType &factor1,const JacobianRangeType &factor2) */
+    /** \copydoc Dune::Fem::LocalFunction::axpy(const PointType &x,const RangeType &factor1,const JacobianRangeType &factor2) */
     template< class PointType >
     void axpy( const PointType &x, const RangeType &factor1, const JacobianRangeType &factor2 );
 

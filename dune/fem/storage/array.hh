@@ -274,7 +274,7 @@ namespace Dune
     typedef typename Traits :: IteratorType IteratorType;
 
   public:
-    /** \copydoc Dune::ArrayInterface::assign(const ElementType &element) */
+    /** \copydoc Dune::Fem::ArrayInterface::assign(const ElementType &element) */
     inline void assign ( const ElementType &element )
     {
       ArrayType &imp = asImp();
@@ -283,7 +283,7 @@ namespace Dune
         imp[ i ] = element;
     }
     
-    /** \copydoc Dune::ArrayInterface::assign(const ArrayInterface<T> &other) */
+    /** \copydoc Dune::Fem::ArrayInterface::assign(const ArrayInterface<T> &other) */
     template< class T >
     inline void assign( const ArrayInterface< T > &other )
     {
@@ -294,25 +294,25 @@ namespace Dune
         imp[ i ] = other[ i ];
     }
 
-    /** \copydoc Dune::ArrayInterface::begin() const */
+    /** \copydoc Dune::Fem::ArrayInterface::begin() const */
     inline ConstIteratorType begin () const
     {
       return ConstIteratorType( asImp(), 0 );
     }
 
-    /** \copydoc Dune::ArrayInterface::begin() */
+    /** \copydoc Dune::Fem::ArrayInterface::begin() */
     inline IteratorType begin ()
     {
       return IteratorType( asImp(), 0 );
     }
 
-    /** \copydoc Dune::ArrayInterface::end() const */
+    /** \copydoc Dune::Fem::ArrayInterface::end() const */
     inline ConstIteratorType end () const
     {
       return ConstIteratorType( asImp(), size() );
     }
 
-    /** \copydoc Dune::ArrayInterface::end() */
+    /** \copydoc Dune::Fem::ArrayInterface::end() */
     inline IteratorType end ()
     {
       return IteratorType( asImp(), size() );
@@ -351,21 +351,21 @@ namespace Dune
       assert( elements_ != NULL );
     }
    
-    /** \copydoc Dune::ArrayInterface::operator[](unsigned int index) const */
+    /** \copydoc Dune::Fem::ArrayInterface::operator[](unsigned int index) const */
     inline const ElementType &operator[] ( unsigned int index ) const
     {
       assert( index < size_ );
       return elements_[ index ];
     }
 
-    /** \copydoc Dune::ArrayInterface::operator[](unsigned int index) */
+    /** \copydoc Dune::Fem::ArrayInterface::operator[](unsigned int index) */
     inline ElementType &operator[] ( unsigned int index )
     {
       assert( index < size_ );
       return elements_[ index ];
     }
 
-    /** \copydoc Dune::ArrayInterface::size */
+    /** \copydoc Dune::Fem::ArrayInterface::size */
     inline unsigned int size () const
     {
       return size_;
@@ -439,21 +439,21 @@ namespace Dune
       assign( other );
     }
   
-    /** \copydoc Dune::ArrayInterface::operator[](unsigned int index) const */
+    /** \copydoc Dune::Fem::ArrayInterface::operator[](unsigned int index) const */
     inline const ElementType &operator[] ( unsigned int index ) const
     {
       assert( index < fixedSize );
       return elements_[ index ];
     }
 
-    /** \copydoc Dune::ArrayInterface::operator[](unsigned int index) */
+    /** \copydoc Dune::Fem::ArrayInterface::operator[](unsigned int index) */
     inline ElementType &operator[] ( unsigned int index )
     {
       assert( index < fixedSize );
       return elements_[ index ];
     }
 
-    /** \copydoc Dune::ArrayInterface::size() const */
+    /** \copydoc Dune::Fem::ArrayInterface::size() const */
     inline unsigned int size () const
     {
       return fixedSize;
@@ -566,7 +566,7 @@ namespace Dune
         elements_[ oldSize + i ] = array[ i ];
     }
     
-    /** \copydoc Dune::ArrayInterface::assign(const ArrayInterface<T> &other) */
+    /** \copydoc Dune::Fem::ArrayInterface::assign(const ArrayInterface<T> &other) */
     template< class T >
     inline void assign( const ArrayInterface< T > &other )
     {

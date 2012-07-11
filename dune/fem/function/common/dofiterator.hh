@@ -172,7 +172,7 @@ namespace Dune
       return *asImp();
     }
 
-    /* \copydoc Dune::DofIteratorInterface::operator!=
+    /* \copydoc Dune::Fem::DofIteratorInterface::operator!=
      *
      *  \note The default implementation is just
      *  \code
@@ -184,7 +184,7 @@ namespace Dune
       return !asImp().operator==( other );
     }
 
-    /** \copydoc Dune::DofIteratorInterface::index() const */
+    /** \copydoc Dune::Fem::DofIteratorInterface::index const */
     inline int index () const
     {
       DofIteratorType it( asImp() );
@@ -233,14 +233,14 @@ namespace Dune
     {
     }
 
-    /** \copydoc Dune::DofIteratorInterface::operator= */
+    /** \copydoc Dune::Fem::DofIteratorInterface::operator= */
     inline const ThisType &operator= ( const ThisType &other )
     {
       it_ = other.it_;
       return *this;
     }
 
-    /** \copydoc Dune::DofIteratorInterface::operator*() const */
+    /** \copydoc Dune::Fem::DofIteratorInterface::operator*() const */
     const DofType& operator* () const
     {
       return (*it_); 
@@ -251,32 +251,32 @@ namespace Dune
       return it_[ n ];
     }
    
-    /** \copydoc Dune::DofIteratorInterface::index */
+    /** \copydoc Dune::Fem::DofIteratorInterface::index */
     inline int index () const 
     {
       return it_.index();
     }
 
-    /** \copydoc Dune::DofIteratorInterface::operator++ */
+    /** \copydoc Dune::Fem::DofIteratorInterface::operator++ */
     inline ThisType &operator++ ()
     {
       ++it_;
       return (*this);
     }
 
-    /** \copydoc Dune::DofIteratorInterface::operator== */
+    /** \copydoc Dune::Fem::DofIteratorInterface::operator== */
     inline bool operator== ( const ThisType &other ) const
     {
       return (it_ == other.it_);
     }
     
-    /** \copydoc Dune::DofIteratorInterface::operator!= */
+    /** \copydoc Dune::Fem::DofIteratorInterface::operator!= */
     inline bool operator!= ( const ThisType &other ) const
     {
       return (it_ != other.it_);
     }
 
-    /** \copydoc Dune::DofIteratorInterface::reset */
+    /** \copydoc Dune::Fem::DofIteratorInterface::reset */
     inline void reset ()
     {
       it_.reset();

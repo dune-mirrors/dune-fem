@@ -665,7 +665,7 @@ namespace Fem
     }
 
   public:
-    /** \copydoc Dune::DiscreteFunctionSpaceInterface::sequence */
+    /** \copydoc Dune::Fem::DiscreteFunctionSpaceInterface::sequence */
     inline int sequence () const
     { 
       return dofManager_.sequence();
@@ -692,37 +692,37 @@ namespace Fem
       return lfStorage_.localFunction( entity );
     }
     
-    /** \copydoc Dune::DiscreteFunctionSpaceInterface::grid() const */
+    /** \copydoc Dune::Fem::DiscreteFunctionSpaceInterface::grid() const */
     inline const GridType &grid () const
     {
       return asImp().gridPart().grid();
     }
 
-    /** \copydoc Dune::DiscreteFunctionSpaceInterface::grid() */
+    /** \copydoc Dune::Fem::DiscreteFunctionSpaceInterface::grid() */
     inline GridType &grid ()
     {
       return asImp().gridPart().grid();
     }
 
-    /** \copydoc Dune::DiscreteFunctionSpaceInterface::gridPart() const */
+    /** \copydoc Dune::Fem::DiscreteFunctionSpaceInterface::gridPart() const */
     inline GridPartType &gridPart () const
     {
       return gridPart_;
     }
    
-    /** \copydoc Dune::DiscreteFunctionSpaceInterface::indexSet() const */
+    /** \copydoc Dune::Fem::DiscreteFunctionSpaceInterface::indexSet() const */
     inline const IndexSetType &indexSet () const
     {
       return asImp().gridPart().indexSet();
     }
 
-    /** \copydoc Dune::DiscreteFunctionSpaceInterface::size */
+    /** \copydoc Dune::Fem::DiscreteFunctionSpaceInterface::size */
     inline int size () const
     {
       return mapper().size();
     }
   
-    /** \copydoc Dune::DiscreteFunctionSpaceInterface::begin() const
+    /** \copydoc Dune::Fem::DiscreteFunctionSpaceInterface::begin() const
      *
      *  \note The default implementation uses the codim 0 iterators of the
      *        associated grid partition.
@@ -732,7 +732,7 @@ namespace Fem
       return asImp().gridPart().template begin< 0 >();
     }
 
-    /** \copydoc Dune::DiscreteFunctionSpaceInterface::end() const
+    /** \copydoc Dune::Fem::DiscreteFunctionSpaceInterface::end() const
      *
      *  \note The default implementation uses the codim 0 iterators of the
      *        associated grid partition.
@@ -742,7 +742,7 @@ namespace Fem
       return asImp().gridPart().template end< 0 >();
     }
 
-    /** \copydoc Dune::DiscreteFunctionSpaceInterface::forEach(FunctorType &f) const
+    /** \copydoc Dune::Fem::DiscreteFunctionSpaceInterface::forEach(FunctorType &f) const
      *
      *  \note The default implementation simply does the following:
      *  \code
@@ -759,13 +759,13 @@ namespace Fem
         f( *it );
     }
 
-    /** \copydoc Dune::DiscreteFunctionSpaceInterface::multipleGeometryTypes */
+    /** \copydoc Dune::Fem::DiscreteFunctionSpaceInterface::multipleGeometryTypes */
     inline bool multipleGeometryTypes () const
     {
       return allGeomTypes_.multipleGeomTypes();
     }
 
-    /** \copydoc Dune::DiscreteFunctionSpaceInterface::multipleBaseFunctionSets
+    /** \copydoc Dune::Fem::DiscreteFunctionSpaceInterface::multipleBaseFunctionSets
      *
      *  \note The default implementation returns \b false.
      */
@@ -774,32 +774,32 @@ namespace Fem
       return false;
     }
 
-    /** \copydoc Dune::DiscreteFunctionSpaceInterface::mapToGlobal(const EntityType &entity,const int localDof) const */
+    /** \copydoc Dune::Fem::DiscreteFunctionSpaceInterface::mapToGlobal(const EntityType &entity,const int localDof) const */
     inline int mapToGlobal ( const EntityType &entity,
                              const int localDof ) const DUNE_DEPRECATED
     {
       return mapper().mapToGlobal( entity, localDof );
     }
 
-    /** \copydoc Dune::DiscreteFunctionSpaceInterface::maxNumLocalDofs */
+    /** \copydoc Dune::Fem::DiscreteFunctionSpaceInterface::maxNumLocalDofs */
     inline int maxNumLocalDofs () const DUNE_DEPRECATED
     {
       return mapper().maxNumDofs();
     }
 
-    /** \copydoc Dune::DiscreteFunctionSpaceInterface::communicationInterface() */
+    /** \copydoc Dune::Fem::DiscreteFunctionSpaceInterface::communicationInterface() */
     InterfaceType communicationInterface () const
     {
       return commInterface_;
     }
 
-    /** \copydoc Dune::DiscreteFunctionSpaceInterface::communicationInterface() */
+    /** \copydoc Dune::Fem::DiscreteFunctionSpaceInterface::communicationInterface() */
     CommunicationDirection communicationDirection () const
     {
       return commDirection_;
     }
 
-    /** \copydoc Dune::DiscreteFunctionSpaceInterface::communicator() */
+    /** \copydoc Dune::Fem::DiscreteFunctionSpaceInterface::communicator() */
     const CommunicationManagerType& communicator() const
     {
       if( communicator_ == 0 )
@@ -811,7 +811,7 @@ namespace Fem
       return *communicator_;
     }
 
-    /** \copydoc Dune::DiscreteFunctionSpaceInterface::communicate(DiscreteFunction &discreteFunction) const */
+    /** \copydoc Dune::Fem::DiscreteFunctionSpaceInterface::communicate(DiscreteFunction &discreteFunction) const */
     template <class DiscreteFunction>
     void communicate(DiscreteFunction& discreteFunction) const
     {
@@ -823,14 +823,14 @@ namespace Fem
       communicate( discreteFunction, (DefaultOperationType*) 0);
     }
 
-    /** \copydoc Dune::DiscreteFunctionSpaceInterface::communicate(DiscreteFunction &discreteFunction, const Operation *) const */
+    /** \copydoc Dune::Fem::DiscreteFunctionSpaceInterface::communicate(DiscreteFunction &discreteFunction, const Operation *) const */
     template <class DiscreteFunction, class Operation>
     void communicate(DiscreteFunction& discreteFunction, const Operation *op ) const
     {
       communicator().exchange( discreteFunction, (Operation *) 0);
     }
 
-    /** \copydoc Dune::DiscreteFunctionSpaceInterface::createDataHandle(DiscreteFunction &discreteFunction.const Operation *operation) const
+    /** \copydoc Dune::Fem::DiscreteFunctionSpaceInterface::createDataHandle(DiscreteFunction &discreteFunction.const Operation *operation) const
      *
      *  \note The default implementation is
      *  \code
@@ -954,19 +954,19 @@ namespace Fem
     {
     }
 
-    /** \copydoc Dune::DiscreteFunctionSpaceInterface::begin */
+    /** \copydoc Dune::Fem::DiscreteFunctionSpaceInterface::begin */
     inline IteratorType begin () const
     {
       return gridPart_.template begin< 0 >();
     }
     
-    /** \copydoc Dune::DiscreteFunctionSpaceInterface::end */
+    /** \copydoc Dune::Fem::DiscreteFunctionSpaceInterface::end */
     inline IteratorType end () const
     {
       return gridPart_.template end< 0 >();
     }
 
-    /** \copydoc Dune::DiscreteFunctionSpaceInterface::forEach(FunctorType &f) const */
+    /** \copydoc Dune::Fem::DiscreteFunctionSpaceInterface::forEach(FunctorType &f) const */
     template< class FunctorType >
     inline void forEach ( FunctorType &f ) const
     {
@@ -975,48 +975,48 @@ namespace Fem
         f( *it );
     }
 
-    /** \copydoc Dune::DiscreteFunctionSpaceInterface::gridPart */
+    /** \copydoc Dune::Fem::DiscreteFunctionSpaceInterface::gridPart */
     inline const GridPartType &gridPart () const
     {
       return gridPart_;
     }
     
-    /** \copydoc Dune::DiscreteFunctionSpaceInterface::indexSet */
+    /** \copydoc Dune::Fem::DiscreteFunctionSpaceInterface::indexSet */
     inline const IndexSetType &indexSet () const
     {
       return gridPart_.indexSet();
     }
     
-    /** \copydoc Dune::DiscreteFunctionSpaceInterface::grid */
+    /** \copydoc Dune::Fem::DiscreteFunctionSpaceInterface::grid */
     inline const GridType& grid () const
     {
       return gridPart_.grid();
     }
 
-    /** \copydoc Dune::DiscreteFunctionSpaceInterface::continuous */
+    /** \copydoc Dune::Fem::DiscreteFunctionSpaceInterface::continuous */
     inline bool continuous () const
     {
       return true;
     }
-    /** \copydoc Dune::DiscreteFunctionSpaceInterface::continuous */
+    /** \copydoc Dune::Fem::DiscreteFunctionSpaceInterface::continuous */
     inline bool continuous (const IntersectionType &intersection) const
     { 
       return true;
     }
 
-    /** \copydoc Dune::DiscreteFunctionSpaceInterface::order */
+    /** \copydoc Dune::Fem::DiscreteFunctionSpaceInterface::order */
     inline int order () const
     {
       return order_;
     }
 
-    /** \copydoc Dune::DiscreteFunctionSpaceInterface::order */
+    /** \copydoc Dune::Fem::DiscreteFunctionSpaceInterface::order */
     inline int order ( const EntityType& ) const
     {
       return order();
     }
 
-    /** \copydoc Dune::DiscreteFunctionSpaceInterface::type */
+    /** \copydoc Dune::Fem::DiscreteFunctionSpaceInterface::type */
     inline DFSpaceIdentifier type () const
     {
       return DFAdapter_id;

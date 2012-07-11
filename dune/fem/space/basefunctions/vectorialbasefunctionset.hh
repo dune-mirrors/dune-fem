@@ -127,7 +127,7 @@ namespace Dune
     size_t size () const { return dimRange*numDifferentBaseFunctions(); }
     int numDifferentBaseFunctions () const { return storage_.numBaseFunctions(); }
 
-    /** \copydoc Dune::BaseFunctionSetInterface::evaluate(const int,const FieldVector<int,diffOrd>&,const PointType&,RangeType&) const */
+    /** \copydoc Dune::Fem::BaseFunctionSetInterface::evaluate(const int,const FieldVector<int,diffOrd>&,const PointType&,RangeType&) const */
     template< int diffOrd, class PointType >
     void evaluate ( const int baseFunction,
                     const FieldVector< int, diffOrd > &diffVariable,
@@ -142,7 +142,7 @@ namespace Dune
       phi[ util_.component( baseFunction ) ] = tmp[ 0 ];
     }
 
-    /** \copydoc Dune::BaseFunctionSetInterface::jacobian(const int baseFunction,const PointType &x,JacobianRangeType &phi) const */
+    /** \copydoc Dune::Fem::BaseFunctionSetInterface::jacobian(const int baseFunction,const PointType &x,JacobianRangeType &phi) const */
     template< class PointType >
     void jacobian ( const int baseFunction,
                     const PointType &x, 

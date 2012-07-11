@@ -74,13 +74,13 @@ namespace Fem
         delete &stream_;
     }
 
-    /** \copydoc Dune::OutStreamInterface::flush */
+    /** \copydoc Dune::Fem::OutStreamInterface::flush */
     void flush ()
     {
       stream_.flush();
     }
 
-    /** \copydoc Dune::OutStreamInterface::writeDouble */
+    /** \copydoc Dune::Fem::OutStreamInterface::writeDouble */
     void writeDouble ( const double value )
     {
       stream_.setf( std ::ios_base :: scientific, std :: ios_base :: floatfield );
@@ -90,7 +90,7 @@ namespace Fem
         writeError();
     }
 
-    /** \copydoc Dune::OutStreamInterface::writeFloat */
+    /** \copydoc Dune::Fem::OutStreamInterface::writeFloat */
     void writeFloat ( const float value )
     {
       stream_.setf( std ::ios_base :: scientific, std :: ios_base :: floatfield );
@@ -100,7 +100,7 @@ namespace Fem
         writeError();
     }
 
-    /** \copydoc Dune::OutStreamInterface::writeInt */
+    /** \copydoc Dune::Fem::OutStreamInterface::writeInt */
     void writeInt ( const int value )
     {
       stream_ << value << std :: endl;
@@ -108,7 +108,7 @@ namespace Fem
         writeError();
     }
 
-    /** \copydoc Dune::OutStreamInterface::writeChar */
+    /** \copydoc Dune::Fem::OutStreamInterface::writeChar */
     void writeChar ( const char value )
     {
       // make sure char is written as number 
@@ -116,14 +116,14 @@ namespace Fem
       writeInt( val );
     }
 
-    /** \copydoc Dune::OutStreamInterface::writeChar */
+    /** \copydoc Dune::Fem::OutStreamInterface::writeChar */
     void writeBool ( const bool value )
     {
       std::string val( ( value == true ) ? "true" : "false" );
       writeString( val );
     }
 
-    /** \copydoc Dune::OutStreamInterface::writeString
+    /** \copydoc Dune::Fem::OutStreamInterface::writeString
      *
      *  \note Strings containing newline characters will not be read back
      *        correctly.
@@ -139,7 +139,7 @@ namespace Fem
         writeError();
     }
 
-    /** \copydoc Dune::OutStreamInterface::writeUnsignedInt */
+    /** \copydoc Dune::Fem::OutStreamInterface::writeUnsignedInt */
     void writeUnsignedInt ( unsigned int value )
     {
       stream_ << value << std::endl;
@@ -147,7 +147,7 @@ namespace Fem
         writeError();
     }
 
-    /** \copydoc Dune::OutStreamInterface::writeUnsignedInt64 */
+    /** \copydoc Dune::Fem::OutStreamInterface::writeUnsignedInt64 */
     void writeUnsignedInt64 ( uint64_t value )
     {
       stream_ << value << std::endl;
@@ -223,7 +223,7 @@ namespace Fem
         delete &stream_;
     }
 
-    /** \copydoc Dune::InStreamInterface::readDouble */
+    /** \copydoc Dune::Fem::InStreamInterface::readDouble */
     void readDouble ( double &value )
     {
       stream_ >> value;
@@ -231,7 +231,7 @@ namespace Fem
         readError();
     }
 
-    /** \copydoc Dune::InStreamInterface::readFloat */
+    /** \copydoc Dune::Fem::InStreamInterface::readFloat */
     void readFloat ( float &value )
     {
       stream_ >> value;
@@ -239,7 +239,7 @@ namespace Fem
         readError();
     }
 
-    /** \copydoc Dune::InStreamInterface::readInt */
+    /** \copydoc Dune::Fem::InStreamInterface::readInt */
     void readInt ( int &value )
     {
       stream_ >> value;
@@ -247,7 +247,7 @@ namespace Fem
         readError();
     }
 
-    /** \copydoc Dune::InStreamInterface::readChar */
+    /** \copydoc Dune::Fem::InStreamInterface::readChar */
     void readChar ( char &value )
     {
       int val;
@@ -255,7 +255,7 @@ namespace Fem
       value = (char) val;
     }
 
-    /** \copydoc Dune::InStreamInterface::readBool */
+    /** \copydoc Dune::Fem::InStreamInterface::readBool */
     void readBool ( bool &value )
     {
       std::string val;
@@ -269,7 +269,7 @@ namespace Fem
         readError();
     }
 
-    /** \copydoc Dune::InStreamInterface::readString
+    /** \copydoc Dune::Fem::InStreamInterface::readString
      *
      *  \note Strings containing newline characters will not be read back
      *        correctly.
@@ -284,7 +284,7 @@ namespace Fem
         readError();
     }
 
-    /** \copydoc Dune::InStreamInterface::readUnsignedInt */
+    /** \copydoc Dune::Fem::InStreamInterface::readUnsignedInt */
     void readUnsignedInt ( unsigned int &value )
     {
       stream_ >> value;
@@ -292,7 +292,7 @@ namespace Fem
         readError();
     }
 
-    /** \copydoc Dune::InStreamInterface::readUnsignedInt64 */
+    /** \copydoc Dune::Fem::InStreamInterface::readUnsignedInt64 */
     void readUnsignedInt64 (uint64_t &value )
     {
       stream_ >> value;

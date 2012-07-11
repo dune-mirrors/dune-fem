@@ -109,7 +109,7 @@ namespace Dune
     inline ThisType &operator= ( const ThisType & );
 
   public:
-    /** \copydoc Dune::LocalMatrixInterface::init */
+    /** \copydoc Dune::Fem::LocalMatrixInterface::init */
     template< class DomainEntityType, class RangeEntityType >
     inline void init ( const DomainEntityType &domainEntity,
                        const RangeEntityType &rangeEntity )
@@ -117,7 +117,7 @@ namespace Dune
       localMatrix().init( domainEntity, rangeEntity );
     }
 
-    /** \copydoc Dune::LocalMatrixInterface::add */
+    /** \copydoc Dune::Fem::LocalMatrixInterface::add */
     inline void add ( const int localRow,
                       const int localCol,
                       const RangeFieldType &value )
@@ -125,7 +125,7 @@ namespace Dune
       localMatrix().add( localRow, localCol, value );
     }
     
-    /** \copydoc Dune::LocalMatrixInterface::set */
+    /** \copydoc Dune::Fem::LocalMatrixInterface::set */
     inline void set ( const int localRow,
                       const int localCol,
                       const RangeFieldType &value )
@@ -133,62 +133,62 @@ namespace Dune
       localMatrix().set( localRow, localCol, value );
     }
     
-    /** \copydoc Dune::LocalMatrixInterface::unitRow */
+    /** \copydoc Dune::Fem::LocalMatrixInterface::unitRow */
     inline void unitRow ( const int localRow ) DUNE_DEPRECATED
     {
       localMatrix().unitRow( localRow ); 
     }
 
-    /** \copydoc Dune::LocalMatrixInterface::clearRow */
+    /** \copydoc Dune::Fem::LocalMatrixInterface::clearRow */
     inline void clearRow ( const int localRow )
     {
       localMatrix().clearRow( localRow );
     }
 
-    /** \copydoc Dune::LocalMatrixInterface::clearRow */
+    /** \copydoc Dune::Fem::LocalMatrixInterface::clearRow */
     inline void clearCol ( const int localCol )
     {
       localMatrix().clearCol( localCol );
     }
     
-    /** \copydoc Dune::LocalMatrixInterface::get */
+    /** \copydoc Dune::Fem::LocalMatrixInterface::get */
     inline const RangeFieldType get ( const int localRow,
                                       const int localCol ) const
     {
       return localMatrix().get( localRow, localCol );
     }
 
-    /** \copydoc Dune::LocalMatrixInterface::scale */
+    /** \copydoc Dune::Fem::LocalMatrixInterface::scale */
     inline void scale ( const RangeFieldType& scalar ) 
     {
       return localMatrix().scale( scalar );
     }
 
-    /** \copydoc Dune::LocalMatrixInterface::clear */
+    /** \copydoc Dune::Fem::LocalMatrixInterface::clear */
     inline void clear ()
     {
       return localMatrix().clear();
     }
 
-    /** \copydoc Dune::LocalMatrixInterface::resort */
+    /** \copydoc Dune::Fem::LocalMatrixInterface::resort */
     inline void resort ()
     {
       return localMatrix().resort();
     }
 
-    /** \copydoc Dune::LocalMatrixInterface::rows */
+    /** \copydoc Dune::Fem::LocalMatrixInterface::rows */
     inline int rows () const
     {
       return localMatrix().rows();
     }
 
-    /** \copydoc Dune::LocalMatrixInterface::columns */
+    /** \copydoc Dune::Fem::LocalMatrixInterface::columns */
     inline int columns () const
     {
       return localMatrix().columns();
     }
 
-    /** \copydoc Dune::LocalMatrixInterface::multiplyAdd */
+    /** \copydoc Dune::Fem::LocalMatrixInterface::multiplyAdd */
     template <class DomainLocalFunctionImp, 
               class RangeLocalFunctionImp>
     inline void multiplyAdd(const DomainLocalFunctionImp& dLf,
@@ -197,25 +197,25 @@ namespace Dune
       localMatrix().multiplyAdd( dLf, rLf); 
     }
     
-    /** \copydoc Dune::LocalMatrixInterface::domainSpace */
+    /** \copydoc Dune::Fem::LocalMatrixInterface::domainSpace */
     inline const DomainSpaceType &domainSpace () const
     {
       return localMatrix().domainSpace();
     }
 
-    /** \copydoc Dune::LocalMatrixInterface::rangeSpace */
+    /** \copydoc Dune::Fem::LocalMatrixInterface::rangeSpace */
     inline const RangeSpaceType &rangeSpace () const
     {
       return localMatrix().rangeSpace();
     }
     
-    /** \copydoc Dune::LocalMatrixInterface::domainBaseFunctionSet */
+    /** \copydoc Dune::Fem::LocalMatrixInterface::domainBaseFunctionSet */
     inline const DomainBaseFunctionSetType &domainBaseFunctionSet () const
     {
       return localMatrix().domainBaseFunctionSet();
     }
 
-    /** \copydoc Dune::LocalMatrixInterface::rangeBaseFunctionSet */
+    /** \copydoc Dune::Fem::LocalMatrixInterface::rangeBaseFunctionSet */
     inline const RangeBaseFunctionSetType &rangeBaseFunctionSet () const
     {
       return localMatrix().rangeBaseFunctionSet();

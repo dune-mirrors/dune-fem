@@ -48,7 +48,7 @@ namespace Dune
     typedef QuadratureImp< FieldType, dim > BaseType;
 
   public:
-    /** \copydoc Dune::QuadratureImp::CoordinateType */
+    /** \copydoc Dune::Fem::QuadratureImp::CoordinateType */
     typedef typename BaseType :: CoordinateType CoordinateType;
 
   protected:
@@ -65,14 +65,14 @@ namespace Dune
      */
     SimplexQuadrature( const GeometryType& geometry, int order, size_t id );
     
-    /** \copydoc Dune::QuadratureImp::geometry
+    /** \copydoc Dune::Fem::QuadratureImp::geometry
      */
     virtual GeometryType geometryType () const
     {
       return GeometryType( topologyId, dim );
     }
    
-    /** \copydoc Dune::QuadratureImp::order
+    /** \copydoc Dune::Fem::QuadratureImp::order
      */
     virtual int order () const
     {
@@ -116,7 +116,7 @@ namespace Dune
     typedef QuadratureImp< FieldType, dim > BaseType;
   
   public:
-    /** \copydoc Dune::QuadratureImp::CoordinateType */
+    /** \copydoc Dune::Fem::QuadratureImp::CoordinateType */
     typedef typename BaseType :: CoordinateType CoordinateType;
     
   protected:
@@ -133,13 +133,13 @@ namespace Dune
      */
     CubeQuadrature( const GeometryType &geometry, int order, size_t id );
     
-    /** \copydoc Dune::QuadratureImp::geometry */
+    /** \copydoc Dune::Fem::QuadratureImp::geometry */
     virtual GeometryType geometryType () const
     {
       return GeometryType( topologyId, dim );
     }
 
-    /** \copydoc Dune::QuadratureImp::order */
+    /** \copydoc Dune::Fem::QuadratureImp::order */
     virtual int order () const
     {
       return order_;
@@ -175,7 +175,7 @@ namespace Dune
     typedef QuadratureImp< FieldType, 1 > BaseType;
     
   public:
-    /** \copydoc Dune::QuadratureImp::CoordinateType */
+    /** \copydoc Dune::Fem::QuadratureImp::CoordinateType */
     typedef typename BaseType :: CoordinateType CoordinateType;
     
   protected:
@@ -192,13 +192,13 @@ namespace Dune
      */
     LineQuadrature( const GeometryType &geometry, int order, size_t id );
 
-    /** \copydoc Dune::QuadratureImp::geometry */
+    /** \copydoc Dune::Fem::QuadratureImp::geometry */
     virtual GeometryType geometryType () const
     {
       return GeometryType( topologyId, 1 );
     }
 
-    /** copydoc Dune::QuadratureImp::order */
+    /** copydoc Dune::Fem::QuadratureImp::order */
     virtual int order() const
     {
       return order_;
@@ -236,7 +236,7 @@ namespace Dune
     typedef QuadratureImp< FieldType, 2 > BaseType;
     
   public:
-    /** \copydoc Dune::QuadratureImp::CoordinateType */
+    /** \copydoc Dune::Fem::QuadratureImp::CoordinateType */
     typedef typename BaseType :: CoordinateType CoordinateType;
 
   private:
@@ -253,13 +253,13 @@ namespace Dune
      */
     TriangleQuadrature ( const GeometryType &geometry, int order, size_t id );
 
-    /** \copydoc Dune::QuadratureImp::geometry */
+    /** \copydoc Dune::Fem::QuadratureImp::geometry */
     virtual GeometryType geometryType () const
     {
       return GeometryType( topologyId, 2 );
     }
 
-    /** \copydoc Dune::QuadratureImp::order */
+    /** \copydoc Dune::Fem::QuadratureImp::order */
     virtual int order () const
     {
       return order_;
@@ -298,7 +298,7 @@ namespace Dune
     typedef QuadratureImp< FieldType, 2 > BaseType;
     
   public:
-    /** \copydoc Dune::QuadratureImp::CoordinateType */
+    /** \copydoc Dune::Fem::QuadratureImp::CoordinateType */
     typedef typename BaseType :: CoordinateType CoordinateType;
 
   private:
@@ -315,13 +315,13 @@ namespace Dune
      */
     QuadrilateralQuadrature( const GeometryType &geometry, int order, size_t id );
 
-    /** \copydoc Dune::QuadratureImp::geometry */
+    /** \copydoc Dune::Fem::QuadratureImp::geometry */
     virtual GeometryType geometryType () const
     {
       return GeometryType( topologyId, 2 );
     }
 
-    /** \copydoc Dune::QuadratureImp::order */
+    /** \copydoc Dune::Fem::QuadratureImp::order */
     virtual int order () const
     {
       return order_;
@@ -359,7 +359,7 @@ namespace Dune
     typedef QuadratureImp< FieldType, 3 > BaseType;
 
   public:
-    /** \copydoc Dune::QuadratureImp::CoordinateType */
+    /** \copydoc Dune::Fem::QuadratureImp::CoordinateType */
     typedef typename BaseType :: CoordinateType CoordinateType;
     
   private:
@@ -376,13 +376,13 @@ namespace Dune
      */
     TetraQuadrature( const GeometryType &geometry, int order, size_t id );
 
-    /** \copydoc Dune::QuadratureImp::geometry */
+    /** \copydoc Dune::Fem::QuadratureImp::geometry */
     virtual GeometryType geometryType () const
     {
       return GeometryType( topologyId, 3 );
     }
 
-    /** \copydoc Dune::QuadratureImp::order */
+    /** \copydoc Dune::Fem::QuadratureImp::order */
     virtual int order () const
     {
       return order_;
@@ -421,7 +421,7 @@ namespace Dune
     typedef QuadratureImp< FieldType, 3 > BaseType;
 
   public:
-    /** \copydoc Dune::QuadratureImp::CoordinateType */
+    /** \copydoc Dune::Fem::QuadratureImp::CoordinateType */
     typedef typename BaseType :: CoordinateType CoordinateType;
 
   private:
@@ -438,13 +438,13 @@ namespace Dune
      */
     HexaQuadrature( const GeometryType &geometry, int order, size_t id );
 
-    /** \copydoc Dune::QuadratureImp::geometry */
+    /** \copydoc Dune::Fem::QuadratureImp::geometry */
     virtual GeometryType geometryType () const
     {
       return GeometryType( topologyId, 3 );
     }
 
-    /** \copydoc Dune::QuadratureImp::order */
+    /** \copydoc Dune::Fem::QuadratureImp::order */
     virtual int order () const
     {
       return order_;
@@ -481,7 +481,7 @@ namespace Dune
     typedef QuadratureImp< FieldType, 3 > BaseType;
     
   public:
-    /** \copydoc Dune::QuadratureImp::CoordinateType */
+    /** \copydoc Dune::Fem::QuadratureImp::CoordinateType */
     typedef typename BaseType :: CoordinateType CoordinateType;
 
   private:
@@ -498,13 +498,13 @@ namespace Dune
      */
     PrismQuadrature( const GeometryType &geometry, int order, size_t id );
 
-    /** \copydoc Dune::QuadratureImp::geometry */
+    /** \copydoc Dune::Fem::QuadratureImp::geometry */
     virtual GeometryType geometryType () const
     {
       return GeometryType( topologyId, 3 );
     }
 
-    /** \copydoc Dune::QuadratureImp::order */
+    /** \copydoc Dune::Fem::QuadratureImp::order */
     virtual int order () const
     {
       return order_;
@@ -541,7 +541,7 @@ namespace Dune
     typedef QuadratureImp< FieldType, 3 > BaseType;
 
   public:
-    /** \copydoc Dune::QuadratureImp::CoordinateType */
+    /** \copydoc Dune::Fem::QuadratureImp::CoordinateType */
     typedef typename BaseType :: CoordinateType CoordinateType;
 
   private:
@@ -558,13 +558,13 @@ namespace Dune
      */
     PyramidQuadrature( const GeometryType &geometry, int order, size_t id );
 
-    /** \copydoc Dune::QuadratureImp::geometry */
+    /** \copydoc Dune::Fem::QuadratureImp::geometry */
     virtual GeometryType geometryType () const
     {
       return GeometryType( topologyId, 3 );
     }
 
-    /** \copydoc Dune::QuadratureImp::order */
+    /** \copydoc Dune::Fem::QuadratureImp::order */
     virtual int order () const
     {
       return order_;

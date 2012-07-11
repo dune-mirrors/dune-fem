@@ -171,19 +171,19 @@ namespace Dune
     // Implementation of DiscreteFunctionSpaceInterface
     // ------------------------------------------------
     
-    /** \copydoc Dune::DiscreteFunctionSpaceInterface::continuous() const */
+    /** \copydoc Dune::Fem::DiscreteFunctionSpaceInterface::continuous() const */
     inline bool continuous () const
     {
       return baseFunctionSpace_.continuous();
     }
     
-    /** \copydoc Dune::DiscreteFunctionSpaceInterface::order() const */
+    /** \copydoc Dune::Fem::DiscreteFunctionSpaceInterface::order() const */
     inline int order () const
     {
       return baseFunctionSpace_.order();
     }
 
-    /** \copydoc Dune::DiscreteFunctionSpaceInterface::baseFunctionSet(const EntityType &entity) const */
+    /** \copydoc Dune::Fem::DiscreteFunctionSpaceInterface::baseFunctionSet(const EntityType &entity) const */
     template< class EntityType >
     inline const BaseFunctionSetType baseFunctionSet( const EntityType &entity ) const
     {
@@ -196,19 +196,19 @@ namespace Dune
       return baseFunctionSpace_.dimensionOfValue;
     }
 
-    /** \copydoc Dune::DiscreteFunctionSpaceInterface::mapper() const */
+    /** \copydoc Dune::Fem::DiscreteFunctionSpaceInterface::mapper() const */
     inline MapperType &mapper () const
     {
       return mapper_;
     }
 
-    /** \copydoc Dune::DiscreteFunctionSpaceInterface::blockMapper() const */
+    /** \copydoc Dune::Fem::DiscreteFunctionSpaceInterface::blockMapper() const */
     inline BlockMapperType &blockMapper () const
     {
       return mapper_;
     }
 
-    /** \copydoc Dune::DiscreteFunctionSpaceInterface::multipleBaseFunctionSets () const */
+    /** \copydoc Dune::Fem::DiscreteFunctionSpaceInterface::multipleBaseFunctionSets () const */
     inline bool multipleBaseFunctionSets () const
     {
       return true;

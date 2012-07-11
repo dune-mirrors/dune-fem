@@ -208,19 +208,19 @@ namespace Dune
       DUNE_THROW( NotImplemented, "LocalFunctionAdapter::evaluate is not implemented." );
     }
 
-    /** \copydoc Dune::DiscreteFunctionInterface::localFunction(const EntityType &entity) const */ 
+    /** \copydoc Dune::Fem::DiscreteFunctionInterface::localFunction(const EntityType &entity) const */ 
     const LocalFunctionType localFunction( const EntityType &entity ) const 
     {
       return LocalFunctionType( entity, *this );
     }
 
-    /** \copydoc Dune::DiscreteFunctionInterface::localFunction(const EntityType &entity) */ 
+    /** \copydoc Dune::Fem::DiscreteFunctionInterface::localFunction(const EntityType &entity) */ 
     LocalFunctionType localFunction( const EntityType &entity )
     {
       return LocalFunctionType( entity, *this );
     }
 
-    /** \copydoc Dune::DiscreteFunctionInterface::name */
+    /** \copydoc Dune::Fem::DiscreteFunctionInterface::name */
     const std::string &name() const
     {
       return name_;
@@ -231,7 +231,7 @@ namespace Dune
       return space_;
     }
 
-    /** \copydoc Dune::DiscreteFunctionInterface::operator+=(const DiscreteFunctionInterfaceType &g) */
+    /** \copydoc Dune::Fem::DiscreteFunctionInterface::operator+=(const DiscreteFunctionInterfaceType &g) */
     template <class DFType>
     DiscreteFunctionType &operator+= ( const DFType &g )
     { 

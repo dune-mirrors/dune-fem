@@ -18,9 +18,9 @@ class FunctionSpace;
 template< class DomainField, class RangeField, int dimD, int dimR>
 struct VectorSpaceTraits
 {
-  /** \copydoc Dune::FunctionSpaceInterface::DomainFieldType */
+  /** \copydoc Dune::Fem::FunctionSpaceInterface::DomainFieldType */
   typedef DomainField DomainFieldType;
-  /** \copydoc Dune::FunctionSpaceInterface::RangeFieldType */
+  /** \copydoc Dune::Fem::FunctionSpaceInterface::RangeFieldType */
   typedef RangeField RangeFieldType;
 
   /** \brief dimension of range vector space */
@@ -28,10 +28,10 @@ struct VectorSpaceTraits
   /** \brief dimension of domain vector space */
   enum { dimRange = dimR };
 
-  /** \copydoc Dune::FunctionSpaceInterface::DomainType */
+  /** \copydoc Dune::Fem::FunctionSpaceInterface::DomainType */
   typedef FieldVector< DomainFieldType, dimDomain > DomainType;
 
-  /** \copydoc Dune::FunctionSpaceInterface::RangeType */
+  /** \copydoc Dune::Fem::FunctionSpaceInterface::RangeType */
   typedef FieldVector< RangeFieldType, dimRange> RangeType;
   
   /** \brief linear mapping type */
@@ -173,11 +173,11 @@ class MatrixMapping :
   // Implement L : VD -> VR where VR is the space of FieldMatrix<RFI,m1,m2>
   // VD is space of FieldVector<DFT,n>
  public:
-  /** \copydoc Dune::FunctionSpaceInterface::DomainFieldType */
+  /** \copydoc Dune::Fem::FunctionSpaceInterface::DomainFieldType */
   typedef DomainFieldImp DomainFieldType;
-  /** \copydoc Dune::FunctionSpaceInterface::RangeFieldType */
+  /** \copydoc Dune::Fem::FunctionSpaceInterface::RangeFieldType */
   typedef RangeFieldImp RangeFieldType;
-  /** \copydoc Dune::FunctionSpaceInterface::RangeType */
+  /** \copydoc Dune::Fem::FunctionSpaceInterface::RangeType */
   typedef RangeMatrix<RangeFieldImp, m1,m2> RangeType;
   /** \brief type of base class */
   typedef FieldMatrix<RangeFieldImp,m1*m2,n> BaseType;
@@ -208,13 +208,13 @@ class MatrixMapping :
 //! \brief Traits class for matrix valued spaces 
 template <typename DomainFieldImp,typename RangeFieldImp,int n,int m1,int m2>
 struct MatrixSpaceTraits {
-  /** \copydoc Dune::FunctionSpaceInterface::DomainFieldType */
+  /** \copydoc Dune::Fem::FunctionSpaceInterface::DomainFieldType */
   typedef DomainFieldImp DomainFieldType;
-  /** \copydoc Dune::FunctionSpaceInterface::RangeFieldType */
+  /** \copydoc Dune::Fem::FunctionSpaceInterface::RangeFieldType */
   typedef RangeFieldImp RangeFieldType;
-  /** \copydoc Dune::FunctionSpaceInterface::DomainType */
+  /** \copydoc Dune::Fem::FunctionSpaceInterface::DomainType */
   typedef FieldVector<DomainFieldImp, n> DomainType;
-  /** \copydoc Dune::FunctionSpaceInterface::RangeType */
+  /** \copydoc Dune::Fem::FunctionSpaceInterface::RangeType */
   typedef RangeMatrix<RangeFieldImp, m1,m2> RangeType;
   /** \brief linear mapping type */
   typedef MatrixMapping<DomainFieldImp,RangeFieldImp, n, m1,m2> LinearMappingType;

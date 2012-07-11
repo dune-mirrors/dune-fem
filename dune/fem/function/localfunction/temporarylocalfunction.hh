@@ -229,7 +229,7 @@ namespace Dune
 
     using BaseType::operator [];
 
-    /** \copydoc Dune::LocalFunction :: init */
+    /** \copydoc Dune::Fem::LocalFunction :: init */
     void init ( const EntityType &entity )
     {
       asImp().init( entity, discreteFunction_ );
@@ -356,19 +356,19 @@ namespace Dune
      */
     TemporaryLocalFunctionImpl ( const ThisType &other );
 
-    /** \copydoc Dune::LocalFunction::operator[]( const int num ) const */
+    /** \copydoc Dune::Fem::LocalFunction::operator[]( const int num ) const */
     const RangeFieldType &operator[] ( const int num ) const;
 
-    /** \copydoc Dune::LocalFunction::operator[]( const int num ) */
+    /** \copydoc Dune::Fem::LocalFunction::operator[]( const int num ) */
     RangeFieldType &operator[] ( const int num );
 
-    /** \copydoc Dune::LocalFunction::order() const */
+    /** \copydoc Dune::Fem::LocalFunction::order() const */
     int order () const;
 
-    /** \copydoc Dune::LocalFunction::baseFunctionSet() const */
+    /** \copydoc Dune::Fem::LocalFunction::baseFunctionSet() const */
     const BaseFunctionSetType &baseFunctionSet () const;
 
-    /** \copydoc Dune::LocalFunction::entity() const */
+    /** \copydoc Dune::Fem::LocalFunction::entity() const */
     const EntityType &entity () const;
 
     /** \brief initialize the local function for an entity
@@ -404,7 +404,7 @@ namespace Dune
     template< class DiscreteFunction >
     void init ( const EntityType &entity, const DiscreteFunction& discreteFunction );
 
-    /** \copydoc Dune::LocalFunction::numDofs() const */
+    /** \copydoc Dune::Fem::LocalFunction::numDofs() const */
     int numDofs () const;
 
   protected:

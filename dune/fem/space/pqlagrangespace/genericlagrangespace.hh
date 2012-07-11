@@ -241,13 +241,13 @@ namespace Dune
     GenericLagrangeSpace ( const ThisType & );
 
   public:
-    /** \copydoc Dune::DiscreteFunctionSpaceInterface::contains */
+    /** \copydoc Dune::Fem::DiscreteFunctionSpaceInterface::contains */
     bool contains ( const int codim ) const
     {
       return mapper().contains( codim );
     }
 
-    /** \copydoc Dune::DiscreteFunctionSpaceInterface::continuous */
+    /** \copydoc Dune::Fem::DiscreteFunctionSpaceInterface::continuous */
     bool continuous () const
     {
       return true;
@@ -261,7 +261,7 @@ namespace Dune
       return GenericSpace_id;
     }
 
-    /** \copydoc Dune::DiscreteFunctionSpaceInterface::order */
+    /** \copydoc Dune::Fem::DiscreteFunctionSpaceInterface::order */
     int order () const
     {
       return polynomialOrder;
@@ -273,7 +273,7 @@ namespace Dune
       return finiteElement_;
     }
 
-    /** \copydoc Dune::DiscreteFunctionSpaceInterface::baseFunctionSet(const EntityType &entity) const */
+    /** \copydoc Dune::Fem::DiscreteFunctionSpaceInterface::baseFunctionSet(const EntityType &entity) const */
     template< class Entity >
     const BaseFunctionSetType baseFunctionSet ( const Entity &entity ) const
     {
@@ -288,13 +288,13 @@ namespace Dune
       return dimVal;
     }
 
-    /** \copydoc Dune::DiscreteFunctionSpaceInterface::mapper */
+    /** \copydoc Dune::Fem::DiscreteFunctionSpaceInterface::mapper */
     MapperType &mapper () const
     {
       return mapper_;
     }
 
-    /** \copydoc Dune::DiscreteFunctionSpaceInterface::blockMapper */
+    /** \copydoc Dune::Fem::DiscreteFunctionSpaceInterface::blockMapper */
     MapperType &blockMapper () const
     {
       return mapper_;

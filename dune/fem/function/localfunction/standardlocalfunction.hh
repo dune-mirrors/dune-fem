@@ -73,25 +73,25 @@ namespace Dune
     //! copy constructor
     StandardLocalFunctionImpl ( const ThisType &other );
 
-    /** \copydoc Dune::LocalFunction::operator[](const int num) const */
+    /** \copydoc Dune::Fem::LocalFunction::operator[](const int num) const */
     const RangeFieldType &operator[] ( const int num ) const;
 
-    /** \copydoc Dune::LocalFunction::operator[](const int num) */
+    /** \copydoc Dune::Fem::LocalFunction::operator[](const int num) */
     RangeFieldType &operator[] ( const int num );
 
-    /** \copydoc Dune::LocalFunction::order() const */
+    /** \copydoc Dune::Fem::LocalFunction::order() const */
     int order () const;
 
-    /** \copydoc Dune::LocalFunction::baseFunctionSet() const */
+    /** \copydoc Dune::Fem::LocalFunction::baseFunctionSet() const */
     const BaseFunctionSetType &baseFunctionSet() const;
 
-    /** \copydoc Dune::LocalFunction::entity() const */
+    /** \copydoc Dune::Fem::LocalFunction::entity() const */
     const EntityType &entity () const;
 
     //! initialize local function 
     void init ( const EntityType &entity );
     
-    /** \copydoc Dune::LocalFunction::numDofs() const */
+    /** \copydoc Dune::Fem::LocalFunction::numDofs() const */
     int numDofs () const;
 
   private:

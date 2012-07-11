@@ -143,7 +143,7 @@ namespace Dune
     using BaseType :: asImp;
 
   public:
-    /** \copydoc Dune::DiffusionModelInterface::diffusiveFlux(const EntityType &entity,const PointType &x,const JacobianRangeType &gradient,JacobianRangeType &flux) const
+    /** \copydoc Dune::Fem::DiffusionModelInterface::diffusiveFlux(const EntityType &entity,const PointType &x,const JacobianRangeType &gradient,JacobianRangeType &flux) const
      *
      *  The default implementation calls
      *  \code

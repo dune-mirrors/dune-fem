@@ -91,7 +91,7 @@ namespace Dune
     }
 
     
-    /** \copydoc Dune::LocalMatrixInterface::init */
+    /** \copydoc Dune::Fem::LocalMatrixInterface::init */
     template< class DomainEntityType, class RangeEntityType >
     inline void init ( const DomainEntityType &domainEntity,
                        const RangeEntityType &rangeEntity )
@@ -100,7 +100,7 @@ namespace Dune
       fields_.resize( rows() * columns() );
     }
 
-    /** \copydoc Dune::LocalMatrixInterface::add */
+    /** \copydoc Dune::Fem::LocalMatrixInterface::add */
     inline void add ( const int localRow,
                       const int localCol,
                       const RangeFieldType &value )
@@ -110,7 +110,7 @@ namespace Dune
       fields_[ localRow * columns() + localCol ] += value;
     }
 
-    /** \copydoc Dune::LocalMatrixInterface::set */
+    /** \copydoc Dune::Fem::LocalMatrixInterface::set */
     inline void set ( const int localRow, 
                       const int localCol, 
                       const RangeFieldType &value )
@@ -128,7 +128,7 @@ namespace Dune
       return fields_[ localRow * columns() + localCol ];
     }
 
-    /** \copydoc Dune::LocalMatrixInterface::clear */
+    /** \copydoc Dune::Fem::LocalMatrixInterface::clear */
     inline void clear ()
     {
       fields_.assign( 0 );

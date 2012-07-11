@@ -534,13 +534,13 @@ namespace Dune
         return size_;
       }
 
-      /** \copydoc Dune::DofMapper::begin(const ElementType &entity) const */
+      /** \copydoc Dune::Fem::DofMapper::begin(const ElementType &entity) const */
       DofMapIteratorType begin ( const ElementType &entity ) const
       {
         return DofMapIteratorType( DofMapIteratorType::beginIterator, entity, asImp() );
       }
       
-      /** \copydoc Dune::DofMapper::end(const ElementType &entity) const */
+      /** \copydoc Dune::Fem::DofMapper::end(const ElementType &entity) const */
       DofMapIteratorType end ( const ElementType &entity ) const
       {
         return DofMapIteratorType( DofMapIteratorType::endIterator, entity, asImp() );
@@ -554,7 +554,7 @@ namespace Dune
           f( i, mapToGlobal( element, i ) );
       }
 
-      /** \copydoc Dune::DofMapper::mapToGlobal */
+      /** \copydoc Dune::Fem::DofMapper::mapToGlobal */
       int mapToGlobal ( const ElementType &entity, const int localDof ) const
       {
         if( discontinuousMapper ) 
@@ -607,27 +607,27 @@ namespace Dune
         }
       }
 
-      /** \copydoc Dune::DofMapper::mapEntityDofToGlobal */
+      /** \copydoc Dune::Fem::DofMapper::mapEntityDofToGlobal */
       template< class Entity >
       int mapEntityDofToGlobal ( const Entity &entity, const int localDof ) const 
       {
         return dofContainer( Entity :: codimension )[ entity ].entityDof( localDof );
       }
       
-      /** \copydoc Dune::DofMapper::maxNumDofs() const */
+      /** \copydoc Dune::Fem::DofMapper::maxNumDofs() const */
       int maxNumDofs () const
       {
         return maxNumDofs_;
       }
 
-      /** \copydoc Dune::DofMapper::numDofs(const ElementType &entity) const */
+      /** \copydoc Dune::Fem::DofMapper::numDofs(const ElementType &entity) const */
       int numDofs ( const ElementType &entity ) const
       {
         const int polOrd = polynomOrder( entity );
         return compiledLocalKey( polOrd, entity.type() ).size();
       }
 
-      /** \copydoc Dune::DofMapper::numEntityDofs(const Entity &entity) const */
+      /** \copydoc Dune::Fem::DofMapper::numEntityDofs(const Entity &entity) const */
       template< class Entity >
       int numEntityDofs ( const Entity &entity ) const
       {
@@ -658,48 +658,48 @@ namespace Dune
         return false;
       }
 
-      /** \copydoc Dune::DofMapper::oldIndex */
+      /** \copydoc Dune::Fem::DofMapper::oldIndex */
       int oldIndex ( const int hole, const int block ) const
       {
         assert( oldIndex_[ hole ] >= 0 );
         return oldIndex_[ hole ];
       }
 
-      /** \copydoc Dune::DofMapper::newIndex */
+      /** \copydoc Dune::Fem::DofMapper::newIndex */
       int newIndex ( const int hole, const int block ) const
       {
         assert( newIndex_[ hole ] >= 0 );
         return newIndex_[ hole ];
       }
 
-      /** \copydoc Dune::DofMapper::numberOfHoles */
+      /** \copydoc Dune::Fem::DofMapper::numberOfHoles */
       int numberOfHoles ( const int block ) const
       {
         return numberOfHoles_;
       }
 
-      /** \copydoc Dune::DofMapper::numBlocks
+      /** \copydoc Dune::Fem::DofMapper::numBlocks
        */
       int numBlocks () const 
       {
         return 1;
       }
 
-      /** \copydoc Dune::DofMapper::oldOffset
+      /** \copydoc Dune::Fem::DofMapper::oldOffset
        */
       int oldOffSet ( const int block ) const
       {
         return 0;
       }
 
-      /** \copydoc Dune::DofMapper::newOffset
+      /** \copydoc Dune::Fem::DofMapper::newOffset
        */
       int offSet ( const int block ) const
       {
         return 0;
       }
 
-      /** \copydoc Dune::DofMapper::consecutive() const */
+      /** \copydoc Dune::Fem::DofMapper::consecutive() const */
       bool consecutive () const
       {
         return true;

@@ -253,14 +253,14 @@ namespace Dune
         delete mapper_;
       }
 
-      /** \copydoc Dune::DiscreteFunctionSpaceInterface::contains */
+      /** \copydoc Dune::Fem::DiscreteFunctionSpaceInterface::contains */
       inline bool contains ( const int codim ) const
       {
         // forward to mapper since this information is held there 
         return blockMapper().contains( codim );
       }
 
-      /** \copydoc Dune::DiscreteFunctionSpaceInterface::continuous */
+      /** \copydoc Dune::Fem::DiscreteFunctionSpaceInterface::continuous */
       inline bool continuous () const
       {
         // forward to the subsapces
@@ -275,13 +275,13 @@ namespace Dune
         return CombinedSpace_id;
       }
 
-      /** \copydoc Dune::DiscreteFunctionSpaceInterface::order */
+      /** \copydoc Dune::Fem::DiscreteFunctionSpaceInterface::order */
       inline int order () const
       {
         return polynomialOrder;
       }
 
-      /** \copydoc Dune::DiscreteFunctionSpaceInterface::baseFunctionSet(const EntityType &entity) const */
+      /** \copydoc Dune::Fem::DiscreteFunctionSpaceInterface::baseFunctionSet(const EntityType &entity) const */
       template< class EntityType >
       BaseFunctionSetType baseFunctionSet ( const EntityType &entity ) const
       {
@@ -296,7 +296,7 @@ namespace Dune
         return dimVal;
       }
 
-      /** \copydoc Dune::DiscreteFunctionSpaceInterface::mapper */
+      /** \copydoc Dune::Fem::DiscreteFunctionSpaceInterface::mapper */
       MapperType &mapper () const
       {
         assert( mapper_ != 0 );

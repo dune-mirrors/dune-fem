@@ -100,7 +100,7 @@ namespace Dune
   public:
     using Base::localPoint;
 
-    /** \copydoc Dune::ElementIntegrationPointList<GridPartImp,0,IntegrationTraits>::ElementIntegrationPointList(const GeometryType &geometry,int order)
+    /** \copydoc Dune::Fem::ElementIntegrationPointList<GridPartImp,0,IntegrationTraits>::ElementIntegrationPointList(const GeometryType &geometry,int order)
      */
     CachingPointList( const GeometryType &geometry, int order )
     : Base( geometry, order )
@@ -113,13 +113,13 @@ namespace Dune
       return QuadraturePointWrapperType( *this, i );
     }
 
-    /** \copydoc Dune::IntegrationPointList::point */
+    /** \copydoc Dune::Fem::IntegrationPointList::point */
     const CoordinateType &point ( const size_t i ) const
     {
       return localPoint( i );
     }
 
-    /** \copydoc Dune::CachingInterface::cachingPoint */
+    /** \copydoc Dune::Fem::CachingInterface::cachingPoint */
     inline size_t cachingPoint( const size_t quadraturePoint ) const
     {
       return quadraturePoint;
@@ -205,14 +205,14 @@ namespace Dune
       return QuadraturePointWrapperType( *this, i );
     }
 
-    /** \copydoc Dune::IntegrationPointList::point
+    /** \copydoc Dune::Fem::IntegrationPointList::point
      */
     const CoordinateType &point ( const size_t i ) const
     {
       return points_[ cachingPoint( i ) ];
     }
 
-    /** \copydoc Dune::CachingInterface::cachingPoint */
+    /** \copydoc Dune::Fem::CachingInterface::cachingPoint */
     inline size_t cachingPoint( const size_t quadraturePoint ) const
     {
       assert( quadraturePoint < (size_t)nop() );

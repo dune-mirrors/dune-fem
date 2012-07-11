@@ -206,13 +206,13 @@ namespace Dune
     //! Desctructor 
     ~FiniteVolumeSpace (); 
 
-    /** \copydoc Dune::DiscreteFunctionSpaceInterface::contains */
+    /** \copydoc Dune::Fem::DiscreteFunctionSpaceInterface::contains */
     inline bool contains(const int codim) const
     {   
       return blockMapper().contains( codim );
     }
     
-    /** \copydoc Dune::DiscreteFunctionSpaceInterface::continuous */
+    /** \copydoc Dune::Fem::DiscreteFunctionSpaceInterface::continuous */
     bool continuous() const { return (polynomialOrder == 0) ? false : true; }
  
     //! return type of this function space 

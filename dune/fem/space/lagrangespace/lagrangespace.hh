@@ -360,19 +360,19 @@ namespace Dune
       }
     }
 
-    /** \copydoc Dune::DiscreteFunctionSpaceInterface::contains */
+    /** \copydoc Dune::Fem::DiscreteFunctionSpaceInterface::contains */
     bool contains ( const int codim ) const
     {
       // forward to mapper since this information is held there 
       return blockMapper().contains( codim );
     }
 
-    /** \copydoc Dune::DiscreteFunctionSpaceInterface::continuous */
+    /** \copydoc Dune::Fem::DiscreteFunctionSpaceInterface::continuous */
     bool continuous () const
     {
       return (polynomialOrder > 0);
     }
-    /** @copydoc Dune::DiscreteFunctionSpaceInterface::continuous */
+    /** @copydoc Dune::Fem::DiscreteFunctionSpaceInterface::continuous */
     inline bool continuous (const IntersectionType &intersection) const
     { 
       return ( (polynomialOrder > 0) && intersection.conforming() );
@@ -386,13 +386,13 @@ namespace Dune
       return LagrangeSpace_id;
     }
 
-    /** \copydoc Dune::DiscreteFunctionSpaceInterface::order */
+    /** \copydoc Dune::Fem::DiscreteFunctionSpaceInterface::order */
     int order () const
     {
       return polynomialOrder;
     }
 
-    /** \copydoc Dune::DiscreteFunctionSpaceInterface::baseFunctionSet(const EntityType &entity) const */
+    /** \copydoc Dune::Fem::DiscreteFunctionSpaceInterface::baseFunctionSet(const EntityType &entity) const */
     template< class EntityType >
     const BaseFunctionSetType baseFunctionSet ( const EntityType &entity ) const
     {
@@ -450,7 +450,7 @@ namespace Dune
       return dimVal;
     }
 
-    /** \copydoc Dune::DiscreteFunctionSpaceInterface::mapper */
+    /** \copydoc Dune::Fem::DiscreteFunctionSpaceInterface::mapper */
     MapperType &mapper () const
     {
       assert( mapper_ != 0 );

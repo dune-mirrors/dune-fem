@@ -147,7 +147,7 @@ namespace Dune
 
 
 
-  /** \copydoc Dune::QuadratureProvider */
+  /** \copydoc Dune::Fem::QuadratureProvider */
   template< typename FieldImp, template< class, int > class QuadratureTraits >
   class QuadratureProvider< FieldImp, 0, QuadratureTraits >
   {
@@ -203,7 +203,7 @@ namespace Dune
   
 
   
-  /** \copydoc Dune::QuadratureProvider */
+  /** \copydoc Dune::Fem::QuadratureProvider */
   template< class FieldImp, template< class, int > class QuadratureTraits >
   class QuadratureProvider< FieldImp, 1, QuadratureTraits >
   {
@@ -261,7 +261,7 @@ namespace Dune
 
 
 
-  /** \copydoc Dune::QuadratureProvider */
+  /** \copydoc Dune::Fem::QuadratureProvider */
   template< class FieldImp, template< class, int > class QuadratureTraits >
   class QuadratureProvider< FieldImp, 2, QuadratureTraits >
   {
@@ -362,7 +362,7 @@ namespace Dune
 
 
   
-  /** \copydoc Dune::QuadratureProvider */
+  /** \copydoc Dune::Fem::QuadratureProvider */
   template< class FieldImp, template< class, int > class QuadratureTraits >
   class QuadratureProvider< FieldImp, 3, QuadratureTraits >
   {

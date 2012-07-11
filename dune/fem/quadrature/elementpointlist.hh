@@ -81,7 +81,7 @@ namespace Dune
       return QuadraturePointWrapperType( *this, i );
     }
    
-    /** \copydoc Dune::IntegrationPointList::point */
+    /** \copydoc Dune::Fem::IntegrationPointList::point */
     const CoordinateType &point ( const size_t i ) const
     {
       return localPoint( i );
@@ -150,7 +150,7 @@ namespace Dune
       return QuadraturePointWrapperType( *this, i );
     }
 
-    /** \copydoc Dune::IntegrationPointList::point
+    /** \copydoc Dune::Fem::IntegrationPointList::point
      */
     const CoordinateType &point ( size_t i ) const
     {

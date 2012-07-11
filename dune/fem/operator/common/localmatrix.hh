@@ -298,7 +298,7 @@ namespace Dune
     {}
 
   public:
-    /** \copydoc Dune::LocalMatrixInterface::init */
+    /** \copydoc Dune::Fem::LocalMatrixInterface::init */
     template< class DomainEntityType, class RangeEntityType >
     inline void init ( const DomainEntityType &domainEntity,
                        const RangeEntityType &rangeEntity )
@@ -307,34 +307,34 @@ namespace Dune
       rangeBaseSet_ = rangeSpace_.baseFunctionSet( rangeEntity );
     }
 
-    /** \copydoc Dune::LocalMatrixInterface::resort */
+    /** \copydoc Dune::Fem::LocalMatrixInterface::resort */
     void resort () {}
 
-    /** \copydoc Dune::LocalMatrixInterface::rows */
+    /** \copydoc Dune::Fem::LocalMatrixInterface::rows */
     int rows () const { return rangeBaseSet_.size(); }
     
-    /** \copydoc Dune::LocalMatrixInterface::columns */
+    /** \copydoc Dune::Fem::LocalMatrixInterface::columns */
     int columns () const { return domainBaseSet_.size(); }
 
-    /** \copydoc Dune::LocalMatrixInterface::domainSpace */
+    /** \copydoc Dune::Fem::LocalMatrixInterface::domainSpace */
     const DomainSpaceType &domainSpace () const { return domainSpace_; }
     
-    /** \copydoc Dune::LocalMatrixInterface::rangeSpace */
+    /** \copydoc Dune::Fem::LocalMatrixInterface::rangeSpace */
     const RangeSpaceType &rangeSpace () const { return rangeSpace_; }
 
-    /** \copydoc Dune::LocalMatrixInterface::domainBaseFunctionSet */
+    /** \copydoc Dune::Fem::LocalMatrixInterface::domainBaseFunctionSet */
     const DomainBaseFunctionSetType &domainBaseFunctionSet () const
     {
       return domainBaseSet_;
     }
     
-    /** \copydoc Dune::LocalMatrixInterface::rangeBaseFunctionSet */
+    /** \copydoc Dune::Fem::LocalMatrixInterface::rangeBaseFunctionSet */
     const RangeBaseFunctionSetType &rangeBaseFunctionSet () const
     {
       return rangeBaseSet_;
     }
 
-    /** \copydoc Dune::LocalMatrixInterface::multiplyAdd */
+    /** \copydoc Dune::Fem::LocalMatrixInterface::multiplyAdd */
     template <class DomainLocalFunctionType,
               class RangeLocalFunctionType> 
     inline void multiplyAdd(const DomainLocalFunctionType& lhs,

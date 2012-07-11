@@ -639,39 +639,39 @@ namespace Fem
     // Default Implementations
     // -----------------------
 
-    /** \copydoc Dune::DiscreteFunctionInterface::name() const */
+    /** \copydoc Dune::Fem::DiscreteFunctionInterface::name() const */
     const std::string &name () const { return name_; }
 
-    /** \copydoc Dune::DiscreteFunctionInterface::space() const */
+    /** \copydoc Dune::Fem::DiscreteFunctionInterface::space() const */
     const DiscreteFunctionSpaceType &space () const { return dfSpace_; }
 
     /** \brief obtain a reference to the underlying grid part */
     const GridPartType &gridPart () const { return space().gridPart(); }
 
-    /** \copydoc Dune::DiscreteFunctionInterface::localFunction(const EntityType &entity) const */
+    /** \copydoc Dune::Fem::DiscreteFunctionInterface::localFunction(const EntityType &entity) const */
     const LocalFunctionType localFunction ( const EntityType &entity ) const;
     
-    /** \copydoc Dune::DiscreteFunctionInterface::localFunction(const EntityType &entity) */
+    /** \copydoc Dune::Fem::DiscreteFunctionInterface::localFunction(const EntityType &entity) */
     LocalFunctionType localFunction ( const EntityType &entity );
   
-    /** \copydoc Dune::DiscreteFunctionInterface::clear() */
+    /** \copydoc Dune::Fem::DiscreteFunctionInterface::clear() */
     void clear();
     
-    /** \copydoc Dune::DiscreteFunctionInterface::allocDofPointer
+    /** \copydoc Dune::Fem::DiscreteFunctionInterface::allocDofPointer
      *  
      *  \note The default implementation make a copy of the DoF vector using
      *        the DoF iterators.
      */
     inline RangeFieldType *allocDofPointer ();
 
-    /** \copydoc Dune::DiscreteFunctionInterface::freeDofPointer
+    /** \copydoc Dune::Fem::DiscreteFunctionInterface::freeDofPointer
      *
      *  \note The default implementation make a copy of the DoF vector using
      *        the DoF iterators.
      */
     inline void freeDofPointer( RangeFieldType *dofPointer );
 
-    /** \copydoc Dune::DiscreteFunctionInterface::addScaled(const DiscreteFunctionInterfaceType &g,const RangeFieldType &s) */
+    /** \copydoc Dune::Fem::DiscreteFunctionInterface::addScaled(const DiscreteFunctionInterfaceType &g,const RangeFieldType &s) */
     DUNE_VERSION_DEPRECATED(1,3,axpy)
     void addScaled ( const DiscreteFunctionInterfaceType &g, const RangeFieldType &s )
     {
@@ -680,28 +680,28 @@ namespace Fem
     
     // use overloaded deprecated axpy method from BaseType
     using BaseType :: axpy;
-    /** \copydoc Dune::DiscreteFunctionInterface::axpy(const RangeFieldType &s,const DiscreteFunctionInterfaceType &g) */
+    /** \copydoc Dune::Fem::DiscreteFunctionInterface::axpy(const RangeFieldType &s,const DiscreteFunctionInterfaceType &g) */
     void axpy ( const RangeFieldType &s, const DiscreteFunctionInterfaceType &g );
     
-    /** \copydoc Dune::DiscreteFunctionInterface::scalarProductDofs */
+    /** \copydoc Dune::Fem::DiscreteFunctionInterface::scalarProductDofs */
     inline RangeFieldType
     scalarProductDofs ( const DiscreteFunctionInterfaceType &other ) const;
 
-    /** \copydoc Dune::DiscreteFunctionInterface::print */
+    /** \copydoc Dune::Fem::DiscreteFunctionInterface::print */
     void print ( std :: ostream &out ) const;
     
-    /** \copydoc Dune::DiscreteFunctionInterface::dofsValid */
+    /** \copydoc Dune::Fem::DiscreteFunctionInterface::dofsValid */
     inline bool dofsValid () const;
  
-    /** \copydoc Dune::DiscreteFunctionInterface::assign(const DiscreteFunctionInterfaceType &g) */
+    /** \copydoc Dune::Fem::DiscreteFunctionInterface::assign(const DiscreteFunctionInterfaceType &g) */
     void assign ( const DiscreteFunctionInterfaceType &g );
     
-    /** \copydoc Dune::DiscreteFunctionInterface::dataHandle */
+    /** \copydoc Dune::Fem::DiscreteFunctionInterface::dataHandle */
     template< class Operation >
     typename CommDataHandle< Operation > :: Type
     dataHandle ( const Operation *operation );
 
-    /** \copydoc Dune::DiscreteFunctionInterface::communicate() */
+    /** \copydoc Dune::Fem::DiscreteFunctionInterface::communicate() */
     void communicate()
     {
       assert( Fem :: ThreadManager :: singleThreadMode() );
@@ -725,7 +725,7 @@ namespace Fem
                            const DomainType &x,
                            RangeType &ret ) const;
 
-    /** \copydoc Dune::DiscreteFunctionInterface::operator+=(const DiscreteFunctionInterfaceType &g) */
+    /** \copydoc Dune::Fem::DiscreteFunctionInterface::operator+=(const DiscreteFunctionInterfaceType &g) */
     DiscreteFunctionType &operator+= ( const DiscreteFunctionInterfaceType &g );
 
     /** \brief substract all degrees of freedom from given discrete function using the dof iterators 
@@ -751,43 +751,43 @@ namespace Fem
      */
     inline DiscreteFunctionType &operator/= ( const RangeFieldType &scalar );
 
-    /** \copydoc Dune::DiscreteFunctionInterface::read */
+    /** \copydoc Dune::Fem::DiscreteFunctionInterface::read */
     template< class StreamTraits >
     inline void read ( InStreamInterface< StreamTraits > &in );
 
-    /** \copydoc Dune::DiscreteFunctionInterface::write */
+    /** \copydoc Dune::Fem::DiscreteFunctionInterface::write */
     template< class StreamTraits >
     inline void write ( OutStreamInterface< StreamTraits > &out ) const;
     
-    /** \copydoc Dune::DiscreteFunctionInterface::read_xdr
+    /** \copydoc Dune::Fem::DiscreteFunctionInterface::read_xdr
      * 
      *  \note The default implementation uses the read method to read the
      *        discrete function from an XDRFileInStream.
      */
     virtual bool read_xdr ( const std :: string filename );
  
-    /** \copydoc Dune::DiscreteFunctionInterface::write_xdr
+    /** \copydoc Dune::Fem::DiscreteFunctionInterface::write_xdr
      *
      *  \note The default implementation uses the write method to write the
      *        discrete function to an XDRFileOutStream.
      */
     virtual bool write_xdr ( const std :: string filename ) const;
     
-    /** \copydoc Dune::DiscreteFunctionInterface::read_ascii
+    /** \copydoc Dune::Fem::DiscreteFunctionInterface::read_ascii
      * 
      *  \note The default implementation uses the read method to read the
      *        discrete function from an ASCIIInStream.
      */
     virtual bool read_ascii ( const std :: string filename );
  
-    /** \copydoc Dune::DiscreteFunctionInterface::write_ascii
+    /** \copydoc Dune::Fem::DiscreteFunctionInterface::write_ascii
      *
      *  \note The default implementation uses the write method to write the
      *        discrete function to an ASSCIIOutStream.
      */
     virtual bool write_ascii ( const std :: string filename ) const;
 
-    /** \copydoc Dune::DiscreteFunctionInterface::enableDofCompression()
+    /** \copydoc Dune::Fem::DiscreteFunctionInterface::enableDofCompression()
      *
      *  \note The default implementation does nothing.
      */
@@ -809,16 +809,16 @@ namespace Fem
     inline LocalFunctionStorageType &localFunctionStorage () const;
 
   protected:  
-    /** \copydoc Dune::PersistentObject :: backup */
+    /** \copydoc Dune::Fem::PersistentObject :: backup */
     virtual void backup() const; 
 
-    /** \copydoc Dune::PersistentObject :: restore */
+    /** \copydoc Dune::Fem::PersistentObject :: restore */
     virtual void restore(); 
 
-    /** \copydoc Dune::PersistentObject :: insertSubData */
+    /** \copydoc Dune::Fem::PersistentObject :: insertSubData */
     virtual void insertSubData();
 
-    /** \copydoc Dune::PersistentObject :: removeSubData */
+    /** \copydoc Dune::Fem::PersistentObject :: removeSubData */
     virtual void removeSubData();
 
     // only PersistenceManager should call backup and restore 

@@ -54,7 +54,7 @@ namespace Dune
     : quad_( geometry, order )
     {}
     
-    /** \copydoc Dune::IntegrationPointList::nop */
+    /** \copydoc Dune::Fem::IntegrationPointList::nop */
     size_t nop () const
     {
       return quadImp().nop();
@@ -75,28 +75,28 @@ namespace Dune
       return quadImp().point( i );
     }
 
-    /** \copydoc Dune::IntegrationPointList::id
+    /** \copydoc Dune::Fem::IntegrationPointList::id
      */
     size_t id () const
     {
       return quadImp().id();
     }
 
-    /** \copydoc Dune::IntegrationPointList::order
+    /** \copydoc Dune::Fem::IntegrationPointList::order
      */
     int order () const
     {
       return quadImp().order();
     }
 
-    /** \copydoc Dune::IntegrationPointList::geometry
+    /** \copydoc Dune::Fem::IntegrationPointList::geometry
      */
     GeometryType geometry () const
     {
       return quadImp().geometryType();
     }
     
-    /** \copydoc Dune::IntegrationPointList::geometry
+    /** \copydoc Dune::Fem::IntegrationPointList::geometry
      */
     GeometryType geometryType () const
     {
@@ -210,7 +210,7 @@ namespace Dune
       return QuadraturePointWrapperType( *this, i );
     }
    
-    /** \copydoc Dune::IntegrationPointList::nop
+    /** \copydoc Dune::Fem::IntegrationPointList::nop
      */
     size_t nop () const
     {
@@ -232,21 +232,21 @@ namespace Dune
       return quad_.point( i );
     }
 
-    /** \copydoc Dune::IntegrationPointList::id
+    /** \copydoc Dune::Fem::IntegrationPointList::id
      */
     size_t id () const
     {
       return quadImp().id();
     }
 
-    /** \copydoc Dune::IntegrationPointList::order
+    /** \copydoc Dune::Fem::IntegrationPointList::order
      */
     int order () const
     {
       return quadImp().order();
     }
 
-    /** \copydoc Dune::IntegrationPointList::geometry
+    /** \copydoc Dune::Fem::IntegrationPointList::geometry
      */
     GeometryType geometry () const
     {
