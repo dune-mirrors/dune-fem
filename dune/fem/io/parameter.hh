@@ -652,6 +652,7 @@ namespace Dune
      *
      *  \param[in]  path  path where filename is stored (for parallel writing)
      *  \param[in]  filename  name of the file to store the parameters in; prefix() is used.
+     *  \param[in]  fileextension  chosen fileextension
      *  \param[in]  writeAll default is true
      */
     static void write ( const std::string& path, const std::string &filename, 

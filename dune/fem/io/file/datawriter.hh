@@ -389,6 +389,7 @@ namespace Fem {
              previous runs 
       \param takeCareOfPersistenceManager flag whether to keep persistent 
              values by PersistenceManager (default true)
+      \param writeStep initial counter value, default 0
       \note In Addition to the parameters read by the DataWriter this class 
             reads the following parameters: 
 
@@ -453,6 +454,8 @@ namespace Fem {
     /** \brief restore grid from previous runs 
       \param[in] checkFile checkPoint filename 
       \param[in] givenRank number of my process (defaults to MPIManager :: rank() )
+      \param[in] paramter Parameterclass which provides informations about the
+      checkpoint
 
       \return Pointer to restored grid instance 
     */

@@ -149,10 +149,10 @@ namespace Dune
     : PairOfInterfaces<I1,I2>(i1,i2)
     {}
     
-    //! \copydoc RestrictProlongInterface::setFatherChildWeight 
-    void setFatherChildWeight (const DomainFieldType& val) const {
-      this->first().setFatherChildWeight(val);
-      this->second().setFatherChildWeight(val);    
+    //! \copydoc RestrictProlongInterface::setFatherChildWeight(const DomainFieldType &weight) const
+    void setFatherChildWeight (const DomainFieldType& weight) const {
+      this->first().setFatherChildWeight(weight);
+      this->second().setFatherChildWeight(weight);    
     }
 
     //! \copydoc RestrictProlongInterface::restrictLocal 

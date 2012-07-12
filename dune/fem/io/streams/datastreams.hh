@@ -318,8 +318,7 @@ namespace Dune
       /** \brief constructor
        *
        *  \param[in]  filename  name of the file to write to
-       *  \param[in]  append    true if stream appends to file filename
-       *                        (default = false)
+       *  \param[in]  pos       position to read from, default 0
        */
       explicit DataInStream ( const std::string &filename,
                               const size_t pos = 0 )

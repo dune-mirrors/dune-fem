@@ -281,7 +281,7 @@ namespace Fem
      *
      *  For example, a \ref Dune::Fem::LagrangeDiscreteFunctionSpace
      *  "Lagrange space" returns \b true iff the intersection is conforming while a \ref
-     *  Dune::DiscontinuousGalerkinSpace "discontiuous Galerkin space" always returns
+     *  Dune::Fem::DiscontinuousGalerkinSpace "discontiuous Galerkin space" always returns
      *  \b false.
      *
      *  \param intersection Intersection for which we want to know the continuety 

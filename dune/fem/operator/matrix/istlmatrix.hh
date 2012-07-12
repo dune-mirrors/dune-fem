@@ -806,7 +806,7 @@ namespace Dune
       assert( rowMapper_.size() == colMapper_.size() );
     }
 
-    /** \copydoc Operator::assembled */
+    /** \copydoc Dune::Fem::Operator::assembled */
     static const bool assembled = true ;
 
     const ThisType& systemMatrix() const { return *this; }
