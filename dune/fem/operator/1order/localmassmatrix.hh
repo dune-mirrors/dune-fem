@@ -359,8 +359,8 @@ protected:
                  const Rhs& rhs, 
                  X& x ) const 
   {
-    assert( matrix.rows == size );
-    assert( matrix.cols == size );
+    assert( matrix.rows() == size );
+    assert( matrix.cols() == size );
     assert( rhs.size() == size );
 
     for( int row = 0; row < size; ++ row ) 
