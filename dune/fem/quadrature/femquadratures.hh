@@ -25,6 +25,22 @@ namespace Dune
   {
     // uses implementation from parDG
     enum { maxOrder1 = 39, maxOrder2 = 13, maxOrder3 = 12 };
+
+    static int maxOrder( const int dim ) 
+    {
+      if( dim == 1 ) 
+        return maxOrder1 ;
+      else if( dim == 2 ) 
+        return maxOrder2 ;
+      else if( dim == 3 ) 
+        return maxOrder3 ;
+      else 
+      {
+        DUNE_THROW(NotImplemented,"SimplexMaxOrder::maxOrder: wrong dimension");
+        return -1;
+      }
+    }
+
   };
           
   /*  \class SimplexQuadrature
