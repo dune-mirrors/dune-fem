@@ -36,6 +36,4 @@ namespace Dune {
   } // end namespace Fem
 } // end namespace Dune
 
-// #include "idprovider.cc"
-
 #endif
