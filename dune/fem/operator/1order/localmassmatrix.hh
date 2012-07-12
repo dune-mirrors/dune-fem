@@ -38,8 +38,8 @@ public:
 
   enum { dgNumDofs = DiscreteFunctionSpaceType :: localBlockSize };
 
-  typedef FieldMatrix<ctype, dgNumDofs, dgNumDofs > DGMatrixType;
-  typedef FieldVector<ctype, dgNumDofs >            DGVectorType;
+  typedef Dune::FieldMatrix<ctype, dgNumDofs, dgNumDofs > DGMatrixType;
+  typedef Dune::FieldVector<ctype, dgNumDofs >            DGVectorType;
 
   typedef typename DiscreteFunctionSpaceType :: GridPartType GridPartType;
 
@@ -94,7 +94,7 @@ protected:
   struct NoMassDummyCaller
   {
     enum { dimRange = DiscreteFunctionSpaceType::dimRange };
-    typedef FieldMatrix<ctype, dimRange, dimRange> MassFactorType;
+    typedef Dune::FieldMatrix<ctype, dimRange, dimRange> MassFactorType;
     // return false since we don;t have a mass term
     bool hasMass() const { return false; }
     void mass(const EntityType&,
