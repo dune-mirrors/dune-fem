@@ -72,7 +72,8 @@ public:
   
   //! create Mappiung with empty linear combination  
   Mapping() 
-    : loopDetected_( false )
+    : lincomb_(),
+      loopDetected_( false )
   {
     // store pointer to myself 
     lincomb_.push_back( term( *this, 1. ) );
