@@ -15,6 +15,9 @@ namespace Dune
     QuadratureImp<ct, dim>(id),
     order_((order <= 0) ? 1 : order)
   {
+    // make sure that we only use orders that are available 
+    assert( order_ <= SimplexMaxOrder :: maxOrder( dim ) );
+
     SimplexPointsAdapter<dim> points(order);
 
     order_ = points.order();
@@ -29,6 +32,8 @@ namespace Dune
     QuadratureImp<ct, dim>(id),
     order_((order <= 0) ? 1 : order)
   {
+    assert( order_ <= GaussPts::highestOrder );
+
     typedef FieldVector<ct, dim> CoordinateType;
 
     const GaussPts& gp = GaussPts::instance();
@@ -95,6 +100,9 @@ namespace Dune
     QuadratureImp<ct, 1>(id),
     order_((order <= 0) ? 1 : order)
   {
+    // make sure that we only use orders that are available 
+    assert( order_ <= GaussPts::highestOrder );
+
     typedef FieldVector<ct, 1> CoordinateType;
 
     const GaussPts& gp = GaussPts::instance();
@@ -126,6 +134,9 @@ namespace Dune
     QuadratureImp<ct, 2>(id),
     order_((order <= 0) ? 1 : order)
   {
+    // make sure that we only use orders that are available 
+    assert( order_ <= SimplexMaxOrder :: maxOrder( dim ) );
+
     SimplexPointsAdapter<2> points(order);
 
     order_ = points.order();
@@ -140,6 +151,9 @@ namespace Dune
     QuadratureImp<ct, 2>(id),
     order_((order <= 0) ? 1 : order)
   {
+    // make sure that we only use orders that are available 
+    assert( order_ <= GaussPts::highestOrder );
+
     typedef FieldVector<ct, 2> CoordinateType;
 
     const GaussPts& gp = GaussPts::instance();
@@ -186,6 +200,9 @@ namespace Dune
     QuadratureImp<ct, 3>(id),
     order_((order <= 0) ? 1 : order)
   {
+    // make sure that we only use orders that are available 
+    assert( order_ <= SimplexMaxOrder :: maxOrder( dim ) );
+
     SimplexPointsAdapter<3> points(order);
 
     order_ = points.order();
@@ -200,6 +217,9 @@ namespace Dune
     QuadratureImp<ct, 3>(id),
     order_((order <= 0) ? 1 : order)
   {
+    // make sure that we only use orders that are available 
+    assert( order_ <= GaussPts::highestOrder );
+
     typedef FieldVector<ct, 3> CoordinateType;
 
     const GaussPts& gp = GaussPts::instance();
