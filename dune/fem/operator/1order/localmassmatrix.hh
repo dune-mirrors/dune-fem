@@ -59,7 +59,8 @@ public:
 
   typedef AllGeomTypes< typename GridPartType :: IndexSetType,GridType> GeometryInformationType;
   typedef typename GeometryInformationType :: DomainType DomainType;
-  typedef DynamicMatrix< RangeFieldType > MatrixType; 
+  // use dynamic matrix from dune-common
+  typedef Dune::DynamicMatrix< RangeFieldType > MatrixType; 
 
 protected:  
   const DiscreteFunctionSpaceType& spc_;
@@ -72,7 +73,8 @@ protected:
   mutable DGMatrixType dgMatrix_;
   mutable DGVectorType dgX_, dgRhs_;
 
-  mutable DynamicVector< RangeFieldType > rhs_;
+  // use dynamic vector from dune-common
+  mutable Dune::DynamicVector< RangeFieldType > rhs_;
   mutable MatrixType matrix_;
 
   mutable std::vector< RangeType > phi_;
@@ -317,7 +319,7 @@ protected:
 
     // if sequence changed or entity index changed 
     // compute mass matrix new 
-    if( entityHasChanged( entity ) )
+    if( entityHasChanged( entity ) ) 
     {
       // resize temporary memory if necessary 
       if( numDofs != int(matrix_.rows()) ) 
@@ -338,6 +340,7 @@ protected:
 
     // make sure that rhs_ has the correct size
     assert( int(rhs_.size()) == numDofs );
+    assert( numDofs == int(matrix_.rows()) );
 
     // copy local function to right hand side 
     for(int l=0; l<numDofs; ++l) 
@@ -356,6 +359,10 @@ protected:
                  const Rhs& rhs, 
                  X& x ) const 
   {
+    assert( matrix.rows == size );
+    assert( matrix.cols == size );
+    assert( rhs.size() == size );
+
     for( int row = 0; row < size; ++ row ) 
     {
       RangeFieldType sum = 0;
