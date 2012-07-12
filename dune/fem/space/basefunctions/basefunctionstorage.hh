@@ -139,8 +139,10 @@ namespace Fem
         jacobians.second = quadId ;
       }
 
+      assert( jacobians.first.size() == quadNop );
       for( size_t qp = 0; qp < quadNop; ++qp ) 
       {
+        assert( jacobians.first[qp].size() == numBase );
         for( size_t i = 0; i< numBase; ++i ) 
         {
           storage.jacobian( i, quad[ qp ], jacobians.first[ qp ][ i ] );
