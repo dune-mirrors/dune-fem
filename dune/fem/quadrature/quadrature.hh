@@ -104,9 +104,9 @@ namespace Dune
 
 
   /** \brief   extract the real coordinate from a point
-   *  \relates Dune::QuadraturePointWrapper
+   *  \relates Dune::Fem::QuadraturePointWrapper
    *
-   *  This function unwraps a possibly \ref Dune::QuadraturePointWrapper
+   *  This function unwraps a possibly \ref Dune::Fem::QuadraturePointWrapper
    *  "wrapped quadrature point". If the point is not a wrapped quadrature
    *  point, the point itself is returned. This makes it possible to have
    *  one evaluation method for the two different kinds of evaluation points.

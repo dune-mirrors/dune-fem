@@ -99,14 +99,14 @@ namespace Fem
     //! type of DiscretefunctionSapce implementation (Barton-Nackman)
     typedef typename Traits :: DiscreteFunctionSpaceType
       DiscreteFunctionSpaceType;
-    //! type of \ref Dune::FunctionSpaceInterface "function space"
+    //! type of \ref Dune::Fem::FunctionSpaceInterface "function space"
     typedef typename Traits :: FunctionSpaceType FunctionSpaceType;
     
   private:
     typedef FunctionSpaceType BaseType;
 
   public:
-    //! type of \ref Dune::BaseFunctionSetInterface "base function set" of this space 
+    //! type of \ref Dune::Fem::BaseFunctionSetInterface "base function set" of this space 
     typedef typename Traits :: BaseFunctionSetType BaseFunctionSetType;
     //! type of \ref Dune::DofMapper "DoF mapper" of this space
     typedef typename Traits :: MapperType MapperType;
@@ -135,7 +135,7 @@ namespace Fem
     typedef typename GridPartType :: IntersectionType IntersectionType;
 
     /** \brief defines type of data handle for communication
-     *  \param  DiscreteFunction  type of \ref Dune::DiscreteFunctionInterface
+     *  \param  DiscreteFunction  type of \ref Dune::Fem::DiscreteFunctionInterface
      *                            "discrete function" to communicate
      *  \param  Operation         type of operation to perform on communication
      *                            (defaults to copy)
@@ -229,7 +229,7 @@ namespace Fem
     /** \brief returns true if the space contains only globally continuous
      *         functions
      *
-     *  For example, a \ref Dune::LagrangeDiscreteFunctionSpace
+     *  For example, a \ref Dune::Fem::LagrangeDiscreteFunctionSpace
      *  "Lagrange space" returns \b true while a \ref
      *  Dune::DiscontinuousGalerkinSpace "discontiuous Galerkin space" returns
      *  \b false.
@@ -279,7 +279,7 @@ namespace Fem
     /** \brief returns true if discrete functions over this space have zero jump
      *         over the given intersection.
      *
-     *  For example, a \ref Dune::LagrangeDiscreteFunctionSpace
+     *  For example, a \ref Dune::Fem::LagrangeDiscreteFunctionSpace
      *  "Lagrange space" returns \b true iff the intersection is conforming while a \ref
      *  Dune::DiscontinuousGalerkinSpace "discontiuous Galerkin space" always returns
      *  \b false.

@@ -340,6 +340,7 @@ namespace Dune
 
     /** \copydoc Dune::Fem::BaseFunctionSetInterface::evaluate(const int baseFunction,const FieldVector<int,diffOrder> &diffVariable,const Point &x,RangeType &value) const */
     template< int diffOrder, class Point >
+    DUNE_DEPRECTED
     void evaluate ( const int baseFunction,
                     const FieldVector< int, diffOrder > &diffVariable,
                     const Point &x,
@@ -350,6 +351,7 @@ namespace Dune
     
     /** \copydoc Dune::Fem::BaseFunctionSetInterface::evaluate(const int baseFunction,const Point &x,RangeType &value) const */
     template< class Point >
+    DUNE_DEPRECTED
     void evaluate ( const int baseFunction, const Point &x, RangeType &value ) const
     {
       FieldVector< int, 0 > diffVariable;
@@ -401,7 +403,7 @@ namespace Dune
         asImp().evaluate( i, x, values[ i ] );
     }
 
-    /** \copydoc Dune::Fem::BaseFunctionSetInterface::jacobian(const int baseFunction,const Point &x, JacobianRangeType &phi) const */
+    /** \copydoc Dune::Fem::BaseFunctionSetInterface::jacobian(const int baseFunction,const Point &x,JacobianRangeType &jacobian) const */
     template< class Point >
     DUNE_DEPRECATED
     void jacobian ( const int baseFunction, const Point &x, JacobianRangeType &jacobian ) const;
@@ -415,6 +417,7 @@ namespace Dune
                        GlobalJacobianRangeArray &jacobians ) const;
 
     template< class Point >
+    DUNE_DEPRECTED
     void hessian ( const int baseFunction, const Point &x, HessianRangeType &hessian ) const;
 
     template< class Point, class Geometry, class DofVector, class GlobalHessianRange >

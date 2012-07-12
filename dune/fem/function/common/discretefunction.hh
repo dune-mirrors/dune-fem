@@ -809,16 +809,16 @@ namespace Fem
     inline LocalFunctionStorageType &localFunctionStorage () const;
 
   protected:  
-    /** \copydoc Dune::Fem::PersistentObject :: backup */
+    /** \copydoc Dune::PersistentObject::backup */
     virtual void backup() const; 
 
-    /** \copydoc Dune::Fem::PersistentObject :: restore */
+    /** \copydoc Dune::PersistentObject::restore */
     virtual void restore(); 
 
-    /** \copydoc Dune::Fem::PersistentObject :: insertSubData */
+    /** \copydoc Dune::PersistentObject::insertSubData */
     virtual void insertSubData();
 
-    /** \copydoc Dune::Fem::PersistentObject :: removeSubData */
+    /** \copydoc Dune::PersistentObject::removeSubData */
     virtual void removeSubData();
 
     // only PersistenceManager should call backup and restore 

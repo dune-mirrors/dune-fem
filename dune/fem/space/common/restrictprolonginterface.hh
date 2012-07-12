@@ -204,7 +204,7 @@ namespace Dune
     }
 
   public:
-    /** \copydoc RestrictProlongInterface::setFatherChildWeight */
+    /** \copydoc RestrictProlongInterface::setFatherChildWeight(const DomainFieldType &weight) const*/  
     void setFatherChildWeight ( const DomainFieldType &weight ) const {}
   };
 

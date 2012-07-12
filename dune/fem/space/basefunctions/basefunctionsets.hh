@@ -108,23 +108,23 @@ namespace Dune
       return storage_.geometryType();
     }
  
-    /** \copydoc Dune::Fem::BaseFunctionSetInterface::evaluate(const int baseFunction,const FieldVector<int,diffOrd> &diffVariable,const PointType &x,RangeType &phi) const */ 
-    template< int diffOrd, class PointType >
+    /** \copydoc Dune::Fem::BaseFunctionSetInterface::evaluate(const int baseFunction,const FieldVector<int,diffOrder> &diffVariable,const Point &x,RangeType &value) const */ 
+    template< int diffOrder, class Point >
     inline void evaluate ( const int baseFunction,
-                           const FieldVector< int, diffOrd > &diffVariable,
-                           const PointType &x,
-                           RangeType &phi ) const
+                           const FieldVector< int, diffOrder > &diffVariable,
+                           const Point &x,
+                           RangeType &value ) const
     {
-      storage_.evaluate( baseFunction, diffVariable, x, phi );
+      storage_.evaluate( baseFunction, diffVariable, x, value );
     }
 
-    /** \copydoc Dune::Fem::BaseFunctionSetInterface::jacobian(const int baseFunction,const PointType &x,JacobianRangeType &phi) const */ 
-    template< class PointType >
+    /** \copydoc Dune::Fem::BaseFunctionSetInterface::jacobian(const int baseFunction,const Point &x,JacobianRangeType &jacobian) const */ 
+    template< class Point >
     inline void jacobian ( const int baseFunction,
-                           const PointType &x,
-                           JacobianRangeType &phi ) const
+                           const Point &x,
+                           JacobianRangeType &jacobian ) const
     {
-      storage_.jacobian( baseFunction, x, phi );
+      storage_.jacobian( baseFunction, x, jacobian );
     }
 
   private:

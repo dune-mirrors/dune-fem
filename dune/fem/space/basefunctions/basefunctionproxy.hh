@@ -59,7 +59,7 @@ namespace Dune
     : baseSet_( baseSet ) 
     {}
 
-    /** \copydoc Dune::Fem::BaseFunctionSetInterface::numBaseFunctions */
+    /** \copydoc Dune::Fem::BaseFunctionSetInterface::size */
     size_t size () const
     {
       return baseFunctionSet().size();
@@ -71,35 +71,35 @@ namespace Dune
       return baseFunctionSet().geometryType();
     }
    
-    /** \copydoc Dune::Fem::BaseFunctionSetInterface::evaluate(const int baseFunction,const FieldVector<int,diffOrd> &diffVariable,const PointType &x,RangeType &phi) const */
-    template< int diffOrd, class PointType >
+    /** \copydoc Dune::Fem::BaseFunctionSetInterface::evaluate(const int baseFunction,const FieldVector<int,diffOrder> &diffVariable,const Point &x,RangeType &value) const */
+    template< int diffOrder, class Point >
     DUNE_DEPRECATED
     void evaluate ( const int baseFunction,
-                    const FieldVector< int, diffOrd > &diffVariable,
-                    const PointType &x,
-                    RangeType &phi ) const
+                    const FieldVector< int, diffOrder > &diffVariable,
+                    const Point &x,
+                    RangeType &value ) const
     {
-      baseFunctionSet().evaluate( baseFunction, diffVariable, x, phi );
+      baseFunctionSet().evaluate( baseFunction, diffVariable, x, value );
     }
 
-    /** \copydoc Dune::Fem::BaseFunctionSetInterface::evaluate(const int baseFunction,const PointType &x,RangeType &phi) const */
-    template< class PointType >
+    /** \copydoc Dune::Fem::BaseFunctionSetInterface::evaluate(const int baseFunction,const Point &x,RangeType &value) const */
+    template< class Point >
     DUNE_DEPRECATED
     void evaluate ( const int baseFunction,
-                    const PointType &x,
-                    RangeType &phi ) const
+                    const Point &x,
+                    RangeType &value ) const
     {
-      baseFunctionSet().evaluate( baseFunction, x, phi );
+      baseFunctionSet().evaluate( baseFunction, x, value );
     }
 
-    /** \copydoc Dune::Fem::BaseFunctionSetDefault::jacobian(const int baseFunction,const PointType &x,JacobianRangeType &phi) const */
-    template< class PointType >
+    /** \copydoc Dune::Fem::BaseFunctionSetInterface::jacobian(const int baseFunction,const Point &x,JacobianRangeType &jacobian) const */
+    template< class Point >
     DUNE_DEPRECATED
     void jacobian( const int baseFunction,
-                   const PointType &x,
-                   JacobianRangeType &phi ) const
+                   const Point &x,
+                   JacobianRangeType &jacobian ) const
     {
-      baseFunctionSet().jacobian( baseFunction, x, phi );
+      baseFunctionSet().jacobian( baseFunction, x, jacobian );
     }
 
     template< class PointType, 

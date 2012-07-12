@@ -71,7 +71,7 @@ namespace Dune
      Utilities for Matlab output are availabe
      through the Dune::MatlabHelper.
     
-     The \ref Dune::CheckPointer "checkpointing facility" 
+     The \ref Dune::Fem::CheckPointer "checkpointing facility" 
      writes both the grid state, a number of
      discrete function, and other parameters
      provided by the user. This information can
