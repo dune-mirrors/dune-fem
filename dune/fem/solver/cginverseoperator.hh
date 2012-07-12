@@ -197,6 +197,7 @@ namespace Dune
         /** \brief constructor of CGInverseOperator
          *
          *  \param[in]  op       operator to invert
+         *  \param[in]  precond  precondition operator
          *  \param[in]  redEps   reduction epsilon
          *  \param[in]  absLimit absolut limit of residual
          *  \param[in]  maxIter  maximum number of iteration steps

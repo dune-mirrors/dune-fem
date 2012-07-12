@@ -111,7 +111,7 @@ namespace Dune
       return DofMapIteratorType( DofMapIteratorType::beginIterator, entity, *this );
     }
     
-    /** \copydoc Dune:::DofMapper::end(const ElementType &entity) const */
+    /** \copydoc Dune::DofMapper::end(const ElementType &entity) const */
     DofMapIteratorType end ( const ElementType &entity ) const
     {
       return DofMapIteratorType( DofMapIteratorType::endIterator, entity, *this );
