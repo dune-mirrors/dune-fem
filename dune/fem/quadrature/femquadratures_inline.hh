@@ -135,7 +135,7 @@ namespace Dune
     order_((order <= 0) ? 1 : order)
   {
     // make sure that we only use orders that are available 
-    assert( order_ <= SimplexMaxOrder :: maxOrder( dim ) );
+    assert( order_ <= SimplexMaxOrder :: maxOrder( 2 ) );
 
     SimplexPointsAdapter<2> points(order);
 
@@ -201,7 +201,7 @@ namespace Dune
     order_((order <= 0) ? 1 : order)
   {
     // make sure that we only use orders that are available 
-    assert( order_ <= SimplexMaxOrder :: maxOrder( dim ) );
+    assert( order_ <= SimplexMaxOrder :: maxOrder( 3 ) );
 
     SimplexPointsAdapter<3> points(order);
 
