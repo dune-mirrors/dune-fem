@@ -454,7 +454,7 @@ namespace Fem {
     /** \brief restore grid from previous runs 
       \param[in] checkFile checkPoint filename 
       \param[in] givenRank number of my process (defaults to MPIManager :: rank() )
-      \param[in] paramter Parameterclass which provides informations about the
+      \param[in] parameter Parameterclass which provides informations about the
       checkpoint
 
       \return Pointer to restored grid instance 

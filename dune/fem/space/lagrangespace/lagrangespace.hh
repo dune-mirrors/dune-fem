@@ -392,7 +392,12 @@ namespace Dune
       return polynomialOrder;
     }
 
-    /** \copydoc Dune::Fem::DiscreteFunctionSpaceInterface::baseFunctionSet(const EntityType &entity) const */
+    /** \brief provide access to the base function set for an entity 
+     *
+     *  \param[in]  entity   entity for which the base function set is requested 
+     *
+     *  \returns base function set for the specified entity
+     */
     template< class EntityType >
     const BaseFunctionSetType baseFunctionSet ( const EntityType &entity ) const
     {

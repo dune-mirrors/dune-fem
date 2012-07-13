@@ -127,10 +127,10 @@ namespace Dune
     size_t size () const { return dimRange*numDifferentBaseFunctions(); }
     int numDifferentBaseFunctions () const { return storage_.numBaseFunctions(); }
 
-    /** \copydoc Dune::Fem::BaseFunctionSetInterface::evaluate(const int baseFunction,const FieldVector<int,diffOrd> &diffVariable,const Point &x,RangeType &value) const */
-    template< int diffOrd, class Point >
+    /** \copydoc Dune::Fem::BaseFunctionSetInterface::evaluate(const int baseFunction,const FieldVector<int,diffOrder> &diffVariable,const Point &x,RangeType &value) const */
+    template< int diffOrder, class Point >
     void evaluate ( const int baseFunction,
-                    const FieldVector< int, diffOrd > &diffVariable,
+                    const FieldVector< int, diffOrder > &diffVariable,
                     const Point &x,
                     RangeType &value ) const
     {

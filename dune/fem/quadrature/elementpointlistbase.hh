@@ -246,7 +246,7 @@ namespace Dune
       return quadImp().order();
     }
 
-    /** \copydoc Dune::Fem::IntegrationPointList::geometry
+    /** \brief obtain GeometryType for this integration point list
      */
     GeometryType geometry () const
     {

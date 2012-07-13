@@ -231,7 +231,7 @@ namespace Fem
      *
      *  For example, a \ref Dune::Fem::LagrangeDiscreteFunctionSpace
      *  "Lagrange space" returns \b true while a \ref
-     *  Dune::DiscontinuousGalerkinSpace "discontiuous Galerkin space" returns
+     *  Dune::Fem::DiscontinuousGalerkinSpace "discontiuous Galerkin space" returns
      *  \b false.
      *
      *  \returns \b true  if the space contians only globally continous
