@@ -45,7 +45,12 @@ const Quadrature<1>& Quadrature<1>::quadrature(int minimum_degree)
   case 34: case 35: return quad1d_35; break;
   case 36: case 37: return quad1d_37; break;
   case 38: case 39: return quad1d_39; break;  
-  default: assert(0);
+  default: 
+    {
+      std::cerr << "Quadrature1d::quadrature: order " << minimum_degree << " not avaiable" << std::endl;
+      assert(0);
+      abort();
+    }
   }
 
   return quad1d_0;
