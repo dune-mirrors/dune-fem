@@ -472,6 +472,8 @@ namespace Dune
 
   public:
     typedef Element ElementType;
+    typedef ElementType FieldType ;
+    typedef ElementType value_type ;
 
   protected:
     typedef ArrayAllocator< ElementType > ArrayAllocatorType;
