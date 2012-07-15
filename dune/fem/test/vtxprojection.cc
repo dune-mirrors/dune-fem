@@ -40,7 +40,7 @@ typedef Fem :: ISTLBlockVectorDiscreteFunction< DiscreteFunctionSpaceType >
   DiscreteFunctionType;
 #elif defined USE_VECTORFUNCTION
 typedef Fem :: ManagedDiscreteFunction
-  < VectorDiscreteFunction
+  < Fem::VectorDiscreteFunction
     < DiscreteFunctionSpaceType,
       Fem::DynamicVector< FunctionSpaceType :: RangeFieldType > > >
   DiscreteFunctionType;
