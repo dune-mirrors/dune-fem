@@ -53,6 +53,10 @@ namespace Dune {
 
     //! type of mass matrix factor (see discretemodel.hh)
     typedef typename DiscreteModelType :: MassFactorType MassFactorType;
+
+    using BaseType::evaluateQuadrature;
+    using BaseType::evaluateQuad;
+
   public:
     DGDiscreteModelCaller( DiscreteModelType& problem ) :
       BaseType( ), 
