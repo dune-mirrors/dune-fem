@@ -116,12 +116,12 @@ namespace Dune
       entity_( &entity )
     {}
     
-    /** \copydoc Dune::Fem::BaseFunctionSetInterface::evaluate(const int baseFunction,const FieldVector<int,diffOrd> &diffVariable,const PointType &x,RangeType &phi) const */
-    template< int diffOrd, class PointType >
+    /** \copydoc Dune::Fem::BaseFunctionSetInterface::evaluate(const int baseFunction,const FieldVector<int,diffOrder> &diffVariable,const Point &x,RangeType &value) const */
+    template< int diffOrder, class Point >
     void evaluate ( const int baseFunction,
-                    const FieldVector< int, diffOrd > &diffVariable,
-                    const PointType &x,
-                    RangeType &phi ) const;
+                    const FieldVector< int, diffOrder > &diffVariable,
+                    const Point &x,
+                    RangeType &value ) const;
 
     /** \brief obtain the entity, this base function set belongs to */
     const ElementType &entity () const

@@ -208,8 +208,8 @@ namespace Dune
     /** \copydoc Dune::DofMapper::maxNumDofs() const */
     int maxNumDofs () const;
 
-    /** \copydoc Dune::DofMapper::numDofs(const ElementType &entity) const */
-    int numDofs ( const ElementType &entity ) const;
+    /** \copydoc Dune::DofMapper::numDofs(const ElementType &element) const */
+    int numDofs ( const ElementType &element ) const;
 
     /** \copydoc Dune::DofMapper::numEntityDofs(const Entity &entity) const */
     template< class Entity >

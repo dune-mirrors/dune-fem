@@ -51,7 +51,7 @@ namespace Dune
     /** \brief add the integral over an entity to a variable
      *
      *  The function needs to have an evaluate method supporting
-     *  \ref Dune::QuadraturePointWrapper "wrapped quadrature points".
+     *  \ref Dune::Fem::QuadraturePointWrapper "wrapped quadrature points".
      *  The declaration should look as follows:
      *  \code
      *  template< class Point >
@@ -95,7 +95,7 @@ namespace Dune
     /** \brief integrate a function over an entity
      *
      *  The function needs to have an evaluate method supporting
-     *  \ref Dune::QuadraturePointWrapper "wrapped quadrature points".
+     *  \ref Dune::Fem::QuadraturePointWrapper "wrapped quadrature points".
      *  The declaration should look as follows:
      *  \code
      *  template< class Point >

@@ -229,7 +229,7 @@ namespace Dune
         return asImp();
       }
 
-      /** \copydoc Dune::VectorInterface::assign(const VectorInterface<T> &v) */
+      /** \copydoc Dune::Fem::VectorInterface::assign(const VectorInterface<T> &v) */
       template< class T >
       void assign ( const VectorInterface< T > &v )
       {
@@ -247,7 +247,7 @@ namespace Dune
           asImp()[ i ] = s;
       }
 
-      /** \copydoc Dune::VectorInterface::clear() */
+      /** \copydoc Dune::Fem::VectorInterface::clear() */
       void clear ()
       {
         asImp().assign( 0 );
@@ -616,7 +616,7 @@ namespace Dune
         return fields_[ index ];
       }
       
-      /** \copydoc Dune::VectorInterface::assign(const VectorInterface<T> &v) */
+      /** \copydoc Dune::Fem::VectorInterface::assign(const VectorInterface<T> &v) */
       template< class T >
       inline void assign ( const VectorInterface< T > &v )
       {
@@ -798,9 +798,9 @@ namespace Dune
      *  \brief Combines two classes implementing the vector interface to
      *         produce a long vector.
 
-     *  This class can be used together with Dune::CombinedInterface
+     *  This class can be used together with Dune::Fem::CombinedInterface
      *  to generate a large vector by combining smaller ones. 
-     *  The class defines the Dune::VectorInterface
+     *  The class defines the Dune::Fem::VectorInterface
      *
      *  Example of usage:
      *  \code

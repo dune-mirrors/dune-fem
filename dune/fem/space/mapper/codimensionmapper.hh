@@ -105,13 +105,13 @@ namespace Dune
       return indexSet_.size( codimension );
     }
 
-    /** \copydoc Dune::Fem::DofMapper::begin(const ElementType &entity) const */
+    /** \copydoc Dune::DofMapper::begin(const ElementType &entity) const */
     DofMapIteratorType begin ( const ElementType &entity ) const
     {
       return DofMapIteratorType( DofMapIteratorType::beginIterator, entity, *this );
     }
     
-    /** \copydoc Dune::Fem::DofMapper::end(const ElementType &entity) const */
+    /** \copydoc Dune::DofMapper::end(const ElementType &entity) const */
     DofMapIteratorType end ( const ElementType &entity ) const
     {
       return DofMapIteratorType( DofMapIteratorType::endIterator, entity, *this );
@@ -181,13 +181,13 @@ namespace Dune
       return maxNumberOfDofs_;
     }
 
-    /** \copydoc Dune::Fem::DofMapper::numDofs(const ElementType &element) const */
+    /** \copydoc Dune::DofMapper::numDofs(const ElementType &element) const */
     int numDofs ( const ElementType &element ) const
     {
       return element.template count< codimension >();
     }
 
-    /** \copydoc Dune::Fem::DofMapper::numEntityDofs(const Entity &entity) const */
+    /** \copydoc Dune::DofMapper::numEntityDofs(const Entity &entity) const */
     template< class Entity >
     int numEntityDofs ( const Entity &entity ) const
     {

@@ -98,6 +98,7 @@ public:
       \param gridPart set of element the minmal with is calculated for 
       \param communicate do global communication to get minimal width for all processes
       (default = true)
+      \param minmax Function which switches between the overall minimun and maximum 
   */
   template <class GridPartType, class MinMax> 
   static inline 

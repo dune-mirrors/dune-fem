@@ -145,7 +145,7 @@ public:
    */
   virtual void operator() ( const double *u, double *f ) const;
 
-  /** \copydoc Dune::Fem::PARDGSpaceOperatorInterface::initializeTimeStepSize(const DestinationType&) const */
+  /** \copydoc Dune::Fem::PARDGSpaceOperatorInterface::initializeTimeStepSize(const DestinationType &U0) const */
   virtual void initializeTimeStepSize ( const DestinationType &U0 ) const;
 
   //! return reference to pass's local memory  

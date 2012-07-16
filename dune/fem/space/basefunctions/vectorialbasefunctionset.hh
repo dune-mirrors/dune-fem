@@ -127,33 +127,33 @@ namespace Dune
     size_t size () const { return dimRange*numDifferentBaseFunctions(); }
     int numDifferentBaseFunctions () const { return storage_.numBaseFunctions(); }
 
-    /** \copydoc Dune::Fem::BaseFunctionSetInterface::evaluate(const int,const FieldVector<int,diffOrd>&,const PointType&,RangeType&) const */
-    template< int diffOrd, class PointType >
+    /** \copydoc Dune::Fem::BaseFunctionSetInterface::evaluate(const int baseFunction,const FieldVector<int,diffOrd> &diffVariable,const Point &x,RangeType &value) const */
+    template< int diffOrd, class Point >
     void evaluate ( const int baseFunction,
                     const FieldVector< int, diffOrd > &diffVariable,
-                    const PointType &x,
-                    RangeType &phi ) const
+                    const Point &x,
+                    RangeType &value ) const
     {
       ScalarRangeType tmp;
       const int scalarBaseFunction = util_.containedDof( baseFunction );
       evaluateScalar( scalarBaseFunction, diffVariable, x, tmp );
 
-      phi = 0;
-      phi[ util_.component( baseFunction ) ] = tmp[ 0 ];
+      value = 0;
+      value[ util_.component( baseFunction ) ] = tmp[ 0 ];
     }
 
-    /** \copydoc Dune::Fem::BaseFunctionSetInterface::jacobian(const int baseFunction,const PointType &x,JacobianRangeType &phi) const */
-    template< class PointType >
+    /** \copydoc Dune::Fem::BaseFunctionSetInterface::jacobian(const int baseFunction,const Point &x,JacobianRangeType &jacobian) const */
+    template< class Point >
     void jacobian ( const int baseFunction,
-                    const PointType &x, 
-                    JacobianRangeType &phi ) const
+                    const Point &x, 
+                    JacobianRangeType &jacobian ) const
     {
       ScalarJacobianRangeType tmp;
       const int scalarBaseFunction = util_.containedDof( baseFunction );
       jacobianScalar( scalarBaseFunction, x, tmp );
 
-      phi = 0;
-      phi[ util_.component( baseFunction )] = tmp[ 0 ];
+      jacobian = 0;
+      jacobian[ util_.component( baseFunction )] = tmp[ 0 ];
     }
 
     template< class PointType >
