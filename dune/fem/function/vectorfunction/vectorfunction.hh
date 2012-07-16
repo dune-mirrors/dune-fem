@@ -60,7 +60,7 @@ namespace Dune
 
       typedef typename DiscreteFunctionSpaceType :: MapperType MapperType;
 
-      typedef typename DofVectorType :: FieldType DofType;
+      typedef typename DofVectorType :: value_type  DofType;
       typedef DofVectorType DofStorageType;
 
       typedef typename DofVectorType :: ConstIteratorType ConstDofIteratorType;
