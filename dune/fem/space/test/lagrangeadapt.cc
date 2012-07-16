@@ -25,7 +25,7 @@ const int polOrder = POLORDER;
 #include <dune/fem/space/common/adaptmanager.hh>
 #include <dune/fem/space/lagrangespace.hh>
 #include <dune/fem/space/lagrangespace/adaptmanager.hh>
-//#include <dune/fem/space/padaptivespace.hh>
+#include <dune/fem/space/padaptivespace.hh>
 #include <dune/fem/function/adaptivefunction.hh>
 #include <dune/fem/quadrature/cachingquadrature.hh>
 #include <dune/fem/operator/lagrangeinterpolation.hh>
@@ -58,7 +58,6 @@ struct CheckGridEnabled
 {
   typedef Grid GridType;
 
-  //typedef Dune::HierarchicGridPart< GridType > GridPartType;
   typedef Dune::AdaptiveLeafGridPart< GridType > GridPartType;
   
   inline static int CallMain ( int argc, char **argv )
@@ -163,7 +162,7 @@ typedef FunctionSpace< double, double, MyGridType::dimensionworld, 1 > FunctionS
 typedef LagrangeDiscreteFunctionSpace< FunctionSpaceType, GridPartType, polOrder >
   DiscreteFunctionSpaceType;
 //! type of the discrete function space our unkown belongs to
-//typedef PAdaptiveLagrangeSpace< FunctionSpaceType, GridPartType, polOrder >
+//typedef Fem :: PAdaptiveLagrangeSpace< FunctionSpaceType, GridPartType, polOrder >
 //  DiscreteFunctionSpaceType;
 
 //! type of the discrete function we are using
@@ -189,7 +188,8 @@ typedef AdaptationManager< MyGridType, RestrictProlongOperatorType >
 
  
 
-void adapt ( MyGridType &grid, DiscreteFunctionType &solution, int step )
+void adapt ( MyGridType &grid, DiscreteFunctionType &solution, int step, 
+             const bool locallyAdaptive )
 {
   typedef DiscreteFunctionSpaceType :: IteratorType IteratorType;
   
@@ -203,11 +203,25 @@ void adapt ( MyGridType &grid, DiscreteFunctionType &solution, int step )
   const int mark = (step < 0 ? -1 : 1);
   const int count = std :: abs( step );
   
-  for( int i = 0; i < count; ++i ) {
+  for( int i = 0; i < count; ++i ) 
+  {
+    int numElements = grid.size( 0 );
+    if( locallyAdaptive )
+    {
+      numElements /= 4;
+      numElements = std::max( numElements, 1 );
+    }
+
     IteratorType it = discreteFunctionSpace.begin();
     const IteratorType endit = discreteFunctionSpace.end();
-    for( ; it != endit; ++it )
-      grid.mark( mark, *it );
+    int elementNumber = 0; 
+    for( ; it != endit; ++it, ++elementNumber )
+    {
+      if( elementNumber < numElements ) 
+      {
+        grid.mark( mark, *it );
+      }
+    }
 
     // adapt grid 
     adaptationManager.adapt();
@@ -219,7 +233,8 @@ void adapt ( MyGridType &grid, DiscreteFunctionType &solution, int step )
 void algorithm ( GridPartType &gridPart,
                  DiscreteFunctionType &solution, 
                  int step,
-                 int turn )
+                 int turn,
+                 const bool locallyAdaptive )
 {
   const unsigned int polOrder
     = DiscreteFunctionSpaceType :: polynomialOrder + 1;
@@ -238,7 +253,7 @@ void algorithm ( GridPartType &gridPart,
   std::cout << "L2 error before adaptation: " << preL2error << std::endl;
   std::cout << "H1 error before adaptation: " << preH1error << std::endl; 
   
-  adapt( gridPart.grid(), solution, step );
+  adapt( gridPart.grid(), solution, step, locallyAdaptive );
   
   //double postL2error = l2norm.distance( fexact, solution );
   double postL2error = l2norm.distance( solution, fexact );
@@ -325,13 +340,15 @@ try
   DiscreteFunctionType solution( "solution", discreteFunctionSpace );
   solution.clear();
 
+  const bool locallyAdaptive = Dune::Parameter :: getValue< bool >("adapt.locallyadaptive", false );
+
   std :: cout << std :: endl << "Refining: " << std :: endl;
   for( int i = 0; i < ml; ++i )
-    algorithm( gridPart, solution, step, (i == ml-1) );
+    algorithm( gridPart, solution, step, (i == ml-1), locallyAdaptive );
   
   std :: cout << std :: endl << "Coarsening:" << std::endl;
   for( int i = ml - 1; i >= 0; --i )
-    algorithm( gridPart, solution, -step, 1 );
+    algorithm( gridPart, solution, -step, 1, locallyAdaptive );
 
   return 0;
 }
