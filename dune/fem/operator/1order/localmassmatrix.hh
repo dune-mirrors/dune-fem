@@ -87,6 +87,7 @@ protected:
 
   // index of entity from index set, don't setup mass matrix for the same entity twice 
   mutable IndexType lastEntityIndex_; 
+  mutable unsigned int lastTopologyId_ ;
   // sequence number (obtained from DofManager via the space)
   mutable int sequence_; 
 
@@ -147,6 +148,7 @@ public:
     , phiMass_( spc_.mapper().maxNumDofs() )
     , localInverseMassMatrix_( GlobalGeometryTypeIndex :: size( GridType::dimension ) )
     , lastEntityIndex_( -1 )
+    , lastTopologyId_( ~0u )
     , sequence_( -1 )  
   {
   }
@@ -163,6 +165,7 @@ public:
       phiMass_( org.phiMass_ ),
       localInverseMassMatrix_( GlobalGeometryTypeIndex :: size( GridType::dimension ) ),
       lastEntityIndex_( org.lastEntityIndex_ ),
+      lastTopologyId_( org.lastTopologyId_ ),
       sequence_( org.sequence_ )  
   {
   }
@@ -288,14 +291,18 @@ protected:
   {
     // don't compute matrix new for the same entity 
     const int currentSequence   = spc_.sequence();
+    const unsigned int topologyId = entity.type().id();
     const IndexType entityIndex = indexSet_.index( entity ) ;
 
     // check whether sequence has been updated 
-    if( sequence_ != currentSequence || lastEntityIndex_ != entityIndex ) 
+    if( sequence_ != currentSequence ||
+        lastEntityIndex_ != entityIndex || 
+        lastTopologyId_  != topologyId ) 
     {
       // update identifiers 
       lastEntityIndex_ = entityIndex ;
-      sequence_ = currentSequence;
+      sequence_        = currentSequence;
+      lastTopologyId_  = topologyId ;
 
       return true ;
     }
@@ -319,14 +326,11 @@ protected:
 
     // if sequence changed or entity index changed 
     // compute mass matrix new 
-    if( entityHasChanged( entity ) ) 
+    if( entityHasChanged( entity ) || numDofs != int(matrix_.rows()) ) 
     {
       // resize temporary memory if necessary 
       if( numDofs != int(matrix_.rows()) ) 
       {
-        // resize vectors 
-        rhs_.resize( numDofs );
-
         // resize matrix 
         matrix_.resize( numDofs, numDofs );
       }
@@ -339,8 +343,15 @@ protected:
     }
 
     // make sure that rhs_ has the correct size
-    assert( int(rhs_.size()) == numDofs );
     assert( numDofs == int(matrix_.rows()) );
+    // resize temporary memory if necessary 
+    if( numDofs != int(rhs_.size()) )
+    {
+      // resize vectors 
+      rhs_.resize( numDofs );
+    }
+
+    assert( int(rhs_.size()) == numDofs );
 
     // copy local function to right hand side 
     for(int l=0; l<numDofs; ++l) 
