@@ -110,7 +110,7 @@ namespace Dune
     typedef LagrangePointSetContainer LagrangePointSetContainerType;
 
     LagrangeMapperSingletonKey ( const GridPartType &gridPart,
-                                 LagrangePointSetContainerType &pointSet,
+                                 const LagrangePointSetContainerType &pointSet,
                                  const int polOrd )
     : gridPart_( gridPart ),
       pointSet_( pointSet ),
@@ -131,11 +131,11 @@ namespace Dune
 
     const typename GridPartType::IndexSetType &indexSet () const { return gridPart_.indexSet(); }
 
-    LagrangePointSetContainerType &pointSet () const { return pointSet_; }
+    const LagrangePointSetContainerType &pointSet () const { return pointSet_; }
 
   private:
     const GridPartType &gridPart_; 
-    LagrangePointSetContainerType &pointSet_;
+    const LagrangePointSetContainerType &pointSet_;
     const int polOrd_;
   };
 
@@ -251,8 +251,12 @@ namespace Dune
     //! type of a Lagrange point set
     typedef LagrangePointSet< GridPartType, polynomialOrder > LagrangePointSetType;
 
-  private:
-    typedef std::vector< const LagrangePointSetType * > LagrangePointSetContainerType;
+    // type of container for the LagangePointSets 
+    typedef CompiledLocalKeyContainer< LagrangePointSetType, 
+                polynomialOrder, polynomialOrder > LagrangePointSetContainerType ;
+
+    // type of local keys for one polynomial order 
+    typedef typename LagrangePointSetContainerType :: LocalKeyStorageType  LocalKeyStorageType;
 
   public:
     //! mapper used to implement mapToGlobal
@@ -270,7 +274,8 @@ namespace Dune
     static const int dimVal = 1;
 
     //! mapper singleton key 
-    typedef LagrangeMapperSingletonKey< GridPartType, LagrangePointSetContainerType >
+    //typedef LagrangeMapperSingletonKey< GridPartType, LagrangePointSetContainerType >
+    typedef LagrangeMapperSingletonKey< GridPartType, LocalKeyStorageType >
       MapperSingletonKeyType;
 
     //! mapper factory 
@@ -309,7 +314,7 @@ namespace Dune
         const CommunicationDirection commDirection = defaultDirection )
     : BaseType( gridPart, commInterface, commDirection ),
       shapeFunctionSets_(),
-      lagrangePointSetContainer_( LocalGeometryTypeIndex::size( dimension ), nullptr ),
+      lagrangePointSetContainer_( gridPart ),
       mapper_( 0 ),
       blockMapper_( 0 )
     {
@@ -322,15 +327,9 @@ namespace Dune
         const GeometryType &gt = geometryTypes[ i ];
         // insert shape function set for geometry type 
         shapeFunctionSets_.template insert< BaseFunctionSetSingletonProviderType >( gt );
-
-        const LagrangePointSetType *&lagrangePointSet
-          = lagrangePointSetContainer_[ LocalGeometryTypeIndex::index( gt ) ];
-        if( !lagrangePointSet )
-          lagrangePointSet = new LagrangePointSetType( gt, polynomialOrder );
-        assert( lagrangePointSet );
       }
 
-      MapperSingletonKeyType key( gridPart, lagrangePointSetContainer_, polynomialOrder );
+      MapperSingletonKeyType key( gridPart, lagrangePointSetContainer_.compiledLocalKeys( polynomialOrder ), polynomialOrder );
       blockMapper_ = &BlockMapperProviderType::getObject( key );
       assert( blockMapper_ != 0 );
       mapper_ = new MapperType( *blockMapper_ );
@@ -349,15 +348,6 @@ namespace Dune
     {
       delete mapper_;
       BlockMapperProviderType::removeObject( *blockMapper_ );
-
-      typedef typename LagrangePointSetContainerType::const_iterator IteratorType;
-      const IteratorType end = lagrangePointSetContainer_.end();
-      for( IteratorType it = lagrangePointSetContainer_.begin(); it != end; ++it )
-      {
-        const LagrangePointSetType *lagrangePointSet = *it;
-        if( lagrangePointSet )
-          delete lagrangePointSet;
-      }
     }
 
     /** \copydoc Dune::Fem::DiscreteFunctionSpaceInterface::contains */
@@ -441,10 +431,7 @@ namespace Dune
      */
     const LagrangePointSetType &lagrangePointSet ( const GeometryType type ) const
     {
-      const LagrangePointSetType *lagrangePointSet
-        = lagrangePointSetContainer_[ LocalGeometryTypeIndex::index( type ) ];
-      assert( lagrangePointSet );
-      return *lagrangePointSet;
+      return lagrangePointSetContainer_.compiledLocalKey( type, polynomialOrder );
     }
 
     /** \brief get dimension of value
@@ -473,7 +460,7 @@ namespace Dune
 
   protected:
     mutable ShapeSetStorageType shapeFunctionSets_;
-    mutable LagrangePointSetContainerType lagrangePointSetContainer_;
+    LagrangePointSetContainerType lagrangePointSetContainer_;
     MapperType *mapper_;
     BlockMapperType *blockMapper_;
   };
