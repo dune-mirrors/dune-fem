@@ -116,7 +116,7 @@ namespace Dune
     /** \addtogroup CombinedDiscreteFunctionSpace
      *
      *  Provides a DiscreteFunctionSpace combined from two arbitrary 
-     *  DiscreteFunctionSpaces U_h and V_h into a single DFSpace ( U_h times V_h ). 
+     *  DiscreteFunctionSpaces U_h and V_h into a single \ref Dune::Fem::DiscreteFunctionSpaceInterface ( U_h times V_h ). 
      *
      *  \note It is assumed that the spaces U_h and V_h  are constructed on the same
      *        gridpart!!!
