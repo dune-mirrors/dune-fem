@@ -338,7 +338,7 @@ namespace Dune
   public:
     using BaseType::size;
 
-    /** \copydoc Dune::BaseFunctionSetInterface::evaluate(const int baseFunction,const FieldVector<int,diffOrder> &diffVariable,const Point &x,RangeType &value) const */
+    /** \copydoc Dune::Fem::BaseFunctionSetInterface::evaluate(const int baseFunction,const FieldVector<int,diffOrder> &diffVariable,const Point &x,RangeType &value) const */
     template< int diffOrder, class Point >
     void evaluate ( const int baseFunction,
                     const FieldVector< int, diffOrder > &diffVariable,
@@ -348,7 +348,7 @@ namespace Dune
       asImp().evaluate( baseFunction, diffVariable, coordinate( x ), value );
     }
     
-    /** \copydoc Dune::BaseFunctionSetInterface::evaluate(const int baseFunction,const Point &x,RangeType &value) const */
+    /** \copydoc Dune::Fem::BaseFunctionSetInterface::evaluate(const int baseFunction,const Point &x,RangeType &value) const */
     template< class Point >
     void evaluate ( const int baseFunction, const Point &x, RangeType &value ) const
     {
@@ -401,7 +401,7 @@ namespace Dune
         asImp().evaluate( i, x, values[ i ] );
     }
 
-    /** \copydoc Dune::BaseFunctionSetInterface::jacobian(const int baseFunction,const Point &x, JacobianRangeType &phi) const */
+    /** \copydoc Dune::Fem::BaseFunctionSetInterface::jacobian(const int baseFunction,const Point &x, JacobianRangeType &phi) const */
     template< class Point >
     DUNE_DEPRECATED
     void jacobian ( const int baseFunction, const Point &x, JacobianRangeType &jacobian ) const;

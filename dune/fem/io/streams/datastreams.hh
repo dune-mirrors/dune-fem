@@ -61,43 +61,43 @@ namespace Dune
       {}
 
     public:
-      /** \copydoc Dune::OutStreamInterface::writeDouble */
+      /** \copydoc Dune::Fem::OutStreamInterface::writeDouble */
       void writeDouble ( double value )
       {
         asImp().write( value );
       }
 
-      /** \copydoc Dune::OutStreamInterface::writeFloat */
+      /** \copydoc Dune::Fem::OutStreamInterface::writeFloat */
       void writeFloat ( float value )
       {
         asImp().write( value );
       }
 
-      /** \copydoc Dune::OutStreamInterface::writeInt */
+      /** \copydoc Dune::Fem::OutStreamInterface::writeInt */
       void writeInt ( int value )
       {
         asImp().write( value );
       }
 
-      /** \copydoc Dune::OutStreamInterface::writeChar */
+      /** \copydoc Dune::Fem::OutStreamInterface::writeChar */
       void writeChar ( char value )
       {
         asImp().write( value );
       }
 
-      /** \copydoc Dune::OutStreamInterface::writeBool */
+      /** \copydoc Dune::Fem::OutStreamInterface::writeBool */
       void writeBool ( const bool value )
       {
         asImp().write( value );
       }
 
-      /** \copydoc Dune::OutStreamInterface::writeUnsignedInt */
+      /** \copydoc Dune::Fem::OutStreamInterface::writeUnsignedInt */
       void writeUnsignedInt ( unsigned int value )
       {
         asImp().write( value );
       }
 
-      /** \copydoc Dune::OutStreamInterface::writeUnsignedInt64 */
+      /** \copydoc Dune::Fem::OutStreamInterface::writeUnsignedInt64 */
       void writeUnsignedInt64 ( uint64_t value )
       {
         asImp().write( value );
@@ -142,43 +142,43 @@ namespace Dune
       {}
 
     public:
-      /** \copydoc Dune::InStreamInterface::readDouble */
+      /** \copydoc Dune::Fem::InStreamInterface::readDouble */
       void readDouble ( double &value )
       {
         asImp().read( value );
       }
 
-      /** \copydoc Dune::InStreamInterface::readFloat */
+      /** \copydoc Dune::Fem::InStreamInterface::readFloat */
       void readFloat ( float &value )
       {
         asImp().read( value );
       }
 
-      /** \copydoc Dune::InStreamInterface::readInt */
+      /** \copydoc Dune::Fem::InStreamInterface::readInt */
       void readInt ( int &value )
       {
         asImp().read( value );
       }
 
-      /** \copydoc Dune::InStreamInterface::readChar */
+      /** \copydoc Dune::Fem::InStreamInterface::readChar */
       void readChar ( char &value )
       {
         asImp().read( value );
       }
 
-      /** \copydoc Dune::InStreamInterface::readBool */
+      /** \copydoc Dune::Fem::InStreamInterface::readBool */
       void readBool ( bool &value )
       {
         asImp().read( value );
       }
 
-      /** \copydoc Dune::InStreamInterface::readUnsignedInt */
+      /** \copydoc Dune::Fem::InStreamInterface::readUnsignedInt */
       void readUnsignedInt ( unsigned int &value )
       {
         asImp().read( value );
       }
 
-      /** \copydoc Dune::InStreamInterface::readUnsignedInt64 */
+      /** \copydoc Dune::Fem::InStreamInterface::readUnsignedInt64 */
       void readUnsignedInt64 ( uint64_t &value )
       {
         asImp().read( value );
@@ -250,7 +250,7 @@ namespace Dune
 #endif
       }
 
-      /** \copydoc Dune::OutStreamInterface::writeString */
+      /** \copydoc Dune::Fem::OutStreamInterface::writeString */
       void writeString( const std::string& s ) 
       {
         const size_t size = s.size();
@@ -286,7 +286,7 @@ namespace Dune
       char* buffer() { return outstream_.buffer() ; }
       const char* buffer() const { return outstream_.buffer() ; }
 
-      /** \copydoc Dune::OutStreamInterface::flush */
+      /** \copydoc Dune::Fem::OutStreamInterface::flush */
       inline void flush ()
       {
         std::ofstream file ( filename_.c_str(), std::ios::binary );
@@ -337,7 +337,7 @@ namespace Dune
 #endif
       }
 
-      /** \copydoc Dune::InStreamInterface::readString */
+      /** \copydoc Dune::Fem::InStreamInterface::readString */
       void readString( std::string& s ) 
       {
         size_t size = 0;

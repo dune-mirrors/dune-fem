@@ -264,7 +264,7 @@ namespace Dune
       -- backupRestoreCounter_ ;
     }
 
-    /** \copydoc Dune::PersistentObject :: backup */
+    /** \copydoc Dune::Fem::PersistentObject :: backup */
     virtual void backup() const 
     {
       if( backupRestoreNeeded() )
@@ -274,7 +274,7 @@ namespace Dune
       }
     }
 
-    /** \copydoc Dune::PersistentObject :: restore */
+    /** \copydoc Dune::Fem::PersistentObject :: restore */
     virtual void restore() 
     {
       if( backupRestoreNeeded() )

@@ -83,43 +83,43 @@ namespace Dune
       /** return reference to internal ostream */
       std::ostream& stream() { return stream_; }
 
-      /** \copydoc Dune::OutStreamInterface::flush */
+      /** \copydoc Dune::Fem::OutStreamInterface::flush */
       void flush ()
       {
         stream_.flush();
       }
 
-      /** \copydoc Dune::OutStreamInterface::writeDouble */
+      /** \copydoc Dune::Fem::OutStreamInterface::writeDouble */
       void writeDouble ( const double value )
       {
         writePrimitive( value );
       }
 
-      /** \copydoc Dune::OutStreamInterface::writeFloat */
+      /** \copydoc Dune::Fem::OutStreamInterface::writeFloat */
       void writeFloat ( const float value )
       {
         writePrimitive( value );
       }
 
-      /** \copydoc Dune::OutStreamInterface::writeInt */
+      /** \copydoc Dune::Fem::OutStreamInterface::writeInt */
       void writeInt ( const int value )
       {
         writePrimitive( value );
       }
 
-      /** \copydoc Dune::OutStreamInterface::writeChar */
+      /** \copydoc Dune::Fem::OutStreamInterface::writeChar */
       void writeChar ( const char value )
       {
         writePrimitive( value );
       }
 
-      /** \copydoc Dune::OutStreamInterface::writeChar */
+      /** \copydoc Dune::Fem::OutStreamInterface::writeChar */
       void writeBool ( const bool value )
       {
         writePrimitive( value );
       }
 
-      /** \copydoc Dune::OutStreamInterface::writeString */
+      /** \copydoc Dune::Fem::OutStreamInterface::writeString */
       void writeString ( const std::string &s )
       {
         const unsigned int length = s.length();
@@ -128,13 +128,13 @@ namespace Dune
           writePrimitive( s[ i ] );
       }
 
-      /** \copydoc Dune::OutStreamInterface::writeUnsignedInt */
+      /** \copydoc Dune::Fem::OutStreamInterface::writeUnsignedInt */
       void writeUnsignedInt ( unsigned int value )
       {
         writePrimitive( value );
       }
 
-      /** \copydoc Dune::OutStreamInterface::writeUnsignedInt64 */
+      /** \copydoc Dune::Fem::OutStreamInterface::writeUnsignedInt64 */
       void writeUnsignedInt64 ( uint64_t value )
       {
         writePrimitive( value );
@@ -218,37 +218,37 @@ namespace Dune
       /** return reference to internal istream */
       std::istream& stream() { return stream_; }
 
-      /** \copydoc Dune::InStreamInterface::readDouble */
+      /** \copydoc Dune::Fem::InStreamInterface::readDouble */
       void readDouble ( double &value )
       {
         readPrimitive( value );
       }
 
-      /** \copydoc Dune::InStreamInterface::readFloat */
+      /** \copydoc Dune::Fem::InStreamInterface::readFloat */
       void readFloat ( float &value )
       {
         readPrimitive( value );
       }
 
-      /** \copydoc Dune::InStreamInterface::readInt */
+      /** \copydoc Dune::Fem::InStreamInterface::readInt */
       void readInt ( int &value )
       {
         readPrimitive( value );
       }
 
-      /** \copydoc Dune::InStreamInterface::readChar */
+      /** \copydoc Dune::Fem::InStreamInterface::readChar */
       void readChar ( char &value )
       {
         readPrimitive( value );
       }
 
-      /** \copydoc Dune::InStreamInterface::readBool */
+      /** \copydoc Dune::Fem::InStreamInterface::readBool */
       void readBool ( bool &value )
       {
         readPrimitive( value );
       }
 
-      /** \copydoc Dune::InStreamInterface::readString */
+      /** \copydoc Dune::Fem::InStreamInterface::readString */
       void readString ( std::string &s )
       {
         unsigned int length;
@@ -262,13 +262,13 @@ namespace Dune
         }
       }
 
-      /** \copydoc Dune::InStreamInterface::readUnsignedInt */
+      /** \copydoc Dune::Fem::InStreamInterface::readUnsignedInt */
       void readUnsignedInt ( unsigned int &value )
       {
         readPrimitive( value );
       }
 
-      /** \copydoc Dune::InStreamInterface::readUnsignedInt64 */
+      /** \copydoc Dune::Fem::InStreamInterface::readUnsignedInt64 */
       void readUnsignedInt64 ( uint64_t &value )
       {
         readPrimitive( value );

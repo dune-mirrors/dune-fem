@@ -405,14 +405,14 @@ namespace Dune
         //std::cout << std::endl;
       }
 
-      /** \copydoc Dune::DiscreteFunctionSpaceInterface::contains */
+      /** \copydoc Dune::Fem::DiscreteFunctionSpaceInterface::contains */
       inline bool contains ( const int codim ) const
       {
         // forward to mapper since this information is held there 
         return blockMapper().contains( codim );
       }
 
-      /** \copydoc Dune::DiscreteFunctionSpaceInterface::continuous */
+      /** \copydoc Dune::Fem::DiscreteFunctionSpaceInterface::continuous */
       inline bool continuous () const
       {
         return Traits :: continuousSpace;
@@ -432,18 +432,18 @@ namespace Dune
         return LagrangeSpace_id;
       }
 
-      /** \copydoc Dune::DiscreteFunctionSpaceInterface::order */
+      /** \copydoc Dune::Fem::DiscreteFunctionSpaceInterface::order */
       inline int order () const 
       {
         return polynomialOrder;
       }
-      /** \copydoc Dune::DiscreteFunctionSpaceInterface::order */
+      /** \copydoc Dune::Fem::DiscreteFunctionSpaceInterface::order */
       inline int order (const typename BaseType::EntityType &entity) const 
       {
         return blockMapper().polynomOrder( entity );
       }
 
-      /** \copydoc Dune::DiscreteFunctionSpaceInterface::baseFunctionSet(const EntityType &entity) const */
+      /** \copydoc Dune::Fem::DiscreteFunctionSpaceInterface::baseFunctionSet(const EntityType &entity) const */
       template< class EntityType >
       inline const BaseFunctionSetType baseFunctionSet ( const EntityType &entity ) const
       {
@@ -522,7 +522,7 @@ namespace Dune
         return dimVal;
       }
 
-      /** \copydoc Dune::DiscreteFunctionSpaceInterface::mapper */
+      /** \copydoc Dune::Fem::DiscreteFunctionSpaceInterface::mapper */
       MapperType &mapper () const
       {
         return mapper_;
@@ -790,7 +790,7 @@ namespace Dune
       }
 
       using BaseType::continuous;
-      /** @copydoc Dune::DiscreteFunctionSpaceInterface::continuous */
+      /** @copydoc Dune::Fem::DiscreteFunctionSpaceInterface::continuous */
       inline bool continuous (const IntersectionType &intersection) const
       { 
         if ( order() > 0 && intersection.conforming())
@@ -1005,7 +1005,7 @@ namespace Dune
       }
 
       using BaseType::continuous;
-      /** @copydoc Dune::DiscreteFunctionSpaceInterface::continuous */
+      /** @copydoc Dune::Fem::DiscreteFunctionSpaceInterface::continuous */
       inline bool continuous (const IntersectionType &intersection) const
       { 
         return false;

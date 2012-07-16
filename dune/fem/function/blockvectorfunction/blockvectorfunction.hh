@@ -247,16 +247,16 @@ public:
   LocalFunctionType localFunction(const EntityType& en) const;
 #endif
 
-  /** \copydoc Dune::DiscreteFunctionInterface::dbegin() */ 
+  /** \copydoc Dune::Fem::DiscreteFunctionInterface::dbegin() */ 
   DofIteratorType dbegin ();
   
-  /** \copydoc Dune::DiscreteFunctionInterface::dend() */
+  /** \copydoc Dune::Fem::DiscreteFunctionInterface::dend() */
   DofIteratorType dend (); 
 
-  /** \copydoc Dune::DiscreteFunctionInterface::dbegin() const */
+  /** \copydoc Dune::Fem::DiscreteFunctionInterface::dbegin() const */
   ConstDofIteratorType dbegin () const;
   
-  /** \copydoc Dune::DiscreteFunctionInterface::dend() const */ 
+  /** \copydoc Dune::Fem::DiscreteFunctionInterface::dend() const */ 
   ConstDofIteratorType dend () const;
 
   inline ConstDofBlockPtrType block ( const unsigned int block ) const
@@ -279,19 +279,19 @@ public:
     return leakPtr_[ index ];
   }
 
-  /** \copydoc Dune::DiscreteFunctionInterface::size */
+  /** \copydoc Dune::Fem::DiscreteFunctionInterface::size */
   inline int size() const
   {
     return dofVec_.size() * localBlockSize ;
   }
 
-  /** \copydoc Dune::DiscreteFunctionDefault::clear */
+  /** \copydoc Dune::Fem::DiscreteFunctionDefault::clear */
   void clear();
 
-  /** \copydoc Dune::DiscreteFunctionDefault::axpy */
+  /** \copydoc Dune::Fem::DiscreteFunctionDefault::axpy */
   void axpy ( const RangeFieldType &s, const DiscreteFunctionType &g );
  
-  /** \copydoc Dune::DiscreteFunctionInterface::print */
+  /** \copydoc Dune::Fem::DiscreteFunctionInterface::print */
   void print( std :: ostream &out ) const;
 
   /** \brief return reference to internal block vector 
@@ -306,7 +306,7 @@ public:
       \return constant reference to leakPointer */
   const LeakPointerType& leakPointer() const { return leakPtr_; }
 
-  /** \copydoc Dune::DiscreteFunctionInterface::enableDofCompression() */
+  /** \copydoc Dune::Fem::DiscreteFunctionInterface::enableDofCompression() */
   void enableDofCompression();
 
 private:  

@@ -59,35 +59,35 @@ namespace Fem
     {}
 
   public:
-    /** \copydoc Dune::OutStreamInterface::writeDouble */
+    /** \copydoc Dune::Fem::OutStreamInterface::writeDouble */
     void writeDouble ( double value )
     {
       if( xdr_double( xdrs(), &value ) == 0 )
         writeError();
     }
 
-    /** \copydoc Dune::OutStreamInterface::writeFloat */
+    /** \copydoc Dune::Fem::OutStreamInterface::writeFloat */
     void writeFloat ( float value )
     {
       if( xdr_float( xdrs(), &value ) == 0 )
         writeError();
     }
 
-    /** \copydoc Dune::OutStreamInterface::writeInt */
+    /** \copydoc Dune::Fem::OutStreamInterface::writeInt */
     void writeInt ( int value )
     {
       if( xdr_int( xdrs(), &value ) == 0 )
         writeError();
     }
 
-    /** \copydoc Dune::OutStreamInterface::writeChar */
+    /** \copydoc Dune::Fem::OutStreamInterface::writeChar */
     void writeChar ( char value )
     {
       if( xdr_char( xdrs(), &value ) == 0 )
         writeError();
     }
 
-    /** \copydoc Dune::OutStreamInterface::writeBool */
+    /** \copydoc Dune::Fem::OutStreamInterface::writeBool */
     void writeBool ( const bool value )
     {
       // convert to character and write 
@@ -95,7 +95,7 @@ namespace Fem
       writeChar( val );
     }
 
-    /** \copydoc Dune::OutStreamInterface::writeString */
+    /** \copydoc Dune::Fem::OutStreamInterface::writeString */
     void writeString ( const std :: string &s )
     {
       assert( s.size() < maxStringSize );
@@ -104,14 +104,14 @@ namespace Fem
         writeError();
     }
 
-    /** \copydoc Dune::OutStreamInterface::writeUnsignedInt */
+    /** \copydoc Dune::Fem::OutStreamInterface::writeUnsignedInt */
     void writeUnsignedInt ( unsigned int value )
     {
       if( xdr_u_int( xdrs(), &value ) == 0 )
         writeError();
     }
 
-    /** \copydoc Dune::OutStreamInterface::writeUnsignedInt64 */
+    /** \copydoc Dune::Fem::OutStreamInterface::writeUnsignedInt64 */
     void writeUnsignedInt64 ( uint64_t value )
     {
 #ifdef XDR_UINT64_FUNC
@@ -179,35 +179,35 @@ namespace Fem
     {}
 
   public:
-    /** \copydoc Dune::InStreamInterface::readDouble */
+    /** \copydoc Dune::Fem::InStreamInterface::readDouble */
     void readDouble ( double &value )
     {
       if( xdr_double( xdrs(), &value ) == 0 )
         readError();
     }
 
-    /** \copydoc Dune::InStreamInterface::readFloat */
+    /** \copydoc Dune::Fem::InStreamInterface::readFloat */
     void readFloat ( float &value )
     {
       if( xdr_float( xdrs(), &value ) == 0 )
         readError();
     }
 
-    /** \copydoc Dune::InStreamInterface::readInt */
+    /** \copydoc Dune::Fem::InStreamInterface::readInt */
     void readInt ( int &value )
     {
       if( xdr_int( xdrs(), &value ) == 0 )
         readError();
     }
 
-    /** \copydoc Dune::InStreamInterface::readChar */
+    /** \copydoc Dune::Fem::InStreamInterface::readChar */
     void readChar ( char &value )
     {
       if( xdr_char( xdrs(), &value ) == 0 )
         readError();
     }
 
-    /** \copydoc Dune::InStreamInterface::readBool */
+    /** \copydoc Dune::Fem::InStreamInterface::readBool */
     void readBool ( bool &value )
     {
       char val;
@@ -216,7 +216,7 @@ namespace Fem
       value = ( val == 1 ) ? true : false;
     }
 
-    /** \copydoc Dune::InStreamInterface::readString */
+    /** \copydoc Dune::Fem::InStreamInterface::readString */
     void readString ( std::string &s )
     {
       char data[ maxStringSize ];
@@ -226,14 +226,14 @@ namespace Fem
       s = data;
     }
 
-    /** \copydoc Dune::InStreamInterface::readUnsignedInt */
+    /** \copydoc Dune::Fem::InStreamInterface::readUnsignedInt */
     void readUnsignedInt ( unsigned int &value )
     {
       if( xdr_u_int( xdrs(), &value ) == 0 )
         readError();
     }
 
-    /** \copydoc Dune::InStreamInterface::readUnsignedInt64 */
+    /** \copydoc Dune::Fem::InStreamInterface::readUnsignedInt64 */
     void readUnsignedInt64 ( uint64_t &value )
     {
 #ifdef XDR_UINT64_FUNC
@@ -301,7 +301,7 @@ namespace Fem
       fclose( file_ );
     }
     
-    /** \copydoc Dune::OutStreamInterface::flush */
+    /** \copydoc Dune::Fem::OutStreamInterface::flush */
     inline void flush ()
     {
       fflush( file_ );

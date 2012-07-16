@@ -197,7 +197,7 @@ namespace Dune
       BlockMapperProviderType::removeObject( blockMapper_ );
     }
   
-    /** @copydoc Dune::DiscreteFunctionSpaceInterface::type */
+    /** @copydoc Dune::Fem::DiscreteFunctionSpaceInterface::type */
     DFSpaceIdentifier type () const 
     {
       return DGSpace_id;
@@ -226,24 +226,24 @@ namespace Dune
       return BaseFunctionSetType( &shapeFunctionSets_[ geomType ] );
     }
 
-    /** @copydoc Dune::DiscreteFunctionSpaceInterface::contains */
+    /** @copydoc Dune::Fem::DiscreteFunctionSpaceInterface::contains */
     bool contains (const int codim) const
     {
       return blockMapper_.contains( codim );
     }
   
-    /** @copydoc Dune::DiscreteFunctionSpaceInterface::continuous */
+    /** @copydoc Dune::Fem::DiscreteFunctionSpaceInterface::continuous */
     bool continuous () const
     {
       return false;
     }
-    /** @copydoc Dune::DiscreteFunctionSpaceInterface::continuous */
+    /** @copydoc Dune::Fem::DiscreteFunctionSpaceInterface::continuous */
     inline bool continuous (const IntersectionType &intersection) const
     { 
       return false;
     }
   
-    /** @copydoc Dune::DiscreteFunctionSpaceInterface::order */
+    /** @copydoc Dune::Fem::DiscreteFunctionSpaceInterface::order */
     int order () const
     {
       return polynomialOrder;
@@ -588,12 +588,12 @@ namespace Dune
                    commInterface, commDirection)
     {}
 
-    /** @copydoc Dune::DiscreteFunctionSpaceInterface::continuous */
+    /** @copydoc Dune::Fem::DiscreteFunctionSpaceInterface::continuous */
     bool continuous () const
     {
       return false;
     }
-    /** @copydoc Dune::DiscreteFunctionSpaceInterface::continuous */
+    /** @copydoc Dune::Fem::DiscreteFunctionSpaceInterface::continuous */
     inline bool continuous (const IntersectionType &intersection) const
     { 
       return false;

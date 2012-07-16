@@ -98,7 +98,7 @@ namespace Dune
     : BaseType( org )
     {}
 
-    /** \copydoc Dune::ElementQuadrature<GridPartImp,0>::weight */
+    /** \copydoc Dune::Fem::ElementQuadrature<GridPartImp,0>::weight */
     const RealType &weight ( size_t i ) const 
     {
       return quadImp().weight( i );
@@ -179,7 +179,7 @@ namespace Dune
     : BaseType( org )
     {}
 
-    /** \copydoc Dune::ElementQuadrature<GridPartImp,1>::weight */
+    /** \copydoc Dune::Fem::ElementQuadrature<GridPartImp,1>::weight */
     const RealType &weight( size_t i ) const 
     {
       return quadImp().weight(i);

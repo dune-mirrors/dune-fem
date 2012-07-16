@@ -121,7 +121,7 @@ namespace Dune
     : BaseType( org )
     {}
 
-    /** \copydoc Dune::Quadrature::weight */
+    /** \copydoc Dune::Fem::Quadrature::weight */
     const RealType &weight( size_t i ) const
     {
       return quadImp().weight( i );

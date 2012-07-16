@@ -59,19 +59,19 @@ namespace Dune
     : baseSet_( baseSet ) 
     {}
 
-    /** \copydoc Dune::BaseFunctionSetInterface::numBaseFunctions */
+    /** \copydoc Dune::Fem::BaseFunctionSetInterface::numBaseFunctions */
     size_t size () const
     {
       return baseFunctionSet().size();
     }
     
-    /** \copydoc Dune::BaseFunctionSetInterface::geometryType */
+    /** \copydoc Dune::Fem::BaseFunctionSetInterface::geometryType */
     GeometryType geometryType () const
     {
       return baseFunctionSet().geometryType();
     }
    
-    /** \copydoc Dune::BaseFunctionSetInterface::evaluate(const int baseFunction,const FieldVector<int,diffOrd> &diffVariable,const PointType &x,RangeType &phi) const */
+    /** \copydoc Dune::Fem::BaseFunctionSetInterface::evaluate(const int baseFunction,const FieldVector<int,diffOrd> &diffVariable,const PointType &x,RangeType &phi) const */
     template< int diffOrd, class PointType >
     DUNE_DEPRECATED
     void evaluate ( const int baseFunction,
@@ -82,7 +82,7 @@ namespace Dune
       baseFunctionSet().evaluate( baseFunction, diffVariable, x, phi );
     }
 
-    /** \copydoc Dune::BaseFunctionSetInterface::evaluate(const int baseFunction,const PointType &x,RangeType &phi) const */
+    /** \copydoc Dune::Fem::BaseFunctionSetInterface::evaluate(const int baseFunction,const PointType &x,RangeType &phi) const */
     template< class PointType >
     DUNE_DEPRECATED
     void evaluate ( const int baseFunction,
@@ -92,7 +92,7 @@ namespace Dune
       baseFunctionSet().evaluate( baseFunction, x, phi );
     }
 
-    /** \copydoc Dune::BaseFunctionSetDefault::jacobian(const int baseFunction,const PointType &x,JacobianRangeType &phi) const */
+    /** \copydoc Dune::Fem::BaseFunctionSetDefault::jacobian(const int baseFunction,const PointType &x,JacobianRangeType &phi) const */
     template< class PointType >
     DUNE_DEPRECATED
     void jacobian( const int baseFunction,

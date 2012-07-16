@@ -79,14 +79,14 @@ namespace Dune
         addQuadraturePoint( (*it).position(), (*it).weight() );
     }
 
-    /** \copydoc Dune::QuadratureImp::order
+    /** \copydoc Dune::Fem::QuadratureImp::order
      */
     int order () const
     { 
       return order_;
     }
     
-    /** \copydoc Dune::QuadratureImp::geometry
+    /** \copydoc Dune::Fem::QuadratureImp::geometry
      */
     GeometryType geometryType () const
     { 

@@ -212,27 +212,27 @@ namespace Dune
     ThisType &operator= ( const ThisType &other );
     
   public:
-    /** \copydoc Dune::DiscreteFunctionInterface::assign(const DiscreteFunctionInterfaceType &g) */
+    /** \copydoc Dune::Fem::DiscreteFunctionInterface::assign(const DiscreteFunctionInterfaceType &g) */
     void assign ( const DiscreteFunctionInterfaceType &g )
     {
       Imp::assignFunction( asImp( g ) );
     }
 
-    /** \copydoc Dune::DiscreteFunctionInterface::operator+=(const DiscreteFunctionInterfaceType &g) */ 
+    /** \copydoc Dune::Fem::DiscreteFunctionInterface::operator+=(const DiscreteFunctionInterfaceType &g) */ 
     ThisType &operator+= ( const DiscreteFunctionInterfaceType &g )
     {
       Imp::addFunction( asImp( g ) );
       return *this;
     }
 
-    /** \copydoc Dune::DiscreteFunctionInterface::operator-=(const DFType &g) */ 
+    /** \copydoc Dune::Fem::DiscreteFunctionInterface::operator-=(const DFType &g) */ 
     ThisType &operator-= ( const DiscreteFunctionInterfaceType &g )
     {
       Imp::substractFunction( asImp( g ) );
       return *this;
     }
 
-    /** \copydoc Dune::DiscreteFunctionInterface::axpy(const RangeFieldType &s,const DiscreteFunctionInterfaceType &g) */
+    /** \copydoc Dune::Fem::DiscreteFunctionInterface::axpy(const RangeFieldType &s,const DiscreteFunctionInterfaceType &g) */
     void axpy( const RangeFieldType &s, const DiscreteFunctionInterfaceType &g )
     {
       Imp::axpy( s, asImp( g ) );

@@ -353,39 +353,39 @@ namespace Dune
     }
 
 
-    /** \copydoc Dune::DiscreteFunctionSpaceInterface::contains(const int codim) const */
+    /** \copydoc Dune::Fem::DiscreteFunctionSpaceInterface::contains(const int codim) const */
     inline bool contains ( const int codim ) const
     {
       return containedSpace().contains( codim );
     }
 
-    /** \copydoc Dune::DiscreteFunctionSpaceInterface::continuous() const */
+    /** \copydoc Dune::Fem::DiscreteFunctionSpaceInterface::continuous() const */
     inline bool continuous () const
     {
       return containedSpace().continuous();
     }
 
 #if 0
-    /** \copydoc Dune::DiscreteFunctionSpaceInterface::polynomOrder() const */
+    /** \copydoc Dune::Fem::DiscreteFunctionSpaceInterface::polynomOrder() const */
     inline int polynomOrder () const
     {
       return containedSpace().polynomOrder();
     }
 #endif
 
-    /** \copydoc Dune::DiscreteFunctionSpaceInterface::order() const */
+    /** \copydoc Dune::Fem::DiscreteFunctionSpaceInterface::order() const */
     inline int order () const
     {
       return containedSpace().order();
     }
 
-    /** \copydoc Dune::DiscreteFunctionSpaceInterface::begin() const */
+    /** \copydoc Dune::Fem::DiscreteFunctionSpaceInterface::begin() const */
     inline IteratorType begin () const
     {
       return containedSpace().begin();
     }
 
-    /** \copydoc Dune::DiscreteFunctionSpaceInterface::end() const */
+    /** \copydoc Dune::Fem::DiscreteFunctionSpaceInterface::end() const */
     inline IteratorType end () const
     {
       return containedSpace().end();
@@ -397,7 +397,7 @@ namespace Dune
       return CombinedSpace_id;
     }
 
-    /** \copydoc Dune::DiscreteFunctionSpaceInterface::baseFunctionSet(const EntityType &entity) const */
+    /** \copydoc Dune::Fem::DiscreteFunctionSpaceInterface::baseFunctionSet(const EntityType &entity) const */
     template< class EntityType >
     const BaseFunctionSetType baseFunctionSet ( const EntityType &entity ) const
     {

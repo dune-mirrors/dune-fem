@@ -217,13 +217,13 @@ namespace Dune
     Pk2DLagrangeSpace ( const ThisType & );
 
   public:
-    /** \copydoc Dune::DiscreteFunctionSpaceInterface::contains */
+    /** \copydoc Dune::Fem::DiscreteFunctionSpaceInterface::contains */
     bool contains ( const int codim ) const
     {
       return mapper().contains( codim );
     }
 
-    /** \copydoc Dune::DiscreteFunctionSpaceInterface::continuous */
+    /** \copydoc Dune::Fem::DiscreteFunctionSpaceInterface::continuous */
     bool continuous () const
     {
       return true;
@@ -237,7 +237,7 @@ namespace Dune
       return GenericSpace_id;
     }
 
-    /** \copydoc Dune::DiscreteFunctionSpaceInterface::order */
+    /** \copydoc Dune::Fem::DiscreteFunctionSpaceInterface::order */
     int order () const
     {
       return polynomialOrder;

@@ -236,7 +236,7 @@ namespace Dune
       return boundaryModelDefault_.robinAlpha( intersection, quadrature, point );
     }
     
-    /** \copydoc Dune::DiffusionModelInterface::diffusiveFlux(const EntityType &entity,const PointType &x,const JacobianRangeType &gradient,JacobianRangeType &flux) const
+    /** \copydoc Dune::Fem::DiffusionModelInterface::diffusiveFlux(const EntityType &entity,const PointType &x,const JacobianRangeType &gradient,JacobianRangeType &flux) const
      *
      *  The default implementation calls
      *  \code
@@ -254,7 +254,7 @@ namespace Dune
       asImp().diffusiveFlux( diffVar, entity, x, gradient, flux );
     }
    
-    /** \copydoc Dune::LinearEllipticModelInterface::convectiveFlux(const EntityType &entity,const PointType &x,const RangeType &phi,JacobianRangeType &flux) const
+    /** \copydoc Dune::Fem::LinearEllipticModelInterface::convectiveFlux(const EntityType &entity,const PointType &x,const RangeType &phi,JacobianRangeType &flux) const
      *
      *  The default implementation returns 0.
      */
@@ -268,7 +268,7 @@ namespace Dune
       flux = 0;
     }
 
-    /** \copydoc Dune::LinearEllipticModelInterface::mass(const EntityType &entity,const PointType &x,RangeType &ret) const
+    /** \copydoc Dune::Fem::LinearEllipticModelInterface::mass(const EntityType &entity,const PointType &x,RangeType &ret) const
      *
      *  The default implementation returns 0.
      */
@@ -281,7 +281,7 @@ namespace Dune
       ret = 0;
     }
 
-    /** \copydoc Dune::LinearEllipticModelInterface::source(const EntityType &entity,const PointType &x,RangeType &ret) const
+    /** \copydoc Dune::Fem::LinearEllipticModelInterface::source(const EntityType &entity,const PointType &x,RangeType &ret) const
      *
      *  The default implementation returns 0.
      */

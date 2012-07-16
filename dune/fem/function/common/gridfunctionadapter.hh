@@ -149,13 +149,13 @@ namespace Dune
       function_.jacobian(global,result);  
     }
 
-    /** \copydoc Dune::DiscreteFunctionInterface::localFunction(const EntityType &entity) const */ 
+    /** \copydoc Dune::Fem::DiscreteFunctionInterface::localFunction(const EntityType &entity) const */ 
     const LocalFunctionType localFunction ( const EntityType &entity ) const 
     {
       return localFunctionStorage().localFunction( entity );
     }
 
-    /** \copydoc Dune::DiscreteFunctionInterface::localFunction(const EntityType &entity) */ 
+    /** \copydoc Dune::Fem::DiscreteFunctionInterface::localFunction(const EntityType &entity) */ 
     LocalFunctionType localFunction ( const EntityType &entity )
     {
       return localFunctionStorage().localFunction( entity );
@@ -166,13 +166,13 @@ namespace Dune
       return localFunctionStorage_;
     }
 
-    /** \copydoc Dune::DiscreteFunctionInterface::name() const */
+    /** \copydoc Dune::Fem::DiscreteFunctionInterface::name() const */
     const std::string &name () const
     {
       return name_;
     }
 
-    /** \copydoc Dune::DiscreteFunctionInterface::space() const */
+    /** \copydoc Dune::Fem::DiscreteFunctionInterface::space() const */
     const DiscreteFunctionSpaceType &space () const
     {
       return space_;
@@ -471,19 +471,19 @@ namespace Dune
       helper_.function().evaluate(global,result);  
     }
 
-    /** \copydoc Dune::DiscreteFunctionInterface::localFunction(const EntityType &entity) const */ 
+    /** \copydoc Dune::Fem::DiscreteFunctionInterface::localFunction(const EntityType &entity) const */ 
     const LocalFunctionType localFunction( const EntityType &entity ) const 
     {
       return helper_.function().localFunction(entity);
     }
 
-    /** \copydoc Dune::DiscreteFunctionInterface::localFunction(const EntityType &entity) */ 
+    /** \copydoc Dune::Fem::DiscreteFunctionInterface::localFunction(const EntityType &entity) */ 
     LocalFunctionType localFunction( const EntityType &entity )
     {
       return helper_.function().localFunction(entity);
     }
 
-    /** \copydoc Dune::DiscreteFunctionInterface::name */
+    /** \copydoc Dune::Fem::DiscreteFunctionInterface::name */
     const std::string &name() const
     {
       return name_;
