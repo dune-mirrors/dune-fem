@@ -132,8 +132,8 @@ namespace Dune
                               const VolumeQuadratureType &quad, int quadPoint,
                               CoefficientType &coeff )
     {
-      evaluateQuad( quad, quadPoint,
-                    this->data_->localFunctionsSelf(), this->valuesEn_ );
+      this->evaluateQuad( quad, quadPoint,
+                          this->data_->localFunctionsSelf(), this->valuesEn_ );
       problem_.coefficient( entity, this->time_, quad.point( quadPoint ),
                             this->valuesEn_, coeff );
     }

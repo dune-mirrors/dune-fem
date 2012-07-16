@@ -62,7 +62,6 @@ struct CheckGridEnabled
 {
   typedef Grid GridType;
 
-  //typedef Dune::HierarchicGridPart< GridType > GridPartType;
   typedef Dune::AdaptiveLeafGridPart< GridType > GridPartType;
   
   inline static int CallMain ( int argc, char **argv )
@@ -192,7 +191,8 @@ void polOrderAdapt( MyGridType &grid, DiscreteFunctionType &solution, int step)
   setPolOrder( solution.space(), step > 0 );
 }
 
-void gridAdapt( MyGridType &grid, DiscreteFunctionType &solution, int step) 
+void gridAdapt( MyGridType &grid, DiscreteFunctionType &solution, int step, 
+                const bool locallyAdaptive = false ) 
 {
   #if USE_GRAPE && SHOW_RESTRICT_PROLONG
     //if( turn > 0 ) 
@@ -215,11 +215,22 @@ void gridAdapt( MyGridType &grid, DiscreteFunctionType &solution, int step)
 
   for( int i = 0; i < count; ++i ) 
   {
+    int numElements = grid.size( 0 );
+    if( locallyAdaptive ) 
+    {
+      numElements /= 4;
+      numElements = std::max( numElements, 1 );
+    }
+    
     IteratorType it = discreteFunctionSpace.begin();
     const IteratorType endit = discreteFunctionSpace.end();
-    for( ; it != endit; ++it )
+    int elemNo = 0;
+    for( ; it != endit; ++it, ++elemNo )
     {
-      grid.mark( mark, *it );
+      if( elemNo < numElements ) 
+      {
+        grid.mark( mark, *it );
+      }
     }
 
     // adapt grid 
@@ -435,6 +446,8 @@ try
   ExactSolutionType fexact;
   GridExactSolutionType f( "exact solution", fexact, gridPart, polOrder );
 
+  const bool locallyAdaptive = Dune::Parameter :: getValue< bool >("adapt.locallyadaptive", false ); 
+
   interpolate( f, solution );
   for ( int r = 0; r < 4; ++r )
   {
@@ -450,20 +463,20 @@ try
     {
       // Test grid ref. (polynomial order is max)
       std :: cout << std :: endl << "Refine grid" << std::endl;
-      gridAdapt( *gridptr, solution, step ) ;
+      gridAdapt( *gridptr, solution, step, locallyAdaptive ) ;
     }
 		else if (r==1)
     {
       // Test grid ref. (but with polynomial order set to min)
       std :: cout << std :: endl << "Refine grid" << std::endl;
       setPolOrder( discreteFunctionSpace, true );
-      gridAdapt( *gridptr, solution, step ) ;
+      gridAdapt( *gridptr, solution, step, locallyAdaptive ) ;
     }
     else if (r==2)
     {
       // Test grid coarsening (polynomial order set to max)
       std :: cout << std :: endl << "Coarsen grid" << std::endl;
-      gridAdapt( *gridptr, solution, -step ) ;
+      gridAdapt( *gridptr, solution, -step, locallyAdaptive ) ;
     }
   }
 

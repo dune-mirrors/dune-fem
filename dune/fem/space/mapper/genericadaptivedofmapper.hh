@@ -165,7 +165,8 @@ namespace Dune
         {
           assert( codim >= 0 );
           assert( codim <= highestDimension );
-          // also for codim == 0 we more then one storage because of different number of
+          // also for codim == 0 we have more then 
+          // one storage because of different number of
           // dofs per polynmomial degree 
           return (codim < dimension) ? (polOrd-minOrder) : 0;
         }
@@ -188,6 +189,7 @@ namespace Dune
         int dof ( const int codim, const int polOrd, const size_t dofNumber ) const 
         { 
           const int entry = determineVectorEntry( codim, polOrd );
+          assert( type_ != GeometryType() );
           assert( dofNumber < dofs_[ entry ].size() );
           return dofs_[ entry ][ dofNumber ];
         }
@@ -778,11 +780,12 @@ namespace Dune
       // (due to refinement of more than one level)
       unsigned int insertFather( const ElementType &entity )
       {
-        if( entity.level() > 0 ) 
+        if( entity.hasFather() ) 
         {
           typedef typename ElementType :: EntityPointer ElementPointerType;
           ElementPointerType father = entity.father();
           const ElementType& dad = *father ;
+
           // if father is a new element, insert it 
           if( dad.isNew() ) 
           {
@@ -796,9 +799,10 @@ namespace Dune
       }
 
       //! return true if elements can be refined more than once during adaptation 
-      bool conformingRefinement () const 
+      bool considerHierarchy () const 
       {
-        return DGFGridInfo< GridType > :: refineStepsForHalf() > 1; 
+        return DGFGridInfo< GridType > :: refineStepsForHalf() > 1 || 
+               ! Dune::Capabilities::hasSingleGeometryType<GridType> :: v  ; 
       }
 
       //! return number of DoFs currently used for space
@@ -810,16 +814,16 @@ namespace Dune
         // count current size 
         size_t usedSize = 0;
 
-        const bool confRefinement = conformingRefinement(); 
+        const bool considerHierarchyOfElements = considerHierarchy();
 
         typedef typename GridPartType :: template Codim< 0 > :: IteratorType IteratorType;
         const IteratorType end = gridPart_.template end<0>();
         for( IteratorType it = gridPart_.template begin<0>(); 
              it != end ; ++it ) 
         {
-          if( confRefinement ) 
+          if( considerHierarchyOfElements ) 
           {
-            // insert father elements (conforming grids only)
+            // insert father elements (conforming and hybrid grids only)
             usedSize += insertFather( *it ); 
           }
 
@@ -857,6 +861,7 @@ namespace Dune
       //! reset all used flags of all DoF entries 
       void setUnused() 
       {
+        // deactivate all entries in the polynomial order container 
         {
           typedef typename PolyOrderContainerType :: Iterator Iterator;
           const Iterator endit = entityPolynomOrder_.end();

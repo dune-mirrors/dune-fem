@@ -123,7 +123,7 @@ protected:
       massMap[ numBaseFct ] = matrix ;
 
       // create quadrature 
-      VolumeQuadratureType volQuad(en, volumeQuadOrd_ );
+      VolumeQuadratureType volQuad(en, volumeQuadratureOrder( en ) );
 
       // setup matrix 
       buildMatrixNoMassFactor(en, geo, baseSet, volQuad, numBaseFct, *matrix, false );
@@ -135,13 +135,25 @@ protected:
     return *((*it).second );
   }
 
+  //! return appropriate quadrature order, default is 2 * order(entity) 
+  int volumeQuadratureOrder( const EntityType& entity ) const 
+  {
+    return ( volumeQuadOrd_ < 0 ) ? ( spc_.order( entity ) * 2 ) : volumeQuadOrd_ ;
+  }
+
+  //! return appropriate quadrature order, default is 2 * order() 
+  int maxVolumeQuadratureOrder() const 
+  {
+    return ( volumeQuadOrd_ < 0 ) ? ( spc_.order() * 2 ) : volumeQuadOrd_ ;
+  }
+
 public:
   //! constructor taking space and volume quadrature order 
   LocalMassMatrixImplementation(const DiscreteFunctionSpaceType& spc, const int volQuadOrd = -1 ) 
     : spc_(spc) 
     , indexSet_( spc.indexSet() )  
     , geoInfo_( indexSet_ ) 
-    , volumeQuadOrd_ ( ( volQuadOrd < 0 ) ? ( spc.order() * 2 ) : volQuadOrd )
+    , volumeQuadOrd_ ( volQuadOrd )
     , affine_ ( setup() )
     , rhs_(), matrix_() 
     , phi_( spc_.mapper().maxNumDofs() )
@@ -449,7 +461,7 @@ protected:
   bool checkAffinity() const 
   {
     return Fem::GeometryAffinityCheck<VolumeQuadratureType> :: 
-      checkAffinity( spc_.begin(), spc_.end(), volumeQuadOrd_);
+      checkAffinity( spc_.begin(), spc_.end(), maxVolumeQuadratureOrder() );
   }
 
   //! build local mass matrix 
@@ -467,7 +479,7 @@ protected:
     matrix = 0;
 
     // create quadrature 
-    VolumeQuadratureType volQuad(en, volumeQuadOrd_ );
+    VolumeQuadratureType volQuad(en, volumeQuadratureOrder( en ) );
 
     if( caller.hasMass() )
     {

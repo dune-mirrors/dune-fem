@@ -11,3 +11,6 @@ fem.adaptation.method: generic
 
 # number of global refinement steps to perform
 lagrangeglobalrefine.maxlevel: 3
+
+# true if only a few elements are marked 
+adapt.locallyadaptive: true

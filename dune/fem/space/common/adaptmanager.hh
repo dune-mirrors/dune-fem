@@ -425,14 +425,20 @@ private:
     // returns true if at least one element was refined 
     const bool refined = grid_.adapt();
 
-    if( refined )
+    // if coarsening or refinement was done 
+    // adjust sizes 
+    if( refined || restr )
     {
-      // get macro grid view 
-      MacroGridView macroView = grid_.levelView( 0 );
-
       // resizes the index sets (insert all new indices) 
       // and resizes the memory
       dm_.resize();
+    }
+    
+    // in case elements were created do prolongation 
+    if( refined ) 
+    {
+      // get macro grid view 
+      MacroGridView macroView = grid_.levelView( 0 );
 
       // make run through grid to project data 
       MacroIterator endit  = macroView.template end<0,pitype>  ();
