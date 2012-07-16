@@ -55,6 +55,8 @@ namespace Dune
         knownGrids.push_back( "OneDGrid" );
         knownGrids.push_back( "GeometryGrid" );
         knownGrids.push_back( "CartesianGrid" );
+        knownGrids.push_back( "CacheItGrid" );
+        knownGrids.push_back( "ParallelGrid" );
         knownGrids.push_back( "ParallelSimplexGrid" );
         knownGrids.push_back( "SPGrid" );
         knownGrids.push_back( "P4estGrid" );
