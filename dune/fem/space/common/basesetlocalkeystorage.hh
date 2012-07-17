@@ -137,7 +137,7 @@ namespace Fem {
       //assert( typeid( factory_ ) == typeid( FactoryImpl< SingletonProvider >* ) );
 
       // get geometry type index 
-      const size_t geomIndex = GlobalGeometryTypeIndex :: index( geomType ) ;
+      const size_t geomIndex = index( geomType ) ;
 
       if( entryStorage_.size() <= geomIndex ) 
         entryStorage_.resize( geomIndex + 1, (Entry* ) 0 );
@@ -151,15 +151,139 @@ namespace Fem {
       return false ;
     }
 
-    //! access to stored entry with given geometry type 
-    const Entry& operator [] ( const GeometryType geomType ) const 
+    //! return true if an entry for this geometry type exists 
+    bool exists( const GeometryType& geomType ) const 
     {
-      assert( GlobalGeometryTypeIndex :: index( geomType ) < entryStorage_.size() );
-      assert( entryStorage_[ GlobalGeometryTypeIndex :: index( geomType ) ] != 0 );
-      return *( entryStorage_[ GlobalGeometryTypeIndex :: index( geomType ) ]);
+      return entryStorage_[ index( geomType ) ] != 0 ;
+    }
+
+    //! access to stored entry with given geometry type 
+    const Entry& operator [] ( const GeometryType& geomType ) const 
+    {
+      assert( index( geomType ) < entryStorage_.size() );
+      assert( entryStorage_[ index( geomType ) ] != 0 );
+      return *( entryStorage_[ index( geomType ) ]);
+    }
+  protected:
+    int index( const GeometryType& geomType ) const 
+    {
+      return LocalGeometryTypeIndex::index( geomType );
     }
   };
 
+
+
+  /** \brief class for storage local keys for a given range of polynomial order and 
+             available geometry type */
+  template< class CompiledLocalKey, unsigned int minPolOrder, unsigned int maxPolOrder >
+  class CompiledLocalKeyContainer 
+  {
+  public:
+    // type of compiled local key 
+    typedef CompiledLocalKey CompiledLocalKeyType;
+
+    //! type of storage class for compiled local keys 
+    typedef BaseSetLocalKeyStorage< CompiledLocalKeyType > LocalKeyStorageType;
+
+    // vector containing storages for each polynomial order 
+    typedef std::vector< LocalKeyStorageType > LocalKeyVectorType;
+
+  protected:
+    enum { numOrders = maxPolOrder - minPolOrder + 1 };
+
+    template <int pOrd>
+    struct ConstructCompiledLocalKeys
+    {
+      /** HelperClasses 
+         \brief 
+         CompiledLocalKeyFactory method createObject and
+         deleteObject for the SingletonList  
+      */
+      class CompiledLocalKeyFactory
+      {
+      public:
+        //! create new BaseFunctionSet 
+        static CompiledLocalKeyType* createObject( const GeometryType& type )
+        {
+          return new CompiledLocalKeyType( type, pOrd );
+        }
+
+        //! delete BaseFunctionSet 
+        static void deleteObject( CompiledLocalKeyType* obj )
+        {
+          delete obj;
+        }
+      };
+
+      static void apply( LocalKeyVectorType& compiledLocalKeys,
+                         const GeometryType& geometryType )
+      {
+        const size_t k = pOrd ;
+
+        //! type of singleton list (singleton provider) for compiled local keys 
+        typedef SingletonList
+          < GeometryType, CompiledLocalKeyType, CompiledLocalKeyFactory >
+          CompiledLocalKeySingletonProviderType;
+
+        // insert compiled local key 
+        compiledLocalKeys[ k - minPolOrder ].template insert< CompiledLocalKeySingletonProviderType > ( geometryType );
+      }
+    };
+
+  protected:
+    // all lagrange point sets for available geometry types 
+    LocalKeyVectorType compiledLocalKeys_ ;
+
+  private:
+    CompiledLocalKeyContainer( const CompiledLocalKeyContainer& );
+
+  public:
+    template <class GridPart>
+    CompiledLocalKeyContainer( const GridPart& gridPart ) 
+      : compiledLocalKeys_( numOrders )
+    {
+      typedef typename GridPart :: IndexSetType IndexSetType ;
+      typedef typename GridPart :: GridType  GridType ;
+      const IndexSetType &indexSet = gridPart.indexSet();
+
+      // get all available geometry types 
+      AllGeomTypes< IndexSetType, GridType > allGeometryTypes( indexSet );
+      const std :: vector< GeometryType >& geometryTypes
+        = allGeometryTypes.geomTypes( 0 );
+
+      // create compiled local keys
+      for( unsigned int i = 0; i < geometryTypes.size(); ++i )
+      {
+        ForLoop< ConstructCompiledLocalKeys, minPolOrder, maxPolOrder > ::
+            apply( compiledLocalKeys_, geometryTypes[ i ] );
+      }
+    }
+
+    /** \brief provide access to all compiled local keys for a given polynomial order 
+     *
+     *  \param[in]  order polynomial order for given geometry type 
+     *
+     *  \returns CompiledLocalKeys storage  
+     */
+    inline const LocalKeyStorageType& compiledLocalKeys( const int order ) const 
+    {
+      assert( order - minPolOrder >= 0 );
+      assert( order - minPolOrder < int( compiledLocalKeys_.size() ) );
+      return compiledLocalKeys_[ order - minPolOrder ];
+    }
+
+    /** \brief provide access to the compiled local keys for a geometry type and polynomial order 
+     *
+     *  \param[in]  type  type of geometry the compiled local key is requested for
+     *  \param[in]  order polynomial order for given geometry type 
+     *
+     *  \returns CompiledLocalKey 
+     */
+    inline const CompiledLocalKeyType &compiledLocalKey( const GeometryType& type, const int order ) const
+    {
+      return compiledLocalKeys( order )[ type ];
+    }
+  };
   } // end namespace Fem 
 
 } // end namespace Dune 

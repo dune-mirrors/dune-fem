@@ -26,9 +26,9 @@ namespace Dune
     template< class Field, int dim >
     Fem::DofMapperCode operator() ( const GenericReferenceElement< Field, dim > &refElement ) const
     {
-      std::size_t gtIdx = LocalGeometryTypeIndex::index( refElement.type() );
-      if( lagrangePointSets_[ gtIdx ] )
-        return Fem::compile( refElement, *lagrangePointSets_[ gtIdx ] );
+      const GeometryType type = refElement.type();
+      if( lagrangePointSets_.exists( type ) )
+        return Fem::compile( refElement, lagrangePointSets_[ type ] );
       else
         return Fem::DofMapperCode();
     }
