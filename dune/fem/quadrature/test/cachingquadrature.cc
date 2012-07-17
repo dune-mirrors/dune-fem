@@ -122,7 +122,7 @@ public:
       for( IntersectionIteratorType iit = gridPart_.ibegin(entity); iit != iend; ++iit )
       {
         const IntersectionType &intersection = *iit;
-        if (intersection.neighbor())
+        if (intersection.neighbor() && intersection.conforming())
         {
           EntityPointerType epInside = intersection.inside();
           EntityType & inside = *epInside;
@@ -209,12 +209,40 @@ int main(int argc, char ** argv)
     if ( Parameter::getValue<bool>("fem.skipfaces", false ) )
       quadOrder = -quadOrder ;
 
+    int nonConformOrigin = Dune::Parameter::getValue< int > ( "poisson.nonConformOrigin", 0 );
+    if ( nonConformOrigin )
+    {
+      const int refineelement = 1 ;
+      std::cout << "Create local refined grid" << std::endl;
+      for (int i=0;i<nonConformOrigin;++i)
+      {
+        if( grid.comm().rank() == 0)
+        {
+          typedef GridType::Codim<0>::LeafIterator IteratorType;
+          IteratorType endit = grid.leafend<0>();
+          for(IteratorType it = grid.leafbegin<0>(); it != endit ; ++it)
+          {
+            const IteratorType :: Entity & entity = *it ;
+            const IteratorType :: Entity :: Geometry& geo = entity.geometry();
+            if (geo.center().two_norm() < 0.5)
+            {
+              grid.mark(refineelement, entity );
+              std::cout << "mark" << std::endl;
+            }
+          }
+        }
+        grid.preAdapt();
+        grid.adapt();
+        grid.postAdapt();
+      }
+    }
+ 
     //typedef HierarchicGridPart< GridType > GridPartType;
     typedef Dune :: LeafGridPart< GridType > GridPartType;
     GridPartType gridPart( grid );
 
     const double eps = 1e-8;
- 
+
     for(int l=0; l<=maxlevel; ++l )
     {
       {
