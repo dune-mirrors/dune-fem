@@ -1,0 +1,20 @@
+Recend changes:
+
+1) The whole model has moved to namespace Fem.
+
+2) Different new gridParts haven been implemented
+   such as idGridPart, geoGridPart and fliteredGridPart.
+
+3) Lagrange Function space in 2D are avilable for polinomial order >3 even if the grid
+   is not twist free.   
+
+4) Each dofmapper is delivered with a mapEach function.
+
+5) In the future basefunctionsets will not provide the methods evaluate, jacobian,
+   hessian for a single basefunction, therefor this methods are marked deprecated.
+
+6) A new CombinedDiscreteFuncitonSpace is implemented, which generates a
+   DiscreteFunctionSpace from two arbitrary DiscreteFunctionSpaces. 
+
+
+
