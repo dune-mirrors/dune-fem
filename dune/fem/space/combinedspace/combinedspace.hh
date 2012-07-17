@@ -379,6 +379,13 @@ namespace Dune
       return containedSpace().order();
     }
 
+    /** \copydoc Dune::Fem::DiscreteFunctionSpaceInterface::order(const EntityType &entity) const */
+    template< class EntityType >
+    inline int order ( const EntityType &entity) const
+    {
+      return containedSpace().order( entity );
+    }
+
     /** \copydoc Dune::Fem::DiscreteFunctionSpaceInterface::begin() const */
     inline IteratorType begin () const
     {
