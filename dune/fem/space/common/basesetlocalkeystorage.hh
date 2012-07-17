@@ -161,7 +161,7 @@ namespace Fem {
     //! access to stored entry with given geometry type 
     const Entry& operator [] ( const GeometryType& geomType ) const 
     {
-      assert( index( geomType ) < entryStorage_.size() );
+      assert( index( geomType ) < static_cast< int >( entryStorage_.size() ) );
       assert( entryStorage_[ index( geomType ) ] != 0 );
       return *( entryStorage_[ index( geomType ) ]);
     }
@@ -269,7 +269,7 @@ namespace Fem {
     inline const LocalKeyStorageType& compiledLocalKeys( const int order ) const 
     {
       assert( order - minPolOrder >= 0 );
-      assert( order - minPolOrder < int( compiledLocalKeys_.size() ) );
+      assert( int( order - minPolOrder ) < int( compiledLocalKeys_.size() ) );
       return compiledLocalKeys_[ order - minPolOrder ];
     }
 
