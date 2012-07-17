@@ -13,6 +13,7 @@
 
 //- Fem includes 
 #include <dune/fem/storage/singletonlist.hh>
+#include <dune/fem/space/common/allgeomtypes.hh>
 
 namespace Dune 
 {
