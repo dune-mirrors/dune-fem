@@ -22,10 +22,22 @@
  *  - The evaluation methods taking a Quadrature and an int as arguments are
  *    now mere fronts for the evaluate methods taking a PointType.
  *  - Local functions now use an \ref EngineConcept "engine concept".
- *  - The method scalarProductDofs in \ref Dune::DiscreteFunctionInterface
+ *  - The method scalarProductDofs in \ref Dune::Fem::DiscreteFunctionInterface
  *    "discrete functions" is now parallelized (do not communicate afterwards).
  *  - Communication managers now support different communication operations
  *    (i.e., copy, add, etc.) and different communication interfaces and
  *    directions. Communication of higher codims should also work.
  *  .
+ 
+ *	\section Changes from 1.2.1 to 1.3.0
+ *  - The whole module has moved to namespace Fem.
+ *	- The new \ref Dune::Fem::CombinedDiscreteFunctionSpace is implemented to generate a 
+ *		\ref Dune::Fem::DiscreteFunctionInterface out of two arbitrary Spaces.
+ *	-	new gridParts are implemented, idGridPart, geoGridPart and filteredGridPart.
+ *	- In 2D \ref Dune::Fem::LagrangeDiscreteFunctionSpace are available with polynomial
+ *	  order >3 even if the grid is not twist free.
+ *	- The dofMapper is equiped with a method called mapEach, which performs a functor
+ *	  application on each tuple of ( localDof, globalDof ).
+ *
+ *	.
  */
