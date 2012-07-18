@@ -365,7 +365,7 @@ namespace Dune
       template <class Entity>
       const Entity& convert( const Entity& entity ) const
       {
-        return entity;
+        return hostGridPart().convert( entity );
       }
 
     private: 
