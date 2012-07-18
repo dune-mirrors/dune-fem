@@ -18,30 +18,64 @@ namespace Fem {
 template <class QuadratureType>
 struct GeometryAffinityCheck 
 {
-  //! check whether all geometry mappings are affine 
-  template <class IteratorType>
-  static inline bool checkAffinity(const IteratorType& begin,
-                                   const IteratorType& endit, 
-                                   const int quadOrd)  
-  {
-    bool affinity = true ;
-    typedef typename IteratorType :: Entity :: Geometry Geometry;
-    for(IteratorType it = begin; it != endit; ++it)
+  // return true if geometry is affine 
+  template< class EntityType >
+  static bool checkGeometry( const EntityType& entity, const int quadOrd ) 
+  { 
+    typedef typename EntityType :: Geometry Geometry;
+    const Geometry& geo = entity.geometry();
+    // if method tells that geometry is not affine 
+    // then check it carefully 
+    if( ! geo.affine() ) 
     {
       // get quadrature of desired order 
-      QuadratureType volQuad( *it, quadOrd );
+      QuadratureType volQuad( entity, quadOrd );
       const int nop = volQuad.nop();
-      const Geometry& geo = it->geometry();
 
       // check all integration elements against the first 
       const double oldIntel = geo.integrationElement( volQuad.point(0) );
       for(int l=1; l<nop; ++l)
       {
         const double intel = geo.integrationElement( volQuad.point(l) );
-        if( std::abs( oldIntel - intel ) > 1e-12 ) affinity = false;
+        if( std::abs( oldIntel - intel ) > 1e-12 ) 
+          return false;
       }
     }
-    return affinity;
+    return true ;
+  }
+
+  //! check whether all geometry mappings are affine 
+  template <class IteratorType>
+  static inline bool checkAffinity(const IteratorType& begin,
+                                   const IteratorType& endit, 
+                                   const int quadOrd)  
+  {
+    for(IteratorType it = begin; it != endit; ++it)
+    {
+      if( ! checkGeometry( *it, quadOrd ) ) return false ;
+    }
+    return true;
+  }
+
+  //! check whether all geometry mappings are affine 
+  template <class GridPartType, class Vector >
+  static inline void checkElementAffinity(const GridPartType& gridPart, 
+                                          const int quadOrd,
+                                          Vector& affineGeomtryVec )  
+  {
+    typedef typename GridPartType :: template Codim< 0 > :: IteratorType  IteratorType;
+    typedef typename GridPartType :: template Codim< 0 > :: EntityType    EntityType;
+    const IteratorType endit = gridPart.template end<0> ();
+    affineGeomtryVec.resize( gridPart.indexSet().size( 0 ) );
+    for(IteratorType it = gridPart.template begin<0>(); it != endit; ++it)
+    {
+      const EntityType& entity = *it ;
+      const int index = gridPart.indexSet().index( entity );
+      affineGeomtryVec[ index ] = checkGeometry( entity, quadOrd );
+    }
+
+    //for( size_t i=0; i<affineGeomtryVec.size(); ++ i)
+    //  std::cout << "geo is " << affineGeomtryVec[ i ] << std::endl;
   }
 };
 
