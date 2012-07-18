@@ -1,5 +1,5 @@
-#ifndef DUNE_FEM_BASEFUNCTIONSET_STANDARD_HH
-#define DUNE_FEM_BASEFUNCTIONSET_STANDARD_HH
+#ifndef DUNE_FEM_BASEFUNCTIONSET_DEFAULT_HH
+#define DUNE_FEM_BASEFUNCTIONSET_DEFAULT_HH
 
 #include <dune/geometry/type.hh>
 
@@ -12,15 +12,15 @@ namespace Dune
   {
 
     template< class Geometry, class ShapeFunctionSet >
-    class StandardBaseFunctionSet
+    class DefaultBaseFunctionSet
     {
-      typedef StandardBaseFunctionSet< ShapeFunctionSet > ThisType;
+      typedef DefaultBaseFunctionSet< ShapeFunctionSet > ThisType;
 
     public:
       typedef Geometry GeometryType;
       typedef ShapeFunctionSet ShapeFunctionSetType;
 
-      StandardBaseFunctionSet ( const GeometryType &geometry, const ShapeFunctionSet &shapeFunctionSet )
+      DefaultBaseFunctionSet ( const GeometryType &geometry, const ShapeFunctionSet &shapeFunctionSet )
       : geometry_( geometry ),
         shapeFunctionSet_( shapeFunctionSet )
       {}
@@ -170,4 +170,4 @@ namespace Dune
 
 } // namespace Dune
 
-#endif // #ifndef DUNE_FEM_BASEFUNCTIONSET_STANDARD_HH
+#endif // #ifndef DUNE_FEM_BASEFUNCTIONSET_DEFAULT_HH
