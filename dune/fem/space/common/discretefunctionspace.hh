@@ -265,7 +265,7 @@ namespace Fem
       return asImp().order();
     } 
   
-    /** \brief get global order of space
+    /** \brief get order of space for given entity 
      *  \param entity Entity for which we want to obtain the polynomial order
      *
      *  \return polorder of space on the given entity 
