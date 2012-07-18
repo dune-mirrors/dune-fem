@@ -54,6 +54,8 @@ public:
 
   typedef VolumeQuadratureImp VolumeQuadratureType;
 
+  typedef Fem::GeometryAffinityCheck<VolumeQuadratureType>  GeometryAffinityCheckType;
+
   //! is true if grid is structured grid 
   enum { StructuredGrid = Capabilities::isCartesian< GridType >::v };
 
@@ -213,7 +215,11 @@ public:
     // get geometry 
     const Geometry& geo = en.geometry();
 
-    if( geo.affine() && ! caller.hasMass() ) 
+    // get appropriate affinty information 
+    const bool affineGeometry = ( geo.affine() ) ? true : 
+        GeometryAffinityCheckType :: checkGeometry( en, geo, volumeQuadratureOrder( en ) )  ;  
+
+    if( affineGeometry && ! caller.hasMass() ) 
     {
       applyInverseLocally( caller, en, geo, lf );
     }
@@ -258,7 +264,7 @@ protected:
     assert( dgNumDofs == lf.numDofs() );
 
     // affine_ can be a static information 
-    const bool isAffine = ( affine_ ) ? true : geo.affine() ;
+    const bool isAffine = ( affine() ) ? true : geo.affine() ;
 
     // in case of affine mappings we only have to multiply with a factor 
     if( isAffine && ! caller.hasMass() )
@@ -460,7 +466,7 @@ protected:
   //! check whether all geometry mappings are affine 
   bool checkAffinity() const 
   {
-    return Fem::GeometryAffinityCheck<VolumeQuadratureType> :: 
+    return GeometryAffinityCheckType :: 
       checkAffinity( spc_.begin(), spc_.end(), maxVolumeQuadratureOrder() );
   }
 
