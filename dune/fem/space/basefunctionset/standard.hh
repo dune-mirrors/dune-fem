@@ -1,5 +1,5 @@
-#ifndef DUNE_FEM_BASEFUNCTIONSET_SIMPLE_HH
-#define DUNE_FEM_BASEFUNCTIONSET_SIMPLE_HH
+#ifndef DUNE_FEM_BASEFUNCTIONSET_STANDARD_HH
+#define DUNE_FEM_BASEFUNCTIONSET_STANDARD_HH
 
 #include <dune/geometry/type.hh>
 
@@ -12,19 +12,24 @@ namespace Dune
   {
 
     template< class Geometry, class ShapeFunctionSet >
-    class SimpleBaseFunctionSet
+    class StandardBaseFunctionSet
     {
-      typedef SimpleBaseFunctionSet< ShapeFunctionSet > ThisType;
+      typedef StandardBaseFunctionSet< ShapeFunctionSet > ThisType;
 
     public:
       typedef Geometry GeometryType;
       typedef ShapeFunctionSet ShapeFunctionSetType;
 
+      StandardBaseFunctionSet ( const GeometryType &geometry, const ShapeFunctionSet &shapeFunctionSet )
+      : geometry_( geometry ),
+        shapeFunctionSet_( shapeFunctionSet )
+      {}
+
       const GeometryType &geometry () const { return geometry_; }
       const ShapeFunctionSet &shapeFunctionSet () const { return shapeFunctionSet_; }
 
 
-      // interface methods
+      // Base Function Set Interface Methods
 
       template< class Point, class DofVector >
       void axpy ( const Point &x, const RangeType &valueFactor, DofVector &dofs ) const
@@ -113,7 +118,7 @@ namespace Dune
       std::size_t size () const { return shapeFunctionSet().size(); }
 
 
-      // depreceted methods (dune-fem-plus)
+      // Old Base Function Set Interface Methods
 
       template< class Point, class GeometryJacobianInverse, class DofVector >
       void axpy ( const Point &x, const GeometryJacobianInverse &gjit,
@@ -122,7 +127,6 @@ namespace Dune
         return axpy( x, jacobianFactor, dofs );
       }
 
-      /** \todo please doc me */
       template< class Point, class GeometryJacobianInverse, class DofVector >
       void axpy ( const Point &x, const GeometryJacobianInverse &gjit,
                   const RangeType &valueFactor, const JacobianRangeType &jacobianFactor,
@@ -166,4 +170,4 @@ namespace Dune
 
 } // namespace Dune
 
-#endif // #ifndef DUNE_FEM_BASEFUNCTIONSET_SIMPLE_HH
+#endif // #ifndef DUNE_FEM_BASEFUNCTIONSET_STANDARD_HH
