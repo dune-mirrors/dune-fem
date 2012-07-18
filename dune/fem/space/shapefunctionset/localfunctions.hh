@@ -3,6 +3,8 @@
 
 #include <vector>
 
+#include <dune/fem/space/common/functionspace.hh>
+
 namespace Dune
 {
 
@@ -20,8 +22,14 @@ namespace Dune
     public:
       typedef LocalBasis LocalBasisType;
 
-      typedef typename LocalBasis::Traits::Range RangeType;
-      typedef typename LocalBasis::Traits::Jacobian JacobianRangeType;
+      typedef FunctionSpace< LocalBasis::Traits::Domain, LocalBasis::Traits::Range > FunctionSpaceType;
+
+      explicit LocalFunctionsShapeFunctionSet ( const LocalBasis &localBasis )
+      : localBasis_( localBasis )
+      {
+        values_.reserve( size() );
+        jacobians_.reserve( size() );
+      }
 
       template< class Point, class Functor >
       void evaluateEach ( const Point &x, Functor &f ) const
