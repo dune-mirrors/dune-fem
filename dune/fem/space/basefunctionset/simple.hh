@@ -11,21 +11,17 @@ namespace Dune
   namespace Fem
   {
 
-    template< class ShapeFunctionSet >
+    template< class Geometry, class ShapeFunctionSet >
     class SimpleBaseFunctionSet
     {
       typedef SimpleBaseFunctionSet< ShapeFunctionSet > ThisType;
 
     public:
+      typedef Geometry GeometryType;
       typedef ShapeFunctionSet ShapeFunctionSetType;
 
-      typedef typename ShapeFunctionSetType::RangeType RangeType;
-
-      typedef typename ShapeFunctionSetType::HessianRangeType LocalHessianRangeType;
-      typedef typename ShapeFunctionSetType::JacobianRangeType LocalJacobianRangeType;
-
-      const ShapeFunctionSet &shapeFunctionSet () const { return shapeFunctionSet_; }
       const GeometryType &geometry () const { return geometry_; }
+      const ShapeFunctionSet &shapeFunctionSet () const { return shapeFunctionSet_; }
 
 
       // interface methods
@@ -162,8 +158,8 @@ namespace Dune
       }
 
     private:
-      const ShapeFunctionSetType &shapeFunctionSet_;
       GeometryType geometry_;
+      const ShapeFunctionSetType &shapeFunctionSet_;
     };
 
   } // namespace Fem
