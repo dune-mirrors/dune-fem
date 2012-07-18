@@ -567,7 +567,7 @@ namespace Dune
       RangeType tmp;
       asImp().evaluate( baseFunction, diffVariable, x, tmp );
       for( int j = 0; j < dimRange; ++j )
-        asImp().jacobian[ j ][ i ] = tmp[ j ];
+        jacobian[ j ][ i ] = tmp[ j ];
     }
   }
 
