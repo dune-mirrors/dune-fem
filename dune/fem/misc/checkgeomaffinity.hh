@@ -19,11 +19,11 @@ template <class QuadratureType>
 struct GeometryAffinityCheck 
 {
   // return true if geometry is affine 
-  template< class EntityType >
-  static bool checkGeometry( const EntityType& entity, const int quadOrd ) 
+  template< class EntityType, class ElementGeometryType >
+  static bool checkGeometry( const EntityType& entity, 
+                             const ElementGeometryType& geo,
+                             const int quadOrd ) 
   { 
-    typedef typename EntityType :: Geometry Geometry;
-    const Geometry& geo = entity.geometry();
     // if method tells that geometry is not affine 
     // then check it carefully 
     if( ! geo.affine() ) 
@@ -42,6 +42,13 @@ struct GeometryAffinityCheck
       }
     }
     return true ;
+  }
+
+  // return true if geometry is affine 
+  template< class EntityType >
+  static bool checkGeometry( const EntityType& entity, const int quadOrd ) 
+  { 
+    return checkGeometry( entity, entity.geometry(), quadOrd );
   }
 
   //! check whether all geometry mappings are affine 
