@@ -353,6 +353,21 @@ namespace Dune
         return hostGridPart_;
       }
 
+      /** \copydoc GridPartInterface::entityPointer( seed ) */
+      template < class EntitySeed >
+      typename Traits::template Codim< EntitySeed::codimension >::EntityPointerType
+      entityPointer ( const EntitySeed &seed ) const
+      {
+        return hostGridPart().entityPointer( seed );
+      }
+
+      /** \copydoc GridPartInterface::convert( entity ) */
+      template <class Entity>
+      const Entity& convert( const Entity& entity ) const
+      {
+        return entity;
+      }
+
     private: 
       HostGridPartType &hostGridPart_;
       FilterType filter_;
