@@ -231,22 +231,22 @@ namespace Dune
     typedef MapperType BlockMapperType;
 
     // implementation of basefunction set 
-    typedef GenericBaseFunctionSet< typename LocalFiniteElementType::Traits::LocalBasisType > BaseFunctionSetImp;
+    typedef Fem::GenericBaseFunctionSet< typename LocalFiniteElementType::Traits::LocalBasisType > BaseFunctionSetImp;
 
     // exported type 
-    typedef SimpleBaseFunctionProxy< BaseFunctionSetImp >            BaseFunctionSetType;
+    typedef Fem::SimpleBaseFunctionProxy< BaseFunctionSetImp >            BaseFunctionSetType;
 
     enum { localBlockSize = dimRange };
 
     /** \brief defines type of communication data handle for this type of space
      */
     template< class DiscreteFunction,
-	      class Operation = DFCommunicationOperation :: Add >
+	      class Operation = Fem::DFCommunicationOperation :: Add >
     struct CommDataHandle
     {
       //! type of data handle 
-      typedef DefaultCommunicationHandler< DiscreteFunction,
-                                           Operation >              Type;
+      typedef Fem::DefaultCommunicationHandler< DiscreteFunction,
+                                                Operation >          Type;
       //! type of operatation to perform on scatter 
       typedef Operation                                              OperationType;
     };
@@ -281,12 +281,12 @@ namespace Dune
    */
   template< class FunctionSpaceImp, class GridPartImp, int polOrder, template<class,class,int> class SpaceTraits >
   class PQLagrangeSpace
-  : public DiscreteFunctionSpaceDefault< SpaceTraits< FunctionSpaceImp, GridPartImp, polOrder > >,
-    public GenericDiscreteFunctionSpace
+  : public Fem::DiscreteFunctionSpaceDefault< SpaceTraits< FunctionSpaceImp, GridPartImp, polOrder > >,
+    public Fem::isGenericDiscreteFunctionSpace
   {
     typedef PQLagrangeSpace< FunctionSpaceImp, GridPartImp, polOrder,
                              SpaceTraits >                           ThisType;
-    typedef DiscreteFunctionSpaceDefault
+    typedef Fem::DiscreteFunctionSpaceDefault
               < SpaceTraits< FunctionSpaceImp, GridPartImp,
                              polOrder > >                            BaseType;
 
@@ -389,9 +389,9 @@ namespace Dune
     /** \brief get the type of this discrete function space 
         \return DFSpaceIdentifier
     **/
-    DFSpaceIdentifier type () const
+    Fem::DFSpaceIdentifier type () const
     {
-      return GenericSpace_id;
+      return Fem::GenericSpace_id;
     }
 
     /** \copydoc Dune::Fem::DiscreteFunctionSpaceInterface::order */
