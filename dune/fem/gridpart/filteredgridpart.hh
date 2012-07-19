@@ -285,7 +285,7 @@ namespace Dune
       }
 
       //! \brief Returns maxlevel of the grid
-      int level() const 
+      int level () const 
       { 
         return hostGridPart().level(); 
       }
@@ -309,30 +309,30 @@ namespace Dune
 
       //! \brief corresponding communication method for this grid part
       template < class DataHandleImp, class DataType >
-      void communicate( CommDataHandleIF< DataHandleImp, DataType > &dataHandle, 
-                        InterfaceType iftype, CommunicationDirection dir ) const 
+      void communicate ( CommDataHandleIF< DataHandleImp, DataType > &dataHandle, 
+                         InterfaceType iftype, CommunicationDirection dir ) const 
       {
         typedef CommDataHandleIF< DataHandleImp, DataType >  HostHandleType;
         FilteredGridPartDataHandle< HostHandleType, ThisType > handleWrapper( dataHandle, *this );
         hostGridPart().communicate( handleWrapper, iftype, dir );
       }
 
-      //! \brief construct entity pointer from entity seed 
+      /** \copydoc GridPartInterface::entityPointer(const EntitySeed &seed) const */
       template < class EntitySeed >
       typename Codim< EntitySeed::codimension >::EntityPointerType
       entityPointer ( const EntitySeed &seed ) const
       {
-        return hostGridPart_.entityPointer( seed );
+        return hostGridPart().entityPointer( seed );
       }
 
       //! \brief return reference to filter 
-      const FilterType &filter() const
+      const FilterType &filter () const
       { 
         return filter_; 
       }
 
       //! \brief return reference to filter 
-      FilterType &filter() 
+      FilterType &filter () 
       {
         return filter_; 
       }
@@ -353,17 +353,9 @@ namespace Dune
         return hostGridPart_;
       }
 
-      /** \copydoc GridPartInterface::entityPointer( seed ) */
-      template < class EntitySeed >
-      typename Traits::template Codim< EntitySeed::codimension >::EntityPointerType
-      entityPointer ( const EntitySeed &seed ) const
-      {
-        return hostGridPart().entityPointer( seed );
-      }
-
-      /** \copydoc GridPartInterface::convert( entity ) */
+      /** \copydoc GridPartInterface::convert(const Entity &entity) const */
       template <class Entity>
-      const Entity& convert( const Entity& entity ) const
+      const Entity& convert ( const Entity &entity ) const
       {
         return hostGridPart().convert( entity );
       }
