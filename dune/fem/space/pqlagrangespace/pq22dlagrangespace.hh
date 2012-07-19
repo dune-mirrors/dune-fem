@@ -16,7 +16,7 @@
 #include <dune/fem/space/common/defaultcommhandler.hh>
 
 //- Dune-Localfunctions include
-#include  <dune/localfunctions/lagrange/pq22d.hh>
+#include  <dune/localfunctions/lagrange/q2.hh>
 
 namespace Dune
 {
@@ -32,7 +32,7 @@ namespace Dune
   {
     typedef typename LocalFiniteElement::Traits::LocalCoefficientsType
       LocalCoefficientsType;
-    typedef GenericBaseFunctionSet< typename LocalFiniteElement::Traits::LocalBasisType >
+    typedef Fem::GenericBaseFunctionSet< typename LocalFiniteElement::Traits::LocalBasisType >
       BaseFunctionSetType;
 
     PQ22DLocalCoefficientsMap ( )
@@ -102,7 +102,7 @@ namespace Dune
               :: IteratorType                                        IteratorType;
 
     static const int polynomialOrder = 2;
-    typedef Dune::PQ22DLocalFiniteElement< DomainFieldType, RangeFieldType > LocalFiniteElementType;
+    typedef Dune::Q2LocalFiniteElement< DomainFieldType, RangeFieldType, 2 > LocalFiniteElementType;
 
   public:
    
@@ -111,21 +111,21 @@ namespace Dune
     typedef MapperType BlockMapperType;
 
     // implementation of basefunction set 
-    typedef GenericBaseFunctionSet< typename LocalFiniteElementType::Traits::LocalBasisType > BaseFunctionSetImp;
+    typedef Fem::GenericBaseFunctionSet< typename LocalFiniteElementType::Traits::LocalBasisType > BaseFunctionSetImp;
 
     // exported type 
-    typedef SimpleBaseFunctionProxy< BaseFunctionSetImp >            BaseFunctionSetType;
+    typedef Fem::SimpleBaseFunctionProxy< BaseFunctionSetImp >            BaseFunctionSetType;
 
     enum { localBlockSize = dimRange };
 
     /** \brief defines type of communication data handle for this type of space
      */
     template< class DiscreteFunction,
-	      class Operation = DFCommunicationOperation :: Add >
+	      class Operation = Fem::DFCommunicationOperation :: Add >
     struct CommDataHandle
     {
       //! type of data handle 
-      typedef DefaultCommunicationHandler< DiscreteFunction,
+      typedef Fem::DefaultCommunicationHandler< DiscreteFunction,
                                            Operation >              Type;
       //! type of operatation to perform on scatter 
       typedef Operation                                              OperationType;
@@ -141,11 +141,11 @@ namespace Dune
 
   template< class FunctionSpaceImp, class GridPartImp >
   class PQ22DLagrangeSpace
-  : public DiscreteFunctionSpaceDefault< PQ22DLagrangeSpaceTraits< FunctionSpaceImp, GridPartImp > >,
-    public GenericDiscreteFunctionSpace
+  : public Fem::DiscreteFunctionSpaceDefault< PQ22DLagrangeSpaceTraits< FunctionSpaceImp, GridPartImp > >,
+    public Fem::isGenericDiscreteFunctionSpace
   {
     typedef PQ22DLagrangeSpace< FunctionSpaceImp, GridPartImp> ThisType;
-    typedef DiscreteFunctionSpaceDefault
+    typedef Fem::DiscreteFunctionSpaceDefault
               < PQ22DLagrangeSpaceTraits< FunctionSpaceImp, GridPartImp > >        BaseType;
 
   public:
@@ -239,9 +239,9 @@ namespace Dune
     /** \brief get the type of this discrete function space 
         \return DFSpaceIdentifier
     **/
-    DFSpaceIdentifier type () const
+    Fem::DFSpaceIdentifier type () const
     {
-      return GenericSpace_id;
+      return Fem::GenericSpace_id;
     }
 
     /** \copydoc Dune::Fem::DiscreteFunctionSpaceInterface::order */
