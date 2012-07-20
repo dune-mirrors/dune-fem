@@ -10,6 +10,7 @@
 //- dune-fem includes
 #include <dune/fem/gridpart/adaptiveleafindexset.hh>
 #include <dune/fem/gridpart/common/gridpart.hh>
+#include <dune/fem/gridpart/common/metatwistutility.hh>
 #include <dune/fem/gridpart/filteredgridpart/capabilities.hh>
 #include <dune/fem/gridpart/filteredgridpart/datahandle.hh>
 #include <dune/fem/gridpart/filteredgridpart/intersectioniterator.hh>
@@ -89,7 +90,7 @@ namespace Dune
       typedef typename HostGridPartType::GridType GridType;
 
       /** \brief The type of the corresponding TwistUtility */
-      typedef TwistUtility< GridType >  TwistUtilityType ;
+      typedef MetaTwistUtility< typename HostGridPartType :: TwistUtilityType >  TwistUtilityType ;
 
       //! \brief export filter type
       typedef FilterImp FilterType;

@@ -15,7 +15,8 @@
 
 //- dune-fem includes
 #include <dune/fem/gridpart/test/failure.hh>
-
+#include <dune/fem/quadrature/cachingquadrature.hh>
+#include <dune/fem/quadrature/intersectionquadrature.hh>
 
 namespace Dune
 {
@@ -87,6 +88,10 @@ namespace Dune
           for( IntersectionIteratorType iit = gridPart.ibegin( entity ); iit != iend; ++iit )
           {
             const IntersectionType &intersection = *iit;
+
+            // create intersection caching quadrature to check twists 
+            IntersectionQuadrature< CachingQuadrature< GridPartType, 1 >, true > 
+              inter( gridPart, intersection, 2 );
 
             checkIntersectionIteratorAssignment( iit, failureHandler );
             checkLocalGeometries( intersection, entity, failureHandler );

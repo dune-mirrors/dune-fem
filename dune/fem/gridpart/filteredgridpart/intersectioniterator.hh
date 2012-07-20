@@ -266,6 +266,18 @@ namespace Dune
       //! \brief de-pointer operator 
       const Intersection* operator ->() const { return this; }
 
+      // impl method is needed for MetaTwistUtility 
+      const Intersection& impl() const
+      { 
+        return *this;
+      }
+
+      // hostIntersection method is needed for MetaTwistUtility 
+      const HostIntersection& hostIntersection() const 
+      {
+        return *hostIterator();
+      }
+
     private:
       const GridPartType & gridPart () const
       {
