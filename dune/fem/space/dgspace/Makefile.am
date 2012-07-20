@@ -9,10 +9,7 @@ libdgspace_la_SOURCES = dgbasefunctions_1.cc \
 libdgspace_la_CPPFLAGS = $(AM_CPPFLAGS) -DCOMPILE_LIB
 
 dgspacedir =  $(includedir)/dune/fem/space/dgspace
-dgspace_HEADERS = dgadaptiveleafgridpart.hh \
-                  dgadaptiveleafindexset.hh \
-                  dgadaptmanager.hh \
-                  dgbasefunctions.hh \
+dgspace_HEADERS = dgbasefunctions.hh \
                   dgspace.hh \
                   legendredgbasefunctions.hh \
                   legendrepoly.hh \

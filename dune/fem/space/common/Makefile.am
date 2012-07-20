@@ -11,7 +11,6 @@ common_HEADERS = adaptmanager.hh \
      defaultcommhandler.hh \
      discretefunctionspace.hh \
      dofmanager.hh \
-     dofmapper.hh \
      dofstorage.hh \
      entitycommhelper.hh \
      functionspace.hh \

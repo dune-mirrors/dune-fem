@@ -12,7 +12,6 @@ misc_HEADERS = alugridwriter.hh \
                combineinterface.hh \
                commhelper.hh \
                debug.hh \
-               deritype.hh \
                double.hh \
                engineconcept.hh \
                femeoc.hh \

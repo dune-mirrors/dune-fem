@@ -1,6 +1,5 @@
 spacedir = $(includedir)/dune/fem/space
-space_HEADERS = adaptoperator.hh \
-                combineddiscretefunctionspace.hh \
+space_HEADERS = combineddiscretefunctionspace.hh \
                 combinedspace.hh \
                 dgspace.hh \
                 fvspace.hh \

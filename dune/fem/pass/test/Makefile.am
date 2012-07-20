@@ -19,7 +19,6 @@ EXTRA_DIST = dgstub.hh \
              lagrange_fixture.hh \
              passstub.hh \
              pass_test.hh \
-             suite.hh \
-             test.hh
+             suite.hh 
 
 include $(top_srcdir)/am/global-rules
