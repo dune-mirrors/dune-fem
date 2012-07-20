@@ -32,7 +32,7 @@ namespace Dune
     typedef typename LocalFiniteElement::Traits::LocalCoefficientsType
       LocalCoefficientsType;
 
-    typedef GenericBaseFunctionSet< typename LocalFiniteElement::Traits::LocalBasisType >
+    typedef Fem::GenericBaseFunctionSet< typename LocalFiniteElement::Traits::LocalBasisType >
       BaseFunctionSetType;
 
     Pk2DLocalCoefficientsMap ( const IndexSet &indexSet )
@@ -115,15 +115,15 @@ namespace Dune
     typedef GenericDofMapper< GridPartType, LocalCoefficientsMapType > MapperType;
     typedef MapperType BlockMapperType;
 
-    typedef GenericBaseFunctionSet< typename LocalFiniteElementType::Traits::LocalBasisType > BaseFunctionSetImp;
-    typedef SimpleBaseFunctionProxy< BaseFunctionSetImp > BaseFunctionSetType;
+    typedef Fem::GenericBaseFunctionSet< typename LocalFiniteElementType::Traits::LocalBasisType > BaseFunctionSetImp;
+    typedef Fem::SimpleBaseFunctionProxy< BaseFunctionSetImp > BaseFunctionSetType;
 
     static const int localBlockSize = dimRange;
 
-    template< class DiscreteFunction, class Operation = DFCommunicationOperation::Add >
+    template< class DiscreteFunction, class Operation = Fem::DFCommunicationOperation::Add >
     struct CommDataHandle
     {
-      typedef DefaultCommunicationHandler< DiscreteFunction, Operation > Type;
+      typedef Fem::DefaultCommunicationHandler< DiscreteFunction, Operation > Type;
       typedef Operation OperationType;
     };
 
@@ -137,11 +137,11 @@ namespace Dune
 
   template< class FunctionSpace, class GridPart, int polOrder >
   class Pk2DLagrangeSpace
-  : public DiscreteFunctionSpaceDefault< Pk2DLagrangeSpaceTraits< FunctionSpace, GridPart, polOrder > >,
-    public GenericDiscreteFunctionSpace
+  : public Fem::DiscreteFunctionSpaceDefault< Pk2DLagrangeSpaceTraits< FunctionSpace, GridPart, polOrder > >,
+    public Fem::isGenericDiscreteFunctionSpace
   {
     typedef Pk2DLagrangeSpace< FunctionSpace, GridPart, polOrder > ThisType;
-    typedef DiscreteFunctionSpaceDefault< Pk2DLagrangeSpaceTraits< FunctionSpace, GridPart, polOrder > > BaseType;
+    typedef Fem::DiscreteFunctionSpaceDefault< Pk2DLagrangeSpaceTraits< FunctionSpace, GridPart, polOrder > > BaseType;
 
   public:
     typedef typename BaseType::Traits Traits;
@@ -232,9 +232,9 @@ namespace Dune
     /** \brief get the type of this discrete function space 
         \return DFSpaceIdentifier
     **/
-    DFSpaceIdentifier type () const
+    Fem::DFSpaceIdentifier type () const
     {
-      return GenericSpace_id;
+      return Fem::GenericSpace_id;
     }
 
     /** \copydoc Dune::Fem::DiscreteFunctionSpaceInterface::order */
