@@ -281,6 +281,13 @@ namespace Dune
         return polynomialOrder;
       }
 
+      /** \copydoc Dune::Fem::DiscreteFunctionSpaceInterface::order */
+      template<class Entity>
+      inline int order ( const Entity &entity ) const
+      {
+        return polynomialOrder;
+      }
+
       /** \copydoc Dune::Fem::DiscreteFunctionSpaceInterface::baseFunctionSet(const EntityType &entity) const */
       template< class EntityType >
       BaseFunctionSetType baseFunctionSet ( const EntityType &entity ) const
