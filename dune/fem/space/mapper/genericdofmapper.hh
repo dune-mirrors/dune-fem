@@ -9,6 +9,7 @@
 
 #include <dune/localfunctions/common/localkey.hh>
 
+#include <dune/fem/misc/functor.hh>
 #include <dune/fem/space/common/dofmanager.hh>
 #include <dune/fem/space/mapper/dofmapper.hh>
 
@@ -151,14 +152,14 @@ namespace Dune
       return DofMapIteratorType( *this, entity, end );
     }
 
-    template< class Entity >
-    const MapInfo &mapInfo ( const Entity &entity ) const;
+    const MapInfo &mapInfo ( const EntityType &entity ) const;
 
-    template< class Entity >
-    void map ( const Entity &entity, std::vector< unsigned int > &indices ) const;
+    template< class Functor >
+    void mapEach ( const EntityType &element, Functor functor ) const;
 
-    template< class Entity >
-    int mapToGlobal( const Entity &entity, const int localDof ) const
+    void map ( const EntityType &element, std::vector< std::size_t > &indices ) const;
+
+    int mapToGlobal( const EntityType &entity, const int localDof ) const
     {
       static std::vector< unsigned int > indices;
       map( entity, indices );
@@ -178,8 +179,7 @@ namespace Dune
       return maxNumDofs_;
     }
 
-    template< class Entity >
-    int numDofs ( const Entity &entity ) const
+    int numDofs ( const EntityType &entity ) const
     {
       return mapInfo( entity ).numDofs;
     }
@@ -317,9 +317,8 @@ namespace Dune
 
 
   template< class GridPart, class LocalCoefficientsMap >
-  template< class Entity >
   const typename GenericDofMapper< GridPart, LocalCoefficientsMap >::MapInfo &
-  GenericDofMapper< GridPart, LocalCoefficientsMap >::mapInfo ( const Entity &entity ) const
+  GenericDofMapper< GridPart, LocalCoefficientsMap >::mapInfo ( const EntityType &entity ) const
   {
     const unsigned int topologyId = entity.type().id(); 
     const unsigned int i = localCoefficientsMap_( entity );
@@ -329,16 +328,15 @@ namespace Dune
 
 
   template< class GridPart, class LocalCoefficientsMap >
-  template< class Entity >
+  template< class Functor >
   inline void
   GenericDofMapper< GridPart, LocalCoefficientsMap >
-    ::map ( const Entity &entity, std::vector< unsigned int > &indices ) const
+    ::mapEach ( const EntityType &entity, Functor functor ) const
   {
     typedef typename std::vector< SubEntityInfo >::const_iterator Iterator;
 
     const MapInfo &info = mapInfo( entity );
 
-    indices.resize( info.numDofs );
     const unsigned int *localDof = &(info.localDof[ 0 ]);
 
     const Iterator end = info.subEntityInfo.end();
@@ -347,8 +345,18 @@ namespace Dune
       const unsigned int index  = indexSet().subIndex( entity, it->subEntity, it->codim );
       const unsigned int offset = it->offset + index*it->numDofs;
       for( unsigned int j = 0; j < it->numDofs; ++j )
-        indices[ *(localDof++) ] = offset + j;
+        functor( *(localDof++), offset + j );
     }
+  }
+
+
+  template< class GridPart, class LocalCoefficientsMap >
+  inline void
+  GenericDofMapper< GridPart, LocalCoefficientsMap >
+    ::map ( const EntityType &element, std::vector< std::size_t > &indices ) const
+  {
+    indices.resize( numDofs( element ) );
+    mapEach( element, Fem::AssignFunctor< std::vector< std::size_t > >( indices ) );
   }
 
 
