@@ -20,7 +20,7 @@ FEMDIR="$DUNEDIR/dune-fem"
 SCRIPTSDIR="$FEMDIR/scripts"
 OPTSDIR="$SCRIPTSDIR/opts"
 
-MODULES="dune-common dune-geometry dune-grid dune-istl dune-fem"
+MODULES="dune-common dune-geometry dune-grid dune-istl dune-localfunctions dune-fem"
 
 # fetch missing tarballs from website
 # -----------------------------------
