@@ -21,7 +21,7 @@ EXTRA_DIST = laplace.hh  massoperator.hh  problem.hh  \
 
 if HAVE_DUNE_LOCALFUNCTIONS
 
-check_PROGRAMS          = test_pqlagrangespace test-pk2d
+noinst_PROGRAMS          = test_pqlagrangespace test-pk2d
 
 test_pqlagrangespace_SOURCES  = main.cc ../../../misc/test.cc ../../../misc/suite.cc
 test_pqlagrangespace_CPPFLAGS = $(ALL_PKG_CPPFLAGS)
