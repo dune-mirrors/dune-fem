@@ -96,7 +96,7 @@ namespace Dune
     DiscreteFunctionType &discreteFunction_;
     
     // std::vector to hold the indices
-    std::vector< unsigned int > indices_;
+    std::vector< std::size_t > indices_;
 
     // array holding pointer to local dofs 
     Fem :: DynamicArray< RangeFieldType* > values_;
@@ -108,7 +108,7 @@ namespace Dune
     const EntityType *entity_;
 
     // number of local dofs
-    unsigned int numDofs_;
+    std::size_t numDofs_;
 
     bool needCheckGeometry_;
   };
