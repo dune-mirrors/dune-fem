@@ -1,4 +1,4 @@
-CONFIGURE_FLAGS="--enable-documentation \
+CONFIGURE_FLAGS="--disable-documentation \
 --enable-fieldvector-size-is-method \
 --without-gmp \
 --enable-experimental-grid-extensions"
