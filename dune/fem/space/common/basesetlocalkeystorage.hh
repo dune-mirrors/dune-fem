@@ -140,8 +140,6 @@ namespace Fem {
       // get geometry type index 
       const size_t geomIndex = index( geomType ) ;
 
-      std::cout << "Insert geomType " << geomType << " into BaseSetStorage" << std::endl;
-
       if( entryStorage_.size() <= geomIndex ) 
         entryStorage_.resize( geomIndex + 1, (Entry* ) 0 );
 
