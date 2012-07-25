@@ -155,7 +155,10 @@ namespace Fem {
     //! return true if an entry for this geometry type exists 
     bool exists( const GeometryType& geomType ) const 
     {
-      return entryStorage_[ index( geomType ) ] != 0 ;
+      if( index( geomType ) < static_cast< int >( entryStorage_.size() ) )
+        return (entryStorage_[ index( geomType ) ] != 0) ;
+      else 
+        return false;
     }
 
     //! access to stored entry with given geometry type 
