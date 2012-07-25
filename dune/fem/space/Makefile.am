@@ -9,7 +9,7 @@ space_HEADERS = adaptoperator.hh \
                 reducedbasisspace.hh
 
 SUBDIRS = basefunctions common dofmapper mapper test dgspace fvspace \
-          lagrangespace combinedspace reducedbasisspace pqlagrangespace \
+          lagrangespace combinedspace reducedbasisspace \
           padaptivespace
 
 noinst_LTLIBRARIES = libspace.la
