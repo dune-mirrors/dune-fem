@@ -10,6 +10,8 @@
 
 //- Dune includes
 #include <dune/common/exceptions.hh>
+#include <dune/common/version.hh>
+
 #include <dune/grid/yaspgrid.hh>
 #include <dune/grid/io/file/dgfparser/dgfparser.hh>
 
@@ -473,7 +475,11 @@ namespace Dune
                                  iTupel& lengthInterior )
       {
 #if HAVE_MPI
-        typedef Cartesian::MultiIndex< dim > MultiIndex ;
+#if DUNE_VERSION_NEWER(DUNE_SPGRID,2012,10)
+        typedef Cartesian::MultiIndex< dim > MultiIndex;
+#else // #if DUNE_VERSION_NEWER(DUNE_SPGRID,2012,10)
+        typedef SPMultiIndex< dim > MultiIndex;
+#endif // #else // #if DUNE_VERSION_NEWER(DUNE_SPGRID,2012,10)
         MultiIndex begin = grid.gridLevel( 0 ).localCube().begin();
         MultiIndex end   = grid.gridLevel( 0 ).localCube().end();
         for( int i=0; i<dim; ++i) 
