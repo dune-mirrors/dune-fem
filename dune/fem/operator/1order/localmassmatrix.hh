@@ -653,7 +653,6 @@ public:
 // #if DUNE_FEM_COMPATIBILITY  
 // put this in next version 1.4 
 
-using Fem :: LocalDGMassMatrix ;
 using Fem :: LocalMassMatrix ;
 
 // #endif // DUNE_FEM_COMPATIBILITY

@@ -353,49 +353,6 @@ namespace Dune
     }
   };
 
-
-  /** @ingroup AdaptiveLeafGP
-      \brief A grid part with an index set specially
-      designed for adaptive calculations.
-
-      The underlying \ref IdBasedLeafIndexSet "index set" is slow since it is based on
-      the LocalIdSet of the grid. Don't use this unless no other option available.
-  */
-  template< class Grid, PartitionIteratorType idxpitype = All_Partition >
-  class IdBasedLeafGridPart;
-
-  //! Type definitions for the LeafGridPart class
-  template< class Grid, PartitionIteratorType idxpitype >
-  class IdBasedLeafGridPartTraits : public AdaptiveLeafGridPartTraits< Grid, idxpitype, false>
-  {
-  public:
-    //! type of the grid part , i.e. this type 
-    typedef IdBasedLeafGridPart< Grid, idxpitype > GridPartType;
-
-    //! type of the index set 
-    typedef IdBasedLeafIndexSet< GridPartType > IndexSetType;
-  };
-
-  template< class Grid, PartitionIteratorType idxpitype >
-  class IdBasedLeafGridPart
-    : public AdaptiveGridPartBase< IdBasedLeafGridPartTraits< Grid, idxpitype > >
-  {
-    typedef AdaptiveGridPartBase< IdBasedLeafGridPartTraits< Grid, idxpitype > >   BaseType;
-  public:  
-    typedef typename BaseType :: GridType GridType;
-    //! Constructor
-    inline explicit IdBasedLeafGridPart ( GridType &grid )
-    : BaseType( grid )
-    {
-    }
-
-    //! copy constructor 
-    inline IdBasedLeafGridPart ( const IdBasedLeafGridPart& other )
-    : BaseType( other )
-    {
-    }
-  };
-
   template< class Grid, PartitionIteratorType idxpitype = All_Partition >
   class IntersectionAdaptiveLeafGridPart ;
 
@@ -537,54 +494,6 @@ namespace Dune
 
       template< class Grid, PartitionIteratorType idxpitype >
       struct isConforming< DGAdaptiveLeafGridPart< Grid, idxpitype > >
-      {
-        static const bool v = Dune::Capabilities::isLeafwiseConforming< Grid >::v;
-      };
-
-
-      // Capabilities for IdBasedLeafGridPart
-      // ------------------------------------
-
-      template< class Grid, PartitionIteratorType idxpitype >
-      struct hasGrid< IdBasedLeafGridPart< Grid, idxpitype > >
-      {
-        static const bool v = true;
-      };
-
-      template< class Grid, PartitionIteratorType idxpitype >
-      struct hasSingleGeometryType< IdBasedLeafGridPart< Grid, idxpitype > >
-      {
-        static const bool v = Dune::Capabilities::hasSingleGeometryType< Grid >::v;
-        static const unsigned int topologyId
-          = Dune::Capabilities::hasSingleGeometryType< Grid >::topologyId;;
-      };
-
-      template< class Grid, PartitionIteratorType idxpitype >
-      struct isCartesian< IdBasedLeafGridPart< Grid, idxpitype > >
-      {
-        static const bool v = Dune::Capabilities::isCartesian< Grid >::v;
-      };
-
-      template< class Grid, PartitionIteratorType idxpitype, int codim  >
-      struct hasEntity< IdBasedLeafGridPart< Grid, idxpitype >, codim >
-      {
-        static const bool v = Dune::Capabilities::hasEntity< Grid, codim >::v;
-      };
-
-      template< class Grid, PartitionIteratorType idxpitype >
-      struct isParallel< IdBasedLeafGridPart< Grid, idxpitype > >
-      {
-        static const bool v = Dune::Capabilities::isParallel< Grid >::v;
-      };
-
-      template< class Grid, PartitionIteratorType idxpitype, int codim >
-      struct canCommunicate< IdBasedLeafGridPart< Grid, idxpitype >, codim >
-      {
-        static const bool v = Dune::Capabilities::canCommunicate< Grid, codim >::v;
-      };
-
-      template< class Grid, PartitionIteratorType idxpitype >
-      struct isConforming< IdBasedLeafGridPart< Grid, idxpitype > >
       {
         static const bool v = Dune::Capabilities::isLeafwiseConforming< Grid >::v;
       };

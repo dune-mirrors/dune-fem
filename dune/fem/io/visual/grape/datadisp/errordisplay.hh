@@ -207,7 +207,7 @@ namespace Dune
     /** \endcond */
 
     typedef LocalFunctionAdapter< Error > ErrorFunctionType;
-    typedef Fem::DiscreteFunctionAdapter< SolutionType, GridPartType >
+    typedef Fem::GridFunctionAdapter< SolutionType, GridPartType >
       GridSolutionType;
     
   protected:
