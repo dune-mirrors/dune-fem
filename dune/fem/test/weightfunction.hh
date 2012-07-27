@@ -8,9 +8,9 @@ namespace Dune
 
   template< class FunctionSpaceImp >
   class WeightFunction
-  : public Fem::Function< FunctionSpaceImp, ExactSolution< FunctionSpaceImp > >
+  : public Fem::Function< FunctionSpaceImp, WeightFunction< FunctionSpaceImp > >
   {
-    typedef ExactSolution< FunctionSpaceImp > ThisType;
+    typedef WeightFunction< FunctionSpaceImp > ThisType;
     typedef Fem::Function< FunctionSpaceImp, ThisType > BaseType;
 
   public:
