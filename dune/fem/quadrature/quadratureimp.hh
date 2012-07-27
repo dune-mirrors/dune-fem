@@ -142,15 +142,6 @@ namespace Dune
     virtual int order() const = 0;
 
     /** \brief obtain GeometryType for this integration point list
-     *  \deprecated use geometryType instead 
-     */
-    DUNE_VERSION_DEPRECATED(1,3,remove)
-    virtual GeometryType geometry () const 
-    {
-      return geometryType(); 
-    }
-
-    /** \brief obtain GeometryType for this integration point list
      *
      *  Integration point lists are specified in local coordinates, i.e.,
      *  coordinates with respect to the reference element. Hence, each 

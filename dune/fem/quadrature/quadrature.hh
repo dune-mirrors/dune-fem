@@ -307,14 +307,6 @@ namespace Dune
     }
     
     /** \brief obtain GeometryType for this integration point list
-     *  \deprecated use method geometryType instead 
-     */  
-    DUNE_VERSION_DEPRECATED(1,3,remove) GeometryType geometry () const
-    {
-      return ipList_.geometryType();
-    }
-    
-    /** \brief obtain GeometryType for this integration point list
      *
      *  Integration point lists are specified in local coordinates, i.e.,
      *  coordinates with respect to the reference element. Hence, each 

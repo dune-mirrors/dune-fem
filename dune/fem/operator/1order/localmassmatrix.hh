@@ -598,18 +598,6 @@ public:
   {}
 };
 
-/** \brief Local Mass Matrix for DG Operators (deprecated, use Fem::LocalMassMatrix)*/ 
-template <class DiscreteFunctionSpaceImp, class VolumeQuadratureImp> 
-class LocalDGMassMatrix 
-  : public LocalMassMatrixImplementation< DiscreteFunctionSpaceImp, VolumeQuadratureImp >
-{
-  typedef LocalMassMatrixImplementation< DiscreteFunctionSpaceImp, VolumeQuadratureImp > BaseType;
-public:
-  DUNE_VERSION_DEPRECATED(1,3,remove) 
-  LocalDGMassMatrix( const DiscreteFunctionSpaceImp& spc, const int volQuadOrd = -1 )
-    : BaseType( spc, volQuadOrd )
-  {}
-};
 
 ///////////////////////////////////////////////////////////////////
 //

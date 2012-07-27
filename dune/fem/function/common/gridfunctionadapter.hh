@@ -341,22 +341,6 @@ namespace Dune
   };
 
 
-  //- deprecated class 
-  template< class FunctionImp, class GridPartImp >
-  class DiscreteFunctionAdapter 
-    : public GridFunctionAdapter< FunctionImp, GridPartImp > 
-  {
-    typedef GridFunctionAdapter< FunctionImp, GridPartImp > BaseType;
-  public:  
-    DUNE_VERSION_DEPRECATED(1,3,GridFunctionAdapter)
-    DiscreteFunctionAdapter ( const std::string &name,
-                              const FunctionImp &f,
-                              const GridPartImp &gridPart,
-                              unsigned int order = BaseType::DiscreteFunctionSpaceType::polynomialOrder )
-    : BaseType( name, f, gridPart, order )
-    {}
-  };
-
   namespace
   {
 

@@ -317,29 +317,10 @@ namespace Fem
      *
      *  Adds s * g to this discrete function.
      * 
-     *  \param[in]  g  discrete function to add
-     *  \param[in]  s  scalar value to scale g with
-     */
-    DUNE_VERSION_DEPRECATED(1,3,axpy)
-    void addScaled( const DiscreteFunctionInterfaceType &g, const RangeFieldType &s )
-    {
-      asImp().addScaled( g, s );
-    }
-
-    /** \brief axpy operation
-     *
-     *  Adds s * g to this discrete function.
-     * 
      *  \param[in]  s  scalar value to scale g with
      *  \param[in]  g  discrete function to add
      */
     void axpy( const RangeFieldType &s, const DiscreteFunctionInterfaceType &g )
-    {
-      asImp().axpy( s, g );
-    }
-
-    DUNE_VERSION_DEPRECATED(1,3,axpy)
-    void axpy( const DiscreteFunctionInterfaceType &g, const RangeFieldType &s )
     {
       asImp().axpy( s, g );
     }
@@ -671,13 +652,6 @@ namespace Fem
      */
     inline void freeDofPointer( RangeFieldType *dofPointer );
 
-    /** \copydoc Dune::Fem::DiscreteFunctionInterface::addScaled(const DiscreteFunctionInterfaceType &g,const RangeFieldType &s) */
-    DUNE_VERSION_DEPRECATED(1,3,axpy)
-    void addScaled ( const DiscreteFunctionInterfaceType &g, const RangeFieldType &s )
-    {
-      axpy( s, g );  
-    }
-    
     // use overloaded deprecated axpy method from BaseType
     using BaseType :: axpy;
     /** \copydoc Dune::Fem::DiscreteFunctionInterface::axpy(const RangeFieldType &s,const DiscreteFunctionInterfaceType &g) */

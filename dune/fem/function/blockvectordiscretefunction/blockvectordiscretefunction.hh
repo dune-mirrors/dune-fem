@@ -275,18 +275,6 @@ namespace Fem {
       dofVector().addScaled(v.dofVector(), scalar);
     }
 
-    /** \brief This method does the same as axpy
-     *   These two methods are here to make this class compatible to the old interface - the newton solver relies on this method for example...
-     *   In new code, axpy should be used.
-     *
-     *  \param[in]  scalar  scalar by which v has to be multiplied before adding it to *this
-     *  \param[in]  v       the other discrete function which has to be scaled and added
-     */
-    DUNE_VERSION_DEPRECATED(1,3,axpy)
-    void addScaled (const RangeFieldType& scalar, const ThisType& v) { axpy(scalar, v); } // TODO: make these methods DUNE_DEPRECATED?
-    DUNE_VERSION_DEPRECATED(1,3,axpy)
-    void addScaled (const ThisType& v, const RangeFieldType& scalar) { axpy(scalar, v); }
-
     /** \brief Obtain the (modifiable) 'index'-th block
      *
      *  \param[in]  index   index of the block

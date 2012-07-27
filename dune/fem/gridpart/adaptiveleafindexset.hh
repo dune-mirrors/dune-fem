@@ -1377,59 +1377,6 @@ namespace Dune
     }
   };
 
-  /////////////////////////////////////////////////////////////////////////
-  //
-  //  --IdBasedLeafIndexSet 
-  //
-  /////////////////////////////////////////////////////////////////////////
-  template< class GridPartImp >
-  struct IdBasedLeafIndexSetTraits
-  {   
-    // type of grid part 
-    typedef GridPartImp GridPartType;
-    // type of grid 
-    typedef typename GridPartType :: GridType GridType;
-    // this index set only supports one codimension, codim zero 
-    enum { numCodimensions = GridType :: dimension + 1 };
-    // first comdimension that is supported (not yet supported)
-    enum { startingCodimension = 0 };
-    // intersection codimensions (this is usually dimension + 1 )
-    enum { intersectionCodimension = -1 };
-    // type of codimension index set  
-    typedef CodimIndexSet< GridType >  CodimIndexSetType; 
-  };
-
-  /** \class DGAdaptiveLeafIndexSet
-   *  \brief consecutive, persistent index set for the leaf level based on the
-   *         grid's hierarchy index set
-   *
-   *  This index set generates a consecutive leaf index out of the unique global
-   *  index of each codimension 0 entity. 
-   *
-   *  \note This index sets supports only indices for codimensions 0 entities of the grid. 
-   *
-   */
-  template < class GridPartImp >
-  class IdBasedLeafIndexSet
-  : public AdaptiveIndexSetBase< IdBasedLeafIndexSetTraits< GridPartImp > > 
-  {
-    typedef AdaptiveIndexSetBase< IdBasedLeafIndexSetTraits< GridPartImp > > BaseType;
-  public:
-    typedef typename BaseType :: GridPartType GridPartType;
-    //! Constructor
-    DUNE_VERSION_DEPRECATED(1,3,remove) 
-    IdBasedLeafIndexSet (const GridPartType & gridPart) 
-      : BaseType(gridPart) 
-    {
-    }
-
-    //! return name of index set 
-    virtual std::string name () const
-    {
-      return "IdBasedLeafIndexSet";
-    }
-  };
-
   } // end namespace Fem
 
 } // end namespace Dune 
