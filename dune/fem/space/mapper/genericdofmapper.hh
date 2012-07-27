@@ -3,9 +3,9 @@
 
 #if HAVE_DUNE_LOCALFUNCTIONS
 
-#include <dune/grid/common/indexidset.hh>
+#include <dune/geometry/referenceelements.hh>
 
-#include <dune/grid/genericgeometry/referencetopologies.hh>
+#include <dune/grid/common/indexidset.hh>
 
 #include <dune/localfunctions/common/localkey.hh>
 
@@ -469,11 +469,10 @@ namespace Dune
   template< class Topology >
   inline void
   GenericDofMapper< GridPart, LocalCoefficientsMap >
-    ::build ( const LocalCoefficientsType &localCoefficients,
-              MapInfo &mapInfo )
+    ::build ( const LocalCoefficientsType &localCoefficients, MapInfo &mapInfo )
   {
-    const GenericGeometry::ReferenceTopology< dimension > &refTopology
-      = GenericGeometry::ReferenceTopologies< dimension >::get( Topology::id );
+    const GenericReferenceElement< void, dimension > &refElement
+      = GenericReferenceElements< void, dimension >::general( GeometryType( Topology() ) );
 
     mapInfo.numDofs = localCoefficients.size();
     mapInfo.localDof.resize( mapInfo.numDofs );
@@ -491,10 +490,10 @@ namespace Dune
     // build subentity information
     for( int codim = 0; codim <= dimension; ++codim )
     {
-      const unsigned int codimSize = refTopology.size( codim );
+      const unsigned int codimSize = refElement.size( codim );
       for( unsigned int subEntity = 0; subEntity < codimSize; ++subEntity )
       {
-        const unsigned int topologyId = refTopology.topologyId( codim, subEntity );
+        const unsigned int topologyId = refElement.type( subEntity, codim ).id();
 
         int &blockIdx = blockIndex_[ codim ][ topologyId >> 1 ];
         const unsigned int numDofs = counts[ mapper( codim, subEntity ) ];
