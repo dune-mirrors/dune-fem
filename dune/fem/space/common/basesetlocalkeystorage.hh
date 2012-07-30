@@ -1,19 +1,17 @@
 #ifndef DUNE_FEM_BASESETLOCALKEYSTORAGE_HH
 #define DUNE_FEM_BASESETLOCALKEYSTORAGE_HH
 
-//- Dune includes 
-#if HAVE_DUNE_GEOMETRY
-#include <dune/geometry/type.hh>
-#include <dune/geometry/typeindex.hh>
-#else
-#include <dune/common/geometrytype.hh>
-#include <dune/geometry/geometrytypeindex.hh>
-#endif
+//- dune-common includes
 #include <dune/common/exceptions.hh>
 
-//- Fem includes 
-#include <dune/fem/storage/singletonlist.hh>
+//- dune-geometry includes 
+#include <dune/geometry/type.hh>
+#include <dune/geometry/typeindex.hh>
+
+//- dune-fem includes 
 #include <dune/fem/space/common/allgeomtypes.hh>
+#include <dune/fem/storage/singletonlist.hh>
+
 
 namespace Dune 
 {
