@@ -1,5 +1,5 @@
 # do everything in the subdirs
-SUBDIRS = pass space function gridpart quadrature operator solver storage io misc test
+SUBDIRS = pass space function gridpart quadrature operator petsc solver storage io misc test
 
 noinst_LTLIBRARIES = libfem.la
 

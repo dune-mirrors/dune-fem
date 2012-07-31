@@ -1,0 +1,9 @@
+This is essentially the l2projection from the dune-fem-howto (as of r647)
+with 2 minor changes:
+
+1) The PetscDiscreteFunction does not support adaption yet. So we destroy
+   and re-create a new PetscDiscreteFunction in each EOC step.
+
+2) After MPIManager::initialize, we call Dune::Petsc::initialize. This is required
+   to set up the handling of PETSc errors. And before the program terminates, we
+   call Dune::Petsc::finalize.

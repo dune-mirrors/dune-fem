@@ -1,0 +1,5 @@
+Here are some experiments with pure PETSc. They are not meant to be useful
+and are just here for reference (maybe someone finds them useful).
+
+All programs below are only check-programs. They should compile when there is a 
+working PETSc installation. And they sould compile without PETSc.

@@ -1,0 +1,7 @@
+globalrefine: 0
+gridfilename: domain_commtest.dgf
+
+fem.prefix: ./data_commtest
+
+fem.io.datafileprefix: solution
+fem.io.outputformat: vtk-cell

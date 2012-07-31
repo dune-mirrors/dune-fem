@@ -1,0 +1,10 @@
+I configured PETSc with the following options (just to show you one
+working setup):
+
+--prefix=<MyPetscDir> --with-clanguage=C++ --with-x=0 --download-hypre=yes --with-hypre=1
+
+In the config.opts for dunecontrol, you should supply
+
+--with-petsc=<MyPetscDir> 
+
+then.

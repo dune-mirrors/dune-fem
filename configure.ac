@@ -93,6 +93,17 @@ AC_CONFIG_FILES([Makefile
      dune/fem/operator/matrix/Makefile
      dune/fem/operator/model/Makefile
      dune/fem/operator/projection/Makefile
+     dune/fem/petsc/tests/Makefile
+     dune/fem/petsc/tests/l2projection/Makefile
+     dune/fem/petsc/experiments/petsc_matrix/Makefile
+     dune/fem/petsc/experiments/Makefile
+     dune/fem/petsc/experiments/commtest/Makefile
+     dune/fem/petsc/experiments/parallel_laplace/Makefile
+     dune/fem/petsc/linearoperator/Makefile
+     dune/fem/petsc/common/Makefile
+     dune/fem/petsc/discretefunction/Makefile
+     dune/fem/petsc/Makefile
+     dune/fem/petsc/solver/Makefile
      dune/fem/io/Makefile
      dune/fem/io/test/Makefile
      dune/fem/io/file/Makefile
