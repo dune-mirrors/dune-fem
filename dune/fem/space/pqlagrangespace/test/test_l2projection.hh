@@ -10,7 +10,7 @@
 // include parameter handling
 #include <dune/fem/io/parameter.hh>
 // include basic grid parts
-#include <dune/fem/gridpart/gridpart.hh>
+#include <dune/fem/gridpart/common/gridpart.hh>
 #include <dune/fem/gridpart/adaptiveleafgridpart.hh>
 // include Lagrange discrete function space
 #include <dune/fem/space/common/adaptmanager.hh>

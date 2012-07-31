@@ -22,7 +22,7 @@
 #include  <dune/localfunctions/lagrange/pk2d.hh>
 #include  <dune/localfunctions/lagrange/pk3d.hh>
 #include  <dune/localfunctions/lagrange/q1.hh>
-#include  <dune/localfunctions/lagrange/q22d.hh>
+#include  <dune/localfunctions/lagrange/q2.hh>
 
 namespace Dune
 {
@@ -165,8 +165,8 @@ namespace Dune
     template<bool isSimplex, bool dummy>
     struct LocalFiniteElementFactoryTraits<2, isSimplex, true, 2, dummy>
     {
-      typedef Q22DLocalFiniteElement< DomainFieldType,
-                                      RangeFieldType >               LocalFiniteElementType;
+      typedef Q2LocalFiniteElement< DomainFieldType,
+                                    RangeFieldType, 2 >               LocalFiniteElementType;
       static const bool geometryTypeIsFixed = true;
     };
 

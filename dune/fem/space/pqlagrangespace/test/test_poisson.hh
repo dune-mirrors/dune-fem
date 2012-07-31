@@ -28,13 +28,14 @@
 // -----------------
 
 // grid parts 
-#include <dune/fem/gridpart/gridpart.hh>
-#include <dune/fem/gridpart/adaptiveleafgridpart.hh>
+#include <dune/fem/gridpart/common/gridpart.hh>
+#include <dune/fem/gridpart/leafgridpart.hh>
 
 // adaptation classes 
 #include <dune/fem/space/common/adaptmanager.hh>
 // lagrange space 
 #include <dune/fem/space/pqlagrangespace/pqlagrangespace.hh>
+#include <dune/fem/space/pqlagrangespace/genericlagrangespace.hh>
 /*#include <dune/fem/space/lagrangespace.hh>*/
 
 // discrete functions 
@@ -52,6 +53,8 @@
 // l2 norm and h1 norm 
 #include <dune/fem/misc/l2norm.hh>
 #include <dune/fem/misc/h1norm.hh>
+
+#include <dune/fem/misc/test.hh>
 
 // Local Includes
 // --------------
@@ -124,7 +127,7 @@ public:
   //---- MatrixObjects -------------------------------------------------------
   //---- good choice for build in solvers ------------------------------------
   //! define the type of the system matrix object
-  typedef SparseRowMatrixTraits< DiscreteSpaceType,
+  typedef Fem::SparseRowMatrixTraits< DiscreteSpaceType,
                                  DiscreteSpaceType >                 MatrixObjectTraits;
 
   //---- other choices, ISTLMatrixTraits for BCRSMatrix from DUNE-ISTL -------
