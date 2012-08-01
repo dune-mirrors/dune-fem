@@ -26,4 +26,6 @@ CLEANFILES = *.tex data/*
 commtest_SOURCES = commtest.cc
 commtest_CPPFLAGS = $(AM_CPPFLAGS)
 
+EXTRA_DIST = domain_commtest.dgf parameter_commtest
+
 include $(top_srcdir)/am/global-rules

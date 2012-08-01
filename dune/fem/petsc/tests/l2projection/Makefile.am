@@ -5,7 +5,9 @@ GRIDTYPE = YASPGRID
 GRIDDIM = 2
 POLORDER = 1
 
-EXTRA_DIST = parameter unitcube1.dgf unitcube2.dgf unitcube3.dgf
+EXTRA_DIST = parameter unitcube1.dgf unitcube2.dgf unitcube3.dgf base.hh massoperator.hh \
+						 mpiexec-petscmatrix.sh mpiexec.sh 
+	
 
 # linker flags
 LDADD = $(ALL_PKG_LDFLAGS) $(ALL_PKG_LIBS) $(DUNEMPILIBS) $(LOCAL_LIBS) $(MPI_LDFLAGS)

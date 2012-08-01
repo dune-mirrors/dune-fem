@@ -18,4 +18,7 @@ CLEANFILES = *.tex data/* rhs.out.gnuplot* solution.out.gnuplot* error.out.gnupl
 parallel_laplace_SOURCES = parallel_laplace.cc
 parallel_laplace_CPPFLAGS = $(AM_CPPFLAGS)
 
+EXTRA_DIST = function.hh l2error.hh laplaceassembler.hh mpiexec.sh \
+						printer.hh scheme.hh solver.hh
+
 include $(top_srcdir)/am/global-rules

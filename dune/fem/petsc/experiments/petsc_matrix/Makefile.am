@@ -20,4 +20,7 @@ CLEANFILES = *.tex data/*
 matrix_test_SOURCES = matrix_test.cc
 matrix_test_CPPFLAGS = $(AM_CPPFLAGS)
 
+EXTRA_DIST = function.hh l2error.hh laplaceassembler.hh printer.hh \
+						 scheme.hh solver.hh
+
 include $(top_srcdir)/am/global-rules
