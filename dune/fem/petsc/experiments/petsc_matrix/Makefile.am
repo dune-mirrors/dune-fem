@@ -1,4 +1,6 @@
 petsc_matrixdir = $(includedir)/dune/fem/petsc/experiments/petsc_matrix
+petsc_matrix_HEADERS = function.hh l2error.hh laplaceassembler.hh printer.hh \
+											 scheme.hh solver.hh
 
 #EXTRA_DIST = parameter unitcube1.dgf unitcube2.dgf unitcube3.dgf
 
@@ -20,7 +22,6 @@ CLEANFILES = *.tex data/*
 matrix_test_SOURCES = matrix_test.cc
 matrix_test_CPPFLAGS = $(AM_CPPFLAGS)
 
-EXTRA_DIST = function.hh l2error.hh laplaceassembler.hh printer.hh \
-						 scheme.hh solver.hh
+EXTRA_DIST = mpiexec.sh  
 
 include $(top_srcdir)/am/global-rules

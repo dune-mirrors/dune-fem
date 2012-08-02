@@ -519,7 +519,7 @@ protected:
     {
       odeSolver->IterativeSolver::set_output(cout);
       odeSolver->DynamicalObject::set_output(cout);
-      // linsolver_->IterativeSolver::set_output(cout);
+      linsolver_->IterativeSolver::set_output(cout);
     }
     return odeSolver;
   }

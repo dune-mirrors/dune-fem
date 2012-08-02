@@ -1,4 +1,4 @@
-l2projectiondir = $(includedir)/dune/fem/petsc/tests/l2projection
+# IGNORE_HEADERS
 
 #GRIDTYPE = SPGRID
 GRIDTYPE = YASPGRID
@@ -20,7 +20,9 @@ else
 CHECK_PROGS = 
 endif
 
+TESTS = $(CHECK_PROGS)
 check_PROGRAMS = $(CHECK_PROGS)
+
 
 CLEANFILES = *.tex data/*
 
