@@ -39,6 +39,11 @@ namespace Dune
       /** \brief type of discrete function in the operator's range */
       typedef typename BaseType::RangeFunctionType RangeFunctionType;
 
+      /** \brief field type of the operator's domain */
+      typedef typename DomainFunctionType::RangeFieldType DomainFieldType;
+      /** \brief field type of the operator's range */
+      typedef typename RangeFunctionType::RangeFieldType RangeFieldType;
+
       /** \brief obtain linearization
        *
        *  \param[in]   u    argument discrete function
