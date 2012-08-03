@@ -22,6 +22,5 @@ CLEANFILES = *.tex data/*
 matrix_test_SOURCES = matrix_test.cc
 matrix_test_CPPFLAGS = $(AM_CPPFLAGS)
 
-EXTRA_DIST = mpiexec.sh  
 
 include $(top_srcdir)/am/global-rules
