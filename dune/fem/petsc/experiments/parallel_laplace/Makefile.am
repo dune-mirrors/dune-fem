@@ -1,5 +1,5 @@
 parallel_laplacedir = $(includedir)/dune/fem/petsc/experiments/parallel_laplace
-parallel_lapalce_HEADERS= function.hh l2error.hh laplaceassembler.hh printer.hh \
+parallel_laplace_HEADERS= function.hh l2error.hh laplaceassembler.hh printer.hh \
 												  scheme.hh solver.hh
 
 # linker flags
