@@ -5,6 +5,7 @@
 #include <dune/geometry/type.hh>
 #include <dune/geometry/typeindex.hh>
 
+#include <dune/fem/gridpart/common/gridpart.hh>
 #include <dune/fem/misc/functor.hh>
 #include <dune/fem/space/common/dofmanager.hh>
 #include <dune/fem/space/dofmapper/code.hh>
