@@ -7,6 +7,7 @@
 
 #include <dune/fem/io/parameter.hh>
 #include <dune/fem/operator/common/operator.hh>
+#include <dune/fem/operator/common/differentiableoperator.hh>
 
 namespace Dune
 {
@@ -24,19 +25,20 @@ namespace Dune
      *        paramter <b>fem.solver.newton.verbose</b>; it defaults to
      *        <b>fem.solver.verbose</b>.
      */
-    template< class Op, class LInvOp >
+    template< class JacobianOperator, class LInvOp >
     class NewtonInverseOperator 
-    : public Operator< typename Op::RangeFunctionType, typename Op::DomainFunctionType > 
+    : public Fem :: Operator< typename JacobianOperator :: DomainFunctionType, 
+                              typename JacobianOperator :: RangeFunctionType > 
     {
-      typedef NewtonInverseOperator< Op, LInvOp > ThisType;
-      typedef Operator< typename Op::RangeFunctionType, typename Op::DomainFunctionType > BaseType;
-
+      typedef NewtonInverseOperator< JacobianOperator, LInvOp > ThisType;
+      typedef Fem::Operator< typename JacobianOperator :: DomainFunctionType,
+                             typename JacobianOperator :: RangeFunctionType > BaseType;
     public:
-      //! type of operator to invert
-      typedef Op OperatorType;
-
       //! type of operator's Jacobian
-      typedef typename OperatorType::JacobianOperatorType JacobianOperatorType;
+      typedef JacobianOperator JacobianOperatorType;
+      
+      //! type of operator to invert
+      typedef DifferentiableOperator<JacobianOperatorType> OperatorType;
 
       //! type of linear inverse operator
       typedef LInvOp LinearInverseOperatorType;
@@ -139,8 +141,8 @@ namespace Dune
 
 
     
-    template< class Op, class LInvOp >
-    inline void NewtonInverseOperator< Op, LInvOp >
+    template< class JacobianOperator, class LInvOp >
+    inline void NewtonInverseOperator< JacobianOperator, LInvOp >
       ::operator() ( const DomainFunctionType &u, RangeFunctionType &w ) const
     {
       DomainFunctionType residual( u );
