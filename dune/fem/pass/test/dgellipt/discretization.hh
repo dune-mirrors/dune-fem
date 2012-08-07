@@ -94,8 +94,8 @@ public:
 
   typedef StartPass<DiscreteFunctionType, startPass > Pass0Type;
   // note, the destination type of the pass 0 is the argument type of pass 1
-  typedef LocalDGElliptPass<LaplaceModelType, Pass0Type, pressureId > LastPassType;
-  typedef LocalDGPass<VelocityModelType,LastPassType, velocityId > VeloPassType;
+  typedef Fem::LocalDGElliptPass<LaplaceModelType, Pass0Type, pressureId > LastPassType;
+  typedef Fem::LocalDGPass<VelocityModelType,LastPassType, velocityId > VeloPassType;
 
   typedef typename LastSpaceType :: FunctionSpaceType FuncSpaceType;
   typedef typename FuncSpaceType::RangeType RangeType;

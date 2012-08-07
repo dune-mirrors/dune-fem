@@ -14,6 +14,8 @@
 
 namespace Dune
 {
+  namespace Fem
+  {
 
   /**
    * @brief Wrapper class for all the template magic used to call the problem
@@ -178,6 +180,8 @@ namespace Dune
     RangeTupleType valuesNeigh_;
     JacobianRangeTupleType jacobians_;
   }; // end EllipticDiscreteModelCaller 
+
+} // end namespace Fem 
 
 } // end namespace Dune 
 #endif

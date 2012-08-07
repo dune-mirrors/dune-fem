@@ -10,6 +10,10 @@
 
 namespace Dune
 {
+  /*
+  namespace Fem
+  {
+  */
 
   /**
    * @brief Converts a selector definition to a set of pairs.
@@ -20,11 +24,7 @@ namespace Dune
   template <int N1, int N2, int N3, int N4, int N5, int N6, int N7, int N8, int N9>
   struct SelectorToPairs {
     typedef Pair<
-#if DUNE_VERSION_NEWER_REV(DUNE_COMMON,2,1,0)
       integral_constant<int,N1>, 
-#else
-      integral_constant<int,N1>, 
-#endif
       typename SelectorToPairs<N2, N3, N4, N5, N6, N7, N8, N9, -1>::Type
     > Type;
   };
@@ -427,22 +427,14 @@ namespace Dune
 
     template< int id >
     inline const typename Get< id > :: Type &
-#if DUNE_VERSION_NEWER_REV(DUNE_COMMON,2,1,0)
     operator[] ( const integral_constant<int, id > idVariable ) const
-#else
-    operator[] ( const integral_constant<int, id > idVariable ) const
-#endif
     {
       return get< id >();
     }
 
     template< int id >
     inline typename Get< id > :: Type &
-#if DUNE_VERSION_NEWER_REV(DUNE_COMMON,2,1,0)
     operator[] ( const integral_constant<int, id > idVariable )
-#else
-    operator[] ( const integral_constant<int, id > idVariable )
-#endif
     {
       return get< id >();
     }
@@ -462,6 +454,8 @@ namespace Dune
   struct ElementType< N, const SelectorPair< Selector, Head, Tail > >
   : public ElementType< N, const Pair< Head, Tail > >
   {};
+
+//} // end namespace Fem 
 
 } // end namespace Dune
 

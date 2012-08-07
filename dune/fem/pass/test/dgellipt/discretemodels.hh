@@ -128,7 +128,7 @@ namespace LDGExample
       //! template-given passId, which is given for this template class.
       //! Since this is the last pass, doesn't play role, 
       //! but it's pass id can not be -1 or omitted
-      typedef DGPrimalOperator< DGDiscreteModelType, PreviousPassType, MatrixObjectTraits, passId >
+      typedef Fem::DGPrimalOperator< DGDiscreteModelType, PreviousPassType, MatrixObjectTraits, passId >
         LocalOperatorType;
 
 #if USE_DUNE_ISTL
@@ -148,7 +148,7 @@ namespace LDGExample
 
   template< class Model, int polOrd, int passId >
   struct LaplaceDiscreteModel
-  : public DGDiscreteModelDefaultWithInsideOutside
+  : public Fem::DGDiscreteModelDefaultWithInsideOutside
     < LaplaceTraits< Model, polOrd, passId >, passId >
   { 
     enum { polynomialOrder = polOrd };
@@ -319,7 +319,7 @@ namespace LDGExample
 
   template <class ModelImp,int polOrd, int passId >
   class VelocityDiscreteModel
-  : public DGDiscreteModelDefaultWithInsideOutside
+  : public Fem::DGDiscreteModelDefaultWithInsideOutside
     < VelocityTraits< ModelImp, polOrd, passId >, passId >
   {
     // do not copy this class 

@@ -27,6 +27,9 @@
 namespace Dune
 {
 
+  namespace Fem
+  {
+
 // double feature only works in serial runs 
 //#if HAVE_MPI == 0
 //#define DG_DOUBLE_FEATURE 
@@ -1918,6 +1921,9 @@ protected:
       return matrixObj_.hasPreconditionMatrix(); 
     }
   };
-#undef DG_DOUBLE_FEATURE  
+#undef DG_DOUBLE_FEATURE 
+
+  } // end namespace Fem
+
 } // end namespace Dune
 #endif

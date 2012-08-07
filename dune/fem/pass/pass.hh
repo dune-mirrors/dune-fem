@@ -13,7 +13,10 @@
 //- local includes 
 #include <dune/fem/operator/common/operator.hh>
 
-namespace Dune {
+namespace Dune 
+{
+  namespace Fem
+  {
 
   // empty non-blocking communication for start pass as default argument
   struct EmptyNonBlockingComm 
@@ -108,9 +111,7 @@ namespace Dune {
    */
   template <class DiscreteModelImp, class PreviousPassImp , int passIdImp>
   class Pass :
-    public Operator<typename PreviousPassImp::GlobalArgumentType::RangeFieldType, 
-                    typename DiscreteModelImp::Traits::DestinationType::RangeFieldType,
-                    typename PreviousPassImp::GlobalArgumentType, 
+    public Operator<typename PreviousPassImp::GlobalArgumentType, 
                     typename DiscreteModelImp::Traits::DestinationType>
   {
     template <class PT, class PP, int PI>
@@ -493,6 +494,17 @@ namespace Dune {
     mutable double computeTime_;
   };
   
+} // end namespace Fem 
+
+  // #if DUNE_FEM_COMPATIBILITY  
+  // put this in next version 1.4 
+
+  using Fem :: Pass ;
+  using Fem :: LocalPass ;
+  using Fem :: StartPass ;
+
+  // #endif // DUNE_FEM_COMPATIBILITY
+
 } // end namespace Dune
 
 #endif

@@ -37,7 +37,7 @@ namespace Dune
   };
   
   class DiscreteModelStub
-  : public DGDiscreteModelDefault< DGStubTraits >
+  : public Fem::DGDiscreteModelDefault< DGStubTraits >
   {
     typedef DGDiscreteModelDefault< DGStubTraits > BaseType;
 

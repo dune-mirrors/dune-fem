@@ -7,6 +7,8 @@
 
 namespace Dune
 {
+  namespace Fem
+  {
 
   // Internal Forward Declarations
   // -----------------------------
@@ -180,6 +182,14 @@ namespace Dune
     using BaseType::destination_;
   }; // end class InsertFunctionPass
 
+} // end namespace Fem 
+
+  // #if DUNE_FEM_COMPATIBILITY  
+  // put this in next version 1.4 
+
+  using Fem :: InsertFunctionPass ;
+
+  // #endif // DUNE_FEM_COMPATIBILITY
 
 } // end namespace Dune
 

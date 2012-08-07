@@ -23,7 +23,10 @@
 
 #include <dune/fem/quadrature/intersectionquadrature.hh>
 
-namespace Dune {
+namespace Dune 
+{
+  namespace Fem
+  {
 /*! @addtogroup PassHyp
  * Description: Solver for equations of the form
 ** \f{eqnarray*}
@@ -612,7 +615,18 @@ namespace Dune {
     LocalMassMatrixType localMassMatrix_;
     const bool notThreadParallel_;
   };
-//! @}  
+//! @} 
+
+} // end namespace Fem 
+
+// #if DUNE_FEM_COMPATIBILITY  
+// put this in next version 1.4 
+
+using Fem :: LocalDGPass ;
+
+// #endif // DUNE_FEM_COMPATIBILITY
+
+
 } // end namespace Dune
 
 #endif

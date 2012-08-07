@@ -4,7 +4,11 @@
 #include <dune/fem/operator/common/spaceoperatorif.hh>
 #include <dune/fem/pass/pass.hh>
 
-namespace Dune {
+namespace Dune 
+{
+
+  namespace Fem
+  {
 
 /** @ingroup Pass 
   \brief CreatePass takes a discrete model and a PassType (like LocalDGPass)
@@ -576,6 +580,18 @@ public:
                       )))) ))));
   }
 };
+
+} // end namespace Fem 
+
+  // #if DUNE_FEM_COMPATIBILITY  
+  // put this in next version 1.4 
+
+  using Fem :: CreatePass ;
+  using Fem :: CreatePassTree ;
+  using Fem :: CreateFeaturedPass ;
+
+  // #endif // DUNE_FEM_COMPATIBILITY
+
 
 } // end namespace Dune 
 #endif

@@ -8,7 +8,10 @@
 
 #include "callerutility.hh"
 
-namespace Dune {
+namespace Dune 
+{
+  namespace Fem
+  {
 
   /**
    * @brief Wrapper class for all the template magic used to call the problem
@@ -277,6 +280,15 @@ namespace Dune {
     double time_;
   };
 
-}
+} // end namespace Fem 
+
+  // #if DUNE_FEM_COMPATIBILITY  
+  // put this in next version 1.4 
+
+  using Fem :: DiscreteModelCallerDefault ;
+
+  // #endif // DUNE_FEM_COMPATIBILITY
+
+} // end namespace Dune
 
 #endif

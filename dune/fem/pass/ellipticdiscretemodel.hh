@@ -13,6 +13,8 @@
 
 namespace Dune
 {
+  namespace Fem
+  {
 
   /**
    * @brief Interface class for problem definition in the 
@@ -197,6 +199,8 @@ namespace Dune
     const DiscreteModelType& asImp() const { return static_cast<const DiscreteModelType&>(*this); }
   };
   
+} // end namespace Fem 
+
 }  // end namespace Dune
 
 #undef CHECK_INTERFACE_IMPLEMENTATION

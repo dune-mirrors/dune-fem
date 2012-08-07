@@ -73,10 +73,10 @@ namespace Dune {
     typedef Tuple<DF0*, DF1*, DF2*> DFTupleType;
     typedef DFTupleType::FirstPair DFPairType;
 
-    typedef LocalFunctionCreator<DFPairType>::ResultType LFTupleType;
+    typedef Fem::LocalFunctionCreator<DFPairType>::ResultType LFTupleType;
     typedef Tuple<LF0, LF1, LF2>::FirstPair LFPairType;
     
-    typedef Creator<RangeTypeEvaluator, LFPairType>::ResultType RTupleType;
+    typedef Fem::Creator<Fem::RangeTypeEvaluator, LFPairType>::ResultType RTupleType;
     typedef Tuple<R0, R1, R2>::FirstPair RPairType;
 
     typedef Fix0::GridType GridType;
@@ -93,14 +93,14 @@ namespace Dune {
 
     DFTupleType dft(&df0, &df1, &df2);
     
-    LFTupleType lft(LocalFunctionCreator<DFPairType>::apply(dft));
+    LFTupleType lft( Fem::LocalFunctionCreator<DFPairType>::apply(dft));
     //LocalFunctionCreator<DFPairType> lfc(dft);
     //   LFTupleType lft = lfc.evaluate();
 
     const bool sameLf = is_same<LFPairType, LFTupleType>::value;
     _test(sameLf == true);
 
-    RTupleType rt = Creator<RangeTypeEvaluator, LFPairType>::apply(lft);
+    RTupleType rt = Fem::Creator<Fem::RangeTypeEvaluator, LFPairType>::apply(lft);
     //RangeVectorCreator<LFPairType> rc(lft);
     //RTupleType rt = rc.evaluate();
 

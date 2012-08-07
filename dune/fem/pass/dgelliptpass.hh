@@ -18,7 +18,11 @@
 
 #include <dune/fem/io/parameter.hh>
 
-namespace Dune {
+namespace Dune 
+{
+  namespace Fem
+  {
+
 /*! @addtogroup PassEllipt
  * Description: Solver for equations of the form
 ** \f{eqnarray*}
@@ -272,6 +276,15 @@ namespace Dune {
       return eps;
     }
   };
+
+} // end namespace Fem 
+
+// #if DUNE_FEM_COMPATIBILITY  
+// put this in next version 1.4 
+
+using Fem :: SlaveDofs ;
+using Fem :: ParallelScalarProduct ;
+// #endif // DUNE_FEM_COMPATIBILITY
 
 } // end namespace Dune
 #endif

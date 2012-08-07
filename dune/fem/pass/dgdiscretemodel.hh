@@ -6,7 +6,10 @@
 #include <dune/common/fvector.hh>
 #include "selection.hh"
 
-namespace Dune {
+namespace Dune 
+{
+  namespace Fem
+  {
 
   /**
    * @brief Interface class for problem definition in the LDG context.
@@ -507,6 +510,8 @@ namespace Dune {
     const EntityType* en_;
     const EntityType* nb_;
   };
+
+} // end namespace Fem 
 
 }  // end namespace Dune
 #endif

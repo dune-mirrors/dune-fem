@@ -13,6 +13,9 @@
 namespace Dune
 {
 
+  namespace Fem
+  {
+
   /**
    * @brief Extracts elements from a tuple based on a Selector definition
    *                                                                                                                                                                           
@@ -637,6 +640,8 @@ namespace Dune
   private:
     QuadratureImp& quad_;
   };
+
+} // end namespace Fem 
 
 } // end namespace Dune
 #endif

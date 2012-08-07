@@ -34,10 +34,10 @@ namespace Dune
 
   template< class PreviousPass, int pId = -1 >
   class PassStub
-  : public Pass< PassStubTraits< GridSelector::GridType >, PreviousPass, pId >
+  : public Fem::Pass< PassStubTraits< GridSelector::GridType >, PreviousPass, pId >
   {
     typedef PassStub< PreviousPass, pId > ThisType;
-    typedef Pass< PassStubTraits< GridSelector::GridType >, PreviousPass, pId > BaseType;
+    typedef Fem::Pass< PassStubTraits< GridSelector::GridType >, PreviousPass, pId > BaseType;
 
   public:
     typedef PassStubTraits< GridSelector::GridType > PassStubTraitsType;
@@ -59,7 +59,7 @@ namespace Dune
 
 
   struct ProblemStub
-  : public DGDiscreteModelDefaultWithInsideOutside< PassStubTraits< GridSelector::GridType >, 0 > 
+  : public Fem::DGDiscreteModelDefaultWithInsideOutside< PassStubTraits< GridSelector::GridType >, 0 > 
   {
     typedef PassStubTraits<GridSelector::GridType> Traits;
   };
