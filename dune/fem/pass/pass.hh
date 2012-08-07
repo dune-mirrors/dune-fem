@@ -472,7 +472,7 @@ namespace Dune
     void compute(const ArgumentType& arg, DestinationType& dest) const 
     {
       // get stopwatch 
-      Timer timer; 
+      Dune::Timer timer; 
       
       prepare(arg, dest);
       
