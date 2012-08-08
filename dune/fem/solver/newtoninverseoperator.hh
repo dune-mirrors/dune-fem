@@ -15,6 +15,49 @@ namespace Dune
   namespace Fem
   {
 
+    struct NewtonParameter 
+    : public LocalParameter< NewtonParameter, NewtonParameter>
+    {
+      NewtonParameter(){}
+
+      virtual double toleranceParameter () const 
+      {
+        return Dune::Parameter::getValue< double >( "fem.solver.newton.tolerance", 1e-6 );
+      }
+
+      virtual double linAbsTolParameter ( const double &tolerance )  const 
+      {
+        return Dune::Parameter::getValue< double >( "fem.solver.newton.linabstol", tolerance / 8 );
+      }
+
+      virtual double linReductionParameter ( const double &tolerance ) const 
+      {
+        return Dune::Parameter::getValue< double >( "fem.solver.newton.linreduction", tolerance / 8 );
+      }
+
+      virtual bool verbose () const 
+      {
+        const bool v = Parameter::getValue< bool >( "fem.solver.verbose", false );
+        return Parameter::getValue< bool >( "fem.solver.newton.verbose", v );
+      }
+
+      virtual bool linearSolverVerbose () const 
+      {
+        const bool v = Parameter::getValue< bool >( "fem.solver.verbose", false );
+        return Parameter::getValue< bool >( "fem.solver.newton.linear.verbose", v );
+      }
+
+      virtual int maxIterationsParameter () const 
+      {
+        return Parameter::getValue< int >( "fem.solver.newton.maxiterations", std::numeric_limits< int >::max() );
+      }
+
+      virtual int maxLinearIterationsParameter () const 
+      {
+        return Parameter::getValue< int >( "fem.solver.newton.maxlineariterations", std::numeric_limits< int >::max() );
+      }
+    };
+
     /** \class NewtonInverseOperator >
      *  \brief inverse operator based on a newton scheme
      *
@@ -55,14 +98,17 @@ namespace Dune
        *  \note The tolerance is read from the paramter
        *        <b>fem.solver.newton.tolerance</b>
        */
-      explicit NewtonInverseOperator ( OperatorType &op )
+      explicit NewtonInverseOperator ( OperatorType &op, 
+                                       const NewtonParameter &parameter = NewtonParameter() )
       : op_( op ),
-        tolerance_( toleranceParameter() ),
-        linAbsTol_( linAbsTolParameter( tolerance_ ) ),
-        linReduction_( linReductionParameter( tolerance_ ) ),
-        verbose_( verbosityParameter() ),
-        maxIterations_( maxIterationsParameter() ),
-        maxLinearIterations_( maxLinearIterationsParameter() )
+        param_( parameter.clone() ),
+        tolerance_( param_->toleranceParameter() ),
+        linAbsTol_( param_->linAbsTolParameter( tolerance_ ) ),
+        linReduction_( param_->linReductionParameter( tolerance_ ) ),
+        verbose_( param_->verbose() ),
+        linearSolverVerbose_( param_->linearSolverVerbose() ),
+        maxIterations_( param_->maxIterationsParameter() ),
+        maxLinearIterations_( param_->maxLinearIterationsParameter() )
       {}
 
       /** constructor
@@ -70,14 +116,17 @@ namespace Dune
        *  \param[in]  op       operator to invert
        *  \param[in]  epsilon  tolerance for norm of residual
        */
-      NewtonInverseOperator ( OperatorType &op, const DomainFieldType &epsilon )
+      NewtonInverseOperator ( OperatorType &op, const DomainFieldType &epsilon,
+                              const NewtonParameter &parameter = NewtonParameter() )
       : op_( op ),
+        param_( parameter.clone() ),
         tolerance_( epsilon ),
-        linAbsTol_( linAbsTolParameter( tolerance_ ) ),
-        linReduction_( linReductionParameter( tolerance_ ) ),
-        verbose_( verbosityParameter() ),
-        maxIterations_( maxIterationsParameter() ),
-        maxLinearIterations_( maxLinearIterationsParameter() )
+        linAbsTol_( param_->linAbsTolParameter( tolerance_ ) ),
+        linReduction_( param_->linReductionParameter( tolerance_ ) ),
+        verbose_( param_->verbose() ),
+        linearSolverVerbose_( param_->linearSolverVerbose() ),
+        maxIterations_( param_->maxIterationsParameter() ),
+        maxLinearIterations_( param_->maxLinearIterationsParameter() )
       {}
         
       virtual void operator() ( const DomainFunctionType &u, RangeFunctionType &w ) const;
@@ -98,40 +147,12 @@ namespace Dune
       }
 
     private:
-      static DomainFieldType toleranceParameter ()
-      {
-        return Dune::Parameter::getValue< DomainFieldType >( "fem.solver.newton.tolerance", 1e-6 );
-      }
-
-      static DomainFieldType linAbsTolParameter ( const DomainFieldType &tolerance )
-      {
-        return Dune::Parameter::getValue< DomainFieldType >( "fem.solver.newton.linabstol", tolerance / 8 );
-      }
-
-      static DomainFieldType linReductionParameter ( const DomainFieldType &tolerance )
-      {
-        return Dune::Parameter::getValue< DomainFieldType >( "fem.solver.newton.linreduction", tolerance / 8 );
-      }
-
-      static bool verbosityParameter ()
-      {
-        const bool v = Parameter::getValue< bool >( "fem.solver.verbose", false );
-        return Parameter::getValue< bool >( "fem.solver.newton.verbose", v );
-      }
-
-      static int maxIterationsParameter ()
-      {
-        return Parameter::getValue< int >( "fem.solver.newton.maxiterations", std::numeric_limits< int >::max() );
-      }
-
-      static int maxLinearIterationsParameter ()
-      {
-        return Parameter::getValue< int >( "fem.solver.newton.maxlineariterations", std::numeric_limits< int >::max() );
-      }
 
       OperatorType &op_;
-      const DomainFieldType tolerance_, linAbsTol_, linReduction_;;
+      const NewtonParameter *param_;
+      const double tolerance_, linAbsTol_, linReduction_;;
       const bool verbose_;
+      const bool linearSolverVerbose_;
       const int maxIterations_;
       const int maxLinearIterations_;
 
@@ -166,7 +187,7 @@ namespace Dune
         //        rather than the relative error
         //        (see also dune-fem/dune/fem/solver/inverseoperators.hh)
         const int remLinearIts = maxLinearIterations_ - linearIterations_;
-        const LinearInverseOperatorType jInv( jOp, linReduction_, linAbsTol_ / delta, remLinearIts );
+        const LinearInverseOperatorType jInv( jOp, linReduction_, linAbsTol_ / delta, remLinearIts, linearSolverVerbose_ );
         
         dw.clear();
         jInv( residual, dw );
