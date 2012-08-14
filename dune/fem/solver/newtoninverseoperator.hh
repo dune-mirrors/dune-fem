@@ -76,6 +76,7 @@ namespace Dune
       typedef NewtonInverseOperator< JacobianOperator, LInvOp > ThisType;
       typedef Fem::Operator< typename JacobianOperator :: DomainFunctionType,
                              typename JacobianOperator :: RangeFunctionType > BaseType;
+
     public:
       //! type of operator's Jacobian
       typedef JacobianOperator JacobianOperatorType;
@@ -101,14 +102,13 @@ namespace Dune
       explicit NewtonInverseOperator ( OperatorType &op, 
                                        const NewtonParameter &parameter = NewtonParameter() )
       : op_( op ),
-        param_( parameter.clone() ),
-        tolerance_( param_->toleranceParameter() ),
-        linAbsTol_( param_->linAbsTolParameter( tolerance_ ) ),
-        linReduction_( param_->linReductionParameter( tolerance_ ) ),
-        verbose_( param_->verbose() ),
-        linearSolverVerbose_( param_->linearSolverVerbose() ),
-        maxIterations_( param_->maxIterationsParameter() ),
-        maxLinearIterations_( param_->maxLinearIterationsParameter() )
+        tolerance_( parameter.toleranceParameter() ),
+        linAbsTol_( parameter.linAbsTolParameter( tolerance_ ) ),
+        linReduction_( parameter.linReductionParameter( tolerance_ ) ),
+        verbose_( parameter.verbose() ),
+        linVerbose_( parameter.linearSolverVerbose() ),
+        maxIterations_( parameter.maxIterationsParameter() ),
+        maxLinearIterations_( parameter.maxLinearIterationsParameter() )
       {}
 
       /** constructor
@@ -119,27 +119,19 @@ namespace Dune
       NewtonInverseOperator ( OperatorType &op, const DomainFieldType &epsilon,
                               const NewtonParameter &parameter = NewtonParameter() )
       : op_( op ),
-        param_( parameter.clone() ),
         tolerance_( epsilon ),
-        linAbsTol_( param_->linAbsTolParameter( tolerance_ ) ),
-        linReduction_( param_->linReductionParameter( tolerance_ ) ),
-        verbose_( param_->verbose() ),
-        linearSolverVerbose_( param_->linearSolverVerbose() ),
-        maxIterations_( param_->maxIterationsParameter() ),
-        maxLinearIterations_( param_->maxLinearIterationsParameter() )
+        linAbsTol_( parameter.linAbsTolParameter( tolerance_ ) ),
+        linReduction_( parameter.linReductionParameter( tolerance_ ) ),
+        verbose_( parameter.verbose() ),
+        linVerbose_( parameter.linearSolverVerbose() ),
+        maxIterations_( parameter.maxIterationsParameter() ),
+        maxLinearIterations_( parameter.maxLinearIterationsParameter() )
       {}
         
       virtual void operator() ( const DomainFunctionType &u, RangeFunctionType &w ) const;
 
-      int iterations () const
-      {
-        return iterations_;
-      }
-
-      int linearIterations () const
-      {
-        return linearIterations_;
-      }
+      int iterations () const { return iterations_; }
+      int linearIterations () const { return linearIterations_; }
 
       bool converged () const
       {
@@ -147,12 +139,10 @@ namespace Dune
       }
 
     private:
-
       OperatorType &op_;
-      const NewtonParameter *param_;
-      const double tolerance_, linAbsTol_, linReduction_;;
+      const double tolerance_, linAbsTol_, linReduction_;
       const bool verbose_;
-      const bool linearSolverVerbose_;
+      const bool linVerbose_;
       const int maxIterations_;
       const int maxLinearIterations_;
 
@@ -187,7 +177,7 @@ namespace Dune
         //        rather than the relative error
         //        (see also dune-fem/dune/fem/solver/inverseoperators.hh)
         const int remLinearIts = maxLinearIterations_ - linearIterations_;
-        const LinearInverseOperatorType jInv( jOp, linReduction_, linAbsTol_ / delta, remLinearIts, linearSolverVerbose_ );
+        const LinearInverseOperatorType jInv( jOp, linReduction_, linAbsTol_ / delta, remLinearIts, linVerbose_ );
         
         dw.clear();
         jInv( residual, dw );
