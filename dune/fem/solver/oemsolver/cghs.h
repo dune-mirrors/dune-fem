@@ -39,7 +39,7 @@ inline
 std::pair < int , double > 
 cghs_algo( const CommunicatorType & comm, 
       unsigned int N, const MATRIX &A, const PC_MATRIX& C,
-      const double *b, double *x, double eps,
+      const double *b, double *x, double eps, int maxIter,
       bool detailed ) 
 {
   if ( N==0 )
@@ -89,7 +89,7 @@ cghs_algo( const CommunicatorType & comm,
 
   double gg = MultType :: ddot(A,g,g);
 
-  while ( gg > err ) 
+  while ( gg > err && its < maxIter ) 
   {
     // apply multiplication 
     MultType :: mult_pc(A,C,r,p,tmp);
@@ -138,9 +138,10 @@ inline
 std::pair < int , double > 
 cghs( const CommunicatorType & comm,
       unsigned int N, const MATRIX &A, const PC_MATRIX &C,
-      const double *b, double *x, double eps, bool detailed ) 
+      const double *b, double *x, double eps, int maxIter, 
+      bool detailed ) 
 {
-  return cghs_algo<true> (comm,N,A,C,b,x,eps,detailed);
+  return cghs_algo<true> (comm,N,A,C,b,x,eps,maxIter,detailed);
 }
 
 // cghs without preconditioning 
@@ -149,9 +150,10 @@ inline
 std::pair < int , double > 
 cghs( const CommunicatorType & comm,
       unsigned int N, const MATRIX &A,
-      const double *b, double *x, double eps, bool detailed ) 
+      const double *b, double *x, double eps, 
+      int maxIter, bool detailed ) 
 {
-  return cghs_algo<false> (comm,N,A,A,b,x,eps,detailed);
+  return cghs_algo<false> (comm,N,A,A,b,x,eps,maxIter,detailed);
 }
 
 #endif // CGHS_BLAS_H

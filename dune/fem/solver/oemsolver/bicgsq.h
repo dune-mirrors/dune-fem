@@ -28,26 +28,26 @@
 template< class MATRIX > inline
 int
 bicgsq( unsigned N, const MATRIX &A,
-	const double *b, double *x, double eps );
+	const double *b, double *x, double eps, int maxIter );
 
 
 template< class MATRIX > inline
 int
 bicgsq( unsigned N, const MATRIX &A,
-	const double *b, double *x, double eps, bool detailed );
+	const double *b, double *x, double eps, int maxIter, bool detailed );
 
 
 
 template< class MATRIX, class PC_MATRIX > inline
 int
 bicgsq( unsigned N, const MATRIX &A, const PC_MATRIX &C,
-	const double *b, double *x, double eps );
+	const double *b, double *x, double eps, int maxIter );
 
 
 template< class MATRIX, class PC_MATRIX > inline
 int
 bicgsq( unsigned N, const MATRIX &A, const PC_MATRIX &C,
-	const double *b, double *x, double eps, bool detailed );
+	const double *b, double *x, double eps, int maxIter, bool detailed );
 
 
 // ============================================================================
@@ -62,7 +62,7 @@ bicgsq( unsigned N, const MATRIX &A, const PC_MATRIX &C,
 template< class MATRIX, class PC_MATRIX > inline
 int
 bicgsq( unsigned N, const MATRIX &A, const PC_MATRIX &C,
-	const double *b, double *x, double eps, bool detailed  ) {
+	const double *b, double *x, double eps, int maxIter, bool detailed  ) {
   double *rT = new double[N];
   double *d  = new double[N];
   double *h  = new double[N];
@@ -87,7 +87,8 @@ bicgsq( unsigned N, const MATRIX &A, const PC_MATRIX &C,
   assert( ddot(N,rT,1,rT,1)>1e-40 );
   rTh=ddot(N,rT,1,h,1);
   rTr=ddot(N,r,1,r,1);
-  while ( rTr>err ) {
+  while ( rTr>err  && its < maxIter ) 
+  {
     mult(A,d,aux1);
     mult(C,aux1,Sd);
     rTSd=ddot(N,rT,1,Sd,1);
@@ -127,8 +128,8 @@ bicgsq( unsigned N, const MATRIX &A, const PC_MATRIX &C,
 template< class MATRIX, class PC_MATRIX > inline
 int
 bicgsq( unsigned N, const MATRIX &A, const PC_MATRIX &C,
-	const double *b, double *x, double eps ) {
-  return bicgsq(N,A,C,b,x,eps,false);
+	const double *b, double *x, double eps, int maxIter ) {
+  return bicgsq(N,A,C,b,x,eps,maxIter,false);
 }
 
 // ============================================================================
@@ -137,7 +138,7 @@ bicgsq( unsigned N, const MATRIX &A, const PC_MATRIX &C,
 template< class MATRIX > inline
 int
 bicgsq( unsigned N, const MATRIX &A,
-	const double *b, double *x, double eps, bool detailed  ) {
+	const double *b, double *x, double eps, int maxIter, bool detailed  ) {
   double *rT = new double[N];
   double *d  = new double[N];
   double *h  = new double[N];
@@ -160,7 +161,8 @@ bicgsq( unsigned N, const MATRIX &A,
   assert( ddot(N,rT,1,rT,1)>1e-40 );
   rTh=ddot(N,rT,1,h,1);
   rTr=ddot(N,r,1,r,1);
-  while ( rTr>err ) {
+  while ( rTr>err && its <maxIter ) 
+  {
     mult(A,d,Ad);
     rTAd=ddot(N,rT,1,Ad,1);
     assert( fabs(rTAd)>1e-40 );
@@ -198,8 +200,8 @@ bicgsq( unsigned N, const MATRIX &A,
 template< class MATRIX > inline
 int
 bicgsq( unsigned N, const MATRIX &A,
-	const double *b, double *x, double eps ) {
-  return bicgsq(N,A,b,x,eps,false);
+	const double *b, double *x, double eps, int maxIter ) {
+  return bicgsq(N,A,b,x,eps,maxIter,false);
 }
 
 // ============================================================================

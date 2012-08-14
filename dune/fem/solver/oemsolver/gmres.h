@@ -28,7 +28,7 @@ inline
 std::pair<int,double> 
 gmres_algo (const CommunicatorType & comm,
        int m, int n, const Matrix &A, const PC_Matrix & C, 
-       const double *b , double *x, double eps,
+       const double *b , double *x, double eps, int maxIter,
        bool detailed ) 
 {
   if ( n<=0 )
@@ -163,7 +163,7 @@ gmres_algo (const CommunicatorType & comm,
         // korrigiere X
         dgemv(DuneCBlas::NoTranspose,n,j,-1.,V,n,y,1,1.,x,1);
       }
-    } while ( fabs(y[j])>=eps*nrm2b );
+    } while ( fabs(y[j])>=eps*nrm2b && io < maxIter );
 
     error = std::abs(y[j]);
     
@@ -201,9 +201,9 @@ template<class CommunicatorType,
 inline 
 std::pair<int,double> 
 gmres( const CommunicatorType & comm, 
-      int m, int n, const Matrix &A, const double *b, double *x, double eps , bool verbose )
+      int m, int n, const Matrix &A, const double *b, double *x, double eps , int maxIter, bool verbose )
 {
-  return gmres_algo<false> (comm,m,n,A,A,b,x,eps,verbose);
+  return gmres_algo<false> (comm,m,n,A,A,b,x,eps,maxIter,verbose);
 }
 
 template<class CommunicatorType, 
@@ -213,9 +213,9 @@ inline
 std::pair<int,double> 
 gmres( const CommunicatorType & comm, 
       int m, int n, const Matrix &A, const PC_Matrix & C ,
-      const double *b, double *x, double eps , bool verbose )
+      const double *b, double *x, double eps , int maxIter, bool verbose )
 {
-  return gmres_algo<true> (comm,m,n,A,C,b,x,eps,verbose);
+  return gmres_algo<true> (comm,m,n,A,C,b,x,eps,maxIter,verbose);
 }
 
 // ============================================================================

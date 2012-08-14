@@ -44,7 +44,7 @@ inline
 std::pair<int,double> 
 bicgstab_algo( const CommunicatorType & comm,
     unsigned int N, const MATRIX &A, const PC_MATRIX & C,
-	  const double *rhs, double *x, double eps, bool detailed ) 
+	  const double *rhs, double *x, double eps, int maxIter, bool detailed ) 
 {
   if(N == 0) 
   {
@@ -115,7 +115,7 @@ bicgstab_algo( const CommunicatorType & comm,
   rTr = MultType::ddot(A,r,r);
   rTh = MultType::ddot(A,rT,s);
  
-  while( rTr>err ) 
+  while( rTr>err && its < maxIter ) 
   {
     // do multiply 
     MultType :: mult_pc(A,C,d,Ad,tmp);
@@ -197,10 +197,11 @@ template<class CommunicatorType,
 inline
 std::pair<int,double> 
 bicgstab( const CommunicatorType & comm,
-    unsigned int N, const MATRIX &A,
-	  const double *b, double *x, double eps, bool verbose ) 
+          unsigned int N, const MATRIX &A,
+      	  const double *b, double *x, double eps,
+          int maxIter, bool verbose ) 
 {
-  return bicgstab_algo<false>(comm,N,A,A,b,x,eps,verbose);
+  return bicgstab_algo<false>(comm,N,A,A,b,x,eps,maxIter,verbose);
 }
 
 // bicgstab with pc matrix 
@@ -210,10 +211,11 @@ template<class CommunicatorType,
 inline
 std::pair<int,double> 
 bicgstab( const CommunicatorType & comm,
-    unsigned int N, const MATRIX &A, const PC_MATRIX & C,
-	  const double *b,double *x, double eps, bool verbose ) 
+          unsigned int N, const MATRIX &A, 
+          const PC_MATRIX & C, const double *b, 
+          double *x, double eps, int maxIter, bool verbose ) 
 {
-  return bicgstab_algo<true>(comm,N,A,C,b,x,eps,verbose);
+  return bicgstab_algo<true>(comm,N,A,C,b,x,eps,maxIter,verbose);
 }
 
 #endif // BICGSTAB_BLAS_H

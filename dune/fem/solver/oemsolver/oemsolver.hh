@@ -1,5 +1,5 @@
-#ifndef DUNE_OEMSOLVER_HH
-#define DUNE_OEMSOLVER_HH
+#ifndef DUNE_FEM_OEMSOLVER_HH
+#define DUNE_FEM_OEMSOLVER_HH
 
 //- system includes
 #include <limits>
@@ -372,7 +372,7 @@ namespace Dune
       static ReturnValueType call(OperatorImp & op, 
                        const DiscreteFunctionImp & arg, 
                        DiscreteFunctionImp & dest, 
-                       double eps, bool verbose)
+                       double eps, int maxIter, bool verbose)
       {
         // use communication class of grid
         // see dune-common/common/collectivecommunication.hh 
@@ -383,13 +383,13 @@ namespace Dune
         {
           return OEMSolver::cghs(arg.space().grid().comm(),
                      size,op.systemMatrix(),op.preconditionMatrix(),
-                     arg.leakPointer(),dest.leakPointer(),eps,verbose);
+                     arg.leakPointer(),dest.leakPointer(),eps,maxIter,verbose);
         }
         else 
         {
           return OEMSolver::cghs(arg.space().grid().comm(),
                     size,op.systemMatrix(),
-                    arg.leakPointer(),dest.leakPointer(),eps,verbose);
+                    arg.leakPointer(),dest.leakPointer(),eps,maxIter,verbose);
         }
       }
     };
@@ -402,7 +402,7 @@ namespace Dune
       static ReturnValueType call(OperatorImp & op, 
                        const DiscreteFunctionImp & arg, 
                        DiscreteFunctionImp & dest, 
-                       double eps, bool verbose)
+                       double eps, int maxIter, bool verbose)
       {
         // use communication class of grid
         // see dune-common/common/collectivecommunication.hh 
@@ -410,7 +410,7 @@ namespace Dune
         int size = arg.space().size();
         return OEMSolver::cghs(arg.space().grid().comm(),
                   size,op.systemMatrix(),
-                  arg.leakPointer(),dest.leakPointer(),eps,verbose);
+                  arg.leakPointer(),dest.leakPointer(),eps,maxIter,verbose);
       }
     };
 
@@ -430,7 +430,7 @@ namespace Dune
              bool verbose )
     : op_(op),
       epsilon_( absLimit ),
-      maxIter_(maxIter ),
+      maxIter_( maxIter ),
       verbose_( verbose ),
       iterations_( 0 )
     {
@@ -477,7 +477,7 @@ namespace Dune
                      // OEMSolver::PreconditionInterface
                      Conversion<OperatorType, OEMSolver::PreconditionInterface > ::exists >::
                        // call solver, see above 
-                       call(op_,arg,dest,epsilon_,verbose_);
+                       call(op_,arg,dest,epsilon_,maxIter_,verbose_);
 
       iterations_ = val.first;
 
@@ -525,20 +525,20 @@ namespace Dune
       static ReturnValueType call(OperatorImp & op, 
                        const DiscreteFunctionImp & arg, 
                        DiscreteFunctionImp & dest, 
-                       double eps, bool verbose)
+                       double eps, int maxIter, bool verbose)
       {
         int size = arg.space().size();
         if(op.hasPreconditionMatrix())
         {
           return OEMSolver::bicgstab(arg.space().grid().comm(),
                     size,op.systemMatrix(),op.preconditionMatrix(),
-                    arg.leakPointer(),dest.leakPointer(),eps,verbose);
+                    arg.leakPointer(),dest.leakPointer(),eps,maxIter,verbose);
         }
         else 
         {
           return OEMSolver::bicgstab(arg.space().grid().comm(),
                     size,op.systemMatrix(),
-                    arg.leakPointer(),dest.leakPointer(),eps,verbose);
+                    arg.leakPointer(),dest.leakPointer(),eps,maxIter,verbose);
         }
       }
     };
@@ -551,12 +551,12 @@ namespace Dune
       static ReturnValueType call(OperatorImp & op, 
                        const DiscreteFunctionImp & arg, 
                        DiscreteFunctionImp & dest, 
-                       double eps, bool verbose)
+                       double eps, int maxIter, bool verbose)
       {
         int size = arg.space().size();
         return OEMSolver::bicgstab(arg.space().grid().comm(),
                   size,op.systemMatrix(),
-                  arg.leakPointer(),dest.leakPointer(),eps,verbose);
+                  arg.leakPointer(),dest.leakPointer(),eps,maxIter,verbose);
       }
     };
 
@@ -625,7 +625,7 @@ namespace Dune
                      // OEMSolver::PreconditionInterface
                      Conversion<OperatorType, OEMSolver::PreconditionInterface > ::exists >::
                        // call solver, see above 
-                       call(op_,arg,dest,epsilon_,verbose_);
+                       call(op_,arg,dest,epsilon_,maxIter_,verbose_);
 
       iterations_ = val.first;
 
@@ -728,7 +728,7 @@ namespace Dune
       int size = arg.space().size();
 
       int iter = OEMSolver::bicgsq(size,op_.systemMatrix(),
-          arg.leakPointer(),dest.leakPointer(),epsilon_,verbose_);
+          arg.leakPointer(),dest.leakPointer(),epsilon_,maxIter_,verbose_);
       
       iterations_ = iter;
 
@@ -772,14 +772,14 @@ namespace Dune
       static ReturnValueType call(OperatorImp & op, 
                        const DiscreteFunctionImp & arg, 
                        DiscreteFunctionImp & dest, 
-                       int inner, double eps, bool verbose)
+                       int inner, double eps, int maxIter, bool verbose)
       {
         int size = arg.space().size();
         if(op.hasPreconditionMatrix())
         {
           return OEMSolver::gmres(arg.space().grid().comm(),
                    inner,size,op.systemMatrix(),op.preconditionMatrix(),
-                   arg.leakPointer(),dest.leakPointer(),eps,verbose);
+                   arg.leakPointer(),dest.leakPointer(),eps,maxIter,verbose);
         }
         // in parallel case we need special treatment, if no preconditoner exist
         else if( arg.space().grid().comm().size() > 1 )
@@ -788,13 +788,13 @@ namespace Dune
           FakeConditionerType preConditioner(size,opSolve);
           return OEMSolver::gmres(arg.space().grid().comm(),
                    inner,size,op.systemMatrix(),preConditioner,
-                   arg.leakPointer(),dest.leakPointer(),eps,verbose);
+                   arg.leakPointer(),dest.leakPointer(),eps,maxIter,verbose);
         }
         else 
         {
           return OEMSolver::gmres(arg.space().grid().comm(),
                    inner,size,op.systemMatrix(),
-                   arg.leakPointer(),dest.leakPointer(),eps,verbose);
+                   arg.leakPointer(),dest.leakPointer(),eps,maxIter,verbose);
         }
       }
     };
@@ -807,7 +807,7 @@ namespace Dune
       static ReturnValueType call(OperatorImp & op, 
                        const DiscreteFunctionImp & arg, 
                        DiscreteFunctionImp & dest, 
-                       int inner, double eps, bool verbose)
+                       int inner, double eps, int maxIter, bool verbose)
       {
         int size = arg.space().size();
         if( arg.space().grid().comm().size() > 1 )
@@ -816,13 +816,13 @@ namespace Dune
           FakeConditionerType preConditioner(size,opSolve);
           return OEMSolver::gmres(arg.space().grid().comm(),
                    inner,size,op.systemMatrix(),preConditioner,
-                   arg.leakPointer(),dest.leakPointer(),eps,verbose);
+                   arg.leakPointer(),dest.leakPointer(),eps,maxIter,verbose);
         }
         else 
         {
           return OEMSolver::gmres(arg.space().grid().comm(),
                    inner,size,op.systemMatrix(),
-                   arg.leakPointer(),dest.leakPointer(),eps,verbose);
+                   arg.leakPointer(),dest.leakPointer(),eps,maxIter,verbose);
         }
       }
     };
@@ -892,11 +892,11 @@ namespace Dune
                      // OEMSolver::PreconditionInterface
                      Conversion<OperatorType, OEMSolver::PreconditionInterface > ::exists >::
                        // call solver, see above 
-                       call(op_,arg,dest,inner,epsilon_,verbose_);
+                       call(op_,arg,dest,inner,epsilon_,maxIter_,verbose_);
 
       iterations_ = val.first;
 
-      if(arg.space().grid().comm().rank() == 0)
+      if( arg.space().grid().comm().rank() == 0 && verbose_ )
       {
         std::cout << "OEM-GMRES: " << val.first << " iterations! Error: " << val.second << "\n";
       }
@@ -944,7 +944,7 @@ namespace Dune
     template <class SolverType, bool hasPreconditioning> 
     struct SolverCaller 
     {
-      template <class OperatorImp, class PreConMatrix, class DiscreteFunctionImp> 
+      template< class OperatorImp, class PreConMatrix, class DiscreteFunctionImp > 
       static void solve(SolverType & solver, 
                  OperatorImp & op, 
                  const PreConMatrix & pm, 
@@ -952,7 +952,6 @@ namespace Dune
                  DiscreteFunctionImp & dest) 
       {
         int size = arg.space().size();
-        solver.set_max_number_of_iterations(size);
 
         OEMSolver::SolverInterfaceImpl<OperatorImp> opSolve(op,size); 
 
@@ -998,8 +997,6 @@ namespace Dune
         int size = arg.space().size();
         OEMSolver::SolverInterfaceImpl<OperatorImp> opSolve(op,size); 
         
-        solver.set_max_number_of_iterations(size);
-
         // in parallel runs we need fake pre conditioner to 
         // project vectors onto interior  
         if(arg.space().grid().comm().size() > 1)
@@ -1064,6 +1061,7 @@ namespace Dune
       prepare ( arg, dest );
 
       solver_.set_tolerance(epsilon_);
+      solver_.set_max_number_of_iterations( maxIter_ );
 
       if(verbose_)
       {
@@ -1118,8 +1116,6 @@ namespace Dune
         OEMSolver::PreconditionerImpl<PreConMatrix> pre(pm,size); 
         solver.set_preconditioner(pre);
         
-        solver.set_max_number_of_iterations(size);
-
         // note argument and destination are toggled 
         solver.solve(opSolve, dest.leakPointer() , arg.leakPointer() );
         solver.unset_preconditioner();
@@ -1211,6 +1207,7 @@ namespace Dune
       prepare ( arg, dest );
 
       solver_.set_tolerance(epsilon_);
+      solver_.set_max_number_of_iterations( maxIter_ );
 
       if(verbose_)
       {
@@ -1266,7 +1263,6 @@ namespace Dune
       {
         int size = arg.space().size();
         OEMSolver::SolverInterfaceImpl<OperatorImp> opSolve(op,size); 
-        solver.set_max_number_of_iterations(size);
 
         OEMSolver::PreconditionerImpl<PreConMatrix> pre(pm,size); 
         solver.set_preconditioner(pre);
@@ -1305,7 +1301,6 @@ namespace Dune
       {
         int size = arg.space().size();
         OEMSolver::SolverInterfaceImpl<OperatorImp> opSolve(op,size); 
-        solver.set_max_number_of_iterations(size);
 
         // note argument and destination are toggled 
         solver.solve(opSolve, dest.leakPointer() , arg.leakPointer() );
@@ -1359,9 +1354,10 @@ namespace Dune
       // prepare operator 
       prepare ( arg, dest );
 
-      solver_.set_tolerance(epsilon_);
+      solver_.set_tolerance( epsilon_ );
+      solver_.set_max_number_of_iterations( maxIter_ );
 
-      if(verbose_)
+      if( verbose_ )
       {
         solver_.IterativeSolver::set_output(std::cout);
         solver_.DynamicalObject::set_output(std::cout);
@@ -1403,4 +1399,4 @@ namespace Dune
 
 
 } // end namespace Dune 
-#endif
+#endif //#indef DUNE_FEM_OEMSOLVER_HH
