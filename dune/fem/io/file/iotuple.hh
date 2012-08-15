@@ -1,5 +1,5 @@
-#ifndef DUNE_INPUTOUTPUTTUPLES_HH
-#define DUNE_INPUTOUTPUTTUPLES_HH
+#ifndef DUNE_FEM_INPUTOUTPUTTUPLES_HH
+#define DUNE_FEM_INPUTOUTPUTTUPLES_HH
 
 //- system includes 
 #include <string>
@@ -499,6 +499,6 @@ namespace Dune
 
   } // namespace Fem   
 
-} // end namespace Dune 
+} // namespace Dune 
 
-#endif // #ifndef DUNE_INPUTOUTPUTTUPLES_HH
+#endif // #ifndef DUNE_FEM_INPUTOUTPUTTUPLES_HH

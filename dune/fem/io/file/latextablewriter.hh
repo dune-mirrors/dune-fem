@@ -402,8 +402,8 @@ namespace Dune
       return preamble;
     }
 
-  }
+  } // namespace Fem
 
-}
+} // namespace Dune
 
 #endif // #ifndef DUNE_FEM_LATEXTABLEWRITER_HH
