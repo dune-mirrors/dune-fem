@@ -13,7 +13,7 @@ namespace Dune
 {
 
   // deprecated class (use DGL2Projection instead)
-  struct L2ProjectionImpl : public DGL2ProjectionImpl
+  struct L2ProjectionImpl : public Fem::DGL2ProjectionImpl
   {
     //! project function onto discrete function space  
     template <class FunctionImp, class DiscreteFunctionImp>

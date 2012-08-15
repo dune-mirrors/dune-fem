@@ -108,7 +108,7 @@ namespace Dune
 
       template <class DiscreteFunctionSpaceImp,
                 int N, 
-                Dune::DofStoragePolicy policy> 
+                DofStoragePolicy policy> 
       struct BubbleM <CombinedSpace<DiscreteFunctionSpaceImp,N,policy> >
       {
         enum { bubblePModifier = BubbleM< DiscreteFunctionSpaceImp > :: bubblePModifier };
@@ -154,7 +154,7 @@ namespace Dune
       
       template <class DiscreteFunctionSpaceImp,
                 int N, 
-                Dune::DofStoragePolicy policy> 
+                DofStoragePolicy policy> 
       struct Spaces<CombinedSpace<DiscreteFunctionSpaceImp,N,policy> >
       {
         typedef typename DiscreteFunctionSpaceImp :: GridPartType GridPartImp;
