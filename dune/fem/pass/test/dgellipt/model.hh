@@ -17,6 +17,7 @@
 #include <dune/fem/function/common/function.hh>
 
 using namespace Dune;
+using namespace Fem;
 
 namespace LDGExample { 
 

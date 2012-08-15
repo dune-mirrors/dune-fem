@@ -16,6 +16,7 @@
 #include <dune/fem/misc/boundaryidentifier.hh>
 
 #include <dune/fem/operator/matrix/spmatrix.hh>
+
 #if HAVE_BLAS
 #include <dune/fem/solver/oemsolver/oemsolver.hh>
 #endif
@@ -24,7 +25,7 @@
 #include <dune/fem/operator/matrix/istlmatrix.hh>
 #include <dune/fem/solver/istlsolver.hh>
 
-#include <dune/fem/solver/inverseoperators.hh>
+#include <dune/fem/solver/cginverseoperator.hh>
 
 #include <dune/fem/gridpart/adaptiveleafgridpart.hh>
 #include <dune/fem/gridpart/leafgridpart.hh>
@@ -47,6 +48,7 @@ namespace LDGExample
 {
 
   using namespace Dune;
+  using namespace Fem;
 
   // MethodOrderTraits
   template< class Model, int polOrd, int dimRange >

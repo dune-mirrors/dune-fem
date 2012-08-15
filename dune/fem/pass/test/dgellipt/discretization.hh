@@ -24,7 +24,7 @@
 
 #include "discretemodels.hh"
 
-#include <dune/fem/solver/inverseoperators.hh>
+#include <dune/fem/solver/cginverseoperator.hh>
 #include <dune/fem/solver/oemsolver/oemsolver.hh>
 #include <dune/fem/operator/matrix/spmatrix.hh>
 
@@ -66,9 +66,7 @@ struct DiscrParam
 template <class LaplaceModelType,
           class VelocityModelType> 
 class MySpaceOperator :
- public Operator<
-    double,
-    double,
+ public Fem::Operator<
     typename VelocityModelType::Traits::DestinationType,
     typename VelocityModelType::Traits::DestinationType>
 {

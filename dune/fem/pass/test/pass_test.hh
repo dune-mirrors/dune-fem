@@ -1,30 +1,37 @@
-#ifndef DUNE_PASS_TEST_HH
-#define DUNE_PASS_TEST_HH
+#ifndef DUNE_FEM_PASS_TEST_HH
+#define DUNE_FEM_PASS_TEST_HH
 
 #include <config.h>
 #include <string>
 
 #include <dune/fem/misc/test.hh>
 
-namespace Dune {
+namespace Dune 
+{
+
+  namespace Fem
+  {
   
-  class Pass_Test : public Test {
-  public:
-    Pass_Test(std::string gridFile) :
-      gridFile_(gridFile)
-    {}
+    class Pass_Test : public Test 
+    {
+    public:
+      Pass_Test(std::string gridFile) :
+        gridFile_(gridFile)
+      {}
 
-    virtual void run();
+      virtual void run();
 
-  private:
-    void functorTest();
-    void dummyTest();
-    void dgTest();
+    private:
+      void functorTest();
+      void dummyTest();
+      void dgTest();
 
-  private:
-    std::string gridFile_;
-  };
+    private:
+      std::string gridFile_;
+    };
 
-}
+  } // namespace Fem
 
-#endif
+} // namespace Dune
+
+#endif // #ifndef DUNE_FEM_PASS_TEST_HH
