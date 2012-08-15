@@ -53,6 +53,6 @@ misc_HEADERS = alugridwriter.hh \
 
 noinst_LTLIBRARIES = libmisc.la
 
-libmisc_la_SOURCES = femtimer.cc
+libmisc_la_SOURCES = femtimer.cc test.cc suite.cc
 
 include $(top_srcdir)/am/global-rules
