@@ -28,6 +28,9 @@
 namespace Dune
 {
 
+  namespace Fem
+  {
+
   typedef FunctionSpace< double, double, GridSelector::dimworld, DIMRANGE >
     TestFunctionSpace;
 
@@ -89,7 +92,8 @@ namespace Dune
     : BaseType( gridPart )
     {}
   };
-    
+
+  }
 }
 
 #endif

@@ -19,6 +19,7 @@
 #include "dfspace.hh"
 
 using namespace Dune;
+using namespace Fem;
 
 // polynom approximation order of quadratures, 
 // at least poolynom order of basis functions 
@@ -81,7 +82,7 @@ int main(int argc, char ** argv)
     std :: cout << "maxDofs = " << discreteFunctionSpace.mapper().maxNumDofs() << std :: endl;
 
     //! perform Lagrange interpolation
-    LagrangeInterpolation< DiscreteFunctionType >
+    Fem::LagrangeInterpolation< ExactSolutionType, DiscreteFunctionType >
       :: interpolateFunction( f, solution );
 
     // Let's check on IO

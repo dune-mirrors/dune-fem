@@ -46,6 +46,7 @@
 #include "weightfunction.hh"
 
 using namespace Dune;
+using namespace Fem;
 
 typedef GridSelector::GridType MyGridType;
 // typedef HierarchicGridPart< MyGridType >  ContainedGridPartType;

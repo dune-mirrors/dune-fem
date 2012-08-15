@@ -27,6 +27,7 @@
 #include <dune/fem/gridpart/adaptiveleafgridpart.hh>
 
 using namespace Dune;
+using namespace Fem;
 
 typedef GridSelector::GridType MyGridType;
 // typedef HierarchicGridPart< MyGridType > GridPartType;

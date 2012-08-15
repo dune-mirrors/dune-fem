@@ -108,6 +108,7 @@ inline bool checkMappers ( const DiscreteFunctionSpaceType &space )
 
 
 using namespace Dune;
+using namespace Fem;
 
 typedef GridSelector::GridType MyGridType;
 typedef HierarchicGridPart< MyGridType > GridPartType;
