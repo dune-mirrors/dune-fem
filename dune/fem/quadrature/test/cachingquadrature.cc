@@ -209,7 +209,7 @@ int main(int argc, char ** argv)
     if ( Parameter::getValue<bool>("fem.skipfaces", false ) )
       quadOrder = -quadOrder ;
 
-    int nonConformOrigin = Dune::Parameter::getValue< int > ( "poisson.nonConformOrigin", 0 );
+    int nonConformOrigin = Parameter::getValue< int > ( "poisson.nonConformOrigin", 0 );
     if ( nonConformOrigin )
     {
       const int refineelement = 1 ;
@@ -238,7 +238,7 @@ int main(int argc, char ** argv)
     }
  
     //typedef HierarchicGridPart< GridType > GridPartType;
-    typedef Dune :: LeafGridPart< GridType > GridPartType;
+    typedef Dune::Fem::LeafGridPart< GridType > GridPartType;
     GridPartType gridPart( grid );
 
     const double eps = 1e-8;

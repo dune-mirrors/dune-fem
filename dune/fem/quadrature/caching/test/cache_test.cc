@@ -157,8 +157,8 @@ namespace Dune {
     GeometryType faceGeo = GeometryType(GeometryType::simplex,2);
 
     // Get reference element
-    const GenericReferenceElement<double, dim>& refElem =
-      GenericReferenceElements<double, dim>::general(elemGeo);
+    const ReferenceElement<double, dim>& refElem =
+      ReferenceElements<double, dim>::general(elemGeo);
     
     // Build quadrature
     QuadratureType quad(faceGeo, 3);

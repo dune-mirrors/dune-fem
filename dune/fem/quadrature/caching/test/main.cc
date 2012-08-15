@@ -8,6 +8,7 @@
 #include "point_test.hh"
 
 using namespace Dune;
+using namespace Fem;
 
 int main() {
 
