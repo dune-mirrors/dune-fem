@@ -223,7 +223,7 @@ namespace Dune
     template< class Functor >
     struct DofMapper< GridPart >::MapFunctor
     {
-      static const bool isCartesian = Capabilities ::
+      static const bool isCartesian = Dune::Capabilities::
         isCartesian< typename GridPart :: GridType > :: v ;
 
       MapFunctor ( const GridPart&  gridPart, const std::vector< SubEntityInfo > &subEntityInfo,
