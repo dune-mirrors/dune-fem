@@ -11,253 +11,254 @@
 namespace Dune
 {
 
-  namespace Fem {
-
-  class MatlabOutStream
+  namespace Fem 
   {
-  protected:
-    XDRFileOutStream stream_;
 
-  public:
-    inline MatlabOutStream ( const std :: string &filename )
-    : stream_( filename )
+    class MatlabOutStream
     {
-    }
+    protected:
+      XDRFileOutStream stream_;
 
-    inline void write ( const double &value )
-    {
-      stream_ << value;
-    }
-
-    inline void write ( const float &value )
-    {
-      stream_ << value;
-    }
-
-    inline void write ( const int &value )
-    {
-      stream_ << value;
-    }
-
-    inline void write ( const unsigned int &value )
-    {
-      stream_ << value;
-    }
-
-    template< class Traits >
-    inline void write ( const VectorInterface< Traits > &v )
-    {
-      const unsigned int size = v.size();
-
-      write( size );
-      for( unsigned int i = 0; i < size; ++i )
-        write( v[ i ] );
-    }
-
-    template< class T >
-    inline void write ( const Fem::DenseMatrix< T > &matrix )
-    {
-      const unsigned int rows = matrix.rows();
-      const unsigned int cols = matrix.cols();
-
-      write( rows );
-      write( cols );
-      for( unsigned int i = 0; i < rows; ++i )
+    public:
+      inline MatlabOutStream ( const std :: string &filename )
+      : stream_( filename )
       {
-        for( unsigned int j = 0; j < cols; ++j )
-          write( matrix[ i ][j] );
       }
-    }
 
-    template< class Traits >
-    inline void write ( const DiscreteFunctionInterface< Traits > &df)
-    {
-    typedef DiscreteFunctionInterface< Traits > DiscreteFunctionType;
-    typedef typename DiscreteFunctionType::ConstDofIteratorType ConstDofIteratorType;
-
-    write(df.size());
-
-    const ConstDofIteratorType end = df.dend();
-    for( ConstDofIteratorType it = df.dbegin(); it != end; ++it )
-      write(*it);
-    }
-
-    template< class BaseFunctionType >
-    inline void write ( const ReducedBasisSpace< BaseFunctionType > &rbspace )
-    {
-      typedef ReducedBasisSpace< BaseFunctionType > ReducedBasisSpaceType;
-      typedef typename ReducedBasisSpaceType :: BaseFunctionSpaceType
-        BaseFunctionSpaceType;
-
-      typedef typename BaseFunctionType :: ConstDofIteratorType
-        ConstDofIteratorType;
-
-      const BaseFunctionSpaceType &baseFunctionSpace
-        = rbspace.baseFunctionSpace();
-
-      write( rbspace.size() );
-      write( baseFunctionSpace.size() );
-
-      for( int i = 0;  i < rbspace.size(); ++i )
+      inline void write ( const double &value )
       {
-        const BaseFunctionType &baseFunction = rbspace.baseFunction( i );
-
-        const ConstDofIteratorType end = baseFunction.dend();
-        for( ConstDofIteratorType it = baseFunction.dbegin(); it != end; ++it )
-          write( *it );
+        stream_ << value;
       }
-    }
 
-    template< class Traits >
-    inline void write ( const GridPartInterface< Traits > &gridPart )
-    {
-      typedef GridPartInterface< Traits > GridPartType;
-      typedef typename GridPartType :: IndexSetType IndexSetType;
-      typedef typename GridPartType :: GridType GridType;
-      typedef typename GridPartType :: template Codim< 0 > :: IteratorType IteratorType;
-
-      enum { dim = GridType :: dimension };
-      enum { dimworld = GridType :: dimensionworld };
-
-      typedef typename GridType :: template Codim< 0 > :: Entity EntityType;
-      typedef typename GridType :: template Codim< dim > :: EntityPointer
-        VertexPtrType;
-      typedef typename GridType :: template Codim< dim > :: Entity VertexType;
-      typedef FieldVector< typename GridType :: ctype, dimworld > PointType;
-
-      const IndexSetType &indexSet = gridPart.indexSet();
-      const unsigned int numEntities = indexSet.size( 0 );
-      const unsigned int numVertices = indexSet.size( dim );
-
-      Fem::DenseMatrix< typename GridType::ctype > points( dimworld, numVertices );
-      Fem::DenseMatrix< unsigned int > triangles( dim+1, numEntities );
-
-      const IteratorType end = gridPart.template end< 0 >();
-      for( IteratorType it = gridPart.template begin< 0 >(); it != end; ++it )
+      inline void write ( const float &value )
       {
-        const EntityType &entity = *it;
+        stream_ << value;
+      }
 
-        if( entity.template count< dim >() != dim+1 )
-          DUNE_THROW( IOError, "MatlabOutStream: Cannot write non-simplex grid." );
+      inline void write ( const int &value )
+      {
+        stream_ << value;
+      }
 
-        const unsigned int enindex = indexSet.index( entity );
-        // run over all vertices of the simplex 
-        for( unsigned int i = 0; i <= dim; ++i )
+      inline void write ( const unsigned int &value )
+      {
+        stream_ << value;
+      }
+
+      template< class Traits >
+      inline void write ( const VectorInterface< Traits > &v )
+      {
+        const unsigned int size = v.size();
+
+        write( size );
+        for( unsigned int i = 0; i < size; ++i )
+          write( v[ i ] );
+      }
+
+      template< class T >
+      inline void write ( const Fem::DenseMatrix< T > &matrix )
+      {
+        const unsigned int rows = matrix.rows();
+        const unsigned int cols = matrix.cols();
+
+        write( rows );
+        write( cols );
+        for( unsigned int i = 0; i < rows; ++i )
         {
-          const VertexPtrType vertexptr = entity.template subEntity< dim >( i );
-          const VertexType &vertex = *vertexptr;
-
-          const PointType &point = vertex.geometry().corner( 0 );
-          const unsigned int ptindex = indexSet.index( vertex );
-
-          for( unsigned int j = 0; j < dimworld; ++j )
-            points[ j ][ ptindex ] = point[ j ];
-          
-          triangles[ i ][ enindex ] = ptindex + 1;
+          for( unsigned int j = 0; j < cols; ++j )
+            write( matrix[ i ][j] );
         }
       }
 
-      write( points );
-      write( triangles );
-    }
+      template< class Traits >
+      inline void write ( const DiscreteFunctionInterface< Traits > &df)
+      {
+      typedef DiscreteFunctionInterface< Traits > DiscreteFunctionType;
+      typedef typename DiscreteFunctionType::ConstDofIteratorType ConstDofIteratorType;
 
-  };
+      write(df.size());
 
-  template< class T >
-  inline MatlabOutStream &operator<< ( MatlabOutStream &out,
-                                       const T &value )
-  {
-    out.write( value );
-    return out;
-  }
+      const ConstDofIteratorType end = df.dend();
+      for( ConstDofIteratorType it = df.dbegin(); it != end; ++it )
+        write(*it);
+      }
 
+      template< class BaseFunctionType >
+      inline void write ( const ReducedBasisSpace< BaseFunctionType > &rbspace )
+      {
+        typedef ReducedBasisSpace< BaseFunctionType > ReducedBasisSpaceType;
+        typedef typename ReducedBasisSpaceType :: BaseFunctionSpaceType
+          BaseFunctionSpaceType;
 
-  class MatlabInStream
-  {
-  protected:
-    XDRFileInStream stream_;
+        typedef typename BaseFunctionType :: ConstDofIteratorType
+          ConstDofIteratorType;
 
-  public:
-    inline MatlabInStream ( const std :: string &filename )
-    : stream_( filename )
-    {
-    }
+        const BaseFunctionSpaceType &baseFunctionSpace
+          = rbspace.baseFunctionSpace();
 
-    inline void read ( double &value )
-    {
-      stream_ >> value;
-    }
+        write( rbspace.size() );
+        write( baseFunctionSpace.size() );
 
-    inline void read ( float &value )
-    {
-      stream_ >> value;
-    }
+        for( int i = 0;  i < rbspace.size(); ++i )
+        {
+          const BaseFunctionType &baseFunction = rbspace.baseFunction( i );
 
-    inline void read ( int &value )
-    {
-      stream_ >> value;
-    }
+          const ConstDofIteratorType end = baseFunction.dend();
+          for( ConstDofIteratorType it = baseFunction.dbegin(); it != end; ++it )
+            write( *it );
+        }
+      }
 
-    inline void read ( unsigned int &value )
-    {
-      stream_ >> value;
-    }
+      template< class Traits >
+      inline void write ( const GridPartInterface< Traits > &gridPart )
+      {
+        typedef GridPartInterface< Traits > GridPartType;
+        typedef typename GridPartType :: IndexSetType IndexSetType;
+        typedef typename GridPartType :: GridType GridType;
+        typedef typename GridPartType :: template Codim< 0 > :: IteratorType IteratorType;
 
-    template< class Traits >
-    inline void read (  VectorInterface< Traits > &v )
-    {
-      unsigned int size;
-      read( size );
-      if( size != v.size() )
-        DUNE_THROW( IOError, "MatlabInStream: Reading vector of different size." );
-      for( unsigned int i = 0; i < size; ++i )
-        read( v[ i ] );
-    }
+        enum { dim = GridType :: dimension };
+        enum { dimworld = GridType :: dimensionworld };
+
+        typedef typename GridType :: template Codim< 0 > :: Entity EntityType;
+        typedef typename GridType :: template Codim< dim > :: EntityPointer
+          VertexPtrType;
+        typedef typename GridType :: template Codim< dim > :: Entity VertexType;
+        typedef FieldVector< typename GridType :: ctype, dimworld > PointType;
+
+        const IndexSetType &indexSet = gridPart.indexSet();
+        const unsigned int numEntities = indexSet.size( 0 );
+        const unsigned int numVertices = indexSet.size( dim );
+
+        Fem::DenseMatrix< typename GridType::ctype > points( dimworld, numVertices );
+        Fem::DenseMatrix< unsigned int > triangles( dim+1, numEntities );
+
+        const IteratorType end = gridPart.template end< 0 >();
+        for( IteratorType it = gridPart.template begin< 0 >(); it != end; ++it )
+        {
+          const EntityType &entity = *it;
+
+          if( entity.template count< dim >() != dim+1 )
+            DUNE_THROW( IOError, "MatlabOutStream: Cannot write non-simplex grid." );
+
+          const unsigned int enindex = indexSet.index( entity );
+          // run over all vertices of the simplex 
+          for( unsigned int i = 0; i <= dim; ++i )
+          {
+            const VertexPtrType vertexptr = entity.template subEntity< dim >( i );
+            const VertexType &vertex = *vertexptr;
+
+            const PointType &point = vertex.geometry().corner( 0 );
+            const unsigned int ptindex = indexSet.index( vertex );
+
+            for( unsigned int j = 0; j < dimworld; ++j )
+              points[ j ][ ptindex ] = point[ j ];
+            
+            triangles[ i ][ enindex ] = ptindex + 1;
+          }
+        }
+
+        write( points );
+        write( triangles );
+      }
+
+    };
 
     template< class T >
-    inline void read ( Fem::DenseMatrix< T > &matrix )
+    inline MatlabOutStream &operator<< ( MatlabOutStream &out,
+                                         const T &value )
     {
-      unsigned int rows ;
-      unsigned int cols ;
+      out.write( value );
+      return out;
+    }
 
-      read( rows );
-      read( cols );
-      matrix.resize(rows,cols);
-      for( unsigned int i = 0; i < rows; ++i )
+
+    class MatlabInStream
+    {
+    protected:
+      XDRFileInStream stream_;
+
+    public:
+      inline MatlabInStream ( const std :: string &filename )
+      : stream_( filename )
       {
-        for( unsigned int j = 0; j < cols; ++j )
-          read( matrix[ i ][j] );
       }
-    }
 
-    template< class Traits >
-    inline void read ( DiscreteFunctionInterface< Traits > &df)
+      inline void read ( double &value )
+      {
+        stream_ >> value;
+      }
+
+      inline void read ( float &value )
+      {
+        stream_ >> value;
+      }
+
+      inline void read ( int &value )
+      {
+        stream_ >> value;
+      }
+
+      inline void read ( unsigned int &value )
+      {
+        stream_ >> value;
+      }
+
+      template< class Traits >
+      inline void read (  VectorInterface< Traits > &v )
+      {
+        unsigned int size;
+        read( size );
+        if( size != v.size() )
+          DUNE_THROW( IOError, "MatlabInStream: Reading vector of different size." );
+        for( unsigned int i = 0; i < size; ++i )
+          read( v[ i ] );
+      }
+
+      template< class T >
+      inline void read ( Fem::DenseMatrix< T > &matrix )
+      {
+        unsigned int rows ;
+        unsigned int cols ;
+
+        read( rows );
+        read( cols );
+        matrix.resize(rows,cols);
+        for( unsigned int i = 0; i < rows; ++i )
+        {
+          for( unsigned int j = 0; j < cols; ++j )
+            read( matrix[ i ][j] );
+        }
+      }
+
+      template< class Traits >
+      inline void read ( DiscreteFunctionInterface< Traits > &df)
+      {
+        int size;
+        read( size );
+        if( size != df.size() )
+          DUNE_THROW( IOError, "MatlabInStream: Reading vector of different size." ); 
+        typedef DiscreteFunctionInterface< Traits > DiscreteFunctionType;
+        typedef typename DiscreteFunctionType::DofIteratorType DofIteratorType; 
+
+        const DofIteratorType end = df.dend();
+        for( DofIteratorType it = df.dbegin(); it != end; ++it )
+          read(*it);
+      }
+
+
+    };
+
+    template< class T >
+    inline MatlabInStream &operator>> ( MatlabInStream &in,
+                                          T &value )
     {
-      int size;
-      read( size );
-      if( size != df.size() )
-        DUNE_THROW( IOError, "MatlabInStream: Reading vector of different size." ); 
-      typedef DiscreteFunctionInterface< Traits > DiscreteFunctionType;
-      typedef typename DiscreteFunctionType::DofIteratorType DofIteratorType; 
-
-      const DofIteratorType end = df.dend();
-      for( DofIteratorType it = df.dbegin(); it != end; ++it )
-        read(*it);
+      in.read( value );
+      return in;
     }
 
+  } // namespace Fem 
 
-  };
+} // namespace Dune 
 
-  template< class T >
-  inline MatlabInStream &operator>> ( MatlabInStream &in,
-                                        T &value )
-  {
-    in.read( value );
-    return in;
-  }
-
-  } // end namespace Fem 
-
-} // end namespace Dune 
-
-#endif
+#endif // #ifndef DUNE_FEM_MATLABSTREAM_HH
