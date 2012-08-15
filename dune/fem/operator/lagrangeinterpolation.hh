@@ -2,6 +2,8 @@
 #define DUNE_FEM_LAGRANGEINTERPOLATION_HH
 
 #include <dune/common/typetraits.hh>
+
+#include <dune/fem/version.hh>
 #include <dune/fem/function/common/gridfunctionadapter.hh>
 #include <dune/fem/operator/common/operator.hh>
 
@@ -250,10 +252,10 @@ namespace Dune
      *              interpolation
      */
     template< class Function >
+    DUNE_VERSION_DEPRECATED(1,4,remove)
     static void interpolateFunction ( const Function &function,
                                       DiscreteFunctionType &discreteFunction )
     {
-      DUNE_VERSION_DEPRECATED(1,4,remove)
       // forward to new implementation 
       Fem :: LagrangeInterpolation< Function, DiscreteFunctionType > 
         :: interpolateFunction ( function, discreteFunction );
@@ -262,10 +264,10 @@ namespace Dune
     //! \copydoc interpolateFunction 
     //- make interface equal to DGL2Projection 
     template< class Function >
+    DUNE_VERSION_DEPRECATED(1,4,remove)
     static void apply ( const Function &function,
                         DiscreteFunctionType &discreteFunction )
     {
-      DUNE_VERSION_DEPRECATED(1,4,remove)
       interpolateFunction( function, discreteFunction );
     }
   };
