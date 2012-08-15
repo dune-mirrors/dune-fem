@@ -8,36 +8,41 @@
 namespace Dune
 {
 
-  template< class CollectiveComm >
-  struct CollectiveCommunicationHelper;
-
-  template< class C >
-  struct CollectiveCommunicationHelper< CollectiveCommunication< C > >
+  namespace Fem
   {
-    typedef CollectiveCommunication< C > CollectiveCommunicationType;
 
-    static CollectiveCommunicationType defaultCommunication ()
+    template< class CollectiveComm >
+    struct CollectiveCommunicationHelper;
+
+    template< class C >
+    struct CollectiveCommunicationHelper< CollectiveCommunication< C > >
     {
-      return CollectiveCommunicationType();
-    }
-  };
+      typedef CollectiveCommunication< C > CollectiveCommunicationType;
+
+      static CollectiveCommunicationType defaultCommunication ()
+      {
+        return CollectiveCommunicationType();
+      }
+    };
 
 #if HAVE_MPI
-  template<>
-  struct CollectiveCommunicationHelper< CollectiveCommunication< MPI_Comm > >
-  {
-    typedef CollectiveCommunication< MPI_Comm > CollectiveCommunicationType;
-
-    static CollectiveCommunicationType defaultCommunication ()
+    template<>
+    struct CollectiveCommunicationHelper< CollectiveCommunication< MPI_Comm > >
     {
-      return CollectiveCommunicationType( MPIHelper :: getCommunicator() );
-    }
-  };
+      typedef CollectiveCommunication< MPI_Comm > CollectiveCommunicationType;
+
+      static CollectiveCommunicationType defaultCommunication ()
+      {
+        return CollectiveCommunicationType( MPIHelper :: getCommunicator() );
+      }
+    };
 #endif
 
-  typedef CollectiveCommunication< MPIHelper :: MPICommunicator >
-    DefaultCollectiveCommunicationType;
+    typedef CollectiveCommunication< MPIHelper :: MPICommunicator >
+      DefaultCollectiveCommunicationType;
+
+  } //  namespace Fem
   
-}
+} // namespace Dune
 
-#endif
+#endif // #ifndef DUNE_FEM_COMMHELPER_HH

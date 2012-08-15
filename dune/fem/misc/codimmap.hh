@@ -9,6 +9,9 @@
 namespace Dune
 {
 
+  namespace Fem
+  {
+
   /** \class CodimMap
    *  \brief Simple array-like map for templates parameterized over codimensions
    *
@@ -110,7 +113,15 @@ namespace Dune
       return *(codimObjects_[ codim ]);
     }
   };
-  
-}
+
+  } // namespace Fem
+
+#if DUNE_FEM_COMPATIBILITY
+  // put this in next version 1.4
+
+  using Fem :: CodimMap ;
+#endif // DUNE_FEM_COMPATIBILITY
+
+} // namespace Dune
 
 #endif // #ifndef DUNE_FEM_CODIMMAP_HH

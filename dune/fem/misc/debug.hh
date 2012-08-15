@@ -6,186 +6,191 @@
 namespace Dune
 {
 
+  namespace Fem
+  {
+
 #if not defined NDEBUG && not defined USE_SMP_PARALLEL
 #define USE_DEBUG_CNT
 #endif
 
-  /** \class DebugCounter
-   *  \brief A counter only present if NDEBUG is not defined
-   *
-   *  There are several cases, where we need a counter for debugging
-   *  purposes that should only be present, if NDEBUG is not defined. 
-   *
-   *  In debug mode, this counter wraps a standard integer type, 
-   *  otherwise its size is zero.
-   *
-   *  \note The comparison operators always return true, 
-   *  if NDEBUG is defined!
-   */
-  template< class CounterImp = unsigned int >
-  class DebugCounter
-  {
-  public:
-    //! integral type for the actual counting
-    typedef CounterImp CounterType;
-    
-  private:
-    typedef DebugCounter< CounterType > ThisType;
-
-  protected:
-#ifdef USE_DEBUG_CNT
-    CounterType count_;
-#endif
-    
-  public:
-    /** \brief constructor
+    /** \class DebugCounter
+     *  \brief A counter only present if NDEBUG is not defined
      *
-     *  \note This constructor implicitly defines a conversion from CounterType
-     *        to DebugCounter. This is very useful in comparison statements.
+     *  There are several cases, where we need a counter for debugging
+     *  purposes that should only be present, if NDEBUG is not defined. 
      *
-     *  \param[in]  count  value to initialize the counter with (defaults to 0)
+     *  In debug mode, this counter wraps a standard integer type, 
+     *  otherwise its size is zero.
+     *
+     *  \note The comparison operators always return true, 
+     *  if NDEBUG is defined!
      */
-    inline DebugCounter ( const CounterType count = 0 )
-#ifdef USE_DEBUG_CNT
-    : count_( count )
-#endif
+    template< class CounterImp = unsigned int >
+    class DebugCounter
     {
-    }
+    public:
+      //! integral type for the actual counting
+      typedef CounterImp CounterType;
+      
+    private:
+      typedef DebugCounter< CounterType > ThisType;
 
-    /** \brief copy constructor
-     */
-    inline DebugCounter ( const ThisType &other )
+    protected:
 #ifdef USE_DEBUG_CNT
-    : count_( other.count_ )
+      CounterType count_;
 #endif
-    {
-    }
-
-    /** \brief increment operator
-     *
-     *  If USE_DEBUG_CNT is not defined, the counter is incremented by 1. Otherwise
-     *  nothing happens (and the entire call will be removed during
-     *  oprimization).
-     */
-    inline ThisType &operator++ ()
-    {
+      
+    public:
+      /** \brief constructor
+       *
+       *  \note This constructor implicitly defines a conversion from CounterType
+       *        to DebugCounter. This is very useful in comparison statements.
+       *
+       *  \param[in]  count  value to initialize the counter with (defaults to 0)
+       */
+      inline DebugCounter ( const CounterType count = 0 )
 #ifdef USE_DEBUG_CNT
-      ++count_;
+      : count_( count )
 #endif
-      return *this;
-    }
+      {
+      }
 
-    /** \brief decrement operator
-     *
-     *  If USE_DEBUG_CNT is not defined, the counter is decremented by 1. Otherwise
-     *  nothing happens (and the entire call will be removed during
-     *  oprimization).
-     */
-    inline ThisType &operator-- ()
-    {
+      /** \brief copy constructor
+       */
+      inline DebugCounter ( const ThisType &other )
 #ifdef USE_DEBUG_CNT
-      --count_;
+      : count_( other.count_ )
 #endif
-      return *this;
-    }
+      {
+      }
 
-    /** \brief comparison for equality
-     *
-     *  Compares to DebugCounters for equality. If USE_DEBUG_CNT is defined, the
-     *  result will be true.
-     *
-     *  \note Due to the implicit conversion, the second argument may also be
-     *        of CounterType.
-     *
-     *  \param[in]  other  DebugCounter to compare this one to
-     *
-     *  \returns true, if the counters equal or USE_DEBUG_CNT is defined
-     */
-    inline bool operator== ( const ThisType &other )
-    {
+      /** \brief increment operator
+       *
+       *  If USE_DEBUG_CNT is not defined, the counter is incremented by 1. Otherwise
+       *  nothing happens (and the entire call will be removed during
+       *  oprimization).
+       */
+      inline ThisType &operator++ ()
+      {
 #ifdef USE_DEBUG_CNT
-      return count_ == other.count_;
+        ++count_;
+#endif
+        return *this;
+      }
+
+      /** \brief decrement operator
+       *
+       *  If USE_DEBUG_CNT is not defined, the counter is decremented by 1. Otherwise
+       *  nothing happens (and the entire call will be removed during
+       *  oprimization).
+       */
+      inline ThisType &operator-- ()
+      {
+#ifdef USE_DEBUG_CNT
+        --count_;
+#endif
+        return *this;
+      }
+
+      /** \brief comparison for equality
+       *
+       *  Compares to DebugCounters for equality. If USE_DEBUG_CNT is defined, the
+       *  result will be true.
+       *
+       *  \note Due to the implicit conversion, the second argument may also be
+       *        of CounterType.
+       *
+       *  \param[in]  other  DebugCounter to compare this one to
+       *
+       *  \returns true, if the counters equal or USE_DEBUG_CNT is defined
+       */
+      inline bool operator== ( const ThisType &other )
+      {
+#ifdef USE_DEBUG_CNT
+        return count_ == other.count_;
 #else
-      return true;
+        return true;
 #endif
-    }
+      }
 
-    /** \brief comparison for inequality
-     *
-     *  Compares to DebugCounters for inequality. If USE_DEBUG_CNT is defined, the
-     *  result will be true.
-     *
-     *  \note Due to the implicit conversion, the second argument may also be
-     *        of CounterType.
-     *
-     *  \param[in]  other  DebugCounter to compare this one to
-     *
-     *  \returns true, if the counters differ or USE_DEBUG_CNT is defined
-     */
-    inline bool operator!= ( const ThisType &other )
-    {
+      /** \brief comparison for inequality
+       *
+       *  Compares to DebugCounters for inequality. If USE_DEBUG_CNT is defined, the
+       *  result will be true.
+       *
+       *  \note Due to the implicit conversion, the second argument may also be
+       *        of CounterType.
+       *
+       *  \param[in]  other  DebugCounter to compare this one to
+       *
+       *  \returns true, if the counters differ or USE_DEBUG_CNT is defined
+       */
+      inline bool operator!= ( const ThisType &other )
+      {
 #ifdef USE_DEBUG_CNT
-      return count_ != other.count_;
+        return count_ != other.count_;
 #else
-      return true;
+        return true;
 #endif
-    }
-  };
+      }
+    };
 
 
 
-  class DebugLock
-  {
-  private:
-    typedef DebugLock ThisType;
-    
-  protected:
-#ifdef USE_DEBUG_CNT
-    bool lock_;
-#endif
-
-  public:
-    inline DebugLock ()
-#ifdef USE_DEBUG_CNT
-    : lock_( false )
-#endif
+    class DebugLock
     {
-    }
-    
-  private:
-    // prohibit copying
-    DebugLock ( const ThisType & );
-
-    // prohibit copying
-    ThisType &operator= ( const ThisType & );
-
-  public:
-    inline bool operator ! () const
-    {
+    private:
+      typedef DebugLock ThisType;
+      
+    protected:
 #ifdef USE_DEBUG_CNT
-      return !lock_;
+      bool lock_;
+#endif
+
+    public:
+      inline DebugLock ()
+#ifdef USE_DEBUG_CNT
+      : lock_( false )
+#endif
+      {
+      }
+      
+    private:
+      // prohibit copying
+      DebugLock ( const ThisType & );
+
+      // prohibit copying
+      ThisType &operator= ( const ThisType & );
+
+    public:
+      inline bool operator ! () const
+      {
+#ifdef USE_DEBUG_CNT
+        return !lock_;
 #else
-      return true;
+        return true;
 #endif
-    }
-    
-    inline void lock ()
-    {
+      }
+      
+      inline void lock ()
+      {
 #ifdef USE_DEBUG_CNT
-      assert( !lock_ );
-      lock_ = true;
+        assert( !lock_ );
+        lock_ = true;
 #endif
-    }
+      }
 
-    inline void unlock ()
-    {
+      inline void unlock ()
+      {
 #ifdef USE_DEBUG_CNT
-      assert( lock_ );
-      lock_ = false;
+        assert( lock_ );
+        lock_ = false;
 #endif
-    }
-  };
+      }
+    };
 
-};
+  } // namespace Fem
+
+} // namespace Dune
 
 #endif

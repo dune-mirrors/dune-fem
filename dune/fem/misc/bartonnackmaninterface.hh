@@ -8,40 +8,46 @@
 
 namespace Dune
 {
-  template< class Interface, class Implementation >
-  class BartonNackmanInterface
+
+  namespace Fem
   {
-    typedef BartonNackmanInterface< Interface, Implementation > ThisType;
 
-  public:
-    BartonNackmanInterface ()
+    template< class Interface, class Implementation >
+    class BartonNackmanInterface
     {
-      dune_static_assert( (Conversion< Interface, ThisType >::exists), "Interface must be derived from BartonNackmanInterface." );
-      //dune_static_assert( (Conversion< Implementation, Interface >::exists), "Implementation must be derived from its interface." );
-    }
-    
-  protected:
-    static const Implementation &asImp ( const ThisType &other )
-    {
-      return static_cast< const Implementation & >( other );
-    }
+      typedef BartonNackmanInterface< Interface, Implementation > ThisType;
 
-    static Implementation &asImp ( ThisType &other )
-    {
-      return static_cast< Implementation & >( other );
-    }
+    public:
+      BartonNackmanInterface ()
+      {
+        dune_static_assert( (Conversion< Interface, ThisType >::exists), "Interface must be derived from BartonNackmanInterface." );
+        //dune_static_assert( (Conversion< Implementation, Interface >::exists), "Implementation must be derived from its interface." );
+      }
+      
+    protected:
+      static const Implementation &asImp ( const ThisType &other )
+      {
+        return static_cast< const Implementation & >( other );
+      }
 
-    const Implementation &asImp () const
-    {
-      return asImp( *this );
-    }
+      static Implementation &asImp ( ThisType &other )
+      {
+        return static_cast< Implementation & >( other );
+      }
 
-    Implementation &asImp ()
-    {
-      return asImp( *this );
-    }
-  };
+      const Implementation &asImp () const
+      {
+        return asImp( *this );
+      }
+
+      Implementation &asImp ()
+      {
+        return asImp( *this );
+      }
+    };
+
+  } // namespace Fem
   
-}
+} // namespace Dune 
 
 #endif // #ifndef DUNE_FEM_BARTONNACKMANINTERFACE_HH
