@@ -204,7 +204,7 @@ namespace Dune
       }
     }
 
-  } // end namespace Fem 
+  } // namespace Fem 
 
 
   /** \class LagrangeInterpolation
@@ -253,6 +253,7 @@ namespace Dune
     static void interpolateFunction ( const Function &function,
                                       DiscreteFunctionType &discreteFunction )
     {
+      DUNE_VERSION_DEPRECATED(1,4,remove)
       // forward to new implementation 
       Fem :: LagrangeInterpolation< Function, DiscreteFunctionType > 
         :: interpolateFunction ( function, discreteFunction );
@@ -264,9 +265,11 @@ namespace Dune
     static void apply ( const Function &function,
                         DiscreteFunctionType &discreteFunction )
     {
+      DUNE_VERSION_DEPRECATED(1,4,remove)
       interpolateFunction( function, discreteFunction );
     }
   };
+
 } // namespace Dune
 
 #endif // #ifndef DUNE_FEM_LAGRANGEINTERPOLATION_HH

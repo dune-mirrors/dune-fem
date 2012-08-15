@@ -1017,11 +1017,12 @@ namespace Dune
       }
 
     };
-  } // end namespace Fem
+
+  } // namespace Fem
     
-} // end Dune namespace  
+} // Dune namespace  
 
 // include definition of RestrictProlongDefault for Lagrange Space.
 #include "adaptmanager.hh"
 
-#endif // #ifndef DUNE_LAGRANGESPACE_LAGRANGESPACE_HH
+#endif // #ifndef DUNE_FEM_PADATPTIVELAGRANGESPACE_HH

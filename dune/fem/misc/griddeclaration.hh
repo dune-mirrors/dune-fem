@@ -1,10 +1,11 @@
-#ifndef DUNE_FEM_GRIDDECLARATION
-#define DUNE_FEM_GRIDDECLARATION
+#ifndef DUNE_FEM_GRIDDECLARATION_HH
+#define DUNE_FEM_GRIDDECLARATION_HH
 
 // include ALUGrid forward declaration 
 #include <dune/grid/alugrid/common/declaration.hh>
 
-namespace Dune {
+namespace Dune 
+{
 
   // Forward Declarations for all Standard Grids
   // -------------------------------------------
@@ -37,5 +38,6 @@ namespace Dune {
 
   template< class HostGrid >
   class CartesianGrid;
+
 }
-#endif
+#endif // #ifndef DUNE_FEM_GRIDDECLARATION_HH

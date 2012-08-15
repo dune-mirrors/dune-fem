@@ -1,5 +1,5 @@
-#ifndef DUNE_INTERSECTIONQUADRATURE_HH
-#define DUNE_INTERSECTIONQUADRATURE_HH
+#ifndef DUNE_FEM_INTERSECTIONQUADRATURE_HH
+#define DUNE_FEM_INTERSECTIONQUADRATURE_HH
 
 //- Dune includes
 #include <dune/common/misc.hh>
@@ -15,114 +15,116 @@
 
 namespace Dune
 {
+
   namespace Fem
   {  
-  /** \brief IntersectionQuadrature is a helper class for creating the appropriate face quadratures 
-             for integrating over intersections. */
-  template< typename FaceQuadrature, bool conforming  >
-  class IntersectionQuadrature 
-  {
-    template < typename FaceQuadratureImp, bool isConforming > 
-    struct QuadSelector
-    {
-      // use given quadrature 
-      typedef FaceQuadratureImp  FaceQuadratureType;
-    };
 
-    template < typename FaceQuadratureImp > 
-    struct QuadSelector<FaceQuadratureImp, false>
+    /** \brief IntersectionQuadrature is a helper class for creating the appropriate face quadratures 
+               for integrating over intersections. */
+    template< typename FaceQuadrature, bool conforming  >
+    class IntersectionQuadrature 
     {
-      // in this case non conforming type is used 
-      typedef typename  FaceQuadratureImp :: 
-        NonConformingQuadratureType  FaceQuadratureType;
-    };
+      template < typename FaceQuadratureImp, bool isConforming > 
+      struct QuadSelector
+      {
+        // use given quadrature 
+        typedef FaceQuadratureImp  FaceQuadratureType;
+      };
 
-  public:
-    //! type of grid partition
-    typedef typename FaceQuadrature :: GridPartType GridPartType;
+      template < typename FaceQuadratureImp > 
+      struct QuadSelector<FaceQuadratureImp, false>
+      {
+        // in this case non conforming type is used 
+        typedef typename  FaceQuadratureImp :: 
+          NonConformingQuadratureType  FaceQuadratureType;
+      };
+
+    public:
+      //! type of grid partition
+      typedef typename FaceQuadrature :: GridPartType GridPartType;
+        
+      //! type of the grid
+      typedef typename GridPartType :: GridType GridType;
+
+      //! Type of the intersection iterator
+      typedef typename GridPartType::IntersectionIteratorType IntersectionIteratorType;
+      typedef typename IntersectionIteratorType::Intersection IntersectionType;
+
+      //! codimension of the element quadrature
+      enum { codimension = FaceQuadrature :: codimension };
+   
+      //! type of intersection quadrature implementation 
+      typedef typename QuadSelector<FaceQuadrature, conforming> :: FaceQuadratureType FaceQuadratureType; 
       
-    //! type of the grid
-    typedef typename GridPartType :: GridType GridType;
+      //! Dimension of the world.
+      enum { dimension = FaceQuadratureType ::dimension };
 
-    //! Type of the intersection iterator
-    typedef typename GridPartType::IntersectionIteratorType IntersectionIteratorType;
-    typedef typename IntersectionIteratorType::Intersection IntersectionType;
+      //! Just another name for double...
+      typedef typename FaceQuadratureType :: RealType RealType;
+      //! The type of the coordinates in the codim-0 reference element.
+      typedef typename FaceQuadratureType :: CoordinateType CoordinateType;
 
-    //! codimension of the element quadrature
-    enum { codimension = FaceQuadrature :: codimension };
- 
-    //! type of intersection quadrature implementation 
-    typedef typename QuadSelector<FaceQuadrature, conforming> :: FaceQuadratureType FaceQuadratureType; 
-    
-    //! Dimension of the world.
-    enum { dimension = FaceQuadratureType ::dimension };
+      typedef typename FaceQuadratureType::LocalCoordinateType LocalCoordinateType;
 
-    //! Just another name for double...
-    typedef typename FaceQuadratureType :: RealType RealType;
-    //! The type of the coordinates in the codim-0 reference element.
-    typedef typename FaceQuadratureType :: CoordinateType CoordinateType;
+      //! for compatibility
+      typedef typename GridType::template Codim< 0 >::Entity EntityType;
+      
+      /** \brief Constructor creating an inside and an outside face quadrature for
+                 integrating over an intersection. 
+              
+          \param[in]  gridPart      grid partition
+          \param[in]  intersection  intersection
+          \param[in]  order         desired order of the quadrature
+   
+       */ 
+      IntersectionQuadrature( const GridPartType &gridPart, 
+                              const IntersectionType &intersection,
+                              const int order) 
+      : inside_ ( gridPart, intersection, order, FaceQuadratureType :: INSIDE ),
+        outside_( gridPart, intersection, order, FaceQuadratureType :: OUTSIDE ) 
+      {}
 
-    typedef typename FaceQuadratureType::LocalCoordinateType LocalCoordinateType;
+      //! \brief return reference to inside face quadrature 
+      const FaceQuadratureType& inside()  const { return inside_;  }
 
-    //! for compatibility
-    typedef typename GridType::template Codim< 0 >::Entity EntityType;
-    
-    /** \brief Constructor creating an inside and an outside face quadrature for
-               integrating over an intersection. 
-            
-        \param[in]  gridPart      grid partition
-        \param[in]  intersection  intersection
-        \param[in]  order         desired order of the quadrature
- 
-     */ 
-    IntersectionQuadrature( const GridPartType &gridPart, 
-                            const IntersectionType &intersection,
-                            const int order) 
-    : inside_ ( gridPart, intersection, order, FaceQuadratureType :: INSIDE ),
-      outside_( gridPart, intersection, order, FaceQuadratureType :: OUTSIDE ) 
-    {}
+      //! \brief return reference to outside face quadrature 
+      const FaceQuadratureType& outside() const { return outside_; }
 
-    //! \brief return reference to inside face quadrature 
-    const FaceQuadratureType& inside()  const { return inside_;  }
+      size_t nop () const
+      {
+        assert( inside().nop() == outside().nop() );
+        return inside().nop();
+      }
 
-    //! \brief return reference to outside face quadrature 
-    const FaceQuadratureType& outside() const { return outside_; }
+      const LocalCoordinateType &localPoint ( const int qp ) const
+      {
+        assert( inside().localPoint( qp ) == outside().localPoint( qp ) );
+        return inside().localPoint( qp );
+      }
 
-    size_t nop () const
-    {
-      assert( inside().nop() == outside().nop() );
-      return inside().nop();
-    }
+      const RealType &weight ( const int qp ) const
+      {
+        assert( inside().weight( qp ) == outside().weight( qp ) );
+        return inside().weight( qp );
+      }
 
-    const LocalCoordinateType &localPoint ( const int qp ) const
-    {
-      assert( inside().localPoint( qp ) == outside().localPoint( qp ) );
-      return inside().localPoint( qp );
-    }
+    private:
+      // prohibit copying 
+      IntersectionQuadrature( const IntersectionQuadrature & );
 
-    const RealType &weight ( const int qp ) const
-    {
-      assert( inside().weight( qp ) == outside().weight( qp ) );
-      return inside().weight( qp );
-    }
+    protected:  
+      const FaceQuadratureType inside_;
+      const FaceQuadratureType outside_;
+    };
 
-  private:
-    // prohibit copying 
-    IntersectionQuadrature( const IntersectionQuadrature & );
+  } // namespace Fem
 
-  protected:  
-    const FaceQuadratureType inside_;
-    const FaceQuadratureType outside_;
-  };
-
-  } // end namespace Fem
-
-  // #if DUNE_FEM_COMPATIBILITY  
+#if DUNE_FEM_COMPATIBILITY  
   // put this in next version 1.4 
 
   using Fem :: IntersectionQuadrature ;
-  // #endif // DUNE_FEM_COMPATIBILITY
+#endif // DUNE_FEM_COMPATIBILITY
 
-} // end namespace Dune 
+} // namespace Dune 
 
-#endif // #ifndef DUNE_INTERSECTIONQUADRATURE_HH
+#endif // #ifndef DUNE_FEM_INTERSECTIONQUADRATURE_HH

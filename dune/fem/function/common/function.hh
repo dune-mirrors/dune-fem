@@ -167,8 +167,8 @@ namespace Dune
 
     ///@} 
 
-  }
+  } // namespace Fem
 
-}
+} // namespace Dune
 
 #endif // #ifndef DUNE_FEM_FUNCTION_HH

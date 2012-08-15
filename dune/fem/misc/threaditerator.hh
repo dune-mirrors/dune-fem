@@ -8,8 +8,11 @@
 #include <dune/fem/space/common/arrays.hh>
 #include <dune/fem/misc/threadmanager.hh>
 
-namespace Dune {
-  namespace Fem {
+namespace Dune 
+{
+
+  namespace Fem 
+  {
 
     /** \brief Thread iterator */
     template <class DiscreteFunctionSpace>  
@@ -303,7 +306,9 @@ namespace Dune {
         return threadNum_[ indexSet_.index( entity ) ];
       }
     };
-  }
-}
 
-#endif
+  } // namespace Fem
+
+} // namespace Dune
+
+#endif // #ifndef DUNE_FEM_THREADITERATOR_HH

@@ -7,18 +7,13 @@
 #include <dune/fem/quadrature/cachingquadrature.hh>
 
 
+namespace Dune
+{
 
+  namespace Fem
+  {
 
-namespace Dune{
-
-//***********************************************************************
-/** \brief This is a restriction/prolongation operator for DG data. 
- */
-
-  namespace Fem{
-
-    template< class ,
-              class >
+    template< class , class >
     class CombinedDiscreteFunctionSpace; 
 
     template< class SP1, class SP2 >
@@ -29,6 +24,8 @@ namespace Dune{
       {}
     };
 
-  } // end namespace Fem
-} // end namespace Dune 
-#endif
+  } // namespace Fem
+
+} // namespace Dune 
+
+#endif //  #ifndef DUNE_FEM_COMBINEDADAPTMANAGER_HH

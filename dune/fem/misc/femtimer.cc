@@ -159,6 +159,6 @@ namespace Dune
       ++stepCount_;
     }
 
-  }
+  } // namespace Fem
 
-}
+} // namespace Dune 

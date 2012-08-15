@@ -13,43 +13,43 @@
 namespace Dune
 {
 
-namespace Fem 
-{
+  namespace Fem 
+  {
 
-/** @ingroup RestrictProlongImpl
-    @{
-**/
+  /** @ingroup RestrictProlongImpl
+      @{
+  **/
 
 #ifdef USE_OLD_COMBINEDSPACE
-  /** \brief specialization of RestrictProlongDefault for
-      CombinedSpace.
-  */
-  template < class DiscreteFunctionSpaceImp, 
-             int N, 
-             DofStoragePolicy policy> 
-  struct DefaultLocalRestrictProlong< CombinedSpace<DiscreteFunctionSpaceImp,N,policy> > 
-  : public DiscontinuousGalerkinLocalRestrictProlong< CombinedSpace<DiscreteFunctionSpaceImp,N,policy> >
-  {
-    DefaultLocalRestrictProlong( const CombinedSpace<DiscreteFunctionSpaceImp,N,policy> & space)
+    /** \brief specialization of RestrictProlongDefault for
+        CombinedSpace.
+    */
+    template < class DiscreteFunctionSpaceImp, 
+               int N, 
+               DofStoragePolicy policy> 
+    struct DefaultLocalRestrictProlong< CombinedSpace<DiscreteFunctionSpaceImp,N,policy> > 
+    : public DiscontinuousGalerkinLocalRestrictProlong< CombinedSpace<DiscreteFunctionSpaceImp,N,policy> >
     {
-      assert( !space.continuous() );
-    }
-  };
+      DefaultLocalRestrictProlong( const CombinedSpace<DiscreteFunctionSpaceImp,N,policy> & space)
+      {
+        assert( !space.continuous() );
+      }
+    };
 #else 
-  template < class DiscreteFunctionSpaceImp, 
-             int N, 
-             DofStoragePolicy policy> 
-  struct DefaultLocalRestrictProlong< CombinedSpace<DiscreteFunctionSpaceImp,N,policy> > 
-  : public EmptyLocalRestrictProlong< CombinedSpace<DiscreteFunctionSpaceImp,N,policy> >
-  {
-    DefaultLocalRestrictProlong( const CombinedSpace<DiscreteFunctionSpaceImp,N,policy> & )
-    {}
-  };
+    template < class DiscreteFunctionSpaceImp, 
+               int N, 
+               DofStoragePolicy policy> 
+    struct DefaultLocalRestrictProlong< CombinedSpace<DiscreteFunctionSpaceImp,N,policy> > 
+    : public EmptyLocalRestrictProlong< CombinedSpace<DiscreteFunctionSpaceImp,N,policy> >
+    {
+      DefaultLocalRestrictProlong( const CombinedSpace<DiscreteFunctionSpaceImp,N,policy> & )
+      {}
+    };
 #endif 
 
-///@}
+  ///@}
 
-} // end namespace Fem  
+  } // namespace Fem  
 
-} // end namespace Dune 
-#endif
+} // namespace Dune 
+#endif // #ifndef DUNE_COMBINEDADAPTMANAGERIMP_HH

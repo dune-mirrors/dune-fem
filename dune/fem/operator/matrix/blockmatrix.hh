@@ -1,5 +1,5 @@
-#ifndef DUNE_BLOCKSPMATRIX_HH
-#define DUNE_BLOCKSPMATRIX_HH
+#ifndef DUNE_FEM_BLOCKSPMATRIX_HH
+#define DUNE_FEM_BLOCKSPMATRIX_HH
 
 //- system includes 
 #include <stack>
@@ -9,6 +9,7 @@
 
 namespace Dune
 {
+
   namespace Fem
   {
 
@@ -314,7 +315,8 @@ namespace Dune
       return s;
     }
 
-  } // end namespace Fem 
+  } // namespace Fem 
 
-} // end namespace Dune 
-#endif  
+} // namespace Dune 
+
+#endif // #ifndef DUNE_FEM_BLOCKSPMATRIX_HH

@@ -1,17 +1,12 @@
-#ifndef DUNE_TWISTUTILITY_HH
-#define DUNE_TWISTUTILITY_HH
+#ifndef DUNE_FEM_TWISTUTILITY_HH
+#define DUNE_FEM_TWISTUTILITY_HH
 
 #include <cassert>
 
 #include <dune/common/static_assert.hh>
 #include <dune/common/version.hh>
-#if HAVE_DUNE_GEOMETRY
 #include <dune/geometry/type.hh>
 #include <dune/geometry/genericgeometry/topologytypes.hh>
-#else
-#include <dune/common/geometrytype.hh>
-#include <dune/grid/genericgeometry/topologytypes.hh>
-#endif
 
 #include <dune/grid/alugrid/common/interfaces.hh>
 
@@ -464,4 +459,4 @@ namespace Dune
   
 } // end namespace Dune 
 
-#endif // #ifndef DUNE_TWISTUTILITY_HH
+#endif // #ifndef DUNE_FEM_TWISTUTILITY_HH

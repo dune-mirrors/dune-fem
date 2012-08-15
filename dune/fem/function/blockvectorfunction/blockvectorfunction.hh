@@ -23,449 +23,451 @@
 namespace Dune
 {
 
-namespace Fem 
-{
+  namespace Fem 
+  {
 
-// forward declarations 
-template <class DiscreteFunctionSpaceType> class ISTLBlockVectorDiscreteFunction;
-template <class DofStorageImp,class DofImp> class DofIteratorBlockVectorDiscreteFunction;
-template< class Traits > class BlockVectorLocalFunction;
-template< class Traits > class BlockVectorLocalFunctionFactory;
-template <class BlockVectorImp, class DofImp> class StraightenBlockVector;
+    // forward declarations 
+    template <class DiscreteFunctionSpaceType> class ISTLBlockVectorDiscreteFunction;
+    template <class DofStorageImp,class DofImp> class DofIteratorBlockVectorDiscreteFunction;
+    template< class Traits > class BlockVectorLocalFunction;
+    template< class Traits > class BlockVectorLocalFunctionFactory;
+    template <class BlockVectorImp, class DofImp> class StraightenBlockVector;
 
-template <class DiscreteFunctionSpaceImp>
-struct ISTLBlockVectorDiscreteFunctionTraits 
-{
-  enum { localBlockSize = DiscreteFunctionSpaceImp :: localBlockSize };
-  typedef typename DiscreteFunctionSpaceImp :: RangeFieldType RangeFieldType;
+    template <class DiscreteFunctionSpaceImp>
+    struct ISTLBlockVectorDiscreteFunctionTraits 
+    {
+      enum { localBlockSize = DiscreteFunctionSpaceImp :: localBlockSize };
+      typedef typename DiscreteFunctionSpaceImp :: RangeFieldType RangeFieldType;
 
-  typedef FieldVector<RangeFieldType, localBlockSize > DofBlockType;
-  typedef const DofBlockType ConstDofBlockType;
-  typedef DofBlockType *DofBlockPtrType;
-  typedef const DofBlockType *ConstDofBlockPtrType;
-  
+      typedef FieldVector<RangeFieldType, localBlockSize > DofBlockType;
+      typedef const DofBlockType ConstDofBlockType;
+      typedef DofBlockType *DofBlockPtrType;
+      typedef const DofBlockType *ConstDofBlockPtrType;
+      
 #if HAVE_DUNE_ISTL
-  typedef BlockVector< DofBlockType > DofStorageType;
+      typedef BlockVector< DofBlockType > DofStorageType;
 #else 
-  typedef Fem :: MutableArray < DofBlockType > DofStorageType;
+      typedef Fem :: MutableArray < DofBlockType > DofStorageType;
 #endif
 
-  typedef DiscreteFunctionSpaceImp DiscreteFunctionSpaceType;
+      typedef DiscreteFunctionSpaceImp DiscreteFunctionSpaceType;
 
-  typedef typename DiscreteFunctionSpaceType :: GridPartType GridPartType;
-  typedef typename DiscreteFunctionSpaceType :: IndexSetType IndexSetType;
+      typedef typename DiscreteFunctionSpaceType :: GridPartType GridPartType;
+      typedef typename DiscreteFunctionSpaceType :: IndexSetType IndexSetType;
 
-  //! needs additional mapper because of block structure 
-  typedef typename DiscreteFunctionSpaceType :: BlockMapperType MapperType;
+      //! needs additional mapper because of block structure 
+      typedef typename DiscreteFunctionSpaceType :: BlockMapperType MapperType;
 
-  typedef ISTLBlockVectorDiscreteFunction<DiscreteFunctionSpaceType> DiscreteFunctionType;
- 
-  typedef DofIteratorBlockVectorDiscreteFunction<DofStorageType,RangeFieldType> DofIteratorType;
-  typedef Fem :: ConstDofIteratorDefault<DofIteratorType> ConstDofIteratorType;
+      typedef ISTLBlockVectorDiscreteFunction<DiscreteFunctionSpaceType> DiscreteFunctionType;
+     
+      typedef DofIteratorBlockVectorDiscreteFunction<DofStorageType,RangeFieldType> DofIteratorType;
+      typedef Fem :: ConstDofIteratorDefault<DofIteratorType> ConstDofIteratorType;
 
-  typedef ISTLBlockVectorDiscreteFunctionTraits<DiscreteFunctionSpaceImp> ThisType;
-  
-  typedef Fem :: StandardLocalFunctionFactory< ThisType > LocalFunctionFactoryType;
+      typedef ISTLBlockVectorDiscreteFunctionTraits<DiscreteFunctionSpaceImp> ThisType;
+      
+      typedef Fem :: StandardLocalFunctionFactory< ThisType > LocalFunctionFactoryType;
 
-  typedef Fem :: LocalFunctionStack< LocalFunctionFactoryType > LocalFunctionStorageType;
-  typedef typename LocalFunctionStorageType :: LocalFunctionType LocalFunctionType;
+      typedef Fem :: LocalFunctionStack< LocalFunctionFactoryType > LocalFunctionStorageType;
+      typedef typename LocalFunctionStorageType :: LocalFunctionType LocalFunctionType;
 
-  typedef StraightenBlockVector<DofStorageType,RangeFieldType> LeakPointerType;
-};
+      typedef StraightenBlockVector<DofStorageType,RangeFieldType> LeakPointerType;
+    };
 
-template <class DofType>
-struct DofTypeWrapper
-{
-  enum { blockSize = DofType :: dimension };
-  static typename DofType::field_type & convert(DofType & val, int idx) 
-  { 
-    return val[idx]; 
-  }
-};
+    template <class DofType>
+    struct DofTypeWrapper
+    {
+      enum { blockSize = DofType :: dimension };
+      static typename DofType::field_type & convert(DofType & val, int idx) 
+      { 
+        return val[idx]; 
+      }
+    };
 
-template <>
-struct DofTypeWrapper<double>
-{
-  enum { blockSize = 1 };
-  static double & convert(double  & val, int idx) { return val; }
-};
+    template <>
+    struct DofTypeWrapper<double>
+    {
+      enum { blockSize = 1 };
+      static double & convert(double  & val, int idx) { return val; }
+    };
 
-template <class BlockVectorImp, class DofImp>
-class StraightenBlockVector
-{
-  typedef BlockVectorImp BlockVectorType;
-  typedef DofImp DofType;
-  typedef typename BlockVectorType :: block_type BlockType;
-  enum { blockSize = BlockType :: dimension };
-public:
-  StraightenBlockVector(BlockVectorImp& vec) : vec_(vec) {}
+    template <class BlockVectorImp, class DofImp>
+    class StraightenBlockVector
+    {
+      typedef BlockVectorImp BlockVectorType;
+      typedef DofImp DofType;
+      typedef typename BlockVectorType :: block_type BlockType;
+      enum { blockSize = BlockType :: dimension };
+    public:
+      StraightenBlockVector(BlockVectorImp& vec) : vec_(vec) {}
 
-  //! return dof
-  DofType& operator [] (int i)
-  {
-    assert((i >=0) && (i < blockSize * vec_.size()));
-    const int count = (int) i/blockSize;
-    assert( count < vec_.size() );
-    const int local = i%blockSize;
-    assert( local < blockSize );
-    return vec_[count][local];
-  }
+      //! return dof
+      DofType& operator [] (int i)
+      {
+        assert((i >=0) && (i < blockSize * vec_.size()));
+        const int count = (int) i/blockSize;
+        assert( count < vec_.size() );
+        const int local = i%blockSize;
+        assert( local < blockSize );
+        return vec_[count][local];
+      }
 
-  //! return dof
-  const DofType& operator [] (int i) const
-  {
-    assert((i >=0) && (i < blockSize * vec_.size()));
-    const int count = (int) i/blockSize;
-    assert( count < vec_.size() );
-    const int local = i%blockSize;
-    assert( local < blockSize );
-    return vec_[count][local];
-  }
+      //! return dof
+      const DofType& operator [] (int i) const
+      {
+        assert((i >=0) && (i < blockSize * vec_.size()));
+        const int count = (int) i/blockSize;
+        assert( count < vec_.size() );
+        const int local = i%blockSize;
+        assert( local < blockSize );
+        return vec_[count][local];
+      }
 
-  int size () const
-  {
-    return vec_.size() * blockSize;
-  }
+      int size () const
+      {
+        return vec_.size() * blockSize;
+      }
 
-  BlockVectorType& blockVector() { return vec_; }
-  const BlockVectorType& blockVector() const { return vec_; }
-protected:
-  BlockVectorType& vec_;
-};
+      BlockVectorType& blockVector() { return vec_; }
+      const BlockVectorType& blockVector() const { return vec_; }
+    protected:
+      BlockVectorType& vec_;
+    };
 
 
 
-//**********************************************************************
-//! @ingroup BlockVectorDFunction
-//  --ISTLBlockVectorDiscreteFunction 
-//
-//! this is one special implementation of a discrete function using an
-//! array for storing the dofs.  
-//!
-//**********************************************************************
-template< class DiscreteFunctionSpaceImp >
-class ISTLBlockVectorDiscreteFunction 
-: public Fem::DiscreteFunctionDefault
-  < ISTLBlockVectorDiscreteFunctionTraits< DiscreteFunctionSpaceImp > > 
-{
-  typedef ISTLBlockVectorDiscreteFunction< DiscreteFunctionSpaceImp > ThisType;
-  typedef Fem::DiscreteFunctionDefault
-    < ISTLBlockVectorDiscreteFunctionTraits< DiscreteFunctionSpaceImp > >
-    BaseType;
+    //**********************************************************************
+    //! @ingroup BlockVectorDFunction
+    //  --ISTLBlockVectorDiscreteFunction 
+    //
+    //! this is one special implementation of a discrete function using an
+    //! array for storing the dofs.  
+    //!
+    //**********************************************************************
+    template< class DiscreteFunctionSpaceImp >
+    class ISTLBlockVectorDiscreteFunction 
+    : public Fem::DiscreteFunctionDefault
+      < ISTLBlockVectorDiscreteFunctionTraits< DiscreteFunctionSpaceImp > > 
+    {
+      typedef ISTLBlockVectorDiscreteFunction< DiscreteFunctionSpaceImp > ThisType;
+      typedef Fem::DiscreteFunctionDefault
+        < ISTLBlockVectorDiscreteFunctionTraits< DiscreteFunctionSpaceImp > >
+        BaseType;
 
-  typedef BaseType  DiscreteFunctionDefaultType;
+      typedef BaseType  DiscreteFunctionDefaultType;
 
-public:  
-  //! type of discrete functions space 
-  typedef DiscreteFunctionSpaceImp DiscreteFunctionSpaceType;
+    public:  
+      //! type of discrete functions space 
+      typedef DiscreteFunctionSpaceImp DiscreteFunctionSpaceType;
 
-  //! traits of this type 
-  typedef ISTLBlockVectorDiscreteFunctionTraits<DiscreteFunctionSpaceType> Traits;
-  
-  //! size of local blocks  
-  enum { localBlockSize = Traits :: localBlockSize };
+      //! traits of this type 
+      typedef ISTLBlockVectorDiscreteFunctionTraits<DiscreteFunctionSpaceType> Traits;
+      
+      //! size of local blocks  
+      enum { localBlockSize = Traits :: localBlockSize };
 
-  //! needs additional mapper 
-  typedef typename Traits :: MapperType MapperType; 
+      //! needs additional mapper 
+      typedef typename Traits :: MapperType MapperType; 
 
-  friend class BlockVectorLocalFunctionFactory< Traits >;
+      friend class BlockVectorLocalFunctionFactory< Traits >;
 
-private:
-  enum { myId_ = 0};
-  
-public:
-  //! type of underlying array
-  typedef typename Traits :: DofStorageType DofStorageType;
+    private:
+      enum { myId_ = 0};
+      
+    public:
+      //! type of underlying array
+      typedef typename Traits :: DofStorageType DofStorageType;
 
-  //! my type 
-  typedef ISTLBlockVectorDiscreteFunction <DiscreteFunctionSpaceType> DiscreteFunctionType;
-  
-  //! Type of the range field
-  typedef typename DiscreteFunctionSpaceType::RangeFieldType RangeFieldType;
+      //! my type 
+      typedef ISTLBlockVectorDiscreteFunction <DiscreteFunctionSpaceType> DiscreteFunctionType;
+      
+      //! Type of the range field
+      typedef typename DiscreteFunctionSpaceType::RangeFieldType RangeFieldType;
 
-  /** \brief For ISTL-compatibility */
-  typedef typename DofStorageType :: block_type block_type; 
+      /** \brief For ISTL-compatibility */
+      typedef typename DofStorageType :: block_type block_type; 
 
-  //! Type of the grid
-  typedef typename DiscreteFunctionSpaceType::GridType GridType;
+      //! Type of the grid
+      typedef typename DiscreteFunctionSpaceType::GridType GridType;
 
-  //! type of local function factory 
-  typedef typename Traits :: LocalFunctionFactoryType LocalFunctionFactoryType;
+      //! type of local function factory 
+      typedef typename Traits :: LocalFunctionFactoryType LocalFunctionFactoryType;
 
-  //! LocalFunctionType is the exported lf type 
-  typedef typename LocalFunctionFactoryType :: ObjectType
-    LocalFunctionImp;
+      //! LocalFunctionType is the exported lf type 
+      typedef typename LocalFunctionFactoryType :: ObjectType
+        LocalFunctionImp;
 
-  //! the dof iterator type of this function
-  typedef typename Traits :: DofIteratorType DofIteratorType;
-  typedef typename Traits :: ConstDofIteratorType ConstDofIteratorType;
+      //! the dof iterator type of this function
+      typedef typename Traits :: DofIteratorType DofIteratorType;
+      typedef typename Traits :: ConstDofIteratorType ConstDofIteratorType;
 
-  //! The associated discrete function space
-  typedef DiscreteFunctionSpaceType FunctionSpaceType;
+      //! The associated discrete function space
+      typedef DiscreteFunctionSpaceType FunctionSpaceType;
 
-  //! the type of the unknowns 
-  typedef RangeFieldType DofType;
+      //! the type of the unknowns 
+      typedef RangeFieldType DofType;
 
-  //! type of block stored in block vector 
-  typedef block_type DofBlockType;
+      //! type of block stored in block vector 
+      typedef block_type DofBlockType;
 
-  typedef typename Traits :: ConstDofBlockType ConstDofBlockType;
-  typedef typename Traits :: DofBlockPtrType DofBlockPtrType;
-  typedef typename Traits :: ConstDofBlockPtrType ConstDofBlockPtrType;
-  
-  //! type of index set 
-  typedef typename DiscreteFunctionSpaceType :: IndexSetType IndexSetType; 
-  
-  //! type of LeakPointer 
-  typedef typename Traits :: LeakPointerType LeakPointerType;
+      typedef typename Traits :: ConstDofBlockType ConstDofBlockType;
+      typedef typename Traits :: DofBlockPtrType DofBlockPtrType;
+      typedef typename Traits :: ConstDofBlockPtrType ConstDofBlockPtrType;
+      
+      //! type of index set 
+      typedef typename DiscreteFunctionSpaceType :: IndexSetType IndexSetType; 
+      
+      //! type of LeakPointer 
+      typedef typename Traits :: LeakPointerType LeakPointerType;
 
-public:
-  //! \brief Constructor makes Discrete Function  
-  ISTLBlockVectorDiscreteFunction ( const DiscreteFunctionSpaceType &f );
-  
-  //! \brief Constructor makes Discrete Function with name 
-  ISTLBlockVectorDiscreteFunction ( const std :: string &name,
-                                const DiscreteFunctionSpaceType &f );
-  
-  //! \brief Constructor makes Discrete Function  
-  ISTLBlockVectorDiscreteFunction ( const std :: string &name,
-                                const DiscreteFunctionSpaceType &f,
-                                const DofStorageType &data );
-  
-  //! \brief Constructor makes Discrete Function from copy 
-  ISTLBlockVectorDiscreteFunction ( const ThisType &other ); 
+    public:
+      //! \brief Constructor makes Discrete Function  
+      ISTLBlockVectorDiscreteFunction ( const DiscreteFunctionSpaceType &f );
+      
+      //! \brief Constructor makes Discrete Function with name 
+      ISTLBlockVectorDiscreteFunction ( const std :: string &name,
+                                    const DiscreteFunctionSpaceType &f );
+      
+      //! \brief Constructor makes Discrete Function  
+      ISTLBlockVectorDiscreteFunction ( const std :: string &name,
+                                    const DiscreteFunctionSpaceType &f,
+                                    const DofStorageType &data );
+      
+      //! \brief Constructor makes Discrete Function from copy 
+      ISTLBlockVectorDiscreteFunction ( const ThisType &other ); 
 
-  /**  \brief delete stack of free local functions belonging to this discrete function */
-  ~ISTLBlockVectorDiscreteFunction ();
+      /**  \brief delete stack of free local functions belonging to this discrete function */
+      ~ISTLBlockVectorDiscreteFunction ();
 
-  using BaseType :: name;
-  using BaseType :: axpy;
+      using BaseType :: name;
+      using BaseType :: axpy;
 
 #if 0
-  /** \brief @copydoc DiscreteFunctionInterface::localFunction */ 
-  template <class EntityType>
-  LocalFunctionType localFunction(const EntityType& en) const;
+      /** \brief @copydoc DiscreteFunctionInterface::localFunction */ 
+      template <class EntityType>
+      LocalFunctionType localFunction(const EntityType& en) const;
 #endif
 
-  /** \copydoc Dune::Fem::DiscreteFunctionInterface::dbegin() */ 
-  DofIteratorType dbegin ();
-  
-  /** \copydoc Dune::Fem::DiscreteFunctionInterface::dend() */
-  DofIteratorType dend (); 
+      /** \copydoc Dune::Fem::DiscreteFunctionInterface::dbegin() */ 
+      DofIteratorType dbegin ();
+      
+      /** \copydoc Dune::Fem::DiscreteFunctionInterface::dend() */
+      DofIteratorType dend (); 
 
-  /** \copydoc Dune::Fem::DiscreteFunctionInterface::dbegin() const */
-  ConstDofIteratorType dbegin () const;
-  
-  /** \copydoc Dune::Fem::DiscreteFunctionInterface::dend() const */ 
-  ConstDofIteratorType dend () const;
+      /** \copydoc Dune::Fem::DiscreteFunctionInterface::dbegin() const */
+      ConstDofIteratorType dbegin () const;
+      
+      /** \copydoc Dune::Fem::DiscreteFunctionInterface::dend() const */ 
+      ConstDofIteratorType dend () const;
 
-  inline ConstDofBlockPtrType block ( const unsigned int block ) const
-  {
-    return &(dofVec_[ block ]);
-  }
-  
-  inline DofBlockPtrType block ( const unsigned int block )
-  {
-    return &(dofVec_[ block ]);
-  }
+      inline ConstDofBlockPtrType block ( const unsigned int block ) const
+      {
+        return &(dofVec_[ block ]);
+      }
+      
+      inline DofBlockPtrType block ( const unsigned int block )
+      {
+        return &(dofVec_[ block ]);
+      }
 
-  inline const RangeFieldType &dof ( const unsigned int index ) const
-  {
-    return leakPtr_[ index ];
-  }
+      inline const RangeFieldType &dof ( const unsigned int index ) const
+      {
+        return leakPtr_[ index ];
+      }
 
-  inline RangeFieldType &dof ( const unsigned int index )
-  {
-    return leakPtr_[ index ];
-  }
+      inline RangeFieldType &dof ( const unsigned int index )
+      {
+        return leakPtr_[ index ];
+      }
 
-  /** \copydoc Dune::Fem::DiscreteFunctionInterface::size */
-  inline int size() const
-  {
-    return dofVec_.size() * localBlockSize ;
-  }
+      /** \copydoc Dune::Fem::DiscreteFunctionInterface::size */
+      inline int size() const
+      {
+        return dofVec_.size() * localBlockSize ;
+      }
 
-  /** \copydoc Dune::Fem::DiscreteFunctionDefault::clear */
-  void clear();
+      /** \copydoc Dune::Fem::DiscreteFunctionDefault::clear */
+      void clear();
 
-  /** \copydoc Dune::Fem::DiscreteFunctionDefault::axpy */
-  void axpy ( const RangeFieldType &s, const DiscreteFunctionType &g );
- 
-  /** \copydoc Dune::Fem::DiscreteFunctionInterface::print */
-  void print( std :: ostream &out ) const;
+      /** \copydoc Dune::Fem::DiscreteFunctionDefault::axpy */
+      void axpy ( const RangeFieldType &s, const DiscreteFunctionType &g );
+     
+      /** \copydoc Dune::Fem::DiscreteFunctionInterface::print */
+      void print( std :: ostream &out ) const;
 
-  /** \brief return reference to internal block vector 
-      \return reference to blockVector */ 
-  DofStorageType& blockVector () const { return dofVec_; }
+      /** \brief return reference to internal block vector 
+          \return reference to blockVector */ 
+      DofStorageType& blockVector () const { return dofVec_; }
 
-  /** \brief return reference to leak pointer 
-      \return reference to leakPointer */ 
-  LeakPointerType& leakPointer() { return leakPtr_; }
+      /** \brief return reference to leak pointer 
+          \return reference to leakPointer */ 
+      LeakPointerType& leakPointer() { return leakPtr_; }
 
-  /** \brief return const reference to leak pointer 
-      \return constant reference to leakPointer */
-  const LeakPointerType& leakPointer() const { return leakPtr_; }
+      /** \brief return const reference to leak pointer 
+          \return constant reference to leakPointer */
+      const LeakPointerType& leakPointer() const { return leakPtr_; }
 
-  /** \copydoc Dune::Fem::DiscreteFunctionInterface::enableDofCompression() */
-  void enableDofCompression();
+      /** \copydoc Dune::Fem::DiscreteFunctionInterface::enableDofCompression() */
+      void enableDofCompression();
 
-private:  
-  // allocates dof storage 
-  DofStorageType& allocateDofStorage();
-  
-  LocalFunctionFactoryType lfFactory_;
+    private:  
+      // allocates dof storage 
+      DofStorageType& allocateDofStorage();
+      
+      LocalFunctionFactoryType lfFactory_;
 
-  // single mapper for blocks 
-  MapperType& mapper_;
+      // single mapper for blocks 
+      MapperType& mapper_;
 
-  // DofStorage that manages the memory for the dofs of this function
-  Fem::DofStorageInterface* memObject_;
+      // DofStorage that manages the memory for the dofs of this function
+      Fem::DofStorageInterface* memObject_;
 
-  //! the dofs stored in an array
-  DofStorageType &dofVec_;
+      //! the dofs stored in an array
+      DofStorageType &dofVec_;
 
-  //! leak pointer converting block vector to straight vector 
-  LeakPointerType leakPtr_; 
+      //! leak pointer converting block vector to straight vector 
+      LeakPointerType leakPtr_; 
 
-  //! hold one object for addLocal and setLocal and so on 
-  LocalFunctionImp localFunc_;
-}; // end class ISTLBlockVectorDiscreteFunction
+      //! hold one object for addLocal and setLocal and so on 
+      LocalFunctionImp localFunc_;
+    }; // end class ISTLBlockVectorDiscreteFunction
 
 
 
-//***********************************************************************
-//
-//  --DofIteratorBlockVectorDiscreteFunction
-//
-//***********************************************************************
-  /** \brief Iterator over an array of dofs 
-      \todo Please doc me!
-  */
-template < class DofStorageImp, class DofImp >
-class DofIteratorBlockVectorDiscreteFunction : 
-  public Fem :: DofIteratorDefault < DofImp , DofIteratorBlockVectorDiscreteFunction < DofStorageImp, DofImp > >
-{
-public:
-  typedef DofImp DofType;
-  typedef DofStorageImp DofStorageType;
-  typedef DofIteratorBlockVectorDiscreteFunction<DofStorageType,DofType> ThisType;
-
-  typedef typename DofStorageType :: block_type DofBlockType;
-  typedef DofTypeWrapper<DofBlockType> DofWrapperType;
-  enum { blockSize = DofWrapperType :: blockSize };
-  
-  //! Default constructor
-  DofIteratorBlockVectorDiscreteFunction() :
-    dofArray_ (0) ,
-    count_(0),
-    idx_(0)
-  {}
-
-  //! Constructor (const)
-  DofIteratorBlockVectorDiscreteFunction ( const DofStorageType & dofArray , int count )
-    :  dofArray_ (const_cast<DofStorageType*>(&dofArray)) ,
-       count_(count),
-       idx_(0) {}
-  
-  //! Constructor
-  DofIteratorBlockVectorDiscreteFunction(DofStorageType& dofArray, int count)
-    : dofArray_(&dofArray),
-      count_(count),
-      idx_(0) {}
-
-  //! Copy Constructor
-  DofIteratorBlockVectorDiscreteFunction (const ThisType& other)
-    : dofArray_(other.dofArray_)
-    , count_(other.count_) 
-    , idx_(other.idx_)
-  {}
-
-  //! Assignment operator
-  ThisType& operator=(const ThisType& other)
-  {
-    if (&other != this) 
+    //***********************************************************************
+    //
+    //  --DofIteratorBlockVectorDiscreteFunction
+    //
+    //***********************************************************************
+      /** \brief Iterator over an array of dofs 
+          \todo Please doc me!
+      */
+    template < class DofStorageImp, class DofImp >
+    class DofIteratorBlockVectorDiscreteFunction : 
+      public Fem :: DofIteratorDefault < DofImp , DofIteratorBlockVectorDiscreteFunction < DofStorageImp, DofImp > >
     {
-      dofArray_ = other.dofArray_;
-      count_ = other.count_;
-      idx_   = other.idx_;
-    }
-    return *this;
-  }
-  //! return dof
-  DofType& operator *()
-  {
-    assert((count_ >=0) && (count_ < (unsigned int)dofArray_->size()));
-    //return DofWrapperType::convert((*dofArray_)[count_],idx_);
-    return ((*dofArray_)[count_][idx_]);
-  }
+    public:
+      typedef DofImp DofType;
+      typedef DofStorageImp DofStorageType;
+      typedef DofIteratorBlockVectorDiscreteFunction<DofStorageType,DofType> ThisType;
 
-  //! return dof read only 
-  const DofType& operator * () const
-  {
-    assert((count_ >=0) && (count_ < (unsigned int)dofArray_->size()));
-    //return DofWrapperType::convert((*dofArray_)[count_],idx_);
-    return ((*dofArray_)[count_][idx_]);
-  }
+      typedef typename DofStorageType :: block_type DofBlockType;
+      typedef DofTypeWrapper<DofBlockType> DofWrapperType;
+      enum { blockSize = DofWrapperType :: blockSize };
+      
+      //! Default constructor
+      DofIteratorBlockVectorDiscreteFunction() :
+        dofArray_ (0) ,
+        count_(0),
+        idx_(0)
+      {}
 
-  //! go to next dof
-  ThisType& operator++ ()
-  {
-    ++idx_;
-    if(idx_ >= blockSize) 
+      //! Constructor (const)
+      DofIteratorBlockVectorDiscreteFunction ( const DofStorageType & dofArray , int count )
+        :  dofArray_ (const_cast<DofStorageType*>(&dofArray)) ,
+           count_(count),
+           idx_(0) {}
+      
+      //! Constructor
+      DofIteratorBlockVectorDiscreteFunction(DofStorageType& dofArray, int count)
+        : dofArray_(&dofArray),
+          count_(count),
+          idx_(0) {}
+
+      //! Copy Constructor
+      DofIteratorBlockVectorDiscreteFunction (const ThisType& other)
+        : dofArray_(other.dofArray_)
+        , count_(other.count_) 
+        , idx_(other.idx_)
+      {}
+
+      //! Assignment operator
+      ThisType& operator=(const ThisType& other)
+      {
+        if (&other != this) 
+        {
+          dofArray_ = other.dofArray_;
+          count_ = other.count_;
+          idx_   = other.idx_;
+        }
+        return *this;
+      }
+      //! return dof
+      DofType& operator *()
+      {
+        assert((count_ >=0) && (count_ < (unsigned int)dofArray_->size()));
+        //return DofWrapperType::convert((*dofArray_)[count_],idx_);
+        return ((*dofArray_)[count_][idx_]);
+      }
+
+      //! return dof read only 
+      const DofType& operator * () const
+      {
+        assert((count_ >=0) && (count_ < (unsigned int)dofArray_->size()));
+        //return DofWrapperType::convert((*dofArray_)[count_],idx_);
+        return ((*dofArray_)[count_][idx_]);
+      }
+
+      //! go to next dof
+      ThisType& operator++ ()
+      {
+        ++idx_;
+        if(idx_ >= blockSize) 
+        {
+          idx_ = 0;
+          ++count_;
+        }
+        return (*this);
+      }
+      
+      //! compare
+      bool operator == (const ThisType & I ) const
+      {
+        return (count_ == I.count_) && (idx_ == I.idx_);
+      }
+
+      //! compare 
+      bool operator != (const ThisType & I ) const
+      {
+        return !((*this) == I);
+      }
+
+      //! return actual index 
+      int index () const { return count_; }
+
+      //! set dof iterator back to begin , for const and not const Iterators
+      void reset () { count_ = 0; idx_ = 0; }
+      
+    private:
+      //! the array holding the dofs 
+      DofStorageType * dofArray_;  
+      
+      //! index 
+      mutable size_t count_;
+      mutable size_t idx_;
+
+    }; // end DofIteratorBlockVectorDiscreteFunction 
+
+    template <class DiscreteFunctionSpaceImp>
+    class ManagedDiscreteFunction<ISTLBlockVectorDiscreteFunction<DiscreteFunctionSpaceImp> > 
+    : public ISTLBlockVectorDiscreteFunction<DiscreteFunctionSpaceImp> 
     {
-      idx_ = 0;
-      ++count_;
-    }
-    return (*this);
-  }
-  
-  //! compare
-  bool operator == (const ThisType & I ) const
-  {
-    return (count_ == I.count_) && (idx_ == I.idx_);
-  }
+      typedef ISTLBlockVectorDiscreteFunction<DiscreteFunctionSpaceImp> BaseType;
+    public:
+      typedef DiscreteFunctionSpaceImp DiscreteFunctionSpaceType;
+      typedef ManagedDiscreteFunction<BaseType> ThisType;
+      //! \brief Constructor makes Discrete Function  
+      ManagedDiscreteFunction ( const DiscreteFunctionSpaceType & f ) : BaseType(f) {}
+      //! \brief Constructor makes Discrete Function with name 
+      ManagedDiscreteFunction ( const std::string name, const DiscreteFunctionSpaceType & f ) : BaseType(name,f) {}
+      //! \brief Constructor makes Discrete Function  
+      ManagedDiscreteFunction ( const std::string name, const DiscreteFunctionSpaceType & f, const typename BaseType::DofStorageType & data ) : BaseType(name,f,data) {}
+      //! \brief Constructor makes Discrete Function from copy 
+      ManagedDiscreteFunction (const ThisType & df) : BaseType(df) {}
+    };
 
-  //! compare 
-  bool operator != (const ThisType & I ) const
-  {
-    return !((*this) == I);
-  }
+  } // namespace Fem
 
-  //! return actual index 
-  int index () const { return count_; }
-
-  //! set dof iterator back to begin , for const and not const Iterators
-  void reset () { count_ = 0; idx_ = 0; }
-  
-private:
-  //! the array holding the dofs 
-  DofStorageType * dofArray_;  
-  
-  //! index 
-  mutable size_t count_;
-  mutable size_t idx_;
-
-}; // end DofIteratorBlockVectorDiscreteFunction 
-
-  template <class DiscreteFunctionSpaceImp>
-  class ManagedDiscreteFunction<ISTLBlockVectorDiscreteFunction<DiscreteFunctionSpaceImp> > :
-  public ISTLBlockVectorDiscreteFunction<DiscreteFunctionSpaceImp> {
-    typedef ISTLBlockVectorDiscreteFunction<DiscreteFunctionSpaceImp> BaseType;
-  public:
-    typedef DiscreteFunctionSpaceImp DiscreteFunctionSpaceType;
-    typedef ManagedDiscreteFunction<BaseType> ThisType;
-    //! \brief Constructor makes Discrete Function  
-    ManagedDiscreteFunction ( const DiscreteFunctionSpaceType & f ) : BaseType(f) {}
-    //! \brief Constructor makes Discrete Function with name 
-    ManagedDiscreteFunction ( const std::string name, const DiscreteFunctionSpaceType & f ) : BaseType(name,f) {}
-    //! \brief Constructor makes Discrete Function  
-    ManagedDiscreteFunction ( const std::string name, const DiscreteFunctionSpaceType & f, const typename BaseType::DofStorageType & data ) : BaseType(name,f,data) {}
-    //! \brief Constructor makes Discrete Function from copy 
-    ManagedDiscreteFunction (const ThisType & df) : BaseType(df) {}
-  };
-} // end namespace Fem
-
-} // end namespace Dune
+} // namespace Dune
 
 #include "blockvectorfunction_inline.hh"
-#endif
+#endif // #ifndef DUNE_FEM_BLOCKVECTORFUNCTION_HH

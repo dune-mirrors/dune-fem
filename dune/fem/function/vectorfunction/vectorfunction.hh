@@ -13,14 +13,14 @@
 namespace Dune
 {
 
-  namespace Fem { 
+  namespace Fem 
+  { 
 
     // Internal Forward Declarations
     // -----------------------------
 
     template< class DiscreteFunctionSpace, class DofVector >
     class VectorDiscreteFunction;
-
 
 
     // VectorDiscreteFunctionTraits
@@ -76,7 +76,6 @@ namespace Dune
       typedef Envelope< DofBlockType > DofBlockPtrType;
       typedef Envelope< ConstDofBlockType > ConstDofBlockPtrType;
     };
-
 
 
     // VectorDiscreteFunction
@@ -270,9 +269,12 @@ namespace Dune
       const bool freeDofVector_;
     };
 
-  } // end namespace Fem 
+  } // namespace Fem 
+
+#if DUNE_FEM_COMPATIBILITY
 
   using Fem :: VectorDiscreteFunction ;
+#endif // DUNE_FEM_COMPATIBILITY
 
   // Capabilibies
   // ------------
@@ -288,8 +290,8 @@ namespace Dune
     
   }
 
-};
+} // namespace Dune
 
 #include "managedvectorfunction.hh"
 
-#endif
+#endif // #ifndef DUNE_FEM_VECTORFUNCTION_HH

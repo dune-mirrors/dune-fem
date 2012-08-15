@@ -8,177 +8,176 @@
 #include <list>
 
 //- Dune includes 
-#if HAVE_DUNE_GEOMETRY
 #include <dune/geometry/type.hh>
 #include <dune/geometry/typeindex.hh>
-#else
-#include <dune/common/geometrytype.hh>
-#include <dune/geometry/geometrytypeindex.hh>
-#endif
 
 #include <dune/fem/misc/threadmanager.hh>
 
-namespace Dune {
+namespace Dune 
+{
 
-  namespace Fem {
-  //! \brief Storage policy for base function sets.
-  //! In a base function set, the base function values on quadrature points
-  //! can either be cached or always recalculated. The storage policies
-  //! CachingStorage and SimpleStorage do exactly that. The present class
-  //! implements the common functionality and can be seen as a layer of
-  //! abstraction in the access to basefunctions.
-  template <int dimworld> 
-  class StorageInterface
+  namespace Fem 
   {
-      typedef StorageInterface<dimworld> ThisType;
-      typedef std::list< ThisType* > StorageInterfaceListType;
 
-      typedef StorageInterfaceListType* StorageInterfaceListPointer;
-      typedef std::vector< size_t > QuadratureIdentifierType;
-      typedef std::list< QuadratureIdentifierType > QuadratureListType;
+    //! \brief Storage policy for base function sets.
+    //! In a base function set, the base function values on quadrature points
+    //! can either be cached or always recalculated. The storage policies
+    //! CachingStorage and SimpleStorage do exactly that. The present class
+    //! implements the common functionality and can be seen as a layer of
+    //! abstraction in the access to basefunctions.
+    template <int dimworld> 
+    class StorageInterface
+    {
+        typedef StorageInterface<dimworld> ThisType;
+        typedef std::list< ThisType* > StorageInterfaceListType;
 
-      enum { ids = 0, codims = 1, sizes = 2, geoIndex = 3, sizeIndents = 4 };
+        typedef StorageInterfaceListType* StorageInterfaceListPointer;
+        typedef std::vector< size_t > QuadratureIdentifierType;
+        typedef std::list< QuadratureIdentifierType > QuadratureListType;
 
-      // return reference to list singleton pointer 
-      static StorageInterfaceListPointer& storageListPtr () 
-      {
-        static StorageInterfaceListType* storageListObj = 0;
-        return storageListObj;
-      }
+        enum { ids = 0, codims = 1, sizes = 2, geoIndex = 3, sizeIndents = 4 };
 
-      // check if list is empty and if yes delete list 
-      void checkAndDeleteStorageList() 
-      {
-        if( storageListPtr()->empty () )
+        // return reference to list singleton pointer 
+        static StorageInterfaceListPointer& storageListPtr () 
         {
-          delete storageListPtr();
-          storageListPtr() = 0;
+          static StorageInterfaceListType* storageListObj = 0;
+          return storageListObj;
         }
-      }
 
-      // singelton implementation 
-      static StorageInterfaceListType & storageList ()
-      {
-        // if list pointer is 0 then create new object 
-        if( ! storageListPtr() )
+        // check if list is empty and if yes delete list 
+        void checkAndDeleteStorageList() 
+        {
+          if( storageListPtr()->empty () )
+          {
+            delete storageListPtr();
+            storageListPtr() = 0;
+          }
+        }
+
+        // singelton implementation 
+        static StorageInterfaceListType & storageList ()
+        {
+          // if list pointer is 0 then create new object 
+          if( ! storageListPtr() )
+          {
+            // make sure we are in single thread mode 
+            assert( ThreadManager :: singleThreadMode() );
+            storageListPtr() = new StorageInterfaceListType();
+          }
+
+          assert( storageListPtr() );
+          return *(storageListPtr());
+        }
+
+        // singelton implementation 
+        static QuadratureListType & quadratureList ()
+        {
+          static QuadratureListType quadratureListObj;
+          return quadratureListObj;
+        }
+        
+      public:
+        //! Constructor, add me to the list of storages 
+        StorageInterface()
+        {
+          storageList().push_back(this);
+        }
+
+        //! Destructor, remove me from the list of storages 
+        virtual ~StorageInterface() 
         {
           // make sure we are in single thread mode 
           assert( ThreadManager :: singleThreadMode() );
-          storageListPtr() = new StorageInterfaceListType();
+          typedef typename StorageInterfaceListType::iterator IteratorType;
+          IteratorType endit = storageList().end();
+          for(IteratorType it = storageList().begin(); it != endit; ++it)
+          {
+            if( (*it) == this )
+            {
+              storageList().erase(it);
+              break;
+            }
+          }
+
+          // if list is empty, then delete list 
+          checkAndDeleteStorageList();
         }
 
-        assert( storageListPtr() );
-        return *(storageListPtr());
-      }
-
-      // singelton implementation 
-      static QuadratureListType & quadratureList ()
-      {
-        static QuadratureListType quadratureListObj;
-        return quadratureListObj;
-      }
-      
-    public:
-      //! Constructor, add me to the list of storages 
-      StorageInterface()
-      {
-        storageList().push_back(this);
-      }
-
-      //! Destructor, remove me from the list of storages 
-      virtual ~StorageInterface() 
-      {
-        // make sure we are in single thread mode 
-        assert( ThreadManager :: singleThreadMode() );
-        typedef typename StorageInterfaceListType::iterator IteratorType;
-        IteratorType endit = storageList().end();
-        for(IteratorType it = storageList().begin(); it != endit; ++it)
+        //! for a newly created storage cache all existing quadratures 
+        template <class StorageImp>
+        void cacheExistingQuadratures(StorageImp & storage)
         {
-          if( (*it) == this )
+          // make sure we are in single thread mode 
+          assert( ThreadManager :: singleThreadMode() );
+
+          // get geometry index of storage  
+          const unsigned int storageIndex = GlobalGeometryTypeIndex :: index( storage.geometryType() );
+
+          typedef typename QuadratureListType::iterator IteratorType;
+          IteratorType endit = quadratureList().end();
+          for(IteratorType it = quadratureList().begin(); it != endit; ++it)
           {
-            storageList().erase(it);
-            break;
+            // only cache base functions for quadratures with same geometry type 
+            if ( (*it)[geoIndex] == storageIndex )
+            {
+              // get if and codim of quad 
+              const size_t id = (*it)[ ids ];
+              const size_t codim = (*it)[ codims ];
+              const size_t quadSize = (*it)[ sizes ];
+              storage.cacheQuadrature(id, codim, quadSize);
+            }
           }
         }
 
-        // if list is empty, then delete list 
-        checkAndDeleteStorageList();
-      }
+        //! cache quadrature for given id and codim 
+        virtual void cacheQuadrature(const size_t id, 
+                                     const size_t codim, 
+                                     const size_t quadSize ) const = 0;
 
-      //! for a newly created storage cache all existing quadratures 
-      template <class StorageImp>
-      void cacheExistingQuadratures(StorageImp & storage)
-      {
-        // make sure we are in single thread mode 
-        assert( ThreadManager :: singleThreadMode() );
+        //! return geometry type of base function set 
+        virtual GeometryType geometryType() const = 0;
 
-        // get geometry index of storage  
-        const unsigned int storageIndex = GlobalGeometryTypeIndex :: index( storage.geometryType() );
-
-        typedef typename QuadratureListType::iterator IteratorType;
-        IteratorType endit = quadratureList().end();
-        for(IteratorType it = quadratureList().begin(); it != endit; ++it)
+        template <class QuadratureType>
+        static void registerQuadratureToStorages(const QuadratureType & quad)
         {
-          // only cache base functions for quadratures with same geometry type 
-          if ( (*it)[geoIndex] == storageIndex )
+          const size_t codim = QuadratureType :: codimension;
+          registerQuadratureToStorages(quad, quad.geometryType(), codim);
+        }
+
+        //! register quadrature for all existing storages 
+        template <class QuadratureType>
+        static void registerQuadratureToStorages(const QuadratureType & quad, 
+                                                 const GeometryType& geoType,   
+                                                 const size_t codim)
+        {
+          // make sure we are in single thread mode 
+          assert( ThreadManager :: singleThreadMode() );
+
+          const size_t id = quad.id();
+          const size_t quadSize = quad.nop();
+          // store quadrature 
+          QuadratureIdentifierType ident( sizeIndents );
+
+          ident[ ids ]    = id ;
+          ident[ codims ] = codim; 
+          ident[ sizes ]  = quadSize;
+          ident[ geoIndex ] = GlobalGeometryTypeIndex :: index( geoType ) ;
+          quadratureList().push_back(ident);
+
+          typedef typename StorageInterfaceListType::iterator IteratorType;
+          IteratorType endit = storageList().end();
+          for(IteratorType it = storageList().begin(); it != endit; ++it)
           {
-            // get if and codim of quad 
-            const size_t id = (*it)[ ids ];
-            const size_t codim = (*it)[ codims ];
-            const size_t quadSize = (*it)[ sizes ];
-            storage.cacheQuadrature(id, codim, quadSize);
+            // make sure that only base functions and quadratures 
+            // with same geometry type are cached 
+            if ( geoType == (*it)->geometryType() )
+              (*it)->cacheQuadrature(id, codim, quadSize);
           }
         }
-      }
-
-      //! cache quadrature for given id and codim 
-      virtual void cacheQuadrature(const size_t id, 
-                                   const size_t codim, 
-                                   const size_t quadSize ) const = 0;
-
-      //! return geometry type of base function set 
-      virtual GeometryType geometryType() const = 0;
-
-      template <class QuadratureType>
-      static void registerQuadratureToStorages(const QuadratureType & quad)
-      {
-        const size_t codim = QuadratureType :: codimension;
-        registerQuadratureToStorages(quad, quad.geometryType(), codim);
-      }
-
-      //! register quadrature for all existing storages 
-      template <class QuadratureType>
-      static void registerQuadratureToStorages(const QuadratureType & quad, 
-                                               const GeometryType& geoType,   
-                                               const size_t codim)
-      {
-        // make sure we are in single thread mode 
-        assert( ThreadManager :: singleThreadMode() );
-
-        const size_t id = quad.id();
-        const size_t quadSize = quad.nop();
-        // store quadrature 
-        QuadratureIdentifierType ident( sizeIndents );
-
-        ident[ ids ]    = id ;
-        ident[ codims ] = codim; 
-        ident[ sizes ]  = quadSize;
-        ident[ geoIndex ] = GlobalGeometryTypeIndex :: index( geoType ) ;
-        quadratureList().push_back(ident);
-
-        typedef typename StorageInterfaceListType::iterator IteratorType;
-        IteratorType endit = storageList().end();
-        for(IteratorType it = storageList().begin(); it != endit; ++it)
-        {
-          // make sure that only base functions and quadratures 
-          // with same geometry type are cached 
-          if ( geoType == (*it)->geometryType() )
-            (*it)->cacheQuadrature(id, codim, quadSize);
-        }
-      }
-  };
+    };
 
   } // namespace Fem 
 
-} // end namespace Dune                                                                                                                                                               
-#endif
+} // namespace Dune
+
+#endif // #ifndef BASEFUNCTION_STORAGE_INTERFACE_HH

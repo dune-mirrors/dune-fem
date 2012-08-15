@@ -1,215 +1,215 @@
-#ifndef DUNE_OBJECTSTACK_HH
-#define DUNE_OBJECTSTACK_HH
+#ifndef DUNE_FEM_OBJECTSTACK_HH
+#define DUNE_FEM_OBJECTSTACK_HH
 
 #include <dune/fem/misc/debug.hh>
 #include <dune/fem/storage/referencecounter.hh>
 
 namespace Dune
 {
+
   namespace Fem
   {
 
-  template< class ObjectFactoryImp >
-  class ObjectStack;
+    template< class ObjectFactoryImp >
+    class ObjectStack;
 
-  template< class ObjectFactoryImp >
-  class ObjectStackEntry;
+    template< class ObjectFactoryImp >
+    class ObjectStackEntry;
 
-
-  
-  template< class ObjectFactoryImp >
-  struct ObjectStackEntryTraits
-  {
-    typedef ObjectStackEntry< ObjectFactoryImp > ReferenceCounterType;
-
-    typedef typename ObjectFactoryImp :: ObjectType ObjectType;
-  };
-
-  
-
-  template< class ObjectFactoryImp >
-  class ObjectStackEntry
-  : public ReferenceCounterDefault< ObjectStackEntryTraits< ObjectFactoryImp > >
-  {
-  public:
-    typedef ObjectFactoryImp ObjectFactoryType;
-
-    typedef ObjectStackEntryTraits< ObjectFactoryType > Traits;
-
-  private:
-    typedef ObjectStackEntry< ObjectFactoryType > ThisType;
-    typedef ReferenceCounterDefault< Traits > BaseType;
-
-    template< class, class >
-    friend class Conversion;
-
-    friend class ObjectStack< ObjectFactoryType >;
-
-  protected:
-    typedef ObjectStack< ObjectFactoryType > ObjectStackType;
-
-  public:
-    typedef typename ObjectFactoryType :: ObjectType ObjectType;
-
-  protected:
-    // reference to the stack
-    ObjectStackType &stack_;
-
-    // pointer to the actual object
-    ObjectType *const object_;
-
-    // next object on the stack
-    ThisType *next_;
-
-  protected:
-    inline explicit ObjectStackEntry ( ObjectStackType &stack )
-    : BaseType( 0 ),
-      stack_( stack ),
-      object_( stack_.factory().newObject() )
+ 
+    template< class ObjectFactoryImp >
+    struct ObjectStackEntryTraits
     {
-    }
+      typedef ObjectStackEntry< ObjectFactoryImp > ReferenceCounterType;
 
-  private:
-    // prohibit copying
-    ObjectStackEntry ( const ThisType & );
+      typedef typename ObjectFactoryImp :: ObjectType ObjectType;
+    };
 
-  public:
-    inline ~ObjectStackEntry ()
+
+    template< class ObjectFactoryImp >
+    class ObjectStackEntry
+    : public ReferenceCounterDefault< ObjectStackEntryTraits< ObjectFactoryImp > >
     {
-      delete object_;
-    }
-    
-  private:
-    // prohivit assignment
-    ThisType &operator= ( const ThisType & );
+    public:
+      typedef ObjectFactoryImp ObjectFactoryType;
 
-  public:
-    inline operator const ObjectType& () const
-    {
-      return *object_;
-    }
+      typedef ObjectStackEntryTraits< ObjectFactoryType > Traits;
 
-    inline operator ObjectType& ()
-    {
-      return *object_;
-    }
+    private:
+      typedef ObjectStackEntry< ObjectFactoryType > ThisType;
+      typedef ReferenceCounterDefault< Traits > BaseType;
 
-    inline void deleteObject ()
-    {
-      stack_.push( this );
-    }
+      template< class, class >
+      friend class Conversion;
 
-    inline const ObjectType &getObject () const
-    {
-      return *object_;
-    }
-    
-    inline ObjectType &getObject ()
-    {
-      return *object_;
-    }
-  };
+      friend class ObjectStack< ObjectFactoryType >;
 
+    protected:
+      typedef ObjectStack< ObjectFactoryType > ObjectStackType;
 
+    public:
+      typedef typename ObjectFactoryType :: ObjectType ObjectType;
 
-  //! \ingroup HelperClasses
-  //! Stores pointers to a given class in a stack
-  //! used for local functions and for basefunctionsets
-  template< class ObjectFactoryImp >
-  class ObjectStack 
-  {
-    typedef ObjectFactoryImp ObjectFactoryType;
+    protected:
+      // reference to the stack
+      ObjectStackType &stack_;
 
-  private:
-    typedef ObjectStack< ObjectFactoryType > ThisType;
+      // pointer to the actual object
+      ObjectType *const object_;
 
-    friend class ObjectStackEntry< ObjectFactoryType >;
+      // next object on the stack
+      ThisType *next_;
 
-  public:
-    //! type of the stored objects
-    typedef typename ObjectFactoryType :: ObjectType ObjectType;
-
-    //! type of the storage objects
-    typedef ObjectStackEntry< ObjectFactoryType > StackEntryType;
-
-    //! type of object pointers
-    typedef ObjectPointer< StackEntryType > PointerType;
-    
-  protected:
-    const ObjectFactoryType &factory_;
-    StackEntryType *top_;
-
-    DebugCounter<> numIssuedObjects_;
-
-  public:
-    //! constructor 
-    ObjectStack ( const ObjectFactoryType &factory )
-    : factory_( factory ),
-      top_( 0 )
-    {
-    }
-
-  private:
-    // Disallow copying
-    ObjectStack ( const ThisType & );
-
-  public:
-    //! delete all objects on stack 
-    ~ObjectStack ()
-    {
-#ifndef BASEFUNCTIONSET_CODEGEN_GENERATE
-      // this assertion will fail during code generation 
-      assert( numIssuedObjects_ == 0 );
-#endif
-
-      while ( top_ != 0 )
+    protected:
+      inline explicit ObjectStackEntry ( ObjectStackType &stack )
+      : BaseType( 0 ),
+        stack_( stack ),
+        object_( stack_.factory().newObject() )
       {
-        StackEntryType *obj = top_;
-        top_ = top_->next_;
-        delete obj;
       }
-    }
-    
-  private:
-    // Disallow copying
-    ThisType &operator= ( const ThisType & );
 
-  public:
-    //! get an object pointer to a storage object
-    inline PointerType getObject ()
+    private:
+      // prohibit copying
+      ObjectStackEntry ( const ThisType & );
+
+    public:
+      inline ~ObjectStackEntry ()
+      {
+        delete object_;
+      }
+      
+    private:
+      // prohivit assignment
+      ThisType &operator= ( const ThisType & );
+
+    public:
+      inline operator const ObjectType& () const
+      {
+        return *object_;
+      }
+
+      inline operator ObjectType& ()
+      {
+        return *object_;
+      }
+
+      inline void deleteObject ()
+      {
+        stack_.push( this );
+      }
+
+      inline const ObjectType &getObject () const
+      {
+        return *object_;
+      }
+      
+      inline ObjectType &getObject ()
+      {
+        return *object_;
+      }
+    };
+
+
+
+    //! \ingroup HelperClasses
+    //! Stores pointers to a given class in a stack
+    //! used for local functions and for basefunctionsets
+    template< class ObjectFactoryImp >
+    class ObjectStack 
     {
-      return PointerType( pop() );
-    }
+      typedef ObjectFactoryImp ObjectFactoryType;
 
-  protected:
-    inline const ObjectFactoryType &factory() const
-    {
-      return factory_;
-    }
+    private:
+      typedef ObjectStack< ObjectFactoryType > ThisType;
 
-    // push storage object to the stack
-    inline void push ( StackEntryType *obj )
-    {
-      --numIssuedObjects_;
-      obj->next_ = top_;
-      top_ = obj;
-    }
+      friend class ObjectStackEntry< ObjectFactoryType >;
 
-    // pop a storage object from the stack
-    inline StackEntryType *pop ()
-    {
-      ++numIssuedObjects_;
+    public:
+      //! type of the stored objects
+      typedef typename ObjectFactoryType :: ObjectType ObjectType;
 
-      StackEntryType *ptr = top_;
-      if( ptr != 0 )
-        top_ = top_->next_;
-      else
-        ptr = new StackEntryType( *this );
-      return ptr;
-    }
-  };
+      //! type of the storage objects
+      typedef ObjectStackEntry< ObjectFactoryType > StackEntryType;
 
-  } // end namespace Fem
-} // end namespace Dune
+      //! type of object pointers
+      typedef ObjectPointer< StackEntryType > PointerType;
+      
+    protected:
+      const ObjectFactoryType &factory_;
+      StackEntryType *top_;
 
+      DebugCounter<> numIssuedObjects_;
+
+    public:
+      //! constructor 
+      ObjectStack ( const ObjectFactoryType &factory )
+      : factory_( factory ),
+        top_( 0 )
+      {
+      }
+
+    private:
+      // Disallow copying
+      ObjectStack ( const ThisType & );
+
+    public:
+      //! delete all objects on stack 
+      ~ObjectStack ()
+      {
+#ifndef BASEFUNCTIONSET_CODEGEN_GENERATE
+        // this assertion will fail during code generation 
+        assert( numIssuedObjects_ == 0 );
 #endif
+
+        while ( top_ != 0 )
+        {
+          StackEntryType *obj = top_;
+          top_ = top_->next_;
+          delete obj;
+        }
+      }
+      
+    private:
+      // Disallow copying
+      ThisType &operator= ( const ThisType & );
+
+    public:
+      //! get an object pointer to a storage object
+      inline PointerType getObject ()
+      {
+        return PointerType( pop() );
+      }
+
+    protected:
+      inline const ObjectFactoryType &factory() const
+      {
+        return factory_;
+      }
+
+      // push storage object to the stack
+      inline void push ( StackEntryType *obj )
+      {
+        --numIssuedObjects_;
+        obj->next_ = top_;
+        top_ = obj;
+      }
+
+      // pop a storage object from the stack
+      inline StackEntryType *pop ()
+      {
+        ++numIssuedObjects_;
+
+        StackEntryType *ptr = top_;
+        if( ptr != 0 )
+          top_ = top_->next_;
+        else
+          ptr = new StackEntryType( *this );
+        return ptr;
+      }
+    };
+
+  } // namespace Fem
+   
+} // namespace Dune
+
+#endif // #ifndef DUNE_FEM_OBJECTSTACK_HH

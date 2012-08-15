@@ -19,7 +19,8 @@
 namespace Dune
 {
 
-  namespace Fem {
+  namespace Fem 
+  {
 
     template< class VT >
     struct VectorInterfaceArrayTraits
@@ -30,7 +31,6 @@ namespace Dune
       typedef typename VT::ConstIteratorType ConstIteratorType;
       typedef typename VT::IteratorType IteratorType;
     };
-
 
 
     //! An abstract vector interface
@@ -866,10 +866,12 @@ namespace Dune
       }
     };
 
-  } // end namespace Fem 
+  } // namespace Fem 
 
+#if DUNE_FEM_COMPATIBILITY 
   // for convenience 
   using Fem :: FieldVectorAdapter ;
+#endif // DUNE_FEM_COMPATIBILITY
 
   // Capabilities
   // ------------
@@ -884,7 +886,7 @@ namespace Dune
     
   }
   
-} // end namespace Dune 
+} // namespace Dune 
 
 #include "vector_inline.hh"
 

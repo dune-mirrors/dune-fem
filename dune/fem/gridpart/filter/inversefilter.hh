@@ -3,8 +3,10 @@
 
 namespace Dune
 {
+
   namespace Fem
   {
+
     template< class FilterImp >
     class InverseFilter
     {
@@ -82,8 +84,8 @@ namespace Dune
 
     }; // end class InverseFilter
 
-  } // end namespace Fem
+  } // namespace Fem
 
-} // end namespace Dune
+} // namespace Dune
 
 #endif // #ifndef DUNE_FEM_GRIDPART_FILTER_INVERSEFILTER_HH

@@ -1,74 +1,77 @@
-namespace Dune {
-  namespace Fem {
-
-  template <class GridImp>
-  typename CacheProvider<GridImp, 1>::MapperContainerType
-  CacheProvider<GridImp, 1>::mappers_;
-
-
-  template <class GridImp>
-  typename CacheProvider<GridImp, 1>::MapperIteratorType
-  CacheProvider<GridImp, 1>::createMapper(const QuadratureType& quad,
-                                          GeometryType elementGeometry,
-                                          integral_constant< bool, true > )
+namespace Dune 
+{
+  namespace Fem 
   {
-    typedef TwistProvider<ct, dim-codim> TwistProviderType;
-    typedef typename TwistProviderType::TwistStorageType TwistStorageType;
 
-    const TwistStorageType& twistMappers =
-      TwistProviderType::getTwistStorage(quad);
-    const MapperVectorType pointMappers =
-      PointProvider<ct, dim, codim>::getMappers(quad, 
-                                                twistMappers.getPoints(),
-                                                elementGeometry);
+    template <class GridImp>
+    typename CacheProvider<GridImp, 1>::MapperContainerType
+    CacheProvider<GridImp, 1>::mappers_;
 
-    const int numFaces = pointMappers.size();
-    const int maxTwist = twistMappers.maxTwist();
-    const int minTwist = twistMappers.minTwist();
 
-    QuadratureKeyType key ( elementGeometry, quad.id() );
-    MapperIteratorType it = mappers_.insert
-      (std::make_pair( key,
-                       CacheStorageType(numFaces, maxTwist))).first;
-
-    for (int face = 0; face < numFaces; ++face) 
+    template <class GridImp>
+    typename CacheProvider<GridImp, 1>::MapperIteratorType
+    CacheProvider<GridImp, 1>::createMapper(const QuadratureType& quad,
+                                            GeometryType elementGeometry,
+                                            integral_constant< bool, true > )
     {
-      for (int twist = minTwist; twist < maxTwist; ++twist) {
-        it->second.addMapper(pointMappers[face],
-                             twistMappers.getMapper(twist),
-                             face, twist);
+      typedef TwistProvider<ct, dim-codim> TwistProviderType;
+      typedef typename TwistProviderType::TwistStorageType TwistStorageType;
+
+      const TwistStorageType& twistMappers =
+        TwistProviderType::getTwistStorage(quad);
+      const MapperVectorType pointMappers =
+        PointProvider<ct, dim, codim>::getMappers(quad, 
+                                                  twistMappers.getPoints(),
+                                                  elementGeometry);
+
+      const int numFaces = pointMappers.size();
+      const int maxTwist = twistMappers.maxTwist();
+      const int minTwist = twistMappers.minTwist();
+
+      QuadratureKeyType key ( elementGeometry, quad.id() );
+      MapperIteratorType it = mappers_.insert
+        (std::make_pair( key,
+                         CacheStorageType(numFaces, maxTwist))).first;
+
+      for (int face = 0; face < numFaces; ++face) 
+      {
+        for (int twist = minTwist; twist < maxTwist; ++twist) {
+          it->second.addMapper(pointMappers[face],
+                               twistMappers.getMapper(twist),
+                               face, twist);
+        }
       }
+
+      return it;
     }
 
-    return it;
-  }
 
 
+    template <class GridImp>
+    typename CacheProvider<GridImp, 1>::MapperIteratorType
+    CacheProvider<GridImp, 1>::createMapper(const QuadratureType& quad,
+                                            GeometryType elementGeometry,
+                                            integral_constant< bool, false > )
+    {
+      const MapperVectorType pointMappers =
+        PointProvider<ct, dim, codim>::getMappers(quad, elementGeometry);
 
-  template <class GridImp>
-  typename CacheProvider<GridImp, 1>::MapperIteratorType
-  CacheProvider<GridImp, 1>::createMapper(const QuadratureType& quad,
-                                          GeometryType elementGeometry,
-                                          integral_constant< bool, false > )
-  {
-    const MapperVectorType pointMappers =
-      PointProvider<ct, dim, codim>::getMappers(quad, elementGeometry);
+      const int numFaces = pointMappers.size();
 
-    const int numFaces = pointMappers.size();
+      QuadratureKeyType key ( elementGeometry, quad.id() );
+      
+      MapperIteratorType it = 
+        mappers_.insert(std::make_pair(key,
+                                       CacheStorageType(numFaces))).first;
 
-    QuadratureKeyType key ( elementGeometry, quad.id() );
-    
-    MapperIteratorType it = 
-      mappers_.insert(std::make_pair(key,
-                                     CacheStorageType(numFaces))).first;
+      for (int face = 0; face < numFaces; ++face) {
+        it->second.addMapper(pointMappers[face], 
+                             face);
+      }
 
-    for (int face = 0; face < numFaces; ++face) {
-      it->second.addMapper(pointMappers[face], 
-                           face);
+      return it;
     }
-
-    return it;
-  }
   
-  } // end namespace Fem
-} // end namespace Dune
+  } // namespace Fem
+
+} // namespace Dune

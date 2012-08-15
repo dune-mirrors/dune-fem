@@ -13,112 +13,112 @@ namespace Dune
   namespace Fem 
   {
 
-  /** \class   DefaultCommunicationHandler
-   *  \ingroup DFComm
-   *  \brief   Default communication handler for discrete functions
-   *
-   *  \param  DiscreteFunction  type of discrete function to be communicated
-   */
-  template< class DiscreteFunction, class Operation = DFCommunicationOperation::Add >
-  class DefaultCommunicationHandler
-  : public CommDataHandleIF
-    < DefaultCommunicationHandler< DiscreteFunction, Operation >,
-      typename DiscreteFunction::RangeFieldType >
-  {
-    typedef DefaultCommunicationHandler< DiscreteFunction, Operation > ThisType;
-    typedef CommDataHandleIF< ThisType, typename DiscreteFunction::RangeFieldType > BaseType;
-
-  public:  
-    typedef typename BaseType::DataType DataType;
-
-    typedef DiscreteFunction DiscreteFunctionType;
-
-    typedef typename DiscreteFunctionType::DiscreteFunctionSpaceType DiscreteFunctionSpaceType;
-
-  protected:
-    typedef typename DiscreteFunctionSpaceType::BlockMapperType MapperType;
-
-    typedef typename DiscreteFunctionType::DofBlockPtrType DofBlockPtrType;
-
-    static const int blockSize = DiscreteFunctionSpaceType::localBlockSize;
-    
-  public:
-    DefaultCommunicationHandler( DiscreteFunctionType &function )
-    : function_( &function ),
-      mapper_( function.space().blockMapper() )
-    {} 
-    
-    DefaultCommunicationHandler( const DefaultCommunicationHandler &other )
-    : function_( other.function_ ),
-      mapper_( other.mapper_ )
-    {}
-    
-  private:  
-    //! cannot be implemented because of the reference
-    DefaultCommunicationHandler &operator= ( const DefaultCommunicationHandler & );
-
-  public:
-    bool contains ( int dim, int codim ) const
+    /** \class   DefaultCommunicationHandler
+     *  \ingroup DFComm
+     *  \brief   Default communication handler for discrete functions
+     *
+     *  \param  DiscreteFunction  type of discrete function to be communicated
+     */
+    template< class DiscreteFunction, class Operation = DFCommunicationOperation::Add >
+    class DefaultCommunicationHandler
+    : public CommDataHandleIF
+      < DefaultCommunicationHandler< DiscreteFunction, Operation >,
+        typename DiscreteFunction::RangeFieldType >
     {
-      return mapper_.contains( codim );
-    }
+      typedef DefaultCommunicationHandler< DiscreteFunction, Operation > ThisType;
+      typedef CommDataHandleIF< ThisType, typename DiscreteFunction::RangeFieldType > BaseType;
 
-    bool fixedsize ( int dim, int codim) const
-    {
-      return mapper_.fixedDataSize( codim );
-    }
+    public:  
+      typedef typename BaseType::DataType DataType;
 
-    //! read buffer and apply operation 
-    template< class MessageBuffer, class Entity >
-    void gather ( MessageBuffer &buffer, const Entity &entity ) const
-    {
-      const unsigned int numEntityDofs = mapper_.numEntityDofs( entity );
-      for( unsigned int i = 0; i < numEntityDofs; ++i )
+      typedef DiscreteFunction DiscreteFunctionType;
+
+      typedef typename DiscreteFunctionType::DiscreteFunctionSpaceType DiscreteFunctionSpaceType;
+
+    protected:
+      typedef typename DiscreteFunctionSpaceType::BlockMapperType MapperType;
+
+      typedef typename DiscreteFunctionType::DofBlockPtrType DofBlockPtrType;
+
+      static const int blockSize = DiscreteFunctionSpaceType::localBlockSize;
+      
+    public:
+      DefaultCommunicationHandler( DiscreteFunctionType &function )
+      : function_( &function ),
+        mapper_( function.space().blockMapper() )
+      {} 
+      
+      DefaultCommunicationHandler( const DefaultCommunicationHandler &other )
+      : function_( other.function_ ),
+        mapper_( other.mapper_ )
+      {}
+      
+    private:  
+      //! cannot be implemented because of the reference
+      DefaultCommunicationHandler &operator= ( const DefaultCommunicationHandler & );
+
+    public:
+      bool contains ( int dim, int codim ) const
       {
-        const unsigned int index = mapper_.mapEntityDofToGlobal( entity, i );
-        
-        DofBlockPtrType blockPtr = function_->block( index );
-        for( int j = 0; j < blockSize; ++j )
-          buffer.write( (*blockPtr)[ j ] );
+        return mapper_.contains( codim );
       }
-    }
 
-    //! read buffer and apply operation 
-    template< class MessageBuffer, class Entity >
-    void scatter ( MessageBuffer &buffer, const Entity &entity, size_t n )
-    {
-      const unsigned int numEntityDofs = mapper_.numEntityDofs( entity );
-
-      assert( n == blockSize * numEntityDofs );
-      for( unsigned int i = 0; i < numEntityDofs; ++i )
+      bool fixedsize ( int dim, int codim) const
       {
-        const unsigned int index = mapper_.mapEntityDofToGlobal( entity, i );
+        return mapper_.fixedDataSize( codim );
+      }
 
-        DofBlockPtrType blockPtr = function_->block( index );
-        for( int j = 0; j < blockSize; ++j )
+      //! read buffer and apply operation 
+      template< class MessageBuffer, class Entity >
+      void gather ( MessageBuffer &buffer, const Entity &entity ) const
+      {
+        const unsigned int numEntityDofs = mapper_.numEntityDofs( entity );
+        for( unsigned int i = 0; i < numEntityDofs; ++i )
         {
-          DataType value;
-          buffer.read( value );
-
-          Operation :: apply( value, (*blockPtr)[ j ] );
+          const unsigned int index = mapper_.mapEntityDofToGlobal( entity, i );
+          
+          DofBlockPtrType blockPtr = function_->block( index );
+          for( int j = 0; j < blockSize; ++j )
+            buffer.write( (*blockPtr)[ j ] );
         }
       }
-    }
 
-    //! return local dof size to be communicated 
-    template< class Entity >
-    size_t size ( const Entity &entity ) const
-    {
-      return blockSize * mapper_.numEntityDofs( entity );
-    }
+      //! read buffer and apply operation 
+      template< class MessageBuffer, class Entity >
+      void scatter ( MessageBuffer &buffer, const Entity &entity, size_t n )
+      {
+        const unsigned int numEntityDofs = mapper_.numEntityDofs( entity );
 
-  protected:
-    DiscreteFunctionType *const function_;
-    const MapperType &mapper_;
-  };
+        assert( n == blockSize * numEntityDofs );
+        for( unsigned int i = 0; i < numEntityDofs; ++i )
+        {
+          const unsigned int index = mapper_.mapEntityDofToGlobal( entity, i );
+
+          DofBlockPtrType blockPtr = function_->block( index );
+          for( int j = 0; j < blockSize; ++j )
+          {
+            DataType value;
+            buffer.read( value );
+
+            Operation :: apply( value, (*blockPtr)[ j ] );
+          }
+        }
+      }
+
+      //! return local dof size to be communicated 
+      template< class Entity >
+      size_t size ( const Entity &entity ) const
+      {
+        return blockSize * mapper_.numEntityDofs( entity );
+      }
+
+    protected:
+      DiscreteFunctionType *const function_;
+      const MapperType &mapper_;
+    };
   
-  } // end namespace Fem 
+  } // namespace Fem 
 
-} // end namespace Dune
+} // namespace Dune
 
 #endif // #ifndef DUNE_FEM_DEFAULTDATAHANDLE_HH

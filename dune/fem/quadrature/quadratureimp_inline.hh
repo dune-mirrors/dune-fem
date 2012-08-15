@@ -5,6 +5,7 @@
 
 namespace Dune
 {
+
   namespace Fem
   {
   
@@ -22,7 +23,8 @@ namespace Dune
     this->addQuadraturePoint(c, w);
   }
 
-  } // end namespace Fem
-} // end namespace Dune
+  } // namespace Fem
 
-#endif
+} // namespace Dune
+
+#endif // #ifndef DUNE_FEM_QUADRATUREIMP_INLINE_HH

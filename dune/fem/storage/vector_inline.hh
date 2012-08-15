@@ -6,7 +6,9 @@
 namespace Dune
 {
 
-  namespace Fem { 
+  namespace Fem 
+  { 
+
     // VectorInterface
     // ---------------
 
@@ -286,7 +288,9 @@ namespace Dune
         v.assign( w );
       return in;
     }
-  }
-}
 
-#endif
+  } // namespace Fem
+
+} // namespace Dune
+
+#endif // #ifndef DUNE_FEM_VECTOR_INLINE_HH

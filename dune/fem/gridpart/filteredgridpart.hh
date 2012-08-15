@@ -19,6 +19,7 @@
 
 namespace Dune
 {
+
   namespace Fem
   {
 
@@ -367,8 +368,8 @@ namespace Dune
       const IndexSetType *indexSetPtr_; 
     };
 
-  }  // end namespace Fem
+  }  // namespace Fem
 
-}  // end namespace Dune
+}  // namespace Dune
 
 #endif // #ifndef DUNE_FEM_GRIDPART_FILTEREDGRIDPART_HH

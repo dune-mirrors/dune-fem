@@ -1,14 +1,9 @@
-#ifndef DUNE_PADAPTIVELAGRANGESPACE_MAPPER_HH
-#define DUNE_PADAPTIVELAGRANGESPACE_MAPPER_HH
+#ifndef DUNE_FEM_PADAPTIVELAGRANGESPACE_MAPPER_HH
+#define DUNE_FEM_PADAPTIVELAGRANGESPACE_MAPPER_HH
 
 //- Dune includes 
-#if HAVE_DUNE_GEOMETRY
 #include <dune/geometry/type.hh>
 #include <dune/geometry/typeindex.hh>
-#else
-#include <dune/common/geometrytype.hh>
-#include <dune/common/geometrytypeindex.hh>
-#endif
 #include <dune/common/exceptions.hh>
 
 //- Dune-Fem includes 
@@ -32,7 +27,8 @@
 namespace Dune
 {
 
-  namespace Fem {
+  namespace Fem 
+  {
   
     template< class GridPart, int polOrder >
     class PAdaptiveLagrangeMapper;
@@ -208,8 +204,9 @@ namespace Dune
         : BaseType( other, compiledLocalKeys ) 
       {} 
     };
-  } // end namespace Fem 
 
-} // end namespace Dune 
+  } // namespace Fem 
 
-#endif // #ifndef DUNE_LAGRANGESPACE_MAPPER_HH
+} // namespace Dune 
+
+#endif // #ifndef DUNE_FEM_PADAPTIVELAGRANGESPACE_MAPPER_HH

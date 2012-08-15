@@ -1,5 +1,5 @@
-#ifndef DUNE_GRIDNAME_HH
-#define DUNE_GRIDNAME_HH
+#ifndef DUNE_FEM_GRIDNAME_HH
+#define DUNE_FEM_GRIDNAME_HH
 
 #include <string>
 #include <iostream>
@@ -10,6 +10,7 @@
 
 namespace Dune 
 {
+
   namespace Fem 
   {
     
@@ -92,6 +93,9 @@ namespace Dune
     {
       return GridName< GridImp > :: name( grid ); 
     }
-  }
-}
-#endif
+
+  } // namespace Fem
+
+} // namespace Dune
+
+#endif // #ifndef DUNE_FEM_GRIDNAME_HH

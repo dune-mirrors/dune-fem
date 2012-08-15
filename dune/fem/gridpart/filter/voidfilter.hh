@@ -3,6 +3,7 @@
 
 namespace Dune
 {
+
   namespace Fem
   {
 
@@ -63,8 +64,8 @@ namespace Dune
 
     }; // end RadialFilter
 
-  }  // end namespace Fem
+  }  // namespace Fem
 
-}  // end namespace Dune
+}  // namespace Dune
 
 #endif // #ifndef DUNE_FEM_GRIDPART_FILTER_VOIDFILTER_HH

@@ -9,129 +9,129 @@ namespace Dune
   namespace Fem 
   {
 
-  // DefaultLocalRestrictProlong
-  // ---------------------------
+    // DefaultLocalRestrictProlong
+    // ---------------------------
 
-  template< class DiscreteFunctionSpace >
-  class DefaultLocalRestrictProlong;
+    template< class DiscreteFunctionSpace >
+    class DefaultLocalRestrictProlong;
 
 
 
-  // ConstantLocalRestrictProlong
-  // ----------------------------
+    // ConstantLocalRestrictProlong
+    // ----------------------------
 
-  template< class DiscreteFunctionSpace >
-  class ConstantLocalRestrictProlong
-  {
-    typedef ConstantLocalRestrictProlong< DiscreteFunctionSpace > ThisType;
-
-  public:
-    typedef DiscreteFunctionSpace DiscreteFunctionSpaceType;
-
-    typedef typename DiscreteFunctionSpaceType::DomainFieldType DomainFieldType;
-
-    ConstantLocalRestrictProlong ()
-    : weight_( -1 )
-    {}
-
-    /** \brief explicit set volume ratio of son and father
-     *
-     *  \param[in]  weight  volume of son / volume of father
-     *
-     *  \note If this ratio is set, it is assume to be constant.
-     */
-    void setFatherChildWeight ( const DomainFieldType &weight )
+    template< class DiscreteFunctionSpace >
+    class ConstantLocalRestrictProlong
     {
-      weight_ = weight;
-    }
+      typedef ConstantLocalRestrictProlong< DiscreteFunctionSpace > ThisType;
 
-    //! restrict data to father 
-    template< class FT, class ST, class LocalGeometry >
-    void restrictLocal ( LocalFunction< FT > &lfFather, const LocalFunction< ST > &lfSon, 
-                         const LocalGeometry &geometryInFather, bool initialize ) const
-    {
-      const DomainFieldType weight = (weight_ < DomainFieldType( 0 ) ? calcWeight( lfFather.entity(), lfSon.entity() ) : weight_); 
+    public:
+      typedef DiscreteFunctionSpace DiscreteFunctionSpaceType;
 
-      assert( weight > 0.0 );
-      //assert( std::abs( geometryInFather.volume() - weight ) < 1e-8 );
+      typedef typename DiscreteFunctionSpaceType::DomainFieldType DomainFieldType;
 
-      const int numDofs = lfFather.numDofs();
-      assert( lfFather.numDofs() == lfSon.numDofs() );
-      if( initialize )
+      ConstantLocalRestrictProlong ()
+      : weight_( -1 )
+      {}
+
+      /** \brief explicit set volume ratio of son and father
+       *
+       *  \param[in]  weight  volume of son / volume of father
+       *
+       *  \note If this ratio is set, it is assume to be constant.
+       */
+      void setFatherChildWeight ( const DomainFieldType &weight )
       {
-        for( int i = 0; i < numDofs; ++i )
-          lfFather[ i ] = weight * lfSon[ i ];
+        weight_ = weight;
       }
-      else 
+
+      //! restrict data to father 
+      template< class FT, class ST, class LocalGeometry >
+      void restrictLocal ( LocalFunction< FT > &lfFather, const LocalFunction< ST > &lfSon, 
+                           const LocalGeometry &geometryInFather, bool initialize ) const
       {
-        for( int i = 0; i < numDofs; ++i )
-          lfFather[ i ] += weight * lfSon[ i ];
+        const DomainFieldType weight = (weight_ < DomainFieldType( 0 ) ? calcWeight( lfFather.entity(), lfSon.entity() ) : weight_); 
+
+        assert( weight > 0.0 );
+        //assert( std::abs( geometryInFather.volume() - weight ) < 1e-8 );
+
+        const int numDofs = lfFather.numDofs();
+        assert( lfFather.numDofs() == lfSon.numDofs() );
+        if( initialize )
+        {
+          for( int i = 0; i < numDofs; ++i )
+            lfFather[ i ] = weight * lfSon[ i ];
+        }
+        else 
+        {
+          for( int i = 0; i < numDofs; ++i )
+            lfFather[ i ] += weight * lfSon[ i ];
+        }
       }
-    }
 
-    //! prolong data to children 
-    template< class FT, class ST, class LocalGeometry >
-    void prolongLocal ( const LocalFunction< FT > &lfFather, LocalFunction< ST > &lfSon,
-                        const LocalGeometry &geometryInFather, bool initialize ) const
+      //! prolong data to children 
+      template< class FT, class ST, class LocalGeometry >
+      void prolongLocal ( const LocalFunction< FT > &lfFather, LocalFunction< ST > &lfSon,
+                          const LocalGeometry &geometryInFather, bool initialize ) const
+      {
+        const int numDofs = lfFather.numDofs();
+        assert( lfFather.numDofs() == lfSon.numDofs() );
+        for( int i = 0; i < numDofs; ++i )
+          lfSon[ i ] = lfFather[ i ];
+      } 
+
+      //! do discrete functions need a communication after restriction / prolongation?
+      bool needCommunication () const { return true; }
+
+
+      template< class Entity >
+      static DomainFieldType calcWeight ( const Entity &father, const Entity &son )
+      {
+        return son.geometry().volume() / father.geometry().volume();
+      }
+
+    protected:
+      DomainFieldType weight_;
+    };
+
+
+
+    // EmptyLocalRestrictProlong
+    // -------------------------
+
+    template< class DiscreteFunctionSpace >
+    class EmptyLocalRestrictProlong
     {
-      const int numDofs = lfFather.numDofs();
-      assert( lfFather.numDofs() == lfSon.numDofs() );
-      for( int i = 0; i < numDofs; ++i )
-        lfSon[ i ] = lfFather[ i ];
-    } 
+      typedef EmptyLocalRestrictProlong< DiscreteFunctionSpace > ThisType;
 
-    //! do discrete functions need a communication after restriction / prolongation?
-    bool needCommunication () const { return true; }
+    public:
+      typedef DiscreteFunctionSpace DiscreteFunctionSpaceType;
 
+      typedef typename DiscreteFunctionSpaceType::DomainFieldType DomainFieldType;
 
-    template< class Entity >
-    static DomainFieldType calcWeight ( const Entity &father, const Entity &son )
-    {
-      return son.geometry().volume() / father.geometry().volume();
-    }
+      /** \brief explicit set volume ratio of son and father
+       *
+       *  \param[in]  weight  volume of son / volume of father
+       *
+       *  \note If this ratio is set, it is assume to be constant.
+       */
+      void setFatherChildWeight ( const DomainFieldType &weight ) {}
 
-  protected:
-    DomainFieldType weight_;
-  };
+      //! restrict data to father 
+      template< class FT, class ST, class LocalGeometry >
+      void restrictLocal ( LocalFunction< FT > &lfFather, const LocalFunction< ST > &lfSon, 
+                           const LocalGeometry &geometryInFather, bool initialize ) const
+      {}
 
+      //! prolong data to children 
+      template< class FT, class ST, class LocalGeometry >
+      void prolongLocal ( const LocalFunction< FT > &lfFather, LocalFunction< ST > &lfSon,
+                          const LocalGeometry &geometryInFather, bool initialize ) const
+      {}
 
-
-  // EmptyLocalRestrictProlong
-  // -------------------------
-
-  template< class DiscreteFunctionSpace >
-  class EmptyLocalRestrictProlong
-  {
-    typedef EmptyLocalRestrictProlong< DiscreteFunctionSpace > ThisType;
-
-  public:
-    typedef DiscreteFunctionSpace DiscreteFunctionSpaceType;
-
-    typedef typename DiscreteFunctionSpaceType::DomainFieldType DomainFieldType;
-
-    /** \brief explicit set volume ratio of son and father
-     *
-     *  \param[in]  weight  volume of son / volume of father
-     *
-     *  \note If this ratio is set, it is assume to be constant.
-     */
-    void setFatherChildWeight ( const DomainFieldType &weight ) {}
-
-    //! restrict data to father 
-    template< class FT, class ST, class LocalGeometry >
-    void restrictLocal ( LocalFunction< FT > &lfFather, const LocalFunction< ST > &lfSon, 
-                         const LocalGeometry &geometryInFather, bool initialize ) const
-    {}
-
-    //! prolong data to children 
-    template< class FT, class ST, class LocalGeometry >
-    void prolongLocal ( const LocalFunction< FT > &lfFather, LocalFunction< ST > &lfSon,
-                        const LocalGeometry &geometryInFather, bool initialize ) const
-    {}
-
-    //! do discrete functions need a communication after restriction / prolongation?
-    bool needCommunication () const { return false; }
-  };
+      //! do discrete functions need a communication after restriction / prolongation?
+      bool needCommunication () const { return false; }
+    };
 
   } // namespace Fem 
 

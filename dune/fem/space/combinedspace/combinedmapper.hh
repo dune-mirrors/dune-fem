@@ -1,5 +1,5 @@
-#ifndef DUNE_COMBINEDMAPPER_HH
-#define DUNE_COMBINEDMAPPER_HH
+#ifndef DUNE_FEM_COMBINEDMAPPER_HH
+#define DUNE_FEM_COMBINEDMAPPER_HH
 
 #include <dune/fem/space/mapper/dofmapper.hh>
 #include <dune/fem/space/common/dofmanager.hh>
@@ -310,6 +310,8 @@ namespace Dune
       int oldGlobalOffset_;
     };
 
-  }   // end namespace Fem  
-} // end namespace Dune
-#endif //header guards
+  }   // namespace Fem  
+
+} // namespace Dune
+ 
+#endif // #ifndef DUNE_FEM_COMBINEDMAPPER_HH

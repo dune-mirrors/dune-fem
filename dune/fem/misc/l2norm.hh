@@ -379,13 +379,13 @@ namespace Dune
 
   } // end namespace Fem 
 
-  // #if DUNE_FEM_COMPATIBILITY  
+#if DUNE_FEM_COMPATIBILITY  
   // put this in next version 1.4 
   
   using Fem :: L2Norm ;
   using Fem :: WeightedL2Norm ;
 
-  // #endif // DUNE_FEM_COMPATIBILITY
+#endif // DUNE_FEM_COMPATIBILITY
 
 } // end namespace Dune 
 

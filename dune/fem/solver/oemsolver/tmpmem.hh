@@ -42,5 +42,4 @@ public:
   }
 };
 
-#endif
-
+#endif // #ifndef __OEM_TMPMEM_HH__

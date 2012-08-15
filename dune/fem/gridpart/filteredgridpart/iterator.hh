@@ -9,6 +9,7 @@
 
 namespace Dune
 {
+
   namespace Fem
   {
 
@@ -137,10 +138,10 @@ namespace Dune
       HostIteratorType hostIterator_;
       HostIteratorType hostEnd_;
 
-    }; // end class FilteredGridPartIterator
+    }; // class FilteredGridPartIterator
 
-  }  // end namespace Fem
+  }  // namespace Fem
 
-}  // end namespace Dune
+}  // namespace Dune
 
 #endif // #ifndef DUNE_FEM_GRIDPART_FILTEREDGRIDPART_ITERATOR_HH

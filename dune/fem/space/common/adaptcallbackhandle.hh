@@ -1,5 +1,5 @@
-#ifndef DUNE_ADAPTCALLBACKHANDLE_HH
-#define DUNE_ADAPTCALLBACKHANDLE_HH
+#ifndef DUNE_FEM_ADAPTCALLBACKHANDLE_HH
+#define DUNE_FEM_ADAPTCALLBACKHANDLE_HH
 
 #include <dune/grid/common/gridenums.hh>
 #include <dune/grid/common/adaptcallback.hh>
@@ -13,128 +13,129 @@
 namespace Dune
 {
 
-  namespace Fem {
-
-  // RestrictProlongWrapper
-  // ----------------------
-
-  template< class Grid, class DofManager, class RestrictProlongOperator >
-  class RestrictProlongWrapper
-  : public AdaptDataHandle
-    < Grid, RestrictProlongWrapper< Grid, DofManager, RestrictProlongOperator > >
+  namespace Fem 
   {
-    typedef RestrictProlongWrapper< Grid, DofManager, RestrictProlongOperator > This;
-    typedef AdaptDataHandle< Grid, This > Base;
 
-  protected:  
-    DofManager &dofManager_;
-    RestrictProlongOperator &rpOp_;
+    // RestrictProlongWrapper
+    // ----------------------
 
-    // flag that is set to true when at least one entity was coarsend or refined 
-    mutable bool wasChanged_ ;
-
-  public:
-    typedef typename Base::Entity Entity;
-
-    RestrictProlongWrapper ( DofManager &dofManager, RestrictProlongOperator &rpOp )
-    : dofManager_( dofManager ),
-      rpOp_( rpOp ),
-      wasChanged_( false )
-    {}
-
-    RestrictProlongWrapper ( const RestrictProlongWrapper& org ) 
-    : dofManager_( org.dofManager_ ), 
-      rpOp_( org.rpOp_ ),
-      wasChanged_( org.wasChanged_ )
-    {}
-
-    bool isValidEntity( const Entity& entity ) const
+    template< class Grid, class DofManager, class RestrictProlongOperator >
+    class RestrictProlongWrapper
+    : public AdaptDataHandle
+      < Grid, RestrictProlongWrapper< Grid, DofManager, RestrictProlongOperator > >
     {
-      // grid was changed, if this method is called
-      wasChanged_ = true ;
+      typedef RestrictProlongWrapper< Grid, DofManager, RestrictProlongOperator > This;
+      typedef AdaptDataHandle< Grid, This > Base;
 
-      // ghosts are not valid for restriction/prolongation
-      assert( entity.partitionType() != GhostEntity );
-      return true ;
-    }
+    protected:  
+      DofManager &dofManager_;
+      RestrictProlongOperator &rpOp_;
 
-    void preAdapt ( const unsigned int estimatedAdditionalElements )
-    {
-      // unset was changed 
-      wasChanged_ = false;
-      // reserve memory 
-      dofManager_.reserveMemory( estimatedAdditionalElements );
-    }
+      // flag that is set to true when at least one entity was coarsend or refined 
+      mutable bool wasChanged_ ;
 
-    void postAdapt ()
-    {
-      // notifyGlobalChange make wasChanged equal on all cores
-      if( dofManager_.notifyGlobalChange( wasChanged_ ) )
+    public:
+      typedef typename Base::Entity Entity;
+
+      RestrictProlongWrapper ( DofManager &dofManager, RestrictProlongOperator &rpOp )
+      : dofManager_( dofManager ),
+        rpOp_( rpOp ),
+        wasChanged_( false )
+      {}
+
+      RestrictProlongWrapper ( const RestrictProlongWrapper& org ) 
+      : dofManager_( org.dofManager_ ), 
+        rpOp_( org.rpOp_ ),
+        wasChanged_( org.wasChanged_ )
+      {}
+
+      bool isValidEntity( const Entity& entity ) const
       {
-        // make sure that no communication calls 
-        // are done during DofManager::compress
-        dofManager_.compress();
+        // grid was changed, if this method is called
+        wasChanged_ = true ;
 
-        // unset was changed flag
+        // ghosts are not valid for restriction/prolongation
+        assert( entity.partitionType() != GhostEntity );
+        return true ;
+      }
+
+      void preAdapt ( const unsigned int estimatedAdditionalElements )
+      {
+        // unset was changed 
         wasChanged_ = false;
+        // reserve memory 
+        dofManager_.reserveMemory( estimatedAdditionalElements );
       }
-    }
 
-    void preCoarsening ( const Entity &father ) const
-    {
-      if( isValidEntity( father ) )
+      void postAdapt ()
       {
-        typedef typename Entity::HierarchicIterator HIterator;
-
-        bool initialize = true;
-        const int childLevel = father.level() + 1;
-        const HIterator end = father.hend( childLevel );
-        for( HIterator it = father.hbegin( childLevel ); it != end; ++it )
+        // notifyGlobalChange make wasChanged equal on all cores
+        if( dofManager_.notifyGlobalChange( wasChanged_ ) )
         {
-          restrictLocal( father, *it, initialize );
-          initialize = false;
+          // make sure that no communication calls 
+          // are done during DofManager::compress
+          dofManager_.compress();
+
+          // unset was changed flag
+          wasChanged_ = false;
         }
       }
-    }
-    
-    void restrictLocal ( const Entity &father, const Entity &son, bool initialize ) const
-    {
-      if( isValidEntity( father ) )
-      {
-        dofManager_.indexSetRestrictProlong().restrictLocal( const_cast< Entity & >( father ), const_cast< Entity & >( son ), initialize );
-        rpOp_.restrictLocal( const_cast< Entity & >( father ), const_cast< Entity & >( son ), initialize );
-      }
-    }
 
-    void postRefinement ( const Entity &father ) const
-    {
-      if( isValidEntity( father ) )
+      void preCoarsening ( const Entity &father ) const
       {
-        typedef typename Entity::HierarchicIterator HIterator;
-
-        bool initialize = true;
-        const int childLevel = father.level() + 1;
-        const HIterator end = father.hend( childLevel );
-        for( HIterator it = father.hbegin( childLevel ); it != end; ++it )
+        if( isValidEntity( father ) )
         {
-          prolongLocal( father, *it, initialize );
-          initialize = false;
+          typedef typename Entity::HierarchicIterator HIterator;
+
+          bool initialize = true;
+          const int childLevel = father.level() + 1;
+          const HIterator end = father.hend( childLevel );
+          for( HIterator it = father.hbegin( childLevel ); it != end; ++it )
+          {
+            restrictLocal( father, *it, initialize );
+            initialize = false;
+          }
         }
       }
-    }
-
-    void prolongLocal ( const Entity &father, const Entity &son, bool initialize ) const
-    {
-      if( isValidEntity( father ) ) 
+      
+      void restrictLocal ( const Entity &father, const Entity &son, bool initialize ) const
       {
-        dofManager_.indexSetRestrictProlong().prolongLocal( const_cast< Entity & >( father ), const_cast< Entity & >( son ), initialize );
-        rpOp_.prolongLocal( const_cast< Entity & >( father ), const_cast< Entity & >( son ), initialize );
+        if( isValidEntity( father ) )
+        {
+          dofManager_.indexSetRestrictProlong().restrictLocal( const_cast< Entity & >( father ), const_cast< Entity & >( son ), initialize );
+          rpOp_.restrictLocal( const_cast< Entity & >( father ), const_cast< Entity & >( son ), initialize );
+        }
       }
-    }
-  };
 
-  } // end namespace Fem 
+      void postRefinement ( const Entity &father ) const
+      {
+        if( isValidEntity( father ) )
+        {
+          typedef typename Entity::HierarchicIterator HIterator;
 
-} // end namespace Dune 
+          bool initialize = true;
+          const int childLevel = father.level() + 1;
+          const HIterator end = father.hend( childLevel );
+          for( HIterator it = father.hbegin( childLevel ); it != end; ++it )
+          {
+            prolongLocal( father, *it, initialize );
+            initialize = false;
+          }
+        }
+      }
 
-#endif // #ifndef DUNE_ADAPTCALLBACKHANDLE_HH
+      void prolongLocal ( const Entity &father, const Entity &son, bool initialize ) const
+      {
+        if( isValidEntity( father ) ) 
+        {
+          dofManager_.indexSetRestrictProlong().prolongLocal( const_cast< Entity & >( father ), const_cast< Entity & >( son ), initialize );
+          rpOp_.prolongLocal( const_cast< Entity & >( father ), const_cast< Entity & >( son ), initialize );
+        }
+      }
+    };
+
+  } // namespace Fem 
+
+} // namespace Dune 
+
+#endif // #ifndef DUNE_FEM_ADAPTCALLBACKHANDLE_HH

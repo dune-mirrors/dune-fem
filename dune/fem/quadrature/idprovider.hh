@@ -1,39 +1,44 @@
-#ifndef DUNE_IDPROVIDER_HH
-#define DUNE_IDPROVIDER_HH
+#ifndef DUNE_FEM_IDPROVIDER_HH
+#define DUNE_FEM_IDPROVIDER_HH
 
 #include <cstdlib>
 
-namespace Dune {
-  namespace Fem {
-  //! Singleton that manages a globally unique identifier.
-  class IdProvider {
-  public:
-    //! Access to the singleton object.
-    inline static IdProvider& instance() {
-      static IdProvider idProvider; 
-      return idProvider;
-    }
+namespace Dune 
+{
 
-    //! Return a new identifier.
-    //! \note Identifiers are never freed.
-    size_t newId() {
-      return lowestFreeId_++;
-    }
+  namespace Fem 
+  {
 
-  private:
-    //! Constructor (for the singleton object)
-    IdProvider() :
-      lowestFreeId_(0)
-    {}
+    //! Singleton that manages a globally unique identifier.
+    class IdProvider 
+    {
+    public:
+      //! Access to the singleton object.
+      inline static IdProvider& instance() 
+      {
+        static IdProvider idProvider; 
+        return idProvider;
+      }
 
-    IdProvider(const IdProvider&);
-    IdProvider& operator=(const IdProvider&);
+      //! Return a new identifier.
+      //! \note Identifiers are never freed.
+      size_t newId() { return lowestFreeId_++; }
 
-  private:
-    size_t lowestFreeId_;
-  };
+    private:
+      //! Constructor (for the singleton object)
+      IdProvider() :
+        lowestFreeId_(0)
+      {}
 
-  } // end namespace Fem
-} // end namespace Dune
+      IdProvider(const IdProvider&);
+      IdProvider& operator=(const IdProvider&);
 
-#endif
+    private:
+      size_t lowestFreeId_;
+    };
+
+  } // namespace Fem
+
+} // namespace Dune
+
+#endif // #ifndef DUNE_FEM_IDPROVIDER_HH

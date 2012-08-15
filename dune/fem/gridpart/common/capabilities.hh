@@ -140,10 +140,10 @@ namespace Dune
         static const bool v = Dune::Fem::GridPartCapabilities::isConforming< GridPartType >::v;
       };
 
-    } // end namespace GridPartCapabilities
+    } // namespace GridPartCapabilities
 
-  } // end namespace Fem
+  } // namespace Fem
 
-} // end namespace Dune
+} // namespace Dune
 
 #endif // #ifndef DUNE_FEM_GRIDPART_CAPABILITIES_HH

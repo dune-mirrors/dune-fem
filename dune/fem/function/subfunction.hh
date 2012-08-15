@@ -7,9 +7,11 @@
 #include <dune/fem/storage/subarray.hh>
 #include <dune/fem/function/vectorfunction/vectorfunction.hh>
 
-namespace Dune {
+namespace Dune 
+{
 
-namespace Fem {
+  namespace Fem 
+  {
 
     //! @ingroup SubDFunction
     //! A class for extracting sub functions from a 
@@ -84,5 +86,7 @@ namespace Fem {
     };
 
   } // namespace Fem 
+
 } // namespace Dune
-#endif
+
+#endif // #ifndef DUNE_FEM_SUBFUNCTION_HH

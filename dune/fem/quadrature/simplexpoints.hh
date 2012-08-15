@@ -1,5 +1,5 @@
-#ifndef DUNE_SIMPLEXPOINTS_HH
-#define DUNE_SIMPLEXPOINTS_HH
+#ifndef DUNE_FEM_SIMPLEXPOINTS_HH
+#define DUNE_FEM_SIMPLEXPOINTS_HH
 
 #include <vector>
 #include <cassert>
@@ -10,62 +10,67 @@
 // include pardg quadratures 
 #include <dune/fem/solver/pardg.hh>
 
-namespace Dune {
-  namespace Fem {
+namespace Dune 
+{
 
-  //! Adapter to the quadratures defined by parDG.
-  template <int dim>
-  class ParDGSimplexPointsAdapter {
-  public:
-    enum { numCorners = dim+1 };
-    typedef typename PARDG::Quadrature<dim> ParDGQuadratureType;
-    typedef FieldVector<double, dim> CoordinateType;
+  namespace Fem 
+  {
 
-  public:
-    //! Constructor.
-    ParDGSimplexPointsAdapter(int order) :
-      quad_(ParDGQuadratureType::quadrature(order)),
-      order_(order)
-    {
-    }
+    //! Adapter to the quadratures defined by parDG.
+    template <int dim>
+    class ParDGSimplexPointsAdapter {
+    public:
+      enum { numCorners = dim+1 };
+      typedef typename PARDG::Quadrature<dim> ParDGQuadratureType;
+      typedef FieldVector<double, dim> CoordinateType;
 
-    //! Number of quadrature points.
-    int numPoints() const 
-    {
-      return quad_.number_of_points();
-    }
-
-    //! The actual order of the quadrature.
-    int order() const 
-    {
-      return order_;
-    }
-
-    //! Access to the ith quadrature point.
-    CoordinateType point(int i) const 
-    {
-      assert(i >= 0 && i < numPoints());
-      CoordinateType result;
-      for (size_t j = 0; j < dim; ++j) 
+    public:
+      //! Constructor.
+      ParDGSimplexPointsAdapter(int order) :
+        quad_(ParDGQuadratureType::quadrature(order)),
+        order_(order)
       {
-        result[j] = quad_.x(i)[j];
       }
-      return result;
-    }
 
-    //! Access to the ith quadrature weight.
-    double weight(int i) const 
-    {
-      assert(i >= 0 && i < numPoints());
-      // scale with volume of reference element!
-      return quad_.w(i);
-    }
-    
-  private:
-    const ParDGQuadratureType& quad_;
-    const int order_;
-  };
+      //! Number of quadrature points.
+      int numPoints() const 
+      {
+        return quad_.number_of_points();
+      }
 
-  } // end namespace Fem
-} // end namespace Dune
-#endif
+      //! The actual order of the quadrature.
+      int order() const 
+      {
+        return order_;
+      }
+
+      //! Access to the ith quadrature point.
+      CoordinateType point(int i) const 
+      {
+        assert(i >= 0 && i < numPoints());
+        CoordinateType result;
+        for (size_t j = 0; j < dim; ++j) 
+        {
+          result[j] = quad_.x(i)[j];
+        }
+        return result;
+      }
+
+      //! Access to the ith quadrature weight.
+      double weight(int i) const 
+      {
+        assert(i >= 0 && i < numPoints());
+        // scale with volume of reference element!
+        return quad_.w(i);
+      }
+      
+    private:
+      const ParDGQuadratureType& quad_;
+      const int order_;
+    };
+
+  } // namespace Fem
+
+} // namespace Dune
+
+#endif // #ifndef DUNE_FEM_SIMPLEXPOINTS_HH

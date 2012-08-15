@@ -12,6 +12,7 @@
 
 namespace Dune
 {
+
   namespace Fem
   {
 
@@ -213,8 +214,8 @@ namespace Dune
       bool intersectionNeighbor ( const Intersection & ) const;
     };
    
-  }  // end namespace Fem
+  }  // namespace Fem
 
-}  // end namespace Dune
+}  // namespace Dune
 
 #endif // #ifndef DUNE_FEM_GRIDPART_FILTER_FILTER_HH

@@ -16,26 +16,26 @@ namespace Dune
   namespace Fem 
   {
 
-  template< class LagrangePointSetContainer >
-  struct LagrangeDofMapperCodeFactory
-  {
-    explicit LagrangeDofMapperCodeFactory ( const LagrangePointSetContainer &lagrangePointSets )
-    : lagrangePointSets_( lagrangePointSets )
-    {}
-
-    template< class Field, int dim >
-    Fem::DofMapperCode operator() ( const GenericReferenceElement< Field, dim > &refElement ) const
+    template< class LagrangePointSetContainer >
+    struct LagrangeDofMapperCodeFactory
     {
-      const GeometryType type = refElement.type();
-      if( lagrangePointSets_.exists( type ) )
-        return Fem::compile( refElement, lagrangePointSets_[ type ] );
-      else
-        return Fem::DofMapperCode();
-    }
+      explicit LagrangeDofMapperCodeFactory ( const LagrangePointSetContainer &lagrangePointSets )
+      : lagrangePointSets_( lagrangePointSets )
+      {}
 
-  private:
-    const LagrangePointSetContainer &lagrangePointSets_;
-  };
+      template< class Field, int dim >
+      Fem::DofMapperCode operator() ( const GenericReferenceElement< Field, dim > &refElement ) const
+      {
+        const GeometryType type = refElement.type();
+        if( lagrangePointSets_.exists( type ) )
+          return Fem::compile( refElement, lagrangePointSets_[ type ] );
+        else
+          return Fem::DofMapperCode();
+      }
+
+    private:
+      const LagrangePointSetContainer &lagrangePointSets_;
+    };
 
   } // namespace Fem 
 

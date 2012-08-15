@@ -78,4 +78,4 @@ namespace pardg {
 
 #endif // end USE_DENNIS 
 
-#endif
+#endif // #ifndef PARDG_INCLUDE_HH

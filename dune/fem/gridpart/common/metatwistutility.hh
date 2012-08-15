@@ -7,6 +7,7 @@
 
 namespace Dune
 {
+
   namespace Fem 
   {
 
@@ -44,8 +45,8 @@ namespace Dune
       }
     };
   
-  } // end namespace Fem 
+  } // namespace Fem 
 
-} // end namespace Dune 
+} // namespace Dune 
 
 #endif // #ifndef DUNE_FEM_METATWISTUTILITY_HH

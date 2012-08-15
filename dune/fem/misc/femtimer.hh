@@ -294,7 +294,7 @@ namespace Dune
         comm.gather( &totalTime, (double *)0, 1, 0 );
     }
 
-  } // end namespace Fem 
+  } // namespace Fem 
 
 
 
@@ -436,6 +436,6 @@ namespace Dune
     Timer time_;
   };
 
-}
+} // namespace Dune
 
-#endif // #ifndef DUNE_FEMTIMER_HH
+#endif // #ifndef DUNE_FEM_FEMTIMER_HH

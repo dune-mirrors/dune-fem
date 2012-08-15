@@ -1,7 +1,6 @@
 #ifndef DUNE_FEM_GRIDPART_FILTEREDGRIDPART_DATAHANDLE_HH
 #define DUNE_FEM_GRIDPART_FILTEREDGRIDPART_DATAHANDLE_HH
 
-
 //- dune-common includes
 #include <dune/common/typetraits.hh>
 
@@ -14,6 +13,7 @@ namespace Dune
 
   namespace Fem
   {
+
     // Forward declaration
     // -------------------
 
@@ -90,8 +90,8 @@ namespace Dune
       WrappedHandle &wrappedHandle_;
     };
 
-  }  // end namespace Fem
+  }  // namespace Fem
 
-}  // end namespace Dune
+}  // namespace Dune
 
 #endif // #ifndef DUNE_FEM_GRIDPART_FILTEREDGRIDPART_DATAHANDLE_HH

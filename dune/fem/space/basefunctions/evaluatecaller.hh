@@ -1,5 +1,5 @@
-#ifndef DUNE_EVALUATECALLER_HH
-#define DUNE_EVALUATECALLER_HH
+#ifndef DUNE_FEM_EVALUATECALLER_HH
+#define DUNE_FEM_EVALUATECALLER_HH
 
 #include <cstdlib>
 #include <vector>
@@ -37,393 +37,395 @@
 namespace Dune
 {
 
-namespace Fem 
-{
-  // empty class for specialization of evaluation classes in basefunctionsets.hh 
-  class EmptyGeometry {};
-
-  // forward declaration 
-  template <class Traits,
-            int quadNop,
-            int numBaseFct >
-  class EvaluateCaller;
-
-  template< class QuadratureImp, 
-            class FactorImp, 
-            class LocalDofVectorImp,
-            class GeometryImp = EmptyGeometry > 
-  struct EvaluateCallerInterfaceTraits 
+  namespace Fem 
   {
-    typedef QuadratureImp     QuadratureType;
-    typedef FactorImp         FactorType;
-    typedef LocalDofVectorImp LocalDofVectorType;
-    typedef GeometryImp       Geometry;        
-  };
 
-  template <class Traits,
-            class BaseFunctionSet,
-            class RangeVectorImp> 
-  struct EvaluateCallerTraits 
-  {
-    typedef Traits  BaseTraits;
-    typedef typename Traits :: QuadratureType      QuadratureType ;
-    typedef typename Traits :: FactorType          FactorType ;
-    typedef typename Traits :: LocalDofVectorType  LocalDofVectorType ;
-    typedef typename Traits :: Geometry            Geometry ;
+    // empty class for specialization of evaluation classes in basefunctionsets.hh 
+    class EmptyGeometry {};
 
-    typedef BaseFunctionSet   BaseFunctionSetType;
-    typedef RangeVectorImp    RangeVectorType;
-  };
+    // forward declaration 
+    template <class Traits,
+              int quadNop,
+              int numBaseFct >
+    class EvaluateCaller;
 
-  //- base function evaluation interface 
-  template <class Traits>  
-  class EvaluateCallerInterface
-  {
-    typedef EvaluateCallerInterface< Traits >  ThisType;
-  protected:
-    enum { maxNumBaseFunctions = MAX_NUMBER_OF_BASE_FCT };
-    enum { maxQuadratures = 50 };
-    enum { maxQuadNop = MAX_NUMBER_OF_QUAD_POINTS };
-
-    class EvaluatorStorage
+    template< class QuadratureImp, 
+              class FactorImp, 
+              class LocalDofVectorImp,
+              class GeometryImp = EmptyGeometry > 
+    struct EvaluateCallerInterfaceTraits 
     {
-    protected:  
-      typedef ThisType* ValueType ;
-      std::vector< ValueType > storage_;
-    public:
-      EvaluatorStorage() : 
-        storage_( maxQuadratures, (ThisType* ) 0 ) 
-      {}
-
-      ~EvaluatorStorage() 
-      {
-        for( size_t i = 0; i<storage_.size(); ++i ) 
-          delete storage_[ i ];
-      }
-
-      ValueType& operator [] ( const int i ) { return storage_[ i ]; }
-      const ValueType& operator [] ( const int i ) const { return storage_[ i ]; }
+      typedef QuadratureImp     QuadratureType;
+      typedef FactorImp         FactorType;
+      typedef LocalDofVectorImp LocalDofVectorType;
+      typedef GeometryImp       Geometry;        
     };
 
-
-    EvaluateCallerInterface() {}
-
-  public:
-    typedef typename Traits :: QuadratureType      QuadratureType ;
-    typedef typename Traits :: FactorType          FactorType ;
-    typedef typename Traits :: LocalDofVectorType  LocalDofVectorType ;
-    typedef typename Traits :: Geometry            Geometry ;
-
-    virtual ~EvaluateCallerInterface() {}
-
-    virtual void axpyRanges( const QuadratureType&,
-                             const FactorType& ,
-                             LocalDofVectorType & ) const = 0;
-
-    virtual void evaluateRanges( const QuadratureType& quad,
-                                 const LocalDofVectorType & dofs,
-                                 FactorType& factors) const = 0;
-
-    virtual void axpyJacobians( const QuadratureType&,
-                                const Geometry&,
-                                const FactorType& ,
-                                LocalDofVectorType & ) const = 0;
-
-    virtual void evaluateJacobians( const QuadratureType&,
-                                    const Geometry&,
-                                    const LocalDofVectorType&,
-                                    FactorType&) const = 0;
-
-    template < class BaseFunctionSet, class Storage >
-    static const ThisType& storage(const BaseFunctionSet& baseSet,
-                                   const Storage& dataCache,
-                                   const QuadratureType& quad ) 
+    template <class Traits,
+              class BaseFunctionSet,
+              class RangeVectorImp> 
+    struct EvaluateCallerTraits 
     {
-      // assert that max numbers are big enough 
-      assert( baseSet.numDifferentBaseFunctions() <= maxNumBaseFunctions );
-      assert( quad.nop()  <= maxQuadNop );
-      assert( quad.id()   < maxQuadratures );
+      typedef Traits  BaseTraits;
+      typedef typename Traits :: QuadratureType      QuadratureType ;
+      typedef typename Traits :: FactorType          FactorType ;
+      typedef typename Traits :: LocalDofVectorType  LocalDofVectorType ;
+      typedef typename Traits :: Geometry            Geometry ;
 
-      // static vector holding all evaluator instances 
-      static EvaluatorStorage evaluators; 
+      typedef BaseFunctionSet   BaseFunctionSetType;
+      typedef RangeVectorImp    RangeVectorType;
+    };
 
-      // check if object already created 
-      const size_t quadId = quad.id();
-      if( evaluators[ quadId ] == 0 )
+    //- base function evaluation interface 
+    template <class Traits>  
+    class EvaluateCallerInterface
+    {
+      typedef EvaluateCallerInterface< Traits >  ThisType;
+    protected:
+      enum { maxNumBaseFunctions = MAX_NUMBER_OF_BASE_FCT };
+      enum { maxQuadratures = 50 };
+      enum { maxQuadNop = MAX_NUMBER_OF_QUAD_POINTS };
+
+      class EvaluatorStorage
       {
-        typedef EvaluateCallerTraits< Traits, BaseFunctionSet, Storage> NewTraits;
-        // create appropriate evaluator 
-        evaluators[ quadId ] = 
-          EvaluateCaller< NewTraits, maxQuadNop, maxNumBaseFunctions > 
-            :: create( dataCache , quad.nop(), baseSet.numDifferentBaseFunctions() );
+      protected:  
+        typedef ThisType* ValueType ;
+        std::vector< ValueType > storage_;
+      public:
+        EvaluatorStorage() : 
+          storage_( maxQuadratures, (ThisType* ) 0 ) 
+        {}
+
+        ~EvaluatorStorage() 
+        {
+          for( size_t i = 0; i<storage_.size(); ++i ) 
+            delete storage_[ i ];
+        }
+
+        ValueType& operator [] ( const int i ) { return storage_[ i ]; }
+        const ValueType& operator [] ( const int i ) const { return storage_[ i ]; }
+      };
+
+
+      EvaluateCallerInterface() {}
+
+    public:
+      typedef typename Traits :: QuadratureType      QuadratureType ;
+      typedef typename Traits :: FactorType          FactorType ;
+      typedef typename Traits :: LocalDofVectorType  LocalDofVectorType ;
+      typedef typename Traits :: Geometry            Geometry ;
+
+      virtual ~EvaluateCallerInterface() {}
+
+      virtual void axpyRanges( const QuadratureType&,
+                               const FactorType& ,
+                               LocalDofVectorType & ) const = 0;
+
+      virtual void evaluateRanges( const QuadratureType& quad,
+                                   const LocalDofVectorType & dofs,
+                                   FactorType& factors) const = 0;
+
+      virtual void axpyJacobians( const QuadratureType&,
+                                  const Geometry&,
+                                  const FactorType& ,
+                                  LocalDofVectorType & ) const = 0;
+
+      virtual void evaluateJacobians( const QuadratureType&,
+                                      const Geometry&,
+                                      const LocalDofVectorType&,
+                                      FactorType&) const = 0;
+
+      template < class BaseFunctionSet, class Storage >
+      static const ThisType& storage(const BaseFunctionSet& baseSet,
+                                     const Storage& dataCache,
+                                     const QuadratureType& quad ) 
+      {
+        // assert that max numbers are big enough 
+        assert( baseSet.numDifferentBaseFunctions() <= maxNumBaseFunctions );
+        assert( quad.nop()  <= maxQuadNop );
+        assert( quad.id()   < maxQuadratures );
+
+        // static vector holding all evaluator instances 
+        static EvaluatorStorage evaluators; 
+
+        // check if object already created 
+        const size_t quadId = quad.id();
+        if( evaluators[ quadId ] == 0 )
+        {
+          typedef EvaluateCallerTraits< Traits, BaseFunctionSet, Storage> NewTraits;
+          // create appropriate evaluator 
+          evaluators[ quadId ] = 
+            EvaluateCaller< NewTraits, maxQuadNop, maxNumBaseFunctions > 
+              :: create( dataCache , quad.nop(), baseSet.numDifferentBaseFunctions() );
+        }
+
+        // return reference to evaluator 
+        return *(evaluators[ quadId ]);
+      }
+    };
+
+    template <class Traits,
+              int quadNop,
+              int numBaseFct >
+    class EvaluateRealImplementation
+      : public EvaluateCallerInterface< typename Traits :: BaseTraits >
+    {
+    protected:  
+      typedef typename Traits :: BaseFunctionSetType BaseFunctionSetType;
+      typedef typename Traits :: QuadratureType      QuadratureType ;
+      typedef typename Traits :: FactorType          FactorType ;
+      typedef typename Traits :: LocalDofVectorType  LocalDofVectorType ;
+      typedef typename Traits :: Geometry            Geometry ;
+      typedef typename Traits :: RangeVectorType     RangeVectorType ;
+
+      enum { dimRange = BaseFunctionSetType :: dimRange };
+      typedef EvaluateRealImplementation< Traits, quadNop, numBaseFct > ThisType;
+      typedef EvaluateCallerInterface< typename Traits :: BaseTraits >   BaseType;
+
+      const RangeVectorType& rangeStorage_;
+
+    public:  
+      // type of interface class
+      typedef BaseType InterfaceType;
+
+      EvaluateRealImplementation( const RangeVectorType& rangeStorage ) 
+        : rangeStorage_( rangeStorage )
+      {}
+
+      virtual void axpyRanges( const QuadratureType& quad,
+                               const FactorType& rangeFactors,
+                               LocalDofVectorType & dofs ) const
+      {
+        BaseFunctionSetType :: template AxpyRanges 
+          < BaseFunctionSetType, Geometry, dimRange, quadNop, numBaseFct > :: axpy 
+          ( quad, rangeStorage_, rangeFactors, dofs );
       }
 
-      // return reference to evaluator 
-      return *(evaluators[ quadId ]);
-    }
-  };
+      virtual void axpyJacobians( const QuadratureType& quad,
+                                  const Geometry& geometry,
+                                  const FactorType& jacFactors,
+                                  LocalDofVectorType& dofs) const 
+      {
+        BaseFunctionSetType :: template AxpyJacobians 
+          < BaseFunctionSetType, Geometry, dimRange, quadNop, numBaseFct > :: axpy 
+          ( quad, geometry, rangeStorage_, jacFactors, dofs );
+      }
 
-  template <class Traits,
-            int quadNop,
-            int numBaseFct >
-  class EvaluateRealImplementation
-    : public EvaluateCallerInterface< typename Traits :: BaseTraits >
-  {
-  protected:  
-    typedef typename Traits :: BaseFunctionSetType BaseFunctionSetType;
-    typedef typename Traits :: QuadratureType      QuadratureType ;
-    typedef typename Traits :: FactorType          FactorType ;
-    typedef typename Traits :: LocalDofVectorType  LocalDofVectorType ;
-    typedef typename Traits :: Geometry            Geometry ;
-    typedef typename Traits :: RangeVectorType     RangeVectorType ;
+      virtual void evaluateRanges( const QuadratureType& quad,
+                                   const LocalDofVectorType & dofs,
+                                   FactorType& rangeFactors) const
+      {
+        BaseFunctionSetType :: template EvaluateRanges
+          < BaseFunctionSetType, Geometry, dimRange, quadNop, numBaseFct >
+          :: eval ( quad, rangeStorage_, dofs, rangeFactors );
+      }
 
-    enum { dimRange = BaseFunctionSetType :: dimRange };
-    typedef EvaluateRealImplementation< Traits, quadNop, numBaseFct > ThisType;
-    typedef EvaluateCallerInterface< typename Traits :: BaseTraits >   BaseType;
+      virtual void evaluateJacobians( const QuadratureType& quad,
+                                      const Geometry& geometry,
+                                      const LocalDofVectorType& dofs,
+                                      FactorType& jacFactors) const 
+      {
+        BaseFunctionSetType :: template EvaluateJacobians 
+          < BaseFunctionSetType, Geometry, dimRange, quadNop, numBaseFct > :: eval 
+          ( quad, geometry, rangeStorage_, dofs, jacFactors );
+      } 
 
-    const RangeVectorType& rangeStorage_;
-
-  public:  
-    // type of interface class
-    typedef BaseType InterfaceType;
-
-    EvaluateRealImplementation( const RangeVectorType& rangeStorage ) 
-      : rangeStorage_( rangeStorage )
-    {}
-
-    virtual void axpyRanges( const QuadratureType& quad,
-                             const FactorType& rangeFactors,
-                             LocalDofVectorType & dofs ) const
+      static InterfaceType* create( const RangeVectorType& rangeStorage ) 
+      {
+        return new ThisType( rangeStorage );
+      }
+    };
+     
+    // The default EvaluateImplementation is empty 
+    // to create this has to be specified and derived from EvaluateCallerDefault
+    template <class Traits,
+              int quadNop,
+              int numBaseFct >
+    class EvaluateImplementation 
+      : public EvaluateCallerInterface< typename Traits :: BaseTraits >
     {
-      BaseFunctionSetType :: template AxpyRanges 
-        < BaseFunctionSetType, Geometry, dimRange, quadNop, numBaseFct > :: axpy 
-        ( quad, rangeStorage_, rangeFactors, dofs );
-    }
+    protected:  
+      typedef typename Traits :: BaseFunctionSetType BaseFunctionSetType;
+      typedef typename Traits :: QuadratureType      QuadratureType ;
+      typedef typename Traits :: FactorType          FactorType ;
+      typedef typename Traits :: LocalDofVectorType  LocalDofVectorType ;
+      typedef typename Traits :: Geometry            Geometry ;
+      typedef typename Traits :: RangeVectorType     RangeVectorType ;
 
-    virtual void axpyJacobians( const QuadratureType& quad,
-                                const Geometry& geometry,
-                                const FactorType& jacFactors,
-                                LocalDofVectorType& dofs) const 
-    {
-      BaseFunctionSetType :: template AxpyJacobians 
-        < BaseFunctionSetType, Geometry, dimRange, quadNop, numBaseFct > :: axpy 
-        ( quad, geometry, rangeStorage_, jacFactors, dofs );
-    }
+      typedef EvaluateImplementation< Traits, quadNop, numBaseFct > ThisType;
 
-    virtual void evaluateRanges( const QuadratureType& quad,
-                                 const LocalDofVectorType & dofs,
-                                 FactorType& rangeFactors) const
-    {
-      BaseFunctionSetType :: template EvaluateRanges
-        < BaseFunctionSetType, Geometry, dimRange, quadNop, numBaseFct >
-        :: eval ( quad, rangeStorage_, dofs, rangeFactors );
-    }
+      typedef EvaluateCallerInterface< typename Traits :: BaseTraits >   BaseType;
+    public:  
+      // type of interface class
+      typedef BaseType InterfaceType;
 
-    virtual void evaluateJacobians( const QuadratureType& quad,
-                                    const Geometry& geometry,
-                                    const LocalDofVectorType& dofs,
-                                    FactorType& jacFactors) const 
-    {
-      BaseFunctionSetType :: template EvaluateJacobians 
-        < BaseFunctionSetType, Geometry, dimRange, quadNop, numBaseFct > :: eval 
-        ( quad, geometry, rangeStorage_, dofs, jacFactors );
-    } 
+      EvaluateImplementation( const RangeVectorType& rangeStorage ) 
+      {}
 
-    static InterfaceType* create( const RangeVectorType& rangeStorage ) 
-    {
-      return new ThisType( rangeStorage );
-    }
-  };
-   
-  // The default EvaluateImplementation is empty 
-  // to create this has to be specified and derived from EvaluateCallerDefault
-  template <class Traits,
-            int quadNop,
-            int numBaseFct >
-  class EvaluateImplementation 
-    : public EvaluateCallerInterface< typename Traits :: BaseTraits >
-  {
-  protected:  
-    typedef typename Traits :: BaseFunctionSetType BaseFunctionSetType;
-    typedef typename Traits :: QuadratureType      QuadratureType ;
-    typedef typename Traits :: FactorType          FactorType ;
-    typedef typename Traits :: LocalDofVectorType  LocalDofVectorType ;
-    typedef typename Traits :: Geometry            Geometry ;
-    typedef typename Traits :: RangeVectorType     RangeVectorType ;
-
-    typedef EvaluateImplementation< Traits, quadNop, numBaseFct > ThisType;
-
-    typedef EvaluateCallerInterface< typename Traits :: BaseTraits >   BaseType;
-  public:  
-    // type of interface class
-    typedef BaseType InterfaceType;
-
-    EvaluateImplementation( const RangeVectorType& rangeStorage ) 
-    {}
-
-    virtual void axpyRanges( const QuadratureType& quad,
-                             const FactorType& rangeFactors,
-                             LocalDofVectorType & dofs ) const
-    {
-      abort();
-    }
-
-    virtual void axpyJacobians( const QuadratureType& quad,
-                                const Geometry& geometry,
-                                const FactorType& jacFactors,
-                                LocalDofVectorType& dofs) const 
-    {
-      abort();
-    }
-
-    virtual void evaluateRanges( const QuadratureType& quad,
-                                 const LocalDofVectorType & dofs,
-                                 FactorType& rangeFactors) const
-    {
-      abort();
-    }
-
-    virtual void evaluateJacobians( const QuadratureType& quad,
-                                    const Geometry& geometry,
-                                    const LocalDofVectorType& dofs,
-                                    FactorType& jacFactors) const 
-    {
-      abort();
-    } 
-
-    static InterfaceType* create( const RangeVectorType& ) 
-    {
-      DUNE_THROW(NotImplemented,"EvaluateImplementation for < " << quadNop << " , " << numBaseFct << " > not created!");
-      return (InterfaceType*) 0;
-    }
-  };
-
-  template <class Traits,
-            int quadNop,
-            int numBaseFct >
-  class EvaluateCaller 
-  {
-  protected:  
-    typedef typename Traits :: RangeVectorType     RangeVectorType ;
-    typedef EvaluateCallerInterface< typename Traits :: BaseTraits >  InterfaceType;
-  public:  
-    static InterfaceType* createObj( const RangeVectorType& rangeStorage, 
-                                     const size_t numbase ) 
-    {
-      if( numBaseFct == numbase ) 
-        return EvaluateImplementation< Traits, quadNop, numBaseFct > :: create( rangeStorage );
-      else 
-        return EvaluateCaller< Traits, quadNop, numBaseFct - 1 > :: createObj( rangeStorage, numbase );
-    }
-
-    static InterfaceType* create( const RangeVectorType& rangeStorage, 
-                                  const size_t quadnop, const size_t numbase ) 
-    {
-      if( quadNop == quadnop ) 
-        return EvaluateCaller< Traits, quadNop, numBaseFct > :: createObj( rangeStorage, numbase );
-      else  
-        return EvaluateCaller< Traits, quadNop - 1, numBaseFct > :: create( rangeStorage, quadnop, numbase );
-    }
-  };
-   
-  template <class Traits,
-            int numBaseFct >
-  class EvaluateCaller< Traits, MIN_NUMBER_OF_QUAD_POINTS, numBaseFct >
-  {
-  protected:  
-    enum { quadNop = MIN_NUMBER_OF_QUAD_POINTS };
-    typedef typename Traits :: RangeVectorType     RangeVectorType ;
-    typedef EvaluateCallerInterface< typename Traits :: BaseTraits >  InterfaceType;
-  public:  
-    static InterfaceType* createObj( const RangeVectorType& rangeStorage, 
-                                     const size_t numbase ) 
-    {
-      if( numBaseFct == numbase ) 
-        return EvaluateImplementation< Traits, quadNop, numBaseFct > :: create( rangeStorage );
-      else 
-        return EvaluateCaller< Traits, quadNop, numBaseFct - 1 > :: createObj( rangeStorage, numbase );
-    }
-
-    static InterfaceType* create( const RangeVectorType& rangeStorage, 
-                                  const size_t quadnop, const size_t numbase ) 
-    {
-      if( quadNop == quadnop ) 
-        return EvaluateCaller< Traits, quadNop, numBaseFct > :: createObj( rangeStorage, numbase );
-      else  
+      virtual void axpyRanges( const QuadratureType& quad,
+                               const FactorType& rangeFactors,
+                               LocalDofVectorType & dofs ) const
       {
         abort();
       }
-    }
-  };
-   
-  template <class Traits,
-            int quadNop>
-  class EvaluateCaller< Traits, quadNop, MIN_NUMBER_OF_BASE_FCT >
-  {
-  protected:  
-    enum { numBaseFct = MIN_NUMBER_OF_BASE_FCT };
-    typedef typename Traits :: RangeVectorType     RangeVectorType ;
-    typedef EvaluateCallerInterface< typename Traits :: BaseTraits >  InterfaceType;
-  public:  
-    static InterfaceType* createObj( const RangeVectorType& rangeStorage, 
-                                     const size_t numbase ) 
-    {
-      if( numBaseFct == numbase ) 
-        return EvaluateImplementation< Traits, quadNop, numBaseFct > :: create( rangeStorage );
-      else 
-        abort();
-    }
 
-    static InterfaceType* create( const RangeVectorType& rangeStorage, 
-                                  const size_t quadnop, const size_t numbase ) 
-    {
-      if( quadNop == quadnop ) 
-        return EvaluateCaller< Traits, quadNop, numBaseFct > :: createObj( rangeStorage, numbase );
-      else  
-      {
-        return EvaluateCaller< Traits, quadNop - 1, numBaseFct > :: create( rangeStorage, quadnop, numbase );
-      }
-    }
-  };
-   
-  template <class Traits>
-  class EvaluateCaller< Traits, MIN_NUMBER_OF_QUAD_POINTS, MIN_NUMBER_OF_BASE_FCT> 
-  {
-  protected:  
-    enum { quadNop = MIN_NUMBER_OF_QUAD_POINTS };
-    enum { numBaseFct = MIN_NUMBER_OF_BASE_FCT };
-    typedef typename Traits :: RangeVectorType     RangeVectorType ;
-    typedef EvaluateCallerInterface< typename Traits :: BaseTraits >  InterfaceType;
-  public:  
-    static InterfaceType* createObj( const RangeVectorType& rangeStorage, 
-                                     const size_t numbase ) 
-    {
-      if( numBaseFct == numbase ) 
-        return EvaluateImplementation< Traits, quadNop, numBaseFct > :: create( rangeStorage );
-      else 
-        abort();
-    }
-
-    static InterfaceType* create( const RangeVectorType& rangeStorage, 
-                                  const size_t quadnop, const size_t numbase ) 
-    {
-      if( quadNop == quadnop ) 
-        return EvaluateCaller< Traits, quadNop, numBaseFct > :: createObj( rangeStorage, numbase );
-      else  
+      virtual void axpyJacobians( const QuadratureType& quad,
+                                  const Geometry& geometry,
+                                  const FactorType& jacFactors,
+                                  LocalDofVectorType& dofs) const 
       {
         abort();
       }
-    }
-  };
+
+      virtual void evaluateRanges( const QuadratureType& quad,
+                                   const LocalDofVectorType & dofs,
+                                   FactorType& rangeFactors) const
+      {
+        abort();
+      }
+
+      virtual void evaluateJacobians( const QuadratureType& quad,
+                                      const Geometry& geometry,
+                                      const LocalDofVectorType& dofs,
+                                      FactorType& jacFactors) const 
+      {
+        abort();
+      } 
+
+      static InterfaceType* create( const RangeVectorType& ) 
+      {
+        DUNE_THROW(NotImplemented,"EvaluateImplementation for < " << quadNop << " , " << numBaseFct << " > not created!");
+        return (InterfaceType*) 0;
+      }
+    };
+
+    template <class Traits,
+              int quadNop,
+              int numBaseFct >
+    class EvaluateCaller 
+    {
+    protected:  
+      typedef typename Traits :: RangeVectorType     RangeVectorType ;
+      typedef EvaluateCallerInterface< typename Traits :: BaseTraits >  InterfaceType;
+    public:  
+      static InterfaceType* createObj( const RangeVectorType& rangeStorage, 
+                                       const size_t numbase ) 
+      {
+        if( numBaseFct == numbase ) 
+          return EvaluateImplementation< Traits, quadNop, numBaseFct > :: create( rangeStorage );
+        else 
+          return EvaluateCaller< Traits, quadNop, numBaseFct - 1 > :: createObj( rangeStorage, numbase );
+      }
+
+      static InterfaceType* create( const RangeVectorType& rangeStorage, 
+                                    const size_t quadnop, const size_t numbase ) 
+      {
+        if( quadNop == quadnop ) 
+          return EvaluateCaller< Traits, quadNop, numBaseFct > :: createObj( rangeStorage, numbase );
+        else  
+          return EvaluateCaller< Traits, quadNop - 1, numBaseFct > :: create( rangeStorage, quadnop, numbase );
+      }
+    };
+     
+    template <class Traits,
+              int numBaseFct >
+    class EvaluateCaller< Traits, MIN_NUMBER_OF_QUAD_POINTS, numBaseFct >
+    {
+    protected:  
+      enum { quadNop = MIN_NUMBER_OF_QUAD_POINTS };
+      typedef typename Traits :: RangeVectorType     RangeVectorType ;
+      typedef EvaluateCallerInterface< typename Traits :: BaseTraits >  InterfaceType;
+    public:  
+      static InterfaceType* createObj( const RangeVectorType& rangeStorage, 
+                                       const size_t numbase ) 
+      {
+        if( numBaseFct == numbase ) 
+          return EvaluateImplementation< Traits, quadNop, numBaseFct > :: create( rangeStorage );
+        else 
+          return EvaluateCaller< Traits, quadNop, numBaseFct - 1 > :: createObj( rangeStorage, numbase );
+      }
+
+      static InterfaceType* create( const RangeVectorType& rangeStorage, 
+                                    const size_t quadnop, const size_t numbase ) 
+      {
+        if( quadNop == quadnop ) 
+          return EvaluateCaller< Traits, quadNop, numBaseFct > :: createObj( rangeStorage, numbase );
+        else  
+        {
+          abort();
+        }
+      }
+    };
+     
+    template <class Traits,
+              int quadNop>
+    class EvaluateCaller< Traits, quadNop, MIN_NUMBER_OF_BASE_FCT >
+    {
+    protected:  
+      enum { numBaseFct = MIN_NUMBER_OF_BASE_FCT };
+      typedef typename Traits :: RangeVectorType     RangeVectorType ;
+      typedef EvaluateCallerInterface< typename Traits :: BaseTraits >  InterfaceType;
+    public:  
+      static InterfaceType* createObj( const RangeVectorType& rangeStorage, 
+                                       const size_t numbase ) 
+      {
+        if( numBaseFct == numbase ) 
+          return EvaluateImplementation< Traits, quadNop, numBaseFct > :: create( rangeStorage );
+        else 
+          abort();
+      }
+
+      static InterfaceType* create( const RangeVectorType& rangeStorage, 
+                                    const size_t quadnop, const size_t numbase ) 
+      {
+        if( quadNop == quadnop ) 
+          return EvaluateCaller< Traits, quadNop, numBaseFct > :: createObj( rangeStorage, numbase );
+        else  
+        {
+          return EvaluateCaller< Traits, quadNop - 1, numBaseFct > :: create( rangeStorage, quadnop, numbase );
+        }
+      }
+    };
+     
+    template <class Traits>
+    class EvaluateCaller< Traits, MIN_NUMBER_OF_QUAD_POINTS, MIN_NUMBER_OF_BASE_FCT> 
+    {
+    protected:  
+      enum { quadNop = MIN_NUMBER_OF_QUAD_POINTS };
+      enum { numBaseFct = MIN_NUMBER_OF_BASE_FCT };
+      typedef typename Traits :: RangeVectorType     RangeVectorType ;
+      typedef EvaluateCallerInterface< typename Traits :: BaseTraits >  InterfaceType;
+    public:  
+      static InterfaceType* createObj( const RangeVectorType& rangeStorage, 
+                                       const size_t numbase ) 
+      {
+        if( numBaseFct == numbase ) 
+          return EvaluateImplementation< Traits, quadNop, numBaseFct > :: create( rangeStorage );
+        else 
+          abort();
+      }
+
+      static InterfaceType* create( const RangeVectorType& rangeStorage, 
+                                    const size_t quadnop, const size_t numbase ) 
+      {
+        if( quadNop == quadnop ) 
+          return EvaluateCaller< Traits, quadNop, numBaseFct > :: createObj( rangeStorage, numbase );
+        else  
+        {
+          abort();
+        }
+      }
+    };
 
 #ifdef USE_BASEFUNCTIONSET_CODEGEN
 #define CODEGEN_INCLUDEEVALCALLERS
-// include specializations of EvaluateImplementation 
+  // include specializations of EvaluateImplementation 
 #include <autogeneratedcode.hh>
 #undef CODEGEN_INCLUDEEVALCALLERS
 #endif
 
-} // end namespace Fem 
+  } // namespace Fem 
 
-} // end namespace Dune
-#endif
+} // namespace Dune
+ 
+#endif // #ifndef DUNE_FEM_EVALUATECALLER_HH

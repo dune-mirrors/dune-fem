@@ -198,15 +198,15 @@ namespace Dune
       integrator.integrateAdd( entity, ulocal2, sum );
     }
 
-  } // end namespace Fem 
+  } // namespace Fem 
 
-  // #if DUNE_FEM_COMPATIBILITY  
+#if DUNE_FEM_COMPATIBILITY  
   // put this in next version 1.4 
   
   using Fem :: H1Norm ;
 
-  // #endif // DUNE_FEM_COMPATIBILITY
+#endif // DUNE_FEM_COMPATIBILITY
   
-} // end namespace Dune 
+} // namespace Dune 
 
 #endif // #ifndef DUNE_FEM_H1NORM_HH

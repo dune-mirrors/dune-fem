@@ -6,95 +6,95 @@
 namespace Dune
 {
 
-namespace Fem
-{
-
-  template< InterfaceType iftype >
-  struct EntityCommHelper;
-
-
-  template<>
-  struct EntityCommHelper< InteriorBorder_InteriorBorder_Interface >
+  namespace Fem
   {
-    static bool send ( const PartitionType p )
+
+    template< InterfaceType iftype >
+    struct EntityCommHelper;
+
+
+    template<>
+    struct EntityCommHelper< InteriorBorder_InteriorBorder_Interface >
     {
-      //return (p == InteriorEntity) || (p == BorderEntity);
-      return (p == BorderEntity);
-    }
+      static bool send ( const PartitionType p )
+      {
+        //return (p == InteriorEntity) || (p == BorderEntity);
+        return (p == BorderEntity);
+      }
 
-    static bool receive ( const PartitionType p )
+      static bool receive ( const PartitionType p )
+      {
+        //return (p == InteriorEntity) || (p == BorderEntity);
+        return (p == BorderEntity);
+      }
+    };
+
+
+    template<>
+    struct EntityCommHelper< InteriorBorder_All_Interface >
     {
-      //return (p == InteriorEntity) || (p == BorderEntity);
-      return (p == BorderEntity);
-    }
-  };
+      static bool send ( const PartitionType p )
+      {
+        return (p == InteriorEntity) || (p == BorderEntity);
+      }
+
+      static bool receive ( const PartitionType p )
+      {
+        //return true;
+        return (p != InteriorEntity);
+      }
+    };
 
 
-  template<>
-  struct EntityCommHelper< InteriorBorder_All_Interface >
-  {
-    static bool send ( const PartitionType p )
+    template<>
+    struct EntityCommHelper< Overlap_OverlapFront_Interface >
     {
-      return (p == InteriorEntity) || (p == BorderEntity);
-    }
+      static bool send ( const PartitionType p )
+      {
+        //return (p == InteriorEntity) || (p == BorderEntity) || (p == OverlapEntity);
+        return (p != FrontEntity) && (p != GhostEntity);
+      }
 
-    static bool receive ( const PartitionType p )
+      static bool receive ( const PartitionType p )
+      {
+        //return (p == InteriorEntity) || (p == BorderEntity) || (p == OverlapEntity) || (p == FrontEntity);
+        return (p != GhostEntity);
+      }
+    };
+
+
+    template<>
+    struct EntityCommHelper< Overlap_All_Interface >
     {
-      //return true;
-      return (p != InteriorEntity);
-    }
-  };
+      static bool send ( const PartitionType p )
+      {
+        //return (p == InteriorEntity) || (p == BorderEntity) || (p == OverlapEntity);
+        return (p != FrontEntity) && (p != GhostEntity);
+      }
+
+      static bool receive ( const PartitionType p )
+      {
+        return true;
+      }
+    };
 
 
-  template<>
-  struct EntityCommHelper< Overlap_OverlapFront_Interface >
-  {
-    static bool send ( const PartitionType p )
+    template<>
+    struct EntityCommHelper< All_All_Interface >
     {
-      //return (p == InteriorEntity) || (p == BorderEntity) || (p == OverlapEntity);
-      return (p != FrontEntity) && (p != GhostEntity);
-    }
+      static bool send ( const PartitionType p )
+      {
+        return true;
+      }
 
-    static bool receive ( const PartitionType p )
-    {
-      //return (p == InteriorEntity) || (p == BorderEntity) || (p == OverlapEntity) || (p == FrontEntity);
-      return (p != GhostEntity);
-    }
-  };
+      static bool receive ( const PartitionType p )
+      {
+        return true;
+      }
+    };
 
+  } // namespace Fem
 
-  template<>
-  struct EntityCommHelper< Overlap_All_Interface >
-  {
-    static bool send ( const PartitionType p )
-    {
-      //return (p == InteriorEntity) || (p == BorderEntity) || (p == OverlapEntity);
-      return (p != FrontEntity) && (p != GhostEntity);
-    }
-
-    static bool receive ( const PartitionType p )
-    {
-      return true;
-    }
-  };
-
-
-  template<>
-  struct EntityCommHelper< All_All_Interface >
-  {
-    static bool send ( const PartitionType p )
-    {
-      return true;
-    }
-
-    static bool receive ( const PartitionType p )
-    {
-      return true;
-    }
-  };
-
-} // end namespace Fem
-
-} // end namespace Dune
+} // namespace Dune
 
 #endif // #ifndef DUNE_FEM_ENTITYCOMMHELPER_HH

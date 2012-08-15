@@ -1,5 +1,5 @@
-#ifndef DUNE_ELLIPTPASS_HH
-#define DUNE_ELLIPTPASS_HH
+#ifndef DUNE_FEM_ELLIPTPASS_HH
+#define DUNE_FEM_ELLIPTPASS_HH
 
 //- Dune includes 
 #include <dune/common/typetraits.hh>
@@ -23,268 +23,269 @@ namespace Dune
   namespace Fem
   {
 
-/*! @addtogroup PassEllipt
- * Description: Solver for equations of the form
-** \f{eqnarray*}
-**   div(A(x)\nabla u) &=& f(x)  \quad\mbox{in}\quad \Omega    \\
-** \f}
-** where \f$ v \f$ is to be computed.
-** @{
-**************************************************************************/
-  //! Concrete implementation of Pass for DG.
-  template< class DiscreteModelImp , class PreviousPassImp , int passId = -1 >
-  class LocalDGElliptPass :
-    public LocalPass< DiscreteModelImp , PreviousPassImp , passId > 
-  {
-    typedef LocalDGElliptPass< DiscreteModelImp , PreviousPassImp , passId > ThisType;
-  public:
-    typedef PreviousPassImp PreviousPassType;
-    //- Typedefs and enums
-    //! Base class
-    typedef LocalPass< DiscreteModelImp , PreviousPassType , passId > BaseType;
-
-    //! Repetition of template arguments
-    typedef DiscreteModelImp DiscreteModelType;
-
-    // Types from the base class
-    typedef typename BaseType::Entity EntityType;
-    typedef typename EntityType :: EntityPointer EntityPointerType;
-    
-    typedef typename BaseType::ArgumentType ArgumentType;
-
-    // Types from the traits
-    typedef typename DiscreteModelType::Traits::DestinationType DestinationType;
-    typedef typename DiscreteModelType::Traits::VolumeQuadratureType VolumeQuadratureType;
-    typedef typename DiscreteModelType::Traits::FaceQuadratureType FaceQuadratureType;
-    typedef typename DiscreteModelType::Traits::DiscreteFunctionSpaceType DiscreteFunctionSpaceType;
-    typedef typename DiscreteFunctionSpaceType::GridType GridType;
-    typedef typename DiscreteFunctionSpaceType::GridPartType GridPartType;
-
-    // Types extracted from the underlying grids
-    typedef typename GridPartType::IntersectionIteratorType IntersectionIteratorType;
-    typedef typename GridType::template Codim<0>::Geometry Geometry;
-
-    // Various other types
-    typedef typename DestinationType::LocalFunctionType LocalFunctionType;
-    typedef typename DiscreteModelType::SelectorType SelectorType;
-
-    typedef CombinedSelector< ThisType, SelectorType > CombinedSelectorType;
-    typedef DiscreteModelCallerDefault
-      < DiscreteModelType, ArgumentType, CombinedSelectorType >
-      DiscreteModelCallerType;
-   
-    // Range of the destination
-    enum { dimRange  = DiscreteFunctionSpaceType :: dimRange }; 
-    enum { dimDomain = DiscreteFunctionSpaceType :: dimDomain }; 
-                    
-    // Types extracted from the discrete function space type
-    typedef typename DiscreteFunctionSpaceType::DomainType DomainType;
-    typedef typename DiscreteFunctionSpaceType::RangeType RangeType;
-    typedef typename DiscreteFunctionSpaceType::JacobianRangeType JacobianRangeType;
-
-    enum { cols = JacobianRangeType :: cols };
-    enum { rows = JacobianRangeType :: rows };
-
-    typedef typename DiscreteModelType :: Traits :: template 
-      LocalOperatorSelector<PreviousPassType> LocalOperatorSelectorType;
-
-    typedef typename  LocalOperatorSelectorType :: LocalOperatorType LocalOperatorType;
-    typedef typename  LocalOperatorSelectorType :: InverseOperatorType InverseOperatorType;
-
-    //! type of restrict and prolong operator during adaptation 
-    typedef LocalOperatorType RestrictProlongOperatorType;
-
-  protected:  
-    const DiscreteFunctionSpaceType& spc_;
-    const bool verbose_;
-    mutable LocalOperatorType op_;
-
-    const double eps_;
-    const int maxIterFactor_; 
-    mutable int maxIter_;
-
-    InverseOperatorType invOp_; 
-
-    mutable DestinationType rhs_;
-    mutable double solveTime_ ;
-    mutable double averageCommTime_ ;
-
-    const bool rebuild_ ;
-
-  public:
-    //- Public methods
-    //! Constructor
-    //! \param problem Actual problem definition (see problem.hh)
-    //! \param pass Previous pass
-    //! \param spc Space belonging to the discrete function local to this pass
-    //! \param paramFile file name of parameter file to read various variables 
-    //! 
-    //!  NOTE: parameter read by this class 
-    //!         - InvSolverEps epsilon for interative solver, default is 1e-10 
-    //!         - verbose if true some output is given, default is false
-    LocalDGElliptPass(DiscreteModelType& problem, 
-                      PreviousPassImp & pass, 
-                      const DiscreteFunctionSpaceType& spc,
-                      const std::string paramFile = "")
-      : BaseType(pass,spc)
-      , spc_(spc) 
-      , verbose_(readVerbose(paramFile, spc_.grid().comm().rank() == 0))
-      , op_(problem,pass,spc,paramFile)
-      , eps_(readEps(paramFile, verbose_ ))
-      , maxIterFactor_(4) 
-      , maxIter_( maxIterFactor_ * spc_.size() )
-      , invOp_(op_,eps_,eps_,maxIter_,verbose_)
-      , rhs_("FEPass::RHS",spc)
-      , solveTime_ ( 0.0 )
-      , averageCommTime_( 0.0 )
-      , rebuild_( ! problem.constantCoefficient() )
+    /*! @addtogroup PassEllipt
+     * Description: Solver for equations of the form
+    ** \f{eqnarray*}
+    **   div(A(x)\nabla u) &=& f(x)  \quad\mbox{in}\quad \Omega    \\
+    ** \f}
+    ** where \f$ v \f$ is to be computed.
+    ** @{
+    **************************************************************************/
+    //! Concrete implementation of Pass for DG.
+    template< class DiscreteModelImp , class PreviousPassImp , int passId = -1 >
+    class LocalDGElliptPass :
+      public LocalPass< DiscreteModelImp , PreviousPassImp , passId > 
     {
-      //assert( this->destination_ );
-    }
+      typedef LocalDGElliptPass< DiscreteModelImp , PreviousPassImp , passId > ThisType;
+    public:
+      typedef PreviousPassImp PreviousPassType;
+      //- Typedefs and enums
+      //! Base class
+      typedef LocalPass< DiscreteModelImp , PreviousPassType , passId > BaseType;
 
-     //- Public methods
-    //! Constructor
-    //! \param problem Actual problem definition (see problem.hh)
-    //! \param pass Previous pass
-    //! \param dest Pointer to needed temporary memory (otherwise created by pass)
-    //! \param paramFile file name of parameter file to read various variables 
-    //! 
-    //!  NOTE: parameter read by this class 
-    //!         - InvSolverEps epsilon for interative solver, default is 1e-10 
-    //!         - verbose if true some output is given, default is false  
-    LocalDGElliptPass(DiscreteModelType& problem, 
-                PreviousPassImp & pass, 
-                DestinationType & dest,
-                const std::string paramFile = "")
-      : BaseType(pass,dest.space())
-      , spc_(dest.space()) 
-      , verbose_(readVerbose(paramFile, spc_.grid().comm().rank() == 0))
-      , op_(problem,pass,spc_,paramFile)
-      , eps_(readEps(paramFile, verbose_ ))
-      , maxIterFactor_(4) 
-      , maxIter_( maxIterFactor_ * spc_.size() )
-      , invOp_(op_,eps_,eps_,maxIter_,verbose_)
-      , rhs_("FEPass::RHS",spc_)
-      , solveTime_ ( 0.0 )
-      , averageCommTime_( 0.0 )
-      , rebuild_( ! problem.constantCoefficient() )
-    {
-      assert( this->destination_ == 0 );
-      this->destination_ = &dest;
-    }
+      //! Repetition of template arguments
+      typedef DiscreteModelImp DiscreteModelType;
 
-    void printTexInfo(std::ostream& out) const 
-    {
-      BaseType::printTexInfo(out);
-      //out << "LocalDGElliptPass: ";
-      //out << " eps = " << eps_
-      //    << " inverse Operator: "
-      //    << "\\\\ \n";
-      op_.printTexInfo( out );
-      invOp_.printTexInfo( out );
-    }
+      // Types from the base class
+      typedef typename BaseType::Entity EntityType;
+      typedef typename EntityType :: EntityPointer EntityPointerType;
+      
+      typedef typename BaseType::ArgumentType ArgumentType;
 
-    // return number of iterations of linear solver 
-    int iterations () const 
-    {   
-      return invOp_.iterations();
-    } 
+      // Types from the traits
+      typedef typename DiscreteModelType::Traits::DestinationType DestinationType;
+      typedef typename DiscreteModelType::Traits::VolumeQuadratureType VolumeQuadratureType;
+      typedef typename DiscreteModelType::Traits::FaceQuadratureType FaceQuadratureType;
+      typedef typename DiscreteModelType::Traits::DiscreteFunctionSpaceType DiscreteFunctionSpaceType;
+      typedef typename DiscreteFunctionSpaceType::GridType GridType;
+      typedef typename DiscreteFunctionSpaceType::GridPartType GridPartType;
 
-    //! return average communication time 
-    double averageCommTime() const 
-    {
-      return averageCommTime_;
-    }
+      // Types extracted from the underlying grids
+      typedef typename GridPartType::IntersectionIteratorType IntersectionIteratorType;
+      typedef typename GridType::template Codim<0>::Geometry Geometry;
 
-    //! return time needed by linear solver 
-    double solverTime() const 
-    {
-      return solveTime_;
-    }
+      // Various other types
+      typedef typename DestinationType::LocalFunctionType LocalFunctionType;
+      typedef typename DiscreteModelType::SelectorType SelectorType;
 
-    //! Set time provider (which gives you access to the global time).
-    void setTime(const double t)
-    {
-      BaseType :: setTime( t );
-      op_.setTime( t );
-    }
+      typedef CombinedSelector< ThisType, SelectorType > CombinedSelectorType;
+      typedef DiscreteModelCallerDefault
+        < DiscreteModelType, ArgumentType, CombinedSelectorType >
+        DiscreteModelCallerType;
+     
+      // Range of the destination
+      enum { dimRange  = DiscreteFunctionSpaceType :: dimRange }; 
+      enum { dimDomain = DiscreteFunctionSpaceType :: dimDomain }; 
+                      
+      // Types extracted from the discrete function space type
+      typedef typename DiscreteFunctionSpaceType::DomainType DomainType;
+      typedef typename DiscreteFunctionSpaceType::RangeType RangeType;
+      typedef typename DiscreteFunctionSpaceType::JacobianRangeType JacobianRangeType;
 
-    //! do nothing here 
-    void applyLocal( const EntityType& en) const
-    {
-    }
-    
-    //! return restrict and prolong operator for fe-pass 
-    RestrictProlongOperatorType & restrictProlongOperator () { return op_; }
+      enum { cols = JacobianRangeType :: cols };
+      enum { rows = JacobianRangeType :: rows };
 
-    virtual void prepare(const ArgumentType& arg, DestinationType& dest) const
-    {
-      // prepare operator 
-      op_.prepare( arg, rhs_ );
-      // re-compute matrix  (true for rebuild anyway)
-      op_.computeMatrix( arg, rhs_ , rebuild_ );
-    }
+      typedef typename DiscreteModelType :: Traits :: template 
+        LocalOperatorSelector<PreviousPassType> LocalOperatorSelectorType;
 
-    //! Some timestep size management.
-    virtual void finalize(const ArgumentType& arg, DestinationType& dest) const
-    {
-      op_.finalize( arg, rhs_ );
-    }
+      typedef typename  LocalOperatorSelectorType :: LocalOperatorType LocalOperatorType;
+      typedef typename  LocalOperatorSelectorType :: InverseOperatorType InverseOperatorType;
 
-    //! compute method 
-    virtual void compute(const ArgumentType& arg, DestinationType& dest) const
-    {
-      // prepare operator 
-      prepare(arg,dest);
+      //! type of restrict and prolong operator during adaptation 
+      typedef LocalOperatorType RestrictProlongOperatorType;
 
-      // calculate new maxIter  
-      maxIter_ = maxIterFactor_ * spc_.size();
+    protected:  
+      const DiscreteFunctionSpaceType& spc_;
+      const bool verbose_;
+      mutable LocalOperatorType op_;
 
+      const double eps_;
+      const int maxIterFactor_; 
+      mutable int maxIter_;
+
+      InverseOperatorType invOp_; 
+
+      mutable DestinationType rhs_;
+      mutable double solveTime_ ;
+      mutable double averageCommTime_ ;
+
+      const bool rebuild_ ;
+
+    public:
+      //- Public methods
+      //! Constructor
+      //! \param problem Actual problem definition (see problem.hh)
+      //! \param pass Previous pass
+      //! \param spc Space belonging to the discrete function local to this pass
+      //! \param paramFile file name of parameter file to read various variables 
+      //! 
+      //!  NOTE: parameter read by this class 
+      //!         - InvSolverEps epsilon for interative solver, default is 1e-10 
+      //!         - verbose if true some output is given, default is false
+      LocalDGElliptPass(DiscreteModelType& problem, 
+                        PreviousPassImp & pass, 
+                        const DiscreteFunctionSpaceType& spc,
+                        const std::string paramFile = "")
+        : BaseType(pass,spc)
+        , spc_(spc) 
+        , verbose_(readVerbose(paramFile, spc_.grid().comm().rank() == 0))
+        , op_(problem,pass,spc,paramFile)
+        , eps_(readEps(paramFile, verbose_ ))
+        , maxIterFactor_(4) 
+        , maxIter_( maxIterFactor_ * spc_.size() )
+        , invOp_(op_,eps_,eps_,maxIter_,verbose_)
+        , rhs_("FEPass::RHS",spc)
+        , solveTime_ ( 0.0 )
+        , averageCommTime_( 0.0 )
+        , rebuild_( ! problem.constantCoefficient() )
       {
-        Timer solveTime ;
+        //assert( this->destination_ );
+      }
 
-        // solve the system 
-        invOp_(rhs_, dest);
+       //- Public methods
+      //! Constructor
+      //! \param problem Actual problem definition (see problem.hh)
+      //! \param pass Previous pass
+      //! \param dest Pointer to needed temporary memory (otherwise created by pass)
+      //! \param paramFile file name of parameter file to read various variables 
+      //! 
+      //!  NOTE: parameter read by this class 
+      //!         - InvSolverEps epsilon for interative solver, default is 1e-10 
+      //!         - verbose if true some output is given, default is false  
+      LocalDGElliptPass(DiscreteModelType& problem, 
+                  PreviousPassImp & pass, 
+                  DestinationType & dest,
+                  const std::string paramFile = "")
+        : BaseType(pass,dest.space())
+        , spc_(dest.space()) 
+        , verbose_(readVerbose(paramFile, spc_.grid().comm().rank() == 0))
+        , op_(problem,pass,spc_,paramFile)
+        , eps_(readEps(paramFile, verbose_ ))
+        , maxIterFactor_(4) 
+        , maxIter_( maxIterFactor_ * spc_.size() )
+        , invOp_(op_,eps_,eps_,maxIter_,verbose_)
+        , rhs_("FEPass::RHS",spc_)
+        , solveTime_ ( 0.0 )
+        , averageCommTime_( 0.0 )
+        , rebuild_( ! problem.constantCoefficient() )
+      {
+        assert( this->destination_ == 0 );
+        this->destination_ = &dest;
+      }
 
-        // get time for solving the system 
-        solveTime_ = solveTime.elapsed ();
+      void printTexInfo(std::ostream& out) const 
+      {
+        BaseType::printTexInfo(out);
+        //out << "LocalDGElliptPass: ";
+        //out << " eps = " << eps_
+        //    << " inverse Operator: "
+        //    << "\\\\ \n";
+        op_.printTexInfo( out );
+        invOp_.printTexInfo( out );
+      }
+
+      // return number of iterations of linear solver 
+      int iterations () const 
+      {   
+        return invOp_.iterations();
+      } 
+
+      //! return average communication time 
+      double averageCommTime() const 
+      {
+        return averageCommTime_;
+      }
+
+      //! return time needed by linear solver 
+      double solverTime() const 
+      {
+        return solveTime_;
+      }
+
+      //! Set time provider (which gives you access to the global time).
+      void setTime(const double t)
+      {
+        BaseType :: setTime( t );
+        op_.setTime( t );
+      }
+
+      //! do nothing here 
+      void applyLocal( const EntityType& en) const
+      {
       }
       
-      { 
-        Timer commTime ;
-        // do data exchange 
-        spc_.communicate( dest );
+      //! return restrict and prolong operator for fe-pass 
+      RestrictProlongOperatorType & restrictProlongOperator () { return op_; }
 
-        // get communication time 
-        averageCommTime_ = commTime.elapsed() + invOp_.averageCommTime();
+      virtual void prepare(const ArgumentType& arg, DestinationType& dest) const
+      {
+        // prepare operator 
+        op_.prepare( arg, rhs_ );
+        // re-compute matrix  (true for rebuild anyway)
+        op_.computeMatrix( arg, rhs_ , rebuild_ );
       }
 
-      // finalize operator 
-      finalize(arg,dest);
-    } 
+      //! Some timestep size management.
+      virtual void finalize(const ArgumentType& arg, DestinationType& dest) const
+      {
+        op_.finalize( arg, rhs_ );
+      }
 
-  private:
-    bool readVerbose(const std::string& paramFile, const bool verboseOutput) const 
-    {
-      return Parameter :: verbose ();
-    }
-    
-    double readEps(const std::string& paramFile, const bool output) const 
-    {
-      double eps = 1e-10; 
-      eps = Parameter :: getValue("InvSolverEps",eps); 
-      return eps;
-    }
-  };
+      //! compute method 
+      virtual void compute(const ArgumentType& arg, DestinationType& dest) const
+      {
+        // prepare operator 
+        prepare(arg,dest);
 
-} // end namespace Fem 
+        // calculate new maxIter  
+        maxIter_ = maxIterFactor_ * spc_.size();
 
-// #if DUNE_FEM_COMPATIBILITY  
+        {
+          Timer solveTime ;
+
+          // solve the system 
+          invOp_(rhs_, dest);
+
+          // get time for solving the system 
+          solveTime_ = solveTime.elapsed ();
+        }
+        
+        { 
+          Timer commTime ;
+          // do data exchange 
+          spc_.communicate( dest );
+
+          // get communication time 
+          averageCommTime_ = commTime.elapsed() + invOp_.averageCommTime();
+        }
+
+        // finalize operator 
+        finalize(arg,dest);
+      } 
+
+    private:
+      bool readVerbose(const std::string& paramFile, const bool verboseOutput) const 
+      {
+        return Parameter :: verbose ();
+      }
+      
+      double readEps(const std::string& paramFile, const bool output) const 
+      {
+        double eps = 1e-10; 
+        eps = Parameter :: getValue("InvSolverEps",eps); 
+        return eps;
+      }
+    };
+
+  } // namespace Fem 
+
+#if DUNE_FEM_COMPATIBILITY  
 // put this in next version 1.4 
 
-using Fem :: SlaveDofs ;
-using Fem :: ParallelScalarProduct ;
-// #endif // DUNE_FEM_COMPATIBILITY
+  using Fem :: SlaveDofs ;
+  using Fem :: ParallelScalarProduct ;
+#endif // DUNE_FEM_COMPATIBILITY
 
-} // end namespace Dune
-#endif
+} // namespace Dune
+
+#endif // #ifndef DUNE_FEM_ELLIPTPASS_HH

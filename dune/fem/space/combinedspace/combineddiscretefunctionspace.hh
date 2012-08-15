@@ -1,5 +1,5 @@
-#ifndef DUNE_COMBINEDDISCRETFUNCTIONSPACE_HH
-#define DUNE_COMBINEDDISCRETFUNCTIONSPACE_HH
+#ifndef DUNE_FEM_COMBINEDDISCRETFUNCTIONSPACE_HH
+#define DUNE_FEM_COMBINEDDISCRETFUNCTIONSPACE_HH
 
 //- system includes 
 #include <algorithm>
@@ -366,7 +366,8 @@ namespace Dune
       typedef Fem::CombinedDiscreteFunctionSpace< Type1, Type2 > Type;
     };
 
-  } // end namespace Fem
+  } // namespace Fem
 
-} // end namespace Dune 
-#endif // #ifndef DUNE_COMBINDEDDISCRETFUNCTIONSPACE_HH
+} // namespace Dune 
+
+#endif // #ifndef DUNE_FEM_COMBINDEDDISCRETFUNCTIONSPACE_HH

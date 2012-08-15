@@ -1,11 +1,7 @@
 #ifndef DUNE_FEM_CODIMENSIONMAPPER_HH
 #define DUNE_FEM_CODIMENSIONMAPPER_HH
 
-#if HAVE_DUNE_GEOMETRY
 #include <dune/geometry/referenceelements.hh>
-#else
-#include <dune/grid/common/genericreferenceelements.hh>
-#endif
 
 #include <dune/fem/space/common/allgeomtypes.hh>
 #include <dune/fem/space/mapper/dofmapper.hh>

@@ -76,10 +76,10 @@ namespace Dune
         static const bool v = isConforming< typename CoordFunction::GridPartType >::v;
       };
 
-    } // end namespace GridPartCapabilities
+    } // namespace GridPartCapabilities
 
-  } // end namespace Fem
+  } // namespace Fem
 
-} // end namespace Dune
+} // namespace Dune
 
 #endif // #ifndef DUNE_FEM_GRIDPART_GEOGRIDPART_CAPABILITIES_HH
