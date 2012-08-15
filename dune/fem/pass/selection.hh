@@ -83,9 +83,9 @@ namespace Dune
 
 
   template< class Argument, int startPassId, class NonBlockingComm, int id >
-  struct FindPass< StartPass< Argument, startPassId, NonBlockingComm >, id >
+  struct FindPass< Fem::StartPass< Argument, startPassId, NonBlockingComm >, id >
   {
-    typedef StartPass< Argument, startPassId, NonBlockingComm > Pass;
+    typedef Fem::StartPass< Argument, startPassId, NonBlockingComm > Pass;
     static const int passNum = ((int)Pass::passId == id ? 0 : -1);
   };
 
