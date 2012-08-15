@@ -1,5 +1,5 @@
-#ifndef DUNE_LAGRANGEMAPPER_TEST_HH
-#define DUNE_LAGRANGEMAPPER_TEST_HH
+#ifndef DUNE_FEM_LAGRANGEMAPPER_TEST_HH
+#define DUNE_FEM_LAGRANGEMAPPER_TEST_HH
 
 #include <string>
 
@@ -10,29 +10,34 @@
 namespace Dune
 {
 
-  template< class Grid >
-  class LagrangeMapper_Test
-  : public Test
+  namespace Fem
   {
-  public:
-    typedef Grid GridType;
 
-    typedef LeafGridPart< GridType > GridPartType;
-      
-    LagrangeMapper_Test( std :: string gridFile )
-      : gridFile_( gridFile )
+    template< class Grid >
+    class LagrangeMapper_Test
+    : public Test
     {
-    }
+    public:
+      typedef Grid GridType;
 
-    virtual void run();
+      typedef LeafGridPart< GridType > GridPartType;
+        
+      LagrangeMapper_Test( std :: string gridFile )
+        : gridFile_( gridFile )
+      {
+      }
 
-  private:
-    template< class SpaceType >
-    void checkDiscreteFunction( const SpaceType &space );
+      virtual void run();
 
-    std :: string gridFile_;
-  };
-    
-}
+    private:
+      template< class SpaceType >
+      void checkDiscreteFunction( const SpaceType &space );
 
-#endif // DUNE_LAGRANGEMAPPER_TEST_HH
+      std :: string gridFile_;
+    };
+  
+  } // namespace Fem
+
+} //namespace Dune
+
+#endif // DUNE_FEM_LAGRANGEMAPPER_TEST_HH

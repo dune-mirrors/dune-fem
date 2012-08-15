@@ -6,6 +6,7 @@
 #include "../lagrangepoints.hh"
 
 using namespace Dune;
+using namespace Fem;
 
 #define VERBOSITY_LEVEL 0
 

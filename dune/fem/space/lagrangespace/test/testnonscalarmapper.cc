@@ -28,13 +28,14 @@ const int dimRange = Dune :: GridSelector :: GridType :: dimensionworld;
 
 
 using namespace Dune;
+using namespace Fem;
 
 // Main Program
 // ------------
 int main( int argc, char **argv )
 {
   // initialize MPI 
-  MPIManager :: initialize ( argc, argv );
+  Dune::Fem::MPIManager :: initialize ( argc, argv );
   const int rank = MPIManager :: rank ();
   
   try
@@ -94,7 +95,7 @@ int main( int argc, char **argv )
     v[1] =-std::sqrt(2);
     v/= v.two_norm();
 
-    Dune :: Parameter :: get( "test.velocity", v, v);
+    Parameter :: get( "test.velocity", v, v);
 #endif
 
 

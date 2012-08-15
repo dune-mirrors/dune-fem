@@ -1,5 +1,5 @@
-#ifndef DUNE_LAGRANGESPACE_BASEFUNCTIONTEST_HH
-#define DUNE_LAGRANGESPACE_BASEFUNCTIONTEST_HH
+#ifndef DUNE_FEM_LAGRANGESPACE_BASEFUNCTIONTEST_HH
+#define DUNE_FEM_LAGRANGESPACE_BASEFUNCTIONTEST_HH
 
 #include <string>
 
@@ -7,9 +7,13 @@
 
 #include <dune/fem/misc/test.hh>
 
-namespace Dune {
+namespace Dune 
+{
 
-  class LagrangeBase_Test : public Test {
+  namespace Fem
+  {
+
+  class LagrangeBase_Test : public Fem::Test {
   public:
     LagrangeBase_Test(std::string gridFile) :
       gridFile_(gridFile)
@@ -26,6 +30,8 @@ namespace Dune {
     std::string gridFile_;
   };
 
-}
+  } // namespace Fem
 
-#endif
+} // namespace Dune
+
+#endif // #ifndef DUNE_FEM_LAGRANGESPACE_BASEFUNCTIONTEST_HH

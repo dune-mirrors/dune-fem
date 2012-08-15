@@ -7,6 +7,7 @@
 
 #include <dune/fem/misc/suite.hh>
 using namespace Dune;
+using namespace Fem;
 
 #include "basefunctiontest.cc"
 #include "mappertest.cc"
