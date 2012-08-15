@@ -614,25 +614,25 @@ namespace Dune
       }
     };
 
+    // Capabilities
+    // ------------
+    
+    namespace Capabilities
+    {
+
+      template< class Array >
+      struct HasLeakPointer
+      : public Fem::MetaBool< false >
+      {};
+
+      template< class Element, template< class > class ArrayAllocator >
+      struct HasLeakPointer< Fem :: DynamicArray< Element, ArrayAllocator > >
+      : public Fem::MetaBool< true >
+      {};
+
+    }
+
   } // namespace Fem
-
-  // Capabilities
-  // ------------
-  
-  namespace Capabilities
-  {
-
-    template< class Array >
-    struct HasLeakPointer
-    : public MetaBool< false >
-    {};
-
-    template< class Element, template< class > class ArrayAllocator >
-    struct HasLeakPointer< Fem :: DynamicArray< Element, ArrayAllocator > >
-    : public MetaBool< true >
-    {};
-
-  }
 
 } // namespace Dune
 

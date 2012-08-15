@@ -839,7 +839,7 @@ namespace Dune
 
     public:
       PairOfVectors ( RVector1Type v1, RVector2Type v2 )
-      : Dune::PairOfInterfaces< RVector1Type, RVector2Type >( v1, v2 )
+      : PairOfInterfaces< RVector1Type, RVector2Type >( v1, v2 )
       {}
         
       const FieldType &operator[] ( unsigned int index ) const
@@ -866,6 +866,19 @@ namespace Dune
       }
     };
 
+    // Capabilities
+    // ------------
+
+    namespace Capabilities
+    {
+
+      template< class Field, template< class > class ArrayAllocator >
+      struct HasLeakPointer< DynamicVector< Field, ArrayAllocator > >
+      : public MetaBool< true >
+      {};
+      
+    }
+  
   } // namespace Fem 
 
 #if DUNE_FEM_COMPATIBILITY 
@@ -873,19 +886,6 @@ namespace Dune
   using Fem :: FieldVectorAdapter ;
 #endif // DUNE_FEM_COMPATIBILITY
 
-  // Capabilities
-  // ------------
-
-  namespace Capabilities
-  {
-
-    template< class Field, template< class > class ArrayAllocator >
-    struct HasLeakPointer< Fem :: DynamicVector< Field, ArrayAllocator > >
-    : public MetaBool< true >
-    {};
-    
-  }
-  
 } // namespace Dune 
 
 #include "vector_inline.hh"

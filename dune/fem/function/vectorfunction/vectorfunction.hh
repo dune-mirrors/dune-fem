@@ -269,26 +269,26 @@ namespace Dune
       const bool freeDofVector_;
     };
 
+    // Capabilibies
+    // ------------
+
+    namespace Capabilities
+    {
+
+      template< class DiscreteFunctionSpace, class DofVector >
+      struct HasLeakPointer
+        < Fem :: VectorDiscreteFunction< DiscreteFunctionSpace, DofVector > >
+      : public HasLeakPointer< DofVector >
+      {};
+      
+    }
+
   } // namespace Fem 
 
 #if DUNE_FEM_COMPATIBILITY
 
   using Fem :: VectorDiscreteFunction ;
 #endif // DUNE_FEM_COMPATIBILITY
-
-  // Capabilibies
-  // ------------
-
-  namespace Capabilities
-  {
-
-    template< class DiscreteFunctionSpace, class DofVector >
-    struct HasLeakPointer
-      < Fem :: VectorDiscreteFunction< DiscreteFunctionSpace, DofVector > >
-    : public HasLeakPointer< DofVector >
-    {};
-    
-  }
 
 } // namespace Dune
 
