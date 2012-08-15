@@ -12,26 +12,7 @@ AM_CONFIG_HEADER([config.h])
 # check all dune-module stuff
 DUNE_CHECK_ALL
 
-AC_ARG_ENABLE(
-  compatibility,
-  AC_HELP_STRING([--enable-compatibility],
-                 [try to be compatible with older dune-fem versions]))
-if test x$enable_compatibility == xyes ; then
-  AC_DEFINE(DUNE_FEM_COMPATIBILITY,1,[Shall dune-fem be compatible with older versions?])
-else
-  AC_DEFINE(DUNE_FEM_COMPATIBILITY,0,[Shall dune-fem be compatible with older versions?])
-fi
-
-
 DUNE_SUMMARY_ALL
-
-if test x$HAVE_DUNE_COMMON != x1 ; then
-  AC_MSG_ERROR([Can't work without the dune-common module. Maybe you have to supply your dune-common directory as --with-dunecommon=dir])
-fi
-
-if test x$HAVE_DUNE_GRID != x1 ; then
-  AC_MSG_ERROR([Can't work without the dune-grid module. Maybe you have to supply your dune-common directory as --with-dunegrid=dir])
-fi
 
 # preset variable to path such that #include <dune/...> works
 AC_SUBST(AM_CPPFLAGS, '$(DUNE_CPPFLAGS) -I$(top_srcdir)')
