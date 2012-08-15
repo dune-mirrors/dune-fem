@@ -11,206 +11,207 @@
 namespace Dune
 {
 
-  namespace Fem {
-
-  /** @ingroup RestrictProlongImpl
-      @{
-  **/
-
-
-  // DiscontinuousGalerkinLocalRestrictProlong
-  // -----------------------------------------
-
-  template< class DiscreteFunctionSpace, bool applyInverse >
-  class DiscontinuousGalerkinLocalRestrictProlong
+  namespace Fem 
   {
-    typedef DiscontinuousGalerkinLocalRestrictProlong< DiscreteFunctionSpace, applyInverse > ThisType;
 
-  public:
-    typedef DiscreteFunctionSpace DiscreteFunctionSpaceType;
+    /** @ingroup RestrictProlongImpl
+        @{
+    **/
 
-    typedef typename DiscreteFunctionSpaceType::DomainFieldType DomainFieldType;
-    typedef typename DiscreteFunctionSpaceType::RangeFieldType RangeFieldType;
-    typedef typename DiscreteFunctionSpaceType::RangeType RangeType;
 
-    typedef typename DiscreteFunctionSpaceType::GridPartType GridPartType;
+    // DiscontinuousGalerkinLocalRestrictProlong
+    // -----------------------------------------
 
-    typedef CachingQuadrature< GridPartType, 0 > QuadratureType;
-
-    typedef LocalMassMatrix< DiscreteFunctionSpaceType, QuadratureType > LocalMassMatrixType;
-
-    DiscontinuousGalerkinLocalRestrictProlong ( const DiscreteFunctionSpaceType& space )
-    : localMassMatrix_( space, space.order() * 2 ),
-      weight_( -1 )
-    {}
-
-    void setFatherChildWeight ( const DomainFieldType &weight )
+    template< class DiscreteFunctionSpace, bool applyInverse >
+    class DiscontinuousGalerkinLocalRestrictProlong
     {
-      weight_ = weight;
-    }
+      typedef DiscontinuousGalerkinLocalRestrictProlong< DiscreteFunctionSpace, applyInverse > ThisType;
 
-    //! restrict data to father 
-    template< class FT, class ST, class LocalGeometry >
-    void restrictLocal ( LocalFunction< FT > &lfFather, const LocalFunction< ST > &lfSon, 
-                         const LocalGeometry &geometryInFather, bool initialize ) const
-    {
-      typedef ConstantLocalRestrictProlong< DiscreteFunctionSpaceType > ConstantLocalRestrictProlongType;
-      const DomainFieldType weight = (weight_ < DomainFieldType( 0 ) ? ConstantLocalRestrictProlongType::calcWeight( lfFather.entity(), lfSon.entity() ) : weight_); 
+    public:
+      typedef DiscreteFunctionSpace DiscreteFunctionSpaceType;
 
-      assert( weight > 0.0 );
+      typedef typename DiscreteFunctionSpaceType::DomainFieldType DomainFieldType;
+      typedef typename DiscreteFunctionSpaceType::RangeFieldType RangeFieldType;
+      typedef typename DiscreteFunctionSpaceType::RangeType RangeType;
 
-      if( initialize )
-        lfFather.clear();
+      typedef typename DiscreteFunctionSpaceType::GridPartType GridPartType;
 
-      typedef typename LocalFunction< ST > :: EntityType  EntityType ;
-      typedef typename EntityType :: Geometry   Geometry;
-      const EntityType& sonEntity = lfSon.entity();
-      const Geometry& sonGeo = sonEntity.geometry();
+      typedef CachingQuadrature< GridPartType, 0 > QuadratureType;
 
-      QuadratureType quad( sonEntity, 2*lfFather.order()+1 );
-      const int nop = quad.nop();
-      for( int qp = 0; qp < nop; ++qp )
+      typedef LocalMassMatrix< DiscreteFunctionSpaceType, QuadratureType > LocalMassMatrixType;
+
+      DiscontinuousGalerkinLocalRestrictProlong ( const DiscreteFunctionSpaceType& space )
+      : localMassMatrix_( space, space.order() * 2 ),
+        weight_( -1 )
+      {}
+
+      void setFatherChildWeight ( const DomainFieldType &weight )
       {
-        RangeFieldType quadWeight = quad.weight( qp );
-        
-        // in case of non-orthonormal basis we have to 
-        // apply the integration element and the 
-        // inverse mass matrix later
-        if( applyInverse ) 
-        {
-          quadWeight *= sonGeo.integrationElement( quad.point(qp) );
-        }
-        else 
-          quadWeight *= weight ;
-
-        RangeType value;
-        lfSon.evaluate( quad[ qp ], value );
-        value *= quadWeight;
-        lfFather.axpy( geometryInFather.global( quad.point( qp ) ), value );
+        weight_ = weight;
       }
 
-      if( applyInverse ) 
+      //! restrict data to father 
+      template< class FT, class ST, class LocalGeometry >
+      void restrictLocal ( LocalFunction< FT > &lfFather, const LocalFunction< ST > &lfSon, 
+                           const LocalGeometry &geometryInFather, bool initialize ) const
       {
-        localMassMatrix_.applyInverse( lfFather );
-      }
-    }
+        typedef ConstantLocalRestrictProlong< DiscreteFunctionSpaceType > ConstantLocalRestrictProlongType;
+        const DomainFieldType weight = (weight_ < DomainFieldType( 0 ) ? ConstantLocalRestrictProlongType::calcWeight( lfFather.entity(), lfSon.entity() ) : weight_); 
 
-    template< class FT, class ST, class LocalGeometry >
-    void prolongLocal ( const LocalFunction< FT > &lfFather, LocalFunction< ST > &lfSon,
-                        const LocalGeometry &geometryInFather, bool initialize ) const
-    {
-      lfSon.clear();
+        assert( weight > 0.0 );
 
-      typedef typename LocalFunction< ST > :: EntityType  EntityType ;
-      typedef typename EntityType :: Geometry   Geometry;
-      const EntityType& sonEntity = lfSon.entity();
-      const Geometry& sonGeo = sonEntity.geometry();
+        if( initialize )
+          lfFather.clear();
 
-      QuadratureType quad( sonEntity, 2*lfSon.order()+1 );
-      const int nop = quad.nop();
-      for( int qp = 0; qp < nop; ++qp )
-      {
-        RangeFieldType quadWeight = quad.weight( qp );
-        
-        // in case of non-orthonormal basis we have to 
-        // apply the integration element and the 
-        // inverse mass matrix later
-        if( applyInverse ) 
+        typedef typename LocalFunction< ST > :: EntityType  EntityType ;
+        typedef typename EntityType :: Geometry   Geometry;
+        const EntityType& sonEntity = lfSon.entity();
+        const Geometry& sonGeo = sonEntity.geometry();
+
+        QuadratureType quad( sonEntity, 2*lfFather.order()+1 );
+        const int nop = quad.nop();
+        for( int qp = 0; qp < nop; ++qp )
         {
-          quadWeight *= sonGeo.integrationElement( quad.point(qp) );
+          RangeFieldType quadWeight = quad.weight( qp );
+          
+          // in case of non-orthonormal basis we have to 
+          // apply the integration element and the 
+          // inverse mass matrix later
+          if( applyInverse ) 
+          {
+            quadWeight *= sonGeo.integrationElement( quad.point(qp) );
+          }
+          else 
+            quadWeight *= weight ;
+
+          RangeType value;
+          lfSon.evaluate( quad[ qp ], value );
+          value *= quadWeight;
+          lfFather.axpy( geometryInFather.global( quad.point( qp ) ), value );
         }
 
-        RangeType value;
-        lfFather.evaluate( geometryInFather.global( quad.point( qp ) ), value );
-        value *= quadWeight;
-        lfSon.axpy( quad[ qp ], value );
+        if( applyInverse ) 
+        {
+          localMassMatrix_.applyInverse( lfFather );
+        }
       }
 
-      if( applyInverse ) 
+      template< class FT, class ST, class LocalGeometry >
+      void prolongLocal ( const LocalFunction< FT > &lfFather, LocalFunction< ST > &lfSon,
+                          const LocalGeometry &geometryInFather, bool initialize ) const
       {
-        localMassMatrix_.applyInverse( sonEntity, lfSon );
+        lfSon.clear();
+
+        typedef typename LocalFunction< ST > :: EntityType  EntityType ;
+        typedef typename EntityType :: Geometry   Geometry;
+        const EntityType& sonEntity = lfSon.entity();
+        const Geometry& sonGeo = sonEntity.geometry();
+
+        QuadratureType quad( sonEntity, 2*lfSon.order()+1 );
+        const int nop = quad.nop();
+        for( int qp = 0; qp < nop; ++qp )
+        {
+          RangeFieldType quadWeight = quad.weight( qp );
+          
+          // in case of non-orthonormal basis we have to 
+          // apply the integration element and the 
+          // inverse mass matrix later
+          if( applyInverse ) 
+          {
+            quadWeight *= sonGeo.integrationElement( quad.point(qp) );
+          }
+
+          RangeType value;
+          lfFather.evaluate( geometryInFather.global( quad.point( qp ) ), value );
+          value *= quadWeight;
+          lfSon.axpy( quad[ qp ], value );
+        }
+
+        if( applyInverse ) 
+        {
+          localMassMatrix_.applyInverse( sonEntity, lfSon );
+        }
       }
-    }
 
-    bool needCommunication () const { return true; }
+      bool needCommunication () const { return true; }
 
-  protected:
-    LocalMassMatrixType localMassMatrix_;
-    DomainFieldType weight_;
-  };
-
-
-
-  // DefaultLocalRestrictProlong for DiscontinuousGalerkinSpace
-  // ----------------------------------------------------------
-
-  template< class FunctionSpaceImp, class GridPartImp, int polOrd, template< class > class StorageImp >
-  struct DefaultLocalRestrictProlong< DiscontinuousGalerkinSpace< FunctionSpaceImp, GridPartImp, polOrd, StorageImp > >
-  : public DiscontinuousGalerkinLocalRestrictProlong< DiscontinuousGalerkinSpace< FunctionSpaceImp, GridPartImp, polOrd, StorageImp >, false >
-  {
-    typedef DiscontinuousGalerkinLocalRestrictProlong< DiscontinuousGalerkinSpace<
-      FunctionSpaceImp, GridPartImp, polOrd, StorageImp >, false  >  BaseType;
-    DefaultLocalRestrictProlong ( const DiscontinuousGalerkinSpace< FunctionSpaceImp, GridPartImp, polOrd, StorageImp > & space )
-      : BaseType( space )
-    {}
-  };
-
-  template< class FunctionSpaceImp, class GridPartImp, template< class > class StorageImp >
-  struct DefaultLocalRestrictProlong< DiscontinuousGalerkinSpace< FunctionSpaceImp, GridPartImp, 0, StorageImp > >
-  : public ConstantLocalRestrictProlong< DiscontinuousGalerkinSpace< FunctionSpaceImp, GridPartImp, 0, StorageImp > >
-  {
-    DefaultLocalRestrictProlong ( const DiscontinuousGalerkinSpace< FunctionSpaceImp, GridPartImp, 0, StorageImp > & )
-    {}
-  };
+    protected:
+      LocalMassMatrixType localMassMatrix_;
+      DomainFieldType weight_;
+    };
 
 
 
-  // DefaultLocalRestrictProlong for LegendreDiscontinuousGalerkinSpace
-  // ------------------------------------------------------------------
+    // DefaultLocalRestrictProlong for DiscontinuousGalerkinSpace
+    // ----------------------------------------------------------
 
-  template< class FunctionSpaceImp, class GridPartImp, int polOrd, template< class > class StorageImp >
-  struct DefaultLocalRestrictProlong< LegendreDiscontinuousGalerkinSpace< FunctionSpaceImp, GridPartImp, polOrd, StorageImp > >
-  : public DiscontinuousGalerkinLocalRestrictProlong< LegendreDiscontinuousGalerkinSpace< FunctionSpaceImp, GridPartImp, polOrd, StorageImp >, false >
-  {
-    typedef DiscontinuousGalerkinLocalRestrictProlong<
-      LegendreDiscontinuousGalerkinSpace< FunctionSpaceImp, GridPartImp, polOrd,  StorageImp >, false > BaseType;
-    DefaultLocalRestrictProlong ( const LegendreDiscontinuousGalerkinSpace< FunctionSpaceImp, GridPartImp, polOrd, StorageImp > & space )
-      : BaseType( space )
-    {}
-  };
+    template< class FunctionSpaceImp, class GridPartImp, int polOrd, template< class > class StorageImp >
+    struct DefaultLocalRestrictProlong< DiscontinuousGalerkinSpace< FunctionSpaceImp, GridPartImp, polOrd, StorageImp > >
+    : public DiscontinuousGalerkinLocalRestrictProlong< DiscontinuousGalerkinSpace< FunctionSpaceImp, GridPartImp, polOrd, StorageImp >, false >
+    {
+      typedef DiscontinuousGalerkinLocalRestrictProlong< DiscontinuousGalerkinSpace<
+        FunctionSpaceImp, GridPartImp, polOrd, StorageImp >, false  >  BaseType;
+      DefaultLocalRestrictProlong ( const DiscontinuousGalerkinSpace< FunctionSpaceImp, GridPartImp, polOrd, StorageImp > & space )
+        : BaseType( space )
+      {}
+    };
 
-  template< class FunctionSpaceImp, class GridPartImp, template< class > class StorageImp >
-  struct DefaultLocalRestrictProlong< LegendreDiscontinuousGalerkinSpace< FunctionSpaceImp, GridPartImp, 0, StorageImp > >
-  : public ConstantLocalRestrictProlong< LegendreDiscontinuousGalerkinSpace< FunctionSpaceImp, GridPartImp, 0, StorageImp > >
-  {
-    DefaultLocalRestrictProlong ( const LegendreDiscontinuousGalerkinSpace< FunctionSpaceImp, GridPartImp, 0, StorageImp > & )
-    {}
-  };
+    template< class FunctionSpaceImp, class GridPartImp, template< class > class StorageImp >
+    struct DefaultLocalRestrictProlong< DiscontinuousGalerkinSpace< FunctionSpaceImp, GridPartImp, 0, StorageImp > >
+    : public ConstantLocalRestrictProlong< DiscontinuousGalerkinSpace< FunctionSpaceImp, GridPartImp, 0, StorageImp > >
+    {
+      DefaultLocalRestrictProlong ( const DiscontinuousGalerkinSpace< FunctionSpaceImp, GridPartImp, 0, StorageImp > & )
+      {}
+    };
 
-  // DefaultLocalRestrictProlong for LagrangeDiscontinuousGalerkinSpace
-  // ------------------------------------------------------------------
 
-  template< class FunctionSpaceImp, class GridPartImp, int polOrd, template< class > class StorageImp >
-  struct DefaultLocalRestrictProlong< LagrangeDiscontinuousGalerkinSpace< FunctionSpaceImp, GridPartImp, polOrd, StorageImp > >
-  : public DiscontinuousGalerkinLocalRestrictProlong< LagrangeDiscontinuousGalerkinSpace< FunctionSpaceImp, GridPartImp, polOrd, StorageImp >, true >
-  {
-    typedef DiscontinuousGalerkinLocalRestrictProlong< LagrangeDiscontinuousGalerkinSpace< FunctionSpaceImp, GridPartImp, polOrd, StorageImp >, true >  BaseType ;
-    DefaultLocalRestrictProlong ( const LagrangeDiscontinuousGalerkinSpace< FunctionSpaceImp, GridPartImp, polOrd, StorageImp > & space )
-      : BaseType( space )
-    {}
-  };
 
-  template< class FunctionSpaceImp, class GridPartImp, template< class > class StorageImp >
-  struct DefaultLocalRestrictProlong< LagrangeDiscontinuousGalerkinSpace< FunctionSpaceImp, GridPartImp, 0, StorageImp > >
-  : public ConstantLocalRestrictProlong< LagrangeDiscontinuousGalerkinSpace< FunctionSpaceImp, GridPartImp, 0, StorageImp > >
-  {
-    DefaultLocalRestrictProlong ( const LagrangeDiscontinuousGalerkinSpace< FunctionSpaceImp, GridPartImp, 0, StorageImp > & )
-    {}
-  };
+    // DefaultLocalRestrictProlong for LegendreDiscontinuousGalerkinSpace
+    // ------------------------------------------------------------------
 
-  ///@}
+    template< class FunctionSpaceImp, class GridPartImp, int polOrd, template< class > class StorageImp >
+    struct DefaultLocalRestrictProlong< LegendreDiscontinuousGalerkinSpace< FunctionSpaceImp, GridPartImp, polOrd, StorageImp > >
+    : public DiscontinuousGalerkinLocalRestrictProlong< LegendreDiscontinuousGalerkinSpace< FunctionSpaceImp, GridPartImp, polOrd, StorageImp >, false >
+    {
+      typedef DiscontinuousGalerkinLocalRestrictProlong<
+        LegendreDiscontinuousGalerkinSpace< FunctionSpaceImp, GridPartImp, polOrd,  StorageImp >, false > BaseType;
+      DefaultLocalRestrictProlong ( const LegendreDiscontinuousGalerkinSpace< FunctionSpaceImp, GridPartImp, polOrd, StorageImp > & space )
+        : BaseType( space )
+      {}
+    };
 
-  } // end namespace Fem 
+    template< class FunctionSpaceImp, class GridPartImp, template< class > class StorageImp >
+    struct DefaultLocalRestrictProlong< LegendreDiscontinuousGalerkinSpace< FunctionSpaceImp, GridPartImp, 0, StorageImp > >
+    : public ConstantLocalRestrictProlong< LegendreDiscontinuousGalerkinSpace< FunctionSpaceImp, GridPartImp, 0, StorageImp > >
+    {
+      DefaultLocalRestrictProlong ( const LegendreDiscontinuousGalerkinSpace< FunctionSpaceImp, GridPartImp, 0, StorageImp > & )
+      {}
+    };
+
+    // DefaultLocalRestrictProlong for LagrangeDiscontinuousGalerkinSpace
+    // ------------------------------------------------------------------
+
+    template< class FunctionSpaceImp, class GridPartImp, int polOrd, template< class > class StorageImp >
+    struct DefaultLocalRestrictProlong< LagrangeDiscontinuousGalerkinSpace< FunctionSpaceImp, GridPartImp, polOrd, StorageImp > >
+    : public DiscontinuousGalerkinLocalRestrictProlong< LagrangeDiscontinuousGalerkinSpace< FunctionSpaceImp, GridPartImp, polOrd, StorageImp >, true >
+    {
+      typedef DiscontinuousGalerkinLocalRestrictProlong< LagrangeDiscontinuousGalerkinSpace< FunctionSpaceImp, GridPartImp, polOrd, StorageImp >, true >  BaseType ;
+      DefaultLocalRestrictProlong ( const LagrangeDiscontinuousGalerkinSpace< FunctionSpaceImp, GridPartImp, polOrd, StorageImp > & space )
+        : BaseType( space )
+      {}
+    };
+
+    template< class FunctionSpaceImp, class GridPartImp, template< class > class StorageImp >
+    struct DefaultLocalRestrictProlong< LagrangeDiscontinuousGalerkinSpace< FunctionSpaceImp, GridPartImp, 0, StorageImp > >
+    : public ConstantLocalRestrictProlong< LagrangeDiscontinuousGalerkinSpace< FunctionSpaceImp, GridPartImp, 0, StorageImp > >
+    {
+      DefaultLocalRestrictProlong ( const LagrangeDiscontinuousGalerkinSpace< FunctionSpaceImp, GridPartImp, 0, StorageImp > & )
+      {}
+    };
+
+    ///@}
+
+  } // namespace Fem 
 
 } // namespace Dune
 

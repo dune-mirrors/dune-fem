@@ -9,14 +9,15 @@ namespace Dune
   namespace Fem 
   {
 
-  template class DiscontinuousGalerkinBaseFunctionFactory
-    < FunctionSpace< double, double, 2, 1 >, 0 >;
-  template class DiscontinuousGalerkinBaseFunctionFactory
-    < FunctionSpace< double, double, 2, 1 >, 1 >;
-  template class DiscontinuousGalerkinBaseFunctionFactory
-    < FunctionSpace< double, double, 2, 1 >, 2 >;
-  template class DiscontinuousGalerkinBaseFunctionFactory
-    < FunctionSpace< double, double, 2, 1 >, 3 >;
+    template class DiscontinuousGalerkinBaseFunctionFactory
+      < FunctionSpace< double, double, 2, 1 >, 0 >;
+    template class DiscontinuousGalerkinBaseFunctionFactory
+      < FunctionSpace< double, double, 2, 1 >, 1 >;
+    template class DiscontinuousGalerkinBaseFunctionFactory
+      < FunctionSpace< double, double, 2, 1 >, 2 >;
+    template class DiscontinuousGalerkinBaseFunctionFactory
+      < FunctionSpace< double, double, 2, 1 >, 3 >;
   
-  } 
-}
+  } // namespace Fem
+
+} // namespace Dune

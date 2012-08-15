@@ -5,60 +5,61 @@
 
 namespace Dune
 {
+
   namespace Fem 
   {
 
-  // External Forward Declarations
-  // -----------------------------
+    // External Forward Declarations
+    // -----------------------------
 
-  template< class FunctionSpaceImp, class GridPartImp, int polOrd, template< class > class BaseFunctionStorageImp >
-  class DiscontinuousGalerkinSpace;
+    template< class FunctionSpaceImp, class GridPartImp, int polOrd, template< class > class BaseFunctionStorageImp >
+    class DiscontinuousGalerkinSpace;
 
-  template< class FunctionSpaceImp, class GridPartImp, int polOrd, template< class > class BaseFunctionStorageImp >
-  class LegendreDiscontinuousGalerkinSpace; 
+    template< class FunctionSpaceImp, class GridPartImp, int polOrd, template< class > class BaseFunctionStorageImp >
+    class LegendreDiscontinuousGalerkinSpace; 
 
 
 
-  // LocalMassMatrix
-  // ---------------
+    // LocalMassMatrix
+    // ---------------
 
-  /** \brief Local Mass Matrix for DG space */
-  template <class FunctionSpaceImp, class GridPartImp, int polOrd,
-            template<class> class BaseFunctionStorageImp, 
-            class VolumeQuadratureImp>
-  class LocalMassMatrix< 
-    DiscontinuousGalerkinSpace< FunctionSpaceImp, GridPartImp, polOrd, BaseFunctionStorageImp >,
-    VolumeQuadratureImp > 
-    : public LocalMassMatrixImplementationDgOrthoNormal< 
-        DiscontinuousGalerkinSpace< FunctionSpaceImp, GridPartImp, polOrd, BaseFunctionStorageImp >, VolumeQuadratureImp >
-  {
-    typedef DiscontinuousGalerkinSpace< FunctionSpaceImp, GridPartImp, polOrd, BaseFunctionStorageImp > DiscreteFunctionSpaceImp;
-    typedef LocalMassMatrixImplementationDgOrthoNormal< DiscreteFunctionSpaceImp, VolumeQuadratureImp > BaseType;
-  public:
-    LocalMassMatrix( const DiscreteFunctionSpaceImp& spc, const int volQuadOrd = -1 )
-      : BaseType( spc, volQuadOrd )
-    {}
-  };
+    /** \brief Local Mass Matrix for DG space */
+    template <class FunctionSpaceImp, class GridPartImp, int polOrd,
+              template<class> class BaseFunctionStorageImp, 
+              class VolumeQuadratureImp>
+    class LocalMassMatrix< 
+      DiscontinuousGalerkinSpace< FunctionSpaceImp, GridPartImp, polOrd, BaseFunctionStorageImp >,
+      VolumeQuadratureImp > 
+      : public LocalMassMatrixImplementationDgOrthoNormal< 
+          DiscontinuousGalerkinSpace< FunctionSpaceImp, GridPartImp, polOrd, BaseFunctionStorageImp >, VolumeQuadratureImp >
+    {
+      typedef DiscontinuousGalerkinSpace< FunctionSpaceImp, GridPartImp, polOrd, BaseFunctionStorageImp > DiscreteFunctionSpaceImp;
+      typedef LocalMassMatrixImplementationDgOrthoNormal< DiscreteFunctionSpaceImp, VolumeQuadratureImp > BaseType;
+    public:
+      LocalMassMatrix( const DiscreteFunctionSpaceImp& spc, const int volQuadOrd = -1 )
+        : BaseType( spc, volQuadOrd )
+      {}
+    };
 
-  /** \brief Local Mass Matrix for Legendre space */
-  template <class FunctionSpaceImp, class GridPartImp, int polOrd,
-            template<class> class BaseFunctionStorageImp, 
-            class VolumeQuadratureImp>
-  class LocalMassMatrix< 
-    LegendreDiscontinuousGalerkinSpace< FunctionSpaceImp, GridPartImp, polOrd, BaseFunctionStorageImp >,
-    VolumeQuadratureImp > 
-    : public LocalMassMatrixImplementationDgOrthoNormal< 
-        LegendreDiscontinuousGalerkinSpace< FunctionSpaceImp, GridPartImp, polOrd, BaseFunctionStorageImp >, VolumeQuadratureImp >
-  {
-    typedef LegendreDiscontinuousGalerkinSpace< FunctionSpaceImp, GridPartImp, polOrd, BaseFunctionStorageImp > DiscreteFunctionSpaceImp;
-    typedef LocalMassMatrixImplementationDgOrthoNormal< DiscreteFunctionSpaceImp, VolumeQuadratureImp > BaseType;
-  public:
-    LocalMassMatrix( const DiscreteFunctionSpaceImp& spc, const int volQuadOrd = -1 )
-      : BaseType( spc, volQuadOrd )
-    {}
-  };
+    /** \brief Local Mass Matrix for Legendre space */
+    template <class FunctionSpaceImp, class GridPartImp, int polOrd,
+              template<class> class BaseFunctionStorageImp, 
+              class VolumeQuadratureImp>
+    class LocalMassMatrix< 
+      LegendreDiscontinuousGalerkinSpace< FunctionSpaceImp, GridPartImp, polOrd, BaseFunctionStorageImp >,
+      VolumeQuadratureImp > 
+      : public LocalMassMatrixImplementationDgOrthoNormal< 
+          LegendreDiscontinuousGalerkinSpace< FunctionSpaceImp, GridPartImp, polOrd, BaseFunctionStorageImp >, VolumeQuadratureImp >
+    {
+      typedef LegendreDiscontinuousGalerkinSpace< FunctionSpaceImp, GridPartImp, polOrd, BaseFunctionStorageImp > DiscreteFunctionSpaceImp;
+      typedef LocalMassMatrixImplementationDgOrthoNormal< DiscreteFunctionSpaceImp, VolumeQuadratureImp > BaseType;
+    public:
+      LocalMassMatrix( const DiscreteFunctionSpaceImp& spc, const int volQuadOrd = -1 )
+        : BaseType( spc, volQuadOrd )
+      {}
+    };
 
-  } // end namespace Fem 
+  } // namespace Fem 
 
 } // namespace Dune 
 
