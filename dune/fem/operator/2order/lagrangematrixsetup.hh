@@ -160,7 +160,7 @@ namespace Dune
 
     typedef LagrangeMatrixSetup<addNonConformingNeighbors> StencilType; 
     
-    typedef ParallelScalarProduct < ColumnSpaceType > ParallelScalarProductType;
+    typedef Fem::ParallelScalarProduct < ColumnSpaceType > ParallelScalarProductType;
   };
   
 #if HAVE_DUNE_ISTL
@@ -177,7 +177,7 @@ namespace Dune
 
     typedef LagrangeMatrixSetup<addNonConformingNeighbors> StencilType; 
     
-    typedef ParallelScalarProduct < ColumnSpaceType > ParallelScalarProductType;
+    typedef Fem::ParallelScalarProduct < ColumnSpaceType > ParallelScalarProductType;
 
     template <class MatrixImp>
     struct Adapter
@@ -200,7 +200,7 @@ namespace Dune
     typedef LagrangeParallelMatrixAdapter< MatrixImp > ThisType;
   public:
     typedef MatrixImp MatrixType;
-    typedef PreconditionerWrapper<MatrixType> PreconditionAdapterType;
+    typedef Fem::PreconditionerWrapper<MatrixType> PreconditionAdapterType;
     
     typedef typename MatrixType :: RowDiscreteFunctionType RowDiscreteFunctionType;
     typedef typename MatrixType :: ColDiscreteFunctionType ColumnDiscreteFunctionType;
@@ -208,7 +208,7 @@ namespace Dune
     typedef typename RowDiscreteFunctionType :: DiscreteFunctionSpaceType RowSpaceType;
 
     typedef typename ColumnDiscreteFunctionType :: DiscreteFunctionSpaceType ColSpaceType;
-    typedef ParallelScalarProduct<ColumnDiscreteFunctionType> ParallelScalarProductType;
+    typedef Fem::ParallelScalarProduct<ColumnDiscreteFunctionType> ParallelScalarProductType;
     
     typedef typename RowDiscreteFunctionType :: DofStorageType     X;
     typedef typename ColumnDiscreteFunctionType :: DofStorageType  Y;

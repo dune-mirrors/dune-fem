@@ -49,7 +49,7 @@ public:
     typedef typename SpaceImp :: GridPartType GridPartType;
     const GridPartType& gridPart = space.gridPart();
 
-    typedef ParallelScalarProduct<DiscreteFunctionType> ParallelScalarProductType;
+    typedef Fem::ParallelScalarProduct<DiscreteFunctionType> ParallelScalarProductType;
     typedef typename ParallelScalarProductType :: BuildProxyType BuildProxyType;
     
     ParallelScalarProductType scp (space);
@@ -171,7 +171,7 @@ protected:
 
     typedef ElementAndNeighbors StencilType; 
     
-    typedef ParallelScalarProduct < ColumnSpaceType > ParallelScalarProductType;
+    typedef Fem::ParallelScalarProduct < ColumnSpaceType > ParallelScalarProductType;
   };
   
 #if HAVE_DUNE_ISTL
@@ -188,7 +188,7 @@ protected:
 
     typedef ElementAndNeighbors StencilType; 
     
-    typedef ParallelScalarProduct < ColumnSpaceType > ParallelScalarProductType;
+    typedef Fem::ParallelScalarProduct < ColumnSpaceType > ParallelScalarProductType;
 
     template <class MatrixImp>
     struct Adapter
@@ -211,7 +211,7 @@ protected:
     typedef DGParallelMatrixAdapter< MatrixImp > ThisType ;
   public:
     typedef MatrixImp MatrixType;
-    typedef PreconditionerWrapper<MatrixType> PreconditionAdapterType;
+    typedef Fem::PreconditionerWrapper<MatrixType> PreconditionAdapterType;
     
     typedef typename MatrixType :: RowDiscreteFunctionType RowDiscreteFunctionType;
     typedef typename MatrixType :: ColDiscreteFunctionType ColumnDiscreteFunctionType;
@@ -219,7 +219,7 @@ protected:
     typedef typename RowDiscreteFunctionType :: DiscreteFunctionSpaceType RowSpaceType;
 
     typedef typename ColumnDiscreteFunctionType :: DiscreteFunctionSpaceType ColSpaceType;
-    typedef ParallelScalarProduct<ColumnDiscreteFunctionType> ParallelScalarProductType;
+    typedef Fem::ParallelScalarProduct<ColumnDiscreteFunctionType> ParallelScalarProductType;
     
     typedef typename RowDiscreteFunctionType :: DofStorageType     X;
     typedef typename ColumnDiscreteFunctionType :: DofStorageType  Y;

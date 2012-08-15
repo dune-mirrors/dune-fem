@@ -16,7 +16,7 @@ namespace Dune
       typedef RowSpace RowSpaceType;
       typedef ColumnSpace ColumnSpaceType;
       typedef Dune::LagrangeMatrixSetup< addNonConformingNeighbors > StencilType;
-      typedef Dune::ParallelScalarProduct< ColumnSpaceType > ParallelScalarProductType;
+      typedef ParallelScalarProduct< ColumnSpaceType > ParallelScalarProductType;
 
 #if HAVE_DUNE_ISTL
       template< class M >

@@ -14,7 +14,7 @@ namespace Dune
       typedef RowSpace RowSpaceType;
       typedef ColumnSpace ColumnSpaceType;
       typedef Dune::ElementAndNeighbors StencilType;
-      typedef Dune::ParallelScalarProduct< ColumnSpaceType > ParallelScalarProductType;
+      typedef ParallelScalarProduct< ColumnSpaceType > ParallelScalarProductType;
 
 #if HAVE_DUNE_ISTL
       template< class M >
@@ -29,4 +29,4 @@ namespace Dune
 
 } // namespace Dune
 
-#endif // #ifndef DUNE_FEM_LAGRANGEMATRIXTRAITS_HH
+#endif // #ifndef DUNE_FEM_DGMATRIXTRAITS_HH
