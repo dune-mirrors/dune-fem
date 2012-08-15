@@ -118,7 +118,7 @@ namespace Dune
       //! UGGrid might have different geom types 
       static bool multipleGeomTypes ()
       {
-        assert( Capabilities :: hasSingleGeometryType < GridType > :: v );
+        assert( Dune::Capabilities :: hasSingleGeometryType < GridType > :: v );
         return false;
       }
     };
