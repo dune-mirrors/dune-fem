@@ -146,7 +146,7 @@ namespace Dune
 
         static const IndexSet &indexSet ( const Grid &grid )
         {
-          if( Dune::MPIManager::rank() == 0 )
+          if( Dune::Fem::MPIManager::rank() == 0 )
             std::cerr << "Warning: Grid does not provide a HierarchicIndexSet, using LeafIndexSet instead." << std::endl;
           return grid.leafIndexSet();
         }

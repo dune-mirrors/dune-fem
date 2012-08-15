@@ -208,7 +208,7 @@ namespace Dune
       };
 
       //! \brief is true if grid on this view only has conforming intersections
-      static const bool conforming = Capabilities::isLevelwiseConforming< GridType >::v;
+      static const bool conforming = Dune::Capabilities::isLevelwiseConforming< GridType >::v;
     };
 
     /** @} */

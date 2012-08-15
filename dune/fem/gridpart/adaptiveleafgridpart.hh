@@ -304,7 +304,7 @@ namespace Dune
       };
 
       //! \brief is true if grid on this view only has conforming intersections
-      static const bool conforming = Capabilities :: isLeafwiseConforming< GridType > :: v;
+      static const bool conforming = Dune::Capabilities::isLeafwiseConforming< GridType > :: v;
     };
 
     template< class Grid, PartitionIteratorType idxpitype , bool onlyCodimensionZero >

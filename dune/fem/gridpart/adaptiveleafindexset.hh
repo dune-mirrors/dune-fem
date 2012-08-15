@@ -90,7 +90,7 @@ namespace Dune
 
       template< int codim >
       struct CountElements  
-        : public CountElementsBase< codim, Capabilities :: hasEntity < GridType, codim > :: v >
+        : public CountElementsBase< codim, Dune::Capabilities::hasEntity < GridType, codim > :: v >
       {
       };
 
@@ -154,7 +154,7 @@ namespace Dune
 
       template< int codim >
       struct InsertGhostSubEntities 
-        : public InsertGhostSubEntitiesBase< codim, Capabilities :: hasEntity < GridType, codim > :: v >
+        : public InsertGhostSubEntitiesBase< codim, Dune::Capabilities::hasEntity < GridType, codim > :: v >
       {
       };
 
@@ -183,7 +183,7 @@ namespace Dune
 
       template< int codim >
       struct CallSetUpCodimSet 
-        : public CallSetUpCodimSetBase< codim, Capabilities :: hasEntity < GridType, codim > :: v >
+        : public CallSetUpCodimSetBase< codim, Dune::Capabilities::hasEntity < GridType, codim > :: v >
       {
       };
 
@@ -214,7 +214,7 @@ namespace Dune
       };
 
       struct GetFaceEntity 
-        : public GetSubEntityBase< 1, Capabilities :: hasEntity < GridType, 1 > :: v  >
+        : public GetSubEntityBase< 1, Dune::Capabilities::hasEntity < GridType, 1 > :: v  >
       {
       };
 
@@ -222,8 +222,8 @@ namespace Dune
       typedef typename GetFaceEntity :: EntityPointer FacePointerType ;
 
       //! is true if grid is a Cartesian, non-adaptive grid (i.e. YaspGrid, SPGrid)
-      enum { CartesianNonAdaptiveGrid =   Capabilities :: isCartesian<GridType>::v && 
-                                        ! Capabilities :: isLocallyAdaptive<GridType>::v };
+      enum { CartesianNonAdaptiveGrid =  Dune::Capabilities::isCartesian<GridType>::v && 
+                                        ! Capabilities::isLocallyAdaptive<GridType>::v };
 
       // my type, to be revised 
       enum { myType = ( numCodimensions == 1 ) ? ( (CartesianNonAdaptiveGrid) ? -1 : 665 ) : 6 };
