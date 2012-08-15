@@ -5,8 +5,10 @@
 
 namespace Dune 
 {
+
   namespace Fem 
   {
+
     /** \class BinaryFileOutStream
      *  \copydoc StandardOutStream 
      */
@@ -90,15 +92,15 @@ namespace Dune
       std::ifstream* file_;
     };
 
-  } // end namespace Fem   
+  } // namespace Fem   
 
-  // #if DUNE_FEM_COMPATIBILITY  
+#if DUNE_FEM_COMPATIBILITY  
   // put this in next version 1.4 
    
   using Fem :: BinaryFileOutStream ;
   using Fem :: BinaryFileInStream ;
-  // #endif // DUNE_FEM_COMPATIBILITY
+#endif // DUNE_FEM_COMPATIBILITY
 
-} // end namespace Dune
+} // namespace Dune
 
 #endif // #ifndef DUNE_FEM_BINARYSTREAMS_HH

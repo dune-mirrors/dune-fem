@@ -16,6 +16,7 @@ namespace Dune
 
   namespace Fem 
   {
+
     struct ByteOrder 
     {
       // the default endianess is little, e.g. 0
@@ -306,15 +307,15 @@ namespace Dune
       std::istream& stream_;
     };
 
-  } // end namespace Fem   
+  } // namespace Fem   
 
-  // #if DUNE_FEM_COMPATIBILITY  
+#if DUNE_FEM_COMPATIBILITY  
   // put this in next version 1.4 
 
   using Fem :: StandardOutStream ;
   using Fem :: StandardInStream ;
-  // #endif // DUNE_FEM_COMPATIBILITY
+#endif // DUNE_FEM_COMPATIBILITY
 
-} // end namespace Dune
+} // namespace Dune
 
 #endif // #ifndef DUNE_FEM_BINARYSTREAMS_HH

@@ -18,6 +18,7 @@
 
 namespace Dune
 {
+
   namespace Fem 
   { 
 
@@ -372,8 +373,8 @@ namespace Dune
 #endif
     };
 
-  } // end  namespace Fem   
+  } // namespace Fem   
 
-} // end namespace Dune
+} // namespace Dune
 
 #endif // #ifndef DUNE_FEM_XDRSTREAMS_HH

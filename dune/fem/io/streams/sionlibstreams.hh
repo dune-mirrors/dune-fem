@@ -23,6 +23,7 @@ namespace Dune
 
   namespace Fem 
   {
+
     /** \class SIONlibOutStream
      *  \ingroup InOutStreams
      *  \brief output stream writing into a single file with the SIONlib
@@ -314,8 +315,8 @@ namespace Dune
       }
     };
 
-  } // end namespace Fem   
+  } // namespace Fem   
 
-} // end namespace Dune
+} // namespace Dune
 
 #endif // #ifndef DUNE_FEM_BINARYSTREAMS_HH

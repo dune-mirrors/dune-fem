@@ -126,8 +126,8 @@ int main ( int argc, char** argv )
     
     bool failed = false ;
     std::stringstream filestr;
-    std::cout << "Path: "<< Dune :: Parameter :: commonOutputPath() << std::endl;
-    filestr << Dune :: Parameter :: commonOutputPath() << "/test." << MPIManager :: rank() << ".";
+    std::cout << "Path: "<< Parameter :: commonOutputPath() << std::endl;
+    filestr << Parameter :: commonOutputPath() << "/test." << MPIManager :: rank() << ".";
     {
       std::string filename( filestr.str() + "ascii" );
       std :: cerr << "Checking ASCII streams..." << std :: endl;
@@ -207,7 +207,7 @@ int main ( int argc, char** argv )
         int size = (argc > 2) ? atoi( argv[ 2 ] ) : MPIManager :: size();
         std::cout << "Check serial read for " << size << " procs" << std::endl;
         std::stringstream file;
-        file << Dune :: Parameter::commonOutputPath() << "/test.sion." << size ;
+        file <<  Parameter::commonOutputPath() << "/test.sion." << size ;
         // check serial read
         for( int rank=0; rank<size; ++rank ) 
         {
