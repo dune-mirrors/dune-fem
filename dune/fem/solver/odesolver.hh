@@ -225,8 +225,8 @@ namespace DuneODE
     typedef typename OdeSolverInterface<DestinationImp> :: MonitorType  MonitorType;
   protected:
     //! constructor
-    ParDGOdeSolverBase(Dune::TimeProviderBase& tp, 
-                       const int order ) :
+    ParDGOdeSolverBase( TimeProviderBase& tp, 
+                        const int order ) :
       timeProvider_( tp ),
       comm_(PARDG::Communicator::instance()),
       order_( order ),
@@ -293,7 +293,7 @@ namespace DuneODE
     virtual const OperatorType& spaceOperator() const = 0;
     
   protected:
-    Dune::TimeProviderBase& timeProvider_;
+    TimeProviderBase& timeProvider_;
     PARDG::Communicator & comm_;
     const int order_;
     bool initialized_;
@@ -331,7 +331,7 @@ namespace DuneODE
 
     //! constructor 
     ExplicitOdeSolver(OperatorType& op, 
-                      Dune :: TimeProviderBase &tp, 
+                      TimeProviderBase &tp, 
                       const int order, bool verbose = false) :
       BaseType(tp, order ),
       expl_( op ),
@@ -446,7 +446,7 @@ namespace DuneODE
     typedef typename BaseType :: MonitorType     MonitorType;
 
     ImplicitOdeSolver(OperatorType& op, 
-                      Dune::TimeProviderBase& tp,
+                      TimeProviderBase& tp,
                       const int order, 
                       bool verbose ) DUNE_DEPRECATED :
       BaseType(tp, order),
@@ -460,7 +460,7 @@ namespace DuneODE
     }
 
     ImplicitOdeSolver(OperatorType& op, 
-                      Dune::TimeProviderBase& tp,
+                      TimeProviderBase& tp,
                       const int order,
                       const ODEParameters& parameter= ODEParameters() ) :
       BaseType(tp, order),
@@ -643,7 +643,7 @@ namespace DuneODE
 
     SemiImplicitOdeSolver(OperatorType& explOp, 
                           OperatorType& implOp, 
-                          Dune::TimeProviderBase& tp,
+                          TimeProviderBase& tp,
                           const int order, const bool verbose ) DUNE_DEPRECATED :
       BaseType( implOp, tp, order, ODEParameters() ),
       expl_( explOp )
@@ -652,7 +652,7 @@ namespace DuneODE
 
     SemiImplicitOdeSolver(OperatorType& explOp, 
                           OperatorType& implOp, 
-                          Dune::TimeProviderBase& tp,
+                          TimeProviderBase& tp,
                           const int order,
                           const ODEParameters& parameter=ODEParameters()) :
       BaseType( implOp, tp, order, parameter ),

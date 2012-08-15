@@ -22,17 +22,17 @@ namespace Dune
 
       virtual double toleranceParameter () const 
       {
-        return Dune::Parameter::getValue< double >( "fem.solver.newton.tolerance", 1e-6 );
+        return Parameter::getValue< double >( "fem.solver.newton.tolerance", 1e-6 );
       }
 
       virtual double linAbsTolParameter ( const double &tolerance )  const 
       {
-        return Dune::Parameter::getValue< double >( "fem.solver.newton.linabstol", tolerance / 8 );
+        return Parameter::getValue< double >( "fem.solver.newton.linabstol", tolerance / 8 );
       }
 
       virtual double linReductionParameter ( const double &tolerance ) const 
       {
-        return Dune::Parameter::getValue< double >( "fem.solver.newton.linreduction", tolerance / 8 );
+        return Parameter::getValue< double >( "fem.solver.newton.linreduction", tolerance / 8 );
       }
 
       virtual bool verbose () const 
@@ -70,12 +70,12 @@ namespace Dune
      */
     template< class JacobianOperator, class LInvOp >
     class NewtonInverseOperator 
-    : public Fem :: Operator< typename JacobianOperator :: DomainFunctionType, 
+    : public Operator< typename JacobianOperator :: DomainFunctionType, 
                               typename JacobianOperator :: RangeFunctionType > 
     {
       typedef NewtonInverseOperator< JacobianOperator, LInvOp > ThisType;
-      typedef Fem::Operator< typename JacobianOperator :: DomainFunctionType,
-                             typename JacobianOperator :: RangeFunctionType > BaseType;
+      typedef Operator< typename JacobianOperator :: DomainFunctionType,
+                        typename JacobianOperator :: RangeFunctionType > BaseType;
 
     public:
       //! type of operator's Jacobian
