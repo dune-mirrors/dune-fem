@@ -1,5 +1,5 @@
-#ifndef DUNE_RESTRICTPROLONGFUNCTION_HH
-#define DUNE_RESTRICTPROLONGFUNCTION_HH
+#ifndef DUNE_FEM_RESTRICTPROLONGFUNCTION_HH
+#define DUNE_FEM_RESTRICTPROLONGFUNCTION_HH
 
 #include <dune/common/exceptions.hh>
 
@@ -8,181 +8,186 @@
 namespace Dune
 {
 
-  /** \class   ProlongFunction
-   *  \ingroup Adaptation
-   *  \brief   prolong discrete functions between grid levels
-   *
-   *  \tparam LRP local restriction and prolongation operator
-   *              (e.g., LocalLagrangeRestrictProlong)
-   */
-  template< class LRP >
-  struct ProlongFunction
+  namespace Fem
   {
-    //! type of the local restriction and prolongation operator
-    typedef LRP LocalRestrictProlong;
 
-    /** \brief prolong a discrete function to finer grid level
+    /** \class   ProlongFunction
+     *  \ingroup Adaptation
+     *  \brief   prolong discrete functions between grid levels
      *
-     *  \note The grid parts modelling the levels need not be of same type.
-     *
-     *  \param[in]  coarseFunction  discrete function on the coarser level
-     *  \param[out] fineFunction    discrete function on the finer level
+     *  \tparam LRP local restriction and prolongation operator
+     *              (e.g., LocalLagrangeRestrictProlong)
      */
-    template< class CoarseFunction, class FineFunction >
-    void operator() ( const CoarseFunction &coarseFunction,
-                      FineFunction &fineFunction ) const
+    template< class LRP >
+    struct ProlongFunction
     {
-      typedef typename CoarseFunction::LocalFunctionType CoarseLocalFunction;
-      typedef typename CoarseFunction::DiscreteFunctionSpaceType CoarseSpace;
-      typedef typename CoarseSpace::IteratorType CoarseIterator;
+      //! type of the local restriction and prolongation operator
+      typedef LRP LocalRestrictProlong;
 
-      typedef typename FineFunction::LocalFunctionType FineLocalFunction;
-
-      const CoarseSpace &coarseSpace = coarseFunction.space();
-      const CoarseIterator end = coarseSpace.end();
-      for( CoarseIterator it = coarseSpace.begin(); it != end; ++it )
+      /** \brief prolong a discrete function to finer grid level
+       *
+       *  \note The grid parts modelling the levels need not be of same type.
+       *
+       *  \param[in]  coarseFunction  discrete function on the coarser level
+       *  \param[out] fineFunction    discrete function on the finer level
+       */
+      template< class CoarseFunction, class FineFunction >
+      void operator() ( const CoarseFunction &coarseFunction,
+                        FineFunction &fineFunction ) const
       {
-        const typename CoarseIterator::Entity &entity = *it;
-        CoarseLocalFunction coarseLocalFunction = coarseFunction.localFunction( entity );
+        typedef typename CoarseFunction::LocalFunctionType CoarseLocalFunction;
+        typedef typename CoarseFunction::DiscreteFunctionSpaceType CoarseSpace;
+        typedef typename CoarseSpace::IteratorType CoarseIterator;
 
-        if( isDefinedOn( fineFunction, entity ) )
+        typedef typename FineFunction::LocalFunctionType FineLocalFunction;
+
+        const CoarseSpace &coarseSpace = coarseFunction.space();
+        const CoarseIterator end = coarseSpace.end();
+        for( CoarseIterator it = coarseSpace.begin(); it != end; ++it )
         {
-          FineLocalFunction fineLocalFunction = fineFunction.localFunction( entity );
-          fineLocalFunction.assign( coarseLocalFunction );
+          const typename CoarseIterator::Entity &entity = *it;
+          CoarseLocalFunction coarseLocalFunction = coarseFunction.localFunction( entity );
+
+          if( isDefinedOn( fineFunction, entity ) )
+          {
+            FineLocalFunction fineLocalFunction = fineFunction.localFunction( entity );
+            fineLocalFunction.assign( coarseLocalFunction );
+          }
+          else
+            hierarchicProlong( coarseLocalFunction, fineFunction );
         }
-        else
-          hierarchicProlong( coarseLocalFunction, fineFunction );
       }
-    }
 
-  private:
-    template< class CoarseLocalFunction, class FineFunction >
-    void hierarchicProlong ( const CoarseLocalFunction &coarseLocalFunction,
-                             FineFunction &fineFunction ) const
-    {
-      typedef typename CoarseLocalFunction::EntityType Entity;
-      typedef typename Entity::HierarchicIterator HierarchicIterator;
-      typedef typename FineFunction::LocalFunctionType FineLocalFunction;
-
-      const Entity &father = coarseLocalFunction.entity();
-      const int childLevel = father.level()+1;
-
-      const HierarchicIterator hend = father.hend( childLevel );
-      for( HierarchicIterator hit = father.hbegin( childLevel ); hit != hend; ++hit )
+    private:
+      template< class CoarseLocalFunction, class FineFunction >
+      void hierarchicProlong ( const CoarseLocalFunction &coarseLocalFunction,
+                               FineFunction &fineFunction ) const
       {
-        const Entity &son = *hit;
-        if( isDefinedOn( fineFunction, son ) )
+        typedef typename CoarseLocalFunction::EntityType Entity;
+        typedef typename Entity::HierarchicIterator HierarchicIterator;
+        typedef typename FineFunction::LocalFunctionType FineLocalFunction;
+
+        const Entity &father = coarseLocalFunction.entity();
+        const int childLevel = father.level()+1;
+
+        const HierarchicIterator hend = father.hend( childLevel );
+        for( HierarchicIterator hit = father.hbegin( childLevel ); hit != hend; ++hit )
         {
-          FineLocalFunction fineLocalFunction = fineFunction.localFunction( son );
-          localRestrictProlong_.prolongLocal( coarseLocalFunction, fineLocalFunction, son.geometryInFather(), true );
+          const Entity &son = *hit;
+          if( isDefinedOn( fineFunction, son ) )
+          {
+            FineLocalFunction fineLocalFunction = fineFunction.localFunction( son );
+            localRestrictProlong_.prolongLocal( coarseLocalFunction, fineLocalFunction, son.geometryInFather(), true );
+          }
+          else
+            DUNE_THROW( GridError, "Cannot prolong over more than one level." );
         }
-        else
-          DUNE_THROW( GridError, "Cannot prolong over more than one level." );
       }
-    }
 
-    template< class Function >
-    static bool isDefinedOn ( const Function &function, const typename Function::GridPartType::template Codim< 0 >::EntityType &entity )
-    {
-      typedef typename Function::GridPartType::IndexSetType IndexSet;
-      const IndexSet &indexSet = function.gridPart().indexSet();
-      return indexSet.contains( entity );
-    }
+      template< class Function >
+      static bool isDefinedOn ( const Function &function, const typename Function::GridPartType::template Codim< 0 >::EntityType &entity )
+      {
+        typedef typename Function::GridPartType::IndexSetType IndexSet;
+        const IndexSet &indexSet = function.gridPart().indexSet();
+        return indexSet.contains( entity );
+      }
 
-  private:
-    LocalRestrictProlong localRestrictProlong_;
-  };
-
+    private:
+      LocalRestrictProlong localRestrictProlong_;
+    };
 
 
-  /** \class   RestrictFunction
-   *  \ingroup Adaptation
-   *  \brief   restrict discrete functions between grid levels
-   *
-   *  \tparam LRP local restriction and prolongation operator
-   *              (e.g., LocalLagrangeRestrictProlong)
-   */
-  template< class LRP >
-  struct RestrictFunction
-  {
-    //! type of the local restriction and prolongation operator
-    typedef LRP LocalRestrictProlong;
 
-  public:
-    /** \brief restrict a discrete function to coarser grid level
+    /** \class   RestrictFunction
+     *  \ingroup Adaptation
+     *  \brief   restrict discrete functions between grid levels
      *
-     *  \note The grid parts modelling the levels need not be of same type.
-     *
-     *  \param[in]  fineFunction   discrete function on the finer level
-     *  \param[out] coarseFunction discrete function on the coarser level
+     *  \tparam LRP local restriction and prolongation operator
+     *              (e.g., LocalLagrangeRestrictProlong)
      */
-    template< class FineFunction, class CoarseFunction >
-    void operator() ( const FineFunction &fineFunction,
-                      CoarseFunction &coarseFunction ) const
+    template< class LRP >
+    struct RestrictFunction
     {
-      typedef typename CoarseFunction::LocalFunctionType CoarseLocalFunction;
-      typedef typename CoarseFunction::DiscreteFunctionSpaceType CoarseSpace;
-      typedef typename CoarseSpace::IteratorType CoarseIterator;
+      //! type of the local restriction and prolongation operator
+      typedef LRP LocalRestrictProlong;
 
-      typedef typename FineFunction::LocalFunctionType FineLocalFunction;
-
-      const CoarseSpace &coarseSpace = coarseFunction.space();
-      const CoarseIterator end = coarseSpace.end();
-      for( CoarseIterator it = coarseSpace.begin(); it != end; ++it )
+    public:
+      /** \brief restrict a discrete function to coarser grid level
+       *
+       *  \note The grid parts modelling the levels need not be of same type.
+       *
+       *  \param[in]  fineFunction   discrete function on the finer level
+       *  \param[out] coarseFunction discrete function on the coarser level
+       */
+      template< class FineFunction, class CoarseFunction >
+      void operator() ( const FineFunction &fineFunction,
+                        CoarseFunction &coarseFunction ) const
       {
-        const typename CoarseIterator::Entity &entity = *it;
-        CoarseLocalFunction coarseLocalFunction = coarseFunction.localFunction( entity );
+        typedef typename CoarseFunction::LocalFunctionType CoarseLocalFunction;
+        typedef typename CoarseFunction::DiscreteFunctionSpaceType CoarseSpace;
+        typedef typename CoarseSpace::IteratorType CoarseIterator;
 
-        if( isDefinedOn( fineFunction, entity ) )
+        typedef typename FineFunction::LocalFunctionType FineLocalFunction;
+
+        const CoarseSpace &coarseSpace = coarseFunction.space();
+        const CoarseIterator end = coarseSpace.end();
+        for( CoarseIterator it = coarseSpace.begin(); it != end; ++it )
         {
-          FineLocalFunction fineLocalFunction = fineFunction.localFunction( entity );
-          coarseLocalFunction.assign( fineLocalFunction );
+          const typename CoarseIterator::Entity &entity = *it;
+          CoarseLocalFunction coarseLocalFunction = coarseFunction.localFunction( entity );
+
+          if( isDefinedOn( fineFunction, entity ) )
+          {
+            FineLocalFunction fineLocalFunction = fineFunction.localFunction( entity );
+            coarseLocalFunction.assign( fineLocalFunction );
+          }
+          else
+            hierarchicRestrict( fineFunction, coarseLocalFunction );
         }
-        else
-          hierarchicRestrict( fineFunction, coarseLocalFunction );
       }
-    }
 
-  private:
-    template< class FineFunction, class CoarseLocalFunction >
-    void hierarchicRestrict ( const FineFunction &fineFunction,
-                              CoarseLocalFunction &coarseLocalFunction ) const
-    {
-      typedef typename CoarseLocalFunction::EntityType Entity;
-      typedef typename Entity::HierarchicIterator HierarchicIterator;
-      typedef typename FineFunction::LocalFunctionType FineLocalFunction;
-
-      const Entity &father = coarseLocalFunction.entity();
-      const int childLevel = father.level()+1;
-
-      const HierarchicIterator hend = father.hend( childLevel );
-      for( HierarchicIterator hit = father.hbegin( childLevel ); hit != hend; ++hit )
+    private:
+      template< class FineFunction, class CoarseLocalFunction >
+      void hierarchicRestrict ( const FineFunction &fineFunction,
+                                CoarseLocalFunction &coarseLocalFunction ) const
       {
-        const Entity &son = *hit;
-        bool initialize = true;
-        if( isDefinedOn( fineFunction, son ) )
+        typedef typename CoarseLocalFunction::EntityType Entity;
+        typedef typename Entity::HierarchicIterator HierarchicIterator;
+        typedef typename FineFunction::LocalFunctionType FineLocalFunction;
+
+        const Entity &father = coarseLocalFunction.entity();
+        const int childLevel = father.level()+1;
+
+        const HierarchicIterator hend = father.hend( childLevel );
+        for( HierarchicIterator hit = father.hbegin( childLevel ); hit != hend; ++hit )
         {
-          FineLocalFunction fineLocalFunction = fineFunction.localFunction( son );
-          localRestrictProlong_.restrictLocal( coarseLocalFunction, fineLocalFunction, son.geometryInFather(), initialize );
-          initialize = false;
+          const Entity &son = *hit;
+          bool initialize = true;
+          if( isDefinedOn( fineFunction, son ) )
+          {
+            FineLocalFunction fineLocalFunction = fineFunction.localFunction( son );
+            localRestrictProlong_.restrictLocal( coarseLocalFunction, fineLocalFunction, son.geometryInFather(), initialize );
+            initialize = false;
+          }
+          else
+            DUNE_THROW( GridError, "Cannot restrict over more than one level." );
         }
-        else
-          DUNE_THROW( GridError, "Cannot restrict over more than one level." );
       }
-    }
 
-    template< class Function >
-    static bool isDefinedOn ( const Function &function, const typename Function::GridPartType::template Codim< 0 >::EntityType &entity )
-    {
-      typedef typename Function::GridPartType::IndexSetType IndexSet;
-      const IndexSet &indexSet = function.gridPart().indexSet();
-      return indexSet.contains( entity );
-    }
+      template< class Function >
+      static bool isDefinedOn ( const Function &function, const typename Function::GridPartType::template Codim< 0 >::EntityType &entity )
+      {
+        typedef typename Function::GridPartType::IndexSetType IndexSet;
+        const IndexSet &indexSet = function.gridPart().indexSet();
+        return indexSet.contains( entity );
+      }
 
-  private:
-    LocalRestrictProlong localRestrictProlong_;
-  };
+    private:
+      LocalRestrictProlong localRestrictProlong_;
+    };
+
+  } // namespace Fem
 
 } // namespace Dune
 
-#endif // #ifndef DUNE_RESTRICTPROLONGFUNCTION_HH
+#endif // #ifndef DUNE_FEM_RESTRICTPROLONGFUNCTION_HH
