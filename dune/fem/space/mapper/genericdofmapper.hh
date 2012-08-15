@@ -105,7 +105,7 @@ namespace Dune
 
   private:
     typedef typename GridPartType::IndexSetType IndexSetType;
-    typedef DofManager< typename GridPartType::GridType > DofManagerType;
+    typedef Fem::DofManager< typename GridPartType::GridType > DofManagerType;
 
     struct Block
     {

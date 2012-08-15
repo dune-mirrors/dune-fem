@@ -234,7 +234,7 @@ namespace Dune
     typedef typename GridPartType::ctype ctype;
     typedef GenericReferenceElements< ctype, dimension > RefElements;
 
-    AllGeomTypes< IndexSetType, typename GridPartType::GridType > allTypes( indexSet_ );
+    Fem::AllGeomTypes< IndexSetType, typename GridPartType::GridType > allTypes( indexSet_ );
     const std::vector< GeometryType > &types = allTypes.geomTypes( 0 );
     const unsigned int numTypes = types.size();
     for( unsigned int i = 0; i < numTypes; ++i )

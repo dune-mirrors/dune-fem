@@ -35,11 +35,11 @@ namespace Dune
   */
   template< class DofMapperTraits >
   class DofMapper
-  : public BartonNackmanInterface< DofMapper< DofMapperTraits >,
+  : public Fem::BartonNackmanInterface< DofMapper< DofMapperTraits >,
                                    typename DofMapperTraits :: DofMapperType >
   {
     typedef DofMapper< DofMapperTraits > ThisType;
-    typedef BartonNackmanInterface< ThisType, typename DofMapperTraits::DofMapperType > BaseType;
+    typedef Fem::BartonNackmanInterface< ThisType, typename DofMapperTraits::DofMapperType > BaseType;
 
   public:
     typedef DofMapperTraits Traits;
