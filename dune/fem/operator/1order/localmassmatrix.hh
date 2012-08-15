@@ -54,7 +54,7 @@ namespace Dune
       typedef Fem::GeometryAffinityCheck<VolumeQuadratureType>  GeometryAffinityCheckType;
 
       //! is true if grid is structured grid 
-      enum { StructuredGrid = Capabilities::isCartesian< GridType >::v };
+      enum { StructuredGrid = Dune::Capabilities::isCartesian< GridType >::v };
 
       typedef AllGeomTypes< typename GridPartType :: IndexSetType,GridType> GeometryInformationType;
       typedef typename GeometryInformationType :: DomainType DomainType;
