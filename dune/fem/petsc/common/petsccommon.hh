@@ -20,9 +20,9 @@
    * This turns off PETSc logging of MPI calls. If it is on, PETSc redifines MPI functions as macros, 
    * which breaks some code. E.g. MPI_Allreduce is redefined
    */
-  #define PETSC_HAVE_BROKEN_RECURSIVE_MACRO
+#define PETSC_HAVE_BROKEN_RECURSIVE_MACRO
 
-  #include <petsc.h>
+#include <petsc.h>
 
 namespace Dune
 {
@@ -98,7 +98,7 @@ namespace Dune
       if( ownHandler )
       {
         // set up our error handler
-        if( Dune::MPIManager::rank() == 0 )
+        if( Dune::Fem::MPIManager::rank() == 0 )
         {
           std::cerr << "INFORMATION: Setting up an own error handler for PETSc errors. If you want the default PETSc handler,\n"
                     << "INFORMATION: set the last argument of Dune::Petsc::initialize(...) to 'false'.\n";
@@ -126,11 +126,11 @@ namespace Dune
      */
     void KSPCreate ( KSP *inksp ) { ErrorCheck( ::KSPCreate( FEM_PETSC_COMM_DEFAULT, inksp ) ); }
     void KSPDestroy ( KSP *ksp ) { 
-      #if PETSC_VERSION_MAJOR <= 3 && PETSC_VERSION_MINOR < 2
+#if PETSC_VERSION_MAJOR <= 3 && PETSC_VERSION_MINOR < 2
         ErrorCheck( ::KSPDestroy( *ksp ) ); 
-      #else
+#else
         ErrorCheck( ::KSPDestroy( ksp ) ); 
-      #endif // PETSC_PETSC_VERSION_MAJOR <= 3 && PETSC_VERSION_MINOR < 2
+#endif // PETSC_PETSC_VERSION_MAJOR <= 3 && PETSC_VERSION_MINOR < 2
     }
     void KSPGetPC ( KSP ksp, PC *pc ) { ErrorCheck( ::KSPGetPC( ksp, pc ) ); }
     void KSPSetFromOptions ( KSP ksp ) { ErrorCheck( ::KSPSetFromOptions( ksp ) ); }
@@ -141,12 +141,12 @@ namespace Dune
       ErrorCheck( ::KSPView( ksp, viewer ) ); 
     }
     void KSPMonitorSet (KSP ksp, PetscErrorCode (*monitor)(KSP,PetscInt,PetscReal,void*),
-      #if PETSC_VERSION_MAJOR <= 3 && PETSC_VERSION_MINOR < 2
-                               void *mctx,PetscErrorCode (*monitordestroy)(void*) 
-      #else
-                               void *mctx,PetscErrorCode (*monitordestroy)(void**)  
-      #endif
-                               )
+#if PETSC_VERSION_MAJOR <= 3 && PETSC_VERSION_MINOR < 2
+                       void *mctx,PetscErrorCode (*monitordestroy)(void*) 
+#else
+                       void *mctx,PetscErrorCode (*monitordestroy)(void**)  
+#endif
+                       )
     { 
         ErrorCheck( ::KSPMonitorSet( ksp, monitor, mctx, monitordestroy ) ); 
     }
@@ -162,11 +162,11 @@ namespace Dune
     // preconditioning 
     void PCCreate  ( PC* pc) { ErrorCheck( ::PCCreate( FEM_PETSC_COMM_DEFAULT, pc ) ); }
     void PCDestroy ( PC* pc) { 
-      #if PETSC_VERSION_MAJOR <= 3 && PETSC_VERSION_MINOR < 2
-        ErrorCheck( ::PCDestroy( *pc ) ); 
-      #else  
-        ErrorCheck( ::PCDestroy( pc ) ); 
-      #endif 
+#if PETSC_VERSION_MAJOR <= 3 && PETSC_VERSION_MINOR < 2
+      ErrorCheck( ::PCDestroy( *pc ) ); 
+#else  
+      ErrorCheck( ::PCDestroy( pc ) ); 
+#endif 
     }
     void PCSetType ( PC pc, const PCType type ) { ErrorCheck( ::PCSetType(  pc, type ) ); }
     void PCFactorSetLevels( PC pc, PetscInt level ) { ErrorCheck( ::PCFactorSetLevels(  pc, level ) ); }
