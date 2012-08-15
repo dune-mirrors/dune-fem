@@ -25,6 +25,7 @@
 
 namespace Dune
 {
+
   namespace Fem
   {
 
@@ -53,7 +54,7 @@ namespace Dune
 
       enum { dimRange = FunctionSpaceType1 :: dimRange + FunctionSpaceType2 :: dimRange };
 
-      typedef Dune :: FunctionSpace< DomainFieldType, RangeFieldType, DomainType :: dimension, dimRange> FunctionSpaceType;
+      typedef FunctionSpace< DomainFieldType, RangeFieldType, DomainType :: dimension, dimRange> FunctionSpaceType;
 
       typedef typename FunctionSpaceType :: RangeType RangeType;
       typedef typename FunctionSpaceType :: JacobianRangeType JacobianRangeType;
