@@ -150,13 +150,13 @@ void testIntersectionIterator( const GridPartType & gridPart )
 
 
 typedef Dune::GridSelector::GridType GridType;
-typedef Dune::DGAdaptiveLeafGridPart< GridType > HostGridPartType;
+typedef Dune::Fem::DGAdaptiveLeafGridPart< GridType > HostGridPartType;
 typedef Dune::Fem::IdGridPart< HostGridPartType > GridPartType;
 
 int main ( int argc, char ** argv )
 try
 {
-  Dune::MPIManager::initialize( argc, argv );
+  Dune::Fem::MPIManager::initialize( argc, argv );
 
   // create grid
   GridType &grid = Dune::TestGrid::grid();
@@ -178,7 +178,7 @@ try
   testSubEntities< GridType::dimension >( gridPart );
 
   std::cout << std::endl;
-  std::cout << "gridWidth: " << Dune::GridWidth::calcGridWidth( gridPart ) << std::endl;
+  std::cout << "gridWidth: " << Dune::Fem::GridWidth::calcGridWidth( gridPart ) << std::endl;
 
   std::cout << std::endl << std::endl;
 

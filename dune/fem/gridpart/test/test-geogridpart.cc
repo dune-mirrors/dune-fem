@@ -209,10 +209,10 @@ void testExchangeGeometry ( const GridPart &gridPart, LocalFunction &localFuncti
 
 
 typedef Dune::GridSelector::GridType GridType;
-typedef Dune::AdaptiveLeafGridPart< GridType > HostGridPartType;
-typedef Dune::FunctionSpace< GridType::ctype, GridType::ctype, GridType::dimensionworld, GridType::dimensionworld > CoordFunctionSpaceType;
-typedef Dune::LagrangeDiscreteFunctionSpace< CoordFunctionSpaceType, HostGridPartType, 1 > DiscreteCoordFunctionSpaceType;
-typedef Dune::AdaptiveDiscreteFunction< DiscreteCoordFunctionSpaceType > CoordFunctionType;
+typedef Dune::Fem::AdaptiveLeafGridPart< GridType > HostGridPartType;
+typedef Dune::Fem::FunctionSpace< GridType::ctype, GridType::ctype, GridType::dimensionworld, GridType::dimensionworld > CoordFunctionSpaceType;
+typedef Dune::Fem::LagrangeDiscreteFunctionSpace< CoordFunctionSpaceType, HostGridPartType, 1 > DiscreteCoordFunctionSpaceType;
+typedef Dune::Fem::AdaptiveDiscreteFunction< DiscreteCoordFunctionSpaceType > CoordFunctionType;
 typedef Dune::Fem::GeoGridPart< CoordFunctionType > GridPartType;
 
 
@@ -245,7 +245,7 @@ try
   testSubEntities< GridType::dimension >( gridPart );
 
   std::cout << std::endl;
-  std::cout << "gridWidth: " << Dune::GridWidth::calcGridWidth( gridPart ) << std::endl;
+  std::cout << "gridWidth: " << Dune::Fem::GridWidth::calcGridWidth( gridPart ) << std::endl;
 
   Dune::TemporaryLocalFunction< DiscreteCoordFunctionSpaceType > tlf( coordFunctionSpace );
   testExchangeGeometry( gridPart, tlf );

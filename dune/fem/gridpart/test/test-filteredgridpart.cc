@@ -151,13 +151,13 @@ void testIntersectionIterator( const GridPartType & gridPart )
 
 
 typedef Dune::GridSelector::GridType GridType;
-typedef Dune::DGAdaptiveLeafGridPart< GridType > HostGridPartType;
+typedef Dune::Fem::DGAdaptiveLeafGridPart< GridType > HostGridPartType;
 typedef Dune::Fem::RadialFilter< GridType::ctype, GridType::dimensionworld > BasicFilterType;
 typedef Dune::Fem::BasicFilterWrapper< HostGridPartType, BasicFilterType > FilterType;
 
 int main ( int argc, char ** argv )
 {
-  Dune::MPIManager :: initialize( argc, argv );
+  Dune::Fem::MPIManager :: initialize( argc, argv );
   try
   {
     // create grid
@@ -187,7 +187,7 @@ int main ( int argc, char ** argv )
 
       /* ----------- added to test the intersection iterator ---------------*/
       std::cout << std::endl;
-      std::cout << "gridWidth: " << Dune::GridWidth::calcGridWidth( gridPart ) << std::endl;
+      std::cout << "gridWidth: " << Dune::Fem::GridWidth::calcGridWidth( gridPart ) << std::endl;
       /* --------------------------*/
 
       /* ----------- new test suite methods ---------------*/
@@ -217,7 +217,7 @@ int main ( int argc, char ** argv )
 
       /* ----------- added to test the intersection iterator ---------------*/
       std::cout << std::endl;
-      std::cout << "gridWidth: " << Dune::GridWidth::calcGridWidth( gridPart ) << std::endl;
+      std::cout << "gridWidth: " << Dune::Fem::GridWidth::calcGridWidth( gridPart ) << std::endl;
       /* --------------------------*/
 
       /* ----------- new test suite methods ---------------*/
