@@ -22,6 +22,7 @@
 
 
 using namespace Dune;
+using namespace Fem;
 
 const int polOrder = POLORDER;
 
@@ -122,6 +123,8 @@ public:
       const BaseFunctionSetType &baseFunctionSet = localFunction.baseFunctionSet();
       const unsigned int numBaseFunctions = baseFunctionSet.size();
 
+      std::vector< RangeType > phi( numBaseFunctions, RangeType( 0 ) );
+
       QuadratureType quadrature( *it, 2*dfSpace.order() + 2);
       const unsigned int numQuadraturePoints = quadrature.nop();
       for( unsigned int pt = 0; pt < numQuadraturePoints; ++pt )
@@ -134,12 +137,11 @@ public:
         
         RangeType y;
         function.evaluate( geometry.global( point ), y );
+        baseFunctionSet.evaluateAll( quadrature[ pt ], phi );
 
         for( unsigned int i = 0; i < numBaseFunctions; ++i )
         {
-          RangeType phi;
-          baseFunctionSet.evaluate( i, quadrature[ pt ], phi );
-          localFunction[ i ] += weight * (y * phi);
+          localFunction[ i ] += weight * (y * phi[i]);
         }
       }
     }

@@ -26,6 +26,7 @@ static const int dim2 = 3;
 #include <dune/grid/io/visual/grapedatadisplay.hh>
 #endif  
 using namespace Dune;
+using namespace Fem;
  
 // polynom approximation order of quadratures, 
 // at least polynom order of basis functions  
@@ -141,9 +142,12 @@ struct TestProdDF {
 
       typedef typename DiscreteFunction1Type::LocalFunctionType LocalFuncType;
 
-      typename DiscreteFunction1SpaceType::RangeType ret (0.0);
-      typename DiscreteFunction1SpaceType::RangeType phi (0.0);
-      typename DiscreteFunction2SpaceType::RangeType psi (0.0);
+      typedef typename DiscreteFunction1SpaceType::RangeType RangeType1;
+      typedef typename DiscreteFunction2SpaceType::RangeType RangeType2;
+
+      RangeType1 ret (0.0);
+      RangeType1 phi (0.0);
+      RangeType2 psi (0.0);
     
       int quadOrd2 = 2*space2.order()+1;
     
@@ -151,23 +155,24 @@ struct TestProdDF {
       Iterator2 endit2 = space2.end(); 
     
       for(Iterator it = space.begin(); it != endit ; ++it) 
-	{
-	  ElementQuadrature<GridPartType,0> quad(*it, polOrd);
-	  // CachingQuadrature<GridPartType,0> quad(*it, polOrd);
-	  const int quadNop  = quad.nop();
-	  for(Iterator2 it2 = space2.begin(); it2 != endit2 ; ++it2) 
-	    {
-	      // Get quadrature rule
-	      ElementQuadrature<GridPart2Type,0> quad2(*it2, quadOrd2);
-	      // CachingQuadrature<GridPart2Type,0> quad2(*it2, quadOrd2);
-      
-	      const BaseFunctionSet2Type bSet2 = space2.baseFunctionSet(*it2);
-	      const int numOfDofs = bSet2.numBaseFunctions();
-	      const int quadNop2 = quad2.nop();
-	      const typename Grid2Type::template Codim<0>::Entity::Geometry& itGeom2 = 
-		(*it2).geometry();
-	
-	      for(int j=0; j< numOfDofs; j++) 
+      {
+        ElementQuadrature<GridPartType,0> quad(*it, polOrd);
+        // CachingQuadrature<GridPartType,0> quad(*it, polOrd);
+        const int quadNop  = quad.nop();
+
+        for(Iterator2 it2 = space2.begin(); it2 != endit2 ; ++it2) 
+        {
+          // Get quadrature rule
+          ElementQuadrature<GridPart2Type,0> quad2(*it2, quadOrd2);
+          // CachingQuadrature<GridPart2Type,0> quad2(*it2, quadOrd2);
+        
+          const BaseFunctionSet2Type bSet2 = space2.baseFunctionSet(*it2);
+          const int numOfDofs = bSet2.numBaseFunctions();
+          const int quadNop2 = quad2.nop();
+          const typename Grid2Type::template Codim<0>::Entity::Geometry& 
+            itGeom2 = (*it2).geometry();
+    
+          for(int j=0; j< numOfDofs; j++) 
 		{
 		  DiscreteFunction1Type ldf = discFunc.localFunction(*it2,j);  
         

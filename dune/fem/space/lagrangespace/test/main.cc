@@ -12,8 +12,9 @@ using namespace Fem;
 #include "basefunctiontest.cc"
 #include "mappertest.cc"
 
-int main() 
+int main( int argc, char **argv ) 
 {
+  MPIManager::initialize( argc, argv );
   //std :: string gridFile( "../../../examples/elliptic/square.dgf" );
   //std :: string gridFile( "onesimplex.dgf" );
   //std :: string gridFile( "cube.dgf" );

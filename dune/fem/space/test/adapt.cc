@@ -40,6 +40,8 @@ const int polOrd = POLORDER;
 #define GRIDDIM dimworld 
 #endif
 
+using namespace Fem;
+
 //***********************************************************************
 /*! L2 Projection of a function f: 
 */

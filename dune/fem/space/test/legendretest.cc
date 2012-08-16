@@ -33,6 +33,7 @@ typedef Dune::YaspGrid< dimw > HGridType;
 #include <dune/grid/io/visual/grapedatadisplay.hh>
 #endif
 using namespace Dune;
+using namespace Fem;
 
 // polynom approximation order of quadratures, 
 // at least poolynom order of basis functions 
@@ -141,8 +142,9 @@ class L2Projection
 
     typedef typename DiscreteFunctionType::LocalFunctionType LocalFuncType;
 
-    typename DiscreteFunctionSpaceType::RangeType ret (0.0);
-    typename DiscreteFunctionSpaceType::RangeType phi (0.0);
+    typedef typename DiscreteFunctionSpaceType::RangeType RangeType;
+    RangeType ret (0.0);
+    std::vector< RangeType > phi ( space.mapper().maxNumDofs(), RangeType(0) );
     //diagomal of massmatrix
     DiscreteFunctionType mass("mass",space);
     mass.clear();
@@ -167,13 +169,15 @@ class L2Projection
       const int quadNop = quad.nop();
       const int numDofs = lf.numDofs();
       for(int qP = 0; qP < quadNop ; ++qP) 
-	{// double det = (*it).geometry().integrationElement( quad.point(qP) );
+      {// double det = (*it).geometry().integrationElement( quad.point(qP) );
         f.evaluate(itGeom.global(quad.point(qP)), ret);
-        for(int i=0; i<numDofs; ++i) {
-          baseset.evaluate(i,quad[qP],phi);
-	  
+
+        baseset.evaluateAll( quad[ qP ], phi );
+
+        for(int i=0; i<numDofs; ++i) 
+        {
 	  //	  tmp[i]+=quad.weight(qP)*SQR(phi)*det ;
-          lf[i] += quad.weight(qP) * (ret * phi)/*det*/ ;
+          lf[i] += quad.weight(qP) * (ret * phi[i])/*det*/ ;
         }
       }
 //       for(int i=0; i<numDofs; ++i) {
@@ -372,11 +376,14 @@ double algorithm (HGridType& grid, DiscreteFunctionType& solution  , int turn )
 //**************************************************
 int main (int argc, char **argv)
 {
+  MPIManager::initialize( argc, argv );
+
   if(argc != 2)
   {
     fprintf(stderr,"usage: %s <maxlevel> \n",argv[0]);
     exit(1);
   }
+
   int ml = atoi( argv[1] );
   double* error = new double[ml];
   // char tmp[16]; sprintf(tmp,"%d",dimw);

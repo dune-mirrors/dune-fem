@@ -9,49 +9,50 @@
 #include "dune/common/exceptions.hh" // We use exceptions
 #include <dune/common/fvector.hh>  // definition of field vectors
 
-
 #include <dune/fem/io/parameter.hh> // include parameters
 
 
+using namespace Dune;
+using namespace Fem;
 
 // main programm
 int main(int argc, char** argv)
 {
   try{
     //Maybe initialize Mpi
-    Dune :: MPIManager :: initialize( argc, argv );
+    MPIManager :: initialize( argc, argv );
 
-    Dune::Parameter::append(argc,argv);
+    Parameter::append(argc,argv);
     if (argc == 2) {
-      Dune::Parameter::append(argv[1]);
+      Parameter::append(argv[1]);
     }
     else
     {
-      Dune::Parameter::append("testparameterfile");
+      Parameter::append("testparameterfile");
     }
 
     // get user id and date
     std::string userId, date;
-    Dune::Parameter::get("user", userId );
-    Dune::Parameter::get("date", date );
+    Parameter::get("user", userId );
+    Parameter::get("date", date );
     
     // get Project discription
     std::string project;
-    Dune::Parameter::get( "project", project ); 
+    Parameter::get( "project", project ); 
 
     // get the parameter for the diffusion 
-    double diffusion = Dune::Parameter::getValue<double>("diffusion", 1.0 );
+    double diffusion = Parameter::getValue<double>("diffusion", 1.0 );
     
     
     // get the macro grid filename, using the NoWhiteSpaceValidator, so that no white
     // space is in the filename
     std::string macrogridname;
-    Dune::Parameter::getValid("macrogrid", Dune::NoWhiteSpaceValidator(), macrogridname );
+    Parameter::getValid("macrogrid",  NoWhiteSpaceValidator(), macrogridname );
 
     // get velocity for the advection part
     typedef Dune::FieldVector< double, 2>  VectorType;
     VectorType velocity;
-    Dune::Parameter::get("velocity", velocity );
+    Parameter::get("velocity", velocity );
 
 
     {
@@ -60,12 +61,12 @@ int main(int argc, char** argv)
 
     // get output path
     std::string outputPath;
-    Dune::Parameter::get("outputpath", outputPath );
+    Parameter::get("outputpath", outputPath );
 
     // just a small example that mmultiplications are possible using shell scripts
-    double multi = Dune::Parameter::getValue<double>("multiplication", 1.0 );
-    double factor1 = Dune::Parameter::getValue<double>("factor1", 1.0 );
-    double factor2 = Dune::Parameter::getValue<double>("factor2", 1.0 );
+    double multi = Parameter::getValue<double>("multiplication", 1.0 );
+    double factor1 = Parameter::getValue<double>("factor1", 1.0 );
+    double factor2 = Parameter::getValue<double>("factor2", 1.0 );
 
     //*****************OutPut*********************//
     std::cout<<"User: "<< userId <<" started his compution of Project: "<< project <<"\nThe acctual date is: "<< date <<std::endl;
@@ -83,7 +84,7 @@ int main(int argc, char** argv)
                 << multi << std::endl;
    
     // finallay write the parameter log
-    Dune::Parameter::write("parameter.log");
+    Parameter::write("parameter.log");
 
     return 0;
   }

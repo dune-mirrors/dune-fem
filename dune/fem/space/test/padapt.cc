@@ -32,7 +32,7 @@ const int polOrder = POLORDER;
 #include <dune/fem/space/padaptivespace.hh>
 
 // include solvers
-#include <dune/fem/solver/inverseoperators.hh>
+#include <dune/fem/solver/cginverseoperator.hh>
 #include <dune/fem/solver/oemsolver.hh>
 #include <dune/fem/operator/matrix/spmatrix.hh>
 
@@ -62,7 +62,7 @@ struct CheckGridEnabled
 {
   typedef Grid GridType;
 
-  typedef Dune::AdaptiveLeafGridPart< GridType > GridPartType;
+  typedef Dune::Fem::AdaptiveLeafGridPart< GridType > GridPartType;
   
   inline static int CallMain ( int argc, char **argv )
   {
@@ -78,6 +78,7 @@ int main ( int argc, char **argv )
 
 
 using namespace Dune;
+using namespace Fem;
 
 // Function, we will interpolate
 // -----------------------------
@@ -291,7 +292,7 @@ void interpolate( const Function &f, DiscreteFunctionType &solution )
 {
 #if 1
   std::cout << "Applying Lagrangeinterpolation:" << std::endl;
-  LagrangeInterpolation< DiscreteFunctionType > :: interpolateFunction( f, solution );
+  Fem::LagrangeInterpolation< Function, DiscreteFunctionType > :: interpolateFunction( f, solution );
 #else
   std::cout << "Applying L2-projection:" << std::endl;
   // define Laplace operator
@@ -446,7 +447,7 @@ try
   ExactSolutionType fexact;
   GridExactSolutionType f( "exact solution", fexact, gridPart, polOrder );
 
-  const bool locallyAdaptive = Dune::Parameter :: getValue< bool >("adapt.locallyadaptive", false ); 
+  const bool locallyAdaptive = Parameter :: getValue< bool >("adapt.locallyadaptive", false ); 
 
   interpolate( f, solution );
   for ( int r = 0; r < 4; ++r )

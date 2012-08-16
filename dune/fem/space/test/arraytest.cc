@@ -9,6 +9,8 @@ using namespace Dune;
 
 #include <dune/fem/space/common/arrays.hh>
 
+using namespace Fem;
+
 template <class Vector> 
 void checkVector( Vector& vector , const size_t rows, const size_t cols ) 
 {

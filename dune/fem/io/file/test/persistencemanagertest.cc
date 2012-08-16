@@ -7,6 +7,7 @@
 #include <dune/grid/io/file/dgfparser/dgfyasp.hh>
 
 using namespace Dune;
+using namespace Fem;
 using namespace std;
 
 /* A test class derived from PersistentObject

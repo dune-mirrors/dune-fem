@@ -26,8 +26,10 @@ static const int dimw = Dune::GridSelector::dimworld;
 #include <dune/fem/solver/timeprovider.hh>
 
 using namespace Dune;
-struct OutputParameters1 : 
-  public LocalParameter<DataOutputParameters,OutputParameters1> {
+using namespace Fem;
+
+struct OutputParameters1 
+: public LocalParameter<DataOutputParameters,OutputParameters1> {
   virtual ~OutputParameters1() {}
   //! path where the data is stored (path are always relative to fem.prefix)
   virtual std::string path() const {

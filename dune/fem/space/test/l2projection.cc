@@ -40,6 +40,7 @@ static const int dimw = Dune::GridSelector::dimworld;
 #endif
 
 using namespace Dune;
+using namespace Fem;
 
 // polynom approximation order of quadratures, 
 // at least polynom order of basis functions

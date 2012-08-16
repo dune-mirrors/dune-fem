@@ -76,21 +76,21 @@ public:
 // ----------------
 typedef Dune::GridSelector::GridType MyGridType;
 
-typedef Dune::LevelGridPart< MyGridType > GridPartType;
+typedef Dune::Fem::LevelGridPart< MyGridType > GridPartType;
 
 //! type of the function space
-typedef Dune::FunctionSpace< double, double, MyGridType::dimensionworld, 1 > FunctionSpaceType;
+typedef Dune::Fem::FunctionSpace< double, double, MyGridType::dimensionworld, 1 > FunctionSpaceType;
 
 //! type of the discrete function space our unkown belongs to
-typedef Dune::LagrangeDiscreteFunctionSpace< FunctionSpaceType, GridPartType, polOrder >
+typedef Dune::Fem::LagrangeDiscreteFunctionSpace< FunctionSpaceType, GridPartType, polOrder >
   DiscreteFunctionSpaceType;
 
 //! type of the discrete function we are using
-typedef Dune::AdaptiveDiscreteFunction< DiscreteFunctionSpaceType > DiscreteFunctionType;
+typedef Dune::Fem::AdaptiveDiscreteFunction< DiscreteFunctionSpaceType > DiscreteFunctionType;
 
 typedef ExactSolution< FunctionSpaceType > ExactSolutionType;
 
-typedef Dune::GridFunctionAdapter< ExactSolutionType, GridPartType > GridExactSolutionType;
+typedef Dune::Fem::GridFunctionAdapter< ExactSolutionType, GridPartType > GridExactSolutionType;
 
 
 
@@ -107,10 +107,10 @@ void algorithm ( MyGridType &grid, int level )
   DiscreteFunctionType fatherFunction( "father function", fatherSpace );
 
   GridExactSolutionType fatherExact( "father level exact solution", fExact, fatherGrid, polOrder+1 );
-  Dune::L2Norm< GridPartType > fatherL2norm( fatherGrid );
-  Dune::H1Norm< GridPartType > fatherH1norm( fatherGrid );
+  Dune::Fem::L2Norm< GridPartType > fatherL2norm( fatherGrid );
+  Dune::Fem::H1Norm< GridPartType > fatherH1norm( fatherGrid );
 
-  Dune::LagrangeInterpolation< DiscreteFunctionType >::interpolateFunction( fatherExact, fatherFunction );
+  Dune::Fem::LagrangeInterpolation< GridExactSolutionType, DiscreteFunctionType >::interpolateFunction( fatherExact, fatherFunction );
   double fatherL2error = fatherL2norm.distance( fatherExact, fatherFunction );
   double fatherH1error = fatherH1norm.distance( fatherExact, fatherFunction );
 
@@ -123,10 +123,10 @@ void algorithm ( MyGridType &grid, int level )
   DiscreteFunctionType sonFunction( "son function", sonSpace );
 
   GridExactSolutionType sonExact( "son level exact solution", fExact, sonGrid, polOrder+1 );
-  Dune::L2Norm< GridPartType > sonL2norm( sonGrid );
-  Dune::H1Norm< GridPartType > sonH1norm( sonGrid );
+  Dune::Fem::L2Norm< GridPartType > sonL2norm( sonGrid );
+  Dune::Fem::H1Norm< GridPartType > sonH1norm( sonGrid );
 
-  Dune::ProlongFunction< Dune::Fem::LagrangeLocalRestrictProlong< MyGridType, polOrder > > prolongFunction;
+  Dune::Fem::ProlongFunction< Dune::Fem::LagrangeLocalRestrictProlong< MyGridType, polOrder > > prolongFunction;
   prolongFunction( fatherFunction, sonFunction );
   double sonL2error = sonL2norm.distance( sonExact, sonFunction );
   double sonH1error = sonH1norm.distance( sonExact, sonFunction );
@@ -152,18 +152,18 @@ void algorithm ( MyGridType &grid, int level )
 int main ( int argc, char **argv )
 try
 {
-  Dune::MPIManager::initialize( argc, argv );
+  Dune::Fem::MPIManager::initialize( argc, argv );
 
   // append parameter
-  Dune::Parameter::append( argc , argv );
+  Dune::Fem::Parameter::append( argc , argv );
   std::string paramFile = "parameter";
   if( argc < 2 )
     std::cerr << "Usage: " << argv[ 0 ] << "<parameter>" << std::endl;
   else 
     paramFile = argv[ 1 ]; 
-  Dune::Parameter::append( paramFile );
+  Dune::Fem::Parameter::append( paramFile );
 
-  const int ml = Dune::Parameter::getValue< int >( "lagrangeglobalrefine.maxlevel", 2 );
+  const int ml = Dune::Fem::Parameter::getValue< int >( "lagrangeglobalrefine.maxlevel", 2 );
 
   std::ostringstream gridName;
   gridName << MyGridType::dimension << "dgrid.dgf";

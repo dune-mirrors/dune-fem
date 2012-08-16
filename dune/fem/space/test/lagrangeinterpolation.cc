@@ -36,6 +36,7 @@
 #endif
 
 using namespace Dune;
+using namespace Fem;
 
 // polynom approximation order of quadratures, 
 // at least poolynom order of basis functions 
@@ -399,7 +400,7 @@ double algorithm( MyGridType &grid, DiscreteFunctionType &solution, int turn )
   ExactSolution *f = new MyExactSolution;
   
   //! perform Lagrange interpolation
-  LagrangeInterpolation< DiscreteFunctionType >::interpolateFunction( *f, solution );
+  Fem::LagrangeInterpolation< ExactSolution, DiscreteFunctionType >::interpolateFunction( *f, solution );
 
   #if 0
   DiscreteGradientFunctionSpaceType discreteGradientFunctionSpace( part );
@@ -447,7 +448,7 @@ double algorithm( MyGridType &grid, DiscreteFunctionType &solution, int turn )
 int main (int argc, char **argv)
 try
 {
-  Dune::MPIManager::initialize( argc, argv );
+  MPIManager::initialize( argc, argv );
 
   std :: cout << "L2 projection test for polynomial order " << polOrder
               << std :: endl;
@@ -472,7 +473,7 @@ try
 
   for( int i = 0; i < ml; ++i )
   {
-    Dune::GlobalRefine::apply( grid, step );
+    Dune::Fem::GlobalRefine::apply( grid, step );
 
     DiscreteFunctionSpaceType discreteFunctionSpace( gridPart );
     DiscreteFunctionType solution( "sol", discreteFunctionSpace );

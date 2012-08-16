@@ -85,7 +85,7 @@ int main(int argc, char ** argv)
     projection(solution,contSolution);
 
     LagrangeFunctionType lagrangeSolution("lagrangeSolution",lagspace);
-    LagrangeInterpolation< LagrangeFunctionType >
+    Fem::LagrangeInterpolation< ExactSolutionType, LagrangeFunctionType >
       :: interpolateFunction( exactSolution, lagrangeSolution );
     #if 0
     LagrangeType lagrangeContSolution("lagrnageContSolution",lagspace);

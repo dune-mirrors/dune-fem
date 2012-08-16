@@ -8,6 +8,7 @@
 #include <dune/fem/space/common/functionspace.hh>
 
 using namespace Dune;
+using namespace Fem;
 
 typedef FunctionSpace<double,double,1,1> SpaceType;
 typedef SpaceType :: DomainFieldType DomainFieldType; 

@@ -17,7 +17,10 @@ const int dimension = GRIDDIM;
 using namespace Dune;
 using namespace Fem;
 
-int main() {
+int main( int argc, char **argv  )
+{
+  MPIManager::initialize( argc, argv );
+
   Suite passSuite("Test suite for pass implementation");
 
   std::stringstream filename;

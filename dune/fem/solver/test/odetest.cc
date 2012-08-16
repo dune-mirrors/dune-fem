@@ -16,6 +16,7 @@
 
 
 using namespace Dune;
+using namespace Fem;
 using namespace DuneODE;
 using namespace std;
 
@@ -96,7 +97,7 @@ private:
 
 int main( int argc, char ** argv )
 {
-  Dune::MPIManager::initialize( argc, argv );
+  Dune::Fem::MPIManager::initialize( argc, argv );
 
   // problem data
   const double initialData = 1.0;

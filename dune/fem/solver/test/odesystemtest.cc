@@ -16,6 +16,7 @@
 
 
 using namespace Dune;
+using namespace Fem;
 using namespace DuneODE;
 using namespace std;
 
@@ -92,7 +93,9 @@ private:
 };
 
 
-int main() {
+int main( int argc, char **argv ) 
+{
+  MPIManager::initialize( argc, argv );
   // problem data
   const double initialData = 1.0;
   const double startTime = -2.0;
@@ -115,7 +118,7 @@ int main() {
 
   // initialize solution vector, same initial data for all components
   DestinationType U;
-  for (int i=0; i<U.size(); i++)
+  for (unsigned int i=0; i<U.size(); i++)
     U[i] = initialData;
 
   // initialize odesolver

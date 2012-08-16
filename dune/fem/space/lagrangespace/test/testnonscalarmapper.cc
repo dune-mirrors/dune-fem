@@ -155,8 +155,7 @@ int main( int argc, char **argv )
               phi = global;
 #endif
 
-              solutionLocal.baseFunctionSet().evaluate( localDof, local, phiLocal );
-              const double value = ( phiLocal * phi ) / phiLocal.two_norm();
+              const double value = phi[ i ];
 
               solutionLocal[localDof] = value;
             }

@@ -17,8 +17,8 @@ namespace Dune
       ProductDiscreteFunction(const DiscreteFunctionSpaceType& f, const DiscreteFunctionSpace2Type& f2) :
         // DiscreteFunctionDefaultType ( f ), 
         name_ ("no name"),
-        functionSpace_(f),
-        functionSpace2_ (f2),
+        functionSpace_( f ),
+        functionSpace2_( f2 ),
         dofVec_ ( f.size() * f2.size() )
     {
        // std::cout << "Size old = " << dofVec_.size() << "  Size  f2 = " << functionSpace2_.size();

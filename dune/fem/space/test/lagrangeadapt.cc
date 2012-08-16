@@ -58,7 +58,7 @@ struct CheckGridEnabled
 {
   typedef Grid GridType;
 
-  typedef Dune::AdaptiveLeafGridPart< GridType > GridPartType;
+  typedef Dune::Fem::AdaptiveLeafGridPart< GridType > GridPartType;
   
   inline static int CallMain ( int argc, char **argv )
   {
@@ -78,7 +78,7 @@ struct CheckGridEnabled< Dune :: YaspGrid< dim > >
 {
   typedef Dune :: YaspGrid< dim > GridType;
   
-  typedef Dune :: LeafGridPart< GridType > GridPartType;
+  typedef Dune :: Fem :: LeafGridPart< GridType > GridPartType;
 
   inline static int CallMain ( int argc, char **argv )
   {
@@ -96,6 +96,7 @@ int main ( int argc, char **argv )
 
 
 using namespace Dune;
+using namespace Fem;
 
 // Function, we will interpolate
 // -----------------------------
@@ -245,7 +246,7 @@ void algorithm ( GridPartType &gridPart,
   L2Norm< GridPartType > l2norm( gridPart );
   H1Norm< GridPartType > h1norm( gridPart );
   
-  LagrangeInterpolation< DiscreteFunctionType > :: interpolateFunction( f, solution );
+  Fem::LagrangeInterpolation< GridExactSolutionType, DiscreteFunctionType > :: interpolateFunction( f, solution );
   double preL2error = l2norm.distance( f, solution );
   double preH1error = h1norm.distance( f, solution );
 
@@ -276,7 +277,7 @@ void algorithm ( GridPartType &gridPart,
     }
   #endif
 
-  LagrangeInterpolation< DiscreteFunctionType > :: interpolateFunction( f, solution );
+    Fem::LagrangeInterpolation< GridExactSolutionType, DiscreteFunctionType > :: interpolateFunction( f, solution );
   double newL2error = l2norm.distance( f, solution );
   double newH1error = h1norm.distance( f, solution );
 
@@ -340,7 +341,7 @@ try
   DiscreteFunctionType solution( "solution", discreteFunctionSpace );
   solution.clear();
 
-  const bool locallyAdaptive = Dune::Parameter :: getValue< bool >("adapt.locallyadaptive", false );
+  const bool locallyAdaptive = Parameter :: getValue< bool >("adapt.locallyadaptive", false );
 
   std :: cout << std :: endl << "Refining: " << std :: endl;
   for( int i = 0; i < ml; ++i )

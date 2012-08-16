@@ -11,6 +11,7 @@
 #include <dune/fem/io/streams/sionlibstreams.hh>
 
 using namespace Dune;
+using namespace Fem;
 
 
 

@@ -28,6 +28,8 @@ using namespace Dune;
 #include <dune/fem/io/file/binarydataio.hh>
 #include <dune/fem/io/parameter.hh>
 
+using namespace Fem;
+
 // polynom approximation order of quadratures, 
 // at least poolynom order of basis functions 
 const int polOrd = POLORDER;

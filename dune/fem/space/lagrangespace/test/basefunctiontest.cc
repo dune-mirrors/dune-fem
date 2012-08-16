@@ -1,7 +1,7 @@
 #include "basefunctiontest.hh"
 
 // #include <dune/grid/io/file/dgfparser/dgfgridtype.hh>
-#include <dune/fem/gridpart/gridpart.hh>
+#include <dune/fem/gridpart/common/gridpart.hh>
 #include <dune/fem/space/lagrangespace.hh>
 
 namespace Dune 
@@ -76,23 +76,25 @@ namespace Dune
       for(IteratorType it = space.begin(); it != end; ++it)
       {
         const BaseFunctionSetType& baseSet = space.baseFunctionSet( *it );
-        const int numBaseFct = baseSet.numBaseFunctions();
+        const int numBaseFct = baseSet.size();
 
         const LagrangePointSetType& pointSet = space.lagrangePointSet( *it );
         const int numPoints = pointSet.size();
-       
+      
+        std::vector< RangeType > phi( numPoints, RangeType( 0 ) );
+          
         for( int i = 0; i < numPoints; ++i ) 
         {
-          RangeType phi( 0.0 );
          
           const DomainType& x = pointSet.point( i );
          
-          // evaluate on lagrange point 
-          baseSet.evaluate( i , x , phi ); 
-          if( std :: abs( phi[ 0 ] - 1.0 ) >= 1e-10 )
+          // evaluate all baseFunctions on lagrange point i
+          baseSet.evaluateAll( x, phi );
+
+          if( std :: abs( phi[ i ][ 0 ] - 1.0 ) >= 1e-10 )
           {
             std :: cout << "Base function " << i << " failed at " << x
-                        << " (" << phi[ 0 ] << " != 1)!" << std :: endl;
+                        << " (" << phi[ i ][ 0 ] << " != 1)!" << std :: endl;
             ++errors;
           }
           
@@ -102,11 +104,10 @@ namespace Dune
               continue;
 
             // evaluate on lagrange point 
-            baseSet.evaluate( j , x, phi ); 
-            if( std :: abs( phi[ 0 ] ) >= 1e-10 )
+            if( std :: abs( phi[ j ][ 0 ] ) >= 1e-10 )
             {
               std :: cout << "Base function " << j << " failed at " << x
-                          << " (" << phi[ 0 ] << " != 0)!" << std :: endl;
+                          << " (" << phi[ j ][ 0 ] << " != 0)!" << std :: endl;
               ++errors;
             }
           }
