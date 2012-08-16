@@ -30,7 +30,7 @@ namespace Dune
   protected:
     struct Error;
 
-    typedef LocalFunctionAdapter< Error > ErrorFunctionType;
+    typedef Fem::LocalFunctionAdapter< Error > ErrorFunctionType;
     
   public:
     template< class GrapeDispType >
@@ -206,7 +206,7 @@ namespace Dune
     };
     /** \endcond */
 
-    typedef LocalFunctionAdapter< Error > ErrorFunctionType;
+    typedef Fem::LocalFunctionAdapter< Error > ErrorFunctionType;
     typedef Fem::GridFunctionAdapter< SolutionType, GridPartType >
       GridSolutionType;
     
