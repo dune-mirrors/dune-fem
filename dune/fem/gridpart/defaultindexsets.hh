@@ -152,7 +152,7 @@ namespace Dune
         }
       };
 
-      static const bool hasHierarchicIndexSet = Capabilities::hasHierarchicIndexSet< Grid >::v;
+      static const bool hasHierarchicIndexSet = Dune::Fem::Capabilities::hasHierarchicIndexSet< Grid >::v;
       typedef typename SelectType< hasHierarchicIndexSet, HierarchicIndexSetGetter< true >, LeafIndexSetGetter< false > >::Type IndexSetGetter;
       
     public: 
