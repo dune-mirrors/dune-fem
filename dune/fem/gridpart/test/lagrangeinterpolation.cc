@@ -39,7 +39,7 @@ using namespace Dune;
   typedef Dune :: GridSelector :: GridType MyGridType;
 
   // typedef AdaptiveLeafGridPart< MyGridType > HostGridPartType;
-  typedef LeafGridPart< MyGridType > HostGridPartType;
+  typedef Fem::LeafGridPart< MyGridType > HostGridPartType;
   typedef Fem::RadialFilter< MyGridType::ctype, MyGridType::dimensionworld > BasicFilterType;
   typedef Fem::BasicFilterWrapper< HostGridPartType, BasicFilterType > FilterType;
   typedef Fem::FilteredGridPart< HostGridPartType, FilterType, true > GridPartType;
@@ -56,13 +56,13 @@ using namespace Dune;
 
 
 
-  void writeOut ( VirtualOutStream out, const DiscreteFunctionType &solution )
+  void writeOut ( Fem::VirtualOutStream out, const DiscreteFunctionType &solution )
   {
     out << solution;
     out.flush();
   }
 
-  void readBack ( VirtualInStream in, DiscreteFunctionType &solution )
+  void readBack ( Fem::VirtualInStream in, DiscreteFunctionType &solution )
   {
     solution.clear();
     in >> solution;
@@ -116,7 +116,7 @@ using namespace Dune;
 
   int main(int argc, char ** argv) 
   {
-    MPIManager :: initialize( argc, argv );
+    Dune::Fem::MPIManager :: initialize( argc, argv );
     try
     {
       MyGridType &grid = TestGrid<MyGridType> :: grid();
@@ -138,12 +138,12 @@ using namespace Dune;
       std :: cout << "maxDofs = " << discreteFunctionSpace.mapper().maxNumDofs() << std :: endl;
 
       //! perform Lagrange interpolation
-      LagrangeInterpolation< DiscreteFunctionType >
+      Fem::LagrangeInterpolation< ExactSolutionType, DiscreteFunctionType >
         :: interpolateFunction( f, solution );
       solution.communicate();
 
       // output to vtk file
-      VTKIO<GridPartType> vtkWriter(gridPart);
+      Fem::VTKIO<GridPartType> vtkWriter(gridPart);
       vtkWriter.addVertexData(solution);
       vtkWriter.pwrite("vtxprojection",
                         Parameter::commonOutputPath().c_str(),"",
