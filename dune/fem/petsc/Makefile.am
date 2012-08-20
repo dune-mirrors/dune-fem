@@ -1,4 +1,4 @@
-SUBDIRS = common discretefunction experiments linearoperator solver tests 
+SUBDIRS = experiments tests 
 
 petscdir = $(includedir)/dune/fem/petsc
 

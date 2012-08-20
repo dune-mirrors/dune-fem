@@ -63,6 +63,7 @@ AC_CONFIG_FILES([Makefile
      dune/fem/function/vectorfunction/Makefile
      dune/fem/function/blockvectors/Makefile
      dune/fem/function/blockvectordiscretefunction/Makefile
+     dune/fem/function/petscdiscretefunction/Makefile
      dune/fem/operator/Makefile
      dune/fem/operator/common/Makefile
      dune/fem/operator/common/test/Makefile
@@ -78,11 +79,7 @@ AC_CONFIG_FILES([Makefile
      dune/fem/petsc/experiments/Makefile
      dune/fem/petsc/experiments/commtest/Makefile
      dune/fem/petsc/experiments/parallel_laplace/Makefile
-     dune/fem/petsc/linearoperator/Makefile
-     dune/fem/petsc/common/Makefile
-     dune/fem/petsc/discretefunction/Makefile
      dune/fem/petsc/Makefile
-     dune/fem/petsc/solver/Makefile
      dune/fem/io/Makefile
      dune/fem/io/test/Makefile
      dune/fem/io/file/Makefile
@@ -100,6 +97,7 @@ AC_CONFIG_FILES([Makefile
      dune/fem/solver/ode/Makefile 
      dune/fem/solver/oemsolver/Makefile 
      dune/fem/misc/Makefile
+     dune/fem/misc/petsc/Makefile
      dune/fem/storage/Makefile
      dune/fem/test/Makefile
      dune/fem/gridpart/Makefile
