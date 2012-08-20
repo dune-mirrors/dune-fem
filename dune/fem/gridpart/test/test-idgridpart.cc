@@ -5,11 +5,7 @@
 
 #include <dune/common/exceptions.hh>
 
-#if HAVE_DUNE_GEOMETRY
 #include <dune/geometry/referenceelements.hh>
-#else
-#include <dune/grid/common/genericreferenceelements.hh>
-#endif
 
 #include <dune/fem/gridpart/adaptiveleafgridpart.hh>
 #include <dune/fem/gridpart/hierarchicgridpart.hh>

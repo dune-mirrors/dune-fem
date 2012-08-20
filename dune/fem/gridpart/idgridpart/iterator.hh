@@ -2,11 +2,7 @@
 #define DUNE_FEM_GRIDPART_IDGRIDPART_ITERATOR_HH
 
 #include <dune/grid/common/entityiterator.hh>
-#if HAVE_DUNE_GEOMETRY
 #include <dune/geometry/referenceelements.hh>
-#else
-#include <dune/grid/common/genericreferenceelements.hh>
-#endif
 
 #include <dune/fem/gridpart/idgridpart/entitypointer.hh>
 

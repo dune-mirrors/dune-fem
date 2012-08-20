@@ -1,11 +1,7 @@
 #ifndef DUNE_REFELEM_TEST_HH
 #define DUNE_REFELEM_TEST_HH
 
-#if HAVE_DUNE_GEOMETRY
 #include <dune/geometry/type.hh>
-#else
-#include <dune/common/geometrytype.hh>
-#endif
 #include <dune/common/fvector.hh>
 
 #include <dune/fem/misc/test.hh>

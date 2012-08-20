@@ -4,11 +4,7 @@
 #include <cassert>
 
 #include <dune/common/fvector.hh>
-#if HAVE_DUNE_GEOMETRY
 #include <dune/geometry/type.hh>
-#else
-#include <dune/common/geometrytype.hh>
-#endif
 
 #include <dune/fem/version.hh>
 
