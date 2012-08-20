@@ -45,12 +45,12 @@ using namespace Dune;
   typedef Fem::FilteredGridPart< HostGridPartType, FilterType, true > GridPartType;
   // typedef AdaptiveLeafGridPart< MyGridType > GridPartType;
 
-  typedef FunctionSpace< double, double, MyGridType::dimensionworld, 1 > FunctionSpaceType;
+  typedef Fem::FunctionSpace< double, double, MyGridType::dimensionworld, 1 > FunctionSpaceType;
 
-  typedef LagrangeDiscreteFunctionSpace< FunctionSpaceType, GridPartType, polOrder >
+  typedef Fem::LagrangeDiscreteFunctionSpace< FunctionSpaceType, GridPartType, polOrder >
     DiscreteFunctionSpaceType;
 
-  typedef AdaptiveDiscreteFunction< DiscreteFunctionSpaceType > DiscreteFunctionType;
+  typedef Fem::AdaptiveDiscreteFunction< DiscreteFunctionSpaceType > DiscreteFunctionType;
 
   typedef ExactSolution< FunctionSpaceType > ExactSolutionType;
 
@@ -146,7 +146,7 @@ using namespace Dune;
       Fem::VTKIO<GridPartType> vtkWriter(gridPart);
       vtkWriter.addVertexData(solution);
       vtkWriter.pwrite("vtxprojection",
-                        Parameter::commonOutputPath().c_str(),"",
+                        Fem::Parameter::commonOutputPath().c_str(),"",
                         Dune::VTK::ascii);
       return 0;
     }
