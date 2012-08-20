@@ -93,7 +93,7 @@ AC_DEFUN([DUNE_PATH_FEM_PETSC],[
       PETSC_INCLUDE_PATH="$with_petsc/$include_path"
                   
       PETSC_LIBS="-lpetsc $LAPACK_LIBS $BLAS_LIBS -lX11 $DUNEMPILIBS"
-      PETSC_LDFLAGS="-L$PETSC_LIB_PATH $DUNEMPILDFLAGS"
+      PETSC_LDFLAGS="-L$PETSC_LIB_PATH $DUNEMPILDFLAGS -Wl,--rpath -Wl,$with_petsc/$lib_path"
 
       # set variables so that tests can use them
       CPPFLAGS="$CPPFLAGS -I$PETSC_INCLUDE_PATH $DUNEMPICPPFLAGS"
