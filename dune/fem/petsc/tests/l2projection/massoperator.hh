@@ -16,10 +16,10 @@
 
 #if defined HAVE_PETSC
 
-#include <dune/fem/petsc/linearoperator/petsclinearoperator.hh>
+#include <dune/fem/operator/common/petsclinearoperator.hh>
 
 class VariableFilenameParameter
-: public Dune::DataOutputParameters 
+: public Dune::Fem::DataOutputParameters 
 {
 
 public:
@@ -51,9 +51,9 @@ public:
   typedef DiscreteFunction DiscreteFunctionType;
   typedef typename DiscreteFunctionType::DiscreteFunctionSpaceType
     DiscreteFunctionSpaceType;
-  typedef Dune::DofManager< typename DiscreteFunctionSpaceType::GridType > DofManagerType;
+  typedef Dune::Fem::DofManager< typename DiscreteFunctionSpaceType::GridType > DofManagerType;
   
-  typedef Dune::CachingQuadrature< typename DiscreteFunctionSpaceType::GridPartType, 0 >
+  typedef Dune::Fem::CachingQuadrature< typename DiscreteFunctionSpaceType::GridPartType, 0 >
     QuadratureType;
 
   #if PETSCLINEAROPERATOR == 1
@@ -61,7 +61,7 @@ public:
       LinearOperatorType;
     #warning using PetscLinearOperator as linear operator
   #else
-    typedef Dune::SparseRowMatrixObject
+    typedef Dune::Fem::SparseRowMatrixObject
       < DiscreteFunctionSpaceType, DiscreteFunctionSpaceType, MatrixTraits >
       LinearOperatorType;
     #warning using SparseRowMatrixObject as linear operator
@@ -102,7 +102,7 @@ struct MassOperator< DiscreteFunction >::MatrixTraits
 
   typedef Dune::LagrangeMatrixSetup< false > StencilType;
 
-  typedef Dune::ParallelScalarProduct< DiscreteFunctionSpaceType >
+  typedef Dune::Fem::ParallelScalarProduct< DiscreteFunctionSpaceType >
     ParallelScalarProductType;
 };
 
@@ -121,10 +121,10 @@ void MassOperator< DiscreteFunction >
   typedef typename IteratorType::Entity EntityType;
   typedef typename EntityType::Geometry GeometryType;
 
-  typedef ::Dune::L2Norm< typename DiscreteFunctionType::GridPartType > L2NormType;
+  typedef ::Dune::Fem::L2Norm< typename DiscreteFunctionType::GridPartType > L2NormType;
 
   typedef Dune::tuple< DiscreteFunction* > IOTupleType;
-  typedef Dune::DataOutput< Dune::GridSelector::GridType, IOTupleType > DataOutputType;
+  typedef Dune::Fem::DataOutput< Dune::GridSelector::GridType, IOTupleType > DataOutputType;
 
   w.clear();
 

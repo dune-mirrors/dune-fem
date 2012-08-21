@@ -28,7 +28,7 @@
 #include <dune/fem/io/file/dataoutput.hh>
 #include <dune/fem/io/file/datawriter.hh>
 
-#include <dune/fem/petsc/common/petsccommon.hh>
+#include <dune/fem/misc/petsc/petsccommon.hh>
 
 
 /* #########################################
@@ -56,23 +56,23 @@ template< class HGridType > /*@LST0S@*/
 Dune::GridPtr< HGridType > initialize ( const std::string &problemDescription )
 {
   // ----- read in runtime parameters ------
-  const std::string filekey = Dune::IOInterface::defaultGridKey( HGridType::dimension );
-  const std::string filename = Dune::Parameter::getValue< std::string >( filekey ); /*@\label{base:param0}@*/
+  const std::string filekey = Dune::Fem::IOInterface::defaultGridKey( HGridType::dimension );
+  const std::string filename = Dune::Fem::Parameter::getValue< std::string >( filekey ); /*@\label{base:param0}@*/
 
   // initialize grid
   Dune::GridPtr< HGridType > gridptr(filename);
-  Dune::Parameter::appendDGF( filename );
+  Dune::Fem::Parameter::appendDGF( filename );
 
   // output of error and eoc information
-  std::string eocOutPath = Dune::Parameter::getValue<std::string>("femhowto.eocOutputPath",  /*@\label{base:param1}@*/
+  std::string eocOutPath = Dune::Fem::Parameter::getValue<std::string>("femhowto.eocOutputPath",  /*@\label{base:param1}@*/
                                                             std::string("."));
   std::string eocFile = eocOutPath + std::string("/eoc.tex");
-  Dune::FemEoc::initialize(eocOutPath, "eoc", problemDescription); /*@\label{base:femeocInit}@*/
+  Dune::Fem::FemEoc::initialize(eocOutPath, "eoc", problemDescription); /*@\label{base:femeocInit}@*/
 
   // and refine the grid until the startLevel is reached
-  const int startLevel = Dune::Parameter::getValue<int>("femhowto.startLevel", 0);
+  const int startLevel = Dune::Fem::Parameter::getValue<int>("femhowto.startLevel", 0);
   for(int level=0; level < startLevel ; ++level)
-    Dune::GlobalRefine::apply(*gridptr, 1 ); /*@\label{base:globalRefine1}@*/
+    Dune::Fem::GlobalRefine::apply(*gridptr, 1 ); /*@\label{base:globalRefine1}@*/
   return gridptr;
 } /*@LST0E@*/
 
@@ -92,14 +92,14 @@ void compute(Algorithm& algorithm)
 
 
   // get some parameters
-  const int eocSteps   = Dune::Parameter::getValue<int>("femhowto.eocSteps", 1);
+  const int eocSteps   = Dune::Fem::Parameter::getValue<int>("femhowto.eocSteps", 1);
 
   // Initialize the DataOutput that writes the solution on the harddisk in a
   // format readable by e.g. Paraview
   // in each loop for the eoc computation the results at
   // the final time is stored
   typedef Dune::tuple< DiscreteFunctionType* > IOTupleType;
-  typedef Dune::DataOutput<HGridType, IOTupleType> DataOutputType;
+  typedef Dune::Fem::DataOutput<HGridType, IOTupleType> DataOutputType;
 
   const unsigned int femTimerId = Dune::FemTimer::addTo("timestep");
   for(int eocloop=0; eocloop < eocSteps; ++eocloop)
@@ -134,18 +134,18 @@ void compute(Algorithm& algorithm)
     algorithm.finalize(u); /*@\label{base:finalize}@*/
 
     // calculate grid width
-    const double h = Dune::GridWidth::calcGridWidth(gridPart);
+    const double h = Dune::Fem::GridWidth::calcGridWidth(gridPart);
 
-    if( Dune::Parameter :: verbose() )
-      Dune::FemEoc::write(h,grid.size(0),runTime,0, std::cout);
+    if( Dune::Fem::Parameter :: verbose() )
+      Dune::Fem::FemEoc::write(h,grid.size(0),runTime,0, std::cout);
     else
-      Dune::FemEoc::write(h,grid.size(0),runTime,0);
+      Dune::Fem::FemEoc::write(h,grid.size(0),runTime,0);
 
     // Refine the grid for the next EOC Step. If the scheme uses adaptation,
     // the refinement level needs to be set in the algorithms' initialize method.
     if(eocloop < eocSteps-1)
     {
-      Dune::GlobalRefine::apply(grid,Dune::DGFGridInfo<HGridType>::refineStepsForHalf()); /*@\label{base:globalRefine2}@*/
+      Dune::Fem::GlobalRefine::apply(grid,Dune::DGFGridInfo<HGridType>::refineStepsForHalf()); /*@\label{base:globalRefine2}@*/
       grid.loadBalance();
     }
   } /***** END of EOC Loop *****/
