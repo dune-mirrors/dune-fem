@@ -1038,14 +1038,60 @@ namespace Dune
       double *null = (double *) NULL ;
       void *Symbolic, *Numeric;
 
-      // call solver 
-      umfpack_di_symbolic (n, m, Ap, Ai, Ax, &Symbolic, null, null) ;
-      umfpack_di_numeric (Ap, Ai, Ax, Symbolic, &Numeric, null, null) ;
+      int status;
+      // symbolic analysis 
+      status = umfpack_di_symbolic(n, n, Ap, Ai, Ax, &Symbolic, NULL, NULL);
+      if (status != UMFPACK_OK) 
+      {
+        if (status == UMFPACK_WARNING_singular_matrix)
+          fprintf(stderr, "matrix is singluar!\n");
+        else if(status == UMFPACK_ERROR_invalid_matrix)
+          fprintf(stderr, "Number of entries in the matrix is negative, Ap [0] is nonzero, a column has a negative number of entries, a row index is out of bounds, or the columns of input matrix were jumbled (unsorted columns or duplicate entries).\n");
+        else if(status == UMFPACK_ERROR_out_of_memory)
+          fprintf(stderr, "Insufficient memory to perform the symbolic analysis.  If the analysis requires more than 2GB of memory and you are using the 32-bit (\"int\") version of UMFPACK, then you are guaranteed   to run out of memory.  Try using the 64-bit version of UMFPACK.\n");
+        else if(status == UMFPACK_ERROR_argument_missing)
+          fprintf(stderr, "One or more required arguments is missing.\n");
+        else if(status == UMFPACK_ERROR_internal_error)
+          fprintf(stderr, "omething very serious went wrong.  This is a bug.  Please contact the author (DrTimothyAldenDavis@gmail.com).\n");
+        else
+          fprintf(stderr, "umfpack_di_numeric() failed, %d\n", status);
+      }
+      // numeric analysis 
+      status = umfpack_di_numeric(Ap, Ai, Ax, Symbolic, &Numeric, NULL, NULL);
+      if (status != UMFPACK_OK) {
+        if (status == UMFPACK_WARNING_singular_matrix)
+          fprintf(stderr, "matrix is singluar!\n");
+        else if(status == UMFPACK_ERROR_invalid_matrix)
+          fprintf(stderr, "Number of entries in the matrix is negative, Ap [0] is nonzero, a column has a negative number of entries, a row index is out of bounds, or the columns of input matrix were jumbled (unsorted columns or duplicate entries).\n"); 
+        else if(status == UMFPACK_ERROR_out_of_memory)
+          fprintf(stderr, "Insufficient memory to perform the symbolic analysis.  If the analysis requires more than 2GB of memory and you are using the 32-bit (\"int\") version of UMFPACK, then you are guaranteed     to run out of memory.  Try using the 64-bit version of UMFPACK.\n");
+        else if(status == UMFPACK_ERROR_argument_missing)
+          fprintf(stderr, "One or more required arguments is missing.\n");
+        else if(status == UMFPACK_ERROR_internal_error)
+          fprintf(stderr, "omething very serious went wrong.  This is a bug. Please contact the author (DrTimothyAldenDavis@gmail.com).\n");
+        else
+          fprintf(stderr, "umfpack_di_numeric() failed, %d\n", status);
+      }
       umfpack_di_free_symbolic (&Symbolic) ;
 
+      // solve Ax = b 
       // solve A^T x = b (since UMFPACK needs column wise storage, we got
       // row wise storage ) 
-      umfpack_di_solve (UMFPACK_At, Ap, Ai, Ax, x, b, Numeric, null, null) ;
+      status = umfpack_di_solve(UMFPACK_A, Ap, Ai, Ax, x, b, Numeric, NULL, NULL);
+      if (status != UMFPACK_OK) {
+        if (status == UMFPACK_WARNING_singular_matrix)
+          fprintf(stderr, "matrix is singluar!\n");
+        else if(status == UMFPACK_ERROR_invalid_matrix)
+          fprintf(stderr, "Number of entries in the matrix is negative, Ap [0] is nonzero, a column has a negative number of entries, a row index is out of bounds, or the columns of input matrix were jumbled (unsorted columns or duplicate entries).\n");
+        else if(status == UMFPACK_ERROR_out_of_memory)
+          fprintf(stderr, "Insufficient memory to perform the symbolic analysis.  If the analysis requires more than 2GB of memory and you are using the 32-bit (\"int\") version of UMFPACK, then you are guaranteed     to run out of memory.  Try using the 64-bit version of UMFPACK.\n");
+        else if(status == UMFPACK_ERROR_argument_missing)
+          fprintf(stderr, "One or more required arguments is missing.\n");
+        else if(status == UMFPACK_ERROR_internal_error)
+          fprintf(stderr, "omething very serious went wrong.  This is a bug.  Please contact the author (DrTimothyAldenDavis@gmail.com).\n");
+        else
+          fprintf(stderr, "umfpack_di_numeric() failed, %d\n", status);
+      }
       umfpack_di_free_numeric (&Numeric) ;
 
       // delete temp memory 
