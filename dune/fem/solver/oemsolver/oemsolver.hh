@@ -935,10 +935,12 @@ namespace Dune
     //
     /////////////////////////////////////////////////////////////////
     // \brief GMRES implementation from Dennis D.
-    template <class DiscreteFunctionType, class OperatorType>
+    template <class DiscreteFunctionType, class OperatorImp>
     class GMRESOp : public Operator<
                 DiscreteFunctionType,DiscreteFunctionType> 
     {
+    public:
+      typedef OperatorImp OperatorType;
     private:
       typedef OEMSolver :: FakeConditioner FakeConditioner;
 
@@ -1094,11 +1096,12 @@ namespace Dune
       }
     };
 
-    template <class DiscreteFunctionType, class OperatorType>
+    template <class DiscreteFunctionType, class OperatorImp>
     class FGMRESOp : public Operator<
                 DiscreteFunctionType,DiscreteFunctionType> 
     {
-
+    public:
+      typedef OperatorImp OperatorType;
     private:
       typedef OEMSolver :: FakeConditioner FakeConditionerType;
 
@@ -1247,10 +1250,12 @@ namespace Dune
       \interface
       \brief BICG-stab implementation from Dennis D.
     */
-    template <class DiscreteFunctionType, class OperatorType>
+    template <class DiscreteFunctionType, class OperatorImp>
     class BICGSTABOp : public Operator<
                 DiscreteFunctionType,DiscreteFunctionType> 
     {
+    public:
+      typedef OperatorImp OperatorType;
     private:
       template <class SolverType, bool hasPreconditioning> 
       struct SolverCaller 
