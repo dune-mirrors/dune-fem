@@ -219,35 +219,34 @@ namespace Dune
       assert( row >= 0 );
       assert( row < dim_[0] );
 
-      int whichCol = defaultCol;
-      int thisCol = 0;
-      for(int i=firstCol; i<nz_; ++i)
-      {
-        thisCol = col_[row*nz_ +i];
-        if(col == thisCol) return i;
-        if(thisCol == defaultCol ) 
-        {
-          ++nonZeros_[row];
-          return i;
-        }
+      int i = 0;
+      while ( i < nz_ && col_[row*nz_+i] < col && col_[row*nz_+i] != defaultCol )
+        ++i;
+      if (col_[row*nz_+i] == col) 
+        return i;  // column already in matrix
+      else if ( col_[row*nz_+i] == defaultCol ) 
+      { // add this column at end of this row
+        ++nonZeros_[row];
+        return i;
       }
-      
-#ifndef NDEBUG 
-#if 0
-      if(whichCol == defaultCol ) 
+      else
       {
-        std::cout << "Writing colIndex for, nz = " << nz_ <<  " , " << col << "\n";
-        for(int i=firstCol; i<nz_; ++i) 
-        {
-          std::cout << col_[row*nz_ +i] << " ";
+        ++nonZeros_[row];
+        // must shift this row to add col at the position i
+        int j = nz_-1; // last column
+        if (col_[row*nz_+j] != defaultCol) 
+        { // new space available - so resize 
+          resize( rows(), cols(), (2 * nz_) );
         }
-        std::cout << std::endl;
+        for (;j>i;--j)
+        {
+          col_[row*nz_+j] = col_[row*nz_+j-1];
+          values_[row*nz_+j] = values_[row*nz_+j-1];
+        }
+        col_[row*nz_+i] = col;
+        values_[row*nz_+i] = 0;
+        return i;
       }
-#endif
-#endif
-
-      if (checkNonConstMethods) assert(checkConsistency());
-      return whichCol;
     }
 
     template <class T> 
@@ -405,11 +404,6 @@ namespace Dune
       assert((row>=0) && (row <= dim_[0]));
 
       int whichCol = colIndex(row,col);
-      if( whichCol == defaultCol ) 
-      {
-        resize( rows(), cols(), (2 * nz_) );
-        whichCol = colIndex(row,col);
-      } 
       assert( whichCol != defaultCol );
 
       {
@@ -426,11 +420,6 @@ namespace Dune
     {
       if (checkNonConstMethods) assert(checkConsistency());
       int whichCol = colIndex(row,col);
-      if( whichCol == defaultCol ) 
-      {
-        resize( rows(), cols(), (2 * nz_) );
-        whichCol = colIndex(row,col);
-      } 
       assert( whichCol != defaultCol );
       values_[row*nz_ + whichCol] += val; 
       col_[row*nz_ + whichCol] = col;
@@ -442,16 +431,9 @@ namespace Dune
     {
       if (checkNonConstMethods) assert(checkConsistency());
       int whichCol = colIndex(row,col);
-      
-      if(whichCol == defaultCol )
-      {
-        std::cout << " error \n";
-      }
-      else
-      {
-        values_[row*nz_ + whichCol] *= val; 
-        col_[row*nz_ + whichCol] = col;
-      }
+      assert( whichCol != defaultCol );
+      values_[row*nz_ + whichCol] *= val; 
+      col_[row*nz_ + whichCol] = col;
       if (checkNonConstMethods) assert(checkConsistency());
     }
     /***************************************/
