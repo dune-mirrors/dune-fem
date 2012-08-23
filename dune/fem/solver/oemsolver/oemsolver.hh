@@ -947,16 +947,16 @@ namespace Dune
       template <class SolverType, bool hasPreconditioning> 
       struct SolverCaller 
       {
-        template< class OperatorImp, class PreConMatrix, class DiscreteFunctionImp > 
+        template< class OperatorImpA, class PreConMatrix, class DiscreteFunctionImp > 
         static void solve(SolverType & solver, 
-                   OperatorImp & op, 
+                   OperatorImpA & op, 
                    const PreConMatrix & pm, 
                    const DiscreteFunctionImp & arg, 
                    DiscreteFunctionImp & dest) 
         {
           int size = arg.space().size();
 
-          OEMSolver::SolverInterfaceImpl<OperatorImp> opSolve(op,size); 
+          OEMSolver::SolverInterfaceImpl<OperatorImpA> opSolve(op,size); 
 
           // in parallel runs we need fake pre conditioner to 
           // project vectors onto interior  
@@ -977,9 +977,9 @@ namespace Dune
           }
         }
         
-        template <class OperatorImp, class DiscreteFunctionImp> 
+        template <class OperatorImpA, class DiscreteFunctionImp> 
         static void call(SolverType & solver, 
-                         OperatorImp & op, 
+                         OperatorImpA & op, 
                          const DiscreteFunctionImp & arg, 
                          DiscreteFunctionImp & dest)
         {
@@ -991,14 +991,14 @@ namespace Dune
       template <class SolverType> 
       struct SolverCaller<SolverType,false>
       {
-        template <class OperatorImp, class DiscreteFunctionImp> 
+        template <class OperatorImpA, class DiscreteFunctionImp> 
         static void call(SolverType & solver, 
-                         OperatorImp & op, 
+                         OperatorImpA & op, 
                          const DiscreteFunctionImp & arg, 
                          DiscreteFunctionImp & dest)
         {
           int size = arg.space().size();
-          OEMSolver::SolverInterfaceImpl<OperatorImp> opSolve(op,size); 
+          OEMSolver::SolverInterfaceImpl<OperatorImpA> opSolve(op,size); 
           
           // in parallel runs we need fake pre conditioner to 
           // project vectors onto interior  
@@ -1108,15 +1108,15 @@ namespace Dune
       template <class SolverType, bool hasPreconditioning> 
       struct SolverCaller 
       {
-        template <class OperatorImp, class PreConMatrix, class DiscreteFunctionImp> 
+        template <class OperatorImpA, class PreConMatrix, class DiscreteFunctionImp> 
         static void solve(SolverType & solver, 
-                   OperatorImp & op, 
+                   OperatorImpA & op, 
                    const PreConMatrix & pm, 
                    const DiscreteFunctionImp & arg, 
                    DiscreteFunctionImp & dest) 
         {
           int size = arg.space().size();
-          OEMSolver::SolverInterfaceImpl<OperatorImp> opSolve(op,size); 
+          OEMSolver::SolverInterfaceImpl<OperatorImpA> opSolve(op,size); 
           OEMSolver::PreconditionerImpl<PreConMatrix> pre(pm,size); 
           solver.set_preconditioner(pre);
           
@@ -1125,9 +1125,9 @@ namespace Dune
           solver.unset_preconditioner();
         }
         
-        template <class OperatorImp, class DiscreteFunctionImp> 
+        template <class OperatorImpA, class DiscreteFunctionImp> 
         static void call(SolverType & solver, 
-                         OperatorImp & op, 
+                         OperatorImpA & op, 
                          const DiscreteFunctionImp & arg, 
                          DiscreteFunctionImp & dest)
         {
@@ -1146,21 +1146,21 @@ namespace Dune
       template <class SolverType> 
       struct SolverCaller<SolverType,false>
       {
-        template <class OperatorImp, class DiscreteFunctionImp> 
+        template <class OperatorImpA, class DiscreteFunctionImp> 
         static void solve(SolverType & solver, 
-                   OperatorImp & op, 
+                   OperatorImpA & op, 
                    const DiscreteFunctionImp & arg, 
                    DiscreteFunctionImp & dest) 
         {
           int size = arg.space().size();
-          OEMSolver::SolverInterfaceImpl<OperatorImp> opSolve(op,size); 
+          OEMSolver::SolverInterfaceImpl<OperatorImpA> opSolve(op,size); 
           FakeConditionerType fake(size,opSolve);
           SolverCaller<SolverType,true>::solve(solver,op,fake,arg,dest);
         }
         
-        template <class OperatorImp, class DiscreteFunctionImp> 
+        template <class OperatorImpA, class DiscreteFunctionImp> 
         static void call(SolverType & solver, 
-                         OperatorImp & op, 
+                         OperatorImpA & op, 
                          const DiscreteFunctionImp & arg, 
                          DiscreteFunctionImp & dest)
         {
@@ -1260,15 +1260,15 @@ namespace Dune
       template <class SolverType, bool hasPreconditioning> 
       struct SolverCaller 
       {
-        template <class OperatorImp, class PreConMatrix, class DiscreteFunctionImp> 
+        template <class OperatorImpA, class PreConMatrix, class DiscreteFunctionImp> 
         static void solve(SolverType & solver, 
-                   OperatorImp & op, 
+                   OperatorImpA & op, 
                    const PreConMatrix & pm, 
                    const DiscreteFunctionImp & arg, 
                    DiscreteFunctionImp & dest) 
         {
           int size = arg.space().size();
-          OEMSolver::SolverInterfaceImpl<OperatorImp> opSolve(op,size); 
+          OEMSolver::SolverInterfaceImpl<OperatorImpA> opSolve(op,size); 
 
           OEMSolver::PreconditionerImpl<PreConMatrix> pre(pm,size); 
           solver.set_preconditioner(pre);
@@ -1278,9 +1278,9 @@ namespace Dune
           solver.unset_preconditioner();
         }
         
-        template <class OperatorImp, class DiscreteFunctionImp> 
+        template <class OperatorImpA, class DiscreteFunctionImp> 
         static void call(SolverType & solver, 
-                         OperatorImp & op, 
+                         OperatorImpA & op, 
                          const DiscreteFunctionImp & arg, 
                          DiscreteFunctionImp & dest)
         {
@@ -1299,21 +1299,21 @@ namespace Dune
       template <class SolverType> 
       struct SolverCaller<SolverType,false>
       {
-        template <class OperatorImp, class DiscreteFunctionImp> 
+        template <class OperatorImpA, class DiscreteFunctionImp> 
         static void solve(SolverType & solver, 
-                   OperatorImp & op, 
+                   OperatorImpA & op, 
                    const DiscreteFunctionImp & arg, 
                    DiscreteFunctionImp & dest) 
         {
           int size = arg.space().size();
-          OEMSolver::SolverInterfaceImpl<OperatorImp> opSolve(op,size); 
+          OEMSolver::SolverInterfaceImpl<OperatorImpA> opSolve(op,size); 
 
           // note argument and destination are toggled 
           solver.solve(opSolve, dest.leakPointer() , arg.leakPointer() );
         }
-        template <class OperatorImp, class DiscreteFunctionImp> 
+        template <class OperatorImpA, class DiscreteFunctionImp> 
         static void call(SolverType & solver, 
-                         OperatorImp & op, 
+                         OperatorImpA & op, 
                          const DiscreteFunctionImp & arg, 
                          DiscreteFunctionImp & dest)
         {

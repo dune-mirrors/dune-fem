@@ -38,8 +38,8 @@ namespace Dune
       typedef typename RangeSpaceType::RangeFieldType RangeFieldType;
       typedef PetscDiscreteFunction< DomainSpaceType > DomainFunctionType;
       typedef PetscDiscreteFunction< RangeSpaceType > RangeFunctionType;
-      typedef typename DomainSpaceType::GridType::template Codim< 0 >::Entity ColEntityType;
-      typedef typename RangeSpaceType::GridType::template Codim< 0 >::Entity RowEntityType;
+      typedef typename DomainSpaceType::GridPartType::template Codim< 0 >::EntityType ColEntityType;
+      typedef typename RangeSpaceType::GridPartType::template Codim< 0 >::EntityType RowEntityType;
 
       const static size_t domainLocalBlockSize = DomainSpaceType::localBlockSize;
       const static size_t rangeLocalBlockSize = RangeSpaceType::localBlockSize;
@@ -189,10 +189,10 @@ namespace Dune
      */
     template< typename DomainSpace, typename RangeSpace >
     class PetscLinearOperator< DomainSpace, RangeSpace >::LocalMatrix 
-    : public LocalMatrixDefault< PetscLinearOperator< DomainSpace, RangeSpace >::LocalMatrixTraits >
+    : public LocalMatrixDefault< typename PetscLinearOperator< DomainSpace, RangeSpace >::LocalMatrixTraits >
     {
       typedef LocalMatrix ThisType;
-      typedef LocalMatrixDefault< PetscLinearOperator< DomainSpace, RangeSpace >::LocalMatrixTraits >  BaseType;
+      typedef LocalMatrixDefault< typename PetscLinearOperator< DomainSpace, RangeSpace >::LocalMatrixTraits >  BaseType;
 
       typedef PetscLinearOperator< DomainSpace, RangeSpace > PetscLinearOperatorType;
 

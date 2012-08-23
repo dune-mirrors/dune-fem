@@ -80,8 +80,8 @@ namespace Dune
     class PetscDofBlock< PVector >::DofProxy
     {
       typedef PVector PetscVectorType;
-      typedef PetscDofBlock< PetscVectorType >::DofProxy ThisType;
-      typedef PetscDofBlock< PetscVectorType >::IndexType IndexType;
+      typedef typename PetscDofBlock< PetscVectorType >::DofProxy ThisType;
+      typedef typename PetscDofBlock< PetscVectorType >::IndexType IndexType;
 
     public:
 
@@ -183,7 +183,7 @@ namespace Dune
     class PetscDofBlock< PVector >::DofIterator 
     : public std::iterator< std::input_iterator_tag, PetscScalar >
     {
-      typedef PetscDofBlock< PVector >::DofIterator ThisType;
+      typedef typename PetscDofBlock< PVector >::DofIterator ThisType;
       typedef PetscDofBlock< PVector > DofBlockType;
 
       typedef std::iterator< std::input_iterator_tag, PetscScalar > BaseType;
