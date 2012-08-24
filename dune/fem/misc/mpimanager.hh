@@ -110,6 +110,10 @@ namespace Dune
 
   } // namespace Fem
 
+#if DUNE_FEM_COMPATIBILITY 
+  using Fem::MPIManager;
+#endif // DUNE_FEM_COMPATIBILITY 
+
 } // namespace Dune
 
 #endif // #ifndef DUNE_FEM_MPIMANAGER_HH
