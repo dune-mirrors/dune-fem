@@ -27,17 +27,19 @@ namespace Dune
     /* ========================================
      * class PetscLinearOperator
      */
-    template< typename DomainSpace, typename RangeSpace >
+    template< typename DomainFunction, typename RangeFunction >
     class PetscLinearOperator 
+    : public Fem::Operator< DomainFunction, RangeFunction >
     {
-      typedef PetscLinearOperator< DomainSpace, RangeSpace > ThisType;
+      typedef PetscLinearOperator< DomainFunction, RangeFunction > ThisType;
     public:
+      typedef DomainFunction DomainFunctionType;
+      typedef RangeFunction RangeFunctionType;
+      typedef typename DomainFunctionType::RangeFieldType DomainFieldType;
+      typedef typename RangeFunctionType::RangeFieldType RangeFieldType;
+      typedef typename DomainFunctionType::DiscreteFunctionSpaceType DomainSpaceType;
+      typedef typename RangeFunctionType::DiscreteFunctionSpaceType RangeSpaceType;
 
-      typedef DomainSpace DomainSpaceType;
-      typedef RangeSpace RangeSpaceType;
-      typedef typename RangeSpaceType::RangeFieldType RangeFieldType;
-      typedef PetscDiscreteFunction< DomainSpaceType > DomainFunctionType;
-      typedef PetscDiscreteFunction< RangeSpaceType > RangeFunctionType;
       typedef typename DomainSpaceType::GridPartType::template Codim< 0 >::EntityType ColEntityType;
       typedef typename RangeSpaceType::GridPartType::template Codim< 0 >::EntityType RowEntityType;
 
@@ -57,8 +59,8 @@ namespace Dune
 
       struct LocalMatrixTraits
       {
-        typedef DomainSpace DomainSpaceType;
-        typedef RangeSpace RangeSpaceType;
+        typedef typename DomainFunctionType::DiscreteFunctionSpaceType DomainSpaceType;
+        typedef typename RangeFunctionType::DiscreteFunctionSpaceType RangeSpaceType;
         typedef LocalMatrix LocalMatrixType;
         typedef typename RangeSpaceType::RangeFieldType RangeFieldType;
 
@@ -163,7 +165,14 @@ namespace Dune
         ::Dune::Petsc::MatMult( petscMatrix_, *arg.petscVec() , *dest.petscVec() );
       }
 
-      void reserve () {} 
+      void operator() ( const DomainFunctionType &arg, RangeFunctionType &dest ) const
+      {
+        apply( arg, dest );
+      }
+
+      void reserve () {
+        ::Dune::Petsc::MatSetUp( petscMatrix_ );
+      } 
 
       void clear ()
       {
@@ -219,21 +228,21 @@ namespace Dune
     /* ========================================
      * class PetscLinearOperator::LocalMatrix
      */
-    template< typename DomainSpace, typename RangeSpace >
-    class PetscLinearOperator< DomainSpace, RangeSpace >::LocalMatrix 
-    : public LocalMatrixDefault< typename PetscLinearOperator< DomainSpace, RangeSpace >::LocalMatrixTraits >
+    template< typename DomainFunction, typename RangeFunction >
+    class PetscLinearOperator< DomainFunction, RangeFunction >::LocalMatrix 
+    : public LocalMatrixDefault< typename PetscLinearOperator< DomainFunction, RangeFunction >::LocalMatrixTraits >
     {
       typedef LocalMatrix ThisType;
-      typedef LocalMatrixDefault< typename PetscLinearOperator< DomainSpace, RangeSpace >::LocalMatrixTraits >  BaseType;
+      typedef LocalMatrixDefault< typename PetscLinearOperator< DomainFunction, RangeFunction >::LocalMatrixTraits >  BaseType;
 
-      typedef PetscLinearOperator< DomainSpace, RangeSpace > PetscLinearOperatorType;
+      typedef PetscLinearOperator< DomainFunction, RangeFunction > PetscLinearOperatorType;
 
 
     public:
       typedef PetscInt                                        DofIndexType;
       typedef std::vector< DofIndexType >                     IndexVectorType;
-      typedef DomainSpace                                     DomainSpaceType;
-      typedef RangeSpace                                      RangeSpaceType;
+      typedef typename DomainFunction::DiscreteFunctionSpaceType DomainSpaceType;
+      typedef typename RangeFunction::DiscreteFunctionSpaceType RangeSpaceType;
       typedef typename DomainSpaceType::BaseFunctionSetType   DomainBaseFunctionSetType;
       typedef typename RangeSpaceType::BaseFunctionSetType    RangeBaseFunctionSetType;
 

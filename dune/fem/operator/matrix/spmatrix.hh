@@ -928,6 +928,10 @@ namespace Dune
       {
         return *this;
       }
+
+      void communicate () const
+      {
+      }
     };
 
   } // namespace Fem 

@@ -216,7 +216,7 @@ namespace Dune
         ::Dune::Petsc::KSPSetPC( ksp_, pc_ );
 
         // get matrix from linear operator 
-        Mat& A = const_cast< Mat & > (op_.systemMatrix().petscMatrix());
+        Mat& A = const_cast< Mat & > (op_.petscMatrix());
 
         // set operator to PETSc solver context 
         ::Dune::Petsc::KSPSetOperators( ksp_, A, A, DIFFERENT_NONZERO_PATTERN);

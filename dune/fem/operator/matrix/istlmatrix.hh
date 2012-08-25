@@ -1309,6 +1309,10 @@ namespace Dune
       {
         return *this;
       }
+
+      void communicate () 
+      {
+      }
     };
 
   } // namespace Fem

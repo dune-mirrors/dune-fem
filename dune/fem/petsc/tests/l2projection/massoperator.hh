@@ -57,12 +57,12 @@ public:
     QuadratureType;
 
   #if PETSCLINEAROPERATOR == 1
-    typedef Dune::Fem::PetscLinearOperator< DiscreteFunctionSpaceType, DiscreteFunctionSpaceType >
+    typedef Dune::Fem::PetscLinearOperator< DiscreteFunctionType, DiscreteFunctionType >
       LinearOperatorType;
     #warning using PetscLinearOperator as linear operator
   #else
-    typedef Dune::Fem::SparseRowMatrixObject
-      < DiscreteFunctionSpaceType, DiscreteFunctionSpaceType, MatrixTraits >
+    typedef Dune::Fem::SparseRowMatrixOperator
+      < DiscreteFunctionType, DiscreteFunctionType, MatrixTraits >
       LinearOperatorType;
     #warning using SparseRowMatrixObject as linear operator
   #endif
@@ -71,7 +71,7 @@ public:
   explicit MassOperator ( const DiscreteFunctionSpaceType &dfSpace )
   : dfSpace_( dfSpace ),
     dofManager_( DofManagerType::instance( dfSpace.grid() ) ),
-    systemMatrix_( dfSpace, dfSpace ),
+    systemMatrix_( "mass operator", dfSpace, dfSpace ),
     sequence_( -1 )
   {}
 

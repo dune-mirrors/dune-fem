@@ -94,15 +94,16 @@ namespace Dune
              diagInv != diagEnd; ++ diagInv ) 
         {
           // get dof entry 
-          DofType& dof = (*diagInv);
+          const DofType& dofii = (*diagInv);
+          DofType dof;
           // if dof is zero, store 1 to avoid NaN 
-          if( std::abs( dof ) < 1e-14 )
+          if( std::abs( dofii ) < 1e-14 )
           {
             dof = 1;
           }
           else 
           {
-            dof = 1.0 / dof;
+            dof = 1.0 / dofii;
           }
         }
       }

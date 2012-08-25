@@ -138,14 +138,14 @@ inline void Algorithm::operator() ( DiscreteFunctionType &solution )
 #if PETSCLINEAROPERATOR 
   if( Dune::Fem::Parameter::getValue<bool>("usepetsc", true ) )
   {
-    typedef Dune::Fem::PetscInverseOperator< DiscreteFunctionType, MassOperatorType > InverseOperator;  
-    op = new InverseOperator( massOperator, 1e-10, 1e-10, maxIter );
+    typedef Dune::Fem::PetscInverseOperator< DiscreteFunctionType, MassOperatorType::LinearOperatorType > InverseOperator;  
+    op = new InverseOperator( massOperator.systemMatrix(), 1e-10, 1e-10, maxIter );
   }
   else 
 #endif
   {
     typedef Dune::Fem::CGInverseOperator< DiscreteFunctionType > InverseOperator;  
-    op = new InverseOperator( massOperator, 1e-10, 1e-10, maxIter );
+    op = new InverseOperator( massOperator.systemMatrix(), 1e-10, 1e-10, maxIter );
   }
 
   // clear result
