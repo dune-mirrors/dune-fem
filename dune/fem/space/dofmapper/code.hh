@@ -111,13 +111,13 @@ namespace Dune
 
       const unsigned int &operator[] ( unsigned int i ) const
       {
-        assert( i < end() - begin() );
+        assert( (ptrdiff_t)i < end() - begin() );
         return begin()[ i ];
       }
 
       unsigned int &operator[] ( unsigned int i )
       {
-        assert( i < end() - begin() );
+        assert( (ptrdiff_t)i < end() - begin() );
         return begin()[ i ];
       }
     };
