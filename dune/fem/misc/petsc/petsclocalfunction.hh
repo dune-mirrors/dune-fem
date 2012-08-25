@@ -152,6 +152,11 @@ namespace Dune
         }
       }
 
+      int order() const
+      {
+        return discreteFunction_.space().order( entity() );
+      }
+
       DofProxyType& operator[] ( unsigned int index )
       {
         assert( index < numDofs() );
@@ -174,6 +179,16 @@ namespace Dune
       void axpy ( const PointType &x, const RangeType &factor )
       {
         baseFunctionSet().axpy( x, factor, *this );
+      }
+      template< class PointType >
+      void axpy ( const PointType &x, const JacobianRangeType &factor)
+      {
+        baseFunctionSet().axpy( x, entity().geometry().jacobianInverseTransposed( coordinate( x ) ), factor, *this );
+      }
+      template< class PointType >
+      void axpy ( const PointType &x, const RangeType &factor1, const JacobianRangeType &factor2 )
+      {
+        baseFunctionSet().axpy( x, entity().geometry().jacobianInverseTransposed( coordinate( x ) ), factor1, factor2, *this );
       }
 
       unsigned int numDofs () const { return numDofs_; }

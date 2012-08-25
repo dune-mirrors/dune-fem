@@ -77,6 +77,38 @@ namespace Dune
       /*
        * ctors, dtor, methods...
        */
+      PetscLinearOperator ( const std::string &, const DomainSpaceType &domainSpace, const RangeSpaceType &rangeSpace )
+      : domainSpace_( domainSpace ),
+        rangeSpace_( rangeSpace ),
+        colSlaveDofs_( domainSpace_ ),
+        rowSlaveDofs_( rangeSpace_ ),
+        localMatrixStack_( *this )     
+      {
+        /*
+         * initialize the row and column petsc dof mappings
+         */
+        const PetscInt localRows = rowDofMapping().numOwnedDofBlocks();
+        const PetscInt localCols = colDofMapping().numOwnedDofBlocks();
+
+        assert( domainLocalBlockSize == rangeLocalBlockSize );
+        // create matrix 
+        ::Dune::Petsc::MatCreate( &petscMatrix_ );
+        
+        if( domainLocalBlockSize > 1 ) 
+        {
+          ::Dune::Petsc::MatSetType( petscMatrix_, MATBAIJ );
+          // set block size 
+          PetscInt bs = domainLocalBlockSize ;
+          ::Dune::Petsc::MatSetBlockSize( petscMatrix_, bs );
+        }
+        else 
+        {
+          ::Dune::Petsc::MatSetType( petscMatrix_, MATAIJ );
+        }
+
+        // set sizes of the matrix 
+        ::Dune::Petsc::MatSetSizes( petscMatrix_, localRows, localCols, PETSC_DETERMINE, PETSC_DETERMINE );
+      }
       PetscLinearOperator ( const DomainSpaceType &domainSpace, const RangeSpaceType &rangeSpace )
       : domainSpace_( domainSpace ),
         rangeSpace_( rangeSpace ),
@@ -322,9 +354,11 @@ namespace Dune
         dofMapper.mapEach( entity, PetscAssignFunctor< PetscMapping >( petscMapping, indices ) );
       }
 
+    public:
       const int rows() const { return rowIndices_.size(); }
       const int columns() const { return colIndices_.size(); }
 
+    private:
       DofIndexType globalRowIndex( const int localRow ) const 
       { 
         assert( localRow < static_cast< int >( rowIndices_.size() ) );
