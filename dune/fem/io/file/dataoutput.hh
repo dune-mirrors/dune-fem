@@ -361,7 +361,7 @@ namespace Dune
     protected:
       static const GridPartType &getGridPart( const OutputTuple& data )
       {
-        const DFType *df = get< 0 >( data );
+        const DFType *df = Dune::get< 0 >( data );
         assert( df );
         return df->space().gridPart();
       }

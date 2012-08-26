@@ -429,7 +429,7 @@ namespace Dune
     protected:
       double error ( const FemEoc::DataTuple &data ) const
       {
-        return get< 5 >( data )[ index_ ];
+        return Dune::get< 5 >( data )[ index_ ];
       }
 
       std::string toString ( const double &error ) const
@@ -459,7 +459,7 @@ namespace Dune
 
       std::string entry ( const DataTuple &data ) const
       {
-        const double h = get< 1 >( data );
+        const double h = Dune::get< 1 >( data );
         const double e = BaseType::error( data );
 
         std::string entry = "---";
