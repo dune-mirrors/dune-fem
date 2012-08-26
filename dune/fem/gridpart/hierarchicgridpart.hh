@@ -2,6 +2,7 @@
 #define DUNE_FEM_GRIDPART_HIERARCHICGRIDPART_HH
 
 //- dune-fem includes
+#include <dune/fem/version.hh>
 #include <dune/fem/gridpart/common/capabilities.hh>
 #include <dune/fem/gridpart/common/gridpart.hh>
 #include <dune/fem/gridpart/defaultindexsets.hh>
@@ -69,6 +70,7 @@ namespace Dune
     public:
       //- Public methods
       //! constructor 
+      DUNE_VERSION_DEPRECATED(1,4,remove)
       explicit HierarchicGridPart ( GridType &grid )
       : BaseType( grid ),
         leafView_( grid.leafView() ),
@@ -76,6 +78,7 @@ namespace Dune
       {}
 
       //! constructor
+      DUNE_VERSION_DEPRECATED(1,4,remove)
       HierarchicGridPart ( GridType &grid, const IndexSetType & )
       : BaseType( grid ),
         leafView_( grid.leafView() ),
@@ -83,6 +86,7 @@ namespace Dune
       {}
 
       //! copy constructor
+      DUNE_VERSION_DEPRECATED(1,4,remove)
       HierarchicGridPart ( const ThisType &other )
       : BaseType( other ),
         leafView_( other.leafView_ ),
