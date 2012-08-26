@@ -152,7 +152,9 @@ namespace Dune
       typedef typename DiscreteFunctionSpaceType :: FunctionSpaceType     FunctionSpaceType;
       typedef typename DiscreteFunctionSpaceType :: GridPartType          GridPartType;
       typedef typename FunctionSpaceType :: DomainType                    DomainType;
+      typedef typename FunctionSpaceType :: DomainFieldType               DomainFieldType;
       typedef typename FunctionSpaceType :: RangeType                     RangeType;
+      typedef typename FunctionSpaceType :: RangeFieldType                RangeFieldType;
 
       typedef GridSolution< GridType, DiscreteFunctionType > GridSolutionType ;
 
