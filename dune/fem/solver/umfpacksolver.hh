@@ -30,7 +30,7 @@ namespace Dune
      *  \ingroup DirectSolver
      *  \brief UMFPACK direct solver
      */
-    template< class DF, class Op >
+    template< class DF, class Op, bool symmetric=false >
     struct UMFPACKOp
     : public Operator< DF, DF >
     {
@@ -83,7 +83,10 @@ namespace Dune
 
 #ifdef ENABLE_UMFPACK 
         // call UMF solve method on SparseRowMatrix
-        op_.systemMatrix().solveUMF( arg, dest );
+        if (symmetric)
+          op_.systemMatrix().solveUMF( arg, dest );
+        else
+          op_.systemMatrix().solveUMFNonSymmetric( arg, dest );
 #else 
         DUNE_THROW( InvalidStateException, "UMFPACK was not found, reconfigure or use other solver!" );
 #endif

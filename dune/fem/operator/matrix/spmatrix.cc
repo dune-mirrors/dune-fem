@@ -972,13 +972,11 @@ namespace Dune
     }
 
     template <class T>
-    void SparseRowMatrix<T>::solveUMF(const T* b, T* x)
+    void SparseRowMatrix<T>::setupUMF(int n, int nAll, int* Ap, int* Ai, T* Ax,int &ANZ, int &LNZ) 
     {
-#ifdef ENABLE_UMFPACK
       // clear all columns that have been cleared from unitRow
       typedef typename std::set<int> :: iterator iterator ;
       const iterator end = clearedRows_.end();
-
       // needed for Lagrange dirichlet nodes 
       if( clearedRows_.size() > 0 )
       {
@@ -991,16 +989,8 @@ namespace Dune
         }
       }
 
-      const int n = dim_[0];
-      const int m = dim_[1];
-
-      int* Ap = new int [n+1];
-
-      const int nAll = n * nz_ ;
-      int* Ai = new int [ nAll ];
-      T*   Ax = new   T [ nAll ];
-
       int nZ = 0;
+      unsigned int row;
       for(int i=0; i<nAll; ++i)
       {
         if( i % nz_ == 0 )
@@ -1013,14 +1003,149 @@ namespace Dune
           Ai[ nZ ] = col_   [ i ];
           Ax[ nZ ] = values_[ i ];
           ++ nZ ;
+          if (col_[i]<row)
+            ++ LNZ;
+          else
+            ++ ANZ;
         }
       }
       Ap[ n ] = nZ;
+    }
 
-      double *null = (double *) NULL ;
-      void *Symbolic, *Numeric;
+    // use new method with symmetric/nonsymmetric flag
+    template <class T>
+    void SparseRowMatrix<T>::solveUMF(const T* b, T* x) 
+    {
+#ifdef ENABLE_UMFPACK
+#if 0 // LDL at the moment leads to unresolved symbols during linking
+      int n = dim_[0];
+      int nAll = n * nz_ ;
+      int* Ap = new int [n+1];
+      int* Ai = new int [ nAll ];
+      T*   Ax = new   T [ nAll ];
+      int ANZ,LNZ;
+      setupUMF(n,nAll,Ap,Ai,Ax,ANZ,LNZ);
+
+      double Lx [LNZ], D [n], Y [n] ;
+      int Li [LNZ], Lp [n+1], Parent [n], Lnz [n], Flag [n], Pattern [n];
+      /* factorize A into LDL’ (P and Pinv not used) */
+      ldl_symbolic (n, Ap, Ai, Lp, Parent, Lnz, Flag, NULL, NULL) ;
+      ldl_numeric (n, Ap, Ai, Ax, Lp, Parent, Lnz, Li, Lx, D, Y, Pattern, Flag, NULL, NULL) ;
+      /* solve Ax=b, overwriting b with the solution x so start with x=b*/
+      for (int i=0;i<n;++i) x[i]=b[i];
+      ldl_lsolve (n, x, Lp, Li, Lx) ;
+      ldl_dsolve (n, x, D) ;
+      ldl_ltsolve (n, x, Lp, Li, Lx) ;
+
+      // delete temp memory 
+      delete [] Ap;
+      delete [] Ax;
+      delete [] Ai;
+#else // want to use LDL but use umfpack at the moment
+      const int n = dim_[0];
+      const int nAll = n * nz_ ;
+
+      int* Ap = new int [n+1];
+      int* Ai = new int [ nAll ];
+      T*   Ax = new   T [ nAll ];
+
+      int ANZ,LNZ;
+      setupUMF(n,nAll,Ap,Ai,Ax,ANZ,LNZ);
 
       int status;
+
+      void *Symbolic, *Numeric;
+      // symbolic analysis 
+      status = umfpack_di_symbolic(n, n, Ap, Ai, Ax, &Symbolic, NULL, NULL);
+      if (status != UMFPACK_OK) 
+      {
+        if (status == UMFPACK_WARNING_singular_matrix)
+          fprintf(stderr, "matrix is singluar!\n");
+        else if(status == UMFPACK_ERROR_invalid_matrix)
+          fprintf(stderr, "Number of entries in the matrix is negative, Ap [0] is nonzero, a column has a negative number of entries, a row index is out of bounds, or the columns of input matrix were jumbled (unsorted columns or duplicate entries).\n");
+        else if(status == UMFPACK_ERROR_out_of_memory)
+          fprintf(stderr, "Insufficient memory to perform the symbolic analysis.  If the analysis requires more than 2GB of memory and you are using the 32-bit (\"int\") version of UMFPACK, then you are guaranteed   to run out of memory.  Try using the 64-bit version of UMFPACK.\n");
+        else if(status == UMFPACK_ERROR_argument_missing)
+          fprintf(stderr, "One or more required arguments is missing.\n");
+        else if(status == UMFPACK_ERROR_internal_error)
+          fprintf(stderr, "omething very serious went wrong.  This is a bug.  Please contact the author (DrTimothyAldenDavis@gmail.com).\n");
+        else
+          fprintf(stderr, "umfpack_di_numeric() failed, %d\n", status);
+      }
+      // numeric analysis 
+      status = umfpack_di_numeric(Ap, Ai, Ax, Symbolic, &Numeric, NULL, NULL);
+      if (status != UMFPACK_OK) {
+        if (status == UMFPACK_WARNING_singular_matrix)
+          fprintf(stderr, "matrix is singluar!\n");
+        else if(status == UMFPACK_ERROR_invalid_matrix)
+          fprintf(stderr, "Number of entries in the matrix is negative, Ap [0] is nonzero, a column has a negative number of entries, a row index is out of bounds, or the columns of input matrix were jumbled (unsorted columns or duplicate entries).\n"); 
+        else if(status == UMFPACK_ERROR_out_of_memory)
+          fprintf(stderr, "Insufficient memory to perform the symbolic analysis.  If the analysis requires more than 2GB of memory and you are using the 32-bit (\"int\") version of UMFPACK, then you are guaranteed     to run out of memory.  Try using the 64-bit version of UMFPACK.\n");
+        else if(status == UMFPACK_ERROR_argument_missing)
+          fprintf(stderr, "One or more required arguments is missing.\n");
+        else if(status == UMFPACK_ERROR_internal_error)
+          fprintf(stderr, "omething very serious went wrong.  This is a bug. Please contact the author (DrTimothyAldenDavis@gmail.com).\n");
+        else
+          fprintf(stderr, "umfpack_di_numeric() failed, %d\n", status);
+      }
+      umfpack_di_free_symbolic (&Symbolic) ;
+
+      // solve Ax = b 
+      // solve A^T x = b (since UMFPACK needs column wise storage, we got
+      // row wise storage ) 
+      status = umfpack_di_solve(UMFPACK_A, Ap, Ai, Ax, x, b, Numeric, NULL, NULL);
+      if (status != UMFPACK_OK) {
+        if (status == UMFPACK_WARNING_singular_matrix)
+          fprintf(stderr, "matrix is singluar!\n");
+        else if(status == UMFPACK_ERROR_invalid_matrix)
+          fprintf(stderr, "Number of entries in the matrix is negative, Ap [0] is nonzero, a column has a negative number of entries, a row index is out of bounds, or the columns of input matrix were jumbled (unsorted columns or duplicate entries).\n");
+        else if(status == UMFPACK_ERROR_out_of_memory)
+          fprintf(stderr, "Insufficient memory to perform the symbolic analysis.  If the analysis requires more than 2GB of memory and you are using the 32-bit (\"int\") version of UMFPACK, then you are guaranteed     to run out of memory.  Try using the 64-bit version of UMFPACK.\n");
+        else if(status == UMFPACK_ERROR_argument_missing)
+          fprintf(stderr, "One or more required arguments is missing.\n");
+        else if(status == UMFPACK_ERROR_internal_error)
+          fprintf(stderr, "omething very serious went wrong.  This is a bug.  Please contact the author (DrTimothyAldenDavis@gmail.com).\n");
+        else
+          fprintf(stderr, "umfpack_di_numeric() failed, %d\n", status);
+      }
+      umfpack_di_free_numeric (&Numeric) ;
+
+      // delete temp memory 
+      delete [] Ap;
+      delete [] Ax;
+      delete [] Ai;
+#endif
+#endif // ENABLE_UMFPACK
+    }
+    template <class T>
+    void SparseRowMatrix<T>::solveUMFNonSymmetric(const T* b, T* x)
+    {
+#ifdef ENABLE_UMFPACK
+      const int n = dim_[0];
+      const int nAll = n * nz_ ;
+
+      int* Ap = new int [n+1];
+      int* Ai = new int [ nAll ];
+      T*   Ax = new   T [ nAll ];
+
+      int ANZ,LNZ;
+      setupUMF(n,nAll,Ap,Ai,Ax,ANZ,LNZ);
+
+      int status;
+
+      // for nonsymmetric matrix we need to transpose A (column vs. row storagei)
+      int* Cp = Ap;
+      int* Ci = Ai;
+      T* Cx = Ax;
+      Ap = new int [n+1];
+      Ai = new int [ nAll ];
+      Ax = new   T [ nAll ];
+      status = umfpack_di_transpose (n, n, Cp, Ci, Cx, (int *) NULL, (int *) NULL, Ap, Ai, Ax) ;
+      delete [] Cx; 
+      delete [] Ci; 
+      delete [] Cp; 
+
+      void *Symbolic, *Numeric;
       // symbolic analysis 
       status = umfpack_di_symbolic(n, n, Ap, Ai, Ax, &Symbolic, NULL, NULL);
       if (status != UMFPACK_OK) 
