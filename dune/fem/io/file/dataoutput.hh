@@ -18,7 +18,6 @@
 #include <dune/fem/function/adaptivefunction.hh>
 #include <dune/fem/quadrature/cachingquadrature.hh>
 #include <dune/fem/gridpart/adaptiveleafgridpart.hh>
-#include <dune/fem/gridpart/hierarchicgridpart.hh>
 
 #ifndef ENABLE_VTXPROJECTION
 #define ENABLE_VTXPROJECTION 1
@@ -375,7 +374,7 @@ namespace Dune
     template< class Grid, class OutputTuple >
     struct DataOutput< GridImp, DataImp >::GridPartGetter< Grid, OutputTuple, 0 >
     {
-      typedef HierarchicGridPart< Grid > GridPartType;
+      typedef AdaptiveLeafGridPart< Grid > GridPartType;
 
       GridPartGetter ( const Grid &grid, const OutputTuple & )
       : gridPart_( const_cast< Grid & >( grid ) )
