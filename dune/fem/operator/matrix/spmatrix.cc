@@ -990,7 +990,7 @@ namespace Dune
       }
 
       int nZ = 0;
-      unsigned int row;
+      unsigned int row = 0;
       for(int i=0; i<nAll; ++i)
       {
         if( i % nz_ == 0 )
@@ -1003,7 +1003,7 @@ namespace Dune
           Ai[ nZ ] = col_   [ i ];
           Ax[ nZ ] = values_[ i ];
           ++ nZ ;
-          if (col_[i]<row)
+          if (col_[i]<(int)row)
             ++ LNZ;
           else
             ++ ANZ;

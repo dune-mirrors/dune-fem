@@ -17,7 +17,7 @@
 
 #ifdef ENABLE_UMFPACK 
 #include <umfpack.h>
-#include <ldl.h>
+// #include <ldl.h>
 #endif
 
 namespace Dune
