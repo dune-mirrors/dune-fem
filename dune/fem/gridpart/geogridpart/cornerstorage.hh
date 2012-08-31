@@ -13,18 +13,18 @@
 namespace Dune
 {
 
-  // External Forward Declarations
-  // -----------------------------
-
-  class IsDiscreteFunction;
-
-  template< class, class, int, template< class > class >
-  class LagrangeDiscreteFunctionSpace;
-
-
 
   namespace Fem
   {
+
+    // External Forward Declarations
+    // -----------------------------
+
+    class IsDiscreteFunction;
+
+    template< class, class, int, template< class > class >
+    class LagrangeDiscreteFunctionSpace;
+
 
     // GeoDiscreteCoordFunctionCaller
     // ------------------------------
@@ -85,7 +85,7 @@ namespace Dune
     // GeoCoordFunctionCaller
     // ----------------------
 
-    template< int codim, class CoordFunction, bool discrete = Conversion< CoordFunction, Dune::IsDiscreteFunction >::exists >
+    template< int codim, class CoordFunction, bool discrete = Conversion< CoordFunction, IsDiscreteFunction >::exists >
     class GeoCoordFunctionCaller;
 
     template< int codim, class CoordFunction >
