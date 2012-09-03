@@ -1,0 +1,10 @@
+/tester
+/cachingquadrature
+/Makefile
+/Makefile.in
+/.deps
+/.libs
+/*.log
+/*.so.*
+/*.swp
+/*.dgf.*

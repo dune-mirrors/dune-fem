@@ -1,0 +1,9 @@
+/Makefile
+/Makefile.in
+/.deps
+/data
+/*.vtu
+/*.pvtu
+/*.tex
+/l2projection
+/l2projection_petscmatrix

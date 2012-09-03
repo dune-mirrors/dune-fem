@@ -1,0 +1,6 @@
+/tester
+/Makefile
+/Makefile.in
+/*.swp
+/.deps
+/.libs

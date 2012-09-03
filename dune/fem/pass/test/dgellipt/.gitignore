@@ -1,0 +1,8 @@
+/dgellipt
+/Makefile
+/Makefile.in
+/manager.*
+/*.log
+/*.swp
+/.deps
+/.libs

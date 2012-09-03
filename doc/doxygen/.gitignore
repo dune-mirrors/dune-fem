@@ -1,0 +1,10 @@
+/html
+/html-dist
+/man
+/Makefile
+/Makefile.in
+/stamp
+/*.log
+/*.out
+/*.swp
+/*.tmp
