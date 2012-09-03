@@ -1,0 +1,6 @@
+/Makefile
+/Makefile.in
+/*.aux
+/*.dvi
+/*.log
+/*.swp

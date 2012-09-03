@@ -1,0 +1,11 @@
+/test-idgridpart
+/test-filteredgridpart
+/test-geogridpart
+/lagrangeinterpolation
+/Makefile
+/Makefile.in
+/*.swp
+/*.log
+/*.vtu
+/*.pvtu
+/.deps

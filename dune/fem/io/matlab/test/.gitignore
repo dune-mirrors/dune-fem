@@ -1,0 +1,10 @@
+/test
+/test.data
+/test.grid
+/Makefile
+/Makefile.in
+/.deps
+/.libs
+/*.dgf.*
+/*.log
+/*.swp
