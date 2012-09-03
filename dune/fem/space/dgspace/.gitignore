@@ -1,0 +1,7 @@
+/Makefile
+/Makefile.in
+/*.so
+/*.so.*
+/*.swp
+/.deps
+/.libs

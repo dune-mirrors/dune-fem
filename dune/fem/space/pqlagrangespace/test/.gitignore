@@ -1,0 +1,8 @@
+/Makefile
+/Makefile.in
+/.deps
+/.libs
+/test_pqlagrangespace
+/test-pk2d
+/*.basis
+/dgfparser.log
