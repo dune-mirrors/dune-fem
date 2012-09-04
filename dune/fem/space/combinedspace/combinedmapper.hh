@@ -27,17 +27,14 @@ namespace Dune
       static const int polynomialOrder = ( polynomialOrder1 > polynomialOrder2 ) ? polynomialOrder1 : polynomialOrder2;
 
       typedef CombinedMapper< Grid, Mapper1, Mapper2 >  DofMapperType;
-
-      // Later on write an new dofIterator
-      typedef DefaultDofMapIterator< ElementType, DofMapperType > DofMapIteratorType;
     };
 
     template< class Grid, class Mapper1, class Mapper2 >
     class CombinedMapper
-    : public DofMapperDefault< CombinedMapperTraits< Grid, Mapper1, Mapper2 > >
+    : public AdaptiveDofMapper< CombinedMapperTraits< Grid, Mapper1, Mapper2 > >
     {
       typedef CombinedMapper< Grid, Mapper1, Mapper2 > ThisType;
-      typedef DofMapperDefault< CombinedMapperTraits< Grid, Mapper1, Mapper2 > > BaseType;
+      typedef AdaptiveDofMapper< CombinedMapperTraits< Grid, Mapper1, Mapper2 > > BaseType;
       typedef Grid GridType;
 
       typedef Mapper1 MapperType1;
@@ -73,8 +70,6 @@ namespace Dune
       public:
       typedef typename BaseType :: Traits Traits;
       typedef typename BaseType :: ElementType ElementType;
-
-      typedef typename Traits :: DofMapIteratorType DofMapIteratorType;
 
       //! order of the Lagrange polynoms
       static const int polynomialOrder1 = Traits :: polynomialOrder1;
@@ -117,18 +112,6 @@ namespace Dune
       int size () const 
       {
         return mapper1_.size() + mapper2_.size();
-      }
-
-      /** \copydoc Dune::DofMapper::begin(const ElementType &entity) const */
-      DofMapIteratorType begin ( const ElementType &entity ) const   
-      {
-        return DofMapIteratorType( DofMapIteratorType::beginIterator, entity, *this );
-      }
-      
-      /** \copydoc Dune::DofMapper::end(const ElementType &entity) const */
-      DofMapIteratorType end ( const ElementType &entity ) const
-      {
-        return DofMapIteratorType( DofMapIteratorType::endIterator, entity, *this );
       }
 
       /** \copydoc Dune::DofMapper::contains(const int codim) const */
