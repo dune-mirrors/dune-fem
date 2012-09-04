@@ -18,13 +18,13 @@ namespace Dune
   namespace Fem
   {
 
-    // DofMapper
-    // ---------
+    // IndexSetDofMapper
+    // -----------------
 
     template< class GridPart >
-    class DofMapper
+    class IndexSetDofMapper
     {
-      typedef DofMapper< GridPart > ThisType;
+      typedef IndexSetDofMapper< GridPart > ThisType;
 
       struct SubEntityInfo
       {
@@ -51,7 +51,7 @@ namespace Dune
 
 
       // forbid copying and assignment
-      DofMapper ( const ThisType & );
+      IndexSetDofMapper ( const ThisType & );
       const ThisType &operator= ( const ThisType & );
 
     public:
@@ -62,9 +62,9 @@ namespace Dune
       typedef DefaultDofMapIterator< ElementType, ThisType > DofMapIteratorType;
 
       template< class CodeFactory >
-      DofMapper ( const GridPartType &gridPart, const CodeFactory &codeFactory );
+      IndexSetDofMapper ( const GridPartType &gridPart, const CodeFactory &codeFactory );
 
-      ~DofMapper ();
+      ~IndexSetDofMapper ();
 
 
       // mapping for DoFs
@@ -92,10 +92,6 @@ namespace Dune
       void mapEach ( const ElementType &element, Functor f ) const;
 
       void map ( const ElementType &element, std::vector< std::size_t > &indices ) const;
-      std::size_t mapToGlobal ( const ElementType &element, int i ) const;
-
-      DofMapIteratorType begin ( const ElementType &element ) const;
-      DofMapIteratorType end ( const ElementType &element ) const;
 
       std::size_t maxNumDofs () const { return maxNumDofs_; }
       std::size_t numDofs ( const ElementType &element ) const { return code( element ).numDofs(); }
@@ -186,11 +182,11 @@ namespace Dune
 
 
 
-    // DofMapper::BuildFunctor
-    // -----------------------
+    // IndexSetDofMapper::BuildFunctor
+    // -------------------------------
 
     template< class GridPart >
-    struct DofMapper< GridPart >::BuildFunctor
+    struct IndexSetDofMapper< GridPart >::BuildFunctor
     {
       explicit BuildFunctor ( std::vector< SubEntityInfo > &subEntityInfo )
       : subEntityInfo_( subEntityInfo )
@@ -213,12 +209,12 @@ namespace Dune
 
 
 
-    // DofMapper::MapFunctor
-    // ---------------------
+    // IndexSetDofMapper::MapFunctor
+    // -----------------------------
 
     template< class GridPart >
     template< class Functor >
-    struct DofMapper< GridPart >::MapFunctor
+    struct IndexSetDofMapper< GridPart >::MapFunctor
     {
       static const bool isCartesian = Dune::Capabilities::
         isCartesian< typename GridPart :: GridType > :: v ;
@@ -303,16 +299,16 @@ namespace Dune
 
 
 
-    // Implementation of DofMapper
-    // ---------------------------
+    // Implementation of IndexSetDofMapper
+    // -----------------------------------
 
     template< class GridPart >
-    const int DofMapper< GridPart >::dimension;
+    const int IndexSetDofMapper< GridPart >::dimension;
 
     template< class GridPart >
     template< class CodeFactory >
-    inline DofMapper< GridPart >
-      ::DofMapper ( const GridPartType &gridPart, const CodeFactory &codeFactory )
+    inline IndexSetDofMapper< GridPart >
+      ::IndexSetDofMapper ( const GridPartType &gridPart, const CodeFactory &codeFactory )
     : gridPart_( gridPart ),
       code_( LocalGeometryTypeIndex::size( dimension ) ),
       maxNumDofs_( 0 ),
@@ -366,7 +362,7 @@ namespace Dune
 
 
     template< class GridPart >
-    inline DofMapper< GridPart >::~DofMapper ()
+    inline IndexSetDofMapper< GridPart >::~IndexSetDofMapper ()
     {
       DofManager< typename GridPartType::GridType >::instance( gridPart_.grid() ).removeIndexSet( *this );
     }
@@ -374,7 +370,7 @@ namespace Dune
 
     template< class GridPart >
     template< class Functor >
-    inline void DofMapper< GridPart >
+    inline void IndexSetDofMapper< GridPart >
       ::mapEach ( const ElementType &element, Functor f ) const
     {
       code( element )( MapFunctor< Functor >( gridPart_, subEntityInfo_, element, f ) );
@@ -382,7 +378,7 @@ namespace Dune
 
 
     template< class GridPart >
-    inline void DofMapper< GridPart >
+    inline void IndexSetDofMapper< GridPart >
       ::map ( const ElementType &element, std::vector< std::size_t > &indices ) const
     {
       indices.resize( numDofs( element ) );
@@ -391,34 +387,8 @@ namespace Dune
 
 
     template< class GridPart >
-    inline std::size_t DofMapper< GridPart >
-      ::mapToGlobal ( const ElementType &element, int i ) const
-    {
-      std::size_t index = 0;
-      mapEach( element, AssignSingleFunctor< std::size_t >( i, index ) );
-      return index;
-    }
-
-
-    template< class GridPart >
-    inline typename DofMapper< GridPart >::DofMapIteratorType
-    DofMapper< GridPart >::begin ( const ElementType &element ) const
-    {
-      return DofMapIteratorType( DofMapIteratorType::beginIterator, element, *this );
-    }
-
-
-    template< class GridPart >
-    inline typename DofMapper< GridPart >::DofMapIteratorType
-    DofMapper< GridPart >::end ( const ElementType &element ) const
-    {
-      return DofMapIteratorType( DofMapIteratorType::endIterator, element, *this );
-    }
-
-
-    template< class GridPart >
     template< class Entity, class Functor >
-    inline void DofMapper< GridPart >
+    inline void IndexSetDofMapper< GridPart >
       ::mapEachEntityDof ( const Entity &entity, Functor f ) const
     {
       const SubEntityInfo &info = subEntityInfo( entity );
@@ -431,7 +401,7 @@ namespace Dune
 
     template< class GridPart >
     template< class Entity >
-    inline void DofMapper< GridPart >
+    inline void IndexSetDofMapper< GridPart >
       ::mapEntityDofs ( const Entity &entity, std::vector< std::size_t > &indices ) const
     {
       indices.resize( numEntityDofs( entity ) );
@@ -441,7 +411,7 @@ namespace Dune
 
     template< class GridPart >
     template< class Entity >
-    inline std::size_t DofMapper< GridPart >
+    inline std::size_t IndexSetDofMapper< GridPart >
       ::numEntityDofs ( const Entity &entity ) const
     {
       return subEntityInfo( entity ).numDofs;
@@ -449,7 +419,7 @@ namespace Dune
 
 
     template< class GridPart >
-    inline std::size_t DofMapper< GridPart >::offSet ( int blk ) const
+    inline std::size_t IndexSetDofMapper< GridPart >::offSet ( int blk ) const
     {
       assert( (blk >= 0) && (blk < numBlocks()) );
       const std::size_t gtIdx = GlobalGeometryTypeIndex::index( blockMap_[ blk ] );
@@ -458,7 +428,7 @@ namespace Dune
 
 
     template< class GridPart >
-    inline std::size_t DofMapper< GridPart >::oldOffSet ( int blk ) const
+    inline std::size_t IndexSetDofMapper< GridPart >::oldOffSet ( int blk ) const
     {
       assert( (blk >= 0) && (blk < numBlocks()) );
       const std::size_t gtIdx = GlobalGeometryTypeIndex::index( blockMap_[ blk ] );
@@ -467,7 +437,7 @@ namespace Dune
 
 
     template< class GridPart >
-    inline std::size_t DofMapper< GridPart >::numberOfHoles ( int blk ) const
+    inline std::size_t IndexSetDofMapper< GridPart >::numberOfHoles ( int blk ) const
     {
       assert( (blk >= 0) && (blk < numBlocks()) );
       const std::size_t gtIdx = GlobalGeometryTypeIndex::index( blockMap_[ blk ] );
@@ -477,7 +447,7 @@ namespace Dune
 
 
     template< class GridPart >
-    inline std::size_t DofMapper< GridPart >::oldIndex ( std::size_t hole, int blk ) const
+    inline std::size_t IndexSetDofMapper< GridPart >::oldIndex ( std::size_t hole, int blk ) const
     {
       assert( (hole >= 0) && (hole < numberOfHoles( blk )) );
       const std::size_t gtIdx = GlobalGeometryTypeIndex::index( blockMap_[ blk ] );
@@ -489,7 +459,7 @@ namespace Dune
 
 
     template< class GridPart >
-    inline std::size_t DofMapper< GridPart >::newIndex ( std::size_t hole, int blk ) const
+    inline std::size_t IndexSetDofMapper< GridPart >::newIndex ( std::size_t hole, int blk ) const
     {
       assert( (hole >= 0) && (hole < numberOfHoles( blk )) );
       const std::size_t gtIdx = GlobalGeometryTypeIndex::index( blockMap_[ blk ] );
@@ -501,7 +471,7 @@ namespace Dune
 
 
     template< class GridPart >
-    inline void DofMapper< GridPart >::update ()
+    inline void IndexSetDofMapper< GridPart >::update ()
     {
       size_ = 0;
       for( typename BlockMapType::const_iterator it = blockMap_.begin(); it != blockMap_.end(); ++it )
@@ -515,7 +485,7 @@ namespace Dune
 
 
     template< class GridPart >
-    inline const DofMapperCode &DofMapper< GridPart >
+    inline const DofMapperCode &IndexSetDofMapper< GridPart >
       ::code ( const GeometryType &gt ) const
     {
       return code_[ LocalGeometryTypeIndex::index( gt ) ];
@@ -524,8 +494,8 @@ namespace Dune
 
     template< class GridPart >
     template< class Entity >
-    inline const typename DofMapper< GridPart >::SubEntityInfo &
-    DofMapper< GridPart >::subEntityInfo ( const Entity &entity ) const
+    inline const typename IndexSetDofMapper< GridPart >::SubEntityInfo &
+    IndexSetDofMapper< GridPart >::subEntityInfo ( const Entity &entity ) const
     {
       return subEntityInfo_[ GlobalGeometryTypeIndex::index( entity.type() ) ];
     }
