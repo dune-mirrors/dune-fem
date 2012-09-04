@@ -46,21 +46,28 @@ namespace Dune
       template< class Functor >
       struct FunctorWrapper
       {
-
-        FunctorWrapper( Functor functor, int localOffset, int globalOffset ) :
-          functor_( functor ) ,         
-          localOffset_(  localOffset ) ,
+        FunctorWrapper ( Functor functor, int localOffset, int globalOffset )
+        : functor_( functor ),         
+          localOffset_(  localOffset ),
           globalOffset_( globalOffset )
         {}
 
-        void operator() ( int localDof, int globalDof ) 
+        template< class GlobalKey >
+        void operator() ( int localDof, const GlobalKey &globalKey ) 
         {
-          functor_( localDof + localOffset_, globalDof + globalOffset_);
+          functor_( localDof + localOffset_, globalKey + globalOffset_ );
         }
-        private:
-          Functor functor_;
-          int localOffset_;
-          int globalOffset_;
+
+        template< class GlobalKey >
+        void operator() ( const GlobalKey &globalKey ) 
+        {
+          functor_( globalKey + globalOffset_ );
+        }
+
+      private:
+        Functor functor_;
+        int localOffset_;
+        int globalOffset_;
       };
 
       public:
@@ -147,17 +154,12 @@ namespace Dune
         return index;
       }
       
-      /** \copydoc Dune::DofMapper::mapEntityDofToGlobal(const Entity &entity, const int localDof) const */
-      template< class Entity > 
-      int mapEntityDofToGlobal ( const Entity &entity, const int localDof ) const
+      /** \copydoc Dune::DofMapper::mapEachEntityDof(const Entity &entity,Functor f) const */
+      template< class Entity, class Functor > 
+      void mapEachEntityDof ( const Entity &entity, Functor f ) const
       {
-        assert( mapper1_.size() == globalOffset_ );
-        const int numEntityDofs =  mapper1_.numEntityDofs( entity);
-
-        if( localDof - numEntityDofs < 0 )
-          return mapper1_.mapEntityDofToGlobal( entity, localDof );
-        else
-          return mapper2_.mapEntityDofToGlobal( entity, localDof - numEntityDofs ) + globalOffset_;
+        mapper1_.mapEach( entity, FunctorWrapper< Functor >( f, 0, 0 ) );
+        mapper2_.mapEach( entity, FunctorWrapper< Functor >( f, mapper1_.numEntityDofs( entity ), globalOffset_) );
       }
       
       /** \copydoc Dune::DofMapper::maxNumDofs const */

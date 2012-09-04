@@ -202,8 +202,8 @@ namespace Dune
       void mapEach ( const ElementType &element, Functor f ) const;
 
       /** \copydoc Dune::DofMapper::mapEntityDofToGlobal(const Entity &entity,const int localDof) const */
-      template< class Entity >
-      int mapEntityDofToGlobal( const Entity &entity, const int localDof ) const;
+      template< class Entity, class Functor >
+      void mapEachEntityDof ( const Entity &entity, Functor f ) const;
 
       /** \copydoc Dune::DofMapper::maxNumDofs() const */
       int maxNumDofs () const;
@@ -263,11 +263,19 @@ namespace Dune
         functor_( functor )
       {}
 
-      void operator() ( int localBlock, int globalBlock ) 
+      template< class GlobalKey >
+      void operator() ( int localBlock, const GlobalKey &globalKey ) 
       {
         int localDof = localBlock*numComponents;
         for( int component = 0; component < numComponents; ++component, ++localDof )
-          functor_( localDof, dofUtil_.combinedDof( globalBlock, component ) );
+          functor_( localDof, dofUtil_.combinedDof( globalKey, component ) );
+      }
+
+      template< class GlobalKey >
+      void operator() ( const GlobalKey &globalKey ) 
+      {
+        for( int component = 0; component < numComponents; ++component )
+          functor_( dofUtil_.combinedDof( globalKey, component ) );
       }
 
     private:
@@ -341,16 +349,10 @@ namespace Dune
 
     template< class ContainedMapper, int N, DofStoragePolicy policy >
     template< class Entity >
-    inline int CombinedMapper< ContainedMapper, N, policy >
-      :: mapEntityDofToGlobal ( const Entity &entity, int localDof ) const 
+    inline void CombinedMapper< ContainedMapper, N, policy >
+      ::mapEachEntityDof ( const Entity &entity, Functor f ) const 
     {
-      const int component = utilLocal_.component( localDof );
-      const int containedLocal = utilLocal_.containedDof( localDof );
-   
-      const int containedGlobal = 
-        containedMapper().mapEntityDofToGlobal( entity, containedLocal );
-      
-      return utilGlobal_.combinedDof( containedGlobal, component );
+      containedMapper().mapEach( entity, FunctorWrapper< Functor >( utilGlobal_, f ) );
     }
 
 

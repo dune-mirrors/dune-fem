@@ -6,155 +6,160 @@
 namespace Dune
 {
 
-  // Internal Forward Declarations
-  // -----------------------------
-
-  template< class BlockMapper, int blockSize >
-  class NonBlockMapper;
-
-
-
-  // NonBlockMapperTraits
-  // --------------------
-
-  template< class BlockMapper, int blockSize >
-  struct NonBlockMapperTraits
+  namespace Fem
   {
-    typedef NonBlockMapper< BlockMapper, blockSize > DofMapperType;
 
-    typedef typename BlockMapper::ElementType ElementType;
-  };
+    // Internal Forward Declarations
+    // -----------------------------
+
+    template< class BlockMapper, int blockSize >
+    class NonBlockMapper;
 
 
 
-  // NonBlockMapper
-  // --------------
+    // NonBlockMapperTraits
+    // --------------------
 
-  template< class BlockMapper, int blockSize >
-  class NonBlockMapper
-  : public DofMapper< NonBlockMapperTraits< BlockMapper, blockSize > >
-  {
-    typedef NonBlockMapper< BlockMapper, blockSize > ThisType;
-    typedef DofMapper< NonBlockMapperTraits< BlockMapper, blockSize > > BaseType;
-
-    template< class Functor >
-    struct BlockFunctor
+    template< class BlockMapper, int blockSize >
+    struct NonBlockMapperTraits
     {
-      explicit BlockFunctor ( Functor functor )
-      : functor_( functor )
+      typedef NonBlockMapper< BlockMapper, blockSize > DofMapperType;
+
+      typedef typename BlockMapper::ElementType ElementType;
+    };
+
+
+
+    // NonBlockMapper
+    // --------------
+
+    template< class BlockMapper, int blockSize >
+    class NonBlockMapper
+    : public DofMapper< NonBlockMapperTraits< BlockMapper, blockSize > >
+    {
+      typedef NonBlockMapper< BlockMapper, blockSize > ThisType;
+      typedef DofMapper< NonBlockMapperTraits< BlockMapper, blockSize > > BaseType;
+
+      template< class Functor >
+      struct BlockFunctor
+      {
+        explicit BlockFunctor ( Functor functor )
+        : functor_( functor )
+        {}
+
+        template< class GlobalKey >
+        void operator() ( int localBlock, const GlobalKey globalKey )
+        {
+          int localDof = blockSize*localBlock;
+          int globalDof = blockSize*globalKey;
+          const int localEnd = localDof + blockSize;
+          while( localDof != localEnd )
+            functor_( localDof++, globalDof++ );
+        }
+
+        template< class GlobalKey >
+        void operator() ( const GlobalKey globalKey )
+        {
+          int globalDof = blockSize*globalKey;
+          const int globalEnd = globalDof + blockSize;
+          while( globalDof != globalEnd )
+            functor_( globalDof++ );
+        }
+
+      private:
+        Functor functor_;
+      };
+
+    public:
+      typedef typename BaseType::ElementType ElementType;
+
+      explicit NonBlockMapper ( BlockMapper &blockMapper )
+      : blockMapper_( blockMapper )
       {}
 
-      template< class GlobalKey >
-      void operator() ( int localBlock, const GlobalKey globalKey )
+      int size () const
       {
-        int localDof = blockSize*localBlock;
-        int globalDof = blockSize*globalBlock;
-        const int localEnd = localDof + blockSize;
-        while( localDof != localEnd )
-          functor_( localDof++, globalDof++ );
+        return blockSize * blockMapper_.size();
       }
 
-      template< class GlobalKey >
-      void operator() ( const GlobalKey globalKey )
+      template< class Functor >
+      void mapEach ( const ElementType &element, Functor f ) const
       {
-        int globalDof = blockSize*globalBlock;
-        const int globalEnd = globalDof + blockSize;
-        while( globalDof != globalEnd )
-          functor_( globalDof++ );
+        blockMapper_.mapEach( element, BlockFunctor< Functor >( f ) );
+      }
+
+
+      template< class Entity, class Functor >
+      void mapEachEntityDof ( const Entity &entity, Functor f ) const
+      {
+        blockMapper_.mapEach( entity, BlockFunctor< Functor >( f ) );
+      }
+
+      int maxNumDofs () const
+      {
+        return blockSize * blockMapper_.maxNumDofs();
+      }
+
+      int numDofs ( const ElementType &element ) const
+      {
+        return blockSize * blockMapper_.numDofs( element );
+      }
+
+      template< class Entity >
+      int numEntityDofs ( const Entity &entity ) const
+      {
+        return blockSize * blockMapper_.numEntityDofs( entity );
+      }
+
+      int numberOfHoles ( const int block ) const
+      {
+        return blockSize * blockMapper_.numberOfHoles( block );
+      }
+
+      int oldIndex ( const int hole, const int block ) const
+      {
+        const int i = hole % blockSize;
+        const int blockHole = hole / blockSize;
+        return blockMapper_.oldIndex( blockHole, block ) * blockSize + i;
+      }
+
+      int newIndex ( const int hole, const int block ) const
+      {
+        const int i = hole % blockSize;
+        const int blockHole = hole / blockSize;
+        return blockMapper_.newIndex( blockHole, block ) * blockSize + i;
+      }
+
+      bool consecutive () const
+      {
+        return blockMapper_.consecutive();
+      }
+
+      int oldOffSet ( const int block ) const
+      {
+        return blockMapper_.oldOffSet( block ) * blockSize;
+      }
+
+      int offSet ( const int block ) const
+      {
+        return blockMapper_.offSet( block ) * blockSize;
+      }
+
+      int numBlocks () const
+      {
+        return blockMapper_.numBlocks();
+      }
+
+      bool contains( const int codim ) const 
+      {
+        return blockMapper_.contains( codim );
       }
 
     private:
-      Functor functor_;
+      BlockMapper &blockMapper_;
     };
 
-  public:
-    typedef typename BaseType::ElementType ElementType;
-
-    explicit NonBlockMapper ( BlockMapper &blockMapper )
-    : blockMapper_( blockMapper )
-    {}
-
-    int size () const
-    {
-      return blockSize * blockMapper_.size();
-    }
-
-    template< class Functor >
-    void mapEach ( const ElementType &element, Functor f ) const
-    {
-      blockMapper_.mapEach( element, BlockFunctor< Functor >( f ) );
-    }
-
-
-    template< class Entity, class Functor >
-    void mapEachEntityDof ( const Entity &entity, Functor f ) const
-    {
-      blockMapper_.mapEach( entity, BlockFunctor< Functor >( f ) );
-    }
-
-    int maxNumDofs () const
-    {
-      return blockSize * blockMapper_.maxNumDofs();
-    }
-
-    int numDofs ( const ElementType &element ) const
-    {
-      return blockSize * blockMapper_.numDofs( element );
-    }
-
-    template< class Entity >
-    int numEntityDofs ( const Entity &entity ) const
-    {
-      return blockSize * blockMapper_.numEntityDofs( entity );
-    }
-
-    int numberOfHoles ( const int block ) const
-    {
-      return blockSize * blockMapper_.numberOfHoles( block );
-    }
-
-    int oldIndex ( const int hole, const int block ) const
-    {
-      const int i = hole % blockSize;
-      const int blockHole = hole / blockSize;
-      return blockMapper_.oldIndex( blockHole, block ) * blockSize + i;
-    }
-
-    int newIndex ( const int hole, const int block ) const
-    {
-      const int i = hole % blockSize;
-      const int blockHole = hole / blockSize;
-      return blockMapper_.newIndex( blockHole, block ) * blockSize + i;
-    }
-
-    bool consecutive () const
-    {
-      return blockMapper_.consecutive();
-    }
-
-    int oldOffSet ( const int block ) const
-    {
-      return blockMapper_.oldOffSet( block ) * blockSize;
-    }
-
-    int offSet ( const int block ) const
-    {
-      return blockMapper_.offSet( block ) * blockSize;
-    }
-
-    int numBlocks () const
-    {
-      return blockMapper_.numBlocks();
-    }
-
-    bool contains( const int codim ) const 
-    {
-      return blockMapper_.contains( codim );
-    }
-
-  private:
-    BlockMapper &blockMapper_;
-  };
+  } // namespace Fem
 
 } // namespace Dune
 
