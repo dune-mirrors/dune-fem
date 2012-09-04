@@ -11,11 +11,6 @@
 /dgl2projection_combined
 /dgl2projection_idgridpart
 /vtxprojection_adaptive
-/mapper_dg
-/mapper_lagrange
-/mapper_fv
-/mapper_cmbpoint
-/mapper_cmbvariable
 /intersectionindexset
 /Makefile
 /Makefile.in
