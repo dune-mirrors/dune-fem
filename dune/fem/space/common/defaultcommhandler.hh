@@ -57,6 +57,54 @@ namespace Dune
       //! cannot be implemented because of the reference
       DefaultCommunicationHandler &operator= ( const DefaultCommunicationHandler & );
 
+      template < class Buffer >
+      struct GatherFunctor
+      {
+        Buffer& buffer_;
+        DiscreteFunctionType *const function_;
+
+        GatherFunctor( Buffer& buffer, DiscreteFunctionType* function )
+          : buffer_( buffer ),
+            function_( function )
+        {
+        }
+
+        template <class GlobalKey>
+        void operator () ( const GlobalKey& globalKey ) 
+        {
+          DofBlockPtrType blockPtr = function_->block( globalKey );
+          for( int j = 0; j < blockSize; ++j )
+          {
+            buffer_.write( (*blockPtr)[ j ] );
+          }
+        }
+      };
+
+      template < class Buffer >
+      struct ScatterFunctor
+      {
+        Buffer& buffer_;
+        DiscreteFunctionType *const function_;
+
+        ScatterFunctor( Buffer& buffer, DiscreteFunctionType* function )
+          : buffer_( buffer ),
+            function_( function )
+        {
+        }
+
+        template <class GlobalKey>
+        void operator () ( const GlobalKey& globalKey ) 
+        {
+          DofBlockPtrType blockPtr = function_->block( globalKey );
+          for( int j = 0; j < blockSize; ++j )
+          {
+            DataType value;
+            buffer_.read( value );
+
+            Operation :: apply( value, (*blockPtr)[ j ] );
+          }
+        }
+      };
     public:
       bool contains ( int dim, int codim ) const
       {
@@ -72,37 +120,18 @@ namespace Dune
       template< class MessageBuffer, class Entity >
       void gather ( MessageBuffer &buffer, const Entity &entity ) const
       {
-        const unsigned int numEntityDofs = mapper_.numEntityDofs( entity );
-        for( unsigned int i = 0; i < numEntityDofs; ++i )
-        {
-          const unsigned int index = mapper_.mapEntityDofToGlobal( entity, i );
-          
-          DofBlockPtrType blockPtr = function_->block( index );
-          for( int j = 0; j < blockSize; ++j )
-            buffer.write( (*blockPtr)[ j ] );
-        }
+        GatherFunctor< MessageBuffer > gatherDofs ( buffer, function_ );
+        mapper_.mapEachEntityDof( entity, gatherDofs );
       }
 
       //! read buffer and apply operation 
       template< class MessageBuffer, class Entity >
       void scatter ( MessageBuffer &buffer, const Entity &entity, size_t n )
       {
-        const unsigned int numEntityDofs = mapper_.numEntityDofs( entity );
+        assert( n == blockSize *  mapper_.numEntityDofs( entity ) );
+        ScatterFunctor< MessageBuffer > scatterDofs ( buffer, function_ );
 
-        assert( n == blockSize * numEntityDofs );
-        for( unsigned int i = 0; i < numEntityDofs; ++i )
-        {
-          const unsigned int index = mapper_.mapEntityDofToGlobal( entity, i );
-
-          DofBlockPtrType blockPtr = function_->block( index );
-          for( int j = 0; j < blockSize; ++j )
-          {
-            DataType value;
-            buffer.read( value );
-
-            Operation :: apply( value, (*blockPtr)[ j ] );
-          }
-        }
+        mapper_.mapEachEntityDof( entity, scatterDofs );
       }
 
       //! return local dof size to be communicated 

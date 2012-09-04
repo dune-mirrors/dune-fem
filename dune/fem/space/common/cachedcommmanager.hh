@@ -25,6 +25,7 @@
 #include <dune/fem/space/common/arrays.hh>
 #include <dune/fem/space/common/entitycommhelper.hh>
 #include <dune/fem/space/common/commindexmap.hh>
+#include <dune/fem/misc/functor.hh>
 
 namespace Dune
 {
@@ -645,12 +646,19 @@ namespace Dune
           // send rank for linkage 
           buffer.write( myRank_ );
 
-          // then send all dof numbers 
           const int numDofs = blockMapper_.numEntityDofs( entity );
+
+          // int should be GlobalKey !!!! 
+          typedef std::vector< int >  IndicesType ;
+          IndicesType indices( numDofs );
+
+          // copy all global keys 
+          blockMapper_.mapEachEntityDof( entity, AssignFunctor< IndicesType >( indices ) );
+
+          // write global keys to message buffer 
           for( int i = 0; i < numDofs; ++i )
           {
-            DataType idx = blockMapper_.mapEntityDofToGlobal( entity, i );
-            buffer.write( idx );
+            buffer.write( indices[ i ] );
           }
         }
       }
@@ -677,7 +685,8 @@ namespace Dune
           linkStorage_.insert( rank );
 
           // read indices from stream 
-          std::vector<int> indices( dataSize - 1 );
+          typedef std::vector<int>  IndicesType ;
+          IndicesType indices( dataSize - 1 );
           for(size_t i=0; i<dataSize-1; ++i) 
           {
             buffer.read( indices[i] );  
@@ -701,10 +710,13 @@ namespace Dune
             // build local mapping for receiving of dofs 
             const int numDofs = blockMapper_.numEntityDofs( entity );
             indices.resize( numDofs );
-            for( int i = 0; i < numDofs; ++i )
-            {
-              indices[ i ] = blockMapper_.mapEntityDofToGlobal( entity, i );
-            }
+
+            // map each entity dof and store in indices 
+            blockMapper_.mapEachEntityDof( entity, AssignFunctor< IndicesType > ( indices ) );
+            //for( int i = 0; i < numDofs; ++i )
+            //{
+             // indices[ i ] = blockMapper_.mapEntityDofToGlobal( entity, i );
+            //}
 
             // insert receiving dofs 
             recvIndexMap_[ rank ].insert( indices );
