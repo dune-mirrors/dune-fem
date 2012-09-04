@@ -213,7 +213,7 @@ namespace Dune
     /** \copydoc DofMapper::consecutive */
     bool consecutive () const 
     {
-      return BaseType::checkConsecutive( indexSet_ );
+      indexSet_.consecutive();
     }
 
   protected:
