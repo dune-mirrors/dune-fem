@@ -375,7 +375,6 @@ namespace Dune
       assert( blockIndex >= 0 );
 
       const Block &block = blocks_[ blockIndex ];
-      assert( (unsigned int)localDof < block.numDofs );
       const unsigned int baseIndex = block.offset + block.numDofs*indexSet_.index( entity );
       for( unsigned int index = baseIndex; index != baseIndex + block.numDofs; ++index )
         f( index );
