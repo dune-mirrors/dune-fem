@@ -22,8 +22,6 @@ namespace Dune
       typedef BaseFunctionList BaseFunctionListType;
       
       typedef typename GridPartType::template Codim< 0 >::EntityType ElementType;
-      
-      typedef DefaultDofMapIterator< ElementType, DofMapperType > DofMapIteratorType;
     };
 
 
@@ -34,16 +32,15 @@ namespace Dune
      */
     template< class GridPart, class BaseFunctionList >
     class ReducedBasisMapper
-    : public DofMapperDefault< ReducedBasisMapperTraits< GridPart, BaseFunctionList > >
+    : public DofMapper< ReducedBasisMapperTraits< GridPart, BaseFunctionList > >
     {
       typedef ReducedBasisMapper< GridPart, BaseFunctionList > ThisType;
-      typedef DofMapperDefault< ReducedBasisMapperTraits< GridPart, BaseFunctionList > > BaseType;
+      typedef DofMapper< ReducedBasisMapperTraits< GridPart, BaseFunctionList > > BaseType;
 
     public:
       typedef typename BaseType::Traits Traits;
 
       typedef typename BaseType::ElementType ElementType;
-      typedef typename BaseType::DofMapIteratorType DofMapIteratorType;
      
       typedef typename Traits::GridPartType GridPartType;
       typedef typename Traits::BaseFunctionListType BaseFunctionListType;
@@ -52,18 +49,6 @@ namespace Dune
       explicit ReducedBasisMapper ( const BaseFunctionListType &baseFunctionList )
       : baseFunctionList_( baseFunctionList )
       {}
-
-      /** \copydoc Dune::DofMapper::begin(const ElementType &entity) const */
-      DofMapIteratorType begin ( const ElementType &entity ) const
-      {
-        return DofMapIteratorType( DofMapIteratorType::beginIterator, entity, *this );
-      }
-      
-      /** \copydoc Dune::DofMapper::end(const ElementType &entity) const */
-      DofMapIteratorType end ( const ElementType &entity ) const
-      {
-        return DofMapIteratorType( DofMapIteratorType::endIterator, entity, *this );
-      }
 
       /** \copydoc Dune::DofMapper::mapEach */
       template< class Functor >
@@ -107,30 +92,6 @@ namespace Dune
         return 0;
       }
      
-      /** \copydoc Dune::DofMapper::consecutive() const */
-      bool consecutive () const
-      {
-        return false;
-      }
-
-      /** \copydoc Dune::DofMapper::newIndex(const int hole,const int block) const */
-      int newIndex ( const int hole, const int block ) const
-      {
-        return -1;
-      }
-
-      /** \copydoc Dune::DofMapper::numberOfHoles(const int block) const */
-      int numberOfHoles ( const int block ) const
-      {
-        return 0;
-      }
-
-      /** \copydoc Dune::DofMapper::oldIndex(const int hole,const int block) const */
-      int oldIndex ( const int hole, const int block ) const
-      {
-        return -1;
-      }
-
       /** \copydoc Dune::DofMapper::size() const */
       int size () const
       {
