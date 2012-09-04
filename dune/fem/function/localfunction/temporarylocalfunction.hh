@@ -433,12 +433,13 @@ namespace Dune
       : discreteFunction_( discreteFunction ), dofs_( dofs )
       {}
 
-      void operator () ( std::size_t local, std::size_t global )
+      template < class GlobalKey >
+      void operator () ( const std::size_t local, const GlobalKey& globalKey )
       {
         typedef typename DiscreteFunction::ConstDofBlockPtrType ConstDofBlockPtrType;
         static const unsigned int blockSize = DiscreteFunctionSpaceType::localBlockSize;
       
-        ConstDofBlockPtrType blockPtr = discreteFunction_.block( global );
+        ConstDofBlockPtrType blockPtr = discreteFunction_.block( globalKey );
         for( unsigned int i = 0; i < blockSize; ++i )
           dofs_[ (local*blockSize) + i ] = (*blockPtr)[ i ];
       }
