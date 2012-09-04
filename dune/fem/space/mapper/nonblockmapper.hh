@@ -14,56 +14,6 @@ namespace Dune
 
 
 
-  // NonBlockDofMapIterator
-  // ----------------------
-
-  template< class BlockDofIterator, int blockSize >
-  class NonBlockDofMapIterator
-  {
-    typedef NonBlockDofMapIterator< BlockDofIterator, blockSize > ThisType;
-
-  public:
-    NonBlockDofMapIterator ( const BlockDofIterator &blockIterator )
-    : blockIterator_( blockIterator ), i_( 0 )
-    {}
-
-    ThisType &operator++ ()
-    {
-      if( ++i_ == blockSize )
-      {
-        i_ = 0;
-        ++blockIterator_;
-      }
-      return *this;
-    }
-
-    bool operator== ( const ThisType &other ) const
-    {
-      return (blockIterator_ == other.blockIterator_) && (i_ == other.i_);
-    }
-
-    bool operator!= ( const ThisType &other ) const
-    {
-      return (blockIterator_ != other.blockIterator_) || (i_ != other.i_);
-    }
-
-    int local () const
-    {
-      return blockSize * blockIterator_.local() + i_;
-    }
-
-    int global () const
-    {
-      return blockSize * blockIterator_.global() + i_;
-    }
-
-  private:
-    BlockDofIterator blockIterator_;
-    int i_;
-  };
-
-
-
   // NonBlockMapperTraits
   // --------------------
 
@@ -73,9 +23,6 @@ namespace Dune
     typedef NonBlockMapper< BlockMapper, blockSize > DofMapperType;
 
     typedef typename BlockMapper::ElementType ElementType;
-
-    typedef NonBlockDofMapIterator< typename BlockMapper::DofMapIteratorType, blockSize >
-      DofMapIteratorType;
   };
 
 
@@ -97,7 +44,8 @@ namespace Dune
       : functor_( functor )
       {}
 
-      void operator() ( int localBlock, int globalBlock )
+      template< class GlobalKey >
+      void operator() ( int localBlock, const GlobalKey globalKey )
       {
         int localDof = blockSize*localBlock;
         int globalDof = blockSize*globalBlock;
@@ -106,13 +54,21 @@ namespace Dune
           functor_( localDof++, globalDof++ );
       }
 
+      template< class GlobalKey >
+      void operator() ( const GlobalKey globalKey )
+      {
+        int globalDof = blockSize*globalBlock;
+        const int globalEnd = globalDof + blockSize;
+        while( globalDof != globalEnd )
+          functor_( globalDof++ );
+      }
+
     private:
       Functor functor_;
     };
 
   public:
     typedef typename BaseType::ElementType ElementType;
-    typedef typename BaseType::DofMapIteratorType DofMapIteratorType;
 
     explicit NonBlockMapper ( BlockMapper &blockMapper )
     : blockMapper_( blockMapper )
@@ -123,35 +79,17 @@ namespace Dune
       return blockSize * blockMapper_.size();
     }
 
-    DofMapIteratorType begin ( const ElementType &entity ) const
-    {
-      return DofMapIteratorType( blockMapper_.begin(entity) );
-    }
-
-    DofMapIteratorType end ( const ElementType &entity ) const
-    {
-      return DofMapIteratorType( blockMapper_.end(entity) );
-    }
-
     template< class Functor >
     void mapEach ( const ElementType &element, Functor f ) const
     {
       blockMapper_.mapEach( element, BlockFunctor< Functor >( f ) );
     }
 
-    int mapToGlobal ( const ElementType &entity, const int localDof ) const
-    {
-      const int i = localDof % blockSize;
-      const int blockDof = localDof / blockSize;
-      return blockMapper_.mapToGlobal( entity, blockDof ) * blockSize + i;
-    }
 
-    template< class Entity >
-    int mapEntityDofToGlobal ( const Entity &entity, const int localDof ) const
+    template< class Entity, class Functor >
+    void mapEachEntityDof ( const Entity &entity, Functor f ) const
     {
-      const int i = localDof % blockSize;
-      const int blockDof = localDof / blockSize;
-      return blockMapper_.mapEntityDofToGlobal( entity, blockDof ) * blockSize + i;
+      blockMapper_.mapEach( entity, BlockFunctor< Functor >( f ) );
     }
 
     int maxNumDofs () const

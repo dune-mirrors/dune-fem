@@ -166,8 +166,8 @@ namespace Dune
       return indices[ localDof ];
     }
 
-    template< class Entity >
-    int mapEntityDofToGlobal ( const Entity &entity, const int localDof ) const;
+    template< class Entity, class Functor >
+    void mapEachEntityDof ( const Entity &entity, Functor f ) const;
 
     unsigned int size () const
     {
@@ -361,10 +361,10 @@ namespace Dune
 
 
   template< class GridPart, class LocalCoefficientsMap >
-  template< class Entity >
-  inline int
+  template< class Entity, class Functor >
+  inline void
   GenericDofMapper< GridPart, LocalCoefficientsMap >
-    ::mapEntityDofToGlobal ( const Entity &entity, const int localDof ) const
+    ::mapEachEntityDof ( const Entity &entity, Functor f ) const
   {
     const int codim = Entity::codimension;
     const unsigned int topologyId = entity.type().id();
@@ -373,7 +373,9 @@ namespace Dune
 
     const Block &block = blocks_[ blockIndex ];
     assert( (unsigned int)localDof < block.numDofs );
-    return block.offset + block.numDofs*indexSet_.index( entity ) + localDof;
+    const unsigned int baseIndex = block.offset + block.numDofs*indexSet_.index( entity );
+    for( unsigned int index = baseIndex; index != baseIndex + block.numDofs; ++index )
+      f( index );
   }
 
 

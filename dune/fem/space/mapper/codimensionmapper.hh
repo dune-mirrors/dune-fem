@@ -163,12 +163,12 @@ namespace Dune
     };
 
   public:
-    /** \copydoc DofMapper::mapEntityDofToGlobal */
-    template< class Entity >
-    int mapEntityDofToGlobal ( const Entity &entity, const int localDof ) const
+    /** \copydoc DofMapper::mapEachEntityDof */
+    template< class Entity, class Functor >
+    void mapEachEntityDof ( const Entity &entity, Functor f ) const
     {
       assert( codimension == Entity::codimension );
-      return IndexExtractor< codimension,  Entity::codimension > :: index( indexSet_, entity ); 
+      f( IndexExtractor< codimension, Entity::codimension >::index( indexSet_, entity ) );
     }
 
     /** \copydoc DofMapper::maxNumDofs() const */

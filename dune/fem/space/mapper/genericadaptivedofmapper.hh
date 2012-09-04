@@ -610,11 +610,13 @@ namespace Dune
         }
       }
 
-      /** \copydoc Dune::Fem::DofMapper::mapEntityDofToGlobal */
-      template< class Entity >
-      int mapEntityDofToGlobal ( const Entity &entity, const int localDof ) const 
+      /** \copydoc Dune::Fem::DofMapper::mapEachEntityDof */
+      template< class Entity, class Functor >
+      void mapEachEntityDof ( const Entity &entity, Functor f ) const
       {
-        return dofContainer( Entity :: codimension )[ entity ].entityDof( localDof );
+        const int n = numEntityDofs( entity );
+        for( int i = 0; i < n; ++i )
+          f( dofContainer( Entity::codimension )[ entity ].entityDof( i ) );
       }
       
       /** \copydoc Dune::Fem::DofMapper::maxNumDofs() const */

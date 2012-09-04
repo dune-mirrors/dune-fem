@@ -80,12 +80,11 @@ namespace Dune
         return localDof;
       }
 
-      /** \copydoc Dune::DofMapper::mapEntityDofToGlobal(const Entity &entity,const int localDof) const */
-      template< class Entity >
-      int mapEntityDofToGlobal ( const Entity &entity, const int localDof ) const
+      /** \copydoc Dune::DofMapper::mapEachEntityDof(const Entity &entity,Functor f) const */
+      template< class Entity, class Functor >
+      void mapEachEntityDof ( const Entity &entity, Functor f ) const
       {
         DUNE_THROW( NotImplemented, "ReducedBasisSpace cannot map entity DoFs." );
-        return 0;
       }
 
       /** \copydoc Dune::DofMapper::numDofs(const ElementType &element) const */

@@ -110,9 +110,6 @@ namespace Dune
       void mapEntityDofs ( const Entity &entity, std::vector< std::size_t > &indices ) const;
 
       template< class Entity >
-      std::size_t mapEntityDofToGlobal ( const Entity &entity, int i ) const;
-
-      template< class Entity >
       std::size_t numEntityDofs ( const Entity &entity ) const;
 
 
@@ -428,7 +425,7 @@ namespace Dune
       std::size_t numDofs = info.numDofs;
       std::size_t index = info.offset + numDofs * std::size_t( indexSet().index( entity ) );
       for( std::size_t i = 0; i < info.numDofs; ++i )
-        f( i, index++ );
+        f( index++ );
     }
 
 
@@ -439,17 +436,6 @@ namespace Dune
     {
       indices.resize( numEntityDofs( entity ) );
       mapEachEntityDof( entity, AssignFunctor< std::vector< std::size_t > >( indices ) );
-    }
-
-
-    template< class GridPart >
-    template< class Entity >
-    inline std::size_t DofMapper< GridPart >
-      ::mapEntityDofToGlobal ( const Entity &entity, const int i ) const
-    {
-      assert( (i >= 0) && (i < int( numEntityDofs( entity ) ) ) );
-      const SubEntityInfo &info = subEntityInfo( entity );
-      return info.offset + info.numDofs*indexSet().index( entity ) + i;
     }
 
 
