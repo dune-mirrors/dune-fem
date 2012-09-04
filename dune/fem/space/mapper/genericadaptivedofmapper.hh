@@ -27,10 +27,10 @@ namespace Dune
 
     template< class TraitsImp >
     class GenericAdaptiveDofMapper 
-    : public DofMapperDefault< TraitsImp > 
+    : public AdaptiveDofMapper< TraitsImp > 
     {
       typedef GenericAdaptiveDofMapper< TraitsImp > ThisType;
-      typedef DofMapperDefault< TraitsImp > BaseType;
+      typedef AdaptiveDofMapper< TraitsImp > BaseType;
 
     public:
       typedef TraitsImp Traits;
