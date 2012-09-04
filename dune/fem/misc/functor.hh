@@ -34,10 +34,10 @@ namespace Dune
         assign_( assign )
       {}
 
-      template< class Element >
-      void operator() ( const std::size_t i, const Element &e )
+      template< class GlobalKey >
+      void operator() ( const std::size_t local, const GlobalKey &globalKey )
       {
-        assign_( e, array_[ i ] );
+        assign_( globalKey, array_[ local ] );
       }
 
     private:
@@ -54,18 +54,18 @@ namespace Dune
     struct AssignSingleFunctor
     {
       explicit AssignSingleFunctor ( const std::size_t i, Value &value )
-      : i_( i ),
+      : localFixed_( i ),
         value_( value )
       {}
 
-      void operator() ( const std::size_t i, const Value &v )
+      void operator() ( const std::size_t local, const Value &globalKey )
       {
-        if( i == i_ )
-          value_ = v;
+        if( local == localFixed_ )
+          value_ = globalKey;
       }
 
     private:
-      std::size_t i_;
+      std::size_t localFixed_;
       Value &value_;
     };
 
