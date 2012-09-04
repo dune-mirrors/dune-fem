@@ -55,9 +55,6 @@ namespace Dune
 
       typedef ElementType EntityType;
 
-      //! type of the dof map iterator
-      typedef typename Traits::DofMapIteratorType DofMapIteratorType;
-
     protected:
       using BaseType::asImp;
 

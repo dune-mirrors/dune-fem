@@ -59,8 +59,6 @@ namespace Dune
 
       typedef typename GridPartType::template Codim< 0 >::EntityType ElementType;
 
-      typedef DefaultDofMapIterator< ElementType, ThisType > DofMapIteratorType;
-
       template< class CodeFactory >
       IndexSetDofMapper ( const GridPartType &gridPart, const CodeFactory &codeFactory );
 

@@ -253,7 +253,6 @@ namespace Dune
     StandardLocalFunctionImpl< DiscreteFunction, DiscreteFunctionSpace >::init ( const EntityType &entity )
     {
       typedef typename DiscreteFunctionSpaceType :: BlockMapperType BlockMapperType;
-      typedef typename BlockMapperType :: DofMapIteratorType DofMapIteratorType;
 
       const DiscreteFunctionSpaceType &space = discreteFunction_.space();
       const bool multipleBaseSets = space.multipleBaseFunctionSets();
