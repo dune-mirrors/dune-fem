@@ -2,7 +2,6 @@
 #define DUNE_FEM_STANDARDLOCALFUNCTION_HH
 
 #include <dune/fem/function/localfunction/localfunction.hh>
-#include <dune/fem/space/common/dofstorage.hh>
 #include <dune/fem/storage/array.hh>
 
 namespace Dune
