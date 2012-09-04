@@ -140,10 +140,10 @@ namespace Dune
      */
     template< class ContainedMapper, int N, DofStoragePolicy policy >
     class CombinedMapper
-    : public DofMapperDefault< CombinedMapperTraits< ContainedMapper, N, policy > >
+    : public AdaptiveDofMapper< CombinedMapperTraits< ContainedMapper, N, policy > >
     {
       typedef CombinedMapper< ContainedMapper, N, policy > ThisType;
-      typedef DofMapperDefault< CombinedMapperTraits< ContainedMapper, N, policy > > BaseType;
+      typedef AdaptiveDofMapper< CombinedMapperTraits< ContainedMapper, N, policy > > BaseType;
 
       template< class, int, DofStoragePolicy >
       friend class CombinedSpace;
@@ -348,7 +348,7 @@ namespace Dune
 
 
     template< class ContainedMapper, int N, DofStoragePolicy policy >
-    template< class Entity >
+    template< class Entity, class Functor >
     inline void CombinedMapper< ContainedMapper, N, policy >
       ::mapEachEntityDof ( const Entity &entity, Functor f ) const 
     {
