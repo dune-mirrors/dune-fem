@@ -138,9 +138,6 @@ protected:
         int nbRowIndex = -1;
         rowMapper.mapEach( nb, AssignSingleValueType( 0, nbRowIndex ) );
 
-        //const int nbRowIndex = rowMapper.mapToGlobal( nb , 0 );
-        //const int nbColIndex = colMapper.mapToGlobal( nb , 0 );
-        //
         // check whether to insert now 
         bool insertHere = (elRowIndex < nbRowIndex);
         bool nbInsert = true;
@@ -165,7 +162,6 @@ protected:
 
           if( nbInsert )
           {
-            //const int elColIndex = colMapper.mapToGlobal( en , 0 );
             int elColIndex = -1; 
             colMapper.mapEach( en, AssignSingleValueType( 0, elColIndex ) );
             nbIndices.insert( elColIndex );  
