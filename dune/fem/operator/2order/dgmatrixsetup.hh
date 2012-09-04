@@ -5,6 +5,7 @@
 
 #include <dune/fem/function/common/scalarproducts.hh>
 #include <dune/fem/space/common/commoperations.hh>
+#include <dune/fem/misc/functor.hh>
 
 #if HAVE_DUNE_ISTL
 #include <dune/istl/operators.hh>
@@ -93,8 +94,13 @@ protected:
                    ParallelScalarProductType& slaveDofs)
   {
     assert( rowMapper.maxNumDofs () == 1 );
+
+    typedef Fem :: AssignSingleFunctor< int > AssignSingleValueType ;
+
+    int elRowIndex = -1; 
+
     // get index for entity 
-    const int elRowIndex = rowMapper.mapToGlobal( en, 0 ); 
+    rowMapper.mapEach( en, AssignSingleValueType( 0, elRowIndex ) );
 
     // type of local indices storage 
     typedef std::set< int >  LocalIndicesType; 
@@ -127,9 +133,14 @@ protected:
         const EntityImp& nb = *ep;
 
         // get index of neighbor 
-        const int nbColIndex = colMapper.mapToGlobal( nb , 0 );
-        const int nbRowIndex = rowMapper.mapToGlobal( nb , 0 );
+        int nbColIndex = -1;
+        colMapper.mapEach( nb, AssignSingleValueType( 0, nbColIndex ) );
+        int nbRowIndex = -1;
+        rowMapper.mapEach( nb, AssignSingleValueType( 0, nbRowIndex ) );
 
+        //const int nbRowIndex = rowMapper.mapToGlobal( nb , 0 );
+        //const int nbColIndex = colMapper.mapToGlobal( nb , 0 );
+        //
         // check whether to insert now 
         bool insertHere = (elRowIndex < nbRowIndex);
         bool nbInsert = true;
@@ -154,7 +165,9 @@ protected:
 
           if( nbInsert )
           {
-            const int elColIndex = colMapper.mapToGlobal( en , 0 );
+            //const int elColIndex = colMapper.mapToGlobal( en , 0 );
+            int elColIndex = -1; 
+            colMapper.mapEach( en, AssignSingleValueType( 0, elColIndex ) );
             nbIndices.insert( elColIndex );  
           }
         }
