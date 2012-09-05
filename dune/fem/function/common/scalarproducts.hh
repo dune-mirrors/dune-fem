@@ -43,10 +43,15 @@ namespace Dune
     template< class Space, class Mapper >
     class SlaveDofs 
     {
+      typedef SlaveDofs< Space, Mapper > ThisType;
+
     public:
       class SingletonKey;
 
     private:
+      template< class Map >
+      struct InsertFunctor;
+
       class LinkBuilder;
 
     public:
@@ -181,6 +186,27 @@ namespace Dune
     };
 
 
+
+    // SlaveDofs::InsertFunctor
+    // ------------------------
+
+    template< class Space, class Mapper >
+    template< class Map >
+    struct SlaveDofs< Space, Mapper >::InsertFunctor
+    {
+      explicit InsertFunctor ( Map &map ) : map_( map ) {}
+
+      template< class Value >
+      void operator() ( const Value &value ) { map_.insert( value ); }
+
+    private:
+      Map &map_;
+    };
+
+
+
+    // Implementation of SlaveDofs
+    // ---------------------------
     
     template< class Space, class Mapper >
     inline void SlaveDofs< Space, Mapper > :: buildDiscontinuousMaps ()
@@ -198,17 +224,8 @@ namespace Dune
           EntityType;
         
         const EntityType &entity = *it;
-        if( entity.partitionType() != InteriorEntity ) 
-        {
-          // build local mapping 
-          const int numDofs = mapper_.numEntityDofs( entity );
-
-          // copy numDofs 
-          for( int i = 0; i < numDofs; ++i )
-          {
-            insert( mapper_.mapEntityDofToGlobal( entity, i ) );
-          }
-        }
+        if( entity.partitionType() != InteriorEntity )
+          mapper_.mapEachEntityDof( entity, InsertFunctor< ThisType >( *this ) );
       }
 
       // insert overall size at the end
@@ -368,11 +385,7 @@ namespace Dune
           
           // if entity in not interiorBorder insert anyway 
           if ( rank < myRank_ || ! sendRank( entity ) )
-          { 
-            const int numDofs = mapper_.numEntityDofs( entity );
-            for( int i = 0; i < numDofs; ++i )
-              slaves_.insert( mapper_.mapEntityDofToGlobal( entity, i ) );
-          }
+            mapper_.mapEachEntityDof( entity, InsertFunctor< IndexMapType >( slaves_ ) );
         }
       }
 
