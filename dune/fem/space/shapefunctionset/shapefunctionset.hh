@@ -14,8 +14,8 @@ namespace Dune
   namespace Fem
   {
 
-    // SimpleShapeFunction
-    // -------------------
+    // ShapeFunctionSet
+    // ----------------
 
     template< class Traits >
     class ShapeFunctionSet
