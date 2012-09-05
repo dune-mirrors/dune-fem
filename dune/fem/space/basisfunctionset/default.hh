@@ -50,10 +50,12 @@ namespace Dune
 
       typedef typename LocalFunctionSpaceType::RangeFieldType RangeFieldType;
 
+      typedef typename EntityType::Geometry GeometryType;
+
     public:
       //  slight misuse of struct ToLocalFunctionSpace!!!
       //! \brief type of function space
-      typedef typename ToLocalFunctionSpace< LocalFunctionSpaceType, EntityType::Geometry::coorddimension >::Type FunctionSpaceType;
+      typedef typename ToLocalFunctionSpace< LocalFunctionSpaceType, GeometryType::coorddimension >::Type FunctionSpaceType;
 
       //! \brief range type
       typedef typename FunctionSpaceType::RangeType RangeType;
@@ -63,8 +65,8 @@ namespace Dune
       typedef typename FunctionSpaceType::HessianRangeType HessianRangeType;
 
       //! \brief type of reference element
-      typedef Dune::ReferenceElement< typename EntityType::Geometry::ctype, 
-                                      EntityType::Geometry::coorddimension > ReferenceElementType;
+      typedef Dune::ReferenceElement< typename GeometryType::ctype, 
+                                      GeometryType::coorddimension > ReferenceElementType;
 
       //! \brief constructor
       DefaultBasisFunctionSet ( const EntityType &entity, const ShapeFunctionSet &shapeFunctionSet )
@@ -81,15 +83,11 @@ namespace Dune
       //! \brief return size of basis function set
       std::size_t size () const { return shapeFunctionSet().size(); }
 
-      //! \brief return geometry type of entity
-      DUNE_VERSION_DEPRECATED(1,4,remove)
-      Dune::GeometryType type () const { return shapeFunctionSet().type(); }
-
       //! \brief return reference element
       const ReferenceElementType &referenceElement () const
       {
-        return Dune::ReferenceElements< typename EntityType::Geometry::ctype, 
-                                        EntityType::Geometry::coorddimension >::general( shapeFunctionSet().type() );
+        return Dune::ReferenceElements< typename GeometryType::ctype, 
+                                        GeometryType::coorddimension >::general( shapeFunctionSet().type() );
       }
 
       //! \todo please doc me
@@ -196,8 +194,7 @@ namespace Dune
       const ShapeFunctionSet &shapeFunctionSet () const { return shapeFunctionSet_; }
 
     protected:
-      typedef typename EntityType::Geometry GeometryType;
-      const GeometryType &geometry () const { return entity().geometry(); }
+      GeometryType geometry () const { return entity().geometry(); }
 
     private:
       const EntityType *entity_;
