@@ -10,8 +10,8 @@
 #include <dune/geometry/type.hh>
 
 //- dune-fem includes
-#include <dune/fem/space/basefunctionset/functor.hh>
-#include <dune/fem/space/basefunctionset/transformation.hh>
+#include <dune/fem/space/basisfunctionset/functor.hh>
+#include <dune/fem/space/basisfunctionset/transformation.hh>
 #include <dune/fem/space/common/functionspace.hh>
 #include <dune/fem/version.hh>
 
