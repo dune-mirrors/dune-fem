@@ -1,8 +1,8 @@
 /am
 /Makefile
 /Makefile.in
-/.deps
-/.libs
+.deps
+.libs
 /dune-fem*.tar.gz
 /dune-fem*.tar.bz2
 /aclocal.m4
@@ -29,3 +29,6 @@
 /check-doxygen.out
 /check-headers.out
 /*.swp
+*.lo
+*.o
+*.la
