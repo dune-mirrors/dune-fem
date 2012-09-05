@@ -6,6 +6,7 @@
 #include <dune/geometry/type.hh>
 
 #include <dune/fem/space/common/functionspace.hh>
+#include <dune/fem/space/shapefunctionset/shapefunctionset.hh>
 
 namespace Dune
 {
@@ -19,11 +20,11 @@ namespace Dune
     template< class ScalarFunctionSpace, class RangeVector >
     struct MakeVectorial;
 
-    template< class DomainVector, class RangeField, int dimR >
-    struct MakeVectorial< FunctionSpace< DomainVector, FieldVector< RangeField, 1 > >, FieldVector< RangeField, dimR > >
+    template< class DomainField, class RangeField, int dimD, int dimR >
+    struct MakeVectorial< FunctionSpace< DomainField, RangeField, dimD, 1 >, FieldVector< RangeField, dimR > >
     {
-      typedef FunctionSpace< DomainVector, FieldVector< RangeField, 1 > > ScalarFunctionSpaceType;
-      typedef FunctionSpace< DomainVector, FieldVector< RangeField, dimR > > VectorialFunctionSpaceType;
+      typedef FunctionSpace< DomainField, RangeField, dimD, 1 > ScalarFunctionSpaceType;
+      typedef FunctionSpace< DomainField, RangeField, dimD, dimR > VectorialFunctionSpaceType;
 
       static const int dimRangeFactor = dimR;
 
@@ -56,8 +57,14 @@ namespace Dune
 
     template< class ScalarShapeFunctionSet, class RangeVector >
     class VectorialShapeFunctionSet
+    : public ShapeFunctionSet< typename MakeVectorial< typename ScalarShapeFunctionSet::FunctionSpaceType, RangeVector >::VectorialFunctionSpaceType, 
+                               VectorialShapeFunctionSet< ScalarShapeFunctionSet, RangeVector >
+                             >
     {
       typedef VectorialShapeFunctionSet< ScalarShapeFunctionSet, RangeVector > ThisType;
+      typedef ShapeFunctionSet< typename MakeVectorial< typename ScalarShapeFunctionSet::FunctionSpaceType, RangeVector >::VectorialFunctionSpaceType, 
+                                VectorialShapeFunctionSet< ScalarShapeFunctionSet, RangeVector >
+                              > BaseType;
 
     public:
       typedef ScalarShapeFunctionSet ScalarShapeFunctionSetType;
@@ -72,7 +79,7 @@ namespace Dune
       struct VectorialFunctor;
 
     public:
-      typedef typename MakeVectorialType::VectorialFunctionSpaceType FunctionSpaceType;
+      typedef typename BaseType::FunctionSpaceType FunctionSpaceType;
 
       explicit VectorialShapeFunctionSet ( const ScalarShapeFunctionSetType &scalarShapeFunctionSet = ScalarShapeFunctionSetType() )
       : scalarShapeFunctionSet_( scalarShapeFunctionSet )
@@ -82,7 +89,7 @@ namespace Dune
 
       // Shape Function Set Interface Methods
 
-      GeometryType geometryType () const { return scalarShapeFunctionSet_.geometryType(); }
+      GeometryType type () const { return scalarShapeFunctionSet_.type(); }
       
       std::size_t size () const { return dimRangeFactor * scalarShapeFunctionSet().size(); }
 
