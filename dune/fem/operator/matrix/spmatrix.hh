@@ -14,6 +14,7 @@
 #include <dune/fem/io/parameter.hh>
 #include <dune/fem/solver/oemsolver.hh>
 #include <dune/fem/operator/common/operator.hh>
+#include <dune/fem/operator/matrix/columnobject.hh>
 
 #ifdef ENABLE_UMFPACK 
 #include <umfpack.h>
@@ -395,17 +396,18 @@ namespace Dune
       typedef DomainSpace DomainSpaceType;
       typedef RangeSpace RangeSpaceType;
 
+      /******************************************************************* 
+      *   Rows belong to the DomainSpace and Columns to the RangeSpace   *
+      *******************************************************************/    
+      typedef typename DomainSpace :: EntityType  DomainEntityType ;
+      typedef typename RangeSpace :: EntityType   RangeEntityType ;
+
     private:  
       typedef SparseRowMatrixObject< DomainSpaceType, RangeSpaceType, Traits > ThisType;
 
     protected:
       typedef typename DomainSpaceType :: GridType GridType;
 
-      /******************************************************************* 
-      *   Rows belong to the DomainSpace and Columns to the RangeSpace   *
-      *******************************************************************/    
-      typedef typename DomainSpace :: EntityType  DomainEntityType ;
-      typedef typename RangeSpace :: EntityType   RangeEntityType ;
 
       template< class MatrixObject >
       struct LocalMatrixTraits;
@@ -439,6 +441,8 @@ namespace Dune
       typedef Fem :: ObjectStack< LocalMatrixFactoryType > LocalMatrixStackType;
       //! type of local matrix 
       typedef LocalMatrixWrapper< LocalMatrixStackType > LocalMatrixType;
+
+      typedef ColumnObject< ThisType > LocalColumnObjectType;
 
     protected:
       const DomainSpaceType &domainSpace_;
@@ -501,6 +505,11 @@ namespace Dune
         *   Rows belong to the DomainSpace and Columns to the RangeSpace   *
         *******************************************************************/
         return LocalMatrixType( localMatrixStack_, domainEntity, rangeEntity );
+      }
+
+      LocalColumnObjectType localColumn( const DomainEntityType &domainEntity ) const
+      {
+        return LocalColumnObjectType ( *this, domainEntity );
       }
 
       //! resize all matrices and clear them 
