@@ -44,7 +44,6 @@ namespace Dune
 
       typedef typename GridPartType::template Codim< 0 >::EntityType ElementType;
       typedef PAdaptiveLagrangeMapper< GridPartType, polynomialOrder > DofMapperType;
-      typedef DefaultDofMapIterator< ElementType, DofMapperType > DofMapIteratorType;
 
       //! type of the compiled local key 
       typedef LagrangePointSet< GridPartType, polynomialOrder >  CompiledLocalKeyType;
@@ -164,7 +163,6 @@ namespace Dune
 
       typedef typename GridPart::template Codim< 0 >::EntityType ElementType;
       typedef PAdaptiveDGMapper< GridPart, polOrder > DofMapperType;
-      typedef DefaultDofMapIterator< ElementType, DofMapperType > DofMapIteratorType;
     };
 
 
