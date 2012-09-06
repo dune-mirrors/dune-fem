@@ -28,7 +28,7 @@
 /check.out
 /check-doxygen.out
 /check-headers.out
-/*.swp
+*.swp
 *.lo
 *.o
 *.la

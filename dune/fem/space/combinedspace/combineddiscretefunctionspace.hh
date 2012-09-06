@@ -37,6 +37,7 @@ namespace Dune
     template< class DFunctionSpace1, class DFunctionSpace2> 
     struct CombinedDiscreteFunctionSpaceTraits
     {
+      static const int codimension = 0;
 
       typedef DFunctionSpace1   DiscreteFunctionSpace1;
       typedef DFunctionSpace2   DiscreteFunctionSpace2;   

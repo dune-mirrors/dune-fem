@@ -39,6 +39,8 @@ namespace Dune
               template< class > class BaseFunctionStorage = CachingStorage >
     struct LagrangeDiscreteFunctionSpaceTraits
     {
+      static const int codimension = 0; 
+
       dune_static_assert((polOrder > 0), "LagrangeSpace only defined for polOrder > 0" );
       
       typedef FunctionSpace FunctionSpaceType;
@@ -54,8 +56,8 @@ namespace Dune
       typedef typename GridPartType::GridType GridType;
       typedef typename GridPartType::IndexSetType IndexSetType;
 
-      typedef typename GridPartType::template Codim< 0 >::IteratorType IteratorType;
-      typedef typename GridPartType::template Codim< 0 >::EntityType EntityType;
+      typedef typename GridPartType::template Codim< codimension >::IteratorType IteratorType;
+      typedef typename GridPartType::template Codim< codimension >::EntityType EntityType;
 
       // get dimension of local coordinate 
       static const int dimLocal = GridPartType::dimension;

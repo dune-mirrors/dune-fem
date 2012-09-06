@@ -127,10 +127,10 @@ namespace Dune
        *
        *  \note Only grid traversal for codimension 0 is currently supported.
        */
-      typedef typename GridPartType :: template Codim< 0 > :: IteratorType
+      typedef typename GridPartType :: template Codim< Traits::codimension > :: IteratorType
         IteratorType;
       //! type of entity of codimension 0
-      typedef typename GridPartType :: template Codim< 0 > :: EntityType EntityType;
+      typedef typename GridPartType :: template Codim< Traits::codimension > :: EntityType EntityType;
       //! type of the intersections
       typedef typename GridPartType :: IntersectionType IntersectionType;
 
@@ -595,7 +595,7 @@ namespace Dune
       typedef DiscreteFunctionSpaceInterface< Traits > BaseType;
       
     public:
-      typedef typename FunctionSpaceTraits :: DiscreteFunctionSpaceType
+      typedef typename Traits :: DiscreteFunctionSpaceType
         DiscreteFunctionSpaceType;
 
       typedef typename BaseType :: GridPartType GridPartType;

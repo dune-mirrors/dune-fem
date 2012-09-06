@@ -594,6 +594,8 @@ namespace Dune
     {
       dune_static_assert((polOrder > 0), "LagrangeSpace only defined for polOrder > 0" );
       
+      static const int codimension = 0;
+
       typedef FunctionSpace FunctionSpaceType;
       typedef typename FunctionSpaceType :: DomainFieldType DomainFieldType;
       typedef typename FunctionSpaceType :: DomainType DomainType;
@@ -606,7 +608,7 @@ namespace Dune
       typedef GridPart GridPartType;
       typedef typename GridPartType :: GridType GridType;
       typedef typename GridPartType :: IndexSetType IndexSetType;
-      typedef typename GridPartType :: template Codim< 0 > :: IteratorType
+      typedef typename GridPartType :: template Codim< codimension > :: IteratorType
         IteratorType;
 
       // get dimension of local coordinate 

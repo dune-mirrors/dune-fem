@@ -38,12 +38,14 @@ namespace Dune
               template <class> class BaseFunctionStorageImp > 
     struct FiniteVolumeSpaceTraits 
     {   
+      static const int codimension = 0;
+
       typedef FunctionSpaceImp FunctionSpaceType;
       typedef GridPartImp GridPartType;
 
       typedef typename GridPartType::GridType GridType;
       typedef typename GridPartType::IndexSetType IndexSetType;
-      typedef typename GridPartType::template Codim<0>::IteratorType IteratorType;
+      typedef typename GridPartType::template Codim< codimension >::IteratorType IteratorType;
       enum { dimRange = FunctionSpaceType :: dimRange };
 
       // dimension of local coordinates 
