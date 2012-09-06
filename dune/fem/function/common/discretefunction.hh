@@ -47,14 +47,12 @@ namespace Dune
     /** Base class for determing whether a class is a discrete function or not. 
     */
     class IsDiscreteFunction
-    {
-    };
+    {};
     
     /** Base class for determing whether a function has local functions or not.
     */
     class HasLocalFunction
-    {
-    };
+    {};
 
     template <class Traits>
     class DiscreteFunctionDefault;
