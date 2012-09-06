@@ -10,6 +10,7 @@
 #include <dune/fem/function/adaptivefunction.hh>
 #include <dune/fem/function/localfunction/temporarylocalfunction.hh>
 #include <dune/fem/gridpart/adaptiveleafgridpart.hh>
+#include <dune/fem/gridpart/leafgridpart.hh>
 #include <dune/fem/gridpart/geogridpart.hh>
 #include <dune/fem/misc/gridwidth.hh>
 #include <dune/fem/operator/lagrangeinterpolation.hh>
@@ -205,7 +206,8 @@ void testExchangeGeometry ( const GridPart &gridPart, LocalFunction &localFuncti
 
 
 typedef Dune::GridSelector::GridType GridType;
-typedef Dune::Fem::AdaptiveLeafGridPart< GridType > HostGridPartType;
+//typedef Dune::Fem::AdaptiveLeafGridPart< GridType > HostGridPartType;
+typedef Dune::Fem::LeafGridPart< GridType > HostGridPartType;
 typedef Dune::Fem::FunctionSpace< GridType::ctype, GridType::ctype, GridType::dimensionworld, GridType::dimensionworld > CoordFunctionSpaceType;
 typedef Dune::Fem::LagrangeDiscreteFunctionSpace< CoordFunctionSpaceType, HostGridPartType, 1 > DiscreteCoordFunctionSpaceType;
 typedef Dune::Fem::AdaptiveDiscreteFunction< DiscreteCoordFunctionSpaceType > CoordFunctionType;
