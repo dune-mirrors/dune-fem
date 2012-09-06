@@ -28,6 +28,8 @@ namespace Dune
        
       typedef typename BaseFunctionSpaceType::BaseFunctionSetType::FunctionSpaceType
         FunctionSpaceType;
+
+      static const int codimension = 0;
     };
 
 

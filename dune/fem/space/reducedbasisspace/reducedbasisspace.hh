@@ -54,6 +54,8 @@ namespace Dune
 
     typedef ReducedBasisMapper< GridPartType, BaseFunctionListType >
       MapperType;
+ 
+    static const int codimension = 0;
 
     enum { localBlockSize = 1 };
     typedef MapperType BlockMapperType;

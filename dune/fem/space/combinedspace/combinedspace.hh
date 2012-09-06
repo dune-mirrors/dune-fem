@@ -136,6 +136,7 @@ namespace Dune
     template< class DiscreteFunctionSpaceImp, int N, DofStoragePolicy policy >
     struct CombinedSpaceTraits
     {
+      static const int codimension = 0;
     private:
       typedef DiscreteFunctionSpaceImp ContainedDiscreteFunctionSpaceType;
 
