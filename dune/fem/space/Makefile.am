@@ -3,6 +3,7 @@ space_HEADERS = combineddiscretefunctionspace.hh \
                 combinedspace.hh \
                 dgspace.hh \
                 fvspace.hh \
+		genericspace.hh \
                 lagrangespace.hh \
                 padaptivespace.hh \
                 reducedbasisspace.hh

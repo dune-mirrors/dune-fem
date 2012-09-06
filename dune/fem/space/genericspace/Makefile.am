@@ -1,5 +1,5 @@
 genericspacedir = $(includedir)/dune/fem/space/genericspace
-genericspace_HEADERS =
+genericspace_HEADERS = space.hh
 
 SUBDIRS =
 
