@@ -35,7 +35,6 @@ namespace Dune
       typedef GridPart GridPartType;
 
       static const int codimension = 0;
-      static const int polynomialOrder = 111;
 
       static const int localBlockSize = 1;
 
@@ -66,7 +65,11 @@ namespace Dune
       typedef DefaultBasisFunctionSet< EntityType, ShapeFunctionSetType > BasisFunctionSetImplType;
 
     public:
+      static const int polynomialOrder = LocalFiniteElementFactory::polynomialOrder;
+
       typedef BasisFunctionSet< EntityType, typename BasisFunctionSetImplType::RangeType, BasisFunctionSetImplType > BasisFunctionSetType;
+
+      typedef typename BasisFunctionSetType::FunctionSpaceType FunctionSpaceType;
     };
 
 
