@@ -490,25 +490,6 @@ namespace Dune
         }
       }
 
-      /* \brief return index for sub entity of given entity and subEntityNumber */
-      IndexType
-      subIndex ( const ElementType& element,
-                 int subNumber, unsigned int codim ) const
-      {
-        if( codimAvailable( codim ) ) 
-        {
-          if( (codim != 0) && !codimUsed_[ codim ] )
-            ForLoop< CallSetUpCodimSet, 0, dimension >::apply( codim, *this );
-          
-          return codimLeafSet( codim ).subIndex( element, subNumber );
-        }
-        else 
-        {
-          DUNE_THROW( NotImplemented, (name() + " does not support indices for codim = ") << codim );
-          return -1;
-        }
-      }
-
       /* \brief return index for intersection */
       IndexType index ( const IntersectionType &intersection ) const
       {
@@ -556,34 +537,28 @@ namespace Dune
           return 0;
       }
 
-      //! return old index, for dof manager only 
-      int oldIndex (const int hole, const int codim ) const
+      template< class Entity >
+      IndexType subIndex ( const Entity &entity, int subNumber, unsigned int codim ) const
       {
-        if( codimAvailable( codim ) ) 
-        {
-          assert( codimUsed_[codim] );
-          return codimLeafSet( codim ).oldIndex( hole ); 
-        }
-        else 
-        {
-          DUNE_THROW( NotImplemented, (name() + " does not support indices for codim = ") << codim );
-          return -1; 
-        }
+        return subIndex< Entity::codimension >( entity, subNumber, codim );
       }
 
-      //! return new index, for dof manager only returns index 
-      int newIndex (const int hole , const int codim ) const
+      /* \brief return index for sub entity of given entity and subEntityNumber */
+      template< int cd >
+      IndexType subIndex ( const typename GridPartType::template Codim< cd >::EntityType &entity,
+                           int subNumber, unsigned int codim ) const
       {
-        if( codimAvailable( codim ) ) 
-        {
-          assert( codimUsed_[codim] );
-          return codimLeafSet( codim ).newIndex( hole ); 
-        }
-        else 
-        {
+        assert( (int( codim ) >= cd) && (int( codim ) <= dimension) );
+        if( !codimAvailable( codim ) ) 
           DUNE_THROW( NotImplemented, (name() + " does not support indices for codim = ") << codim );
-          return -1; 
-        }
+
+        if( (codim != 0) && !codimUsed_[ codim ] )
+          ForLoop< CallSetUpCodimSet, 0, dimension >::apply( codim, *this );
+
+        const CodimIndexSetType &codimSet = codimLeafSet( codim );
+        const IndexType idx = codimSet.subIndex( gridEntity( entity ), subNumber );
+        assert( (idx >= 0) && (idx < IndexType( codimSet.size() )) );
+        return idx;
       }
 
     protected:
