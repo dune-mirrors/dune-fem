@@ -4,7 +4,10 @@
 //- dune-fem includes
 #include <dune/fem/space/basisfunctionset/basisfunctionset.hh>
 #include <dune/fem/space/basisfunctionset/default.hh>
+#include <dune/fem/space/common/defaultcommhandler.hh>
 #include <dune/fem/space/common/discretefunctionspace.hh>
+#include <dune/fem/space/dofmapper/indexsetdofmapper.hh>
+#include <dune/fem/space/mapper/nonblockmapper.hh>
 #include <dune/fem/space/shapefunctionset/localfunctions.hh>
 
 namespace Dune
@@ -73,20 +76,22 @@ namespace Dune
 
     template< class GridPart, class LocalFiniteElementFactory >
     class GenericDiscreteFunctionSpace
-    : public DiscreteFunctionSpaceDefault< GenericDiscreteFunctionSpaceTraits<> >
+    : public DiscreteFunctionSpaceDefault< GenericDiscreteFunctionSpaceTraits< GridPart, LocalFiniteElementFactory > >
     {
-      typedef GenericDiscreteFunctionSpace<> ThisType;
-      typedef DiscreteFunctionSpaceDefault< GenericDiscreteFunctionSpaceTraits<> > BaseType;
+      typedef GenericDiscreteFunctionSpace< GridPart, LocalFiniteElementFactory > ThisType;
+      typedef DiscreteFunctionSpaceDefault< GenericDiscreteFunctionSpaceTraits< GridPart, LocalFiniteElementFactory > > BaseType;
 
-      typedef GenericDiscreteFunctionSpaceTraits<> TraitsType;
+      typedef GenericDiscreteFunctionSpaceTraits< GridPart, LocalFiniteElementFactory > TraitsType;
 
       typedef typename TraitsType::BasisFunctionSetImplType BasisFunctionSetImplType;
+      typedef typename TraitsType::ShapeFunctionSetType ShapeFunctionSetType;
 
     public:
       typedef typename BaseType::GridPartType GridPartType;
+      typedef typename BaseType::EntityType EntityType;
       typedef typename BaseType::IntersectionType IntersectionType;
 
-      typedef typename BaseType::BasisFunctionSpaceType BasisFunctionSpaceType;
+      typedef typename BaseType::BasisFunctionSpaceType BasisFunctionSetType;
       typedef typename BaseType::BlockMapperType BlockMapperType;
       typedef typename BaseType::MapperType MapperType;
 
@@ -100,7 +105,7 @@ namespace Dune
       bool continuous () const { return false; }
       bool continuous ( const IntersectionType &intersection ) { return false; }
 
-      BasisFunctionSetType basisFunctionSet ( const Entity &entity ) const
+      BasisFunctionSetType basisFunctionSet ( const EntityType &entity ) const
       {
         return BasisFunctionSetType( BasisFunctionSetImplType( entity, shapeFunctionSet( entity ) ) );
       }
@@ -109,7 +114,7 @@ namespace Dune
       MapperType &mapper () const { return mapper_; }
 
     private:
-      const ShapeFunctionSetType &shapeFunctionSet ( const Entity &entity ) const
+      const ShapeFunctionSetType &shapeFunctionSet ( const EntityType &entity ) const
       {
       }
 
