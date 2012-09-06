@@ -215,7 +215,7 @@ typedef Dune::Fem::GeoGridPart< CoordFunctionType > GridPartType;
 int main ( int argc, char ** argv )
 try
 {
-  Dune::MPIManager::initialize( argc, argv );
+  Dune::Fem::MPIManager::initialize( argc, argv );
 
   // create grid
   GridType &grid = Dune::TestGrid::grid();
@@ -243,7 +243,7 @@ try
   std::cout << std::endl;
   std::cout << "gridWidth: " << Dune::Fem::GridWidth::calcGridWidth( gridPart ) << std::endl;
 
-  Dune::TemporaryLocalFunction< DiscreteCoordFunctionSpaceType > tlf( coordFunctionSpace );
+  Dune::Fem::TemporaryLocalFunction< DiscreteCoordFunctionSpaceType > tlf( coordFunctionSpace );
   testExchangeGeometry( gridPart, tlf );
 
   std::cout << std::endl << std::endl;
