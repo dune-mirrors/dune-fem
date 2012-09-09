@@ -10,24 +10,24 @@ namespace Dune
     template< class LinearOperator >
     struct ColumnObject
     {
-      typedef typename LinearOperator::DomainEntityType DomainEntityType;
-      typedef typename LinearOperator::RangeEntityType RangeEntityType;
+      typedef typename LinearOperator::ColumnEntityType ColumnEntityType;
+      typedef typename LinearOperator::RowEntityType RowEntityType;
 
       typedef typename LinearOperator::DomainSpaceType DomainSpaceType;
       typedef typename LinearOperator::RangeSpaceType RangeSpaceType;
 
       typedef typename LinearOperator::LocalMatrixType LocalMatrixType;
 
-      ColumnObject( const LinearOperator &linOp, const DomainEntityType &domainEntity )
+      ColumnObject( const LinearOperator &linOp, const RowEntityType &rowEntity )
       :
         linOp_( linOp ),
-        domainEntity_( domainEntity )
+        rowEntity_( rowEntity )
       {}
 
       //! return local matrix 
-      inline LocalMatrixType localMatrix( const RangeEntityType &rangeEntity ) const
+      inline LocalMatrixType localMatrix( const ColumnEntityType &colEntity ) const
       {
-        return linOp_.localMatrix( domainEntity_, rangeEntity );
+        return linOp_.localMatrix( rowEntity_, colEntity );
       }
 
       //! return domain space (i.e. space that builds the rows)
@@ -38,7 +38,7 @@ namespace Dune
 
     private:
       const LinearOperator &linOp_;
-      const DomainEntityType &domainEntity_;
+      const RowEntityType &rowEntity_;
     };
 
   } // namespace Fem

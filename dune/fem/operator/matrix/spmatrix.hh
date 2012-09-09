@@ -401,6 +401,8 @@ namespace Dune
       *******************************************************************/    
       typedef typename DomainSpace :: EntityType  DomainEntityType ;
       typedef typename RangeSpace :: EntityType   RangeEntityType ;
+      typedef typename DomainSpace :: EntityType RowEntityType ;
+      typedef typename RangeSpace :: EntityType ColumnEntityType ;
 
     private:  
       typedef SparseRowMatrixObject< DomainSpaceType, RangeSpaceType, Traits > ThisType;

@@ -23,6 +23,7 @@
 #include <dune/fem/function/common/scalarproducts.hh>
 #include <dune/fem/operator/matrix/preconditionerwrapper.hh>
 #include <dune/fem/io/parameter.hh>
+#include <dune/fem/operator/matrix/columnobject.hh>
 
 namespace Dune
 { 
@@ -441,8 +442,6 @@ namespace Dune
       //! type of this pointer 
       typedef ISTLMatrixObject<DomainSpaceType,RangeSpaceType,Traits> ThisType;
 
-
-    protected:  
       typedef typename DomainSpaceType::GridType GridType; 
 
       typedef typename RangeSpaceType :: EntityType ColumnEntityType ;
@@ -455,7 +454,6 @@ namespace Dune
       
       typedef FieldMatrix<RangeFieldType, littleRows, littleCols> LittleBlockType; 
 
-    public:
       typedef ISTLBlockVectorDiscreteFunction< DomainSpaceType >     RowDiscreteFunctionType; 
       typedef typename RowDiscreteFunctionType :: LeakPointerType  RowLeakPointerType;
       typedef ISTLBlockVectorDiscreteFunction< RangeSpaceType >  ColumnDiscreteFunctionType; 
@@ -766,6 +764,7 @@ namespace Dune
       typedef ObjectStack< LocalMatrixFactoryType > LocalMatrixStackType;
       //! type of local matrix 
       typedef LocalMatrixWrapper< LocalMatrixStackType > LocalMatrixType;
+      typedef ColumnObject< ThisType > LocalColumnObjectType;
 
     protected:  
       const DomainSpaceType & domainSpace_;
@@ -1238,6 +1237,10 @@ namespace Dune
                                   const ColumnEntityType& colEntity) const 
       {
         return LocalMatrixType(localMatrixStack_,rowEntity,colEntity);
+      }
+      LocalColumnObjectType localColumn( const ColumnEntityType &colEntity ) const
+      {
+        return LocalColumnObjectType ( *this, colEntity );
       }
 
     protected:  
