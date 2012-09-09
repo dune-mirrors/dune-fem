@@ -77,6 +77,7 @@ namespace Dune
       typedef typename DiscreteFunctionType::DofBlockType::DofProxy DofProxyType;
       typedef std::vector< DofProxyType > ProxyVectorType;
 
+      struct AssignDofs;
     public:
 
       enum { dimDomain = DiscreteFunctionSpaceType::dimDomain };
@@ -106,8 +107,6 @@ namespace Dune
 
       void init ( const EntityType &entity )
       {
-        typedef typename DiscreteFunctionSpaceType::BlockMapperType BlockMapperType;
-        typedef typename BlockMapperType::DofMapIteratorType DofMapIteratorType;
         enum { blockSize = DiscreteFunctionSpaceType :: localBlockSize };
 
         typedef typename DiscreteFunctionType::DofBlockPtrType DofBlockPtrType;
@@ -137,6 +136,11 @@ namespace Dune
         entity_ = &entity;
         assert( baseFunctionSet_.geometryType() == entity.type() );
 
+        space.blockMapper().mapEach( entity, AssignDofs( discreteFunction_, 
+                        proxyVector_ ) );
+        /*
+        typedef typename DiscreteFunctionSpaceType::BlockMapperType BlockMapperType;
+        typedef typename BlockMapperType::DofMapIteratorType DofMapIteratorType;
         assert( numDofs_ <= proxyVector_.size() );
         const BlockMapperType &mapper = space.blockMapper();
         const DofMapIteratorType end = mapper.end( entity );
@@ -150,6 +154,7 @@ namespace Dune
           for( unsigned int i = 0; i < blockSize; ++i )
             proxyVector_[ localBlock + i ].assign( (*blockPtr)[ i ] );
         }
+        */
       }
 
       int order() const
@@ -270,6 +275,32 @@ namespace Dune
       
     };
 
+    // PetscLocalFunctionImpl::AssignDofs
+    // -------------------------------------
+
+    template< class DiscreteFunction >
+    struct PetscLocalFunction< DiscreteFunction >::AssignDofs
+    {
+      AssignDofs ( DiscreteFunctionType &discreteFunction, ProxyVectorType &values )
+      : discreteFunction_( discreteFunction ), values_( values )
+      {}
+
+      template < class GlobalKey >
+      void operator () ( const std::size_t local, const GlobalKey& globalKey )
+      {
+        typedef typename DiscreteFunctionType::DofBlockPtrType DofBlockPtrType;
+        static const unsigned int blockSize = DiscreteFunctionSpaceType::localBlockSize;
+      
+        DofBlockPtrType blockPtr = discreteFunction_.block( globalKey );
+        const unsigned int localBlock = local * blockSize;
+        for( unsigned int i = 0; i < blockSize; ++i )
+          values_[ localBlock + i ].assign( (*blockPtr)[ i ] );
+      }
+
+    private:
+      DiscreteFunctionType &discreteFunction_;
+      ProxyVectorType &values_;
+    };
 
   } // namespace Fem
 

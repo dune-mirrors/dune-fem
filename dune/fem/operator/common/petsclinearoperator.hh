@@ -13,6 +13,7 @@
 
 #include <dune/fem/misc/petsc/petsccommon.hh>
 #include <dune/fem/function/petscdiscretefunction/petscdiscretefunction.hh>
+#include <dune/fem/operator/matrix/columnobject.hh>
 
 #if defined HAVE_PETSC
 
@@ -40,7 +41,7 @@ namespace Dune
       typedef typename DomainFunctionType::DiscreteFunctionSpaceType DomainSpaceType;
       typedef typename RangeFunctionType::DiscreteFunctionSpaceType RangeSpaceType;
 
-      typedef typename DomainSpaceType::GridPartType::template Codim< 0 >::EntityType ColEntityType;
+      typedef typename DomainSpaceType::GridPartType::template Codim< 0 >::EntityType ColumnEntityType;
       typedef typename RangeSpaceType::GridPartType::template Codim< 0 >::EntityType RowEntityType;
 
       const static size_t domainLocalBlockSize = DomainSpaceType::localBlockSize;
@@ -75,6 +76,7 @@ namespace Dune
 
       //! type of local matrix using stacking mechanism
       typedef LocalMatrixWrapper< LocalMatrixStackType > LocalMatrixType;
+      typedef ColumnObject< ThisType > LocalColumnObjectType;
 
       /*
        * ctors, dtor, methods...
@@ -186,9 +188,13 @@ namespace Dune
       }
       
       //! return local matrix representation 
-      LocalMatrixType localMatrix ( const RowEntityType &rowEntity, const ColEntityType &colEntity )
+      LocalMatrixType localMatrix ( const RowEntityType &rowEntity, const ColumnEntityType &colEntity ) const
       {
         return LocalMatrixType(localMatrixStack_,rowEntity,colEntity);
+      }
+      LocalColumnObjectType localColumn( const ColumnEntityType &colEntity ) const
+      {
+        return LocalColumnObjectType ( *this, colEntity );
       }
 
       // just here for debugging
@@ -284,7 +290,7 @@ namespace Dune
                       domainSpace.blockMapper().maxNumDofs() )
       {}
 
-      void init ( const RowEntityType &rowEntity, const ColEntityType &colEntity ) 
+      void init ( const RowEntityType &rowEntity, const ColumnEntityType &colEntity ) 
       {
         // call initialize on base class 
         BaseType :: init( rowEntity, colEntity );
