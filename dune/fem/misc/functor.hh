@@ -69,6 +69,25 @@ namespace Dune
       Value &value_;
     };
 
+    template <class Mapper2, class Entity2, class Functor>
+    struct MatrixFunctor
+    {
+      explicit MatrixFunctor( const Mapper2 &mapper2, const Entity2 &entity2, Functor functor )
+      : mapper2_(mapper2),
+        entity2_(entity2),
+        functor_(functor)
+      {}
+      void operator() ( const std::size_t local1, const typename Functor::GlobalKey &globalKey1 )
+      {
+        functor_.set(local1,globalKey1);
+        mapper2_.mapEach(entity2_, functor_);
+      }
+      private:
+      const Mapper2 &mapper2_;
+      const Entity2 &entity2_; 
+      Functor functor_;
+    };
+
   } // namespace Fem
 
 } // namespace Dune

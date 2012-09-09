@@ -55,6 +55,8 @@ namespace Dune
       const ThisType &operator= ( const ThisType & );
 
     public:
+      typedef size_t GlobalKeyType;
+
       typedef GridPart GridPartType;
 
       typedef typename GridPartType::template Codim< 0 >::EntityType ElementType;

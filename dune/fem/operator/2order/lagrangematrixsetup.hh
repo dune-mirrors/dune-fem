@@ -50,6 +50,28 @@ namespace Dune
     }
 
   protected:
+    template <class GK>
+    struct FillFunctor
+    {
+      typedef std :: set< int >  LocalIndicesType;
+      typedef GK GlobalKey;
+      FillFunctor(std::map<int,LocalIndicesType> &indices) 
+      : indices_(indices),
+        localIndices_(0)
+      {}
+      void set(const std::size_t rowLocal, const GlobalKey &rowGlobal)
+      {
+        localIndices_ = &(indices_[ rowGlobal ]);
+      }
+      template <class ColGlobal>
+      void operator() ( const std::size_t colLocal, const ColGlobal &colGlobal)
+      {
+        localIndices_->insert( colGlobal );
+      }
+      private:
+      std::map<int,LocalIndicesType> &indices_;
+      LocalIndicesType *localIndices_;
+    };
     //! create entries for element and neighbors 
     template< class GridPart, class Entity,
               class RowMapper, class ColMapper >
@@ -60,23 +82,10 @@ namespace Dune
                               std :: map< int, std :: set< int > > &indices )
     {
       // type of local indices storage 
-      typedef std :: set< int >  LocalIndicesType;
-
-      typedef typename RowMapper :: DofMapIteratorType RowDofMapIteratorType;
-      typedef typename ColMapper :: DofMapIteratorType ColDofMapIteratorType;
-
-      const RowDofMapIteratorType rowEnd = rowMapper.end( entity );
-      for(RowDofMapIteratorType rowIt = rowMapper.begin( entity );
-          rowIt != rowEnd; ++rowIt )
-      {
-        LocalIndicesType &localIndices = indices[ rowIt.global() ];
-
-        const ColDofMapIteratorType colEnd = colMapper.end( entity );
-        ColDofMapIteratorType colIt = colMapper.begin( entity );
-        for( ; colIt != colEnd; ++colIt )
-          localIndices.insert( colIt.global() );
-      }
-
+      typedef FillFunctor<typename RowMapper::GlobalKeyType> Functor;
+      typedef Fem::MatrixFunctor<ColMapper,Entity,Functor > MFunctor;
+      rowMapper.mapEach(entity, MFunctor( colMapper, entity, Functor(indices) ) );
+ 
       // in case of non-conforming stabilization 
       if( addNonConformingNeighbors )
       {
@@ -93,19 +102,7 @@ namespace Dune
           {
             EntityPointer ep = intersection.outside(); 
             const Entity& neighbor = *ep;
-
-            // also add all neighbor dofs 
-            for(RowDofMapIteratorType rowIt = rowMapper.begin( entity );
-                rowIt != rowEnd; ++rowIt )
-            {
-              LocalIndicesType &localIndices = indices[ rowIt.global() ];
-              const ColDofMapIteratorType colEnd = colMapper.end( neighbor );
-              for(ColDofMapIteratorType colIt = colMapper.begin( neighbor );
-                  colIt != colEnd; ++colIt )
-              {
-                localIndices.insert( colIt.global() );
-              }
-            }
+            rowMapper.mapEach(entity, MFunctor( colMapper, neighbor, Functor(indices) ) );
           }
         }
       }

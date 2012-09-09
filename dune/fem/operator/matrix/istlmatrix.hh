@@ -525,7 +525,8 @@ namespace Dune
 
         // vector with pointers to local matrices 
         typedef std::vector<LittleBlockType *> LittleMatrixRowStorageType ;
-        std::vector< LittleMatrixRowStorageType > matrices_;
+        typedef std::vector< LittleMatrixRowStorageType > VecLittleMatrixRowStorageType;
+        VecLittleMatrixRowStorageType matrices_;
 
         // matrix to build 
         const MatrixObjectType& matrixObj_;
@@ -533,6 +534,56 @@ namespace Dune
         // type of actual geometry 
         GeometryType geomType_;
         
+       template <class RowGlobalKey>
+       struct ColFunctor
+       {
+         ColFunctor(LittleMatrixRowStorageType& localMatRow,
+                    RowType& matRow,
+                    const RowGlobalKey &globalRowKey)
+         : localMatRow_(localMatRow),
+           matRow_(matRow),
+           globalRowKey_(globalRowKey)
+         {
+         }
+         template< class GlobalKey >
+         void operator() ( const int localDoF, const GlobalKey &globalDoF )
+         {
+           // assert( matrix_.exists( globalRowKey_, globalDoF ) );
+           localMatRow_[ localDoF ] = &matRow_[ globalDoF ];
+         }         
+         private:
+         LittleMatrixRowStorageType& localMatRow_;
+         RowType& matRow_;
+         const RowGlobalKey &globalRowKey_;
+       };
+       struct RowFunctor
+       {
+         RowFunctor(const ColumnEntityType &colEntity, 
+                    const ColMapperType &colMapper,
+                    MatrixType &matrix,
+                    VecLittleMatrixRowStorageType &matrices,
+                    int numCols)
+         : colEntity_(colEntity),
+           colMapper_(colMapper),
+           matrix_(matrix),
+           matrices_(matrices),
+           numCols_(numCols)
+         {}
+         template< class GlobalKey >
+         void operator() ( const int localDoF, const GlobalKey &globalDoF )
+         {
+           LittleMatrixRowStorageType& localMatRow = matrices_[ localDoF ];
+           localMatRow.resize( numCols_ );
+           ColFunctor<GlobalKey> colFunctor( localMatRow, matrix_[ globalDoF ], globalDoF );
+           colMapper_.mapEach( colEntity_, colFunctor );
+         }
+         private:
+         const ColumnEntityType & colEntity_;
+         const ColMapperType &colMapper_;
+         MatrixType &matrix_;
+         VecLittleMatrixRowStorageType &matrices_;
+         int numCols_;
+       };
       public:  
         LocalMatrix(const MatrixObjectType & mObj,
                     const DomainSpaceType & rowSpace,
@@ -561,6 +612,9 @@ namespace Dune
             matrices_.resize( numRows_ );
           }
 
+          RowFunctor rowFunctor(colEntity, colMapper_, matrixObj_.matrix(), matrices_, numCols_);
+          rowMapper_.mapEach(rowEntity, rowFunctor);
+          /*
           MatrixType& matrix = matrixObj_.matrix();
           typedef typename RowMapperType :: DofMapIteratorType RowMapIteratorType ;
           typedef typename ColMapperType :: DofMapIteratorType ColMapIteratorType ;
@@ -583,6 +637,7 @@ namespace Dune
               localMatRow[ col.local() ] = &matRow[ col.global() ];
             }
           }
+          */
         }
 
         LocalMatrix(const LocalMatrix& org) 
