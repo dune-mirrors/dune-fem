@@ -66,6 +66,7 @@ namespace Dune
       typedef DFImp              DiscreteFunctionType;
       typedef AssembledOperator  OperatorType;
       
+      typedef typename DiscreteFunctionType :: DofType DofType;
       typedef typename DiscreteFunctionType :: DofIteratorType DofIteratorType;  
       typedef typename DiscreteFunctionType :: ConstDofIteratorType ConstDofIteratorType;  
         
@@ -82,29 +83,16 @@ namespace Dune
         // make consistent at border dofs  
         diagonalInv_.communicate();
 
-        // get dof type 
-        typedef typename DiscreteFunctionType :: DofType DofType;
-
         // In general: store 1/diag 
         //
-        // note: set zero entries to 1, this can happen when dofs 
-        // are excluded from the matrix setup
-        const DofIteratorType diagEnd = diagonalInv_.dend();
-        for( DofIteratorType diagInv = diagonalInv_.dbegin();
-             diagInv != diagEnd; ++ diagInv ) 
+        // note: We set near-zero entries to 1 to avoid NaNs. Such entries occur
+        //       if DoFs are excluded from matrix setup
+        const DofType &eps = 16*std::numeric_limits< DofType >::epsilon();
+        const DofIteratorType dend = diagonalInv_.dend();
+        for( DofIteratorType dit = diagonalInv_.dbegin(); dit != dend; ++dit )
         {
-          // get dof entry 
-          const DofType& dofii = (*diagInv);
-          DofType dof;
-          // if dof is zero, store 1 to avoid NaN 
-          if( std::abs( dofii ) < 1e-14 )
-          {
-            dof = 1;
-          }
-          else 
-          {
-            dof = 1.0 / dofii;
-          }
+          DofType &dof = *dit;
+          dof = (std::abs( dof ) < eps ? DofType( 1 ) : DofType( 1 ) / dof);
         }
       }
 
