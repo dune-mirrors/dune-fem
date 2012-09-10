@@ -18,16 +18,16 @@ namespace Dune
 
       typedef typename LinearOperator::LocalMatrixType LocalMatrixType;
 
-      ColumnObject( const LinearOperator &linOp, const RowEntityType &rowEntity )
+      ColumnObject( const LinearOperator &linOp, const ColumnEntityType &colEntity )
       :
         linOp_( linOp ),
-        rowEntity_( rowEntity )
+        colEntity_( colEntity )
       {}
 
       //! return local matrix 
-      inline LocalMatrixType localMatrix( const ColumnEntityType &colEntity ) const
+      inline LocalMatrixType localMatrix( const RowEntityType &rowEntity ) const
       {
-        return linOp_.localMatrix( rowEntity_, colEntity );
+        return linOp_.localMatrix( rowEntity, colEntity_ );
       }
 
       //! return domain space (i.e. space that builds the rows)
@@ -38,7 +38,7 @@ namespace Dune
 
     private:
       const LinearOperator &linOp_;
-      const RowEntityType &rowEntity_;
+      const ColumnEntityType &colEntity_;
     };
 
   } // namespace Fem

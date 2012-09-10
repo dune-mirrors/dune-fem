@@ -115,7 +115,7 @@ bicgstab_algo( const CommunicatorType & comm,
   rTr = MultType::ddot(A,r,r);
   rTh = MultType::ddot(A,rT,s);
  
-  while( rTr>err && its < maxIter ) 
+  while( rTr>err && (int)its < maxIter ) 
   {
     // do multiply 
     MultType :: mult_pc(A,C,d,Ad,tmp);
