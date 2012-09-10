@@ -167,7 +167,8 @@ namespace Dune
       void initialize ( const SlaveDofsType& slaveDofs )
       {
         numSlaveBlocks_ = slaveDofs.size() - 1;
-        numOwnedDofBlocks_ = slaveDofs.space().blockMapper().size() - numSlaveBlocks_;
+        // numOwnedDofBlocks_ = slaveDofs.space().blockMapper().size() - numSlaveBlocks_;
+        numOwnedDofBlocks_ = slaveDofs.space().mapper().size() - numSlaveBlocks_;
 
         // start with index 0 (use unsigned long as buffers) 
         unsigned long processStartIndex = 0;

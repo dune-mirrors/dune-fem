@@ -91,7 +91,7 @@ namespace Dune
       template< class Functor >
       void mapEach ( const ElementType &element, Functor f ) const;
 
-      void map ( const ElementType &element, std::vector< std::size_t > &indices ) const;
+      void map ( const ElementType &element, std::vector< GlobalKeyType > &indices ) const;
 
       std::size_t maxNumDofs () const { return maxNumDofs_; }
       std::size_t numDofs ( const ElementType &element ) const { return code( element ).numDofs(); }
@@ -103,7 +103,7 @@ namespace Dune
       void mapEachEntityDof ( const Entity &entity, Functor f ) const;
 
       template< class Entity >
-      void mapEntityDofs ( const Entity &entity, std::vector< std::size_t > &indices ) const;
+      void mapEntityDofs ( const Entity &entity, std::vector< GlobalKeyType > &indices ) const;
 
       template< class Entity >
       std::size_t numEntityDofs ( const Entity &entity ) const;
