@@ -32,12 +32,11 @@ namespace Dune
       struct Eval
       {
         template <class FieldVectorType>
-        static double apply(const LegendrePoly& lp, const FieldVectorType& x, const int idx)
+        static double apply(const FieldVectorType& x, const int idx)
         {
           assert( int(x.dimension) == int(dim) );
           const int num = idx % (PolOrd+1);
-          // LegendrePoly lp=LegendrePoly(num);
-          return lp.evaluate(num,x[i-1]) * Eval<dim, i-1, PolOrd>::apply(lp,x,(idx-num)/(PolOrd+1));
+          return LegendrePoly::evaluate(num,x[i-1]) * Eval<dim, i-1, PolOrd>::apply(x,(idx-num)/(PolOrd+1));
         }
       };
 
@@ -45,7 +44,7 @@ namespace Dune
       struct Eval<dim,0,PolOrd>
       {
         template <class FieldVectorType>
-        static double apply(const LegendrePoly& lp, const FieldVectorType& x, const int idx)
+        static double apply(const FieldVectorType& x, const int idx)
         {
           return 1.0;
         }
@@ -56,14 +55,14 @@ namespace Dune
       struct EvalD
       {
         template <class FieldVectorType>
-        static double apply(const LegendrePoly& lp, const FieldVectorType& x, const int j, const int idx)
+        static double apply(const FieldVectorType& x, const int j, const int idx)
         {
           assert( int(x.dimension) == int(dim) );
           const int num=idx%(PolOrd+1);
           if( (i-1) != j )
-            return lp.evaluate(num,x[i-1]) * EvalD<dim,i-1,PolOrd>::apply(lp,x, j, (idx-num)/(PolOrd+1));
+            return LegendrePoly::evaluate(num,x[i-1]) * EvalD<dim,i-1,PolOrd>::apply(x, j, (idx-num)/(PolOrd+1));
           else
-            return lp.jacobian(num,x[i-1]) * EvalD<dim,i-1,PolOrd>::apply(lp,x, j, (idx-num)/(PolOrd+1));
+            return LegendrePoly::jacobian(num,x[i-1]) * EvalD<dim,i-1,PolOrd>::apply(x, j, (idx-num)/(PolOrd+1));
         }
       };
 
@@ -71,7 +70,7 @@ namespace Dune
       struct EvalD<dim,0,PolOrd>
       {
         template <class FieldVectorType>
-        static double apply(const LegendrePoly& lp, const FieldVectorType& x, const int j, const int idx)
+        static double apply(const FieldVectorType& x, const int j, const int idx)
         {
           return 1.0;
         }
@@ -87,8 +86,7 @@ namespace Dune
 
     public:
       LegendreDGBaseFunction( const int baseNum ) 
-        : lp_( LegendrePoly :: instance() ),
-          baseNum_( baseNum )
+      : baseNum_( baseNum )
       {
         // Check if base number is valid
         assert(baseNum_ >= 0 && baseNum_ < numBaseFunctions());
@@ -99,13 +97,13 @@ namespace Dune
       virtual void evaluate(const FieldVector<int, 0>& diffVariable,
                             const DomainType& x, RangeType& phi) const 
       {
-        phi = Eval<dim,dim,polOrd>::apply( lp_, x, baseNum_ );
+        phi = Eval<dim,dim,polOrd>::apply( x, baseNum_ );
       }
 
       virtual void evaluate(const FieldVector<int, 1>& diffVariable,
                             const DomainType& x, RangeType& phi) const 
       {
-        phi = EvalD<dim,dim,polOrd>::apply( lp_, x, diffVariable[0], baseNum_);
+        phi = EvalD<dim,dim,polOrd>::apply( x, diffVariable[0], baseNum_);
       
       }
 
@@ -122,9 +120,6 @@ namespace Dune
       }
 
     protected:
-      // reference to legendre polynomials 
-      const LegendrePoly& lp_;
-
       // my number in the set of basis functions
       const int baseNum_;
     };
