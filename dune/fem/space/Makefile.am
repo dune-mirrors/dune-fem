@@ -1,5 +1,6 @@
 spacedir = $(includedir)/dune/fem/space
-space_HEADERS = combineddiscretefunctionspace.hh \
+space_HEADERS = anisotropicdgspace.hh \
+		combineddiscretefunctionspace.hh \
                 combinedspace.hh \
                 dgspace.hh \
                 fvspace.hh \
@@ -8,10 +9,10 @@ space_HEADERS = combineddiscretefunctionspace.hh \
                 padaptivespace.hh \
                 reducedbasisspace.hh
 
-SUBDIRS =  basefunctions basisfunctionset combinedspace \
-	   common dgspace dofmapper fvspace genericspace \
-           lagrangespace mapper padaptivespace \
-           reducedbasisspace  shapefunctionset test
+SUBDIRS = anisotropicdgspace basefunctions basisfunctionset \
+	  combinedspace common dgspace dofmapper fvspace \
+	  genericspace lagrangespace mapper padaptivespace \
+	  reducedbasisspace shapefunctionset test
 
 noinst_LTLIBRARIES = libspace.la
 
