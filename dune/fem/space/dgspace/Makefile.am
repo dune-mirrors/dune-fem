@@ -5,7 +5,8 @@ libdgspace_la_LIBADD  =
 
 libdgspace_la_SOURCES = dgbasefunctions_1.cc \
                         dgbasefunctions_2.cc \
-                        dgbasefunctions_3.cc
+                        dgbasefunctions_3.cc \
+			legendrepoly.cc
 libdgspace_la_CPPFLAGS = $(AM_CPPFLAGS) -DCOMPILE_LIB
 
 dgspacedir =  $(includedir)/dune/fem/space/dgspace
