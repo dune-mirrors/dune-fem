@@ -11,6 +11,8 @@
 #include <dune/common/densevector.hh>
 #include <dune/common/forloop.hh>
 #include <dune/common/static_assert.hh>
+#include <dune/common/tuples.hh>
+#include <dune/common/tupleutility.hh>
 
 // dune-fem includes
 #include <dune/fem/space/dgspace/legendredgbasefunctions.hh>
@@ -24,6 +26,39 @@
 
 namespace AnisotropicDG
 {
+
+  // MakeTuple
+  // ---------
+
+  /**
+   * \brief Make tuple of given length from type
+   *
+   * Thus, the following types are equal: 
+   \code
+   Dune::tuple< T, T, T, T >
+   MakeTuple< T, 4 >::Type
+   endcode
+   *
+   * \tparam  T    Type
+   * \tparam  len  Tuple length 
+   */
+  template< class T, int len >
+  struct MakeTuple;
+
+  template< class T >
+  struct MakeTuple< T, 1 >
+  {
+    typename Dune::tuple< T > Type;
+  };
+
+  template< class T, int len >
+  struct MakeTuple
+  {
+    dune_static_assert( len > 0, "Negative template parameter." );
+    typedef Dune::JoinTuples< Dune::tuple< T >, typename MakeTuple< T, len-1 >::Type > Type;
+  };
+
+
 
   // NumShapeFunctions
   // -----------------
