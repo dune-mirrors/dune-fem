@@ -57,24 +57,11 @@ namespace Dune
       typedef typename FunctionSpaceType::JacobianRangeType JacobianRangeType;
       typedef typename FunctionSpaceType::HessianRangeType HessianRangeType;
 
-      LegendreShapeFunction ( int shapeFunction, int order )
-      { 
-        for( int i = 0; i < dimension; ++i )
-        {
-          multiIndex_[ i ] = shapeFunction % (order+1);
-          shapeFunction /= (order+1);
-        }
-      }
+      typedef Dune::array< int, dimension > MultiIndexType;
 
-      LegendreShapeFunction ( const ThisType &other )
-      {
-        std::copy( other.multiIndex_.begin(), other.multiIndex_.end(), multiIndex_.begin() );
-      }
-
-      const ThisType &operator= ( const ThisType &other )
-      {
-        std::copy( other.multiIndex_.begin(), other.multiIndex_.end(), multiIndex_.begin() );
-      }
+      explicit LegendreShapeFunction ( const MultiIndexType &multiIndex )
+      : multiIndex_( multiIndex )
+      {}
 
       void evaluate ( const DomainType &x, RangeType &value ) const
       {
@@ -100,8 +87,8 @@ namespace Dune
         hessian = HessianRangeType( 1 );
         for( int k = 0; k < dimension; ++k )
         {
-          const RangeFieldType phi = LegendrePoly::evaluate( multiIndex_[ k ], x[ k-1 ]);
-          const RangeFieldType dphi = LegendrePoly::jacobian( multiIndex_[ k ], x[ k-1 ]);
+          const RangeFieldType phi = LegendrePoly::evaluate( multiIndex_[ k ], x[ k-1 ] );
+          const RangeFieldType dphi = LegendrePoly::jacobian( multiIndex_[ k ], x[ k-1 ] );
           for( int i = 0; i < dimension; ++i )
           {
             hessian[ i ][ i ] *= ( k == i ) ? LegendrePoly::hessian( multiIndex_[ i ], x[ i-1 ]) : phi;
@@ -116,7 +103,7 @@ namespace Dune
       }
 
     private:
-      Dune::array< int, dimension > multiIndex_;
+      MultiIndexType multiIndex_;
     };
 
 
@@ -152,9 +139,15 @@ namespace Dune
         return size;
       }
 
-      ShapeFunctionType *createShapeFunction ( const std::size_t i ) const
+      ShapeFunctionType *createShapeFunction ( std::size_t shapeFunction ) const
       {
-        return new ShapeFunctionType( i, order_ );
+        typename ShapeFunctionType::MultiIndexType multiIndex;
+        for( int i = 0; i < dimension; ++i )
+        {
+          multiIndex[ i ] = shapeFunction % (order_+1);
+          shapeFunction /= (order_+1);
+        }
+        return new ShapeFunctionType( multiIndex );
       }
 
     private:
