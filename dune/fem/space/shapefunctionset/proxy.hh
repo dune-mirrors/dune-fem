@@ -38,10 +38,10 @@ namespace Dune
      */
     template< class ShapeFunctionSetImpl >
     class ShapeFunctionSetProxy
-    : public ShapeFunctionSet< typename ShapeFunctionSetImpl::FunctionSpace, ShapeFunctionSetProxy< ShapeFunctionSetImpl > >
+    : public ShapeFunctionSet< typename ShapeFunctionSetImpl::FunctionSpaceType, ShapeFunctionSetProxy< ShapeFunctionSetImpl > >
     {
       typedef ShapeFunctionSetProxy< ShapeFunctionSetImpl > ThisType;
-      typedef ShapeFunctionSet< typename ShapeFunctionSetImpl::FunctionSpace, ThisType > BaseType;
+      typedef ShapeFunctionSet< typename ShapeFunctionSetImpl::FunctionSpaceType, ThisType > BaseType;
 
     protected:
       typedef ShapeFunctionSetImpl ImplementationType;
