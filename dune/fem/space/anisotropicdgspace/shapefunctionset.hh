@@ -174,7 +174,7 @@ namespace AnisotropicDG
     {
       static void apply ( Type &shapeFunctionSetTuple, const MultiIndexType &multiIndex )
       {
-        assert( MultiIndexType::contains( multiIndex ) );
+        assert( MultiIndexSetType::contains( multiIndex ) );
         Dune::get< i >( shapeFunctionSetTuple )
           = &( ShapeFunctionSetProviderType::get( multiIndex[ i ] ) );
       }
@@ -224,11 +224,16 @@ namespace AnisotropicDG
 
     ScalarShapeFunctionSet ( const MultiIndexType &multiIndex )
     : implementation_( ShapeFunctionSetTupleType::create( multiIndex ) )
-    {}
+    {
+      assert(( NumShapeFunctions< FunctionSpaceType::dimDomain, maxOrder >::count( multiIndex ) == size() )); 
+    }
 
     Dune::GeometryType type () const { return implementation().type(); }
 
-    std::size_t size () const { return implementation().size(); }
+    std::size_t size () const
+    {
+      return implementation().size();
+    }
 
     template< class Point, class Functor >
     void evaluateEach ( const Point &x, Functor functor ) const

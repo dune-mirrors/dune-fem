@@ -12,6 +12,7 @@
 
 // local includes
 #include "multiindexset.hh"
+#include "utility.hh"
 
 /**
   @file
@@ -26,7 +27,7 @@ namespace AnisotropicDG
   // Internal forward declaration 
   // ----------------------------
 
-  template< class GridPart, int maxOrder >
+  template< class GridPart, int maxPolOrder >
   class DofMapper;
 
 
@@ -34,11 +35,11 @@ namespace AnisotropicDG
   // DofMapperTraits
   // ---------------
 
-  template< class GridPart, int maxOrder >
+  template< class GridPart, int maxPolOrder >
   struct DofMapperTraits
   {
     //! \brief type of DoF mapper
-    typedef AnisotropicDG::DofMapper< GridPart, maxOrder > DofMapperType;
+    typedef AnisotropicDG::DofMapper< GridPart, maxPolOrder > DofMapperType;
     //! \brief element type
     typedef typename GridPart::template Codim< 0 >::EntityType ElementType;
   };
@@ -48,12 +49,12 @@ namespace AnisotropicDG
   // DofMapper
   // ---------
 
-  template< class GridPart, int maxOrder >
+  template< class GridPart, int maxPolOrder >
   class DofMapper
-  : public Dune::Fem::AdaptiveDofMapper< AnisotropicDG::DofMapperTraits< GridPart, maxOrder > >
+  : public Dune::Fem::DofMapper< AnisotropicDG::DofMapperTraits< GridPart, maxPolOrder > >
   {
-    typedef DofMapper< GridPart, maxOrder > ThisType;
-    typedef Dune::Fem::AdaptiveDofMapper< AnisotropicDG::DofMapperTraits< GridPart, maxOrder > > BaseType;
+    typedef DofMapper< GridPart, maxPolOrder > ThisType;
+    typedef Dune::Fem::DofMapper< AnisotropicDG::DofMapperTraits< GridPart, maxPolOrder > > BaseType;
 
   public:
     typedef typename BaseType::Traits Traits;
@@ -62,12 +63,15 @@ namespace AnisotropicDG
     typedef GridPart GridPartType;
     static const int dimension = GridPartType::dimension;
 
-    typedef typename MultiIndexSet< dimension, maxOrder >::MultiIndexType MultiIndexType;
+    typedef typename MultiIndexSet< dimension, maxPolOrder >::MultiIndexType MultiIndexType;
 
-    explicit DofMapper ( const GridPartType &gridPart )
+    explicit DofMapper ( const GridPartType &gridPart, const MultiIndexType multiIndex )
     : gridPart_( gridPart ),
-      size_( computeSize( gridPart_ ) )
-    {}
+      multiIndex_( multiIndex )
+    {
+      // compute total number of DoFs
+      size_ = computeSize( gridPart_ );
+    }
 
 
     // DofMapper interface methods
@@ -102,73 +106,43 @@ namespace AnisotropicDG
 
     int maxNumDofs () const
     {
-      DUNE_THROW( Dune::NotImplemented, "Method maxNumDofs() not implemented yet" );
+      return size_;
     }
 
-    int numDofs ( const ElementType &element ) const
+    template< class Entity >
+    int numDofs ( const Entity &entity ) const
     {
-      DUNE_THROW( Dune::NotImplemented, "Method numDofs() not implemented yet" );
+      assert( Entity::codimension == 0 );
+      return NumShapeFunctions< dimension, maxOrder >::count( multiIndex_ );
     }
 
     template< class Entity >
     int numEntityDofs ( const Entity &entity ) const
     {
-      return ( Entity::codimension == 0 ? numDofs() : 0 );
-    }
-
-
-    // AdaptvieDofMapper interface methods
-    // -----------------------------------
-
-    int numberOfHoles ( const int block ) const
-    {
-      DUNE_THROW( Dune::NotImplemented, "Method numberOfHoles() not implemented yet" );
-    }
-
-    int oldIndex ( const int hole, const int block ) const
-    {
-      DUNE_THROW( Dune::NotImplemented, "Method oldIndex() not implemented yet" );
-    }
-
-    int newIndex ( const int hole, const int block ) const
-    {
-      DUNE_THROW( Dune::NotImplemented, "Method newIndex() not implemented yet" );
-    }
-
-    bool consecutive () const
-    {
-      DUNE_THROW( Dune::NotImplemented, "Method consecutive() not implemented yet" );
-    }
-
-    int oldOffSet ( const int block ) const
-    {
-      DUNE_THROW( Dune::NotImplemented, "Method oldOffSet() not implemented yet" );
-    }
-   
-    int offSet ( const int block ) const
-    {
-      DUNE_THROW( Dune::NotImplemented, "Method offSet() not implemented yet" );
-    }
-  
-    int numBlocks () const
-    {
-      DUNE_THROW( Dune::NotImplemented, "Method numBlocks() not implemented yet" );
+      return ( Entity::codimension == 0 ? numDofs( entity ) : 0 );
     }
 
 
     // Non-interface methods
     // ---------------------
 
+    // return (multi index valued) polynomial order for element
     MultiIndexType &order ( const ElementType &element ) const
     {
-      DUNE_THROW( Dune::NotImplemented, "Method order() not implemented yet" );
+      return multiIndex_;
     }
 
-    // return whether polynomial order is constant
-    // bool fixedOrder ( const ElementType &element ) const;
+    // return true, if only one shape function set is used 
+    bool fixedOrder () const
+    {
+      return true;
+    }
    
     // return maximum polyonmial order for given entity
-    // typename MultiIndexType maxOrder ( const ElementType &element ) const;
+    typename MultiIndexType ::value_type maxOrder () const
+    {
+      return maxPolOrder;
+    }
 
   protected:
     const GridPartType &gridPart () const
@@ -178,17 +152,18 @@ namespace AnisotropicDG
 
   private:
     // compute total number of DoFs
-    static std::size_t computeSize ( const GridPartType &gridPart )
+    std::size_t computeSize () const
     {
       std::size_t size = 0;
       typedef typename GridPartType::template Codim< 0 >::Iterator IteratorType;
-      const IteratorType end = gridPart.template end< 0 >();
-      for( IteratorType it = gridPart.template begin< 0 >(); it != end; ++it )
+      const IteratorType end = gridPart().template end< 0 >();
+      for( IteratorType it = gridPart().template begin< 0 >(); it != end; ++it )
         size += numDofs( *it );
       return size;
     }
 
     const GridPartType &gridPart_;
+    MultiIndexType multiIndex_;
     size_t size_;
   };
 

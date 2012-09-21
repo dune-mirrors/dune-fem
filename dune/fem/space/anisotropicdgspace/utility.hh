@@ -2,7 +2,6 @@
 #define DUNE_FEM_SPACE_ANISOTROPICDGSPACE_UTILTIY_HH
 
 // C++ includes
-#include <algorithm>
 #include <cassert>
 #include <cstddef>
 
@@ -104,20 +103,30 @@ namespace AnisotropicDG
     //! \brief return max number of shape functions
     std::size_t max () const
     {
-      DUNE_THROW( Dune::NotImplemented, "Method max() not implemented yet" );
+      std::size_t min = 1;
+      for( int i = 0; i < dimension; ++i )
+        min *= sizes_[ maxOrder ];
+      return min ;
     }
 
     //! \brief return min number of shape functions
     std::size_t min () const
     {
-      DUNE_THROW( Dune::NotImplemented, "Method min() not implemented yet" );
+      std::size_t min = 1;
+      for( int i = 0; i < dimension; ++i )
+        min *= sizes_[ 0 ];
+      return min ;
     }
 
     //! \brief return number of shape functions for given multi index
     template< class Implementation >
     std::size_t count ( const Dune::DenseVector< Implementation > &multiIndex ) const
     {
-      DUNE_THROW( Dune::NotImplemented, "Method count() not implemented yet" );
+      assert( multiIndex.size() == dimension );
+      std::size_t count = 1;
+      for( int i = 0; i < dimension; ++i )
+        count *= sizes_[ multiIndex[ i ] ];
+      return count;
     }
 
   private:

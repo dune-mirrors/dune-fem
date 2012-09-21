@@ -132,7 +132,7 @@ namespace AnisotropicDG
 
     BasisFunctionSetType basisFunctionSet ( const EntityType &entity ) const
     {
-      const MultiIndexType &multiIndex = mapper().multiIndex( entity );
+      const MultiIndexType &multiIndex = mapper().order( entity );
       return BasisFunctionSetType( entity, ShapeFunctionSetType( multiIndex ) );
     }
     
@@ -148,12 +148,12 @@ namespace AnisotropicDG
 
     int order () const
     {
-      return maxOrder;
+      return mapper().maxOrder();
     }
 
     int order ( const EntityType &entity ) const
     {
-      const MultiIndexType &multiIndex = mapper().multiIndex( entity );
+      const MultiIndexType &multiIndex = mapper().order( entity );
       return std::max_element( multiIndex.begin(), multiIndex.end() );
     }
 
