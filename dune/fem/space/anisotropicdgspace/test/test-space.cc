@@ -7,7 +7,7 @@
 #include <dune/fem/function/adaptivefunction.hh>
 #include <dune/fem/gridpart/adaptiveleafgridpart.hh>
 #include <dune/fem/misc/mpimanager.hh>
-// #include <dune/fem/space/anisotropicdgspace.hh>
+#include <dune/fem/space/anisotropicdgspace.hh>
 #include <dune/fem/space/common/functionspace.hh>
 
 // local includes
@@ -32,7 +32,7 @@ static const int dimDomain = GridPartType::dimensionworld;
 typedef Dune::Fem::FunctionSpace< DomainFieldType, RangeFieldType, dimDomain, dimRange > FunctionSpaceType;
 
 // anisotropic DG space
-// typedef Dune::Fem::AnisotropicDGSpace< FunctionSpaceType, GridPartType, maxOrder > DiscreteFunctionSpaceType;
+typedef Dune::Fem::AnisotropicDGSpace< FunctionSpaceType, GridPartType, maxOrder > DiscreteFunctionSpaceType;
 
 // discrete function space
 // typedef Dune::Fem::AdaptiveDiscreteFunction< DiscreteFunctionSpaceType > DiscreteFunctionType;
@@ -53,9 +53,9 @@ try
   GridPartType gridPart( grid );
 
   // create discrete function space
-  // typedef DiscreteFunctionSpaceType::MultiIndexType MultiIndexType;
-  // MultiIndexType multiIndex( maxOrder );
-  // DiscreteFunctionSpaceType discreteFunctionSpace( gridPart, multiIndex );
+  typedef DiscreteFunctionSpaceType::MultiIndexType MultiIndexType;
+  MultiIndexType multiIndex( maxOrder );
+  DiscreteFunctionSpaceType discreteFunctionSpace( gridPart, multiIndex );
 
   // create discrete function
   // DiscreteFunctionType uh( "uh", discreteFunctionSpace );
