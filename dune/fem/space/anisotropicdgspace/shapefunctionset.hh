@@ -5,15 +5,16 @@
 #include <cassert>
 
 // dune-common includes
-#include <dune/common/exceptions.hh>
+#include <dune/common/array.hh>
 #include <dune/common/forloop.hh>
 
 // dune-geometry includes
 #include <dune/geometry/referenceelements.hh>
 
 // dune-fem includes
-#include <dune/fem/common/functionspace.hh>
+#include <dune/fem/space/common/functionspace.hh>
 #include <dune/fem/space/shapefunctionset/legendre.hh>
+#include <dune/fem/space/shapefunctionset/proxy.hh>
 #include <dune/fem/space/shapefunctionset/tensorproduct.hh>
 #include <dune/fem/space/shapefunctionset/vectorial.hh>
 
@@ -55,12 +56,12 @@ namespace AnisotropicDG
   template< class FunctionSpace, int maxOrder >
   class LegendreShapeFunctionSetProvider
   {
-    typedef LegendreShapeFunctionSetProvider< FunctionSpace, int maxOrder > ThisType;
+    typedef LegendreShapeFunctionSetProvider< FunctionSpace, maxOrder > ThisType;
     static const int storageSize = maxOrder+1;
 
   public:
     typedef FunctionSpace FunctionSpaceType;
-    typedef LegendreShapeFunctionSet< FunctionSpaceType > LegendreShapeFunctionSetType;
+    typedef Dune::Fem::LegendreShapeFunctionSet< FunctionSpaceType > LegendreShapeFunctionSetType;
 
   private:
     template< int order >
@@ -84,9 +85,9 @@ namespace AnisotropicDG
     {
       for( int i = 0; i < storageSize; ++i )
       {
-        if( shapeFunctionSets_[ order ] )
-          delete shapeFunctionSets_[ order ];
-        shapeFunctionSets_[ order ] = nullptr;
+        if( shapeFunctionSets_[ i ] )
+          delete shapeFunctionSets_[ i ];
+        shapeFunctionSets_[ i ] = nullptr;
       }
     }
 
@@ -106,88 +107,129 @@ namespace AnisotropicDG
     LegendreShapeFunctionSetProvider ( const ThisType & );
     ThisType &operator= ( const ThisType & );
 
-    Dune::array< const LegendreShapeFunctionSet *, storageSize > shapeFunctionSets_;
+    Dune::array< const LegendreShapeFunctionSetType *, storageSize > shapeFunctionSets_;
   };
 
 
 
-  // DefaultShapeFunctionSet
-  // -----------------------
+  // ShapeFunctionSetTuple
+  // ---------------------
 
   /*
-   * A class for constructing a shape function set.
+   * \brief A class providing tuples of shape function sets
+   *
+   * A class providing tuples of one-dimensional, scalar shape function sets
+   * to be used with Dune::Fem::TensorShapeFunctionSet
+   *
+   * Example usage:
+\code
+    const int maxOrder = MAXORDER;
+
+    // create multi index
+    typedef typedef ShapeFunctionSetTuple< FunctionSpaceType, maxOrder >::MultiIndexType 
+      MultiIndexType;
+    MultiIndexType multiIndex( maxOrder );
+
+    // create shape function set tuple
+    typedef typedef ShapeFunctionSetTuple< FunctionSpaceType, maxOrder >::Type 
+      ShapeFunctionSetTupleType;
+    const ShapeFunctionSetTupleType shapeFunctionSetTuple
+      = ShapeFunctionSetTuple< FunctionSpaceType, maxOrder >::create( multiIndex );
+\endcode
    */
   template< class FunctionSpace, int maxOrder >
-  struct DefaultShapeFunctionSet
+  struct ShapeFunctionSetTuple
   {
-    // export template parameter
+    // export template parameter function space
     typedef FunctionSpace FunctionSpaceType;
 
   private:
-    typedef typename FunctionSpaceType::RangeType RangeType;
+    // dimension
     static const int dimension = FunctionSpaceType::dimDomain;
-    typedef typename Dune::ToScalarFunctionSpace< FunctionSpaceType >::Type ScalarFunctionSpace;
-    typedef Dune::Fem::LegendreShapeFunctionSet< 
-        typename ToLocalFunctionSpace< ScalarFunctionSpace, 1 >::Type
-      > LegendreShapeFunctionSetType;
-    typedef typename MakeTuple< const LegendreShapeFunctionSetType &, dimension >::Type LegendreShapeFunctionSetTupleType;
-    typedef Dune::Fem::TensorProductShapeFunctionSet< ScalarFunctionSpace, LegendreShapeFunctionSetTupleType > ScalarShapeFunctionSet;
+
+    // scalar function space
+    typedef typename Dune::Fem::ToScalarFunctionSpace< FunctionSpaceType >::Type ScalarFunctionSpace;
+
+    // provider for simple shape function sets 
+    typedef LegendreShapeFunctionSetProvider< 
+        typename Dune::Fem::ToLocalFunctionSpace< ScalarFunctionSpace, 1 >::Type, maxOrder
+      > ShapeFunctionSetProviderType;
+
+    // simple shape function sets
+    typedef typename ShapeFunctionSetProviderType::LegendreShapeFunctionSetType ShapeFunctionSetType;
+
+    // we need to apply a proxy here
+    typedef Dune::Fem::ShapeFunctionSetProxy< ShapeFunctionSetType > ShapeFunctionSetProxyType;
 
   public:
-    // multi index type
-    typedef MultiIndexSet< dimension, maxOrder >::MultiIndexType MultiIndexType;
-    // implementation type
-    typedef VectorialShapeFunctionSet< ScalarShapeFunctionSet, RangeType > ImplementationType;
+    //! \brief type of shape function set tuple
+    typedef typename MakeTuple< ShapeFunctionSetProxyType, dimension >::Type Type;
 
-    // return shape function set
-    static ImplementationType create ( const MultiIndexType &multiIndex )
+    //! \brief multi index type
+    typedef typename MultiIndexSet< dimension, maxOrder >::MultiIndexType MultiIndexType;
+
+  protected:
+    template< int i >
+    struct Create
     {
-      LegendreShapeFunctionSetTupleType tuple( multiIndex );
-      ScalarShapeFunctionSet scalarShapeFunctionSet( tuple );
-      return ImplementationType( scalarShapeFunctionSet );
+      static void apply ( Type &shapeFunctionSetTuple, const MultiIndexType &multiIndex )
+      {
+        Dune::get< i >( shapeFunctionSetTuple )
+          = &( ShapeFunctionSetProviderType::get( multiIndex[ i ] ) );
+      }
+    };
+
+  public:
+    //! \brief create shape function set tuple from multi index
+    static Type create ( const MultiIndexType &multiIndex )
+    {
+      Type shapeFunctionSetTuple;
+      Dune::ForLoop< Create, 0, dimension >::apply( shapeFunctionSetTuple, multiIndex );
+      return shapeFunctionSetTuple;
     }
   };
 
 
 
-  // ShapeFunctionSet
-  // ----------------
+  // ScalarShapeFunction
+  // -------------------
 
-  template< class FunctionSpace, int maxOrder, class Implementation = DefaultShapeFunctionSet< FunctionSpace, maxOrder > >
-  class ShapeFunctionSet
-  : public Dune::Fem::ShapeFunctionSet< FunctionSpace, ShapeFunctionSet< FunctionSpace, maxOrder, Implementation > >
+  template< class FunctionSpace, int maxOrder >
+  struct ScalarShapeFunctionSet
+  : public Dune::Fem::ShapeFunctionSet< FunctionSpace, ScalarShapeFunctionSet< FunctionSpace, maxOrder > >
   {
-    typedef ShapeFunctionSet< FunctionSpace, maxOrder, Implementation > ThisType;
-    typedef Dune::Fem::ShapeFunctionSet< FunctionSpace, ThisType > BaseType;
-
-  public:
-    typedef typename BaseType::FunctionSpaceType FunctionSpaceType;
-    typedef typename BaseType::RangeType RangeType;
-    typedef typename BaseType::JacobianRangeType JacobianRangeType;
-    typedef typename BaseType::HessianRangeType HessianRangeType;
+    typedef FunctionSpace FunctionSpaceType;
 
   private:
-    static const int dimension = FunctionSpaceType::dimDomain;
+    dune_static_assert( (FunctionSpaceType::dimRange == 1),
+                        "FunctionSpace must be scalar (i.e., dimRange = 1)." );
 
-    typedef Implementation< FunctionSpaceType, maxOrder > ImplementationType;
+    typedef ScalarShapeFunctionSet< FunctionSpaceType, maxOrder > ThisType;
+    typedef Dune::Fem::ShapeFunctionSet< FunctionSpaceType, ThisType > BaseType;
+
+  private:
+    typedef typename ShapeFunctionSetTuple< FunctionSpaceType, maxOrder >::Type ShapeFunctionSetTupleType;
+
+  protected:
+    typedef Dune::Fem::TensorProductShapeFunctionSet< 
+        FunctionSpaceType, ShapeFunctionSetTupleType
+      > ImplementationType;
 
   public:
-    typedef typename ImplementationType::MultiIndexType MultiIndexType;
+    typedef typename ShapeFunctionSetTupleType::MultiIndexType MultiIndexType;
 
-    ShapeFunctionSet ( const Dune::GeometryType &type, const MultiIndexType &multiIndex )
-    : implementation_( multiIndex )
-    {
-      assert( type == ThisType::type() );
-    }
+    ScalarShapeFunctionSet ( const MultiIndexType &multiIndex )
+    : implementation_( ShapeFunctionSetTupleType::create( multiIndex ) )
+    {}
 
-    static Dune::GeometryType type ()
+    Dune::GeometryType type () const
     {
       return implementation().type();
     }
 
     std::size_t size () const
     {
-      return implementation().type();
+      return implementation().size();
     }
 
     template< class Point, class Functor >
@@ -215,8 +257,78 @@ namespace AnisotropicDG
     }
 
   private:
-    static ImplementationType ( const MultiIndexType &multiIndex ) const;
+    ImplementationType implementation_;
+  };
 
+
+
+  // ShapeFunctionSet
+  // ----------------
+
+  template< class FunctionSpace, int maxOrder >
+  class ShapeFunctionSet
+  : public Dune::Fem::ShapeFunctionSet< FunctionSpace, ShapeFunctionSet< FunctionSpace, maxOrder > >
+  {
+    typedef ShapeFunctionSet< FunctionSpace, maxOrder > ThisType;
+    typedef Dune::Fem::ShapeFunctionSet< FunctionSpace, ThisType > BaseType;
+
+  public:
+    typedef typename BaseType::FunctionSpaceType FunctionSpaceType;
+    typedef typename BaseType::RangeType RangeType;
+    typedef typename BaseType::JacobianRangeType JacobianRangeType;
+    typedef typename BaseType::HessianRangeType HessianRangeType;
+
+  private:
+    typedef typename Dune::Fem::ToScalarFunctionSpace< FunctionSpaceType >::Type ScalarFunctionSpace;
+    typedef ScalarShapeFunctionSet< ScalarFunctionSpace, maxOrder > ScalarShapeFunctionSetType;
+
+  protected:
+    typedef Dune::Fem::VectorialShapeFunctionSet< ScalarShapeFunctionSetType, RangeType > ImplementationType;
+
+  public:
+    typedef typename ImplementationType::MultiIndexType MultiIndexType;
+
+    ShapeFunctionSet ( const Dune::GeometryType &type, const MultiIndexType &multiIndex )
+    : implementation_( ScalarShapeFunctionSetType( multiIndex ) )
+    {
+      assert( type == ThisType::type() );
+    }
+
+    static Dune::GeometryType type ()
+    {
+      return implementation().type();
+    }
+
+    std::size_t size () const
+    {
+      return implementation().size();
+    }
+
+    template< class Point, class Functor >
+    void evaluateEach ( const Point &x, Functor functor ) const
+    {
+      return implementation().evaluateEach( x, functor );
+    }
+
+    template< class Point, class Functor >
+    void jacobianEach ( const Point &x, Functor functor ) const
+    {
+      return implementation().jacobianEach( x, functor );
+    }
+
+    template< class Point, class Functor >
+    void hessianEach ( const Point &x, Functor functor ) const
+    {
+      return implementation().hessianEach( x, functor );
+    }
+
+  protected:
+    const ImplementationType &implementation () const
+    {
+      return implementation_;
+    }
+
+  private:
     ImplementationType implementation_;
   };
 
