@@ -4,9 +4,6 @@
 // C++ includes
 #include <cstddef>
 
-// dune-common includes
-#include <dune/common/exceptions.hh>
-
 // dune-fem includes
 #include <dune/fem/space/mapper/dofmapper.hh>
 
@@ -64,6 +61,9 @@ namespace AnisotropicDG
     typedef GridPart GridPartType;
     static const int dimension = GridPartType::dimension;
 
+    typedef typename GridPartType::IndexSetType IndexSetType;
+    typedef typename IndexSetType::IndexType GlobalKeyType;
+
     typedef typename MultiIndexSet< dimension, maxPolOrder >::MultiIndexType MultiIndexType;
 
     explicit DofMapper ( const GridPartType &gridPart, const MultiIndexType multiIndex )
@@ -94,13 +94,19 @@ namespace AnisotropicDG
     template< class Functor >
     void mapEach ( const ElementType &element, Functor f ) const
     {
-      DUNE_THROW( Dune::NotImplemented, "Method mapEach() not implemented yet" );
+      const int numDofs = ThisType::numDofs( element );
+      for( int i = 0; i < numDofs; ++i )
+        f( i, globalKey( element, i ) );
     }
     
     template< class Entity, class Functor >
     void mapEachEntityDof ( const Entity &entity, Functor f ) const
     {
-      DUNE_THROW( Dune::NotImplemented, "Method mapEachEntityDof() not implemented yet" );
+      if( Entity::codimenion != 0 )
+        return;
+      const int numDofs = ThisType::numDofs( entity );
+      for( int i = 0; i < numDofs; ++i )
+        f( globalKey( entity, i ) );
     }
 
     int maxNumDofs () const
@@ -147,6 +153,13 @@ namespace AnisotropicDG
     const GridPartType &gridPart () const
     {
       return gridPart_;
+    }
+
+    template< class Entity >
+    GlobalKeyType globalKey ( const Entity &entity, const int localDoF ) const
+    {
+      assert( Entity::codimension == 0 );
+      return dimRange*gridPart().indexSet().index( entity ) + localDoF;
     }
 
   private:
