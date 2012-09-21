@@ -23,10 +23,10 @@ namespace AnisotropicDG
    * \brief Make tuple of given length from type
    *
    * Thus, the following types are equal: 
-   \code
-   Dune::tuple< T, T, T, T >
-   MakeTuple< T, 4 >::Type
-   endcode
+\code
+    Dune::tuple< T, T, T, T >
+    MakeTuple< T, 4 >::Type
+\endcode
    *
    * \tparam  T    Type
    * \tparam  len  Tuple length 
@@ -43,7 +43,7 @@ namespace AnisotropicDG
   template< class T, int len >
   struct MakeTuple
   {
-    dune_static_assert( len > 0, "Negative template parameter." );
+    dune_static_assert( len > 0, "Negative or zero template parameter." );
     typedef Dune::JoinTuples< Dune::tuple< T >, typename MakeTuple< T, len-1 >::Type > Type;
   };
 
