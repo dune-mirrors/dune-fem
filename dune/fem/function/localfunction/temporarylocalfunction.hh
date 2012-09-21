@@ -287,8 +287,8 @@ namespace Dune
 
     public:
       //! type of the base function set
-      typedef typename DiscreteFunctionSpaceType :: BaseFunctionSetType
-        BaseFunctionSetType;
+      typedef typename DiscreteFunctionSpaceType :: BasisFunctionSetType
+        BasisFunctionSetType;
 
       //! type of the entity, this local function is associated with
       typedef typename DiscreteFunctionSpaceType :: EntityType EntityType;
@@ -367,8 +367,8 @@ namespace Dune
       /** \copydoc Dune::Fem::LocalFunction::order() const */
       int order () const;
 
-      /** \copydoc Dune::Fem::LocalFunction::baseFunctionSet() const */
-      const BaseFunctionSetType &baseFunctionSet () const;
+      /** \copydoc Dune::Fem::LocalFunction::basisFunctionSet() const */
+      const BasisFunctionSetType &basisFunctionSet () const;
 
       /** \copydoc Dune::Fem::LocalFunction::entity() const */
       const EntityType &entity () const;
@@ -413,7 +413,7 @@ namespace Dune
       const DiscreteFunctionSpaceType &discreteFunctionSpace_;
       const EntityType *entity_;
 
-      BaseFunctionSetType baseFunctionSet_;
+      BasisFunctionSetType basisFunctionSet_;
 
       DofArrayType dofs_;
 
@@ -495,7 +495,7 @@ namespace Dune
       :: TemporaryLocalFunctionImpl ( const DiscreteFunctionSpaceType &dfSpace )
     : discreteFunctionSpace_( dfSpace ),
       entity_( 0 ),
-      baseFunctionSet_(),
+      basisFunctionSet_(),
       dofs_( DiscreteFunctionSpace::localBlockSize * discreteFunctionSpace_.blockMapper().maxNumDofs() ),
       needCheckGeometry_( true )
     {}
@@ -507,7 +507,7 @@ namespace Dune
                                       const EntityType &entity )
     : discreteFunctionSpace_( dfSpace ),
       entity_( &entity ),
-      baseFunctionSet_( discreteFunctionSpace_.baseFunctionSet( entity ) ),
+      basisFunctionSet_( discreteFunctionSpace_.basisFunctionSet( entity ) ),
       dofs_( DiscreteFunctionSpace::localBlockSize * discreteFunctionSpace_.blockMapper().maxNumDofs() ),
       needCheckGeometry_( true )
     {}
@@ -518,7 +518,7 @@ namespace Dune
       :: TemporaryLocalFunctionImpl ( const ThisType &other )
     : discreteFunctionSpace_( other.discreteFunctionSpace_ ),
       entity_( other.entity_ ),
-      baseFunctionSet_( other.baseFunctionSet_ ),
+      basisFunctionSet_( other.basisFunctionSet_ ),
       dofs_( other.dofs_ ),
       needCheckGeometry_( true )
     {}
@@ -559,12 +559,12 @@ namespace Dune
     template< class DiscreteFunctionSpace, template< class > class ArrayAllocator >
     inline
     const typename TemporaryLocalFunctionImpl< DiscreteFunctionSpace, ArrayAllocator >
-      :: BaseFunctionSetType &
+      :: BasisFunctionSetType &
     TemporaryLocalFunctionImpl< DiscreteFunctionSpace, ArrayAllocator >
-      :: baseFunctionSet () const
+      :: basisFunctionSet () const
     {
       assert( entity_ != 0 );
-      return baseFunctionSet_;
+      return basisFunctionSet_;
     }
 
     
@@ -584,25 +584,25 @@ namespace Dune
     inline void TemporaryLocalFunctionImpl< DiscreteFunctionSpace, ArrayAllocator >
       :: init ( const EntityType &entity )
     {
-      const bool multipleBaseSets = discreteFunctionSpace_.multipleBaseFunctionSets();
+      const bool multipleBaseSets = discreteFunctionSpace_.multipleBasisFunctionSets();
 
       if( multipleBaseSets || needCheckGeometry_ )
       {
         // if multiple base sets skip geometry call
         bool updateBaseSet = true;
         if( !multipleBaseSets && (entity_ != 0) )
-          updateBaseSet = (baseFunctionSet_.geometryType() != entity.type());
+          updateBaseSet = (basisFunctionSet_.geometryType() != entity.type());
         
         if( multipleBaseSets || updateBaseSet )
         {
-          baseFunctionSet_ = discreteFunctionSpace_.baseFunctionSet( entity );
+          basisFunctionSet_ = discreteFunctionSpace_.basisFunctionSet( entity );
           needCheckGeometry_ = discreteFunctionSpace_.multipleGeometryTypes();
         }
       }
-      assert( baseFunctionSet_.size() <= dofs_.size() );
+      assert( basisFunctionSet_.size() <= dofs_.size() );
 
       entity_ = &entity;
-      assert( baseFunctionSet_.geometryType() == entity.type() );
+      assert( basisFunctionSet_.geometryType() == entity.type() );
     }
 
 
@@ -626,7 +626,7 @@ namespace Dune
     inline int TemporaryLocalFunctionImpl< DiscreteFunctionSpace, ArrayAllocator >
       :: numDofs () const
     {
-      return baseFunctionSet_.size();
+      return basisFunctionSet_.size();
     }
 
   } // namespace Fem 
