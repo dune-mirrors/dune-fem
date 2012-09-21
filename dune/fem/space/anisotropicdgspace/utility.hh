@@ -9,7 +9,7 @@
 /**
   @file
   @author Christoph Gersbacher
-  @brief Please doc me
+  @brief Provide a simple template meta programm for constructing tuple types
 */
 
 
