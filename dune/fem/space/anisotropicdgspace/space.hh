@@ -59,6 +59,7 @@ namespace AnisotropicDG
     typedef typename FunctionSpaceType::DomainType DomainType;
     typedef typename FunctionSpaceType::RangeType RangeType;
 
+    static const int codimension = 0;
     typedef typename GridPart::template Codim< 0 >::EntityType EntityType;
 
     typedef Dune::Fem::FunctionSpace< DomainFieldType, RangeFieldType, dimLocal, dimLocal > ShapeFunctionSpaceType;
@@ -112,7 +113,7 @@ namespace AnisotropicDG
     typedef typename Traits::MultiIndexType MultiIndexType;
 
   private:
-    typedef typename Traits::ShapeFunctionSet ShapeFunctionSetType;
+    typedef typename Traits::ShapeFunctionSetType ShapeFunctionSetType;
 
   public:
     using BaseType::gridPart;

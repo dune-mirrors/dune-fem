@@ -37,14 +37,14 @@ namespace AnisotropicDG
   template< class T >
   struct MakeTuple< T, 1 >
   {
-    typename Dune::tuple< T > Type;
+    typedef Dune::tuple< T > Type;
   };
 
   template< class T, int len >
   struct MakeTuple
   {
     dune_static_assert( len > 0, "Negative or zero template parameter." );
-    typedef Dune::JoinTuples< Dune::tuple< T >, typename MakeTuple< T, len-1 >::Type > Type;
+    typedef typename Dune::JoinTuples< Dune::tuple< T >, typename MakeTuple< T, len-1 >::Type >::type Type;
   };
 
 } //  namespace AnisotropicDG

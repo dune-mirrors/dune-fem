@@ -56,9 +56,9 @@ namespace AnisotropicDG
     template< int order >
     struct Initialize
     {
-      static void apply ( Dune::array< int, maxOrder+1 > &sizes )
+      static void apply ( Dune::array< std::size_t, maxOrder+1 > &sizes )
       {
-        dune_static_assert( order >= 0 && order <= maxOrder, "Invalid template parameter" );
+        dune_static_assert( order >= 0 && order <= maxOrder, "Invalid template parameter " );
         sizes[ order ] = Dune::Fem::NumLegendreBaseFunctions< order, dimension >::numBaseFct;
       }
     };
@@ -67,10 +67,9 @@ namespace AnisotropicDG
     //! \brief constructor
     NumShapeFunctions ()
     {
-      Dune::ForLoop< Initialize, 0, maxOrder+1 >::apply( sizes_ );
+      Dune::ForLoop< Initialize, 0, maxOrder >::apply( sizes_ );
     }
 
-  public:
     //! \brief get singleton
     static ThisType &instance ()
     {
@@ -78,32 +77,33 @@ namespace AnisotropicDG
       return instance_;
     }
 
+  public:
     //! \brief return max number of shape functions
-    std::size_t max () const
+    static std::size_t max ()
     {
       std::size_t min = 1;
       for( int i = 0; i < dimension; ++i )
-        min *= sizes_[ maxOrder ];
+        min *= instance().sizes_[ maxOrder ];
       return min ;
     }
 
     //! \brief return min number of shape functions
-    std::size_t min () const
+    static std::size_t min ()
     {
       std::size_t min = 1;
       for( int i = 0; i < dimension; ++i )
-        min *= sizes_[ 0 ];
+        min *= instance().sizes_[ 0 ];
       return min ;
     }
 
     //! \brief return number of shape functions for given multi index
     template< class Implementation >
-    std::size_t count ( const Dune::DenseVector< Implementation > &multiIndex ) const
+    static std::size_t count ( const Dune::DenseVector< Implementation > &multiIndex )
     {
       assert( multiIndex.size() == dimension );
       std::size_t count = 1;
       for( int i = 0; i < dimension; ++i )
-        count *= sizes_[ multiIndex[ i ] ];
+        count *= instance().sizes_[ multiIndex[ i ] ];
       return count;
     }
 
@@ -163,7 +163,7 @@ namespace AnisotropicDG
   protected:
     LegendreShapeFunctionSetProvider ()
     {
-      Dune::ForLoop< Initialize, 0, storageSize >::apply( shapeFunctionSets_);
+      Dune::ForLoop< Initialize, 0, maxOrder >::apply( shapeFunctionSets_);
     }
 
   public:
@@ -198,8 +198,8 @@ namespace AnisotropicDG
 
 
 
-  // ShapeFunctionSetTuple
-  // ---------------------
+  // ShapeFunctionSetTupleProvider
+  // -----------------------------
 
   /*
    * \brief A class providing tuples of shape function sets
@@ -212,19 +212,19 @@ namespace AnisotropicDG
     const int maxOrder = MAXORDER;
 
     // create multi index
-    typedef typedef ShapeFunctionSetTuple< FunctionSpaceType, maxOrder >::MultiIndexType 
+    typedef typedef ShapeFunctionSetTupleProvider< FunctionSpaceType, maxOrder >::MultiIndexType 
       MultiIndexType;
     MultiIndexType multiIndex( maxOrder );
 
     // create shape function set tuple
-    typedef typedef ShapeFunctionSetTuple< FunctionSpaceType, maxOrder >::Type 
+    typedef typedef ShapeFunctionSetTupleProvider< FunctionSpaceType, maxOrder >::ShapeFunctionSetTupleType
       ShapeFunctionSetTupleType;
     const ShapeFunctionSetTupleType shapeFunctionSetTuple
-      = ShapeFunctionSetTuple< FunctionSpaceType, maxOrder >::create( multiIndex );
+      = ShapeFunctionSetTupleProvider< FunctionSpaceType, maxOrder >::create( multiIndex );
 \endcode
    */
   template< class FunctionSpace, int maxOrder >
-  struct ShapeFunctionSetTuple
+  struct ShapeFunctionSetTupleProvider
   {
     // export template parameter function space
     typedef FunctionSpace FunctionSpaceType;
@@ -249,7 +249,7 @@ namespace AnisotropicDG
 
   public:
     //! \brief type of shape function set tuple
-    typedef typename MakeTuple< ShapeFunctionSetProxyType, dimension >::Type Type;
+    typedef typename MakeTuple< ShapeFunctionSetProxyType, dimension >::Type ShapeFunctionSetTupleType;
 
     //! \brief multi index type
     typedef typename MultiIndexSet< dimension, maxOrder >::MultiIndexType MultiIndexType;
@@ -258,7 +258,7 @@ namespace AnisotropicDG
     template< int i >
     struct Create
     {
-      static void apply ( Type &shapeFunctionSetTuple, const MultiIndexType &multiIndex )
+      static void apply ( ShapeFunctionSetTupleType &shapeFunctionSetTuple, const MultiIndexType &multiIndex )
       {
         assert( MultiIndexSetType::contains( multiIndex ) );
         Dune::get< i >( shapeFunctionSetTuple )
@@ -268,9 +268,9 @@ namespace AnisotropicDG
 
   public:
     //! \brief create shape function set tuple from multi index
-    static Type create ( const MultiIndexType &multiIndex )
+    static ShapeFunctionSetTupleType create ( const MultiIndexType &multiIndex )
     {
-      Type shapeFunctionSetTuple;
+      ShapeFunctionSetTupleType shapeFunctionSetTuple;
       Dune::ForLoop< Create, 0, dimension >::apply( shapeFunctionSetTuple, multiIndex );
       return shapeFunctionSetTuple;
     }
@@ -298,7 +298,8 @@ namespace AnisotropicDG
     typedef Dune::Fem::ShapeFunctionSet< FunctionSpaceType, ThisType > BaseType;
 
   private:
-    typedef typename ShapeFunctionSetTuple< FunctionSpaceType, maxOrder >::Type ShapeFunctionSetTupleType;
+    typedef ShapeFunctionSetTupleProvider< FunctionSpaceType, maxOrder > ShapeFunctionSetTupleProviderType;
+    typedef typename ShapeFunctionSetTupleProviderType::ShapeFunctionSetTupleType ShapeFunctionSetTupleType;
 
   protected:
     typedef Dune::Fem::TensorProductShapeFunctionSet< 
@@ -306,7 +307,7 @@ namespace AnisotropicDG
       > ImplementationType;
 
   public:
-    typedef typename ShapeFunctionSetTupleType::MultiIndexType MultiIndexType;
+    typedef typename ShapeFunctionSetTupleProviderType::MultiIndexType MultiIndexType;
 
     ScalarShapeFunctionSet ( const MultiIndexType &multiIndex )
     : implementation_( ShapeFunctionSetTupleType::create( multiIndex ) )
@@ -375,7 +376,7 @@ namespace AnisotropicDG
     typedef Dune::Fem::VectorialShapeFunctionSet< ScalarShapeFunctionSetType, RangeType > ImplementationType;
 
   public:
-    typedef typename ImplementationType::MultiIndexType MultiIndexType;
+    typedef typename ScalarShapeFunctionSetType::MultiIndexType MultiIndexType;
 
     ShapeFunctionSet ( const Dune::GeometryType &type, const MultiIndexType &multiIndex )
     : implementation_( ScalarShapeFunctionSetType( multiIndex ) )
