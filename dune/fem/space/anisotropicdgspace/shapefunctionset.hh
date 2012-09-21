@@ -191,9 +191,12 @@ namespace AnisotropicDG
 
 
 
-  // ScalarShapeFunction
-  // -------------------
+  // ScalarShapeFunctionSet
+  // ----------------------
 
+  /*
+   * \brief Provices an anisotropic scalar Legendre shape function set
+   */
   template< class FunctionSpace, int maxOrder >
   struct ScalarShapeFunctionSet
   : public Dune::Fem::ShapeFunctionSet< FunctionSpace, ScalarShapeFunctionSet< FunctionSpace, maxOrder > >
@@ -222,15 +225,9 @@ namespace AnisotropicDG
     : implementation_( ShapeFunctionSetTupleType::create( multiIndex ) )
     {}
 
-    Dune::GeometryType type () const
-    {
-      return implementation().type();
-    }
+    Dune::GeometryType type () const { return implementation().type(); }
 
-    std::size_t size () const
-    {
-      return implementation().size();
-    }
+    std::size_t size () const { return implementation().size(); }
 
     template< class Point, class Functor >
     void evaluateEach ( const Point &x, Functor functor ) const
@@ -294,15 +291,9 @@ namespace AnisotropicDG
       assert( type == ThisType::type() );
     }
 
-    static Dune::GeometryType type ()
-    {
-      return implementation().type();
-    }
+    Dune::GeometryType type () { return implementation().type(); }
 
-    std::size_t size () const
-    {
-      return implementation().size();
-    }
+    std::size_t size () const { return implementation().size(); }
 
     template< class Point, class Functor >
     void evaluateEach ( const Point &x, Functor functor ) const
