@@ -12,13 +12,14 @@
 
 // dune-fem includes
 #include <dune/fem/space/basefunctions/basefunctionstorage.hh>
+#include <dune/fem/space/basisfunctionset/default.hh>
 #include <dune/fem/space/common/defaultcommhandler.hh>
 #include <dune/fem/space/common/discretefunctionspace.hh>
 #include <dune/fem/space/common/functionspace.hh>
 
 // local includes
 #include "dofmapper.hh"
-#include "multiindexset.hh"
+#include "shapefunctionset.hh"
 
 /**
   @file
@@ -58,11 +59,13 @@ namespace AnisotropicDG
     typedef typename FunctionSpaceType::DomainType DomainType;
     typedef typename FunctionSpaceType::RangeType RangeType;
 
-    typedef typename MultiIndexSet< dimLocal, maxOrder >::MultiIndexType MultiIndexType;
+    typedef typename GridPart::template Codim< 0 >::EntityType EntityType;
 
     typedef Dune::Fem::FunctionSpace< DomainFieldType, RangeFieldType, dimLocal, dimLocal > ShapeFunctionSpaceType;
-    // typedef StandardBasisFunctionSet< ShapeFunctionSpaceType, Storage > ShapeFunctionSetType;
-    // typedef SimpleBasisFunctionProxy< ShapeFunctionSetType > BasisFunctionSetType;
+    typedef ShapeFunctionSet< ShapeFunctionSpaceType, maxOrder > ShapeFunctionSetType;
+    typedef Dune::Fem::DefaultBasisFunctionSet< EntityType, ShapeFunctionSetType > BasisFunctionSetType;
+
+    typedef typename MultiIndexSet< dimLocal, maxOrder >::MultiIndexType MultiIndexType;
 
     static const int localBlockSize = 1;
     typedef DofMapper< GridPartType, maxOrder > BlockMapperType;
@@ -111,19 +114,15 @@ namespace AnisotropicDG
   private:
     typedef typename Traits::ShapeFunctionSet ShapeFunctionSetType;
 
-    static const Dune::InterfaceType defaultInterface = Dune::InteriorBorder_InteriorBorder_Interface;
-    static const Dune::CommunicationDirection defaultDirection = Dune::ForwardCommunication;
-
   public:
     using BaseType::gridPart;
 
     DiscreteFunctionSpace ( GridPartType &gridPart,
-                            const MultiIndexType &multiIndex = MultiIndexType( maxOrder ),
-                            const Dune::InterfaceType commInterface = defaultInterface,
-                            const Dune::CommunicationDirection commDirection = defaultDirection )
+                            const MultiIndexType &multiIndex,
+                            const Dune::InterfaceType commInterface,
+                            const Dune::CommunicationDirection commDirection )
     : BaseType( gridPart, commInterface, commDirection ),
-      mapper_( gridPart, multiIndex ),
-      shapeFunctionSet_( nullptr )
+      mapper_( gridPart, multiIndex )
     { }
 
     Dune::Fem::DFSpaceIdentifier type () const
@@ -133,18 +132,8 @@ namespace AnisotropicDG
 
     BasisFunctionSetType basisFunctionSet ( const EntityType &entity ) const
     {
-#if 0
-      // get geometry type
-      const GeometryType type = entity.type();
-      if( !type.isCube() )
-        DUNE_THROW( InvalidStateException, "MixedOrderDGSpace only provides base functions for cubes" );
-             
-      // get multi indexed order
-      const MultiIndex multiIndex = blockMapper().order( entity );
-      
-      // return base function set 
-      return BasisFunctionSetType( &basisFunctionSets_[ type ][ multiIndex ] );
-#endif
+      const MultiIndexType &multiIndex = mapper().multiIndex( entity );
+      return BasisFunctionSetType( entity, ShapeFunctionSetType( multiIndex ) );
     }
     
     bool contains ( const int codim ) const
@@ -164,7 +153,7 @@ namespace AnisotropicDG
 
     int order ( const EntityType &entity ) const
     {
-      MultiIndexType multiIndex = blockMapper().order( entity );
+      const MultiIndexType &multiIndex = mapper().multiIndex( entity );
       return std::max_element( multiIndex.begin(), multiIndex.end() );
     }
 
@@ -180,7 +169,6 @@ namespace AnisotropicDG
 
     bool multipleGeometryTypes () const
     {
-      // anisotropic order dg basisfunction set only availalbe for cartesian grids
       return false;
     }
 
@@ -194,10 +182,10 @@ namespace AnisotropicDG
     ThisType &operator= ( const ThisType & );
 
     MapperType mapper_;
-    const ShapeFunctionSetType *shapeFunctionSet_;
   };
 
 }  // namespace AnisotropicDG
+
 
 
 namespace Dune
@@ -216,11 +204,23 @@ namespace Dune
       typedef AnisotropicDGSpace< FunctionSpace, GridPart, maxOrder, Storage > ThisType;
       typedef AnisotropicDG::DiscreteFunctionSpace< FunctionSpace, GridPart, maxOrder, Storage > BaseType;
 
-    public:
+      static const Dune::InterfaceType defaultInterface = Dune::InteriorBorder_InteriorBorder_Interface;
+      static const Dune::CommunicationDirection defaultDirection = Dune::ForwardCommunication;
 
+    public:
+      typedef typename BaseType::GridPartType GridPartType;
+      typedef typename BaseType::MultiIndexType MultiIndexType;
+
+      AnisotropicDGSpace ( GridPartType &gridPart,
+                           const MultiIndexType &multiIndex = MultiIndexType( maxOrder ),
+                           const Dune::InterfaceType commInterface = defaultInterface,
+                           const Dune::CommunicationDirection commDirection = defaultDirection )
+      : BaseType( gridPart, multiIndex, commInterface, commDirection )
+      { }
     };
 
   } // namespace Fem
 
 } // namespace Dune
+
 #endif // #ifndef DUNE_FEM_SPACE_ANISOTROPICDGSPACE_SPACE_HH
