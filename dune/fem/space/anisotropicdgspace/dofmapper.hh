@@ -12,6 +12,7 @@
 
 // local includes
 #include "multiindexset.hh"
+#include "shapefunctionset.hh"
 #include "utility.hh"
 
 /**
@@ -27,7 +28,7 @@ namespace AnisotropicDG
   // Internal forward declaration 
   // ----------------------------
 
-  template< class GridPart, int maxPolOrder >
+  template< class GridPart, int dimRange, int maxPolOrder >
   class DofMapper;
 
 
@@ -35,11 +36,11 @@ namespace AnisotropicDG
   // DofMapperTraits
   // ---------------
 
-  template< class GridPart, int maxPolOrder >
+  template< class GridPart, int dimRange, int maxPolOrder >
   struct DofMapperTraits
   {
     //! \brief type of DoF mapper
-    typedef AnisotropicDG::DofMapper< GridPart, maxPolOrder > DofMapperType;
+    typedef AnisotropicDG::DofMapper< GridPart, dimRange, maxPolOrder > DofMapperType;
     //! \brief element type
     typedef typename GridPart::template Codim< 0 >::EntityType ElementType;
   };
@@ -49,12 +50,12 @@ namespace AnisotropicDG
   // DofMapper
   // ---------
 
-  template< class GridPart, int maxPolOrder >
+  template< class GridPart, int dimRange, int maxPolOrder >
   class DofMapper
-  : public Dune::Fem::DofMapper< AnisotropicDG::DofMapperTraits< GridPart, maxPolOrder > >
+  : public Dune::Fem::DofMapper< AnisotropicDG::DofMapperTraits< GridPart, dimRange, maxPolOrder > >
   {
-    typedef DofMapper< GridPart, maxPolOrder > ThisType;
-    typedef Dune::Fem::DofMapper< AnisotropicDG::DofMapperTraits< GridPart, maxPolOrder > > BaseType;
+    typedef DofMapper< GridPart, dimRange, maxPolOrder > ThisType;
+    typedef Dune::Fem::DofMapper< AnisotropicDG::DofMapperTraits< GridPart, dimRange, maxPolOrder > > BaseType;
 
   public:
     typedef typename BaseType::Traits Traits;
@@ -67,11 +68,9 @@ namespace AnisotropicDG
 
     explicit DofMapper ( const GridPartType &gridPart, const MultiIndexType multiIndex )
     : gridPart_( gridPart ),
-      multiIndex_( multiIndex )
-    {
-      // compute total number of DoFs
-      size_ = computeSize( gridPart_ );
-    }
+      multiIndex_( multiIndex ),
+      size_( dimRange*NumShapeFunctions< dimension, maxPolOrder >::count( multiIndex ) )
+    {}
 
 
     // DofMapper interface methods
@@ -79,7 +78,7 @@ namespace AnisotropicDG
 
     std::size_t size () const
     {
-      return computeSize();
+      return size_;
     }
 
     bool contains ( const int codim ) const
@@ -113,7 +112,7 @@ namespace AnisotropicDG
     int numDofs ( const Entity &entity ) const
     {
       assert( Entity::codimension == 0 );
-      return NumShapeFunctions< dimension, maxOrder >::count( multiIndex_ );
+      return size_; 
     }
 
     template< class Entity >
@@ -151,20 +150,9 @@ namespace AnisotropicDG
     }
 
   private:
-    // compute total number of DoFs
-    std::size_t computeSize () const
-    {
-      std::size_t size = 0;
-      typedef typename GridPartType::template Codim< 0 >::Iterator IteratorType;
-      const IteratorType end = gridPart().template end< 0 >();
-      for( IteratorType it = gridPart().template begin< 0 >(); it != end; ++it )
-        size += numDofs( *it );
-      return size;
-    }
-
     const GridPartType &gridPart_;
     MultiIndexType multiIndex_;
-    size_t size_;
+    std::size_t size_;
   };
 
 } // namespace AnisotropicDG

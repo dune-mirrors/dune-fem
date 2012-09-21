@@ -68,7 +68,7 @@ namespace AnisotropicDG
     typedef typename MultiIndexSet< dimLocal, maxOrder >::MultiIndexType MultiIndexType;
 
     static const int localBlockSize = 1;
-    typedef DofMapper< GridPartType, maxOrder > BlockMapperType;
+    typedef DofMapper< GridPartType, dimRange, maxOrder > BlockMapperType;
     typedef BlockMapperType MapperType;
 
     template< class DiscreteFunction, class Operation = Dune::Fem::DFCommunicationOperation::Copy >
