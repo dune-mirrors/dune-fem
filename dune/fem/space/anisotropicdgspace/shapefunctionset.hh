@@ -174,6 +174,7 @@ namespace AnisotropicDG
     {
       static void apply ( Type &shapeFunctionSetTuple, const MultiIndexType &multiIndex )
       {
+        assert( MultiIndexType::contains( multiIndex ) );
         Dune::get< i >( shapeFunctionSetTuple )
           = &( ShapeFunctionSetProviderType::get( multiIndex[ i ] ) );
       }
