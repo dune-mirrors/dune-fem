@@ -286,7 +286,6 @@ namespace AnisotropicDG
    */
   template< class FunctionSpace, int maxOrder >
   struct ScalarShapeFunctionSet
-  : public Dune::Fem::ShapeFunctionSet< FunctionSpace, ScalarShapeFunctionSet< FunctionSpace, maxOrder > >
   {
     typedef FunctionSpace FunctionSpaceType;
 
@@ -295,7 +294,6 @@ namespace AnisotropicDG
                         "FunctionSpace must be scalar (i.e., dimRange = 1)." );
 
     typedef ScalarShapeFunctionSet< FunctionSpaceType, maxOrder > ThisType;
-    typedef Dune::Fem::ShapeFunctionSet< FunctionSpaceType, ThisType > BaseType;
 
   private:
     typedef ShapeFunctionSetTupleProvider< FunctionSpaceType, maxOrder > ShapeFunctionSetTupleProviderType;
@@ -357,16 +355,15 @@ namespace AnisotropicDG
 
   template< class FunctionSpace, int maxOrder >
   class ShapeFunctionSet
-  : public Dune::Fem::ShapeFunctionSet< FunctionSpace, ShapeFunctionSet< FunctionSpace, maxOrder > >
   {
     typedef ShapeFunctionSet< FunctionSpace, maxOrder > ThisType;
-    typedef Dune::Fem::ShapeFunctionSet< FunctionSpace, ThisType > BaseType;
 
   public:
-    typedef typename BaseType::FunctionSpaceType FunctionSpaceType;
-    typedef typename BaseType::RangeType RangeType;
-    typedef typename BaseType::JacobianRangeType JacobianRangeType;
-    typedef typename BaseType::HessianRangeType HessianRangeType;
+    typedef FunctionSpace FunctionSpaceType;
+    typedef typename FunctionSpaceType::DomainType DomainType;
+    typedef typename FunctionSpaceType::RangeType RangeType;
+    typedef typename FunctionSpaceType::JacobianRangeType JacobianRangeType;
+    typedef typename FunctionSpaceType::HessianRangeType HessianRangeType;
 
   private:
     typedef typename Dune::Fem::ToScalarFunctionSpace< FunctionSpaceType >::Type ScalarFunctionSpace;
