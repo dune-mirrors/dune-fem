@@ -164,6 +164,9 @@ namespace Dune
       //! block mapper 
       typedef typename Traits :: BlockMapperType BlockMapperType; 
 
+      //! size of small blocks 
+      enum { localBlockSize = Traits :: localBlockSize };
+
    protected:  
       //! mapper factory 
       typedef CodimensionMapperSingletonFactory< GridPartType, 0 > BlockMapperSingletonFactoryType;
@@ -237,6 +240,7 @@ namespace Dune
       int dimensionOfValue () const;
 
       //! Return the dof mapper of the space
+      DUNE_VERSION_DEPRECATED(1,4,remove) 
       MapperType& mapper() const;
 
       //! Return the dof mapper of the space

@@ -70,7 +70,7 @@ namespace Dune
         }
 
         template <class GlobalKey>
-        void operator () ( const GlobalKey& globalKey ) 
+        void operator () ( const size_t local, const GlobalKey& globalKey ) 
         {
           DofBlockPtrType blockPtr = function_->block( globalKey );
           for( int j = 0; j < blockSize; ++j )
@@ -93,7 +93,7 @@ namespace Dune
         }
 
         template <class GlobalKey>
-        void operator () ( const GlobalKey& globalKey ) 
+        void operator () ( const size_t local, const GlobalKey& globalKey ) 
         {
           DofBlockPtrType blockPtr = function_->block( globalKey );
           for( int j = 0; j < blockSize; ++j )

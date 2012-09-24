@@ -53,7 +53,7 @@ namespace Dune
           maxDofs = std::max( maxDofs, baseSet->size() );
         }
       }
-      assert( std::size_t( mapper().maxNumDofs() ) == maxDofs );
+      assert( std::size_t( blockMapper().maxNumDofs() * localBlockSize ) == maxDofs );
     }
       
     template <class FunctionSpaceImp, class GridPartImp, int polOrd, template <class> class BaseFunctionStorageImp >

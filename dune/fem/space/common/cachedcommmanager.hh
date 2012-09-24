@@ -535,7 +535,8 @@ namespace Dune
     template< class LinkStorage, class IndexMapVector, InterfaceType CommInterface >
     class DependencyCache< Space > :: LinkBuilder
     : public CommDataHandleIF
-      < LinkBuilder< LinkStorage, IndexMapVector, CommInterface >, int >
+      < LinkBuilder< LinkStorage, IndexMapVector, CommInterface >, 
+                     typename SpaceType :: BlockMapperType :: GlobalKeyType >
     {
     public:
       typedef LinkStorage LinkStorageType;
@@ -543,11 +544,12 @@ namespace Dune
       typedef IndexMapVector IndexMapVectorType;
 
       typedef typename SpaceType :: BlockMapperType BlockMapperType; 
+      typedef typename BlockMapperType :: GlobalKeyType  GlobalKeyType; 
 
-      typedef int DataType;
+      typedef GlobalKeyType DataType;
 
     protected:
-      const int myRank_;
+      const GlobalKeyType myRank_;
       const int mySize_; 
       
       LinkStorageType &linkStorage_; 
@@ -651,7 +653,7 @@ namespace Dune
           const int numDofs = blockMapper_.numEntityDofs( entity );
 
           // int should be GlobalKey !!!! 
-          typedef std::vector< int >  IndicesType ;
+          typedef std::vector< GlobalKeyType >  IndicesType ;
           IndicesType indices( numDofs );
 
           // copy all global keys 
@@ -675,7 +677,7 @@ namespace Dune
         if( dataSize > 0 ) 
         {
           // read rank of other side
-          DataType rank;
+          GlobalKeyType rank;
           buffer.read( rank );  
           assert( (rank >= 0) && (rank < mySize_) );
 
@@ -687,7 +689,7 @@ namespace Dune
           linkStorage_.insert( rank );
 
           // read indices from stream 
-          typedef std::vector<int>  IndicesType ;
+          typedef std::vector< GlobalKeyType >  IndicesType ;
           IndicesType indices( dataSize - 1 );
           for(size_t i=0; i<dataSize-1; ++i) 
           {
@@ -956,7 +958,7 @@ namespace Dune
       bool operator == (const CommManagerSingletonKey & otherKey) const
       {
         // mapper of space is singleton 
-        return (&(space_.mapper()) == & (otherKey.space_.mapper()) );
+        return (&(space_.blockMapper()) == & (otherKey.space_.blockMapper()) );
       }
 
       //! return reference to index set 

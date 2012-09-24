@@ -396,7 +396,7 @@ namespace Dune
       std::size_t numDofs = info.numDofs;
       std::size_t index = info.offset + numDofs * std::size_t( indexSet().index( entity ) );
       for( std::size_t i = 0; i < info.numDofs; ++i )
-        f( index++ );
+        f( i, index++ );
     }
 
 

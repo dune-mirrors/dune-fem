@@ -39,6 +39,7 @@ namespace Dune
       typedef CodimensionMapper< GridPartType, codim > DofMapperType;
 
       typedef typename IndexSetType :: IndexType SizeType;
+      typedef typename IndexSetType :: IndexType GlobalKeyType ;
     };
 
 
@@ -54,6 +55,7 @@ namespace Dune
       typedef CodimensionMapper< GridPartType, 0 > DofMapperType;
 
       typedef typename IndexSetType :: IndexType SizeType;
+      typedef typename IndexSetType :: IndexType GlobalKeyType ;
     };
 
 
@@ -80,6 +82,10 @@ namespace Dune
 
       typedef typename Traits::IndexSetType IndexSetType;
 
+      typedef typename Traits::SizeType SizeType;
+
+      typedef typename Traits::GlobalKeyType  GlobalKeyType ;
+
       //! dimension of the grid
       static const int dimension = GridPartType::dimension;
 
@@ -96,7 +102,7 @@ namespace Dune
       }
 
       /** \copydoc DofMapper::size */
-      int size () const
+      SizeType size () const
       {
         // return number of dofs for codimension 
         return indexSet_.size( codimension );
@@ -108,8 +114,8 @@ namespace Dune
       {
         if( codimension > 0 )
         {
-          const int n = numDofs( element );
-          for( int i = 0; i < n; ++i )
+          const SizeType n = numDofs( element );
+          for( SizeType i = 0; i < n; ++i )
             f( i, indexSet_.subIndex( element, i, codimension ) );
         }
         else
@@ -117,7 +123,7 @@ namespace Dune
       }
 
       /** \copydoc DofMapper::mapToGlobal */
-      int mapToGlobal ( const ElementType &entity, const int localDof ) const
+      GlobalKeyType mapToGlobal ( const ElementType &entity, const int localDof ) const
       {
         // we only have one local dof 
         assert( localDof < maxNumDofs() );
@@ -132,7 +138,7 @@ namespace Dune
       struct IndexExtractor 
       {
         template <class Entity >
-        static inline int index(const IndexSetType& indexSet, const Entity& entity )
+        static inline GlobalKeyType index(const IndexSetType& indexSet, const Entity& entity )
         {
           DUNE_THROW(InvalidStateException,"Wrong codimension selected"); 
           return -1;
@@ -145,7 +151,7 @@ namespace Dune
       struct IndexExtractor< codim, codim >
       {
         template< class Entity >
-        static inline int index(const IndexSetType& indexSet, const Entity& entity )
+        static inline GlobalKeyType index(const IndexSetType& indexSet, const Entity& entity )
         {
           return indexSet.index( entity );
         }
@@ -157,44 +163,45 @@ namespace Dune
       void mapEachEntityDof ( const Entity &entity, Functor f ) const
       {
         assert( codimension == Entity::codimension );
-        f( IndexExtractor< codimension, Entity::codimension >::index( indexSet_, entity ) );
+        // we only have one DoF per entity, so simply assign DoF 0
+        f( 0, IndexExtractor< codimension, Entity::codimension >::index( indexSet_, entity ) );
       }
 
       /** \copydoc DofMapper::maxNumDofs() const */
-      int maxNumDofs () const
+      SizeType maxNumDofs () const
       {
         return maxNumberOfDofs_;
       }
 
       /** \copydoc Dune::DofMapper::numDofs(const ElementType &element) const */
-      int numDofs ( const ElementType &element ) const
+      SizeType numDofs ( const ElementType &element ) const
       {
         return element.template count< codimension >();
       }
 
       /** \copydoc Dune::DofMapper::numEntityDofs(const Entity &entity) const */
       template< class Entity >
-      int numEntityDofs ( const Entity &entity ) const
+      SizeType numEntityDofs ( const Entity &entity ) const
       {
         return (contains( Entity::codimension ) ? 1 : 0);
       }
      
       /** \copydoc DofMapper::oldIndex */
-      int oldIndex ( const int hole, int ) const
+      GlobalKeyType oldIndex ( const int hole, int ) const
       {
         // forward to index set 
         return indexSet_.oldIndex( hole, codimension ) ;
       }
 
       /** \copydoc DofMapper::newIndex */
-      int newIndex ( const int hole, int ) const
+      GlobalKeyType newIndex ( const int hole, int ) const
       {
         // forward to index set 
         return indexSet_.newIndex( hole, codimension );
       }
 
       /** \copydoc DofMapper::numberOfHoles */
-      int numberOfHoles ( const int ) const
+      SizeType numberOfHoles ( const int ) const
       {
         return indexSet_.numberOfHoles( codimension );
       }
