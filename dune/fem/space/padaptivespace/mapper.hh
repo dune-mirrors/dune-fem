@@ -50,6 +50,9 @@ namespace Dune
       typedef BaseSetLocalKeyStorage< CompiledLocalKeyType > BaseSetLocalKeyStorageType;
 
       typedef std::vector< BaseSetLocalKeyStorageType > CompiledLocalKeyVectorType ;
+
+      typedef int SizeType ; 
+      typedef int GlobalKeyType ;
     };
 
 
@@ -163,6 +166,8 @@ namespace Dune
 
       typedef typename GridPart::template Codim< 0 >::EntityType ElementType;
       typedef PAdaptiveDGMapper< GridPart, polOrder > DofMapperType;
+      typedef int SizeType ; 
+      typedef int GlobalKeyType ;
     };
 
 

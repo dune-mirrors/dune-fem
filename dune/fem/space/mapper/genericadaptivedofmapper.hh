@@ -48,15 +48,14 @@ namespace Dune
       //! type of entities (codim 0)
       typedef typename Traits::ElementType ElementType;
 
-
-      //! type of DofMapIterator
-      typedef typename Traits::DofMapIteratorType DofMapIteratorType;
-   
       //! type of the underlying grid
       typedef typename GridPartType::GridType GridType;
 
       //! type of the index set
       typedef typename GridPartType::IndexSetType IndexSetType;
+
+      //! type of global key 
+      typedef typename Traits :: GlobalKeyType  GlobalKeyType ;
 
       //! type of coordinates within the grid
       typedef typename GridType::ctype FieldType;
@@ -537,18 +536,6 @@ namespace Dune
         return size_;
       }
 
-      /** \copydoc Dune::Fem::DofMapper::begin(const ElementType &entity) const */
-      DofMapIteratorType begin ( const ElementType &entity ) const
-      {
-        return DofMapIteratorType( DofMapIteratorType::beginIterator, entity, asImp() );
-      }
-      
-      /** \copydoc Dune::Fem::DofMapper::end(const ElementType &entity) const */
-      DofMapIteratorType end ( const ElementType &entity ) const
-      {
-        return DofMapIteratorType( DofMapIteratorType::endIterator, entity, asImp() );
-      }
-
       template< class Functor >
       void mapEach ( const ElementType &element, Functor f ) const
       {
@@ -616,7 +603,7 @@ namespace Dune
       {
         const int n = numEntityDofs( entity );
         for( int i = 0; i < n; ++i )
-          f( dofContainer( Entity::codimension )[ entity ].entityDof( i ) );
+          f( i, dofContainer( Entity::codimension )[ entity ].entityDof( i ) );
       }
       
       /** \copydoc Dune::Fem::DofMapper::maxNumDofs() const */
