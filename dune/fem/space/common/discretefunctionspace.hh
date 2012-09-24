@@ -1,23 +1,26 @@
 #ifndef DUNE_FEM_DISCRETEFUNCTIONSPACE_HH
 #define DUNE_FEM_DISCRETEFUNCTIONSPACE_HH
 
-//- system includes
+// C++ includes
 #include <cassert>
 
-//- Dune includes 
+// dune-common includes 
 #include <dune/common/bartonnackmanifcheck.hh>
-#include <dune/fem/space/common/functionspace.hh>
-#include <dune/fem/space/common/commoperations.hh>
+
+// dune-fem includes
 #include <dune/fem/function/localfunction/localfunctionwrapper.hh>
 #include <dune/fem/function/localfunction/temporarylocalfunction.hh>
-#include <dune/fem/storage/singletonlist.hh>
-#include <dune/fem/space/common/dofmanager.hh>
+#include <dune/fem/space/common/commoperations.hh>
 #include <dune/fem/space/common/communicationmanager.hh>
+#include <dune/fem/space/common/dofmanager.hh>
+#include <dune/fem/space/common/functionspace.hh>
+#include <dune/fem/storage/singletonlist.hh>
+#include <dune/fem/version.hh>
 
-
-//- local includes 
+// local includes 
 #include "allgeomtypes.hh"
 #include "dofstorage.hh"
+
 
 namespace Dune
 {
@@ -787,7 +790,7 @@ namespace Dune
         return allGeomTypes_.multipleGeomTypes();
       }
 
-      /** \copydoc Dune::Fem::DiscreteFunctionSpaceInterface::multipleBaseFunctionSets
+      /** \copydoc Dune::Fem::DiscreteFunctionSpaceInterface::multipleBasisFunctionSets
        *
        *  \note The default implementation returns \b false.
        */
@@ -1053,17 +1056,17 @@ namespace Dune
        deleteObject for the SingletonList  
     */
     template <class KeyImp, class ObjectImp, class ObjectFactoryImp>
-    class BasisFunctionSetSingletonFactory
+    class BaseFunctionSetSingletonFactory
     { 
     public:
-      //! create new BasisFunctionSet 
+      //! create new BaseFunctionSet 
       static ObjectImp * createObject( const KeyImp & key )
       {
         ObjectFactoryImp fac(key); 
         return new ObjectImp(fac); 
       }
       
-      //! delete BasisFunctionSet 
+      //! delete BaseFunctionSet 
       static void deleteObject( ObjectImp * obj ) 
       {
         delete obj;
