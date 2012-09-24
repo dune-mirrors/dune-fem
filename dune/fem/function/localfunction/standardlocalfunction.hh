@@ -55,8 +55,8 @@ namespace Dune
       enum { dimRange = DiscreteFunctionSpaceType::dimRange };
       
       //! type of base function sets
-      typedef typename DiscreteFunctionSpaceType::BaseFunctionSetType
-        BaseFunctionSetType;
+      typedef typename DiscreteFunctionSpaceType::BasisFunctionSetType
+        BasisFunctionSetType;
 
       //! entity type is specified by space 
       typedef typename DiscreteFunctionSpaceType::EntityType EntityType;
@@ -82,8 +82,8 @@ namespace Dune
       /** \copydoc Dune::Fem::LocalFunction::order() const */
       int order () const;
 
-      /** \copydoc Dune::Fem::LocalFunction::baseFunctionSet() const */
-      const BaseFunctionSetType &baseFunctionSet() const;
+      /** \copydoc Dune::Fem::LocalFunction::basisFunctionSet() const */
+      const BasisFunctionSetType &basisFunctionSet() const;
 
       /** \copydoc Dune::Fem::LocalFunction::entity() const */
       const EntityType &entity () const;
@@ -105,7 +105,7 @@ namespace Dune
       ValuesArrayType values_;
 
        // base function set 
-      BaseFunctionSetType baseFunctionSet_;
+      BasisFunctionSetType basisFunctionSet_;
 
       // actual entity
       const EntityType *entity_;
@@ -183,7 +183,7 @@ namespace Dune
       ::StandardLocalFunctionImpl ( DiscreteFunctionType &discreteFunction )
     : discreteFunction_( discreteFunction ),
       values_( DiscreteFunctionSpace::localBlockSize * discreteFunction_.space().blockMapper().maxNumDofs() ),
-      baseFunctionSet_(),
+      basisFunctionSet_(),
       entity_( 0 ),
       numDofs_( 0 ),
       needCheckGeometry_( true )
@@ -195,7 +195,7 @@ namespace Dune
       ::StandardLocalFunctionImpl ( const ThisType &other )
     : discreteFunction_( other.discreteFunction_ ),
       values_( other.values_ ),
-      baseFunctionSet_( other.baseFunctionSet_ ),
+      basisFunctionSet_( other.basisFunctionSet_ ),
       entity_( other.entity_ ),
       numDofs_( other.numDofs_ ),
       needCheckGeometry_( other.needCheckGeometry_ )
@@ -231,11 +231,11 @@ namespace Dune
 
 
     template< class DiscreteFunction, class DiscreteFunctionSpace >
-    inline const typename StandardLocalFunctionImpl< DiscreteFunction, DiscreteFunctionSpace >::BaseFunctionSetType &
-    StandardLocalFunctionImpl< DiscreteFunction, DiscreteFunctionSpace >::baseFunctionSet () const
+    inline const typename StandardLocalFunctionImpl< DiscreteFunction, DiscreteFunctionSpace >::BasisFunctionSetType &
+    StandardLocalFunctionImpl< DiscreteFunction, DiscreteFunctionSpace >::basisFunctionSet () const
     {
       assert( entity_ != 0 );
-      return baseFunctionSet_;
+      return basisFunctionSet_;
     }
 
     
@@ -255,21 +255,21 @@ namespace Dune
       typedef typename DiscreteFunctionSpaceType :: BlockMapperType BlockMapperType;
 
       const DiscreteFunctionSpaceType &space = discreteFunction_.space();
-      const bool multipleBaseSets = space.multipleBaseFunctionSets();
+      const bool multipleBaseSets = space.multipleBasisFunctionSets();
 
       if( multipleBaseSets || needCheckGeometry_ )
       {
         // if multiple base sets skip geometry call
         bool updateBaseSet = true;
         if( !multipleBaseSets && (entity_ != 0) )
-          updateBaseSet = (baseFunctionSet_.geometryType() != entity.type());
+          updateBaseSet = (basisFunctionSet_.geometryType() != entity.type());
         
         if( multipleBaseSets || updateBaseSet )
         {
-          baseFunctionSet_ = space.baseFunctionSet( entity );
+          basisFunctionSet_ = space.basisFunctionSet( entity );
 
-          // note, do not use baseFunctionSet() here, entity might no have been set
-          numDofs_ = baseFunctionSet_.size();
+          // note, do not use basisFunctionSet() here, entity might no have been set
+          numDofs_ = basisFunctionSet_.size();
 
           needCheckGeometry_ = space.multipleGeometryTypes();
         }
@@ -277,7 +277,7 @@ namespace Dune
 
       // cache entity
       entity_ = &entity;
-      assert( baseFunctionSet_.geometryType() == entity.type() );
+      assert( basisFunctionSet_.geometryType() == entity.type() );
 
       assert( numDofs_ <= values_.size() );
       space.blockMapper().mapEach( entity, AssignDofs( discreteFunction_, values_ ) );
