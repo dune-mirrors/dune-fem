@@ -32,60 +32,56 @@ namespace Dune
     /*
      * \brief A proxy object converting a pointer to a shape function set to a object
      *
-     * \tparam  ShapeFunctionSetImpl  An implementation of Dune::Fem::ShapeFunctionSet
+     * \tparam  ShapeFunctionSet  An implementation of Dune::Fem::ShapeFunctionSet
      *
      * \note This class has an implicit constructor from a pointer to a shape function set.
      */
-    template< class ShapeFunctionSetImpl >
+    template< class ShapeFunctionSet >
     class ShapeFunctionSetProxy
-    : public ShapeFunctionSet< typename ShapeFunctionSetImpl::FunctionSpaceType, ShapeFunctionSetProxy< ShapeFunctionSetImpl > >
+    : public Dune::Fem::ShapeFunctionSet< typename ShapeFunctionSet::FunctionSpaceType, ShapeFunctionSetProxy< ShapeFunctionSet > >
     {
-      typedef ShapeFunctionSetProxy< ShapeFunctionSetImpl > ThisType;
-      typedef ShapeFunctionSet< typename ShapeFunctionSetImpl::FunctionSpaceType, ThisType > BaseType;
-
-    protected:
-      typedef ShapeFunctionSetImpl ImplementationType;
+      typedef ShapeFunctionSetProxy< ShapeFunctionSet > ThisType;
+      typedef Dune::Fem::ShapeFunctionSet< typename ShapeFunctionSet::FunctionSpaceType, ThisType > BaseType;
 
     public:
       ShapeFunctionSetProxy ()
-      : implementation_( nullptr )
+      : shapeFunctionSet_( nullptr )
       {}
 
-      ShapeFunctionSetProxy ( const ImplementationType *implementation )
-      : implementation_( implementation )
+      ShapeFunctionSetProxy ( const ShapeFunctionSet *shapeFunctionSet )
+      : shapeFunctionSet_( shapeFunctionSet )
       {}
 
-      GeometryType type () const { return implementation().type(); }
+      GeometryType type () const { return shapeFunctionSet().type(); }
 
-      std::size_t size () const { return implementation().size(); }
+      std::size_t size () const { return shapeFunctionSet().size(); }
 
       template< class Point, class Functor >
       void evaluateEach ( const Point &x, Functor functor ) const
       {
-        implementation().evaluateEach( x, functor );
+        shapeFunctionSet().evaluateEach( x, functor );
       }
 
       template< class Point, class Functor > 
       void jacobianEach ( const Point &x, Functor functor ) const
       {
-        implementation().jacobianEach( x, functor );
+        shapeFunctionSet().jacobianEach( x, functor );
       }
 
       template< class Point, class Functor > 
       void hessianEach ( const Point &x, Functor functor ) const
       {
-        implementation().hessianEach( x, functor );
-      }
-
-    protected:
-      const ImplementationType &implementation () const
-      {
-        assert( implementation_ );
-        return *implementation_;
+        shapeFunctionSet().hessianEach( x, functor );
       }
 
     private:
-      const ImplementationType *implementation_;
+      const ShapeFunctionSet &shapeFunctionSet () const
+      {
+        assert( shapeFunctionSet_ );
+        return *shapeFunctionSet_;
+      }
+
+      const ShapeFunctionSet *shapeFunctionSet_;
     };
 
   } // namespace Fem
