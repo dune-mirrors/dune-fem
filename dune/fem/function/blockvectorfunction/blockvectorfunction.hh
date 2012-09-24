@@ -56,7 +56,7 @@ namespace Dune
       typedef typename DiscreteFunctionSpaceType :: IndexSetType IndexSetType;
 
       //! needs additional mapper because of block structure 
-      typedef typename DiscreteFunctionSpaceType :: BlockMapperType MapperType;
+      typedef typename DiscreteFunctionSpaceType :: BlockMapperType BlockMapperType;
 
       typedef ISTLBlockVectorDiscreteFunction<DiscreteFunctionSpaceType> DiscreteFunctionType;
      
@@ -166,7 +166,7 @@ namespace Dune
       enum { localBlockSize = Traits :: localBlockSize };
 
       //! needs additional mapper 
-      typedef typename Traits :: MapperType MapperType; 
+      typedef typename Traits :: BlockMapperType BlockMapperType; 
 
       friend class BlockVectorLocalFunctionFactory< Traits >;
 
@@ -316,7 +316,7 @@ namespace Dune
       LocalFunctionFactoryType lfFactory_;
 
       // single mapper for blocks 
-      MapperType& mapper_;
+      BlockMapperType& blockMapper_;
 
       // DofStorage that manages the memory for the dofs of this function
       Fem::DofStorageInterface* memObject_;

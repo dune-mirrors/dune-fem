@@ -42,7 +42,7 @@ namespace Dune
       typedef typename Traits::ConstDofIteratorType ConstDofIteratorType;
       
     private:
-      typedef typename Traits::MapperType MapperType;
+      typedef typename Traits::NonBlockingMapperType NonBlockingMapperType;
 
       typedef typename DiscreteFunctionSpaceImp::Traits SpaceTraits;
       typedef typename SpaceTraits::RangeFieldType RangeFieldType;
@@ -226,18 +226,19 @@ namespace Dune
         
         // create memory object 
         std::pair< DofStorageInterface* , DofStorageType* > memPair
-           = allocateManagedDofStorage( spc_.grid(), spc_.mapper(),
+           = allocateManagedDofStorage( spc_.grid(), mapper(),
                                         name, (MutableDofStorageType *) 0);
                                         
         // save pointer 
         memObject_ = memPair.first;
         return *(memPair.second);
       }
+
+      NonBlockingMapperType& mapper() { return mapper_ ; }
    
       const DiscreteFunctionSpaceType& spc_;
+      NonBlockingMapperType mapper_;
       DofStorageInterface* memObject_;
-
-    protected:
       DofStorageType& dofVec_;
     }; // end class AdaptiveFunctionImplementation
 

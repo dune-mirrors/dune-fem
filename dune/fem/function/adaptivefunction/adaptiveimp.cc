@@ -22,8 +22,9 @@ namespace Dune
                                           const DiscreteFunctionSpaceType &spc,
                                           VectorPointerType *vector )
     : spc_(spc),
+      mapper_( spc_.blockMapper() ),
       memObject_( 0 ),
-      dofVec_( allocateDofStorageWrapper( spc_.mapper(), name, vector ) )
+      dofVec_( allocateDofStorageWrapper( mapper(), name, vector ) )
     {}
 
     template <class DiscreteFunctionSpaceImp>
@@ -32,6 +33,7 @@ namespace Dune
                                          const DiscreteFunctionSpaceType &spc,
                                          DofStorageType &dofVec)
     : spc_(spc),
+      mapper_( spc_.blockMapper() ),
       memObject_( 0 ),
       dofVec_(dofVec)
     {}
@@ -41,6 +43,7 @@ namespace Dune
     AdaptiveFunctionImplementation( const std :: string &name,
                                     const ThisType &other )
     : spc_( other.spc_ ),
+      mapper_( spc_.blockMapper() ),
       memObject_( 0 ),
       dofVec_( allocateDofStorage( name ) )
     {
