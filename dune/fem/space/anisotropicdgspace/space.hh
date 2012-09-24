@@ -182,7 +182,7 @@ namespace AnisotropicDG
     DiscreteFunctionSpace ( const ThisType & );
     ThisType &operator= ( const ThisType & );
 
-    MapperType mapper_;
+    mutable MapperType mapper_;
   };
 
 }  // namespace AnisotropicDG
