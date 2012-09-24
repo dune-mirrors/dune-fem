@@ -134,7 +134,7 @@ namespace Dune
       }
 
       //! \brief return entity
-      const Entity &entity () const { return impl().entity(); }
+      const EntityType &entity () const { return impl().entity(); }
 
     private:
       ImplementationType impl_;
