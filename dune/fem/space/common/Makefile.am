@@ -12,7 +12,6 @@ common_HEADERS = adaptmanager.hh \
      discretefunctionspace.hh \
      dofmanager.hh \
      dofstorage.hh \
-     entitycommhelper.hh \
      functionspace.hh \
      functionspaceinterface.hh \
      loadbalancer.hh \
