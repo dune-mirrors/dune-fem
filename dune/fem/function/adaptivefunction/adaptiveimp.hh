@@ -42,7 +42,7 @@ namespace Dune
       typedef typename Traits::ConstDofIteratorType ConstDofIteratorType;
       
     private:
-      typedef typename Traits::NonBlockingMapperType NonBlockingMapperType;
+      typedef typename Traits::MapperType MapperType;
 
       typedef typename DiscreteFunctionSpaceImp::Traits SpaceTraits;
       typedef typename SpaceTraits::RangeFieldType RangeFieldType;
@@ -177,7 +177,6 @@ namespace Dune
         const std::string name_;
         DofStorageType array_;
       public:
-        template <class MapperType>
         DofStorageWrapper(const MapperType& mapper,
                           const std::string& name,
                           const VectorPointerType* v)
@@ -200,7 +199,7 @@ namespace Dune
 
     protected:
       // allocate unmanaged dof storage 
-      template <class MapperType, class VectorPointerType>
+      template <class VectorPointerType>
       DofStorageType& 
       allocateDofStorageWrapper(const MapperType& mapper,
                                 const std::string& name, 
@@ -234,10 +233,10 @@ namespace Dune
         return *(memPair.second);
       }
 
-      NonBlockingMapperType& mapper() { return mapper_ ; }
+      MapperType& mapper() { return mapper_ ; }
    
       const DiscreteFunctionSpaceType& spc_;
-      NonBlockingMapperType mapper_;
+      MapperType mapper_;
       DofStorageInterface* memObject_;
       DofStorageType& dofVec_;
     }; // end class AdaptiveFunctionImplementation

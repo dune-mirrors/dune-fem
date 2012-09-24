@@ -9,6 +9,7 @@ namespace Dune
       :: AdaptiveFunctionImplementation ( const std :: string &name,
                                           const DiscreteFunctionSpaceType &spc )
     : spc_(spc),
+      mapper_( spc_.blockMapper() ),
       memObject_( 0 ),
       dofVec_( allocateDofStorage( name ) )
     {

@@ -62,12 +62,11 @@ namespace Dune
 
       typedef typename DiscreteFunctionSpaceType :: JacobianRangeType JacobianRangeType;
       typedef typename DiscreteFunctionSpaceType :: BlockMapperType BlockMapperType;
-      typedef typename DiscreteFunctionSpaceType :: MapperType MapperType;
       typedef typename DiscreteFunctionSpaceType :: GridType GridType;
 
       // type used to determine size etc.
       typedef NonBlockMapper< BlockMapperType, 
-                              DiscreteFunctionSpaceType :: localBlockSize > NonBlockingMapperType ;
+                              DiscreteFunctionSpaceType :: localBlockSize > MapperType ;
 
       // type of Array seen by functions 
       typedef StaticArray<DofType>  DofStorageType;

@@ -14,7 +14,7 @@ EXTRA_DIST = 2dgrid.dgf \
 # linker flags
 LDADD = $(ALL_PKG_LDFLAGS) $(ALL_PKG_LIBS) $(DUNEMPILIBS) $(LOCAL_LIBS)
 # preprocessor flags
-AM_CPPFLAGS = $(ALL_PKG_CPPFLAGS) $(DUNEMPICPPFLAGS)
+AM_CPPFLAGS = $(ALL_PKG_CPPFLAGS) $(DUNEMPICPPFLAGS) -DWANT_CACHED_COMM_MANAGER=0
 
 TESTPROGS = lagrangeinterpolation_linear lagrangeinterpolation_quadratic \
             dgl2projection_adaptive      dgl2projection_filtered \

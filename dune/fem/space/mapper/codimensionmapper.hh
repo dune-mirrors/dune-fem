@@ -37,6 +37,8 @@ namespace Dune
       typedef typename GridPartType::IndexSetType IndexSetType;
       
       typedef CodimensionMapper< GridPartType, codim > DofMapperType;
+
+      typedef typename IndexSetType :: IndexType SizeType;
     };
 
 
@@ -50,6 +52,8 @@ namespace Dune
       typedef typename GridPartType::IndexSetType IndexSetType;
       
       typedef CodimensionMapper< GridPartType, 0 > DofMapperType;
+
+      typedef typename IndexSetType :: IndexType SizeType;
     };
 
 

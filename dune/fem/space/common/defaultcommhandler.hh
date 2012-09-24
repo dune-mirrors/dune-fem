@@ -36,7 +36,7 @@ namespace Dune
       typedef typename DiscreteFunctionType::DiscreteFunctionSpaceType DiscreteFunctionSpaceType;
 
     protected:
-      typedef typename DiscreteFunctionSpaceType::BlockMapperType MapperType;
+      typedef typename DiscreteFunctionSpaceType::BlockMapperType BlockMapperType;
 
       typedef typename DiscreteFunctionType::DofBlockPtrType DofBlockPtrType;
 
@@ -45,12 +45,12 @@ namespace Dune
     public:
       DefaultCommunicationHandler( DiscreteFunctionType &function )
       : function_( &function ),
-        mapper_( function.space().blockMapper() )
+        blockMapper_( function.space().blockMapper() )
       {} 
       
       DefaultCommunicationHandler( const DefaultCommunicationHandler &other )
       : function_( other.function_ ),
-        mapper_( other.mapper_ )
+        blockMapper_( other.blockMapper_ )
       {}
       
     private:  
@@ -108,12 +108,12 @@ namespace Dune
     public:
       bool contains ( int dim, int codim ) const
       {
-        return mapper_.contains( codim );
+        return blockMapper_.contains( codim );
       }
 
       bool fixedsize ( int dim, int codim) const
       {
-        return mapper_.fixedDataSize( codim );
+        return blockMapper_.fixedDataSize( codim );
       }
 
       //! read buffer and apply operation 
@@ -121,29 +121,29 @@ namespace Dune
       void gather ( MessageBuffer &buffer, const Entity &entity ) const
       {
         GatherFunctor< MessageBuffer > gatherDofs ( buffer, function_ );
-        mapper_.mapEachEntityDof( entity, gatherDofs );
+        blockMapper_.mapEachEntityDof( entity, gatherDofs );
       }
 
       //! read buffer and apply operation 
       template< class MessageBuffer, class Entity >
       void scatter ( MessageBuffer &buffer, const Entity &entity, size_t n )
       {
-        assert( n == blockSize *  mapper_.numEntityDofs( entity ) );
+        assert( n == blockSize *  blockMapper_.numEntityDofs( entity ) );
         ScatterFunctor< MessageBuffer > scatterDofs ( buffer, function_ );
 
-        mapper_.mapEachEntityDof( entity, scatterDofs );
+        blockMapper_.mapEachEntityDof( entity, scatterDofs );
       }
 
       //! return local dof size to be communicated 
       template< class Entity >
       size_t size ( const Entity &entity ) const
       {
-        return blockSize * mapper_.numEntityDofs( entity );
+        return blockSize * blockMapper_.numEntityDofs( entity );
       }
 
     protected:
       DiscreteFunctionType *const function_;
-      const MapperType &mapper_;
+      const BlockMapperType &blockMapper_;
     };
   
   } // namespace Fem 

@@ -113,7 +113,7 @@ namespace Dune
       //! type of block mapper of this space
       typedef typename Traits :: BlockMapperType BlockMapperType;
 
-      //! size of local blocks, here always 1 
+      //! size of local blocks
       enum { localBlockSize = Traits :: localBlockSize };
 
       //! type of underlying \ref GridPart "grid part" 
@@ -300,7 +300,9 @@ namespace Dune
        *
        *  \returns refernce to mapper
        */    
-      inline MapperType &mapper () const
+      inline 
+      DUNE_VERSION_DEPRECATED(1,4,remove) 
+      MapperType &mapper () const
       {
         CHECK_INTERFACE_IMPLEMENTATION( asImp().mapper() );
         return asImp().mapper();
@@ -563,7 +565,7 @@ namespace Dune
     inline bool operator== ( const DiscreteFunctionSpaceInterface< Traits > &X,
                              const DiscreteFunctionSpaceInterface< Traits > &Y )
     {
-      return &(X.mapper()) == &(Y.mapper());
+      return &(X.blockMapper()) == &(Y.blockMapper());
     }
 
 
@@ -611,10 +613,14 @@ namespace Dune
       typedef typename LocalFunctionStorageType :: LocalFunctionType
         LocalFunctionType;
 
+      //! size of local blocks 
+      enum { localBlockSize = BaseType :: localBlockSize };
+
     protected:
       using BaseType :: asImp;
 
     public:
+      using BaseType :: blockMapper;
       using BaseType :: mapper;
       using BaseType :: order ;
 
@@ -719,7 +725,7 @@ namespace Dune
       /** \copydoc Dune::Fem::DiscreteFunctionSpaceInterface::size */
       inline int size () const
       {
-        return mapper().size();
+        return blockMapper().size() * localBlockSize ;
       }
     
       /** \copydoc Dune::Fem::DiscreteFunctionSpaceInterface::begin() const
@@ -775,14 +781,16 @@ namespace Dune
       }
 
       /** \copydoc Dune::Fem::DiscreteFunctionSpaceInterface::mapToGlobal(const EntityType &entity,const int localDof) const */
-      inline int mapToGlobal ( const EntityType &entity,
+      inline 
+      DUNE_VERSION_DEPRECATED(1,4,remove) 
+      int mapToGlobal ( const EntityType &entity,
                                const int localDof ) const DUNE_DEPRECATED
       {
         return mapper().mapToGlobal( entity, localDof );
       }
 
       /** \copydoc Dune::Fem::DiscreteFunctionSpaceInterface::maxNumLocalDofs */
-      inline int maxNumLocalDofs () const DUNE_DEPRECATED
+      inline int maxNumLocalDofs () const DUNE_VERSION_DEPRECATED(1,4,remove)
       {
         return mapper().maxNumDofs();
       }

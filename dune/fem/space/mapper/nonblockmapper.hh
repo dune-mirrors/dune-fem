@@ -26,6 +26,8 @@ namespace Dune
       typedef NonBlockMapper< BlockMapper, blockSize > DofMapperType;
 
       typedef typename BlockMapper::ElementType ElementType;
+
+      typedef typename BlockMapper::SizeType  SizeType;
     };
 
 
@@ -40,6 +42,11 @@ namespace Dune
       typedef NonBlockMapper< BlockMapper, blockSize > ThisType;
       typedef DofMapper< NonBlockMapperTraits< BlockMapper, blockSize > > BaseType;
 
+      typedef NonBlockMapperTraits< BlockMapper, blockSize > Traits ;  
+    public:
+      typedef typename Traits :: SizeType SizeType ;
+
+    private:  
       template< class Functor >
       struct BlockFunctor
       {
