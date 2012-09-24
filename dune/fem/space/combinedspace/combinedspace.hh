@@ -62,7 +62,7 @@ namespace Dune
       {
         enum { localBlockSize = 1 };
         
-        typedef typename ContainedSpace :: Traits :: BlockMapperType
+        typedef typename ContainedSpace :: Traits :: MapperType
           ContainedBlockMapperType;
         
         typedef CombinedMapper< ContainedBlockMapperType, N, VariableBased >
@@ -71,7 +71,7 @@ namespace Dune
         inline static ContainedBlockMapperType &
         containedBlockMapper( const ContainedSpace &space )
         {
-          return space.blockMapper();
+          return space.mapper();
         }
 
         /* This would be the better definition. The problem is that the DoFs

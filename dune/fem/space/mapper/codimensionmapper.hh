@@ -122,17 +122,6 @@ namespace Dune
           f( 0, indexSet_.index( element ) );
       }
 
-      /** \copydoc DofMapper::mapToGlobal */
-      GlobalKeyType mapToGlobal ( const ElementType &entity, const int localDof ) const
-      {
-        // we only have one local dof 
-        assert( localDof < maxNumDofs() );
-        if ( codimension == 0 ) 
-          return indexSet_.index( entity );
-        else 
-          return indexSet_.subIndex( entity, localDof, codimension );
-      }
-
     protected:
       template <int codim1, int codim>
       struct IndexExtractor 
