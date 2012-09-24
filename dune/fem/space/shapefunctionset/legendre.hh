@@ -9,10 +9,6 @@
 #include <dune/common/array.hh>
 #include <dune/common/static_assert.hh>
 
-// dune-geometry includes
-#include <dune/geometry/type.hh>
-#include <dune/geometry/genericgeometry/topologytypes.hh>
-
 // dune-fem includes
 #include <dune/fem/space/dgspace/legendrepoly.hh>
 #include <dune/fem/space/shapefunctionset/simple.hh>
@@ -179,13 +175,8 @@ namespace Dune
 
     public:
       LegendreShapeFunctionSet ( const int order )
-      : BaseType( type(), FactoryType( order ) )
+      : BaseType( FactoryType( order ) )
       {}
-      
-      static GeometryType type ()
-      {
-        return typename Dune::GenericGeometry::CubeTopology< FunctionSpace::dimDomain >::type();
-      }
     };
 
   } // namespace Fem

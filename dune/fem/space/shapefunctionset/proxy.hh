@@ -3,15 +3,10 @@
 
 // C++ includes
 #include <cassert>
+#include <cstddef>
 
 // dune-common includes
 #include <dune/common/nullptr.hh>
-
-// dune-geometry includes
-#include <dune/geometry/type.hh>
-
-// dune-fem includes
-#include <dune/fem/space/shapefunctionset/shapefunctionset.hh>
 
 /**
   @file
@@ -38,50 +33,48 @@ namespace Dune
      */
     template< class ShapeFunctionSet >
     class ShapeFunctionSetProxy
-    : public Dune::Fem::ShapeFunctionSet< typename ShapeFunctionSet::FunctionSpaceType, ShapeFunctionSetProxy< ShapeFunctionSet > >
     {
       typedef ShapeFunctionSetProxy< ShapeFunctionSet > ThisType;
-      typedef Dune::Fem::ShapeFunctionSet< typename ShapeFunctionSet::FunctionSpaceType, ThisType > BaseType;
 
     public:
-      ShapeFunctionSetProxy ()
-      : shapeFunctionSet_( nullptr )
-      {}
+      typedef ShapeFunctionSet ImplementationType;
 
-      ShapeFunctionSetProxy ( const ShapeFunctionSet *shapeFunctionSet )
-      : shapeFunctionSet_( shapeFunctionSet )
-      {}
-
-      GeometryType type () const { return shapeFunctionSet().type(); }
-
-      std::size_t size () const { return shapeFunctionSet().size(); }
-
-      template< class Point, class Functor >
-      void evaluateEach ( const Point &x, Functor functor ) const
-      {
-        shapeFunctionSet().evaluateEach( x, functor );
-      }
-
-      template< class Point, class Functor > 
-      void jacobianEach ( const Point &x, Functor functor ) const
-      {
-        shapeFunctionSet().jacobianEach( x, functor );
-      }
-
-      template< class Point, class Functor > 
-      void hessianEach ( const Point &x, Functor functor ) const
-      {
-        shapeFunctionSet().hessianEach( x, functor );
-      }
-
-    private:
-      const ShapeFunctionSet &shapeFunctionSet () const
+      const ImplementationType &impl () const
       {
         assert( shapeFunctionSet_ );
         return *shapeFunctionSet_;
       }
 
-      const ShapeFunctionSet *shapeFunctionSet_;
+      ShapeFunctionSetProxy ()
+      : shapeFunctionSet_( nullptr )
+      {}
+
+      ShapeFunctionSetProxy ( const ImplementationType *shapeFunctionSet )
+      : shapeFunctionSet_( shapeFunctionSet )
+      {}
+
+      std::size_t size () const { return impl().size(); }
+
+      template< class Point, class Functor >
+      void evaluateEach ( const Point &x, Functor functor ) const
+      {
+        impl().evaluateEach( x, functor );
+      }
+
+      template< class Point, class Functor > 
+      void jacobianEach ( const Point &x, Functor functor ) const
+      {
+        impl().jacobianEach( x, functor );
+      }
+
+      template< class Point, class Functor > 
+      void hessianEach ( const Point &x, Functor functor ) const
+      {
+        impl().hessianEach( x, functor );
+      }
+
+    private:
+      const ImplementationType *shapeFunctionSet_;
     };
 
   } // namespace Fem

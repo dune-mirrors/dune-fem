@@ -1,23 +1,16 @@
 #ifndef DUNE_FEM_SHAPEFUNCTIONSET_TENSORPRODUCT_HH
 #define DUNE_FEM_SHAPEFUNCTIONSET_TENSORPRODUCT_HH
 
-//- C++ includes
+// C++ includes
 #include <cstddef>
 
-//- dune-common includes
+// dune-common includes
 #include <dune/common/array.hh>
 #include <dune/common/fmatrix.hh>
 #include <dune/common/forloop.hh>
 #include <dune/common/fvector.hh>
 #include <dune/common/static_assert.hh>
 #include <dune/common/tuples.hh>
-
-//- dune-geometry includes
-#include <dune/geometry/type.hh>
-#include <dune/geometry/genericgeometry/topologytypes.hh>
-
-//- dune-fem includes
-#include <dune/fem/space/shapefunctionset/shapefunctionset.hh>
 
 
 namespace Dune
@@ -31,10 +24,8 @@ namespace Dune
 
     template< class FunctionSpace, class ShapeFunctionSetTuple >
     class TensorProductShapeFunctionSet
-    : public ShapeFunctionSet< FunctionSpace, TensorProductShapeFunctionSet< FunctionSpace, ShapeFunctionSetTuple > >
     {
       typedef TensorProductShapeFunctionSet< FunctionSpace, ShapeFunctionSetTuple > ThisType;
-      typedef ShapeFunctionSet< FunctionSpace, TensorProductShapeFunctionSet< FunctionSpace, ShapeFunctionSetTuple > > BaseType;
 
       dune_static_assert( (FunctionSpace::dimDomain == Dune::tuple_size< ShapeFunctionSetTuple >::value),
                           "dimDomain of FunctionSpace must coincide with length of ShapeFunctionSetTuple." );
@@ -57,18 +48,13 @@ namespace Dune
       typedef typename FunctionSpaceType::DomainFieldType DomainFieldType;
       typedef typename FunctionSpaceType::RangeFieldType RangeFieldType;
 
-      typedef typename BaseType::DomainType DomainType;
-      typedef typename BaseType::RangeType RangeType;
-      typedef typename BaseType::JacobianRangeType JacobianRangeType;
-      typedef typename BaseType::HessianRangeType HessianRangeType;
+      typedef typename FunctionSpaceType::DomainType DomainType;
+      typedef typename FunctionSpaceType::RangeType RangeType;
+      typedef typename FunctionSpaceType::JacobianRangeType JacobianRangeType;
+      typedef typename FunctionSpaceType::HessianRangeType HessianRangeType;
 
       explicit TensorProductShapeFunctionSet ( const ShapeFunctionSetTupleType &shapeFunctionSetTuple );
       ~TensorProductShapeFunctionSet ();
-
-      GeometryType type () const
-      {
-        return GeometryType( typename GenericGeometry::CubeTopology< dimension >::type() );
-      }
 
       std::size_t size () const;
 

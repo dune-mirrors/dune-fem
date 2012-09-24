@@ -1,12 +1,13 @@
 #ifndef DUNE_FEM_SHAPEFUNCTIONSET_VECTORIAL_HH
 #define DUNE_FEM_SHAPEFUNCTIONSET_VECTORIAL_HH
 
+// C++ includes
 #include <algorithm>
+#include <cstddef>
 
-#include <dune/geometry/type.hh>
-
+// dune-fem includes
 #include <dune/fem/space/common/functionspace.hh>
-#include <dune/fem/space/shapefunctionset/shapefunctionset.hh>
+
 
 namespace Dune
 {
@@ -57,16 +58,11 @@ namespace Dune
 
     template< class ScalarShapeFunctionSet, class RangeVector >
     class VectorialShapeFunctionSet
-    : public ShapeFunctionSet< typename MakeVectorial< typename ScalarShapeFunctionSet::FunctionSpaceType, RangeVector >::VectorialFunctionSpaceType, 
-                               VectorialShapeFunctionSet< ScalarShapeFunctionSet, RangeVector >
-                             >
     {
       typedef VectorialShapeFunctionSet< ScalarShapeFunctionSet, RangeVector > ThisType;
-      typedef ShapeFunctionSet< typename MakeVectorial< typename ScalarShapeFunctionSet::FunctionSpaceType, RangeVector >::VectorialFunctionSpaceType, 
-                                VectorialShapeFunctionSet< ScalarShapeFunctionSet, RangeVector >
-                              > BaseType;
 
     public:
+      typedef typename MakeVectorial< typename ScalarShapeFunctionSet::FunctionSpaceType, RangeVector >::VectorialFunctionSpaceType FunctionSpaceType;
       typedef ScalarShapeFunctionSet ScalarShapeFunctionSetType;
 
     protected:
@@ -79,8 +75,6 @@ namespace Dune
       struct VectorialFunctor;
 
     public:
-      typedef typename BaseType::FunctionSpaceType FunctionSpaceType;
-
       explicit VectorialShapeFunctionSet ( const ScalarShapeFunctionSetType &scalarShapeFunctionSet = ScalarShapeFunctionSetType() )
       : scalarShapeFunctionSet_( scalarShapeFunctionSet )
       {}
@@ -88,9 +82,6 @@ namespace Dune
       const ScalarShapeFunctionSetType &scalarShapeFunctionSet () const { return scalarShapeFunctionSet_; }
 
       // Shape Function Set Interface Methods
-
-      GeometryType type () const { return scalarShapeFunctionSet_.type(); }
-      
       std::size_t size () const { return dimRangeFactor * scalarShapeFunctionSet().size(); }
 
       template< class Point, class Functor >
