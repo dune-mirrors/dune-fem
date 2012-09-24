@@ -3,12 +3,13 @@
 
 // C++ includes
 #include <cassert>
+#include <cstddef>
 
 // dune-common includes
 #include <dune/common/nullptr.hh>
 
-// dune-fem includes
-#include <dune/fem/space/basisfunctionset/basisfunctionset.hh>
+// dune-geometry includes
+#include <dune/geometry/type.hh>
 
 /**
   @file
@@ -36,24 +37,25 @@ namespace Dune
 
     template< class BasisFunctionSet > 
     class BasisFunctionSetProxy
-    : public Dune::Fem::BasisFunctionSet< typename BasisFunctionSet::EntityType, 
-                                          typename BasisFunctionSet::RangeType, 
-                                          BasisFunctionSetProxy< BasisFunctionSet > > 
     {
       typedef BasisFunctionSetProxy< BasisFunctionSet > ThisType;
-      typedef Dune::Fem::BasisFunctionSet< typename BasisFunctionSet::EntityType,
-                                           typename BasisFunctionSet::RangeType,
-                                           BasisFunctionSetProxy< BasisFunctionSet > > BaseType;
 
     public:
-      typedef typename BaseType::EntityType EntityType;
+      typedef BasisFunctionSet ImplementationType;
+      const ImplementationType &impl () const
+      {
+        assert( basisFunctionSet_ );
+        return *basisFunctionSet_;
+      }
 
-      typedef typename BaseType::DomainType DomainType;
-      typedef typename BaseType::RangeType RangeType;
-      typedef typename BaseType::JacobianRangeType JacobianRangeType;
-      typedef typename BaseType::HessianRangeType HessianRangeType;
+      typedef typename BasisFunctionSet::EntityType EntityType;
 
-      typedef typename BaseType::ReferenceElementType ReferenceElementType; 
+      typedef typename BasisFunctionSet::DomainType DomainType;
+      typedef typename BasisFunctionSet::RangeType RangeType;
+      typedef typename BasisFunctionSet::JacobianRangeType JacobianRangeType;
+      typedef typename BasisFunctionSet::HessianRangeType HessianRangeType;
+
+      typedef typename BasisFunctionSet::ReferenceElementType ReferenceElementType; 
 
       BasisFunctionSetProxy ()
       : basisFunctionSet_( nullptr )
@@ -63,19 +65,19 @@ namespace Dune
       : basisFunctionSet_( basisFunctionSet )
       {}
 
-      std::size_t size () const { return basisFunctionSet().size(); } 
+      std::size_t size () const { return impl().size(); } 
 
-      Dune::GeometryType type () const { return basisFunctionSet().type(); } 
+      Dune::GeometryType type () const { return impl().type(); } 
 
       const ReferenceElementType &referenceElement () const
       {
-        return basisFunctionSet().referenceElement();
+        return impl().referenceElement();
       }
 
       template< class Point, class DofVector >
       void axpy ( const Point &x, const RangeType &valueFactor, DofVector &dofs ) const
       {
-        basisFunctionSet().axpy( x, valueFactor, dofs );
+        impl().axpy( x, valueFactor, dofs );
       }
 
       template< class Point, class DofVector >
@@ -88,55 +90,49 @@ namespace Dune
       void axpy ( const Point &x, const RangeType &valueFactor, const JacobianRangeType &jacobianFactor,
                   DofVector &dofs ) const
       {
-        basisFunctionSet().axpy( x, valueFactor, jacobianFactor, dofs );
+        impl().axpy( x, valueFactor, jacobianFactor, dofs );
       }
 
       template< class Point, class DofVector >
       void evaluateAll ( const Point &x, const DofVector &dofs, RangeType &value ) const
       {
-        basisFunctionSet().evaluateAll( x, dofs, value );
+        impl().evaluateAll( x, dofs, value );
       }
 
       template< class Point, class RangeArray >
       void evaluateAll ( const Point &x, RangeArray &values ) const
       {
-        basisFunctionSet().evaluateAll( x, values );
+        impl().evaluateAll( x, values );
       }
 
       template< class Point, class DofVector >
       void jacobianAll ( const Point &x, const DofVector &dofs, JacobianRangeType &jacobian ) const
       {
-        basisFunctionSet().jacobianAll( x, dofs, jacobian );
+        impl().jacobianAll( x, dofs, jacobian );
       }
 
       template< class Point, class JacobianRangeArray >
       void jacobianAll ( const Point &x, JacobianRangeArray &jacobians ) const
       {
-        basisFunctionSet().jacobianAll( x, jacobians );
+        impl().jacobianAll( x, jacobians );
       }
 
       template< class Point, class DofVector >
       void hessianAll ( const Point &x, const DofVector &dofs, HessianRangeType &hessian ) const
       {
-        basisFunctionSet().hessianAll( x, dofs, hessian );
+        impl().hessianAll( x, dofs, hessian );
       }
 
       template< class Point, class HessianRangeArray >
       void hessianAll ( const Point &x, HessianRangeArray &hessians ) const
       {
-        basisFunctionSet().hessianAll( x, hessians );
+        impl().hessianAll( x, hessians );
       }
 
-      const EntityType &entity () const { return basisFunctionSet().entity(); }
+      const EntityType &entity () const { return impl().entity(); }
 
     private:
-      const BasisFunctionSet &basisFunctionSet () const
-      {
-        assert( basisFunctionSet_ );
-        return *basisFunctionSet_;
-      }
-
-      BasisFunctionSet basisFunctionSet_;
+      const BasisFunctionSet *basisFunctionSet_;
     };
 
   } // namespace Fem
