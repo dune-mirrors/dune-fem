@@ -1,11 +1,10 @@
-#ifndef DUNE_FEM_SPACE_FVSPACE_SHAPEFUNCTIONSET_HH
-#define DUNE_FEM_SPACE_FVSPACE_SHAPEFUNCTIONSET_HH
+#ifndef DUNE_FEM_SPACE_FiniteVolumeSPACE_SHAPEFUNCTIONSET_HH
+#define DUNE_FEM_SPACE_FiniteVolumeSPACE_SHAPEFUNCTIONSET_HH
 
 // dune-common includes 
 #include <dune/common/static_assert.hh>
 
 // dune-fem includes 
-#include <dune/fem/space/shapefunctionset/shapefunctionset.hh>
 #include <dune/fem/space/shapefunctionset/vectorial.hh>
 
 /*
@@ -21,11 +20,11 @@ namespace Dune
   namespace Fem 
   {
 
-    // FVScalarShapeFunctionSet
-    // ------------------------
+    // FiniteVolumeScalarShapeFunctionSet
+    // ----------------------------------
 
     template< class FunctionSpace, int polOrder >
-    struct FVScalarShapeFunctionSet;
+    struct FiniteVolumeScalarShapeFunctionSet;
 
 
 
@@ -33,59 +32,50 @@ namespace Dune
     // ----------------------------------------------
 
     template< class FunctionSpace >
-    class FVScalarShapeFunctionSet< FunctionSpace, 0 >
-    : public ShapeFunctionSet< FunctionSpace, FVScalarShapeFunctionSet< FunctionSpace, 0 > >
+    class FiniteVolumeScalarShapeFunctionSet< FunctionSpace, 0 >
     {
-      typedef FVScalarShapeFunctionSet< FunctionSpace, 0 > ThisType;
-      typedef ShapeFunctionSet< FunctionSpace, ThisType > BaseType;
+      typedef FiniteVolumeScalarShapeFunctionSet< FunctionSpace, 0 > ThisType;
 
       dune_static_assert( (FunctionSpace::dimRange == 1),
                           "FunctionSpace must be scalar (i.e., dimRange = 1)." );
 
     public:
-      typedef typename BaseType::RangeType RangeType;
-      typedef typename BaseType::JacobianType JacobianRangeType;
-      typedef typename BaseType::HessianType HessianRangeType;
+      typedef FunctionSpace FunctionSpaceType;
+      typedef typename FunctionSpaceType::DomainType DomainType;
+      typedef typename FunctionSpaceType::RangeType RangeType;
+      typedef typename FunctionSpaceType::JacobianType JacobianRangeType;
+      typedef typename FunctionSpaceType::HessianType HessianRangeType;
 
     private:
       typedef typename RangeType::value_type RangeFieldType;
       static const int dimRange = RangeFieldType::dimension;
 
     public:
-      FVScalarShapeFunctionSet ( const GeometryType &type )
-      : type_( type )
-      {}
-
-      GeometryType type () const { return type_; }
-
-      std::size_t size () const { return 1; }
+      static std::size_t size () { return 1; }
 
       template< class Point, class Functor >
-      void evaluateEach ( const Point &, Functor functor ) const
+      static void evaluateEach ( const Point &, Functor functor )
       {
         functor( 0, RangeType( 1 ) );
       }
 
       template< class Point, class Functor >
-      void jacobianEach ( const Point &, Functor functor ) const
+      static void jacobianEach ( const Point &, Functor functor )
       {
         functor( 0, JacobianRangeType( 0 ) );
       }
 
       template< class Point, class Functor >
-      void hessianEach ( const Point &, Functor functor ) const
+      static void hessianEach ( const Point &, Functor functor )
       {
         functor( 0, HessianRangeType( 0 ) );
       }
-
-    private:
-      GeometryType type_;
     };
 
 
 
-    // FVShapeFunctionSet
-    // ------------------
+    // FiniteVolumeShapeFunctionSet
+    // ----------------------------
 
     /*
      * \brief Implementation of Dune::Fem::ShapeFunctionSet for Finite Volume spaces 
@@ -96,63 +86,60 @@ namespace Dune
      * \note This shape function set is only implemented for polynomial order 0.
      */
     template< class FunctionSpace, int polOrder >
-    struct FVShapeFunctionSet
-    : public ShapeFunctionSet< FunctionSpace, FVShapeFunctionSet< FunctionSpace, polOrder > >
+    struct FiniteVolumeShapeFunctionSet
     {
       dune_static_assert( (polOrder == 0),
-                           "FVShapeFunctionSet only availabe for polynomial order 0." );
+                           "FiniteVolumeShapeFunctionSet only availabe for polynomial order 0." );
 
-      typedef FVShapeFunctionSet< FunctionSpace, polOrder > ThisType;
-      typedef ShapeFunctionSet< FunctionSpace, ThisType > BaseType;
+      typedef FiniteVolumeShapeFunctionSet< FunctionSpace, polOrder > ThisType;
 
     public:
-      typedef typename BaseType::FunctionSpaceType FunctionSpaceType;
-      typedef typename BaseType::RangeType RangeType;
+      typedef FunctionSpace FunctionSpaceType;
+      typedef typename FunctionSpaceType::DomainType DomainType;
+      typedef typename FunctionSpaceType::RangeType RangeType;
+      typedef typename FunctionSpaceType::RangeType JacobianRangeType;
+      typedef typename FunctionSpaceType::RangeType HessianRangeType;
 
     protected:
       typedef typename FunctionSpaceType::ScalarFunctionSpaceType ScalarFunctionSpaceType;
-      typedef FVScalarShapeFunctionSet< ScalarFunctionSpaceType, polOrder > ScalarShapeFunctionSetType;
-      typedef VectorialShapeFunctionSet< ScalarShapeFunctionSetType, RangeType > ImplementationType;
+      typedef FiniteVolumeScalarShapeFunctionSet< ScalarFunctionSpaceType, polOrder > ScalarShapeFunctionSetType;
+      typedef VectorialShapeFunctionSet< ScalarShapeFunctionSetType, RangeType > VectorialShapeFunctionSetType;
 
     public:
-      FVShapeFunctionSet( const GeometryType &type )
-      : implementation_( ScalarShapeFunctionSetType( type ) )
-      {}
+      FiniteVolumeShapeFunctionSet () {}
 
-      GeometryType type () const { return implementation().type(); }
-
-      std::size_t size () const { return implementation().size(); }
+      std::size_t size () const { return vectorialShapeFunctionSet().size(); }
 
       template< class Point, class Functor >
       void evaluateEach ( const Point &x, Functor functor ) const
       {
-        implementation().evaluateEach( x, functor );
+        vectorialShapeFunctionSet().evaluateEach( x, functor );
       }
 
       template< class Point, class Functor >
       void jacobianEach ( const Point & x, Functor functor ) const
       {
-        implementation().jacobianEach( x, functor );
+        vectorialShapeFunctionSet().jacobianEach( x, functor );
       }
 
       template< class Point, class Functor >
       void hessianEach ( const Point & x, Functor functor ) const
       {
-        implementation().hessianEach( x, functor );
+        vectorialShapeFunctionSet().hessianEach( x, functor );
       }
 
     protected:
-      const ImplementationType &implementation () const
+      const VectorialShapeFunctionSetType &vectorialShapeFunctionSet () const
       {
-        return implementation_;
+        return vectorialShapeFunctionSet_;
       }
 
     private:
-      ImplementationType implementation_;
+      VectorialShapeFunctionSetType vectorialShapeFunctionSet_;
     };
 
   } // namespace Fem 
 
 } // namespace Dune
 
-#endif // #ifndef DUNE_FEM_SPACE_FVSPACE_SHAPEFUNCTIONSET_HH
+#endif // #ifndef DUNE_FEM_SPACE_FiniteVolumeSPACE_SHAPEFUNCTIONSET_HH
