@@ -35,7 +35,7 @@ typedef Dune::Fem::FunctionSpace< DomainFieldType, RangeFieldType, dimDomain, di
 typedef Dune::Fem::AnisotropicDGSpace< FunctionSpaceType, GridPartType, maxOrder > DiscreteFunctionSpaceType;
 
 // discrete function space
-// typedef Dune::Fem::AdaptiveDiscreteFunction< DiscreteFunctionSpaceType > DiscreteFunctionType;
+typedef Dune::Fem::AdaptiveDiscreteFunction< DiscreteFunctionSpaceType > DiscreteFunctionType;
 
 
 int main ( int argc, char **argv )
@@ -58,7 +58,7 @@ try
   DiscreteFunctionSpaceType discreteFunctionSpace( gridPart, multiIndex );
 
   // create discrete function
-  // DiscreteFunctionType uh( "uh", discreteFunctionSpace );
+  DiscreteFunctionType uh( "uh", discreteFunctionSpace );
 
   return 0;
 }

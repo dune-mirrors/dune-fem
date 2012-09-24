@@ -49,10 +49,10 @@ namespace AnisotropicDG
 
   template< class GridPart, int dimRange, int maxPolOrder >
   class DofMapper
-  : public Dune::Fem::DofMapper< AnisotropicDG::DofMapperTraits< GridPart, dimRange, maxPolOrder > >
+  : public Dune::Fem::AdaptiveDofMapper< AnisotropicDG::DofMapperTraits< GridPart, dimRange, maxPolOrder > >
   {
     typedef DofMapper< GridPart, dimRange, maxPolOrder > ThisType;
-    typedef Dune::Fem::DofMapper< AnisotropicDG::DofMapperTraits< GridPart, dimRange, maxPolOrder > > BaseType;
+    typedef Dune::Fem::AdaptiveDofMapper< AnisotropicDG::DofMapperTraits< GridPart, dimRange, maxPolOrder > > BaseType;
 
   public:
     typedef typename BaseType::Traits Traits;
@@ -125,6 +125,49 @@ namespace AnisotropicDG
     int numEntityDofs ( const Entity &entity ) const
     {
       return ( Entity::codimension == 0 ? numDofs( entity ) : 0 );
+    }
+
+    // Extended interface methods for AdaptviveDofMapper
+    // -------------------------------------------------
+
+    int numberOfHoles ( const int block ) const
+    {
+      return 0;
+    }
+
+    int oldIndex ( const int hole, const int block ) const
+    {
+      DUNE_THROW( Dune::NotImplemented, "Method oldIndex() not implemented yet" );
+    }
+
+    /** \brief return new index of hole for data block (with resprect to new offset) */
+    int newIndex ( const int hole, const int block ) const
+    {
+      DUNE_THROW( Dune::NotImplemented, "Method newIndex() not implemented yet" );
+    }
+
+    /** \brief return true if compress will affect data */
+    bool consecutive () const
+    {
+      return true;
+    }
+
+    /** \brief return old offsets for given block */
+    int oldOffSet ( const int block ) const
+    {
+      return 0;
+    }
+
+    /** \brief return current offsets for given block */
+    int offSet ( const int block ) const
+    {
+      return 0;
+    }
+
+    /** \brief return number of supported blocks */
+    int numBlocks () const
+    {
+      return 1;
     }
 
 
