@@ -49,7 +49,7 @@ namespace Dune
       : shapeFunctionSet_( nullptr )
       {}
 
-      ShapeFunctionSetProxy ( const ImplementationType *shapeFunctionSet )
+      ShapeFunctionSetProxy ( const ShapeFunctionSet *shapeFunctionSet )
       : shapeFunctionSet_( shapeFunctionSet )
       {}
 
@@ -74,7 +74,7 @@ namespace Dune
       }
 
     private:
-      const ImplementationType *shapeFunctionSet_;
+      const ShapeFunctionSet *shapeFunctionSet_;
     };
 
   } // namespace Fem

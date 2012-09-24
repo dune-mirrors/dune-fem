@@ -4,9 +4,6 @@
 //- C++ includes
 #include <cstddef>
 
-//- dune-common includes
-#include <dune/common/documentation.hh>
-
 /**
   \file
   \brief Interface for shape function sets
@@ -31,20 +28,21 @@ namespace Dune
      * \note Constructor signatures are explicitly not specified by this
      *       interface.
      */
+    template< class FunctionSpace >
     class ShapeFunctionSet
     {
     public:
       //! \brief function space type
-      typedef ImplementationDefined FunctionSpaceType;
+      typedef FunctionSpace FunctionSpaceType;
       
       //! \brief domain type
-      typedef ImplementationDefined DomainType;
+      typedef typename FunctionSpaceType::DomainType DomainType;
       //! \brief range type
-      typedef ImplementationDefined RangeType;
+      typedef typename FunctionSpaceType::RangeType RangeType;
       //! \brief jacobian range type
-      typedef ImplementationDefined JacobianRangeType;
+      typedef typename FunctionSpaceType::JacobianRangeType JacobianRangeType;
       //! \brief hessian range type
-      typedef ImplementationDefined HessianRangeType;
+      typedef typename FunctionSpaceType::HessianRangeType HessianRangeType;
 
       //! \brief return number of shape functions
       std::size_t size () const;
