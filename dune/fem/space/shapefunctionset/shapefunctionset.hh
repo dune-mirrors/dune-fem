@@ -54,13 +54,6 @@ namespace Dune
       //! \brief hessian range type
       typedef typename FunctionSpaceType::HessianRangeType HessianRangeType;
 
-      //! \brief return geometry type
-      GeometryType type () const
-      {
-        CHECK_INTERFACE_IMPLEMENTATION( impl().type() );
-        return impl().type();
-      }
-
       //! \brief return number of shape functions
       std::size_t size () const
       {
