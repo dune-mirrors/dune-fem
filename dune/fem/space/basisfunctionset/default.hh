@@ -69,12 +69,10 @@ namespace Dune
                                       GeometryType::coorddimension > ReferenceElementType;
 
       //! \brief constructor
-      DefaultBasisFunctionSet ( const EntityType &entity, const ShapeFunctionSet &shapeFunctionSet )
+      DefaultBasisFunctionSet ( const EntityType &entity, const ShapeFunctionSet &shapeFunctionSet = ShapeFunctionSet() )
       : entity_( &entity ),
         shapeFunctionSet_( shapeFunctionSet )
-      {
-        assert( entity.type() == shapeFunctionSet.type() );
-      }
+      {}
 
 
       // Basis Function Set Interface Methods
@@ -87,7 +85,7 @@ namespace Dune
       const ReferenceElementType &referenceElement () const
       {
         return Dune::ReferenceElements< typename GeometryType::ctype, 
-                                        GeometryType::coorddimension >::general( shapeFunctionSet().type() );
+                                        GeometryType::coorddimension >::general( entity().type() );
       }
 
       //! \todo please doc me
@@ -198,7 +196,7 @@ namespace Dune
 
     private:
       const EntityType *entity_;
-      const ShapeFunctionSetType &shapeFunctionSet_;
+      ShapeFunctionSetType shapeFunctionSet_;
     };
 
   } // namespace Fem

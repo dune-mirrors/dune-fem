@@ -1,11 +1,10 @@
 #ifndef DUNE_FEM_SHAPEFUNCTIONSET_SIMPLE_HH
 #define DUNE_FEM_SHAPEFUNCTIONSET_SIMPLE_HH
 
+// C++ includes
+#include <cstddef>
 #include <vector>
 
-#include <dune/geometry/type.hh>
-
-#include <dune/fem/space/shapefunctionset/shapefunctionset.hh>
 
 namespace Dune
 {
@@ -45,31 +44,25 @@ namespace Dune
 
     template< class ShapeFunction >
     class SimpleShapeFunctionSet
-    : public ShapeFunctionSet< typename ShapeFunction::FunctionSpaceType, SimpleShapeFunctionSet< ShapeFunction > >
     {
       typedef SimpleShapeFunctionSet< ShapeFunction > ThisType;
-      typedef ShapeFunctionSet< typename ShapeFunction::FunctionSpaceType, 
-                                SimpleShapeFunctionSet< ShapeFunction > > BaseType;
 
     public:
       typedef ShapeFunction ShapeFunctionType;
       
-      typedef typename BaseType::FunctionSpaceType FunctionSpaceType;
-      typedef typename BaseType::DomainType DomainType;
-      typedef typename BaseType::RangeType RangeType;
-      typedef typename BaseType::JacobianRangeType JacobianRangeType;
-      typedef typename BaseType::HessianRangeType HessianRangeType;
+      typedef typename ShapeFunction::FunctionSpaceType FunctionSpaceType;
+      typedef typename FunctionSpaceType::DomainType DomainType;
+      typedef typename FunctionSpaceType::RangeType RangeType;
+      typedef typename FunctionSpaceType::JacobianRangeType JacobianRangeType;
+      typedef typename FunctionSpaceType::HessianRangeType HessianRangeType;
 
       template< class Factory >
-      explicit SimpleShapeFunctionSet ( const GeometryType &type, const Factory &factory );
+      explicit SimpleShapeFunctionSet ( const Factory &factory );
 
       ~SimpleShapeFunctionSet ();
 
 
       // Shape Function Set Interface Methods
-
-      GeometryType type () const { return type_; }
-      
       std::size_t size () const { return shapeFunctions_.size(); }
 
       template< class Point, class Functor >
@@ -82,7 +75,6 @@ namespace Dune
       void hessianEach ( const Point &x, Functor functor ) const;
      
     protected:
-      GeometryType type_;
       std::vector< const ShapeFunctionType * > shapeFunctions_;
     };
 
@@ -94,8 +86,7 @@ namespace Dune
     template< class ShapeFunction >
     template< class Factory >
     inline SimpleShapeFunctionSet< ShapeFunction >
-      ::SimpleShapeFunctionSet ( const GeometryType &type, const Factory &factory )
-    : type_( type )
+      ::SimpleShapeFunctionSet ( const Factory &factory )
     {
       const std::size_t numShapeFunctions = factory.numShapeFunctions();
       shapeFunctions_.resize( numShapeFunctions );

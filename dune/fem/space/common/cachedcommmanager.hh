@@ -7,23 +7,25 @@
 #include <queue>
 #include <vector>
 
-//- Dune includes  
+//- dune-common includes  
 #include <dune/common/misc.hh>
 #include <dune/common/timer.hh>
 #include <dune/common/mpihelper.hh>
+
+//- dune-grid includes  
 #include <dune/grid/common/grid.hh>
 #include <dune/grid/common/datahandleif.hh>
+#include <dune/grid/utility/entitycommhelper.hh>
 
 #if HAVE_ALUGRID
 // include alugrid headers to have to communicator class from ALUGrid 
 #include <dune/grid/alugrid/3d/alu3dinclude.hh>
 #endif
 
-//- Dune-fem includes 
+//- dune-fem includes 
 #include <dune/fem/storage/singletonlist.hh>
 #include <dune/fem/space/common/commoperations.hh>
 #include <dune/fem/space/common/arrays.hh>
-#include <dune/fem/space/common/entitycommhelper.hh>
 #include <dune/fem/space/common/commindexmap.hh>
 #include <dune/fem/misc/functor.hh>
 

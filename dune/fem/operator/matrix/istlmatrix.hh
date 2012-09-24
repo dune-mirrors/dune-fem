@@ -610,8 +610,10 @@ namespace Dune
             matrices_.resize( numRows_ );
           }
 
-          RowFunctor rowFunctor(colEntity, colMapper_, matrixObj_.matrix(), matrices_, numCols_);
-          rowMapper_.mapEach(rowEntity, rowFunctor);
+          // RowFunctor rowFunctor(colEntity, colMapper_, matrixObj_.matrix(), matrices_, numCols_);
+          // rowMapper_.mapEach(rowEntity, rowFunctor);
+          RowFunctor colFunctor(rowEntity, rowMapper_, matrixObj_.matrix(), matrices_, numCols_);
+          colMapper_.mapEach(colEntity, colFunctor);
           /*
           MatrixType& matrix = matrixObj_.matrix();
           typedef typename RowMapperType :: DofMapIteratorType RowMapIteratorType ;

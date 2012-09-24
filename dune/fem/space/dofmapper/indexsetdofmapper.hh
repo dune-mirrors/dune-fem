@@ -1,5 +1,5 @@
-#ifndef DUNE_FEM_DOFMAPPER_DOFMAPPER_HH
-#define DUNE_FEM_DOFMAPPER_DOFMAPPER_HH
+#ifndef DUNE_FEM_DOFMAPPER_INDEXSETDOFMAPPER_HH
+#define DUNE_FEM_DOFMAPPER_INDEXSETDOFMAPPER_HH
 
 #include <dune/geometry/referenceelements.hh>
 #include <dune/geometry/type.hh>
@@ -504,4 +504,4 @@ namespace Dune
 
 } // namespace Dune
 
-#endif // #ifndef DUNE_FEM_DOFMAPPER_DOFMAPPER_HH
+#endif // #ifndef DUNE_FEM_DOFMAPPER_INDEXSETDOFMAPPER_HH
