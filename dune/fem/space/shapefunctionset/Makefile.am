@@ -4,4 +4,3 @@ shapefunctionset_HEADERS = legendre.hh  localfunctions.hh  proxy.hh \
 			   tensorproduct.hh  vectorial.hh  wrapper.hh
 
 include $(top_srcdir)/am/global-rules
-

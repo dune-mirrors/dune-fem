@@ -43,8 +43,8 @@ namespace Dune
       typedef FunctionSpace FunctionSpaceType;
       typedef typename FunctionSpaceType::DomainType DomainType;
       typedef typename FunctionSpaceType::RangeType RangeType;
-      typedef typename FunctionSpaceType::JacobianType JacobianRangeType;
-      typedef typename FunctionSpaceType::HessianType HessianRangeType;
+      typedef typename FunctionSpaceType::JacobianRangeType JacobianRangeType;
+      typedef typename FunctionSpaceType::HessianRangeType HessianRangeType;
 
     private:
       typedef typename RangeType::value_type RangeFieldType;

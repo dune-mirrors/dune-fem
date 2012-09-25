@@ -5,12 +5,6 @@
 #include <dune/common/typetraits.hh>
 
 // dune-fem includes
-#include <dune/fem/space/common/discretefunctionspace.hh>
-
-// dune-geometry includes
-#include <dune/geometry/type.hh>
-
-// dune-fem includes
 #include <dune/fem/space/basefunctions/basefunctionstorage.hh>
 #include <dune/fem/space/basisfunctionset/default.hh>
 #include <dune/fem/space/common/defaultcommhandler.hh>
@@ -59,7 +53,7 @@ namespace Dune
     // Forward declaration
     // -------------------
 
-    template< class FunctionSpace, class GridPart, int polOrder,
+    template< class FunctionSpace, class GridPart, int codim,
               template< class > class Storage >
     class FiniteVolumeSpace;
 
@@ -68,22 +62,23 @@ namespace Dune
     // FiniteVolumeSpaceTraits
     // -----------------------
 
-    template< class FunctionSpace, class GridPart, int polOrder,
+    template< class FunctionSpace, class GridPart, int codim,
               template< class > class Storage >
     struct FiniteVolumeSpaceTraits
     {
-      typedef FiniteVolumeSpace< FunctionSpace, GridPart, polOrder, Storage > DiscreteFunctionSpaceType;
+      typedef FiniteVolumeSpace< FunctionSpace, GridPart, codim, Storage > DiscreteFunctionSpaceType;
 
       typedef FunctionSpace FunctionSpaceType;
       typedef GridPart GridPartType;
 
-      static const int codimension = 0;
+      static const int codimension = codim;
       
     private:
       static const int dimLocal = GridPartType::dimension; 
       static const int dimRange = FunctionSpaceType::dimRange;
 
       typedef typename GridPartType::template Codim< codimension >::EntityType EntityType;
+      static const int polOrder = 0;
       typedef FiniteVolumeShapeFunctionSet< typename ToLocalFunctionSpace< FunctionSpaceType, dimLocal >::Type, polOrder > ShapeFunctionSetType;
 
     public:
@@ -91,7 +86,7 @@ namespace Dune
 
       static const int localBlockSize = dimRange;
 
-      typedef CodimensionMapper< GridPartType, 0 > BlockMapperType;
+      typedef CodimensionMapper< GridPartType, codimension > BlockMapperType;
       typedef NonBlockMapper< BlockMapperType, localBlockSize > MapperType;
 
       template< class DiscreteFunction, class Operation = DFCommunicationOperation::Copy >
@@ -107,18 +102,15 @@ namespace Dune
     // FiniteVolumeSpace
     // -----------------
  
-    template< class FunctionSpace, class GridPart, int polOrder,
+    template< class FunctionSpace, class GridPart, int codim = 0,
               template< class > class Storage = SimpleStorage >
     struct FiniteVolumeSpace
-    : public DiscreteFunctionSpaceDefault< FiniteVolumeSpaceTraits< FunctionSpace, GridPart, polOrder, Storage > >
+    : public DiscreteFunctionSpaceDefault< FiniteVolumeSpaceTraits< FunctionSpace, GridPart, codim, Storage > >
     {
-      dune_static_assert( (polOrder == 0),
-                          "FiniteVolumeSpace only availabe for polynomial order 0." );
-
-      typedef FiniteVolumeSpaceTraits< FunctionSpace, GridPart, polOrder, Storage > Traits;
+      typedef FiniteVolumeSpaceTraits< FunctionSpace, GridPart, codim, Storage > Traits;
 
     private:
-      typedef FiniteVolumeSpace< FunctionSpace, GridPart, polOrder, Storage > ThisType;
+      typedef FiniteVolumeSpace< FunctionSpace, GridPart, codim, Storage > ThisType;
       typedef DiscreteFunctionSpaceDefault< Traits > BaseType;
 
       static const InterfaceType defaultInterface = InteriorBorder_All_Interface;
@@ -142,6 +134,9 @@ namespace Dune
       explicit FiniteVolumeSpace( GridPartType &gridPart,
                                   const InterfaceType commInterface = defaultInterface,
                                   const CommunicationDirection commDirection = defaultDirection )
+      : BaseType( gridPart, commInterface, commDirection ),
+        blockMapper_( gridPart ),
+        mapper_( blockMapper_ )
       {
         deprecationWarning( Dune::integral_constant< bool, ShowWarning< Storage >::v >() );
       }
@@ -156,19 +151,19 @@ namespace Dune
         return BasisFunctionSetType( entity );
       }
 
-      bool contains ( const int codim ) const
+      bool contains ( const int codimension ) const
       {
-        return blockMapper().contains( codim );
+        return blockMapper().contains( codimension );
       }
 
       bool continuous () const
       {
-        return ( polOrder != 0 );
+        return false;
       }
 
       int order () const
       {
-        return polOrder;
+        return 0;
       }
 
       MapperType &mapper () const
@@ -188,7 +183,7 @@ namespace Dune
       void
       deprecationWarning ( Dune::integral_constant< bool, false > ) {}        
 
-      BlockMapperType& blockMapper_;
+      mutable BlockMapperType blockMapper_;
       mutable MapperType mapper_; 
     };
 
@@ -197,11 +192,11 @@ namespace Dune
     // DefaultLocalRestrictProlong for FiniteVolumeSpace
     // -------------------------------------------------
 
-    template< class FunctionSpace, class GridPart, template< class > class Storage >
-    struct DefaultLocalRestrictProlong< FiniteVolumeSpace< FunctionSpace, GridPart, 0, Storage > >
-    : public ConstantLocalRestrictProlong< FiniteVolumeSpace< FunctionSpace, GridPart, 0, Storage > >
+    template< class FunctionSpace, class GridPart, int codim, template< class > class Storage >
+    struct DefaultLocalRestrictProlong< FiniteVolumeSpace< FunctionSpace, GridPart, codim, Storage > >
+    : public ConstantLocalRestrictProlong< FiniteVolumeSpace< FunctionSpace, GridPart, codim, Storage > >
     {
-      DefaultLocalRestrictProlong ( const FiniteVolumeSpace< FunctionSpace, GridPart, 0, Storage > & )
+      DefaultLocalRestrictProlong ( const FiniteVolumeSpace< FunctionSpace, GridPart, codim, Storage > & )
       {}
     };
 
