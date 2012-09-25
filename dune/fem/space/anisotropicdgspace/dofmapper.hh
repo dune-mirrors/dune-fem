@@ -40,6 +40,8 @@ namespace AnisotropicDG
     typedef AnisotropicDG::DofMapper< GridPart, dimRange, maxPolOrder > DofMapperType;
     //! \brief element type
     typedef typename GridPart::template Codim< 0 >::EntityType ElementType;
+    //! \brief type of size integer
+    typedef std::size_t SizeType;
   };
 
 
@@ -57,6 +59,7 @@ namespace AnisotropicDG
   public:
     typedef typename BaseType::Traits Traits;
     typedef typename BaseType::ElementType ElementType;
+    typedef typename BaseType::SizeType SizeType;
 
     typedef GridPart GridPartType;
     static const int dimension = GridPartType::dimension;
@@ -76,7 +79,7 @@ namespace AnisotropicDG
     // DofMapper interface methods
     // ---------------------------
 
-    std::size_t size () const
+    SizeType size () const
     {
       return size_;
     }
@@ -208,7 +211,7 @@ namespace AnisotropicDG
   private:
     const GridPartType &gridPart_;
     MultiIndexType multiIndex_;
-    std::size_t size_;
+    SizeType size_;
   };
 
 } // namespace AnisotropicDG
