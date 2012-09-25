@@ -3,6 +3,7 @@
 
 #include <dune/fem/function/vectorfunction/vectorfunction.hh>
 #include <dune/fem/space/common/dofmanager.hh>
+#include <dune/fem/space/mapper/nonblockmapper.hh>
 
 namespace Dune
 {
@@ -30,7 +31,12 @@ namespace Dune
       typedef typename DiscreteFunctionSpaceType :: GridPartType :: GridType
         GridType;
 
+      typedef typename DiscreteFunctionSpaceType::BlockMapperType BlockMapperType;
+      typedef NonBlockMapper< BlockMapperType, 
+                              DiscreteFunctionSpaceType::localBlockSize > NonBlockingMapperType ;
+
     protected:
+      NonBlockingMapperType* mapper_ ;
       DofStorageInterface *memObject_;
 
     public:
@@ -57,6 +63,9 @@ namespace Dune
       {
         if( memObject_ ) 
           delete memObject_ ;
+        memObject_ = 0;
+
+        delete mapper_ ; mapper_ = 0;
       }
 
       inline void enableDofCompression ()
@@ -70,9 +79,10 @@ namespace Dune
       allocDofVector ( const std :: string &name,
                        const DiscreteFunctionSpaceType &dfSpace )
       {
+        mapper_ = new NonBlockingMapperType( dfSpace.blockMapper() );
         // allocate managed dof storage 
         std :: pair< DofStorageInterface *, DofVectorType * > memPair
-          = allocateManagedDofStorage( dfSpace.grid(), dfSpace.mapper(), 
+          = allocateManagedDofStorage( dfSpace.grid(), *mapper_, 
                                        name , (DofVectorType *) 0);
         memObject_ = memPair.first;
         return *(memPair.second);

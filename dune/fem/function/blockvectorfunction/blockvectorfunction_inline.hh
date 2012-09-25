@@ -14,7 +14,7 @@ namespace Dune
       :: ISTLBlockVectorDiscreteFunction ( const DiscreteFunctionSpaceType &f ) 
     : BaseType( "no name ", f, lfFactory_ ), 
       lfFactory_( *this ),
-      mapper_( f.blockMapper() ) ,
+      blockMapper_( f.blockMapper() ) ,
       memObject_( 0 ), 
       dofVec_( allocateDofStorage() ),
       leakPtr_(dofVec_),
@@ -28,7 +28,7 @@ namespace Dune
                                        const DiscreteFunctionSpaceType &dfSpace )
     : BaseType( name, dfSpace, lfFactory_ ),
       lfFactory_( *this ),
-      mapper_( dfSpace.blockMapper() ),
+      blockMapper_( dfSpace.blockMapper() ),
       memObject_( 0 ), 
       dofVec_( allocateDofStorage() ),
       leakPtr_(dofVec_),
@@ -43,7 +43,7 @@ namespace Dune
                                        const DofStorageType &data )
     : BaseType( name, f , lfFactory_ ),
       lfFactory_( *this ),
-      mapper_( f.blockMapper() ),
+      blockMapper_( f.blockMapper() ),
       memObject_( 0 ),
       dofVec_( const_cast<DofStorageType&> (data) ),
       leakPtr_(dofVec_),
@@ -56,7 +56,7 @@ namespace Dune
       :: ISTLBlockVectorDiscreteFunction ( const ThisType &other ) 
     : BaseType( other.name(), other.space(), lfFactory_ ),
       lfFactory_( *this ),
-      mapper_( other.space().blockMapper() ),
+      blockMapper_( other.space().blockMapper() ),
       memObject_( 0 ),
       dofVec_( allocateDofStorage() ),
       leakPtr_( dofVec_ ),
@@ -83,7 +83,7 @@ namespace Dune
       
       std::pair< Fem::DofStorageInterface*, DofStorageType* > memPair
         = Fem::allocateManagedDofStorage( this->space().grid(),
-                                          mapper_ ,
+                                          blockMapper_ ,
                                           this->name(),
                                           (DofStorageType *) 0 );
       // store memory 

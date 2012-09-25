@@ -442,6 +442,7 @@ namespace Dune
       }
 
       /** \copydoc Dune::Fem::DiscreteFunctionSpaceInterface::mapper */
+      DUNE_VERSION_DEPRECATED(1,4,remove)
       MapperType &mapper () const
       {
         assert( mapper_ != 0 );

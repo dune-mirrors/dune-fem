@@ -33,7 +33,8 @@ namespace Dune
       typedef typename DiscreteFunctionSpaceType :: RangeFieldType RangeFieldType;
       typedef typename DiscreteFunctionSpaceType :: RangeType RangeType;
 
-      enum { dgNumDofs = DiscreteFunctionSpaceType :: localBlockSize };
+      enum { localBlockSize = DiscreteFunctionSpaceType :: localBlockSize };
+      enum { dgNumDofs = localBlockSize };
 
       typedef Dune::FieldMatrix<ctype, dgNumDofs, dgNumDofs > DGMatrixType;
       typedef Dune::FieldVector<ctype, dgNumDofs >            DGVectorType;
@@ -146,6 +147,12 @@ namespace Dune
         return ( volumeQuadOrd_ < 0 ) ? ( spc_.order() * 2 ) : volumeQuadOrd_ ;
       }
 
+      // return number of max non blocked dofs 
+      int maxNumDofs() const 
+      {
+        return spc_.blockMapper().maxNumDofs() * localBlockSize ;
+      }
+
     public:
       //! constructor taking space and volume quadrature order 
       LocalMassMatrixImplementation(const DiscreteFunctionSpaceType& spc, const int volQuadOrd = -1 ) 
@@ -155,8 +162,8 @@ namespace Dune
         , volumeQuadOrd_ ( volQuadOrd )
         , affine_ ( setup() )
         , rhs_(), matrix_() 
-        , phi_( spc_.mapper().maxNumDofs() )
-        , phiMass_( spc_.mapper().maxNumDofs() )
+        , phi_( maxNumDofs() )
+        , phiMass_( maxNumDofs() )
         , localInverseMassMatrix_( GlobalGeometryTypeIndex :: size( GridType::dimension ) )
         , lastEntityIndex_( -1 )
         , lastTopologyId_( ~0u )

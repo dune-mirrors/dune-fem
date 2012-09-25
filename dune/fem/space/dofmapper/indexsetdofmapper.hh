@@ -55,7 +55,8 @@ namespace Dune
       const ThisType &operator= ( const ThisType & );
 
     public:
-      typedef size_t GlobalKeyType;
+      typedef size_t SizeType;
+      typedef SizeType GlobalKeyType;
 
       typedef GridPart GridPartType;
 
@@ -395,7 +396,7 @@ namespace Dune
       std::size_t numDofs = info.numDofs;
       std::size_t index = info.offset + numDofs * std::size_t( indexSet().index( entity ) );
       for( std::size_t i = 0; i < info.numDofs; ++i )
-        f( index++ );
+        f( i, index++ );
     }
 
 
