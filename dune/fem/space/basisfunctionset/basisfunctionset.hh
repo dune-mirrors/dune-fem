@@ -12,6 +12,11 @@
 #include <dune/fem/space/common/functionspace.hh>
 #include <dune/fem/version.hh>
 
+/**
+  @file
+  @brief Interface for basis function sets
+*/
+
 
 namespace Dune
 {
@@ -22,7 +27,16 @@ namespace Dune
     // BasisFunctionSet
     // ----------------
 
-    template< class Entity, class Range, class Implementation >
+    /**
+     * \brief Interface class for basis function sets
+     *
+     * This class cannot be used itself, it is for documentation purposes
+     * only.
+     *
+     * \note Constructor signatures are explicitly not specified by this
+     *       interface.
+     */
+    template< class Entity, class Range >
     class BasisFunctionSet
     {
     public:
