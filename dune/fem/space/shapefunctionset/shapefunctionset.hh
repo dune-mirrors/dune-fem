@@ -5,8 +5,8 @@
 #include <cstddef>
 
 /**
-  \file
-  \brief Interface for shape function sets
+  @file
+  @brief Interface for shape function sets
 */
 
 
