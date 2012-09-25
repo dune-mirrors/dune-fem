@@ -69,11 +69,11 @@ namespace Dune
 
     private:
       template< class Functor >
-      void doEvaluateEach ( int d, RangeType value, std::size_t &index, const RangeFieldType *buffer, Functor functor );
+      void doEvaluateEach ( int d, RangeType value, std::size_t &index, const RangeFieldType *buffer, Functor functor ) const;
       template< class Functor >
-      void doJacobianEach ( int d, JacobianRangeType jacobian, std::size_t &index, const RangeFieldType *buffer, Functor functor );
+      void doJacobianEach ( int d, JacobianRangeType jacobian, std::size_t &index, const RangeFieldType *buffer, Functor functor ) const;
       template< class Functor >
-      void doHessianEach ( int d, HessianRangeType hessian, std::size_t &index, const RangeFieldType *buffer, Functor functor );
+      void doHessianEach ( int d, HessianRangeType hessian, std::size_t &index, const RangeFieldType *buffer, Functor functor ) const;
 
       ShapeFunctionSetTuple shapeFunctionSetTuple_;
       array< std::size_t, dimension > sizes_;
@@ -268,7 +268,7 @@ namespace Dune
     template< class FunctionSpace, class ShapeFunctionSetTuple >
     template< class Functor >
     inline void TensorProductShapeFunctionSet< FunctionSpace, ShapeFunctionSetTuple >
-      ::doEvaluateEach ( int d, RangeType value, std::size_t &index, const RangeFieldType *buffer, Functor functor )
+      ::doEvaluateEach ( int d, RangeType value, std::size_t &index, const RangeFieldType *buffer, Functor functor ) const
     {
       if( d < dimension )
       {
@@ -287,7 +287,7 @@ namespace Dune
     template< class FunctionSpace, class ShapeFunctionSetTuple >
     template< class Functor >
     inline void TensorProductShapeFunctionSet< FunctionSpace, ShapeFunctionSetTuple >
-      ::doJacobianEach ( int d, JacobianRangeType jacobian, std::size_t &index, const RangeFieldType *buffer, Functor functor )
+      ::doJacobianEach ( int d, JacobianRangeType jacobian, std::size_t &index, const RangeFieldType *buffer, Functor functor ) const
     {
       if( d < dimension )
       {
@@ -308,7 +308,7 @@ namespace Dune
     template< class FunctionSpace, class ShapeFunctionSetTuple >
     template< class Functor >
     inline void TensorProductShapeFunctionSet< FunctionSpace, ShapeFunctionSetTuple >
-      ::doHessianEach ( int d, HessianRangeType hessian, std::size_t &index, const RangeFieldType *buffer, Functor functor )
+      ::doHessianEach ( int d, HessianRangeType hessian, std::size_t &index, const RangeFieldType *buffer, Functor functor ) const
     {
       if( d < dimension )
       {
