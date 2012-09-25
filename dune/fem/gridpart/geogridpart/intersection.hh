@@ -121,13 +121,13 @@ namespace Dune
       FieldVector< ctype, dimensionworld >
       integrationOuterNormal ( const FieldVector< ctype, dimension-1 > &local ) const
       {
-        const GenericReferenceElement< ctype, dimension > &refElement
-          = GenericReferenceElements< ctype, dimension>::general( insideGeo_.type() );
+        const ReferenceElement< ctype, dimension > &refElement
+          = ReferenceElements< ctype, dimension>::general( insideGeo_.type() );
 
         FieldVector< ctype, dimension > x( geometryInInside().global( local ) );
         typedef typename ElementGeometryImplType::JacobianInverseTransposed JacobianInverseTransposed;
         const JacobianInverseTransposed &jit = insideGeo_.jacobianInverseTransposed( x );
-        const FieldVector< ctype, dimension > &refNormal = refElement.volumeOuterNormal( indexInInside() );
+        const FieldVector< ctype, dimension > &refNormal = refElement.integrationOuterNormal( indexInInside() );
 
         FieldVector< ctype, dimensionworld > normal;
         jit.mv( refNormal, normal );
@@ -138,13 +138,13 @@ namespace Dune
       FieldVector< ctype, dimensionworld >
       outerNormal ( const FieldVector< ctype, dimension-1 > &local ) const
       {
-        const GenericReferenceElement< ctype, dimension > &refElement
-          = GenericReferenceElements< ctype, dimension>::general( insideGeo_.type() );
+        const ReferenceElement< ctype, dimension > &refElement
+          = ReferenceElements< ctype, dimension>::general( insideGeo_.type() );
 
         FieldVector< ctype, dimension > x( geometryInInside().global( local ) );
         typedef typename ElementGeometryImplType::JacobianInverseTransposed JacobianInverseTransposed;
         const JacobianInverseTransposed &jit = insideGeo_.jacobianInverseTransposed( x );
-        const FieldVector< ctype, dimension > &refNormal = refElement.volumeOuterNormal( indexInInside() );
+        const FieldVector< ctype, dimension > &refNormal = refElement.integraionOuterNormal( indexInInside() );
 
         FieldVector< ctype, dimensionworld > normal;
         jit.mv( refNormal, normal );

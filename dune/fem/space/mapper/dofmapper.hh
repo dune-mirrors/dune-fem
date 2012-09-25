@@ -131,7 +131,7 @@ namespace Dune
        *
        *    // application operator
        *    template< class GlobalKey >
-       *    void operator() ( const GlobalKey &globalKey );
+       *    void operator() ( const int localDoF, const GlobalKey &globalKey );
        *  };
        *  \endcode
        *
