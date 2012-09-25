@@ -38,10 +38,12 @@ AC_CONFIG_FILES([Makefile
      dune/fem/space/basefunctions/Makefile
      dune/fem/space/basisfunctionset/Makefile
      dune/fem/space/shapefunctionset/Makefile
+     dune/fem/space/shapefunctionset/test/Makefile
      dune/fem/space/common/Makefile
      dune/fem/space/dofmapper/Makefile
      dune/fem/space/dgspace/Makefile
      dune/fem/space/fvspace/Makefile
+     dune/fem/space/fvspace/test/Makefile
      dune/fem/space/genericspace/Makefile
      dune/fem/space/lagrangespace/Makefile
      dune/fem/space/lagrangespace/test/Makefile
