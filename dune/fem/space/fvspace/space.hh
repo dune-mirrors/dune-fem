@@ -102,7 +102,7 @@ namespace Dune
     // FiniteVolumeSpace
     // -----------------
  
-    template< class FunctionSpace, class GridPart, int codim,
+    template< class FunctionSpace, class GridPart, int codim = 0,
               template< class > class Storage = SimpleStorage >
     struct FiniteVolumeSpace
     : public DiscreteFunctionSpaceDefault< FiniteVolumeSpaceTraits< FunctionSpace, GridPart, codim, Storage > >
@@ -134,6 +134,9 @@ namespace Dune
       explicit FiniteVolumeSpace( GridPartType &gridPart,
                                   const InterfaceType commInterface = defaultInterface,
                                   const CommunicationDirection commDirection = defaultDirection )
+      : BaseType( gridPart, commInterface, commDirection ),
+        blockMapper_( gridPart ),
+        mapper_( blockMapper_ )
       {
         deprecationWarning( Dune::integral_constant< bool, ShowWarning< Storage >::v >() );
       }
@@ -180,7 +183,7 @@ namespace Dune
       void
       deprecationWarning ( Dune::integral_constant< bool, false > ) {}        
 
-      BlockMapperType& blockMapper_;
+      mutable BlockMapperType blockMapper_;
       mutable MapperType mapper_; 
     };
 
