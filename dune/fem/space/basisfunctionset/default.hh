@@ -31,6 +31,12 @@ namespace Dune
      * \tparam  Entity            entity type
      * \tparam  ShapeFunctionSet  shape function set
      *
+     * \note ShapeFunctionSet must be a copyable object. For most 
+     *       non-trivial implementations, you may want to use a 
+     *       proxy, see file
+\code
+    <dune/fem/space/shapefunctionset/proxy.hh>
+\endcode
      */
     template< class Entity, class ShapeFunctionSet >
     class DefaultBasisFunctionSet
