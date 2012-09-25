@@ -38,7 +38,6 @@ AC_CONFIG_FILES([Makefile
      dune/fem/space/basefunctions/Makefile
      dune/fem/space/basisfunctionset/Makefile
      dune/fem/space/shapefunctionset/Makefile
-     dune/fem/space/shapefunctionset/test/Makefile
      dune/fem/space/common/Makefile
      dune/fem/space/dofmapper/Makefile
      dune/fem/space/dgspace/Makefile
