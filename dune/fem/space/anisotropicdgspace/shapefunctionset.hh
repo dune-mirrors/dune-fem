@@ -6,14 +6,10 @@
 #include <cstddef>
 
 // dune-common includes
-
 #include <dune/common/array.hh>
 #include <dune/common/densevector.hh>
 #include <dune/common/forloop.hh>
 #include <dune/common/static_assert.hh>
-
-// dune-geometry includes
-#include <dune/geometry/referenceelements.hh>
 
 // dune-fem includes
 #include <dune/fem/space/common/functionspace.hh>
@@ -308,12 +304,10 @@ namespace AnisotropicDG
     typedef typename ShapeFunctionSetTupleProviderType::MultiIndexType MultiIndexType;
 
     ScalarShapeFunctionSet ( const MultiIndexType &multiIndex )
-    : implementation_( ShapeFunctionSetTupleType::create( multiIndex ) )
+    : implementation_( ShapeFunctionSetTupleProviderType::create( multiIndex ) )
     {
       assert(( NumShapeFunctions< FunctionSpaceType::dimDomain, maxOrder >::count( multiIndex ) == size() )); 
     }
-
-    Dune::GeometryType type () const { return implementation().type(); }
 
     std::size_t size () const
     {
@@ -375,13 +369,9 @@ namespace AnisotropicDG
   public:
     typedef typename ScalarShapeFunctionSetType::MultiIndexType MultiIndexType;
 
-    ShapeFunctionSet ( const Dune::GeometryType &type, const MultiIndexType &multiIndex )
+    ShapeFunctionSet ( const MultiIndexType &multiIndex )
     : implementation_( ScalarShapeFunctionSetType( multiIndex ) )
-    {
-      assert( type == ThisType::type() );
-    }
-
-    Dune::GeometryType type () { return implementation().type(); }
+    {}
 
     std::size_t size () const { return implementation().size(); }
 

@@ -178,7 +178,7 @@ namespace AnisotropicDG
     // ---------------------
 
     // return (multi index valued) polynomial order for element
-    MultiIndexType &order ( const ElementType &element ) const
+    const MultiIndexType &order ( const ElementType &element ) const
     {
       return multiIndex_;
     }
