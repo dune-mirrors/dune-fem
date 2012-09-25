@@ -154,7 +154,10 @@ namespace Dune
         BlockTraits;
 
     public:
-      typedef typename ContainedSpaceTraits :: MapperType ContainedMapperType;
+      typedef typename ContainedDiscreteFunctionSpaceType :: BlockMapperType
+        ContainedBlockMapperType ;
+      typedef NonBlockMapper< ContainedBlockMapperType,
+                              ContainedDiscreteFunctionSpaceType :: localBlockSize >  ContainedMapperType;
 
       typedef typename ContainedFunctionSpaceType::DomainFieldType 
       DomainFieldType;
@@ -185,14 +188,12 @@ namespace Dune
       // type of singleton factory 
       typedef VectorialBaseFunctionSet< BaseFunctionSpaceType, CachingStorage >
         BaseFunctionSetImp;
-      //typedef VectorialBaseFunctionProxy<BaseFunctionSetImp> BaseFunctionSetType;
       typedef SimpleBaseFunctionProxy<BaseFunctionSetImp> BaseFunctionSetType;
 
       typedef CombinedMapper< ContainedMapperType, N, policy > MapperType;
       typedef CombinedSubMapper< ContainedMapperType, N, policy > SubMapperType;
       
       enum { localBlockSize = BlockTraits :: localBlockSize };
-      //enum { localBlockSize = N * ContainedSpaceTraits :: localBlockSize };
       typedef typename BlockTraits :: BlockMapperType BlockMapperType;
      
       typedef typename FunctionSpaceType::RangeType RangeType;
@@ -314,7 +315,8 @@ namespace Dune
       : BaseType( gridpart, commInterface, commDirection  ),
         LagrangePointSetExporterType( containedSpace_ ),
         containedSpace_( gridpart ),
-        mapper_( containedSpace_.mapper() ),
+        containedMapper_( containedSpace_.blockMapper() ),
+        mapper_( containedMapper_ ),
         blockMapper_( Traits :: BlockTraits :: containedBlockMapper( containedSpace_ ) ),
         baseSetMap_(),
         dm_( DofManagerType :: instance( containedSpace_.grid() ) )
@@ -420,7 +422,9 @@ namespace Dune
       }
 
       //! access to mapper
-      inline MapperType &mapper () const
+      inline 
+      DUNE_VERSION_DEPRECATED(1,4,remove)
+      MapperType &mapper () const
       {
         return mapper_;
       }
@@ -447,13 +451,14 @@ namespace Dune
       //! return a reference to the contained space's mapper
       inline ContainedMapperType &containedMapper () const
       { 
-        return containedSpace().mapper();
+        return containedMapper_;
       }
 
       const DiscreteFunctionSpaceImp& containedSpace() const { return containedSpace_; }
 
     protected:
       DiscreteFunctionSpaceImp containedSpace_;
+      ContainedMapperType containedMapper_;
       mutable MapperType mapper_;
       mutable BlockMapperType blockMapper_;
 

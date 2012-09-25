@@ -8,6 +8,7 @@
 //- Dune includes
 #include <dune/common/typetraits.hh>
 #include <dune/fem/space/common/dofmanager.hh>
+#include <dune/fem/space/mapper/nonblockmapper.hh>
 
 #include <dune/fem/function/common/discretefunction.hh>
 #include <dune/fem/storage/subarray.hh>
@@ -60,8 +61,12 @@ namespace Dune
       typedef RangeFieldType DofType;
 
       typedef typename DiscreteFunctionSpaceType :: JacobianRangeType JacobianRangeType;
-      typedef typename DiscreteFunctionSpaceType :: MapperType MapperType;
+      typedef typename DiscreteFunctionSpaceType :: BlockMapperType BlockMapperType;
       typedef typename DiscreteFunctionSpaceType :: GridType GridType;
+
+      // type used to determine size etc.
+      typedef NonBlockMapper< BlockMapperType, 
+                              DiscreteFunctionSpaceType :: localBlockSize > MapperType ;
 
       // type of Array seen by functions 
       typedef StaticArray<DofType>  DofStorageType;

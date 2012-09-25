@@ -53,6 +53,9 @@ namespace Dune
       //! type of codimension 0 entities
       typedef typename Traits::ElementType ElementType;
 
+      //! type of size integer
+      typedef typename Traits::SizeType SizeType;
+
       typedef ElementType EntityType;
 
     protected:
@@ -61,7 +64,7 @@ namespace Dune
     public: 
       /** \brief  return number of dofs for special function space and grid on
                   specified level */
-      int size () const 
+      SizeType size () const 
       {
         CHECK_INTERFACE_IMPLEMENTATION(asImp().size());
         return asImp().size();
@@ -158,7 +161,7 @@ namespace Dune
        *  
        *  \returns number of DoFs on the entity
        */
-      int numDofs ( const ElementType &element ) const
+      SizeType numDofs ( const ElementType &element ) const
       {
         CHECK_INTERFACE_IMPLEMENTATION( asImp().numDofs( element ) );
         return asImp().numDofs( element );
@@ -179,7 +182,7 @@ namespace Dune
        *  \returns number of DoFs on the entity
        */
       template< class Entity >
-      int numEntityDofs ( const Entity &entity ) const
+      SizeType numEntityDofs ( const Entity &entity ) const
       {
         CHECK_INTERFACE_IMPLEMENTATION( asImp().numEntityDofs( entity ) );
         return asImp().numEntityDofs( entity );
@@ -197,7 +200,6 @@ namespace Dune
     /** \brief 
        Extended interface for adaptive DoF mappers
     */
-
     template< class DofMapperTraits >
     class AdaptiveDofMapper
     : public DofMapper< DofMapperTraits >
@@ -208,22 +210,28 @@ namespace Dune
       using BaseType::asImp;
 
     public:
+      //! type of size integer 
+      typedef typename BaseType::SizeType SizeType;
+
+      //! at the moment this should be similar to SizeType
+      typedef SizeType GlobalKeyType;
+
       /** \brief return number of holes for data block */
-      int numberOfHoles ( const int block ) const 
+      SizeType numberOfHoles ( const int block ) const 
       {
         CHECK_INTERFACE_IMPLEMENTATION(asImp().numberOfHoles(block));
         return asImp().numberOfHoles(block); 
       }
       
       /** \brief return old index of hole for data block (with resprect to new offset) */
-      int oldIndex ( const int hole, const int block ) const 
+      GlobalKeyType oldIndex ( const int hole, const int block ) const 
       { 
         CHECK_INTERFACE_IMPLEMENTATION(asImp().oldIndex(hole,block));
         return asImp().oldIndex(hole,block); 
       }
         
       /** \brief return new index of hole for data block (with resprect to new offset) */
-      int newIndex ( const int hole, const int block ) const 
+      GlobalKeyType newIndex ( const int hole, const int block ) const 
       { 
         CHECK_INTERFACE_IMPLEMENTATION(asImp().newIndex(hole,block));
         return asImp().newIndex(hole,block); 
@@ -237,21 +245,21 @@ namespace Dune
       }
  
       /** \brief return old offsets for given block */
-      int oldOffSet ( const int block ) const
+      SizeType oldOffSet ( const int block ) const
       {
         CHECK_INTERFACE_IMPLEMENTATION(asImp().oldOffSet(block));
         return asImp().oldOffSet(block);
       }
 
       /** \brief return current offsets for given block */
-      int offSet ( const int block ) const
+      SizeType offSet ( const int block ) const
       {
         CHECK_INTERFACE_IMPLEMENTATION(asImp().offSet(block));
         return asImp().offSet(block);
       }
 
       /** \brief return number of supported blocks */
-      int numBlocks () const
+      SizeType numBlocks () const
       {
         CHECK_INTERFACE_IMPLEMENTATION(asImp().numBlocks());
         return asImp().numBlocks();

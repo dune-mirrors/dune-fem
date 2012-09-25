@@ -15,6 +15,7 @@
 #include <dune/fem/solver/oemsolver.hh>
 #include <dune/fem/operator/common/operator.hh>
 #include <dune/fem/operator/matrix/columnobject.hh>
+#include <dune/fem/space/mapper/nonblockmapper.hh>
 
 #ifdef ENABLE_UMFPACK 
 #include <umfpack.h>
@@ -380,6 +381,16 @@ namespace Dune
       {
         typedef SparseRowMatrixObject<RowSpaceType,ColumnSpaceType,OperatorTraits> MatrixObjectType;
       };
+
+      typedef RowSpaceImp  DomainSpaceType;
+      typedef ColSpaceImp  RangeSpaceType;
+
+      typedef typename DomainSpaceType :: BlockMapperType DomainBlockMapperType ;
+      typedef NonBlockMapper< DomainBlockMapperType, 
+                              DomainSpaceType :: localBlockSize > DomainMapperType;
+      typedef typename RangeSpaceType :: BlockMapperType RangeBlockMapperType ;
+      typedef NonBlockMapper< RangeBlockMapperType, 
+                              RangeSpaceType :: localBlockSize > RangeMapperType;
     };
 
     template< class DomainSpace, class RangeSpace, class TraitsImp >
@@ -446,9 +457,15 @@ namespace Dune
 
       typedef ColumnObject< ThisType > LocalColumnObjectType;
 
+      typedef typename Traits :: DomainMapperType  DomainMapperType;
+      typedef typename Traits :: RangeMapperType   RangeMapperType;
+
     protected:
       const DomainSpaceType &domainSpace_;
       const RangeSpaceType &rangeSpace_;
+
+      DomainMapperType domainMapper_ ;
+      RangeMapperType  rangeMapper_ ;
       
       int sequence_;
 
@@ -464,6 +481,8 @@ namespace Dune
                                     const std::string &paramfile = "" )
       : domainSpace_( domainSpace ),
         rangeSpace_( rangeSpace ),
+        domainMapper_( domainSpace_.blockMapper() ),
+        rangeMapper_( rangeSpace_.blockMapper() ),
         sequence_( -1 ),
         matrix_(),
         preconditioning_( false ),
@@ -496,7 +515,7 @@ namespace Dune
       //! interface method from LocalMatrixFactory
       inline ObjectType *newObject () const
       {
-        return new ObjectType( *this, domainSpace_, rangeSpace_ );
+        return new ObjectType( *this, domainSpace_, rangeSpace_, domainMapper_, rangeMapper_ );
       }
 
       //! return local matrix 
@@ -546,8 +565,8 @@ namespace Dune
             
             if( verbose )
             {
-              const int rowMaxNumbers = rangeSpace_.mapper().maxNumDofs();
-              const int colMaxNumbers = domainSpace_.mapper().maxNumDofs();
+              const int rowMaxNumbers = rangeMapper_.maxNumDofs();
+              const int colMaxNumbers = domainMapper_.maxNumDofs();
 
               std::cout << "Reserve Matrix with (" << rangeSpace_.size() << "," << domainSpace_.size()<< ")\n";
               std::cout << "Max number of base functions = (" << rowMaxNumbers << "," << colMaxNumbers << ")\n";
@@ -750,6 +769,9 @@ namespace Dune
 
       typedef typename RangeSpaceType :: RangeFieldType RangeFieldType;
       typedef RangeFieldType LittleBlockType;
+
+      typedef typename TraitsImp::DomainMapperType DomainMapperType;
+      typedef typename TraitsImp::RangeMapperType  RangeMapperType;
     };
 
 
@@ -783,8 +805,15 @@ namespace Dune
       //! type of little blocks 
       typedef typename Traits :: LittleBlockType LittleBlockType;
 
+      //! type of nonblocked domain mapper   
+      typedef typename Traits :: DomainMapperType DomainMapperType;
+      //! type of nonblocked domain mapper   
+      typedef typename Traits :: RangeMapperType RangeMapperType;
+
     protected:
       MatrixType &matrix_; 
+      const DomainMapperType& domainMapper_;
+      const RangeMapperType&  rangeMapper_;
       
       //! global index in the DomainSpace
       std :: vector< int > rowMapper_;
@@ -800,9 +829,13 @@ namespace Dune
       //! class RowSpaceType, class ColSpaceType> 
       inline LocalMatrix( const MatrixObjectType &matrixObject,
                           const DomainSpaceType &domainSpace,
-                          const RangeSpaceType &rangeSpace )
+                          const RangeSpaceType &rangeSpace,
+                          const DomainMapperType& domainMapper,
+                          const RangeMapperType& rangeMapper )
       : BaseType( domainSpace, rangeSpace),
-        matrix_( matrixObject.matrix() )
+        matrix_( matrixObject.matrix() ),
+        domainMapper_( domainMapper ),
+        rangeMapper_( rangeMapper )
       {
       }
       
@@ -821,12 +854,12 @@ namespace Dune
         BaseType::init( domainEntity, rangeEntity );
           
         // rows are determined by the range space
-        rowMapper_.resize( rangeSpace_.mapper().numDofs( rangeEntity ) );
-        rangeSpace_.mapper().mapEach( rangeEntity, Fem::AssignFunctor< std::vector< int > >( rowMapper_ ) );
+        rowMapper_.resize( rangeMapper_.numDofs( rangeEntity ) );
+        rangeMapper_.mapEach( rangeEntity, Fem::AssignFunctor< std::vector< int > >( rowMapper_ ) );
 
         // columns are determind by the domain space
-        colMapper_.resize( domainSpace_.mapper().numDofs( domainEntity ) );
-        domainSpace_.mapper().mapEach( domainEntity, Fem::AssignFunctor< std::vector< int > >( colMapper_ ) );
+        colMapper_.resize( domainMapper_.numDofs( domainEntity ) );
+        domainMapper_.mapEach( domainEntity, Fem::AssignFunctor< std::vector< int > >( colMapper_ ) );
       }
 
       //! return number of rows 

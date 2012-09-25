@@ -26,6 +26,8 @@ namespace Dune
       typedef NonBlockMapper< BlockMapper, blockSize > DofMapperType;
 
       typedef typename BlockMapper::ElementType ElementType;
+
+      typedef typename BlockMapper::SizeType  SizeType;
     };
 
 
@@ -40,6 +42,11 @@ namespace Dune
       typedef NonBlockMapper< BlockMapper, blockSize > ThisType;
       typedef DofMapper< NonBlockMapperTraits< BlockMapper, blockSize > > BaseType;
 
+      typedef NonBlockMapperTraits< BlockMapper, blockSize > Traits ;  
+    public:
+      typedef typename Traits :: SizeType SizeType ;
+
+    private:  
       template< class Functor >
       struct BlockFunctor
       {
@@ -51,19 +58,10 @@ namespace Dune
         void operator() ( int localBlock, const GlobalKey globalKey )
         {
           int localDof = blockSize*localBlock;
-          int globalDof = blockSize*globalKey;
+          SizeType globalDof = blockSize*globalKey;
           const int localEnd = localDof + blockSize;
           while( localDof != localEnd )
             functor_( localDof++, globalDof++ );
-        }
-
-        template< class GlobalKey >
-        void operator() ( const GlobalKey globalKey )
-        {
-          int globalDof = blockSize*globalKey;
-          const int globalEnd = globalDof + blockSize;
-          while( globalDof != globalEnd )
-            functor_( globalDof++ );
         }
 
       private:
@@ -92,7 +90,7 @@ namespace Dune
       template< class Entity, class Functor >
       void mapEachEntityDof ( const Entity &entity, Functor f ) const
       {
-        blockMapper_.mapEach( entity, BlockFunctor< Functor >( f ) );
+        blockMapper_.mapEachEntityDof( entity, BlockFunctor< Functor >( f ) );
       }
 
       int maxNumDofs () const

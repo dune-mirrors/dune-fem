@@ -177,7 +177,6 @@ namespace Dune
         const std::string name_;
         DofStorageType array_;
       public:
-        template <class MapperType>
         DofStorageWrapper(const MapperType& mapper,
                           const std::string& name,
                           const VectorPointerType* v)
@@ -200,7 +199,7 @@ namespace Dune
 
     protected:
       // allocate unmanaged dof storage 
-      template <class MapperType, class VectorPointerType>
+      template <class VectorPointerType>
       DofStorageType& 
       allocateDofStorageWrapper(const MapperType& mapper,
                                 const std::string& name, 
@@ -226,18 +225,19 @@ namespace Dune
         
         // create memory object 
         std::pair< DofStorageInterface* , DofStorageType* > memPair
-           = allocateManagedDofStorage( spc_.grid(), spc_.mapper(),
+           = allocateManagedDofStorage( spc_.grid(), mapper(),
                                         name, (MutableDofStorageType *) 0);
                                         
         // save pointer 
         memObject_ = memPair.first;
         return *(memPair.second);
       }
+
+      MapperType& mapper() { return mapper_ ; }
    
       const DiscreteFunctionSpaceType& spc_;
+      MapperType mapper_;
       DofStorageInterface* memObject_;
-
-    protected:
       DofStorageType& dofVec_;
     }; // end class AdaptiveFunctionImplementation
 

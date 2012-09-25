@@ -23,9 +23,9 @@
 #include "shapefunctionset.hh"
 
 /*
-  \file
-  \brief Finite Volume space
-  \author Christoph Gersbacher
+  @file
+  @brief Finite Volume space
+  @author Christoph Gersbacher
 */
 
 
@@ -48,6 +48,8 @@ namespace
 
 } // namespace
 
+
+
 namespace Dune
 {
 
@@ -62,6 +64,7 @@ namespace Dune
     class FiniteVolumeSpace;
 
 
+
     // FiniteVolumeSpaceTraits
     // -----------------------
 
@@ -69,29 +72,21 @@ namespace Dune
               template< class > class Storage >
     struct FiniteVolumeSpaceTraits
     {
+      typedef FiniteVolumeSpace< FunctionSpace, GridPart, polOrder, Storage > DiscreteFunctionSpaceType;
+
       typedef FunctionSpace FunctionSpaceType;
       typedef GridPart GridPartType;
 
-      typedef typename GridPartType::IndexSetType IndexSetType;
-
       static const int codimension = 0;
-      typedef typename GridPartType::template Codim< codimension >::IteratorType IteratorType;
-      typedef typename IteratorType::Entity EntityType;
       
-      static const int dimRange = FunctionSpaceType::dimRange;
+    private:
       static const int dimLocal = GridPartType::dimension; 
+      static const int dimRange = FunctionSpaceType::dimRange;
 
-      typedef typename FunctionSpaceType::DomainFieldType DomainFieldType;
-      typedef typename FunctionSpaceType::RangeFieldType RangeFieldType;
+      typedef typename GridPartType::template Codim< codimension >::EntityType EntityType;
+      typedef FiniteVolumeShapeFunctionSet< typename ToLocalFunctionSpace< FunctionSpaceType, dimLocal >::Type, polOrder > ShapeFunctionSetType;
 
-      typedef typename FunctionSpaceType::DomainType DomainType;
-      typedef typename FunctionSpaceType::RangeType RangeType;
-
-      typedef typename FunctionSpaceType::JacobianRangeType JacobianRangeType;
-
-      typedef FiniteVolumeSpace< FunctionSpace, GridPart, polOrder, Storage > DiscreteFunctionSpaceType;
-
-      typedef FiniteVolumeShapeFunctionSet< typename ToLocalFunctionSpace< FunctionSpace, dimLocal >::Type, polOrder > ShapeFunctionSetType;
+    public:
       typedef DefaultBasisFunctionSet< EntityType, ShapeFunctionSetType > BasisFunctionSetType;
 
       static const int localBlockSize = dimRange;
@@ -117,6 +112,9 @@ namespace Dune
     struct FiniteVolumeSpace
     : public DiscreteFunctionSpaceDefault< FiniteVolumeSpaceTraits< FunctionSpace, GridPart, polOrder, Storage > >
     {
+      dune_static_assert( (polOrder == 0),
+                          "FiniteVolumeSpace only availabe for polynomial order 0." );
+
       typedef FiniteVolumeSpaceTraits< FunctionSpace, GridPart, polOrder, Storage > Traits;
 
     private:
@@ -133,7 +131,7 @@ namespace Dune
       typedef typename BaseType::GridType GridType;
       typedef typename BaseType::IndexSetType IndexSetType;
       typedef typename BaseType::IteratorType IteratorType;
-      typedef typename BaseType::EntityType EntityType;
+      typedef typename IteratorType::Entity EntityType;
       typedef typename BaseType::IntersectionType IntersectionType;
 
       typedef typename BaseType::BasisFunctionSetType BasisFunctionSetType;

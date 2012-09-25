@@ -187,7 +187,7 @@ namespace Dune
         // check maxNumDofs 
         assert( maxNumDofs > 0 );
         // this should be the same 
-        assert( maxNumDofs == mapper().maxNumDofs() );
+        assert( maxNumDofs == localBlockSize * blockMapper().maxNumDofs() );
 #endif
       }
 
@@ -253,6 +253,7 @@ namespace Dune
       /** \brief Return dof mapper of the space
           \return MapperType 
       */
+      DUNE_VERSION_DEPRECATED(1,4,remove)
       MapperType& mapper() const 
       {
         return mapper_;

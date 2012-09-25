@@ -16,8 +16,9 @@ namespace Dune
 
     class CommunicationIndexMap
     {
+      typedef int IndexType ;
     private:
-      MutableArray< int > indices_;
+      MutableArray< IndexType > indices_;
 
     public:
       //! constructor creating empty map
@@ -33,7 +34,7 @@ namespace Dune
 
     public:
       //! return index map for entry i
-      const int operator [] ( const size_t i ) const
+      const IndexType operator [] ( const size_t i ) const
       {
         assert( i < size() );
         return indices_[ i ];
@@ -47,7 +48,8 @@ namespace Dune
 
       //! append index vector with idx 
       //! result is unsorted 
-      void insert( const std :: vector< int > &idx )
+      template <class GlobalKey>
+      void insert( const std :: vector< GlobalKey > &idx )
       {
         const size_t size = idx.size();
         size_t  count = indices_.size();
@@ -65,14 +67,15 @@ namespace Dune
       }
 
       //! insert sorted set of indices  
-      void set( const std :: set<int> &idxSet )
+      template <class GlobalKey> 
+      void set( const std :: set< GlobalKey > &idxSet )
       {
         // resize to given new size 
         resize( idxSet.size() );
         
         // copy all elements from set to array 
-        int count = 0;
-        typedef std :: set<int> :: const_iterator iterator; 
+        size_t count = 0;
+        typedef typename std :: set< GlobalKey > :: const_iterator iterator; 
         const iterator end = idxSet.end();
         for(iterator it = idxSet.begin(); it != end; ++it, ++count) 
         {
@@ -127,12 +130,12 @@ namespace Dune
 
     protected:  
       //! resize map with size size  
-      inline void resize ( int size ) 
+      inline void resize ( size_t size ) 
       {
         indices_.resize( size );
       }
 
-      inline void reserve ( int size )
+      inline void reserve ( size_t size )
       {
         indices_.reserve( size );
       }

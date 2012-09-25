@@ -41,6 +41,8 @@ namespace Dune
 
       typedef CombinedMapper< ContainedMapperType, numComponents, policy >
         DofMapperType;
+
+      typedef typename ContainedMapperType :: SizeType SizeType;
     };
 
     
@@ -352,7 +354,7 @@ namespace Dune
     inline void CombinedMapper< ContainedMapper, N, policy >
       ::mapEachEntityDof ( const Entity &entity, Functor f ) const 
     {
-      containedMapper().mapEach( entity, FunctorWrapper< Functor >( utilGlobal_, f ) );
+      containedMapper().mapEachEntityDof( entity, FunctorWrapper< Functor >( utilGlobal_, f ) );
     }
 
 

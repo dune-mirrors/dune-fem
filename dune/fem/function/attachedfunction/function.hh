@@ -5,6 +5,7 @@
 #include <dune/fem/function/common/dofblock.hh>
 #include <dune/fem/function/common/discretefunction.hh>
 #include <dune/fem/function/localfunction/standardlocalfunction.hh>
+#include <dune/fem/space/mapper/nonblockmapper.hh>
 
 #include "container.hh"
 
@@ -42,7 +43,11 @@ namespace Dune
       typedef typename DiscreteFunctionSpaceType :: JacobianRangeType
         JacobianRangeType;
 
-      typedef typename DiscreteFunctionSpaceType :: MapperType MapperType;
+      enum { blockSize = DiscreteFunctionSpaceType :: localBlockSize };
+
+      typedef typename DiscreteFunctionSpaceType :: BlockMapperType BlockMapperType;
+      typedef NonBlockMapper< BlockMapperType, blockSize > MapperType;
+
       typedef typename DiscreteFunctionSpaceType :: GridPartType GridPartType;
 
       typedef typename GridPartType :: GridType GridType;
@@ -55,7 +60,6 @@ namespace Dune
       typedef typename ContainerType :: ConstSlotIteratorType
         ConstDofIteratorType;
 
-      enum { blockSize = DiscreteFunctionSpaceType :: localBlockSize };
 
       typedef DofBlockProxy< DiscreteFunctionType, DofType, blockSize >
         DofBlockType;
@@ -103,8 +107,13 @@ namespace Dune
       typedef typename Traits :: DofBlockPtrType DofBlockPtrType;
       typedef typename Traits :: ConstDofBlockPtrType ConstDofBlockPtrType;
 
+      using BaseType :: space ;
+
     protected:
+      typedef typename Traits :: MapperType MapperType;
+
       const LocalFunctionFactoryType lfFactory_;
+      MapperType mapper_;
 
       ContainerType &container_;
       unsigned int slot_;
@@ -114,15 +123,17 @@ namespace Dune
                                         const DiscreteFunctionSpaceType &dfSpace )
       : BaseType( name, dfSpace, lfFactory_ ),
         lfFactory_( *this ),
-        container_( ContainerType :: attach( dfSpace.grid(), dfSpace.mapper() ) ),
+        mapper_( dfSpace.blockMapper() ),
+        container_( ContainerType :: attach( dfSpace.grid(), mapper_ ) ),
         slot_( container_.allocSlot() )
       {}
 
       inline AttachedDiscreteFunction ( const ThisType &other )
       : BaseType( other.name(), other.space(), lfFactory_ ),
         lfFactory_( *this ),
+        mapper_( space().blockMapper() ),
         container_( ContainerType :: attach
-          ( other.space().grid(), other.space().mapper() ) ),
+          ( other.space().grid(), mapper_ ) ),
         slot_( container_.allocSlot() )
       {
         assign( other );
