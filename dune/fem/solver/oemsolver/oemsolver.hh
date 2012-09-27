@@ -1034,7 +1034,7 @@ namespace Dune
 
     public:
       GMRESOp( OperatorType & op , double  redEps , double absLimit , int maxIter , bool verbose )
-          : solver_(PARDG::Communicator::instance(), 64)
+          : solver_(PARDG::Communicator::instance(), Parameter::getValue< int >( "oemsolver.gmres.restart", 20 ) )
           , op_(op) , epsilon_ ( absLimit ) 
           , maxIter_ (maxIter ) , verbose_ ( verbose )
           , iterations_ ( 0 )
@@ -1184,7 +1184,7 @@ namespace Dune
       
     public:
       FGMRESOp( OperatorType & op , double  redEps , double absLimit , int maxIter , bool verbose )
-          : solver_(PARDG::Communicator::instance(),20)
+          : solver_(PARDG::Communicator::instance(), Parameter::getValue< int >( "oemsolver.gmres.restart", 20 ) )
           , op_(op) , epsilon_ ( absLimit ) 
           , maxIter_ (maxIter ) , verbose_ ( verbose ) 
           , iterations_( 0 )

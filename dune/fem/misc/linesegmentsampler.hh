@@ -49,8 +49,8 @@ namespace Dune
       template< class Vector >
       struct Reduce;
 
-      typedef GenericReferenceElement< DomainFieldType, dimGrid > ReferenceElement;
-      typedef GenericReferenceElements< DomainFieldType, dimGrid > ReferenceElements;
+      typedef Dune::ReferenceElement< DomainFieldType, dimGrid > ReferenceElement;
+      typedef Dune::ReferenceElements< DomainFieldType, dimGrid > ReferenceElements;
 
     public:
       /** \brief constructor
@@ -159,7 +159,7 @@ namespace Dune
           const LocalDomainType &center = refElement.position( face, 1 );
 
           DomainType normal;
-          const LocalDomainType &refNormal = refElement.volumeOuterNormal( face );
+          const LocalDomainType &refNormal = refElement.integrationOuterNormal( face );
           geometry.jacobianInverseTransposed( center ).mv( refNormal, normal );
 
           const DomainFieldType nds = normal * ds;

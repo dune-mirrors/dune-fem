@@ -6,7 +6,6 @@
 /config.h
 /config.h.in
 /config.guess
-/config.log
 /config.lt
 /config.status
 /config.sub
@@ -30,7 +29,9 @@
 Makefile
 Makefile.in
 
+*~
 *.la
 *.lo
+*.log
 *.o
 *.swp
