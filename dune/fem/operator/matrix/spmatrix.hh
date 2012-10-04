@@ -385,12 +385,6 @@ namespace Dune
       typedef RowSpaceImp  DomainSpaceType;
       typedef ColSpaceImp  RangeSpaceType;
 
-      typedef typename DomainSpaceType :: BlockMapperType DomainBlockMapperType ;
-      typedef NonBlockMapper< DomainBlockMapperType, 
-                              DomainSpaceType :: localBlockSize > DomainMapperType;
-      typedef typename RangeSpaceType :: BlockMapperType RangeBlockMapperType ;
-      typedef NonBlockMapper< RangeBlockMapperType, 
-                              RangeSpaceType :: localBlockSize > RangeMapperType;
     };
 
     template< class DomainSpace, class RangeSpace, class TraitsImp >
@@ -410,10 +404,17 @@ namespace Dune
       /******************************************************************* 
       *   Rows belong to the DomainSpace and Columns to the RangeSpace   *
       *******************************************************************/    
-      typedef typename DomainSpace :: EntityType  DomainEntityType ;
-      typedef typename RangeSpace :: EntityType   RangeEntityType ;
-      typedef typename DomainSpace :: EntityType RowEntityType ;
-      typedef typename RangeSpace :: EntityType ColumnEntityType ;
+      typedef typename DomainSpaceType :: EntityType  DomainEntityType ;
+      typedef typename RangeSpaceType  :: EntityType  RangeEntityType ;
+      typedef typename DomainSpaceType :: EntityType  RowEntityType ;
+      typedef typename RangeSpaceType  :: EntityType  ColumnEntityType ;
+
+      typedef typename DomainSpaceType :: BlockMapperType DomainBlockMapperType ;
+      typedef NonBlockMapper< DomainBlockMapperType, 
+                              DomainSpaceType :: localBlockSize > DomainMapperType;
+      typedef typename RangeSpaceType :: BlockMapperType RangeBlockMapperType ;
+      typedef NonBlockMapper< RangeBlockMapperType, 
+                              RangeSpaceType :: localBlockSize > RangeMapperType;
 
     private:  
       typedef SparseRowMatrixObject< DomainSpaceType, RangeSpaceType, Traits > ThisType;
@@ -456,9 +457,6 @@ namespace Dune
       typedef LocalMatrixWrapper< LocalMatrixStackType > LocalMatrixType;
 
       typedef ColumnObject< ThisType > LocalColumnObjectType;
-
-      typedef typename Traits :: DomainMapperType  DomainMapperType;
-      typedef typename Traits :: RangeMapperType   RangeMapperType;
 
     protected:
       const DomainSpaceType &domainSpace_;
@@ -763,15 +761,17 @@ namespace Dune
     {
       typedef DomainSpace DomainSpaceType;
       typedef RangeSpace RangeSpaceType;
+
+      typedef SparseRowMatrixObject< DomainSpaceType, RangeSpaceType, TraitsImp >
+        SparseRowMatrixObjectType;
       
-      typedef typename SparseRowMatrixObject< DomainSpaceType, RangeSpaceType, TraitsImp >
-        :: template LocalMatrix< MatrixObject > LocalMatrixType;
+      typedef typename SparseRowMatrixObjectType :: template LocalMatrix< MatrixObject > LocalMatrixType;
 
       typedef typename RangeSpaceType :: RangeFieldType RangeFieldType;
       typedef RangeFieldType LittleBlockType;
 
-      typedef typename TraitsImp::DomainMapperType DomainMapperType;
-      typedef typename TraitsImp::RangeMapperType  RangeMapperType;
+      typedef typename SparseRowMatrixObjectType::DomainMapperType  DomainMapperType;
+      typedef typename SparseRowMatrixObjectType::RangeMapperType   RangeMapperType;
     };
 
 
@@ -814,12 +814,14 @@ namespace Dune
       MatrixType &matrix_; 
       const DomainMapperType& domainMapper_;
       const RangeMapperType&  rangeMapper_;
-      
-      //! global index in the DomainSpace
-      std :: vector< int > rowMapper_;
 
+      typedef std :: vector< typename RangeMapperType :: SizeType > RowIndicesType ;
+      //! global index in the DomainSpace
+      RowIndicesType rowIndices_;
+
+      typedef std :: vector< typename DomainMapperType :: SizeType > ColumnIndicesType ;
       //! global index in the RangeSpace
-      std :: vector< int > colMapper_;
+      ColumnIndicesType columnIndices_;
 
       using BaseType :: domainSpace_;
       using BaseType :: rangeSpace_;
@@ -854,24 +856,24 @@ namespace Dune
         BaseType::init( domainEntity, rangeEntity );
           
         // rows are determined by the range space
-        rowMapper_.resize( rangeMapper_.numDofs( rangeEntity ) );
-        rangeMapper_.mapEach( rangeEntity, Fem::AssignFunctor< std::vector< int > >( rowMapper_ ) );
+        rowIndices_.resize( rangeMapper_.numDofs( rangeEntity ) );
+        rangeMapper_.mapEach( rangeEntity, AssignFunctor< RowIndicesType >( rowIndices_ ) );
 
         // columns are determind by the domain space
-        colMapper_.resize( domainMapper_.numDofs( domainEntity ) );
-        domainMapper_.mapEach( domainEntity, Fem::AssignFunctor< std::vector< int > >( colMapper_ ) );
+        columnIndices_.resize( domainMapper_.numDofs( domainEntity ) );
+        domainMapper_.mapEach( domainEntity, AssignFunctor< ColumnIndicesType >( columnIndices_ ) );
       }
 
       //! return number of rows 
       int rows () const
       {
-        return rowMapper_.size();
+        return rowIndices_.size();
       }
 
       //! return number of columns 
       int columns () const
       {
-        return colMapper_.size();
+        return columnIndices_.size();
       }
 
       //! add value to matrix entry
@@ -881,7 +883,7 @@ namespace Dune
         assert( (localRow >= 0) && (localRow < rows()) );
         assert( (localCol >= 0) && (localCol < columns()) );
 
-        matrix_.add( rowMapper_[ localRow ], colMapper_[ localCol ], value );
+        matrix_.add( rowIndices_[ localRow ], columnIndices_[ localCol ], value );
       }
 
       //! get matrix entry 
@@ -890,7 +892,7 @@ namespace Dune
         assert( (localRow >= 0) && (localRow < rows()) );
         assert( (localCol >= 0) && (localCol < columns()) );
 
-        return matrix_( rowMapper_[ localRow ], colMapper_[ localCol ] );
+        return matrix_( rowIndices_[ localRow ], columnIndices_[ localCol ] );
       }
 
       //! set matrix entry to value 
@@ -899,28 +901,28 @@ namespace Dune
         assert( (localRow >= 0) && (localRow < rows()) );
         assert( (localCol >= 0) && (localCol < columns()) );
 
-        matrix_.set( rowMapper_[ localRow ], colMapper_[ localCol ], value );
+        matrix_.set( rowIndices_[ localRow ], columnIndices_[ localCol ], value );
       }
 
       //! set matrix row to zero except diagonla entry 
       void unitRow( const int localRow )
       {
         assert( (localRow >= 0) && (localRow < rows()) );
-        matrix_.unitRow( rowMapper_[ localRow ] );
+        matrix_.unitRow( rowIndices_[ localRow ] );
       }
 
       //! set matrix row to zero
       void clearRow( const int localRow )
       {
         assert( (localRow >= 0) && (localRow < rows()) );
-        matrix_.clearRow( rowMapper_[localRow]);
+        matrix_.clearRow( rowIndices_[localRow]);
       }
 
       //! set matrix column to zero
       void clearCol ( const int localCol )
       {
         assert( (localCol >= 0) && (localCol < columns()) );
-        matrix_.clearCol( colMapper_[localCol] );
+        matrix_.clearCol( columnIndices_[localCol] );
       }
 
       //! clear all entries belonging to local matrix 
@@ -928,7 +930,7 @@ namespace Dune
       {
         const int row = rows();
         for( int i = 0; i < row; ++i )
-          matrix_.clearRow( rowMapper_[ i ] );
+          matrix_.clearRow( rowIndices_[ i ] );
       }
 
       //! scale local matrix with a certain value 
@@ -936,7 +938,7 @@ namespace Dune
       {
         const int row = rows();
         for( int i = 0; i < row; ++i )
-          matrix_.scaleRow( rowMapper_[ i ] , value );
+          matrix_.scaleRow( rowIndices_[ i ] , value );
       }
 
       //! resort all global rows of matrix to have ascending numbering 
@@ -944,7 +946,7 @@ namespace Dune
       {
         const int row = rows();
         for( int i = 0; i < row; ++i )
-          matrix_.resortRow( rowMapper_[ i ] );
+          matrix_.resortRow( rowIndices_[ i ] );
       }
     };
 
