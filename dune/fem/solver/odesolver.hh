@@ -447,22 +447,8 @@ namespace DuneODE
 
     ImplicitOdeSolver(OperatorType& op, 
                       TimeProviderBase& tp,
-                      const int order, 
-                      bool verbose ) DUNE_DEPRECATED :
-      BaseType(tp, order),
-      impl_( op ),
-      linsolver_( 0 ),
-      param_( ODEParameters().clone() ),
-      verbose_( param_->verbose() ),
-      cfl_(1.0),
-      cflMax_( param_->cflMax() )
-    {
-    }
-
-    ImplicitOdeSolver(OperatorType& op, 
-                      TimeProviderBase& tp,
                       const int order,
-                      const ODEParameters& parameter= ODEParameters() ) :
+                      const ODEParameters& parameter = ODEParameters() ) :
       BaseType(tp, order),
       impl_( op ),
       linsolver_( 0 ),
@@ -644,17 +630,8 @@ namespace DuneODE
     SemiImplicitOdeSolver(OperatorType& explOp, 
                           OperatorType& implOp, 
                           TimeProviderBase& tp,
-                          const int order, const bool verbose ) DUNE_DEPRECATED :
-      BaseType( implOp, tp, order, ODEParameters() ),
-      expl_( explOp )
-    {
-    }
-
-    SemiImplicitOdeSolver(OperatorType& explOp, 
-                          OperatorType& implOp, 
-                          TimeProviderBase& tp,
                           const int order,
-                          const ODEParameters& parameter=ODEParameters()) :
+                          const ODEParameters& parameter = ODEParameters() ) :
       BaseType( implOp, tp, order, parameter ),
       expl_( explOp )
     {
