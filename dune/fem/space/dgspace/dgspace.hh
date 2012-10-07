@@ -182,10 +182,8 @@ namespace Dune
         }
 
 #ifndef NDEBUG
-        int maxNumDofs = shapeFunctionSets_.maxSize();
+        size_t maxNumDofs = shapeFunctionSets_.maxSize();
 
-        // check maxNumDofs 
-        assert( maxNumDofs > 0 );
         // this should be the same 
         assert( maxNumDofs == localBlockSize * blockMapper().maxNumDofs() );
 #endif
@@ -266,7 +264,7 @@ namespace Dune
         return blockMapper_;
       }
 
-    protected:  
+    private:  
       //! \brief prohibited empty constructor  
       DiscontinuousGalerkinSpaceBase();
       //! \brief prohibited empty copy constructor  
