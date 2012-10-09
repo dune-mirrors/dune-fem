@@ -203,8 +203,10 @@ namespace Dune
       //! type of base class 
       typedef SpaceOperatorStorage< OperatorType > BaseType;
 
+			protected:
       // use pass method of base 
       using BaseType :: pass;
+			private:
       
       //! type of destination 
       typedef typename OperatorType::DestinationType DestinationType;
