@@ -2,7 +2,7 @@
 #define DUNE_FEM_DATAOUTPUT_HH
 
 #ifndef USE_VTKWRITER
-#define USE_VTKWRITER 1
+#define USE_VTKWRITER 0
 #endif
 
 //#define USE_GRAPE 0
@@ -752,7 +752,7 @@ namespace Dune
         filename = writeGnuPlotOutput();
         break;
       default:
-        DUNE_THROW(NotImplemented,"DataOutput::write: wrong output format");
+        DUNE_THROW(NotImplemented,"DataOutput::write: wrong output format = " << outputFormat_);
       }
 
       if( outputFormat_ != none ) 
