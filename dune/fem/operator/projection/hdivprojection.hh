@@ -356,8 +356,7 @@ namespace Dune
 
         VolumeQuadratureType quad (en,polOrd);
         DomainType result;
-        JacobianRangeType valTmp;
-        JacobianRangeType val;
+        std::vector< JacobianRangeType > valTmpVec( bSet.size() );
         DomainType bVal; 
         DomainType aVal; 
 
@@ -393,10 +392,10 @@ namespace Dune
           uLF.evaluate(quad[l], result);
 
           // evaluate base functions of u 
-          for(int j=0; j<cols; ++j)     
-          {
-            uLF.baseFunctionSet().evaluate(j, quad[l], uRets[j] );
-          }
+          uLF.baseFunctionSet().evaluateAll( quad[l], uRets );
+
+          // evaluate gradients 
+          bSet.jacobianAll( quad[l], inv, valTmpVec );
 
           // for all bubble functions 
           for( int i = 0 ; i<enDofs; i += bubbleMod ) 
@@ -410,10 +409,10 @@ namespace Dune
             const int baseFct = lagrangePointSet.entityDofNumber( 0, 0, localBaseFct ); 
             
             // evaluate gradient 
-            bSet.jacobian( baseFct, quad[l], valTmp );
+            JacobianRangeType& val = valTmpVec[ baseFct ];
 
             //apply inverse 
-            inv.mv( valTmp[0], val[0] );
+            //inv.mv( valTmp[0], val[0] );
 
             for(int d = 0; d<bubbleMod; ++d ) 
             {
@@ -459,7 +458,7 @@ namespace Dune
         RangeType uPhi;
 
         typedef typename ElementGradientSpaceType :: JacobianRangeType GradJacobianRangeType; 
-        GradJacobianRangeType gradTmp;
+        std::vector< GradJacobianRangeType > gradTmpVec( bSet.size() );
         GradJacobianRangeType gradPhi;
 
         typedef typename EntityType :: Geometry Geometry ;
@@ -484,11 +483,13 @@ namespace Dune
           uLF.evaluate(quad[l], result);
 
           // evaluate base function on quadrature point 
-          for(int j=0; j<cols; ++j)     
-          {
-            uLF.baseFunctionSet().evaluate(j, quad[l], uRets[ j ] );
-          }
+          uLF.baseFunctionSet().evaluateAll( quad[l], uRets );
 
+          // evaluate gradient (skip first function because this function
+          // is constant and the gradient therefore 0 )
+          bSet.jacobianAll( quad[l], inv, gradTmpVec );
+
+            // apply jacobian Inverse 
           for(int i=0; i<localRows; ++i)     
           {
             // we might have other row 
@@ -496,10 +497,7 @@ namespace Dune
 
             // evaluate gradient (skip first function because this function
             // is constant and the gradient therefore 0 )
-            bSet.jacobian( baseFunctionOffset( i ), quad[l], gradTmp);
-
-            // apply jacobian Inverse 
-            inv.mv( gradTmp[0], gradPhi[0] );
+            GradJacobianRangeType& gradPhi = gradTmpVec[ baseFunctionOffset( i ) ];
 
             const double uDGVal = result * gradPhi[0];
             rhs[row] += uDGVal * intel;  
@@ -554,7 +552,7 @@ namespace Dune
       template <class GradBaseFunctionSet>
       int gradientBaseFct(const GradBaseFunctionSet& gradSet) const 
       {
-        return (gradPolOrd <= 0) ? 0 : gradSet.numBaseFunctions() - gradFuncOffset;
+        return (gradPolOrd <= 0) ? 0 : gradSet.size() - gradFuncOffset;
       }
 
       int baseFunctionOffset(const int i) const 
@@ -670,7 +668,7 @@ namespace Dune
         const FaceBSetType faceSet = 
           GetSubBaseFunctionSet<FaceBSetType,GridType>::faceBaseSet( *start , faceSpace_ ); 
         // number of dofs on faces 
-        const int numFaceDofs = faceSet.numBaseFunctions();
+        const int numFaceDofs = faceSet.size();
         
 
         const GradientBaseSetType gradSet = gradSpace_.baseFunctionSet(*start);
@@ -909,6 +907,10 @@ namespace Dune
             // create quadrature 
             FaceQuadratureType faceQuadInner(gridPart, inter, polOrd, FaceQuadratureType::INSIDE);
             const int quadNop = faceQuadInner.nop();
+
+            std::vector< RangeType > uPhiVec( numDofs );
+            std::vector< FaceRangeType > faceValVec( numFaceDofs );
+
             for (int l = 0; l < quadNop ; ++l)
             {
               DomainType unitNormal = 
@@ -925,21 +927,22 @@ namespace Dune
 
               RangeFieldType val = ret * unitNormal; 
               val *= intel;
+
+              bSet.evaluateAll( faceQuadInner[l], uPhiVec );
              
               // evaluate base functions 
               for(int i=0; i<numDofs; ++i) 
               {
-                bSet.evaluate(i,faceQuadInner[l], uPhi); 
-                rets[i]  = uPhi * unitNormal; 
+                rets[i]  = uPhiVec[ i ] * unitNormal; 
                 rets[i] *= intel;
               }
+
+              faceSet.evaluateAll( faceQuadInner[ l ], faceValVec );
 
               int row = firstRow; 
               for(int j=0; j<numFaceDofs; ++j, ++row)
               {
-                // can the following line ever have worked?
-                // faceSet.evaluate(j,faceQuadInner.localPoint(l), faceVal);
-                faceSet.evaluate( j, faceQuadInner[ l ], faceVal );
+                FaceRangeType& faceVal = faceValVec[ j ];
                 rhs[row] += val*faceVal[0];
 
                 for(int i=0; i<numDofs; ++i) 
@@ -1014,6 +1017,9 @@ namespace Dune
         const int quadNop = faceQuadInner.nop();
         const int numDofs = uLF.numDofs();
 
+        std::vector< RangeType > phiVec( numDofs );
+        std::vector< FaceRangeType > facePhiVec( numFaceDofs );
+
         for (int l = 0; l < quadNop ; ++l)
         {
           DomainType unitNormal = 
@@ -1037,20 +1043,23 @@ namespace Dune
           RangeFieldType val = ret * unitNormal; 
           val *= intel;
 
+          bSet.evaluateAll( faceQuadInner[l], phiVec );
+
           // evaluate base functions 
           for(int i=0; i<numDofs; ++i) 
           {
-            bSet.evaluate(i, faceQuadInner[l], ret);
-            rets[i]  = ret * unitNormal;
+            rets[i]  = phiVec[ i ] * unitNormal;
             rets[i] *= intel;
           }
          
+          // evaluate all basis functions 
+          faceSet.evaluateAll( faceQuadInner[ l ], facePhiVec );
+
           int row = firstRow; 
           for(int j=0; j<numFaceDofs; ++j, ++row )
           {
-            // can the following line ever have worked?
-            // faceSet.evaluate(j, faceQuadInner.localPoint(l), faceVal);
-            faceSet.evaluate( j, faceQuadInner[ l ], faceVal );
+            FaceRangeType& faceVal = facePhiVec[ j ];
+
             rhs[row] += val * faceVal[0];
 
             for(int i=0; i<numDofs; ++i) 
