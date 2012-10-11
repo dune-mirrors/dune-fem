@@ -136,7 +136,7 @@ namespace Dune
                 CombinedSelectorType> DiscreteModelCallerType;
 
       typedef typename GridType :: ctype ctype;
-      typedef FieldMatrix<ctype,dim,dim> JacobianInverseType;
+      typedef typename GeometryType::JacobianInverseTransposed JacobianInverseTransposedType;
       
       //my Typedefs
       typedef typename DiscreteFunctionSpaceType::DomainFieldType DomainFieldType;
@@ -756,7 +756,7 @@ namespace Dune
           const double intel = volQuad.weight(l)
               *geo.integrationElement(volQuad.point(l));
 
-          const JacobianInverseType& inv =
+          const JacobianInverseTransposedType& inv =
             geo.jacobianInverseTransposed(volQuad.point(l));
 
           ////////////////////////////////////
@@ -1093,9 +1093,7 @@ namespace Dune
                                                     const JacobianRangeType &psi ) const
       {
         typedef typename EntityType :: Geometry GeometryType;
-        typedef FieldMatrix< typename GeometryType :: ctype,
-                             GeometryType :: mydimension,
-                             GeometryType :: mydimension >
+        typedef typename GeometryType :: JacobianInverseTransposed
           GeometryJacobianType;
 
         const GeometryType &geometry = entity.geometry();

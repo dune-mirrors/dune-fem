@@ -372,7 +372,7 @@ namespace Dune
         typedef typename Geometry :: ctype ctype; 
         enum { cdim  = Geometry :: coorddimension };
         enum { mydim = Geometry :: mydimension    };
-        typedef FieldMatrix<ctype, cdim, mydim> JacobianInverseType;
+        typedef typename Geometry::JacobianInverseTransposed JacobianInverseType;
 
         // get number of dofs for codim 0 (skip first for) 
         const int enDofs = numberOfBubbles( lagrangePointSet.numDofs( 0 ), type ,
@@ -468,7 +468,7 @@ namespace Dune
         typedef typename Geometry :: ctype ctype; 
         enum { cdim  = Geometry :: coorddimension };
         enum { mydim = Geometry :: mydimension    };
-        typedef FieldMatrix<ctype, cdim, mydim> JacobianInverseType;
+        typedef typename Geometry::JacobianInverseTransposed JacobianInverseType;
 
         const int quadNop = quad.nop();
         for (int l = 0; l < quadNop ; ++l)
