@@ -20,7 +20,7 @@ namespace Dune
     template <int p, int dim>
     struct NumLegendreBaseFunctions
     {
-      enum { numBaseFct = Power_m_p<p+1,dim>::power };
+      enum { numBaseFct = StaticPower<p+1,dim>::power };
     };
 
     template < class FunctionSpaceType, int polOrd>
