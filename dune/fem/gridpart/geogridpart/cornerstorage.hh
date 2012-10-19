@@ -71,7 +71,7 @@ namespace Dune
 
       unsigned int numCorners () const
       {
-        return GenericReferenceElements< typename CoordFunctionType::GridPartType::GridType::ctype, dimension >::general( type() ).size(dimension);
+        return ReferenceElements< typename CoordFunctionType::GridPartType::GridType::ctype, dimension >::general( type() ).size(dimension);
       }
 
     private:
