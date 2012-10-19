@@ -40,13 +40,15 @@ namespace Dune
   
     template< class CoordFunction >
     struct GlobalGeometryTraits< Fem::GeoGridPartFamily< CoordFunction > >
-    : public DefaultGeometryTraits< typename CoordFunction::RangeFieldType, CoordFunction::FunctionSpaceType::dimDomain, CoordFunction::FunctionSpaceType::dimRange >
+    : public DefaultGeometryTraits< typename CoordFunction::RangeFieldType, 
+                                    CoordFunction::FunctionSpaceType::dimDomain, 
+                                    CoordFunction::FunctionSpaceType::dimRange >
     {
       typedef Fem::GeoGridPartFamily< CoordFunction > GridPartFamily;
 
       typedef DuneCoordTraits< typename CoordFunction::RangeFieldType > CoordTraits;
 
-      static const int dimGrid = CoordFunction::FunctionSpaceType::dimDomain;
+      static const int dimGrid  = CoordFunction::FunctionSpaceType::dimDomain;
       static const int dimWorld = CoordFunction::FunctionSpaceType::dimRange;
 
       static const bool hybrid = !Capabilities::hasSingleGeometryType< typename CoordFunction::GridType >::v;
