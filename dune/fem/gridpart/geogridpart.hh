@@ -8,6 +8,7 @@
 #include <dune/fem/gridpart/geogridpart/datahandle.hh>
 #include <dune/fem/gridpart/geogridpart/entity.hh>
 #include <dune/fem/gridpart/geogridpart/entitypointer.hh>
+#include <dune/fem/gridpart/geogridpart/geometry.hh>
 #include <dune/fem/gridpart/geogridpart/intersection.hh>
 #include <dune/fem/gridpart/geogridpart/intersectioniterator.hh>
 #include <dune/fem/gridpart/geogridpart/iterator.hh>
@@ -28,67 +29,7 @@ namespace Dune
     template< class CoordFunction >
     class GeoGridPartFamily;
 
-  } // namespace Fem
 
-
-
-  namespace GenericGeometry
-  {
-
-    // GeometryTraits for GeoGridPart
-    // ------------------------------
-  
-    template< class CoordFunction >
-    struct GlobalGeometryTraits< Fem::GeoGridPartFamily< CoordFunction > >
-    : public DefaultGeometryTraits< typename CoordFunction::RangeFieldType, 
-                                    CoordFunction::FunctionSpaceType::dimDomain, 
-                                    CoordFunction::FunctionSpaceType::dimRange >
-    {
-      typedef Fem::GeoGridPartFamily< CoordFunction > GridPartFamily;
-
-      typedef DuneCoordTraits< typename CoordFunction::RangeFieldType > CoordTraits;
-
-      static const int dimGrid  = CoordFunction::FunctionSpaceType::dimDomain;
-      static const int dimWorld = CoordFunction::FunctionSpaceType::dimRange;
-
-      static const bool hybrid = !Capabilities::hasSingleGeometryType< typename CoordFunction::GridType >::v;
-      // this value is only used when hybrid is false (and only valid in that case)
-      static const unsigned int topologyId = Capabilities::hasSingleGeometryType< typename CoordFunction::GridType >::topologyId;
-
-      template< class Topology >
-      struct Mapping
-      {
-        typedef Fem::GeoCornerStorage< Topology, const GridPartFamily > CornerStorage;
-        typedef CornerMapping< CoordTraits, Topology, dimWorld, CornerStorage > type;
-      };
-
-      struct Caching
-      {
-        static const EvaluationType evaluateJacobianTransposed = ComputeOnDemand;
-        static const EvaluationType evaluateJacobianInverseTransposed = ComputeOnDemand;
-        static const EvaluationType evaluateIntegrationElement = ComputeOnDemand;
-      };
-    };
-    
-  } // namespace GenericGeometry
-
-
-
-  namespace FacadeOptions
-  {
-
-    template< int mydim, int cdim, class CoordFunction >
-    struct StoreGeometryReference< mydim, cdim, const Fem::GeoGridPartFamily< CoordFunction >, Dune::GenericGeometry::Geometry >
-    {
-      static const bool v = false;
-    };
-
-  } // namespace FacadeOptions
-
-
-
-  namespace Fem
-  {
 
     // GeoGridPartFamily
     // -----------------
@@ -112,7 +53,7 @@ namespace Dune
         template< int codim >
         struct Codim
         {
-          typedef Dune::Geometry< dimension - codim, dimensionworld, const GridPartFamily, Dune::GenericGeometry::Geometry > Geometry;
+          typedef Dune::Geometry< dimension - codim, dimensionworld, const GridPartFamily, GeoGeometry > Geometry;
           typedef typename HostGridPartType::template Codim< codim >::LocalGeometryType LocalGeometry;
 
           typedef GeoEntityPointer< GeoEntityPointerTraits< codim, const GridPartFamily > > EntityPointerImpl;

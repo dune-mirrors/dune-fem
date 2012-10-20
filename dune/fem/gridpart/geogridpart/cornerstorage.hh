@@ -25,6 +25,7 @@ namespace Dune
     class LagrangeDiscreteFunctionSpace;
 
 
+
     // GeoDiscreteCoordFunctionCaller
     // ------------------------------
 
@@ -69,7 +70,7 @@ namespace Dune
         return hostEntity_.type();
       }
 
-      unsigned int numCorners () const
+      std::size_t numCorners () const
       {
         return ReferenceElements< typename CoordFunctionType::GridPartType::GridType::ctype, dimension >::general( type() ).size(dimension);
       }
@@ -112,7 +113,7 @@ namespace Dune
         return hostCorners_.type();
       }
 
-      unsigned int numCorners () const
+      std::size_t numCorners () const
       {
         return hostCorners_.numCorners();
       }
@@ -170,11 +171,11 @@ namespace Dune
       : coordFunctionCaller_( coordFunction, hostEntity )
       {}
 
-      template< unsigned int numCorners >
-      void calculate ( Coordinate (&corners)[ numCorners ] ) const
+      template< std::size_t size >
+      void calculate ( Dune::array< Coordinate, size > &corners ) const
       {
-        assert( numCorners == coordFunctionCaller_.numCorners() );
-        for( unsigned int i = 0; i < numCorners; ++i )
+        const std::size_t numCorners = coordFunctionCaller_.numCorners();
+        for( std::size_t i = 0; i < numCorners; ++i )
           coordFunctionCaller_.evaluate( i, corners[ i ] );
       }
 
@@ -208,11 +209,13 @@ namespace Dune
       : localCoordFunction_( localCoordFunction )
       {}
 
-      template< unsigned int numCorners >
-      void calculate ( Coordinate (&corners)[ numCorners ] ) const
+      template< std::size_t size >
+      void calculate ( Dune::array< Coordinate, size > &corners ) const
       {
-        assert( numCorners * dimensionworld == localCoordFunction_.numDofs() );
-        for( unsigned int i = 0; i < numCorners; ++i )
+        assert( (localCoordFunction_.numDofs() % dimensionworld) == 0 );
+        const std::size_t numCorners = localCoordFunction_.numDofs() / dimensionworld;
+        assert( size >= numCorners );
+        for( std::size_t i = 0; i < numCorners; ++i )
         {
           for( int k = 0; k < dimensionworld; ++k )
             corners[ i ][ k ] = localCoordFunction_[ i*dimensionworld + k ];
@@ -256,11 +259,12 @@ namespace Dune
         hostLocalGeometry_( hostLocalGeometry )
       {}
 
-      template< unsigned int numCorners >
-      void calculate ( Coordinate (&corners)[ numCorners ] ) const
+      template< std::size_t size >
+      void calculate ( Dune::array< Coordinate, size > &corners ) const
       {
-        assert( numCorners == hostLocalGeometry_.corners() );
-        for( unsigned int i = 0; i < numCorners; ++i )
+        const std::size_t numCorners = hostLocalGeometry_.corners();
+        assert( size >= numCorners );
+        for( std::size_t i = 0; i < numCorners; ++i )
           corners[ i ] = elementGeometry_.global( hostLocalGeometry_.corner( i ) );
       }
 
@@ -274,36 +278,25 @@ namespace Dune
     // GeoCornerStorage
     // ----------------
 
-    template< class Topology, class GridFamily >
+    template< int mydim, int cdim, class GridFamily >
     class GeoCornerStorage
     {
-      typedef typename remove_const< GridFamily >::type::Traits Traits;
-
       typedef typename remove_const< GridFamily >::type::ctype ctype;
 
-      static const int dimension = remove_const< GridFamily >::type::dimension;
-      static const int mydimension = Topology::dimension;
-      static const int codimension = dimension - mydimension;
-      static const int dimensionworld = remove_const< GridFamily >::type::dimensionworld;
+      typedef FieldVector< ctype, cdim > Coordinate;
 
-      typedef FieldVector< ctype, dimensionworld > Coordinate;
+      typedef Dune::array< Coordinate, (1 << mydim) > Coords;
 
     public:
-      static const unsigned int size = Topology::numCorners;
+      typedef typename Coords::const_iterator const_iterator;
 
-      template< class SubTopology >
-      struct SubStorage
-      {
-        typedef GeoCornerStorage< SubTopology, GridFamily > type;
-      };
-
-      explicit GeoCornerStorage ( const GeoCoordVector< mydimension, GridFamily > &coords )
+      explicit GeoCornerStorage ( const GeoCoordVector< mydim, GridFamily > &coords )
       {
         coords.calculate( coords_ );
       }
 
       template< class LCFTraits >
-      explicit GeoCornerStorage ( const GeoLocalCoordVector< mydimension, GridFamily, LCFTraits > &coords )
+      explicit GeoCornerStorage ( const GeoLocalCoordVector< mydim, GridFamily, LCFTraits > &coords )
       {
         coords.calculate( coords_ );
       }
@@ -313,21 +306,16 @@ namespace Dune
         coords.calculate( coords_ );
       }
 
-      template< class Mapping, unsigned int codim >
-      explicit
-      GeoCornerStorage ( const GenericGeometry::SubMappingCoords< Mapping, codim > &coords )
-      {
-        for( unsigned int i = 0; i < size; ++i )
-          coords_[ i ] = coords[ i ];
-      }
-
       const Coordinate &operator[] ( unsigned int i ) const
       {
         return coords_[ i ];
       }
 
+      const_iterator begin () const { return coords_.begin(); }
+      const_iterator end () const { return coords_.end(); }
+
     private:
-      Coordinate coords_[ size ];
+      Coords coords_;
     };
 
   } // namespace Fem
