@@ -21,11 +21,11 @@ namespace Dune
       static const int dimension = GridType::dimension;
       static const int codimension = codim;
 
-      typedef GenericReferenceElement< FieldType, dimension-codimension >
+      typedef Dune::ReferenceElement< FieldType, dimension-codimension >
         ReferenceElementType;
 
     protected:
-      typedef GenericReferenceElementContainer< FieldType, dimension-codimension >
+      typedef Dune::ReferenceElementContainer< FieldType, dimension-codimension >
         ContainerType;
 
       ReferenceElementProviderBase ()

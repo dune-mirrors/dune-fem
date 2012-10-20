@@ -233,7 +233,7 @@ namespace Dune
       virtual const MatrixType& buildTransformationMatrix(int tiwst) const;
       
     private:
-      const GenericReferenceElement<ct, dim>& refElem_;
+      const Dune::ReferenceElement<ct, dim>& refElem_;
       mutable MatrixType mat_;
     };
 
@@ -254,7 +254,7 @@ namespace Dune
       virtual const MatrixType& buildTransformationMatrix(int tiwst) const;
       
     private:
-      const GenericReferenceElement<ct, dim>& refElem_;
+      const Dune::ReferenceElement<ct, dim>& refElem_;
       mutable MatrixType mat_;
     };
 
@@ -277,7 +277,7 @@ namespace Dune
       typedef FaceTopologyMapping<tetra> FaceTopo;
 
     private:
-      const GenericReferenceElement<ct, dim>& refElem_;
+      const Dune::ReferenceElement<ct, dim>& refElem_;
       mutable MatrixType mat_;
     };
 
@@ -302,7 +302,7 @@ namespace Dune
       typedef FaceTopologyMapping<hexa> FaceTopo;
 
     private:
-      const GenericReferenceElement<ct, dim>& refElem_;
+      const Dune::ReferenceElement<ct, dim>& refElem_;
       mutable MatrixType mat_;
     };
 

@@ -1052,7 +1052,7 @@ namespace Dune
           if (! codimLeafSet( codim ).exists( element, i) )
           {
             codimLeafSet( codim ).insertSubEntity( element,i );
-            if ( Dune::GenericReferenceElements< ctype, dimension >::
+            if ( Dune::ReferenceElements< ctype, dimension >::
                general( element.type() ).type( i, codim ) == type )
               ++count;
           }

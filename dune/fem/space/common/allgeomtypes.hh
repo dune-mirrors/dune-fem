@@ -43,7 +43,7 @@ namespace Dune
       typedef typename GridType::ctype ctype;
 
       //! type of reference element 
-      typedef GenericReferenceElement< ctype, dim > ReferenceElementType; 
+      typedef Dune::ReferenceElement< ctype, dim > ReferenceElementType; 
 
       //! type of domain vector 
       typedef FieldVector<ctype, dim> DomainType;
@@ -75,7 +75,7 @@ namespace Dune
       //! return reference element for type 
       static const ReferenceElementType &referenceElement ( const GeometryType &type )
       {
-        return GenericReferenceElements< ctype, dim >::general( type );
+        return Dune::ReferenceElements< ctype, dim >::general( type );
       }
 
     protected:  

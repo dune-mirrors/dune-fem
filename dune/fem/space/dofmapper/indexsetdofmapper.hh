@@ -46,8 +46,8 @@ namespace Dune
 
       static const int dimension = GridPart::dimension;
 
-      typedef GenericReferenceElement< typename GridPart::ctype, dimension > RefElementType;
-      typedef GenericReferenceElements< typename GridPart::ctype, dimension > RefElementsType;
+      typedef Dune::ReferenceElement< typename GridPart::ctype, dimension > RefElementType;
+      typedef Dune::ReferenceElements< typename GridPart::ctype, dimension > RefElementsType;
 
 
       // forbid copying and assignment
@@ -246,8 +246,8 @@ namespace Dune
         if( ! isCartesian && dimension == 2 && codim == 1 && numDofs > 1 ) 
         {
           typedef typename GridPart::ctype FieldType ;
-          const GenericReferenceElement< FieldType, dimension > &refElem
-              = GenericReferenceElements< FieldType, dimension >::general( element_.type() );
+          const Dune::ReferenceElement< FieldType, dimension > &refElem
+              = Dune::ReferenceElements< FieldType, dimension >::general( element_.type() );
 
 #ifndef NDEBUG
           const int vxSize = refElem.size( subEntity, codim, dimension );

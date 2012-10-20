@@ -572,8 +572,8 @@ namespace Dune
           // account for possible twists in the grid (only 2d)
           if( dimension == 2 && codim == 1 ) 
           {
-            const GenericReferenceElement< FieldType, dimension > &refElem
-                = GenericReferenceElements< FieldType, dimension >::general( entity.type() );
+            const Dune::ReferenceElement< FieldType, dimension > &refElem
+                = Dune::ReferenceElements< FieldType, dimension >::general( entity.type() );
 
 #ifndef NDEBUG
             const int vxSize = refElem.size( subEntity, codim, dimension );

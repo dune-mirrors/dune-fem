@@ -407,8 +407,8 @@ namespace Dune
           const Entity &entity = *it;
           const Geometry &geometry = entity.geometry();
 
-          const GenericReferenceElement< DomainFieldType, dimLocal > &refElement
-            = GenericReferenceElements< DomainFieldType, dimLocal >::general( geometry.type() );
+          const Dune::ReferenceElement< DomainFieldType, dimLocal > &refElement
+            = Dune::ReferenceElements< DomainFieldType, dimLocal >::general( geometry.type() );
 
           const LocalCoordinateType xlocal = geometry.local( x );
           if( refElement.checkInside( xlocal ) )

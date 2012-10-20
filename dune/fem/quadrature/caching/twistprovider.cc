@@ -183,7 +183,7 @@ namespace Dune
     PointTwistMapperStrategy<ct, dim>::
     PointTwistMapperStrategy(GeometryType geo) :
       TwistMapperStrategy<ct, dim>(0, 1),
-      refElem_(GenericReferenceElements<ct, dim>::cube()),
+      refElem_(Dune::ReferenceElements<ct, dim>::cube()),
       mat_(0.)
     {
       assert(dim == 0);
@@ -202,7 +202,7 @@ namespace Dune
     LineTwistMapperStrategy<ct, dim>::
     LineTwistMapperStrategy(GeometryType geo) :
       TwistMapperStrategy<ct, dim>(0, 2),
-      refElem_(GenericReferenceElements<ct, dim>::cube()),
+      refElem_(Dune::ReferenceElements<ct, dim>::cube()),
       mat_(0.)
     {
       assert(dim == 1);
@@ -222,7 +222,7 @@ namespace Dune
     TriangleTwistMapperStrategy<ct, dim>::
     TriangleTwistMapperStrategy(GeometryType geo) :
       TwistMapperStrategy<ct, dim>(-3, 3),
-      refElem_(GenericReferenceElements<ct, dim>::simplex()),
+      refElem_(Dune::ReferenceElements<ct, dim>::simplex()),
       mat_(0.)
     {
       assert(dim == 2);
@@ -248,7 +248,7 @@ namespace Dune
     QuadrilateralTwistMapperStrategy<ct, dim>::
     QuadrilateralTwistMapperStrategy(GeometryType geo) :
       TwistMapperStrategy<ct, dim>(-4, 4),
-      refElem_(GenericReferenceElements<ct, dim>::cube()),
+      refElem_(Dune::ReferenceElements<ct, dim>::cube()),
       mat_(0.)
     {
       assert(dim == 2);

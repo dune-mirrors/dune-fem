@@ -173,8 +173,8 @@ namespace Dune
       const std::vector< GeometryType >::const_iterator end = geomTypes[ 0 ].end();
       for( std::vector< GeometryType >::const_iterator it = geomTypes[ 0 ].begin(); it !=  end; ++it )
       {
-        const GenericReferenceElement< ctype, dimension > &referenceElement
-          = GenericReferenceElements< ctype, dimension >::general( *it );
+        const Dune::ReferenceElement< ctype, dimension > &referenceElement
+          = Dune::ReferenceElements< ctype, dimension >::general( *it );
         for( int cd = 1; cd <= dimension; ++cd )
         {
           const int nSubEntities = referenceElement.size( cd );

@@ -54,8 +54,8 @@ namespace Dune {
     GeometryType elemGeo = GeometryType(GeometryType::prism,3);
 
     // Get reference element
-    const GenericReferenceElement<double, dim>& refElem =
-      GenericReferenceElements<double, dim>::general(elemGeo);
+    const Dune::ReferenceElement<double, dim>& refElem =
+      Dune::ReferenceElements<double, dim>::general(elemGeo);
     
     // Loop over all faces
     for (int i = 0; i < refElem.size(codim); ++i) 
@@ -109,8 +109,8 @@ namespace Dune {
     GeometryType faceGeo = GeometryType(GeometryType::cube,2);
 
     // Get reference element
-    const GenericReferenceElement<double, dim>& refElem =
-      GenericReferenceElements<double, dim>::general(elemGeo);
+    const Dune::ReferenceElement<double, dim>& refElem =
+      Dune::ReferenceElements<double, dim>::general(elemGeo);
     
     // Build quadrature
     QuadratureType quad(faceGeo, 3);
@@ -203,8 +203,8 @@ namespace Dune {
     GeometryType faceGeo = GeometryType(GeometryType::simplex,1);
 
     // Get reference element
-    const GenericReferenceElement<double, dim>& refElem =
-      GenericReferenceElements<double, dim>::general(elemGeo);
+    const Dune::ReferenceElement<double, dim>& refElem =
+      Dune::ReferenceElements<double, dim>::general(elemGeo);
     
     // Build quadrature
     QuadratureType quad(faceGeo, 3);
@@ -248,8 +248,8 @@ namespace Dune {
     GeometryType faceGeo = GeometryType(GeometryType::cube,1);
 
     // Get reference element
-    const GenericReferenceElement<double, dim>& refElem =
-      GenericReferenceElements<double, dim>::general(elemGeo);
+    const Dune::ReferenceElement<double, dim>& refElem =
+      Dune::ReferenceElements<double, dim>::general(elemGeo);
     
     // Build quadrature
     QuadratureType quad(faceGeo, 5);

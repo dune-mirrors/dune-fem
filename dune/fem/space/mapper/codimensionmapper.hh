@@ -217,7 +217,7 @@ namespace Dune
       maxNumberOfDofs_( 0 )
     {
       typedef typename GridPartType::ctype ctype;
-      typedef GenericReferenceElements< ctype, dimension > RefElements;
+      typedef Dune::ReferenceElements< ctype, dimension > RefElements;
 
       Fem::AllGeomTypes< IndexSetType, typename GridPartType::GridType > allTypes( indexSet_ );
       const std::vector< GeometryType > &types = allTypes.geomTypes( 0 );

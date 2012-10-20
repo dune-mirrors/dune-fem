@@ -24,7 +24,7 @@ namespace Dune
       {}
 
       template< class Field, int dim >
-      Fem::DofMapperCode operator() ( const GenericReferenceElement< Field, dim > &refElement ) const
+      Fem::DofMapperCode operator() ( const Dune::ReferenceElement< Field, dim > &refElement ) const
       {
         const GeometryType type = refElement.type();
         if( lagrangePointSets_.exists( type ) )
