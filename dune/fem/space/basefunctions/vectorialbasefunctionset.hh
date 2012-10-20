@@ -584,8 +584,8 @@ namespace Dune
           const size_t baseRow = quad.cachingPoint( row ); 
 
           // if geometry has non-affine mapping we need to update jacobian inverse
-          typedef typename Geometry::Jacobian GeometryJacobianType;
-          const GeometryJacobianType& gjit = geometry.jacobianInverseTransposed( quad.point( row ) );
+          const typename Geometry::JacobianInverseTransposed &gjit
+            = geometry.jacobianInverseTransposed( quad.point( row ) );
 
           assert( jacobianStorage.size() > baseRow );
           assert( jacobianStorage[ baseRow ].size() >= numCols );
@@ -824,8 +824,8 @@ namespace Dune
           assert( jacobianStorage.size() > baseRow );
           assert( jacobianStorage[ baseRow ].size() >= numCols );
 
-          typedef typename Geometry::Jacobian GeometryJacobianType;
-          const GeometryJacobianType& gjit = geometry.jacobianInverseTransposed( quad.point( row ) );
+          const typename Geometry::JacobianInverseTransposed &gjit
+            = geometry.jacobianInverseTransposed( quad.point( row ) );
 
           JacobianRangeType jacFactorInv;
 
