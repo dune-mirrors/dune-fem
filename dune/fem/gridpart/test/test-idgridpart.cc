@@ -44,7 +44,7 @@ void testGridPart( const GridPartType & gridPart )
     else consecutiveIndex[0][index] = true;
     for (int c=0;c<=GridPartType::dimension;++c)
     {
-      int nSubEn = Dune::GenericReferenceElements< typename GridPartType::GridType::ctype, GridPartType::dimension >::
+      int nSubEn = Dune::ReferenceElements< typename GridPartType::GridType::ctype, GridPartType::dimension >::
           general( it->type() ).size(c);
       for (int i=0;i<nSubEn;++i)
       {

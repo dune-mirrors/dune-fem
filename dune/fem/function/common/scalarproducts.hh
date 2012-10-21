@@ -197,7 +197,7 @@ namespace Dune
       explicit InsertFunctor ( Map &map ) : map_( map ) {}
 
       template< class Value >
-      void operator() ( const Value &value ) { map_.insert( value ); }
+      void operator() ( const int, const Value &value ) { map_.insert( value ); }
 
     private:
       Map &map_;

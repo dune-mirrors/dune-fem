@@ -26,6 +26,8 @@ namespace Dune
       static const int polynomialOrder2 = Mapper2 :: polynomialOrder;
       static const int polynomialOrder = ( polynomialOrder1 > polynomialOrder2 ) ? polynomialOrder1 : polynomialOrder2;
 
+      typedef std::size_t SizeType;
+
       typedef CombinedMapper< Grid, Mapper1, Mapper2 >  DofMapperType;
     };
 

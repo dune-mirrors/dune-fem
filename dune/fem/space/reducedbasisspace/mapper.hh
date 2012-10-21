@@ -22,6 +22,8 @@ namespace Dune
       typedef BaseFunctionList BaseFunctionListType;
       
       typedef typename GridPartType::template Codim< 0 >::EntityType ElementType;
+
+      typedef int SizeType;
     };
 
 
@@ -39,6 +41,7 @@ namespace Dune
 
     public:
       typedef typename BaseType::Traits Traits;
+      typedef typename Traits::SizeType SizeType;
 
       typedef typename BaseType::ElementType ElementType;
      
@@ -93,7 +96,7 @@ namespace Dune
       }
      
       /** \copydoc Dune::DofMapper::size() const */
-      int size () const
+      SizeType size () const
       {
         return baseFunctionList_.size();
       }

@@ -740,19 +740,21 @@ namespace Dune
       case binary:   
         writeBinaryData( sequenceStamp );
         break;
-#if USE_VTKWRITER
       case vtk : 
       case vtkvtx :
       case subvtk :
+#if USE_VTKWRITER
         // write data in vtk output format 
         filename = writeVTKOutput();
         break;
+#else 
+        DUNE_THROW(NotImplemented,"DataOutput::write: VTKWriter was disabled by USE_VTKWRITER 0");
 #endif // #if USE_VTKWRITER
       case gnuplot :
         filename = writeGnuPlotOutput();
         break;
       default:
-        DUNE_THROW(NotImplemented,"DataOutput::write: wrong output format");
+        DUNE_THROW(NotImplemented,"DataOutput::write: wrong output format = " << outputFormat_);
       }
 
       if( outputFormat_ != none ) 

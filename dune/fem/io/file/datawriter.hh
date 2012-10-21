@@ -652,7 +652,7 @@ namespace Dune
         if( writeStep_ >= maxCheckPointNumber_ ) writeStep_ = 0;
 
         // write data 
-        std::string path = writeMyBinaryData( time, writeStep_, data_ );
+        std::string path = this->writeMyBinaryData( time, writeStep_, data_ );
 
         // if true also backup PersistenceManager 
         if( takeCareOfPersistenceManager_ ) 

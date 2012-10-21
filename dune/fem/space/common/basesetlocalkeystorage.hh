@@ -61,7 +61,7 @@ namespace Dune
           }
         }
         
-        FactoryIF* clone() const { return new FactoryImpl<SingletonProvider> (); }
+        virtual FactoryIF* clone() const { return new FactoryImpl<SingletonProvider> (); }
       };
 
       // pointer to apropriate factory 
@@ -72,11 +72,13 @@ namespace Dune
       // export value type confomring to std::vector 
       typedef Entry value_type ;
 
+      // default constructor 
       BaseSetLocalKeyStorage()
         : factory_( 0 ) 
         , entryStorage_()
       {} 
 
+      //! copy constructor 
       BaseSetLocalKeyStorage( const BaseSetLocalKeyStorage& other )
         : factory_( other.factory_ ? other.factory_->clone() : 0 )
         , entryStorage_( other.entryStorage_.size(), ( Entry * ) 0 )
@@ -134,13 +136,15 @@ namespace Dune
         }
 
         // check that type of factory is correct 
-        //assert( typeid( factory_ ) == typeid( FactoryImpl< SingletonProvider >* ) );
+        assert( dynamic_cast< const FactoryImpl< SingletonProvider >* > ( factory_ ) != 0 );
 
         // get geometry type index 
         const size_t geomIndex = index( geomType ) ;
 
         if( entryStorage_.size() <= geomIndex ) 
           entryStorage_.resize( geomIndex + 1, (Entry* ) 0 );
+
+        assert( geomIndex < entryStorage_.size() );
 
         // if entry is still not used, insert it  
         if( entryStorage_[ geomIndex ] == 0 )
@@ -163,6 +167,7 @@ namespace Dune
       //! access to stored entry with given geometry type 
       const Entry& operator [] ( const GeometryType& geomType ) const 
       {
+        // assert( factory_ );
         assert( index( geomType ) < static_cast< int >( entryStorage_.size() ) );
         assert( entryStorage_[ index( geomType ) ] != 0 );
         return *( entryStorage_[ index( geomType ) ]);

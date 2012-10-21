@@ -480,8 +480,8 @@ namespace Dune
       typedef LagrangePointSet< GridPartType, polynomialOrder > LagrangePointSetType;
 
     private:
-      typedef GenericReferenceElement< FieldType, dimension > ReferenceElementType;
-      typedef GenericReferenceElements< FieldType, dimension > ReferenceElementsType;
+      typedef Dune::ReferenceElement< FieldType, dimension > ReferenceElementType;
+      typedef Dune::ReferenceElements< FieldType, dimension > ReferenceElementsType;
 
       SubEntityLagrangePointIterator ( const LagrangePointSetType &lagrangePointSet,
                                        const unsigned int subEntity,

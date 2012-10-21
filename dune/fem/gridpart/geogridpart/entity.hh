@@ -134,7 +134,7 @@ namespace Dune
       typedef typename Traits::HostGridPartType HostGridPartType;
       typedef typename Traits::CoordFunctionType CoordFunctionType;
 
-      typedef Dune::GenericGeometry::Geometry< mydimension, dimensionworld, const GridFamily > GeometryImplType;
+      typedef typename Geometry::Implementation GeometryImplType;
 
       typedef GeoCoordVector< mydimension, GridFamily > CoordVectorType;
 

@@ -1,7 +1,7 @@
 #ifndef DUNE_FEM_LEGENDREDGBASEFUNCTIONS_HH
 #define DUNE_FEM_LEGENDREDGBASEFUNCTIONS_HH
 
-#include <dune/common/misc.hh>
+#include <dune/common/power.hh>
 #include <dune/common/static_assert.hh>
 #include <dune/common/array.hh>
 
@@ -20,7 +20,7 @@ namespace Dune
     template <int p, int dim>
     struct NumLegendreBaseFunctions
     {
-      enum { numBaseFct = Power_m_p<p+1,dim>::power };
+      enum { numBaseFct = StaticPower<p+1,dim>::power };
     };
 
     template < class FunctionSpaceType, int polOrd>

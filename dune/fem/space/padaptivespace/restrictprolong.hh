@@ -53,8 +53,8 @@ namespace Dune
         const Entity &father = fatherFunction.entity();
         const Entity &son = sonFunction.entity();
 
-        const GenericReferenceElement< ctype, dimension > &refSon
-          = GenericReferenceElements< ctype, dimension >::general( son.type() );
+        const Dune::ReferenceElement< ctype, dimension > &refSon
+          = Dune::ReferenceElements< ctype, dimension >::general( son.type() );
 
         const LagrangePointSet &pointSet = lagrangePointSet( father );
 

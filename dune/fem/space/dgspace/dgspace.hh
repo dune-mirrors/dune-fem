@@ -182,12 +182,11 @@ namespace Dune
         }
 
 #ifndef NDEBUG
-        int maxNumDofs = shapeFunctionSets_.maxSize();
+        const size_t maxNumDofs = shapeFunctionSets_.maxSize();
 
-        // check maxNumDofs 
-        assert( maxNumDofs > 0 );
         // this should be the same 
-        assert( maxNumDofs == localBlockSize * blockMapper().maxNumDofs() );
+        const size_t blockSize = localBlockSize ; // for debugging 
+        assert( codimension == 0 ? (maxNumDofs == blockSize * blockMapper().maxNumDofs()) : true );
 #endif
       }
 
@@ -266,7 +265,7 @@ namespace Dune
         return blockMapper_;
       }
 
-    protected:  
+    private:  
       //! \brief prohibited empty constructor  
       DiscontinuousGalerkinSpaceBase();
       //! \brief prohibited empty copy constructor  
@@ -301,9 +300,9 @@ namespace Dune
       typedef GridPartImp GridPartType;
       typedef typename GridPartType::GridType GridType;
 
-      enum { dimRange  = FunctionSpaceType::dimRange };
-      enum { dimDomain = FunctionSpaceType::dimDomain };
-      enum { dimLocal  = GridType :: dimension };
+      enum { dimRange    = FunctionSpaceType::dimRange };
+      enum { dimDomain   = FunctionSpaceType::dimDomain };
+      enum { dimLocal    = GridType :: dimension };
       enum { codimension = GridType :: dimensionworld - dimDomain }; 
 
       typedef typename GridPartType::IndexSetType IndexSetType;
@@ -316,7 +315,7 @@ namespace Dune
       typedef typename FunctionSpaceType::DomainType DomainType;
       typedef typename FunctionSpaceType::JacobianRangeType JacobianRangeType;
 
-      typedef typename ToLocalFunctionSpace< FunctionSpaceType, dimLocal> :: Type 
+      typedef typename ToLocalFunctionSpace< FunctionSpaceType, dimLocal > :: Type 
         BaseFunctionSpaceType;
    
       typedef VectorialBaseFunctionSet<BaseFunctionSpaceType, BaseFunctionStorageImp > ShapeFunctionSetType;

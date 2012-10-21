@@ -53,8 +53,8 @@ namespace Dune
       {
         static const int dimRange = LocalFunction< ST >::dimRange;
 
-        const GenericReferenceElement< ctype, dimension > &refSon
-          = GenericReferenceElements< ctype, dimension >::general( lfSon.entity().type() );
+        const Dune::ReferenceElement< ctype, dimension > &refSon
+          = Dune::ReferenceElements< ctype, dimension >::general( lfSon.entity().type() );
 
         const LagrangePointSetType &pointSet = lagrangePointSet( lfFather.entity() );
 

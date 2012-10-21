@@ -170,10 +170,10 @@ namespace Dune
         typedef typename Entity::ctype ctype;
         static const int dim = Entity::dimension;
 
-        const GenericReferenceElement< ctype, dim > &enRef
-          = GenericReferenceElements< ctype, dim >::general( en.type() );
-        const GenericReferenceElement< ctype, dim > &nbRef
-          = GenericReferenceElements< ctype, dim >::general( nb.type() );
+        const Dune::ReferenceElement< ctype, dim > &enRef
+          = Dune::ReferenceElements< ctype, dim >::general( en.type() );
+        const Dune::ReferenceElement< ctype, dim > &nbRef
+          = Dune::ReferenceElements< ctype, dim >::general( nb.type() );
           
         // number of vertices of face 
         const int numVertices = enRef.size( inEn, 1, dim );
@@ -261,8 +261,8 @@ namespace Dune
       {
         assert( it.outside()->type().isCube() );
         typedef UGGrid< 3 > :: ctype ctype ;
-        static const GenericReferenceElement< ctype, 3 > &refElem =
-                GenericReferenceElements< ctype, 3 >::general( it.outside()->type() );
+        static const Dune::ReferenceElement< ctype, 3 > &refElem =
+                Dune::ReferenceElements< ctype, 3 >::general( it.outside()->type() );
 
         //return UG3::CubeTwists::twistInNeighbor( it.indexInOutside() );
         return UG3::CubeTwists::twistInNeighbor( refElem, it.geometryInOutside(), it.indexInOutside() );
@@ -282,8 +282,8 @@ namespace Dune
       {
         assert( it.outside()->type().isCube() );
         typedef UGGrid< 3 > :: ctype ctype ;
-        static const GenericReferenceElement< ctype, 3 > &refElem =
-                GenericReferenceElements< ctype, 3 >::general( it.outside()->type() );
+        static const Dune::ReferenceElement< ctype, 3 > &refElem =
+                Dune::ReferenceElements< ctype, 3 >::general( it.outside()->type() );
 
         //return UG3::CubeTwists::twistInNeighbor( it.indexInOutside() );
         return UG3::CubeTwists::twistInNeighbor( refElem, it.geometryInOutside(), it.indexInOutside() );

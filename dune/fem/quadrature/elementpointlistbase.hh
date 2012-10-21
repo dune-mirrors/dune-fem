@@ -294,7 +294,7 @@ namespace Dune
       static GeometryType
       getFaceGeometry ( const GeometryType &elementGeo, const int face )
       {
-        typedef GenericReferenceElements< RealType, dimension > RefElements;
+        typedef Dune::ReferenceElements< RealType, dimension > RefElements;
         return RefElements::general( elementGeo ).type( face, codimension );
       }
 

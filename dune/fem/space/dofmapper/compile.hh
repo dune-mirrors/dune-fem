@@ -20,7 +20,7 @@ namespace Dune
 
     template< class Field, int dim >
     inline DofMapperCode
-    generateCodimensionCode ( const GenericReferenceElement< Field, dim > &refElement, int codim )
+    generateCodimensionCode ( const Dune::ReferenceElement< Field, dim > &refElement, int codim )
     {
       unsigned int count = refElement.size( codim );
       DofMapperCodeWriter code( count, count );
@@ -41,7 +41,7 @@ namespace Dune
 
     template< class Field, int dim, class LocalCoefficients >
     inline DofMapperCode
-    compile ( const GenericReferenceElement< Field, dim > &refElement,
+    compile ( const Dune::ReferenceElement< Field, dim > &refElement,
               const LocalCoefficients &localCoefficients )
     {
       const std::size_t numDofs = localCoefficients.size();

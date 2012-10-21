@@ -475,8 +475,8 @@ namespace Dune
     GenericDofMapper< GridPart, LocalCoefficientsMap >
       ::build ( const LocalCoefficientsType &localCoefficients, MapInfo &mapInfo )
     {
-      const GenericReferenceElement< void, dimension > &refElement
-        = GenericReferenceElements< void, dimension >::general( GeometryType( Topology() ) );
+      const Dune::ReferenceElement< void, dimension > &refElement
+        = Dune::ReferenceElements< void, dimension >::general( GeometryType( Topology() ) );
 
       mapInfo.numDofs = localCoefficients.size();
       mapInfo.localDof.resize( mapInfo.numDofs );

@@ -265,7 +265,7 @@ ImplicitEuler::ImplicitEuler(Communicator &comm, Function &f) :
 {}
 
 
-//class Gauss2
+//class Gauss2 (Crank-Nicholson)
 static const double Gauss2_A[] = {0.5};
 static const double Gauss2_b[] = {1.0};
 static const double Gauss2_c[] = {0.5};

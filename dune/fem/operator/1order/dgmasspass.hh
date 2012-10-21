@@ -205,8 +205,8 @@ namespace Dune
 
           typedef typename GeometryType :: ctype coordType; 
           enum { dim = GridType :: dimension };
-          const GenericReferenceElement< coordType, dim > & refElem =
-                 GenericReferenceElements< coordType, dim >::general(geo.type());
+          const Dune::ReferenceElement< coordType, dim > & refElem =
+                 Dune::ReferenceElements< coordType, dim >::general(geo.type());
           
           double volRef = refElem.volume();
           return volRef/volume;

@@ -48,7 +48,7 @@ void testGridPart( const GridPartType & gridPart )
     else consecutiveIndex[0][index] = true;
     for (int c=0;c<=GridPartType::dimension;++c)
     {
-      int nSubEn = Dune::GenericReferenceElements< typename GridPartType::GridType::ctype, GridPartType::dimension >::
+      int nSubEn = Dune::ReferenceElements< typename GridPartType::GridType::ctype, GridPartType::dimension >::
           general( it->type() ).size(c);
       for (int i=0;i<nSubEn;++i)
       {
@@ -173,8 +173,8 @@ void testExchangeGeometry ( const GridPart &gridPart, LocalFunction &localFuncti
   typedef typename GridPart::template Codim< 0 >::EntityPointerType EntityPointerType;
   typedef typename GridPart::template Codim< 0 >::GeometryType GeometryType;
 
-  typedef Dune::GenericReferenceElement< typename GridPart::ctype, GridPart::dimension > RefElementType;
-  typedef Dune::GenericReferenceElements< typename GridPart::ctype, GridPart::dimension > RefElementsType;
+  typedef Dune::ReferenceElement< typename GridPart::ctype, GridPart::dimension > RefElementType;
+  typedef Dune::ReferenceElements< typename GridPart::ctype, GridPart::dimension > RefElementsType;
 
 
   const IteratorType end = gridPart.template end< 0 >();

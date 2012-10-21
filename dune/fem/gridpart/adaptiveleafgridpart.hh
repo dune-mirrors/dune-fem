@@ -121,6 +121,7 @@ namespace Dune
         DofManager< GridType > :: instance( grid );
         return grid ;
       }
+
     public:
       //! constructor
       explicit AdaptiveGridPartBase ( GridType &grid )
@@ -142,6 +143,8 @@ namespace Dune
       { 
         IndexSetProviderType::removeObject( indexSet() );
       }
+
+      using BaseType::grid;
 
       //! Returns reference to index set of the underlying grid
       const IndexSetType &indexSet () const
@@ -185,14 +188,14 @@ namespace Dune
       inline IntersectionIteratorType
       ibegin ( const ElementType &entity ) const
       {
-        return entity.ileafbegin();
+        return grid().leafView().ibegin( entity );
       }
       
       //! iend of corresponding intersection iterator for given entity
       inline IntersectionIteratorType
       iend ( const ElementType &entity ) const
       {
-        return entity.ileafend();
+        return grid().leafView().iend( entity );
       }
 
       int boundaryId ( const IntersectionType &intersection ) const
@@ -203,7 +206,7 @@ namespace Dune
       //! Returns maxlevel of the grid
       inline int level () const
       {
-        return this->grid().maxLevel();
+        return grid().maxLevel();
       }
 
       //! corresponding communication method for this grid part
@@ -214,6 +217,7 @@ namespace Dune
       {
         this->grid().communicate( data, iftype, dir );
       }
+
     protected:
       const GridPartType& asImp() const 
       {

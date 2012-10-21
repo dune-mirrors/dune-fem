@@ -5,6 +5,7 @@
 #include <dune/common/forloop.hh>
 
 #include <dune/fem/version.hh>
+#include <dune/fem/gridpart/common/gridpart.hh>
 #include <dune/fem/gridpart/dunefemindexsets.hh>
 #include <dune/fem/gridpart/codimindexset.hh>
 
@@ -535,6 +536,7 @@ namespace Dune
         }
         else 
           return 0;
+
       }
 
       template< class Entity >
@@ -1050,7 +1052,7 @@ namespace Dune
           if (! codimLeafSet( codim ).exists( element, i) )
           {
             codimLeafSet( codim ).insertSubEntity( element,i );
-            if ( Dune::GenericReferenceElements< ctype, dimension >::
+            if ( Dune::ReferenceElements< ctype, dimension >::
                general( element.type() ).type( i, codim ) == type )
               ++count;
           }

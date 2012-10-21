@@ -5,6 +5,7 @@
 #include <set>
 
 #include <dune/fem/function/common/scalarproducts.hh>
+#include <dune/fem/misc/functor.hh>
 
 #if HAVE_DUNE_ISTL
 #include <dune/istl/operators.hh>

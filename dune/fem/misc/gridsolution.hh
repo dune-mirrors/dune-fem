@@ -106,8 +106,8 @@ namespace Dune
 #ifndef NDEBUG
         {
           // check that corners are within the reference element of the given type
-          const GenericReferenceElement< typename GridType::ctype, GridType::dimensionworld > &refElement
-               = GenericReferenceElements< typename GridType::ctype, GridType::dimensionworld >::general( entity.type() );
+          const Dune::ReferenceElement< typename GridType::ctype, GridType::dimensionworld > &refElement
+               = Dune::ReferenceElements< typename GridType::ctype, GridType::dimensionworld >::general( entity.type() );
             
           assert( refElement.checkInside( local ) );
         }
@@ -174,8 +174,8 @@ namespace Dune
           {
             const Entity& entity = * it ;
             // check that corners are within the reference element of the given type
-            const GenericReferenceElement< typename Grid::ctype, Grid::dimensionworld > &refElement
-                 = GenericReferenceElements< typename Grid::ctype, Grid::dimensionworld >::general( entity.type() );
+            const Dune::ReferenceElement< typename Grid::ctype, Grid::dimensionworld > &refElement
+                 = Dune::ReferenceElements< typename Grid::ctype, Grid::dimensionworld >::general( entity.type() );
             
             typedef typename Entity :: Geometry Geometry;
             const Geometry& geo = entity.geometry();

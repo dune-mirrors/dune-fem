@@ -36,8 +36,8 @@ protected:
     typedef FaceTopologyMapping<hexa>  CubeFaceMapping;
 
     // get reference element 
-    const GenericReferenceElement< ctype, dim > &refElem = 
-      GenericReferenceElements< ctype, dim >::general( en.type() ); 
+    const Dune::ReferenceElement< ctype, dim > &refElem = 
+      Dune::ReferenceElements< ctype, dim >::general( en.type() ); 
 
     const int vxSize = refElem.size( face, 1, dim );
     typedef  FieldVector<ctype,dim> CoordinateVectorType;
@@ -127,8 +127,8 @@ protected:
         eiter != enditer; ++eiter)
     {
       const GeometryType geomType = eiter->geometry().type();
-      const GenericReferenceElement< ctype, dim > & refElem =
-                    GenericReferenceElements< ctype, dim >::general(geomType);
+      const Dune::ReferenceElement< ctype, dim > & refElem =
+                    Dune::ReferenceElements< ctype, dim >::general(geomType);
       const int numFaces = refElem.size(codim);
       //std::cout << "For type " << geomType << " got " << numFaces << " numFaces\n";
 
@@ -251,8 +251,8 @@ protected:
     typedef FaceTopologyMapping<hexa>  CubeFaceMapping;
 
     // get reference element 
-    const GenericReferenceElement< ctype, dim > &refElem = 
-      GenericReferenceElements< ctype, dim >::general( en.type() ); 
+    const Dune::ReferenceElement< ctype, dim > &refElem = 
+      Dune::ReferenceElements< ctype, dim >::general( en.type() ); 
 
     const int vxSize = refElem.size( face, 1, dim );
     std::vector<int> vx( vxSize ,-1);
