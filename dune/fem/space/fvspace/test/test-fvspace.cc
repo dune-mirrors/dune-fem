@@ -9,10 +9,13 @@
 // dune-fem includes
 #include <dune/fem/function/adaptivefunction.hh>
 #include <dune/fem/gridpart/adaptiveleafgridpart.hh>
+#include <dune/fem/misc/l2norm.hh>
 #include <dune/fem/misc/mpimanager.hh>
+#include <dune/fem/operator/projection/l2projection.hh>
 #include <dune/fem/space/common/functionspace.hh>
 #include <dune/fem/space/fvspace.hh>
 
+#include "../../../test/exactsolution.hh"
 #include "../../../test/testgrid.hh"
 
 
@@ -44,8 +47,8 @@ try
   Dune::Fem::MPIManager::initialize( argc, argv );
 
   // create grid
-  GridType &grid = Dune::TestGrid::grid();
-  const int step = Dune::TestGrid::refineStepsForHalf();
+  GridType &grid = Dune::Fem::TestGrid::grid();
+  const int step = Dune::Fem::TestGrid::refineStepsForHalf();
   grid.globalRefine( 2*step );
 
   // create grid part
@@ -54,8 +57,20 @@ try
   // create discrete function space
   DiscreteFunctionSpaceType discreteFunctionSpace( gridPart );
 
+  // create exact solution
+  typedef Dune::Fem::ExactSolution< FunctionSpaceType > ExactSolutionType;
+  ExactSolutionType exactSolution;
   // create discrete function
-  DiscreteFunctionType uh( "uh", discreteFunctionSpace );
+  DiscreteFunctionType solution( "solution", discreteFunctionSpace );
+  solution.clear();
+
+  // perform the L2Projection
+  Dune::Fem::L2Projection< ExactSolutionType, DiscreteFunctionType > dgl2;
+  dgl2( exactSolution, solution );
+
+  // compute error
+  Dune::Fem::L2Norm< GridPartType > l2norm( gridPart );
+  RangeFieldType error = l2norm.distance( exactSolution, solution );
   
   return 0;
 }
