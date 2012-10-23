@@ -166,6 +166,11 @@ namespace Dune
         return 0;
       }
 
+      int order ( const EntityType & ) const
+      {
+        return order();          
+      }
+
       MapperType &mapper () const
       {
         return mapper_;
