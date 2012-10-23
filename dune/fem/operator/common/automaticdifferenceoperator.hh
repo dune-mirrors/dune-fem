@@ -16,7 +16,7 @@ namespace Dune
     // Internal Forward Declarations
     // -----------------------------
 
-    template< class Operator >
+    template< class Operator, class LinearOperator >
     class AutomaticDifferenceOperator;
 
 
@@ -29,8 +29,9 @@ namespace Dune
     : public Dune::Fem::Operator< typename Operator::DomainFunctionType, typename Operator::RangeFunctionType >
     {
       typedef Dune::Fem::Operator< typename Operator::DomainFunctionType, typename Operator::RangeFunctionType > BaseType;
+      typedef AutomaticDifferenceLinearOperator< Operator > ThisType;
 
-      friend class AutomaticDifferenceOperator< Operator >;
+      friend class AutomaticDifferenceOperator< Operator, ThisType >;
 
     public:
       typedef Operator OperatorType;
@@ -76,11 +77,11 @@ namespace Dune
      *  \note The Jacobian operator is an on-the-fly operator, i.e., it does
      *        not store a matrix but only implements the application.
      */
-    template< class Operator >
+    template< class Operator, class LinearOperator = AutomaticDifferenceLinearOperator< Operator > >
     class AutomaticDifferenceOperator 
-    : public Dune::Fem::DifferentiableOperator< AutomaticDifferenceLinearOperator< Operator > >
+    : public Dune::Fem::DifferentiableOperator< LinearOperator >
     {
-      typedef Dune::Fem::DifferentiableOperator< AutomaticDifferenceLinearOperator< Operator > > BaseType;
+      typedef Dune::Fem::DifferentiableOperator< LinearOperator > BaseType;
 
     public:
       typedef Operator OperatorType;
