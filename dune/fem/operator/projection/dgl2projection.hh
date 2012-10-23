@@ -13,14 +13,6 @@ namespace Dune
   namespace Fem 
   {
 
-    // External Forward Declarations
-    // -----------------------------
-
-    template <class FunctionSpaceImp, class GridPartImp, int polOrd,
-              template<class> class BaseFunctionStorageImp >
-    class FiniteVolumeSpace;
-
-
     // DGL2ProjectionImpl
     // ------------------
 
@@ -112,9 +104,9 @@ namespace Dune
       {
         typedef typename DiscreteFunctionImp::DiscreteFunctionSpaceType DiscreteFunctionSpaceType;
         typedef typename DiscreteFunctionImp::LocalFunctionType LocalFuncType;
-        typedef typename DiscreteFunctionSpaceType::Traits::GridPartType GridPartType;
-        typedef typename DiscreteFunctionSpaceType::Traits::IteratorType Iterator;
-        typedef typename DiscreteFunctionSpaceType::BaseFunctionSetType BaseFunctionSetType ; 
+        typedef typename DiscreteFunctionSpaceType::GridPartType GridPartType;
+        typedef typename DiscreteFunctionSpaceType::IteratorType Iterator;
+        typedef typename DiscreteFunctionSpaceType::BasisFunctionSetType BasisFunctionSetType ; 
         typedef typename GridPartType::GridType GridType;
 
         typedef typename FunctionImp::LocalFunctionType LocalFType;
