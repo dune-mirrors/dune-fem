@@ -34,6 +34,7 @@ namespace Dune
       {
         typename VectorialFunctionSpaceType::RangeType vectorialValue( RangeField( 0 ) );
         vectorialValue[ k ] = scalarValue[ 0 ];
+        return vectorialValue;
       }
 
       static typename VectorialFunctionSpaceType::JacobianRangeType
@@ -41,6 +42,7 @@ namespace Dune
       {
         typename VectorialFunctionSpaceType::JacobianRangeType vectorialValue( RangeField( 0 ) );
         vectorialValue[ k ] = scalarValue[ 0 ];
+        return vectorialValue;
       }
 
       static typename VectorialFunctionSpaceType::HessianRangeType
@@ -48,6 +50,7 @@ namespace Dune
       {
         typename VectorialFunctionSpaceType::HessianRangeType vectorialValue( RangeField( 0 ) );
         vectorialValue[ k ] = scalarValue[ 0 ];
+        return vectorialValue;
       }
     };
 
