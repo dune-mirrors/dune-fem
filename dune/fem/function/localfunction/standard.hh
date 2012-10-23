@@ -1,8 +1,10 @@
-#ifndef DUNE_FEM_STANDARDLOCALFUNCTION_HH
-#define DUNE_FEM_STANDARDLOCALFUNCTION_HH
+#ifndef DUNE_FEM_FUNCTION_LOCALFUNCTION_STANDARD_HH
+#define DUNE_FEM_FUNCTION_LOCALFUNCTION_STANDARD_HH
 
-#include <dune/fem/function/localfunction/localfunction.hh>
+// dune-fem includes
+#include <dune/fem/function/localfunction/default.hh>
 #include <dune/fem/storage/array.hh>
+
 
 namespace Dune
 {
@@ -262,7 +264,7 @@ namespace Dune
         // if multiple base sets skip geometry call
         bool updateBaseSet = true;
         if( !multipleBaseSets && (entity_ != 0) )
-          updateBaseSet = (basisFunctionSet_.geometryType() != entity.type());
+          updateBaseSet = (basisFunctionSet_.entity().type() != entity.type());
         
         if( multipleBaseSets || updateBaseSet )
         {
@@ -277,7 +279,7 @@ namespace Dune
 
       // cache entity
       entity_ = &entity;
-      assert( basisFunctionSet_.geometryType() == entity.type() );
+      assert( basisFunctionSet_.entity().type() == entity.type() );
 
       assert( numDofs_ <= values_.size() );
       space.blockMapper().mapEach( entity, AssignDofs( discreteFunction_, values_ ) );
@@ -295,4 +297,4 @@ namespace Dune
 
 } // namespace Dune
 
-#endif // #ifndef DUNE_FEM_STANDARDLOCALFUNCTION_HH
+#endif // #ifndef DUNE_FEM_FUNCTION_LOCALFUNCTION_STANDARD_HH

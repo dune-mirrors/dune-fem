@@ -1,11 +1,11 @@
 localfunctiondir =  $(includedir)/dune/fem/function/localfunction
 
-localfunction_HEADERS = localfunction.hh \
-                        localfunctionwrapper.hh \
-			genericlocalfunction.hh \
-			genericlocalfunction_inline.hh \
-                        standardlocalfunction.hh \
-			temporarylocalfunction.hh
+localfunction_HEADERS = default.hh \
+			generic.hh \
+			generic_inline.hh \
+			localfunction.hh \
+			standard.hh \
+			temporary.hh \
+			wrapper.hh
 
 include $(top_srcdir)/am/global-rules
-

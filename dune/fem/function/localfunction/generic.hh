@@ -1,8 +1,13 @@
-#ifndef DUNE_FEM_GENERICLOCALFUNCTION_HH
-#define DUNE_FEM_GENERICLOCALFUNCTION_HH
+#ifndef DUNE_FEM_FUNCTION_LOCALFUNCTION_GENERIC_HH
+#define DUNE_FEM_FUNCTION_LOCALFUNCTION_GENERIC_HH
 
+// C++ includes
+#include <vector>
+
+// dune-fem includes
+#include <dune/fem/function/localfunction/default.hh>
 #include <dune/fem/storage/array.hh>
-#include <dune/fem/function/localfunction/localfunction.hh>
+
 
 namespace Dune
 {
@@ -147,6 +152,6 @@ namespace Dune
 
 } // namespace Dune 
 
-#include "genericlocalfunction_inline.hh"
+#include "generic_inline.hh"
 
-#endif // DUNE_FEM_GENERICLOCALFUNCTION_HH
+#endif // #ifndef DUNE_FEM_FUNCTION_LOCALFUNCTION_GENERIC_HH

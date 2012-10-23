@@ -1,8 +1,10 @@
-#ifndef DUNE_FEM_TEMPORARYLOCALFUNCTION_HH
-#define DUNE_FEM_TEMPORARYLOCALFUNCTION_HH
+#ifndef DUNE_FEM_FUNCTION_LOCALFUNCTION_TEMPORARY_HH
+#define DUNE_FEM_FUNCTION_LOCALFUNCTION_TEMPORARY_HH
 
+// dune-fem includes
 #include <dune/fem/storage/array.hh>
-#include <dune/fem/function/localfunction/localfunction.hh>
+#include <dune/fem/function/localfunction/default.hh>
+
 
 namespace Dune
 {
@@ -642,4 +644,4 @@ namespace Dune
 
 } // namespace Dune
 
-#endif // #ifndef DUNE_FEM_TEMPORARYLOCALFUNCTION_HH
+#endif // #ifndef DUNE_FEM_FUNCTION_LOCALFUNCTION_TEMPORARY_HH
