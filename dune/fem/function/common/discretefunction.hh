@@ -19,7 +19,7 @@
 #include <dune/fem/function/common/dofiterator.hh>
 #include <dune/fem/function/common/function.hh>
 #include <dune/fem/function/common/scalarproducts.hh>
-#include <dune/fem/function/localfunction/localfunctionwrapper.hh>
+#include <dune/fem/function/localfunction/wrapper.hh>
 #include <dune/fem/io/file/persistencemanager.hh>
 #include <dune/fem/misc/threadmanager.hh>
 

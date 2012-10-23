@@ -8,8 +8,8 @@
 #include <dune/common/bartonnackmanifcheck.hh>
 
 // dune-fem includes
-#include <dune/fem/function/localfunction/localfunctionwrapper.hh>
-#include <dune/fem/function/localfunction/temporarylocalfunction.hh>
+#include <dune/fem/function/localfunction/wrapper.hh>
+#include <dune/fem/function/localfunction/temporary.hh>
 #include <dune/fem/space/common/commoperations.hh>
 #include <dune/fem/space/common/communicationmanager.hh>
 #include <dune/fem/space/common/dofmanager.hh>

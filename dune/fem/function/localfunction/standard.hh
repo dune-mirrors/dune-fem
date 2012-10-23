@@ -106,7 +106,7 @@ namespace Dune
       // array holding pointer to local dofs 
       ValuesArrayType values_;
 
-       // base function set 
+      // base function set 
       BasisFunctionSetType basisFunctionSet_;
 
       // actual entity
