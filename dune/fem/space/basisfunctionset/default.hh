@@ -1,15 +1,18 @@
 #ifndef DUNE_FEM_BASISFUNCTIONSET_DEFAULT_HH
 #define DUNE_FEM_BASISFUNCTIONSET_DEFAULT_HH
 
-//- C++ includes
+// C++ includes
 #include <cassert>
 #include <cstddef>
 
-//- dune-geometry includes
+// dune-common includes
+#include <dune/common/nullptr.hh>
+
+// dune-geometry includes
 #include <dune/geometry/referenceelements.hh>
 #include <dune/geometry/type.hh>
 
-//- dune-fem includes
+// dune-fem includes
 #include <dune/fem/space/basisfunctionset/functor.hh>
 #include <dune/fem/space/basisfunctionset/transformation.hh>
 #include <dune/fem/space/common/functionspace.hh>
@@ -73,6 +76,11 @@ namespace Dune
       //! \brief type of reference element
       typedef Dune::ReferenceElement< typename GeometryType::ctype, 
                                       GeometryType::coorddimension > ReferenceElementType;
+
+      //! \brief constructor
+      DefaultBasisFunctionSet ()
+      : entity_( nullptr )
+      {}
 
       //! \brief constructor
       DefaultBasisFunctionSet ( const EntityType &entity, const ShapeFunctionSet &shapeFunctionSet = ShapeFunctionSet() )
@@ -188,7 +196,11 @@ namespace Dune
       }
 
       //! \brief return entity
-      const Entity &entity () const { return *entity_; }
+      const Entity &entity () const
+      {
+        assert( entity_ );
+        return *entity_;
+      }
 
 
       // Non-interface methods
