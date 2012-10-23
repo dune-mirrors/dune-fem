@@ -1,8 +1,14 @@
 #ifndef DUNE_FEM_LOCALFUNCTION_HH
 #define DUNE_FEM_LOCALFUNCTION_HH
 
-#include <dune/fem/misc/engineconcept.hh>
+//- dune-common includes
+#include <dune/common/exceptions.hh>
+
+//- dune-fem includes
 #include <dune/fem/function/common/function.hh>
+#include <dune/fem/misc/engineconcept.hh>
+#include <dune/fem/version.hh>
+
 
 namespace Dune
 {
@@ -262,7 +268,13 @@ namespace Dune
       {
         return asImp().entity();
       }
-      
+
+      //! \todo please doc me
+      void init ( const EntityType &entity )
+      {
+        asImp().init( entity );
+      }
+
       /** \brief evaluate a partial deriviaive of the local function
        *
        *  \param[in]   diffVariable  vector describing the desired partial
@@ -271,6 +283,7 @@ namespace Dune
        *  \param[out]  ret           value of the function in the given point
        */
       template< int diffOrder, class PointType >
+      DUNE_VERSION_DEPRECATED(1,4,remove)
       void evaluate ( const FieldVector< int, diffOrder > &diffVariable,
                       const PointType &x, RangeType &ret ) const
       {
@@ -286,11 +299,6 @@ namespace Dune
       void evaluate ( const PointType &x, RangeType &ret ) const
       {
         asImp().evaluate( x, ret );
-      }
-
-      void init ( const EntityType &entity )
-      {
-        asImp().init( entity );
       }
 
       /** \brief evaluate Jacobian of the local function
@@ -363,8 +371,12 @@ namespace Dune
                             const RangeVectorType& rangeVector,
                             const JacobianRangeVectorType& jacobianVector )
       {
-        asImp().basisFunctionSet().axpyRanges( quad, rangeVector, asImp() );
-        asImp().basisFunctionSet().axpyJacobians( quad, entity().geometry(), jacobianVector, asImp() );
+        const std::size_t nop = quad.nop();
+        for( std::size_t qp = 0; qp < nop; ++qp )
+        {
+          asImp().basisFunctionSet().axpy( quad[ qp ], rangeVector[ qp ], asImp() );
+          asImp().basisFunctionSet().axpy( quad[ qp ], jacobianVector[ qp ], asImp() );
+        }
       }
       
       template< class QuadratureType, class VectorType  >
@@ -378,20 +390,26 @@ namespace Dune
       template< class QuadratureType, class VectorType  >
       void axpyQuadrature ( const QuadratureType &quad, const VectorType &factorVec, const RangeType & )
       {
-        asImp().basisFunctionSet().axpyRanges( quad, factorVec, asImp() );
+        const std::size_t nop = quad.nop();
+        for( std::size_t qp = 0; qp < nop; ++qp )
+          asImp().basisFunctionSet().axpy( quad[ qp ], factorVec[ qp ], asImp() );
       }
 
       template< class QuadratureType, class VectorType  >
       void axpyQuadrature ( const QuadratureType &quad, const VectorType& factorVec, const JacobianRangeType & )
       {
-        asImp().basisFunctionSet().axpyJacobians( quad, entity().geometry(), factorVec, asImp() );
+        const std::size_t nop = quad.nop();
+        for( std::size_t qp = 0; qp < nop; ++qp )
+          asImp().basisFunctionSet().axpy( quad[ qp ], factorVec[ qp ], asImp() );
       }
 
       // evaluate local function and store results in vector of RangeTypes 
       template< class QuadratureType, class VectorType  >
       void evaluateQuadrature( const QuadratureType &quad, VectorType &result, const RangeType & ) const
       {
-        asImp().basisFunctionSet().evaluateRanges( quad, asImp(), result );
+        const std::size_t nop = quad.nop();
+        for( std::size_t qp = 0; qp < nop; ++qp )
+          asImp().basisFunctionSet().evaluateAll( quad[ qp ], asImp(), result[ qp ] );
       }
 
       // evaluate jacobian of local function and store result in vector of
@@ -399,7 +417,9 @@ namespace Dune
       template< class QuadratureType, class VectorType >
       void evaluateQuadrature( const QuadratureType &quad, VectorType &result, const JacobianRangeType & ) const
       {
-        asImp().basisFunctionSet().evaluateJacobians( quad, entity().geometry(), asImp(), result );
+        const std::size_t nop = quad.nop();
+        for( std::size_t qp = 0; qp < nop; ++qp )
+          asImp().basisFunctionSet().jacobianAll( quad[ qp ], asImp(), result[ qp ] );
       }
 
       using BaseType::asImp;
@@ -574,7 +594,8 @@ namespace Dune
       ::evaluate ( const FieldVector< int, diffOrder > &diffVariable,
                    const PointType &x, RangeType &ret ) const
     {
-      asImp().basisFunctionSet().evaluateAll( diffVariable, x, asImp(), ret);
+      DUNE_THROW( NotImplemented, "Method evaluate() not implemented yet." );
+      // asImp().baseFunctionSet().evaluateAll( diffVariable, x, asImp(), ret );
     }
 
     
@@ -584,7 +605,7 @@ namespace Dune
       :: evaluate ( const PointType &x,
                     RangeType &ret ) const
     {
-      asImp().basisFunctionSet().evaluateAll( x, asImp(), ret);
+      asImp().basisFunctionSet().evaluateAll( x, asImp(), ret );
     }
 
 
@@ -593,10 +614,7 @@ namespace Dune
     inline void LocalFunctionDefault< DiscreteFunctionSpace, LocalFunctionImp >
       ::jacobian ( const PointType &x, JacobianRangeType &ret ) const
     {
-      asImp().basisFunctionSet().jacobianAll( 
-          x, 
-          asImp().entity().geometry().jacobianInverseTransposed( coordinate( x ) ),
-          asImp(), ret);
+      asImp().basisFunctionSet().jacobianAll( x, asImp(), ret );
     }
 
 
@@ -605,7 +623,7 @@ namespace Dune
     inline void LocalFunctionDefault< DiscreteFunctionSpace, LocalFunctionImp >
       ::hessian ( const PointType &x, HessianRangeType &hessian ) const
     {
-      asImp().basisFunctionSet().hessianAll( x, asImp().entity().geometry(), asImp(), hessian );
+      asImp().basisFunctionSet().hessianAll( x, asImp(), hessian );
     }
    
     
@@ -623,11 +641,7 @@ namespace Dune
     inline void LocalFunctionDefault< DiscreteFunctionSpace, LocalFunctionImp >
       ::axpy ( const PointType &x, const JacobianRangeType &factor )
     {
-      asImp().basisFunctionSet().axpy( 
-              x, 
-              asImp().entity().geometry().jacobianInverseTransposed( coordinate( x ) ),
-              factor, 
-              asImp() );
+      asImp().basisFunctionSet().axpy( x, factor, asImp() );
     }
 
     
@@ -636,10 +650,7 @@ namespace Dune
     inline void LocalFunctionDefault< DiscreteFunctionSpace, LocalFunctionImp >
       ::axpy ( const PointType &x, const RangeType &factor1, const JacobianRangeType &factor2 )
     {
-      asImp().basisFunctionSet().axpy( 
-            x, 
-            asImp().entity().geometry().jacobianInverseTransposed( coordinate( x ) ),
-            factor1, factor2, asImp() );
+      asImp().basisFunctionSet().axpy( x, factor1, factor2, asImp() );
     }
 
   } // end namespace Fem
