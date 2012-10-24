@@ -137,6 +137,7 @@ namespace Dune
       template< class Point, class DofVector >
       void evaluateAll ( const Point &x, const DofVector &dofs, RangeType &value ) const
       {
+        value = RangeType( 0 );
         AxpyFunctor< DofVector, RangeType > f( dofs, value );
         shapeFunctionSet().evaluateEach( x, f );
       }
