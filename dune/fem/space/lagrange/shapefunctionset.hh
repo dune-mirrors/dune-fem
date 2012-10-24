@@ -7,10 +7,13 @@
 
 // dune-common includes
 #include <dune/common/exceptions.hh>
+#include <dune/common/nullptr.hh>
 #include <dune/common/static_assert.hh>
 
 // dune-geometry includes
+#include <dune/geometry/genericgeometry/topologytypes.hh>
 #include <dune/geometry/type.hh>
+
 
 // dune-fem includes
 #include <dune/fem/space/common/functionspace.hh>
@@ -72,7 +75,7 @@ namespace Dune
      *        using generic Lagrange shape functions
      *
      * \tparam  FunctionSpace  scalar function space
-     * \tparam  GeometryTypea  generic geometry type wrapper
+     * \tparam  GeometryType   generic geometry type wrapper
      * \tparam  polOrder       polynomial order
      */
     template< class FunctionSpace, class GeometryType, unsigned int polOrder >
@@ -117,19 +120,31 @@ namespace Dune
     template< class FunctionSpace, int polOrder >
     class LagrangeScalarShapeFunctionSet
     {
+      typedef LagrangeScalarShapeFunctionSet< FunctionSpace, polOrder > ThisType;
+
+      static const int dimension = FunctionSpace::dimDomain;
+
       template< class Topology >
       struct Switch
       {
+        // get generic geometry type
         static const unsigned int topologyId = Topology::id;
-        
-        typedef typename GeometryWrapper< topologyId, FunctionSpace::dimDomain >
+        typedef typename GeometryWrapper< topologyId, dimension >
           ::GenericGeometryType GenericGeometryType;
 
+        // number of shape functions
+        static const int numShapeFunctions 
+          = GenericLagrangePoint< GeometryType, polOrder >::numLagrangePoints;
+
+        // type of scalar shape function
         typedef LagrangeShapeFunction< FunctionSpace, GenericGeometryType, polOrder > 
           ShapeFunctionType;
         typedef typename ShapeFunctionType::GenericBaseFunctionType GenericBaseFunctionType;
-       
-        static const int size = GenericLagrangePoint< GeometryType, polOrder >::numLagrangePoints;
+
+        static void apply ( int &size )
+        {
+          size = numShapeFunctions; 
+        }
       };
 
     public:
@@ -155,6 +170,14 @@ namespace Dune
       void hessianEach ( const Point &x, Functor functor ) const;
 
     private:
+      static std::size_t size ( const GeometryType &type )
+      {
+        int size;
+        const unsigned int topologyId = type.id();
+        GenericGeometry::IfTopology< Switch, dimension >::apply( topologyId, size );
+        return size;
+      }
+
       std::vector< const ShapeFunctionType * > shapeFunctions_;
     };
 
@@ -241,12 +264,11 @@ namespace Dune
     // Implementation of LagrangeScalarShapeFunctionSet
     // ------------------------------------------------
 
-#if 0
     template< class FunctionSpace, int polOrder >
     inline LagrangeScalarShapeFunctionSet< FunctionSpace, polOrder >
       ::LagrangeScalarShapeFunctionSet ( const GeometryType &type )
+    : shapeFunctions_( ThisType::size( type ), nullptr )
     {}
-#endif
 
 
     template< class FunctionSpace, int polOrder >
