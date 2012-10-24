@@ -1,8 +1,9 @@
-#ifndef DUNE_FEM_SPACE_LAGRANGE_SHAPEFUNCTION_HH
-#define DUNE_FEM_SPACE_LAGRANGE_SHAPEFUNCTION_HH
+#ifndef DUNE_FEM_SPACE_LAGRANGE_SHAPEFUNCTIONSET_HH
+#define DUNE_FEM_SPACE_LAGRANGE_SHAPEFUNCTIONSET_HH
 
 // C++ includes
 #include <cstdlib>
+#include <vector>
 
 // dune-common includes
 #include <dune/common/exceptions.hh>
@@ -19,6 +20,12 @@
 #include <dune/fem/space/lagrangespace/genericlagrangepoints.hh>
 #include <dune/fem/space/lagrangespace/genericbasefunctions.hh>
 
+/*
+  @file
+  @brief Shape function set for Lagrange space
+  @author Christoph Gersbacher
+*/
+
 
 namespace Dune
 {
@@ -29,9 +36,10 @@ namespace Dune
     // LagrangeShapeFunctionInterface
     // ------------------------------
 
-    /* \brief abstract base class for Lagrange shape functions
+    /**
+     * \brief abstract base class for Lagrange shape functions
      *
-     * \tparam  FunctionSpace  Scalar function space
+     * \tparam  FunctionSpace  scalar function space
      */
     template< class FunctionSpace >
     class LagrangeShapeFunctionInterface
@@ -59,6 +67,14 @@ namespace Dune
     // LagrangeShapeFunction
     // ---------------------
 
+    /**
+     * \brief implementation of Lagrange shape function 
+     *        using generic Lagrange shape functions
+     *
+     * \tparam  FunctionSpace  scalar function space
+     * \tparam  GeometryTypea  generic geometry type wrapper
+     * \tparam  polOrder       polynomial order
+     */
     template< class FunctionSpace, class GeometryType, unsigned int polOrder >
     class LagrangeShapeFunction
     : public LagrangeShapeFunctionInterface< FunctionSpace >
@@ -92,6 +108,12 @@ namespace Dune
     // LagrangeScalarShapeFunctionSet
     // ------------------------------
 
+    /**
+     * \brief scalar Lagrange shape function set
+     *
+     * \tparam  FunctionSpace  scalar function space
+     * \tparam  polOrder       polynomial order
+     */
     template< class FunctionSpace, int polOrder >
     class LagrangeScalarShapeFunctionSet
     {
@@ -111,6 +133,14 @@ namespace Dune
       };
 
     public:
+      typedef LagrangeShapeFunctionInterface< FunctionSpace > ShapeFunctionType;
+      
+      typedef typename ShapeFunctionType::FunctionSpaceType FunctionSpaceType;
+      typedef typename ShapeFunctionType::DomainType DomainType;
+      typedef typename ShapeFunctionType::RangeType RangeType;
+      typedef typename ShapeFunctionType::JacobianRangeType JacobianRangeType;
+      typedef typename ShapeFunctionType::HessianRangeType HessianRangeType;
+      
       explicit LagrangeScalarShapeFunctionSet ( const GeometryType &type );
 
       std::size_t size () const;
@@ -123,6 +153,9 @@ namespace Dune
 
       template< class Point, class Functor >
       void hessianEach ( const Point &x, Functor functor ) const;
+
+    private:
+      std::vector< const ShapeFunctionType * > shapeFunctions_;
     };
 
 
@@ -144,6 +177,12 @@ namespace Dune
     // LagrangeShapeFunctionSet
     // ------------------------
 
+    /**
+     * \brief Lagrange shape function set
+     *
+     * \tparam  FunctionSpace  function space
+     * \tparam  polOrder       polynomial order
+     */
     template< class FunctionSpace, int order >
     class LagrangeShapeFunctionSet
     : public VectorialShapeFunctionSet< typename LagrangeShapeFunctionSetTraits< FunctionSpace, order>::ScalarShapeFunctionSetType,
@@ -156,7 +195,9 @@ namespace Dune
       typedef VectorialShapeFunctionSet< ScalarShapeFunctionSetType, typename Traits::RangeType > BaseType;
 
     public:
-      LagrangeShapeFunctionSet ( const GeometryType &type );
+      LagrangeShapeFunctionSet ( const GeometryType &type )
+      : BaseType( ScalarShapeFunctionSetType( type ) )
+      {}
     };
 
 
@@ -171,6 +212,7 @@ namespace Dune
       DUNE_THROW( NotImplemented, "Method evaluate() not implemented yet." );
     }
 
+
     template< class FunctionSpace, class GeometryType, unsigned int polOrder >
     inline void LagrangeShapeFunction< FunctionSpace, GeometryType, polOrder >
       ::jacobian ( const DomainType &x, JacobianRangeType &value ) const
@@ -178,12 +220,14 @@ namespace Dune
       DUNE_THROW( NotImplemented, "Method jacobian() not implemented yet." );
     }
 
+
     template< class FunctionSpace, class GeometryType, unsigned int polOrder >
     inline void LagrangeShapeFunction< FunctionSpace, GeometryType, polOrder >
       ::hessian ( const DomainType &x, HessianRangeType &value ) const
     {
       DUNE_THROW( NotImplemented, "Method hessian() not implemented yet." );
     }
+
 
     template< class FunctionSpace, class GeometryType, unsigned int polOrder >
     inline int LagrangeShapeFunction< FunctionSpace, GeometryType, polOrder >
@@ -204,6 +248,7 @@ namespace Dune
     {}
 #endif
 
+
     template< class FunctionSpace, int polOrder >
     inline std::size_t LagrangeScalarShapeFunctionSet< FunctionSpace, polOrder >
       ::size () const
@@ -211,32 +256,50 @@ namespace Dune
       DUNE_THROW( NotImplemented, "Method size() not implemented yet." );
     }
 
+
     template< class FunctionSpace, int polOrder >
     template< class Point, class Functor >
     inline void LagrangeScalarShapeFunctionSet< FunctionSpace, polOrder >
       ::evaluateEach ( const Point &x, Functor functor ) const
     {
-      DUNE_THROW( NotImplemented, "Method evaluateEach() not implemented yet." );
+      for( std::size_t i = 0; i < size(); ++i )
+      {
+        RangeType value;
+        shapeFunctions_[ i ]->evaluate( coordinate( x ), value );
+        functor( i, value );
+      }
     }
+
 
     template< class FunctionSpace, int polOrder >
     template< class Point, class Functor >
     inline void LagrangeScalarShapeFunctionSet< FunctionSpace, polOrder >
       ::jacobianEach ( const Point &x, Functor functor ) const
     {
-      DUNE_THROW( NotImplemented, "Method jacobianEach() not implemented yet." );
+      for( std::size_t i = 0; i < size(); ++i )
+      {
+        JacobianRangeType jacobian;
+        shapeFunctions_[ i ]->evaluate( coordinate( x ), jacobian );
+        functor( i, jacobian );
+      }
     }
+
 
     template< class FunctionSpace, int polOrder >
     template< class Point, class Functor >
     inline void LagrangeScalarShapeFunctionSet< FunctionSpace, polOrder >
       ::hessianEach ( const Point &x, Functor functor ) const
     {
-      DUNE_THROW( NotImplemented, "Method hessianEach() not implemented yet." );
+      for( std::size_t i = 0; i < size(); ++i )
+      {
+        HessianRangeType hessian;
+        shapeFunctions_[ i ]->evaluate( coordinate( x ), hessian );
+        functor( i, hessian );
+      }
     }
 
   } // namespace Fem
 
 } // namespace Dune
 
-#endif // #ifndef DUNE_FEM_SPACE_LAGRANGE_SHAPEFUNCTION_HH
+#endif // #ifndef DUNE_FEM_SPACE_LAGRANGE_SHAPEFUNCTIONSET_HH

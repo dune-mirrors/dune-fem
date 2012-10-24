@@ -6,6 +6,6 @@ lagrangedir = $(includedir)/dune/fem/space/lagrange
 lagrange_HEADERS = adaptmanager.hh \
 		   declaration.hh \
 		   restrictprolong.hh \
-		   shapefunction.hh
+		   shapefunctionset.hh
 
 include $(top_srcdir)/am/global-rules
