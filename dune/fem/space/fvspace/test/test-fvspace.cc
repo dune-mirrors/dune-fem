@@ -141,6 +141,7 @@ try
 
   // compute DG L2-projection
   double oldError = algorithm( grid, 0 );
+  std::cout << "L2 error[ 0 ] = " << oldError << std::endl;
   for( int step = 1; step < steps ; ++step )
   {
     Dune::Fem::GlobalRefine::apply( grid, refineStepsForHalf );
