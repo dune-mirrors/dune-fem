@@ -11,7 +11,7 @@ space_HEADERS = anisotropicdgspace.hh \
 
 SUBDIRS = anisotropicdgspace basefunctions basisfunctionset \
 	  combinedspace common dgspace dofmapper fvspace \
-	  genericspace lagrangespace mapper padaptivespace \
+	  genericspace lagrange lagrangespace mapper padaptivespace \
 	  reducedbasisspace shapefunctionset test
 
 noinst_LTLIBRARIES = libspace.la
