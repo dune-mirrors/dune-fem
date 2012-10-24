@@ -78,8 +78,7 @@ namespace Dune
       static const int dimRange = FunctionSpaceType::dimRange;
 
       typedef typename GridPartType::template Codim< codimension >::EntityType EntityType;
-      static const int polOrder = 0;
-      typedef FiniteVolumeShapeFunctionSet< typename ToLocalFunctionSpace< FunctionSpaceType, dimLocal >::Type, polOrder > ShapeFunctionSetType;
+      typedef FiniteVolumeShapeFunctionSet< typename ToLocalFunctionSpace< FunctionSpaceType, dimLocal >::Type > ShapeFunctionSetType;
 
     public:
       typedef DefaultBasisFunctionSet< EntityType, ShapeFunctionSetType > BasisFunctionSetType;

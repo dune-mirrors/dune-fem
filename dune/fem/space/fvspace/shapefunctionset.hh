@@ -23,18 +23,10 @@ namespace Dune
     // FiniteVolumeScalarShapeFunctionSet
     // ----------------------------------
 
-    template< class FunctionSpace, int polOrder >
-    struct FiniteVolumeScalarShapeFunctionSet;
-
-
-
-    // Template specialization for polynomial order 0
-    // ----------------------------------------------
-
     template< class FunctionSpace >
-    class FiniteVolumeScalarShapeFunctionSet< FunctionSpace, 0 >
+    struct FiniteVolumeScalarShapeFunctionSet
     {
-      typedef FiniteVolumeScalarShapeFunctionSet< FunctionSpace, 0 > ThisType;
+      typedef FiniteVolumeScalarShapeFunctionSet< FunctionSpace > ThisType;
 
       dune_static_assert( (FunctionSpace::dimRange == 1),
                           "FunctionSpace must be scalar (i.e., dimRange = 1)." );
@@ -81,17 +73,13 @@ namespace Dune
      * \brief Implementation of Dune::Fem::ShapeFunctionSet for Finite Volume spaces 
      *
      * \tparam  FunctionSpace  Function space
-     * \tparam  polOrder  Polynomial order
      *
-     * \note This shape function set is only implemented for polynomial order 0.
+     * \note This shape function set has fixed polynomial order 0.
      */
-    template< class FunctionSpace, int polOrder >
+    template< class FunctionSpace >
     struct FiniteVolumeShapeFunctionSet
     {
-      dune_static_assert( (polOrder == 0),
-                           "FiniteVolumeShapeFunctionSet only availabe for polynomial order 0." );
-
-      typedef FiniteVolumeShapeFunctionSet< FunctionSpace, polOrder > ThisType;
+      typedef FiniteVolumeShapeFunctionSet< FunctionSpace > ThisType;
 
     public:
       typedef FunctionSpace FunctionSpaceType;
@@ -102,7 +90,7 @@ namespace Dune
 
     protected:
       typedef typename FunctionSpaceType::ScalarFunctionSpaceType ScalarFunctionSpaceType;
-      typedef FiniteVolumeScalarShapeFunctionSet< ScalarFunctionSpaceType, polOrder > ScalarShapeFunctionSetType;
+      typedef FiniteVolumeScalarShapeFunctionSet< ScalarFunctionSpaceType > ScalarShapeFunctionSetType;
       typedef VectorialShapeFunctionSet< ScalarShapeFunctionSetType, RangeType > VectorialShapeFunctionSetType;
 
     public:
