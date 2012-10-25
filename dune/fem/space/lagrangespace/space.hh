@@ -150,7 +150,7 @@ namespace Dune
     private:
       typedef typename BaseType::Traits::ShapeFunctionSetType ShapeFunctionSetType;
       typedef Fem::BaseSetLocalKeyStorage< ShapeFunctionSetType > ShapeSetStorageType;
-      typedef SingletonList< GeometryType, ShapeFunctionSetType > ShapeFunctionSetSingletonProviderType; 
+      typedef SingletonList< GeometryType, ShapeFunctionSetType > ShapeFunctionSetSingletonProviderType;
 
       typedef CompiledLocalKeyContainer< LagrangePointSetType, polynomialOrder, polynomialOrder > LagrangePointSetContainerType;
       typedef typename LagrangePointSetContainerType::LocalKeyStorageType LocalKeyStorageType;
@@ -214,7 +214,7 @@ namespace Dune
       /** \copydoc Dune::Fem::DiscreteFunctionSpaceInterface::basisFunctionSet */
       const BasisFunctionSetType basisFunctionSet ( const EntityType &entity ) const
       {
-        return basisFunctionSet( entity.type() );
+        return BasisFunctionSetType( entity, &shapeFunctionSets_[ entity.type() ] );
       }
 
       /** \copydoc Dune::Fem::DiscreteFunctionSpaceInterface::continuous */
@@ -252,17 +252,6 @@ namespace Dune
       ///////////////////////////
       // Non-interface methods //
       ///////////////////////////
-      
-      /** \brief provide access to the base function set for a geometry type
-       *
-       *  \param[in]  type  type of geometry the base function set is requested for
-       *
-       *  \returns base function set for the specified geometry
-       */
-      const BasisFunctionSetType basisFunctionSet ( const GeometryType &type ) const
-      {
-        return BasisFunctionSetType( &shapeFunctionSets_[ type ] );
-      }
 
       /** \brief provide access to the Lagrange point set for an entity
        *

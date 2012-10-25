@@ -198,6 +198,13 @@ namespace Dune
     // ---------------------------------------
 
     template< class FunctionSpace, class GeometryType, unsigned int polOrder >
+    inline LagrangeShapeFunction< FunctionSpace, GeometryType, polOrder >
+      ::LagrangeShapeFunction ( const GenericBaseFunctionType &genericShapeFunction )
+    : genericShapeFunction_( genericShapeFunction )
+    {}
+
+
+    template< class FunctionSpace, class GeometryType, unsigned int polOrder >
     inline void LagrangeShapeFunction< FunctionSpace, GeometryType, polOrder >
       ::evaluate ( const DomainType &x, RangeType &value ) const
     {
@@ -208,7 +215,7 @@ namespace Dune
 
     template< class FunctionSpace, class GeometryType, unsigned int polOrder >
     inline void LagrangeShapeFunction< FunctionSpace, GeometryType, polOrder >
-      ::jacobian ( const DomainType &x, JacobianRangeType &value ) const
+      ::jacobian ( const DomainType &x, JacobianRangeType &jacobian ) const
     {
       FieldVector< int, 1 > diffVariable;
       RangeType tmp;
@@ -224,7 +231,7 @@ namespace Dune
 
     template< class FunctionSpace, class GeometryType, unsigned int polOrder >
     inline void LagrangeShapeFunction< FunctionSpace, GeometryType, polOrder >
-      ::hessian ( const DomainType &x, HessianRangeType &value ) const
+      ::hessian ( const DomainType &x, HessianRangeType &hessian ) const
     {
       FieldVector< int, 2 > diffVariable;
       RangeType tmp;
@@ -327,6 +334,32 @@ namespace Dune
       ::LagrangeShapeFunctionSet( const Dune::GeometryType &type )
     : BaseType( ScalarShapeFunctionSetType( ScalarShapeFunctionFactoryType( type ) ) )
     {}
+
+
+
+    // Extern Template Instantiations
+    // ------------------------------
+
+    extern template class LagrangeShapeFunctionFactory< FunctionSpace< double, double, 1, 1 >, 1 >;
+    extern template class LagrangeShapeFunctionFactory< FunctionSpace< double, double, 2, 1 >, 1 >;
+    extern template class LagrangeShapeFunctionFactory< FunctionSpace< double, double, 3, 1 >, 1 >;
+    extern template class LagrangeShapeFunctionFactory< FunctionSpace< float, float, 1, 1 >, 1 >;
+    extern template class LagrangeShapeFunctionFactory< FunctionSpace< float, float, 2, 1 >, 1 >;
+    extern template class LagrangeShapeFunctionFactory< FunctionSpace< float, float, 3, 1 >, 1 >;
+
+    extern template class LagrangeShapeFunctionFactory< FunctionSpace< double, double, 1, 1 >, 2 >;
+    extern template class LagrangeShapeFunctionFactory< FunctionSpace< double, double, 2, 1 >, 2 >;
+    extern template class LagrangeShapeFunctionFactory< FunctionSpace< double, double, 3, 1 >, 2 >;
+    extern template class LagrangeShapeFunctionFactory< FunctionSpace< float, float, 1, 1 >, 2 >;
+    extern template class LagrangeShapeFunctionFactory< FunctionSpace< float, float, 2, 1 >, 2 >;
+    extern template class LagrangeShapeFunctionFactory< FunctionSpace< float, float, 3, 1 >, 2 >;
+
+    extern template class LagrangeShapeFunctionFactory< FunctionSpace< double, double, 1, 1 >, 3 >;
+    extern template class LagrangeShapeFunctionFactory< FunctionSpace< double, double, 2, 1 >, 3 >;
+    extern template class LagrangeShapeFunctionFactory< FunctionSpace< double, double, 3, 1 >, 3 >;
+    extern template class LagrangeShapeFunctionFactory< FunctionSpace< float, float, 1, 1 >, 3 >;
+    extern template class LagrangeShapeFunctionFactory< FunctionSpace< float, float, 2, 1 >, 3 >;
+    extern template class LagrangeShapeFunctionFactory< FunctionSpace< float, float, 3, 1 >, 3 >;
 
   } // namespace Fem
 
