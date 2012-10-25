@@ -6,8 +6,9 @@ lagrangespacedir = $(includedir)/dune/fem/space/lagrangespace
 lagrangespace_HEADERS = adaptmanager.hh  declaration.hh \
 			dofmappercode.hh  genericbasefunctions.hh \
 			genericgeometry.hh  genericlagrangepoints.hh \
-			lagrangepoints.hh  restrictprolong.hh \
-			shapefunctionset.hh  space.hh  storage.hh
+			lagrangepoints.hh  lagrangespace.hh \
+			restrictprolong.hh  shapefunctionset.hh \
+			space.hh  storage.hh
 
 noinst_LTLIBRARIES = liblagrangespace.la
 
