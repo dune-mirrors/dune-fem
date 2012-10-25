@@ -39,6 +39,13 @@ namespace Dune
     public:
       typedef ShapeFunctionSet ImplementationType;
 
+      typedef typename ImplementationType::FunctionSpaceType FunctionSpaceType;
+      
+      typedef typename FunctionSpaceType::DomainType DomainType;
+      typedef typename FunctionSpaceType::RangeType RangeType;
+      typedef typename FunctionSpaceType::JacobianRangeType JacobianRangeType;
+      typedef typename FunctionSpaceType::HessianRangeType HessianRangeType;
+
       const ImplementationType &impl () const
       {
         assert( shapeFunctionSet_ );
