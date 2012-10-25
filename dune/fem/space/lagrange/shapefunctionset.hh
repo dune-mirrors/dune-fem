@@ -2,11 +2,11 @@
 #define DUNE_FEM_SPACE_LAGRANGE_SHAPEFUNCTIONSET_HH
 
 // C++ includes
+#include <cassert>
 #include <cstdlib>
-#include <vector>
 
 // dune-common includes
-#include <dune/common/exceptions.hh>
+#include <dune/common/fvector.hh>
 #include <dune/common/nullptr.hh>
 #include <dune/common/static_assert.hh>
 
@@ -14,9 +14,9 @@
 #include <dune/geometry/genericgeometry/topologytypes.hh>
 #include <dune/geometry/type.hh>
 
-
 // dune-fem includes
 #include <dune/fem/space/common/functionspace.hh>
+#include <dune/fem/space/shapefunctionset/simple.hh>
 #include <dune/fem/space/shapefunctionset/vectorial.hh>
 
 // local includes
@@ -52,7 +52,6 @@ namespace Dune
     public:
       typedef FunctionSpace FunctionSpaceType;
 
-
       typedef typename FunctionSpaceType::DomainType DomainType;
       typedef typename FunctionSpaceType::RangeType RangeType;
       typedef typename FunctionSpaceType::JacobianRangeType JacobianRangeType;
@@ -85,6 +84,8 @@ namespace Dune
       typedef LagrangeShapeFunction< FunctionSpace, GeometryType, polOrder > ThisType;
       typedef LagrangeShapeFunctionInterface< FunctionSpace > BaseType;
 
+      static const int dimension = FunctionSpace::dimDomain;
+
     public:
       typedef GenericLagrangeBaseFunction< FunctionSpace, GeometryType, polOrder >
         GenericBaseFunctionType;
@@ -106,79 +107,39 @@ namespace Dune
       GenericBaseFunctionType genericShapeFunction_;
     };
 
- 
 
-    // LagrangeScalarShapeFunctionSet
-    // ------------------------------
+
+    // LagrangeShapeFunctionFactory
+    // ----------------------------
 
     /**
-     * \brief scalar Lagrange shape function set
+     * \brief factory class 
      *
      * \tparam  FunctionSpace  scalar function space
      * \tparam  polOrder       polynomial order
      */
+
     template< class FunctionSpace, int polOrder >
-    class LagrangeScalarShapeFunctionSet
+    class LagrangeShapeFunctionFactory 
     {
-      typedef LagrangeScalarShapeFunctionSet< FunctionSpace, polOrder > ThisType;
-
       static const int dimension = FunctionSpace::dimDomain;
-
-      template< class Topology >
-      struct Switch
-      {
-        // get generic geometry type
-        static const unsigned int topologyId = Topology::id;
-        typedef typename GeometryWrapper< topologyId, dimension >
-          ::GenericGeometryType GenericGeometryType;
-
-        // number of shape functions
-        static const int numShapeFunctions 
-          = GenericLagrangePoint< GeometryType, polOrder >::numLagrangePoints;
-
-        // type of scalar shape function
-        typedef LagrangeShapeFunction< FunctionSpace, GenericGeometryType, polOrder > 
-          ShapeFunctionType;
-        typedef typename ShapeFunctionType::GenericBaseFunctionType GenericBaseFunctionType;
-
-        static void apply ( int &size )
-        {
-          size = numShapeFunctions; 
-        }
-      };
 
     public:
       typedef LagrangeShapeFunctionInterface< FunctionSpace > ShapeFunctionType;
-      
-      typedef typename ShapeFunctionType::FunctionSpaceType FunctionSpaceType;
-      typedef typename ShapeFunctionType::DomainType DomainType;
-      typedef typename ShapeFunctionType::RangeType RangeType;
-      typedef typename ShapeFunctionType::JacobianRangeType JacobianRangeType;
-      typedef typename ShapeFunctionType::HessianRangeType HessianRangeType;
-      
-      explicit LagrangeScalarShapeFunctionSet ( const GeometryType &type );
-
-      std::size_t size () const;
-
-      template< class Point, class Functor >
-      void evaluateEach ( const Point &x, Functor functor ) const;
-
-      template< class Point, class Functor >
-      void jacobianEach ( const Point &x, Functor functor ) const;
-
-      template< class Point, class Functor >
-      void hessianEach ( const Point &x, Functor functor ) const;
 
     private:
-      static std::size_t size ( const GeometryType &type )
-      {
-        int size;
-        const unsigned int topologyId = type.id();
-        GenericGeometry::IfTopology< Switch, dimension >::apply( topologyId, size );
-        return size;
-      }
+      template< class Topology >
+      struct Switch;
 
-      std::vector< const ShapeFunctionType * > shapeFunctions_;
+    public:
+      explicit LagrangeShapeFunctionFactory ( const Dune::GeometryType &type );
+
+      std::size_t numShapeFunctions () const;
+
+      ShapeFunctionType *createShapeFunction( std::size_t i ) const;
+
+    private:
+      unsigned int topologyId_;
     };
 
 
@@ -190,9 +151,13 @@ namespace Dune
     struct LagrangeShapeFunctionSetTraits
     {
       typedef FunctionSpace FunctionSpaceType;
+
       typedef typename FunctionSpaceType::RangeType RangeType;
+
       typedef typename ToScalarFunctionSpace< FunctionSpaceType >::Type ScalarFunctionSpaceType;
-      typedef LagrangeScalarShapeFunctionSet< ScalarFunctionSpaceType, order > ScalarShapeFunctionSetType;
+      typedef LagrangeShapeFunctionFactory< ScalarFunctionSpaceType, order > ScalarShapeFunctionFactoryType;
+      typedef typename ScalarShapeFunctionFactoryType::ShapeFunctionType ScalarShapeFunctionType;
+      typedef SimpleShapeFunctionSet< ScalarShapeFunctionType > ScalarShapeFunctionSetType;
     };
 
 
@@ -212,15 +177,18 @@ namespace Dune
                                         typename LagrangeShapeFunctionSetTraits< FunctionSpace, order>::RangeType
                                       >
     {
-      typedef LagrangeShapeFunctionSet< FunctionSpace, order > ThisType;
-      typedef LagrangeShapeFunctionSetTraits< FunctionSpace, order > Traits;
-      typedef typename Traits::ScalarShapeFunctionSetType ScalarShapeFunctionSetType;
-      typedef VectorialShapeFunctionSet< ScalarShapeFunctionSetType, typename Traits::RangeType > BaseType;
+      typedef LagrangeShapeFunctionSetTraits< FunctionSpace, order> Traits;
+
+      typedef VectorialShapeFunctionSet< typename Traits::ScalarShapeFunctionSetType,
+                                         typename Traits::RangeType
+                                       > BaseType;
+
+      typedef typename Traits::ScalarShapeFunctionFactoryType ScalarShapeFunctionFactoryType;
 
     public:
-      LagrangeShapeFunctionSet ( const GeometryType &type )
-      : BaseType( ScalarShapeFunctionSetType( type ) )
-      {}
+      typedef typename BaseType::ScalarFunctionSpaceType ScalarFunctionSpaceType;
+
+      LagrangeShapeFunctionSet ( const Dune::GeometryType &type );
     };
 
 
@@ -232,7 +200,8 @@ namespace Dune
     inline void LagrangeShapeFunction< FunctionSpace, GeometryType, polOrder >
       ::evaluate ( const DomainType &x, RangeType &value ) const
     {
-      DUNE_THROW( NotImplemented, "Method evaluate() not implemented yet." );
+      FieldVector< int, 0 > diffVariable;
+      return genericShapeFunction_.evaluate( diffVariable, x, value );
     }
 
 
@@ -240,7 +209,15 @@ namespace Dune
     inline void LagrangeShapeFunction< FunctionSpace, GeometryType, polOrder >
       ::jacobian ( const DomainType &x, JacobianRangeType &value ) const
     {
-      DUNE_THROW( NotImplemented, "Method jacobian() not implemented yet." );
+      FieldVector< int, 1 > diffVariable;
+      RangeType tmp;
+
+      int &i = diffVariable[ 0 ];
+      for( i = 0; i < dimension; ++i )
+      {
+        genericShapeFunction_.evaluate( diffVariable, x, tmp );
+        jacobian[ 0 ][ i ] = tmp[ 0 ];
+      }
     }
 
 
@@ -248,7 +225,25 @@ namespace Dune
     inline void LagrangeShapeFunction< FunctionSpace, GeometryType, polOrder >
       ::hessian ( const DomainType &x, HessianRangeType &value ) const
     {
-      DUNE_THROW( NotImplemented, "Method hessian() not implemented yet." );
+      FieldVector< int, 2 > diffVariable;
+      RangeType tmp;
+
+      int &i = diffVariable[ 0 ];
+      for( i = 0; i < dimension; ++i )
+      {
+        // we use symmetrized evaluation of the hessian, since calling
+        // evaluate is in general quite expensive
+        int &j = diffVariable[ 1 ];
+        for( j = 0; j < i; ++j )
+        {
+          genericShapeFunction_.evaluate( diffVariable, x, tmp );
+          hessian[ 0 ][ i ][ j ] = hessian[ 0 ][ j ][ i ] = tmp[ 0 ];
+        }
+
+        assert( j == i );
+        genericShapeFunction_.evaluate( diffVariable, x, tmp );
+        hessian[ 0 ][ i ][ i ] = tmp[ 0 ];
+      }
     }
 
 
@@ -261,64 +256,76 @@ namespace Dune
 
 
 
-    // Implementation of LagrangeScalarShapeFunctionSet
-    // ------------------------------------------------
+    // LagrangeShapeFunctionFactory::Switch
+    // ------------------------------------
 
     template< class FunctionSpace, int polOrder >
-    inline LagrangeScalarShapeFunctionSet< FunctionSpace, polOrder >
-      ::LagrangeScalarShapeFunctionSet ( const GeometryType &type )
-    : shapeFunctions_( ThisType::size( type ), nullptr )
+    template< class Topology >
+    struct LagrangeShapeFunctionFactory< FunctionSpace, polOrder >::Switch
+    {
+      // get generic geometry type
+      static const unsigned int topologyId = Topology::id;
+      typedef typename GeometryWrapper< topologyId, dimension >
+        ::GenericGeometryType GenericGeometryType;
+
+      // type of scalar shape function
+      typedef LagrangeShapeFunction< FunctionSpace, GenericGeometryType, polOrder > 
+        ShapeFunctionImpl;
+      typedef typename ShapeFunctionImpl::GenericBaseFunctionType GenericBaseFunctionType;
+
+      static void apply ( int &size )
+      {
+        size = GenericLagrangePoint< GeometryType, polOrder >::numLagrangePoints;
+      }
+
+      static void apply ( const std::size_t &i, ShapeFunctionType *&shapeFunction )
+      {
+        shapeFunction = new ShapeFunctionImpl( GenericBaseFunctionType( i ) );
+      }
+    };
+
+
+
+    // Implementation of LagrangeShapeFunctionFactory
+    // ----------------------------------------------
+
+    template< class FunctionSpace, int polOrder >
+    inline LagrangeShapeFunctionFactory< FunctionSpace, polOrder >
+      ::LagrangeShapeFunctionFactory ( const Dune::GeometryType &type )
+    : topologyId_( type.id() )
     {}
 
 
     template< class FunctionSpace, int polOrder >
-    inline std::size_t LagrangeScalarShapeFunctionSet< FunctionSpace, polOrder >
-      ::size () const
+    inline std::size_t LagrangeShapeFunctionFactory< FunctionSpace, polOrder >
+      ::numShapeFunctions () const
     {
-      DUNE_THROW( NotImplemented, "Method size() not implemented yet." );
+      std::size_t numShapeFunctions;
+      GenericGeometry::IfTopology< Switch, dimension >::apply( topologyId_, numShapeFunctions );
+      return numShapeFunctions;
     }
 
 
     template< class FunctionSpace, int polOrder >
-    template< class Point, class Functor >
-    inline void LagrangeScalarShapeFunctionSet< FunctionSpace, polOrder >
-      ::evaluateEach ( const Point &x, Functor functor ) const
+    inline typename LagrangeShapeFunctionFactory< FunctionSpace, polOrder >::ShapeFunctionType *
+    LagrangeShapeFunctionFactory< FunctionSpace, polOrder >
+      ::createShapeFunction( std::size_t i ) const
     {
-      for( std::size_t i = 0; i < size(); ++i )
-      {
-        RangeType value;
-        shapeFunctions_[ i ]->evaluate( coordinate( x ), value );
-        functor( i, value );
-      }
+      ShapeFunctionType *shapeFunction( nullptr );
+      GenericGeometry::IfTopology< Switch, dimension >::apply( topologyId_, i, shapeFunction );
+      return shapeFunction;
     }
 
 
-    template< class FunctionSpace, int polOrder >
-    template< class Point, class Functor >
-    inline void LagrangeScalarShapeFunctionSet< FunctionSpace, polOrder >
-      ::jacobianEach ( const Point &x, Functor functor ) const
-    {
-      for( std::size_t i = 0; i < size(); ++i )
-      {
-        JacobianRangeType jacobian;
-        shapeFunctions_[ i ]->evaluate( coordinate( x ), jacobian );
-        functor( i, jacobian );
-      }
-    }
 
+    // Implementation of LagrangeShapeFunctionSet
+    // ------------------------------------------
 
-    template< class FunctionSpace, int polOrder >
-    template< class Point, class Functor >
-    inline void LagrangeScalarShapeFunctionSet< FunctionSpace, polOrder >
-      ::hessianEach ( const Point &x, Functor functor ) const
-    {
-      for( std::size_t i = 0; i < size(); ++i )
-      {
-        HessianRangeType hessian;
-        shapeFunctions_[ i ]->evaluate( coordinate( x ), hessian );
-        functor( i, hessian );
-      }
-    }
+    template< class FunctionSpace, int order >
+    inline LagrangeShapeFunctionSet< FunctionSpace, order >
+      ::LagrangeShapeFunctionSet( const Dune::GeometryType &type )
+    : BaseType( ScalarShapeFunctionSetType( ScalarShapeFunctionFactoryType( type ) ) )
+    {}
 
   } // namespace Fem
 
