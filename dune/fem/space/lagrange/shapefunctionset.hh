@@ -273,9 +273,9 @@ namespace Dune
         ShapeFunctionImpl;
       typedef typename ShapeFunctionImpl::GenericBaseFunctionType GenericBaseFunctionType;
 
-      static void apply ( int &size )
+      static void apply ( std::size_t &size )
       {
-        size = GenericLagrangePoint< GeometryType, polOrder >::numLagrangePoints;
+        size = GenericLagrangePoint< GenericGeometryType, polOrder >::numLagrangePoints;
       }
 
       static void apply ( const std::size_t &i, ShapeFunctionType *&shapeFunction )
@@ -309,7 +309,7 @@ namespace Dune
     template< class FunctionSpace, int polOrder >
     inline typename LagrangeShapeFunctionFactory< FunctionSpace, polOrder >::ShapeFunctionType *
     LagrangeShapeFunctionFactory< FunctionSpace, polOrder >
-      ::createShapeFunction( std::size_t i ) const
+      ::createShapeFunction( const std::size_t i ) const
     {
       ShapeFunctionType *shapeFunction( nullptr );
       GenericGeometry::IfTopology< Switch, dimension >::apply( topologyId_, i, shapeFunction );

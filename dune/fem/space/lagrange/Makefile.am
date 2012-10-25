@@ -8,4 +8,10 @@ lagrange_HEADERS = adaptmanager.hh \
 		   restrictprolong.hh \
 		   shapefunctionset.hh
 
+noinst_LTLIBRARIES = liblagrange.la
+
+liblagrange_la_SOURCES = shapefunctionset.cc
+liblagrange_la_CPPFLAGS = $(AM_CPPFLAGS)
+liblagrange_la_LIBADD =
+
 include $(top_srcdir)/am/global-rules
