@@ -6,7 +6,8 @@ lagrangedir = $(includedir)/dune/fem/space/lagrange
 lagrange_HEADERS = adaptmanager.hh \
 		   declaration.hh \
 		   restrictprolong.hh \
-		   shapefunctionset.hh
+		   shapefunctionset.hh \
+		   space.hh
 
 noinst_LTLIBRARIES = liblagrange.la
 
