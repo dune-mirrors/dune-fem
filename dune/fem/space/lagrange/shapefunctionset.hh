@@ -20,8 +20,8 @@
 #include <dune/fem/space/shapefunctionset/vectorial.hh>
 
 // local includes
-#include <dune/fem/space/lagrangespace/genericlagrangepoints.hh>
-#include <dune/fem/space/lagrangespace/genericbasefunctions.hh>
+#include "genericlagrangepoints.hh"
+#include "genericbasefunctions.hh"
 
 /*
   @file

@@ -1,6 +1,9 @@
 #ifndef DUNE_FEM_SPACE_LAGRANGE_SPACE_HH
 #define DUNE_FEM_SPACE_LAGRANGE_SPACE_HH
 
+// C++ includes
+#include <vector>
+
 // dune-common includes
 #include <dune/common/exceptions.hh>
 #include <dune/common/nullptr.hh>
@@ -12,16 +15,18 @@
 // dune-fem includes
 #include <dune/fem/space/basefunctions/basefunctionstorage.hh>
 #include <dune/fem/space/basisfunctionset/default.hh>
+#include <dune/fem/space/shapefunctionset/proxy.hh>
+#include <dune/fem/space/common/allgeomtypes.hh>
 #include <dune/fem/space/common/basesetlocalkeystorage.hh>
 #include <dune/fem/space/common/defaultcommhandler.hh>
 #include <dune/fem/space/common/discretefunctionspace.hh>
 #include <dune/fem/space/common/functionspace.hh>
 #include <dune/fem/space/dofmapper/indexsetdofmapper.hh>
-#include <dune/fem/space/lagrangespace/lagrangepoints.hh>
 #include <dune/fem/space/mapper/nonblockmapper.hh>
 #include <dune/fem/storage/singletonlist.hh>
 
 // local includes
+#include "lagrangepoints.hh"
 #include "adaptmanager.hh"
 #include "shapefunctionset.hh"
 #include "storage.hh"
@@ -77,8 +82,10 @@ namespace Dune
     public:
       // shape function set type
       typedef LagrangeShapeFunctionSet< ShapeFunctionSpaceType, polynomialOrder > ShapeFunctionSetType;
+      // proxy
+      typedef ShapeFunctionSetProxy< ShapeFunctionSetType > ShapeFunctionSetProxyType;
       // basis function set type
-      typedef Dune::Fem::DefaultBasisFunctionSet< EntityType, ShapeFunctionSetType > BasisFunctionSetType;
+      typedef Dune::Fem::DefaultBasisFunctionSet< EntityType, ShapeFunctionSetProxyType > BasisFunctionSetType;
 
       template< class DiscreteFunction, class Operation = Dune::Fem::DFCommunicationOperation::Add >
       struct CommDataHandle
@@ -134,13 +141,20 @@ namespace Dune
       typedef typename BaseType::BlockMapperType BlockMapperType;
 
       typedef typename BaseType::GridPartType GridPartType;
+      typedef typename BaseType::GridType GridType;
+      typedef typename BaseType::IndexSetType IndexSetType;
       typedef typename BaseType::EntityType EntityType;
 
       typedef LagrangePointSet< GridPartType, polynomialOrder > LagrangePointSetType;
 
     private:
+      typedef typename BaseType::Traits::ShapeFunctionSetType ShapeFunctionSetType;
+      typedef Fem::BaseSetLocalKeyStorage< ShapeFunctionSetType > ShapeSetStorageType;
+      typedef SingletonList< GeometryType, ShapeFunctionSetType > ShapeFunctionSetSingletonProviderType; 
+
       typedef CompiledLocalKeyContainer< LagrangePointSetType, polynomialOrder, polynomialOrder > LagrangePointSetContainerType;
       typedef typename LagrangePointSetContainerType::LocalKeyStorageType LocalKeyStorageType;
+
       typedef LagrangeMapperSingletonKey< GridPartType, LocalKeyStorageType >
         MapperSingletonKeyType;
       typedef LagrangeMapperSingletonFactory< MapperSingletonKeyType, BlockMapperType >
@@ -161,11 +175,20 @@ namespace Dune
                                                const InterfaceType commInterface = defaultInterface,
                                                const CommunicationDirection commDirection = defaultDirection )
       : BaseType( gridPart, commInterface, commDirection ),
-        // shapeFunctionSets_(),
         lagrangePointSetContainer_( gridPart ),
         blockMapper_( nullptr ),
         mapper_( nullptr )
       {
+        const IndexSetType &indexSet = gridPart.indexSet();
+
+        AllGeomTypes< IndexSetType, GridType > allGeometryTypes( indexSet );
+        const std::vector< GeometryType > &geometryTypes = allGeometryTypes.geomTypes( 0 );
+        for( unsigned int i = 0; i < geometryTypes.size(); ++i )
+        {
+          const GeometryType &type = geometryTypes[ i ];
+          shapeFunctionSets_.template insert< ShapeFunctionSetSingletonProviderType >( type );
+        }
+
         MapperSingletonKeyType key( gridPart, lagrangePointSetContainer_.compiledLocalKeys( polynomialOrder ), polynomialOrder );
         blockMapper_ = &BlockMapperProviderType::getObject( key );
         assert( blockMapper_ );
@@ -238,8 +261,7 @@ namespace Dune
        */
       const BasisFunctionSetType basisFunctionSet ( const GeometryType &type ) const
       {
-        DUNE_THROW( NotImplemented, "Method basisFunctionSet() not implemented yet." );
-        // return BasisFunctionSetType( &shapeFunctionSets_[ type ] );
+        return BasisFunctionSetType( &shapeFunctionSets_[ type ] );
       }
 
       /** \brief provide access to the Lagrange point set for an entity
@@ -277,7 +299,7 @@ namespace Dune
       // forbid assignment
       ThisType &operator= ( const ThisType & );
 
-      // ShapeSetStorageType shapeFunctionSets_;
+      ShapeSetStorageType shapeFunctionSets_;
       LagrangePointSetContainerType lagrangePointSetContainer_;
       BlockMapperType *blockMapper_;
       MapperType *mapper_;

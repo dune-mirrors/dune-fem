@@ -1,17 +1,24 @@
-#ifndef DUNE_FEM_LAGRANGESPACE_RESTRICTPROLONG_HH
-#define DUNE_FEM_LAGRANGESPACE_RESTRICTPROLONG_HH
+#ifndef DUNE_FEM_SPACE_LAGRANGE_RESTRICTPROLONG_HH
+#define DUNE_FEM_SPACE_LAGRANGE_RESTRICTPROLONG_HH
 
+// C++ includes
 #include <map>
 
+// dune-geometry includes
 #include <dune/geometry/referenceelements.hh>
 #include <dune/geometry/type.hh>
 
+// dune-fem includes
 #include <dune/fem/gridpart/leafgridpart.hh>
 #include <dune/fem/function/localfunction/localfunction.hh>
-#include <dune/fem/space/lagrangespace/lagrangepoints.hh>
+
+// local includes
+#include "lagrangepoints.hh"
+
 
 namespace Dune
 {
+
   namespace Fem
   {
 
@@ -124,4 +131,4 @@ namespace Dune
 
 } // namespace Dune
 
-#endif // #ifndef DUNE_FEM_LAGRANGESPACE_RESTRICTPROLONG_HH
+#endif // #ifndef DUNE_FEM_SPACE_LAGRANGE_RESTRICTPROLONG_HH
