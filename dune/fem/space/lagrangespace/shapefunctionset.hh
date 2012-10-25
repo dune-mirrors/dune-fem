@@ -183,6 +183,7 @@ namespace Dune
                                          typename Traits::RangeType
                                        > BaseType;
 
+      typedef typename Traits::ScalarShapeFunctionSetType ScalarShapeFunctionSetType;
       typedef typename Traits::ScalarShapeFunctionFactoryType ScalarShapeFunctionFactoryType;
 
     public:
