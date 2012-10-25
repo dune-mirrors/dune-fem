@@ -4,18 +4,25 @@
 // dune-common includes
 #include <dune/common/exceptions.hh>
 #include <dune/common/nullptr.hh>
+#include <dune/common/static_assert.hh>
 
 // dune-geometry includes
 #include <dune/geometry/type.hh>
 
 // dune-fem includes
 #include <dune/fem/space/basefunctions/basefunctionstorage.hh>
+#include <dune/fem/space/basisfunctionset/default.hh>
 #include <dune/fem/space/common/basesetlocalkeystorage.hh>
+#include <dune/fem/space/common/defaultcommhandler.hh>
 #include <dune/fem/space/common/discretefunctionspace.hh>
+#include <dune/fem/space/common/functionspace.hh>
+#include <dune/fem/space/dofmapper/indexsetdofmapper.hh>
 #include <dune/fem/space/lagrangespace/lagrangepoints.hh>
+#include <dune/fem/space/mapper/nonblockmapper.hh>
 
 // local includes
 #include "adaptmanager.hh"
+#include "shapefunctionset.hh"
 
 
 namespace Dune
@@ -24,11 +31,62 @@ namespace Dune
   namespace Fem
   {
 
+    // Forward declaration
+    // -------------------
+
+    template< class FunctionSpace, class GridPart, int polOrder, template< class > class Storage >
+    class LagrangeDiscreteFunctionSpace;
+
+
+
     // LagrangeDiscreteFunctionSpaceTraits
     // -----------------------------------
 
     template< class FunctionSpace, class GridPart, unsigned int polOrder, template< class > class Storage = CachingStorage >
-    struct LagrangeDiscreteFunctionSpaceTraits;
+    struct LagrangeDiscreteFunctionSpaceTraits
+    {
+      // type of discrete function space
+      typedef LagrangeDiscreteFunctionSpace< FunctionSpace, GridPart, polOrder, Storage > DiscreteFunctionSpaceType;
+
+      // function space type
+      typedef FunctionSpace FunctionSpaceType;
+      // grid part type
+      typedef GridPart GridPartType;
+     
+      // export template parameter polynomial order
+      static const int polynomialOrder = polOrder;
+
+      // local block size
+      static const int localBlockSize = FunctionSpaceType::dimRange;
+      // block mapper type
+      typedef IndexSetDofMapper< GridPartType > BlockMapperType;
+      // mapper type
+      typedef NonBlockMapper< BlockMapperType, localBlockSize > MapperType;
+
+      // codimension
+      static const int codimension = 0;
+      // entity type
+      typedef typename GridPartType::template Codim< codimension >::EntityType EntityType;
+
+    private:
+      static const int dimLocal = GridPartType::dimension;
+      typedef typename ToLocalFunctionSpace< FunctionSpaceType, dimLocal >::Type ShapeFunctionSpaceType;
+
+    public:
+      // shape function set type
+      typedef LagrangeShapeFunctionSet< ShapeFunctionSpaceType, polynomialOrder > ShapeFunctionSetType;
+      // basis function set type
+      typedef Dune::Fem::DefaultBasisFunctionSet< EntityType, ShapeFunctionSetType > BasisFunctionSetType;
+
+      template< class DiscreteFunction, class Operation = Dune::Fem::DFCommunicationOperation::Add >
+      struct CommDataHandle
+      {
+        // type of data handle
+        typedef Dune::Fem::DefaultCommunicationHandler< DiscreteFunction, Operation > Type;
+        // type of operation to perform on scatter
+        typedef Operation OperationType;
+      };
+    };
 
 
 
@@ -60,6 +118,8 @@ namespace Dune
     class LagrangeDiscreteFunctionSpace
     : public DiscreteFunctionSpaceDefault< LagrangeDiscreteFunctionSpaceTraits< FunctionSpace, GridPart, polOrder, Storage > >
     {
+      dune_static_assert((polOrder > 0), "LagrangeDiscreteFunctionSpace only defined for polOrder > 0" );
+
       typedef LagrangeDiscreteFunctionSpace< FunctionSpace, GridPart, polOrder, Storage > ThisType;
       typedef DiscreteFunctionSpaceDefault< LagrangeDiscreteFunctionSpaceTraits< FunctionSpace, GridPart, polOrder, Storage > > BaseType;
 
@@ -95,7 +155,7 @@ namespace Dune
       /** \copydoc Dune::Fem::DiscreteFunctionSpaceInterface::basisFunctionSet */
       const BasisFunctionSetType basisFunctionSet ( const EntityType &entity ) const
       {
-        DUNE_THROW( NotImplemented, "Method basisFunctionSet() not implemented yet." );
+        return basisFunctionSet( entity.type() );
       }
 
       /** \copydoc Dune::Fem::DiscreteFunctionSpaceInterface::continuous */
@@ -140,7 +200,7 @@ namespace Dune
        *
        *  \returns base function set for the specified geometry
        */
-      const BasisFunctionSetType basisFunctionSet ( const GeometryType type ) const
+      const BasisFunctionSetType basisFunctionSet ( const GeometryType &type ) const
       {
         DUNE_THROW( NotImplemented, "Method basisFunctionSet() not implemented yet." );
       }
@@ -169,7 +229,7 @@ namespace Dune
        *
        *  \returns LagrangePointSetType
        */
-      const LagrangePointSetType &lagrangePointSet ( const GeometryType type ) const
+      const LagrangePointSetType &lagrangePointSet ( const GeometryType &type ) const
       {
         return lagrangePointSetContainer_.compiledLocalKey( type, polynomialOrder );
       }
