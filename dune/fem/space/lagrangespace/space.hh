@@ -41,7 +41,7 @@ namespace Dune
     // Forward declaration
     // -------------------
 
-    template< class FunctionSpace, class GridPart, int polOrder, template< class > class Storage >
+    template< class FunctionSpace, class GridPart, int polOrder, template< class > class Storage = CachingStorage >
     class LagrangeDiscreteFunctionSpace;
 
 
@@ -49,7 +49,7 @@ namespace Dune
     // LagrangeDiscreteFunctionSpaceTraits
     // -----------------------------------
 
-    template< class FunctionSpace, class GridPart, unsigned int polOrder, template< class > class Storage = CachingStorage >
+    template< class FunctionSpace, class GridPart, unsigned int polOrder, template< class > class Storage >
     struct LagrangeDiscreteFunctionSpaceTraits
     {
       // type of discrete function space
