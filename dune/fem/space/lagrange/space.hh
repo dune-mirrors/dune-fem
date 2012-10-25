@@ -19,10 +19,12 @@
 #include <dune/fem/space/dofmapper/indexsetdofmapper.hh>
 #include <dune/fem/space/lagrangespace/lagrangepoints.hh>
 #include <dune/fem/space/mapper/nonblockmapper.hh>
+#include <dune/fem/storage/singletonlist.hh>
 
 // local includes
 #include "adaptmanager.hh"
 #include "shapefunctionset.hh"
+#include "storage.hh"
 
 
 namespace Dune
@@ -118,7 +120,7 @@ namespace Dune
     class LagrangeDiscreteFunctionSpace
     : public DiscreteFunctionSpaceDefault< LagrangeDiscreteFunctionSpaceTraits< FunctionSpace, GridPart, polOrder, Storage > >
     {
-      dune_static_assert((polOrder > 0), "LagrangeDiscreteFunctionSpace only defined for polOrder > 0" );
+      dune_static_assert( (polOrder > 0), "LagrangeDiscreteFunctionSpace only defined for polOrder > 0" );
 
       typedef LagrangeDiscreteFunctionSpace< FunctionSpace, GridPart, polOrder, Storage > ThisType;
       typedef DiscreteFunctionSpaceDefault< LagrangeDiscreteFunctionSpaceTraits< FunctionSpace, GridPart, polOrder, Storage > > BaseType;
@@ -138,6 +140,15 @@ namespace Dune
 
     private:
       typedef CompiledLocalKeyContainer< LagrangePointSetType, polynomialOrder, polynomialOrder > LagrangePointSetContainerType;
+      typedef typename LagrangePointSetContainerType::LocalKeyStorageType LocalKeyStorageType;
+      typedef LagrangeMapperSingletonKey< GridPartType, LocalKeyStorageType >
+        MapperSingletonKeyType;
+      typedef LagrangeMapperSingletonFactory< MapperSingletonKeyType, BlockMapperType >
+        BlockMapperSingletonFactoryType;
+      typedef SingletonList< MapperSingletonKeyType, BlockMapperType, BlockMapperSingletonFactoryType > BlockMapperProviderType;
+
+      static const InterfaceType defaultInterface = InteriorBorder_InteriorBorder_Interface;
+      static const CommunicationDirection defaultDirection = ForwardCommunication;
 
     public:
       ///////////////////////
@@ -145,6 +156,31 @@ namespace Dune
       ///////////////////////
 
       using BaseType::order;
+
+      explicit LagrangeDiscreteFunctionSpace ( GridPartType &gridPart,
+                                               const InterfaceType commInterface = defaultInterface,
+                                               const CommunicationDirection commDirection = defaultDirection )
+      : BaseType( gridPart, commInterface, commDirection ),
+        // shapeFunctionSets_(),
+        lagrangePointSetContainer_( gridPart ),
+        blockMapper_( nullptr ),
+        mapper_( nullptr )
+      {
+        MapperSingletonKeyType key( gridPart, lagrangePointSetContainer_.compiledLocalKeys( polynomialOrder ), polynomialOrder );
+        blockMapper_ = &BlockMapperProviderType::getObject( key );
+        assert( blockMapper_ );
+        
+        mapper_ = new MapperType( *blockMapper_ );
+        assert( mapper_ );
+      }
+
+      ~LagrangeDiscreteFunctionSpace ()
+      {
+        if( mapper_ )
+          delete mapper_;
+        mapper_ = nullptr;
+        BlockMapperProviderType::removeObject( *blockMapper_ );
+      }
 
       /** \copydoc Dune::Fem::DiscreteFunctionSpaceInterface::type */
       DFSpaceIdentifier type () const
@@ -165,7 +201,7 @@ namespace Dune
       }
 
       /** \copydoc Dune::Fem::DiscreteFunctionSpaceInterface::continuous */
-      bool continuous (const IntersectionType &intersection) const
+      bool continuous ( const IntersectionType &intersection ) const
       {
         return intersection.conforming();
       }
@@ -203,6 +239,7 @@ namespace Dune
       const BasisFunctionSetType basisFunctionSet ( const GeometryType &type ) const
       {
         DUNE_THROW( NotImplemented, "Method basisFunctionSet() not implemented yet." );
+        // return BasisFunctionSetType( &shapeFunctionSets_[ type ] );
       }
 
       /** \brief provide access to the Lagrange point set for an entity
@@ -234,10 +271,16 @@ namespace Dune
         return lagrangePointSetContainer_.compiledLocalKey( type, polynomialOrder );
       }
 
-    public:
+    private:
+      // forbid copying
+      LagrangeDiscreteFunctionSpace ( const ThisType & );
+      // forbid assignment
+      ThisType &operator= ( const ThisType & );
+
+      // ShapeSetStorageType shapeFunctionSets_;
       LagrangePointSetContainerType lagrangePointSetContainer_;
-      MapperType *mapper_;
       BlockMapperType *blockMapper_;
+      MapperType *mapper_;
     };
 
   } // namespace Fem

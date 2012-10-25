@@ -5,9 +5,11 @@ SUBDIRS =
 lagrangedir = $(includedir)/dune/fem/space/lagrange
 lagrange_HEADERS = adaptmanager.hh \
 		   declaration.hh \
+		   dofmappercode.hh \
 		   restrictprolong.hh \
 		   shapefunctionset.hh \
-		   space.hh
+		   space.h \
+		   storage.hh
 
 noinst_LTLIBRARIES = liblagrange.la
 
