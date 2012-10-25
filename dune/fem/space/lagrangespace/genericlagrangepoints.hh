@@ -1,14 +1,15 @@
-#ifndef DUNE_FEM_LAGRANGESPACE_GENERICLAGRANGEPOINTS_HH
-#define DUNE_FEM_LAGRANGESPACE_GENERICLAGRANGEPOINTS_HH
+#ifndef DUNE_FEM_SPACE_LAGRANGE_GENERICLAGRANGEPOINTS_HH
+#define DUNE_FEM_SPACE_LAGRANGE_GENERICLAGRANGEPOINTS_HH
 
-//- system includes 
+// C++ includes
 #include <iostream>
 
-//- Dune includes 
+// dune-common includes
 #include <dune/common/fvector.hh>
 
-//- local includes 
+// local includes 
 #include "genericgeometry.hh"
+
 
 namespace Dune
 {
@@ -921,4 +922,4 @@ namespace Dune
 
 } // namespace Dune
 
-#endif // #ifndef DUNE_FEM_LAGRANGESPACE_GENERICLAGRANGEPOINTS_HH
+#endif // #ifndef DUNE_FEM_SPACE_LAGRANGE_GENERICLAGRANGEPOINTS_HH

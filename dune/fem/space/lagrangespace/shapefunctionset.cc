@@ -2,7 +2,7 @@
 
 // dune-fem includes
 #include <dune/fem/space/common/functionspace.hh>
-#include <dune/fem/space/lagrange/shapefunctionset.hh>
+#include <dune/fem/space/lagrangespace/shapefunctionset.hh>
 
 namespace Dune
 {

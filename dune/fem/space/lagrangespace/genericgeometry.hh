@@ -1,11 +1,16 @@
-#ifndef DUNE_FEM_GENERICGEOMETRY_HH
-#define DUNE_FEM_GENERICGEOMETRY_HH
+#ifndef DUNE_FEM_SPACE_LAGRANGE_GENERICGEOMETRY_HH
+#define DUNE_FEM_SPACE_LAGRANGE_GENERICGEOMETRY_HH
 
+// dune-common includes
 #include <dune/common/fvector.hh>
-#include <dune/geometry/type.hh>
 #include <dune/common/static_assert.hh>
 
+// dune-geometry includes
+#include <dune/geometry/type.hh>
+
+// dune-fem includes
 #include <dune/fem/misc/metaprogramming.hh>
+
 
 namespace Dune
 {
@@ -533,4 +538,4 @@ namespace Dune
 
 } // namespace Dune
 
-#endif // #ifndef DUNE_FEM_GENERICGEOMETRY_HH
+#endif // #ifndef DUNE_FEM_SPACE_LAGRANGE_GENERICGEOMETRY_HH
