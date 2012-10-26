@@ -78,53 +78,11 @@ namespace Dune
      */
     template< class FunctionSpace >
     struct FiniteVolumeShapeFunctionSet
-    {
-      typedef FiniteVolumeShapeFunctionSet< FunctionSpace > ThisType;
-
-    public:
-      typedef FunctionSpace FunctionSpaceType;
-      typedef typename FunctionSpaceType::DomainType DomainType;
-      typedef typename FunctionSpaceType::RangeType RangeType;
-      typedef typename FunctionSpaceType::RangeType JacobianRangeType;
-      typedef typename FunctionSpaceType::RangeType HessianRangeType;
-
-    protected:
-      typedef typename FunctionSpaceType::ScalarFunctionSpaceType ScalarFunctionSpaceType;
-      typedef FiniteVolumeScalarShapeFunctionSet< ScalarFunctionSpaceType > ScalarShapeFunctionSetType;
-      typedef VectorialShapeFunctionSet< ScalarShapeFunctionSetType, RangeType > VectorialShapeFunctionSetType;
-
-    public:
-      FiniteVolumeShapeFunctionSet () {}
-
-      std::size_t size () const { return vectorialShapeFunctionSet().size(); }
-
-      template< class Point, class Functor >
-      void evaluateEach ( const Point &x, Functor functor ) const
-      {
-        vectorialShapeFunctionSet().evaluateEach( x, functor );
-      }
-
-      template< class Point, class Functor >
-      void jacobianEach ( const Point & x, Functor functor ) const
-      {
-        vectorialShapeFunctionSet().jacobianEach( x, functor );
-      }
-
-      template< class Point, class Functor >
-      void hessianEach ( const Point & x, Functor functor ) const
-      {
-        vectorialShapeFunctionSet().hessianEach( x, functor );
-      }
-
-    protected:
-      const VectorialShapeFunctionSetType &vectorialShapeFunctionSet () const
-      {
-        return vectorialShapeFunctionSet_;
-      }
-
-    private:
-      VectorialShapeFunctionSetType vectorialShapeFunctionSet_;
-    };
+    : public VectorialShapeFunctionSet< 
+        FiniteVolumeScalarShapeFunctionSet< typename FunctionSpace::ScalarFunctionSpaceType >,
+        typename FunctionSpace::RangeType
+      >
+    {};
 
   } // namespace Fem 
 
