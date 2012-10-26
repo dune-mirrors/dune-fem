@@ -163,8 +163,8 @@ namespace Dune
             if( std::abs( h[i] - w ) > 1e-15 ) return false; 
           }
 
-          IntersectionIteratorType endnit = en.ilevelend();
-          for(IntersectionIteratorType nit = en.ilevelbegin();
+          IntersectionIteratorType endnit = macroView.iend( en );
+          for(IntersectionIteratorType nit = macroView.ibegin( en );
               nit != endnit; ++nit)
           {
             const typename IntersectionIteratorType::Intersection& inter=*nit;
