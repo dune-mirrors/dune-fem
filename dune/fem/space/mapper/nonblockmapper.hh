@@ -2,6 +2,7 @@
 #define DUNE_FEM_NONBLOCKMAPPER_HH
 
 #include <dune/fem/space/mapper/dofmapper.hh>
+#include <dune/fem/misc/functor.hh>
 
 namespace Dune
 {
