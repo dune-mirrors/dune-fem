@@ -35,6 +35,8 @@ namespace Dune
       virtual void jacobian ( const DomainType &x, JacobianRangeType &jacobian ) const = 0;
 
       virtual void hessian ( const DomainType &x, HessianRangeType &hessian ) const = 0;
+
+      const ThisType *clone () const = 0;
     };
 
 
@@ -59,8 +61,11 @@ namespace Dune
       template< class Factory >
       explicit SimpleShapeFunctionSet ( const Factory &factory );
 
-      ~SimpleShapeFunctionSet ();
+      SimpleShapeFunctionSet ( const ThisType &other );
 
+      const ThisType &operator= ( const ThisType &other );
+
+      ~SimpleShapeFunctionSet ();
 
       // Shape Function Set Interface Methods
       std::size_t size () const { return shapeFunctions_.size(); }
@@ -92,6 +97,30 @@ namespace Dune
       shapeFunctions_.resize( numShapeFunctions );
       for( std::size_t i = 0; i < numShapeFunctions; ++i )
         shapeFunctions_[ i ] = factory.createShapeFunction( i );
+    }
+
+    template< class ShapeFunction >
+    inline SimpleShapeFunctionSet< ShapeFunction >::SimpleShapeFunctionSet( const ThisType &other )
+    {
+      *this = other;
+    }
+
+    template< class ShapeFunction >
+    inline const typename SimpleShapeFunctionSet< ShapeFunction >::ThisType &
+    SimpleShapeFunctionSet< ShapeFunction >::operator= ( const ThisType &other )
+    {
+      if( this == &other )
+        return *this;
+
+      for( std::size_t i = 0; i < size(); ++i )
+        delete shapeFunctions_[ i ];
+
+      const std::size_t numShapeFunctions = other.size();
+      shapeFunctions_.resize( numShapeFunctions );
+      for( std::size_t i = 0; i < numShapeFunctions; ++i )
+        shapeFunctions_[ i ] = other.shapeFunctions_[ i ]->clone();
+
+      return *this;
     }
 
 
