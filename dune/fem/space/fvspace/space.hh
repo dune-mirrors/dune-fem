@@ -116,6 +116,8 @@ namespace Dune
       static const CommunicationDirection defaultDirection =  ForwardCommunication;
 
     public:
+      static const int polynomialOrder DUNE_DEPRECATED = 0;
+
       typedef typename BaseType::FunctionSpaceType FunctionSpaceType;
 
       typedef typename BaseType::GridPartType GridPartType;
