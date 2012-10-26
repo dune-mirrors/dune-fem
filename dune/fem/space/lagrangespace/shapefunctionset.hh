@@ -47,6 +47,8 @@ namespace Dune
     template< class FunctionSpace >
     class LagrangeShapeFunctionInterface
     {
+      typedef LagrangeShapeFunctionInterface< FunctionSpace > ThisType;
+      
       dune_static_assert( (FunctionSpace::dimRange == 1), "FunctionSpace must be scalar." );
 
     public:
@@ -62,6 +64,8 @@ namespace Dune
       virtual void hessian ( const DomainType &x, HessianRangeType &hessian ) const = 0;
 
       virtual int order () const = 0;
+
+      virtual const ThisType *clone () const = 0;
     };
 
 
@@ -95,14 +99,18 @@ namespace Dune
       typedef typename BaseType::JacobianRangeType JacobianRangeType;
       typedef typename BaseType::HessianRangeType HessianRangeType;
 
-      explicit LagrangeShapeFunction ( const GenericBaseFunctionType &genericShapeFunction );
+      explicit LagrangeShapeFunction ( const GenericBaseFunctionType &genericShapeFunction )
+      : genericShapeFunction_( genericShapeFunction )
+      {}
 
       virtual void evaluate ( const DomainType &x, RangeType &value ) const;
       virtual void jacobian ( const DomainType &x, JacobianRangeType &jacobian ) const;
       virtual void hessian ( const DomainType &x, HessianRangeType &hessian ) const;
 
-      int order () const;
+      virtual int order () const { return polOrder; }
       
+      virtual const BaseType *clone () const { return new ThisType( *this ); }
+
     protected:
       GenericBaseFunctionType genericShapeFunction_;
     };
@@ -132,7 +140,9 @@ namespace Dune
       struct Switch;
 
     public:
-      explicit LagrangeShapeFunctionFactory ( const Dune::GeometryType &type );
+      explicit LagrangeShapeFunctionFactory ( const Dune::GeometryType &type )
+      : topologyId_( type.id() )
+      {}
 
       std::size_t numShapeFunctions () const;
 
@@ -189,20 +199,15 @@ namespace Dune
     public:
       typedef typename BaseType::ScalarFunctionSpaceType ScalarFunctionSpaceType;
 
-      LagrangeShapeFunctionSet ( const Dune::GeometryType &type );
+      LagrangeShapeFunctionSet ( const Dune::GeometryType &type )
+      : BaseType( ScalarShapeFunctionSetType( ScalarShapeFunctionFactoryType( type ) ) )
+      {}
     };
 
 
 
     // Implementation of LagrangeShapeFunction
     // ---------------------------------------
-
-    template< class FunctionSpace, class GeometryType, unsigned int polOrder >
-    inline LagrangeShapeFunction< FunctionSpace, GeometryType, polOrder >
-      ::LagrangeShapeFunction ( const GenericBaseFunctionType &genericShapeFunction )
-    : genericShapeFunction_( genericShapeFunction )
-    {}
-
 
     template< class FunctionSpace, class GeometryType, unsigned int polOrder >
     inline void LagrangeShapeFunction< FunctionSpace, GeometryType, polOrder >
@@ -255,14 +260,6 @@ namespace Dune
     }
 
 
-    template< class FunctionSpace, class GeometryType, unsigned int polOrder >
-    inline int LagrangeShapeFunction< FunctionSpace, GeometryType, polOrder >
-      ::order () const
-    {
-      return polOrder;
-    }
-
-
 
     // LagrangeShapeFunctionFactory::Switch
     // ------------------------------------
@@ -298,13 +295,6 @@ namespace Dune
     // ----------------------------------------------
 
     template< class FunctionSpace, int polOrder >
-    inline LagrangeShapeFunctionFactory< FunctionSpace, polOrder >
-      ::LagrangeShapeFunctionFactory ( const Dune::GeometryType &type )
-    : topologyId_( type.id() )
-    {}
-
-
-    template< class FunctionSpace, int polOrder >
     inline std::size_t LagrangeShapeFunctionFactory< FunctionSpace, polOrder >
       ::numShapeFunctions () const
     {
@@ -323,17 +313,6 @@ namespace Dune
       GenericGeometry::IfTopology< Switch, dimension >::apply( topologyId_, i, shapeFunction );
       return shapeFunction;
     }
-
-
-
-    // Implementation of LagrangeShapeFunctionSet
-    // ------------------------------------------
-
-    template< class FunctionSpace, int order >
-    inline LagrangeShapeFunctionSet< FunctionSpace, order >
-      ::LagrangeShapeFunctionSet( const Dune::GeometryType &type )
-    : BaseType( ScalarShapeFunctionSetType( ScalarShapeFunctionFactoryType( type ) ) )
-    {}
 
 
 
