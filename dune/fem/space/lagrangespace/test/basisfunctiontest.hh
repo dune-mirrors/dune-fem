@@ -13,19 +13,19 @@ namespace Dune
   namespace Fem
   {
 
-  class LagrangeBase_Test : public Fem::Test {
+  class LagrangeBasis_Test : public Fem::Test {
   public:
-    LagrangeBase_Test(std::string gridFile) :
+    LagrangeBasis_Test(std::string gridFile) :
       gridFile_(gridFile)
     {}
 
     virtual void run();
 
-    void testBaseFunctions();
+    void testBasisFunctions();
 
   private:
     template <class SpaceType>
-    void checkLagrangeBase(const SpaceType&);
+    void checkLagrangeBasis(const SpaceType&);
     
     std::string gridFile_;
   };
