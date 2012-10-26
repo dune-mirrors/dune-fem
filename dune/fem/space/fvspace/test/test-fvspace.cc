@@ -96,14 +96,14 @@ double algorithm ( GridType &grid, const int step )
   Dune::Fem::L2Projection< GridExactSolutionType, DiscreteFunctionType > dgl2;
   dgl2( gridExactSolution, solution );
 
-#if 0
-    // output
-    typedef Dune::tuple< const DiscreteFunctionType *, GridExactSolutionType * > IOTupleType;
-    IOTupleType ioTuple( &solution, &gridExactSolution );
-    typedef Dune::Fem::DataOutput< GridType, IOTupleType > DataOutputType;
-    DataOutputType dataOutput( grid, ioTuple, DataOutputParameters( step ) );
-    dataOutput.write();
-#endif
+  // prepare output
+  typedef Dune::tuple< const DiscreteFunctionType *, GridExactSolutionType * > IOTupleType;
+  IOTupleType ioTuple( &solution, &gridExactSolution );
+
+  // data output
+  typedef Dune::Fem::DataOutput< GridType, IOTupleType > DataOutputType;
+  DataOutputType dataOutput( grid, ioTuple, DataOutputParameters( step ) );
+  dataOutput.write();
 
   // compute error
   Dune::Fem::L2Norm< GridPartType > l2norm( gridPart );
@@ -117,6 +117,10 @@ try
 {
   // initialize MPI
   Dune::Fem::MPIManager::initialize( argc, argv );
+
+  // read parameter file
+  Dune::Fem::Parameter::append( argc, argv );
+  Dune::Fem::Parameter::append( "parameter" );
 
   if( argc < 2 )
   {

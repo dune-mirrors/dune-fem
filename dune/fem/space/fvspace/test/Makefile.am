@@ -10,4 +10,6 @@ check_PROGRAMS = test-fvspace
 
 test_fvspace_SOURCES = test-fvspace.cc
 
+CLEANFILES = *.pvtu *.vtu *.log 
+
 include $(top_srcdir)/am/global-rules
