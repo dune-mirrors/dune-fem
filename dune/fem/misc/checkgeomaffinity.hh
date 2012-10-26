@@ -152,7 +152,7 @@ namespace Dune
           const FieldVector<ctype, dimworld> enBary = 
             geo.global( geoInfo.localCenter( geo.type() ));
 
-          typedef typename GridType :: Traits :: LevelIntersectionIterator IntersectionIteratorType;
+          typedef typename MacroGridView :: IntersectionIterator IntersectionIteratorType;
 
           // if geometry is not cube, it's not a cartesian grid 
           if ( ! geo.type().isCube() ) return false;
