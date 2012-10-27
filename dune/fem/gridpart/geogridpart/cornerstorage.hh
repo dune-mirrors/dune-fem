@@ -46,6 +46,7 @@ namespace Dune
 
       static const int dimRange = CoordFunctionType::FunctionSpaceType::dimRange;
       static const int dimension = HostEntityType::dimension;
+      static const int mydimension = HostEntityType::mydimension;
 
       GeoDiscreteCoordFunctionCaller ( const CoordFunction &coordFunction,
                                        const HostEntityType &hostEntity )
@@ -72,7 +73,7 @@ namespace Dune
 
       std::size_t numCorners () const
       {
-        return ReferenceElements< typename CoordFunctionType::GridPartType::GridType::ctype, dimension >::general( type() ).size(dimension);
+        return ReferenceElements< typename CoordFunctionType::GridPartType::GridType::ctype, mydimension >::general( type() ).size( mydimension );
       }
 
     private:
