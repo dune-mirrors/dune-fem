@@ -3,15 +3,16 @@ space_HEADERS = combineddiscretefunctionspace.hh \
                 combinedspace.hh \
                 dgspace.hh \
                 fvspace.hh \
-		genericspace.hh \
+                genericspace.hh \
                 lagrangespace.hh \
                 padaptivespace.hh \
                 reducedbasisspace.hh
 
 SUBDIRS =  basefunctions basisfunctionset combinedspace \
-	   common dgspace dofmapper fvspace genericspace \
+           common dgspace dofmapper fvspace genericspace \
            lagrangespace mapper padaptivespace \
-           reducedbasisspace  shapefunctionset test
+					 shapefunctionset test \
+           reducedbasisspace 
 
 noinst_LTLIBRARIES = libspace.la
 
