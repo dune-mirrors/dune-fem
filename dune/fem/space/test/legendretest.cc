@@ -57,7 +57,7 @@ const int polOrd =1;/*POLORDER;*/
 
   //typedef Dune::SGrid<dimw,dimw> HGridType;
 //! the index set we are using 
-typedef HierarchicGridPart<HGridType> GridPartType;
+typedef LeafGridPart<HGridType> GridPartType;
 
 //! define the function space, \f[ \R^2 \rightarrow \R \f]
 // see dune/common/functionspace.hh
@@ -144,7 +144,7 @@ class L2Projection
 
     typedef typename DiscreteFunctionSpaceType::RangeType RangeType;
     RangeType ret (0.0);
-    std::vector< RangeType > phi ( space.mapper().maxNumDofs(), RangeType(0) );
+    std::vector< RangeType > phi;
     //diagomal of massmatrix
     DiscreteFunctionType mass("mass",space);
     mass.clear();
@@ -168,6 +168,8 @@ class L2Projection
       
       const int quadNop = quad.nop();
       const int numDofs = lf.numDofs();
+      phi.resize( numDofs );
+
       for(int qP = 0; qP < quadNop ; ++qP) 
       {// double det = (*it).geometry().integrationElement( quad.point(qP) );
         f.evaluate(itGeom.global(quad.point(qP)), ret);
