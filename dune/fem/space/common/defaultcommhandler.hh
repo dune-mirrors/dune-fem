@@ -40,7 +40,7 @@ namespace Dune
 
       typedef typename DiscreteFunctionType::DofBlockPtrType DofBlockPtrType;
 
-      static const int blockSize = DiscreteFunctionSpaceType::localBlockSize;
+      static const unsigned int blockSize = DiscreteFunctionSpaceType::localBlockSize;
       
     public:
       DefaultCommunicationHandler( DiscreteFunctionType &function )
