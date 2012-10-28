@@ -80,8 +80,8 @@ namespace Dune
       IntersectionQuadrature( const GridPartType &gridPart, 
                               const IntersectionType &intersection,
                               const int order) 
-      : inside_ ( gridPart, intersection, order, FaceQuadratureType :: INSIDE ),
-        outside_( gridPart, intersection, order, FaceQuadratureType :: OUTSIDE ) 
+      : inside_ ( gridPart, intersection, order, FaceQuadratureType::INSIDE ),
+        outside_( gridPart, intersection, order, intersection.neighbor() ? FaceQuadratureType::OUTSIDE : FaceQuadratureType::INSIDE )
       {}
 
       //! \brief return reference to inside face quadrature 
