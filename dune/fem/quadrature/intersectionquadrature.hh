@@ -84,6 +84,27 @@ namespace Dune
         outside_( gridPart, intersection, order, intersection.neighbor() ? FaceQuadratureType::OUTSIDE : FaceQuadratureType::INSIDE )
       {}
 
+      /** \brief Constructor creating an inside and an outside face quadrature for
+                 integrating over an intersection. 
+              
+          \param[in]  gridPart        grid partition
+          \param[in]  intersection    intersection
+          \param[in]  order           desired order of the quadrature
+          \param[in]  noNeigborCheck  flag that indicates that the neighbor check is not necessary (independent of the value of noNeigborCheck)
+   
+          \note For this constructor intersection.neighbor() must return true.
+       */ 
+      IntersectionQuadrature( const GridPartType &gridPart, 
+                              const IntersectionType &intersection,
+                              const int order,
+                              const bool noNeighborCheck ) 
+      : inside_ ( gridPart, intersection, order, FaceQuadratureType::INSIDE  ),
+        outside_( gridPart, intersection, order, FaceQuadratureType::OUTSIDE )
+      {
+        // make sure neighbor is true 
+        assert( intersection.neighbor() );
+      }
+
       //! \brief return reference to inside face quadrature 
       const FaceQuadratureType& inside()  const { return inside_;  }
 
