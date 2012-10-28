@@ -1,7 +1,6 @@
 #ifndef DUNE_FEM_GRIDPART_GEOGRIDPART_CORNERSTORAGE_HH
 #define DUNE_FEM_GRIDPART_GEOGRIDPART_CORNERSTORAGE_HH
 
-
 #include <dune/common/typetraits.hh>
 
 #include <dune/geometry/genericgeometry/geometry.hh>
