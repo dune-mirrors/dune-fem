@@ -18,7 +18,7 @@ static const int dimw = Dune::GridSelector::dimworld;
 #include <dune/fem/function/common/gridfunctionadapter.hh>
 
 #include <dune/fem/operator/projection/dgl2projection.hh>
-#include <dune/fem/misc/l2error.hh>
+#include <dune/fem/misc/l2norm.hh>
 
 #include <dune/fem/misc/double.hh>
 
@@ -160,7 +160,7 @@ double algorithm (GridType& grid, DiscreteFunctionType& solution,double time=0)
    ExactSolution f( time ); 
 
    // L2 error class 
-   L2Error < DiscreteFunctionType > l2err;
+   L2Norm< GridPartType > l2norm( solution.space().gridPart() );
        
    //! perform l2-projection
    DGL2ProjectionImpl::project(f, solution);
@@ -169,11 +169,8 @@ double algorithm (GridType& grid, DiscreteFunctionType& solution,double time=0)
    // pol ord for calculation the error chould by higher than 
    // pol for evaluation the basefunctions 
    typedef DiscreteFunctionSpaceType :: RangeType RangeType; 
-   RangeType error = l2err.norm(f ,solution, 0.0);
-   std::cout << "\nL2 Error: ";
-   for(int i=0; i<RangeType::dimension; ++i)
-     std::cout << "["<<i<<"] : " << error[i] << " ";
-   std::cout << std::endl;
+   double error = l2norm.distance( f ,solution );
+   std::cout << "\nL2 Error: " << error << std::endl;
    return sqrt(error*error);
 }
 
