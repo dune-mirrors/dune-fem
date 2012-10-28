@@ -72,7 +72,7 @@ namespace Dune
 
       std::size_t numCorners () const
       {
-        return ReferenceElements< typename CoordFunctionType::GridPartType::GridType::ctype, dimension >::general( type() ).size(dimension);
+        return ReferenceElements< typename CoordFunctionType::GridPartType::GridType::ctype, dimension-codim >::general( type() ).size(dimension-codim);
       }
 
     private:
