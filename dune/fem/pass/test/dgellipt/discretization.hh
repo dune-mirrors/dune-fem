@@ -34,7 +34,7 @@
 #include <dune/fem/operator/projection/hdivprojection.hh>
 
 // definition of L2Error 
-#include <dune/fem/misc/l2error.hh>
+#include <dune/fem/misc/l2norm.hh>
 
 using namespace Dune;
 
@@ -256,9 +256,9 @@ public:
 
       veloPass_(arg,velo);
 
+      L2Norm < GridPartType > l2norm( gridPart_ );
       {
-        L2Error < DestinationType > l2errGrad;
-        gradError[i] = l2errGrad.norm(model_.data().gradient() , velo);
+        gradError[i] = l2norm.distance(model_.data().gradient() , velo);
 
         Fem::HdivProjection< DestinationType > hdiv(velo.space());
         DestinationType tmp ( velo );
@@ -270,7 +270,7 @@ public:
         
         std::cout << "After Normal Jump = " << hdiv.normalJump( velo ) << "\n";
 
-        errVelo[i] = l2errGrad.norm( model_.data().gradient() , velo);
+        errVelo[i] = l2norm.distance( model_.data().gradient() , velo);
         
 #if HAVE_GRAPE
         if( disp_ )
@@ -284,10 +284,9 @@ public:
 #endif
       }
      
-      L2Error < SolutionType > l2err;
       // pol ord for calculation the error chould by higher than 
       // pol for evaluation the basefunctions 
-      error[i] = l2err.norm( model_.data().solution() , dest);
+      error[i] = l2norm.distance(model_.data().solution() , dest);
 
       for(int k=0; k<RangeType::dimension; k++)
         std::cout << "\nError["<<k<<"] : " << error[i][k] << "\n";
