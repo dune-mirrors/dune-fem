@@ -29,9 +29,9 @@ using namespace Dune;
 
 int main(int argc, char **argv)
 {
-  MPIManager::initialize(argc,argv);
+  Fem::MPIManager::initialize(argc,argv);
   try {
-    Parameter::append(argc,argv);
+    Fem::Parameter::append(argc,argv);
 #ifdef PARAMETER_APPEND_FUNCTION
     PARAMETER_APPEND_FUNCTION();
 #endif

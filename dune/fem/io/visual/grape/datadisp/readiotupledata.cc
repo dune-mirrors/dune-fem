@@ -28,7 +28,7 @@ typedef GR_InputType GR_DiscFuncType;
 static std::stack<GR_GridType *> gridStack;
 static std::stack<GrapeDispType *> dispStack;
 
-static BinaryDataIO <GR_GridType> dataIO;
+static Fem::BinaryDataIO <GR_GridType> dataIO;
 
 template <class T> 
 inline void deleteObjects(std::stack<T *> & stack);
@@ -42,7 +42,7 @@ inline void dataDispErrorExit(std::string msg)
 
 inline GrapeDispType * readTupleData(const char * path, const char * filename, 
             double & time , int n, 
-            int timestep, int myRank,
+            int timestep, int myRank, int mySize,
             INFO* info)
 {
   // check whether we use a fixed mesh 
@@ -59,7 +59,7 @@ inline GrapeDispType * readTupleData(const char * path, const char * filename,
   DATAINFO * dinf = info[n].datinf;
 
   Fem::IOTuple<GR_DiscFuncType>::ReturnType* tup = 
-    Fem::IOTuple<GR_DiscFuncType>::input(grid,myRank,path,fn);
+    Fem::IOTuple<GR_DiscFuncType>::input(grid,time,myRank,mySize,path,fn);
   std::cout << "Finished reading grid" << std::endl;
 
   // push all new grids to grid stack 
@@ -106,10 +106,10 @@ inline INFO * readData(INFO * info , const char * path, int i_start, int i_end,
         {
           // use standard procedure to create path name 
           std::string newpath = 
-            IOInterface::createRecoverPath(path,proc,info[i].name,ntime);
+            Fem::IOInterface::createRecoverPath(path,proc,info[i].name,ntime);
 
           newdisp = readTupleData(newpath.c_str(), info[i].name, 
-                                  t_act , i , ntime, proc,   info);
+                                  t_act , i , ntime, proc, anzProcs, info);
 
           if( comdisp )
           {
