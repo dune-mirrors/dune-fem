@@ -21,7 +21,7 @@
 #include <dune/fem/operator/projection/l2projection.hh>
 #include <dune/fem/space/common/adaptmanager.hh>
 #include <dune/fem/space/common/functionspace.hh>
-#include <dune/fem/space/fvspace.hh>
+#include <dune/fem/space/finitevolume.hh>
 
 #include "../../../test/exactsolution.hh"
 #include "../../../test/testgrid.hh"

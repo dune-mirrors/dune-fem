@@ -6,9 +6,9 @@ DIMRANGE = 1
 LDADD = $(ALL_PKG_LDFLAGS) $(ALL_PKG_LIBS) $(LOCAL_LIBS) $(MPI_LDFLAGS)
 AM_CPPFLAGS = $(ALL_PKG_CPPFLAGS) -DDIMRANGE=$(DIMRANGE)
 
-check_PROGRAMS = test-fvspace
+check_PROGRAMS = test-finitevolumespace
 
-test_fvspace_SOURCES = test-fvspace.cc
+test_finitevolumespace_SOURCES = test-finitevolumespace.cc
 
 CLEANFILES = *.pvtu *.vtu *.log 
 
