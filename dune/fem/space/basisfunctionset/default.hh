@@ -203,6 +203,9 @@ namespace Dune
         return *entity_;
       }
 
+      //! \brief return geometry type
+      Dune::GeometryType type () const { return entity().type(); }
+
 
       // Non-interface methods
       // ---------------------

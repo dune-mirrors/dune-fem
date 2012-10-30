@@ -131,6 +131,8 @@ namespace Dune
 
       const EntityType &entity () const { return impl().entity(); }
 
+      Dune::GeometryType type () const { return impl().type(); }
+
     private:
       const BasisFunctionSet *basisFunctionSet_;
     };
