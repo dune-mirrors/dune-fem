@@ -175,30 +175,48 @@ namespace Dune
         return (contains( Entity::codimension ) ? 1 : 0);
       }
      
-      /** \copydoc DofMapper::oldIndex */
+      /** \copydoc AdaptiveDofMapper::oldIndex */
       GlobalKeyType oldIndex ( const int hole, int ) const
       {
         // forward to index set 
         return indexSet_.oldIndex( hole, codimension ) ;
       }
 
-      /** \copydoc DofMapper::newIndex */
+      /** \copydoc AdaptiveDofMapper::newIndex */
       GlobalKeyType newIndex ( const int hole, int ) const
       {
         // forward to index set 
         return indexSet_.newIndex( hole, codimension );
       }
 
-      /** \copydoc DofMapper::numberOfHoles */
+      /** \copydoc AdaptiveDofMapper::numberOfHoles */
       SizeType numberOfHoles ( const int ) const
       {
         return indexSet_.numberOfHoles( codimension );
       }
 
-      /** \copydoc DofMapper::consecutive */
+      /** \copydoc AdaptiveDofMapper::consecutive */
       bool consecutive () const 
       {
         return indexSet_.consecutive();
+      }
+
+      /** \copydoc AdaptiveDofMapper::oldOffSet */
+      SizeType oldOffSet ( const int block ) const
+      {
+        return 0;
+      }
+
+      /** \copydoc AdaptiveDofMapper::offSet */
+      SizeType offSet ( const int block ) const
+      {
+        return 0;
+      }
+
+      /** \copydoc AdaptiveDofMapper::numBlocks */
+      SizeType numBlocks () const
+      {
+        return 1;
       }
 
     protected:
