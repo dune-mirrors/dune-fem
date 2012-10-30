@@ -264,7 +264,7 @@ namespace Dune
         // if multiple base sets skip geometry call
         bool updateBaseSet = true;
         if( !multipleBaseSets && (entity_ != 0) )
-          updateBaseSet = (basisFunctionSet_.entity().type() != entity.type());
+          updateBaseSet = (basisFunctionSet_.type() != entity.type());
         
         if( multipleBaseSets || updateBaseSet )
         {
