@@ -10,16 +10,12 @@ libdiscontinuousgalerkin_la_SOURCES = dgbasefunctions_1.cc \
 libdiscontinuousgalerkin_la_CPPFLAGS = $(AM_CPPFLAGS) -DCOMPILE_LIB
 
 discontinuousgalerkindir =  $(includedir)/dune/fem/space/discontinuousgalerkin
-discontinuousgalerkin_HEADERS = declaration.hh \
-		  dgbasefunctions.hh \
-                  space.hh \
-                  legendredgbasefunctions.hh \
-                  legendrepoly.hh \
-                  localdgmassmatrix.hh \
-                  localrestrictprolong.hh \
-                  orthonormalbase_mod.hh \
-		  space.hh
+discontinuousgalerkin_HEADERS = declaration.hh  default.hh  dgbasefunctions.hh \
+				dgspace.hh  lagrange.hh  legendredgbasefunctions.hh \
+				legendre.hh  legendrepoly.hh  localdgmassmatrix.hh \
+				localrestrictprolong.hh  orthonormalbase_mod.hh  space.hh
 
 EXTRA_DIST = orthonormalbase_1d.cc orthonormalbase_2d.cc orthonormalbase_3d.cc
 
 include $(top_srcdir)/am/global-rules
+
