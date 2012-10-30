@@ -1,0 +1,13 @@
+/generic
+/tester
+/testnonscalarmapper
+/Makefile
+/Makefile.in
+/*.log
+/*.dgf.*
+/*.so
+/*.so.*
+/*.swp
+/*.vtu
+/.libs
+/.deps

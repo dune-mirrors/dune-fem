@@ -1,16 +1,21 @@
-#ifndef DUNE_FEM_LAGRANGESPACE_LAGRANGEPOINTS_HH
-#define DUNE_FEM_LAGRANGESPACE_LAGRANGEPOINTS_HH
+#ifndef DUNE_FEM_SPACE_LAGRANGE_LAGRANGEPOINTS_HH
+#define DUNE_FEM_SPACE_LAGRANGE_LAGRANGEPOINTS_HH
 
+// dune-geometry includes
 #include <dune/geometry/referenceelements.hh>
 
+// dune-fem includes
 #include <dune/fem/quadrature/cachingpointlist.hh>
 #include <dune/fem/space/dofmapper/localkey.hh>
 
+// local includes
 #include "genericgeometry.hh"
 #include "genericlagrangepoints.hh"
 
+
 namespace Dune
 {
+
   namespace Fem
   {
 
@@ -803,4 +808,4 @@ namespace Dune
 
 } // namespace Dune
 
-#endif // #ifndef DUNE_FEM_LAGRANGESPACE_LAGRANGEPOINTS_HH
+#endif // #ifndef DUNE_FEM_SPACE_LAGRANGE_LAGRANGEPOINTS_HH

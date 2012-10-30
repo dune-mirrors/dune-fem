@@ -72,8 +72,6 @@ namespace Dune
 
       // codimension
       static const int codimension = 0;
-      // entity type
-      typedef typename GridPartType::template Codim< codimension >::EntityType EntityType;
 
     private:
       static const int dimLocal = GridPartType::dimension;

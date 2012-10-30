@@ -9,7 +9,7 @@
 using namespace Dune;
 using namespace Fem;
 
-#include "basefunctiontest.cc"
+#include "basisfunctiontest.cc"
 #include "mappertest.cc"
 
 int main( int argc, char **argv ) 
@@ -22,8 +22,8 @@ int main( int argc, char **argv )
   std :: string gridFile( "2dgrid.dgf" );
   //std :: string gridFile( "../../../examples/poisson/3dgrid.al" );
   
-  Suite suite("Basefunction tests");
-  suite.addTest( new LagrangeBase_Test(gridFile));
+  Suite suite("Basisfunction tests");
+  suite.addTest( new LagrangeBasis_Test(gridFile));
   suite.addTest( new LagrangeMapper_Test< GridSelector::GridType >( gridFile ) );
 
   suite.run();

@@ -1,5 +1,5 @@
-#ifndef DUNE_FEM_SPACE_LAGRANGESPACE_DOFMAPPERCODE_HH
-#define DUNE_FEM_SPACE_LAGRANGESPACE_DOFMAPPERCODE_HH
+#ifndef DUNE_FEM_SPACE_LAGRANGE_DOFMAPPER_HH
+#define DUNE_FEM_SPACE_LAGRANGE_DOFMAPPER_HH
 
 // dune-geometry includes
 #include <dune/geometry/referenceelements.hh>
@@ -10,11 +10,15 @@
 #include <dune/fem/space/dofmapper/code.hh>
 #include <dune/fem/space/dofmapper/compile.hh>
 
+
 namespace Dune
 {
 
-  namespace Fem 
+  namespace Fem
   {
+
+    // LagrangeDofMapperCodeFactory
+    // ----------------------------
 
     template< class LagrangePointSetContainer >
     struct LagrangeDofMapperCodeFactory
@@ -24,21 +28,21 @@ namespace Dune
       {}
 
       template< class Field, int dim >
-      Fem::DofMapperCode operator() ( const Dune::ReferenceElement< Field, dim > &refElement ) const
+      DofMapperCode operator() ( const ReferenceElement< Field, dim > &refElement ) const
       {
         const GeometryType type = refElement.type();
         if( lagrangePointSets_.exists( type ) )
-          return Fem::compile( refElement, lagrangePointSets_[ type ] );
+          return compile( refElement, lagrangePointSets_[ type ] );
         else
-          return Fem::DofMapperCode();
+          return DofMapperCode();
       }
 
     private:
       const LagrangePointSetContainer &lagrangePointSets_;
     };
 
-  } // namespace Fem 
+  } // namespace Fem
 
 } // namespace Dune
 
-#endif // #ifndef DUNE_FEM_SPACE_LAGRANGESPACE_DOFMAPPERCODE_HH
+#endif // #ifndef DUNE_FEM_SPACE_LAGRANGE_DOFMAPPER_HH

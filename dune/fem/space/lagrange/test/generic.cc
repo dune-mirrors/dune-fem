@@ -2,7 +2,7 @@
 
 #include <dune/common/forloop.hh>
 
-#include "../basefunctions.hh"
+#include "../shapefunctionset.hh"
 #include "../lagrangepoints.hh"
 
 using namespace Dune;
@@ -27,9 +27,8 @@ typedef FunctionSpace< double, double, DIMENSION, 1 > FunctionSpaceType;
 typedef FunctionSpaceType :: DomainType DomainType;
 typedef FunctionSpaceType :: RangeType RangeType;
 
-typedef Fem::LagrangeBaseFunctionFactory< FunctionSpaceType, DIMENSION, POLORDER >
-  BaseFunctionFactoryType;
-typedef BaseFunctionInterface< FunctionSpaceType > BaseFunctionType;
+typedef Fem::LagrangeShapeFunctionFactory< FunctionSpaceType, POLORDER > ShapeFunctionFactoryType;
+typedef ShapeFunctionFactoryType::ShapeFunctionType ShapeFunctionType;
 
 typedef Fem::LagrangePoint< GeometryType :: GEOMETRYTYPE, DIMENSION, POLORDER >
   LagrangePointType;
@@ -54,11 +53,11 @@ struct PrintMaxDofs
 int main( int argc, char **argv )
 {
   GeometryType geometryType( GeometryType::GEOMETRYTYPE, DIMENSION );
-  BaseFunctionFactoryType baseFunctionFactory ( geometryType );
+  ShapeFunctionFactoryType shapeFunctionFactory ( geometryType );
 
-  const unsigned int numBaseFunctions = baseFunctionFactory.numBaseFunctions();
+  const unsigned int numShapeFunctions = shapeFunctionFactory.numShapeFunctions();
 
-  std::cout << "Number of base functions: " << numBaseFunctions;
+  std::cout << "Number of shape functions: " << numShapeFunctions;
   std::cout << std::endl << std::endl;
 
   ForLoop< PrintMaxDofs, 0, DIMENSION >::apply();
@@ -68,7 +67,7 @@ int main( int argc, char **argv )
   unsigned int indexErrors = 0;
   unsigned int pointSetErrors = 0;
   LagrangePointListType pointSet( 0 );
-  for( unsigned int i = 0; i < numBaseFunctions; ++i )
+  for( unsigned int i = 0; i < numShapeFunctions; ++i )
   {
     LagrangePointType point( i );
 
@@ -116,14 +115,14 @@ int main( int argc, char **argv )
   std :: cout << std :: endl;
   
   errors = 0;
-  for( unsigned int j = 0; j < numBaseFunctions; ++j )
+  for( unsigned int j = 0; j < numShapeFunctions; ++j )
   {
-    BaseFunctionType &baseFunction = *(baseFunctionFactory.baseFunction( j ));
+    ShapeFunctionType *shapeFunction = shapeFunctionFactory.createShapeFunction( j );
 
     #if (VERBOSITY_LEVEL >= 1)
-      std :: cout << "Base function: " << j << std :: endl;
+      std :: cout << "Shape function: " << j << std :: endl;
     #endif
-    for( unsigned int i = 0; i < numBaseFunctions; ++i )
+    for( unsigned int i = 0; i < numShapeFunctions; ++i )
     {
       LagrangePointType point( i );
 
@@ -132,7 +131,7 @@ int main( int argc, char **argv )
 
       RangeType phi;
       FieldVector< int, 0 > derivative;
-      baseFunction.evaluate( derivative, x, phi );
+      shapeFunction->evaluate( x, phi );
       
       double expected = ((i == j) ? 1.0 : 0.0);
       if( fabs( phi[ 0 ] - expected ) > 1e-8 )
@@ -145,15 +144,16 @@ int main( int argc, char **argv )
       #endif
     }
 
-    delete &baseFunction;
+    delete shapeFunction;
     #if (VERBOSITY_LEVEL >= 1)
       std :: cout << std :: endl;
     #endif
   }
-  std :: cout << "Base function evaluation errors: " << errors << std :: endl;
+  std :: cout << "Shape function evaluation errors: " << errors << std :: endl;
   
   errors = 0;
-  for( unsigned int i = 0; i < numBaseFunctions; ++i ) {
+  for( unsigned int i = 0; i < numShapeFunctions; ++i ) 
+  {
     LagrangePointType point( i );
 
     DomainType x;
@@ -163,35 +163,31 @@ int main( int argc, char **argv )
       std :: cout << "Lagrange point " << i << ": " << x << std :: endl;
     #endif
 
-    for( int k = 0; k < DIMENSION; ++k ) {
-      FieldVector< int, 1 > derivative( k );
+    typedef ShapeFunctionType::JacobianRangeType JacobianRangeType;
+    JacobianRangeType jacobian( 0 );
+    for( unsigned int j = 0; j < numShapeFunctions; ++j )
+    {
+      ShapeFunctionType *shapeFunction = shapeFunctionFactory.createShapeFunction( j );
 
-      RangeType sum( 0 );
-      for( unsigned int j = 0; j < numBaseFunctions; ++j )
-      {
-        BaseFunctionType &baseFunction = *(baseFunctionFactory.baseFunction( j ));
-
-        RangeType phi;
-        baseFunction.evaluate( derivative, x, phi );
-        #if (VERBOSITY_LEVEL >= 1)
-          std :: cout << "BaseFunction " << j << ", derivative " << k << ": " << phi[ 0 ] << std :: endl;
-        #endif
-        sum += phi;
-
-        delete &baseFunction;
-      }
-
+      JacobianRangeType tmp;
+      shapeFunction->jacobian( x, tmp );
       #if (VERBOSITY_LEVEL >= 1)
-        std :: cout << "Derivative " << k << " sums up to " << sum[ 0 ] << "." << std :: endl;
+        std :: cout << "ShapeFunction " << j << ", jacobian: " << tmp << std :: endl;
       #endif
-      if( fabs( sum[ 0 ] ) > 1e-8 )
-        ++errors;
+
+      jacobian += tmp;
+
+      delete shapeFunction;
     }
+
+    if( fabs( jacobian[ 0 ].two_norm() ) > 1e-8 )
+      ++errors;
+
     #if (VERBOSITY_LEVEL >= 1)
       std :: cout << std :: endl;
     #endif
   }
-  std :: cout << "Base function derivtive summation errors: " << errors << std :: endl;
+  std :: cout << "Shape function derivtive summation errors: " << errors << std :: endl;
   
   return 0;
 }

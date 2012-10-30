@@ -1,0 +1,6 @@
+ToDo-List:
+
+-Documentation (almost everything is still missing here)
+-Lagrange Mapper for polynomialOrder > 2
+ (remember: do not provide an implementation for polynomialOrder = 0)
+-If desired: Base functions with DimRange > 1
