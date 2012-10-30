@@ -10,7 +10,7 @@
 #include <dune/common/static_assert.hh>
 
 // dune-fem includes
-#include <dune/fem/space/dgspace/legendrepoly.hh>
+#include <dune/fem/space/discontinuousgalerkin/legendrepoly.hh>
 #include <dune/fem/space/shapefunctionset/simple.hh>
 
 /**
