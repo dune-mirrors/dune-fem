@@ -83,6 +83,7 @@ namespace Dune
 
       // exported type 
       typedef SimpleBaseFunctionProxy< ShapeFunctionSetType >  BaseFunctionSetType;
+      typedef BaseFunctionSetType BasisFunctionSetType;
 
       /** \brief defines type of communication data handle for this type of space
        */
