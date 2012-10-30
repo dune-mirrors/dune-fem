@@ -1,6 +1,8 @@
 #ifndef DUNE_FEM_NONBLOCKMAPPER_HH
 #define DUNE_FEM_NONBLOCKMAPPER_HH
 
+#include <vector>
+
 #include <dune/fem/space/mapper/dofmapper.hh>
 #include <dune/fem/misc/functor.hh>
 
