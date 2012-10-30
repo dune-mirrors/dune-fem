@@ -2,7 +2,7 @@
 
 // #include <dune/grid/io/file/dgfparser/dgfgridtype.hh>
 #include <dune/fem/gridpart/common/gridpart.hh>
-#include <dune/fem/space/lagrangespace.hh>
+#include <dune/fem/space/lagrange.hh>
 
 namespace Dune 
 {

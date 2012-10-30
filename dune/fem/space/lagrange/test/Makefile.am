@@ -19,7 +19,7 @@ testnonscalarmapper_SOURCES = testnonscalarmapper.cc
 testnonscalarmapper_CPPFLAGS = $(ALL_PKG_CPPFLAGS) -DPOLORDER=$(POLORDER) -DSCALAR=$(SCALAR)
 
 
-testdir=$(includedir)/dune/fem/space/lagrangespace/test
+testdir=$(includedir)/dune/fem/space/lagrange/test
 test_HEADERS = basisfunctiontest.hh  mappertest.hh basisfunctiontest.cc \
 mappertest.cc
 EXTRA_DIST = 2dgrid.dgf cube.dgf onesimplex.dgf

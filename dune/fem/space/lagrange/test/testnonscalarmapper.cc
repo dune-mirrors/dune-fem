@@ -10,7 +10,7 @@
 // adaptation classes 
 #include <dune/fem/space/common/adaptmanager.hh>
 // lagrange space 
-#include <dune/fem/space/lagrangespace.hh>
+#include <dune/fem/space/lagrange.hh>
 #include <dune/fem/function/adaptivefunction.hh>
 #include <dune/fem/io/file/vtkio.hh>
 
