@@ -142,41 +142,55 @@ namespace Dune
         deprecationWarning( Dune::integral_constant< bool, ShowWarning< Storage >::v >() );
       }
 
+      /** @copydoc Dune::Fem::DiscreteFunctionSpaceInterface::type */
       DFSpaceIdentifier type () const
       {
         return FiniteVolumeSpace_id;
       }
 
+      /** @copydoc Dune::Fem::DiscreteFunctionSpaceInterface::basisFunctionSet */
       BasisFunctionSetType basisFunctionSet ( const EntityType &entity ) const
       {
         return BasisFunctionSetType( entity );
       }
 
+      /** @copydoc Dune::Fem::DiscreteFunctionSpaceInterface::contains */
       bool contains ( const int codimension ) const
       {
         return blockMapper().contains( codimension );
       }
 
+      /** @copydoc Dune::Fem::DiscreteFunctionSpaceInterface::continuous */
       bool continuous () const
       {
         return false;
       }
 
+      /** @copydoc Dune::Fem::DiscreteFunctionSpaceInterface::continuous */
+      bool continuous ( const IntersectionType &intersection ) const
+      {
+        return false;
+      }
+
+      /** @copydoc Dune::Fem::DiscreteFunctionSpaceInterface::order */
       int order () const
       {
         return 0;
       }
 
+      /** @copydoc Dune::Fem::DiscreteFunctionSpaceInterface::order */
       int order ( const EntityType & ) const
       {
         return order();          
       }
 
+      /** @copydoc Dune::Fem::DiscreteFunctionSpaceInterface::mapper */
       MapperType &mapper () const
       {
         return mapper_;
       }
 
+      /** @copydoc Dune::Fem::DiscreteFunctionSpaceInterface::blockMapper */
       BlockMapperType &blockMapper () const
       {
         return blockMapper_;
