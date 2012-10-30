@@ -1,7 +1,7 @@
 #ifndef DUNE_FEM_DGLOCALRESTRICTPROLONG_HH
 #define DUNE_FEM_DGLOCALRESTRICTPROLONG_HH
 
-#include <dune/fem/function/localfunction/temporarylocalfunction.hh>
+#include <dune/fem/function/localfunction/temporary.hh>
 #include <dune/fem/quadrature/cachingquadrature.hh>
 #include <dune/fem/space/common/adaptmanager.hh>
 #include <dune/fem/space/common/localrestrictprolong.hh>
