@@ -22,6 +22,33 @@ namespace Dune
   namespace Fem
   {
 
+    // DiscontinuousGalerkinSpaceTraitsBase
+    // ------------------------------------
+
+    template< class FunctionSpace, class GridPart, int polOrder, template< class > class Storage >
+    struct DiscontinuousGalerkinSpaceTraitsBase
+    {
+      typedef FunctionSpace FunctionSpaceType;
+      typedef GridPart GridPartType;
+
+      static const int dimRange = FunctionSpaceType::dimRange;
+      static const int dimLocal = GridPartType::dimension;
+      
+      static const int codimension = 0;
+      static const int polynomialOrder = polOrder;
+
+      typedef CodimensionMapper< GridPartType, codimension > BlockMapperType;
+
+      template <class DiscreteFunction, class Operation = DFCommunicationOperation::Copy >
+      struct CommDataHandle
+      {
+        typedef DefaultCommunicationHandler< DiscreteFunction, Operation > Type;
+        typedef Operation OperationType;
+      };
+    };
+
+
+
     // DiscontinuousGalerkinSpaceDefault
     // ---------------------------------
 
@@ -129,32 +156,6 @@ namespace Dune
 
     private:
       mutable BlockMapperType &blockMapper_;
-    };
-
-
-    // DiscontinuousGalerkinSpaceTraitsBase
-    // ------------------------------------
-
-    template< class FunctionSpace, class GridPart, int polOrder, template< class > class Storage >
-    struct DiscontinuousGalerkinSpaceTraitsBase
-    {
-      typedef FunctionSpace FunctionSpaceType;
-      typedef GridPart GridPartType;
-
-      static const int dimRange = FunctionSpaceType::dimRange;
-      static const int dimLocal = GridPartType::dimension;
-      
-      static const int codimension = 0;
-      static const int polynomialOrder = polOrder;
-
-      typedef CodimensionMapper< GridPartType, codimension > BlockMapperType;
-
-      template <class DiscreteFunction, class Operation = DFCommunicationOperation::Copy >
-      struct CommDataHandle
-      {
-        typedef DefaultCommunicationHandler< DiscreteFunction, Operation > Type;
-        typedef Operation OperationType;
-      };
     };
 
   } // namespace Fem
