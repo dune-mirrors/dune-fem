@@ -83,8 +83,8 @@ namespace Dune
         return localBasis_.size();
       }
       
-      /** \copydoc Dune::Fem::BaseFunctionSetInterface::geometryType */
-      GeometryType geometryType () const
+      /** \copydoc Dune::Fem::BaseFunctionSetInterface::type */
+      GeometryType type () const
       {
         return geometryType_;
       }

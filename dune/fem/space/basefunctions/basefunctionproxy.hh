@@ -66,10 +66,10 @@ namespace Dune
         return baseFunctionSet().size();
       }
       
-      /** \copydoc Dune::Fem::BaseFunctionSetInterface::geometryType */
-      GeometryType geometryType () const
+      /** \copydoc Dune::Fem::BaseFunctionSetInterface::type */
+      GeometryType type () const
       {
-        return baseFunctionSet().geometryType();
+        return baseFunctionSet().type();
       }
      
       /** \copydoc Dune::Fem::BaseFunctionSetInterface::evaluate(const int baseFunction,const FieldVector<int,diffOrder> &diffVariable,const Point &x,RangeType &value) const */
