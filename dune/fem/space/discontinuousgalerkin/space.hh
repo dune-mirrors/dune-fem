@@ -8,15 +8,21 @@
 #include <dune/geometry/type.hh>
 
 // dune-fem includes
+#include <dune/fem/gridpart/common/capabilities.hh>
 #include <dune/fem/misc/bartonnackmaninterface.hh>
 #include <dune/fem/space/common/defaultcommhandler.hh>
 #include <dune/fem/space/common/discretefunctionspace.hh>
 #include <dune/fem/space/mapper/codimensionmapper.hh>
+#include <dune/fem/space/mapper/nonblockmapper.hh>
 #include <dune/fem/storage/singletonlist.hh>
 #include <dune/fem/version.hh>
+#include <dune/fem/space/shapefunctionset/legendre.hh>
+#include <dune/fem/space/lagrange/genericbasefunctions.hh>
 
 // local includes
 #include "declaration.hh"
+#include "dgbasefunctions.hh"
+#include "legendredgbasefunctions.hh"
 
 
 namespace Dune
@@ -135,12 +141,51 @@ namespace Dune
     };
 
 
+    // DiscontinuousGalerkinSpaceTraitsBase
+    // ------------------------------------
+
+    template< class FunctionSpace, class GridPart, int polOrder, template< class > class Storage >
+    struct DiscontinuousGalerkinSpaceTraitsBase
+    {
+      typedef FunctionSpace FunctionSpaceType;
+      typedef GridPart GridPartType;
+
+      static const int dimRange = FunctionSpaceType::dimRange;
+      static const int dimLocal = GridPartType::dimension;
+      
+      static const int codimension = 0;
+      static const int polynomialOrder = polOrder;
+
+      typedef CodimensionMapper< GridPartType, codimension > BlockMapperType;
+
+      template <class DiscreteFunction, class Operation = DFCommunicationOperation::Copy >
+      struct CommDataHandle
+      {
+        typedef DefaultCommunicationHandler< DiscreteFunction, Operation > Type;
+        typedef Operation OperationType;
+      };
+    };
+
+
 
     // DiscontinuousGalerkinSpaceTraits
     // --------------------------------
 
     template< class FunctionSpace, class GridPart, int polOrder, template< class > class Storage >
-    class DiscontinuousGalerkinSpaceTraits;
+    class DiscontinuousGalerkinSpaceTraits
+    : public DiscontinuousGalerkinSpaceTraitsBase< FunctionSpace, GridPart, polOrder, Storage >
+    {
+      typedef DiscontinuousGalerkinSpaceTraitsBase< FunctionSpace, GridPart, polOrder, Storage > BaseType;
+
+    public:
+      typedef DiscontinuousGalerkinSpace< FunctionSpace, GridPart, polOrder, Storage > DiscreteFunctionSpaceType;
+
+      static const int localBlockSize = BaseType::dimRange * DGNumberOfBaseFunctions< polOrder, BaseType::dimLocal >::numBaseFunctions;
+      typedef NonBlockMapper< typename BaseType::BlockMapperType, localBlockSize > MapperType;
+
+      // ShapeFunctionSetType
+      // BasisFunctionSetType
+    };
 
 
 
@@ -190,7 +235,28 @@ namespace Dune
     // ----------------------------------------
 
     template< class FunctionSpace, class GridPart, int polOrder, template< class > class Storage >
-    class LagrangeDiscontinuousGalerkinSpaceTraits;
+    class LagrangeDiscontinuousGalerkinSpaceTraits
+    : public DiscontinuousGalerkinSpaceTraitsBase< FunctionSpace, GridPart, polOrder, Storage >
+    {
+      typedef DiscontinuousGalerkinSpaceTraitsBase< FunctionSpace, GridPart, polOrder, Storage > BaseType;
+
+      typedef typename GeometryWrapper<
+          Dune::Fem::GridPartCapabilities::hasSingleGeometryType< typename BaseType::GridPartType >::topologyId, BaseType::dimLocal
+        >::GenericGeometryType GenericGeometryType;
+
+      typedef GenericLagrangeBaseFunction<
+          typename FunctionSpace::ScalarFunctionSpaceType, GenericGeometryType, polOrder
+        > GenericBaseFunctionType;
+
+    public:
+      typedef LagrangeDiscontinuousGalerkinSpace< FunctionSpace, GridPart, polOrder, Storage > DiscreteFunctionSpaceType;
+
+      static const int localBlockSize = BaseType::dimRange * GenericBaseFunctionType::numBaseFunctions;
+      typedef NonBlockMapper< typename BaseType::BlockMapperType, localBlockSize > MapperType;
+
+      // ShapeFunctionSetType
+      // BasisFunctionSetType
+    };
 
 
 
@@ -241,7 +307,20 @@ namespace Dune
     // ----------------------------------
 
     template< class FunctionSpace, class GridPart, int polOrder, template< class > class Storage >
-    class LegendreDiscontinuousGalerkinSpaceTraits;
+    class LegendreDiscontinuousGalerkinSpaceTraits
+    : public DiscontinuousGalerkinSpaceTraitsBase< FunctionSpace, GridPart, polOrder, Storage >
+    {
+      typedef DiscontinuousGalerkinSpaceTraitsBase< FunctionSpace, GridPart, polOrder, Storage > BaseType;
+
+    public:
+      typedef LegendreDiscontinuousGalerkinSpace< FunctionSpace, GridPart, polOrder, Storage > DiscreteFunctionSpaceType;
+
+      static const int localBlockSize = BaseType::dimRange * NumLegendreBaseFunctions< polOrder, BaseType::dimLocal >::numBaseFct;
+      typedef NonBlockMapper< typename BaseType::BlockMapperType, localBlockSize > MapperType;
+
+      // ShapeFunctionSetType
+      // BasisFunctionSetType
+    };
 
 
 
