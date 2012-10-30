@@ -8,6 +8,7 @@
 #include <dune/geometry/type.hh>
 
 // dune-fem includes
+#include <dune/fem/misc/bartonnackmaninterface.hh>
 #include <dune/fem/space/common/defaultcommhandler.hh>
 #include <dune/fem/space/common/discretefunctionspace.hh>
 #include <dune/fem/space/mapper/codimensionmapper.hh>
@@ -24,53 +25,19 @@ namespace Dune
   namespace Fem
   {
 
-    // DiscontinuousGalerkinSpaceTraits
-    // --------------------------------
+    // DiscontinuousGalerkinSpaceDefault
+    // ---------------------------------
 
-    template< class FunctionSpace, class GridPart, int polOrder, template< class > class Storage >
-    struct DiscontinuousGalerkinSpaceTraits
+    template< class Traits >
+    class DiscontinuousGalerkinSpaceDefault
+    : public DiscreteFunctionSpaceDefault< Traits >
     {
-      typedef FunctionSpace FunctionSpaceType;
-      typedef GridPart GridPartType;
-      static const int polynomialOrder = polOrder;
-
-      // static const int localBlockSize = ;
-      // typedef ... BlockMapperType;
-      // typedef ... MapperType;
-
-      static const int codimension = 0;
-
-      // typedef ... BasisFunctionSetType;
-
-      template< class DiscreteFunction, class Operation = DFCommunicationOperation::Copy >
-      struct CommDataHandle
-      {
-        typedef DefaultCommunicationHandler< DiscreteFunction, Operation > Type;
-        typedef Operation OperationType;
-      };
-
-      // typedef ... DiscreteFunctionSpaceType;
-    };
-
-
-
-    // DiscontinuousGalerkinSpace
-    // --------------------------
-
-    template< class FunctionSpace, class GridPart, int polOrder, template< class > class Storage >
-    class DiscontinuousGalerkinSpace
-    : public DiscreteFunctionSpaceDefault< DiscontinuousGalerkinSpaceTraits< FunctionSpace, GridPart, polOrder, Storage > >
-    {
-      typedef DiscontinuousGalerkinSpace< FunctionSpace, GridPart, polOrder, Storage > ThisType;
-      typedef DiscreteFunctionSpaceDefault< 
-          DiscontinuousGalerkinSpaceTraits< FunctionSpace, GridPart, polOrder, Storage > 
-        > BaseType;
+      typedef DiscontinuousGalerkinSpaceDefault< Traits > ThisType;
+      typedef DiscreteFunctionSpaceDefault< Traits > BaseType;
 
     public:
-      typedef typename BaseType::Traits Traits;
-
       static const int codimension = Traits::codimension;
-      static const int polynomialOrder DUNE_DEPRECATED = 0;
+      static const int polynomialOrder = Traits::polynomialOrder;
 
       typedef typename BaseType::FunctionSpaceType FunctionSpaceType;
 
@@ -86,7 +53,9 @@ namespace Dune
       typedef typename BaseType::MapperType MapperType;
       typedef typename BaseType::BlockMapperType BlockMapperType;
 
-    private:
+    protected:
+      using BaseType::asImp;
+
       typedef CodimensionMapperSingletonFactory< GridPartType, codimension > BlockMapperSingletonFactoryType;
       typedef SingletonList< typename BlockMapperSingletonFactoryType::Key,
                              BlockMapperType, BlockMapperSingletonFactoryType 
@@ -98,16 +67,14 @@ namespace Dune
     public:
       using BaseType::order;
 
-      DiscontinuousGalerkinSpace ( GridPartType &gridPart, 
-                                   const std::vector< GeometryType > &types,
-                                   const InterfaceType commInterface = defaultInterface,
-                                   const CommunicationDirection commDirection = defaultDirection )
+      DiscontinuousGalerkinSpaceDefault ( GridPartType &gridPart, 
+                                          const InterfaceType commInterface,
+                                          const CommunicationDirection commDirection )
       : BaseType( gridPart, commInterface, commDirection ),
-        blockMapper_( BlockMapperProviderType::getObject( gridPart ) ),
-        mapper_( blockMapper_ )
+        blockMapper_( BlockMapperProviderType::getObject( gridPart ) )
       {}
 
-      ~DiscontinuousGalerkinSpace ()
+      ~DiscontinuousGalerkinSpaceDefault ()
       {
         BlockMapperProviderType::removeObject( blockMapper_ );
       }
@@ -121,7 +88,8 @@ namespace Dune
       /** @copydoc Dune::Fem::DiscreteFunctionSpaceInterface::basisFunctionSet */
       BasisFunctionSetType basisFunctionSet ( const EntityType &entity ) const
       {
-        // return BasisFunctionSetType( entity, &shapeFunctionSets_[ entity.type() ] );
+        CHECK_INTERFACE_IMPLEMENTATION( asImp().shapeFunctionSet( entity ) );
+        return BasisFunctionSetType( entity, asImp().shapeFunctionSet( entity ) );
       }
 
       /** @copydoc Dune::Fem::DiscreteFunctionSpaceInterface::contains */
@@ -152,7 +120,8 @@ namespace Dune
       DUNE_VERSION_DEPRECATED(1,4,remove)
       MapperType &mapper () const
       {
-        return mapper_;
+        CHECK_INTERFACE_IMPLEMENTATION( asImp().mapper() );
+        return asImp().mapper();
       }
 
       /** @copydoc Dune::Fem::DiscreteFunctionSpaceInterface::blockMapper */
@@ -162,7 +131,157 @@ namespace Dune
       }
 
     private:
-      BlockMapperType &blockMapper_;
+      mutable BlockMapperType &blockMapper_;
+    };
+
+
+
+    // DiscontinuousGalerkinSpaceTraits
+    // --------------------------------
+
+    template< class FunctionSpace, class GridPart, int polOrder, template< class > class Storage >
+    class DiscontinuousGalerkinSpaceTraits;
+
+
+
+    // DiscontinuousGalerkinSpace
+    // --------------------------
+
+    template< class FunctionSpace, class GridPart, int polOrder, template< class > class Storage >
+    class DiscontinuousGalerkinSpace
+    : public DiscontinuousGalerkinSpaceDefault< DiscontinuousGalerkinSpaceTraits< FunctionSpace, GridPart, polOrder, Storage > >
+    {
+      typedef DiscontinuousGalerkinSpace< FunctionSpace, GridPart, polOrder, Storage > ThisType; 
+      typedef DiscontinuousGalerkinSpaceDefault< DiscontinuousGalerkinSpaceTraits< FunctionSpace, GridPart, polOrder, Storage > > BaseType;
+
+    public:
+      using BaseType::blockMapper;
+
+      typedef typename BaseType::Traits Traits;
+      typedef typename BaseType::GridPartType GridPartType;
+      typedef typename BaseType::MapperType MapperType;
+      typedef typename BaseType::ShapeFunctionSetType ShapeFunctionSetType;
+      typedef typename BaseType::EntityType EntityType;
+
+      DiscontinuousGalerkinSpace ( const GridPartType &gridPart,
+                                   const InterfaceType commInterface = BaseType::defaultInterface,
+                                   const CommunicationDirection commDirection = BaseType::defaultDirection )
+      : BaseType( gridPart, commInterface, commDirection ),
+        mapper_( blockMapper() )
+      {}
+
+      ShapeFunctionSetType shapeFunctionSet ( const EntityType &entity ) const
+      {
+        return shapeFunctionSet( entity.type() );
+      }
+
+      ShapeFunctionSetType shapeFunctionSet ( const GeometryType &type) const;
+
+      DUNE_VERSION_DEPRECATED(1,4,remove)
+      MapperType &mapper () const { return mapper_; }
+
+    private:
+      MapperType mapper_;
+    };
+
+
+
+    // LagrangeDiscontinuousGalerkinSpaceTraits
+    // ----------------------------------------
+
+    template< class FunctionSpace, class GridPart, int polOrder, template< class > class Storage >
+    class LagrangeDiscontinuousGalerkinSpaceTraits;
+
+
+
+    // LagrangeDiscontinuousGalerkinSpace
+    // ----------------------------------
+
+    template< class FunctionSpace, class GridPart, int polOrder, template< class > class Storage >
+    class LagrangeDiscontinuousGalerkinSpace
+    : public DiscontinuousGalerkinSpaceDefault< LagrangeDiscontinuousGalerkinSpaceTraits< FunctionSpace, GridPart, polOrder, Storage > >
+    {
+
+      typedef LagrangeDiscontinuousGalerkinSpace< FunctionSpace, GridPart, polOrder, Storage > ThisType;
+      typedef DiscontinuousGalerkinSpaceDefault< LagrangeDiscontinuousGalerkinSpaceTraits< FunctionSpace, GridPart, polOrder, Storage > > BaseType;
+
+    public:
+      using BaseType::blockMapper;
+
+      typedef typename BaseType::Traits Traits;
+      typedef typename BaseType::GridPartType GridPartType;
+      typedef typename BaseType::MapperType MapperType;
+      typedef typename BaseType::ShapeFunctionSetType ShapeFunctionSetType;
+      typedef typename BaseType::EntityType EntityType;
+
+      LagrangeDiscontinuousGalerkinSpace ( const GridPartType &gridPart,
+                                           const InterfaceType commInterface = BaseType::defaultInterface,
+                                           const CommunicationDirection commDirection = BaseType::defaultDirection )
+      : BaseType( gridPart, commInterface, commDirection ),
+        mapper_( blockMapper() )
+      {}
+
+      ShapeFunctionSetType shapeFunctionSet ( const EntityType &entity ) const
+      {
+        return shapeFunctionSet( entity.type() );
+      }
+
+      ShapeFunctionSetType shapeFunctionSet ( const GeometryType &type) const;
+
+      DUNE_VERSION_DEPRECATED(1,4,remove)
+      MapperType &mapper () const { return mapper_; }
+
+    private:
+      mutable MapperType mapper_;
+    };
+
+
+
+    // LegendreDiscontinuousGalerkinSpaceTraits
+    // ----------------------------------
+
+    template< class FunctionSpace, class GridPart, int polOrder, template< class > class Storage >
+    class LegendreDiscontinuousGalerkinSpaceTraits;
+
+
+
+    // LegendreDiscontinuousGalerkinSpace
+    // ----------------------------------
+
+    template< class FunctionSpace, class GridPart, int polOrder, template< class > class Storage >
+    class LegendreDiscontinuousGalerkinSpace
+    : public DiscontinuousGalerkinSpaceDefault< LegendreDiscontinuousGalerkinSpaceTraits< FunctionSpace, GridPart, polOrder, Storage > >
+    {
+      typedef LegendreDiscontinuousGalerkinSpace< FunctionSpace, GridPart, polOrder, Storage > ThisType;
+      typedef DiscontinuousGalerkinSpaceDefault< LegendreDiscontinuousGalerkinSpaceTraits< FunctionSpace, GridPart, polOrder, Storage > > BaseType;
+
+    public:
+      using BaseType::blockMapper;
+
+      typedef typename BaseType::Traits Traits;
+      typedef typename BaseType::GridPartType GridPartType;
+      typedef typename BaseType::MapperType MapperType;
+      typedef typename BaseType::ShapeFunctionSetType ShapeFunctionSetType;
+      typedef typename BaseType::EntityType EntityType;
+
+      LegendreDiscontinuousGalerkinSpace ( const GridPartType &gridPart,
+                                           const InterfaceType commInterface = BaseType::defaultInterface,
+                                           const CommunicationDirection commDirection = BaseType::defaultDirection )
+      : BaseType( gridPart, commInterface, commDirection ),
+        mapper_( blockMapper() )
+      {}
+
+      ShapeFunctionSetType shapeFunctionSet ( const EntityType &entity ) const
+      {
+        return shapeFunctionSet( entity.type() );
+      }
+
+      ShapeFunctionSetType shapeFunctionSet ( const GeometryType &type) const;
+
+      DUNE_VERSION_DEPRECATED(1,4,remove)
+      MapperType &mapper () const { return mapper_; }
+
+    private:
       mutable MapperType mapper_;
     };
 
