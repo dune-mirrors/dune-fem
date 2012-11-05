@@ -40,7 +40,7 @@ namespace Dune
 
       typedef typename DiscreteFunctionType::DofBlockPtrType DofBlockPtrType;
 
-      static const int blockSize = DiscreteFunctionSpaceType::localBlockSize;
+      static const unsigned int blockSize = DiscreteFunctionSpaceType::localBlockSize;
       
     public:
       DefaultCommunicationHandler( DiscreteFunctionType &function )
@@ -73,7 +73,7 @@ namespace Dune
         void operator () ( const size_t local, const GlobalKey& globalKey ) 
         {
           DofBlockPtrType blockPtr = function_->block( globalKey );
-          for( int j = 0; j < blockSize; ++j )
+          for( unsigned int j = 0; j < blockSize; ++j )
           {
             buffer_.write( (*blockPtr)[ j ] );
           }
@@ -96,7 +96,7 @@ namespace Dune
         void operator () ( const size_t local, const GlobalKey& globalKey ) 
         {
           DofBlockPtrType blockPtr = function_->block( globalKey );
-          for( int j = 0; j < blockSize; ++j )
+          for( unsigned int j = 0; j < blockSize; ++j )
           {
             DataType value;
             buffer_.read( value );

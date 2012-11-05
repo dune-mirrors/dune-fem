@@ -98,10 +98,10 @@ namespace Dune
           const char* fileMode = "wb";
 
           // number of physical files to be created 
-          int numFiles = Dune :: Parameter :: getValue< int >( "fem.io.sionlib.numfiles", 1 );
+          int numFiles = Parameter :: getValue< int >( "fem.io.sionlib.numfiles", 1 );
 
           // block size of filesystem, -1 use system default 
-          int blockSize = Dune :: Parameter :: getValue< int >( "fem.io.sionlib.blocksize", -1 );
+          int blockSize = Parameter :: getValue< int >( "fem.io.sionlib.blocksize", -1 );
 
           // my rank 
           int rank = rank_;

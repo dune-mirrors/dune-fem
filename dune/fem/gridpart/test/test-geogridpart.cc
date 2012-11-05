@@ -232,7 +232,7 @@ try
   DiscreteCoordFunctionSpaceType coordFunctionSpace( hostGridPart );
   CoordFunctionType coordFunction( "coordinate function", coordFunctionSpace );
   typedef Identity< CoordFunctionSpaceType > IdentityType;
-  Dune::LagrangeInterpolation< CoordFunctionType >::interpolateFunction( IdentityType(), coordFunction );
+  Dune::Fem::LagrangeInterpolation< IdentityType, CoordFunctionType >::interpolateFunction( IdentityType(), coordFunction );
   GridPartType gridPart( coordFunction );
 
   // run test

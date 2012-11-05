@@ -152,7 +152,7 @@ namespace Dune
           const FieldVector<ctype, dimworld> enBary = 
             geo.global( geoInfo.localCenter( geo.type() ));
 
-          typedef typename GridType :: Traits :: LevelIntersectionIterator IntersectionIteratorType;
+          typedef typename MacroGridView :: IntersectionIterator IntersectionIteratorType;
 
           // if geometry is not cube, it's not a cartesian grid 
           if ( ! geo.type().isCube() ) return false;
@@ -163,8 +163,8 @@ namespace Dune
             if( std::abs( h[i] - w ) > 1e-15 ) return false; 
           }
 
-          IntersectionIteratorType endnit = en.ilevelend();
-          for(IntersectionIteratorType nit = en.ilevelbegin();
+          IntersectionIteratorType endnit = macroView.iend( en );
+          for(IntersectionIteratorType nit = macroView.ibegin( en );
               nit != endnit; ++nit)
           {
             const typename IntersectionIteratorType::Intersection& inter=*nit;

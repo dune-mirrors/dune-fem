@@ -8,6 +8,7 @@
 #include <dune/grid/geometrygrid/geometry.hh>
 
 #include <dune/fem/gridpart/common/capabilities.hh>
+#include <dune/fem/gridpart/geogridpart/cornerstorage.hh>
 
 namespace Dune
 {

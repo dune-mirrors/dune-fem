@@ -86,9 +86,6 @@ namespace Dune {
 #include <dune/common/exceptions.hh>
 using namespace Dune;
 
-// include definition of grid type 
-// #include <dune/grid/io/file/dgfparser/dgfgridtype.hh>
-
 // include grape visualization 
 #include <dune/grid/io/visual/grapedatadisplay.hh>
 #include <dune/grid/io/visual/combinedgrapedisplay.hh>
@@ -103,9 +100,9 @@ using namespace Dune;
 
 int main(int argc, char **argv)
 {
-  MPIManager::initialize(argc,argv);
+  Fem::MPIManager::initialize(argc,argv);
   try {			         
-    Parameter::append(argc,argv);
+    Fem::Parameter::append(argc,argv);
     if (argc < 2)
     {
       print_help(argv[0]);

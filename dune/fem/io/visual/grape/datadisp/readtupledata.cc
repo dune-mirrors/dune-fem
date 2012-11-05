@@ -76,7 +76,7 @@ inline INFO * readData(INFO * info , const char * path, int i_start, int i_end,
   double t_end = -t_start, t_act = 0.0;
   int  ntime, n_step = 0;
 
-  const bool useRankPath = Dune :: DataWriterParameters().separateRankPath();
+  const bool useRankPath = Dune::Fem::DataWriterParameters().separateRankPath();
 
   for (ntime = i_start; ntime <= i_end; ntime += i_delta)
   {
@@ -93,7 +93,7 @@ inline INFO * readData(INFO * info , const char * path, int i_start, int i_end,
         {
           // use standard procedure to create path name 
           std::string newpath = 
-            IOInterface::createRecoverPath(path,proc,info[i].name,ntime, useRankPath);
+            Fem::IOInterface::createRecoverPath(path,proc,info[i].name,ntime, useRankPath);
 
           readTupleData(newpath.c_str(), info[i].name, 
                         t_act , i , ntime, proc, numProcs, info);

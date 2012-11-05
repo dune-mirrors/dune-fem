@@ -14,17 +14,16 @@
 #include <dune/fem/io/file/iointerface.hh>
 #include <dune/fem/io/file/datawriter.hh>
 
-
 inline bool readDataInfo(std::string path, DATAINFO * dinf, 
                          const int timestamp, const int dataSet) 
 {
-  static const bool useRankPath = Dune :: DataWriterParameters().separateRankPath();
+  static const bool useRankPath = Dune::Fem::DataWriterParameters().separateRankPath();
   std::cout << "Reading data base for " << dinf->name << "! \n";
   std::string dataname; 
   if( useRankPath )  
   {
     dataname = Fem::IOTupleBase::dataName( 
-                  IOInterface::createRecoverPath(path,0, dinf->name, timestamp, useRankPath ),
+                  Fem::IOInterface::createRecoverPath(path,0, dinf->name, timestamp, useRankPath ),
                   dinf->name);
   }
   else 
@@ -51,13 +50,13 @@ inline bool readDataInfo(std::string path, DATAINFO * dinf,
   }
   
   int fakedata = 1;
-  bool fake = readParameter(dataname,"Fake_data",fakedata);
+  bool fake = Fem::readParameter(dataname,"Fake_data",fakedata);
   
   std::cerr << "FAKE: " << fake << " " << fakedata << std::endl;
   if( (!fake) || (!fakedata) )
   {
     std::string dummy; 
-    readParameter(dataname,"DataBase",dummy);
+    Fem::readParameter(dataname,"DataBase",dummy);
     std::string * basename = new std::string (dummy);
     std::cout << "Read Function: " << *basename << std::endl;
     dinf->base_name = basename->c_str();
@@ -72,17 +71,17 @@ inline bool readDataInfo(std::string path, DATAINFO * dinf,
   else
   {
     std::string dummy; 
-    readParameter(dataname,"DataBase",dummy);
+    Fem::readParameter(dataname,"DataBase",dummy);
     std::string * basename = new std::string (dummy);
     std::cout << "Read Function: " << *basename << std::endl;
     dinf->base_name = basename->c_str();
 
     int dimrange;
-    readParameter(dataname,"Dim_Range",dimrange);
+    Fem::readParameter(dataname,"Dim_Range",dimrange);
     if(dimrange <= 0) dataDispErrorExit("wrong dimrange");
 
     int dimVal = 1;
-    readParameter(dataname,"Dim_Domain",dimVal);
+    Fem::readParameter(dataname,"Dim_Domain",dimVal);
     if((dimVal <= 0) || (dimVal > dimrange)) dataDispErrorExit("wrong DimVal");
     dinf->dimVal = dimVal;
 
@@ -95,7 +94,7 @@ inline bool readDataInfo(std::string path, DATAINFO * dinf,
       std::string compkey ("comp_");
       compkey += tmpDummy.str();
       
-      bool couldread = readParameter(dataname,compkey.c_str(),comp[k]);
+      bool couldread = Fem::readParameter(dataname,compkey.c_str(),comp[k]);
       if(!couldread) dataDispErrorExit("wrong " + compkey);
     }
     dinf->comp = comp;
@@ -111,11 +110,11 @@ inline int scanProcsPaths(const std::string globalPath,
   int procs = 0;
   while ( true )
   {
-    std::string path( IOInterface::
+    std::string path( Fem::IOInterface::
         createRecoverPath(globalPath,procs,dataPrefix,step) );
 
     // check for directory 
-    if( ! directoryExists( path ) )
+    if( ! Dune::Fem::directoryExists( path ) )
     {
       return procs;
     }
@@ -130,10 +129,10 @@ inline int scanProcsFiles(const std::string globalPath,
                           const std::string dataPrefix,
                           int step)
 {
-  const bool singleBackupRestoreFile = PersistenceManager :: singleBackupRestoreFile ;
+  const bool singleBackupRestoreFile = Dune::Fem::PersistenceManager :: singleBackupRestoreFile ;
 
   int procs = 0; 
-  std::string path( IOInterface::
+  std::string path( Fem::IOInterface::
       createRecoverPath(globalPath,procs,dataPrefix,step, false ) );
 
   while ( true )
@@ -142,7 +141,7 @@ inline int scanProcsFiles(const std::string globalPath,
     filename << path << "/" << dataPrefix << "." << procs;
 
     // check for file 
-    const bool fileOk = fileExists( filename.str() ) ;
+    const bool fileOk = Dune::Fem::fileExists( filename.str() ) ;
 
     if( (singleBackupRestoreFile && fileOk) || (! singleBackupRestoreFile && ! fileOk ) ) 
     {
@@ -180,9 +179,9 @@ inline int readParameterList (int argc, char **argv, bool displayData = true )
     return(0);
   }
   if (argc == 3) {
-    path = Parameter::commonOutputPath();
+    path = Dune::Fem::Parameter::commonOutputPath();
     std::string dummyfile;
-    Parameter::get("fem.io.datafileprefix",solprefix);
+    Dune::Fem::Parameter::get("fem.io.datafileprefix",solprefix);
     info[n].name = solprefix.c_str();
     info[n].datinf = 0;
     info[n].fix_mesh = 0;
@@ -327,7 +326,7 @@ inline int readParameterList (int argc, char **argv, bool displayData = true )
  
   // scan for max number of processor paths  
   int numberProcessors = 0;
-  static const bool useRankPath = Dune :: DataWriterParameters().separateRankPath();
+  static const bool useRankPath = Dune::Fem::DataWriterParameters().separateRankPath();
   for(int k=0; k<n; k++) 
   {
     // scan for max number of processor paths  

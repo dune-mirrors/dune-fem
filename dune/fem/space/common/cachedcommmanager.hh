@@ -550,7 +550,7 @@ namespace Dune
 
     protected:
       const GlobalKeyType myRank_;
-      const int mySize_; 
+      const GlobalKeyType mySize_; 
       
       LinkStorageType &linkStorage_; 
 

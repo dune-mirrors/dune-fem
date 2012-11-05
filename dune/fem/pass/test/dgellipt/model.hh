@@ -291,6 +291,7 @@ public:
   class ExactSolution
   : public Fem::Function< FuncSpaceType, ExactSolution >
   {
+  public:  
     typedef typename FuncSpaceType::RangeType RangeType;
     typedef typename FuncSpaceType::RangeFieldType RangeFieldType;
     typedef typename FuncSpaceType::DomainType DomainType;
@@ -323,6 +324,7 @@ public:
   class ExactGradient
   : public Fem::Function< FuncSPCType, ExactGradient< FuncSPCType > >
   {
+  public:  
     typedef typename FuncSPCType::RangeType RangeType;
     typedef typename FuncSPCType::RangeFieldType RangeFieldType;
     typedef typename FuncSPCType::DomainType DomainType;

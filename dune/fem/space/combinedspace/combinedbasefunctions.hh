@@ -94,7 +94,9 @@ namespace Dune
           baseSet2_( baseSet2 ),
           size1_( baseSet1.size() ),
           size2_( baseSet2.size() ), 
-          offset_( baseSet1_.size() )
+          offset_( baseSet1_.size() ),
+          phi1_( size1_ ), 
+          phi2_( size2_ ) 
       {}
 
       //! HACK for LocalMatrixDefault interface  !//
@@ -103,7 +105,9 @@ namespace Dune
           baseSet2_(),
           size1_( 0 ),
           size2_( 0 ),
-          offset_( 0 )
+          offset_( 0 ),
+          phi1_( size1_ ), 
+          phi2_( size2_ ) 
       {}
 
       size_t size()  const
@@ -168,7 +172,9 @@ namespace Dune
       BaseFunctionSetType2 baseSet2_;
       std::size_t size1_;
       std::size_t size2_;
-      std::size_t offset_;   
+      std::size_t offset_;  
+      mutable std::vector< RangeType1 > phi1_;
+      mutable std::vector< RangeType2 > phi2_;
     };
       
 
@@ -214,22 +220,19 @@ namespace Dune
                   RangeType &phi ) const
     {
       assert( offset_ == baseSet1_.size() );
-      
+    
+      phi = 0;
       if( baseFunction - offset_ < 0 )
       {
         RangeType1 phi1;
         baseSet1_.evaluate( baseFunction, x, phi1);        
         for(int r=0;r<dimRange1;++r)
           phi[ r ] = phi1[ r ];
-        for(int r=0;r<dimRange2;++r)
-          phi[ r +dimRange1 ]  = 0;
       }
       else
       {
         RangeType2 phi2;
         baseSet2_.evaluate( baseFunction - offset_, x, phi2);
-        for(int r=0;r<dimRange1;++r)
-          phi[ r ] = 0;
         for(int r=0;r<dimRange2;++r)
           phi[ r +dimRange1 ]  = phi2[ r ];
       }
@@ -241,6 +244,7 @@ namespace Dune
     :: evaluateAll ( const FieldVector< int, diffOrder > &diffVariable,
                      const Point &x, const DofVector &dofs, RangeType &value ) const
     {
+      assert( offset_ == baseSet1_.size() );
       SubDofVector<const DofVector, double > dofs1( dofs, size1_, 0  );
       SubDofVector<const DofVector, double > dofs2( dofs, size2_, offset_ );
       RangeType1 value1;
@@ -260,23 +264,26 @@ namespace Dune
     inline void CombinedBaseFunctionSet< CombFunctSpace, BaseSetType1, BaseSetType2>
     :: evaluateAll ( const Point &x, RangeArray &values ) const
     {
-      std::vector< RangeType1 > phi1;
-      baseSet1_.evaluateAll( x, phi1 );        
+      assert( offset_ == baseSet1_.size() );
 
-      std::vector< RangeType2 > phi2;
-      baseSet2_.evaluateAll( x, phi2 );      
+      phi1_.resize( size1_ );
+      phi2_.resize( size2_ );
+      baseSet1_.evaluateAll( x, phi1_ );        
+      baseSet2_.evaluateAll( x, phi2_ );      
 
       const int size = size1_ + size2_;
-      values.resize( size );
+
+      values.clear();
+      values.resize( size, RangeType(0) );
       for( size_t i=0;i<size1_;++i)
       {
         for(int r=0;r<dimRange1;++r)
-          values[ i ][ r ] =  phi1[i][r];
+          values[ i ][ r ] = phi1_[ i ][ r ];
       }
       for( size_t i=0;i< size2_;++i)
       {
         for(int r=0;r<dimRange2;++r)
-          values[ i+ offset_ ][ r +dimRange1 ]  = phi2[i][ r ];
+          values[ i+ offset_ ][ r +dimRange1 ] = phi2_[ i ][ r ];
       }
     }
 

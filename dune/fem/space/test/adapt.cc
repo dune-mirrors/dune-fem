@@ -17,7 +17,7 @@ using namespace Dune;
 
 #include <dune/fem/space/lagrangespace.hh>
 #include <dune/fem/operator/projection/dgl2projection.hh>
-#include <dune/fem/misc/l2error.hh>
+#include <dune/fem/misc/l2norm.hh>
 
 #if HAVE_GRAPE && GRIDDIM > 1 
 #define USE_GRAPE 1
@@ -29,7 +29,6 @@ using namespace Dune;
 #include <dune/grid/io/visual/grapedatadisplay.hh>
 #endif
 
-#include <dune/fem/io/file/binarydataio.hh>
 #include <dune/fem/io/parameter.hh>
 
 // polynom approximation order of quadratures, 
@@ -153,8 +152,8 @@ double algorithm ( MyGridType &grid, DiscreteFunctionType &solution, int step, i
   {
     ExactSolution f;
     DGL2ProjectionImpl :: project( f, solution );
-    L2Error< DiscreteFunctionType > l2err;
-    double new_error = l2err.norm( f ,solution, polOrd + 4, 0.0)[ 0 ];
+    Dune :: Fem :: L2Norm< GridPartType > l2norm ( solution.space().gridPart() ) ;
+    double new_error = l2norm.distance( f ,solution ); 
     std::cout << "before ref." << new_error << "\n\n"; 
   }
 
@@ -173,8 +172,8 @@ double algorithm ( MyGridType &grid, DiscreteFunctionType &solution, int step, i
   // calculation L2 error on refined grid
   // pol ord for calculation the error chould by higher than 
   // pol for evaluation the basefunctions 
-  L2Error < DiscreteFunctionType > l2err;
-  double error = l2err.norm(f ,solution, polOrd + 4, 0.0 )[ 0 ];
+  Dune :: Fem :: L2Norm< GridPartType > l2norm ( solution.space().gridPart() ) ;
+  double error = l2norm.distance( f, solution );
 
 #if USE_GRAPE
   // if Grape was found, then display last solution 
@@ -187,7 +186,7 @@ double algorithm ( MyGridType &grid, DiscreteFunctionType &solution, int step, i
   
   //! perform l2-projection to refined grid
   DGL2ProjectionImpl :: project ( f, solution );
-  double new_error = l2err.norm(f ,solution, polOrd + 4, 0.0)[ 0 ];
+  double new_error = l2norm.distance( f, solution );
   std::cout << "\nL2 Error : " << error << " on new grid " << new_error << "\n\n";
 #if USE_GRAPE
   // if Grape was found, then display last solution 
@@ -199,10 +198,6 @@ double algorithm ( MyGridType &grid, DiscreteFunctionType &solution, int step, i
     grape.dataDisplay( solution );
   }
 #endif
-  BinaryDataIO< MyGridType > dataio; 
-  dataio.writeGrid( grid, xdr, "gridout", 0.0, turn );
-  dataio.writeData( solution, xdr, "sol", turn );
-  
   return error;
 }
 

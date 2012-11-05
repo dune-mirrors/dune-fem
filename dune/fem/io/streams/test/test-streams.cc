@@ -188,7 +188,7 @@ int main ( int argc, char** argv )
     {
       std :: cerr << "Checking SIONlib streams..." << std :: endl;
       std::stringstream file;
-      file << Dune :: Parameter::commonOutputPath() << "/test.sion." << MPIManager :: size() ;
+      file << Parameter::commonOutputPath() << "/test.sion." << MPIManager :: size() ;
       std::string filename( file.str() );
       if( writeStreams ) 
       {

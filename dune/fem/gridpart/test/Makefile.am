@@ -1,7 +1,7 @@
 # IGNORE_HEADERS
 
 # set default grid type for make all
-GRIDTYPE=YASPGRID
+GRIDTYPE=SGRID
 GRIDDIM=2
 
 # test programs 
