@@ -1,6 +1,6 @@
 shapefunctionsetdir = $(includedir)/dune/fem/space/shapefunctionset
-shapefunctionset_HEADERS = legendre.hh  localfunctions.hh  proxy.hh \
-			   shapefunctionset.hh  simple.hh \
+shapefunctionset_HEADERS = lagrange.hh  legendre.hh  localfunctions.hh \
+			   proxy.hh  shapefunctionset.hh  simple.hh \
 			   tensorproduct.hh  vectorial.hh  wrapper.hh
 
 include $(top_srcdir)/am/global-rules
