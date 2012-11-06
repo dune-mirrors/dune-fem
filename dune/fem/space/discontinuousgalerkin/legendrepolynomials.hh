@@ -1,5 +1,5 @@
-#ifndef DUNE_FEM_SPACE_DISCONTINUOUSGALERKIN_LEGENDREPOLY_HH
-#define DUNE_FEM_SPACE_DISCONTINUOUSGALERKIN_LEGENDREPOLY_HH
+#ifndef DUNE_FEM_SPACE_DISCONTINUOUSGALERKIN_LEGENDREPOLYNOMIALS_HH
+#define DUNE_FEM_SPACE_DISCONTINUOUSGALERKIN_LEGENDREPOLYNOMIALS_HH
 
 // C++ inlcudes
 #include <cassert>
@@ -12,18 +12,18 @@ namespace Dune
   namespace Fem 
   {  
 
-    class LegendrePoly
+    class LegendrePolynomials
     {
     protected:
-      static const int maxPol = 11;
+      static const int maxOrder = 11;
 
-      static const double factor[ maxPol ][ maxPol ];
-      static const double weight[ maxPol ];
+      static const double factor[ maxOrder ][ maxOrder ];
+      static const double weight[ maxOrder ];
 
     public:
       static double evaluate ( const int num, const double x )
       {
-        assert( 0 <= num && num < maxPol );
+        assert( 0 <= num && num < maxOrder );
 
         double phi = factor[ num ][ num ];
         for( int i = num-1; i >= 0; --i )
@@ -33,7 +33,7 @@ namespace Dune
       
       static double jacobian ( const int num, const double x )
       { 
-        assert( 0 <= num && num < maxPol );
+        assert( 0 <= num && num < maxOrder );
 
         double phi = 0.;
         if( num >= 1 )
@@ -47,7 +47,7 @@ namespace Dune
          
       static double hessian ( const int num, const double x )
       { 
-        assert( 0 <= num && num < maxPol );
+        assert( 0 <= num && num < maxOrder );
 
         double phi=0.;
         if( num >= 2 )
@@ -64,4 +64,4 @@ namespace Dune
 
 } // namespace Dune 
 
-#endif // #ifndef DUNE_FEM_SPACE_DISCONTINUOUSGALERKIN_LEGENDREPOLY_HH
+#endif // #ifndef DUNE_FEM_SPACE_DISCONTINUOUSGALERKIN_LEGENDREPOLYNOMIALS_HH

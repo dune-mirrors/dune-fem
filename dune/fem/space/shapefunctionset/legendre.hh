@@ -10,7 +10,7 @@
 #include <dune/common/static_assert.hh>
 
 // dune-fem includes
-#include <dune/fem/space/discontinuousgalerkin/legendrepoly.hh>
+#include <dune/fem/space/discontinuousgalerkin/legendrepolynomials.hh>
 #include <dune/fem/space/shapefunctionset/simple.hh>
 
 /**
@@ -63,7 +63,7 @@ namespace Dune
       {
         value[ 0 ] = RangeFieldType( 1 );
         for( int i = 0; i< dimension; ++i )
-          value[ 0 ] *= LegendrePoly::evaluate( multiIndex_[ i ], x[ i-1 ] );
+          value[ 0 ] *= LegendrePolynomials::evaluate( multiIndex_[ i ], x[ i-1 ] );
       }
 
       void jacobian ( const DomainType &x, JacobianRangeType &jacobian ) const
@@ -71,8 +71,8 @@ namespace Dune
         jacobian = JacobianRangeType( 1 );
         for( int k = 0; k < dimension; ++k )
         {
-          const RangeFieldType phi = LegendrePoly::evaluate( multiIndex_[ k ], x[ k-1 ]);
-          const RangeFieldType dphi = LegendrePoly::jacobian( multiIndex_[ k ], x[ k-1 ]);
+          const RangeFieldType phi = LegendrePolynomials::evaluate( multiIndex_[ k ], x[ k-1 ]);
+          const RangeFieldType dphi = LegendrePolynomials::jacobian( multiIndex_[ k ], x[ k-1 ]);
           for( int i = 0; i < dimension; ++i )
             jacobian[ 0 ][ i ] *= ( k == i ) ? dphi : phi;
         }
@@ -83,11 +83,11 @@ namespace Dune
         hessian = HessianRangeType( 1 );
         for( int k = 0; k < dimension; ++k )
         {
-          const RangeFieldType phi = LegendrePoly::evaluate( multiIndex_[ k ], x[ k-1 ] );
-          const RangeFieldType dphi = LegendrePoly::jacobian( multiIndex_[ k ], x[ k-1 ] );
+          const RangeFieldType phi = LegendrePolynomials::evaluate( multiIndex_[ k ], x[ k-1 ] );
+          const RangeFieldType dphi = LegendrePolynomials::jacobian( multiIndex_[ k ], x[ k-1 ] );
           for( int i = 0; i < dimension; ++i )
           {
-            hessian[ i ][ i ] *= ( k == i ) ? LegendrePoly::hessian( multiIndex_[ i ], x[ i-1 ]) : phi;
+            hessian[ i ][ i ] *= ( k == i ) ? LegendrePolynomials::hessian( multiIndex_[ i ], x[ i-1 ]) : phi;
             for( int j = i+1; j < dimension; ++j )
             {
               RangeFieldType tmp = ( k == i || k == j ) ? dphi : phi;

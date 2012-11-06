@@ -6,12 +6,12 @@ libdiscontinuousgalerkin_la_LIBADD  =
 libdiscontinuousgalerkin_la_SOURCES = dgbasefunctions_1.cc \
                         dgbasefunctions_2.cc \
                         dgbasefunctions_3.cc \
-			legendrepoly.cc
+			legendrepolynomials.cc
 libdiscontinuousgalerkin_la_CPPFLAGS = $(AM_CPPFLAGS) -DCOMPILE_LIB
 
 discontinuousgalerkindir =  $(includedir)/dune/fem/space/discontinuousgalerkin
 discontinuousgalerkin_HEADERS = declaration.hh  default.hh  dgbasefunctions.hh \
-				lagrange.hh  legendre.hh  legendrepoly.hh \
+				lagrange.hh  legendre.hh  legendrepolynomials.hh \
 				localdgmassmatrix.hh  localrestrictprolong.hh \
 				orthonormalbase_mod.hh  space.hh
 

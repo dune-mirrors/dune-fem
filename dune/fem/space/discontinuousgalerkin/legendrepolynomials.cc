@@ -1,6 +1,6 @@
 #include <config.h>
 
-#include <dune/fem/space/dgspace/legendrepoly.hh>
+#include <dune/fem/space/discontinuousgalerkin/legendrepolynomials.hh>
 
 namespace Dune
 {
@@ -8,11 +8,11 @@ namespace Dune
   namespace Fem 
   {  
 
-    const double LegendrePoly::weight[ LegendrePoly::maxPol ]
+    const double LegendrePolynomials::weight[ LegendrePolynomials::maxOrder ]
       = { 1.0, 1.73205080756887729352744634151, 2.23606797749978969640917366873, 2.64575131106459059050161575364, 3.0, 3.31662479035539984911493273667, 3.60555127546398929311922126747,
           3.87298334620741688517926539978, 4.12310562561766054982140985597, 4.35889894354067355223698198386, 4.58257569495584000658804719373 };
 
-    const double LegendrePoly::factor[ LegendrePoly::maxPol ][ LegendrePoly::maxPol ]
+    const double LegendrePolynomials::factor[ LegendrePolynomials::maxOrder ][ LegendrePolynomials::maxOrder ]
       = { { 1.0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 },
           { -1.0, 2.0, 0, 0, 0, 0, 0, 0, 0, 0, 0 },
           { 1.0, - 6.0, 6.0, 0, 0, 0, 0, 0, 0, 0, 0 },
