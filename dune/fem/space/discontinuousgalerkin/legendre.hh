@@ -5,6 +5,7 @@
 #include <cassert>
 
 // dune-common includes
+#include <dune/common/power.hh>
 #include <dune/common/typetraits.hh>
 
 // dune-geometry includes
@@ -23,7 +24,6 @@
 // local includes
 #include "declaration.hh"
 #include "default.hh"
-#include "legendredgbasefunctions.hh"
 
 
 namespace
@@ -66,10 +66,16 @@ namespace Dune
 
       typedef typename FunctionSpace::RangeType RangeType;
 
+      template <int p, int dim>
+      struct NumLegendreShapeFunctions
+      {
+        static const int v = StaticPower< p+1, dim >::power;
+      };
+
     public:
       typedef LegendreDiscontinuousGalerkinSpace< FunctionSpace, GridPart, polOrder, Storage > DiscreteFunctionSpaceType;
 
-      static const int localBlockSize = BaseType::dimRange * NumLegendreBaseFunctions< polOrder, BaseType::dimLocal >::numBaseFct;
+      static const int localBlockSize = BaseType::dimRange * NumLegendreShapeFunctions< polOrder, BaseType::dimLocal >::v;
       typedef NonBlockMapper< typename BaseType::BlockMapperType, localBlockSize > MapperType;
 
       typedef LegendreShapeFunctionSet< typename ToLocalFunctionSpace< FunctionSpace, BaseType::dimLocal >::Type > ScalarShapeFunctionSetType;
