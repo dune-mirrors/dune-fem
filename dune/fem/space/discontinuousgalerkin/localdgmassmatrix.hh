@@ -1,24 +1,18 @@
-#ifndef DUNE_FEM_LOCALDGMASSMATRIX_HH
-#define DUNE_FEM_LOCALDGMASSMATRIX_HH
+#ifndef DUNE_FEM_SPACE_DISCONTINUOUSGALERKIN_LOCALDGMASSMATRIX_HH
+#define DUNE_FEM_SPACE_DISCONTINUOUSGALERKIN_LOCALDGMASSMATRIX_HH
 
+// dune-fem includes
 #include <dune/fem/operator/1order/localmassmatrix.hh>
+
+// local includes
+#include "declaration.hh"
+
 
 namespace Dune
 {
 
   namespace Fem 
   {
-
-    // External Forward Declarations
-    // -----------------------------
-
-    template< class FunctionSpaceImp, class GridPartImp, int polOrd, template< class > class BaseFunctionStorageImp >
-    class DiscontinuousGalerkinSpace;
-
-    template< class FunctionSpaceImp, class GridPartImp, int polOrd, template< class > class BaseFunctionStorageImp >
-    class LegendreDiscontinuousGalerkinSpace; 
-
-
 
     // LocalMassMatrix
     // ---------------
@@ -40,6 +34,8 @@ namespace Dune
         : BaseType( spc, volQuadOrd )
       {}
     };
+
+
 
     /** \brief Local Mass Matrix for Legendre space */
     template <class FunctionSpaceImp, class GridPartImp, int polOrd,
@@ -63,4 +59,4 @@ namespace Dune
 
 } // namespace Dune 
 
-#endif // #ifndef DUNE_FEM_LOCALDGMASSMATRIX_HH
+#endif // #ifndef DUNE_FEM_SPACE_DISCONTINUOUSGALERKIN_LOCALDGMASSMATRIX_HH

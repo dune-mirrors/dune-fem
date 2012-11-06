@@ -1,12 +1,16 @@
-#ifndef DUNE_FEM_DGLOCALRESTRICTPROLONG_HH
-#define DUNE_FEM_DGLOCALRESTRICTPROLONG_HH
+#ifndef DUNE_FEM_SPACE_DISCONTINUOUSGALERKIN_LOCALRESTRICTPROLONG_HH_
+#define DUNE_FEM_SPACE_DISCONTINUOUSGALERKIN_LOCALRESTRICTPROLONG_HH_
 
+// dune-fem includes
 #include <dune/fem/function/localfunction/temporary.hh>
 #include <dune/fem/quadrature/cachingquadrature.hh>
 #include <dune/fem/space/common/adaptmanager.hh>
 #include <dune/fem/space/common/localrestrictprolong.hh>
-#include <dune/fem/space/dgspace/dgspace.hh>
-#include <dune/fem/space/dgspace/localdgmassmatrix.hh>
+
+// local includes
+#include "declaration.hh" 
+#include "localdgmassmatrix.hh"
+
 
 namespace Dune
 {
@@ -188,6 +192,8 @@ namespace Dune
       {}
     };
 
+
+
     // DefaultLocalRestrictProlong for LagrangeDiscontinuousGalerkinSpace
     // ------------------------------------------------------------------
 
@@ -215,4 +221,4 @@ namespace Dune
 
 } // namespace Dune
 
-#endif // #ifndef DUNE_FEM_DGLOCALRESTRICTPROLONG_HH
+#endif // #ifndef DUNE_FEM_SPACE_DISCONTINUOUSGALERKIN_LOCALRESTRICTPROLONG_HH_
