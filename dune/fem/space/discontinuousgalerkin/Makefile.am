@@ -11,7 +11,7 @@ libdiscontinuousgalerkin_la_CPPFLAGS = $(AM_CPPFLAGS) -DCOMPILE_LIB
 
 discontinuousgalerkindir =  $(includedir)/dune/fem/space/discontinuousgalerkin
 discontinuousgalerkin_HEADERS = declaration.hh  default.hh  dgbasefunctions.hh \
-				dgspace.hh  lagrange.hh  legendredgbasefunctions.hh \
+				lagrange.hh  legendredgbasefunctions.hh \
 				legendre.hh  legendrepoly.hh  localdgmassmatrix.hh \
 				localrestrictprolong.hh  orthonormalbase_mod.hh  space.hh
 
