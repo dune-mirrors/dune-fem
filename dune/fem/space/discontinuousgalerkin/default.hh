@@ -1,6 +1,9 @@
 #ifndef DUNE_FEM_SPACE_DISCONTINUOUSGALERKIN_DEFAULT_HH
 #define DUNE_FEM_SPACE_DISCONTINUOUSGALERKIN_DEFAULT_HH
 
+// dune-common includes
+#include <dune/common/static_assert.hh>
+
 // dune-geometry includes
 #include <dune/geometry/type.hh>
 
@@ -25,6 +28,9 @@ namespace Dune
     // DiscontinuousGalerkinSpaceTraitsBase
     // ------------------------------------
 
+    /* 
+     * common base traits class for all Discontinuous Galerkin spaces
+     */
     template< class FunctionSpace, class GridPart, int polOrder, template< class > class Storage >
     struct DiscontinuousGalerkinSpaceTraitsBase
     {
@@ -33,9 +39,11 @@ namespace Dune
 
       static const int dimRange = FunctionSpaceType::dimRange;
       static const int dimLocal = GridPartType::dimension;
+      dune_static_assert( (GridPartType::dimensionworld <= 3), "Use Legendre spaces for higher spatial dimensions." );
       
       static const int codimension = 0;
       static const int polynomialOrder = polOrder;
+      dune_static_assert( (polOrder >= 0), "Negative polynomial order." );
 
       typedef CodimensionMapper< GridPartType, codimension > BlockMapperType;
 
@@ -52,6 +60,17 @@ namespace Dune
     // DiscontinuousGalerkinSpaceDefault
     // ---------------------------------
 
+    /* 
+     * Default implementation for discrete Discontinuous Galerkin spaces.
+     *
+     * Derived classes are expected to implement the following methods:
+\code
+  // return shape function set for given entity
+  ShapeFunctionSetType shapeFunctionSet ( const EntityType &entity ) const;
+  // return mapper
+  MapperType &mapper () const;
+\endcode
+     */
     template< class Traits >
     class DiscontinuousGalerkinSpaceDefault
     : public DiscreteFunctionSpaceDefault< Traits >

@@ -5,10 +5,6 @@
 #include <dune/geometry/type.hh>
 
 // dune-fem includes
-#include <dune/fem/misc/bartonnackmaninterface.hh>
-#include <dune/fem/space/common/defaultcommhandler.hh>
-#include <dune/fem/space/common/discretefunctionspace.hh>
-#include <dune/fem/space/mapper/codimensionmapper.hh>
 #include <dune/fem/space/mapper/nonblockmapper.hh>
 #include <dune/fem/storage/singletonlist.hh>
 #include <dune/fem/version.hh>
@@ -48,6 +44,7 @@ namespace Dune
     // DiscontinuousGalerkinSpace
     // --------------------------
 
+
     template< class FunctionSpace, class GridPart, int polOrder, template< class > class Storage >
     class DiscontinuousGalerkinSpace
     : public DiscontinuousGalerkinSpaceDefault< DiscontinuousGalerkinSpaceTraits< FunctionSpace, GridPart, polOrder, Storage > >
@@ -71,13 +68,28 @@ namespace Dune
         mapper_( blockMapper() )
       {}
 
+      /** \brief return shape function set for given entity
+       *
+       * \param[in]  entity  entity (of codim 0) for which shape function set 
+       *                     is requested
+       *
+       * \returns  ShapeFunctionSetType  shape function set                     
+       */
       ShapeFunctionSetType shapeFunctionSet ( const EntityType &entity ) const
       {
         return shapeFunctionSet( entity.type() );
       }
 
+      /** \brief return shape function set for geometry type 
+       *
+       * \param[in]  type  geometry type for which shape function set
+       *                   is requested
+       *
+       * \returns  ShapeFunctionSetType  shape function set                     
+       */
       ShapeFunctionSetType shapeFunctionSet ( const GeometryType &type) const;
 
+      /** @copydoc Dune::Fem::DiscreteFunctionSpaceInterface::mapper */
       DUNE_VERSION_DEPRECATED(1,4,remove)
       MapperType &mapper () const { return mapper_; }
 
