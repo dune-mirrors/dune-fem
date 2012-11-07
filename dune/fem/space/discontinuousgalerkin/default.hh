@@ -15,9 +15,6 @@
 #include <dune/fem/storage/singletonlist.hh>
 #include <dune/fem/version.hh>
 
-// local includes
-#include "dgbasefunctions.hh"
-
 
 namespace Dune
 {

@@ -163,6 +163,10 @@ namespace Dune
       {
         return OrthonormalBase_2D::eval_triangle_2d( i, &x[ 0 ] );
       }
+      static RangeType evaluate ( const Pyramid(), std::size_t i, const DomainType &x )
+      {
+        return OrthonormalBase_3D::eval_pyramid_3d( i, &x[ 0 ] );
+      }
       static RangeType evaluate ( const Hexahedron(), std::size_t i, const DomainType &x )
       {
         return OrthonormalBase_3D::eval_hexahedron_3d( i, &x[ 0 ] );
@@ -170,10 +174,6 @@ namespace Dune
       static RangeType evaluate ( const Prism(), std::size_t i, const DomainType &x )
       {
         return OrthonormalBase_3D::eval_prism_3d( i, &x[ 0 ] );
-      }
-      static RangeType evaluate ( const Pyramid(), std::size_t i, const DomainType &x )
-      {
-        return OrthonormalBase_3D::eval_pyramid_3d( i, &x[ 0 ] );
       }
       static RangeType evaluate ( const Tetrahedron(), std::size_t i, const DomainType &x )
       {
@@ -215,6 +215,10 @@ namespace Dune
       {
         OrthonormalBase_2D::grad_triangle_2d( i , &x[ 0 ], &jacobian );
       }
+      static void evaluate ( const Pyramid(), std::size_t i, const DomainType &x, JacobianRangeType &jacobian )
+      {
+        OrthonormalBase_3D::grad_pyramid_3d( i , &x[ 0 ], &jacobian );
+      }
       static void evaluate ( const Hexahedron(), std::size_t i, const DomainType &x, JacobianRangeType &jacobian )
       {
         OrthonormalBase_3D::grad_hexahedron_3d( i , &x[ 0 ], &jacobian );
@@ -222,10 +226,6 @@ namespace Dune
       static void evaluate ( const Prism(), std::size_t i, const DomainType &x, JacobianRangeType &jacobian )
       {
         OrthonormalBase_3D::grad_prism_3d( i , &x[ 0 ], &jacobian );
-      }
-      static void evaluate ( const Pyramid(), std::size_t i, const DomainType &x, JacobianRangeType &jacobian )
-      {
-        OrthonormalBase_3D::grad_pyramid_3d( i , &x[ 0 ], &jacobian );
       }
       static void evaluate ( const Tetrahedron(), std::size_t i, const DomainType &x, JacobianRangeType &jacobian )
       {
