@@ -139,7 +139,7 @@ namespace Dune
        */
       ShapeFunctionSetType shapeFunctionSet ( const GeometryType &type) const
       {
-        assert( entity.type() == GeometryType( GenericGeometry::CubeTopology< Traits::dimLocal >::type ) );
+        assert( type == GeometryType( GenericGeometry::CubeTopology< Traits::dimLocal >::type ) );
         return ShapeFunctionSetType( &shapeFunctionSet_ );
       }
 
