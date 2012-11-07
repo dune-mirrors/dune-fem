@@ -12,9 +12,6 @@
 #include <dune/geometry/genericgeometry/topologytypes.hh>
 #include <dune/geometry/type.hh>
 
-// dune-fem includes
-#include <dune/fem/space/shapefunctionset/capabilities.hh>
-
 // local includes 
 #include "orthonormalbase_mod.hh"
 
@@ -39,47 +36,40 @@ namespace Dune
 
 
 
-    namespace ShapeFunctionSetCapabilities
+    // OrthonormalShapeFunctionSetSize
+    // -------------------------------
+
+    template< class FunctionSpace, int polOrder >
+    class OrthonormalShapeFunctionSetSize
     {
+      dune_static_assert( (FunctionSpace::dimDomain <= 3),
+                          "Shape function set only implemented up to dimension 3." );
 
-      // Template specialization of hasStaticSize
-      // ----------------------------------------
+      template< int order, int dimension >
+      struct ShapeFunctionSetSize;
 
-      template< class FunctionSpace, int polOrder >
-      class hasStaticSize< OrthonormalShapeFunctionSet< FunctionSpace, polOrder > > 
+      template< int order >
+      struct ShapeFunctionSetSize< order, 1 >
       {
-        template< int order, int dimDomain >
-        struct NumShapeFunctions
-        {
-          dune_static_assert( (FunctionSpace::dimDomain <= 3),
-                               "Shape function set only implemented up to dimension 3." );
-        };
-
-        template< int order >
-        struct NumShapeFunctions< order, 1 >
-        {
-          static const std::size_t v = order + 1;
-        };
-
-        template< int order >
-        struct NumShapeFunctions< order, 2 >
-        {
-          static const std::size_t v = (order + 2) * (order + 1) / 2;
-        };
-
-        template< int order >
-        struct NumShapeFunctions< order, 3 >
-        {
-          static const size_t v = ((order+1)*(order+2)*(2*order+3)/6
-                                 + (order+1)*(order+2)/2)/2;
-        };
-
-      public:
-        static const bool v = true;
-        static const std::size_t size = NumShapeFunctions< polOrder, FunctionSpace::dimDomain >::v;
+        static const std::size_t v = order + 1;
       };
 
-    } // namespace ShapeFunctionSetCapabilities
+      template< int order >
+      struct ShapeFunctionSetSize< order, 2 >
+      {
+        static const std::size_t v = (order + 2) * (order + 1) / 2;
+      };
+
+      template< int order >
+      struct ShapeFunctionSetSize< order, 3 >
+      {
+        static const size_t v = ((order+1)*(order+2)*(2*order+3)/6
+                               + (order+1)*(order+2)/2)/2;
+      };
+
+    public:
+      static const std::size_t v = ShapeFunctionSetSize< polOrder, FunctionSpace::dimDomain >::v;
+    };
 
 
 
@@ -141,7 +131,7 @@ namespace Dune
       template< class Functor >
       static void apply ( const DomainType &x, Functor functor )
       {
-        const std::size_t size = ShapeFunctionSetCapabilities::hasStaticSize< OrthonormalShapeFunctionSet< FunctionSpace, polOrder > >::size;
+        const std::size_t size = OrthonormalShapeFunctionSetSize< FunctionSpace, polOrder >::v;
         for( std::size_t i = 0; i < size; ++i )
           functor( i, evaluate( Topology(), i, x ) );
       }
@@ -190,7 +180,7 @@ namespace Dune
       static void apply ( const DomainType &x, Functor functor )
       {
         JacobianRangeType jacobian;
-        const std::size_t size = ShapeFunctionSetCapabilities::hasStaticSize< OrthonormalShapeFunctionSet< FunctionSpace, polOrder > >::size;
+        const std::size_t size = OrthonormalShapeFunctionSetSize< FunctionSpace, polOrder >::v;
         for( std::size_t i = 0; i < size; ++i )
         {
           evaluate( Topology(), i, x, jacobian);
@@ -269,7 +259,7 @@ namespace Dune
       /** @copydoc Dune::Fem::ShapeFunctionSet::size */
       std::size_t size () const
       {
-        return ShapeFunctionSetCapabilities::hasStaticSize< ThisType >::size;
+        return OrthonormalShapeFunctionSetSize< FunctionSpace, polOrder >::v;
       }
 
       /** @copydoc Dune::Fem::ShapeFunctionSet::evaluateEach */

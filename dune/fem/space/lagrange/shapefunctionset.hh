@@ -157,7 +157,7 @@ namespace Dune
     // LagrangeShapeFunctionSetTraits
     // ------------------------------
 
-    template< class FunctionSpace, int order >
+    template< class FunctionSpace, int polOrder >
     struct LagrangeShapeFunctionSetTraits
     {
       typedef FunctionSpace FunctionSpaceType;
@@ -165,7 +165,7 @@ namespace Dune
       typedef typename FunctionSpaceType::RangeType RangeType;
 
       typedef typename ToScalarFunctionSpace< FunctionSpaceType >::Type ScalarFunctionSpaceType;
-      typedef LagrangeShapeFunctionFactory< ScalarFunctionSpaceType, order > ScalarShapeFunctionFactoryType;
+      typedef LagrangeShapeFunctionFactory< ScalarFunctionSpaceType, polOrder > ScalarShapeFunctionFactoryType;
       typedef typename ScalarShapeFunctionFactoryType::ShapeFunctionType ScalarShapeFunctionType;
       typedef SimpleShapeFunctionSet< ScalarShapeFunctionType > ScalarShapeFunctionSetType;
     };
@@ -181,13 +181,13 @@ namespace Dune
      * \tparam  FunctionSpace  function space
      * \tparam  polOrder       polynomial order
      */
-    template< class FunctionSpace, int order >
+    template< class FunctionSpace, int polOrder >
     class LagrangeShapeFunctionSet
-    : public VectorialShapeFunctionSet< typename LagrangeShapeFunctionSetTraits< FunctionSpace, order>::ScalarShapeFunctionSetType,
-                                        typename LagrangeShapeFunctionSetTraits< FunctionSpace, order>::RangeType
+    : public VectorialShapeFunctionSet< typename LagrangeShapeFunctionSetTraits< FunctionSpace, polOrder >::ScalarShapeFunctionSetType,
+                                        typename LagrangeShapeFunctionSetTraits< FunctionSpace, polOrder >::RangeType
                                       >
     {
-      typedef LagrangeShapeFunctionSetTraits< FunctionSpace, order> Traits;
+      typedef LagrangeShapeFunctionSetTraits< FunctionSpace, polOrder > Traits;
 
       typedef VectorialShapeFunctionSet< typename Traits::ScalarShapeFunctionSetType,
                                          typename Traits::RangeType
