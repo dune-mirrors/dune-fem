@@ -62,9 +62,14 @@ namespace Dune
     {
       typedef DiscontinuousGalerkinSpaceTraitsBase< FunctionSpace, GridPart, polOrder, Storage > BaseType;
 
-      typedef typename BaseType::EntityType EntityType;
+    public:
+      typedef typename BaseType::FunctionSpaceType FunctionSpaceType;
+      typedef typename BaseType::GridPartType GridPartType;
 
-      typedef typename FunctionSpace::RangeType RangeType;
+    private:
+      typedef typename GridPartType::template Codim< BaseType::codimension >::EntityType EntityType;
+
+      typedef typename FunctionSpaceType::RangeType RangeType;
 
       template <int p, int dim>
       struct NumLegendreShapeFunctions
@@ -73,7 +78,7 @@ namespace Dune
       };
 
     public:
-      typedef LegendreDiscontinuousGalerkinSpace< FunctionSpace, GridPart, polOrder, Storage > DiscreteFunctionSpaceType;
+      typedef LegendreDiscontinuousGalerkinSpace< FunctionSpaceType, GridPartType, polOrder, Storage > DiscreteFunctionSpaceType;
 
       static const int localBlockSize = BaseType::dimRange * NumLegendreShapeFunctions< polOrder, BaseType::dimLocal >::v;
       typedef NonBlockMapper< typename BaseType::BlockMapperType, localBlockSize > MapperType;

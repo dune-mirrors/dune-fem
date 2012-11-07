@@ -8,6 +8,7 @@
 #include <dune/geometry/type.hh>
 
 // dune-fem includes
+#include <dune/fem/space/basefunctions/basefunctionstorage.hh>
 #include <dune/fem/gridpart/common/capabilities.hh>
 #include <dune/fem/space/basisfunctionset/default.hh>
 #include <dune/fem/space/common/allgeomtypes.hh>
@@ -84,7 +85,7 @@ namespace Dune
     // LagrangeDiscontinuousGalerkinSpace
     // ----------------------------------
 
-    template< class FunctionSpace, class GridPart, int polOrder, template< class > class Storage >
+    template< class FunctionSpace, class GridPart, int polOrder, template< class > class Storage = SimpleStorage >
     class LagrangeDiscontinuousGalerkinSpace
     : public DiscontinuousGalerkinSpaceDefault< LagrangeDiscontinuousGalerkinSpaceTraits< FunctionSpace, GridPart, polOrder, Storage > >
     {
