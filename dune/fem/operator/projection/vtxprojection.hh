@@ -1,7 +1,7 @@
 #ifndef DUNE_FEM_VTXPROJECTION_HH
 #define DUNE_FEM_VTXPROJECTION_HH
 
-#include <dune/fem/space/lagrangespace.hh>
+#include <dune/fem/space/lagrange.hh>
 // #include <dune/grid/utility/twistutility.hh>
 #include <dune/fem/operator/common/operator.hh>
 #include <dune/fem/space/common/communicationmanager.hh>
