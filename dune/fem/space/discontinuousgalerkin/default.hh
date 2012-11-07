@@ -88,6 +88,7 @@ namespace Dune
       typedef typename IteratorType::Entity EntityType;
       typedef typename BaseType::IntersectionType IntersectionType;
 
+      typedef typename Traits::ShapeFunctionSetType ShapeFunctionSetType;
       typedef typename BaseType::BasisFunctionSetType BasisFunctionSetType;
 
       typedef typename BaseType::MapperType MapperType;
@@ -128,8 +129,7 @@ namespace Dune
       /** @copydoc Dune::Fem::DiscreteFunctionSpaceInterface::basisFunctionSet */
       BasisFunctionSetType basisFunctionSet ( const EntityType &entity ) const
       {
-        CHECK_INTERFACE_IMPLEMENTATION( asImp().shapeFunctionSet( entity ) );
-        return BasisFunctionSetType( entity, asImp().shapeFunctionSet( entity ) );
+        return BasisFunctionSetType( entity, shapeFunctionSet( entity ) );
       }
 
       /** @copydoc Dune::Fem::DiscreteFunctionSpaceInterface::contains */
@@ -168,6 +168,19 @@ namespace Dune
       BlockMapperType &blockMapper () const
       {
         return blockMapper_;
+      }
+
+      /** \brief return shape function set for given entity
+       *
+       * \param[in]  entity  entity (of codim 0) for which shape function set 
+       *                     is requested
+       *
+       * \returns  ShapeFunctionSetType  shape function set                     
+       */
+      ShapeFunctionSetType shapeFunctionSet ( const EntityType &entity ) const
+      {
+        CHECK_INTERFACE_IMPLEMENTATION( asImp().shapeFunctionSet( entity ) );
+        return asImp().shapeFunctionSet( entity );
       }
 
     private:
