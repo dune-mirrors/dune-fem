@@ -104,12 +104,26 @@ namespace Dune
       // tetrahedron
       typedef Dune::GenericGeometry::Pyramid< Triangle > Tetrahedron;
 
-      // make unique topology id
-      template< unsigned int topologyId >
-      struct UniqueId
+      // mapping from topology to basic geometry type (see list above)
+      template< class Topology >
+      class BasicGeometryType 
       {
-        static const unsigned int v = topologyId | (unsigned int)Dune::GenericGeometry::prismConstruction;
+        template< unsigned int topologyId >
+        struct UniqueId
+        {
+          static const unsigned int v = topologyId | (unsigned int)Dune::GenericGeometry::prismConstruction;
+        };
+
+      public:
+        typedef typename Dune::GenericGeometry::Topology< UniqueId< Topology::id >::v, Topology::dimension >::type Type;
       };
+
+      // instantiate a basic geometry type
+      template< class Topology >
+      static typename BasicGeometryType< Topology >::Type basicGeometryType ()
+      {
+        return typename BasicGeometryType< Topology >::Type();
+      }
 
     public:
       template< class Topology >
@@ -133,7 +147,7 @@ namespace Dune
       {
         const std::size_t size = OrthonormalShapeFunctionSetSize< FunctionSpace, polOrder >::v;
         for( std::size_t i = 0; i < size; ++i )
-          functor( i, evaluate( Topology(), i, x ) );
+          functor( i, evaluate( basicGeometryType< Topology>(), i, x ) );
       }
 
     protected:
@@ -165,11 +179,6 @@ namespace Dune
       {
         return OrthonormalBase_3D::eval_tetrahedron_3d( i, &x[ 0 ] );
       }
-      template< class T >
-      static RangeType evaluate ( const T &, std::size_t , const DomainType & )
-      {
-        DUNE_THROW( NotImplemented, "Shape function set not implemented for given geometry type." );
-      }
     };
 
 
@@ -188,7 +197,7 @@ namespace Dune
         const std::size_t size = OrthonormalShapeFunctionSetSize< FunctionSpace, polOrder >::v;
         for( std::size_t i = 0; i < size; ++i )
         {
-          evaluate( Topology(), i, x, jacobian);
+          evaluate( basicGeometryType< Topology >(), i, x, jacobian);
           functor( i, jacobian );
         }
       }
@@ -221,11 +230,6 @@ namespace Dune
       static void evaluate ( const Tetrahedron &, std::size_t i, const DomainType &x, JacobianRangeType &jacobian )
       {
         OrthonormalBase_3D::grad_tetrahedron_3d( i , &x[ 0 ], &jacobian );
-      }
-      template< class T >
-      static RangeType evaluate ( const T &, std::size_t , const DomainType & )
-      {
-        DUNE_THROW( NotImplemented, "Shape function set not implemented for given geometry type." );
       }
     };
 
