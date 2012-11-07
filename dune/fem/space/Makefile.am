@@ -25,6 +25,8 @@ noinst_LTLIBRARIES = libspace.la
 # construct only from sub-libraries
 libspace_la_SOURCES =
 libspace_la_LIBADD = dgspace/libdgspace.la \
+		     discontinuousgalerkin/libdiscontinuousgalerkin.la \
+		     lagrange/liblagrange.la \
                      lagrangespace/liblagrangespace.la
 
 include $(top_srcdir)/am/global-rules
