@@ -8,6 +8,7 @@
 #include <dune/geometry/type.hh>
 
 // dune-fem includes
+#include <dune/fem/space/basefunctions/basefunctionstorage.hh>
 #include <dune/fem/space/basisfunctionset/default.hh>
 #include <dune/fem/space/common/allgeomtypes.hh>
 #include <dune/fem/space/common/basesetlocalkeystorage.hh>
@@ -56,7 +57,7 @@ namespace Dune
       typedef VectorialShapeFunctionSet< ScalarShapeFunctionSetType, typename FunctionSpaceType::RangeType > ShapeFunctionSetImp;
       typedef ShapeFunctionSetProxy< ShapeFunctionSetImp > ShapeFunctionSetType;
 
-      static const int localBlockSize = BaseType::dimRange * ShapeFunctionSetCapabilities::hasStaticSize< ScalarShapeFunctionSetType >::size;
+      static const int localBlockSize = BaseType::dimRange * OrthonormalShapeFunctionSetSize< ScalarShapeFunctionSpaceType, polOrder >::v;
       typedef NonBlockMapper< typename BaseType::BlockMapperType, localBlockSize > MapperType;
 
       typedef DefaultBasisFunctionSet< EntityType, ShapeFunctionSetType > BasisFunctionSetType;
@@ -67,7 +68,7 @@ namespace Dune
     // DiscontinuousGalerkinSpace
     // --------------------------
 
-    template< class FunctionSpace, class GridPart, int polOrder, template< class > class Storage >
+    template< class FunctionSpace, class GridPart, int polOrder, template< class > class Storage = SimpleStorage >
     class DiscontinuousGalerkinSpace
     : public DiscontinuousGalerkinSpaceDefault< DiscontinuousGalerkinSpaceTraits< FunctionSpace, GridPart, polOrder, Storage > >
     {
@@ -95,7 +96,7 @@ namespace Dune
       typedef BaseSetLocalKeyStorage< ShapeFunctionSetImp > ShapeFunctionSetStorageType;
 
     public:
-      DiscontinuousGalerkinSpace ( const GridPartType &gridPart,
+      DiscontinuousGalerkinSpace ( GridPartType &gridPart,
                                    const InterfaceType commInterface = BaseType::defaultInterface,
                                    const CommunicationDirection commDirection = BaseType::defaultDirection )
       : BaseType( gridPart, commInterface, commDirection ),
@@ -113,13 +114,7 @@ namespace Dune
         }
       }
 
-      /** \brief return shape function set for given entity
-       *
-       * \param[in]  entity  entity (of codim 0) for which shape function set 
-       *                     is requested
-       *
-       * \returns  ShapeFunctionSetType  shape function set                     
-       */
+      /** @copydoc Dune::Fem::DiscreteFunctionSpaceInterface::shapeFunctionSet */
       ShapeFunctionSetType shapeFunctionSet ( const EntityType &entity ) const
       {
         return shapeFunctionSet( entity.type() );

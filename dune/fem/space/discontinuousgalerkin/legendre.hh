@@ -114,7 +114,7 @@ namespace Dune
       typedef typename ShapeFunctionSetType::ImplementationType ShapeFunctionSetImp;
 
     public:
-      LegendreDiscontinuousGalerkinSpace ( const GridPartType &gridPart,
+      LegendreDiscontinuousGalerkinSpace ( GridPartType &gridPart,
                                            const InterfaceType commInterface = BaseType::defaultInterface,
                                            const CommunicationDirection commDirection = BaseType::defaultDirection )
       : BaseType( gridPart, commInterface, commDirection ),
@@ -124,13 +124,7 @@ namespace Dune
         deprecationWarning( Dune::integral_constant< bool, ShowWarning< Storage >::v >() );
       }
 
-      /** \brief return unique shape function set for given entity
-       *
-       * \param[in]  entity  entity (of codim 0) for which shape function set 
-       *                     is requested
-       *
-       * \returns  ShapeFunctionSetType  shape function set                     
-       */
+      /** @copydoc Dune::Fem::DiscreteFunctionSpaceInterface::shapeFunctionSet */
       ShapeFunctionSetType shapeFunctionSet ( const EntityType &entity ) const
       {
         return shapeFunctionSet( entity.type() );
