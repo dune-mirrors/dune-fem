@@ -97,7 +97,6 @@ namespace Dune
       typedef typename FunctionSpaceType::DomainType DomainType;
       typedef typename FunctionSpaceType::RangeType RangeType;
       typedef typename FunctionSpaceType::JacobianRangeType JacobianRangeType;
-      typedef typename FunctionSpaceType::HessianEachType HessianType;
 
     protected:
       // line
@@ -128,9 +127,6 @@ namespace Dune
 
       template< class Topology >
       struct JacobianEach;
-
-      template< class Topology >
-      struct HessianEach;
     };
 
 
@@ -235,22 +231,6 @@ namespace Dune
 
 
 
-    // Implementation of OrthonormalShapeFunctionHelper::HessianEach
-    // --------------------------------------------------------------
-
-    template< class FunctionSpace, int polOrder >
-    template< class Topology >
-    struct OrthonormalShapeFunctionHelper< FunctionSpace, polOrder >::HessianEach
-    {
-      template< class Functor >
-      static void apply ( const DomainType &x, Functor functor )
-      {
-        DUNE_THROW( NotImplemented, "Hessian not implemented for this shape function set." );
-      }
-    };
-
-
-
     // OrthonormalShapeFunctionSet
     // ---------------------------
     
@@ -265,21 +245,6 @@ namespace Dune
 
       // helper class
       typedef OrthonormalShapeFunctionHelper< FunctionSpace, polOrder > ShapeFunctionSetHelperType;
-
-      template< class Topology >
-      struct EvaluateEach
-      : public ShapeFunctionSetHelperType::template EvaluateEach< Topology >
-      {};
-
-      template< class Topology >
-      struct JacobianEach 
-      : public ShapeFunctionSetHelperType::template JacobianEach< Topology >
-      {};
-
-      template< class Topology >
-      struct HessianEach 
-      : public ShapeFunctionSetHelperType::template HessianEach< Topology >
-      {};
 
     public:
       //! \brief function space type
@@ -311,7 +276,7 @@ namespace Dune
       template< class Point, class Functor >
       void evaluateEach ( const Point &x, Functor functor ) const
       {
-        Dune::GenericGeometry::IfTopology< EvaluateEach, dimension >
+        Dune::GenericGeometry::IfTopology< ShapeFunctionSetHelperType::template EvaluateEach, dimension >
           ::apply( topologyId_, coordinate( x ), functor );
       }
 
@@ -319,7 +284,7 @@ namespace Dune
       template< class Point, class Functor >
       void jacobianEach ( const Point &x, Functor functor ) const
       {
-        Dune::GenericGeometry::IfTopology< JacobianEach, dimension >
+        Dune::GenericGeometry::IfTopology< ShapeFunctionSetHelperType::template JacobianEach, dimension >
           ::apply( topologyId_, coordinate( x ), functor );
       }
 
@@ -327,8 +292,7 @@ namespace Dune
       template< class Point, class Functor >
       void hessianEach ( const Point &x, Functor functor ) const
       {
-        Dune::GenericGeometry::IfTopology< HessianEach, dimension >
-          ::apply( topologyId_, coordinate( x ), functor );
+        DUNE_THROW( NotImplemented, "Hessian not implemented for this shape function set." );
       }
 
     private:
