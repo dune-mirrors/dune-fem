@@ -137,33 +137,38 @@ namespace Dune
       }
 
     protected:
-      static RangeType evaluate ( const Line(), std::size_t i, const DomainType &x )
+      static RangeType evaluate ( const Line &, std::size_t i, const DomainType &x )
       {
         return OrthonormalBase_1D::eval_line( i, &x[ 0 ] );
       }
-      static RangeType evaluate ( const Quadrilateral(), std::size_t i, const DomainType &x )
+      static RangeType evaluate ( const Quadrilateral &, std::size_t i, const DomainType &x )
       {
         return OrthonormalBase_2D::eval_quadrilateral_2d( i, &x[ 0 ] );
       }
-      static RangeType evaluate ( const Triangle(), std::size_t i, const DomainType &x )
+      static RangeType evaluate ( const Triangle &, std::size_t i, const DomainType &x )
       {
         return OrthonormalBase_2D::eval_triangle_2d( i, &x[ 0 ] );
       }
-      static RangeType evaluate ( const Pyramid(), std::size_t i, const DomainType &x )
+      static RangeType evaluate ( const Pyramid &, std::size_t i, const DomainType &x )
       {
         return OrthonormalBase_3D::eval_pyramid_3d( i, &x[ 0 ] );
       }
-      static RangeType evaluate ( const Hexahedron(), std::size_t i, const DomainType &x )
+      static RangeType evaluate ( const Hexahedron &, std::size_t i, const DomainType &x )
       {
         return OrthonormalBase_3D::eval_hexahedron_3d( i, &x[ 0 ] );
       }
-      static RangeType evaluate ( const Prism(), std::size_t i, const DomainType &x )
+      static RangeType evaluate ( const Prism &, std::size_t i, const DomainType &x )
       {
         return OrthonormalBase_3D::eval_prism_3d( i, &x[ 0 ] );
       }
-      static RangeType evaluate ( const Tetrahedron(), std::size_t i, const DomainType &x )
+      static RangeType evaluate ( const Tetrahedron &, std::size_t i, const DomainType &x )
       {
         return OrthonormalBase_3D::eval_tetrahedron_3d( i, &x[ 0 ] );
+      }
+      template< class T >
+      static RangeType evaluate ( const T &, std::size_t , const DomainType & )
+      {
+        DUNE_THROW( NotImplemented, "Shape function set not implemented for given geometry type." );
       }
     };
 
@@ -189,33 +194,38 @@ namespace Dune
       }
 
     protected:
-      static void evaluate ( const Line(), std::size_t i, const DomainType &x, JacobianRangeType &jacobian )
+      static void evaluate ( const Line &, std::size_t i, const DomainType &x, JacobianRangeType &jacobian )
       {
         OrthonormalBase_1D::grad_line( i , &x[ 0 ], &jacobian );
       }
-      static void evaluate ( const Quadrilateral(), std::size_t i, const DomainType &x, JacobianRangeType &jacobian )
+      static void evaluate ( const Quadrilateral &, std::size_t i, const DomainType &x, JacobianRangeType &jacobian )
       {
         OrthonormalBase_2D::grad_quadrilateral_2d( i , &x[ 0 ], &jacobian );
       }
-      static void evaluate ( const Triangle(), std::size_t i, const DomainType &x, JacobianRangeType &jacobian )
+      static void evaluate ( const Triangle &, std::size_t i, const DomainType &x, JacobianRangeType &jacobian )
       {
         OrthonormalBase_2D::grad_triangle_2d( i , &x[ 0 ], &jacobian );
       }
-      static void evaluate ( const Pyramid(), std::size_t i, const DomainType &x, JacobianRangeType &jacobian )
+      static void evaluate ( const Pyramid &, std::size_t i, const DomainType &x, JacobianRangeType &jacobian )
       {
         OrthonormalBase_3D::grad_pyramid_3d( i , &x[ 0 ], &jacobian );
       }
-      static void evaluate ( const Hexahedron(), std::size_t i, const DomainType &x, JacobianRangeType &jacobian )
+      static void evaluate ( const Hexahedron &, std::size_t i, const DomainType &x, JacobianRangeType &jacobian )
       {
         OrthonormalBase_3D::grad_hexahedron_3d( i , &x[ 0 ], &jacobian );
       }
-      static void evaluate ( const Prism(), std::size_t i, const DomainType &x, JacobianRangeType &jacobian )
+      static void evaluate ( const Prism &, std::size_t i, const DomainType &x, JacobianRangeType &jacobian )
       {
         OrthonormalBase_3D::grad_prism_3d( i , &x[ 0 ], &jacobian );
       }
-      static void evaluate ( const Tetrahedron(), std::size_t i, const DomainType &x, JacobianRangeType &jacobian )
+      static void evaluate ( const Tetrahedron &, std::size_t i, const DomainType &x, JacobianRangeType &jacobian )
       {
         OrthonormalBase_3D::grad_tetrahedron_3d( i , &x[ 0 ], &jacobian );
+      }
+      template< class T >
+      static RangeType evaluate ( const T &, std::size_t , const DomainType & )
+      {
+        DUNE_THROW( NotImplemented, "Shape function set not implemented for given geometry type." );
       }
     };
 
