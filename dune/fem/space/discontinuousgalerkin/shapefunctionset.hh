@@ -2,6 +2,7 @@
 #define DUNE_FEM_SPACE_DISCONTINUOUSGALERKIN_SHAPEFUNCTIONSET_HH
 
 // C++ includes
+#include <cassert>
 #include <cstdlib>
 
 // dune-common includes
@@ -147,7 +148,10 @@ namespace Dune
       {
         const std::size_t size = OrthonormalShapeFunctionSetSize< FunctionSpace, polOrder >::v;
         for( std::size_t i = 0; i < size; ++i )
+        {
+          assert( x.size() == Topology::dimension );
           functor( i, evaluate( basicGeometryType< Topology>(), i, x ) );
+        }
       }
 
     protected:
@@ -197,7 +201,8 @@ namespace Dune
         const std::size_t size = OrthonormalShapeFunctionSetSize< FunctionSpace, polOrder >::v;
         for( std::size_t i = 0; i < size; ++i )
         {
-          evaluate( basicGeometryType< Topology >(), i, x, jacobian);
+          assert( x.size() == Topology::dimension );
+          evaluate( basicGeometryType< Topology >(), i, x, jacobian );
           functor( i, jacobian );
         }
       }
