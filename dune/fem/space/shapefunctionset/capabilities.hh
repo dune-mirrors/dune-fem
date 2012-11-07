@@ -1,6 +1,9 @@
 #ifndef DUNE_FEM_SPACE_SHAPEFUNCTIONSET_CAPABILITIES_HH
 #define DUNE_FEM_SPACE_SHAPEFUNCTIONSET_CAPABILITIES_HH
 
+// C++ includes
+#include <cstddef>
+
 /**
   @file
   @author Christoph Gersbacher
@@ -23,7 +26,7 @@ namespace Dune
       struct hasStaticSize
       {
         static const bool v = false;
-        static const unsigned int size = ~0u;
+        static const std::size_t size = ~0u;
       };
 
     } // namespace ShapeFunctionSetCapabilities
