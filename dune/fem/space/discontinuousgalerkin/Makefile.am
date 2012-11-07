@@ -20,7 +20,7 @@ discontinuousgalerkin_HEADERS = declaration.hh \
 				space.hh \
 				dgbasefunctions.hh \
 				legendrepolynomials.hh \
-				orthonormalbase_mod.hh \
+				orthonormalbase_mod.hh
 
 EXTRA_DIST = orthonormalbase_1d.cc orthonormalbase_2d.cc orthonormalbase_3d.cc
 
