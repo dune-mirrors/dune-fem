@@ -114,8 +114,6 @@ namespace Dune
 
       // number of local dofs
       unsigned int numDofs_;
-
-      bool needCheckGeometry_;
     };
 
 
@@ -187,8 +185,7 @@ namespace Dune
       values_( DiscreteFunctionSpace::localBlockSize * discreteFunction_.space().blockMapper().maxNumDofs() ),
       basisFunctionSet_(),
       entity_( 0 ),
-      numDofs_( 0 ),
-      needCheckGeometry_( true )
+      numDofs_( 0 )
     {}
 
 
@@ -199,8 +196,7 @@ namespace Dune
       values_( other.values_ ),
       basisFunctionSet_( other.basisFunctionSet_ ),
       entity_( other.entity_ ),
-      numDofs_( other.numDofs_ ),
-      needCheckGeometry_( other.needCheckGeometry_ )
+      numDofs_( other.numDofs_ )
     {}
 
 
@@ -257,29 +253,10 @@ namespace Dune
       typedef typename DiscreteFunctionSpaceType :: BlockMapperType BlockMapperType;
 
       const DiscreteFunctionSpaceType &space = discreteFunction_.space();
-      const bool multipleBaseSets = space.multipleBasisFunctionSets();
 
-      if( multipleBaseSets || needCheckGeometry_ )
-      {
-        // if multiple base sets skip geometry call
-        bool updateBaseSet = true;
-        if( !multipleBaseSets && (entity_ != 0) )
-          updateBaseSet = (basisFunctionSet_.type() != entity.type());
-        
-        if( multipleBaseSets || updateBaseSet )
-        {
-          basisFunctionSet_ = space.basisFunctionSet( entity );
-
-          // note, do not use basisFunctionSet() here, entity might no have been set
-          numDofs_ = basisFunctionSet_.size();
-
-          needCheckGeometry_ = space.multipleGeometryTypes();
-        }
-      }
-
-      // cache entity
+      basisFunctionSet_ = space.basisFunctionSet( entity );
+      numDofs_ = basisFunctionSet_.size();
       entity_ = &entity;
-      assert( basisFunctionSet_.entity().type() == entity.type() );
 
       assert( numDofs_ <= values_.size() );
       space.blockMapper().mapEach( entity, AssignDofs( discreteFunction_, values_ ) );
