@@ -55,10 +55,10 @@ namespace Dune
       typedef typename BaseType :: DomainSpaceType DomainSpaceType;
       typedef typename BaseType :: RangeSpaceType RangeSpaceType;
 
-      typedef typename BaseType :: DomainBaseFunctionSetType
-        DomainBaseFunctionSetType;
-      typedef typename BaseType :: RangeBaseFunctionSetType
-        RangeBaseFunctionSetType;
+      typedef typename BaseType :: DomainBasisFunctionSetType
+        DomainBasisFunctionSetType;
+      typedef typename BaseType :: RangeBasisFunctionSetType
+        RangeBasisFunctionSetType;
 
     private:
       typedef typename LocalMatrixStackType :: PointerType
@@ -207,16 +207,34 @@ namespace Dune
         return localMatrix().rangeSpace();
       }
       
-      /** \copydoc Dune::Fem::LocalMatrixInterface::domainBaseFunctionSet */
-      inline const DomainBaseFunctionSetType &domainBaseFunctionSet () const
+      /** \copydoc Dune::Fem::LocalMatrixInterface::domainBasisFunctionSet */
+      inline const DomainBasisFunctionSetType &domainBasisFunctionSet () const
       {
-        return localMatrix().domainBaseFunctionSet();
+        return localMatrix().domainBasisFunctionSet();
       }
 
-      /** \copydoc Dune::Fem::LocalMatrixInterface::rangeBaseFunctionSet */
-      inline const RangeBaseFunctionSetType &rangeBaseFunctionSet () const
+      // compatibility method
+      typedef DomainBasisFunctionSetType DomainBaseFunctionSetType;
+      inline 
+      DUNE_VERSION_DEPRECATED(1,4,remove)
+      const DomainBaseFunctionSetType &domainBaseFunctionSet () const
       {
-        return localMatrix().rangeBaseFunctionSet();
+        return domainBasisFunctionSet();
+      }
+
+      /** \copydoc Dune::Fem::LocalMatrixInterface::rangeBasisFunctionSet */
+      inline const RangeBasisFunctionSetType &rangeBasisFunctionSet () const
+      {
+        return localMatrix().rangeBasisFunctionSet();
+      }
+
+      // compatibility method
+      typedef RangeBasisFunctionSetType RangeBaseFunctionSetType;
+      inline 
+      DUNE_VERSION_DEPRECATED(1,4,remove)
+      const RangeBaseFunctionSetType &rangeBaseFunctionSet () const
+      {
+        return rangeBasisFunctionSet();
       }
 
     protected:
