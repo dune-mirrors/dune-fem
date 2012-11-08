@@ -114,8 +114,6 @@ namespace Dune
 
       // number of local dofs
       unsigned int numDofs_;
-
-      bool needCheckGeometry_;
     };
 
 
