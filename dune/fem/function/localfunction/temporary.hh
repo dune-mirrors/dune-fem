@@ -418,8 +418,6 @@ namespace Dune
       BasisFunctionSetType basisFunctionSet_;
 
       DofArrayType dofs_;
-
-      bool needCheckGeometry_;
     };
 
 
@@ -498,8 +496,7 @@ namespace Dune
     : discreteFunctionSpace_( dfSpace ),
       entity_( 0 ),
       basisFunctionSet_(),
-      dofs_( DiscreteFunctionSpace::localBlockSize * discreteFunctionSpace_.blockMapper().maxNumDofs() ),
-      needCheckGeometry_( true )
+      dofs_( DiscreteFunctionSpace::localBlockSize * discreteFunctionSpace_.blockMapper().maxNumDofs() )
     {}
 
 
@@ -510,8 +507,7 @@ namespace Dune
     : discreteFunctionSpace_( dfSpace ),
       entity_( &entity ),
       basisFunctionSet_( discreteFunctionSpace_.basisFunctionSet( entity ) ),
-      dofs_( DiscreteFunctionSpace::localBlockSize * discreteFunctionSpace_.blockMapper().maxNumDofs() ),
-      needCheckGeometry_( true )
+      dofs_( DiscreteFunctionSpace::localBlockSize * discreteFunctionSpace_.blockMapper().maxNumDofs() )
     {}
 
 
@@ -521,8 +517,7 @@ namespace Dune
     : discreteFunctionSpace_( other.discreteFunctionSpace_ ),
       entity_( other.entity_ ),
       basisFunctionSet_( other.basisFunctionSet_ ),
-      dofs_( other.dofs_ ),
-      needCheckGeometry_( true )
+      dofs_( other.dofs_ )
     {}
 
     
@@ -586,25 +581,10 @@ namespace Dune
     inline void TemporaryLocalFunctionImpl< DiscreteFunctionSpace, ArrayAllocator >
       :: init ( const EntityType &entity )
     {
-      const bool multipleBaseSets = discreteFunctionSpace_.multipleBasisFunctionSets();
-
-      if( multipleBaseSets || needCheckGeometry_ )
-      {
-        // if multiple base sets skip geometry call
-        bool updateBaseSet = true;
-        if( !multipleBaseSets && (entity_ != 0) )
-          updateBaseSet = (basisFunctionSet_.geometryType() != entity.type());
-        
-        if( multipleBaseSets || updateBaseSet )
-        {
-          basisFunctionSet_ = discreteFunctionSpace_.basisFunctionSet( entity );
-          needCheckGeometry_ = discreteFunctionSpace_.multipleGeometryTypes();
-        }
-      }
-      assert( basisFunctionSet_.size() <= dofs_.size() );
-
+      basisFunctionSet_ = discreteFunctionSpace_.basisFunctionSet( entity );
       entity_ = &entity;
-      assert( basisFunctionSet_.geometryType() == entity.type() );
+      
+      assert( basisFunctionSet_.size() <= dofs_.size() );
     }
 
 
