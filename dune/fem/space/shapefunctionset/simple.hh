@@ -154,7 +154,7 @@ namespace Dune
       for( std::size_t i = 0; i < size(); ++i )
       {
         JacobianRangeType jacobian;
-        shapeFunctions_[ i ]->evaluate( coordinate( x ), jacobian );
+        shapeFunctions_[ i ]->jacobian( coordinate( x ), jacobian );
         functor( i, jacobian );
       }
     }
@@ -168,7 +168,7 @@ namespace Dune
       for( std::size_t i = 0; i < size(); ++i )
       {
         HessianRangeType hessian;
-        shapeFunctions_[ i ]->evaluate( coordinate( x ), hessian );
+        shapeFunctions_[ i ]->hessian( coordinate( x ), hessian );
         functor( i, hessian );
       }
     }
