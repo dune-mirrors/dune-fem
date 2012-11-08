@@ -6,14 +6,12 @@
 
 // dune-common includes
 #include <dune/common/power.hh>
-#include <dune/common/typetraits.hh>
 
 // dune-geometry includes
 #include <dune/geometry/type.hh>
 #include <dune/geometry/genericgeometry/topologytypes.hh>
 
 // dune-fem includes
-#include <dune/fem/space/basefunctions/basefunctionstorage.hh>
 #include <dune/fem/space/basisfunctionset/default.hh>
 #include <dune/fem/space/common/functionspace.hh>
 #include <dune/fem/space/mapper/nonblockmapper.hh>
@@ -24,27 +22,6 @@
 // local includes
 #include "declaration.hh"
 #include "default.hh"
-
-
-namespace
-{
-  template< template< class > class Storage >
-  struct ShowWarning;
-
-  template<>
-  struct ShowWarning< Dune::Fem::CachingStorage >
-  {
-    static const bool v = true;
-  };
-
-  template<>
-  struct ShowWarning< Dune::Fem::SimpleStorage >
-  {
-    static const bool v = false;
-  };
-
-} // namespace
-
 
 
 namespace Dune
@@ -97,10 +74,10 @@ namespace Dune
 
     template< class FunctionSpace, class GridPart, int polOrder, template< class > class Storage = CachingStorage >
     class LegendreDiscontinuousGalerkinSpace
-    : public DiscontinuousGalerkinSpaceDefault< LegendreDiscontinuousGalerkinSpaceTraits< FunctionSpace, GridPart, polOrder, Storage > >
+    : public DiscontinuousGalerkinSpaceDefault< LegendreDiscontinuousGalerkinSpaceTraits< FunctionSpace, GridPart, polOrder, Storage >, Storage >
     {
       typedef LegendreDiscontinuousGalerkinSpace< FunctionSpace, GridPart, polOrder, Storage > ThisType;
-      typedef DiscontinuousGalerkinSpaceDefault< LegendreDiscontinuousGalerkinSpaceTraits< FunctionSpace, GridPart, polOrder, Storage > > BaseType;
+      typedef DiscontinuousGalerkinSpaceDefault< LegendreDiscontinuousGalerkinSpaceTraits< FunctionSpace, GridPart, polOrder, Storage >, Storage > BaseType;
 
     public:
       using BaseType::blockMapper;
@@ -128,9 +105,7 @@ namespace Dune
       : BaseType( gridPart, commInterface, commDirection ),
         mapper_( blockMapper() ),
         shapeFunctionSet_( polOrder )
-      {
-        deprecationWarning( Dune::integral_constant< bool, ShowWarning< Storage >::v >() );
-      }
+      {}
 
       /** @copydoc Dune::Fem::DiscreteFunctionSpaceInterface::basisFunctionSet */
       BasisFunctionSetType basisFunctionSet ( const EntityType &entity ) const
@@ -168,11 +143,6 @@ namespace Dune
       MapperType &mapper () const { return mapper_; }
 
     private:
-      void DUNE_DEPRECATED_MSG( "Caching disabled for LegendreDiscreteFunctionSpace." )
-      deprecationWarning ( Dune::integral_constant< bool, true > ) {}
-      void
-      deprecationWarning ( Dune::integral_constant< bool, false > ) {}
-
       mutable MapperType mapper_;
       ShapeFunctionSetImp shapeFunctionSet_;
     };

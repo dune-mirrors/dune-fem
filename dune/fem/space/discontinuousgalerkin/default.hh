@@ -4,16 +4,35 @@
 // dune-common includes
 #include <dune/common/static_assert.hh>
 
-// dune-geometry includes
-#include <dune/geometry/type.hh>
-
 // dune-fem includes
 #include <dune/fem/misc/bartonnackmaninterface.hh>
+#include <dune/fem/space/basefunctions/basefunctionstorage.hh>
 #include <dune/fem/space/common/defaultcommhandler.hh>
 #include <dune/fem/space/common/discretefunctionspace.hh>
 #include <dune/fem/space/mapper/codimensionmapper.hh>
 #include <dune/fem/storage/singletonlist.hh>
 #include <dune/fem/version.hh>
+
+
+namespace
+{
+  template< template< class > class Storage >
+  struct ShowWarning;
+
+  template<>
+  struct ShowWarning< Dune::Fem::CachingStorage >
+  {
+    static const bool v = true;
+  };
+
+  template<>
+  struct ShowWarning< Dune::Fem::SimpleStorage >
+  {
+    static const bool v = false;
+  };
+
+} // namespace
+
 
 
 namespace Dune
@@ -60,11 +79,11 @@ namespace Dune
     /* 
      * Default implementation for discrete Discontinuous Galerkin spaces.
      */
-    template< class Traits >
+    template< class Traits, template< class > class Storage >
     class DiscontinuousGalerkinSpaceDefault
     : public DiscreteFunctionSpaceDefault< Traits >
     {
-      typedef DiscontinuousGalerkinSpaceDefault< Traits > ThisType;
+      typedef DiscontinuousGalerkinSpaceDefault< Traits, Storage > ThisType;
       typedef DiscreteFunctionSpaceDefault< Traits > BaseType;
 
     public:
@@ -104,7 +123,9 @@ namespace Dune
                                           const CommunicationDirection commDirection )
       : BaseType( gridPart, commInterface, commDirection ),
         blockMapper_( BlockMapperProviderType::getObject( gridPart ) )
-      {}
+      {
+        deprecationWarning( Dune::integral_constant< bool, ShowWarning< Storage >::v >() );
+      }
 
       ~DiscontinuousGalerkinSpaceDefault ()
       {
@@ -163,6 +184,11 @@ namespace Dune
       }
 
     private:
+      void DUNE_DEPRECATED_MSG( "Caching disabled for Discontinuous Galerkin spaces." )
+      deprecationWarning ( Dune::integral_constant< bool, true > ) {}
+      void
+      deprecationWarning ( Dune::integral_constant< bool, false > ) {}
+
       mutable BlockMapperType &blockMapper_;
     };
 

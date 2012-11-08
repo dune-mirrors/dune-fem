@@ -8,7 +8,6 @@
 #include <dune/geometry/type.hh>
 
 // dune-fem includes
-#include <dune/fem/space/basefunctions/basefunctionstorage.hh>
 #include <dune/fem/gridpart/common/capabilities.hh>
 #include <dune/fem/space/basisfunctionset/default.hh>
 #include <dune/fem/space/common/allgeomtypes.hh>
@@ -17,7 +16,6 @@
 #include <dune/fem/space/lagrange/shapefunctionset.hh>
 #include <dune/fem/space/mapper/nonblockmapper.hh>
 #include <dune/fem/space/shapefunctionset/proxy.hh>
-#include <dune/fem/storage/singletonlist.hh>
 
 // local includes
 #include "declaration.hh"
@@ -85,13 +83,13 @@ namespace Dune
     // LagrangeDiscontinuousGalerkinSpace
     // ----------------------------------
 
-    template< class FunctionSpace, class GridPart, int polOrder, template< class > class Storage = SimpleStorage >
+    template< class FunctionSpace, class GridPart, int polOrder, template< class > class Storage = CachingStorage >
     class LagrangeDiscontinuousGalerkinSpace
-    : public DiscontinuousGalerkinSpaceDefault< LagrangeDiscontinuousGalerkinSpaceTraits< FunctionSpace, GridPart, polOrder, Storage > >
+    : public DiscontinuousGalerkinSpaceDefault< LagrangeDiscontinuousGalerkinSpaceTraits< FunctionSpace, GridPart, polOrder, Storage >, Storage >
     {
 
       typedef LagrangeDiscontinuousGalerkinSpace< FunctionSpace, GridPart, polOrder, Storage > ThisType;
-      typedef DiscontinuousGalerkinSpaceDefault< LagrangeDiscontinuousGalerkinSpaceTraits< FunctionSpace, GridPart, polOrder, Storage > > BaseType;
+      typedef DiscontinuousGalerkinSpaceDefault< LagrangeDiscontinuousGalerkinSpaceTraits< FunctionSpace, GridPart, polOrder, Storage >, Storage > BaseType;
 
     public:
       using BaseType::blockMapper;
