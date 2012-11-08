@@ -85,9 +85,11 @@ namespace Dune
       typedef typename BaseType::IndexSetType IndexSetType;
       typedef typename BaseType::EntityType EntityType;
 
-      typedef typename BaseType::ShapeFunctionSetType ShapeFunctionSetType;
-      
+      typedef typename BaseType::BasisFunctionSetType BasisFunctionSetType;
+
       typedef typename BaseType::MapperType MapperType;
+
+      typedef typename Traits::ShapeFunctionSetType ShapeFunctionSetType;
 
     private:
       // shape function set is a proxy, get underlying type
@@ -114,7 +116,19 @@ namespace Dune
         }
       }
 
-      /** @copydoc Dune::Fem::DiscreteFunctionSpaceInterface::shapeFunctionSet */
+      /** @copydoc Dune::Fem::DiscreteFunctionSpaceInterface::basisFunctionSet */
+      BasisFunctionSetType basisFunctionSet ( const EntityType &entity ) const
+      {
+        return BasisFunctionSetType( entity, shapeFunctionSet( entity ) );
+      }
+
+      /** \brief return shape function set for given entity
+       *
+       * \param[in]  entity  entity (of codim 0) for which shape function set 
+       *                     is requested
+       *
+       * \returns  ShapeFunctionSetType  shape function set                     
+       */
       ShapeFunctionSetType shapeFunctionSet ( const EntityType &entity ) const
       {
         return shapeFunctionSet( entity.type() );

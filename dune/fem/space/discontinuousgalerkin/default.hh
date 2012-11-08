@@ -26,7 +26,7 @@ namespace Dune
     // ------------------------------------
 
     /* 
-     * common base traits class for all Discontinuous Galerkin spaces
+     * Common base traits class for all Discontinuous Galerkin spaces
      */
     template< class FunctionSpace, class GridPart, int polOrder, template< class > class Storage >
     struct DiscontinuousGalerkinSpaceTraitsBase
@@ -59,14 +59,6 @@ namespace Dune
 
     /* 
      * Default implementation for discrete Discontinuous Galerkin spaces.
-     *
-     * Derived classes are expected to implement the following methods:
-\code
-  // return shape function set for given entity
-  ShapeFunctionSetType shapeFunctionSet ( const EntityType &entity ) const;
-  // return mapper
-  MapperType &mapper () const;
-\endcode
      */
     template< class Traits >
     class DiscontinuousGalerkinSpaceDefault
@@ -88,7 +80,6 @@ namespace Dune
       typedef typename IteratorType::Entity EntityType;
       typedef typename BaseType::IntersectionType IntersectionType;
 
-      typedef typename Traits::ShapeFunctionSetType ShapeFunctionSetType;
       typedef typename BaseType::BasisFunctionSetType BasisFunctionSetType;
 
       typedef typename BaseType::MapperType MapperType;
@@ -129,7 +120,8 @@ namespace Dune
       /** @copydoc Dune::Fem::DiscreteFunctionSpaceInterface::basisFunctionSet */
       BasisFunctionSetType basisFunctionSet ( const EntityType &entity ) const
       {
-        return BasisFunctionSetType( entity, shapeFunctionSet( entity ) );
+        CHECK_INTERFACE_IMPLEMENTATION( asImp().basisFunctionSet( entity ) );
+        return asImp().basisFunctionSet( entity );
       }
 
       /** @copydoc Dune::Fem::DiscreteFunctionSpaceInterface::contains */
@@ -168,19 +160,6 @@ namespace Dune
       BlockMapperType &blockMapper () const
       {
         return blockMapper_;
-      }
-
-      /** \brief return shape function set for given entity
-       *
-       * \param[in]  entity  entity (of codim 0) for which shape function set 
-       *                     is requested
-       *
-       * \returns  ShapeFunctionSetType  shape function set                     
-       */
-      ShapeFunctionSetType shapeFunctionSet ( const EntityType &entity ) const
-      {
-        CHECK_INTERFACE_IMPLEMENTATION( asImp().shapeFunctionSet( entity ) );
-        return asImp().shapeFunctionSet( entity );
       }
 
     private:

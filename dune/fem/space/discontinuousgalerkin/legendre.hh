@@ -112,8 +112,11 @@ namespace Dune
       typedef typename BaseType::GridPartType GridPartType;
       typedef typename BaseType::EntityType EntityType;
 
+      typedef typename BaseType::BasisFunctionSetType BasisFunctionSetType;
+
       typedef typename BaseType::MapperType MapperType;
-      typedef typename BaseType::ShapeFunctionSetType ShapeFunctionSetType;
+
+      typedef typename Traits::ShapeFunctionSetType ShapeFunctionSetType;
 
     private:
       typedef typename ShapeFunctionSetType::ImplementationType ShapeFunctionSetImp;
@@ -129,7 +132,19 @@ namespace Dune
         deprecationWarning( Dune::integral_constant< bool, ShowWarning< Storage >::v >() );
       }
 
-      /** @copydoc Dune::Fem::DiscreteFunctionSpaceInterface::shapeFunctionSet */
+      /** @copydoc Dune::Fem::DiscreteFunctionSpaceInterface::basisFunctionSet */
+      BasisFunctionSetType basisFunctionSet ( const EntityType &entity ) const
+      {
+        return BasisFunctionSetType( entity, shapeFunctionSet( entity ) );
+      }
+
+      /** \brief return shape function set for given entity
+       *
+       * \param[in]  entity  entity (of codim 0) for which shape function set 
+       *                     is requested
+       *
+       * \returns  ShapeFunctionSetType  shape function set                     
+       */
       ShapeFunctionSetType shapeFunctionSet ( const EntityType &entity ) const
       {
         return shapeFunctionSet( entity.type() );
@@ -144,7 +159,7 @@ namespace Dune
        */
       ShapeFunctionSetType shapeFunctionSet ( const GeometryType &type) const
       {
-        assert( type == GeometryType( GenericGeometry::CubeTopology< Traits::dimLocal >::type ) );
+        assert( type == GeometryType( typename GenericGeometry::CubeTopology< Traits::dimLocal >::type() ) );
         return ShapeFunctionSetType( &shapeFunctionSet_ );
       }
 
@@ -153,7 +168,7 @@ namespace Dune
       MapperType &mapper () const { return mapper_; }
 
     private:
-      void DUNE_DEPRECATED_MSG( "Caching disabled for FiniteVolumeSpace." )
+      void DUNE_DEPRECATED_MSG( "Caching disabled for LegendreDiscreteFunctionSpace." )
       deprecationWarning ( Dune::integral_constant< bool, true > ) {}
       void
       deprecationWarning ( Dune::integral_constant< bool, false > ) {}
