@@ -121,7 +121,7 @@ namespace Dune
           gjit.mtv( jacobianFactor[ r ], tmpJacobianFactor[ r ] );
 
         FunctionalAxpyFunctor< LocalJacobianRangeType, DofVector > f( jacobianFactor, dofs );
-        shapeFunctionSet().evaluateEach( x, f );
+        shapeFunctionSet().jacobianEach( x, f );
       }
 
       //! \todo please doc me
@@ -177,7 +177,7 @@ namespace Dune
       template< class Point, class DofVector >
       void hessianAll ( const Point &x, const DofVector &dofs, HessianRangeType &hessian ) const
       {
-        LocalHessianRangeType localHessian( RangeFieldType( 0 ) );
+        LocalHessianRangeType localHessian( typename LocalHessianRangeType::value_type( RangeFieldType( 0 ) ) );
         AxpyFunctor< DofVector, LocalHessianRangeType > f( dofs, localHessian );
         shapeFunctionSet().hessianEach( x, f );
 
