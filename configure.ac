@@ -5,7 +5,7 @@ DUNE_AC_INIT
 AM_INIT_AUTOMAKE([foreign 1.9 tar-pax dist-bzip2])
 
 # check if we're in the right directory
-AC_CONFIG_SRCDIR([dune/fem/space/dgspace/dgspace.hh])
+AC_CONFIG_SRCDIR([dune/fem/space/finitevolume.hh])
 # which header-file is created
 AM_CONFIG_HEADER([config.h])
 
@@ -42,16 +42,12 @@ AC_CONFIG_FILES([Makefile
      dune/fem/space/shapefunctionset/Makefile
      dune/fem/space/common/Makefile
      dune/fem/space/dofmapper/Makefile
-     dune/fem/space/dgspace/Makefile
      dune/fem/space/discontinuousgalerkin/Makefile
      dune/fem/space/finitevolume/Makefile
      dune/fem/space/finitevolume/test/Makefile
-     dune/fem/space/fvspace/Makefile
      dune/fem/space/genericspace/Makefile
      dune/fem/space/lagrange/Makefile
      dune/fem/space/lagrange/test/Makefile
-     dune/fem/space/lagrangespace/Makefile
-     dune/fem/space/lagrangespace/test/Makefile
      dune/fem/space/reducedbasisspace/Makefile
      dune/fem/space/reducedbasisspace/test/Makefile
      dune/fem/space/combinedspace/Makefile
