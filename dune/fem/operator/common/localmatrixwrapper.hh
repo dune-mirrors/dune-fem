@@ -213,28 +213,10 @@ namespace Dune
         return localMatrix().domainBasisFunctionSet();
       }
 
-      // compatibility method
-      typedef DomainBasisFunctionSetType DomainBaseFunctionSetType;
-      inline 
-      DUNE_VERSION_DEPRECATED(1,4,remove)
-      const DomainBaseFunctionSetType &domainBaseFunctionSet () const
-      {
-        return domainBasisFunctionSet();
-      }
-
       /** \copydoc Dune::Fem::LocalMatrixInterface::rangeBasisFunctionSet */
       inline const RangeBasisFunctionSetType &rangeBasisFunctionSet () const
       {
         return localMatrix().rangeBasisFunctionSet();
-      }
-
-      // compatibility method
-      typedef RangeBasisFunctionSetType RangeBaseFunctionSetType;
-      inline 
-      DUNE_VERSION_DEPRECATED(1,4,remove)
-      const RangeBaseFunctionSetType &rangeBaseFunctionSet () const
-      {
-        return rangeBasisFunctionSet();
       }
 
     protected:

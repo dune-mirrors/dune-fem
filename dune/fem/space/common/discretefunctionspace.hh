@@ -685,19 +685,6 @@ namespace Dune
       }
 
     public:
-      /** \brief get base function set for given entity
-       *
-       *  \param[in]  entity  entity (of codim 0) for which base function is
-       *                      requested
-       *
-       *  \returns BasisFunctionSet for the entity
-       */
-      typedef typename BaseType :: BasisFunctionSetType BaseFunctionSetType;
-      inline const BaseFunctionSetType baseFunctionSet ( const EntityType &entity ) const DUNE_DEPRECATED
-      {
-        return asImp().basisFunctionSet( entity );
-      }
- 
       /** \copydoc Dune::Fem::DiscreteFunctionSpaceInterface::sequence */
       inline int sequence () const
       { 

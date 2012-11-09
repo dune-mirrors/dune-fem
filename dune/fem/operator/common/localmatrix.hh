@@ -3,7 +3,6 @@
 
 //- Dune includes 
 #include <dune/fem/misc/bartonnackmaninterface.hh>
-#include <dune/fem/version.hh>
 
 namespace Dune 
 { 
@@ -329,26 +328,10 @@ namespace Dune
         return domainBaseSet_;
       }
 
-      // compatibility method
-      typedef DomainBasisFunctionSetType DomainBaseFunctionSetType;
-      DUNE_VERSION_DEPRECATED(1,4,remove)
-      const DomainBaseFunctionSetType &domainBaseFunctionSet () const
-      {
-        return domainBasisFunctionSet();
-      }
-      
       /** \copydoc Dune::Fem::LocalMatrixInterface::rangeBasisFunctionSet */
       const RangeBasisFunctionSetType &rangeBasisFunctionSet () const
       {
         return rangeBaseSet_;
-      }
-
-      // compatibility method
-      typedef RangeBasisFunctionSetType RangeBaseFunctionSetType;
-      DUNE_VERSION_DEPRECATED(1,4,remove)
-      const RangeBaseFunctionSetType &rangeBaseFunctionSet () const
-      {
-        return rangeBasisFunctionSet();
       }
 
       /** \copydoc Dune::Fem::LocalMatrixInterface::multiplyAdd */
