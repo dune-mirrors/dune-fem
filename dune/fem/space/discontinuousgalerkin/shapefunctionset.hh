@@ -210,31 +210,31 @@ namespace Dune
     protected:
       static void evaluate ( const Line &, std::size_t i, const DomainType &x, JacobianRangeType &jacobian )
       {
-        OrthonormalBase_1D::grad_line( i , &x[ 0 ], &jacobian );
+        OrthonormalBase_1D::grad_line( i , &x[ 0 ], &jacobian[ 0 ][ 0 ] );
       }
       static void evaluate ( const Quadrilateral &, std::size_t i, const DomainType &x, JacobianRangeType &jacobian )
       {
-        OrthonormalBase_2D::grad_quadrilateral_2d( i , &x[ 0 ], &jacobian );
+        OrthonormalBase_2D::grad_quadrilateral_2d( i , &x[ 0 ], &jacobian[ 0 ][ 0 ] );
       }
       static void evaluate ( const Triangle &, std::size_t i, const DomainType &x, JacobianRangeType &jacobian )
       {
-        OrthonormalBase_2D::grad_triangle_2d( i , &x[ 0 ], &jacobian );
+        OrthonormalBase_2D::grad_triangle_2d( i , &x[ 0 ], &jacobian[ 0 ][ 0 ] );
       }
       static void evaluate ( const Pyramid &, std::size_t i, const DomainType &x, JacobianRangeType &jacobian )
       {
-        OrthonormalBase_3D::grad_pyramid_3d( i , &x[ 0 ], &jacobian );
+        OrthonormalBase_3D::grad_pyramid_3d( i , &x[ 0 ], &jacobian[ 0 ][ 0 ] );
       }
       static void evaluate ( const Hexahedron &, std::size_t i, const DomainType &x, JacobianRangeType &jacobian )
       {
-        OrthonormalBase_3D::grad_hexahedron_3d( i , &x[ 0 ], &jacobian );
+        OrthonormalBase_3D::grad_hexahedron_3d( i , &x[ 0 ], &jacobian[ 0 ][ 0 ] );
       }
       static void evaluate ( const Prism &, std::size_t i, const DomainType &x, JacobianRangeType &jacobian )
       {
-        OrthonormalBase_3D::grad_prism_3d( i , &x[ 0 ], &jacobian );
+        OrthonormalBase_3D::grad_prism_3d( i , &x[ 0 ], &jacobian[ 0 ][ 0 ] );
       }
       static void evaluate ( const Tetrahedron &, std::size_t i, const DomainType &x, JacobianRangeType &jacobian )
       {
-        OrthonormalBase_3D::grad_tetrahedron_3d( i , &x[ 0 ], &jacobian );
+        OrthonormalBase_3D::grad_tetrahedron_3d( i , &x[ 0 ], &jacobian[ 0 ][ 0 ] );
       }
     };
 
