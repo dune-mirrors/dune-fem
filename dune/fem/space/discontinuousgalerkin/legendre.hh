@@ -20,7 +20,6 @@
 #include <dune/fem/space/shapefunctionset/vectorial.hh>
 
 // local includes
-#include "declaration.hh"
 #include "default.hh"
 
 

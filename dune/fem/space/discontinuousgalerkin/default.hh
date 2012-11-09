@@ -13,6 +13,10 @@
 #include <dune/fem/storage/singletonlist.hh>
 #include <dune/fem/version.hh>
 
+// local includes
+#include "declaration.hh"
+#include "localrestrictprolong.hh"
+
 
 namespace
 {

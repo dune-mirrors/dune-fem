@@ -17,7 +17,6 @@
 #include <dune/fem/version.hh>
 
 // local includes
-#include "declaration.hh"
 #include "default.hh"
 #include "shapefunctionset.hh"
 

@@ -18,7 +18,6 @@
 #include <dune/fem/space/shapefunctionset/proxy.hh>
 
 // local includes
-#include "declaration.hh"
 #include "default.hh"
 
 
