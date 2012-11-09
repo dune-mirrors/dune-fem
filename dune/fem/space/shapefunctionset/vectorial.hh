@@ -48,7 +48,8 @@ namespace Dune
       static typename VectorialFunctionSpaceType::HessianRangeType
       makeVectorial ( int k, const typename ScalarFunctionSpaceType::HessianRangeType &scalarValue )
       {
-        typename VectorialFunctionSpaceType::HessianRangeType vectorialValue( RangeField( 0 ) );
+        typename VectorialFunctionSpaceType::HessianRangeType 
+          vectorialValue( typename VectorialFunctionSpaceType::HessianRangeType::value_type( RangeField( 0 ) ) );
         vectorialValue[ k ] = scalarValue[ 0 ];
         return vectorialValue;
       }
