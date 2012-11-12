@@ -69,9 +69,9 @@ namespace AnisotropicDG
     typedef int IndexType;
 
     // constructor
-    Iterator ( IndexType n )
+    explicit Iterator ( IndexType n )
     : multiIndex_( n )
-    { }
+    {}
 
     static IndexType invalidIndex ()
     {

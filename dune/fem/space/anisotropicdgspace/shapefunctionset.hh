@@ -9,11 +9,11 @@
 #include <dune/common/array.hh>
 #include <dune/common/densevector.hh>
 #include <dune/common/forloop.hh>
+#include <dune/common/power.hh>
 #include <dune/common/static_assert.hh>
 
 // dune-fem includes
 #include <dune/fem/space/common/functionspace.hh>
-#include <dune/fem/space/dgspace/legendredgbasefunctions.hh>
 #include <dune/fem/space/shapefunctionset/legendre.hh>
 #include <dune/fem/space/shapefunctionset/proxy.hh>
 #include <dune/fem/space/shapefunctionset/tensorproduct.hh>
@@ -39,7 +39,7 @@ namespace AnisotropicDG
   /**
    * \brief Provide number of shape functions for AnisotropicDGSpace
    *
-   * \tparam  dimension  grid dimension
+   * \tparam  dimension  grid dimension 
    *
    * \tparam  maxOrder   maximum polynomal order
    */
@@ -55,7 +55,7 @@ namespace AnisotropicDG
       static void apply ( Dune::array< std::size_t, maxOrder+1 > &sizes )
       {
         dune_static_assert( order >= 0 && order <= maxOrder, "Invalid template parameter " );
-        sizes[ order ] = Dune::Fem::NumLegendreBaseFunctions< order, dimension >::numBaseFct;
+        sizes[ order ] = Dune::StaticPower< order+1, dimension >::power;
       }
     };
 
@@ -149,7 +149,7 @@ namespace AnisotropicDG
     template< int order >
     struct Initialize
     {
-      static void apply ( const Dune::array< LegendreShapeFunctionSetType *, storageSize > &shapeFunctions )
+      static void apply ( Dune::array< const LegendreShapeFunctionSetType *, storageSize > &shapeFunctions )
       {
         dune_static_assert( order >= 0 && order < storageSize, "Invalid template parameter" );
         shapeFunctions[ order ] = new LegendreShapeFunctionSetType( order );
@@ -267,7 +267,7 @@ namespace AnisotropicDG
     static ShapeFunctionSetTupleType create ( const MultiIndexType &multiIndex )
     {
       ShapeFunctionSetTupleType shapeFunctionSetTuple;
-      Dune::ForLoop< Create, 0, dimension >::apply( shapeFunctionSetTuple, multiIndex );
+      Dune::ForLoop< Create, 0, dimension-1 >::apply( shapeFunctionSetTuple, multiIndex );
       return shapeFunctionSetTuple;
     }
   };
@@ -303,7 +303,7 @@ namespace AnisotropicDG
   public:
     typedef typename ShapeFunctionSetTupleProviderType::MultiIndexType MultiIndexType;
 
-    ScalarShapeFunctionSet ( const MultiIndexType &multiIndex )
+    explicit ScalarShapeFunctionSet ( const MultiIndexType &multiIndex )
     : implementation_( ShapeFunctionSetTupleProviderType::create( multiIndex ) )
     {
       assert(( NumShapeFunctions< FunctionSpaceType::dimDomain, maxOrder >::count( multiIndex ) == size() )); 
@@ -349,58 +349,25 @@ namespace AnisotropicDG
 
   template< class FunctionSpace, int maxOrder >
   class ShapeFunctionSet
+  : public Dune::Fem::VectorialShapeFunctionSet< 
+      ScalarShapeFunctionSet< typename Dune::Fem::ToScalarFunctionSpace< FunctionSpace >::Type, maxOrder >,
+      typename FunctionSpace::RangeType
+    >
   {
     typedef ShapeFunctionSet< FunctionSpace, maxOrder > ThisType;
+    typedef Dune::Fem::VectorialShapeFunctionSet< 
+        ScalarShapeFunctionSet< typename Dune::Fem::ToScalarFunctionSpace< FunctionSpace >::Type, maxOrder >,
+        typename FunctionSpace::RangeType
+      > BaseType;
 
-  public:
-    typedef FunctionSpace FunctionSpaceType;
-    typedef typename FunctionSpaceType::DomainType DomainType;
-    typedef typename FunctionSpaceType::RangeType RangeType;
-    typedef typename FunctionSpaceType::JacobianRangeType JacobianRangeType;
-    typedef typename FunctionSpaceType::HessianRangeType HessianRangeType;
-
-  private:
-    typedef typename Dune::Fem::ToScalarFunctionSpace< FunctionSpaceType >::Type ScalarFunctionSpace;
-    typedef ScalarShapeFunctionSet< ScalarFunctionSpace, maxOrder > ScalarShapeFunctionSetType;
-
-  protected:
-    typedef Dune::Fem::VectorialShapeFunctionSet< ScalarShapeFunctionSetType, RangeType > ImplementationType;
+    typedef typename BaseType::ScalarShapeFunctionSetType ScalarShapeFunctionSetType;
 
   public:
     typedef typename ScalarShapeFunctionSetType::MultiIndexType MultiIndexType;
 
-    ShapeFunctionSet ( const MultiIndexType &multiIndex )
-    : implementation_( ScalarShapeFunctionSetType( multiIndex ) )
+    explicit ShapeFunctionSet ( const MultiIndexType &multiIndex = MultiIndexType( maxOrder ) )
+    : BaseType( ScalarShapeFunctionSetType( multiIndex ) )
     {}
-
-    std::size_t size () const { return implementation().size(); }
-
-    template< class Point, class Functor >
-    void evaluateEach ( const Point &x, Functor functor ) const
-    {
-      return implementation().evaluateEach( x, functor );
-    }
-
-    template< class Point, class Functor >
-    void jacobianEach ( const Point &x, Functor functor ) const
-    {
-      return implementation().jacobianEach( x, functor );
-    }
-
-    template< class Point, class Functor >
-    void hessianEach ( const Point &x, Functor functor ) const
-    {
-      return implementation().hessianEach( x, functor );
-    }
-
-  protected:
-    const ImplementationType &implementation () const
-    {
-      return implementation_;
-    }
-
-  private:
-    ImplementationType implementation_;
   };
 
 } // namespace AnisotropicDG 

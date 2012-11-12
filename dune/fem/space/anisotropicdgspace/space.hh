@@ -4,12 +4,6 @@
 // C++ includes
 #include <algorithm>
 
-// dune-common includes
-#include <dune/common/nullptr.hh>
-
-// dune-geometry includes
-#include <dune/geometry/type.hh>
-
 // dune-fem includes
 #include <dune/fem/space/basefunctions/basefunctionstorage.hh>
 #include <dune/fem/space/basisfunctionset/default.hh>
@@ -50,19 +44,13 @@ namespace AnisotropicDG
     typedef FunctionSpace FunctionSpaceType;
     typedef GridPart GridPartType;
 
-    static const int dimDomain = FunctionSpaceType::dimDomain;
     static const int dimRange = FunctionSpaceType::dimRange;
     static const int dimLocal = GridPartType::dimension;
-
-    typedef typename FunctionSpaceType::DomainFieldType DomainFieldType;
-    typedef typename FunctionSpaceType::RangeFieldType RangeFieldType;
-    typedef typename FunctionSpaceType::DomainType DomainType;
-    typedef typename FunctionSpaceType::RangeType RangeType;
 
     static const int codimension = 0;
     typedef typename GridPart::template Codim< 0 >::EntityType EntityType;
 
-    typedef Dune::Fem::FunctionSpace< DomainFieldType, RangeFieldType, dimLocal, dimLocal > ShapeFunctionSpaceType;
+    typedef typename Dune::Fem::ToLocalFunctionSpace< FunctionSpace, dimLocal >::Type ShapeFunctionSpaceType;
     typedef ShapeFunctionSet< ShapeFunctionSpaceType, maxOrder > ShapeFunctionSetType;
     typedef Dune::Fem::DefaultBasisFunctionSet< EntityType, ShapeFunctionSetType > BasisFunctionSetType;
 
@@ -99,11 +87,7 @@ namespace AnisotropicDG
     typedef typename BaseType::FunctionSpaceType FunctionSpaceType;
 
     typedef typename BaseType::GridPartType GridPartType;
-    typedef typename BaseType::GridType GridType;
-    typedef typename BaseType::IndexSetType IndexSetType;
-    typedef typename BaseType::IteratorType IteratorType;
     typedef typename BaseType::EntityType EntityType;
-    typedef typename BaseType::IntersectionType IntersectionType;
 
     typedef typename BaseType::BasisFunctionSetType BasisFunctionSetType;
 
@@ -124,7 +108,7 @@ namespace AnisotropicDG
                             const Dune::CommunicationDirection commDirection )
     : BaseType( gridPart, commInterface, commDirection ),
       mapper_( gridPart, multiIndex )
-    { }
+    {}
 
     Dune::Fem::DFSpaceIdentifier type () const
     {
@@ -155,7 +139,7 @@ namespace AnisotropicDG
     int order ( const EntityType &entity ) const
     {
       const MultiIndexType &multiIndex = mapper().order( entity );
-      return std::max_element( multiIndex.begin(), multiIndex.end() );
+      return *(std::max_element( multiIndex.begin(), multiIndex.end() ) );
     }
 
     MapperType &mapper () const
@@ -209,6 +193,8 @@ namespace Dune
       static const Dune::CommunicationDirection defaultDirection = Dune::ForwardCommunication;
 
     public:
+      static const int polynomialOrder = maxOrder;
+
       typedef typename BaseType::GridPartType GridPartType;
       typedef typename BaseType::MultiIndexType MultiIndexType;
 
@@ -217,7 +203,7 @@ namespace Dune
                            const Dune::InterfaceType commInterface = defaultInterface,
                            const Dune::CommunicationDirection commDirection = defaultDirection )
       : BaseType( gridPart, multiIndex, commInterface, commDirection )
-      { }
+      {}
     };
 
   } // namespace Fem

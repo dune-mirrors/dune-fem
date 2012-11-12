@@ -10,7 +10,6 @@
 // local includes
 #include "multiindexset.hh"
 #include "shapefunctionset.hh"
-#include "utility.hh"
 
 /**
   @file
@@ -69,7 +68,7 @@ namespace AnisotropicDG
 
     typedef typename MultiIndexSet< dimension, maxPolOrder >::MultiIndexType MultiIndexType;
 
-    explicit DofMapper ( const GridPartType &gridPart, const MultiIndexType multiIndex )
+    DofMapper ( const GridPartType &gridPart, const MultiIndexType multiIndex )
     : gridPart_( gridPart ),
       multiIndex_( multiIndex ),
       size_( dimRange*NumShapeFunctions< dimension, maxPolOrder >::count( multiIndex ) )
