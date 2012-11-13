@@ -1,4 +1,5 @@
-test-multiindexset
-test-space
+/test-multiindexset
+/test-shapefunctionset
+/test-space
 
-*.o
+/*.o
