@@ -45,8 +45,8 @@ try
   Dune::Fem::MPIManager::initialize( argc, argv );
 
   // create grid
-  GridType &grid = Dune::TestGrid::grid();
-  const int step = Dune::TestGrid::refineStepsForHalf();
+  GridType &grid = Dune::Fem::TestGrid::grid();
+  const int step = Dune::Fem::TestGrid::refineStepsForHalf();
   grid.globalRefine( 2*step );
 
   // create grid part
