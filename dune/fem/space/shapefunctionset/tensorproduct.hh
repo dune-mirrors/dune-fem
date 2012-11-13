@@ -56,6 +56,9 @@ namespace Dune
       explicit TensorProductShapeFunctionSet ( const ShapeFunctionSetTupleType &shapeFunctionSetTuple );
       ~TensorProductShapeFunctionSet ();
 
+      TensorProductShapeFunctionSet ( const ThisType &other );
+      const ThisType &operator= ( const ThisType &other );
+
       std::size_t size () const;
 
       template< class Point, class Functor >
@@ -209,6 +212,42 @@ namespace Dune
 
 
     template< class FunctionSpace, class ShapeFunctionSetTuple >
+    inline TensorProductShapeFunctionSet< FunctionSpace, ShapeFunctionSetTuple >
+      ::TensorProductShapeFunctionSet ( const ThisType &other )
+    : shapeFunctionSetTuple_( other.shapeFunctionSetTuple_ )
+    {
+      std::size_t buffer_size = 0;
+      for( int i = 0; i < dimension; ++i )
+      {
+        sizes_[ i ] = other.sizes_[ i ];
+        buffer_size += sizes_[ i ];
+      }
+      buffer_ = new RangeFieldType[ 3*buffer_size ];
+    }
+
+
+    template< class FunctionSpace, class ShapeFunctionSetTuple >
+    inline const typename TensorProductShapeFunctionSet< FunctionSpace, ShapeFunctionSetTuple >::ThisType &
+    TensorProductShapeFunctionSet< FunctionSpace, ShapeFunctionSetTuple >
+      ::operator= ( const ThisType &other )
+    {
+      if( this == &other )
+        return *this;
+      delete[]( buffer_ );
+
+      shapeFunctionSetTuple_ = other.shapeFunctionSetTuple_;
+      std::size_t buffer_size = 0;
+      for( int i = 0; i < dimension; ++i )
+      {
+        sizes_[ i ] = other.sizes_[ i ];
+        buffer_size += sizes_[ i ];
+      }
+      buffer_ = new RangeFieldType[ 3*buffer_size ];
+      return *this;
+    }
+
+
+    template< class FunctionSpace, class ShapeFunctionSetTuple >
     inline std::size_t
     TensorProductShapeFunctionSet< FunctionSpace, ShapeFunctionSetTuple >::size () const
     {
@@ -228,7 +267,7 @@ namespace Dune
       ForLoop< EvaluateAll, 0, dimension-1 >::apply( shapeFunctionSetTuple_, coordinate( x ), it );
 
       std::size_t index = 0;
-      doEvaluateEach( 0, RangeType( RangeFieldType( 1 ) ), index, buffer_ );
+      doEvaluateEach( 0, RangeType( RangeFieldType( 1 ) ), index, buffer_, functor );
     }
 
 
@@ -244,7 +283,7 @@ namespace Dune
       JacobianRangeType jacobian;
       for( int i = 0; i < dimension; ++i )
         jacobian[ 0 ][ i ] = RangeFieldType( 1 );
-      doJacobianeEach( 0, jacobian, index, buffer_ );
+      doJacobianeEach( 0, jacobian, index, buffer_, functor );
     }
 
 
@@ -261,7 +300,7 @@ namespace Dune
       for( int i = 0; i < dimension; ++i )
         for( int j = 0; j < dimension; ++j )
           hessian[ 0 ][ i ][ j ] = RangeFieldType( 1 );
-      doHessianEach( 0, hessian, index, buffer_ );
+      doHessianEach( 0, hessian, index, buffer_, functor );
     }
 
 
@@ -272,11 +311,11 @@ namespace Dune
     {
       if( d < dimension )
       {
-        for( int i = 0; i < sizes_[ d ]; ++i )
+        for( std::size_t i = 0; i < sizes_[ d ]; ++i )
         {
           RangeType v( value );
           v[ 0 ] *= buffer[ i ];
-          doEvaluateEach( d+1, v, index, buffer+sizes_[ d ] ); 
+          doEvaluateEach( d+1, v, index, buffer+sizes_[ d ], functor ); 
         }
       }
       else
@@ -291,13 +330,13 @@ namespace Dune
     {
       if( d < dimension )
       {
-        for( int i = 0; i < sizes_[ d ]; ++i )
+        for( std::size_t i = 0; i < sizes_[ d ]; ++i )
         {
           JacobianRangeType j( jacobian );
           j[ 0 ][ d ] *= buffer[ i + sizes_[ d ] ];
           for( int k = 1; k < dimension; ++k )
             j[ 0 ][ (d+k)%dimension ] *= buffer[ i ];
-          doEvaluateEach( d+1, j, index, buffer+2*sizes_[ d ] ); 
+          doEvaluateEach( d+1, j, index, buffer+2*sizes_[ d ], functor ); 
         }
       }
       else
@@ -312,7 +351,7 @@ namespace Dune
     {
       if( d < dimension )
       {
-        for( int i = 0; i < sizes_[ d ]; ++i )
+        for( std::size_t i = 0; i < sizes_[ d ]; ++i )
         {
           HessianRangeType h( hessian );
           h[ 0 ][ d ][ d ] *= buffer[ i + 2*sizes_[ d ] ];
@@ -323,7 +362,7 @@ namespace Dune
             for( int k = 1; k < dimension; ++k )
               h[ 0 ][ (d+j)%dimension ][ (d+k)%dimension ] *= buffer[ i ];
           }
-          doEvaluateEach( d+1, h, index, buffer+3*sizes_[ d ] ); 
+          doEvaluateEach( d+1, h, index, buffer+3*sizes_[ d ], functor ); 
         }
       }
       else
