@@ -12,9 +12,8 @@
 #include <cassert>
 #include <sys/times.h>
 
-#include <dune/common/mpihelper.hh>
-
 //- Dune includes 
+#include <dune/fem/misc/mpimanager.hh>
 #include <dune/fem/operator/common/spaceoperatorif.hh>
 #include <dune/fem/solver/timeprovider.hh>
 #include <dune/fem/io/parameter.hh>
