@@ -21,7 +21,6 @@
 
 // local includes
 #include "multiindexset.hh"
-#include "utility.hh"
 
 /**
   @file
@@ -44,72 +43,36 @@ namespace AnisotropicDG
    * \tparam  maxOrder   maximum polynomal order
    */
   template < int dimension, int maxOrder >
-  class NumShapeFunctions
+  struct NumShapeFunctions
   {
-    // this type
-    typedef NumShapeFunctions< dimension, maxOrder > ThisType;
-
-    template< int order >
-    struct Initialize
-    {
-      static void apply ( Dune::array< std::size_t, maxOrder+1 > &sizes )
-      {
-        dune_static_assert( order >= 0 && order <= maxOrder, "Invalid template parameter " );
-        sizes[ order ] = Dune::StaticPower< order+1, dimension >::power;
-      }
-    };
-
-  protected:
-    //! \brief constructor
-    NumShapeFunctions ()
-    {
-      Dune::ForLoop< Initialize, 0, maxOrder >::apply( sizes_ );
-    }
-
-    //! \brief get singleton
-    static ThisType &instance ()
-    {
-      static ThisType instance_;
-      return instance_;
-    }
-
-  public:
     //! \brief return max number of shape functions
     static std::size_t max ()
     {
-      std::size_t min = 1;
-      for( int i = 0; i < dimension; ++i )
-        min *= instance().sizes_[ maxOrder ];
-      return min ;
+      return Dune::StaticPower< maxOrder+1, dimension >::power;
     }
 
     //! \brief return min number of shape functions
     static std::size_t min ()
     {
-      std::size_t min = 1;
-      for( int i = 0; i < dimension; ++i )
-        min *= instance().sizes_[ 0 ];
-      return min ;
+      return 1;
     }
 
     //! \brief return number of shape functions for given multi index
     template< class Implementation >
     static std::size_t count ( const Dune::DenseVector< Implementation > &multiIndex )
     {
+      typedef Dune::DenseVector< Implementation > DenseVectorType;
       assert( multiIndex.size() == dimension );
+
       std::size_t count = 1;
       for( int i = 0; i < dimension; ++i )
-        count *= instance().sizes_[ multiIndex[ i ] ];
+      {
+        const typename DenseVectorType::value_type order = multiIndex[ i ];
+        assert( 0 <= order && order <= maxOrder );
+        count *= order+1;
+      }
       return count;
     }
-
-  private:
-    //forbid copy constructor
-    NumShapeFunctions ( const ThisType &other );
-    // forbid assignment operator
-    ThisType &operator= ( const ThisType &other );
-
-    Dune::array< std::size_t, maxOrder+1 > sizes_;
   };
 
 
@@ -163,16 +126,6 @@ namespace AnisotropicDG
     }
 
   public:
-    ~LegendreShapeFunctionSetProvider ()
-    {
-      for( int i = 0; i < storageSize; ++i )
-      {
-        if( shapeFunctionSets_[ i ] )
-          delete shapeFunctionSets_[ i ];
-        shapeFunctionSets_[ i ] = nullptr;
-      }
-    }
-
     static const LegendreShapeFunctionSetType &get ( const int order )
     {
       return *( instance().shapeFunctionSets_[ order ] );
@@ -245,10 +198,12 @@ namespace AnisotropicDG
 
   public:
     //! \brief type of shape function set tuple
-    typedef typename MakeTuple< ShapeFunctionSetProxyType, dimension >::Type ShapeFunctionSetTupleType;
+    typedef Dune::array< ShapeFunctionSetProxyType, dimension > ShapeFunctionSetTupleType;
 
+    //! \brief multi index set type
+    typedef MultiIndexSet< dimension, maxOrder > MultiIndexSetType;
     //! \brief multi index type
-    typedef typename MultiIndexSet< dimension, maxOrder >::MultiIndexType MultiIndexType;
+    typedef typename MultiIndexSetType::MultiIndexType MultiIndexType;
 
   protected:
     template< int i >
