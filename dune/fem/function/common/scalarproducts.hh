@@ -9,7 +9,6 @@
 #include <limits>
 
 //- Dune includes  
-#include <dune/common/mpihelper.hh>
 #include <dune/common/exceptions.hh>
 
 #include <dune/grid/common/gridenums.hh>
@@ -23,6 +22,7 @@
 //- Dune-fem includes 
 //#include <dune/fem/space/common/commoperations.hh>
 #include <dune/fem/storage/singletonlist.hh>
+#include <dune/fem/misc/mpimanager.hh>
 #include <dune/fem/space/common/commindexmap.hh>
 
 namespace Dune
