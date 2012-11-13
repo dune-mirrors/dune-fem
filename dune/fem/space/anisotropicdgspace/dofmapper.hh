@@ -71,7 +71,7 @@ namespace AnisotropicDG
     DofMapper ( const GridPartType &gridPart, const MultiIndexType multiIndex )
     : gridPart_( gridPart ),
       multiIndex_( multiIndex ),
-      size_( dimRange*NumShapeFunctions< dimension, maxPolOrder >::count( multiIndex ) )
+      numDofs_( dimRange*NumShapeFunctions< dimension, maxPolOrder >::count( multiIndex ) )
     {}
 
 
@@ -80,7 +80,7 @@ namespace AnisotropicDG
 
     SizeType size () const
     {
-      return size_;
+      return indexSet().size( 0 )*numDofs_;
     }
 
     bool contains ( const int codim ) const
@@ -90,7 +90,7 @@ namespace AnisotropicDG
 
     bool fixedDataSize ( int codim ) const
     {
-      return ( contains( codim ) ? false : true );
+      return !contains( codim );
     }
 
     template< class Functor >
@@ -113,14 +113,14 @@ namespace AnisotropicDG
 
     int maxNumDofs () const
     {
-      return size_;
+      return dimRange*NumShapeFunctions< dimension, maxPolOrder >::max();
     }
 
     template< class Entity >
     int numDofs ( const Entity &entity ) const
     {
       assert( Entity::codimension == 0 );
-      return size_; 
+      return numDofs_; 
     }
 
     template< class Entity >
@@ -128,6 +128,7 @@ namespace AnisotropicDG
     {
       return ( Entity::codimension == 0 ? numDofs( entity ) : 0 );
     }
+
 
     // Extended interface methods for AdaptviveDofMapper
     // -------------------------------------------------
@@ -200,6 +201,11 @@ namespace AnisotropicDG
       return gridPart_;
     }
 
+    const IndexSetType &indexSet () const
+    {
+      return gridPart().indexSet();
+    }
+
     template< class Entity >
     GlobalKeyType globalKey ( const Entity &entity, const int localDoF ) const
     {
@@ -210,7 +216,7 @@ namespace AnisotropicDG
   private:
     const GridPartType &gridPart_;
     MultiIndexType multiIndex_;
-    SizeType size_;
+    SizeType numDofs_;
   };
 
 } // namespace AnisotropicDG
