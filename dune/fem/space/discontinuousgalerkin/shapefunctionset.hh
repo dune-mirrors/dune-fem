@@ -97,9 +97,9 @@ namespace Dune
       // triangle
       typedef Dune::GenericGeometry::Pyramid< Line > Triangle;
       // pyramid
-      typedef Dune::GenericGeometry::Prism< Quadrilateral > Pyramid;
+      typedef Dune::GenericGeometry::Prism< Quadrilateral > Hexahedron;
       // hexahedron
-      typedef Dune::GenericGeometry::Pyramid< Quadrilateral > Hexahedron;
+      typedef Dune::GenericGeometry::Pyramid< Quadrilateral > Pyramid;
       // prism
       typedef Dune::GenericGeometry::Prism< Triangle > Prism;
       // tetrahedron
