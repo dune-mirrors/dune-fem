@@ -13,6 +13,7 @@
 #include <dune/fem/space/common/basesetlocalkeystorage.hh>
 #include <dune/fem/space/mapper/nonblockmapper.hh>
 #include <dune/fem/space/shapefunctionset/proxy.hh>
+#include <dune/fem/space/shapefunctionset/selectcaching.hh>
 #include <dune/fem/space/shapefunctionset/vectorial.hh>
 #include <dune/fem/version.hh>
 
@@ -49,13 +50,24 @@ namespace Dune
       typedef typename ToLocalFunctionSpace< ScalarFunctionSpaceType, BaseType::dimLocal >::Type ScalarShapeFunctionSpaceType;
 
     public:
-      typedef OrthonormalShapeFunctionSet< ScalarShapeFunctionSpaceType, polOrder > ScalarShapeFunctionSetType;
-      typedef VectorialShapeFunctionSet< ScalarShapeFunctionSetType, typename FunctionSpaceType::RangeType > ShapeFunctionSetImp;
-      typedef ShapeFunctionSetProxy< ShapeFunctionSetImp > ShapeFunctionSetType;
+      typedef OrthonormalShapeFunctionSet< ScalarShapeFunctionSpaceType, polOrder > OrthonormalShapeFunctionSetType;
+      typedef SelectCachingShapeFunctionSet< OrthonormalShapeFunctionSetType, Storage > ShapeFunctionSetImp;
+
+      struct ShapeFunctionSetFactory
+      {
+        static ShapeFunctionSetImp *createObject ( const GeometryType &type )
+        {
+          return new ShapeFunctionSetImp( type, OrthonormalShapeFunctionSetType( type ) );
+        }
+
+        static void deleteObject ( ShapeFunctionSetImp *object ) { delete object; }
+      };
 
       static const int localBlockSize = BaseType::dimRange * OrthonormalShapeFunctionSetSize< ScalarShapeFunctionSpaceType, polOrder >::v;
       typedef NonBlockMapper< typename BaseType::BlockMapperType, localBlockSize > MapperType;
 
+      typedef ShapeFunctionSetProxy< ShapeFunctionSetImp > ScalarShapeFunctionSetType;
+      typedef VectorialShapeFunctionSet< ScalarShapeFunctionSetType, typename FunctionSpaceType::RangeType > ShapeFunctionSetType;
       typedef DefaultBasisFunctionSet< EntityType, ShapeFunctionSetType > BasisFunctionSetType;
     };
 
@@ -88,9 +100,8 @@ namespace Dune
       typedef typename Traits::ShapeFunctionSetType ShapeFunctionSetType;
 
     private:
-      // shape function set is a proxy, get underlying type
-      typedef typename ShapeFunctionSetType::ImplementationType ShapeFunctionSetImp;
-      typedef SingletonList< const GeometryType, ShapeFunctionSetImp > SingletonProviderType;
+      typedef typename Traits::ShapeFunctionSetImp ShapeFunctionSetImp;
+      typedef SingletonList< const GeometryType, ShapeFunctionSetImp, typename Traits::ShapeFunctionSetFactory > SingletonProviderType;
       typedef BaseSetLocalKeyStorage< ShapeFunctionSetImp > ShapeFunctionSetStorageType;
 
     public:

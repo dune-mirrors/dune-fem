@@ -6,7 +6,6 @@
 
 // dune-fem includes
 #include <dune/fem/misc/bartonnackmaninterface.hh>
-#include <dune/fem/space/basefunctions/basefunctionstorage.hh>
 #include <dune/fem/space/common/defaultcommhandler.hh>
 #include <dune/fem/space/common/discretefunctionspace.hh>
 #include <dune/fem/space/mapper/codimensionmapper.hh>
@@ -18,6 +17,7 @@
 #include "localrestrictprolong.hh"
 
 
+#if 0
 namespace
 {
   template< template< class > class Storage >
@@ -36,7 +36,7 @@ namespace
   };
 
 } // namespace
-
+#endif
 
 
 namespace Dune
@@ -128,7 +128,9 @@ namespace Dune
       : BaseType( gridPart, commInterface, commDirection ),
         blockMapper_( BlockMapperProviderType::getObject( gridPart ) )
       {
+#if 0
         deprecationWarning( Dune::integral_constant< bool, ShowWarning< Storage >::v >() );
+#endif
       }
 
       ~DiscontinuousGalerkinSpaceDefault ()
@@ -188,10 +190,12 @@ namespace Dune
       }
 
     private:
+#if 0
       void DUNE_DEPRECATED_MSG( "Caching disabled for Discontinuous Galerkin spaces." )
       deprecationWarning ( Dune::integral_constant< bool, true > ) {}
       void
       deprecationWarning ( Dune::integral_constant< bool, false > ) {}
+#endif
 
       mutable BlockMapperType &blockMapper_;
     };

@@ -45,6 +45,25 @@ namespace Dune
       Assign assign_;
     };
 
+    template< class T, class Assign >
+    struct AssignFunctor< T *, Assign >
+    {
+      explicit AssignFunctor ( T *array, const Assign &assign = Assign() )
+      : array_( array ),
+        assign_( assign )
+      {}
+
+      template< class GlobalKey >
+      void operator() ( const std::size_t local, const GlobalKey &globalKey )
+      {
+        assign_( globalKey, array_[ local ] );
+      }
+
+    private:
+      T *array_;
+      Assign assign_;
+    };
+
 
 
     // AssignSingleFunctor

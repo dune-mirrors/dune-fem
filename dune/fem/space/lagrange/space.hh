@@ -13,7 +13,6 @@
 #include <dune/geometry/type.hh>
 
 // dune-fem includes
-#include <dune/fem/space/basefunctions/basefunctionstorage.hh>
 #include <dune/fem/space/basisfunctionset/default.hh>
 #include <dune/fem/space/common/allgeomtypes.hh>
 #include <dune/fem/space/common/basesetlocalkeystorage.hh>
@@ -23,6 +22,7 @@
 #include <dune/fem/space/dofmapper/indexsetdofmapper.hh>
 #include <dune/fem/space/mapper/nonblockmapper.hh>
 #include <dune/fem/space/shapefunctionset/proxy.hh>
+#include <dune/fem/space/shapefunctionset/selectcaching.hh>
 #include <dune/fem/storage/singletonlist.hh>
 
 // local includes

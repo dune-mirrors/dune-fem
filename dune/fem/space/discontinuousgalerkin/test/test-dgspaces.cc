@@ -22,6 +22,7 @@
 #include <dune/fem/space/common/adaptmanager.hh>
 #include <dune/fem/space/common/functionspace.hh>
 #include <dune/fem/space/discontinuousgalerkin.hh>
+// #include <dune/fem/space/anisotropicdgspace.hh>
 
 #include "../../../test/exactsolution.hh"
 #include "../../../test/testgrid.hh"
@@ -87,6 +88,8 @@ double algorithm ( GridType &grid, const int step )
 
   // create discrete function space
   typedef Dune::Fem::DiscontinuousGalerkinSpace< FunctionSpaceType, GridPartType, polOrder > DiscreteFunctionSpaceType;
+  // typedef Dune::Fem::DiscontinuousGalerkinSpace< FunctionSpaceType, GridPartType, polOrder, Dune::Fem::SimpleStorage > DiscreteFunctionSpaceType;
+  // typedef Dune::Fem::AnisotropicDGSpace< FunctionSpaceType, GridPartType, polOrder > DiscreteFunctionSpaceType;
   DiscreteFunctionSpaceType discreteFunctionSpace( gridPart );
 
   // create discrete function
@@ -98,7 +101,7 @@ double algorithm ( GridType &grid, const int step )
   Dune::Fem::L2Projection< GridExactSolutionType, DiscreteFunctionType > dgl2;
   dgl2( gridExactSolution, solution );
 
-#if 1
+#if 0
   // prepare output
   typedef Dune::tuple< const DiscreteFunctionType *, GridExactSolutionType * > IOTupleType;
   IOTupleType ioTuple( &solution, &gridExactSolution );

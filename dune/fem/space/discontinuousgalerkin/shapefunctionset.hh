@@ -271,7 +271,7 @@ namespace Dune
       //! \brief hessian range type
       typedef typename FunctionSpaceType::HessianRangeType HessianRangeType;
 
-      OrthonormalShapeFunctionSet ( const GeometryType &type )
+      explicit OrthonormalShapeFunctionSet ( const GeometryType &type )
       : topologyId_( type.id() )
       {}
 
