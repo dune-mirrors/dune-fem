@@ -184,12 +184,9 @@ namespace AnisotropicDG
     // dimension
     static const int dimension = FunctionSpaceType::dimDomain;
 
-    // scalar function space
-    typedef typename Dune::Fem::ToScalarFunctionSpace< FunctionSpaceType >::Type ScalarFunctionSpace;
-
     // provider for simple shape function sets 
     typedef LegendreShapeFunctionSetProvider< 
-        typename Dune::Fem::ToLocalFunctionSpace< ScalarFunctionSpace, 1 >::Type, maxOrder
+        typename Dune::Fem::ToLocalFunctionSpace< FunctionSpaceType, 1 >::Type, maxOrder
       > ShapeFunctionSetProviderType;
 
     // simple shape function sets
@@ -213,7 +210,6 @@ namespace AnisotropicDG
     {
       static void apply ( ShapeFunctionSetTupleType &shapeFunctionSetTuple, const MultiIndexType &multiIndex )
       {
-        assert( MultiIndexSetType::contains( multiIndex ) );
         Dune::get< i >( shapeFunctionSetTuple )
           = &( ShapeFunctionSetProviderType::get( multiIndex[ i ] ) );
       }
@@ -223,6 +219,7 @@ namespace AnisotropicDG
     //! \brief create shape function set tuple from multi index
     static ShapeFunctionSetTupleType create ( const MultiIndexType &multiIndex )
     {
+      assert( MultiIndexSetType::contains( multiIndex ) );
       ShapeFunctionSetTupleType shapeFunctionSetTuple;
       Dune::ForLoop< Create, 0, dimension-1 >::apply( shapeFunctionSetTuple, multiIndex );
       return shapeFunctionSetTuple;
@@ -253,7 +250,7 @@ namespace AnisotropicDG
     typedef typename ShapeFunctionSetTupleProviderType::ShapeFunctionSetTupleType ShapeFunctionSetTupleType;
 
   protected:
-    typedef Dune::Fem::TensorProductShapeFunctionSet< 
+    typedef Dune::Fem::TensorProductShapeFunctionSet<
         FunctionSpaceType, ShapeFunctionSetTupleType
       > ImplementationType;
 

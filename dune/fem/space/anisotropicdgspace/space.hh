@@ -10,6 +10,8 @@
 #include <dune/fem/space/common/defaultcommhandler.hh>
 #include <dune/fem/space/common/discretefunctionspace.hh>
 #include <dune/fem/space/common/functionspace.hh>
+#include <dune/fem/space/mapper/codimensionmapper.hh>
+#include <dune/fem/space/mapper/nonblockmapper.hh>
 
 // local includes
 #include "dofmapper.hh"
@@ -56,9 +58,9 @@ namespace AnisotropicDG
 
     typedef typename MultiIndexSet< dimLocal, maxOrder >::MultiIndexType MultiIndexType;
 
-    static const int localBlockSize = 1;
-    typedef DofMapper< GridPartType, dimRange, maxOrder > BlockMapperType;
-    typedef BlockMapperType MapperType;
+    typedef Dune::Fem::CodimensionMapper< GridPartType, codimension > BlockMapperType;
+    static const int localBlockSize = Dune::StaticPower< maxOrder+1, dimLocal >::power;
+    typedef Dune::Fem::NonBlockMapper< BlockMapperType, localBlockSize > MapperType;
 
     template< class DiscreteFunction, class Operation = Dune::Fem::DFCommunicationOperation::Copy >
     struct CommDataHandle
@@ -107,7 +109,9 @@ namespace AnisotropicDG
                             const Dune::InterfaceType commInterface,
                             const Dune::CommunicationDirection commDirection )
     : BaseType( gridPart, commInterface, commDirection ),
-      mapper_( gridPart, multiIndex )
+      blockMapper_( gridPart ),
+      mapper_( blockMapper_ ),
+      multiIndex_( multiIndex )
     {}
 
     Dune::Fem::DFSpaceIdentifier type () const
@@ -117,8 +121,8 @@ namespace AnisotropicDG
 
     BasisFunctionSetType basisFunctionSet ( const EntityType &entity ) const
     {
-      const MultiIndexType &multiIndex = mapper().order( entity );
-      return BasisFunctionSetType( entity, ShapeFunctionSetType( multiIndex ) );
+      // const MultiIndexType &multiIndex = mapper().order( entity );
+      return BasisFunctionSetType( entity, ShapeFunctionSetType( multiIndex_ ) );
     }
     
     bool contains ( const int codim ) const
@@ -133,13 +137,13 @@ namespace AnisotropicDG
 
     int order () const
     {
-      return mapper().maxOrder();
+      return maxOrder; // mapper().maxOrder();
     }
 
     int order ( const EntityType &entity ) const
     {
-      const MultiIndexType &multiIndex = mapper().order( entity );
-      return *(std::max_element( multiIndex.begin(), multiIndex.end() ) );
+      // const MultiIndexType &multiIndex = mapper().order( entity );
+      return *(std::max_element( multiIndex_.begin(), multiIndex_.end() ) );
     }
 
     MapperType &mapper () const
@@ -149,7 +153,7 @@ namespace AnisotropicDG
 
     BlockMapperType &blockMapper () const
     {
-      return mapper();
+      return blockMapper_;
     }
 
     bool multipleGeometryTypes () const
@@ -166,7 +170,9 @@ namespace AnisotropicDG
     DiscreteFunctionSpace ( const ThisType & );
     ThisType &operator= ( const ThisType & );
 
+    mutable BlockMapperType blockMapper_;
     mutable MapperType mapper_;
+    MultiIndexType multiIndex_;
   };
 
 }  // namespace AnisotropicDG
