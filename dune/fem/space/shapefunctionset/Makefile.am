@@ -1,5 +1,6 @@
 shapefunctionsetdir = $(includedir)/dune/fem/space/shapefunctionset
-shapefunctionset_HEADERS = lagrange.hh \
+shapefunctionset_HEADERS = caching.hh \
+                           lagrange.hh \
 			   legendre.hh \
 			   localfunctions.hh \
 			   orthonormal.hh \
