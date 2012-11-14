@@ -147,7 +147,7 @@ namespace Dune
 
     template <class FunctionSpaceImp>
     inline void CachingStorage<FunctionSpaceImp>
-      ::cacheQuadrature ( std::size_t id, std::size_t codim, std::size_t quadSize ) const
+      ::cacheQuadrature ( std::size_t id, std::size_t codim, std::size_t quadSize )
     {
       RangeIteratorType it = rangestored_.find(id);
       if (it == rangestored_.end()) 

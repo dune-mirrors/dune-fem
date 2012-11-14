@@ -29,12 +29,12 @@ namespace Dune
       struct StorageInterface
       {
         virtual ~StorageInterface () {}
-        virtual void cacheQuadrature ( std::size_t id, std::size_t codim, std::size_t quadSize ) const = 0;
+        virtual void cacheQuadrature ( std::size_t id, std::size_t codim, std::size_t quadSize ) = 0;
         virtual GeometryType type () const = 0;
       };
 
     private:
-      typedef std::list< const StorageInterface * > StorageListType;
+      typedef std::list< StorageInterface * > StorageListType;
 
       struct QuadratureInfo
       {
@@ -59,7 +59,7 @@ namespace Dune
       }
       
     public:
-      static void registerStorage ( const StorageInterface &storage )
+      static void registerStorage ( StorageInterface &storage )
       {
         assert( ThreadManager::singleThreadMode() );
         storageList().push_back( &storage );
@@ -73,7 +73,7 @@ namespace Dune
         }
       }
 
-      static void unregisterStorage ( const StorageInterface &storage )
+      static void unregisterStorage ( StorageInterface &storage )
       {
         assert( ThreadManager::singleThreadMode() );
         const typename StorageListType::iterator pos

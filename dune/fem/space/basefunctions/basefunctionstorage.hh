@@ -479,7 +479,7 @@ namespace Dune
     private:
       GeometryType type () const { return geometryType(); }
       // caches the quadrature, see also addEntry.. 
-      void cacheQuadrature ( std::size_t id, std::size_t codim, std::size_t quadSize ) const;
+      void cacheQuadrature ( std::size_t id, std::size_t codim, std::size_t quadSize );
    
       // here a switch-case for codim is done and then addEntry called
       inline ReturnPairType addEntryInterface(const size_t id, 
