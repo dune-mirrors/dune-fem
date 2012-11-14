@@ -104,11 +104,11 @@ namespace AnisotropicDG
     template< class Entity, class Functor >
     void mapEachEntityDof ( const Entity &entity, Functor f ) const
     {
-      if( Entity::codimenion != 0 )
+      if( Entity::codimension != 0 )
         return;
       const int numDofs = ThisType::numDofs( entity );
       for( int i = 0; i < numDofs; ++i )
-        f( globalKey( entity, i ) );
+        f( i, globalKey( entity, i ) );
     }
 
     int maxNumDofs () const
@@ -190,7 +190,7 @@ namespace AnisotropicDG
     }
    
     // return maximum polyonmial order for given entity
-    typename MultiIndexType ::value_type maxOrder () const
+    typename MultiIndexType::value_type maxOrder () const
     {
       return maxPolOrder;
     }
@@ -210,7 +210,7 @@ namespace AnisotropicDG
     GlobalKeyType globalKey ( const Entity &entity, const int localDoF ) const
     {
       assert( Entity::codimension == 0 );
-      return dimRange*gridPart().indexSet().index( entity ) + localDoF;
+      return dimRange*indexSet().index( entity ) + localDoF;
     }
 
   private:

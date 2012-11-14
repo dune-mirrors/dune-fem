@@ -1,6 +1,7 @@
 #include <config.h>
 
 // C++ includes
+#include <algorithm>
 #include <vector>
 
 // dune-common includes
@@ -66,18 +67,41 @@ public:
   // mass matrix type
   typedef Dune::DynamicMatrix< RangeFieldType > MassMatrixType;
 
-  CheckOrthonormalShapeFunctionSet ( const Dune::GeometryType &type,
-                                     const ShapeFunctionSetType &shapeFunctionSet,
-                                     int order )
-  : shapeFunctionSet_( shapeFunctionSet )
+  CheckOrthonormalShapeFunctionSet ( const ShapeFunctionSetType &shapeFunctionSet,
+                                     const Dune::GeometryType &type,
+                                     int order,
+                                     double eps = 1e-12 )
+  : shapeFunctionSet_( shapeFunctionSet ),
+    type_( type ),
+    order_( order )
   {
+    // create quadrature rule
     QuadratureType quad( type, order );
+    // initialize mass matrix
     setupMassMatrix( quad );
-    std::cout << massMatrix_ << std::endl;
+
+    // compute \max_{i, j} |(M - I)_{ij}|
+    RangeFieldType error = RangeFieldType( 0 );
+    for( typename MassMatrixType::size_type i = 0; i < massMatrix().rows(); ++i )
+    {
+      typename MassMatrixType::row_type row = massMatrix()[ i ];
+      row[ i ] -= RangeType( 1 );
+      error = std::max( error, row.infinity_norm() );
+    }
+
+    // store result
+    failure_ = ( error > eps );
   }
 
-  // return mass matrix
+  // return mass matrix M
   const MassMatrixType &massMatrix () const { return massMatrix_; }
+
+  // return false, if \max_{i, j} |(M - I)_{ij}| 
+  // is greater than given tolerance, true otherwise
+  operator bool () const
+  {
+    return !failure_;
+  }
 
 private:
   void setupMassMatrix ( const QuadratureType &quad )
@@ -124,8 +148,17 @@ private:
     return shapeFunctionSet_;
   }
 
+  // return geometry type
+  const Dune::GeometryType &type () const { return type_; }
+
+  // return order
+  int order () const { return order_; }
+
   ShapeFunctionSetType shapeFunctionSet_;
-  MassMatrixType massMatrix_;
+  Dune::GeometryType type_;
+  int order_;
+  MassMatrixType massMatrix_; 
+  bool failure_;
 };
 
 
@@ -175,7 +208,12 @@ try
     int order = 2*maxOrder + 1;
 
     // check shape function set
-    CheckOrthonormalShapeFunctionSet< ShapeFunctionSetType > check( type, shapeFunctionSet, order );
+    CheckOrthonormalShapeFunctionSet< ShapeFunctionSetType > check( shapeFunctionSet, type, order );
+    if( !check )
+    {
+      std::cerr << check.massMatrix() << std::endl;
+      DUNE_THROW( Dune::InvalidStateException, "Shape function set not orthonormal." );
+    }
   }
 
   return 0;

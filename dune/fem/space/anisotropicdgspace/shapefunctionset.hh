@@ -11,6 +11,7 @@
 #include <dune/common/forloop.hh>
 #include <dune/common/power.hh>
 #include <dune/common/static_assert.hh>
+#include <dune/common/tuples.hh>
 
 // dune-fem includes
 #include <dune/fem/space/common/functionspace.hh>
@@ -21,6 +22,7 @@
 
 // local includes
 #include "multiindexset.hh"
+#include "utility.hh"
 
 /**
   @file
@@ -198,7 +200,7 @@ namespace AnisotropicDG
 
   public:
     //! \brief type of shape function set tuple
-    typedef Dune::array< ShapeFunctionSetProxyType, dimension > ShapeFunctionSetTupleType;
+    typedef typename MakeTuple< ShapeFunctionSetProxyType, dimension >::Type ShapeFunctionSetTupleType;
 
     //! \brief multi index set type
     typedef MultiIndexSet< dimension, maxOrder > MultiIndexSetType;
