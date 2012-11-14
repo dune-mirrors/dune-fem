@@ -11,7 +11,7 @@
 
 #include <dune/fem/space/common/arrays.hh>
 #include <dune/fem/space/basefunctions/basefunctionfactory.hh>
-#include <dune/fem/space/basefunctions/storageinterface.hh>
+#include <dune/fem/quadrature/caching/registry.hh>
 #include <dune/fem/quadrature/quadrature.hh>
 
 #include <dune/fem/misc/threadmanager.hh>
@@ -26,8 +26,7 @@ namespace Dune
     class CachingInterface;
 
     template <class FunctionSpaceImp>
-    class StorageBase : public StorageInterface<FunctionSpaceImp::dimDomain> 
-
+    class StorageBase
     {
     public:
       typedef BaseFunctionFactory<FunctionSpaceImp> FactoryType;
@@ -73,11 +72,6 @@ namespace Dune
                     const DomainType& xLocal, 
                     JacobianRangeType& result) const;
 
-      inline void cacheQuadrature(const size_t id, 
-                                  const size_t codim, 
-                                  const size_t quadSize) const 
-      {}
-      
       //! return geometry type 
       GeometryType geometryType () const { return elementGeometry_; }
 
@@ -263,18 +257,15 @@ namespace Dune
     //! \todo Implement switch for non-conforming grids!!!!
     template< class FunctionSpaceImp >
     class CachingStorage
-    : public StorageBase< FunctionSpaceImp >
+    : public StorageBase< FunctionSpaceImp >,
+      private QuadratureStorageRegistry::StorageInterface
     {
+      typedef CachingStorage< FunctionSpaceImp > ThisType;
+      typedef StorageBase< FunctionSpaceImp > BaseType;
+
     public:
       typedef FunctionSpaceImp FunctionSpaceType;
 
-    private:
-      typedef CachingStorage< FunctionSpaceType > ThisType;
-      typedef StorageBase< FunctionSpaceType > BaseType;
-      
-      friend class StorageInterface< FunctionSpaceType :: dimDomain >;
-      
-    public:
       typedef BaseFunctionFactory< FunctionSpaceType > FactoryType;
       typedef typename FunctionSpaceType :: DomainType DomainType;
       typedef typename FunctionSpaceType :: RangeType RangeType;
@@ -420,24 +411,27 @@ namespace Dune
         {
           return jacobians[ quad.id() ];
         }
-        
       };
 
     public:
-      using BaseType :: cacheExistingQuadratures;
-      using BaseType :: evaluate;
-      using BaseType :: jacobian;
+      using BaseType::evaluate;
+      using BaseType::jacobian;
+      using BaseType::geometryType;
 
     protected:  
-      using BaseType :: rangeTmp_;
-      using BaseType :: jacobianTmp_;
+      using BaseType::rangeTmp_;
+      using BaseType::jacobianTmp_;
      
     public:
-      //! Constructor
-      inline explicit CachingStorage ( const FactoryType &factory )
+      explicit CachingStorage ( const FactoryType &factory )
       : BaseType( factory )
       {
-        cacheExistingQuadratures( *this );
+        QuadratureStorageRegistry::registerStorage( *this );
+      }
+
+      ~CachingStorage ()
+      {
+        QuadratureStorageRegistry::unregisterStorage( *this );
       }
       
       //! evaulate base function 
@@ -483,10 +477,9 @@ namespace Dune
       }
 
     private:
+      GeometryType type () const { return geometryType(); }
       // caches the quadrature, see also addEntry.. 
-      inline void cacheQuadrature(const size_t id, 
-                                  const size_t codim,
-                                  const size_t quadSize) const;
+      void cacheQuadrature ( std::size_t id, std::size_t codim, std::size_t quadSize ) const;
    
       // here a switch-case for codim is done and then addEntry called
       inline ReturnPairType addEntryInterface(const size_t id, 
@@ -509,9 +502,8 @@ namespace Dune
 
 #if DUNE_FEM_COMPATIBILITY  
 // put this in next version 1.4 
-
-using Fem :: SimpleStorage ;
-using Fem :: CachingStorage ;
+using Fem::SimpleStorage;
+using Fem::CachingStorage;
 #endif // DUNE_FEM_COMPATIBILITY
 
 } // namespace Dune

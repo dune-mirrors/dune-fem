@@ -1,7 +1,11 @@
+// C++ includes
 #include <cassert>
+
+// dune-geometry includes
 #include <dune/geometry/referenceelements.hh>
 
-#include <dune/fem/space/basefunctions/storageinterface.hh>
+// dune-fem includes
+#include <dune/fem/quadrature/caching/registry.hh>
 #include <dune/fem/misc/threadmanager.hh>
 
 namespace Dune 
@@ -31,12 +35,10 @@ namespace Dune
                           GlobalPointVectorType(quad.nop()))
                          ).first;
         for (size_t i = 0; i < quad.nop(); ++i) 
-        {
           it->second[i] = quad.point(i);
-        }
 
-        // register quadrature to existing base function storages 
-        StorageInterface<dim>::registerQuadratureToStorages(quad);
+        // register quadrature to existing storages
+        QuadratureStorageRegistry::registerQuadrature( quad );
       }
     }
 
@@ -144,7 +146,6 @@ namespace Dune
       {
         // Assumption: all faces have the same type
         // (not true for pyramids and prisms)
-        //assert(sameGeometry(quad.geometryType(), refElem.type(face, codim)));
         MapperType pMap(numLocalPoints);
           
         for (int pt = 0; pt < numLocalPoints; ++pt, ++globalNum) {
@@ -158,18 +159,11 @@ namespace Dune
         mit->second[face] = pMap;  // = face*numLocalPoints+pt
       } // end for all faces
 
-      // register quadrature to base function storages 
-      StorageInterface<dim>::registerQuadratureToStorages(quad, elementGeo, 1);
+      // register quadrature to existing storages
+      QuadratureStorageRegistry::registerQuadrature( quad, elementGeo, 1 );
       
       return mit;
     }
-
-    template <class ct, int dim>
-    bool PointProvider<ct, dim, 1>::sameGeometry(GeometryType geo1, 
-                                                 GeometryType geo2)
-    {
-      return geo1 == geo2;
-    } 
 
   } // namespace Fem
 
