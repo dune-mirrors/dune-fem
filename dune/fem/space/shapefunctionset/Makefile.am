@@ -5,6 +5,7 @@ shapefunctionset_HEADERS = caching.hh \
 			   localfunctions.hh \
 			   orthonormal.hh \
 			   proxy.hh \
+                           selectcaching.hh \
 			   shapefunctionset.hh \
 			   simple.hh \
 			   tensorproduct.hh \
