@@ -1,1 +1,7 @@
 /test-dgspaces
+
+/*.gnu
+/*.vtu
+/*.pvtu
+/*.vtp
+/*.pvtp

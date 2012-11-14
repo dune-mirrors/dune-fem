@@ -1,7 +1,7 @@
-GRIDTYPE=SGRID
-GRIDDIM=3
+GRIDTYPE=SPGRID
+GRIDDIM=2
 
-POLORDER = 3
+POLORDER = 2
 DIMRANGE = 1
 
 LDADD = $(ALL_PKG_LDFLAGS) $(ALL_PKG_LIBS) $(LOCAL_LIBS) $(MPI_LDFLAGS)
@@ -11,6 +11,6 @@ check_PROGRAMS = test-dgspaces
 
 test_dgspaces_SOURCES = test-dgspaces.cc
 
-CLEANFILES = *.pvtu *.vtu *.log 
+CLEANFILES = *.gnu *.vtu *.pvtu *.vtp *.pvtp *.log 
 
 include $(top_srcdir)/am/global-rules
