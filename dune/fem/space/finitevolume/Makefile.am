@@ -1,5 +1,5 @@
 finitevolumespacedir =  $(includedir)/dune/fem/space/finitevolumespace
-finitevolumespace_HEADERS = declaration.hh  shapefunctionset.hh  space.hh
+finitevolumespace_HEADERS = declaration.hh  space.hh
 
 SUBDIRS = test
 

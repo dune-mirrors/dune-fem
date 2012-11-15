@@ -5,16 +5,18 @@
 #include <dune/common/typetraits.hh>
 
 // dune-fem includes
-#include <dune/fem/space/basefunctions/basefunctionstorage.hh>
 #include <dune/fem/space/basisfunctionset/default.hh>
 #include <dune/fem/space/common/defaultcommhandler.hh>
 #include <dune/fem/space/common/discretefunctionspace.hh>
 #include <dune/fem/space/common/functionspace.hh>
+#include <dune/fem/space/common/localrestrictprolong.hh>
 #include <dune/fem/space/mapper/codimensionmapper.hh>
 #include <dune/fem/space/mapper/nonblockmapper.hh>
+#include <dune/fem/space/shapefunctionset/selectcaching.hh>
+#include <dune/fem/version.hh>
 
 // local includes
-#include "shapefunctionset.hh"
+#include "declaration.hh"
 
 /*
   @file
@@ -23,39 +25,54 @@
 */
 
 
-namespace
-{
-  template< template< class > class Storage >
-  struct ShowWarning;
-
-  template<>
-  struct ShowWarning< Dune::Fem::CachingStorage >
-  {
-    static const bool v = true;
-  };
-
-  template<>
-  struct ShowWarning< Dune::Fem::SimpleStorage >
-  {
-    static const bool v = false;
-  };
-
-} // namespace
-
-
-
 namespace Dune
 {
 
   namespace Fem
   {
 
-    // Forward declaration
-    // -------------------
+    // FiniteVolumeShapeFunctionSet
+    // ----------------------------
 
-    template< class FunctionSpace, class GridPart, int codim,
-              template< class > class Storage >
-    class FiniteVolumeSpace;
+    /*
+     * \brief Implementation of Dune::Fem::ShapeFunctionSet for Finite Volume spaces 
+     *
+     * \tparam  FunctionSpace  Function space
+     *
+     * \note This shape function set has fixed polynomial order 0.
+     */
+    template< class FunctionSpace >
+    struct FiniteVolumeShapeFunctionSet
+    {
+      typedef FiniteVolumeShapeFunctionSet< FunctionSpace > ThisType;
+
+    public:
+      typedef FunctionSpace FunctionSpaceType;
+      typedef typename FunctionSpaceType::DomainType DomainType;
+      typedef typename FunctionSpaceType::RangeType RangeType;
+      typedef typename FunctionSpaceType::JacobianRangeType JacobianRangeType;
+      typedef typename FunctionSpaceType::HessianRangeType HessianRangeType;
+
+      static std::size_t size () { return 1; }
+
+      template< class Point, class Functor >
+      static void evaluateEach ( const Point &, Functor functor )
+      {
+        functor( 0, RangeType( 1 ) );
+      }
+
+      template< class Point, class Functor >
+      static void jacobianEach ( const Point &, Functor functor )
+      {
+        functor( 0, JacobianRangeType( 0 ) );
+      }
+
+      template< class Point, class Functor >
+      static void hessianEach ( const Point &, Functor functor )
+      {
+        functor( 0, HessianRangeType( 0 ) );
+      }
+    };
 
 
 
@@ -138,9 +155,7 @@ namespace Dune
       : BaseType( gridPart, commInterface, commDirection ),
         blockMapper_( gridPart ),
         mapper_( blockMapper_ )
-      {
-        deprecationWarning( Dune::integral_constant< bool, ShowWarning< Storage >::v >() );
-      }
+      {}
 
       /** @copydoc Dune::Fem::DiscreteFunctionSpaceInterface::type */
       DFSpaceIdentifier type () const
@@ -185,6 +200,7 @@ namespace Dune
       }
 
       /** @copydoc Dune::Fem::DiscreteFunctionSpaceInterface::mapper */
+      DUNE_VERSION_DEPRECATED(1,4,remove)
       MapperType &mapper () const
       {
         return mapper_;
@@ -197,12 +213,6 @@ namespace Dune
       }
 
     private:
-      void DUNE_DEPRECATED_MSG( "Caching disabled for FiniteVolumeSpace." )
-      deprecationWarning ( Dune::integral_constant< bool, true > ) {}
-
-      void
-      deprecationWarning ( Dune::integral_constant< bool, false > ) {}        
-
       mutable BlockMapperType blockMapper_;
       mutable MapperType mapper_; 
     };
