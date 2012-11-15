@@ -3,9 +3,10 @@
 
 // C++ includes
 #include <cstddef>
-#include <map>
+#include <vector>
 
 // dune-common includes
+#include <dune/common/nullptr.hh>
 #include <dune/common/typetraits.hh>
 
 // dune-fem includes
@@ -118,13 +119,13 @@ namespace Dune
       CachingShapeFunctionSet ( const ThisType & );
       const ThisType &operator= ( const ThisType & );
 
-      typedef std::map< std::size_t, RangeType * > ValueCacheMapType;
-      typedef std::map< std::size_t, JacobianRangeType * > JacobianCacheMapType;
+      typedef std::vector< RangeType * > ValueCacheVectorType;
+      typedef std::vector< JacobianRangeType * > JacobianCacheVectorType;
 
       GeometryType type_;
       ShapeFunctionSet shapeFunctionSet_;
-      ValueCacheMapType valueCaches_;
-      JacobianCacheMapType jacobianCaches_;
+      ValueCacheVectorType valueCaches_;
+      JacobianCacheVectorType jacobianCaches_;
     };
 
 
@@ -136,10 +137,10 @@ namespace Dune
     inline CachingShapeFunctionSet< ShapeFunctionSet >::~CachingShapeFunctionSet ()
     {
       QuadratureStorageRegistry::unregisterStorage( *this );
-      for( typename ValueCacheMapType::iterator it = valueCaches_.begin(); it != valueCaches_.end(); ++it )
-        delete it->second;
-      for( typename JacobianCacheMapType::iterator it = jacobianCaches_.begin(); it != jacobianCaches_.end(); ++it )
-        delete it->second;
+      for( typename ValueCacheVectorType::iterator it = valueCaches_.begin(); it != valueCaches_.end(); ++it )
+        delete *it;
+      for( typename JacobianCacheVectorType::iterator it = jacobianCaches_.begin(); it != jacobianCaches_.end(); ++it )
+        delete *it;
     }
 
 
@@ -149,13 +150,13 @@ namespace Dune
       ::evaluateEach ( const Quadrature &quadrature, std::size_t pt, Functor functor,
                        integral_constant< bool, true > ) const
     {
-      typename ValueCacheMapType::const_iterator pos = valueCaches_.find( quadrature.id() );
-      assert( (pos != valueCaches_.end()) && pos->second );
+      assert( (quadrature.id() < valueCaches_.size()) && valueCaches_[ quadrature.id() ] );
+      const RangeType *cache = valueCaches_[ quadrature.id() ];
 
       const std::size_t numShapeFunctions = size();
       const std::size_t cpt = quadrature.cachingPoint( pt );
       for( std::size_t i = 0; i < numShapeFunctions; ++i )
-        functor( i, pos->second[ cpt*numShapeFunctions + i ] );
+        functor( i, cache[ cpt*numShapeFunctions + i ] );
     }
 
 
@@ -165,13 +166,13 @@ namespace Dune
       ::jacobianEach ( const Quadrature &quadrature, std::size_t pt, Functor functor,
                        integral_constant< bool, true > ) const
     {
-      typename JacobianCacheMapType::const_iterator pos = jacobianCaches_.find( quadrature.id() );
-      assert( (pos != jacobianCaches_.end()) && pos->second );
+      assert( (quadrature.id() < jacobianCaches_.size()) && jacobianCaches_[ quadrature.id() ] );
+      const JacobianRangeType *cache = jacobianCaches_[ quadrature.id() ];
 
       const std::size_t numShapeFunctions = size();
       const std::size_t cpt = quadrature.cachingPoint( pt );
       for( std::size_t i = 0; i < numShapeFunctions; ++i )
-        functor( i, pos->second[ cpt*numShapeFunctions + i ] );
+        functor( i, cache[ cpt*numShapeFunctions + i ] );
     }
 
 
@@ -179,7 +180,14 @@ namespace Dune
     inline void CachingShapeFunctionSet< ShapeFunctionSet >
       ::cacheQuadrature( std::size_t id, std::size_t codim, std::size_t size )
     {
-      if( valueCaches_.find( id ) == valueCaches_.end() )
+      if( id >= valueCaches_.size() )
+      {
+        valueCaches_.resize( id+1, nullptr );
+        jacobianCaches_.resize( id+1, nullptr );
+      }
+      assert( bool( valueCaches_[ id ] ) == bool( jacobianCaches_[ id ] ) );
+
+      if( !valueCaches_[ id ] )
       {
         typedef typename FunctionSpaceType::DomainFieldType ctype;
         const int dim = FunctionSpaceType::dimDomain;
