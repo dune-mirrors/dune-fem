@@ -239,7 +239,7 @@ namespace Dune
 
     template< class Traits >
     inline void DiscreteFunctionDefault< Traits >
-      ::hessian ( const DomainType &x, HessianRangeType &jacobian ) const
+      ::hessian ( const DomainType &x, HessianRangeType &hessian ) const
     {
       LocalFunctionHessianFunctor< LocalFunctionType > functor( hessian );
       asImp().evaluateGlobal( x, functor );
@@ -251,9 +251,9 @@ namespace Dune
     inline void DiscreteFunctionDefault< Traits >
       ::evaluate ( const FieldVector< int, diffOrder > &diffVariable,
                    const DomainType &x,
-                   RangeType &ret ) const
+                   RangeType &value ) const
     {
-      LocalFunctionEvaluateFunctor< LocalFunctionType, diffOrder > functor( diffVariable, ret );
+      LocalFunctionEvaluateFunctor< LocalFunctionType, diffOrder > functor( diffVariable, value );
       asImp().evaluateGlobal( x, functor );
     }
 
