@@ -15,9 +15,7 @@
 #include <dune/geometry/type.hh>
 
 // dune-fem includes
-#include <dune/fem/space/common/functionspace.hh>
 #include <dune/fem/space/shapefunctionset/simple.hh>
-#include <dune/fem/space/shapefunctionset/vectorial.hh>
 
 // local includes
 #include "genericlagrangepoints.hh"
@@ -154,24 +152,6 @@ namespace Dune
 
 
 
-    // LagrangeShapeFunctionSetTraits
-    // ------------------------------
-
-    template< class FunctionSpace, int polOrder >
-    struct LagrangeShapeFunctionSetTraits
-    {
-      typedef FunctionSpace FunctionSpaceType;
-
-      typedef typename FunctionSpaceType::RangeType RangeType;
-
-      typedef typename ToScalarFunctionSpace< FunctionSpaceType >::Type ScalarFunctionSpaceType;
-      typedef LagrangeShapeFunctionFactory< ScalarFunctionSpaceType, polOrder > ScalarShapeFunctionFactoryType;
-      typedef typename ScalarShapeFunctionFactoryType::ShapeFunctionType ScalarShapeFunctionType;
-      typedef SimpleShapeFunctionSet< ScalarShapeFunctionType > ScalarShapeFunctionSetType;
-    };
-
-
-
     // LagrangeShapeFunctionSet
     // ------------------------
 
@@ -183,24 +163,18 @@ namespace Dune
      */
     template< class FunctionSpace, int polOrder >
     class LagrangeShapeFunctionSet
-    : public VectorialShapeFunctionSet< typename LagrangeShapeFunctionSetTraits< FunctionSpace, polOrder >::ScalarShapeFunctionSetType,
-                                        typename LagrangeShapeFunctionSetTraits< FunctionSpace, polOrder >::RangeType
-                                      >
+    : public SimpleShapeFunctionSet< 
+        typename LagrangeShapeFunctionFactory< FunctionSpace, polOrder >::ShapeFunctionType 
+      >
     {
-      typedef LagrangeShapeFunctionSetTraits< FunctionSpace, polOrder > Traits;
+      dune_static_assert( (FunctionSpace::dimRange == 1), "FunctionSpace must be scalar." );
 
-      typedef VectorialShapeFunctionSet< typename Traits::ScalarShapeFunctionSetType,
-                                         typename Traits::RangeType
-                                       > BaseType;
-
-      typedef typename Traits::ScalarShapeFunctionSetType ScalarShapeFunctionSetType;
-      typedef typename Traits::ScalarShapeFunctionFactoryType ScalarShapeFunctionFactoryType;
+      typedef LagrangeShapeFunctionFactory< FunctionSpace, polOrder > ShapeFunctionFactoryType;
+      typedef SimpleShapeFunctionSet< typename ShapeFunctionFactoryType::ShapeFunctionType > BaseType;
 
     public:
-      typedef typename BaseType::ScalarFunctionSpaceType ScalarFunctionSpaceType;
-
       LagrangeShapeFunctionSet ( const Dune::GeometryType &type )
-      : BaseType( ScalarShapeFunctionSetType( ScalarShapeFunctionFactoryType( type ) ) )
+      : BaseType( ShapeFunctionFactoryType( type ) )
       {}
     };
 

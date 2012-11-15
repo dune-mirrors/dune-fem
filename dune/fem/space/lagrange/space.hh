@@ -23,6 +23,7 @@
 #include <dune/fem/space/mapper/nonblockmapper.hh>
 #include <dune/fem/space/shapefunctionset/proxy.hh>
 #include <dune/fem/space/shapefunctionset/selectcaching.hh>
+#include <dune/fem/space/shapefunctionset/vectorial.hh>
 #include <dune/fem/storage/singletonlist.hh>
 
 // local includes
@@ -76,11 +77,14 @@ namespace Dune
     private:
       typedef typename GridPartType::template Codim< codimension >::EntityType EntityType;
       static const int dimLocal = GridPartType::dimension;
-      typedef typename ToLocalFunctionSpace< FunctionSpaceType, dimLocal >::Type ShapeFunctionSpaceType;
+      typedef typename FunctionSpace::ScalarFunctionSpaceType ScalarFunctionSpaceType;
+      typedef typename ToLocalFunctionSpace< ScalarFunctionSpaceType, dimLocal >::Type ShapeFunctionSpaceType;
 
     public:
-      // shape function set type
-      typedef LagrangeShapeFunctionSet< ShapeFunctionSpaceType, polynomialOrder > ShapeFunctionSetType;
+      // scalar shape function set type
+      typedef LagrangeShapeFunctionSet< ShapeFunctionSpaceType, polynomialOrder > ScalarShapeFunctionSetType;
+      // shape function set
+      typedef VectorialShapeFunctionSet< ScalarShapeFunctionSetType, typename FunctionSpaceType::RangeType > ShapeFunctionSetType;
       // proxy
       typedef ShapeFunctionSetProxy< ShapeFunctionSetType > ShapeFunctionSetProxyType;
       // basis function set type
