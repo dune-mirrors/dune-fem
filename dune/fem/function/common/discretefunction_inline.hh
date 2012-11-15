@@ -224,7 +224,7 @@ namespace Dune
       ::evaluate ( const DomainType &x, RangeType &value ) const
     {
       LocalFunctionEvaluateFunctor< LocalFunctionType > functor( value );
-      evaluateGlobal( x, functor );
+      asImp().evaluateGlobal( x, functor );
     }
 
 
@@ -233,7 +233,7 @@ namespace Dune
       ::jacobian ( const DomainType &x, JacobianRangeType &jacobian ) const
     {
       LocalFunctionJacobianFunctor< LocalFunctionType > functor( jacobian );
-      evaluateGlobal( x, functor );
+      asImp().evaluateGlobal( x, functor );
     }
 
 
@@ -242,7 +242,7 @@ namespace Dune
       ::hessian ( const DomainType &x, HessianRangeType &jacobian ) const
     {
       LocalFunctionHessianFunctor< LocalFunctionType > functor( hessian );
-      evaluateGlobal( x, functor );
+      asImp().evaluateGlobal( x, functor );
     }
 
 
@@ -254,7 +254,7 @@ namespace Dune
                    RangeType &ret ) const
     {
       LocalFunctionEvaluateFunctor< LocalFunctionType, diffOrder > functor( diffVariable, ret );
-      evaluateGlobal( x, functor );
+      asImp().evaluateGlobal( x, functor );
     }
 
 
