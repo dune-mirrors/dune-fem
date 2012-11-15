@@ -4,7 +4,7 @@
 #include <dune/fem/space/common/dofmanager.hh>
 #include <dune/fem/function/common/dofblock.hh>
 #include <dune/fem/function/common/discretefunction.hh>
-#include <dune/fem/function/localfunction/standardlocalfunction.hh>
+#include <dune/fem/function/localfunction/standard.hh>
 #include <dune/fem/space/mapper/nonblockmapper.hh>
 
 #include "container.hh"
