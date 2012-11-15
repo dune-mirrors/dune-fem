@@ -1,27 +1,26 @@
 #ifndef DUNE_FEM_DISCRETEFUNCTION_HH
 #define DUNE_FEM_DISCRETEFUNCTION_HH
 
-//- system includes 
+// C++ includes 
 #include <string>
 
-//- Dune inlcudes 
+// dune-common inlcudes 
 #include <dune/common/version.hh>
 
-#include <dune/grid/common/grid.hh>
-
-//- local includes 
-#include <dune/fem/misc/debug.hh>
-#include <dune/fem/storage/objectstack.hh>
-#include <dune/fem/io/streams/streams.hh>
-#include <dune/fem/io/streams/asciistreams.hh>
-#include <dune/fem/io/streams/xdrstreams.hh>
-#include <dune/fem/space/common/discretefunctionspace.hh>
+// dune-fem includes 
 #include <dune/fem/function/common/dofiterator.hh>
 #include <dune/fem/function/common/function.hh>
 #include <dune/fem/function/common/scalarproducts.hh>
 #include <dune/fem/function/localfunction/wrapper.hh>
 #include <dune/fem/io/file/persistencemanager.hh>
+#include <dune/fem/io/streams/asciistreams.hh>
+#include <dune/fem/io/streams/streams.hh>
+#include <dune/fem/io/streams/xdrstreams.hh>
+#include <dune/fem/misc/debug.hh>
 #include <dune/fem/misc/threadmanager.hh>
+#include <dune/fem/space/common/discretefunctionspace.hh>
+#include <dune/fem/storage/objectstack.hh>
+#include <dune/fem/version.hh>
 
 
 namespace Dune
@@ -553,7 +552,11 @@ namespace Dune
       typedef typename DiscreteFunctionSpaceType :: DomainType DomainType;
       //! type of range vector
       typedef typename DiscreteFunctionSpaceType :: RangeType RangeType;
-    
+      //! type of jacobian
+      typedef typename DiscreteFunctionSpaceType :: JacobianRangeType JacobianRangeType;
+      //! type of hessian 
+      typedef typename DiscreteFunctionSpaceType :: HessianRangeType HessianRangeType;
+
       //! type of domain field (usually a float type)
       typedef typename DiscreteFunctionSpaceType :: DomainFieldType DomainFieldType;
       //! type of range field (usually a float type)
@@ -680,22 +683,20 @@ namespace Dune
         this->space().communicate( asImp() );
       }
    
-      /** \copydoc Dune::Fem::Function::evaluate(const DomainType &x,RangeType &ret) const
-       *
-       *  The default implementation just does
-       *  \code
-       *  FieldVector< int, 0 > diffVariable;
-       *  asImp().evaluate( diffVariable, x, ret );
-       *  \endcode
-       */
-      inline void evaluate ( const DomainType &x,
-                             RangeType &ret ) const;
+      /** \copydoc Dune::Fem::Function::evaluate(const DomainType &x,RangeType &ret) const */
+      inline void evaluate ( const DomainType &x, RangeType &ret ) const;
+
+      /** \copydoc Dune::Fem::Function::jacobian(const DomainType &x,RangeType &ret) const */
+      inline void jacobian ( const DomainType &x, JacobianRangeType &ret ) const;
+
+      /** \copydoc Dune::Fem::Function::hessian (const DomainType &x,RangeType &ret) const */
+      inline void hessian ( const DomainType &x, HessianRangeType &ret ) const;
 
       /** \copydoc Dune::Fem::Function::evaluate(const FieldVector<int,diffOrder> &diffVariable,const DomainType &x,RangeType &ret) const */
       template< int diffOrder >
+      DUNE_VERSION_DEPRECATED(1,4,remove)
       inline void evaluate ( const FieldVector< int, diffOrder > &diffVariable,
-                             const DomainType &x,
-                             RangeType &ret ) const;
+                             const DomainType &x, RangeType &ret ) const;
 
       /** \copydoc Dune::Fem::DiscreteFunctionInterface::operator+=(const DiscreteFunctionInterfaceType &g) */
       DiscreteFunctionType &operator+= ( const DiscreteFunctionInterfaceType &g );
@@ -792,6 +793,10 @@ namespace Dune
 
       /** \copydoc Dune::PersistentObject::removeSubData */
       virtual void removeSubData();
+
+      /** \brief evaluate functor in global coordinate */
+      template< class Functor >
+      void evaluateGlobal ( const DomainType &x, Functor functor ) const;
 
       // only PersistenceManager should call backup and restore 
       friend class PersistenceManager;
