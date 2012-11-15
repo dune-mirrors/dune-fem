@@ -6,9 +6,14 @@
 
 // dune-fem includes
 #include <dune/fem/misc/bartonnackmaninterface.hh>
+#include <dune/fem/space/basisfunctionset/default.hh>
+#include <dune/fem/space/common/basesetlocalkeystorage.hh>
 #include <dune/fem/space/common/defaultcommhandler.hh>
 #include <dune/fem/space/common/discretefunctionspace.hh>
 #include <dune/fem/space/mapper/codimensionmapper.hh>
+#include <dune/fem/space/mapper/nonblockmapper.hh>
+#include <dune/fem/space/shapefunctionset/proxy.hh>
+#include <dune/fem/space/shapefunctionset/vectorial.hh>
 #include <dune/fem/storage/singletonlist.hh>
 #include <dune/fem/version.hh>
 
@@ -17,65 +22,11 @@
 #include "localrestrictprolong.hh"
 
 
-#if 0
-namespace
-{
-  template< template< class > class Storage >
-  struct ShowWarning;
-
-  template<>
-  struct ShowWarning< Dune::Fem::CachingStorage >
-  {
-    static const bool v = true;
-  };
-
-  template<>
-  struct ShowWarning< Dune::Fem::SimpleStorage >
-  {
-    static const bool v = false;
-  };
-
-} // namespace
-#endif
-
-
 namespace Dune
 {
 
   namespace Fem
   {
-
-    // DiscontinuousGalerkinSpaceTraitsBase
-    // ------------------------------------
-
-    /* 
-     * Common base traits class for all Discontinuous Galerkin spaces
-     */
-    template< class FunctionSpace, class GridPart, int polOrder, template< class > class Storage >
-    struct DiscontinuousGalerkinSpaceTraitsBase
-    {
-      typedef FunctionSpace FunctionSpaceType;
-      typedef GridPart GridPartType;
-
-      static const int dimRange = FunctionSpaceType::dimRange;
-      static const int dimLocal = GridPartType::dimension;
-      dune_static_assert( (GridPartType::dimensionworld <= 3), "Use Legendre spaces for higher spatial dimensions." );
-      
-      static const int codimension = 0;
-      static const int polynomialOrder = polOrder;
-      dune_static_assert( (polOrder >= 0), "Negative polynomial order." );
-
-      typedef CodimensionMapper< GridPartType, codimension > BlockMapperType;
-
-      template <class DiscreteFunction, class Operation = DFCommunicationOperation::Copy >
-      struct CommDataHandle
-      {
-        typedef DefaultCommunicationHandler< DiscreteFunction, Operation > Type;
-        typedef Operation OperationType;
-      };
-    };
-
-
 
     // DiscontinuousGalerkinSpaceDefault
     // ---------------------------------
@@ -103,6 +54,7 @@ namespace Dune
       typedef typename IteratorType::Entity EntityType;
       typedef typename BaseType::IntersectionType IntersectionType;
 
+      typedef typename Traits::ShapeFunctionSetType ShapeFunctionSetType;
       typedef typename BaseType::BasisFunctionSetType BasisFunctionSetType;
 
       typedef typename BaseType::MapperType MapperType;
@@ -111,6 +63,10 @@ namespace Dune
     protected:
       using BaseType::asImp;
 
+      typedef typename Traits::ScalarShapeFunctionSetType ScalarShapeFunctionSetType;
+      typedef SingletonList< const GeometryType, ScalarShapeFunctionSetType, typename Traits::ScalarShapeFunctionSetFactoryType > SingletonProviderType;
+      typedef BaseSetLocalKeyStorage< ScalarShapeFunctionSetType > ScalarShapeFunctionSetStorageType;
+      
       typedef CodimensionMapperSingletonFactory< GridPartType, codimension > BlockMapperSingletonFactoryType;
       typedef SingletonList< typename BlockMapperSingletonFactoryType::Key,
                              BlockMapperType, BlockMapperSingletonFactoryType 
@@ -126,11 +82,19 @@ namespace Dune
                                           const InterfaceType commInterface,
                                           const CommunicationDirection commDirection )
       : BaseType( gridPart, commInterface, commDirection ),
-        blockMapper_( BlockMapperProviderType::getObject( gridPart ) )
+        blockMapper_( BlockMapperProviderType::getObject( gridPart ) ),
+        mapper_( blockMapper_ )
       {
-#if 0
-        deprecationWarning( Dune::integral_constant< bool, ShowWarning< Storage >::v >() );
-#endif
+        // get geometry types
+        std::vector< GeometryType > geomTypes = AllGeomTypes< IndexSetType, GridType >( gridPart.indexSet()).geomTypes( Traits::codimension );
+        
+        // store shape function sets per type
+        const typename std::vector< GeometryType >::const_iterator end = geomTypes.end();
+        for( typename std::vector< GeometryType >::const_iterator it = geomTypes.begin(); it != end; ++it )    
+        {
+          const GeometryType &type = *it;
+          shapeFunctionSets_.template insert< SingletonProviderType >( type );
+        }
       }
 
       ~DiscontinuousGalerkinSpaceDefault ()
@@ -147,8 +111,31 @@ namespace Dune
       /** @copydoc Dune::Fem::DiscreteFunctionSpaceInterface::basisFunctionSet */
       BasisFunctionSetType basisFunctionSet ( const EntityType &entity ) const
       {
-        CHECK_INTERFACE_IMPLEMENTATION( asImp().basisFunctionSet( entity ) );
-        return asImp().basisFunctionSet( entity );
+        return BasisFunctionSetType( entity, shapeFunctionSet( entity ) );
+      }
+
+      /** \brief return shape function set for given entity
+       *
+       * \param[in]  entity  entity (of codim 0) for which shape function set 
+       *                     is requested
+       *
+       * \returns  ShapeFunctionSetType  shape function set                     
+       */
+      ShapeFunctionSetType shapeFunctionSet ( const EntityType &entity ) const
+      {
+        return shapeFunctionSet( entity.type() );
+      }
+
+      /** \brief return shape unique function set for geometry type 
+       *
+       * \param[in]  type  geometry type (must be a cube) for which 
+       *                   shape function set is requested
+       *
+       * \returns  ShapeFunctionSetType  shape function set                     
+       */
+      ShapeFunctionSetType shapeFunctionSet ( const GeometryType &type ) const
+      {
+        return ShapeFunctionSetType( &shapeFunctionSets_[ type ] );
       }
 
       /** @copydoc Dune::Fem::DiscreteFunctionSpaceInterface::contains */
@@ -179,8 +166,7 @@ namespace Dune
       DUNE_VERSION_DEPRECATED(1,4,remove)
       MapperType &mapper () const
       {
-        CHECK_INTERFACE_IMPLEMENTATION( asImp().mapper() );
-        return asImp().mapper();
+        return mapper_;
       }
 
       /** @copydoc Dune::Fem::DiscreteFunctionSpaceInterface::blockMapper */
@@ -190,14 +176,51 @@ namespace Dune
       }
 
     private:
-#if 0
-      void DUNE_DEPRECATED_MSG( "Caching disabled for Discontinuous Galerkin spaces." )
-      deprecationWarning ( Dune::integral_constant< bool, true > ) {}
-      void
-      deprecationWarning ( Dune::integral_constant< bool, false > ) {}
-#endif
-
       mutable BlockMapperType &blockMapper_;
+      mutable MapperType mapper_;
+      ScalarShapeFunctionSetStorageType shapeFunctionSets_;
+    };
+
+
+
+    // DiscontinuousGalerkinSpaceDefaultTraits
+    // ---------------------------------------
+
+    /* 
+     * Traits class for default Discontinuous Galerkin space implementation
+     */
+    template< class Traits >
+    struct DiscontinuousGalerkinSpaceDefaultTraits
+    {
+      typedef typename Traits::DiscreteFunctionSpaceType DiscreteFunctionSpaceType;
+
+      typedef typename Traits::FunctionSpaceType FunctionSpaceType;
+      typedef typename Traits::GridPartType GridPartType;
+
+      static const int codimension = Traits::codimension;
+      static const int polynomialOrder = Traits::polynomialOrder;
+      dune_static_assert( (polynomialOrder >= 0), "Negative polynomial order." );
+
+      typedef typename GridPartType::template Codim< codimension >::EntityType EntityType;
+
+      typedef typename Traits::ScalarShapeFunctionSetType ScalarShapeFunctionSetType;
+      typedef typename Traits::ScalarShapeFunctionSetFactoryType ScalarShapeFunctionSetFactoryType;
+
+      typedef ShapeFunctionSetProxy< ScalarShapeFunctionSetType > ScalarShapeFunctionSetProxyType;
+      typedef VectorialShapeFunctionSet< ScalarShapeFunctionSetProxyType, typename FunctionSpaceType::RangeType > ShapeFunctionSetType;
+
+      typedef Dune::Fem::DefaultBasisFunctionSet< EntityType, ShapeFunctionSetType > BasisFunctionSetType;
+
+      typedef CodimensionMapper< GridPartType, codimension > BlockMapperType;
+      static const int localBlockSize = Traits::localBlockSize;
+      typedef NonBlockMapper< BlockMapperType, localBlockSize > MapperType;
+
+      template <class DiscreteFunction, class Operation = DFCommunicationOperation::Copy >
+      struct CommDataHandle
+      {
+        typedef DefaultCommunicationHandler< DiscreteFunction, Operation > Type;
+        typedef Operation OperationType;
+      };
     };
 
   } // namespace Fem
