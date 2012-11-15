@@ -53,25 +53,17 @@ namespace Dune
     template< class FunctionSpace, class GridPart, unsigned int polOrder, template< class > class Storage >
     struct LagrangeDiscreteFunctionSpaceTraits
     {
-      // type of discrete function space
       typedef LagrangeDiscreteFunctionSpace< FunctionSpace, GridPart, polOrder, Storage > DiscreteFunctionSpaceType;
 
-      // function space type
       typedef FunctionSpace FunctionSpaceType;
-      // grid part type
       typedef GridPart GridPartType;
      
-      // export template parameter polynomial order
       static const int polynomialOrder = polOrder;
 
-      // local block size
       static const int localBlockSize = FunctionSpaceType::dimRange;
-      // block mapper type
       typedef IndexSetDofMapper< GridPartType > BlockMapperType;
-      // mapper type
       typedef NonBlockMapper< BlockMapperType, localBlockSize > MapperType;
 
-      // codimension
       static const int codimension = 0;
 
     private:
@@ -81,14 +73,24 @@ namespace Dune
       typedef typename ToLocalFunctionSpace< ScalarFunctionSpaceType, dimLocal >::Type ShapeFunctionSpaceType;
 
     public:
-      // scalar shape function set type
-      typedef LagrangeShapeFunctionSet< ShapeFunctionSpaceType, polynomialOrder > ScalarShapeFunctionSetType;
-      // shape function set
-      typedef VectorialShapeFunctionSet< ScalarShapeFunctionSetType, typename FunctionSpaceType::RangeType > ShapeFunctionSetType;
-      // proxy
-      typedef ShapeFunctionSetProxy< ShapeFunctionSetType > ShapeFunctionSetProxyType;
-      // basis function set type
-      typedef Dune::Fem::DefaultBasisFunctionSet< EntityType, ShapeFunctionSetProxyType > BasisFunctionSetType;
+      typedef LagrangeShapeFunctionSet< ShapeFunctionSpaceType, polynomialOrder > LagrangeShapeFunctionSetType;
+      typedef SelectCachingShapeFunctionSet< LagrangeShapeFunctionSetType, Storage > ScalarShapeFunctionSetType;
+
+      struct ScalarShapeFunctionSetFactory
+      {
+        static ScalarShapeFunctionSetType *createObject ( const GeometryType &type )
+        {
+          return new ScalarShapeFunctionSetType( type, LagrangeShapeFunctionSetType( type ) );
+        }
+
+        static void deleteObject ( ScalarShapeFunctionSetType *object ) { delete object; }
+      };
+      typedef ScalarShapeFunctionSetFactory ScalarShapeFunctionSetFactoryType;
+
+      typedef ShapeFunctionSetProxy< ScalarShapeFunctionSetType > ScalarShapeFunctionSetProxyType;
+      typedef VectorialShapeFunctionSet< ScalarShapeFunctionSetProxyType, typename FunctionSpaceType::RangeType > ShapeFunctionSetType;
+
+      typedef Dune::Fem::DefaultBasisFunctionSet< EntityType, ShapeFunctionSetType > BasisFunctionSetType;
 
       template< class DiscreteFunction, class Operation = Dune::Fem::DFCommunicationOperation::Add >
       struct CommDataHandle
@@ -136,24 +138,27 @@ namespace Dune
       typedef DiscreteFunctionSpaceDefault< LagrangeDiscreteFunctionSpaceTraits< FunctionSpace, GridPart, polOrder, Storage > > BaseType;
 
     public:
+      typedef typename BaseType::Traits Traits;
       static const int polynomialOrder = polOrder;
-
-      typedef typename BaseType::BasisFunctionSetType BasisFunctionSetType;
-      typedef typename BaseType::IntersectionType IntersectionType;
-      typedef typename BaseType::MapperType MapperType;
-      typedef typename BaseType::BlockMapperType BlockMapperType;
 
       typedef typename BaseType::GridPartType GridPartType;
       typedef typename BaseType::GridType GridType;
       typedef typename BaseType::IndexSetType IndexSetType;
       typedef typename BaseType::EntityType EntityType;
+      typedef typename BaseType::IntersectionType IntersectionType;
+
+      typedef typename BaseType::Traits::ShapeFunctionSetType ShapeFunctionSetType;
+      typedef typename BaseType::BasisFunctionSetType BasisFunctionSetType;
+
+      typedef typename BaseType::BlockMapperType BlockMapperType;
+      typedef typename BaseType::MapperType MapperType;
 
       typedef LagrangePointSet< GridPartType, polynomialOrder > LagrangePointSetType;
 
     private:
-      typedef typename BaseType::Traits::ShapeFunctionSetType ShapeFunctionSetType;
-      typedef Fem::BaseSetLocalKeyStorage< ShapeFunctionSetType > ShapeSetStorageType;
-      typedef SingletonList< GeometryType, ShapeFunctionSetType > ShapeFunctionSetSingletonProviderType;
+      typedef typename Traits::ScalarShapeFunctionSetType ScalarShapeFunctionSetType;
+      typedef SingletonList< GeometryType, ScalarShapeFunctionSetType, typename Traits::ScalarShapeFunctionSetFactoryType > SingletonProviderType;
+      typedef BaseSetLocalKeyStorage< ScalarShapeFunctionSetType > ScalarShapeFunctionSetStorageType;
 
       typedef CompiledLocalKeyContainer< LagrangePointSetType, polynomialOrder, polynomialOrder > LagrangePointSetContainerType;
       typedef typename LagrangePointSetContainerType::LocalKeyStorageType LocalKeyStorageType;
@@ -178,9 +183,9 @@ namespace Dune
                                                const InterfaceType commInterface = defaultInterface,
                                                const CommunicationDirection commDirection = defaultDirection )
       : BaseType( gridPart, commInterface, commDirection ),
-        lagrangePointSetContainer_( gridPart ),
         blockMapper_( nullptr ),
-        mapper_( nullptr )
+        mapper_( nullptr ),
+        lagrangePointSetContainer_( gridPart )
       {
         const IndexSetType &indexSet = gridPart.indexSet();
 
@@ -189,7 +194,7 @@ namespace Dune
         for( unsigned int i = 0; i < geometryTypes.size(); ++i )
         {
           const GeometryType &type = geometryTypes[ i ];
-          shapeFunctionSets_.template insert< ShapeFunctionSetSingletonProviderType >( type );
+          scalarShapeFunctionSets_.template insert< SingletonProviderType >( type );
         }
 
         MapperSingletonKeyType key( gridPart, lagrangePointSetContainer_.compiledLocalKeys( polynomialOrder ), polynomialOrder );
@@ -217,7 +222,7 @@ namespace Dune
       /** \copydoc Dune::Fem::DiscreteFunctionSpaceInterface::basisFunctionSet */
       const BasisFunctionSetType basisFunctionSet ( const EntityType &entity ) const
       {
-        return BasisFunctionSetType( entity, &shapeFunctionSets_[ entity.type() ] );
+        return BasisFunctionSetType( entity, shapeFunctionSet( entity ) );
       }
 
       /** \copydoc Dune::Fem::DiscreteFunctionSpaceInterface::continuous */
@@ -256,6 +261,30 @@ namespace Dune
       // Non-interface methods //
       ///////////////////////////
 
+      /** \brief return shape function set for given entity
+       *
+       * \param[in]  entity  entity (of codim 0) for which shape function set 
+       *                     is requested
+       *
+       * \returns  ShapeFunctionSetType  shape function set                     
+       */
+      ShapeFunctionSetType shapeFunctionSet ( const EntityType &entity ) const
+      {
+        return shapeFunctionSet( entity.type() );
+      }
+
+      /** \brief return shape unique function set for geometry type 
+       *
+       * \param[in]  type  geometry type (must be a cube) for which 
+       *                   shape function set is requested
+       *
+       * \returns  ShapeFunctionSetType  shape function set                     
+       */
+      ShapeFunctionSetType shapeFunctionSet ( const GeometryType &type ) const
+      {
+        return ShapeFunctionSetType( &scalarShapeFunctionSets_[ type ] );
+      }
+
       /** \brief provide access to the Lagrange point set for an entity
        *
        *  \note This method is not part of the DiscreteFunctionSpaceInterface. It
@@ -291,10 +320,10 @@ namespace Dune
       // forbid assignment
       ThisType &operator= ( const ThisType & );
 
-      ShapeSetStorageType shapeFunctionSets_;
-      LagrangePointSetContainerType lagrangePointSetContainer_;
       BlockMapperType *blockMapper_;
       MapperType *mapper_;
+      ScalarShapeFunctionSetStorageType scalarShapeFunctionSets_;
+      LagrangePointSetContainerType lagrangePointSetContainer_;
     };
 
   } // namespace Fem
