@@ -82,8 +82,8 @@ namespace Dune
                                           const InterfaceType commInterface,
                                           const CommunicationDirection commDirection )
       : BaseType( gridPart, commInterface, commDirection ),
-        blockMapper_( BlockMapperProviderType::getObject( gridPart ) ),
-        mapper_( blockMapper_ )
+        blockMapper_( &BlockMapperProviderType::getObject( gridPart ) ),
+        mapper_( blockMapper() )
       {
         // get geometry types
         std::vector< GeometryType > geomTypes = AllGeomTypes< IndexSetType, GridType >( gridPart.indexSet()).geomTypes( Traits::codimension );
@@ -99,7 +99,7 @@ namespace Dune
 
       ~DiscontinuousGalerkinSpaceDefault ()
       {
-        BlockMapperProviderType::removeObject( blockMapper_ );
+        BlockMapperProviderType::removeObject( blockMapper() );
       }
 
       /** @copydoc Dune::Fem::DiscreteFunctionSpaceInterface::type */
@@ -141,7 +141,7 @@ namespace Dune
       /** @copydoc Dune::Fem::DiscreteFunctionSpaceInterface::contains */
       bool contains ( const int codimension ) const
       {
-        return blockMapper_.contains( codimension );
+        return blockMapper().contains( codimension );
       }
 
       /** @copydoc Dune::Fem::DiscreteFunctionSpaceInterface::continuous */
@@ -172,11 +172,11 @@ namespace Dune
       /** @copydoc Dune::Fem::DiscreteFunctionSpaceInterface::blockMapper */
       BlockMapperType &blockMapper () const
       {
-        return blockMapper_;
+        return *blockMapper_;
       }
 
     private:
-      mutable BlockMapperType &blockMapper_;
+      BlockMapperType *blockMapper_;
       mutable MapperType mapper_;
       ScalarShapeFunctionSetStorageType scalarShapeFunctionSets_;
     };
