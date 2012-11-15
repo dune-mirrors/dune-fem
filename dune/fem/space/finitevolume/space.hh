@@ -13,6 +13,7 @@
 #include <dune/fem/space/mapper/codimensionmapper.hh>
 #include <dune/fem/space/mapper/nonblockmapper.hh>
 #include <dune/fem/space/shapefunctionset/selectcaching.hh>
+#include <dune/fem/space/shapefunctionset/vectorial.hh>
 #include <dune/fem/version.hh>
 
 // local includes
@@ -53,20 +54,24 @@ namespace Dune
       typedef typename FunctionSpaceType::JacobianRangeType JacobianRangeType;
       typedef typename FunctionSpaceType::HessianRangeType HessianRangeType;
 
+      /** @copydoc Dune::Fem::ShapeFunctionSet::size */
       static std::size_t size () { return 1; }
 
+      /** @copydoc Dune::Fem::ShapeFunctionSet::evaluateEach */
       template< class Point, class Functor >
       static void evaluateEach ( const Point &, Functor functor )
       {
         functor( 0, RangeType( 1 ) );
       }
 
+      /** @copydoc Dune::Fem::ShapeFunctionSet::jacobianEach */
       template< class Point, class Functor >
       static void jacobianEach ( const Point &, Functor functor )
       {
         functor( 0, JacobianRangeType( 0 ) );
       }
 
+      /** @copydoc Dune::Fem::ShapeFunctionSet::hessianEach */
       template< class Point, class Functor >
       static void hessianEach ( const Point &, Functor functor )
       {
@@ -95,9 +100,11 @@ namespace Dune
       static const int dimRange = FunctionSpaceType::dimRange;
 
       typedef typename GridPartType::template Codim< codimension >::EntityType EntityType;
-      typedef FiniteVolumeShapeFunctionSet< typename ToLocalFunctionSpace< FunctionSpaceType, dimLocal >::Type > ShapeFunctionSetType;
+      typedef typename FunctionSpaceType::ScalarFunctionSpaceType ScalarFunctionSpaceType;
+      typedef FiniteVolumeShapeFunctionSet< typename ToLocalFunctionSpace< ScalarFunctionSpaceType, dimLocal >::Type > ScalarShapeFunctionSetType;
 
     public:
+      typedef VectorialShapeFunctionSet< ScalarShapeFunctionSetType, typename FunctionSpaceType::RangeType > ShapeFunctionSetType;
       typedef DefaultBasisFunctionSet< EntityType, ShapeFunctionSetType > BasisFunctionSetType;
 
       static const int localBlockSize = dimRange;
