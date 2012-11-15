@@ -1,12 +1,14 @@
 #ifndef DUNE_FEM_FUNCTION_HH
 #define DUNE_FEM_FUNCTION_HH
 
-//- Dune includes 
+// dune-common includes 
 #include <dune/common/fvector.hh>
 
-//- local includes 
+// dune-fem includes 
 #include <dune/fem/misc/bartonnackmaninterface.hh>
 #include <dune/fem/operator/common/mapping.hh>
+#include <dune/fem/version.hh>
+
 
 namespace Dune
 {
@@ -129,6 +131,16 @@ namespace Dune
         CHECK_AND_CALL_INTERFACE_IMPLEMENTATION( asImp().jacobian( x, ret ) );
       }
 
+      /** \brief evaluate the hessian of the function
+       *
+       *  \param[in]  x    evaluation point
+       *  \param[out] ret  value of the hessian in x
+       */
+      void hessian ( const DomainType &x, HessianRangeType &ret ) const
+      {
+        CHECK_AND_CALL_INTERFACE_IMPLEMENTATION( asImp().hessian( x, ret ) );
+      }
+
       /** \brief evaluate a derivative of the function
        * 
        *  \param[in]  diffVariable  vector describing the partial derivative to
@@ -137,6 +149,7 @@ namespace Dune
        *  \param[out] ret           value of the derivative in x 
        */    
       template< int diffOrder >
+      DUNE_VERSION_DEPRECATED(1,4,remove)
       void evaluate ( const FieldVector< int, diffOrder > &diffVariable,
                       const DomainType &x,
                       RangeType &ret ) const
