@@ -13,10 +13,13 @@
 
 // dune-fem includes
 #include <dune/fem/space/basisfunctionset/default.hh>
+#include <dune/fem/space/common/allgeomtypes.hh>
+#include <dune/fem/space/common/basesetlocalkeystorage.hh>
 #include <dune/fem/space/common/functionspace.hh>
 #include <dune/fem/space/mapper/nonblockmapper.hh>
 #include <dune/fem/space/shapefunctionset/legendre.hh>
 #include <dune/fem/space/shapefunctionset/proxy.hh>
+#include <dune/fem/space/shapefunctionset/selectcaching.hh>
 #include <dune/fem/space/shapefunctionset/vectorial.hh>
 
 // local includes
@@ -59,10 +62,21 @@ namespace Dune
       static const int localBlockSize = BaseType::dimRange * NumLegendreShapeFunctions< polOrder, BaseType::dimLocal >::v;
       typedef NonBlockMapper< typename BaseType::BlockMapperType, localBlockSize > MapperType;
 
-      typedef LegendreShapeFunctionSet< typename ToLocalFunctionSpace< FunctionSpace, BaseType::dimLocal >::Type > ScalarShapeFunctionSetType;
-      typedef VectorialShapeFunctionSet< ScalarShapeFunctionSetType, RangeType > ShapeFunctionSetImp;
-      typedef ShapeFunctionSetProxy< ShapeFunctionSetImp > ShapeFunctionSetType;
+      typedef LegendreShapeFunctionSet< typename ToLocalFunctionSpace< FunctionSpace, BaseType::dimLocal >::Type > LegendreShapeFunctionSetType;
+      typedef SelectCachingShapeFunctionSet< LegendreShapeFunctionSetType, Storage > ShapeFunctionSetImp;
 
+      struct ShapeFunctionSetFactory
+      {
+        static ShapeFunctionSetImp *createObject ( const GeometryType &type )
+        {
+          return new ShapeFunctionSetImp( type, LegendreShapeFunctionSetType( polOrder ) );
+        }
+
+        static void deleteObject ( ShapeFunctionSetImp *object ) { delete object; }
+      };
+
+      typedef ShapeFunctionSetProxy< ShapeFunctionSetImp > ScalarShapeFunctionSetType;
+      typedef VectorialShapeFunctionSet< ScalarShapeFunctionSetType, RangeType > ShapeFunctionSetType;
       typedef Dune::Fem::DefaultBasisFunctionSet< EntityType, ShapeFunctionSetType > BasisFunctionSetType;
     };
 
@@ -86,6 +100,8 @@ namespace Dune
       typedef typename BaseType::Traits Traits;
 
       typedef typename BaseType::GridPartType GridPartType;
+      typedef typename BaseType::GridType GridType;
+      typedef typename BaseType::IndexSetType IndexSetType;
       typedef typename BaseType::EntityType EntityType;
 
       typedef typename BaseType::BasisFunctionSetType BasisFunctionSetType;
@@ -96,15 +112,27 @@ namespace Dune
 
     private:
       typedef typename ShapeFunctionSetType::ImplementationType ShapeFunctionSetImp;
+      typedef SingletonList< const GeometryType, ShapeFunctionSetImp, typename Traits::ShapeFunctionSetFactory > SingletonProviderType;
+      typedef BaseSetLocalKeyStorage< ShapeFunctionSetImp > ShapeFunctionSetStorageType;
 
     public:
       LegendreDiscontinuousGalerkinSpace ( GridPartType &gridPart,
                                            const InterfaceType commInterface = BaseType::defaultInterface,
                                            const CommunicationDirection commDirection = BaseType::defaultDirection )
       : BaseType( gridPart, commInterface, commDirection ),
-        mapper_( blockMapper() ),
-        shapeFunctionSet_( polOrder )
-      {}
+        mapper_( blockMapper() )
+      {
+        // get geometry types
+        std::vector< GeometryType > geomTypes = AllGeomTypes< IndexSetType, GridType >( gridPart.indexSet()).geomTypes( BaseType::codimension );
+        
+        // store shape function sets per type
+        const typename std::vector< GeometryType >::const_iterator end = geomTypes.end();
+        for( typename std::vector< GeometryType >::const_iterator it = geomTypes.begin(); it != end; ++it )     
+        {
+          const GeometryType &type = *it;
+          shapeFunctionSets_.template insert< SingletonProviderType >( type );
+        }
+      }
 
       /** @copydoc Dune::Fem::DiscreteFunctionSpaceInterface::basisFunctionSet */
       BasisFunctionSetType basisFunctionSet ( const EntityType &entity ) const
@@ -133,8 +161,7 @@ namespace Dune
        */
       ShapeFunctionSetType shapeFunctionSet ( const GeometryType &type) const
       {
-        assert( type == GeometryType( typename GenericGeometry::CubeTopology< Traits::dimLocal >::type() ) );
-        return ShapeFunctionSetType( &shapeFunctionSet_ );
+        return ShapeFunctionSetType( &shapeFunctionSets_ );
       }
 
       /** @copydoc Dune::Fem::DiscreteFunctionSpaceInterface::mapper */
@@ -143,7 +170,7 @@ namespace Dune
 
     private:
       mutable MapperType mapper_;
-      ShapeFunctionSetImp shapeFunctionSet_;
+      ShapeFunctionSetStorageType shapeFunctionSets_;
     };
 
   } // namespace Fem
