@@ -84,6 +84,16 @@ namespace Dune
     // FiniteVolumeSpaceTraits
     // -----------------------
 
+    /*
+     * \brief Finite volume space
+     *
+     * \tparam  FunctionSpace  Function space
+     * \tparam  GridPart       Grid part
+     * \tparam  codim          codimennsion
+     * \tparam  Storage        Caching storage policy
+     *
+     * \note This shape function set has fixed polynomial order 0.
+     */
     template< class FunctionSpace, class GridPart, int codim,
               template< class > class Storage >
     struct FiniteVolumeSpaceTraits
