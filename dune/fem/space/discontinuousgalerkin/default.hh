@@ -93,7 +93,7 @@ namespace Dune
         for( typename std::vector< GeometryType >::const_iterator it = geomTypes.begin(); it != end; ++it )    
         {
           const GeometryType &type = *it;
-          shapeFunctionSets_.template insert< SingletonProviderType >( type );
+          scalarShapeFunctionSets_.template insert< SingletonProviderType >( type );
         }
       }
 
@@ -135,7 +135,7 @@ namespace Dune
        */
       ShapeFunctionSetType shapeFunctionSet ( const GeometryType &type ) const
       {
-        return ShapeFunctionSetType( &shapeFunctionSets_[ type ] );
+        return ShapeFunctionSetType( &scalarShapeFunctionSets_[ type ] );
       }
 
       /** @copydoc Dune::Fem::DiscreteFunctionSpaceInterface::contains */
@@ -178,7 +178,7 @@ namespace Dune
     private:
       mutable BlockMapperType &blockMapper_;
       mutable MapperType mapper_;
-      ScalarShapeFunctionSetStorageType shapeFunctionSets_;
+      ScalarShapeFunctionSetStorageType scalarShapeFunctionSets_;
     };
 
 
