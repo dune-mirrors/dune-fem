@@ -1,6 +1,7 @@
 localfunctiondir =  $(includedir)/dune/fem/function/localfunction
 
 localfunction_HEADERS = default.hh \
+			functor.hh \
 			generic.hh \
 			generic_inline.hh \
 			localfunction.hh \
