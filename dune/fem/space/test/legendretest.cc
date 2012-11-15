@@ -20,10 +20,9 @@ typedef Dune::YaspGrid< dimw > HGridType;
 #endif
 
 #include <dune/fem/operator/discreteoperatorimp.hh>
-#include <dune/fem/space/lagrangespace.hh>
+#include <dune/fem/space/lagrange.hh>
 #include <dune/fem/function/adaptivefunction.hh>
-#include <dune/fem/space/dgspace.hh>
-#include <dune/fem/space/lagrangespace.hh>
+#include <dune/fem/space/discontinuousgalerkin.hh>
 #include <dune/fem/quadrature/cachingquadrature.hh> 
 
 #include <dune/fem/gridpart/hierarchicgridpart.hh>
@@ -133,8 +132,8 @@ class L2Projection
   template <class FunctionType>
   static void project (const FunctionType &f, DiscreteFunctionType &discFunc, int polOrd) 
   {
-    typedef typename DiscreteFunctionSpaceType::Traits::GridPartType GridPartType;
-    typedef typename DiscreteFunctionSpaceType::Traits::IteratorType Iterator;
+    typedef typename DiscreteFunctionSpaceType::GridPartType GridPartType;
+    typedef typename DiscreteFunctionSpaceType::IteratorType Iterator;
 
     const DiscreteFunctionSpaceType& space =  discFunc.space();
 
@@ -158,10 +157,9 @@ class L2Projection
       LocalFuncType lf = discFunc.localFunction(*it);
       LocalFuncType tmp = mass.localFunction(*it);
       
-      //! Note: BaseFunctions must be ortho-normal!!!!
-      typedef typename DiscreteFunctionSpaceType::BaseFunctionSetType BaseFunctionSetType ; 
-      const BaseFunctionSetType & baseset =
-        lf.baseFunctionSet();
+      //! Note: basis functions must be ortho-normal!!!!
+      typedef typename DiscreteFunctionSpaceType::BasisFunctionSetType BasisFunctionSetType ; 
+      const BasisFunctionSetType & basisSet = lf.basisFunctionSet();
 
       const typename HGridType::template Codim<0>::Entity::Geometry& 
         itGeom = (*it).geometry();
@@ -174,7 +172,7 @@ class L2Projection
       {// double det = (*it).geometry().integrationElement( quad.point(qP) );
         f.evaluate(itGeom.global(quad.point(qP)), ret);
 
-        baseset.evaluateAll( quad[ qP ], phi );
+        basisSet.evaluateAll( quad[ qP ], phi );
 
         for(int i=0; i<numDofs; ++i) 
         {

@@ -9,13 +9,13 @@ using namespace Dune;
 #include <dune/fem/function/adaptivefunction.hh>
 //#include <dune/fem/function/vectorfunction.hh>
 //#include <dune/fem/function/attachedfunction.hh>
-#include <dune/fem/space/dgspace.hh>
+#include <dune/fem/space/discontinuousgalerkin.hh>
 #include <dune/fem/quadrature/cachingquadrature.hh>
 
 #include <dune/fem/gridpart/adaptiveleafgridpart.hh>
 #include <dune/fem/gridpart/hierarchicgridpart.hh>
 
-#include <dune/fem/space/lagrangespace.hh>
+#include <dune/fem/space/lagrange.hh>
 #include <dune/fem/operator/projection/dgl2projection.hh>
 #include <dune/fem/misc/l2norm.hh>
 

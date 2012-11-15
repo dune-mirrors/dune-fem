@@ -14,8 +14,14 @@ AM_CPPFLAGS = $(ALL_PKG_CPPFLAGS) -DPOLORDER=$(POLORDER) -DWANT_GRAPE=$(WANT_GRA
   -DWANT_CACHED_COMM_MANAGER=$(WANT_CACHED)
 
 ADAPTPROG = lagrangeadapt adapt
-check_PROGRAMS = $(ADAPTPROG) l2projection lagrangeinterpolation legendretest \
-                 lagrangeglobalrefine arraytest dgcomm padapt
+check_PROGRAMS = $(ADAPTPROG) \
+		 arraytest \
+		 dgcomm \
+                 l2projection \
+                 lagrangeglobalrefine \
+		 lagrangeinterpolation \
+		 legendretest
+#		 padapt
 
 EXTRA_DIST = systemmatrix.cc
 
