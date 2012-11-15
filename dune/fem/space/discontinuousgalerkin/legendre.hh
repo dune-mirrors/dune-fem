@@ -49,7 +49,8 @@ namespace Dune
     public:
       static const int localBlockSize = FunctionSpaceType::dimRange * NumLegendreShapeFunctions< polOrder, dimLocal >::v;
 
-      typedef LegendreShapeFunctionSet< typename ToLocalFunctionSpace< FunctionSpace, dimLocal >::Type > LegendreShapeFunctionSetType;
+      typedef typename FunctionSpaceType::ScalarFunctionSetType ScalarFunctionSpaceType;
+      typedef LegendreShapeFunctionSet< typename ToLocalFunctionSpace< ScalarFunctionSpaceType, dimLocal >::Type > LegendreShapeFunctionSetType;
       typedef SelectCachingShapeFunctionSet< LegendreShapeFunctionSetType, Storage > ScalarShapeFunctionSetType;
 
       struct ScalarShapeFunctionSetFactory
