@@ -683,14 +683,14 @@ namespace Dune
         this->space().communicate( asImp() );
       }
    
-      /** \copydoc Dune::Fem::Function::evaluate(const DomainType &x,RangeType &ret) const */
-      inline void evaluate ( const DomainType &x, RangeType &ret ) const;
+      /** \copydoc Dune::Fem::Function::evaluate(const DomainType &x,RangeType &value) const */
+      inline void evaluate ( const DomainType &x, RangeType &value ) const;
 
-      /** \copydoc Dune::Fem::Function::jacobian(const DomainType &x,RangeType &ret) const */
-      inline void jacobian ( const DomainType &x, JacobianRangeType &ret ) const;
+      /** \copydoc Dune::Fem::Function::jacobian(const DomainType &x,JacobianRangeType &jacobian) const */
+      inline void jacobian ( const DomainType &x, JacobianRangeType &jacobian ) const;
 
-      /** \copydoc Dune::Fem::Function::hessian (const DomainType &x,RangeType &ret) const */
-      inline void hessian ( const DomainType &x, HessianRangeType &ret ) const;
+      /** \copydoc Dune::Fem::Function::hessian (const DomainType &x,HessianRangeType &hessian) const */
+      inline void hessian ( const DomainType &x, HessianRangeType &hessian ) const;
 
       /** \copydoc Dune::Fem::Function::evaluate(const FieldVector<int,diffOrder> &diffVariable,const DomainType &x,RangeType &ret) const */
       template< int diffOrder >
