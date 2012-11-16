@@ -15,121 +15,203 @@ namespace Dune
   namespace Fem 
   {
 
+    // MakeVectorialTraits
+    // -------------------
+
+    template< class Scalar, class Vectorial >
+    struct MakeVectorialTraits;
+
+    template< class K, int dimR >
+    struct MakeVectorialTraits< FieldVector< K, 1 >, FieldVector< K, dimR > >
+    {
+      typedef FieldVector< K, 1 > ScalarType;
+      typedef FieldVector< K, dimR > VectorialType;
+
+      typedef typename FieldTraits< VectorialType >::field_type field_type;
+      typedef typename VectorialType::size_type ComponentType;
+      typedef typename VectorialType::size_type size_type;
+
+      static const size_type factor = dimR;
+
+      static ComponentType begin () { return ComponentType( 0 ); }
+      static ComponentType end () { return ComponentType( factor ); }
+
+      static const K &access ( const ScalarType &x ) { return x[ 0 ]; }
+      static K &access ( ScalarType &x ) { return x[ 0 ]; }
+
+      static const K &access ( const VectorialType &x, const ComponentType &i ) { return x[ i ]; }
+      static K &access ( VectorialType &x, const ComponentType &i ) { return x[ i ]; }
+
+      static size_type index ( const ComponentType &i ) { return i; }
+    };
+
+    template< class K, int dimR, int dimD >
+    struct MakeVectorialTraits< FieldMatrix< K, 1, dimD >, FieldMatrix< K, dimR, dimD > >
+    {
+      typedef FieldMatrix< K, 1, dimD > ScalarType;
+      typedef FieldMatrix< K, dimR, dimD > VectorialType;
+
+      typedef typename FieldTraits< VectorialType >::field_type field_type;
+      typedef typename VectorialType::size_type ComponentType;
+      typedef typename VectorialType::size_type size_type;
+
+      static const size_type factor = dimR;
+
+      static ComponentType begin () { return ComponentType( 0 ); }
+      static ComponentType end () { return ComponentType( factor ); }
+
+      static const FieldVector< K, dimD > &access ( const ScalarType &x ) { return x[ 0 ]; }
+      static FieldVector< K, dimD > &access ( ScalarType &x ) { return x[ 0 ]; }
+
+      static const FieldVector< K, dimD > &access ( const VectorialType &x, const ComponentType &i ) { return x[ i ]; }
+      static FieldVector< K, dimD > &access ( VectorialType &x, const ComponentType &i ) { return x[ i ]; }
+
+      static size_type index ( const ComponentType &i ) { return i; }
+    };
+
+
+
     // MakeVectorialExpression
     // -----------------------
 
     template< class Scalar, class Vectorial >
-    class MakeVectorialExpression;
-
-    template< class K, int dimR >
-    class MakeVectorialExpression< FieldVector< K, 1 >, FieldVector< K, dimR > >
+    class BasicMakeVectorialExpression
     {
-      typedef MakeVectorialExpression< FieldVector< K, 1 >, FieldVector< K, dimR > > ThisType;
-      
+      typedef BasicMakeVectorialExpression< Scalar, Vectorial > ThisType;
+
+      typedef MakeVectorialTraits< Scalar, Vectorial > Traits;
+
     public:
-      typedef FieldVector< K, 1 > ScalarType;
-      typedef FieldVector< K, dimR > VectorialType;
+      typedef typename Traits::ScalarType ScalarType;
+      typedef typename Traits::VectorialType VectorialType;
 
-      typedef typename VectorialType::size_type size_type;
+      typedef typename Traits::field_type field_type;
+      typedef typename Traits::ComponentType ComponentType;
+      typedef typename Traits::size_type size_type;
 
-      MakeVectorialExpression ( int component, const ScalarType &scalar )
+      BasicMakeVectorialExpression ( const ComponentType &component, const ScalarType &scalar )
       : component_( component ),
         scalar_( scalar )
       {}
 
       operator VectorialType () const
       {
-        VectorialType vectorial( K( 0 ) );
-        vectorial[ component() ] = scalar()[ 0 ];
+        VectorialType vectorial( field_type( 0 ) );
+        Traits::access( vectorial, component() ) = Traits::access( scalar() );
         return vectorial;
       }
 
-      const ThisType &operator*= ( const K &s )
+      const ThisType &operator*= ( const field_type &s )
       {
         scalar() *= s;
         return *this;
       }
 
-      const ThisType &operator/= ( const K &s )
+      const ThisType &operator/= ( const field_type &s )
       {
         scalar() /= s;
         return *this;
       }
 
-      K operator* ( const ThisType &other ) const
-      {
-        return (component() == other.component() ? scalar() * other.scalar() : K( 0 ));
-      }
-
-      K operator* ( const VectorialType &other ) const
-      {
-        return (scalar()[ 0 ] * other[ component() ]);
-      }
-
-      K one_norm () const { return scalar().one_norm(); }
-      K two_norm () const { return scalar().two_norm(); }
-      K two_norm2 () const { return scalar().two_norm2(); }
-      K infinity_norm () const { return scalar().infinity_norm(); }
-
-      size_type size () const { return dimR; }
-
-      friend K operator* ( const VectorialType &a, ThisType &b ) { return b*a; }
-
-      friend void axpy ( const K &a, const ThisType &x, VectorialType &y )
-      {
-        axpy( a, x.scalar()[ 0 ], y[ x.component() ] );
-      }
-
-      int component () const { return component_; }
+      const ComponentType &component () const { return component_; }
 
       const ScalarType &scalar () const { return scalar_; }
       ScalarType &scalar () { return scalar_; }
 
     protected:
-      int component_;
+      ComponentType component_;
       ScalarType scalar_;
+    };
+
+
+
+    // MakeVectorialExpression
+    // -----------------------
+
+    template< class Scalar, class Vectorial >
+    class MakeVectorialExpression
+    : public BasicMakeVectorialExpression< Scalar, Vectorial >
+    {
+      typedef MakeVectorialExpression< Scalar, Vectorial > ThisType;
+      typedef BasicMakeVectorialExpression< Scalar, Vectorial > BaseType;
+      
+    public:
+      typedef typename BaseType::ComponentType ComponentType;
+      typedef typename BaseType::ScalarType ScalarType;
+
+      MakeVectorialExpression ( const ComponentType &component, const ScalarType &scalar )
+      : BaseType( component, scalar )
+      {}
+    };
+
+    template< class K, int dimR >
+    class MakeVectorialExpression< FieldVector< K, 1 >, FieldVector< K, dimR > >
+    : public BasicMakeVectorialExpression< FieldVector< K, 1 >, FieldVector< K, dimR > >
+    {
+      typedef MakeVectorialExpression< FieldVector< K, 1 >, FieldVector< K, dimR > > ThisType;
+      typedef BasicMakeVectorialExpression< FieldVector< K, 1 >, FieldVector< K, dimR > > BaseType;
+      
+    public:
+      typedef typename BaseType::ScalarType ScalarType;
+      typedef typename BaseType::VectorialType VectorialType;
+
+      typedef typename BaseType::field_type field_type;
+      typedef typename BaseType::ComponentType ComponentType;
+      typedef typename BaseType::size_type size_type;
+
+      using BaseType::component;
+      using BaseType::scalar;
+
+      MakeVectorialExpression ( const ComponentType &component, const ScalarType &scalar )
+      : BaseType( component, scalar )
+      {}
+
+      field_type operator* ( const ThisType &other ) const
+      {
+        return (component() == other.component() ? scalar() * other.scalar() : field_type( 0 ));
+      }
+
+      field_type operator* ( const VectorialType &other ) const
+      {
+        return (scalar()[ 0 ] * other[ component() ]);
+      }
+
+      field_type one_norm () const { return scalar().one_norm(); }
+      field_type two_norm () const { return scalar().two_norm(); }
+      field_type two_norm2 () const { return scalar().two_norm2(); }
+      field_type infinity_norm () const { return scalar().infinity_norm(); }
+
+      size_type size () const { return dimR; }
+
+      friend field_type operator* ( const VectorialType &a, ThisType &b ) { return b*a; }
     };
 
     template< class K, int dimR, int dimD >
     class MakeVectorialExpression< FieldMatrix< K, 1, dimD >, FieldMatrix< K, dimR, dimD > >
     {
       typedef MakeVectorialExpression< FieldMatrix< K, 1, dimD >, FieldMatrix< K, dimR, dimD > > ThisType;
+      typedef BasicMakeVectorialExpression< FieldMatrix< K, 1, dimD >, FieldMatrix< K, dimR, dimD > > BaseType;
       
     public:
-      typedef FieldMatrix< K, 1, dimD > ScalarType;
-      typedef FieldMatrix< K, dimR, dimD > VectorialType;
+      typedef typename BaseType::ScalarType ScalarType;
+      typedef typename BaseType::VectorialType VectorialType;
 
-      typedef typename VectorialType::size_type size_type;
+      typedef typename BaseType::field_type field_type;
+      typedef typename BaseType::ComponentType ComponentType;
+      typedef typename BaseType::size_type size_type;
 
-      MakeVectorialExpression ( int component, const ScalarType &scalar )
-      : component_( component ),
-        scalar_( scalar )
+      using BaseType::component;
+      using BaseType::scalar;
+
+      MakeVectorialExpression ( const ComponentType &component, const ScalarType &scalar )
+      : BaseType( component, scalar )
       {}
-
-      operator VectorialType () const
-      {
-        VectorialType vectorial( K( 0 ) );
-        vectorial[ component() ] = scalar()[ 0 ];
-        return vectorial;
-      }
-
-      const ThisType &operator*= ( const K &s )
-      {
-        scalar() *= s;
-        return *this;
-      }
-
-      const ThisType &operator/= ( const K &s )
-      {
-        scalar() /= s;
-        return *this;
-      }
 
       template< class X, class Y >
       void mv ( const X &x, Y &y ) const
       {
         for( size_type i = 0; i < rows(); ++i )
-          y[ i ] = K( 0 );
+          y[ i ] = field_type( 0 );
         for( size_type j= 0; j < cols(); ++j )
           y[ component() ] += scalar()[ component() ][ j ] * x[ j ];
       }
@@ -169,31 +251,17 @@ namespace Dune
           y[ i ] -= scalar()[ i ][ component() ] * x[ component() ];
       }
 
-      K frobenius_norm () const { return scalar().frobenius_norm(); }
-      K frobenius_norm2 () const { return scalar().frobenius_norm2(); }
-      K infinity_norm () const { return scalar().infinity_norm(); }
+      field_type frobenius_norm () const { return scalar().frobenius_norm(); }
+      field_type frobenius_norm2 () const { return scalar().frobenius_norm2(); }
+      field_type infinity_norm () const { return scalar().infinity_norm(); }
 
-      K determinant () const { return (dimR == 1 ? scalar().determinant() : K( 0 )); }
+      field_type determinant () const { return (dimR == 1 ? scalar().determinant() : field_type( 0 )); }
 
       size_type N () const { return rows(); }
       size_type M () const { return cols(); }
 
       size_type rows () const { return dimR; }
       size_type cols () const { return scalar().cols(); }
-
-      friend void axpy ( const K &a, const ThisType &x, VectorialType &y )
-      {
-        axpy( a, x.scalar()[ 0 ], y[ x.component() ] );
-      }
-
-      int component () const { return component_; }
-
-      const ScalarType &scalar () const { return scalar_; }
-      ScalarType &scalar () { return scalar_; }
-
-    protected:
-      int component_;
-      ScalarType scalar_;
     };
 
 
@@ -249,46 +317,28 @@ namespace Dune
       return (static_cast< Vectorial >( a ) != b);
     }
 
+    template< class Scalar, class Vectorial >
+    inline void
+    axpy ( const typename MakeVectorialTraits< Scalar, Vectorial >::field_type &a,
+           const MakeVectorialExpression< Scalar, Vectorial > &x,
+           typename MakeVectorialTraits< Scalar, Vectorial >::VectorialType &y )
+    {
+      typedef MakeVectorialTraits< Scalar, Vectorial > Traits;
+      axpy( a, Traits::access( x.scalar() ), Traits::access( y, x.component() ) );
+    }
 
 
-    // MakeVectorial
-    // -------------
+
+    // ToNewRangeType
+    // --------------
 
     template< class ScalarFunctionSpace, class RangeVector >
-    struct MakeVectorial;
+    struct ToNewRange;
 
     template< class DomainField, class RangeField, int dimD, int dimR >
-    struct MakeVectorial< FunctionSpace< DomainField, RangeField, dimD, 1 >, FieldVector< RangeField, dimR > >
+    struct ToNewRange< FunctionSpace< DomainField, RangeField, dimD, 1 >, FieldVector< RangeField, dimR > >
     {
-      typedef FunctionSpace< DomainField, RangeField, dimD, 1 > ScalarFunctionSpaceType;
-      typedef FunctionSpace< DomainField, RangeField, dimD, dimR > VectorialFunctionSpaceType;
-
-      static const int dimRangeFactor = dimR;
-
-      static typename VectorialFunctionSpaceType::RangeType
-      makeVectorial ( int k, const typename ScalarFunctionSpaceType::RangeType &scalarValue )
-      {
-        typename VectorialFunctionSpaceType::RangeType vectorialValue( RangeField( 0 ) );
-        vectorialValue[ k ] = scalarValue[ 0 ];
-        return vectorialValue;
-      }
-
-      static typename VectorialFunctionSpaceType::JacobianRangeType
-      makeVectorial ( int k, const typename ScalarFunctionSpaceType::JacobianRangeType &scalarValue )
-      {
-        typename VectorialFunctionSpaceType::JacobianRangeType vectorialValue( RangeField( 0 ) );
-        vectorialValue[ k ] = scalarValue[ 0 ];
-        return vectorialValue;
-      }
-
-      static typename VectorialFunctionSpaceType::HessianRangeType
-      makeVectorial ( int k, const typename ScalarFunctionSpaceType::HessianRangeType &scalarValue )
-      {
-        typename VectorialFunctionSpaceType::HessianRangeType 
-          vectorialValue( typename VectorialFunctionSpaceType::HessianRangeType::value_type( RangeField( 0 ) ) );
-        vectorialValue[ k ] = scalarValue[ 0 ];
-        return vectorialValue;
-      }
+      typedef FunctionSpace< DomainField, RangeField, dimD, dimR > Type;
     };
 
 
@@ -302,19 +352,19 @@ namespace Dune
       typedef VectorialShapeFunctionSet< ScalarShapeFunctionSet, RangeVector > ThisType;
 
     public:
-      typedef typename MakeVectorial< typename ScalarShapeFunctionSet::FunctionSpaceType, RangeVector >::VectorialFunctionSpaceType FunctionSpaceType;
       typedef ScalarShapeFunctionSet ScalarShapeFunctionSetType;
 
     protected:
       typedef typename ScalarShapeFunctionSetType::FunctionSpaceType ScalarFunctionSpaceType;
-      typedef MakeVectorial< ScalarFunctionSpaceType, RangeVector > MakeVectorialType;
 
-      static const int dimRangeFactor = MakeVectorialType::dimRangeFactor;
+      static const std::size_t dimRangeFactor = MakeVectorialTraits< typename ScalarFunctionSpaceType::RangeType, RangeVector >::factor;
 
-      template< class Functor >
+      template< class Functor, class Vectorial >
       struct VectorialFunctor;
 
     public:
+      typedef typename ToNewRange< ScalarFunctionSpaceType, RangeVector >::Type FunctionSpaceType;
+
       explicit VectorialShapeFunctionSet ( const ScalarShapeFunctionSetType &scalarShapeFunctionSet = ScalarShapeFunctionSetType() )
       : scalarShapeFunctionSet_( scalarShapeFunctionSet )
       {}
@@ -343,18 +393,21 @@ namespace Dune
     // -------------------------------------------
 
     template< class ScalarShapeFunctionSet, class RangeVector >
-    template< class Functor >
+    template< class Functor, class Vectorial >
     struct VectorialShapeFunctionSet< ScalarShapeFunctionSet, RangeVector >::VectorialFunctor
     {
       explicit VectorialFunctor ( const Functor &functor )
       : functor_( functor )
       {}
 
-      template< class Value >
-      void operator() ( const std::size_t i, const Value &value )
+      template< class Scalar >
+      void operator() ( const std::size_t i, const Scalar &value )
       {
-        for( int k = 0; k < dimRangeFactor; ++k )
-          functor_( i*dimRangeFactor+k, MakeVectorialType::makeVectorial( k, value ) );
+        typedef MakeVectorialTraits< Scalar, Vectorial > Traits;
+        typedef MakeVectorialExpression< Scalar, Vectorial > Expression;
+        const typename Traits::ComponentType end = Traits::end();
+        for( typename Traits::ComponentType k = Traits::begin(); k != end; ++k )
+          functor_( i*Traits::factor + Traits::index( k ), Expression( k, value ) );
       }
 
     private:
@@ -371,7 +424,8 @@ namespace Dune
     inline void VectorialShapeFunctionSet< ScalarShapeFunctionSet, RangeVector >
       ::evaluateEach ( const Point &x, Functor functor ) const
     {
-      scalarShapeFunctionSet().evaluateEach( x, VectorialFunctor< Functor >( functor ) );
+      typedef typename FunctionSpaceType::RangeType VectorialType;
+      scalarShapeFunctionSet().evaluateEach( x, VectorialFunctor< Functor, VectorialType >( functor ) );
     }
     
 
@@ -380,7 +434,8 @@ namespace Dune
     inline void VectorialShapeFunctionSet< ScalarShapeFunctionSet, RangeVector >
       ::jacobianEach ( const Point &x, Functor functor ) const
     {
-      scalarShapeFunctionSet().jacobianEach( x, VectorialFunctor< Functor >( functor ) );
+      typedef typename FunctionSpaceType::JacobianRangeType VectorialType;
+      scalarShapeFunctionSet().jacobianEach( x, VectorialFunctor< Functor, VectorialType >( functor ) );
     }
 
 
@@ -389,7 +444,8 @@ namespace Dune
     inline void VectorialShapeFunctionSet< ScalarShapeFunctionSet, RangeVector >
       ::hessianEach ( const Point &x, Functor functor ) const
     {
-      scalarShapeFunctionSet().hessianEach( x, VectorialFunctor< Functor >( functor ) );
+      typedef typename FunctionSpaceType::HessianRangeType VectorialType;
+      scalarShapeFunctionSet().hessianEach( x, VectorialFunctor< Functor, VectorialType >( functor ) );
     }
 
   } // namespace Fem 

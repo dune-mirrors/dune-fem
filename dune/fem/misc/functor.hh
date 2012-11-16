@@ -14,8 +14,8 @@ namespace Dune
 
     struct DefaultAssign
     {
-      template< class T >
-      void operator() ( const T &a, T &b ) const
+      template< class T, class U >
+      void operator() ( const T &a, U &b ) const
       {
         b = a;
       }
