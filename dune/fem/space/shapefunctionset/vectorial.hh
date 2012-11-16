@@ -32,54 +32,44 @@ namespace Dune
 
       typedef typename VectorialType::size_type size_type;
 
-      MakeVectorialExpression ( int k, const ScalarType &scalar )
-      : k_( k ),
+      MakeVectorialExpression ( int component, const ScalarType &scalar )
+      : component_( component ),
         scalar_( scalar )
       {}
 
       operator VectorialType () const
       {
         VectorialType vectorial( K( 0 ) );
-        vectorial[ k_ ] = scalar_[ 0 ];
+        vectorial[ component() ] = scalar()[ 0 ];
         return vectorial;
       }
 
       const ThisType &operator*= ( const K &s )
       {
-        scalar_ *= s;
+        scalar() *= s;
         return *this;
       }
 
       const ThisType &operator/= ( const K &s )
       {
-        scalar_ /= s;
+        scalar() /= s;
         return *this;
-      }
-
-      bool operator== ( const ThisType &other ) const
-      {
-        return ((k_ == other.k_) && (scalar_ == other.scalar_));
-      }
-
-      bool operator!= ( const ThisType &other ) const
-      {
-        return ((k_ != other.k_) || (scalar_ != other.scalar_));
       }
 
       K operator* ( const ThisType &other ) const
       {
-        return (k_ == other.k_ ? scalar_ * other.scalar_ : K( 0 ));
+        return (component() == other.component() ? scalar() * other.scalar() : K( 0 ));
       }
 
       K operator* ( const VectorialType &other ) const
       {
-        return (scalar_[ 0 ] * other[ k_ ]);
+        return (scalar()[ 0 ] * other[ component() ]);
       }
 
-      K one_norm () const { return scalar_.one_norm(); }
-      K two_norm () const { return scalar_.two_norm(); }
-      K two_norm2 () const { return scalar_.two_norm2(); }
-      K infinity_norm () const { return scalar_.infinity_norm(); }
+      K one_norm () const { return scalar().one_norm(); }
+      K two_norm () const { return scalar().two_norm(); }
+      K two_norm2 () const { return scalar().two_norm2(); }
+      K infinity_norm () const { return scalar().infinity_norm(); }
 
       size_type size () const { return dimR; }
 
@@ -87,11 +77,16 @@ namespace Dune
 
       friend void axpy ( const K &a, const ThisType &x, VectorialType &y )
       {
-        y[ x.k_ ] += a * x.scalar_[ 0 ];
+        axpy( a, x.scalar()[ 0 ], y[ x.component() ] );
       }
 
+      int component () const { return component_; }
+
+      const ScalarType &scalar () const { return scalar_; }
+      ScalarType &scalar () { return scalar_; }
+
     protected:
-      int k_;
+      int component_;
       ScalarType scalar_;
     };
 
@@ -106,38 +101,28 @@ namespace Dune
 
       typedef typename VectorialType::size_type size_type;
 
-      MakeVectorialExpression ( int k, const ScalarType &scalar )
-      : k_( k ),
+      MakeVectorialExpression ( int component, const ScalarType &scalar )
+      : component_( component ),
         scalar_( scalar )
       {}
 
       operator VectorialType () const
       {
         VectorialType vectorial( K( 0 ) );
-        vectorial[ k_ ] = scalar_[ 0 ];
+        vectorial[ component() ] = scalar()[ 0 ];
         return vectorial;
       }
 
       const ThisType &operator*= ( const K &s )
       {
-        scalar_ *= s;
+        scalar() *= s;
         return *this;
       }
 
       const ThisType &operator/= ( const K &s )
       {
-        scalar_ /= s;
+        scalar() /= s;
         return *this;
-      }
-
-      bool operator== ( const ThisType &other ) const
-      {
-        return ((k_ == other.k_) && (scalar_ == other.scalar_));
-      }
-
-      bool operator!= ( const ThisType &other ) const
-      {
-        return ((k_ != other.k_) || (scalar_ != other.scalar_));
       }
 
       template< class X, class Y >
@@ -146,63 +131,68 @@ namespace Dune
         for( size_type i = 0; i < rows(); ++i )
           y[ i ] = K( 0 );
         for( size_type j= 0; j < cols(); ++j )
-          y[ k_ ] += scalar_[ k_ ][ j ] * x[ j ];
+          y[ component() ] += scalar()[ component() ][ j ] * x[ j ];
       }
 
       template< class X, class Y >
       void mtv ( const X &x, Y &y ) const
       {
         for( size_type i = 0; i < rows(); ++i )
-          y[ i ] = scalar_[ i ][ k_ ] * x[ k_ ];
+          y[ i ] = scalar()[ i ][ component() ] * x[ component() ];
       }
 
       template< class X, class Y >
       void umv ( const X &x, Y &y ) const
       {
         for( size_type j= 0; j < cols(); ++j )
-          y[ k_ ] += scalar_[ k_ ][ j ] * x[ j ];
+          y[ component() ] += scalar()[ component() ][ j ] * x[ j ];
       }
 
       template< class X, class Y >
       void umtv ( const X &x, Y &y ) const
       {
         for( size_type i = 0; i < rows(); ++i )
-          y[ i ] += scalar_[ i ][ k_ ] * x[ k_ ];
+          y[ i ] += scalar()[ i ][ component() ] * x[ component() ];
       }
 
       template< class X, class Y >
       void mmv ( const X &x, Y &y ) const
       {
         for( size_type j= 0; j < cols(); ++j )
-          y[ k_ ] -= scalar_[ k_ ][ j ] * x[ j ];
+          y[ component() ] -= scalar()[ component() ][ j ] * x[ j ];
       }
 
       template< class X, class Y >
       void mmtv ( const X &x, Y &y ) const
       {
         for( size_type i = 0; i < rows(); ++i )
-          y[ i ] -= scalar_[ i ][ k_ ] * x[ k_ ];
+          y[ i ] -= scalar()[ i ][ component() ] * x[ component() ];
       }
 
-      K frobenius_norm () const { return scalar_.frobenius_norm(); }
-      K frobenius_norm2 () const { return scalar_.frobenius_norm2(); }
-      K infinity_norm () const { return scalar_.infinity_norm(); }
+      K frobenius_norm () const { return scalar().frobenius_norm(); }
+      K frobenius_norm2 () const { return scalar().frobenius_norm2(); }
+      K infinity_norm () const { return scalar().infinity_norm(); }
 
-      K determinant () const { return (dimR == 1 ? scalar_.determinant() : K( 0 )); }
+      K determinant () const { return (dimR == 1 ? scalar().determinant() : K( 0 )); }
 
       size_type N () const { return rows(); }
       size_type M () const { return cols(); }
 
       size_type rows () const { return dimR; }
-      size_type cols () const { return scalar_.cols(); }
+      size_type cols () const { return scalar().cols(); }
 
       friend void axpy ( const K &a, const ThisType &x, VectorialType &y )
       {
-        y[ x.k_ ].axpy( a, x.scalar_[ 0 ] );
+        axpy( a, x.scalar()[ 0 ], y[ x.component() ] );
       }
 
+      int component () const { return component_; }
+
+      const ScalarType &scalar () const { return scalar_; }
+      ScalarType &scalar () { return scalar_; }
+
     protected:
-      int k_;
+      int component_;
       ScalarType scalar_;
     };
 
@@ -210,6 +200,22 @@ namespace Dune
 
     // Auxilliary Functions for MakeVectorialExpression
     // ------------------------------------------------
+
+    template< class Scalar, class Vectorial >
+    inline bool
+    operator== ( const MakeVectorialExpression< Scalar, Vectorial > &a,
+                 const MakeVectorialExpression< Scalar, Vectorial > &b )
+    {
+      return ((a.component() == b.component()) && (a.scalar() == b.scalar()));
+    }
+
+    template< class Scalar, class Vectorial >
+    inline bool
+    operator!= ( const MakeVectorialExpression< Scalar, Vectorial > &a,
+                 const MakeVectorialExpression< Scalar, Vectorial > &b )
+    {
+      return ((a.component() != b.component()) || (a.scalar() != b.scalar()));
+    }
 
     template< class Scalar, class Vectorial >
     inline bool
