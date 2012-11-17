@@ -33,8 +33,15 @@ namespace AnisotropicDG
 {
 
   // ShapeFunctionSetStorage
-  // -----------------------------
+  // -----------------------
 
+  /** 
+   * \brief Storage class for shape function sets for anisotropic DG space
+   *
+   * \tparam  FunctionSpace  Scalar value function space
+   * \tparam  maxOrder       max polynomial order
+   * \tparam  Storage        select caching/non caching shape function set
+   */
   template< class FunctionSpace, int maxOrder, template< class > class Storage >
   class ShapeFunctionSetStorage
   {
@@ -114,6 +121,7 @@ namespace AnisotropicDG
       }
     }
 
+    // add shape function set for given multi index to space
     bool insert ( const MultiIndexType &multiIndex )
     {
       const size_type position = ThisType::position( multiIndex );
@@ -128,12 +136,14 @@ namespace AnisotropicDG
       return false;
     }
 
+    // return true, if shape function set for multi index has been inserted
     bool exists ( const MultiIndexType &multiIndex ) const
     {
       const size_type position = ThisType::position( multiIndex );
       return shapeFunctionSets_[ position ];
     }
 
+    // return shape function set for multi index (do not test for null pointer)
     const ShapeFunctionSetType &operator[] ( const MultiIndexType &multiIndex ) const
     {
       const size_type position = ThisType::position( multiIndex );
@@ -142,6 +152,7 @@ namespace AnisotropicDG
     }
 
   private:
+    // map multi index set to integer value
     size_type position ( const MultiIndexType &multiIndex ) const
     {
       std::size_t position = 0, factor = 1;
@@ -159,6 +170,5 @@ namespace AnisotropicDG
   };
 
 } // namespace AnisotropicDG
-
 
 #endif // #ifndef DUNE_FEM_SPACE_ANISOTROPICDGSPACE_SHAPEFUNCTIONSETSTORAGE_HH
