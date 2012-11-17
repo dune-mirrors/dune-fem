@@ -145,7 +145,7 @@ namespace AnisotropicDG
     
     ShapeFunctionSetType shapeFunctionSet ( const MultiIndexType &multiIndex ) const
     {
-      return ShapeFunctionSetType( &scalarShapeFunctionSets_[ type ] );
+      return ShapeFunctionSetType( &scalarShapeFunctionSets_[ multiIndex ] );
     }
     
     bool contains ( const int codim ) const

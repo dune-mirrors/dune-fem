@@ -139,7 +139,7 @@ namespace AnisotropicDG
       return instance_;
     }
 
-    ~LegendreShapeFunctionSetProvider ();
+    ~LegendreShapeFunctionSetProvider () {}
     LegendreShapeFunctionSetProvider ( const ThisType & );
     ThisType &operator= ( const ThisType & );
 
@@ -254,6 +254,11 @@ namespace AnisotropicDG
       > ImplementationType;
 
   public:
+    typedef typename ImplementationType::DomainType DomainType;
+    typedef typename ImplementationType::RangeType RangeType;
+    typedef typename ImplementationType::JacobianRangeType JacobianRangeType;
+    typedef typename ImplementationType::HessianRangeType HessianRangeType;
+
     typedef typename ShapeFunctionSetTupleProviderType::MultiIndexType MultiIndexType;
 
     explicit ShapeFunctionSet ( const MultiIndexType &multiIndex = MultiIndexType( maxOrder ) )

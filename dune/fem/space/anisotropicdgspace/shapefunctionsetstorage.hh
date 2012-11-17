@@ -68,7 +68,7 @@ namespace AnisotropicDG
     {
       static Dune::GeometryType type ()
       {
-        return Dune::GeometryType( Dune::GenericGeometry::CubeTopology< dimension >::type() );
+        return Dune::GeometryType( typename Dune::GenericGeometry::CubeTopology< dimension >::type() );
       }
 
       static ShapeFunctionSetType *createObject ( const MultiIndexType &multiIndex )
