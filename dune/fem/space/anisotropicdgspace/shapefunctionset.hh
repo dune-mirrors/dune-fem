@@ -121,7 +121,6 @@ namespace AnisotropicDG
       }
     };
 
-  protected:
     LegendreShapeFunctionSetProvider ()
     {
       Dune::ForLoop< Initialize, 0, maxOrder >::apply( shapeFunctionSets_);
@@ -133,14 +132,14 @@ namespace AnisotropicDG
       return *( instance().shapeFunctionSets_[ order ] );
     }
 
-  protected:
+  private:
     static const ThisType &instance ()
     {
       static ThisType instance_;
       return instance_;
     }
 
-  private:
+    ~LegendreShapeFunctionSetProvider ();
     LegendreShapeFunctionSetProvider ( const ThisType & );
     ThisType &operator= ( const ThisType & );
 
@@ -228,14 +227,14 @@ namespace AnisotropicDG
 
 
 
-  // ScalarShapeFunctionSet
-  // ----------------------
+  // ShapeFunctionSet
+  // ----------------
 
   /*
-   * \brief Provices an anisotropic scalar Legendre shape function set
+   * \brief Provides an anisotropic scalar Legendre shape function set
    */
   template< class FunctionSpace, int maxOrder >
-  struct ScalarShapeFunctionSet
+  struct ShapeFunctionSet
   {
     typedef FunctionSpace FunctionSpaceType;
 
@@ -243,7 +242,7 @@ namespace AnisotropicDG
     dune_static_assert( (FunctionSpaceType::dimRange == 1),
                         "FunctionSpace must be scalar (i.e., dimRange = 1)." );
 
-    typedef ScalarShapeFunctionSet< FunctionSpaceType, maxOrder > ThisType;
+    typedef ShapeFunctionSet< FunctionSpaceType, maxOrder > ThisType;
 
   private:
     typedef ShapeFunctionSetTupleProvider< FunctionSpaceType, maxOrder > ShapeFunctionSetTupleProviderType;
@@ -257,7 +256,7 @@ namespace AnisotropicDG
   public:
     typedef typename ShapeFunctionSetTupleProviderType::MultiIndexType MultiIndexType;
 
-    explicit ScalarShapeFunctionSet ( const MultiIndexType &multiIndex )
+    explicit ShapeFunctionSet ( const MultiIndexType &multiIndex = MultiIndexType( maxOrder ) )
     : implementation_( ShapeFunctionSetTupleProviderType::create( multiIndex ) )
     {
       assert(( NumShapeFunctions< FunctionSpaceType::dimDomain, maxOrder >::count( multiIndex ) == size() )); 
@@ -294,34 +293,6 @@ namespace AnisotropicDG
 
   private:
     ImplementationType implementation_;
-  };
-
-
-
-  // ShapeFunctionSet
-  // ----------------
-
-  template< class FunctionSpace, int maxOrder >
-  class ShapeFunctionSet
-  : public Dune::Fem::VectorialShapeFunctionSet< 
-      ScalarShapeFunctionSet< typename Dune::Fem::ToScalarFunctionSpace< FunctionSpace >::Type, maxOrder >,
-      typename FunctionSpace::RangeType
-    >
-  {
-    typedef ShapeFunctionSet< FunctionSpace, maxOrder > ThisType;
-    typedef Dune::Fem::VectorialShapeFunctionSet< 
-        ScalarShapeFunctionSet< typename Dune::Fem::ToScalarFunctionSpace< FunctionSpace >::Type, maxOrder >,
-        typename FunctionSpace::RangeType
-      > BaseType;
-
-    typedef typename BaseType::ScalarShapeFunctionSetType ScalarShapeFunctionSetType;
-
-  public:
-    typedef typename ScalarShapeFunctionSetType::MultiIndexType MultiIndexType;
-
-    explicit ShapeFunctionSet ( const MultiIndexType &multiIndex = MultiIndexType( maxOrder ) )
-    : BaseType( ScalarShapeFunctionSetType( multiIndex ) )
-    {}
   };
 
 } // namespace AnisotropicDG 

@@ -12,10 +12,12 @@
 #include <dune/fem/space/common/functionspace.hh>
 #include <dune/fem/space/mapper/codimensionmapper.hh>
 #include <dune/fem/space/mapper/nonblockmapper.hh>
+#include <dune/fem/space/shapefunctionset/proxy.hh>
+#include <dune/fem/space/shapefunctionset/selectcaching.hh>
 
 // local includes
 #include "dofmapper.hh"
-#include "shapefunctionset.hh"
+#include "shapefunctionsetstorage.hh"
 
 /**
   @file
@@ -50,13 +52,20 @@ namespace AnisotropicDG
     static const int dimLocal = GridPartType::dimension;
 
     static const int codimension = 0;
-    typedef typename GridPart::template Codim< 0 >::EntityType EntityType;
-
-    typedef typename Dune::Fem::ToLocalFunctionSpace< FunctionSpace, dimLocal >::Type ShapeFunctionSpaceType;
-    typedef ShapeFunctionSet< ShapeFunctionSpaceType, maxOrder > ShapeFunctionSetType;
-    typedef Dune::Fem::DefaultBasisFunctionSet< EntityType, ShapeFunctionSetType > BasisFunctionSetType;
 
     typedef typename MultiIndexSet< dimLocal, maxOrder >::MultiIndexType MultiIndexType;
+
+    typedef typename FunctionSpaceType::ScalarFunctionSpaceType ScalarFunctionSpaceType;
+    typedef typename Dune::Fem::ToLocalFunctionSpace< ScalarFunctionSpaceType, dimLocal >::Type ShapeFunctionSpaceType;
+
+    typedef ShapeFunctionSetStorage< ShapeFunctionSpaceType, maxOrder, Storage > ScalarShapeFunctionSetStorageType;
+    typedef typename ScalarShapeFunctionSetStorageType::ShapeFunctionSetType ScalarShapeFunctionSetType;
+
+    typedef Dune::Fem::ShapeFunctionSetProxy< ScalarShapeFunctionSetType > ScalarShapeFunctionSetProxyType;
+    typedef Dune::Fem::VectorialShapeFunctionSet< ScalarShapeFunctionSetProxyType, typename FunctionSpaceType::RangeType > ShapeFunctionSetType;
+
+    typedef typename GridPart::template Codim< 0 >::EntityType EntityType;
+    typedef Dune::Fem::DefaultBasisFunctionSet< EntityType, ShapeFunctionSetType > BasisFunctionSetType;
 
     typedef Dune::Fem::CodimensionMapper< GridPartType, codimension > BlockMapperType;
     static const int localBlockSize = Dune::StaticPower< maxOrder+1, dimLocal >::power;
@@ -91,6 +100,7 @@ namespace AnisotropicDG
     typedef typename BaseType::GridPartType GridPartType;
     typedef typename BaseType::EntityType EntityType;
 
+    typedef typename Traits::ShapeFunctionSetType ShapeFunctionSetType;
     typedef typename BaseType::BasisFunctionSetType BasisFunctionSetType;
 
     typedef typename BaseType::MapperType MapperType;
@@ -99,7 +109,8 @@ namespace AnisotropicDG
     typedef typename Traits::MultiIndexType MultiIndexType;
 
   private:
-    typedef typename Traits::ShapeFunctionSetType ShapeFunctionSetType;
+    typedef typename Traits::ScalarShapeFunctionSetStorageType ScalarShapeFunctionSetStorageType;
+    typedef typename Traits::ScalarShapeFunctionSetType ScalarShapeFunctionSetType;
 
   public:
     using BaseType::gridPart;
@@ -112,7 +123,9 @@ namespace AnisotropicDG
       blockMapper_( gridPart ),
       mapper_( blockMapper_ ),
       multiIndex_( multiIndex )
-    {}
+    {
+      scalarShapeFunctionSets_.insert( multiIndex_ );
+    }
 
     Dune::Fem::DFSpaceIdentifier type () const
     {
@@ -121,8 +134,18 @@ namespace AnisotropicDG
 
     BasisFunctionSetType basisFunctionSet ( const EntityType &entity ) const
     {
+      return BasisFunctionSetType( entity, shapeFunctionSet( entity ) );
+    }
+
+    ShapeFunctionSetType shapeFunctionSet ( const EntityType &entity ) const
+    {
       // const MultiIndexType &multiIndex = mapper().order( entity );
-      return BasisFunctionSetType( entity, ShapeFunctionSetType( multiIndex_ ) );
+      return shapeFunctionSet( multiIndex_ );
+    }
+    
+    ShapeFunctionSetType shapeFunctionSet ( const MultiIndexType &multiIndex ) const
+    {
+      return ShapeFunctionSetType( &scalarShapeFunctionSets_[ type ] );
     }
     
     bool contains ( const int codim ) const
@@ -173,6 +196,7 @@ namespace AnisotropicDG
     mutable BlockMapperType blockMapper_;
     mutable MapperType mapper_;
     MultiIndexType multiIndex_;
+    ScalarShapeFunctionSetStorageType scalarShapeFunctionSets_;
   };
 
 }  // namespace AnisotropicDG

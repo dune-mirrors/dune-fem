@@ -31,6 +31,7 @@ namespace AnisotropicDG
     //! \brief return
     typedef Iterator IteratorType;
 
+    //! \brief return number of multi indices
     static std::size_t size ()
     {
       return std::pow( (order+1), dimension );
