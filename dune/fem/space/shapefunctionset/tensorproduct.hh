@@ -283,7 +283,7 @@ namespace Dune
       JacobianRangeType jacobian;
       for( int i = 0; i < dimension; ++i )
         jacobian[ 0 ][ i ] = RangeFieldType( 1 );
-      doJacobianeEach( 0, jacobian, index, buffer_, functor );
+      doJacobianEach( 0, jacobian, index, buffer_, functor );
     }
 
 
@@ -336,7 +336,7 @@ namespace Dune
           j[ 0 ][ d ] *= buffer[ i + sizes_[ d ] ];
           for( int k = 1; k < dimension; ++k )
             j[ 0 ][ (d+k)%dimension ] *= buffer[ i ];
-          doEvaluateEach( d+1, j, index, buffer+2*sizes_[ d ], functor ); 
+          doJacobianEach( d+1, j, index, buffer+2*sizes_[ d ], functor ); 
         }
       }
       else
@@ -362,7 +362,7 @@ namespace Dune
             for( int k = 1; k < dimension; ++k )
               h[ 0 ][ (d+j)%dimension ][ (d+k)%dimension ] *= buffer[ i ];
           }
-          doEvaluateEach( d+1, h, index, buffer+3*sizes_[ d ], functor ); 
+          doHessianEach( d+1, h, index, buffer+3*sizes_[ d ], functor ); 
         }
       }
       else
