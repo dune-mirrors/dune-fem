@@ -192,13 +192,42 @@ double algorithm ( MyGridType &grid, DiscreteFunctionType &solution, int step, i
   // if Grape was found, then display last solution 
   if(0 && turn > 0) {
     std::cerr << "SIZE: " << solution.space().size() 
-	      << " GRID: " << grid.size(0) << std::endl;
+        << " GRID: " << grid.size(0) << std::endl;
     std::cerr << "GRAPE 3" << std::endl;
     GrapeDataDisplay< MyGridType > grape(grid); 
     grape.dataDisplay( solution );
   }
 #endif
   return error;
+}
+
+template <class Space>
+void checkBaseSet( const Space& space ) 
+{
+  typedef typename Space :: IteratorType IteratorType ;
+  typedef typename IteratorType :: Entity EntityType ;
+  typedef typename Space :: RangeType  RangeType;
+  typedef typename Space :: ShapeFunctionSetType  ShapeFunctionSetType;
+  std::vector< RangeType > phi( space.blockMapper().maxNumDofs() );
+  const IteratorType endit = space.end();
+  for( IteratorType it = space.begin(); it != endit; ++it ) 
+  {
+    const EntityType& entity = *it ;
+    CachingQuadrature< GridPartType, 0 > quad( entity, space.order() );
+    const ShapeFunctionSetType& sSet = space.shapeFunctionSet( entity );
+    phi.resize( sSet.size() );
+    const int quadNop = quad.nop();
+    for( int i = 0; i< quadNop; ++ i) 
+    {
+      std::cout << "qp[ " << i << " ] = " << coordinate( quad[ i ] ) << std::endl;
+
+      sSet.evaluateEach( quad[ i ], Dune::Fem::AssignFunctor< std::vector< RangeType > > (phi) );
+      for( int j=0; j<sSet.size(); ++j ) 
+        std::cout << phi[ j ] << " " << std::endl;
+    }
+  }
+
+  abort();
 }
 
 
@@ -238,6 +267,8 @@ try {
 
   GridPartType part ( *grid );
   DiscreteFunctionSpaceType linFuncSpace ( part );
+  checkBaseSet( linFuncSpace );
+
   DiscreteFunctionType solution ( "sol", linFuncSpace );
   solution.clear();
   std::cout << "------------    Refining:" << std::endl;
