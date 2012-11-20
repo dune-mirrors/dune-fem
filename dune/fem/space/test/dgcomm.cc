@@ -15,8 +15,6 @@ using namespace Dune;
 #include <dune/fem/gridpart/adaptiveleafgridpart.hh>
 #include <dune/fem/gridpart/hierarchicgridpart.hh>
 
-#include <dune/fem/operator/projection/l2projection.hh>
-
 #if HAVE_GRAPE && GRIDDIM > 1 
 #define USE_GRAPE 1
 #else 
@@ -35,6 +33,10 @@ using namespace Fem;
 // polynom approximation order of quadratures, 
 // at least poolynom order of basis functions 
 const int polOrd = POLORDER;
+
+#ifndef GRIDDIM 
+#define GRIDDIM dimworld 
+#endif
 
 //***********************************************************************
 /*! L2 Projection of a function f: 
@@ -84,6 +86,52 @@ struct ExactSolution
   }
 };
 
+// ********************************************************************
+class DGL2ProjectionAllPartitionNoComm
+{
+
+ public:
+  template <class FunctionType, class DiscreteFunctionType> 
+  static void project (const FunctionType &f, DiscreteFunctionType &discFunc, 
+                       int polOrd = -1 ) 
+  {
+    typedef typename DiscreteFunctionType::Traits::DiscreteFunctionSpaceType 
+      FunctionSpaceType;
+    typedef typename FunctionSpaceType::Traits::GridPartType GridPartType;
+    typedef typename GridPartType :: template Codim < 0 > :: 
+      template Partition< All_Partition > :: IteratorType IteratorType;
+
+    const FunctionSpaceType& space =  discFunc.space();
+
+    if( polOrd < 0 )  polOrd = 2 * space.order() + 2 ;
+
+    discFunc.clear();
+
+    typedef typename DiscreteFunctionType::LocalFunctionType LocalFuncType;
+
+    typename FunctionSpaceType::RangeType ret (0.0);
+    typename FunctionSpaceType::RangeType phi (0.0);
+
+    IteratorType it    = space.gridPart().template begin< 0, All_Partition > ();
+    IteratorType endit = space.gridPart().template end< 0, All_Partition > ();
+
+    // Get quadrature rule
+    CachingQuadrature<GridPartType,0> quad(*it, polOrd);
+
+    for( ; it != endit ; ++it) 
+    {
+      LocalFuncType lf = discFunc.localFunction(*it);
+      const typename MyGridType::template Codim<0>::Entity::Geometry &itGeom
+        = (*it).geometry();
+      for( size_t qP = 0; qP < quad.nop(); ++qP )
+      {
+        f.evaluate(itGeom.global(quad.point(qP)), ret);
+        ret *= quad.weight(qP) ;
+        lf.axpy( quad[qP], ret );
+      }
+    }
+  }
+};
 
 // calculates || u-u_h ||_L2
 template <class DiscreteFunctionType>
@@ -171,11 +219,6 @@ double algorithm ( MyGridType &grid, DiscreteFunctionType &solution, int step, i
   L2ErrorNoComm< DiscreteFunctionType > l2err;
   solution.clear();
 
-  // choose default order and no communication 
-  //Fem::L2Projection< ExactSolution, DiscreteFunctionType > l2pro( -1, false );
-
-  //l2pro( f, solution );
-
   DGL2ProjectionAllPartitionNoComm :: project( f, solution );
   double new_error = l2err.norm(f ,solution);
   std::cout << "P[" << grid.comm().rank() << "]  start comm: " << new_error << std::endl; 
@@ -190,11 +233,9 @@ double algorithm ( MyGridType &grid, DiscreteFunctionType &solution, int step, i
   // calculate l2 error again 
   double error = l2err.norm(f ,solution);
   std::cout << "P[" << grid.comm().rank() << "]  done comm: " << error << std::endl;
-  std::cout << "P[" << grid.comm().rank() << "]  diff :" << std::abs( error - new_error ) << std::endl;
 
   if( std::abs( new_error - error ) > 1e-10 ) 
     DUNE_THROW(InvalidStateException,"Communication not working correctly");
-
   
   ///////////////////////////////////////////////////
   //  test non-blocking communication 
@@ -219,8 +260,7 @@ double algorithm ( MyGridType &grid, DiscreteFunctionType &solution, int step, i
 
   // calculate l2 error again 
   double nonBlock = l2err.norm(f ,solution);
-  std::cout << "P[" << grid.comm().rank() << "]  non-blocking:   " << nonBlock << std::endl;
-  std::cout << "P[" << grid.comm().rank() << "]  diff non-block: " << std::abs( nonBlock - new_error ) << std::endl;
+  std::cout << "P[" << grid.comm().rank() << "]  non-blocking: " << nonBlock << std::endl;
 
   if( std::abs( new_error - nonBlock ) > 1e-10 ) 
     DUNE_THROW(InvalidStateException,"Communication not working correctly");
