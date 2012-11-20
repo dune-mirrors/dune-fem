@@ -17,7 +17,7 @@ AM_CPPFLAGS = $(ALL_PKG_CPPFLAGS) -DPOLORDER=$(POLORDER) -DWANT_GRAPE=$(WANT_GRA
 
 ADAPTPROG = lagrangeadapt adapt padapt
 # programs run during make check 
-TESTS = $(ADAPTPROG)
+TESTS = $(ADAPTPROG) dgcomm-4.sh
 
 check_PROGRAMS = $(ADAPTPROG) l2projection lagrangeinterpolation legendretest \
                  lagrangeglobalrefine arraytest dgcomm
