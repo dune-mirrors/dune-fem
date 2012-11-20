@@ -99,7 +99,7 @@ struct Scheme
       discreteSpace_( gridPart_ ),
       solution_( "solution", discreteSpace_ ),
       restrictProlong_( solution_ ),
-      adaptationManager_( gridPart_.grid(), restrictProlong_ ),
+      adaptationManager_( gridPart_.grid(), restrictProlong_, 1),
       step_( step )
   {
     if( discreteSpace_.begin() != discreteSpace_.end() ) 
@@ -204,6 +204,7 @@ struct Function : Dune::Fem::Function< FunctionSpace, Function< FunctionSpace > 
 template <class HGridType>
 double algorithm ( HGridType &grid, const int step )
 {
+  /*
   const int loadBalance = Dune::Fem::Parameter::getValue< int >( "fem.loadbalancing.step", 0 );
   
   if( loadBalance > 0 )
@@ -211,6 +212,7 @@ double algorithm ( HGridType &grid, const int step )
     std::cout << "load balancing activated" << std::endl;
     grid.loadBalance();
   }
+  */
 
   // we want to solve the problem on the leaf elements of the grid
   typedef Dune::Fem::AdaptiveLeafGridPart< HGridType, Dune::InteriorBorder_Partition > GridPartType;
@@ -252,8 +254,10 @@ double algorithm ( HGridType &grid, const int step )
         break;
     }
 
+    /*
     if( loadBalance > 0 )
       grid.loadBalance();
+    */
 
 
     // data I/O
