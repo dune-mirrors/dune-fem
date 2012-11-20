@@ -138,7 +138,7 @@ struct Scheme
       // x = center - ( t, t, t )
       DomainType x;
 
-      for( int i = 0; i < 3; ++i )
+      for( int i = 0; i < DomainType::dimension; ++i )
         x[ i ] = center[ i ] - time;
       
       /*      // find center
@@ -278,6 +278,7 @@ try
   Dune::Fem::Parameter::append( "fem.io.outputformat", "vtk-cell" );
   Dune::Fem::Parameter::append( "fem.io.partitioning", "true" );
   Dune::Fem::Parameter::append( "fem.loadbalancing.step", "1" );
+  Dune::Fem::Parameter::append( "fem.adaptation.method", "callback" );
 
   // type of hierarchical grid 
   typedef Dune :: GridSelector :: GridType  HGridType ;
