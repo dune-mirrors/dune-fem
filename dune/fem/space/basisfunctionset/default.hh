@@ -120,7 +120,7 @@ namespace Dune
         for( int r = 0; r < FunctionSpaceType::dimRange; ++r )
           gjit.mtv( jacobianFactor[ r ], tmpJacobianFactor[ r ] );
 
-        FunctionalAxpyFunctor< LocalJacobianRangeType, DofVector > f( jacobianFactor, dofs );
+        FunctionalAxpyFunctor< LocalJacobianRangeType, DofVector > f( tmpJacobianFactor, dofs );
         shapeFunctionSet().jacobianEach( x, f );
       }
 
