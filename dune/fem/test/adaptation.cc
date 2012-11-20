@@ -201,7 +201,13 @@ try
   typedef Dune :: GridSelector :: GridType  HGridType ;
 
   // create grid from DGF file
-  const std::string gridfile = "unitcube-3d.dgf";
+  std::stringstream gridfilestr;
+  if( HGridType :: dimension == 3 ) 
+    gridfilestr << "unitcube-3d.dgf";
+  else   
+    gridfilestr << HGridType :: dimension << "dgrid.dgf";
+
+  const std::string gridfile ( gridfilestr.str() );
 
   // the method rank and size from MPIManager are static 
   if( Dune::Fem::MPIManager::rank() == 0 )
