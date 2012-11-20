@@ -3,7 +3,9 @@
 # set default grid type for make all
 GRIDTYPE=YASPGRID
 #GRIDTYPE=ALUGRID_CONFORM
+
 GRIDDIM=2
+#GRIDDIM=3
 
 EXTRA_DIST = 2dgrid.dgf \
              3dgrid.dgf \
@@ -77,6 +79,6 @@ intersectionindexset_SOURCES = intersectionindexset.cc
 intersectionindexset_CPPFLAGS = $(AM_CPPFLAGS)
 
 adaptation_SOURCES = adaptation.cc
-adaptation_CPPFLAGS = $(AM_CPPFLAGS)
+adaptation_CPPFLAGS = $(AM_CPPFLAGS) -UGRIDDIM -DGRIDDIM=3 -UWORLDDIM -DWORLDDIM=3
 
 include $(top_srcdir)/am/global-rules

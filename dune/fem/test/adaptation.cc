@@ -5,6 +5,10 @@
 #endif
 #endif
 
+#if defined ALUGRID_CONFORM 
+#define CONFORMING_SPACE
+#endif
+
 // include configure variables 
 #include <config.h>
 
@@ -19,6 +23,7 @@
 
 // include discrete function space
 #include <dune/fem/space/lagrangespace.hh>
+#include <dune/fem/space/dgspace.hh>
 
 // adaptation ...
 #include <dune/fem/function/adaptivefunction.hh>
@@ -68,7 +73,11 @@ struct Scheme
   typedef typename GridPartType::GridType GridType;
   
   typedef FunctionSpace FunctionSpaceType;
+#ifdef CONFORMING_SPACE
   typedef Dune::Fem::LagrangeDiscreteFunctionSpace< FunctionSpaceType, GridPartType, POLORDER > DiscreteFunctionSpaceType;
+#else 
+  typedef Dune::Fem::DiscontinuousGalerkinSpace< FunctionSpaceType, GridPartType, POLORDER > DiscreteFunctionSpaceType;
+#endif
 
 #if HAVE_DUNE_ISTL
   typedef Dune::Fem::ISTLBlockVectorDiscreteFunction< DiscreteFunctionSpaceType > DiscreteFunctionType;
