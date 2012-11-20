@@ -2,13 +2,14 @@
 
 # set default grid type for make all
 GRIDTYPE=YASPGRID
+#GRIDTYPE=ALUGRID_CONFORM
 GRIDDIM=2
 
 EXTRA_DIST = 2dgrid.dgf \
              3dgrid.dgf \
              dfspace.hh \
              exactsolution.hh \
-						 weightfunction.hh \
+             weightfunction.hh \
              testgrid.hh
 
 # linker flags
@@ -25,7 +26,8 @@ TESTPROGS = lagrangeinterpolation_linear lagrangeinterpolation_quadratic \
             dgl2projection_fv      \
             dgl2projection_idgridpart \
             vtxprojection_adaptive \
-            intersectionindexset 
+            intersectionindexset \
+            adaptation
 
 
 TESTS = $(TESTPROGS)
@@ -73,5 +75,8 @@ vtxprojection_adaptive_CPPFLAGS = -DPOLORDER=1 -DCOUNT_FLOPS $(AM_CPPFLAGS)
 
 intersectionindexset_SOURCES = intersectionindexset.cc
 intersectionindexset_CPPFLAGS = $(AM_CPPFLAGS)
+
+adaptation_SOURCES = adaptation.cc
+adaptation_CPPFLAGS = $(AM_CPPFLAGS)
 
 include $(top_srcdir)/am/global-rules
