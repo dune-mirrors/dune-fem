@@ -554,8 +554,9 @@ namespace Dune
         // get new off set 
         const int newOffSet = mapper().offSet( block );
 
+        // this seams not to be true for higher order Lagrange parallel computations
         // here we should have at least the same offsets 
-        assert( newOffSet <= oldOffSet );
+        // assert( newOffSet <= oldOffSet );
 
         // only if block is not starting from zero 
         if( newOffSet < oldOffSet )
@@ -571,6 +572,21 @@ namespace Dune
           // move block forward 
           SpecialArrayFeatures< DofArrayType >
             :: memMoveForward( array_, blockSize, oldOffSet, newOffSet ); 
+        }
+        // otherwise move backward 
+        else if( newOffSet > oldOffSet )
+        {
+          // get number of blocks 
+          const int numBlocks = mapper().numBlocks();
+
+          // get upperBound 
+          const int upperBound
+            = (block == numBlocks - 1) ? oldSize : mapper().oldOffSet( block + 1 );
+          // calculate block size 
+          const int blockSize = upperBound - oldOffSet;
+          // move block backward 
+          SpecialArrayFeatures< DofArrayType >
+            :: memMoveBackward( array_, blockSize, oldOffSet, newOffSet );
         }
       }
     };
