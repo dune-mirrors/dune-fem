@@ -19,7 +19,7 @@ using namespace Dune;
 #include <dune/fem/operator/projection/dgl2projection.hh>
 #include <dune/fem/misc/l2norm.hh>
 
-#if HAVE_GRAPE && GRIDDIM > 1 
+#if HAVE_GRAPE && WANT_GRAPE && GRIDDIM > 1 
 #define USE_GRAPE 1
 #else 
 #define USE_GRAPE 0
@@ -50,7 +50,6 @@ using namespace Fem;
 typedef GridSelector::GridType MyGridType;
 typedef DGAdaptiveLeafGridPart< MyGridType > GridPartType;
 //typedef AdaptiveLeafGridPart< MyGridType > GridPartType;
-//typedef HierarchicGridPart< MyGridType > GridPartType;
 
 //! define the function space, \f[ \R^2 \rightarrow \R \f]
 // see dune/common/functionspace.hh
@@ -161,7 +160,8 @@ double algorithm ( MyGridType &grid, DiscreteFunctionType &solution, int step, i
 
 #if USE_GRAPE
   // if Grape was found, then display last solution 
-  if(0 && turn > 0) {
+  if(turn > 0) 
+  {
     std::cerr << "GRAPE 1" << std::endl;
     GrapeDataDisplay < MyGridType > grape(grid); 
     grape.dataDisplay( solution );
@@ -177,7 +177,8 @@ double algorithm ( MyGridType &grid, DiscreteFunctionType &solution, int step, i
 
 #if USE_GRAPE
   // if Grape was found, then display last solution 
-  if(0 && turn > 0) {
+  if(turn > 0) 
+  {
     std::cerr << "GRAPE 2" << std::endl;
     GrapeDataDisplay< MyGridType > grape(grid); 
     grape.dataDisplay( solution );
@@ -190,9 +191,10 @@ double algorithm ( MyGridType &grid, DiscreteFunctionType &solution, int step, i
   std::cout << "\nL2 Error : " << error << " on new grid " << new_error << "\n\n";
 #if USE_GRAPE
   // if Grape was found, then display last solution 
-  if(0 && turn > 0) {
+  if(turn > 0) 
+  {
     std::cerr << "SIZE: " << solution.space().size() 
-	      << " GRID: " << grid.size(0) << std::endl;
+        << " GRID: " << grid.size(0) << std::endl;
     std::cerr << "GRAPE 3" << std::endl;
     GrapeDataDisplay< MyGridType > grape(grid); 
     grape.dataDisplay( solution );
@@ -200,7 +202,6 @@ double algorithm ( MyGridType &grid, DiscreteFunctionType &solution, int step, i
 #endif
   return error;
 }
-
 
 //**************************************************
 //
@@ -237,25 +238,39 @@ try {
   const int step = DGFGridInfo< MyGridType >::refineStepsForHalf();
 
   GridPartType part ( *grid );
-  DiscreteFunctionSpaceType linFuncSpace ( part );
-  DiscreteFunctionType solution ( "sol", linFuncSpace );
+  DiscreteFunctionSpaceType space( part );
+
+  // threshold for EOC difference to predicted value 
+  const double eocThreshold = Parameter :: getValue("adapt.eocthreshold", double(0.2) );
+
+  DiscreteFunctionType solution ( "sol", space );
   solution.clear();
   std::cout << "------------    Refining:" << std::endl;
   for(int i=0; i<ml; i+=1)
   {
     error[i] = algorithm ( *grid , solution, step, (i==ml-1));
-    if (i>0) {
+    if (i>0) 
+    {
       double eoc = log( error[i-1]/error[i]) / M_LN2; 
       std::cout << "EOC = " << eoc << " \n";
+      if( std::abs( eoc - (space.order()+1.0) ) > eocThreshold ) 
+      {
+        DUNE_THROW(InvalidStateException,"EOC check of refinement failed");
+      }
     }
   }
   std::cout << "------------   Coarsening:" << std::endl;
   for(int i=ml-1; i>=0; i-=1)
   {
     error[i] = algorithm ( *grid , solution,-step, 1);
-    if (i<ml-1) {
+    if (i<ml-1) 
+    {
       double eoc = log( error[i+1]/error[i]) / M_LN2; 
       std::cout << "EOC = " << eoc << " \n";
+      if( std::abs( eoc + (space.order()+1.0) ) > eocThreshold ) 
+      {
+        DUNE_THROW(InvalidStateException,"EOC check of coarsening failed");
+      }
     }
   }
   return 0;
