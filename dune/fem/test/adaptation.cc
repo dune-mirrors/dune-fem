@@ -99,7 +99,7 @@ struct Scheme
       discreteSpace_( gridPart_ ),
       solution_( "solution", discreteSpace_ ),
       restrictProlong_( solution_ ),
-      adaptationManager_( gridPart_.grid(), restrictProlong_, 1),
+      adaptationManager_( gridPart_.grid(), restrictProlong_ ),
       step_( step )
   {
     if( discreteSpace_.begin() != discreteSpace_.end() ) 
@@ -204,16 +204,6 @@ struct Function : Dune::Fem::Function< FunctionSpace, Function< FunctionSpace > 
 template <class HGridType>
 double algorithm ( HGridType &grid, const int step )
 {
-  /*
-  const int loadBalance = Dune::Fem::Parameter::getValue< int >( "fem.loadbalancing.step", 0 );
-  
-  if( loadBalance > 0 )
-  {
-    std::cout << "load balancing activated" << std::endl;
-    grid.loadBalance();
-  }
-  */
-
   // we want to solve the problem on the leaf elements of the grid
   typedef Dune::Fem::AdaptiveLeafGridPart< HGridType, Dune::InteriorBorder_Partition > GridPartType;
   GridPartType gridPart(grid);
@@ -237,7 +227,7 @@ double algorithm ( HGridType &grid, const int step )
   DataOutputType dataOutput( grid, ioTuple, DataOutputParameters( step ) );
   ///////////////////////////
 
-  for( double time = 0; time <= 1.0; time += 0.05 )
+  for( double time = 0; time <= 0.35; time += 0.05 )
   {
     if( Dune::Fem::MPIManager::rank() == 0 )
       std::cout << "time: " << time << std::endl;
@@ -253,12 +243,6 @@ double algorithm ( HGridType &grid, const int step )
       if( max > 10 )
         break;
     }
-
-    /*
-    if( loadBalance > 0 )
-      grid.loadBalance();
-    */
-
 
     // data I/O
     dataOutput.write();
@@ -293,6 +277,7 @@ try
   Dune::Fem::Parameter::append( "fem.io.savecount", "1" );
   Dune::Fem::Parameter::append( "fem.io.outputformat", "vtk-cell" );
   Dune::Fem::Parameter::append( "fem.io.partitioning", "true" );
+  Dune::Fem::Parameter::append( "fem.loadbalancing.step", "1" );
 
   // type of hierarchical grid 
   typedef Dune :: GridSelector :: GridType  HGridType ;
