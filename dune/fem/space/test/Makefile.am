@@ -5,17 +5,22 @@ WANT_CACHED = 1
 # set default grid type for make all
 GRIDTYPE=YASPGRID
 #GRIDTYPE=PARALLELGRID_ALUGRID_SIMPLEX
+#GRIDTYPE=ALUGRID_SIMPLEX
 #GRIDTYPE=ALUGRID_CONFORM
 #GRIDTYPE=ALUGRID_CUBE
+#GRIDTYPE=ALBERTAGRID
 GRIDDIM=2
 
 LDADD = $(ALL_PKG_LDFLAGS) $(ALL_PKG_LIBS) $(LOCAL_LIBS) $(MPI_LDFLAGS)
 AM_CPPFLAGS = $(ALL_PKG_CPPFLAGS) -DPOLORDER=$(POLORDER) -DWANT_GRAPE=$(WANT_GRAPE) \
   -DWANT_CACHED_COMM_MANAGER=$(WANT_CACHED)
 
-ADAPTPROG = lagrangeadapt adapt
+ADAPTPROG = lagrangeadapt adapt padapt
+# programs run during make check 
+TESTS = $(ADAPTPROG)
+
 check_PROGRAMS = $(ADAPTPROG) l2projection lagrangeinterpolation legendretest \
-                 lagrangeglobalrefine arraytest dgcomm padapt
+                 lagrangeglobalrefine arraytest dgcomm
 
 EXTRA_DIST = systemmatrix.cc
 
