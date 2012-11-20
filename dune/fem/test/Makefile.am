@@ -28,12 +28,10 @@ TESTPROGS = lagrangeinterpolation_linear lagrangeinterpolation_quadratic \
             dgl2projection_fv      \
             dgl2projection_idgridpart \
             vtxprojection_adaptive \
-            intersectionindexset \
-            adaptation
+            intersectionindexset
 
-
-TESTS = $(TESTPROGS)
-check_PROGRAMS = $(TESTPROGS)
+TESTS = $(TESTPROGS) adaptation-4.sh
+check_PROGRAMS = $(TESTPROGS) adaptation
 
 lagrangeinterpolation_linear_SOURCES = lagrangeinterpolation.cc
 lagrangeinterpolation_linear_CPPFLAGS = -DPOLORDER=1 -DCOUNT_FLOPS $(AM_CPPFLAGS)
