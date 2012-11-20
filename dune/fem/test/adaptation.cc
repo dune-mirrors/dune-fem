@@ -6,7 +6,7 @@
 #endif
 
 #if defined ALUGRID_CONFORM 
-#define CONFORMING_SPACE
+// #define CONFORMING_SPACE
 #endif
 
 // include configure variables 
@@ -17,6 +17,7 @@
 
 // include grid part
 #include <dune/fem/gridpart/adaptiveleafgridpart.hh>
+#include <dune/fem/gridpart/hierarchicgridpart.hh>
 
 // include output
 #include <dune/fem/io/file/dataoutput.hh>
@@ -99,7 +100,7 @@ struct Scheme
       discreteSpace_( gridPart_ ),
       solution_( "solution", discreteSpace_ ),
       restrictProlong_( solution_ ),
-      adaptationManager_( gridPart_.grid(), restrictProlong_, 1),
+      adaptationManager_( gridPart_.grid(), restrictProlong_),
       step_( step )
   {
     if( discreteSpace_.begin() != discreteSpace_.end() ) 
@@ -204,18 +205,9 @@ struct Function : Dune::Fem::Function< FunctionSpace, Function< FunctionSpace > 
 template <class HGridType>
 double algorithm ( HGridType &grid, const int step )
 {
-  /*
-  const int loadBalance = Dune::Fem::Parameter::getValue< int >( "fem.loadbalancing.step", 0 );
-  
-  if( loadBalance > 0 )
-  {
-    std::cout << "load balancing activated" << std::endl;
-    grid.loadBalance();
-  }
-  */
-
   // we want to solve the problem on the leaf elements of the grid
   typedef Dune::Fem::AdaptiveLeafGridPart< HGridType, Dune::InteriorBorder_Partition > GridPartType;
+  // typedef Dune::Fem::HierarchicGridPart< HGridType > GridPartType;
   GridPartType gridPart(grid);
 
   // use a scalar function space
@@ -253,12 +245,6 @@ double algorithm ( HGridType &grid, const int step )
       if( max > 10 )
         break;
     }
-
-    /*
-    if( loadBalance > 0 )
-      grid.loadBalance();
-    */
-
 
     // data I/O
     dataOutput.write();
