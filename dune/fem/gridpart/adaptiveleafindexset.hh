@@ -537,7 +537,7 @@ namespace Dune
         if( !codimAvailable( codim ) ) 
           DUNE_THROW( NotImplemented, (name() + " does not support indices for codim = ") << codim );
 
-        if( (codim != 0) && !codimUsed_[ codim ] )
+        if( (codim != 0) && ! codimUsed_[ codim ] )
           ForLoop< CallSetUpCodimSet, 0, dimension >::apply( codim, *this );
 
         const CodimIndexSetType &codimSet = codimLeafSet( codim );
@@ -555,7 +555,7 @@ namespace Dune
       //! return number of holes of the sets indices 
       int numberOfHoles ( const int codim ) const
       {
-        if( codimAvailable( codim ) ) 
+        if( codimAvailable( codim ) && codimUsed_[codim] ) 
         {
           assert( codimUsed_[codim] );
           return codimLeafSet( codim ).numberOfHoles(); 
@@ -981,6 +981,7 @@ namespace Dune
       // mark codimension as used
       codimUsed_[ codim ] = true;
     }
+
     template< class TraitsImp >
     template< int codim >
     inline void
@@ -998,10 +999,11 @@ namespace Dune
       const Iterator end = gridPart_.template end< 0, pitype >();
       for( Iterator it = gridPart_.template begin< 0, pitype >(); it != end; ++it )
       {
-        for (int i=0;i<it->template count<codim>();++i)
+        const ElementType& element = *it ;
+        for (int i = 0; i < element.template count<codim>(); ++i )
         {
-          if (! codimLeafSet( codim ).exists( *it, i) )
-            codimLeafSet( codim ).insertSubEntity( *it,i );
+          if (! codimLeafSet( codim ).exists( element, i) )
+            codimLeafSet( codim ).insertSubEntity( element, i );
         }
       }
 
