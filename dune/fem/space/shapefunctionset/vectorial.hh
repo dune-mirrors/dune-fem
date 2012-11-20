@@ -328,10 +328,35 @@ namespace Dune
       axpy( a, Traits::access( x.scalar() ), Traits::access( y, x.component() ) );
     }
 
+    template< class Scalar, class Vectorial >
+    inline typename MakeVectorialTraits< Scalar, Vectorial >::field_type
+    scalarProduct ( const MakeVectorialExpression< Scalar, Vectorial > &a,
+                    const Vectorial &b )
+    {
+      return scalarProduct( a.scalar()[ 0 ], b[ a.component() ] );
+    }
+
+    template< class Scalar, class Vectorial >
+    inline typename MakeVectorialTraits< Scalar, Vectorial >::field_type
+    scalarProduct ( const Vectorial &a,
+                    const MakeVectorialExpression< Scalar, Vectorial > &b )
+    {
+      return scalarProduct( a[ b.component() ], b.scalar()[ 0 ] );
+    }
+
+    template< class Scalar, class Vectorial >
+    inline typename MakeVectorialTraits< Scalar, Vectorial >::field_type
+    scalarProduct ( const MakeVectorialExpression< Scalar, Vectorial > &a,
+                    const MakeVectorialExpression< Scalar, Vectorial > &b )
+    {
+      typedef typename MakeVectorialTraits< Scalar, Vectorial >::field_type field_type;
+      return (a.component() == b.component() ? scalarProduct( a.scalar(), b.scalar() ) : field_type( 0 ));
+    }
 
 
-    // ToNewRangeType
-    // --------------
+
+    // ToNewRange
+    // ----------
 
     template< class ScalarFunctionSpace, class RangeVector >
     struct ToNewRange;
