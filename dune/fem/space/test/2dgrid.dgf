@@ -3,11 +3,11 @@ DGF
 Interval
 0 0   % p0
 1 1   % p1
-1 1   % nx ny
+4 4   % nx ny
 #
 
 BoundaryDomain
-1    -1 -1   30 30
+default 1 
 #
 
 GridParameter
