@@ -122,44 +122,44 @@ struct Scheme
     // loop over all elements 
     const IteratorType end = discreteSpace_.end();
     for( IteratorType it = discreteSpace_.begin(); it != end; ++it )
+    {
+      const ElementType &entity = *it;
+
+      // find center
+      DomainType center = DomainType( 0 );
+
+      for( int i = 0; i < entity.geometry().corners(); ++i )
       {
-	const ElementType &entity = *it;
-
-	// find center
-	DomainType center = DomainType( 0 );
-
-	for( int i = 0; i < entity.geometry().corners(); ++i )
-	  {
-	    center += entity.geometry().corner( i );
-	  }
-
-	//	center /= entity.geometry().corners();
-
-	// x = center - ( t, t, t )
-	DomainType x;
-
-	for( int i = 0; i < 3; ++i )
-	  x[ i ] = center[ i ] - time;
-	
-	/*	// find center
-	DomainType center = entity.geometry().center();
-	DomainType x = DomainType(-time);
-	x += center;*/
-
-	// refine if 0.3 < |x| < 1.0, otherwise (possibly) coarsen
-	if( x.two_norm() > 0.3 && x.two_norm() < 1.0 && entity.level() <= 9 + 3 * step_ )
-	  {
-	    grid_.mark( 1, entity );
-	    marked = 1;
-	    count ++;
-	  }
-	else
-	  {
-	    grid_.mark( -1, entity );
-	  }
-
-	total++;
+        center += entity.geometry().corner( i );
       }
+
+      //      center /= entity.geometry().corners();
+
+      // x = center - ( t, t, t )
+      DomainType x;
+
+      for( int i = 0; i < 3; ++i )
+        x[ i ] = center[ i ] - time;
+      
+      /*      // find center
+      DomainType center = entity.geometry().center();
+      DomainType x = DomainType(-time);
+      x += center;*/
+
+      // refine if 0.3 < |x| < 1.0, otherwise (possibly) coarsen
+      if( x.two_norm() > 0.3 && x.two_norm() < 1.0 && entity.level() <= 9 + 3 * step_ )
+      {
+        grid_.mark( 1, entity );
+        marked = 1;
+        count ++;
+      }
+      else
+      {
+        grid_.mark( -1, entity );
+      }
+
+      total++;
+    }
 
     // get global max 
     marked = grid_.comm().max( marked );
@@ -167,7 +167,7 @@ struct Scheme
     // print info
     if( bool( marked ) )
       std::cout << "P" << Dune::Fem::MPIManager::rank() << ": " << 
-	"marked (" << count << " of " << total << ")" << std::endl;
+        "marked (" << count << " of " << total << ")" << std::endl;
     return bool(marked);
   }
 
@@ -192,7 +192,7 @@ template< class FunctionSpace >
 struct Function : Dune::Fem::Function< FunctionSpace, Function< FunctionSpace > >
 {
   void evaluate( const typename FunctionSpace::DomainType &x,
-		 typename FunctionSpace::RangeType &y ) const
+                 typename FunctionSpace::RangeType &y ) const
   {
     y[ 0 ] = 0.0;
   }
@@ -207,10 +207,10 @@ double algorithm ( HGridType &grid, const int step )
   const int loadBalance = Dune::Fem::Parameter::getValue< int >( "fem.loadbalancing.step", 0 );
   
   if( loadBalance > 0 )
-    {
-      std::cout << "load balancing activated" << std::endl;
-      grid.loadBalance();
-    }
+  {
+    std::cout << "load balancing activated" << std::endl;
+    grid.loadBalance();
+  }
 
   // we want to solve the problem on the leaf elements of the grid
   typedef Dune::Fem::AdaptiveLeafGridPart< HGridType, Dune::InteriorBorder_Partition > GridPartType;
@@ -236,29 +236,29 @@ double algorithm ( HGridType &grid, const int step )
   ///////////////////////////
 
   for( double time = 0; time <= 1.0; time += 0.05 )
+  {
+    if( Dune::Fem::MPIManager::rank() == 0 )
+      std::cout << "time: " << time << std::endl;
+
+    // mark element for adaptation 
+    int max = 0;
+    while( scheme.mark( time ) ) 
     {
-      if( Dune::Fem::MPIManager::rank() == 0 )
-	std::cout << "time: " << time << std::endl;
+      // adapt grid 
+      scheme.adapt();
 
-      // mark element for adaptation 
-      int max = 0;
-      while( scheme.mark( time ) ) 
-	{
-	  // adapt grid 
-	  scheme.adapt();
-
-	  max++;
-	  if( max > 10 )
-	    break;
-	}
-
-      if( loadBalance > 0 )
-	grid.loadBalance();
-
-
-      // data I/O
-      dataOutput.write();
+      max++;
+      if( max > 10 )
+        break;
     }
+
+    if( loadBalance > 0 )
+      grid.loadBalance();
+
+
+    // data I/O
+    dataOutput.write();
+  }
 
   return 0.0;
 }
