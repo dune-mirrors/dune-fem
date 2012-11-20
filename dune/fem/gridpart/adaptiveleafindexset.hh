@@ -520,25 +520,8 @@ namespace Dune
         DUNE_THROW( NotImplemented, (name() + " does not support subIndices for intersections, intersectionCodim = ") << codim );
         return -1;
       }
-      //////////////////////////////////////////////////////////
-      //
-      //  DoF adjustment methods
-      //
-      //////////////////////////////////////////////////////////
 
-      //! return number of holes of the sets indices 
-      int numberOfHoles ( const int codim ) const
-      {
-        if( codimAvailable( codim ) ) 
-        {
-          assert( codimUsed_[codim] );
-          return codimLeafSet( codim ).numberOfHoles(); 
-        }
-        else 
-          return 0;
-
-      }
-
+      /* \brief subIndex of given entity */
       template< class Entity >
       IndexType subIndex ( const Entity &entity, int subNumber, unsigned int codim ) const
       {
@@ -561,6 +544,54 @@ namespace Dune
         const IndexType idx = codimSet.subIndex( gridEntity( entity ), subNumber );
         assert( (idx >= 0) && (idx < IndexType( codimSet.size() )) );
         return idx;
+      }
+
+      ///////////////////////////////////////////////////////////////////
+      //
+      //  DoF adjustment methods, needed by AdaptiveDofMapper interface 
+      //
+      ///////////////////////////////////////////////////////////////////
+
+      //! return number of holes of the sets indices 
+      int numberOfHoles ( const int codim ) const
+      {
+        if( codimAvailable( codim ) ) 
+        {
+          assert( codimUsed_[codim] );
+          return codimLeafSet( codim ).numberOfHoles(); 
+        }
+        else 
+          return 0;
+      }
+
+      //! return old index, for dof manager only 
+      int oldIndex (const int hole, const int codim ) const
+      {
+        if( codimAvailable( codim ) )
+        {
+          assert( codimUsed_[codim] );
+          return codimLeafSet( codim ).oldIndex( hole );
+        }
+        else
+        {
+          DUNE_THROW( NotImplemented, (name() + " does not support indices for codim = ") << codim );
+          return -1;
+        }
+      }
+
+      //! return new index, for dof manager only returns index 
+      int newIndex (const int hole , const int codim ) const
+      {
+        if( codimAvailable( codim ) )
+        {
+          assert( codimUsed_[codim] );
+          return codimLeafSet( codim ).newIndex( hole );
+        }
+        else
+        {
+          DUNE_THROW( NotImplemented, (name() + " does not support indices for codim = ") << codim );
+          return -1;
+        }
       }
 
     protected:
