@@ -1,9 +1,7 @@
 #ifndef DUNE_FEM_COMMHELPER_HH
 #define DUNE_FEM_COMMHELPER_HH
 
-#include <dune/common/collectivecommunication.hh>
-#include <dune/common/mpicollectivecommunication.hh>
-#include <dune/common/mpihelper.hh>
+#include <dune/fem/misc/mpimanager.hh>
 
 namespace Dune
 {

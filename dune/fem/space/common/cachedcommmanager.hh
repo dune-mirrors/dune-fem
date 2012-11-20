@@ -10,7 +10,6 @@
 //- dune-common includes  
 #include <dune/common/misc.hh>
 #include <dune/common/timer.hh>
-#include <dune/common/mpihelper.hh>
 
 //- dune-grid includes  
 #include <dune/grid/common/grid.hh>
@@ -28,6 +27,7 @@
 #include <dune/fem/space/common/arrays.hh>
 #include <dune/fem/space/common/commindexmap.hh>
 #include <dune/fem/misc/functor.hh>
+#include <dune/fem/misc/mpimanager.hh>
 
 namespace Dune
 {

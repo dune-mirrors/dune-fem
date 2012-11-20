@@ -5,8 +5,7 @@
 #include <fstream>
 #include <string>
 
-#include "dune/common/mpihelper.hh" // An initializer of MPI
-#include "dune/common/exceptions.hh" // We use exceptions
+#include <dune/common/exceptions.hh> // We use exceptions
 #include <dune/common/fvector.hh>  // definition of field vectors
 
 #include <dune/fem/io/parameter.hh> // include parameters

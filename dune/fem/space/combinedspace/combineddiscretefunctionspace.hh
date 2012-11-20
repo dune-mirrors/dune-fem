@@ -82,12 +82,14 @@ namespace Dune
       typedef CombinedDiscreteFunctionSpace < DiscreteFunctionSpace1, DiscreteFunctionSpace2 >
         DiscreteFunctionSpaceType;
 
-      enum { localBlockSize = 1 };
+      enum { localBlockSize = 1,
+             localBlockSize1 = DiscreteFunctionSpace1::Traits::localBlockSize,
+             localBlockSize2 = DiscreteFunctionSpace2::Traits::localBlockSize };
 
       private:
       //! mapper for block
-      typedef typename DiscreteFunctionSpace1 :: MapperType     MapperType1;
-      typedef typename DiscreteFunctionSpace2 :: MapperType     MapperType2;
+      typedef typename DiscreteFunctionSpace1 :: BlockMapperType     BlockMapperType1;
+      typedef typename DiscreteFunctionSpace2 :: BlockMapperType     BlockMapperType2;
 
       //! get base function sets of the two spaces
       typedef typename DiscreteFunctionSpace1 :: BaseFunctionSetType   BaseFunctionSetType1;
@@ -95,7 +97,7 @@ namespace Dune
 
       public:
       //! define a combined DofMapper and the block mapper
-      typedef CombinedMapper< GridType, MapperType1, MapperType2 > BlockMapperType;
+      typedef CombinedMapper< GridType, BlockMapperType1, localBlockSize1, BlockMapperType2, localBlockSize2 > BlockMapperType;
       typedef BlockMapperType MapperType;
 
       //! implementation of basefunction set 
@@ -238,7 +240,7 @@ namespace Dune
         space2_( gridPart, commInterface, commDirection ),
         mapper_( 0 )
       {
-        mapper_ = new MapperType( gridPart.grid(), space1_.mapper(), space2_.mapper());
+        mapper_ = new MapperType( gridPart.grid(), space1_.blockMapper(), space2_.blockMapper() );
         assert( mapper_ != 0 );
       }
 

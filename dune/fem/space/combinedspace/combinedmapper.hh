@@ -2,6 +2,7 @@
 #define DUNE_FEM_COMBINEDMAPPER_HH
 
 #include <dune/fem/space/mapper/dofmapper.hh>
+#include <dune/fem/space/mapper/nonblockmapper.hh>
 #include <dune/fem/space/common/dofmanager.hh>
 
 
@@ -12,35 +13,42 @@ namespace Dune
   {
 
     //! forward declaration
-    template< class Grid,  class Mapper1, class Mapper2 >
+    template< class Grid,  class BlockMapper1, int blockSize1, class BlockMapper2, int blockSize2 >
     class CombinedMapper;
 
     //! Traits 
-    template< class Grid, class Mapper1, class Mapper2 >
+    template< class Grid,  class BlockMapper1, int blockSize1, class BlockMapper2, int blockSize2 >
     struct CombinedMapperTraits
     {
       // we still need entities of codimension 0 here 
-      typedef typename Mapper1 :: ElementType ElementType;
+      typedef typename BlockMapper1 :: ElementType ElementType;
 
-      static const int polynomialOrder1 = Mapper1 :: polynomialOrder;
-      static const int polynomialOrder2 = Mapper2 :: polynomialOrder;
+      static const int polynomialOrder1 = BlockMapper1 :: polynomialOrder;
+      static const int polynomialOrder2 = BlockMapper2 :: polynomialOrder;
       static const int polynomialOrder = ( polynomialOrder1 > polynomialOrder2 ) ? polynomialOrder1 : polynomialOrder2;
+
+      typedef NonBlockMapper< BlockMapper1, blockSize1 > MapperType1; 
+      typedef NonBlockMapper< BlockMapper2, blockSize2 > MapperType2; 
 
       typedef std::size_t SizeType;
 
-      typedef CombinedMapper< Grid, Mapper1, Mapper2 >  DofMapperType;
+      typedef CombinedMapper< Grid, BlockMapper1, blockSize1, BlockMapper2, blockSize2 >  DofMapperType;
     };
 
-    template< class Grid, class Mapper1, class Mapper2 >
+    template< class Grid,  class BlockMapper1, int blockSize1, class BlockMapper2, int blockSize2 >
     class CombinedMapper
-    : public AdaptiveDofMapper< CombinedMapperTraits< Grid, Mapper1, Mapper2 > >
+    : public AdaptiveDofMapper< CombinedMapperTraits< Grid, BlockMapper1, blockSize1, BlockMapper2, blockSize2 > >
     {
-      typedef CombinedMapper< Grid, Mapper1, Mapper2 > ThisType;
-      typedef AdaptiveDofMapper< CombinedMapperTraits< Grid, Mapper1, Mapper2 > > BaseType;
+      typedef AdaptiveDofMapper< CombinedMapperTraits< Grid, BlockMapper1, blockSize1, BlockMapper2, blockSize2 > > BaseType;
+      typedef CombinedMapper< Grid, BlockMapper1, blockSize1, BlockMapper2, blockSize2 >  ThisType;
       typedef Grid GridType;
 
-      typedef Mapper1 MapperType1;
-      typedef Mapper2 MapperType2;
+    public:
+      typedef typename BaseType::Traits Traits;
+
+    protected:
+      typedef typename Traits::MapperType1 MapperType1;
+      typedef typename Traits::MapperType2 MapperType2;
 
       template< class Functor >
       struct FunctorWrapper
@@ -70,7 +78,6 @@ namespace Dune
       };
 
       public:
-      typedef typename BaseType :: Traits Traits;
       typedef typename BaseType :: ElementType ElementType;
 
       //! order of the Lagrange polynoms
@@ -83,13 +90,12 @@ namespace Dune
 
       public:
       //! constructor
-      CombinedMapper( const GridType &grid,  const MapperType1 &mapper1, const MapperType2& mapper2 )
-        : // BaseType( gridPart ), // hmmm
-          dm_( DofManagerType :: instance( grid ) ), 
-          mapper1_( mapper1 ),
-          mapper2_( mapper2 ),
-          globalOffset_( mapper1.size() ),
-          oldGlobalOffset_( -1 )
+      CombinedMapper( const GridType &grid, BlockMapper1 &blockMapper1, BlockMapper2& blockMapper2 )
+      :  dm_( DofManagerType :: instance( grid ) ), 
+         mapper1_( blockMapper1 ),
+         mapper2_( blockMapper2 ),
+         globalOffset_( mapper1_.size() ),
+         oldGlobalOffset_( -1 )
       {
         dm_.addIndexSet( *this );
       }
@@ -290,8 +296,8 @@ namespace Dune
 
     protected:
       DofManagerType &dm_;
-      const MapperType1 &mapper1_;
-      const MapperType2 &mapper2_;
+      MapperType1 mapper1_;
+      MapperType2 mapper2_;
 
       int globalOffset_;
       int oldGlobalOffset_;

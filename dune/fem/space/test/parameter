@@ -13,4 +13,7 @@ fem.adaptation.method: generic
 lagrangeglobalrefine.maxlevel: 3
 
 # true if only a few elements are marked 
-adapt.locallyadaptive: true
+adapt.locallyadaptive: false
+
+# EOC error threshold 
+adapt.eocthreshold: 0.1
