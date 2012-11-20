@@ -18,6 +18,7 @@ using namespace Dune;
 #include <dune/fem/space/lagrangespace.hh>
 #include <dune/fem/operator/projection/dgl2projection.hh>
 #include <dune/fem/misc/l2norm.hh>
+#include <dune/fem/misc/capabilities.hh>
 
 #if HAVE_GRAPE && WANT_GRAPE && GRIDDIM > 1 
 #define USE_GRAPE 1
@@ -243,6 +244,8 @@ try {
   // threshold for EOC difference to predicted value 
   const double eocThreshold = Parameter :: getValue("adapt.eocthreshold", double(0.2) );
 
+  const bool isLocallyAdaptive = Dune::Fem::Capabilities::isLocallyAdaptive< MyGridType > :: v ;
+
   DiscreteFunctionType solution ( "sol", space );
   solution.clear();
   std::cout << "------------    Refining:" << std::endl;
@@ -251,12 +254,17 @@ try {
     error[i] = algorithm ( *grid , solution, step, (i==ml-1));
     if (i>0) 
     {
-      double eoc = log( error[i-1]/error[i]) / M_LN2; 
-      std::cout << "EOC = " << eoc << " \n";
-      if( std::abs( eoc - (space.order()+1.0) ) > eocThreshold ) 
+      if ( isLocallyAdaptive ) 
       {
-        DUNE_THROW(InvalidStateException,"EOC check of refinement failed");
+        double eoc = log( error[i-1]/error[i]) / M_LN2; 
+        std::cout << "EOC = " << eoc << std::endl;
+        if( std::abs( eoc - (space.order()+1.0) ) > eocThreshold ) 
+        {
+          DUNE_THROW(InvalidStateException,"EOC check of refinement failed");
+        }
       }
+      else 
+        std::cout << "no EOC for non-adaptive grid" << std::endl;
     }
   }
   std::cout << "------------   Coarsening:" << std::endl;
@@ -265,12 +273,17 @@ try {
     error[i] = algorithm ( *grid , solution,-step, 1);
     if (i<ml-1) 
     {
-      double eoc = log( error[i+1]/error[i]) / M_LN2; 
-      std::cout << "EOC = " << eoc << " \n";
-      if( std::abs( eoc + (space.order()+1.0) ) > eocThreshold ) 
+      if( isLocallyAdaptive ) 
       {
-        DUNE_THROW(InvalidStateException,"EOC check of coarsening failed");
+        double eoc = log( error[i+1]/error[i]) / M_LN2; 
+        std::cout << "EOC = " << eoc << std::endl;
+        if( std::abs( eoc + (space.order()+1.0) ) > eocThreshold ) 
+        {
+          DUNE_THROW(InvalidStateException,"EOC check of coarsening failed");
+        }
       }
+      else 
+        std::cout << "no EOC for non-adaptive grid" << std::endl;
     }
   }
   return 0;
