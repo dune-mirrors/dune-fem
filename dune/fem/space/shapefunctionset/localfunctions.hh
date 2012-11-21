@@ -76,7 +76,7 @@ namespace Dune
       template< class Point, class Functor >
       void jacobianEach ( const Point &x, Functor &f ) const
       {
-        localBasis_.jacobianFunction( coordinate( x ), jacobians_ );
+        localBasis_.evaluateJacobian( coordinate( x ), jacobians_ );
         assert( jacobians_.size() == size() );
         callFunctor( jacobians_, f );
       }
