@@ -23,6 +23,7 @@
 
 // include discrete function space
 #include <dune/fem/space/lagrangespace.hh>
+#include <dune/fem/space/padaptivespace.hh>
 #include <dune/fem/space/dgspace.hh>
 
 // adaptation ...
@@ -74,7 +75,8 @@ struct Scheme
   
   typedef FunctionSpace FunctionSpaceType;
 #ifdef CONFORMING_SPACE
-  typedef Dune::Fem::LagrangeDiscreteFunctionSpace< FunctionSpaceType, GridPartType, POLORDER > DiscreteFunctionSpaceType;
+  //typedef Dune::Fem::LagrangeDiscreteFunctionSpace< FunctionSpaceType, GridPartType, POLORDER > DiscreteFunctionSpaceType;
+  typedef Dune::Fem::PAdaptiveLagrangeSpace< FunctionSpaceType, GridPartType, POLORDER > DiscreteFunctionSpaceType;
 #else 
   typedef Dune::Fem::DiscontinuousGalerkinSpace< FunctionSpaceType, GridPartType, POLORDER > DiscreteFunctionSpaceType;
 #endif
