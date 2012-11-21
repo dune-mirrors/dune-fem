@@ -111,7 +111,7 @@ namespace Dune
         collList_(),
         balanceTime_( 0.0 )
       {
-        rpOp.addToList( *this );
+        rpOp.addToLoadBalancer( *this );
         if( Parameter::verbose() )
           std::cout << "Created LoadBalancer: balanceStep = " << balanceStep_ << std::endl;
       }
@@ -250,7 +250,7 @@ namespace Dune
 
       //! add discrete function to data inliner/xtractor list 
       template <class DiscreteFunctionType>
-      void addToList(DiscreteFunctionType& df)
+      void addToLoadBalancer(DiscreteFunctionType& df)
       {
         addDiscreteFunction(df);    
       }
