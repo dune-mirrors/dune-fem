@@ -79,8 +79,8 @@ struct Scheme
   
   typedef FunctionSpace FunctionSpaceType;
 #ifdef CONFORMING_SPACE
-  //typedef Dune::Fem::LagrangeDiscreteFunctionSpace< FunctionSpaceType, GridPartType, POLORDER > DiscreteFunctionSpaceType;
-  typedef Dune::Fem::PAdaptiveLagrangeSpace< FunctionSpaceType, GridPartType, POLORDER > DiscreteFunctionSpaceType;
+  typedef Dune::Fem::LagrangeDiscreteFunctionSpace< FunctionSpaceType, GridPartType, POLORDER > DiscreteFunctionSpaceType;
+  // typedef Dune::Fem::PAdaptiveLagrangeSpace< FunctionSpaceType, GridPartType, POLORDER > DiscreteFunctionSpaceType;
 #else 
   typedef Dune::Fem::DiscontinuousGalerkinSpace< FunctionSpaceType, GridPartType, POLORDER > DiscreteFunctionSpaceType;
 #endif
@@ -151,8 +151,7 @@ struct Scheme
       x += center;
 
       // refine if 0.3 < |x| < 1.0, otherwise (possibly) coarsen
-      // if( x.two_norm() > 0.3 && x.two_norm() < 0.4 && entity.level() <= 9 + 3 * step_ )
-      if( x.two_norm() > 2.3 && x.two_norm() < 5.4 && entity.level() <= 9 + 3 * step_ )
+      if( x.two_norm() > 0.3 && x.two_norm() < 0.4 && entity.level() <= 9 + 3 * step_ )
       {
         grid_.mark( 1, entity );
         marked = 1;
