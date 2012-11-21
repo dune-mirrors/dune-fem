@@ -27,11 +27,11 @@ namespace Dune
       typedef typename LocalBasis::Traits Traits;
 
     public:
-      typedef typename Traits::Domain DomainType;
+      typedef typename Traits::DomainType DomainType;
       typedef typename DomainType::value_type DomainFieldType;
       static const int dimDomain = DomainType::dimension;
       
-      typedef typename Traits::Range RangeType;
+      typedef typename Traits::RangeType RangeType;
       typedef typename RangeType::value_type RangeFieldType;
       static const int dimRange = RangeType::dimension;
 
@@ -53,8 +53,10 @@ namespace Dune
 
     public:
       typedef typename Traits::FunctionSpaceType FunctionSpaceType;
+      typedef typename FunctionSpaceType::DomainType DomainType;
       typedef typename FunctionSpaceType::RangeType RangeType;
       typedef typename FunctionSpaceType::JacobianRangeType JacobianRangeType;
+      typedef typename FunctionSpaceType::HessianRangeType HessianRangeType;
 
       explicit LocalFunctionsShapeFunctionSet ( const LocalBasis &localBasis )
       : localBasis_( localBasis )
