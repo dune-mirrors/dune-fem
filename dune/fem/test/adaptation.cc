@@ -30,13 +30,17 @@
 #include <dune/fem/function/adaptivefunction.hh>
 #include <dune/fem/space/common/adaptmanager.hh>
 
-#if HAVE_DUNE_ISTL
+#ifndef HAVE_DUNE_ISTL
+#undef WANT_ISTL
+#endif
+
+#if WANT_ISTL
 // include discrete function
 #include <dune/fem/function/blockvectorfunction.hh>
 #endif
 
 #ifndef POLORDER
-#define POLORDER 2
+#define POLORDER 1
 #endif
 
 // DataOutputParameters
@@ -81,7 +85,7 @@ struct Scheme
   typedef Dune::Fem::DiscontinuousGalerkinSpace< FunctionSpaceType, GridPartType, POLORDER > DiscreteFunctionSpaceType;
 #endif
 
-#if HAVE_DUNE_ISTL
+#if WANT_ISTL
   typedef Dune::Fem::ISTLBlockVectorDiscreteFunction< DiscreteFunctionSpaceType > DiscreteFunctionType;
 #else
   typedef Dune::Fem::AdaptiveDiscreteFunction< DiscreteFunctionSpaceType > DiscreteFunctionType;
@@ -127,6 +131,7 @@ struct Scheme
     {
       const ElementType &entity = *it;
 
+      /*
       // find center
       DomainType center = DomainType( 0 );
 
@@ -134,22 +139,20 @@ struct Scheme
       {
         center += entity.geometry().corner( i );
       }
-
-      //      center /= entity.geometry().corners();
-
       // x = center - ( t, t, t )
       DomainType x;
-
       for( int i = 0; i < DomainType::dimension; ++i )
         x[ i ] = center[ i ] - time;
+      */
       
-      /*      // find center
+      // find center
       DomainType center = entity.geometry().center();
       DomainType x = DomainType(-time);
-      x += center;*/
+      x += center;
 
       // refine if 0.3 < |x| < 1.0, otherwise (possibly) coarsen
-      if( x.two_norm() > 0.3 && x.two_norm() < 1.0 && entity.level() <= 9 + 3 * step_ )
+      // if( x.two_norm() > 0.3 && x.two_norm() < 0.4 && entity.level() <= 9 + 3 * step_ )
+      if( x.two_norm() > 2.3 && x.two_norm() < 5.4 && entity.level() <= 9 + 3 * step_ )
       {
         grid_.mark( 1, entity );
         marked = 1;
@@ -289,8 +292,10 @@ try
   std::stringstream gridfilestr;
   gridfilestr << HGridType :: dimension << "dgrid.dgf";
 
+  std::string gridfile; 
+  Dune::Fem::Parameter::get( "fem.io.macrogrid", gridfilestr.str(), gridfile );
+
   // create grid from DGF file
-  const std::string gridfile ( gridfilestr.str() );
 
   // the method rank and size from MPIManager are static 
   if( Dune::Fem::MPIManager::rank() == 0 )
