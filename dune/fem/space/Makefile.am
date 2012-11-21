@@ -8,14 +8,15 @@ space_HEADERS = anisotropicdgspace.hh \
 		genericspace.hh \
 		lagrange.hh \
 		padaptivespace.hh \
+		rannacherturek.hh \
 		reducedbasisspace.hh
 
 SUBDIRS = anisotropicdgspace basefunctions \
 	  basisfunctionset combinedspace common \
 	  discontinuousgalerkin dofmapper \
 	  finitevolume genericspace lagrange \
-	  mapper padaptivespace reducedbasisspace \
-	  shapefunctionset test
+	  mapper padaptivespace rannacherturek \
+	  reducedbasisspace shapefunctionset test
 
 noinst_LTLIBRARIES = libspace.la
 

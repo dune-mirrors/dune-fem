@@ -49,6 +49,7 @@ AC_CONFIG_FILES([Makefile
      dune/fem/space/genericspace/Makefile
      dune/fem/space/lagrange/Makefile
      dune/fem/space/lagrange/test/Makefile
+     dune/fem/space/rannacherturek/Makefile
      dune/fem/space/reducedbasisspace/Makefile
      dune/fem/space/reducedbasisspace/test/Makefile
      dune/fem/space/combinedspace/Makefile
