@@ -186,12 +186,6 @@ namespace Dune
         return BasisFunctionSetType( entity );
       }
 
-      /** @copydoc Dune::Fem::DiscreteFunctionSpaceInterface::contains */
-      bool contains ( const int codimension ) const
-      {
-        return blockMapper().contains( codimension );
-      }
-
       /** @copydoc Dune::Fem::DiscreteFunctionSpaceInterface::continuous */
       bool continuous () const
       {

@@ -224,10 +224,10 @@ namespace Dune
        *  \returns \b true if codimension contains DoFs,
        *           \b false otherwise
        */
+      DUNE_VERSION_DEPRECATED(1,4,remove) 
       inline bool contains ( const int codim ) const
       { 
-        CHECK_INTERFACE_IMPLEMENTATION( asImp().contains( codim ) );
-        return asImp().contains( codim ); 
+        return blockMapper().contains( codim ); 
       }
 
       /** \brief returns true if the space contains only globally continuous
