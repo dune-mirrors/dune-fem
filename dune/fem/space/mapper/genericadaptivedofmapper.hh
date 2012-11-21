@@ -761,7 +761,6 @@ namespace Dune
       //! adjust mapper to newly set polynomial orders 
       void adapt()
       {
-        resizeContainers();
         sequence_ = -1;
         compress();
       }
@@ -883,6 +882,9 @@ namespace Dune
           numberOfHoles_ = 0;
           return false ;
         }
+
+        // adjust size of containers 
+        resizeContainers();
 
         // make all dofs that are currently used 
         // (corresponding to GridPart's iterator)
