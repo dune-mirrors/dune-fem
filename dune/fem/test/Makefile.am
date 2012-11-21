@@ -2,13 +2,16 @@
 
 # set default grid type for make all
 GRIDTYPE=SGRID
+# GRIDTYPE=ALUGRID_CONFORM
+
 GRIDDIM=2
+# GRIDDIM=3
 
 EXTRA_DIST = 2dgrid.dgf \
              3dgrid.dgf \
              dfspace.hh \
              exactsolution.hh \
-						 weightfunction.hh \
+             weightfunction.hh \
              testgrid.hh
 
 # linker flags
@@ -25,11 +28,9 @@ TESTPROGS = lagrangeinterpolation_linear lagrangeinterpolation_quadratic \
             dgl2projection_idgridpart \
             vtxprojection_adaptive \
             intersectionindexset
-#dgl2projection_combined
 
-
-TESTS = $(TESTPROGS)
-check_PROGRAMS = $(TESTPROGS)
+TESTS = $(TESTPROGS) adaptation-4.sh
+check_PROGRAMS = $(TESTPROGS) adaptation
 
 lagrangeinterpolation_linear_SOURCES = lagrangeinterpolation.cc
 lagrangeinterpolation_linear_CPPFLAGS = -DPOLORDER=1 -DCOUNT_FLOPS $(AM_CPPFLAGS)
@@ -39,9 +40,6 @@ lagrangeinterpolation_quadratic_CPPFLAGS = -DPOLORDER=2 -DCOUNT_FLOPS $(AM_CPPFL
 
 dgl2projection_adaptive_SOURCES = dgl2projection.cc
 dgl2projection_adaptive_CPPFLAGS = -DPOLORDER=1 -DCOUNT_FLOPS $(AM_CPPFLAGS)
-
-# dgl2projection_combined_SOURCES = dgl2projection.cc
-# dgl2projection_combined_CPPFLAGS = -DPOLORDER=1 -DCOUNT_FLOPS $(AM_CPPFLAGS) -DUSE_COMBINEDSPACE -DUSE_VARIABLEBASE -DUSE_COMBINEDFUNCTION -DWANT_CACHED_COMM_MANAGER=0
 
 # only run this test for YaspGrid
 dgl2projection_legendre_SOURCES = dgl2projection.cc
@@ -73,5 +71,8 @@ vtxprojection_adaptive_CPPFLAGS = -DPOLORDER=1 -DCOUNT_FLOPS $(AM_CPPFLAGS)
 
 intersectionindexset_SOURCES = intersectionindexset.cc
 intersectionindexset_CPPFLAGS = $(AM_CPPFLAGS)
+
+adaptation_SOURCES = adaptation.cc
+adaptation_CPPFLAGS = $(AM_CPPFLAGS) -UGRIDDIM -DGRIDDIM=3 -UWORLDDIM -DWORLDDIM=3
 
 include $(top_srcdir)/am/global-rules
