@@ -12,6 +12,24 @@ namespace Dune
   namespace Fem
   {
 
+    // Internal Forward Declarations
+    // -----------------------------
+
+    template< class T >
+    inline void axpy ( const T &a, const T &x, T &y );
+
+    template< class K, int SIZE >
+    inline void axpy ( const typename FieldTraits< K >::field_type &a,
+                       const FieldVector< K, SIZE > &x,
+                       FieldVector< K, SIZE > &y );
+
+    template< class K, int ROWS, int COLS >
+    inline void axpy ( const typename FieldTraits< K >::field_type &a,
+                       const FieldMatrix< K, ROWS, COLS > &x,
+                       FieldMatrix< K, ROWS, COLS > &y );
+
+
+
     // axpy
     // ----
 
@@ -26,7 +44,8 @@ namespace Dune
                        const FieldVector< K, SIZE > &x,
                        FieldVector< K, SIZE > &y )
     {
-      y.axpy( a, x );
+      for( int i = 0; i < SIZE; ++i )
+        axpy( a, x[ i ], y[ i ] );
     }
 
     template< class K, int ROWS, int COLS >

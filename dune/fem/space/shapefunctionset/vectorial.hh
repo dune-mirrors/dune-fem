@@ -36,6 +36,8 @@ namespace Dune
       static ComponentType begin () { return ComponentType( 0 ); }
       static ComponentType end () { return ComponentType( factor ); }
 
+      static VectorialType zeroVectorial () { return VectorialType( K( field_type( 0 ) ) ); }
+
       static const K &access ( const ScalarType &x ) { return x[ 0 ]; }
       static K &access ( ScalarType &x ) { return x[ 0 ]; }
 
@@ -59,6 +61,8 @@ namespace Dune
 
       static ComponentType begin () { return ComponentType( 0 ); }
       static ComponentType end () { return ComponentType( factor ); }
+
+      static VectorialType zeroVectorial () { return VectorialType( K( field_type( 0 ) ) ); }
 
       static const FieldVector< K, dimD > &access ( const ScalarType &x ) { return x[ 0 ]; }
       static FieldVector< K, dimD > &access ( ScalarType &x ) { return x[ 0 ]; }
@@ -96,7 +100,7 @@ namespace Dune
 
       operator VectorialType () const
       {
-        VectorialType vectorial( field_type( 0 ) );
+        VectorialType vectorial = Traits::zeroVectorial();
         Traits::access( vectorial, component() ) = Traits::access( scalar() );
         return vectorial;
       }
@@ -326,6 +330,32 @@ namespace Dune
     {
       typedef MakeVectorialTraits< Scalar, Vectorial > Traits;
       axpy( a, Traits::access( x.scalar() ), Traits::access( y, x.component() ) );
+    }
+
+    template< class GeometryJacobianInverseTransposed, class K, int ROWS >
+    void jacobianTransformation ( const GeometryJacobianInverseTransposed &gjit,
+                                  const MakeVectorialExpression< FieldMatrix< K, 1, GeometryJacobianInverseTransposed::rows >, FieldMatrix< K, ROWS, GeometryJacobianInverseTransposed::cols > > &a,
+                                  FieldMatrix< K, ROWS, GeometryJacobianInverseTransposed::rows > &b )
+    {
+      typedef MakeVectorialTraits< FieldMatrix< K, 1, GeometryJacobianInverseTransposed::rows >, FieldMatrix< K, ROWS, GeometryJacobianInverseTransposed::cols > > Traits;
+      b = Traits::zeroVectorial();
+      gjit.mv( Traits::access( a.scalar() ), Traits::access( b, a.component() ) );
+    }
+
+    template< class GeometryJacobianInverseTransposed, class K, int SIZE >
+    void hessianTransformation ( const GeometryJacobianInverseTransposed &gjit,
+                                 const MakeVectorialExpression< FieldVector< FieldMatrix< K, GeometryJacobianInverseTransposed::cols, GeometryJacobianInverseTransposed::cols >, 1 >, FieldVector< FieldMatrix< K, GeometryJacobianInverseTransposed::cols, GeometryJacobianInverseTransposed::cols >, SIZE > > &a,
+                                 FieldVector< FieldMatrix< K, GeometryJacobianInverseTransposed::rows, GeometryJacobianInverseTransposed::rows >, SIZE > &b )
+    {
+      typedef MakeVectorialTraits< FieldVector< FieldMatrix< K, GeometryJacobianInverseTransposed::cols, GeometryJacobianInverseTransposed::cols >, 1 >, FieldVector< FieldMatrix< K, GeometryJacobianInverseTransposed::cols, GeometryJacobianInverseTransposed::cols >, SIZE > > Traits;
+      b = Traits::zeroVectorial();
+      for( int k = 0; k < GeometryJacobianInverseTransposed::cols; ++k )
+      {
+        FieldVector< K, GeometryJacobianInverseTransposed::rows > c;
+        gjit.mv( Traits::access( a.scalar() )[ k ], c );
+        for( int j = 0; j < GeometryJacobianInverseTransposed::rows; ++j )
+          Traits::access( b, a.component() )[ j ].axpy( gjit[ j ][ k ], c );
+      }
     }
 
     template< class Scalar, class Vectorial >
