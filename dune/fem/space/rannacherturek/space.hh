@@ -199,7 +199,7 @@ namespace Dune
       ShapeFunctionSetType shapeFunctionSet ( const EntityType &entity ) const
       {
         assert( scalarShapeFunctionSet_);
-        return ShapeFunctionSetType( &scalarShapeFunctionSet_ );
+        return ShapeFunctionSetType( scalarShapeFunctionSet_ );
       }
 
       /** @copydoc Dune::Fem::DiscreteFunctionSpaceInterface::continuous */

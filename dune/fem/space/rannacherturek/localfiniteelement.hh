@@ -25,7 +25,7 @@ namespace Dune
     template< class LocalFiniteElementImp >
     class LocalFiniteElement
     {
-      typedef typename LocalFiniteElement::Traits Traits;
+      typedef typename LocalFiniteElementImp::Traits Traits;
 
     public:
       //! \brief local basis type
