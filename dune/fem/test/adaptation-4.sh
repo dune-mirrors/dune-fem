@@ -7,4 +7,4 @@ export MPIEXEC_PROG=adaptation
 # define executable 
 export MPIEXEC_PARAMETER=parameter
 # call mpi start script 
-exec ../../../scripts/mpiexec.sh 4
+exec ../../../scripts/mpiexec.sh 4 $*
