@@ -65,7 +65,7 @@ namespace Dune
         storageList().push_back( &storage );
 
         const GeometryType type = storage.type();
-        for( typename QuadratureInfoListType::iterator it = quadratureInfoList().begin(); it != quadratureInfoList().end(); ++it )
+        for( QuadratureInfoListType::iterator it = quadratureInfoList().begin(); it != quadratureInfoList().end(); ++it )
         {
           // only cache shape functions for quadratures with same geometry type 
           if( type == it->type )
@@ -76,7 +76,7 @@ namespace Dune
       static void unregisterStorage ( StorageInterface &storage )
       {
         assert( ThreadManager::singleThreadMode() );
-        const typename StorageListType::iterator pos
+        const StorageListType::iterator pos
           = std::find( storageList().begin(), storageList().end(), &storage );
         if( pos != storageList().end() )
           storageList().erase( pos );
