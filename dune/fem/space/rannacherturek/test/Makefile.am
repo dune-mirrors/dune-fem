@@ -10,6 +10,8 @@ check_PROGRAMS = test-space
 
 test_space_SOURCES = test-space.cc
 
-EXTRA_DIST =
+EXTRA_DIST = exactsolution.hh
+
+CLEANFILES = *.vtu *.pvtu *.log
 
 include $(top_srcdir)/am/global-rules

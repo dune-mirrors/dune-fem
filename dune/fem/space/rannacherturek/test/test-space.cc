@@ -23,8 +23,8 @@
 #include <dune/fem/space/common/interpolation.hh>
 #include <dune/fem/space/rannacherturek.hh>
 
-#include "../../../test/exactsolution.hh"
 #include "../../../test/testgrid.hh"
+#include "exactsolution.hh"
 
 // range dimension
 static const int dimRange = DIMRANGE;
@@ -51,7 +51,7 @@ struct DataOutputParameters
   std::string prefix () const
   {
     std::stringstream s;
-    s << "projection-" << step_ << "-";
+    s << "interpolation-" << step_ << "-";
     return s.str();
   }
 
@@ -98,7 +98,6 @@ double algorithm ( GridType &grid, const int step )
   // perform the interpolation 
   interpolation( gridExactSolution, solution );
 
-#if 0
   // prepare output
   typedef Dune::tuple< const DiscreteFunctionType *, GridExactSolutionType * > IOTupleType;
   IOTupleType ioTuple( &solution, &gridExactSolution );
@@ -107,7 +106,6 @@ double algorithm ( GridType &grid, const int step )
   typedef Dune::Fem::DataOutput< GridType, IOTupleType > DataOutputType;
   DataOutputType dataOutput( grid, ioTuple, DataOutputParameters( step ) );
   dataOutput.write();
-#endif
 
   // compute error
   Dune::Fem::L2Norm< GridPartType > l2norm( gridPart );
