@@ -6,4 +6,6 @@ rannacherturekspace_HEADERS = declaration.hh \
 			      localrestrictprolong.hh \
 			      space.hh
 
+SUBDIRS = test
+
 include $(top_srcdir)/am/global-rules
