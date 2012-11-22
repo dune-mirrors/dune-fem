@@ -3,7 +3,6 @@ rannacherturekspace_HEADERS = declaration.hh \
 			      dofmappercode.hh \
 			      localfiniteelement.hh \
 			      localinterpolation.hh \
-			      localrestrictprolong.hh \
 			      space.hh
 
 SUBDIRS = test

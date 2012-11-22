@@ -1,6 +1,8 @@
 #ifndef DUNE_FEM_SPACE_RANNACHERTUREK_HH
 #define DUNE_FEM_SPACE_RANNACHERTUREK_HH
 
+#if HAVE_DUNE_LOCALFUNCTIONS
+
 // C++ includes
 #include <cassert>
 #include <vector>
@@ -29,7 +31,6 @@
 #include "dofmappercode.hh"
 #include "localfiniteelement.hh"
 #include "localinterpolation.hh"
-#include "localrestrictprolong.hh"
 
 /**
   @file
@@ -260,5 +261,7 @@ namespace Dune
   } // namespace Fem
 
 } // end namespace Dune
+
+#endif // #if HAVE_DUNE_LOCALFUNCTIONS
 
 #endif // #ifndef DUNE_FEM_SPACE_RANNACHERTUREK_HH
