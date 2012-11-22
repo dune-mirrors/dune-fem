@@ -5,6 +5,9 @@
 #include <cstdlib>
 #include <vector>
 
+// dune-common includes
+#include <dune/common/fvector.hh>
+
 
 namespace Dune
 {
