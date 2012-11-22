@@ -141,6 +141,8 @@ namespace Dune
       typedef typename BaseType::Traits Traits;
       static const int polynomialOrder = polOrder;
 
+      typedef typename BaseType::FunctionSpaceType FunctionSpaceType;
+
       typedef typename BaseType::GridPartType GridPartType;
       typedef typename BaseType::GridType GridType;
       typedef typename BaseType::IndexSetType IndexSetType;
@@ -260,6 +262,30 @@ namespace Dune
       ///////////////////////////
       // Non-interface methods //
       ///////////////////////////
+
+      /** \brief interpolate a function locally
+       *
+       *  \param[in]  f     local function to interpolate
+       *  \param[out] dofs  local degrees of freedom of the interpolion
+       */
+      template< class LocalFunction, class LocalDofVector >
+      void interpolate ( const LocalFunction &f, LocalDofVector &dofs ) const
+      {
+        const EntityType &entity = f.entity();
+
+        const LagrangePointSetType &pointSet = lagrangePointSet( entity );
+
+        int k = 0;
+        const std::size_t numPoints = pointSet.nop();
+        for( std::size_t pt = 0; pt < numPoints; ++pt )
+        {
+          typename FunctionSpaceType::RangeType phi;
+          f.evaluate( pointSet[ pt ], phi );
+
+          for( int i = 0; i < FunctionSpaceType::dimRange; ++i, ++k )
+            dofs[ k ] = phi[ i ];
+        }
+      }
 
       /** \brief return shape function set for given entity
        *
