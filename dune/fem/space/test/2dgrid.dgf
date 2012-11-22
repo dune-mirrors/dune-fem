@@ -13,4 +13,5 @@ default 1
 GridParameter
 name 2d-unit-cube(8x8)
 closure none
+overlap 1
 #

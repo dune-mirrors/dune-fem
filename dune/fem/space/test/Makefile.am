@@ -15,7 +15,11 @@ LDADD = $(ALL_PKG_LDFLAGS) $(ALL_PKG_LIBS) $(LOCAL_LIBS) $(MPI_LDFLAGS)
 AM_CPPFLAGS = $(ALL_PKG_CPPFLAGS) -DPOLORDER=$(POLORDER) -DWANT_GRAPE=$(WANT_GRAPE) \
   -DWANT_CACHED_COMM_MANAGER=$(WANT_CACHED)
 
-ADAPTPROG = lagrangeadapt adapt
+ADAPTPROG = lagrangeadapt adapt padapt
+
+# programs run during make check 
+TESTS = $(ADAPTPROG) dgcomm-4.sh
+
 check_PROGRAMS = $(ADAPTPROG) \
 		 arraytest \
 		 dgcomm \
@@ -23,7 +27,6 @@ check_PROGRAMS = $(ADAPTPROG) \
                  lagrangeglobalrefine \
 		 lagrangeinterpolation \
 		 legendretest
-#		 padapt
 
 EXTRA_DIST = systemmatrix.cc
 
@@ -36,5 +39,6 @@ lagrangeglobalrefine_SOURCES = lagrangeglobalrefine.cc
 legendretest_SOURCES = legendretest.cc
 arraytest_SOURCES = arraytest.cc
 dgcomm_SOURCES = dgcomm.cc
+dgcomm_CPPFLAGS = $(AM_CPPFLAGS) -UGRIDDIM -DGRIDDIM=3 -UWORLDDIM -DWORLDDIM=3
 
 include $(top_srcdir)/am/global-rules

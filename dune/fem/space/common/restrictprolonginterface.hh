@@ -99,6 +99,15 @@ namespace Dune
         CHECK_AND_CALL_INTERFACE_IMPLEMENTATION( asImp().addToList( comm ) );
       }
 
+      /** \brief add discrete function to load balancer 
+       *  \param[in]  lb LoadBalancer to add the discrete functions to
+       */
+      template< class LoadBalancer >
+      void addToLoadBalancer ( LoadBalancer &lb )
+      {
+        CHECK_AND_CALL_INTERFACE_IMPLEMENTATION( asImp().addToLoadBalancer( lb ) );
+      }
+
     protected:  
       /** \brief calculates the weight, i.e. (volume son)/(volume father)
           \param[in] father Father Entity 
@@ -177,6 +186,14 @@ namespace Dune
       {
         this->first().addToList(comm); 
         this->second().addToList(comm);    
+      }
+
+      //! \copydoc RestrictProlongInterface::addToLoadBalancer 
+      template <class LoadBalancerImp>
+      void addToLoadBalancer(LoadBalancerImp& lb) 
+      {
+        this->first().addToLoadBalancer( lb ); 
+        this->second().addToLoadBalancer( lb );    
       }
     };
 
@@ -320,6 +337,13 @@ namespace Dune
       {
         if( localRP_.needCommunication() )
           comm.addToList( discreteFunction_ );
+      }
+
+      //! add discrete function to load balancer 
+      template< class LoadBalancer >
+      void addToLoadBalancer ( LoadBalancer& lb )
+      {
+        lb.addToLoadBalancer( discreteFunction_ );
       }
 
     protected:

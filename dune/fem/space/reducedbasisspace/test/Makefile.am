@@ -7,7 +7,7 @@ GRIDDIM=2
 POLORDER = 1
 
 # removed until somebody who actually needs this fixes it
-check_PROGRAMS = # l2projection
+check_PROGRAMS = l2projection
 l2projection_SOURCES = l2projection.cc
 
 AM_CPPFLAGS = $(ALL_PKG_CPPFLAGS) -g -Wall -O0 -DPOLORDER=$(POLORDER)

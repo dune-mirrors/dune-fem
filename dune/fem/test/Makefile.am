@@ -1,11 +1,11 @@
 # IGNORE_HEADERS
 
 # set default grid type for make all
-GRIDTYPE=SGRID
-# GRIDTYPE=ALUGRID_CONFORM
+# GRIDTYPE=YASPGRID
+GRIDTYPE=ALUGRID_CONFORM
 
-GRIDDIM=2
-# GRIDDIM=3
+#GRIDDIM=2
+GRIDDIM=3
 
 EXTRA_DIST = 2dgrid.dgf \
              3dgrid.dgf \

@@ -205,6 +205,8 @@ namespace Dune
         std::cerr << "Warning: WrappedHierarchicIndexSet::instance( grid ) can only handle one grid." << std::endl;
         return set;
       }
+      //! return persistent status 
+      bool persistent () const { return true; }
     };
 
 
