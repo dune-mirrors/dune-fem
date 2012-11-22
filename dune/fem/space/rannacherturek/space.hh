@@ -3,6 +3,7 @@
 
 // C++ includes
 #include <cassert>
+#include <vector>
 
 // dune-common includes
 #include <dune/common/nullptr.hh>
@@ -27,6 +28,8 @@
 #include "declaration.hh"
 #include "dofmappercode.hh"
 #include "localfiniteelement.hh"
+#include "localinterpolation.hh"
+#include "localrestrictprolong.hh"
 
 /**
   @file
@@ -41,16 +44,16 @@ namespace Dune
   namespace Fem
   {
 
-    // RannacherTurekSpaceTraits
-    // -------------------------
+    // RannacherTurekDiscreteFunctionSpaceTraits
+    // -----------------------------------------
 
     template< class FunctionSpace, class GridPart, template< class > class Storage >
-    struct RannacherTurekSpaceTraits
+    struct RannacherTurekDiscreteFunctionSpaceTraits
     {
       dune_static_assert( Dune::Fem::GridPartCapabilities::hasSingleGeometryType< GridPart >::v,
                           "GridPart has more than one geometry type." );
 
-      typedef RannacherTurekSpace< FunctionSpace, GridPart, Storage > DiscreteFunctionSpaceType;
+      typedef RannacherTurekDiscreteFunctionSpace< FunctionSpace, GridPart, Storage > DiscreteFunctionSpaceType;
 
       typedef FunctionSpace FunctionSpaceType;
       typedef GridPart GridPartType;
@@ -64,11 +67,12 @@ namespace Dune
       static const int dimLocal = GridPartType::dimension;
       typedef typename ToLocalFunctionSpace< ScalarFunctionSpaceType, dimLocal >::Type ScalarShapeFunctionSpaceType;
 
+    public:
       typedef RannacherTurekLocalFiniteElement< ScalarShapeFunctionSpaceType > LocalFiniteElementType;
       typedef typename LocalFiniteElementType::LocalBasisType LocalBasisType;
       typedef typename LocalFiniteElementType::LocalCoefficientsType LocalCoefficientsType;
+      typedef typename LocalFiniteElementType::LocalInterpolationType LocalInterpolationType;
 
-    public:
       typedef RannacherTurekBlockMapperFactory< GridPartType, LocalCoefficientsType > BlockMapperFactoryType;
       typedef typename BlockMapperFactoryType::BlockMapperType BlockMapperType;
 
@@ -106,15 +110,15 @@ namespace Dune
 
 
 
-    // RannacherTurekSpace
-    // -------------------
+    // RannacherTurekDiscreteFunctionSpace
+    // -----------------------------------
 
     template< class FunctionSpace, class GridPart, template< class > class Storage = CachingStorage >
-    struct RannacherTurekSpace
-    : public DiscreteFunctionSpaceDefault< RannacherTurekSpaceTraits< FunctionSpace, GridPart, Storage > >
+    struct RannacherTurekDiscreteFunctionSpace
+    : public DiscreteFunctionSpaceDefault< RannacherTurekDiscreteFunctionSpaceTraits< FunctionSpace, GridPart, Storage > >
     {
-      typedef RannacherTurekSpace< FunctionSpace, GridPart, Storage > ThisType;
-      typedef DiscreteFunctionSpaceDefault< RannacherTurekSpaceTraits< FunctionSpace, GridPart, Storage > > BaseType;
+      typedef RannacherTurekDiscreteFunctionSpace< FunctionSpace, GridPart, Storage > ThisType;
+      typedef DiscreteFunctionSpaceDefault< RannacherTurekDiscreteFunctionSpaceTraits< FunctionSpace, GridPart, Storage > > BaseType;
 
       static const InterfaceType defaultInterface = InteriorBorder_All_Interface;
       static const CommunicationDirection defaultDirection =  ForwardCommunication;
@@ -123,6 +127,8 @@ namespace Dune
       static const int polynomialOrder = 1;
 
       typedef typename BaseType::Traits Traits;
+
+      typedef typename BaseType::FunctionSpaceType FunctionSpaceType;
 
       typedef typename BaseType::GridPartType GridPartType;
       typedef typename BaseType::EntityType EntityType;
@@ -145,7 +151,7 @@ namespace Dune
     public:
       using BaseType::order;
 
-      explicit RannacherTurekSpace ( GridPartType &gridPart,
+      explicit RannacherTurekDiscreteFunctionSpace ( GridPartType &gridPart,
                                      const InterfaceType commInterface = defaultInterface,
                                      const CommunicationDirection commDirection = defaultDirection )
       : BaseType( gridPart, commInterface, commDirection ),
@@ -165,7 +171,7 @@ namespace Dune
         mapper_ = new MapperType( blockMapper() );
       }
 
-      ~RannacherTurekSpace ()
+      ~RannacherTurekDiscreteFunctionSpace ()
       {
         if( mapper_ )
           delete mapper_;
@@ -229,8 +235,21 @@ namespace Dune
         return *mapper_;
       }      
 
+      /** \brief interpolate a function locally
+       *
+       *  \param[in]  f     local function to interpolate
+       *  \param[out] dofs  local degrees of freedom of the interpolion
+       */
+      template< class LocalFunction, class LocalDofVector >
+      static void interpolate ( const LocalFunction &f, LocalDofVector &dofs )
+      {
+        typedef typename Traits::LocalInterpolationType LocalInterpolationType;
+        VectorialLocalInterpolation< LocalInterpolationType, typename FunctionSpaceType::RangeType > interpolation;
+        interpolation( f, dofs );
+      }
+
     private:
-      RannacherTurekSpace ( const ThisType & );
+      RannacherTurekDiscreteFunctionSpace ( const ThisType & );
       ThisType &operator= ( const ThisType & );
 
       ScalarShapeFunctionSetType *scalarShapeFunctionSet_;

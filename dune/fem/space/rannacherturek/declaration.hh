@@ -7,11 +7,11 @@ namespace Dune
   namespace Fem
   {
 
-    // RannacherTurekSpace
-    // -------------------
+    // RannacherTurekDiscreteFunctionSpace
+    // -----------------------------------
 
     template< class FunctionSpace, class GridPart, template< class > class Storage >
-    struct RannacherTurekSpace;
+    struct RannacherTurekDiscreteFunctionSpace;
 
   } // namespace Fem
 
