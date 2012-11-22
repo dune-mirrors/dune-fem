@@ -16,4 +16,4 @@ lagrangeglobalrefine.maxlevel: 3
 adapt.locallyadaptive: false
 
 # EOC error threshold 
-adapt.eocthreshold: 0.1
+adapt.eocthreshold: 0.15

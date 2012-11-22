@@ -33,5 +33,6 @@ lagrangeglobalrefine_SOURCES = lagrangeglobalrefine.cc
 legendretest_SOURCES = legendretest.cc
 arraytest_SOURCES = arraytest.cc
 dgcomm_SOURCES = dgcomm.cc
+dgcomm_CPPFLAGS = $(AM_CPPFLAGS) -UGRIDDIM -DGRIDDIM=3 -UWORLDDIM -DWORLDDIM=3
 
 include $(top_srcdir)/am/global-rules
