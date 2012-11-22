@@ -1,6 +1,8 @@
 #ifndef DUNE_FEM_SPACE_RANNACHERTUREK_LOCALFINITEELEMENT_HH
 #define DUNE_FEM_SPACE_RANNACHERTUREK_LOCALFINITEELEMENT_HH
 
+#if HAVE_DUNE_LOCALFUNCTIONS
+
 // dune-localfunctions includes
 #include <dune/localfunctions/rannacherturek.hh>
 
@@ -76,7 +78,7 @@ namespace Dune
 
 
     // RannacherTurekLocalFiniteElement
-    // ------------------
+    // --------------------------------
 
     template< class FunctionSpace >
     class RannacherTurekLocalFiniteElement;
@@ -89,5 +91,7 @@ namespace Dune
   } // namespace Fem
 
 } // namespace Dune
+
+#endif // #if HAVE_DUNE_LOCALFUNCTIONS
 
 #endif // #ifndef DUNE_FEM_SPACE_RANNACHERTUREK_LOCALFINITEELEMENT_HH
