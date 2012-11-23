@@ -143,7 +143,8 @@ try
   // create grid
   GridType &grid = Dune::Fem::TestGrid::grid();
   const int refineStepsForHalf = Dune::Fem::TestGrid::refineStepsForHalf(); 
-  Dune::Fem::GlobalRefine::apply( grid, refineStepsForHalf );
+  for( int i = 0; i < refCount; ++i )
+    Dune::Fem::GlobalRefine::apply( grid, refineStepsForHalf );
 
   double oldError = algorithm( grid, 0 );
   std::cout << "L2 error[ 0 ] = " << oldError << std::endl;
