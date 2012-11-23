@@ -14,6 +14,9 @@
 // dune-geometry types
 #include <dune/geometry/type.hh>
 
+// dune-localfunctions includes
+#include <dune/localfunctions/rannacherturek.hh>
+
 // dune-fem includes
 #include <dune/fem/gridpart/common/capabilities.hh>
 #include <dune/fem/space/basisfunctionset/default.hh>
@@ -29,7 +32,6 @@
 // local includes
 #include "declaration.hh"
 #include "dofmappercode.hh"
-#include "localfiniteelement.hh"
 #include "localinterpolation.hh"
 
 /**
@@ -64,15 +66,15 @@ namespace Dune
     private:
       typedef typename GridPartType::template Codim< codimension >::EntityType EntityType;
 
-      typedef typename FunctionSpaceType::ScalarFunctionSpaceType ScalarFunctionSpaceType;
+      typedef typename FunctionSpaceType::DomainFieldType DomainFieldType;
+      typedef typename FunctionSpaceType::RangeFieldType RangeFieldType;
       static const int dimLocal = GridPartType::dimension;
-      typedef typename ToLocalFunctionSpace< ScalarFunctionSpaceType, dimLocal >::Type ScalarShapeFunctionSpaceType;
 
     public:
-      typedef RannacherTurekLocalFiniteElement< ScalarShapeFunctionSpaceType > LocalFiniteElementType;
-      typedef typename LocalFiniteElementType::LocalBasisType LocalBasisType;
-      typedef typename LocalFiniteElementType::LocalCoefficientsType LocalCoefficientsType;
-      typedef typename LocalFiniteElementType::LocalInterpolationType LocalInterpolationType;
+      typedef Dune::RannacherTurekLocalFiniteElement< DomainFieldType, RangeFieldType, dimLocal > LocalFiniteElementType;
+      typedef typename LocalFiniteElementType::Traits::LocalBasisType LocalBasisType;
+      typedef typename LocalFiniteElementType::Traits::LocalCoefficientsType LocalCoefficientsType;
+      typedef typename LocalFiniteElementType::Traits::LocalInterpolationType LocalInterpolationType;
 
       typedef RannacherTurekBlockMapperFactory< GridPartType, LocalCoefficientsType > BlockMapperFactoryType;
       typedef typename BlockMapperFactoryType::BlockMapperType BlockMapperType;
