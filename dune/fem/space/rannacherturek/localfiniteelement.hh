@@ -83,9 +83,9 @@ namespace Dune
     template< class FunctionSpace >
     class RannacherTurekLocalFiniteElement;
 
-    template< class DomainFieldType, class RangeFieldType >
-    struct RannacherTurekLocalFiniteElement< Dune::Fem::FunctionSpace< DomainFieldType, RangeFieldType, 2, 1 > >
-    : public LocalFiniteElement< Dune::RannacherTurek2DLocalFiniteElement< DomainFieldType, RangeFieldType > >
+    template< class DomainFieldType, class RangeFieldType, int dimDomain >
+    struct RannacherTurekLocalFiniteElement< Dune::Fem::FunctionSpace< DomainFieldType, RangeFieldType, dimDomain, 1 > >
+    : public LocalFiniteElement< Dune::RannacherTurekLocalFiniteElement< DomainFieldType, RangeFieldType, dimDomain > >
     {};
 
   } // namespace Fem

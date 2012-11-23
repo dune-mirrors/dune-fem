@@ -1,0 +1,16 @@
+DGF
+
+Interval
+0 0 0  % p0
+1 1 1  % p1
+4 4 4  % nx ny nz
+#
+
+BoundaryDomain
+default 1
+#
+
+GridParameter
+overlap 1
+name 3d-unit-cube(2x2x2)
+#
