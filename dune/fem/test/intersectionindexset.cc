@@ -1,4 +1,7 @@
 #undef NDEBUG
+#ifdef YASPGRID
+#define SKIP_TEST
+#endif
 
 // without this define this code won't compile for Yasp
 #define ENABLE_ADAPTIVELEAFINDEXSET_FOR_YASPGRID
@@ -21,6 +24,7 @@
 using namespace Dune;
 using namespace Fem;
 
+#ifndef SKIP_TEST
 typedef GridSelector::GridType MyGridType;
 // typedef HierarchicGridPart< MyGridType >  ContainedGridPartType;
 typedef IntersectionAdaptiveLeafGridPart< MyGridType > ContainedGridPartType;
@@ -72,6 +76,7 @@ void checkIntersectionIndexSet( const GridPartType& gridPart )
     std::cerr << "ERROR: size of intersection set wrong! " << std::endl;
   }
 }
+#endif
 
 // main program 
 int main(int argc, char ** argv) 
@@ -79,6 +84,7 @@ int main(int argc, char ** argv)
   MPIManager :: initialize( argc, argv );
   try
   {
+#ifndef SKIP_TEST
     MyGridType &grid = TestGrid :: grid();
     const int step = TestGrid :: refineStepsForHalf();
     grid.globalRefine( 2*step );
@@ -89,6 +95,7 @@ int main(int argc, char ** argv)
       << GridWidth :: calcGridWidth( gridPart ) << std::endl; 
 
     checkIntersectionIndexSet( gridPart );
+#endif
     return 0;
   }
   catch( Exception e )
