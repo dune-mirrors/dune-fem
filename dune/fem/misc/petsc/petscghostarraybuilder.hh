@@ -211,9 +211,14 @@ namespace Dune
         int counter = 0;
         std::vector< int > slaveDofsWithIndex( 2*numDofs, -1 );
 
+        std::vector< size_t > globalDofs;
+        globalDofs.resize( numDofs );
+        AssignFunctor< std::vector< size_t> >  functor( globalDofs );
+        mapper_.mapEachEntityDof( entity, functor );
+
         for( int i = 0; i < numDofs; ++i )
         {
-          const int dof = mapper_.mapEntityDofToGlobal( entity, i );
+          size_t &dof = globalDofs[i];
           assert( size_t( dof ) < petscDofMapping_.size() );
           const int petscDof = petscDofMapping_.localSlaveMapping( dof );
 
@@ -250,12 +255,19 @@ namespace Dune
         assert( static_cast< size_t >( twiceNumSlaveDofs ) + 1 == n );
         assert( twiceNumSlaveDofs + 1 == int( n ) );
 
+
+        const int numDofs = mapper_.numEntityDofs( entity );
+        std::vector< size_t > globalDofs;
+        globalDofs.resize( numDofs );
+        AssignFunctor< std::vector< size_t> >  functor( globalDofs );
+        mapper_.mapEachEntityDof( entity, functor );
+
         for( size_t i = 0; i < size_t( twiceNumSlaveDofs/2 ); ++i )
         {
           int petscDof, index;
           buffer.read( index );
 
-          int globalDof = mapper_.mapEntityDofToGlobal( entity, index );
+          size_t &globalDof = globalDofs[ index ];
           assert( petscDofMapping_.isSlave( globalDof ) );
 
           buffer.read( petscDof ); 
@@ -268,11 +280,17 @@ namespace Dune
       size_t size ( const Entity &entity ) const
       {
         size_t size = 0;
+      
         const int numDofs = mapper_.numEntityDofs( entity );
+
+        std::vector< size_t > globalDofs;
+        globalDofs.resize( numDofs );
+        AssignFunctor< std::vector< size_t> >  functor( globalDofs );
+        mapper_.mapEachEntityDof( entity, functor );
+
         for( int i = 0; i < numDofs; ++i )
         {
-          const int dof = mapper_.mapEntityDofToGlobal( entity, i );
-          if( !petscDofMapping_.isSlave( dof ) ) 
+          if( !petscDofMapping_.isSlave( globalDofs[i] ) ) 
             ++size;
         }
         assert( size == 0 || size == size_t( numDofs ) );
