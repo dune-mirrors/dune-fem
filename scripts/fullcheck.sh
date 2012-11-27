@@ -34,14 +34,12 @@ errors=0
 # check headers in Makefile.am in each MODULE
 # -------------------------------------------
 
-for module in $MODULES; do 
-  echo
-  echo "Checking Makefile.am's *_HEADERS variables in $module" 
-  cd $DUNEDIR/$module
-  if ! $SCRIPTSDIR/check-headers.sh fast ; then
-    errors=$((errors+1))
-  fi
-done
+echo
+echo "Checking Makefile.am's *_HEADERS variables..." 
+cd $FEMDIR
+if ! $SCRIPTSDIR/check-headers.sh fast ; then
+  errors=$((errors+1))
+fi
 
 # configure with minimal options
 # ------------------------------
@@ -77,12 +75,15 @@ fi
 # check headers
 # -------------
 
-echo
-echo "Checking headers..."
-cd $FEMDIR
-if ! $SCRIPTSDIR/check-headers.sh ; then
-  errors=$((errors+1))
-fi
+for module in $MODULES;
+do 
+  echo
+  echo "Checking headers in $modul ..."
+  cd $DUNEDIR/$module
+  if ! $SCRIPTSDIR/check-headers.sh ; then
+    errors=$((errors+1))
+  fi
+done
 
 # check documentation
 # -------------------
