@@ -86,64 +86,18 @@ namespace Dune
         rangeSpace_( rangeSpace ),
         colSlaveDofs_( domainSpace_ ),
         rowSlaveDofs_( rangeSpace_ ),
+        sequence_(-1),
         localMatrixStack_( *this )     
       {
-        /*
-         * initialize the row and column petsc dof mappings
-         */
-        const PetscInt localRows = rowDofMapping().numOwnedDofBlocks();
-        const PetscInt localCols = colDofMapping().numOwnedDofBlocks();
-
-        assert( domainLocalBlockSize == rangeLocalBlockSize );
-        // create matrix 
-        ::Dune::Petsc::MatCreate( &petscMatrix_ );
-        
-        if( domainLocalBlockSize > 1 ) 
-        {
-          ::Dune::Petsc::MatSetType( petscMatrix_, MATBAIJ );
-          // set block size 
-          PetscInt bs = domainLocalBlockSize ;
-          ::Dune::Petsc::MatSetBlockSize( petscMatrix_, bs );
-        }
-        else 
-        {
-          ::Dune::Petsc::MatSetType( petscMatrix_, MATAIJ );
-        }
-
-        // set sizes of the matrix 
-        ::Dune::Petsc::MatSetSizes( petscMatrix_, localRows, localCols, PETSC_DETERMINE, PETSC_DETERMINE );
       }
       PetscLinearOperator ( const DomainSpaceType &domainSpace, const RangeSpaceType &rangeSpace )
       : domainSpace_( domainSpace ),
         rangeSpace_( rangeSpace ),
         colSlaveDofs_( domainSpace_ ),
         rowSlaveDofs_( rangeSpace_ ),
+        sequence_(-1),
         localMatrixStack_( *this )     
       {
-        /*
-         * initialize the row and column petsc dof mappings
-         */
-        const PetscInt localRows = rowDofMapping().numOwnedDofBlocks();
-        const PetscInt localCols = colDofMapping().numOwnedDofBlocks();
-
-        assert( domainLocalBlockSize == rangeLocalBlockSize );
-        // create matrix 
-        ::Dune::Petsc::MatCreate( &petscMatrix_ );
-        
-        if( domainLocalBlockSize > 1 ) 
-        {
-          ::Dune::Petsc::MatSetType( petscMatrix_, MATBAIJ );
-          // set block size 
-          PetscInt bs = domainLocalBlockSize ;
-          ::Dune::Petsc::MatSetBlockSize( petscMatrix_, bs );
-        }
-        else 
-        {
-          ::Dune::Petsc::MatSetType( petscMatrix_, MATAIJ );
-        }
-
-        // set sizes of the matrix 
-        ::Dune::Petsc::MatSetSizes( petscMatrix_, localRows, localCols, PETSC_DETERMINE, PETSC_DETERMINE );
       }
 
       //! destructor deleting PETSc Mat object 
@@ -172,7 +126,36 @@ namespace Dune
         apply( arg, dest );
       }
 
-      void reserve () {
+      void reserve () 
+      {
+        if(sequence_ != domainSpace().sequence())  
+        {
+          /*
+          * initialize the row and column petsc dof mappings
+          */
+          const PetscInt localRows = rowDofMapping().numOwnedDofBlocks();
+          const PetscInt localCols = colDofMapping().numOwnedDofBlocks();
+
+           assert( domainLocalBlockSize == rangeLocalBlockSize );
+          // create matrix 
+          ::Dune::Petsc::MatCreate( &petscMatrix_ );
+        
+          if( domainLocalBlockSize > 1 ) 
+          {
+            ::Dune::Petsc::MatSetType( petscMatrix_, MATBAIJ );
+            // set block size 
+            PetscInt bs = domainLocalBlockSize ;
+            ::Dune::Petsc::MatSetBlockSize( petscMatrix_, bs );
+          }
+          else 
+          {
+            ::Dune::Petsc::MatSetType( petscMatrix_, MATAIJ );
+          }
+
+          // set sizes of the matrix 
+          ::Dune::Petsc::MatSetSizes( petscMatrix_, localRows, localCols, PETSC_DETERMINE, PETSC_DETERMINE );
+        } 
+
         ::Dune::Petsc::MatSetUp( petscMatrix_ );
       } 
 
@@ -224,6 +207,7 @@ namespace Dune
       ColPetscSlaveDofsType colSlaveDofs_;
       RowPetscSlaveDofsType rowSlaveDofs_;
 
+      int sequence_;
       mutable Mat petscMatrix_;
 
       mutable LocalMatrixStackType localMatrixStack_;
