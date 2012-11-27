@@ -1,3 +1,11 @@
+#ifdef ALBERTAGRID
+// set dimensions to ALBERTA dimensions to avoid conflicts 
+#undef GRIDDIM
+#define GRIDDIM ALBERTA_DIM
+#undef WORLDDIM
+#define WORLDDIM ALBERTA_DIM
+#endif
+
 #include <config.h>
 
 #include <iostream>
