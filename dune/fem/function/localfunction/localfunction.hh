@@ -19,7 +19,7 @@ namespace Dune
      *
      * On every element from a discrete function the local funtion can be
      * accessed. With the local function one has access to the dof and on the
-     * other hand to the base function set of this actual element. Therefore
+     * other hand to the basis function set of this actual element. Therefore
      * this is called a local function.
      *
      * \remarks The interface for using a LocalFunction is defined by the class
@@ -86,12 +86,12 @@ namespace Dune
       //! dimension of the range
       static const int dimRange = DiscreteFunctionSpaceType::dimRange;
 
-      //! type of base function set  
+      //! type of basis function set  
       typedef typename DiscreteFunctionSpaceType::BasisFunctionSetType BasisFunctionSetType;
 
-      //! type of the Jacobian of a base function
+      //! type of the Jacobian of a basis function
       typedef typename BasisFunctionSetType::JacobianRangeType LocalJacobianRangeType;
-      // type of the Hessian of a base function
+      // type of the Hessian of a basis function
       typedef typename BasisFunctionSetType::HessianRangeType LocalHessianRangeType;
 
       /** \brief access to local dofs (read-only)
@@ -181,14 +181,14 @@ namespace Dune
 
       /** \brief axpy operation for local function
        *
-       *  Denoting the DoFs of the local function by \f$u_i\f$ and the base
+       *  Denoting the DoFs of the local function by \f$u_i\f$ and the basis
        *  functions by \f$\varphi_i\f$, this function performs the following
        *  operation:
        *  \f[
        *  u_i = u_i + factor \cdot \varphi_i( x )
        *  \f]
        *
-       *  \param[in]  x       point to evaluate base functions in
+       *  \param[in]  x       point to evaluate basis functions in
        *  \param[in]  factor  axpy factor
        */
       template< class PointType >
@@ -199,14 +199,14 @@ namespace Dune
     
       /** \brief axpy operation for local function
        *
-       *  Denoting the DoFs of the local function by \f$u_i\f$ and the base
+       *  Denoting the DoFs of the local function by \f$u_i\f$ and the basis
        *  functions by \f$\varphi_i\f$, this function performs the following
        *  operation:
        *  \f[
        *  u_i = u_i + factor \cdot \nabla\varphi_i( x )
        *  \f]
        *
-       *  \param[in]  x       point to evaluate jacobian of base functions in
+       *  \param[in]  x       point to evaluate jacobian of basis functions in
        *  \param[in]  factor  axpy factor
        */
       template< class PointType >
@@ -217,14 +217,14 @@ namespace Dune
 
       /** \brief axpy operation for local function
        *
-       *  Denoting the DoFs of the local function by \f$u_i\f$ and the base
+       *  Denoting the DoFs of the local function by \f$u_i\f$ and the basis 
        *  functions by \f$\varphi_i\f$, this function performs the following
        *  operation:
        *  \f[
        *  u_i = u_i + factor1 \cdot \varphi_i( x ) + factor2 \cdot \nabla\varphi_i( x )
        *  \f]
        *
-       *  \param[in]  x        point to evaluate base functions in
+       *  \param[in]  x        point to evaluate basis functions in
        *  \param[in]  factor1  axpy factor for \f$\varphi( x )\f$
        *  \param[in]  factor2  axpy factor for \f$\nabla\varphi( x )\f$
        */
@@ -240,7 +240,7 @@ namespace Dune
        *  to integrate it exactly.
        *
        *  \note It is not completely clear what this value should be, e.g., for
-       *        bilinear base functions.
+       *        bilinear basis functions.
        *
        *  \returns order of the local function
        */
@@ -249,11 +249,24 @@ namespace Dune
         return asImp().order();
       }
 
-      /** \brief obtain the base function set for this local function
+      /** \brief obtain the basis function set for this local function
        *
-       *  \returns reference to the base function set
+       *  \returns reference to the basis function set
        */
       const BasisFunctionSetType &basisFunctionSet () const 
+      {
+        return asImp().basisFunctionSet();
+      }
+
+      /** \brief obtain the basis function set for this local function
+       *
+       *  \returns reference to the basis function set
+       *
+       *  \note compatibility method, will be removed
+       */
+      typedef BasisFunctionSetType BaseFunctionSetType;
+      DUNE_VERSION_DEPRECATED(1,4,remove)
+      const BaseFunctionSetType &baseFunctionSet () const
       {
         return asImp().basisFunctionSet();
       }
@@ -330,7 +343,7 @@ namespace Dune
       /** \brief obtain the number of local DoFs
        *
        *  Obtain the number of local DoFs of this local function. The value is
-       *  identical to the number of base functons on the entity.
+       *  identical to the number of basis functons on the entity.
        *  
        *  \returns number of local DoFs
        */
@@ -348,7 +361,7 @@ namespace Dune
        *
        *  Obtain the number of local DoFs of the scalar case 
        *  of this local function. The value is
-       *  identical to the number of base functons on the entity.
+       *  identical to the number of basis functons on the entity.
        *  
        *  \returns number of local DoFs, scalar case 
        */
