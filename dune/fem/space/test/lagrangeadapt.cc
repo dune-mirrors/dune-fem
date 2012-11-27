@@ -297,7 +297,7 @@ void algorithm ( GridPartType &gridPart,
   std :: cout << "L2 EOC: " << l2eoc << std :: endl;
   std :: cout << "H1 EOC: " << h1eoc << std :: endl;
 
-  const bool isLocallyAdaptive = Dune::Fem::Capabilities::isLocallyAdaptive< typename GridPartType :: GridType > :: v ;
+  const bool isLocallyAdaptive = Dune::Fem::Capabilities::isLocallyAdaptive< GridPartType :: GridType > :: v ;
   // threshold for EOC difference to predicted value 
   const double eocThreshold = Parameter :: getValue("adapt.eocthreshold", double(0.2) );
 
