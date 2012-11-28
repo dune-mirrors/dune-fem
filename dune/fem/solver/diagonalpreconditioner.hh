@@ -90,10 +90,7 @@ namespace Dune
         const DofType &eps = 16*std::numeric_limits< DofType >::epsilon();
         const DofIteratorType dend = diagonalInv_.dend();
         for( DofIteratorType dit = diagonalInv_.dbegin(); dit != dend; ++dit )
-        {
-          DofType &dof = *dit;
-          dof = (std::abs( dof ) < eps ? DofType( 1 ) : DofType( 1 ) / dof);
-        }
+          *dit = (std::abs( *dit ) < eps ? DofType( 1 ) : DofType( 1 ) / *dit);
       }
 
       virtual void operator()(const DiscreteFunctionType &u, DiscreteFunctionType &res) const

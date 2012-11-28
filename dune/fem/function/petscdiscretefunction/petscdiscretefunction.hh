@@ -107,7 +107,11 @@ namespace Dune
       typedef typename PetscVectorType::DofBlockPtrType                 DofBlockPtrType;
       typedef typename PetscVectorType::ConstDofBlockPtrType            ConstDofBlockPtrType;
 
-      typedef typename DofBlockType::DofProxy DofType;
+      // what is DoFType ?!?!?!? this
+      typedef RangeFieldType DofType;
+
+      // or this ?!?!?!
+//    typedef typename DofBlockType::DofProxy DofType;
 
     public:
 
