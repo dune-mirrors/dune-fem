@@ -78,10 +78,12 @@ fi
 for module in $MODULES;
 do 
   echo
-  echo "Checking headers in $modul ..."
+  echo "Checking headers in $module ..."
   cd $DUNEDIR/$module
   if ! $SCRIPTSDIR/check-headers.sh ; then
-    errors=$((errors+1))
+    if test "x$module" == "xdune-fem"; then
+      errors=$((errors+1))
+    fi
   fi
 done
 
