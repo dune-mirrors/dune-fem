@@ -140,7 +140,7 @@ namespace AnisotropicDG
     bool exists ( const MultiIndexType &multiIndex ) const
     {
       const size_type position = ThisType::position( multiIndex );
-      return shapeFunctionSets_[ position ];
+      return bool( shapeFunctionSets_[ position ] );
     }
 
     // return shape function set for multi index (do not test for null pointer)
@@ -152,14 +152,14 @@ namespace AnisotropicDG
     }
 
   private:
-    // map multi index set to integer value
+    // injective mapping from multi index to integer value
     size_type position ( const MultiIndexType &multiIndex ) const
     {
       std::size_t position = 0, factor = 1;
       for( std::size_t i = 0; i < dimension-1; ++i )
       {
         position += multiIndex[ i ]*factor;
-        factor *= maxOrder;
+        factor *= maxOrder+1;
       }
       position += multiIndex[ dimension-1 ]*factor;
       assert( position < MultiIndexSetType::size() );
