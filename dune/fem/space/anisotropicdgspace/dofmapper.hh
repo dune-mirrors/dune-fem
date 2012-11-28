@@ -24,7 +24,7 @@ namespace AnisotropicDG
   // Internal forward declaration 
   // ----------------------------
 
-  template< class GridPart, int dimRange, int maxPolOrder >
+  template< class GridPart, int maxPolOrder >
   class DofMapper;
 
 
@@ -32,11 +32,11 @@ namespace AnisotropicDG
   // DofMapperTraits
   // ---------------
 
-  template< class GridPart, int dimRange, int maxPolOrder >
+  template< class GridPart, int maxPolOrder >
   struct DofMapperTraits
   {
     //! \brief type of DoF mapper
-    typedef AnisotropicDG::DofMapper< GridPart, dimRange, maxPolOrder > DofMapperType;
+    typedef AnisotropicDG::DofMapper< GridPart, maxPolOrder > DofMapperType;
     //! \brief element type
     typedef typename GridPart::template Codim< 0 >::EntityType ElementType;
     //! \brief type of size integer
@@ -48,12 +48,12 @@ namespace AnisotropicDG
   // DofMapper
   // ---------
 
-  template< class GridPart, int dimRange, int maxPolOrder >
+  template< class GridPart, int maxPolOrder >
   class DofMapper
-  : public Dune::Fem::AdaptiveDofMapper< AnisotropicDG::DofMapperTraits< GridPart, dimRange, maxPolOrder > >
+  : public Dune::Fem::AdaptiveDofMapper< AnisotropicDG::DofMapperTraits< GridPart, maxPolOrder > >
   {
-    typedef DofMapper< GridPart, dimRange, maxPolOrder > ThisType;
-    typedef Dune::Fem::AdaptiveDofMapper< AnisotropicDG::DofMapperTraits< GridPart, dimRange, maxPolOrder > > BaseType;
+    typedef DofMapper< GridPart, maxPolOrder > ThisType;
+    typedef Dune::Fem::AdaptiveDofMapper< AnisotropicDG::DofMapperTraits< GridPart, maxPolOrder > > BaseType;
 
   public:
     typedef typename BaseType::Traits Traits;
@@ -71,7 +71,7 @@ namespace AnisotropicDG
     DofMapper ( const GridPartType &gridPart, const MultiIndexType multiIndex )
     : gridPart_( gridPart ),
       multiIndex_( multiIndex ),
-      numDofs_( dimRange*NumShapeFunctions< dimension, maxPolOrder >::count( multiIndex ) )
+      numDofs_( NumShapeFunctions< dimension, maxPolOrder >::count( multiIndex ) )
     {}
 
 
@@ -113,7 +113,7 @@ namespace AnisotropicDG
 
     int maxNumDofs () const
     {
-      return dimRange*NumShapeFunctions< dimension, maxPolOrder >::max();
+      return NumShapeFunctions< dimension, maxPolOrder >::max();
     }
 
     template< class Entity >
@@ -210,7 +210,7 @@ namespace AnisotropicDG
     GlobalKeyType globalKey ( const Entity &entity, const int localDoF ) const
     {
       assert( Entity::codimension == 0 );
-      return dimRange*indexSet().index( entity ) + localDoF;
+      return numDofs_*indexSet().index( entity ) + localDoF;
     }
 
   private:

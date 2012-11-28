@@ -67,8 +67,8 @@ namespace AnisotropicDG
     typedef typename GridPart::template Codim< 0 >::EntityType EntityType;
     typedef Dune::Fem::DefaultBasisFunctionSet< EntityType, ShapeFunctionSetType > BasisFunctionSetType;
 
-    typedef Dune::Fem::CodimensionMapper< GridPartType, codimension > BlockMapperType;
-    static const int localBlockSize = Dune::StaticPower< maxOrder+1, dimLocal >::power;
+    typedef DofMapper< GridPartType, maxOrder > BlockMapperType;
+    static const int localBlockSize = dimRange;
     typedef Dune::Fem::NonBlockMapper< BlockMapperType, localBlockSize > MapperType;
 
     template< class DiscreteFunction, class Operation = Dune::Fem::DFCommunicationOperation::Copy >
@@ -120,7 +120,7 @@ namespace AnisotropicDG
                             const Dune::InterfaceType commInterface,
                             const Dune::CommunicationDirection commDirection )
     : BaseType( gridPart, commInterface, commDirection ),
-      blockMapper_( gridPart ),
+      blockMapper_( gridPart, multiIndex ),
       mapper_( blockMapper_ ),
       multiIndex_( multiIndex )
     {
