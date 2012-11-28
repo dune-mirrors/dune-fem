@@ -6,6 +6,7 @@
 
 // dune-common includes
 #include <dune/common/fvector.hh>
+#include <dune/common/power.hh>
 
 /**
   @file
@@ -34,7 +35,7 @@ namespace AnisotropicDG
     //! \brief return number of multi indices
     static std::size_t size ()
     {
-      return std::pow( (order+1), dimension );
+      return Dune::StaticPower< order+1, dimension >::power;
     }
 
     //! \brief return true, if index is contained in this set
