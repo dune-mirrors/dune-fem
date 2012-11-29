@@ -31,11 +31,11 @@ MODULES="dune-common dune-geometry dune-grid dune-istl dune-fem"
 
 errors=0
 
-# check headers in Makefile.am
-# ----------------------------
+# check headers in Makefile.am in each MODULE
+# -------------------------------------------
 
 echo
-echo "Checking Makefile.am's *_HEADERS variables..."
+echo "Checking Makefile.am's *_HEADERS variables..." 
 cd $FEMDIR
 if ! $SCRIPTSDIR/check-headers.sh fast ; then
   errors=$((errors+1))
@@ -75,12 +75,17 @@ fi
 # check headers
 # -------------
 
-echo
-echo "Checking headers..."
-cd $FEMDIR
-if ! $SCRIPTSDIR/check-headers.sh ; then
-  errors=$((errors+1))
-fi
+for module in $MODULES;
+do 
+  echo
+  echo "Checking headers in $module ..."
+  cd $DUNEDIR/$module
+  if ! $SCRIPTSDIR/check-headers.sh ; then
+    if test "x$module" == "xdune-fem"; then
+      errors=$((errors+1))
+    fi
+  fi
+done
 
 # check documentation
 # -------------------

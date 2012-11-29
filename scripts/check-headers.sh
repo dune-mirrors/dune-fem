@@ -63,7 +63,14 @@ for directory in $files ; do
     done
   done
 
+  # IGNORE_HEADERS fem headercheck ignore
   ignore=`grep "IGNORE_HEADERS" $makefile`
+  if test "x$ignore" != "x" ; then
+    continue
+  fi
+
+  # headercheck_IGNORE core headercheck ignore
+  ignore=`grep "headercheck_IGNORE" $makefile`
   if test "x$ignore" != "x" ; then
     continue
   fi
