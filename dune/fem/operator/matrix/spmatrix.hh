@@ -210,6 +210,10 @@ namespace Dune
       //! return value of entry (row,col)
       T operator() ( const int row, const int col ) const;
       T operator() ( const unsigned int row, const unsigned int col ) const;
+      T operator() ( const size_t row, const size_t col ) const
+      {
+        return this->operator()((unsigned int)(row), (unsigned int)(col) );
+      }
 
       //! set entry to value
       //! note, that every entry is performed into the matrix!
