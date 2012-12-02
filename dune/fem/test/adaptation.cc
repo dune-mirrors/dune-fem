@@ -1,3 +1,11 @@
+#ifdef ALBERTAGRID
+// set dimensions to ALBERTA dimensions to avoid conflicts 
+#undef GRIDDIM
+#define GRIDDIM ALBERTA_DIM
+#undef WORLDDIM
+#define WORLDDIM ALBERTA_DIM
+#endif
+
 // only perform this test for the 3d version of ALUGrid
 #if defined ALUGRID_CONFORM || defined ALUGRID_SIMPLEX || defined ALUGRID_CUBE
 #if GRIDDIM == 3 
