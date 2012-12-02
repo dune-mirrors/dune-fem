@@ -626,7 +626,7 @@ namespace Dune
       //! returns true if combination is contained 
       bool contains ( int dim, int codim ) const
       {
-        return space_.contains( codim );
+        return space_.blockMapper().contains( codim );
       }
 
       //! return whether we have a fixed size 
