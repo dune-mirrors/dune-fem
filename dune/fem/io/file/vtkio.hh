@@ -92,11 +92,11 @@ namespace Dune
       {
         if (vector_) {
           std::stringstream ret_vec;
-          ret_vec << name_ << "-vec-" << component_;
+          ret_vec << name_ << "_vec" << component_;
           return ret_vec.str(); 
         }
         std::stringstream ret;
-        ret << name_ << "-" << component_;
+        ret << name_ << component_;
         return ret.str();
       }
 

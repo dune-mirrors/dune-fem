@@ -726,7 +726,7 @@ namespace Dune
           if (i != col) 
           {
             // only set 0 if nonzero column entry exists in current row
-            if ((*this)(i,col) != 0)
+            if (this->operator()(i,col) != 0)
                 set(i,col,0); 
           }
           else set(col,col,1.0); 
