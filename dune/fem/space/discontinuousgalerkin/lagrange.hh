@@ -82,12 +82,12 @@ namespace Dune
     template< class FunctionSpace, class GridPart, int polOrder, template< class > class Storage = CachingStorage >
     class LagrangeDiscontinuousGalerkinSpace
     : public DiscontinuousGalerkinSpaceDefault< 
-        DiscontinuousGalerkinSpaceDefaultTraits< LagrangeDiscontinuousGalerkinSpaceTraits< FunctionSpace, GridPart, polOrder, Storage > >, Storage 
+        DiscontinuousGalerkinSpaceDefaultTraits< LagrangeDiscontinuousGalerkinSpaceTraits< FunctionSpace, GridPart, polOrder, Storage > >
       >
     {
       typedef LagrangeDiscontinuousGalerkinSpace< FunctionSpace, GridPart, polOrder, Storage > ThisType;
       typedef DiscontinuousGalerkinSpaceDefault< 
-          DiscontinuousGalerkinSpaceDefaultTraits< LagrangeDiscontinuousGalerkinSpaceTraits< FunctionSpace, GridPart, polOrder, Storage > >, Storage 
+          DiscontinuousGalerkinSpaceDefaultTraits< LagrangeDiscontinuousGalerkinSpaceTraits< FunctionSpace, GridPart, polOrder, Storage > >
         > BaseType;
 
     public:

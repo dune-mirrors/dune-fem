@@ -34,11 +34,11 @@ namespace Dune
     /* 
      * Default implementation for discrete Discontinuous Galerkin spaces.
      */
-    template< class Traits, template< class > class Storage >
+    template< class Traits >
     class DiscontinuousGalerkinSpaceDefault
     : public DiscreteFunctionSpaceDefault< Traits >
     {
-      typedef DiscontinuousGalerkinSpaceDefault< Traits, Storage > ThisType;
+      typedef DiscontinuousGalerkinSpaceDefault< Traits > ThisType;
       typedef DiscreteFunctionSpaceDefault< Traits > BaseType;
 
     public:
