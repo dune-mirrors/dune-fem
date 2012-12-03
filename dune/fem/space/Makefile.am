@@ -1,7 +1,6 @@
 spacedir = $(includedir)/dune/fem/space
 
-space_HEADERS = anisotropicdgspace.hh \
-		combineddiscretefunctionspace.hh \
+space_HEADERS = combineddiscretefunctionspace.hh \
 		combinedspace.hh \
 		discontinuousgalerkin.hh \
 		finitevolume.hh \
@@ -10,12 +9,13 @@ space_HEADERS = anisotropicdgspace.hh \
 		rannacherturek.hh \
 		reducedbasisspace.hh
 
-SUBDIRS = anisotropicdgspace basefunctions \
-	  basisfunctionset combinedspace common \
+SUBDIRS = basefunctions basisfunctionset \
+	  combinedspace common \
 	  discontinuousgalerkin dofmapper \
 	  finitevolume lagrange mapper \
 	  padaptivespace rannacherturek \
-	  reducedbasisspace shapefunctionset test
+	  reducedbasisspace shapefunctionset \
+	  test
 
 noinst_LTLIBRARIES = libspace.la
 

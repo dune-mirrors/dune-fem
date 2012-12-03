@@ -35,8 +35,6 @@ AC_CONFIG_FILES([Makefile
      dune/fem/pass/test/dgellipt/Makefile
      dune/fem/space/Makefile
      dune/fem/space/test/Makefile
-     dune/fem/space/anisotropicdgspace/Makefile
-     dune/fem/space/anisotropicdgspace/test/Makefile
      dune/fem/space/basefunctions/Makefile
      dune/fem/space/basisfunctionset/Makefile
      dune/fem/space/shapefunctionset/Makefile
