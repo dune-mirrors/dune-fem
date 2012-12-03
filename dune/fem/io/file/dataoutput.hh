@@ -245,7 +245,9 @@ namespace Dune
       */
       void write() const 
       {
-        write( "" );
+        if( willWrite() )
+          writeData( writeCalls_, "" );
+        ++writeCalls_;
       }
 
       /** \brief write given data to disc, evaluates parameter savecount and savestep
