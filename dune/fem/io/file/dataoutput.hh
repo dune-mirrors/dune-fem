@@ -204,7 +204,18 @@ namespace Dune
       void consistentSaveStep ( const TimeProviderBase &tp ) const;
 
       //! destructor 
-      virtual ~DataOutput() { delete param_; }
+      virtual ~DataOutput()
+      {
+	delete param_; 
+
+	if( pvd_ )
+	  {
+	    pvd_ << "  </Collection>" << std::endl;
+	    pvd_ << "</VTKFile>" << std::endl;
+
+	    pvd_.close();
+	  }
+      }
 
     protected:  
       //! initialize data writer 
@@ -245,7 +256,9 @@ namespace Dune
       */
       void write() const 
       {
-        write( "" );
+        if( willWrite() )
+          writeData( writeCalls_, "" );
+        ++writeCalls_;
       }
 
       /** \brief write given data to disc, evaluates parameter savecount and savestep
@@ -337,6 +350,7 @@ namespace Dune
       // grape, vtk or ...
       OutputFormat outputFormat_;
       mutable std::ofstream sequence_;
+      mutable std::ofstream pvd_;
       const DataOutputParameters* param_;
     }; // end class DataOutput
 
@@ -645,7 +659,6 @@ namespace Dune
       consistentSaveStep( tp );
     }
 
-
     template< class GridImp, class DataImp >
     inline void DataOutput< GridImp, DataImp >
       ::consistentSaveStep ( const TimeProviderBase &tp ) const
@@ -712,12 +725,29 @@ namespace Dune
         // only write series file for VTK output
         if ( Parameter :: verbose() && outputFormat_ < binary ) 
         {
-          std::string name = path_ + "/" + datapref_;
-          name += ".series";
-          std::cout << "opening file: " << name << std::endl;
-          sequence_.open(name.c_str());
-          if ( ! sequence_ )
-            std::cout << "could not write sequence file" << std::endl;
+          {
+            std::string name = path_ + "/" + datapref_;
+            name += ".series";
+            std::cout << "opening file: " << name << std::endl;
+            sequence_.open(name.c_str());
+            if ( ! sequence_ )
+              std::cout << "could not write sequence file" << std::endl;
+          }
+
+          {
+            std::string name = path_ + "/" + datapref_;
+            name += ".pvd";
+            std::cout << "opening file: " << name << std::endl;
+            pvd_.open(name.c_str());
+            if ( ! pvd_ )
+              std::cout << "could not write sequence file" << std::endl;
+            else
+            {
+              pvd_ << "<?xml version=\"1.0\"?>" << std::endl;
+              pvd_ << "<VTKFile type=\"Collection\" version=\"0.1\" byte_order=\"LittleEndian\">" << std::endl;
+              pvd_ << "  <Collection>" << std::endl;
+            }
+          }
         }
 
         // write parameter file 
@@ -759,12 +789,17 @@ namespace Dune
 
       if( outputFormat_ != none ) 
       {
-        if (sequence_)
+        if( sequence_ )
           sequence_ << writeStep_ << " "
                     << filename << " "
                     << sequenceStamp
                     << outstring
                     << std::endl;
+
+        if( pvd_ )
+          pvd_ << "    <DataSet timestep=\"" << sequenceStamp << "\" "
+               << "group=\"\" part=\"0\" "
+               << "file=\""<<filename<<"\"/>" << std::endl;
 
         if( Parameter::verbose() )
         {

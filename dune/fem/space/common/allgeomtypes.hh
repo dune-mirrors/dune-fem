@@ -149,33 +149,37 @@ namespace Dune
       explicit AllGeomTypes ( const IndexSetType &indexSet )
       {
         // vertices 
-        geomTypes_[ dim ].push_back( GeometryType( GeometryType::simplex, 0 ) );
-        
-        if( dim == 2 )
+        for (int i=0;i<dim;++i)
+          geomTypes_[ i ].push_back( GeometryType( GeometryType::simplex, dim-i ) );
+
+        if ( ! ( indexSet.geomTypes(0).size() == 1 && 
+                 indexSet.geomTypes(0)[0].isSimplex() ) )
         {
-          // elements 
-          geomTypes_[ 0 ].push_back( GeometryType( GeometryType::simplex, 2 ) );
-          geomTypes_[ 0 ].push_back( GeometryType( GeometryType::cube, 2 ) );
+          if( dim == 2 )
+          {
+            // elements 
+            // geomTypes_[ 0 ].push_back( GeometryType( GeometryType::simplex, 2 ) );
+            geomTypes_[ 0 ].push_back( GeometryType( GeometryType::cube, 2 ) );
 
-          // faces 
-          geomTypes_[ 1 ].push_back( GeometryType( GeometryType::cube, 1 ) );
+            // faces 
+            // geomTypes_[ 1 ].push_back( GeometryType( GeometryType::cube, 1 ) );
+          }
+          else if( dim == 3 )
+          {
+            // elements 
+            // geomTypes_[ 0 ].push_back( GeometryType( GeometryType::simplex, 3 ) );
+            geomTypes_[ 0 ].push_back( GeometryType( GeometryType::cube, 3 ) );
+            geomTypes_[ 0 ].push_back( GeometryType( GeometryType::prism, 3 ) );
+            geomTypes_[ 0 ].push_back( GeometryType( GeometryType::pyramid, 3 ) );
+
+            // faces 
+            // geomTypes_[ 1 ].push_back( GeometryType( GeometryType::simplex, 2 ) );
+            geomTypes_[ 1 ].push_back( GeometryType( GeometryType::cube, 2 ) );
+
+            // edges 
+            // geomTypes_[ 2 ].push_back( GeometryType( GeometryType::cube, 1 ) );
+          }
         }
-        else if( dim == 3 )
-        {
-          // elements 
-          geomTypes_[ 0 ].push_back( GeometryType( GeometryType::simplex, 3 ) );
-          geomTypes_[ 0 ].push_back( GeometryType( GeometryType::cube, 3 ) );
-          geomTypes_[ 0 ].push_back( GeometryType( GeometryType::prism, 3 ) );
-          geomTypes_[ 0 ].push_back( GeometryType( GeometryType::pyramid, 3 ) );
-
-          // faces 
-          geomTypes_[ 1 ].push_back( GeometryType( GeometryType::simplex, 2 ) );
-          geomTypes_[ 1 ].push_back( GeometryType( GeometryType::cube, 2 ) );
-
-          // edges 
-          geomTypes_[ 2 ].push_back( GeometryType( GeometryType::cube, 1 ) );
-        }
-
         this->buildMaps( geomTypes_[ 0 ] );
       }                  
       
