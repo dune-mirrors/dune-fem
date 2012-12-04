@@ -34,6 +34,8 @@ namespace Dune
       typedef CachingShapeFunctionSet< ShapeFunctionSet > BaseType;
 
     public:
+      typedef ShapeFunctionSet ImplementationType;
+
       explicit SelectCachingShapeFunctionSet ( const GeometryType &type,
                                                const ShapeFunctionSet &shapeFunctionSet = ShapeFunctionSet() )
       : BaseType( type, shapeFunctionSet )
@@ -47,6 +49,8 @@ namespace Dune
       typedef ShapeFunctionSet BaseType;
 
     public:
+      typedef ShapeFunctionSet ImplementationType;
+
       explicit SelectCachingShapeFunctionSet ( const GeometryType &type,
                                                const ShapeFunctionSet &shapeFunctionSet = ShapeFunctionSet() )
       : BaseType( shapeFunctionSet )
