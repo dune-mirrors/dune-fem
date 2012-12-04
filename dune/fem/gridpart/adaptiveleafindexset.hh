@@ -52,6 +52,9 @@ namespace Dune
       //! number of supported codimensions 
       static const int intersectionCodimension = TraitsImp :: intersectionCodimension ;
 
+      //! true if only one geometry type is available 
+      static const bool hasSingleGeometryType = Dune::Capabilities::hasSingleGeometryType< GridType > :: v ;
+
       //! type of index 
       typedef typename BaseType :: IndexType IndexType;
 
@@ -72,7 +75,7 @@ namespace Dune
       template< int codim , bool gridHasCodim >
       struct CountElementsBase
       {
-        static void apply ( const ThisType &indexSet, const GeometryType &type, int &count )
+        static void apply ( const ThisType &indexSet, const GeometryType &type, IndexType& count )
         {
           if( type.dim() == dimension - codim )
             count = indexSet.template countElements< codim >( type, integral_constant<bool,true>() );
@@ -82,7 +85,7 @@ namespace Dune
       template< int codim >
       struct CountElementsBase< codim, false >
       {
-        static void apply ( const ThisType &indexSet, const GeometryType &type, int &count )
+        static void apply ( const ThisType &indexSet, const GeometryType &type, IndexType& count )
         {
           if( type.dim() == dimension - codim )
             count = indexSet.template countElements< codim >( type, integral_constant<bool,false>() );
@@ -345,15 +348,17 @@ namespace Dune
       {
         const int codim = dimension - type.dim();
 
+        // true if only one geometry type is present 
+        const bool onlySingleGeometryType = hasSingleGeometryType || geomTypes( codim ).size() == 1 ;
         // use size of codim index set if possible 
-        if( codimAvailable( codim ) )
+        if( codimAvailable( codim ) && onlySingleGeometryType )
         {
           if( codimUsed_[ codim ] )
             return codimLeafSet( codim ).size();
         }
 
-        assert( geomTypes( codim ).size() == 1 ); 
-        int count = 0;
+        // count entities for given geometry type 
+        IndexType count = 0 ;
         ForLoop< CountElements, 0, dimension > :: apply( *this, type, count );
         return count;
       }
@@ -366,8 +371,15 @@ namespace Dune
         {
           return codimLeafSet( codim ).size();
         }
-        assert( geomTypes( codim ).size() == 1 ); 
-        return size( geomTypes( codim )[0] );
+
+        // count size for all geometry types 
+        IndexType count = 0 ;
+        const size_t types = geomTypes( codim ).size();
+        for( size_t i=0; i<types; ++i ) 
+        {
+          count += size( geomTypes( codim )[ i ] );
+        }
+        return count ;
       }
       
       //! returns vector with geometry tpyes this index set has indices for
@@ -640,9 +652,9 @@ namespace Dune
       // count elements by iterating over grid and compare 
       // entities of given codim with given type 
       template< int codim >
-      inline int countElements ( GeometryType type, const integral_constant<bool,true> &hasEntities ) const;
+      inline IndexType countElements ( GeometryType type, const integral_constant<bool,true> &hasEntities ) const;
       template< int codim >
-      inline int countElements ( GeometryType type, const integral_constant<bool,false> &hasEntities ) const;
+      inline IndexType countElements ( GeometryType type, const integral_constant<bool,false> &hasEntities ) const;
       
     public:
       //! write indexset to stream  
@@ -1042,7 +1054,7 @@ namespace Dune
 
     template< class TraitsImp >
     template< int codim >
-    inline int
+    inline typename AdaptiveIndexSetBase< TraitsImp >::IndexType
     AdaptiveIndexSetBase< TraitsImp >::countElements ( GeometryType type, const integral_constant<bool,true>& ) const
     {
       typedef typename GridPartType
@@ -1050,17 +1062,20 @@ namespace Dune
 
       const Iterator begin = gridPart_.template begin< codim, pitype >();
       const Iterator end = gridPart_.template end< codim, pitype >();
-      int count = 0;
+      IndexType count = 0;
       for( Iterator it = begin; it != end; ++it )
       {
         if( it->type() == type )
+        {
           ++count;
+        }
       }
       return count; 
     }
+
     template< class TraitsImp >
     template< int codim >
-    inline int
+    inline typename AdaptiveIndexSetBase< TraitsImp >::IndexType
     AdaptiveIndexSetBase< TraitsImp >::countElements ( GeometryType type, const integral_constant<bool,false>& ) const
     {
       // make sure codimension is enabled 
@@ -1075,7 +1090,7 @@ namespace Dune
       typedef typename GridPartType::ctype ctype;
 
       const Iterator end = gridPart_.template end< 0, pitype >();
-      int count = 0;
+      IndexType count = 0;
       for( Iterator it = gridPart_.template begin< 0, pitype >(); it != end; ++it )
       {
         const ElementType& element = *it ;
@@ -1087,7 +1102,9 @@ namespace Dune
             codimLeafSet( codim ).insertSubEntity( element,i );
             if ( Dune::ReferenceElements< ctype, dimension >::
                general( element.type() ).type( i, codim ) == type )
+            {
               ++count;
+            }
           }
         }
       }
