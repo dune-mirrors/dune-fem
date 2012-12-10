@@ -14,11 +14,7 @@ LDADD = $(ALL_PKG_LDFLAGS) $(ALL_PKG_LIBS) $(DUNEMPILIBS) $(LOCAL_LIBS) $(MPI_LD
 # preprocessor flags
 AM_CPPFLAGS = $(ALL_PKG_CPPFLAGS) $(DUNEMPICPPFLAGS)
 
-if PETSC
-CHECK_PROGS = l2projection l2projection_petscmatrix
-else
 CHECK_PROGS = 
-endif
 
 TESTS = $(CHECK_PROGS)
 check_PROGRAMS = $(CHECK_PROGS)
