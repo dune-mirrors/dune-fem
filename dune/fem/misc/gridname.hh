@@ -28,15 +28,15 @@ namespace Dune
     // --------
 
     template< class GridImp >
-    static const std::string &gridName ( const GridImp &grid )
-    {
-      return gridName< GridImp >();
-    }
-
-    template< class GridImp >
     static const std::string &gridName ()
     {
       return GridName< GridImp >::str();
+    }
+
+    template< class GridImp >
+    static const std::string &gridName ( const GridImp &grid )
+    {
+      return gridName< GridImp >();
     }
 
 
