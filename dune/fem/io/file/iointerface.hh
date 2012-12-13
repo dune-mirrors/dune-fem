@@ -475,11 +475,11 @@ namespace Dune
                                  iTupel& lengthInterior )
       {
 #if HAVE_MPI
-#if DUNE_VERSION_NEWER(DUNE_SPGRID,2012,12)
+#if DUNE_VERSION_NEWER(DUNE_SPGRID,2012,13)
         typedef Cartesian::MultiIndex< dim > MultiIndex;
-#else // #if DUNE_VERSION_NEWER(DUNE_SPGRID,2012,12)
+#else // #if DUNE_VERSION_NEWER(DUNE_SPGRID,2012,13)
         typedef SPMultiIndex< dim > MultiIndex;
-#endif // #else // #if DUNE_VERSION_NEWER(DUNE_SPGRID,2012,12)
+#endif // #else // #if DUNE_VERSION_NEWER(DUNE_SPGRID,2012,13)
         MultiIndex begin = grid.gridLevel( 0 ).localCube().begin();
         MultiIndex end   = grid.gridLevel( 0 ).localCube().end();
         for( int i=0; i<dim; ++i) 
