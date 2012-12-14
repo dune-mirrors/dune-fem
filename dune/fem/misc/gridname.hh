@@ -3,6 +3,7 @@
 
 // C++ includes
 #include <climits>
+#include <iostream>
 #include <string>
 #include <typeinfo>
 #include <vector>
