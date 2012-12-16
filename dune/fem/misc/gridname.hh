@@ -2,6 +2,7 @@
 #define DUNE_FEM_MISC_GRIDNAME_HH
 
 // C++ includes
+#include <cstdlib>
 #include <climits>
 #include <iostream>
 #include <string>
@@ -71,7 +72,7 @@ namespace Dune
 
         char *endptr = 0;
         // get position of strings that are not numbers 
-        long int result = strtol( name.c_str(), &endptr, 0 );
+        long int result = std::strtol( name.c_str(), &endptr, 0 );
         if( result == LONG_MAX || result == LONG_MIN ) 
           DUNE_THROW( UnknownGridException, "GridName: faild to determine name of grid!" );
 
