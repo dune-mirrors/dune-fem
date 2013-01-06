@@ -9,7 +9,7 @@
 #include <iterator>
 #include <utility>
 
-#if defined HAVE_PETSC
+#if HAVE_PETSC
 
 #include <dune/fem/misc/petsc/petsccommon.hh>
 #include <dune/fem/misc/petsc/petscdofmappings.hh>
@@ -57,6 +57,7 @@ namespace Dune
       typedef S                                                         DiscreteFunctionSpaceType;
       typedef typename DiscreteFunctionSpaceType::DomainType            DomainType;
       typedef typename DiscreteFunctionSpaceType::RangeType             RangeType;
+      typedef typename DiscreteFunctionSpaceType::JacobianRangeType     JacobianRangeType;
       typedef typename DiscreteFunctionSpaceType::MapperType            MapperType;
       typedef typename DiscreteFunctionSpaceType::BlockMapperType       BlockMapperType;
       typedef typename DiscreteFunctionSpaceType::GridPartType          GridPartType;
@@ -83,6 +84,7 @@ namespace Dune
       typedef PetscDiscreteFunctionTraits< S > Traits;
       typedef typename Traits::DiscreteFunctionSpaceType                DiscreteFunctionSpaceType;
       typedef typename DiscreteFunctionSpaceType::FunctionSpaceType     FunctionSpaceType;
+      typedef typename Traits::DiscreteFunctionSpaceType::EntityType    EntityType ;
 
       const static size_t localBlockSize = DiscreteFunctionSpaceType::localBlockSize;
 
@@ -99,6 +101,7 @@ namespace Dune
 
       typedef typename Traits::DomainType                               DomainType;
       typedef typename Traits::RangeType                                RangeType;
+      typedef typename Traits::JacobianRangeType                        JacobianRangeType;
 
       typedef typename PetscVectorType::DofBlockType                    DofBlockType;
       typedef typename PetscVectorType::ConstDofBlockType               ConstDofBlockType;
@@ -284,6 +287,8 @@ namespace Dune
       {
         return name_;
       }
+
+      void enableDofCompression () {}
 
     private:
       PetscDiscreteFunction ();

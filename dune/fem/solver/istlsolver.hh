@@ -90,7 +90,7 @@ namespace Dune
           // verbose only in verbose mode and for rank 0 
           int verb = (verbose && (dest.space().grid().comm().rank() == 0)) ? 2 : 0;
            
-          if( absLimit < std::numeric_limits< double >::max() )
+          if( 0 < absLimit && absLimit < std::numeric_limits< double >::max() )
           {
             const double residuum = matrix.residuum( arg.blockVector(), dest.blockVector() );
             reduction = (residuum > 0) ? absLimit/ residuum : 1e-3;

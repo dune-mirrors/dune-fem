@@ -515,6 +515,9 @@ namespace Dune
 
       typedef typename BaseType :: GridType  GridType;
 
+      dune_static_assert( Dune::Capabilities::hasSingleGeometryType < GridType >::v ,
+                          "LagrangeDiscontinuousGalerkinSpace only works with a grid having a single geometry type" );
+
       // define Lagrange generic base function to get numBaseFunctions 
       typedef typename GeometryWrapper< 
             Dune::Capabilities::hasSingleGeometryType < GridType >::topologyId, 
