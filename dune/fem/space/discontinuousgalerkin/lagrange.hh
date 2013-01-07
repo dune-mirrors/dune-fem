@@ -36,8 +36,10 @@ namespace Dune
       static const int polynomialOrder = polOrder;
 
     private:
+      typedef typename FunctionSpaceType::ScalarFunctionSpaceType ScalarFunctionSpaceType;
+
       static const int dimLocal = GridPartType::dimension;
-      typedef typename ToLocalFunctionSpace< FunctionSpaceType, dimLocal >::Type ShapeFunctionSpaceType;
+      typedef typename ToLocalFunctionSpace< ScalarFunctionSpaceType, dimLocal >::Type ShapeFunctionSpaceType;
 
       template< class GridPartType, bool hasSingleGeometryType = Dune::Fem::GridPartCapabilities::hasSingleGeometryType< GridPartType >::v >
       struct HaveSingleGeometryType;
