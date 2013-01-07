@@ -4,6 +4,8 @@
 #include <dune/fem/space/common/functionspaceinterface.hh>
 #include <dune/common/fmatrix.hh>
 
+#include <dune/fem/version.hh>
+
 namespace Dune
 {
 
@@ -234,54 +236,56 @@ namespace Dune
     class MatrixFunctionSpace : public
           FunctionSpaceInterface<MatrixSpaceTraits<DomainFieldImp,RangeFieldImp,n,m1,m2> > {};
 
-
-    //! convert functions space to scalar function space
-    template <class FunctionSpaceImp>
-    struct ToScalarFunctionSpace {};
-
-    //! specialization for parameter list <domainfile,rangefield,dimDomain,dimRange> 
-    template <
-      class DomainFieldImp, class RangeFieldImp, int dimDomain, int dimRange>
-    struct ToScalarFunctionSpace<
-      FunctionSpace<DomainFieldImp, RangeFieldImp, dimDomain, dimRange> >
-    {
-      typedef FunctionSpace<DomainFieldImp, RangeFieldImp, dimDomain, 1> Type;
-    };
-
-    //! convert functions space to scalar function space of basis functions (local space)
-    template <class FunctionSpaceImp, int dimLocal>
-    struct ToLocalFunctionSpace {};
-
-    //! specialization for parameter list <domainfile,rangefield,dimDomain,dimRange,dimLocal> 
-    template <class DomainFieldImp, class RangeFieldImp, int dimDomain, int dimRange, int dimLocal>
-    struct ToLocalFunctionSpace<
-      FunctionSpace<DomainFieldImp, RangeFieldImp, dimDomain, dimRange>, dimLocal >
-    {
-      typedef FunctionSpace<DomainFieldImp, RangeFieldImp, dimLocal, dimRange> Type;
-    };
-
-
-    //! specialization for parameter list <domainfile,rangefield,dimDomain,dimRange,dimLocal> 
-    template <class DomainFieldImp, class RangeFieldImp, int n, int m1, int m2, int dimLocal>
-    struct ToLocalFunctionSpace<
-      MatrixFunctionSpace<DomainFieldImp, RangeFieldImp, n,m1,m2>, dimLocal >
-    {
-      typedef MatrixFunctionSpace<DomainFieldImp, RangeFieldImp, dimLocal ,m1,m2> Type;
-    };
-
-
-
+    // function space converter objects
+    // --------------------------------
+    
+    //! convert functions space to space with new dim domain
+    template < class FunctionSpaceImp, int newDimDomain >
+    struct ToNewDimDomainFunctionSpace;
 
     //! convert functions space to space with new dim range 
-    template <class FunctionSpaceImp, int newDimRange>
-    struct ToNewDimRangeFunctionSpace {};
+    template < class FunctionSpaceImp, int newDimRange >
+    struct ToNewDimRangeFunctionSpace; 
+
+    //! convert functions space to scalar function space
+    template < class FunctionSpaceImp >
+    struct DUNE_DEPRECATED
+      ToScalarFunctionSpace
+    {
+      
+      typedef typename ToNewDimRangeFunctionSpace< FunctionSpaceImp, 1 >::Type Type;
+    }; 
+
+    //! convert functions space to scalar function space of basis functions (local space)
+    template < class FunctionSpaceImp, int dimLocal >
+    struct DUNE_DEPRECATED
+      ToLocalFunctionSpace
+    {
+      typedef typename ToNewDimDomainFunctionSpace< FunctionSpaceImp, dimLocal >::Type Type;
+    };
+
+
+    //! specialization for parameter list <domainfile,rangefield,dimDomain,dimRange,newDimDomain> 
+    template< class DomainFieldImp, class RangeFieldImp, int dimDomain, int dimRange, int newDimDomain >
+    struct ToNewDimDomainFunctionSpace< FunctionSpace< DomainFieldImp, RangeFieldImp, dimDomain, dimRange >, newDimDomain >
+    {
+      typedef FunctionSpace< DomainFieldImp, RangeFieldImp, newDimDomain, dimRange> Type;
+    };
+
 
     //! specialization for parameter list <domainfile,rangefield,dimDomain,dimRange,dimLocal> 
-    template <class DomainFieldImp, class RangeFieldImp, int dimDomain, int dimRange, int newDimRange>
-    struct ToNewDimRangeFunctionSpace< 
-      FunctionSpace<DomainFieldImp, RangeFieldImp, dimDomain, dimRange>, newDimRange >
+    template< class DomainFieldImp, class RangeFieldImp, int n, int m1, int m2, int newDimDomain >
+    struct ToNewDimDomainFunctionSpace< MatrixFunctionSpace< DomainFieldImp, RangeFieldImp, n, m1, m2 >, newDimDomain >
     {
-      typedef FunctionSpace<DomainFieldImp, RangeFieldImp, dimDomain, newDimRange> Type;
+      typedef MatrixFunctionSpace< DomainFieldImp, RangeFieldImp, newDimDomain, m1, m2 > Type;
+    };
+    
+
+    //! specialization for parameter list <domainfile,rangefield,dimDomain,dimRange,dimLocal> 
+    template< class DomainFieldImp, class RangeFieldImp, int dimDomain, int dimRange, int newDimRange >
+    struct ToNewDimRangeFunctionSpace< FunctionSpace< DomainFieldImp, RangeFieldImp, dimDomain, dimRange >, newDimRange >
+    {
+      typedef FunctionSpace< DomainFieldImp, RangeFieldImp, dimDomain, newDimRange > Type;
     };
 
   } // namespace Fem 
