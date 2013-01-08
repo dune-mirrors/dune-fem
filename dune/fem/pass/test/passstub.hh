@@ -2,7 +2,7 @@
 #define DUNE_FEM_PASSSTUB_HH
 
 #include <dune/fem/gridpart/leafgridpart.hh>
-#include <dune/fem/space/lagrangespace.hh>
+#include <dune/fem/space/lagrange.hh>
 #include <dune/fem/function/adaptivefunction.hh>
 #include <dune/fem/quadrature/elementquadrature.hh>
 

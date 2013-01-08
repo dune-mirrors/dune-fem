@@ -3,7 +3,7 @@
 
 //- Dune includes
 #include <dune/fem/space/common/dofmanager.hh>
-#include <dune/fem/space/lagrangespace.hh>
+#include <dune/fem/space/lagrange.hh>
 #include <dune/fem/gridpart/leafgridpart.hh>
 
 namespace Dune 

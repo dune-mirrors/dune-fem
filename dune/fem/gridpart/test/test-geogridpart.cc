@@ -14,7 +14,7 @@
 #include <dune/fem/gridpart/geogridpart.hh>
 #include <dune/fem/misc/gridwidth.hh>
 #include <dune/fem/operator/lagrangeinterpolation.hh>
-#include <dune/fem/space/lagrangespace.hh>
+#include <dune/fem/space/lagrange.hh>
 
 #include "./failure.hh"
 #include "./checkseed.hh"
