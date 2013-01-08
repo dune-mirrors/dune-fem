@@ -843,8 +843,9 @@ namespace Dune
     template< class TraitsImp >
     inline void
     AdaptiveIndexSetBase< TraitsImp >
-      ::checkHierarchy ( const ElementType &entity, bool isNew )
+      ::checkHierarchy ( const ElementType &entity, bool wasNew )
     {
+      bool isNew = wasNew ;
       typedef typename ElementType::HierarchicIterator HierarchicIterator;
 
       // for leaf entites, just insert the index
