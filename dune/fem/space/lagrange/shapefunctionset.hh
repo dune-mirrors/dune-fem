@@ -57,6 +57,8 @@ namespace Dune
       typedef typename FunctionSpaceType::JacobianRangeType JacobianRangeType;
       typedef typename FunctionSpaceType::HessianRangeType HessianRangeType;
 
+      virtual ~LagrangeShapeFunctionInterface () {}
+
       virtual void evaluate ( const DomainType &x, RangeType &value ) const = 0;
       virtual void jacobian ( const DomainType &x, JacobianRangeType &jacobian ) const = 0;
       virtual void hessian ( const DomainType &x, HessianRangeType &hessian ) const = 0;
