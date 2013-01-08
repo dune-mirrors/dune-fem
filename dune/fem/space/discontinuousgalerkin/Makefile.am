@@ -13,8 +13,6 @@ discontinuousgalerkin_HEADERS = declaration.hh \
 
 EXTRA_DIST = orthonormalbase_1d.cc orthonormalbase_2d.cc orthonormalbase_3d.cc
 
-SUBDIRS = test
-
 noinst_LTLIBRARIES = libdiscontinuousgalerkin.la
 
 libdiscontinuousgalerkin_la_CXXFLAGS = @AM_CPPFLAGS@

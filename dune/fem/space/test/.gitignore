@@ -4,6 +4,7 @@
 /lagrangeadapt
 /lagrangeglobalrefine
 /lagrangeinterpolation
+/interpolation
 /legendretest
 /l2projection
 /arraytest

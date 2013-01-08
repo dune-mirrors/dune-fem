@@ -23,8 +23,8 @@
 #include <dune/fem/space/common/interpolation.hh>
 #include <dune/fem/space/discontinuousgalerkin.hh>
 
-#include "../../../test/exactsolution.hh"
-#include "../../../test/testgrid.hh"
+#include "../../test/exactsolution.hh"
+#include "../../test/testgrid.hh"
 
 // polynomial order
 static const int polOrder = POLORDER;
