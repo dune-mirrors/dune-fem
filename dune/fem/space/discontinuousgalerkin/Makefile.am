@@ -5,6 +5,7 @@ discontinuousgalerkin_HEADERS = declaration.hh \
 				legendre.hh \
 				legendrepolynomials.hh \
 				localdgmassmatrix.hh \
+				localinterpolation.hh \
 				localrestrictprolong.hh \
 				orthonormalbase_mod.hh \
 				shapefunctionset.hh \

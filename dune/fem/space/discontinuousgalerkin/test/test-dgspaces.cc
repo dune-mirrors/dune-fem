@@ -18,9 +18,9 @@
 #include <dune/fem/io/parameter.hh>
 #include <dune/fem/misc/l2norm.hh>
 #include <dune/fem/misc/mpimanager.hh>
-#include <dune/fem/operator/projection/l2projection.hh>
 #include <dune/fem/space/common/adaptmanager.hh>
 #include <dune/fem/space/common/functionspace.hh>
+#include <dune/fem/space/common/interpolation.hh>
 #include <dune/fem/space/discontinuousgalerkin.hh>
 
 #include "../../../test/exactsolution.hh"
@@ -94,9 +94,12 @@ double algorithm ( GridType &grid, const int step )
   DiscreteFunctionType solution( "solution", discreteFunctionSpace );
   solution.clear();
 
-  // perform the L2Projection
-  Dune::Fem::L2Projection< GridExactSolutionType, DiscreteFunctionType > dgl2;
-  dgl2( gridExactSolution, solution );
+  // interpolation operator
+  typedef Dune::Fem::Interpolation< DiscreteFunctionType > InterpolationType;
+  InterpolationType interpolation;
+
+  // perform the interpolation 
+  interpolation( gridExactSolution, solution );
 
 #if 0
   // prepare output
