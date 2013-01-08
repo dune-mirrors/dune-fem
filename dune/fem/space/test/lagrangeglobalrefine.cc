@@ -9,8 +9,7 @@ const int polOrder = POLORDER;
 #include <dune/fem/gridpart/levelgridpart.hh>
 // #include <dgfgridtype.hh>
 
-#include <dune/fem/space/lagrangespace/lagrangespace.hh>
-#include <dune/fem/space/lagrangespace/restrictprolong.hh>
+#include <dune/fem/space/lagrange.hh>
 #include <dune/fem/space/common/restrictprolongfunction.hh>
 #include <dune/fem/function/adaptivefunction.hh>
 #include <dune/fem/operator/lagrangeinterpolation.hh>

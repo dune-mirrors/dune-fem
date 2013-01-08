@@ -1,23 +1,26 @@
 #ifndef DUNE_FEM_DISCRETEFUNCTIONSPACE_HH
 #define DUNE_FEM_DISCRETEFUNCTIONSPACE_HH
 
-//- system includes
+// C++ includes
 #include <cassert>
 
-//- Dune includes 
+// dune-common includes 
 #include <dune/common/bartonnackmanifcheck.hh>
-#include <dune/fem/space/common/functionspace.hh>
+
+// dune-fem includes
+#include <dune/fem/function/localfunction/wrapper.hh>
+#include <dune/fem/function/localfunction/temporary.hh>
 #include <dune/fem/space/common/commoperations.hh>
-#include <dune/fem/function/localfunction/localfunctionwrapper.hh>
-#include <dune/fem/function/localfunction/temporarylocalfunction.hh>
-#include <dune/fem/storage/singletonlist.hh>
-#include <dune/fem/space/common/dofmanager.hh>
 #include <dune/fem/space/common/communicationmanager.hh>
+#include <dune/fem/space/common/dofmanager.hh>
+#include <dune/fem/space/common/functionspace.hh>
+#include <dune/fem/storage/singletonlist.hh>
+#include <dune/fem/version.hh>
 
-
-//- local includes 
+// local includes 
 #include "allgeomtypes.hh"
 #include "dofstorage.hh"
+
 
 namespace Dune
 {
@@ -106,8 +109,8 @@ namespace Dune
       typedef FunctionSpaceType BaseType;
 
     public:
-      //! type of \ref Dune::Fem::BaseFunctionSetInterface "base function set" of this space 
-      typedef typename Traits :: BaseFunctionSetType BaseFunctionSetType;
+      //! type of \ref Dune::Fem::BasisFunctionSet "basis function set" of this space 
+      typedef typename Traits :: BasisFunctionSetType BasisFunctionSetType;
       //! type of \ref Dune::DofMapper "DoF mapper" of this space
       typedef typename Traits :: MapperType MapperType;
       //! type of block mapper of this space
@@ -200,19 +203,20 @@ namespace Dune
         return asImp().type();
       }
 
-      /** \brief get base function set for given entity
+   
+      /** \brief get basis function set for given entity
        *
        *  \param[in]  entity  entity (of codim 0) for which base function is
        *                      requested
        *
-       *  \returns BaseFunctionSet for the entity
+       *  \returns BasisFunctionSet for the entity
        */
-      inline const BaseFunctionSetType baseFunctionSet ( const EntityType &entity ) const
+      inline const BasisFunctionSetType basisFunctionSet ( const EntityType &entity ) const
       {
-        CHECK_INTERFACE_IMPLEMENTATION( asImp().baseFunctionSet( entity ) );
-        return asImp().baseFunctionSet( entity );
+        CHECK_INTERFACE_IMPLEMENTATION( asImp().basisFunctionSet( entity ) );
+        return asImp().basisFunctionSet( entity );
       }
-    
+
       /** \brief returns true if the space contains DoFs of given codimension
        * 
        *  \param[in]  codim  codimension to check for DoFs
@@ -220,10 +224,10 @@ namespace Dune
        *  \returns \b true if codimension contains DoFs,
        *           \b false otherwise
        */
+      DUNE_VERSION_DEPRECATED(1,4,remove) 
       inline bool contains ( const int codim ) const
       { 
-        CHECK_INTERFACE_IMPLEMENTATION( asImp().contains( codim ) );
-        return asImp().contains( codim ); 
+        return blockMapper().contains( codim ); 
       }
 
       /** \brief returns true if the space contains only globally continuous
@@ -432,12 +436,22 @@ namespace Dune
        *  \returns \b true if base function set depend on entities, \b false
        *           otherwise
        */
-      inline bool multipleBaseFunctionSets () const
+      inline bool multipleBaseFunctionSets () const DUNE_DEPRECATED
       {
-        CHECK_INTERFACE_IMPLEMENTATION( asImp().multipleBaseFunctionSets() );
-        return asImp().multipleBaseFunctionSets();
+        return multipleBasisFunctionSets();
       }
       
+      /** \brief returns true if base function sets depend on the entity
+       *
+       *  \returns \b true if base function set depend on entities, \b false
+       *           otherwise
+       */
+      inline bool multipleBasisFunctionSets () const
+      {
+        CHECK_INTERFACE_IMPLEMENTATION( asImp().multipleBasisFunctionSets() );
+        return asImp().multipleBasisFunctionSets();
+      }
+
       /** \brief Map local DoF number to global DoF number
        *
        *  Maps an entity and a local DoF number to a global DoF number, i.e.,
@@ -771,11 +785,11 @@ namespace Dune
         return allGeomTypes_.multipleGeomTypes();
       }
 
-      /** \copydoc Dune::Fem::DiscreteFunctionSpaceInterface::multipleBaseFunctionSets
+      /** \copydoc Dune::Fem::DiscreteFunctionSpaceInterface::multipleBasisFunctionSets
        *
        *  \note The default implementation returns \b false.
        */
-      inline bool multipleBaseFunctionSets () const
+      inline bool multipleBasisFunctionSets () const
       {
         return false;
       }
@@ -1035,7 +1049,7 @@ namespace Dune
 
     /**\ingroup HelperClasses 
        \brief 
-       BaseFunctionSetSingletonFactory provides method createObject and
+       BasisFunctionSetSingletonFactory provides method createObject and
        deleteObject for the SingletonList  
     */
     template <class KeyImp, class ObjectImp, class ObjectFactoryImp>

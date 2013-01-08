@@ -1,4 +1,5 @@
 POLORDER = 2
+DIMRANGE = 3
 WANT_GRAPE = 0
 WANT_CACHED = 1
 
@@ -12,15 +13,22 @@ GRIDTYPE=YASPGRID
 GRIDDIM=2
 
 LDADD = $(ALL_PKG_LDFLAGS) $(ALL_PKG_LIBS) $(LOCAL_LIBS) $(MPI_LDFLAGS)
-AM_CPPFLAGS = $(ALL_PKG_CPPFLAGS) -DPOLORDER=$(POLORDER) -DWANT_GRAPE=$(WANT_GRAPE) \
+AM_CPPFLAGS = $(ALL_PKG_CPPFLAGS) -DPOLORDER=$(POLORDER) -DDIMRANGE=$(DIMRANGE) -DWANT_GRAPE=$(WANT_GRAPE) \
   -DWANT_CACHED_COMM_MANAGER=$(WANT_CACHED)
 
 ADAPTPROG = lagrangeadapt adapt padapt
+
 # programs run during make check 
 TESTS = $(ADAPTPROG) dgcomm-4.sh
 
-check_PROGRAMS = $(ADAPTPROG) l2projection lagrangeinterpolation legendretest \
-                 lagrangeglobalrefine arraytest dgcomm
+check_PROGRAMS = $(ADAPTPROG) \
+		 arraytest \
+		 dgcomm \
+		 interpolation \
+                 l2projection \
+                 lagrangeglobalrefine \
+		 lagrangeinterpolation \
+		 legendretest
 
 EXTRA_DIST = systemmatrix.cc
 
@@ -28,6 +36,7 @@ l2projection_SOURCES = l2projection.cc
 adapt_SOURCES = adapt.cc
 padapt_SOURCES = padapt.cc
 lagrangeinterpolation_SOURCES = lagrangeinterpolation.cc
+interpolation_SOURCES = interpolation.cc
 lagrangeadapt_SOURCES = lagrangeadapt.cc
 lagrangeglobalrefine_SOURCES = lagrangeglobalrefine.cc
 legendretest_SOURCES = legendretest.cc

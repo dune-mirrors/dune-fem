@@ -1,12 +1,14 @@
 #ifndef DUNE_FEM_FUNCTION_HH
 #define DUNE_FEM_FUNCTION_HH
 
-//- Dune includes 
+// dune-common includes 
 #include <dune/common/fvector.hh>
 
-//- local includes 
+// dune-fem includes 
 #include <dune/fem/misc/bartonnackmaninterface.hh>
 #include <dune/fem/operator/common/mapping.hh>
+#include <dune/fem/version.hh>
+
 
 namespace Dune
 {
@@ -111,22 +113,32 @@ namespace Dune
 
       /** \brief evaluate the function
        *
-       *  \param[in]  x    evaluation point 
-       *  \param[out] ret  value of the function in x
+       *  \param[in]  x      evaluation point 
+       *  \param[out] value  value of the function in x
        */
-      void evaluate ( const DomainType &x, RangeType &ret ) const
+      void evaluate ( const DomainType &x, RangeType &value ) const
       {
-        CHECK_AND_CALL_INTERFACE_IMPLEMENTATION( asImp().evaluate( x, ret ) );
+        CHECK_AND_CALL_INTERFACE_IMPLEMENTATION( asImp().evaluate( x, value ) );
       }
 
       /** \brief evaluate the Jacobian of the function
        *
-       *  \param[in]  x    evaluation point
-       *  \param[out] ret  value of the Jacobian in x
+       *  \param[in]  x         evaluation point
+       *  \param[out] jacobian  value of the Jacobian in x
        */
-      void jacobian ( const DomainType &x, JacobianRangeType &ret ) const
+      void jacobian ( const DomainType &x, JacobianRangeType &jacobian ) const
       {
-        CHECK_AND_CALL_INTERFACE_IMPLEMENTATION( asImp().jacobian( x, ret ) );
+        CHECK_AND_CALL_INTERFACE_IMPLEMENTATION( asImp().jacobian( x, jacobian ) );
+      }
+
+      /** \brief evaluate the hessian of the function
+       *
+       *  \param[in]  x        evaluation point
+       *  \param[out] hessian  value of the hessian in x
+       */
+      void hessian ( const DomainType &x, HessianRangeType &hessian ) const
+      {
+        CHECK_AND_CALL_INTERFACE_IMPLEMENTATION( asImp().hessian( x, hessian ) );
       }
 
       /** \brief evaluate a derivative of the function
@@ -134,14 +146,15 @@ namespace Dune
        *  \param[in]  diffVariable  vector describing the partial derivative to
        *                            evaluate
        *  \param[in]  x             evaluation point
-       *  \param[out] ret           value of the derivative in x 
+       *  \param[out] value         value of the derivative in x 
        */    
       template< int diffOrder >
+      DUNE_VERSION_DEPRECATED(1,4,remove)
       void evaluate ( const FieldVector< int, diffOrder > &diffVariable,
                       const DomainType &x,
-                      RangeType &ret ) const
+                      RangeType &value ) const
       {
-        CHECK_AND_CALL_INTERFACE_IMPLEMENTATION( asImp().evaluate( diffVariable, x, ret ) );
+        CHECK_AND_CALL_INTERFACE_IMPLEMENTATION( asImp().evaluate( diffVariable, x, value ) );
       }
 
       /** \brief Obtain the related function space

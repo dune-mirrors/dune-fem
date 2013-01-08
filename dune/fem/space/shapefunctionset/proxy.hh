@@ -3,15 +3,10 @@
 
 // C++ includes
 #include <cassert>
+#include <cstddef>
 
 // dune-common includes
 #include <dune/common/nullptr.hh>
-
-// dune-geometry includes
-#include <dune/geometry/type.hh>
-
-// dune-fem includes
-#include <dune/fem/space/shapefunctionset/shapefunctionset.hh>
 
 /**
   @file
@@ -32,60 +27,61 @@ namespace Dune
     /*
      * \brief A proxy object converting a pointer to a shape function set to a object
      *
-     * \tparam  ShapeFunctionSetImpl  An implementation of Dune::Fem::ShapeFunctionSet
+     * \tparam  ShapeFunctionSet  An implementation of Dune::Fem::ShapeFunctionSet
      *
      * \note This class has an implicit constructor from a pointer to a shape function set.
      */
-    template< class ShapeFunctionSetImpl >
+    template< class ShapeFunctionSet >
     class ShapeFunctionSetProxy
-    : public ShapeFunctionSet< typename ShapeFunctionSetImpl::FunctionSpaceType, ShapeFunctionSetProxy< ShapeFunctionSetImpl > >
     {
-      typedef ShapeFunctionSetProxy< ShapeFunctionSetImpl > ThisType;
-      typedef ShapeFunctionSet< typename ShapeFunctionSetImpl::FunctionSpaceType, ThisType > BaseType;
-
-    protected:
-      typedef ShapeFunctionSetImpl ImplementationType;
+      typedef ShapeFunctionSetProxy< ShapeFunctionSet > ThisType;
 
     public:
+      typedef ShapeFunctionSet ImplementationType;
+
+      typedef typename ImplementationType::FunctionSpaceType FunctionSpaceType;
+      
+      typedef typename FunctionSpaceType::DomainType DomainType;
+      typedef typename FunctionSpaceType::RangeType RangeType;
+      typedef typename FunctionSpaceType::JacobianRangeType JacobianRangeType;
+      typedef typename FunctionSpaceType::HessianRangeType HessianRangeType;
+
+      const ImplementationType &impl () const
+      {
+        assert( shapeFunctionSet_ );
+        return *shapeFunctionSet_;
+      }
+
       ShapeFunctionSetProxy ()
-      : implementation_( nullptr )
+      : shapeFunctionSet_( nullptr )
       {}
 
-      ShapeFunctionSetProxy ( const ImplementationType *implementation )
-      : implementation_( implementation )
+      ShapeFunctionSetProxy ( const ShapeFunctionSet *shapeFunctionSet )
+      : shapeFunctionSet_( shapeFunctionSet )
       {}
 
-      GeometryType type () const { return implementation().type(); }
-
-      std::size_t size () const { return implementation().size(); }
+      std::size_t size () const { return impl().size(); }
 
       template< class Point, class Functor >
       void evaluateEach ( const Point &x, Functor functor ) const
       {
-        implementation().evaluateEach( x, functor );
+        impl().evaluateEach( x, functor );
       }
 
       template< class Point, class Functor > 
       void jacobianEach ( const Point &x, Functor functor ) const
       {
-        implementation().jacobianEach( x, functor );
+        impl().jacobianEach( x, functor );
       }
 
       template< class Point, class Functor > 
       void hessianEach ( const Point &x, Functor functor ) const
       {
-        implementation().hessianEach( x, functor );
-      }
-
-    protected:
-      const ImplementationType &implementation () const
-      {
-        assert( implementation_ );
-        return *implementation_;
+        impl().hessianEach( x, functor );
       }
 
     private:
-      const ImplementationType *implementation_;
+      const ShapeFunctionSet *shapeFunctionSet_;
     };
 
   } // namespace Fem

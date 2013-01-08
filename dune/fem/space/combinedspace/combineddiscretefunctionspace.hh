@@ -20,6 +20,7 @@
 
 //- local includes 
 #include "combinedbasefunctions.hh"
+#include "combinedbasisfunctionset.hh"
 #include "combinedmapper.hh"
 #include "adaptmanager.hh"
 
@@ -92,8 +93,8 @@ namespace Dune
       typedef typename DiscreteFunctionSpace2 :: BlockMapperType     BlockMapperType2;
 
       //! get base function sets of the two spaces
-      typedef typename DiscreteFunctionSpace1 :: BaseFunctionSetType   BaseFunctionSetType1;
-      typedef typename DiscreteFunctionSpace2 :: BaseFunctionSetType   BaseFunctionSetType2;
+      typedef typename DiscreteFunctionSpace1 :: BasisFunctionSetType   BasisFunctionSetType1;
+      typedef typename DiscreteFunctionSpace2 :: BasisFunctionSetType   BasisFunctionSetType2;
 
       public:
       //! define a combined DofMapper and the block mapper
@@ -101,8 +102,8 @@ namespace Dune
       typedef BlockMapperType MapperType;
 
       //! implementation of basefunction set 
-      typedef CombinedBaseFunctionSet< FunctionSpaceType, BaseFunctionSetType1, BaseFunctionSetType2 >
-          BaseFunctionSetType;   
+      typedef CombinedBasisFunctionSet< FunctionSpaceType, BasisFunctionSetType1, BasisFunctionSetType2 >
+          BasisFunctionSetType;   
 
       template< class DiscreteFunction,
                 class Operation = DFCommunicationOperation :: Copy >
@@ -185,7 +186,7 @@ namespace Dune
       };
       
       //! type of the base function set(s)
-      typedef typename Traits :: BaseFunctionSetType BaseFunctionSetType;
+      typedef typename Traits :: BasisFunctionSetType BasisFunctionSetType;
 
       //! types of the dof mapper for the two subspaces
       typedef typename DiscreteFunctionSpaceType1 :: MapperType MapperType1;
@@ -231,10 +232,9 @@ namespace Dune
        *  \param[in]  commInterface  communication interface to use (optional)
        *  \param[in]  commDirection  communication direction to use (optional)
        */
-      explicit CombinedDiscreteFunctionSpace
-        ( GridPartType &gridPart, 
-          const InterfaceType commInterface = defaultInterface,
-          const CommunicationDirection commDirection = defaultDirection )
+      explicit CombinedDiscreteFunctionSpace ( GridPartType &gridPart, 
+                                               const InterfaceType commInterface = defaultInterface,
+                                               const CommunicationDirection commDirection = defaultDirection )
       : BaseType( gridPart, commInterface, commDirection ),
         space1_( gridPart, commInterface, commDirection ),
         space2_( gridPart, commInterface, commDirection ),
@@ -294,9 +294,9 @@ namespace Dune
 
       /** \copydoc Dune::Fem::DiscreteFunctionSpaceInterface::baseFunctionSet(const EntityType &entity) const */
       template< class EntityType >
-      BaseFunctionSetType baseFunctionSet ( const EntityType &entity ) const
+      BasisFunctionSetType basisFunctionSet ( const EntityType &entity ) const
       {
-        return BaseFunctionSetType( space1_.baseFunctionSet( entity ), space2_.baseFunctionSet( entity ) );
+        return BasisFunctionSetType( space1_.basisFunctionSet( entity ), space2_.basisFunctionSet( entity ) );
       }
 
       /** \brief get dimension of value

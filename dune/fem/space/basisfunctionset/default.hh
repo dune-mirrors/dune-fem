@@ -1,15 +1,18 @@
 #ifndef DUNE_FEM_BASISFUNCTIONSET_DEFAULT_HH
 #define DUNE_FEM_BASISFUNCTIONSET_DEFAULT_HH
 
-//- C++ includes
+// C++ includes
 #include <cassert>
 #include <cstddef>
 
-//- dune-geometry includes
+// dune-common includes
+#include <dune/common/nullptr.hh>
+
+// dune-geometry includes
 #include <dune/geometry/referenceelements.hh>
 #include <dune/geometry/type.hh>
 
-//- dune-fem includes
+// dune-fem includes
 #include <dune/fem/space/basisfunctionset/functor.hh>
 #include <dune/fem/space/basisfunctionset/transformation.hh>
 #include <dune/fem/space/common/functionspace.hh>
@@ -31,6 +34,12 @@ namespace Dune
      * \tparam  Entity            entity type
      * \tparam  ShapeFunctionSet  shape function set
      *
+     * \note ShapeFunctionSet must be a copyable object. For most 
+     *       non-trivial implementations, you may want to use a 
+     *       proxy, see file
+\code
+    <dune/fem/space/shapefunctionset/proxy.hh>
+\endcode
      */
     template< class Entity, class ShapeFunctionSet >
     class DefaultBasisFunctionSet
@@ -69,12 +78,15 @@ namespace Dune
                                       GeometryType::coorddimension > ReferenceElementType;
 
       //! \brief constructor
-      DefaultBasisFunctionSet ( const EntityType &entity, const ShapeFunctionSet &shapeFunctionSet )
+      DefaultBasisFunctionSet ()
+      : entity_( nullptr )
+      {}
+
+      //! \brief constructor
+      DefaultBasisFunctionSet ( const EntityType &entity, const ShapeFunctionSet &shapeFunctionSet = ShapeFunctionSet() )
       : entity_( &entity ),
         shapeFunctionSet_( shapeFunctionSet )
-      {
-        assert( entity.type() == shapeFunctionSet.type() );
-      }
+      {}
 
 
       // Basis Function Set Interface Methods
@@ -87,7 +99,7 @@ namespace Dune
       const ReferenceElementType &referenceElement () const
       {
         return Dune::ReferenceElements< typename GeometryType::ctype, 
-                                        GeometryType::coorddimension >::general( shapeFunctionSet().type() );
+                                        GeometryType::coorddimension >::general( entity().type() );
       }
 
       //! \todo please doc me
@@ -108,8 +120,8 @@ namespace Dune
         for( int r = 0; r < FunctionSpaceType::dimRange; ++r )
           gjit.mtv( jacobianFactor[ r ], tmpJacobianFactor[ r ] );
 
-        FunctionalAxpyFunctor< LocalJacobianRangeType, DofVector > f( jacobianFactor, dofs );
-        shapeFunctionSet().evaluateEach( x, f );
+        FunctionalAxpyFunctor< LocalJacobianRangeType, DofVector > f( tmpJacobianFactor, dofs );
+        shapeFunctionSet().jacobianEach( x, f );
       }
 
       //! \todo please doc me
@@ -125,6 +137,7 @@ namespace Dune
       template< class Point, class DofVector >
       void evaluateAll ( const Point &x, const DofVector &dofs, RangeType &value ) const
       {
+        value = RangeType( 0 );
         AxpyFunctor< DofVector, RangeType > f( dofs, value );
         shapeFunctionSet().evaluateEach( x, f );
       }
@@ -164,7 +177,7 @@ namespace Dune
       template< class Point, class DofVector >
       void hessianAll ( const Point &x, const DofVector &dofs, HessianRangeType &hessian ) const
       {
-        LocalHessianRangeType localHessian( RangeFieldType( 0 ) );
+        LocalHessianRangeType localHessian( typename LocalHessianRangeType::value_type( RangeFieldType( 0 ) ) );
         AxpyFunctor< DofVector, LocalHessianRangeType > f( dofs, localHessian );
         shapeFunctionSet().hessianEach( x, f );
 
@@ -184,7 +197,14 @@ namespace Dune
       }
 
       //! \brief return entity
-      const Entity &entity () const { return *entity_; }
+      const Entity &entity () const
+      {
+        assert( entity_ );
+        return *entity_;
+      }
+
+      //! \brief return geometry type
+      Dune::GeometryType type () const { return entity().type(); }
 
 
       // Non-interface methods
@@ -198,7 +218,7 @@ namespace Dune
 
     private:
       const EntityType *entity_;
-      const ShapeFunctionSetType &shapeFunctionSet_;
+      ShapeFunctionSetType shapeFunctionSet_;
     };
 
   } // namespace Fem

@@ -7,7 +7,7 @@
 
 //- local includes 
 #include <dune/fem/gridpart/emptyindexset.hh>
-#include <dune/fem/function/localfunction/temporarylocalfunction.hh>
+#include <dune/fem/function/localfunction/temporary.hh>
 #include <dune/fem/misc/combineinterface.hh>
 #include <dune/fem/space/common/localrestrictprolong.hh>
 

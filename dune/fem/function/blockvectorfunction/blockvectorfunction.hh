@@ -18,7 +18,7 @@
 
 #include <dune/fem/function/common/discretefunction.hh>
 #include <dune/fem/function/common/dofiterator.hh>
-#include <dune/fem/function/localfunction/standardlocalfunction.hh>
+#include <dune/fem/function/localfunction/standard.hh>
 
 namespace Dune
 {

@@ -12,7 +12,7 @@
 #include <dune/fem/misc/metaprogramming.hh>
 #include <dune/fem/space/common/dofmanager.hh>
 #include <dune/fem/space/dofmapper/localkey.hh>
-#include <dune/fem/space/lagrangespace/lagrangepoints.hh>
+#include <dune/fem/space/lagrange/lagrangepoints.hh>
 #include <dune/fem/space/mapper/dofmapper.hh>
 #include <dune/fem/space/mapper/codimensionmapper.hh>
 

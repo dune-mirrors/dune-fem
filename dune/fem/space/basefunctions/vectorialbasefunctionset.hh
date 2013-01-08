@@ -143,7 +143,7 @@ namespace Dune
       const ThisType &operator= ( const ThisType & );
       
     public:
-      GeometryType geometryType () const { return storage_.geometryType(); }
+      GeometryType type () const { return storage_.geometryType(); }
       
       size_t size () const { return dimRange*numDifferentBaseFunctions(); }
       int numDifferentBaseFunctions () const { return storage_.numBaseFunctions(); }

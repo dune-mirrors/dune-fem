@@ -44,7 +44,7 @@ namespace Dune
       typedef typename DiscreteFunctionSpaceType :: IndexSetType IndexSetType; 
       typedef typename IndexSetType :: IndexType   IndexType;
 
-      typedef typename DiscreteFunctionSpaceType :: BaseFunctionSetType BaseFunctionSetType; 
+      typedef typename DiscreteFunctionSpaceType :: BasisFunctionSetType BasisFunctionSetType; 
 
       typedef typename GridPartType :: GridType GridType;
       typedef typename DiscreteFunctionSpaceType :: EntityType  EntityType;
@@ -106,27 +106,27 @@ namespace Dune
         }
       };
 
-      template <class BaseFunctionSetType> 
+      template <class BasisFunctionSetType> 
       MatrixType& getLocalInverseMassMatrix(const EntityType& en, 
                                             const Geometry& geo,
-                                            const BaseFunctionSetType& baseSet,
-                                            const int numBaseFct ) const 
+                                            const BasisFunctionSetType& basisSet,
+                                            const int numBasisFct ) const 
       {
         const GeometryType geomType = geo.type();
         typedef typename MassMatrixStorageType :: iterator iterator ;
         MassMatrixStorageType& massMap = localInverseMassMatrix_[ GlobalGeometryTypeIndex :: index( geomType ) ];
 
-        iterator it = massMap.find( numBaseFct ); 
+        iterator it = massMap.find( numBasisFct ); 
         if( it == massMap.end() ) 
         {
-          MatrixType* matrix = new MatrixType( numBaseFct, numBaseFct, 0.0 );
-          massMap[ numBaseFct ] = matrix ;
+          MatrixType* matrix = new MatrixType( numBasisFct, numBasisFct, 0.0 );
+          massMap[ numBasisFct ] = matrix ;
 
           // create quadrature 
           VolumeQuadratureType volQuad(en, volumeQuadratureOrder( en ) );
 
           // setup matrix 
-          buildMatrixNoMassFactor(en, geo, baseSet, volQuad, numBaseFct, *matrix, false );
+          buildMatrixNoMassFactor(en, geo, basisSet, volQuad, numBasisFct, *matrix, false );
           matrix->invert();
 
           return *matrix;
@@ -293,7 +293,7 @@ namespace Dune
           }
 
           // setup local mass matrix 
-          buildMatrix( caller, en, geo, lf.baseFunctionSet(), dgNumDofs, dgMatrix_ );
+          buildMatrix( caller, en, geo, lf.basisFunctionSet(), dgNumDofs, dgMatrix_ );
 
           // solve linear system  
           dgMatrix_.solve( dgX_, dgRhs_ );
@@ -358,7 +358,7 @@ namespace Dune
           }
 
           // setup local mass matrix 
-          buildMatrix( caller, entity, geo, lf.baseFunctionSet(), numDofs, matrix_ );
+          buildMatrix( caller, entity, geo, lf.basisFunctionSet(), numDofs, matrix_ );
 
           // invert mass matrix 
           matrix_.invert();
@@ -429,7 +429,7 @@ namespace Dune
 
         // get local inverted mass matrix 
         MatrixType& invMassMatrix = 
-          getLocalInverseMassMatrix( en, geo, lf.baseFunctionSet(), numDofs );
+          getLocalInverseMassMatrix( en, geo, lf.basisFunctionSet(), numDofs );
 
         // resize vectors 
         rhs_.resize( numDofs );
@@ -479,7 +479,7 @@ namespace Dune
       void buildMatrix(const MassCallerType& caller,
                        const EntityType& en,
                        const Geometry& geo, 
-                       const BaseFunctionSetType& set,
+                       const BasisFunctionSetType& set,
                        const std::size_t numDofs,
                        Matrix& matrix) const 
       {
@@ -507,7 +507,7 @@ namespace Dune
       void buildMatrixNoMassFactor(
                        const EntityType& en,
                        const Geometry& geo, 
-                       const BaseFunctionSetType& set,
+                       const BasisFunctionSetType& set,
                        const VolumeQuadratureType& volQuad,
                        const int numDofs,
                        Matrix& matrix,
@@ -520,7 +520,7 @@ namespace Dune
           const double intel = ( applyIntegrationElement ) ? 
               ( volQuad.weight(qp) * geo.integrationElement(volQuad.point(qp)) ) : volQuad.weight(qp) ;
 
-          // eval base functions 
+          // eval basis functions 
           set.evaluateAll(volQuad[qp], phi_);
 
           for(int m=0; m<numDofs; ++m)
@@ -545,7 +545,7 @@ namespace Dune
                        const MassCallerType& caller,
                        const EntityType& en,
                        const Geometry& geo, 
-                       const BaseFunctionSetType& set,
+                       const BasisFunctionSetType& set,
                        const VolumeQuadratureType& volQuad,
                        const int numDofs,
                        Matrix& matrix) const 
@@ -560,13 +560,13 @@ namespace Dune
           const double intel = volQuad.weight(qp)
              * geo.integrationElement(volQuad.point(qp));
 
-          // eval base functions 
+          // eval basis functions 
           set.evaluateAll( volQuad[qp], phi_);
 
           // call mass factor 
           caller.mass( en, volQuad, qp, mass);
 
-          // apply mass matrix to all base functions 
+          // apply mass matrix to all basis functions 
           for(int m=0; m<numDofs; ++m)
           {
             mass.mv( phi_[m], phiMass_[m] );

@@ -17,7 +17,7 @@
 
 #include <dune/fem/space/common/allgeomtypes.hh> 
 #include <dune/fem/space/common/arrays.hh> 
-#include <dune/fem/function/localfunction/temporarylocalfunction.hh>
+#include <dune/fem/function/localfunction/temporary.hh>
 #include <dune/fem/operator/1order/localmassmatrix.hh>
 #include <dune/fem/pass/selection.hh>
 
@@ -83,8 +83,7 @@ namespace Dune
       typedef typename DiscreteFunctionSpaceType::DomainType DomainType;
       typedef typename DiscreteFunctionSpaceType::RangeType RangeType;
       typedef typename DiscreteFunctionSpaceType::JacobianRangeType JacobianRangeType;
-      typedef typename DiscreteFunctionSpaceType:: BaseFunctionSetType
-        BaseFunctionSetType; 
+      typedef typename DiscreteFunctionSpaceType::BasisFunctionSetType BasisFunctionSetType; 
 
       // Types extracted from the underlying grids
       typedef typename GridPartType::IntersectionIteratorType IntersectionIteratorType;
