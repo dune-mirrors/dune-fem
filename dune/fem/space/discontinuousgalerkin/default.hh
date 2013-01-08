@@ -152,8 +152,8 @@ namespace Dune
 
       /** \brief local interpolation using discontinuous L2-projection
        *
-       *  \param[in]  f     local function to interpolate
-       *  \param[out] dofs  local degrees of freedom of the interpolion
+       *  \param[in]  localFunction  local function to interpolate
+       *  \param[out] dofs           local degrees of freedom of the interpolion
        */
       template< class LocalFunction, class LocalDofVector >
       void interpolate ( const LocalFunction &localFunction, LocalDofVector &dofs ) const
