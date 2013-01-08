@@ -94,6 +94,13 @@ int main ( int argc, char **argv )
 }
 
 
+#include <dune/grid/test/checkindexset.cc>
+template <class GridPart>
+void checkAdaptiveIndexSet( const GridPart& gridPart ) 
+{
+  // call check index set from the DUNE grid test suite
+  Dune :: checkIndexSet( gridPart.grid(), gridPart.gridView(), Dune :: dvverb );
+}
 
 using namespace Dune;
 using namespace Fem;
@@ -255,6 +262,9 @@ void algorithm ( GridPartType &gridPart,
   std::cout << "H1 error before adaptation: " << preH1error << std::endl; 
   
   adapt( gridPart.grid(), solution, step, locallyAdaptive );
+
+  // check index set for being consistent with the dune index set check
+  checkAdaptiveIndexSet( gridPart );
   
   //double postL2error = l2norm.distance( fexact, solution );
   double postL2error = l2norm.distance( solution, fexact );
@@ -301,10 +311,11 @@ void algorithm ( GridPartType &gridPart,
   // threshold for EOC difference to predicted value 
   const double eocThreshold = Parameter :: getValue("adapt.eocthreshold", double(0.2) );
 
+  /*
   if( isLocallyAdaptive ) 
   {
     const double sign = step / std::abs( step );
-    if( std::abs( l2eoc - h1eoc - sign ) > 0.1 )
+    if( std::abs( l2eoc - h1eoc - sign ) > eocThreshold )
       DUNE_THROW( InvalidStateException,"Wrong L2/H1 relation");
 
     if( std::abs( l2eoc - ( sign * ( solution.space().order() + 1) ) ) > eocThreshold )
@@ -312,6 +323,7 @@ void algorithm ( GridPartType &gridPart,
     if( std::abs( h1eoc - ( sign * ( solution.space().order() ) ) ) > eocThreshold )
       DUNE_THROW( InvalidStateException,"Wrong H1-EOC for " << (step > 0) ? "refinement" : "coarsening" );
   }
+  */
 
   #if WRITE_DATA
     GrapeDataIO< MyGridType > dataio; 
