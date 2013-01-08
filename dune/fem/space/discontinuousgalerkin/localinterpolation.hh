@@ -37,7 +37,7 @@ namespace Dune
       typedef typename RangeType::value_type RangeFieldType;
 
       typedef typename DiscreteFunctionSpaceType::GridPartType GridPartType;
-      typedef Quadrature< GridPartType, DiscreteFunctionSpaceType::codimension > QuadratureType;
+      typedef Quadrature< GridPartType, EntityType::codimension > QuadratureType;
 
       typedef LocalMassMatrix< DiscreteFunctionSpaceType, QuadratureType > LocalMassMatrixType;
 

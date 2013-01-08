@@ -10,6 +10,7 @@
 #include <dune/fem/space/common/discretefunctionspace.hh>
 #include <dune/fem/space/common/functionspace.hh>
 #include <dune/fem/space/common/localrestrictprolong.hh>
+#include <dune/fem/space/discontinuousgalerkin/localinterpolation.hh>
 #include <dune/fem/space/mapper/codimensionmapper.hh>
 #include <dune/fem/space/mapper/nonblockmapper.hh>
 #include <dune/fem/space/shapefunctionset/selectcaching.hh>
@@ -221,6 +222,23 @@ namespace Dune
       BlockMapperType &blockMapper () const
       {
         return blockMapper_;
+      }
+
+      ///////////////////////////
+      // Non-interface methods //
+      ///////////////////////////
+
+      /** \brief local interpolation using discontinuous L2-projection
+       *
+       *  \param[in]  localFunction  local function to interpolate
+       *  \param[out] dofs           local degrees of freedom of the interpolion
+       */
+      template< class LocalFunction, class LocalDofVector >
+      void interpolate ( const LocalFunction &localFunction, LocalDofVector &dofs ) const
+      {
+        typedef DiscontinuousGalerkinLocalInterpolation< typename BaseType::DiscreteFunctionSpaceType > LocalInterpolationType;
+        LocalInterpolationType interpolation( this->asImp() );
+        interpolation( localFunction, dofs );
       }
 
     private:
