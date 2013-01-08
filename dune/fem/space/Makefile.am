@@ -2,9 +2,12 @@ spacedir = $(includedir)/dune/fem/space
 
 space_HEADERS = combineddiscretefunctionspace.hh \
 		combinedspace.hh \
+		dgspace.hh \
 		discontinuousgalerkin.hh \
 		finitevolume.hh \
+		fvspace.hh \
 		lagrange.hh \
+		lagrangespace.hh \
 		padaptivespace.hh \
 		rannacherturek.hh \
 		reducedbasisspace.hh
