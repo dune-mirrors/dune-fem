@@ -149,8 +149,8 @@ namespace Dune
       template< class Entity, class Functor > 
       void mapEachEntityDof ( const Entity &entity, Functor f ) const
       {
-        mapper1_.mapEach( entity, FunctorWrapper< Functor >( f, 0, 0 ) );
-        mapper2_.mapEach( entity, FunctorWrapper< Functor >( f, mapper1_.numEntityDofs( entity ), globalOffset_) );
+        mapper1_.mapEachEntityDof( entity, FunctorWrapper< Functor >( f, 0, 0 ) );
+        mapper2_.mapEachEntityDof( entity, FunctorWrapper< Functor >( f, mapper1_.numEntityDofs( entity ), globalOffset_) );
       }
       
       /** \copydoc Dune::DofMapper::maxNumDofs const */
