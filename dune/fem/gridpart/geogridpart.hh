@@ -102,6 +102,7 @@ namespace Dune
       static const int dimensionworld = CoordFunction::FunctionSpaceType::dimRange;
 
       typedef GeoGridPartFamily< CoordFunction > GridPartFamily;
+      typedef GeoGridPartFamily< CoordFunction > GridFamily;
 
       struct Traits
       {
