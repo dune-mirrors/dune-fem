@@ -90,6 +90,7 @@ namespace Dune
     {
       typedef GeoGridPart< CoordFunction > GridPartType;
       typedef GeoGridPartFamily< CoordFunction > GridPartFamily;
+      typedef GeoGridPartFamily< CoordFunction > GridFamily;
 
       typedef typename GridPartFamily::Traits::HostGridPartType HostGridPartType;
 
