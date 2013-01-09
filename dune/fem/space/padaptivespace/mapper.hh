@@ -16,7 +16,7 @@
 #include <dune/fem/space/mapper/codimensionmapper.hh>
 
 //- local includes 
-#include <dune/fem/space/lagrangespace/lagrangepoints.hh>
+#include <dune/fem/space/lagrange/lagrangepoints.hh>
 
 #include <dune/grid/utility/persistentcontainer.hh>
 
