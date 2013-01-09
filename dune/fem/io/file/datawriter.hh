@@ -625,6 +625,7 @@ namespace Dune
       //! print class name 
       virtual const char* myClassName() const { return "CheckPointer"; }
         
+      using BaseType :: willWrite ;
       /** \brief returns true if data will be written on next write call
       */
       bool willWrite(const TimeProviderBase& tp) const
