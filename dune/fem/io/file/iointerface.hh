@@ -462,27 +462,23 @@ namespace Dune
     };
 
 #if HAVE_DUNE_SPGRID
-    template < class ct, int dim, SPRefinementStrategy strategy , class Comm > 
+    template< class ct, int dim, SPRefinementStrategy strategy, class Comm >
     struct SaveParallelCartesianGrid< SPGrid< ct, dim, strategy, Comm > >
     {
-      static const bool saveMacroGrid = true  ;
+      static const bool saveMacroGrid = true;
 
       typedef SPGrid< ct, dim, strategy, Comm > Grid;
-      typedef FieldVector<int, dim> iTupel;
+      typedef FieldVector< int, dim > iTupel;
 
-      static void getCoordinates(const Grid& grid, const iTupel& anz, 
-                                 iTupel& origin, iTupel& originInterior, 
-                                 iTupel& lengthInterior )
+      static void getCoordinates( const Grid &grid, const iTupel &anz,
+                                  iTupel &origin, iTupel &originInterior,
+                                  iTupel &lengthInterior )
       {
 #if HAVE_MPI
-#if DUNE_VERSION_NEWER(DUNE_SPGRID,2012,13)
-        typedef Cartesian::MultiIndex< dim > MultiIndex;
-#else // #if DUNE_VERSION_NEWER(DUNE_SPGRID,2012,13)
-        typedef SPMultiIndex< dim > MultiIndex;
-#endif // #else // #if DUNE_VERSION_NEWER(DUNE_SPGRID,2012,13)
-        MultiIndex begin = grid.gridLevel( 0 ).localCube().begin();
-        MultiIndex end   = grid.gridLevel( 0 ).localCube().end();
-        for( int i=0; i<dim; ++i) 
+        typedef typename Grid::MultiIndex MultiIndex;
+        const MultiIndex begin = grid.gridLevel( 0 ).localCube().begin();
+        const MultiIndex end = grid.gridLevel( 0 ).localCube().end();
+        for( int i = 0; i < dim; ++i )
         {
           originInterior[ i ] = begin[ i ];
           lengthInterior[ i ] = end[ i ] - begin[ i ];
