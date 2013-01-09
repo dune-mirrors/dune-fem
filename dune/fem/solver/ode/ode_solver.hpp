@@ -70,6 +70,7 @@ public:
                     int& newton_iterations, int& ils_iterations,
 		    int& max_newton_iterations, int& max_ils_iterations);
 
+  using ODESolver :: step ;
 protected:
   // from DynamicalObject
   virtual void resize(int new_size, int component);
@@ -134,6 +135,7 @@ public:
                     int& newton_iterations, int& ils_iterations,
 		    int& max_newton_iterations, int& max_ils_iterations);
 
+  using ODESolver :: step ;
 protected:
   // from DynamicalObject
   virtual void resize(int new_size, int component);
@@ -195,6 +197,7 @@ public:
   // from ODESolver
   virtual bool step(double t, double dt, double *u);
   
+  using ODESolver :: step ;
 private:
   Function &f;
   const int num_of_stages;
@@ -212,6 +215,7 @@ public:
 			int (*seq)(int) = DoubleHarmonicSequence );
 
   virtual bool step(double t, double dt, double *u);
+  using ODESolver :: step ;
 
   static int DoubleRombergSequence(int i);
   static int DoubleHarmonicSequence(int i);
@@ -231,6 +235,8 @@ public:
   ImplicitBulirschStoer(Communicator &comm, Function &f, 
 			int num_of_stages, 
 			int (*seq)(int) = DoubleHarmonicSequence );
+
+  using ODESolver :: step ;
 
   virtual bool step(double t, double dt, double *u,
                     int& newton_iterations, int& ils_iterations,
@@ -289,6 +295,7 @@ private:
 class ExplicitRungeKutta : public ODESolver
 {
 public:
+  using ODESolver :: step ;
   virtual bool step(double t, double dt, double *u);
   
 protected:

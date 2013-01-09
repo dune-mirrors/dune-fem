@@ -103,13 +103,13 @@ namespace Dune
 
     public:
       //! return dof number of salve with index 
-      const int operator [] ( const int index ) const
+      int operator [] ( const int index ) const
       {
         return slaves_[ index ];
       }
 
       //! return number of slave dofs 
-      const int size () const
+      int size () const
       {
         return slaves_.size();
       }
