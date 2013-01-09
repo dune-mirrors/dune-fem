@@ -45,10 +45,10 @@ namespace Dune
 
     public:
       //! empty contructor 
-      LagrangeInterpolation() {}
+      LagrangeInterpolation () {}
 
       //! virtual destructor because of inheritance from Operator  
-      virtual ~LagrangeInterpolation() {}
+      virtual ~LagrangeInterpolation () {}
 
       /** interpolate an analytical function into a Lagrange discrete function
        *
@@ -78,76 +78,37 @@ namespace Dune
        *  \param[out] discreteFunction discrete function to receive the
        *              interpolation
        */
-      static void interpolateFunction ( const Function &function,
-                                        DiscreteFunctionType &discreteFunction );
+      static void interpolateFunction ( const Function &function, DiscreteFunctionType &discreteFunction )
+      {
+        const bool hasLocalFunction = Conversion< Function, HasLocalFunction >::exists;
+        interpolateFunction( function, discreteFunction, integral_constant< bool, hasLocalFunction >() );
+      }
 
       //! \copydoc interpolateFunction 
       //- make interface equal to DGL2Projection 
-      static void apply ( const Function &function,
-                          DiscreteFunctionType &discreteFunction )
+      static void apply ( const Function &function, DiscreteFunctionType &discreteFunction )
       {
         interpolateFunction( function, discreteFunction );
       }
 
     private:
-      template< bool dummy, bool hasLocalFunction >
-      struct CallInterpolateDiscreteFunction;
-
-      template < bool dummy >
-      struct CallInterpolateDiscreteFunction< dummy, true >
+      static void interpolateFunction ( const Function &function, DiscreteFunctionType &discreteFunction, integral_constant< bool, true > )
       {
-        static void call( const Function &function,
-                          DiscreteFunction &discreteFunction )
-        {
-          LagrangeInterpolation<Function, DiscreteFunction>::interpolateDiscreteFunction( function, discreteFunction );
-        }
-      };
+        interpolateDiscreteFunction( function, discreteFunction );
+      }
 
-      template < bool dummy >
-      struct CallInterpolateDiscreteFunction< dummy, false >
+      static void interpolateFunction ( const Function &function, DiscreteFunctionType &discreteFunction, integral_constant< bool, false > )
       {
-        static void call ( const Function &function,
-                           DiscreteFunction &discreteFunction )
-        {
-          typedef typename DiscreteFunction::DiscreteFunctionSpaceType DiscreteFunctionSpaceType;
-          typedef typename DiscreteFunctionSpaceType::GridPartType GridPartType;
-          typedef GridFunctionAdapter< Function, GridPartType > GridFunctionAdapterType;
+        typedef GridFunctionAdapter< Function, GridPartType > GridFunctionType;
 
-          const DiscreteFunctionSpaceType &dfSpace = discreteFunction.space();
-          GridFunctionAdapterType dfAdapter( "function", function, dfSpace.gridPart() );
-          LagrangeInterpolation<GridFunctionAdapterType, DiscreteFunction>::
-            interpolateDiscreteFunction( dfAdapter, discreteFunction );
-        }
-      };
+        const DiscreteFunctionSpaceType &dfSpace = discreteFunction.space();
+        GridFunctionType dfAdapter( "function", function, dfSpace.gridPart() );
+        interpolateDiscreteFunction( dfAdapter, discreteFunction );
+      }
 
-    protected:
-      /** interpolate a discrete function into a Lagrange discrete function
-       *
-       *  This Method evaluates the given grid function (which can be evaluated
-       *  locally at the Lagrange points and writes the values into a discrete
-       *  function.
-       *
-       *  \param[in] function  grid function to interpolate
-       *
-       *  \param[out] discreteFunction discrete function to receive the
-       *              interpolation
-       */
       template< class GridFunction >
-      static void
-      interpolateDiscreteFunction ( const GridFunction &function,
-                                    DiscreteFunctionType &discreteFunction );
+      static void interpolateDiscreteFunction ( const GridFunction &function, DiscreteFunctionType &discreteFunction );
     };
-
-
-
-    template< class Function, class DiscreteFunction >
-    inline void LagrangeInterpolation< Function, DiscreteFunction >
-      ::interpolateFunction ( const Function &function,
-                              DiscreteFunctionType &discreteFunction )
-    {
-      const bool hasLocalFunction = Conversion< Function, HasLocalFunction >::exists;
-      CallInterpolateDiscreteFunction< true, hasLocalFunction >::call( function, discreteFunction );
-    }
 
 
     
