@@ -259,7 +259,7 @@ namespace Dune
       using BaseType::dofManager_;
 
       // return true if codim is supported 
-      const bool codimAvailable( const int codim ) const 
+      bool codimAvailable( const int codim ) const 
       {
         return codim < numCodimensions && codim >= 0 ;
       }
