@@ -112,16 +112,16 @@ namespace Dune
         typedef typename DiscreteFunctionType::DofBlockPtrType DofBlockPtrType;
         
         const DiscreteFunctionSpaceType &space = discreteFunction().space();
-        const bool multipleBaseSets = space.multipleBaseFunctionSets();
+        const bool multipleBasisSets = space.multipleBasisFunctionSets();
 
-        if( multipleBaseSets || needCheckGeometry_ )
+        if( multipleBasisSets || needCheckGeometry_ )
         {
           // if multiple base sets skip geometry call
-          bool updateBaseSet = true;
-          if( !multipleBaseSets && ( entity_ != 0 ) )
-            updateBaseSet = ( basisFunctionSet_.type() != entity.type() );
+          bool updateBasisSet = true;
+          if( !multipleBasisSets && ( entity_ != 0 ) )
+            updateBasisSet = ( basisFunctionSet_.type() != entity.type() );
           
-          if( multipleBaseSets || updateBaseSet )
+          if( multipleBasisSets || updateBasisSet )
           {
             basisFunctionSet_ = space.basisFunctionSet( entity );
 
