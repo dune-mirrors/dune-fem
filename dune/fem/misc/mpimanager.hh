@@ -1,8 +1,8 @@
 #ifndef DUNE_FEM_MPIMANAGER_HH
 #define DUNE_FEM_MPIMANAGER_HH
 
-#include <dune/common/parallel/mpicollectivecommunication.hh>
-#include <dune/common/parallel/mpihelper.hh>
+#include <dune/common/mpicollectivecommunication.hh>
+#include <dune/common/mpihelper.hh>
 
 namespace Dune
 {
