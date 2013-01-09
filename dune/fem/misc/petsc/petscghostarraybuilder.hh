@@ -196,7 +196,7 @@ namespace Dune
 
       bool contains ( int dim, int codim ) const
       {
-        return space_.contains( codim );
+        return mapper_.contains( codim );
       }
 
       bool fixedsize ( int dim, int codim ) const
