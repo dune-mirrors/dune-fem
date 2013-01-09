@@ -30,9 +30,9 @@
 #include <dune/fem/io/file/dataoutput.hh>
 
 // include discrete function space
-#include <dune/fem/space/lagrangespace.hh>
+#include <dune/fem/space/lagrange.hh>
 #include <dune/fem/space/padaptivespace.hh>
-#include <dune/fem/space/dgspace.hh>
+#include <dune/fem/space/discontinuousgalerkin.hh>
 
 // adaptation ...
 #include <dune/fem/function/adaptivefunction.hh>

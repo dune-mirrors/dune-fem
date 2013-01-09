@@ -15,8 +15,8 @@
 
 //- Local includes
 #include "adaptiveimp.hh"
-#include <dune/fem/function/localfunction/standardlocalfunction.hh>
-#include <dune/fem/function/localfunction/genericlocalfunction.hh>
+#include <dune/fem/function/localfunction/standard.hh>
+#include <dune/fem/function/localfunction/generic.hh>
 
 namespace Dune
 {

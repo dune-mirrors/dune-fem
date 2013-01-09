@@ -13,7 +13,7 @@
 #include <dune/fem/function/common/discretefunction.hh>
 
 //- Local includes
-#include <dune/fem/function/localfunction/standardlocalfunction.hh>
+#include <dune/fem/function/localfunction/standard.hh>
 
 namespace Dune
 {

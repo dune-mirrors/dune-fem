@@ -3,16 +3,16 @@
 
 #include <dune/fem/misc/double.hh>
 
-#include <dune/fem/space/dgspace.hh>
+#include <dune/fem/space/discontinuousgalerkin.hh>
 #include <dune/fem/space/common/dofstorage.hh>
 #if defined USE_COMBINEDSPACE
 #  include <dune/fem/space/combinedspace.hh>
 #endif
 #if defined USE_LAGRANGESPACE
-#  include <dune/fem/space/lagrangespace.hh>
+#  include <dune/fem/space/lagrange.hh>
 #endif
 #if defined USE_FVSPACE
-#  include <dune/fem/space/fvspace.hh>
+#  include <dune/fem/space/finitevolume.hh>
 #endif
 
 

@@ -7,7 +7,7 @@
 #include <dune/geometry/referenceelements.hh>
 
 #include <dune/fem/function/localfunction/localfunction.hh>
-#include <dune/fem/space/lagrangespace/lagrangepoints.hh>
+#include <dune/fem/space/lagrange/lagrangepoints.hh>
 
 namespace Dune
 {

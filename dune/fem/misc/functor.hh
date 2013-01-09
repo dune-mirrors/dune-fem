@@ -14,8 +14,8 @@ namespace Dune
 
     struct DefaultAssign
     {
-      template< class T >
-      void operator() ( const T &a, T &b ) const
+      template< class T, class U >
+      void operator() ( const T &a, U &b ) const
       {
         b = a;
       }
@@ -42,6 +42,25 @@ namespace Dune
 
     private:
       Array &array_;
+      Assign assign_;
+    };
+
+    template< class T, class Assign >
+    struct AssignFunctor< T *, Assign >
+    {
+      explicit AssignFunctor ( T *array, const Assign &assign = Assign() )
+      : array_( array ),
+        assign_( assign )
+      {}
+
+      template< class GlobalKey >
+      void operator() ( const std::size_t local, const GlobalKey &globalKey )
+      {
+        assign_( globalKey, array_[ local ] );
+      }
+
+    private:
+      T *array_;
       Assign assign_;
     };
 

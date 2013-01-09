@@ -23,9 +23,8 @@ const int polOrder = POLORDER;
 
 #include <dune/fem/gridpart/adaptiveleafgridpart.hh>
 #include <dune/fem/space/common/adaptmanager.hh>
-#include <dune/fem/space/lagrangespace.hh>
-#include <dune/fem/space/lagrangespace/adaptmanager.hh>
-#include <dune/fem/space/padaptivespace.hh>
+#include <dune/fem/space/lagrange.hh>
+// #include <dune/fem/space/padaptivespace.hh>
 #include <dune/fem/function/adaptivefunction.hh>
 #include <dune/fem/quadrature/cachingquadrature.hh>
 #include <dune/fem/operator/lagrangeinterpolation.hh>

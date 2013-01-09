@@ -24,7 +24,6 @@ TESTPROGS = lagrangeinterpolation_linear lagrangeinterpolation_quadratic \
             dgl2projection_blockvector   dgl2projection_vector \
             dgl2projection_attached      dgl2projection_legendre \
             dgl2projection_blockvectordiscretefunction \
-            dgl2projection_combined \
             dgl2projection_fv      \
             dgl2projection_idgridpart \
             vtxprojection_adaptive \
@@ -41,9 +40,6 @@ lagrangeinterpolation_quadratic_CPPFLAGS = -DPOLORDER=2 -DCOUNT_FLOPS $(AM_CPPFL
 
 dgl2projection_adaptive_SOURCES = dgl2projection.cc
 dgl2projection_adaptive_CPPFLAGS = -DPOLORDER=1 -DCOUNT_FLOPS $(AM_CPPFLAGS)
-
-dgl2projection_combined_SOURCES = dgl2projection.cc
-dgl2projection_combined_CPPFLAGS = -DPOLORDER=1 -DCOUNT_FLOPS $(AM_CPPFLAGS) -DUSE_COMBINEDSPACE -DUSE_VARIABLEBASE -DUSE_COMBINEDFUNCTION -DWANT_CACHED_COMM_MANAGER=0
 
 # only run this test for YaspGrid
 dgl2projection_legendre_SOURCES = dgl2projection.cc

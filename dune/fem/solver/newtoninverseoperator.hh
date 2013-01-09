@@ -99,7 +99,7 @@ namespace Dune
        *  \note The tolerance is read from the paramter
        *        <b>fem.solver.newton.tolerance</b>
        */
-      explicit NewtonInverseOperator ( OperatorType &op, 
+      explicit NewtonInverseOperator ( const OperatorType &op, 
                                        const NewtonParameter &parameter = NewtonParameter() )
       : op_( op ),
         tolerance_( parameter.toleranceParameter() ),
@@ -116,7 +116,7 @@ namespace Dune
        *  \param[in]  op       operator to invert
        *  \param[in]  epsilon  tolerance for norm of residual
        */
-      NewtonInverseOperator ( OperatorType &op, const DomainFieldType &epsilon,
+      NewtonInverseOperator ( const OperatorType &op, const DomainFieldType &epsilon,
                               const NewtonParameter &parameter = NewtonParameter() )
       : op_( op ),
         tolerance_( epsilon ),
@@ -139,7 +139,7 @@ namespace Dune
       }
 
     private:
-      OperatorType &op_;
+      const OperatorType &op_;
       const double tolerance_, linAbsTol_, linReduction_;
       const bool verbose_;
       const bool linVerbose_;

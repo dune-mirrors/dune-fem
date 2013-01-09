@@ -8,7 +8,7 @@
 #include <dune/fem/io/parameter.hh>
 #include <dune/fem/space/common/loadbalancer.hh>
 #include <dune/fem/gridpart/adaptiveleafgridpart.hh>
-#include <dune/fem/space/lagrangespace.hh>
+#include <dune/fem/space/lagrange.hh>
 #include <dune/fem/function/adaptivefunction.hh>
 #include <dune/fem/quadrature/cachingquadrature.hh>
 #include <dune/fem/io/file/persistencemanager.hh>
@@ -625,6 +625,7 @@ namespace Dune
       //! print class name 
       virtual const char* myClassName() const { return "CheckPointer"; }
         
+      using BaseType :: willWrite ;
       /** \brief returns true if data will be written on next write call
       */
       bool willWrite(const TimeProviderBase& tp) const

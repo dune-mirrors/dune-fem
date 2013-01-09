@@ -626,7 +626,7 @@ namespace Dune
       //! returns true if combination is contained 
       bool contains ( int dim, int codim ) const
       {
-        return space_.contains( codim );
+        return space_.blockMapper().contains( codim );
       }
 
       //! return whether we have a fixed size 
@@ -964,9 +964,9 @@ namespace Dune
       //! return reference to index set 
       const SpaceImp & space() const { return space_; }
       //! return communication interface 
-      const InterfaceType interface() const { return interface_; }
+      InterfaceType interface() const { return interface_; }
       //! return communication direction  
-      const CommunicationDirection direction() const { return dir_; }
+      CommunicationDirection direction() const { return dir_; }
     };
 
     //! Factory class for SingletonList to tell how objects are created and

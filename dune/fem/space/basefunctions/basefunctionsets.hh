@@ -103,8 +103,8 @@ namespace Dune
         return storage_.numBaseFunctions();
       }
       
-      /** \copydoc Dune::Fem::BaseFunctionSetInterface::geometryType */
-      inline GeometryType geometryType () const
+      /** \copydoc Dune::Fem::BaseFunctionSetInterface::type */
+      inline GeometryType type () const
       {
         return storage_.geometryType();
       }
