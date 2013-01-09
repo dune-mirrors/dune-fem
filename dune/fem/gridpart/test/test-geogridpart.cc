@@ -8,7 +8,7 @@
 #include <dune/geometry/referenceelements.hh>
 
 #include <dune/fem/function/adaptivefunction.hh>
-#include <dune/fem/function/localfunction/temporarylocalfunction.hh>
+#include <dune/fem/function/localfunction/temporary.hh>
 #include <dune/fem/gridpart/adaptiveleafgridpart.hh>
 #include <dune/fem/gridpart/leafgridpart.hh>
 #include <dune/fem/gridpart/geogridpart.hh>
@@ -213,17 +213,16 @@ typedef Dune::Fem::LagrangeDiscreteFunctionSpace< CoordFunctionSpaceType, HostGr
 typedef Dune::Fem::AdaptiveDiscreteFunction< DiscreteCoordFunctionSpaceType > CoordFunctionType;
 typedef Dune::Fem::GeoGridPart< CoordFunctionType > GridPartType;
 
-
 int main ( int argc, char ** argv )
 try
 {
   Dune::Fem::MPIManager::initialize( argc, argv );
 
   // create grid
-  GridType &grid = Dune::TestGrid::grid();
+  GridType &grid = Dune::Fem::TestGrid::grid();
 
   // refine grid
-  const int step = Dune::TestGrid::refineStepsForHalf();
+  const int step = Dune::Fem::TestGrid::refineStepsForHalf();
   grid.globalRefine( 2*step );
   grid.loadBalance();
 
