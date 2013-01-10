@@ -9,12 +9,11 @@
 #include <dune/fem/quadrature/cachingquadrature.hh>
 #include <dune/fem/operator/common/spaceoperatorif.hh> 
 #include <dune/fem/operator/matrix/blockmatrix.hh>
-#include <dune/fem/space/dgspace.hh>
 #include <dune/fem/space/combinedspace.hh>
 
 // make sure higher order Lagrange works (define USE_TWISTFREE_MAPPER)
-#include <dune/fem/space/lagrangespace.hh>
-#include <dune/fem/space/dgspace.hh>
+#include <dune/fem/space/discontinuousgalerkin.hh>
+#include <dune/fem/space/lagrange.hh>
 
 namespace Dune
 {
