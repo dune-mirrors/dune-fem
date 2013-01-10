@@ -203,7 +203,7 @@ namespace Dune
       const int numProcs_;
       std::vector< GridSolutionType* > solutions_; 
 
-      const int numProcs(const std::string& checkPointFile) const 
+      int numProcs(const std::string& checkPointFile) const 
       {
         int numProc = MPIManager :: size();
         readParameter(checkPointFile, "NumberProcessors", numProc, Parameter::verbose () );

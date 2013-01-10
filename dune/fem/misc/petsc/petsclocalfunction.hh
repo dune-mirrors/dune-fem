@@ -6,7 +6,7 @@
 
 #include <dune/fem/misc/petsc/petsccommon.hh>
 
-#include <dune/fem/function/localfunction/localfunction.hh>
+#include <dune/fem/function/localfunction/default.hh>
 
 namespace Dune 
 {
@@ -71,7 +71,7 @@ namespace Dune
       typedef typename DiscreteFunctionSpaceType::RangeType RangeType;
       typedef typename DiscreteFunctionSpaceType::JacobianRangeType JacobianRangeType;
       typedef typename DiscreteFunctionSpaceType::HessianRangeType HessianRangeType;
-      typedef typename DiscreteFunctionSpaceType::BaseFunctionSetType BaseFunctionSetType;
+      typedef typename DiscreteFunctionSpaceType::BasisFunctionSetType BasisFunctionSetType;
 
     private:
       typedef typename DiscreteFunctionType::DofBlockType::DofProxy DofProxyType;
@@ -97,12 +97,12 @@ namespace Dune
         proxyVector_( other.proxyVector_ ),
         needCheckGeometry_( other.needCheckGeometry_ ),
         entity_( other.entity_ ),
-        baseFunctionSet_( other.baseFunctionSet_ )
+        basisFunctionSet_( other.basisFunctionSet_ )
       {}
 
-      const BaseFunctionSetType &baseFunctionSet () const 
+      const BasisFunctionSetType &basisFunctionSet () const 
       {
-        return baseFunctionSet_;
+        return basisFunctionSet_;
       }
 
       void init ( const EntityType &entity )
@@ -112,21 +112,21 @@ namespace Dune
         typedef typename DiscreteFunctionType::DofBlockPtrType DofBlockPtrType;
         
         const DiscreteFunctionSpaceType &space = discreteFunction().space();
-        const bool multipleBaseSets = space.multipleBaseFunctionSets();
+        const bool multipleBasisSets = space.multipleBasisFunctionSets();
 
-        if( multipleBaseSets || needCheckGeometry_ )
+        if( multipleBasisSets || needCheckGeometry_ )
         {
           // if multiple base sets skip geometry call
-          bool updateBaseSet = true;
-          if( !multipleBaseSets && ( entity_ != 0 ) )
-            updateBaseSet = ( baseFunctionSet_.geometryType() != entity.type() );
+          bool updateBasisSet = true;
+          if( !multipleBasisSets && ( entity_ != 0 ) )
+            updateBasisSet = ( basisFunctionSet_.type() != entity.type() );
           
-          if( multipleBaseSets || updateBaseSet )
+          if( multipleBasisSets || updateBasisSet )
           {
-            baseFunctionSet_ = space.baseFunctionSet( entity );
+            basisFunctionSet_ = space.basisFunctionSet( entity );
 
             // note, do not use baseFunctionSet() here, entity might no have been set
-            numDofs_ = baseFunctionSet_.size();
+            numDofs_ = basisFunctionSet_.size();
 
             needCheckGeometry_ = space.multipleGeometryTypes();
           }
@@ -134,7 +134,7 @@ namespace Dune
 
         // cache entity
         entity_ = &entity;
-        assert( baseFunctionSet_.geometryType() == entity.type() );
+        assert( basisFunctionSet_.type() == entity.type() );
 
         space.blockMapper().mapEach( entity, AssignDofs( discreteFunction_, 
                         proxyVector_ ) );
@@ -177,23 +177,23 @@ namespace Dune
       template< class PointType >
       void jacobian ( const PointType &x, JacobianRangeType &ret ) const
       {
-        baseFunctionSet().jacobianAll( x, entity().geometry().jacobianInverseTransposed( coordinate( x ) ), *this, ret);
+        basisFunctionSet().jacobianAll( x, *this, ret);
       }
 
       template< class PointType >
       void axpy ( const PointType &x, const RangeType &factor )
       {
-        baseFunctionSet().axpy( x, factor, *this );
+        basisFunctionSet().axpy( x, factor, *this );
       }
       template< class PointType >
       void axpy ( const PointType &x, const JacobianRangeType &factor)
       {
-        baseFunctionSet().axpy( x, entity().geometry().jacobianInverseTransposed( coordinate( x ) ), factor, *this );
+        basisFunctionSet().axpy( x, factor, *this );
       }
       template< class PointType >
       void axpy ( const PointType &x, const RangeType &factor1, const JacobianRangeType &factor2 )
       {
-        baseFunctionSet().axpy( x, entity().geometry().jacobianInverseTransposed( coordinate( x ) ), factor1, factor2, *this );
+        basisFunctionSet().axpy( x, factor1, factor2, *this );
       }
 
       unsigned int numDofs () const { return numDofs_; }
@@ -221,7 +221,7 @@ namespace Dune
       ProxyVectorType proxyVector_;
       bool needCheckGeometry_;
       const EntityType *entity_;
-      BaseFunctionSetType baseFunctionSet_;
+      BasisFunctionSetType basisFunctionSet_;
       
     };
 

@@ -146,6 +146,46 @@ namespace Dune
       template< class Grid, class OutputTuple, int N = tuple_size< OutputTuple >::value >
       struct GridPartGetter;
 
+    template< class Grid, class OutputTuple, int N >
+    struct GridPartGetter
+    {
+      typedef typename TypeTraits< typename tuple_element< 0, OutputTuple >::type >::PointeeType DFType;
+      typedef typename DFType :: DiscreteFunctionSpaceType :: GridPartType GridPartType;
+
+      GridPartGetter ( const Grid &, const OutputTuple &data )
+      : gridPart_( getGridPart( data ) )
+      {}
+
+      const GridPartType &gridPart () const { return gridPart_; }
+
+    protected:
+      static const GridPartType &getGridPart( const OutputTuple& data )
+      {
+        const DFType *df = Dune::get< 0 >( data );
+        assert( df );
+        return df->space().gridPart();
+      }
+
+      const GridPartType &gridPart_;
+    };
+
+
+    template< class Grid, class OutputTuple >
+    struct GridPartGetter< Grid, OutputTuple, 0 >
+    {
+      typedef AdaptiveLeafGridPart< Grid > GridPartType;
+
+      GridPartGetter ( const Grid &grid, const OutputTuple & )
+      : gridPart_( const_cast< Grid & >( grid ) )
+      {}
+
+      const GridPartType &gridPart () const { return gridPart_; }
+
+    protected:
+      const GridPartType gridPart_;
+    };
+
+
 #if USE_VTKWRITER
       template< class VTKIOType >
       struct VTKListEntry 
@@ -358,48 +398,6 @@ namespace Dune
 
     // DataOutput::GridPartGetter
     // --------------------------
-
-    template< class GridImp, class DataImp >
-    template< class Grid, class OutputTuple, int N >
-    struct DataOutput< GridImp, DataImp >::GridPartGetter
-    {
-      typedef typename TypeTraits< typename tuple_element< 0, OutputTuple >::type >::PointeeType DFType;
-      typedef typename DFType :: DiscreteFunctionSpaceType :: GridPartType GridPartType;
-
-      GridPartGetter ( const Grid &, const OutputTuple &data )
-      : gridPart_( getGridPart( data ) )
-      {}
-
-      const GridPartType &gridPart () const { return gridPart_; }
-
-    protected:
-      static const GridPartType &getGridPart( const OutputTuple& data )
-      {
-        const DFType *df = Dune::get< 0 >( data );
-        assert( df );
-        return df->space().gridPart();
-      }
-
-      const GridPartType &gridPart_;
-    };
-
-
-    template< class GridImp, class DataImp >
-    template< class Grid, class OutputTuple >
-    struct DataOutput< GridImp, DataImp >::GridPartGetter< Grid, OutputTuple, 0 >
-    {
-      typedef AdaptiveLeafGridPart< Grid > GridPartType;
-
-      GridPartGetter ( const Grid &grid, const OutputTuple & )
-      : gridPart_( const_cast< Grid & >( grid ) )
-      {}
-
-      const GridPartType &gridPart () const { return gridPart_; }
-
-    protected:
-      const GridPartType gridPart_;
-    };
-
 
 
     // DataOutput::VTKFunc

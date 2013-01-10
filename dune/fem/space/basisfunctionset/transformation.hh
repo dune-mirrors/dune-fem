@@ -90,9 +90,8 @@ namespace Dune
           DUNE_THROW( NotImplemented, "HessianTransformation not implemented for non-affine geometries." );
       }
 
-      template< class K, int SIZE >
-      void operator() ( const FieldVector< FieldMatrix< K, Geometry::mydimension, Geometry::mydimension >, SIZE > &a,
-                        FieldVector< FieldMatrix< K, Geometry::coorddimension, Geometry::coorddimension >, SIZE > &b )
+      template< class A, class B >
+      void operator() ( const A &a, B &b ) const
       {
         hessianTransformation( gjit_, a, b );
       }

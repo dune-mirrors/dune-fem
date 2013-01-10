@@ -28,7 +28,7 @@ namespace Dune
 
     public:
       //! Maps an index onto another one
-      const unsigned int operator[] ( unsigned int index ) const
+      unsigned int operator[] ( unsigned int index ) const
       {
         return asImp().operator[]( index );
       }

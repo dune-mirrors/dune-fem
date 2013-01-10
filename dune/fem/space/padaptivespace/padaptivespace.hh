@@ -25,8 +25,7 @@
 #include <dune/fem/space/common/basesetlocalkeystorage.hh>
 
 //- local includes 
-#include <dune/fem/space/lagrangespace/basefunctions.hh>
-
+#include "lagrangebasefunctions.hh"
 #include "mapper.hh"
 
 namespace Dune

@@ -964,9 +964,9 @@ namespace Dune
       //! return reference to index set 
       const SpaceImp & space() const { return space_; }
       //! return communication interface 
-      const InterfaceType interface() const { return interface_; }
+      InterfaceType interface() const { return interface_; }
       //! return communication direction  
-      const CommunicationDirection direction() const { return dir_; }
+      CommunicationDirection direction() const { return dir_; }
     };
 
     //! Factory class for SingletonList to tell how objects are created and

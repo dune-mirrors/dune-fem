@@ -145,14 +145,14 @@ namespace Dune
       typedef DiscreteFunctionSpaceType SingleDiscreteFunctionSpaceType;
 
       typedef typename DiscreteFunctionSpaceType:: IteratorType IteratorType ;
-      typedef typename DiscreteFunctionSpaceType::BaseFunctionSetType BaseFunctionSetType;
+      typedef typename DiscreteFunctionSpaceType::BasisFunctionSetType BasisFunctionSetType;
 
       typedef typename DiscreteGradientSpaceType::RangeType GradientRangeType;
       typedef typename DiscreteGradientSpaceType::JacobianRangeType GradJacobianRangeType;
       typedef GradJacobianRangeType GradientJacobianRangeType;
       enum { GradDimRange = GradientRangeType :: dimension };
       
-      typedef typename DiscreteGradientSpaceType::BaseFunctionSetType GradientBaseFunctionSetType;
+      typedef typename DiscreteGradientSpaceType::BasisFunctionSetType GradientBasisFunctionSetType;
        // type of temporary local function belonging to lower space 
 
       typedef DGMatrixTraits< MatrixObjectTraits > MyOperatorTraits;
@@ -247,14 +247,14 @@ namespace Dune
       class CoefficientCallerRHS 
       {
         SingleLFType &singleRhs_;
-        const BaseFunctionSetType &bsetEn_;
+        const BasisFunctionSetType &bsetEn_;
         mutable RangeType rhsval_;
         const int numDofs_ ;
 
       public:
         explicit CoefficientCallerRHS ( SingleLFType &singleRhs )
           : singleRhs_ ( singleRhs )
-          , bsetEn_( singleRhs_.baseFunctionSet()) 
+          , bsetEn_( singleRhs_.basisFunctionSet()) 
           , rhsval_ (0.0)  
           , numDofs_ ( singleRhs_.numDofs () )
         {}
@@ -685,9 +685,9 @@ namespace Dune
         // get geometry
         const GeometryType & geo = en.geometry();
 
-        // get base function set of single space 
-        const BaseFunctionSetType bsetEn = spc_.baseFunctionSet(en);
-        const int numDofs = bsetEn.numBaseFunctions();
+        // get basis function set of single space 
+        const BasisFunctionSetType bsetEn = spc_.basisFunctionSet(en);
+        const int numDofs = bsetEn.numBasisFunctions();
         assert( numDofs > 0 );
         // resize caches 
         resizeCaches(numDofs);
@@ -741,7 +741,7 @@ namespace Dune
                               const GeometryType &geo,
                               const QuadratureType &volQuad,
                               const CoeffCallerType& coeffCaller,
-                              const BaseFunctionSetType bsetEn,
+                              const BasisFunctionSetType bsetEn,
                               const int numDofs, 
                               LocalMatrixType &matrixEn) const
       {
@@ -853,9 +853,9 @@ namespace Dune
 
         factorFaces_ = 1;//((geo.type().isSimplex()) ? (dim+1) : 2 * dim);
 
-        // get base function set of single space 
-        const BaseFunctionSetType bsetEn = spc_.baseFunctionSet( entity );
-        const int numDofs = bsetEn.numBaseFunctions();
+        // get basis function set of single space 
+        const BasisFunctionSetType bsetEn = spc_.basisFunctionSet( entity );
+        const int numDofs = bsetEn.numBasisFunctions();
         assert( numDofs > 0 );
 
         double betaEst = 0.0;
@@ -1085,9 +1085,9 @@ namespace Dune
         return betaEst ;
       }
 
-      template<class BaseFunctionSet, class PointType >
-      inline RangeFieldType evaluateGradientSingle( const BaseFunctionSet& baseSet,
-                                                    const int baseFunction,
+      template<class BasisFunctionSet, class PointType >
+      inline RangeFieldType evaluateGradientSingle( const BasisFunctionSet& basisSet,
+                                                    const int basisFunction,
                                                     const EntityType &entity,
                                                     const PointType &x,
                                                     const JacobianRangeType &psi ) const
@@ -1101,7 +1101,7 @@ namespace Dune
           = geometry.jacobianInverseTransposed( coordinate( x ) );
 
         JacobianRangeType gradPhi;
-        baseSet.jacobian( baseFunction, x, gradPhi );
+        basisSet.jacobian( basisFunction, x, gradPhi );
 
         RangeFieldType result = 0;
         for( int i = 0; i < dimRange; ++i )
@@ -1121,7 +1121,7 @@ namespace Dune
                                 const GeometryType &geo,
                                 const VolumeQuadratureType &volQuad,
                                 const int numDofs,
-                                const BaseFunctionSetType &bsetEn, 
+                                const BasisFunctionSetType &bsetEn, 
                                 LocalMatrixType *matrixEnPtr, 
                                 SingleLFType &singleRhs,
                                 double &wspeedS ) const 
@@ -1130,9 +1130,9 @@ namespace Dune
         FaceQuadratureType faceQuadInner(gridPart_, nit, faceQuadOrd_,
                                          FaceQuadratureType::INSIDE);
 
-        typedef typename DiscreteGradientSpaceType::BaseFunctionSetType BaseFunctionSetType;
-        const BaseFunctionSetType enSet = gradientSpace_.baseFunctionSet( entity );
-        // get number of base functions for gradient space 
+        typedef typename DiscreteGradientSpaceType::BasisFunctionSetType BasisFunctionSetType;
+        const BasisFunctionSetType enSet = gradientSpace_.basisFunctionSet( entity );
+        // get number of basis functions for gradient space 
 
         LocalMatrixType& matrixEn = *matrixEnPtr;
 
@@ -1196,7 +1196,7 @@ namespace Dune
 
           wspeedS += ldt * faceQuadInner.weight(l);
 
-          // cache base functions evaluations
+          // cache basis functions evaluations
           for(int k=0; k<numDofs; ++k)
           { 
             // evaluate normal * grad phi 
@@ -1389,7 +1389,7 @@ namespace Dune
                                   const VolumeQuadratureType &volQuad,
                                   const QuadratureImp &faceQuadInner,
                                   const QuadratureImp &faceQuadOuter,
-                                  const BaseFunctionSetType &bsetEn,
+                                  const BasisFunctionSetType &bsetEn,
                                   LocalMatrixType &matrixEn,
                                   SingleLFType &singleRhs,
                                   double &wspeedS
@@ -1398,7 +1398,7 @@ namespace Dune
 #endif    
                                 ) const
       {
-        const int numDofs = bsetEn.numBaseFunctions();
+        const int numDofs = bsetEn.numBasisFunctions();
 
         // make neighbor known to model caller 
         caller_.setNeighbor( neighbor );
@@ -1439,12 +1439,12 @@ namespace Dune
 #else 
         bool useInterior = false;
 #endif
-        // get base function set 
-        const BaseFunctionSetType bsetNeigh = spc_.baseFunctionSet( neighbor );
+        // get basis function set 
+        const BasisFunctionSetType bsetNeigh = spc_.basisFunctionSet( neighbor );
 
-        typedef typename DiscreteGradientSpaceType::BaseFunctionSetType BaseFunctionSetType;
-        const BaseFunctionSetType enSet = gradientSpace_.baseFunctionSet( entity );
-        const BaseFunctionSetType nbSet = gradientSpace_.baseFunctionSet( neighbor );
+        typedef typename DiscreteGradientSpaceType::BasisFunctionSetType BasisFunctionSetType;
+        const BasisFunctionSetType enSet = gradientSpace_.basisFunctionSet( entity );
+        const BasisFunctionSetType nbSet = gradientSpace_.basisFunctionSet( neighbor );
 
         typedef FieldMatrix<double, massSize , massSize > MassMatrixType; 
         typedef FieldVector<double, massSize > MassVectorType; 
@@ -1518,11 +1518,11 @@ namespace Dune
           // set useInterior to save comp time 
           useInterior = ( C_12 > 0 );
           
-          // cache base functions evaluations
+          // cache basis functions evaluations
           // leads to major speedup
           for(int k=0; k<numDofs; ++k)
           { 
-            // eval base functions 
+            // eval basis functions 
             bsetEn.evaluate(k,faceQuadInner[l], phi_[k]);
             // eval gradient for entity
             tau_[ k ] = evaluateGradientSingle( bsetEn, k, entity, faceQuadInner[ l ], normEn );
@@ -1674,13 +1674,13 @@ namespace Dune
         return neighbor.geometry().volume();
       } // end applyLocalNeighbor 
 
-      template <class BaseFunctionSet, 
+      template <class BasisFunctionSet, 
                 class LocalStorageType, 
                 class MassMatrixType>
       void getMassMatrix(const GeometryType& geo,
                          VolumeQuadratureType& volQuad,
-                         BaseFunctionSet& set,
-                         const int numBase,
+                         BasisFunctionSet& set,
+                         const int numBasis,
                          LocalStorageType& tmp,
                          MassMatrixType& massMatrix) const
       {
@@ -1691,13 +1691,13 @@ namespace Dune
           const double intel = volQuad.weight(qp)
              * geo.integrationElement(volQuad.point(qp));
 
-          for(int m=0; m<numBase; ++m)
+          for(int m=0; m<numBasis; ++m)
           {  
-            // eval base functions 
+            // eval basis functions 
             set.evaluate(m, volQuad[qp], tmp[m] );
           }
 
-          for(int m=0; m<numBase; ++m)
+          for(int m=0; m<numBasis; ++m)
           {
             {
               double val = intel * (tmp[m] * tmp[m]);
@@ -1705,7 +1705,7 @@ namespace Dune
             }
 
             
-            for(int k=m+1; k<numBase; ++k) 
+            for(int k=m+1; k<numBasis; ++k) 
             {
               double val = intel * (tmp[m] * tmp[k]);
               massMatrix[k][m] += val;
@@ -1814,7 +1814,7 @@ namespace Dune
       // return type of analyticalFlux 
       mutable FluxRangeType coeffEn_;
       mutable FluxRangeType coeffNb_;
-      // caches for base function evaluation 
+      // caches for basis function evaluation 
       mutable MutableArray<RangeFieldType> tau_;
       mutable MutableArray<RangeFieldType> tauNeigh_;
       mutable MutableArray<RangeType> phi_;

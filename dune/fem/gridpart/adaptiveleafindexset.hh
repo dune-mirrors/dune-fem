@@ -259,7 +259,7 @@ namespace Dune
       using BaseType::dofManager_;
 
       // return true if codim is supported 
-      const bool codimAvailable( const int codim ) const 
+      bool codimAvailable( const int codim ) const 
       {
         return codim < numCodimensions && codim >= 0 ;
       }
@@ -843,8 +843,9 @@ namespace Dune
     template< class TraitsImp >
     inline void
     AdaptiveIndexSetBase< TraitsImp >
-      ::checkHierarchy ( const ElementType &entity, bool isNew )
+      ::checkHierarchy ( const ElementType &entity, bool wasNew )
     {
+      bool isNew = wasNew ;
       typedef typename ElementType::HierarchicIterator HierarchicIterator;
 
       // for leaf entites, just insert the index
