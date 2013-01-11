@@ -110,8 +110,7 @@ namespace Dune
       typedef GeoIntersection< const GridPartFamily > IntersectionImplType;
       typedef GeoIntersectionIterator< const GridPartFamily > IntersectionIteratorImplType;
       
-
-      typedef IntersectionIterator< const GridPartFamily, IntersectionImplType, IntersectionIteratorImplType > IntersectionIteratorType;
+      typedef IntersectionIterator< const GridPartFamily, IntersectionIteratorImplType, IntersectionImplType > IntersectionIteratorType;
 
       template< int codim >
       struct Codim
