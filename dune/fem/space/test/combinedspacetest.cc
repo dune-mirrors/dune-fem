@@ -86,8 +86,9 @@ const int dimDomain = FuncSpace::dimDomain;
 
 
 
-void checkBasisSet ( const EntityType &entity, const DiscreteFunctionSpaceType &space )
+int checkBasisSet ( const EntityType &entity, const DiscreteFunctionSpaceType &space )
 {
+  int checkSum = 0;
   BasisFunctionSetType bSet = space.basisFunctionSet( entity );
 
   BasisFunctionSetType1 bSet1 = space.space1().basisFunctionSet( entity );
@@ -183,6 +184,7 @@ void checkBasisSet ( const EntityType &entity, const DiscreteFunctionSpaceType &
       value -= ranges[i];
       if( value.two_norm() > 1e-8)
       {
+        ++checkSum;
         std::cout<<" Basisfunction evaluation missmatch at: "<< i << " on quad point "<< qp << "  and difference: "<<  value.two_norm() <<std::endl;
 
         std::cout<< ranges[i]<<std::endl;
@@ -197,6 +199,7 @@ void checkBasisSet ( const EntityType &entity, const DiscreteFunctionSpaceType &
       jacHelp -= jacs[i];
       if( jacHelp.frobenius_norm() > 1e-8)
       {
+        ++checkSum;
         std::cout<<" Basisfunction jacobian missmatch at: "<< i << " on quad point "<< qp << "  and difference: "<<  jacHelp.frobenius_norm() <<std::endl;
 
         std::cout<< jacs[i]<<std::endl;
@@ -215,10 +218,12 @@ void checkBasisSet ( const EntityType &entity, const DiscreteFunctionSpaceType &
 
       if( std::sqrt ( val ) > 1e-8 )
       {
+        ++checkSum;
         std::cout<<" Basisfunction hessian missmatch at: "<< i << " on quad point "<< qp <<std::endl;
       }
     }
   }
+  return checkSum;
 }
 
 int checkSpace( const DiscreteFunctionSpaceType & space )
