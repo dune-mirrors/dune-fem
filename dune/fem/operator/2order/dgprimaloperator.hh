@@ -687,7 +687,7 @@ namespace Dune
 
         // get basis function set of single space 
         const BasisFunctionSetType bsetEn = spc_.basisFunctionSet(en);
-        const int numDofs = bsetEn.numBasisFunctions();
+        const int numDofs = bsetEn.size();
         assert( numDofs > 0 );
         // resize caches 
         resizeCaches(numDofs);
@@ -855,7 +855,7 @@ namespace Dune
 
         // get basis function set of single space 
         const BasisFunctionSetType bsetEn = spc_.basisFunctionSet( entity );
-        const int numDofs = bsetEn.numBasisFunctions();
+        const int numDofs = bsetEn.size();
         assert( numDofs > 0 );
 
         double betaEst = 0.0;
@@ -1398,7 +1398,7 @@ namespace Dune
 #endif    
                                 ) const
       {
-        const int numDofs = bsetEn.numBasisFunctions();
+        const int numDofs = bsetEn.size();
 
         // make neighbor known to model caller 
         caller_.setNeighbor( neighbor );
