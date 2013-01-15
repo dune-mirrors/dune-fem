@@ -401,7 +401,7 @@ namespace Dune
           RangeFieldType sum = 0;
           // get matrix row 
           typedef typename Matrix :: const_row_reference  MatRow;
-          MatRow& matRow = matrix[ row ];
+          MatRow matRow = matrix[ row ];
 
           // multiply row with right hand side
           for( int col = 0; col < size; ++ col ) 
