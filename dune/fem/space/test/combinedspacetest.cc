@@ -47,12 +47,12 @@ typedef AdaptiveLeafGridPart< MyGridType > GridPartType;
 typedef FunctionSpace < MyGridType::ctype, double, dimw, 2 > FuncSpace1;
 typedef FunctionSpace < MyGridType::ctype, double, dimw, 1 > FuncSpace2;
 
-typedef typename FuncSpace1::RangeType RangeType1;
-typedef typename FuncSpace2::RangeType RangeType2;
-typedef typename FuncSpace1::JacobianRangeType JacobianRangeType1;
-typedef typename FuncSpace2::JacobianRangeType JacobianRangeType2;
-typedef typename FuncSpace1::HessianRangeType HessianRangeType1;
-typedef typename FuncSpace2::HessianRangeType HessianRangeType2;
+typedef FuncSpace1::RangeType RangeType1;
+typedef FuncSpace2::RangeType RangeType2;
+typedef FuncSpace1::JacobianRangeType JacobianRangeType1;
+typedef FuncSpace2::JacobianRangeType JacobianRangeType2;
+typedef FuncSpace1::HessianRangeType HessianRangeType1;
+typedef FuncSpace2::HessianRangeType HessianRangeType2;
 
 //! define the function space our unkown belong to
 //! see dune/fem/lagrangebase.hh
@@ -64,17 +64,17 @@ typedef LagrangeDiscontinuousGalerkinSpace<FuncSpace2, GridPartType,
 
 typedef CombinedDiscreteFunctionSpace< DiscreteFunctionSpaceType1, DiscreteFunctionSpaceType2 > DiscreteFunctionSpaceType;
 
-typedef typename DiscreteFunctionSpaceType::IteratorType IteratorType;
-typedef typename IteratorType::Entity EntityType;
+typedef DiscreteFunctionSpaceType::IteratorType IteratorType;
+typedef IteratorType::Entity EntityType;
 
-typedef typename DiscreteFunctionSpaceType::FunctionSpaceType FuncSpace;
-typedef typename FuncSpace::RangeType RangeType;
-typedef typename FuncSpace::JacobianRangeType JacobianRangeType;
-typedef typename FuncSpace::HessianRangeType HessianRangeType;
+typedef DiscreteFunctionSpaceType::FunctionSpaceType FuncSpace;
+typedef FuncSpace::RangeType RangeType;
+typedef FuncSpace::JacobianRangeType JacobianRangeType;
+typedef FuncSpace::HessianRangeType HessianRangeType;
 
-typedef typename DiscreteFunctionSpaceType::BasisFunctionSetType BasisFunctionSetType;
-typedef typename DiscreteFunctionSpaceType1::BasisFunctionSetType BasisFunctionSetType1;
-typedef typename DiscreteFunctionSpaceType2::BasisFunctionSetType BasisFunctionSetType2;
+typedef DiscreteFunctionSpaceType::BasisFunctionSetType BasisFunctionSetType;
+typedef DiscreteFunctionSpaceType1::BasisFunctionSetType BasisFunctionSetType1;
+typedef DiscreteFunctionSpaceType2::BasisFunctionSetType BasisFunctionSetType2;
 
 typedef CachingQuadrature<GridPartType,0> QuadratureType;
 
