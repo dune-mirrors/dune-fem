@@ -14,7 +14,7 @@
 namespace Dune
 {
 
-  namespace Fem 
+  namespace Fem
   {
 
     // forward declaration
@@ -25,7 +25,7 @@ namespace Dune
     //! Traits class for a combined BasisFunctionSetType
     template <class CombFunctSpace, class BasisSetType1, class BasisSetType2>
     struct CombinedBasisFunctionSetTraits
-    { 
+    {
       typedef CombFunctSpace              FunctionSpaceType;
       typedef BasisSetType1                BasisFunctionSetType1;
       typedef BasisSetType2                BasisFunctionSetType2;
@@ -45,14 +45,14 @@ namespace Dune
       typedef typename FunctionSpaceType2 :: RangeType          RangeType2;
       typedef typename FunctionSpaceType2 :: JacobianRangeType  JacobianRangeType2;
       typedef typename FunctionSpaceType2 :: HessianRangeType   HessianRangeType2;
-        
-      typedef CombinedBasisFunctionSet< FunctionSpaceType, BasisFunctionSetType1, BasisFunctionSetType2 > 
+
+      typedef CombinedBasisFunctionSet< FunctionSpaceType, BasisFunctionSetType1, BasisFunctionSetType2 >
         BasisFunctionSetType;
     };
 
     //! CombinedBasisFunctionSet
     template<class CombFunctSpace, class BasisSetType1, class BasisSetType2>
-    class CombinedBasisFunctionSet 
+    class CombinedBasisFunctionSet
     {
       public:
       typedef CombinedBasisFunctionSetTraits< CombFunctSpace, BasisSetType1, BasisSetType2> Traits;
@@ -67,7 +67,7 @@ namespace Dune
       typedef typename FunctionSpaceType :: RangeFieldType    RangeFieldType;
       typedef typename FunctionSpaceType :: JacobianRangeType JacobianRangeType;
       typedef typename FunctionSpaceType :: HessianRangeType  HessianRangeType;
-      
+
       typedef typename Traits :: BasisFunctionSetType1     BasisFunctionSetType1;
       typedef typename Traits :: BasisFunctionSetType2     BasisFunctionSetType2;
 
@@ -88,9 +88,9 @@ namespace Dune
       typedef typename FunctionSpaceType2 :: RangeType          RangeType2;
       typedef typename FunctionSpaceType2 :: JacobianRangeType  JacobianRangeType2;
       typedef typename FunctionSpaceType2 :: HessianRangeType   HessianRangeType2;
-      //! dimension of domain 
+      //! dimension of domain
       enum { dimDomain = FunctionSpaceType :: dimDomain };
-      //! dimension of range 
+      //! dimension of range
       enum { dimRange  = FunctionSpaceType :: dimRange };
       //! dimensions of the two ranges
       enum { dimRange1 = FunctionSpaceType1 :: dimRange };
@@ -98,30 +98,32 @@ namespace Dune
 
       public:
       //! constructor
-      CombinedBasisFunctionSet( const BasisFunctionSetType1 &basisSet1, const BasisFunctionSetType2 &basisSet2 ) 
+      CombinedBasisFunctionSet( const BasisFunctionSetType1 &basisSet1, const BasisFunctionSetType2 &basisSet2 )
       : basisSet1_( basisSet1 ),
         basisSet2_( basisSet2 ),
         size1_( basisSet1.size() ),
-        size2_( basisSet2.size() ), 
+        size2_( basisSet2.size() ),
         offset_( basisSet1_.size() ),
-        phi1_( size1_ ), 
-        phi2_( size2_ ) 
+        phi1_( size1_ ),
+        phi2_( size2_ ),
+        dPhi1_( size1_ ),
+        dPhi2_( size2_ )
       {}
 
       //! HACK for LocalMatrixDefault interface  !//
       CombinedBasisFunctionSet( )
-      : basisSet1_(), 
+      : basisSet1_(),
         basisSet2_(),
         size1_( 0 ),
         size2_( 0 ),
         offset_( 0 ),
-        phi1_( size1_ ), 
-        phi2_( size2_ ) 
+        phi1_( size1_ ),
+        phi2_( size2_ )
       {}
 
       std::size_t size()  const
       {
-        return size1_ + size2_; 
+        return size1_ + size2_;
       }
 
       Dune::GeometryType type () const
@@ -178,17 +180,19 @@ namespace Dune
 
       template< class Point, class DofVector >
       void axpy ( const Point &x, const RangeType &valueFactor, const JacobianRangeType &jacobianFactor, DofVector &dofs ) const;
-        
+
       protected:
       BasisFunctionSetType1 basisSet1_;
       BasisFunctionSetType2 basisSet2_;
       std::size_t size1_;
       std::size_t size2_;
-      std::size_t offset_;  
+      std::size_t offset_;
       mutable std::vector< RangeType1 > phi1_;
       mutable std::vector< RangeType2 > phi2_;
+      mutable std::vector< JacobianRangeType1 > dPhi1_;
+      mutable std::vector< JacobianRangeType2 > dPhi2_;
     };
-      
+
 
 
     template<class CombFunctSpace, class BasisSetType1, class BasisSetType2>
@@ -222,7 +226,7 @@ namespace Dune
       phi1_.resize( size1_ );
       phi2_.resize( size2_ );
       basisSet1_.evaluateAll( x, phi1_ );
-      basisSet2_.evaluateAll( x, phi2_ ); 
+      basisSet2_.evaluateAll( x, phi2_ );
 
       const int size = size1_ + size2_;
 
@@ -269,25 +273,25 @@ namespace Dune
     inline void CombinedBasisFunctionSet< CombFunctSpace, BasisSetType1, BasisSetType2>
     :: jacobianAll ( const Point &x, GlobalJacobianRangeArray &jacobians ) const
     {
-      std::vector< JacobianRangeType1 > phi1;
-      basisSet1_.jacobianAll( x, phi1 );
+      dPhi1_.resize( size1_, JacobianRangeType1( 0.) );
+      basisSet1_.jacobianAll( x, dPhi1_ );
 
-      std::vector< JacobianRangeType2 > phi2;
-      basisSet2_.jacobianAll( x, phi2 );
+      dPhi2_.resize( size2_, JacobianRangeType2( 0.) );
+      basisSet2_.jacobianAll( x, dPhi2_ );
       const int size = size1_ + size2_;
 
-      jacobians.resize( size );
+      jacobians.resize( size, JacobianRangeType( 0. ) );
 
       for( size_t i=0;i<size1_;++i)
       {
         for(int r=0;r<dimRange1;++r)
-          jacobians[ i ][ r ] =  phi1[i][r];
+          jacobians[ i ][ r ] =  dPhi1_[i][r];
       }
 
       for( size_t i=0;i<size2_;++i)
-      {        
+      {
         for(int r=0;r<dimRange2;++r)
-          jacobians[ i +offset_ ][ r +dimRange1 ]  = phi2[i][ r ];
+          jacobians[ i +offset_ ][ r +dimRange1 ]  = dPhi2_[i][ r ];
       }
     }
 
@@ -321,11 +325,12 @@ namespace Dune
     inline void CombinedBasisFunctionSet< CombFunctSpace, BasisSetType1, BasisSetType2>
     :: hessianAll ( const Point &x, HessianRangeArray &hessians ) const
     {
-      std::vector< HessianRangeType1 > phi1;
+      std::vector< HessianRangeType1 > phi1( size1_ );
       basisSet1_.hessianAll( x, phi1 );
 
-      std::vector< HessianRangeType2 > phi2;
+      std::vector< HessianRangeType2 > phi2( size2_ );
       basisSet2_.hessianAll( x, phi2 );
+
       const int size = size1_ + size2_;
 
       hessians.resize( size );
@@ -337,7 +342,7 @@ namespace Dune
       }
 
       for( size_t i=0;i<size2_;++i)
-      {        
+      {
         for(int r=0;r<dimRange2;++r)
           hessians[ i +offset_ ][ r +dimRange1 ]  = phi2[i][ r ];
       }
@@ -353,7 +358,7 @@ namespace Dune
     {
       SubDofVector<DofVector, double > dofs1( dofs, size1_, 0  );
       SubDofVector<DofVector, double > dofs2( dofs, size2_, offset_ );
-      SubObject< const RangeType, const RangeType1, 0 > valueFactor1( valueFactor ); 
+      SubObject< const RangeType, const RangeType1, 0 > valueFactor1( valueFactor );
       SubObject< const RangeType, const RangeType2, dimRange1 > valueFactor2( valueFactor );
 
       basisSet1_.axpy(x, valueFactor1, dofs1);
@@ -369,7 +374,7 @@ namespace Dune
     {
       SubDofVector<DofVector, double > dofs1( dofs, size1_, 0  );
       SubDofVector<DofVector, double > dofs2( dofs, size2_, offset_ );
-      SubObject< const JacobianRangeType, const JacobianRangeType1, 0 > jacobianFactor1( jacobianFactor ); 
+      SubObject< const JacobianRangeType, const JacobianRangeType1, 0 > jacobianFactor1( jacobianFactor );
       SubObject< const JacobianRangeType, const JacobianRangeType2, dimRange1 > jacobianFactor2( jacobianFactor );
 
       basisSet1_.axpy(x, jacobianFactor1, dofs1);
@@ -387,10 +392,10 @@ namespace Dune
     {
       SubDofVector<DofVector, double > dofs1( dofs, size1_, 0  );
       SubDofVector<DofVector, double > dofs2( dofs, size2_, offset_ );
-      SubObject< const RangeType, const RangeType1, 0 > valueFactor1( valueFactor ); 
+      SubObject< const RangeType, const RangeType1, 0 > valueFactor1( valueFactor );
       SubObject< const RangeType, const RangeType2, dimRange1 > valueFactor2( valueFactor );
       SubObject< const JacobianRangeType, const JacobianRangeType1, 0 > jacobianFactor1( jacobianFactor );
-      SubObject< const JacobianRangeType, const JacobianRangeType2, dimRange1 > jacobianFactor2( jacobianFactor ); 
+      SubObject< const JacobianRangeType, const JacobianRangeType2, dimRange1 > jacobianFactor2( jacobianFactor );
 
       basisSet1_.axpy(x, valueFactor1, jacobianFactor1, dofs1);
       basisSet2_.axpy(x, valueFactor2, jacobianFactor2, dofs2);
@@ -398,6 +403,6 @@ namespace Dune
 
   } // namespace Fem
 
-} // namespace Dune 
+} // namespace Dune
 
 #endif // #ifndef DUNE_FEM_COMBINEDBASISFUNCTIONSET_HH

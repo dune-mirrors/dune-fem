@@ -52,7 +52,7 @@ using namespace Dune;
 
   typedef Fem::AdaptiveDiscreteFunction< DiscreteFunctionSpaceType > DiscreteFunctionType;
 
-  typedef ExactSolution< FunctionSpaceType > ExactSolutionType;
+  typedef Fem::ExactSolution< FunctionSpaceType > ExactSolutionType;
 
 
 

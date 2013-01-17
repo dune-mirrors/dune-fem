@@ -9,12 +9,11 @@
 #include <dune/fem/quadrature/cachingquadrature.hh>
 #include <dune/fem/operator/common/spaceoperatorif.hh> 
 #include <dune/fem/operator/matrix/blockmatrix.hh>
-#include <dune/fem/space/dgspace.hh>
 #include <dune/fem/space/combinedspace.hh>
 
 // make sure higher order Lagrange works (define USE_TWISTFREE_MAPPER)
-#include <dune/fem/space/lagrangespace.hh>
-#include <dune/fem/space/dgspace.hh>
+#include <dune/fem/space/discontinuousgalerkin.hh>
+#include <dune/fem/space/lagrange.hh>
 
 namespace Dune
 {
@@ -209,7 +208,7 @@ namespace Dune
       {
         typedef typename GridPartType :: IntersectionIteratorType IntersectionIteratorType;
         typedef typename IntersectionIteratorType :: Intersection IntersectionType;
-        typedef typename DiscreteFunctionSpaceType::Traits::IteratorType Iterator;
+        typedef typename DiscreteFunctionSpaceType::IteratorType Iterator;
         typedef typename GridType :: template Codim<0> :: Entity EntityType;
         typedef typename GridType :: template Codim<0> :: EntityPointer EntityPointerType;
         typedef typename GridType :: Traits :: LocalIdSet LocalIdSetType; 
@@ -592,9 +591,9 @@ namespace Dune
         enum { localBlockSize = FunctionSpaceType::localBlockSize };
 
         typedef typename FunctionSpaceType::BaseFunctionSetType BaseFunctionSetType;
-        typedef typename FunctionSpaceType::Traits::GridType GridType;
-        typedef typename FunctionSpaceType::Traits::GridPartType GridPartType;
-        typedef typename FunctionSpaceType::Traits::IteratorType Iterator;
+        typedef typename FunctionSpaceType::GridType GridType;
+        typedef typename FunctionSpaceType::GridPartType GridPartType;
+        typedef typename FunctionSpaceType::IteratorType Iterator;
         typedef typename GridPartType :: IntersectionIteratorType IntersectionIteratorType;
         typedef typename GridType :: template Codim<0> :: Entity EntityType;
         typedef typename GridType :: template Codim<0> :: EntityPointer EntityPointerType;

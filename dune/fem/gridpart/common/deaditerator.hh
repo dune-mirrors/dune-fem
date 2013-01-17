@@ -149,8 +149,10 @@ namespace Dune
     {
       typedef DeadIntersectionIterator< GridFamily > ThisType;
 
+      typedef DeadIntersection< const GridFamily > DeadIntersectionType;
+
     public:
-      typedef Dune::Intersection< const GridFamily, DeadIntersection > Intersection;
+      typedef Dune::Intersection< const GridFamily, DeadIntersectionType > Intersection;
 
       DeadIntersectionIterator ()
       {}

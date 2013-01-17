@@ -63,11 +63,14 @@ namespace Dune
           typedef typename HostGridPartType::GridType::template Codim< codim >::EntitySeed EntitySeed;
         };
 
-        typedef Dune::Intersection< const GridPartFamily, DeadIntersection > LeafIntersection;
-        typedef Dune::Intersection< const GridPartFamily, DeadIntersection > LevelIntersection;
+        typedef DeadIntersection< const GridPartFamily > IntersectionImplType;
+        typedef DeadIntersectionIterator< const GridPartFamily > IntersectionIteratorImplType;
 
-        typedef Dune::IntersectionIterator< const GridPartFamily, DeadIntersectionIterator, DeadIntersection > LeafIntersectionIterator;
-        typedef Dune::IntersectionIterator< const GridPartFamily, DeadIntersectionIterator, DeadIntersection > LevelIntersectionIterator;
+        typedef Dune::Intersection< const GridPartFamily, IntersectionImplType > LeafIntersection;
+        typedef Dune::Intersection< const GridPartFamily, IntersectionImplType > LevelIntersection;
+
+        typedef Dune::IntersectionIterator< const GridPartFamily, IntersectionIteratorImplType, IntersectionImplType > LeafIntersectionIterator;
+        typedef Dune::IntersectionIterator< const GridPartFamily, IntersectionIteratorImplType, IntersectionImplType > LevelIntersectionIterator;
 
         typedef Dune::EntityIterator< 0, const GridPartFamily, DeadIterator< typename Codim< 0 >::EntityPointerImpl > > HierarchicIterator;
       };
@@ -104,7 +107,10 @@ namespace Dune
       static const PartitionIteratorType indexSetPartitionType = HostGridPartType::indexSetPartitionType;
       static const InterfaceType indexSetInterfaceType = HostGridPartType::indexSetInterfaceType;
 
-      typedef IntersectionIterator< const GridPartFamily, GeoIntersectionIterator, GeoIntersection > IntersectionIteratorType;
+      typedef GeoIntersection< const GridPartFamily > IntersectionImplType;
+      typedef GeoIntersectionIterator< const GridPartFamily > IntersectionIteratorImplType;
+      
+      typedef IntersectionIterator< const GridPartFamily, IntersectionIteratorImplType, IntersectionImplType > IntersectionIteratorType;
 
       template< int codim >
       struct Codim

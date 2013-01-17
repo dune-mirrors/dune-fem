@@ -26,7 +26,7 @@ namespace Dune
       typedef GeoIntersection< const GridFamily > IntersectionImplType;
 
     public:
-      typedef Dune::Intersection< const GridFamily, GeoIntersection > Intersection;
+      typedef Dune::Intersection< const GridFamily, IntersectionImplType > Intersection;
 
       template< class Entity >
       GeoIntersectionIterator ( const Entity &inside,

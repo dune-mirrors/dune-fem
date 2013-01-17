@@ -313,6 +313,8 @@ namespace Dune
       typedef GridPersistentObject PersistentGridObjectType;
       PersistentGridObjectType* persistentGridObject_ ;
 
+      OutPutDataType* dataPtr_ ;
+
       const int checkPointStep_;
       const int maxCheckPointNumber_;
       int myRank_;
@@ -335,6 +337,7 @@ namespace Dune
                    const CheckPointerParameters& parameter = CheckPointerParameters() ) 
         : BaseType(grid,data,tp,parameter)  
         , persistentGridObject_( new PersistentGridObjectType( grid_ ) ) 
+        , dataPtr_ ( 0 )
         , checkPointStep_( parameter.checkPointStep() )
         , maxCheckPointNumber_( parameter.maxNumberOfCheckPoints() )
         , myRank_( grid.comm().rank() )  
@@ -354,6 +357,7 @@ namespace Dune
                     const CheckPointerParameters& parameter = CheckPointerParameters() )
         : BaseType(grid, *( new OutPutDataType () ), tp, parameter )  
         , persistentGridObject_( new PersistentGridObjectType( grid_ ) ) 
+        , dataPtr_ ( &data_ )
         , checkPointStep_( parameter.checkPointStep() )
         , maxCheckPointNumber_( parameter.maxNumberOfCheckPoints() )
         , myRank_( grid.comm().rank() )  
@@ -367,6 +371,14 @@ namespace Dune
         // remove persistent grid object from PersistenceManager
         delete persistentGridObject_;
         persistentGridObject_ = 0;
+
+        // if data_ was created inside this class 
+        // we have also to delete it
+        if( dataPtr_ ) 
+        {
+          delete dataPtr_;
+          dataPtr_ = 0 ;
+        }
       }
 
     protected:  

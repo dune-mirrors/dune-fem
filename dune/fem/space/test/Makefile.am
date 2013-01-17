@@ -23,10 +23,11 @@ TESTS = $(ADAPTPROG) dgcomm-4.sh
 
 check_PROGRAMS = $(ADAPTPROG) \
 		 arraytest \
+		 combinedspacetest \
 		 dgcomm \
 		 interpolation \
-                 l2projection \
-                 lagrangeglobalrefine \
+     l2projection \
+     lagrangeglobalrefine \
 		 lagrangeinterpolation \
 		 legendretest
 
@@ -35,6 +36,7 @@ EXTRA_DIST = systemmatrix.cc
 l2projection_SOURCES = l2projection.cc
 adapt_SOURCES = adapt.cc
 padapt_SOURCES = padapt.cc
+combinedspacetest_SOURCES = combinedspacetest.cc
 lagrangeinterpolation_SOURCES = lagrangeinterpolation.cc
 interpolation_SOURCES = interpolation.cc
 lagrangeadapt_SOURCES = lagrangeadapt.cc
