@@ -146,12 +146,11 @@ AC_DEFUN([DUNE_PATH_FEM_PETSC],[
 		  This is only true if the application uses the PETSC_CPPFLAGS])
 	  AC_MSG_RESULT(ok)
 	  
-    # add to global list
-	  DUNE_PKG_LIBS="$PETSC_LIBS $DUNE_PKG_LIBS"
-	  DUNE_PKG_LDFLAGS="$DUNE_PKG_LDFLAGS $PETSC_LDFLAGS"
-	  DUNE_PKG_CPPFLAGS="$DUNE_PKG_CPPFLAGS $PETSC_CPPFLAGS"
-	  
-    # re-set variable correctly
+          # add to global list
+          DUNE_ADD_ALL_PKG([PETSC], [\${PETSC_CPPFLAGS}],
+                           [\${PETSC_LDFLAGS}], [\${PETSC_LIBS}])
+
+          # re-set variable correctly
 	  with_petsc="yes"
       else
 	  with_petsc="no"
