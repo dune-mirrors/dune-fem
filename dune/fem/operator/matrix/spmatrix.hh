@@ -210,7 +210,7 @@ namespace Dune
       //! return value of entry (row,col)
       T operator() ( const int row, const int col ) const;
       T operator() ( const unsigned int row, const unsigned int col ) const;
-      T operator() ( const size_t row, const size_t col ) const
+      T operator() ( const long unsigned int row, const long unsigned int col ) const
       {
         return this->operator()((unsigned int)(row), (unsigned int)(col) );
       }
