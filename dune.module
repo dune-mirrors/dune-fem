@@ -1,6 +1,6 @@
 Module: dune-fem
 Version: 1.4.0
 Maintainer: dune@mathematik.uni-freiburg.de
-Depends: dune-grid (>= 2.2)
-Suggests: dune-istl (>= 2.2) dune-localfunctions (>= 2.2)
+Depends: dune-grid (>= 2.3)
+Suggests: dune-istl (>= 2.3) dune-localfunctions (>= 2.3) 
 Sources: dune
