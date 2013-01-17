@@ -9,11 +9,11 @@
 
 //- Dune includes
 #include <dune/geometry/referenceelements.hh>
-#include <dune/grid/alugrid/3d/topology.hh>
 #include <dune/fem/quadrature/quadrature.hh>
 
 //- Local includes
 #include "pointmapper.hh"
+#include "topology.hh"
 
 namespace Dune 
 {
@@ -277,9 +277,6 @@ namespace Dune
       virtual const MatrixType& buildTransformationMatrix(int twist) const;
 
     private:
-      typedef FaceTopologyMapping<tetra> FaceTopo;
-
-    private:
       const Dune::ReferenceElement<ct, dim>& refElem_;
       mutable MatrixType mat_;
     };
@@ -301,9 +298,6 @@ namespace Dune
       
       virtual const MatrixType& buildTransformationMatrix(int twist) const;
       
-    private:
-      typedef FaceTopologyMapping<hexa> FaceTopo;
-
     private:
       const Dune::ReferenceElement<ct, dim>& refElem_;
       mutable MatrixType mat_;
