@@ -18,7 +18,7 @@
 
 // include Lagrange discrete function space
 #include <dune/fem/gridpart/adaptiveleafgridpart.hh>
-#include <dune/fem/space/lagrangespace.hh>
+#include <dune/fem/space/lagrange.hh>
 
 #include <dune/fem/function/petscdiscretefunction.hh>
 

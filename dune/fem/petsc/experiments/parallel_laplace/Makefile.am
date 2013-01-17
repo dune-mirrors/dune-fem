@@ -7,11 +7,7 @@ LDADD = $(ALL_PKG_LDFLAGS) $(ALL_PKG_LIBS) $(DUNEMPILIBS) $(LOCAL_LIBS)
 # preprocessor flags
 AM_CPPFLAGS = $(ALL_PKG_CPPFLAGS) $(DUNEMPICPPFLAGS)
 
-if PETSC
-CHECK_PROGS = parallel_laplace
-else
 CHECK_PROGS = 
-endif
 
 check_PROGRAMS = $(CHECK_PROGS)
 

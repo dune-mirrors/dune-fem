@@ -5,7 +5,7 @@
 #include <dune/fem/pass/dgpass.hh>
 #include <dune/fem/pass/selection.hh>
 #include <dune/fem/pass/dgdiscretemodel.hh>
-#include <dune/fem/space/dgspace.hh>
+#include <dune/fem/space/discontinuousgalerkin.hh>
 #include <dune/fem/space/combinedspace.hh>
 
 // Dune includes

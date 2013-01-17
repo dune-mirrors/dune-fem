@@ -63,11 +63,14 @@ namespace Dune
             typedef typename HostGridPartType::GridType::template Codim< codim >::EntitySeed EntitySeed;
           };
 
-          typedef Dune::Intersection< const GridFamily, DeadIntersection > LeafIntersection;
-          typedef Dune::Intersection< const GridFamily, DeadIntersection > LevelIntersection;
+          typedef DeadIntersection< const GridFamily > IntersectionImplType;
+          typedef DeadIntersectionIterator< const GridFamily > IntersectionIteratorImplType;
 
-          typedef Dune::IntersectionIterator< const GridFamily, DeadIntersectionIterator, DeadIntersection > LeafIntersectionIterator;
-          typedef Dune::IntersectionIterator< const GridFamily, DeadIntersectionIterator, DeadIntersection > LevelIntersectionIterator;
+          typedef Dune::Intersection< const GridFamily, IntersectionImplType > LeafIntersection;
+          typedef Dune::Intersection< const GridFamily, IntersectionImplType > LevelIntersection;
+
+          typedef Dune::IntersectionIterator< const GridFamily, IntersectionIteratorImplType, IntersectionImplType > LeafIntersectionIterator;
+          typedef Dune::IntersectionIterator< const GridFamily, IntersectionIteratorImplType, IntersectionImplType > LevelIntersectionIterator;
 
           typedef Dune::EntityIterator< 0, const GridFamily, DeadIterator< typename Codim< 0 >::EntityPointerImpl > > HierarchicIterator;
         };
@@ -90,7 +93,9 @@ namespace Dune
       static const PartitionIteratorType indexSetPartitionType = HostGridPart::indexSetPartitionType;
       static const InterfaceType indexSetInterfaceType = HostGridPart::indexSetInterfaceType;
 
-      typedef IntersectionIterator< const GridFamily, IdIntersectionIterator, IdIntersection > IntersectionIteratorType;
+      typedef IdIntersectionIterator < const GridFamily > IntersectionIteratorImplType;
+      typedef IdIntersection< const GridFamily > IntersectionImplType;
+      typedef IntersectionIterator< const GridFamily, IntersectionIteratorImplType, IntersectionImplType > IntersectionIteratorType;
 
       template< int codim >
       struct Codim

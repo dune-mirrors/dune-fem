@@ -8,7 +8,7 @@
 #include <dune/fem/storage/envelope.hh>
 #include <dune/fem/function/common/dofblock.hh>
 #include <dune/fem/function/common/discretefunction.hh>
-#include <dune/fem/function/localfunction/standardlocalfunction.hh>
+#include <dune/fem/function/localfunction/standard.hh>
 
 namespace Dune
 {

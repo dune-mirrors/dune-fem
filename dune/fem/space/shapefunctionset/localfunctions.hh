@@ -1,12 +1,15 @@
 #ifndef DUNE_FEM_SHAPEFUNCTIONSET_LOCALFUNCTIONS_HH
 #define DUNE_FEM_SHAPEFUNCTIONSET_LOCALFUNCTIONS_HH
 
+// C++ includes
+#include <cstddef>
 #include <vector>
 
+// dune-common includes
 #include <dune/common/exceptions.hh>
 
+// dune-fem includes
 #include <dune/fem/space/common/functionspace.hh>
-#include <dune/fem/space/shapefunctionset/shapefunctionset.hh>
 
 namespace Dune
 {
@@ -24,11 +27,11 @@ namespace Dune
       typedef typename LocalBasis::Traits Traits;
 
     public:
-      typedef typename Traits::Domain DomainType;
+      typedef typename Traits::DomainType DomainType;
       typedef typename DomainType::value_type DomainFieldType;
       static const int dimDomain = DomainType::dimension;
       
-      typedef typename Traits::Range RangeType;
+      typedef typename Traits::RangeType RangeType;
       typedef typename RangeType::value_type RangeFieldType;
       static const int dimRange = RangeType::dimension;
 
@@ -42,32 +45,25 @@ namespace Dune
 
     template< class LocalBasis >
     class LocalFunctionsShapeFunctionSet
-    : public ShapeFunctionSet< typename LocalFunctionsShapeFunctionSetTraits< LocalBasis >::FunctionSpaceType,
-                               LocalFunctionsShapeFunctionSet< LocalBasis >
-                             >
     {
       // this type
       typedef LocalFunctionsShapeFunctionSet< LocalBasis > ThisType;
       // traits class
       typedef LocalFunctionsShapeFunctionSetTraits< LocalBasis > Traits;
-      // base type
-      typedef ShapeFunctionSet< Traits, ThisType > BaseType;
 
     public:
-      typedef typename BaseType::FunctionSpaceType FunctionSpaceType;
-      typedef typename BaseType::RangeType RangeType;
-      typedef typename BaseType::JacobianRangeType JacobianRangeType;
+      typedef typename Traits::FunctionSpaceType FunctionSpaceType;
+      typedef typename FunctionSpaceType::DomainType DomainType;
+      typedef typename FunctionSpaceType::RangeType RangeType;
+      typedef typename FunctionSpaceType::JacobianRangeType JacobianRangeType;
+      typedef typename FunctionSpaceType::HessianRangeType HessianRangeType;
 
-      explicit LocalFunctionsShapeFunctionSet ( const GeometryType &type, 
-                                                const LocalBasis &localBasis )
-      : type_( type ),
-        localBasis_( localBasis )
+      explicit LocalFunctionsShapeFunctionSet ( const LocalBasis &localBasis )
+      : localBasis_( localBasis )
       {
         values_.reserve( size() );
         jacobians_.reserve( size() );
       }
-
-      GeometryType type () const { return type_; }
 
       std::size_t size () const { return localBasis_.size(); }
 
@@ -82,7 +78,7 @@ namespace Dune
       template< class Point, class Functor >
       void jacobianEach ( const Point &x, Functor &f ) const
       {
-        localBasis_.jacobianFunction( coordinate( x ), jacobians_ );
+        localBasis_.evaluateJacobian( coordinate( x ), jacobians_ );
         assert( jacobians_.size() == size() );
         callFunctor( jacobians_, f );
       }
@@ -103,7 +99,6 @@ namespace Dune
           f( i++, *it );
       }
 
-      GeometryType type_;
       LocalBasis localBasis_;
       mutable std::vector< RangeType > values_;
       mutable std::vector< JacobianRangeType > jacobians_;

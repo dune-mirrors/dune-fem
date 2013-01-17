@@ -1,9 +1,11 @@
 /adapt
 /padapt
 /combinedtest
+/combinedspacetest
 /lagrangeadapt
 /lagrangeglobalrefine
 /lagrangeinterpolation
+/interpolation
 /legendretest
 /l2projection
 /arraytest

@@ -44,8 +44,7 @@ namespace Dune
     private:
       typedef typename Traits::MapperType MapperType;
 
-      typedef typename DiscreteFunctionSpaceImp::Traits SpaceTraits;
-      typedef typename SpaceTraits::RangeFieldType RangeFieldType;
+      typedef typename DiscreteFunctionSpaceImp::RangeFieldType RangeFieldType;
 
       // dof array that is resizeable 
       typedef typename Traits::MutableDofStorageType MutableDofStorageType;

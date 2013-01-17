@@ -5,9 +5,10 @@
 
 #include <dune/geometry/referenceelements.hh>
 
+#include <dune/fem/function/localfunction/functor.hh>
+#include <dune/fem/gridpart/dunefemindexsets.hh>
 #include <dune/fem/io/streams/streams.hh>
 #include <dune/fem/misc/threadmanager.hh>
-#include <dune/fem/gridpart/dunefemindexsets.hh>
 
 #include "discretefunction.hh"
 
@@ -186,35 +187,22 @@ namespace Dune
 
 
     template< class Traits >
+    template< class Functor >
     inline void DiscreteFunctionDefault< Traits >
-      :: evaluate ( const DomainType &x,
-                    RangeType &ret ) const
+      ::evaluateGlobal ( const DomainType &x, Functor functor ) const
     {
-      FieldVector< int, 0 > diffVariable;
-      BaseType :: evaluate( diffVariable, x, ret );
-    }
+      typedef typename DiscreteFunctionSpaceType::IteratorType IteratorType;
+      typedef typename EntityType::Geometry GeometryType;
+      typedef typename GeometryType::LocalCoordinate LocalCoordinateType;
 
-
-    template< class Traits >
-    template< int diffOrder >
-    inline void DiscreteFunctionDefault< Traits >
-      ::evaluate ( const FieldVector< int, diffOrder > &diffVariable,
-                   const DomainType &x,
-                   RangeType &ret ) const
-    {
-      typedef typename DiscreteFunctionSpaceType::IteratorType Iterator;
-      typedef typename DiscreteFunctionSpaceType::EntityType   Entity;
-      typedef typename Entity::Geometry Geometry;
-      typedef typename Geometry :: LocalCoordinate LocalCoordinateType;
-
-      const int dimLocal = LocalCoordinateType :: dimension;
+      const int dimLocal = LocalCoordinateType::dimension;
       
       const DiscreteFunctionSpaceType &space = BaseType::space();
-      const Iterator end = space.end();
-      for( Iterator it = space.begin(); it != end; ++it )
+      const IteratorType end = space.end();
+      for( IteratorType it = space.begin(); it != end; ++it )
       {
-        const Entity &entity = *it;
-        const Geometry &geometry = entity.geometry();
+        const EntityType &entity = *it;
+        const GeometryType &geometry = entity.geometry();
 
         const Dune::ReferenceElement< DomainFieldType, dimLocal > &refElement
           = Dune::ReferenceElements< DomainFieldType, dimLocal >::general( geometry.type() );
@@ -223,11 +211,50 @@ namespace Dune
         if( refElement.checkInside( xlocal ) )
         {
           const LocalFunctionType localFunction = BaseType::localFunction( entity );
-          localFunction.evaluate( diffVariable, xlocal, ret );
+          functor( xlocal, localFunction );
           return;
         }
       }
       DUNE_THROW( RangeError, "DiscreteFunctionDefault::evaluate: x is not within domain." );
+    }
+
+
+    template< class Traits >
+    inline void DiscreteFunctionDefault< Traits >
+      ::evaluate ( const DomainType &x, RangeType &value ) const
+    {
+      LocalFunctionEvaluateFunctor< LocalFunctionType > functor( value );
+      asImp().evaluateGlobal( x, functor );
+    }
+
+
+    template< class Traits >
+    inline void DiscreteFunctionDefault< Traits >
+      ::jacobian ( const DomainType &x, JacobianRangeType &jacobian ) const
+    {
+      LocalFunctionJacobianFunctor< LocalFunctionType > functor( jacobian );
+      asImp().evaluateGlobal( x, functor );
+    }
+
+
+    template< class Traits >
+    inline void DiscreteFunctionDefault< Traits >
+      ::hessian ( const DomainType &x, HessianRangeType &hessian ) const
+    {
+      LocalFunctionHessianFunctor< LocalFunctionType > functor( hessian );
+      asImp().evaluateGlobal( x, functor );
+    }
+
+
+    template< class Traits >
+    template< int diffOrder >
+    inline void DiscreteFunctionDefault< Traits >
+      ::evaluate ( const FieldVector< int, diffOrder > &diffVariable,
+                   const DomainType &x,
+                   RangeType &value ) const
+    {
+      LocalFunctionEvaluateFunctor< LocalFunctionType, diffOrder > functor( diffVariable, value );
+      asImp().evaluateGlobal( x, functor );
     }
 
 

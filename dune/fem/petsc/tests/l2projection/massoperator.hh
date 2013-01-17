@@ -113,7 +113,7 @@ void MassOperator< DiscreteFunction >
   ::assembleRHS( const Function &u, DiscreteFunctionType &w ) const
 {
   typedef typename DiscreteFunctionSpaceType::IteratorType IteratorType;
-  typedef typename DiscreteFunctionSpaceType::BaseFunctionSetType BaseFunctionSetType;
+  typedef typename DiscreteFunctionSpaceType::BasisFunctionSetType BasisFunctionSetType;
   typedef typename DiscreteFunctionSpaceType::RangeFieldType FieldType;
   typedef typename DiscreteFunctionSpaceType::RangeType      RangeType;
 
@@ -171,7 +171,7 @@ const typename MassOperator< DiscreteFunction >::LinearOperatorType &
 MassOperator< DiscreteFunction >::systemMatrix () const
 {
   typedef typename DiscreteFunctionSpaceType::IteratorType IteratorType;
-  typedef typename DiscreteFunctionSpaceType::BaseFunctionSetType BaseFunctionSetType;
+  typedef typename DiscreteFunctionSpaceType::BasisFunctionSetType BasisFunctionSetType;
   typedef typename DiscreteFunctionSpaceType::RangeFieldType FieldType;
 
   typedef typename LinearOperatorType::LocalMatrixType LocalMatrixType;
@@ -194,7 +194,7 @@ MassOperator< DiscreteFunction >::systemMatrix () const
 
       LocalMatrixType localMatrix = systemMatrix_.localMatrix( entity, entity );
 
-      const BaseFunctionSetType &basis = localMatrix.domainBaseFunctionSet();
+      const BasisFunctionSetType &basis = localMatrix.domainBasisFunctionSet();
       const unsigned int numBasisFunctions = basis.size();
       values.resize( numBasisFunctions );
 

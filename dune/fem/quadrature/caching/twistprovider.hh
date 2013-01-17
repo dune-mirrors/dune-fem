@@ -189,6 +189,9 @@ namespace Dune
       //! Constructor
       TwistMapperCreator(const QuadratureType& quad);
 
+      //! Destructor
+      ~TwistMapperCreator();
+
       //! Create the actual mapper for a given twist
       const TwistStorageType* createStorage() const;
       
@@ -211,7 +214,7 @@ namespace Dune
    
     private:
       const QuadratureType& quad_;    
-      std::auto_ptr<TwistMapperStrategy<ct, dim> > helper_;
+      TwistMapperStrategy<ct, dim>* helper_;
 
       static const ct eps_;
     };

@@ -1,23 +1,16 @@
 #ifndef DUNE_FEM_SHAPEFUNCTIONSET_TENSORPRODUCT_HH
 #define DUNE_FEM_SHAPEFUNCTIONSET_TENSORPRODUCT_HH
 
-//- C++ includes
+// C++ includes
 #include <cstddef>
 
-//- dune-common includes
+// dune-common includes
 #include <dune/common/array.hh>
 #include <dune/common/fmatrix.hh>
 #include <dune/common/forloop.hh>
 #include <dune/common/fvector.hh>
 #include <dune/common/static_assert.hh>
 #include <dune/common/tuples.hh>
-
-//- dune-geometry includes
-#include <dune/geometry/type.hh>
-#include <dune/geometry/genericgeometry/topologytypes.hh>
-
-//- dune-fem includes
-#include <dune/fem/space/shapefunctionset/shapefunctionset.hh>
 
 
 namespace Dune
@@ -31,10 +24,8 @@ namespace Dune
 
     template< class FunctionSpace, class ShapeFunctionSetTuple >
     class TensorProductShapeFunctionSet
-    : public ShapeFunctionSet< FunctionSpace, TensorProductShapeFunctionSet< FunctionSpace, ShapeFunctionSetTuple > >
     {
       typedef TensorProductShapeFunctionSet< FunctionSpace, ShapeFunctionSetTuple > ThisType;
-      typedef ShapeFunctionSet< FunctionSpace, TensorProductShapeFunctionSet< FunctionSpace, ShapeFunctionSetTuple > > BaseType;
 
       dune_static_assert( (FunctionSpace::dimDomain == Dune::tuple_size< ShapeFunctionSetTuple >::value),
                           "dimDomain of FunctionSpace must coincide with length of ShapeFunctionSetTuple." );
@@ -57,18 +48,16 @@ namespace Dune
       typedef typename FunctionSpaceType::DomainFieldType DomainFieldType;
       typedef typename FunctionSpaceType::RangeFieldType RangeFieldType;
 
-      typedef typename BaseType::DomainType DomainType;
-      typedef typename BaseType::RangeType RangeType;
-      typedef typename BaseType::JacobianRangeType JacobianRangeType;
-      typedef typename BaseType::HessianRangeType HessianRangeType;
+      typedef typename FunctionSpaceType::DomainType DomainType;
+      typedef typename FunctionSpaceType::RangeType RangeType;
+      typedef typename FunctionSpaceType::JacobianRangeType JacobianRangeType;
+      typedef typename FunctionSpaceType::HessianRangeType HessianRangeType;
 
       explicit TensorProductShapeFunctionSet ( const ShapeFunctionSetTupleType &shapeFunctionSetTuple );
       ~TensorProductShapeFunctionSet ();
 
-      GeometryType type () const
-      {
-        return GeometryType( typename GenericGeometry::CubeTopology< dimension >::type() );
-      }
+      TensorProductShapeFunctionSet ( const ThisType &other );
+      const ThisType &operator= ( const ThisType &other );
 
       std::size_t size () const;
 
@@ -82,9 +71,12 @@ namespace Dune
       void hessianEach ( const Point &x, Functor functor ) const;
 
     private:
-      void doEvaluateEach ( int d, RangeType value, std::size_t &index, const RangeFieldType *buffer );
-      void doJacobianEach ( int d, JacobianRangeType jacobian, std::size_t &index, const RangeFieldType *buffer );
-      void doHessianEach ( int d, HessianRangeType hessian, std::size_t &index, const RangeFieldType *buffer );
+      template< class Functor >
+      void doEvaluateEach ( int d, RangeType value, std::size_t &index, const RangeFieldType *buffer, Functor functor ) const;
+      template< class Functor >
+      void doJacobianEach ( int d, JacobianRangeType jacobian, std::size_t &index, const RangeFieldType *buffer, Functor functor ) const;
+      template< class Functor >
+      void doHessianEach ( int d, HessianRangeType hessian, std::size_t &index, const RangeFieldType *buffer, Functor functor ) const;
 
       ShapeFunctionSetTuple shapeFunctionSetTuple_;
       array< std::size_t, dimension > sizes_;
@@ -220,6 +212,42 @@ namespace Dune
 
 
     template< class FunctionSpace, class ShapeFunctionSetTuple >
+    inline TensorProductShapeFunctionSet< FunctionSpace, ShapeFunctionSetTuple >
+      ::TensorProductShapeFunctionSet ( const ThisType &other )
+    : shapeFunctionSetTuple_( other.shapeFunctionSetTuple_ )
+    {
+      std::size_t buffer_size = 0;
+      for( int i = 0; i < dimension; ++i )
+      {
+        sizes_[ i ] = other.sizes_[ i ];
+        buffer_size += sizes_[ i ];
+      }
+      buffer_ = new RangeFieldType[ 3*buffer_size ];
+    }
+
+
+    template< class FunctionSpace, class ShapeFunctionSetTuple >
+    inline const typename TensorProductShapeFunctionSet< FunctionSpace, ShapeFunctionSetTuple >::ThisType &
+    TensorProductShapeFunctionSet< FunctionSpace, ShapeFunctionSetTuple >
+      ::operator= ( const ThisType &other )
+    {
+      if( this == &other )
+        return *this;
+      delete[]( buffer_ );
+
+      shapeFunctionSetTuple_ = other.shapeFunctionSetTuple_;
+      std::size_t buffer_size = 0;
+      for( int i = 0; i < dimension; ++i )
+      {
+        sizes_[ i ] = other.sizes_[ i ];
+        buffer_size += sizes_[ i ];
+      }
+      buffer_ = new RangeFieldType[ 3*buffer_size ];
+      return *this;
+    }
+
+
+    template< class FunctionSpace, class ShapeFunctionSetTuple >
     inline std::size_t
     TensorProductShapeFunctionSet< FunctionSpace, ShapeFunctionSetTuple >::size () const
     {
@@ -239,7 +267,7 @@ namespace Dune
       ForLoop< EvaluateAll, 0, dimension-1 >::apply( shapeFunctionSetTuple_, coordinate( x ), it );
 
       std::size_t index = 0;
-      doEvaluateEach( 0, RangeType( RangeFieldType( 1 ) ), index, buffer_ );
+      doEvaluateEach( 0, RangeType( RangeFieldType( 1 ) ), index, buffer_, functor );
     }
 
 
@@ -255,7 +283,7 @@ namespace Dune
       JacobianRangeType jacobian;
       for( int i = 0; i < dimension; ++i )
         jacobian[ 0 ][ i ] = RangeFieldType( 1 );
-      doJacobianeEach( 0, jacobian, index, buffer_ );
+      doJacobianEach( 0, jacobian, index, buffer_, functor );
     }
 
 
@@ -272,21 +300,22 @@ namespace Dune
       for( int i = 0; i < dimension; ++i )
         for( int j = 0; j < dimension; ++j )
           hessian[ 0 ][ i ][ j ] = RangeFieldType( 1 );
-      doHessianEach( 0, hessian, index, buffer_ );
+      doHessianEach( 0, hessian, index, buffer_, functor );
     }
 
 
     template< class FunctionSpace, class ShapeFunctionSetTuple >
+    template< class Functor >
     inline void TensorProductShapeFunctionSet< FunctionSpace, ShapeFunctionSetTuple >
-      ::doEvaluateEach ( int d, RangeType value, std::size_t &index, const RangeFieldType *buffer )
+      ::doEvaluateEach ( int d, RangeType value, std::size_t &index, const RangeFieldType *buffer, Functor functor ) const
     {
       if( d < dimension )
       {
-        for( int i = 0; i < sizes_[ d ]; ++i )
+        for( std::size_t i = 0; i < sizes_[ d ]; ++i )
         {
           RangeType v( value );
           v[ 0 ] *= buffer[ i ];
-          doEvaluateEach( d+1, v, index, buffer+sizes_[ d ] ); 
+          doEvaluateEach( d+1, v, index, buffer+sizes_[ d ], functor ); 
         }
       }
       else
@@ -295,18 +324,19 @@ namespace Dune
 
 
     template< class FunctionSpace, class ShapeFunctionSetTuple >
+    template< class Functor >
     inline void TensorProductShapeFunctionSet< FunctionSpace, ShapeFunctionSetTuple >
-      ::doJacobianEach ( int d, JacobianRangeType jacobian, std::size_t &index, const RangeFieldType *buffer )
+      ::doJacobianEach ( int d, JacobianRangeType jacobian, std::size_t &index, const RangeFieldType *buffer, Functor functor ) const
     {
       if( d < dimension )
       {
-        for( int i = 0; i < sizes_[ d ]; ++i )
+        for( std::size_t i = 0; i < sizes_[ d ]; ++i )
         {
           JacobianRangeType j( jacobian );
           j[ 0 ][ d ] *= buffer[ i + sizes_[ d ] ];
           for( int k = 1; k < dimension; ++k )
             j[ 0 ][ (d+k)%dimension ] *= buffer[ i ];
-          doEvaluateEach( d+1, j, index, buffer+2*sizes_[ d ] ); 
+          doJacobianEach( d+1, j, index, buffer+2*sizes_[ d ], functor ); 
         }
       }
       else
@@ -315,12 +345,13 @@ namespace Dune
 
 
     template< class FunctionSpace, class ShapeFunctionSetTuple >
+    template< class Functor >
     inline void TensorProductShapeFunctionSet< FunctionSpace, ShapeFunctionSetTuple >
-      ::doHessianEach ( int d, HessianRangeType hessian, std::size_t &index, const RangeFieldType *buffer )
+      ::doHessianEach ( int d, HessianRangeType hessian, std::size_t &index, const RangeFieldType *buffer, Functor functor ) const
     {
       if( d < dimension )
       {
-        for( int i = 0; i < sizes_[ d ]; ++i )
+        for( std::size_t i = 0; i < sizes_[ d ]; ++i )
         {
           HessianRangeType h( hessian );
           h[ 0 ][ d ][ d ] *= buffer[ i + 2*sizes_[ d ] ];
@@ -331,7 +362,7 @@ namespace Dune
             for( int k = 1; k < dimension; ++k )
               h[ 0 ][ (d+j)%dimension ][ (d+k)%dimension ] *= buffer[ i ];
           }
-          doEvaluateEach( d+1, h, index, buffer+3*sizes_[ d ] ); 
+          doHessianEach( d+1, h, index, buffer+3*sizes_[ d ], functor ); 
         }
       }
       else

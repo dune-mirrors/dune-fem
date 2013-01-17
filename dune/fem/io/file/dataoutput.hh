@@ -14,7 +14,7 @@
 #include <dune/fem/solver/timeprovider.hh>
 #include <dune/fem/space/common/loadbalancer.hh>
 #include <dune/fem/gridpart/adaptiveleafgridpart.hh>
-#include <dune/fem/space/lagrangespace.hh>
+#include <dune/fem/space/lagrange.hh>
 #include <dune/fem/function/adaptivefunction.hh>
 #include <dune/fem/quadrature/cachingquadrature.hh>
 #include <dune/fem/gridpart/adaptiveleafgridpart.hh>
@@ -146,6 +146,46 @@ namespace Dune
       template< class Grid, class OutputTuple, int N = tuple_size< OutputTuple >::value >
       struct GridPartGetter;
 
+    template< class Grid, class OutputTuple, int N >
+    struct GridPartGetter
+    {
+      typedef typename TypeTraits< typename tuple_element< 0, OutputTuple >::type >::PointeeType DFType;
+      typedef typename DFType :: DiscreteFunctionSpaceType :: GridPartType GridPartType;
+
+      GridPartGetter ( const Grid &, const OutputTuple &data )
+      : gridPart_( getGridPart( data ) )
+      {}
+
+      const GridPartType &gridPart () const { return gridPart_; }
+
+    protected:
+      static const GridPartType &getGridPart( const OutputTuple& data )
+      {
+        const DFType *df = Dune::get< 0 >( data );
+        assert( df );
+        return df->space().gridPart();
+      }
+
+      const GridPartType &gridPart_;
+    };
+
+
+    template< class Grid, class OutputTuple >
+    struct GridPartGetter< Grid, OutputTuple, 0 >
+    {
+      typedef AdaptiveLeafGridPart< Grid > GridPartType;
+
+      GridPartGetter ( const Grid &grid, const OutputTuple & )
+      : gridPart_( const_cast< Grid & >( grid ) )
+      {}
+
+      const GridPartType &gridPart () const { return gridPart_; }
+
+    protected:
+      const GridPartType gridPart_;
+    };
+
+
 #if USE_VTKWRITER
       template< class VTKIOType >
       struct VTKListEntry 
@@ -204,7 +244,18 @@ namespace Dune
       void consistentSaveStep ( const TimeProviderBase &tp ) const;
 
       //! destructor 
-      virtual ~DataOutput() { delete param_; }
+      virtual ~DataOutput()
+      {
+	delete param_; 
+
+	if( pvd_ )
+	  {
+	    pvd_ << "  </Collection>" << std::endl;
+	    pvd_ << "</VTKFile>" << std::endl;
+
+	    pvd_.close();
+	  }
+      }
 
     protected:  
       //! initialize data writer 
@@ -245,7 +296,9 @@ namespace Dune
       */
       void write() const 
       {
-        write( "" );
+        if( willWrite() )
+          writeData( writeCalls_, "" );
+        ++writeCalls_;
       }
 
       /** \brief write given data to disc, evaluates parameter savecount and savestep
@@ -337,6 +390,7 @@ namespace Dune
       // grape, vtk or ...
       OutputFormat outputFormat_;
       mutable std::ofstream sequence_;
+      mutable std::ofstream pvd_;
       const DataOutputParameters* param_;
     }; // end class DataOutput
 
@@ -344,48 +398,6 @@ namespace Dune
 
     // DataOutput::GridPartGetter
     // --------------------------
-
-    template< class GridImp, class DataImp >
-    template< class Grid, class OutputTuple, int N >
-    struct DataOutput< GridImp, DataImp >::GridPartGetter
-    {
-      typedef typename TypeTraits< typename tuple_element< 0, OutputTuple >::type >::PointeeType DFType;
-      typedef typename DFType :: DiscreteFunctionSpaceType :: GridPartType GridPartType;
-
-      GridPartGetter ( const Grid &, const OutputTuple &data )
-      : gridPart_( getGridPart( data ) )
-      {}
-
-      const GridPartType &gridPart () const { return gridPart_; }
-
-    protected:
-      static const GridPartType &getGridPart( const OutputTuple& data )
-      {
-        const DFType *df = Dune::get< 0 >( data );
-        assert( df );
-        return df->space().gridPart();
-      }
-
-      const GridPartType &gridPart_;
-    };
-
-
-    template< class GridImp, class DataImp >
-    template< class Grid, class OutputTuple >
-    struct DataOutput< GridImp, DataImp >::GridPartGetter< Grid, OutputTuple, 0 >
-    {
-      typedef AdaptiveLeafGridPart< Grid > GridPartType;
-
-      GridPartGetter ( const Grid &grid, const OutputTuple & )
-      : gridPart_( const_cast< Grid & >( grid ) )
-      {}
-
-      const GridPartType &gridPart () const { return gridPart_; }
-
-    protected:
-      const GridPartType gridPart_;
-    };
-
 
 
     // DataOutput::VTKFunc
@@ -645,7 +657,6 @@ namespace Dune
       consistentSaveStep( tp );
     }
 
-
     template< class GridImp, class DataImp >
     inline void DataOutput< GridImp, DataImp >
       ::consistentSaveStep ( const TimeProviderBase &tp ) const
@@ -712,12 +723,29 @@ namespace Dune
         // only write series file for VTK output
         if ( Parameter :: verbose() && outputFormat_ < binary ) 
         {
-          std::string name = path_ + "/" + datapref_;
-          name += ".series";
-          std::cout << "opening file: " << name << std::endl;
-          sequence_.open(name.c_str());
-          if ( ! sequence_ )
-            std::cout << "could not write sequence file" << std::endl;
+          {
+            std::string name = path_ + "/" + datapref_;
+            name += ".series";
+            std::cout << "opening file: " << name << std::endl;
+            sequence_.open(name.c_str());
+            if ( ! sequence_ )
+              std::cout << "could not write sequence file" << std::endl;
+          }
+
+          {
+            std::string name = path_ + "/" + datapref_;
+            name += ".pvd";
+            std::cout << "opening file: " << name << std::endl;
+            pvd_.open(name.c_str());
+            if ( ! pvd_ )
+              std::cout << "could not write sequence file" << std::endl;
+            else
+            {
+              pvd_ << "<?xml version=\"1.0\"?>" << std::endl;
+              pvd_ << "<VTKFile type=\"Collection\" version=\"0.1\" byte_order=\"LittleEndian\">" << std::endl;
+              pvd_ << "  <Collection>" << std::endl;
+            }
+          }
         }
 
         // write parameter file 
@@ -759,12 +787,17 @@ namespace Dune
 
       if( outputFormat_ != none ) 
       {
-        if (sequence_)
+        if( sequence_ )
           sequence_ << writeStep_ << " "
                     << filename << " "
                     << sequenceStamp
                     << outstring
                     << std::endl;
+
+        if( pvd_ )
+          pvd_ << "    <DataSet timestep=\"" << sequenceStamp << "\" "
+               << "group=\"\" part=\"0\" "
+               << "file=\""<<filename<<"\"/>" << std::endl;
 
         if( Parameter::verbose() )
         {

@@ -12,6 +12,11 @@
 #include <dune/fem/space/common/functionspace.hh>
 #include <dune/fem/version.hh>
 
+/**
+  @file
+  @brief Interface for basis function sets
+*/
+
 
 namespace Dune
 {
@@ -22,19 +27,21 @@ namespace Dune
     // BasisFunctionSet
     // ----------------
 
-    template< class Entity, class Range, class Implementation >
+    /**
+     * \brief Interface class for basis function sets
+     *
+     * This class cannot be used itself, it is for documentation purposes
+     * only.
+     *
+     * \note Constructor signatures are explicitly not specified by this
+     *       interface.
+     */
+    template< class Entity, class Range >
     class BasisFunctionSet
     {
     public:
       //! \brief entity type
       typedef Entity EntityType;
-
-      //! \brief implementation type
-      typedef Implementation ImplementationType;
-      //! \brief return reference to implementation
-      ImplementationType &impl () { return impl_; }
-      //! \brief return reference to implementation
-      const ImplementationType &impl () const { return impl_; }
 
       // function space type
       typedef FunctionSpace< typename Entity::Geometry::ctype, typename Range::value_type, 
@@ -54,90 +61,55 @@ namespace Dune
       typedef Dune::ReferenceElement< typename DomainType::value_type, 
                                       DomainType::dimension > ReferenceElementType;
 
-      //! \brief copy constructor from implementation
-      BasisFunctionSet ( const ImplementationType &impl )
-      : impl_( impl )
-      {}
-
       //! \brief return size of basis function set
-      std::size_t size () const { return impl().size(); }
+      std::size_t size () const;
 
       //! \brief return geometry type of entity
       DUNE_VERSION_DEPRECATED(1,4,remove)
-      Dune::GeometryType type () const { return referenceElement().type(); }
+      Dune::GeometryType type () const;
 
       //! \brief return reference element
-      const ReferenceElementType &referenceElement () const { return impl().referenceElement(); }
+      const ReferenceElementType &referenceElement () const;
 
       //! \todo please doc me
       template< class Point, class DofVector >
-      void axpy ( const Point &x, const RangeType &valueFactor, DofVector &dofs ) const
-      {
-        impl().axpy( x, valueFactor, dofs );
-      }
+      void axpy ( const Point &x, const RangeType &valueFactor, DofVector &dofs ) const;
 
       //! \todo please doc me
       template< class Point, class DofVector >
-      void axpy ( const Point &x, const JacobianRangeType &jacobianFactor, DofVector &dofs ) const
-      {
-        axpy( x, jacobianFactor, dofs );
-      }
+      void axpy ( const Point &x, const JacobianRangeType &jacobianFactor, DofVector &dofs ) const;
 
       //! \todo please doc me
       template< class Point, class DofVector >
       void axpy ( const Point &x, const RangeType &valueFactor, const JacobianRangeType &jacobianFactor,
-                  DofVector &dofs ) const
-      {
-        impl().axpy( x, valueFactor, jacobianFactor, dofs );
-      }
+                  DofVector &dofs ) const;
 
       //! \todo please doc me
       template< class Point, class DofVector >
-      void evaluateAll ( const Point &x, const DofVector &dofs, RangeType &value ) const
-      {
-        impl().evaluateAll( x, dofs, value );
-      }
+      void evaluateAll ( const Point &x, const DofVector &dofs, RangeType &value ) const;
 
       //! \todo please doc me
       template< class Point, class RangeArray >
-      void evaluateAll ( const Point &x, RangeArray &values ) const
-      {
-        impl().evaluateAll( x, values );
-      }
+      void evaluateAll ( const Point &x, RangeArray &values ) const;
 
       //! \todo please doc me
       template< class Point, class DofVector >
-      void jacobianAll ( const Point &x, const DofVector &dofs, JacobianRangeType &jacobian ) const
-      {
-        impl().jacobianAll( x, dofs, jacobian );
-      }
+      void jacobianAll ( const Point &x, const DofVector &dofs, JacobianRangeType &jacobian ) const;
 
       //! \todo please doc me
       template< class Point, class JacobianRangeArray >
-      void jacobianAll ( const Point &x, JacobianRangeArray &jacobians ) const
-      {
-        impl().jacobianAll( x, jacobians );
-      }
+      void jacobianAll ( const Point &x, JacobianRangeArray &jacobians ) const;
 
       //! \todo please doc me
       template< class Point, class DofVector >
-      void hessianAll ( const Point &x, const DofVector &dofs, HessianRangeType &hessian ) const
-      {
-        impl().hessianAll( x, dofs, hessian );
-      }
+      void hessianAll ( const Point &x, const DofVector &dofs, HessianRangeType &hessian ) const;
 
       //! \todo please doc me
       template< class Point, class HessianRangeArray >
-      void hessianAll ( const Point &x, HessianRangeArray &hessians ) const
-      {
-        impl().hessianAll( x, hessians );
-      }
+      void hessianAll ( const Point &x, HessianRangeArray &hessians ) const;
 
       //! \brief return entity
-      const Entity &entity () const { return impl().entity(); }
-
-    private:
-      ImplementationType impl_;
+      const EntityType &entity () const;
     };
 
   } // namespace Fem

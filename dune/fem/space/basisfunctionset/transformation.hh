@@ -11,6 +11,21 @@ namespace Dune
   namespace Fem
   {
 
+    // jacobianTransformation
+    // ----------------------
+
+
+    template< class GeometryJacobianInverseTransposed, class K, int ROWS >
+    void jacobianTransformation ( const GeometryJacobianInverseTransposed &gjit,
+                                  const FieldMatrix< K, ROWS, GeometryJacobianInverseTransposed::cols > &a,
+                                  FieldMatrix< K, ROWS, GeometryJacobianInverseTransposed::rows > &b )
+    {
+      for( int r = 0; r < ROWS; ++r )
+        gjit.mv( a[ r ], b[ r ] );
+    }
+
+
+
     // JacobianTransformation
     // ----------------------
 
@@ -24,17 +39,38 @@ namespace Dune
       : gjit_( geometry.jacobianInverseTransposed( x ) )
       {}
 
-      template< class K, int ROWS >
-      void operator() ( const FieldMatrix< K, ROWS, Geometry::mydimension > &a,
-                        FieldMatrix< K, ROWS, Geometry::coorddimension > &b )
+      template< class A, class B >
+      void operator() ( const A &a, B &b ) const
       {
-        for( int r = 0; r < ROWS; ++r )
-          gjit_.mv( a[ r ], b[ r ] );
+        jacobianTransformation( gjit_, a, b );
       }
 
     private:
       const GeometryJacobianInverseTransposed &gjit_;
     };
+
+
+
+    // hessianTransformation
+    // ---------------------
+
+    template< class GeometryJacobianInverseTransposed, class K, int SIZE >
+    void hessianTransformation ( const GeometryJacobianInverseTransposed &gjit,
+                                 const FieldVector< FieldMatrix< K, GeometryJacobianInverseTransposed::cols, GeometryJacobianInverseTransposed::cols >, SIZE > &a,
+                                 FieldVector< FieldMatrix< K, GeometryJacobianInverseTransposed::rows, GeometryJacobianInverseTransposed::rows >, SIZE > &b )
+    {
+      for( int r = 0; r < SIZE; ++r )
+      {
+        b[ r ] = K( 0 );
+        for( int k = 0; k < GeometryJacobianInverseTransposed::cols; ++k )
+        {
+          FieldVector< K, GeometryJacobianInverseTransposed::rows > c;
+          gjit.mv( a[ r ][ k ], c );
+          for( int j = 0; j < GeometryJacobianInverseTransposed::rows; ++j )
+            b[ r ][ j ].axpy( gjit[ j ][ k ], c );
+        }
+      }
+    }
 
 
 
@@ -54,21 +90,10 @@ namespace Dune
           DUNE_THROW( NotImplemented, "HessianTransformation not implemented for non-affine geometries." );
       }
 
-      template< class K, int SIZE >
-      void operator() ( const FieldVector< FieldMatrix< K, Geometry::mydimension, Geometry::mydimension >, SIZE > &a,
-                        FieldVector< FieldMatrix< K, Geometry::coorddimension, Geometry::coorddimension >, SIZE > &b )
+      template< class A, class B >
+      void operator() ( const A &a, B &b ) const
       {
-        for( int r = 0; r < SIZE; ++r )
-        {
-          b[ r ] = K( 0 );
-          for( int k = 0; k < Geometry::mydimension; ++k )
-          {
-            FieldVector< K, Geometry::coorddimension > c;
-            gjit_.mv( a[ r ][ k ], c );
-            for( int j = 0; j < Geometry::coorddimension; ++j )
-              b[ r ][ j ].axpy( gjit_[ j ][ k ], c );
-          }
-        }
+        hessianTransformation( gjit_, a, b );
       }
 
     private:

@@ -7,10 +7,9 @@
 static const int dimw = Dune::GridSelector::dimworld;
 
 #include <dune/fem/operator/discreteoperatorimp.hh>
-#include <dune/fem/space/lagrangespace.hh>
 #include <dune/fem/function/adaptivefunction.hh>
-#include <dune/fem/space/dgspace.hh>
-#include <dune/fem/space/lagrangespace.hh>
+#include <dune/fem/space/discontinuousgalerkin.hh>
+#include <dune/fem/space/lagrange.hh>
 #include <dune/fem/quadrature/cachingquadrature.hh>
 
 #include <dune/fem/gridpart/adaptiveleafgridpart.hh> 

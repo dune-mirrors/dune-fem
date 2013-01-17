@@ -145,10 +145,10 @@ namespace Dune
        * 
        *  \returns GeometryType of the base function set
        */
-      GeometryType geometryType () const
+      GeometryType type () const
       {
-        CHECK_INTERFACE_IMPLEMENTATION( asImp().geometryType() );
-        return asImp().geometryType();
+        CHECK_INTERFACE_IMPLEMENTATION( asImp().type() );
+        return asImp().type();
       }
 
       /** \brief \todo please doc me */

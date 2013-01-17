@@ -161,10 +161,10 @@ int main ( int argc, char ** argv )
   try
   {
     // create grid
-    GridType & grid = Dune::TestGrid::grid();
+    GridType & grid = Dune::Fem::TestGrid::grid();
 
     // refine grid
-    const int step = Dune::TestGrid::refineStepsForHalf();
+    const int step = Dune::Fem::TestGrid::refineStepsForHalf();
     grid.globalRefine( 2*step );
     grid.loadBalance();
 

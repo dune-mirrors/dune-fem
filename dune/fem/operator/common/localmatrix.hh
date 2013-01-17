@@ -49,12 +49,12 @@ namespace Dune
       typedef typename Traits :: RangeSpaceType RangeSpaceType;
 
       //! type of base function sets within domain function space
-      typedef typename DomainSpaceType :: BaseFunctionSetType
-        DomainBaseFunctionSetType;
+      typedef typename DomainSpaceType :: BasisFunctionSetType
+        DomainBasisFunctionSetType;
 
       //! type of base function sets within range function space
-      typedef typename RangeSpaceType :: BaseFunctionSetType
-        RangeBaseFunctionSetType;
+      typedef typename RangeSpaceType :: BasisFunctionSetType
+        RangeBasisFunctionSetType;
 
       /*! type of block (i.e. FieldMatrix for BlockMatrices */
       typedef typename Traits :: LittleBlockType  LittleBlockType;
@@ -218,17 +218,17 @@ namespace Dune
       }
 
       /** \brief access to the base function set within the domain space */
-      inline const DomainBaseFunctionSetType &domainBaseFunctionSet () const
+      inline const DomainBasisFunctionSetType &domainBasisFunctionSet () const
       {
-        CHECK_INTERFACE_IMPLEMENTATION( asImp().domainBaseFunctionSet() );
-        return asImp().domainBaseFunctionSet();
+        CHECK_INTERFACE_IMPLEMENTATION( asImp().domainBasisFunctionSet() );
+        return asImp().domainBasisFunctionSet();
       }
       
       /** \brief access to the base function set within the range space */
-      inline const RangeBaseFunctionSetType &rangeBaseFunctionSet () const
+      inline const RangeBasisFunctionSetType &rangeBasisFunctionSet () const
       {
-        CHECK_INTERFACE_IMPLEMENTATION( asImp().rangeBaseFunctionSet() );
-        return asImp().rangeBaseFunctionSet();
+        CHECK_INTERFACE_IMPLEMENTATION( asImp().rangeBasisFunctionSet() );
+        return asImp().rangeBasisFunctionSet();
       }
 
       /** \brief return column object for local matrix which contains axpy methods 
@@ -258,17 +258,17 @@ namespace Dune
       typedef typename BaseType :: DomainSpaceType DomainSpaceType;
       typedef typename BaseType :: RangeSpaceType RangeSpaceType;
 
-      typedef typename BaseType :: DomainBaseFunctionSetType
-        DomainBaseFunctionSetType;
-      typedef typename BaseType :: RangeBaseFunctionSetType
-        RangeBaseFunctionSetType;
+      typedef typename BaseType :: DomainBasisFunctionSetType
+        DomainBasisFunctionSetType;
+      typedef typename BaseType :: RangeBasisFunctionSetType
+        RangeBasisFunctionSetType;
 
     protected:
       const DomainSpaceType &domainSpace_;
       const RangeSpaceType &rangeSpace_;
 
-      DomainBaseFunctionSetType domainBaseSet_;
-      RangeBaseFunctionSetType rangeBaseSet_;
+      DomainBasisFunctionSetType domainBaseSet_;
+      RangeBasisFunctionSetType rangeBaseSet_;
 
     protected:
       LocalMatrixDefault ( const DomainSpaceType &domainSpace,
@@ -286,8 +286,8 @@ namespace Dune
                            const RangeEntityType &rangeEntity )
       : domainSpace_( domainSpace ),
         rangeSpace_( rangeSpace ),
-        domainBaseSet_( domainSpace.baseFunctionSet( domainEntity ) ),
-        rangeBaseSet_( rangeSpace.baseFunctionSet( rangeEntity ) )
+        domainBaseSet_( domainSpace.basisFunctionSet( domainEntity ) ),
+        rangeBaseSet_( rangeSpace.basisFunctionSet( rangeEntity ) )
       {}
 
       LocalMatrixDefault ( const LocalMatrixDefault& org )
@@ -303,8 +303,8 @@ namespace Dune
       inline void init ( const DomainEntityType &domainEntity,
                          const RangeEntityType &rangeEntity )
       {
-        domainBaseSet_ = domainSpace_.baseFunctionSet( domainEntity );
-        rangeBaseSet_ = rangeSpace_.baseFunctionSet( rangeEntity );
+        domainBaseSet_ = domainSpace_.basisFunctionSet( domainEntity );
+        rangeBaseSet_ = rangeSpace_.basisFunctionSet( rangeEntity );
       }
 
       /** \copydoc Dune::Fem::LocalMatrixInterface::resort */
@@ -322,14 +322,14 @@ namespace Dune
       /** \copydoc Dune::Fem::LocalMatrixInterface::rangeSpace */
       const RangeSpaceType &rangeSpace () const { return rangeSpace_; }
 
-      /** \copydoc Dune::Fem::LocalMatrixInterface::domainBaseFunctionSet */
-      const DomainBaseFunctionSetType &domainBaseFunctionSet () const
+      /** \copydoc Dune::Fem::LocalMatrixInterface::domainBasisFunctionSet */
+      const DomainBasisFunctionSetType &domainBasisFunctionSet () const
       {
         return domainBaseSet_;
       }
-      
-      /** \copydoc Dune::Fem::LocalMatrixInterface::rangeBaseFunctionSet */
-      const RangeBaseFunctionSetType &rangeBaseFunctionSet () const
+
+      /** \copydoc Dune::Fem::LocalMatrixInterface::rangeBasisFunctionSet */
+      const RangeBasisFunctionSetType &rangeBasisFunctionSet () const
       {
         return rangeBaseSet_;
       }
@@ -404,9 +404,9 @@ namespace Dune
                  const RangeType& factor,
                  const RangeFieldType& weight = RangeFieldType(1) ) 
       {
-        const unsigned int numBaseFunctions = localMatrix_.rows();
-        assert( phi.size() >= numBaseFunctions );
-        for( unsigned int row = 0; row < numBaseFunctions; ++ row )
+        const unsigned int numBasisFunctions = localMatrix_.rows();
+        assert( phi.size() >= numBasisFunctions );
+        for( unsigned int row = 0; row < numBasisFunctions; ++ row )
         {
           RangeFieldType value = factor * phi[ row ];
           localMatrix_.add( row, column_, weight * value );
@@ -430,9 +430,9 @@ namespace Dune
                  const JacobianRangeType& jacobianFactor,
                  const RangeFieldType& weight = RangeFieldType(1) ) 
       {
-        const unsigned int numBaseFunctions = localMatrix_.rows();
-        assert( dphi.size() >= numBaseFunctions );
-        for( unsigned int row = 0; row < numBaseFunctions; ++ row )
+        const unsigned int numBasisFunctions = localMatrix_.rows();
+        assert( dphi.size() >= numBasisFunctions );
+        for( unsigned int row = 0; row < numBasisFunctions; ++ row )
         {
           RangeFieldType value = 0; 
           for( int k = 0; k < jacobianFactor.rows; ++k )
@@ -463,10 +463,10 @@ namespace Dune
                  const JacobianRangeType& jacobianFactor,
                  const RangeFieldType& weight = RangeFieldType(1) ) 
       {
-        const unsigned int numBaseFunctions = localMatrix_.rows();
-        assert( phi.size() >= numBaseFunctions );
-        assert( dphi.size() >= numBaseFunctions );
-        for( unsigned int row = 0; row < numBaseFunctions; ++ row )
+        const unsigned int numBasisFunctions = localMatrix_.rows();
+        assert( phi.size() >= numBasisFunctions );
+        assert( dphi.size() >= numBasisFunctions );
+        for( unsigned int row = 0; row < numBasisFunctions; ++ row )
         {
           RangeFieldType value = factor * phi[ row ];
           for( int k = 0; k < jacobianFactor.rows; ++k )

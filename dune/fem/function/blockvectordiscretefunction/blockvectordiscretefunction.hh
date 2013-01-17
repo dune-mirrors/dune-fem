@@ -11,8 +11,8 @@
 
 #include <dune/fem/function/common/discretefunction.hh>
 #include <dune/fem/function/common/scalarproducts.hh>
-#include <dune/fem/function/localfunction/standardlocalfunction.hh>
-#include <dune/fem/function/localfunction/localfunctionwrapper.hh>
+#include <dune/fem/function/localfunction/standard.hh>
+#include <dune/fem/function/localfunction/wrapper.hh>
 
 #include <dune/fem/storage/envelope.hh>
 #include <dune/fem/misc/threadmanager.hh>

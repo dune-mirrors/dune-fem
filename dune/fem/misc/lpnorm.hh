@@ -100,11 +100,11 @@ namespace Dune
                   class VDiscreteFunctionType, 
                   class ReturnType>
         static 
-        const ReturnType& forEach ( const ThisType& norm,
-                                    const UDiscreteFunctionType& u, 
-                                    const VDiscreteFunctionType& v, 
-                                    const ReturnType& initialValue, 
-                                    const unsigned int order )
+        ReturnType forEach ( const ThisType& norm,
+                             const UDiscreteFunctionType& u, 
+                             const VDiscreteFunctionType& v, 
+                             const ReturnType& initialValue, 
+                             const unsigned int order )
         {
           dune_static_assert( uDiscrete && vDiscrete, "Distance can only be calculated between GridFunctions" );
 
@@ -129,10 +129,10 @@ namespace Dune
                   class VDiscreteFunctionType, 
                   class ReturnType>
         static 
-        const ReturnType& forEach ( const ThisType& norm,
-                                    const F& f, const VDiscreteFunctionType& v, 
-                                    const ReturnType& initialValue, 
-                                    const unsigned int order )
+        ReturnType forEach ( const ThisType& norm,
+                             const F& f, const VDiscreteFunctionType& v, 
+                             const ReturnType& initialValue, 
+                             const unsigned int order )
         {
           typedef GridFunctionAdapter< F, GridPartType>  GridFunction ;
           GridFunction u( "LPNorm::adapter" , f , v.space().gridPart(), v.space().order() ); 
@@ -150,11 +150,11 @@ namespace Dune
                   class F, 
                   class ReturnType>
         static 
-        const ReturnType& forEach ( const ThisType& norm,
-                                    const UDiscreteFunctionType& u, 
-                                    const F& f, 
-                                    const ReturnType& initialValue, 
-                                    const unsigned int order )
+        ReturnType forEach ( const ThisType& norm,
+                             const UDiscreteFunctionType& u, 
+                             const F& f, 
+                             const ReturnType& initialValue, 
+                             const unsigned int order )
         {
           return ForEachCaller< false, uDiscrete > :: 
             forEach( norm, f, u, initialValue, order );
@@ -162,7 +162,7 @@ namespace Dune
       };
 
       template <class DiscreteFunctionType, class ReturnType> 
-      const ReturnType& 
+      ReturnType 
       forEach ( const DiscreteFunctionType& u,  
                 const ReturnType& initialValue,
                 const unsigned int order = 0 ) const 
@@ -185,7 +185,7 @@ namespace Dune
       template <class UDiscreteFunctionType, 
                 class VDiscreteFunctionType, 
                 class ReturnType> 
-      const ReturnType& 
+      ReturnType 
       forEach ( const UDiscreteFunctionType& u,  
                 const VDiscreteFunctionType& v, 
                 const ReturnType& initialValue,

@@ -8,11 +8,7 @@
 #include <dune/geometry/type.hh>
 #include <dune/geometry/genericgeometry/topologytypes.hh>
 
-#include <dune/grid/alugrid/common/interfaces.hh>
-
-#if HAVE_DUNE_GEOGRID
 #include <dune/grid/utility/hostgridaccess.hh>
-#endif
 
 // this also includes the forward declarations 
 #include <dune/fem/misc/capabilities.hh>
@@ -376,14 +372,13 @@ namespace Dune
 
 
 
-    // Specialization for GeoGrid
+    // Specialization for GeometryGrid
     // --------------------------
 
-#if HAVE_DUNE_GEOGRID
-    template< class HostGrid, class CoordFunction >
-    struct TwistUtility< GeometryGrid< HostGrid, CoordFunction > >
+    template< class HostGrid, class CoordFunction, class Allocator >
+    struct TwistUtility< GeometryGrid< HostGrid, CoordFunction, Allocator > >
     {
-      typedef GeometryGrid< HostGrid, CoordFunction > GridType;
+      typedef GeometryGrid< HostGrid, CoordFunction, Allocator > GridType;
       typedef typename GridType::Traits::LeafIntersectionIterator LeafIntersectionIterator;
       typedef typename LeafIntersectionIterator::Intersection LeafIntersection;
       typedef typename GridType::Traits::LevelIntersectionIterator LevelIntersectionIterator;
@@ -458,7 +453,6 @@ namespace Dune
       TwistUtility( const TwistUtility & );
       TwistUtility &operator=( const TwistUtility & );
     };
-#endif // #if HAVE_DUNE_GEOGRID
 
   }  // namespace Fem
   

@@ -9,7 +9,7 @@
 #include "model.hh"
 
 // choose discrete function type
-#include <dune/fem/space/lagrangespace.hh>
+#include <dune/fem/space/lagrange.hh>
 
 #include <dune/fem/gridpart/leafgridpart.hh>
 

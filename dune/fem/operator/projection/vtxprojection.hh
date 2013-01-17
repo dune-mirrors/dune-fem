@@ -1,7 +1,7 @@
 #ifndef DUNE_FEM_VTXPROJECTION_HH
 #define DUNE_FEM_VTXPROJECTION_HH
 
-#include <dune/fem/space/lagrangespace/lagrangespace.hh>
+#include <dune/fem/space/lagrange.hh>
 // #include <dune/grid/utility/twistutility.hh>
 #include <dune/fem/operator/common/operator.hh>
 #include <dune/fem/space/common/communicationmanager.hh>
@@ -37,7 +37,7 @@ namespace Dune
 
         typedef typename DiscreteFunctionSpaceType::GridPartType GridPartType;
         typedef typename DiscreteFunctionSpaceType::IteratorType IteratorType;
-        typedef typename DiscreteFunctionSpaceType::BaseFunctionSetType BaseFunctionSetType;
+        typedef typename DiscreteFunctionSpaceType::BasisFunctionSetType BasisFunctionSetType;
         typedef typename DiscreteFunctionSpaceType::LagrangePointSetType LagrangePointSetType;
 
         typedef typename GridPartType::IntersectionIteratorType IntersectionIteratorType;

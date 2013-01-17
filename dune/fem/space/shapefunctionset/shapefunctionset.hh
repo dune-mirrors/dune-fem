@@ -4,11 +4,10 @@
 //- C++ includes
 #include <cstddef>
 
-//- dune-common includes
-#include <dune/common/bartonnackmanifcheck.hh>
-
-//- dune-geometry includes
-#include <dune/geometry/type.hh>
+/**
+  @file
+  @brief Interface for shape function sets
+*/
 
 
 namespace Dune
@@ -21,29 +20,20 @@ namespace Dune
     // ----------------
 
     /**
-     * \brief interface class for shape function sets
+     * \brief Interface class for shape function sets
      *
-     * \tparam  FunctionSpace   Function space
-     * \tparam  Implementation  Implementation of this interface
+     * This class cannot be used itself, it is for documentation purposes
+     * only.
      *
-     * \note FunctionSpace::dimDomain has to be equal to type().dim().
+     * \note Constructor signatures are explicitly not specified by this
+     *       interface.
      */
-    template< class FunctionSpace, class Implementation >
+    template< class FunctionSpace >
     class ShapeFunctionSet
     {
-      // this type
-      typedef ShapeFunctionSet< FunctionSpace, Implementation > ThisType;
-
     public:
       //! \brief function space type
       typedef FunctionSpace FunctionSpaceType;
-      //! \brief type of real implementation
-      typedef Implementation ImplementationType;
-
-      //! \brief return reference to implementation
-      ImplementationType &impl () { return static_cast< ImplementationType & >( *this ); }
-      //! \brief return const reference to implementation
-      const ImplementationType &impl () const { return static_cast< const ImplementationType & >( *this ); }
       
       //! \brief domain type
       typedef typename FunctionSpaceType::DomainType DomainType;
@@ -54,19 +44,8 @@ namespace Dune
       //! \brief hessian range type
       typedef typename FunctionSpaceType::HessianRangeType HessianRangeType;
 
-      //! \brief return geometry type
-      GeometryType type () const
-      {
-        CHECK_INTERFACE_IMPLEMENTATION( impl().type() );
-        return impl().type();
-      }
-
       //! \brief return number of shape functions
-      std::size_t size () const
-      {
-        CHECK_INTERFACE_IMPLEMENTATION( impl().size() );
-        return impl().size();
-      }
+      std::size_t size () const;
 
       /**
        * \brief evalute each shape function
@@ -85,10 +64,7 @@ namespace Dune
        *  \endcode
        */
       template< class Point, class Functor >
-      void evaluateEach ( const Point &x, Functor functor ) const
-      {
-        CHECK_AND_CALL_INTERFACE_IMPLEMENTATION( impl().evaluateEach( x, functor ) );
-      }
+      void evaluateEach ( const Point &x, Functor functor ) const;
 
       /**
        * \brief evalute jacobian of each shape function
@@ -107,10 +83,7 @@ namespace Dune
        *  \endcode
        */
       template< class Point, class Functor > 
-      void jacobianEach ( const Point &x, Functor functor ) const
-      {
-        CHECK_AND_CALL_INTERFACE_IMPLEMENTATION( impl().jacobianEach( x, functor ) );
-      }
+      void jacobianEach ( const Point &x, Functor functor ) const;
 
       /**
        * \brief evalute hessian of each shape function
@@ -129,16 +102,7 @@ namespace Dune
        *  \endcode
        */
       template< class Point, class Functor > 
-      void hessianEach ( const Point &x, Functor functor ) const
-      {
-        CHECK_AND_CALL_INTERFACE_IMPLEMENTATION( impl().hessianEach( x, functor ) );
-      }
-
-    private:
-      // forbid copy constructor
-      ShapeFunctionSet ( const ThisType & );
-      // forbid assignment operator 
-      ThisType &operator= ( const ThisType & );
+      void hessianEach ( const Point &x, Functor functor ) const;
     };
 
   } // namespace Fem

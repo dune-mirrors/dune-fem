@@ -28,13 +28,13 @@ namespace Dune
     template< class Grid >
     struct hasHierarchicIndexSet< const Grid >
     {
-      static const bool v = hasHierarchicIndexSet< Grid >::v;
+      static const bool v = false;
     };
 
     template< class Grid >
     struct hasHierarchicIndexSet
     {
-      static const bool v = Dune::Capabilities::hasHierarchicIndexSet< Grid >::v;
+      static const bool v = false;
     };
 
     template< int dim, int dimw >

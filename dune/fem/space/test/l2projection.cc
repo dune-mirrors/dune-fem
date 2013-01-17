@@ -5,12 +5,11 @@
 
 static const int dimw = Dune::GridSelector::dimworld;
 
-#include <dune/fem/operator/discreteoperatorimp.hh>
-#include <dune/fem/space/lagrangespace.hh>
 #include <dune/fem/function/adaptivefunction.hh>
-#include <dune/fem/space/dgspace.hh>
-#include <dune/fem/space/lagrangespace.hh>
+#include <dune/fem/operator/discreteoperatorimp.hh>
 #include <dune/fem/quadrature/cachingquadrature.hh>
+#include <dune/fem/space/discontinuousgalerkin.hh>
+#include <dune/fem/space/lagrange.hh>
 
 #include <dune/fem/gridpart/adaptiveleafgridpart.hh> 
 #include <dune/fem/gridpart/hierarchicgridpart.hh>
@@ -116,7 +115,7 @@ double algorithm ( MyGridType &grid, DiscreteFunctionType &solution, bool displa
    ExactSolution f;
 
    // L2 error class 
-   Dune :: Fem :: L2Norm< GridPartType > l2norm( solution.space().gridPart() );
+   Dune :: Fem :: L2Norm< GridPartType > l2norm( solution.gridPart() );
        
    //! perform l2-projection
    DGL2ProjectionImpl::project(f, solution);
@@ -125,7 +124,9 @@ double algorithm ( MyGridType &grid, DiscreteFunctionType &solution, bool displa
    // pol ord for calculation the error should be higher than
    // pol for evaluation the basefunctions 
    typedef DiscreteFunctionSpaceType :: RangeType RangeType; 
-   double error = l2norm.distance( f ,solution );
+   typedef GridFunctionAdapter< ExactSolution, GridPartType >  GridFunctionType;
+   GridFunctionType exactSolution( "exact solution", f, solution.gridPart(), solution.space().order() + 1 );
+   double error = l2norm.distance( exactSolution, solution );
    std::cout << "\nL2 Error: " << error << "\n\n";
 
 #if USE_GRAPE
@@ -137,7 +138,7 @@ double algorithm ( MyGridType &grid, DiscreteFunctionType &solution, bool displa
    }
 #endif
    
-   return sqrt(error*error);
+   return error;
 }
 
 
