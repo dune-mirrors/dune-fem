@@ -1,8 +1,9 @@
 SUBDIRS = test
 
 cachingdir =  $(includedir)/dune/fem/quadrature/caching
-caching_HEADERS = cacheprovider.hh  pointmapper.hh  pointprovider.hh twistprovider.hh \
-cacheprovider.cc  pointprovider.cc  twistprovider.cc twistutility.hh registry.hh
+caching_HEADERS = cacheprovider.cc  pointmapper.hh    pointprovider.hh  topology.cc  twistprovider.cc  twistutility.cc \
+									cacheprovider.hh  pointprovider.cc  registry.hh       topology.hh  twistprovider.hh  twistutility.hh
+
 
 noinst_LTLIBRARIES = libcaching.la
 
