@@ -4,7 +4,7 @@
 
 #include "helper_test.hh"
 //#include <dune/fem/quadrature/elementquadrature.hh>
-#include <dune/fem/function/localfunction/temporarylocalfunction.hh>
+#include <dune/fem/function/localfunction/temporary.hh>
 
 namespace Dune 
 {
