@@ -31,7 +31,7 @@
 #include <dune/fem/pass/dgelliptpass.hh>
 
 // H-div projection 
-#include <dune/fem/operator/projection/hdivprojection.hh>
+//#include <dune/fem/operator/projection/hdivprojection.hh>
 
 // definition of L2Error 
 #include <dune/fem/misc/l2norm.hh>
@@ -259,7 +259,7 @@ public:
       L2Norm < GridPartType > l2norm( gridPart_ );
       {
         gradError[i] = l2norm.distance(model_.data().gradient() , velo);
-
+/*
         Fem::HdivProjection< DestinationType > hdiv(velo.space());
         DestinationType tmp ( velo );
 
@@ -269,6 +269,7 @@ public:
         hdiv( tmp, velo );
         
         std::cout << "After Normal Jump = " << hdiv.normalJump( velo ) << "\n";
+        */
 
         errVelo[i] = l2norm.distance( model_.data().gradient() , velo);
         
@@ -399,7 +400,7 @@ void simul(typename DiscrType::ModelType & model, std::string paramFile)
   LaplaceModelType lpm(model);
   VelocityModelType vm(model, (bplus == 0));
 
-  SpaceOperatorType spaceOp(grid , lpm , vm, paramfile );
+  SpaceOperatorType spaceOp(grid , lpm , vm, paramFile );
   
   //! storage for the discrete solution and its update
   DestinationType *solution = spaceOp.createDestinationFct("solution");
