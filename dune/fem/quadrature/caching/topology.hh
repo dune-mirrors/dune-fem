@@ -1,12 +1,14 @@
-#ifndef DUNE_ALU3DGRIDTOPOLOGY_HH
-#define DUNE_ALU3DGRIDTOPOLOGY_HH
+#ifndef DUNE_FEM_ALU3DGRIDTOPOLOGY_HH
+#define DUNE_FEM_ALU3DGRIDTOPOLOGY_HH
 
 //- system includes 
 #include <cassert>
 
-namespace Dune {
+namespace Dune 
+{
 
-  namespace Fem {
+  namespace Fem 
+  {
 
     // types of the elementes, 
     // i.e . tetra or hexa, mixed is not implemeneted 
@@ -145,6 +147,9 @@ namespace Dune {
       return dune2aluEdge_[index];
     }
 
-  } // end namespace Fem
-} // end namespace Dune
-#endif
+
+  } // namespace Fem
+
+} // namespace Dune
+
+#endif // #ifndef DUNE_FEM_ALU3DGRIDTOPOLOGY_HH
