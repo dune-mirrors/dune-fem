@@ -85,6 +85,10 @@ namespace Dune
         return shapeFunctionSet_.hessianEach( x, functor );
       }
 
+      GeometryType type () const DUNE_DEPRECATED {  return type_; }
+      
+      GeometryType geometryType () const DUNE_DEPRECATED {  return type(); }
+
     private:
       template< class Quadrature, class Functor >
       void evaluateEach ( const Quadrature &quadrature, std::size_t pt, Functor functor,
@@ -109,7 +113,6 @@ namespace Dune
                           integral_constant< bool, true > ) const;
 
 
-      GeometryType type () const { return type_; }
       void cacheQuadrature( std::size_t id, std::size_t codim, std::size_t size );
 
       template< class PointVector >
