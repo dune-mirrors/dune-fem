@@ -183,7 +183,7 @@ namespace Dune
       }
 
       /** \brief Please doc me. */
-      const CompiledLocalKeyType &lagrangePointSet ( const GeometryType type, const int order = BaseType::polynomialOrder ) const DUNE_DEPRECATED
+      const CompiledLocalKeyType &lagrangePointSet ( const GeometryType &type, const int order = BaseType::polynomialOrder ) const DUNE_DEPRECATED
       {
         return compiledLocalKey( type, order );
       }
