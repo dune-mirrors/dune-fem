@@ -16,9 +16,11 @@
 #include <dune/grid/common/datahandleif.hh>
 #include <dune/grid/utility/entitycommhelper.hh>
 
-#if HAVE_ALUGRID
 // include alugrid headers to have to communicator class from ALUGrid 
+#if HAVE_ALUGRID
 #include <dune/grid/alugrid/3d/alu3dinclude.hh>
+#elif HAVE_DUNE_ALUGRID
+#include <dune/alugrid/3d/alu3dinclude.hh>
 #endif
 
 //- dune-fem includes 
@@ -39,8 +41,9 @@ namespace Dune
         @{
      **/
     
-    // only if ALUGrid found and was build for parallel runs 
-#if HAVE_ALUGRID && ALU3DGRID_PARALLEL 
+// only if ALUGrid found and was build for parallel runs 
+// if HAVE_ALUGRID is not defined, ALU3DGRID_PARALLEL shouldn't be either
+#if ALU3DGRID_PARALLEL 
 
 #ifdef ALUGRID_PERIODIC_BOUNDARY_PARALLEL
 #define ALUGRID_HAS_NONBLOCKING_COMM

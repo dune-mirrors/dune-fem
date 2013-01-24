@@ -296,8 +296,9 @@ namespace Dune
       TwistUtility(const TwistUtility&);
       TwistUtility& operator=(const TwistUtility&);
     };
+#endif // #if HAVE_ALUGRID
 
-
+#if HAVE_ALUGRID || HAVE_DUNE_ALUGRID
     /** \brief Specialization of TwistUtility for ALUGrid. 
     */
     template< int dim, int dimw, ALUGridElementType elType, ALUGridRefinementType refineType, class Comm >
@@ -337,8 +338,7 @@ namespace Dune
       TwistUtility(const TwistUtility&);
       TwistUtility& operator=(const TwistUtility&);
     };
-#endif
-
+#endif // #if HAVE_ALUGRID || HAVE_DUNE_ALUGRID
 
 
     // Specialization for UGGrid
