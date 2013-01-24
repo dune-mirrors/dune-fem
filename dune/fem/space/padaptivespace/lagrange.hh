@@ -108,7 +108,7 @@ namespace Dune
      *
      *  \brief   Lagrange discrete function space
      */
-    template< class FunctionSpace, class GridPart, int polOrder, template< class > class Storage >
+    template< class FunctionSpace, class GridPart, int polOrder, template< class > class Storage = CachingStorage >
     class PAdaptiveLagrangeSpace
     : public GenericDiscreteFunctionSpace< PAdaptiveLagrangeSpaceTraits< FunctionSpace, GridPart, polOrder, Storage > >
     {
