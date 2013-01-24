@@ -1,10 +1,12 @@
-#ifndef DUNE_FEM_PADATPTIVESPACE_LAGRANGEBASEFUNCTIONS_INLINE_HH
-#define DUNE_FEM_PADATPTIVESPACE_LAGRANGEBASEFUNCTIONS_INLINE_HH
+#ifndef DUNE_FEM_SPACE_PADAPTIVE_LAGRANGEBASEFUNCTIONS_INLINE_HH
+#define DUNE_FEM_SPACE_PADAPTIVE_LAGRANGEBASEFUNCTIONS_INLINE_HH
 
 #include <dune/common/version.hh>
+
 #include <dune/geometry/genericgeometry/topologytypes.hh>
 
 #include "lagrangebasefunctions.hh"
+
 
 namespace Dune
 {
@@ -130,4 +132,4 @@ namespace Dune
 
 } // namespace Dune 
 
-#endif // #ifndef DUNE_FEM_PADATPTIVESPACE_LAGRANGEBASEFUNCTIONS_INLINE_HH
+#endif // #ifndef DUNE_FEM_SPACE_PADAPTIVE_LAGRANGEBASEFUNCTIONS_INLINE_HH

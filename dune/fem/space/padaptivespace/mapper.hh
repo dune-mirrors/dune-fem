@@ -1,28 +1,23 @@
-#ifndef DUNE_FEM_PADAPTIVELAGRANGESPACE_MAPPER_HH
-#define DUNE_FEM_PADAPTIVELAGRANGESPACE_MAPPER_HH
+#ifndef DUNE_FEM_SPACE_PADAPTIVE_MAPPER_HH
+#define DUNE_FEM_SPACE_PADAPTIVE_MAPPER_HH
 
-//- Dune includes 
-#include <dune/geometry/type.hh>
-#include <dune/geometry/typeindex.hh>
 #include <dune/common/exceptions.hh>
 
-//- Dune-Fem includes 
-#include <dune/fem/misc/capabilities.hh>
-#include <dune/fem/misc/codimmap.hh>
-#include <dune/fem/misc/metaprogramming.hh>
-#include <dune/fem/space/common/dofmanager.hh>
-
-#include <dune/fem/space/mapper/dofmapper.hh>
-#include <dune/fem/space/mapper/codimensionmapper.hh>
-
-//- local includes 
-#include <dune/fem/space/lagrange/lagrangepoints.hh>
+#include <dune/geometry/type.hh>
+#include <dune/geometry/typeindex.hh>
 
 #include <dune/grid/utility/persistentcontainer.hh>
 
-// include generic adaptive dof mapper 
-#include <dune/fem/space/mapper/genericadaptivedofmapper.hh>
+#include <dune/fem/misc/capabilities.hh>
+#include <dune/fem/misc/codimmap.hh>
+#include <dune/fem/misc/metaprogramming.hh>
 #include <dune/fem/space/common/basesetlocalkeystorage.hh>
+#include <dune/fem/space/common/dofmanager.hh>
+#include <dune/fem/space/lagrange/lagrangepoints.hh>
+#include <dune/fem/space/mapper/codimensionmapper.hh>
+#include <dune/fem/space/mapper/dofmapper.hh>
+#include <dune/fem/space/mapper/genericadaptivedofmapper.hh>
+
 
 namespace Dune
 {
@@ -30,8 +25,15 @@ namespace Dune
   namespace Fem 
   {
   
+    // Internal forward declaration
+    // ----------------------------
     template< class GridPart, int polOrder >
     class PAdaptiveLagrangeMapper;
+
+
+
+    // PAdaptiveLagrangeMapperTraits
+    // -----------------------------
 
     template< class GridPart, int polOrder >
     struct PAdaptiveLagrangeMapperTraits
@@ -198,8 +200,7 @@ namespace Dune
       PAdaptiveDGMapper ( const GridPartType &gridPart,
                           CompiledLocalKeyVectorType &compiledLocalKeys )
         : BaseType( gridPart, compiledLocalKeys )
-      {
-      }
+      {}
 
       //! sort of copy constructor
       PAdaptiveDGMapper ( const ThisType& other,
@@ -212,4 +213,4 @@ namespace Dune
 
 } // namespace Dune 
 
-#endif // #ifndef DUNE_FEM_PADAPTIVELAGRANGESPACE_MAPPER_HH
+#endif // #ifndef DUNE_FEM_SPACE_PADAPTIVE_MAPPER_HH

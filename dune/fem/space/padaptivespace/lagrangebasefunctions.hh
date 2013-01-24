@@ -1,7 +1,6 @@
-#ifndef DUNE_FEM_PADATPTIVESPACE_LAGRANGEBASEFUNCTIONS_HH
-#define DUNE_FEM_PADATPTIVESPACE_LAGRANGEBASEFUNCTIONS_HH
+#ifndef DUNE_FEM_SPACE_PADAPTIVE_LAGRANGEBASEFUNCTIONS_HH
+#define DUNE_FEM_SPACE_PADAPTIVE_LAGRANGEBASEFUNCTIONS_HH
 
-// dune-fem includes
 #include <dune/fem/space/lagrange/genericbasefunctions.hh>
 
 
@@ -88,4 +87,4 @@ namespace Dune
 
 #include "lagrangebasefunctions_inline.hh"
 
-#endif // #ifndef DUNE_FEM_PADATPTIVESPACE_LAGRANGEBASEFUNCTIONS_HH
+#endif // #ifndef DUNE_FEM_SPACE_PADAPTIVE_LAGRANGEBASEFUNCTIONS_HH
