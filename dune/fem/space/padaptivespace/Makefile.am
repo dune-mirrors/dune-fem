@@ -5,8 +5,6 @@ padaptivespace_HEADERS = adaptmanager.hh \
 			 discontinuousgalerkin.hh \
 			 generic.hh \
 			 lagrange.hh \
-			 lagrangebasefunctions.hh \
-			 lagrangebasefunctions_inline.hh \
 			 mapper.hh \
 			 padaptivespace.hh \
 			 restrictprolong.hh
