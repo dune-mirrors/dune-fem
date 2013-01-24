@@ -6,7 +6,6 @@
 #include <dune/fem/io/parameter.hh>
 #include <dune/fem/io/streams/asciistreams.hh>
 #include <dune/fem/io/streams/binarystreams.hh>
-#include <dune/fem/io/streams/datastreams.hh>
 #include <dune/fem/io/streams/xdrstreams.hh>
 #include <dune/fem/io/streams/sionlibstreams.hh>
 
