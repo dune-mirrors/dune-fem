@@ -64,6 +64,8 @@ namespace Dune
       static const int codimension = 0;
 
     private:
+      typedef typename GridPartType::template Codim< codimension >::EntityType EntityType;
+
       static const int dimLocal = GridPartType::dimension;
       typedef typename FunctionSpace::ScalarFunctionSpaceType ScalarFunctionSpaceType;
       typedef typename ToLocalFunctionSpace< ScalarFunctionSpaceType, dimLocal >::Type ShapeFunctionSpaceType;
@@ -88,6 +90,11 @@ namespace Dune
           static void deleteObject ( ScalarShapeFunctionSetType *object ) { delete object; }
         };
       };
+
+      typedef ShapeFunctionSetProxy< ScalarShapeFunctionSetType > ScalarShapeFunctionSetProxyType;
+      typedef VectorialShapeFunctionSet< ScalarShapeFunctionSetProxyType, typename FunctionSpaceType::RangeType > ShapeFunctionSetType;
+
+      typedef Dune::Fem::DefaultBasisFunctionSet< EntityType, ShapeFunctionSetType > BasisFunctionSetType;
 
       template< class DiscreteFunction, class Operation = DFCommunicationOperation::Add >
       struct CommDataHandle

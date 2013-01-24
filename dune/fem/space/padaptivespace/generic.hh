@@ -54,10 +54,13 @@ namespace Dune
       typedef typename IteratorType::Entity EntityType;
       typedef typename BaseType::IntersectionType IntersectionType;
 
+      typedef typename Traits::ShapeFunctionSetType ShapeFunctionSetType;
+      typedef typename BaseType::BasisFunctionSetType BasisFunctionSetType;
+
       typedef typename BaseType::MapperType MapperType;
       typedef typename BaseType::BlockMapperType BlockMapperType;
 
-      static const int polynomialOrder = BaseType::polynomialOrder;
+      static const int polynomialOrder = Traits::polynomialOrder;
 
     protected:
       // single type for shape function sets of all polynomial orders
@@ -71,11 +74,7 @@ namespace Dune
         typedef typename Traits::template ScalarShapeFunctionSetFactory< pOrd >::Type Type;
       };
 
-      typedef ShapeFunctionSetProxy< ScalarShapeFunctionSetType > ScalarShapeFunctionSetProxyType;
-
     public:
-      typedef VectorialShapeFunctionSet< ScalarShapeFunctionSetProxyType, typename FunctionSpaceType::RangeType > ShapeFunctionSetType;
-      typedef Dune::Fem::DefaultBasisFunctionSet< EntityType, ShapeFunctionSetType > BasisFunctionSetType;
 
       typedef typename Traits::CompiledLocalKeyType CompiledLocalKeyType;
       typedef BaseSetLocalKeyStorage< CompiledLocalKeyType > LocalKeyStorageType;
@@ -349,6 +348,7 @@ namespace Dune
         return endDF;
       }
 
+    public:
       template< class DiscreteFunction >
       void removeFunction ( const DiscreteFunction &df ) const
       {
