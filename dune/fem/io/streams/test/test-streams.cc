@@ -170,19 +170,6 @@ int main ( int argc, char** argv )
         failed = true ;
     }
 
-#if HAVE_ALUGRID
-    {
-      std::string filename( filestr.str() + "data" );
-      std :: cerr << "Checking Data streams..." << std :: endl;
-      Fem :: DataOutStream dout( filename.c_str() );
-      write( dout, data );
-      dout.flush();
-      Fem :: DataInStream din( filename.c_str() );
-      if( ! read( din, data ) )
-        failed = true ;
-    }
-#endif
-
 #if HAVE_SIONLIB
     {
       std :: cerr << "Checking SIONlib streams..." << std :: endl;
