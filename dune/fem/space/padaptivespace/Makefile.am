@@ -1,8 +1,5 @@
-AUTOMAKE_OPTIONS = foreign 1.5
-
-SUBDIRS = 
-
 padaptivespacedir = $(includedir)/dune/fem/space/padaptivespace
+
 padaptivespace_HEADERS = adaptmanager.hh \
 			 declaration.hh \
 			 discontinuousgalerkin.hh \
@@ -13,5 +10,7 @@ padaptivespace_HEADERS = adaptmanager.hh \
 			 mapper.hh \
 			 padaptivespace.hh \
 			 restrictprolong.hh
+
+SUBDIRS = 
 
 include $(top_srcdir)/am/global-rules
