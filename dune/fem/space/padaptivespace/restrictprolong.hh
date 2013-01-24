@@ -1,19 +1,20 @@
-#ifndef DUNE_FEM_PLAGRANGESPACE_RESTRICTPROLONG_HH
-#define DUNE_FEM_PLAGRANGESPACE_RESTRICTPROLONG_HH
+#ifndef DUNE_FEM_SPACE_PADAPTIVE_RESTRICTPROLONG_HH
+#define DUNE_FEM_SPACE_PADAPTIVE_RESTRICTPROLONG_HH
 
-#include <map>
-
-#include <dune/geometry/type.hh>
 #include <dune/geometry/referenceelements.hh>
 
 #include <dune/fem/function/localfunction/localfunction.hh>
 #include <dune/fem/space/lagrange/lagrangepoints.hh>
+
 
 namespace Dune
 {
 
   namespace Fem
   {
+
+    // PLagrangeLocalRestrictProlong
+    // -----------------------------
 
     template< class G, class LagrangePointSetProvider >
     struct PLagrangeLocalRestrictProlong
@@ -144,4 +145,4 @@ namespace Dune
 
 } // namespace Dune 
 
-#endif // #ifndef DUNE_FEM_LAGRANGESPACE_RESTRICTPROLONG_HH
+#endif // #ifndef DUNE_FEM_SPACE_PADAPTIVE_RESTRICTPROLONG_HH
