@@ -51,7 +51,7 @@ namespace Dune
     // Specialization for ALUGrid
     // --------------------------
 
-#if HAVE_ALUGRID
+#if HAVE_ALUGRID || HAVE_DUNE_ALUGRID
     template< int dim, int dimw, ALUGridElementType elType, ALUGridRefinementType refineType, class Comm >
     struct BoundaryIdProvider< ALUGrid< dim, dimw, elType, refineType, Comm > >
     {
@@ -63,7 +63,9 @@ namespace Dune
         return intersection.impl().boundaryId();
       }
     };
+#endif // #if HAVE_ALUGRID || HAVE_DUNE_ALUGRID
 
+#if HAVE_ALUGRID
     template< int dim, int dimw >
     struct BoundaryIdProvider< ALUConformGrid< dim, dimw > >
     {
