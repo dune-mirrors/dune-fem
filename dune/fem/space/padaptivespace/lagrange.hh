@@ -41,7 +41,7 @@ namespace Dune
     // ----------------------------
 
     template< class FunctionSpace, class GridPart, unsigned int polOrder,
-              template< class > class BaseFunctionStorage = CachingStorage >
+              template< class > class BaseFunctionStorage >
     struct PAdaptiveLagrangeSpaceTraits
     {
       dune_static_assert((polOrder > 0), "LagrangeSpace only defined for polOrder > 0" );
@@ -120,7 +120,7 @@ namespace Dune
     template< class FunctionSpaceImp,
               class GridPartImp,
               int polOrder,
-              template< class > class BaseFunctionStorageImp >
+              template< class > class BaseFunctionStorageImp = CachingStorage >
     class PAdaptiveLagrangeSpace
     : public GenericDiscreteFunctionSpace
              < PAdaptiveLagrangeSpaceTraits< FunctionSpaceImp,
