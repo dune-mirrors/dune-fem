@@ -18,8 +18,6 @@
 #include <dune/fem/space/shapefunctionset/simple.hh>
 #include <dune/fem/space/shapefunctionset/vectorial.hh>
 
-#include "lagrangebasefunctions.hh"
-
 
 namespace Dune
 {
@@ -120,7 +118,7 @@ namespace Dune
 
       /** \brief constructor
        *
-       *  \param[in]  gridPart       grid part for the Lagrange space
+       *  \param[in]  gridPart       grid part
        *  \param[in]  commInterface  communication interface to use 
        *  \param[in]  commDirection  communication direction to use
        */
