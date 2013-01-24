@@ -41,34 +41,23 @@ namespace Dune
     // PAdaptiveDGSpaceTraits
     // ----------------------
 
-    template< class FunctionSpace, class GridPart, unsigned int polOrder,
-              template< class > class BaseFunctionStorage >
+    template< class FunctionSpace, class GridPart, int polOrder, template< class > class Storage >
     struct PAdaptiveDGSpaceTraits 
-      : public PAdaptiveLagrangeSpaceTraits
-          < FunctionSpace, GridPart, polOrder, BaseFunctionStorage >
+    : public PAdaptiveLagrangeSpaceTraits< FunctionSpace, GridPart, polOrder, Storage >
     {
-      typedef PAdaptiveDGSpace
-        < FunctionSpace, GridPart, polOrder, BaseFunctionStorage >
-        DiscreteFunctionSpaceType;
+      typedef PAdaptiveDGSpace< FunctionSpace, GridPart, polOrder, Storage > DiscreteFunctionSpaceType;
 
-      enum { localBlockSize = FunctionSpace :: dimRange };
-
-      //! this is a continuous space 
       static const bool continuousSpace = false ;
+      static const int localBlockSize = FunctionSpace::dimRange;
 
-      // mapper for block
       typedef PAdaptiveDGMapper< GridPart, polOrder > BlockMapperType;
       typedef NonBlockMapper< BlockMapperType, localBlockSize > MapperType;
       
-      /** \brief defines type of communication data handle for this type of space
-       */
       template< class DiscreteFunction,
                 class Operation = DFCommunicationOperation :: Copy >
       struct CommDataHandle
       {
-        //! type of data handle 
         typedef DefaultCommunicationHandler< DiscreteFunction, Operation > Type;
-        //! type of operatation to perform on scatter 
         typedef Operation OperationType;
       };
     };
@@ -79,77 +68,42 @@ namespace Dune
     // ----------------
 
     /** \class   PAdaptiveDGSpace
+     *
      *  \ingroup PAdaptiveDGSpace
+     *
      *  \brief   adaptive DG discrete function space
      */
-    template< class FunctionSpaceImp,
-              class GridPartImp,
-              int polOrder,
-              template< class > class BaseFunctionStorageImp = CachingStorage >
+    template< class FunctionSpace, class GridPart, int polOrder, template< class > class Storage = CachingStorage >
     class PAdaptiveDGSpace
-    : public GenericDiscreteFunctionSpace
-             < PAdaptiveDGSpaceTraits< FunctionSpaceImp,
-                                       GridPartImp,
-                                       polOrder,
-                                       BaseFunctionStorageImp > >
+    : public GenericDiscreteFunctionSpace< PAdaptiveDGSpaceTraits< FunctionSpace, GridPart, polOrder, Storage > >
     {
+      typedef PAdaptiveDGSpace< FunctionSpace, GridPart, polOrder, Storage > ThisType;
+      typedef GenericDiscreteFunctionSpace< PAdaptiveDGSpaceTraits< FunctionSpace, GridPart, polOrder, Storage > > BaseType;
+
     public:
-      //! traits for the discrete function space
-      typedef PAdaptiveDGSpaceTraits< FunctionSpaceImp,
-                                      GridPartImp,
-                                      polOrder,
-                                      BaseFunctionStorageImp >
-        Traits;
-      //! type of the discrete function space
-      typedef PAdaptiveDGSpace< FunctionSpaceImp,
-                                GridPartImp,
-                                polOrder,
-                                BaseFunctionStorageImp >
-              PAdaptiveDGSpaceType;
+      typedef ThisType PAdaptiveDGSpaceType;
 
-    private:
-      typedef GenericDiscreteFunctionSpace< Traits > BaseType;
-      typedef PAdaptiveDGSpaceType ThisType;
-    public:
+      typedef typename BaseType::Traits Traits;
 
-      typedef typename Traits :: GridPartType GridPartType;
-      typedef typename Traits :: GridType GridType;
-      typedef typename Traits :: IndexSetType IndexSetType;
-      typedef typename Traits :: IteratorType IteratorType;
-      typedef typename BaseType ::IntersectionType IntersectionType;
+      typedef typename BaseType::GridPartType GridPartType;
+      typedef typename BaseType::IntersectionType IntersectionType;
 
-      //! maximum polynomial order of functions in this space
-      enum { polynomialOrder = Traits :: polynomialOrder };
-      
-      //! type of compiled local key 
-      typedef typename Traits :: CompiledLocalKeyType  CompiledLocalKeyType;
-
-      // deprecated name 
+      typedef typename BaseType::CompiledLocalKeyType CompiledLocalKeyType;
       typedef CompiledLocalKeyType LagrangePointSetType;
 
-      //! mapper used to implement mapToGlobal
-      typedef typename Traits :: MapperType MapperType;
+    protected:
+      using BaseType::dfList_;
+      using BaseType::searchFunction;
 
-      //! mapper used to for block vector function 
-      typedef typename Traits :: BlockMapperType BlockMapperType;
+    public:
+      using BaseType::continuous;
+      using BaseType::gridPart;
+      using BaseType::blockMapper;
+      using BaseType::compiledLocalKey;
 
-      //! size of local blocks
-      enum { localBlockSize = Traits :: localBlockSize };
-
-      //! dimension of a value
-      enum { dimVal = 1 };
-
-      //! type of DoF manager
-      typedef DofManager< GridType > DofManagerType;
-
-      using BaseType :: gridPart;
-      using BaseType :: blockMapper;
-      using BaseType :: compiledLocalKey;
-
-      //! default communication interface 
+      // default communication interface 
       static const InterfaceType defaultInterface = InteriorBorder_All_Interface;
-
-      //! default communication direction 
+      // default communication direction 
       static const CommunicationDirection defaultDirection = ForwardCommunication;
 
       /** \brief constructor
@@ -158,30 +112,43 @@ namespace Dune
        *  \param[in]  commInterface  communication interface to use (optional)
        *  \param[in]  commDirection  communication direction to use (optional)
        */
-      explicit PAdaptiveDGSpace
-        ( GridPartType &gridPart,
-          const InterfaceType commInterface = defaultInterface,
-          const CommunicationDirection commDirection = defaultDirection )
+      explicit PAdaptiveDGSpace ( GridPartType &gridPart,
+                                  const InterfaceType commInterface = defaultInterface,
+                                  const CommunicationDirection commDirection = defaultDirection )
       : BaseType( gridPart, commInterface, commDirection )
-      {
-      }
+      {}
 
-      //! copy constructor needed for p-adaption 
-      PAdaptiveDGSpace( const PAdaptiveDGSpace& other ) 
+      // copy constructor needed for p-adaption 
+      PAdaptiveDGSpace ( const PAdaptiveDGSpace &other ) 
       : BaseType( other )
-      {
+      {}
+
+      /** @copydoc Dune::Fem::DiscreteFunctionSpaceInterface::continuous */
+      inline bool continuous (const IntersectionType &intersection) const
+      { 
+        return false;
       }
 
-    protected:
-      using BaseType :: dfList_;
-      using BaseType :: searchFunction;
+      /** \brief Please doc me. */
+      template< class EntityType >
+      DUNE_DEPRECATED
+      inline const CompiledLocalKeyType &lagrangePointSet( const EntityType &entity ) const
+      {
+        return compiledLocalKey( entity.type(),
+                                 blockMapper().polynomOrder( entity ) );
+      }
 
-    public:
-      /*! \brief add function to discrete function space for p-adaptation 
-          (currently only supported by AdaptiveDiscreteFunction )
+      /** \brief Please doc me. */
+      inline const CompiledLocalKeyType &lagrangePointSet( const GeometryType &type, const int order = BaseType::polynomialOrder ) const
+      {
+        return compiledLocalKey( type, order );
+      }
+
+      /** \brief add function to discrete function space for p-adaptation 
+       *         (currently only supported by AdaptiveDiscreteFunction )
        */
       template <class DiscreteFunction> 
-      void addFunction( DiscreteFunction& df ) const
+      void addFunction ( DiscreteFunction &df ) const
       {
         assert( searchFunction( df ) == dfList_.end() );
         // select L2Porjection to be the LocalInterpolation 
@@ -190,38 +157,10 @@ namespace Dune
         typedef typename BaseType :: PAdaptiveDiscreteFunctionEntryInterface
           EntryInterface;
 
-        EntryInterface* entry = new RealEntryType( df );
+        EntryInterface *entry = new RealEntryType( df );
         assert( entry );
         dfList_.push_front( entry );
       }
-
-      //! deprecated method 
-      template< class EntityType >
-      inline const CompiledLocalKeyType &lagrangePointSet( const EntityType &entity ) const
-      {
-        return compiledLocalKey( entity.type(),
-                                 blockMapper().polynomOrder( entity ) );
-      }
-
-      //! deprecated method 
-      inline const CompiledLocalKeyType &lagrangePointSet( const GeometryType type ) const
-      {
-        return compiledLocalKey( type, polynomialOrder );
-      }
-
-      //! deprecated method 
-      inline const CompiledLocalKeyType &lagrangePointSet( const GeometryType type, const int order ) const
-      {
-        return compiledLocalKey( type, order );
-      }
-
-      using BaseType::continuous;
-      /** @copydoc Dune::Fem::DiscreteFunctionSpaceInterface::continuous */
-      inline bool continuous (const IntersectionType &intersection) const
-      { 
-        return false;
-      }
-
     };
 
   } // namespace Fem
