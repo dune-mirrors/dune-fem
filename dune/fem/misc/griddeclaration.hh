@@ -2,7 +2,11 @@
 #define DUNE_FEM_GRIDDECLARATION_HH
 
 // include ALUGrid forward declaration 
+#if HAVE_DUNE_ALUGRID 
+#include <dune/alugrid/common/declaration.hh>
+#else
 #include <dune/grid/alugrid/common/declaration.hh>
+#endif
 
 namespace Dune 
 {
