@@ -42,7 +42,7 @@ namespace Dune
     // ----------------------
 
     template< class FunctionSpace, class GridPart, unsigned int polOrder,
-              template< class > class BaseFunctionStorage = CachingStorage >
+              template< class > class BaseFunctionStorage >
     struct PAdaptiveDGSpaceTraits 
       : public PAdaptiveLagrangeSpaceTraits
           < FunctionSpace, GridPart, polOrder, BaseFunctionStorage >
@@ -85,7 +85,7 @@ namespace Dune
     template< class FunctionSpaceImp,
               class GridPartImp,
               int polOrder,
-              template< class > class BaseFunctionStorageImp >
+              template< class > class BaseFunctionStorageImp = CachingStorage >
     class PAdaptiveDGSpace
     : public GenericDiscreteFunctionSpace
              < PAdaptiveDGSpaceTraits< FunctionSpaceImp,

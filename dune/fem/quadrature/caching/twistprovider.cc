@@ -233,7 +233,7 @@ namespace Dune
     TriangleTwistMapperStrategy<ct, dim>::
     buildTransformationMatrix(int twist) const 
     {
-      typedef FaceTopologyMapping<tetra> FaceTopo;
+      typedef Dune::Fem::FaceTopologyMapping<tetra> FaceTopo;
       mat_ = 0.0;
       for (int idx = 0; idx < dim+1; ++idx) 
       {
@@ -259,7 +259,7 @@ namespace Dune
     QuadrilateralTwistMapperStrategy<ct, dim>::
     buildTransformationMatrix(int twist) const 
     {
-      typedef FaceTopologyMapping<hexa> FaceTopo;
+      typedef Dune::Fem::FaceTopologyMapping<hexa> FaceTopo;
       mat_ = 0.0;
       for (int idx = 0; idx < dim+1; ++idx) 
       {

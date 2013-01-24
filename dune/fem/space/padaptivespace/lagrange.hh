@@ -41,8 +41,7 @@ namespace Dune
     // PAdaptiveLagrangeSpaceTraits
     // ----------------------------
 
-    template< class FunctionSpace, class GridPart, unsigned int polOrder,
-              template< class > class Storage >
+    template< class FunctionSpace, class GridPart, int polOrder, template< class > class Storage >
     struct PAdaptiveLagrangeSpaceTraits
     {
       dune_static_assert((polOrder > 0), "LagrangeSpace only defined for polOrder > 0" );
