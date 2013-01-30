@@ -15,7 +15,7 @@ space_HEADERS = combineddiscretefunctionspace.hh \
 SUBDIRS = basefunctions basisfunctionset \
 	  combinedspace common \
 	  discontinuousgalerkin dofmapper \
-	  finitevolume lagrange mapper \
+	  finitevolume fourier lagrange mapper \
 	  padaptivespace rannacherturek \
 	  reducedbasisspace shapefunctionset \
 	  test
