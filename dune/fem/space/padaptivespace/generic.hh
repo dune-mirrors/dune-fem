@@ -155,7 +155,7 @@ namespace Dune
       ///////////////////////
       
       /** @copydoc Dune::Fem::DiscreteFunctionSpaceInterface::type */
-      inline DFSpaceIdentifier type () const { return LagrangeSpace_id; }
+      inline DFSpaceIdentifier type () const { return GenericSpace_id; }
 
       /** @copydoc Dune::Fem::DiscreteFunctionSpaceInterface::basisFunctionSet */
       BasisFunctionSetType basisFunctionSet ( const EntityType &entity ) const
