@@ -6,7 +6,7 @@ fourier_HEADERS = basisfunctionset.hh \
 		  dofmapper.hh \
 		  space.hh
 
-SUBDIRS = test
+SUBDIRS =
 
 EXTRA_DIST =
 
