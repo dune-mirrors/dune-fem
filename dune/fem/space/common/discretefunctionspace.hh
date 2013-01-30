@@ -42,13 +42,15 @@ namespace Dune
     */
 
     //! \brief enumerator for identification of spaces 
-    enum DFSpaceIdentifier {  
-      GenericSpace_id ,  //!< id for Generic Space
-      LagrangeSpace_id , //!< id for Lagrange Space 
-      DGSpace_id ,       //!< id for Discontinuous Galerkin Space 
-      CombinedSpace_id , //!< id for Combined Space 
-      FiniteVolumeSpace_id , //!< id for Finite Volume Space 
-      DFAdapter_id    //!< id for DiscreteFunctionSpace Adapter
+    enum DFSpaceIdentifier {
+      CombinedSpace_id,       //!< id for Combined Space 
+      DFAdapter_id,           //!< id for DiscreteFunctionSpace Adapter
+      DGSpace_id,             //!< id for Discontinuous Galerkin Space 
+      FiniteVolumeSpace_id,   //!< id for Finite Volume Space 
+      FourierSpace_id,        //!< id for Fourier space
+      GenericSpace_id,        //!< id for Generic Space
+      LagrangeSpace_id,       //!< id for Lagrange Space
+      RannacherTurekSpace_id  //!< id for Rannacher-Turek space
     };
 
 

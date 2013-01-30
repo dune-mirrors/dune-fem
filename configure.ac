@@ -42,6 +42,8 @@ AC_CONFIG_FILES([Makefile
      dune/fem/space/dofmapper/Makefile
      dune/fem/space/discontinuousgalerkin/Makefile
      dune/fem/space/finitevolume/Makefile
+     dune/fem/space/fourier/Makefile
+     dune/fem/space/fourier/test/Makefile
      dune/fem/space/lagrange/Makefile
      dune/fem/space/lagrange/test/Makefile
      dune/fem/space/rannacherturek/Makefile
