@@ -173,6 +173,10 @@ namespace Dune
 #endif // #if HAVE_ALUGRID
 
 
+    // ReferenceElementProvider for ALUGrid
+    // -------------------------------------
+    // TODO: add specialization for ALUGrid 
+
 
     // ReferenceElementProvider for OneDGrid
     // -------------------------------------

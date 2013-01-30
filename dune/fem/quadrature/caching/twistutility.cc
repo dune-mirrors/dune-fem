@@ -2,12 +2,13 @@
 
 #include <dune/geometry/referenceelements.hh>
 
-#include <dune/grid/alugrid/3d/topology.hh>
 #include <dune/fem/quadrature/caching/twistutility.hh>
 
 #if HAVE_UG
 #include <dune/grid/uggrid.hh>
 #endif // #if HAVE_UG
+
+#include "topology.hh"
 
 namespace Dune
 {

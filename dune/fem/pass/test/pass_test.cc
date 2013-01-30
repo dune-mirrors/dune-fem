@@ -6,7 +6,7 @@
 #include "lagrange_fixture.hh"
 
 #include <dune/fem/function/adaptivefunction.hh>
-#include <dune/fem/function/localfunction/temporarylocalfunction.hh>
+#include <dune/fem/function/localfunction/temporary.hh>
 
 namespace Dune
 {

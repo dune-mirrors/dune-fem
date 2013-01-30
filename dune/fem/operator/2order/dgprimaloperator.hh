@@ -666,6 +666,7 @@ namespace Dune
           phi_.resize(numDofs);
           phiNeigh_.resize(numDofs);
           psi_.resize(numDofs);
+          psitmp_.resize(numDofs);
           coeffPsi_.resize(numDofs);
         }
       }
@@ -756,9 +757,6 @@ namespace Dune
           const double intel = volQuad.weight(l)
               *geo.integrationElement(volQuad.point(l));
 
-          const JacobianInverseTransposedType& inv =
-            geo.jacobianInverseTransposed(volQuad.point(l));
-
           ////////////////////////////////////
           // create rightHandSide
           ////////////////////////////////////
@@ -771,26 +769,16 @@ namespace Dune
           // call anayltical flux of discrete model 
           betaEst = std::max( betaEst, coeffCaller.evaluateCoefficient( caller_, entity, volQuad, l, coeffEn_ ) );
 
+          // eval grad psi on reference element
+          bsetEn.jacobianAll( volQuad[l], psitmp_ );
+
           /////////////////////////////////
           // fill element matrix 
           /////////////////////////////////
           for(int k = 0; k < numDofs; ++k)
           {
-            JacobianRangeType& psi = psi_[k]; 
-            JacobianRangeType& coeffPsi = coeffPsi_[k];
-
-            // eval grad psi on reference element
-            bsetEn.jacobian( k, volQuad[l], psitmp_ );
-    
-            // apply inverse jacobian 
-            for(int i=0; i<dimRange; ++i) 
-            {
-              psi[i] = 0.0; 
-              inv.umv(psitmp_[i], psi[i]);
-            }
-
             // apply coefficient 
-            coeffCaller.applyCoefficient(coeffEn_, psi, coeffPsi); 
+            coeffCaller.applyCoefficient(coeffEn_, psitmp_[ k ], coeffPsi_[ k ]); 
           }
 
           // fill element matrix 
@@ -1100,14 +1088,14 @@ namespace Dune
         const GeometryJacobianType &jacobianInverseTransposed
           = geometry.jacobianInverseTransposed( coordinate( x ) );
 
-        JacobianRangeType gradPhi;
-        basisSet.jacobian( basisFunction, x, gradPhi );
+        std::vector<JacobianRangeType> gradPhi( basisSet.size(), JacobianRangeType(0) );
+        basisSet.jacobianAll( x, gradPhi );
 
         RangeFieldType result = 0;
         for( int i = 0; i < dimRange; ++i )
         {
           DomainType gradScaled;
-          jacobianInverseTransposed.mv( gradPhi[ i ], gradScaled );
+          jacobianInverseTransposed.mv( gradPhi[ basisFunction ][ i ], gradScaled );
           result += gradScaled * psi[ i ];
         }
         return result;
@@ -1196,13 +1184,14 @@ namespace Dune
 
           wspeedS += ldt * faceQuadInner.weight(l);
 
+          // evaluate phi 
+          bsetEn.evaluateAll( faceQuadInner[l], phi_ );
+
           // cache basis functions evaluations
           for(int k=0; k<numDofs; ++k)
           { 
             // evaluate normal * grad phi 
             tau_[ k ] = evaluateGradientSingle( bsetEn, k, entity, faceQuadInner[ l ], norm );
-            // evaluate phi 
-            bsetEn.evaluate(k,faceQuadInner[l] , phi_[k]);
           }
 
           // if not Babuska-Zlamal method, add boundary terms 
@@ -1518,17 +1507,18 @@ namespace Dune
           // set useInterior to save comp time 
           useInterior = ( C_12 > 0 );
           
+          // eval basis functions 
+          bsetEn.evaluateAll( faceQuadInner[l], phi_);
+          // neighbor stuff 
+          bsetNeigh.evaluateAll( faceQuadOuter[l], phiNeigh_ );
+
           // cache basis functions evaluations
           // leads to major speedup
           for(int k=0; k<numDofs; ++k)
           { 
-            // eval basis functions 
-            bsetEn.evaluate(k,faceQuadInner[l], phi_[k]);
             // eval gradient for entity
             tau_[ k ] = evaluateGradientSingle( bsetEn, k, entity, faceQuadInner[ l ], normEn );
 
-            // neighbor stuff 
-            bsetNeigh.evaluate(k,faceQuadOuter[l], phiNeigh_[k] );      
             // eval gradient for neighbor
             tauNeigh_[ k ] = evaluateGradientSingle( bsetNeigh, k, neighbor, faceQuadOuter[ l ], normNb );
           }
@@ -1691,11 +1681,8 @@ namespace Dune
           const double intel = volQuad.weight(qp)
              * geo.integrationElement(volQuad.point(qp));
 
-          for(int m=0; m<numBasis; ++m)
-          {  
-            // eval basis functions 
-            set.evaluate(m, volQuad[qp], tmp[m] );
-          }
+          // eval basis functions 
+          set.evaluateAll( volQuad[qp], tmp );
 
           for(int m=0; m<numBasis; ++m)
           {
@@ -1814,12 +1801,14 @@ namespace Dune
       // return type of analyticalFlux 
       mutable FluxRangeType coeffEn_;
       mutable FluxRangeType coeffNb_;
+
       // caches for basis function evaluation 
       mutable MutableArray<RangeFieldType> tau_;
       mutable MutableArray<RangeFieldType> tauNeigh_;
       mutable MutableArray<RangeType> phi_;
       mutable MutableArray<RangeType> phiNeigh_;
       mutable MutableArray<JacobianRangeType> psi_;
+      mutable MutableArray<JacobianRangeType> psitmp_;
       mutable MutableArray<JacobianRangeType> coeffPsi_;
 
       mutable MutableArray<RangeType> eta_;
@@ -1829,8 +1818,6 @@ namespace Dune
       mutable MutableArray<GradRangeType> rRetsCoeff_;
 
       DomainType upwind_;
-
-      mutable JacobianRangeType psitmp_;
 
       mutable bool matrixAssembled_;
       double betaFactor_;

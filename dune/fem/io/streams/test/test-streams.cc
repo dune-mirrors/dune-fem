@@ -6,7 +6,6 @@
 #include <dune/fem/io/parameter.hh>
 #include <dune/fem/io/streams/asciistreams.hh>
 #include <dune/fem/io/streams/binarystreams.hh>
-#include <dune/fem/io/streams/datastreams.hh>
 #include <dune/fem/io/streams/xdrstreams.hh>
 #include <dune/fem/io/streams/sionlibstreams.hh>
 
@@ -170,19 +169,6 @@ int main ( int argc, char** argv )
       if( !read( xin, data ) )
         failed = true ;
     }
-
-#if HAVE_ALUGRID
-    {
-      std::string filename( filestr.str() + "data" );
-      std :: cerr << "Checking Data streams..." << std :: endl;
-      Fem :: DataOutStream dout( filename.c_str() );
-      write( dout, data );
-      dout.flush();
-      Fem :: DataInStream din( filename.c_str() );
-      if( ! read( din, data ) )
-        failed = true ;
-    }
-#endif
 
 #if HAVE_SIONLIB
     {

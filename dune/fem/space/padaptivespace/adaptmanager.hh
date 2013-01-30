@@ -1,5 +1,5 @@
-#ifndef DUNE_FEM_PADATPTIVESPACE_ADAPTMANAGER_HH
-#define DUNE_FEM_PADATPTIVESPACE_ADAPTMANAGER_HH
+#ifndef DUNE_FEM_SPACE_PADAPTIVE_ADAPTMANAGER_HH
+#define DUNE_FEM_SPACE_PADAPTIVE_ADAPTMANAGER_HH
 
 #include <dune/grid/common/capabilities.hh>
 
@@ -7,8 +7,10 @@
 #include <dune/fem/operator/lagrangeinterpolation.hh>
 #include <dune/fem/space/common/localrestrictprolong.hh>
 #include <dune/fem/space/discontinuousgalerkin/localrestrictprolong.hh>
-#include <dune/fem/space/padaptivespace/padaptivespace.hh>
-#include <dune/fem/space/padaptivespace/restrictprolong.hh>
+
+#include "declaration.hh"
+#include "restrictprolong.hh"
+
 
 namespace Dune
 {
@@ -136,4 +138,4 @@ namespace Dune
 
 } // namespace Dune
 
-#endif // #ifndef DUNE_FEM_PADATPTIVESPACE_ADAPTMANAGER_HH
+#endif // #ifndef DUNE_FEM_SPACE_PADAPTIVE_ADAPTMANAGER_HH

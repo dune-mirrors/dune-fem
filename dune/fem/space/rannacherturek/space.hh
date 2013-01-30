@@ -190,7 +190,7 @@ namespace Dune
       }
       
       /** @copydoc Dune::Fem::DiscreteFunctionSpaceInterface::type */
-      DFSpaceIdentifier type () const { return GenericSpace_id; }
+      DFSpaceIdentifier type () const { return RannacherTurekSpace_id; }
 
       /** @copydoc Dune::Fem::DiscreteFunctionSpaceInterface::basisFunctionSet */
       BasisFunctionSetType basisFunctionSet ( const EntityType &entity ) const
