@@ -28,7 +28,6 @@ namespace Dune
     struct NumFourierBasisFunctions
     {
       static const int v = StaticPower< (2*order+1), dimension >::power;
-
     };
 
 
@@ -138,11 +137,14 @@ namespace Dune
       static void evaluateEach ( const DomainType &x, Functor functor )
       {
         functor( 0, .5 );
+        // use recursion:
+        // sin((n+1)*x) = sin(n*x)*cos(x) + cos(n*x)*sin(x)
+        // cos((n+1)*x) = cos(n*x)*cos(x) - sin(n*x)*sin(x)
         for( SizeType n = 1; n <= order; ++n )
         {
           const int basisFunction = 2*n-1;
-          functor( basisFunction, cos( n*x ) );
-          functor( basisFunction+1, sin( n*x ) );
+          functor( basisFunction, std::cos( n*x ) );
+          functor( basisFunction+1, std::sin( n*x ) );
         }
       }
 
@@ -153,8 +155,8 @@ namespace Dune
         for( SizeType n = 1; n <= order; ++n )
         {
           const int basisFunction = 2*n-1;
-          functor( basisFunction, -n*sin( n*x ) );
-          functor( basisFunction+1, n*cos( n*x ) );
+          functor( basisFunction, -n*std::sin( n*x ) );
+          functor( basisFunction+1, n*std::cos( n*x ) );
         }
       }
 
@@ -165,8 +167,8 @@ namespace Dune
         for( SizeType n = 1; n <= order; ++n )
         {
           const int basisFunction = 2*n-1;
-          functor( basisFunction, -n*n*cos( n*x ) );
-          functor( basisFunction+1, -n*n*sin( n*x ) );
+          functor( basisFunction, -n*n*std::cos( n*x ) );
+          functor( basisFunction+1, -n*n*std::sin( n*x ) );
         }
       }
     };

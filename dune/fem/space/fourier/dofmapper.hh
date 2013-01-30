@@ -65,7 +65,7 @@ namespace Dune
       }
 
       /** @copydoc Dune::Fem::DofMapper::contains */
-      static bool contains ( const int codim ) { return !codim; }
+      static bool contains ( int codim ) { return (codim == 0); }
 
       /** @copydoc Dune::Fem::DofMapper::fixedDataSize */
       static bool fixedDataSize ( int codim ) { return true; }
@@ -83,7 +83,7 @@ namespace Dune
       template< class Entity, class Functor >
       static void mapEachEntityDof ( const Entity &entity, Functor f )
       {
-        if( Entity::codimension )
+        if( Entity::codimension != 0 )
           return;
         const SizeType size = ThisType::size();
         for( SizeType i = 0; i < size; ++i )
@@ -100,7 +100,7 @@ namespace Dune
       template< class Entity >
       static SizeType numEntityDofs ( const Entity &entity )
       {
-        return ( Entity::codimension ? 0 : size() );
+        return (Entity::codimension == 0 ? size() : SizeType( 0 ));
       }
 
 
@@ -127,9 +127,8 @@ namespace Dune
       bool consecutive () const { return true; }
 
       /** @copydoc Dune::Fem::AdaptiveDofMapper::oldOffSet */
-      SizeType oldOffSet ( const int block ) const { return SizeType ( 0 ); }
+      SizeType oldOffSet ( const int block ) const { return SizeType( 0 ); }
 
-      /** \brief return current offsets for given block */
       /** @copydoc Dune::Fem::AdaptiveDofMapper::offSet */
       SizeType offSet ( const int block ) const { return SizeType( 0 ); }
 
