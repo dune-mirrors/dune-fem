@@ -5,6 +5,7 @@ space_HEADERS = combineddiscretefunctionspace.hh \
 		dgspace.hh \
 		discontinuousgalerkin.hh \
 		finitevolume.hh \
+		fourier.hh \
 		fvspace.hh \
 		lagrange.hh \
 		lagrangespace.hh \
