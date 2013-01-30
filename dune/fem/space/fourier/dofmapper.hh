@@ -59,10 +59,7 @@ namespace Dune
       /////////////////////////////////
 
       /** @copydoc Dune::Fem::DofMapper::size */
-      static SizeType size ()
-      {
-        return NumFourierBasisFunctions< ElementType::Geometry::coorddimension, order >::v;
-      }
+      static SizeType size () { return 1; }
 
       /** @copydoc Dune::Fem::DofMapper::contains */
       static bool contains ( int codim ) { return (codim == 0); }
@@ -74,20 +71,15 @@ namespace Dune
       template< class Functor >
       static void mapEach ( const ElementType &element, Functor f )
       {
-        const SizeType size = ThisType::size();
-        for( SizeType i = 0; i < size; ++i )
-          f( i, i );
+        f( 0, 0 );
       }
 
       /** @copydoc Dune::Fem::DofMapper::mapEachEntityDof */
       template< class Entity, class Functor >
       static void mapEachEntityDof ( const Entity &entity, Functor f )
       {
-        if( Entity::codimension != 0 )
-          return;
-        const SizeType size = ThisType::size();
-        for( SizeType i = 0; i < size; ++i )
-          f( i, i );
+        if( Entity::codimension == 0 )
+          f( 0, 0 );
       }
 
       /** @copydoc Dune::Fem::DofMapper::maxNumDofs */

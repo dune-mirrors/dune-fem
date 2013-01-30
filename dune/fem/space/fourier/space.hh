@@ -43,7 +43,7 @@ namespace Dune
 
       typedef ScalarBasisFunctionSetType BasisFunctionSetType;
 
-      static const int localBlockSize = FunctionSpace::dimRange;
+      static const int localBlockSize = FunctionSpace::dimRange * NumFourierBasisFunctions< FunctionSpaceType::dimDomain, order >::v;
 
       typedef FourierDofMapper< GridPartType, order > BlockMapperType;
       typedef NonBlockMapper< BlockMapperType, localBlockSize > MapperType;
