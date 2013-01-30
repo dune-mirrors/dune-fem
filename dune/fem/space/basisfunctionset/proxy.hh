@@ -50,6 +50,8 @@ namespace Dune
 
       typedef typename BasisFunctionSet::EntityType EntityType;
 
+      typedef typename BasisFunctionSet::FunctionSpaceType FunctionSpaceType;
+
       typedef typename BasisFunctionSet::DomainType DomainType;
       typedef typename BasisFunctionSet::RangeType RangeType;
       typedef typename BasisFunctionSet::JacobianRangeType JacobianRangeType;
