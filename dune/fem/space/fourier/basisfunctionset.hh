@@ -26,26 +26,20 @@ namespace Dune
     // FourierBasisFunctionSet
     // -----------------------
 
-    template< class Entity, class Range, int order >
+    template< class Entity, class BasisFunctions >
     class FourierBasisFunctionSet
     {
-      typedef FourierBasisFunctionSet< Entity, Range, order > ThisType;
-
-      dune_static_assert( Range::dimension == 1, "FunctionSpace must be scalar (i.e., dimRange = 1)." );
+      typedef FourierBasisFunctionSet< Entity, BasisFunctions > ThisType;
 
     public:
       typedef Entity EntityType;
+      typedef BasisFunctions BasisFunctionsType;
 
       typedef typename EntityType::Geometry GeometryType;
 
-    private:
-      typedef typename GeometryType::ctype DomainFieldType;
-      static const int dimDomain = GeometryType::coorddimension;
-      
-    public:
       typedef std::size_t SizeType;
 
-      typedef FunctionSpace< DomainFieldType, typename Range::value_type, dimDomain, Range::dimension > FunctionSpaceType;
+      typedef typename BasisFunctionsType::FunctionSpaceType FunctionSpaceType;
 
       typedef typename FunctionSpaceType::DomainType DomainType;
       typedef typename FunctionSpaceType::RangeType RangeType;
@@ -54,41 +48,15 @@ namespace Dune
 
       typedef Dune::ReferenceElement< typename DomainType::value_type, DomainType::dimension > ReferenceElementType;
 
-    protected:
-      typedef FourierBasisFunctions< FunctionSpaceType, order > BasisFunctionsType;
-
-    public:
-      /////////////////////////////////
-      // Construction, copying, etc. //
-      /////////////////////////////////
-
       FourierBasisFunctionSet ()
-      : entity_( nullptr ), 
-        geometry_( nullptr ),
-        basisFunctions_()
+      : entity_( nullptr ),
+        basisFunctions_( nullptr )
       {}
 
-      FourierBasisFunctionSet ( const ThisType &other )
-      {
-        *this = other;
-      }
-
-      const ThisType &operator= ( const ThisType &other )
-      {
-        entity_ = other.entity_;
-        if( geometry_ )
-          delete geometry_;
-        if( entity_ )
-          geometry_ = new GeometryType( entity_->geometry() );
-      }
-
-      ~FourierBasisFunctionSet ()
-      {
-        if( geometry_ )
-          delete geometry_;
-        geometry_ = nullptr;
-      }
-
+      FourierBasisFunctionSet ( const EntityType &entity, const BasisFunctionsType &basisFunctions )
+      : entity_( &entity ),
+        basisFunctions_( &basisFunctions )
+      {}
 
       //////////////////////////////////////////
       // Basis function set interface methods //
@@ -176,40 +144,26 @@ namespace Dune
         return *entity_;
       }
 
-      const GeometryType &geometry () const
-      {
-        assert( geometry_ );
-        return *geometry_;
-      }
-
       DUNE_VERSION_DEPRECATED(1,4,remove)
       Dune::GeometryType type () const { return geometry().type(); }
 
       const ReferenceElementType &referenceElement () const
       {
-        return Dune::ReferenceElements< DomainFieldType, dimDomain >::general( geometry().type() );
-      }
-
-
-      ///////////////////////////
-      // Non-interface methods //
-      ///////////////////////////
-
-      void initialize ( const Entity &entity ) const
-      {
-        entity_ = &entity;
-        if( geometry_ )
-          delete geometry_;
-        geometry_ = new GeometryType( entity_->geometry() );
+        return Dune::ReferenceElements< typename GeometryType::ctype, GeometryType::dimension >::general( geometry().type() );
       }
 
     protected:
-      const BasisFunctionsType basisFunctions () const { return basisFunctions_; }
+      GeometryType geometry () const { return entity().geometry(); }
+
+      const BasisFunctionsType basisFunctions () const
+      {
+        assert( basisFunctions_ );
+        return *basisFunctions_;
+      }
 
     private:
-      mutable const EntityType *entity_;
-      mutable const GeometryType *geometry_;
-      BasisFunctionsType basisFunctions_;
+      const EntityType *entity_;
+      const BasisFunctionsType *basisFunctions_;
     };
 
   } // namespace Fem

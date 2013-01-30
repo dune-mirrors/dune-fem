@@ -5,7 +5,6 @@
 #include <limits>
 
 #include <dune/fem/space/basisfunctionset/proxy.hh>
-// #include <dune/fem/space/basisfunctionset/vectorial.hh>
 #include <dune/fem/space/common/defaultcommhandler.hh>
 #include <dune/fem/space/common/discretefunctionspace.hh>
 #include <dune/fem/space/mapper/codimensionmapper.hh>
@@ -39,11 +38,10 @@ namespace Dune
       typedef typename GridPartType::template Codim< codimension >::EntityType EntityType;
 
       typedef typename FunctionSpaceType::ScalarFunctionSpaceType ScalarFunctionSpaceType;
-      typedef FourierBasisFunctionSet< EntityType, typename ScalarFunctionSpaceType::RangeType, order > ScalarBasisFunctionSetType;
+      typedef FourierBasisFunctions< ScalarFunctionSpaceType, order > ScalarBasisFunctionsType;
+      typedef FourierBasisFunctionSet< EntityType, ScalarBasisFunctionsType > ScalarBasisFunctionSetType;
 
-      typedef BasisFunctionSetProxy< ScalarBasisFunctionSetType > BasisFunctionSetProxyType;
-      typedef BasisFunctionSetProxyType BasisFunctionSetType;
-      // typedef VectorialBasisFunctionSet< BasisFunctionSetProxyType, typename FunctionSpaceType::RangeType > BasisFunctionSetType;
+      typedef ScalarBasisFunctionSetType BasisFunctionSetType;
 
       static const int localBlockSize = FunctionSpace::dimRange;
 
@@ -80,6 +78,8 @@ namespace Dune
       typedef typename BaseType::EntityType EntityType;
       typedef typename BaseType::IntersectionType IntersectionType;
 
+      typedef typename Traits::ScalarBasisFunctionsType ScalarBasisFunctionsType;
+
       typedef typename Traits::ScalarBasisFunctionSetType ScalarBasisFunctionSetType;
       typedef typename BaseType::BasisFunctionSetType BasisFunctionSetType;
 
@@ -106,9 +106,7 @@ namespace Dune
       /** @copydoc Dune::Fem::DiscreteFunctionSpaceInterface::basisFunctionSet */
       BasisFunctionSetType basisFunctionSet ( const EntityType &entity ) const
       {
-        scalarBasisFunctionSet_.initialize( entity );
-        return BasisFunctionSetType( &scalarBasisFunctionSet_ );
-        // return BasisFunctionSetType( entity, &scalarBasisFunctionSet_ );
+        return BasisFunctionSetType( entity, scalarBasisFunctions_ );
       }
 
       /** @copydoc Dune::Fem::DiscreteFunctionSpaceInterface::continuous */
@@ -130,7 +128,7 @@ namespace Dune
     private:
       mutable BlockMapperType blockMapper_;
       mutable MapperType mapper_;
-      ScalarBasisFunctionSetType scalarBasisFunctionSet_;
+      ScalarBasisFunctionsType scalarBasisFunctions_;
     };
 
   } // namespace Fem
