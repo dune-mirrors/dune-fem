@@ -85,8 +85,11 @@ namespace Dune
                   const JacobianRangeType &jacobianFactor,
                   DofVector &dofs ) const
       {
-        axpy( x, valueFactor, dofs );
-        axpy( x, jacobianFactor, dofs );
+        DomainType y = geometry().global( coordinate( x ) );
+        FunctionalAxpyFunctor< RangeType, DofVector > fv( valueFactor, dofs );
+        basisFunctions().evaluateEach( y, fv );
+        FunctionalAxpyFunctor< JacobianRangeType, DofVector > fj( jacobianFactor, dofs );
+        basisFunctions().jacobianEach( y, fj );
       }
 
       template< class Point, class DofVector >

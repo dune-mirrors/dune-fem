@@ -71,7 +71,7 @@ namespace Dune
     public:
       typedef typename BaseType::Traits Traits;
 
-      static const int polynomialOrder = Order;
+      static const int polynomialOrder = Order+1;
 
       typedef typename BaseType::FunctionSpaceType FunctionSpaceType;
       typedef typename BaseType::GridPartType GridPartType;
@@ -116,7 +116,7 @@ namespace Dune
       bool continuous ( const IntersectionType &intersection ) const { return true; }
 
       /** @copydoc Dune::Fem::DiscreteFunctionSpaceInterface::order */
-      int order () const { return Order; }
+      int order () const { return Order+1; }
 
       /** @copydoc Dune::Fem::DiscreteFunctionSpaceInterface::blockMapper */
       BlockMapperType &blockMapper () const { return blockMapper_; }
