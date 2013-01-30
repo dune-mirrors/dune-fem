@@ -92,10 +92,9 @@ namespace Dune
       template< class Point, class DofVector >
       void evaluateAll ( const Point &x, const DofVector &dofs, RangeType &value ) const
       {
-        const typename GeometryType::LocalCoordinate &y = coordinate( x );
-        DomainType z = geometry().global( y );
+        DomainType y = geometry().global( coordinate( x ) );
         AxpyFunctor< DofVector, RangeType > f( dofs, value );
-        basisFunctions().evaluateEach( z, f );
+        basisFunctions().evaluateEach( y, f );
       }
 
       template< class Point, class RangeArray >
@@ -135,7 +134,7 @@ namespace Dune
       {
         DomainType y = geometry().global( coordinate( x ) );
         AssignFunctor< HessianRangeArray > f( hessians );
-        basisFunctions().hessiansEach( y, f );
+        basisFunctions().hessianEach( y, f );
       }
 
       const EntityType &entity () const

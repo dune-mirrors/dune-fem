@@ -136,39 +136,39 @@ namespace Dune
       template< class Functor >
       static void evaluateEach ( const DomainType &x, Functor functor )
       {
-        functor( 0, .5 );
+        functor( 0, RangeFieldType( 1 ) / RangeFieldType( 2 ) );
         // use recursion:
         // sin((n+1)*x) = sin(n*x)*cos(x) + cos(n*x)*sin(x)
         // cos((n+1)*x) = cos(n*x)*cos(x) - sin(n*x)*sin(x)
-        for( SizeType n = 1; n <= order; ++n )
+        SizeType basisFunction = 1;
+        for( int n = 1; n <= order; ++n )
         {
-          const int basisFunction = 2*n-1;
-          functor( basisFunction, std::cos( n*x ) );
-          functor( basisFunction+1, std::sin( n*x ) );
+          functor( basisFunction++, std::cos( n*x[ 0 ] ) );
+          functor( basisFunction++, std::sin( n*x[ 0 ] ) );
         }
       }
 
       template< class Functor >
       static void jacobianEach ( const DomainType &x, Functor functor )
       {
-        functor( 0, 0. );
-        for( SizeType n = 1; n <= order; ++n )
+        functor( 0, RangeFieldType( 0 ) );
+        SizeType basisFunction = 1;
+        for( int n = 1; n <= order; ++n )
         {
-          const int basisFunction = 2*n-1;
-          functor( basisFunction, -n*std::sin( n*x ) );
-          functor( basisFunction+1, n*std::cos( n*x ) );
+          functor( basisFunction++, -n*std::sin( n*x[ 0 ] ) );
+          functor( basisFunction++, n*std::cos( n*x[ 0 ] ) );
         }
       }
 
       template< class Functor >
       static void hessianEach ( const DomainType &x, Functor functor )
       {
-        functor( 0, 0. );
-        for( SizeType n = 1; n <= order; ++n )
+        functor( 0, RangeFieldType( 0 ) );
+        SizeType basisFunction = 1;
+        for( int n = 1; n <= order; ++n )
         {
-          const int basisFunction = 2*n-1;
-          functor( basisFunction, -n*n*std::cos( n*x ) );
-          functor( basisFunction+1, -n*n*std::sin( n*x ) );
+          functor( basisFunction++, -(n*n)*std::cos( n*x[ 0 ] ) );
+          functor( basisFunction++, -(n*n)*std::sin( n*x[ 0 ] ) );
         }
       }
     };
@@ -278,31 +278,34 @@ namespace Dune
       void evaluate ( const MultiIndexType &multiIndex, JacobianRangeType &jacobian ) const
       {
         jacobian = JacobianRangeType( 1 );
-        for( SizeType k = 0; k < dimDomain; ++k )
+        for( int k = 0; k < dimDomain; ++k )
         {
           const RangeFieldType phi = buffer_[ k ][ multiIndex[ k ] ];
           const RangeFieldType dphi = buffer_[ k ][ buffer_size + multiIndex[ k ] ];
           for( int i = 0; i < dimDomain; ++i )
-            jacobian[ 0 ][ i ] *= ( k == i ) ? dphi : phi;
+            jacobian[ 0 ][ i ] *= (k == i ? dphi : phi);
         }
       }
 
       // evaluate hessian of tensor product basis function
       void evaluate ( const MultiIndexType &multiIndex, HessianRangeType &hessian ) const
       {
-        hessian = HessianRangeType( 1 );
+        for( int i = 0; i < dimDomain; ++i )
+          for( int j = 0; j < dimDomain; ++j )
+            hessian[ 0 ][ i ][ j ] = RangeFieldType( 1 );
+
         for( int k = 0; k < dimDomain; ++k )
         {
           const RangeFieldType phi = buffer_[ k ][ multiIndex[ k ] ];
           const RangeFieldType dphi = buffer_[ k ][ buffer_size + multiIndex[ k ] ];
           for( int i = 0; i < dimDomain; ++i )
           {
-            hessian[ i ][ i ] *= ( k == i ) ? buffer_[ i ][ 2*buffer_size + multiIndex[ i ] ] : phi;
+            hessian[ 0 ][ i ][ i ] *= (k == i ? buffer_[ i ][ 2*buffer_size + multiIndex[ i ] ] : phi);
             for( int j = i+1; j < dimDomain; ++j )
             {
               RangeFieldType tmp = ( k == i || k == j ) ? dphi : phi;
-              hessian[ i ][ j ] *= tmp;
-              hessian[ j ][ i ] *= tmp;
+              hessian[ 0 ][ i ][ j ] *= tmp;
+              hessian[ 0 ][ j ][ i ] *= tmp;
             }
           }
         }
@@ -378,7 +381,7 @@ namespace Dune
         for( int i = 0; i < dimDomain; ++i )
         {
           const int j = dimDomain-i-1;
-          if( ++multiIndex_[ j ] <= N )
+          if( ++multiIndex_[ j ] < N )
             return *this;
           multiIndex_[ j ] = 0;
         }
@@ -401,12 +404,11 @@ namespace Dune
       static SizeType index ( const MultiIndexType &multiIndex )
       {
         SizeType index = 0, factor = 1;
-        for( SizeType i = dimDomain-1; i > 0; --i )
+        for( int i = dimDomain-1; i >= 0; --i )
         {
           index += multiIndex[ i ]*factor;
-          factor *= N+1;
+          factor *= N;
         }
-        index += multiIndex[ 0 ]*factor;
         assert( index < size() );
         return index;
       }
