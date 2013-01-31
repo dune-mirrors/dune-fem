@@ -61,6 +61,8 @@ namespace Dune
 
       typedef typename EntityType::Geometry GeometryType;
 
+      typedef typename GeometryType::ctype ctype;
+
     public:
       //  slight misuse of struct ToLocalFunctionSpace!!!
       //! \brief type of function space
@@ -74,8 +76,7 @@ namespace Dune
       typedef typename FunctionSpaceType::HessianRangeType HessianRangeType;
 
       //! \brief type of reference element
-      typedef Dune::ReferenceElement< typename GeometryType::ctype, 
-                                      GeometryType::coorddimension > ReferenceElementType;
+      typedef Dune::ReferenceElement< ctype, GeometryType::coorddimension > ReferenceElementType;
 
       //! \brief constructor
       DefaultBasisFunctionSet ()
@@ -98,8 +99,7 @@ namespace Dune
       //! \brief return reference element
       const ReferenceElementType &referenceElement () const
       {
-        return Dune::ReferenceElements< typename GeometryType::ctype, 
-                                        GeometryType::coorddimension >::general( entity().type() );
+        return Dune::ReferenceElements< ctype, GeometryType::coorddimension >::general( type() );
       }
 
       //! \todo please doc me
@@ -211,7 +211,7 @@ namespace Dune
       // ---------------------
 
       //! \brief return shape function set
-      const ShapeFunctionSet &shapeFunctionSet () const { return shapeFunctionSet_; }
+      const ShapeFunctionSetType &shapeFunctionSet () const { return shapeFunctionSet_; }
 
     protected:
       GeometryType geometry () const { return entity().geometry(); }
