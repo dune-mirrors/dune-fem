@@ -57,6 +57,9 @@ namespace Dune
       template< class LocalFunction, class LocalDofVector >
       void operator () ( const LocalFunction &localFunction, LocalDofVector &dofs ) const
       {
+        // set all dofs to zero
+        dofs.clear();
+
         // get entity and geometry
         const EntityType &entity = localFunction.entity();
         const typename EntityType::Geometry geometry = entity.geometry();
