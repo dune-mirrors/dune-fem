@@ -27,7 +27,7 @@ FEMDIR="$DUNEDIR/dune-fem"
 SCRIPTSDIR="$FEMDIR/scripts"
 OPTSDIR="$SCRIPTSDIR/opts"
 
-MODULES="dune-common dune-geometry dune-grid dune-istl dune-localfunctions dune-fem"
+MODULES="dune-common dune-geometry dune-grid dune-istl dune-localfunctions dune-spgrid dune-fem"
 
 errors=0
 
