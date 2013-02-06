@@ -83,12 +83,6 @@ namespace Dune
       typedef typename Geometry::LocalCoordinate LocalCoordinate;
       typedef typename Geometry::Jacobian GeometryJacobianInverseTransposed;
 
-    private:
-      typedef typename GeometryJacobianInverseTransposed::value_type ctype;
-      static const int rows = GeometryJacobianInverseTransposed::rows;
-      static const int cols = GeometryJacobianInverseTransposed::cols;
-
-    public:
       HessianTransformation ( const Geometry &geometry, const LocalCoordinate &x )
       : gjit_( geometry.jacobianInverseTransposed( x ) )
       {
@@ -103,7 +97,7 @@ namespace Dune
       }
 
     private:
-      const Dune::FieldMatrix< ctype, rows, cols > &gjit_;
+      const GeometryJacobianInverseTransposed &gjit_;
     };
 
   } // namespace Fem
