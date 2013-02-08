@@ -46,7 +46,7 @@ namespace Dune
   namespace Fem 
   {
 
-    /** \brief Parameter class for Dune::DataOutput
+    /** \brief Parameter class for Dune::Fem::DataOutput
 
         Structure providing the main parameters used to setup the Dune::DataOutput.
         By default these parameters are set through the Dune::Parameter class, i.e.,
@@ -55,7 +55,9 @@ namespace Dune
         class can then be passed in the construction of the Dune::DataOutput.
      */
     struct DataOutputParameters
+#ifndef DOXYGEN
     : public LocalParameter< DataOutputParameters, DataOutputParameters >
+#endif
     {
       //! path where the data is stored (path are always relative to fem.commonOutputPath)
       virtual std::string path() const
@@ -130,7 +132,7 @@ namespace Dune
 
 
     /** @ingroup DiscFuncIO 
-       \brief Implementation of the Dune::IOInterface. 
+       \brief Implementation of the Dune::Fem::IOInterface. 
        This class manages data output.
        Available output formats are GRAPE, VTK and VTK Vertex projected
        using the VtxProjection operator. Details can be
