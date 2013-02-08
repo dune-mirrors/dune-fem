@@ -27,6 +27,7 @@ LIBS="$DUNE_LIBS $BLAS_LIBS"
 AC_CONFIG_FILES([Makefile
      doc/Makefile
      doc/doxygen/Makefile
+     doc/doxygen/Doxyfile
      doc/doxygen/pages/Makefile
      dune/Makefile
      dune/fem/Makefile

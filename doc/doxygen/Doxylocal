@@ -1,0 +1,40 @@
+# Where to search and which files to use
+INPUT                 += @srcdir@/modules \
+                         @srcdir@/pages/ \
+                         @top_srcdir@/modules \
+                         @top_srcdir@/dune/fem  \
+                         @top_srcdir@/dune/fem/io/visual/grape/datadisp/datadisp.cc
+
+EXCLUDE               += @top_srcdir@/dune/fem/test \
+                         @top_srcdir@/dune/fem/function/productfunction/test \
+                         @top_srcdir@/dune/fem/io/file/test \
+                         @top_srcdir@/dune/fem/io/matlab/test \
+                         @top_srcdir@/dune/fem/io/streams/test \
+                         @top_srcdir@/dune/fem/io/test \
+                         @top_srcdir@/dune/fem/operator/common/test \
+                         @top_srcdir@/dune/fem/petsc \
+                         @top_srcdir@/dune/fem/quadrature/caching/test \
+                         @top_srcdir@/dune/fem/quadrature/test \
+                         @top_srcdir@/dune/fem/solver/test \
+                         @top_srcdir@/dune/fem/space/basefunctions/test \
+                         @top_srcdir@/dune/fem//lagrange/test \
+                         @top_srcdir@/dune/fem/reducedbasisspace/test \
+                         @top_srcdir@/dune/fem/space/test \
+                         @top_srcdir@/dune/fem/gridpart/test \
+                         @top_srcdir@/dune/fem/pass/test \
+                         @top_srcdir@/dune/fem/quadrature/ugquadratures.* \
+                         @top_srcdir@/dune/fem/quadrature/simplexpoints.hh \
+                         @top_srcdir@/dune/fem/quadrature/caching/topology.hh \
+                         @top_srcdir@/dune/fem/quadrature/caching/topology.cc \
+                         @top_srcdir@/dune/fem/misc/metaprogramming.hh
+
+ALIASES              += notcleardoc="\xrefitem notcleardoc \"documentation will be extended\" \"Needs extended documentation\"" \
+                        parametername="\xrefitem parametername \"DUNE-FEM parameter\" \"Parameters used in DUNE-FEM \"" \
+                        femparam{2}="\parametername <tt>\1</tt> \2 \n\n no default\n "  \
+                        femparam{3}="\parametername <tt>\1</tt> \2 \n\n default: <tt>\3</tt>\n" \
+                        interfaceclass="\xrefitem interfaceclass \"An interface class\" \"Main interface classes\"" \
+                        newimplementation="\xrefitem newimplementation \"Newly added\" \"New interface implementation and other gadgets\"" 
+
+FILE_PATTERNS       += *.hh *.dist *.dev *.page
+
+EXAMPLE_PATH        +=  @top_srcdir@/dune/fem/misc
