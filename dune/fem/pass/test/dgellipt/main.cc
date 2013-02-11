@@ -5,7 +5,7 @@
 
 #include <dune/common/exceptions.hh>
 #include <dune/common/misc.hh>
-#include <dune/common/stdstreams.cc>
+//#include <dune/common/stdstreams.cc>
 #include <dune/common/timer.hh>
 
 #include <dune/fem/misc/double.hh>

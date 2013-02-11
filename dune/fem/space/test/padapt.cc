@@ -16,7 +16,7 @@ const int polOrder = POLORDER;
 
 #include <iostream>
 #include <sstream>
-#include <dune/common/stdstreams.cc>
+//#include <dune/common/stdstreams.cc>
 
 #include <dune/fem/gridpart/adaptiveleafgridpart.hh>
 #include <dune/fem/gridpart/hierarchicgridpart.hh>
