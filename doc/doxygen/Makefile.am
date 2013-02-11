@@ -1,5 +1,7 @@
 # $Id: Makefile.am 6360 2011-02-28 11:41:46Z sander $
 
+SUBDIRS = pages
+
 # setting like in dune-web
 BASEDIR=../..
 CURDIR=doc/doxygen
