@@ -203,8 +203,10 @@ class SpaceOperatorPtr
   //! type of base class 
   typedef SpaceOperatorStorage< OperatorType > BaseType;
 
+	protected:
   // use pass method of base 
   using BaseType :: pass;
+	public:
   
   //! type of destination 
   typedef typename OperatorType::DestinationType DestinationType;
