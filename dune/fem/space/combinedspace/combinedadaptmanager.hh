@@ -28,9 +28,13 @@ namespace Fem
              int N, 
              DofStoragePolicy policy> 
   struct DefaultLocalRestrictProlong< CombinedSpace<DiscreteFunctionSpaceImp,N,policy> > 
-  : public DiscontinuousGalerkinLocalRestrictProlong< CombinedSpace<DiscreteFunctionSpaceImp,N,policy> >
+  : public DiscontinuousGalerkinLocalRestrictProlong< CombinedSpace<DiscreteFunctionSpaceImp,N,policy>, false >
   {
+		typedef DiscontinuousGalerkinLocalRestrictProlong< CombinedSpace<DiscreteFunctionSpaceImp,N,policy>, false >
+			BaseType;
+
     DefaultLocalRestrictProlong( const CombinedSpace<DiscreteFunctionSpaceImp,N,policy> & space)
+			: BaseType( space )
     {
       assert( !space.continuous() );
     }
@@ -41,6 +45,7 @@ namespace Fem
              DofStoragePolicy policy> 
   struct DefaultLocalRestrictProlong< CombinedSpace<DiscreteFunctionSpaceImp,N,policy> > 
   : public EmptyLocalRestrictProlong< CombinedSpace<DiscreteFunctionSpaceImp,N,policy> >
+	// Why EmptyLocalRestrictProlong<> ?
   {
     DefaultLocalRestrictProlong( const CombinedSpace<DiscreteFunctionSpaceImp,N,policy> & )
     {}
