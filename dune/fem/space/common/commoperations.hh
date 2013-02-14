@@ -214,8 +214,8 @@ namespace Fem
               , DataImpEight & eight = null() 
               , DataImpNine  & nine  = null() )
       : one_(one) , two_(two) , three_(three) , four_(four) 
-      , five_(five) , six_(six_) , seven_(seven)
-      , eight_(eight) , nine_(nine_) 
+      , five_(five) , six_(six ) , seven_(seven)
+      , eight_(eight) , nine_(nine ) 
       , data_( one_ , two_, three_, four_, five_, six_ , seven_ , eight_ , nine_ )
     {
     }
