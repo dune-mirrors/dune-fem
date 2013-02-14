@@ -52,7 +52,7 @@ namespace Fem {
 
       //p=6x^2-6x+1 
       factor_[2][0]= 1.0;
-      factor_[2][1]=- 6.0;
+      factor_[2][1]= -6.0;
       factor_[2][2]= 6.0;
       factor_[2][3]= 0;
       factor_[2][4]= 0;
