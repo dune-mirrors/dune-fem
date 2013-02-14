@@ -157,7 +157,7 @@ namespace Dune
 
     //! \copydoc RestrictProlongInterface::restrictLocal 
     template <class EntityType>
-    void restrictLocal ( EntityType &father, EntityType &son, 
+    void restrictLocal ( const EntityType &father, const EntityType &son, 
                          bool initialize ) const {
       this->first().restrictLocal(father,son,initialize);
       this->second().restrictLocal(father,son,initialize);    
@@ -165,7 +165,7 @@ namespace Dune
 
     //! \copydoc RestrictProlongInterface::prolongLocal 
     template <class EntityType>
-    void prolongLocal ( EntityType &father, EntityType &son, 
+    void prolongLocal ( const EntityType &father, const EntityType &son, 
                         bool initialize ) const {
       this->first().prolongLocal(father,son,initialize);
       this->second().prolongLocal(father,son,initialize);    
