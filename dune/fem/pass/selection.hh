@@ -315,8 +315,9 @@ namespace Dune
     // then return nulltype() as a value
     static typename TupleAccessTraits< Nil > :: ConstType
     get( const Tuple &arg )
-    {
-      return Nil();
+		{
+			static Nil nilDummy;
+      return nilDummy;
     }
     
     static typename TupleAccessTraits< Nil > :: NonConstType
