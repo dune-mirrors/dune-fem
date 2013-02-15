@@ -13,6 +13,7 @@
 #include <dune/fem/space/common/discretefunctionspace.hh>
 #include <dune/fem/space/common/functionspace.hh>
 #include <dune/fem/space/common/localrestrictprolong.hh>
+#include <dune/fem/space/discontinuousgalerkin/localinterpolation.hh>
 #include <dune/fem/space/mapper/codimensionmapper.hh>
 #include <dune/fem/space/mapper/nonblockmapper.hh>
 #include <dune/fem/space/shapefunctionset/selectcaching.hh>
@@ -238,15 +239,9 @@ namespace Dune
       template< class LocalFunction, class LocalDofVector >
       void interpolate ( const LocalFunction &localFunction, LocalDofVector &dofs ) const
       {
-        typedef typename FunctionSpaceType::DomainFieldType DomainFieldType;
-        typedef typename FunctionSpaceType::RangeType RangeType;
-
-        const EntityType &entity = localFunction.entity();
-        const ReferenceElement< DomainFieldType, GridPartType::dimension > &referenceElement = ReferenceElements< DomainFieldType, GridPartType::dimension >::general( entity.type() );
-
-        RangeType value;
-        localFunction.evaluate( referenceElement.position( 0, 0 ), value );
-        dofs[ 0 ] = value;
+        typedef DiscontinuousGalerkinLocalInterpolation< ThisType > LocalInterpolationType;
+        LocalInterpolationType interpolation( *this );
+        interpolation( localFunction, dofs );
       }
 
     private:
