@@ -321,7 +321,8 @@ namespace Dune
       static typename TupleAccessTraits< Nil > :: NonConstType
       get( Tuple &arg )
       {
-        return Nil();
+				static Nil nilDummy;
+      	return nilDummy;
       }
     };
 
