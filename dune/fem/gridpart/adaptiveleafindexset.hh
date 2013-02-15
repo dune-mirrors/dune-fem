@@ -620,7 +620,7 @@ namespace Dune
       void removeIndex ( const ElementType &entity );
 
       // check whether entity can be inserted or not 
-      void checkHierarchy ( const ElementType &entity, const bool wasNew );
+      void checkHierarchy ( const ElementType &entity, bool wasNew );
 
       // mark indices that are still used (and give new indices to new elements)
       template <PartitionIteratorType pt>
