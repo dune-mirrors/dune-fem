@@ -36,24 +36,35 @@ void interpolate ( const LocalFunction &f, LocalDofVector &dofs ) const;
       /** \brief interpolate a grid function
        *
        *  \param[in]   u  grid function to interpolate
-       *  \param[out]  w  discrete function to represent the interpolation
+       *  \param[out]  v  discrete function to represent the interpolation
        */
       template< class GridFunction >
-      void operator() ( const GridFunction &u, DiscreteFunctionType &w )
+      void operator() ( const GridFunction &u, DiscreteFunctionType &v )
+      {
+        apply( u, v );
+      }
+
+      /** \brief interpolate a grid function
+       *
+       *  \param[in]   u  grid function to interpolate
+       *  \param[out]  v  discrete function to represent the interpolation
+       */
+      template< class GridFunction >
+      static void apply ( const GridFunction &u, DiscreteFunctionType &v )
       {
         typedef typename DiscreteFunctionSpaceType::IteratorType IteratorType;
         typedef typename DiscreteFunctionSpaceType::EntityType EntityType;
 
         typedef typename DiscreteFunctionType::LocalFunctionType LocalFunctionType;
 
-        const DiscreteFunctionSpaceType &space = w.space();
+        const DiscreteFunctionSpaceType &space = v.space();
 
         const IteratorType end = space.end();
         for( IteratorType it = space.begin(); it != end; ++it )
         {
           const EntityType &entity = *it;
-          LocalFunctionType wLocal = w.localFunction( entity );
-          space.interpolate( u.localFunction( entity ), wLocal );
+          LocalFunctionType vLocal = v.localFunction( entity );
+          space.interpolate( u.localFunction( entity ), vLocal );
         }
       }
     };
