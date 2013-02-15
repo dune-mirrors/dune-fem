@@ -166,7 +166,6 @@ namespace Dune
       enum { value = -1 };
     };
 
-    
     /**
      *
      * @brief For checking if everything is ok with types
@@ -315,7 +314,8 @@ namespace Dune
       static typename TupleAccessTraits< Nil > :: ConstType
       get( const Tuple &arg )
       {
-        return Nil();
+				static Nil nilDummy;
+      	return nilDummy;
       }
       
       static typename TupleAccessTraits< Nil > :: NonConstType
