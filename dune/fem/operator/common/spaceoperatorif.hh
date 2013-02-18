@@ -206,7 +206,7 @@ class SpaceOperatorPtr
 	protected:
   // use pass method of base 
   using BaseType :: pass;
-	public:
+	private:
   
   //! type of destination 
   typedef typename OperatorType::DestinationType DestinationType;
