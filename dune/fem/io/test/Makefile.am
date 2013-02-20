@@ -6,7 +6,8 @@ EXTRA_DIST = testparameterfile \
 						 oldparameterfile \
 						 param_DarcyStokes \
 						 param_NavierStokes \
-						 date.sh
+						 date.sh \
+						 bc.sh
 
 TESTS = parametertest
 check_PROGRAMS = parametertest
