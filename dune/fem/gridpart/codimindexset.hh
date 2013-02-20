@@ -21,40 +21,40 @@ namespace Dune
   // PersistentContainer for YaspGrid
   // --------------------------------
 
-  template< int dim, class Data, class Allocator >
-  class PersistentContainer< YaspGrid< dim >, Data, Allocator >
+  template< int dim, class Data >
+  class PersistentContainer< YaspGrid< dim >, Data >
   : public PersistentContainerVector< YaspGrid< dim >, 
                                       typename YaspGrid< dim >::LeafIndexSet,
-                                      std::vector<Data,Allocator> >
+                                      std::vector<Data> >
   {
     typedef YaspGrid< dim > Grid;
-    typedef PersistentContainerVector< Grid, typename Grid::LeafIndexSet, std::vector<Data,Allocator> > BaseType;
+    typedef PersistentContainerVector< Grid, typename Grid::LeafIndexSet, std::vector<Data> > BaseType;
 
   public:
     //! Constructor filling the container with values using the default constructor 
     //! Depending on the implementation this could be achieved without allocating memory
-    PersistentContainer ( const Grid &grid, const int codim, const Allocator &allocator = Allocator() )
-    : BaseType( grid, codim, grid.leafIndexSet(), 1.0, allocator )
+    PersistentContainer ( const Grid &grid, const int codim, const Data& value = Data() )
+    : BaseType( grid, codim, grid.leafIndexSet(), 1.0, value )
     {}
   };
 
   // PersistentContainer for SGrid
   // -------------------------------
 
-  template< int dim, int dimworld, class ctype, class Data, class Allocator >
-  class PersistentContainer< SGrid< dim, dimworld, ctype >, Data, Allocator >
+  template< int dim, int dimworld, class ctype, class Data >
+  class PersistentContainer< SGrid< dim, dimworld, ctype >, Data >
   : public PersistentContainerVector< SGrid< dim, dimworld, ctype >, 
                                       typename SGrid< dim, dimworld, ctype >::LeafIndexSet,
-                                      std::vector<Data,Allocator> >
+                                      std::vector<Data> >
   {
     typedef SGrid< dim, dimworld, ctype > Grid ;
-    typedef PersistentContainerVector< Grid, typename Grid::LeafIndexSet, std::vector<Data,Allocator> > BaseType;
+    typedef PersistentContainerVector< Grid, typename Grid::LeafIndexSet, std::vector<Data> > BaseType;
 
   public:
     //! Constructor filling the container with values using the default constructor 
     //! Depending on the implementation this could be achieved without allocating memory
-    PersistentContainer ( const Grid &grid, const int codim, const Allocator &allocator = Allocator() )
-    : BaseType( grid, codim, grid.leafIndexSet(), 1.0, allocator )
+    PersistentContainer ( const Grid &grid, const int codim, const Data& value = Data() )
+    : BaseType( grid, codim, grid.leafIndexSet(), 1.0, value )
     {}
   };
 
