@@ -26,11 +26,7 @@ namespace Dune
         
         Constructor takes base file name for the tex file and
         generate the files:
-        filename_timestamp.dat
-        or without the time stamp (by default) in the name depending on 
-        the parameter fem.io.eocFileTimeStamp.
-        A time stamp is added to the file name to prevent the
-        overwriting of a valuable eoc data from the previous simulation.
+        filename.dat
 
         The class is singleton but severeal numbers of tables can be written with different 
         errors. Each time the class is initialized a new table will be written.
@@ -139,17 +135,6 @@ namespace Dune
         const int tabId = outputFile_.size() -1;
 
         fileNames_[tabId] = filename;
-
-        // add time stamp to file name, if requested (prevents results from being overwritten)
-        if( Parameter::getValue< bool >( "fem.io.eocFileTimeStamp", false ) )
-        {
-          time_t seconds = time(0);
-          struct tm *ptm = localtime( &seconds );
-          char timeString[20];
-          strftime( timeString, 20, "_%d%m%Y_%H%M%S", ptm );
-          fileNames_[tabId] += std::string( timeString );
-        }
-
         outputFile_[tabId] = new std::stringstream;
 
         // write together with table the description

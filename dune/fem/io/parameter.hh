@@ -1222,16 +1222,6 @@ namespace Dune
       std::string fullname( path );
       fullname += "/";
       fullname += filename;
-
-      if( Parameter::getValue< bool >( "fem.io.parameterFileTimeStamp", false ) )
-      {
-        time_t seconds = time(0);
-        struct tm *ptm = localtime( &seconds );
-        char timeString[20];
-        strftime( timeString, 20, "_%d%m%Y_%H%M%S", ptm );
-        fullname += std::string( timeString );
-      } 
-
       fullname += fileextension;
 
       std::ofstream file( fullname.c_str() );
