@@ -18,14 +18,18 @@
 #include <dune/fem/solver/timeprovider.hh>
 #include <dune/fem/io/parameter.hh>
 
-//- include runge kutta ode solver 
-#include <dune/fem/solver/rungekutta.hh>
+//- include Ode Solver interface
+#include <dune/fem/solver/odesolverinterface.hh>
 
 // include headers of PARDG 
 #include "pardg.hh"
 
 namespace DuneODE 
 {
+
+  using namespace Dune;
+  using namespace Fem;
+  using namespace std;
 
 #ifdef USE_PARDG_ODE_SOLVER
   struct ODEParameters
