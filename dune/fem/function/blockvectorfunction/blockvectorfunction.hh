@@ -103,10 +103,10 @@ namespace Dune
       //! return dof
       DofType& operator [] (int i)
       {
-        assert((i >=0) && (i < blockSize * vec_.size()));
-        const int count = (int) i/blockSize;
+        assert((i >=0) && ((unsigned int ) i < blockSize * vec_.size()));
+        const unsigned int count = (int) i/blockSize;
         assert( count < vec_.size() );
-        const int local = i%blockSize;
+        const unsigned int local = i%blockSize;
         assert( local < blockSize );
         return vec_[count][local];
       }
@@ -114,10 +114,10 @@ namespace Dune
       //! return dof
       const DofType& operator [] (int i) const
       {
-        assert((i >=0) && (i < blockSize * vec_.size()));
-        const int count = (int) i/blockSize;
+        assert((i >=0) && ((unsigned int ) i < blockSize * vec_.size()));
+        const unsigned int count = (int) i/blockSize;
         assert( count < vec_.size() );
-        const int local = i%blockSize;
+        const unsigned int local = i%blockSize;
         assert( local < blockSize );
         return vec_[count][local];
       }
@@ -225,13 +225,13 @@ namespace Dune
       
       //! \brief Constructor makes Discrete Function with name 
       ISTLBlockVectorDiscreteFunction ( const std :: string &name,
-                                    const DiscreteFunctionSpaceType &f );
-      
+                                        const DiscreteFunctionSpaceType &f );
+
       //! \brief Constructor makes Discrete Function  
       ISTLBlockVectorDiscreteFunction ( const std :: string &name,
-                                    const DiscreteFunctionSpaceType &f,
-                                    const DofStorageType &data );
-      
+                                        const DiscreteFunctionSpaceType &f,
+                                        const DofStorageType &data );
+
       //! \brief Constructor makes Discrete Function from copy 
       ISTLBlockVectorDiscreteFunction ( const ThisType &other ); 
 
