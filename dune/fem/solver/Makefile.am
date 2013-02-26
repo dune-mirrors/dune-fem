@@ -20,11 +20,12 @@ solver_HEADERS = cginverseoperator.hh \
                  inverseoperators.hh \
                  istlsolver.hh \
                  odesolver.hh \
+                 odesolverinterface.hh \
                  oemsolver.hh \
                  multistep.hh \
                  newtoninverseoperator.hh \
                  pardg.hh \
-								 petscsolver.hh \
+                 petscsolver.hh \
                  rungekutta.hh \
                  timeprovider.hh \
                  umfpacksolver.hh
