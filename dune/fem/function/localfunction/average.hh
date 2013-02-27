@@ -146,7 +146,7 @@ namespace Dune
         Impl::apply( localFunction, average );
       }
 
-      void operator() ( const LocalFunction &localFunction, typename LocalFunction::RangeType &average )
+      void operator() ( const LocalFunction &localFunction, typename LocalFunction::RangeType &average ) const
       {
         Impl::apply( localFunction, average );
       }
