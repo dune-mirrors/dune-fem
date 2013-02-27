@@ -32,6 +32,7 @@ AC_CONFIG_FILES([Makefile
      dune/Makefile
      dune/fem/Makefile
      dune/fem/pass/Makefile
+     dune/fem/pass/common/Makefile
      dune/fem/pass/test/Makefile
      dune/fem/pass/test/dgellipt/Makefile
      dune/fem/space/Makefile

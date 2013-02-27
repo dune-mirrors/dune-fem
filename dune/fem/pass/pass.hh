@@ -7,8 +7,8 @@
 
 //- Dune includes
 #include <dune/common/timer.hh>
-#include <dune/fem/misc/femtuples.hh>
-#include <dune/fem/misc/utility.hh>
+// #include <dune/fem/misc/femtuples.hh>
+// #include <dune/fem/misc/utility.hh>
 
 //- local includes 
 #include <dune/fem/operator/common/operator.hh>
@@ -55,7 +55,7 @@ namespace Dune
       //! The argument (and destination) type of the overall operator
       typedef ArgumentImp GlobalArgumentType;
       //! End marker for tuple of return types of the passes
-      typedef Nil NextArgumentType;
+      typedef Dune::tuple<> NextArgumentType;
       
     public:
       //! empty constructor 
@@ -86,7 +86,7 @@ namespace Dune
       void printTexInfo(std::ostream& out) const {}
 
       //! Returns the closure of the destination tuple.
-      NextArgumentType localArgument() const { return nullType(); }
+      NextArgumentType localArgument() const { return NextArgumentType(); }
 
       //! No memory needs to be allocated.
       void allocateLocalMemory() {}
@@ -168,10 +168,9 @@ namespace Dune
       //! Tuple containing destination types of all preceding passes plus the
       //! global argument. This serves as the argument for this pass' 
       //! computations
-      typedef Pair<
-        const GlobalArgumentType*, LocalArgumentType> TotalArgumentType;
+      typedef typename PushFrontTuple< LocalArgumentType, const GlobalArgumentType* >::type TotalArgumentType;
       //! Tuple containing destination types of all passes up to this one.
-      typedef Pair<DestinationType*, LocalArgumentType> NextArgumentType;
+      typedef typename PushBackTuple< LocalArgumentType, DestinationType* >::type NextArgumentType;
 
     public:
       // return pass number
@@ -214,7 +213,7 @@ namespace Dune
       {
         previousPass_.pass(arg);
         typename PreviousPassType::NextArgumentType prevArg = previousPass_.localArgument();
-        const TotalArgumentType totalArg(&arg, prevArg);
+        const TotalArgumentType totalArg = tuple_push_front( prevArg, &arg );
         this->compute(totalArg, dest);
 
         // if initComm has not been called for this pass, we have to 

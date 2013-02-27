@@ -1,0 +1,162 @@
+#ifndef DUNE_FEM_PASS_COMMON_POINTERTUPLE_HH
+#define DUNE_FEM_PASS_COMMON_POINTERTUPLE_HH
+
+#include <dune/common/static_assert.hh>
+#include <dune/common/tupleutility.hh>
+#include <dune/common/typetraits.hh>
+
+#include "tupletypetraits.hh"
+#include "tupleutility.hh"
+
+namespace
+{
+  // ReferenceEvaluator
+  // ------------------
+
+  template< class T >
+  struct ReferenceEvaluator 
+  {
+    typedef const typename Dune::TypeTraits< T >::PointeeType & Type;
+  };
+
+
+
+  // DereferenceTuple
+  // ----------------
+
+  template< class Tuple,
+            class Seed = Dune::tuple<>,
+            int index = 0,
+            int size = Dune::tuple_size< Tuple >::value
+          >
+  struct DereferenceTuple
+  {
+    typedef typename ReferenceEvaluator< typename Dune::tuple_element< index, Tuple >::type >::Type AppendType;
+    typedef typename Dune::PushBackTuple< Seed, AppendType >::type AccumulatedType;
+    typedef DereferenceTuple< Tuple, AccumulatedType, (index+1), size > NextType;
+
+  public:
+    typedef typename Dune::ForEachType< ReferenceEvaluator, Tuple >::Type Type;
+
+    static Type apply ( Tuple &tuple )
+    {
+      Seed seed;
+      return append( tuple, seed );
+    }
+
+  protected:
+    template< class, class, int, int > friend class DereferenceTuple;
+
+    static Type append ( Tuple &tuple, Seed &seed )
+    {
+      typename Dune::tuple_element< index, Tuple >::type pointer = Dune::get< index >( tuple );
+      AppendType append = *pointer;
+      AccumulatedType next = Dune::tuple_push_back( seed, append );
+      return NextType::append( tuple, next );
+    }
+  };
+
+  template< class Tuple,
+            class ResultType,
+            int size
+          >
+  struct DereferenceTuple< Tuple, ResultType, size, size >
+  {
+  protected:
+    template< class, class, int, int > friend class DereferenceTuple;
+
+    static ResultType append ( Tuple &tuple, ResultType &result )
+    {
+      return result;
+    }
+  };
+
+} // namespace
+
+
+
+namespace Dune
+{
+
+  namespace Fem
+  {
+
+    // PointerTuple
+    // ------------
+
+    /*
+     * \brief Please doc me.
+     */
+    template< class Tuple >
+    class PointerTuple
+    {
+      typedef PointerTuple< Tuple > ThisType;
+
+      dune_static_assert( TupleTypeTraits< Tuple >::isPointerTuple,
+                           "Can not wrap non-pointer tuple." );
+
+   public:
+      //! \brief type of pointer tuple
+      typedef Tuple PointerType;
+
+      //! \brief type of element
+      typedef typename TupleTypeTraits< PointerType >::PointeeTupleType ElementType;
+
+      //! \brief please doc me
+      typedef typename DereferenceTuple< PointerType >::Type ReferenceType;
+
+    public:
+      //! \brief store null pointer tuple
+      PointerTuple ()
+      : tuple_( nullptrTuple() )
+      {}
+
+      //! \brief store tuple
+      explicit PointerTuple ( const Tuple &tuple )
+      : tuple_( tuple )
+      {}
+
+      //! \brief assignment operator from new tuple
+      PointerTuple &operator= ( const ThisType &other )
+      {
+        tuple_ = other.tuple_;
+        return *this;
+      }
+
+      //! \brief assignment operator from new tuple
+      PointerTuple &operator= ( const Tuple &tuple )
+      {
+        tuple_ = tuple;
+        return *this;
+      }
+
+      //! \brief create null pointer
+      ReferenceType operator* ()
+      {
+        return DereferenceTuple< PointerType >::apply( tuple_ );;
+      }
+
+      //! \brief create null pointer
+      const ReferenceType operator* () const
+      {
+        return DereferenceTuple< PointerType >::apply( tuple_ );
+      }
+
+      //! \brief return true, if internal pointer is null pointer tuple 
+      operator bool () const { return ( tuple_ == nullptrTuple() ); }
+
+    protected:
+      static PointerType nullptrTuple ()
+      {
+        return Dune::NullPointerInitialiser< PointerType >::apply();
+      }
+
+    private:
+      PointerType tuple_;
+    };
+
+  } // namespace Fem
+
+} // namespace Dune
+
+#endif // #ifndef DUNE_FEM_PASS_COMMON_POINTERTUPLE_HH
