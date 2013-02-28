@@ -35,6 +35,12 @@ namespace Dune
     // ApplyLocalOperatorDiscreteModel
     // -------------------------------
 
+    /** \brief discrete model layout for ApplyLocalOperatorPass
+     *
+     *  The discrete model determines the local function to be passed
+     *  to the local operator in ApplyLocalOperatorPass.
+     *
+     */
     template< class Traits,
               int N1 = -1,
               int N2 = -1,
@@ -48,39 +54,55 @@ namespace Dune
             >
     struct ApplyLocalOperatorDiscreteModel
     {
+      //! \brief implementation type of discrete model
       typedef typename Traits::DiscreteModelType DiscreteModelType;
+      //! \brief destination type
       typedef typename Traits::DestinationType DiscreteFunctionType;
+      //! \biref type of discrete function space type
       typedef typename Traits::DiscreteFunctionSpaceType DiscreteFunctionSpaceType;
 
+      //! \brief function space type
       typedef typename DiscreteFunctionSpaceType::FunctionSpaceType FunctionSpaceType;
+
+      //! \brief domain type
       typedef typename FunctionSpaceType::DomainType DomainType;
+      //! \brief range type
       typedef typename FunctionSpaceType::RangeType RangeType;
+      //! \brief jacobian range type
       typedef typename FunctionSpaceType::JacobianRangeType JacobianRangeType;
+      //! \brief hessian range type
       typedef typename FunctionSpaceType::HessianRangeType HessianRangeType;
 
+      //! \brief entity type
       typedef typename DiscreteFunctionSpaceType::EntityType EntityType;
+      //! \brief local coordinate type
       typedef typename EntityType::Geometry::LocalCoordinate LocalCoordinateType;
 
+      //! \brief selector of pass ids wrapped in (integral_constant)
       typedef typename Dune::Fem::Selector< N1 , N2 , N3 , N4 , N5 , N6 , N7 , N8 , N9 >::Type Selector;
 
+      //! \brief set time
       void setTime ( double time )
       {
         CHECK_INTERFACE_IMPLEMENTATION( asImp().setTime( time ) );
         return asImp().setTime( time );
       }
 
+      //! \brief return time
       double time () const
       {
         CHECK_INTERFACE_IMPLEMENTATION( asImp().time() );
         return asImp().time();
       }
 
+      //! \brief return order of local function to be passed to local operator
       int order ( const EntityType &entity ) const
       {
         CHECK_INTERFACE_IMPLEMENTATION( asImp().order( entity ) );
         return asImp().order( entity );
       }
 
+      //! \brief evaluate method of local function 
       template< class ArgumentTuple >
       void evaluate ( const EntityType &entity,
                       const LocalCoordinateType &x,
@@ -91,6 +113,7 @@ namespace Dune
         return asImp().evaluate( entity, x, tuple, value );
       }
 
+      //! \brief jacobian method of local function
       template< class JacobianTuple >
       void jacobian ( const EntityType &entity,
                       const LocalCoordinateType &x,
@@ -101,6 +124,7 @@ namespace Dune
         return asImp().evaluate( entity, x, tuple, jacobian );
       }
 
+      //! \brief hessian method of local function
       template< class HessianTuple >
       void hessian ( const EntityType &entity,
                      const LocalCoordinateType &x,
