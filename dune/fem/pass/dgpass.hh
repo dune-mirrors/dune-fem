@@ -5,7 +5,7 @@
 #include <dune/fem/misc/utility.hh>
 
 #include <dune/fem/pass/pass.hh>
-#include <dune/fem/pass/selection.hh>
+// #include <dune/fem/pass/selection.hh>
 // #include "discretemodel.hh"
 #include <dune/fem/pass/dgmodelcaller.hh>
 
@@ -19,7 +19,6 @@
 #include <dune/fem/space/common/arrays.hh> 
 #include <dune/fem/function/localfunction/temporary.hh>
 #include <dune/fem/operator/1order/localmassmatrix.hh>
-#include <dune/fem/pass/selection.hh>
 
 #include <dune/fem/quadrature/intersectionquadrature.hh>
 
