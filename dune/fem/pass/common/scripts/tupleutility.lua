@@ -62,7 +62,7 @@ function tuple_get_elements ( length, begin )
 end
 
 function tuple_push_back ( i )
-  body = "template< T" .. i .. ( ( (i == 1) ) and "" or ( ", " .. general_list( i-1 ) ) ) .. " >\n"
+  body = "template< class T" .. i .. ( ( (i == 1) ) and "" or ( ", " .. general_list( i-1, "class T" ) ) ) .. " >\n"
   body = body .. "inline " .. tuple( i ) .. " tuple_push_back ( const " .. tuple( i-1 ) .. " &t, T" .. i .. " t" .. i .. " )" .. "\n"
   body = body .. "{" .. "\n"
   if i == 1 then
@@ -75,7 +75,7 @@ function tuple_push_back ( i )
 end
 
 function tuple_push_front ( i )
-  body = "template< T" .. i .. ( ( (i == 1) ) and "" or ( ", " .. general_list( i-1 ) ) ) .. " >\n"
+  body = "template< class T" .. i .. ( ( (i == 1) ) and "" or ( ", " .. general_list( i-1, "class T" ) ) ) .. " >\n"
   body = body .."inline " .. tuple( i ) .. " tuple_push_front ( const " .. tuple( i-1, 2 ) .. " &t, T1 t1 )" .. "\n"
   body = body .. "{" .. "\n"
   if i == 1 then
