@@ -13,36 +13,36 @@
 -- Date: 2013-02-24
 ----------------------------------------------------------------------
 
-function template_list ( length, begin )
-  begin = ( begin ) and begin or 1 -- use default value begin = 1
+function general_list ( length, prefix, begin )
+  begin = ( begin ) and begin or 1      -- use default value begin = 1
+  prefix = ( prefix ) and prefix or "T"  -- use default value ""
 
   if length == 0 then
-    return "tuple<>"
+    return ""
   end
 
-  line = "template< class T" .. begin
+  line = prefix .. begin
   for j = (begin+1), (begin+length-1) do
-    line = line .. ", class T" .. j
+    line = line .. ", " .. prefix .. j
   end
-  line = line .. " >"
   return line
 end
 
-function tuple ( length, begin )
-  begin = ( begin ) and begin or 1 -- use default value begin = 1
+function template_list ( length, begin )
+  prefix = "class T"
+  if length == 0 then
+    return "template<>"
+  else 
+    return "template< " .. general_list( length, prefix, begin ) .. " >"
+  end
+end
 
+function tuple ( length, begin )
   if length == 0 then
     return "tuple<>"
+  else 
+    return "tuple< " .. general_list( length, "T", begin ) .. " >"
   end
-
-  line = "tuple<"
-  last = (begin+length-1)
-  for j = begin, last do
-    line = line .. " T" .. j
-    line = line .. ( ( j == last ) and " " or "," )
-  end
-  line = line .. ">"
-  return line
 end
 
 function tuple_get_elements ( length, begin )
@@ -62,8 +62,8 @@ function tuple_get_elements ( length, begin )
 end
 
 function tuple_push_back ( i )
-  body = template_list( i ).. "\n"
-  body = body .. "inline " .. tuple( i ) .. " tuple_push_back ( const " .. tuple( i-1 ) .. " &t, const T" .. i .. " &t" .. i .. " )" .. "\n"
+  body = "template< T" .. i .. ( ( (i == 1) ) and "" or ( ", " .. general_list( i-1 ) ) ) .. " >\n"
+  body = body .. "inline " .. tuple( i ) .. " tuple_push_back ( const " .. tuple( i-1 ) .. " &t, T" .. i .. " t" .. i .. " )" .. "\n"
   body = body .. "{" .. "\n"
   if i == 1 then
     body = body .. "  return " .. tuple( i ) .. "( t" .. i .. " );" .. "\n"
@@ -75,8 +75,8 @@ function tuple_push_back ( i )
 end
 
 function tuple_push_front ( i )
-  body = template_list( i ) .. "\n"
-  body = body .."inline " .. tuple( i ) .. " tuple_push_front ( const " .. tuple( i-1, 2 ) .. " &t, const T1 &t1 )" .. "\n"
+  body = "template< T" .. i .. ( ( (i == 1) ) and "" or ( ", " .. general_list( i-1 ) ) ) .. " >\n"
+  body = body .."inline " .. tuple( i ) .. " tuple_push_front ( const " .. tuple( i-1, 2 ) .. " &t, T1 t1 )" .. "\n"
   body = body .. "{" .. "\n"
   if i == 1 then
     body = body .. "  return " .. tuple( i ) .. "( t" .. i .. " );" .. "\n"
