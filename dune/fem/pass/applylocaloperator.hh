@@ -58,8 +58,7 @@ namespace Dune
       typedef typename FunctionSpaceType::HessianRangeType HessianRangeType;
 
       typedef typename DiscreteFunctionSpaceType::EntityType EntityType;
-      typedef typename EntityType::Geometry GeometryType;
-      typedef typename GeometryType::LocalCoordinate LocalCoordinateType;
+      typedef typename EntityType::Geometry::LocalCoordinate LocalCoordinateType;
 
       typedef typename Dune::Fem::Selector< N1 , N2 , N3 , N4 , N5 , N6 , N7 , N8 , N9 >::Type SelectorType;
 

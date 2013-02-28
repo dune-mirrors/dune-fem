@@ -25,26 +25,21 @@ namespace Dune
       template< int id >
       struct Position
       {
-        static const int v = Dune::FirstTypeIndex< Dune::integral_constant< int, id >, Selector >::value; 
+        static const int v = Dune::FirstTypeIndex< Selector, Dune::integral_constant< int, id > >::value; 
       };
 
     public:
       template< int id >
       struct Get
       {
-        typedef typename Dune::tuple_element< Position< id >::v, Tuple >::type Type;
+        static const int position = Position< id >::v;
+        typedef typename Dune::tuple_element< position, Tuple >::type Type;
       };
 
-      Wrapper ( Tuple &tuple ) : tuple_( tuple ) {}
+      explicit Wrapper ( const Tuple &tuple ) : tuple_( tuple ) {}
 
       template< int id >
       inline const typename Get< id >::Type &get () const
-      {
-        return Dune::get< Position< id >::v >( tuple_ );
-      }
-
-      template< int id >
-      inline typename Get< id >::Type &get ()
       {
         return Dune::get< Position< id >::v >( tuple_ );
       }
@@ -56,15 +51,8 @@ namespace Dune
         return get< id >();
       }
 
-      template< int id >
-      inline typename Get< id >::Type &
-      operator[] ( const Dune::integral_constant< int, id > & )
-      {
-        return get< id >();
-      }
-
     private:
-      Tuple &tuple_;
+      const Tuple &tuple_;
     };
 
   } // namespace Fem

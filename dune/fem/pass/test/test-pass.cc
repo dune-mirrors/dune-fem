@@ -26,6 +26,7 @@
 #include <dune/fem/test/testgrid.hh>
 
 #include <dune/fem/pass/applylocaloperator.hh>
+#include <dune/fem/pass/common/wrapper.hh>
 
 // Internal forward declaration
 // ----------------------------
@@ -48,14 +49,6 @@ struct DiscreteModelTraits
   typedef typename DestinationType::DiscreteFunctionSpaceType DiscreteFunctionSpaceType;
 
   typedef typename DiscreteFunctionSpaceType::FunctionSpaceType FunctionSpaceType;
-  typedef typename DiscreteFunctionSpaceType::GridPartType GridPartType;
-
-  typedef typename FunctionSpaceType::DomainType DomainType;
-  typedef typename FunctionSpaceType::RangeType RangeType;
-  typedef typename FunctionSpaceType::JacobianRangeType JacobianRangeType;
-
-  typedef Dune::Fem::CachingQuadrature< GridPartType, 0 > VolumeQuadratureType; 
-  typedef Dune::Fem::CachingQuadrature< GridPartType, 1 > FaceQuadratureType;
 };
 
 
@@ -89,13 +82,14 @@ public:
 
   int order ( const EntityType &entity ) const { return order_; }
 
-  template< class ArgumentTuple >
+  template< class RangeTuple >
   void evaluate ( const EntityType &entity,
                   const LocalCoordinateType &x,
-                  const ArgumentTuple &tuple,
+                  const RangeTuple &tuple,
                   RangeType &value ) const
   {
-    value = Dune::get< 0 >( tuple ); 
+    Dune::Fem::Wrapper< RangeTuple, typename BaseType::SelectorType > wrapper( tuple );
+    value = wrapper[ u ];
   }
 
   template< class JacobianTuple >
@@ -104,7 +98,8 @@ public:
                   const JacobianTuple &tuple,
                   JacobianRangeType &jacobian ) const
   {
-    jacobian = Dune::get< 0 >( tuple ); 
+    Dune::Fem::Wrapper< JacobianTuple, typename BaseType::SelectorType > wrapper( tuple );
+    jacobian = wrapper[ u ];
   }
 
 private:
