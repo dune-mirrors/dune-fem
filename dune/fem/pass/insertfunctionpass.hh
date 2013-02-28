@@ -3,7 +3,7 @@
 
 #include <dune/fem/function/common/discretefunction.hh>
 #include <dune/fem/function/common/gridfunctionadapter.hh>
-#include <dune/fem/pass/pass.hh>
+#include <dune/fem/pass/common/pass.hh>
 
 namespace Dune
 {

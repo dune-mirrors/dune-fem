@@ -4,7 +4,7 @@
 //- system includes 
 #include <dune/fem/misc/utility.hh>
 
-#include <dune/fem/pass/pass.hh>
+#include <dune/fem/pass/common/pass.hh>
 // #include <dune/fem/pass/selection.hh>
 // #include "discretemodel.hh"
 #include <dune/fem/pass/dgmodelcaller.hh>

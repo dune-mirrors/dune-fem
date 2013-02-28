@@ -14,7 +14,7 @@
 #include <dune/fem/pass/common/pointertuple.hh>
 #include <dune/fem/pass/common/selector.hh>
 #include <dune/fem/pass/common/tupletypetraits.hh>
-#include <dune/fem/pass/pass.hh>
+#include <dune/fem/pass/common/pass.hh>
 
 namespace Dune
 {
