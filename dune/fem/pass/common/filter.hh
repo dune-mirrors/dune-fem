@@ -130,14 +130,12 @@ namespace
           >
   class ExtractType
   {
-    dune_static_assert( ( Dune::tuple_size< Argument >::value >= Dune::tuple_size< Mapping >::value ),
-                        "Argument is not long enough" );
-
     // get pass number for element to append from mapping
     static const int position = Dune::tuple_element< index, Mapping >::type::value;
 
     // add type to seed
     typedef typename Dune::tuple_element< position, Argument >::type AppendType;
+
     typedef typename Dune::PushBackTuple< Seed, AppendType >::type AccumulatedType;
 
     typedef ExtractType< Argument, Mapping, AccumulatedType, (index+1), size > NextType;
@@ -164,18 +162,23 @@ namespace
 
   template< class Argument,
             class Mapping,
-            class ResultType,
+            class Seed,
             int size >
-  struct ExtractType< Argument, Mapping, ResultType, size, size >
+  struct ExtractType< Argument, Mapping, Seed, size, size >
   {
-    typedef ResultType Type;
+    typedef Seed Type;
+
+    static Type apply ( Argument & )
+    {
+      return Type();
+    }
 
   protected:
     template< class, class, class, int, int > friend class ExtractType;
 
-    static Type append ( Argument &argument, ResultType &result )
+    static Type append ( Argument &argument, Seed &seed )
     {
-      return result;
+      return seed;
     }
   };
 
