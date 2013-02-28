@@ -9,7 +9,7 @@ pass_HEADERS = applylocaloperator.hh \
 	       dgpass.hh \
 	       insertfunction.hh \
 	       insertfunctionpass.hh \
-	       modelcallerdefault.hh \
+	       modelcaller.hh \
 	       pass.hh
 
 include $(top_srcdir)/am/global-rules

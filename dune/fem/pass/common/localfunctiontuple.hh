@@ -197,7 +197,7 @@ namespace Dune
       void evaluateQuadrature ( const QuadratureType &quadrature, RangeTupleVectorType &vector ) const
       {
         const int nop = quadrature.nop();
-        assert( vector.size() == nop );
+        assert( vector.size() >= nop );
         for( int qp = 0; qp < nop; ++qp )
         {
           RangeTupleType &values = vector[ qp ];

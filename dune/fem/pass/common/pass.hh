@@ -1,5 +1,5 @@
-#ifndef DUNE_FEM_PASS_HH
-#define DUNE_FEM_PASS_HH
+#ifndef DUNE_FEM_PASS_COMMON_PASS_HH
+#define DUNE_FEM_PASS_COMMON_PASS_HH
 
 #include <limits>
 #include <string>
@@ -505,4 +505,4 @@ namespace Dune
 
 } // namespace Dune
 
-#endif // #ifndef DUNE_FEM_PASS_HH
+#endif // #ifndef DUNE_FEM_PASS_COMMON_PASS_HH
