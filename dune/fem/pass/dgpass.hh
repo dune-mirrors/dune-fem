@@ -1,4 +1,4 @@
 #warning #include <dune/fem/pass/dgpass.hh> is deprecated.
-#warning Use #include <dune/fem/pass/discontinuousgalerkin.hh> instead.
+#warning Use #include <dune/fem/pass/localdg.hh> instead.
 
-#include <dune/fem/pass/discontinuousgalerkin.hh>
+#include <dune/fem/pass/localdg.hh>

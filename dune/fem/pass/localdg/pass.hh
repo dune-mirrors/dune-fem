@@ -1,26 +1,14 @@
-#ifndef DUNE_FEM_DGPASS_HH
-#define DUNE_FEM_DGPASS_HH
+#ifndef DUNE_FEM_PASS_LOCALDG_HH
+#define DUNE_FEM_PASS_LOCALDG_HH
 
-//- system includes 
-#include <dune/fem/misc/utility.hh>
-
-#include <dune/fem/pass/common/pass.hh>
-// #include <dune/fem/pass/selection.hh>
-// #include "discretemodel.hh"
-#include <dune/fem/pass/dgmodelcaller.hh>
-
-#include <dune/fem/solver/timeprovider.hh>
-
-#include <dune/common/fvector.hh>
-#include <dune/grid/common/grid.hh>
-#include <dune/fem/quadrature/caching/twistutility.hh>
-
-#include <dune/fem/space/common/allgeomtypes.hh> 
-#include <dune/fem/space/common/arrays.hh> 
 #include <dune/fem/function/localfunction/temporary.hh>
 #include <dune/fem/operator/1order/localmassmatrix.hh>
-
+#include <dune/fem/pass/common/pass.hh>
+#include <dune/fem/quadrature/caching/twistutility.hh>
 #include <dune/fem/quadrature/intersectionquadrature.hh>
+#include <dune/fem/space/common/arrays.hh> 
+
+#include "modelcaller.hh"
 
 namespace Dune 
 {
@@ -92,12 +80,9 @@ namespace Dune
 
       // Various other types
       typedef typename DestinationType::LocalFunctionType LocalFunctionType;
-      typedef typename DiscreteModelType::SelectorType SelectorType;
-      typedef CombinedSelector< ThisType , SelectorType > CombinedSelectorType;
-      typedef DGDiscreteModelCaller< DiscreteModelType 
-                                     , ArgumentType 
-                                     , CombinedSelectorType
-                                   > DiscreteModelCallerType;
+
+      typedef typename DiscreteModelType::Selector Selector;
+      typedef DGDiscreteModelCaller< DiscreteModelType, ArgumentType, ThisType, Selector > DiscreteModelCallerType;
 
       // Range of the destination
       enum { dimRange = DiscreteFunctionSpaceType::dimRange };
@@ -125,7 +110,7 @@ namespace Dune
                   const int faceQuadOrd=-1,
                   const bool notThreadParallel = true ) :
         BaseType(pass, spc),
-        caller_(problem),
+        caller_(0),
         problem_(problem),
         arg_(0),
         dest_(0),
@@ -190,8 +175,9 @@ namespace Dune
           dest_->clear();
         }
 
-        // set arguments to caller 
-        caller_.setArgument(*arg_);
+        caller_ = new DiscreteModelCallerType( *arg_, problem_ );
+        assert( caller_ );
+        caller_->setTime( this->time() );
 
         // resize indicator function 
         visited_.resize( indexSet_.size(0) );
@@ -201,9 +187,6 @@ namespace Dune
 
         // time initialisation to max value 
         dtMin_ = std::numeric_limits<double>::max();
-
-        // time is member of pass 
-        caller_.setTime( this->time() );
       }
 
       //! Some timestep size management.
@@ -216,9 +199,10 @@ namespace Dune
           // communicate calculated function 
           spc_.communicate( dest );
         }
-        
-        // call finalize 
-        caller_.finalize();
+       
+        if( caller_ )
+          delete caller_;
+        caller_ = 0;
       }
 
       size_t numberOfElements() const { return 0; }
@@ -242,7 +226,7 @@ namespace Dune
         LocalFunctionType function = dest_->localFunction(en);
 
         // apply local inverse mass matrix 
-        localMassMatrix_.applyInverse( caller_, en, function );
+        localMassMatrix_.applyInverse( caller(), en, function );
       }
 
       //! local integration 
@@ -280,7 +264,7 @@ namespace Dune
           VolumeQuadratureType volQuad( en, volumeQuadOrd_ );
 
           // set entity and evaluate local functions for quadrature 
-          caller_.setEntity( en , volQuad );
+          caller().setEntity( en , volQuad );
 
           if( problem_.hasSource() )
           {
@@ -296,7 +280,7 @@ namespace Dune
         else 
         {
           // only set entity here without evaluation 
-          caller_.setEntity( en );
+          caller().setEntity( en );
         }
 
         /////////////////////////////
@@ -354,7 +338,7 @@ namespace Dune
                                                FaceQuadratureType::INSIDE);
 
               // set neighbor entity to inside entity 
-              caller_.setBoundary(en, faceQuadInner);
+              caller().setBoundary(en, faceQuadInner);
 
               // cache number of quadrature points 
               const size_t faceQuadInner_nop = faceQuadInner.nop();
@@ -368,7 +352,7 @@ namespace Dune
                 RangeType& flux = valEnVec_[ l ];
 
                 // eval boundary Flux  
-                wspeedS += caller_.boundaryFlux( *nit, faceQuadInner, l, flux )
+                wspeedS += caller().boundaryFlux( *nit, faceQuadInner, l, flux )
                          * faceQuadInner.weight(l);
                 
                 // apply weights 
@@ -424,7 +408,7 @@ namespace Dune
         function += update;
 
         // apply local inverse mass matrix 
-        localMassMatrix_.applyInverse( caller_, en, function );
+        localMassMatrix_.applyInverse( caller(), en, function );
       }
 
       //////////////////////////////////////////
@@ -447,7 +431,7 @@ namespace Dune
           JacobianRangeType& flux = fMatVec_[ l ];
 
           // evaluate analytical flux and source 
-          caller_.analyticalFlux(en, volQuad, l, flux );
+          caller().analyticalFlux(en, volQuad, l, flux );
           
           const double intel = geo.integrationElement(volQuad.point(l))
                              * volQuad.weight(l);
@@ -488,7 +472,7 @@ namespace Dune
 
           // evaluate analytical flux and source 
           const double dtEst =
-            caller_.analyticalFluxAndSource(en, volQuad, l, flux, source );
+            caller().analyticalFluxAndSource(en, volQuad, l, flux, source );
           
           const double intel = geo.integrationElement(volQuad.point(l))
                              * volQuad.weight(l);
@@ -529,7 +513,7 @@ namespace Dune
         const QuadratureImp &faceQuadOuter = interQuad.outside();
 
         // make Entity known in caller  
-        caller_.setNeighbor(nb, faceQuadInner, faceQuadOuter);
+        caller().setNeighbor(nb, faceQuadInner, faceQuadOuter);
        
         // get goemetry of neighbor 
         const Geometry & nbGeo = nb.geometry();
@@ -552,7 +536,7 @@ namespace Dune
           RangeType& fluxEn = valEnVec_[ l ];
           RangeType& fluxNb = valNbVec_[ l ];
 
-          wspeedS += caller_.numericalFlux(intersection, 
+          wspeedS += caller().numericalFlux(intersection, 
                                            faceQuadInner, 
                                            faceQuadOuter,
                                            l, 
@@ -580,14 +564,27 @@ namespace Dune
 
         return nbvol;
       }
-                           
+
+    protected:
+      DiscreteModelCallerType &caller ()
+      {
+        assert( caller_ );
+        return *caller_;
+      }
+
+      const DiscreteModelCallerType &caller () const
+      {
+        assert( caller_ );
+        return *caller_;
+      }
+
     private:
       LocalDGPass();
       LocalDGPass(const LocalDGPass&);
       LocalDGPass& operator=(const LocalDGPass&);
 
     protected:
-      mutable DiscreteModelCallerType caller_;
+      mutable DiscreteModelCallerType *caller_;
       const DiscreteModelType& problem_; 
       
       mutable ArgumentType* arg_;
@@ -628,4 +625,4 @@ using Fem :: LocalDGPass ;
 
 } // namespace Dune
 
-#endif // #ifndef DUNE_FEM_DGPASS_HH
+#endif // #ifndef DUNE_FEM_PASS_LOCALDG_HH

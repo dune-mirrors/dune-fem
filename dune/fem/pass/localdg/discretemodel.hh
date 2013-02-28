@@ -1,5 +1,5 @@
-#ifndef DUNE_FEM_DGDISCRETEMODEL_HH
-#define DUNE_FEM_DGDISCRETEMODEL_HH
+#ifndef DUNE_FEM_LOCALDG_DISCRETEMODEL_HH
+#define DUNE_FEM_LOCALDG_DISCRETEMODEL_HH
 
 #include <cassert>
 
@@ -526,4 +526,5 @@ namespace Dune
   } // namespace Fem 
 
 }  // namespace Dune
-#endif // #ifndef DUNE_FEM_DGDISCRETEMODEL_HH
+
+#endif // #ifndef DUNE_FEM_LOCALDG_DISCRETEMODEL_HH

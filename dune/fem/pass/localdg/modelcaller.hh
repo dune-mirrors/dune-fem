@@ -1,5 +1,5 @@
-#ifndef DUNE_FEM_PASS_DGMODELCALLER_HH
-#define DUNE_FEM_PASS_DGMODELCALLER_HH
+#ifndef DUNE_FEM_PASS_LOCALDG_MODELCALLER_HH
+#define DUNE_FEM_PASS_LOCALDG_MODELCALLER_HH
 
 #include <cstddef>
 #include <vector>
@@ -261,4 +261,4 @@ namespace Dune
 
 } // namespace Dune
 
-#endif // #ifndef DUNE_FEM_PASS_DGMODELCALLER_HH
+#endif // #ifndef DUNE_FEM_PASS_LOCALDG_MODELCALLER_HH
