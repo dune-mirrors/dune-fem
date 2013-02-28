@@ -1,17 +1,15 @@
 #ifndef DUNE_FEM_PASS_HH
 #define DUNE_FEM_PASS_HH
 
-//- System includes
-#include <string>
 #include <limits>
+#include <string>
 
-//- Dune includes
 #include <dune/common/timer.hh>
-// #include <dune/fem/misc/femtuples.hh>
-// #include <dune/fem/misc/utility.hh>
+#include <dune/common/tuples.hh>
 
-//- local includes 
 #include <dune/fem/operator/common/operator.hh>
+
+#include "tupleutility.hh"
 
 namespace Dune 
 {
