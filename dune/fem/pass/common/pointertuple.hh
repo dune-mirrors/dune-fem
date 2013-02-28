@@ -110,6 +110,24 @@ namespace Dune
       //! \brief please doc me
       typedef typename DereferenceTuple< PointerType >::Type ReferenceType;
 
+    private:
+      // check whether a tuple pointer can be dereferenced
+      struct SaneTuplePointer
+      {
+        SaneTuplePointer () : v_( true ) {}
+
+        template< class Ptr >
+        void visit ( Ptr &ptr )
+        {
+          v_ &= bool( ptr );
+        }
+
+        operator bool() const { return v_; }
+
+      private:
+        bool v_;
+      };
+
     public:
       //! \brief store null pointer tuple
       PointerTuple ()
@@ -147,8 +165,14 @@ namespace Dune
         return DereferenceTuple< PointerType >::apply( tuple_ );
       }
 
-      //! \brief return true, if internal pointer is not null pointer tuple 
-      operator bool () const { return ( tuple_ != nullptrTuple() ); }
+      //! \brief return true, if internal tuple can be dereferenced
+      operator bool () const
+      {
+        Dune::ForEachValue< PointerType > forEach( tuple_ );
+        SaneTuplePointer check;
+        forEach.apply( check );
+        return check;
+      }
 
     protected:
       static PointerType nullptrTuple ()
