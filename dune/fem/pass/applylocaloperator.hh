@@ -207,11 +207,12 @@ namespace Dune
                                const DiscreteFunctionSpaceType &space,
                                std::string passName = "ApplyLocalOperatorPass" )
       : BaseType( pass, space, passName ),
-        caller_( discreteModel ),
-        localFunction_( caller_ ),
+        discreteModel_( discreteModel ),
         localOperator_( localOperator ),
         arg_( nullptr ),
-        dest_( nullptr )
+        dest_( nullptr ),
+        caller_( nullptr ),
+        localFunction_( nullptr )
       {}
 
       void printTexInfo (std::ostream &ostream ) const
@@ -226,36 +227,42 @@ namespace Dune
       {
         arg_ = const_cast< ArgumentType* >( &arg );
         dest_ = &dest;
-        caller_.prepare( *arg_ );
-        caller_.setTime( time() );
+
+        caller_ = new DiscreteModelCallerType( *arg_, discreteModel_ );
+        assert( caller_ );
+        caller_->setTime( time() );
+
+        localFunction_ = new LocalFunction( *caller_ );
+        assert( localFunction_ );
       }
 
       void finalize ( const ArgumentType &arg, DestinationType &dest ) const
       {
         space().communicate( dest );
-        caller_.finalize();
+
+        if( localFunction_ )
+          delete localFunction_;
+
+        if( caller_ )
+          delete caller_;
+        caller_ = nullptr;
       }
 
       void applyLocal ( const EntityType &entity ) const
       {
-        // initialize argument for local operator
-        LocalFunction &arg = localFunction_;
-        arg.init( entity );
-        
-        // get destination for local operator
-        typename DestinationType::LocalFunctionType dest = dest_->localFunction( entity );
-
-        // apply local operator
-        localOperator_( arg, dest );
+        localFunction_->init( entity );
+        typename DestinationType::LocalFunctionType dofs = dest_->localFunction( entity );
+        localOperator_( *localFunction_, dofs );
       }
 
     private:
-      mutable DiscreteModelCallerType caller_;
-      mutable LocalFunction localFunction_;
+      DiscreteModelType &discreteModel_;
       const LocalOperatorType &localOperator_;
 
       mutable ArgumentType *arg_;
       mutable DestinationType *dest_;
+      mutable DiscreteModelCallerType *caller_;
+      mutable LocalFunction *localFunction_;
     };
 
 
@@ -369,39 +376,11 @@ namespace Dune
       typedef typename LocalFunctionTupleType::HessianRangeTupleType HessianRangeTupleType;
 
     public:
-      ApplyLocalOperatorDiscreteModelCaller ( DiscreteModel &discreteModel )
+      ApplyLocalOperatorDiscreteModelCaller ( ArgumentType &argument, DiscreteModel &discreteModel )
       : discreteModel_( discreteModel ),
-        localFunctionTuple_( nullptr )
-      {
-        // we are going to use placement new
-        buffer_ = new char[ sizeof( LocalFunctionTupleType ) ];
-      }
-
-      ~ApplyLocalOperatorDiscreteModelCaller ()
-      {
-        if( localFunctionTuple_ )
-          localFunctionTuple_->~LocalFunctionTupleType();
-        localFunctionTuple_ = nullptr;
-
-        delete[] buffer_;
-      }
-
-      //! \brief prepare
-      void prepare ( ArgumentType &argument )
-      {
-        discreteFunctionPointerTuple_ = DiscreteFunctionPointerTupleType( FilterType::apply( argument ) );
-        localFunctionTuple_ = new( buffer_) LocalFunctionTupleType( *discreteFunctionPointerTuple_ );
-      }
-
-      //! \brief finalize
-      void finalize ()
-      {
-        if( localFunctionTuple_ )
-          localFunctionTuple_->~LocalFunctionTupleType();
-        localFunctionTuple_ = nullptr;
-
-        discreteFunctionPointerTuple_ = DiscreteFunctionPointerTupleType();
-      }
+        discreteFunctionPointerTuple_( FilterType::apply( argument ) ),
+        localFunctionTuple_( *discreteFunctionPointerTuple_ )
+      {}
       
       //! \brief update local functions
       void setEntity ( const EntityType &entity )
@@ -470,36 +449,18 @@ namespace Dune
 
     protected:
       DiscreteModelType &discreteModel () { return discreteModel_; }
-
       const DiscreteModelType &discreteModel () const { return discreteModel_; }
 
-      LocalFunctionTupleType &localFunctionTuple ()
-      {
-        assert( localFunctionTuple_ );
-        return *localFunctionTuple_;
-      }
-
-      const LocalFunctionTupleType &localFunctionTuple () const
-      {
-        assert( localFunctionTuple_ );
-        return *localFunctionTuple_;
-      }
-
-      static DiscreteFunctionPointerTupleType nullptrTuple ()
-      {
-        return Dune::NullPointerInitialiser< DiscreteFunctionTupleType >::apply();
-      }
+      LocalFunctionTupleType &localFunctionTuple () { return localFunctionTuple_; }
+      const LocalFunctionTupleType &localFunctionTuple () const { return localFunctionTuple_; }
 
     private:
       ApplyLocalOperatorDiscreteModelCaller ( const ThisType & );
       ThisType &operator= ( const ThisType & );
 
       DiscreteModelType &discreteModel_;
-      
       DiscreteFunctionPointerTupleType discreteFunctionPointerTuple_;
-
-      LocalFunctionTupleType *localFunctionTuple_;
-      char *buffer_;
+      LocalFunctionTupleType localFunctionTuple_;
 
       // caches for evaluating local functions
       mutable RangeTupleType values_;

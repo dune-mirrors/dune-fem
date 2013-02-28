@@ -147,8 +147,8 @@ namespace Dune
         return DereferenceTuple< PointerType >::apply( tuple_ );
       }
 
-      //! \brief return true, if internal pointer is null pointer tuple 
-      operator bool () const { return ( tuple_ == nullptrTuple() ); }
+      //! \brief return true, if internal pointer is not null pointer tuple 
+      operator bool () const { return ( tuple_ != nullptrTuple() ); }
 
     protected:
       static PointerType nullptrTuple ()
