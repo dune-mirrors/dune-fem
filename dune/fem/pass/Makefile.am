@@ -7,6 +7,7 @@ pass_HEADERS = applylocaloperator.hh \
 	       dgdiscretemodel.hh \
 	       dgmodelcaller.hh \
 	       dgpass.hh \
+	       insertfunction.hh \
 	       insertfunctionpass.hh \
 	       modelcallerdefault.hh \
 	       pass.hh
