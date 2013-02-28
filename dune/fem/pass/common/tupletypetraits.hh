@@ -11,50 +11,6 @@
 namespace
 {
 
-  // PointeeTypeEvaluator
-  // --------------------
-
-  template< class T >
-  struct PointeeTypeEvaluator
-  {
-    typedef typename Dune::TypeTraits< T >::PointeeType Type;
-  };
-
-
-
-  // ReferredTypeEvaluator 
-  // ---------------------
-
-  template< class T >
-  struct ReferredTypeEvaluator
-  {
-    typedef typename Dune::TypeTraits< T >::ReferredType Type;
-  };
-
-
-
-  // IsPointer
-  // ---------
-
-  template< class T >
-  struct IsPointer
-  {
-    static const bool value = Dune::TypeTraits< T >::isPointer;
-  };
-
-
-
-  // IsReference
-  // -----------
-
-  template< class T >
-  struct IsReference
-  {
-    static const bool value = Dune::TypeTraits< T >::isReference;
-  };
-
-
-
   // CheckAllElements
   // ----------------
 
@@ -130,8 +86,33 @@ namespace Dune
    * \brief Mimicks Dune::TypeTraits (see dune/common/typetraits.hh) for tuples.
    */
   template< class Tuple >
-  struct TupleTypeTraits
+  class TupleTypeTraits
   {
+    template< class T >
+    struct IsPointer
+    {
+      static const bool value = Dune::TypeTraits< T >::isPointer;
+    };
+
+    template< class T >
+    struct IsReference
+    {
+      static const bool value = Dune::TypeTraits< T >::isReference;
+    };
+
+    template< class T >
+    struct PointeeTypeEvaluator
+    {
+      typedef typename Dune::TypeTraits< T >::PointeeType Type;
+    };
+
+    template< class T >
+    struct ReferredTypeEvaluator
+    {
+      typedef typename Dune::TypeTraits< T >::ReferredType Type;
+    };
+
+  public:
     static const bool isPointerTuple = CheckAllElements< Tuple, IsPointer >::value;
 
     typedef typename Dune::SelectType< isPointerTuple,
@@ -149,6 +130,9 @@ namespace Dune
   // tuple_remove_const
   // ------------------
 
+  /*
+   * \brief Please doc me.
+   */
   template< class Tuple >
   class tuple_remove_const
   {
