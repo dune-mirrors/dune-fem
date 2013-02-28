@@ -88,7 +88,7 @@ public:
                   const RangeTuple &tuple,
                   RangeType &value ) const
   {
-    Dune::Fem::Wrapper< RangeTuple, typename BaseType::SelectorType > wrapper( tuple );
+    Dune::Fem::Wrapper< RangeTuple, typename BaseType::Selector > wrapper( tuple );
     value = wrapper[ u ];
   }
 
@@ -98,7 +98,7 @@ public:
                   const JacobianTuple &tuple,
                   JacobianRangeType &jacobian ) const
   {
-    Dune::Fem::Wrapper< JacobianTuple, typename BaseType::SelectorType > wrapper( tuple );
+    Dune::Fem::Wrapper< JacobianTuple, typename BaseType::Selector > wrapper( tuple );
     jacobian = wrapper[ u ];
   }
 

@@ -14,7 +14,6 @@
 #include <dune/fem/pass/common/pointertuple.hh>
 #include <dune/fem/pass/common/selector.hh>
 #include <dune/fem/pass/common/tupletypetraits.hh>
-#include <dune/fem/pass/common/wrapper.hh>
 #include <dune/fem/pass/pass.hh>
 
 namespace Dune
@@ -23,9 +22,11 @@ namespace Dune
   namespace Fem
   {
 
-    // Internal forward declaration
-    // ----------------------------
+    // Internal forward declarations
+    // -----------------------------
 
+    template< class DiscreteModel, class LocalOperator, class PreviousPass, int id >
+    struct ApplyLocalOperatorPass;
     template< class DiscreteModel, class Argument, class Pass, class Selector >
     class ApplyLocalOperatorDiscreteModelCaller;
 
@@ -60,7 +61,7 @@ namespace Dune
       typedef typename DiscreteFunctionSpaceType::EntityType EntityType;
       typedef typename EntityType::Geometry::LocalCoordinate LocalCoordinateType;
 
-      typedef typename Dune::Fem::Selector< N1 , N2 , N3 , N4 , N5 , N6 , N7 , N8 , N9 >::Type SelectorType;
+      typedef typename Dune::Fem::Selector< N1 , N2 , N3 , N4 , N5 , N6 , N7 , N8 , N9 >::Type Selector;
 
       void setTime ( double time )
       {
@@ -120,6 +121,29 @@ namespace Dune
     // ApplyLocalOperatorPass
     // ----------------------
 
+    /** \brief A pass implementation allowing for user defined local
+     *         operation to be applied.
+     *
+     *  Local pass that evaluates a local function from given discrete
+     *  model. The resulting local function is passed to the template 
+     *  argument local operator. The local operator writes to the 
+     *  destination of this pass.
+     *
+     *  The local operator must have the following form: 
+     * \code
+  struct LocalOperator
+  {
+    template< class LocalFunction, class LocalDofVector >
+    void operator() ( const LocalFunction &localFunction, LocalDofVector &dofs ) const;
+  };
+     * \endcode
+     *
+     *  \tparam  DiscreteModel  discrete model
+     *  \tparam  LocalOperator  local operator
+     *  \tparam  PreviousPass   type of previous pass
+     *  \tparam  id             pass id
+     * 
+     */
     template< class DiscreteModel, class LocalOperator, class PreviousPass, int id >
     struct ApplyLocalOperatorPass 
     : public Dune::Fem::LocalPass< DiscreteModel, PreviousPass, id >
@@ -128,27 +152,25 @@ namespace Dune
       typedef Dune::Fem::LocalPass< DiscreteModel, PreviousPass, id > BaseType;
 
     public:
+      //! \brief type of discrete model
       typedef DiscreteModel DiscreteModelType;
+      //! \brief type of local operator
       typedef LocalOperator LocalOperatorType;
 
+      //! \brief argument type
       typedef typename BaseType::ArgumentType ArgumentType;
+      //! \brief destination type
       typedef typename BaseType::DestinationType DestinationType;
 
-      typedef typename BaseType::RangeFieldType RangeFieldType;
-
+      //! \brief discrete function space type
       typedef typename BaseType::DiscreteFunctionSpaceType DiscreteFunctionSpaceType;
 
+      //! \brief entity type
       typedef typename BaseType::EntityType EntityType;
 
     private:
-      typedef typename DiscreteFunctionSpaceType::FunctionSpaceType FunctionSpaceType;
-      typedef typename DiscreteFunctionSpaceType::GridPartType GridPartType;
-
-      typedef typename DestinationType::LocalFunctionType LocalFunctionType;
-
-      typedef typename DiscreteModelType::SelectorType SelectorType;
-      typedef ApplyLocalOperatorDiscreteModelCaller< DiscreteModelType, ArgumentType, ThisType, SelectorType > DiscreteModelCallerType;
-
+      typedef typename DiscreteModelType::Selector Selector;
+      typedef ApplyLocalOperatorDiscreteModelCaller< DiscreteModelType, ArgumentType, ThisType, Selector > DiscreteModelCallerType;
       struct LocalFunction;
 
     public:
@@ -220,7 +242,7 @@ namespace Dune
     template< class DiscreteModel, class LocalOperator, class PreviousPass, int id >
     struct ApplyLocalOperatorPass< DiscreteModel, LocalOperator, PreviousPass, id >::LocalFunction
     {
-      typedef typename ApplyLocalOperatorPass< DiscreteModel, LocalOperator, PreviousPass, id >::FunctionSpaceType FunctionSpaceType;
+      typedef typename DiscreteFunctionSpaceType::FunctionSpaceType FunctionSpaceType;
 
       typedef typename FunctionSpaceType::DomainFieldType DomainFieldType;
       typedef typename FunctionSpaceType::RangeFieldType RangeFieldType;
@@ -285,10 +307,10 @@ namespace Dune
     // ApplyLocalOperatorDiscreteModelCaller
     // -------------------------------------
 
-    template< class DiscreteModel, class Argument, class Pass, class Selector >
+    template< class DiscreteModel, class Argument, class Pass, class SelectorTuple >
     class ApplyLocalOperatorDiscreteModelCaller
     {
-      typedef ApplyLocalOperatorDiscreteModelCaller< DiscreteModel, Argument, Pass, Selector > ThisType;
+      typedef ApplyLocalOperatorDiscreteModelCaller< DiscreteModel, Argument, Pass, SelectorTuple > ThisType;
 
     public:
       //! \brief discrete model type
@@ -296,7 +318,7 @@ namespace Dune
       //! \brief total argument type
       typedef Argument ArgumentType;
       //! \brief selector
-      typedef Selector SelectorType;
+      typedef SelectorTuple Selector;
 
       //! \brief entity type
       typedef typename DiscreteModelType::EntityType EntityType;
@@ -313,9 +335,7 @@ namespace Dune
 
     protected:
       typedef Filter< ArgumentType, Pass, Selector > FilterType;
-
       typedef PointerTuple< typename FilterType::ResultType > DiscreteFunctionPointerTupleType;
-
       typedef typename DiscreteFunctionPointerTupleType::ElementType DiscreteFunctionTupleType;
 
       typedef LocalFunctionTuple< DiscreteFunctionTupleType, EntityType > LocalFunctionTupleType;
