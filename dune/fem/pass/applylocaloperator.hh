@@ -75,7 +75,6 @@ namespace Dune
         return asImp().time();
       }
 
-
       int order ( const EntityType &entity ) const
       {
         CHECK_INTERFACE_IMPLEMENTATION( asImp().order( entity ) );
@@ -368,10 +367,16 @@ namespace Dune
       }
 
       //! \brief set value to be returned by method time()
-      void setTime ( double time ) DUNE_DEPRECATED { discreteModel().setTime( time ); }
+      void setTime ( double time ) // DUNE_DEPRECATED
+      {
+        discreteModel().setTime( time );
+      }
 
       //!  \brief return time
-      double time () const DUNE_DEPRECATED { return discreteModel().time(); }
+      double time () const // DUNE_DEPRECATED
+      {
+        return discreteModel().time();
+      }
 
       int order ( const EntityType &entity ) const
       {

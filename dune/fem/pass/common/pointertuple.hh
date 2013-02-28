@@ -10,16 +10,6 @@
 
 namespace
 {
-  // ReferenceEvaluator
-  // ------------------
-
-  template< class T >
-  struct ReferenceEvaluator 
-  {
-    typedef const typename Dune::TypeTraits< T >::PointeeType & Type;
-  };
-
-
 
   // DereferenceTuple
   // ----------------
@@ -31,7 +21,15 @@ namespace
           >
   struct DereferenceTuple
   {
+
+    template< class T >
+    struct ReferenceEvaluator 
+    {
+      typedef const typename Dune::TypeTraits< T >::PointeeType & Type;
+    };
+
     typedef typename ReferenceEvaluator< typename Dune::tuple_element< index, Tuple >::type >::Type AppendType;
+
     typedef typename Dune::PushBackTuple< Seed, AppendType >::type AccumulatedType;
     typedef DereferenceTuple< Tuple, AccumulatedType, (index+1), size > NextType;
 
@@ -51,23 +49,30 @@ namespace
     {
       typename Dune::tuple_element< index, Tuple >::type pointer = Dune::get< index >( tuple );
       AppendType append = *pointer;
-      AccumulatedType next = Dune::tuple_push_back( seed, append );
+      AccumulatedType next = Dune::tuple_push_back< AppendType >( seed, append );
       return NextType::append( tuple, next );
     }
   };
 
   template< class Tuple,
-            class ResultType,
+            class Seed,
             int size
           >
-  struct DereferenceTuple< Tuple, ResultType, size, size >
+  struct DereferenceTuple< Tuple, Seed, size, size >
   {
+    typedef Seed Type;
+
+    static Type apply ( Tuple & )
+    {
+      return Type();
+    }
+
   protected:
     template< class, class, int, int > friend class DereferenceTuple;
 
-    static ResultType append ( Tuple &tuple, ResultType &result )
+    static Type append ( Tuple &tuple, Seed &seed )
     {
-      return result;
+      return seed;
     }
   };
 
