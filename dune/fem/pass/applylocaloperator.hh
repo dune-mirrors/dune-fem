@@ -5,14 +5,13 @@
 #include <iosfwd>
 #include <string>
 
-#include <dune/common/bartonnackmanifcheck.hh>
+#include <dune/common/documentation.hh>
 #include <dune/common/exceptions.hh>
 #include <dune/common/nullptr.hh>
 
 #include <dune/fem/pass/common/localfunctiontuple.hh>
 #include <dune/fem/pass/common/pass.hh>
 #include <dune/fem/pass/common/pointertuple.hh>
-#include <dune/fem/pass/common/selector.hh>
 #include <dune/fem/pass/common/tupletypetraits.hh>
 #include <dune/fem/pass/common/tupleutility.hh>
 
@@ -35,31 +34,19 @@ namespace Dune
     // ApplyLocalOperatorDiscreteModel
     // -------------------------------
 
-    /** \brief discrete model layout for ApplyLocalOperatorPass
+    /** \brief Sample class layout of discrete models as expected by 
+     *         ApplyLocalOperatorPass.
      *
      *  The discrete model determines the local function to be passed
      *  to the local operator in ApplyLocalOperatorPass.
      *
      */
-    template< class Traits,
-              int N1 = -1,
-              int N2 = -1,
-              int N3 = -1,
-              int N4 = -1,
-              int N5 = -1,
-              int N6 = -1,
-              int N7 = -1,
-              int N8 = -1,
-              int N9 = -1
-            >
+    template< class DiscreteFunction >
     struct ApplyLocalOperatorDiscreteModel
     {
-      //! \brief implementation type of discrete model
-      typedef typename Traits::DiscreteModelType DiscreteModelType;
-      //! \brief destination type
-      typedef typename Traits::DestinationType DiscreteFunctionType;
+      typedef DiscreteFunction DiscreteFunctionType;
       //! \biref type of discrete function space type
-      typedef typename Traits::DiscreteFunctionSpaceType DiscreteFunctionSpaceType;
+      typedef typename DiscreteFunctionType::DiscreteFunctionSpaceType DiscreteFunctionSpaceType;
 
       //! \brief function space type
       typedef typename DiscreteFunctionSpaceType::FunctionSpaceType FunctionSpaceType;
@@ -78,66 +65,38 @@ namespace Dune
       //! \brief local coordinate type
       typedef typename EntityType::Geometry::LocalCoordinate LocalCoordinateType;
 
-      //! \brief selector of pass ids wrapped in (integral_constant)
-      typedef typename Dune::Fem::Selector< N1 , N2 , N3 , N4 , N5 , N6 , N7 , N8 , N9 >::Type Selector;
+      //! \brief tuple of integral_constants containing pass ids
+      typedef ImplementationDefined Selector;
 
       //! \brief set time
-      void setTime ( double time )
-      {
-        CHECK_INTERFACE_IMPLEMENTATION( asImp().setTime( time ) );
-        return asImp().setTime( time );
-      }
+      void setTime ( double time );
 
       //! \brief return time
-      double time () const
-      {
-        CHECK_INTERFACE_IMPLEMENTATION( asImp().time() );
-        return asImp().time();
-      }
+      double time () const;
 
       //! \brief return order of local function to be passed to local operator
-      int order ( const EntityType &entity ) const
-      {
-        CHECK_INTERFACE_IMPLEMENTATION( asImp().order( entity ) );
-        return asImp().order( entity );
-      }
+      int order ( const EntityType &entity ) const;
 
       //! \brief evaluate method of local function 
       template< class ArgumentTuple >
       void evaluate ( const EntityType &entity,
                       const LocalCoordinateType &x,
                       const ArgumentTuple &tuple,
-                      RangeType &value ) const
-      {
-        CHECK_INTERFACE_IMPLEMENTATION( asImp().evaluate( entity, x, tuple, value ) );
-        return asImp().evaluate( entity, x, tuple, value );
-      }
+                      RangeType &value ) const;
 
       //! \brief jacobian method of local function
       template< class JacobianTuple >
       void jacobian ( const EntityType &entity,
                       const LocalCoordinateType &x,
                       const JacobianTuple &tuple,
-                      JacobianRangeType &jacobian ) const
-      {
-        CHECK_INTERFACE_IMPLEMENTATION( asImp().jacobian( entity, x, tuple, jacobian ) );
-        return asImp().evaluate( entity, x, tuple, jacobian );
-      }
+                      JacobianRangeType &jacobian ) const;
 
       //! \brief hessian method of local function
       template< class HessianTuple >
       void hessian ( const EntityType &entity,
                      const LocalCoordinateType &x,
                      const HessianTuple &tuple,
-                     HessianRangeType &hessian ) const
-      {
-        CHECK_INTERFACE_IMPLEMENTATION( asImp().evaluate( entity, x, tuple, hessian ) );
-        return asImp().evaluate( entity, x, tuple, hessian );
-      }
-
-    protected:
-      DiscreteModelType &asImp () { return static_cast< DiscreteModelType & >( *this ); }
-      const DiscreteModelType &asImp () const { return static_cast< const DiscreteModelType & >( *this ); }
+                     HessianRangeType &hessian ) const;
     };
 
 
