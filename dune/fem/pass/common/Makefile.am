@@ -7,6 +7,6 @@ passcommon_HEADERS = localfunctionselector.hh \
 		     selector.hh \
 		     tupletypetraits.hh \
 		     tupleutility.hh \
-		     wrapper.hh
+		     typeindexedtuple.hh
 
 include $(top_srcdir)/am/global-rules

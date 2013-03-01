@@ -15,7 +15,10 @@
 #include <dune/fem/misc/l2norm.hh>
 #include <dune/fem/misc/mpimanager.hh>
 #include <dune/fem/operator/common/spaceoperatorif.hh>
+#include <dune/fem/pass/applylocaloperator.hh>
 #include <dune/fem/pass/common/pass.hh>
+#include <dune/fem/pass/common/selector.hh>
+#include <dune/fem/pass/common/typeindexedtuple.hh>
 #include <dune/fem/quadrature/cachingquadrature.hh>
 #include <dune/fem/space/common/adaptmanager.hh>
 #include <dune/fem/space/common/functionspace.hh>
@@ -25,55 +28,34 @@
 #include <dune/fem/test/exactsolution.hh>
 #include <dune/fem/test/testgrid.hh>
 
-#include <dune/fem/pass/applylocaloperator.hh>
-#include <dune/fem/pass/common/wrapper.hh>
-
-// Internal forward declaration
-// ----------------------------
-
-template< class, int >
-class DiscreteModel;
-
-
-
-// DiscreteModelTraits
-// -------------------
-
-template< class DiscreteFunction, int id >
-struct DiscreteModelTraits
-{
-  typedef DiscreteModel< DiscreteFunction, id > DiscreteModelType;
-
-  typedef DiscreteFunction DestinationType;
-
-  typedef typename DestinationType::DiscreteFunctionSpaceType DiscreteFunctionSpaceType;
-
-  typedef typename DiscreteFunctionSpaceType::FunctionSpaceType FunctionSpaceType;
-};
-
-
-
 // DiscreteModel
 // -------------
 
-template< class DiscreteFunction, int id >
+template< class DiscreteFunction, class SelectorTuple >
 struct DiscreteModel
-: public Dune::Fem::ApplyLocalOperatorDiscreteModel< DiscreteModelTraits< DiscreteFunction, id >, id >
 {
-  typedef DiscreteModelTraits< DiscreteFunction, id > Traits;
+  struct Traits
+  {
+    typedef DiscreteFunction DestinationType;
+    typedef typename DestinationType::DiscreteFunctionSpaceType DiscreteFunctionSpaceType;
+  };
+
+  typedef typename Traits::DestinationType DiscreteFunctionType;
+  typedef typename Traits::DiscreteFunctionSpaceType DiscreteFunctionSpaceType;
+  typedef typename DiscreteFunctionSpaceType::FunctionSpaceType FunctionSpaceType;
+
+  typedef typename FunctionSpaceType::RangeType RangeType;
+  typedef typename FunctionSpaceType::JacobianRangeType JacobianRangeType;
+
+  typedef typename DiscreteFunctionSpaceType::EntityType EntityType;
+  typedef typename EntityType::Geometry::LocalCoordinate LocalCoordinateType;
+
+  typedef SelectorTuple Selector;
 
 private:
-  typedef Dune::Fem::ApplyLocalOperatorDiscreteModel< Traits, id > BaseType;
-  
-  Dune::integral_constant< int, id > u;
+  static const typename Dune::tuple_element< 0, Selector >::type u;
 
 public:
-  typedef typename BaseType::RangeType RangeType;
-  typedef typename BaseType::JacobianRangeType JacobianRangeType;
-
-  typedef typename BaseType::EntityType EntityType;
-  typedef typename BaseType::LocalCoordinateType LocalCoordinateType;
-
   DiscreteModel ( int order ) : order_( order ), time_( 0. ) {}
 
   void setTime ( double time ) { time_ = time; }
@@ -88,7 +70,7 @@ public:
                   const RangeTuple &tuple,
                   RangeType &value ) const
   {
-    Dune::Fem::Wrapper< RangeTuple, typename BaseType::Selector > wrapper( tuple );
+    Dune::TypeIndexedTuple< RangeTuple, Selector > wrapper( tuple );
     value = wrapper[ u ];
   }
 
@@ -98,7 +80,7 @@ public:
                   const JacobianTuple &tuple,
                   JacobianRangeType &jacobian ) const
   {
-    Dune::Fem::Wrapper< JacobianTuple, typename BaseType::Selector > wrapper( tuple );
+    Dune::TypeIndexedTuple< JacobianTuple, Selector > wrapper( tuple );
     jacobian = wrapper[ u ];
   }
 
@@ -163,7 +145,7 @@ public:
 private:
   enum PassId{ Start, Interpolation };
 
-  typedef DiscreteModel< DiscreteFunctionType, Start > DiscreteModelType;
+  typedef DiscreteModel< DiscreteFunctionType, typename Dune::Fem::Selector< Start >::Type > DiscreteModelType;
   typedef LocalRestrictionOperator< DiscreteFunctionSpaceType > LocalOperatorType;
 
   typedef Dune::Fem::StartPass< DiscreteFunctionType, Start > StartPassType;
