@@ -302,7 +302,7 @@ namespace Dune
        * in the template declaration of the DGDiscreteModel where one names
        * passIds necessary for this DGDiscreteModel
        */
-      typedef typename Selector< N1 , N2 , N3 , N4 , N5 , N6 , N7 , N8 , N9 >::Type Selector;
+      typedef typename Dune::Fem::Selector< N1 , N2 , N3 , N4 , N5 , N6 , N7 , N8 , N9 >::Type Selector;
 
     public:
       typedef typename BaseType::EntityType EntityType;
