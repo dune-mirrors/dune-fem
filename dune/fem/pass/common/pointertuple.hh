@@ -26,7 +26,9 @@ namespace
     typedef DereferenceTuple< Tuple, AccumulatedType, (index+1), size > NextType;
 
   public:
-    typedef typename Dune::ReferenceTuple< Tuple >::Type Type;
+    typedef typename Dune::ReferenceTuple<
+        typename Dune::TupleTypeTraits< Tuple >::PointeeTupleType
+      >::Type Type;
 
     static Type apply ( Tuple &tuple )
     {
@@ -34,7 +36,7 @@ namespace
       return append( tuple, seed );
     }
 
-  protected:
+  private:
     template< class, class, int, int > friend class DereferenceTuple;
 
     static Type append ( Tuple &tuple, Seed &seed )
@@ -52,14 +54,16 @@ namespace
           >
   struct DereferenceTuple< Tuple, Seed, size, size >
   {
-    typedef typename Dune::ReferenceTuple< Tuple >::Type Type;
+    typedef typename Dune::ReferenceTuple<
+        typename Dune::TupleTypeTraits< Tuple >::PointeeTupleType
+      >::Type Type;
 
     static Type apply ( Tuple & )
     {
       return Type();
     }
 
-  protected:
+  private:
     template< class, class, int, int > friend class DereferenceTuple;
 
     static Type append ( Tuple &tuple, Seed &seed )

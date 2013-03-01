@@ -136,7 +136,7 @@ namespace Dune
     template< class T >
     struct ReferenceEvaluator 
     {
-      typedef const typename Dune::TypeTraits< T >::PointeeType & Type;
+      typedef typename Dune::TypeTraits< T >::ReferredType & Type;
     };
 
   public:
