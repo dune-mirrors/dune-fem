@@ -2,8 +2,5 @@
 TODO for dune/fem/pass/common
 -----------------------------
 
-  - find better names for Dune::Fem::Filter (dune/fem/pass/common/filter.hh)
-    and Dune::Fem::Wrapper (dune/fem/pass/common/wrapper.hh)
-
   - replace template argument DiscreteFunctionTuple in LocalFunctionTuple
     (dune/fem/pass/common/localfunctiontuple.hh)
