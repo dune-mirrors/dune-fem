@@ -5,6 +5,8 @@
 #include <dune/common/tupleutility.hh>
 #include <dune/common/typetraits.hh>
 
+#include "tupleutility.hh"
+
 namespace
 {
 
@@ -43,39 +45,6 @@ namespace
   struct ElementTuple< -1, -1, -1, -1, -1, -1, -1, -1, -1, Seed >
   {
     typedef Seed Type;
-  };
-
-
-
-  // FindElement
-  // -----------
-
-  /*
-   * \brief Find element in tuple without throwing an exception
-   *        on failure.
-   */
-  template< class Tuple,
-            class Element, 
-            int onFailure = -1,
-            int start = 0,
-            int size = Dune::tuple_size< Tuple >::value
-          >
-  class FindElement
-  {
-    static const bool success = ( Dune::is_same< typename Dune::tuple_element< start, Tuple >::type, Element >::value );
-
-  public:
-    static const int position = success ? start : FindElement< Tuple, Element, onFailure, start+1, size >::position;
-  };
-
-  template< class Tuple,
-            class Element,
-            int onFailure,
-            int size
-          >
-  struct FindElement< Tuple, Element, onFailure, size, size >
-  {
-    static const int position = onFailure;
   };
 
 } // namespace
@@ -117,7 +86,7 @@ namespace Dune
       template< int N >
       struct Contains
       {
-        static const bool v = ( FindElement< Type, Dune::integral_constant< int, N > >::position != -1 );
+        static const bool v = ( Dune::ContainsType< Type, Dune::integral_constant< int, N > >::value );
       };
 
     private:

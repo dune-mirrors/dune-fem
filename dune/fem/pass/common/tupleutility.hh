@@ -319,6 +319,35 @@ namespace Dune
 
 
 
+  // ContainsType
+  // ------------
+
+  /*
+   * \brief Check wheter given type is contained in tuple.
+   *
+   * \tparam  Tuple  tuple
+   * \tparam  Type   type to search for
+   */
+  template< class Tuple,
+            class Type, 
+            int N = Dune::tuple_size< Tuple >::value
+          >
+  struct ContainsType
+  {
+    static const bool value = ( Dune::is_same< typename Dune::tuple_element< N-1, Tuple >::type, Type >::value
+                                || ContainsType< Tuple, Type, N-1 >::position );
+  };
+
+  template< class Tuple,
+            class Type
+          >
+  struct ContainsType< Tuple, Type, 0 >
+  {
+    static const bool value = false;
+  };
+
+
+
   // FirstTypeIndexTuple
   // -------------------
 
