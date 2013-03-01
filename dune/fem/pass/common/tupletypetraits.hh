@@ -127,6 +127,24 @@ namespace Dune
 
 
 
+  // ReferenceTuple
+  // --------------
+
+  template< class Tuple >
+  class ReferenceTuple
+  {
+    template< class T >
+    struct ReferenceEvaluator 
+    {
+      typedef const typename Dune::TypeTraits< T >::PointeeType & Type;
+    };
+
+  public:
+    typedef typename Dune::ForEachType< ReferenceEvaluator, Tuple >::Type Type;
+  };
+
+
+
   // tuple_remove_const
   // ------------------
 

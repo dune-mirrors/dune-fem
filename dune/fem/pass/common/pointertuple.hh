@@ -19,22 +19,14 @@ namespace
             int index = 0,
             int size = Dune::tuple_size< Tuple >::value
           >
-  struct DereferenceTuple
+  class DereferenceTuple
   {
-
-    template< class T >
-    struct ReferenceEvaluator 
-    {
-      typedef const typename Dune::TypeTraits< T >::PointeeType & Type;
-    };
-
-    typedef typename ReferenceEvaluator< typename Dune::tuple_element< index, Tuple >::type >::Type AppendType;
-
+    typedef typename Dune::TypeTraits< typename Dune::tuple_element< index, Tuple >::type >::PointeeType & AppendType;
     typedef typename Dune::PushBackTuple< Seed, AppendType >::type AccumulatedType;
     typedef DereferenceTuple< Tuple, AccumulatedType, (index+1), size > NextType;
 
   public:
-    typedef typename Dune::ForEachType< ReferenceEvaluator, Tuple >::Type Type;
+    typedef typename Dune::ReferenceTuple< Tuple >::Type Type;
 
     static Type apply ( Tuple &tuple )
     {
@@ -60,7 +52,7 @@ namespace
           >
   struct DereferenceTuple< Tuple, Seed, size, size >
   {
-    typedef Seed Type;
+    typedef typename Dune::ReferenceTuple< Tuple >::Type Type;
 
     static Type apply ( Tuple & )
     {
