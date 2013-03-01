@@ -2,6 +2,7 @@
 #define DUNE_FEM_PASS_COMMON_LOCALFUNCTIONTUPLE_HH
 
 #include <cassert>
+#include <cstddef>
 
 #include <dune/common/exceptions.hh>
 #include <dune/common/nullptr.hh>
@@ -196,9 +197,9 @@ namespace Dune
       template< class QuadratureType, class RangeTupleVectorType >
       void evaluateQuadrature ( const QuadratureType &quadrature, RangeTupleVectorType &vector ) const
       {
-        const int nop = quadrature.nop();
+        const std::size_t nop = quadrature.nop();
         assert( vector.size() >= nop );
-        for( int qp = 0; qp < nop; ++qp )
+        for( std::size_t qp = 0; qp < nop; ++qp )
         {
           RangeTupleType &values = vector[ qp ];
           evaluate( quadrature[ qp ], values );
