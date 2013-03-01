@@ -47,9 +47,9 @@ namespace Dune
       typedef typename DiscreteModelType::IntersectionType IntersectionType;
 
       // type of volume quadrature
-      typedef typename DiscreteModelType::VolumeQudratureType VolumeQuadratureType;
+      typedef typename DiscreteModelType::Traits::VolumeQuadratureType VolumeQuadratureType;
       // type of face quadrature
-      typedef typename DiscreteModelType::FaceQudratureType FaceQuadratureType;
+      typedef typename DiscreteModelType::Traits::FaceQuadratureType FaceQuadratureType;
 
       // type of mass factor
       typedef typename DiscreteModelType::MassFactorType MassFactorType;
@@ -142,20 +142,20 @@ namespace Dune
       void analyticalFlux ( const EntityType &entity,
                             const VolumeQuadratureType &quadrature,
                             const int qp,
-                            JacobianRangeType &flux ) const
+                            JacobianRangeType &flux )
       {
         assert( hasFlux() );
-        discreteModel().analyticalFlux( entity, time(), quadrature.point( qp ), values_, flux );
+        discreteModel().analyticalFlux( entity, time(), quadrature.point( qp ), values_[ qp ], flux );
       }
 
       // evaluate analytical flux
-      void source ( const EntityType &entity,
-                    const VolumeQuadratureType &quadrature,
-                    const int qp,
-                    RangeType &source ) const
+      double source ( const EntityType &entity,
+                      const VolumeQuadratureType &quadrature,
+                      const int qp,
+                      RangeType &source )
       {
         assert( hasSource() );
-        discreteModel().source( entity, time(), quadrature.point( qp ), values_[ qp ], jacobians_[ qp ], source );
+        return discreteModel().source( entity, time(), quadrature.point( qp ), values_[ qp ], jacobians_[ qp ], source );
       }
 
 
@@ -164,10 +164,10 @@ namespace Dune
                                        const VolumeQuadratureType &quadrature,
                                        const int qp,
                                        JacobianRangeType &flux,
-                                       RangeType &source ) const
+                                       RangeType &source )
       {
         analyticalFlux( entity, quadrature, qp, flux );
-        return source( entity, quadrature, qp, source );
+        return ThisType::source( entity, quadrature, qp, source );
       }
 
       // evaluate numerical flux
@@ -176,7 +176,7 @@ namespace Dune
                              const QuadratureType &inside,
                              const QuadratureType &outside,
                              const int qp,
-                             RangeType &gLeft, RangeType &gRight ) const
+                             RangeType &gLeft, RangeType &gRight )
       {
         return discreteModel().numericalFlux( intersection, time(), inside.localPoint( qp ), valuesInside_[ qp ], valuesOutside_[ qp ], gLeft, gRight );
       }
@@ -185,7 +185,7 @@ namespace Dune
       double boundaryFlux ( const IntersectionType &intersection,
                             const FaceQuadratureType &quadrature,
                             const int qp,
-                            RangeType &gLeft ) const
+                            RangeType &gLeft )
       {
         return discreteModel().boundaryFlux( intersection, time(), quadrature.localPoint( qp ), valuesInside_[ qp ], gLeft );
       }
@@ -194,7 +194,7 @@ namespace Dune
       void mass ( const EntityType &entity,
                   const VolumeQuadratureType &quadrature,
                   const int qp,
-                  MassFactorType &massFactor ) const
+                  MassFactorType &massFactor )
       {
         discreteModel().mass( entity, time(), quadrature.point( qp ), values_[ qp ], massFactor );
       }
