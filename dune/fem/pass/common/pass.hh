@@ -40,21 +40,24 @@ namespace Dune
      * @brief End marker for a compile-time list of passes.
      *
      */
-    template < class ArgumentImp , int passIdImp  = -1,
+    template < class ArgumentImp , int passIdImp,
                class NonBlockingCommunication = EmptyNonBlockingComm  >
     class StartPass 
     {
       NonBlockingCommunication nonBlockingComm_;
     public:
-      //- Enums and typedefs
-      //! The start pass has index 0.
-      enum{ passNum=0 };
-      enum{ passId = passIdImp };
+      //! position in pass tree (0 for start pass)
+      static const int passNum = 0;
+      static const int passId DUNE_DEPRECATED = passIdImp;
+
+      //! pass ids up to here (tuple of integral constants)
+      typedef Dune::tuple< integral_constant< int, passId > > PassIds;
+      
       //! The argument (and destination) type of the overall operator
       typedef ArgumentImp GlobalArgumentType;
       //! End marker for tuple of return types of the passes
       typedef Dune::tuple<> NextArgumentType;
-      
+
     public:
       //! empty constructor 
       StartPass() : nonBlockingComm_() {} 
@@ -116,7 +119,6 @@ namespace Dune
       template <class PT, class PP, int PI>
       friend class Pass;
     public:
-      enum{ passId = passIdImp };
       //! little interface class for deleting discrete function 
       //! held by this class 
       template <class ObjectToDelete>
@@ -142,12 +144,16 @@ namespace Dune
         }
       };
 
-      //- Enums and typedefs
-      //! The index of the pass.
-      enum {passNum = PreviousPassImp::passNum + 1};
-
       //! Type of the preceding pass.
       typedef PreviousPassImp PreviousPassType;
+
+      //! position in pass tree
+      static const int passNum = PreviousPassType::passNum + 1;
+      static const int passId DUNE_DEPRECATED = passIdImp;
+
+      //! pass ids up to here (tuple of integral constants)
+      typedef typename Dune::PushBackTuple< typename PreviousPassType::PassIds, integral_constant< int, passId > > PassIds;
+
       //! Type of the discrete function which stores the result of this pass' 
       //! computations.
       typedef typename DiscreteModelImp::Traits::DestinationType DestinationType;

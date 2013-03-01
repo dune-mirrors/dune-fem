@@ -20,18 +20,25 @@ namespace Dune
     // DGDiscreteModelCaller
     // ---------------------
 
-    template <class DiscreteModel, class Argument, class Pass, class SelectorTuple >
+    /** \brief   model caller for local DG pass
+     *  \class   DGDiscreteModelCaller
+     *  \ingroup PassHyp
+     *
+     *  \todo please doc me
+     */
+    template< class DiscreteModel, class Argument, class PassIds >
     class DGDiscreteModelCaller 
     {
-      typedef DGDiscreteModelCaller< DiscreteModel, Argument, Pass, SelectorTuple > ThisType;
+      typedef DGDiscreteModelCaller< DiscreteModel, Argument, PassIds > ThisType;
 
     public:
       // discrete model type
       typedef DiscreteModel DiscreteModelType;
       // argument type
       typedef Argument ArgumentType;
-      // selector type
-      typedef SelectorTuple Selector;
+
+      /** \brief selector (tuple of integral constants) */
+      typedef typename DiscreteModelType::Selector Selector;
 
       // entity type
       typedef typename DiscreteModelType::EntityType EntityType;
@@ -54,8 +61,8 @@ namespace Dune
       typedef typename FunctionSpaceType::JacobianRangeType JacobianRangeType;
 
     private:
-      typedef Filter< ArgumentType, Pass, Selector > FilterType;
-      typedef PointerTuple< typename FilterType::ResultType > DiscreteFunctionPointerTupleType;
+      typedef Dune::MakeSubTuple< ArgumentType, typename Dune::FirstTypeIndexTuple< PassIds, Selector >::type > FilterType;
+      typedef PointerTuple< typename FilterType::type > DiscreteFunctionPointerTupleType;
 
       typedef typename DiscreteFunctionPointerTupleType::ElementType DiscreteFunctionTupleType;
       typedef LocalFunctionTuple< DiscreteFunctionTupleType, EntityType > LocalFunctionTupleType;

@@ -1,7 +1,6 @@
 passcommondir =  $(includedir)/dune/fem/pass/common
 
-passcommon_HEADERS = filter.hh \
-		     localfunctionselector.hh \
+passcommon_HEADERS = localfunctionselector.hh \
 		     localfunctiontuple.hh \
 		     pass.hh \
 		     pointertuple.hh \

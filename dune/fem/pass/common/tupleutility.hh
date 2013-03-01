@@ -317,6 +317,110 @@ namespace Dune
     return tuple< T2, T3, T4, T5, T6, T7, T8, T9 >( get< 1 >( t ), get< 2 >( t ), get< 3 >( t ), get< 4 >( t ), get< 5 >( t ), get< 6 >( t ), get< 7 >( t ), get< 8 >( t ) );
   }
 
+
+
+  // FirstTypeIndexTuple
+  // -------------------
+
+  /*
+   * \brief Please doc me.
+   */
+  template< class Tuple,
+            class SubTuple,
+            class Seed = Dune::tuple<>,
+            int index = 0,
+            int size = Dune::tuple_size< SubTuple >::value
+          >
+  class FirstTypeIndexTuple
+  {
+    dune_static_assert( (index == Dune::tuple_size< Seed >::value),
+                        "The \"index\" template parameter of FirstTypeIndexTuple"
+                        "is an implementation detail and should never be "
+                        "set explicitly!" );
+
+    // get element from selector
+    typedef typename Dune::tuple_element< index, SubTuple >::type Element;
+    // find element in pass id tuple
+    typedef typename Dune::FirstTypeIndex< Tuple, Element >::type Position;
+    // add value to seed
+    typedef typename Dune::PushBackTuple< Seed, Position >::type NextSeed;
+
+  public:
+    // result type is a tuple of integral constants
+    typedef typename FirstTypeIndexTuple< Tuple, SubTuple, NextSeed, (index+1) >::type type;
+  };
+
+  template< class Tuple,
+            class SubTuple,
+            class Seed,
+            int size
+          >
+  struct FirstTypeIndexTuple< Tuple, SubTuple, Seed, size, size >
+  {
+    typedef Seed type;
+  };
+
+
+
+  // MakeSubTuple
+  // ------------
+
+  /*
+   * \brief Please doc me.
+   */
+  template< class Tuple,
+            class Positions,
+            class Seed = Dune::tuple<>,
+            int index = 0,
+            int size = Dune::tuple_size< Positions >::value
+          >
+  class MakeSubTuple
+  {
+    template< class, class, class, int, int > friend class MakeSubTuple;
+
+    // get pass number for element to append from mapping
+    static const int position = Dune::tuple_element< index, Positions >::type::value;
+
+    // add type to seed
+    typedef typename Dune::tuple_element< position, Tuple >::type AppendType;
+
+    typedef typename Dune::PushBackTuple< Seed, AppendType >::type AccumulatedType;
+
+    typedef MakeSubTuple< Tuple, Positions, AccumulatedType, (index+1), size > NextType;
+
+    static typename NextType::type append ( Tuple &tuple, Seed &seed )
+    {
+      AppendType append = Dune::template get< position >( tuple );
+      AccumulatedType next = tuple_push_back( seed, append );
+      return NextType::append( tuple, next );
+    }
+
+  public:
+    typedef typename NextType::type type;
+
+    static type apply ( Tuple &tuple )
+    {
+      Seed seed;
+      return append( tuple, seed );
+    }
+  };
+
+  template< class Tuple,
+            class Positions,
+            class Seed,
+            int size >
+  class MakeSubTuple< Tuple, Positions, Seed, size, size >
+  {
+    template< class, class, class, int, int > friend class MakeSubTuple;
+
+    static type append ( Tuple &tuple, Seed &seed ) { return seed; }
+
+  public:
+    typedef Seed type;
+
+    static type apply ( Tuple & ) { return type(); }
+  };
+
 } // namespace Dune
 
 #endif // #ifndef DUNE_FEM_PASS_COMMON_TUPLEUTILITY_HH

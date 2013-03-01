@@ -27,7 +27,7 @@ namespace Dune
 
     template< class DiscreteModel, class LocalOperator, class PreviousPass, int id >
     struct ApplyLocalOperatorPass;
-    template< class DiscreteModel, class Argument, class Pass, class Selector >
+    template< class DiscreteModel, class Argument, class PassIds, class Selector >
     class ApplyLocalOperatorDiscreteModelCaller;
 
 
@@ -169,13 +169,16 @@ namespace Dune
      * 
      */
     template< class DiscreteModel, class LocalOperator, class PreviousPass, int id >
-    struct ApplyLocalOperatorPass 
+    struct ApplyLocalOperatorPass
     : public Dune::Fem::LocalPass< DiscreteModel, PreviousPass, id >
     {
       typedef ApplyLocalOperatorPass< DiscreteModel, LocalOperator, PreviousPass, id > ThisType;
       typedef Dune::Fem::LocalPass< DiscreteModel, PreviousPass, id > BaseType;
 
     public:
+      //! pass ids up to here (tuple of integral constants)
+      typedef typename BaseType::PassIds PassIds;
+
       //! \brief type of discrete model
       typedef DiscreteModel DiscreteModelType;
       //! \brief type of local operator
@@ -194,7 +197,7 @@ namespace Dune
 
     private:
       typedef typename DiscreteModelType::Selector Selector;
-      typedef ApplyLocalOperatorDiscreteModelCaller< DiscreteModelType, ArgumentType, ThisType, Selector > DiscreteModelCallerType;
+      typedef ApplyLocalOperatorDiscreteModelCaller< DiscreteModelType, ArgumentType, PassIds, Selector > DiscreteModelCallerType;
       struct LocalFunction;
 
     public:
@@ -338,10 +341,10 @@ namespace Dune
     // ApplyLocalOperatorDiscreteModelCaller
     // -------------------------------------
 
-    template< class DiscreteModel, class Argument, class Pass, class SelectorTuple >
+    template< class DiscreteModel, class Argument, class PassIds, class SelectorTuple >
     class ApplyLocalOperatorDiscreteModelCaller
     {
-      typedef ApplyLocalOperatorDiscreteModelCaller< DiscreteModel, Argument, Pass, SelectorTuple > ThisType;
+      typedef ApplyLocalOperatorDiscreteModelCaller< DiscreteModel, Argument, PassIds, SelectorTuple > ThisType;
 
     public:
       //! \brief discrete model type
@@ -365,8 +368,8 @@ namespace Dune
       typedef typename FunctionSpaceType::HessianRangeType HessianRangeType;
 
     protected:
-      typedef Filter< ArgumentType, Pass, Selector > FilterType;
-      typedef PointerTuple< typename FilterType::ResultType > DiscreteFunctionPointerTupleType;
+      typedef Dune::MakeSubTuple< ArgumentType, typename Dune::FirstTypeIndexTuple< PassIds, Selector >::type > FilterType;
+      typedef PointerTuple< typename FilterType::type > DiscreteFunctionPointerTupleType;
       typedef typename DiscreteFunctionPointerTupleType::ElementType DiscreteFunctionTupleType;
 
       typedef LocalFunctionTuple< DiscreteFunctionTupleType, EntityType > LocalFunctionTupleType;

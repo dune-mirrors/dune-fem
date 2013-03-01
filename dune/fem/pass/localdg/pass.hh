@@ -46,6 +46,9 @@ namespace Dune
       //! Base class
       typedef LocalPass< DiscreteModelImp , PreviousPassImp , passIdImp > BaseType;
 
+      //! pass ids up to here (tuple of integral constants)
+      typedef typename BaseType::PassIds PassIds;
+
       //! Repetition of template arguments
       typedef DiscreteModelImp DiscreteModelType;
       //! Repetition of template arguments
@@ -81,8 +84,7 @@ namespace Dune
       // Various other types
       typedef typename DestinationType::LocalFunctionType LocalFunctionType;
 
-      typedef typename DiscreteModelType::Selector Selector;
-      typedef DGDiscreteModelCaller< DiscreteModelType, ArgumentType, ThisType, Selector > DiscreteModelCallerType;
+      typedef DGDiscreteModelCaller< DiscreteModelType, ArgumentType, PassIds > DiscreteModelCallerType;
 
       // Range of the destination
       enum { dimRange = DiscreteFunctionSpaceType::dimRange };
