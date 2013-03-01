@@ -51,7 +51,7 @@ namespace Dune
       static const int passId DUNE_DEPRECATED = passIdImp;
 
       //! pass ids up to here (tuple of integral constants)
-      typedef Dune::tuple< integral_constant< int, passId > > PassIds;
+      typedef Dune::tuple< integral_constant< int, passIdImp > > PassIds;
       
       //! The argument (and destination) type of the overall operator
       typedef ArgumentImp GlobalArgumentType;
@@ -152,7 +152,7 @@ namespace Dune
       static const int passId DUNE_DEPRECATED = passIdImp;
 
       //! pass ids up to here (tuple of integral constants)
-      typedef typename Dune::PushBackTuple< typename PreviousPassType::PassIds, integral_constant< int, passId > > PassIds;
+      typedef typename Dune::PushBackTuple< typename PreviousPassType::PassIds, integral_constant< int, passIdImp > >::type PassIds;
 
       //! Type of the discrete function which stores the result of this pass' 
       //! computations.

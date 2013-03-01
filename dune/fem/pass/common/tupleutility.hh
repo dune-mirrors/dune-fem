@@ -413,7 +413,7 @@ namespace Dune
   {
     template< class, class, class, int, int > friend class MakeSubTuple;
 
-    static type append ( Tuple &tuple, Seed &seed ) { return seed; }
+    static Seed append ( Tuple &tuple, Seed &seed ) { return seed; }
 
   public:
     typedef Seed type;

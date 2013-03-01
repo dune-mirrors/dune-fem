@@ -15,7 +15,7 @@
 #include <dune/fem/misc/l2norm.hh>
 #include <dune/fem/misc/mpimanager.hh>
 #include <dune/fem/operator/common/spaceoperatorif.hh>
-#include <dune/fem/pass/pass.hh>
+#include <dune/fem/pass/common/pass.hh>
 #include <dune/fem/quadrature/cachingquadrature.hh>
 #include <dune/fem/space/common/adaptmanager.hh>
 #include <dune/fem/space/common/functionspace.hh>

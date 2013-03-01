@@ -9,12 +9,12 @@
 #include <dune/common/exceptions.hh>
 #include <dune/common/nullptr.hh>
 
-#include <dune/fem/pass/common/filter.hh>
 #include <dune/fem/pass/common/localfunctiontuple.hh>
+#include <dune/fem/pass/common/pass.hh>
 #include <dune/fem/pass/common/pointertuple.hh>
 #include <dune/fem/pass/common/selector.hh>
 #include <dune/fem/pass/common/tupletypetraits.hh>
-#include <dune/fem/pass/common/pass.hh>
+#include <dune/fem/pass/common/tupleutility.hh>
 
 namespace Dune
 {
@@ -169,7 +169,7 @@ namespace Dune
      * 
      */
     template< class DiscreteModel, class LocalOperator, class PreviousPass, int id >
-    struct ApplyLocalOperatorPass
+    class ApplyLocalOperatorPass
     : public Dune::Fem::LocalPass< DiscreteModel, PreviousPass, id >
     {
       typedef ApplyLocalOperatorPass< DiscreteModel, LocalOperator, PreviousPass, id > ThisType;
