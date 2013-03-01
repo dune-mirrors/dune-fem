@@ -10,6 +10,7 @@
 #include <dune/fem/pass/common/selector.hh>
 #include <dune/fem/pass/common/tupletypetraits.hh>
 #include <dune/fem/pass/common/tupleutility.hh>
+#include <dune/fem/pass/common/typeindexedtuple.hh>
 
 namespace Dune
 {
@@ -77,9 +78,6 @@ namespace Dune
         discreteFunctions_( FilterType::apply( argument ) ),
         localFunctionsInside_( *discreteFunctions_ ),
         localFunctionsOutside_( *discreteFunctions_ )
-#ifndef NDEBUG
-      //
-#endif // #ifndef NDEBUG
       {}
 
       // return true, if discrete model has flux
@@ -112,44 +110,32 @@ namespace Dune
       void setEntity ( const EntityType &entity, const VolumeQuadratureType &quadrature )
       {
         setEntity( entity );
-        resize( values_, quadrature.nop() );
+        values_.resize( quadrature.nop() );
         localFunctionsInside_.evaluateQuadrature( quadrature, values_ );
-
-#ifndef NDEBUG
-        // ...
-#endif // #ifndef NDEBUG
       }
 
       // evaluate outside local functions in all quadrature points
       template< class QuadratureType >
       void setNeighbor ( const EntityType &neighbor,
-                         const QuadratureType &inner,
-                         const QuadratureType &outer )
+                         const QuadratureType &inside,
+                         const QuadratureType &outside )
       {
         // we assume that setEntity() was called in advance!
-        resize( valuesInside_, inner.nop() );
-        localFunctionsInside_.evaluateQuadrature( inner, valuesInside_ );
+        valuesInside_.resize( inside.nop() );
+        localFunctionsInside_.evaluateQuadrature( inside, valuesInside_ );
 
         setNeighbor( neighbor );
 
-        resize( valuesOutside_, outer.nop() );
-        localFunctionsOutside_.evaluateQuadrature( outer, valuesOutside_ );
-
-#ifndef NDEBUG
-        // ...
-#endif // #ifndef NDEBUG
+        valuesOutside_.resize( outside.nop() );
+        localFunctionsOutside_.evaluateQuadrature( outside, valuesOutside_ );
       }
 
       // please doc me
       template< class QuadratureType >
       void setBoundary ( const EntityType &entity, const QuadratureType &quadrature )
       {
-        resize( valuesInside_, quadrature.nop() );
+        valuesInside_.resize( quadrature.nop() );
         localFunctionsInside_.evaluateQuadrature( quadrature, valuesInside_ );
-
-#ifndef NDEBUG
-        // ...
-#endif // #ifndef NDEBUG
       }
 
       // evaluate analytical flux
@@ -158,10 +144,6 @@ namespace Dune
                             const int qp,
                             JacobianRangeType &flux ) const
       {
-#ifndef NDEBUG
-        //
-#endif // #ifndef NDEBUG
-
         assert( hasFlux() );
         discreteModel().analyticalFlux( entity, time(), quadrature.point( qp ), values_, flux );
       }
@@ -172,10 +154,6 @@ namespace Dune
                     const int qp,
                     RangeType &source ) const
       {
-#ifndef NDEBUG
-        //
-#endif // #ifndef NDEBUG
-
         assert( hasSource() );
         discreteModel().source( entity, time(), quadrature.point( qp ), values_[ qp ], jacobians_[ qp ], source );
       }
@@ -195,16 +173,12 @@ namespace Dune
       // evaluate numerical flux
       template< class QuadratureType >
       double numericalFlux ( const IntersectionType &intersection,
-                             const QuadratureType &inner,
-                             const QuadratureType &outer,
+                             const QuadratureType &inside,
+                             const QuadratureType &outside,
                              const int qp,
                              RangeType &gLeft, RangeType &gRight ) const
       {
-#ifndef NDEBUG
-        // ...
-#endif // #ifndef NDEBUG
-
-        return discreteModel().numericalFlux( intersection, time(), inner.localPoint( qp ), valuesInside_[ qp ], valuesOutside_[ qp ], gLeft, gRight );
+        return discreteModel().numericalFlux( intersection, time(), inside.localPoint( qp ), valuesInside_[ qp ], valuesOutside_[ qp ], gLeft, gRight );
       }
 
       // evaluate boundary flux
@@ -213,10 +187,6 @@ namespace Dune
                             const int qp,
                             RangeType &gLeft ) const
       {
-#ifndef NDEBUG
-        // ...
-#endif // #ifndef NDEBUG
-
         return discreteModel().boundaryFlux( intersection, time(), quadrature.localPoint( qp ), valuesInside_[ qp ], gLeft );
       }
 
@@ -226,10 +196,6 @@ namespace Dune
                   const int qp,
                   MassFactorType &massFactor ) const
       {
-#ifndef NDEBUG
-        // ...
-#endif // #ifndef NDEBUG
-
         discreteModel().mass( entity, time(), quadrature.point( qp ), values_[ qp ], massFactor );
       }
 
@@ -238,17 +204,6 @@ namespace Dune
       const DiscreteModelType &discreteModel () const { return discreteModel_; }
 
     private:
-      // resize vector if necessary
-      template< class Quadrature, class Vector >
-      bool resize ( Vector &vector, const int size )
-      {
-        if( vector.size() >= size )
-          return false;
-
-        vector.resize( size );
-        return true;
-      }
-
       // forbid copying and assignment
       DGDiscreteModelCaller ( const ThisType & );
       ThisType operator= ( const ThisType & );
@@ -257,11 +212,8 @@ namespace Dune
       double time_;
       DiscreteFunctionPointerTupleType discreteFunctions_;
       LocalFunctionTupleType localFunctionsInside_, localFunctionsOutside_;
-      std::vector< RangeTupleType > values_, valuesInside_, valuesOutside_;
-      std::vector< JacobianRangeTupleType > jacobians_;
-#ifndef NDEBUG
-      //
-#endif // #ifndef NDEBUG
+      std::vector< Dune::TypeIndexedTuple< RangeTupleType, Selector > > values_, valuesInside_, valuesOutside_;
+      std::vector< Dune::TypeIndexedTuple< JacobianRangeTupleType, Selector > > jacobians_;
     };
 
   } // namespace Fem
