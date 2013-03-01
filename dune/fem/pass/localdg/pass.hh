@@ -568,13 +568,7 @@ namespace Dune
       }
 
     protected:
-      DiscreteModelCallerType &caller ()
-      {
-        assert( caller_ );
-        return *caller_;
-      }
-
-      const DiscreteModelCallerType &caller () const
+      DiscreteModelCallerType &caller () const
       {
         assert( caller_ );
         return *caller_;
@@ -587,7 +581,7 @@ namespace Dune
 
     protected:
       mutable DiscreteModelCallerType *caller_;
-      const DiscreteModelType& problem_; 
+      DiscreteModelType& problem_; 
       
       mutable ArgumentType* arg_;
       mutable DestinationType* dest_;
