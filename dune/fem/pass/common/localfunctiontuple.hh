@@ -194,16 +194,11 @@ namespace Dune
        *  \param[in]  quadrature  quadrature
        *  \param[in]  vector      a (dynamic) vector of range tuples
        */
-      template< class QuadratureType, class RangeTupleVectorType >
-      void evaluateQuadrature ( const QuadratureType &quadrature, RangeTupleVectorType &vector ) const
+      template< class QuadratureType, class TupleVectorType >
+      void evaluateQuadrature ( const QuadratureType &quadrature, TupleVectorType &vector ) const
       {
-        const std::size_t nop = quadrature.nop();
         assert( vector.size() >= nop );
-        for( std::size_t qp = 0; qp < nop; ++qp )
-        {
-          RangeTupleType &values = vector[ qp ];
-          evaluate( quadrature[ qp ], values );
-        }
+        evaluateQuadrature( quadrature, vector, vector[ 0 ] );
       }
 
     protected:
@@ -212,6 +207,28 @@ namespace Dune
         ForEachValue< LocalFunctionTupleType > forEach( localFunctionTuple_ );
         SetEntity functor( entity );
         forEach.apply( functor );
+      }
+
+      template< class QuadratureType, class TupleVectorType >
+      void evaluateQuadrature ( const QuadratureType &quadrature, TupleVectorType &vector, RangeTupleType & ) const
+      {
+        const std::size_t nop = quadrature.nop();
+        for( std::size_t qp = 0; qp < nop; ++qp )
+        {
+          RangeTupleType &values = vector[ qp ];
+          evaluate( quadrature[ qp ], values );
+        }
+      }
+
+      template< class QuadratureType, class TupleVectorType >
+      void evaluateQuadrature ( const QuadratureType &quadrature, TupleVectorType &vector, JacobianRangeTupleType & ) const
+      {
+        const std::size_t nop = quadrature.nop();
+        for( std::size_t qp = 0; qp < nop; ++qp )
+        {
+          JacobianRangeTupleType &values = vector[ qp ];
+          jacobian( quadrature[ qp ], values );
+        }
       }
 
       LocalFunctionTupleType &localFunctions () { return localFunctionTuple_; }
