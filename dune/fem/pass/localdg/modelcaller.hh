@@ -6,7 +6,6 @@
 
 #include <dune/fem/pass/common/localfunctiontuple.hh>
 #include <dune/fem/pass/common/pass.hh>
-#include <dune/fem/pass/common/pointertuple.hh>
 #include <dune/fem/pass/common/selector.hh>
 #include <dune/fem/pass/common/tupletypetraits.hh>
 #include <dune/fem/pass/common/tupleutility.hh>
@@ -63,9 +62,9 @@ namespace Dune
 
     private:
       typedef Dune::MakeSubTuple< ArgumentType, typename Dune::FirstTypeIndexTuple< PassIds, Selector >::type > FilterType;
-      typedef PointerTuple< typename FilterType::type > DiscreteFunctionPointerTupleType;
+      typedef typename FilterType::type DiscreteFunctionPointerTupleType;
 
-      typedef typename DiscreteFunctionPointerTupleType::ElementType DiscreteFunctionTupleType;
+      typedef typename TupleTypeTraits< DiscreteFunctionPointerTupleType >::PointeeTupleType DiscreteFunctionTupleType;
       typedef LocalFunctionTuple< DiscreteFunctionTupleType, EntityType > LocalFunctionTupleType;
 
       typedef typename LocalFunctionTupleType::RangeTupleType RangeTupleType;
@@ -76,8 +75,8 @@ namespace Dune
       : discreteModel_( discreteModel ),
         time_( 0. ),
         discreteFunctions_( FilterType::apply( argument ) ),
-        localFunctionsInside_( *discreteFunctions_ ),
-        localFunctionsOutside_( *discreteFunctions_ )
+        localFunctionsInside_( Dune::DereferenceTuple< DiscreteFunctionPointerTupleType >::apply( discreteFunctions_ ) ),
+        localFunctionsOutside_( Dune::DereferenceTuple< DiscreteFunctionPointerTupleType >::apply( discreteFunctions_ ) )
       {}
 
       // return true, if discrete model has flux

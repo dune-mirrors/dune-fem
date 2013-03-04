@@ -11,7 +11,6 @@
 
 #include <dune/fem/pass/common/localfunctiontuple.hh>
 #include <dune/fem/pass/common/pass.hh>
-#include <dune/fem/pass/common/pointertuple.hh>
 #include <dune/fem/pass/common/tupletypetraits.hh>
 #include <dune/fem/pass/common/tupleutility.hh>
 
@@ -328,8 +327,8 @@ namespace Dune
 
     protected:
       typedef Dune::MakeSubTuple< ArgumentType, typename Dune::FirstTypeIndexTuple< PassIds, Selector >::type > FilterType;
-      typedef PointerTuple< typename FilterType::type > DiscreteFunctionPointerTupleType;
-      typedef typename DiscreteFunctionPointerTupleType::ElementType DiscreteFunctionTupleType;
+      typedef typename FilterType::type DiscreteFunctionPointerTupleType;
+      typedef typename TupleTypeTraits< DiscreteFunctionPointerTupleType >::PointeeTupleType DiscreteFunctionTupleType;
 
       typedef LocalFunctionTuple< DiscreteFunctionTupleType, EntityType > LocalFunctionTupleType;
 
@@ -341,7 +340,7 @@ namespace Dune
       ApplyLocalOperatorDiscreteModelCaller ( ArgumentType &argument, DiscreteModel &discreteModel )
       : discreteModel_( discreteModel ),
         discreteFunctionPointerTuple_( FilterType::apply( argument ) ),
-        localFunctionTuple_( *discreteFunctionPointerTuple_ )
+        localFunctionTuple_( DereferenceTuple< DiscreteFunctionPointerTupleType >::apply( discreteFunctionPointerTuple_ ) )
       {}
       
       //! \brief update local functions

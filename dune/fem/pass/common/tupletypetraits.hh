@@ -127,9 +127,37 @@ namespace Dune
 
 
 
+  // PointerTuple
+  // ------------
+
+  /**
+   * \brief Convert a tuple to a tuple of pointer types.
+   *
+   * \tparam  Tuple  none of the types in Tuple should be of pointer type
+   */
+  template< class Tuple >
+  class PointerTuple
+  {
+    template< class T >
+    struct PointerEvaluator
+    {
+      typedef typename Dune::TypeTraits< T >::PointeeType * Type;
+    };
+
+  public:
+    typedef typename Dune::ForEachType< PointerEvaluator, Tuple >::Type Type;
+  };
+
+
+
   // ReferenceTuple
   // --------------
 
+  /**
+   * \brief Convert a tuple to a tuple of references.
+   *
+   * \tparam  Tuple  tuple to convert
+   */
   template< class Tuple >
   class ReferenceTuple
   {
@@ -145,23 +173,169 @@ namespace Dune
 
 
 
-  // tuple_remove_const
-  // ------------------
+  // ConstTuple
+  // ----------
 
-  /*
-   * \brief Please doc me.
+  /**
+   * \brief Add const qualifier to all tuple elements. 
+   *
+   * \tparam  Tuple  tuple to convert
    */
   template< class Tuple >
-  class tuple_remove_const
+  class ConstTuple
+  {
+    template< class T >
+    struct ConstEvaluator
+    {
+      typedef typename Dune::ConstantVolatileTraits< T >::ConstType Type;
+    };
+
+  public:
+    typedef typename Dune::ForEachType< ConstEvaluator, Tuple >::Type Type;
+  };
+
+
+
+  // RemoveConstTuple
+  // ----------------
+
+  /**
+   * \brief Remove const qualifiers from tuple.
+   */
+  template< class Tuple >
+  class RemoveConstTuple
   {
     template< class T >
     struct RemoveConstEvaluator
     {
-      typedef typename Dune::remove_const< T >::type Type;
+      typedef typename Dune::ConstantVolatileTraits< T >::UnqualifiedType Type;
     };
 
- public:
-    typedef typename Dune::ForEachType< RemoveConstEvaluator, Tuple >::Type type;
+  public:
+    typedef typename Dune::ForEachType< RemoveConstEvaluator, Tuple >::Type Type;
+  };
+
+
+
+  // tuple_remove_const
+  // ------------------
+
+  /*
+   * \brief Convenience structure mimicking Dune::remove_const.
+   */
+  template< class Tuple >
+  struct tuple_remove_const
+  {
+    typedef typename RemoveConstTuple< Tuple >::Type type;
+  };
+
+
+
+  // ValidPointerTupleCheck
+  // ----------------------
+
+  /**
+   * \brief Check whether a pointer tuple can be dereferenced.
+   *
+   * \tparam  Tuple  tuple of pointer types
+   */
+  template< class Tuple >
+  class ValidPointerTupleCheck
+  {
+    dune_static_assert( TupleTypeTraits< Tuple >::isPointerTuple,
+                        "Can not check non-pointer tuple." );
+
+    struct ValidPointer
+    {
+      ValidPointer () : v_( true ) {}
+
+      template< class Ptr >
+      void visit ( Ptr &ptr )
+      {
+        v_ &= bool( ptr );
+      }
+
+      operator bool() const { return v_; }
+
+    private:
+      bool v_;
+    };
+
+  public:
+    static bool apply ( const Tuple &tuple )
+    {
+      Dune::ForEachValue< Tuple > forEach( tuple );
+      ValidPointer check;
+      forEach.apply( check );
+      return check;
+    }
+  };
+
+
+
+  // DereferenceTuple
+  // ----------------
+
+  /**
+   * \brief Dereference pointer tuple.
+   */
+  template< class Tuple,
+            class Seed = Dune::tuple<>,
+            int index = 0,
+            int size = Dune::tuple_size< Tuple >::value
+          >
+  class DereferenceTuple
+  {
+    template< class, class, int, int > friend class DereferenceTuple;
+
+    typedef typename Dune::TypeTraits< typename Dune::tuple_element< index, Tuple >::type >::PointeeType & AppendType;
+    typedef typename Dune::PushBackTuple< Seed, AppendType >::type AccumulatedType;
+
+    typedef DereferenceTuple< Tuple, AccumulatedType, (index+1), size > NextType;
+
+  public:
+    typedef typename Dune::ReferenceTuple<
+        typename Dune::TupleTypeTraits< Tuple >::PointeeTupleType
+      >::Type Type;
+
+    static Type apply ( Tuple &tuple )
+    {
+      Seed seed;
+      return append( tuple, seed );
+    }
+
+  private:
+    static Type append ( Tuple &tuple, Seed &seed )
+    {
+      typename Dune::tuple_element< index, Tuple >::type pointer = Dune::get< index >( tuple );
+      AppendType append = *pointer;
+      AccumulatedType next = Dune::tuple_push_back< AppendType >( seed, append );
+      return NextType::append( tuple, next );
+    }
+  };
+
+  template< class Tuple,
+            class Seed,
+            int size
+          >
+  class DereferenceTuple< Tuple, Seed, size, size >
+  {
+    template< class, class, int, int > friend class DereferenceTuple;
+
+  public:
+    typedef typename Dune::ReferenceTuple<
+        typename Dune::TupleTypeTraits< Tuple >::PointeeTupleType
+      >::Type Type;
+
+    dune_static_assert( (Dune::is_same< Seed, Type >::value), "Failed to dereference pointer tuple." );
+
+    static Type apply ( Tuple & )
+    {
+      return Type();
+    }
+
+  private:
+    static Seed append ( Tuple &tuple, Seed &seed ) { return seed; }
   };
 
 } // namespace Dune
