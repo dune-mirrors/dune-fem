@@ -216,7 +216,7 @@ namespace Dune
       void operator()(const GlobalArgumentType& arg, DestinationType& dest) const
       {
         previousPass_.pass(arg);
-        typename PreviousPassType::NextArgumentType prevArg = previousPass_.localArgument();
+        LocalArgumentType prevArg = previousPass_.localArgument();
         const TotalArgumentType totalArg = tuple_push_front( prevArg, &arg );
         this->compute(totalArg, dest);
 
@@ -273,9 +273,10 @@ namespace Dune
       }
 
       //! Returns a compilation of the results of the preceding passes
-      NextArgumentType localArgument() const {
-        typename PreviousPassType :: NextArgumentType nextArg( previousPass_.localArgument() );
-        return NextArgumentType(destination_, nextArg );
+      NextArgumentType localArgument () const
+      {
+        typename PreviousPassType::NextArgumentType nextArg( previousPass_.localArgument() );
+        return tuple_push_back( nextArg, destination_ );
       }
 
       /** \brief finalizeCommunication collects possbily initiated non-blocking
