@@ -65,6 +65,8 @@ namespace Dune
       typedef typename FilterType::type DiscreteFunctionPointerTupleType;
 
       typedef typename TupleTypeTraits< DiscreteFunctionPointerTupleType >::PointeeTupleType DiscreteFunctionTupleType;
+
+    protected:
       typedef LocalFunctionTuple< DiscreteFunctionTupleType, EntityType > LocalFunctionTupleType;
 
       typedef typename LocalFunctionTupleType::RangeTupleType RangeTupleType;
@@ -209,7 +211,10 @@ namespace Dune
 
       DiscreteModelType &discreteModel_;
       double time_;
+
       DiscreteFunctionPointerTupleType discreteFunctions_;
+
+    protected:
       LocalFunctionTupleType localFunctionsInside_, localFunctionsOutside_;
       std::vector< Dune::TypeIndexedTuple< RangeTupleType, Selector > > values_, valuesInside_, valuesOutside_;
       std::vector< Dune::TypeIndexedTuple< JacobianRangeTupleType, Selector > > jacobians_;
