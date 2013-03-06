@@ -6,6 +6,7 @@
 
 // dune-common includes 
 #include <dune/common/bartonnackmanifcheck.hh>
+#include <dune/common/nullptr.hh>
 
 // dune-fem includes
 #include <dune/fem/function/localfunction/wrapper.hh>
@@ -40,6 +41,46 @@ namespace Dune
 
         @{
     */
+
+    // ExportsDiscreteFunctionSpaceType
+    // --------------------------------
+
+    template< class T >
+    class ExportsDiscreteFunctionSpaceType
+    {
+      typedef char Small;
+      struct Big { char dummy[ 2 ]; };
+
+      template< class U >
+      static Small test ( const U &, typename U::DiscreteFunctionSpaceType * = nullptr );
+      static Big test ( ... );
+
+      static const T &makeT ();
+
+      template< class U, bool >
+      struct GetDiscreteFunctionSpaceType;
+
+      template< class U >
+      struct GetDiscreteFunctionSpaceType< U, true >
+      {
+        typedef typename U::DiscreteFunctionSpaceType Type;
+      };
+
+      template< class U >
+      struct GetDiscreteFunctionSpaceType< U, false >
+      {
+        typedef void Type;
+      };
+
+    public:
+      static const bool v = (sizeof( test( makeT() ) ) == sizeof( Small ));
+      typedef typename GetDiscreteFunctionSpaceType< T, v >::Type Type;
+    };
+
+
+
+    // DFSpaceIdentifier
+    // -----------------
 
     //! \brief enumerator for identification of spaces 
     enum DFSpaceIdentifier {

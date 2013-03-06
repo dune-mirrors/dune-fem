@@ -27,7 +27,12 @@ FEMDIR="$DUNEDIR/dune-fem"
 SCRIPTSDIR="$FEMDIR/scripts"
 OPTSDIR="$SCRIPTSDIR/opts"
 
-MODULES="dune-common dune-geometry dune-grid dune-istl dune-localfunctions dune-spgrid dune-fem"
+# search for all existing dune modules
+# ------------------------------------
+MODULES=""
+for modctrl in $(find -name dune.module -print); do
+  MODULES+="$(dirname $modctrl | sed -e 's@^[.]/@@g') " 
+done
 
 errors=0
 

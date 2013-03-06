@@ -8,6 +8,7 @@
 #include<dune/geometry/referenceelements.hh>
 
 // dune-fem includes
+#include <dune/fem/function/localfunction/average.hh>
 #include <dune/fem/space/basisfunctionset/default.hh>
 #include <dune/fem/space/common/defaultcommhandler.hh>
 #include <dune/fem/space/common/discretefunctionspace.hh>
@@ -239,9 +240,10 @@ namespace Dune
       template< class LocalFunction, class LocalDofVector >
       void interpolate ( const LocalFunction &localFunction, LocalDofVector &dofs ) const
       {
-        typedef DiscontinuousGalerkinLocalInterpolation< ThisType > LocalInterpolationType;
-        LocalInterpolationType interpolation( *this );
-        interpolation( localFunction, dofs );
+        typename LocalFunction::RangeType value;
+        LocalAverage< LocalFunction, GridPartType >::apply( localFunction, value );
+        for( int i = 0; i < FunctionSpaceType::dimRange; ++i )
+          dofs[ i ] = value[ i ];
       }
 
     private:
