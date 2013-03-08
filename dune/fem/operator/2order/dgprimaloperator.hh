@@ -1,34 +1,34 @@
 #ifndef DUNE_FEM_DGPRIMALOPERATOR_HH
 #define DUNE_FEM_DGPRIMALOPERATOR_HH
 
-//- Dune includes 
-#include <dune/common/typetraits.hh>
-#include <dune/common/timer.hh>
 #include <dune/common/fvector.hh>
-#include <dune/grid/common/grid.hh>
-#include <dune/fem/quadrature/caching/twistutility.hh>
 
-//- local includes 
-#include <dune/fem/pass/pass.hh>
-#include <dune/fem/pass/dgdiscretemodel.hh>
-#include <dune/fem/pass/ellipticmodelcaller.hh>
-
-#include <dune/fem/solver/timeprovider.hh>
+#include <dune/fem/io/file/persistencemanager.hh>
 #include <dune/fem/misc/boundaryidentifier.hh>
-#include <dune/fem/solver/oemsolver/preconditioning.hh>
-
-#include <dune/fem/space/common/communicationmanager.hh>
-#include <dune/fem/space/common/arrays.hh>
-
 #include <dune/fem/misc/gridwidth.hh>
-
 #include <dune/fem/operator/2order/dgmatrixsetup.hh>
+#include <dune/fem/pass/common/pass.hh>
+// #include <dune/fem/pass/ellipticmodelcaller.hh>
+#include <dune/fem/pass/localdg/discretemodel.hh>
+#include <dune/fem/quadrature/caching/twistutility.hh>
+#include <dune/fem/solver/oemsolver/preconditioning.hh>
+#include <dune/fem/space/common/arrays.hh>
+#include <dune/fem/space/common/communicationmanager.hh>
 
 namespace Dune
 {
 
   namespace Fem
   {
+
+    // External forward declaration
+    // -----------------------------
+
+    // to be implemented!
+    template< class DiscreteModel, class Argument, class PassIds >
+    class EllipticDiscreteModelCaller;
+
+
 
     // double feature only works in serial runs 
     //#if HAVE_MPI == 0
@@ -83,6 +83,8 @@ namespace Dune
       //! I need to switch PreviousPassType
       typedef PreviousPassImp PreviousPassType;
 
+      typedef typename BaseType::PassIds PassIds;
+
       // Types from the base class
       typedef typename BaseType::Entity EntityType; 
       typedef typename EntityType::EntityPointer EntityPointerType;
@@ -131,9 +133,7 @@ namespace Dune
       typedef typename DiscreteModelType::SelectorType SelectorType;
 
       // model callers 
-      typedef CombinedSelector< ThisType , SelectorType >  CombinedSelectorType;
-      typedef EllipticDiscreteModelCaller< DiscreteModelType, ArgumentType,
-                CombinedSelectorType> DiscreteModelCallerType;
+      typedef EllipticDiscreteModelCaller< DiscreteModelType, ArgumentType, PassIds > DiscreteModelCallerType;
 
       typedef typename GridType :: ctype ctype;
       typedef typename GeometryType::JacobianInverseTransposed JacobianInverseTransposedType;
