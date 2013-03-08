@@ -9,10 +9,10 @@
 #include <dune/common/exceptions.hh>
 #include <dune/common/nullptr.hh>
 
+#include <dune/fem/common/tupletypetraits.hh>
+#include <dune/fem/common/tupleutility.hh>
 #include <dune/fem/pass/common/localfunctiontuple.hh>
 #include <dune/fem/pass/common/pass.hh>
-#include <dune/fem/pass/common/tupletypetraits.hh>
-#include <dune/fem/pass/common/tupleutility.hh>
 
 namespace Dune
 {

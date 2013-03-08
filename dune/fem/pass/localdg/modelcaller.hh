@@ -4,12 +4,12 @@
 #include <cstddef>
 #include <vector>
 
+#include <dune/fem/common/tupletypetraits.hh>
+#include <dune/fem/common/tupleutility.hh>
+#include <dune/fem/common/typeindexedtuple.hh>
 #include <dune/fem/pass/common/localfunctiontuple.hh>
 #include <dune/fem/pass/common/pass.hh>
 #include <dune/fem/pass/common/selector.hh>
-#include <dune/fem/pass/common/tupletypetraits.hh>
-#include <dune/fem/pass/common/tupleutility.hh>
-#include <dune/fem/pass/common/typeindexedtuple.hh>
 
 namespace Dune
 {

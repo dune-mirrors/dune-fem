@@ -5,7 +5,7 @@
 #include <dune/common/tupleutility.hh>
 #include <dune/common/typetraits.hh>
 
-#include "tupleutility.hh"
+#include <dune/fem/common/tupleutility.hh>
 
 namespace
 {

@@ -7,9 +7,8 @@
 #include <dune/common/timer.hh>
 #include <dune/common/tuples.hh>
 
+#include <dune/fem/common/tupleutility.hh>
 #include <dune/fem/operator/common/operator.hh>
-
-#include "tupleutility.hh"
 
 namespace Dune 
 {

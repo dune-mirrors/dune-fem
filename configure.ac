@@ -31,6 +31,7 @@ AC_CONFIG_FILES([Makefile
      doc/doxygen/pages/Makefile
      dune/Makefile
      dune/fem/Makefile
+     dune/fem/common/Makefile
      dune/fem/pass/Makefile
      dune/fem/pass/common/Makefile
      dune/fem/pass/localdg/Makefile
