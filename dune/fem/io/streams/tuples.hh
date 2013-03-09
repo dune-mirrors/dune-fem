@@ -34,7 +34,7 @@ namespace
     static InStream &apply ( InStream &in, Tuple &tuple )
     {
       Dune::ForEachValue< Tuple > forEach( tuple );
-      InStreamFunctor functor;
+      InStreamFunctor functor( in );
       forEach.apply( functor );
       return in;
     }
@@ -66,8 +66,8 @@ namespace
     template< class Tuple >
     static OutStream &apply ( OutStream &out, const Tuple &tuple )
     {
-      Dune::ForEachValue< Tuple > forEach( const_cast< Tuple >( tuple ) );
-      OutStreamFunctor functor;
+      Dune::ForEachValue< Tuple > forEach( const_cast< Tuple & >( tuple ) );
+      OutStreamFunctor functor( out );
       forEach.apply( functor );
       return out;
     }
