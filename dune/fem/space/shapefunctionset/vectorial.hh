@@ -334,12 +334,12 @@ namespace Dune
 
     template< class GeometryJacobianInverseTransposed, class K, int ROWS >
     void jacobianTransformation ( const GeometryJacobianInverseTransposed &gjit,
-                                  const MakeVectorialExpression< FieldMatrix< K, 1, GeometryJacobianInverseTransposed::rows >, FieldMatrix< K, ROWS, GeometryJacobianInverseTransposed::cols > > &a,
+                                  const MakeVectorialExpression< FieldMatrix< K, 1, GeometryJacobianInverseTransposed::cols >, FieldMatrix< K, ROWS, GeometryJacobianInverseTransposed::cols > > &a,
                                   FieldMatrix< K, ROWS, GeometryJacobianInverseTransposed::rows > &b )
     {
-      typedef MakeVectorialTraits< FieldMatrix< K, 1, GeometryJacobianInverseTransposed::rows >, FieldMatrix< K, ROWS, GeometryJacobianInverseTransposed::cols > > Traits;
+      typedef MakeVectorialTraits< FieldMatrix< K, 1, GeometryJacobianInverseTransposed::cols >, FieldMatrix< K, ROWS, GeometryJacobianInverseTransposed::cols > > Traits;
       b = Traits::zeroVectorial();
-      gjit.mv( Traits::access( a.scalar() ), Traits::access( b, a.component() ) );
+      gjit.mv( Traits::access( a.scalar() ), b[ a.component() ] );
     }
 
     template< class GeometryJacobianInverseTransposed, class K, int SIZE >
@@ -348,13 +348,14 @@ namespace Dune
                                  FieldVector< FieldMatrix< K, GeometryJacobianInverseTransposed::rows, GeometryJacobianInverseTransposed::rows >, SIZE > &b )
     {
       typedef MakeVectorialTraits< FieldVector< FieldMatrix< K, GeometryJacobianInverseTransposed::cols, GeometryJacobianInverseTransposed::cols >, 1 >, FieldVector< FieldMatrix< K, GeometryJacobianInverseTransposed::cols, GeometryJacobianInverseTransposed::cols >, SIZE > > Traits;
-      b = Traits::zeroVectorial();
+      typedef MakeVectorialTraits< FieldVector< FieldMatrix< K, GeometryJacobianInverseTransposed::rows, GeometryJacobianInverseTransposed::rows >, 1 >, FieldVector< FieldMatrix< K, GeometryJacobianInverseTransposed::rows, GeometryJacobianInverseTransposed::rows >, SIZE > > RgTraits;
+      b = RgTraits::zeroVectorial();
       for( int k = 0; k < GeometryJacobianInverseTransposed::cols; ++k )
       {
         FieldVector< K, GeometryJacobianInverseTransposed::rows > c;
         gjit.mv( Traits::access( a.scalar() )[ k ], c );
         for( int j = 0; j < GeometryJacobianInverseTransposed::rows; ++j )
-          Traits::access( b, a.component() )[ j ].axpy( gjit[ j ][ k ], c );
+          RgTraits::access( b, a.component() )[ j ].axpy( gjit[ j ][ k ], c );
       }
     }
 

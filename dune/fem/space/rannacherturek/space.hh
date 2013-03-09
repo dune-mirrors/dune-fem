@@ -1,6 +1,9 @@
 #ifndef DUNE_FEM_SPACE_RANNACHERTUREK_HH
 #define DUNE_FEM_SPACE_RANNACHERTUREK_HH
 
+// ------------------------------------------------------------------------
+// !!! RannacherTurekDiscreteFunctionSpace requires dune-localfunctions !!!
+// ------------------------------------------------------------------------
 #if HAVE_DUNE_LOCALFUNCTIONS
 
 // C++ includes
@@ -116,6 +119,15 @@ namespace Dune
     // RannacherTurekDiscreteFunctionSpace
     // -----------------------------------
 
+    /** \brief Rannacher-Turek Space
+     *  \class RannacherTurekDiscreteFunctionSpace
+     *  \ingroup DiscreteFunctionSpace
+     *
+     *  \note The RannacherTurekDiscreteFunctionSpace depends on
+     *        dune-localfunctions (see http://www.dune-project.org).
+     *
+     *  \todo please doc me
+     */
     template< class FunctionSpace, class GridPart, template< class > class Storage = CachingStorage >
     struct RannacherTurekDiscreteFunctionSpace
     : public DiscreteFunctionSpaceDefault< RannacherTurekDiscreteFunctionSpaceTraits< FunctionSpace, GridPart, Storage > >

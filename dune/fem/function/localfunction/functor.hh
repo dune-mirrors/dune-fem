@@ -28,14 +28,14 @@ namespace Dune
     {
       typedef LocalFunction LocalFunctionType;
 
-      typedef typename LocalFunctionType::DomainType DomainType;
+      typedef typename LocalFunctionType::LocalCoordinateType LocalCoordinateType;
       typedef typename LocalFunctionType::RangeType RangeType;
 
       LocalFunctionEvaluateFunctor ( RangeType &value )
       : value_( value )
       {}
 
-      void operator() ( const DomainType &x, const LocalFunction &localFunction )
+      void operator() ( const LocalCoordinateType &x, const LocalFunction &localFunction )
       {
         localFunction.evaluate( x, value_ );
       }
@@ -49,7 +49,7 @@ namespace Dune
     {
       typedef LocalFunction LocalFunctionType;
 
-      typedef typename LocalFunctionType::DomainType DomainType;
+      typedef typename LocalFunctionType::LocalCoordinateType LocalCoordinateType;
       typedef typename LocalFunctionType::RangeType RangeType;
 
       LocalFunctionEvaluateFunctor ( const Dune::FieldVector< int, diffOrder > &diffVariable,
@@ -58,7 +58,7 @@ namespace Dune
         diffVariable_( &diffVariable )
       {}
 
-      void operator() ( const DomainType &x, const LocalFunction &localFunction )
+      void operator() ( const LocalCoordinateType &x, const LocalFunction &localFunction )
       {
         localFunction.evaluate( x, value_ );
       }
@@ -78,14 +78,14 @@ namespace Dune
     {
       typedef LocalFunction LocalFunctionType;
 
-      typedef typename LocalFunctionType::DomainType DomainType;
+      typedef typename LocalFunctionType::LocalCoordinateType LocalCoordinateType;
       typedef typename LocalFunctionType::JacobianRangeType JacobianRangeType;
 
       LocalFunctionJacobianFunctor ( JacobianRangeType &jacobian )
       : jacobian_( jacobian )
       {}
 
-      void operator() ( const DomainType &x, const LocalFunction &localFunction )
+      void operator() ( const LocalCoordinateType &x, const LocalFunction &localFunction )
       {
         localFunction.jacobian( x, jacobian_);
       }
@@ -104,14 +104,14 @@ namespace Dune
     {
       typedef LocalFunction LocalFunctionType;
 
-      typedef typename LocalFunctionType::DomainType DomainType;
+      typedef typename LocalFunctionType::LocalCoordinateType LocalCoordinateType;
       typedef typename LocalFunctionType::HessianRangeType HessianRangeType;
 
       LocalFunctionHessianFunctor ( HessianRangeType &hessian )
       : hessian_( hessian )
       {}
 
-      void operator() ( const DomainType &x, const LocalFunction &localFunction )
+      void operator() ( const LocalCoordinateType &x, const LocalFunction &localFunction )
       {
         localFunction.hessian( x, hessian_ );
       }
