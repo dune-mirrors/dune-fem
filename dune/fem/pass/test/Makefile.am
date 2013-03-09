@@ -17,13 +17,7 @@ test_pass_CPPFLAGS = $(ALL_PKG_CPPFLAGS) $(DUNEMPICPPFLAGS) -DDIMRANGE=$(DIMRANG
 
 DGFFILES = 1dgrid.dgf 2dgrid.dgf 3dgrid.dgf
 
-
-EXTRA_DIST = $(DGFFILES) \
-	     dgstub.hh \
-             helper_test.hh \
-             lagrange_fixture.hh \
-             passstub.hh \
-             pass_test.hh
+EXTRA_DIST = $(DGFFILES) parameter
 
 CLEANFILES =
 
