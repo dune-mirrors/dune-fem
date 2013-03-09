@@ -197,7 +197,7 @@ namespace Dune
       template< class QuadratureType, class TupleVectorType >
       void evaluateQuadrature ( const QuadratureType &quadrature, TupleVectorType &vector ) const
       {
-        assert( vector.size() >= nop );
+        assert( vector.size() >= quadrature.nop() );
         evaluateQuadrature( quadrature, vector, vector[ 0 ] );
       }
 
