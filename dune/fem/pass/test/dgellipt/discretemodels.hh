@@ -137,10 +137,10 @@ namespace LDGExample
       typedef ISTLBICGSTABOp <DiscreteFunctionType, LocalOperatorType> InverseOperatorType;
 #elif HAVE_BLAS
       //typedef GMRESOp    <DiscreteFunctionType, LocalOperatorType> InverseOperatorType;
-      typedef OEMBICGSTABOp <DiscreteFunctionType, LocalOperatorType> InverseOperatorType;
+      //typedef OEMBICGSTABOp <DiscreteFunctionType, LocalOperatorType> InverseOperatorType;
       //typedef OEMGMRESOp    <DiscreteFunctionType, LocalOperatorType> InverseOperatorType;
       //typedef OEMCGOp       <DiscreteFunctionType, LocalOperatorType> InverseOperatorType;
-      //typedef CGInverseOp   <DiscreteFunctionType, LocalOperatorType> InverseOperatorType;
+      typedef CGInverseOp   <DiscreteFunctionType, LocalOperatorType> InverseOperatorType;
       //typedef BICGSTABOp    <DiscreteFunctionType, LocalOperatorType> InverseOperatorType;
 #else 
       typedef CGInverseOp   <DiscreteFunctionType, LocalOperatorType> InverseOperatorType;
