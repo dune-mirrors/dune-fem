@@ -5,6 +5,8 @@
 #include <dune/common/tuples.hh>
 #include <dune/common/tupleutility.hh>
 
+#include "nil.hh"
+
 #if HAVE_TUPLE || HAVE_TR1_TUPLE
 
 // overload Element Implementation 
@@ -14,12 +16,6 @@ namespace Dune
 
   namespace Fem
   {
-
-    /**
-     * @brief An empty class.
-     */
-    struct Nil
-    {};
 
     namespace
     {

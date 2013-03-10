@@ -1,14 +1,16 @@
 #ifndef DUNE_FEM_COMBINEINTERFACE_HH
 #define DUNE_FEM_COMBINEINTERFACE_HH
 
-#include <dune/fem/misc/femtuples.hh>
+#include <dune/common/tuples.hh>
+
+#include "nil.hh"
 
 namespace Dune 
 {
   
   namespace Fem
   {
-
+  
     /*! @addtogroup InterfaceHelper
         A general strategy for combining up to nine instances of an 
         interface class. The resulting type again satisfies the 
@@ -69,16 +71,16 @@ namespace Dune
       //! Constructor taking two interface instances
       PairOfInterfaces(T1& t1,T2& t2) : p2(t2,n), p(t1,p2) {}
       //! Access first interface instance
-      T1Type& first() {return p.first();}
+      T1Type& first() {return Dune::get<0>(p);}
       //! Access second interface instance
-      T2Type& second() {return p.second().first();}
+      T2Type& second() {return Dune::get<0>(Dune::get<1>(p));}
       //! const Access first interface instance
-      const T1Type& first() const {return p.first();}
+      const T1Type& first() const {return Dune::get<0>(p);}
       //! const Access second interface instance
-      const T2Type& second() const {return p.second().first();}
+      const T2Type& second() const {return Dune::get<0>(Dune::get<1>(p));}
     private:
-      typedef Pair<T2&,Nil> Pair2Type;
-      typedef Pair<T1&,Pair2Type> PairType;
+      typedef Dune::tuple<T2&,Nil> Pair2Type;
+      typedef Dune::tuple<T1&,Pair2Type> PairType;
       Nil n;
       Pair2Type p2;
       PairType p;
@@ -92,16 +94,16 @@ namespace Dune
       //! Constructor taking two interface instances
       PairOfInterfaces(T1* t1,T2& t2) : p2(t2,n), p(t1,p2) {}
       //! Access first interface instance
-      T1Type& first() {return *(p.first());}
+      T1Type& first() {return *(Dune::get<0>(p));}
       //! Access second interface instance
-      T2Type& second() {return p.second().first();}
+      T2Type& second() {return Dune::get<0>(Dune::get<1>(p));}
       //! Access first interface instance
-      const T1Type& first() const {return *(p.first());}
+      const T1Type& first() const {return *(Dune::get<0>(p));}
       //! Access second interface instance
-      const T2Type& second() const {return p.second().first();}
+      const T2Type& second() const {return Dune::get<0>(Dune::get<1>(p));}
     private:
-      typedef Pair<T2&,Nil> Pair2Type;
-      typedef Pair<T1*,Pair2Type> PairType;
+      typedef Dune::tuple<T2&,Nil> Pair2Type;
+      typedef Dune::tuple<T1*,Pair2Type> PairType;
       Nil n;
       Pair2Type p2;
       PairType p;
@@ -115,16 +117,16 @@ namespace Dune
       //! Constructor taking two interface instances
       PairOfInterfaces(T1& t1,T2* t2) : p2(t2,n), p(t1,p2) {}
       //! Access first interface instance
-      T1Type& first() {return p.first();}
+      T1Type& first() {return Dune::get<0>(p);}
       //! Access second interface instance
-      T2Type& second() {return *(p.second().first());}
+      T2Type& second() {return *(Dune::get<0>(Dune::get<1>(p)));}
       //! Access first interface instance
-      const T1Type& first() const {return p.first();}
+      const T1Type& first() const {return Dune::get<0>(p);}
       //! Access second interface instance
-      const T2Type& second() const {return *(p.second().first());}
+      const T2Type& second() const {return *(Dune::get<0>(Dune::get<1>(p)));}
     private:
-      typedef Pair<T2*,Nil> Pair2Type;
-      typedef Pair<T1&,Pair2Type> PairType;
+      typedef Dune::tuple<T2*,Nil> Pair2Type;
+      typedef Dune::tuple<T1&,Pair2Type> PairType;
       Nil n;
       Pair2Type p2;
       PairType p;
@@ -138,16 +140,16 @@ namespace Dune
       //! Constructor taking two interface instances
       PairOfInterfaces(T1* t1,T2* t2) : p2(t2,n), p(t1,p2) {}
       //! Access first interface instance
-      T1Type& first() {return *(p.first());}
+      T1Type& first() {return *(Dune::get<0>(p));}
       //! Access second interface instance
-      T2Type& second() {return *(p.second().first());}
+      T2Type& second() {return *(Dune::get<0>(Dune::get<1>(p)));}
       //! Access first interface instance
-      const T1Type& first() const {return *(p.first());}
+      const T1Type& first() const {return *(Dune::get<0>(p));}
       //! Access second interface instance
-      const T2Type& second() const {return *(p.second().first());}
+      const T2Type& second() const {return *(Dune::get<0>(Dune::get<1>(p)));}
     private:
-      typedef Pair<T2*,Nil> Pair2Type;
-      typedef Pair<T1*,Pair2Type> PairType;
+      typedef Dune::tuple<T2*,Nil> Pair2Type;
+      typedef Dune::tuple<T1*,Pair2Type> PairType;
       Nil n;
       Pair2Type p2;
       PairType p;
