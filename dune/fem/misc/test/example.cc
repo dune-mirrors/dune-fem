@@ -1,8 +1,8 @@
-#include <cmath>
 #include <config.h>
-#include <dune/fem/misc/femtuples.hh>
+
 #include <iostream>
-#include "combineinterface.hh"
+
+#include <dune/fem/misc/combineinterface.hh>
 
 template <class Impl>
 struct InterfaceA {
@@ -25,9 +25,9 @@ struct InterfaceAImpl2 : public InterfaceA<InterfaceAImpl2> {
 template <class I1,class I2>
 struct InterfaceAPairPlus : 
   public InterfaceA<InterfaceAPairPlus<I1,I2> >,
-  public Dune::PairOfInterfaces<I1,I2> {
+  public Dune::Fem::PairOfInterfaces<I1,I2> {
   // always use the following interface
-  InterfaceAPairPlus(I1 i1, I2 i2) : Dune::PairOfInterfaces<I1,I2>(i1,i2) {}
+  InterfaceAPairPlus(I1 i1, I2 i2) : Dune::Fem::PairOfInterfaces<I1,I2>(i1,i2) {}
   // the result of the interface method should be summed up...
   int a(int i) {
     return this->first().a(i) + this->second().a(i);
@@ -36,9 +36,9 @@ struct InterfaceAPairPlus :
 template <class I1,class I2>
 struct InterfaceAPairPow : 
   public InterfaceA<InterfaceAPairPow<I1,I2> >,
-  public Dune::PairOfInterfaces<I1,I2> {
+  public Dune::Fem::PairOfInterfaces<I1,I2> {
   // always use the following interface
-  InterfaceAPairPow(I1 i1, I2 i2) : Dune::PairOfInterfaces<I1,I2>(i1,i2) {}
+  InterfaceAPairPow(I1 i1, I2 i2) : Dune::Fem::PairOfInterfaces<I1,I2>(i1,i2) {}
   // the result of the interface method should be summed up...
   int a(int i) {
     return this->first().a(i)*this->second().a(i);
@@ -54,7 +54,7 @@ int test2(InterfaceA<A1>& impl1,
   typedef InterfaceA<A1> I1Type;
   typedef InterfaceA<A2> I2Type;
   // Can now further combine the interfaces also using reference and pointer
-  typedef Dune::CombineInterface<InterfaceAPairPlus,I1Type*,I1Type&,I1Type&,
+  typedef Dune::Fem::CombineInterface<InterfaceAPairPlus,I1Type*,I1Type&,I1Type&,
     InterfaceAImpl1&,InterfaceAImpl1&,InterfaceAImpl2&,InterfaceAImpl2&,
     I2Type&,I2Type&> CIType;
   InterfaceAImpl1 a1;
@@ -63,13 +63,13 @@ int test2(InterfaceA<A1>& impl1,
   return ci.a(10);
 }
 int main() {
-  typedef Dune::CombineInterface<InterfaceAPairPlus,
+  typedef Dune::Fem::CombineInterface<InterfaceAPairPlus,
     InterfaceAImpl1&,InterfaceAImpl2&,InterfaceAImpl2&> InterfaceAImpl122;
   InterfaceAImpl1 i1;
   InterfaceAImpl2 i2,i3;
   InterfaceAImpl122 i122(i1,i2,i3);
   // InterfaceAImpl122 is again an interface implementation...
-  typedef Dune::CombineInterface<InterfaceAPairPlus,
+  typedef Dune::Fem::CombineInterface<InterfaceAPairPlus,
     InterfaceAImpl1&,InterfaceAImpl122&,InterfaceAImpl1&,InterfaceAImpl122&> 
     InterfaceAImpl11221122;
   InterfaceAImpl11221122 i11221122(i1,i122,i1,i122);
@@ -79,7 +79,7 @@ int main() {
   std::cout << "Example of recombination: " 
 	    << "result is A11111221122112211221122 (13xA1 + 10xA2)" << std::endl;
   std::cout << test2(i1,i11221122) << std::endl;
-  typedef Dune::CombineInterface<InterfaceAPairPow,
+  typedef Dune::Fem::CombineInterface<InterfaceAPairPow,
     InterfaceAImpl1&,InterfaceAImpl122&,InterfaceAImpl11221122&> 
     InterfaceAImpl122Pow11221122;
   InterfaceAImpl122Pow11221122 i122Pow11221122(i1,i122,i11221122);

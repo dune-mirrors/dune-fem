@@ -105,6 +105,7 @@ AC_CONFIG_FILES([Makefile
      dune/fem/solver/oemsolver/Makefile 
      dune/fem/misc/Makefile
      dune/fem/misc/petsc/Makefile
+     dune/fem/misc/test/Makefile
      dune/fem/storage/Makefile
      dune/fem/test/Makefile
      dune/fem/gridpart/Makefile

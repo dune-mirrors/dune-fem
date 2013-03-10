@@ -1,6 +1,10 @@
 #include <iostream>
-#include "combineinterface.hh"
-using namespace Dune;
+
+#include <dune/common/static_assert.hh>
+#include <dune/common/typetraits.hh>
+
+#include <dune/fem/misc/combineinterface.hh>
+
 // Ein Interface mit einer void Methode
 struct GInter {
   void hallo() {
@@ -81,9 +85,9 @@ struct GlobalInter2 {
 /*****************************************************************/
 // Klasse zur Kombinieren zweier lokaler Interface-Klassen
 template <class T1,class T2> 
-struct CombLocalInter : public PairOfInterfaces<T1,T2> {
+struct CombLocalInter : public Dune::Fem::PairOfInterfaces<T1,T2> {
   // diese Zeilen muessen immer dabei sein
-  CombLocalInter(T1 t1,T2 t2) : PairOfInterfaces<T1,T2>(t1,t2) {}
+  CombLocalInter(T1 t1,T2 t2) : Dune::Fem::PairOfInterfaces<T1,T2>(t1,t2) {}
   // Interface methode
   void test() {
     this->first().test();
@@ -92,13 +96,13 @@ struct CombLocalInter : public PairOfInterfaces<T1,T2> {
 };
 // Kombination von "globalen" Interfaceklassen
 template <class T1,class T2> 
-struct CombGlobalInter : public PairOfInterfaces<T1,T2> {
+struct CombGlobalInter : public Dune::Fem::PairOfInterfaces<T1,T2> {
  private:
   CombGlobalInter(const CombGlobalInter&) ;
   CombGlobalInter();
  public:
   // erstmal die Typen:
-  typedef PairOfInterfaces<T1,T2> BaseType;
+  typedef Dune::Fem::PairOfInterfaces<T1,T2> BaseType;
   typedef typename BaseType::T1Type T1Type;
   typedef typename BaseType::T2Type T2Type;
   typedef typename BaseType::T1Type::GType GType;// wobei GType fuer alle
@@ -109,10 +113,10 @@ struct CombGlobalInter : public PairOfInterfaces<T1,T2> {
   // getestet werden ...
   typedef typename T2Type::GType G2Type;  
   // ... aber erst im Konstruktor 
-  CombGlobalInter(T1 t1,T2 t2) : PairOfInterfaces<T1,T2>(t1,t2),
+  CombGlobalInter(T1 t1,T2 t2) : Dune::Fem::PairOfInterfaces<T1,T2>(t1,t2),
     local_(t1.reflocal(),t2.reflocal()) {
     // same type?
-    IsTrue<is_same<GType,G2Type>::value>::yes();
+    dune_static_assert( (Dune::is_same< GType, G2Type >::value), "types do not conincide" );
     // same reference?
     // if (&(t1.g())!=&(t2.g())) abort();
   }
@@ -140,17 +144,17 @@ int main() {
   II1 o1(g);
   II2 o2(g),o3(g);
   // Combiniere II1 und II2 ueber 
-  typedef CombineInterface<CombGlobalInter,II1&,II2&> co12Type;
+  typedef Dune::Fem::CombineInterface<CombGlobalInter,II1&,II2&> co12Type;
   co12Type co12(o1,o2);
   // Combiniere II12 mit II2 (ginge auch mit
   //                          CombineInterface<CombGlobalInter,co12Type,II2&>
-  typedef CombineInterface<CombGlobalInter,co12Type&,II2&> co122Type;
+  typedef Dune::Fem::CombineInterface<CombGlobalInter,co12Type&,II2&> co122Type;
   co122Type co122(co12,o3);
   // Jetzt legen wir richtig los
-  typedef CombineInterface<CombGlobalInter,co12Type&,II2&,co12Type&> co12212Type;
+  typedef Dune::Fem::CombineInterface<CombGlobalInter,co12Type&,II2&,co12Type&> co12212Type;
   co12212Type co12212(co12,o3,co12);
   // und noch mehr (im Moment Maximum = 4)
-  typedef CombineInterface<CombGlobalInter,II2&,co12212Type&,co12212Type&,II2&>
+  typedef Dune::Fem::CombineInterface<CombGlobalInter,II2&,co12212Type&,co12212Type&,II2&>
     co212212122122Type;
   // co212212122122 ist mir zu lang...
   typedef co212212122122Type coType;

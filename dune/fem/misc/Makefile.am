@@ -1,9 +1,7 @@
-# don't follow the full GNU-standard; we definitely need automake >= 1.5
-AUTOMAKE_OPTIONS = foreign 1.5
-
-SUBDIRS = petsc
-
 miscdir =  $(includedir)/dune/fem/misc
+
+SUBDIRS = petsc test
+
 misc_HEADERS = alugridwriter.hh \
                bartonnackmaninterface.hh \
                boundaryidentifier.hh \
@@ -20,7 +18,6 @@ misc_HEADERS = alugridwriter.hh \
                femeoctable.hh \
                field.hh \
                functor.hh \
-               example.cc \
                femtimer.hh \
                femtuples.hh \
                fieldmatrixhelper.hh \
@@ -34,7 +31,6 @@ misc_HEADERS = alugridwriter.hh \
                l2norm.hh \
                lpnorm.hh \
                linesegmentsampler.hh \
-               longexample.cc \
                mapgeomtype.hh \
                metaprogramming.hh \
                mpimanager.hh \
@@ -54,7 +50,6 @@ misc_HEADERS = alugridwriter.hh \
                threadmanager.hh
 
 noinst_LTLIBRARIES = libmisc.la
-
 libmisc_la_SOURCES = femtimer.cc test.cc suite.cc
 
 include $(top_srcdir)/am/global-rules
