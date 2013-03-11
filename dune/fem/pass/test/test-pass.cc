@@ -6,6 +6,7 @@
 #include <dune/common/exceptions.hh>
 #include <dune/common/typetraits.hh>
 
+#include <dune/fem/common/typeindexedtuple.hh>
 #include <dune/fem/function/adaptivefunction.hh>
 #include <dune/fem/function/common/gridfunctionadapter.hh>
 #include <dune/fem/function/localfunction/temporary.hh>
@@ -18,7 +19,6 @@
 #include <dune/fem/pass/applylocaloperator.hh>
 #include <dune/fem/pass/common/pass.hh>
 #include <dune/fem/pass/common/selector.hh>
-#include <dune/fem/pass/common/typeindexedtuple.hh>
 #include <dune/fem/quadrature/cachingquadrature.hh>
 #include <dune/fem/space/common/adaptmanager.hh>
 #include <dune/fem/space/common/functionspace.hh>
