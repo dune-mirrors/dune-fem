@@ -18,7 +18,6 @@ misc_HEADERS = alugridwriter.hh \
 	       femeoctable.hh \
 	       femtimer.cc \
 	       femtimer.hh \
-	       femtuples.hh \
 	       field.hh \
 	       fieldmatrixhelper.hh \
 	       fmatrixconverter.hh \
@@ -48,7 +47,6 @@ misc_HEADERS = alugridwriter.hh \
 	       test.hh \
 	       threaditerator.hh \
 	       threadmanager.hh \
-	       utility.hh \
 	       validator.hh
 
 noinst_LTLIBRARIES = libmisc.la
