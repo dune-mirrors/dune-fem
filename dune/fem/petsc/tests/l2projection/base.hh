@@ -6,9 +6,6 @@
 
 #include <sstream>
 
-#include <dune/common/misc.hh>
-#include <dune/common/fvector.hh>
-
 #include <dune/common/version.hh>
 
 // DGF gridtype 
@@ -16,17 +13,10 @@
 #include <dune/grid/io/file/dgfparser/dgfgridtype.hh>
 #endif
 
-#include <dune/fem/misc/mpimanager.hh>
-#include <dune/fem/misc/utility.hh>
-#include <dune/fem/misc/l2error.hh>
-#include <dune/fem/misc/femeoc.hh>
+#include <dune/fem/io/file/dataoutput.hh>
+#include <dune/fem/io/parameter.hh>
 #include <dune/fem/misc/femtimer.hh>
 #include <dune/fem/misc/gridwidth.hh>
-#include <dune/fem/gridpart/common/gridpart.hh>
-#include <dune/fem/space/common/adaptmanager.hh>
-#include <dune/fem/io/parameter.hh>
-#include <dune/fem/io/file/dataoutput.hh>
-#include <dune/fem/io/file/datawriter.hh>
 
 #include <dune/fem/misc/petsc/petsccommon.hh>
 
