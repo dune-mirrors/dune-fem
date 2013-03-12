@@ -346,7 +346,7 @@ namespace Dune
       //! \brief update local functions
       void setEntity ( const EntityType &entity )
       {
-        localFunctionTuple().setEntity( entity );
+        localFunctionTuple().init( entity );
       }
 
       //! \brief set value to be returned by method time()

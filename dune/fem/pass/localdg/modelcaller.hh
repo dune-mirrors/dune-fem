@@ -96,14 +96,14 @@ namespace Dune
       // set inside local funtions to entity
       void setEntity ( const EntityType &entity )
       {
-        localFunctionsInside_.setEntity( entity );
+        localFunctionsInside_.init( entity );
         discreteModel().setEntity( entity );
       }
 
       // set outside local functions to entity 
       void setNeighbor ( const EntityType &entity )
       {
-        localFunctionsOutside_.setEntity( entity );
+        localFunctionsOutside_.init( entity );
         discreteModel().setNeighbor( entity );
       }
 

@@ -137,10 +137,10 @@ namespace Dune
        *
        *  \param[in]  entity  grid part entity
        */
-      void setEntity ( const EntityType &entity )
+      void init ( const EntityType &entity )
       {
         entity_ = &entity;
-        setEntity( entity, localFunctionTuple_ );
+        init( entity, localFunctionTuple_ );
       }
 
       /** \brief return entity */
@@ -202,7 +202,7 @@ namespace Dune
       }
 
     protected:
-      void setEntity ( const EntityType &entity, LocalFunctionTupleType &localFunctions )
+      void init ( const EntityType &entity, LocalFunctionTupleType &localFunctions )
       {
         ForEachValue< LocalFunctionTupleType > forEach( localFunctionTuple_ );
         SetEntity functor( entity );
