@@ -338,7 +338,8 @@ namespace Dune
                                   FieldMatrix< K, ROWS, GeometryJacobianInverseTransposed::rows > &b )
     {
       typedef MakeVectorialTraits< FieldMatrix< K, 1, GeometryJacobianInverseTransposed::cols >, FieldMatrix< K, ROWS, GeometryJacobianInverseTransposed::cols > > Traits;
-      b = Traits::zeroVectorial();
+      typedef MakeVectorialTraits< FieldMatrix< K, 1, GeometryJacobianInverseTransposed::rows >, FieldMatrix< K, ROWS, GeometryJacobianInverseTransposed::rows > > RgTraits;
+      b = RgTraits::zeroVectorial();
       gjit.mv( Traits::access( a.scalar() ), b[ a.component() ] );
     }
 
