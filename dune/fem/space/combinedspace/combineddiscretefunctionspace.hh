@@ -19,7 +19,6 @@
 #include <dune/fem/space/common/defaultcommhandler.hh>
 
 //- local includes 
-#include "combinedbasefunctions.hh"
 #include "combinedbasisfunctionset.hh"
 #include "combinedmapper.hh"
 #include "adaptmanager.hh"
@@ -98,7 +97,7 @@ namespace Dune
 
       public:
       //! define a combined DofMapper and the block mapper
-      typedef CombinedMapper< GridType, BlockMapperType1, localBlockSize1, BlockMapperType2, localBlockSize2 > BlockMapperType;
+      typedef CombinedSpaceMapper< GridType, BlockMapperType1, localBlockSize1, BlockMapperType2, localBlockSize2 > BlockMapperType;
       typedef BlockMapperType MapperType;
 
       //! implementation of basefunction set 
