@@ -31,7 +31,7 @@ namespace Dune
 
       typedef std::size_t SizeType;
 
-      typedef CombinedMapper< Grid, BlockMapper1, blockSize1, BlockMapper2, blockSize2 >  DofMapperType;
+      typedef CombinedSpaceMapper< Grid, BlockMapper1, blockSize1, BlockMapper2, blockSize2 >  DofMapperType;
     };
 
     template< class Grid,  class BlockMapper1, int blockSize1, class BlockMapper2, int blockSize2 >
