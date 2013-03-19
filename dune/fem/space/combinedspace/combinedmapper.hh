@@ -17,7 +17,7 @@ namespace Dune
 
     //! Traits 
     template< class Grid,  class BlockMapper1, int blockSize1, class BlockMapper2, int blockSize2 >
-    struct CombinedSapceMapperTraits
+    struct CombinedSpaceMapperTraits
     {
       // we still need entities of codimension 0 here 
       typedef typename BlockMapper1 :: ElementType ElementType;
