@@ -61,6 +61,9 @@ namespace Dune
       typedef Dune::ReferenceElement< typename DomainType::value_type, 
                                       DomainType::dimension > ReferenceElementType;
 
+      //! \brief return order of basis function set
+      int order () const;
+
       //! \brief return size of basis function set
       std::size_t size () const;
 

@@ -93,6 +93,9 @@ namespace Dune
       // Basis Function Set Interface Methods
       // ------------------------------------
 
+      //! \brief return order of basis function set
+      int order () const { return shapeFunctionSet().order(); }
+
       //! \brief return size of basis function set
       std::size_t size () const { return shapeFunctionSet().size(); }
 

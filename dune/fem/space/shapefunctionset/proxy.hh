@@ -60,6 +60,8 @@ namespace Dune
       : shapeFunctionSet_( shapeFunctionSet )
       {}
 
+      int order () const { return impl().order(); }
+
       std::size_t size () const { return impl().size(); }
 
       template< class Point, class Functor >

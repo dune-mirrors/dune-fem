@@ -144,6 +144,8 @@ namespace Dune
       : topologyId_( type.id() )
       {}
 
+      int order () const;
+
       std::size_t numShapeFunctions () const;
 
       ShapeFunctionType *createShapeFunction( std::size_t i ) const;
@@ -269,6 +271,14 @@ namespace Dune
 
     // Implementation of LagrangeShapeFunctionFactory
     // ----------------------------------------------
+
+    template< class FunctionSpace, int polOrder >
+    inline int LagrangeShapeFunctionFactory< FunctionSpace, polOrder >
+      ::order () const
+    {
+      return polOrder;
+    }
+
 
     template< class FunctionSpace, int polOrder >
     inline std::size_t LagrangeShapeFunctionFactory< FunctionSpace, polOrder >

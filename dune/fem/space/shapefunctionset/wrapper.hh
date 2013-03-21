@@ -35,6 +35,11 @@ namespace Dune
       : shapeFunctionSet_( shapeFunctionSet )
       {}
 
+      int order () const
+      {
+        return shapeFunctionSet_.order();
+      }
+
       std::size_t size () const
       {
         return shapeFunctionSet_.size();

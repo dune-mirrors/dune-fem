@@ -129,11 +129,13 @@ namespace Dune
       : order_( order )
       {}
 
+      int order () const { return order_; }
+
       std::size_t numShapeFunctions () const
       {
         std::size_t size = 1;
         for( int i = 0; i < dimension; ++i )
-          size *= (order_+1);
+          size *= (order()+1);
         return size;
       }
 
@@ -142,8 +144,8 @@ namespace Dune
         typename ShapeFunctionType::MultiIndexType multiIndex;
         for( int i = 0; i < dimension; ++i )
         {
-          multiIndex[ i ] = shapeFunction % (order_+1);
-          shapeFunction /= (order_+1);
+          multiIndex[ i ] = shapeFunction % (order()+1);
+          shapeFunction /= (order()+1);
         }
         return new ShapeFunctionType( multiIndex );
       }

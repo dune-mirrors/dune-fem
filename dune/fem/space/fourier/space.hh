@@ -94,10 +94,12 @@ namespace Dune
       using BaseType::order;
 
       explicit FourierDiscreteFunctionSpace ( GridPartType &gridPart,
+                                              int order = std::numeric_limits< int >::max(),
                                               const InterfaceType commInterface = defaultInterface,
                                               const CommunicationDirection commDirection = defaultDirection )
       : BaseType( gridPart, commInterface, commDirection ),
-        mapper_( blockMapper_ )
+        mapper_( blockMapper_ ),
+        scalarBasisFunctions_( order )
       {}
 
       /** @copydoc Dune::Fem::DiscreteFunctionSpaceInterface::type */
@@ -116,7 +118,7 @@ namespace Dune
       bool continuous ( const IntersectionType &intersection ) const { return true; }
 
       /** @copydoc Dune::Fem::DiscreteFunctionSpaceInterface::order */
-      int order () const { return Order+1; }
+      int order () const { return scalarBasisFunctions_.order(); }
 
       /** @copydoc Dune::Fem::DiscreteFunctionSpaceInterface::blockMapper */
       BlockMapperType &blockMapper () const { return blockMapper_; }
