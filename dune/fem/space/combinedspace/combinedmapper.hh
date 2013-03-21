@@ -1,10 +1,9 @@
-#ifndef DUNE_FEM_COMBINEDMAPPER_HH
-#define DUNE_FEM_COMBINEDMAPPER_HH
+#ifndef DUNE_FEM_COMBINEDSPACEMAPPER_HH
+#define DUNE_FEM_COMBINEDSPACEMAPPER_HH
 
 #include <dune/fem/space/mapper/dofmapper.hh>
 #include <dune/fem/space/mapper/nonblockmapper.hh>
 #include <dune/fem/space/common/dofmanager.hh>
-
 
 
 namespace Dune
@@ -14,11 +13,11 @@ namespace Dune
 
     //! forward declaration
     template< class Grid,  class BlockMapper1, int blockSize1, class BlockMapper2, int blockSize2 >
-    class CombinedMapper;
+    class CombinedSpaceMapper;
 
     //! Traits 
     template< class Grid,  class BlockMapper1, int blockSize1, class BlockMapper2, int blockSize2 >
-    struct CombinedMapperTraits
+    struct CombinedSpaceMapperTraits
     {
       // we still need entities of codimension 0 here 
       typedef typename BlockMapper1 :: ElementType ElementType;
@@ -32,15 +31,15 @@ namespace Dune
 
       typedef std::size_t SizeType;
 
-      typedef CombinedMapper< Grid, BlockMapper1, blockSize1, BlockMapper2, blockSize2 >  DofMapperType;
+      typedef CombinedSpaceMapper< Grid, BlockMapper1, blockSize1, BlockMapper2, blockSize2 >  DofMapperType;
     };
 
     template< class Grid,  class BlockMapper1, int blockSize1, class BlockMapper2, int blockSize2 >
-    class CombinedMapper
-    : public AdaptiveDofMapper< CombinedMapperTraits< Grid, BlockMapper1, blockSize1, BlockMapper2, blockSize2 > >
+    class CombinedSpaceMapper
+    : public AdaptiveDofMapper< CombinedSpaceMapperTraits< Grid, BlockMapper1, blockSize1, BlockMapper2, blockSize2 > >
     {
-      typedef AdaptiveDofMapper< CombinedMapperTraits< Grid, BlockMapper1, blockSize1, BlockMapper2, blockSize2 > > BaseType;
-      typedef CombinedMapper< Grid, BlockMapper1, blockSize1, BlockMapper2, blockSize2 >  ThisType;
+      typedef AdaptiveDofMapper< CombinedSpaceMapperTraits< Grid, BlockMapper1, blockSize1, BlockMapper2, blockSize2 > > BaseType;
+      typedef CombinedSpaceMapper< Grid, BlockMapper1, blockSize1, BlockMapper2, blockSize2 >  ThisType;
       typedef Grid GridType;
 
     public:
@@ -90,7 +89,7 @@ namespace Dune
 
       public:
       //! constructor
-      CombinedMapper( const GridType &grid, BlockMapper1 &blockMapper1, BlockMapper2& blockMapper2 )
+      CombinedSpaceMapper( const GridType &grid, BlockMapper1 &blockMapper1, BlockMapper2& blockMapper2 )
       :  dm_( DofManagerType :: instance( grid ) ), 
          mapper1_( blockMapper1 ),
          mapper2_( blockMapper2 ),
@@ -100,13 +99,13 @@ namespace Dune
         dm_.addIndexSet( *this );
       }
 
-      ~CombinedMapper() 
+      ~CombinedSpaceMapper() 
       {
         dm_.removeIndexSet( *this );
       }
       
       //! copy constructor
-      CombinedMapper( const ThisType &other )
+      CombinedSpaceMapper( const ThisType &other )
         : dm_( other.dm_ ),
           mapper1_( other.mapper1_ ),
           mapper2_( other.mapper2_ ),
@@ -307,4 +306,4 @@ namespace Dune
 
 } // namespace Dune
  
-#endif // #ifndef DUNE_FEM_COMBINEDMAPPER_HH
+#endif // #ifndef DUNE_FEM_COMBINEDSPACEMAPPER_HH

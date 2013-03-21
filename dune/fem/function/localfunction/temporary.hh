@@ -366,9 +366,6 @@ namespace Dune
       /** \copydoc Dune::Fem::LocalFunction::operator[]( const int num ) */
       RangeFieldType &operator[] ( const int num );
 
-      /** \copydoc Dune::Fem::LocalFunction::order() const */
-      int order () const;
-
       /** \copydoc Dune::Fem::LocalFunction::basisFunctionSet() const */
       const BasisFunctionSetType &basisFunctionSet () const;
 
@@ -542,14 +539,6 @@ namespace Dune
     {
       assert( num < numDofs() );
       return dofs_[ num ];
-    }
-
-
-    template< class DiscreteFunctionSpace, template< class > class ArrayAllocator >
-    inline int
-    TemporaryLocalFunctionImpl< DiscreteFunctionSpace, ArrayAllocator >::order () const
-    {
-      return discreteFunctionSpace_.order( entity() );
     }
 
 

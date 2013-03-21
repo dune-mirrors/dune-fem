@@ -24,10 +24,10 @@ namespace Dune
     // NumFourierBasisFunctions
     // ------------------------
 
-    template< int dimension, int order >
+    template< int dimension, int Order >
     struct NumFourierBasisFunctions
     {
-      static const int v = StaticPower< (2*order+1), dimension >::power;
+      static const int v = StaticPower< (2*Order+1), dimension >::power;
     };
 
 
@@ -35,7 +35,7 @@ namespace Dune
     // FourierBasisFunctions
     // ---------------------
 
-    template< class FunctionSpace, int order >
+    template< class FunctionSpace, int Order >
     struct FourierBasisFunctions
     {
       dune_static_assert( (FunctionSpace::dimRange == 1),
@@ -49,6 +49,9 @@ namespace Dune
       typedef typename FunctionSpaceType::HessianRangeType HessianRangeType;
 
       typedef std::size_t SizeType;
+
+      //! \brief return order
+      int order () const;
 
       //! \brief return number of basis functions
       SizeType size () const;
@@ -116,10 +119,10 @@ namespace Dune
     // Template specialization for dimDomain = dimRange = 1
     // ----------------------------------------------------
 
-    template< class DomainFieldType, class RangeFieldType, int order >
-    class FourierBasisFunctions< FunctionSpace< DomainFieldType, RangeFieldType, 1, 1 >, order >
+    template< class DomainFieldType, class RangeFieldType, int Order >
+    class FourierBasisFunctions< FunctionSpace< DomainFieldType, RangeFieldType, 1, 1 >, Order >
     {
-      typedef FourierBasisFunctions< FunctionSpace< DomainFieldType, RangeFieldType, 1, 1 >, order > ThisType;
+      typedef FourierBasisFunctions< FunctionSpace< DomainFieldType, RangeFieldType, 1, 1 >, Order > ThisType;
 
     public:
       typedef FunctionSpace< DomainFieldType, RangeFieldType, 1, 1 > FunctionSpaceType;
@@ -130,8 +133,12 @@ namespace Dune
       typedef typename FunctionSpaceType::HessianRangeType HessianRangeType;
 
       typedef std::size_t SizeType;
+      
+      explicit FourierBasisFunctions ( int order ) : order_( order ) {}
 
-      static SizeType size () { return NumFourierBasisFunctions< 1, order >::v; }
+      int order () const { return order_; }
+
+      static SizeType size () { return NumFourierBasisFunctions< 1, Order >::v; }
 
       template< class Functor >
       static void evaluateEach ( const DomainType &x, Functor functor )
@@ -141,7 +148,7 @@ namespace Dune
         // sin((n+1)*x) = sin(n*x)*cos(x) + cos(n*x)*sin(x)
         // cos((n+1)*x) = cos(n*x)*cos(x) - sin(n*x)*sin(x)
         SizeType basisFunction = 1;
-        for( int n = 1; n <= order; ++n )
+        for( int n = 1; n <= Order; ++n )
         {
           functor( basisFunction++, std::cos( n*x[ 0 ] ) );
           functor( basisFunction++, std::sin( n*x[ 0 ] ) );
@@ -153,7 +160,7 @@ namespace Dune
       {
         functor( 0, RangeFieldType( 0 ) );
         SizeType basisFunction = 1;
-        for( int n = 1; n <= order; ++n )
+        for( int n = 1; n <= Order; ++n )
         {
           functor( basisFunction++, -n*std::sin( n*x[ 0 ] ) );
           functor( basisFunction++, n*std::cos( n*x[ 0 ] ) );
@@ -165,12 +172,14 @@ namespace Dune
       {
         functor( 0, RangeFieldType( 0 ) );
         SizeType basisFunction = 1;
-        for( int n = 1; n <= order; ++n )
+        for( int n = 1; n <= Order; ++n )
         {
           functor( basisFunction++, -(n*n)*std::cos( n*x[ 0 ] ) );
           functor( basisFunction++, -(n*n)*std::sin( n*x[ 0 ] ) );
         }
       }
+    private:
+      int order_;
     };
 
 
@@ -178,10 +187,10 @@ namespace Dune
     // Template specialization for dimDomain > 1, dimRange = 1
     // -------------------------------------------------------
 
-    template< class DomainFieldType, class RangeFieldType, int dimDomain, int order >
-    class FourierBasisFunctions< FunctionSpace< DomainFieldType, RangeFieldType, dimDomain, 1 >, order >
+    template< class DomainFieldType, class RangeFieldType, int dimDomain, int Order >
+    class FourierBasisFunctions< FunctionSpace< DomainFieldType, RangeFieldType, dimDomain, 1 >, Order >
     {
-      typedef FourierBasisFunctions< FunctionSpace< DomainFieldType, RangeFieldType, dimDomain, 1 >, order > ThisType;
+      typedef FourierBasisFunctions< FunctionSpace< DomainFieldType, RangeFieldType, dimDomain, 1 >, Order > ThisType;
 
     public:
       typedef FunctionSpace< DomainFieldType, RangeFieldType, dimDomain, 1 > FunctionSpaceType;
@@ -195,7 +204,7 @@ namespace Dune
 
     private:
       // number of Fourier basis function for dimDomain = 1
-      static const int buffer_size = NumFourierBasisFunctions< 1, order >::v;
+      static const int buffer_size = NumFourierBasisFunctions< 1, Order >::v;
 
       // tags used for building cache
       struct Evaluate {};  //< evaluate basis functions
@@ -215,7 +224,11 @@ namespace Dune
       static IteratorType end () { return IteratorType::end(); }
 
     public:
-      static SizeType size () { return NumFourierBasisFunctions< dimDomain, order >::v; }
+      explicit FourierBasisFunctions ( int order ) : order_( order ) {}
+
+      int order () { return order_; }
+
+      static SizeType size () { return NumFourierBasisFunctions< dimDomain, Order >::v; }
 
       template< class Functor >
       void evaluateEach ( const DomainType &x, Functor functor ) const
@@ -317,6 +330,7 @@ namespace Dune
       void prepare ( const Hessian &, const DomainType &x ) const;
 
     private:
+      int order_;
       // cache for evaluation of basis functions
       mutable array< array< RangeFieldType, 3*buffer_size>, dimDomain > buffer_;
     };
@@ -326,8 +340,8 @@ namespace Dune
     // Implementation of FourierBasisFunctions::Assign
     // -----------------------------------------------
 
-    template< class DomainFieldType, class RangeFieldType, int dimDomain, int order >
-    struct FourierBasisFunctions< FunctionSpace< DomainFieldType, RangeFieldType, dimDomain, 1 >, order >::Assign
+    template< class DomainFieldType, class RangeFieldType, int dimDomain, int Order >
+    struct FourierBasisFunctions< FunctionSpace< DomainFieldType, RangeFieldType, dimDomain, 1 >, Order >::Assign
     {
       explicit Assign ( RangeFieldType *buffer ) : buffer_( buffer ) {}
 
@@ -357,8 +371,8 @@ namespace Dune
     // Implementation of FourierBasisFunctions::MultiIndexIterator
     // -----------------------------------------------------------
 
-    template< class DomainFieldType, class RangeFieldType, int dimDomain, int order >
-    struct FourierBasisFunctions< FunctionSpace< DomainFieldType, RangeFieldType, dimDomain, 1 >, order >::MultiIndexIterator
+    template< class DomainFieldType, class RangeFieldType, int dimDomain, int Order >
+    struct FourierBasisFunctions< FunctionSpace< DomainFieldType, RangeFieldType, dimDomain, 1 >, Order >::MultiIndexIterator
     {
       typedef MultiIndexIterator ThisType;
 
@@ -369,7 +383,7 @@ namespace Dune
 
       static IndexType invalidIndex () { return std::numeric_limits< IndexType >::max(); }
 
-      static const int N = NumFourierBasisFunctions< 1, order >::v;
+      static const int N = NumFourierBasisFunctions< 1, Order >::v;
 
     public:
       static ThisType begin () { return ThisType( 0 ); }
@@ -422,11 +436,11 @@ namespace Dune
     // Implementation of FourierBasisFunctions
     // ---------------------------------------
 
-    template< class DomainFieldType, class RangeFieldType, int dimDomain, int order >
-    void FourierBasisFunctions< FunctionSpace< DomainFieldType, RangeFieldType, dimDomain, 1 >, order >
+    template< class DomainFieldType, class RangeFieldType, int dimDomain, int Order >
+    void FourierBasisFunctions< FunctionSpace< DomainFieldType, RangeFieldType, dimDomain, 1 >, Order >
       ::prepare ( const Evaluate &, const DomainType &x ) const
     {
-      typedef FourierBasisFunctions< FunctionSpace< DomainFieldType, RangeFieldType, 1, 1 >, order > BasisFunctionsImp;
+      typedef FourierBasisFunctions< FunctionSpace< DomainFieldType, RangeFieldType, 1, 1 >, Order > BasisFunctionsImp;
       for( SizeType i = 0; i < dimDomain; ++i )
       {
         RangeFieldType *it = &buffer_[ i ][ 0 ];
@@ -436,11 +450,11 @@ namespace Dune
     };
 
 
-    template< class DomainFieldType, class RangeFieldType, int dimDomain, int order >
-    void FourierBasisFunctions< FunctionSpace< DomainFieldType, RangeFieldType, dimDomain, 1 >, order >
+    template< class DomainFieldType, class RangeFieldType, int dimDomain, int Order >
+    void FourierBasisFunctions< FunctionSpace< DomainFieldType, RangeFieldType, dimDomain, 1 >, Order >
       ::prepare ( const Jacobian &, const DomainType &x ) const
     {
-      typedef FourierBasisFunctions< FunctionSpace< DomainFieldType, RangeFieldType, 1, 1 >, order > BasisFunctionsImp;
+      typedef FourierBasisFunctions< FunctionSpace< DomainFieldType, RangeFieldType, 1, 1 >, Order > BasisFunctionsImp;
       for( SizeType i = 0; i < dimDomain; ++i )
       {
         RangeFieldType *it = &buffer_[ i ][ 0 ];
@@ -451,11 +465,11 @@ namespace Dune
     };
 
 
-    template< class DomainFieldType, class RangeFieldType, int dimDomain, int order >
-    void FourierBasisFunctions< FunctionSpace< DomainFieldType, RangeFieldType, dimDomain, 1 >, order >
+    template< class DomainFieldType, class RangeFieldType, int dimDomain, int Order >
+    void FourierBasisFunctions< FunctionSpace< DomainFieldType, RangeFieldType, dimDomain, 1 >, Order >
       ::prepare ( const Hessian &, const DomainType &x ) const
     {
-      typedef FourierBasisFunctions< FunctionSpace< DomainFieldType, RangeFieldType, 1, 1 >, order > BasisFunctionsImp;
+      typedef FourierBasisFunctions< FunctionSpace< DomainFieldType, RangeFieldType, 1, 1 >, Order > BasisFunctionsImp;
       for( SizeType i = 0; i < dimDomain; ++i )
       {
         RangeFieldType *it = &buffer_[ i ][ 0 ];

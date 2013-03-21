@@ -67,6 +67,8 @@ namespace Dune
       : basisFunctionSet_( basisFunctionSet )
       {}
 
+      int order () const { return impl().order(); }
+
       std::size_t size () const { return impl().size(); } 
 
       Dune::GeometryType type () const { return impl().type(); } 

@@ -317,7 +317,7 @@ namespace Dune
        *
        *  \return polorder of space on the given entity 
        */
-      inline int order ( const EntityType& entity ) const 
+      inline int order ( const EntityType& entity ) const DUNE_DEPRECATED
       { 
         CHECK_INTERFACE_IMPLEMENTATION( asImp().order( entity ) );
         return asImp().order( entity );
@@ -740,7 +740,7 @@ namespace Dune
       */
       inline int order ( const EntityType& entity ) const 
       { 
-        return asImp().order();
+        return asImp().basisFunctionSet( entity ).order();
       } 
     
       /** obtain a local function for an entity (to store intermediate values)

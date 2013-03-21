@@ -59,6 +59,9 @@ namespace Dune
       typedef typename FunctionSpaceType::JacobianRangeType JacobianRangeType;
       typedef typename FunctionSpaceType::HessianRangeType HessianRangeType;
 
+      /** @copydoc Dune::Fem::ShapeFunctionSet::order */
+      static std::size_t order () { return 0; }
+
       /** @copydoc Dune::Fem::ShapeFunctionSet::size */
       static std::size_t size () { return 1; }
 

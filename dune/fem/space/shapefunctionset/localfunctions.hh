@@ -65,6 +65,8 @@ namespace Dune
         jacobians_.reserve( size() );
       }
 
+      int order () const { return localBasis_.order(); }
+
       std::size_t size () const { return localBasis_.size(); }
 
       template< class Point, class Functor >

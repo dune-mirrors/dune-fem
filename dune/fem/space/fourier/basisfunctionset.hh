@@ -62,6 +62,8 @@ namespace Dune
       // Basis function set interface methods //
       //////////////////////////////////////////
 
+      int order () const { return basisFunctions().order(); }
+
       SizeType size () const { return basisFunctions().size(); }
 
       template< class Point, class DofVector >

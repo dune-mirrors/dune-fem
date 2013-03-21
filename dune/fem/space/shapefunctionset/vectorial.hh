@@ -429,6 +429,8 @@ namespace Dune
 
       const ScalarShapeFunctionSetType &scalarShapeFunctionSet () const { return scalarShapeFunctionSet_; }
 
+      int order () const { return scalarShapeFunctionSet().order(); }
+
       // Shape Function Set Interface Methods
       std::size_t size () const { return dimRangeFactor * scalarShapeFunctionSet().size(); }
 
