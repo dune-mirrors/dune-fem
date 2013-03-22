@@ -104,7 +104,8 @@ namespace Dune
     }
 
     template< class ShapeFunction >
-    inline SimpleShapeFunctionSet< ShapeFunction >::SimpleShapeFunctionSet( const ThisType &other )
+    inline SimpleShapeFunctionSet< ShapeFunction >
+      ::SimpleShapeFunctionSet ( const ThisType &other )
     {
       *this = other;
     }
@@ -124,6 +125,7 @@ namespace Dune
       for( std::size_t i = 0; i < numShapeFunctions; ++i )
         shapeFunctions_[ i ] = other.shapeFunctions_[ i ]->clone();
 
+      order_ = other.order_;
       return *this;
     }
 
