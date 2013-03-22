@@ -43,9 +43,6 @@ namespace Dune
       //! type of grid partition
       typedef typename FaceQuadrature :: GridPartType GridPartType;
         
-      //! type of the grid
-      typedef typename GridPartType :: GridType GridType;
-
       //! Type of the intersection iterator
       typedef typename GridPartType::IntersectionIteratorType IntersectionIteratorType;
       typedef typename IntersectionIteratorType::Intersection IntersectionType;
@@ -66,8 +63,8 @@ namespace Dune
 
       typedef typename FaceQuadratureType::LocalCoordinateType LocalCoordinateType;
 
-      //! for compatibility
-      typedef typename GridType::template Codim< 0 >::Entity EntityType;
+      // for compatibility
+      typedef typename GridPartType::template Codim< 0 >::EntityType EntityType;
       
       /** \brief Constructor creating an inside and an outside face quadrature for
                  integrating over an intersection. 

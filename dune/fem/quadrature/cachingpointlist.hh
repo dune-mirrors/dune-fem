@@ -85,6 +85,7 @@ namespace Dune
       typedef ElementPointListBase< GridPartImp, 0, IntegrationTraits > Base;
 
     public:
+      typedef typename Base::GridPartType GridPartType;
       static const int codimension = Base::codimension;
 
       //! The type of the coordinates in the codim-0 reference element.
@@ -93,9 +94,6 @@ namespace Dune
       //! the type of the quadrature point 
       typedef QuadraturePointWrapper< This > QuadraturePointWrapperType;
       
-      //! type of grid 
-      typedef typename Base::GridPartType::GridType GridType;
-
     protected:
       using Base::quadImp;
 
@@ -107,7 +105,7 @@ namespace Dune
       CachingPointList( const GeometryType &geometry, int order )
       : Base( geometry, order )
       {
-        CacheProvider< GridType, codimension >::registerQuadrature( quadImp() );
+        CacheProvider< GridPartType, codimension >::registerQuadrature( quadImp() );
       }
 
       const QuadraturePointWrapperType operator[] ( const size_t i ) const
@@ -162,7 +160,6 @@ namespace Dune
 
 
       // for compatibility
-      typedef typename GridPartType::GridType GridType;
       typedef typename GridPartType::TwistUtilityType  TwistUtilityType;
       typedef IntersectionIteratorType IntersectionIterator;
 
@@ -171,7 +168,7 @@ namespace Dune
       typedef typename CachingTraits< RealType, dimension >::MapperType MapperType;
       typedef typename CachingTraits< RealType, dimension >::PointVectorType PointVectorType;
 
-      typedef CacheProvider< GridType, codimension >            CacheProviderType;
+      typedef CacheProvider< GridPartType, codimension >            CacheProviderType;
       typedef PointProvider< RealType, dimension, codimension>  PointProviderType;
 
       using Base::localFaceIndex;

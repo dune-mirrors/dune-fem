@@ -107,10 +107,9 @@ protected:
   void checkLeafsCodim1(GridPartType& gridPart,
                         const int quadOrd) 
   {
-    typedef typename GridPartType :: GridType GridType; 
-    enum { dim = GridType :: dimension };
+    enum { dim = GridPartType :: dimension };
     enum { codim = 1 };
-    typedef typename GridType::ctype ctype;
+    typedef typename GridPartType ::ctype ctype;
 
     typedef typename GridPartType::IntersectionIteratorType IntersectionIterator;
     typedef typename IntersectionIterator::Intersection Intersection;
@@ -138,7 +137,7 @@ protected:
            it != endit; ++it) 
       {
         const Intersection& inter=*it;
-        typedef TwistUtility<GridType> TwistUtilityType; 
+        typedef typename GridPartType::TwistUtilityType TwistUtilityType; 
 
         if( inter.boundary() ) continue ;
 

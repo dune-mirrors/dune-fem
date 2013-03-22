@@ -64,8 +64,6 @@ namespace Dune
 
       typedef QuadraturePointWrapper< This > QuadraturePointWrapperType;
 
-      typedef typename Base::GridPartType::GridType GridType;
-
     public:
       using Base::localPoint;
      
@@ -120,7 +118,6 @@ namespace Dune
      
 
       // for compatibility
-      typedef typename GridPartType::GridType GridType;
       typedef typename GridPartType::TwistUtilityType  TwistUtilityType;
       typedef IntersectionIteratorType IntersectionIterator;
 

@@ -37,7 +37,6 @@ class TestCaching
 private:
   // types of iterators, entities and intersection
   typedef typename GridPartType :: template Codim<0> :: IteratorType IteratorType;
-  typedef typename GridPartType :: GridType GridType ;
   typedef typename GridPartType :: IndexSetType  IndexSetType ;
   typedef typename IteratorType :: Entity EntityType;
   typedef typename EntityType :: EntityPointer EntityPointerType;
@@ -91,7 +90,7 @@ public:
       const int quadNop = cacheQuad.nop();
       for (int qp = 0; qp < quadNop; ++qp)
       {
-        Dune::FieldVector<typename GridType::ctype,GridType::dimensionworld> globalElem, globalCache;
+        Dune::FieldVector<typename GridPartType::ctype,GridPartType::dimensionworld> globalElem, globalCache;
         globalCache  = geo.global( cacheQuad.point( qp ) );
         globalElem   = geo.global( elemQuad.point( qp ) );
         if( (globalCache-globalElem).two_norm() > eps_) 
@@ -137,8 +136,8 @@ public:
           const int faceQuadInner_nop = faceQuadInner.nop();
           for (int qp = 0; qp < faceQuadInner_nop; ++qp)
           {
-            typedef TwistUtility<GridType> TwistUtilityType;
-            Dune::FieldVector<typename GridType::ctype,GridType::dimensionworld> globalInside, globalOutside;
+            typedef typename GridPartType::TwistUtilityType TwistUtilityType;
+            Dune::FieldVector<typename GridPartType::ctype,GridPartType::dimensionworld> globalInside, globalOutside;
             globalInside = inside.geometry().global(faceQuadInner.point(qp));
             globalOutside = outside.geometry().global(faceQuadOuter.point(qp));
             if( (globalInside-globalOutside).two_norm() > eps_) 
