@@ -273,6 +273,10 @@ namespace Dune
     // ----------------------------------------------
 
     template< class FunctionSpace, int polOrder >
+    const int LagrangeShapeFunctionFactory< FunctionSpace, polOrder >::dimension;
+
+
+    template< class FunctionSpace, int polOrder >
     inline int LagrangeShapeFunctionFactory< FunctionSpace, polOrder >
       ::order () const
     {
