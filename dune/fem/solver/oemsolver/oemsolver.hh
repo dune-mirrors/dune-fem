@@ -785,8 +785,9 @@ namespace Dune
           // in parallel case we need special treatment, if no preconditoner exist
           else if( arg.space().grid().comm().size() > 1 )
           {
-            OEMSolver::SolverInterfaceImpl<OperatorImp> opSolve(op); 
-            FakeConditionerType preConditioner(size,opSolve);
+            typedef typename OperatorImp::SystemMatrixType SystemMatrixType;
+            OEMSolver::SolverInterfaceImpl< SystemMatrixType > opSolve( op.systemMatrix() ); 
+            FakeConditionerType preConditioner( size, opSolve );
             return OEMSolver::gmres(arg.space().grid().comm(),
                      inner,size,op.systemMatrix(),preConditioner,
                      arg.leakPointer(),dest.leakPointer(),eps,maxIter,verbose);
@@ -813,8 +814,9 @@ namespace Dune
           int size = arg.space().size();
           if( arg.space().grid().comm().size() > 1 )
           {
-            OEMSolver::SolverInterfaceImpl<OperatorImp> opSolve(op); 
-            FakeConditionerType preConditioner(size,opSolve);
+            typedef typename OperatorImp::SystemMatrixType SystemMatrixType;
+            OEMSolver::SolverInterfaceImpl< SystemMatrixType > opSolve( op.systemMatrix() ); 
+            FakeConditionerType preConditioner( size, opSolve );
             return OEMSolver::gmres(arg.space().grid().comm(),
                      inner,size,op.systemMatrix(),preConditioner,
                      arg.leakPointer(),dest.leakPointer(),eps,maxIter,verbose);
