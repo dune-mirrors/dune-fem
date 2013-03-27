@@ -226,7 +226,7 @@ namespace Dune
     public:
       explicit FourierBasisFunctions ( int order ) : order_( order ) {}
 
-      int order () { return order_; }
+      int order () const { return order_; }
 
       static SizeType size () { return NumFourierBasisFunctions< dimDomain, Order >::v; }
 

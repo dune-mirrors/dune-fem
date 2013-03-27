@@ -5,6 +5,7 @@
 #include <limits>
 
 #include <dune/fem/space/basisfunctionset/proxy.hh>
+#include <dune/fem/space/basisfunctionset/vectorial.hh>
 #include <dune/fem/space/common/defaultcommhandler.hh>
 #include <dune/fem/space/common/discretefunctionspace.hh>
 #include <dune/fem/space/mapper/codimensionmapper.hh>
@@ -41,7 +42,7 @@ namespace Dune
       typedef FourierBasisFunctions< ScalarFunctionSpaceType, order > ScalarBasisFunctionsType;
       typedef FourierBasisFunctionSet< EntityType, ScalarBasisFunctionsType > ScalarBasisFunctionSetType;
 
-      typedef ScalarBasisFunctionSetType BasisFunctionSetType;
+      typedef VectorialBasisFunctionSet< ScalarBasisFunctionSetType, typename FunctionSpaceType::RangeType > BasisFunctionSetType;
 
       static const int localBlockSize = FunctionSpace::dimRange * NumFourierBasisFunctions< FunctionSpaceType::dimDomain, order >::v;
 
@@ -108,7 +109,8 @@ namespace Dune
       /** @copydoc Dune::Fem::DiscreteFunctionSpaceInterface::basisFunctionSet */
       BasisFunctionSetType basisFunctionSet ( const EntityType &entity ) const
       {
-        return BasisFunctionSetType( entity, scalarBasisFunctions_ );
+        typedef typename Traits::ScalarBasisFunctionSetType ScalarBasisFunctionSetType;
+        return BasisFunctionSetType( ScalarBasisFunctionSetType( entity, scalarBasisFunctions_ ) );
       }
 
       /** @copydoc Dune::Fem::DiscreteFunctionSpaceInterface::continuous */
