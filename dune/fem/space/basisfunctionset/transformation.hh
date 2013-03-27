@@ -33,7 +33,7 @@ namespace Dune
     struct JacobianTransformation
     {
       typedef typename Geometry::LocalCoordinate LocalCoordinate;
-      typedef typename Geometry::Jacobian GeometryJacobianInverseTransposed;
+      typedef typename Geometry::JacobianInverseTransposed GeometryJacobianInverseTransposed;
 
       JacobianTransformation ( const Geometry &geometry, const LocalCoordinate &x )
       : gjit_( geometry.jacobianInverseTransposed( x ) )
@@ -81,7 +81,7 @@ namespace Dune
     struct HessianTransformation
     {
       typedef typename Geometry::LocalCoordinate LocalCoordinate;
-      typedef typename Geometry::Jacobian GeometryJacobianInverseTransposed;
+      typedef typename Geometry::JacobianInverseTransposed GeometryJacobianInverseTransposed;
 
       HessianTransformation ( const Geometry &geometry, const LocalCoordinate &x )
       : gjit_( geometry.jacobianInverseTransposed( x ) )
