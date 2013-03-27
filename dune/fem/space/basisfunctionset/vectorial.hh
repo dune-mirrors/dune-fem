@@ -9,6 +9,7 @@
 #include <dune/geometry/referenceelements.hh>
 #include <dune/geometry/type.hh>
 
+#include <dune/fem/space/basisfunctionset/functor.hh>
 #include <dune/fem/space/common/functionspace.hh>
 #include <dune/fem/version.hh>
 
@@ -52,6 +53,8 @@ namespace Dune
       struct Hessian;
 
     public:
+      explicit VectorialBasisFunctionSet () {}
+
       explicit VectorialBasisFunctionSet ( const ScalarBasisFunctionSetType &scalarBasisFunctionSet )
       : scalarBasisFunctionSet_( scalarBasisFunctionSet )
       {}
@@ -127,7 +130,7 @@ namespace Dune
       template< class Evaluate, class Point, class DofVector >
       void axpy ( const Point &x, const typename Evaluate::Vector &factor, DofVector &dofs ) const
       {
-        const std::size_t size = scalarBasisFunctionSet.size();
+        const std::size_t size = scalarBasisFunctionSet().size();
         std::vector< typename Evaluate::Scalar > scalars( size );
         Evaluate::apply( scalarBasisFunctionSet(), x, scalars );
         for( std::size_t i = 0; i < size; ++i )
@@ -135,13 +138,13 @@ namespace Dune
           for( int r = 0; r < dimRange; ++r )
           {
             const std::size_t index = r*size + i;
-            dofs[ index ] += factor[ r ]*scalars[ i ];
+            dofs[ index ] += factor[ r ] * scalars[ i ][ 0 ];
           }
         }
       }
 
       template< class Evaluate, class Point, class DofVector >
-      void evaluateAll ( const Point &x, const DofVector &dofs, typename Evaluate::Vector &vectorial )
+      void evaluateAll ( const Point &x, const DofVector &dofs, typename Evaluate::Vector &vectorial ) const
       {
         const std::size_t size = scalarBasisFunctionSet().size();
         typename Evaluate::Scalar scalar;
@@ -192,7 +195,7 @@ namespace Dune
       typedef typename ScalarFunctionSpaceType::RangeType Scalar;
       typedef RangeType Vector;
 
-      template< class Point, class DofVector >
+      template< class Point >
       static void apply ( const ScalarBasisFunctionSetType &scalarBasisFunctionSet,
                           const Point &x, const RangeFieldType *dofs, Scalar &scalar )
       {
@@ -218,7 +221,7 @@ namespace Dune
       typedef typename ScalarFunctionSpaceType::JacobianRangeType Scalar;
       typedef JacobianRangeType Vector;
 
-      template< class Point, class DofVector >
+      template< class Point >
       static void apply ( const ScalarBasisFunctionSetType &scalarBasisFunctionSet,
                           const Point &x, const RangeFieldType *dofs, Scalar &scalar )
       {
@@ -244,7 +247,7 @@ namespace Dune
       typedef typename ScalarFunctionSpaceType::HessianRangeType Scalar;
       typedef HessianRangeType Vector;
 
-      template< class Point, class DofVector >
+      template< class Point >
       static void apply ( const ScalarBasisFunctionSetType &scalarBasisFunctionSet,
                           const Point &x, const RangeFieldType *dofs, Scalar &scalar )
       {
