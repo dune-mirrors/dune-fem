@@ -237,6 +237,7 @@ namespace Dune
         if (col_[row*nz_+j] != defaultCol) 
         { // new space available - so resize 
           resize( rows(), cols(), (2 * nz_) );
+          j++;
         }
         for (;j>i;--j)
         {
