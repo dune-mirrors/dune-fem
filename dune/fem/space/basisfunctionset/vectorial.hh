@@ -2,9 +2,8 @@
 #define DUNE_FEM_BASISFUNCTIONSET_VECTORIAL_HH
 
 #include <cstddef>
+#include <utility>
 #include <vector>
-
-#include <dune/common/exceptions.hh>
 
 #include <dune/geometry/referenceelements.hh>
 #include <dune/geometry/type.hh>
@@ -74,7 +73,7 @@ namespace Dune
 
       HorizontalDofAlignment () {}
 
-      HorizontalDofAlignment ( const ScalarBasisFunctionSet &scalarBasisFunctionSet )
+      explicit HorizontalDofAlignment ( const ScalarBasisFunctionSet &scalarBasisFunctionSet )
       : scalarSize_( scalarBasisFunctionSet.size() )
       {}
 
@@ -128,6 +127,7 @@ namespace Dune
       explicit VerticalDofAlignment ( const ScalarBasisFunctionSet & ) {}
 
       VerticalDofAlignment ( const ThisType & ) {}
+
       ThisType &operator= ( const ThisType & ) { return *this; }
 
       GlobalDofType globalDof ( const LocalDofType &localDof ) const
@@ -252,7 +252,7 @@ namespace Dune
       struct Hessian;
 
     public:
-      explicit VectorialBasisFunctionSet () {}
+      VectorialBasisFunctionSet () {}
 
       explicit VectorialBasisFunctionSet ( const ScalarBasisFunctionSetType &scalarBasisFunctionSet )
       : scalarBasisFunctionSet_( scalarBasisFunctionSet ),
