@@ -4,8 +4,6 @@
 #include <cassert>
 #include <cstddef>
 
-#include <dune/common/static_assert.hh>
-
 #include <dune/geometry/referenceelements.hh>
 #include <dune/geometry/type.hh>
 
@@ -15,7 +13,6 @@
 #include <dune/fem/version.hh>
 
 #include "basisfunctions.hh"
-
 
 namespace Dune
 {
