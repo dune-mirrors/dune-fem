@@ -22,7 +22,12 @@ namespace Dune
     // DofAlignment
     // ------------
 
-    /** \brief Please doc me.
+    /** \brief Interface documentation for Dof alignment classes
+     *         used in VectorialBasisFunctionSet.
+     *
+     *  \note This interface class is implemented by 
+     *        HorizontalDofAlignment and 
+     *        VerticalDofAlignment
      *
      *  \tparam  Imp  implementation type (CRTP)
      */
@@ -36,14 +41,34 @@ namespace Dune
       using BaseType::asImp;
 
     public:
+      //! \brief global Dof type
       typedef std::size_t GlobalDofType;
+      /** \brief local Dof type consists of coordinate number and Dof 
+       *         number in scalar basis function set
+       */
       typedef std::pair< int, std::size_t > LocalDofType;
 
+      /** \brief map local to global Dof
+       *
+       *  \note methods localDof and globalDof must be inverse
+       *
+       *  \param[in]  localDof  local Dof
+       *
+       *  \returns global Dof
+       */
       GlobalDofType globalDof ( const LocalDofType &localDof ) const
       {
         return asImp().globalDof( localDof );
       }
 
+      /** \brief map global to local Dof
+       *
+       *  \note methods localDof and globalDof must be inverse
+       *
+       *  \param[in]  global  global Dof
+       *
+       *  \returns local Dof 
+       */
       LocalDofType localDof ( const GlobalDofType &globalDof ) const
       {
         return asImp().globalDof( localDof );
@@ -55,7 +80,10 @@ namespace Dune
     // HorizontalDofAlignment
     // ----------------------
 
-    /** \brief Please doc me.
+    /** \brief Implementation of DofAlignment.
+     *
+     *  This Dof alignment uses consecutive enumeration for
+     *  each coordinate in vectial basis function set.
      *
      *  \tparam  ScalarBasisFunctionSet  scalar basis function set
      *  \tparam  Range                   range
@@ -77,19 +105,23 @@ namespace Dune
       : scalarSize_( scalarBasisFunctionSet.size() )
       {}
 
+      // need to implement copy constructor because of basis class
       HorizontalDofAlignment ( const ThisType &other ) : scalarSize_( other.scalarSize_ ) {}
 
+      // need to implement assignment operator because of basis class
       ThisType &operator= ( const ThisType &other )
       {
         scalarSize_ = other.scalarSize_;
         return *this;
       }
 
+      /** @copydoc Dune::Fem::DofAlignment::globalDof */
       GlobalDofType globalDof ( const LocalDofType &localDof ) const
       {
         return GlobalDofType( localDof.first*scalarSize_ + localDof.second );
       }
 
+      /** @copydoc Dune::Fem::DofAlignment::localDof */
       LocalDofType localDof ( const GlobalDofType &globalDof ) const
       {
          return LocalDofType( globalDof / scalarSize_, globalDof % scalarSize_ ); 
@@ -104,7 +136,9 @@ namespace Dune
     // VerticalDofAlignment
     // --------------------
 
-    /** \brief Please doc me.
+    /** \brief Implementation of DofAlignment.
+     *
+     *  This Dof uses the same Dof enumeration as VectorialShapeFunctionSet.
      *
      *  \tparam  ScalarBasisFunctionSet  scalar basis function set
      *  \tparam  Range                   range
@@ -126,15 +160,19 @@ namespace Dune
 
       explicit VerticalDofAlignment ( const ScalarBasisFunctionSet & ) {}
 
+      // need to implement copy constructor because of basis class
       VerticalDofAlignment ( const ThisType & ) {}
 
+      // need to implement assignment operator because of basis class
       ThisType &operator= ( const ThisType & ) { return *this; }
 
+      /** @copydoc Dune::Fem::DofAlignment::globalDof */
       GlobalDofType globalDof ( const LocalDofType &localDof ) const
       {
         return GlobalDofType( localDof.first + localDof.second*dimRange );
       }
 
+      /** @copydoc Dune::Fem::DofAlignment::localDof */
       LocalDofType localDof ( const GlobalDofType &globalDof ) const
       {
         return LocalDofType( globalDof % dimRange, globalDof / dimRange ); 
@@ -143,16 +181,21 @@ namespace Dune
 
 
 
-    // DofSubVector
+    // SubDofVector
     // ------------
 
+    /** \brief Extract Sub dof vector for single coordinate.
+     *
+     *  \tparam  DofVector     Dof vector
+     *  \tparam  DofAlignment  implementation of DofAlignment
+     */
     template< class DofVector, class DofAlignment >
-    class DofSubVector;
+    class SubDofVector;
 
     template< class DofVector, class ScalarBasisFunctionSet, class Range >
-    class DofSubVector< DofVector, HorizontalDofAlignment< ScalarBasisFunctionSet, Range > >
+    class SubDofVector< DofVector, HorizontalDofAlignment< ScalarBasisFunctionSet, Range > >
     {
-      typedef DofSubVector< DofVector, HorizontalDofAlignment< ScalarBasisFunctionSet, Range > > ThisType;
+      typedef SubDofVector< DofVector, HorizontalDofAlignment< ScalarBasisFunctionSet, Range > > ThisType;
 
       typedef typename Range::value_type RangeFieldType;
 
@@ -162,7 +205,7 @@ namespace Dune
     public:
       typedef RangeFieldType value_type;
 
-      DofSubVector( const DofVector &dofs, int coordinate, const DofAlignmentType &dofAlignment )
+      SubDofVector( const DofVector &dofs, int coordinate, const DofAlignmentType &dofAlignment )
       : dofs_( &(dofs[ dofAlignment.globalDof( LocalDofType( coordinate, 0 ) ) ] ) )
       {}
 
@@ -176,9 +219,9 @@ namespace Dune
     };
 
     template< class DofVector, class ScalarBasisFunctionSet, class Range >
-    class DofSubVector< DofVector, VerticalDofAlignment< ScalarBasisFunctionSet, Range > >
+    class SubDofVector< DofVector, VerticalDofAlignment< ScalarBasisFunctionSet, Range > >
     {
-      typedef DofSubVector< DofVector, VerticalDofAlignment< ScalarBasisFunctionSet, Range > > ThisType;
+      typedef SubDofVector< DofVector, VerticalDofAlignment< ScalarBasisFunctionSet, Range > > ThisType;
 
       typedef typename Range::value_type RangeFieldType;
 
@@ -188,7 +231,7 @@ namespace Dune
     public:
       typedef RangeFieldType value_type;
 
-      DofSubVector( const DofVector &dofs, int coordinate, const DofAlignmentType &dofAlignment )
+      SubDofVector( const DofVector &dofs, int coordinate, const DofAlignmentType &dofAlignment )
       : dofs_( dofs ),
         coordinate_( coordinate ),
         dofAlignment_( dofAlignment )
@@ -210,7 +253,8 @@ namespace Dune
     // VectorialBasisFunctionSet
     // -------------------------
 
-    /** \brief Please doc me.
+    /** \brief Builds a vectorial basis function set 
+     *         from given scalar basis function set.
      *
      *  \tparam  ScalarBasisFunctionSet  scalar basis function set
      *  \tparam  Range                   range vector
@@ -247,9 +291,9 @@ namespace Dune
 
       typedef typename FunctionSpaceType::RangeFieldType RangeFieldType;
 
-      struct Evaluate;
-      struct Jacobian;
-      struct Hessian;
+      struct EvaluateAll;
+      struct JacobianAll;
+      struct HessianAll;
 
     public:
       VectorialBasisFunctionSet () {}
@@ -271,13 +315,13 @@ namespace Dune
       template< class Point, class DofVector >
       void axpy ( const Point &x, const RangeType &valueFactor, DofVector &dofs ) const
       {
-        axpy< Evaluate >( x, valueFactor, dofs );
+        axpy< EvaluateAll >( x, valueFactor, dofs );
       }
 
       template< class Point, class DofVector >
       void axpy ( const Point &x, const JacobianRangeType &jacobianFactor, DofVector &dofs ) const
       {
-        axpy< Jacobian >( x, jacobianFactor, dofs );
+        axpy< JacobianAll >( x, jacobianFactor, dofs );
       }
 
       template< class Point, class DofVector >
@@ -291,37 +335,37 @@ namespace Dune
       template< class Point, class DofVector >
       void evaluateAll ( const Point &x, const DofVector &dofs, RangeType &value ) const
       {
-        evaluateAll< Evaluate >( x, dofs, value );
+        evaluateAll< EvaluateAll >( x, dofs, value );
       }
 
       template< class Point, class RangeArray >
       void evaluateAll ( const Point &x, RangeArray &values ) const
       {
-        evaluateAll< Evaluate >( x, values );
+        evaluateAll< EvaluateAll >( x, values );
       }
 
       template< class Point, class DofVector >
       void jacobianAll ( const Point &x, const DofVector &dofs, JacobianRangeType &jacobian ) const
       {
-        evaluateAll< Jacobian >( x, dofs, jacobian );
+        evaluateAll< JacobianAll >( x, dofs, jacobian );
       }
 
       template< class Point, class JacobianRangeArray >
       void jacobianAll ( const Point &x, JacobianRangeArray &jacobians ) const
       {
-        evaluateAll< Jacobian >( x, jacobians );
+        evaluateAll< JacobianAll >( x, jacobians );
       }
 
       template< class Point, class DofVector >
       void hessianAll ( const Point &x, const DofVector &dofs, HessianRangeType &hessian ) const
       {
-        evaluateAll< Hessian >( x, dofs, hessian );
+        evaluateAll< HessianAll >( x, dofs, hessian );
       }
 
       template< class Point, class HessianRangeArray >
       void hessianAll ( const Point &x, HessianRangeArray &hessians ) const
       {
-        evaluateAll< Hessian >( x, hessians );
+        evaluateAll< HessianAll >( x, hessians );
       }
 
       const EntityType &entity () const { return scalarBasisFunctionSet().entity(); }
@@ -352,7 +396,7 @@ namespace Dune
         typename Evaluate::Scalar scalar;
         for( int r = 0; r < dimRange; ++r )
         {
-          DofSubVector< DofVector, DofAlignmentType > subDofs( dofs, r, dofAlignment_ );
+          SubDofVector< DofVector, DofAlignmentType > subDofs( dofs, r, dofAlignment_ );
           Evaluate::apply( scalarBasisFunctionSet(), x, subDofs, scalar );
           vector[ r ] = scalar[ 0 ];
         }
@@ -390,11 +434,11 @@ namespace Dune
 
 
 
-    // VectorialBasisFunctionSet< ScalarBasisFunctionSet, Range >::Evaluate
-    // --------------------------------------------------------------------
+    // VectorialBasisFunctionSet< ScalarBasisFunctionSet, Range >::EvaluateAll
+    // -----------------------------------------------------------------------
 
     template< class ScalarBasisFunctionSet, class Range, template< class, class > class DofAlignment >
-    struct VectorialBasisFunctionSet< ScalarBasisFunctionSet, Range, DofAlignment >::Evaluate
+    struct VectorialBasisFunctionSet< ScalarBasisFunctionSet, Range, DofAlignment >::EvaluateAll
     {
       typedef typename ScalarFunctionSpaceType::RangeType Scalar;
       typedef RangeType Vector;
@@ -416,11 +460,11 @@ namespace Dune
 
 
 
-    // VectorialBasisFunctionSet< ScalarBasisFunctionSet, Range >::Jacobian
-    // --------------------------------------------------------------------
+    // VectorialBasisFunctionSet< ScalarBasisFunctionSet, Range >::JacobianAll
+    // -----------------------------------------------------------------------
 
     template< class ScalarBasisFunctionSet, class Range, template< class, class > class DofAlignment >
-    struct VectorialBasisFunctionSet< ScalarBasisFunctionSet, Range, DofAlignment >::Jacobian
+    struct VectorialBasisFunctionSet< ScalarBasisFunctionSet, Range, DofAlignment >::JacobianAll
     {
       typedef typename ScalarFunctionSpaceType::JacobianRangeType Scalar;
       typedef JacobianRangeType Vector;
@@ -442,11 +486,11 @@ namespace Dune
 
 
 
-    // VectorialBasisFunctionSet< ScalarBasisFunctionSet, Range >::Hessian
-    // -------------------------------------------------------------------
+    // VectorialBasisFunctionSet< ScalarBasisFunctionSet, Range >::HessianAll
+    // ----------------------------------------------------------------------
 
     template< class ScalarBasisFunctionSet, class Range, template< class, class > class DofAlignment >
-    struct VectorialBasisFunctionSet< ScalarBasisFunctionSet, Range, DofAlignment >::Hessian
+    struct VectorialBasisFunctionSet< ScalarBasisFunctionSet, Range, DofAlignment >::HessianAll
     {
       typedef typename ScalarFunctionSpaceType::HessianRangeType Scalar;
       typedef HessianRangeType Vector;
