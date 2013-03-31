@@ -2,9 +2,6 @@
 #define DUNE_FEM_SPACE_PADAPTIVE_LAGRANGE_HH
 
 #include <dune/fem/operator/lagrangeinterpolation.hh>
-#include <dune/fem/space/basefunctions/basefunctionproxy.hh>
-#include <dune/fem/space/basefunctions/basefunctionsets.hh>
-#include <dune/fem/space/basefunctions/basefunctionstorage.hh>
 #include <dune/fem/space/common/defaultcommhandler.hh>
 #include <dune/fem/space/lagrange/shapefunctionset.hh>
 #include <dune/fem/space/mapper/nonblockmapper.hh>
