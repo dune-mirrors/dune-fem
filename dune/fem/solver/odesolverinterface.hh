@@ -68,12 +68,7 @@ namespace DuneODE
         \param[in] u unknown to solve for 
         \param[in] monitor Monitor to get some inside information 
     */
-    virtual void solve(DestinationType& u, MonitorType& monitor) 
-    {
-      std::cerr << "OdeSolverInterface::solve(DestinationType&,MonitorType&) should not be used." 
-                << std::endl;
-      abort();
-    }
+    virtual void solve ( DestinationType &u, MonitorType &monitor ) = 0;
 
     /** \brief print description of ODE solver to out stream */
     virtual void description(std::ostream&) const = 0;
