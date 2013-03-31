@@ -1,32 +1,27 @@
 #ifndef DUNE_FEM_SPACE_LAGRANGE_SHAPEFUNCTIONSET_HH
 #define DUNE_FEM_SPACE_LAGRANGE_SHAPEFUNCTIONSET_HH
 
-// C++ includes
 #include <cassert>
 #include <cstdlib>
 
-// dune-common includes
 #include <dune/common/fvector.hh>
 #include <dune/common/nullptr.hh>
 #include <dune/common/static_assert.hh>
 
-// dune-geometry includes
 #include <dune/geometry/genericgeometry/topologytypes.hh>
 #include <dune/geometry/type.hh>
 
-// dune-fem includes
+#include <dune/fem/space/common/functionspace.hh>
 #include <dune/fem/space/shapefunctionset/simple.hh>
 
-// local includes
-#include "genericlagrangepoints.hh"
 #include "genericbasefunctions.hh"
+#include "genericlagrangepoints.hh"
 
 /*
   @file
   @brief Shape function set for Lagrange space
   @author Christoph Gersbacher
 */
-
 
 namespace Dune
 {
