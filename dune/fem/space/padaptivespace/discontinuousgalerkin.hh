@@ -2,9 +2,6 @@
 #define DUNE_FEM_SPACE_PADAPTIVE_DISCONTINUOUSGALERKIN_HH
 
 #include <dune/fem/operator/projection/dgl2projection.hh>
-#include <dune/fem/space/basefunctions/basefunctionproxy.hh>
-#include <dune/fem/space/basefunctions/basefunctionsets.hh>
-#include <dune/fem/space/basefunctions/basefunctionstorage.hh>
 #include <dune/fem/space/common/defaultcommhandler.hh>
 #include <dune/fem/space/mapper/nonblockmapper.hh>
 

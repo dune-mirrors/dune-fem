@@ -1,17 +1,9 @@
 #ifndef DUNE_FEM_SPACE_LAGRANGE_GENERICBASEFUNCTIONS_HH
 #define DUNE_FEM_SPACE_LAGRANGE_GENERICBASEFUNCTIONS_HH
 
-// dune-common includes 
 #include <dune/common/fvector.hh>
 
-// dune-fem includes
-#include <dune/fem/space/basefunctions/basefunctionfactory.hh>
-#include <dune/fem/space/basefunctions/basefunctioninterface.hh>
-#include <dune/fem/space/common/functionspace.hh>
-
-// local includes 
 #include "genericlagrangepoints.hh"
-
 
 namespace Dune
 {
