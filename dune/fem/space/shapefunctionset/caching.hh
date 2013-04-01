@@ -97,11 +97,25 @@ namespace Dune
       
       GeometryType geometryType () const DUNE_DEPRECATED {  return type(); }
 
+      template < class QuadratureType >
+      const RangeType* rangeCache( const QuadratureType& quadrature ) const
+      {
+        return ReturnCache< QuadratureType, Conversion< QuadratureType, CachingInterface >::exists > ::
+          ranges( *this, quadrature, valueCaches_, localRangeCache_ );
+      }
+
+      template < class QuadratureType >
+      const JacobianRangeType* jacobianCache( const QuadratureType& quadrature ) const
+      {
+        return ReturnCache< QuadratureType, Conversion< QuadratureType, CachingInterface >::exists > ::
+          jacobians( *this, quadrature, jacobianCaches_, localJacobianCache_ );
+      }
+
     private:
       template< class Quad, bool cacheable >
       struct ReturnCache
       {
-        static const RangeVectorType&
+        static const RangeType*
         ranges( const ThisType& shapeFunctionSet,
                 const Quad& quad,
                 const ValueCacheVectorType&,
@@ -167,20 +181,6 @@ namespace Dune
           return cache[ quad.id() ];
         }
       };
-
-      template < class QuadratureType >
-      const RangeVectorType& rangeCache( const QuadratureType& quadrature ) const
-      {
-        return ReturnCache< QuadratureType, Conversion< QuadratureType, CachingInterface >::exists > ::
-          ranges( *this, quadrature, valueCaches_, localRangeCache_ );
-      }
-
-      template < class QuadratureType >
-      const JacobianRangeVectorType& jacobianCache( const QuadratureType& quadrature ) const
-      {
-        return ReturnCache< QuadratureType, Conversion< QuadratureType, CachingInterface >::exists > ::
-          jacobians( *this, quadrature, jacobianCaches_, localJacobianCache_ );
-      }
 
 
       template< class Quadrature, class Functor >
