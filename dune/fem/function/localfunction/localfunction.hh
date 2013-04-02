@@ -370,26 +370,25 @@ namespace Dune
         return asImp().numScalarDofs();
       }
 
+      /** \brief evaluate all basisfunctions for all quadrature points, multiply with the given factor and 
+                 add the result to the local coefficients  */
       template< class QuadratureType, class VectorType >
-      void axpyQuadrature ( const QuadratureType &quad, const VectorType &factorVec )
+      void axpyQuadrature ( const QuadratureType &quad, const VectorType &values )
       {
-        assert( factorVec.size() > 0 );
-        axpyQuadrature( quad, factorVec, factorVec[ 0 ] );
+        asImp().basisFunctionSet().axpy( quad, values, asImp() );
       }
 
+      /** \brief evaluate all basisfunctions for all quadrature points, multiply with the given factor and 
+                 add the result to the local coefficients */
       template< class QuadratureType, class RangeVectorType, class JacobianRangeVectorType >
       void axpyQuadrature ( const QuadratureType &quad,
                             const RangeVectorType& rangeVector,
                             const JacobianRangeVectorType& jacobianVector )
       {
-        const std::size_t nop = quad.nop();
-        for( std::size_t qp = 0; qp < nop; ++qp )
-        {
-          asImp().basisFunctionSet().axpy( quad[ qp ], rangeVector[ qp ], asImp() );
-          asImp().basisFunctionSet().axpy( quad[ qp ], jacobianVector[ qp ], asImp() );
-        }
+        asImp().basisFunctionSet().axpy( quad, rangeVector, jacobianVector, asImp() );
       }
       
+      /** \brief evaluate all basisfunctions for all quadrature points and store the results in the result vector */
       template< class QuadratureType, class VectorType  >
       void evaluateQuadrature( const QuadratureType &quad, VectorType &result ) const
       {
@@ -398,39 +397,22 @@ namespace Dune
       }
 
     protected:  
-      template< class QuadratureType, class VectorType  >
-      void axpyQuadrature ( const QuadratureType &quad, const VectorType &factorVec, const RangeType & )
-      {
-        const std::size_t nop = quad.nop();
-        for( std::size_t qp = 0; qp < nop; ++qp )
-          asImp().basisFunctionSet().axpy( quad[ qp ], factorVec[ qp ], asImp() );
-      }
-
-      template< class QuadratureType, class VectorType  >
-      void axpyQuadrature ( const QuadratureType &quad, const VectorType& factorVec, const JacobianRangeType & )
-      {
-        const std::size_t nop = quad.nop();
-        for( std::size_t qp = 0; qp < nop; ++qp )
-          asImp().basisFunctionSet().axpy( quad[ qp ], factorVec[ qp ], asImp() );
-      }
-
       // evaluate local function and store results in vector of RangeTypes 
+      // this method only helps to identify the correct method on
+      // the basis function set
       template< class QuadratureType, class VectorType  >
       void evaluateQuadrature( const QuadratureType &quad, VectorType &result, const RangeType & ) const
       {
-        const std::size_t nop = quad.nop();
-        for( std::size_t qp = 0; qp < nop; ++qp )
-          asImp().basisFunctionSet().evaluateAll( quad[ qp ], asImp(), result[ qp ] );
+        asImp().basisFunctionSet().evaluateAll( quad, asImp(), result );
       }
 
       // evaluate jacobian of local function and store result in vector of
-      // JacobianRangeTypes 
+      // JacobianRangeTypes, this method only helps to identify the correct method on
+      // the basis function set
       template< class QuadratureType, class VectorType >
       void evaluateQuadrature( const QuadratureType &quad, VectorType &result, const JacobianRangeType & ) const
       {
-        const std::size_t nop = quad.nop();
-        for( std::size_t qp = 0; qp < nop; ++qp )
-          asImp().basisFunctionSet().jacobianAll( quad[ qp ], asImp(), result[ qp ] );
+        asImp().basisFunctionSet().jacobianAll( quad, asImp(), result );
       }
 
       using BaseType::asImp;
