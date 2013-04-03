@@ -121,48 +121,60 @@ namespace Dune
         phi2_( size2_ )
       {}
 
+      //! \copydoc BasisFunctionSet::order
       std::size_t size()  const
       {
         return size1_ + size2_;
       }
 
+      //! \copydoc BasisFunctionSet::type
       Dune::GeometryType type () const
       {
         assert( basisSet1_.type() == basisSet2_.type() );
         return basisSet1_.type();
       }
 
-      //! \brief return entity
+      //! \copydoc BasisFunctionSet::entity
       const EntityType &entity () const
       {
         assert( basisSet1_.entity() == basisSet2_.entity() );
         return basisSet1_.entity();
       }
 
-      //! \brief return reference element
+      //! \copydoc BasisFunctionSet::entity
       const ReferenceElementType &referenceElement () const
       {
         assert( basisSet1_.referenceElement() == basisSet2_.referenceElement() );
         return basisSet1_.referenceElement();
       }
 
-      //! \todo please doc me
+      //! \copydoc BasisFunctionSet::evaluateAll( x, dofs, value )
       template< class Point, class DofVector >
       void evaluateAll ( const Point &x, const DofVector &dofs, RangeType &value ) const;
 
-      //! \todo please doc me
+      //! \copydoc BasisFunctionSet::evaluateAll( x, values )
       template< class Point, class RangeArray >
       void evaluateAll ( const Point &x, RangeArray &values ) const;
 
-      //! \todo please doc me
+      //! \copydoc BasisFunctionSet::evaluateAll( quad, dofs, ranges )
+      template< class QuadratureType, class DofVector, class RangeArray >
+      void evaluateAll ( const QuadratureType &quad, const DofVector &dofs, RangeArray &ranges ) const;
+
+
+      //! \copydoc BasisFunctionSet::jacobianAll( x, dofs, jacobian )
       template< class Point, class DofVector >
       void jacobianAll ( const Point &x, const DofVector &dofs, JacobianRangeType &jacobian ) const;
 
-      //! \todo please doc me
+      //! \copydoc BasisFunctionSet::jacobianAll( x, dofs, jacobians )
       template< class Point, class JacobianRangeArray >
       void jacobianAll ( const Point &x, JacobianRangeArray &jacobians ) const;
 
-      //! \todo please doc me
+      //! \brief evaluate the jacobian of all basis functions and store the result in the jacobians array
+      template< class QuadratureType, class DofVector, class JacobianArray >
+      void jacobianAll ( const QuadratureType &quad, const DofVector &dofs, JacobianArray &jacobians ) const;
+
+
+      //! \copydoc BasisFunctionSet::hessianAll( x, dofs, hessian )
       template< class Point, class DofVector >
       void hessianAll ( const Point &x, const DofVector &dofs, HessianRangeType &hessian ) const;
 
@@ -171,13 +183,23 @@ namespace Dune
       void hessianAll ( const Point &x, HessianRangeArray &hessians ) const;
 
 
-      // axpy methods
+      //! \copydoc BasisFunctionSet::axpy( quad, values, dofs )
+      template< class QuadratureType, class Vector, class DofVector >
+      void axpy ( const QuadratureType &quad, const Vector &values, DofVector &dofs ) const;
+
+      //! \copydoc BasisFunctionSet::axpy( quad, valuesA, valuesB, dofs )
+      template< class QuadratureType, class VectorA, class VectorB, class DofVector >
+      void axpy ( const QuadratureType &quad, const VectorA &valuesA, const VectorB &valuesB, DofVector &dofs ) const;
+
+      //! \copydoc BasisFunctionSet::axpy( x, valueFactor, dofs )
       template< class Point, class DofVector >
       void axpy ( const Point &x, const RangeType &valueFactor, DofVector &dofs ) const;
 
+      //! \copydoc BasisFunctionSet::axpy( x, jacobianFactor, dofs )
       template< class Point, class DofVector >
       void axpy ( const Point &x, const JacobianRangeType &valueFactor, DofVector &dofs ) const;
 
+      //! \copydoc BasisFunctionSet::axpy( x, valueFactor, jacobianFactor, dofs )
       template< class Point, class DofVector >
       void axpy ( const Point &x, const RangeType &valueFactor, const JacobianRangeType &jacobianFactor, DofVector &dofs ) const;
 
@@ -194,6 +216,8 @@ namespace Dune
     };
 
 
+    // CombinedBasisFunctionSet::evaluateAll
+    // -------------------------------------
 
     template<class CombFunctSpace, class BasisSetType1, class BasisSetType2>
     template< class Point, class DofVector >
@@ -215,6 +239,9 @@ namespace Dune
         value[ r + dimRange1 ] = value2[ r ];
     }
 
+
+    // CombinedBasisFunctionSet::evaluateAll
+    // -------------------------------------
 
     template<class CombFunctSpace, class BasisSetType1, class BasisSetType2>
     template< class Point, class RangeArray >
@@ -244,8 +271,25 @@ namespace Dune
       }
     }
 
+    
+    // CombinedBasisFunctionSet::evaluateAll
+    // -------------------------------------
+   
+    template<class CombFunctSpace, class BasisSetType1, class BasisSetType2>
+    template< class Quadrature, class DofVector, class RangeArray >
+    inline void CombinedBasisFunctionSet< CombFunctSpace, BasisSetType1, BasisSetType2>
+    :: evaluateAll ( const Quadrature &quad, const DofVector &dofs, RangeArray &ranges ) const
+    {
+      const int nop = quad.nop();
+      for( int qp = 0; qp< nop; ++qp )
+        evaluateAll( quad[ qp ], dofs, ranges[ qp ] );
+    }
 
-    /** \brief \todo please doc me */
+
+
+    // CombinedBasisFunctionSet::jacobianAll
+    // -------------------------------------
+
     template<class CombFunctSpace, class BasisSetType1, class BasisSetType2>
     template< class Point, class DofVector >
     inline void CombinedBasisFunctionSet< CombFunctSpace, BasisSetType1, BasisSetType2>
@@ -267,7 +311,10 @@ namespace Dune
         jacobian[ r + dimRange1 ] = jacobian2[ r ];
     }
 
-    /** \brief \todo please doc me */
+
+    // CombinedBasisFunctionSet::jacobianAll
+    // -------------------------------------
+
     template<class CombFunctSpace, class BasisSetType1, class BasisSetType2>
     template< class Point, class GlobalJacobianRangeArray >
     inline void CombinedBasisFunctionSet< CombFunctSpace, BasisSetType1, BasisSetType2>
@@ -296,7 +343,24 @@ namespace Dune
     }
 
 
-    /** \brief \todo please doc me */
+    // CombinedBasisFunctionSet::jacobianAll
+    // -------------------------------------
+
+    template<class CombFunctSpace, class BasisSetType1, class BasisSetType2>
+    template< class Quadrature, class DofVector, class JacobianArray >
+    inline void CombinedBasisFunctionSet< CombFunctSpace, BasisSetType1, BasisSetType2>
+    :: jacobianAll ( const Quadrature &quad, const DofVector &dofs, JacobianArray &jacobians ) const
+    {
+      const int nop = quad.nop();
+      for( int qp = 0; qp< nop; ++qp )
+        jacobianAll( quad[ qp ], dofs, jacobians[ qp ] );
+    }
+
+
+
+    // CombinedBasisFunctionSet::hessianAll
+    // -------------------------------------
+
     template<class CombFunctSpace, class BasisSetType1, class BasisSetType2>
     template< class Point, class DofVector >
     inline void CombinedBasisFunctionSet< CombFunctSpace, BasisSetType1, BasisSetType2>
@@ -319,7 +383,9 @@ namespace Dune
     }
 
 
-    /** \brief \todo please doc me */
+    // CombinedBasisFunctionSet::hessianAll
+    // -------------------------------------
+
     template<class CombFunctSpace, class BasisSetType1, class BasisSetType2>
     template< class Point, class HessianRangeArray >
     inline void CombinedBasisFunctionSet< CombFunctSpace, BasisSetType1, BasisSetType2>
@@ -350,7 +416,9 @@ namespace Dune
 
 
 
-    /** \todo please doc me */
+    // CombinedBasisFunctionSet::axpy
+    // ------------------------------
+
     template<class CombFunctSpace, class BasisSetType1, class BasisSetType2>
     template< class Point, class DofVector >
     inline void CombinedBasisFunctionSet< CombFunctSpace, BasisSetType1, BasisSetType2>
@@ -361,12 +429,14 @@ namespace Dune
       SubObject< const RangeType, const RangeType1, 0 > valueFactor1( valueFactor );
       SubObject< const RangeType, const RangeType2, dimRange1 > valueFactor2( valueFactor );
 
-      basisSet1_.axpy(x, valueFactor1, dofs1);
-
-      basisSet2_.axpy(x, valueFactor2, dofs2);
+      basisSet1_.axpy(x, (RangeType1) valueFactor1, dofs1);
+      basisSet2_.axpy(x, (RangeType2) valueFactor2, dofs2);
     }
 
-    /** \todo please doc me */
+
+    // CombinedBasisFunctionSet::axpy
+    // ------------------------------
+
     template<class CombFunctSpace, class BasisSetType1, class BasisSetType2>
     template< class Point, class DofVector >
     inline void CombinedBasisFunctionSet< CombFunctSpace, BasisSetType1, BasisSetType2>
@@ -377,13 +447,14 @@ namespace Dune
       SubObject< const JacobianRangeType, const JacobianRangeType1, 0 > jacobianFactor1( jacobianFactor );
       SubObject< const JacobianRangeType, const JacobianRangeType2, dimRange1 > jacobianFactor2( jacobianFactor );
 
-      basisSet1_.axpy(x, jacobianFactor1, dofs1);
-
-      basisSet2_.axpy(x, jacobianFactor2, dofs2);
+      basisSet1_.axpy(x, (JacobianRangeType1) jacobianFactor1, dofs1);
+      basisSet2_.axpy(x, (JacobianRangeType2) jacobianFactor2, dofs2);
     }
 
 
-    /** \todo please doc me */
+    // CombinedBasisFunctionSet::axpy
+    // ------------------------------
+
     template<class CombFunctSpace, class BasisSetType1, class BasisSetType2>
     template< class Point, class DofVector >
     inline void CombinedBasisFunctionSet< CombFunctSpace, BasisSetType1, BasisSetType2>
@@ -397,8 +468,39 @@ namespace Dune
       SubObject< const JacobianRangeType, const JacobianRangeType1, 0 > jacobianFactor1( jacobianFactor );
       SubObject< const JacobianRangeType, const JacobianRangeType2, dimRange1 > jacobianFactor2( jacobianFactor );
 
-      basisSet1_.axpy(x, valueFactor1, jacobianFactor1, dofs1);
-      basisSet2_.axpy(x, valueFactor2, jacobianFactor2, dofs2);
+      basisSet1_.axpy(x, (RangeType1) valueFactor1, (JacobianRangeType1) jacobianFactor1, dofs1);
+      basisSet2_.axpy(x, (RangeType1) valueFactor2, (JacobianRangeType2) jacobianFactor2, dofs2);
+    }
+
+
+    // CombinedBasisFunctionSet::axpy
+    // ------------------------------
+
+    template<class CombFunctSpace, class BasisSetType1, class BasisSetType2>
+    template< class Quadrature, class Vector, class DofVector >  
+    inline void CombinedBasisFunctionSet< CombFunctSpace, BasisSetType1, BasisSetType2>
+    :: axpy ( const Quadrature &quad, const Vector &values, DofVector &dofs ) const
+    {
+      const int nop = quad.nop();
+      for( int qp = 0; qp< nop; ++qp )
+        axpy( quad[ qp ], values[ qp ], dofs );
+    }
+
+
+    // CombinedBasisFunctionSet::axpy
+    // ------------------------------
+
+    template<class CombFunctSpace, class BasisSetType1, class BasisSetType2>
+    template< class Quadrature, class VectorA, class VectorB, class DofVector >  
+    inline void CombinedBasisFunctionSet< CombFunctSpace, BasisSetType1, BasisSetType2>
+    :: axpy ( const Quadrature &quad, const VectorA &valuesA, const VectorB &valuesB, DofVector &dofs ) const
+    {
+      const int nop = quad.nop();
+      for( int qp = 0; qp< nop; ++qp )
+      {
+        axpy( quad[ qp ], valuesA[ qp ], dofs );
+        axpy( quad[ qp ], valuesB[ qp ], dofs );
+      }
     }
 
   } // namespace Fem
