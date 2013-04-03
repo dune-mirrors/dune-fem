@@ -38,6 +38,12 @@ namespace Dune
       typedef typename ShapeFunctionSet::JacobianRangeType JacobianRangeType;
       typedef typename ShapeFunctionSet::HessianRangeType HessianRangeType;
 
+      typedef std::vector< RangeType >         RangeVectorType ;
+      typedef std::vector< JacobianRangeType > JacobianRangeVectorType ;
+
+      typedef std::vector< RangeType * > ValueCacheVectorType;
+      typedef std::vector< JacobianRangeType * > JacobianCacheVectorType;
+
       explicit CachingShapeFunctionSet ( const GeometryType &type,
                                          const ShapeFunctionSet &shapeFunctionSet = ShapeFunctionSet() )
       : type_( type ),
@@ -91,7 +97,92 @@ namespace Dune
       
       GeometryType geometryType () const DUNE_DEPRECATED {  return type(); }
 
+      template < class QuadratureType >
+      const RangeType* rangeCache( const QuadratureType& quadrature ) const
+      {
+        return ReturnCache< QuadratureType, Conversion< QuadratureType, CachingInterface >::exists > ::
+          ranges( *this, quadrature, valueCaches_, localRangeCache_ );
+      }
+
+      template < class QuadratureType >
+      const JacobianRangeType* jacobianCache( const QuadratureType& quadrature ) const
+      {
+        return ReturnCache< QuadratureType, Conversion< QuadratureType, CachingInterface >::exists > ::
+          jacobians( *this, quadrature, jacobianCaches_, localJacobianCache_ );
+      }
+
     private:
+      template< class Quad, bool cacheable >
+      struct ReturnCache
+      {
+        static const RangeType*
+        ranges( const ThisType& shapeFunctionSet,
+                const Quad& quad,
+                const ValueCacheVectorType&,
+                RangeVectorType& storage )
+        {
+          // evaluate all basis functions and multiply with dof value 
+          const unsigned int nop  = quad.nop();
+          const unsigned int size = shapeFunctionSet.size();
+
+          // make sure cache has the appropriate size 
+          storage.resize( size * nop * 10  );
+
+          for( unsigned int qp = 0 ; qp < nop; ++ qp )
+          {
+            const int cacheQp = quad.cachingPoint( qp );
+            AssignFunctor< RangeType* > funztor( &(storage[ cacheQp *size ]) );
+            shapeFunctionSet.evaluateEach( quad[ qp ], funztor );
+          }
+          return &(storage[0]);
+        }
+
+        static const JacobianRangeType*
+        jacobians( const ThisType& shapeFunctionSet,
+                   const Quad& quad,
+                   const JacobianCacheVectorType&,
+                   JacobianRangeVectorType& storage )
+        {
+          // evaluate all basis functions and multiply with dof value 
+          const unsigned int nop  = quad.nop();
+          const unsigned int size = shapeFunctionSet.size();
+
+          // make sure cache has the appropriate size 
+          storage.resize( size * nop * 10  );
+
+          for( unsigned int qp = 0 ; qp < nop; ++ qp )
+          {
+            const int cacheQp = quad.cachingPoint( qp );
+            AssignFunctor< JacobianRangeType* > funztor( &(storage[ cacheQp * size ]) );
+            shapeFunctionSet.jacobianEach( quad[ qp ], funztor );
+          }
+          return &(storage[ 0 ]);
+        }
+      };
+
+      template< class Quad >
+      struct ReturnCache< Quad, true >
+      {
+        static const RangeType*
+        ranges( const ThisType& shapeFunctionSet,
+                const Quad& quad,
+                const ValueCacheVectorType& cache,
+                const RangeVectorType& )
+        {
+          return cache[ quad.id() ];
+        }
+
+        static const JacobianRangeType*
+        jacobians( const ThisType& shapeFunctionSet,
+                   const Quad& quad,
+                   const JacobianCacheVectorType& cache,
+                   const JacobianRangeVectorType& )
+        {
+          return cache[ quad.id() ];
+        }
+      };
+
+
       template< class Quadrature, class Functor >
       void evaluateEach ( const Quadrature &quadrature, std::size_t pt, Functor functor,
                           integral_constant< bool, false > ) const
@@ -124,13 +215,14 @@ namespace Dune
       CachingShapeFunctionSet ( const ThisType & );
       const ThisType &operator= ( const ThisType & );
 
-      typedef std::vector< RangeType * > ValueCacheVectorType;
-      typedef std::vector< JacobianRangeType * > JacobianCacheVectorType;
-
       GeometryType type_;
       ShapeFunctionSet shapeFunctionSet_;
       ValueCacheVectorType valueCaches_;
       JacobianCacheVectorType jacobianCaches_;
+
+      mutable RangeVectorType          localRangeCache_ ;
+      mutable JacobianRangeVectorType  localJacobianCache_;
+
     };
 
 

@@ -83,7 +83,7 @@ namespace Dune
       template< class Point, class Functor >
       static void hessianEach ( const Point &, Functor functor )
       {
-        functor( 0, HessianRangeType( 0 ) );
+        functor( 0, HessianRangeType( typename HessianRangeType::value_type( 0 ) ) );
       }
     };
 
@@ -97,7 +97,7 @@ namespace Dune
      *
      * \tparam  FunctionSpace  Function space
      * \tparam  GridPart       Grid part
-     * \tparam  codim          codimennsion
+     * \tparam  codim          codimension
      * \tparam  Storage        Caching storage policy
      *
      * \note This shape function set has fixed polynomial order 0.

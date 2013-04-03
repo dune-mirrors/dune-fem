@@ -8,7 +8,6 @@
 #include <dune/common/misc.hh>
 
 #include <dune/fem/function/adaptivefunction.hh>
-#include <dune/fem/space/basefunctions/basefunctionstorage.hh>
 #include <dune/fem/space/basisfunctionset/default.hh>
 #include <dune/fem/space/common/basesetlocalkeystorage.hh>
 #include <dune/fem/space/common/discretefunctionspace.hh>
