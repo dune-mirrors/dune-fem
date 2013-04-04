@@ -24,6 +24,7 @@ misc_HEADERS = alugridwriter.hh \
 	       functor.hh \
 	       griddeclaration.hh \
 	       gridname.hh \
+	       gridobjectstreams.hh \
 	       gridsolution.hh \
 	       gridwidth.hh \
 	       h1norm.hh \
