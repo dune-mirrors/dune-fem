@@ -5,10 +5,8 @@
 
 #include <dune/grid/common/capabilities.hh>
 
-#include <dune/fem/misc/metaprogramming.hh>
-
-// include forward declarations of standard grids 
 #include <dune/fem/misc/griddeclaration.hh>
+#include <dune/fem/misc/metaprogramming.hh>
 
 namespace Dune
 {
@@ -173,11 +171,15 @@ namespace Dune
         static const bool v = supportsCallbackAdaptation< HostGrid > :: v;
       };
 
+#if HAVE_DUNE_METAGRID
       template< class HostGrid >
       struct supportsCallbackAdaptation< CartesianGrid< HostGrid > >
       {
         static const bool v = supportsCallbackAdaptation< HostGrid > :: v;
       };
+#endif // #if HAVE_DUNE_METAGRID
+
+
 
       // isLocallyAdaptive
       // -----------------
@@ -242,11 +244,13 @@ namespace Dune
         static const bool v = isLocallyAdaptive< HostGrid > :: v;
       };
 
+#if HAVE_DUNE_METAGRID
       template< class HostGrid >
       struct isLocallyAdaptive< CartesianGrid< HostGrid > >
       {
         static const bool v = isLocallyAdaptive< HostGrid > :: v;
       };
+#endif // #if HAVE_DUNE_METAGRID
 
 
       // IsUnstructured (deprecated)
