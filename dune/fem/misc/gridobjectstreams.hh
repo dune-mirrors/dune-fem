@@ -130,7 +130,7 @@ namespace Dune
       typedef typename ParallelGrid< HostGrid >::RankManager::ObjectStream OutStreamType;
     };
 
-    template< class HostGrid >
+    template< class HostGrid, class MapToSphere >
     struct GridObjectStreamTraits< SphereGrid< HostGrid, MapToSphere > >
     {
       typedef typename GridObjectStreamTraits< SphereGrid< HostGrid, MapToSphere > >::InStreamType InStreamType;
