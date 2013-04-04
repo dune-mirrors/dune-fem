@@ -37,8 +37,8 @@ namespace Dune
 
       typedef typename GridPartType::GridType::ctype DomainFieldType;
 
-      static const int dimDomain = GridPartType::GridType::dimensionworld;
-      static const int dimGrid = GridPartType::GridType::dimension;
+      static const int dimDomain = GridPartType::dimensionworld;
+      static const int dimGrid = GridPartType::dimension;
 
       typedef FieldVector< DomainFieldType, dimDomain > DomainType;
       typedef FieldVector< DomainFieldType, dimGrid > LocalDomainType;
