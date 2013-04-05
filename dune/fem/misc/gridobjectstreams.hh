@@ -61,6 +61,20 @@ namespace Dune
     // GridObjectStreamTraits for ALUGrid
     // ----------------------------------
 
+#if HAVE_ALUGRID || HAVE_DUNE_ALUGRID
+    template< int dim, int dimworld, ALUGridElementType elType, ALUGridRefinementType refineType, class Comm >
+    struct GridObjectStreamTraits< ALUGrid< dim, dimworld, elType, refineType, Comm > >
+    {
+      typedef typename ALUGrid< dim, dimworld, elType, refineType, Comm >::ObjectStreamType InStreamType;
+      typedef typename ALUGrid< dim, dimworld, elType, refineType, Comm >::ObjectStreamType OutStreamType;
+    };
+#endif // #if HAVE_ALUGRID || HAVE_DUNE_ALUGRID
+
+
+
+    // GridObjectStreamTraits for ALUConformGrid
+    // -----------------------------------------
+
 #if HAVE_ALUGRID
     template< int dim, int dimworld >
     struct GridObjectStreamTraits< ALUConformGrid< dim, dimworld> >
@@ -68,14 +82,28 @@ namespace Dune
       typedef typename ALUConformGrid< dim, dimworld >::ObjectStreamType InStreamType;
       typedef typename ALUConformGrid< dim, dimworld >::ObjectStreamType OutStreamType;
     };
+#endif // #if HAVE_ALUGRID
 
+
+
+    // GridObjectStreamTraits for ALUCubeGrid
+    // --------------------------------------
+
+#if HAVE_ALUGRID
     template< int dim, int dimworld >
     struct GridObjectStreamTraits< ALUCubeGrid< dim, dimworld> >
     {
       typedef typename ALUCubeGrid< dim, dimworld >::ObjectStreamType InStreamType;
       typedef typename ALUCubeGrid< dim, dimworld >::ObjectStreamType OutStreamType;
     };
+#endif // #if HAVE_ALUGRID
 
+
+
+    // GridObjectStreamTraits for ALUSimplexGrid
+    // -----------------------------------------
+
+#if HAVE_ALUGRID
     template< int dim, int dimworld >
     struct GridObjectStreamTraits< ALUSimplexGrid< dim, dimworld> >
     {
@@ -84,57 +112,99 @@ namespace Dune
     };
 #endif // #if HAVE_ALUGRID
 
-#if HAVE_ALUGRID || HAVE_DUNE_ALUGRID
-    template< int dim, int dimworld, ALUGridElementType elType, ALUGridRefinementType refineType, class Comm >
-    struct GridObjectStreamTraits< ALUGrid< dim, dimworld, elType, refineType, Comm > >
-    {
-      typedef typename ALUGrid< dim, dimworld, elType, refineType, Comm >::ObjectStreamType InStreamType;
-      typedef typename ALUGrid< dim, dimworld, elType, refineType, Comm >::ObjectStreamType OutStreamType;
-    };
-#endif // #if HAVE_DUNE_ALUGRID
 
+
+    // GridObjectStreamTraits for CacheItGrid
+    // --------------------------------------
 
 #if HAVE_DUNE_METAGRID
     template< class HostGrid >
     struct GridObjectStreamTraits< CacheItGrid< HostGrid > >
     {
-      typedef typename GridObjectStreamTraits< CacheItGrid< HostGrid > >::InStreamType InStreamType;
-      typedef typename GridObjectStreamTraits< CacheItGrid< HostGrid > >::OutStreamType OutStreamType;
+      typedef typename GridObjectStreamTraits< HostGrid >::InStreamType InStreamType;
+      typedef typename GridObjectStreamTraits< HostGrid >::OutStreamType OutStreamType;
     };
+#endif // #if HAVE_DUNE_METAGRID
 
+
+
+    // GridObjectStreamTraits for CartesianGrid
+    // ----------------------------------------
+
+#if HAVE_DUNE_METAGRID
     template< class HostGrid >
     struct GridObjectStreamTraits< CartesianGrid< HostGrid > >
     {
-      typedef typename GridObjectStreamTraits< CartesianGrid< HostGrid > >::InStreamType InStreamType;
-      typedef typename GridObjectStreamTraits< CartesianGrid< HostGrid > >::OutStreamType OutStreamType;
+      typedef typename GridObjectStreamTraits< HostGrid >::InStreamType InStreamType;
+      typedef typename GridObjectStreamTraits< HostGrid >::OutStreamType OutStreamType;
     };
+#endif // #if HAVE_DUNE_METAGRID
 
+
+
+    // GridObjectStreamTraits for FilteredGrid
+    // ---------------------------------------
+
+#if HAVE_DUNE_METAGRID
     template< class HostGrid >
     struct GridObjectStreamTraits< FilteredGrid< HostGrid > >
     {
-      typedef typename GridObjectStreamTraits< FilteredGrid< HostGrid > >::InStreamType InStreamType;
-      typedef typename GridObjectStreamTraits< FilteredGrid< HostGrid > >::OutStreamType OutStreamType;
+      typedef typename GridObjectStreamTraits< HostGrid >::InStreamType InStreamType;
+      typedef typename GridObjectStreamTraits< HostGrid >::OutStreamType OutStreamType;
+    };
+#endif // #if HAVE_DUNE_METAGRID
+
+
+
+    // GridObjectStreamTraits for GeometryGrid
+    // ---------------------------------------
+
+    template< class HostGrid, class CoordFunction, class Allocator >
+    struct GridObjectStreamTraits< GeometryGrid< HostGrid, CoordFunction, Allocator > >
+    {
+      typedef typename GridObjectStreamTraits< HostGrid >::InStreamType InStreamType;
+      typedef typename GridObjectStreamTraits< HostGrid >::OutStreamType OutStreamType;
     };
 
+
+
+    // GridObjectStreamTraits for IdGrid
+    // ---------------------------------
+
+#if HAVE_DUNE_METAGRID
     template< class HostGrid >
     struct GridObjectStreamTraits< IdGrid< HostGrid > >
     {
-      typedef typename GridObjectStreamTraits< IdGrid< HostGrid > >::InStreamType InStreamType;
-      typedef typename GridObjectStreamTraits< IdGrid< HostGrid > >::OutStreamType OutStreamType;
+      typedef typename GridObjectStreamTraits< HostGrid >::InStreamType InStreamType;
+      typedef typename GridObjectStreamTraits< HostGrid >::OutStreamType OutStreamType;
     };
+#endif // #if HAVE_DUNE_METAGRID
 
+
+
+    // GridObjectStreamTraits for ParallelGrid
+    // ---------------------------------------
+
+#if HAVE_DUNE_METAGRID
     template< class HostGrid >
     struct GridObjectStreamTraits< ParallelGrid< HostGrid > >
     {
       typedef typename ParallelGrid< HostGrid >::RankManager::ObjectStream InStreamType;
       typedef typename ParallelGrid< HostGrid >::RankManager::ObjectStream OutStreamType;
     };
+#endif // #if HAVE_DUNE_METAGRID
 
-    template< class HostGrid >
+
+
+    // GridObjectStreamTraits for SphereGrid
+    // -------------------------------------
+
+#if HAVE_DUNE_METAGRID
+    template< class HostGrid, class MapToSphere >
     struct GridObjectStreamTraits< SphereGrid< HostGrid, MapToSphere > >
     {
-      typedef typename GridObjectStreamTraits< SphereGrid< HostGrid, MapToSphere > >::InStreamType InStreamType;
-      typedef typename GridObjectStreamTraits< SphereGrid< HostGrid, MapToSphere > >::OutStreamType OutStreamType;
+      typedef typename GridObjectStreamTraits< HostGrid >::InStreamType InStreamType;
+      typedef typename GridObjectStreamTraits< HostGrid >::OutStreamType OutStreamType;
     };
 #endif // #if HAVE_DUNE_METAGRID
 
