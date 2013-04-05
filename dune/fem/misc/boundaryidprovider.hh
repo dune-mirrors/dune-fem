@@ -104,7 +104,7 @@ namespace Dune
 #endif // #if HAVE_ALUGRID
 
 
-
+#if HAVE_DUNE_METAGRID
     // Specialization for CartesianGrid
     // --------------------------------
 
@@ -120,6 +120,7 @@ namespace Dune
           ::boundaryId ( HostGridAccess< GridType >::getIntersection( intersection ) );
       }
     };
+#endif
 
 
 
