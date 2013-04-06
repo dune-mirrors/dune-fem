@@ -86,8 +86,8 @@ namespace Dune
       typedef typename RowType< RangeObject > :: Type RowType;
 
     public:
-      SubObject( DomainObjectType &host ):
-        host_( host )
+      SubObject( DomainObjectType &host )
+      : host_( host )
       {}
 
       const RowType &operator[] ( const int i ) const
@@ -102,7 +102,7 @@ namespace Dune
         return host_[ i + offset ];
       }
 
-      int size() const
+      int size () const
       {
         return Dune::Fem::RowType< RangeObject > :: size;
       }
@@ -120,6 +120,16 @@ namespace Dune
     };
 
   } // namespace Fem
+
+
+  // cast into fieldMatrix
+  template<class DomainObj, class RangeObj, int offset>
+  void istl_assign_to_fmatrix( DenseMatrix< typename remove_const< RangeObj > :: type >& fm, 
+                               const Fem::SubObject<DomainObj, RangeObj, offset>& s)
+  {
+    for( int i = 0; i < s.size(); ++i )
+      fm[ i ] = s[ i ];
+  }
 
 } //  namespace Dune
 
