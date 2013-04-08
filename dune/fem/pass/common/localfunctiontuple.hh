@@ -5,10 +5,12 @@
 #include <cstddef>
 
 #include <dune/common/exceptions.hh>
+#include <dune/common/forloop.hh>
 #include <dune/common/nullptr.hh>
 #include <dune/common/tuples.hh>
 #include <dune/common/tupleutility.hh>
 
+#include <dune/fem/common/tupleutility.hh>
 #include <dune/fem/quadrature/quadrature.hh>
 
 #include "localfunctionselector.hh"
@@ -89,49 +91,6 @@ namespace Dune
   namespace Fem
   {
 
-    /** \brief wrapper class to convert a vector of tuples of RangeTypes into something 
-               that behaves like a vector< RangeType >
-    */           
-    template <class VectorTupleType, int passId >
-    class TupleToVectorConverter
-    {
-      // no copying
-      TupleToVectorConverter(const TupleToVectorConverter&);
-    public:
-      typedef typename VectorTupleType :: value_type TupleType;
-      typedef typename tuple_element< passId, TupleType > :: type  ValueType;
-      typedef ValueType value_type ;
-
-      //! constructor
-      TupleToVectorConverter(VectorTupleType& vec)
-        : vector_( vec )
-      {}
-
-      //! return reference to i-th entry of vector and passId's tuple component
-      ValueType& operator [] (const size_t i)
-      {
-        assert( i < vector_.size() );
-        return get< passId >( vector_[ i ] );
-      }
-
-      //! return reference to i-th entry of vector and passId's tuple component
-      const ValueType& operator [] (const size_t i) const
-      {
-        assert( i < vector_.size() );
-        return get< passId >( vector_[ i ] );
-      }
-
-      //! return size of vector 
-      size_t size() const
-      {
-        return vector_.size();
-      }
-
-    protected:
-      VectorTupleType& vector_;
-    };
-
-
     // LocalFunctionTuple
     // ------------------
 
@@ -147,8 +106,8 @@ namespace Dune
 
       struct SetEntity;
       struct Evaluate;
-      template < int passId > 
-      struct EvaluateQuadrature ;  
+      template< int pos >
+      struct EvaluateQuadrature;
       struct Jacobian;
       struct Hessian;
    
@@ -315,17 +274,16 @@ namespace Dune
     // --------------------------------------------------------
 
     template< class DiscreteModel, class Entity >
-    template< int passId >
+    template< int pos >
     struct LocalFunctionTuple< DiscreteModel, Entity >::EvaluateQuadrature
     {
       template< class Quadrature, class LocalFunctionTuple, class VectorOfTuples >
-      static void apply( const Quadrature& quadrature, 
-                         LocalFunctionTuple &localFunctionTuple, 
-                         VectorOfTuples &vectorOfTuples )
+      static void apply ( const Quadrature &quadrature, 
+                          LocalFunctionTuple &localFunctionTuple, 
+                          VectorOfTuples &vectorOfTuples )
       {
-        TupleToVectorConverter< VectorOfTuples, passId > vector ( vectorOfTuples );
-        // get passId-th local function and call evaluateQuadrature  
-        get< passId > ( localFunctionTuple ).evaluateQuadrature( quadrature, vector );
+        TupleToVectorConverter< VectorOfTuples, pos > vector( vectorOfTuples );
+        Dune::get< pos >( localFunctionTuple ).evaluateQuadrature( quadrature, vector );
       }
     };
 

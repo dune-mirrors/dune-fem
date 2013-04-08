@@ -462,6 +462,51 @@ namespace Dune
     static type apply ( Tuple & ) { return type(); }
   };
 
+
+
+  // TupleToVectorConverter
+  // ----------------------
+
+  /** \brief wrapper class to convert a vector of tuples of RangeTypes into something 
+             that behaves like a vector< RangeType >
+  */           
+  template< class VectorTupleType, int pos >
+  class TupleToVectorConverter
+  {
+    // no copying
+    TupleToVectorConverter ( const TupleToVectorConverter & );
+
+  public:
+    typedef typename VectorTupleType::value_type TupleType;
+    typedef typename tuple_element< pos, TupleType >::type ValueType;
+    typedef ValueType value_type;
+
+    //! constructor
+    explicit TupleToVectorConverter ( VectorTupleType &vector )
+    : vector_( vector )
+    {}
+
+    //! return reference to i-th entry of vector and pos's tuple component
+    ValueType &operator [] ( const size_t i )
+    {
+      assert( i < size() );
+      return Dune::get< pos >( vector_[ i ] );
+    }
+
+    //! return reference to i-th entry of vector and passId's tuple component
+    const ValueType &operator [] ( const size_t i ) const
+    {
+      assert( i < size() );
+      return get< pos >( vector_[ i ] );
+    }
+
+    //! return size of vector 
+    size_t size () const { return vector_.size(); }
+
+  protected:
+    VectorTupleType &vector_;
+  };
+
 } // namespace Dune
 
 #endif // #ifndef DUNE_FEM_COMMON_TUPLEUTILITY_HH
