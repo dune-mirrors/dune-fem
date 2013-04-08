@@ -490,7 +490,7 @@ namespace Dune
     ValueType &operator [] ( const size_t i )
     {
       assert( i < size() );
-      return Dune::get< pos >( vector_[ i ] );
+      return get< pos >( vector_[ i ] );
     }
 
     //! return reference to i-th entry of vector and passId's tuple component

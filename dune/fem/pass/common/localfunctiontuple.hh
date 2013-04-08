@@ -267,7 +267,7 @@ namespace Dune
     // --------------------------------------------------------
 
     template< class DiscreteModel, class Entity >
-    template< int pos >
+    template< int passId >
     struct LocalFunctionTuple< DiscreteModel, Entity >::EvaluateQuadrature
     {
       template< class Quadrature, class LocalFunctionTuple, class VectorOfTuples >
@@ -275,8 +275,8 @@ namespace Dune
                           LocalFunctionTuple &localFunctionTuple, 
                           VectorOfTuples &vectorOfTuples )
       {
-        TupleToVectorConverter< VectorOfTuples, pos > vector( vectorOfTuples );
-        Dune::get< pos >( localFunctionTuple ).evaluateQuadrature( quadrature, vector );
+        TupleToVectorConverter< VectorOfTuples, passId > vector( vectorOfTuples );
+        get< passId >( localFunctionTuple ).evaluateQuadrature( quadrature, vector );
       }
     };
 
