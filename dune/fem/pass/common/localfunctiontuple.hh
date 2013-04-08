@@ -131,59 +131,6 @@ namespace Dune
       VectorTupleType& vector_;
     };
 
-    /** \brief ForEach class that is used with the evaluateQuadrature call below */
-    template <class TupleType, class VectorType>
-    class ForEachValueVector {
-    public:
-      //! Constructor
-      //! \param t1 First tuple.
-      //! \param t2 Second tuple.
-      ForEachValueVector(TupleType& tuple, VectorType& vec ) :
-        tuple_( tuple ),
-        vector_( vec )
-      {}
-
-      //! Applies the function object f to the pair of tuples.
-      //! \param f The function object to apply on the pair of tuples.
-      template <class Functor>
-      void apply(Functor& f)
-      {
-        // iterate over tuple elements for 0 to tuple_size-1 
-        Apply<0, tuple_size< TupleType >::value >::apply(f, tuple_, vector_ );
-      }
-
-    private:
-      template <int passId, int size>  
-      struct Apply
-      {
-        template <class Functor, class Tuple, class VectorOfTuples> 
-        static void apply( Functor& f, Tuple& tuple, VectorOfTuples& vectorOfTuples )
-        {
-          TupleToVectorConverter< VectorOfTuples, passId > vector ( vectorOfTuples );
-          // call functor (here evaluateQuadrature on local function)
-          f.visit( get< passId >(tuple), vector );
-          // got to next tuple element
-          Apply< passId+1, size> :: apply( f, tuple, vectorOfTuples );
-        }
-      };
-
-      //! termination of tuple iteration when size is reached 
-      template <int size>  
-      struct Apply< size, size >
-      {
-        template <class Functor, class Tuple, class VectorOfTuples> 
-        static void apply( Functor& f, Tuple& tuple, VectorOfTuples& vector )
-        {
-          // do nothing here, since this is the terminating call
-        }
-      };
-
-    private:
-      TupleType&   tuple_;
-      VectorType&  vector_;
-    };
-
-
 
     // LocalFunctionTuple
     // ------------------
@@ -200,7 +147,7 @@ namespace Dune
 
       struct SetEntity;
       struct Evaluate;
-      template <class Quadrature> 
+      template < int passId > 
       struct EvaluateQuadrature ;  
       struct Jacobian;
       struct Hessian;
@@ -296,9 +243,9 @@ namespace Dune
       void evaluateQuadrature ( const QuadratureType &quadrature, TupleVectorType &vector ) const
       {
         assert( vector.size() >= quadrature.nop() );
-        ForEachValueVector< LocalFunctionTupleType, TupleVectorType > forEach( localFunctionTuple_, vector );
-        EvaluateQuadrature< QuadratureType > functor( quadrature );
-        forEach.apply( functor );
+        // loop over local function tuple and call EvaluateQuadrature::apply
+        ForLoop< EvaluateQuadrature, 0, tuple_size< LocalFunctionTupleType >::value-1 > 
+          :: apply( quadrature, localFunctionTuple_, vector );
       }
 
     protected:
@@ -368,19 +315,18 @@ namespace Dune
     // --------------------------------------------------------
 
     template< class DiscreteModel, class Entity >
-    template< class Quadrature >
+    template< int passId >
     struct LocalFunctionTuple< DiscreteModel, Entity >::EvaluateQuadrature
     {
-      EvaluateQuadrature ( const Quadrature& quadrature ) : quadrature_( quadrature ) {}
-
-      template< class LocalFunction, class ValueVector >
-      void visit ( LocalFunction &localFunction, ValueVector &values ) const
+      template< class Quadrature, class LocalFunctionTuple, class VectorOfTuples >
+      static void apply( const Quadrature& quadrature, 
+                         LocalFunctionTuple &localFunctionTuple, 
+                         VectorOfTuples &vectorOfTuples )
       {
-        localFunction.evaluateQuadrature( quadrature_, values );
+        TupleToVectorConverter< VectorOfTuples, passId > vector ( vectorOfTuples );
+        // get passId-th local function and call evaluateQuadrature  
+        get< passId > ( localFunctionTuple ).evaluateQuadrature( quadrature, vector );
       }
-
-    private:
-      const Quadrature& quadrature_;
     };
 
 
