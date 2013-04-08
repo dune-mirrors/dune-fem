@@ -83,7 +83,6 @@ namespace Dune
   };
 
 
-
   // Dune::get for TypeIndexedTuple
   // ------------------------------
 
@@ -102,5 +101,18 @@ namespace Dune
   }
 
 } // namespace Dune
+
+namespace std { 
+
+  // tuple_element specialization for TypeIndexedTuple
+  // -------------------------------------------------
+
+  template< size_t i, class Tuple, class Types >
+  struct tuple_element< i, Dune::TypeIndexedTuple< Tuple, Types > > 
+  {
+    // use types from Tuple, since the get method is specialized to return these 
+    typedef typename tuple_element< i, Tuple > :: type type ;
+  };
+}
 
 #endif // #ifndef DUNE_FEM_PASS_COMMON_TYPEINDEXEDTUPLE_HH

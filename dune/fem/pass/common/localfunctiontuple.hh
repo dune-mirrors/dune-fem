@@ -97,24 +97,9 @@ namespace Dune
     {
       // no copying
       TupleToVectorConverter(const TupleToVectorConverter&);
-
-      //! standard case 
-      template <int pos, class Tuple> 
-      struct TupleElement
-      {
-        typedef typename tuple_element< pos, Tuple> :: type type ;
-      };
-
-      //! specialization to extract correct tuple component
-      template <int pos, class Tuple, class Types> 
-      struct TupleElement< pos, TypeIndexedTuple< Tuple, Types > > 
-      {
-        typedef typename tuple_element< pos, Tuple> :: type type ;
-      };
-
     public:
       typedef typename VectorTupleType :: value_type TupleType;
-      typedef typename TupleElement< passId, TupleType > :: type  ValueType;
+      typedef typename tuple_element< passId, TupleType > :: type  ValueType;
       typedef ValueType value_type ;
 
       //! constructor
