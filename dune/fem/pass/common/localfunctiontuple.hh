@@ -89,6 +89,117 @@ namespace Dune
   namespace Fem
   {
 
+    /** \brief wrapper class to convert a vector of tuples of RangeTypes into something 
+               that behaves like a vector< RangeType >
+    */           
+    template <class VectorTupleType, int passId >
+    class TupleToVectorConverter
+    {
+      // no copying
+      TupleToVectorConverter(const TupleToVectorConverter&);
+
+      //! standard case 
+      template <int pos, class Tuple> 
+      struct TupleElement
+      {
+        typedef typename tuple_element< pos, Tuple> :: type type ;
+      };
+
+      //! specialization to extract correct tuple component
+      template <int pos, class Tuple, class Types> 
+      struct TupleElement< pos, TypeIndexedTuple< Tuple, Types > > 
+      {
+        typedef typename tuple_element< pos, Tuple> :: type type ;
+      };
+
+    public:
+      typedef typename VectorTupleType :: value_type TupleType;
+      typedef typename TupleElement< passId, TupleType > :: type  ValueType;
+      typedef ValueType value_type ;
+
+      //! constructor
+      TupleToVectorConverter(VectorTupleType& vec)
+        : vector_( vec )
+      {}
+
+      //! return reference to i-th entry of vector and passId's tuple component
+      ValueType& operator [] (const size_t i)
+      {
+        assert( i < vector_.size() );
+        return get< passId >( vector_[ i ] );
+      }
+
+      //! return reference to i-th entry of vector and passId's tuple component
+      const ValueType& operator [] (const size_t i) const
+      {
+        assert( i < vector_.size() );
+        return get< passId >( vector_[ i ] );
+      }
+
+      //! return size of vector 
+      size_t size() const
+      {
+        return vector_.size();
+      }
+
+    protected:
+      VectorTupleType& vector_;
+    };
+
+    /** \brief ForEach class that is used with the evaluateQuadrature call below */
+    template <class TupleType, class VectorType>
+    class ForEachValueVector {
+    public:
+      //! Constructor
+      //! \param t1 First tuple.
+      //! \param t2 Second tuple.
+      ForEachValueVector(TupleType& tuple, VectorType& vec ) :
+        tuple_( tuple ),
+        vector_( vec )
+      {}
+
+      //! Applies the function object f to the pair of tuples.
+      //! \param f The function object to apply on the pair of tuples.
+      template <class Functor>
+      void apply(Functor& f)
+      {
+        // iterate over tuple elements for 0 to tuple_size-1 
+        Apply<0, tuple_size< TupleType >::value >::apply(f, tuple_, vector_ );
+      }
+
+    private:
+      template <int passId, int size>  
+      struct Apply
+      {
+        template <class Functor, class Tuple, class VectorOfTuples> 
+        static void apply( Functor& f, Tuple& tuple, VectorOfTuples& vectorOfTuples )
+        {
+          TupleToVectorConverter< VectorOfTuples, passId > vector ( vectorOfTuples );
+          // call functor (here evaluateQuadrature on local function)
+          f.visit( get< passId >(tuple), vector );
+          // got to next tuple element
+          Apply< passId+1, size> :: apply( f, tuple, vectorOfTuples );
+        }
+      };
+
+      //! termination of tuple iteration when size is reached 
+      template <int size>  
+      struct Apply< size, size >
+      {
+        template <class Functor, class Tuple, class VectorOfTuples> 
+        static void apply( Functor& f, Tuple& tuple, VectorOfTuples& vector )
+        {
+          // do nothing here, since this is the terminating call
+        }
+      };
+
+    private:
+      TupleType&   tuple_;
+      VectorType&  vector_;
+    };
+
+
+
     // LocalFunctionTuple
     // ------------------
 
@@ -104,6 +215,8 @@ namespace Dune
 
       struct SetEntity;
       struct Evaluate;
+      template <class Quadrature> 
+      struct EvaluateQuadrature ;  
       struct Jacobian;
       struct Hessian;
    
@@ -198,7 +311,9 @@ namespace Dune
       void evaluateQuadrature ( const QuadratureType &quadrature, TupleVectorType &vector ) const
       {
         assert( vector.size() >= quadrature.nop() );
-        evaluateQuadrature( quadrature, vector, vector[ 0 ] );
+        ForEachValueVector< LocalFunctionTupleType, TupleVectorType > forEach( localFunctionTuple_, vector );
+        EvaluateQuadrature< QuadratureType > functor( quadrature );
+        forEach.apply( functor );
       }
 
     protected:
@@ -207,28 +322,6 @@ namespace Dune
         ForEachValue< LocalFunctionTupleType > forEach( localFunctionTuple_ );
         SetEntity functor( entity );
         forEach.apply( functor );
-      }
-
-      template< class QuadratureType, class TupleVectorType >
-      void evaluateQuadrature ( const QuadratureType &quadrature, TupleVectorType &vector, RangeTupleType & ) const
-      {
-        const std::size_t nop = quadrature.nop();
-        for( std::size_t qp = 0; qp < nop; ++qp )
-        {
-          RangeTupleType &values = vector[ qp ];
-          evaluate( quadrature[ qp ], values );
-        }
-      }
-
-      template< class QuadratureType, class TupleVectorType >
-      void evaluateQuadrature ( const QuadratureType &quadrature, TupleVectorType &vector, JacobianRangeTupleType & ) const
-      {
-        const std::size_t nop = quadrature.nop();
-        for( std::size_t qp = 0; qp < nop; ++qp )
-        {
-          JacobianRangeTupleType &values = vector[ qp ];
-          jacobian( quadrature[ qp ], values );
-        }
       }
 
       LocalFunctionTupleType &localFunctions () { return localFunctionTuple_; }
@@ -281,6 +374,28 @@ namespace Dune
 
     private:
       const LocalCoordinateType &x_;
+    };
+
+
+
+
+    // Implementation of LocalFunctionTuple::EvaluateQuadrature
+    // --------------------------------------------------------
+
+    template< class DiscreteModel, class Entity >
+    template< class Quadrature >
+    struct LocalFunctionTuple< DiscreteModel, Entity >::EvaluateQuadrature
+    {
+      EvaluateQuadrature ( const Quadrature& quadrature ) : quadrature_( quadrature ) {}
+
+      template< class LocalFunction, class ValueVector >
+      void visit ( LocalFunction &localFunction, ValueVector &values ) const
+      {
+        localFunction.evaluateQuadrature( quadrature_, values );
+      }
+
+    private:
+      const Quadrature& quadrature_;
     };
 
 
