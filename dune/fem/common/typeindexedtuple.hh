@@ -1,8 +1,10 @@
-#ifndef DUNE_FEM_PASS_COMMON_TYPEINDEXEDTUPLE_HH
-#define DUNE_FEM_PASS_COMMON_TYPEINDEXEDTUPLE_HH
+#ifndef DUNE_FEM_COMMON_TYPEINDEXEDTUPLE_HH
+#define DUNE_FEM_COMMON_TYPEINDEXEDTUPLE_HH
 
 #include <dune/common/tuples.hh>
 #include <dune/common/tupleutility.hh>
+
+#include <dune/fem/common/tupleutility.hh>
 
 namespace Dune
 {
@@ -102,17 +104,18 @@ namespace Dune
 
 } // namespace Dune
 
-namespace std { 
 
-  // tuple_element specialization for TypeIndexedTuple
-  // -------------------------------------------------
+DUNE_OPEN_TUPLE_NAMESPACE
+
+  // tuple_element for TypeIndexedTuple
+  // ----------------------------------
 
   template< size_t i, class Tuple, class Types >
   struct tuple_element< i, Dune::TypeIndexedTuple< Tuple, Types > > 
   {
-    // use types from Tuple, since the get method is specialized to return these 
-    typedef typename tuple_element< i, Tuple > :: type type ;
+    typedef typename tuple_element< i, Tuple >::type type;
   };
-}
 
-#endif // #ifndef DUNE_FEM_PASS_COMMON_TYPEINDEXEDTUPLE_HH
+DUNE_CLOSE_TUPLE_NAMESPACE
+
+#endif // #ifndef DUNE_FEM_COMMON_TYPEINDEXEDTUPLE_HH
