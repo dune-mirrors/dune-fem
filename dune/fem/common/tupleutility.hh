@@ -1,9 +1,21 @@
-#ifndef DUNE_FEM_PASS_COMMON_TUPLEUTILITY_HH
-#define DUNE_FEM_PASS_COMMON_TUPLEUTILITY_HH
+#ifndef DUNE_FEM_COMMON_TUPLEUTILITY_HH
+#define DUNE_FEM_COMMON_TUPLEUTILITY_HH
 
 #include <dune/common/static_assert.hh>
 #include <dune/common/tuples.hh>
 #include <dune/common/tupleutility.hh>
+
+#ifdef HAVE_TUPLE
+#define DUNE_OPEN_TUPLE_NAMESPACE namespace std {
+#define DUNE_CLOSE_TUPLE_NAMESPACE }
+#elif defined HAVE_TR1_TUPLE // #ifdef HAVE_TUPLE
+#define DUNE_OPEN_TUPLE_NAMESPACE namespace std { namespace tr1 {
+#define DUNE_CLOSE_TUPLE_NAMESPACE } }
+#else // #elif defined HAVE_TR1_TUPLE // #ifdef HAVE_TUPLE
+#define DUNE_OPEN_TUPLE_NAMESPACE namespace Dune {
+#define DUNE_CLOSE_TUPLE_NAMESPACE }
+#endif // #else // #elif defined HAVE_TR1_TUPLE // #ifdef HAVE_TUPLE
+
 
 namespace
 {
@@ -452,4 +464,4 @@ namespace Dune
 
 } // namespace Dune
 
-#endif // #ifndef DUNE_FEM_PASS_COMMON_TUPLEUTILITY_HH
+#endif // #ifndef DUNE_FEM_COMMON_TUPLEUTILITY_HH
