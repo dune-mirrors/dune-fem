@@ -145,11 +145,15 @@ namespace Dune
     {
       typedef LocalFunctionTuple< DiscreteFunctionTuple, Entity > ThisType;
 
+      template < int passId > 
       struct SetEntity;
+      template < int passId > 
       struct Evaluate;
       template < int passId > 
       struct EvaluateQuadrature ;  
+      template< int passId > 
       struct Jacobian;
+      template< int passId > 
       struct Hessian;
    
     public:
@@ -203,9 +207,8 @@ namespace Dune
       template< class PointType >
       void evaluate ( const PointType &x, RangeTupleType &values ) const
       {
-        Dune::ForEachValuePair< LocalFunctionTupleType, RangeTupleType > forEach( localFunctionTuple_, values );
-        Evaluate functor( coordinate( x ) );
-        forEach.apply( functor );
+        ForLoop< Evaluate, 0, tuple_size< LocalFunctionTupleType >::value-1 > 
+          :: apply( localFunctionTuple_, coordinate( x ), values );
       }
 
       /** \brief evaluate jacobians of local functions
@@ -216,9 +219,8 @@ namespace Dune
       template< class PointType >
       void jacobian ( const PointType &x, JacobianRangeTupleType &jacobians ) const
       {
-        Dune::ForEachValuePair< LocalFunctionTupleType, JacobianRangeTupleType > forEach( localFunctionTuple_, jacobians );
-        Jacobian functor( coordinate( x ) );
-        forEach.apply( functor );
+        ForLoop< Jacobian, 0, tuple_size< LocalFunctionTupleType >::value-1 > 
+          :: apply( localFunctionTuple_, coordinate( x ), jacobians );
       }
 
       /** \brief evaluate hessians of local functions
@@ -229,9 +231,8 @@ namespace Dune
       template< class PointType >
       void hessian ( const PointType &x, HessianRangeTupleType &hessians ) const
       {
-        Dune::ForEachValuePair< LocalFunctionTupleType, HessianRangeTupleType > forEach( localFunctionTuple_, hessians );
-        Hessian functor( coordinate( x ) );
-        forEach.apply( functor );
+        ForLoop< Hessian, 0, tuple_size< LocalFunctionTupleType >::value-1 >
+          :: apply( localFunctionTuple_, coordinate( x ), hessians );
       }
 
       /** \brief evaluate local functions for quadrature
@@ -251,9 +252,8 @@ namespace Dune
     protected:
       void init ( const EntityType &entity, LocalFunctionTupleType &localFunctions )
       {
-        ForEachValue< LocalFunctionTupleType > forEach( localFunctionTuple_ );
-        SetEntity functor( entity );
-        forEach.apply( functor );
+        ForLoop< SetEntity, 0, tuple_size< LocalFunctionTupleType >::value-1 >
+          :: apply( localFunctions, entity );
       }
 
       LocalFunctionTupleType &localFunctions () { return localFunctionTuple_; }
@@ -274,18 +274,14 @@ namespace Dune
     // -----------------------------------------------
 
     template< class DiscreteModel, class Entity >
+    template< int passId >
     struct LocalFunctionTuple< DiscreteModel, Entity>::SetEntity
     {
-      SetEntity ( const EntityType &entity ) : entity_( entity ) {}
-
-      template< class LocalFunction >
-      void visit ( LocalFunction &localFunction ) const
+      template< class LocalFunctionTuple >
+      static void apply ( LocalFunctionTuple &localFunctionTuple, const EntityType& entity )
       {
-        localFunction.init( entity_ );
+        get< passId >( localFunctionTuple ).init( entity );
       }
-
-    private:
-      const EntityType &entity_;
     };
 
 
@@ -294,20 +290,17 @@ namespace Dune
     // ----------------------------------------------
 
     template< class DiscreteModel, class Entity >
+    template< int passId >
     struct LocalFunctionTuple< DiscreteModel, Entity >::Evaluate
     {
-      Evaluate ( const LocalCoordinateType &x ) : x_( x ) {}
-
-      template< class LocalFunction, class Range >
-      void visit ( LocalFunction &localFunction, Range &value ) const
+      template< class LocalFunctionTuple, class Range >
+      static void apply ( LocalFunctionTuple &localFunctionTuple, 
+                          const LocalCoordinateType& x, 
+                          Range &value )
       {
-        localFunction.evaluate( x_, value );
+        get< passId >( localFunctionTuple ).evaluate( x, value );
       }
-
-    private:
-      const LocalCoordinateType &x_;
     };
-
 
 
 
@@ -335,18 +328,16 @@ namespace Dune
     // ----------------------------------------------
 
     template< class DiscreteModel, class Entity >
+    template< int passId >
     struct LocalFunctionTuple< DiscreteModel, Entity >::Jacobian
     {
-      Jacobian ( const LocalCoordinateType &x ) : x_( x ) {}
-
-      template< class LocalFunction, class JacobianRangeType >
-      void visit ( LocalFunction &localFunction, JacobianRangeType &jacobian ) const
+      template< class LocalFunctionTuple, class JacobianRangeType >
+      static void apply ( LocalFunctionTuple &localFunctionTuple, 
+                          const LocalCoordinateType& x, 
+                          JacobianRangeType &jacobian )
       {
-        localFunction.jacobian( x_, jacobian );
+        get< passId >( localFunctionTuple ).jacobian( x, jacobian );
       }
-
-    private:
-      const LocalCoordinateType &x_;
     };
 
 
@@ -355,14 +346,15 @@ namespace Dune
     // ---------------------------------------------
 
     template< class DiscreteModel, class Entity >
+    template< int passId >
     struct LocalFunctionTuple< DiscreteModel, Entity>::Hessian
     {
-      Hessian ( const LocalCoordinateType &x ) : x_( x ) {}
-
-      template< class LocalFunction, class HessianRangeType >
-      void visit ( LocalFunction &localFunction, HessianRangeType &hessian ) const
+      template< class LocalFunctionTuple, class HessianRangeType >
+      static void visit ( LocalFunctionTuple &localFunctionTuple, 
+                          const LocalCoordinateType& x,
+                          HessianRangeType &hessian )
       {
-        localFunction.hessian( x_, hessian );
+        get< passId >( localFunctionTuple ).hessian( x, hessian );
       }
 
     private:
