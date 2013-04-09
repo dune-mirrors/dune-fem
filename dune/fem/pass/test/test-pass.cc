@@ -91,6 +91,15 @@ private:
 
 
 
+// Implementation of DiscreteModel
+// -------------------------------
+
+template< class DiscreteFunction, class SelectorTuple >
+const typename Dune::tuple_element< 0, typename DiscreteModel< DiscreteFunction, SelectorTuple >::Selector >::type
+DiscreteModel< DiscreteFunction, SelectorTuple >::u;
+
+
+
 // LocalRestrictionOperator
 // ------------------------
 
