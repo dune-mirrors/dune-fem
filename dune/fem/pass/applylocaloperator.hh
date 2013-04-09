@@ -251,47 +251,43 @@ namespace Dune
       typedef typename EntityType::Geometry::LocalCoordinate LocalCoordinateType;
 
       LocalFunction ( DiscreteModelCallerType &caller )
-      : caller_( caller ),
-        entity_( nullptr )
+      : caller_( caller )
       {}
 
-      int order () const { return caller().order( entity() ); }
+      int order () const { return caller().order(); }
 
-      const EntityType &entity () const
+      const EntityType &entity () const { return caller_.entity(); }
+
+      void init ( const EntityType &entity ) { caller_.setEntity( entity ); }
+
+      template< class Point >
+      void evaluate ( const Point &x, RangeType &value ) const
       {
-        assert( entity_ );
-        return *entity_;
+        caller().evaluate( x, value );
       }
 
-      void init ( const EntityType &entity )
+      template< class Point >
+      void jacobian ( const Point &x, JacobianRangeType &jacobian ) const
       {
-        entity_ = &entity;
-        caller_.setEntity( entity );
+        caller().jacobian( x, jacobian );
       }
 
-      template< class PointType >
-      void evaluate ( const PointType &x, RangeType &value ) const
+      template< class Point >
+      void hessian ( const Point &x, HessianRangeType &hessian ) const
       {
-        caller().evaluate( entity(), x, value );
+        caller().hessian( x, hessian );
       }
 
-      template< class PointType >
-      void jacobian ( const PointType &x, JacobianRangeType &jacobian ) const
+      template< class Quadrature, class RangeVector >
+      void evaluateQuadrature( const Quadrature &quadrature, RangeVector &values ) const
       {
-        caller().jacobian( entity(), x, jacobian );
-      }
-
-      template< class PointType >
-      void hessian ( const PointType &x, HessianRangeType &hessian ) const
-      {
-        caller().hessian( entity(), x, hessian );
+        caller().evaluateQuadrature( quadrature, values );
       }
 
     private:
       const DiscreteModelCallerType &caller () const { return caller_; }
 
       DiscreteModelCallerType &caller_;
-      const EntityType *entity_;
     };
 
 
@@ -361,51 +357,45 @@ namespace Dune
         return discreteModel().time();
       }
 
-      int order ( const EntityType &entity ) const
+      int order () const
       {
-        return discreteModel().order( entity );
+        return discreteModel().order( entity() );
       }
+
+      //! \brief return entity
+      const EntityType &entity () const { return localFunctionTuple().entity(); }
 
       //! \brief evalute local functions and pass values to discrete model
       template< class Point >
-      void evaluate ( const EntityType &entity,
-                      const Point &x,
-                      RangeType &value ) const
+      void evaluate ( const Point &x, RangeType &value ) const
       {
-        assert( &entity == &(localFunctionTuple().entity()) );
         localFunctionTuple().evaluate( x, values_ );
-        discreteModel().evaluate( entity, coordinate( x ), values_, value );
+        discreteModel().evaluate( entity(), coordinate( x ), values_, value );
       }
       
       //! \brief evalute jacobians or local functions and pass values to discrete model
       template< class Point >
-      void jacobian ( const EntityType &entity,
-                      const Point &x,
-                      JacobianRangeType &jacobian ) const
+      void jacobian ( const Point &x, JacobianRangeType &jacobian ) const
       {
-        assert( &entity == &(localFunctionTuple().entity()) );
         localFunctionTuple().evaluate( x, jacobians_ );
-        discreteModel().jacobian( entity, coordinate( x ), jacobians_, jacobian );
+        discreteModel().jacobian( entity(), coordinate( x ), jacobians_, jacobian );
       }
 
       //! \brief evalute hessians of local functions and pass values to discrete model
       template< class Point >
-      void hessian ( const EntityType &entity,
-                     const Point &x,
-                     HessianRangeType &hessian ) const
+      void hessian ( const Point &x, HessianRangeType &hessian ) const
       {
         DUNE_THROW( Dune::NotImplemented, "Method hessian() not implemented yet" );
       }
 
       //! \brief calls method evaluate() for all quadrature points
-      template< class QuadratureType, class RangeVectorType >
-      void evaluateQuadrature ( const EntityType &entity,
-                                const QuadratureType &quadrature,
-                                RangeVectorType &values ) const
+      template< class Quadrature, class RangeVector >
+      void evaluateQuadrature ( const Quadrature &quadrature, RangeVector &values ) const
       {
+        assert( values.size() >= quadrature.nop() );
         const int nop = quadrature.nop();
         for( int qp = 0; qp < nop; ++qp )
-          evaluate( entity, quadrature[ qp ], values[ qp ] );
+          evaluate( entity(), quadrature[ qp ], values[ qp ] );
       }
 
     protected:
