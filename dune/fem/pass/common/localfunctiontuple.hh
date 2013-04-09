@@ -11,7 +11,6 @@
 #include <dune/common/tupleutility.hh>
 
 #include <dune/fem/common/tupleutility.hh>
-#include <dune/fem/quadrature/quadrature.hh>
 
 #include "localfunctionselector.hh"
 
@@ -99,10 +98,11 @@ namespace Dune
      *        mimicks the LocalFunction interface
      *        (see dune/fem/function/localfunction/localfunction.hh).
      */
-    template< class DiscreteFunctionTuple, class Entity >
+    template< class DiscreteFunctionTuple, class Entity,
+              size_t TupleSize = tuple_size< DiscreteFunctionTuple >::value >
     class LocalFunctionTuple
     {
-      typedef LocalFunctionTuple< DiscreteFunctionTuple, Entity > ThisType;
+      typedef LocalFunctionTuple< DiscreteFunctionTuple, Entity, TupleSize > ThisType;
 
       template< int pos > struct SetEntity;
       template< int pos > struct Evaluate;
@@ -116,9 +116,13 @@ namespace Dune
       //! \brief entity type
       typedef Entity EntityType;
 
-      //! \brief type of local function tuple
+    protected:
       typedef typename Dune::ForEachType< LocalFunctionEvaluator, DiscreteFunctionTupleType >::Type LocalFunctionTupleType;
 
+      typedef typename EntityType::Geometry GeometryType;
+      typedef typename GeometryType::LocalCoordinate LocalCoordinateType;
+
+    public:
       // ! \brief type of range type tuple
       typedef typename Dune::ForEachType< RangeTypeEvaluator, LocalFunctionTupleType >::Type RangeTupleType;
       // ! \brief type of jacobian range type tuple
@@ -126,11 +130,6 @@ namespace Dune
       // ! \brief type of hessian range type tuple
       typedef typename Dune::ForEachType< HessianRangeTypeEvaluator, LocalFunctionTupleType >::Type HessianRangeTupleType;
 
-    protected:
-      typedef typename EntityType::Geometry GeometryType;
-      typedef typename GeometryType::LocalCoordinate LocalCoordinateType;
-
-    public:
       template< class Factory >
       LocalFunctionTuple ( Factory factory )
       : localFunctionTuple_( Dune::transformTuple< LocalFunctionEvaluator, Factory >( factory ) )
@@ -142,15 +141,13 @@ namespace Dune
        */
       void init ( const EntityType &entity )
       {
-        entity_ = &entity;
-        init( entity, localFunctionTuple_ );
+        ForLoop< SetEntity, 0, TupleSize-1 >::apply( localFunctions(), entity );
       }
 
       /** \brief return entity */
       const EntityType &entity () const
       {
-        assert( entity_ );
-        return *entity_;
+        return Dune::get< 0 >( localFunctions() ).entity();
       }
 
       /** \brief evaluate local functions
@@ -158,11 +155,10 @@ namespace Dune
        *  \param[in]  x       quadrature point or local coordinate
        *  \param[in]  values  values of local functions
        */
-      template< class PointType >
-      void evaluate ( const PointType &x, RangeTupleType &values ) const
+      template< class Point >
+      void evaluate ( const Point &x, RangeTupleType &values ) const
       {
-        ForLoop< Evaluate, 0, tuple_size< LocalFunctionTupleType >::value-1 > 
-          :: apply( localFunctionTuple_, coordinate( x ), values );
+        ForLoop< Evaluate, 0, TupleSize-1 >::apply( localFunctions(), x, values );
       }
 
       /** \brief evaluate jacobians of local functions
@@ -170,11 +166,10 @@ namespace Dune
        *  \param[in]  x          quadrature point or local coordinate
        *  \param[in]  jacobians  jacobians of local functions
        */
-      template< class PointType >
-      void jacobian ( const PointType &x, JacobianRangeTupleType &jacobians ) const
+      template< class Point >
+      void jacobian ( const Point &x, JacobianRangeTupleType &jacobians ) const
       {
-        ForLoop< Jacobian, 0, tuple_size< LocalFunctionTupleType >::value-1 > 
-          :: apply( localFunctionTuple_, coordinate( x ), jacobians );
+        ForLoop< Jacobian, 0, TupleSize-1 >::apply( localFunctions(), x, jacobians );
       }
 
       /** \brief evaluate hessians of local functions
@@ -182,11 +177,10 @@ namespace Dune
        *  \param[in]  x         quadrature point or local coordinate
        *  \param[in]  hessians  hessians of local functions
        */
-      template< class PointType >
-      void hessian ( const PointType &x, HessianRangeTupleType &hessians ) const
+      template< class Point >
+      void hessian ( const Point &x, HessianRangeTupleType &hessians ) const
       {
-        ForLoop< Hessian, 0, tuple_size< LocalFunctionTupleType >::value-1 >
-          :: apply( localFunctionTuple_, coordinate( x ), hessians );
+        ForLoop< Hessian, 0, TupleSize-1 >::apply( localFunctions(), x, hessians );
       }
 
       /** \brief evaluate local functions for quadrature
@@ -198,28 +192,68 @@ namespace Dune
       void evaluateQuadrature ( const QuadratureType &quadrature, TupleVectorType &vector ) const
       {
         assert( vector.size() >= quadrature.nop() );
-        // loop over local function tuple and call EvaluateQuadrature::apply
-        ForLoop< EvaluateQuadrature, 0, tuple_size< LocalFunctionTupleType >::value-1 > 
-          :: apply( quadrature, localFunctionTuple_, vector );
+        ForLoop< EvaluateQuadrature, 0, TupleSize-1 >::apply( quadrature, localFunctions(), vector );
       }
 
     protected:
-      void init ( const EntityType &entity, LocalFunctionTupleType &localFunctions )
-      {
-        ForLoop< SetEntity, 0, tuple_size< LocalFunctionTupleType >::value-1 >
-          :: apply( localFunctions, entity );
-      }
-
       LocalFunctionTupleType &localFunctions () { return localFunctionTuple_; }
-
       const LocalFunctionTupleType &localFunctions () const { return localFunctionTuple_; }
 
     private:
-      LocalFunctionTuple ( const ThisType & );
-      ThisType &operator= ( const ThisType & );
-
       mutable LocalFunctionTupleType localFunctionTuple_;
-      const EntityType *entity_;
+    };
+
+
+
+    // LocalFunctionTuple for Empty Tuples
+    // -----------------------------------
+
+    template< class DiscreteFunctionTuple, class Entity >
+    class LocalFunctionTuple< DiscreteFunctionTuple, Entity, 0 >
+    {
+      typedef LocalFunctionTuple< DiscreteFunctionTuple, Entity, 0 > ThisType;
+
+    public:
+      typedef DiscreteFunctionTuple DiscreteFunctionTupleType;
+      typedef Entity EntityType;
+
+      typedef Dune::tuple<> RangeTupleType;
+      typedef Dune::tuple<> JacobianRangeTupleType;
+      typedef Dune::tuple<> HessianRangeTupleType;
+
+      template< class Factory >
+      LocalFunctionTuple ( Factory factory )
+      : entity_( nullptr )
+      {}
+
+      void init ( const EntityType &entity ) { entity_ = &entity; }
+
+      const EntityType &entity () const
+      {
+        assert( entity_ );
+        return *entity_;
+      }
+
+      template< class Point >
+      void evaluate ( const Point &x, RangeTupleType &values ) const
+      {}
+
+      template< class Point >
+      void jacobian ( const Point &x, JacobianRangeTupleType &jacobians ) const
+      {}
+
+      template< class Point >
+      void hessian ( const Point &x, HessianRangeTupleType &hessians ) const
+      {}
+
+      template< class QuadratureType, class TupleVectorType >
+      void evaluateQuadrature ( const QuadratureType &quadrature, TupleVectorType &vector ) const
+      {
+        assert( vector.size() >= quadrature.nop() );
+      }
+
+    private:
+      EntityType *entity_;
     };
 
 
@@ -227,15 +261,14 @@ namespace Dune
     // Implementation of LocalFunctionTuple::SetEntity
     // -----------------------------------------------
 
-    template< class DiscreteModel, class Entity >
+    template< class DiscreteFunctionTuple, class Entity, size_t TupleSize >
     template< int pos >
-    struct LocalFunctionTuple< DiscreteModel, Entity>::SetEntity
+    struct LocalFunctionTuple< DiscreteFunctionTuple, Entity, TupleSize >::SetEntity
     {
-      template< class LocalFunctionTuple >
-      static void apply ( LocalFunctionTuple &localFunctionTuple,
+      static void apply ( LocalFunctionTupleType &localFunctions,
                           const EntityType &entity )
       {
-        Dune::get< pos >( localFunctionTuple ).init( entity );
+        Dune::get< pos >( localFunctions ).init( entity );
       }
     };
 
@@ -244,16 +277,16 @@ namespace Dune
     // Implementation of LocalFunctionTuple::Evaluate
     // ----------------------------------------------
 
-    template< class DiscreteModel, class Entity >
+    template< class DiscreteFunctionTuple, class Entity, size_t TupleSize >
     template< int pos >
-    struct LocalFunctionTuple< DiscreteModel, Entity >::Evaluate
+    struct LocalFunctionTuple< DiscreteFunctionTuple, Entity, TupleSize >::Evaluate
     {
-      template< class LocalFunctionTuple, class Range >
-      static void apply ( LocalFunctionTuple &localFunctionTuple,
-                          const LocalCoordinateType &x,
-                          Range &value )
+      template< class Point >
+      static void apply ( const LocalFunctionTupleType &localFunctions,
+                          const Point &x,
+                          RangeTupleType &values )
       {
-        Dune::get< pos >( localFunctionTuple ).evaluate( x, value );
+        Dune::get< pos >( localFunctions ).evaluate( x, Dune::get< pos >( values ) );
       }
     };
 
@@ -262,17 +295,17 @@ namespace Dune
     // Implementation of LocalFunctionTuple::EvaluateQuadrature
     // --------------------------------------------------------
 
-    template< class DiscreteModel, class Entity >
+    template< class DiscreteFunctionTuple, class Entity, size_t TupleSize >
     template< int pos >
-    struct LocalFunctionTuple< DiscreteModel, Entity >::EvaluateQuadrature
+    struct LocalFunctionTuple< DiscreteFunctionTuple, Entity, TupleSize >::EvaluateQuadrature
     {
-      template< class Quadrature, class LocalFunctionTuple, class VectorOfTuples >
-      static void apply ( const Quadrature &quadrature, 
-                          LocalFunctionTuple &localFunctionTuple, 
+      template< class Quadrature, class VectorOfTuples >
+      static void apply ( const Quadrature &quadrature,
+                          const LocalFunctionTupleType &localFunctions,
                           VectorOfTuples &vectorOfTuples )
       {
         TupleToVectorConverter< VectorOfTuples, pos > vector( vectorOfTuples );
-        Dune::get< pos >( localFunctionTuple ).evaluateQuadrature( quadrature, vector );
+        Dune::get< pos >( localFunctions ).evaluateQuadrature( quadrature, vector );
       }
     };
 
@@ -281,16 +314,16 @@ namespace Dune
     // Implementation of LocalFunctionTuple::Jacobian
     // ----------------------------------------------
 
-    template< class DiscreteModel, class Entity >
+    template< class DiscreteFunctionTuple, class Entity, size_t TupleSize >
     template< int pos >
-    struct LocalFunctionTuple< DiscreteModel, Entity >::Jacobian
+    struct LocalFunctionTuple< DiscreteFunctionTuple, Entity, TupleSize >::Jacobian
     {
-      template< class LocalFunctionTuple, class JacobianRangeType >
-      static void apply ( LocalFunctionTuple &localFunctionTuple,
-                          const LocalCoordinateType &x,
-                          JacobianRangeType &jacobian )
+      template< class Point >
+      static void apply ( const LocalFunctionTupleType &localFunctions,
+                          const Point &x,
+                          JacobianRangeTupleType &jacobians )
       {
-        Dune::get< pos >( localFunctionTuple ).jacobian( x, jacobian );
+        Dune::get< pos >( localFunctions ).jacobian( x, Dune::get< pos >( jacobians ) );
       }
     };
 
@@ -299,16 +332,16 @@ namespace Dune
     // Implementation of LocalFunctionTuple::Hessian
     // ---------------------------------------------
 
-    template< class DiscreteModel, class Entity >
+    template< class DiscreteFunctionTuple, class Entity, size_t TupleSize >
     template< int pos >
-    struct LocalFunctionTuple< DiscreteModel, Entity>::Hessian
+    struct LocalFunctionTuple< DiscreteFunctionTuple, Entity, TupleSize >::Hessian
     {
-      template< class LocalFunctionTuple, class HessianRangeType >
-      static void apply ( LocalFunctionTuple &localFunctionTuple,
-                          const LocalCoordinateType &x,
-                          HessianRangeType &hessian )
+      template< class Point >
+      static void apply ( const LocalFunctionTupleType &localFunctions,
+                          const Point &x,
+                          HessianRangeTupleType &hessians )
       {
-        Dune::get< pos >( localFunctionTuple ).hessian( x, hessian );
+        Dune::get< pos >( localFunctions ).hessian( x, Dune::get< pos >( hessians ) );
       }
     };
 
