@@ -84,26 +84,11 @@ namespace Dune
     Tuple tuple_;
   };
 
-
-  // Dune::get for TypeIndexedTuple
-  // ------------------------------
-
-  template< int i, class Tuple, class Types >
-  typename Dune::tuple_element< i, Tuple >::type &
-  get ( TypeIndexedTuple< Tuple, Types > &tuple )
-  {
-    return Dune::get< i >( static_cast< Tuple & >( tuple ) );
-  }
-
-  template< int i, class Tuple, class Types >
-  const typename Dune::tuple_element< i, Tuple >::type &
-  get ( const TypeIndexedTuple< Tuple, Types > &tuple )
-  {
-    return Dune::get< i >( static_cast< const Tuple & >( tuple ) );
-  }
-
 } // namespace Dune
 
+
+// Some Specializations for Tuple Access
+// -------------------------------------
 
 DUNE_OPEN_TUPLE_NAMESPACE
 
@@ -115,6 +100,25 @@ DUNE_OPEN_TUPLE_NAMESPACE
   {
     typedef typename tuple_element< i, Tuple >::type type;
   };
+
+
+
+  // get for TypeIndexedTuple
+  // ------------------------
+
+  template< int i, class Tuple, class Types >
+  typename tuple_element< i, Tuple >::type &
+  get ( Dune::TypeIndexedTuple< Tuple, Types > &tuple )
+  {
+    return get< i >( static_cast< Tuple & >( tuple ) );
+  }
+
+  template< int i, class Tuple, class Types >
+  const typename tuple_element< i, Tuple >::type &
+  get ( const Dune::TypeIndexedTuple< Tuple, Types > &tuple )
+  {
+    return get< i >( static_cast< const Tuple & >( tuple ) );
+  }
 
 DUNE_CLOSE_TUPLE_NAMESPACE
 
