@@ -467,7 +467,6 @@ namespace Dune
       DataCollector<GridType,LocalInterface<ParamType> > & 
       operator += (const DataCollector<GridType,LocalDataCollectType> &op)
       {
-        typedef DataCollector<GridType,LocalDataCollectType> CopyType;
         typedef LocalInterface<ParamType> COType;
          
         COType *newLDCOp = new COType ( ldc_ + op.getLocalOp() );
@@ -488,7 +487,6 @@ namespace Dune
       {
         //std::cout << "operator += with Interface Type \n";
         typedef LocalInterface<ParamType> COType;
-        typedef DataCollector<GridType,COType> CopyType;
          
         COType *newLDCOp = new COType ( ldc_ + op.getLocalInterfaceOp() );
         typedef DataCollector<GridType, COType> OPType;
