@@ -36,7 +36,7 @@ namespace Dune
     {
       assert( order_ <= GaussPts::highestOrder );
 
-      typedef FieldVector<ct, dim> CoordinateType;
+      typedef FieldVector< ct, dim > CoordinateType;
 
       const GaussPts& gp = GaussPts::instance();
 
@@ -65,8 +65,9 @@ namespace Dune
         
         // compute coordinates and weight
         double weight = 1.0;
-        FieldVector<ct, dim> local;
-        for (int k = 0; k < dim; k++) {
+        CoordinateType local;
+        for (int k = 0; k < dim; k++)
+        {
           local[k] = gp.point(m,x[k]);
           weight *= gp.weight(m,x[k]);
         }
@@ -82,15 +83,14 @@ namespace Dune
       QuadratureImp<double, 0>(id),
       order_((order <= 0) ? 1 : order)
     {
-        typedef double ct;
-      typedef FieldVector<ct, 0> CoordinateType;
+      typedef FieldVector< double, 0 > CoordinateType;
 
       order_ = 20;
 
       // fill in all the gauss points
      // compute coordinates and weight
      double weight = 1.0;
-     FieldVector<ct, 0> local(0);
+     CoordinateType local( 0 );
 
      // put in container
      this->addQuadraturePoint(local, weight);
@@ -105,7 +105,7 @@ namespace Dune
       // make sure that we only use orders that are available 
       assert( order_ <= GaussPts::highestOrder );
 
-      typedef FieldVector<ct, 1> CoordinateType;
+      typedef FieldVector< ct, 1 > CoordinateType;
 
       const GaussPts& gp = GaussPts::instance();
       
@@ -121,8 +121,9 @@ namespace Dune
       
       // fill in all the gauss points
       int n = gp.power(m,1);    
-      for (int i = 0; i < n; ++i) {
-        CoordinateType local(0.0);
+      for (int i = 0; i < n; ++i)
+      {
+        CoordinateType local( ct( 0 ) );
 
         local[0] = gp.point(m, i);
         double weight = gp.weight(m, i);
@@ -148,7 +149,7 @@ namespace Dune
       }
     }
 
-    template <class ct>
+    template< class ct >
     QuadrilateralQuadrature<ct>::QuadrilateralQuadrature(const GeometryType&, int order, size_t id) :
       QuadratureImp<ct, 2>(id),
       order_((order <= 0) ? 1 : order)
@@ -156,14 +157,15 @@ namespace Dune
       // make sure that we only use orders that are available 
       assert( order_ <= GaussPts::highestOrder );
 
-      typedef FieldVector<ct, 2> CoordinateType;
+      typedef FieldVector< ct, 2 > CoordinateType;
 
       const GaussPts& gp = GaussPts::instance();
       const int dim = 2;
 
       // find the right Gauss Rule from given order
       int m = 0;
-      for (int i = 0; i <= GaussPts::MAXP; i++) {
+      for (int i = 0; i <= GaussPts::MAXP; i++)
+      {
         if (gp.order(i)>=order_) {
           m = i;
           break;
@@ -186,8 +188,9 @@ namespace Dune
         
         // compute coordinates and weight
         double weight = 1.0;
-        FieldVector<ct, dim> local;
-        for (int k = 0; k < dim; k++) {
+        CoordinateType local;
+        for (int k = 0; k < dim; k++)
+        {
           local[k] = gp.point(m,x[k]);
           weight *= gp.weight(m,x[k]);
         }
@@ -214,7 +217,7 @@ namespace Dune
       }
     }
 
-    template <class ct>
+    template< class ct >
     HexaQuadrature<ct>::HexaQuadrature(const GeometryType&, int order, size_t id) :
       QuadratureImp<ct, 3>(id),
       order_((order <= 0) ? 1 : order)
@@ -222,7 +225,7 @@ namespace Dune
       // make sure that we only use orders that are available 
       assert( order_ <= GaussPts::highestOrder );
 
-      typedef FieldVector<ct, 3> CoordinateType;
+      typedef FieldVector< ct, 3 > CoordinateType;
 
       const GaussPts& gp = GaussPts::instance();
       const int dim = 3;
@@ -252,8 +255,9 @@ namespace Dune
         
         // compute coordinates and weight
         double weight = 1.0;
-        FieldVector<ct, dim> local;
-        for (int k = 0; k < dim; k++) {
+        CoordinateType local;
+        for (int k = 0; k < dim; k++)
+        {
           local[k] = gp.point(m,x[k]);
           weight *= gp.weight(m,x[k]);
         }
