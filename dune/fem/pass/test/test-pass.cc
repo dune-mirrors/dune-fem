@@ -53,7 +53,7 @@ struct DiscreteModel
   typedef SelectorTuple Selector;
 
 private:
-  static const typename Dune::tuple_element< 0, Selector >::type u;
+  typename Dune::tuple_element< 0, Selector >::type u;
 
 public:
   DiscreteModel ( int order ) : order_( order ), time_( 0. ) {}
@@ -88,15 +88,6 @@ private:
   int order_;
   double time_;
 };
-
-
-
-// Implementation of DiscreteModel
-// -------------------------------
-
-template< class DiscreteFunction, class SelectorTuple >
-const typename Dune::tuple_element< 0, typename DiscreteModel< DiscreteFunction, SelectorTuple >::Selector >::type
-DiscreteModel< DiscreteFunction, SelectorTuple >::u;
 
 
 
