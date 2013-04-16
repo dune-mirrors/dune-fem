@@ -26,7 +26,7 @@ namespace Dune
       typedef IdIntersection< const GridFamily > IntersectionImplType;
 
     public:
-      typedef Dune::Intersection< const GridFamily, IdIntersection > Intersection;
+      typedef Dune::Intersection< const GridFamily, IntersectionImplType > Intersection;
 
       IdIntersectionIterator ( const HostIntersectionIteratorType &hostIterator )
       : intersection_( IntersectionImplType() ),

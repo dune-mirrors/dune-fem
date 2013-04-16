@@ -2,6 +2,7 @@
 #define DUNE_FEM_SHAPEFUNCTIONSET_TENSORPRODUCT_HH
 
 // C++ includes
+#include <algorithm>
 #include <cstddef>
 
 // dune-common includes
@@ -11,6 +12,7 @@
 #include <dune/common/fvector.hh>
 #include <dune/common/static_assert.hh>
 #include <dune/common/tuples.hh>
+#include <dune/common/tupleutility.hh>
 
 
 namespace Dune
@@ -33,6 +35,7 @@ namespace Dune
                           "FunctionSpace must be scalar (i.e., dimRange = 1)." );
 
       struct Assign;
+      struct Order;
 
       template< int i > struct Size;
       template< int i > struct EvaluateAll;
@@ -58,6 +61,8 @@ namespace Dune
 
       TensorProductShapeFunctionSet ( const ThisType &other );
       const ThisType &operator= ( const ThisType &other );
+
+      int order () const;
 
       std::size_t size () const;
 
@@ -112,6 +117,27 @@ namespace Dune
 
     private:
       RangeFieldType *buffer_;
+    };
+
+
+
+    // TensorProductShapeFunctionSet::Order
+    // ------------------------------------
+
+    template< class FunctionSpace, class ShapeFunctionSetTuple >
+    struct TensorProductShapeFunctionSet< FunctionSpace, ShapeFunctionSetTuple >::Order
+    {
+      Order () : order_( 0 ) {}
+
+      template< class ShapeFunctionSet >
+      void visit ( const ShapeFunctionSet &shapeFunctionSet )
+      {
+        order_ = std::max( order_, shapeFunctionSet.order() );
+      }
+
+      operator int() const { return order_; }
+    private:
+      int order_;
     };
 
 
@@ -244,6 +270,16 @@ namespace Dune
       }
       buffer_ = new RangeFieldType[ 3*buffer_size ];
       return *this;
+    }
+
+
+    template< class FunctionSpace, class ShapeFunctionSetTuple >
+    inline int TensorProductShapeFunctionSet< FunctionSpace, ShapeFunctionSetTuple >::order () const
+    {
+      Dune::ForEachValue< ShapeFunctionSetTupleType > forEach;
+      Order functor;
+      forEach.apply( functor );
+      return functor;
     }
 
 

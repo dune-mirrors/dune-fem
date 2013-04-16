@@ -25,13 +25,16 @@ namespace Dune
   namespace Fem
   {
 
+    // Internal Forward Declarations
+    // -----------------------------
+
     template< class Grid >
     struct BoundaryIdProvider;
 
 
 
-    // Specialization for AlbertaGrid
-    // ------------------------------
+    // BoundaryIdProvider for AlbertaGrid
+    // ----------------------------------
 
 #if HAVE_ALBERTA
     template< int dim, int dimW >
@@ -48,10 +51,11 @@ namespace Dune
 #endif // #if HAVE_ALBERTA
 
 
-    // Specialization for ALUGrid
-    // --------------------------
 
-#if HAVE_ALUGRID
+    // BoundaryIdProvider for ALUGrid
+    // ------------------------------
+
+#if HAVE_ALUGRID || HAVE_DUNE_ALUGRID
     template< int dim, int dimw, ALUGridElementType elType, ALUGridRefinementType refineType, class Comm >
     struct BoundaryIdProvider< ALUGrid< dim, dimw, elType, refineType, Comm > >
     {
@@ -63,7 +67,14 @@ namespace Dune
         return intersection.impl().boundaryId();
       }
     };
+#endif // #if HAVE_ALUGRID || HAVE_DUNE_ALUGRID
 
+
+
+    // BoundaryIdProvider for ALUConformGrid
+    // -------------------------------------
+
+#if HAVE_ALUGRID
     template< int dim, int dimw >
     struct BoundaryIdProvider< ALUConformGrid< dim, dimw > >
     {
@@ -75,7 +86,14 @@ namespace Dune
         return intersection.impl().boundaryId();
       }
     };
+#endif // #if HAVE_ALUGRID
 
+
+
+    // BoundaryIdProvider for ALUCubeGrid
+    // ----------------------------------
+
+#if HAVE_ALUGRID
     template< int dim, int dimw >
     struct BoundaryIdProvider< ALUCubeGrid< dim, dimw > >
     {
@@ -87,7 +105,14 @@ namespace Dune
         return intersection.impl().boundaryId();
       }
     };
+#endif // #if HAVE_ALUGRID
 
+
+
+    // BoundaryIdProvider for ALUSimplexGrid
+    // -------------------------------------
+
+#if HAVE_ALUGRID
     template< int dim, int dimw >
     struct BoundaryIdProvider< ALUSimplexGrid< dim, dimw > >
     {
@@ -103,9 +128,30 @@ namespace Dune
 
 
 
-    // Specialization for CartesianGrid
-    // --------------------------------
+    // BoundaryIdProvider for CacheItGrid
+    // ----------------------------------
 
+#if HAVE_DUNE_METAGRID
+    template< class HostGrid >
+    struct BoundaryIdProvider< CacheItGrid< HostGrid > >
+    {
+      typedef CacheItGrid< HostGrid > GridType;
+
+      template< class Intersection >
+      static int boundaryId ( const Intersection &intersection )
+      {
+        return BoundaryIdProvider< HostGrid >
+          ::boundaryId ( HostGridAccess< GridType >::getIntersection( intersection ) );
+      }
+    };
+#endif // #if HAVE_DUNE_METAGRID
+
+
+
+    // BoundaryIdProvider for CartesianGrid
+    // ------------------------------------
+
+#if HAVE_DUNE_METAGRID
     template< class HostGrid >
     struct BoundaryIdProvider< CartesianGrid< HostGrid > >
     {
@@ -118,11 +164,36 @@ namespace Dune
           ::boundaryId ( HostGridAccess< GridType >::getIntersection( intersection ) );
       }
     };
+#endif // #if HAVE_DUNE_METAGRID
 
 
 
-    // Specialization for GeometryGrid
-    // -------------------------------
+    // BoundaryIdProvider for FilteredGrid
+    // -----------------------------------
+
+#if HAVE_DUNE_METAGRID
+    template< class HostGrid >
+    struct BoundaryIdProvider< FilteredGrid< HostGrid > >
+    {
+      typedef FilteredGrid< HostGrid > GridType;
+
+      // todo: FilteredGrid is a filtering grid and, hence, needs a specialized
+      //       version of boundaryId.
+      template< class Intersection >
+      static int boundaryId ( const Intersection &intersection )
+      {
+        if( !iHostGridAccess< GridType >::getIntersection( intersection ).boundary() )
+          DUNE_THROW( NotImplemented, "BoundaryIdProvider for artificial boundaries of FilteredGrid not implemented." );
+        return BoundaryIdProvider< HostGrid >
+          ::boundaryId ( HostGridAccess< GridType >::getIntersection( intersection ) );
+      }
+    };
+#endif // #if HAVE_DUNE_METAGRID
+
+
+
+    // BoundaryIdProvider for GeometryGrid
+    // -----------------------------------
 
     template< class HostGrid, class CoordFunction, class Allocator >
     struct BoundaryIdProvider< GeometryGrid< HostGrid, CoordFunction, Allocator > >
@@ -139,8 +210,28 @@ namespace Dune
 
 
 
-    // Specialization for OneDGrid
-    // ---------------------------
+    // BoundaryIdProvider for IdGrid
+    // -----------------------------
+
+#if HAVE_DUNE_METAGRID
+    template< class HostGrid >
+    struct BoundaryIdProvider< IdGrid< HostGrid > >
+    {
+      typedef IdGrid< HostGrid > GridType;
+
+      template< class Intersection >
+      static int boundaryId ( const Intersection &intersection )
+      {
+        return BoundaryIdProvider< HostGrid >
+          ::boundaryId ( HostGridAccess< GridType >::getIntersection( intersection ) );
+      }
+    };
+#endif // #if HAVE_DUNE_METAGRID
+
+
+
+    // BoundaryIdProvider for OneDGrid
+    // -------------------------------
 
     template<>
     struct BoundaryIdProvider< OneDGrid >
@@ -156,8 +247,28 @@ namespace Dune
 
 
 
-    // Specialization for SGrid
-    // ------------------------
+    // BoundaryIdProvider for ParallelGrid
+    // -----------------------------------
+
+#if HAVE_DUNE_METAGRID
+    template< class HostGrid >
+    struct BoundaryIdProvider< ParallelGrid< HostGrid > >
+    {
+      typedef ParallelGrid< HostGrid > GridType;
+
+      template< class Intersection >
+      static int boundaryId ( const Intersection &intersection )
+      {
+        return BoundaryIdProvider< HostGrid >
+          ::boundaryId ( HostGridAccess< GridType >::getIntersection( intersection ) );
+      }
+    };
+#endif // #if HAVE_DUNE_METAGRID
+
+
+
+    // BoundaryIdProvider for SGrid
+    // ----------------------------
 
     template< int dim, int dimw, class ctype >
     struct BoundaryIdProvider< SGrid< dim, dimw, ctype > >
@@ -173,8 +284,28 @@ namespace Dune
 
 
 
-    // Specialization for SPGrid
-    // -------------------------
+    // BoundaryIdProvider for SphereGrid
+    // ---------------------------------
+
+#if HAVE_DUNE_METAGRID
+    template< class HostGrid, class MapToSphere >
+    struct BoundaryIdProvider< SphereGrid< HostGrid, MapToSphere > >
+    {
+      typedef SphereGrid< HostGrid, MapToSphere > GridType;
+
+      template< class Intersection >
+      static int boundaryId ( const Intersection &intersection )
+      {
+        return BoundaryIdProvider< HostGrid >
+          ::boundaryId ( HostGridAccess< GridType >::getIntersection( intersection ) );
+      }
+    };
+#endif // #if HAVE_DUNE_METAGRID
+
+
+
+    // BoundaryIdProvider for SPGrid
+    // -----------------------------
 
 #if HAVE_DUNE_SPGRID
     template< class ct, int dim, SPRefinementStrategy strategy, class Comm >
@@ -192,8 +323,8 @@ namespace Dune
 
 
 
-    // Specialization for UGGrid
-    // -------------------------
+    // BoundaryIdProvider for UGGrid
+    // -----------------------------
 
     template< int dim >
     struct BoundaryIdProvider< UGGrid< dim > >
@@ -209,8 +340,8 @@ namespace Dune
 
 
 
-    // Specialization for YaspGrid
-    // ---------------------------
+    // BoundaryIdProvider for YaspGrid
+    // -------------------------------
 
     template< int dim >
     struct BoundaryIdProvider< YaspGrid< dim > >

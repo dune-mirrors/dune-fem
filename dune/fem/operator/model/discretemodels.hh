@@ -1,26 +1,15 @@
 #ifndef DUNE_FEM_LDG_DISCRETEMODELS_HH
 #define DUNE_FEM_LDG_DISCRETEMODELS_HH
 
-#include <dune/fem/pass/dgpass.hh>
-#include <dune/fem/pass/dgdiscretemodel.hh>
-#include <dune/fem/pass/selection.hh>
-#include <dune/fem/solver/timeprovider.hh>
-
-// Dune includes
-#include <dune/common/tupleutility.hh>
-#include <dune/common/typetraits.hh>
-#include <dune/fem/gridpart/common/gridpart.hh>
-#include <dune/fem/gridpart/adaptiveleafgridpart.hh>
-
-//- local includes 
-#include <dune/fem/space/dgspace.hh>
-#include <dune/fem/space/combinedspace.hh>
-
 #include <dune/fem/function/adaptivefunction.hh>
+#include <dune/fem/pass/localdg/discretemodel.hh>
+#include <dune/fem/quadrature/cachingquadrature.hh>
+#include <dune/fem/space/combinedspace.hh>
+#include <dune/fem/space/discontinuousgalerkin.hh>
+
 #if HAVE_DUNE_ISTL
 #include <dune/fem/function/blockvectorfunction.hh>
 #endif
-#include <dune/fem/quadrature/cachingquadrature.hh>
 
 //*************************************************************
 

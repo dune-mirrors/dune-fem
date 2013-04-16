@@ -194,7 +194,7 @@ namespace Dune
         typedef SPGrid< ct, dim, strategy, Comm >  Grid;
         static bool isInside(const DomainType& x, const Grid& grid ) 
         {
-          return grid.contains( x );
+          return grid.domain().contains( x );
         }
       };
 #endif
@@ -203,7 +203,7 @@ namespace Dune
       const int numProcs_;
       std::vector< GridSolutionType* > solutions_; 
 
-      const int numProcs(const std::string& checkPointFile) const 
+      int numProcs(const std::string& checkPointFile) const 
       {
         int numProc = MPIManager :: size();
         readParameter(checkPointFile, "NumberProcessors", numProc, Parameter::verbose () );

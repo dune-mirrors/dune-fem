@@ -78,18 +78,14 @@ namespace Dune
     template <class ct, int dim>
     TwistMapperCreator<ct, dim>::TwistMapperCreator(const QuadratureType& quad) :
       quad_(quad),
-      helper_()
+      helper_( 0 )
     {
-      typedef std::auto_ptr<TwistMapperStrategy<ct, dim> > AutoPtrType;
-      
       const GeometryType geoType = quad.geometryType();
       if (dim == 0) {
-        helper_ = AutoPtrType(new
-                PointTwistMapperStrategy<ct,dim>( geoType ) );
+        helper_ = new PointTwistMapperStrategy<ct,dim>( geoType );
       }
       else if (dim == 1) {
-        helper_ = 
-          AutoPtrType(new LineTwistMapperStrategy<ct, dim>( geoType ));
+        helper_ = new LineTwistMapperStrategy<ct, dim>( geoType );
       } 
       else 
       {
@@ -97,19 +93,23 @@ namespace Dune
 
         if(geoType.isTriangle()) 
         {
-          helper_ = 
-            AutoPtrType(new TriangleTwistMapperStrategy<ct, dim>( geoType ) );
+          helper_ = new TriangleTwistMapperStrategy<ct, dim>( geoType );
           return ;
         }
         if( geoType.isQuadrilateral())
         {
-          helper_ = 
-           AutoPtrType(new QuadrilateralTwistMapperStrategy<ct,dim>( geoType ) );
+          helper_ = new QuadrilateralTwistMapperStrategy<ct,dim>( geoType );
           return ;
         }
         DUNE_THROW(NotImplemented, 
                    "No creator for given GeometryType exists");
       }
+    }
+
+    template <class ct, int dim>
+    TwistMapperCreator<ct, dim>::~TwistMapperCreator()
+    {
+      delete helper_ ; helper_ = 0 ;
     }
 
     template <class ct, int dim>
@@ -233,8 +233,8 @@ namespace Dune
     TriangleTwistMapperStrategy<ct, dim>::
     buildTransformationMatrix(int twist) const 
     {
+      typedef Dune::Fem::FaceTopologyMapping<tetra> FaceTopo;
       mat_ = 0.0;
-
       for (int idx = 0; idx < dim+1; ++idx) 
       {
         mat_[idx] = refElem_.position( 
@@ -259,6 +259,7 @@ namespace Dune
     QuadrilateralTwistMapperStrategy<ct, dim>::
     buildTransformationMatrix(int twist) const 
     {
+      typedef Dune::Fem::FaceTopologyMapping<hexa> FaceTopo;
       mat_ = 0.0;
       for (int idx = 0; idx < dim+1; ++idx) 
       {

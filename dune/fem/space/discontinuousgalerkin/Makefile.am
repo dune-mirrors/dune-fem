@@ -5,14 +5,13 @@ discontinuousgalerkin_HEADERS = declaration.hh \
 				legendre.hh \
 				legendrepolynomials.hh \
 				localdgmassmatrix.hh \
+				localinterpolation.hh \
 				localrestrictprolong.hh \
 				orthonormalbase_mod.hh \
 				shapefunctionset.hh \
 				space.hh
 
 EXTRA_DIST = orthonormalbase_1d.cc orthonormalbase_2d.cc orthonormalbase_3d.cc
-
-SUBDIRS = test
 
 noinst_LTLIBRARIES = libdiscontinuousgalerkin.la
 

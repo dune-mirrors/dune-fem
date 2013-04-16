@@ -259,7 +259,7 @@ namespace Dune
       using BaseType::dofManager_;
 
       // return true if codim is supported 
-      const bool codimAvailable( const int codim ) const 
+      bool codimAvailable( const int codim ) const 
       {
         return codim < numCodimensions && codim >= 0 ;
       }
@@ -620,7 +620,7 @@ namespace Dune
       void removeIndex ( const ElementType &entity );
 
       // check whether entity can be inserted or not 
-      void checkHierarchy ( const ElementType &entity, const bool wasNew );
+      void checkHierarchy ( const ElementType &entity, bool wasNew );
 
       // mark indices that are still used (and give new indices to new elements)
       template <PartitionIteratorType pt>
@@ -843,8 +843,9 @@ namespace Dune
     template< class TraitsImp >
     inline void
     AdaptiveIndexSetBase< TraitsImp >
-      ::checkHierarchy ( const ElementType &entity, bool isNew )
+      ::checkHierarchy ( const ElementType &entity, bool wasNew )
     {
+      bool isNew = wasNew ;
       typedef typename ElementType::HierarchicIterator HierarchicIterator;
 
       // for leaf entites, just insert the index

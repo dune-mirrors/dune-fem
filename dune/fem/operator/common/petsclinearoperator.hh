@@ -233,8 +233,8 @@ namespace Dune
       typedef std::vector< DofIndexType >                     IndexVectorType;
       typedef typename DomainFunction::DiscreteFunctionSpaceType DomainSpaceType;
       typedef typename RangeFunction::DiscreteFunctionSpaceType RangeSpaceType;
-      typedef typename DomainSpaceType::BaseFunctionSetType   DomainBaseFunctionSetType;
-      typedef typename RangeSpaceType::BaseFunctionSetType    RangeBaseFunctionSetType;
+      typedef typename DomainSpaceType::BasisFunctionSetType   DomainBasisFunctionSetType;
+      typedef typename RangeSpaceType::BasisFunctionSetType    RangeBasisFunctionSetType;
 
       enum { littleCols  = DomainSpaceType::localBlockSize };
       enum { littleRows  = RangeSpaceType ::localBlockSize };

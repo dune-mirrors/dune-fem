@@ -1,7 +1,7 @@
 #include <config.h>
 
 #include <iostream>
-#include <dune/common/stdstreams.cc>
+//#include <dune/common/stdstreams.cc>
 
 using namespace Dune;
 

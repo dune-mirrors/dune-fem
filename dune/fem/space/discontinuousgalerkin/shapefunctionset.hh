@@ -275,6 +275,10 @@ namespace Dune
       : topologyId_( type.id() )
       {}
 
+      /** @copydoc Dune::Fem::ShapeFunctionSet::order*/
+      int order () const { return polOrder; }
+
+
       /** @copydoc Dune::Fem::ShapeFunctionSet::size */
       std::size_t size () const
       {

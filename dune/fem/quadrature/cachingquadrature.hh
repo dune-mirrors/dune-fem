@@ -62,9 +62,6 @@ namespace Dune
         BaseType;
 
     public:
-      //! type of the grid
-      typedef typename GridPartType :: GridType GridType;
-
       //! Dimension of the world.
       enum { dimension = BaseType::dimension };
 
@@ -132,9 +129,6 @@ namespace Dune
       using BaseType :: quadImp;
 
     public:
-      // type of grid 
-      typedef typename GridPartType :: GridType GridType;
-
       //! Dimeinsion of the world
       enum { dimension = BaseType::dimension };
       

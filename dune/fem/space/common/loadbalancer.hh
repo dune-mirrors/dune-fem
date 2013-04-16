@@ -1,22 +1,22 @@
 #ifndef DUNE_FEM_LOADBALANCER_HH
 #define DUNE_FEM_LOADBALANCER_HH
 
-//- system includes 
 #include <cassert>
-#include <vector>
-#include <set>
 #include <iostream>
+#include <set>
+#include <vector>
 
-//- local includes 
 #include <dune/common/static_assert.hh>
 #include <dune/common/timer.hh>
-#include <dune/fem/space/common/datacollector.hh>
-#include <dune/fem/space/common/dofmanager.hh>
+#include <dune/common/tuples.hh>
+
 #include <dune/fem/function/common/discretefunction.hh>
 #include <dune/fem/io/file/asciiparser.hh>
-#include <dune/fem/io/parameter.hh>
 #include <dune/fem/io/file/persistencemanager.hh>
+#include <dune/fem/io/parameter.hh>
 #include <dune/fem/misc/threadmanager.hh>
+#include <dune/fem/space/common/datacollector.hh>
+#include <dune/fem/space/common/dofmanager.hh>
 
 namespace Dune
 {
@@ -237,14 +237,14 @@ namespace Dune
       //! backup internal data 
       void backup() const 
       { 
-        Tuple<const int& > value( balanceCounter_ );
+        Dune::tuple<const int& > value( balanceCounter_ );
         PersistenceManager::backupValue("loadbalancer",value);
       }
 
       //! retore internal data 
       void restore() 
       {
-        Tuple< int& > value( balanceCounter_ );
+        Dune::tuple< int& > value( balanceCounter_ );
         PersistenceManager::restoreValue("loadbalancer",value);
       }
 

@@ -19,6 +19,7 @@
 
 // local includes
 #include "declaration.hh"
+#include "localinterpolation.hh"
 #include "localrestrictprolong.hh"
 
 
@@ -114,30 +115,6 @@ namespace Dune
         return BasisFunctionSetType( entity, shapeFunctionSet( entity ) );
       }
 
-      /** \brief return shape function set for given entity
-       *
-       * \param[in]  entity  entity (of codim 0) for which shape function set 
-       *                     is requested
-       *
-       * \returns  ShapeFunctionSetType  shape function set                     
-       */
-      ShapeFunctionSetType shapeFunctionSet ( const EntityType &entity ) const
-      {
-        return shapeFunctionSet( entity.type() );
-      }
-
-      /** \brief return shape unique function set for geometry type 
-       *
-       * \param[in]  type  geometry type (must be a cube) for which 
-       *                   shape function set is requested
-       *
-       * \returns  ShapeFunctionSetType  shape function set                     
-       */
-      ShapeFunctionSetType shapeFunctionSet ( const GeometryType &type ) const
-      {
-        return ShapeFunctionSetType( &scalarShapeFunctionSets_[ type ] );
-      }
-
       /** @copydoc Dune::Fem::DiscreteFunctionSpaceInterface::continuous */
       bool continuous () const
       {
@@ -167,6 +144,47 @@ namespace Dune
       BlockMapperType &blockMapper () const
       {
         return *blockMapper_;
+      }
+
+      ///////////////////////////
+      // Non-interface methods //
+      ///////////////////////////
+
+      /** \brief local interpolation using discontinuous L2-projection
+       *
+       *  \param[in]  localFunction  local function to interpolate
+       *  \param[in]  dofs           local degrees of freedom of the interpolation
+       */
+      template< class LocalFunction, class LocalDofVector >
+      void interpolate ( const LocalFunction &localFunction, LocalDofVector &dofs ) const
+      {
+        typedef DiscontinuousGalerkinLocalInterpolation< typename BaseType::DiscreteFunctionSpaceType > LocalInterpolationType;
+        LocalInterpolationType interpolation( asImp() );
+        interpolation( localFunction, dofs );
+      }
+
+      /** \brief return shape function set for given entity
+       *
+       * \param[in]  entity  entity (of codim 0) for which shape function set 
+       *                     is requested
+       *
+       * \returns  ShapeFunctionSetType  shape function set                     
+       */
+      ShapeFunctionSetType shapeFunctionSet ( const EntityType &entity ) const
+      {
+        return shapeFunctionSet( entity.type() );
+      }
+
+      /** \brief return shape unique function set for geometry type 
+       *
+       * \param[in]  type  geometry type (must be a cube) for which 
+       *                   shape function set is requested
+       *
+       * \returns  ShapeFunctionSetType  shape function set                     
+       */
+      ShapeFunctionSetType shapeFunctionSet ( const GeometryType &type ) const
+      {
+        return ShapeFunctionSetType( &scalarShapeFunctionSets_[ type ] );
       }
 
     private:

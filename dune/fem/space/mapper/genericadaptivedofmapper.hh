@@ -2,6 +2,7 @@
 #define DUNE_FEM_GENERICPADAPTIVEDOFMAPPER_HH
 
 #include <dune/common/exceptions.hh>
+#include <dune/common/nullptr.hh>
 
 #include <dune/geometry/type.hh>
 
@@ -12,7 +13,7 @@
 #include <dune/fem/misc/metaprogramming.hh>
 #include <dune/fem/space/common/dofmanager.hh>
 #include <dune/fem/space/dofmapper/localkey.hh>
-#include <dune/fem/space/lagrangespace/lagrangepoints.hh>
+#include <dune/fem/space/lagrange/lagrangepoints.hh>
 #include <dune/fem/space/mapper/dofmapper.hh>
 #include <dune/fem/space/mapper/codimensionmapper.hh>
 
@@ -404,7 +405,7 @@ namespace Dune
                            unsigned int& notAlreadyCounted,
                            std::vector< DofContainerType* > dofContainers ) 
         {
-          DofContainerType& dofContainer = *dofContainers[ codim ];
+          DofContainerType &dofContainer = *dofContainers[ codim ];
           if( codim == 0 ) 
           {
             insertDofs( entity, clk, polOrd, 0, globalSize, 
@@ -429,7 +430,7 @@ namespace Dune
                            const int polOrd,
                            std::vector< DofContainerType* > dofContainers ) 
         {
-          DofContainerType& dofContainer = *dofContainers[ codim ];
+          DofContainerType &dofContainer = *dofContainers[ codim ];
           const int count = entity.template count< codim > ();
           for(int i=0; i<count; ++i ) 
           {
@@ -447,7 +448,7 @@ namespace Dune
         dm_( DofManagerType :: instance(gridPart.grid()) ),
         compiledLocalKeys_( compiledLocalKeyVector ),
         entityPolynomOrder_( gridPart.grid(), 0 ),
-        dofContainer_( dimension+1, (DofContainerType *) 0 ),
+        dofContainer_( dimension+1, nullptr ),
         numberOfHoles_( 0 ),
         oldIndex_(),
         newIndex_(),
@@ -484,7 +485,7 @@ namespace Dune
         dm_( other.dm_ ),
         compiledLocalKeys_( compiledLocalKeyVector ),
         entityPolynomOrder_( other.entityPolynomOrder_ ),
-        dofContainer_( dimension+1, (DofContainerType *) 0 ),
+        dofContainer_( dimension+1, nullptr ),
         numberOfHoles_( other.numberOfHoles_ ),
         oldIndex_( other.oldIndex_ ),
         newIndex_( other.newIndex_ ),
@@ -511,9 +512,10 @@ namespace Dune
         entityPolynomOrder_[ entity ].set( polOrd );
       }
 
-      DofContainerType& dofContainer( const size_t codim ) const 
+      DofContainerType &dofContainer ( const std::size_t codim ) const
       {
         assert( codim < dofContainer_.size() );
+        assert( dofContainer_[ codim ] );
         return *(dofContainer_[ codim ]);
       }
 
@@ -700,10 +702,12 @@ namespace Dune
       // Adaptation Methods (as for Index Sets)
       void resizeContainers() 
       {
-        entityPolynomOrder_.update();
+        entityPolynomOrder_.resize();
+        entityPolynomOrder_.shrinkToFit();
         for( int codim = 0; codim <= highestDimension; ++codim )
         {
-          dofContainer( codim ).update();
+          dofContainer( codim ).resize();
+          dofContainer( codim ).shrinkToFit();
         }
       }
 
@@ -731,7 +735,7 @@ namespace Dune
           polyStorage.activate();
 
           // insert for all sub entities 
-          ForLoop< InsertSubEntities, 0, highestDimension> :: 
+          ForLoop< InsertSubEntities, 0, highestDimension>::
             apply( entity, clk, polOrd, size_, notAlreadyCounted, dofContainer_ );
 
           //printEntityDofs( entity );
@@ -747,7 +751,7 @@ namespace Dune
         // polOrd ist set on call of deactivate 
         if( entityPolynomOrder_[ entity ].deactivate( polOrd ) )
         {
-          ForLoop< RemoveSubEntities, 0, highestDimension> :: 
+          ForLoop< RemoveSubEntities, 0, highestDimension>::
             apply( entity, polOrd, dofContainer_ );
         }
       }

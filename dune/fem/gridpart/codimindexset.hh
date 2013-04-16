@@ -21,40 +21,40 @@ namespace Dune
   // PersistentContainer for YaspGrid
   // --------------------------------
 
-  template< int dim, class Data, class Allocator >
-  class PersistentContainer< YaspGrid< dim >, Data, Allocator >
+  template< int dim, class Data >
+  class PersistentContainer< YaspGrid< dim >, Data >
   : public PersistentContainerVector< YaspGrid< dim >, 
                                       typename YaspGrid< dim >::LeafIndexSet,
-                                      std::vector<Data,Allocator> >
+                                      std::vector<Data> >
   {
     typedef YaspGrid< dim > Grid;
-    typedef PersistentContainerVector< Grid, typename Grid::LeafIndexSet, std::vector<Data,Allocator> > BaseType;
+    typedef PersistentContainerVector< Grid, typename Grid::LeafIndexSet, std::vector<Data> > BaseType;
 
   public:
     //! Constructor filling the container with values using the default constructor 
     //! Depending on the implementation this could be achieved without allocating memory
-    PersistentContainer ( const Grid &grid, const int codim, const Allocator &allocator = Allocator() )
-    : BaseType( grid, codim, grid.leafIndexSet(), 1.0, allocator )
+    PersistentContainer ( const Grid &grid, const int codim, const Data& value = Data() )
+    : BaseType( grid, codim, grid.leafIndexSet(), 1.0, value )
     {}
   };
 
   // PersistentContainer for SGrid
   // -------------------------------
 
-  template< int dim, int dimworld, class ctype, class Data, class Allocator >
-  class PersistentContainer< SGrid< dim, dimworld, ctype >, Data, Allocator >
+  template< int dim, int dimworld, class ctype, class Data >
+  class PersistentContainer< SGrid< dim, dimworld, ctype >, Data >
   : public PersistentContainerVector< SGrid< dim, dimworld, ctype >, 
                                       typename SGrid< dim, dimworld, ctype >::LeafIndexSet,
-                                      std::vector<Data,Allocator> >
+                                      std::vector<Data> >
   {
     typedef SGrid< dim, dimworld, ctype > Grid ;
-    typedef PersistentContainerVector< Grid, typename Grid::LeafIndexSet, std::vector<Data,Allocator> > BaseType;
+    typedef PersistentContainerVector< Grid, typename Grid::LeafIndexSet, std::vector<Data> > BaseType;
 
   public:
     //! Constructor filling the container with values using the default constructor 
     //! Depending on the implementation this could be achieved without allocating memory
-    PersistentContainer ( const Grid &grid, const int codim, const Allocator &allocator = Allocator() )
-    : BaseType( grid, codim, grid.leafIndexSet(), 1.0, allocator )
+    PersistentContainer ( const Grid &grid, const int codim, const Data& value = Data() )
+    : BaseType( grid, codim, grid.leafIndexSet(), 1.0, value )
     {}
   };
 
@@ -97,16 +97,7 @@ namespace Dune
       // indices in this status have not been initialized 
       static IndexType invalidIndex() { return -1; }
 
-      // Index pair that is stored, derive from pair to overload 
-      // default constructor which sets the correct default data 
-      struct IndexPair : public std::pair< IndexType, INDEXSTATE > 
-      {
-        typedef std::pair< IndexType, INDEXSTATE > BaseType;
-        // default constructor 
-        IndexPair() 
-          : BaseType( ThisType::invalidIndex(), UNUSED ) {}
-      }; 
-
+      typedef std::pair< IndexType, INDEXSTATE > IndexPair;
 
       // array type for indices 
       typedef MutableArray< IndexType > IndexArrayType;
@@ -143,7 +134,7 @@ namespace Dune
                      const int codim, 
                      const double memoryFactor = 1.1) 
         : grid_( grid ) 
-        , leafIndex_(grid, codim)
+        , leafIndex_( grid, codim, IndexPair( invalidIndex(), UNUSED ) )
         , holes_(0)
         , oldIdx_(0)
         , newIdx_(0)
@@ -166,20 +157,18 @@ namespace Dune
       //! reallocate the vectors
       void resize ()
       {
-        leafIndex_.reserve();
+        leafIndex_.resize( IndexPair( invalidIndex(), UNUSED ) );
       }
 
       //! prepare for setup (nothing to do here)
-      void prepareCompress ()
-      {
-      }
+      void prepareCompress () {}
 
     public:  
       //! clear set 
       void clear() 
       {
         // set all values to invalidIndex  
-        std::fill( leafIndex_.begin(), leafIndex_.end(), IndexPair() );
+        leafIndex_.fill( IndexPair( invalidIndex(), UNUSED ) );
         // reset next free index 
         nextFreeIndex_ = 0;
       }
@@ -187,25 +176,24 @@ namespace Dune
       //! set all entries to unused 
       void resetUsed() 
       {
-        typedef typename IndexContainerType :: Iterator Iterator;
-        const Iterator endit = leafIndex_.end();
-        for( Iterator it = leafIndex_.begin(); it != endit; ++it )
-        {
-          (*it).second = UNUSED;
-        }
+        typedef typename IndexContainerType::Iterator Iterator;
+        const Iterator end = leafIndex_.end();
+        for( Iterator it = leafIndex_.begin(); it != end; ++it )
+          it->second = UNUSED;
+      }
+
+      bool consecutive ()
+      {
+        typedef typename IndexContainerType::Iterator Iterator;
+        bool consecutive = true;
+        const Iterator end = leafIndex_.end();
+        for( Iterator it = leafIndex_.begin(); it != end; ++it )
+          consecutive &= (it->first < nextFreeIndex_);
+        return consecutive;
       }
 
       //! set all entries to unused 
-      void checkConsecutive() 
-      {
-        typedef typename IndexContainerType :: Iterator Iterator;
-        const Iterator endit = leafIndex_.end();
-        for( Iterator it = leafIndex_.begin(); it != endit; ++it )
-        {
-          const int idx = (*it).first; 
-          assert( idx < nextFreeIndex_ );
-        }
-      }
+      void checkConsecutive () { assert( consecutive() ); }
 
       //! clear holes, i.e. set number of holes to zero 
       void clearHoles() 
@@ -229,12 +217,12 @@ namespace Dune
         // mark holes 
         int actHole = 0;
         int newActSize = 0;
-        typedef typename IndexContainerType :: Iterator Iterator;
-        const Iterator endit = leafIndex_.end();
-        for( Iterator it = leafIndex_.begin(); it != endit; ++it )
+        typedef typename IndexContainerType::Iterator Iterator;
+        const Iterator end = leafIndex_.end();
+        for( Iterator it = leafIndex_.begin(); it != end; ++it )
         {
-          const IndexPair& leafIdx = *it;
-          if( leafIdx.first >= 0 )
+          const IndexPair &leafIdx = *it;
+          if( leafIdx.first != invalidIndex() )
           {
             // create vector with all holes 
             if( leafIdx.second == UNUSED )
@@ -265,16 +253,16 @@ namespace Dune
           // the opposite way. future work. 
           int holes = 0; // number of real holes 
           //size_t i = 0;
-          const Iterator endit = leafIndex_.end();
-          for( Iterator it = leafIndex_.begin(); it != endit; ++it )
+          const Iterator end = leafIndex_.end();
+          for( Iterator it = leafIndex_.begin(); it != end; ++it )
           {
-            IndexPair& leafIdx = *it;
+            IndexPair &leafIdx = *it;
             // a index that is used but larger then actual size 
             // has to move to a hole 
-            if( leafIdx.second == UNUSED) 
+            if( leafIdx.second == UNUSED ) 
             {
               // all unused indices are reset to invalidIndex  
-              leafIdx.first = invalidIndex() ;
+              leafIdx.first = invalidIndex();
             }
             else 
             {
@@ -320,14 +308,13 @@ namespace Dune
           // this call only sets the size of the vectors 
           oldIdx_.resize(holes);
           newIdx_.resize(holes);
-
         } // end if actHole > 0  
        
         // store number of actual holes 
         numberHoles_ = oldIdx_.size();
 
-        // adjust size 
-        leafIndex_.update();
+        // adjust size
+        leafIndex_.shrinkToFit();
         
         // the next index that can be given away is equal to size
         nextFreeIndex_ = actSize;
@@ -433,7 +420,7 @@ namespace Dune
       {
         assert( myCodim_ == EntityType :: codimension );
         // insert index 
-        IndexPair& leafIdx = leafIndex_[ entity ];
+        IndexPair &leafIdx = leafIndex_[ entity ];
         insertIdx( leafIdx );
 
         // if index is also larger than lastSize
@@ -462,11 +449,11 @@ namespace Dune
 
       void print( std::ostream& out ) const 
       {
-        typedef typename IndexContainerType :: ConstIterator Iterator;
-        const Iterator endit = leafIndex_.end();
-        for( Iterator it = leafIndex_.begin(); it != endit; ++it )
+        typedef typename IndexContainerType::ConstIterator Iterator;
+        const Iterator end = leafIndex_.end();
+        for( Iterator it = leafIndex_.begin(); it != end; ++it )
         {
-          const IndexPair& leafIdx = *it;
+          const IndexPair &leafIdx = *it;
           out << "idx: " << leafIdx.first << "  stat: " << leafIdx.second << std::endl;
         }
       }
@@ -481,11 +468,10 @@ namespace Dune
       }
 
       // insert element and create index for element number  
-      void insertIdx ( IndexPair& leafIdx )
+      void insertIdx ( IndexPair &leafIdx )
       {
         if( leafIdx.first == invalidIndex() )
-          leafIdx.first = nextFreeIndex_ ++ ;
-
+          leafIdx.first = nextFreeIndex_++;
         leafIdx.second = USED;
       }
 
@@ -502,12 +488,10 @@ namespace Dune
         out << mysize ;
 
         // backup indices 
-        typedef typename IndexContainerType :: ConstIterator ConstIterator;
-        const ConstIterator endit = leafIndex_.end();
-        for( ConstIterator it = leafIndex_.begin(); it != endit; ++it )
-        {
+        typedef typename IndexContainerType::ConstIterator ConstIterator;
+        const ConstIterator end = leafIndex_.end();
+        for( ConstIterator it = leafIndex_.begin(); it != end; ++it )
           out << (*it).first ;
-        }
 
         return true;
       }
@@ -523,7 +507,7 @@ namespace Dune
         uint64_t storedSize = 0;
         in >> storedSize ;
 
-        uint64_t leafsize = leafIndex_.size() ;
+        uint64_t leafsize = leafIndex_.size();
         // the stored size can be larger (visualization of parallel grids in serial)
         if( storedSize < leafsize ) 
         {
@@ -531,13 +515,11 @@ namespace Dune
         }
 
         // restore indices  
-        typedef typename IndexContainerType :: Iterator Iterator;
-        const Iterator endit = leafIndex_.end();
+        typedef typename IndexContainerType::Iterator Iterator;
+        const Iterator end = leafIndex_.end();
         uint64_t count = 0 ;
-        for( Iterator it = leafIndex_.begin(); it != endit; ++it, ++count )
-        {
+        for( Iterator it = leafIndex_.begin(); it != end; ++it, ++count )
           in >> (*it).first ;
-        }
 
         // also read indices that were stored but are not needed on read 
         if( count < storedSize )

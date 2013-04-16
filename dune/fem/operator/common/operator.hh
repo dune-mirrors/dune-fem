@@ -30,9 +30,9 @@ namespace Dune
       typedef RangeFunction RangeFunctionType;
 
       /** \brief field type of the operator's domain */
-      typedef typename DomainFunctionType::RangeFieldType DomainFieldType;
+      typedef typename DomainFunction::RangeFieldType DomainFieldType;
       /** \brief field type of the operator's range */
-      typedef typename RangeFunctionType::RangeFieldType RangeFieldType;
+      typedef typename RangeFunction::RangeFieldType RangeFieldType;
 
       /** \deprecated
        *   \brief assembled = 

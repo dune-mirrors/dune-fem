@@ -782,7 +782,7 @@ namespace Dune
           return vector2_[ index2 ];
       }
 
-      const unsigned int size() const
+      unsigned int size() const
       {
         return vector1_.size() + vector2_.size();
       }
@@ -860,7 +860,7 @@ namespace Dune
           return this->second()[ index2 ];
       }
 
-      const unsigned int size () const
+      unsigned int size () const
       {
         return this->first().size() + this->second().size();
       }

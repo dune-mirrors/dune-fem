@@ -3,16 +3,16 @@ namespace Dune
   namespace Fem 
   {
 
-    template <class GridImp>
-    typename CacheProvider<GridImp, 1>::MapperContainerType
-    CacheProvider<GridImp, 1>::mappers_;
+    template <class GridPart>
+    typename CacheProvider<GridPart, 1>::MapperContainerType
+    CacheProvider<GridPart, 1>::mappers_;
 
 
-    template <class GridImp>
-    typename CacheProvider<GridImp, 1>::MapperIteratorType
-    CacheProvider<GridImp, 1>::createMapper(const QuadratureType& quad,
-                                            GeometryType elementGeometry,
-                                            integral_constant< bool, true > )
+    template <class GridPart>
+    typename CacheProvider<GridPart, 1>::MapperIteratorType
+    CacheProvider<GridPart, 1>::createMapper(const QuadratureType& quad,
+                                             GeometryType elementGeometry,
+                                             integral_constant< bool, true > )
     {
       typedef TwistProvider<ct, dim-codim> TwistProviderType;
       typedef typename TwistProviderType::TwistStorageType TwistStorageType;
@@ -47,11 +47,11 @@ namespace Dune
 
 
 
-    template <class GridImp>
-    typename CacheProvider<GridImp, 1>::MapperIteratorType
-    CacheProvider<GridImp, 1>::createMapper(const QuadratureType& quad,
-                                            GeometryType elementGeometry,
-                                            integral_constant< bool, false > )
+    template <class GridPart>
+    typename CacheProvider<GridPart, 1>::MapperIteratorType
+    CacheProvider<GridPart, 1>::createMapper(const QuadratureType& quad,
+                                             GeometryType elementGeometry,
+                                             integral_constant< bool, false > )
     {
       const MapperVectorType pointMappers =
         PointProvider<ct, dim, codim>::getMappers(quad, elementGeometry);
@@ -60,14 +60,11 @@ namespace Dune
 
       QuadratureKeyType key ( elementGeometry, quad.id() );
       
-      MapperIteratorType it = 
-        mappers_.insert(std::make_pair(key,
-                                       CacheStorageType(numFaces))).first;
+      MapperIteratorType it
+        = mappers_.insert(std::make_pair(key, CacheStorageType(numFaces))).first;
 
-      for (int face = 0; face < numFaces; ++face) {
-        it->second.addMapper(pointMappers[face], 
-                             face);
-      }
+      for (int face = 0; face < numFaces; ++face)
+        it->second.addMapper(pointMappers[face], face);
 
       return it;
     }

@@ -2,6 +2,8 @@
 
 #include <dune/grid/sgrid.hh>
 
+#include <dune/fem/gridpart/leafgridpart.hh>
+
 #ifdef ENABLE_ALUGRID
 #include <dune/grid/alugrid.hh>
 #endif
@@ -43,9 +45,10 @@ namespace Dune {
 
     //typedef PrismGrid<dim, dim> GridType;
     typedef UGGrid<dim> GridType;
+    typedef Dune::Fem::LeafGridPart< GridType > GridPartType;
     
-    typedef CacheProvider<GridType, codim> CacheProviderType;
-    typedef Quadrature< GridType :: ctype, GridType :: dimension-1> QuadratureType;
+    typedef CacheProvider<GridPartType, codim> CacheProviderType;
+    typedef Quadrature< GridPartType :: ctype, GridPartType :: dimension-1> QuadratureType;
 
     typedef CacheProviderType::MapperType MapperType;
     typedef PointProvider<double, dim, codim> PointProviderType;
@@ -98,8 +101,9 @@ namespace Dune {
     const int codim = 1;
 
     typedef ALUCubeGrid< 3, 3 > GridType;
-    typedef CacheProvider<GridType, codim> CacheProviderType;
-    typedef Quadrature< GridType :: ctype, GridType :: dimension-1> QuadratureType;
+    typedef Dune::Fem::LeafGridPart< GridType > GridPartType;
+    typedef CacheProvider<GridPartType, codim> CacheProviderType;
+    typedef Quadrature< GridPartType :: ctype, GridPartType :: dimension-1> QuadratureType;
     //typedef CacheProviderType::QuadratureType QuadratureType;
     typedef CacheProviderType::MapperType MapperType;
     typedef PointProvider<double, dim, codim> PointProviderType;
@@ -146,9 +150,10 @@ namespace Dune {
     const int codim = 1;
 
     typedef ALUSimplexGrid< 3, 3 > GridType;
-    typedef CacheProvider<GridType, codim> CacheProviderType;
+    typedef Dune::Fem::LeafGridPart< GridType > GridPartType;
+    typedef CacheProvider<GridPartType, codim> CacheProviderType;
     //typedef CacheProviderType::QuadratureType QuadratureType;
-    typedef Quadrature< GridType :: ctype, GridType :: dimension-1> QuadratureType;
+    typedef Quadrature< GridPartType :: ctype, GridPartType :: dimension-1> QuadratureType;
     typedef CacheProviderType::MapperType MapperType;
     typedef PointProvider<double, dim, codim> PointProviderType;
     typedef PointProviderType::GlobalPointVectorType PointVectorType;
@@ -192,9 +197,10 @@ namespace Dune {
     const int codim = 1;
 
     typedef AlbertaGrid< dim > GridType;
-    typedef CacheProvider<GridType, codim> CacheProviderType;
+    typedef Dune::Fem::LeafGridPart< GridType > GridPartType;
+    typedef CacheProvider<GridPartType, codim> CacheProviderType;
     //typedef CacheProviderType::QuadratureType QuadratureType;
-    typedef Quadrature< GridType :: ctype, GridType :: dimension-1> QuadratureType;
+    typedef Quadrature< GridPartType :: ctype, GridPartType :: dimension-1> QuadratureType;
     typedef CacheProviderType::MapperType MapperType;
     typedef PointProvider<double, dim, codim> PointProviderType;
     typedef PointProviderType::GlobalPointVectorType PointVectorType;
@@ -237,8 +243,9 @@ namespace Dune {
     const int codim = 1;
 
     typedef SGrid< dim, dim > GridType;
-    typedef CacheProvider<GridType, codim> CacheProviderType;
-    typedef Quadrature< GridType :: ctype, GridType :: dimension-1> QuadratureType;
+    typedef Dune::Fem::LeafGridPart< GridType > GridPartType;
+    typedef CacheProvider<GridPartType, codim> CacheProviderType;
+    typedef Quadrature< GridPartType :: ctype, GridPartType :: dimension-1> QuadratureType;
     //typedef CacheProviderType::QuadratureType QuadratureType;
     typedef CacheProviderType::MapperType MapperType;
     typedef PointProvider<double, dim, codim> PointProviderType;

@@ -15,8 +15,10 @@ namespace Dune
   namespace Fem
   {
 
-    struct NewtonParameter 
+    struct NewtonParameter
+#ifndef DOXYGEN 
     : public LocalParameter< NewtonParameter, NewtonParameter>
+#endif
     {
       NewtonParameter(){}
 

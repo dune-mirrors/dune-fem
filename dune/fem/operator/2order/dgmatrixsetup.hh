@@ -32,7 +32,7 @@ public:
   static inline int nonZerosEstimate(const Space& space) 
   {
     return ((Space :: GridType :: dimension * 2) + 1) 
-      * space.mapper().maxNumDofs(); 
+      * space.blockMapper().maxNumDofs() * Space :: localBlockSize ; 
   }
 
   //! create entries for element and neighbors 

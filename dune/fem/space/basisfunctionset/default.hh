@@ -61,6 +61,8 @@ namespace Dune
 
       typedef typename EntityType::Geometry GeometryType;
 
+      typedef typename GeometryType::ctype ctype;
+
     public:
       //  slight misuse of struct ToLocalFunctionSpace!!!
       //! \brief type of function space
@@ -74,8 +76,7 @@ namespace Dune
       typedef typename FunctionSpaceType::HessianRangeType HessianRangeType;
 
       //! \brief type of reference element
-      typedef Dune::ReferenceElement< typename GeometryType::ctype, 
-                                      GeometryType::coorddimension > ReferenceElementType;
+      typedef Dune::ReferenceElement< ctype, GeometryType::coorddimension > ReferenceElementType;
 
       //! \brief constructor
       DefaultBasisFunctionSet ()
@@ -92,14 +93,43 @@ namespace Dune
       // Basis Function Set Interface Methods
       // ------------------------------------
 
+      //! \brief return order of basis function set
+      int order () const { return shapeFunctionSet().order(); }
+
       //! \brief return size of basis function set
       std::size_t size () const { return shapeFunctionSet().size(); }
 
       //! \brief return reference element
       const ReferenceElementType &referenceElement () const
       {
-        return Dune::ReferenceElements< typename GeometryType::ctype, 
-                                        GeometryType::coorddimension >::general( entity().type() );
+        return Dune::ReferenceElements< ctype, GeometryType::coorddimension >::general( type() );
+      }
+
+      //! \brief evaluate all basis function and multiply with given values and add to dofs 
+      template< class QuadratureType, class Vector, class DofVector >
+      void axpy ( const QuadratureType &quad, const Vector &values, DofVector &dofs ) const
+      {
+        // call axpy method for each entry of the given vector, e.g. rangeVector or jacobianVector
+        const unsigned int nop = quad.nop();
+        for( unsigned int qp = 0; qp < nop; ++qp )
+        {
+          axpy( quad[ qp ], values[ qp ], dofs );
+        }
+      }
+
+      /** \brief evaluate all basis function and multiply with given values and add to dofs 
+          \note valuesA and valuesB can be vectors of RangeType or JacobianRangeType 
+      */
+      template< class QuadratureType, class VectorA, class VectorB, class DofVector >
+      void axpy ( const QuadratureType &quad, const VectorA &valuesA, const VectorB &valuesB, DofVector &dofs ) const
+      {
+        // call axpy method for each entry of the given vector, e.g. rangeVector or jacobianVector
+        const unsigned int nop = quad.nop();
+        for( unsigned int qp = 0; qp < nop; ++qp )
+        {
+          axpy( quad[ qp ], valuesA[ qp ], dofs );
+          axpy( quad[ qp ], valuesB[ qp ], dofs );
+        }
       }
 
       //! \todo please doc me
@@ -133,6 +163,18 @@ namespace Dune
         axpy( x, jacobianFactor, dofs );
       }
 
+      /** \copydoc BasisFunctionSet::evaluateAll( quad, dofs, ranges ) */
+      template< class QuadratureType, class DofVector, class RangeArray >
+      void evaluateAll ( const QuadratureType &quad, const DofVector &dofs, RangeArray &ranges ) const
+      {
+        // call axpy method for each entry of the given vector, e.g. rangeVector or jacobianVector
+        const unsigned int nop = quad.nop();
+        for( unsigned int qp = 0; qp < nop; ++qp )
+        {
+          evaluateAll( quad[ qp ], dofs, ranges[ qp ] );
+        }
+      }
+
       //! \todo please doc me
       template< class Point, class DofVector >
       void evaluateAll ( const Point &x, const DofVector &dofs, RangeType &value ) const
@@ -148,6 +190,18 @@ namespace Dune
       {
         AssignFunctor< RangeArray > f( values );
         shapeFunctionSet().evaluateEach( x, f );
+      }
+
+      /** \copydoc BasisFunctionSet::jacobianAll( quad, dofs, jacobians ) */
+      template< class QuadratureType, class DofVector, class JacobianArray >
+      void jacobianAll ( const QuadratureType &quad, const DofVector &dofs, JacobianArray &jacobians ) const
+      {
+        // call axpy method for each entry of the given vector, e.g. rangeVector or jacobianVector
+        const unsigned int nop = quad.nop();
+        for( unsigned int qp = 0; qp < nop; ++qp )
+        {
+          jacobianAll( quad[ qp ], dofs, jacobians[ qp ] );
+        }
       }
 
       //! \todo please doc me
@@ -211,10 +265,13 @@ namespace Dune
       // ---------------------
 
       //! \brief return shape function set
-      const ShapeFunctionSet &shapeFunctionSet () const { return shapeFunctionSet_; }
+      const ShapeFunctionSetType &shapeFunctionSet () const { return shapeFunctionSet_; }
 
     protected:
       GeometryType geometry () const { return entity().geometry(); }
+
+
+
 
     private:
       const EntityType *entity_;

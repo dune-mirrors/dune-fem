@@ -34,10 +34,10 @@ namespace Dune
         assign_( assign )
       {}
 
-      template< class GlobalKey >
-      void operator() ( const std::size_t local, const GlobalKey &globalKey )
+      template< class Value >
+      void operator() ( const std::size_t local, const Value &value )
       {
-        assign_( globalKey, array_[ local ] );
+        assign_( value, array_[ local ] );
       }
 
     private:
@@ -53,10 +53,10 @@ namespace Dune
         assign_( assign )
       {}
 
-      template< class GlobalKey >
-      void operator() ( const std::size_t local, const GlobalKey &globalKey )
+      template< class Value >
+      void operator() ( const std::size_t local, const Value &value )
       {
-        assign_( globalKey, array_[ local ] );
+        assign_( value, array_[ local ] );
       }
 
     private:

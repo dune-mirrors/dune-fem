@@ -61,6 +61,9 @@ namespace Dune
       typedef Dune::ReferenceElement< typename DomainType::value_type, 
                                       DomainType::dimension > ReferenceElementType;
 
+      //! \brief return order of basis function set
+      int order () const;
+
       //! \brief return size of basis function set
       std::size_t size () const;
 
@@ -70,6 +73,14 @@ namespace Dune
 
       //! \brief return reference element
       const ReferenceElementType &referenceElement () const;
+
+      //! \brief evaluate all basis function and multiply with given values and add to dofs 
+      template< class QuadratureType, class Vector, class DofVector >
+      void axpy ( const QuadratureType &quad, const Vector &values, DofVector &dofs ) const;
+
+      //! \brief evaluate all basis function and multiply with given values and add to dofs 
+      template< class QuadratureType, class VectorA, class VectorB, class DofVector >
+      void axpy ( const QuadratureType &quad, const VectorA &valuesA, const VectorB &valuesB, DofVector &dofs ) const;
 
       //! \todo please doc me
       template< class Point, class DofVector >
@@ -84,6 +95,10 @@ namespace Dune
       void axpy ( const Point &x, const RangeType &valueFactor, const JacobianRangeType &jacobianFactor,
                   DofVector &dofs ) const;
 
+      //! \brief evaluate all basis functions and store the result in the ranges array
+      template< class QuadratureType, class DofVector, class RangeArray >
+      void evaluateAll ( const QuadratureType &quad, const DofVector &dofs, RangeArray &ranges ) const;
+
       //! \todo please doc me
       template< class Point, class DofVector >
       void evaluateAll ( const Point &x, const DofVector &dofs, RangeType &value ) const;
@@ -91,6 +106,10 @@ namespace Dune
       //! \todo please doc me
       template< class Point, class RangeArray >
       void evaluateAll ( const Point &x, RangeArray &values ) const;
+
+      //! \brief evaluate the jacobian of all basis functions and store the result in the jacobians array
+      template< class QuadratureType, class DofVector, class JacobianArray >
+      void jacobianAll ( const QuadratureType &quad, const DofVector &dofs, JacobianArray &jacobians ) const;
 
       //! \todo please doc me
       template< class Point, class DofVector >

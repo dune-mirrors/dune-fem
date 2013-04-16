@@ -155,10 +155,10 @@ try
   Dune::Fem::MPIManager::initialize( argc, argv );
 
   // create grid
-  GridType &grid = Dune::TestGrid::grid();
+  GridType &grid = Dune::Fem::TestGrid::grid();
 
   // refine grid
-  const int step = Dune::TestGrid::refineStepsForHalf();
+  const int step = Dune::Fem::TestGrid::refineStepsForHalf();
   grid.globalRefine( 2*step );
   grid.loadBalance();
 

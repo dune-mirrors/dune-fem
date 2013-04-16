@@ -152,6 +152,8 @@ namespace Dune
       struct ArgumentIF 
       {
         virtual void initialize( LocalFunctionType* lf ) const = 0;
+
+        virtual ~ArgumentIF () {}
       };
 
       // storage of argument reference to init local functions 
@@ -168,6 +170,8 @@ namespace Dune
         : arg_( arg ),
           time_( time )
         {}
+
+        ~ArgumentInitializer () {}
 
         virtual void initialize( LocalFunctionType* lf ) const 
         {

@@ -20,8 +20,6 @@
 #include <dune/fem/solver/oemsolver/cblas.h>
 #endif
 
-#include <dune/grid/alugrid/common/interfaces.hh>
-
 // include xdr wrapper 
 #include <dune/fem/io/streams/streams.hh>
 
@@ -178,7 +176,7 @@ namespace Dune
       : vec_(vec) 
       , size_(size)
     {
-      assert( size_ >= 0 );
+      //assert( size_ >= 0 );
     }
 
     //! create array of length size and store vec as pointer to memory 
@@ -186,7 +184,7 @@ namespace Dune
       : vec_( const_cast< T * > (vec) ) 
       , size_(size)
     {
-      assert( size_ >= 0 );
+      //assert( size_ >= 0 );
     }
 
     //! iterator pointing to begin of array 

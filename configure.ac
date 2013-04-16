@@ -27,27 +27,29 @@ LIBS="$DUNE_LIBS $BLAS_LIBS"
 AC_CONFIG_FILES([Makefile
      doc/Makefile
      doc/doxygen/Makefile
+     doc/doxygen/Doxyfile
      doc/doxygen/pages/Makefile
      dune/Makefile
      dune/fem/Makefile
+     dune/fem/common/Makefile
      dune/fem/pass/Makefile
+     dune/fem/pass/common/Makefile
+     dune/fem/pass/localdg/Makefile
      dune/fem/pass/test/Makefile
-     dune/fem/pass/test/dgellipt/Makefile
      dune/fem/space/Makefile
      dune/fem/space/test/Makefile
      dune/fem/space/basefunctions/Makefile
      dune/fem/space/basisfunctionset/Makefile
+     dune/fem/space/basisfunctionset/test/Makefile
      dune/fem/space/shapefunctionset/Makefile
      dune/fem/space/common/Makefile
      dune/fem/space/dofmapper/Makefile
      dune/fem/space/discontinuousgalerkin/Makefile
-     dune/fem/space/discontinuousgalerkin/test/Makefile
      dune/fem/space/finitevolume/Makefile
-     dune/fem/space/finitevolume/test/Makefile
+     dune/fem/space/fourier/Makefile
      dune/fem/space/lagrange/Makefile
      dune/fem/space/lagrange/test/Makefile
      dune/fem/space/rannacherturek/Makefile
-     dune/fem/space/rannacherturek/test/Makefile
      dune/fem/space/reducedbasisspace/Makefile
      dune/fem/space/reducedbasisspace/test/Makefile
      dune/fem/space/combinedspace/Makefile
@@ -104,6 +106,7 @@ AC_CONFIG_FILES([Makefile
      dune/fem/solver/oemsolver/Makefile 
      dune/fem/misc/Makefile
      dune/fem/misc/petsc/Makefile
+     dune/fem/misc/test/Makefile
      dune/fem/storage/Makefile
      dune/fem/test/Makefile
      dune/fem/gridpart/Makefile

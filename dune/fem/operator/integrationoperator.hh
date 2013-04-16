@@ -3,7 +3,7 @@
 
 #include <dune/fem/operator/common/operator.hh>
 #include <dune/fem/operator/common/temporarylocalmatrix.hh>
-#include <dune/fem/function/localfunction/temporarylocalfunction.hh>
+#include <dune/fem/function/localfunction/temporary.hh>
 
 namespace Dune
 {

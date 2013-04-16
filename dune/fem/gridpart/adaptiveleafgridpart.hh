@@ -188,14 +188,14 @@ namespace Dune
       inline IntersectionIteratorType
       ibegin ( const ElementType &entity ) const
       {
-        return grid().leafView().ibegin( entity );
+        return leafView_.ibegin( entity );
       }
       
       //! iend of corresponding intersection iterator for given entity
       inline IntersectionIteratorType
       iend ( const ElementType &entity ) const
       {
-        return grid().leafView().iend( entity );
+        return leafView_.iend( entity );
       }
 
       int boundaryId ( const IntersectionType &intersection ) const

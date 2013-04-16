@@ -37,7 +37,6 @@ namespace Dune
 
         typedef typename DiscreteFunctionSpaceType::GridPartType GridPartType;
         typedef typename DiscreteFunctionSpaceType::IteratorType IteratorType;
-        typedef typename DiscreteFunctionSpaceType::BasisFunctionSetType BasisFunctionSetType;
         typedef typename DiscreteFunctionSpaceType::LagrangePointSetType LagrangePointSetType;
 
         typedef typename GridPartType::IntersectionIteratorType IntersectionIteratorType;
@@ -46,11 +45,9 @@ namespace Dune
         typedef typename GridPartType::template Codim< 0 >::EntityPointerType EntityPointerType;
         typedef typename GridPartType::template Codim< 0 >::GeometryType GeometryType;;
 
-        typedef typename LagrangePointSetType::template Codim< 0 >::SubEntityIteratorType EntityDofIteratorType;
         typedef typename LagrangePointSetType::template Codim< 1 >::SubEntityIteratorType FaceDofIteratorType;
 
         typedef typename FunctionSpaceType::RangeFieldType RangeFieldType;
-        typedef typename FunctionSpaceType::DomainType DomainType;
         typedef typename FunctionSpaceType::RangeType RangeType;
         typedef typename GeometryType::LocalCoordinate LocalCoordinateType;
 

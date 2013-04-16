@@ -1,32 +1,27 @@
 #ifndef DUNE_FEM_SPACE_LAGRANGE_SHAPEFUNCTIONSET_HH
 #define DUNE_FEM_SPACE_LAGRANGE_SHAPEFUNCTIONSET_HH
 
-// C++ includes
 #include <cassert>
 #include <cstdlib>
 
-// dune-common includes
 #include <dune/common/fvector.hh>
 #include <dune/common/nullptr.hh>
 #include <dune/common/static_assert.hh>
 
-// dune-geometry includes
 #include <dune/geometry/genericgeometry/topologytypes.hh>
 #include <dune/geometry/type.hh>
 
-// dune-fem includes
+#include <dune/fem/space/common/functionspace.hh>
 #include <dune/fem/space/shapefunctionset/simple.hh>
 
-// local includes
-#include "genericlagrangepoints.hh"
 #include "genericbasefunctions.hh"
+#include "genericlagrangepoints.hh"
 
 /*
   @file
   @brief Shape function set for Lagrange space
   @author Christoph Gersbacher
 */
-
 
 namespace Dune
 {
@@ -56,6 +51,8 @@ namespace Dune
       typedef typename FunctionSpaceType::RangeType RangeType;
       typedef typename FunctionSpaceType::JacobianRangeType JacobianRangeType;
       typedef typename FunctionSpaceType::HessianRangeType HessianRangeType;
+
+      virtual ~LagrangeShapeFunctionInterface () {}
 
       virtual void evaluate ( const DomainType &x, RangeType &value ) const = 0;
       virtual void jacobian ( const DomainType &x, JacobianRangeType &jacobian ) const = 0;
@@ -143,6 +140,8 @@ namespace Dune
       explicit LagrangeShapeFunctionFactory ( const Dune::GeometryType &type )
       : topologyId_( type.id() )
       {}
+
+      int order () const;
 
       std::size_t numShapeFunctions () const;
 
@@ -269,6 +268,18 @@ namespace Dune
 
     // Implementation of LagrangeShapeFunctionFactory
     // ----------------------------------------------
+
+    template< class FunctionSpace, int polOrder >
+    const int LagrangeShapeFunctionFactory< FunctionSpace, polOrder >::dimension;
+
+
+    template< class FunctionSpace, int polOrder >
+    inline int LagrangeShapeFunctionFactory< FunctionSpace, polOrder >
+      ::order () const
+    {
+      return polOrder;
+    }
+
 
     template< class FunctionSpace, int polOrder >
     inline std::size_t LagrangeShapeFunctionFactory< FunctionSpace, polOrder >

@@ -4,12 +4,17 @@
 // dune-common includes
 #include <dune/common/typetraits.hh>
 
+// dune-geometry includes
+#include<dune/geometry/referenceelements.hh>
+
 // dune-fem includes
+#include <dune/fem/function/localfunction/average.hh>
 #include <dune/fem/space/basisfunctionset/default.hh>
 #include <dune/fem/space/common/defaultcommhandler.hh>
 #include <dune/fem/space/common/discretefunctionspace.hh>
 #include <dune/fem/space/common/functionspace.hh>
 #include <dune/fem/space/common/localrestrictprolong.hh>
+#include <dune/fem/space/discontinuousgalerkin/localinterpolation.hh>
 #include <dune/fem/space/mapper/codimensionmapper.hh>
 #include <dune/fem/space/mapper/nonblockmapper.hh>
 #include <dune/fem/space/shapefunctionset/selectcaching.hh>
@@ -54,6 +59,9 @@ namespace Dune
       typedef typename FunctionSpaceType::JacobianRangeType JacobianRangeType;
       typedef typename FunctionSpaceType::HessianRangeType HessianRangeType;
 
+      /** @copydoc Dune::Fem::ShapeFunctionSet::order */
+      static std::size_t order () { return 0; }
+
       /** @copydoc Dune::Fem::ShapeFunctionSet::size */
       static std::size_t size () { return 1; }
 
@@ -75,7 +83,7 @@ namespace Dune
       template< class Point, class Functor >
       static void hessianEach ( const Point &, Functor functor )
       {
-        functor( 0, HessianRangeType( 0 ) );
+        functor( 0, HessianRangeType( typename HessianRangeType::value_type( 0 ) ) );
       }
     };
 
@@ -89,7 +97,7 @@ namespace Dune
      *
      * \tparam  FunctionSpace  Function space
      * \tparam  GridPart       Grid part
-     * \tparam  codim          codimennsion
+     * \tparam  codim          codimension
      * \tparam  Storage        Caching storage policy
      *
      * \note This shape function set has fixed polynomial order 0.
@@ -221,6 +229,24 @@ namespace Dune
       BlockMapperType &blockMapper () const
       {
         return blockMapper_;
+      }
+
+      ///////////////////////////
+      // Non-interface methods //
+      ///////////////////////////
+
+      /** \brief local interpolation
+       *
+       *  \param[in]  localFunction  local function to interpolate
+       *  \param[in]  dofs           local degrees of freedom of the interpolation
+       */
+      template< class LocalFunction, class LocalDofVector >
+      void interpolate ( const LocalFunction &localFunction, LocalDofVector &dofs ) const
+      {
+        typename LocalFunction::RangeType value;
+        LocalAverage< LocalFunction, GridPartType >::apply( localFunction, value );
+        for( int i = 0; i < FunctionSpaceType::dimRange; ++i )
+          dofs[ i ] = value[ i ];
       }
 
     private:

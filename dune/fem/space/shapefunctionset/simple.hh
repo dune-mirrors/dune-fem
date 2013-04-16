@@ -67,6 +67,8 @@ namespace Dune
 
       ~SimpleShapeFunctionSet ();
 
+      int order () const { return order_; }
+
       // Shape Function Set Interface Methods
       std::size_t size () const { return shapeFunctions_.size(); }
 
@@ -81,6 +83,7 @@ namespace Dune
      
     protected:
       std::vector< const ShapeFunctionType * > shapeFunctions_;
+      int order_;
     };
 
 
@@ -97,10 +100,12 @@ namespace Dune
       shapeFunctions_.resize( numShapeFunctions );
       for( std::size_t i = 0; i < numShapeFunctions; ++i )
         shapeFunctions_[ i ] = factory.createShapeFunction( i );
+      order_ = factory.order();
     }
 
     template< class ShapeFunction >
-    inline SimpleShapeFunctionSet< ShapeFunction >::SimpleShapeFunctionSet( const ThisType &other )
+    inline SimpleShapeFunctionSet< ShapeFunction >
+      ::SimpleShapeFunctionSet ( const ThisType &other )
     {
       *this = other;
     }
@@ -120,6 +125,7 @@ namespace Dune
       for( std::size_t i = 0; i < numShapeFunctions; ++i )
         shapeFunctions_[ i ] = other.shapeFunctions_[ i ]->clone();
 
+      order_ = other.order_;
       return *this;
     }
 

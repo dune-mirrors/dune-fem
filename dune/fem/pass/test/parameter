@@ -1,0 +1,13 @@
+# start level for initial refinement
+startlevel: 4
+
+# specify directory for data output
+fem.io.path: ./
+# specify directory for data output (is created if not exists)
+fem.prefix: ./data
+# prefix data data files
+fem.io.datafileprefix: solution
+# SaveCount (write data every saveCount time steps, <=0 deactivates)
+fem.io.savecount: 0
+# output format: binary | vtk-cell | vtk-vertex (projected in DG case) | none
+fem.io.outputformat: vtk-cell

@@ -6,11 +6,11 @@ SUBDIRS = test
 streamsdir =  $(includedir)/dune/fem/io/streams
 streams_HEADERS = asciistreams.hh \
                   binarystreams.hh \
-                  datastreams.hh \
-									sionlibstreams.hh \
-									standardstreams.hh \
+		  sionlibstreams.hh \
+		  standardstreams.hh \
                   streams.hh \
                   streams_inline.hh \
+		  tuples.hh \
                   virtualstreams.hh \
                   xdrstreams.hh
 

@@ -52,10 +52,10 @@ namespace Dune
     struct ElementQuadratureTraits
     {
       // type of single coordinate
-      typedef typename GridPartImp :: GridType :: ctype ctype;
+      typedef typename GridPartImp :: ctype ctype;
 
       // dimension of quadrature 
-      enum { dimension = GridPartImp :: GridType :: dimension };
+      enum { dimension = GridPartImp ::  dimension };
 
       // codimension of quadrature
       enum { codimension = codim };
@@ -86,14 +86,11 @@ namespace Dune
       //! codimension of the element quadrature
       enum { codimension = 0 };
 
-      //! type of the grid
-      typedef typename GridPartType :: GridType GridType;
-
       //! dimension of the world
-      enum { dimension = GridType :: dimension };
+      enum { dimension = GridPartType :: dimension };
       
       //! type for reals (usually double)
-      typedef typename GridType :: ctype RealType;
+      typedef typename GridPartType :: ctype RealType;
       
       //! type for coordinates in the codim-0 reference element 
       typedef typename IntegrationTraits :: CoordinateType CoordinateType;
@@ -156,14 +153,11 @@ namespace Dune
       using BaseType :: quadImp;
       
     public:
-      //! type of the grid
-      typedef typename GridPartType :: GridType GridType;
-    
       //! dimension of the world
-      enum { dimension = GridType :: dimension };
+      enum { dimension = GridPartType :: dimension };
       
       //! type for reals (usually double)
-      typedef typename GridType :: ctype RealType;
+      typedef typename GridPartType :: ctype RealType;
 
       //! type of the intersection iterator
       typedef typename GridPartType :: IntersectionIteratorType IntersectionIteratorType;

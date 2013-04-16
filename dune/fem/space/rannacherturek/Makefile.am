@@ -4,6 +4,4 @@ rannacherturekspace_HEADERS = declaration.hh \
 			      localinterpolation.hh \
 			      space.hh
 
-SUBDIRS = test
-
 include $(top_srcdir)/am/global-rules

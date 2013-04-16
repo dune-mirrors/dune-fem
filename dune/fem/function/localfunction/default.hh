@@ -112,6 +112,9 @@ namespace Dune
       template< class PointType >
       void axpy( const PointType &x, const RangeType &factor1, const JacobianRangeType &factor2 );
 
+      /** \copydoc Dune::Fem::LocalFunction::order() const */
+      int order () const { return asImp().basisFunctionSet().order(); }
+
       int numScalarDofs () const
       {
         const int numDofs = asImp().numDofs();

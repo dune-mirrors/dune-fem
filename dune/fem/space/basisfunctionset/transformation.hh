@@ -33,7 +33,7 @@ namespace Dune
     struct JacobianTransformation
     {
       typedef typename Geometry::LocalCoordinate LocalCoordinate;
-      typedef typename Geometry::Jacobian GeometryJacobianInverseTransposed;
+      typedef typename Geometry::JacobianInverseTransposed GeometryJacobianInverseTransposed;
 
       JacobianTransformation ( const Geometry &geometry, const LocalCoordinate &x )
       : gjit_( geometry.jacobianInverseTransposed( x ) )
@@ -81,7 +81,7 @@ namespace Dune
     struct HessianTransformation
     {
       typedef typename Geometry::LocalCoordinate LocalCoordinate;
-      typedef typename Geometry::Jacobian GeometryJacobianInverseTransposed;
+      typedef typename Geometry::JacobianInverseTransposed GeometryJacobianInverseTransposed;
 
       HessianTransformation ( const Geometry &geometry, const LocalCoordinate &x )
       : gjit_( geometry.jacobianInverseTransposed( x ) )
@@ -90,9 +90,8 @@ namespace Dune
           DUNE_THROW( NotImplemented, "HessianTransformation not implemented for non-affine geometries." );
       }
 
-      template< class K, int SIZE >
-      void operator() ( const FieldVector< FieldMatrix< K, Geometry::mydimension, Geometry::mydimension >, SIZE > &a,
-                        FieldVector< FieldMatrix< K, Geometry::coorddimension, Geometry::coorddimension >, SIZE > &b )
+      template< class A, class B >
+      void operator() ( const A &a, B &b ) const
       {
         hessianTransformation( gjit_, a, b );
       }

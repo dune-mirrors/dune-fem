@@ -44,6 +44,9 @@ namespace Dune
       //! \brief hessian range type
       typedef typename FunctionSpaceType::HessianRangeType HessianRangeType;
 
+      //! \brief return order of shape functions
+      int order () const;
+
       //! \brief return number of shape functions
       std::size_t size () const;
 

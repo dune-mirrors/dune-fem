@@ -81,9 +81,6 @@ namespace Dune
       /** \copydoc Dune::Fem::LocalFunction::operator[](const int num) */
       RangeFieldType &operator[] ( const int num );
 
-      /** \copydoc Dune::Fem::LocalFunction::order() const */
-      int order () const;
-
       /** \copydoc Dune::Fem::LocalFunction::basisFunctionSet() const */
       const BasisFunctionSetType &basisFunctionSet() const;
 
@@ -221,14 +218,6 @@ namespace Dune
 
 
     template< class DiscreteFunction, class DiscreteFunctionSpace >
-    inline int
-    StandardLocalFunctionImpl< DiscreteFunction, DiscreteFunctionSpace >::order () const
-    {
-      return discreteFunction_.space().order( entity() );
-    }
-
-
-    template< class DiscreteFunction, class DiscreteFunctionSpace >
     inline const typename StandardLocalFunctionImpl< DiscreteFunction, DiscreteFunctionSpace >::BasisFunctionSetType &
     StandardLocalFunctionImpl< DiscreteFunction, DiscreteFunctionSpace >::basisFunctionSet () const
     {
@@ -250,8 +239,6 @@ namespace Dune
     inline void
     StandardLocalFunctionImpl< DiscreteFunction, DiscreteFunctionSpace >::init ( const EntityType &entity )
     {
-      typedef typename DiscreteFunctionSpaceType :: BlockMapperType BlockMapperType;
-
       const DiscreteFunctionSpaceType &space = discreteFunction_.space();
 
       basisFunctionSet_ = space.basisFunctionSet( entity );

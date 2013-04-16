@@ -1,14 +1,9 @@
 #ifndef DUNE_FEM_DGMASSPASS_HH
 #define DUNE_FEM_DGMASSPASS_HH
 
-//- Dune includes 
-#include <dune/common/fvector.hh>
 #include <dune/geometry/referenceelements.hh>
-#include <dune/grid/common/grid.hh>
-#include <dune/fem/quadrature/caching/twistutility.hh>
 
-//- Dune-fem includes 
-#include <dune/fem/pass/dgpass.hh>
+#include <dune/fem/pass/localdg.hh>
 #include <dune/fem/space/common/communicationmanager.hh>
 
 namespace Dune
@@ -34,57 +29,38 @@ namespace Dune
       : public LocalDGPass< DiscreteModelImp, PreviousPassImp >
       {
         typedef LocalDGMassPass< DiscreteModelImp, PreviousPassImp > ThisType;
-
-      public:
-        //- Typedefs and enums
-        //! Base class
         typedef LocalDGPass<DiscreteModelImp, PreviousPassImp> BaseType;
 
-        //! Repetition of template arguments
-        typedef DiscreteModelImp DiscreteModelType;
-        //! Repetition of template arguments
-        typedef PreviousPassImp PreviousPassType;
+      public:
+        typedef typename BaseType::DiscreteModelType DiscreteModelType;
+        typedef typename BaseType::PreviousPassType PreviousPassType;
 
-        // Types from the base class
-        typedef typename BaseType::Entity EntityType;
-        typedef typename EntityType :: EntityPointer EntityPointerType;
         typedef typename BaseType::ArgumentType ArgumentType;
 
-        // Types from the traits
-        typedef typename DiscreteModelType::Traits::DestinationType DestinationType;
-        typedef typename DiscreteModelType::Traits::VolumeQuadratureType VolumeQuadratureType;
-        typedef typename DiscreteModelType::Traits::FaceQuadratureType FaceQuadratureType;
-        typedef typename DiscreteModelType::Traits::DiscreteFunctionSpaceType DiscreteFunctionSpaceType;
-        //! Iterator over the space
-        typedef typename DiscreteFunctionSpaceType::IteratorType IteratorType;
+        typedef typename BaseType::DestinationType DestinationType;
+        typedef typename BaseType::DiscreteFunctionSpaceType DiscreteFunctionSpaceType;
+        typedef typename BaseType::BasisFunctionSetType BasisFunctionSetType;
+        typedef typename BaseType::LocalFunctionType LocalFunctionType;
 
-        // Types extracted from the discrete function space type
-        typedef typename DiscreteFunctionSpaceType::GridType GridType;
-        typedef typename DiscreteFunctionSpaceType::GridPartType GridPartType;
-        typedef typename DiscreteFunctionSpaceType::DomainType DomainType;
-        typedef typename DiscreteFunctionSpaceType::RangeType RangeType;
-        typedef typename DiscreteFunctionSpaceType::RangeFieldType RangeFieldType;
-        typedef typename DiscreteFunctionSpaceType::JacobianRangeType JacobianRangeType;
-        typedef typename DiscreteFunctionSpaceType::BaseFunctionSetType BaseFunctionSetType;
+        typedef typename BaseType::GridPartType GridPartType;
+        typedef typename BaseType::GridType GridType;
+        typedef typename BaseType::IteratorType IteratorType;
+        typedef typename BaseType::Entity EntityType;
+        typedef typename BaseType::Geometry GeometryType;
+        typedef typename BaseType::IntersectionIteratorType IntersectionIteratorType;
 
-        // Types extracted from the underlying grids
-        typedef typename GridPartType::IntersectionIteratorType IntersectionIteratorType;
-        typedef typename GridType::template Codim<0>::Geometry GeometryType;
 
-        // Various other types
-        typedef typename DestinationType::LocalFunctionType LocalFunctionType;
-        typedef typename DiscreteModelType::SelectorType SelectorType;
-        typedef CombinedSelector< ThisType, SelectorType > CombinedSelectorType;
-        typedef DGDiscreteModelCaller< DiscreteModelType, ArgumentType, CombinedSelectorType >
-          DiscreteModelCallerType;
+        typedef typename BaseType::RangeType RangeType;
+        typedef typename RangeType::value_type RangeFieldType;
 
-        // type of Communication Manager 
+        typedef typename BaseType::VolumeQuadratureType VolumeQuadratureType;
+
         typedef CommunicationManager<DiscreteFunctionSpaceType> CommunicationManagerType;
         
-        typedef typename DiscreteModelType :: MassFactorType MassFactorType;
+        typedef typename DiscreteModelType::MassFactorType MassFactorType;
         
-        // Range of the destination
-        enum { dimRange = DiscreteFunctionSpaceType :: dimRange };
+        enum { dimRange = BaseType::dimRange };
+
       public:
         //- Public methods
         //! Constructor
@@ -143,7 +119,7 @@ namespace Dune
           this->caller_.setEntity(en);
           LocalFunctionType updEn = this->dest_->localFunction(en);
           const int updEn_numDofs = updEn.numDofs();
-          const BaseFunctionSetType& bsetEn = updEn.baseFunctionSet(); 
+          const BasisFunctionSetType& bsetEn = updEn.basisFunctionSet(); 
           
           // only call geometry once, who know what is done in this function 
           const GeometryType & geo = en.geometry();

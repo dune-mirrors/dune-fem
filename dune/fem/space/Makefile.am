@@ -2,9 +2,13 @@ spacedir = $(includedir)/dune/fem/space
 
 space_HEADERS = combineddiscretefunctionspace.hh \
 		combinedspace.hh \
+		dgspace.hh \
 		discontinuousgalerkin.hh \
 		finitevolume.hh \
+		fourier.hh \
+		fvspace.hh \
 		lagrange.hh \
+		lagrangespace.hh \
 		padaptivespace.hh \
 		rannacherturek.hh \
 		reducedbasisspace.hh
@@ -12,7 +16,7 @@ space_HEADERS = combineddiscretefunctionspace.hh \
 SUBDIRS = basefunctions basisfunctionset \
 	  combinedspace common \
 	  discontinuousgalerkin dofmapper \
-	  finitevolume lagrange mapper \
+	  finitevolume fourier lagrange mapper \
 	  padaptivespace rannacherturek \
 	  reducedbasisspace shapefunctionset \
 	  test

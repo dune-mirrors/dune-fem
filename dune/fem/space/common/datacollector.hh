@@ -12,7 +12,8 @@
 //-Dune includes#
 #include <dune/common/version.hh>
 
-//- local includes 
+//- local includes
+#include <dune/fem/misc/gridobjectstreams.hh>
 #include <dune/fem/operator/common/objpointer.hh>
 
 namespace Dune
@@ -223,24 +224,6 @@ namespace Dune
         return *combo;
       }
       LocalOp & asImp() { return static_cast<LocalOp &> (*this); }
-    };
-
-    class DummyObjectStream
-    { 
-      public:
-        class EOFException {} ;
-        template <class T>
-        void read (T &) const { assert(false); abort(); }
-        template <class T>
-        void readObject (T &) { assert(false); abort(); }
-        void readObject (int) { assert(false); abort(); }
-        void readObject (double) { assert(false); abort(); }
-        template <class T>
-        void write (const T &) { assert(false);abort(); }
-        template <class T>
-        void writeObject (T &) { assert(false);abort(); }
-        void writeObject (int) { assert(false);abort(); }
-        void writeObject (double) { assert(false);abort(); }
     };
 
     /*! Combination of different DataCollectors
@@ -484,7 +467,6 @@ namespace Dune
       DataCollector<GridType,LocalInterface<ParamType> > & 
       operator += (const DataCollector<GridType,LocalDataCollectType> &op)
       {
-        typedef DataCollector<GridType,LocalDataCollectType> CopyType;
         typedef LocalInterface<ParamType> COType;
          
         COType *newLDCOp = new COType ( ldc_ + op.getLocalOp() );
@@ -505,7 +487,6 @@ namespace Dune
       {
         //std::cout << "operator += with Interface Type \n";
         typedef LocalInterface<ParamType> COType;
-        typedef DataCollector<GridType,COType> CopyType;
          
         COType *newLDCOp = new COType ( ldc_ + op.getLocalInterfaceOp() );
         typedef DataCollector<GridType, COType> OPType;

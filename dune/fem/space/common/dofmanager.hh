@@ -1,34 +1,31 @@
 #ifndef DUNE_FEM_DOFMANAGER_HH
 #define DUNE_FEM_DOFMANAGER_HH
 
-//- System includes 
+//- system includes
 #include <cassert>
 #include <string>
 #include <list>
 
-//- Dune includes 
+//- dune-common includes
 #include <dune/common/stdstreams.hh>
 #include <dune/common/exceptions.hh>
 #include <dune/common/version.hh>
 
+// dune-grid includes
 #include <dune/grid/alugrid/common/interfaces.hh>
 
-#include <dune/fem/version.hh>
-
-// here are the default grid index set defined 
-#include <dune/fem/space/common/restrictprolonginterface.hh>
-#include <dune/fem/storage/singletonlist.hh>
-
+//- dune-fem includes
 #include <dune/fem/io/parameter.hh>
 #include <dune/fem/io/streams/xdrstreams.hh>
 #include <dune/fem/io/streams/standardstreams.hh>
-
-//- local includes 
-#include <dune/fem/space/mapper/dofmapper.hh>
-
-#include <dune/fem/space/common/datacollector.hh>
-#include <dune/fem/space/common/arrays.hh>
+#include <dune/fem/misc/gridobjectstreams.hh>
 #include <dune/fem/misc/threadmanager.hh>
+#include <dune/fem/space/common/arrays.hh>
+#include <dune/fem/space/common/datacollector.hh>
+#include <dune/fem/space/common/restrictprolonginterface.hh>
+#include <dune/fem/space/mapper/dofmapper.hh>
+#include <dune/fem/storage/singletonlist.hh>
+#include <dune/fem/version.hh>
 
 
 namespace Dune
@@ -782,18 +779,9 @@ namespace Dune
       typedef Grid GridType;
 
     public:
-
-#if DUNE_VERSION_NEWER_REV(DUNE_GRID,2,2,0)
       // types of inlining and xtraction stream types 
-      typedef typename GridObjectStreamOrDefault<
-        GridType, DummyObjectStream>::InStreamType  XtractStreamType;
-      typedef typename GridObjectStreamOrDefault<
-        GridType, DummyObjectStream>::OutStreamType InlineStreamType;
-#else 
-      typedef typename GridObjectStreamOrDefault<
-        GridType, DummyObjectStream>::ObjectStreamType InlineStreamType;
-      typedef InlineStreamType XtractStreamType ;
-#endif
+      typedef typename GridObjectStreamTraits< GridType >::InStreamType XtractStreamType;
+      typedef typename GridObjectStreamTraits< GridType >::OutStreamType InlineStreamType;
 
       // types of data collectors 
       typedef DataCollectorInterface<GridType, XtractStreamType >   DataXtractorType;

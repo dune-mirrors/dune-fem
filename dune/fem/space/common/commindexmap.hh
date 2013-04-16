@@ -34,7 +34,7 @@ namespace Dune
 
     public:
       //! return index map for entry i
-      const IndexType operator [] ( const size_t i ) const
+      IndexType operator [] ( const size_t i ) const
       {
         assert( i < size() );
         return indices_[ i ];

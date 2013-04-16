@@ -33,12 +33,4 @@ factor1: 15
 factor2: 2
 
 # just to show that even multiplications are possible here ;)
-multiplication: $[ echo $(factor1)*$(factor2) | bc ] 
-
-
-
-
-
-
-
-
+multiplication: $[./bc.sh $(factor1) $(factor2)] 

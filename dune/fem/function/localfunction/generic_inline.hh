@@ -61,15 +61,6 @@ namespace Dune
 
 
     template< class DiscreteFunction, class DiscreteFunctionSpace >
-    inline int
-    GenericLocalFunctionImpl< DiscreteFunction, DiscreteFunctionSpace >::order () const
-    {
-      return discreteFunction_.space().order( entity() );
-    }
-
-
-
-    template< class DiscreteFunction, class DiscreteFunctionSpace >
     inline
     const typename GenericLocalFunctionImpl< DiscreteFunction, DiscreteFunctionSpace >::BaseFunctionSetType &
     GenericLocalFunctionImpl< DiscreteFunction, DiscreteFunctionSpace >

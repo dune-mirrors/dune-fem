@@ -1,23 +1,24 @@
-# IGNORE_HEADERS
+GRIDTYPE = YASPGRID
+GRIDDIM = 2
 
-# set default grid type for make all
-GRIDTYPE=YASPGRID
-GRIDDIM=2
+DIMRANGE = 2
+POLORDER = 2
 
-SUBDIRS = dgellipt
-
-# test programs 
-check_PROGRAMS = tester 
-
-LDADD = $(ALL_PKG_LDFLAGS) $(ALL_PKG_LIBS) $(LOCAL_LIBS)
+LDADD = $(ALL_PKG_LDFLAGS) $(ALL_PKG_LIBS) $(LOCAL_LIBS) $(MPI_LDFLAGS) 
 AM_CPPFLAGS = $(ALL_PKG_CPPFLAGS) 
 
-tester_SOURCES = main.cc pass_test.cc helper_test.cc
+SUBDIRS =
 
-EXTRA_DIST = dgstub.hh \
-             helper_test.hh \
-             lagrange_fixture.hh \
-             passstub.hh \
-             pass_test.hh 
+# test programs 
+check_PROGRAMS = test-pass
+
+test_pass_SOURCES = test-pass.cc
+test_pass_CPPFLAGS = $(ALL_PKG_CPPFLAGS) $(DUNEMPICPPFLAGS) -DDIMRANGE=$(DIMRANGE) -DPOLORDER=$(POLORDER)
+
+DGFFILES = 1dgrid.dgf 2dgrid.dgf 3dgrid.dgf
+
+EXTRA_DIST = $(DGFFILES) parameter
+
+CLEANFILES =
 
 include $(top_srcdir)/am/global-rules

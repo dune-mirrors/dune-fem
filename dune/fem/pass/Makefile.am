@@ -1,12 +1,14 @@
-# $Id$
-
-SUBDIRS = test
+SUBDIRS = common localdg test
 
 passdir =  $(includedir)/dune/fem/pass
-pass_HEADERS = callerutility.hh  createpass.hh insertfunctionpass.hh \
-modelcallerdefault.hh  dgelliptpass.hh \
-pass.hh	 dgpass.hh  selection.hh dgmodelcaller.hh\
-discretemodel.hh  dgdiscretemodel.hh\
-ellipticdiscretemodel.hh ellipticmodelcaller.hh
+
+pass_HEADERS = applylocaloperator.hh \
+	       createpass.hh \
+	       dgdiscretemodel.hh \
+	       dgpass.hh \
+	       localdg.hh \
+	       insertfunction.hh \
+	       insertfunctionpass.hh \
+	       pass.hh
 
 include $(top_srcdir)/am/global-rules

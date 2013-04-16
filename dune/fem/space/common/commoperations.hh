@@ -1,10 +1,13 @@
 #ifndef DUNE_FEM_COMMOPERATIONS_HH
 #define DUNE_FEM_COMMOPERATIONS_HH
 
-#include <dune/fem/misc/utility.hh>
-//- Dune includes 
+#include <dune/common/tuples.hh>
+#include <dune/common/tupleutility.hh>
 
 #include <dune/grid/common/datahandleif.hh>
+
+#include <dune/fem/misc/nil.hh>
+
 
 namespace Dune 
 {
@@ -184,16 +187,16 @@ namespace Dune
       DataImpEight & eight_;
       DataImpNine  & nine_;
 
-      typedef Tuple<  DataImpOne 
-                    , DataImpTwo 
-                    , DataImpThree 
-                    , DataImpFour 
-                    , DataImpFive  
-                    , DataImpSix
-                    , DataImpSeven 
-                    , DataImpEight
-                    , DataImpNine 
-                    > DataHandlerTupleType;
+      typedef Dune::tuple<  DataImpOne
+                            , DataImpTwo
+                            , DataImpThree
+                            , DataImpFour
+                            , DataImpFive
+                            , DataImpSix
+                            , DataImpSeven
+                            , DataImpEight
+                            , DataImpNine
+                            > DataHandlerTupleType;
 
       mutable DataHandlerTupleType data_; 
     public:
@@ -223,7 +226,7 @@ namespace Dune
 
       bool contains (int dim, int codim) const
       {
-        ForEachTupleValue<DataHandlerTupleType> forEach(data_);
+        ForEachValue<DataHandlerTupleType> forEach(data_);
         Contains dataContains(dim,codim);
         forEach.apply(dataContains);
         return dataContains.contains();
@@ -231,7 +234,7 @@ namespace Dune
 
       bool fixedsize (int dim, int codim) const
       {
-        ForEachTupleValue<DataHandlerTupleType> forEach(data_);
+        ForEachValue<DataHandlerTupleType> forEach(data_);
         FixedSize dataFixedSize(dim,codim);
         forEach.apply(dataFixedSize);
         return dataFixedSize.fixedSize();
@@ -242,7 +245,7 @@ namespace Dune
       template<class MessageBufferImp, class EntityType>
       void gather (MessageBufferImp& buff, const EntityType& en) const
       {
-        ForEachTupleValue<DataHandlerTupleType> forEach(data_);
+        ForEachValue<DataHandlerTupleType> forEach(data_);
         DataGather<MessageBufferImp,EntityType> gatherData(buff,en);
         forEach.apply(gatherData);
       }
@@ -252,7 +255,7 @@ namespace Dune
       template<class MessageBufferImp, class EntityType>
       void scatter (MessageBufferImp& buff, const EntityType& en, size_t n)
       {
-        ForEachTupleValue<DataHandlerTupleType> forEach(data_);
+        ForEachValue<DataHandlerTupleType> forEach(data_);
         DataScatter<MessageBufferImp,EntityType> scatterData(buff,en,n);
         forEach.apply(scatterData);
       }
@@ -262,7 +265,7 @@ namespace Dune
       template<class EntityType>
       size_t size (const EntityType& en) const
       {
-        ForEachTupleValue<DataHandlerTupleType> forEach(data_);
+        ForEachValue<DataHandlerTupleType> forEach(data_);
         DataSize<EntityType> dataSize(en);
         forEach.apply(dataSize);
         return dataSize.size();

@@ -2,7 +2,7 @@
 #define DUNE_FEM_CREATEPASS_HH
 
 #include <dune/fem/operator/common/spaceoperatorif.hh>
-#include <dune/fem/pass/pass.hh>
+#include <dune/fem/pass/common/pass.hh>
 
 namespace Dune 
 {

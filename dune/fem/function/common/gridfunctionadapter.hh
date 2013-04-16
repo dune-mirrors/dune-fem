@@ -199,9 +199,9 @@ namespace Dune
       typedef LocalFunction ThisType;
       typedef GridFunctionAdapter< Function, GridPart > DiscreteFunctionType;
 
-      typedef typename EntityType::Geometry GeometryType;
-
     public:
+      typedef typename Traits::EntityType EntityType; 
+
       static const int dimRange = DiscreteFunctionSpaceType::dimRange;
       static const int dimDomain = GridPart::GridType::dimensionworld;
       static const int dimLocal = GridPart::GridType::dimension;
@@ -240,6 +240,7 @@ namespace Dune
       template< class PointType >
       void evaluate ( const PointType &x, RangeType &ret ) const
       {
+        typedef typename EntityType::Geometry GeometryType;
         const GeometryType geometry = entity().geometry();
         DomainType global = geometry.global( coordinate( x ) );
         function().evaluate( global, ret );
@@ -249,6 +250,7 @@ namespace Dune
       template< class PointType >
       void jacobian ( const PointType &x, JacobianRangeType &ret ) const
       {
+        typedef typename EntityType::Geometry GeometryType;
         const GeometryType geometry = entity().geometry();
 
         const typename GeometryType::LocalCoordinate cx = coordinate( x );

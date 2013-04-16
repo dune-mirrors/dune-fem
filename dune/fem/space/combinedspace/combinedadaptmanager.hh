@@ -21,14 +21,20 @@ namespace Dune
   **/
 
 #ifdef USE_OLD_COMBINEDSPACE
-    /** \brief specialization of RestrictProlongDefault for
-        CombinedSpace.
-    */
-    template < class DiscreteFunctionSpaceImp, 
-               int N, 
-               DofStoragePolicy policy> 
-    struct DefaultLocalRestrictProlong< CombinedSpace<DiscreteFunctionSpaceImp,N,policy> > 
-    : public DiscontinuousGalerkinLocalRestrictProlong< CombinedSpace<DiscreteFunctionSpaceImp,N,policy> >
+  /** \brief specialization of RestrictProlongDefault for
+      CombinedSpace.
+  */
+  template < class DiscreteFunctionSpaceImp, 
+             int N, 
+             DofStoragePolicy policy> 
+  struct DefaultLocalRestrictProlong< CombinedSpace<DiscreteFunctionSpaceImp,N,policy> > 
+  : public DiscontinuousGalerkinLocalRestrictProlong< CombinedSpace<DiscreteFunctionSpaceImp,N,policy>, false >
+  {
+		typedef DiscontinuousGalerkinLocalRestrictProlong< CombinedSpace<DiscreteFunctionSpaceImp,N,policy>, false >
+			BaseType;
+
+    DefaultLocalRestrictProlong( const CombinedSpace<DiscreteFunctionSpaceImp,N,policy> & space)
+			: BaseType( space )
     {
       DefaultLocalRestrictProlong( const CombinedSpace<DiscreteFunctionSpaceImp,N,policy> & space)
       {

@@ -1,17 +1,14 @@
 #ifndef DUNE_FEM_CACHEPROVIDER_HH
 #define DUNE_FEM_CACHEPROVIDER_HH
 
-//- System includes
 #include <vector>
 #include <map>
 
-//- Dune includes
 #include <dune/common/misc.hh>
 #include <dune/common/version.hh>
 
-#include <dune/fem/misc/capabilities.hh>
+#include <dune/fem/gridpart/common/capabilities.hh>
 
-//- Local includes
 #include "pointmapper.hh"
 #include "twistprovider.hh"
 #include "pointprovider.hh"
@@ -134,16 +131,16 @@ namespace Dune
     // CacheProvider
     // -------------
 
-    template< class GridImp, int codim >
+    template< class GridPart, int codim >
     class CacheProvider;
 
-    template <class GridImp>
-    class CacheProvider<GridImp, 0>
+    template <class GridPart>
+    class CacheProvider<GridPart, 0>
     {
     private:
       enum { codim = 0 };
-      enum { dim = GridImp::dimension };
-      typedef typename GridImp::ctype ct;
+      enum { dim = GridPart::dimension };
+      typedef typename GridPart::ctype ct;
       typedef CachingTraits<ct, dim> Traits;
 
     public:
@@ -157,16 +154,16 @@ namespace Dune
       }
     };
 
-    template <class GridImp>
-    class CacheProvider<GridImp, 1>
+    template <class GridPart>
+    class CacheProvider<GridPart, 1>
     {
       enum { codim = 1 };
-      enum { dim = GridImp::dimension };
-      typedef typename GridImp::ctype ct;
+      enum { dim = GridPart::dimension };
+      typedef typename GridPart::ctype ct;
       typedef CachingTraits<ct, dim-codim> Traits;
 
       // true if grid could have twists 
-      static const bool hasTwists = ! Dune::Capabilities::isCartesian<GridImp>::v ;
+      static const bool hasTwists = ! Dune::Fem::GridPartCapabilities::isCartesian<GridPart>::v ;
     public:
       typedef typename Traits::QuadratureType QuadratureType;
       typedef typename Traits::MapperType MapperType;
@@ -190,7 +187,7 @@ namespace Dune
         if( it == mappers_.end() ) 
         {
           integral_constant< bool, hasTwists > i2t;
-          it = CacheProvider<GridImp, 1>::createMapper( quad, elementGeometry, i2t );
+          it = CacheProvider<GridPart, 1>::createMapper( quad, elementGeometry, i2t );
         }
 
         return it->second.getMapper(faceIndex, faceTwist);

@@ -212,7 +212,7 @@ namespace Dune
       //! apply local dg mass matrix to local function lf
       //! using the massFactor method of the caller 
       template <class MassCallerType, class LocalFunctionType> 
-      void applyInverse(const MassCallerType& caller, 
+      void applyInverse(MassCallerType& caller, 
                         const EntityType& en, 
                         LocalFunctionType& lf) const 
       {
@@ -259,7 +259,7 @@ namespace Dune
       //  applyInverse for DG spaces 
       ///////////////////////////////////////////////////////////
       template <class MassCallerType, class LocalFunctionType> 
-      void applyInverseDgOrthoNormalBasis(const MassCallerType& caller, 
+      void applyInverseDgOrthoNormalBasis(MassCallerType& caller, 
                                           const EntityType& en, 
                                           LocalFunctionType& lf) const 
       {
@@ -401,7 +401,7 @@ namespace Dune
           RangeFieldType sum = 0;
           // get matrix row 
           typedef typename Matrix :: const_row_reference  MatRow;
-          MatRow& matRow = matrix[ row ];
+          MatRow matRow = matrix[ row ];
 
           // multiply row with right hand side
           for( int col = 0; col < size; ++ col ) 
@@ -476,7 +476,7 @@ namespace Dune
 
       //! build local mass matrix 
       template <class MassCallerType, class Matrix> 
-      void buildMatrix(const MassCallerType& caller,
+      void buildMatrix(MassCallerType& caller,
                        const EntityType& en,
                        const Geometry& geo, 
                        const BasisFunctionSetType& set,
@@ -542,7 +542,7 @@ namespace Dune
       //! build local mass matrix with mass factor 
       template <class MassCallerType, class Matrix> 
       void buildMatrixWithMassFactor(
-                       const MassCallerType& caller,
+                       MassCallerType& caller,
                        const EntityType& en,
                        const Geometry& geo, 
                        const BasisFunctionSetType& set,
@@ -625,7 +625,7 @@ namespace Dune
       //! apply local dg mass matrix to local function lf
       //! using the massFactor method of the caller 
       template <class MassCallerType, class LocalFunctionType> 
-      void applyInverse(const MassCallerType& caller, 
+      void applyInverse(MassCallerType& caller, 
                         const EntityType& en, 
                         LocalFunctionType& lf) const 
       {

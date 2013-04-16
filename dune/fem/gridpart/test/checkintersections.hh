@@ -7,7 +7,7 @@
 #include <dune/common/stdstreams.hh>
 
 //- dune-geometry includes
-#include <dune/geometry/quadraturerules/gaussquadrature.hh>
+#include <dune/geometry/quadraturerules.hh>
 #include <dune/geometry/referenceelements.hh>
 
 //- dune-grid includes
@@ -149,11 +149,8 @@ namespace Dune
       typedef typename GridPartType::ctype ctype;
 
       // get Gauss quadrature points
-      typedef Dune::GenericGeometry::GaussPoints< ctype > Points;
-      typedef Dune::GenericGeometry::GenericQuadratureFactory< 
-          LocalGeometryType::mydimension, ctype, Points 
-        > QuadratureFactory;
-      const typename QuadratureFactory::Object &quad = *QuadratureFactory::create( entity.type(), 3 );
+      const Dune::QuadratureRule< ctype, LocalGeometryType::mydimension > & quad = 
+        Dune::QuadratureRules< ctype, LocalGeometryType::mydimension >::rule( entity.type(), 3 );
 
       // compute sum of all integration outer normals
       GlobalCoordinateType sum( 0 );

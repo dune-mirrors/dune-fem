@@ -9,11 +9,11 @@
 
 //- Dune includes
 #include <dune/geometry/referenceelements.hh>
-#include <dune/grid/alugrid/3d/topology.hh>
 #include <dune/fem/quadrature/quadrature.hh>
 
 //- Local includes
 #include "pointmapper.hh"
+#include "topology.hh"
 
 namespace Dune 
 {
@@ -189,6 +189,9 @@ namespace Dune
       //! Constructor
       TwistMapperCreator(const QuadratureType& quad);
 
+      //! Destructor
+      ~TwistMapperCreator();
+
       //! Create the actual mapper for a given twist
       const TwistStorageType* createStorage() const;
       
@@ -211,7 +214,7 @@ namespace Dune
    
     private:
       const QuadratureType& quad_;    
-      std::auto_ptr<TwistMapperStrategy<ct, dim> > helper_;
+      TwistMapperStrategy<ct, dim>* helper_;
 
       static const ct eps_;
     };
@@ -274,9 +277,6 @@ namespace Dune
       virtual const MatrixType& buildTransformationMatrix(int twist) const;
 
     private:
-      typedef FaceTopologyMapping<tetra> FaceTopo;
-
-    private:
       const Dune::ReferenceElement<ct, dim>& refElem_;
       mutable MatrixType mat_;
     };
@@ -298,9 +298,6 @@ namespace Dune
       
       virtual const MatrixType& buildTransformationMatrix(int twist) const;
       
-    private:
-      typedef FaceTopologyMapping<hexa> FaceTopo;
-
     private:
       const Dune::ReferenceElement<ct, dim>& refElem_;
       mutable MatrixType mat_;

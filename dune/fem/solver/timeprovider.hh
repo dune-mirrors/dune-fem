@@ -1,18 +1,15 @@
 #ifndef DUNE_FEM_TIMEPROVIDER_HH
 #define DUNE_FEM_TIMEPROVIDER_HH
 
-//- system includes 
-#include <limits>
 #include <cassert>
+#include <limits>
 
-//- Dune includes 
-#include <dune/common/exceptions.hh>
+#include <dune/common/tuples.hh>
 
-#include <dune/fem/misc/commhelper.hh>
-#include <dune/fem/io/parameter.hh>
 #include <dune/fem/io/file/asciiparser.hh>
 #include <dune/fem/io/file/persistencemanager.hh>
-#include <dune/fem/misc/femtuples.hh>
+#include <dune/fem/io/parameter.hh>
+#include <dune/fem/misc/commhelper.hh>
 #include <dune/fem/space/common/dofmanager.hh>
 
 namespace Dune
@@ -75,14 +72,14 @@ namespace Dune
 
       void backup() const 
       {
-        Tuple<const double&,const int&,const double&,const bool&,const double&>
+        Dune::tuple<const double&,const int&,const double&,const bool&,const double&>
           values(time_,timeStep_,dt_,valid_,dtEstimate_);
         PersistenceManager::backupValue("timeprovider",values);
       }
 
       void restore() 
       {
-        Tuple<double&,int&,double&,bool&,double&>
+        Dune::tuple<double&,int&,double&,bool&,double&>
           values(time_,timeStep_,dt_,valid_,dtEstimate_);
         PersistenceManager::restoreValue("timeprovider",values);
         dtEstimateValid_ = true;
