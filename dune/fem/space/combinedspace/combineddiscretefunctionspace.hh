@@ -6,6 +6,7 @@
 
 //- Dune includes 
 #include <dune/common/misc.hh>
+#include <dune/common/typetraits.hh>
 #include <dune/grid/common/grid.hh>
 
 
@@ -35,9 +36,12 @@ namespace Dune
 
 
     template< class DFunctionSpace1, class DFunctionSpace2> 
-    struct CombinedDiscreteFunctionSpaceTraits
+    struct CombinedDiscreteFunctionSpaceTraitsBase
     {
-      static const int codimension = 0;
+      dune_static_assert( DFunctionSpace1 :: codimension == DFunctionSpace2 :: codimension, 
+          "CombinedDiscreteFunctionSpace for spaces with different codimensions is not supported" );
+
+      static const int codimension = DFunctionSpace1 :: codimension;
 
       typedef DFunctionSpace1   DiscreteFunctionSpace1;
       typedef DFunctionSpace2   DiscreteFunctionSpace2;   
@@ -82,28 +86,17 @@ namespace Dune
       typedef CombinedDiscreteFunctionSpace < DiscreteFunctionSpace1, DiscreteFunctionSpace2 >
         DiscreteFunctionSpaceType;
 
-      enum { localBlockSize = 1,
-             localBlockSize1 = DiscreteFunctionSpace1::Traits::localBlockSize,
-             localBlockSize2 = DiscreteFunctionSpace2::Traits::localBlockSize };
-
-      private:
-      //! mapper for block
-      typedef typename DiscreteFunctionSpace1 :: BlockMapperType     BlockMapperType1;
-      typedef typename DiscreteFunctionSpace2 :: BlockMapperType     BlockMapperType2;
-
+    private:
       //! get base function sets of the two spaces
       typedef typename DiscreteFunctionSpace1 :: BasisFunctionSetType   BasisFunctionSetType1;
       typedef typename DiscreteFunctionSpace2 :: BasisFunctionSetType   BasisFunctionSetType2;
 
-      public:
-      //! define a combined DofMapper and the block mapper
-      typedef CombinedSpaceMapper< GridType, BlockMapperType1, localBlockSize1, BlockMapperType2, localBlockSize2 > BlockMapperType;
-      typedef BlockMapperType MapperType;
-
+    public:
       //! implementation of basefunction set 
       typedef CombinedBasisFunctionSet< FunctionSpaceType, BasisFunctionSetType1, BasisFunctionSetType2 >
-          BasisFunctionSetType;   
+          BasisFunctionSetType;
 
+      // review to make it work for all kind of combinations
       template< class DiscreteFunction,
                 class Operation = DFCommunicationOperation :: Copy >
       struct CommDataHandle
@@ -113,6 +106,85 @@ namespace Dune
         //! type of operatation to perform on scatter 
         typedef Operation OperationType;
       };
+    };
+
+
+    template< class DFunctionSpace1, class DFunctionSpace2 >
+    struct CombinedDiscreteFunctionSpaceTraits;
+
+
+    // Traits class for same discrete function space implementations
+    // -------------------------------------------------------------
+    template< class GridPartImp,
+              class FunctionSpaceImp1,
+              class FunctionSpaceImp2,
+              int polOrder1,
+              int polOrder2, 
+              template<class> class Storage1,
+              template<class> class Storage2,
+              template<class, class, int, template<class> class> class DFSpaceImp >
+    struct CombinedDiscreteFunctionSpaceTraits< 
+                  DFSpaceImp< FunctionSpaceImp1, GridPartImp, polOrder1, Storage1 >, 
+                  DFSpaceImp< FunctionSpaceImp2, GridPartImp, polOrder2, Storage2 > > 
+    : public CombinedDiscreteFunctionSpaceTraitsBase 
+    < DFSpaceImp< FunctionSpaceImp1, GridPartImp, polOrder1, Storage1 >, 
+      DFSpaceImp< FunctionSpaceImp2, GridPartImp, polOrder2, Storage2 > > 
+    {
+      typedef DFSpaceImp< FunctionSpaceImp1, GridPartImp, polOrder1, Storage1 > DiscreteFunctionSpace1;
+      typedef DFSpaceImp< FunctionSpaceImp2, GridPartImp, polOrder2, Storage2 > DiscreteFunctionSpace2;
+
+      static const int codimension = DiscreteFunctionSpace1 :: codimension;
+      enum { localBlockSize1 = DiscreteFunctionSpace1::localBlockSize,
+             localBlockSize2 = DiscreteFunctionSpace2::localBlockSize, 
+             localBlockSize = localBlockSize1 + localBlockSize2 };
+
+      //! define a combined DofMapper and the block mapper
+      typedef typename DiscreteFunctionSpace1 :: BlockMapperType BlockMapperType;
+      typedef NonBlockMapper< BlockMapperType, localBlockSize > MapperType;
+
+      typedef CodimensionMapperSingletonFactory< GridPartImp, codimension > BlockMapperSingletonFactoryType;
+      typedef typename BlockMapperSingletonFactoryType::Key BlockMapperKeyType;
+      typedef SingletonList< BlockMapperKeyType, BlockMapperType, BlockMapperSingletonFactoryType > BlockMapperProviderType;
+
+      static BlockMapperKeyType getKey( const GridPartImp &gridPart, const DiscreteFunctionSpace1 &space1, const DiscreteFunctionSpace2 &sapce2 ) 
+      {
+        BlockMapperKeyType key( gridPart );
+        return key;
+      }
+    };
+
+
+    // Traits class for different space implementations
+    // ------------------------------------------------
+    template< class DFunctionSpace1, class DFunctionSpace2 >
+    struct CombinedDiscreteFunctionSpaceTraits
+    :public CombinedDiscreteFunctionSpaceTraitsBase< DFunctionSpace1, DFunctionSpace2>
+    {
+      typedef CombinedDiscreteFunctionSpaceTraitsBase< DFunctionSpace1, DFunctionSpace2 > BaseType;
+      typedef typename BaseType :: GridPartType GridPartType;
+      typedef typename BaseType :: GridType GridType;
+
+      enum { localBlockSize1 = DFunctionSpace1::localBlockSize,
+             localBlockSize2 = DFunctionSpace2::localBlockSize, 
+             localBlockSize = 1 };
+    private:
+      //! mapper for blocks
+      typedef typename DFunctionSpace1 :: BlockMapperType     BlockMapperType1;
+      typedef typename DFunctionSpace2 :: BlockMapperType     BlockMapperType2;
+
+    public:
+      typedef CombinedSpaceMapper< GridType, BlockMapperType1, localBlockSize1, BlockMapperType2, localBlockSize2 > BlockMapperType;
+      typedef NonBlockMapper< BlockMapperType, localBlockSize > MapperType;
+
+      typedef CombinedSpaceMapperSingletonFactory< GridPartType, DFunctionSpace1, DFunctionSpace2 > BlockMapperSingletonFactoryType;
+      typedef typename BlockMapperSingletonFactoryType::Key BlockMapperKeyType;
+      typedef SingletonList< BlockMapperKeyType, BlockMapperType, BlockMapperSingletonFactoryType > BlockMapperProviderType;
+
+      static BlockMapperKeyType getKey( const GridPartType &gridPart, const DFunctionSpace1 &space1, const DFunctionSpace2 &space2 ) 
+      {
+        BlockMapperKeyType key( gridPart, space1, space2 );
+        return key;
+      }
     };
 
 
@@ -135,8 +207,7 @@ namespace Dune
     template< class DFSpace1, class DFSpace2 >
     class CombinedDiscreteFunctionSpace
     : public DiscreteFunctionSpaceDefault
-             < CombinedDiscreteFunctionSpaceTraits< DFSpace1,
-                                                    DFSpace2 > >
+             < CombinedDiscreteFunctionSpaceTraits< DFSpace1, DFSpace2 > >
     {
     public:
       //! types of Discrete Subspace 
@@ -162,6 +233,8 @@ namespace Dune
       typedef typename Traits :: IteratorType IteratorType;
       //! dimension of the grid (not the world)
       enum { dimension = GridType :: dimension };
+
+      static const int codimension =  Traits :: codimension;
 
       //! the underlaying Analytical function space
       typedef typename Traits :: FunctionSpaceType FunctionSpaceType;
@@ -215,6 +288,8 @@ namespace Dune
       typedef CombinedDiscreteFunctionSpaceType ThisType;
       typedef DiscreteFunctionSpaceDefault< Traits > BaseType;
 
+      typedef typename Traits :: BlockMapperSingletonFactoryType BlockMapperSingletonFactoryType;
+      typedef typename Traits :: BlockMapperProviderType BlockMapperProviderType;
 
     public:
       using BaseType :: gridPart;
@@ -237,10 +312,9 @@ namespace Dune
       : BaseType( gridPart, commInterface, commDirection ),
         space1_( gridPart, commInterface, commDirection ),
         space2_( gridPart, commInterface, commDirection ),
-        mapper_( 0 )
+        blockMapper_( &BlockMapperProviderType::getObject( Traits::getKey( gridPart, space1_, space2_ ) ) ),
+        mapper_( blockMapper() )
       {
-        mapper_ = new MapperType( gridPart.grid(), space1_.blockMapper(), space2_.blockMapper() );
-        assert( mapper_ != 0 );
       }
 
     private:
@@ -253,7 +327,7 @@ namespace Dune
       **/
       ~CombinedDiscreteFunctionSpace ()
       {
-        delete mapper_;
+        BlockMapperProviderType::removeObject( blockMapper() );
       }
 
       /** \copydoc Dune::Fem::DiscreteFunctionSpaceInterface::contains */
@@ -309,8 +383,7 @@ namespace Dune
       /** \copydoc Dune::Fem::DiscreteFunctionSpaceInterface::mapper */
       MapperType &mapper () const
       {
-        assert( mapper_ != 0 );
-        return *mapper_;
+        return mapper_;
       }
 
       /** \brief obtain the DoF block mapper of this space
@@ -318,7 +391,7 @@ namespace Dune
       **/
       BlockMapperType &blockMapper () const
       {
-        return mapper();
+        return *blockMapper_;
       }
 
       /** \brief obtain the first subspace
@@ -343,8 +416,11 @@ namespace Dune
       //! space 2
       DiscreteFunctionSpaceType2  space2_;
 
+      //! BlockMapper
+      BlockMapperType *blockMapper_;
+
       //! corresponding mapper
-      MapperType *mapper_;
+      mutable MapperType mapper_;
     };
 
     //! specialization of DifferentDiscreteFunctionSpace for CombinedDiscreteFunctionSpace
