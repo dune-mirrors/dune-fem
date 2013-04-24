@@ -1,16 +1,16 @@
 #ifndef DUNE_FEM_COMBINEDDISCRETFUNCTIONSPACE_HH
 #define DUNE_FEM_COMBINEDDISCRETFUNCTIONSPACE_HH
 
-//- system includes 
+//- system includes
 #include <algorithm>
 
-//- Dune includes 
+//- Dune includes
 #include <dune/common/misc.hh>
 #include <dune/common/typetraits.hh>
 #include <dune/grid/common/grid.hh>
 
 
-//- Dune-Fem includes 
+//- Dune-Fem includes
 #include <dune/fem/space/common/dofmanager.hh>
 #include <dune/fem/space/mapper/nonblockmapper.hh>
 #include <dune/fem/space/common/discretefunctionspace.hh>
@@ -19,7 +19,10 @@
 #include <dune/fem/space/basefunctions/basefunctionproxy.hh>
 #include <dune/fem/space/common/defaultcommhandler.hh>
 
-//- local includes 
+#include <dune/fem/space/mapper/codimensionmapper.hh>
+#include <dune/fem/space/discontinuousgalerkin/space.hh>
+
+//- local includes
 #include "combinedbasisfunctionset.hh"
 #include "combinedmapper.hh"
 #include "adaptmanager.hh"
@@ -35,20 +38,20 @@ namespace Dune
     class CombinedDiscreteFunctionSpace;
 
 
-    template< class DFunctionSpace1, class DFunctionSpace2> 
+    template< class DFunctionSpace1, class DFunctionSpace2>
     struct CombinedDiscreteFunctionSpaceTraitsBase
     {
-      dune_static_assert( DFunctionSpace1 :: codimension == DFunctionSpace2 :: codimension, 
+      dune_static_assert( DFunctionSpace1 :: codimension == DFunctionSpace2 :: codimension,
           "CombinedDiscreteFunctionSpace for spaces with different codimensions is not supported" );
 
       static const int codimension = DFunctionSpace1 :: codimension;
 
       typedef DFunctionSpace1   DiscreteFunctionSpace1;
-      typedef DFunctionSpace2   DiscreteFunctionSpace2;   
+      typedef DFunctionSpace2   DiscreteFunctionSpace2;
 
-      typedef typename DiscreteFunctionSpace1 :: FunctionSpaceType     FunctionSpaceType1; 
-      typedef typename DiscreteFunctionSpace2 :: FunctionSpaceType     FunctionSpaceType2; 
-      
+      typedef typename DiscreteFunctionSpace1 :: FunctionSpaceType     FunctionSpaceType1;
+      typedef typename DiscreteFunctionSpace2 :: FunctionSpaceType     FunctionSpaceType2;
+
       typedef typename FunctionSpaceType1 :: DomainFieldType DomainFieldType;
       typedef typename FunctionSpaceType1 :: DomainType DomainType;
       typedef typename FunctionSpaceType1 :: RangeFieldType RangeFieldType;
@@ -71,18 +74,18 @@ namespace Dune
       typedef typename GridPartType :: template Codim< 0 > :: IteratorType
         IteratorType;
 
-      typedef typename IteratorType :: Entity EntityType;    
+      typedef typename IteratorType :: Entity EntityType;
 
-      // get dimension of local coordinate 
+      // get dimension of local coordinate
       enum { dimLocal = GridType :: dimension };
 
       typedef typename ToLocalFunctionSpace< FunctionSpaceType, dimLocal > :: Type
         BaseFunctionSpaceType;
 
-      enum { polynomialOrder1 =  DiscreteFunctionSpace1 :: polynomialOrder, 
+      enum { polynomialOrder1 =  DiscreteFunctionSpace1 :: polynomialOrder,
              polynomialOrder2 =  DiscreteFunctionSpace2 :: polynomialOrder,
              polynomialOrder =  ( polynomialOrder1 > polynomialOrder2 ? polynomialOrder1 : polynomialOrder2 )   };
-      
+
       typedef CombinedDiscreteFunctionSpace < DiscreteFunctionSpace1, DiscreteFunctionSpace2 >
         DiscreteFunctionSpaceType;
 
@@ -92,7 +95,7 @@ namespace Dune
       typedef typename DiscreteFunctionSpace2 :: BasisFunctionSetType   BasisFunctionSetType2;
 
     public:
-      //! implementation of basefunction set 
+      //! implementation of basefunction set
       typedef CombinedBasisFunctionSet< FunctionSpaceType, BasisFunctionSetType1, BasisFunctionSetType2 >
           BasisFunctionSetType;
 
@@ -101,9 +104,9 @@ namespace Dune
                 class Operation = DFCommunicationOperation :: Copy >
       struct CommDataHandle
       {
-        //! type of data handle 
+        //! type of data handle
         typedef DefaultCommunicationHandler< DiscreteFunction, Operation > Type;
-        //! type of operatation to perform on scatter 
+        //! type of operatation to perform on scatter
         typedef Operation OperationType;
       };
     };
@@ -113,40 +116,58 @@ namespace Dune
     struct CombinedDiscreteFunctionSpaceTraits;
 
 
-    // Traits class for same discrete function space implementations
-    // -------------------------------------------------------------
+    // Traits class for DG discrete function space implementations, both
+    // -----------------------------------------------------------------
     template< class GridPartImp,
               class FunctionSpaceImp1,
               class FunctionSpaceImp2,
               int polOrder1,
-              int polOrder2, 
+              int polOrder2,
               template<class> class Storage1,
               template<class> class Storage2,
-              template<class, class, int, template<class> class> class DFSpaceImp >
-    struct CombinedDiscreteFunctionSpaceTraits< 
-                  DFSpaceImp< FunctionSpaceImp1, GridPartImp, polOrder1, Storage1 >, 
-                  DFSpaceImp< FunctionSpaceImp2, GridPartImp, polOrder2, Storage2 > > 
-    : public CombinedDiscreteFunctionSpaceTraitsBase 
-    < DFSpaceImp< FunctionSpaceImp1, GridPartImp, polOrder1, Storage1 >, 
-      DFSpaceImp< FunctionSpaceImp2, GridPartImp, polOrder2, Storage2 > > 
+              template<class, class, int, template<class> class> class Traits1,
+              template<class, class, int, template<class> class> class Traits2 >
+    struct CombinedDiscreteFunctionSpaceTraits<
+             DiscontinuousGalerkinSpaceDefault< DiscontinuousGalerkinSpaceDefaultTraits<
+                Traits1< FunctionSpaceImp1, GridPartImp, polOrder1, Storage1 > > >,
+             DiscontinuousGalerkinSpaceDefault< DiscontinuousGalerkinSpaceDefaultTraits<
+                Traits2< FunctionSpaceImp2, GridPartImp, polOrder2, Storage2 > > > >
+    : public CombinedDiscreteFunctionSpaceTraitsBase<
+       DiscontinuousGalerkinSpaceDefault< DiscontinuousGalerkinSpaceDefaultTraits<
+         Traits1< FunctionSpaceImp1, GridPartImp, polOrder1, Storage1 > > >,
+       DiscontinuousGalerkinSpaceDefault< DiscontinuousGalerkinSpaceDefaultTraits<
+         Traits2< FunctionSpaceImp2, GridPartImp, polOrder2, Storage2 > > > >
     {
-      typedef DFSpaceImp< FunctionSpaceImp1, GridPartImp, polOrder1, Storage1 > DiscreteFunctionSpace1;
-      typedef DFSpaceImp< FunctionSpaceImp2, GridPartImp, polOrder2, Storage2 > DiscreteFunctionSpace2;
+
+      typedef DiscontinuousGalerkinSpaceDefault< DiscontinuousGalerkinSpaceDefaultTraits<
+         Traits1< FunctionSpaceImp1, GridPartImp, polOrder1, Storage1 > > > DiscreteFunctionSpace1;
+      typedef DiscontinuousGalerkinSpaceDefault< DiscontinuousGalerkinSpaceDefaultTraits<
+         Traits2< FunctionSpaceImp2, GridPartImp, polOrder2, Storage2 > > > DiscreteFunctionSpace2;
 
       static const int codimension = DiscreteFunctionSpace1 :: codimension;
       enum { localBlockSize1 = DiscreteFunctionSpace1::localBlockSize,
-             localBlockSize2 = DiscreteFunctionSpace2::localBlockSize, 
+             localBlockSize2 = DiscreteFunctionSpace2::localBlockSize,
              localBlockSize = localBlockSize1 + localBlockSize2 };
 
       //! define a combined DofMapper and the block mapper
-      typedef typename DiscreteFunctionSpace1 :: BlockMapperType BlockMapperType;
+      typedef CodimensionMapper< GridPartImp, codimension > BlockMapperType;
       typedef NonBlockMapper< BlockMapperType, localBlockSize > MapperType;
 
-      static BlockMapperType* getBlockMapper( const DiscreteFunctionSpace1 &space1, const DiscreteFunctionSpace2 &sapce2 ) 
+      typedef CodimensionMapperSingletonFactory< GridPartImp, codimension > BlockMapperSingletonFactoryType;
+      typedef typename BlockMapperSingletonFactoryType::Key BlockMapperKeyType;
+      typedef SingletonList< BlockMapperKeyType, BlockMapperType, BlockMapperSingletonFactoryType > BlockMapperProviderType;
+
+      static BlockMapperType* getBlockMapper ( const DiscreteFunctionSpace1 &space1, const DiscreteFunctionSpace2 &sapce2 )
       {
-        return &(space1.blockMapper());
+        return &BlockMapperProviderType::getObject( space1.gridPart() );
+      }
+
+      static void deleteBlockMapper ( BlockMapperType *blockMapper )
+      {
+        BlockMapperProviderType::removeObject( *blockMapper );
       }
     };
+
 
 
     // Traits class for different space implementations
@@ -160,7 +181,7 @@ namespace Dune
       typedef typename BaseType :: GridType GridType;
 
       enum { localBlockSize1 = DFunctionSpace1::localBlockSize,
-             localBlockSize2 = DFunctionSpace2::localBlockSize, 
+             localBlockSize2 = DFunctionSpace2::localBlockSize,
              localBlockSize = 1 };
     private:
       //! mapper for blocks
@@ -171,10 +192,15 @@ namespace Dune
       typedef CombinedSpaceMapper< GridType, BlockMapperType1, localBlockSize1, BlockMapperType2, localBlockSize2 > BlockMapperType;
       typedef NonBlockMapper< BlockMapperType, localBlockSize > MapperType;
 
-      static BlockMapperType* getBlockMapper( const DFunctionSpace1 &space1, const DFunctionSpace2 &space2 ) 
+      static BlockMapperType* getBlockMapper( const DFunctionSpace1 &space1, const DFunctionSpace2 &space2 )
       {
-        BlockMapperType blockMapper( space1.gridPart().grid(), space1.blockMapper(), space2.blockMapper() );
-        return &(blockMapper);
+        return new BlockMapperType( space1.gridPart().grid(), space1.blockMapper(), space2.blockMapper() );
+      }
+
+      static void deleteBlockMapper( BlockMapperType *blockMapper )
+      {
+        delete blockMapper;
+        blockMapper = nullptr;
       }
     };
 
@@ -182,8 +208,8 @@ namespace Dune
 
     /** \addtogroup CombinedDiscreteFunctionSpace
      *
-     *  Provides a DiscreteFunctionSpace combined from two arbitrary 
-     *  DiscreteFunctionSpaces U_h and V_h into a single \ref Dune::Fem::DiscreteFunctionSpaceInterface ( U_h times V_h ). 
+     *  Provides a DiscreteFunctionSpace combined from two arbitrary
+     *  DiscreteFunctionSpaces U_h and V_h into a single \ref Dune::Fem::DiscreteFunctionSpaceInterface ( U_h times V_h ).
      *
      *  \note It is assumed that the spaces U_h and V_h  are constructed on the same
      *        gridpart!!!
@@ -201,13 +227,13 @@ namespace Dune
              < CombinedDiscreteFunctionSpaceTraits< DFSpace1, DFSpace2 > >
     {
     public:
-      //! types of Discrete Subspace 
+      //! types of Discrete Subspace
       typedef DFSpace1    DiscreteFunctionSpaceType1;
       typedef DFSpace2    DiscreteFunctionSpaceType2;
 
       //! traits for the discrete function space
       typedef CombinedDiscreteFunctionSpaceTraits< DFSpace1,
-                                                   DFSpace2 > 
+                                                   DFSpace2 >
         Traits;
 
       //! type of the discrete function space
@@ -247,7 +273,7 @@ namespace Dune
              polynomialOrder2 = Traits :: polynomialOrder2,
              polynomialOrder = Traits :: polynomialOrder
       };
-      
+
       //! type of the base function set(s)
       typedef typename Traits :: BasisFunctionSetType BasisFunctionSetType;
 
@@ -258,7 +284,7 @@ namespace Dune
       //! mapper used to implement mapToGlobal
       typedef typename Traits :: MapperType MapperType;
 
-      //! mapper used to for block vector function 
+      //! mapper used to for block vector function
       typedef typename Traits :: BlockMapperType BlockMapperType;
 
       //! size of local blocks
@@ -274,7 +300,7 @@ namespace Dune
       typedef int IdentifierType;
       //! identifier of this discrete function space
       static const IdentifierType id = 669;
-      
+
     private:
       typedef CombinedDiscreteFunctionSpaceType ThisType;
       typedef DiscreteFunctionSpaceDefault< Traits > BaseType;
@@ -282,10 +308,10 @@ namespace Dune
     public:
       using BaseType :: gridPart;
 
-      //! default communication interface 
+      //! default communication interface
       static const InterfaceType defaultInterface = InteriorBorder_All_Interface;
 
-      //! default communication direction 
+      //! default communication direction
       static const CommunicationDirection defaultDirection = ForwardCommunication;
 
       /** \brief constructor
@@ -294,7 +320,7 @@ namespace Dune
        *  \param[in]  commInterface  communication interface to use (optional)
        *  \param[in]  commDirection  communication direction to use (optional)
        */
-      explicit CombinedDiscreteFunctionSpace ( GridPartType &gridPart, 
+      explicit CombinedDiscreteFunctionSpace ( GridPartType &gridPart,
                                                const InterfaceType commInterface = defaultInterface,
                                                const CommunicationDirection commDirection = defaultDirection )
       : BaseType( gridPart, commInterface, commDirection ),
@@ -311,18 +337,17 @@ namespace Dune
 
     public:
       /** \brief Destructor (freeing base functions and mapper)
-          \return 
+          \return
       **/
       ~CombinedDiscreteFunctionSpace ()
       {
-        delete blockMapper_;
-        blockMapper_ = nullptr;
+        Traits::deleteBlockMapper( blockMapper_ );
       }
 
       /** \copydoc Dune::Fem::DiscreteFunctionSpaceInterface::contains */
       inline bool contains ( const int codim ) const
       {
-        // forward to mapper since this information is held there 
+        // forward to mapper since this information is held there
         return blockMapper().contains( codim );
       }
 
@@ -333,7 +358,7 @@ namespace Dune
         return space1_.continuous() && space2_.continuous();
       }
 
-      /** \brief get the type of this discrete function space 
+      /** \brief get the type of this discrete function space
           \return DFSpaceIdentifier
       **/
       inline DFSpaceIdentifier type () const
@@ -436,6 +461,6 @@ namespace Dune
 
   } // namespace Fem
 
-} // namespace Dune 
+} // namespace Dune
 
 #endif // #ifndef DUNE_FEM_COMBINDEDDISCRETFUNCTIONSPACE_HH
