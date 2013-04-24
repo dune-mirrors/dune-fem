@@ -142,14 +142,9 @@ namespace Dune
       typedef typename DiscreteFunctionSpace1 :: BlockMapperType BlockMapperType;
       typedef NonBlockMapper< BlockMapperType, localBlockSize > MapperType;
 
-      typedef CodimensionMapperSingletonFactory< GridPartImp, codimension > BlockMapperSingletonFactoryType;
-      typedef typename BlockMapperSingletonFactoryType::Key BlockMapperKeyType;
-      typedef SingletonList< BlockMapperKeyType, BlockMapperType, BlockMapperSingletonFactoryType > BlockMapperProviderType;
-
-      static BlockMapperKeyType getKey( const GridPartImp &gridPart, const DiscreteFunctionSpace1 &space1, const DiscreteFunctionSpace2 &sapce2 ) 
+      static BlockMapperType* getBlockMapper( const DiscreteFunctionSpace1 &space1, const DiscreteFunctionSpace2 &sapce2 ) 
       {
-        BlockMapperKeyType key( gridPart );
-        return key;
+        return &(space1.blockMapper());
       }
     };
 
@@ -176,14 +171,10 @@ namespace Dune
       typedef CombinedSpaceMapper< GridType, BlockMapperType1, localBlockSize1, BlockMapperType2, localBlockSize2 > BlockMapperType;
       typedef NonBlockMapper< BlockMapperType, localBlockSize > MapperType;
 
-      typedef CombinedSpaceMapperSingletonFactory< GridPartType, DFunctionSpace1, DFunctionSpace2 > BlockMapperSingletonFactoryType;
-      typedef typename BlockMapperSingletonFactoryType::Key BlockMapperKeyType;
-      typedef SingletonList< BlockMapperKeyType, BlockMapperType, BlockMapperSingletonFactoryType > BlockMapperProviderType;
-
-      static BlockMapperKeyType getKey( const GridPartType &gridPart, const DFunctionSpace1 &space1, const DFunctionSpace2 &space2 ) 
+      static BlockMapperType* getBlockMapper( const DFunctionSpace1 &space1, const DFunctionSpace2 &space2 ) 
       {
-        BlockMapperKeyType key( gridPart, space1, space2 );
-        return key;
+        BlockMapperType blockMapper( space1.gridPart().grid(), space1.blockMapper(), space2.blockMapper() );
+        return &(blockMapper);
       }
     };
 
@@ -288,9 +279,6 @@ namespace Dune
       typedef CombinedDiscreteFunctionSpaceType ThisType;
       typedef DiscreteFunctionSpaceDefault< Traits > BaseType;
 
-      typedef typename Traits :: BlockMapperSingletonFactoryType BlockMapperSingletonFactoryType;
-      typedef typename Traits :: BlockMapperProviderType BlockMapperProviderType;
-
     public:
       using BaseType :: gridPart;
 
@@ -312,7 +300,7 @@ namespace Dune
       : BaseType( gridPart, commInterface, commDirection ),
         space1_( gridPart, commInterface, commDirection ),
         space2_( gridPart, commInterface, commDirection ),
-        blockMapper_( &BlockMapperProviderType::getObject( Traits::getKey( gridPart, space1_, space2_ ) ) ),
+        blockMapper_( Traits::getBlockMapper( space1_, space2_ ) ),
         mapper_( blockMapper() )
       {
       }
@@ -327,7 +315,8 @@ namespace Dune
       **/
       ~CombinedDiscreteFunctionSpace ()
       {
-        BlockMapperProviderType::removeObject( blockMapper() );
+        delete blockMapper_;
+        blockMapper_ = nullptr;
       }
 
       /** \copydoc Dune::Fem::DiscreteFunctionSpaceInterface::contains */

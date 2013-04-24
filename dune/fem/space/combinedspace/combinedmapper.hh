@@ -302,43 +302,6 @@ namespace Dune
       int oldGlobalOffset_;
     };
 
-    template< class GridPart, class Space1, class Space2 >
-    struct CombinedSpaceMapperSingletonFactory
-    {
-      typedef CombinedSpaceMapper< typename GridPart::GridType, 
-              typename Space1::BlockMapperType, Space1::localBlockSize,
-              typename Space2::BlockMapperType, Space2::localBlockSize > Object;
-
-      struct Key
-      {
-        Key ( const GridPart &gp, const Space1 &sp1, const Space2 &sp2 )
-        : gridPart( gp ),
-          space1( sp1 ),
-          space2( sp2 )
-        {}
-
-        bool operator== ( const Key &other )
-        {
-          return true; 
-        }
-
-        const GridPart &gridPart;
-        const Space1 &space1;
-        const Space2 &space2;
-      };
-
-      //! create new mapper  
-      static Object *createObject ( const Key &key )
-      {
-        return new Object ( key.gridPart.grid(), key.space1.blockMapper(), key.space2.blockMapper() );
-      }
-
-      //! delete mapper object 
-      static void deleteObject ( Object *object )
-      {
-        delete object;
-      }
-    };
   }   // namespace Fem  
 
 } // namespace Dune
