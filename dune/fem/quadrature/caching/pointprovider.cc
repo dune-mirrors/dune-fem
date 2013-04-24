@@ -151,7 +151,7 @@ namespace Dune
         for (int pt = 0; pt < numLocalPoints; ++pt, ++globalNum) {
           // Store point on reference element
           pit->second[globalNum] = 
-            refElem.template global<codim>(points[pt], face, codim);
+            refElem.template geometry<codim>(face).global( points[pt] );
           
           // Store point mapping
           pMap[pt] = globalNum;
