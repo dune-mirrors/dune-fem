@@ -13,164 +13,183 @@
 #include <dune/fem/operator/matrix/preconditionerwrapper.hh>
 #endif
 
-namespace Dune {
-
-////////////////////////////////////////////////////////////
-//
-//  Setup of matrix structure 
-//
-////////////////////////////////////////////////////////////
-/**  \brief Setup Matrix structure for DG operators by including
- * elements and it's neighbors. 
-*/
-class ElementAndNeighbors
+namespace Dune 
 {
-public:
-  //! get number of entries per row for a block matrix, 
-  //! i.e. here number of (neighbors + 1) * maxNumDofs 
-  template <class Space> 
-  static inline int nonZerosEstimate(const Space& space) 
+
+  ////////////////////////////////////////////////////////////
+  //
+  //  Setup of matrix structure 
+  //
+  ////////////////////////////////////////////////////////////
+  /**  \brief Setup Matrix structure for DG operators by including
+   * elements and it's neighbors. 
+  */
+  class ElementAndNeighbors
   {
-    return ((Space :: GridType :: dimension * 2) + 1) 
-      * space.blockMapper().maxNumDofs() * Space :: localBlockSize ; 
-  }
-
-  //! create entries for element and neighbors 
-  template <class SpaceImp,    
-            class RowMapperType,
-            class ColMapperType,
-            class MatrixStructureMapImp,
-            class DiscreteFunctionType>
-  static inline void setup(const SpaceImp& space,    
-                           const RowMapperType& rowMapper,
-                           const ColMapperType& colMapper,
-                           MatrixStructureMapImp& indices,
-                           const DiscreteFunctionType* )
-  {
-    typedef typename SpaceImp :: GridPartType GridPartType;
-    const GridPartType& gridPart = space.gridPart();
-
-    typedef Fem::ParallelScalarProduct<DiscreteFunctionType> ParallelScalarProductType;
-    typedef typename ParallelScalarProductType :: BuildProxyType BuildProxyType;
-    
-    ParallelScalarProductType scp (space);
-
-    std::auto_ptr<BuildProxyType> buildProxy = scp.buildProxy();
-
-    // define used types 
-    typedef typename GridPartType :: GridType GridType;
-    typedef typename GridPartType :: template Codim<0> :: EntityType    EntityType;
-    typedef typename GridPartType :: template Codim<0> :: IteratorType  IteratorType;
-
-    // clear map 
-    indices.clear();
-
-    // we need All_Partition here to insert overlap entities 
-    // only for diagonal 
-    IteratorType endit = gridPart.template end<0>(); 
-    for(IteratorType it = gridPart.template begin<0>(); it != endit; ++it)
+  public:
+    //! get number of entries per row for a block matrix, 
+    //! i.e. here number of (neighbors + 1) * maxNumDofs 
+    template <class Space> 
+    static inline int nonZerosEstimate(const Space& space) 
     {
-      const EntityType & en = *it;
-      // add all column entities to row  
-      fill(gridPart,en,rowMapper,colMapper,indices, *buildProxy);
+      return ((Space :: GridType :: dimension * 2) + 1) 
+        * space.blockMapper().maxNumDofs() * Space :: localBlockSize ; 
     }
 
-    // insert size as last ghost 
-    buildProxy->insert( rowMapper.size() );
-  }
-
-protected:
-  //! create entries for element and neighbors 
-  template <class GridPartImp,
-            class EntityImp,
-            class RowMapperImp,
-            class ColMapperImp,
-            class ParallelScalarProductType>
-  static inline void fill(const GridPartImp& gridPart,
-                   const EntityImp& en,
-                   const RowMapperImp& rowMapper,
-                   const ColMapperImp& colMapper,
-                   std::map< int , std::set<int> >& indices,
-                   ParallelScalarProductType& slaveDofs)
-  {
-    assert( rowMapper.maxNumDofs () == 1 );
-
-    typedef Fem :: AssignSingleFunctor< int > AssignSingleValueType ;
-
-    int elRowIndex = -1; 
-
-    // get index for entity 
-    rowMapper.mapEach( en, AssignSingleValueType( 0, elRowIndex ) );
-
-    // type of local indices storage 
-    typedef std::set< int >  LocalIndicesType; 
-    LocalIndicesType& localIndices = indices[elRowIndex];
-
-    // insert diagonal for each element 
-    localIndices.insert( elRowIndex );
-
-    // if entity is not interior, insert into overlap entries 
-    if(en.partitionType() != InteriorEntity)
+    //! create entries for element and neighbors 
+    template <class SpaceImp,    
+              class RowMapperType,
+              class ColMapperType,
+              class MatrixStructureMapImp,
+              class DiscreteFunctionType>
+    static inline void setup(const SpaceImp& space,    
+                             const RowMapperType& rowMapper,
+                             const ColMapperType& colMapper,
+                             MatrixStructureMapImp& indices,
+                             const DiscreteFunctionType* )
     {
-      slaveDofs.insert( elRowIndex );
-    }
+      typedef typename SpaceImp :: GridPartType GridPartType;
+      const GridPartType& gridPart = space.gridPart();
 
-    // insert neighbors 
-    typedef typename GridPartImp::template Codim<0>::EntityPointerType EntityPointerType; 
-    typedef typename GridPartImp:: IntersectionIteratorType IntersectionIteratorType;
-    typedef typename IntersectionIteratorType :: Intersection IntersectionType;
-    IntersectionIteratorType endnit = gridPart.iend(en);
-    for(IntersectionIteratorType nit = gridPart.ibegin(en);
-        nit != endnit; ++nit)
-    {
-      // get intersection 
-      const IntersectionType& inter = *nit;
+      typedef Fem::ParallelScalarProduct<DiscreteFunctionType> ParallelScalarProductType;
+      typedef typename ParallelScalarProductType :: BuildProxyType BuildProxyType;
+      
+      ParallelScalarProductType scp (space);
 
-      if(inter.neighbor())
+      std::auto_ptr<BuildProxyType> buildProxy = scp.buildProxy();
+
+      // define used types 
+      typedef typename GridPartType :: GridType GridType;
+      typedef typename GridPartType :: template Codim<0> :: EntityType    EntityType;
+      typedef typename GridPartType :: template Codim<0> :: IteratorType  IteratorType;
+
+      // clear map 
+      indices.clear();
+
+      // we need All_Partition here to insert overlap entities 
+      // only for diagonal 
+      IteratorType endit = gridPart.template end<0>(); 
+      for(IteratorType it = gridPart.template begin<0>(); it != endit; ++it)
       {
-        // get neighbor 
-        EntityPointerType ep = inter.outside();
-        const EntityImp& nb = *ep;
+        const EntityType & en = *it;
+        // add all column entities to row  
+        fill( gridPart,en,rowMapper,colMapper,indices, *buildProxy );
+      }
 
-        // get index of neighbor 
-        int nbColIndex = -1;
-        colMapper.mapEach( nb, AssignSingleValueType( 0, nbColIndex ) );
-        int nbRowIndex = -1;
-        rowMapper.mapEach( nb, AssignSingleValueType( 0, nbRowIndex ) );
+      // insert size as last ghost 
+      buildProxy->insert( rowMapper.size() );
+    }
 
-        // check whether to insert now 
-        bool insertHere = (elRowIndex < nbRowIndex);
-        bool nbInsert = true;
+  protected:
+    template <class GK>
+    struct FillFunctor
+    {
+      typedef std :: set< int >  LocalIndicesType;
+      typedef GK GlobalKey;
+
+      FillFunctor ( std::map<int,LocalIndicesType> &indices, bool fillNeighbor = true ) 
+      : indices_(indices),
+        localIndices_(0),
+        fillNeighbor_( fillNeighbor )
+      {}
+
+      void set ( const std::size_t rowLocal, const GlobalKey &rowGlobal )
+      {
+        localIndices_ = &(indices_[ rowGlobal ]);
+      }
+
+      template < class ColGlobal >
+      void operator() ( const std::size_t colLocal, const ColGlobal &colGlobal )
+      {
+        if( fillNeighbor_ )
+          localIndices_->insert( colGlobal );
+      }
+
+    private:
+      std::map<int,LocalIndicesType> &indices_;
+      LocalIndicesType *localIndices_;
+      bool fillNeighbor_;
+    };
+
+
+    template <class GK, class SlaveDofProviderImp>
+    struct FillSlaveFunctor
+    {
+      typedef SlaveDofProviderImp SlaveDofProvider;
+      typedef GK GlobalKey;
+
+      FillSlaveFunctor ( SlaveDofProvider &slaves ) 
+      : slaves_( slaves ) 
+      {}
+
+      template < class ColGlobal >
+      void operator() ( const std::size_t colLocal, const ColGlobal &colGlobal )
+      {
+        slaves_.insert( colGlobal );
+      }
+
+    private:
+      SlaveDofProvider &slaves_;
+    };
+
+
+    //! create entries for element and neighbors 
+    template <class GridPartImp,
+              class EntityImp,
+              class RowMapperImp,
+              class ColMapperImp,
+              class ParallelScalarProductType>
+    static inline void fill(const GridPartImp& gridPart,
+                     const EntityImp& en,
+                     const RowMapperImp& rowMapper,
+                     const ColMapperImp& colMapper,
+                     std::map< int , std::set<int> >& indices,
+                     ParallelScalarProductType& slaveDofs)
+    {
+      typedef FillFunctor<typename RowMapperImp::GlobalKeyType> Functor;
+      typedef Fem::MatrixFunctor<ColMapperImp,EntityImp,Functor > MFunctor;
+
+      rowMapper.mapEach( en, MFunctor( colMapper, en, Functor( indices ) ) );
+
+      typedef FillSlaveFunctor< typename RowMapperImp::GlobalKeyType, ParallelScalarProductType > SlaveFillFunctorType;
+      // if entity is not interior, insert into overlap entries 
+      if(en.partitionType() != InteriorEntity)
+      {
+        rowMapper.mapEach( en, SlaveFillFunctorType( slaveDofs ) );
+      }
+
+      // insert neighbors 
+      typedef typename GridPartImp::template Codim<0>::EntityPointerType EntityPointerType; 
+      typedef typename GridPartImp:: IntersectionIteratorType IntersectionIteratorType;
+      typedef typename IntersectionIteratorType :: Intersection IntersectionType;
+      IntersectionIteratorType endnit = gridPart.iend(en);
+      for(IntersectionIteratorType nit = gridPart.ibegin(en);
+          nit != endnit; ++nit)
+      {
+        // get intersection 
+        const IntersectionType& inter = *nit;
+
+        if( inter.neighbor() )
+        {
+          // get neighbor 
+          EntityPointerType ep = inter.outside();
+          const EntityImp& nb = *ep;
+
+          bool fillNeighbor = true;
 #if HAVE_MPI 
-        // check partition type 
-        if( nb.partitionType() != InteriorEntity )
-        {
-          insertHere = true;
-          nbInsert = nb.partitionType() != GhostEntity;
-          slaveDofs.insert( nbRowIndex );
-        }
-#endif
-        // insert pair 
-        if( insertHere )
-        {
-          // insert neighbor 
-          localIndices.insert( nbColIndex );
-
-          // insert symetric part with swaped row-col
-          LocalIndicesType& nbIndices = indices[nbRowIndex];
-          nbIndices.insert( nbColIndex );
-
-          if( nbInsert )
+          // check partition type 
+          if( nb.partitionType() != InteriorEntity )
           {
-            int elColIndex = -1; 
-            colMapper.mapEach( en, AssignSingleValueType( 0, elColIndex ) );
-            nbIndices.insert( elColIndex );  
+            fillNeighbor = nb.partitionType() != GhostEntity;
+            rowMapper.mapEach( nb, SlaveFillFunctorType( slaveDofs ) );
           }
+#endif
+          rowMapper.mapEach( nb, MFunctor( colMapper, en, Functor( indices, fillNeighbor ) ) );
         }
       }
     }
-  }
-};
+  };
+
 
   template <class TraitsImp>
   struct DGMatrixTraits

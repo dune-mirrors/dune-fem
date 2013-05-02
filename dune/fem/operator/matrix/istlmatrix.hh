@@ -1034,7 +1034,7 @@ namespace Dune
         // AMG Jacobi   
         else if(preconditioning_ == amg_jacobi)
         {
-          typedef SeqJac<ISTLMatrixType,RowBlockVectorType,ColumnBlockVectorType> PreconditionerType;
+          typedef SeqJac<ISTLMatrixType,RowBlockVectorType,ColumnBlockVectorType,1> PreconditionerType;
           return createAMGMatrixAdapter( (PreconditionerType*)0, numIterations_ );
         }
         else 
