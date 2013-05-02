@@ -599,16 +599,13 @@ namespace Dune
         void init(const RowEntityType & rowEntity,
                   const ColumnEntityType & colEntity)
         {
-          if( geomType_ != rowEntity.type() ) 
-          {
-            // initialize base functions sets 
-            BaseType :: init ( rowEntity , colEntity );
+          // initialize base functions sets 
+          BaseType :: init ( rowEntity , colEntity );
 
-            geomType_ = rowEntity.type();
-            numRows_  = rowMapper_.numDofs(rowEntity);
-            numCols_  = colMapper_.numDofs(colEntity);
-            matrices_.resize( numRows_ );
-          }
+          geomType_ = rowEntity.type();
+          numRows_  = rowMapper_.numDofs(rowEntity);
+          numCols_  = colMapper_.numDofs(colEntity);
+          matrices_.resize( numRows_ );
 
           // RowFunctor rowFunctor(colEntity, colMapper_, matrixObj_.matrix(), matrices_, numCols_);
           // rowMapper_.mapEach(rowEntity, rowFunctor);
