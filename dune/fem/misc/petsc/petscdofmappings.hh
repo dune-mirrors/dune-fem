@@ -146,10 +146,7 @@ namespace Dune
         #endif 
         assert( numOwnedDofBlocks_ == ownedDofBlocks );
 
-        typedef FunctionSpace< typename SpaceType :: DomainFieldType, GlobalDofType, SpaceType :: dimDomain, 1 >
-          FunctionSpaceType ;
-
-        typedef typename SpaceType :: template ToNewFunctionSpace< FunctionSpaceType > :: Type GlobalDofSpaceType ;
+        typedef typename SpaceType :: template ToNewDimRange< 1 > :: Type GlobalDofSpaceType ;
 
         GlobalDofSpaceType dofSpace( space.gridPart() );
 
@@ -166,9 +163,9 @@ namespace Dune
 
       void initialize ( const SlaveDofsType& slaveDofs )
       {
-        numSlaveBlocks_ = slaveDofs.size() - 1;
-        // numOwnedDofBlocks_ = slaveDofs.space().blockMapper().size() - numSlaveBlocks_;
-        numOwnedDofBlocks_ = slaveDofs.space().mapper().size() - numSlaveBlocks_;
+        numSlaveBlocks_    = slaveDofs.size() - 1;
+        numOwnedDofBlocks_ = slaveDofs.space().blockMapper().size() - numSlaveBlocks_;
+        //numOwnedDofBlocks_ = slaveDofs.space().mapper().size() - numSlaveBlocks_;
 
         // start with index 0 (use unsigned long as buffers) 
         unsigned long processStartIndex = 0;
