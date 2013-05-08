@@ -133,10 +133,12 @@ namespace Dune
           /*
           * initialize the row and column petsc dof mappings
           */
-          const PetscInt localRows = rowDofMapping().numOwnedDofBlocks();
-          const PetscInt localCols = colDofMapping().numOwnedDofBlocks();
+          const PetscInt localRows =
+            rowDofMapping().numOwnedDofBlocks()*rangeLocalBlockSize;
+          const PetscInt localCols =
+            colDofMapping().numOwnedDofBlocks()*domainLocalBlockSize;
 
-           assert( domainLocalBlockSize == rangeLocalBlockSize );
+          assert( domainLocalBlockSize == rangeLocalBlockSize );
           // create matrix 
           ::Dune::Petsc::MatCreate( &petscMatrix_ );
         
@@ -282,7 +284,10 @@ namespace Dune
         if( littleRows > 1 )
         {
           // set all values to 0 
-          localMatrix_ = 0;
+          localMatrix_ = LittleBlockType(0.);
+                              // DynamicMatrixType( rangeSpace().blockMapper().maxNumDofs(),
+                              // domainSpace().blockMapper().maxNumDofs(), 
+                              // LittleBlockType(0.) );
         }
 
         setupIndices( rangeSpace().blockMapper(), petscLinearOperator_.rowDofMapping(), rowEntity, rowIndices_ );
@@ -307,6 +312,7 @@ namespace Dune
 
       ~LocalMatrix() 
       {
+        if (petscMatrix() == 0) return;
         if( littleRows > 1 ) 
         {
           const int colSize = columns() * littleCols ;
