@@ -23,10 +23,10 @@ namespace Dune
     class DefaultCommunicationHandler
     : public CommDataHandleIF
       < DefaultCommunicationHandler< DiscreteFunction, Operation >,
-        typename DiscreteFunction::RangeFieldType >
+        typename DiscreteFunction::DofType >
     {
       typedef DefaultCommunicationHandler< DiscreteFunction, Operation > ThisType;
-      typedef CommDataHandleIF< ThisType, typename DiscreteFunction::RangeFieldType > BaseType;
+      typedef CommDataHandleIF< ThisType, typename DiscreteFunction::DofType > BaseType;
 
     public:  
       typedef typename BaseType::DataType DataType;
