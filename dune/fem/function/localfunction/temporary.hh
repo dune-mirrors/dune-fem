@@ -13,21 +13,27 @@ namespace Dune
   {
 
     template< class DiscreteFunctionSpace,
+              class Dof, 
               template< class > class ArrayAllocator = DefaultArrayAllocator >
     class TemporaryLocalFunctionImpl;
 
     template< class DiscreteFunctionSpace,
+              class Dof = typename DiscreteFunctionSpace :: RangeFieldType, 
               template< class > class ArrayAllocator = DefaultArrayAllocator >
     class TemporaryLocalFunction;
 
     template< class DiscreteFunctionSpace,
+              class Dof, 
               template< class > class ArrayAllocator >
     struct TemporaryLocalFunctionTraits
     {
       typedef DiscreteFunctionSpace DiscreteFunctionSpaceType;
 
-      typedef TemporaryLocalFunctionImpl< DiscreteFunctionSpace, ArrayAllocator > LocalFunctionImpType;
-      typedef TemporaryLocalFunction< DiscreteFunctionSpace, ArrayAllocator > LocalFunctionUserType;
+      //! type of DoF use in local function 
+      typedef Dof DofType;
+
+      typedef TemporaryLocalFunctionImpl< DiscreteFunctionSpace, Dof, ArrayAllocator > LocalFunctionImpType;
+      typedef TemporaryLocalFunction< DiscreteFunctionSpace, Dof, ArrayAllocator > LocalFunctionUserType;
     };
 
 
@@ -50,15 +56,15 @@ namespace Dune
      *  \param DiscreteFunctionSpaceImp type of the discrete function space, the
      *                                  local function shall belong to
      */
-    template< class DiscreteFunctionSpace,
+    template< class DiscreteFunctionSpace, class Dof,
               template< class > class ArrayAllocator >
     class TemporaryLocalFunction
     : public LocalFunction
-      < TemporaryLocalFunctionTraits< DiscreteFunctionSpace, ArrayAllocator > >
+      < TemporaryLocalFunctionTraits< DiscreteFunctionSpace, Dof, ArrayAllocator > >
     {
     public:
       typedef TemporaryLocalFunctionTraits
-        < DiscreteFunctionSpace, ArrayAllocator >
+        < DiscreteFunctionSpace, Dof, ArrayAllocator >
         Traits;
 
       //! type of the discrete function space
@@ -69,7 +75,7 @@ namespace Dune
       typedef typename Traits :: LocalFunctionImpType LocalFunctionImpType;
 
     private:
-      typedef TemporaryLocalFunction< DiscreteFunctionSpaceType, ArrayAllocator >
+      typedef TemporaryLocalFunction< DiscreteFunctionSpaceType, Dof, ArrayAllocator >
         ThisType;
       typedef LocalFunction< Traits > BaseType;
 
@@ -143,7 +149,7 @@ namespace Dune
       LocalFunctionImpType impl_;
     };
 
-    template< class DiscreteFunctionSpace,
+    template< class DiscreteFunction,
               template< class > class ArrayAllocator = DefaultArrayAllocator >
     class ConstLocalFunction;
 
@@ -168,13 +174,17 @@ namespace Dune
     template< class DiscreteFunction,
               template< class > class ArrayAllocator >
     class ConstLocalFunction 
-    : public TemporaryLocalFunction< typename DiscreteFunction :: DiscreteFunctionSpaceType , ArrayAllocator >
+    : public TemporaryLocalFunction< typename DiscreteFunction :: DiscreteFunctionSpaceType, 
+                                     typename DiscreteFunction :: DofType,
+                                     ArrayAllocator >
     {
-      typedef TemporaryLocalFunction< typename DiscreteFunction ::
-        DiscreteFunctionSpaceType, ArrayAllocator > BaseType;
+      typedef TemporaryLocalFunction< typename DiscreteFunction :: DiscreteFunctionSpaceType, 
+                                      typename DiscreteFunction :: DofType,
+                                      ArrayAllocator > BaseType;
       typedef ConstLocalFunction< DiscreteFunction, ArrayAllocator > ThisType;
     public:
       typedef DiscreteFunction DiscreteFunctionType ;
+      typedef typename DiscreteFunctionType :: DofType DofType;
       typedef typename BaseType :: DiscreteFunctionSpaceType DiscreteFunctionSpaceType ;
       typedef typename BaseType :: EntityType EntityType ;
       typedef typename BaseType :: RangeFieldType RangeFieldType ;
@@ -246,7 +256,7 @@ namespace Dune
     protected:
       // make all methods that modify the local function protected 
       // to prohibit modifying of the local dofs 
-      RangeFieldType &operator[] ( const int num )
+      DofType &operator[] ( const int num )
       {
         return asImp()[ num ];
       }
@@ -264,12 +274,12 @@ namespace Dune
     // TemporaryLocalFunctionImpl
     // --------------------------
 
-    template< class DiscreteFunctionSpace,
+    template< class DiscreteFunctionSpace, class Dof,
               template< class > class ArrayAllocator >
     class TemporaryLocalFunctionImpl
     : public LocalFunctionDefault
       < DiscreteFunctionSpace,
-        TemporaryLocalFunctionImpl< DiscreteFunctionSpace, ArrayAllocator > >
+        TemporaryLocalFunctionImpl< DiscreteFunctionSpace, Dof, ArrayAllocator > >
     {
       template< class DiscreteFunction >
       struct AssignDofs;
@@ -279,7 +289,7 @@ namespace Dune
       typedef DiscreteFunctionSpace DiscreteFunctionSpaceType;
 
     private:
-      typedef TemporaryLocalFunctionImpl< DiscreteFunctionSpaceType, ArrayAllocator >
+      typedef TemporaryLocalFunctionImpl< DiscreteFunctionSpaceType, Dof, ArrayAllocator >
         ThisType;
       typedef LocalFunctionDefault< DiscreteFunctionSpaceType, ThisType > BaseType;
       
@@ -291,6 +301,9 @@ namespace Dune
       //! type of the base function set
       typedef typename DiscreteFunctionSpaceType :: BasisFunctionSetType
         BasisFunctionSetType;
+
+      //! type of DoF used 
+      typedef Dof  DofType;
 
       //! type of the entity, this local function is associated with
       typedef typename DiscreteFunctionSpaceType :: EntityType EntityType;
@@ -312,7 +325,7 @@ namespace Dune
       enum { dimRange = DiscreteFunctionSpaceType :: dimRange };
 
     protected:
-      typedef DynamicArray< RangeFieldType, ArrayAllocator > DofArrayType;
+      typedef DynamicArray< DofType, ArrayAllocator > DofArrayType;
 
     public:
       /** \brief constructor creating a local function without binding it to an 
@@ -361,10 +374,10 @@ namespace Dune
       TemporaryLocalFunctionImpl ( const ThisType &other );
 
       /** \copydoc Dune::Fem::LocalFunction::operator[]( const int num ) const */
-      const RangeFieldType &operator[] ( const int num ) const;
+      const DofType &operator[] ( const int num ) const;
 
       /** \copydoc Dune::Fem::LocalFunction::operator[]( const int num ) */
-      RangeFieldType &operator[] ( const int num );
+      DofType &operator[] ( const int num );
 
       /** \copydoc Dune::Fem::LocalFunction::basisFunctionSet() const */
       const BasisFunctionSetType &basisFunctionSet () const;
@@ -422,9 +435,9 @@ namespace Dune
     // TemporaryLocalFunctionImpl::AssignDofs
     // --------------------------------------
 
-    template< class DiscreteFunctionSpace, template< class > class ArrayAllocator >
+    template< class DiscreteFunctionSpace, class Dof, template< class > class ArrayAllocator >
     template< class DiscreteFunction >
-    struct TemporaryLocalFunctionImpl< DiscreteFunctionSpace, ArrayAllocator >::AssignDofs
+    struct TemporaryLocalFunctionImpl< DiscreteFunctionSpace, Dof, ArrayAllocator >::AssignDofs
     {
       AssignDofs ( const DiscreteFunction &discreteFunction, DofArrayType &dofs )
       : discreteFunction_( discreteFunction ), dofs_( dofs )
@@ -454,6 +467,7 @@ namespace Dune
     // -----------------------------
     
     template< class DiscreteFunctionSpace,
+              class Dof,
               template< class > class ArrayAllocator = DefaultArrayAllocator >
     class TemporaryLocalFunctionFactory
     {
@@ -462,11 +476,11 @@ namespace Dune
 
     private:
       typedef TemporaryLocalFunctionFactory
-        < DiscreteFunctionSpaceType, ArrayAllocator >
+        < DiscreteFunctionSpaceType, Dof, ArrayAllocator >
         ThisType;
 
     public:
-      typedef TemporaryLocalFunctionImpl< DiscreteFunctionSpaceType, ArrayAllocator >
+      typedef TemporaryLocalFunctionImpl< DiscreteFunctionSpaceType, Dof, ArrayAllocator >
         ObjectType;
 
       explicit TemporaryLocalFunctionFactory ( const DiscreteFunctionSpaceType &dfSpace )
@@ -487,8 +501,8 @@ namespace Dune
     // Implementation of TemporaryLocalFunctionImpl
     // --------------------------------------------
 
-    template< class DiscreteFunctionSpace, template< class > class ArrayAllocator >
-    inline TemporaryLocalFunctionImpl< DiscreteFunctionSpace, ArrayAllocator >
+    template< class DiscreteFunctionSpace, class Dof, template< class > class ArrayAllocator >
+    inline TemporaryLocalFunctionImpl< DiscreteFunctionSpace, Dof, ArrayAllocator >
       :: TemporaryLocalFunctionImpl ( const DiscreteFunctionSpaceType &dfSpace )
     : discreteFunctionSpace_( dfSpace ),
       entity_( 0 ),
@@ -497,8 +511,8 @@ namespace Dune
     {}
 
 
-    template< class DiscreteFunctionSpace, template< class > class ArrayAllocator >
-    inline TemporaryLocalFunctionImpl< DiscreteFunctionSpace, ArrayAllocator >
+    template< class DiscreteFunctionSpace, class Dof, template< class > class ArrayAllocator >
+    inline TemporaryLocalFunctionImpl< DiscreteFunctionSpace, Dof, ArrayAllocator >
       :: TemporaryLocalFunctionImpl ( const DiscreteFunctionSpaceType &dfSpace,
                                       const EntityType &entity )
     : discreteFunctionSpace_( dfSpace ),
@@ -508,8 +522,8 @@ namespace Dune
     {}
 
 
-    template< class DiscreteFunctionSpace, template< class > class ArrayAllocator >
-    inline TemporaryLocalFunctionImpl< DiscreteFunctionSpace, ArrayAllocator >
+    template< class DiscreteFunctionSpace, class Dof, template< class > class ArrayAllocator >
+    inline TemporaryLocalFunctionImpl< DiscreteFunctionSpace, Dof, ArrayAllocator >
       :: TemporaryLocalFunctionImpl ( const ThisType &other )
     : discreteFunctionSpace_( other.discreteFunctionSpace_ ),
       entity_( other.entity_ ),
@@ -518,11 +532,11 @@ namespace Dune
     {}
 
     
-    template< class DiscreteFunctionSpace, template< class > class ArrayAllocator >
+    template< class DiscreteFunctionSpace, class Dof, template< class > class ArrayAllocator >
     inline
-    const typename TemporaryLocalFunctionImpl< DiscreteFunctionSpace, ArrayAllocator >
-      :: RangeFieldType &
-    TemporaryLocalFunctionImpl< DiscreteFunctionSpace, ArrayAllocator >
+    const typename TemporaryLocalFunctionImpl< DiscreteFunctionSpace, Dof, ArrayAllocator >
+      :: DofType &
+    TemporaryLocalFunctionImpl< DiscreteFunctionSpace, Dof, ArrayAllocator >
       :: operator[] ( const int num ) const
     {
       assert( num < numDofs() );
@@ -530,11 +544,11 @@ namespace Dune
     }
 
 
-    template< class DiscreteFunctionSpace, template< class > class ArrayAllocator >
+    template< class DiscreteFunctionSpace, class Dof, template< class > class ArrayAllocator >
     inline
-    typename TemporaryLocalFunctionImpl< DiscreteFunctionSpace, ArrayAllocator >
-      :: RangeFieldType &
-    TemporaryLocalFunctionImpl< DiscreteFunctionSpace, ArrayAllocator >
+    typename TemporaryLocalFunctionImpl< DiscreteFunctionSpace, Dof, ArrayAllocator >
+      :: DofType &
+    TemporaryLocalFunctionImpl< DiscreteFunctionSpace, Dof, ArrayAllocator >
       :: operator[] ( const int num )
     {
       assert( num < numDofs() );
@@ -542,11 +556,11 @@ namespace Dune
     }
 
 
-    template< class DiscreteFunctionSpace, template< class > class ArrayAllocator >
+    template< class DiscreteFunctionSpace, class Dof, template< class > class ArrayAllocator >
     inline
-    const typename TemporaryLocalFunctionImpl< DiscreteFunctionSpace, ArrayAllocator >
+    const typename TemporaryLocalFunctionImpl< DiscreteFunctionSpace, Dof, ArrayAllocator >
       :: BasisFunctionSetType &
-    TemporaryLocalFunctionImpl< DiscreteFunctionSpace, ArrayAllocator >
+    TemporaryLocalFunctionImpl< DiscreteFunctionSpace, Dof, ArrayAllocator >
       :: basisFunctionSet () const
     {
       assert( entity_ != 0 );
@@ -554,11 +568,11 @@ namespace Dune
     }
 
     
-    template< class DiscreteFunctionSpace, template< class > class ArrayAllocator >
+    template< class DiscreteFunctionSpace, class Dof, template< class > class ArrayAllocator >
     inline
-    const typename TemporaryLocalFunctionImpl< DiscreteFunctionSpace, ArrayAllocator >
+    const typename TemporaryLocalFunctionImpl< DiscreteFunctionSpace, Dof, ArrayAllocator >
       :: EntityType &
-    TemporaryLocalFunctionImpl< DiscreteFunctionSpace, ArrayAllocator >
+    TemporaryLocalFunctionImpl< DiscreteFunctionSpace, Dof, ArrayAllocator >
       :: entity () const
     {
       assert( entity_ != 0 );
@@ -566,8 +580,8 @@ namespace Dune
     }
 
 
-    template< class DiscreteFunctionSpace, template< class > class ArrayAllocator >
-    inline void TemporaryLocalFunctionImpl< DiscreteFunctionSpace, ArrayAllocator >
+    template< class DiscreteFunctionSpace, class Dof, template< class > class ArrayAllocator >
+    inline void TemporaryLocalFunctionImpl< DiscreteFunctionSpace, Dof, ArrayAllocator >
       :: init ( const EntityType &entity )
     {
       basisFunctionSet_ = discreteFunctionSpace_.basisFunctionSet( entity );
@@ -577,9 +591,9 @@ namespace Dune
     }
 
 
-    template< class DiscreteFunctionSpace, template< class > class ArrayAllocator >
+    template< class DiscreteFunctionSpace, class Dof, template< class > class ArrayAllocator >
     template< class DiscreteFunction >
-    inline void TemporaryLocalFunctionImpl< DiscreteFunctionSpace, ArrayAllocator >
+    inline void TemporaryLocalFunctionImpl< DiscreteFunctionSpace, Dof, ArrayAllocator >
       ::init ( const EntityType &entity, const DiscreteFunction &discreteFunction )
     {
       // initialize 
@@ -593,8 +607,8 @@ namespace Dune
     }
 
 
-    template< class DiscreteFunctionSpace, template< class > class ArrayAllocator >
-    inline int TemporaryLocalFunctionImpl< DiscreteFunctionSpace, ArrayAllocator >
+    template< class DiscreteFunctionSpace, class Dof, template< class > class ArrayAllocator >
+    inline int TemporaryLocalFunctionImpl< DiscreteFunctionSpace, Dof, ArrayAllocator >
       :: numDofs () const
     {
       return basisFunctionSet_.size();
