@@ -58,7 +58,7 @@ dgl2projection_vector_SOURCES = dgl2projection.cc
 dgl2projection_vector_CPPFLAGS = -DPOLORDER=1 -DUSE_VECTORFUNCTION $(AM_CPPFLAGS)
 
 dgl2projection_vector_int_SOURCES = dgl2projection.cc
-dgl2projection_vector_int_CPPFLAGS = -DPOLORDER=1 -DUSE_VECTORFUNCTION -DUSE_VECTORFUNCTION_INT $(AM_CPPFLAGS)
+dgl2projection_vector_int_CPPFLAGS = -DPOLORDER=1 -DUSE_VECTORFUNCTION -DUSE_DOFTYPE_INT $(AM_CPPFLAGS)
 
 dgl2projection_attached_SOURCES = dgl2projection.cc
 dgl2projection_attached_CPPFLAGS = -DPOLORDER=1 -DUSE_ATTACHEDFUNCTION $(AM_CPPFLAGS)

@@ -74,7 +74,7 @@ typedef Fem :: ISTLBlockVectorDiscreteFunction< DiscreteFunctionSpaceType >
 typedef Fem :: ManagedDiscreteFunction
   < Fem :: VectorDiscreteFunction
     < DiscreteFunctionSpaceType,
-  #if defined USE_VECTORFUNCTION_INT
+  #if defined USE_DOFTYPE_INT
         Fem :: DynamicVector< int > 
   #else
         Fem :: DynamicVector< FunctionSpaceType :: RangeFieldType > 
