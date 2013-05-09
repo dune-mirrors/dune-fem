@@ -244,9 +244,9 @@ namespace Dune
         return dofVector().leakPointer();
       }
 
-      RangeFieldType scalarProductDofs ( const ThisType &u ) const
+      RangeFieldType scalarProductDofs ( const ThisType &other ) const
       {
-        return dofVector() * u.dofVector();
+        return this->scalarProduct_.scalarProductDofs( *this, other );
       }
 
       int size () const
