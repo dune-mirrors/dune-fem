@@ -138,8 +138,7 @@ namespace Dune
         freeDofVector_( false )
       {
         // size of dof vector must be size of space in blocks x localBlockSize 
-        assert( dofVector_->size() == 
-                (unsigned int)dfSpace.blockMapper().size() * DiscreteFunctionSpace :: localBlockSize  );
+        assert( dofVector_->size() == (unsigned int)dfSpace.blockMapper().size() );
       }
 
       VectorDiscreteFunction ( const ThisType &other )

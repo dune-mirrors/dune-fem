@@ -8,6 +8,7 @@
 #include <iostream>
 
 
+#include <dune/fem/space/finitevolume.hh>
 #include <dune/fem/storage/vector.hh>
 #include <dune/fem/function/vectorfunction.hh>
 #include <dune/fem/misc/mpimanager.hh>
@@ -146,19 +147,40 @@ namespace Dune
         #endif 
         assert( numOwnedDofBlocks_ == ownedDofBlocks );
 
-        typedef typename SpaceType :: template ToNewDimRange< 1 > :: Type GlobalDofSpaceType ;
+        typedef typename SpaceType :: template ToNewDimRange< 1 > :: Type DofSpaceType ;
 
-        GlobalDofSpaceType dofSpace( space.gridPart() );
+        if( space.continuous() )
+        {
+          typedef DofSpaceType GlobalDofSpaceType ;
+          GlobalDofSpaceType dofSpace( space.gridPart() );
 
-        // store global dofs as a discrete function to use the already 
-        // built communication patterns to sum up the global dofs 
-        // which in this case simply sets the global numbers of the dofs 
-        // from the other ranks (we have to use the space's range field type)
-        VectorDiscreteFunction< GlobalDofSpaceType, GlobalDofMappingType  >
-          dofMappingFunc( "globalDofs", dofSpace, globalDofMapping_ );
+          // store global dofs as a discrete function to use the already 
+          // built communication patterns to sum up the global dofs 
+          // which in this case simply sets the global numbers of the dofs 
+          // from the other ranks (we have to use the space's range field type)
+          VectorDiscreteFunction< GlobalDofSpaceType, GlobalDofMappingType  >
+            dofMappingFunc( "globalDofs", dofSpace, globalDofMapping_ );
 
-        // do communication
-        dofMappingFunc.communicate();
+          // do communication
+          dofMappingFunc.communicate();
+        }
+        else 
+        {
+          // for discontinuous solution we only need one dof per element --> FV space
+          typedef FiniteVolumeSpace< typename DofSpaceType :: FunctionSpaceType, 
+                                     typename DofSpaceType :: GridPartType >  GlobalDofSpaceType ;
+          GlobalDofSpaceType dofSpace( space.gridPart() );
+
+          // store global dofs as a discrete function to use the already 
+          // built communication patterns to sum up the global dofs 
+          // which in this case simply sets the global numbers of the dofs 
+          // from the other ranks (we have to use the space's range field type)
+          VectorDiscreteFunction< GlobalDofSpaceType, GlobalDofMappingType  >
+            dofMappingFunc( "globalDofs", dofSpace, globalDofMapping_ );
+
+          // do communication
+          dofMappingFunc.communicate();
+        }
       }
 
       void initialize ( const SlaveDofsType& slaveDofs )
