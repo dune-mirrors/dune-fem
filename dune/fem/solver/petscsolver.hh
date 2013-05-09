@@ -256,6 +256,12 @@ namespace Dune
         // call PETSc solvers 
         ::Dune::Petsc::KSPSolve(ksp_, *arg.petscVec() , *dest.petscVec() );
 
+        // for continuous solution we need a communication here
+        if( dest.space().continuous() )
+        {
+          dest.communicate();
+        }
+
         // get number of iterations 
         PetscInt its ;
         ::Dune::Petsc::KSPGetIterationNumber( ksp_, &its );
