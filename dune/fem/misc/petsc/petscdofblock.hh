@@ -131,6 +131,18 @@ namespace Dune
         return *this;
       }
 
+      const ThisType& operator-= ( const ThisType &other )
+      {
+        setValue( -other.getValue(), ADD_VALUES );
+        return *this;
+      }
+
+      const ThisType& operator-= ( const PetscScalar scalar )
+      {
+        setValue( -scalar, ADD_VALUES );
+        return *this;
+      }
+
       // conversion operators
       operator PetscScalar () const { return getValue(); }
 
