@@ -4,7 +4,7 @@
 
 #include <dune/fem/storage/envelope.hh> 
 
-#if defined HAVE_PETSC
+#if HAVE_PETSC
 
 #include <dune/fem/misc/petsc/petsccommon.hh>
 #include <dune/fem/misc/petsc/petscvector.hh>
@@ -296,6 +296,6 @@ namespace Dune
 
 } // namespace Dune
 
-#endif // #if defined HAVE_PETSC
+#endif // #if HAVE_PETSC
 
 #endif // DUNE_FEM_PETSCDOFBLOCK_HH

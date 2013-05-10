@@ -4,7 +4,7 @@
 
 #include <dune/fem/storage/envelope.hh> 
 
-#if defined HAVE_PETSC
+#if HAVE_PETSC
 
 #include <dune/fem/misc/petsc/petsccommon.hh>
 #include <dune/fem/misc/petsc/petscslavedofprovider.hh>
@@ -69,7 +69,7 @@ namespace Dune
       {
         // set up the DofMapping instance and all variables depending on it
         localSize_ = dofMapping().numOwnedDofBlocks() * blockSize;
-        numGhosts_ = dofMapping().numSlaveBlocks() * blockSize;
+        numGhosts_ = dofMapping().numSlaveBlocks()    * blockSize;
         assert( static_cast< size_t >( localSize_ + numGhosts_ ) == dofMapping().size() * blockSize );
 
         // set up the ghost array builder
@@ -310,6 +310,6 @@ namespace Dune
 
 } // namespace Dune
 
-#endif // #if defined HAVE_PETSC 
+#endif // #if HAVE_PETSC 
 
 #endif // DUNE_FEM_PETSCVECTOR_HH

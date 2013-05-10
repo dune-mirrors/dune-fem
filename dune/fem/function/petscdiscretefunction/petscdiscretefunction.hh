@@ -321,6 +321,6 @@ namespace Dune
 
 } // namespace Dune
 
-#endif // #if defined HAVE_PETSC
+#endif // #if HAVE_PETSC
 
 #endif // #ifndef DUNE_FEM_PETSCDISCRETEFUNCTION_HH

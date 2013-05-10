@@ -4,6 +4,10 @@
 #include <dune/common/parallel/mpicollectivecommunication.hh>
 #include <dune/common/parallel/mpihelper.hh>
 
+#if HAVE_PETSC
+#include <dune/fem/misc/petsc/petsccommon.hh>
+#endif
+
 namespace Dune
 {
 
@@ -75,6 +79,10 @@ namespace Dune
         // if not already called, this will call MPI_Init 
         helper = &MPIHelper::instance( argc, argv );
         comm = new CollectiveCommunication( helper->getCommunicator() );
+
+#if HAVE_PETSC
+        ::Dune::Petsc::initialize( rank()==0, argc, argv );
+#endif
       }
 
       static MPIHelper &helper () DUNE_DEPRECATED

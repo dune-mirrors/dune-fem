@@ -9,10 +9,9 @@
  */
 
 #include <string>
+#include <iostream>
 
 #include <dune/common/exceptions.hh>
-
-#include <dune/fem/misc/mpimanager.hh>
 
 #if HAVE_PETSC
 
@@ -91,6 +90,27 @@ namespace Dune
      * This should be called right after the initialization of the MPI manager. It expects the same arguments
      * as PetscInitialize
      */
+    void initialize( const bool verbose, int &argc, char **&args, const char file[] = 0 , const char help[] = 0, bool ownHandler = true ) 
+    {
+      ::PetscInitialize( &argc, &args, file, help );
+
+      if( ownHandler )
+      {
+        // set up our error handler
+        if( verbose )
+        {
+          std::cerr << "INFORMATION: Setting up an own error handler for PETSc errors. If you want the default PETSc handler,\n"
+                    << "INFORMATION: set the last argument of Dune::Petsc::initialize(...) to 'false'.\n";
+        }
+        ::PetscPushErrorHandler( &ErrorHandler, 0 );
+      }
+    }
+
+#if 0
+    /*
+     * This should be called right after the initialization of the MPI manager. It expects the same arguments
+     * as PetscInitialize
+     */
     void initialize( int *argc, char ***args, const char file[], const char help[], bool ownHandler = true ) 
     {
       ::PetscInitialize( argc, args, file, help );
@@ -106,6 +126,7 @@ namespace Dune
         ::PetscPushErrorHandler( &ErrorHandler, 0 );
       }
     }
+#endif
 
     /*
      * This should be called just before the termination of the program.
