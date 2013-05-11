@@ -49,7 +49,7 @@ namespace Dune
         {
           // needed for later calling Petsc::finalize to the right time
           static PETSc petsc;
-          ::Dune::Petsc::initialize( rank()==0, argc, argv );
+          ::Dune::Petsc::initialize( verbose, argc, argv );
         }
       };
 #endif
