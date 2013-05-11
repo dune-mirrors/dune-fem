@@ -28,6 +28,10 @@ namespace Dune
       ~MPIManager ()
       {
         delete comm_;
+
+#if HAVE_PETSC
+        ::Dune::Petsc::finalize();
+#endif
       }
 
       // prohibit copying and assignment
@@ -43,9 +47,6 @@ namespace Dune
     public:
       static void initialize ( int &argc, char **&argv )
       {
-        MPIHelper *&helper = instance().helper_;
-        CollectiveCommunication *&comm = instance().comm_;
-
         // the following initalization is only enabled for 
         // MPI-thread parallel programs 
 #if HAVE_MPI && MPI_2 
@@ -73,12 +74,17 @@ namespace Dune
 #endif // end USE_SMP_PARALLEL
 #endif // end HAVE_MPI && MPI_2       
 
-        if( (helper != 0) || (comm != 0) )
+        // call MPIHelper before instance(), this way MPIHelper seems to be deleted 
+        // before MPIManager, which is needed because of the PETSc::finalize call 
+        MPIHelper *helper = &MPIHelper::instance( argc, argv );
+        CollectiveCommunication *comm = new CollectiveCommunication( helper->getCommunicator() ); 
+
+        if( (instance().helper_ != 0) || (instance().comm_ != 0) )
           DUNE_THROW( InvalidStateException, "MPIManager has already been initialized." );
 
         // if not already called, this will call MPI_Init 
-        helper = &MPIHelper::instance( argc, argv );
-        comm = new CollectiveCommunication( helper->getCommunicator() );
+        instance().helper_ = helper ;
+        instance().comm_   = comm ;
 
 #if HAVE_PETSC
         ::Dune::Petsc::initialize( rank()==0, argc, argv );
