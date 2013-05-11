@@ -213,9 +213,6 @@ try
 
   Dune::Fem::Parameter::write( "parameter.log" );
 
-  // finalize PETSc
-  Dune::Petsc::finalize();
-
   return 0;
 }
 catch( const Dune::Exception &exception )
