@@ -99,8 +99,8 @@ namespace Dune
         // set up our error handler
         if( verbose )
         {
-          std::cerr << "INFORMATION: Setting up an own error handler for PETSc errors. If you want the default PETSc handler,\n"
-                    << "INFORMATION: set the last argument of Dune::Petsc::initialize(...) to 'false'.\n";
+          dverb << "INFORMATION: Setting up an own error handler for PETSc errors. If you want the default PETSc handler,\n"
+                << "INFORMATION: set the last argument of Dune::Petsc::initialize(...) to 'false'.\n";
         }
         ::PetscPushErrorHandler( &ErrorHandler, 0 );
       }
