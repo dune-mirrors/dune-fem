@@ -5,6 +5,8 @@
 #include <iosfwd>
 #include <sstream>
 
+#include <dune/common/typetraits.hh>
+
 #include <dune/fem/common/tupleutility.hh>
 #include <dune/fem/operator/1order/localmassmatrix.hh>
 #include <dune/fem/pass/common/pass.hh>
@@ -31,10 +33,11 @@ namespace Dune
     public:
       static const std::size_t functionalPosition
         = Dune::FirstTypeIndex< PassIds, Dune::integral_constant< int, functionalId > >::type::value;
+      typedef typename Dune::tuple_element< functionalPosition, TotalArgumentType >::type DestinationPtrType;
 
       struct Traits
       {
-        typedef typename Dune::tuple_element< functionalPosition, TotalArgumentType >::type DestinationType;
+        typedef typename Dune::TypeTraits< DestinationPtrType >::PointeeType DestinationType;
         typedef typename DestinationType::DiscreteFunctionSpaceType DiscreteFunctionSpaceType;
       };
     };
@@ -57,6 +60,8 @@ namespace Dune
       typedef DGInverseMassPass< functionalId, PreviousPass, id > ThisType;
       typedef Dune::Fem::Pass< DGInverseMassPassDiscreteModel< functionalId, PreviousPass >, PreviousPass, id > BaseType;
 
+      typedef DGInverseMassPassDiscreteModel< functionalId, PreviousPass > DiscreteModelType;
+
     public:
       //! pass ids up to here (tuple of integral constants)
       typedef typename BaseType::PassIds PassIds;
@@ -67,14 +72,10 @@ namespace Dune
       typedef typename BaseType::DestinationType DestinationType;
 
       //! \brief discrete function space type
-      typedef typename BaseType::DiscreteFunctionSpaceType DiscreteFunctionSpaceType;
-
-      //! \brief entity type
-      typedef typename BaseType::EntityType EntityType;
+      typedef typename DiscreteModelType::Traits::DiscreteFunctionSpaceType DiscreteFunctionSpaceType;
 
     private:
-      static const std::size_t functionalPosition
-        = DGInverseMassPassDiscreteModel< functionalId, PreviousPass >::functionalPosition;
+      static const std::size_t functionalPosition = DiscreteModelType::functionalPosition;
 
       typedef typename DiscreteFunctionSpaceType::GridPartType GridPartType;
       typedef LocalMassMatrix< DiscreteFunctionSpaceType, CachingQuadrature< GridPartType, 0 > > LocalMassMatrixType;
