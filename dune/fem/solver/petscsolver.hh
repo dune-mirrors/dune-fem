@@ -195,8 +195,6 @@ namespace Dune
         }
         else if ( pcType == petsc_ml )
           type = PCML;
-        else if ( pcType == petsc_prometheus )
-          type = PCPROMETHEUS;
         else if ( pcType == petsc_ilu ) 
           type = PCILU; 
         else if( pcType == petsc_lu ) 
