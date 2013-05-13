@@ -5,6 +5,7 @@ passdir =  $(includedir)/dune/fem/pass
 pass_HEADERS = applylocaloperator.hh \
 	       createpass.hh \
 	       dgdiscretemodel.hh \
+	       dginversemass.hh \
 	       dgpass.hh \
 	       localdg.hh \
 	       insertfunction.hh \

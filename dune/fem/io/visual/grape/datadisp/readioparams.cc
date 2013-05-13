@@ -161,9 +161,11 @@ inline int readParameterList (int argc, char **argv, bool displayData = true )
   int    n = 0, n_info = 10;
 
   int    i_delta = 1;
-  const  char *replay = 0;
   double   timestep = 1.0e-3;
-  bool fixedMesh = false;
+  //bool fixedMesh = false;
+#ifdef USE_GRAPE_DISPLAY
+  const  char *replay = 0;
+#endif
   
   info = (INFO *) malloc(n_info*sizeof(INFO));
   assert(info != 0);
@@ -267,11 +269,13 @@ inline int readParameterList (int argc, char **argv, bool displayData = true )
       n++;
       i += 2;
     }
+    /*
     else if (!strcmp(argv[i], "-f"))
     {
       fixedMesh = true;
       i += 1;
     }
+    */
     else if (!strcmp(argv[i], "-p"))
     {
       if (i+1 == argc)
@@ -279,6 +283,7 @@ inline int readParameterList (int argc, char **argv, bool displayData = true )
       path = argv[i+1];
       i += 2;
     }
+#ifdef USE_GRAPE_DISPLAY
     else if (!strcmp(argv[i], "-replay"))
     {
       if (i+1 == argc)
@@ -286,6 +291,7 @@ inline int readParameterList (int argc, char **argv, bool displayData = true )
       replay = argv[i+1];
       i += 2;
     }
+#endif
     else
     {
       std::cerr << "unknown option " << argv[i] << std::endl;
