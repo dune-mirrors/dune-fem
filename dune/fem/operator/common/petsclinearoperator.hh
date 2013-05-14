@@ -110,7 +110,7 @@ namespace Dune
       void communicate ()
       {
         ::Dune::Petsc::MatAssemblyBegin( petscMatrix_, MAT_FINAL_ASSEMBLY );
-        ::Dune::Petsc::MatAssemblyEnd( petscMatrix_, MAT_FINAL_ASSEMBLY );
+        ::Dune::Petsc::MatAssemblyEnd  ( petscMatrix_, MAT_FINAL_ASSEMBLY );
       }
 
       const DomainSpaceType& domainSpace () const { return domainSpace_; }
@@ -183,12 +183,10 @@ namespace Dune
       }
 
       // just here for debugging
-      #ifndef NDEBUG
       void view () const 
       {
         ::Dune::Petsc::MatView( petscMatrix_, PETSC_VIEWER_STDOUT_WORLD );
       }
-      #endif
 
       // return reference to PETSc matrix object 
       Mat& petscMatrix () const { return petscMatrix_; }
@@ -242,7 +240,7 @@ namespace Dune
       enum { littleRows  = RangeSpaceType ::localBlockSize };
 
       typedef Dune::FieldMatrix< typename DomainSpaceType :: RangeFieldType, 
-                  littleRows, littleCols > LittleBlockType ;
+                                 littleRows, littleCols > LittleBlockType ;
 
       typedef Dune::DynamicMatrix< LittleBlockType > DynamicMatrixType;
 
@@ -273,7 +271,9 @@ namespace Dune
       : BaseType( domainSpace, rangeSpace ),
         petscLinearOperator_( petscLinOp ),
         localMatrix_( rangeSpace.blockMapper().maxNumDofs(), 
-                      domainSpace.blockMapper().maxNumDofs() )
+                      domainSpace.blockMapper().maxNumDofs() ),
+        rows_( 0 ),
+        cols_( 0 )
       {}
 
       void init ( const RowEntityType &rowEntity, const ColumnEntityType &colEntity ) 
@@ -283,15 +283,17 @@ namespace Dune
 
         if( littleRows > 1 )
         {
-          // set all values to 0 
+          // set all little blocks to 0 
           localMatrix_ = LittleBlockType(0.);
-                              // DynamicMatrixType( rangeSpace().blockMapper().maxNumDofs(),
-                              // domainSpace().blockMapper().maxNumDofs(), 
-                              // LittleBlockType(0.) );
         }
 
-        setupIndices( rangeSpace().blockMapper(), petscLinearOperator_.rowDofMapping(), rowEntity, rowIndices_ );
+        // setup row indices and also store number of local rows 
+        setupIndices( rangeSpace().blockMapper(),  petscLinearOperator_.rowDofMapping(), rowEntity, rowIndices_ );
+        rows_ = rowIndices_.size() * littleRows ;
+
+        // setup col indices and also store number of local cols 
         setupIndices( domainSpace().blockMapper(), petscLinearOperator_.colDofMapping(), colEntity, colIndices_ );
+        cols_ = colIndices_.size() * littleCols ;
       }
 
       inline void add ( const int localRow, const int localCol, const RangeFieldType &value )
@@ -304,29 +306,33 @@ namespace Dune
           const int lCol = localCol%littleCols;
 
           // add value to local storage 
-          localMatrix_[ row ][ col ][ lRow ][ lCol ] += value ;
+          //localMatrix_[ row ][ col ][ lRow ][ lCol ] += value ;
+
+          PetscInt globalRow = globalRowIndex( row ) * littleRows + lRow ;
+          PetscInt globalCol = globalColIndex( col ) * littleCols + lCol ;
+          ::Dune::Petsc::MatSetValue( petscMatrix(), globalRow, globalCol, value, ADD_VALUES );
         }
         else
          ::Dune::Petsc::MatSetValue( petscMatrix(), globalRowIndex( localRow ), globalColIndex( localCol ) , value, ADD_VALUES );
       }
 
-      ~LocalMatrix() 
+      void finalize () 
       {
-        if (petscMatrix() == 0) return;
+        /*
         if( littleRows > 1 ) 
         {
-          const int colSize = columns() * littleCols ;
+          const int colSize = columns();
+          const int cols    = colIndices_.size();
 
           PetscScalar v[ colSize ];
-          PetscInt c[ colSize ] ;
+          PetscInt    c[ colSize ];
 
-          const int nrows = rows();
-          const int cols = columns();
+          const int nrows = rowIndices_.size();
           for( int row = 0 ; row < nrows; ++ row ) 
           {
             // set row indices 
             PetscInt idxm[ 1 ] = { PetscInt( globalRowIndex( row ) * littleRows ) };
-            for(int lr = 0; lr < littleRows; ++lr ) 
+            for(int lr = 0; lr < littleRows; ++lr, ++idxm[ 0 ] ) 
             {
               for(int col = 0, colG = 0; col < cols ; ++col ) 
               {
@@ -342,6 +348,7 @@ namespace Dune
             }
           }
         }
+        */
       }
 
     private:
@@ -360,8 +367,8 @@ namespace Dune
       }
 
     public:
-      const int rows() const { return rowIndices_.size(); }
-      const int columns() const { return colIndices_.size(); }
+      const int rows()    const { return rows_; }
+      const int columns() const { return cols_; }
 
     private:
       DofIndexType globalRowIndex( const int localRow ) const 
@@ -384,6 +391,9 @@ namespace Dune
       IndexVectorType colIndices_;
 
       DynamicMatrixType localMatrix_; 
+
+      int rows_ ;
+      int cols_ ;
     };
 
 
