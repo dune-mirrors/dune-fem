@@ -55,8 +55,8 @@ namespace Dune
       typedef PetscDofBlock< const ThisType >                 ConstDofBlockType;
       typedef typename DofBlockType::DofIterator              DofIteratorType;
       typedef typename ConstDofBlockType::DofIterator         ConstDofIteratorType;
-      typedef Envelope< DofBlockType >           DofBlockPtrType; 
-      typedef Envelope< ConstDofBlockType >      ConstDofBlockPtrType;
+      typedef Envelope< DofBlockType >                        DofBlockPtrType; 
+      typedef Envelope< ConstDofBlockType >                   ConstDofBlockPtrType;
       typedef typename DofBlockType::IndexType                IndexType;
 
       PetscVector ( const DFSpace& dfSpace )
