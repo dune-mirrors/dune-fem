@@ -97,7 +97,7 @@ namespace Dune
         localSize_( other.localSize_ ),
         numGhosts_( other.numGhosts_ )
       {
-        // we want the 'other' do do all its communication right now before
+        // we want the 'other' to do all its communication right now before
         // we start copying values from it
         other.communicateIfNecessary();
 
