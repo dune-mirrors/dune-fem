@@ -224,6 +224,30 @@ namespace Dune
         hasBeenModified();
       }
 
+      // debugging; comes in handy to call these 2 methods in gdb
+      // doit is only here to prevent the compiler from optimizing these calls away...
+      void printGlobal ( bool doit ) 
+      { 
+          if( !doit ) 
+            return; 
+          VecView( vec_, PETSC_VIEWER_STDOUT_WORLD ); 
+      }
+
+      void printGhost ( bool doit) 
+      { 
+          if( !doit ) 
+            return; 
+
+          PetscScalar *array;
+          VecGetArray( ghostedVec_,&array );
+          for( int i=0; i < localSize_ + numGhosts_; i++ ) 
+          {
+            PetscSynchronizedPrintf(PETSC_COMM_WORLD,"%D %G\n",i,PetscRealPart(array[i]));
+          }
+          VecRestoreArray( ghostedVec_, &array );
+          PetscSynchronizedFlush( PETSC_COMM_WORLD );
+      }
+
     private:
       PetscVector ();
       PetscVector& operator= ( const ThisType& );
@@ -231,32 +255,6 @@ namespace Dune
       PetscDofMappingType& dofMapping () { return petscSlaveDofs_.dofMapping(); }
       const PetscDofMappingType& dofMapping () const { return petscSlaveDofs_.dofMapping(); }
       
-      #ifndef NDEBUG
-        // debugging; comes in handy to call these 2 methods in gdb
-        // doit is only here to prevent the compiler from optimizing these calls away...
-        void printGlobal ( bool doit ) 
-        { 
-            if( !doit ) 
-              return; 
-            VecView( vec_, PETSC_VIEWER_STDOUT_WORLD ); 
-        }
-
-        void printGhost ( bool doit) 
-        { 
-            if( !doit ) 
-              return; 
-
-            PetscScalar *array;
-            VecGetArray( ghostedVec_,&array );
-            for( int i=0; i < localSize_ + numGhosts_; i++ ) 
-            {
-              PetscSynchronizedPrintf(PETSC_COMM_WORLD,"%D %G\n",i,PetscRealPart(array[i]));
-            }
-            VecRestoreArray( ghostedVec_, &array );
-            PetscSynchronizedFlush( PETSC_COMM_WORLD );
-        }
-      #endif // NDEBUG
-
       void communicateIfNecessary () const
       {
         // communicate this process' values
