@@ -241,6 +241,13 @@ namespace Dune
       {
         return MatrixColumnType( asImp(), col );
       }
+
+      /*! \brief finalize local matrix setup and possibly add values to real matrix */
+      inline void finalize() 
+      {
+        CHECK_AND_CALL_INTERFACE_IMPLEMENTATION(asImp().finalize());
+      }
+
     };
 
 
@@ -309,6 +316,9 @@ namespace Dune
 
       /** \copydoc Dune::Fem::LocalMatrixInterface::resort */
       void resort () {}
+
+      /** \copydoc Dune::Fem::LocalMatrixInterface::finalize */
+      void finalize () {}
 
       /** \copydoc Dune::Fem::LocalMatrixInterface::rows */
       int rows () const { return rangeBaseSet_.size(); }
