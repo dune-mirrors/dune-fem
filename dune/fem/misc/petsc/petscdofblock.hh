@@ -235,15 +235,10 @@ namespace Dune
       const value_type operator* () const { return block()[ indexInBlock_ ]; }
 
       // prefix increment
-      ThisType operator++ () { increment(); return *this; }
-      // postfix increment
-      ThisType operator++ ( int ) { ThisType buf = *this; decrement(); return buf; }
+      ThisType& operator++ () { increment(); return *this; }
 
       // prefix decrement
-      ThisType operator-- () { increment(); return *this; }
-      // postfix decrement
-      ThisType operator-- ( int ) { ThisType buf = *this; decrement(); return buf; }
-
+      ThisType& operator-- () { decrement(); return *this; }
 
     private:
       // forbidden

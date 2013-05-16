@@ -585,11 +585,14 @@ namespace Dune
     template <class T> 
     void SparseRowMatrix<T>::print(std::ostream& s) const
     {
+      s.precision( 6 );
       for(int row=0; row<dim_[0]; row++)
       {
         for(int col=0; col<dim_[1]; col++)
         {
-          s << (*this)(row,col) << " ";
+          double val = (*this)(row,col);
+          val = std::abs( val ) < 1e-14 ? 0 : val; 
+          s << val << " ";
         }
         s << "\n";
       }
