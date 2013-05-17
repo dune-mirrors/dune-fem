@@ -149,22 +149,32 @@ namespace Dune
         //  preconditioning 
         /////////////////////////////////////////////
 
-        enum PetscPcType { petsc_none     = 0, // no preconditioning 
-                           // parallel preconditioners 
-                           petsc_asm      = 1, // Additive Schwarz 
-                           petsc_sor      = 2, // SOR and SSOR 
-                           petsc_jacobi   = 3, // Jacobi preconditioning 
-                           petsc_hypre    = 4, // Hypre preconditioning
+        enum PetscPcType { petsc_none       = 0,   // no preconditioning 
+                           petsc_asm        = 1,   // Additive Schwarz 
+                           petsc_sor        = 2,   // SOR and SSOR 
+                           petsc_jacobi     = 3,   // Jacobi preconditioning 
+                           // requiring additional packages
+                           petsc_hypre      = 4,   // Hypre preconditioning
+                           petsc_ml         = 5,   // ML preconditioner (from Trilinos)
                            // serial preconditioners 
-                           petsc_ilu      = 5, // ILU preconditioning 
-                           petsc_lu       = 6, // LU factorization 
-                           petsc_icc      = 7,  // Incomplete Cholesky factorization
+                           petsc_ilu        = 6,   // ILU preconditioning 
+                           petsc_lu         = 7,   // LU factorization 
+                           petsc_icc        = 8,   // Incomplete Cholesky factorization
+                           // direct solvers
+                           petsc_mumps      = 9,   // use mumps 
+                           petsc_superlu    = 10,   // use superlu-dist
+                           end              = 11
                          };
+        const PetscPcType serialStart = petsc_ilu;
+        const PetscPcType serialEnd = petsc_icc;
 
         const PCType type = PCNONE ;
 
         // see PETSc docu for more types 
-        const std::string preconNames [] = { "none", "asm", "sor", "jacobi", "hypre",  "ilu-n", "lu", "icc" };
+        const std::string preconNames [end] = { "none", "asm", "sor", "jacobi", 
+                                                "hypre", "ml", 
+                                                "ilu-n", "lu", "icc",
+                                                "mumps", "superlu" };
         PetscPcType pcType = (PetscPcType) Parameter :: getEnum("petsc.preconditioning.method", preconNames, 0 );
 
         if( pcType == petsc_none )
@@ -183,17 +193,33 @@ namespace Dune
           DUNE_THROW(InvalidStateException,"PetscInverseOperator: Trying to use HYPRE preconditioning but PETSc has not been compiled with HYPRE support" );
 #endif // HAVE_PETSC_HYPRE
         }
+        else if ( pcType == petsc_ml )
+          type = PCML;
         else if ( pcType == petsc_ilu ) 
           type = PCILU; 
         else if( pcType == petsc_lu ) 
           type = PCLU;
         else if( pcType == petsc_icc ) 
           type = PCICC;
+        else if( pcType == petsc_mumps )
+        {
+          /* could use
+          KSPSetType(ksp,KSPPREONLY);
+          */
+          type = PCLU;
+        }
+        else if( pcType == petsc_superlu )
+        {
+          /* could use
+          KSPSetType(ksp,KSPPREONLY);
+          */
+          type = PCLU;
+        }
         else 
           DUNE_THROW(InvalidStateException,"PetscInverseOperator: wrong preconditiong choosen" );
 
         // check whether the preconditioner can be used in parallel
-        if( MPIManager :: size() > 1 && pcType > petsc_hypre ) 
+        if( MPIManager :: size() > 1 && pcType >= serialStart && pcType <= serialEnd ) 
         {
           if( MPIManager :: rank() == 0 )
           {
@@ -214,6 +240,10 @@ namespace Dune
 
         // set preconditioning context 
         ::Dune::Petsc::KSPSetPC( ksp_, pc_ );
+        if( pcType == petsc_mumps )
+          PCFactorSetMatSolverPackage(pc_,MATSOLVERMUMPS);
+        if( pcType == petsc_superlu )
+          PCFactorSetMatSolverPackage(pc_,MATSOLVERSUPERLU_DIST);
 
         // get matrix from linear operator 
         Mat& A = const_cast< Mat & > (op_.petscMatrix());
