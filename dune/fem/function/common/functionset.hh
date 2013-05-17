@@ -1,7 +1,10 @@
 #ifndef DUNE_FEM_FUNCTION_COMMON_FUNCTIONSET_HH
 #define DUNE_FEM_FUNCTION_COMMON_FUNCTIONSET_HH
 
+#include <cassert>
 #include <cstddef>
+
+#include <dune/common/nullptr.hh>
 
 namespace Dune
 {
@@ -21,8 +24,9 @@ namespace Dune
      *  \tparam  FunctionSpace  function space
      */
     template< class FunctionSpace >
-    struct FunctionSet 
+    class FunctionSet 
     {
+    public:
       //! \brief function space type
       typedef FunctionSpace FunctionSpaceType;
 
@@ -97,6 +101,66 @@ struct Functor
        */
       template< class Functor >
       void hessianEach ( const DomainType &x, Functor functor ) const;
+    };
+
+
+
+    // FunctionSetProxy
+    // ----------------
+
+    /** \class FunctionSetProxy
+     *
+     *  \brief Proxy for a FunctionSet.
+     *
+     *  \tparam  FunctionSpace  function space
+     */
+    template< class FunctionSet >
+    class FunctionSetProxy
+    {
+    public:
+      typedef FunctionSet ImplementationType;
+      const ImplementationType &impl () const
+      {
+        assert( functionSet_ );
+        return *functionSet_;
+      }
+
+      typedef typename FunctionSet::FunctionSpaceType FunctionSpaceType;;
+
+      typedef typename FunctionSet::DomainType DomainType;
+      typedef typename FunctionSet::RangeType RangeType;
+      typedef typename FunctionSet::JacobianRangeType JacobianRangeType;
+      typedef typename FunctionSet::HessianRangeType HessianRangeType;
+
+      FunctionSetProxy () : functionSet_( nullptr ) {}
+
+      FunctionSetProxy ( const FunctionSet *functionSet )
+      : functionSet_( functionSet )
+      {}
+
+      int order () const { return impl().order(); }
+
+      std::size_t size () const { return impl().size(); }
+
+      template< class Functor >
+      void evaluateEach ( const DomainType &x, Functor functor ) const
+      {
+        impl().evaluateEach( x, functor );
+      }
+
+      template< class Functor >
+      void jacobianEach ( const DomainType &x, Functor functor ) const
+      {
+        impl().jacobianEach( x, functor );
+      }
+      template< class Functor >
+      void hessianEach ( const DomainType &x, Functor functor ) const
+      {
+        impl().hessianEach( x, functor );
+      }
+
+    private:
+      const FunctionSet *functionSet_;
     };
 
   } // namespace Fem

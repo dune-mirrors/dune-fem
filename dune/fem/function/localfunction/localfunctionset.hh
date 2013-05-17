@@ -1,7 +1,10 @@
 #ifndef DUNE_FEM_FUNCTION_LOCALFUNCTION_LOCALFUNCTIONSET_HH
 #define DUNE_FEM_FUNCTION_LOCALFUNCTION_LOCALFUNCTIONSET_HH
 
+#include <cassert>
 #include <cstddef>
+
+#include <dune/common/nullptr.hh>
 
 #include <dune/fem/space/common/functionspace.hh>
 
@@ -106,6 +109,70 @@ namespace Dune
        */
       template< class Point, class Functor >
       void hessianEach ( const Point &x, Functor functor ) const;
+    };
+
+
+
+    // LocalFunctionSetProxy
+    // ---------------------
+
+    /** \class LocalFunctionSetProxy
+     *
+     *  \brief Proxy for a LocalBasisFunctionSet
+     *
+     *  \tparam  LocalFunctionSet  local function set
+     */
+    template< class LocalFunctionSet >
+    class LocalFunctionSetProxy
+    {
+    public:
+      typedef LocalFunctionSet ImplementationType;
+      const ImplementationType &impl () const
+      {
+        assert( localFunctionSet_ );
+        return *localFunctionSet_;
+      }
+
+      typedef typename LocalFunctionSet::EntityType EntityType;
+      typedef typename LocalFunctionSet::FunctionSpaceType FunctionSpaceType;
+
+      typedef typename LocalFunctionSet::DomainType DomainType;
+      typedef typename LocalFunctionSet::RangeType RangeType;
+      typedef typename LocalFunctionSet::JacobianRangeType JacobianRangeType;
+      typedef typename LocalFunctionSet::HessianRangeType HessianRangeType;
+
+      LocalFunctionSetProxy () : localFunctionSet_( nullptr ) {}
+      
+      LocalFunctionSetProxy ( const LocalFunctionSet *localFunctionSet )
+      : localFunctionSet_( localFunctionSet )
+      {}
+
+      int order () const { return impl().order(); }
+
+      const EntityType &entity () const { return impl().entity(); }
+
+      std::size_t size () const { return impl().size(); }
+
+      template< class Point, class Functor >
+      void evaluateEach ( const Point &x, Functor functor ) const
+      {
+        impl().evaluateEach( x, functor );
+      }
+
+      template< class Point, class Functor >
+      void jacobianEach ( const Point &x, Functor functor ) const
+      {
+        impl().jacobianEach( x, functor );
+      }
+
+      template< class Point, class Functor >
+      void hessianEach ( const Point &x, Functor functor ) const
+      {
+        impl().hessianEach( x, functor );
+      }
+
+    private:
+      const LocalFunctionSet *localFunctionSet_;
     };
 
   } // namespace Fem
