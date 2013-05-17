@@ -10,7 +10,6 @@ pass_HEADERS = applylocaloperator.hh \
 	       insertfunction.hh \
 	       insertfunctionpass.hh \
 	       localdg.hh \
-	       local.hh \
 	       pass.hh
 
 include $(top_srcdir)/am/global-rules
