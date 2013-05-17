@@ -2,3 +2,4 @@
 #warning Use #include <dune/fem/pass/common/pass.hh> instead.
 
 #include <dune/fem/pass/common/pass.hh>
+#include <dune/fem/pass/common/local.hh>

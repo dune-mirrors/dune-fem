@@ -155,9 +155,6 @@ inline void Algorithm::operator() ( DiscreteFunctionType &solution )
   InvOperatorType& inverseOperator = *op;
   inverseOperator( rhs, solution );
 
-  // make solution consistent for the error calculation
-  solution.communicate();
-
   Dune::Fem::VTKIO< GridPartType > vtkio( dfSpace_.gridPart() );
   vtkio.addVertexData( solution );
   vtkio.write("dump");
@@ -215,9 +212,6 @@ try
   compute( algorithm );
 
   Dune::Fem::Parameter::write( "parameter.log" );
-
-  // finalize PETSc
-  Dune::Petsc::finalize();
 
   return 0;
 }

@@ -21,7 +21,7 @@ AM_CPPFLAGS = $(ALL_PKG_CPPFLAGS) $(DUNEMPICPPFLAGS)
 
 TESTPROGS = lagrangeinterpolation_linear lagrangeinterpolation_quadratic \
             dgl2projection_adaptive      dgl2projection_filtered \
-            dgl2projection_blockvector   dgl2projection_vector \
+            dgl2projection_blockvector   dgl2projection_vector dgl2projection_vector_int \
             dgl2projection_attached      dgl2projection_legendre \
             dgl2projection_blockvectordiscretefunction \
             dgl2projection_fv      \
@@ -43,7 +43,7 @@ dgl2projection_adaptive_CPPFLAGS = -DPOLORDER=1 -DCOUNT_FLOPS $(AM_CPPFLAGS)
 
 # only run this test for YaspGrid
 dgl2projection_legendre_SOURCES = dgl2projection.cc
-dgl2projection_legendre_CPPFLAGS = -DPOLORDER=1 -DGRIDDIM=$(GRIDDIM) -DYASPGRID -DUSE_LEGENDRESPACE -DCOUNT_FLOPS $(CPPFLAGS) $(DUNEMPICPPFLAGS)
+dgl2projection_legendre_CPPFLAGS = -DPOLORDER=1 -DGRIDDIM=$(GRIDDIM) -DYASPGRID -DUSE_LEGENDRESPACE -DCOUNT_FLOPS $(AM_CPPFLAGS) $(DUNEMPICPPFLAGS)
 
 dgl2projection_filtered_SOURCES = dgl2projection.cc
 dgl2projection_filtered_CPPFLAGS = -DPOLORDER=1 -DCOUNT_FLOPS $(AM_CPPFLAGS) -DUSE_FILTEREDGRID 
@@ -56,6 +56,9 @@ dgl2projection_blockvector_CPPFLAGS = -DPOLORDER=1 -DUSE_BLOCKVECTORFUNCTION $(A
 
 dgl2projection_vector_SOURCES = dgl2projection.cc
 dgl2projection_vector_CPPFLAGS = -DPOLORDER=1 -DUSE_VECTORFUNCTION $(AM_CPPFLAGS)
+
+dgl2projection_vector_int_SOURCES = dgl2projection.cc
+dgl2projection_vector_int_CPPFLAGS = -DPOLORDER=1 -DUSE_VECTORFUNCTION -DUSE_DOFTYPE_INT $(AM_CPPFLAGS)
 
 dgl2projection_attached_SOURCES = dgl2projection.cc
 dgl2projection_attached_CPPFLAGS = -DPOLORDER=1 -DUSE_ATTACHEDFUNCTION $(AM_CPPFLAGS)

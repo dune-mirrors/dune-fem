@@ -4,7 +4,7 @@
 
 #include <dune/fem/storage/envelope.hh> 
 
-#if defined HAVE_PETSC
+#if HAVE_PETSC
 
 #include <dune/fem/misc/petsc/petsccommon.hh>
 #include <dune/fem/misc/petsc/petscvector.hh>
@@ -131,6 +131,18 @@ namespace Dune
         return *this;
       }
 
+      const ThisType& operator-= ( const ThisType &other )
+      {
+        setValue( -other.getValue(), ADD_VALUES );
+        return *this;
+      }
+
+      const ThisType& operator-= ( const PetscScalar scalar )
+      {
+        setValue( -scalar, ADD_VALUES );
+        return *this;
+      }
+
       // conversion operators
       operator PetscScalar () const { return getValue(); }
 
@@ -223,15 +235,10 @@ namespace Dune
       const value_type operator* () const { return block()[ indexInBlock_ ]; }
 
       // prefix increment
-      ThisType operator++ () { increment(); return *this; }
-      // postfix increment
-      ThisType operator++ ( int ) { ThisType buf = *this; decrement(); return buf; }
+      ThisType& operator++ () { increment(); return *this; }
 
       // prefix decrement
-      ThisType operator-- () { increment(); return *this; }
-      // postfix decrement
-      ThisType operator-- ( int ) { ThisType buf = *this; decrement(); return buf; }
-
+      ThisType& operator-- () { decrement(); return *this; }
 
     private:
       // forbidden
@@ -284,6 +291,6 @@ namespace Dune
 
 } // namespace Dune
 
-#endif // #if defined HAVE_PETSC
+#endif // #if HAVE_PETSC
 
 #endif // DUNE_FEM_PETSCDOFBLOCK_HH

@@ -248,12 +248,12 @@ namespace Dune
       using Imp :: dofStorage;
 
     public:
-      inline const RangeFieldType &dof ( unsigned int index ) const
+      inline const DofType &dof ( unsigned int index ) const
       {
         return dofVec_[ index ];
       }
 
-      inline RangeFieldType &dof ( unsigned int index )
+      inline DofType &dof ( unsigned int index )
       {
         return dofVec_[ index ];
       }

@@ -5,9 +5,6 @@
 
 #include <dune/fem/space/mapper/dofmapper.hh>
 
-#include "basisfunctions.hh"
-
-
 namespace Dune
 {
 

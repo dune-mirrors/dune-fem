@@ -102,6 +102,14 @@ namespace Dune
       {
       }
 
+      /** \brief destructor */
+      inline ~LocalMatrixWrapper ( )
+      {
+        // call finalize on local matrix implementation 
+        // (e.g. needed for PETSc to add values to the real matrix)
+        localMatrix().finalize();
+      }
+
     private:
       // prohibit assignment
       inline ThisType &operator= ( const ThisType & );
