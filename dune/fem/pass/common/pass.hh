@@ -9,7 +9,6 @@
 
 #include <dune/fem/common/tupleutility.hh>
 #include <dune/fem/operator/common/operator.hh>
-#include <dune/fem/pass/local.hh>
 
 namespace Dune 
 {

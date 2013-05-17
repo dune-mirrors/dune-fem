@@ -3,7 +3,7 @@
 
 #include <dune/fem/function/localfunction/temporary.hh>
 #include <dune/fem/operator/1order/localmassmatrix.hh>
-#include <dune/fem/pass/local.hh>
+#include <dune/fem/pass/common/local.hh>
 #include <dune/fem/quadrature/caching/twistutility.hh>
 #include <dune/fem/quadrature/intersectionquadrature.hh>
 #include <dune/fem/space/common/arrays.hh> 

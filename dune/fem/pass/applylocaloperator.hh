@@ -12,7 +12,7 @@
 #include <dune/fem/common/tupletypetraits.hh>
 #include <dune/fem/common/tupleutility.hh>
 #include <dune/fem/pass/common/localfunctiontuple.hh>
-#include <dune/fem/pass/local.hh>
+#include <dune/fem/pass/common/local.hh>
 
 namespace Dune
 {
