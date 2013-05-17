@@ -110,7 +110,7 @@ cghs_algo( const CommunicatorType & comm,
     
     if ( detailed && (comm.rank() == 0) )
     {
-      std::cout<<"cghs "<<its<<"\t"<<gg<< std::endl;
+      std::cout<<"cghs "<<its<<"\t"<<sqrt(gg)<< std::endl;
     }
     ++its;
   }
