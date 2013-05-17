@@ -6,6 +6,7 @@ localfunction_HEADERS = average.hh \
 			generic.hh \
 			generic_inline.hh \
 			localfunction.hh \
+			localfunctionset.hh \
 			standard.hh \
 			temporary.hh \
 			temporarylocalfunction.hh \
