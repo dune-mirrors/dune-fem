@@ -49,6 +49,13 @@ namespace Dune
       //! \brief type of reference element
       typedef Dune::ReferenceElement< typename EntityType::ctype, EntityType::dimensionworld > ReferenceElementType;
 
+      /* default constructor
+       *
+       * Note: we require a local function set to have a default constructor;
+       *       eventually use LocalFunctionSetProxy.
+       */
+      SimpleBasisFunctionSet () {}
+
       /** \brief constructor
        *
        *  \param[in]  localFunctionSet  implementation of LocalFunctionSet
