@@ -283,6 +283,10 @@ namespace Dune
       {
         ::Dune::Petsc::MatSetValue( petscMatrix(), globalRowIndex( localRow ), globalColIndex( localCol ) , value, ADD_VALUES );
       }
+      inline void set(const int localRow, const int localCol, const RangeFieldType &value )
+      {
+       ::Dune::Petsc::MatSetValue( petscMatrix(), globalRowIndex( localRow ), globalColIndex( localCol ) , 0., INSERT_VALUES );
+      }
 
     private:
       LocalMatrix ();
@@ -316,6 +320,14 @@ namespace Dune
     public:
       const int rows()    const { return rowIndices_.size(); }
       const int columns() const { return colIndices_.size(); }
+
+      //! set matrix row to zero
+      void clearRow ( const int localRow )
+      {
+        const int col = this->columns();
+        for(int localCol=0; localCol<col; ++localCol) 
+          ::Dune::Petsc::MatSetValue( petscMatrix(), globalRowIndex( localRow ), globalColIndex( localCol ) , 0., INSERT_VALUES );
+      }
 
     private:
       DofIndexType globalRowIndex( const int localRow ) const 
