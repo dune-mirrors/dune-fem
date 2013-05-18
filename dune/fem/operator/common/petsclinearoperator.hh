@@ -187,6 +187,10 @@ namespace Dune
       {
         ::Dune::Petsc::MatView( petscMatrix_, PETSC_VIEWER_STDOUT_WORLD );
       }
+      void viewMatlab (const char *filename) const
+      {
+        ::Dune::Petsc::MatViewMatlab( petscMatrix_, filename );
+      }
 
       // return reference to PETSc matrix object 
       Mat& petscMatrix () const { return petscMatrix_; }
@@ -285,7 +289,15 @@ namespace Dune
       }
       inline void set(const int localRow, const int localCol, const RangeFieldType &value )
       {
-       ::Dune::Petsc::MatSetValue( petscMatrix(), globalRowIndex( localRow ), globalColIndex( localCol ) , 0., INSERT_VALUES );
+       ::Dune::Petsc::MatSetValue( petscMatrix(), globalRowIndex( localRow ), globalColIndex( localCol ) , value, INSERT_VALUES );
+      }
+      inline const RangeFieldType get ( const int localRow, const int localCol ) const
+      {
+        RangeFieldType v[1];
+        const int r[] = {globalRowIndex( localRow )};
+        const int c[] = {globalColIndex( localCol )};
+        ::Dune::Petsc::MatGetValues( petscMatrix(), 1, r, 1, c, v );
+        return v[0];
       }
 
     private:
