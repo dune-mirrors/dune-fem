@@ -105,7 +105,9 @@ namespace Dune
         return Dune::ReferenceElements< ctype, GeometryType::coorddimension >::general( type() );
       }
 
-      //! \brief evaluate all basis function and multiply with given values and add to dofs 
+      /** \brief evaluate all basis function and multiply with given
+       *         values and add to dofs
+       */
       template< class QuadratureType, class Vector, class DofVector >
       void axpy ( const QuadratureType &quad, const Vector &values, DofVector &dofs ) const
       {
@@ -117,8 +119,11 @@ namespace Dune
         }
       }
 
-      /** \brief evaluate all basis function and multiply with given values and add to dofs 
-          \note valuesA and valuesB can be vectors of RangeType or JacobianRangeType 
+      /** \brief evaluate all basis function and multiply with given
+       *         values and add to dofs 
+       *
+       *  \note valuesA and valuesB can be vectors of RangeType or
+       *        JacobianRangeType 
       */
       template< class QuadratureType, class VectorA, class VectorB, class DofVector >
       void axpy ( const QuadratureType &quad, const VectorA &valuesA, const VectorB &valuesB, DofVector &dofs ) const
@@ -132,7 +137,9 @@ namespace Dune
         }
       }
 
-      //! \todo please doc me
+      /** \brief evaluate all basis function and multiply with given
+       *         values and add to dofs
+       */
       template< class Point, class DofVector >
       void axpy ( const Point &x, const RangeType &valueFactor, DofVector &dofs ) const
       {
@@ -140,7 +147,9 @@ namespace Dune
         shapeFunctionSet().evaluateEach( x, f );
       }
 
-      //! \todo please doc me
+      /** \brief evaluate all basis function and multiply with given
+       *         values and add to dofs
+       */
       template< class Point, class DofVector >
       void axpy ( const Point &x, const JacobianRangeType &jacobianFactor, DofVector &dofs ) const
       {
@@ -154,7 +163,9 @@ namespace Dune
         shapeFunctionSet().jacobianEach( x, f );
       }
 
-      //! \todo please doc me
+      /** \brief evaluate all basis function and multiply with given
+       *         values and add to dofs
+       */
       template< class Point, class DofVector >
       void axpy ( const Point &x, const RangeType &valueFactor, const JacobianRangeType &jacobianFactor,
                   DofVector &dofs ) const
@@ -269,9 +280,6 @@ namespace Dune
 
     protected:
       GeometryType geometry () const { return entity().geometry(); }
-
-
-
 
     private:
       const EntityType *entity_;

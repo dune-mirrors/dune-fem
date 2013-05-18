@@ -3,3 +3,4 @@ CONFIGURE_FLAGS="--disable-documentation \
 --without-gmp \
 --enable-experimental-grid-extensions"
 MAKE_FLAGS=
+MAKE_FLAGS=-j8
