@@ -187,10 +187,12 @@ namespace Dune
       {
         ::Dune::Petsc::MatView( petscMatrix_, PETSC_VIEWER_STDOUT_WORLD );
       }
+      /* Not tested yet
       void viewMatlab (const char *filename) const
       {
         ::Dune::Petsc::MatViewMatlab( petscMatrix_, filename );
       }
+      */
 
       // return reference to PETSc matrix object 
       Mat& petscMatrix () const { return petscMatrix_; }
