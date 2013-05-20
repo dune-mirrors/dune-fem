@@ -19,7 +19,7 @@ usepetsc: true
 petsc.kspsolver.method: cg
 
 # valid are:  "none", "asm", "sor", "jacobi", "ilu-n", "lu", "icc", "hypre"
-petsc.preconditioning.method: hypre
+petsc.preconditioning.method: none
 petsc.preconditioning.iterations: 2
 
 # specify directory for data output (is created if not exists)

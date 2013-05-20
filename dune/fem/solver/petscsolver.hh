@@ -150,6 +150,7 @@ namespace Dune
         /////////////////////////////////////////////
 
         enum PetscPcType { petsc_none       = 0,   // no preconditioning 
+                           // parallel preconditioners 
                            petsc_asm        = 1,   // Additive Schwarz 
                            petsc_sor        = 2,   // SOR and SSOR 
                            petsc_jacobi     = 3,   // Jacobi preconditioning 

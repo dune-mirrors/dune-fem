@@ -14,6 +14,7 @@
 #endif
 
 #include <dune/fem/io/file/dataoutput.hh>
+#include <dune/fem/space/common/adaptmanager.hh>
 #include <dune/fem/io/parameter.hh>
 #include <dune/fem/misc/femtimer.hh>
 #include <dune/fem/misc/gridwidth.hh>
