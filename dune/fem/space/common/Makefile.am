@@ -4,6 +4,7 @@ common_HEADERS = adaptmanager.hh \
      arrays.hh \
      basesetlocalkeystorage.hh \
      cachedcommmanager.hh \
+     capabilities.hh \
      commindexmap.hh \
      commoperations.hh \
      communicationmanager.hh \
