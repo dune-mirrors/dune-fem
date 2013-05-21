@@ -27,8 +27,9 @@
 #include <dune/fem/storage/singletonlist.hh>
 
 // local includes
-#include "lagrangepoints.hh"
 #include "adaptmanager.hh"
+#include "capabilities.hh"
+#include "lagrangepoints.hh"
 #include "shapefunctionset.hh"
 #include "storage.hh"
 
