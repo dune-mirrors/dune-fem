@@ -1,5 +1,6 @@
 rannacherturekspacedir =  $(includedir)/dune/fem/space/rannacherturek
-rannacherturekspace_HEADERS = declaration.hh \
+rannacherturekspace_HEADERS = capabilities.hh \
+			      declaration.hh \
 			      dofmappercode.hh \
 			      localinterpolation.hh \
 			      space.hh

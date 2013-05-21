@@ -59,7 +59,7 @@ namespace Dune
       static SizeType size () { return 1; }
 
       /** @copydoc Dune::Fem::DofMapper::contains */
-      static bool contains ( int codim ) { return (codim == 0); }
+      static bool contains ( int codim ) { return false; }
 
       /** @copydoc Dune::Fem::DofMapper::fixedDataSize */
       static bool fixedDataSize ( int codim ) { return true; }
@@ -74,10 +74,7 @@ namespace Dune
       /** @copydoc Dune::Fem::DofMapper::mapEachEntityDof */
       template< class Entity, class Functor >
       static void mapEachEntityDof ( const Entity &entity, Functor f )
-      {
-        if( Entity::codimension == 0 )
-          f( 0, 0 );
-      }
+      {}
 
       /** @copydoc Dune::Fem::DofMapper::maxNumDofs */
       static SizeType maxNumDofs () { return size(); }
@@ -89,7 +86,7 @@ namespace Dune
       template< class Entity >
       static SizeType numEntityDofs ( const Entity &entity )
       {
-        return (Entity::codimension == 0 ? size() : SizeType( 0 ));
+        return 0;
       }
 
 

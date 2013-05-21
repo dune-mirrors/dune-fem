@@ -1,6 +1,7 @@
 fourierdir =  $(includedir)/dune/fem/space/fourier
 
-fourier_HEADERS = declaration.hh \
+fourier_HEADERS = capabilities.hh \
+		  declaration.hh \
 		  dofmapper.hh \
 		  functionset.hh \
 		  space.hh
