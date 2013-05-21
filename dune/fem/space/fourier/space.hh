@@ -14,9 +14,10 @@
 #include <dune/fem/space/mapper/nonblockmapper.hh>
 #include <dune/fem/version.hh>
 
-#include "declaration.hh"
-#include "dofmapper.hh"
-#include "functionset.hh"
+#include <dune/fem/space/fourier/capabilities.hh>
+#include <dune/fem/space/fourier/declaration.hh>
+#include <dune/fem/space/fourier/dofmapper.hh>
+#include <dune/fem/space/fourier/functionset.hh>
 
 namespace Dune
 {
