@@ -4,7 +4,7 @@
 
 namespace Dune
 {
-  
+
   namespace Fem
   {
 
@@ -17,7 +17,7 @@ namespace Dune
        *         not depend on the grid (part) entity
        */
       template< class DiscreteFunctionSpace >
-      struct hasFixedPolynomialOrder 
+      struct hasFixedPolynomialOrder
       {
         static const bool v = false;
       };
@@ -30,7 +30,7 @@ namespace Dune
        *         and compile time static
        */
       template< class DiscreteFunctionSpace >
-      struct hasStaticPolynomialOrder 
+      struct hasStaticPolynomialOrder
       {
         static const bool v = false;
         static const int order = -1;
@@ -38,19 +38,19 @@ namespace Dune
 
 
 
-      /** \class isContinuous 
+      /** \class isContinuous
        *
        *  \brief specialize with \b true if space is always continuous
        */
       template< class DiscreteFunctionSpace >
-      struct isContinuous 
+      struct isContinuous
       {
         static const bool v = false;
       };
 
 
 
-      /** \class isLocalized 
+      /** \class isLocalized
        *
        *  \brief specialize with \b true if the space is localized, *
        *  i.e., the basis function set is based on a shape function set.
@@ -61,7 +61,7 @@ namespace Dune
 \endcode
        */
       template< class DiscreteFunctionSpace >
-      struct isLocalized 
+      struct isLocalized
       {
         static const bool v = false;
       };
@@ -73,7 +73,7 @@ namespace Dune
        *  \brief specialize with \b true if space can be used in parallel
        */
       template< class DiscreteFunctionSpace >
-      struct isParallel 
+      struct isParallel
       {
         static const bool v = false;
       };
@@ -95,33 +95,87 @@ namespace Dune
 
       /** \class threadSafe
        *
-       *  \brief specialize with \b true if the space implementation 
+       *  \brief specialize with \b true if the space implementation
        *         is thread safe
        */
       template< class DiscreteFunctionSpace >
-      struct threadSafe 
+      struct threadSafe
       {
         static const bool v = false;
       };
 
 
 
-      /** \class viewThreadSafe 
+      /** \class viewThreadSafe
        *
-       * \brief specialize with \b true if the space implementation is 
+       * \brief specialize with \b true if the space implementation is
        *        thread safe, while it is not modified
        *
        */
       template< class DiscreteFunctionSpace >
-      struct viewThreadSafe 
+      struct viewThreadSafe
       {
         static const bool v = false;
+      };
+
+
+
+      // const specialization
+      // --------------------
+
+      template< class DiscreteFunctionSpace >
+      struct hasFixedPolynomialOrder< const DiscreteFunctionSpace >
+      {
+        static const bool v = hasFixedPolynomialOrder< DiscreteFunctionSpace >::v;
+      };
+
+      template< class DiscreteFunctionSpace >
+      struct hasStaticPolynomialOrder< const DiscreteFunctionSpace >
+      {
+        static const bool v = hasStaticPolynomialOrder< DiscreteFunctionSpace >::v;
+        static const int order = hasStaticPolynomialOrder< DiscreteFunctionSpace >::order;
+      };
+
+      template< class DiscreteFunctionSpace >
+      struct isContinuous < const DiscreteFunctionSpace >
+      {
+        static const bool v = isContinuous< DiscreteFunctionSpace >::v;
+      };
+
+      template< class DiscreteFunctionSpace >
+      struct isLocalized< const DiscreteFunctionSpace >
+      {
+        static const bool v = isLocalized< DiscreteFunctionSpace >::v;
+      };
+
+      template< class DiscreteFunctionSpace >
+      struct isParallel< const DiscreteFunctionSpace >
+      {
+        static const bool v = isParallel< DiscreteFunctionSpace >::v;
+      };
+
+      template< class DiscreteFunctionSpace >
+      struct isAdaptive< const DiscreteFunctionSpace >
+      {
+        static const bool v = isAdaptive< DiscreteFunctionSpace >::v;
+      };
+
+      template< class DiscreteFunctionSpace >
+      struct threadSafe< const DiscreteFunctionSpace >
+      {
+        static const bool v = threadSafe< DiscreteFunctionSpace >::v;
+      };
+
+      template< class DiscreteFunctionSpace >
+      struct viewThreadSafe< const DiscreteFunctionSpace >
+      {
+        static const bool v = viewThreadSafe< DiscreteFunctionSpace >::v;
       };
 
     } // namespace Capabilities
 
   } // namespace Fem
 
-} // namespace Dune 
+} // namespace Dune
 
 #endif // #ifndef DUNE_FEM_SPACE_COMMON_CAPABILITIES_HH
