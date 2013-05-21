@@ -14,8 +14,9 @@
 #include <dune/fem/space/shapefunctionset/selectcaching.hh>
 
 // local includes
-#include "default.hh"
-#include "shapefunctionset.hh"
+#include <dune/fem/space/discontinuousgalerkin/capabilities.hh>
+#include <dune/fem/space/discontinuousgalerkin/default.hh>
+#include <dune/fem/space/discontinuousgalerkin/shapefunctionset.hh>
 
 
 namespace Dune

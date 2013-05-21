@@ -1,5 +1,6 @@
 discontinuousgalerkindir =  $(includedir)/dune/fem/space/discontinuousgalerkin
-discontinuousgalerkin_HEADERS = declaration.hh \
+discontinuousgalerkin_HEADERS = capabilities.hh \
+				declaration.hh \
 				default.hh \
 				lagrange.hh \
 				legendre.hh \
