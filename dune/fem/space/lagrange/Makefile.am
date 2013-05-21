@@ -4,11 +4,18 @@ SUBDIRS = test
 
 lagrangedir = $(includedir)/dune/fem/space/lagrange
 
-lagrange_HEADERS = adaptmanager.hh  declaration.hh \
-		   dofmappercode.hh  genericbasefunctions.hh \
-		   genericgeometry.hh  genericlagrangepoints.hh \
-		   lagrangepoints.hh  restrictprolong.hh \
-		   shapefunctionset.hh 	space.hh  storage.hh
+lagrange_HEADERS = adaptmanager.hh \
+		   dofmappercode.hh \
+		   genericlagrangepoints.hh \
+		   shapefunctionset.hh \
+		   capabilities.hh \
+		   genericbasefunctions.hh \
+		   lagrangepoints.hh \
+		   space.hh \
+		   declaration.hh \
+		   genericgeometry.hh \
+		   restrictprolong.hh \
+		   storage.hh
 
 noinst_LTLIBRARIES = liblagrange.la
 
