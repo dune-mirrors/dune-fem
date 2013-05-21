@@ -33,9 +33,10 @@
 #include <dune/fem/space/shapefunctionset/vectorial.hh>
 
 // local includes
-#include "declaration.hh"
-#include "dofmappercode.hh"
-#include "localinterpolation.hh"
+#include <dune/fem/space/rannacherturek/capabilities.hh>
+#include <dune/fem/space/rannacherturek/declaration.hh>
+#include <dune/fem/space/rannacherturek/dofmappercode.hh>
+#include <dune/fem/space/rannacherturek/localinterpolation.hh>
 
 /**
   @file
