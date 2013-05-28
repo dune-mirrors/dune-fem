@@ -1,5 +1,5 @@
-#ifndef DUNE_FEM_DG_DOMAINTHREADITERATOR_HH
-#define DUNE_FEM_DG_DOMAINTHREADITERATOR_HH
+#ifndef DUNE_FEM_DOMAINTHREADITERATOR_HH
+#define DUNE_FEM_DOMAINTHREADITERATOR_HH
 
 #include <vector>
 
@@ -7,9 +7,9 @@
 
 #include <dune/fem/misc/threads/threadmanager.hh>
 #include <dune/fem/gridpart/filteredgridpart.hh>
+#include <dune/fem/gridpart/filter/threadfilter.hh>
 
 #ifdef USE_SMP_PARALLEL
-#include <dune/fem/gridpart/filter/threadfilter.hh>
 #include <dune/fem/misc/threads/threadpartitioner.hh>
 #endif
 
@@ -27,8 +27,9 @@ namespace Dune {
       typedef typename SpaceType :: GridType      GridType;
       typedef typename SpaceType :: GridPartType  GridPartType;
       typedef typename SpaceType :: IndexSetType  IndexSetType;
-#ifdef USE_SMP_PARALLEL
+
       typedef ThreadFilter<GridPartType> FilterType;
+#ifdef USE_SMP_PARALLEL
       typedef FilteredGridPart< GridPartType, FilterType, false > FilteredGridPartType ;
 
       typedef typename FilteredGridPartType :: template Codim< 0 > :: IteratorType
