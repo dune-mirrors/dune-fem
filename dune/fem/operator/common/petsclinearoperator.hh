@@ -129,7 +129,8 @@ namespace Dune
         apply( arg, dest );
       }
 
-      void reserve () 
+      template <class Stencil>
+      void reserve (const Stencil &stencil) 
       {
         if(sequence_ != domainSpace().sequence())  
         {
@@ -156,6 +157,9 @@ namespace Dune
           {
             ::Dune::Petsc::MatSetType( petscMatrix_, MATAIJ );
           }
+
+          int d_nnz[localRows];
+          ::Dune::Petsc::MatSetUp( petscMatrix_, d_nnz );
 
           // set sizes of the matrix 
           ::Dune::Petsc::MatSetSizes( petscMatrix_, localRows, localCols, PETSC_DETERMINE, PETSC_DETERMINE );
