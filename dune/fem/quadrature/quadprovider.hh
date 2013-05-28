@@ -4,7 +4,7 @@
 #include <dune/fem/storage/array.hh>
 #include <dune/fem/quadrature/quadratureimp.hh>
 #include <dune/fem/quadrature/idprovider.hh>
-#include <dune/fem/misc/threadmanager.hh>
+#include <dune/fem/misc/threads/threadmanager.hh>
 
 namespace Dune
 {
