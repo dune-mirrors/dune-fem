@@ -157,7 +157,11 @@ namespace Dune
       //! reallocate the vectors
       void resize ()
       {
-        leafIndex_.resize( IndexPair( invalidIndex(), UNUSED ) );
+        IndexContainerType checkSize( leafIndex_ );
+        checkSize.resize();
+        // only resize if the container is enlarged 
+        if( checkSize.size() > leafIndex_.size() ) 
+          leafIndex_.resize( IndexPair( invalidIndex(), UNUSED ) );
       }
 
       //! prepare for setup (nothing to do here)
@@ -314,7 +318,9 @@ namespace Dune
         numberHoles_ = oldIdx_.size();
 
         // adjust size
-        leafIndex_.shrinkToFit();
+        leafIndex_.resize( IndexPair( invalidIndex(), UNUSED ) );
+        // shrinkToFit does not do anything 
+        // leafIndex_.shrinkToFit();
         
         // the next index that can be given away is equal to size
         nextFreeIndex_ = actSize;
