@@ -74,9 +74,9 @@ namespace Dune
       { 
         return globalStencil_; 
       }
-      int maxNZ() const
+      size_t maxNZ() const
       {
-        int ret = 0;
+        size_t ret = 0;
         typedef typename GlobalStencilType::const_iterator StencilIteratorType;
         const GlobalStencilType &glStencil = globalStencil();
         StencilIteratorType end = glStencil.end();
@@ -120,9 +120,11 @@ namespace Dune
       }
       const LocalStencilType &localStencil(const DomainGlobalKeyType &key) const
       { 
+        DUNE_THROW( Dune::NotImplemented, "SimpleStencil: exact stencil information is unavailable." );
       }
       const GlobalStencilType &globalStencil() const
       { 
+        DUNE_THROW( Dune::NotImplemented, "SimpleStencil: global stencil is unavailable." );
       }
     private:
       int maxNZ_;
