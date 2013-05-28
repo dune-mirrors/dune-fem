@@ -173,7 +173,8 @@ namespace Dune
           {
             int femIndex = it->first;
             int nz = it->second.size();
-            int petscIndex = rowDofMapping().globalMapping( femIndex )-rowDofMapping().processStartIndex();
+            int petscIndex = rowDofMapping().localSlaveMapping( femIndex );
+              // rowDofMapping().globalMapping( femIndex ) - rowDofMapping().processStartIndex();
             /*
             std::cout << femIndex << " , " 
                       << rowDofMapping().globalMapping( femIndex ) << " , "
