@@ -39,13 +39,10 @@ namespace Dune
         {}
         void set(const std::size_t, const DomainGlobalKeyType &domainGlobal)
         {
-          std::cout << std::endl;
-          std::cout << "domain global key: " << domainGlobal << " = ";
           localStencil_ = &(stencil_[ domainGlobal ]);
         }
         void operator() ( const std::size_t, const RangeGlobalKeyType &rangeGlobal)
         {
-          std::cout << rangeGlobal << std::endl;
           localStencil_->insert( rangeGlobal );
         }
         private:
@@ -67,7 +64,6 @@ namespace Dune
       {
         domainBlockMapper_.mapEach(dEntity, 
                   MFunctor( rangeBlockMapper_, rEntity, FillFunctor(globalStencil_) ) );
-        std::cout << std::endl;
       }
 
       const LocalStencilType &localStencil(const DomainGlobalKeyType &key) const

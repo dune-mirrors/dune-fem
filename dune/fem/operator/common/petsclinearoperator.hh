@@ -168,20 +168,22 @@ namespace Dune
           typedef typename GlobalStencilType::const_iterator StencilIteratorType;
           const GlobalStencilType &glStencil = stencil.globalStencil();
           StencilIteratorType end = glStencil.end();
-          std::cout << "localRows: " << localRows << std::endl;
+          // std::cout << "localRows: " << localRows << std::endl;
           for ( StencilIteratorType it = glStencil.begin(); it != end; ++it)
           {
             int femIndex = it->first;
             int nz = it->second.size();
             int petscIndex = rowDofMapping().globalMapping( femIndex )-rowDofMapping().processStartIndex();
+            /*
             std::cout << femIndex << " , " 
                       << rowDofMapping().globalMapping( femIndex ) << " , "
                       << petscIndex
                       << " = " << nz
                       << std::endl;
+            */
             if ( ! rowDofMapping().isSlave( femIndex ) )
             {
-              std::cout << "inserted..." << std::endl;
+              // std::cout << "inserted..." << std::endl;
               assert( petscIndex >= 0 );
               assert( petscIndex < d_nnz.size() );
               d_nnz[ petscIndex ] = nz;
