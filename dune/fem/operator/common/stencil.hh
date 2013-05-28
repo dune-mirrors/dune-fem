@@ -39,10 +39,13 @@ namespace Dune
         {}
         void set(const std::size_t, const DomainGlobalKeyType &domainGlobal)
         {
+          std::cout << std::endl;
+          std::cout << "domain global key: " << domainGlobal << " = ";
           localStencil_ = &(stencil_[ domainGlobal ]);
         }
         void operator() ( const std::size_t, const RangeGlobalKeyType &rangeGlobal)
         {
+          std::cout << rangeGlobal << std::endl;
           localStencil_->insert( rangeGlobal );
         }
         private:
@@ -64,6 +67,7 @@ namespace Dune
       {
         domainBlockMapper_.mapEach(dEntity, 
                   MFunctor( rangeBlockMapper_, rEntity, FillFunctor(globalStencil_) ) );
+        std::cout << std::endl;
       }
 
       const LocalStencilType &localStencil(const DomainGlobalKeyType &key) const
@@ -74,11 +78,58 @@ namespace Dune
       { 
         return globalStencil_; 
       }
+      int maxNZ() const
+      {
+        int ret = 0;
+        typedef typename GlobalStencilType::const_iterator StencilIteratorType;
+        const GlobalStencilType &glStencil = globalStencil();
+        StencilIteratorType end = glStencil.end();
+        for ( StencilIteratorType it = glStencil.begin(); it != end; ++it)
+          ret = std::max(ret,it->second.size());
+        return ret;
+      }
 
     private:
       const DomainBlockMapper &domainBlockMapper_;
       const RangeBlockMapper &rangeBlockMapper_;
       GlobalStencilType globalStencil_;
+    };
+
+    template <class DomainSpace, class RangeSpace>
+    struct SimpleStencil : public Stencil<DomainSpace,RangeSpace>
+    {
+      typedef Stencil<DomainSpace,RangeSpace> BaseType;
+      typedef typename DomainSpace::IteratorType        DomainIteratorType;
+      typedef typename DomainIteratorType::Entity       DomainEntityType;
+      typedef typename DomainSpace::BlockMapperType     DomainBlockMapper;
+      typedef typename DomainBlockMapper::GlobalKeyType DomainGlobalKeyType;
+
+      typedef typename RangeSpace::IteratorType         RangeIteratorType;
+      typedef typename RangeIteratorType::Entity        RangeEntityType;
+      typedef typename RangeSpace::BlockMapperType      RangeBlockMapper;
+      typedef typename RangeBlockMapper::GlobalKeyType  RangeGlobalKeyType;
+
+      typedef std::set<RangeGlobalKeyType> LocalStencilType;
+      typedef std::map<DomainGlobalKeyType,LocalStencilType> GlobalStencilType;
+
+      SimpleStencil(int maxNZ) 
+      : maxNZ_(maxNZ)
+      {}
+      int maxNZ() const
+      {
+        return maxNZ_;
+      }
+      void fill ( const DomainEntityType &dEntity, const RangeEntityType &rEntity )
+      {
+      }
+      const LocalStencilType &localStencil(const DomainGlobalKeyType &key) const
+      { 
+      }
+      const GlobalStencilType &globalStencil() const
+      { 
+      }
+    private:
+      int maxNZ_;
     };
   
   } // namespace Fem

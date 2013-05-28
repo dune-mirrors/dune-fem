@@ -163,15 +163,31 @@ namespace Dune
           // set sizes of the matrix 
           ::Dune::Petsc::MatSetSizes( petscMatrix_, localRows, localCols, PETSC_DETERMINE, PETSC_DETERMINE );
 
-          int d_nnz[localRows];
+          std::vector<int> d_nnz(localRows,0);
           typedef typename StencilType::GlobalStencilType GlobalStencilType;
           typedef typename GlobalStencilType::const_iterator StencilIteratorType;
           const GlobalStencilType &glStencil = stencil.globalStencil();
           StencilIteratorType end = glStencil.end();
+          std::cout << "localRows: " << localRows << std::endl;
           for ( StencilIteratorType it = glStencil.begin(); it != end; ++it)
-            d_nnz[ rowDofMapping().globalMapping( (*it).first ) ] = (*it).second.size();
-
-          ::Dune::Petsc::MatSetUp( petscMatrix_, d_nnz );
+          {
+            int femIndex = it->first;
+            int nz = it->second.size();
+            int petscIndex = rowDofMapping().globalMapping( femIndex )-rowDofMapping().processStartIndex();
+            std::cout << femIndex << " , " 
+                      << rowDofMapping().globalMapping( femIndex ) << " , "
+                      << petscIndex
+                      << " = " << nz
+                      << std::endl;
+            if ( ! rowDofMapping().isSlave( femIndex ) )
+            {
+              std::cout << "inserted..." << std::endl;
+              assert( petscIndex >= 0 );
+              assert( petscIndex < d_nnz.size() );
+              d_nnz[ petscIndex ] = nz;
+            }
+          }
+          ::Dune::Petsc::MatSetUp( petscMatrix_, &d_nnz[0] );
         } 
 
         // ::Dune::Petsc::MatSetUp( petscMatrix_ );
