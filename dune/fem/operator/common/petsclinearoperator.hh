@@ -14,6 +14,7 @@
 #include <dune/fem/misc/petsc/petsccommon.hh>
 #include <dune/fem/function/petscdiscretefunction/petscdiscretefunction.hh>
 #include <dune/fem/operator/matrix/columnobject.hh>
+#include <dune/fem/operator/common/stencil.hh>
 
 #if defined HAVE_PETSC
 
@@ -46,6 +47,8 @@ namespace Dune
 
       const static size_t domainLocalBlockSize = DomainSpaceType::localBlockSize;
       const static size_t rangeLocalBlockSize = RangeSpaceType::localBlockSize;
+
+      typedef Stencil<DomainSpaceType,RangeSpaceType> StencilType;
 
     private:
       typedef PetscSlaveDofProvider< DomainSpaceType > RowPetscSlaveDofsType;
@@ -129,8 +132,7 @@ namespace Dune
         apply( arg, dest );
       }
 
-      template <class Stencil>
-      void reserve (const Stencil &stencil) 
+      void reserve (const StencilType &stencil) 
       {
         if(sequence_ != domainSpace().sequence())  
         {
@@ -158,14 +160,21 @@ namespace Dune
             ::Dune::Petsc::MatSetType( petscMatrix_, MATAIJ );
           }
 
-          int d_nnz[localRows];
-          ::Dune::Petsc::MatSetUp( petscMatrix_, d_nnz );
-
           // set sizes of the matrix 
           ::Dune::Petsc::MatSetSizes( petscMatrix_, localRows, localCols, PETSC_DETERMINE, PETSC_DETERMINE );
+
+          int d_nnz[localRows];
+          typedef typename StencilType::GlobalStencilType GlobalStencilType;
+          typedef typename GlobalStencilType::const_iterator StencilIteratorType;
+          const GlobalStencilType &glStencil = stencil.globalStencil();
+          StencilIteratorType end = glStencil.end();
+          for ( StencilIteratorType it = glStencil.begin(); it != end; ++it)
+            d_nnz[ rowDofMapping().globalMapping( (*it).first ) ] = (*it).second.size();
+
+          ::Dune::Petsc::MatSetUp( petscMatrix_, d_nnz );
         } 
 
-        ::Dune::Petsc::MatSetUp( petscMatrix_ );
+        // ::Dune::Petsc::MatSetUp( petscMatrix_ );
         status_ = statAssembled;
       } 
 
