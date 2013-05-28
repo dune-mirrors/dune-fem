@@ -190,6 +190,7 @@ namespace Dune
             }
           }
           ::Dune::Petsc::MatSetUp( petscMatrix_, &d_nnz[0] );
+          // ::Dune::Petsc::MatSetUp( petscMatrix_, stencil.maxNZ() );
         } 
 
         // ::Dune::Petsc::MatSetUp( petscMatrix_ );
