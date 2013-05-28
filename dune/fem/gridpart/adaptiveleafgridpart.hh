@@ -257,6 +257,7 @@ namespace Dune
       {
 #ifdef USE_PARTITIONTYPED_INDEXSET
         static const PartitionIteratorType indexSetPartitionType = idxpitype;
+        static const InterfaceType indexSetInterfaceType = InteriorBorder_InteriorBorder_Interface;
 #else
         static const PartitionIteratorType indexSetPartitionType = All_Partition;
         static const InterfaceType indexSetInterfaceType = All_All_Interface;
@@ -269,6 +270,7 @@ namespace Dune
       {
 #ifdef USE_PARTITIONTYPED_INDEXSET
         static const PartitionIteratorType indexSetPartitionType = idxpitype;
+        static const InterfaceType indexSetInterfaceType = InteriorBorder_InteriorBorder_Interface;
 #else
         static const PartitionIteratorType indexSetPartitionType = All_Partition;
         static const InterfaceType indexSetInterfaceType = All_All_Interface;

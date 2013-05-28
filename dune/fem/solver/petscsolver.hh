@@ -237,7 +237,7 @@ namespace Dune
         ::Dune::Petsc::PCSetType( pc_, type );
         ::Dune::Petsc::PCFactorSetLevels( pc_, pcLevel );
 
-        // :: PCHYPRESetType( pc_, "boomeramg" );
+        :: PCHYPRESetType( pc_, "boomeramg" );
 
         // set preconditioning context 
         ::Dune::Petsc::KSPSetPC( ksp_, pc_ );
@@ -250,8 +250,8 @@ namespace Dune
         Mat& A = const_cast< Mat & > (op_.petscMatrix());
 
         // set operator to PETSc solver context 
-        ::Dune::Petsc::KSPSetOperators( ksp_, A, A, DIFFERENT_NONZERO_PATTERN);
-
+        // ::Dune::Petsc::KSPSetOperators( ksp_, A, A, DIFFERENT_NONZERO_PATTERN);
+        ::Dune::Petsc::KSPSetOperators( ksp_, A, A, SAME_PRECONDITIONER); 
         // set prescribed tolerances 
         PetscInt  maxits = maxIter_ ;
         PetscReal reduc  = reduction_;

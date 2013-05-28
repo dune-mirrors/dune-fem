@@ -207,7 +207,13 @@ namespace Dune
         ErrorCheck( ::MatDestroy( A ) ); 
       #endif // PETSC_PETSC_VERSION_MAJOR <= 3 && PETSC_VERSION_MINOR < 2
     }
-    inline void MatSetUp( Mat mat ) { ErrorCheck( ::MatSetUp(mat)); }
+    inline void MatSetUp( Mat mat ) 
+    { 
+      ErrorCheck( ::MatSeqAIJSetPreallocation(mat,25,PETSC_NULL) );
+      ErrorCheck( ::MatMPIAIJSetPreallocation(mat,25,PETSC_NULL,0,PETSC_NULL) );
+      ErrorCheck( ::MatSetOption(mat, MAT_NEW_NONZERO_ALLOCATION_ERR,PETSC_FALSE) );
+      ErrorCheck( ::MatSetUp(mat)); 
+    }
     inline void MatGetOwnershipRange ( Mat mat, PetscInt *m, PetscInt* n ) { ErrorCheck( ::MatGetOwnershipRange( mat, m, n ) ); }
     inline void MatGetSize ( Mat mat, PetscInt *m, PetscInt* n ) { ErrorCheck( ::MatGetSize( mat, m, n ) ); }
     inline void MatMult  ( Mat mat, Vec x, Vec y ) { ErrorCheck( ::MatMult( mat, x, y ) ); }
