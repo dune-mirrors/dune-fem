@@ -66,10 +66,10 @@ namespace Dune {
         , sequence_( -1 )  
         , filteredGridParts_( Fem :: ThreadManager :: maxThreads() )
 #endif
-        , communicationThread_( Parameter::getValue<bool>("femdg.threads.communicationthread", false) 
+        , communicationThread_( Parameter::getValue<bool>("fem.threads.communicationthread", false) 
                     &&  Fem :: ThreadManager :: maxThreads() > 1 ) // only possible if maxThreads > 1
         , verbose_( Parameter::verbose() && 
-                    Parameter::getValue<bool>("femdg.threads.verbose", false ) )
+                    Parameter::getValue<bool>("fem.threads.verbose", false ) )
       {
 #ifdef USE_SMP_PARALLEL
         for(int thread=0; thread < Fem :: ThreadManager :: maxThreads(); ++thread )
