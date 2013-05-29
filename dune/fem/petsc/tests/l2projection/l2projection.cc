@@ -198,7 +198,6 @@ try
 
   // initialize MPI manager and PETSc
   Dune::Fem::MPIManager::initialize( argc, argv );
-  Dune::Petsc::initialize( &argc, &argv, static_cast< char* >( 0 ), static_cast< char* >( 0 ) );
 
   // add command line parameters to global parameter table
   Dune::Fem::Parameter::append( argc, argv );
