@@ -10,7 +10,7 @@
 #include <dune/geometry/type.hh>
 
 // dune-fem includes
-#include <dune/fem/misc/threadmanager.hh>
+#include <dune/fem/misc/threads/threadmanager.hh>
 
 namespace Dune 
 {

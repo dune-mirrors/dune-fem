@@ -1,6 +1,6 @@
 miscdir =  $(includedir)/dune/fem/misc
 
-SUBDIRS = petsc test
+SUBDIRS = petsc test threads
 
 misc_HEADERS = alugridwriter.hh \
 	       bartonnackmaninterface.hh \

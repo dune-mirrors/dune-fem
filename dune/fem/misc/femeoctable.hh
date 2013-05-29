@@ -110,7 +110,7 @@ namespace Dune
       int init(const std::string& path,
                const std::string& name, const std::string& descript) 
       {
-        if (MPIManager::rank() != 0) return -1;
+//        if (MPIManager::rank() != 0) return -1;
         if( !createDirectory( path ) )
           DUNE_THROW( IOError, "Failed to create path `" << path << "'." );
         return init(path+"/"+name,descript);
@@ -118,7 +118,7 @@ namespace Dune
 
       int init(const std::string& filename, const std::string& descript)
       {
-        if (MPIManager::rank() != 0) return -1;
+//        if (MPIManager::rank() != 0) return -1;
 
         //! create new vector components
         outputFile_.push_back((std::stringstream *) 0);

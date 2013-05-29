@@ -49,6 +49,169 @@ namespace Dune
     };
 
 
+    // ISTLMINResOp
+    // --------------
+
+    /** \brief MINRES scheme for block matrices (BCRSMatrix) 
+        and block vectors (BVector) from DUNE-ISTL. */
+    template< class DF, class Op >
+    struct ISTLMINResOp
+    : public Operator< DF, DF >
+    {
+    public:  
+      typedef DF DiscreteFunctionType;
+      typedef DiscreteFunctionType  DestinationType;
+      typedef Op OperatorType;
+
+    private:
+      template <class OperatorImp, bool hasPreconditioning>
+      struct SolverCaller
+      {
+        template <class DiscreteFunctionImp>
+        static std::pair< int, double >
+        call ( const OperatorImp &op,
+               const DiscreteFunctionImp &arg, DiscreteFunctionImp &dest,
+               double reduction, double absLimit, int maxIter, bool verbose )
+        {
+          return solve( op.systemMatrix(), arg, dest, reduction, absLimit, maxIter, verbose );
+        }
+
+        template< class MatrixObjType, class DiscreteFunctionImp >
+        static std::pair< int, double >
+        solve ( const MatrixObjType &mObj,
+                const DiscreteFunctionImp &arg, DiscreteFunctionImp &dest,
+                double reduction, double absLimit, int maxIter, bool verbose )
+        {
+          typedef typename MatrixObjType::MatrixAdapterType MatrixAdapterType;
+          MatrixAdapterType matrix = mObj.matrixAdapter();
+          
+          typedef typename DiscreteFunctionType :: DofStorageType BlockVectorType;
+
+          // verbose only in verbose mode and for rank 0 
+          int verb = (verbose && (dest.space().grid().comm().rank() == 0)) ? 2 : 0;
+           
+          if( 0 < absLimit && absLimit < std::numeric_limits< double >::max() )
+          {
+            const double residuum = matrix.residuum( arg.blockVector(), dest.blockVector() );
+            reduction = (residuum > 0) ? absLimit/ residuum : 1e-3;
+
+            if( verbose ) 
+              std::cout << "ISTL MINRes-Solver: reduction: " << reduction << ", residuum: " << residuum << ", absolut limit: " << absLimit << std::endl;
+          }
+
+          MINRESSolver< BlockVectorType >
+            solver( matrix, matrix.scp(), matrix.preconditionAdapter(), reduction, maxIter, verb );
+
+          // call solver and return info
+          int iter = ISTLSolverCall::solve( solver, arg.blockVector(), dest.blockVector() );
+          return std::pair< int, double > ( iter, matrix.averageCommTime() );
+        }
+      };
+
+    public:
+      /** \brief constructor
+       *
+       *  \param[in] op Mapping describing operator to invert
+       *  \param[in] reduction reduction epsilon
+       *  \param[in] absLimit absolut limit of residual (not used here)
+       *  \param[in] maxIter maximal iteration steps
+       *  \param[in] verbose verbosity
+       *
+       *  \note ISTL BiCG-stab only uses the relative reduction.
+       */
+      ISTLMINResOp ( const OperatorType &op,
+                     double  reduction,
+                     double absLimit,
+                     int maxIter,
+                     bool verbose )
+      : op_( op ),
+        reduction_( reduction ),
+        absLimit_( absLimit ),
+        maxIter_( maxIter ),
+        verbose_( verbose ),
+        iterations_( 0 ),
+        averageCommTime_( 0.0 )
+      {}
+
+      /** \brief constructor
+       *
+       *  \param[in] op        mapping describing operator to invert
+       *  \param[in] reduction    reduction epsilon
+       *  \param[in] absLimit  absolut limit of residual (not used here)
+       *  \param[in] maxIter   maximal iteration steps
+       */
+      ISTLMINResOp ( const OperatorType &op,
+                     double reduction,
+                     double absLimit,
+                     int maxIter = std::numeric_limits< int >::max() )
+      : op_( op ),
+        reduction_( reduction ),
+        absLimit_ ( absLimit ),
+        maxIter_( maxIter ),
+        verbose_( Parameter::getValue< bool >( "fem.solver.verbose", false ) ),
+        iterations_( 0 ),
+        averageCommTime_( 0.0 )
+      {}
+
+      void prepare (const DiscreteFunctionType& Arg, DiscreteFunctionType& Dest) const
+      {}
+
+      void finalize () const
+      {}
+
+      void printTexInfo(std::ostream& out) const
+      {
+        out << "Solver: ISTL MINRes,  eps = " << reduction_ ;
+        out  << "\\\\ \n";
+      }
+
+      /** \brief solve the system 
+          \param[in] arg right hand side 
+          \param[out] dest solution 
+      */
+      void apply( const DiscreteFunctionType& arg, DiscreteFunctionType& dest ) const
+      {
+        typedef SolverCaller< OperatorType, true > Caller;
+
+        std::pair< int, double > info
+          = Caller::call( op_, arg, dest, reduction_, absLimit_, maxIter_, verbose_ );
+
+        iterations_ = info.first;
+        averageCommTime_ = info.second;
+      }
+
+      // return number of iterations 
+      int iterations() const 
+      {
+        return iterations_;
+      }
+
+      //! return accumulated communication time
+      double averageCommTime() const 
+      {
+        return averageCommTime_;
+      }
+
+      /** \brief solve the system 
+          \param[in] arg right hand side 
+          \param[out] dest solution 
+      */
+      void operator() ( const DiscreteFunctionType& arg, DiscreteFunctionType& dest ) const
+      {
+        apply(arg,dest);
+      }
+
+    private:
+      const OperatorType &op_;
+      double reduction_;
+      double absLimit_;
+      int maxIter_;
+      bool verbose_ ;
+      mutable int iterations_;
+      mutable double averageCommTime_;
+    }; 
+
+
     // ISTLBICGSTABOp
     // --------------
 
@@ -261,7 +424,7 @@ namespace Dune
             reduction = (residuum > 0) ? absLimit/ residuum : 1e-3;
 
             if( verbose ) 
-              std::cout << "ISTL CG-Solver: reduction: " << reduction << ", residuum: " << residuum << ", absolut limit: " << absLimit << std::endl;
+              std::cout << "ISTL GMRes-Solver: reduction: " << reduction << ", residuum: " << residuum << ", absolut limit: " << absLimit << std::endl;
           }
 
           RestartedGMResSolver< BlockVectorType >
@@ -328,7 +491,7 @@ namespace Dune
 
       void printTexInfo(std::ostream& out) const
       {
-        out << "Solver: ISTL BiCG-STAB,  eps = " << reduction_ ;
+        out << "Solver: ISTL GMRes,  eps = " << reduction_ ;
         out  << "\\\\ \n";
       }
 

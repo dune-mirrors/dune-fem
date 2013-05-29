@@ -9,10 +9,9 @@
  */
 
 #include <string>
+#include <iostream>
 
 #include <dune/common/exceptions.hh>
-
-#include <dune/fem/misc/mpimanager.hh>
 
 #if HAVE_PETSC
 
@@ -59,10 +58,10 @@ namespace Dune
      * macro (which we want to use because it can print useful diagnostic output in
      * case of errors) 
      */
-    ErrorCode ErrorCheckHelper ( ErrorCode errorCode ) { CHKERRQ( errorCode ); return 0; }
+    inline ErrorCode ErrorCheckHelper ( ErrorCode errorCode ) { CHKERRQ( errorCode ); return 0; }
 
-    ErrorCode ErrorHandler ( MPI_Comm comm, int line, const char *function, const char *file, const char *dir, 
-                             ErrorCode errorCode, PetscErrorType p, const char *message, void *context )
+    inline ErrorCode ErrorHandler ( MPI_Comm comm, int line, const char *function, const char *file, const char *dir, 
+                                    ErrorCode errorCode, PetscErrorType p, const char *message, void *context )
     {
       std::ostringstream msgout;
       msgout << "PETSc Error in the PETSc function '" << function << "' at " << file << ":" << line << ":";
@@ -79,7 +78,7 @@ namespace Dune
       return errorCode;
     }
 
-    void ErrorCheck ( ErrorCode errorCode )
+    inline void ErrorCheck ( ErrorCode errorCode )
     {
       if( errorCode )
       {
@@ -91,7 +90,28 @@ namespace Dune
      * This should be called right after the initialization of the MPI manager. It expects the same arguments
      * as PetscInitialize
      */
-    void initialize( int *argc, char ***args, const char file[], const char help[], bool ownHandler = true ) 
+    inline void initialize( const bool verbose, int &argc, char **&args, const char file[] = 0 , const char help[] = 0, bool ownHandler = true ) 
+    {
+      ::PetscInitialize( &argc, &args, file, help );
+
+      if( ownHandler )
+      {
+        // set up our error handler
+        if( verbose )
+        {
+          dverb << "INFORMATION: Setting up an own error handler for PETSc errors. If you want the default PETSc handler,\n"
+                << "INFORMATION: set the last argument of Dune::Petsc::initialize(...) to 'false'.\n";
+        }
+        ::PetscPushErrorHandler( &ErrorHandler, 0 );
+      }
+    }
+
+#if 0
+    /*
+     * This should be called right after the initialization of the MPI manager. It expects the same arguments
+     * as PetscInitialize
+     */
+    inline void initialize( int *argc, char ***args, const char file[], const char help[], bool ownHandler = true ) 
     {
       ::PetscInitialize( argc, args, file, help );
 
@@ -106,11 +126,12 @@ namespace Dune
         ::PetscPushErrorHandler( &ErrorHandler, 0 );
       }
     }
+#endif
 
     /*
      * This should be called just before the termination of the program.
      */
-    void finalize ()
+    inline void finalize ()
     {
       // TODO: test here if we are using our own handler
       ::PetscPopErrorHandler();
@@ -124,125 +145,127 @@ namespace Dune
      *
      * The PETSC_VERSION_... customizations are not very well tested yet
      */
-    void KSPCreate ( KSP *inksp ) { ErrorCheck( ::KSPCreate( FEM_PETSC_COMM_DEFAULT, inksp ) ); }
-    void KSPDestroy ( KSP *ksp ) { 
+    inline void KSPCreate ( KSP *inksp ) { ErrorCheck( ::KSPCreate( FEM_PETSC_COMM_DEFAULT, inksp ) ); }
+    inline void KSPDestroy ( KSP *ksp ) { 
 #if PETSC_VERSION_MAJOR <= 3 && PETSC_VERSION_MINOR < 2
         ErrorCheck( ::KSPDestroy( *ksp ) ); 
 #else
         ErrorCheck( ::KSPDestroy( ksp ) ); 
 #endif // PETSC_PETSC_VERSION_MAJOR <= 3 && PETSC_VERSION_MINOR < 2
     }
-    void KSPGetPC ( KSP ksp, PC *pc ) { ErrorCheck( ::KSPGetPC( ksp, pc ) ); }
-    void KSPSetFromOptions ( KSP ksp ) { ErrorCheck( ::KSPSetFromOptions( ksp ) ); }
-    void KSPSetType ( KSP ksp, const KSPType type ) { ErrorCheck( ::KSPSetType( ksp, type ) ); }
-    void KSPGMRESSetRestart ( KSP ksp, PetscInt restart ) { ErrorCheck( ::KSPGMRESSetRestart( ksp, restart ) ); }
-    void KSPView ( KSP ksp, PetscViewer viewer = PETSC_VIEWER_STDOUT_(FEM_PETSC_COMM_DEFAULT)  ) 
+    inline void KSPGetPC ( KSP ksp, PC *pc ) { ErrorCheck( ::KSPGetPC( ksp, pc ) ); }
+    inline void KSPSetFromOptions ( KSP ksp ) { ErrorCheck( ::KSPSetFromOptions( ksp ) ); }
+    inline void KSPSetType ( KSP ksp, const KSPType type ) { ErrorCheck( ::KSPSetType( ksp, type ) ); }
+    inline void KSPGMRESSetRestart ( KSP ksp, PetscInt restart ) { ErrorCheck( ::KSPGMRESSetRestart( ksp, restart ) ); }
+    inline void KSPView ( KSP ksp, PetscViewer viewer = PETSC_VIEWER_STDOUT_(FEM_PETSC_COMM_DEFAULT)  ) 
     { 
       ErrorCheck( ::KSPView( ksp, viewer ) ); 
     }
-    void KSPMonitorSet (KSP ksp, PetscErrorCode (*monitor)(KSP,PetscInt,PetscReal,void*),
+    inline void KSPMonitorSet (KSP ksp, PetscErrorCode (*monitor)(KSP,PetscInt,PetscReal,void*),
 #if PETSC_VERSION_MAJOR <= 3 && PETSC_VERSION_MINOR < 2
-                       void *mctx,PetscErrorCode (*monitordestroy)(void*) 
+                               void *mctx,PetscErrorCode (*monitordestroy)(void*) 
 #else
-                       void *mctx,PetscErrorCode (*monitordestroy)(void**)  
+                               void *mctx,PetscErrorCode (*monitordestroy)(void**)  
 #endif
                        )
     { 
         ErrorCheck( ::KSPMonitorSet( ksp, monitor, mctx, monitordestroy ) ); 
     }
-    void KSPGetIterationNumber( KSP ksp, PetscInt* its ) 
+    inline void KSPGetIterationNumber( KSP ksp, PetscInt* its ) 
     { ErrorCheck( ::KSPGetIterationNumber( ksp, its ) ); }
 
-    void KSPSetOperators (KSP ksp, Mat Amat, Mat Pmat, MatStructure flag ) { ErrorCheck( ::KSPSetOperators( ksp, Amat, Pmat, flag ) ); }
-    void KSPSetTolerances ( KSP ksp, PetscReal rtol, PetscReal abstol, PetscReal dtol, PetscInt maxits ) 
+    inline void KSPSetOperators (KSP ksp, Mat Amat, Mat Pmat, MatStructure flag ) { ErrorCheck( ::KSPSetOperators( ksp, Amat, Pmat, flag ) ); }
+    inline void KSPSetTolerances ( KSP ksp, PetscReal rtol, PetscReal abstol, PetscReal dtol, PetscInt maxits ) 
       { ErrorCheck( ::KSPSetTolerances( ksp, rtol, abstol, dtol, maxits ) ); }
-    void KSPSolve ( KSP ksp, Vec b, Vec x ) { ErrorCheck( ::KSPSolve( ksp, b, x ) ); }
-    void KSPSetPC ( KSP ksp, PC pc ) { ErrorCheck( ::KSPSetPC( ksp, pc ) ); }
+    inline void KSPSolve ( KSP ksp, Vec b, Vec x ) { ErrorCheck( ::KSPSolve( ksp, b, x ) ); }
+    inline void KSPSetPC ( KSP ksp, PC pc ) { ErrorCheck( ::KSPSetPC( ksp, pc ) ); }
 
     // preconditioning 
-    void PCCreate  ( PC* pc) { ErrorCheck( ::PCCreate( FEM_PETSC_COMM_DEFAULT, pc ) ); }
-    void PCDestroy ( PC* pc) { 
+    inline void PCCreate  ( PC* pc) { ErrorCheck( ::PCCreate( FEM_PETSC_COMM_DEFAULT, pc ) ); }
+    inline void PCDestroy ( PC* pc) { 
 #if PETSC_VERSION_MAJOR <= 3 && PETSC_VERSION_MINOR < 2
       ErrorCheck( ::PCDestroy( *pc ) ); 
 #else  
       ErrorCheck( ::PCDestroy( pc ) ); 
 #endif 
     }
-    void PCSetType ( PC pc, const PCType type ) { ErrorCheck( ::PCSetType(  pc, type ) ); }
-    void PCFactorSetLevels( PC pc, PetscInt level ) { ErrorCheck( ::PCFactorSetLevels(  pc, level ) ); }
+    inline void PCSetType ( PC pc, const PCType type ) { ErrorCheck( ::PCSetType(  pc, type ) ); }
+    inline void PCFactorSetLevels( PC pc, PetscInt level ) { ErrorCheck( ::PCFactorSetLevels(  pc, level ) ); }
 
     // matrix routines 
-    void MatAssemblyBegin ( Mat mat, MatAssemblyType type ) { ErrorCheck( ::MatAssemblyBegin( mat, type ) ); }
-    void MatAssemblyEnd ( Mat mat, MatAssemblyType type ) { ErrorCheck( ::MatAssemblyEnd( mat, type ) ); }
-    void MatCreate ( Mat *A ) { ErrorCheck( ::MatCreate( FEM_PETSC_COMM_DEFAULT, A) ); }
-    void MatCreateBlockMat ( Mat *A, PetscInt m, PetscInt n, PetscInt bs, PetscInt nz, PetscInt* nnz ) 
+    inline void MatAssemblyBegin ( Mat mat, MatAssemblyType type ) { ErrorCheck( ::MatAssemblyBegin( mat, type ) ); }
+    inline void MatAssemblyEnd ( Mat mat, MatAssemblyType type ) { ErrorCheck( ::MatAssemblyEnd( mat, type ) ); }
+    inline void MatCreate ( Mat *A ) { ErrorCheck( ::MatCreate( FEM_PETSC_COMM_DEFAULT, A) ); }
+    inline void MatCreateBlockMat ( Mat *A, PetscInt m, PetscInt n, PetscInt bs, PetscInt nz, PetscInt* nnz ) 
     { 
       ErrorCheck( ::MatCreateBlockMat( FEM_PETSC_COMM_DEFAULT, n, m, bs, nz, nnz, A) ); 
     }
-    void MatDestroy ( Mat *A ) { 
+    inline void MatDestroy ( Mat *A ) { 
       #if PETSC_VERSION_MAJOR <= 3 && PETSC_VERSION_MINOR < 2
         ErrorCheck( ::MatDestroy( *A ) ); 
       #else
         ErrorCheck( ::MatDestroy( A ) ); 
       #endif // PETSC_PETSC_VERSION_MAJOR <= 3 && PETSC_VERSION_MINOR < 2
     }
-    void MatSetUp( Mat mat ) { ErrorCheck( ::MatSetUp(mat)); }
-    void MatGetOwnershipRange ( Mat mat, PetscInt *m, PetscInt* n ) { ErrorCheck( ::MatGetOwnershipRange( mat, m, n ) ); }
-    void MatGetSize ( Mat mat, PetscInt *m, PetscInt* n ) { ErrorCheck( ::MatGetSize( mat, m, n ) ); }
-    void MatMult  ( Mat mat, Vec x, Vec y ) { ErrorCheck( ::MatMult( mat, x, y ) ); }
-    void MatSetBlockSize ( Mat A, PetscInt bs ) { ErrorCheck( ::MatSetBlockSize( A, bs ) ); }
-    void MatSetSizes ( Mat A, PetscInt m, PetscInt n, PetscInt M, PetscInt N ) { ErrorCheck( ::MatSetSizes( A, m, n, M, N ) ); }
-    void MatSetFromOptions ( Mat B ) { ErrorCheck( ::MatSetFromOptions( B ) ); }
-    void MatSetType ( Mat mat, const MatType matype ) { ErrorCheck( ::MatSetType( mat, matype ) ); }
-    void MatSetValue ( Mat v, PetscInt i, PetscInt j, PetscScalar va, InsertMode mode ) { ErrorCheck( ::MatSetValue( v, i, j, va, mode ) ); }
-    void MatSetValues ( Mat mat, PetscInt m, const PetscInt idxm[], PetscInt n, const PetscInt idxn[], const PetscScalar v[], InsertMode addv )
+    inline void MatSetUp( Mat mat ) { ErrorCheck( ::MatSetUp(mat)); }
+    inline void MatGetOwnershipRange ( Mat mat, PetscInt *m, PetscInt* n ) { ErrorCheck( ::MatGetOwnershipRange( mat, m, n ) ); }
+    inline void MatGetSize ( Mat mat, PetscInt *m, PetscInt* n ) { ErrorCheck( ::MatGetSize( mat, m, n ) ); }
+    inline void MatMult  ( Mat mat, Vec x, Vec y ) { ErrorCheck( ::MatMult( mat, x, y ) ); }
+    inline void MatSetBlockSize ( Mat A, PetscInt bs ) { ErrorCheck( ::MatSetBlockSize( A, bs ) ); }
+    inline void MatSetSizes ( Mat A, PetscInt m, PetscInt n, PetscInt M, PetscInt N ) { ErrorCheck( ::MatSetSizes( A, m, n, M, N ) ); }
+    inline void MatSetFromOptions ( Mat B ) { ErrorCheck( ::MatSetFromOptions( B ) ); }
+    inline void MatSetType ( Mat mat, const MatType matype ) { ErrorCheck( ::MatSetType( mat, matype ) ); }
+    inline void MatSetValue ( Mat v, PetscInt i, PetscInt j, PetscScalar va, InsertMode mode ) { ErrorCheck( ::MatSetValue( v, i, j, va, mode ) ); }
+    inline void MatSetValues ( Mat mat, PetscInt m, const PetscInt idxm[], PetscInt n, const PetscInt idxn[], const PetscScalar v[], InsertMode addv )
       { ErrorCheck( ::MatSetValues( mat, m, idxm, n, idxn, v, addv ) ); }
-    void MatView ( Mat mat, PetscViewer viewer ) { ErrorCheck( ::MatView( mat, viewer ) ); }
-    void MatZeroEntries ( Mat mat ) { ErrorCheck( ::MatZeroEntries( mat ) ); }
-    void PetscBarrier ( PetscObject obj ) { ErrorCheck( ::PetscBarrier( obj ) ); }
-    void PetscFinalize () { ErrorCheck( ::PetscFinalize() ); }
-    void PetscInitialize( int *argc, char ***args, const char file[], const char help[] ) { ErrorCheck( ::PetscInitialize( argc, args, file, help ) ); }
-    void PetscViewerASCIIOpen ( MPI_Comm comm, const char name[], PetscViewer *lab ) { ErrorCheck( ::PetscViewerASCIIOpen( comm, name, lab ) ); }
-    void PetscViewerDestroy ( PetscViewer *viewer ) { 
+    inline void MatGetValues ( Mat mat, PetscInt m, const PetscInt idxm[], PetscInt n, const PetscInt idxn[], PetscScalar v[] )
+      { ErrorCheck( ::MatGetValues( mat, m, idxm, n, idxn, v ) ); }
+    inline void MatView ( Mat mat, PetscViewer viewer ) { ErrorCheck( ::MatView( mat, viewer ) ); }
+    inline void MatZeroEntries ( Mat mat ) { ErrorCheck( ::MatZeroEntries( mat ) ); }
+    inline void PetscBarrier ( PetscObject obj ) { ErrorCheck( ::PetscBarrier( obj ) ); }
+    inline void PetscFinalize () { ErrorCheck( ::PetscFinalize() ); }
+    inline void PetscInitialize( int *argc, char ***args, const char file[], const char help[] ) { ErrorCheck( ::PetscInitialize( argc, args, file, help ) ); }
+    inline void PetscViewerASCIIOpen ( MPI_Comm comm, const char name[], PetscViewer *lab ) { ErrorCheck( ::PetscViewerASCIIOpen( comm, name, lab ) ); }
+    inline void PetscViewerDestroy ( PetscViewer *viewer ) { 
       #if PETSC_VERSION_MAJOR <= 3 && PETSC_VERSION_MINOR < 2
         ErrorCheck( ::PetscViewerDestroy( *viewer ) );  
       #else
         ErrorCheck( ::PetscViewerDestroy( viewer ) );  
       #endif
     }
-    void PetscViewerSetFormat ( PetscViewer viewer, PetscViewerFormat format ) { ErrorCheck( ::PetscViewerSetFormat( viewer, format ) ); }
-    void VecAssemblyBegin ( Vec vec ) { ErrorCheck( ::VecAssemblyBegin( vec ) ); }
-    void VecAssemblyEnd ( Vec vec ) { ErrorCheck( ::VecAssemblyEnd( vec ) ); }
-    void VecAXPY ( Vec y, PetscScalar alpha, Vec x) { ErrorCheck( ::VecAXPY( y, alpha, x ) ); }
-    void VecCopy ( Vec x, Vec y ) { ErrorCheck( ::VecCopy( x, y ) ); }
-    void VecCreate ( Vec *vec ) { ErrorCheck( ::VecCreate( FEM_PETSC_COMM_DEFAULT, vec ) ); }
-    void VecCreateGhost ( PetscInt n, PetscInt N, PetscInt nghost, const PetscInt ghosts[], Vec *vv )
+    inline void PetscViewerSetFormat ( PetscViewer viewer, PetscViewerFormat format ) { ErrorCheck( ::PetscViewerSetFormat( viewer, format ) ); }
+    inline void VecAssemblyBegin ( Vec vec ) { ErrorCheck( ::VecAssemblyBegin( vec ) ); }
+    inline void VecAssemblyEnd ( Vec vec ) { ErrorCheck( ::VecAssemblyEnd( vec ) ); }
+    inline void VecAXPY ( Vec y, PetscScalar alpha, Vec x) { ErrorCheck( ::VecAXPY( y, alpha, x ) ); }
+    inline void VecCopy ( Vec x, Vec y ) { ErrorCheck( ::VecCopy( x, y ) ); }
+    inline void VecCreate ( Vec *vec ) { ErrorCheck( ::VecCreate( FEM_PETSC_COMM_DEFAULT, vec ) ); }
+    inline void VecCreateGhost ( PetscInt n, PetscInt N, PetscInt nghost, const PetscInt ghosts[], Vec *vv )
       { ErrorCheck( ::VecCreateGhost( FEM_PETSC_COMM_DEFAULT, n, N, nghost, ghosts, vv ) ); }
-    void VecDestroy ( Vec *v ) { 
+    inline void VecDestroy ( Vec *v ) { 
       #if PETSC_VERSION_MAJOR <= 3 && PETSC_VERSION_MINOR < 2
         ErrorCheck( ::VecDestroy( *v ) ); 
       #else
         ErrorCheck( ::VecDestroy( v ) ); 
       #endif // PETSC_PETSC_VERSION_MAJOR <= 3 && PETSC_VERSION_MINOR < 2
     } 
-    void VecDot ( Vec x, Vec y, PetscScalar *val ) { ErrorCheck( ::VecDot( x, y, val ) ); }
-    void VecDuplicate ( Vec v, Vec *newv ) { ErrorCheck( ::VecDuplicate( v, newv ) ); }
-    void VecGetLocalSize ( Vec x, PetscInt *size ) { ErrorCheck( ::VecGetLocalSize( x, size ) ); }
-    void VecGetOwnershipRange ( Vec x, PetscInt *low, PetscInt *high ) { ErrorCheck( ::VecGetOwnershipRange( x, low, high ) ); }
-    void VecGetSize ( Vec x, PetscInt *size ) { ErrorCheck( ::VecGetSize( x, size ) ); }
-    void VecGetValues ( Vec x, PetscInt ni, const PetscInt ix[], PetscScalar y[] ) { ErrorCheck( ::VecGetValues( x, ni, ix, y ) ); }
-    void VecGhostGetLocalForm ( Vec g, Vec *l ) { ErrorCheck( ::VecGhostGetLocalForm( g, l ) ); }
-    void VecGhostRestoreLocalForm ( Vec g, Vec *l ) { ErrorCheck( ::VecGhostRestoreLocalForm( g, l ) ); }
-    void VecGhostUpdateBegin ( Vec g, InsertMode insertmode, ScatterMode scattermode ) { ErrorCheck( ::VecGhostUpdateBegin( g, insertmode, scattermode ) ); }
-    void VecGhostUpdateEnd ( Vec g, InsertMode insertmode, ScatterMode scattermode ) { ErrorCheck( ::VecGhostUpdateEnd( g, insertmode, scattermode ) ); }
-    void VecNorm ( Vec x, NormType type, PetscReal *val ) { ErrorCheck( ::VecNorm( x, type, val ) ); }
-    void VecScale ( Vec x, PetscScalar alpha ) { ErrorCheck( ::VecScale( x, alpha ) ); }
-    void VecSet ( Vec x, PetscScalar alpha ) { ErrorCheck( ::VecSet( x, alpha ) ); }
-    void VecSetFromOptions ( Vec vec ) { ErrorCheck( ::VecSetFromOptions( vec ) ); }
-    void VecSetType ( Vec vec, const VecType method ) { ErrorCheck( ::VecSetType( vec, method ) ); }
-    void VecSetSizes ( Vec v, PetscInt n, PetscInt N ) { ErrorCheck( ::VecSetSizes( v, n, N ) ); }
-    void VecSetValue ( Vec v, int row, PetscScalar value, InsertMode mode ) { ErrorCheck( ::VecSetValue( v, row, value, mode ) ); }
-    void VecView ( Vec vec, PetscViewer viewer ) { ErrorCheck( ::VecView( vec, viewer ) ); }
+    inline void VecDot ( Vec x, Vec y, PetscScalar *val ) { ErrorCheck( ::VecDot( x, y, val ) ); }
+    inline void VecDuplicate ( Vec v, Vec *newv ) { ErrorCheck( ::VecDuplicate( v, newv ) ); }
+    inline void VecGetLocalSize ( Vec x, PetscInt *size ) { ErrorCheck( ::VecGetLocalSize( x, size ) ); }
+    inline void VecGetOwnershipRange ( Vec x, PetscInt *low, PetscInt *high ) { ErrorCheck( ::VecGetOwnershipRange( x, low, high ) ); }
+    inline void VecGetSize ( Vec x, PetscInt *size ) { ErrorCheck( ::VecGetSize( x, size ) ); }
+    inline void VecGetValues ( Vec x, PetscInt ni, const PetscInt ix[], PetscScalar y[] ) { ErrorCheck( ::VecGetValues( x, ni, ix, y ) ); }
+    inline void VecGhostGetLocalForm ( Vec g, Vec *l ) { ErrorCheck( ::VecGhostGetLocalForm( g, l ) ); }
+    inline void VecGhostRestoreLocalForm ( Vec g, Vec *l ) { ErrorCheck( ::VecGhostRestoreLocalForm( g, l ) ); }
+    inline void VecGhostUpdateBegin ( Vec g, InsertMode insertmode, ScatterMode scattermode ) { ErrorCheck( ::VecGhostUpdateBegin( g, insertmode, scattermode ) ); }
+    inline void VecGhostUpdateEnd ( Vec g, InsertMode insertmode, ScatterMode scattermode ) { ErrorCheck( ::VecGhostUpdateEnd( g, insertmode, scattermode ) ); }
+    inline void VecNorm ( Vec x, NormType type, PetscReal *val ) { ErrorCheck( ::VecNorm( x, type, val ) ); }
+    inline void VecScale ( Vec x, PetscScalar alpha ) { ErrorCheck( ::VecScale( x, alpha ) ); }
+    inline void VecSet ( Vec x, PetscScalar alpha ) { ErrorCheck( ::VecSet( x, alpha ) ); }
+    inline void VecSetFromOptions ( Vec vec ) { ErrorCheck( ::VecSetFromOptions( vec ) ); }
+    inline void VecSetType ( Vec vec, const VecType method ) { ErrorCheck( ::VecSetType( vec, method ) ); }
+    inline void VecSetSizes ( Vec v, PetscInt n, PetscInt N ) { ErrorCheck( ::VecSetSizes( v, n, N ) ); }
+    inline void VecSetValue ( Vec v, int row, PetscScalar value, InsertMode mode ) { ErrorCheck( ::VecSetValue( v, row, value, mode ) ); }
+    inline void VecView ( Vec vec, PetscViewer viewer ) { ErrorCheck( ::VecView( vec, viewer ) ); }
       
   } // namespace Petsc
 

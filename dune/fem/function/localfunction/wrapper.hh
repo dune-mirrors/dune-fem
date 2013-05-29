@@ -28,6 +28,8 @@ namespace Dune
       typedef LocalFunctionStorage LocalFunctionStorageType;
       typedef typename LocalFunctionStorageType :: ObjectType
         LocalFunctionImpType;
+
+      typedef typename LocalFunctionImpType :: DofType DofType;
       typedef typename LocalFunctionImpType :: DiscreteFunctionSpaceType
         DiscreteFunctionSpaceType;
       typedef LocalFunctionWrapper< LocalFunctionStorageType >

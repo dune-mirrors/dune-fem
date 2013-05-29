@@ -43,7 +43,7 @@ namespace Dune
       //! \brief entity type
       typedef Entity EntityType;
 
-      // function space type
+      //! function space type
       typedef FunctionSpace< typename Entity::Geometry::ctype, typename Range::value_type, 
                              Entity::Geometry::coorddimension, Range::dimension
                            > FunctionSpaceType;
@@ -74,30 +74,42 @@ namespace Dune
       //! \brief return reference element
       const ReferenceElementType &referenceElement () const;
 
-      //! \brief evaluate all basis function and multiply with given values and add to dofs 
-      template< class QuadratureType, class Vector, class DofVector >
-      void axpy ( const QuadratureType &quad, const Vector &values, DofVector &dofs ) const;
+      /** \brief evaluate all basis function and multiply with given
+       *         values and add to dofs
+       */
+      template< class Quadrature, class Vector, class DofVector >
+      void axpy ( const Quadrature &quad, const Vector &values, DofVector &dofs ) const;
 
-      //! \brief evaluate all basis function and multiply with given values and add to dofs 
-      template< class QuadratureType, class VectorA, class VectorB, class DofVector >
-      void axpy ( const QuadratureType &quad, const VectorA &valuesA, const VectorB &valuesB, DofVector &dofs ) const;
+      /** \brief evaluate all basis function and multiply with given
+       *         values and add to dofs
+       */
+      template< class Quadrature, class VectorA, class VectorB, class DofVector >
+      void axpy ( const Quadrature &quad, const VectorA &valuesA, const VectorB &valuesB, DofVector &dofs ) const;
 
-      //! \todo please doc me
+      /** \brief evaluate all basis function and multiply with given
+       *         values and add to dofs
+       */
       template< class Point, class DofVector >
       void axpy ( const Point &x, const RangeType &valueFactor, DofVector &dofs ) const;
 
-      //! \todo please doc me
+      /** \brief evaluate all basis function and multiply with given
+       *         values and add to dofs
+       */
       template< class Point, class DofVector >
       void axpy ( const Point &x, const JacobianRangeType &jacobianFactor, DofVector &dofs ) const;
 
-      //! \todo please doc me
+      /** \brief evaluate all basis function and multiply with given
+       *         values and add to dofs
+       */
       template< class Point, class DofVector >
       void axpy ( const Point &x, const RangeType &valueFactor, const JacobianRangeType &jacobianFactor,
                   DofVector &dofs ) const;
 
-      //! \brief evaluate all basis functions and store the result in the ranges array
-      template< class QuadratureType, class DofVector, class RangeArray >
-      void evaluateAll ( const QuadratureType &quad, const DofVector &dofs, RangeArray &ranges ) const;
+      /** \brief evaluate all basis functions and store the result in the
+       *         ranges array
+       */
+      template< class Quadrature, class DofVector, class RangeArray >
+      void evaluateAll ( const Quadrature &quad, const DofVector &dofs, RangeArray &ranges ) const;
 
       //! \todo please doc me
       template< class Point, class DofVector >

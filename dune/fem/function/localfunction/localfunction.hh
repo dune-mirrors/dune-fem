@@ -56,6 +56,9 @@ namespace Dune
       //! type of the discrete function space, the local function belongs to
       typedef typename Traits::DiscreteFunctionSpaceType DiscreteFunctionSpaceType;
 
+      //! type of DoF use with the discrete function 
+      typedef typename Traits::DofType DofType;
+
       //! type of the local function implementation (engine concept)
       typedef typename Traits::LocalFunctionImpType LocalFunctionImpType;
 
@@ -99,7 +102,7 @@ namespace Dune
        *  \param[in]  num  local dof number 
        *  \return reference to dof 
        */
-      const RangeFieldType &operator[] ( const int num ) const
+      const DofType &operator[] ( const int num ) const
       {
         return asImp()[ num ];
       }
@@ -109,7 +112,7 @@ namespace Dune
        *  \param[in]  num  local DoF number
        *  \return reference to DoF
        */
-      RangeFieldType &operator[] ( const int num )
+      DofType &operator[] ( const int num )
       {
         return asImp()[ num ];
       }

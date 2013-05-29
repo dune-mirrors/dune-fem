@@ -19,11 +19,6 @@ AC_SUBST(AM_CPPFLAGS, '$(DUNE_CPPFLAGS) -I$(top_srcdir)')
 AC_SUBST(AM_LDFLAGS, '$(DUNE_LDFLAGS) $(DUNE_LIBS)')
 AC_SUBST([LOCAL_LIBS], '$(top_builddir)/dune/fem/libfem.la')
 
-# implicitly set the Dune-flags everywhere
-CPPFLAGS="$DUNE_CPPFLAGS"
-LDFLAGS="$DUNE_LDFLAGS"
-LIBS="$DUNE_LIBS $BLAS_LIBS"
-
 AC_CONFIG_FILES([Makefile
      doc/Makefile
      doc/doxygen/Makefile
@@ -107,6 +102,7 @@ AC_CONFIG_FILES([Makefile
      dune/fem/misc/Makefile
      dune/fem/misc/petsc/Makefile
      dune/fem/misc/test/Makefile
+     dune/fem/misc/threads/Makefile
      dune/fem/storage/Makefile
      dune/fem/test/Makefile
      dune/fem/gridpart/Makefile

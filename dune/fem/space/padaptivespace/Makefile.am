@@ -1,6 +1,7 @@
 padaptivespacedir = $(includedir)/dune/fem/space/padaptivespace
 
 padaptivespace_HEADERS = adaptmanager.hh \
+			 capabilities.hh \
 			 declaration.hh \
 			 discontinuousgalerkin.hh \
 			 generic.hh \

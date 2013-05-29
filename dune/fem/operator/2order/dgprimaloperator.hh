@@ -8,6 +8,7 @@
 #include <dune/fem/misc/gridwidth.hh>
 #include <dune/fem/operator/2order/dgmatrixsetup.hh>
 #include <dune/fem/pass/common/pass.hh>
+#include <dune/fem/pass/common/local.hh>
 // #include <dune/fem/pass/ellipticmodelcaller.hh>
 #include <dune/fem/pass/localdg/discretemodel.hh>
 #include <dune/fem/quadrature/caching/twistutility.hh>

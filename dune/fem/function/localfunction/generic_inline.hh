@@ -38,7 +38,7 @@ namespace Dune
 
     template< class DiscreteFunction, class DiscreteFunctionSpace >
     inline
-    const typename GenericLocalFunctionImpl< DiscreteFunction, DiscreteFunctionSpace >::RangeFieldType &
+    const typename GenericLocalFunctionImpl< DiscreteFunction, DiscreteFunctionSpace >::DofType &
     GenericLocalFunctionImpl< DiscreteFunction, DiscreteFunctionSpace >
       ::operator[] ( const int num ) const
     {
@@ -50,7 +50,7 @@ namespace Dune
     
     template< class DiscreteFunction, class DiscreteFunctionSpace >
     inline
-    typename GenericLocalFunctionImpl< DiscreteFunction, DiscreteFunctionSpace >::RangeFieldType &
+    typename GenericLocalFunctionImpl< DiscreteFunction, DiscreteFunctionSpace >::DofType &
     GenericLocalFunctionImpl< DiscreteFunction, DiscreteFunctionSpace >
       ::operator[] ( const int num )
     {
