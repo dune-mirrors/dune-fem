@@ -11,6 +11,10 @@
 #include <dune/fem/io/streams/xdrstreams.hh>
 #include <dune/grid/utility/persistentcontainer.hh>
 
+#include <dune/grid/utility/persistentcontainervector.hh>
+#include <dune/grid/utility/persistentcontainerwrapper.hh>
+#include <dune/grid/utility/persistentcontainermap.hh>
+
 #ifdef ENABLE_ADAPTIVELEAFINDEXSET_FOR_YASPGRID
 #include <dune/grid/yaspgrid.hh>
 #include <dune/grid/sgrid.hh>
@@ -102,7 +106,48 @@ namespace Dune
       // array type for indices 
       typedef MutableArray< IndexType > IndexArrayType;
 
-      typedef PersistentContainer< GridImp, IndexPair > IndexContainerType;
+      class IndexPersistentContainer 
+        : public PersistentContainer< GridImp, IndexPair >
+      {
+        typedef PersistentContainer< GridImp, IndexPair > BaseType ;
+      public:
+        using BaseType :: size ;
+        using BaseType :: resize ;
+        using BaseType :: codimension ;
+
+        typedef typename BaseType :: Value Value;
+        typedef typename BaseType :: Size  Size ;
+
+        IndexPersistentContainer( const GridImp& grid, const int codim, const Value& value )
+          : BaseType( grid, codim, value ) 
+        {}
+
+        void enlarge( const Value& value = Value() ) 
+        {
+          // call corrected implementation 
+          enlargeImpl( *this, value ); 
+        }
+
+      protected:  
+        template <class G, class T> 
+        void enlargeImpl( PersistentContainerWrapper< G, T >& container, const Value& value ) 
+        {
+          enlargeImpl( container.hostContainer_, value );
+        }
+
+        // enlarge implementation for persistent containers based on 
+        template < class G, class IndexSet, class Vector >
+        void enlargeImpl( PersistentContainerVector< G, IndexSet, Vector >& container, const Value& value ) 
+        {
+          const Size indexSetSize = container.indexSet().size( codimension() );
+          if( size() < indexSetSize ) 
+            resize( value ); 
+        }
+      };
+
+      typedef IndexPersistentContainer IndexContainerType ;
+
+      //typedef PersistentContainer< GridImp, IndexPair > IndexContainerType;
 
       // the mapping of the global to leaf index 
       IndexContainerType leafIndex_;
@@ -157,6 +202,7 @@ namespace Dune
       //! reallocate the vectors
       void resize ()
       {
+        // leafIndex_.enlarge( IndexPair( invalidIndex(), UNUSED ) );
         IndexContainerType checkSize( leafIndex_ );
         checkSize.resize();
         // only resize if the container is enlarged 
