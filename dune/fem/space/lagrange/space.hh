@@ -172,7 +172,8 @@ namespace Dune
         BlockMapperSingletonFactoryType;
       typedef SingletonList< MapperSingletonKeyType, BlockMapperType, BlockMapperSingletonFactoryType > BlockMapperProviderType;
 
-      static const InterfaceType defaultInterface = InteriorBorder_InteriorBorder_Interface;
+      // static const InterfaceType defaultInterface = InteriorBorder_InteriorBorder_Interface;
+      static const InterfaceType defaultInterface = GridPart::indexSetInterfaceType;
       static const CommunicationDirection defaultDirection = ForwardCommunication;
 
     public:
