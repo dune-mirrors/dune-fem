@@ -174,7 +174,12 @@ namespace Dune
         template < class G, class IdSet, class Map >
         void enlargeImpl( PersistentContainerMap< G, IdSet, Map >& container, const Value& value ) 
         {
-          // do nothing for the map implementation, this might need to be revised 
+          // this needs a revision 
+          PersistentContainerMap< G, IdSet, Map > checkSize( container );
+          checkSize.resize( value );
+          // is current size is to small then do a resize, otherwise do nothing
+          if( size() < checkSize.size() ) 
+            resize( value );
         }
       };
 
