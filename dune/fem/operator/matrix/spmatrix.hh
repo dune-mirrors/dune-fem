@@ -370,7 +370,7 @@ namespace Dune
 
     // SparseRowMatrixObject
     // ---------------------
-    template <class DomainSpace, class RangeSpace, class TraitsImp>
+    template <class DomainSpace, class RangeSpace>
     class SparseRowMatrixObject;
 
     template <class RowSpaceImp, class ColSpaceImp = RowSpaceImp>
@@ -379,29 +379,18 @@ namespace Dune
       typedef RowSpaceImp RowSpaceType;
       typedef ColSpaceImp ColumnSpaceType;
       typedef SparseRowMatrixTraits<RowSpaceType,ColumnSpaceType> ThisType;
-
-      template <class OperatorTraits>
-      struct MatrixObject
-      {
-        typedef SparseRowMatrixObject<RowSpaceType,ColumnSpaceType,OperatorTraits> MatrixObjectType;
-      };
+      typedef SparseRowMatrixObject<RowSpaceType,ColumnSpaceType> MatrixObjectType;
 
       typedef RowSpaceImp  DomainSpaceType;
       typedef ColSpaceImp  RangeSpaceType;
 
     };
 
-    template< class DomainSpace, class RangeSpace, class TraitsImp >
+    template< class DomainSpace, class RangeSpace>
     class SparseRowMatrixObject
     : public Fem :: OEMMatrix
     {
     public:
-      //! type of traits 
-      typedef TraitsImp Traits;
-
-      //! type of stencil class 
-      typedef typename Traits :: StencilType StencilType;
-      
       typedef DomainSpace DomainSpaceType;
       typedef RangeSpace RangeSpaceType;
 
@@ -421,7 +410,7 @@ namespace Dune
                               RangeSpaceType :: localBlockSize > RangeMapperType;
 
     private:  
-      typedef SparseRowMatrixObject< DomainSpaceType, RangeSpaceType, Traits > ThisType;
+      typedef SparseRowMatrixObject< DomainSpaceType, RangeSpaceType > ThisType;
 
     protected:
       typedef typename DomainSpaceType :: GridType GridType;
@@ -449,7 +438,9 @@ namespace Dune
 
     public:  
       // extract matrix impl depending on traits 
-      typedef typename MatrixImpl< Traits, Conversion< Traits, OverloadedSparseRowMatrix> :: exists > :: MatrixType  MatrixType;
+      typedef SparseRowMatrix< double > MatrixType;
+      // ???????
+      // typedef typename MatrixImpl< Traits, Conversion< Traits, OverloadedSparseRowMatrix> :: exists > :: MatrixType  MatrixType;
       typedef MatrixType PreconditionMatrixType;
 
     public:
@@ -554,7 +545,8 @@ namespace Dune
       }
 
       //! reserve memory corresponnding to size of spaces
-      inline void reserve(bool verbose = false )
+      template <class Stencil>
+      inline void reserve(const Stencil &stencil, bool verbose = false )
       {
         if( sequence_ != domainSpace_.sequence() )
         {
@@ -575,7 +567,7 @@ namespace Dune
             }
 
             // upper estimate for number of non-zeros 
-            const int nonZeros = std::max( StencilType :: nonZerosEstimate( domainSpace_ ), matrix_.numNonZeros() );
+            const int nonZeros = std::max( stencil.maxZerosEstimate(), matrix_.numNonZeros() );
 
             matrix_.reserve( rangeSpace_.size(), domainSpace_.size(), nonZeros, 0.0 );
           }
@@ -759,14 +751,14 @@ namespace Dune
 
 
 
-    template< class DomainSpace, class RangeSpace, class TraitsImp >
+    template< class DomainSpace, class RangeSpace >
     template< class MatrixObject >
-    struct SparseRowMatrixObject< DomainSpace, RangeSpace, TraitsImp >::LocalMatrixTraits
+    struct SparseRowMatrixObject< DomainSpace, RangeSpace >::LocalMatrixTraits
     {
       typedef DomainSpace DomainSpaceType;
       typedef RangeSpace RangeSpaceType;
 
-      typedef SparseRowMatrixObject< DomainSpaceType, RangeSpaceType, TraitsImp >
+      typedef SparseRowMatrixObject< DomainSpaceType, RangeSpaceType >
         SparseRowMatrixObjectType;
       
       typedef typename SparseRowMatrixObjectType :: template LocalMatrix< MatrixObject > LocalMatrixType;
@@ -781,9 +773,9 @@ namespace Dune
 
 
     //! LocalMatrix 
-    template< class DomainSpace, class RangeSpace, class TraitsImp>
+    template< class DomainSpace, class RangeSpace>
     template< class MatrixObject >
-    class SparseRowMatrixObject< DomainSpace, RangeSpace, TraitsImp > :: LocalMatrix
+    class SparseRowMatrixObject< DomainSpace, RangeSpace> :: LocalMatrix
     : public LocalMatrixDefault< LocalMatrixTraits< MatrixObject > >
     {
     public:
@@ -959,14 +951,14 @@ namespace Dune
     // SparseRowMatrixOperator
     // -----------------------
 
-    template< class DomainFunction, class RangeFunction, class TraitsImp >
+    template< class DomainFunction, class RangeFunction >
     class SparseRowMatrixOperator
-    : public SparseRowMatrixObject< typename DomainFunction::DiscreteFunctionSpaceType, typename RangeFunction::DiscreteFunctionSpaceType, TraitsImp >,
+    : public SparseRowMatrixObject< typename DomainFunction::DiscreteFunctionSpaceType, typename RangeFunction::DiscreteFunctionSpaceType >,
       public Fem::AssembledOperator< DomainFunction, RangeFunction >,
       public OEMSolver::PreconditionInterface
     {
-      typedef SparseRowMatrixOperator< DomainFunction, RangeFunction, TraitsImp > This;
-      typedef SparseRowMatrixObject< typename DomainFunction::DiscreteFunctionSpaceType, typename RangeFunction::DiscreteFunctionSpaceType, TraitsImp > Base;
+      typedef SparseRowMatrixOperator< DomainFunction, RangeFunction > This;
+      typedef SparseRowMatrixObject< typename DomainFunction::DiscreteFunctionSpaceType, typename RangeFunction::DiscreteFunctionSpaceType > Base;
 
     public:
       typedef typename Base::DomainSpaceType DomainSpaceType;

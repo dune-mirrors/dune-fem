@@ -150,6 +150,8 @@ namespace Dune
       addNonConformingNeighbors flag is false.
       For others is flag could be equal the inverse to GridPart :: conforming 
   */
+#warning DEPRECATED CLASS: outcommented
+#if 0 
   template <class TraitsImp, bool addNonConformingNeighbors = false>
   struct LagrangeMatrixTraits
   {
@@ -160,12 +162,15 @@ namespace Dune
     
     typedef Fem::ParallelScalarProduct < ColumnSpaceType > ParallelScalarProductType;
   };
+#endif
   
 #if HAVE_DUNE_ISTL
   // forward 
   template <class MatrixImp>
   class LagrangeParallelMatrixAdapter;
 
+#warning DEPRECATED CLASS: outcommented
+#if 0
   // specialization for ISTL matrices 
   template <class RowSpaceImp, class ColSpaceImp, bool addNonConformingNeighbors>
   struct LagrangeMatrixTraits< Fem::ISTLMatrixTraits<RowSpaceImp,ColSpaceImp>, addNonConformingNeighbors >
@@ -184,6 +189,7 @@ namespace Dune
       typedef LagrangeParallelMatrixAdapter<MatrixImp> MatrixAdapterType;
     };
   };
+#endif
   
   /*! 
     \brief Adapter to turn a matrix into a linear operator.

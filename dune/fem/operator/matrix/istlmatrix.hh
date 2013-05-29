@@ -25,6 +25,8 @@
 #include <dune/fem/io/parameter.hh>
 #include <dune/fem/operator/matrix/columnobject.hh>
 
+#include <dune/fem/operator/matrix/istlmatrixadapter.hh>
+
 namespace Dune
 { 
 
@@ -121,6 +123,8 @@ namespace Dune
           : BaseType(org) 
         {}
 
+#warning DEPRECATED METHOD: outcommented
+#if 0 
         //! setup matrix entires 
         template <class RowMapperType, class ColMapperType,
                   class StencilCreatorImp> 
@@ -152,8 +156,9 @@ namespace Dune
             std::cout << "ISTLMatrix::setup: finished assembly of matrix structure! \n";
           }
         }
-
-        void createEntries(std::map<int , std::set<int> >& indices) 
+#endif
+        template <class RowKeyType, class ColKeyType>
+        void createEntries(const std::map<RowKeyType , std::set<ColKeyType> >& indices) 
         {
           // type of create interator 
           typedef typename BaseType :: CreateIterator CreateIteratorType; 
@@ -163,8 +168,12 @@ namespace Dune
               create != endcreate; ++create) 
           {
             // set of column indices 
-            std::set<int>& localIndices = indices[ create.index() ];
-            typedef typename std::set<int>::iterator iterator;
+            typedef typename std::map<RowKeyType , std::set<ColKeyType> >
+              ::const_iterator StencilIterator;
+            const StencilIterator it = indices.find( create.index() );
+            assert( it != indices.end() );
+            const std::set<ColKeyType>& localIndices = it->second;
+            typedef typename std::set<ColKeyType>::const_iterator iterator;
             iterator end = localIndices.end();
             // insert all indices for this row 
             for (iterator it = localIndices.begin(); it != end; ++it)
@@ -404,7 +413,7 @@ namespace Dune
         }
     };
 
-    template <class RowSpaceImp, class ColSpaceImp, class TraitsImp> 
+    template <class RowSpaceImp, class ColSpaceImp> 
     class ISTLMatrixObject;
     
     template <class RowSpaceImp, class ColSpaceImp = RowSpaceImp>
@@ -414,33 +423,21 @@ namespace Dune
       typedef ColSpaceImp RangeSpaceType; 
       typedef ISTLMatrixTraits<DomainSpaceType,RangeSpaceType> ThisType;  
       
-      template <class OperatorTraits>
-      struct MatrixObject 
-      {
-        typedef ISTLMatrixObject<DomainSpaceType,RangeSpaceType,OperatorTraits> MatrixObjectType; 
-      };
+      typedef ISTLMatrixObject<DomainSpaceType,RangeSpaceType> MatrixObjectType; 
     };
 
     //! MatrixObject handling an istl matrix 
-    template <class DomainSpaceImp, class RangeSpaceImp, class TraitsImp> 
+    template <class DomainSpaceImp, class RangeSpaceImp> 
     class ISTLMatrixObject
     {
     public:  
-      //! type of traits 
-      typedef TraitsImp Traits;
-
-      //! type of stencil defined by operator
-      typedef typename Traits :: StencilType StencilType;
-      
       //! type of space defining row structure 
       typedef DomainSpaceImp DomainSpaceType; 
-      //typedef typename Traits :: DomainSpaceType DomainSpaceType;
       //! type of space defining column structure 
       typedef RangeSpaceImp RangeSpaceType; 
-      //typedef typename Traits :: RangeSpaceType RangeSpaceType;
 
       //! type of this pointer 
-      typedef ISTLMatrixObject<DomainSpaceType,RangeSpaceType,Traits> ThisType;
+      typedef ISTLMatrixObject<DomainSpaceType,RangeSpaceType> ThisType;
 
       typedef typename DomainSpaceType::GridType GridType; 
 
@@ -471,7 +468,7 @@ namespace Dune
       typedef ImprovedBCRSMatrix< LittleBlockType , 
                                   RowDiscreteFunctionType , 
                                   ColumnDiscreteFunctionType > MatrixType;
-      typedef typename Traits :: template Adapter < MatrixType > ::  MatrixAdapterType MatrixAdapterType;
+      typedef typename ISTLParallelMatrixAdapter<MatrixType,DomainSpaceType>::Type MatrixAdapterType;
       // get preconditioner type from MatrixAdapterType
       typedef ThisType PreconditionMatrixType;
       typedef typename MatrixAdapterType :: ParallelScalarProductType ParallelScalarProductType;
@@ -1059,8 +1056,10 @@ namespace Dune
         removeObj( false );
       }
 
+#warning DEPRECATED METHOD: outcommented
+#if 0 
       //! reserve matrix with right size 
-      void reserve(bool verbose = false) 
+      void reserve(bool verbose = false) DUNE_VERSION_DEPRECATED(1,4,remove)
       {
         // if grid sequence number changed, rebuild matrix 
         if(sequence_ != domainSpace().sequence())
@@ -1070,6 +1069,22 @@ namespace Dune
           StencilType stencil; 
           matrix_ = new MatrixType(rowMapper_.size(),colMapper_.size());
           matrix().setup(rangeSpace(),rowMapper(),colMapper(),stencil,verbose);
+
+          sequence_ = domainSpace().sequence();
+        }
+      }
+#endif
+
+      template <class Stencil>
+      void reserve(const Stencil &stencil,bool verbose = false) 
+      {
+        // if grid sequence number changed, rebuild matrix 
+        if(sequence_ != domainSpace().sequence())
+        {
+          removeObj( true );
+
+          matrix_ = new MatrixType(rowMapper_.size(),colMapper_.size());
+          matrix().createEntries( stencil.globalStencil() );
 
           sequence_ = domainSpace().sequence();
         }
@@ -1333,13 +1348,13 @@ namespace Dune
     // ISTLMatrixOperator
     // ------------------
 
-    template< class DomainFunction, class RangeFunction, class TraitsImp >
+    template< class DomainFunction, class RangeFunction >
     class ISTLMatrixOperator
-    : public ISTLMatrixObject< typename DomainFunction::DiscreteFunctionSpaceType, typename RangeFunction::DiscreteFunctionSpaceType, TraitsImp >,
+    : public ISTLMatrixObject< typename DomainFunction::DiscreteFunctionSpaceType, typename RangeFunction::DiscreteFunctionSpaceType >,
       public AssembledOperator< DomainFunction, RangeFunction >
     {
-      typedef ISTLMatrixOperator< DomainFunction, RangeFunction, TraitsImp > This;
-      typedef ISTLMatrixObject< typename DomainFunction::DiscreteFunctionSpaceType, typename RangeFunction::DiscreteFunctionSpaceType, TraitsImp > Base;
+      typedef ISTLMatrixOperator< DomainFunction, RangeFunction > This;
+      typedef ISTLMatrixObject< typename DomainFunction::DiscreteFunctionSpaceType, typename RangeFunction::DiscreteFunctionSpaceType > Base;
 
     public:
       typedef typename Base::DomainSpaceType DomainSpaceType;

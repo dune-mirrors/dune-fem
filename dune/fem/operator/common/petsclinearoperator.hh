@@ -132,6 +132,11 @@ namespace Dune
         apply( arg, dest );
       }
 
+      void reserve ( ) 
+      {
+        reserve( SimpleStencil<DomainSpaceType,RangeSpaceType>(0) );
+      }
+      template <class StencilType>
       void reserve (const StencilType &stencil) 
       {
         if(sequence_ != domainSpace().sequence())  
@@ -190,8 +195,10 @@ namespace Dune
               d_nnz[ petscIndex ] = nz;
             }
           }
-          ::Dune::Petsc::MatSetUp( petscMatrix_, &d_nnz[0] );
-          // ::Dune::Petsc::MatSetUp( petscMatrix_, stencil.maxNZ() );
+          if (is_same< StencilType,SimpleStencil<DomainSpaceType,RangeSpaceType> >::value)
+            ::Dune::Petsc::MatSetUp( petscMatrix_, stencil.maxZerosEstimate() );
+          else
+            ::Dune::Petsc::MatSetUp( petscMatrix_, &d_nnz[0] );
         } 
 
         // ::Dune::Petsc::MatSetUp( petscMatrix_ );

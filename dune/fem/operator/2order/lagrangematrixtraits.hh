@@ -1,7 +1,7 @@
 #ifndef DUNE_FEM_LAGRANGEMATRIXTRAITS_HH
 #define DUNE_FEM_LAGRANGEMATRIXTRAITS_HH
 
-#include <dune/fem/operator/2order/lagrangematrixsetup.hh>
+// #include <dune/fem/operator/2order/lagrangematrixsetup.hh>
 
 namespace Dune
 {
@@ -13,12 +13,12 @@ namespace Dune
               bool addNonConformingNeighbors = false >
     struct LagrangeMatrixTraits
     {
-      typedef RowSpace RowSpaceType;
-      typedef ColumnSpace ColumnSpaceType;
-      typedef Dune::LagrangeMatrixSetup< addNonConformingNeighbors > StencilType;
-      typedef ParallelScalarProduct< ColumnSpaceType > ParallelScalarProductType;
+      // typedef RowSpace RowSpaceType;
+      // typedef ColumnSpace ColumnSpaceType;
+      // typedef Dune::LagrangeMatrixSetup< addNonConformingNeighbors > StencilType;
+      // typedef ParallelScalarProduct< ColumnSpaceType > ParallelScalarProductType;
 
-#if HAVE_DUNE_ISTL
+#if 0 // HAVE_DUNE_ISTL
       template< class M >
       struct Adapter
       {
