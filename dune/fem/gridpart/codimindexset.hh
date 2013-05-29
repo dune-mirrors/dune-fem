@@ -110,6 +110,25 @@ namespace Dune
         : public PersistentContainer< GridImp, IndexPair >
       {
         typedef PersistentContainer< GridImp, IndexPair > BaseType ;
+
+        template <class G, class T> 
+        struct PublicPersistentContainerWrapper : public PersistentContainerWrapper< G, T >
+        {
+          using PersistentContainerWrapper< G, T > :: hostContainer_;
+        };
+
+        template <class G, class I, class V> 
+        struct PublicPersistentContainerVector : public PersistentContainerVector< G, I, V >
+        {
+          using PersistentContainerVector< G, I, V > :: indexSet;
+        };
+
+        template <class G, class I, class M> 
+        struct PublicPersistentContainerMap : public PersistentContainerMap< G, I, M >
+        {
+          using PersistentContainerMap< G, I, M > :: idSet;
+        };
+
       public:
         using BaseType :: size ;
         using BaseType :: resize ;
@@ -132,15 +151,25 @@ namespace Dune
         template <class G, class T> 
         void enlargeImpl( PersistentContainerWrapper< G, T >& container, const Value& value ) 
         {
-          enlargeImpl( container.hostContainer_, value );
+          enlargeImpl( ((PublicPersistentContainerWrapper< G, T > &) container).hostContainer_, value );
         }
 
-        // enlarge implementation for persistent containers based on 
+        // enlarge implementation for persistent containers based on vectors 
         template < class G, class IndexSet, class Vector >
         void enlargeImpl( PersistentContainerVector< G, IndexSet, Vector >& container, const Value& value ) 
         {
-          const Size indexSetSize = container.indexSet().size( codimension() );
+          const Size indexSetSize = ((PublicPersistentContainerVector< G, IndexSet,
+                Vector >& ) container).indexSet().size( codimension() );
           if( size() < indexSetSize ) 
+            resize( value ); 
+        }
+
+        // enlarge implementation for persistent containers based on maps
+        template < class G, class IdSet, class Map >
+        void enlargeImpl( PersistentContainerMap< G, IdSet, Map >& container, const Value& value ) 
+        {
+          const Size idSetSize = ((PublicPersistentContainerMap< G, IdSet, Map >& ) container).idSet().size( codimension() );
+          if( size() < idSetSize ) 
             resize( value ); 
         }
       };
@@ -202,12 +231,8 @@ namespace Dune
       //! reallocate the vectors
       void resize ()
       {
-        // leafIndex_.enlarge( IndexPair( invalidIndex(), UNUSED ) );
-        IndexContainerType checkSize( leafIndex_ );
-        checkSize.resize();
-        // only resize if the container is enlarged 
-        if( checkSize.size() > leafIndex_.size() ) 
-          leafIndex_.resize( IndexPair( invalidIndex(), UNUSED ) );
+        // enlarge index container, do not shrink, because the old indices are still needed
+        leafIndex_.enlarge( IndexPair( invalidIndex(), UNUSED ) );
       }
 
       //! prepare for setup (nothing to do here)
