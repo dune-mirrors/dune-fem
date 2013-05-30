@@ -1,10 +1,10 @@
-// vim: set expandtab ts=2 sw=2 sts=2:
 // include configurations options
 
 #ifdef HAVE_CONFIG_H
 #include <config.h>
 #endif
 
+#if HAVE_PETSC
 
 // Includes from the IOStream Library
 // ----------------------------------
@@ -21,6 +21,7 @@
 #include <dune/fem/space/lagrange.hh>
 
 #include <dune/fem/function/petscdiscretefunction.hh>
+#include <dune/fem/function/adaptivefunction.hh>
 
 #include <dune/fem/solver/cginverseoperator.hh>
 #include <dune/fem/solver/petscsolver.hh>
@@ -90,7 +91,11 @@ struct Algorithm
   typedef Dune::Fem::AdaptiveLeafGridPart< GridType, Dune::InteriorBorder_Partition > GridPartType;
   typedef Dune::Fem::FunctionSpace< double, double, GridType::dimensionworld, 1 > SpaceType;
   typedef Dune::Fem::LagrangeDiscreteFunctionSpace< SpaceType, GridPartType, polOrder > DiscreteSpaceType;
+#ifdef PETSCLINEAROPERATOR
   typedef Dune::Fem::PetscDiscreteFunction< DiscreteSpaceType > DiscreteFunctionType;
+#else 
+  typedef Dune::Fem::AdaptiveDiscreteFunction< DiscreteSpaceType > DiscreteFunctionType;
+#endif
   typedef Dune::Fem::L2Norm< GridPartType > L2NormType;
 
   typedef Function< SpaceType > FunctionType;
@@ -135,7 +140,7 @@ inline void Algorithm::operator() ( DiscreteFunctionType &solution )
   unsigned long maxIter = dfSpace_.size();
   maxIter = dfSpace_.grid().comm().sum( maxIter );
 
-#if PETSCLINEAROPERATOR 
+#ifdef USE_PETSCLINEAROPERATOR 
   if( Dune::Fem::Parameter::getValue<bool>("usepetsc", true ) )
   {
     typedef Dune::Fem::PetscInverseOperator< DiscreteFunctionType, MassOperatorType::LinearOperatorType > InverseOperator;  
@@ -185,7 +190,7 @@ inline Algorithm::DiscreteSpaceType &Algorithm::space ()
 {
   return dfSpace_;
 }
-
+#endif
 
 
 // Main Program
@@ -194,6 +199,7 @@ inline Algorithm::DiscreteSpaceType &Algorithm::space ()
 int main ( int argc, char **argv )
 try
 {
+#if HAVE_PETSC
   typedef Dune::GridSelector::GridType GridType;
 
   // initialize MPI manager and PETSc
@@ -211,6 +217,7 @@ try
   compute( algorithm );
 
   Dune::Fem::Parameter::write( "parameter.log" );
+#endif
 
   return 0;
 }

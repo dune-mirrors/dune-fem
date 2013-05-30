@@ -18,7 +18,7 @@
 
 #if ALU3DGRID_PARALLEL
 
-#warning "Using the Partitioner"
+#warning "Using the ThreadPartitioner"
 
 #define ALU2DGRID_READALL_GRIDS 
 
@@ -226,9 +226,18 @@ protected:
       }
 
       enum { dim = GridType :: dimension };
-
+#if HAVE_ALUGRID // old ALUGrid version 1.52
+      double center[ 3 ] = { 0 };
+      typename EntityType :: Geometry :: 
+        GlobalCoordinate barycenter = entity.geometry().center();
+      for( int i=0; i<dim; ++i ) 
+        center[ i ] = barycenter[ i ];
       db.vertexUpdate ( typename LoadBalancerType :: 
-                        GraphVertex ( getIndex( entity ), weight ) );
+                        GraphVertex ( getIndex( entity ), weight, center ) );
+#else // new dune-alugrid version
+      db.vertexUpdate ( typename LoadBalancerType :: 
+                        GraphVertex ( getIndex( entity ), weight ));
+#endif
       ++graphSize_; 
     }
     
