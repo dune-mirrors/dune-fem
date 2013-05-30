@@ -1,7 +1,6 @@
 POLORDER = 2
 DIMRANGE = 3
 WANT_GRAPE = 0
-WANT_CACHED = 1
 
 # set default grid type for make all
 GRIDTYPE=YASPGRID
@@ -13,18 +12,18 @@ GRIDTYPE=YASPGRID
 GRIDDIM=2
 
 LDADD = $(ALL_PKG_LDFLAGS) $(ALL_PKG_LIBS) $(LOCAL_LIBS) $(MPI_LDFLAGS)
-AM_CPPFLAGS = $(ALL_PKG_CPPFLAGS) -DPOLORDER=$(POLORDER) -DDIMRANGE=$(DIMRANGE) -DWANT_GRAPE=$(WANT_GRAPE) \
-  -DWANT_CACHED_COMM_MANAGER=$(WANT_CACHED)
+AM_CPPFLAGS = $(ALL_PKG_CPPFLAGS) -DPOLORDER=$(POLORDER) -DDIMRANGE=$(DIMRANGE) -DWANT_GRAPE=$(WANT_GRAPE)
 
 ADAPTPROG = lagrangeadapt adapt padapt
 
 # programs run during make check 
-TESTS = $(ADAPTPROG) dgcomm-4.sh
+TESTS = $(ADAPTPROG) dgcomm-4.sh dgcomm-cached-4.sh
 
 check_PROGRAMS = $(ADAPTPROG) \
 		 arraytest \
 		 combinedspacetest \
 		 dgcomm \
+		 dgcomm_cached \
 		 interpolation \
      l2projection \
      lagrangeglobalrefine \
@@ -44,6 +43,8 @@ lagrangeglobalrefine_SOURCES = lagrangeglobalrefine.cc
 legendretest_SOURCES = legendretest.cc
 arraytest_SOURCES = arraytest.cc
 dgcomm_SOURCES = dgcomm.cc
-dgcomm_CPPFLAGS = $(AM_CPPFLAGS) -UGRIDDIM -DGRIDDIM=3 -UWORLDDIM -DWORLDDIM=3
+dgcomm_cached_SOURCES = dgcomm.cc
+dgcomm_CPPFLAGS = $(AM_CPPFLAGS) -UGRIDDIM -DGRIDDIM=3 -UWORLDDIM -DWORLDDIM=3 -DWANT_CACHED_COMM_MANAGER=0
+dgcomm_cached_CPPFLAGS = $(AM_CPPFLAGS) -UGRIDDIM -DGRIDDIM=3 -UWORLDDIM -DWORLDDIM=3 
 
 include $(top_srcdir)/am/global-rules

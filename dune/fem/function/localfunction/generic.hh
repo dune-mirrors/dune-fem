@@ -32,6 +32,9 @@ namespace Dune
       //! type of discrete function the local function belongs to
       typedef DiscreteFunction                                         DiscreteFunctionType;
 
+      //! type of DoF used by the discrete function 
+      typedef typename DiscreteFunctionType :: DofType DofType;
+
       //! type of  discrete function space the local function belongs to
       typedef DiscreteFunctionSpace                                    DiscreteFunctionSpaceType;
 
@@ -77,10 +80,10 @@ namespace Dune
 
     public:
       /** \copydoc Dune::Fem::LocalFunction::operator[](const int num) const */
-      const RangeFieldType &operator[] ( const int num ) const;
+      const DofType &operator[] ( const int num ) const;
 
       /** \copydoc Dune::Fem::LocalFunction::operator[](const int num) */
-      RangeFieldType &operator[] ( const int num );
+      DofType &operator[] ( const int num );
 
       /** \copydoc Dune::Fem::LocalFunction::baseFunctionSet() const */
       const BaseFunctionSetType &baseFunctionSet() const;
@@ -101,7 +104,7 @@ namespace Dune
       std::vector< unsigned int > indices_;
 
       // array holding pointer to local dofs 
-      Fem :: DynamicArray< RangeFieldType* > values_;
+      Fem :: DynamicArray< DofType* > values_;
 
        // base function set 
       BaseFunctionSetType baseFunctionSet_;

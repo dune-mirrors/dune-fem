@@ -665,7 +665,7 @@ namespace Dune
       typedef typename BaseType :: IteratorType IteratorType;
       typedef typename BaseType :: EntityType EntityType;
 
-      typedef TemporaryLocalFunctionFactory< DiscreteFunctionSpaceType >
+      typedef TemporaryLocalFunctionFactory< DiscreteFunctionSpaceType, typename Traits::FunctionSpaceType::RangeFieldType >
         LocalFunctionFactoryType;
       typedef LocalFunctionStack< LocalFunctionFactoryType > LocalFunctionStorageType;
 

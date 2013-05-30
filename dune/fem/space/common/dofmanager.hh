@@ -19,7 +19,7 @@
 #include <dune/fem/io/streams/xdrstreams.hh>
 #include <dune/fem/io/streams/standardstreams.hh>
 #include <dune/fem/misc/gridobjectstreams.hh>
-#include <dune/fem/misc/threadmanager.hh>
+#include <dune/fem/misc/threads/threadmanager.hh>
 #include <dune/fem/space/common/arrays.hh>
 #include <dune/fem/space/common/datacollector.hh>
 #include <dune/fem/space/common/restrictprolonginterface.hh>

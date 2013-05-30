@@ -108,6 +108,12 @@ namespace Dune
         return indexSet_.size( codimension );
       }
 
+      /** \brief Check, whether the data in a codimension has fixed size */
+      bool fixedDataSize ( int codim ) const
+      {
+        return true;
+      }
+
       /** \copydoc DofMapper::mapEach */
       template< class Functor >
       void mapEach ( const ElementType &element, Functor f ) const

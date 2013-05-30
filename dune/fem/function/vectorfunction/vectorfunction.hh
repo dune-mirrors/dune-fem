@@ -124,8 +124,8 @@ namespace Dune
       typedef typename Traits::DofBlockPtrType DofBlockPtrType;
       typedef typename Traits::ConstDofBlockPtrType ConstDofBlockPtrType;
 
-    private:
-      dune_static_assert( (Conversion< RangeFieldType, DofType >::sameType), "RangeFieldType and DofType must equal." );
+    //private:
+    //  dune_static_assert( (Conversion< RangeFieldType, DofType >::sameType), "RangeFieldType and DofType must equal." );
 
     public:
       //! Constructor
@@ -137,7 +137,9 @@ namespace Dune
         dofVector_( &dofVector ),
         freeDofVector_( false )
       {
-        assert( dofVector_->size() == (unsigned int)dfSpace.size() );
+        // size of dof vector must be size of space in blocks x localBlockSize 
+        assert( dofVector_->size() == (unsigned int)dfSpace.blockMapper().size() *
+            DiscreteFunctionSpaceType :: localBlockSize );
       }
 
       VectorDiscreteFunction ( const ThisType &other )
@@ -222,29 +224,29 @@ namespace Dune
         return DofBlockPtrType( key );
       }
 
-      const RangeFieldType &dof ( unsigned int index ) const
+      const DofType &dof ( unsigned int index ) const
       {
         return dofVector()[ index ];
       }
 
-      RangeFieldType &dof ( unsigned int index )
+      DofType &dof ( unsigned int index )
       {
         return dofVector()[ index ];
       }
 
-      const RangeFieldType *leakPointer () const
+      const DofType *leakPointer () const
       {
         return dofVector().leakPointer();
       }
 
-      RangeFieldType *leakPointer ()
+      DofType *leakPointer ()
       {
         return dofVector().leakPointer();
       }
 
-      RangeFieldType scalarProductDofs ( const ThisType &u ) const
+      RangeFieldType scalarProductDofs ( const ThisType &other ) const
       {
-        return dofVector() * u.dofVector();
+        return this->scalarProduct_.scalarProductDofs( *this, other );
       }
 
       int size () const

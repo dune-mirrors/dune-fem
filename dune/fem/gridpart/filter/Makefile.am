@@ -4,6 +4,6 @@ SUBDIRS =
 
 filter_HEADERS = basicfilterwrapper.hh  filter.hh  \
 		 inversefilter.hh  radialfilter.hh  \
-		 voidfilter.hh
+		 threadfilter.hh  voidfilter.hh
 
 include $(top_srcdir)/am/global-rules

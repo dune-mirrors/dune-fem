@@ -45,8 +45,6 @@ namespace Dune
       struct hasSingleGeometryType
       : public Dune::GeoGrid::InferHasSingleGeometryType< GridPartCapabilities::hasSingleGeometryType< HostGridPartType >, dimension, mydim >
       {};
-
-      struct UserData {};
     };
 
 

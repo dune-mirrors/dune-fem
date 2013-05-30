@@ -4,7 +4,7 @@
 
 #include <dune/fem/storage/envelope.hh> 
 
-#if defined HAVE_PETSC
+#if HAVE_PETSC
 
 #include <dune/fem/misc/petsc/petsccommon.hh>
 #include <dune/fem/misc/petsc/petscslavedofprovider.hh>
@@ -55,8 +55,8 @@ namespace Dune
       typedef PetscDofBlock< const ThisType >                 ConstDofBlockType;
       typedef typename DofBlockType::DofIterator              DofIteratorType;
       typedef typename ConstDofBlockType::DofIterator         ConstDofIteratorType;
-      typedef Envelope< DofBlockType >           DofBlockPtrType; 
-      typedef Envelope< ConstDofBlockType >      ConstDofBlockPtrType;
+      typedef Envelope< DofBlockType >                        DofBlockPtrType; 
+      typedef Envelope< ConstDofBlockType >                   ConstDofBlockPtrType;
       typedef typename DofBlockType::IndexType                IndexType;
 
       PetscVector ( const DFSpace& dfSpace )
@@ -69,7 +69,7 @@ namespace Dune
       {
         // set up the DofMapping instance and all variables depending on it
         localSize_ = dofMapping().numOwnedDofBlocks() * blockSize;
-        numGhosts_ = dofMapping().numSlaveBlocks() * blockSize;
+        numGhosts_ = dofMapping().numSlaveBlocks()    * blockSize;
         assert( static_cast< size_t >( localSize_ + numGhosts_ ) == dofMapping().size() * blockSize );
 
         // set up the ghost array builder
@@ -97,7 +97,7 @@ namespace Dune
         localSize_( other.localSize_ ),
         numGhosts_( other.numGhosts_ )
       {
-        // we want the 'other' do do all its communication right now before
+        // we want the 'other' to do all its communication right now before
         // we start copying values from it
         other.communicateIfNecessary();
 
@@ -224,6 +224,30 @@ namespace Dune
         hasBeenModified();
       }
 
+      // debugging; comes in handy to call these 2 methods in gdb
+      // doit is only here to prevent the compiler from optimizing these calls away...
+      void printGlobal ( bool doit ) 
+      { 
+          if( !doit ) 
+            return; 
+          VecView( vec_, PETSC_VIEWER_STDOUT_WORLD ); 
+      }
+
+      void printGhost ( bool doit) 
+      { 
+          if( !doit ) 
+            return; 
+
+          PetscScalar *array;
+          VecGetArray( ghostedVec_,&array );
+          for( int i=0; i < localSize_ + numGhosts_; i++ ) 
+          {
+            PetscSynchronizedPrintf(PETSC_COMM_WORLD,"%D %G\n",i,PetscRealPart(array[i]));
+          }
+          VecRestoreArray( ghostedVec_, &array );
+          PetscSynchronizedFlush( PETSC_COMM_WORLD );
+      }
+
     private:
       PetscVector ();
       PetscVector& operator= ( const ThisType& );
@@ -231,32 +255,6 @@ namespace Dune
       PetscDofMappingType& dofMapping () { return petscSlaveDofs_.dofMapping(); }
       const PetscDofMappingType& dofMapping () const { return petscSlaveDofs_.dofMapping(); }
       
-      #ifndef NDEBUG
-        // debugging; comes in handy to call these 2 methods in gdb
-        // doit is only here to prevent the compiler from optimizing these calls away...
-        void printGlobal ( bool doit ) 
-        { 
-            if( !doit ) 
-              return; 
-            VecView( vec_, PETSC_VIEWER_STDOUT_WORLD ); 
-        }
-
-        void printGhost ( bool doit) 
-        { 
-            if( !doit ) 
-              return; 
-
-            PetscScalar *array;
-            VecGetArray( ghostedVec_,&array );
-            for( int i=0; i < localSize_ + numGhosts_; i++ ) 
-            {
-              PetscSynchronizedPrintf(PETSC_COMM_WORLD,"%D %G\n",i,PetscRealPart(array[i]));
-            }
-            VecRestoreArray( ghostedVec_, &array );
-            PetscSynchronizedFlush( PETSC_COMM_WORLD );
-        }
-      #endif // NDEBUG
-
       void communicateIfNecessary () const
       {
         // communicate this process' values
@@ -310,6 +308,6 @@ namespace Dune
 
 } // namespace Dune
 
-#endif // #if defined HAVE_PETSC 
+#endif // #if HAVE_PETSC 
 
 #endif // DUNE_FEM_PETSCVECTOR_HH

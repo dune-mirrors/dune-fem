@@ -5,7 +5,7 @@
 #include <dune/fem/function/common/scalarproducts.hh>
 
 
-#if defined HAVE_PETSC
+#if HAVE_PETSC
 
 #include <dune/fem/misc/petsc/petsccommon.hh>
 #include <dune/fem/misc/petsc/petscdofmappings.hh>
@@ -68,6 +68,6 @@ namespace Dune
 
 } // namespace Dune
 
-#endif // #if defined HAVE_PETSC
+#endif // #if HAVE_PETSC
 
 #endif // DUNE_FEM_PETSCSLAVEDOFPROVIDER_HH

@@ -4,7 +4,9 @@
 #include <cassert>
 #include <limits>
 
-#include <dune/fem/space/basisfunctionset/proxy.hh>
+#include <dune/fem/function/common/functionset.hh>
+#include <dune/fem/function/localfunction/localfunctionsetadapter.hh>
+#include <dune/fem/space/basisfunctionset/simple.hh>
 #include <dune/fem/space/basisfunctionset/vectorial.hh>
 #include <dune/fem/space/common/defaultcommhandler.hh>
 #include <dune/fem/space/common/discretefunctionspace.hh>
@@ -12,11 +14,10 @@
 #include <dune/fem/space/mapper/nonblockmapper.hh>
 #include <dune/fem/version.hh>
 
-#include "basisfunctionset.hh"
-#include "basisfunctions.hh"
-#include "declaration.hh"
-#include "dofmapper.hh"
-
+#include <dune/fem/space/fourier/capabilities.hh>
+#include <dune/fem/space/fourier/declaration.hh>
+#include <dune/fem/space/fourier/dofmapper.hh>
+#include <dune/fem/space/fourier/functionset.hh>
 
 namespace Dune
 {
@@ -39,12 +40,14 @@ namespace Dune
       typedef typename GridPartType::template Codim< codimension >::EntityType EntityType;
 
       typedef typename FunctionSpaceType::ScalarFunctionSpaceType ScalarFunctionSpaceType;
-      typedef FourierBasisFunctions< ScalarFunctionSpaceType, order > ScalarBasisFunctionsType;
-      typedef FourierBasisFunctionSet< EntityType, ScalarBasisFunctionsType > ScalarBasisFunctionSetType;
+      typedef FourierFunctionSet< ScalarFunctionSpaceType, order > FunctionSetType;
+      typedef FunctionSetProxy< FunctionSetType > FunctionSetProxyType;
+      typedef LocalFunctionSetAdapter< EntityType, FunctionSetProxyType > LocalFunctionSetType;
+      typedef SimpleBasisFunctionSet< LocalFunctionSetType > ScalarBasisFunctionSetType;
 
       typedef VectorialBasisFunctionSet< ScalarBasisFunctionSetType, typename FunctionSpaceType::RangeType > BasisFunctionSetType;
 
-      static const int localBlockSize = FunctionSpace::dimRange * NumFourierBasisFunctions< FunctionSpaceType::dimDomain, order >::v;
+      static const int localBlockSize = FunctionSpace::dimRange * FourierFunctionSetSize< FunctionSpaceType::dimDomain, order >::v;
 
       typedef FourierDofMapper< GridPartType, order > BlockMapperType;
       typedef NonBlockMapper< BlockMapperType, localBlockSize > MapperType;
@@ -79,7 +82,7 @@ namespace Dune
       typedef typename BaseType::EntityType EntityType;
       typedef typename BaseType::IntersectionType IntersectionType;
 
-      typedef typename Traits::ScalarBasisFunctionsType ScalarBasisFunctionsType;
+      typedef typename Traits::FunctionSetType FunctionSetType;
 
       typedef typename Traits::ScalarBasisFunctionSetType ScalarBasisFunctionSetType;
       typedef typename BaseType::BasisFunctionSetType BasisFunctionSetType;
@@ -100,7 +103,7 @@ namespace Dune
                                               const CommunicationDirection commDirection = defaultDirection )
       : BaseType( gridPart, commInterface, commDirection ),
         mapper_( blockMapper_ ),
-        scalarBasisFunctions_( order )
+        functionSet_( order )
       {}
 
       /** @copydoc Dune::Fem::DiscreteFunctionSpaceInterface::type */
@@ -109,8 +112,9 @@ namespace Dune
       /** @copydoc Dune::Fem::DiscreteFunctionSpaceInterface::basisFunctionSet */
       BasisFunctionSetType basisFunctionSet ( const EntityType &entity ) const
       {
+        typedef typename Traits::LocalFunctionSetType LocalFunctionSetType;
         typedef typename Traits::ScalarBasisFunctionSetType ScalarBasisFunctionSetType;
-        return BasisFunctionSetType( ScalarBasisFunctionSetType( entity, scalarBasisFunctions_ ) );
+        return BasisFunctionSetType( ScalarBasisFunctionSetType( LocalFunctionSetType( entity, &functionSet_ ) ) );
       }
 
       /** @copydoc Dune::Fem::DiscreteFunctionSpaceInterface::continuous */
@@ -120,7 +124,7 @@ namespace Dune
       bool continuous ( const IntersectionType &intersection ) const { return true; }
 
       /** @copydoc Dune::Fem::DiscreteFunctionSpaceInterface::order */
-      int order () const { return scalarBasisFunctions_.order(); }
+      int order () const { return functionSet_.order(); }
 
       /** @copydoc Dune::Fem::DiscreteFunctionSpaceInterface::blockMapper */
       BlockMapperType &blockMapper () const { return blockMapper_; }
@@ -132,7 +136,7 @@ namespace Dune
     private:
       mutable BlockMapperType blockMapper_;
       mutable MapperType mapper_;
-      ScalarBasisFunctionsType scalarBasisFunctions_;
+      FunctionSetType functionSet_;
     };
 
   } // namespace Fem

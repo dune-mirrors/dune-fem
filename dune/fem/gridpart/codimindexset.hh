@@ -11,6 +11,10 @@
 #include <dune/fem/io/streams/xdrstreams.hh>
 #include <dune/grid/utility/persistentcontainer.hh>
 
+#include <dune/grid/utility/persistentcontainervector.hh>
+#include <dune/grid/utility/persistentcontainerwrapper.hh>
+#include <dune/grid/utility/persistentcontainermap.hh>
+
 #ifdef ENABLE_ADAPTIVELEAFINDEXSET_FOR_YASPGRID
 #include <dune/grid/yaspgrid.hh>
 #include <dune/grid/sgrid.hh>
@@ -102,7 +106,85 @@ namespace Dune
       // array type for indices 
       typedef MutableArray< IndexType > IndexArrayType;
 
-      typedef PersistentContainer< GridImp, IndexPair > IndexContainerType;
+      class IndexPersistentContainer 
+        : public PersistentContainer< GridType, IndexPair >
+      {
+        typedef PersistentContainer< GridType, IndexPair > BaseType ;
+
+        // classes to make protected members public 
+        template <class G, class T> 
+        struct PublicPersistentContainerWrapper : public PersistentContainerWrapper< G, T >
+        {
+          using PersistentContainerWrapper< G, T > :: hostContainer_;
+        };
+
+        template <class G, class I, class V> 
+        struct PublicPersistentContainerVector : public PersistentContainerVector< G, I, V >
+        {
+          using PersistentContainerVector< G, I, V > :: indexSet;
+        };
+
+        template <class G, class I, class M> 
+        struct PublicPersistentContainerMap : public PersistentContainerMap< G, I, M >
+        {
+          using PersistentContainerMap< G, I, M > :: idSet;
+        };
+
+      public:
+        using BaseType :: size ;
+        using BaseType :: resize ;
+        using BaseType :: codimension ;
+
+        typedef typename BaseType :: Value Value;
+        typedef typename BaseType :: Size  Size ;
+
+        //! constructor needed by CodimIndexSet 
+        IndexPersistentContainer( const GridType& grid, const int codim, const Value& value )
+          : BaseType( grid, codim, value ) 
+        {}
+
+        //! only do a resize if the current size is smaller then the needed size 
+        void enlargeOnly( const Value& value = Value() ) 
+        {
+          // call corrected implementation 
+          enlargeImpl( *this, value ); 
+        }
+
+      protected:  
+        // specialization for PersistentContainerWrapper that calles the other methods 
+        template <class G, class T> 
+        void enlargeImpl( PersistentContainerWrapper< G, T >& container, const Value& value ) 
+        {
+          enlargeImpl( ((PublicPersistentContainerWrapper< G, T > &) container).hostContainer_, value );
+        }
+
+        // enlarge implementation for persistent containers based on vectors 
+        template < class G, class IndexSet, class Vector >
+        void enlargeImpl( PersistentContainerVector< G, IndexSet, Vector >& container, const Value& value ) 
+        {
+          // get size of index set 
+          const Size indexSetSize = 
+            ((PublicPersistentContainerVector< G, IndexSet, Vector >& ) container).indexSet().size( codimension() );
+          // is current size is to small then do a resize, otherwise do nothing
+          if( size() < indexSetSize ) 
+            resize( value ); 
+        }
+
+        // enlarge implementation for persistent containers based on maps
+        template < class G, class IdSet, class Map >
+        void enlargeImpl( PersistentContainerMap< G, IdSet, Map >& container, const Value& value ) 
+        {
+          // this needs a revision 
+          PersistentContainerMap< G, IdSet, Map > checkSize( container );
+          checkSize.resize( value );
+          // is current size is to small then do a resize, otherwise do nothing
+          if( size() < checkSize.size() ) 
+            resize( value );
+        }
+      };
+
+      // use the imporved PersistentContainer
+      typedef IndexPersistentContainer IndexContainerType ;
 
       // the mapping of the global to leaf index 
       IndexContainerType leafIndex_;
@@ -157,7 +239,8 @@ namespace Dune
       //! reallocate the vectors
       void resize ()
       {
-        leafIndex_.resize( IndexPair( invalidIndex(), UNUSED ) );
+        // enlarge index container, do not shrink, because the old indices are still needed during compress 
+        leafIndex_.enlargeOnly( IndexPair( invalidIndex(), UNUSED ) );
       }
 
       //! prepare for setup (nothing to do here)
@@ -248,11 +331,7 @@ namespace Dune
         if(actHole > 0)
         {
           // close holes 
-          //
-          // NOTE: here the holes closing should be done in 
-          // the opposite way. future work. 
           int holes = 0; // number of real holes 
-          //size_t i = 0;
           const Iterator end = leafIndex_.end();
           for( Iterator it = leafIndex_.begin(); it != end; ++it )
           {
@@ -271,13 +350,13 @@ namespace Dune
               if(leafIdx.first >= actSize)
               {
                 // serach next hole that is smaler than actual size 
-                actHole--;
+                --actHole;
                 // if actHole < 0 then error, because we have index larger then
                 // actual size 
                 assert(actHole >= 0);
                 while ( holes_[actHole] >= actSize )
                 {
-                  actHole--;
+                  --actHole;
                   if(actHole < 0) break;
                 }
 
@@ -313,8 +392,8 @@ namespace Dune
         // store number of actual holes 
         numberHoles_ = oldIdx_.size();
 
-        // adjust size
-        leafIndex_.shrinkToFit();
+        // adjust size of container to correct value 
+        leafIndex_.resize( IndexPair( invalidIndex(), UNUSED ) );
         
         // the next index that can be given away is equal to size
         nextFreeIndex_ = actSize;

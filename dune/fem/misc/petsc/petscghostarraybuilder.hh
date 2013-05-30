@@ -6,7 +6,7 @@
 
 #include <dune/fem/misc/mpimanager.hh> 
 
-#if defined HAVE_PETSC
+#if HAVE_PETSC
 
 #include <dune/fem/misc/petsc/petsccommon.hh>
 #include <dune/fem/misc/petsc/petscdofmappings.hh>
@@ -316,6 +316,6 @@ namespace Dune
 
 } // namespace Dune
 
-#endif // #if defined HAVE_PETSC
+#endif // #if HAVE_PETSC
 
 #endif // DUNE_FEM_PETSCGHOSTARRAYBUILDER_HH

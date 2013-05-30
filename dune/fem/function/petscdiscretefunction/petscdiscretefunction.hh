@@ -290,6 +290,11 @@ namespace Dune
 
       void enableDofCompression () {}
 
+      void print( std::ostream& out ) 
+      {
+        petscVector().printGlobal( true );
+      }
+
     private:
       PetscDiscreteFunction ();
       ThisType& operator= ( const ThisType &other );
@@ -321,6 +326,6 @@ namespace Dune
 
 } // namespace Dune
 
-#endif // #if defined HAVE_PETSC
+#endif // #if HAVE_PETSC
 
 #endif // #ifndef DUNE_FEM_PETSCDISCRETEFUNCTION_HH

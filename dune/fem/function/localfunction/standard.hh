@@ -31,6 +31,9 @@ namespace Dune
       //! type of discrete function the local function belongs to
       typedef DiscreteFunction DiscreteFunctionType;
 
+      //! type of dof that belongs to discrete function 
+      typedef typename DiscreteFunctionType :: DofType  DofType;
+
       //! type of  discrete function space the local function belongs to
       typedef DiscreteFunctionSpace DiscreteFunctionSpaceType;
 
@@ -64,7 +67,7 @@ namespace Dune
       typedef typename DiscreteFunctionSpaceType::EntityType EntityType;
 
     protected:
-      typedef  Fem :: DynamicArray< RangeFieldType * > ValuesArrayType ;
+      typedef  Fem :: DynamicArray< DofType* > ValuesArrayType ;
 
       struct AssignDofs;
 
@@ -76,10 +79,10 @@ namespace Dune
       StandardLocalFunctionImpl ( const ThisType &other );
 
       /** \copydoc Dune::Fem::LocalFunction::operator[](const int num) const */
-      const RangeFieldType &operator[] ( const int num ) const;
+      const DofType &operator[] ( const int num ) const;
 
       /** \copydoc Dune::Fem::LocalFunction::operator[](const int num) */
-      RangeFieldType &operator[] ( const int num );
+      DofType &operator[] ( const int num );
 
       /** \copydoc Dune::Fem::LocalFunction::basisFunctionSet() const */
       const BasisFunctionSetType &basisFunctionSet() const;
@@ -198,7 +201,7 @@ namespace Dune
 
 
     template< class DiscreteFunction, class DiscreteFunctionSpace >
-    inline const typename StandardLocalFunctionImpl< DiscreteFunction, DiscreteFunctionSpace >::RangeFieldType &
+    inline const typename StandardLocalFunctionImpl< DiscreteFunction, DiscreteFunctionSpace >::DofType&
     StandardLocalFunctionImpl< DiscreteFunction, DiscreteFunctionSpace >::operator[] ( const int num ) const
     {
       assert( (num >= 0) && (num < numDofs()) );
@@ -208,7 +211,7 @@ namespace Dune
     
     template< class DiscreteFunction, class DiscreteFunctionSpace >
     inline typename StandardLocalFunctionImpl< DiscreteFunction, DiscreteFunctionSpace >
-      ::RangeFieldType &
+      ::DofType &
     StandardLocalFunctionImpl< DiscreteFunction, DiscreteFunctionSpace >
       ::operator[] ( const int num )
     {

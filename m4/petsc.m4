@@ -36,8 +36,7 @@ AC_DEFUN([DUNE_PATH_FEM_PETSC],[
                 AC_MSG_RESULT(no)
             fi
           else
-            with_petsc="no"
-	    AC_MSG_RESULT(no)
+	    AC_MSG_ERROR([Path to PETSC installation ($with_petsc) does not exist!])
       fi
 	else
 	    AC_MSG_RESULT(no)

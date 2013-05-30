@@ -1,8 +1,9 @@
 # IGNORE_HEADERS
 
 #GRIDTYPE = SPGRID
-GRIDTYPE = YASPGRID
-GRIDDIM = 2
+#GRIDTYPE = YASPGRID
+GRIDTYPE = ALUGRID_SIMPLEX
+GRIDDIM = 3
 POLORDER = 1
 
 EXTRA_DIST = parameter unitcube1.dgf unitcube2.dgf unitcube3.dgf base.hh massoperator.hh \
@@ -14,7 +15,7 @@ LDADD = $(ALL_PKG_LDFLAGS) $(ALL_PKG_LIBS) $(DUNEMPILIBS) $(LOCAL_LIBS) $(MPI_LD
 # preprocessor flags
 AM_CPPFLAGS = $(ALL_PKG_CPPFLAGS) $(DUNEMPICPPFLAGS)
 
-CHECK_PROGS = 
+CHECK_PROGS = l2projection l2projection_petscmatrix
 
 TESTS = $(CHECK_PROGS)
 check_PROGRAMS = $(CHECK_PROGS)

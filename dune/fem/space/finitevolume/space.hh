@@ -9,7 +9,9 @@
 
 // dune-fem includes
 #include <dune/fem/function/localfunction/average.hh>
+#include <dune/fem/gridpart/common/capabilities.hh>
 #include <dune/fem/space/basisfunctionset/default.hh>
+#include <dune/fem/space/common/capabilities.hh>
 #include <dune/fem/space/common/defaultcommhandler.hh>
 #include <dune/fem/space/common/discretefunctionspace.hh>
 #include <dune/fem/space/common/functionspace.hh>
@@ -22,14 +24,13 @@
 #include <dune/fem/version.hh>
 
 // local includes
-#include "declaration.hh"
+#include <dune/fem/space/finitevolume/declaration.hh>
 
 /*
   @file
   @brief Finite Volume space
   @author Christoph Gersbacher
 */
-
 
 namespace Dune
 {
@@ -266,6 +267,72 @@ namespace Dune
       DefaultLocalRestrictProlong ( const FiniteVolumeSpace< FunctionSpace, GridPart, codim, Storage > & )
       {}
     };
+
+
+
+    // Dune::Fem::Capabilities for FiniteVolumeSpace
+    // ---------------------------------------------
+
+    namespace Capabilities
+    {
+
+      template< class FunctionSpace, class GridPart, int codim, template< class > class Storage >
+      struct hasFixedPolynomialOrder< FiniteVolumeSpace< FunctionSpace, GridPart, codim, Storage > >
+      {
+        static const bool v = true;
+      };
+
+
+      template< class FunctionSpace, class GridPart, int codim, template< class > class Storage >
+      struct hasStaticPolynomialOrder< FiniteVolumeSpace< FunctionSpace, GridPart, codim, Storage > >
+      {
+        static const bool v = true;
+        static const int order = 0; 
+      };
+
+
+      template< class FunctionSpace, class GridPart, int codim, template< class > class Storage >
+      struct isContinuous< FiniteVolumeSpace< FunctionSpace, GridPart, codim, Storage > >
+      {
+        static const bool v = false;
+      };
+
+
+      template< class FunctionSpace, class GridPart, int codim, template< class > class Storage >
+      struct isLocalized< FiniteVolumeSpace< FunctionSpace, GridPart, codim, Storage > >
+      {
+        static const bool v = true;
+      };
+
+
+      template< class FunctionSpace, class GridPart, int codim, template< class > class Storage >
+      struct isParallel< FiniteVolumeSpace< FunctionSpace, GridPart, codim, Storage > >
+      {
+        static const bool v = Dune::Fem::GridPartCapabilities::isParallel< GridPart >::v;
+      };
+
+
+      template< class FunctionSpace, class GridPart, int codim, template< class > class Storage >
+      struct isAdaptive< FiniteVolumeSpace< FunctionSpace, GridPart, codim, Storage > >
+      {
+        static const bool v = true;
+      };
+
+
+      template< class FunctionSpace, class GridPart, int codim, template< class > class Storage >
+      struct threadSafe< FiniteVolumeSpace< FunctionSpace, GridPart, codim, Storage > >
+      {
+        static const bool v = false;
+      };
+
+
+      template< class FunctionSpace, class GridPart, int codim, template< class > class Storage >
+      struct viewThreadSafe< FiniteVolumeSpace< FunctionSpace, GridPart, codim, Storage > >
+      {
+        static const bool v = true;
+      };
+
+    } // namespace Capabilities
 
   } // namespace Fem
 

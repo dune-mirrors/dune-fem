@@ -4,6 +4,7 @@ basisfunctionset_HEADERS = basisfunctionset.hh \
 			   default.hh \
 			   functor.hh \
 			   proxy.hh \
+			   simple.hh \
 			   transformation.hh \
 			   vectorial.hh
 
