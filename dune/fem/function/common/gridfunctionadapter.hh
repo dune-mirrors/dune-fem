@@ -122,7 +122,7 @@ namespace Dune
       // reference to function this local belongs to
       GridFunctionAdapter ( const std::string &name,
                             const FunctionType &f,
-                            const GridPartType &gridPart,
+                            GridPartType &gridPart,
                             unsigned int order = DiscreteFunctionSpaceType::polynomialOrder )
       : space_( gridPart, order ),
         localFunctionStorage_( *this ),

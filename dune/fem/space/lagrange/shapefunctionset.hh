@@ -61,8 +61,6 @@ namespace Dune
       virtual int order () const = 0;
 
       virtual const ThisType *clone () const = 0;
-
-      virtual ~LagrangeShapeFunctionInterface() {}
     };
 
 
