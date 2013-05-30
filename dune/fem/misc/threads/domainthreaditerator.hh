@@ -128,9 +128,10 @@ namespace Dune {
           const size_t partitions = ThreadManager :: maxThreads() - commThread ;
 
           // create partitioner 
-          ThreadPartitioner< GridPartType > db( space_.gridPart() , partitions );
+          typedef ThreadPartitioner< GridPartType > ThreadPartitionerType;
+          ThreadPartitionerType db( space_.gridPart() , partitions );
           // do partitioning 
-          db.serialPartition( false );
+          db.serialPartition(); // ThreadPartitionerType::sfc );
 
           // get end iterator
           typedef typename SpaceType :: IteratorType SpaceIteratorType;
