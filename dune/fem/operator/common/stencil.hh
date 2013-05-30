@@ -194,7 +194,8 @@ namespace Dune
             {
               EntityPointer ep = intersection.outside(); 
               const DomainEntityType& neighbor = *ep;
-              BaseType::fill(neighbor,entity);
+              if( neighbor.partitionType() != GhostEntity )
+                BaseType::fill(neighbor,entity);
             }
           }
         }

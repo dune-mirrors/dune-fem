@@ -27,6 +27,8 @@
 
 #include <dune/fem/operator/matrix/istlmatrixadapter.hh>
 
+#include <dune/fem/function/common/dgmatrixsetup.hh>
+
 namespace Dune
 { 
 
@@ -171,7 +173,8 @@ namespace Dune
             typedef typename std::map<RowKeyType , std::set<ColKeyType> >
               ::const_iterator StencilIterator;
             const StencilIterator it = indices.find( create.index() );
-            assert( it != indices.end() );
+            if (it == indices.end() )
+              continue;
             const std::set<ColKeyType>& localIndices = it->second;
             typedef typename std::set<ColKeyType>::const_iterator iterator;
             iterator end = localIndices.end();
@@ -1087,6 +1090,7 @@ namespace Dune
           matrix().createEntries( stencil.globalStencil() );
 
           sequence_ = domainSpace().sequence();
+          ElementAndNeighbors::setup(rangeSpace(),rowMapper_, (ColumnDiscreteFunctionType*)0);
         }
       }
 
