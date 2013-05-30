@@ -117,6 +117,8 @@ namespace Dune
 
       virtual ~EvaluateCallerInterface() {}
 
+      virtual void* storageAddress () const = 0;
+
       virtual void axpyRanges( const QuadratureType&,
                                const FactorType& ,
                                LocalDofVectorType & ) const = 0;
@@ -159,6 +161,9 @@ namespace Dune
               :: create( dataCache , quad.nop(), baseSet.numDifferentBaseFunctions() );
         }
 
+        // make sure the storage is the same 
+        assert( ((void *) &dataCache) == evaluators[ quadId ]->storageAddress() );
+
         // return reference to evaluator 
         return *(evaluators[ quadId ]);
       }
@@ -191,6 +196,8 @@ namespace Dune
       EvaluateRealImplementation( const RangeVectorType& rangeStorage ) 
         : rangeStorage_( rangeStorage )
       {}
+
+      virtual void* storageAddress() const { return (void *) &rangeStorage_ ; }
 
       virtual void axpyRanges( const QuadratureType& quad,
                                const FactorType& rangeFactors,
