@@ -1,9 +1,9 @@
 # IGNORE_HEADERS
 
 #GRIDTYPE = SPGRID
-#GRIDTYPE = YASPGRID
-GRIDTYPE = ALUGRID_SIMPLEX
-GRIDDIM = 3
+GRIDTYPE = YASPGRID
+#GRIDTYPE = ALUGRID_SIMPLEX
+GRIDDIM = 2
 POLORDER = 1
 
 EXTRA_DIST = parameter unitcube1.dgf unitcube2.dgf unitcube3.dgf base.hh massoperator.hh \
@@ -27,6 +27,6 @@ l2projection_SOURCES = l2projection.cc
 l2projection_CPPFLAGS = $(AM_CPPFLAGS) -DPOLORDER=$(POLORDER)
 
 l2projection_petscmatrix_SOURCES = l2projection.cc
-l2projection_petscmatrix_CPPFLAGS = $(AM_CPPFLAGS) -DPOLORDER=$(POLORDER) -DPETSCLINEAROPERATOR=1
+l2projection_petscmatrix_CPPFLAGS = $(AM_CPPFLAGS) -DPOLORDER=$(POLORDER) -DUSE_PETSCLINEAROPERATOR
 
 include $(top_srcdir)/am/global-rules
