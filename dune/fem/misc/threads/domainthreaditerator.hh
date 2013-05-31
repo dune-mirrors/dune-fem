@@ -42,6 +42,9 @@ namespace Dune {
       typedef typename GridPartType :: template Codim<0> ::
         EntityPointerType EntityPointer ;
 
+      typedef ThreadPartitioner< GridPartType >           ThreadPartitionerType;
+      typedef typename ThreadPartitionerType :: Method    PartitioningMethodType ;
+
     protected:  
       const SpaceType& space_ ;
       const IndexSetType& indexSet_;
@@ -53,9 +56,19 @@ namespace Dune {
       typedef typename FilterType :: ThreadArrayType ThreadArrayType;
       ThreadArrayType threadNum_;
 #endif
+      const PartitioningMethodType method_;
+
       // if true, thread 0 does only communication and no computation
       const bool communicationThread_; 
       const bool verbose_ ;
+
+    protected:
+      PartitioningMethodType getMethod() const 
+      {
+        // default is recursive 
+        const std::string methodNames[] = { "recursive", "kway", "sfc" }; 
+        return (PartitioningMethodType ) Parameter::getEnum("fem.threads.partitioningmethod", methodNames, 0 );
+      }
 
     public:  
       //! contructor creating thread iterators 
@@ -66,6 +79,7 @@ namespace Dune {
         , sequence_( -1 )  
         , filteredGridParts_( Fem :: ThreadManager :: maxThreads() )
 #endif
+        , method_( getMethod() )
         , communicationThread_( Parameter::getValue<bool>("fem.threads.communicationthread", false) 
                     &&  Fem :: ThreadManager :: maxThreads() > 1 ) // only possible if maxThreads > 1
         , verbose_( Parameter::verbose() && 
@@ -128,10 +142,9 @@ namespace Dune {
           const size_t partitions = ThreadManager :: maxThreads() - commThread ;
 
           // create partitioner 
-          typedef ThreadPartitioner< GridPartType > ThreadPartitionerType;
           ThreadPartitionerType db( space_.gridPart() , partitions );
           // do partitioning 
-          db.serialPartition(); // ThreadPartitionerType::sfc );
+          db.serialPartition( method_ ); 
 
           // get end iterator
           typedef typename SpaceType :: IteratorType SpaceIteratorType;

@@ -138,7 +138,10 @@ protected:
   std::vector< int > partition_;
 
 public:
-  enum Method { kway, recursive, sfc };
+  enum Method { recursive = 0, // METIS_PartGraphRecursive,
+                kway = 1,      // METIS_PartGraphKway
+                sfc = 2        // ALUGRID_SpaceFillingCurve 
+  };
 
   /** \brief constructor 
       \param gridPart  grid part with set of entities that should be partitioned 
@@ -313,10 +316,14 @@ public:
           partition_ = db_.repartition( mpAccess_, DataBaseType :: METIS_PartGraphRecursive, pSize_ );
         else if( method == kway ) 
           partition_ = db_.repartition( mpAccess_, DataBaseType :: METIS_PartGraphKway, pSize_ );
-#if HAVE_DUNE_ALUGRID
         else if( method == sfc ) 
+        {
+#if HAVE_DUNE_ALUGRID
           partition_ = db_.repartition( mpAccess_, DataBaseType :: ALUGRID_SpaceFillingCurve, pSize_ );
+#else   
+          DUNE_THROW(InvalidStateException,"ThreadPartitioner::serialPartition: dune-alugrid not found, therefore not sfc partitioning");
 #endif
+        }
         else 
           DUNE_THROW(InvalidStateException,"ThreadPartitioner::serialPartition: wrong method");
         assert( int(partition_.size()) >= graphSize_ );
