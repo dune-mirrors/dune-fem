@@ -962,8 +962,7 @@ namespace Dune
     template< class DomainFunction, class RangeFunction, class TraitsImp >
     class SparseRowMatrixOperator
     : public SparseRowMatrixObject< typename DomainFunction::DiscreteFunctionSpaceType, typename RangeFunction::DiscreteFunctionSpaceType, TraitsImp >,
-      public Fem::AssembledOperator< DomainFunction, RangeFunction >,
-      public OEMSolver::PreconditionInterface
+      public Fem::AssembledOperator< DomainFunction, RangeFunction >
     {
       typedef SparseRowMatrixOperator< DomainFunction, RangeFunction, TraitsImp > This;
       typedef SparseRowMatrixObject< typename DomainFunction::DiscreteFunctionSpaceType, typename RangeFunction::DiscreteFunctionSpaceType, TraitsImp > Base;
