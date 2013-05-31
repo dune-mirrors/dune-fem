@@ -14,13 +14,9 @@
 #include <dune/alugrid/3d/alugrid.hh>
 #endif
 
-#include <dune/grid/io/visual/grapegriddisplay.hh>
-
 #if ALU3DGRID_PARALLEL
 
 #warning "Using the ThreadPartitioner"
-
-#define ALU2DGRID_READALL_GRIDS 
 
 #if HAVE_DUNE_ALUGRID 
 namespace ALUGrid {
@@ -142,7 +138,14 @@ protected:
   std::vector< int > partition_;
 
 public:
-  ThreadPartitioner( const GridPartType& gridPart, const int pSize )
+  enum Method { kway, recursive, sfc };
+
+  /** \brief constructor 
+      \param gridPart  grid part with set of entities that should be partitioned 
+      \param pSize     number of partitions 
+  */    
+  ThreadPartitioner( const GridPartType& gridPart, 
+                     const int pSize )
     : mpAccess_(),
       db_ (),
       gridPart_( gridPart )
@@ -285,7 +288,13 @@ protected:
   }
 
 public:
-  bool serialPartition(const bool useKway = true ) 
+  /** \brief 
+      \param method    partitioning method, available are:
+                       - kway      = METIS_PartGraphKway 
+                       - recursive = METIS_PartGraphRecursive (default)
+                       - sfc       = space filling curve (only in dune-alugrid)
+  */                     
+  bool serialPartition( const Method method = recursive ) 
   {
     if( pSize_ > 1 ) 
     {
@@ -300,14 +309,18 @@ public:
       else 
       {
         // || HAVE_METIS 
-        if( useKway ) 
-          partition_ = db_.repartition( mpAccess_, DataBaseType :: METIS_PartGraphKway, pSize_ );
-        else 
+        if( method == recursive ) 
           partition_ = db_.repartition( mpAccess_, DataBaseType :: METIS_PartGraphRecursive, pSize_ );
-//        partition_ = db_.repartition( mpAccess_, DataBaseType :: ALUGRID_SpaceFillingCurveNoEdges, pSize_ );
+        else if( method == kway ) 
+          partition_ = db_.repartition( mpAccess_, DataBaseType :: METIS_PartGraphKway, pSize_ );
+#if HAVE_DUNE_ALUGRID
+        else if( method == sfc ) 
+          partition_ = db_.repartition( mpAccess_, DataBaseType :: ALUGRID_SpaceFillingCurve, pSize_ );
+#endif
+        else 
+          DUNE_THROW(InvalidStateException,"ThreadPartitioner::serialPartition: wrong method");
+        assert( int(partition_.size()) >= graphSize_ );
       }
-
-      assert( int(partition_.size()) >= graphSize_ );
 
       /*
       assert( partition_.size() > 0 );
@@ -317,11 +330,6 @@ public:
         std::cout << "part[" << i << "] = " << partition_[ i ]  << endl;
         ++counter[  partition_[ i ]  ];
       }
-      */
-
-      /*
-      for( int i=0; i<pSize_; ++ i) 
-        std::cout << counter[ i ] << " counter \n";
       */
       return partition_.size() > 0;
     }
