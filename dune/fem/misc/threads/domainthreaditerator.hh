@@ -56,6 +56,9 @@ namespace Dune {
       typedef typename FilterType :: ThreadArrayType ThreadArrayType;
       ThreadArrayType threadNum_;
 #endif
+      // ratio of computing time needed by the master thread compared to the other threads
+      double masterRatio_ ;
+
       const PartitioningMethodType method_;
 
       // if true, thread 0 does only communication and no computation
@@ -79,6 +82,7 @@ namespace Dune {
         , sequence_( -1 )  
         , filteredGridParts_( Fem :: ThreadManager :: maxThreads() )
 #endif
+        , masterRatio_( 1.0 )
         , method_( getMethod() )
         , communicationThread_( Parameter::getValue<bool>("fem.threads.communicationthread", false) 
                     &&  Fem :: ThreadManager :: maxThreads() > 1 ) // only possible if maxThreads > 1
@@ -142,7 +146,7 @@ namespace Dune {
           const size_t partitions = ThreadManager :: maxThreads() - commThread ;
 
           // create partitioner 
-          ThreadPartitionerType db( space_.gridPart() , partitions );
+          ThreadPartitionerType db( space_.gridPart() , partitions, masterRatio_ );
           // do partitioning 
           db.serialPartition( method_ ); 
 
@@ -242,6 +246,11 @@ namespace Dune {
         return 0;
 #endif
       }
+
+      void setMasterRatio( const double ratio ) 
+      {
+        masterRatio_ = 0.5 * (ratio + masterRatio_);
+      }
     };
 
     /** \brief Thread iterator */
@@ -328,6 +337,12 @@ namespace Dune {
       void update() 
       {
         iterators_.update();
+      }
+
+      //! set ratio between master thread and other threads in comp time
+      void setMasterRatio( const double ratio ) 
+      {
+        iterators_.setMasterRatio( ratio );
       }
 
       //! return begin iterator for current thread 
