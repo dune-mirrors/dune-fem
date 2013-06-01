@@ -42,8 +42,10 @@ namespace Dune {
       typedef typename GridPartType :: template Codim<0> ::
         EntityPointerType EntityPointer ;
 
+#ifdef USE_SMP_PARALLEL
       typedef ThreadPartitioner< GridPartType >           ThreadPartitionerType;
       typedef typename ThreadPartitionerType :: Method    PartitioningMethodType ;
+#endif // #ifdef USE_SMP_PARALLEL
 
     protected:  
       const SpaceType& space_ ;
@@ -59,19 +61,23 @@ namespace Dune {
       // ratio of computing time needed by the master thread compared to the other threads
       double masterRatio_ ;
 
+#ifdef USE_SMP_PARALLEL
       const PartitioningMethodType method_;
+#endif // #ifdef USE_SMP_PARALLEL
 
       // if true, thread 0 does only communication and no computation
       const bool communicationThread_; 
       const bool verbose_ ;
 
     protected:
+#ifdef USE_SMP_PARALLEL
       PartitioningMethodType getMethod() const 
       {
         // default is recursive 
         const std::string methodNames[] = { "recursive", "kway", "sfc" }; 
         return (PartitioningMethodType ) Parameter::getEnum("fem.threads.partitioningmethod", methodNames, 0 );
       }
+#endif // #ifdef USE_SMP_PARALLEL
 
     public:  
       //! contructor creating thread iterators 
@@ -83,7 +89,9 @@ namespace Dune {
         , filteredGridParts_( Fem :: ThreadManager :: maxThreads() )
 #endif
         , masterRatio_( 1.0 )
+#ifdef USE_SMP_PARALLEL
         , method_( getMethod() )
+#endif // #ifdef USE_SMP_PARALLEL
         , communicationThread_( Parameter::getValue<bool>("fem.threads.communicationthread", false) 
                     &&  Fem :: ThreadManager :: maxThreads() > 1 ) // only possible if maxThreads > 1
         , verbose_( Parameter::verbose() && 
