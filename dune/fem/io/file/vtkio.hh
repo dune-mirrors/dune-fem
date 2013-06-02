@@ -146,7 +146,7 @@ namespace Dune
         typedef typename GridViewType :: template Codim< 0 >::Entity EntityType;
         typedef typename EntityType::Geometry::LocalCoordinate LocalCoordinateType;
 
-        typedef DomainDecomposedIteratorStorage< GridPart >  ThreadIteratorType;
+        typedef DomainDecomposedIteratorStorage< GridPartType >  ThreadIteratorType;
 
         //! constructor taking discrete function 
         PartitioningData( const GridPartType& gridPart,
