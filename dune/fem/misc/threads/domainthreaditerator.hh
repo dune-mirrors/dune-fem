@@ -5,6 +5,7 @@
 
 #include <dune/common/exceptions.hh>
 
+#include <dune/fem/space/common/dofmanager.hh>
 #include <dune/fem/misc/threads/threadmanager.hh>
 #include <dune/fem/gridpart/filteredgridpart.hh>
 #include <dune/fem/gridpart/filter/threadfilter.hh>
@@ -18,15 +19,13 @@ namespace Dune {
   namespace Fem {
 
     /** \brief Thread iterator */
-    template <class DiscreteFunctionSpace>  
+    template <class GridPart>  
     class DomainDecomposedIterator
     {
-      typedef DiscreteFunctionSpace SpaceType;
     public:  
-      typedef DiscreteFunctionSpace DiscreteFunctionSpaceType;
-      typedef typename SpaceType :: GridType      GridType;
-      typedef typename SpaceType :: GridPartType  GridPartType;
-      typedef typename SpaceType :: IndexSetType  IndexSetType;
+      typedef GridPart  GridPartType;
+      typedef typename GridPartType :: GridType      GridType;
+      typedef typename GridPartType :: IndexSetType  IndexSetType;
 
       typedef ThreadFilter<GridPartType> FilterType;
 #ifdef USE_SMP_PARALLEL
@@ -35,12 +34,14 @@ namespace Dune {
       typedef typename FilteredGridPartType :: template Codim< 0 > :: IteratorType
         IteratorType;
 #else 
-      typedef typename SpaceType :: IteratorType IteratorType ;
+      typedef typename GridPartType :: template Codim< 0 > :: IteratorType IteratorType ;
 #endif
 
       typedef typename IteratorType :: Entity EntityType ;
       typedef typename GridPartType :: template Codim<0> ::
         EntityPointerType EntityPointer ;
+
+      typedef DofManager< GridType > DofManagerType;
 
 #ifdef USE_SMP_PARALLEL
       typedef ThreadPartitioner< GridPartType >           ThreadPartitionerType;
@@ -48,7 +49,8 @@ namespace Dune {
 #endif // #ifdef USE_SMP_PARALLEL
 
     protected:  
-      const SpaceType& space_ ;
+      const GridPartType& gridPart_;
+      const DofManagerType& dofManager_;
       const IndexSetType& indexSet_;
 
 #ifdef USE_SMP_PARALLEL
@@ -81,9 +83,10 @@ namespace Dune {
 
     public:  
       //! contructor creating thread iterators 
-      explicit DomainDecomposedIterator( const SpaceType& spc )
-        : space_( spc ),
-          indexSet_( space_.indexSet() )
+      explicit DomainDecomposedIterator( const GridPartType& gridPart )
+        : gridPart_( gridPart ),
+          dofManager_( DofManagerType :: instance( gridPart_.grid() ) ),
+          indexSet_( gridPart_.indexSet() )
 #ifdef USE_SMP_PARALLEL
         , sequence_( -1 )  
         , filteredGridParts_( Fem :: ThreadManager :: maxThreads() )
@@ -100,10 +103,10 @@ namespace Dune {
 #ifdef USE_SMP_PARALLEL
         for(int thread=0; thread < Fem :: ThreadManager :: maxThreads(); ++thread )
         {
-          // i is the thread number of this filter 
+          // thread is the thread number of this filter 
           filteredGridParts_[ thread ] 
-            = new FilteredGridPartType( space_.gridPart(), 
-                                        FilterType( space_.gridPart(), threadNum_, thread ) );
+            = new FilteredGridPartType( const_cast<GridPartType &> (gridPart_), 
+                                        FilterType( gridPart_, threadNum_, thread ) );
         }
 
         threadNum_.setMemoryFactor( 1.1 ); 
@@ -124,9 +127,6 @@ namespace Dune {
 #endif
       }
 
-      //! return reference to space 
-      const SpaceType& space() const { return space_; }
-
 #ifdef USE_SMP_PARALLEL
       //! return filter for given thread 
       const FilterType& filter( const int thread ) const 
@@ -139,8 +139,9 @@ namespace Dune {
       void update() 
       {
 #ifdef USE_SMP_PARALLEL
+        const int sequence = dofManager_.sequence() ;
         // if grid got updated also update iterators 
-        if( sequence_ != space_.sequence() )
+        if( sequence_ != sequence )
         {
           if( ! ThreadManager :: singleThreadMode() ) 
           {
@@ -154,13 +155,13 @@ namespace Dune {
           const size_t partitions = ThreadManager :: maxThreads() - commThread ;
 
           // create partitioner 
-          ThreadPartitionerType db( space_.gridPart() , partitions, masterRatio_ );
+          ThreadPartitionerType db( gridPart_, partitions, masterRatio_ );
           // do partitioning 
           db.serialPartition( method_ ); 
 
           // get end iterator
-          typedef typename SpaceType :: IteratorType SpaceIteratorType;
-          const SpaceIteratorType endit = space_.end();
+          typedef typename GridPartType :: template Codim< 0 > :: IteratorType GPIteratorType;
+          const GPIteratorType endit = gridPart_.template end< 0 >();
 
           // get size for index set 
           const size_t size = indexSet_.size( 0 );
@@ -175,7 +176,8 @@ namespace Dune {
             std::vector< int > counter( partitions+commThread , 0 );
 
             int numInteriorElems = 0;
-            for(SpaceIteratorType it = space_.begin(); it != endit; ++it, ++numInteriorElems ) 
+            for(GPIteratorType it = gridPart_.template begin< 0 >(); 
+                it != endit; ++it, ++numInteriorElems ) 
             {
               const EntityType& entity  = * it;
               const int rank = db.getRank( entity ) + commThread ;
@@ -186,7 +188,7 @@ namespace Dune {
             }
 
             // update sequence number 
-            sequence_ = space_.sequence();
+            sequence_ = sequence;
 
             if( verbose_ )
             {
@@ -198,7 +200,7 @@ namespace Dune {
               
 #ifndef NDEBUG
             // check that all interior elements have got a valid thread number 
-            for(SpaceIteratorType it = space_.begin(); it != endit; ++it ) 
+            for(GPIteratorType it = gridPart_.template begin< 0 >(); it != endit; ++it ) 
             {
               assert( threadNum_[ indexSet_.index( *it ) ] >= 0 );
             }
@@ -222,7 +224,7 @@ namespace Dune {
         else 
           return filteredGridParts_[ thread ]->template begin< 0 > ();
 #else 
-        return space_.begin();
+        return gridPart_.template begin< 0 > ();
 #endif
       }
 
@@ -232,7 +234,7 @@ namespace Dune {
 #ifdef USE_SMP_PARALLEL
         return filteredGridParts_[ ThreadManager :: thread() ]->template end< 0 > ();
 #else 
-        return space_.end();
+        return gridPart_.template end< 0 > ();
 #endif
       }
 
@@ -262,17 +264,14 @@ namespace Dune {
     };
 
     /** \brief Thread iterator */
-    template <class DiscreteFunctionSpace>  
+    template <class GridPart>  
     class DomainDecomposedIteratorStorage
     {
-      typedef DiscreteFunctionSpace SpaceType;
     public:  
-      typedef DiscreteFunctionSpace DiscreteFunctionSpaceType;
+      typedef GridPart  GridPartType;
+      typedef typename GridPartType :: IndexSetType  IndexSetType;
 
-      typedef typename SpaceType :: GridPartType  GridPartType;
-      typedef typename SpaceType :: IndexSetType  IndexSetType;
-
-      typedef DomainDecomposedIterator< DiscreteFunctionSpace >  DomainIterator;
+      typedef DomainDecomposedIterator< GridPartType >  DomainIterator;
       typedef typename DomainIterator :: FilterType    FilterType ;
       typedef typename DomainIterator :: IteratorType  IteratorType;
 
@@ -283,10 +282,10 @@ namespace Dune {
       {
         struct Key
         {
-          const DiscreteFunctionSpaceType& space_;
+          const GridPartType& gridPart_;
           const IndexSetType& indexSet_;
-          Key(const DiscreteFunctionSpaceType& space)
-           : space_( space ), indexSet_( space_.indexSet() )
+          Key(const GridPartType& gridPart)
+           : gridPart_( gridPart ), indexSet_( gridPart_.indexSet() )
           {}
 
           bool operator ==( const Key& other ) const
@@ -294,7 +293,7 @@ namespace Dune {
             // compare grid pointers 
             return (&indexSet_) == (& other.indexSet_ );
           }
-          const DiscreteFunctionSpaceType& space() const { return space_; }
+          const GridPartType& gridPart() const { return gridPart_; }
         };
 
         typedef DomainIterator ObjectType;
@@ -302,7 +301,7 @@ namespace Dune {
 
         inline static ObjectType *createObject ( const KeyType &key )
         {
-          return new ObjectType( key.space() );
+          return new ObjectType( key.gridPart() );
         }
 
         inline static void deleteObject ( ObjectType *object )
@@ -314,26 +313,23 @@ namespace Dune {
 
      typedef typename IteratorFactory :: KeyType KeyType;
      typedef SingletonList
-      < KeyType, DomainIterator, IteratorFactory > IndexSetProviderType;
+      < KeyType, DomainIterator, IteratorFactory > IteratorProviderType;
 
     protected:  
       DomainIterator& iterators_;
 
     public:  
       //! contructor creating thread iterators 
-      explicit DomainDecomposedIteratorStorage( const DiscreteFunctionSpaceType& spc )
-        : iterators_( IndexSetProviderType::getObject( KeyType( spc ) ) )
+      explicit DomainDecomposedIteratorStorage( const GridPartType& gridPart )
+        : iterators_( IteratorProviderType::getObject( KeyType( gridPart ) ) )
       {
         update();
       }
 
       ~DomainDecomposedIteratorStorage() 
       {
-        IndexSetProviderType::removeObject( iterators_ );
+        IteratorProviderType::removeObject( iterators_ );
       }
-
-      //! return reference to space 
-      const SpaceType& space() const { return iterators_.space(); }
 
       //! return filter for given thread 
       const FilterType& filter( const int thread ) const 
