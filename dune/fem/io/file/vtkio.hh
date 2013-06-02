@@ -149,8 +149,10 @@ namespace Dune
         typedef DomainDecomposedIteratorStorage< GridPart >  ThreadIteratorType;
 
         //! constructor taking discrete function 
-        PartitioningData( const GridPartType& gridPart, const int rank, const int nThreads ) 
-          : iterators_( gridPart ), rank_( rank ), nThreads_( nThreads ) {}
+        PartitioningData( const GridPartType& gridPart,
+                          const std::string& name,
+                          const int rank, const int nThreads )
+          : iterators_( gridPart ), name_( name ), rank_( rank ), nThreads_( nThreads ) {}
 
         //! virtual destructor
         virtual ~PartitioningData () {}
@@ -163,26 +165,35 @@ namespace Dune
         virtual double evaluate ( int comp, const EntityType &e, const LocalCoordinateType &xi ) const
         {
           const int thread = iterators_.thread( e );
-          return double( rank_ * nThreads_ + thread );
+          return (nThreads_ < 0) ? double( rank_ ) : double( rank_ * nThreads_ + thread );
         }
 
         //! get name
         virtual std::string name () const
         {
-          return std::string( "rank" );
+          return name_;
         }
 
       private:
         ThreadIteratorType iterators_;
+        const std::string name_;
         const int rank_;
         const int nThreads_;
+
       };
+
+      int getPartitionParameter() const 
+      {
+        // 0 = none, 1 = MPI ranks only, 2 = ranks + threads, 3 = like 1 and also threads only
+        const std::string names[] = { "none", "rank", "rank+thread", "rank/thread" };
+        return Parameter :: getEnum ("fem.io.partitioning", names, 0 );
+      }
 
     protected :
       VTKIOBase ( const GridPartType &gridPart, VTKWriterType *vtkWriter )
       : gridPart_( gridPart ),
         vtkWriter_( vtkWriter ),
-        addPartition_( Parameter :: getValue< int > ("fem.io.partitioning", 0 ) )
+        addPartition_( getPartitionParameter() )
       {
       }
 
@@ -192,7 +203,15 @@ namespace Dune
         {
           const int rank = ( myRank < 0 ) ? gridPart_.grid().comm().rank() : myRank ;
           const int nThreads = ( addPartition_ > 1 ) ? ThreadManager::maxThreads() : 1 ;
-          vtkWriter_->addCellData( new PartitioningData( gridPart_, rank, nThreads ) );
+          if( addPartition_ <= 2 ) 
+            vtkWriter_->addCellData( new PartitioningData( gridPart_, "rank", rank, nThreads ) );
+          else 
+          {
+            // rank only visualization 
+            vtkWriter_->addCellData( new PartitioningData( gridPart_, "rank", rank, -1 ) );
+            // thread only visualization 
+            vtkWriter_->addCellData( new PartitioningData( gridPart_, "thread", 0, nThreads ) );
+          }
           addPartition_ = 0 ;
         }
       }
