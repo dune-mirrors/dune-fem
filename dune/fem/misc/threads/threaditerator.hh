@@ -6,7 +6,10 @@
 #include <dune/common/exceptions.hh>
 
 #include <dune/fem/space/common/arrays.hh>
+#include <dune/fem/space/common/dofmanager.hh>
 #include <dune/fem/misc/threads/threadmanager.hh>
+#include <dune/fem/gridpart/filter/threadfilter.hh>
+
 
 namespace Dune 
 {
@@ -15,19 +18,25 @@ namespace Dune
   {
 
     /** \brief Thread iterator */
-    template <class DiscreteFunctionSpace>  
+    template <class GridPart>  
     class ThreadIterator
     {
-      typedef DiscreteFunctionSpace SpaceType;
+      ThreadIterator( const ThreadIterator& );
+      ThreadIterator& operator= ( const ThreadIterator& );
     public:  
-      typedef DiscreteFunctionSpace DiscreteFunctionSpaceType;
-      typedef typename SpaceType :: IteratorType IteratorType ;
-      typedef typename IteratorType :: Entity EntityType ;
-      typedef typename SpaceType :: GridType :: template Codim<0> ::
-        EntityPointer EntityPointer ;
-      typedef typename SpaceType :: IndexSetType IndexSetType ;
+      typedef GridPart GridPartType;
+      typedef typename GridPartType :: GridType  GridType;
+      typedef typename GridPartType :: template Codim< 0 > :: IteratorType      IteratorType ;
+      typedef typename GridPartType :: template Codim< 0 > :: EntityType        EntityType ;
+      typedef typename GridPartType :: template Codim< 0 > :: EntityPointerType EntityPointerType ;
+      typedef typename GridPartType :: IndexSetType IndexSetType ;
+      typedef DofManager< GridType > DofManagerType;
+
+      typedef ThreadFilter<GridPartType> FilterType;
+
     protected:  
-      const SpaceType& space_ ;
+      const GridPartType& gridPart_;
+      const DofManagerType& dofManager_;
       const IndexSetType& indexSet_;
 
 #ifdef USE_SMP_PARALLEL
@@ -35,33 +44,55 @@ namespace Dune
       std::vector< IteratorType > iterators_;
       MutableArray< int > threadNum_;
       std::vector< std::vector< int > > threadId_; 
+      std::vector< FilterType* > filters_;
 #endif
     public:  
       //! contructor creating thread iterators 
-      explicit ThreadIterator( const SpaceType& spc )
-        : space_( spc )
-        , indexSet_( space_.indexSet() )
+      explicit ThreadIterator( const GridPartType& gridPart )
+        : gridPart_( gridPart )
+        , dofManager_( DofManagerType :: instance( gridPart_.grid() ) )
+        , indexSet_( gridPart_.indexSet() )
 #ifdef USE_SMP_PARALLEL
         , sequence_( -1 )  
-        , iterators_( ThreadManager::maxThreads() + 1 , space_.end() )
+        , iterators_( ThreadManager::maxThreads() + 1 , gridPart_.template end< 0 >() )
         , threadId_( ThreadManager::maxThreads() )
 #endif
       {
 #ifdef USE_SMP_PARALLEL
         threadNum_.setMemoryFactor( 1.1 ); 
+        filters_.resize( Fem :: ThreadManager :: maxThreads(), (FilterType *) 0 );
+        for(int thread=0; thread < Fem :: ThreadManager :: maxThreads(); ++thread )
+        {
+          filters_[ thread ] = new FilterType( gridPart_, threadNum_, thread );
+        }
 #endif
         update();
       }
 
-      //! return reference to space 
-      const SpaceType& space() const { return space_; }
+#ifdef USE_SMP_PARALLEL
+      ~ThreadIterator() 
+      {
+        for(size_t i = 0; i<filters_.size(); ++i )
+        {
+          delete filters_[ i ];
+        }
+      }
+
+      //! return filter for given thread 
+      const FilterType& filter( const unsigned int thread ) const
+      {
+        assert( thread < filters_.size() );
+        return *(filters_[ thread ]);
+      }
+#endif
 
       //! update internal list of iterators 
       void update() 
       {
 #ifdef USE_SMP_PARALLEL
+        const int sequence = dofManager_.sequence();
         // if grid got updated also update iterators 
-        if( sequence_ != space_.sequence() )
+        if( sequence_ != sequence )
         {
           if( ! ThreadManager :: singleThreadMode() ) 
           {
@@ -73,9 +104,9 @@ namespace Dune
           const size_t maxThreads = ThreadManager :: maxThreads() ;
 
           // get end iterator
-          const IteratorType endit = space_.end();
+          const IteratorType endit = gridPart_.template end< 0 >();
 
-          IteratorType it = space_.begin(); 
+          IteratorType it = gridPart_.template begin< 0 >();
           if( it == endit ) 
           {
             // set all iterators to end iterators 
@@ -86,7 +117,7 @@ namespace Dune
             threadNum_.resize( 0 );
 
             // update sequence number 
-            sequence_ = space_.sequence();
+            sequence_ = sequence;
             return ;
           }
 
@@ -129,7 +160,7 @@ namespace Dune
           }
 
           // update sequence number 
-          sequence_ = space_.sequence();
+          sequence_ = sequence;
 
           //for(size_t i = 0; i<size; ++i ) 
           //  std::cout << threadNum_[ i ] << std::endl;
@@ -143,7 +174,7 @@ namespace Dune
 #ifdef USE_SMP_PARALLEL
         return iterators_[ ThreadManager :: thread() ];
 #else 
-        return space_.begin();
+        return gridPart_.template begin< 0 >();
 #endif
       }
 
@@ -153,18 +184,18 @@ namespace Dune
 #ifdef USE_SMP_PARALLEL
         return iterators_[ ThreadManager :: thread() + 1 ];
 #else 
-        return space_.end();
+        return gridPart_.template end< 0 >();
 #endif
       }
 
       //! return thread number this entity belongs to 
-      int index(const EntityType& entity ) const 
+      int index( const EntityType& entity ) const 
       {
         return indexSet_.index( entity );
       }
 
       //! return thread number this entity belongs to 
-      int thread(const EntityType& entity ) const 
+      int thread( const EntityType& entity ) const 
       {
 #ifdef USE_SMP_PARALLEL
         assert( (size_t) threadNum_.size() > indexSet_.index( entity ) );
@@ -174,136 +205,6 @@ namespace Dune
 #else 
         return 0;
 #endif
-      }
-    };
-
-
-    /** \brief Thread iterator */
-    template <class DiscreteFunctionSpace>  
-    class ThreadIteratorPointer
-    {
-      typedef DiscreteFunctionSpace SpaceType;
-    public:  
-      typedef DiscreteFunctionSpace DiscreteFunctionSpaceType;
-      typedef typename SpaceType :: GridType :: template Codim<0> :: Entity EntityType ;
-      typedef typename SpaceType :: GridType :: template Codim<0> ::
-        EntityPointer EntityPointer ;
-      typedef typename SpaceType :: IndexSetType IndexSetType ;
-    protected:  
-      const SpaceType& space_ ;
-      const IndexSetType& indexSet_;
-
-      class Iterator
-      {
-        const std::vector< EntityPointer >& vec_;
-        size_t pos_ ;
-      public:
-        typedef typename SpaceType :: GridType :: template Codim<0> :: Entity EntityType ;
-        typedef EntityType Entity ;
-        Iterator( const std::vector< EntityPointer >& vec, const size_t pos)
-          : vec_( vec ), pos_( pos )
-        {}
-
-        const EntityType& operator* () const 
-        {
-          assert( pos_ < vec_.size() );
-          return *( vec_[ pos_ ] );
-        }
-
-        void operator ++ () { ++pos_; }
-        bool operator != (const Iterator & other ) const 
-        {
-          return pos_ != other.pos_ ;
-        }
-      };
-
-      int sequence_;
-      std::vector< std::vector< EntityPointer > > pointers_;
-      std::vector< int > threadNum_;
-    public:  
-      typedef Iterator IteratorType ;
-      explicit ThreadIteratorPointer( const SpaceType& spc )
-        : space_( spc )
-        , indexSet_( space_.indexSet() )
-#ifdef USE_SMP_PARALLEL
-        , sequence_( -1 )  
-        , pointers_( ThreadManager :: maxThreads() + 1 )
-#endif
-      {
-        update();
-      }
-
-      void update() 
-      {
-#ifdef USE_SMP_PARALLEL
-        if( sequence_ != space_.sequence() )
-        {
-          if( ! ThreadManager :: singleThreadMode() ) 
-          {
-            std::cerr << "Don't call ThreadIterator::update in a parallel environment!" << std::endl;
-            assert( false );
-            abort();
-          }
-
-          const int maxThreads = ThreadManager :: maxThreads() ;
-          typedef typename SpaceType :: IteratorType SpcIteratorType ;
-          SpcIteratorType it = space_.begin(); 
-          const SpcIteratorType endit = space_.end();
-          if( it == endit ) 
-          {
-            // update sequence number 
-            sequence_ = space_.sequence();
-            return ;
-          }
-
-          int size = 0;
-          for( SpcIteratorType countit = space_.begin(); countit != endit; ++countit, ++size ) {}
-          // resize threads 
-          threadNum_.resize( size );
-
-          // here ruse iterator to count 
-          const int counter = ((int) size / maxThreads );
-          for( int thread = 0; thread <= maxThreads; ++thread ) 
-          {
-            int i = 0; 
-            pointers_[ thread ].resize( counter, it );
-            while( (i < counter) && (it != endit) )
-            {
-              pointers_[ thread ][ i ] = it ;
-              threadNum_[ indexSet_.index( *it ) ] = thread ;
-              ++i;
-              ++it;
-            }
-          }
-          // update sequence number 
-          sequence_ = space_.sequence();
-        }
-#endif
-      }
-
-      Iterator begin() const 
-      {
-#ifdef USE_SMP_PARALLEL
-        return Iterator( pointers_[ ThreadManager::thread() ], 0 );
-#else 
-        return Iterator( pointers_[ 0 ], 0 );
-#endif
-      }
-
-      Iterator end() const 
-      {
-#ifdef USE_SMP_PARALLEL
-        return Iterator( pointers_[ ThreadManager::thread() ], 
-                         pointers_[ ThreadManager::thread() ].size() );
-#else 
-        return Iterator( pointers_[ 0 ], pointers_[ 0 ].size() );
-#endif
-      }
-
-      int thread(const EntityType& entity ) const 
-      {
-        assert( ((int) threadNum_.size()) > indexSet_.index( entity ) );
-        return threadNum_[ indexSet_.index( entity ) ];
       }
     };
 

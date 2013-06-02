@@ -114,26 +114,24 @@ namespace Dune {
         update();
       }
 
+#ifdef USE_SMP_PARALLEL
       //! destructor 
       ~DomainDecomposedIterator()
       {
-#ifdef USE_SMP_PARALLEL
         for(int thread=0; thread < Fem :: ThreadManager :: maxThreads(); ++thread )
         {
           // i is the thread number of this filter 
           delete filteredGridParts_[ thread ] ; 
           filteredGridParts_[ thread ] = 0 ;
         }
-#endif
       }
 
-#ifdef USE_SMP_PARALLEL
       //! return filter for given thread 
       const FilterType& filter( const int thread ) const 
       {
         return filteredGridParts_[ thread ]->filter();
       }
-#endif
+#endif // USE_SMP_PARALLEL
 
       //! update internal list of iterators 
       void update() 
