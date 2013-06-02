@@ -12,6 +12,9 @@
 #include <dune/fem/gridpart/common/gridpartview.hh>
 #include <dune/fem/io/parameter.hh>
 
+#include <dune/fem/misc/threads/threadmanager.hh>
+#include <dune/fem/misc/threads/domainthreaditerator.hh>
+
 namespace Dune
 {
 
@@ -127,6 +130,13 @@ namespace Dune
       typedef typename SelectType< subsampling, SubsamplingVTKWriter, VTKWriter >::Type
         VTKWriterType;
 
+    public:
+      typedef GridPart GridPartType;
+
+      typedef typename GridPartType::GridType GridType;
+      typedef typename GridPartType::IndexSetType IndexSetType;
+
+    protected:   
       class PartitioningData 
         : public VTKFunction< GridViewType >
       {
@@ -136,8 +146,11 @@ namespace Dune
         typedef typename GridViewType :: template Codim< 0 >::Entity EntityType;
         typedef typename EntityType::Geometry::LocalCoordinate LocalCoordinateType;
 
+        typedef DomainDecomposedIteratorStorage< GridPart >  ThreadIteratorType;
+
         //! constructor taking discrete function 
-        PartitioningData( const int rank ) : rank_( rank ) {}
+        PartitioningData( const GridPartType& gridPart, const int rank, const int nThreads ) 
+          : iterators_( gridPart ), rank_( rank ), nThreads_( nThreads ) {}
 
         //! virtual destructor
         virtual ~PartitioningData () {}
@@ -149,7 +162,8 @@ namespace Dune
         //! the entity
         virtual double evaluate ( int comp, const EntityType &e, const LocalCoordinateType &xi ) const
         {
-          return double( rank_ );
+          const int thread = iterators_.thread( e );
+          return double( rank_ * nThreads_ + thread );
         }
 
         //! get name
@@ -159,30 +173,27 @@ namespace Dune
         }
 
       private:
+        ThreadIteratorType iterators_;
         const int rank_;
+        const int nThreads_;
       };
-
-    public:
-      typedef GridPart GridPartType;
-
-      typedef typename GridPartType::GridType GridType;
-      typedef typename GridPartType::IndexSetType IndexSetType;
 
     protected :
       VTKIOBase ( const GridPartType &gridPart, VTKWriterType *vtkWriter )
       : gridPart_( gridPart ),
         vtkWriter_( vtkWriter ),
-        addPartition_( Parameter :: getValue< bool > ("fem.io.partitioning", false ) )
+        addPartition_( Parameter :: getValue< int > ("fem.io.partitioning", 0 ) )
       {
       }
 
       void addPartitionData( const int myRank = -1 ) 
       {
-        if( addPartition_ ) 
+        if( addPartition_ > 0 ) 
         {
           const int rank = ( myRank < 0 ) ? gridPart_.grid().comm().rank() : myRank ;
-          vtkWriter_->addCellData( new PartitioningData( rank ) );
-          addPartition_ = false ;
+          const int nThreads = ( addPartition_ > 1 ) ? ThreadManager::maxThreads() : 1 ;
+          vtkWriter_->addCellData( new PartitioningData( gridPart_, rank, nThreads ) );
+          addPartition_ = 0 ;
         }
       }
 
@@ -264,10 +275,10 @@ namespace Dune
         return vtkWriter_->write( name, type, rank, size );
       }
 
-    private:
+    protected:
       const GridPartType &gridPart_;
       VTKWriterType *vtkWriter_;
-      bool addPartition_;
+      int addPartition_;
     };
 
 
