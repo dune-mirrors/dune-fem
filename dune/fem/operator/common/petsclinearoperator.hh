@@ -153,11 +153,12 @@ namespace Dune
           // create matrix 
           ::Dune::Petsc::MatCreate( &petscMatrix_ );
         
-          if( domainLocalBlockSize > 1 ) 
+          PetscInt bs = 1;
+          if( 0 && domainLocalBlockSize > 1 ) 
           {
+            bs = domainLocalBlockSize ;
             ::Dune::Petsc::MatSetType( petscMatrix_, MATBAIJ );
             // set block size 
-            PetscInt bs = domainLocalBlockSize ;
             ::Dune::Petsc::MatSetBlockSize( petscMatrix_, bs );
           }
           else 
@@ -168,11 +169,13 @@ namespace Dune
           // set sizes of the matrix 
           ::Dune::Petsc::MatSetSizes( petscMatrix_, localRows, localCols, PETSC_DETERMINE, PETSC_DETERMINE );
 
-          std::vector<int> d_nnz(localRows,0);
+          std::vector<int> d_nnz(localRows/bs,0);
           typedef typename StencilType::GlobalStencilType GlobalStencilType;
           typedef typename GlobalStencilType::const_iterator StencilIteratorType;
           const GlobalStencilType &glStencil = stencil.globalStencil();
           StencilIteratorType end = glStencil.end();
+#if 0
+          assert( glStencil.size() == localRows/bs );
           // std::cout << "localRows: " << localRows << std::endl;
           for ( StencilIteratorType it = glStencil.begin(); it != end; ++it)
           {
@@ -192,13 +195,20 @@ namespace Dune
               // std::cout << "inserted..." << std::endl;
               assert( petscIndex >= 0 );
               assert( petscIndex < d_nnz.size() );
-              d_nnz[ petscIndex ] = nz;
+              d_nnz[petscIndex] = nz;
+              for (int i=0;i<bs;++i)
+              {
+                ++it;
+                assert(it!=end);
+              }
             }
           }
-          if (is_same< StencilType,SimpleStencil<DomainSpaceType,RangeSpaceType> >::value)
+#endif
+          if (1 || is_same< StencilType,SimpleStencil<DomainSpaceType,RangeSpaceType> >::value)
             ::Dune::Petsc::MatSetUp( petscMatrix_, stencil.maxZerosEstimate() );
           else
             ::Dune::Petsc::MatSetUp( petscMatrix_, &d_nnz[0] );
+          sequence_ = domainSpace().sequence();
         } 
 
         // ::Dune::Petsc::MatSetUp( petscMatrix_ );
@@ -478,7 +488,7 @@ namespace Dune
       IndexVectorType rowIndices_;
       IndexVectorType colIndices_;
       std::vector<RangeFieldType> values_;
-      Status status_;
+      mutable Status status_;
     };
 
 

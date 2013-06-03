@@ -7,7 +7,7 @@
 #include <dune/fem/space/common/commoperations.hh>
 #include <dune/fem/misc/functor.hh>
 
-#if HAVE_DUNE_ISTL
+#if 0 // HAVE_DUNE_ISTL
 #include <dune/istl/operators.hh>
 #include <dune/fem/operator/matrix/istlmatrix.hh>
 #include <dune/fem/operator/matrix/preconditionerwrapper.hh>

@@ -546,7 +546,6 @@ namespace Dune
          template< class GlobalKey >
          void operator() ( const int localDoF, const GlobalKey &globalDoF )
          {
-           // assert( matrix_.exists( globalRowKey_, globalDoF ) );
            localMatRow_[ localDoF ] = &matRow_[ globalDoF ];
          }         
          private:
@@ -556,13 +555,13 @@ namespace Dune
        };
        struct RowFunctor
        {
-         RowFunctor(const ColumnEntityType &colEntity, 
-                    const ColMapperType &colMapper,
+         RowFunctor(const RowEntityType &rowEntity, 
+                    const RowMapperType &rowMapper,
                     MatrixType &matrix,
                     VecLittleMatrixRowStorageType &matrices,
                     int numCols)
-         : colEntity_(colEntity),
-           colMapper_(colMapper),
+         : rowEntity_(rowEntity),
+           rowMapper_(rowMapper),
            matrix_(matrix),
            matrices_(matrices),
            numCols_(numCols)
@@ -573,11 +572,11 @@ namespace Dune
            LittleMatrixRowStorageType& localMatRow = matrices_[ localDoF ];
            localMatRow.resize( numCols_ );
            ColFunctor<GlobalKey> colFunctor( localMatRow, matrix_[ globalDoF ], globalDoF );
-           colMapper_.mapEach( colEntity_, colFunctor );
+           rowMapper_.mapEach( rowEntity_, colFunctor );
          }
          private:
-         const ColumnEntityType & colEntity_;
-         const ColMapperType &colMapper_;
+         const RowEntityType & rowEntity_;
+         const RowMapperType & rowMapper_;
          MatrixType &matrix_;
          VecLittleMatrixRowStorageType &matrices_;
          int numCols_;
@@ -607,34 +606,8 @@ namespace Dune
           numCols_  = colMapper_.numDofs(colEntity);
           matrices_.resize( numRows_ );
 
-          // RowFunctor rowFunctor(colEntity, colMapper_, matrixObj_.matrix(), matrices_, numCols_);
-          // rowMapper_.mapEach(rowEntity, rowFunctor);
-          RowFunctor colFunctor(rowEntity, rowMapper_, matrixObj_.matrix(), matrices_, numCols_);
-          colMapper_.mapEach(colEntity, colFunctor);
-          /*
-          MatrixType& matrix = matrixObj_.matrix();
-          typedef typename RowMapperType :: DofMapIteratorType RowMapIteratorType ;
-          typedef typename ColMapperType :: DofMapIteratorType ColMapIteratorType ;
-
-          const RowMapIteratorType endrow = rowMapper_.end( rowEntity );
-          for( RowMapIteratorType row = rowMapper_.begin( rowEntity );
-               row != endrow; ++row ) 
-          {
-            LittleMatrixRowStorageType& localMatRow = matrices_[ row.local() ];
-            localMatRow.resize( numCols_ );
-
-            // get row 
-            RowType& matRow = matrix[ row.global() ];
-
-            const ColMapIteratorType endcol = colMapper_.end( colEntity );
-            for( ColMapIteratorType col = colMapper_.begin( colEntity );
-                 col != endcol; ++col ) 
-            {
-              assert( matrix.exists( row.global(), col.global() ) );
-              localMatRow[ col.local() ] = &matRow[ col.global() ];
-            }
-          }
-          */
+          RowFunctor rowFunctor(rowEntity, rowMapper_, matrixObj_.matrix(), matrices_, numCols_);
+          colMapper_.mapEach(colEntity, rowFunctor);
         }
 
         LocalMatrix(const LocalMatrix& org) 
@@ -1090,7 +1063,8 @@ namespace Dune
           matrix().createEntries( stencil.globalStencil() );
 
           sequence_ = domainSpace().sequence();
-          ElementAndNeighbors::setup(rangeSpace(),rowMapper_, (ColumnDiscreteFunctionType*)0);
+          if ( !Dune::Fem::Capabilities::isContinuous<RangeSpaceType>::v )
+            ElementAndNeighbors::setup(rangeSpace(),rowMapper_, (ColumnDiscreteFunctionType*)0);
         }
       }
 

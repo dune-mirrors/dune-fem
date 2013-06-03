@@ -101,8 +101,7 @@ namespace Dune
       template < class ColGlobal >
       void operator() ( const std::size_t colLocal, const ColGlobal &colGlobal )
       {
-        if( fillNeighbor_ )
-          localIndices_->insert( colGlobal );
+        localIndices_->insert( colGlobal );
       }
 
     private:
@@ -184,7 +183,8 @@ namespace Dune
             rowMapper.mapEach( nb, SlaveFillFunctorType( slaveDofs ) );
           }
 #endif
-          rowMapper.mapEach( nb, MFunctor( colMapper, en, Functor( indices, fillNeighbor ) ) );
+          rowMapper.mapEach( en, MFunctor( colMapper, nb, Functor( indices, fillNeighbor ) ) );
+          // rowMapper.mapEach( nb, MFunctor( colMapper, en, Functor( indices, fillNeighbor ) ) );
         }
       }
     }

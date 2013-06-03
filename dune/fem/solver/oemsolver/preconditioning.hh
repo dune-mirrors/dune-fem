@@ -8,7 +8,6 @@ namespace OEMSolver
   */
   class PreconditionInterface 
   {
-    /*
   public:
     //! type of this class 
     typedef PreconditionInterface ThisType; 
@@ -19,7 +18,6 @@ namespace OEMSolver
     //! returns true, if preconditioning should be used 
     //! default is false 
     bool hasPreconditionMatrix() const { return false; }
-    */
   };
 
 } // namespace OEMSolver 

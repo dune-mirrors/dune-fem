@@ -40,8 +40,10 @@ namespace Dune
       //! create entries for element and neighbors
       void fill ( const DomainEntityType &dEntity, const RangeEntityType &rEntity )
       {
-        domainBlockMapper_.mapEach(dEntity, 
-                  MFunctor( rangeBlockMapper_, rEntity, FillFunctor(globalStencil_) ) );
+        // domainBlockMapper_.mapEach(dEntity, 
+        //           MFunctor( rangeBlockMapper_, rEntity, FillFunctor(globalStencil_) ) );
+        rangeBlockMapper_.mapEach(rEntity, 
+                  MFunctor( domainBlockMapper_, dEntity, FillFunctor(globalStencil_) ) );
       }
 
       const LocalStencilType &localStencil(const DomainGlobalKeyType &key) const
@@ -194,8 +196,7 @@ namespace Dune
             {
               EntityPointer ep = intersection.outside(); 
               const DomainEntityType& neighbor = *ep;
-              if( neighbor.partitionType() != GhostEntity )
-                BaseType::fill(neighbor,entity);
+              BaseType::fill(neighbor,entity);
             }
           }
         }
