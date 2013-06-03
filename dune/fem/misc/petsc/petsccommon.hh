@@ -211,18 +211,39 @@ namespace Dune
     { 
       ErrorCheck( ::MatSetUp(mat)); 
     }
-    inline void MatSetUp( Mat mat, int nz ) 
+    inline void MatSetUp( Mat mat, PetscInt bs, int nz ) 
     { 
-      ErrorCheck( ::MatSeqAIJSetPreallocation(mat,nz,PETSC_NULL) );
-      ErrorCheck( ::MatMPIAIJSetPreallocation(mat,nz,PETSC_NULL,50,PETSC_NULL) );
-      ErrorCheck( ::MatSetOption(mat, MAT_NEW_NONZERO_ALLOCATION_ERR,PETSC_FALSE) );
+      if (bs == 1)
+      {
+        ErrorCheck( ::MatSeqAIJSetPreallocation(mat,nz,PETSC_NULL) );
+        ErrorCheck( ::MatMPIAIJSetPreallocation(mat,nz,PETSC_NULL,50,PETSC_NULL) );
+      }
+      else
+      {
+        ErrorCheck( ::MatSeqBAIJSetPreallocation(mat,bs,nz,PETSC_NULL) );
+        ErrorCheck( ::MatMPIBAIJSetPreallocation(mat,bs,nz,PETSC_NULL,50,PETSC_NULL) );
+      }
+      // the following seems not to work for block matrix
+      // ErrorCheck( ::MatSetOption(mat, MAT_NEW_NONZERO_ALLOCATION_ERR,PETSC_FALSE) );
+      // the following only works for block matrix
+      // but should be used with MAT_NEW_NONZERO_LOCATIONS...
+      // ErrorCheck( ::MatSetOption(mat, MAT_USE_HASH_TABLE,PETSC_FALSE) );
       ErrorCheck( ::MatSetUp(mat)); 
     }
-    inline void MatSetUp( Mat mat, const int *d_nnz )
+    inline void MatSetUp( Mat mat, PetscInt bs, const int *d_nnz )
     {
-      ErrorCheck( ::MatSeqAIJSetPreallocation(mat,0,d_nnz ) );
-      ErrorCheck( ::MatMPIAIJSetPreallocation(mat,0,d_nnz,50,PETSC_NULL) );
-      ErrorCheck( ::MatSetOption(mat, MAT_NEW_NONZERO_ALLOCATION_ERR,PETSC_FALSE) );
+      if (bs == 1)
+      {
+        ErrorCheck( ::MatSeqAIJSetPreallocation(mat,0,d_nnz ) );
+        ErrorCheck( ::MatMPIAIJSetPreallocation(mat,0,d_nnz,50,PETSC_NULL) );
+      }
+      else
+      {
+        ErrorCheck( ::MatSeqBAIJSetPreallocation(mat,bs,0,d_nnz ) );
+        ErrorCheck( ::MatMPIBAIJSetPreallocation(mat,bs,0,d_nnz,50,PETSC_NULL) );
+      }
+      // see previous comments
+      // ErrorCheck( ::MatSetOption(mat, MAT_NEW_NONZERO_ALLOCATION_ERR,PETSC_FALSE) );
       ErrorCheck( ::MatSetUp(mat));
     }
 

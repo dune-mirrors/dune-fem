@@ -567,7 +567,7 @@ namespace Dune
             }
 
             // upper estimate for number of non-zeros 
-            const int nonZeros = std::max( stencil.maxZerosEstimate(), matrix_.numNonZeros() );
+            const int nonZeros = std::max( stencil.maxNonZerosEstimate(), matrix_.numNonZeros() );
 
             matrix_.reserve( rangeSpace_.size(), domainSpace_.size(), nonZeros, 0.0 );
           }

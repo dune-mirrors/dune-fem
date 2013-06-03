@@ -38,12 +38,12 @@ namespace Dune
       }
 
       //! create entries for element and neighbors
-      void fill ( const DomainEntityType &dEntity, const RangeEntityType &rEntity )
+      void fill ( const DomainEntityType &dEntity, const RangeEntityType &rEntity,
+                  bool fillGhost=true )
       {
-        // domainBlockMapper_.mapEach(dEntity, 
-        //           MFunctor( rangeBlockMapper_, rEntity, FillFunctor(globalStencil_) ) );
+        bool doFill = (dEntity.partitionType()!=GhostEntity) || fillGhost;
         rangeBlockMapper_.mapEach(rEntity, 
-                  MFunctor( domainBlockMapper_, dEntity, FillFunctor(globalStencil_) ) );
+                  MFunctor( domainBlockMapper_, dEntity, FillFunctor(globalStencil_,doFill) ) );
       }
 
       const LocalStencilType &localStencil(const DomainGlobalKeyType &key) const
@@ -54,7 +54,7 @@ namespace Dune
       { 
         return globalStencil_; 
       }
-      int maxZerosEstimate() const
+      int maxNonZerosEstimate() const
       {
         int ret = 0;
         typedef typename GlobalStencilType::const_iterator StencilIteratorType;
@@ -70,9 +70,10 @@ namespace Dune
       struct FillFunctor
       {
         typedef DomainGlobalKeyType GlobalKey;
-        FillFunctor(GlobalStencilType &stencil) 
+        FillFunctor(GlobalStencilType &stencil,bool fill) 
         : stencil_(stencil),
-          localStencil_(0)
+          localStencil_(0),
+          fill_(fill)
         {}
         void set(const std::size_t, const DomainGlobalKeyType &domainGlobal)
         {
@@ -80,11 +81,13 @@ namespace Dune
         }
         void operator() ( const std::size_t, const RangeGlobalKeyType &rangeGlobal)
         {
-          localStencil_->insert( rangeGlobal );
+          if (fill_)
+            localStencil_->insert( rangeGlobal );
         }
         private:
         GlobalStencilType &stencil_;
         LocalStencilType *localStencil_;
+        bool fill_;
       };
       typedef typename Dune::Fem::MatrixFunctor<RangeBlockMapper,RangeEntityType,FillFunctor > MFunctor;
 
@@ -112,7 +115,7 @@ namespace Dune
       {
         maxNZ_ = 0; // estimate optimal stencil....
       }
-      int maxZerosEstimate() const
+      int maxNonZerosEstimate() const
       {
         return maxNZ_;
       }

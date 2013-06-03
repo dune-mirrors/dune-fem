@@ -154,7 +154,7 @@ namespace Dune
           ::Dune::Petsc::MatCreate( &petscMatrix_ );
         
           PetscInt bs = 1;
-          if( 0 && domainLocalBlockSize > 1 ) 
+          if( domainLocalBlockSize > 1 ) 
           {
             bs = domainLocalBlockSize ;
             ::Dune::Petsc::MatSetType( petscMatrix_, MATBAIJ );
@@ -174,15 +174,15 @@ namespace Dune
           typedef typename GlobalStencilType::const_iterator StencilIteratorType;
           const GlobalStencilType &glStencil = stencil.globalStencil();
           StencilIteratorType end = glStencil.end();
-#if 0
           assert( glStencil.size() == localRows/bs );
           // std::cout << "localRows: " << localRows << std::endl;
           for ( StencilIteratorType it = glStencil.begin(); it != end; ++it)
           {
             int femIndex = it->first;
+            // Remark: ghost entities should not be inserted into the stencil for dg to
+            // get optimal results but they are needed for istl....
             int nz = it->second.size();
             int petscIndex = rowDofMapping().localSlaveMapping( femIndex );
-              // rowDofMapping().globalMapping( femIndex ) - rowDofMapping().processStartIndex();
             /*
             std::cout << femIndex << " , " 
                       << rowDofMapping().globalMapping( femIndex ) << " , "
@@ -192,22 +192,15 @@ namespace Dune
             */
             if ( ! rowDofMapping().isSlave( femIndex ) )
             {
-              // std::cout << "inserted..." << std::endl;
               assert( petscIndex >= 0 );
               assert( petscIndex < d_nnz.size() );
               d_nnz[petscIndex] = nz;
-              for (int i=0;i<bs;++i)
-              {
-                ++it;
-                assert(it!=end);
-              }
             }
           }
-#endif
-          if (1 || is_same< StencilType,SimpleStencil<DomainSpaceType,RangeSpaceType> >::value)
-            ::Dune::Petsc::MatSetUp( petscMatrix_, stencil.maxZerosEstimate() );
+          if (is_same< StencilType,SimpleStencil<DomainSpaceType,RangeSpaceType> >::value)
+            ::Dune::Petsc::MatSetUp( petscMatrix_, bs, stencil.maxNonZerosEstimate() );
           else
-            ::Dune::Petsc::MatSetUp( petscMatrix_, &d_nnz[0] );
+            ::Dune::Petsc::MatSetUp( petscMatrix_, bs, &d_nnz[0] );
           sequence_ = domainSpace().sequence();
         } 
 
