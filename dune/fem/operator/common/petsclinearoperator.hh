@@ -174,8 +174,6 @@ namespace Dune
           typedef typename GlobalStencilType::const_iterator StencilIteratorType;
           const GlobalStencilType &glStencil = stencil.globalStencil();
           StencilIteratorType end = glStencil.end();
-          assert( glStencil.size() == localRows/bs );
-          // std::cout << "localRows: " << localRows << std::endl;
           for ( StencilIteratorType it = glStencil.begin(); it != end; ++it)
           {
             int femIndex = it->first;

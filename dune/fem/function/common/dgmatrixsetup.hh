@@ -25,13 +25,25 @@ namespace Dune
     /**  \brief Setup Matrix structure for DG operators by including
      * elements and it's neighbors. 
     */
+    template <class SpaceImp >
     class ElementAndNeighbors
     {
     public:
       //! create entries for element and neighbors 
-      template <class SpaceImp,    
-                class RowMapperType,
-                class DiscreteFunctionType>
+      template < class RowMapperType, class DiscreteFunctionType>
+      static inline void setup(const SpaceImp& space,    
+                               const RowMapperType& rowMapper,
+                               const DiscreteFunctionType* )
+      {}
+    };
+    template< class FunctionSpace, class GridPart, int polOrder, template< class > class Storage>
+    class ElementAndNeighbors<
+      DiscontinuousGalerkinSpace<FunctionSpace,GridPart,polOrder,Storage> >
+    {
+      typedef DiscontinuousGalerkinSpace<FunctionSpace,GridPart,polOrder,Storage> SpaceImp;
+    public:
+      //! create entries for element and neighbors 
+      template < class RowMapperType, class DiscreteFunctionType>
       static inline void setup(const SpaceImp& space,    
                                const RowMapperType& rowMapper,
                                const DiscreteFunctionType* )
@@ -99,7 +111,7 @@ namespace Dune
 #if HAVE_MPI 
         typedef FillSlaveFunctor< typename RowMapperImp::GlobalKeyType, ParallelScalarProductType > SlaveFillFunctorType;
         // if entity is not interior, insert into overlap entries 
-        if(en.partitionType() != InteriorEntity)
+        if(en.partitionType() != InteriorEntity && gridPart.indexSet().contains(en) )
           rowMapper.mapEach( en, SlaveFillFunctorType( slaveDofs ) );
 
         // insert neighbors 
@@ -119,7 +131,7 @@ namespace Dune
             EntityPointerType ep = inter.outside();
             const EntityImp& nb = *ep;
             // check partition type 
-            if( nb.partitionType() != InteriorEntity )
+            if( nb.partitionType() != InteriorEntity && gridPart.indexSet().contains(nb) )
             {
               rowMapper.mapEach( nb, SlaveFillFunctorType( slaveDofs ) );
             }

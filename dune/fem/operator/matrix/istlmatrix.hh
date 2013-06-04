@@ -1063,8 +1063,8 @@ namespace Dune
           matrix().createEntries( stencil.globalStencil() );
 
           sequence_ = domainSpace().sequence();
-          if ( !Dune::Fem::Capabilities::isContinuous<RangeSpaceType>::v )
-            ElementAndNeighbors::setup(rangeSpace(),rowMapper_, (ColumnDiscreteFunctionType*)0);
+          // if ( !Dune::Fem::Capabilities::isContinuous<RangeSpaceType>::v )
+          ElementAndNeighbors<RangeSpaceType>::setup(rangeSpace(),rowMapper_, (ColumnDiscreteFunctionType*)0);
         }
       }
 
