@@ -422,6 +422,7 @@ namespace Dune
       template< class MatrixObject >
       class LocalMatrix;
       
+#if 0
       template <class Traits, bool definesNewMatrix >
       struct MatrixImpl
       {
@@ -435,6 +436,7 @@ namespace Dune
       {
         typedef typename Traits :: MatrixType MatrixType;
       };
+#endif
 
     public:  
       // extract matrix impl depending on traits 
@@ -567,7 +569,8 @@ namespace Dune
             }
 
             // upper estimate for number of non-zeros 
-            const int nonZeros = std::max( stencil.maxNonZerosEstimate(), matrix_.numNonZeros() );
+            std::cout << stencil.maxNonZerosEstimate() << std::endl;
+            const int nonZeros = std::max( 10*stencil.maxNonZerosEstimate(), matrix_.numNonZeros() );
 
             matrix_.reserve( rangeSpace_.size(), domainSpace_.size(), nonZeros, 0.0 );
           }
