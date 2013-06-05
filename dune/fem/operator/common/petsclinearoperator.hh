@@ -193,7 +193,7 @@ namespace Dune
           for ( StencilIteratorType it = glStencil.begin(); it != end; ++it)
           {
             int femIndex = it->first;
-            if ( rowDofMapping().isSlave( femIndex ) ) break;
+            if ( rowDofMapping().isSlave( femIndex ) ) continue;
             // Remark: ghost entities should not be inserted into the stencil for dg to
             // get optimal results but they are needed for istl....
             int nzDiag = 0;

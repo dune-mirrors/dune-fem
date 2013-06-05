@@ -26,8 +26,7 @@
 #include <dune/fem/operator/matrix/columnobject.hh>
 
 #include <dune/fem/operator/matrix/istlmatrixadapter.hh>
-
-#include <dune/fem/function/common/dgmatrixsetup.hh>
+#include <dune/fem/operator/matrix/istlscpsetup.hh>
 
 namespace Dune
 { 
@@ -1063,8 +1062,7 @@ namespace Dune
           matrix().createEntries( stencil.globalStencil() );
 
           sequence_ = domainSpace().sequence();
-          // if ( !Dune::Fem::Capabilities::isContinuous<RangeSpaceType>::v )
-          ElementAndNeighbors<RangeSpaceType>::setup(rangeSpace(),rowMapper_, (ColumnDiscreteFunctionType*)0);
+          ISTLScpSetup<RangeSpaceType>::setup(rangeSpace(),rowMapper_, (ColumnDiscreteFunctionType*)0);
         }
       }
 

@@ -1,5 +1,5 @@
-#ifndef DUNE_DGMATRIXSETUP_HH
-#define DUNE_DGMATRIXSETUP_HH
+#ifndef DUNE_ISTLSCPSETUP_HH
+#define DUNE_ISTLSCPSETUP_HH
 
 #include <dune/common/timer.hh>
 
@@ -26,7 +26,7 @@ namespace Dune
      * elements and it's neighbors. 
     */
     template <class SpaceImp >
-    class ElementAndNeighbors
+    class ISTLScpSetup
     {
     public:
       //! create entries for element and neighbors 
@@ -37,7 +37,7 @@ namespace Dune
       {}
     };
     template< class FunctionSpace, class GridPart, int polOrder, template< class > class Storage>
-    class ElementAndNeighbors<
+    class ISTLScpSetup<
       DiscontinuousGalerkinSpace<FunctionSpace,GridPart,polOrder,Storage> >
     {
       typedef DiscontinuousGalerkinSpace<FunctionSpace,GridPart,polOrder,Storage> SpaceImp;
