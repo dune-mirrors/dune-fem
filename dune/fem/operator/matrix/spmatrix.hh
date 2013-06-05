@@ -570,7 +570,7 @@ namespace Dune
 
             // upper estimate for number of non-zeros 
             const static size_t domainLocalBlockSize = DomainSpaceType::localBlockSize;
-            const int nonZeros = std::max( stencil.maxNonZerosEstimate()*domainLocalBlockSize, 
+            const int nonZeros = std::max( (int)(stencil.maxNonZerosEstimate()*domainLocalBlockSize), 
                                            matrix_.numNonZeros() );
             matrix_.reserve( rangeSpace_.size(), domainSpace_.size(), nonZeros, 0.0 );
           }

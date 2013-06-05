@@ -255,10 +255,7 @@ namespace Dune
         bool isDuplicate = false;
         int idx = space_.indexSet().index(entity);
         if (duplicates_.find(idx) != duplicates_.end())
-        {
           isDuplicate = true;
-          std::cout << "duplicate" << std::endl;
-        }
         else
           duplicates_.insert(idx);
 
