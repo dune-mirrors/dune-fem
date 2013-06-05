@@ -91,7 +91,7 @@ namespace Dune
           average[ i ] = localFunction[ i ];
 
         const typename LocalFunction::BasisFunctionSetType &basisFunctionSet = localFunction.basisFunctionSet();
-        average /= std::sqrt( basisFunctionSet().referenceElement().volume() );
+        average /= std::sqrt( basisFunctionSet.referenceElement().volume() );
       }
 
     public:
