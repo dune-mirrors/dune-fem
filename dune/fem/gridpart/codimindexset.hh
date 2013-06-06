@@ -109,7 +109,7 @@ namespace Dune
       typedef PersistentContainer< GridType, IndexType > IndexContainerType;
 
       // the mapping of the global to leaf index 
-      IndexContainerType leafIndex_;
+      IndexContainerType  leafIndex_;
       IndexStateArrayType indexState_;
 
       // stack for holes 
@@ -194,7 +194,7 @@ namespace Dune
             {
               std::cout << "index " << *it << " exists twice " << std::endl;
             }
-            //assert( found.find( *it ) == found.end() );
+            assert( found.find( *it ) == found.end() );
             found.insert( *it );
           }
           consecutive &= (*it < IndexType( indexState_.size() ));
@@ -223,18 +223,10 @@ namespace Dune
 
         // true if a least one dof must be copied 
         bool haveToCopy = false;
-        
-        typedef typename IndexContainerType::Iterator Iterator;
-        const Iterator end = leafIndex_.end();
-        for( Iterator it = leafIndex_.begin(); it != end; ++it )
-        {
-          if( *it != invalidIndex() && indexState_[ *it ] == UNUSED ) 
-            *it = invalidIndex();
-        }
 
         // mark holes 
         int actHole = 0;
-        for( int index=0; index<sizeOfVecs; ++index )
+        for( int index = 0; index < sizeOfVecs; ++index )
         {
           // create vector with all holes 
           if( indexState_[ index ] == UNUSED )
@@ -304,10 +296,10 @@ namespace Dune
               index = holes_[actHole];
 
               // means that dof manager has to copy the mem
-              indexState_[ index ] = NEW;
               haveToCopy = true;
             }
           }
+
           // this call only sets the size of the vectors 
           oldIdx_.resize(holes);
           newIdx_.resize(holes);
@@ -315,8 +307,8 @@ namespace Dune
           // mark holes as new
           // note: This needs to be done after reassignment, so that their
           //       original entry will still see them as UNUSED.
-          //for( int hole = 0; hole < holes; ++hole )
-          // indexState_[ newIdx_[ hole ] ] = NEW;
+          for( int hole = 0; hole < holes; ++hole )
+            indexState_[ newIdx_[ hole ] ] = NEW;
 
         } // end if actHole > 0  
        
