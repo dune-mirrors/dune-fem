@@ -275,11 +275,10 @@ namespace Dune
                   newIdx_[holes] = holes_[actHole];
                   ++holes;
                 }
-                
+
                 *it = holes_[actHole];
 
                 // means that dof manager has to copy the mem
-                indexState_[ *it ] = NEW;
                 haveToCopy = true;
               }
             }
@@ -288,6 +287,13 @@ namespace Dune
           // this call only sets the size of the vectors 
           oldIdx_.resize(holes);
           newIdx_.resize(holes);
+
+          // mark holes as new
+          // note: This needs to be done after reassignment, so that their
+          //       original entry will still see them as UNUSED.
+          for( int hole = 0; hole < holes; ++hole )
+            indexState_[ newIdx_[ hole ] ] = NEW;
+
         } // end if actHole > 0  
        
         // store number of actual holes 
