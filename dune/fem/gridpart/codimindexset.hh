@@ -194,7 +194,7 @@ namespace Dune
             {
               std::cout << "index " << *it << " exists twice " << std::endl;
             }
-            assert( found.find( *it ) == found.end() );
+            //assert( found.find( *it ) == found.end() );
             found.insert( *it );
           }
           consecutive &= (*it < IndexType( indexState_.size() ));
@@ -224,7 +224,6 @@ namespace Dune
         // true if a least one dof must be copied 
         bool haveToCopy = false;
         
-        /*
         typedef typename IndexContainerType::Iterator Iterator;
         const Iterator end = leafIndex_.end();
         for( Iterator it = leafIndex_.begin(); it != end; ++it )
@@ -232,7 +231,6 @@ namespace Dune
           if( *it != invalidIndex() && indexState_[ *it ] == UNUSED ) 
             *it = invalidIndex();
         }
-        */
 
         // mark holes 
         int actHole = 0;
@@ -313,6 +311,13 @@ namespace Dune
           // this call only sets the size of the vectors 
           oldIdx_.resize(holes);
           newIdx_.resize(holes);
+
+          // mark holes as new
+          // note: This needs to be done after reassignment, so that their
+          //       original entry will still see them as UNUSED.
+          //for( int hole = 0; hole < holes; ++hole )
+          // indexState_[ newIdx_[ hole ] ] = NEW;
+
         } // end if actHole > 0  
        
         // store number of actual holes 
