@@ -101,15 +101,14 @@ namespace Dune
       // indices in this status have not been initialized 
       static IndexType invalidIndex() { return -1; }
 
-      typedef std::pair< IndexType, INDEXSTATE > IndexPair;
-
       // array type for indices 
       typedef MutableArray< IndexType > IndexArrayType;
+      typedef MutableArray< INDEXSTATE > IndexStateArrayType;
 
       class IndexPersistentContainer 
-        : public PersistentContainer< GridType, IndexPair >
+      : public PersistentContainer< GridType, IndexType >
       {
-        typedef PersistentContainer< GridType, IndexPair > BaseType ;
+        typedef PersistentContainer< GridType, IndexType > BaseType;
 
         // classes to make protected members public 
         template <class G, class T> 
@@ -188,6 +187,7 @@ namespace Dune
 
       // the mapping of the global to leaf index 
       IndexContainerType leafIndex_;
+      IndexStateArrayType indexState_;
 
       // stack for holes 
       IndexArrayType holes_; 
@@ -197,9 +197,6 @@ namespace Dune
       IndexArrayType oldIdx_; 
       IndexArrayType newIdx_; 
      
-      // next index to give away 
-      IndexType nextFreeIndex_;
-
       // last size of set before compress (needed in parallel runs) 
       IndexType lastSize_;
 
@@ -216,11 +213,11 @@ namespace Dune
                      const int codim, 
                      const double memoryFactor = 1.1) 
         : grid_( grid ) 
-        , leafIndex_( grid, codim, IndexPair( invalidIndex(), UNUSED ) )
+        , leafIndex_( grid, codim, invalidIndex() )
+        , indexState_( 0 )
         , holes_(0)
         , oldIdx_(0)
         , newIdx_(0)
-        , nextFreeIndex_ (0)
         , lastSize_ (0)
         , myCodim_( codim ) 
         , numberHoles_(0)
@@ -231,6 +228,7 @@ namespace Dune
       //! set memory overestimation factor 
       void setMemoryFactor(const double memoryFactor)
       {
+        indexState_.setMemoryFactor( memoryFactor );
         holes_.setMemoryFactor(memoryFactor);
         oldIdx_.setMemoryFactor(memoryFactor);
         newIdx_.setMemoryFactor(memoryFactor);
@@ -240,7 +238,7 @@ namespace Dune
       void resize ()
       {
         // enlarge index container, do not shrink, because the old indices are still needed during compress 
-        leafIndex_.enlargeOnly( IndexPair( invalidIndex(), UNUSED ) );
+        leafIndex_.enlargeOnly( invalidIndex() );
       }
 
       //! prepare for setup (nothing to do here)
@@ -251,27 +249,25 @@ namespace Dune
       void clear() 
       {
         // set all values to invalidIndex  
-        leafIndex_.fill( IndexPair( invalidIndex(), UNUSED ) );
-        // reset next free index 
-        nextFreeIndex_ = 0;
+        leafIndex_.fill( invalidIndex() );
+        // free all indices
+        indexState_.resize( 0 );
       }
 
       //! set all entries to unused 
-      void resetUsed() 
+      void resetUsed ()
       {
-        typedef typename IndexContainerType::Iterator Iterator;
-        const Iterator end = leafIndex_.end();
-        for( Iterator it = leafIndex_.begin(); it != end; ++it )
-          it->second = UNUSED;
+        std::fill( indexState_.begin(), indexState_.end(), UNUSED );
       }
 
       bool consecutive ()
       {
+        // Something's wrong here: This method _must_ always return true
         typedef typename IndexContainerType::Iterator Iterator;
         bool consecutive = true;
         const Iterator end = leafIndex_.end();
         for( Iterator it = leafIndex_.begin(); it != end; ++it )
-          consecutive &= (it->first < nextFreeIndex_);
+          consecutive &= (*it < IndexType( indexState_.size() ));
         return consecutive;
       }
 
@@ -284,14 +280,14 @@ namespace Dune
         // set number of holes to zero 
         numberHoles_ = 0;
         // remember actual size 
-        lastSize_ = nextFreeIndex_;
+        lastSize_ = indexState_.size();
       }
 
       //! make to index numbers consecutive 
       //! return true, if at least one hole was closed 
       bool compress ()
       {
-        const int sizeOfVecs = leafIndex_.size();
+        const int sizeOfVecs = indexState_.size();
         holes_.resize( sizeOfVecs );
 
         // true if a least one dof must be copied 
@@ -299,29 +295,15 @@ namespace Dune
         
         // mark holes 
         int actHole = 0;
-        int newActSize = 0;
-        typedef typename IndexContainerType::Iterator Iterator;
-        const Iterator end = leafIndex_.end();
-        for( Iterator it = leafIndex_.begin(); it != end; ++it )
+        for( int index = 0; index < sizeOfVecs; ++index )
         {
-          const IndexPair &leafIdx = *it;
-          if( leafIdx.first != invalidIndex() )
-          {
-            // create vector with all holes 
-            if( leafIdx.second == UNUSED )
-            {
-              holes_[actHole] = leafIdx.first;
-              ++actHole;
-            }
-
-            // count the size of the leaf indices 
-            ++newActSize;
-          }
+          // create vector with all holes 
+          if( indexState_[ index ] == UNUSED )
+            holes_[ actHole++ ] = index;
         }
 
-        assert( newActSize >= actHole );
         // the new size is the actual size minus the holes 
-        int actSize = newActSize - actHole;
+        int actSize = sizeOfVecs - actHole;
 
         // resize hole storing vectors 
         oldIdx_.resize(actHole);
@@ -332,22 +314,22 @@ namespace Dune
         {
           // close holes 
           int holes = 0; // number of real holes 
+          typedef typename IndexContainerType::Iterator Iterator;
           const Iterator end = leafIndex_.end();
           for( Iterator it = leafIndex_.begin(); it != end; ++it )
           {
-            IndexPair &leafIdx = *it;
             // a index that is used but larger then actual size 
             // has to move to a hole 
-            if( leafIdx.second == UNUSED ) 
+            if( (*it == invalidIndex()) || (indexState_[ *it ] == UNUSED) )
             {
-              // all unused indices are reset to invalidIndex  
-              leafIdx.first = invalidIndex();
+              // all unused indices are reset to invalidIndex
+              *it = invalidIndex();
             }
             else 
             {
               // if used index lies behind size, then index has to move 
               // to one of the holes 
-              if(leafIdx.first >= actSize)
+              if( *it >= actSize )
               {
                 // serach next hole that is smaler than actual size 
                 --actHole;
@@ -366,19 +348,19 @@ namespace Dune
                 // only for none-ghost elements hole storage is applied
                 // this is because ghost indices might have in introduced 
                 // after the resize was done. 
-                if( leafIdx.second == USED ) 
+                if( indexState_[ *it ] == USED )
 #endif
                 {
                   // remember old and new index 
-                  oldIdx_[holes] = leafIdx.first; 
+                  oldIdx_[holes] = *it;
                   newIdx_[holes] = holes_[actHole];
                   ++holes;
                 }
                 
-                leafIdx.first = holes_[actHole];
+                *it = holes_[actHole];
 
                 // means that dof manager has to copy the mem
-                leafIdx.second = NEW;
+                indexState_[ *it ] = NEW;
                 haveToCopy = true;
               }
             }
@@ -393,10 +375,10 @@ namespace Dune
         numberHoles_ = oldIdx_.size();
 
         // adjust size of container to correct value 
-        leafIndex_.resize( IndexPair( invalidIndex(), UNUSED ) );
-        
-        // the next index that can be given away is equal to size
-        nextFreeIndex_ = actSize;
+        leafIndex_.resize( invalidIndex() );
+
+        // resize vector of index states
+        indexState_.resize( actSize );
 
 #ifndef NDEBUG
         checkConsecutive();
@@ -406,13 +388,10 @@ namespace Dune
       }
 
       //! return how much extra memory is needed for restriction 
-      IndexType additionalSizeEstimate () const { return nextFreeIndex_; }
+      IndexType additionalSizeEstimate () const { return indexState_.size(); }
 
       //! return size of grid entities per level and codim 
-      IndexType size () const
-      {
-        return nextFreeIndex_;
-      }
+      IndexType size () const { return indexState_.size(); }
       
       //! return size of grid entities per level and codim 
       IndexType realSize () const
@@ -426,8 +405,8 @@ namespace Dune
       IndexType index ( const EntityType& entity ) const
       {
         assert( myCodim_ == EntityType :: codimension );
-        assert( checkValidIndex( leafIndex_[ entity ].first ) );
-        return leafIndex_[ entity ].first;
+        assert( checkValidIndex( leafIndex_[ entity ] ) );
+        return leafIndex_[ entity ];
       }
       
       //! return leaf index for given entity   
@@ -436,8 +415,8 @@ namespace Dune
                            const int subNumber ) const 
       {
         assert( 0 == EntityType :: codimension );
-        assert( checkValidIndex( leafIndex_( entity, subNumber ).first ) );
-        return leafIndex_( entity, subNumber ).first;
+        assert( checkValidIndex( leafIndex_( entity, subNumber ) ) );
+        return leafIndex_( entity, subNumber );
       }
       
       //! return state of index for given hierarchic number  
@@ -445,7 +424,8 @@ namespace Dune
       bool exists ( const EntityType& entity ) const
       {
         assert( myCodim_ == EntityType :: codimension );
-        return leafIndex_[ entity ].second != UNUSED;
+        const IndexType &index = leafIndex_[ entity ];
+        return (indexState_[ index ] != UNUSED);
       }
      
       template <class EntityType> 
@@ -453,7 +433,8 @@ namespace Dune
                     const int subNumber ) const 
       {
         assert( 0 == EntityType :: codimension );
-        return leafIndex_( entity, subNumber).second != UNUSED;
+        const IndexType &index = leafIndex_( entity, subNumber );
+        return (indexState_[ index ] != UNUSED);
       }
      
       //! return number of holes 
@@ -498,16 +479,14 @@ namespace Dune
       void insertGhost (const EntityType& entity )
       {
         assert( myCodim_ == EntityType :: codimension );
-        // insert index 
-        IndexPair &leafIdx = leafIndex_[ entity ];
+        // insert index
+        IndexType &leafIdx = leafIndex_[ entity ];
         insertIdx( leafIdx );
 
         // if index is also larger than lastSize
         // mark as new to skip old-new index lists 
-        if( leafIdx.first >= lastSize_ ) 
-        {
-          leafIdx.second = NEW;
-        }
+        if( leafIdx >= lastSize_ ) 
+          indexState_[ leafIdx ] = NEW;
       }
 
       // insert element and create index for element number 
@@ -515,7 +494,9 @@ namespace Dune
       void markForRemoval( const EntityType& entity )
       {
         assert( myCodim_ == EntityType :: codimension );
-        leafIndex_[ entity ].second = UNUSED;
+        const IndexType &index = leafIndex_[ entity ];
+        if( index != invalidIndex() )
+          indexState_[ index ] = UNUSED;
       }
 
       // insert element as ghost and create index for element number 
@@ -523,7 +504,7 @@ namespace Dune
       bool validIndex (const EntityType& entity ) const
       {
         assert( myCodim_ == EntityType :: codimension );
-        return leafIndex_[ entity ].first >= 0; 
+        return (leafIndex_[ entity ] >= 0);
       }
 
       void print( std::ostream& out ) const 
@@ -532,8 +513,8 @@ namespace Dune
         const Iterator end = leafIndex_.end();
         for( Iterator it = leafIndex_.begin(); it != end; ++it )
         {
-          const IndexPair &leafIdx = *it;
-          out << "idx: " << leafIdx.first << "  stat: " << leafIdx.second << std::endl;
+          const IndexType &leafIdx = *it;
+          out << "idx: " << leafIdx << "  stat: " << indexState_[ leafIdx ] << std::endl;
         }
       }
 
@@ -547,11 +528,14 @@ namespace Dune
       }
 
       // insert element and create index for element number  
-      void insertIdx ( IndexPair &leafIdx )
+      void insertIdx ( IndexType &index )
       {
-        if( leafIdx.first == invalidIndex() )
-          leafIdx.first = nextFreeIndex_++;
-        leafIdx.second = USED;
+        if( index == invalidIndex() )
+        {
+          index = indexState_.size();
+          indexState_.resize( index+1 );
+        }
+        indexState_[ index ] = USED;
       }
 
     public:  
@@ -560,7 +544,7 @@ namespace Dune
       bool write(OutStreamInterface< StreamTraits >& out) const
       {
         // store current index set size 
-        out << nextFreeIndex_ ;
+        out << indexState_.size();
         
         // for consistency checking, write size as 64bit integer
         const uint64_t mysize = leafIndex_.size();
@@ -570,7 +554,7 @@ namespace Dune
         typedef typename IndexContainerType::ConstIterator ConstIterator;
         const ConstIterator end = leafIndex_.end();
         for( ConstIterator it = leafIndex_.begin(); it != end; ++it )
-          out << (*it).first ;
+          out << *it;
 
         return true;
       }
@@ -579,8 +563,13 @@ namespace Dune
       template <class StreamTraits> 
       bool read(InStreamInterface< StreamTraits >& in)
       {
-        // read current index set size 
-        in >> nextFreeIndex_ ;
+        // read current index set size
+        int size;
+        in >> size;
+
+        // mark all indices used
+        indexState_.resize( size );
+        std::fill( indexState_.begin(), indexState_.end(), USED );
         
         // for consistency checking 
         uint64_t storedSize = 0;
@@ -598,7 +587,7 @@ namespace Dune
         const Iterator end = leafIndex_.end();
         uint64_t count = 0 ;
         for( Iterator it = leafIndex_.begin(); it != end; ++it, ++count )
-          in >> (*it).first ;
+          in >> *it;
 
         // also read indices that were stored but are not needed on read 
         if( count < storedSize )
