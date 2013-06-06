@@ -181,12 +181,24 @@ namespace Dune
 
       bool consecutive ()
       {
+        std::set< int > found ;
         // Something's wrong here: This method _must_ always return true
         typedef typename IndexContainerType::Iterator Iterator;
         bool consecutive = true;
         const Iterator end = leafIndex_.end();
         for( Iterator it = leafIndex_.begin(); it != end; ++it )
+        {
+          if( *it != invalidIndex() )
+          {
+            if( found.find( *it ) != found.end() ) 
+            {
+              std::cout << "index " << *it << " exists twice " << std::endl;
+            }
+            assert( found.find( *it ) == found.end() );
+            found.insert( *it );
+          }
           consecutive &= (*it < IndexType( indexState_.size() ));
+        }
         return consecutive;
       }
 
@@ -212,9 +224,19 @@ namespace Dune
         // true if a least one dof must be copied 
         bool haveToCopy = false;
         
+        /*
+        typedef typename IndexContainerType::Iterator Iterator;
+        const Iterator end = leafIndex_.end();
+        for( Iterator it = leafIndex_.begin(); it != end; ++it )
+        {
+          if( *it != invalidIndex() && indexState_[ *it ] == UNUSED ) 
+            *it = invalidIndex();
+        }
+        */
+
         // mark holes 
         int actHole = 0;
-        for( int index = 0; index < sizeOfVecs; ++index )
+        for( int index=0; index<sizeOfVecs; ++index )
         {
           // create vector with all holes 
           if( indexState_[ index ] == UNUSED )
@@ -222,7 +244,7 @@ namespace Dune
         }
 
         // the new size is the actual size minus the holes 
-        int actSize = sizeOfVecs - actHole;
+        const int actSize = sizeOfVecs - actHole;
 
         // resize hole storing vectors 
         oldIdx_.resize(actHole);
@@ -237,54 +259,57 @@ namespace Dune
           const Iterator end = leafIndex_.end();
           for( Iterator it = leafIndex_.begin(); it != end; ++it )
           {
+            IndexType& index = *it;
+            if( index == invalidIndex() ) 
+            {
+              continue ;
+            }
+            else if( indexState_[ index ] == UNUSED )
+            {
+              index = invalidIndex();
+              continue ;
+            }
+
             // a index that is used but larger then actual size 
             // has to move to a hole 
-            if( (*it == invalidIndex()) || (indexState_[ *it ] == UNUSED) )
+            // if used index lies behind size, then index has to move 
+            // to one of the holes 
+            if( index >= actSize )
             {
-              // all unused indices are reset to invalidIndex
-              *it = invalidIndex();
-            }
-            else 
-            {
-              // if used index lies behind size, then index has to move 
-              // to one of the holes 
-              if( *it >= actSize )
+              //std::cout << "Check index " << index << std::endl;
+              // serach next hole that is smaler than actual size 
+              --actHole;
+              // if actHole < 0 then error, because we have index larger then
+              // actual size 
+              assert(actHole >= 0);
+              while ( holes_[actHole] >= actSize )
               {
-                // serach next hole that is smaler than actual size 
                 --actHole;
-                // if actHole < 0 then error, because we have index larger then
-                // actual size 
-                assert(actHole >= 0);
-                while ( holes_[actHole] >= actSize )
-                {
-                  --actHole;
-                  if(actHole < 0) break;
-                }
+                if(actHole < 0) break;
+              }
 
-                assert(actHole >= 0);
+              assert(actHole >= 0);
 
 #if HAVE_MPI 
-                // only for none-ghost elements hole storage is applied
-                // this is because ghost indices might have in introduced 
-                // after the resize was done. 
-                if( indexState_[ *it ] == USED )
+              // only for none-ghost elements hole storage is applied
+              // this is because ghost indices might have in introduced 
+              // after the resize was done. 
+              if( indexState_[ index ] == USED )
 #endif
-                {
-                  // remember old and new index 
-                  oldIdx_[holes] = *it;
-                  newIdx_[holes] = holes_[actHole];
-                  ++holes;
-                }
-                
-                *it = holes_[actHole];
-
-                // means that dof manager has to copy the mem
-                indexState_[ *it ] = NEW;
-                haveToCopy = true;
+              {
+                // remember old and new index 
+                oldIdx_[holes] = index;
+                newIdx_[holes] = holes_[actHole];
+                ++holes;
               }
+              
+              index = holes_[actHole];
+
+              // means that dof manager has to copy the mem
+              indexState_[ index ] = NEW;
+              haveToCopy = true;
             }
           }
-
           // this call only sets the size of the vectors 
           oldIdx_.resize(holes);
           newIdx_.resize(holes);
@@ -300,9 +325,18 @@ namespace Dune
         indexState_.resize( actSize );
 
 #ifndef NDEBUG
+        for( int i=0; i<actSize; ++i ) 
+          assert( indexState_[ i ] == USED || 
+                  indexState_[ i ] == UNUSED ||  
+                  indexState_[ i ] == NEW );
+
+        // make sure that the leaf size of the grid 
+        // is the same the size of the codim=0 index set
+        if( grid_.comm().size() == 1 && myCodim_ == 0 )
+          assert( grid_.size( 0 ) == actSize );
+
         checkConsecutive();
 #endif
-
         return haveToCopy;
       }
 
@@ -353,6 +387,7 @@ namespace Dune
       {
         assert( 0 == EntityType :: codimension );
         const IndexType &index = leafIndex_( entity, subNumber );
+        assert( index < indexState_.size() );
         return (indexState_[ index ] != UNUSED);
       }
      
@@ -454,6 +489,7 @@ namespace Dune
           index = indexState_.size();
           indexState_.resize( index+1 );
         }
+        assert( index < indexState_.size() );
         indexState_[ index ] = USED;
       }
 
