@@ -2,6 +2,7 @@
 #define DUNE_FEM_CODIMINDEXSET_HH
 
 #include <algorithm>
+#include <set>
 
 //- Dune includes 
 #include <dune/common/misc.hh>
