@@ -486,7 +486,7 @@ namespace Dune
           index = indexState_.size();
           indexState_.resize( index+1 );
         }
-        assert( index < indexState_.size() );
+        assert( index < IndexType( indexState_.size() ) );
         indexState_[ index ] = USED;
       }
 
