@@ -500,7 +500,7 @@ namespace Dune
         // don't write something like  out << indexState_.size()
         // since on read you then don't know exactly what 
         // type has been written, it must be the same types
-        const unsigned int indexSize = indexState_.size();
+        const uint32_t indexSize = indexState_.size();
         out << indexSize;
         
         // for consistency checking, write size as 64bit integer
@@ -521,7 +521,7 @@ namespace Dune
       bool read(InStreamInterface< StreamTraits >& in)
       {
         // read current index set size
-        unsigned int size = 0;
+        uint32_t size = 0;
         in >> size;
 
         // mark all indices used
