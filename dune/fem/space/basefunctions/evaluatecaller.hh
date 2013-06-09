@@ -5,6 +5,7 @@
 #include <vector>
 
 #include <dune/common/exceptions.hh>
+#include <dune/fem/misc/threads/threadmanager.hh>
 
 #ifdef USE_BASEFUNCTIONSET_CODEGEN
 #define CODEGEN_INCLUDEMAXNUMS 
@@ -148,7 +149,8 @@ namespace Dune
         assert( quad.id()   < maxQuadratures );
 
         // static vector holding all evaluator instances 
-        static EvaluatorStorage evaluators; 
+        static std::vector< EvaluatorStorage > evaluatorVector( ThreadManager::maxThreads() ); 
+        EvaluatorStorage& evaluators = evaluatorVector[ ThreadManager::thread() ];
 
         // check if object already created 
         const size_t quadId = quad.id();
