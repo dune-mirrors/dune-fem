@@ -1,7 +1,6 @@
 #ifndef DUNE_FEM_CORNERPOINTSET_HH
 #define DUNE_FEM_CORNERPOINTSET_HH
 
-#include <dune/geometry/genericgeometry/conversion.hh>
 #include <dune/geometry/genericgeometry/referencedomain.hh>
 
 #include <dune/fem/quadrature/cachingpointlist.hh>
@@ -94,8 +93,6 @@ namespace Dune
       typedef IntegrationPointListImp< ct, Topology::dimension > BaseType;
 
       typedef GenericGeometry::ReferenceDomain< Topology > ReferenceDomain;
-      typedef GenericGeometry::DuneGeometryTypeProvider< Topology::dimension, GeometryType::simplex >
-        GeometryTypeProvider;
 
     public:
       typedef typename BaseType::CoordinateType CoordinateType;
@@ -107,7 +104,7 @@ namespace Dune
 
       static unsigned int maxOrder () { return 1; }
 
-      GeometryType geometryType () const { return GeometryTypeProvider::type( Topology::id ); }
+      GeometryType geometryType () const { return GeometryType( Topology() ); }
 
     protected:
       using BaseType::addIntegrationPoint;
