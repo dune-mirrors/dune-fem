@@ -107,9 +107,7 @@ namespace Dune
 
       static unsigned int maxOrder () { return 1; }
 
-      GeometryType geometry () const { return GeometryTypeProvider::type( Topology::id ); }
-      
-      GeometryType geometryType () const { return geometry(); }
+      GeometryType geometryType () const { return GeometryTypeProvider::type( Topology::id ); }
 
     protected:
       using BaseType::addIntegrationPoint;
