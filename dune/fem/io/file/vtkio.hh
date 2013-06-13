@@ -182,6 +182,40 @@ namespace Dune
 
       };
 
+      class VolumeData 
+        : public VTKFunction< GridViewType >
+      {
+        typedef PartitioningData   ThisType;
+
+      public:
+        typedef typename GridViewType :: template Codim< 0 >::Entity EntityType;
+        typedef typename EntityType::Geometry::LocalCoordinate LocalCoordinateType;
+
+        typedef DomainDecomposedIteratorStorage< GridPartType >  ThreadIteratorType;
+
+        //! constructor taking discrete function 
+        VolumeData() {}
+
+        //! virtual destructor
+        virtual ~VolumeData () {}
+
+        //! return number of components
+        virtual int ncomps () const { return 1; }
+
+        //! evaluate single component comp in
+        //! the entity
+        virtual double evaluate ( int comp, const EntityType &e, const LocalCoordinateType &xi ) const
+        {
+          return e.geometry().volume();
+        }
+
+        //! get name
+        virtual std::string name () const
+        {
+          return std::string("volume");
+        }
+      };
+
       int getPartitionParameter() const 
       {
         // 0 = none, 1 = MPI ranks only, 2 = ranks + threads, 3 = like 1 and also threads only
@@ -201,6 +235,8 @@ namespace Dune
       {
         if( addPartition_ > 0 ) 
         {
+          vtkWriter_->addCellData( new VolumeData() );
+
           const int rank = ( myRank < 0 ) ? gridPart_.grid().comm().rank() : myRank ;
           const int nThreads = ( addPartition_ > 1 ) ? ThreadManager::maxThreads() : 1 ;
           if( addPartition_ <= 2 ) 
