@@ -91,7 +91,7 @@ namespace Dune
           average[ i ] = localFunction[ i ];
 
         const typename LocalFunction::BasisFunctionSetType &basisFunctionSet = localFunction.basisFunctionSet();
-        average /= std::sqrt( basisFunctionSet().referenceElement().volume() );
+        average /= std::sqrt( basisFunctionSet.referenceElement().volume() );
       }
 
     public:
@@ -123,6 +123,7 @@ namespace Dune
     template< class LocalFunction, class GridPart, class FunctionSpace, int codim, template< class > class Storage >
     class LocalAverageImpl< LocalFunction, GridPart, FiniteVolumeSpace< FunctionSpace, GridPart, codim, Storage > >
     {
+    public:
       static void apply ( const LocalFunction &localFunction, typename LocalFunction::RangeType &average )
       {
         localFunction.evaluate( typename LocalFunction::DomainType( 0 ), average );

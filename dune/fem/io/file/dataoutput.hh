@@ -248,15 +248,15 @@ namespace Dune
       //! destructor 
       virtual ~DataOutput()
       {
-	delete param_; 
+  delete param_; 
 
-	if( pvd_ )
-	  {
-	    pvd_ << "  </Collection>" << std::endl;
-	    pvd_ << "</VTKFile>" << std::endl;
+        if( pvd_ )
+        {
+          pvd_ << "  </Collection>" << std::endl;
+          pvd_ << "</VTKFile>" << std::endl;
 
-	    pvd_.close();
-	  }
+          pvd_.close();
+        }
       }
 
     protected:  

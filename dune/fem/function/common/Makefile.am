@@ -7,7 +7,8 @@ common_HEADERS = discretefunction.hh \
                  functionset.hh \
                  gridfunctionadapter.hh \
                  localfunctionadapter.hh \
-                 scalarproducts.hh
+                 scalarproducts.hh \
+								 timedependentfunction.hh
 
 include $(top_srcdir)/am/global-rules
 

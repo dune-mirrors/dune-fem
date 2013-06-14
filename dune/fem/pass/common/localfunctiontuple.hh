@@ -130,6 +130,12 @@ namespace Dune
       // ! \brief type of hessian range type tuple
       typedef typename Dune::ForEachType< HessianRangeTypeEvaluator, LocalFunctionTupleType >::Type HessianRangeTupleType;
 
+      template< int i >
+      struct Get
+      {
+        typedef typename Dune::tuple_element< i, LocalFunctionTupleType >::type Type;
+      };
+
       template< class Factory >
       LocalFunctionTuple ( Factory factory )
       : localFunctionTuple_( Dune::transformTuple< LocalFunctionEvaluator, Factory >( factory ) )
@@ -194,6 +200,14 @@ namespace Dune
         assert( vector.size() >= quadrature.nop() );
         ForLoop< EvaluateQuadrature, 0, TupleSize-1 >::apply( quadrature, localFunctions(), vector );
       }
+
+      //! \brief get i-th tuple element
+      template< int i >
+      typename Get< i >::Type &get () { return Dune::get< i >( localFunctions() ); }
+
+      //! \brief get i-th tuple element
+      template< int i >
+      const typename Get< i >::Type &get () const { return Dune::get< i >( localFunctions() ); }
 
     protected:
       LocalFunctionTupleType &localFunctions () { return localFunctionTuple_; }
@@ -347,6 +361,41 @@ namespace Dune
 
   } // namespace Fem
 
+
+
+  // get for LocalFunctionTuple
+  // --------------------------
+
+  template< int i, class DiscreteFunctionTuple, class Entity, size_t TupleSize >
+  typename Dune::Fem::LocalFunctionTuple< DiscreteFunctionTuple, Entity, TupleSize >::template Get< i >::Type
+  get ( Dune::Fem::LocalFunctionTuple< DiscreteFunctionTuple, Entity, TupleSize > &localFunctionTuple )
+  {
+    return localFunctionTuple.template get< i >();
+  }
+
+  template< int i, class DiscreteFunctionTuple, class Entity, size_t TupleSize >
+  const typename Dune::Fem::LocalFunctionTuple< DiscreteFunctionTuple, Entity, TupleSize >::template Get< i >::Type
+  get ( const Dune::Fem::LocalFunctionTuple< DiscreteFunctionTuple, Entity, TupleSize > &localFunctionTuple )
+  {
+    return localFunctionTuple.template get< i >();
+  }
+
 } // namespace Dune
+
+
+
+// Some Specializations for Tuple Access
+// -------------------------------------
+
+DUNE_OPEN_TUPLE_NAMESPACE
+  // tuple_element for LocalFunctionTuple
+  // ------------------------------------
+  
+  template< size_t i, class DiscreteFunctionTuple, class Entity, size_t TupleSize >
+  struct tuple_element< i, Dune::Fem::LocalFunctionTuple< DiscreteFunctionTuple, Entity, TupleSize > >
+  {
+    typedef typename Dune::Fem::LocalFunctionTuple< DiscreteFunctionTuple, Entity, TupleSize >::template Get< i >::Type type;
+  };
+DUNE_CLOSE_TUPLE_NAMESPACE
 
 #endif // #ifndef DUNE_FEM_PASS_COMMON_LOCALFUNCTIONTUPLE_HH

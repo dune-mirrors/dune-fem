@@ -14,13 +14,9 @@
 #include <dune/alugrid/3d/alugrid.hh>
 #endif
 
-#include <dune/grid/io/visual/grapegriddisplay.hh>
-
 #if ALU3DGRID_PARALLEL
 
-#warning "Using the Partitioner"
-
-#define ALU2DGRID_READALL_GRIDS 
+#warning "Using the ThreadPartitioner"
 
 #if HAVE_DUNE_ALUGRID 
 namespace ALUGrid {
@@ -133,6 +129,8 @@ protected:
   // load balancer bounds 
   const double ldbOver_ ;
   const double ldbUnder_;
+  const double cutOffFactor_;
+
   const int pSize_ ;
   int graphSize_; 
 
@@ -142,13 +140,25 @@ protected:
   std::vector< int > partition_;
 
 public:
-  ThreadPartitioner( const GridPartType& gridPart, const int pSize )
+  enum Method { recursive = 0, // METIS_PartGraphRecursive,
+                kway      = 1, // METIS_PartGraphKway
+                sfc       = 2  // ALUGRID_SpaceFillingCurve 
+  };
+
+  /** \brief constructor 
+      \param gridPart  grid part with set of entities that should be partitioned 
+      \param pSize     number of partitions 
+  */    
+  ThreadPartitioner( const GridPartType& gridPart, 
+                     const int pSize,
+                     const double cutOffFactor = 1.0 )
     : mpAccess_(),
       db_ (),
       gridPart_( gridPart )
     , indexSet_( gridPart_.indexSet() )
     , ldbOver_(1.2)
     , ldbUnder_(0.0)
+    , cutOffFactor_( std::max( double(1.0 - cutOffFactor), 0.0 ) )
     , pSize_( pSize )
     , graphSize_( pSize_ )
     , index_( indexSet_.size( 0 ), -1 )
@@ -192,12 +202,13 @@ protected:
     graphSize_ = 0;
     typedef typename GridPartType :: template Codim< 0 > :: IteratorType Iterator;
     const Iterator end = gridPart.template end<0> ();
+    const int cutOff = cutOffFactor_ * (indexSet_.size( 0 ) / pSize_) ;
     // create graph 
     for(Iterator it = gridPart.template begin<0> (); it != end; ++it )
     {
       const EntityType& entity = *it;
       assert( entity.partitionType() == InteriorEntity );
-      ldbUpdateVertex ( entity,
+      ldbUpdateVertex ( entity, cutOff,
                         gridPart.ibegin( entity ),
                         gridPart.iend( entity ),
                         db_ );
@@ -206,16 +217,18 @@ protected:
 
   template <class IntersectionIteratorType>
   void ldbUpdateVertex ( const EntityType & entity, 
+                         const int cutOff,
                          const IntersectionIteratorType& ibegin,
                          const IntersectionIteratorType& iend,
                          DataBaseType & db )
   {
-    int weight = 1; // a least weight 1 for macro element 
+    const int index = getIndex( entity );
+    int weight = (index >= cutOff) ? 1 : 8; // a least weight 1 for macro element 
 
     // calculate weight, which is number of children 
     {
       const int mxl = gridPart_.grid().maxLevel();
-      if( mxl > entity.level() ) 
+      if( mxl > entity.level() && ! entity.isLeaf() ) 
       {
         typedef typename EntityType :: HierarchicIterator HierIt; 
         const HierIt endit = entity.hend( mxl ); 
@@ -226,9 +239,18 @@ protected:
       }
 
       enum { dim = GridType :: dimension };
-
+#if HAVE_ALUGRID // old ALUGrid version 1.52
+      double center[ 3 ] = { 0 };
+      typename EntityType :: Geometry :: 
+        GlobalCoordinate barycenter = entity.geometry().center();
+      for( int i=0; i<dim; ++i ) 
+        center[ i ] = barycenter[ i ];
       db.vertexUpdate ( typename LoadBalancerType :: 
-                        GraphVertex ( getIndex( entity ), weight ) );
+                        GraphVertex ( index, weight, center ) );
+#else // new dune-alugrid version
+      db.vertexUpdate ( typename LoadBalancerType :: 
+                        GraphVertex ( index, weight ));
+#endif
       ++graphSize_; 
     }
     
@@ -276,7 +298,13 @@ protected:
   }
 
 public:
-  bool serialPartition(const bool useKway = true ) 
+  /** \brief 
+      \param method    partitioning method, available are:
+                       - kway      = METIS_PartGraphKway 
+                       - recursive = METIS_PartGraphRecursive (default)
+                       - sfc       = space filling curve (only in dune-alugrid)
+  */                     
+  bool serialPartition( const Method method = recursive ) 
   {
     if( pSize_ > 1 ) 
     {
@@ -291,14 +319,22 @@ public:
       else 
       {
         // || HAVE_METIS 
-        if( useKway ) 
-          partition_ = db_.repartition( mpAccess_, DataBaseType :: METIS_PartGraphKway, pSize_ );
-        else 
+        if( method == recursive ) 
           partition_ = db_.repartition( mpAccess_, DataBaseType :: METIS_PartGraphRecursive, pSize_ );
-//        partition_ = db_.repartition( mpAccess_, DataBaseType :: ALUGRID_SpaceFillingCurveNoEdges, pSize_ );
+        else if( method == kway ) 
+          partition_ = db_.repartition( mpAccess_, DataBaseType :: METIS_PartGraphKway, pSize_ );
+        else if( method == sfc ) 
+        {
+#if HAVE_DUNE_ALUGRID
+          partition_ = db_.repartition( mpAccess_, DataBaseType :: ALUGRID_SpaceFillingCurve, pSize_ );
+#else   
+          DUNE_THROW(InvalidStateException,"ThreadPartitioner::serialPartition: dune-alugrid not found, therefore not sfc partitioning");
+#endif
+        }
+        else 
+          DUNE_THROW(InvalidStateException,"ThreadPartitioner::serialPartition: wrong method");
+        assert( int(partition_.size()) >= graphSize_ );
       }
-
-      assert( int(partition_.size()) >= graphSize_ );
 
       /*
       assert( partition_.size() > 0 );
@@ -308,11 +344,6 @@ public:
         std::cout << "part[" << i << "] = " << partition_[ i ]  << endl;
         ++counter[  partition_[ i ]  ];
       }
-      */
-
-      /*
-      for( int i=0; i<pSize_; ++ i) 
-        std::cout << counter[ i ] << " counter \n";
       */
       return partition_.size() > 0;
     }
