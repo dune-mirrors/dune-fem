@@ -9,6 +9,7 @@ GRIDDIM=2
 
 EXTRA_DIST = 2dgrid.dgf \
              3dgrid.dgf \
+						 adaptation-4.sh \
              dfspace.hh \
              exactsolution.hh \
              weightfunction.hh \
