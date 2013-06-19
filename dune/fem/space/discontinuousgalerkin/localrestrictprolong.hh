@@ -46,7 +46,8 @@ namespace Dune
 
       DiscontinuousGalerkinLocalRestrictProlong ( const DiscreteFunctionSpaceType& space )
       : localMassMatrix_( space, space.order() * 2 ),
-        weight_( -1 )
+        weight_( -1 ),
+        temp_( space )
       {}
 
       void setFatherChildWeight ( const DomainFieldType &weight )
@@ -66,6 +67,12 @@ namespace Dune
 
         if( initialize )
           lfFather.clear();
+
+        if( applyInverse )
+        {
+          temp_.init( lfFather.entity() );
+          temp_.clear();
+        }
 
         typedef typename LocalFunction< ST > :: EntityType  EntityType ;
         typedef typename EntityType :: Geometry   Geometry;
@@ -91,12 +98,17 @@ namespace Dune
           RangeType value;
           lfSon.evaluate( quad[ qp ], value );
           value *= quadWeight;
-          lfFather.axpy( geometryInFather.global( quad.point( qp ) ), value );
+
+          if( applyInverse )
+            temp_.axpy( geometryInFather.global( quad.point( qp ) ), value );
+          else 
+            lfFather.axpy( geometryInFather.global( quad.point( qp ) ), value );
         }
 
         if( applyInverse ) 
         {
-          localMassMatrix_.applyInverse( lfFather );
+          localMassMatrix_.applyInverse( temp_ );
+          lfFather += temp_;
         }
       }
 
@@ -142,6 +154,7 @@ namespace Dune
     protected:
       LocalMassMatrixType localMassMatrix_;
       DomainFieldType weight_;
+      mutable TemporaryLocalFunction< DiscreteFunctionSpace > temp_;
     };
 
 
