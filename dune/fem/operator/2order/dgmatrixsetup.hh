@@ -175,6 +175,9 @@ namespace Dune
           EntityPointerType ep = inter.outside();
           const EntityImp& nb = *ep;
 
+          // insert (en,nb) matrix
+          rowMapper.mapEach( nb, MFunctor( colMapper, en, Functor( indices ) ) );
+
           bool fillNeighbor = true;
 #if HAVE_MPI 
           // check partition type 
@@ -184,7 +187,8 @@ namespace Dune
             rowMapper.mapEach( nb, SlaveFillFunctorType( slaveDofs ) );
           }
 #endif
-          rowMapper.mapEach( nb, MFunctor( colMapper, en, Functor( indices, fillNeighbor ) ) );
+          // insert (nb, en) matrix for overlap elements
+          rowMapper.mapEach( en, MFunctor( colMapper, nb, Functor( indices, fillNeighbor ) ) );
         }
       }
     }
