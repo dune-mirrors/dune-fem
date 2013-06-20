@@ -87,10 +87,9 @@ namespace Dune
       typedef std :: set< int >  LocalIndicesType;
       typedef GK GlobalKey;
 
-      FillFunctor ( std::map<int,LocalIndicesType> &indices, bool fillNeighbor = true ) 
+      FillFunctor ( std::map<int,LocalIndicesType> &indices )
       : indices_(indices),
-        localIndices_(0),
-        fillNeighbor_( fillNeighbor )
+        localIndices_(0)
       {}
 
       void set ( const std::size_t rowLocal, const GlobalKey &rowGlobal )
@@ -101,35 +100,29 @@ namespace Dune
       template < class ColGlobal >
       void operator() ( const std::size_t colLocal, const ColGlobal &colGlobal )
       {
-        if( fillNeighbor_ )
-          localIndices_->insert( colGlobal );
+        localIndices_->insert( colGlobal );
       }
 
     private:
       std::map<int,LocalIndicesType> &indices_;
       LocalIndicesType *localIndices_;
-      bool fillNeighbor_;
     };
 
 
-    template <class GK, class SlaveDofProviderImp>
-    struct FillSlaveFunctor
+    template <class Map>
+    struct InsertFunctor
     {
-      typedef SlaveDofProviderImp SlaveDofProvider;
-      typedef GK GlobalKey;
-
-      FillSlaveFunctor ( SlaveDofProvider &slaves ) 
-      : slaves_( slaves ) 
+      InsertFunctor ( Map &map )
+      : map_( map )
       {}
 
       template < class ColGlobal >
       void operator() ( const std::size_t colLocal, const ColGlobal &colGlobal )
       {
-        slaves_.insert( colGlobal );
+        map_.insert( colGlobal );
       }
-
     private:
-      SlaveDofProvider &slaves_;
+      Map &map_;
     };
 
 
@@ -151,7 +144,7 @@ namespace Dune
 
       rowMapper.mapEach( en, MFunctor( colMapper, en, Functor( indices ) ) );
 
-      typedef FillSlaveFunctor< typename RowMapperImp::GlobalKeyType, ParallelScalarProductType > SlaveFillFunctorType;
+      typedef InsertFunctor< ParallelScalarProductType > SlaveFillFunctorType;
       // if entity is not interior, insert into overlap entries 
       if(en.partitionType() != InteriorEntity)
       {
@@ -178,17 +171,17 @@ namespace Dune
           // insert (en,nb) matrix
           rowMapper.mapEach( nb, MFunctor( colMapper, en, Functor( indices ) ) );
 
-          bool fillNeighbor = true;
 #if HAVE_MPI 
           // check partition type 
           if( nb.partitionType() != InteriorEntity )
           {
-            fillNeighbor = nb.partitionType() != GhostEntity;
+            // if not interior element we have a slave dof
             rowMapper.mapEach( nb, SlaveFillFunctorType( slaveDofs ) );
+            // overlap element, we insert the (nb, en) matrix
+            if( nb.partitionType() != GhostEntity )
+              rowMapper.mapEach( en, MFunctor( colMapper, nb, Functor( indices ) ) );
           }
 #endif
-          // insert (nb, en) matrix for overlap elements
-          rowMapper.mapEach( en, MFunctor( colMapper, nb, Functor( indices, fillNeighbor ) ) );
         }
       }
     }
@@ -318,7 +311,7 @@ namespace Dune
       communicate( x );
       
       // apply vector to matrix 
-      matrix_.mv(x,y);
+      matrix_.mv( x, y );
 
       // delete non-interior 
       scp_.deleteNonInterior( y );
@@ -331,7 +324,7 @@ namespace Dune
       communicate( x );
       
       // apply matrix 
-      matrix_.usmv(alpha,x,y);
+      matrix_.usmv( alpha, x, y );
 
       // delete non-interior 
       scp_.deleteNonInterior( y );
@@ -390,15 +383,15 @@ namespace Dune
       return matrix_;
     }
   protected:
-    void communicate(const X& x) const 
+    void communicate( const X& x ) const
     {
       if( rowSpace_.grid().comm().size() <= 1 ) return ;
 
-      Timer commTime; 
-      
+      Timer commTime;
+
       // create temporary discretet function object 
       RowDiscreteFunctionType tmp ("DGParallelMatrixAdapter::communicate",
-                                   rowSpace_, x );
+                                    rowSpace_, x );
 
       // exchange data by copying 
       rowSpace_.communicate( tmp );
