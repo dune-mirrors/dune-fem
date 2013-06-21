@@ -197,7 +197,10 @@ namespace Dune
       explicit InsertFunctor ( Map &map ) : map_( map ) {}
 
       template< class Value >
-      void operator() ( const int, const Value &value ) { map_.insert( value ); }
+      void operator() ( const int, const Value &value ) 
+      {
+        map_.insert( value ); 
+      }
 
     private:
       Map &map_;
@@ -224,8 +227,10 @@ namespace Dune
           EntityType;
         
         const EntityType &entity = *it;
-        if( entity.partitionType() != InteriorEntity )
+        if( entity.partitionType() != Dune::InteriorEntity )
+        {
           mapper_.mapEachEntityDof( entity, InsertFunctor< ThisType >( *this ) );
+        }
       }
 
       // insert overall size at the end
@@ -605,31 +610,6 @@ namespace Dune
       < typename ISTLBlockVectorDiscreteFunction< DiscreteFunctionSpaceImp >
           :: DofStorageType >
     {
-      //! class for building scalar product dofs used in DGMatrixSetup
-      template<class SlaveDofsImp>
-      class SlaveDofsProxy
-      {
-      protected:  
-        SlaveDofsImp& slaveDofs_;
-        SlaveDofsProxy(const SlaveDofsProxy& org); 
-      public:
-        //! constructor 
-        SlaveDofsProxy(SlaveDofsImp& sd) : slaveDofs_(sd) 
-        {
-          slaveDofs_.initialize();
-        }
-        //! destructor 
-        ~SlaveDofsProxy() 
-        { 
-          slaveDofs_.finalize(); 
-        }
-        //! insert index 
-        void insert(const int idx)
-        {
-          slaveDofs_.insert( idx );
-        }
-      };
-
       //! discrete function type 
       typedef ISTLBlockVectorDiscreteFunction<DiscreteFunctionSpaceImp> DiscreteFunctionType;
       //! type of this class 
@@ -648,14 +628,10 @@ namespace Dune
       
     public:  
       // type of communication manager object which does communication 
-      typedef SlaveDofs<DiscreteFunctionSpaceType,MapperType> SlaveDofsType;
+      typedef SlaveDofsProvider< DiscreteFunctionSpaceType > SlaveDofsProviderType;
+      typedef typename SlaveDofsProviderType :: SlaveDofsType SlaveDofsType;
 
-    private:  
-      typedef typename SlaveDofsType :: SingletonKey KeyType;
-      typedef SingletonList< KeyType, SlaveDofsType > SlaveDofsProviderType;
-      
     public:
-      typedef SlaveDofsProxy<SlaveDofsType> BuildProxyType;
       //! export types
       typedef BlockVectorType domain_type;
       typedef typename BlockVectorType :: block_type :: field_type field_type;
@@ -665,29 +641,29 @@ namespace Dune
 
     protected:
       const DiscreteFunctionSpaceType & space_; 
-
-      // is singleton per space 
-      SlaveDofsType &slaveDofs_;
+      SlaveDofsProviderType slaveDofProvider_;
 
       ParallelScalarProduct ( const ThisType &org );
     public:  
       //! constructor taking space 
       ParallelScalarProduct ( const DiscreteFunctionSpaceType &space )
       : space_( space ),
-        slaveDofs_( SlaveDofsProviderType::getObject( KeyType( space_, space_.blockMapper() ) ) )
+        slaveDofProvider_( space )
       {}
 
       //! remove object comm
       ~ParallelScalarProduct () 
+      {}
+
+      SlaveDofsType& slaveDofs () 
       {
-        SlaveDofsProviderType::removeObject( slaveDofs_ );
+        return slaveDofProvider_.slaveDofs();
       }
 
-      //! return build proxy for setup slave dofs 
-      std::auto_ptr<BuildProxyType> buildProxy() { return std::auto_ptr<BuildProxyType> (new BuildProxyType(slaveDofs_)); }
-
-      //! return reference to slave dofs
-      const SlaveDofsType& slaveDofs() const { return slaveDofs_; }
+      const SlaveDofsType& slaveDofs () const
+      {
+        return slaveDofProvider_.slaveDofs();
+      }
 
       /*! \brief Dot product of two discrete functions. 
         It is assumed that the vectors are consistent on the interior+border
@@ -729,18 +705,19 @@ namespace Dune
         // only delete ghost entries 
         if( deleteGhostEntries ) 
         {
-          // rebuild slave dofs if grid was changed  
-          slaveDofs_.rebuild();
+          // rebuild slave dofs if grid was changed 
+          SlaveDofsType &slaveDofs = slaveDofProvider_.slaveDofs();
 
           // don't delete the last since this is the overall Size 
-          const int slaveSize = slaveDofs_.size() - 1;
+          const int slaveSize = slaveDofs.size() - 1;
           for(int slave = 0; slave<slaveSize; ++slave)
           {
-            x[ slaveDofs_[slave] ] = 0;
+            x[ slaveDofs[slave] ] = 0;
           }
         }
 #endif
       }
+
     protected:    
       /*! \brief Dot product of two block vectors. 
         It is assumed that the vectors are consistent on the interior+border
@@ -751,14 +728,14 @@ namespace Dune
       {
 #if HAVE_MPI
         // rebuild slave dofs if grid was changed  
-        slaveDofs_.rebuild();
+        SlaveDofsType &slaveDofs = slaveDofProvider_.slaveDofs();
 
         RangeFieldType scp = 0;
         int i = 0;
-        const int slaveSize = slaveDofs_.size();
+        const int slaveSize = slaveDofs.size();
         for(int slave = 0; slave<slaveSize; ++slave)
         {
-          const int nextSlave = slaveDofs_[slave];
+          const int nextSlave = slaveDofs[slave];
           for(; i<nextSlave; ++i) 
           {
             scp += x[i] * y[i];

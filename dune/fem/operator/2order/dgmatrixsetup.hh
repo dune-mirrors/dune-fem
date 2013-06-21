@@ -40,23 +40,14 @@ namespace Dune
     template <class SpaceImp,    
               class RowMapperType,
               class ColMapperType,
-              class MatrixStructureMapImp,
-              class DiscreteFunctionType>
+              class MatrixStructureMapImp > 
     static inline void setup(const SpaceImp& space,    
                              const RowMapperType& rowMapper,
                              const ColMapperType& colMapper,
-                             MatrixStructureMapImp& indices,
-                             const DiscreteFunctionType* )
+                             MatrixStructureMapImp& indices )
     {
       typedef typename SpaceImp :: GridPartType GridPartType;
       const GridPartType& gridPart = space.gridPart();
-
-      typedef Fem::ParallelScalarProduct<DiscreteFunctionType> ParallelScalarProductType;
-      typedef typename ParallelScalarProductType :: BuildProxyType BuildProxyType;
-      
-      ParallelScalarProductType scp (space);
-
-      std::auto_ptr<BuildProxyType> buildProxy = scp.buildProxy();
 
       // define used types 
       typedef typename GridPartType :: GridType GridType;
@@ -73,11 +64,8 @@ namespace Dune
       {
         const EntityType & en = *it;
         // add all column entities to row  
-        fill( gridPart,en,rowMapper,colMapper,indices, *buildProxy );
+        fill( gridPart, en, rowMapper, colMapper, indices );
       }
-
-      // insert size as last ghost 
-      buildProxy->insert( rowMapper.size() );
     }
 
   protected:
@@ -108,48 +96,21 @@ namespace Dune
       LocalIndicesType *localIndices_;
     };
 
-
-    template <class Map>
-    struct InsertFunctor
-    {
-      InsertFunctor ( Map &map )
-      : map_( map )
-      {}
-
-      template < class ColGlobal >
-      void operator() ( const std::size_t colLocal, const ColGlobal &colGlobal )
-      {
-        map_.insert( colGlobal );
-      }
-    private:
-      Map &map_;
-    };
-
-
     //! create entries for element and neighbors 
     template <class GridPartImp,
               class EntityImp,
               class RowMapperImp,
-              class ColMapperImp,
-              class ParallelScalarProductType>
+              class ColMapperImp >
     static inline void fill(const GridPartImp& gridPart,
                      const EntityImp& en,
                      const RowMapperImp& rowMapper,
                      const ColMapperImp& colMapper,
-                     std::map< int , std::set<int> >& indices,
-                     ParallelScalarProductType& slaveDofs)
+                     std::map< int , std::set<int> >& indices )
     {
       typedef FillFunctor<typename RowMapperImp::GlobalKeyType> Functor;
       typedef Fem::MatrixFunctor<ColMapperImp,EntityImp,Functor > MFunctor;
 
       rowMapper.mapEach( en, MFunctor( colMapper, en, Functor( indices ) ) );
-
-      typedef InsertFunctor< ParallelScalarProductType > SlaveFillFunctorType;
-      // if entity is not interior, insert into overlap entries 
-      if(en.partitionType() != InteriorEntity)
-      {
-        rowMapper.mapEach( en, SlaveFillFunctorType( slaveDofs ) );
-      }
 
       // insert neighbors 
       typedef typename GridPartImp::template Codim<0>::EntityPointerType EntityPointerType; 
@@ -172,15 +133,9 @@ namespace Dune
           rowMapper.mapEach( nb, MFunctor( colMapper, en, Functor( indices ) ) );
 
 #if HAVE_MPI 
-          // check partition type 
-          if( nb.partitionType() != InteriorEntity )
-          {
-            // if not interior element we have a slave dof
-            rowMapper.mapEach( nb, SlaveFillFunctorType( slaveDofs ) );
-            // overlap element, we insert the (nb, en) matrix
-            if( nb.partitionType() != GhostEntity )
-              rowMapper.mapEach( en, MFunctor( colMapper, nb, Functor( indices ) ) );
-          }
+          // overlap element, we insert the (nb, en) matrix
+          if( nb.partitionType() == OverlapEntity )
+            rowMapper.mapEach( en, MFunctor( colMapper, nb, Functor( indices ) ) );
 #endif
         }
       }
@@ -309,7 +264,7 @@ namespace Dune
     {
       // exchange data first 
       communicate( x );
-      
+
       // apply vector to matrix 
       matrix_.mv( x, y );
 
