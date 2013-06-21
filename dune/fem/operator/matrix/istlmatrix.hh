@@ -145,7 +145,7 @@ namespace Dune
             std::map< int , std::set<int> > indices;
 
             // build matrix entries
-            stencil.setup(colSpace, rowMapper, colMapper, indices , (ColDiscreteFunctionType*) 0);
+            stencil.setup(colSpace, rowMapper, colMapper, indices );
 
             // insert entries 
             createEntries( indices );

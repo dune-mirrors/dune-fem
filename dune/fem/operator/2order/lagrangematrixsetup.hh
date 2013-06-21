@@ -34,12 +34,11 @@ namespace Dune
 
     //! create entries for element and neighbors 
     template< class Space, class RowMapper, class ColMapper,
-              class MatrixStructureMap, class DiscreteFunction >
+              class MatrixStructureMap >
     static inline void setup ( const Space &space, 
                                const RowMapper &rowMapper,
                                const ColMapper &colMapper,
-                               MatrixStructureMap &indices,
-                               const DiscreteFunction*)
+                               MatrixStructureMap &indices )
     {
       typedef typename Space :: IteratorType IteratorType;
 

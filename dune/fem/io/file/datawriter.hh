@@ -420,6 +420,7 @@ namespace Dune
                    const int writeStep = 0 )
         : BaseType(grid, data, CheckPointerParameters( checkFile == 0 ) ) // checkFile != 0 means read mode 
         , persistentGridObject_( 0 ) // do not create a persistent object here, since we are in read mode
+        , dataPtr_ ( 0 )
         , checkPointStep_( 0 )
         , maxCheckPointNumber_( writeStep + 1 )
         , myRank_( myRank )  
