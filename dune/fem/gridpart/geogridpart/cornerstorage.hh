@@ -106,7 +106,7 @@ namespace Dune
 
       void evaluate ( unsigned int i, RangeType &y ) const
       {
-        coordFunction_.evaluate( hostCorners_.corner( i ), y );
+        coordFunction_.evaluate( hostCorners_[ i ], y );
       }
 
       GeometryType type () const
@@ -116,7 +116,7 @@ namespace Dune
 
       std::size_t numCorners () const
       {
-        return hostCorners_.numCorners();
+        return hostCorners_.size();
       }
 
     private:

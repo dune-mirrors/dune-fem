@@ -40,23 +40,14 @@ namespace Dune
     template <class SpaceImp,    
               class RowMapperType,
               class ColMapperType,
-              class MatrixStructureMapImp,
-              class DiscreteFunctionType>
+              class MatrixStructureMapImp > 
     static inline void setup(const SpaceImp& space,    
                              const RowMapperType& rowMapper,
                              const ColMapperType& colMapper,
-                             MatrixStructureMapImp& indices,
-                             const DiscreteFunctionType* )
+                             MatrixStructureMapImp& indices )
     {
       typedef typename SpaceImp :: GridPartType GridPartType;
       const GridPartType& gridPart = space.gridPart();
-
-      typedef Fem::ParallelScalarProduct<DiscreteFunctionType> ParallelScalarProductType;
-      typedef typename ParallelScalarProductType :: BuildProxyType BuildProxyType;
-      
-      ParallelScalarProductType scp (space);
-
-      std::auto_ptr<BuildProxyType> buildProxy = scp.buildProxy();
 
       // define used types 
       typedef typename GridPartType :: GridType GridType;
@@ -73,11 +64,8 @@ namespace Dune
       {
         const EntityType & en = *it;
         // add all column entities to row  
-        fill( gridPart,en,rowMapper,colMapper,indices, *buildProxy );
+        fill( gridPart, en, rowMapper, colMapper, indices );
       }
-
-      // insert size as last ghost 
-      buildProxy->insert( rowMapper.size() );
     }
 
   protected:
@@ -87,10 +75,9 @@ namespace Dune
       typedef std :: set< int >  LocalIndicesType;
       typedef GK GlobalKey;
 
-      FillFunctor ( std::map<int,LocalIndicesType> &indices, bool fillNeighbor = true ) 
+      FillFunctor ( std::map<int,LocalIndicesType> &indices )
       : indices_(indices),
-        localIndices_(0),
-        fillNeighbor_( fillNeighbor )
+        localIndices_(0)
       {}
 
       void set ( const std::size_t rowLocal, const GlobalKey &rowGlobal )
@@ -101,62 +88,29 @@ namespace Dune
       template < class ColGlobal >
       void operator() ( const std::size_t colLocal, const ColGlobal &colGlobal )
       {
-        if( fillNeighbor_ )
-          localIndices_->insert( colGlobal );
+        localIndices_->insert( colGlobal );
       }
 
     private:
       std::map<int,LocalIndicesType> &indices_;
       LocalIndicesType *localIndices_;
-      bool fillNeighbor_;
     };
-
-
-    template <class GK, class SlaveDofProviderImp>
-    struct FillSlaveFunctor
-    {
-      typedef SlaveDofProviderImp SlaveDofProvider;
-      typedef GK GlobalKey;
-
-      FillSlaveFunctor ( SlaveDofProvider &slaves ) 
-      : slaves_( slaves ) 
-      {}
-
-      template < class ColGlobal >
-      void operator() ( const std::size_t colLocal, const ColGlobal &colGlobal )
-      {
-        slaves_.insert( colGlobal );
-      }
-
-    private:
-      SlaveDofProvider &slaves_;
-    };
-
 
     //! create entries for element and neighbors 
     template <class GridPartImp,
               class EntityImp,
               class RowMapperImp,
-              class ColMapperImp,
-              class ParallelScalarProductType>
+              class ColMapperImp >
     static inline void fill(const GridPartImp& gridPart,
                      const EntityImp& en,
                      const RowMapperImp& rowMapper,
                      const ColMapperImp& colMapper,
-                     std::map< int , std::set<int> >& indices,
-                     ParallelScalarProductType& slaveDofs)
+                     std::map< int , std::set<int> >& indices )
     {
       typedef FillFunctor<typename RowMapperImp::GlobalKeyType> Functor;
       typedef Fem::MatrixFunctor<ColMapperImp,EntityImp,Functor > MFunctor;
 
       rowMapper.mapEach( en, MFunctor( colMapper, en, Functor( indices ) ) );
-
-      typedef FillSlaveFunctor< typename RowMapperImp::GlobalKeyType, ParallelScalarProductType > SlaveFillFunctorType;
-      // if entity is not interior, insert into overlap entries 
-      if(en.partitionType() != InteriorEntity)
-      {
-        rowMapper.mapEach( en, SlaveFillFunctorType( slaveDofs ) );
-      }
 
       // insert neighbors 
       typedef typename GridPartImp::template Codim<0>::EntityPointerType EntityPointerType; 
@@ -175,16 +129,14 @@ namespace Dune
           EntityPointerType ep = inter.outside();
           const EntityImp& nb = *ep;
 
-          bool fillNeighbor = true;
+          // insert (en,nb) matrix
+          rowMapper.mapEach( nb, MFunctor( colMapper, en, Functor( indices ) ) );
+
 #if HAVE_MPI 
-          // check partition type 
-          if( nb.partitionType() != InteriorEntity )
-          {
-            fillNeighbor = nb.partitionType() != GhostEntity;
-            rowMapper.mapEach( nb, SlaveFillFunctorType( slaveDofs ) );
-          }
+          // overlap element, we insert the (nb, en) matrix
+          if( nb.partitionType() == OverlapEntity )
+            rowMapper.mapEach( en, MFunctor( colMapper, nb, Functor( indices ) ) );
 #endif
-          rowMapper.mapEach( nb, MFunctor( colMapper, en, Functor( indices, fillNeighbor ) ) );
         }
       }
     }
@@ -312,9 +264,9 @@ namespace Dune
     {
       // exchange data first 
       communicate( x );
-      
+
       // apply vector to matrix 
-      matrix_.mv(x,y);
+      matrix_.mv( x, y );
 
       // delete non-interior 
       scp_.deleteNonInterior( y );
@@ -327,7 +279,7 @@ namespace Dune
       communicate( x );
       
       // apply matrix 
-      matrix_.usmv(alpha,x,y);
+      matrix_.usmv( alpha, x, y );
 
       // delete non-interior 
       scp_.deleteNonInterior( y );
@@ -386,15 +338,15 @@ namespace Dune
       return matrix_;
     }
   protected:
-    void communicate(const X& x) const 
+    void communicate( const X& x ) const
     {
       if( rowSpace_.grid().comm().size() <= 1 ) return ;
 
-      Timer commTime; 
-      
+      Timer commTime;
+
       // create temporary discretet function object 
       RowDiscreteFunctionType tmp ("DGParallelMatrixAdapter::communicate",
-                                   rowSpace_, x );
+                                    rowSpace_, x );
 
       // exchange data by copying 
       rowSpace_.communicate( tmp );
