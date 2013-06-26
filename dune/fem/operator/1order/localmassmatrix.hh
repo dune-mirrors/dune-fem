@@ -206,14 +206,7 @@ namespace Dune
       //! return mass factor for diagonal mass matrix 
       double getAffineMassFactor(const Geometry& geo) const 
       {
-#if 0
         return geoInfo_.referenceVolume( geo.type() ) / geo.volume(); 
-#else
-        const double blah1 = geoInfo_.referenceVolume( geo.type() );
-        const double blah2 = geo.volume();
-        
-        return blah1 / blah2;
-#endif
       }
 
       //! apply local dg mass matrix to local function lf
@@ -278,7 +271,7 @@ namespace Dune
         const bool isAffine = ( affine() ) ? true : geo.affine() ;
 
         // in case of affine mappings we only have to multiply with a factor 
-        if( false && isAffine && ! caller.hasMass() )
+        if( isAffine && ! caller.hasMass() )
         {
           const double massVolInv = getAffineMassFactor( geo );
 

@@ -999,13 +999,13 @@ namespace Dune
       typedef DefaultCommunicationManager< ThisType > CommunicationManagerType;
 
     protected:
-      GridPartType &gridPart_;
+      const GridPartType &gridPart_;
       const unsigned int order_;
 
     public:
       //! constructor taking grid Part 
       inline explicit DiscreteFunctionSpaceAdapter
-        ( GridPartType &gridPart,
+        ( const GridPartType &gridPart,
           unsigned int order = polynomialOrder )
       : BaseType(),
         gridPart_( gridPart ),
@@ -1042,16 +1042,8 @@ namespace Dune
           f( *it );
       }
 
-#if 0
       /** \copydoc Dune::Fem::DiscreteFunctionSpaceInterface::gridPart */
       inline const GridPartType &gridPart () const
-      {
-        return gridPart_;
-      }
-#endif
-
-      /** \copydoc Dune::Fem::DiscreteFunctionSpaceInterface::gridPart */
-      inline GridPartType &gridPart () const
       {
         return gridPart_;
       }
