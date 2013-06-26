@@ -21,7 +21,8 @@ quadrature_HEADERS = cachingpointlist.hh \
                      pyramidpoints.hh \
                      quadprovider.hh \
                      simplexpoints.hh \
-                     intersectionquadrature.hh
+                     intersectionquadrature.hh\
+                     lumpingquadrature.hh
 
 noinst_LTLIBRARIES = libquadrature.la
 
