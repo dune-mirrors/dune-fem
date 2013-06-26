@@ -41,6 +41,7 @@ namespace Dune
       double time_;
       int timeStep_;
       double dt_;
+      double invdt_;
       bool valid_;
       bool dtEstimateValid_;
       double dtEstimate_;
@@ -52,6 +53,7 @@ namespace Dune
                                       (double)0.0 ) ),
         timeStep_( 0 ),
         dt_( 0.0 ),
+        invdt_( HUGE_VAL ),
         valid_( false ),
         dtEstimateValid_( false )
       {
@@ -62,6 +64,7 @@ namespace Dune
       : time_( startTime ),
         timeStep_( 0 ),
         dt_( 0.0 ),
+        invdt_( HUGE_VAL ),
         valid_( false ),
         dtEstimateValid_( false )
       {
@@ -83,6 +86,7 @@ namespace Dune
           values(time_,timeStep_,dt_,valid_,dtEstimate_);
         PersistenceManager::restoreValue("timeprovider",values);
         dtEstimateValid_ = true;
+        invdt_ = 1.0 / dt_;
       }
       
     private:
@@ -117,6 +121,16 @@ namespace Dune
       {
         assert( timeStepValid() );
         return dt_;
+      }
+
+      /** \brief obtain the size of the inverse of the current time step
+       *
+       *  \returns the size of the inverse of the current time step
+       */
+      double inverseDeltaT () const
+      {
+        assert( timeStepValid() );
+        return invdt_;
       }
 
       /** \brief obtain current estimate on time step
@@ -437,6 +451,7 @@ namespace Dune
           // set timestep estimate 
           dt_ = std::min(cfl_ * dtEstimate,dtUpperBound_);
           dt_ = comm_.min( dt_ );
+          invdt_ = 1.0 / dt_;
           valid_ = (dt_ > 0.0);
           // reset counter 
           counter_ = 0;
@@ -470,6 +485,7 @@ namespace Dune
 
     protected:
       using BaseType::dt_;
+      using BaseType::invdt_;
       using BaseType::dtEstimate_;
       using BaseType::dtUpperBound_;
       using BaseType::valid_;
