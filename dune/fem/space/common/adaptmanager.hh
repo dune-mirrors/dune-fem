@@ -643,25 +643,18 @@ namespace Dune
       , balanceTime_( 0.0 )
       , referenceCounter_( ProviderType :: getObject( &grid ) )
     {
-#if 0
-      // cH: this is just too inconvenient, not that I need to
-      // actually use more than one at the same time, but: please
-      // never again try to protect me against myself.
       ++ referenceCounter_;
       if( referenceCounter_ > 1 )
       {
         DUNE_THROW(InvalidStateException,"Only one instance of AdaptationManager allowed per grid instance");
       }
-#endif
     }
 
     //! destructor decreasing reference counter 
     ~AdaptationManager() 
     {
-#if 0
       -- referenceCounter_;
       ProviderType :: removeObject( referenceCounter_ );
-#endif
     }
 
     /** @copydoc LoadBalancerInterface::loadBalance */
