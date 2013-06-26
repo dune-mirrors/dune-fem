@@ -7,7 +7,7 @@ AM_INIT_AUTOMAKE([foreign 1.9 tar-pax dist-bzip2])
 # check if we're in the right directory
 AC_CONFIG_SRCDIR([dune/fem/space/finitevolume.hh])
 # which header-file is created
-AM_CONFIG_HEADER([config.h])
+AC_CONFIG_HEADER([config.h])
 
 # check all dune-module stuff
 DUNE_CHECK_ALL
