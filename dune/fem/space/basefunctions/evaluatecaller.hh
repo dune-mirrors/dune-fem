@@ -5,7 +5,7 @@
 #include <vector>
 
 #include <dune/common/exceptions.hh>
-#include <dune/fem/misc/threads/threadsafevalues.hh>
+#include <dune/fem/misc/threads/threadsafevalue.hh>
 
 #ifdef USE_BASEFUNCTIONSET_CODEGEN
 #define CODEGEN_INCLUDEMAXNUMS 

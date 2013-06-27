@@ -3,7 +3,7 @@
 
 #include <dune/fem/misc/debug.hh>
 #include <dune/fem/storage/referencecounter.hh>
-#include <dune/fem/misc/threads/threadsafevalues.hh>
+#include <dune/fem/misc/threads/threadsafevalue.hh>
 
 namespace Dune
 {
