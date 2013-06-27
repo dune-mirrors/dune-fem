@@ -8,6 +8,10 @@ namespace Dune {
 
   namespace Fem {
 
+
+    /** \brief ThreadSafeValue realizes thread safety for a given variable by 
+               creating an instance of this variable for each thread. 
+    */ 
     template <class T>
     class ThreadSafeValue
     {
