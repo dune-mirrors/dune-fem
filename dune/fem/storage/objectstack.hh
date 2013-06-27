@@ -3,6 +3,7 @@
 
 #include <dune/fem/misc/debug.hh>
 #include <dune/fem/storage/referencecounter.hh>
+#include <dune/fem/misc/threads/threadsafevalues.hh>
 
 namespace Dune
 {
@@ -136,15 +137,17 @@ namespace Dune
       
     protected:
       const ObjectFactoryType &factory_;
-      StackEntryType *top_;
 
-      DebugCounter<> numIssuedObjects_;
+      typedef std::pair< StackEntryType*, DebugCounter<> > StackEntryPairType ;
+      typedef ThreadSafeValue< StackEntryPairType > ThreadSafeValuesType;
 
+      // thread safe stack entries (in multi thread mode a vector)
+      ThreadSafeValuesType stackEntries_;
     public:
       //! constructor 
       ObjectStack ( const ObjectFactoryType &factory )
       : factory_( factory ),
-        top_( 0 )
+        stackEntries_( StackEntryPairType( (StackEntryType* )0, DebugCounter<> () ) )
       {
       }
 
@@ -156,16 +159,23 @@ namespace Dune
       //! delete all objects on stack 
       ~ObjectStack ()
       {
-#ifndef BASEFUNCTIONSET_CODEGEN_GENERATE
-        // this assertion will fail during code generation 
-        assert( numIssuedObjects_ == 0 );
-#endif
-
-        while ( top_ != 0 )
+        // make sure this is only called in single thread mode 
+        // because the master thread is taking care of all object delete
+        assert( ThreadManager::singleThreadMode() );
+        const size_t threadSize = stackEntries_.size();
+        for( size_t i=0; i<threadSize; ++i )
         {
-          StackEntryType *obj = top_;
-          top_ = top_->next_;
-          delete obj;
+          StackEntryPairType& stackEntry = stackEntries_[ i ];
+#ifndef BASEFUNCTIONSET_CODEGEN_GENERATE
+          // this assertion will fail during code generation 
+          assert( stackEntry.second == 0 );
+#endif
+          while ( stackEntry.first != 0 )
+          {
+            StackEntryType *obj = stackEntry.first;
+            stackEntry.first = obj->next_;
+            delete obj;
+          }
         }
       }
       
@@ -189,19 +199,32 @@ namespace Dune
       // push storage object to the stack
       inline void push ( StackEntryType *obj )
       {
-        --numIssuedObjects_;
-        obj->next_ = top_;
-        top_ = obj;
+        push( obj, *stackEntries_ );
       }
 
       // pop a storage object from the stack
       inline StackEntryType *pop ()
       {
-        ++numIssuedObjects_;
+        return pop( *stackEntries_ );
+      }
 
-        StackEntryType *ptr = top_;
+    private:  
+      // push storage object to the stack
+      inline void push ( StackEntryType *obj, StackEntryPairType& stackEntry )
+      {
+        --stackEntry.second;
+        obj->next_ = stackEntry.first;
+        stackEntry.first = obj;
+      }
+
+      // pop a storage object from the stack
+      inline StackEntryType *pop ( StackEntryPairType& stackEntry )
+      {
+        ++stackEntry.second;
+
+        StackEntryType *ptr = stackEntry.first;
         if( ptr != 0 )
-          top_ = top_->next_;
+          stackEntry.first = stackEntry.first->next_;
         else
           ptr = new StackEntryType( *this );
         return ptr;
