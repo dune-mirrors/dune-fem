@@ -144,22 +144,12 @@ namespace Dune
                                     BlockVectorType& blockVector )
       : dfSpace_( dfSpace ),
         lfFactory_( *this ),
-#ifdef USE_SMP_PARALLEL
-        lfStorageVec_ ( Fem :: ThreadManager :: maxThreads() ),
-#else 
         lfStorage_( lfFactory_ ),
-#endif
         mapper_( dfSpace.blockMapper() ),
         name_( name ),
         memPair_( static_cast< DofStorageInterface* >( 0 ), &blockVector ),
         scalarProduct_( dfSpace_ )
       {
-#ifdef USE_SMP_PARALLEL
-        for( size_t i=0 ; i<lfStorageVec_.size(); ++i ) 
-        {
-          lfStorageVec_[ i ] = new LocalFunctionStorageType( lfFactory_ );
-        }
-#endif
       }
 
       /** \brief Constructor to use if the vector storing the dofs does not exist yet
@@ -171,22 +161,12 @@ namespace Dune
                                     const DiscreteFunctionSpaceType &dfSpace )
       : dfSpace_( dfSpace ),
         lfFactory_( *this ), 
-#ifdef USE_SMP_PARALLEL
-        lfStorageVec_ ( Fem :: ThreadManager :: maxThreads() ),
-#else 
         lfStorage_( lfFactory_ ),
-#endif
         mapper_( dfSpace.blockMapper() ),
         name_( name ),
         memPair_( allocateManagedDofStorage< BlockVectorType >( space().grid(), mapper_, name ) ),
         scalarProduct_( dfSpace_ )
       {
-#ifdef USE_SMP_PARALLEL
-          for( size_t i=0 ; i<lfStorageVec_.size(); ++i ) 
-          {
-            lfStorageVec_[ i ] = new LocalFunctionStorageType( lfFactory_ );
-          }
-#endif
       }
 
 
@@ -197,25 +177,13 @@ namespace Dune
       BlockVectorDiscreteFunction ( const ThisType &other )
       : dfSpace_( other.space() ),
         lfFactory_( *this ),
-#ifdef USE_SMP_PARALLEL
-        lfStorageVec_ ( Fem :: ThreadManager :: maxThreads() ),
-#else 
         lfStorage_( lfFactory_ ),
-#endif
         mapper_( other.space().blockMapper() ), 
         name_( other.name() ),
         memPair_( allocateManagedDofStorage< BlockVectorType >( space().grid(), mapper_, name() ) ),
         scalarProduct_( dfSpace_ )
       {
         dofVector() = other.dofVector();
-
-        // we create our own factories
-#ifdef USE_SMP_PARALLEL
-        for( size_t i=0 ; i<lfStorageVec_.size(); ++i ) 
-        {
-          lfStorageVec_[ i ] = new LocalFunctionStorageType( lfFactory_ );
-        }
-#endif
       }
 
       ~BlockVectorDiscreteFunction ()
@@ -223,13 +191,6 @@ namespace Dune
         // TODO: use a smart pointer for this?
         // No need for a null check here. Stroustrup: "Applying delete to zero has no effect."
         delete memPair_.first;
-
-#ifdef USE_SMP_PARALLEL
-        for( size_t i=0 ; i<lfStorageVec_.size(); ++i )
-        {
-          delete lfStorageVec_[ i ]; 
-        }
-#endif
       }
 
     private:
@@ -618,11 +579,7 @@ namespace Dune
       // Obtain the correct local function storage object for this thread
       LocalFunctionStorageType& localFunctionStorage () const
       {
-#ifdef USE_SMP_PARALLEL
-        return *(lfStorageVec_[ Fem :: ThreadManager :: thread() ]);
-#else 
         return lfStorage_;
-#endif
       }
 
       /* 
@@ -631,11 +588,7 @@ namespace Dune
       const DiscreteFunctionSpaceType& dfSpace_;
       const LocalFunctionFactoryType lfFactory_;
       // local function storage
-#ifdef USE_SMP_PARALLEL
-      mutable std::vector< LocalFunctionStorageType* > lfStorageVec_;
-#else 
       mutable LocalFunctionStorageType lfStorage_;
-#endif
       MapperType mapper_;
       std::string name_;
       std::pair< DofStorageInterface *, BlockVectorType * > memPair_;
