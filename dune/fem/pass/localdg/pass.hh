@@ -169,9 +169,7 @@ namespace Dune
         arg_ = const_cast<ArgumentType*>(&arg);
         dest_ = &dest;
 
-#ifdef USE_SMP_PARALLEL 
         if( notThreadParallel_ )
-#endif
         {
           // clear destination 
           dest_->clear();
@@ -194,9 +192,7 @@ namespace Dune
       //! Some timestep size management.
       virtual void finalize(const ArgumentType& arg, DestinationType& dest) const
       {
-#ifdef USE_SMP_PARALLEL
         if( notThreadParallel_ )
-#endif
         {
           // communicate calculated function 
           spc_.communicate( dest );
