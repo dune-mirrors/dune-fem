@@ -14,6 +14,7 @@
 #include <dune/fem/misc/petsc/petsccommon.hh>
 #include <dune/fem/function/petscdiscretefunction/petscdiscretefunction.hh>
 #include <dune/fem/operator/matrix/columnobject.hh>
+
 #include <dune/fem/operator/common/stencil.hh>
 
 #if defined HAVE_PETSC
@@ -47,8 +48,6 @@ namespace Dune
 
       const static size_t domainLocalBlockSize = DomainSpaceType::localBlockSize;
       const static size_t rangeLocalBlockSize = RangeSpaceType::localBlockSize;
-
-      typedef Stencil<DomainSpaceType,RangeSpaceType> StencilType;
 
     private:
       typedef PetscSlaveDofProvider< DomainSpaceType > RowPetscSlaveDofsType;
@@ -175,21 +174,6 @@ namespace Dune
           typedef typename GlobalStencilType::const_iterator StencilIteratorType;
           const GlobalStencilType &glStencil = stencil.globalStencil();
           StencilIteratorType end = glStencil.end();
-#if 0
-          {
-            for ( StencilIteratorType it = glStencil.begin(); it != end; ++it)
-            {
-              int femIndex = it->first;
-              int nz = it->second.size();
-              std::ostream_iterator< double > output( cout, " " );
-              std::cout << rowDofMapping().isSlave( femIndex ) << " -> ";
-              std::cout << femIndex << " (" << nz << "): ";
-              std::copy( it->second.begin(), it->second.end(), output );
-              std::cout << std::endl;
-            }
-          }
-#endif
-
           for ( StencilIteratorType it = glStencil.begin(); it != end; ++it)
           {
             int femIndex = it->first;
@@ -203,10 +187,20 @@ namespace Dune
             typedef typename LocalStencilType::const_iterator LocalStencilIteratorType;
             LocalStencilIteratorType endLocal = it->second.end();
             for ( LocalStencilIteratorType itLocal = it->second.begin(); itLocal != endLocal; ++itLocal)
+            {
               if (!rowDofMapping().isSlave( *itLocal )) 
+              {
                 ++nzDiag;
+                // std::cout << "diag: (" << rowDofMapping().localSlaveMapping( femIndex )
+                //   << "," << rowDofMapping().localSlaveMapping( *itLocal )
+                //   << ") ";
+              }
               else 
                 ++nzOff;
+            }
+            // std::cout << std::endl;
+            // std::cout << "nz: " << rowDofMapping().localSlaveMapping( femIndex )
+            //           << " " << nzDiag << " " << nzOff << std::endl;
 
             int petscIndex = rowDofMapping().localSlaveMapping( femIndex );
             assert( petscIndex >= 0 );

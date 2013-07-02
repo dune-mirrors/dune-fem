@@ -3,6 +3,7 @@
 
 #if HAVE_DUNE_ISTL
 
+#include <dune/common/timer.hh>
 #include <dune/fem/space/lagrange.hh>
 #include <dune/fem/space/discontinuousgalerkin.hh>
 
@@ -130,7 +131,7 @@ namespace Dune
         if( rowSpace_.grid().comm().size() <= 1 )
           return;
 
-        Timer commTime; 
+        Dune::Timer commTime; 
         ColumnDiscreteFunctionType tmp( "LagrangeParallelMatrixAdapter::communicate", colSpace_, y );
         colSpace_.communicate( tmp );
         averageCommTime_ += commTime.elapsed();
@@ -304,7 +305,7 @@ namespace Dune
       {
         if( rowSpace_.grid().comm().size() <= 1 ) return ;
 
-        Timer commTime; 
+        Dune::Timer commTime; 
         
         // create temporary discretet function object 
         RowDiscreteFunctionType tmp ("DGParallelMatrixAdapter::communicate",
