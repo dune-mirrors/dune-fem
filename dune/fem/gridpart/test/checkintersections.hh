@@ -148,15 +148,15 @@ namespace Dune
       // single coordinate type
       typedef typename GridPartType::ctype ctype;
 
-      // get Gauss quadrature points
-      const Dune::QuadratureRule< ctype, LocalGeometryType::mydimension > & quad = 
-        Dune::QuadratureRules< ctype, LocalGeometryType::mydimension >::rule( entity.type(), 3 );
-
       // compute sum of all integration outer normals
       GlobalCoordinateType sum( 0 );
       const IntersectionIteratorType end = gridPart.iend( entity );
       for( IntersectionIteratorType it = gridPart.ibegin( entity ); it != end; ++it )
       {
+        // get Gauss quadrature points
+        const Dune::QuadratureRule< ctype, LocalGeometryType::mydimension > & quad = 
+          Dune::QuadratureRules< ctype, LocalGeometryType::mydimension >::rule( it->type(), 3 );
+
         for ( size_t i = 0; i < quad.size(); ++i )
         {
           const LocalCoordinateType &point = quad[ i ].position();
