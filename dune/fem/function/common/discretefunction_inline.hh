@@ -27,32 +27,10 @@ namespace Dune
                                    const DiscreteFunctionSpaceType &dfSpace,
                                    const LocalFunctionFactoryType &lfFactory )
     : dfSpace_( dfSpace ),
-#ifdef USE_SMP_PARALLEL
-      lfStorageVec_ ( Fem :: ThreadManager :: maxThreads() ),
-#else 
       lfStorage_( lfFactory ),
-#endif
       name_( name ),
       scalarProduct_( dfSpace )
     {
-#ifdef USE_SMP_PARALLEL
-      for( size_t i=0 ; i<lfStorageVec_.size(); ++i ) 
-      {
-        lfStorageVec_[ i ] = new LocalFunctionStorageType( lfFactory );
-      }
-#endif
-    }
-
-    template< class Traits >
-    inline DiscreteFunctionDefault< Traits >::~DiscreteFunctionDefault ()
-    {
-      assert( !dofPointerLock_ );
-#ifdef USE_SMP_PARALLEL
-      for( size_t i=0 ; i<lfStorageVec_.size(); ++i )
-      {
-        delete lfStorageVec_[ i ]; 
-      }
-#endif
     }
 
 
@@ -516,11 +494,7 @@ namespace Dune
     inline typename DiscreteFunctionDefault< Traits > :: LocalFunctionStorageType &
     DiscreteFunctionDefault< Traits > :: localFunctionStorage () const
     {
-#ifdef USE_SMP_PARALLEL
-      return *(lfStorageVec_[ Fem :: ThreadManager :: thread() ]);
-#else 
       return lfStorage_;
-#endif
     }
 
 

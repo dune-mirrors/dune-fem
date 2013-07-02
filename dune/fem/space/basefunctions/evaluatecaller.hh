@@ -5,7 +5,7 @@
 #include <vector>
 
 #include <dune/common/exceptions.hh>
-#include <dune/fem/misc/threads/threadmanager.hh>
+#include <dune/fem/misc/threads/threadsafevalue.hh>
 
 #ifdef USE_BASEFUNCTIONSET_CODEGEN
 #define CODEGEN_INCLUDEMAXNUMS 
@@ -141,8 +141,7 @@ namespace Dune
       template < class BaseFunctionSet, class Storage >
       static const ThisType& storage(const BaseFunctionSet& baseSet,
                                      const Storage& dataCache,
-                                     const QuadratureType& quad,
-                                     const int thread = ThreadManager::thread() ) 
+                                     const QuadratureType& quad)
       {
         // assert that max numbers are big enough 
         assert( baseSet.numDifferentBaseFunctions() <= maxNumBaseFunctions );
@@ -150,9 +149,8 @@ namespace Dune
         assert( quad.id()   < maxQuadratures );
 
         // static vector holding all evaluator instances 
-        static std::vector< EvaluatorStorage > evaluatorVector( ThreadManager::maxThreads() ); 
-        assert( thread == ThreadManager::thread() );
-        EvaluatorStorage& evaluators = evaluatorVector[ thread ];
+        static ThreadSafeValue< EvaluatorStorage > evaluatorStorage;
+        EvaluatorStorage& evaluators = *evaluatorStorage;
 
         // check if object already created 
         const size_t quadId = quad.id();

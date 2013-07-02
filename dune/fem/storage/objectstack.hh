@@ -1,8 +1,8 @@
 #ifndef DUNE_FEM_OBJECTSTACK_HH
 #define DUNE_FEM_OBJECTSTACK_HH
 
-#include <dune/fem/misc/debug.hh>
 #include <dune/fem/storage/referencecounter.hh>
+#include <dune/fem/misc/threads/threadsafevalue.hh>
 
 namespace Dune
 {
@@ -136,15 +136,18 @@ namespace Dune
       
     protected:
       const ObjectFactoryType &factory_;
-      StackEntryType *top_;
 
-      DebugCounter<> numIssuedObjects_;
+      // store stack such that entries are thread safe
+      typedef StackEntryType*  StackEntryPtrType;
+      typedef ThreadSafeValue< StackEntryPtrType > ThreadSafeValuesType;
 
+      // thread safe stack entries (in multi thread mode a vector)
+      ThreadSafeValuesType stackEntries_;
     public:
       //! constructor 
       ObjectStack ( const ObjectFactoryType &factory )
       : factory_( factory ),
-        top_( 0 )
+        stackEntries_( StackEntryPtrType(0) )
       {
       }
 
@@ -156,16 +159,19 @@ namespace Dune
       //! delete all objects on stack 
       ~ObjectStack ()
       {
-#ifndef BASEFUNCTIONSET_CODEGEN_GENERATE
-        // this assertion will fail during code generation 
-        assert( numIssuedObjects_ == 0 );
-#endif
-
-        while ( top_ != 0 )
+        // make sure this is only called in single thread mode 
+        // because the master thread is taking care of all object delete
+        assert( ThreadManager::singleThreadMode() );
+        const size_t threadSize = stackEntries_.size();
+        for( size_t i=0; i<threadSize; ++i )
         {
-          StackEntryType *obj = top_;
-          top_ = top_->next_;
-          delete obj;
+          StackEntryPtrType& stackEntry = stackEntries_[ i ];
+          while ( stackEntry != 0 )
+          {
+            StackEntryType *obj = stackEntry;
+            stackEntry = obj->next_;
+            delete obj;
+          }
         }
       }
       
@@ -189,19 +195,31 @@ namespace Dune
       // push storage object to the stack
       inline void push ( StackEntryType *obj )
       {
-        --numIssuedObjects_;
-        obj->next_ = top_;
-        top_ = obj;
+        // get thread private value 
+        push( obj, *stackEntries_ );
       }
 
       // pop a storage object from the stack
       inline StackEntryType *pop ()
       {
-        ++numIssuedObjects_;
+        // get thread private value 
+        return pop( *stackEntries_ );
+      }
 
-        StackEntryType *ptr = top_;
+    private:  
+      // push storage object to the stack
+      inline void push ( StackEntryType *obj, StackEntryPtrType& stackEntry )
+      {
+        obj->next_ = stackEntry;
+        stackEntry = obj;
+      }
+
+      // pop a storage object from the stack
+      inline StackEntryType *pop ( StackEntryPtrType& stackEntry )
+      {
+        StackEntryType *ptr = stackEntry;
         if( ptr != 0 )
-          top_ = top_->next_;
+          stackEntry = stackEntry->next_;
         else
           ptr = new StackEntryType( *this );
         return ptr;

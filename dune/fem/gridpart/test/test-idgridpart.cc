@@ -146,7 +146,7 @@ void testIntersectionIterator( const GridPartType & gridPart )
 
 
 typedef Dune::GridSelector::GridType GridType;
-typedef Dune::Fem::DGAdaptiveLeafGridPart< GridType > HostGridPartType;
+typedef Dune::Fem::AdaptiveLeafGridPart< GridType > HostGridPartType;
 typedef Dune::Fem::IdGridPart< HostGridPartType > GridPartType;
 
 int main ( int argc, char ** argv )
