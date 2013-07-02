@@ -803,9 +803,20 @@ namespace Dune
                     << std::endl;
 
         if( pvd_ )
+        {
+          // cH: only use the basename of filename, Paraview will
+          // prepend the leading path correctly, if the pvd-file
+          // resides in the same directory as the data files.
+          std::string basefilename;
+          size_t pos = filename.find_last_of( '/' );
+          if (pos == filename.npos) {
+            pos = -1;
+          }
+          basefilename = filename.substr( pos+1, filename.npos );
           pvd_ << "    <DataSet timestep=\"" << sequenceStamp << "\" "
                << "group=\"\" part=\"0\" "
-               << "file=\""<<filename<<"\"/>" << std::endl;
+               << "file=\""<<basefilename<<"\"/>" << std::endl;
+        }
 
         if( Parameter::verbose() )
         {
