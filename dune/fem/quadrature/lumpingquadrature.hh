@@ -137,9 +137,15 @@ class CachingLumpingQuadrature<GridPart, 0>
    *
    *  \param[in]  entity  entity, on whose reference element the quadratre
    *                      lives
-   *  \param[in]  order   desired minimal order of the quadrature
+   *
+   *  \param[in] ignored desired minimal order of the quadrature,
+   *                     which is of course fixed at 1. But we allow
+   *                     for this parameter in order to plug the
+   *                     LumpingQuadrature into generic code which
+   *                     normally passes the quadrature order as
+   *                     second parameter.
    */
-  CachingLumpingQuadrature(const EntityType &entity)
+  CachingLumpingQuadrature(const EntityType &entity, int ignored)
     : BaseType(entity.type(), 1)
   {}
 
@@ -194,9 +200,15 @@ class CachingLumpingQuadrature<GridPart, 1>
  public:
   /** \brief constructor
    *
-   *  \param[in]  entity  entity, on whose reference element the quadratre
-   *                      lives
-   *  \param[in]  order   desired minimal order of the quadrature
+   *  \note The CachingQuadrature requires the grid part to get twist
+   *        information for TwistUtility (see also
+   *        ElementQuadrature<GridPartImp,1>).
+   * 
+   *  \param[in]  gridPart      grid partition
+   *  \param[in]  intersection  intersection
+   *  \param[in]  ignored       desired order of the quadrature, which is ignored here
+   *  \param[in]  side          either INSIDE or OUTSIDE; codim-0 entity for 
+   *                            which the ElementQuadrature shall be created
    */
   CachingLumpingQuadrature(const GridPartType& gridPart,
                            const IntersectionType& intersection,
