@@ -145,7 +145,7 @@ class CachingLumpingQuadrature<GridPart, 0>
    *                     normally passes the quadrature order as
    *                     second parameter.
    */
-  CachingLumpingQuadrature(const EntityType &entity, int ignored)
+  CachingLumpingQuadrature(const EntityType &entity, int ignored = 1)
     : BaseType(entity.type(), 1)
   {}
 
