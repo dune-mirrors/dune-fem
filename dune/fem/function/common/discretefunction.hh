@@ -615,9 +615,6 @@ namespace Dune
       ThisType &operator= ( const ThisType & );
 
     public:
-      inline ~DiscreteFunctionDefault ();
-
-
       // Default Implementations
       // -----------------------
 
@@ -820,11 +817,7 @@ namespace Dune
       const DiscreteFunctionSpaceType &dfSpace_;
 
       // the local function storage 
-#ifdef USE_SMP_PARALLEL
-      mutable std::vector< LocalFunctionStorageType* > lfStorageVec_;
-#else 
       mutable LocalFunctionStorageType lfStorage_;
-#endif
 
       DebugLock dofPointerLock_;
 

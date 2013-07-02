@@ -8,8 +8,8 @@
 namespace Dune
 {
 
-	namespace Fem
-	{ 
+  namespace Fem
+  { 
 
     /** \brief ElementPointListBase */
     template< class GridPartImp, int codim, class IntegrationTraits >
@@ -304,7 +304,7 @@ namespace Dune
       int localFaceIndex_;
     };
 
-	} // namespace Fem
+  } // namespace Fem
 
 } // namespace Dune
 
