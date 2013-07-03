@@ -9,7 +9,7 @@ namespace Dune
   namespace Fem
   {
 
-#if not defined NDEBUG && not defined USE_SMP_PARALLEL
+#if not defined NDEBUG 
 #define USE_DEBUG_CNT
 #endif
 

@@ -422,7 +422,7 @@ namespace Dune
       {
         static const bool v = Dune::Capabilities::hasSingleGeometryType< Grid >::v;
         static const unsigned int topologyId
-          = Dune::Capabilities::hasSingleGeometryType< Grid >::topologyId;;
+          = Dune::Capabilities::hasSingleGeometryType< Grid >::topologyId;
       };
 
       template< class Grid, PartitionIteratorType idxpitype, bool onlyCodimensionZero >
@@ -470,7 +470,7 @@ namespace Dune
       {
         static const bool v = Dune::Capabilities::hasSingleGeometryType< Grid >::v;
         static const unsigned int topologyId
-          = Dune::Capabilities::hasSingleGeometryType< Grid >::topologyId;;
+          = Dune::Capabilities::hasSingleGeometryType< Grid >::topologyId;
       };
 
       template< class Grid, PartitionIteratorType idxpitype >
@@ -518,7 +518,7 @@ namespace Dune
       {
         static const bool v = Dune::Capabilities::hasSingleGeometryType< Grid >::v;
         static const unsigned int topologyId
-          = Dune::Capabilities::hasSingleGeometryType< Grid >::topologyId;;
+          = Dune::Capabilities::hasSingleGeometryType< Grid >::topologyId;
       };
 
       template< class Grid, PartitionIteratorType idxpitype >

@@ -385,7 +385,7 @@ namespace Dune
       {
         assert( 0 == EntityType :: codimension );
         const IndexType &index = leafIndex_( entity, subNumber );
-        assert( index < indexState_.size() );
+        assert( index < IndexType( indexState_.size() ) );
         return (indexState_[ index ] != UNUSED);
       }
      

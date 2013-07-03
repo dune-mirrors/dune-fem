@@ -115,7 +115,7 @@ namespace Dune
       delete[] count[ 0 ];
 
       return code;
-    };
+    }
 
   } // namespace Fem
 
