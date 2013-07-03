@@ -204,7 +204,7 @@ namespace Dune
 
             int petscIndex = rowDofMapping().localSlaveMapping( femIndex );
             assert( petscIndex >= 0 );
-            assert( petscIndex < d_nnz.size() );
+            assert( petscIndex < ( int ) d_nnz.size() );
             d_nnz[petscIndex] = nzDiag;
             o_nnz[petscIndex] = nzOff;
           }
