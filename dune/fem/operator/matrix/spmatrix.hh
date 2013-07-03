@@ -276,7 +276,7 @@ namespace Dune
       void operator () (const DiscFuncType &f, DiscFuncType &ret) const 
       {
         apply(f,ret); 
-      };
+      }
       
       //! return diagonal of (this * A * B)
       template <class DiscFuncType>

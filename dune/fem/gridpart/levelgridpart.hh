@@ -230,7 +230,7 @@ namespace Dune
       {
         static const bool v = Dune::Capabilities::hasSingleGeometryType< GridType >::v;
         static const unsigned int topologyId
-          = Dune::Capabilities::hasSingleGeometryType< GridType >::topologyId;;
+          = Dune::Capabilities::hasSingleGeometryType< GridType >::topologyId;
       };
 
       template< class GridType >
