@@ -136,7 +136,7 @@ namespace Dune
     };
 
     template <class DomainSpace, class RangeSpace>
-    struct DiagonalStencil : Stencil<DomainSpace,RangeSpace>
+    struct DiagonalStencil : public Stencil<DomainSpace,RangeSpace>
     {
       typedef Stencil<DomainSpace,RangeSpace> BaseType;
     public:
@@ -161,7 +161,7 @@ namespace Dune
     };
 
     template <class DomainSpace, class RangeSpace>
-    struct DiagonalAndNeighborStencil : Stencil<DomainSpace,RangeSpace>
+    struct DiagonalAndNeighborStencil : public Stencil<DomainSpace,RangeSpace>
     {
       typedef Stencil<DomainSpace,RangeSpace> BaseType;
     public:

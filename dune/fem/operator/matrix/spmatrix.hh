@@ -577,6 +577,38 @@ namespace Dune
           sequence_ = domainSpace_.sequence();
         }
       }
+      #if 0
+      //! reserve memory corresponnding to size of spaces
+      DUNE_VERSION_DEPRECATED(1,5,remove)
+      inline void reserve(bool verbose = false ) 
+      {
+        if( sequence_ != domainSpace_.sequence() )
+        {
+#ifndef DUNE_FEM_DONT_CHECKITERATORS_OF_SPACE
+          // if empty grid do nothing (can appear in parallel runs)
+          if( (domainSpace_.begin() != domainSpace_.end())
+              && (rangeSpace_.begin() != rangeSpace_.end()) )
+#endif
+          {
+            
+            if( verbose )
+            {
+              const int rowMaxNumbers = rangeMapper_.maxNumDofs();
+              const int colMaxNumbers = domainMapper_.maxNumDofs();
+
+              std::cout << "Reserve Matrix with (" << rangeSpace_.size() << "," << domainSpace_.size()<< ")\n";
+              std::cout << "Max number of base functions = (" << rowMaxNumbers << "," << colMaxNumbers << ")\n";
+            }
+
+            // upper estimate for number of non-zeros 
+            const int nonZeros = std::max( StencilType :: nonZerosEstimate( domainSpace_ ), matrix_.numNonZeros() );
+
+            matrix_.reserve( rangeSpace_.size(), domainSpace_.size(), nonZeros, 0.0 );
+          }
+          sequence_ = domainSpace_.sequence();
+        }
+      }
+      #endif
 
       //! solve A dest = arg using the UMFPACK direct solver 
       template< class DomainFunction, class RangeFunction >
@@ -955,11 +987,10 @@ namespace Dune
     // -----------------------
 
     template< class DomainFunction, class RangeFunction >
-    class SparseRowMatrixOperator
+    class SparseRowLinearOperator
     : public SparseRowMatrixObject< typename DomainFunction::DiscreteFunctionSpaceType, typename RangeFunction::DiscreteFunctionSpaceType >,
       public Fem::AssembledOperator< DomainFunction, RangeFunction >
     {
-      typedef SparseRowMatrixOperator< DomainFunction, RangeFunction > This;
       typedef SparseRowMatrixObject< typename DomainFunction::DiscreteFunctionSpaceType, typename RangeFunction::DiscreteFunctionSpaceType > Base;
 
     public:
@@ -971,6 +1002,54 @@ namespace Dune
 
       using Base::apply;
 
+      SparseRowLinearOperator ( const std::string &name,
+                                const DomainSpaceType &domainSpace,
+                                const RangeSpaceType &rangeSpace,
+                                const std::string &paramfile = "" )
+      : Base( domainSpace, rangeSpace, paramfile )
+      {}
+
+      virtual void operator() ( const DomainFunction &arg, RangeFunction &dest ) const
+      {
+        Base::apply( arg, dest );
+      }
+
+      const Base &systemMatrix () const
+      {
+        return *this;
+      }
+
+      void communicate () const
+      {
+      }
+    };
+  } // namespace Fem
+
+} // namespace Dune
+
+#include <dune/fem/operator/common/stencil.hh>
+namespace Dune { 
+  namespace Fem {
+    template< class DomainFunction, class RangeFunction, class Traits >
+    class SparseRowMatrixOperator
+    : public SparseRowMatrixObject< typename DomainFunction::DiscreteFunctionSpaceType, typename RangeFunction::DiscreteFunctionSpaceType >,
+      public Fem::AssembledOperator< DomainFunction, RangeFunction >
+    {
+      // dune_static_assert( !(Conversion<CompatibilityDummy, void>::exists), 
+      //   "traits template argument not required anymore for SparseRowMatrixOperator" );
+
+      typedef SparseRowMatrixObject< typename DomainFunction::DiscreteFunctionSpaceType, typename RangeFunction::DiscreteFunctionSpaceType > Base;
+
+    public:
+      typedef typename Base::DomainSpaceType DomainSpaceType;
+      typedef typename Base::RangeSpaceType RangeSpaceType;
+
+      /** \copydoc Fem::Operator::assembled */ 
+      static const bool assembled = true ;
+
+      using Base::apply;
+
+      DUNE_VERSION_DEPRECATED(1,4,remove)
       SparseRowMatrixOperator ( const std::string &name,
                                 const DomainSpaceType &domainSpace,
                                 const RangeSpaceType &rangeSpace,
@@ -991,6 +1070,46 @@ namespace Dune
       void communicate () const
       {
       }
+      void reserve(bool verbose = false) 
+      {
+        Base::reserve(DummyStencil(Base::domainSpace()),verbose);
+      }
+
+    private:
+
+      class DummyStencil 
+      {
+        typedef Stencil<DomainSpaceType,RangeSpaceType> StencilType;
+      public:
+        typedef typename StencilType::DomainEntityType       DomainEntityType;
+        typedef typename StencilType::RangeEntityType        RangeEntityType;
+        typedef typename StencilType::DomainGlobalKeyType    DomainGlobalKeyType;
+        typedef typename StencilType::RangeGlobalKeyType     RangeGlobalKeyType;
+        typedef typename StencilType::LocalStencilType       LocalStencilType;
+        typedef typename StencilType::GlobalStencilType      GlobalStencilType;
+
+        DummyStencil(const DomainSpaceType &space) : space_(space) 
+        {}
+        int maxNonZerosEstimate() const
+        {
+          return Traits::StencilType::nonZerosEstimate(space_);
+        }
+        const LocalStencilType &localStencil(const DomainGlobalKeyType &key) const
+        {
+           DUNE_THROW( Dune::NotImplemented, "SimpleStencil: exact stencil information is unavailable." );
+           return localStencil_;
+        }
+        const GlobalStencilType &globalStencil() const
+        {
+          DUNE_THROW( Dune::NotImplemented, "SimpleStencil: global stencil is  unavailable." );
+          return stencil_;
+        }
+      private:
+        const DomainSpaceType &space_;
+        GlobalStencilType stencil_;
+        LocalStencilType localStencil_;
+      };
+
     };
 
   } // namespace Fem 

@@ -124,40 +124,6 @@ namespace Dune
           : BaseType(org) 
         {}
 
-#warning DEPRECATED METHOD: outcommented
-#if 0 
-        //! setup matrix entires 
-        template <class RowMapperType, class ColMapperType,
-                  class StencilCreatorImp> 
-        void setup(const RangeSpaceType& colSpace, 
-                   const RowMapperType & rowMapper, 
-                   const ColMapperType & colMapper,
-                   const StencilCreatorImp& stencil, 
-                   bool verbose = false) 
-        { 
-          // if empty grid, do nothing
-          if( colSpace.begin() == colSpace.end() ) return ;
-          
-          {
-            // map of indices 
-            // necessary because element traversal not necessaryly is in
-            // ascending order 
-            std::map< int , std::set<int> > indices;
-
-            // build matrix entries
-            stencil.setup(colSpace, rowMapper, colMapper, indices );
-
-            // insert entries 
-            createEntries( indices );
-          }
-
-          // in verbose mode some output 
-          if(verbose)  
-          {
-            std::cout << "ISTLMatrix::setup: finished assembly of matrix structure! \n";
-          }
-        }
-#endif
         template <class RowKeyType, class ColKeyType>
         void createEntries(const std::map<RowKeyType , std::set<ColKeyType> >& indices) 
         {
@@ -1031,25 +997,6 @@ namespace Dune
         removeObj( false );
       }
 
-#warning DEPRECATED METHOD: outcommented
-#if 0 
-      //! reserve matrix with right size 
-      void reserve(bool verbose = false) DUNE_VERSION_DEPRECATED(1,4,remove)
-      {
-        // if grid sequence number changed, rebuild matrix 
-        if(sequence_ != domainSpace().sequence())
-        {
-          removeObj( true );
-
-          StencilType stencil; 
-          matrix_ = new MatrixType(rowMapper_.size(),colMapper_.size());
-          matrix().setup(rangeSpace(),rowMapper(),colMapper(),stencil,verbose);
-
-          sequence_ = domainSpace().sequence();
-        }
-      }
-#endif
-
       template <class Stencil>
       void reserve(const Stencil &stencil,bool verbose = false) 
       {
@@ -1324,11 +1271,11 @@ namespace Dune
     // ------------------
 
     template< class DomainFunction, class RangeFunction >
-    class ISTLMatrixOperator
+    class ISTLLinearOperator
     : public ISTLMatrixObject< typename DomainFunction::DiscreteFunctionSpaceType, typename RangeFunction::DiscreteFunctionSpaceType >,
       public AssembledOperator< DomainFunction, RangeFunction >
     {
-      typedef ISTLMatrixOperator< DomainFunction, RangeFunction > This;
+      typedef ISTLLinearOperator< DomainFunction, RangeFunction > This;
       typedef ISTLMatrixObject< typename DomainFunction::DiscreteFunctionSpaceType, typename RangeFunction::DiscreteFunctionSpaceType > Base;
 
     public:
@@ -1340,6 +1287,45 @@ namespace Dune
 
       using Base::apply;
 
+      ISTLLinearOperator ( const std::string &name,
+                           const DomainSpaceType &domainSpace,
+                           const RangeSpaceType &rangeSpace )
+      : Base( domainSpace, rangeSpace )
+      {}
+
+      virtual void operator() ( const DomainFunction &arg, RangeFunction &dest ) const
+      {
+        Base::apply( arg, dest );
+      }
+
+      const Base &systemMatrix () const
+      {
+        return *this;
+      }
+
+      void communicate () 
+      {
+      }
+    };
+
+    template< class DomainFunction, class RangeFunction, class Traits >
+    class ISTLMatrixOperator
+    : public ISTLMatrixObject< typename DomainFunction::DiscreteFunctionSpaceType, typename RangeFunction::DiscreteFunctionSpaceType >,
+      public AssembledOperator< DomainFunction, RangeFunction >
+    {
+      typedef ISTLMatrixOperator< DomainFunction, RangeFunction,Traits > This;
+      typedef ISTLMatrixObject< typename DomainFunction::DiscreteFunctionSpaceType, typename RangeFunction::DiscreteFunctionSpaceType > Base;
+
+    public:
+      typedef typename Base::DomainSpaceType DomainSpaceType;
+      typedef typename Base::RangeSpaceType RangeSpaceType;
+
+      /** \copydoc Operator::assembled */
+      static const bool assembled = true ;
+
+      using Base::apply;
+
+      DUNE_VERSION_DEPRECATED(1,4,remove)
       ISTLMatrixOperator ( const std::string &name,
                            const DomainSpaceType &domainSpace,
                            const RangeSpaceType &rangeSpace,
@@ -1360,8 +1346,47 @@ namespace Dune
       void communicate () 
       {
       }
-    };
+      void reserve(bool verbose = false) 
+      {
+        Base::reserve(DummyStencil(Base::domainSpace(),Base::rangeSpace()),verbose);
+      }
 
+    private:
+
+      class DummyStencil 
+      {
+        typedef Stencil<DomainSpaceType,RangeSpaceType> StencilType;
+      public:
+        typedef typename StencilType::DomainEntityType         DomainEntityType;
+        typedef typename StencilType::RangeEntityType          RangeEntityType;
+        typedef int                                            DomainGlobalKeyType;
+        typedef int                                            RangeGlobalKeyType;
+        typedef std::set<RangeGlobalKeyType>                   LocalStencilType;
+        typedef std::map<DomainGlobalKeyType,LocalStencilType> GlobalStencilType;
+
+        DummyStencil(const DomainSpaceType &dspace, const RangeSpaceType &rspace) 
+        : dspace_(dspace), rspace_(rspace)
+        {
+          Traits::StencilType::setup(rspace_, dspace_.blockMapper(), rspace_.blockMapper(), globalStencil_ );
+        }
+        int maxNonZerosEstimate() const
+        {
+          return Traits::StencilType::nonZerosEstimate(rspace_);
+        }
+        const LocalStencilType &localStencil(const DomainGlobalKeyType &key) const
+        { 
+          return globalStencil_[key]; 
+        }
+        const GlobalStencilType &globalStencil() const
+        { 
+          return globalStencil_; 
+        }
+      private:
+        const DomainSpaceType &dspace_;
+        const RangeSpaceType &rspace_;
+        GlobalStencilType globalStencil_;
+      };
+    };
   } // namespace Fem
 
 #if DUNE_FEM_COMPATIBILITY  

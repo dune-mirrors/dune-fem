@@ -1,6 +1,8 @@
 #ifndef DUNE_FEM_DGMATRIXTRAITS_HH
 #define DUNE_FEM_DGMATRIXTRAITS_HH
 
+#warning DEPRECATED file not needed anymore - use new XXXLinearOperator instead of XXXMatrixOperator
+
 #include <dune/fem/operator/2order/dgmatrixsetup.hh>
 
 namespace Dune

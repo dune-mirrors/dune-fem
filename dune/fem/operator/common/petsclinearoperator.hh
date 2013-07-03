@@ -168,50 +168,52 @@ namespace Dune
           // set sizes of the matrix 
           ::Dune::Petsc::MatSetSizes( petscMatrix_, localRows, localCols, PETSC_DETERMINE, PETSC_DETERMINE );
 
-          std::vector<int> d_nnz(localRows/bs,0);
-          std::vector<int> o_nnz(localRows/bs,0);
-          typedef typename StencilType::GlobalStencilType GlobalStencilType;
-          typedef typename GlobalStencilType::const_iterator StencilIteratorType;
-          const GlobalStencilType &glStencil = stencil.globalStencil();
-          StencilIteratorType end = glStencil.end();
-          for ( StencilIteratorType it = glStencil.begin(); it != end; ++it)
-          {
-            int femIndex = it->first;
-            if ( rowDofMapping().isSlave( femIndex ) ) continue;
-            // Remark: ghost entities should not be inserted into the stencil for dg to
-            // get optimal results but they are needed for istl....
-            int nzDiag = 0;
-            int nzOff  = 0;
-
-            typedef typename StencilType::LocalStencilType LocalStencilType;
-            typedef typename LocalStencilType::const_iterator LocalStencilIteratorType;
-            LocalStencilIteratorType endLocal = it->second.end();
-            for ( LocalStencilIteratorType itLocal = it->second.begin(); itLocal != endLocal; ++itLocal)
-            {
-              if (!rowDofMapping().isSlave( *itLocal )) 
-              {
-                ++nzDiag;
-                // std::cout << "diag: (" << rowDofMapping().localSlaveMapping( femIndex )
-                //   << "," << rowDofMapping().localSlaveMapping( *itLocal )
-                //   << ") ";
-              }
-              else 
-                ++nzOff;
-            }
-            // std::cout << std::endl;
-            // std::cout << "nz: " << rowDofMapping().localSlaveMapping( femIndex )
-            //           << " " << nzDiag << " " << nzOff << std::endl;
-
-            int petscIndex = rowDofMapping().localSlaveMapping( femIndex );
-            assert( petscIndex >= 0 );
-            assert( petscIndex < ( int ) d_nnz.size() );
-            d_nnz[petscIndex] = nzDiag;
-            o_nnz[petscIndex] = nzOff;
-          }
           if (is_same< StencilType,SimpleStencil<DomainSpaceType,RangeSpaceType> >::value)
             ::Dune::Petsc::MatSetUp( petscMatrix_, bs, stencil.maxNonZerosEstimate() );
           else
+          {
+            std::vector<int> d_nnz(localRows/bs,0);
+            std::vector<int> o_nnz(localRows/bs,0);
+            typedef typename StencilType::GlobalStencilType GlobalStencilType;
+            typedef typename GlobalStencilType::const_iterator StencilIteratorType;
+            const GlobalStencilType &glStencil = stencil.globalStencil();
+            StencilIteratorType end = glStencil.end();
+            for ( StencilIteratorType it = glStencil.begin(); it != end; ++it)
+            {
+              int femIndex = it->first;
+              if ( rowDofMapping().isSlave( femIndex ) ) continue;
+              // Remark: ghost entities should not be inserted into the stencil for dg to
+              // get optimal results but they are needed for istl....
+              int nzDiag = 0;
+              int nzOff  = 0;
+
+              typedef typename StencilType::LocalStencilType LocalStencilType;
+              typedef typename LocalStencilType::const_iterator LocalStencilIteratorType;
+              LocalStencilIteratorType endLocal = it->second.end();
+              for ( LocalStencilIteratorType itLocal = it->second.begin(); itLocal != endLocal; ++itLocal)
+              {
+                if (!rowDofMapping().isSlave( *itLocal )) 
+                {
+                  ++nzDiag;
+                  // std::cout << "diag: (" << rowDofMapping().localSlaveMapping( femIndex )
+                  //   << "," << rowDofMapping().localSlaveMapping( *itLocal )
+                  //   << ") ";
+                }
+                else 
+                  ++nzOff;
+              }
+              // std::cout << std::endl;
+              // std::cout << "nz: " << rowDofMapping().localSlaveMapping( femIndex )
+              //           << " " << nzDiag << " " << nzOff << std::endl;
+
+              int petscIndex = rowDofMapping().localSlaveMapping( femIndex );
+              assert( petscIndex >= 0 );
+              assert( petscIndex < ( int ) d_nnz.size() );
+              d_nnz[petscIndex] = nzDiag;
+              o_nnz[petscIndex] = nzOff;
+            }
             ::Dune::Petsc::MatSetUp( petscMatrix_, bs, &d_nnz[0], &o_nnz[0] );
+          }
           sequence_ = domainSpace().sequence();
         } 
 
