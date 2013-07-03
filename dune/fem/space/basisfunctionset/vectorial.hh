@@ -268,7 +268,7 @@ namespace Dune
     public:
       typedef ScalarBasisFunctionSet ScalarBasisFunctionSetType;
 
-      typedef typename ScalarBasisFunctionSetType::EntityType EntityType;;
+      typedef typename ScalarBasisFunctionSetType::EntityType EntityType;
       typedef typename ScalarBasisFunctionSetType::ReferenceElementType ReferenceElementType;
 
     private:

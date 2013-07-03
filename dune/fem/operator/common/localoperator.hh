@@ -148,19 +148,19 @@ namespace Dune
       
       // one entity
       template<class EntityType>
-      void prepareLocal (EntityType & en) {}; 
+      void prepareLocal (EntityType & en) {}
       
       //! \todo Please doc me!
       template<class EntityType>
-      void finalizeLocal(EntityType & en) {}; 
+      void finalizeLocal(EntityType & en) {}
 
       // two entities
       template<class EntityType>
-      void prepareLocal (EntityType & en1, EntityType &en2){}; 
+      void prepareLocal (EntityType & en1, EntityType &en2){}
       
       //! \todo Please doc me!
       template<class EntityType>
-      void finalizeLocal(EntityType & en1, EntityType &en2){}; 
+      void finalizeLocal(EntityType & en1, EntityType &en2){}
       //**************************************************************
 
     protected:

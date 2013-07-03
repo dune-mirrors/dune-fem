@@ -102,7 +102,7 @@ namespace Dune
       {
         static const bool v = Dune::Fem::GridPartCapabilities::hasSingleGeometryType< GridPartType >::v;
         static const unsigned int topologyId 
-          = Dune::Fem::GridPartCapabilities::hasSingleGeometryType< GridPartType >::topologyId;;
+          = Dune::Fem::GridPartCapabilities::hasSingleGeometryType< GridPartType >::topologyId;
       };
 
 
