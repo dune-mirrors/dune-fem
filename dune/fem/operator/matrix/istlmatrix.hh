@@ -1062,7 +1062,6 @@ namespace Dune
           matrix().createEntries( stencil.globalStencil() );
 
           sequence_ = domainSpace().sequence();
-          ISTLScpSetup<RangeSpaceType>::setup(rangeSpace(),rowMapper_, (ColumnDiscreteFunctionType*)0);
         }
       }
 
