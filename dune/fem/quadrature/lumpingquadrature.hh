@@ -39,14 +39,14 @@ class LumpingQuadrature
   /** \brief constructor filling the list of points and weights
    *
    *  \param[in]  gemoetry  geometry type for which a quadrature is desired
-   *  \param[in]  order     order is ignored
+   *  \param[in]  ignored     order is ignored
    *  \param[in]  id        unique identifier, ignored
    */
-  LumpingQuadrature(const GeometryType& geometry, int order, int id)
+  LumpingQuadrature(const GeometryType& geometry, int ignored, int id)
     : BaseType(id)
   {
     // make sure that we only use orders that are available 
-    assert(order == 1);
+    assert(ignored == 1);
     
     for (unsigned i = 0; i < ReferenceDomain::numCorners; ++i) {
       CoordinateType pt;
@@ -214,7 +214,7 @@ class CachingLumpingQuadrature<GridPart, 1>
                            const IntersectionType& intersection,
                            int ignored,
                            typename BaseType::Side side)
-    : BaseType(gridPart, intersection, ignored, side)
+    : BaseType(gridPart, intersection, 1, side)
   {}
 
   /** \brief copy constructor
