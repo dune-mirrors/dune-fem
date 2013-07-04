@@ -1,4 +1,4 @@
-matrixdir =  $(includedir)/dune/fem/operator/linear
+lineardir =  $(includedir)/dune/fem/operator/linear
 linear_HEADERS = istloperator.hh \
                  spoperator.hh
 

@@ -9,6 +9,6 @@ AM_CPPFLAGS = $(ALL_PKG_CPPFLAGS) $(DUNEMPICPPFLAGS) -DPOLORDER=$(POLORD)
 #ADAPTPROG = prod
 
 check_PROGRAMS = $(ADAPTPROG)
-prod_SOURCES = productfunctiontest.cc
+# prod_SOURCES = productfunctiontest.cc
 
 include $(top_srcdir)/am/global-rules

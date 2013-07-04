@@ -11,6 +11,7 @@
 #include <string>
 #include <iostream>
 
+#include <dune/common/stdstreams.hh>
 #include <dune/common/exceptions.hh>
 
 #if HAVE_PETSC

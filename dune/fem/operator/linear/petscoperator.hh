@@ -15,6 +15,7 @@
 #include <dune/fem/function/petscdiscretefunction/petscdiscretefunction.hh>
 #include <dune/fem/operator/matrix/columnobject.hh>
 
+#include <dune/fem/operator/common/operator.hh>
 #include <dune/fem/operator/common/stencil.hh>
 
 #if defined HAVE_PETSC

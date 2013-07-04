@@ -6,6 +6,9 @@
 #include <set>
 #include <map>
 
+#include <dune/grid/common/gridenums.hh>
+#include <dune/fem/misc/functor.hh>
+
 namespace Dune 
 {
   namespace Fem 
