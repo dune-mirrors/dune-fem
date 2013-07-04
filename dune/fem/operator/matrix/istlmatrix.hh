@@ -26,7 +26,6 @@
 #include <dune/fem/operator/matrix/columnobject.hh>
 
 #include <dune/fem/operator/matrix/istlmatrixadapter.hh>
-#include <dune/fem/operator/matrix/istlscpsetup.hh>
 
 namespace Dune
 { 
