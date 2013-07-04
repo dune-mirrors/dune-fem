@@ -4,8 +4,9 @@
 
 #include <config.h>
 
+#include <dune/fem/operator/common/stencil.hh>
 #include <dune/fem/operator/common/operator.hh>
-#include <dune/fem/operator/matrix/spmatrix.hh>
+#include <dune/fem/operator/linear/spoperator.hh>
 #include <dune/fem/operator/2order/lagrangematrixsetup.hh>
 #include <dune/fem/quadrature/cachingquadrature.hh>
 
@@ -16,7 +17,7 @@
 
 #if defined HAVE_PETSC
 
-#include <dune/fem/operator/common/petsclinearoperator.hh>
+#include <dune/fem/operator/linear/petscoperator.hh>
 
 class VariableFilenameParameter
 : public Dune::Fem::DataOutputParameters 
@@ -45,8 +46,6 @@ class MassOperator
 {
   typedef MassOperator< DiscreteFunction > ThisType;
 
-  struct MatrixTraits;
-
 public:
   typedef DiscreteFunction DiscreteFunctionType;
   typedef typename DiscreteFunctionType::DiscreteFunctionSpaceType
@@ -59,12 +58,12 @@ public:
   #if PETSCLINEAROPERATOR == 1
     typedef Dune::Fem::PetscLinearOperator< DiscreteFunctionType, DiscreteFunctionType >
       LinearOperatorType;
-    #warning using PetscLinearOperator as linear operator
+    #warning using Petsc for linear operator
   #else
-    typedef Dune::Fem::SparseRowMatrixOperator
-      < DiscreteFunctionType, DiscreteFunctionType, MatrixTraits >
+    typedef Dune::Fem::SparseRowLinearOperator
+      < DiscreteFunctionType, DiscreteFunctionType >
       LinearOperatorType;
-    #warning using SparseRowMatrixObject as linear operator
+    #warning using SparseRow for linear operator
   #endif
 
 
@@ -91,19 +90,6 @@ private:
   const DofManagerType &dofManager_;
   mutable LinearOperatorType systemMatrix_;
   mutable int sequence_;
-};
-
-
-template< class DiscreteFunction >
-struct MassOperator< DiscreteFunction >::MatrixTraits
-{
-  typedef DiscreteFunctionSpaceType RowSpaceType;
-  typedef DiscreteFunctionSpaceType ColumnSpaceType;
-
-  typedef Dune::LagrangeMatrixSetup< false > StencilType;
-
-  typedef Dune::Fem::ParallelScalarProduct< DiscreteFunctionSpaceType >
-    ParallelScalarProductType;
 };
 
 
@@ -180,7 +166,7 @@ MassOperator< DiscreteFunction >::systemMatrix () const
 
   if( sequence_ != dofManager_.sequence() )
   {
-    systemMatrix_.reserve();
+    systemMatrix_.reserve(Dune::Fem::SimpleStencil<DiscreteFunctionSpaceType,DiscreteFunctionSpaceType>());
     systemMatrix_.clear();
 
     std::vector< typename DiscreteFunctionSpaceType::RangeType > values;

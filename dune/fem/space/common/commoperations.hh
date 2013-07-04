@@ -281,9 +281,9 @@ namespace Dune
     //! \brief Mathematical operation apply during communication 
     //! to data that is communicated 
     //! enum of all avialable operations
-    enum dfCommunicationOperation {copy,add,min,max};
     struct DFCommunicationOperation 
     {
+      enum dfCommunicationOperation {copy,add,min,max};
       //! just copy data 
       struct Copy 
       {

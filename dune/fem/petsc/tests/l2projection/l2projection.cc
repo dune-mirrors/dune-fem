@@ -91,7 +91,7 @@ struct Algorithm
   typedef Dune::Fem::AdaptiveLeafGridPart< GridType, Dune::InteriorBorder_Partition > GridPartType;
   typedef Dune::Fem::FunctionSpace< double, double, GridType::dimensionworld, 1 > SpaceType;
   typedef Dune::Fem::LagrangeDiscreteFunctionSpace< SpaceType, GridPartType, polOrder > DiscreteSpaceType;
-#ifdef PETSCLINEAROPERATOR
+#if PETSCLINEAROPERATOR == 1
   typedef Dune::Fem::PetscDiscreteFunction< DiscreteSpaceType > DiscreteFunctionType;
 #else 
   typedef Dune::Fem::AdaptiveDiscreteFunction< DiscreteSpaceType > DiscreteFunctionType;
@@ -140,7 +140,7 @@ inline void Algorithm::operator() ( DiscreteFunctionType &solution )
   unsigned long maxIter = dfSpace_.size();
   maxIter = dfSpace_.grid().comm().sum( maxIter );
 
-#ifdef USE_PETSCLINEAROPERATOR 
+#if PETSCLINEAROPERATOR == 1
   if( Dune::Fem::Parameter::getValue<bool>("usepetsc", true ) )
   {
     typedef Dune::Fem::PetscInverseOperator< DiscreteFunctionType, MassOperatorType::LinearOperatorType > InverseOperator;  
