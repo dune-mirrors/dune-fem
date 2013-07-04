@@ -4,8 +4,13 @@
 #if HAVE_DUNE_ISTL
 
 #include <dune/common/timer.hh>
+
+#include <dune/istl/operators.hh>
+
 #include <dune/fem/space/lagrange.hh>
 #include <dune/fem/space/discontinuousgalerkin.hh>
+#include <dune/fem/operator/common/operator.hh>
+#include <dune/fem/operator/matrix/preconditionerwrapper.hh>
 
 namespace Dune
 {
