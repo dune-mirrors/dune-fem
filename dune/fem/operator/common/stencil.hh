@@ -116,7 +116,7 @@ namespace Dune
       {}
       SimpleStencil()
       {
-        maxNZ_ = 0; // estimate optimal stencil....
+        maxNZ_ = 1; 
       }
       int maxNonZerosEstimate() const
       {

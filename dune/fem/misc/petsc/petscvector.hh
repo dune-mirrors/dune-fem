@@ -69,8 +69,8 @@ namespace Dune
         localSize_( 0 ),
         numGhosts_( 0 )
       {
-        dune_static_assert( CommunicationOperationType::value == copy ||
-                            CommunicationOperationType::value == add,
+        dune_static_assert( CommunicationOperationType::value == DFCommunicationOperation::copy ||
+                            CommunicationOperationType::value == DFCommunicationOperation::add,
                             "only copy/add are available communication operations for petsc");
         // set up the DofMapping instance and all variables depending on it
         localSize_ = dofMapping().numOwnedDofBlocks() * blockSize;
@@ -267,7 +267,7 @@ namespace Dune
         {
           if ( memorySequence_ < sequence_ )
           {
-            if ( CommunicationOperationType::value == add )
+            if ( CommunicationOperationType::value == DFCommunicationOperation::add )
             {
               ::Dune::Petsc::VecGhostUpdateBegin( vec_, ADD_VALUES, SCATTER_REVERSE );
               ::Dune::Petsc::VecGhostUpdateEnd( vec_, ADD_VALUES, SCATTER_REVERSE );
