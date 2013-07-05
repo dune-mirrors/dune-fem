@@ -1343,7 +1343,7 @@ namespace Dune {
         }
         const LocalStencilType &localStencil(const DomainGlobalKeyType &key) const
         { 
-          return globalStencil_[key]; 
+          return globalStencil_.find( key )->second; 
         }
         const GlobalStencilType &globalStencil() const
         { 
