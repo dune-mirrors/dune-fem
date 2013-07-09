@@ -9,8 +9,6 @@
 
 //- dune-fem includes
 #include <dune/fem/gridpart/common/capabilities.hh>
-#include <dune/fem/misc/selectvalue.hh>
-
 
 namespace Dune
 {
@@ -40,8 +38,7 @@ namespace Dune
       struct hasSingleGeometryType< FilteredGridPart< HostGridPartImp, FilterImp, useFilteredIndexSet > >
       {
         static const bool v = hasSingleGeometryType< HostGridPartImp >::v;
-        static const unsigned int topologyId
-          = SelectUnsignedValue< v, hasSingleGeometryType< HostGridPartImp >::topologyId, ~0u >::Value;
+        static const unsigned int topologyId = hasSingleGeometryType< HostGridPartImp >::topologyId;
       };
 
 
