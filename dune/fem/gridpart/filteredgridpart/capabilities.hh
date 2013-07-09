@@ -41,7 +41,7 @@ namespace Dune
       {
         static const bool v = hasSingleGeometryType< HostGridPartImp >::v;
         static const unsigned int topologyId
-          = SelectUnsignedValue< v, hasSingleGeometryType< HostGridPartImp >::topologyId, ~0 >::Value;
+          = SelectUnsignedValue< v, hasSingleGeometryType< HostGridPartImp >::topologyId, ~0u >::Value;
       };
 
 
