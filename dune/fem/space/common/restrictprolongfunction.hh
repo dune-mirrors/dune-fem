@@ -158,19 +158,19 @@ namespace Dune
         const Entity &father = coarseLocalFunction.entity();
         const int childLevel = father.level()+1;
 
+        bool initialize = true;
         const HierarchicIterator hend = father.hend( childLevel );
         for( HierarchicIterator hit = father.hbegin( childLevel ); hit != hend; ++hit )
         {
           const Entity &son = *hit;
-          bool initialize = true;
           if( isDefinedOn( fineFunction, son ) )
           {
             FineLocalFunction fineLocalFunction = fineFunction.localFunction( son );
             localRestrictProlong_.restrictLocal( coarseLocalFunction, fineLocalFunction, son.geometryInFather(), initialize );
-            initialize = false;
           }
           else
             DUNE_THROW( GridError, "Cannot restrict over more than one level." );
+          initialize = false;
         }
       }
 
