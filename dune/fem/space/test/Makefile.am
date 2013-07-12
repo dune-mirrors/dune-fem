@@ -30,7 +30,7 @@ check_PROGRAMS = $(ADAPTPROG) \
 		 lagrangeinterpolation \
 		 legendretest
 
-EXTRA_DIST = systemmatrix.cc
+EXTRA_DIST = systemmatrix.cc dgcomm-4.sh dgcomm-cached-4.sh
 
 l2projection_SOURCES = l2projection.cc
 adapt_SOURCES = adapt.cc
