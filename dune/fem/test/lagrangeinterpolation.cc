@@ -1,9 +1,15 @@
 #undef NDEBUG
+#define ENABLE_ADAPTIVELEAFINDEXSET_FOR_YASPGRID
+
+#ifdef YASPGRID
+#define LEAFGRIDPART
+#endif
 
 #include <config.h>
 #include <iostream>
 
 #include <dune/fem/gridpart/adaptiveleafgridpart.hh>
+#include <dune/fem/gridpart/leafgridpart.hh>
 
 #include <dune/fem/misc/double.hh>
 #include <dune/fem/space/lagrange.hh>
@@ -30,9 +36,15 @@ using namespace Fem;
 #endif
 
 typedef GridSelector::GridType MyGridType;
-typedef AdaptiveLeafGridPart< MyGridType > GridPartType;
 
-// typedef FunctionSpace< double, Double, dimworld, 1 > FunctionSpaceType;
+#ifdef LEAFGRIDPART
+// AdaptiveLeafGridPart does not work with YaspGrid for p > 1, since not entities for
+// codim > 0 and codim < dim are available, which are needed to build the index set
+typedef LeafGridPart< MyGridType > GridPartType;
+#else
+typedef AdaptiveLeafGridPart< MyGridType > GridPartType;
+#endif
+
 typedef TestFunctionSpace FunctionSpaceType;
 
 typedef LagrangeDiscreteFunctionSpace< FunctionSpaceType, GridPartType, polOrder >
@@ -88,12 +100,9 @@ int main(int argc, char ** argv)
     
     XDRFileOutStream xout( "solution-xdr.tmp" );
     writeOut( virtualize( xout ), solution );
-    //out << solution;
-    //out.flush();
-    //readback.clear();
+
     XDRFileInStream xin( "solution-xdr.tmp" );
     readBack( virtualize( xin ), readback );
-    //in >> readback;
     if( readback != solution )
     {
       std :: cerr << "xdr read/write gives different function." << std :: endl;
@@ -102,12 +111,9 @@ int main(int argc, char ** argv)
 
     ASCIIOutStream aout( "solution-ascii.tmp" );
     writeOut( virtualize( aout ), solution );
-    //aout << solution;
-    //aout.flush();
-    //readback.clear();
+
     ASCIIInStream ain( "solution-ascii.tmp" );
     readBack( virtualize( ain ), readback );
-    //ain >> readback;
     if( readback != solution )
     {
       std :: cerr << "ascii read/write gives different function." << std :: endl;

@@ -39,7 +39,7 @@ namespace Dune
     //! Constructor filling the container with values using the default constructor 
     //! Depending on the implementation this could be achieved without allocating memory
     PersistentContainer ( const Grid &grid, const int codim, const Data& value = Data() )
-    : BaseType( grid, codim, grid.leafIndexSet(), 1.0, value )
+    : BaseType( grid.leafIndexSet(), codim, value )
     {}
   };
 
@@ -59,7 +59,7 @@ namespace Dune
     //! Constructor filling the container with values using the default constructor 
     //! Depending on the implementation this could be achieved without allocating memory
     PersistentContainer ( const Grid &grid, const int codim, const Data& value = Data() )
-    : BaseType( grid, codim, grid.leafIndexSet(), 1.0, value )
+    : BaseType( grid.leafIndexSet(), codim, value )
     {}
   };
 
