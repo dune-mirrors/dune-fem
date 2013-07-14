@@ -3,13 +3,13 @@ DIMRANGE = 3
 WANT_GRAPE = 0
 
 # set default grid type for make all
-GRIDTYPE=YASPGRID
+#GRIDTYPE=YASPGRID
 #GRIDTYPE=PARALLELGRID_ALUGRID_SIMPLEX
 #GRIDTYPE=ALUGRID_SIMPLEX
 #GRIDTYPE=ALUGRID_CONFORM
-#GRIDTYPE=ALUGRID_CUBE
+GRIDTYPE=ALUGRID_CUBE
 #GRIDTYPE=ALBERTAGRID
-GRIDDIM=2
+GRIDDIM=3
 
 LDADD = $(ALL_PKG_LDFLAGS) $(ALL_PKG_LIBS) $(LOCAL_LIBS) $(MPI_LDFLAGS)
 AM_CPPFLAGS = $(ALL_PKG_CPPFLAGS) -DPOLORDER=$(POLORDER) -DDIMRANGE=$(DIMRANGE) -DWANT_GRAPE=$(WANT_GRAPE)
@@ -30,7 +30,7 @@ check_PROGRAMS = $(ADAPTPROG) \
 		 lagrangeinterpolation \
 		 legendretest
 
-EXTRA_DIST = systemmatrix.cc dgcomm-4.sh dgcomm-cached-4.sh
+EXTRA_DIST = systemmatrix.cc dgcomm-4.sh dgcomm-cached-4.sh parameter
 
 l2projection_SOURCES = l2projection.cc
 adapt_SOURCES = adapt.cc
