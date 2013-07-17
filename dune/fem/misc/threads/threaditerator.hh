@@ -46,6 +46,11 @@ namespace Dune
       std::vector< std::vector< int > > threadId_; 
       std::vector< FilterType* > filters_;
 #endif
+
+      // if true, thread 0 does only communication and no computation
+      const bool communicationThread_;
+      const bool verbose_ ;
+      
     public:  
       //! contructor creating thread iterators 
       explicit ThreadIterator( const GridPartType& gridPart )
@@ -57,6 +62,10 @@ namespace Dune
         , iterators_( ThreadManager::maxThreads() + 1 , gridPart_.template end< 0 >() )
         , threadId_( ThreadManager::maxThreads() )
 #endif
+        , communicationThread_( Parameter::getValue<bool>("fem.threads.communicationthread", false)
+                    &&  Fem :: ThreadManager :: maxThreads() > 1 ) // only possible if maxThreads > 1
+        , verbose_( Parameter::verbose() &&
+                    Parameter::getValue<bool>("fem.threads.verbose", false ) )
       {
 #ifdef USE_SMP_PARALLEL
         threadNum_.setMemoryFactor( 1.1 ); 
@@ -136,10 +145,15 @@ namespace Dune
           size_t checkSize = 0;
           const size_t roundOff = (size % maxThreads);
           const size_t counterBase = ((size_t) size / maxThreads );
+
+          // just for diagnostics 
+          std::vector< int > nElems( maxThreads, 0 );
+
           for( size_t thread = 1; thread <= maxThreads; ++thread ) 
           {
             size_t i = 0; 
             const size_t counter = counterBase + (( (thread-1) < roundOff ) ? 1 : 0);
+            nElems[ thread-1 ] = counter ;
             checkSize += counter ;
             //std::cout << counter << " for thread " << thread-1 << std::endl;
             while( (i < counter) && (it != endit) )
@@ -161,6 +175,15 @@ namespace Dune
 
           // update sequence number 
           sequence_ = sequence;
+
+          if( verbose_ )
+          {
+            std::cout << "ThreadIterator: sequence = " << sequence_ << " size = " << checkSize << std::endl;
+            const size_t counterSize = nElems.size();
+            for(size_t i = 0; i<counterSize; ++i )
+              std::cout << "ThreadIterator: T[" << i << "] = " << nElems[ i ] << std::endl;
+          }
+
 
           //for(size_t i = 0; i<size; ++i ) 
           //  std::cout << threadNum_[ i ] << std::endl;
