@@ -5,9 +5,9 @@ WANT_GRAPE = 0
 # set default grid type for make all
 #GRIDTYPE=YASPGRID
 #GRIDTYPE=PARALLELGRID_ALUGRID_SIMPLEX
-#GRIDTYPE=ALUGRID_SIMPLEX
+GRIDTYPE=ALUGRID_SIMPLEX
 #GRIDTYPE=ALUGRID_CONFORM
-GRIDTYPE=ALUGRID_CUBE
+#GRIDTYPE=ALUGRID_CUBE
 #GRIDTYPE=ALBERTAGRID
 GRIDDIM=3
 
@@ -30,7 +30,7 @@ check_PROGRAMS = $(ADAPTPROG) \
 		 lagrangeinterpolation \
 		 legendretest
 
-EXTRA_DIST = systemmatrix.cc dgcomm-4.sh dgcomm-cached-4.sh parameter
+EXTRA_DIST = systemmatrix.cc dgcomm-4.sh dgcomm-cached-4.sh parameter *.dgf
 
 l2projection_SOURCES = l2projection.cc
 adapt_SOURCES = adapt.cc
