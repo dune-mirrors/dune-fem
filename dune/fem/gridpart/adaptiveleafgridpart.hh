@@ -277,6 +277,8 @@ namespace Dune
       /** \brief The type of the corresponding TwistUtility */
       typedef TwistUtility< GridType >  TwistUtilityType ;
 
+      typedef typename GridType::CollectiveCommunication CollectiveCommunicationType;
+
     protected:  
       // choose the AdaptiveIndexSet (based on the HierarchicIndexSet)
       // to be revised

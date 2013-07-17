@@ -29,12 +29,12 @@
 template< typename DF >
 void viewPETScVector ( const DF &dFunction, const std::string beforeMsg = "", const std::string afterMsg = "" )
 {
-  if( dFunction.space().grid().comm().rank() == 0 )
+  if( dFunction.space().gridPart().comm().rank() == 0 )
   {
     std::cout << beforeMsg << std::endl;
   }
   VecView( *dFunction.petscVector(), PETSC_VIEWER_STDOUT_WORLD );
-  if( dFunction.space().grid().comm().rank() == 0 )
+  if( dFunction.space().gridPart().comm().rank() == 0 )
   {
     std::cout << afterMsg << std::endl;
   }

@@ -382,13 +382,13 @@ namespace Dune
 
           if(op.hasPreconditionMatrix())
           {
-            return OEMSolver::cghs(arg.space().grid().comm(),
+            return OEMSolver::cghs(arg.space().gridPart().comm(),
                        size,op.systemMatrix(),op.preconditionMatrix(),
                        arg.leakPointer(),dest.leakPointer(),eps,maxIter,verbose);
           }
           else 
           {
-            return OEMSolver::cghs(arg.space().grid().comm(),
+            return OEMSolver::cghs(arg.space().gridPart().comm(),
                       size,op.systemMatrix(),
                       arg.leakPointer(),dest.leakPointer(),eps,maxIter,verbose);
           }
@@ -409,7 +409,7 @@ namespace Dune
           // see dune-common/common/collectivecommunication.hh 
           // for interface 
           int size = arg.space().size();
-          return OEMSolver::cghs(arg.space().grid().comm(),
+          return OEMSolver::cghs(arg.space().gridPart().comm(),
                     size,op.systemMatrix(),
                     arg.leakPointer(),dest.leakPointer(),eps,maxIter,verbose);
         }
@@ -482,7 +482,7 @@ namespace Dune
 
         iterations_ = val.first;
 
-        if(arg.space().grid().comm().rank() == 0)
+        if(arg.space().gridPart().comm().rank() == 0)
         {
           std::cout << "OEM-CG: " << val.first << " iterations! Error: " << val.second << "\n";
         }
@@ -531,13 +531,13 @@ namespace Dune
           int size = arg.space().size();
           if(op.hasPreconditionMatrix())
           {
-            return OEMSolver::bicgstab(arg.space().grid().comm(),
+            return OEMSolver::bicgstab(arg.space().gridPart().comm(),
                       size,op.systemMatrix(),op.preconditionMatrix(),
                       arg.leakPointer(),dest.leakPointer(),eps,maxIter,verbose);
           }
           else 
           {
-            return OEMSolver::bicgstab(arg.space().grid().comm(),
+            return OEMSolver::bicgstab(arg.space().gridPart().comm(),
                       size,op.systemMatrix(),
                       arg.leakPointer(),dest.leakPointer(),eps,maxIter,verbose);
           }
@@ -555,7 +555,7 @@ namespace Dune
                          double eps, int maxIter, bool verbose)
         {
           int size = arg.space().size();
-          return OEMSolver::bicgstab(arg.space().grid().comm(),
+          return OEMSolver::bicgstab(arg.space().gridPart().comm(),
                     size,op.systemMatrix(),
                     arg.leakPointer(),dest.leakPointer(),eps,maxIter,verbose);
         }
@@ -630,7 +630,7 @@ namespace Dune
 
         iterations_ = val.first;
 
-        if(arg.space().grid().comm().rank() == 0)
+        if(arg.space().gridPart().comm().rank() == 0)
         {
           std::cout << "OEM-BICGstab: " << val.first << " iterations! Error: " << val.second << "\n";
         }
@@ -778,23 +778,23 @@ namespace Dune
           int size = arg.space().size();
           if(op.hasPreconditionMatrix())
           {
-            return OEMSolver::gmres(arg.space().grid().comm(),
+            return OEMSolver::gmres(arg.space().gridPart().comm(),
                      inner,size,op.systemMatrix(),op.preconditionMatrix(),
                      arg.leakPointer(),dest.leakPointer(),eps,maxIter,verbose);
           }
           // in parallel case we need special treatment, if no preconditoner exist
-          else if( arg.space().grid().comm().size() > 1 )
+          else if( arg.space().gridPart().comm().size() > 1 )
           {
             typedef typename OperatorImp::SystemMatrixType SystemMatrixType;
             OEMSolver::SolverInterfaceImpl< SystemMatrixType > opSolve( op.systemMatrix() ); 
             FakeConditionerType preConditioner( size, opSolve );
-            return OEMSolver::gmres(arg.space().grid().comm(),
+            return OEMSolver::gmres(arg.space().gridPart().comm(),
                      inner,size,op.systemMatrix(),preConditioner,
                      arg.leakPointer(),dest.leakPointer(),eps,maxIter,verbose);
           }
           else 
           {
-            return OEMSolver::gmres(arg.space().grid().comm(),
+            return OEMSolver::gmres(arg.space().gridPart().comm(),
                      inner,size,op.systemMatrix(),
                      arg.leakPointer(),dest.leakPointer(),eps,maxIter,verbose);
           }
@@ -812,18 +812,18 @@ namespace Dune
                          int inner, double eps, int maxIter, bool verbose)
         {
           int size = arg.space().size();
-          if( arg.space().grid().comm().size() > 1 )
+          if( arg.space().gridPart().comm().size() > 1 )
           {
             typedef typename OperatorImp::SystemMatrixType SystemMatrixType;
             OEMSolver::SolverInterfaceImpl< SystemMatrixType > opSolve( op.systemMatrix() ); 
             FakeConditionerType preConditioner( size, opSolve );
-            return OEMSolver::gmres(arg.space().grid().comm(),
+            return OEMSolver::gmres(arg.space().gridPart().comm(),
                      inner,size,op.systemMatrix(),preConditioner,
                      arg.leakPointer(),dest.leakPointer(),eps,maxIter,verbose);
           }
           else 
           {
-            return OEMSolver::gmres(arg.space().grid().comm(),
+            return OEMSolver::gmres(arg.space().gridPart().comm(),
                      inner,size,op.systemMatrix(),
                      arg.leakPointer(),dest.leakPointer(),eps,maxIter,verbose);
           }
@@ -899,7 +899,7 @@ namespace Dune
 
         iterations_ = val.first;
 
-        if( arg.space().grid().comm().rank() == 0 && verbose_ )
+        if( arg.space().gridPart().comm().rank() == 0 && verbose_ )
         {
           std::cout << "OEM-GMRES: " << val.first << " iterations! Error: " << val.second << "\n";
         }
@@ -1004,7 +1004,7 @@ namespace Dune
           
           // in parallel runs we need fake pre conditioner to 
           // project vectors onto interior  
-          if(arg.space().grid().comm().size() > 1)
+          if(arg.space().gridPart().comm().size() > 1)
           {
             FakeConditioner fake(size,opSolve);
             OEMSolver::SolverInterfaceImpl<FakeConditioner> pre(fake);

@@ -231,9 +231,9 @@ namespace Dune
       
       const GridPartType &gridPart () const { return gridPart_; }
 
-      typename GridPartType::GridType::Traits::CollectiveCommunication comm () const
+      typename GridPartType::CollectiveCommunicationType comm () const
       {
-        return gridPart().grid().comm();
+        return gridPart().comm();
       }
 
     private:
@@ -419,7 +419,7 @@ namespace Dune
       ReturnType sum = BaseType :: forEach( u, ReturnType(0) );
 
       // return result
-      return std::pow (  comm().sum( sum[ 0 ] ), (1.0 / p_) );
+      return std::pow ( comm().sum( sum[ 0 ] ), (1.0 / p_) );
     }
 
     template< class GridPart, class OrderCalculator >

@@ -91,8 +91,8 @@ namespace Dune
       : space_( key.space() ),
         gridPart_( space_.gridPart() ),
         mapper_( key.mapper() ),
-        myRank_( gridPart_.grid().comm().rank() ),
-        mySize_( gridPart_.grid().comm().size() ),
+        myRank_( gridPart_.comm().rank() ),
+        mySize_( gridPart_.comm().size() ),
         slaves_(),
         sequence_( -1 )
       {}
@@ -245,7 +245,7 @@ namespace Dune
       // we have to skip communication when parallel program is 
       // executed only on one processor 
       // otherwise YaspGrid and Lagrange polorder=2 fails :( 
-      if( space_.grid().comm().size() > 1 )
+      if( gridPart_.comm().size() > 1 )
       {
         try
         {
@@ -343,8 +343,8 @@ namespace Dune
       LinkBuilder( IndexMapType &slaves,
                    const SpaceType &space,
                    const MapperType& mapper )
-      : myRank_( space.grid().comm().rank() ),
-        mySize_( space.grid().comm().size() ),
+      : myRank_( space.gridPart().comm().rank() ),
+        mySize_( space.gridPart().comm().size() ),
         slaves_( slaves ),
         space_( space ),
         mapper_( mapper )
@@ -545,7 +545,7 @@ namespace Dune
         }
 
         // do global sum 
-        scp = space().grid().comm().sum( scp );
+        scp = space().gridPart().comm().sum( scp );
         return scp;
       }
     };
@@ -743,12 +743,12 @@ namespace Dune
           // set i to next valid value 
           ++i;
         }
-        scp = space_.grid().comm().sum( scp );
+        scp = space_.gridPart().comm().sum( scp );
         return scp;
 #else 
         // return build-in scalar product 
         RangeFieldType scp = x * y;
-        scp = space_.grid().comm().sum( scp );
+        scp = space_.gridPart().comm().sum( scp );
         return scp;
 #endif
       }

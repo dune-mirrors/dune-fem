@@ -389,7 +389,7 @@ namespace Dune
       //! communicate data 
       void communicate(const double * arg) const
       {
-        if( rowSpace_.grid().comm().size() <= 1 ) return ;
+        if( rowSpace_.gridPart().comm().size() <= 1 ) return ;
 
         DestinationType tmp("OnTheFlyMatrixObject::communicate_tmp",rowSpace_,arg);
         rowSpace_.communicate( tmp );

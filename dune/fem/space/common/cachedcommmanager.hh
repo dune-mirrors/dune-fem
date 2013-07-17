@@ -306,8 +306,8 @@ namespace Dune
         gridPart_( space_.gridPart() ),
         interface_( interface ),
         dir_(dir),
-        myRank_( gridPart_.grid().comm().rank() ),
-        mySize_( gridPart_.grid().comm().size() ),
+        myRank_( gridPart_.comm().rank() ),
+        mySize_( gridPart_.comm().size() ),
         linkStorage_(),
         recvIndexMap_( new IndexMapType[ mySize_ ] ),
         sendIndexMap_( new IndexMapType[ mySize_ ] ),
@@ -316,8 +316,7 @@ namespace Dune
         buildTime_( 0.0 ),
         sequence_( -1 ),
         nonBlockingObjects_( 0 )
-      {
-      }
+      {}
 
     private:
       // prohibit copying
@@ -410,7 +409,7 @@ namespace Dune
         const int myRebuild = willRebuild;
 
         // send willRebuild from rank 0 to all 
-        gridPart_.grid().comm().broadcast( &willRebuild, 1 , 0);
+        gridPart_.comm().broadcast( &willRebuild, 1 , 0);
 
         assert( willRebuild == myRebuild );
 #endif
@@ -568,8 +567,8 @@ namespace Dune
                     IndexMapVectorType &sendIdxMap,
                     IndexMapVectorType &recvIdxMap,
                     const SpaceType &space )
-      : myRank_( space.grid().comm().rank() ),
-        mySize_( space.grid().comm().size() ),
+      : myRank_( space.gridPart().comm().rank() ),
+        mySize_( space.gridPart().comm().size() ),
         linkStorage_( linkStorage ),
         sendIndexMap_( sendIdxMap ),
         recvIndexMap_( recvIdxMap ),
@@ -1029,10 +1028,9 @@ namespace Dune
                            const CommunicationDirection dir)
         : space_(space)
         , key_(space_,interface,dir)
-        , mySize_(space_.grid().comm().size())
+        , mySize_(space_.gridPart().comm().size())
         , cache_(CommunicationProviderType::getObject(key_)) 
-      {
-      }
+      {}
 
       //! constructor taking space and communication interface/direction 
       CommunicationManager(const SpaceType & space)
@@ -1040,10 +1038,9 @@ namespace Dune
         , key_(space_,
                space.communicationInterface(),
                space.communicationDirection())
-        , mySize_(space_.grid().comm().size())
+        , mySize_(space_.gridPart().comm().size())
         , cache_(CommunicationProviderType::getObject(key_)) 
-      {
-      }
+      {}
 
       //! remove object comm
       ~CommunicationManager() 

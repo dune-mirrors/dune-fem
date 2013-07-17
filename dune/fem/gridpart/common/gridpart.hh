@@ -88,6 +88,9 @@ namespace Dune
       //! \brief Index set implementation
       typedef typename Traits::IndexSetType IndexSetType;
 
+      //! \brief Collective communication
+      typedef typename Traits::CollectiveCommunicationType CollectiveCommunicationType;
+
       //! \brief Twist utility type 
       typedef typename Traits::TwistUtilityType TwistUtilityType;
 
@@ -245,6 +248,13 @@ namespace Dune
         return asImp().boundaryId( intersection );
       }
 
+      /** \brief obtain collective communication object */
+      const CollectiveCommunicationType &comm () const
+      {
+        CHECK_INTERFACE_IMPLEMENTATION( asImp().comm() );
+        return asImp().comm();
+      }
+
       //! \brief corresponding communication method for grid part
       template< class DataHandleImp, class DataType >
       void communicate ( CommDataHandleIF< DataHandleImp, DataType > &data,
@@ -301,6 +311,9 @@ namespace Dune
       //! \brief Index set implementation
       typedef typename Traits::IndexSetType IndexSetType;
 
+      //! \brief Collective communication
+      typedef typename Traits::CollectiveCommunicationType CollectiveCommunicationType;
+
     protected:
       GridType &grid_;
 
@@ -323,6 +336,12 @@ namespace Dune
 
       //! Returns reference to the underlying grid
       GridType &grid () { return grid_; }
+
+      /** \brief obtain collective communication object */
+      const CollectiveCommunicationType &comm () const
+      {
+        return grid().comm();
+      }
 
       /* \brief \copydoc GridPartInterface::entityPointer
        *

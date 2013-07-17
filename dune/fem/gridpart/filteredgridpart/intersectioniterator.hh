@@ -30,6 +30,8 @@ namespace Dune
       static const int dimension = HostIntersection::dimension;
       //! \brief world dimension
       static const int dimensionworld = HostIntersection::dimensionworld;
+      static const int mydimension = dimension - 1;
+
       //! \brief single coordinate type
       typedef typename HostIntersection::ctype ctype;
 

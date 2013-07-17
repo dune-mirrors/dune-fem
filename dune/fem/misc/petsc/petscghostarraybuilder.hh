@@ -58,7 +58,7 @@ namespace Dune
       : array_( 0 ),
         arrayNeedsUpdate_( true )
       {
-        if( slaveDofs.space().grid().comm().size() > 1 ) // YaspGrid and lagrange polorder = 2 fails unless we skip this in serial code
+        if( slaveDofs.space().gridPart().comm().size() > 1 ) // YaspGrid and lagrange polorder = 2 fails unless we skip this in serial code
         {
           try
           {

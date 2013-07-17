@@ -4,7 +4,6 @@
 #include <dune/common/typetraits.hh>
 
 #include <dune/grid/io/file/vtk/vtkwriter.hh>
-#include <dune/grid/io/file/vtk/vtkwriter.hh>
 #include <dune/grid/io/file/vtk/subsamplingvtkwriter.hh>
 
 #include <dune/fem/version.hh>
@@ -237,7 +236,7 @@ namespace Dune
         {
           vtkWriter_->addCellData( new VolumeData() );
 
-          const int rank = ( myRank < 0 ) ? gridPart_.grid().comm().rank() : myRank ;
+          const int rank = ( myRank < 0 ) ? gridPart_.comm().rank() : myRank ;
           const int nThreads = ( addPartition_ > 1 ) ? ThreadManager::maxThreads() : 1 ;
           if( addPartition_ <= 2 ) 
             vtkWriter_->addCellData( new PartitioningData( gridPart_, "rank", rank, nThreads ) );
