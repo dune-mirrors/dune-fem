@@ -24,7 +24,7 @@ namespace Dune
 
       typedef typename IntersectionIterator::Intersection Intersection;
 
-      typedef typename Grid::Traits::CollectiveCommunication CollectiveCommunication;
+      typedef typename GridPart::CollectiveCommunicationType CollectiveCommunication;
 
       template< int codim >
       struct Codim
@@ -153,7 +153,7 @@ namespace Dune
 
       const CollectiveCommunication &comm () const
       {
-        return grid().comm();
+        return gridPart_.comm();
       }
 
       template< class DataHandleImp, class DataType >
