@@ -197,6 +197,8 @@ namespace Dune
         };
       };
 
+      typedef typename GridType::CollectiveCommunication CollectiveCommunicationType;
+
       //! \brief is true if grid on this view only has conforming intersections 
       static const bool conforming = Dune::Capabilities::isLeafwiseConforming< GridType >::v;
     };

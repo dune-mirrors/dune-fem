@@ -137,6 +137,8 @@ namespace Dune
         typedef typename Partition< InteriorBorder_Partition >::IteratorType IteratorType;
       };
 
+      typedef typename HostGridPartType::CollectiveCommunicationType CollectiveCommunicationType;
+
       //! \brief maximum partition type, the index set provides indices for
       static const PartitionIteratorType indexSetPartitionType = HostGridPartType::indexSetPartitionType;
 
@@ -198,6 +200,8 @@ namespace Dune
 
       //! \brief intersection type
       typedef typename IntersectionIteratorType::Intersection IntersectionType;
+
+      typedef typename Traits::CollectiveCommunicationType CollectiveCommunicationType;
 
       //! \brief grid view
       typedef GridView< GridPartViewTraits< ThisType > > GridViewType;
@@ -308,6 +312,8 @@ namespace Dune
       {
         return intersection.boundaryId();
       }
+
+      const CollectiveCommunicationType &comm () const { return hostGridPart_.comm(); }
 
       //! \brief corresponding communication method for this grid part
       template < class DataHandleImp, class DataType >
