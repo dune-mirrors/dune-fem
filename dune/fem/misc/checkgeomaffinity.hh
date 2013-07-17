@@ -254,7 +254,7 @@ namespace Dune
         bool cartesian = doCheck( gridPart.grid() , gridPart.indexSet() );
         int val = (cartesian) ? 1 : 0;
         // take global minimum  
-        val = gridPart.grid().comm().min( val );
+        val = gridPart.comm().min( val );
         return (val == 1) ? true : false;
       }
     };

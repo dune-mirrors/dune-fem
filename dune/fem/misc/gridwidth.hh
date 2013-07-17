@@ -160,7 +160,7 @@ namespace Dune
         if( communicate )
         {
           double w = width ;
-          gridPart.grid().comm().template allreduce<MinMax> ( &w, &width, 1 );
+          gridPart.comm().template allreduce<MinMax> ( &w, &width, 1 );
         }
 
         return width;
@@ -221,7 +221,7 @@ namespace Dune
 #ifndef NDEBUG 
         // make sure grid width calculation is done on every process 
         int check = (dm_.sequence() != sequence_) ? 1 : 0;
-        int willCalc = grid_.comm().min( check );
+        int willCalc = gridPart_.comm().min( check );
         assert( check == willCalc );
 #endif
 

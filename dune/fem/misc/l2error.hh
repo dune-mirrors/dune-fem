@@ -83,7 +83,7 @@ namespace Dune
               CollectiveCommunication
               CommunicatorType; 
           
-          const CommunicatorType & comm = gridPart.grid().comm();
+          const CommunicatorType & comm = gridPart.comm();
           
           RangeType ret (0.0);
           RangeType phi (0.0);
@@ -161,7 +161,7 @@ namespace Dune
             CollectiveCommunication
             CommunicatorType; 
         
-        const CommunicatorType & comm = gridPart.grid().comm();
+        const CommunicatorType & comm = gridPart.comm();
         
         RangeFieldType ret=0;  
 

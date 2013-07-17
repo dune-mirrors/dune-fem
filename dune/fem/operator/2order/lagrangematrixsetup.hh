@@ -272,7 +272,7 @@ namespace Dune
     //! apply operator to x, scale and add:  \f$ y = y + \alpha A(x) \f$
     virtual void applyscaleadd ( field_type alpha, const X &x, Y &y) const
     {
-      if( rowSpace_.grid().comm().size() <= 1 )
+      if( rowSpace_.gridPart().comm().size() <= 1 )
       {
         matrix_.usmv(alpha,x,y);
         communicate( y );
@@ -305,7 +305,7 @@ namespace Dune
   protected:
     void communicate( Y &y ) const
     {
-      if( rowSpace_.grid().comm().size() <= 1 )
+      if( rowSpace_.gridPart().comm().size() <= 1 )
         return;
 
       Timer commTime; 

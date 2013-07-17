@@ -385,7 +385,7 @@ namespace DuneODE
     ExplMultiStep (Operator& op,int pord,double cfl, bool verbose = true ) :
       TimeProvider(0.0,(cfl/double(pord))*0.95),
       BaseType(op,*this,pord,verbose),
-      tp_(op.space().grid().comm(),*this), 
+      tp_(op.space().gridPart().comm(),*this), 
       savetime_(0.0), savestep_(1)
     {
       op.timeProvider(this);

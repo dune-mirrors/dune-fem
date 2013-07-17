@@ -115,7 +115,7 @@ namespace Dune
             DataHandleType;
           
           // on serial runs: do nothing
-          if( space_.grid().comm().size() <= 1 )
+          if( space_.gridPart().comm().size() <= 1 )
             return 0.0;
 
           // get stopwatch 
@@ -226,7 +226,7 @@ namespace Dune
                              const Operation *operation ) const
       {
         // on serial runs: do nothing
-        if( space_.grid().comm().size() <= 1 )
+        if( space_.gridPart().comm().size() <= 1 )
           return;
 
         NonBlockingCommunicationType nbc( space_, interface_, dir_ );

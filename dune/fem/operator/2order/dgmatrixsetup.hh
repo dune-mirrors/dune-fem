@@ -327,7 +327,7 @@ namespace Dune
         ++i;
       }
 
-      res = rowSpace_.grid().comm().sum( res );
+      res = rowSpace_.gridPart().comm().sum( res );
       // return global sum of residuum 
       return std::sqrt( res );
     }
@@ -340,7 +340,7 @@ namespace Dune
   protected:
     void communicate( const X& x ) const
     {
-      if( rowSpace_.grid().comm().size() <= 1 ) return ;
+      if( rowSpace_.gridPart().comm().size() <= 1 ) return ;
 
       Timer commTime;
 
