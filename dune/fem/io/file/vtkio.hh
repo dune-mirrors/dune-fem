@@ -4,7 +4,6 @@
 #include <dune/common/typetraits.hh>
 
 #include <dune/grid/io/file/vtk/vtkwriter.hh>
-#include <dune/grid/io/file/vtk/vtkwriter.hh>
 #include <dune/grid/io/file/vtk/subsamplingvtkwriter.hh>
 
 #include <dune/fem/version.hh>

@@ -13,7 +13,7 @@ namespace Dune
 
     template <class GridPartType>
     struct WeightDefault {
-      typedef FieldVector<double,GridPartType::GridType::dimension> DomainType;
+      typedef FieldVector<double,GridPartType::dimension> DomainType;
       template <class EntityType>
       void setEntity(const EntityType& en) {
         volume_ = en.geometry().volume();
