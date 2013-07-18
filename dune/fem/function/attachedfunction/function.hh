@@ -124,7 +124,7 @@ namespace Dune
       : BaseType( name, dfSpace, lfFactory_ ),
         lfFactory_( *this ),
         mapper_( dfSpace.blockMapper() ),
-        container_( ContainerType :: attach( dfSpace.grid(), mapper_ ) ),
+        container_( ContainerType::attach( dfSpace.gridPart().grid(), mapper_ ) ),
         slot_( container_.allocSlot() )
       {}
 
@@ -132,8 +132,7 @@ namespace Dune
       : BaseType( other.name(), other.space(), lfFactory_ ),
         lfFactory_( *this ),
         mapper_( space().blockMapper() ),
-        container_( ContainerType :: attach
-          ( other.space().grid(), mapper_ ) ),
+        container_( ContainerType::attach( other.space().gridPart().grid(), mapper_ ) ),
         slot_( container_.allocSlot() )
       {
         assign( other );

@@ -215,8 +215,8 @@ namespace Dune
        
         enum { dim = GridType::dimension };
         
-        const DiscreteFunctionSpaceType& space =  discFunc.space();
-        const GridPartType & gridPart = space.gridPart();
+        const DiscreteFunctionSpaceType &space = discFunc.space();
+        const GridPartType &gridPart = space.gridPart();
         const int polOrd = (polyOrder <0) ? (2 * space.order() + 2) : polyOrder;
         
         typedef typename DiscreteFunctionType::LocalFunctionType LocalFuncType;
@@ -229,7 +229,7 @@ namespace Dune
 
         double sum = 0.0;
 
-        const LocalIdSetType & idSet = space.grid().localIdSet();
+        const LocalIdSetType &idSet = gridPart.grid().localIdSet();
         
         Iterator endit = space.end();
         for(Iterator it = space.begin(); it != endit ; ++it) 

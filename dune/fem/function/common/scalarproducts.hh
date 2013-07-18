@@ -698,9 +698,7 @@ namespace Dune
       {
 #if HAVE_MPI
         // case of ALUGrid and DGSpace or FVSpace 
-        const bool deleteGhostEntries = 
-            space_.grid().overlapSize(0) == 0 && 
-            ! space_.continuous();
+        const bool deleteGhostEntries = (space_.gridPart().grid().overlapSize( 0 ) == 0) && !space_.continuous();
 
         // only delete ghost entries 
         if( deleteGhostEntries ) 

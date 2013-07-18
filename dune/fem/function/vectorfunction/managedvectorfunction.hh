@@ -81,9 +81,8 @@ namespace Dune
       {
         mapper_ = new NonBlockingMapperType( dfSpace.blockMapper() );
         // allocate managed dof storage 
-        std :: pair< DofStorageInterface *, DofVectorType * > memPair
-          = allocateManagedDofStorage( dfSpace.grid(), *mapper_, 
-                                       name , (DofVectorType *) 0);
+        std::pair< DofStorageInterface *, DofVectorType * > memPair
+          = allocateManagedDofStorage( dfSpace.gridPart().grid(), *mapper_, name, (DofVectorType *)0 );
         memObject_ = memPair.first;
         return *(memPair.second);
       }

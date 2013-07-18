@@ -164,7 +164,7 @@ namespace Dune
         lfStorage_( lfFactory_ ),
         mapper_( dfSpace.blockMapper() ),
         name_( name ),
-        memPair_( allocateManagedDofStorage< BlockVectorType >( space().grid(), mapper_, name ) ),
+        memPair_( allocateManagedDofStorage< BlockVectorType >( space().gridPart().grid(), mapper_, name ) ),
         scalarProduct_( dfSpace_ )
       {
       }
@@ -180,7 +180,7 @@ namespace Dune
         lfStorage_( lfFactory_ ),
         mapper_( other.space().blockMapper() ), 
         name_( other.name() ),
-        memPair_( allocateManagedDofStorage< BlockVectorType >( space().grid(), mapper_, name() ) ),
+        memPair_( allocateManagedDofStorage< BlockVectorType >( space().gridPart().grid(), mapper_, name() ) ),
         scalarProduct_( dfSpace_ )
       {
         dofVector() = other.dofVector();

@@ -224,7 +224,7 @@ namespace Dune
         
         // create memory object 
         std::pair< DofStorageInterface* , DofStorageType* > memPair
-           = allocateManagedDofStorage( spc_.grid(), mapper(),
+           = allocateManagedDofStorage( spc_.gridPart().grid(), mapper(),
                                         name, (MutableDofStorageType *) 0);
                                         
         // save pointer 

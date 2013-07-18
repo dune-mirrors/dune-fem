@@ -440,7 +440,7 @@ namespace Dune
                                 const std::string& filename,
                                 const int p =  -1 ) 
       {
-        const int rank = ( p < 0 ) ? gridPart.grid().comm().rank() : p ;
+        const int rank = ( p < 0 ? gridPart.comm().rank() : p);
         ALUGridWriter< GridPartType, IndexSetType > writer ( gridPart, indexSet );
         writer.write( filename, rank );
       }

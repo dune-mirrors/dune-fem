@@ -216,7 +216,7 @@ void resetNonInterior( DiscreteFunctionType &solution )
     }
   }
 
-  std::cout << "P[" << space.grid().comm().rank() << "]  reset " << count << " entities "  << std::endl;
+  std::cout << "P[" << space.gridPart().comm().rank() << "]  reset " << count << " entities "  << std::endl;
             
 }
  

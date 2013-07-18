@@ -62,25 +62,25 @@ void setToRank ( DF &dFunction, const std::string &msg )
   typedef Dune::tuple< DF* > IOTupleType;
   typedef Dune::DataOutput< GridType, IOTupleType > DataOutputType;
   IOTupleType dataTup ( &dFunction );
-  DataOutputType dataOutput( dFunction.space().grid(), dataTup, VariableFilenameParameter( msg ) );
+  DataOutputType dataOutput( dFunction.gridPart().grid(), dataTup, VariableFilenameParameter( msg ) );
 
   std::cout << std::endl;
-  std::cout << dFunction.space().grid().comm().rank() << ", size() of " << msg << ": " << dFunction.size() << std::endl;
-  /*std::cout << dFunction.space().grid().comm().rank() << ", size/localBlockSize for " << 
+  std::cout << dFunction.gridPart().comm().rank() << ", size() of " << msg << ": " << dFunction.size() << std::endl;
+  /*std::cout << dFunction.gridPart().comm().rank() << ", size/localBlockSize for " << 
             msg << ": " << dFunction.size()/DF::localBlockSize << std::endl;*/
   size_t counter = 0;
   for( typename DF::DofIteratorType it = dFunction.dbegin(); it != dFunction.dend(); ++it ) 
   {
-    *it = dFunction.space().grid().comm().rank() + 1;
+    *it = dFunction.gridPart().comm().rank() + 1;
     ++counter;
   }
-  std::cout << dFunction.space().grid().comm().rank() << ", " << msg << "s dof iterator walked over " 
+  std::cout << dFunction.gridPart().comm().rank() << ", " << msg << "s dof iterator walked over " 
             << counter << " dofs\n";
   dataOutput.writeData( 0, "before" );
   dFunction.communicate();
   dataOutput.writeData( 1, "after" );
 
-  /*std::cout << msg << ", reading on rk " << dFunction.space().grid().comm().rank() << " after communication:\n";
+  /*std::cout << msg << ", reading on rk " << dFunction.gridPart().comm().rank() << " after communication:\n";
   counter = 0;
   for( typename DF::DofIteratorType it = dFunction.dbegin(); it != dFunction.dend(); ++it ) 
   {

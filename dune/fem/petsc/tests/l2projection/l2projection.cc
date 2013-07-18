@@ -138,7 +138,7 @@ inline void Algorithm::operator() ( DiscreteFunctionType &solution )
   InvOperatorType* op = 0;
 
   unsigned long maxIter = dfSpace_.size();
-  maxIter = dfSpace_.grid().comm().sum( maxIter );
+  maxIter = dfSpace_.gridPart().comm().sum( maxIter );
 
 #ifdef USE_PETSCLINEAROPERATOR 
   if( Dune::Fem::Parameter::getValue<bool>("usepetsc", true ) )

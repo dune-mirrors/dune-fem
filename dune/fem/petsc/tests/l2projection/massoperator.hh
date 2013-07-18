@@ -70,7 +70,7 @@ public:
 
   explicit MassOperator ( const DiscreteFunctionSpaceType &dfSpace )
   : dfSpace_( dfSpace ),
-    dofManager_( DofManagerType::instance( dfSpace.grid() ) ),
+    dofManager_( DofManagerType::instance( dfSpace.gridPart().grid() ) ),
     systemMatrix_( "mass operator", dfSpace, dfSpace ),
     sequence_( -1 )
   {}
