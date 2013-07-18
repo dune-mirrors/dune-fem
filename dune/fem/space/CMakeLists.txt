@@ -27,5 +27,10 @@ foreach(i ${SUBDIRS})
   add_subdirectory(${i} ${opt})
 endforeach(i ${SUBDIRS})
 
-dune_add_library(libspace_la ADD_LIBS space discontinuousgalerkin
-                     lagrang)
+dune_add_library(space SOURCES 
+    discontinuousgalerkin/legendrepolynomials.cc
+    discontinuousgalerkin/orthonormalbase_1d.cc
+    discontinuousgalerkin/orthonormalbase_2d.cc
+    discontinuousgalerkin/orthonormalbase_3d.cc
+    lagrange/shapefunctionset.cc
+  )

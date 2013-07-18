@@ -5,7 +5,6 @@ set(io_HEADERS  io.hh  parameter.hh)
 set(SUBDIRS  file streams visual matlab test)
 # build io library
 
-dune_add_library(io SOURCES io.cc)
 # include common rules
 # include not needed for CMake
 # include $(top_srcdir)/am/global-rules

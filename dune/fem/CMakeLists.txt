@@ -2,7 +2,7 @@
 set(SUBDIRS  common pass space function gridpart quadrature operator petsc solver storage io misc test)
 
 # construct only from sub-libraries
-dune_add_library(dunefem ADD_LIBS libio_la libmisc_la libspace_la libsolver_la libquadrature_la)
+
 # install all files to dune/fem
 set(femdir  ${CMAKE_INSTALL_INCLUDEDIR}/dune/fem)
 set(fem_HEADERS  version.hh)
@@ -15,3 +15,6 @@ foreach(i ${SUBDIRS})
   endif(${i} STREQUAL "test")
   add_subdirectory(${i} ${opt})
 endforeach(i ${SUBDIRS})
+
+dune_add_library(io SOURCES io/io.cc)
+dune_add_library(dunefem ADD_LIBS io misc space solver quadrature)

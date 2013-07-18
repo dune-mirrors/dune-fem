@@ -4,17 +4,9 @@ set(odedir  ${CMAKE_INSTALL_INCLUDEDIR}/dune/fem/solver/ode)
 if( PARDG)
     # only install these headers
     set(ode_HEADERS  communicator.hpp mpicommunicator.hpp emptycommunicator.hpp)
-    set(noinst_LTLIBRARIES  libodesolver.la)
-    dune_add_library(odesolver SOURCES "")
+    
 else( PARDG )
     # otherwise install all
-    dune_add_library(odesolver SOURCES odeobjectfiles.cc odeobjectfiles_mpi.cc)
-    if(MPI_CXX_FOUND)
-        add_dune_mpi_flags(odesolver )
-        target_link_libraries(odesolver ${DUNE_LIBS})
-    else(MPI_CXX_FOUND )
-        target_link_libraries(odesolver ${DUNE_LIBS})
-    endif(MPI_CXX_FOUND )
     
     set(ode_HEADERS  communicator.hpp mpicommunicator.hpp emptycommunicator.hpp
     blas.hpp  iterative_solver.hpp limiter.hpp
