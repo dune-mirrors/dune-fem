@@ -5,7 +5,9 @@
 
 #include <dune/fem/version.hh>
 #include <dune/fem/function/common/gridfunctionadapter.hh>
+#include <dune/fem/misc/iteratorprovider.hh>
 #include <dune/fem/operator/common/operator.hh>
+
 
 namespace Dune 
 {
@@ -16,7 +18,8 @@ namespace Dune
     /** \class LagrangeInterpolation
      *  \brief Generates the Lagrange Interpolation of an analytic function
      */
-    template< class Function, class DiscreteFunction >
+    template< class Function, class DiscreteFunction,
+              class IteratorProvider = Fem::IteratorProvider< typename DiscreteFunction::DiscreteFunctionSpaceType > >
     class LagrangeInterpolation : public Operator< Function, DiscreteFunction >
     {
       typedef LagrangeInterpolation< Function, DiscreteFunction > ThisType;
@@ -112,15 +115,15 @@ namespace Dune
 
 
     
-    template< class Function, class DiscreteFunction >
+    template< class Function, class DiscreteFunction, class IteratorProvider >
     template< class GridFunction >
-    inline void LagrangeInterpolation< Function, DiscreteFunction >
+    inline void LagrangeInterpolation< Function, DiscreteFunction, IteratorProvider >
       ::interpolateDiscreteFunction ( const GridFunction &function,
                                       DiscreteFunctionType &discreteFunction )
     {
       typedef typename DiscreteFunctionType::DofType DofType;
       typedef typename DiscreteFunctionType::DofIteratorType DofIteratorType;
-      typedef typename DiscreteFunctionSpaceType::IteratorType IteratorType;
+      typedef typename IteratorProvider::IteratorType IteratorType;
       static const int dimRange = DiscreteFunctionSpaceType::dimRange;
 
       typedef typename GridFunction::LocalFunctionType FunctionLocalFunctionType;
@@ -132,8 +135,10 @@ namespace Dune
 
       const DiscreteFunctionSpaceType &dfSpace = discreteFunction.space();
 
-      IteratorType endit = dfSpace.end();
-      for( IteratorType it = dfSpace.begin(); it != endit; ++it )
+      IteratorProvider iteratorProvider( dfSpace );
+
+      const IteratorType end = iteratorProvider.end();
+      for( IteratorType it = iteratorProvider.begin(); it != end; ++it )
       {
         const LagrangePointSetType &lagrangePointSet
           = dfSpace.lagrangePointSet( *it );

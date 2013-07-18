@@ -1,11 +1,16 @@
 #ifndef DUNE_FEM_SPACE_INTERPOLATION_HH
 #define DUNE_FEM_SPACE_INTERPOLATION_HH
 
+#include <dune/fem/misc/iteratorprovider.hh>
+
 namespace Dune
 {
 
   namespace Fem
   {
+
+    // Interpolation
+    // -------------
 
     /** \class   Interpolation
      *  \ingroup DiscreteFunctionSpace
@@ -27,7 +32,8 @@ void interpolate ( const LocalFunction &f, LocalDofVector &dofs ) const;
      *
      *  \tparam  DiscreteFunction  type of discrete function to interpolate to
      */
-    template< class DiscreteFunction >
+    template< class DiscreteFunction,
+              class IteratorProvider = Fem::IteratorProvider< typename DiscreteFunction::DiscreteFunctionSpaceType > >
     struct Interpolation
     {
       typedef DiscreteFunction DiscreteFunctionType;
@@ -52,15 +58,15 @@ void interpolate ( const LocalFunction &f, LocalDofVector &dofs ) const;
       template< class GridFunction >
       static void apply ( const GridFunction &u, DiscreteFunctionType &v )
       {
-        typedef typename DiscreteFunctionSpaceType::IteratorType IteratorType;
+        typedef typename IteratorProvider::IteratorType IteratorType;
         typedef typename DiscreteFunctionSpaceType::EntityType EntityType;
-
         typedef typename DiscreteFunctionType::LocalFunctionType LocalFunctionType;
 
         const DiscreteFunctionSpaceType &space = v.space();
+        IteratorProvider iteratorProvider( space );
 
-        const IteratorType end = space.end();
-        for( IteratorType it = space.begin(); it != end; ++it )
+        const IteratorType end = iteratorProvider.end();
+        for( IteratorType it = iteratorProvider.begin(); it != end; ++it )
         {
           const EntityType &entity = *it;
           LocalFunctionType vLocal = v.localFunction( entity );
