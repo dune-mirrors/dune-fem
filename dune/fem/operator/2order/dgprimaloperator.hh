@@ -390,7 +390,7 @@ namespace Dune
         }
         
         bool success = true;  
-        const bool output = (gridPart_.grid().comm().rank() == 0);
+        const bool output = (gridPart_.comm().rank() == 0);
         // if parameter file is not empty read parameter 
         if(paramFile != "")
         {

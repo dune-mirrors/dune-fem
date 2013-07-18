@@ -88,7 +88,7 @@ namespace Dune
           typedef typename DiscreteFunctionType :: DofStorageType BlockVectorType;
 
           // verbose only in verbose mode and for rank 0 
-          int verb = (verbose && (dest.space().grid().comm().rank() == 0)) ? 2 : 0;
+          int verb = (verbose && (dest.space().gridPart().comm().rank() == 0)) ? 2 : 0;
            
           if( 0 < absLimit && absLimit < std::numeric_limits< double >::max() )
           {
@@ -251,7 +251,7 @@ namespace Dune
           typedef typename DiscreteFunctionType :: DofStorageType BlockVectorType;
 
           // verbose only in verbose mode and for rank 0 
-          int verb = (verbose && (dest.space().grid().comm().rank() == 0)) ? 2 : 0;
+          int verb = (verbose && (dest.space().gridPart().comm().rank() == 0)) ? 2 : 0;
            
           if( 0 < absLimit && absLimit < std::numeric_limits< double >::max() )
           {
@@ -416,7 +416,7 @@ namespace Dune
           typedef typename DiscreteFunctionType :: DofStorageType BlockVectorType;
 
           // verbose only in verbose mode and for rank 0 
-          int verb = (verbose && (dest.space().grid().comm().rank() == 0)) ? 2 : 0;
+          int verb = (verbose && (dest.space().gridPart().comm().rank() == 0)) ? 2 : 0;
            
           if( absLimit < std::numeric_limits< double >::max() )
           {
@@ -584,7 +584,7 @@ namespace Dune
           typedef typename DiscreteFunctionType :: DofStorageType BlockVectorType;
 
           // verbose only in verbose mode and for rank 0 
-          int verb = (verbose && (dest.space().grid().comm().rank() == 0)) ? 2 : 0;
+          int verb = (verbose && (dest.space().gridPart().comm().rank() == 0)) ? 2 : 0;
             
           if( absLimit < std::numeric_limits< double >::max() )
           {

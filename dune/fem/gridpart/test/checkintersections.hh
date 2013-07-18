@@ -12,6 +12,7 @@
 
 //- dune-grid includes
 #include <dune/grid/test/checkgeometry.cc>
+#include <dune/grid/test/checkintersectionit.cc>
 
 //- dune-fem includes
 #include <dune/fem/gridpart/test/failure.hh>
@@ -88,6 +89,8 @@ namespace Dune
           for( IntersectionIteratorType iit = gridPart.ibegin( entity ); iit != iend; ++iit )
           {
             const IntersectionType &intersection = *iit;
+
+            checkIntersection( intersection, false );
 
             // create intersection caching quadrature to check twists 
             IntersectionQuadrature< CachingQuadrature< GridPartType, 1 >, true > 

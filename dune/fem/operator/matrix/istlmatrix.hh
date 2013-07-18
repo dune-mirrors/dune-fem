@@ -925,7 +925,7 @@ namespace Dune
                              size_t numIterations) const 
       {
         typedef typename MatrixAdapterType :: PreconditionAdapterType PreConType;
-        PreConType preconAdapter(matrix(), numIterations, relaxFactor_, preconditioning, domainSpace().grid().comm() );
+        PreConType preconAdapter(matrix(), numIterations, relaxFactor_, preconditioning, domainSpace().gridPart().comm() );
         return MatrixAdapterType(matrix(), domainSpace(), rangeSpace(), preconAdapter );
       }
 
@@ -941,7 +941,7 @@ namespace Dune
       MatrixAdapterType matrixAdapterObject() const 
       { 
 #ifndef DISABLE_ISTL_PRECONDITIONING
-        const size_t procs = domainSpace().grid().comm().size();
+        const size_t procs = domainSpace().gridPart().comm().size();
 
         typedef typename MatrixType :: BaseType ISTLMatrixType ;
         typedef typename MatrixAdapterType :: PreconditionAdapterType PreConType;

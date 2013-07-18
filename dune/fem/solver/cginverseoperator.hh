@@ -357,7 +357,7 @@ namespace Dune
     inline void ConjugateGradientSolver< Operator >
       ::solve ( const OperatorType &op, const RangeFunctionType &b, DomainFunctionType &x ) const
     {
-      const bool verbose = (verbose_ && (b.space().grid().comm().rank() == 0));
+      const bool verbose = (verbose_ && (b.space().gridPart().comm().rank() == 0));
       
       const RangeFieldType tolerance = (epsilon_ * epsilon_) * b.scalarProductDofs( b ); 
 
@@ -397,7 +397,7 @@ namespace Dune
         {
           std::cerr << "CG-Iteration: " << realCount_ << ", sqr(Residuum): " << residuum << std::endl;
           // only for parallel apps 
-          if( b.space().grid().comm().size() > 1 )
+          if( b.space().gridPart().comm().size() > 1 )
             std::cerr << "Communication needed: " << exchangeTime << " s" << std::endl;
         }
         
@@ -410,7 +410,7 @@ namespace Dune
     inline void ConjugateGradientSolver< Operator >
     ::solve ( const OperatorType &op, const PreconditionerType &precond, const RangeFunctionType &b, DomainFunctionType &x ) const
     {
-      const bool verbose = (verbose_ && (b.space().grid().comm().rank() == 0));
+      const bool verbose = (verbose_ && (b.space().gridPart().comm().rank() == 0));
       
       const RangeFieldType tolerance = (epsilon_ * epsilon_) * b.scalarProductDofs( b ); 
 
@@ -464,7 +464,7 @@ namespace Dune
         {
           std::cerr << "CG-Iteration: " << realCount_ << ", Residuum: " << residuum << std::endl;
           // only for parallel apps 
-          if( b.space().grid().comm().size() > 1 )
+          if( b.space().gridPart().comm().size() > 1 )
             std::cerr << "Communication needed: " << exchangeTime << " s" << std::endl;
         }
         

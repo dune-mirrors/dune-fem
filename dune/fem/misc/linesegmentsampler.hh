@@ -196,7 +196,7 @@ namespace Dune
       }
 
       typedef Reduce< typename GridFunction::RangeType > Op;
-      gridPart().grid().comm().template allreduce< Op >( &(samples[ 0 ]), numSamples );
+      gridPart().comm().template allreduce< Op >( &(samples[ 0 ]), numSamples );
 
       bool valid = true;
       for( int i = 0; i < numSamples; ++i )
