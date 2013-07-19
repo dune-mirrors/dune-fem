@@ -199,6 +199,7 @@ namespace Dune
       template< class Point, class RangeArray >
       void evaluateAll ( const Point &x, RangeArray &values ) const
       {
+        assert( values.size() >= size() );
         AssignFunctor< RangeArray > f( values );
         shapeFunctionSet().evaluateEach( x, f );
       }
@@ -232,6 +233,7 @@ namespace Dune
       template< class Point, class JacobianRangeArray >
       void jacobianAll ( const Point &x, JacobianRangeArray &jacobians ) const
       {
+        assert( jacobians.size() >= size() );
         typedef JacobianTransformation< GeometryType > Transformation;
         Transformation transformation( geometry(), coordinate( x ) );
         AssignFunctor< JacobianRangeArray, Transformation > f( jacobians, transformation );
@@ -255,6 +257,7 @@ namespace Dune
       template< class Point, class HessianRangeArray >
       void hessianAll ( const Point &x, HessianRangeArray &hessians ) const
       {
+        assert( hessians.size() >= size() );
         typedef HessianTransformation< GeometryType > Transformation;
         Transformation transformation( geometry(), coordinate( x ) );
         AssignFunctor< HessianRangeArray, Transformation > f( hessians, transformation );
