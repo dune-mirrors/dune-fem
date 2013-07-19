@@ -1,10 +1,20 @@
 #ifndef DUNE_FEM_SPACE_DISCONTINUOUSGALERKIN_HIERARCHICLEGENDREMAP_HH
 #define DUNE_FEM_SPACE_DISCONTINUOUSGALERKIN_HIERARCHICLEGENDREMAP_HH
 
+// C++ inlcudes
+#include <cassert>
+
+// dune-common includes
+#include <dune/common/power.hh>
+#include <dune/common/array.hh>
+
+
 namespace Dune
 {
+
   namespace Fem
   {
+
     template<int polOrder, int dimension>
     class HierarchicLegendreMap
     {
@@ -116,14 +126,11 @@ namespace Dune
 
     };
     
-
   
-  }// namespace Fem
+  } // namespace Fem
 
-}//namespace Dune
+} // namespace Dune
 
-
-
-#endif //DUNE_FEM_SPACE_DISCONTINUOUSGALERKIN_HIERARCHICLEGENDREMAP_HH
+#endif //#DUNE_FEM_SPACE_DISCONTINUOUSGALERKIN_HIERARCHICLEGENDREMAP_HH
 
 
