@@ -680,7 +680,7 @@ namespace Dune
       LocalDataInliner ( const DiscreteFunctionType & df, 
                          const ContainsCheck& containsCheck ) 
         : df_ (df),
-          dm_( DofManagerType :: instance( df.space().grid() ) ),
+          dm_( DofManagerType::instance( df.gridPart().grid() ) ),
           containsCheck_( containsCheck )
       {}
 
@@ -776,7 +776,7 @@ namespace Dune
       LocalDataXtractor ( DiscreteFunctionType & df, 
                           const ContainsCheck& containsCheck ) 
         : df_ (df),
-          dm_( DofManagerType :: instance( df.space().grid() ) ),
+          dm_( DofManagerType :: instance( df.gridPart().grid() ) ),
           containsCheck_( containsCheck )
         {}
 

@@ -82,7 +82,7 @@ namespace Dune
         DUNE_THROW(InvalidStateException,"DofStorage already allocated!");
       
       std::pair< Fem::DofStorageInterface*, DofStorageType* > memPair
-        = Fem::allocateManagedDofStorage( this->space().grid(),
+        = Fem::allocateManagedDofStorage( this->space().gridPart().grid(),
                                           blockMapper_ ,
                                           this->name(),
                                           (DofStorageType *) 0 );

@@ -2,6 +2,8 @@ discontinuousgalerkindir =  $(includedir)/dune/fem/space/discontinuousgalerkin
 discontinuousgalerkin_HEADERS = capabilities.hh \
 				declaration.hh \
 				default.hh \
+				hierarchiclegendre.hh	\
+				hierarchiclegendremap.hh	\
 				lagrange.hh \
 				legendre.hh \
 				legendrepolynomials.hh \

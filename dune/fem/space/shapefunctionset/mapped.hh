@@ -3,6 +3,7 @@
 
 //- C++ includes
 #include <cstddef>
+#include <iostream>
 
 /**
   @file
