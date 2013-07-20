@@ -3,6 +3,7 @@ shapefunctionset_HEADERS = caching.hh \
                            lagrange.hh \
 			   legendre.hh \
 			   localfunctions.hh \
+				 mapped.hh \
 			   orthonormal.hh \
 			   proxy.hh \
                            selectcaching.hh \
