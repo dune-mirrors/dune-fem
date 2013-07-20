@@ -28,6 +28,7 @@ misc_HEADERS = alugridwriter.hh \
 	       gridsolution.hh \
 	       gridwidth.hh \
 	       h1norm.hh \
+				 iteratorprovider.hh \
 	       l1error.hh \
 	       l1norm.hh \
 	       l2error.hh \
