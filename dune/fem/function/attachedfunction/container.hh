@@ -49,7 +49,7 @@ namespace Dune
       {
         StorageType *const null = 0;
         std :: pair< DofStorageInterface *, StorageType * > memPair
-          = allocateManagedDofStorage( key.gridPart().grid(), key.mapper(), name(), null );
+          = allocateManagedDofStorage( key.grid(), key.mapper(), name(), null );
 
         // store pointers 
         memObject_ = memPair.first;
