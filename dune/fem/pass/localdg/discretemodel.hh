@@ -432,7 +432,7 @@ namespace Dune
     {
     public:
       //! \brief default method for setting adaptation handle to discrete model 
-      template <class Adaptation, class ThreadFilter>
+      template <class Adaptation>
       void setAdaptation( Adaptation&, 
                           const double weight = 1.0 ) {}
 
