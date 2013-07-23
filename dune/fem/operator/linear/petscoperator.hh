@@ -317,8 +317,8 @@ namespace Dune
       typedef typename DomainSpaceType::BasisFunctionSetType      DomainBasisFunctionSetType;
       typedef typename RangeSpaceType::BasisFunctionSetType       RangeBasisFunctionSetType;
 
-      enum { littleCols  = RangeSpaceType::localBlockSize };
-      enum { littleRows  = DomainSpaceType ::localBlockSize };
+      enum { rangeBlockSize = RangeSpaceType::localBlockSize };
+      enum { domainBlockSize = DomainSpaceType ::localBlockSize };
 
     private:
 
@@ -369,16 +369,25 @@ namespace Dune
         }
       }
 
-      void init ( const RowEntityType &rowEntity, const ColumnEntityType &colEntity ) 
+      void init ( const RowEntityType &domainEntity, const ColumnEntityType &rangeEntity ) 
       {
         // call initialize on base class 
         BaseType :: init( rowEntity, colEntity );
 
+        //*************************************************
+        //  The rows belong to the domain space 
+        //  it's indices are determained by the rangeSpace
+        //
+        //  The columns belong to the range space
+        //  it's indices are determained by the domainSpace
+        //*************************************************
+
         // setup row indices and also store number of local rows 
-        setupIndices( domainSpace().blockMapper(),  petscLinearOperator_.rowDofMapping(), rowEntity, littleRows, rowIndices_ );
+        setupIndices( rangeSpace().blockMapper(), petscLinearOperator_.colDofMapping(), rangeEntity, rangeBlockSize, rowIndices_ );
 
         // setup col indices and also store number of local cols 
-        setupIndices( rangeSpace().blockMapper(), petscLinearOperator_.colDofMapping(), colEntity, littleCols, colIndices_ );
+        setupIndices( domainSpace().blockMapper(), petscLinearOperator_.rowDofMapping(), domainEntity, domainBlockSize, colIndices_ );
+
         
         values_.resize( columns()*rows(), 0. );
         for (int r=0;r<rows();++r)
