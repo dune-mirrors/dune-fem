@@ -93,7 +93,7 @@ namespace Dune
         return shapeFunctionSet_.hessianEach( x, functor );
       }
 
-      GeometryType type () const DUNE_DEPRECATED {  return type_; }
+      GeometryType type () const {  return type_; }
       
       GeometryType geometryType () const DUNE_DEPRECATED {  return type(); }
 
