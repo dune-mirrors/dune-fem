@@ -18,8 +18,6 @@ namespace Dune
     template <class DiscreteModelImp, class PreviousPassImp , int passIdImp >
     class Pass;
 
-
-
     // LocalPass
     // ---------
 
@@ -70,7 +68,9 @@ namespace Dune
       : BaseType(pass),
         spc_(spc),
         passName_(passName),
-        computeTime_(0.0)
+        computeTime_(0.0),
+        numberOfElements_( 0 ),
+        passIsActive_( true )
       {}
 
       //! \brief destructor
@@ -103,6 +103,18 @@ namespace Dune
         return ct;
       }
 
+      /** \brief return number of elements visited during operator computation */
+      virtual size_t numberOfElements() const { return numberOfElements_; }
+
+      /** \brief return true if pass is active */
+      bool active () const { return passIsActive_; }
+
+      /** \brief set pass status to active */
+      void enable () const { passIsActive_ = true ; }
+
+      /** \brief set pass status to inactive */
+      void disable() const { passIsActive_ = false ; }
+
     protected:
       //! Actions to be carried out before a global grid walkthrough.
       //! To be overridden in a derived class.
@@ -120,13 +132,17 @@ namespace Dune
       //! call finalize.
       void compute (const ArgumentType &arg, DestinationType &dest) const
       {
+        // if pass was disable, don't do computation 
+        if( ! active() ) return ;
+
         // get stopwatch
         Dune::Timer timer;
 
         prepare(arg, dest);
 
-        IteratorType endit = spc_.end();
-        for (IteratorType it = spc_.begin(); it != endit; ++it)
+        numberOfElements_ = 0 ;
+        const IteratorType endit = spc_.end();
+        for (IteratorType it = spc_.begin(); it != endit; ++it, ++ numberOfElements_ )
         {
           applyLocal(*it);
         }
@@ -141,6 +157,8 @@ namespace Dune
       const DiscreteFunctionSpaceType &spc_;
       const std::string passName_;
       mutable double computeTime_;
+      mutable size_t numberOfElements_; 
+      mutable bool passIsActive_;
     };
 
   } // namespace Fem
