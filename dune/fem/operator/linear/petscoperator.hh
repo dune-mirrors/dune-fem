@@ -372,7 +372,7 @@ namespace Dune
       void init ( const RowEntityType &domainEntity, const ColumnEntityType &rangeEntity ) 
       {
         // call initialize on base class 
-        BaseType :: init( rowEntity, colEntity );
+        BaseType :: init( domainEntity, rangeEntity );
 
         //*************************************************
         //  The rows belong to the domain space 
