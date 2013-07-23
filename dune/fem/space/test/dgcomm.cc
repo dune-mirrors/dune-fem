@@ -33,7 +33,6 @@ using namespace Dune;
 #include <dune/grid/io/visual/grapedatadisplay.hh>
 #endif
 
-#include <dune/fem/io/file/binarydataio.hh>
 #include <dune/fem/io/parameter.hh>
 
 using namespace Fem;
