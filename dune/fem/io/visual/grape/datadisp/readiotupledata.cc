@@ -12,7 +12,6 @@
 
 //- include grape io stuff 
 #include <dune/fem/io/file/asciiparser.hh>
-#include <dune/fem/io/file/binarydataio.hh>
 #include <dune/fem/io/file/iotuple.hh>
 #include <dune/fem/io/file/iointerface.hh>
 
@@ -27,8 +26,6 @@ typedef GR_InputType GR_DiscFuncType;
 
 static std::stack<GR_GridType *> gridStack;
 static std::stack<GrapeDispType *> dispStack;
-
-static Fem::BinaryDataIO <GR_GridType> dataIO;
 
 template <class T> 
 inline void deleteObjects(std::stack<T *> & stack);
