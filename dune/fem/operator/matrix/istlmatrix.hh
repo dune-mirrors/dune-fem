@@ -25,6 +25,8 @@
 #include <dune/fem/io/parameter.hh>
 #include <dune/fem/operator/matrix/columnobject.hh>
 
+#include <dune/fem/operator/matrix/istlmatrixadapter.hh>
+
 namespace Dune
 { 
 
@@ -121,39 +123,8 @@ namespace Dune
           : BaseType(org) 
         {}
 
-        //! setup matrix entires 
-        template <class RowMapperType, class ColMapperType,
-                  class StencilCreatorImp> 
-        void setup(const RangeSpaceType& colSpace, 
-                   const RowMapperType & rowMapper, 
-                   const ColMapperType & colMapper,
-                   const StencilCreatorImp& stencil, 
-                   bool verbose = false) 
-        { 
-          // if empty grid, do nothing
-          if( colSpace.begin() == colSpace.end() ) return ;
-          
-          {
-            // map of indices 
-            // necessary because element traversal not necessaryly is in
-            // ascending order 
-            std::map< int , std::set<int> > indices;
-
-            // build matrix entries
-            stencil.setup(colSpace, rowMapper, colMapper, indices );
-
-            // insert entries 
-            createEntries( indices );
-          }
-
-          // in verbose mode some output 
-          if(verbose)  
-          {
-            std::cout << "ISTLMatrix::setup: finished assembly of matrix structure! \n";
-          }
-        }
-
-        void createEntries(std::map<int , std::set<int> >& indices) 
+        template <class RowKeyType, class ColKeyType>
+        void createEntries(const std::map<RowKeyType , std::set<ColKeyType> >& indices) 
         {
           // type of create interator 
           typedef typename BaseType :: CreateIterator CreateIteratorType; 
@@ -163,8 +134,13 @@ namespace Dune
               create != endcreate; ++create) 
           {
             // set of column indices 
-            std::set<int>& localIndices = indices[ create.index() ];
-            typedef typename std::set<int>::iterator iterator;
+            typedef typename std::map<RowKeyType , std::set<ColKeyType> >
+              ::const_iterator StencilIterator;
+            const StencilIterator it = indices.find( create.index() );
+            if (it == indices.end() )
+              continue;
+            const std::set<ColKeyType>& localIndices = it->second;
+            typedef typename std::set<ColKeyType>::const_iterator iterator;
             iterator end = localIndices.end();
             // insert all indices for this row 
             for (iterator it = localIndices.begin(); it != end; ++it)
@@ -404,7 +380,7 @@ namespace Dune
         }
     };
 
-    template <class RowSpaceImp, class ColSpaceImp, class TraitsImp> 
+    template <class RowSpaceImp, class ColSpaceImp> 
     class ISTLMatrixObject;
     
     template <class RowSpaceImp, class ColSpaceImp = RowSpaceImp>
@@ -414,33 +390,21 @@ namespace Dune
       typedef ColSpaceImp RangeSpaceType; 
       typedef ISTLMatrixTraits<DomainSpaceType,RangeSpaceType> ThisType;  
       
-      template <class OperatorTraits>
-      struct MatrixObject 
-      {
-        typedef ISTLMatrixObject<DomainSpaceType,RangeSpaceType,OperatorTraits> MatrixObjectType; 
-      };
+      typedef ISTLMatrixObject<DomainSpaceType,RangeSpaceType> MatrixObjectType; 
     };
 
     //! MatrixObject handling an istl matrix 
-    template <class DomainSpaceImp, class RangeSpaceImp, class TraitsImp> 
+    template <class DomainSpaceImp, class RangeSpaceImp> 
     class ISTLMatrixObject
     {
     public:  
-      //! type of traits 
-      typedef TraitsImp Traits;
-
-      //! type of stencil defined by operator
-      typedef typename Traits :: StencilType StencilType;
-      
       //! type of space defining row structure 
       typedef DomainSpaceImp DomainSpaceType; 
-      //typedef typename Traits :: DomainSpaceType DomainSpaceType;
       //! type of space defining column structure 
       typedef RangeSpaceImp RangeSpaceType; 
-      //typedef typename Traits :: RangeSpaceType RangeSpaceType;
 
       //! type of this pointer 
-      typedef ISTLMatrixObject<DomainSpaceType,RangeSpaceType,Traits> ThisType;
+      typedef ISTLMatrixObject<DomainSpaceType,RangeSpaceType> ThisType;
 
       typedef typename DomainSpaceType::GridType GridType; 
 
@@ -471,7 +435,7 @@ namespace Dune
       typedef ImprovedBCRSMatrix< LittleBlockType , 
                                   RowDiscreteFunctionType , 
                                   ColumnDiscreteFunctionType > MatrixType;
-      typedef typename Traits :: template Adapter < MatrixType > ::  MatrixAdapterType MatrixAdapterType;
+      typedef typename ISTLParallelMatrixAdapter<MatrixType,DomainSpaceType>::Type MatrixAdapterType;
       // get preconditioner type from MatrixAdapterType
       typedef ThisType PreconditionMatrixType;
       typedef typename MatrixAdapterType :: ParallelScalarProductType ParallelScalarProductType;
@@ -546,7 +510,6 @@ namespace Dune
          template< class GlobalKey >
          void operator() ( const int localDoF, const GlobalKey &globalDoF )
          {
-           // assert( matrix_.exists( globalRowKey_, globalDoF ) );
            localMatRow_[ localDoF ] = &matRow_[ globalDoF ];
          }         
          private:
@@ -556,13 +519,13 @@ namespace Dune
        };
        struct RowFunctor
        {
-         RowFunctor(const ColumnEntityType &colEntity, 
-                    const ColMapperType &colMapper,
+         RowFunctor(const RowEntityType &rowEntity, 
+                    const RowMapperType &rowMapper,
                     MatrixType &matrix,
                     VecLittleMatrixRowStorageType &matrices,
                     int numCols)
-         : colEntity_(colEntity),
-           colMapper_(colMapper),
+         : rowEntity_(rowEntity),
+           rowMapper_(rowMapper),
            matrix_(matrix),
            matrices_(matrices),
            numCols_(numCols)
@@ -573,11 +536,11 @@ namespace Dune
            LittleMatrixRowStorageType& localMatRow = matrices_[ localDoF ];
            localMatRow.resize( numCols_ );
            ColFunctor<GlobalKey> colFunctor( localMatRow, matrix_[ globalDoF ], globalDoF );
-           colMapper_.mapEach( colEntity_, colFunctor );
+           rowMapper_.mapEach( rowEntity_, colFunctor );
          }
          private:
-         const ColumnEntityType & colEntity_;
-         const ColMapperType &colMapper_;
+         const RowEntityType & rowEntity_;
+         const RowMapperType & rowMapper_;
          MatrixType &matrix_;
          VecLittleMatrixRowStorageType &matrices_;
          int numCols_;
@@ -607,34 +570,8 @@ namespace Dune
           numCols_  = colMapper_.numDofs(colEntity);
           matrices_.resize( numRows_ );
 
-          // RowFunctor rowFunctor(colEntity, colMapper_, matrixObj_.matrix(), matrices_, numCols_);
-          // rowMapper_.mapEach(rowEntity, rowFunctor);
-          RowFunctor colFunctor(rowEntity, rowMapper_, matrixObj_.matrix(), matrices_, numCols_);
-          colMapper_.mapEach(colEntity, colFunctor);
-          /*
-          MatrixType& matrix = matrixObj_.matrix();
-          typedef typename RowMapperType :: DofMapIteratorType RowMapIteratorType ;
-          typedef typename ColMapperType :: DofMapIteratorType ColMapIteratorType ;
-
-          const RowMapIteratorType endrow = rowMapper_.end( rowEntity );
-          for( RowMapIteratorType row = rowMapper_.begin( rowEntity );
-               row != endrow; ++row ) 
-          {
-            LittleMatrixRowStorageType& localMatRow = matrices_[ row.local() ];
-            localMatRow.resize( numCols_ );
-
-            // get row 
-            RowType& matRow = matrix[ row.global() ];
-
-            const ColMapIteratorType endcol = colMapper_.end( colEntity );
-            for( ColMapIteratorType col = colMapper_.begin( colEntity );
-                 col != endcol; ++col ) 
-            {
-              assert( matrix.exists( row.global(), col.global() ) );
-              localMatRow[ col.local() ] = &matRow[ col.global() ];
-            }
-          }
-          */
+          RowFunctor rowFunctor(rowEntity, rowMapper_, matrixObj_.matrix(), matrices_, numCols_);
+          colMapper_.mapEach(colEntity, rowFunctor);
         }
 
         LocalMatrix(const LocalMatrix& org) 
@@ -1059,17 +996,17 @@ namespace Dune
         removeObj( false );
       }
 
-      //! reserve matrix with right size 
-      void reserve(bool verbose = false) 
+      //! reserve memory for assemble based on the provided stencil 
+      template <class Stencil>
+      void reserve(const Stencil &stencil,bool verbose = false) 
       {
         // if grid sequence number changed, rebuild matrix 
         if(sequence_ != domainSpace().sequence())
         {
           removeObj( true );
 
-          StencilType stencil; 
           matrix_ = new MatrixType(rowMapper_.size(),colMapper_.size());
-          matrix().setup(rangeSpace(),rowMapper(),colMapper(),stencil,verbose);
+          matrix().createEntries( stencil.globalStencil() );
 
           sequence_ = domainSpace().sequence();
         }
@@ -1328,18 +1265,25 @@ namespace Dune
       
     };
 
+  } // namespace Fem
 
+} // namespace Dune 
+
+
+// following is deprecated
+#include <dune/fem/operator/common/stencil.hh>
+namespace Dune { 
+  namespace Fem {
 
     // ISTLMatrixOperator
     // ------------------
-
-    template< class DomainFunction, class RangeFunction, class TraitsImp >
+    template< class DomainFunction, class RangeFunction, class Traits >
     class ISTLMatrixOperator
-    : public ISTLMatrixObject< typename DomainFunction::DiscreteFunctionSpaceType, typename RangeFunction::DiscreteFunctionSpaceType, TraitsImp >,
+    : public ISTLMatrixObject< typename DomainFunction::DiscreteFunctionSpaceType, typename RangeFunction::DiscreteFunctionSpaceType >,
       public AssembledOperator< DomainFunction, RangeFunction >
     {
-      typedef ISTLMatrixOperator< DomainFunction, RangeFunction, TraitsImp > This;
-      typedef ISTLMatrixObject< typename DomainFunction::DiscreteFunctionSpaceType, typename RangeFunction::DiscreteFunctionSpaceType, TraitsImp > Base;
+      typedef ISTLMatrixOperator< DomainFunction, RangeFunction,Traits > This;
+      typedef ISTLMatrixObject< typename DomainFunction::DiscreteFunctionSpaceType, typename RangeFunction::DiscreteFunctionSpaceType > Base;
 
     public:
       typedef typename Base::DomainSpaceType DomainSpaceType;
@@ -1350,6 +1294,7 @@ namespace Dune
 
       using Base::apply;
 
+      DUNE_VERSION_DEPRECATED(1,4,remove)
       ISTLMatrixOperator ( const std::string &name,
                            const DomainSpaceType &domainSpace,
                            const RangeSpaceType &rangeSpace,
@@ -1370,8 +1315,47 @@ namespace Dune
       void communicate () 
       {
       }
-    };
+      void reserve(bool verbose = false) 
+      {
+        Base::reserve(DummyStencil(Base::domainSpace(),Base::rangeSpace()),verbose);
+      }
 
+    private:
+
+      class DummyStencil 
+      {
+        typedef Stencil<DomainSpaceType,RangeSpaceType> StencilType;
+      public:
+        typedef typename StencilType::DomainEntityType         DomainEntityType;
+        typedef typename StencilType::RangeEntityType          RangeEntityType;
+        typedef int                                            DomainGlobalKeyType;
+        typedef int                                            RangeGlobalKeyType;
+        typedef std::set<RangeGlobalKeyType>                   LocalStencilType;
+        typedef std::map<DomainGlobalKeyType,LocalStencilType> GlobalStencilType;
+
+        DummyStencil(const DomainSpaceType &dspace, const RangeSpaceType &rspace) 
+        : dspace_(dspace), rspace_(rspace)
+        {
+          Traits::StencilType::setup(rspace_, dspace_.blockMapper(), rspace_.blockMapper(), globalStencil_ );
+        }
+        int maxNonZerosEstimate() const
+        {
+          return Traits::StencilType::nonZerosEstimate(rspace_);
+        }
+        const LocalStencilType &localStencil(const DomainGlobalKeyType &key) const
+        { 
+          return globalStencil_.find( key )->second; 
+        }
+        const GlobalStencilType &globalStencil() const
+        { 
+          return globalStencil_; 
+        }
+      private:
+        const DomainSpaceType &dspace_;
+        const RangeSpaceType &rspace_;
+        GlobalStencilType globalStencil_;
+      };
+    };
   } // namespace Fem
 
 #if DUNE_FEM_COMPATIBILITY  

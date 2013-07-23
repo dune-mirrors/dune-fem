@@ -19,6 +19,34 @@ namespace Dune
   namespace Fem
   {
 
+#if 0
+      enum InterfaceType { 
+            InteriorBorder_InteriorBorder_Interface=0, //!< send/receive interior and border entities
+            InteriorBorder_All_Interface=1,            //!< send interior and border, receive all entities
+            Overlap_OverlapFront_Interface=2,          //!< send overlap, receive overlap and front entities
+            Overlap_All_Interface=3,                   //!< send overlap, receive all entities
+            All_All_Interface=4                        //!< send all and receive all entities
+      };
+      enum PartitionIteratorType {
+            Interior_Partition=0,       //!< only interior entities
+            InteriorBorder_Partition=1, //!< interior and border entities
+            Overlap_Partition=2,        //!< only overlap entities
+            OverlapFront_Partition=3,   //!< overlap and front entities
+            All_Partition=4,            //!< all entities
+            Ghost_Partition=5           //!< only ghost entities
+      };
+#endif
+    template <PartitionIteratorType ittype>
+    struct IteratorToInterface
+    {
+      static const InterfaceType value = InteriorBorder_All_Interface;
+    };
+    template <>
+    struct IteratorToInterface< InteriorBorder_Partition >
+    {
+      static const InterfaceType value = InteriorBorder_InteriorBorder_Interface;
+    };
+
     /////////////////////////////////////////////////////////////////////////
     //
     //  --AdaptiveLeafIndexGridPart 
@@ -257,24 +285,16 @@ namespace Dune
       template < int dummy, bool onlyCodimZero > 
       struct AdaptiveLeafIndexSetChooser
       {
-#ifdef USE_PARTITIONTYPED_INDEXSET
         static const PartitionIteratorType indexSetPartitionType = idxpitype;
-#else
-        static const PartitionIteratorType indexSetPartitionType = All_Partition;
-        static const InterfaceType indexSetInterfaceType = All_All_Interface;
-#endif
+        static const InterfaceType indexSetInterfaceType = IteratorToInterface<idxpitype>::value;
         typedef AdaptiveLeafIndexSet< GridPartType > IndexSetType;
       };
 
       template <int dummy> 
       struct AdaptiveLeafIndexSetChooser<dummy, true >
       {
-#ifdef USE_PARTITIONTYPED_INDEXSET
         static const PartitionIteratorType indexSetPartitionType = idxpitype;
-#else
-        static const PartitionIteratorType indexSetPartitionType = All_Partition;
-        static const InterfaceType indexSetInterfaceType = All_All_Interface;
-#endif
+        static const InterfaceType indexSetInterfaceType = IteratorToInterface<idxpitype>::value;
         typedef DGAdaptiveLeafIndexSet< GridPartType > IndexSetType;
       };
 

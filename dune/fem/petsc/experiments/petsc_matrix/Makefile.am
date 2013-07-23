@@ -15,8 +15,8 @@ check_PROGRAMS = $(CHECK_PROGS)
 
 CLEANFILES = *.tex data/*
 
-matrix_test_SOURCES = matrix_test.cc
-matrix_test_CPPFLAGS = $(AM_CPPFLAGS)
+# matrix_test_SOURCES = matrix_test.cc
+# matrix_test_CPPFLAGS = $(AM_CPPFLAGS)
 
 
 include $(top_srcdir)/am/global-rules

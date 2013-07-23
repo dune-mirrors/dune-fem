@@ -370,7 +370,7 @@ namespace Dune
 
     // SparseRowMatrixObject
     // ---------------------
-    template <class DomainSpace, class RangeSpace, class TraitsImp>
+    template <class DomainSpace, class RangeSpace>
     class SparseRowMatrixObject;
 
     template <class RowSpaceImp, class ColSpaceImp = RowSpaceImp>
@@ -379,29 +379,18 @@ namespace Dune
       typedef RowSpaceImp RowSpaceType;
       typedef ColSpaceImp ColumnSpaceType;
       typedef SparseRowMatrixTraits<RowSpaceType,ColumnSpaceType> ThisType;
-
-      template <class OperatorTraits>
-      struct MatrixObject
-      {
-        typedef SparseRowMatrixObject<RowSpaceType,ColumnSpaceType,OperatorTraits> MatrixObjectType;
-      };
+      typedef SparseRowMatrixObject<RowSpaceType,ColumnSpaceType> MatrixObjectType;
 
       typedef RowSpaceImp  DomainSpaceType;
       typedef ColSpaceImp  RangeSpaceType;
 
     };
 
-    template< class DomainSpace, class RangeSpace, class TraitsImp >
+    template< class DomainSpace, class RangeSpace>
     class SparseRowMatrixObject
     : public Fem :: OEMMatrix
     {
     public:
-      //! type of traits 
-      typedef TraitsImp Traits;
-
-      //! type of stencil class 
-      typedef typename Traits :: StencilType StencilType;
-      
       typedef DomainSpace DomainSpaceType;
       typedef RangeSpace RangeSpaceType;
 
@@ -421,7 +410,7 @@ namespace Dune
                               RangeSpaceType :: localBlockSize > RangeMapperType;
 
     private:  
-      typedef SparseRowMatrixObject< DomainSpaceType, RangeSpaceType, Traits > ThisType;
+      typedef SparseRowMatrixObject< DomainSpaceType, RangeSpaceType > ThisType;
 
     protected:
       typedef typename DomainSpaceType :: GridType GridType;
@@ -433,6 +422,7 @@ namespace Dune
       template< class MatrixObject >
       class LocalMatrix;
       
+#if 0
       template <class Traits, bool definesNewMatrix >
       struct MatrixImpl
       {
@@ -446,10 +436,13 @@ namespace Dune
       {
         typedef typename Traits :: MatrixType MatrixType;
       };
+#endif
 
     public:  
       // extract matrix impl depending on traits 
-      typedef typename MatrixImpl< Traits, Conversion< Traits, OverloadedSparseRowMatrix> :: exists > :: MatrixType  MatrixType;
+      typedef SparseRowMatrix< double > MatrixType;
+      // ???????
+      // typedef typename MatrixImpl< Traits, Conversion< Traits, OverloadedSparseRowMatrix> :: exists > :: MatrixType  MatrixType;
       typedef MatrixType PreconditionMatrixType;
 
     public:
@@ -553,8 +546,41 @@ namespace Dune
         return matrix_;
       }
 
+      //! reserve memory for assemble based on the provided stencil 
+      template <class Stencil>
+      inline void reserve(const Stencil &stencil, bool verbose = false )
+      {
+        if( sequence_ != domainSpace_.sequence() )
+        {
+#ifndef DUNE_FEM_DONT_CHECKITERATORS_OF_SPACE
+          // if empty grid do nothing (can appear in parallel runs)
+          if( (domainSpace_.begin() != domainSpace_.end())
+              && (rangeSpace_.begin() != rangeSpace_.end()) )
+#endif
+          {
+            
+            if( verbose )
+            {
+              const int rowMaxNumbers = rangeMapper_.maxNumDofs();
+              const int colMaxNumbers = domainMapper_.maxNumDofs();
+
+              std::cout << "Reserve Matrix with (" << rangeSpace_.size() << "," << domainSpace_.size()<< ")\n";
+              std::cout << "Max number of base functions = (" << rowMaxNumbers << "," << colMaxNumbers << ")\n";
+            }
+
+            // upper estimate for number of non-zeros 
+            const static size_t domainLocalBlockSize = DomainSpaceType::localBlockSize;
+            const int nonZeros = std::max( (int)(stencil.maxNonZerosEstimate()*domainLocalBlockSize), 
+                                           matrix_.numNonZeros() );
+            matrix_.reserve( rangeSpace_.size(), domainSpace_.size(), nonZeros, 0.0 );
+          }
+          sequence_ = domainSpace_.sequence();
+        }
+      }
+      #if 0
       //! reserve memory corresponnding to size of spaces
-      inline void reserve(bool verbose = false )
+      DUNE_VERSION_DEPRECATED(1,5,remove)
+      inline void reserve(bool verbose = false ) 
       {
         if( sequence_ != domainSpace_.sequence() )
         {
@@ -582,6 +608,7 @@ namespace Dune
           sequence_ = domainSpace_.sequence();
         }
       }
+      #endif
 
       //! solve A dest = arg using the UMFPACK direct solver 
       template< class DomainFunction, class RangeFunction >
@@ -759,14 +786,14 @@ namespace Dune
 
 
 
-    template< class DomainSpace, class RangeSpace, class TraitsImp >
+    template< class DomainSpace, class RangeSpace >
     template< class MatrixObject >
-    struct SparseRowMatrixObject< DomainSpace, RangeSpace, TraitsImp >::LocalMatrixTraits
+    struct SparseRowMatrixObject< DomainSpace, RangeSpace >::LocalMatrixTraits
     {
       typedef DomainSpace DomainSpaceType;
       typedef RangeSpace RangeSpaceType;
 
-      typedef SparseRowMatrixObject< DomainSpaceType, RangeSpaceType, TraitsImp >
+      typedef SparseRowMatrixObject< DomainSpaceType, RangeSpaceType >
         SparseRowMatrixObjectType;
       
       typedef typename SparseRowMatrixObjectType :: template LocalMatrix< MatrixObject > LocalMatrixType;
@@ -781,9 +808,9 @@ namespace Dune
 
 
     //! LocalMatrix 
-    template< class DomainSpace, class RangeSpace, class TraitsImp>
+    template< class DomainSpace, class RangeSpace>
     template< class MatrixObject >
-    class SparseRowMatrixObject< DomainSpace, RangeSpace, TraitsImp > :: LocalMatrix
+    class SparseRowMatrixObject< DomainSpace, RangeSpace> :: LocalMatrix
     : public LocalMatrixDefault< LocalMatrixTraits< MatrixObject > >
     {
     public:
@@ -954,18 +981,27 @@ namespace Dune
       }
     };
 
+  } // namespace Fem
 
+} // namespace Dune
+
+// following is deprecated
+#include <dune/fem/operator/common/stencil.hh>
+namespace Dune { 
+  namespace Fem {
 
     // SparseRowMatrixOperator
     // -----------------------
 
-    template< class DomainFunction, class RangeFunction, class TraitsImp >
+    template< class DomainFunction, class RangeFunction, class Traits >
     class SparseRowMatrixOperator
-    : public SparseRowMatrixObject< typename DomainFunction::DiscreteFunctionSpaceType, typename RangeFunction::DiscreteFunctionSpaceType, TraitsImp >,
+    : public SparseRowMatrixObject< typename DomainFunction::DiscreteFunctionSpaceType, typename RangeFunction::DiscreteFunctionSpaceType >,
       public Fem::AssembledOperator< DomainFunction, RangeFunction >
     {
-      typedef SparseRowMatrixOperator< DomainFunction, RangeFunction, TraitsImp > This;
-      typedef SparseRowMatrixObject< typename DomainFunction::DiscreteFunctionSpaceType, typename RangeFunction::DiscreteFunctionSpaceType, TraitsImp > Base;
+      // dune_static_assert( !(Conversion<CompatibilityDummy, void>::exists), 
+      //   "traits template argument not required anymore for SparseRowMatrixOperator" );
+
+      typedef SparseRowMatrixObject< typename DomainFunction::DiscreteFunctionSpaceType, typename RangeFunction::DiscreteFunctionSpaceType > Base;
 
     public:
       typedef typename Base::DomainSpaceType DomainSpaceType;
@@ -976,6 +1012,7 @@ namespace Dune
 
       using Base::apply;
 
+      DUNE_VERSION_DEPRECATED(1,4,remove)
       SparseRowMatrixOperator ( const std::string &name,
                                 const DomainSpaceType &domainSpace,
                                 const RangeSpaceType &rangeSpace,
@@ -996,6 +1033,46 @@ namespace Dune
       void communicate () const
       {
       }
+      void reserve(bool verbose = false) 
+      {
+        Base::reserve(DummyStencil(Base::domainSpace()),verbose);
+      }
+
+    private:
+
+      class DummyStencil 
+      {
+        typedef Stencil<DomainSpaceType,RangeSpaceType> StencilType;
+      public:
+        typedef typename StencilType::DomainEntityType       DomainEntityType;
+        typedef typename StencilType::RangeEntityType        RangeEntityType;
+        typedef typename StencilType::DomainGlobalKeyType    DomainGlobalKeyType;
+        typedef typename StencilType::RangeGlobalKeyType     RangeGlobalKeyType;
+        typedef typename StencilType::LocalStencilType       LocalStencilType;
+        typedef typename StencilType::GlobalStencilType      GlobalStencilType;
+
+        DummyStencil(const DomainSpaceType &space) : space_(space) 
+        {}
+        int maxNonZerosEstimate() const
+        {
+          return Traits::StencilType::nonZerosEstimate(space_);
+        }
+        const LocalStencilType &localStencil(const DomainGlobalKeyType &key) const
+        {
+           DUNE_THROW( Dune::NotImplemented, "SimpleStencil: exact stencil information is unavailable." );
+           return localStencil_;
+        }
+        const GlobalStencilType &globalStencil() const
+        {
+          DUNE_THROW( Dune::NotImplemented, "SimpleStencil: global stencil is  unavailable." );
+          return stencil_;
+        }
+      private:
+        const DomainSpaceType &space_;
+        GlobalStencilType stencil_;
+        LocalStencilType localStencil_;
+      };
+
     };
 
   } // namespace Fem 

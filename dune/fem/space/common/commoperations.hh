@@ -280,11 +280,14 @@ namespace Dune
 
     //! \brief Mathematical operation apply during communication 
     //! to data that is communicated 
+    //! enum of all avialable operations
     struct DFCommunicationOperation 
     {
+      enum dfCommunicationOperation {copy,add,min,max};
       //! just copy data 
       struct Copy 
       {
+        static const dfCommunicationOperation value = copy;
         static const char * name () 
         {
           return "Copy";
@@ -300,6 +303,7 @@ namespace Dune
       //! sum up data  
       struct Add 
       {
+        static const dfCommunicationOperation value = add;
         static const char * name () 
         {
           return "Add";
@@ -315,6 +319,7 @@ namespace Dune
       //! keep minimum   
       struct Min 
       {
+        static const dfCommunicationOperation value = min;
         static const char * name () 
         {
           return "Min";
@@ -330,6 +335,7 @@ namespace Dune
       //! keep maximum   
       struct Max 
       {
+        static const dfCommunicationOperation value = max;
         static const char * name () 
         {
           return "Max";

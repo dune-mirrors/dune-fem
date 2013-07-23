@@ -11,6 +11,7 @@
 #include <dune/fem/misc/petsc/petscghostarraybuilder.hh>
 #include <dune/fem/misc/petsc/petscdofmappings.hh>
 #include <dune/fem/misc/petsc/petscdofblock.hh>
+#include <dune/common/static_assert.hh>
 
 
 namespace Dune 
@@ -49,8 +50,7 @@ namespace Dune
 
       static const int blockSize = DFSpace :: localBlockSize;
       typedef typename PetscSlaveDofsType :: PetscDofMappingType  PetscDofMappingType;
-
-
+      
       typedef PetscDofBlock< ThisType >                       DofBlockType;
       typedef PetscDofBlock< const ThisType >                 ConstDofBlockType;
       typedef typename DofBlockType::DofIterator              DofIteratorType;
@@ -58,6 +58,8 @@ namespace Dune
       typedef Envelope< DofBlockType >                        DofBlockPtrType; 
       typedef Envelope< ConstDofBlockType >                   ConstDofBlockPtrType;
       typedef typename DofBlockType::IndexType                IndexType;
+
+      typedef typename DFSpace::template CommDataHandle<void>::OperationType CommunicationOperationType;
 
       PetscVector ( const DFSpace& dfSpace )
       : petscSlaveDofs_( dfSpace ),
@@ -67,6 +69,9 @@ namespace Dune
         localSize_( 0 ),
         numGhosts_( 0 )
       {
+        dune_static_assert( CommunicationOperationType::value == DFCommunicationOperation::copy ||
+                            CommunicationOperationType::value == DFCommunicationOperation::add,
+                            "only copy/add are available communication operations for petsc");
         // set up the DofMapping instance and all variables depending on it
         localSize_ = dofMapping().numOwnedDofBlocks() * blockSize;
         numGhosts_ = dofMapping().numSlaveBlocks()    * blockSize;
@@ -262,9 +267,11 @@ namespace Dune
         {
           if ( memorySequence_ < sequence_ )
           {
-            ::Dune::Petsc::VecGhostUpdateBegin( vec_, ADD_VALUES, SCATTER_REVERSE );
-            ::Dune::Petsc::VecGhostUpdateEnd( vec_, ADD_VALUES, SCATTER_REVERSE );
-            
+            if ( CommunicationOperationType::value == DFCommunicationOperation::add )
+            {
+              ::Dune::Petsc::VecGhostUpdateBegin( vec_, ADD_VALUES, SCATTER_REVERSE );
+              ::Dune::Petsc::VecGhostUpdateEnd( vec_, ADD_VALUES, SCATTER_REVERSE );
+            }
             ::Dune::Petsc::VecGhostUpdateBegin( vec_, INSERT_VALUES, SCATTER_FORWARD );
             ::Dune::Petsc::VecGhostUpdateEnd( vec_, INSERT_VALUES, SCATTER_FORWARD );
 

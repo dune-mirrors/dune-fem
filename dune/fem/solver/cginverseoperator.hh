@@ -379,13 +379,16 @@ namespace Dune
       {
         if( realCount_ > 0 )
         { 
+          assert( residuum/prevResiduum == residuum/prevResiduum );
           p *= (residuum / prevResiduum);
           p -= r;
         }
 
         op( p, h );
 
-        const RangeFieldType alpha = residuum / p.scalarProductDofs( h );
+        double pdoth = p.scalarProductDofs( h );
+        const RangeFieldType alpha = residuum / pdoth;
+        assert( alpha == alpha );
         x.axpy( alpha, p );
         r.axpy( alpha, h );
 
@@ -440,15 +443,18 @@ namespace Dune
       for( realCount_ = 0; (residuum > tolerance) && (realCount_ < maxIterations_); ++realCount_ )
       {
         if( realCount_ > 0 )
-         { 
-           const RangeFieldType beta=residuum/prevResiduum;
-           q*=beta;
-           q+=(s);
-         }
+        { 
+          assert( residuum/prevResiduum == residuum/prevResiduum );
+          const RangeFieldType beta=residuum/prevResiduum;
+          q*=beta;
+          q+=(s);
+        }
         
         op( q, h );
         
-        const RangeFieldType alpha = residuum / q.scalarProductDofs( h );//<p,Bp>/<q,Aq>
+        double qdoth = q.scalarProductDofs( h );
+        const RangeFieldType alpha = residuum / qdoth;//<p,Bp>/<q,Aq>
+        assert( alpha == alpha );
         x.axpy( alpha, q );
         
         p.axpy( -alpha, h );//r_k

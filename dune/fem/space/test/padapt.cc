@@ -34,7 +34,7 @@ const int polOrder = POLORDER;
 // include solvers
 #include <dune/fem/solver/cginverseoperator.hh>
 #include <dune/fem/solver/oemsolver.hh>
-#include <dune/fem/operator/matrix/spmatrix.hh>
+#include <dune/fem/operator/linear/spoperator.hh>
 
 #if HAVE_GRAPE
   #define USE_GRAPE WANT_GRAPE
@@ -304,7 +304,7 @@ void interpolate( const Function &f, DiscreteFunctionType &solution )
 
   typedef Dune::SparseRowMatrixTraits < DiscreteFunctionSpaceType, DiscreteFunctionSpaceType > MatrixObjectTraits;
   typedef LagrangeMatrixTraits< MatrixObjectTraits > MatrixTraits;
-  typedef Dune::SparseRowMatrixOperator< DiscreteFunctionType, DiscreteFunctionType, MatrixTraits >
+  typedef Dune::SparseRowLinearOperator< DiscreteFunctionType, DiscreteFunctionType, MatrixTraits >
       LinearOperatorType;
 
   DiscreteFunctionType rhs( "rhs", solution.space() );

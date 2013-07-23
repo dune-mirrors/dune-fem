@@ -3,7 +3,7 @@
 
 #if defined HAVE_PETSC
 
-#include <dune/fem/petsc/common/petsccommon.hh>
+#include <dune/fem/misc/petsc/petsccommon.hh>
 
 class Solver {
 public:

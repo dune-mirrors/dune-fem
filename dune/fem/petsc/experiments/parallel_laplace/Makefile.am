@@ -13,8 +13,8 @@ check_PROGRAMS = $(CHECK_PROGS)
 
 CLEANFILES = *.tex data/* rhs.out.gnuplot* solution.out.gnuplot* error.out.gnuplot*
 
-parallel_laplace_SOURCES = parallel_laplace.cc
-parallel_laplace_CPPFLAGS = $(AM_CPPFLAGS)
+# parallel_laplace_SOURCES = parallel_laplace.cc
+# parallel_laplace_CPPFLAGS = $(AM_CPPFLAGS)
 
 EXTRA_DIST = mpiexec.sh 
 

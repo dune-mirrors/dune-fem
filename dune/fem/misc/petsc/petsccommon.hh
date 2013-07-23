@@ -11,6 +11,7 @@
 #include <string>
 #include <iostream>
 
+#include <dune/common/stdstreams.hh>
 #include <dune/common/exceptions.hh>
 
 #if HAVE_PETSC
@@ -207,7 +208,46 @@ namespace Dune
         ErrorCheck( ::MatDestroy( A ) ); 
       #endif // PETSC_PETSC_VERSION_MAJOR <= 3 && PETSC_VERSION_MINOR < 2
     }
-    inline void MatSetUp( Mat mat ) { ErrorCheck( ::MatSetUp(mat)); }
+    inline void MatSetUp( Mat mat ) 
+    { 
+      ErrorCheck( ::MatSetUp(mat)); 
+    }
+    inline void MatSetUp( Mat mat, PetscInt bs, int nz ) 
+    { 
+      if (bs == 1)
+      {
+        ErrorCheck( ::MatSeqAIJSetPreallocation(mat,nz,PETSC_NULL) );
+        ErrorCheck( ::MatMPIAIJSetPreallocation(mat,nz,PETSC_NULL,nz/2,PETSC_NULL) );
+      }
+      else
+      {
+        ErrorCheck( ::MatSeqBAIJSetPreallocation(mat,bs,nz,PETSC_NULL) );
+        ErrorCheck( ::MatMPIBAIJSetPreallocation(mat,bs,nz,PETSC_NULL,nz/2,PETSC_NULL) );
+      }
+      // the following seems not to work for block matrix
+      ErrorCheck( ::MatSetOption(mat, MAT_NEW_NONZERO_ALLOCATION_ERR,PETSC_FALSE) );
+      // the following only works for block matrix
+      // but should be used with MAT_NEW_NONZERO_LOCATIONS...
+      // ErrorCheck( ::MatSetOption(mat, MAT_USE_HASH_TABLE,PETSC_FALSE) );
+      ErrorCheck( ::MatSetUp(mat)); 
+    }
+    inline void MatSetUp( Mat mat, PetscInt bs, const int *d_nnz, const int *o_nnz )
+    {
+      if (bs == 1)
+      {
+        ErrorCheck( ::MatSeqAIJSetPreallocation(mat,0,d_nnz ) );
+        ErrorCheck( ::MatMPIAIJSetPreallocation(mat,0,d_nnz,5,o_nnz) );
+      }
+      else
+      {
+        ErrorCheck( ::MatSeqBAIJSetPreallocation(mat,bs,0,d_nnz ) );
+        ErrorCheck( ::MatMPIBAIJSetPreallocation(mat,bs,0,d_nnz,5,PETSC_NULL) );
+      }
+      // see previous comments
+      ErrorCheck( ::MatSetOption(mat, MAT_NEW_NONZERO_ALLOCATION_ERR,PETSC_FALSE) );
+      ErrorCheck( ::MatSetUp(mat));
+    }
+
     inline void MatGetOwnershipRange ( Mat mat, PetscInt *m, PetscInt* n ) { ErrorCheck( ::MatGetOwnershipRange( mat, m, n ) ); }
     inline void MatGetSize ( Mat mat, PetscInt *m, PetscInt* n ) { ErrorCheck( ::MatGetSize( mat, m, n ) ); }
     inline void MatMult  ( Mat mat, Vec x, Vec y ) { ErrorCheck( ::MatMult( mat, x, y ) ); }

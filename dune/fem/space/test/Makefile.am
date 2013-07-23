@@ -9,7 +9,7 @@ GRIDTYPE=YASPGRID
 #GRIDTYPE=ALUGRID_CONFORM
 #GRIDTYPE=ALUGRID_CUBE
 #GRIDTYPE=ALBERTAGRID
-GRIDDIM=2
+GRIDDIM=3
 
 LDADD = $(ALL_PKG_LDFLAGS) $(ALL_PKG_LIBS) $(LOCAL_LIBS) $(MPI_LDFLAGS)
 AM_CPPFLAGS = $(ALL_PKG_CPPFLAGS) -DPOLORDER=$(POLORDER) -DDIMRANGE=$(DIMRANGE) -DWANT_GRAPE=$(WANT_GRAPE)
@@ -30,7 +30,7 @@ check_PROGRAMS = $(ADAPTPROG) \
 		 lagrangeinterpolation \
 		 legendretest
 
-EXTRA_DIST = systemmatrix.cc
+EXTRA_DIST = systemmatrix.cc dgcomm-4.sh dgcomm-cached-4.sh parameter *.dgf
 
 l2projection_SOURCES = l2projection.cc
 adapt_SOURCES = adapt.cc

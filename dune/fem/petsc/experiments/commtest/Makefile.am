@@ -19,8 +19,8 @@ check_PROGRAMS = $(CHECK_PROGS)
 
 CLEANFILES = *.tex data/*
 
-commtest_SOURCES = commtest.cc
-commtest_CPPFLAGS = $(AM_CPPFLAGS)
+# commtest_SOURCES = commtest.cc
+# commtest_CPPFLAGS = $(AM_CPPFLAGS)
 
 EXTRA_DIST = domain_commtest.dgf parameter_commtest
 

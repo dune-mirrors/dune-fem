@@ -6,6 +6,6 @@ common_HEADERS = automaticdifferenceoperator.hh  differentiableoperator.hh \
                  combine.inc  localoperator.hh  mapping.hh  objpointer.hh \
                  vectorspace.hh  spaceoperatorif.hh  localmatrix.hh \
                  localmatrixwrapper.hh  temporarylocalmatrix.hh \
-								 petsclinearoperator.hh
+								 petsclinearoperator.hh stencil.hh
 
 include $(top_srcdir)/am/global-rules
