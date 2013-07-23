@@ -13,6 +13,19 @@ namespace Dune
 {
   namespace Fem 
   {
+    /** \class Stencil
+     *  \brief default implementation for a general operator stencil
+     *
+     *  To assemble a matrix from an operator the method reserve has to be
+     *  called on the linear operator class passing a stencil object as
+     *  parameter. To setup a full stencil the method fill has to be
+     *  called with each pair (en,nb) for which the locslMatrix method is
+     *  called during the assembly. 
+     *
+     *  \tparam  DomainSpace  type of discrete function space for the domain
+     *  \tparam  RangeSpace   type of discrete function space for the range
+     *
+     */
     template <class DomainSpace, class RangeSpace>
     class Stencil
     {
@@ -30,17 +43,31 @@ namespace Dune
       typedef typename DomainBlockMapper::GlobalKeyType DomainGlobalKeyType;
       typedef typename RangeBlockMapper::GlobalKeyType  RangeGlobalKeyType;
 
+      //! type for storing the stencil of one row
       typedef std::set<RangeGlobalKeyType>                   LocalStencilType;
+      //! type for storing the full stencil
       typedef std::map<DomainGlobalKeyType,LocalStencilType> GlobalStencilType;
 
     public:
+      /** \brief Constructor 
+       *
+       *  \param[in]  dSpace    domain space
+       *  \param[in]  rSpace    range space
+       *
+       */
       Stencil(const DomainSpace &dSpace, const RangeSpace &rSpace)
         : domainBlockMapper_( dSpace.blockMapper() )
         , rangeBlockMapper_( rSpace.blockMapper() )
       {
       }
 
-      //! create entries for element and neighbors
+      /** \brief Create stencil entries for (dEntity,rEntity) pair
+       *
+       *  \param[in]  dEntity    domain entity
+       *  \param[in]  rEntity    range entity
+       *  \param[in]  fillGhost  setup stencil even for a ghost domain entity
+       *
+       */
       void fill ( const DomainEntityType &dEntity, const RangeEntityType &rEntity,
                   bool fillGhost=true )
       {
@@ -49,14 +76,23 @@ namespace Dune
                   MFunctor( domainBlockMapper_, dEntity, FillFunctor(globalStencil_,doFill) ) );
       }
 
+      /** \brief Return stencil for a given row of the matrix
+       *
+       *  \param[in]  key   key for matrix row
+       *
+       */
       const LocalStencilType &localStencil(const DomainGlobalKeyType &key) const
       { 
         return globalStencil_[key]; 
       }
+      /** \brief Return the full stencil
+       */
       const GlobalStencilType &globalStencil() const
       { 
         return globalStencil_; 
       }
+      /** \brief Return an upper bound for the maximum number of non-zero entries in all row
+       */
       int maxNonZerosEstimate() const
       {
         int ret = 0;
@@ -99,6 +135,13 @@ namespace Dune
       GlobalStencilType globalStencil_;
     };
 
+    /** \class SimpleStencil
+     *  \brief a watered down stencil providing only the upper bound for the non-zero entries per row.
+     *
+     *  \tparam  DomainSpace  type of discrete function space for the domain
+     *  \tparam  RangeSpace   type of discrete function space for the range
+     *
+     */
     template <class DomainSpace, class RangeSpace>
     class SimpleStencil 
     {
@@ -138,6 +181,14 @@ namespace Dune
       LocalStencilType localStencil_;
     };
 
+    /** \class DiagonalStencil
+     *  \brief Stencil contaning the entries (en,en) for all entities in the space.
+     *         Defailt for an operator over a Lagrange space or a DG mass operator.
+     *
+     *  \tparam  DomainSpace  type of discrete function space for the domain
+     *  \tparam  RangeSpace   type of discrete function space for the range
+     *
+     */
     template <class DomainSpace, class RangeSpace>
     struct DiagonalStencil : public Stencil<DomainSpace,RangeSpace>
     {
@@ -163,6 +214,15 @@ namespace Dune
       }
     };
 
+    /** \class DiagonalAndNeighborStencil
+     *  \brief Stencil contaning the entries (en,en) and (en,nb) for all entities en in the space
+     *         and neighbors nb of en.
+     *         Defailt for an operator over a DG space.
+     *
+     *  \tparam  DomainSpace  type of discrete function space for the domain
+     *  \tparam  RangeSpace   type of discrete function space for the range
+     *
+     */
     template <class DomainSpace, class RangeSpace>
     struct DiagonalAndNeighborStencil : public Stencil<DomainSpace,RangeSpace>
     {
