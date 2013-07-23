@@ -308,18 +308,18 @@ namespace Dune
         receiveComm();
       }
 
-    protected:
-      //! Does the actual computations. Needs to be overridden in the derived
-      //! clases
-      virtual void compute(const TotalArgumentType& arg, 
-                           DestinationType& dest) const = 0;
-
       //! derived passes have to implement this method 
       //! returning the time step estimate 
       virtual double timeStepEstimateImpl() const 
       {
         return std::numeric_limits<double>::max(); 
       }
+
+    protected:
+      //! Does the actual computations. Needs to be overridden in the derived
+      //! clases
+      virtual void compute(const TotalArgumentType& arg, 
+                           DestinationType& dest) const = 0;
 
       /** \brief finalizeCommunication collects possbily initiated non-blocking
                  communications for all passes 
