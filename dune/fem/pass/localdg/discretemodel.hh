@@ -425,6 +425,26 @@ namespace Dune
       { }
     };
 
+    // DGDGAdaptiveDiscreteModel
+    // ---------------------------------------
+
+    class DGAdaptiveDiscreteModel
+    {
+    public:
+      //! \brief default method for setting adaptation handle to discrete model 
+      template <class Adaptation, class ThreadFilter>
+      void setAdaptation( const Adaptation&, 
+                          const double weight = 1.0 ) {}
+
+      //! \brief default method for setting adaptation handle and thead filter to discrete model 
+      template <class Adaptation, class ThreadFilter>
+      void setAdaptation( const Adaptation&, 
+                          const ThreadFilter&, 
+                          const double weight = 1.0 ) {}
+
+      //! remove pointer to adaptation handle 
+      void removeAdaptation() {}
+    };
 
 
     // DGDiscreteModelDefaultWithInsideOutside
@@ -445,7 +465,8 @@ namespace Dune
               , int N9 = -1 
               >
     class DGDiscreteModelDefaultWithInsideOutside
-    : public DGDiscreteModelDefault< DGDiscreteModelTraits, N1, N2, N3, N4, N5, N6, N7, N8, N9 >
+    : public DGDiscreteModelDefault< DGDiscreteModelTraits, N1, N2, N3, N4, N5, N6, N7, N8, N9 >,
+      public DGAdaptiveDiscreteModel
     {
       typedef DGDiscreteModelDefault< DGDiscreteModelTraits, N1, N2, N3, N4, N5, N6, N7, N8, N9 > BaseType;
 

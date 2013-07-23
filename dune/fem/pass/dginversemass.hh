@@ -22,7 +22,7 @@ namespace Dune
     // ------------------------------
 
     template< int functionalId, class PreviousPass >
-    struct DGInverseMassPassDiscreteModel
+    struct DGInverseMassPassDiscreteModel : public DGAdaptiveDiscreteModel
     {
     private:
       typedef typename PreviousPass::PassIds PassIds;
