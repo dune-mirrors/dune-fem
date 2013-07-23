@@ -433,12 +433,12 @@ namespace Dune
     public:
       //! \brief default method for setting adaptation handle to discrete model 
       template <class Adaptation, class ThreadFilter>
-      void setAdaptation( const Adaptation&, 
+      void setAdaptation( Adaptation&, 
                           const double weight = 1.0 ) {}
 
       //! \brief default method for setting adaptation handle and thead filter to discrete model 
       template <class Adaptation, class ThreadFilter>
-      void setAdaptation( const Adaptation&, 
+      void setAdaptation( Adaptation&, 
                           const ThreadFilter&, 
                           const double weight = 1.0 ) {}
 
