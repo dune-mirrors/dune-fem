@@ -133,8 +133,8 @@ namespace Dune
       PetscDiscreteFunction ( const ThisType &other )
       : name_( "copy of " + other.name_ ),
         dfSpace_( other.dfSpace_ ),
-        lfFactory_( other.lfFactory_ ),
-        lfStorage_( other.lfStorage_ ),
+        lfFactory_( *this ),
+        lfStorage_( lfFactory_ ),
         petscVector_( other.petscVector_ )
       {}
 
