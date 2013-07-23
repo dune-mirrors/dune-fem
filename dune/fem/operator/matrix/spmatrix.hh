@@ -546,7 +546,7 @@ namespace Dune
         return matrix_;
       }
 
-      //! reserve memory corresponnding to size of spaces
+      //! reserve memory for assemble based on the provided stencil 
       template <class Stencil>
       inline void reserve(const Stencil &stencil, bool verbose = false )
       {

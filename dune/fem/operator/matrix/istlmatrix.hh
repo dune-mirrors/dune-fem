@@ -996,6 +996,7 @@ namespace Dune
         removeObj( false );
       }
 
+      //! reserve memory for assemble based on the provided stencil 
       template <class Stencil>
       void reserve(const Stencil &stencil,bool verbose = false) 
       {

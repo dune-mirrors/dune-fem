@@ -132,10 +132,12 @@ namespace Dune
         apply( arg, dest );
       }
 
-      void reserve ( ) 
+      void reserve () 
       {
         reserve( SimpleStencil<DomainSpaceType,RangeSpaceType>(0) );
       }
+
+      //! reserve memory for assemble based on the provided stencil 
       template <class StencilType>
       void reserve (const StencilType &stencil) 
       {
