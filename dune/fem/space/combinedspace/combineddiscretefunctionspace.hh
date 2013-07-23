@@ -345,14 +345,14 @@ namespace Dune
       }
 
       /** \copydoc Dune::Fem::DiscreteFunctionSpaceInterface::contains */
-      inline bool contains ( const int codim ) const
+      bool contains ( const int codim ) const
       {
         // forward to mapper since this information is held there
         return blockMapper().contains( codim );
       }
 
       /** \copydoc Dune::Fem::DiscreteFunctionSpaceInterface::continuous */
-      inline bool continuous () const
+      bool continuous () const
       {
         // forward to the subsapces
         return space1_.continuous() && space2_.continuous();
@@ -360,7 +360,7 @@ namespace Dune
 
       /** TODO Doc me */ 
       template< class Intersection >
-      inline bool continuous ( const Intersection & intersection ) const
+      bool continuous ( const Intersection & intersection ) const
       {
         // forward to the subsapces
         return space1_.continuous( intersection ) && space2_.continuous( intersection );
@@ -369,20 +369,20 @@ namespace Dune
       /** \brief get the type of this discrete function space
           \return DFSpaceIdentifier
       **/
-      inline DFSpaceIdentifier type () const
+      DFSpaceIdentifier type () const
       {
         return CombinedSpace_id;
       }
 
       /** \copydoc Dune::Fem::DiscreteFunctionSpaceInterface::order */
-      inline int order () const
+      int order () const
       {
         return polynomialOrder;
       }
 
       /** \copydoc Dune::Fem::DiscreteFunctionSpaceInterface::order */
       template<class Entity>
-      inline int order ( const Entity &entity ) const
+      int order ( const Entity &entity ) const
       {
         return polynomialOrder;
       }
@@ -397,7 +397,7 @@ namespace Dune
       /** \brief get dimension of value
           \return int
       **/
-      inline int dimensionOfValue () const
+      int dimensionOfValue () const
       {
         return dimVal;
       }
