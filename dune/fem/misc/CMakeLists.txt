@@ -48,7 +48,7 @@ set(misc_HEADERS  alugridwriter.hh
                threadmanager.hh
                validator.hh)
 
-dune_add_library(misc SOURCES femtimer.cc test.cc suite.cc)
+dune_add_library(misc OBJECT femtimer.cc test.cc suite.cc)
 # include not needed for CMake
 # include $(top_srcdir)/am/global-rules
 install(FILES ${misc_HEADERS} DESTINATION ${miscdir})

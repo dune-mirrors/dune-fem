@@ -15,3 +15,5 @@ foreach(i ${SUBDIRS})
   endif(${i} STREQUAL "test")
   add_subdirectory(${i} ${opt})
 endforeach(i ${SUBDIRS})
+
+dune_add_library(io OBJECT io.cc)

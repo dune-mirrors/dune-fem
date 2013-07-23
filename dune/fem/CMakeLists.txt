@@ -16,5 +16,3 @@ foreach(i ${SUBDIRS})
   add_subdirectory(${i} ${opt})
 endforeach(i ${SUBDIRS})
 
-dune_add_library(io SOURCES io/io.cc)
-dune_add_library(dunefem ADD_LIBS io misc space solver quadrature)

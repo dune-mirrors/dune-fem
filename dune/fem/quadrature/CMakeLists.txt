@@ -31,7 +31,7 @@ foreach(i ${SUBDIRS})
   add_subdirectory(${i} ${opt})
 endforeach(i ${SUBDIRS})
 
-dune_add_library(quadrature SOURCES 
+dune_add_library(quadrature OBJECT 
     caching/twistutility.cc 
     caching/topology.cc
   )

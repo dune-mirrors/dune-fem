@@ -34,7 +34,7 @@ foreach(i ${SUBDIRS})
   add_subdirectory(${i} ${opt})
 endforeach(i ${SUBDIRS})
 
-dune_add_library(solver SOURCES 
+dune_add_library(solver OBJECT 
     ode/odeobjectfiles.cc 
     ode/odeobjectfiles_mpi.cc
   )

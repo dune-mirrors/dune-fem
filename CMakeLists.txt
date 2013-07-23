@@ -18,7 +18,7 @@ include(DuneMacros)
 # start a dune project with information from dune.module
 dune_project()
 
-set(SUBDIRS  dune m4 doc)
+set(SUBDIRS  dune m4 lib doc)
 # we need the module file to be able to build via dunecontrol
 set(EXTRA_DIST  dune.module ChangeLog modules)
 set(DISTCHECK_CONFIGURE_FLAGS  --with-dune="${DUNEROOT}" CXX="${CXX}" CC="${CC}")

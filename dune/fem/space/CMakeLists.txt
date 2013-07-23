@@ -27,7 +27,7 @@ foreach(i ${SUBDIRS})
   add_subdirectory(${i} ${opt})
 endforeach(i ${SUBDIRS})
 
-dune_add_library(space SOURCES 
+dune_add_library(space OBJECT 
     discontinuousgalerkin/legendrepolynomials.cc
     discontinuousgalerkin/orthonormalbase_1d.cc
     discontinuousgalerkin/orthonormalbase_2d.cc
