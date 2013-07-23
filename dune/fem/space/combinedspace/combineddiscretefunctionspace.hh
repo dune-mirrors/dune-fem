@@ -358,6 +358,14 @@ namespace Dune
         return space1_.continuous() && space2_.continuous();
       }
 
+      /** TODO Doc me */ 
+      template< class Intersection >
+      inline bool continuous ( const Intersection & intersection ) const
+      {
+        // forward to the subsapces
+        return space1_.continuous( intersection ) && space2_.continuous( intersection );
+      }
+
       /** \brief get the type of this discrete function space
           \return DFSpaceIdentifier
       **/
