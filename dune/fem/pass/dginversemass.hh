@@ -107,6 +107,9 @@ namespace Dune
         }
       }
 
+      //! this pass needs no communication 
+      bool requireCommunication () const { return false ; }
+
       const DiscreteFunctionSpaceType &space () const { return space_; }
 
     protected:

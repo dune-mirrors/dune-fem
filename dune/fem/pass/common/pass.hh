@@ -315,6 +315,11 @@ namespace Dune
         return std::numeric_limits<double>::max(); 
       }
 
+      /** \brief requireCommunication returns true if the pass needs communication at all 
+       *         \note The default implementation returns \b true \b 
+       */
+      virtual bool requireCommunication () const { return true; }
+
     protected:
       //! Does the actual computations. Needs to be overridden in the derived
       //! clases
