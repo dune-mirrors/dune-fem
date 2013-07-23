@@ -1,7 +1,7 @@
 #ifndef DUNE_FEM_BINARYDATAIO_HH
 #define DUNE_FEM_BINARYDATAIO_HH
 
-//- system includes 
+#warning "BinaryDataIO is deprecated and will be removed after dune-fem 1.4."
 
 //- Dune includes 
 #include <dune/common/misc.hh>
