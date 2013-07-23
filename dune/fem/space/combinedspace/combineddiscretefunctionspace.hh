@@ -245,6 +245,7 @@ namespace Dune
       //! same gridPart
       typedef typename Traits :: GridPartType GridPartType;
       typedef typename Traits :: GridType GridType;
+      typedef typename GridPartType::IntersectionType IntersectionType;
       //! extract informations about IndexSet and Iterators
       typedef typename Traits :: IndexSetType IndexSetType;
       typedef typename Traits :: IteratorType IteratorType;
@@ -358,9 +359,8 @@ namespace Dune
         return space1_.continuous() && space2_.continuous();
       }
 
-      /** TODO Doc me */ 
-      template< class Intersection >
-      bool continuous ( const Intersection & intersection ) const
+      /** \copydoc Dune::Fem::DiscreteFunctionSpaceInterface::continuous */
+      bool continuous ( const IntersectionType & intersection ) const
       {
         // forward to the subsapces
         return space1_.continuous( intersection ) && space2_.continuous( intersection );
