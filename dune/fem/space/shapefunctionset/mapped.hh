@@ -39,8 +39,8 @@ namespace Dune
       originalShapeFunctionSet_(originalShapeFunctionSet),
       mapping_(mapping)
       { 
-       for(size_t i=0; i<size();++i)
-         std::cout<<"Mapping[ "<< i <<" ]= "<<mapping_[i]<<std::endl;
+        //for(size_t i=0; i<size();++i)
+        //  std::cout<<"Mapping[ "<< i <<" ] = "<<mapping_[i]<<std::endl;
       }
 
       int order() const {return originalShapeFunctionSet_.order();}

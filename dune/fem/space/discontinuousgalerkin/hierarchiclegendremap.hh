@@ -8,6 +8,7 @@
 #include <dune/common/power.hh>
 #include <dune/common/array.hh>
 
+#include <dune/fem/io/parameter.hh>
 
 namespace Dune
 {
@@ -87,9 +88,8 @@ namespace Dune
       
       // map for renumbering of basis functions to have a hierarchical basis 
       BaseNumberMapType baseFunctionMap_;
-  
 
-      public:
+    public:
       //default constructor
       HierarchicLegendreMap()
       {
@@ -111,21 +111,20 @@ namespace Dune
          }
        
 #ifndef NDEBUG 
-        //std::cout << numBaseFct << std::endl;
-        for( int i=0; i<numBaseFct; ++i ) 
+        if( Parameter :: verbose() )
         {
-          std::cout << "base " << i << " is " << baseFunctionMap_[ i ] << std::endl;
-          assert( baseFunctionMap_[ i ] >= 0 );
+          //std::cout << numBaseFct << std::endl;
+          for( int i=0; i<numBaseFct; ++i ) 
+          {
+            std::cout << "base " << i << " is " << baseFunctionMap_[ i ] << std::endl;
+            assert( baseFunctionMap_[ i ] >= 0 );
+          }
         }
 #endif
- 
       }
- 
 
-      const int operator[](int i) const {return baseFunctionMap_[i];}
-
+      const int operator[](int i) const { return baseFunctionMap_[ i ]; }
     };
-    
   
   } // namespace Fem
 
