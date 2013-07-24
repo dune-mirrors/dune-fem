@@ -225,31 +225,29 @@ protected:
     const int index = getIndex( entity );
     int weight = (index >= cutOff) ? 1 : 8; // a least weight 1 for macro element 
 
-    // calculate weight, which is number of children 
     {
-      const int mxl = gridPart_.grid().maxLevel();
-      if( mxl > entity.level() && ! entity.isLeaf() ) 
+      if( Fem::GridPartCapabilities::hasGrid< GridPartType >::v )
       {
-        typedef typename EntityType :: HierarchicIterator HierIt; 
-        const HierIt endit = entity.hend( mxl ); 
-        for(HierIt it = entity.hbegin( mxl ); it != endit; ++it)
+        // calculate weight, which is number of children
+        const int mxl = gridPart_.grid().maxLevel();
+        if( mxl > entity.level() && ! entity.isLeaf() ) 
         {
-          ++weight;
+          typedef typename EntityType :: HierarchicIterator HierIt; 
+          const HierIt endit = entity.hend( mxl ); 
+          for(HierIt it = entity.hbegin( mxl ); it != endit; ++it)
+            ++weight;
         }
       }
 
-      enum { dim = GridType :: dimension };
 #if HAVE_ALUGRID // old ALUGrid version 1.52
-      double center[ 3 ] = { 0 };
-      typename EntityType :: Geometry :: 
-        GlobalCoordinate barycenter = entity.geometry().center();
-      for( int i=0; i<dim; ++i ) 
+      double center[ 3 ] = { 0, 0, 0 };
+      typedef typename EntityType::Geometry::GlobalCoordinate GlobalCoordinate;
+      const GlobalCoordinate barycenter = entity.geometry().center();
+      for( int i = 0; i < GlobalCoordinate::dimension; ++i ) 
         center[ i ] = barycenter[ i ];
-      db.vertexUpdate ( typename LoadBalancerType :: 
-                        GraphVertex ( index, weight, center ) );
+      db.vertexUpdate( typename LoadBalancerType::GraphVertex( index, weight, center ) );
 #else // new dune-alugrid version
-      db.vertexUpdate ( typename LoadBalancerType :: 
-                        GraphVertex ( index, weight ));
+      db.vertexUpdate( typename LoadBalancerType::GraphVertex( index, weight ) );
 #endif
       ++graphSize_; 
     }
