@@ -11,6 +11,7 @@
 #include <dune/fem/operator/1order/localmassmatrix.hh>
 #include <dune/fem/pass/common/local.hh>
 #include <dune/fem/quadrature/cachingquadrature.hh>
+#include <dune/fem/pass/localdg/discretemodel.hh>
 
 namespace Dune
 {
