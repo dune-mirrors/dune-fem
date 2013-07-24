@@ -1049,6 +1049,18 @@ namespace Dune
       }
       
     public:
+      /** \brief increase the DofManagers internal sequence number
+          \note  This will increase the sequence counter by 1.
+      */
+      void incrementSequenceNumber () 
+      {
+        // mark next sequence 
+        ++sequence_;
+
+        // check that sequence number is the same for all processes
+        assert( sequence_ == grid_.comm().max( sequence_ ) );
+      }
+
       //- --compress
       /** \brief Compress all data that is hold by this dofmanager 
           \note  This will increase the sequence counter by 1.
@@ -1056,10 +1068,7 @@ namespace Dune
       void compress() 
       {
         // mark next sequence 
-        ++sequence_;
-
-        // check that sequence number is the same for all processes
-        assert( sequence_ == grid_.comm().max( sequence_ ) );
+        incrementSequenceNumber ();
 
         // compress indexsets first 
         {
