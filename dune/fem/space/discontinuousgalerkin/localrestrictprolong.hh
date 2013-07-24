@@ -207,6 +207,30 @@ namespace Dune
 
 
 
+    // DefaultLocalRestrictProlong for HierarchicLegendreDiscontinuousGalerkinSpace
+    // ----------------------------------------------------------------------------
+
+    template< class FunctionSpaceImp, class GridPartImp, int polOrd, template< class > class StorageImp >
+    struct DefaultLocalRestrictProlong< HierarchicLegendreDiscontinuousGalerkinSpace< FunctionSpaceImp, GridPartImp, polOrd, StorageImp > >
+    : public DiscontinuousGalerkinLocalRestrictProlong< HierarchicLegendreDiscontinuousGalerkinSpace< FunctionSpaceImp, GridPartImp, polOrd, StorageImp >, false >
+    {
+      typedef DiscontinuousGalerkinLocalRestrictProlong<
+        HierarchicLegendreDiscontinuousGalerkinSpace< FunctionSpaceImp, GridPartImp, polOrd,  StorageImp >, false > BaseType;
+      DefaultLocalRestrictProlong ( const HierarchicLegendreDiscontinuousGalerkinSpace< FunctionSpaceImp, GridPartImp, polOrd, StorageImp > & space )
+        : BaseType( space )
+      {}
+    };
+
+    template< class FunctionSpaceImp, class GridPartImp, template< class > class StorageImp >
+    struct DefaultLocalRestrictProlong< HierarchicLegendreDiscontinuousGalerkinSpace< FunctionSpaceImp, GridPartImp, 0, StorageImp > >
+    : public ConstantLocalRestrictProlong< HierarchicLegendreDiscontinuousGalerkinSpace< FunctionSpaceImp, GridPartImp, 0, StorageImp > >
+    {
+      DefaultLocalRestrictProlong ( const HierarchicLegendreDiscontinuousGalerkinSpace< FunctionSpaceImp, GridPartImp, 0, StorageImp > & )
+      {}
+    };
+
+
+
     // DefaultLocalRestrictProlong for LagrangeDiscontinuousGalerkinSpace
     // ------------------------------------------------------------------
 
