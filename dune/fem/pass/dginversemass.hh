@@ -9,7 +9,7 @@
 
 #include <dune/fem/common/tupleutility.hh>
 #include <dune/fem/operator/1order/localmassmatrix.hh>
-#include <dune/fem/pass/common/pass.hh>
+#include <dune/fem/pass/common/local.hh>
 #include <dune/fem/quadrature/cachingquadrature.hh>
 
 namespace Dune
@@ -39,6 +39,8 @@ namespace Dune
       {
         typedef typename Dune::TypeTraits< DestinationPtrType >::PointeeType DestinationType;
         typedef typename DestinationType::DiscreteFunctionSpaceType DiscreteFunctionSpaceType;
+        typedef CachingQuadrature< typename DiscreteFunctionSpaceType::GridPartType, 0 > VolumeQuadratureType;
+        typedef CachingQuadrature< typename DiscreteFunctionSpaceType::GridPartType, 1 > FaceQuadratureType;
       };
     };
 
@@ -55,14 +57,15 @@ namespace Dune
      */
     template< int functionalId, class PreviousPass, int id >
     class DGInverseMassPass
-    : public Dune::Fem::Pass< DGInverseMassPassDiscreteModel< functionalId, PreviousPass >, PreviousPass, id >
+    : public Dune::Fem::LocalPass< DGInverseMassPassDiscreteModel< functionalId, PreviousPass >, PreviousPass, id >
     {
       typedef DGInverseMassPass< functionalId, PreviousPass, id > ThisType;
-      typedef Dune::Fem::Pass< DGInverseMassPassDiscreteModel< functionalId, PreviousPass >, PreviousPass, id > BaseType;
-
-      typedef DGInverseMassPassDiscreteModel< functionalId, PreviousPass > DiscreteModelType;
+      typedef Dune::Fem::LocalPass< DGInverseMassPassDiscreteModel< functionalId, PreviousPass >, PreviousPass, id > BaseType;
 
     public:
+      //! type of the discrete model used 
+      typedef DGInverseMassPassDiscreteModel< functionalId, PreviousPass > DiscreteModelType;
+
       //! pass ids up to here (tuple of integral constants)
       typedef typename BaseType::PassIds PassIds;
 
@@ -78,16 +81,32 @@ namespace Dune
       static const std::size_t functionalPosition = DiscreteModelType::functionalPosition;
 
       typedef typename DiscreteFunctionSpaceType::GridPartType GridPartType;
-      typedef LocalMassMatrix< DiscreteFunctionSpaceType, CachingQuadrature< GridPartType, 0 > > LocalMassMatrixType;
+      typedef typename DiscreteModelType::Traits::VolumeQuadratureType VolumeQuadratureType;
+      typedef LocalMassMatrix< DiscreteFunctionSpaceType, VolumeQuadratureType > LocalMassMatrixType;
 
+      typedef typename GridPartType::template Codim< 0 >::EntityType EntityType;
     public:
       using BaseType::passNumber;
+      using BaseType::space;
 
       explicit DGInverseMassPass ( PreviousPass &previousPass,
                                    const DiscreteFunctionSpaceType &space )
-      : BaseType( previousPass ),
-        space_( space ),
-        localMassMatrix_( space, 2*space.order() )
+      : BaseType( previousPass, space, "DGInverseMassPass" ),
+        localMassMatrix_( space, 2*space.order() ),
+        arg_( 0 ),
+        dest_( 0 )
+      {}
+
+      //! constructor for use with thread pass 
+      explicit DGInverseMassPass ( const DiscreteModelType& discreteModel, 
+                                   PreviousPass &previousPass,
+                                   const DiscreteFunctionSpaceType &space,
+                                   const int volQuadOrd  = -1, 
+                                   const int faceQuadOrd = -1)
+      : BaseType( previousPass, space, "DGInverseMassPass" ),
+        localMassMatrix_( space, ( volQuadOrd == -1 ) ? (2*space.order()) : volQuadOrd ),
+        arg_( 0 ),
+        dest_( 0 )
       {}
 
       void printTexInfo ( std::ostream &out ) const
@@ -96,37 +115,86 @@ namespace Dune
         out << "DGInverseMassPass: " << "\\\\" << std::endl;
       }
 
-      void allocateLocalMemory ()
-      {
-        if( !destination_ )
-        {
-          std::ostringstream name;
-          name << "DGInverseMassPass_" << passNumber();
-          destination_ = new DestinationType( name.str(), space() );
-          deleteHandler_ = &(BaseType::DeleteHandlerType::instance());
-        }
-      }
-
       //! this pass needs no communication 
       bool requireCommunication () const { return false ; }
 
-      const DiscreteFunctionSpaceType &space () const { return space_; }
+      //! interface method 
+      void prepare( const TotalArgumentType &argument, DestinationType &destination ) const
+      {
+        arg_  = &argument;
+        dest_ = &destination;
+      }
+
+      //! prepare for ThreadPass 
+      void prepare( const TotalArgumentType &argument, DestinationType &destination, const bool ) const
+      {
+        prepare( argument, destination );
+      }
+
+      //! finalize for ThreadPass 
+      void finalize( const TotalArgumentType &argument, DestinationType &destination, const bool ) const
+      {
+        finalize( argument, destination );
+      }
+
+      //! interface method 
+      void finalize( const TotalArgumentType &argument, DestinationType &destination ) const
+      {
+        arg_  = 0 ;
+        dest_ = 0 ;
+      }
+
+      //! apply inverse mass matrix locally 
+      void applyLocal( const EntityType& entity ) const 
+      {
+        assert( arg_ ); 
+        assert( dest_ );
+        typename DestinationType::LocalFunctionType localDestination = dest_->localFunction( entity );
+        localDestination.assign( Dune::get< functionalPosition >( *arg_ )->localFunction( entity ) );
+        localMassMatrix_.applyInverse( entity, localDestination );
+      }
+
+      //! apply local with neighbor checker (not needed here)
+      template <class NBChecker>
+      void applyLocal( const EntityType& entity, const NBChecker& ) const 
+      {
+        applyLocal( entity );
+      }
+
+      /** \brief  apply local for all elements that do not need information from 
+       *          other processes (here all elements)
+       */         
+      template <class NBChecker>
+      void applyLocalInterior( const EntityType& entity, const NBChecker& ) const 
+      {
+        applyLocal( entity );
+      }
+
+      /** \brief  apply local for all elements that need information from 
+       *          other processes (here no elements)
+       */         
+      template <class NBChecker>
+      void applyLocalProcessBoundary( const EntityType& entity, const NBChecker& ) const 
+      {
+        DUNE_THROW(InvalidStateException,"DGInverseMassPass does not need a second phase for ThreadPass");
+      }
 
     protected:
       void compute ( const TotalArgumentType &argument, DestinationType &destination ) const
       {
-        typedef typename GridPartType::template Codim< 0 >::template Partition< All_Partition >::IteratorType IteratorType;
-        typedef typename GridPartType::template Codim< 0 >::EntityType EntityType;
+        // set pointer
+        prepare( argument, destination );
 
+        typedef typename GridPartType::template Codim< 0 >::template Partition< All_Partition >::IteratorType IteratorType;
         const GridPartType &gridPart = space().gridPart();
         const IteratorType end = gridPart.template end< 0, All_Partition >();
         for( IteratorType it = gridPart.template begin< 0, All_Partition >(); it != end; ++it )
         {
-          const EntityType &entity = *it;
-          typename DestinationType::LocalFunctionType localDestination = destination.localFunction( entity );
-          localDestination.assign( Dune::get< functionalPosition >( argument )->localFunction( entity ) );
-          localMassMatrix_.applyInverse( entity, localDestination );
+          applyLocal( *it );
         }
+
+        // remove pointer
+        finalize( argument, destination );
       }
 
     protected:
@@ -134,8 +202,10 @@ namespace Dune
       using BaseType::deleteHandler_;
 
     private:
-      const DiscreteFunctionSpaceType &space_;
       LocalMassMatrixType localMassMatrix_;
+
+      mutable const TotalArgumentType* arg_;
+      mutable DestinationType*         dest_;
     };
 
   } // namespace Fem
