@@ -55,6 +55,26 @@ namespace Dune
       {}
     };
 
+    /** \brief Local Mass Matrix for hierarchic Legendre space */
+    template <class FunctionSpaceImp, 
+              class GridPartImp, 
+              int polOrd,
+              template<class> class BaseFunctionStorageImp, 
+              class VolumeQuadratureImp>
+    class LocalMassMatrix< 
+      HierarchicLegendreDiscontinuousGalerkinSpace< FunctionSpaceImp, GridPartImp, polOrd, BaseFunctionStorageImp >,
+                                                    VolumeQuadratureImp > 
+      : public LocalMassMatrixImplementationDgOrthoNormal< 
+          HierarchicLegendreDiscontinuousGalerkinSpace< FunctionSpaceImp, GridPartImp, polOrd, BaseFunctionStorageImp >, VolumeQuadratureImp >
+    {
+      typedef HierarchicLegendreDiscontinuousGalerkinSpace< FunctionSpaceImp, GridPartImp, polOrd, BaseFunctionStorageImp > DiscreteFunctionSpaceImp;
+      typedef LocalMassMatrixImplementationDgOrthoNormal< DiscreteFunctionSpaceImp, VolumeQuadratureImp > BaseType;
+    public:
+      LocalMassMatrix( const DiscreteFunctionSpaceImp& spc, const int volQuadOrd = -1 )
+        : BaseType( spc, volQuadOrd )
+      {}
+    };
+
   } // namespace Fem 
 
 } // namespace Dune 
