@@ -158,7 +158,7 @@ namespace Dune
             //std::cout << counter << " for thread " << thread-1 << std::endl;
             while( (i < counter) && (it != endit) )
             {
-              assert( indexSet_.index( *it ) < (size_t) threadNum_.size() );
+              assert( std::size_t( indexSet_.index( *it ) ) < std::size_t( threadNum_.size() ) );
               threadNum_[ indexSet_.index( *it ) ] = thread - 1;
               ++i;
               ++it;
@@ -221,7 +221,7 @@ namespace Dune
       int thread( const EntityType& entity ) const 
       {
 #ifdef USE_SMP_PARALLEL
-        assert( (size_t) threadNum_.size() > indexSet_.index( entity ) );
+        assert( std::size_t( threadNum_.size() ) > std::size_t( indexSet_.index( entity ) ) );
         // NOTE: this number can also be negative for ghost elements or elements
         // that do not belong to the set covered by the space iterators 
         return threadNum_[ indexSet_.index( entity ) ];
