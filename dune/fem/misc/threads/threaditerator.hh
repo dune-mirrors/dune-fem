@@ -18,7 +18,7 @@ namespace Dune
   {
 
     /** \brief Thread iterator */
-    template <class GridPart>  
+    template <class GridPart, PartitionIteratorType pitype = InteriorBorder_Partition >  
     class ThreadIterator
     {
       ThreadIterator( const ThreadIterator& );
@@ -26,9 +26,9 @@ namespace Dune
     public:  
       typedef GridPart GridPartType;
       typedef typename GridPartType :: GridType  GridType;
-      typedef typename GridPartType :: template Codim< 0 > :: IteratorType      IteratorType ;
-      typedef typename GridPartType :: template Codim< 0 > :: EntityType        EntityType ;
-      typedef typename GridPartType :: template Codim< 0 > :: EntityPointerType EntityPointerType ;
+      typedef typename GridPartType :: template Codim< 0 > :: template Partition< pitype > :: IteratorType       IteratorType ;
+      typedef typename GridPartType :: template Codim< 0 > :: EntityType         EntityType ;
+      typedef typename GridPartType :: template Codim< 0 > :: EntityPointerType  EntityPointerType ;
       typedef typename GridPartType :: IndexSetType IndexSetType ;
       typedef DofManager< GridType > DofManagerType;
 
@@ -59,7 +59,7 @@ namespace Dune
         , indexSet_( gridPart_.indexSet() )
 #ifdef USE_SMP_PARALLEL
         , sequence_( -1 )  
-        , iterators_( ThreadManager::maxThreads() + 1 , gridPart_.template end< 0 >() )
+        , iterators_( ThreadManager::maxThreads() + 1 , gridPart_.template end< 0, pitype >() )
         , threadId_( ThreadManager::maxThreads() )
 #endif
         , communicationThread_( Parameter::getValue<bool>("fem.threads.communicationthread", false)
@@ -113,9 +113,9 @@ namespace Dune
           const size_t maxThreads = ThreadManager :: maxThreads() ;
 
           // get end iterator
-          const IteratorType endit = gridPart_.template end< 0 >();
+          const IteratorType endit = gridPart_.template end< 0, pitype >();
 
-          IteratorType it = gridPart_.template begin< 0 >();
+          IteratorType it = gridPart_.template begin< 0, pitype >();
           if( it == endit ) 
           {
             // set all iterators to end iterators 
@@ -197,7 +197,7 @@ namespace Dune
 #ifdef USE_SMP_PARALLEL
         return iterators_[ ThreadManager :: thread() ];
 #else 
-        return gridPart_.template begin< 0 >();
+        return gridPart_.template begin< 0, pitype >();
 #endif
       }
 
@@ -207,7 +207,7 @@ namespace Dune
 #ifdef USE_SMP_PARALLEL
         return iterators_[ ThreadManager :: thread() + 1 ];
 #else 
-        return gridPart_.template end< 0 >();
+        return gridPart_.template end< 0, pitype >();
 #endif
       }
 
