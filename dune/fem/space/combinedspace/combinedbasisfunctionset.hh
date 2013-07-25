@@ -121,10 +121,16 @@ namespace Dune
         phi2_( size2_ )
       {}
 
-      //! \copydoc BasisFunctionSet::order
+      //! \copydoc BasisFunctionSet::size
       std::size_t size()  const
       {
         return size1_ + size2_;
+      }
+
+      //! \copydoc BasisFunctionSet::order
+      int order ()  const
+      {
+        return std::max( basisSet1().order(), basisSet2().order() );
       }
 
       //! \copydoc BasisFunctionSet::type
