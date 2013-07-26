@@ -130,7 +130,7 @@ namespace Dune
       //! \copydoc BasisFunctionSet::order
       int order ()  const
       {
-        return std::max( basisSet1().order(), basisSet2().order() );
+        return std::max( basisSet1_.order(), basisSet2_.order() );
       }
 
       //! \copydoc BasisFunctionSet::type
