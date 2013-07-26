@@ -24,7 +24,9 @@ namespace Dune
       template< class CoordFunction >
       struct hasGrid< GeoGridPart< CoordFunction > >
       {
-        static const bool v = hasGrid< typename CoordFunction::GridPartType >::v;
+        // either implement this or leaf it away !!!
+//        static const bool v = hasGrid< typename CoordFunction::GridPartType >::v;
+        static const bool v = false;
       };
 
 
