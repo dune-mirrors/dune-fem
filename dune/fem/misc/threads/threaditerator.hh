@@ -99,7 +99,7 @@ namespace Dune
       void update() 
       {
 #ifdef USE_SMP_PARALLEL
-        const int sequence = dofManager_.sequence();
+        const int sequence = gridPart_.sequence();
         // if grid got updated also update iterators 
         if( sequence_ != sequence )
         {
