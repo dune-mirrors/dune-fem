@@ -11,6 +11,7 @@
 #include <dune/grid/common/grid.hh>
 
 //- dune-fem includes
+#include <dune/fem/space/common/dofmanager.hh>
 #include <dune/fem/gridpart/common/capabilities.hh>
 #include <dune/fem/gridpart/common/gridpartview.hh>
 #include <dune/fem/quadrature/caching/twistutility.hh>
@@ -157,6 +158,7 @@ namespace Dune
         return asImp().grid(); 
       }
 
+      //! \brief convert grid part into a dune grid view
       GridViewType gridView () const
       {
         typedef typename GridViewType::GridViewImp Impl;
@@ -242,6 +244,7 @@ namespace Dune
         return asImp().iend( entity ); 
       }
 
+      //! return boundary if given an intersection
       int boundaryId ( const IntersectionType &intersection ) const
       {
         CHECK_INTERFACE_IMPLEMENTATION( asImp().boundaryId( intersection ) );
@@ -285,6 +288,15 @@ namespace Dune
         return asImp().convert( entity );
       }
 
+      /** \brief return sequence number to update structures depending on the grid part 
+       *  \note The default returns DofManager< Grid > :: sequence () 
+       */
+      int sequence () const 
+      {
+        CHECK_INTERFACE_IMPLEMENTATION( asImp().sequence() );
+        return asImp().sequence() ;
+      }
+
     protected: 
       //! do not create explicit instances of this class 
       GridPartInterface () {}  
@@ -314,17 +326,22 @@ namespace Dune
       //! \brief Collective communication
       typedef typename Traits::CollectiveCommunicationType CollectiveCommunicationType;
 
+      //! \brief type of DofManager
+      typedef DofManager< GridType >  DofManagerType;
     protected:
-      GridType &grid_;
+      GridType       &grid_;
+      DofManagerType &dofManager_; 
 
     protected:
       //! constructor
       GridPartDefault ( GridType &grid )
-      : grid_( grid )
+      : grid_( grid ),
+        dofManager_( DofManagerType :: instance( grid_ ) )
       {}
 
       GridPartDefault ( const ThisType &other )
-      : grid_( other.grid_ )
+      : grid_( other.grid_ ),
+        dofManager_( DofManagerType :: instance( grid_ ) )
       {}
 
       ~GridPartDefault ()
@@ -343,7 +360,7 @@ namespace Dune
         return grid().comm();
       }
 
-      /* \brief \copydoc GridPartInterface::entityPointer
+      /** \brief \copydoc GridPartInterface::entityPointer
        *
        * \tparam  EntitySeed  entity seed from which to create entity pointer 
        *
@@ -357,14 +374,23 @@ namespace Dune
         return grid().entityPointer( seed );
       }
 
-      /* \brief \copydoc GridPartInterface::convert 
+      /** \brief \copydoc GridPartInterface::convert 
          
-         The default implementation does nothing but return the same entity 
+          \note  The default implementation does nothing but return the same entity 
        */
       template <class Entity> 
       const Entity& convert( const Entity& entity ) const 
       {
         return entity;
+      }
+
+      /** \brief \copydoc GridPartInterface::sequence 
+       *
+       *  \note  The default returns DofManager< Grid > :: sequence
+       */
+      int sequence () const 
+      {
+        return dofManager_.sequence();
       }
     };
 
