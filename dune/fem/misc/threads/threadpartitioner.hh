@@ -14,6 +14,8 @@
 #include <dune/alugrid/3d/alugrid.hh>
 #endif
 
+#include <dune/fem/gridpart/common/capabilities.hh>
+
 #if ALU3DGRID_PARALLEL
 
 #warning "Using the ThreadPartitioner"
