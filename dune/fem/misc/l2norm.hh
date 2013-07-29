@@ -41,8 +41,9 @@ namespace Dune
       typedef CachingQuadrature< GridPartType, 0 > QuadratureType;
       typedef Integrator< QuadratureType > IntegratorType;
 
+      const unsigned int order_;
     public:
-      explicit L2Norm ( const GridPartType &gridPart );
+      explicit L2Norm ( const GridPartType &gridPart, const unsigned int order = -1 );
 
       template< class DiscreteFunctionType >
       typename DiscreteFunctionType::RangeFieldType
@@ -74,8 +75,9 @@ namespace Dune
     // ------------------------
     
     template< class GridPart >
-    inline L2Norm< GridPart >::L2Norm ( const GridPartType &gridPart )
-    : BaseType( gridPart )
+    inline L2Norm< GridPart >::L2Norm ( const GridPartType &gridPart, const unsigned int order )
+    : BaseType( gridPart ),
+      order_( order )
     {}
 
 
@@ -121,7 +123,7 @@ namespace Dune
       typedef typename DiscreteFunctionType::LocalFunctionType LocalFunctionType;
       // evaluate norm locally 
       
-      IntegratorType integrator( order );
+      IntegratorType integrator( std::max( order_, order ) );
 
       LocalFunctionType ulocal = u.localFunction( entity );
       FunctionSquare< LocalFunctionType > ulocal2( ulocal );
@@ -143,7 +145,7 @@ namespace Dune
       typedef typename VDiscreteFunctionType::LocalFunctionType VLocalFunctionType;
 
       // evaluate norm locally 
-      IntegratorType integrator( order );
+      IntegratorType integrator( std::max( order_, order ) );
 
       ULocalFunctionType ulocal = u.localFunction( entity );
       VLocalFunctionType vlocal = v.localFunction( entity );
