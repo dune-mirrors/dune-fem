@@ -36,7 +36,7 @@ namespace Dune
       using BaseType::comm;
 
     public:
-      explicit H1Norm ( const GridPartType &gridPart );
+      explicit H1Norm ( const GridPartType &gridPart, const unsigned int order = 0 );
       H1Norm ( const ThisType &other );
 
       template< class DiscreteFunctionType >
@@ -66,6 +66,8 @@ namespace Dune
     private:
       // prohibit assignment
       ThisType operator= ( const ThisType &other );
+
+      const unsigned int order_;
     };
 
 
@@ -112,15 +114,17 @@ namespace Dune
     // -------------------------
     
     template< class GridPart >
-    inline H1Norm< GridPart >::H1Norm ( const GridPartType &gridPart )
-    : BaseType( gridPart )
+    inline H1Norm< GridPart >::H1Norm ( const GridPartType &gridPart, const unsigned int order )
+    : BaseType( gridPart ),
+      order_( order )
     {}
 
 
 
     template< class GridPart >
     inline H1Norm< GridPart >::H1Norm ( const ThisType &other )
-    : BaseType( other )
+    : BaseType( other ),
+      order_( other.order_ )
     {}
 
     
@@ -132,7 +136,7 @@ namespace Dune
       typedef typename DiscreteFunctionType::RangeFieldType RangeFieldType;
       typedef FieldVector< RangeFieldType, 1 > ReturnType ;
 
-      ReturnType sum = BaseType :: forEach( u, ReturnType( 0 ) );
+      ReturnType sum = BaseType :: forEach( u, ReturnType( 0 ), order_ );
 
       // return result, e.g. sqrt of calculated sum 
       return sqrt( comm().sum( sum[ 0 ] ) );
@@ -147,7 +151,7 @@ namespace Dune
       typedef typename UDiscreteFunctionType::RangeFieldType RangeFieldType;
       typedef FieldVector< RangeFieldType, 1 > ReturnType ;
 
-      ReturnType sum = BaseType :: forEach( u, v, ReturnType( 0 ) );
+      ReturnType sum = BaseType :: forEach( u, v, ReturnType( 0 ), order_ );
 
       // return result, e.g. sqrt of calculated sum 
       return sqrt( comm().sum( sum[ 0 ] ) );

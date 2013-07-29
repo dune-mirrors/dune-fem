@@ -40,8 +40,9 @@ namespace Dune
       typedef typename GridIteratorType::Entity EntityType;
       typedef CachingQuadrature< GridPartType, 0 > QuadratureType;
 
+      const unsigned int order_;
     public:
-      explicit L1Norm ( const GridPartType &gridPart );
+      explicit L1Norm ( const GridPartType &gridPart, const unsigned int order = 0 );
 
       template< class DiscreteFunctionType >
       typename DiscreteFunctionType::RangeFieldType norm ( const DiscreteFunctionType &u ) const;
@@ -73,8 +74,9 @@ namespace Dune
     // ------------------------
     
     template< class GridPart >
-    inline L1Norm< GridPart >::L1Norm ( const GridPartType &gridPart )
-    : BaseType( gridPart )
+    inline L1Norm< GridPart >::L1Norm ( const GridPartType &gridPart, const unsigned int order )
+    : BaseType( gridPart ),
+      order_( order )
     {}
 
 
@@ -87,7 +89,7 @@ namespace Dune
       typedef FieldVector< RangeFieldType, 1 > ReturnType ;
 
       // calculate integral over each element 
-      ReturnType sum = BaseType :: forEach( u, ReturnType(0) );
+      ReturnType sum = BaseType :: forEach( u, ReturnType(0), order_ );
 
       // return result, e.g. sum
       return comm().sum( sum[ 0 ] );
@@ -104,7 +106,7 @@ namespace Dune
       typedef FieldVector< RangeFieldType, 1 > ReturnType ;
 
       // calculate integral over each element 
-      ReturnType sum = BaseType :: forEach( u, v, ReturnType(0) );
+      ReturnType sum = BaseType :: forEach( u, v, ReturnType(0), order_ );
 
       // return result, e.g. sum
       return comm().sum( sum[ 0 ] );

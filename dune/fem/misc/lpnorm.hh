@@ -416,7 +416,7 @@ namespace Dune
       typedef FieldVector< RangeFieldType, 1 > ReturnType ;
 
       // calculate integral over each element 
-      ReturnType sum = BaseType :: forEach( u, ReturnType(0) );
+      ReturnType sum = BaseType :: forEach( u, ReturnType(0), order() );
 
       // return result
       return std::pow ( comm().sum( sum[ 0 ] ), (1.0 / p_) );
@@ -432,7 +432,7 @@ namespace Dune
       typedef FieldVector< RangeFieldType, 1 > ReturnType ;
 
       // calculate integral over each element 
-      ReturnType sum = BaseType :: forEach( u, v, ReturnType(0) );
+      ReturnType sum = BaseType :: forEach( u, v, ReturnType(0), order() );
 
       // return result 
       return std::pow( comm().sum( sum[ 0 ] ), (1.0/p_) );
@@ -565,7 +565,7 @@ namespace Dune
       p_(p)
     {
       dune_static_assert( (WeightFunctionSpaceType::dimRange == 1),
-                          "Wight function must be scalar." );
+                          "Weight function must be scalar." );
     }
 
 

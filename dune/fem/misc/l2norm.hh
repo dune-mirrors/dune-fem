@@ -43,7 +43,7 @@ namespace Dune
 
       const unsigned int order_;
     public:
-      explicit L2Norm ( const GridPartType &gridPart, const unsigned int order = -1 );
+      explicit L2Norm ( const GridPartType &gridPart, const unsigned int order = 0 );
 
       template< class DiscreteFunctionType >
       typename DiscreteFunctionType::RangeFieldType
@@ -90,7 +90,7 @@ namespace Dune
       typedef FieldVector< RangeFieldType, 1 > ReturnType ;
 
       // calculate integral over each element 
-      ReturnType sum = BaseType :: forEach( u, ReturnType(0) );
+      ReturnType sum = BaseType :: forEach( u, ReturnType(0), order_ );
 
       // return result, e.g. sqrt of calculated sum 
       return sqrt( comm().sum( sum[ 0 ] ) );
@@ -107,7 +107,7 @@ namespace Dune
       typedef FieldVector< RangeFieldType, 1 > ReturnType ;
 
       // calculate integral over each element 
-      ReturnType sum = BaseType :: forEach( u, v, ReturnType(0) );
+      ReturnType sum = BaseType :: forEach( u, v, ReturnType(0), order_ );
 
       // return result, e.g. sqrt of calculated sum 
       return sqrt( comm().sum( sum[ 0 ] ) );
@@ -121,9 +121,9 @@ namespace Dune
                                     ReturnType& sum ) const
     {
       typedef typename DiscreteFunctionType::LocalFunctionType LocalFunctionType;
+
       // evaluate norm locally 
-      
-      IntegratorType integrator( std::max( order_, order ) );
+      IntegratorType integrator( order );
 
       LocalFunctionType ulocal = u.localFunction( entity );
       FunctionSquare< LocalFunctionType > ulocal2( ulocal );
@@ -145,7 +145,7 @@ namespace Dune
       typedef typename VDiscreteFunctionType::LocalFunctionType VLocalFunctionType;
 
       // evaluate norm locally 
-      IntegratorType integrator( std::max( order_, order ) );
+      IntegratorType integrator( order );
 
       ULocalFunctionType ulocal = u.localFunction( entity );
       VLocalFunctionType vlocal = v.localFunction( entity );
@@ -261,7 +261,7 @@ namespace Dune
       using BaseType::norm;
       using BaseType::distance;
 
-      explicit WeightedL2Norm ( const WeightFunctionType &weightFunction );
+      explicit WeightedL2Norm ( const WeightFunctionType &weightFunction, const unsigned int order = 0 );
 
       template< class UDiscreteFunctionType, class ReturnType >
       void normLocal ( const EntityType &entity, const int order,
@@ -286,8 +286,8 @@ namespace Dune
     
     template< class WeightFunction >
     inline WeightedL2Norm< WeightFunction >
-      ::WeightedL2Norm ( const WeightFunctionType &weightFunction )
-    : BaseType( weightFunction.space().gridPart() ),
+      ::WeightedL2Norm ( const WeightFunctionType &weightFunction, const unsigned int order )
+    : BaseType( weightFunction.space().gridPart(), order ),
       weightFunction_( weightFunction )
     {
       dune_static_assert( (WeightFunctionSpaceType::dimRange == 1),
