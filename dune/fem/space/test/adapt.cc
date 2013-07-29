@@ -149,10 +149,12 @@ void adapt( MyGridType &grid, DiscreteFunctionType &solution, int step )
 // ********************************************************************
 double algorithm ( MyGridType &grid, DiscreteFunctionType &solution, int step, int turn )
 {
+  const unsigned int order = solution.space().order();
+
   {
     ExactSolution f;
     DGL2ProjectionImpl :: project( f, solution );
-    Dune :: Fem :: L2Norm< GridPartType > l2norm ( solution.space().gridPart() ) ;
+    Dune :: Fem :: L2Norm< GridPartType > l2norm ( solution.space().gridPart(), 2*order+2 ) ;
     double new_error = l2norm.distance( f ,solution ); 
     std::cout << "before ref." << new_error << "\n\n"; 
   }
@@ -173,7 +175,7 @@ double algorithm ( MyGridType &grid, DiscreteFunctionType &solution, int step, i
   // calculation L2 error on refined grid
   // pol ord for calculation the error chould by higher than 
   // pol for evaluation the basefunctions 
-  Dune :: Fem :: L2Norm< GridPartType > l2norm ( solution.space().gridPart() ) ;
+  Dune :: Fem :: L2Norm< GridPartType > l2norm ( solution.space().gridPart(), 2*order+2 ) ;
   double error = l2norm.distance( f, solution );
 
 #if USE_GRAPE
