@@ -7,6 +7,7 @@
 
 #include <dune/grid/common/gridenums.hh>
 #include <dune/grid/common/indexidset.hh>
+#include <dune/fem/gridpart/dunefemindexsets.hh>
 
 namespace Dune
 {
@@ -19,6 +20,7 @@ namespace Dune
 
     template< class HostIndexSet >
     class IdIndexSet
+      : public PersistentIndexSetInterface 
     {
       typedef IdIndexSet< HostIndexSet > This;
 
@@ -26,7 +28,7 @@ namespace Dune
       typedef typename HostIndexSet::IndexType IndexType;
 
       explicit IdIndexSet ( const HostIndexSet &hostIndexSet )
-      : hostIndexSet_( &hostIndexSet )
+      : hostIndexSet_( const_cast<HostIndexSet *> (&hostIndexSet) )
       {}
 
       int size ( const GeometryType &type ) const { return hostIndexSet().size( type ); }
@@ -58,6 +60,23 @@ namespace Dune
       bool consecutive () const { return hostIndexSet().consecutive(); }
       bool persistent () const { return hostIndexSet().persistent(); }
 
+      void compress () 
+      { 
+        assert( consecutive() );
+        hostIndexSet().compress(); 
+      }
+
+      void addBackupRestore() 
+      { 
+        if( persistent() ) 
+          static_cast< PersistentIndexSetInterface& > (hostIndexSet()).addBackupRestore(); 
+      }
+      void removeBackupRestore() 
+      { 
+        if( persistent() ) 
+          static_cast< PersistentIndexSetInterface& > (hostIndexSet()).removeBackupRestore(); 
+      }
+
       int numberOfHoles ( const int codim ) const { return hostIndexSet().numberOfHoles( codim ); }
 
       int oldIndex ( const int hole, const int codim ) const
@@ -79,7 +98,13 @@ namespace Dune
         return *hostIndexSet_;
       }
 
-      const HostIndexSet *hostIndexSet_;
+      HostIndexSet &hostIndexSet () 
+      {
+        assert( hostIndexSet_ );
+        return *hostIndexSet_;
+      }
+
+      HostIndexSet *hostIndexSet_;
     };
 
   } // namespace Fem
