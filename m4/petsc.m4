@@ -1,6 +1,3 @@
-dnl -*- mode: autoconf; tab-width: 8; indent-tabs-mode: nil; -*-
-dnl vi: set et ts=8 sw=2 sts=2:
-# $Id$
 # searches for PETSc headers and libs
 #
 # This is taken from dune-pdelab and has been modified.
@@ -12,6 +9,8 @@ AC_DEFUN([DUNE_PATH_FEM_PETSC],[
   AC_REQUIRE([ACX_BLAS])
   AC_REQUIRE([ACX_LAPACK])
   AC_REQUIRE([DUNE_MPI])
+  AC_REQUIRE([AC_PROG_GREP])
+  AC_REQUIRE([AC_PROG_SED])
 
   #
   # USer hints ...
@@ -29,7 +28,6 @@ AC_DEFUN([DUNE_PATH_FEM_PETSC],[
 	    with_petsc=`eval cd $withval 2>&1 && pwd`
             include_path=include
             lib_path=lib
-            echo "$with_petsc/$include_path/petsc.h"
             if test -f "$with_petsc/$include_path/petsc.h" ; then
                 AC_MSG_RESULT(yes)
             else
@@ -91,7 +89,23 @@ AC_DEFUN([DUNE_PATH_FEM_PETSC],[
       PETSC_LIB_PATH="$with_petsc/$lib_path"
       PETSC_INCLUDE_PATH="$with_petsc/$include_path"
                   
-      PETSC_LIBS="-lpetsc $LAPACK_LIBS $BLAS_LIBS -lX11 $DUNEMPILIBS"
+      PETSC_VARIABLES_FILE=$with_petsc/conf/petscvariables
+
+      # use library information from PETSC's variables file to get 
+      # correct list of external libraries
+	    if test -f "$PETSC_VARIABLES_FILE" ; then
+        PETSC_LIBS=`$GREP "PETSC_WITH_EXTERNAL_LIB " $PETSC_VARIABLES_FILE | $SED 's/PETSC_WITH_EXTERNAL_LIB = //g'`
+        # if PETSC_LIB is empty we got the wrong file
+        # this happens when we do not deal with intalled version
+        if test x"$PETSC_LIBS" = x ; then 
+          PETSC_ARCH=`$GREP "PETSC_ARCH" $PETSC_VARIABLES_FILE | $SED 's/PETSC_ARCH=//g'`
+          PETSC_VARIABLES_FILE=$with_petsc/$PETSC_ARCH/conf/petscvariables
+          PETSC_LIBS=`$GREP "PETSC_WITH_EXTERNAL_LIB " $PETSC_VARIABLES_FILE | $SED 's/PETSC_WITH_EXTERNAL_LIB = //g'`
+        fi
+      else  
+        PETSC_LIBS="-lpetsc $LAPACK_LIBS $BLAS_LIBS -lX11 $DUNEMPILIBS"
+      fi  
+  
       PETSC_LDFLAGS="-L$PETSC_LIB_PATH $DUNEMPILDFLAGS -Wl,--rpath -Wl,$with_petsc/$lib_path"
 
       # set variables so that tests can use them
@@ -99,7 +113,7 @@ AC_DEFUN([DUNE_PATH_FEM_PETSC],[
 
       # check for central header
       AC_CHECK_HEADER([petsc.h],[
-              PETSC_CPPFLAGS="-I$PETSC_INCLUDE_PATH $DUNEMPICPPFLAGS"
+        PETSC_CPPFLAGS="-I$PETSC_INCLUDE_PATH $DUNEMPICPPFLAGS"
 	      HAVE_PETSC="1"],[
 	      HAVE_PETSC="0"
 	      AC_MSG_WARN([petsc.h not found in $PETSC_INCLUDE_PATH with $CPPFLAGS])]
@@ -114,21 +128,15 @@ AC_DEFUN([DUNE_PATH_FEM_PETSC],[
       LIBS="-lm $LIBS -lX11 $LAPACK_LIBS $BLAS_LIBS $X_LIBS $DUNEMPILIBS $DUNEMPILDFLAGS"
       
       if test x$HAVE_PETSC = x1 ; then
-	  DUNE_CHECK_LIB_EXT([$PETSC_LIB_PATH], [petsc], [PetscTrMalloc],
-              [
-		  PETSC_LIBS="-L$PETSC_LIB_PATH -lpetsc $X_LIBS -lX11 $LAPACK_LIBS $BLAS_LIBS -lm $DUNEMPILIBS $DUNEMPILDFLAGS"
-		  LIBS="$PETSC_LIBS $ac_save_LIBS"
-              ],[
-		  HAVE_PETSC="0"
-		  AC_MSG_WARN(libpetsc not found!)
-              ])
+	    DUNE_CHECK_LIB_EXT([$PETSC_LIB_PATH], [petsc], [PetscTrMalloc],
+        [ 
+    		  LIBS="$PETSC_LIBS $ac_save_LIBS"
+        ],
+        [
+          HAVE_PETSC="0"
+    		  AC_MSG_WARN(libpetsc not found!)
+        ])
       fi
-
-      # Check for HYPRE-support in PETSc. If it is supported, we have to link with -lHYPRE
-      AC_CHECK_DECL([PETSC_HAVE_HYPRE],[
-        PETSC_LIBS="$PETSC_LIBS -lHYPRE"
-        PETSC_CPPFLAGS="$PETSC_CPPFLAGS -DHAVE_PETSC_HYPRE=1"
-      ],,[#include "petscconf.h"])
 
 #      AC_LANG_POP([C++])
       
