@@ -188,11 +188,7 @@ namespace Dune
           type = PCJACOBI;
         else if ( pcType == petsc_hypre ) 
         {
-#if HAVE_PETSC_HYPRE
           type = PCHYPRE;
-#else
-          DUNE_THROW(InvalidStateException,"PetscInverseOperator: Trying to use HYPRE preconditioning but PETSc has not been compiled with HYPRE support" );
-#endif // HAVE_PETSC_HYPRE
         }
         else if ( pcType == petsc_ml )
           type = PCML;
