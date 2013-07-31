@@ -69,12 +69,18 @@ namespace Dune
       void addBackupRestore() 
       { 
         if( persistent() ) 
-          static_cast< PersistentIndexSetInterface& > (hostIndexSet()).addBackupRestore(); 
+        {
+          // this cast should work, since we have a persistent index set 
+          ((PersistentIndexSetInterface &) hostIndexSet()).addBackupRestore();
+        }
       }
       void removeBackupRestore() 
       { 
         if( persistent() ) 
-          static_cast< PersistentIndexSetInterface& > (hostIndexSet()).removeBackupRestore(); 
+        {
+          // this cast should work, since we have a persistent index set 
+          ((PersistentIndexSetInterface &) hostIndexSet()).removeBackupRestore();
+        }
       }
 
       int numberOfHoles ( const int codim ) const { return hostIndexSet().numberOfHoles( codim ); }
