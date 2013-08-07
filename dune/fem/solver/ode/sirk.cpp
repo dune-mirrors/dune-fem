@@ -278,7 +278,7 @@ void SIRK::LinearOperator::setup(double t, const double *u, double lambda)
 }
 
 
-void SIRK::LinearOperator::operator()(const double *p, double *DFu_p, int i)
+void SIRK::LinearOperator::operator()(const double *p, double *DFu_p, int component)
 {
   double local_dot[2], global_dot[2];
   local_dot[0] = cblas_ddot(dim, u, 1, u, 1);
@@ -292,7 +292,7 @@ void SIRK::LinearOperator::operator()(const double *p, double *DFu_p, int i)
   const double lambda_eps = lambda / eps;
 
   dwaxpby(dim, 1.0, u, 1, eps, p, 1, u_tmp, 1);
-  f(t, u_tmp, DFu_p);
+  f(t, u_tmp, DFu_p, component);
   for(int i=0; i<dim; i++) DFu_p[i] = p[i] - lambda_eps*(DFu_p[i] - f_tmp[i]);
 }
 
