@@ -177,28 +177,6 @@ namespace Dune
         return proxyVector_[ index ];
       }
 
-      template< class PointType >
-      void jacobian ( const PointType &x, JacobianRangeType &ret ) const
-      {
-        basisFunctionSet().jacobianAll( x, *this, ret);
-      }
-
-      template< class PointType >
-      void axpy ( const PointType &x, const RangeType &factor )
-      {
-        basisFunctionSet().axpy( x, factor, *this );
-      }
-      template< class PointType >
-      void axpy ( const PointType &x, const JacobianRangeType &factor)
-      {
-        basisFunctionSet().axpy( x, factor, *this );
-      }
-      template< class PointType >
-      void axpy ( const PointType &x, const RangeType &factor1, const JacobianRangeType &factor2 )
-      {
-        basisFunctionSet().axpy( x, factor1, factor2, *this );
-      }
-
       unsigned int numDofs () const { return numDofs_; }
 
       const EntityType& entity () const
