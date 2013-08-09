@@ -25,6 +25,7 @@ TESTPROGS = lagrangeinterpolation_linear lagrangeinterpolation_quadratic \
             dgl2projection_blockvector   dgl2projection_vector dgl2projection_vector_int \
             dgl2projection_attached      dgl2projection_legendre \
             dgl2projection_blockvectordiscretefunction \
+            dgl2projection_petscdiscretefunction \
             dgl2projection_fv      \
             dgl2projection_idgridpart \
             vtxprojection_adaptive \
@@ -66,6 +67,9 @@ dgl2projection_attached_CPPFLAGS = -DPOLORDER=1 -DUSE_ATTACHEDFUNCTION $(AM_CPPF
 
 dgl2projection_blockvectordiscretefunction_SOURCES = dgl2projection.cc
 dgl2projection_blockvectordiscretefunction_CPPFLAGS = -DPOLORDER=1 -DUSE_BLOCKVECTORDISCRETEFUNCTION $(AM_CPPFLAGS)
+
+dgl2projection_petscdiscretefunction_SOURCES = dgl2projection.cc
+dgl2projection_petscdiscretefunction_CPPFLAGS = -DPOLORDER=1 -DUSE_PETSCDISCRETEFUNCTION $(AM_CPPFLAGS)
 
 dgl2projection_idgridpart_SOURCES = dgl2projection.cc
 dgl2projection_idgridpart_CPPFLAGS = -DPOLORDER=1 -DCOUNT_FLOPS $(AM_CPPFLAGS) -DUSE_IDGRIDPART 
