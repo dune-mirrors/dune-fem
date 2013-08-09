@@ -9,6 +9,7 @@
 #include <dune/fem/misc/petsc/petsccommon.hh>
 #include <dune/fem/misc/petsc/petscvector.hh>
 
+#include <dune/fem/io/streams/streams.hh>
 
 namespace Dune 
 {
@@ -181,6 +182,26 @@ namespace Dune
       PetscInt indexInBlock_;
 
     };
+
+     
+    // TODO: to be revised 
+    //! proper implementation for InStreamInterface of the DofProxy 
+    //template< class Traits,  class PVector >
+    template< class Traits,  class T >
+    inline InStreamInterface< Traits > &
+    operator>> ( InStreamInterface< Traits > &in,
+                 //const typename PetscDofBlock< PVector >::DofProxy& value )
+                 const T& value )
+    {
+      DUNE_THROW(NotImplemented,"operator>> not implemented for PetscDofBlock< PVector >::DofProxy");
+/*
+      PetscScalar val;
+      in >> val;
+      value = val;
+*/
+      return in;
+    }
+
 
     /*
      * This is almost a bidirectional iterator but does not completely satisfy the required

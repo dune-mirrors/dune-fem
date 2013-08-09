@@ -73,6 +73,9 @@ namespace Dune
       typedef typename DiscreteFunctionSpaceType::HessianRangeType HessianRangeType;
       typedef typename DiscreteFunctionSpaceType::BasisFunctionSetType BasisFunctionSetType;
 
+      //! type of local coordinates 
+      typedef typename EntityType::Geometry::LocalCoordinate  LocalCoordinateType;
+
     private:
       typedef typename DiscreteFunctionType::DofBlockType::DofProxy DofProxyType;
       typedef std::vector< DofProxyType > ProxyVectorType;
@@ -239,8 +242,9 @@ namespace Dune
       typedef PetscLocalFunctionFactory< DiscreteFunctionType > LocalFunctionFactoryType;
       typedef PetscLocalFunction< DF > LocalFunctionType;
 
-      explicit PetscLocalFunctionStack ( LocalFunctionFactoryType &factory )
-      : factory_( factory )
+      explicit PetscLocalFunctionStack ( const LocalFunctionFactoryType &factory )
+        // this needs to be fixed in discretefunction.hh
+      : factory_( const_cast< LocalFunctionFactoryType& > (factory) )
       {}
 
       LocalFunctionType localFunction () const { return LocalFunctionType( *this ); }
