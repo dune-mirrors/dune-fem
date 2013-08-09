@@ -119,6 +119,20 @@ namespace Dune
         setValue( val );
         return *this;
       }
+      
+      const ThisType& operator*= ( const ThisType& other )
+      {
+        PetscScalar value = getValue() * other.getValue();
+        setValue( value );
+        return *this;
+      }
+
+      const ThisType& operator*= ( const PetscScalar scalar )
+      {
+        PetscScalar value = getValue() * scalar ;
+        setValue( value );
+        return *this;
+      }
 
       const ThisType& operator+= ( const ThisType &other )
       {
