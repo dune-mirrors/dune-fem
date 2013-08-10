@@ -58,14 +58,15 @@ namespace Dune
       typedef PetscDiscreteFunctionTraits< DiscreteFunctionSpaceType >  Traits;
       typedef typename DiscreteFunctionSpaceType::DomainType            DomainType;
       typedef typename DiscreteFunctionSpaceType::RangeType             RangeType;
+
       typedef typename DiscreteFunctionSpaceType::JacobianRangeType     JacobianRangeType;
       typedef typename DiscreteFunctionSpaceType::MapperType            MapperType;
       typedef typename DiscreteFunctionSpaceType::BlockMapperType       BlockMapperType;
       typedef typename DiscreteFunctionSpaceType::GridPartType          GridPartType;
       typedef PetscDiscreteFunction< DiscreteFunctionSpaceType >        DiscreteFunctionType;
 
-      typedef PetscLocalFunctionFactory< DiscreteFunctionType >         LocalFunctionFactoryType;
-      typedef PetscLocalFunctionStack< DiscreteFunctionType >           LocalFunctionStorageType;
+      typedef PetscLocalFunctionFactory< Traits >                       LocalFunctionFactoryType;
+      typedef LocalFunctionStack< LocalFunctionFactoryType >            LocalFunctionStorageType;
       typedef PetscLocalFunction< DiscreteFunctionType >                LocalFunctionType;
 
       typedef PetscVector< DiscreteFunctionSpaceType  >                 PetscVectorType;
