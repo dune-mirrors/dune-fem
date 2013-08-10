@@ -14,81 +14,73 @@
 
 #include "localfunctionselector.hh"
 
-namespace
-{
-
-  // LocalFunctionEvaluator
-  // ----------------------
-
-  /*
-   * \brief Choose local function for given discrete function.
-   *        Use LocalFunctionSelector to define the type of 
-   *        the local function.
-   */
-  template< class DiscreteFunction >
-  struct LocalFunctionEvaluator
-  {
-    typedef typename Dune::Fem::LocalFunctionSelector< 
-        typename Dune::TypeTraits< DiscreteFunction >::ReferredType
-      >::Type Type; 
-
-    static Type apply ( const DiscreteFunction &discreteFunction )
-    {
-      return Type( discreteFunction );
-    }
-  };
-
-
-
-  // RangeTypeEvaluator
-  // ------------------
-
-  /*
-   * \brief Get range type from local function type.
-   */
-  template< class LocalFunction >
-  struct RangeTypeEvaluator
-  {
-    typedef typename LocalFunction::RangeType Type;
-  };
-
-
-
-  // JacobianRangeTypeEvaluator
-  // --------------------------
-
-  /*
-   * \brief Get jacobian range type from local function type.
-   */
-  template< class LocalFunction >
-  struct JacobianRangeTypeEvaluator
-  {
-    typedef typename LocalFunction::JacobianRangeType Type;
-  };
-
-
-
-  // HessianRangeTypeEvaluator
-  // --------------------------
-
-  /*
-   * \brief Get hessian range type from local function type.
-   */
-  template< class LocalFunction >
-  struct HessianRangeTypeEvaluator
-  {
-    typedef typename LocalFunction::HessianRangeType Type;
-  };
-
-} // namespace 
-
-
-
 namespace Dune
 {
 
   namespace Fem
   {
+    // LocalFunctionEvaluator
+    // ----------------------
+
+    /*
+     * \brief Choose local function for given discrete function.
+     *        Use LocalFunctionSelector to define the type of 
+     *        the local function.
+     */
+    template< class DiscreteFunction >
+    struct LocalFunctionEvaluator
+    {
+      typedef typename Dune::Fem::LocalFunctionSelector< 
+          typename Dune::TypeTraits< DiscreteFunction >::ReferredType
+        >::Type Type; 
+
+      static Type apply ( const DiscreteFunction &discreteFunction )
+      {
+        return Type( discreteFunction );
+      }
+    };
+
+
+
+    // RangeTypeEvaluator
+    // ------------------
+
+    /*
+     * \brief Get range type from local function type.
+     */
+    template< class LocalFunction >
+    struct RangeTypeEvaluator
+    {
+      typedef typename LocalFunction::RangeType Type;
+    };
+
+
+
+    // JacobianRangeTypeEvaluator
+    // --------------------------
+
+    /*
+     * \brief Get jacobian range type from local function type.
+     */
+    template< class LocalFunction >
+    struct JacobianRangeTypeEvaluator
+    {
+      typedef typename LocalFunction::JacobianRangeType Type;
+    };
+
+
+
+    // HessianRangeTypeEvaluator
+    // --------------------------
+
+    /*
+     * \brief Get hessian range type from local function type.
+     */
+    template< class LocalFunction >
+    struct HessianRangeTypeEvaluator
+    {
+      typedef typename LocalFunction::HessianRangeType Type;
+    };
 
     // LocalFunctionTuple
     // ------------------
