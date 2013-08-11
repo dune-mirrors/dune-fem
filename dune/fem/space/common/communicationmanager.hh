@@ -60,6 +60,7 @@ namespace Dune
   
   namespace Fem 
   {
+    template <class DiscreteFunctionSpace> class PetscDiscreteFunction ;
 
   /** @addtogroup Communication Communication 
       @{
@@ -103,6 +104,20 @@ namespace Dune
         {
           // nothing to do here, since DUNE does not support 
           // non-blocking communcation yet  
+        }
+
+        //! receive data for discrete function and given operation 
+        template < class DiscreteFunctionSpace, class Operation >
+        double receive( PetscDiscreteFunction< DiscreteFunctionSpace > & discreteFunction, 
+                        const Operation* operation )
+        {
+          // get stopwatch 
+          Dune::Timer exchangeT;
+        
+          // PetscDiscreteFunction has it's own communication 
+          discreteFunction.communicate();
+
+          return exchangeT.elapsed();
         }
 
         //! receive data for discrete function and given operation 

@@ -36,6 +36,8 @@ namespace Dune
   
   namespace Fem 
   {
+    // forward declaration to disable caching for PetscDiscreteFunction 
+    template <class DiscreteFunctionSpace> class PetscDiscreteFunction ;
 
     /** @addtogroup Communication Communication 
         @{
@@ -189,6 +191,16 @@ namespace Dune
           dependencyCache_.detachComm() ;
         }
 
+        template < class DiscreteFunctionSpace >   
+        void send( const PetscDiscreteFunction< DiscreteFunctionSpace >& discreteFunction )
+        {
+            Dune::Timer timer ;
+            // do receive data 
+            discreteFunction.communicate();
+            return timer.elapsed();
+          // nothing to do for the PetscDiscreteFunction here
+        }
+
         template < class DiscreteFunction >   
         void send( const DiscreteFunction& discreteFunction )
         {
@@ -226,6 +238,20 @@ namespace Dune
 
           // store time needed for sending
           exchangeTime_ = sendTimer.elapsed();
+        }
+
+        //! receive data for discrete function and given operation 
+        template < class DiscreteFunctionSpace, class Operation >   
+        double receive( PetscDiscreteFunction< DiscreteFunctionSpace >& discreteFunction, 
+                        const Operation* operation )
+        {
+          // take time 
+          Dune::Timer exchTimer ;
+
+          // PetscDiscreteFunction has it's own communication 
+          discreteFunction.communicate();
+
+          return exchTimer.elapsed();
         }
 
         //! receive data for discrete function and given operation 
@@ -459,6 +485,15 @@ namespace Dune
       }
       
     protected:  
+      // specialization for PetscDiscreteFunction doing nothing
+      template< class DiscreteFunctionSpace >
+      inline void writeBuffer ( const int link,
+                                ObjectStreamType &str,
+                                const PetscDiscreteFunction< DiscreteFunctionSpace > &discreteFunction ) const
+      {
+        DUNE_THROW(NotImplemented,"writeBuffer not implemented for PetscDiscteteFunction" );
+      }
+
       // write data of DataImp& vector to object stream 
       // --writeBuffer 
       template< class DiscreteFunction >
@@ -491,6 +526,17 @@ namespace Dune
             os.writeUnsave( ((*blockPtr)[ k ]) );
           }
         }
+      }
+
+      // read data from object stream to DataImp& data vector 
+      // specialization for PetscDiscreteFunction doing nothing 
+      template< class DiscreteFunctionSpace, class Operation >
+      inline void readBuffer ( const int link,
+                               ObjectStreamType &str, 
+                               PetscDiscreteFunction< DiscreteFunctionSpace > &discreteFunction,
+                               const Operation * ) const 
+      {
+        DUNE_THROW(NotImplemented,"readBuffer not implemented for PetscDiscteteFunction" );
       }
 
       // read data from object stream to DataImp& data vector 
@@ -1014,7 +1060,7 @@ namespace Dune
       const int mySize_;
 
       typedef ALU3DSPACE MpAccessLocal MPAccessInterfaceType; 
-      
+
       // is singleton per space 
       DependencyCacheType &cache_;
       CommunicationManager(const ThisType& org);
