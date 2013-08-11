@@ -45,7 +45,7 @@ namespace Dune
 
     /** \brief SpecialArrayFeatures is a wrapper class to extend some array
         classes with some special features needed for the MemObject.
-        There exsist a specialization for MutableArray. 
+        There exsist a specialization for MutableArray and PetscVector. 
      */ 
     template<class ArrayType>
     struct SpecialArrayFeatures
@@ -65,8 +65,9 @@ namespace Dune
       }
 
       /** \brief move memory blocks backwards */
-      static void memMoveBackward(ArrayType& array, const int length,
-                const int oldStartIdx, const int newStartIdx)
+      static inline 
+      void memMoveBackward(ArrayType& array, const int length,
+                           const int oldStartIdx, const int newStartIdx)
       {
         // get new end of block which is offSet + (length of block - 1) 
         int newIdx = newStartIdx + length - 1; 
@@ -79,8 +80,9 @@ namespace Dune
       }
 
       /** \brief move memory blocks forward */
-      static void memMoveForward(ArrayType& array, const int length,
-                const int oldStartIdx, const int newStartIdx)
+      static inline
+      void memMoveForward(ArrayType& array, const int length,
+                          const int oldStartIdx, const int newStartIdx)
       {
         const int upperBound = oldStartIdx + length;
         // get new off set that should be smaller then old one
@@ -90,6 +92,13 @@ namespace Dune
           // copy to new location 
           array[newIdx] = array[oldIdx];
         }
+      }
+
+      /** \brief implements array[ newIndex ] = array[ oldIndex ] */
+      static inline
+      void assign( ArrayType& array, const int newIndex, const int oldIndex )
+      {
+        array[ newIndex ] = array[ oldIndex ];
       }
     };
 
@@ -317,7 +326,8 @@ namespace Dune
 
     /*! 
       A ManagedDofStorage holds the memory for one DiscreteFunction and the
-      corresponding DofArrayMemory. If a DiscreteFunction is signed in by a
+      corresponding DofArrayMemory. ManagedDofStorageImplementation implements the 
+      basic features such as resize and dof compression. If a DiscreteFunction is signed in by a
       function space, then such a MemObject is created by the DofManager. 
       The MemObject also knows the DofMapper from the function space which the
       discrete function belongs to. Here we dont know the exact type of the dof
@@ -326,13 +336,13 @@ namespace Dune
       be called during memory reorganizing which is only once per timestep. 
     */
     template <class GridImp, class MapperType , class DofArrayType>
-    class ManagedDofStorage : public ManagedDofStorageInterface
+    class ManagedDofStorageImplementation : public ManagedDofStorageInterface
     {
       // interface for MemObject lists
       typedef LocalInterface< int > MemObjectCheckType;
-    private:
+    protected:
       // type of this class 
-      typedef ManagedDofStorage <GridImp, MapperType , DofArrayType> ThisType;
+      typedef ManagedDofStorageImplementation <GridImp, MapperType , DofArrayType> ThisType;
 
       typedef DofManager<GridImp> DofManagerType;
 
@@ -343,7 +353,7 @@ namespace Dune
       MapperType &mapper_;
 
       // Array which the dofs are stored in 
-      DofArrayType array_;
+      DofArrayType& array_;
 
       // name of mem object, i.e. name of discrete function 
       std::string name_;
@@ -357,16 +367,16 @@ namespace Dune
       bool dataCompressionEnabled_;
 
       // prohibit copying 
-      ManagedDofStorage(const ManagedDofStorage& );
-    public:
-      //! Constructor of MemObject, only to call from DofManager 
-      ManagedDofStorage ( const GridImp& grid,
-                          const MapperType& mapper,
-                          const std::string& name
-                        )
+      ManagedDofStorageImplementation(const ManagedDofStorageImplementation& );
+    protected:
+      //! Constructor of ManagedDofStorageImplementation, only to call from derived classes 
+      ManagedDofStorageImplementation ( const GridImp& grid,
+                                        const MapperType& mapper,
+                                        const std::string& name,
+                                        DofArrayType& array )
         : dm_( DofManagerType :: instance( grid ) ),
           mapper_ ( const_cast<MapperType& >(mapper)),
-          array_( mapper_.size() ),
+          array_( array ),
           name_ (name),
           resizeMemObj_(*this),
           reserveMemObj_(*this),
@@ -380,12 +390,13 @@ namespace Dune
       }
 
       //! \brief destructor deleting MemObject from resize and reserve List
-      ~ManagedDofStorage()
+      ~ManagedDofStorageImplementation()
       {
         // remove from dof manager 
         dm_.removeDofStorage( *this );
       }
 
+    public:  
       //! return object that calls resize of this memory object 
       ResizeMemoryObjectType& resizeMemoryObject() { return resizeMemObj_; }
 
@@ -466,7 +477,6 @@ namespace Dune
           // therefore use newSize to enleage array 
           assert( ! mapper().consecutive() );
           // resize array 
-          // ???? noch ueberpruefen 
           resize (); 
         }
       }
@@ -506,7 +516,8 @@ namespace Dune
                 const int newIndex = mapper().newIndex( i, block );
 
                 assert( newIndex < nSize );
-                array_[ newIndex ] = array_[ oldIndex ];
+                // implements array_[ newIndex ] = array_[ oldIndex ] ;
+                SpecialArrayFeatures< DofArrayType > :: assign( array_, newIndex, oldIndex );
               }
             }
           }
@@ -569,6 +580,24 @@ namespace Dune
           SpecialArrayFeatures< DofArrayType >
             :: memMoveForward( array_, blockSize, oldOffSet, newOffSet ); 
         }
+      }
+    };
+
+    /*! A ManagedDofStorage holds the memory for one DiscreteFunction. */
+    template <class GridImp, class MapperType , class DofArrayType>
+    class ManagedDofStorage : public ManagedDofStorageImplementation< GridImp, MapperType, DofArrayType >
+    {
+      typedef ManagedDofStorageImplementation< GridImp, MapperType, DofArrayType > BaseType;
+    protected:
+      DofArrayType myArray_;
+    public:  
+      //! Constructor of ManagedDofStorage 
+      ManagedDofStorage( const GridImp& grid,
+                         const MapperType& mapper,
+                         const std::string& name )
+        : BaseType( grid, mapper, name, myArray_ ),
+          myArray_( mapper.size() )
+      {
       }
     };
 

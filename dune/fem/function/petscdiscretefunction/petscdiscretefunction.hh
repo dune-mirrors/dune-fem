@@ -22,12 +22,8 @@
 
 #include <dune/common/fvector.hh> 
 
-// If we don't define this, there is an error when headerchecking this file...
-#define WANT_CACHED_COMM_MANAGER 0
-
 #include <dune/fem/function/common/discretefunction.hh>
 #include <dune/fem/function/localfunction/localfunction.hh>
-//#include <dune/fem/function/localfunction/standardlocalfunction.hh>
 #include <dune/fem/function/blockvectordiscretefunction/blockvectordiscretefunction.hh>
 
 #include <dune/geometry/referenceelements.hh>
@@ -125,8 +121,13 @@ namespace Dune
       // what is DoFType ?!?!?!? this
       typedef RangeFieldType DofType;
 
+      // type used to determine size etc.
+      typedef NonBlockMapper< BlockMapperType,
+                              DiscreteFunctionSpaceType :: localBlockSize > MapperType ;
+
     public:
       using BaseType :: space;
+      using BaseType :: name;
 
       /*
        * methods
@@ -135,14 +136,27 @@ namespace Dune
                               const DiscreteFunctionSpaceType &dfSpace )
       : BaseType( name, dfSpace, lfFactory_ ),
         lfFactory_( *this ),
-        petscVector_( dfSpace )
+        mapper_( space().blockMapper() ),
+        memObject_( 0 ),
+        petscVector_( allocateDofStorage( name ) )
       {}
 
       PetscDiscreteFunction ( const ThisType &other )
       : BaseType( "copy of " + other.name(), other.space(), lfFactory_ ),
         lfFactory_( *this ),
-        petscVector_( other.petscVector_ )
+        mapper_( space().blockMapper() ),
+        memObject_( 0 ),
+        petscVector_( allocateDofStorage( name() ) )
       {}
+
+      ~PetscDiscreteFunction() 
+      {
+        if( memObject_ ) 
+        {
+          delete memObject_;
+          memObject_ = 0;
+        }
+      }
 
       /** \copydoc Dune::Fem::DiscreteFunctionInterface::block( unsigned int index ) const */
       ConstDofBlockPtrType block ( unsigned int index ) const
@@ -223,14 +237,35 @@ namespace Dune
       /** \brief obtain a pointer to the underlying PETSc Vec */
       Vec* petscVec () { return petscVector().getVector(); }
 
-      void enableDofCompression () {  }
+      void enableDofCompression () 
+      { 
+        if( memObject_ )
+          memObject_->enableDofCompression();
+      }
 
       void print( std::ostream& out ) 
       {
         petscVector().printGlobal( true );
       }
 
-    private:
+    protected:
+      // allocate managed dof storage 
+      PetscVectorType& allocateDofStorage(const std::string& name)
+      {
+        if( memObject_ != 0)
+        {
+          DUNE_THROW(InvalidStateException,"DofStorage already allocated!");
+        }
+
+        typedef PetscManagedDofStorage< DiscreteFunctionSpace, MapperType > PetscManagedDofStorageType;
+        PetscManagedDofStorageType* pmds = new PetscManagedDofStorageType( space(), mapper_, name );
+        // PetscManagedDofStorageType* pmds = new PetscManagedDofStorageType( space(), name );
+
+        // save pointer 
+        memObject_ = pmds ;
+        return pmds->getArray();
+      }
+
       PetscDiscreteFunction ();
       ThisType& operator= ( const ThisType &other );
 
@@ -241,7 +276,9 @@ namespace Dune
        * data fields
        */
       LocalFunctionFactoryType lfFactory_;
-      PetscVectorType petscVector_;
+      MapperType               mapper_;
+      DofStorageInterface*     memObject_;
+      PetscVectorType&         petscVector_;
     };
 
 
