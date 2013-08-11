@@ -1,29 +1,18 @@
 #ifndef DUNE_FEM_SPACE_FVSPACE_SPACE_HH
 #define DUNE_FEM_SPACE_FVSPACE_SPACE_HH
 
-// dune-common includes
-#include <dune/common/typetraits.hh>
-
-// dune-geometry includes
-#include<dune/geometry/referenceelements.hh>
-
-// dune-fem includes
 #include <dune/fem/function/localfunction/average.hh>
 #include <dune/fem/gridpart/common/capabilities.hh>
-#include <dune/fem/space/basisfunctionset/default.hh>
 #include <dune/fem/space/common/capabilities.hh>
 #include <dune/fem/space/common/defaultcommhandler.hh>
 #include <dune/fem/space/common/discretefunctionspace.hh>
-#include <dune/fem/space/common/functionspace.hh>
 #include <dune/fem/space/common/localrestrictprolong.hh>
-#include <dune/fem/space/discontinuousgalerkin/localinterpolation.hh>
 #include <dune/fem/space/mapper/codimensionmapper.hh>
 #include <dune/fem/space/mapper/nonblockmapper.hh>
 #include <dune/fem/space/shapefunctionset/selectcaching.hh>
-#include <dune/fem/space/shapefunctionset/vectorial.hh>
 #include <dune/fem/version.hh>
 
-// local includes
+#include <dune/fem/space/finitevolume/basisfunctionset.hh>
 #include <dune/fem/space/finitevolume/declaration.hh>
 
 /*
@@ -38,62 +27,11 @@ namespace Dune
   namespace Fem
   {
 
-    // FiniteVolumeShapeFunctionSet
-    // ----------------------------
-
-    /*
-     * \brief Implementation of Dune::Fem::ShapeFunctionSet for Finite Volume spaces 
-     *
-     * \tparam  FunctionSpace  Function space
-     *
-     * \note This shape function set has fixed polynomial order 0.
-     */
-    template< class FunctionSpace >
-    struct FiniteVolumeShapeFunctionSet
-    {
-      typedef FiniteVolumeShapeFunctionSet< FunctionSpace > ThisType;
-
-    public:
-      typedef FunctionSpace FunctionSpaceType;
-      typedef typename FunctionSpaceType::DomainType DomainType;
-      typedef typename FunctionSpaceType::RangeType RangeType;
-      typedef typename FunctionSpaceType::JacobianRangeType JacobianRangeType;
-      typedef typename FunctionSpaceType::HessianRangeType HessianRangeType;
-
-      /** @copydoc Dune::Fem::ShapeFunctionSet::order */
-      static std::size_t order () { return 0; }
-
-      /** @copydoc Dune::Fem::ShapeFunctionSet::size */
-      static std::size_t size () { return 1; }
-
-      /** @copydoc Dune::Fem::ShapeFunctionSet::evaluateEach */
-      template< class Point, class Functor >
-      static void evaluateEach ( const Point &, Functor functor )
-      {
-        functor( 0, RangeType( 1 ) );
-      }
-
-      /** @copydoc Dune::Fem::ShapeFunctionSet::jacobianEach */
-      template< class Point, class Functor >
-      static void jacobianEach ( const Point &, Functor functor )
-      {
-        functor( 0, JacobianRangeType( 0 ) );
-      }
-
-      /** @copydoc Dune::Fem::ShapeFunctionSet::hessianEach */
-      template< class Point, class Functor >
-      static void hessianEach ( const Point &, Functor functor )
-      {
-        functor( 0, HessianRangeType( typename HessianRangeType::value_type( 0 ) ) );
-      }
-    };
-
-
-
     // FiniteVolumeSpaceTraits
     // -----------------------
 
-    /*
+    /* \class FiniteVolumeSpaceTraits
+     *
      * \brief Finite volume space
      *
      * \tparam  FunctionSpace  Function space
@@ -119,12 +57,9 @@ namespace Dune
       static const int dimRange = FunctionSpaceType::dimRange;
 
       typedef typename GridPartType::template Codim< codimension >::EntityType EntityType;
-      typedef typename FunctionSpaceType::ScalarFunctionSpaceType ScalarFunctionSpaceType;
-      typedef FiniteVolumeShapeFunctionSet< typename ToLocalFunctionSpace< ScalarFunctionSpaceType, dimLocal >::Type > ScalarShapeFunctionSetType;
 
     public:
-      typedef VectorialShapeFunctionSet< ScalarShapeFunctionSetType, typename FunctionSpaceType::RangeType > ShapeFunctionSetType;
-      typedef DefaultBasisFunctionSet< EntityType, ShapeFunctionSetType > BasisFunctionSetType;
+      typedef FiniteVolumeBasisFunctionSet< EntityType, typename FunctionSpaceType::RangeType > BasisFunctionSetType;
 
       static const int localBlockSize = dimRange;
 
@@ -301,7 +236,7 @@ namespace Dune
       template< class FunctionSpace, class GridPart, int codim, template< class > class Storage >
       struct isLocalized< FiniteVolumeSpace< FunctionSpace, GridPart, codim, Storage > >
       {
-        static const bool v = true;
+        static const bool v = false; // there is no method 'shapeFunctionSet( const EntityType & )'
       };
 
 
