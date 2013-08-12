@@ -339,6 +339,18 @@ namespace Dune
     {
       typedef DGParallelMatrixAdapter<MatrixImp> Type ;
     };
+    template< class MatrixImp,
+              class FunctionSpace, class GridPart, int polOrder, template< class > class Storage>
+    struct ISTLParallelMatrixAdapter< MatrixImp, LagrangeDiscontinuousGalerkinSpace< FunctionSpace,GridPart,polOrder,Storage> >
+    {
+      typedef DGParallelMatrixAdapter<MatrixImp> Type ;
+    };
+    template< class MatrixImp,
+              class FunctionSpace, class GridPart, int polOrder, template< class > class Storage>
+    struct ISTLParallelMatrixAdapter< MatrixImp, LegendreDiscontinuousGalerkinSpace< FunctionSpace,GridPart,polOrder,Storage> >
+    {
+      typedef DGParallelMatrixAdapter<MatrixImp> Type ;
+    };
   } // end namespace Fem
 } // end namespace Dune 
 
