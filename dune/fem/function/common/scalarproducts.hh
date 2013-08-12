@@ -155,8 +155,7 @@ namespace Dune
       }
 
       //! check if grid has changed and rebuild cache if necessary 
-      //! return true if rebuild was done 
-      inline bool rebuild () 
+      inline void rebuild () 
       {
         // check whether grid has changed. 
         if( sequence_ != space_.sequence() )
@@ -164,9 +163,7 @@ namespace Dune
           initialize();
           buildMaps();
           finalize();
-          return true ;
         }
-        return false ;
       }
 
       //! return reference to discrete function space 
