@@ -233,7 +233,7 @@ namespace Dune
       assert( offset() == basisSet1().size() );
       typedef typename DofVector :: DofType DofType;
       SubDofVector<const DofVector, DofType > dofs1( dofs, size1_, 0  );
-      SubDofVector<const DofVector, DofType > dofs2( dofs, size2_, offset() );
+      SubDofVector<const DofVector, DofType > dofs2( dofs, size2_, offset_ );
       RangeType1 value1;
       RangeType2 value2;
       basisSet1_.evaluateAll( x, dofs1, value1 );
@@ -304,7 +304,7 @@ namespace Dune
     {
       typedef typename DofVector :: DofType DofType;
       SubDofVector<const DofVector, DofType > dofs1( dofs, size1_, 0  );
-      SubDofVector<const DofVector, DofType > dofs2( dofs, size2_, offset() );
+      SubDofVector<const DofVector, DofType > dofs2( dofs, size2_, offset_ );
 
       JacobianRangeType1 jacobian1;
       JacobianRangeType2 jacobian2;
@@ -376,7 +376,7 @@ namespace Dune
     {
       typedef typename DofVector :: DofType DofType;
       SubDofVector<const DofVector, DofType > dofs1( dofs, size1_, 0  );
-      SubDofVector<const DofVector, DofType > dofs2( dofs, size2_, offset() );
+      SubDofVector<const DofVector, DofType > dofs2( dofs, size2_, offset_ );
 
       HessianRangeType1 hessian1;
       HessianRangeType2 hessian2;
@@ -435,7 +435,7 @@ namespace Dune
     {
       typedef typename DofVector :: DofType DofType;
       SubDofVector<DofVector, DofType > dofs1( dofs, size1_, 0  );
-      SubDofVector<DofVector, DofType > dofs2( dofs, size2_, offset() );
+      SubDofVector<DofVector, DofType > dofs2( dofs, size2_, offset_ );
       SubObject< const RangeType, const RangeType1, 0 > valueFactor1( valueFactor );
       SubObject< const RangeType, const RangeType2, dimRange1 > valueFactor2( valueFactor );
 
@@ -454,7 +454,7 @@ namespace Dune
     {
       typedef typename DofVector :: DofType DofType;
       SubDofVector<DofVector, DofType > dofs1( dofs, size1_, 0  );
-      SubDofVector<DofVector, DofType > dofs2( dofs, size2_, offset() );
+      SubDofVector<DofVector, DofType > dofs2( dofs, size2_, offset_ );
       SubObject< const JacobianRangeType, const JacobianRangeType1, 0 > jacobianFactor1( jacobianFactor );
       SubObject< const JacobianRangeType, const JacobianRangeType2, dimRange1 > jacobianFactor2( jacobianFactor );
 
@@ -474,7 +474,7 @@ namespace Dune
     {
       typedef typename DofVector :: DofType DofType;
       SubDofVector<DofVector, DofType > dofs1( dofs, size1_, 0  );
-      SubDofVector<DofVector, DofType > dofs2( dofs, size2_, offset() );
+      SubDofVector<DofVector, DofType > dofs2( dofs, size2_, offset_ );
       SubObject< const RangeType, const RangeType1, 0 > valueFactor1( valueFactor );
       SubObject< const RangeType, const RangeType2, dimRange1 > valueFactor2( valueFactor );
       SubObject< const JacobianRangeType, const JacobianRangeType1, 0 > jacobianFactor1( jacobianFactor );
