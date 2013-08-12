@@ -21,7 +21,82 @@ namespace Dune
   {
 
     // forward declarations
-    template< typename > class PetscDofBlock;
+    template< typename >      class PetscDofBlock;
+    template< class DFSpace > class PetscVector;
+
+    /*! ManagedDofStorage for PetscDiscreteFunction using PetscVector */
+    template < class DiscreteFunctionSpace, class Mapper >
+    class PetscManagedDofStorage 
+      : public ManagedDofStorageImplementation< typename DiscreteFunctionSpace :: GridType, 
+                                                Mapper,
+                                                PetscVector< DiscreteFunctionSpace > > 
+    {
+      typedef typename DiscreteFunctionSpace :: GridType GridType;
+      typedef PetscSlaveDofProvider< DiscreteFunctionSpace > PetscSlaveDofProviderType;
+      typedef Mapper MapperType ;
+      typedef PetscVector< DiscreteFunctionSpace > DofArrayType ;
+      typedef ManagedDofStorageImplementation< GridType, MapperType, DofArrayType >  BaseType;
+    protected:
+      DofArrayType myArray_;
+    public:
+      //! Constructor of ManagedDofStorageImpl, only to call from DofManager 
+      PetscManagedDofStorage( const DiscreteFunctionSpace& space, 
+                              const MapperType& mapper, 
+                              const std::string& name )
+        : BaseType( space.grid(), mapper, name, myArray_ ),
+          myArray_( space )
+      {
+      }
+    };
+
+
+    /*! specialization of SpecialArrayFeatures for PetscVector 
+     * dealing with the strange PetscVec */
+    template< class DFS > 
+    struct SpecialArrayFeatures< PetscVector< DFS > > 
+    {
+      typedef PetscVector< DFS >  ArrayType ;
+      /** \brief value type of array, i.e. double */
+      typedef typename ArrayType :: value_type ValueType;
+
+      /** \brief return used memory size of Array */
+      static size_t used(const ArrayType & array)
+      {
+        return array.size() * sizeof(ValueType);
+      }
+
+      /** \brief set memory overestimate factor, here does nothing */
+      static void setMemoryFactor(ArrayType & array, const double memFactor)
+      {
+        // do nothing here
+      }
+
+      /** \brief move memory blocks backwards */
+      static void memMoveBackward(ArrayType& array, const int length,
+                                  const int oldStartIdx, const int newStartIdx)
+      {
+        DUNE_THROW(NotImplemented,"memMoveBackward is to be implemented");
+      }
+
+      /** \brief move memory blocks forward */
+      static void memMoveForward(ArrayType& array, const int length,
+                                 const int oldStartIdx, const int newStartIdx)
+      {
+        DUNE_THROW(NotImplemented,"memMoveForward is to be implemented");
+      }
+
+      static void assign( ArrayType& array, const int newIndex, const int oldIndex )
+      {
+        typedef typename ArrayType :: DofBlockPtrType DofBlockPtrType;
+        DofBlockPtrType newBlock = array.block( newIndex );
+        DofBlockPtrType oldBlock = array.block( oldIndex );
+
+        const unsigned int blockSize = ArrayType :: blockSize;
+        for( unsigned int i = 0; i < blockSize; ++i )
+          (*newBlock)[ i ] = (*oldBlock)[ i ];
+      }
+    };
+
 
     /* ========================================
      * class PetscVector
@@ -47,6 +122,7 @@ namespace Dune
 
     public:
       typedef PetscSlaveDofProvider< DFSpace > PetscSlaveDofsType;
+      typedef PetscScalar  value_type ;
 
       static const int blockSize = DFSpace :: localBlockSize;
       typedef typename PetscSlaveDofsType :: PetscDofMappingType  PetscDofMappingType;
@@ -122,6 +198,16 @@ namespace Dune
 
       size_t size () const { return static_cast< size_t >( localSize_ + numGhosts_ ); }
 
+      void resize( const size_t newsize ) 
+      {
+        DUNE_THROW(NotImplemented,"PetscVector::resize is to be implemented");
+      }
+
+      void reserve( const size_t capacity ) 
+      {
+        DUNE_THROW(NotImplemented,"PetscVector::resize is to be implemented");
+      }
+
       void hasBeenModified () { ++sequence_; }
 
       void communicate () 
@@ -161,6 +247,9 @@ namespace Dune
         ++sequence_;
         communicateIfNecessary();
       }
+
+      //DofBlockPtrType operator [] ( const IndexType index ) { return block( index ); }
+      //ConstDofBlockPtrType operator [] const ( const IndexType index ) { return block( index ); }
 
       DofBlockPtrType block ( IndexType index ) 
       {

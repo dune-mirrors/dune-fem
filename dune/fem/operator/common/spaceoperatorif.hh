@@ -10,6 +10,7 @@
 //-Dune fem includes 
 #include <dune/fem/operator/common/operator.hh>
 #include <dune/fem/operator/common/objpointer.hh>
+#include <dune/fem/function/adaptivefunction.hh>
 
 namespace Dune
 {
@@ -100,7 +101,7 @@ namespace Dune
       typedef typename DestinationType::DiscreteFunctionSpaceType SpaceType;
       
     protected:  
-      template < class Op, class Field > 
+      template < class Op, class DF, class Field > 
       struct CallDoubleOperator
       {
         static inline void apply( const Op& op, const double* u, double* f )
@@ -110,17 +111,20 @@ namespace Dune
         }
       };
 
+      // this only works if the DestinationType is AdaptiveDiscreteFunction and the 
+      // DofType is double 
       template < class Op > 
-      struct CallDoubleOperator< Op, double >
+      struct CallDoubleOperator< Op, AdaptiveDiscreteFunction< SpaceType >, double >
       {
         static inline void apply( const Op& op, const double* u, double* f )
         {
+          typedef AdaptiveDiscreteFunction< SpaceType > Destination ;
           // get space instance
           const SpaceType &spc = op.space();
 
           // convert arguments to discrete function
-          const DestinationType arg( "SpaceOperatorIF::ARG", spc, u );
-          DestinationType dest( "SpaceOperatorIF::DEST", spc, f );
+          const Destination arg( "SpaceOperatorIF::ARG", spc, u );
+          Destination dest( "SpaceOperatorIF::DEST", spc, f );
 
           // call operator apply
           op( arg, dest );
@@ -303,6 +307,7 @@ namespace Dune
       ::operator() ( const double *u, double *f ) const
     {
       CallDoubleOperator< SpaceOperatorInterface< DiscreteFunction >, 
+                          DiscreteFunction, 
                           typename DiscreteFunction :: RangeFieldType >::apply( *this, u, f );
     }
 

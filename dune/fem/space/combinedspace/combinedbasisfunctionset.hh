@@ -230,9 +230,10 @@ namespace Dune
     inline void CombinedBasisFunctionSet< CombFunctSpace, BasisSetType1, BasisSetType2>
     :: evaluateAll ( const Point &x, const DofVector &dofs, RangeType &value ) const
     {
-      assert( offset_ == basisSet1_.size() );
-      SubDofVector<const DofVector, double > dofs1( dofs, size1_, 0  );
-      SubDofVector<const DofVector, double > dofs2( dofs, size2_, offset_ );
+      assert( offset() == basisSet1().size() );
+      typedef typename DofVector :: DofType DofType;
+      SubDofVector<const DofVector, DofType > dofs1( dofs, size1_, 0  );
+      SubDofVector<const DofVector, DofType > dofs2( dofs, size2_, offset_ );
       RangeType1 value1;
       RangeType2 value2;
       basisSet1_.evaluateAll( x, dofs1, value1 );
@@ -301,8 +302,9 @@ namespace Dune
     inline void CombinedBasisFunctionSet< CombFunctSpace, BasisSetType1, BasisSetType2>
     :: jacobianAll ( const Point &x, const DofVector &dofs, JacobianRangeType &jacobian ) const
     {
-      SubDofVector<const DofVector, double > dofs1( dofs, size1_, 0  );
-      SubDofVector<const DofVector, double > dofs2( dofs, size2_, offset_ );
+      typedef typename DofVector :: DofType DofType;
+      SubDofVector<const DofVector, DofType > dofs1( dofs, size1_, 0  );
+      SubDofVector<const DofVector, DofType > dofs2( dofs, size2_, offset_ );
 
       JacobianRangeType1 jacobian1;
       JacobianRangeType2 jacobian2;
@@ -372,8 +374,9 @@ namespace Dune
     inline void CombinedBasisFunctionSet< CombFunctSpace, BasisSetType1, BasisSetType2>
     :: hessianAll ( const Point &x, const DofVector &dofs, HessianRangeType &hessian ) const
     {
-      SubDofVector<const DofVector, double > dofs1( dofs, size1_, 0  );
-      SubDofVector<const DofVector, double > dofs2( dofs, size2_, offset_ );
+      typedef typename DofVector :: DofType DofType;
+      SubDofVector<const DofVector, DofType > dofs1( dofs, size1_, 0  );
+      SubDofVector<const DofVector, DofType > dofs2( dofs, size2_, offset_ );
 
       HessianRangeType1 hessian1;
       HessianRangeType2 hessian2;
@@ -430,8 +433,9 @@ namespace Dune
     inline void CombinedBasisFunctionSet< CombFunctSpace, BasisSetType1, BasisSetType2>
     :: axpy ( const Point &x, const RangeType &valueFactor, DofVector &dofs ) const
     {
-      SubDofVector<DofVector, double > dofs1( dofs, size1_, 0  );
-      SubDofVector<DofVector, double > dofs2( dofs, size2_, offset_ );
+      typedef typename DofVector :: DofType DofType;
+      SubDofVector<DofVector, DofType > dofs1( dofs, size1_, 0  );
+      SubDofVector<DofVector, DofType > dofs2( dofs, size2_, offset_ );
       SubObject< const RangeType, const RangeType1, 0 > valueFactor1( valueFactor );
       SubObject< const RangeType, const RangeType2, dimRange1 > valueFactor2( valueFactor );
 
@@ -448,8 +452,9 @@ namespace Dune
     inline void CombinedBasisFunctionSet< CombFunctSpace, BasisSetType1, BasisSetType2>
     :: axpy ( const Point &x, const JacobianRangeType &jacobianFactor, DofVector &dofs ) const
     {
-      SubDofVector<DofVector, double > dofs1( dofs, size1_, 0  );
-      SubDofVector<DofVector, double > dofs2( dofs, size2_, offset_ );
+      typedef typename DofVector :: DofType DofType;
+      SubDofVector<DofVector, DofType > dofs1( dofs, size1_, 0  );
+      SubDofVector<DofVector, DofType > dofs2( dofs, size2_, offset_ );
       SubObject< const JacobianRangeType, const JacobianRangeType1, 0 > jacobianFactor1( jacobianFactor );
       SubObject< const JacobianRangeType, const JacobianRangeType2, dimRange1 > jacobianFactor2( jacobianFactor );
 
@@ -467,8 +472,9 @@ namespace Dune
     :: axpy ( const Point &x, const RangeType &valueFactor, const JacobianRangeType &jacobianFactor,
               DofVector &dofs ) const
     {
-      SubDofVector<DofVector, double > dofs1( dofs, size1_, 0  );
-      SubDofVector<DofVector, double > dofs2( dofs, size2_, offset_ );
+      typedef typename DofVector :: DofType DofType;
+      SubDofVector<DofVector, DofType > dofs1( dofs, size1_, 0  );
+      SubDofVector<DofVector, DofType > dofs2( dofs, size2_, offset_ );
       SubObject< const RangeType, const RangeType1, 0 > valueFactor1( valueFactor );
       SubObject< const RangeType, const RangeType2, dimRange1 > valueFactor2( valueFactor );
       SubObject< const JacobianRangeType, const JacobianRangeType1, 0 > jacobianFactor1( jacobianFactor );

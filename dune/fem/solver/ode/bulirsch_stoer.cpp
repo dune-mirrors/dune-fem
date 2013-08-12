@@ -446,8 +446,8 @@ int ImplicitBulirschStoer::LinearOperator::dim_of_value(int i) const
 }
 
 
-void ImplicitBulirschStoer::LinearOperator::operator()(const double *p,
-						       double *DFu_p, int i)
+void ImplicitBulirschStoer::LinearOperator::
+operator()(const double *p, double *DFu_p, int component)
 {
   const int dim = ibs.dim;
   const double *u = ibs.z_k;
@@ -465,7 +465,7 @@ void ImplicitBulirschStoer::LinearOperator::operator()(const double *p,
   // DFu_p = ( F(u+eps*p) - F(u) ) / eps
   // whith F(u) = u - z_km - dt/n * f( t + (k+0.5)*dt/n, 0.5*(u + z_km) )
   for(int i=0; i<dim; i++) ibs.tmp[i] = 0.5*(u[i] + eps*p[i] + ibs.z_km[i]);
-  (ibs.f)(ibs.t + (ibs.k+0.5)*ibs.dt_n, ibs.tmp, DFu_p);
+  (ibs.f)(ibs.t + (ibs.k+0.5)*ibs.dt_n, ibs.tmp, DFu_p, component);
   for(int i=0; i<dim; i++){
     DFu_p[i] = eps_inv*(u[i]+eps*p[i]-ibs.z_km[i]-ibs.dt_n*DFu_p[i]-ibs.F[i]);
   }

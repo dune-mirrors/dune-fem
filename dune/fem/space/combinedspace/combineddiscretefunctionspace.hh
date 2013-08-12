@@ -226,6 +226,9 @@ namespace Dune
     : public DiscreteFunctionSpaceDefault
              < CombinedDiscreteFunctionSpaceTraits< DFSpace1, DFSpace2 > >
     {
+      typedef CombinedDiscreteFunctionSpace< DFSpace1, DFSpace2 > ThisType;
+      typedef DiscreteFunctionSpaceDefault< CombinedDiscreteFunctionSpaceTraits< DFSpace1, DFSpace2 > > BaseType;
+
     public:
       //! types of Discrete Subspace
       typedef DFSpace1    DiscreteFunctionSpaceType1;
@@ -296,17 +299,23 @@ namespace Dune
       //! dimension of a value
       enum { dimVal = 1 };
 
-    public:
       //! type of identifier for this discrete function space
       typedef int IdentifierType;
       //! identifier of this discrete function space
       static const IdentifierType id = 669;
 
-    private:
-      typedef CombinedDiscreteFunctionSpaceType ThisType;
-      typedef DiscreteFunctionSpaceDefault< Traits > BaseType;
+      template< int newDimRange >
+      struct ToNewDimRange
+      {
+        typedef typename SelectType< (newDimRange == 1), 
+                    typename DiscreteFunctionSpaceType1 :: template ToNewDimRange< 1 > :: Type,
+                    typename BaseType :: template ToNewDimRange< newDimRange > :: Type 
+                  > :: Type Type;
+      };
 
-    public:
+      //! tuple tpye of space
+      typedef Dune::tuple< DiscreteFunctionSpaceType1, DiscreteFunctionSpaceType2 > SpaceTupleType;
+
       using BaseType :: gridPart;
 
       //! default communication interface
@@ -444,6 +453,7 @@ namespace Dune
       //! corresponding mapper
       mutable MapperType mapper_;
     };
+
 
     //! specialization of DifferentDiscreteFunctionSpace for CombinedDiscreteFunctionSpace
     template< class DFunctionSpaceImp1,

@@ -6,6 +6,7 @@ CONFIGURE_FLAGS="\
 --enable-fieldvector-size-is-method \
 --without-gmp \
 --enable-parallel \
+--with-petsc=$MODULEDIR/petsc \
 --prefix=/hosts/gandalf/raid5/morgoth/dune/src/dune \
 --with-alugrid=$MODULEDIR/alugrid \
 --with-alberta=$MODULEDIR/alberta \

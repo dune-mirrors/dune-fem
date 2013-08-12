@@ -9,6 +9,7 @@
 #include <iterator>
 #include <utility>
 
+
 #if HAVE_PETSC
 
 #include <dune/fem/misc/petsc/petsccommon.hh>
@@ -21,12 +22,8 @@
 
 #include <dune/common/fvector.hh> 
 
-// If we don't define this, there is an error when headerchecking this file...
-#define WANT_CACHED_COMM_MANAGER 0
-
 #include <dune/fem/function/common/discretefunction.hh>
 #include <dune/fem/function/localfunction/localfunction.hh>
-//#include <dune/fem/function/localfunction/standardlocalfunction.hh>
 #include <dune/fem/function/blockvectordiscretefunction/blockvectordiscretefunction.hh>
 
 #include <dune/geometry/referenceelements.hh>
@@ -43,37 +40,50 @@ namespace Dune
     /* ==============================
      * forward declarations
      */
-    template< typename S > class PetscDiscreteFunction;
+    template< class DiscreteFunctionSpace > class PetscDiscreteFunction;
 
 
     /* ========================================
      * struct PetscDiscreteFunctionTraits
      * =======================================
      */
-    template< typename S >
+    template< class DiscreteFunctionSpace >
     struct PetscDiscreteFunctionTraits
     {
-      typedef PetscDiscreteFunctionTraits< S >                          ThisType;
-      typedef S                                                         DiscreteFunctionSpaceType;
+      typedef DiscreteFunctionSpace                                     DiscreteFunctionSpaceType;
+      typedef PetscDiscreteFunctionTraits< DiscreteFunctionSpaceType >  Traits;
       typedef typename DiscreteFunctionSpaceType::DomainType            DomainType;
       typedef typename DiscreteFunctionSpaceType::RangeType             RangeType;
+
       typedef typename DiscreteFunctionSpaceType::JacobianRangeType     JacobianRangeType;
       typedef typename DiscreteFunctionSpaceType::MapperType            MapperType;
       typedef typename DiscreteFunctionSpaceType::BlockMapperType       BlockMapperType;
       typedef typename DiscreteFunctionSpaceType::GridPartType          GridPartType;
-      typedef PetscDiscreteFunction< S >                                DiscreteFunctionType;
+      typedef PetscDiscreteFunction< DiscreteFunctionSpaceType >        DiscreteFunctionType;
+
+      typedef PetscLocalFunctionFactory< Traits >                       LocalFunctionFactoryType;
+      typedef LocalFunctionStack< LocalFunctionFactoryType >            LocalFunctionStorageType;
+      typedef PetscLocalFunction< DiscreteFunctionType >                LocalFunctionType;
+
+      typedef PetscVector< DiscreteFunctionSpaceType  >                 PetscVectorType;
+      typedef typename PetscVectorType::DofBlockType                    DofBlockType;
+      typedef typename PetscVectorType::ConstDofBlockType               ConstDofBlockType;
+      typedef typename PetscVectorType::DofIteratorType                 DofIteratorType;
+      typedef typename PetscVectorType::ConstDofIteratorType            ConstDofIteratorType;
+      typedef typename PetscVectorType::DofBlockPtrType                 DofBlockPtrType;
+      typedef typename PetscVectorType::ConstDofBlockPtrType            ConstDofBlockPtrType;
     };
 
     /* ========================================
      * class PetscDiscreteFunction
      * =======================================
      */
-    template< typename S >
+    template< class DiscreteFunctionSpace >
     class PetscDiscreteFunction
-    : public HasLocalFunction,
-      public IsBlockVectorDiscreteFunction
+      : public DiscreteFunctionDefault< PetscDiscreteFunctionTraits< DiscreteFunctionSpace > >
     {
-      typedef PetscDiscreteFunction< S > ThisType;
+      typedef PetscDiscreteFunction< DiscreteFunctionSpace > ThisType;
+      typedef DiscreteFunctionDefault< PetscDiscreteFunctionTraits< DiscreteFunctionSpace > > BaseType;
       friend class PetscLocalFunction< ThisType >;
 
     public:
@@ -81,23 +91,21 @@ namespace Dune
       /*
        * types
        */
-      typedef PetscDiscreteFunctionTraits< S > Traits;
+      typedef PetscDiscreteFunctionTraits< DiscreteFunctionSpace > Traits;
       typedef typename Traits::DiscreteFunctionSpaceType                DiscreteFunctionSpaceType;
       typedef typename DiscreteFunctionSpaceType::FunctionSpaceType     FunctionSpaceType;
       typedef typename Traits::DiscreteFunctionSpaceType::EntityType    EntityType ;
 
       const static size_t localBlockSize = DiscreteFunctionSpaceType::localBlockSize;
 
-      typedef PetscVector< DiscreteFunctionSpaceType  >                 PetscVectorType;
+      typedef typename Traits :: PetscVectorType                        PetscVectorType;
 
       typedef typename DiscreteFunctionSpaceType::RangeFieldType        RangeFieldType;
       typedef typename DiscreteFunctionSpaceType::DomainFieldType       DomainFieldType;
       typedef typename Traits::BlockMapperType                          BlockMapperType;
       typedef typename Traits::GridPartType                             GridPartType;
-      typedef PetscLocalFunctionFactory< ThisType >                     LocalFunctionFactoryType;
-      typedef PetscLocalFunctionStack< ThisType >                       LocalFunctionStorageType;
 
-      typedef PetscLocalFunction< ThisType >                            LocalFunctionType;
+      typedef typename Traits :: LocalFunctionFactoryType               LocalFunctionFactoryType;
 
       typedef typename Traits::DomainType                               DomainType;
       typedef typename Traits::RangeType                                RangeType;
@@ -113,33 +121,42 @@ namespace Dune
       // what is DoFType ?!?!?!? this
       typedef RangeFieldType DofType;
 
-      // or this ?!?!?!
-//    typedef typename DofBlockType::DofProxy DofType;
+      // type used to determine size etc.
+      typedef NonBlockMapper< BlockMapperType,
+                              DiscreteFunctionSpaceType :: localBlockSize > MapperType ;
 
     public:
+      using BaseType :: space;
+      using BaseType :: name;
 
       /*
        * methods
        */
       PetscDiscreteFunction ( const std::string &name,
                               const DiscreteFunctionSpaceType &dfSpace )
-      : name_( name ),
-        dfSpace_( dfSpace ),
+      : BaseType( name, dfSpace, lfFactory_ ),
         lfFactory_( *this ),
-        lfStorage_( lfFactory_ ),
-        petscVector_( dfSpace )
+        mapper_( space().blockMapper() ),
+        memObject_( 0 ),
+        petscVector_( allocateDofStorage( name ) )
       {}
 
       PetscDiscreteFunction ( const ThisType &other )
-      : name_( "copy of " + other.name_ ),
-        dfSpace_( other.dfSpace_ ),
+      : BaseType( "copy of " + other.name(), other.space(), lfFactory_ ),
         lfFactory_( *this ),
-        lfStorage_( lfFactory_ ),
-        petscVector_( other.petscVector_ )
+        mapper_( space().blockMapper() ),
+        memObject_( 0 ),
+        petscVector_( allocateDofStorage( name() ) )
       {}
 
-      ~PetscDiscreteFunction () 
-      {}
+      ~PetscDiscreteFunction() 
+      {
+        if( memObject_ ) 
+        {
+          delete memObject_;
+          memObject_ = 0;
+        }
+      }
 
       /** \copydoc Dune::Fem::DiscreteFunctionInterface::block( unsigned int index ) const */
       ConstDofBlockPtrType block ( unsigned int index ) const
@@ -180,51 +197,6 @@ namespace Dune
         petscVector().communicateNow();
       }
 
-      /** \copydoc Dune::Fem::DiscreteFunctionInterface::scalarProductDofs */
-      PetscScalar scalarProductDofs ( const ThisType &other ) const
-      {
-        return petscVector()*other.petscVector();
-      }
-
-      /** \copydoc Dune::Fem::Function::evaluate(const FieldVector<int,diffOrder> &diffVariable,const DomainType &x,RangeType &ret) const */
-      template< int diffOrder >
-      void evaluate ( const ::Dune::FieldVector< int, diffOrder > &diffVariable,
-                      const DomainType &x,
-                      RangeType &ret ) const
-      {
-        typedef typename DiscreteFunctionSpaceType::IteratorType Iterator;
-        typedef typename Iterator::Entity Entity;
-        typedef typename Entity::Geometry Geometry;
-        typedef typename Geometry::LocalCoordinate LocalCoordinateType;
-
-        const int dimLocal = LocalCoordinateType::dimension;
-        
-        const Iterator end = space().end();
-        for( Iterator it = space().begin(); it != end; ++it )
-        {
-          const Entity &entity = *it;
-          const Geometry &geometry = entity.geometry();
-
-          const Dune::ReferenceElement< DomainFieldType, dimLocal > &refElement
-            = Dune::ReferenceElements< DomainFieldType, dimLocal >::general( geometry.type() );
-
-          const LocalCoordinateType xlocal = geometry.local( x );
-          if( refElement.checkInside( xlocal ) )
-          {
-            localFunction( entity ).evaluate( diffVariable, xlocal, ret );
-            return;
-          }
-        }
-        DUNE_THROW( RangeError, "PetscDiscreteFunction::evaluate: x is not within domain." );
-      }
-
-      /** \copydoc Dune::Fem::Function::evaluate(const DomainType &x,RangeType &ret) const */
-      void evaluate ( const DomainType &x, RangeType &ret ) const
-      {
-        Dune::FieldVector< int, 0 > diffVariable;
-        evaluate( diffVariable, x, ret );
-      }
-
       /** \copydoc Dune::Fem::DiscreteFunctionInterface::operator+= */
       const ThisType& operator+= ( const ThisType &other )
       {
@@ -259,66 +231,54 @@ namespace Dune
         petscVector().axpy( static_cast< const PetscScalar& >( scalar ), other.petscVector() );
       }
 
-      /** \copydoc Dune::Fem::DiscreteFunctionInterface::space() const */
-      const DiscreteFunctionSpaceType& space () const { return dfSpace_; }
-
       /** \brief obtain a constand pointer to the underlying PETSc Vec */
       const Vec* petscVec () const { return petscVector().getVector(); }
 
       /** \brief obtain a pointer to the underlying PETSc Vec */
       Vec* petscVec () { return petscVector().getVector(); }
 
-      /** \copydoc Dune::Fem::DiscreteFunctionInterface::localFunction(const EntityType &entity) */
-      template< class EntityType >
-      LocalFunctionType localFunction ( const EntityType &entity )
-      {
-        return localFunctionStorage().localFunction( entity );
+      void enableDofCompression () 
+      { 
+        if( memObject_ )
+          memObject_->enableDofCompression();
       }
-
-      /** \copydoc Dune::Fem::DiscreteFunctionInterface::localFunction(const EntityType &entity) const */
-      template< class EntityType >
-      LocalFunctionType localFunction ( const EntityType &entity ) const
-      {
-        return localFunctionStorage().localFunction( entity );
-      }
-
-      /** \copydoc Dune::Fem::DiscreteFunctionInterface::name() const */
-      const std::string& name () const
-      {
-        return name_;
-      }
-
-      void enableDofCompression () {}
 
       void print( std::ostream& out ) 
       {
         petscVector().printGlobal( true );
       }
 
-    private:
+    protected:
+      // allocate managed dof storage 
+      PetscVectorType& allocateDofStorage(const std::string& name)
+      {
+        if( memObject_ != 0)
+        {
+          DUNE_THROW(InvalidStateException,"DofStorage already allocated!");
+        }
+
+        typedef PetscManagedDofStorage< DiscreteFunctionSpace, MapperType > PetscManagedDofStorageType;
+        PetscManagedDofStorageType* pmds = new PetscManagedDofStorageType( space(), mapper_, name );
+        // PetscManagedDofStorageType* pmds = new PetscManagedDofStorageType( space(), name );
+
+        // save pointer 
+        memObject_ = pmds ;
+        return pmds->getArray();
+      }
+
       PetscDiscreteFunction ();
       ThisType& operator= ( const ThisType &other );
 
-      /*
-       * private methods
-       */
-      LocalFunctionStorageType& localFunctionStorage () const 
-      {
-        return lfStorage_;
-      }
-
       PetscVectorType& petscVector () { return petscVector_; }
-
       const PetscVectorType& petscVector () const { return petscVector_; }
 
       /*
        * data fields
        */
-      std::string name_;
-      const DiscreteFunctionSpaceType &dfSpace_;
       LocalFunctionFactoryType lfFactory_;
-      mutable LocalFunctionStorageType lfStorage_;
-      PetscVectorType petscVector_;
+      MapperType               mapper_;
+      DofStorageInterface*     memObject_;
+      PetscVectorType&         petscVector_;
     };
 
 

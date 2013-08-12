@@ -197,7 +197,7 @@ void DIRK::LinearOperator::setup(double t, const double *u, double lambda)
 }
 
 
-void DIRK::LinearOperator::operator()(const double *p, double *DFu_p, int i)
+void DIRK::LinearOperator::operator()(const double *p, double *DFu_p, int component)
 {
   const double DBLEPSILON = DBL_EPSILON;
   double local_dot[2], global_dot[2];
@@ -212,7 +212,7 @@ void DIRK::LinearOperator::operator()(const double *p, double *DFu_p, int i)
   const double lambda_eps = lambda / eps; 
 
   dwaxpby(dim, 1.0, u, 1, eps, p, 1, u_tmp, 1);
-  f(t, u_tmp, DFu_p);
+  f(t, u_tmp, DFu_p, component);
   for(int i=0; i<dim; i++) DFu_p[i] = p[i] - lambda_eps*(DFu_p[i] - f_tmp[i]);
 }
 

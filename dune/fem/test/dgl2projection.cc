@@ -22,6 +22,8 @@
 #elif defined USE_BLOCKVECTORDISCRETEFUNCTION
 #include <dune/fem/function/blockvectordiscretefunction.hh>
 #include <dune/fem/function/blockvectors/referenceblockvector.hh>
+#elif HAVE_PETSC && defined USE_PETSCDISCRETEFUNCTION
+#include <dune/fem/function/petscdiscretefunction.hh>
 #elif defined USE_COMBINEDFUNCTION
 #undef DIMRANGE 
 #define DIMRANGE 1
@@ -87,6 +89,9 @@ typedef Fem :: AttachedDiscreteFunction< DiscreteFunctionSpaceType >
 typedef Dune::Fem::ReferenceBlockVector< double, DiscreteFunctionSpaceType::localBlockSize > 
   BlockVectorType;
 typedef Dune::Fem::BlockVectorDiscreteFunction< DiscreteFunctionSpaceType, BlockVectorType > 
+  DiscreteFunctionType;
+#elif HAVE_PETSC && defined USE_PETSCDISCRETEFUNCTION
+typedef Dune::Fem::PetscDiscreteFunction< DiscreteFunctionSpaceType > 
   DiscreteFunctionType;
 #elif defined USE_COMBINEDFUNCTION
 typedef Fem :: AdaptiveDiscreteFunction< DiscreteFunctionSpaceType >

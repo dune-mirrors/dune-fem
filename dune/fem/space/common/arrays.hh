@@ -578,15 +578,15 @@ namespace Dune
     {
       return array.usedMemorySize();
     }
-    static void setMemoryFactor(ArrayType & array, const double memFactor) 
+    static inline void setMemoryFactor(ArrayType & array, const double memFactor) 
     {
       array.setMemoryFactor(memFactor);
     }
 
-    static void memMoveBackward(ArrayType& array, 
-                                const size_t length,
-                                const size_t oldStartIdx, 
-                                const size_t newStartIdx)
+    static inline void memMoveBackward(ArrayType& array, 
+                                       const size_t length,
+                                       const size_t oldStartIdx, 
+                                       const size_t newStartIdx)
     {
       assert( newStartIdx >= oldStartIdx );
       //array.memmove(length,oldStartIdx,newStartIdx);
@@ -605,10 +605,10 @@ namespace Dune
 #endif
       }
     }
-    static void memMoveForward(ArrayType& array, 
-                               const size_t length,
-                               const size_t oldStartIdx, 
-                               const size_t newStartIdx)
+    static inline void memMoveForward(ArrayType& array, 
+                                      const size_t length,
+                                      const size_t oldStartIdx, 
+                                      const size_t newStartIdx)
     {
       assert( newStartIdx <= oldStartIdx );
       //array.memmove(length,oldStartIdx,newStartIdx);
@@ -624,6 +624,12 @@ namespace Dune
         array[oldIdx] = 0.0;
 #endif
       }
+    }
+
+    static inline 
+    void assign( ArrayType& array, const int newIndex, const int oldIndex )
+    {
+      array[ newIndex ] = array[ oldIndex ];
     }
   };
 

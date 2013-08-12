@@ -102,8 +102,8 @@ int QuasiExactNewton::LinearOperator::dim_of_value(int i) const
 }
 
 
-void QuasiExactNewton::LinearOperator::operator()(const double *p, 
-						  double *DFu_p, int i)
+void QuasiExactNewton::LinearOperator::
+operator()(const double *p, double *DFu_p, int component)
 {
   double local_dot[2], global_dot[2];
   local_dot[0] = cblas_ddot(qen.dim, qen.u, 1, qen.u, 1);
@@ -117,7 +117,7 @@ void QuasiExactNewton::LinearOperator::operator()(const double *p,
   
   //for(int k=0; k<qen.dim; k++) qen.u_tmp[k] = qen.u[k] + eps*p[k];
   dwaxpby(qen.dim, 1.0, qen.u, 1, eps, p, 1, qen.u_tmp, 1);
-  (*qen.F)(qen.u_tmp, DFu_p);
+  (*qen.F)(qen.u_tmp, DFu_p, component);
   //for(int k=0; k<qen.dim; k++) DFu_p[k] = (DFu_p[k] - qen.f[k])/eps;
   daxpby(qen.dim, -1.0/eps, qen.f, 1, 1.0/eps, DFu_p, 1);
 }
