@@ -16,6 +16,7 @@
 #if HAVE_PETSC
 
 #include <dune/fem/misc/petsc/petsccommon.hh>
+#include <dune/fem/gridpart/dunefemindexsets.hh>
 
 namespace Dune 
 {
@@ -36,9 +37,13 @@ namespace Dune
      * =================================================
      */
     template< class SlaveDofs >
-    class PetscDofMappings
+    class PetscDofMappings 
+      : public PersistentIndexSet< typename SlaveDofs::GridPartType::GridType, 
+                                   PetscDofMappings<  SlaveDofs > >
     {
       typedef PetscDofMappings< SlaveDofs > ThisType;
+      typedef PersistentIndexSet< typename SlaveDofs::GridPartType::GridType, 
+                                  PetscDofMappings<  SlaveDofs > > BaseType;
 
     public:
       typedef SlaveDofs  SlaveDofsType;
@@ -51,15 +56,32 @@ namespace Dune
       typedef DynamicVector< GlobalDofType >           GlobalDofMappingType ; 
 
       PetscDofMappings ( SlaveDofs *slaveDofs ) 
-        : numOwnedDofBlocks_( 0 ),
+        : BaseType( slaveDofs->space().gridPart().grid() ),
+          slaveDofs_( *slaveDofs ),
+          numOwnedDofBlocks_( 0 ),
           numSlaveBlocks_( 0 ),
           processStartIndex_( 0 ),
           localSlaveMapping_(),
-          globalDofMapping_()
+          globalDofMapping_(),
+          sequence_( -1 )
       {
-        slaveDofs->rebuild();
-        initialize( *slaveDofs );
+        // update dof mapping 
+        update();
       }
+
+      bool update () 
+      {
+        slaveDofs_.rebuild();
+        const int sequence = slaveDofs_.space().sequence();
+        if( sequence_ != sequence )
+        {
+          initialize( slaveDofs_ );
+          sequence_ = sequence ;
+          return true ;
+        }
+        return false ;
+      }
+
 
       GlobalDofType numOwnedDofBlocks () const { return numOwnedDofBlocks_; }
 
@@ -84,6 +106,19 @@ namespace Dune
       { 
         return static_cast< int >( localSlaveMapping( i ) ) >= numOwnedDofBlocks(); 
       }
+
+
+      ///////////////////////////////////////////////
+      //  interface methods for PersistentIndexSet 
+      ///////////////////////////////////////////////
+      template < class Stream >
+      void write( const Stream& ) const {}
+
+      template < class Stream >
+      void read( const Stream& ) {}
+
+      void resize () { update (); }
+      bool compress() { return update (); }
 
     private:
       //////////////////////////////// 
@@ -187,7 +222,6 @@ namespace Dune
       {
         numSlaveBlocks_    = slaveDofs.size() - 1;
         numOwnedDofBlocks_ = slaveDofs.space().blockMapper().size() - numSlaveBlocks_;
-        //numOwnedDofBlocks_ = slaveDofs.space().mapper().size() - numSlaveBlocks_;
 
         // start with index 0 (use unsigned long as buffers) 
         unsigned long processStartIndex = 0;
@@ -209,49 +243,50 @@ namespace Dune
       //////////////////////////////////////////
       // Methods for consistency checking, only used when NDEBUG is not set
       //////////////////////////////////////////
-      #ifndef NDEBUG
-        template< typename SlavesType >
-        void checkSlaveConsistency ( const SlavesType& slaves ) const
+      template< typename SlavesType >
+      void checkSlaveConsistency ( const SlavesType& slaves ) const
+      {
+        for( size_t i = 0; i < size(); ++i )
         {
-          for( size_t i = 0; i < size(); ++i )
-          {
-            assert( isSlave( i ) == slaves.isSlave( i ) );
-          }
+          assert( isSlave( i ) == slaves.isSlave( i ) );
         }
+      }
 
-        void checkDofMappingConsistency () const 
+      void checkDofMappingConsistency () const 
+      {
+        // Check if the dof mapping is bijective and valid. This piece of code does not strive to be 
+        // efficient...
+        std::map< DofType, bool > buf;
+        for( std::vector< int >::const_iterator it = localSlaveMapping_.begin(); it != localSlaveMapping_.end(); ++it )
         {
-          // Check if the dof mapping is bijective and valid. This piece of code does not strive to be 
-          // efficient...
-          std::map< DofType, bool > buf;
-          for( std::vector< int >::const_iterator it = localSlaveMapping_.begin(); it != localSlaveMapping_.end(); ++it )
+          if( *it < 0 ) 
           {
-            if( *it < 0 ) 
-            {
-              std::cerr << "localSlaveMapping_ has not been initialized completely on rank " << MPIManager::rank() << std::endl;
-              assert( false );
-            }
-            if( buf.find( *it ) != buf.end() )
-            {
-              std::cerr << *it << " was found more than once in localSlaveMapping_ (on rank " << MPIManager::rank() << ")\n";
-              assert( false );
-            }
-            else
-            {
-              buf[ *it ] = true;
-            }
+            std::cerr << "localSlaveMapping_ has not been initialized completely on rank " << MPIManager::rank() << std::endl;
+            assert( false );
+          }
+
+          if( buf.find( *it ) != buf.end() )
+          {
+            std::cerr << *it << " was found more than once in localSlaveMapping_ (on rank " << MPIManager::rank() << ")\n";
+            assert( false );
+          }
+          else
+          {
+            buf[ *it ] = true;
           }
         }
-      #endif 
+      }
 
       //////////////////////////////// 
       // data fields
       //////////////////////////////// 
+      SlaveDofsType&  slaveDofs_;         // reference to slave dofs 
       GlobalDofType   numOwnedDofBlocks_; // number of blocks where this proc is master
       GlobalDofType   numSlaveBlocks_;    // number of slave blocks 
       GlobalDofType   processStartIndex_; // Start index of this process' portion of the PETSc Vec.
       DofMappingType  localSlaveMapping_; // local mapping (used for Discrete Function)
       GlobalDofMappingType globalDofMapping_; // global mapping (needed for matrices)
+      int sequence_ ;                     // sequence number of adaptive grid
     };
 
   } // namespace Fem

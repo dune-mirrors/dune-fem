@@ -87,6 +87,7 @@ namespace Dune
 
       static void assign( ArrayType& array, const int newIndex, const int oldIndex )
       {
+        /*
         typedef typename ArrayType :: DofBlockPtrType DofBlockPtrType;
         DofBlockPtrType newBlock = array.block( newIndex );
         DofBlockPtrType oldBlock = array.block( oldIndex );
@@ -94,6 +95,7 @@ namespace Dune
         const unsigned int blockSize = ArrayType :: blockSize;
         for( unsigned int i = 0; i < blockSize; ++i )
           (*newBlock)[ i ] = (*oldBlock)[ i ];
+          */
       }
     };
 
@@ -148,25 +150,8 @@ namespace Dune
         dune_static_assert( CommunicationOperationType::value == DFCommunicationOperation::copy ||
                             CommunicationOperationType::value == DFCommunicationOperation::add,
                             "only copy/add are available communication operations for petsc");
-        // set up the DofMapping instance and all variables depending on it
-        localSize_ = dofMapping().numOwnedDofBlocks() * blockSize;
-        numGhosts_ = dofMapping().numSlaveBlocks()    * blockSize;
-        assert( static_cast< size_t >( localSize_ + numGhosts_ ) == dofMapping().size() * blockSize );
-
-        // set up the ghost array builder
-        typedef PetscGhostArrayBuilder< PetscSlaveDofsType, PetscDofMappingType > PetscGhostArrayBuilderType;
-        PetscGhostArrayBuilderType ghostArrayBuilder( petscSlaveDofs_, dofMapping() );
-        assert( int( ghostArrayBuilder.size() ) == dofMapping().numSlaveBlocks() );
-        
-        // finally, create the PETSc Vecs
-        ::Dune::Petsc::VecCreateGhost( 
-          static_cast< PetscInt >( localSize_ ), 
-          PETSC_DECIDE, 
-          static_cast< PetscInt >( numGhosts_ ), 
-          ghostArrayBuilder.array(),
-          &vec_ 
-        );
-        ::Dune::Petsc::VecGhostGetLocalForm( vec_, &ghostedVec_ );
+        // init vector 
+        init();
       }
 
       // TODO: think about sequence overflows...
@@ -178,34 +163,54 @@ namespace Dune
         localSize_( other.localSize_ ),
         numGhosts_( other.numGhosts_ )
       {
-        // we want the 'other' to do all its communication right now before
-        // we start copying values from it
-        other.communicateIfNecessary();
-
-        // Do the copying on the PETSc level
-        ::Dune::Petsc::VecDuplicate( other.vec_, &vec_ );
-        ::Dune::Petsc::VecCopy( other.vec_, vec_ );
-        ::Dune::Petsc::VecGhostGetLocalForm( vec_, &ghostedVec_ );
-
-        updateGhostRegions();
+        // assign vectors 
+        assign( other );
       }
       
       ~PetscVector ()
       {
-        ::Dune::Petsc::VecGhostRestoreLocalForm( vec_, &ghostedVec_ );
-        ::Dune::Petsc::VecDestroy( &vec_ );
+        // destroy vectors 
+        removeObj();
       }
 
       size_t size () const { return static_cast< size_t >( localSize_ + numGhosts_ ); }
 
       void resize( const size_t newsize ) 
       {
-        DUNE_THROW(NotImplemented,"PetscVector::resize is to be implemented");
+        /*
+        std::vector< double > values( dofMapping().size() );
+        typedef typename std::vector< double > :: iterator  iterator ;
+
+        const DofIteratorType end = dend ();
+        iterator value = values.begin();
+        for( DofIteratorType it = dbegin(); it != end ; ++ it, ++value ) 
+        {
+          if( value == values.end() ) break ;
+          assert( value != values.end() );
+          *value = *it ;
+        }
+        */
+
+        // TODO: keep old data stored in current vector
+        // remove old vectors 
+        removeObj();
+
+        // initialize new 
+        init();
+
+        /*
+        const size_t vsize = std::min( values.size(), size() );
+        DofIteratorType it = dbegin();
+        for( size_t i=0; i<vsize; ++ i, ++ it ) 
+          *it = values[ i ];      
+        */
+
+        hasBeenModified ();
       }
 
       void reserve( const size_t capacity ) 
       {
-        DUNE_THROW(NotImplemented,"PetscVector::resize is to be implemented");
+        resize( capacity );
       }
 
       void hasBeenModified () { ++sequence_; }
@@ -342,7 +347,55 @@ namespace Dune
           PetscSynchronizedFlush( PETSC_COMM_WORLD );
       }
 
-    private:
+    protected:
+      // setup vector according to mapping sizes 
+      void init() 
+      {
+        // set up the DofMapping instance and all variables depending on it
+        localSize_ = dofMapping().numOwnedDofBlocks() * blockSize;
+        numGhosts_ = dofMapping().numSlaveBlocks()    * blockSize;
+
+        //std::cout << "PetscVector::init: "<< localSize_ << "  " << numGhosts_ << std::endl;
+        assert( static_cast< size_t >( localSize_ + numGhosts_ ) == dofMapping().size() * blockSize );
+
+        // set up the ghost array builder
+        typedef PetscGhostArrayBuilder< PetscSlaveDofsType, PetscDofMappingType > PetscGhostArrayBuilderType;
+        PetscGhostArrayBuilderType ghostArrayBuilder( petscSlaveDofs_, dofMapping() );
+        assert( int( ghostArrayBuilder.size() ) == dofMapping().numSlaveBlocks() );
+        
+        // finally, create the PETSc Vecs
+        ::Dune::Petsc::VecCreateGhost( 
+          static_cast< PetscInt >( localSize_ ), 
+          PETSC_DECIDE, 
+          static_cast< PetscInt >( numGhosts_ ), 
+          ghostArrayBuilder.array(),
+          &vec_ 
+        );
+        ::Dune::Petsc::VecGhostGetLocalForm( vec_, &ghostedVec_ );
+      }
+
+      // delete vectors 
+      void removeObj() 
+      {
+        ::Dune::Petsc::VecGhostRestoreLocalForm( vec_, &ghostedVec_ );
+        ::Dune::Petsc::VecDestroy( &vec_ );
+      }
+
+      // assign from other given PetscVector
+      void assign( const ThisType& other ) 
+      {
+        // we want the 'other' to do all its communication right now before
+        // we start copying values from it
+        other.communicateIfNecessary();
+
+        // Do the copying on the PETSc level
+        ::Dune::Petsc::VecDuplicate( other.vec_, &vec_ );
+        ::Dune::Petsc::VecCopy( other.vec_, vec_ );
+        ::Dune::Petsc::VecGhostGetLocalForm( vec_, &ghostedVec_ );
+
+        updateGhostRegions();
+      }
+
       PetscVector ();
       PetscVector& operator= ( const ThisType& );
 
