@@ -230,7 +230,7 @@ namespace Dune
     inline void CombinedBasisFunctionSet< CombFunctSpace, BasisSetType1, BasisSetType2>
     :: evaluateAll ( const Point &x, const DofVector &dofs, RangeType &value ) const
     {
-      assert( offset() == basisSet1().size() );
+      assert( offset_ == basisSet1_.size() );
       typedef typename DofVector :: DofType DofType;
       SubDofVector<const DofVector, DofType > dofs1( dofs, size1_, 0  );
       SubDofVector<const DofVector, DofType > dofs2( dofs, size2_, offset_ );
