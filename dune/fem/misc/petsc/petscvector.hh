@@ -347,6 +347,21 @@ namespace Dune
           PetscSynchronizedFlush( PETSC_COMM_WORLD );
       }
 
+      // assign from other given PetscVector
+      void assign( const ThisType& other ) 
+      {
+        // we want the 'other' to do all its communication right now before
+        // we start copying values from it
+        other.communicateIfNecessary();
+
+        // Do the copying on the PETSc level
+        ::Dune::Petsc::VecDuplicate( other.vec_, &vec_ );
+        ::Dune::Petsc::VecCopy( other.vec_, vec_ );
+        ::Dune::Petsc::VecGhostGetLocalForm( vec_, &ghostedVec_ );
+
+        updateGhostRegions();
+      }
+
     protected:
       // setup vector according to mapping sizes 
       void init() 
@@ -379,21 +394,6 @@ namespace Dune
       {
         ::Dune::Petsc::VecGhostRestoreLocalForm( vec_, &ghostedVec_ );
         ::Dune::Petsc::VecDestroy( &vec_ );
-      }
-
-      // assign from other given PetscVector
-      void assign( const ThisType& other ) 
-      {
-        // we want the 'other' to do all its communication right now before
-        // we start copying values from it
-        other.communicateIfNecessary();
-
-        // Do the copying on the PETSc level
-        ::Dune::Petsc::VecDuplicate( other.vec_, &vec_ );
-        ::Dune::Petsc::VecCopy( other.vec_, vec_ );
-        ::Dune::Petsc::VecGhostGetLocalForm( vec_, &ghostedVec_ );
-
-        updateGhostRegions();
       }
 
       PetscVector ();
