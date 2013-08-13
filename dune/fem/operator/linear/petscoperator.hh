@@ -53,7 +53,7 @@ namespace Dune
     private:
       typedef PetscSlaveDofProvider< DomainSpaceType > RowPetscSlaveDofsType;
       typedef PetscSlaveDofProvider< RangeSpaceType  > ColPetscSlaveDofsType;
-      enum Status {statAssembled=0,statAdd=1,statInsert=2,statGet=3};
+      enum Status {statAssembled=0,statAdd=1,statInsert=2,statGet=3,statNothing=4};
 
     public:
       typedef typename ColPetscSlaveDofsType :: PetscDofMappingType   ColDofMappingType;
@@ -92,7 +92,7 @@ namespace Dune
         rowSlaveDofs_( domainSpace_ ),
         sequence_(-1),
         localMatrixStack_( *this ),
-        status_(statAssembled)
+        status_(statNothing)
       {
       }
       PetscLinearOperator ( const DomainSpaceType &domainSpace, const RangeSpaceType &rangeSpace )
@@ -102,14 +102,15 @@ namespace Dune
         rowSlaveDofs_( domainSpace_ ),
         sequence_(-1),
         localMatrixStack_( *this ),     
-        status_(statAssembled)
+        status_(statNothing)
       {
       }
 
       //! destructor deleting PETSc Mat object 
       ~PetscLinearOperator ()
       {
-        ::Dune::Petsc::MatDestroy( &petscMatrix_ );
+        if( status_ != statNothing )
+          ::Dune::Petsc::MatDestroy( &petscMatrix_ );
       }
 
       void communicate ()
