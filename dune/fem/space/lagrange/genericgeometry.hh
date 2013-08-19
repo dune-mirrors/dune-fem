@@ -196,7 +196,7 @@ namespace Dune
     public:
       static const unsigned int dimension = dim;
 
-      typedef typename SelectType< isPrism, Prism< true >, Pyramid< false > >::Type::GenericGeometryType
+      typedef typename conditional< isPrism, Prism< true >, Pyramid< false > >::type::GenericGeometryType
         GenericGeometryType;
     };
 

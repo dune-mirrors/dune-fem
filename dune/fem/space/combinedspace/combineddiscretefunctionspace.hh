@@ -307,10 +307,10 @@ namespace Dune
       template< int newDimRange >
       struct ToNewDimRange
       {
-        typedef typename SelectType< (newDimRange == 1), 
+        typedef typename conditional< (newDimRange == 1), 
                     typename DiscreteFunctionSpaceType1 :: template ToNewDimRange< 1 > :: Type,
                     typename BaseType :: template ToNewDimRange< newDimRange > :: Type 
-                  > :: Type Type;
+                  > :: type Type;
       };
 
       //! tuple tpye of space

@@ -46,7 +46,7 @@ namespace Dune
       typedef AdaptiveDiscreteFunctionTraits< DiscreteFunctionSpaceType > Traits;
 
       static const bool isGenericSpace = Conversion< DiscreteFunctionSpaceType, isGenericDiscreteFunctionSpace >::exists;
-      typedef typename SelectType< isGenericSpace, GenericLocalFunctionFactory< Traits >, StandardLocalFunctionFactory< Traits > >::Type
+      typedef typename conditional< isGenericSpace, GenericLocalFunctionFactory< Traits >, StandardLocalFunctionFactory< Traits > >::type
         LocalFunctionFactoryType;
 
       typedef LocalFunctionStack< LocalFunctionFactoryType > LocalFunctionStorageType;
