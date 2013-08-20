@@ -99,6 +99,9 @@ namespace Dune
 
           // number of physical files to be created 
           int numFiles = Parameter :: getValue< int >( "fem.io.sionlib.numfiles", 1 );
+          // number of files cannot be bigger than number of tasks
+          if( numFiles > MPIManager::size() )
+            numFiles = MPIManager::size() ;
 
           // block size of filesystem, -1 use system default 
           int blockSize = Parameter :: getValue< int >( "fem.io.sionlib.blocksize", -1 );
