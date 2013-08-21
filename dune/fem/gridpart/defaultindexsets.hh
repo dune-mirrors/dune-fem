@@ -153,7 +153,7 @@ namespace Dune
       };
 
       static const bool hasHierarchicIndexSet = Dune::Capabilities::hasHierarchicIndexSet< Grid >::v;
-      typedef typename SelectType< hasHierarchicIndexSet, HierarchicIndexSetGetter< true >, LeafIndexSetGetter< false > >::Type IndexSetGetter;
+      typedef typename conditional< hasHierarchicIndexSet, HierarchicIndexSetGetter< true >, LeafIndexSetGetter< false > >::type IndexSetGetter;
       
     public: 
       //! \brief type of HierarchicIndexSet, default is LeafIndexSet

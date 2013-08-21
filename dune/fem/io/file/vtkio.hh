@@ -126,7 +126,7 @@ namespace Dune
       class VTKWriter;
       class SubsamplingVTKWriter;
 
-      typedef typename SelectType< subsampling, SubsamplingVTKWriter, VTKWriter >::Type
+      typedef typename conditional< subsampling, SubsamplingVTKWriter, VTKWriter >::type
         VTKWriterType;
 
     public:

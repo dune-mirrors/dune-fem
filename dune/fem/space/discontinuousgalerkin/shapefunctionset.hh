@@ -88,6 +88,7 @@ namespace Dune
       typedef typename FunctionSpaceType::DomainType DomainType;
       typedef typename FunctionSpaceType::RangeType RangeType;
       typedef typename FunctionSpaceType::JacobianRangeType JacobianRangeType;
+      typedef typename FunctionSpaceType::HessianRangeType HessianRangeType;
 
     protected:
       // line
@@ -132,6 +133,9 @@ namespace Dune
 
       template< class Topology >
       struct JacobianEach;
+
+      template< class Topology >
+      struct HessianEach;
     };
 
 
@@ -238,6 +242,61 @@ namespace Dune
       }
     };
 
+    // Implementation of OrthonormalShapeFunctionHelper::HessianEach
+    // -------------------------------------------------------------
+
+    template< class FunctionSpace, int polOrder >
+    template< class Topology >
+    struct OrthonormalShapeFunctionHelper< FunctionSpace, polOrder >::HessianEach
+    {
+      template< class Functor >
+      static void apply ( const DomainType &x, Functor functor )
+      {
+        double hess[3] = { 0, 0, 0 };
+        HessianRangeType hessian;
+        const std::size_t size = OrthonormalShapeFunctionSetSize< FunctionSpace, polOrder >::v;
+        for( std::size_t i = 0; i < size; ++i )
+        {
+          assert( x.size() == Topology::dimension );
+          evaluate( basicGeometryType< Topology >(), i, x, hess );
+          for( unsigned int j = 0; j < FunctionSpace::dimDomain;  ++j )
+            for( unsigned int k = 0; k < FunctionSpace::dimDomain; ++k )
+              hessian[ 0 ][ j ][ k ] = hess[ j + k ];
+
+          functor( i, hessian );
+        }
+      }
+
+    protected:
+      static void evaluate ( const Line &, std::size_t i, const DomainType &x, double (&hessian)[3] )
+      {
+        DUNE_THROW( NotImplemented, "On orthonormal shape function set HessianAll() is only implemented for triangles" );
+      }
+      static void evaluate ( const Quadrilateral &, std::size_t i, const DomainType &x, double (&hessian)[3] )
+      {
+        DUNE_THROW( NotImplemented, "On orthonormal shape function set HessianAll() is only implemented for triangles" );
+      }
+      static void evaluate ( const Triangle &, std::size_t i, const DomainType &x, double (&hessian)[3] )
+      {
+        OrthonormalBase_2D::hess_triangle_2d( i , &x[ 0 ], hessian );
+      }
+      static void evaluate ( const Pyramid &, std::size_t i, const DomainType &x, double (&hessian)[3] )
+      {
+        DUNE_THROW( NotImplemented, "On orthonormal shape function set HessianAll() is only implemented for triangles" );
+      }
+      static void evaluate ( const Hexahedron &, std::size_t i, const DomainType &x, double (&hessian)[3] )
+      {
+        DUNE_THROW( NotImplemented, "On orthonormal shape function set HessianAll() is only implemented for triangles" );
+      }
+      static void evaluate ( const Prism &, std::size_t i, const DomainType &x, double (&hessian)[3] )
+      {
+        DUNE_THROW( NotImplemented, "On orthonormal shape function set HessianAll() is only implemented for triangles" );
+      }
+      static void evaluate ( const Tetrahedron &, std::size_t i, const DomainType &x, double (&hessian)[3] )
+      {
+        DUNE_THROW( NotImplemented, "On orthonormal shape function set HessianAll() is only implemented for triangles" );
+      }
+    };
 
 
     // OrthonormalShapeFunctionSet
@@ -305,7 +364,8 @@ namespace Dune
       template< class Point, class Functor >
       void hessianEach ( const Point &x, Functor functor ) const
       {
-        DUNE_THROW( NotImplemented, "Hessian not implemented for this shape function set." );
+        Dune::GenericGeometry::IfTopology< ShapeFunctionSetHelperType::template HessianEach, dimension >
+          ::apply( topologyId_, coordinate( x ), functor );
       }
 
     private:
