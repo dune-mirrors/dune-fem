@@ -92,11 +92,6 @@ namespace Dune
       //! type of basis function set  
       typedef typename DiscreteFunctionSpaceType::BasisFunctionSetType BasisFunctionSetType;
 
-      //! type of the Jacobian of a basis function
-      typedef typename BasisFunctionSetType::JacobianRangeType LocalJacobianRangeType;
-      // type of the Hessian of a basis function
-      typedef typename BasisFunctionSetType::HessianRangeType LocalHessianRangeType;
-
       /** \brief access to local dofs (read-only)
        *
        *  \param[in]  num  local dof number 
