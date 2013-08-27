@@ -578,7 +578,9 @@ namespace DuneODE
       } 
       else 
       {
-        timeProvider_.provideTimeStepEstimate( cfl_ * dt );
+        if( factor >= 1.0 )
+          DUNE_THROW( InvalidStateException, "Invalid cfl factor (no convergence): " << factor );
+        timeProvider_.provideTimeStepEstimate( factor * dt );
         timeProvider_.invalidateTimeStep();
        
         // output only in verbose mode 
