@@ -12,14 +12,15 @@
 #include <cassert>
 #include <sys/times.h>
 
-//- Dune includes 
+//- dune-common includes
+#include <dune/common/nullptr.hh>
+
+//- dune-fem includes
+#include <dune/fem/io/parameter.hh>
 #include <dune/fem/misc/mpimanager.hh>
 #include <dune/fem/operator/common/spaceoperatorif.hh>
-#include <dune/fem/solver/timeprovider.hh>
-#include <dune/fem/io/parameter.hh>
-
-//- include Ode Solver interface
 #include <dune/fem/solver/odesolverinterface.hh>
+#include <dune/fem/solver/timeprovider.hh>
 
 // include headers of PARDG 
 #include "pardg.hh"
@@ -53,23 +54,30 @@ namespace DuneODE
     // choice of linear solver for the implicit ODE solver 
     virtual PARDG::IterativeLinearSolver *linearSolver(PARDG::Communicator & comm) const
     {
-      PARDG::IterativeLinearSolver* solver = 0;
-      static const std::string methodTypeTable[]
-        = { "gmres", "cg" };
-      int method = Parameter::getEnum( "fem.ode.linearsolver" , methodTypeTable,0 );
-      if (method == 0)
+      static const std::string methodTypeTable[] = { "gmres", "cg", "bicgstab" };
+      const int method = Parameter::getEnum( "fem.ode.linearsolver", methodTypeTable, 0 );
+
+      PARDG::IterativeLinearSolver *solver = nullptr;
+      switch( method )
       {
-        // number of gmres clycles that should be done 
-        int cycles = Parameter::getValue< int >( "fem.ode.gmrescycles" , 15 );
-        solver = new PARDG::GMRES(comm,cycles);
+      case 0:
+        solver = new PARDG::GMRES( comm, Parameter::getValue< int >( "fem.ode.gmrescycles" , 15 ) );
+        break;
+
+      case 1:
+        solver = new PARDG::CG( comm );
+        break;
+
+      case 2:
+        solver = new PARDG::BICGSTAB( comm );
+        break;
       }
-      else {
-        solver = new PARDG::CG(comm);
-      }
+      if( !solver )
+        DUNE_THROW( InvalidStateException, "Unable to create linear solver." );
+
       // tolerance for the linear solver 
       double tol = Parameter::getValue< double >( "fem.ode.solver.tolerance" , 1e-8 );
-      static const std::string errorTypeTable[]
-        = { "absolute", "relative" };
+      static const std::string errorTypeTable[] = { "absolute", "relative" };
       // errormeassure used in the linear solver 
       int errorType = Parameter::getEnum( "fem.ode.solver.errormeasure", errorTypeTable, 0 );
       solver->set_tolerance(tol,(errorType==1));
@@ -78,6 +86,7 @@ namespace DuneODE
       solver->set_max_number_of_iterations(maxIter);
       return solver;
     }
+
     /** \brief tolerance for the non-linear solver (should be larger than the tolerance for
                the linear solver */
     virtual double tolerance() const
