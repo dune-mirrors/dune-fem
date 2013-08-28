@@ -100,6 +100,7 @@ AC_CONFIG_FILES([Makefile
      dune/fem/solver/test/Makefile 
      dune/fem/solver/ode/Makefile 
      dune/fem/solver/oemsolver/Makefile 
+     dune/fem/solver/rungekutta/Makefile
      dune/fem/misc/Makefile
      dune/fem/misc/petsc/Makefile
      dune/fem/misc/test/Makefile

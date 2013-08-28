@@ -1,7 +1,7 @@
 # don't follow the full GNU-standard; we definitely need automake >= 1.5
 AUTOMAKE_OPTIONS = foreign 1.5
 
-SUBDIRS = ode oemsolver test
+SUBDIRS = ode oemsolver rungekutta test
 
 noinst_LTLIBRARIES = libsolver.la
 
