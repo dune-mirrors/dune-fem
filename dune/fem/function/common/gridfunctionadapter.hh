@@ -271,6 +271,14 @@ namespace Dune
         }
       }
 
+      //! evaluate function or jacobian of function for given quadrature 
+      template < class QuadratureType, class VectorType >
+      void evaluateQuadrature( const QuadratureType& quadrature, VectorType& values ) const
+      {
+        assert( values.size() == quadrature.nop() );
+        evaluateQuadratureImp( quadrature, values, values[ 0 ] );
+      }
+
       int order () const { return order_; }
 
       //! init local function
@@ -285,7 +293,27 @@ namespace Dune
         return *entity_;
       }
 
-    private:
+    protected:
+      template < class QuadratureType, class VectorType >
+      void evaluateQuadratureImp( const QuadratureType& quadrature, VectorType& values, const RangeType& ) const
+      {
+        const unsigned int nop = quadrature.nop();
+        for( unsigned int qp = 0; qp < nop; ++qp ) 
+        {
+          evaluate( quadrature[ qp ], values[ qp ] );
+        }
+      }
+
+      template < class QuadratureType, class VectorType >
+      void evaluateQuadratureImp( const QuadratureType& quadrature, VectorType& values, const JacobianRangeType& ) const
+      {
+        const unsigned int nop = quadrature.nop();
+        for( unsigned int qp = 0; qp < nop; ++qp ) 
+        {
+          jacobian( quadrature[ qp ], values[ qp ] );
+        }
+      }
+
       const FunctionType &function () const
       {
         return *function_;
