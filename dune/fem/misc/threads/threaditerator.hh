@@ -133,7 +133,8 @@ namespace Dune
           // thread 0 starts at begin 
           iterators_[ 0 ] = it ;
 
-          // get size for index set 
+          // get size for index set (this only works well when pitype == All_Partition)
+          // otherwise element have to be counted 
           const size_t size = indexSet_.size( 0 );
 
           // resize threads storage 
