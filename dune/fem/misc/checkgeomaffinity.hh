@@ -89,11 +89,13 @@ namespace Dune
     };
 
     //! Helper class to check whether grid is structured or not 
+    template <class GridPartType>
     struct CheckCartesian 
     {
+      typedef typename GridPartType :: GridType GridType ;
     protected:  
       //! check whether this is a cartesian grid or not 
-      template <class GridType, class IndexSetType>
+      template <class IndexSetType>
       static inline bool doCheck(const GridType& grid, const IndexSetType& indexSet)
       {
         typedef typename GridType :: template Codim<0> :: LevelIterator MacroIteratorType; 
@@ -246,9 +248,7 @@ namespace Dune
         return true;
       }       
 
-      
       //! check whether all the is grid is a cartesian grid 
-      template <class GridPartType>
       static inline bool check(const GridPartType& gridPart)
       {
         bool cartesian = doCheck( gridPart.grid() , gridPart.indexSet() );
