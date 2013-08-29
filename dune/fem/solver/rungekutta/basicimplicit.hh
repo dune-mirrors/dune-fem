@@ -3,6 +3,7 @@
 
 //- system includes 
 #include <cassert>
+#include <limits>
 #include <sstream>
 #include <vector>
 
@@ -17,12 +18,31 @@
 namespace DuneODE 
 {
 
+  // NoImplicitRungeKuttaSourceTerm
+  // ------------------------------
+
+  struct NoImplicitRungeKuttaSourceTerm
+  {
+    template< class T >
+    bool source ( const T &u, const std::vector< T * > &update, int stage, T &source )
+    {
+      return false;
+    }
+
+    double timeStepEstimate ()
+    {
+      return std::numeric_limits< double >::max();
+    }
+  };
+
+
+
   /** \brief Implicit RungeKutta ODE solver. */
-  template< class HelmholtzOperator, class NonlinearSolver, class TimeStepControl >
+  template< class HelmholtzOperator, class NonlinearSolver, class TimeStepControl, class SourceTerm = NoImplicitRungeKuttaSourceTerm >
   class BasicImplicitRungeKuttaSolver
   : public OdeSolverInterface< typename HelmholtzOperator::DestinationType >
   {
-    typedef BasicImplicitRungeKuttaSolver< HelmholtzOperator, NonlinearSolver, TimeStepControl > ThisType;
+    typedef BasicImplicitRungeKuttaSolver< HelmholtzOperator, NonlinearSolver, TimeStepControl, SourceTerm > ThisType;
     typedef OdeSolverInterface< typename HelmholtzOperator::DestinationType > BaseType;
 
   public:
@@ -31,6 +51,7 @@ namespace DuneODE
     typedef HelmholtzOperator HelmholtzOperatorType;
     typedef NonlinearSolver NonlinearSolverType;
     typedef TimeStepControl TimeStepControlType;
+    typedef SourceTerm SourceTermType;
 
     typedef Dune::Fem::TimeProviderBase TimeProviderType;
 
@@ -40,18 +61,20 @@ namespace DuneODE
       
     /** \brief constructor 
      *
-     *  \param[in]  helmholtzOp   Helmholtz operator \f$L\f$
-     *  \param[in]  timeProvider  time provider
-     *  \param[in]  butcherTable  butcher table to use
-     *  \param[in]  traits        additional traits
+     *  \param[in]  helmholtzOp      Helmholtz operator \f$L\f$
+     *  \param[in]  butcherTable     butcher table to use
+     *  \param[in]  timeStepControl  time step controller
+     *  \param[in]  sourceTerm       additional source term
      */
     template< class ButcherTable >
     BasicImplicitRungeKuttaSolver ( HelmholtzOperatorType &helmholtzOp,
                                     const ButcherTable &butcherTable,
-                                    const TimeStepControl &timeStepControl = TimeStepControl() )
+                                    const TimeStepControlType &timeStepControl = TimeStepControl(),
+                                    const SourceTermType &sourceTerm = SourceTermType() )
     : helmholtzOp_( helmholtzOp ),
       nonlinearSolver_( helmholtzOp_ ),
       timeStepControl_( timeStepControl ),
+      sourceTerm_( sourceTerm ),
       stages_( butcherTable.stages() ),
       alpha_( butcherTable.A() ),
       gamma_( stages() ),
@@ -125,10 +148,11 @@ namespace DuneODE
         // assemble rhs of nonlinear equation
         update_[ s ]->assign( U );
         *update_[ s ] *= gamma_[ s ];
-
         for( int k = 0; k < s; ++k )
           update_[ s ]->axpy( alpha_[ s ][ k ], *update_[ k ] );
-         
+        if( source( U, update_, s, rhs_ ) )
+          update_[ s ]->axpy( alpha_[ s ][ s ]*timeStepSize, rhs_ ); 
+
         // apply Helmholtz operator to right hand side
         helmholtzOp_.setTime( time + c_[ s ]*timeStepSize );
         helmholtzOp_.setLambda( 0 );
@@ -140,7 +164,7 @@ namespace DuneODE
 
         // on failure break solving
         if( !nonlinearSolver_.converged() )
-          return timeStepControl_.reduceTimeStep( helmholtzOp_.timeStepEstimate(), updateMonitor( monitor ) );
+          return timeStepControl_.reduceTimeStep( helmholtzOp_.timeStepEstimate(), source.timeStepEstimate(), updateMonitor( monitor ) );
       }
 
       // update solution
@@ -149,7 +173,7 @@ namespace DuneODE
         U.axpy( beta_[ s ], *update_[ s ] );
 
       // update time step size
-      timeStepControl_.timeStepEstimate( helmholtzOp_.timeStepEstimate(), updateMonitor( monitor ) );
+      timeStepControl_.timeStepEstimate( helmholtzOp_.timeStepEstimate(), source.timeStepEstimate(), updateMonitor( monitor ) );
     }
 
     int stages () const { return stages(); }
@@ -170,6 +194,7 @@ namespace DuneODE
     HelmholtzOperatorType &helmholtzOp_;
     NonlinearSolverType nonlinearSolver_;
     TimeStepControl timeStepControl_;
+    SourceTerm sourceTerm_;
 
     int stages_;
     double delta_;
