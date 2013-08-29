@@ -3,8 +3,6 @@
 
 #include <dune/common/typetraits.hh>
 
-#include <dune/geometry/genericgeometry/geometry.hh>
-
 #include <dune/grid/geometrygrid/hostcorners.hh>
 #include <dune/grid/geometrygrid/coordfunction.hh>
 
