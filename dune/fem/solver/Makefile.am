@@ -1,19 +1,3 @@
-# don't follow the full GNU-standard; we definitely need automake >= 1.5
-AUTOMAKE_OPTIONS = foreign 1.5
-
-SUBDIRS = ode oemsolver rungekutta test
-
-noinst_LTLIBRARIES = libsolver.la
-
-# construct only from sub-libraries
-libsolver_la_SOURCES =
-# if par DG was found, then ODE solver are not included  
-# if PARDG 
-# libsolver_la_LIBADD =
-# else 
-libsolver_la_LIBADD = ode/libodesolver.la
-# endif
-
 solverdir =  $(includedir)/dune/fem/solver
 solver_HEADERS = cginverseoperator.hh \
                  diagonalpreconditioner.hh \
@@ -29,5 +13,12 @@ solver_HEADERS = cginverseoperator.hh \
                  rungekutta.hh \
                  timeprovider.hh \
                  umfpacksolver.hh
+
+SUBDIRS = ode oemsolver rungekutta test
+
+noinst_LTLIBRARIES = libsolver.la
+
+libsolver_la_SOURCES =
+libsolver_la_LIBADD = rungekutta/librungekutta.la ode/libodesolver.la
 
 include $(top_srcdir)/am/global-rules

@@ -6,9 +6,13 @@
 #include <sstream>
 #include <vector>
 
+//- dune-common includes
+#include <dune/common/exceptions.hh>
+
 //- dune-fem includes
 #include <dune/fem/io/parameter.hh>
 #include <dune/fem/solver/rungekutta/basicimplicit.hh>
+#include <dune/fem/solver/rungekutta/butchertable.hh>
 #include <dune/fem/solver/timeprovider.hh>
 
 namespace DuneODE 
@@ -250,7 +254,6 @@ namespace DuneODE
      *  \param[in]  butcherTable  butcher table to use
      *  \param[in]  traits        additional traits
      */
-    template< class ButcherTable >
     ImplicitRungeKuttaSolver ( HelmholtzOperatorType &helmholtzOp,
                                TimeProviderType &timeProvider,
                                int order = 1,
@@ -259,51 +262,20 @@ namespace DuneODE
     {}
 
   protected:
-    class ButcherTable
-    {
-      friend class ImplicitRungeKuttaSolver< HelmholtzOperator, NonlinearSolver >;
-      Dune::DynamicMatrix< double > A_;
-      Dune::DynamicVector< double > b_, c_;
-
-      explicit ButcherTable ( int stages )
-      : A_( stages, stages ),
-        b_( stages ),
-        c_( stages )
-      {}
-
-    public:
-      int stages () const { return b.size(); }
-      const Dune::DynamicMatrix< double > &A () const { return A_; }
-      const Dune::DynamicVector< double > &b () const { return b_; }
-      const Dune::DynamicVector< double > &c () const { return c_; }
-    };
-
-    static ButcherTable butcherTable ( int order )
+    static SimpleButcherTable< double > butcherTable ( int order )
     {
       switch( order )
       {
       case 1:
-        {
-          ButcherTable bt( 1 );
-          bt.A_[ 0 ][ 0 ] = 1.0;
-          bt.b_[ 0 ] = 1.0;
-          bt.c_[ 0 ] = 1.0;
-          return bt;
-        }
-
+        return implicitEulerButcherTable();
       case 2:
-        {
-          ButcherTable bt( 2 );
-          bt.A_[ 0 ][ 0 ] = 0.5 * (1.0 - 1.0 / std::sqrt( 3.0 ));
-          bt.A_[ 0 ][ 1 ] = 0.0;
-          bt.A_[ 1 ][ 0 ] = 1.0 / std::sqrt( 3.0 );
-          bt.A_[ 1 ][ 1 ] = 0.5 * (1.0 - 1.0 / std::sqrt( 3.0 ));
-          bt.b_[ 0 ] = 0.5;
-          bt.b_[ 1 ] = 0.5;
-          bt.c_[ 0 ] = 0.5 * (1.0 - 1.0 / std::sqrt( 3.0 ));
-          bt.c_[ 0 ] = 0.5 * (1.0 + 1.0 / std::sqrt( 3.0 ));
-          return bt;
-        }
+        return gauss2ButcherTable();
+      case 3:
+        return implicit3ButcherTable();
+      case 4:
+        return implicit34ButcherTable();
+      default:
+        DUNE_THROW( NotImplemented, "Implicit Runge-Kutta method of order " << order << " not implemented." );
       }
     }
   };
