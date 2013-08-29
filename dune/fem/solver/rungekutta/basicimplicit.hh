@@ -24,7 +24,7 @@ namespace DuneODE
   struct NoImplicitRungeKuttaSourceTerm
   {
     template< class T >
-    bool source ( const T &u, const std::vector< T * > &update, int stage, T &source )
+    bool operator() ( double time, double timeStepSize, int stage, const T &u, const std::vector< T * > &update, T &source )
     {
       return false;
     }
@@ -150,7 +150,7 @@ namespace DuneODE
         *update_[ s ] *= gamma_[ s ];
         for( int k = 0; k < s; ++k )
           update_[ s ]->axpy( alpha_[ s ][ k ], *update_[ k ] );
-        if( source( U, update_, s, rhs_ ) )
+        if( sourceTerm_( time, timeStepSize, s, U, update_, rhs_ ) )
           update_[ s ]->axpy( alpha_[ s ][ s ]*timeStepSize, rhs_ ); 
 
         // apply Helmholtz operator to right hand side
@@ -164,7 +164,7 @@ namespace DuneODE
 
         // on failure break solving
         if( !nonlinearSolver_.converged() )
-          return timeStepControl_.reduceTimeStep( helmholtzOp_.timeStepEstimate(), source.timeStepEstimate(), updateMonitor( monitor ) );
+          return timeStepControl_.reduceTimeStep( helmholtzOp_.timeStepEstimate(), sourceTerm_.timeStepEstimate(), updateMonitor( monitor ) );
       }
 
       // update solution
@@ -173,7 +173,7 @@ namespace DuneODE
         U.axpy( beta_[ s ], *update_[ s ] );
 
       // update time step size
-      timeStepControl_.timeStepEstimate( helmholtzOp_.timeStepEstimate(), source.timeStepEstimate(), updateMonitor( monitor ) );
+      timeStepControl_.timeStepEstimate( helmholtzOp_.timeStepEstimate(), sourceTerm_.timeStepEstimate(), updateMonitor( monitor ) );
     }
 
     int stages () const { return stages(); }

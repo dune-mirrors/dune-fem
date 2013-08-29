@@ -31,7 +31,6 @@ namespace DuneODE
     typedef HelmholtzOperator HelmholtzOperatorType;
     typedef typename BaseType::TimeStepControlType TimeStepControlType;
 
-
     typedef typename TimeStepControlType::TimeProviderType TimeProviderType;
     typedef typename TimeStepControlType::ParametersType ParametersType;
 
