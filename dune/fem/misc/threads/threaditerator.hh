@@ -114,7 +114,6 @@ namespace Dune
 
           // get end iterator
           const IteratorType endit = gridPart_.template end< 0, pitype >();
-
           IteratorType it = gridPart_.template begin< 0, pitype >();
           if( it == endit ) 
           {
@@ -135,6 +134,7 @@ namespace Dune
 
           // get size for index set (this only works well when pitype == All_Partition)
           // otherwise element have to be counted 
+          const size_t iterSize = countElements( it, endit );
           const size_t size = indexSet_.size( 0 );
 
           // resize threads storage 
@@ -144,8 +144,8 @@ namespace Dune
 
           // here use iterator to count 
           size_t checkSize = 0;
-          const size_t roundOff = (size % maxThreads);
-          const size_t counterBase = ((size_t) size / maxThreads );
+          const size_t roundOff = (iterSize % maxThreads);
+          const size_t counterBase = ((size_t) iterSize / maxThreads );
 
           // just for diagnostics 
           std::vector< int > nElems( maxThreads, 0 );
@@ -168,9 +168,9 @@ namespace Dune
           }
           iterators_[ maxThreads ] = endit ;
 
-          if( checkSize != size ) 
+          if( checkSize != iterSize ) 
           {
-            assert( checkSize == size );
+            assert( checkSize == iterSize );
             DUNE_THROW(InvalidStateException,"Partitioning inconsistent!"); 
           }
 
@@ -191,6 +191,7 @@ namespace Dune
         }
 #endif
       }
+
 
       //! return begin iterator for current thread 
       IteratorType begin() const 
@@ -229,6 +230,16 @@ namespace Dune
 #else 
         return 0;
 #endif
+      }
+
+    protected:  
+      template < class Iterator > 
+      size_t countElements( const Iterator& begin, const Iterator& end ) const 
+      {
+        size_t count = 0;
+        for( Iterator it = begin; it != end; ++ it ) 
+          ++count ;
+        return count ;
       }
     };
 
