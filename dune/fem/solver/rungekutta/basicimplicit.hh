@@ -123,17 +123,19 @@ namespace DuneODE
       for( int s; s < stages(); ++s )
       {
         // assemble rhs of nonlinear equation
-        rhs_.assign( U );
-        rhs_ *= gamma_[ s ];
+        update_[ s ]->assign( U );
+        *update_[ s ] *= gamma_[ s ];
 
         for( int k = 0; k < s; ++k )
-          rhs_.axpy( alpha_[ s ][ k ], *update_[ k ] );
+          update_[ s ]->axpy( alpha_[ s ][ k ], *update_[ k ] );
          
-        // setup Helmholtz operator
+        // apply Helmholtz operator to right hand side
         helmholtzOp_.setTime( time + c_[ s ]*timeStepSize );
-        helmholtzOp_.setLambda( alpha_[ s ][ s ]*timeStepSize );
+        helmholtzOp_.setLambda( 0 );
+        helmholtzOp_( *update_[ s ], rhs_ );
 
         // solve the system
+        helmholtzOp_.setLambda( alpha_[ s ][ s ]*timeStepSize );
         nonlinearSolver_( rhs_, *update_[ s ] );
 
         // on failure break solving
