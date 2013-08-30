@@ -194,10 +194,6 @@ namespace Dune
         template < class DiscreteFunctionSpace >   
         void send( const PetscDiscreteFunction< DiscreteFunctionSpace >& discreteFunction )
         {
-            Dune::Timer timer ;
-            // do receive data 
-            discreteFunction.communicate();
-            return timer.elapsed();
           // nothing to do for the PetscDiscreteFunction here
         }
 
