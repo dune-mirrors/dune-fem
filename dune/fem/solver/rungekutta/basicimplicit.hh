@@ -173,7 +173,7 @@ namespace DuneODE
       timeStepControl_.timeStepEstimate( helmholtzOp_.timeStepEstimate(), sourceTerm_.timeStepEstimate(), updateMonitor( monitor ) );
     }
 
-    int stages () const { return stages(); }
+    int stages () const { return stages_; }
 
     void description ( std::ostream &out ) const
     {
