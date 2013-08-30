@@ -41,7 +41,7 @@ namespace Dune
         w.assign( u );
         if( lambda_ != 0.0 )
         {
-          spaceOp_( u, wTmp_ );
+          jacobianOp_( u, wTmp_ );
           w.axpy( -lambda_, wTmp_ );
         }
       }
@@ -51,7 +51,7 @@ namespace Dune
     protected:
       JacobianOp jacobianOp_;
       double lambda_;
-      RangeFunctionType wTmp_;
+      mutable RangeFunctionType wTmp_;
     };
 
 
