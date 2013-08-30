@@ -153,26 +153,27 @@ namespace DuneODE
     double time () const { return timeProvider_.time(); }
     double timeStepSize () const { return timeProvider_.deltaT(); }
 
-    void initialTimeStepSize ( double helmholtzEstimate )
+    void initialTimeStepSize ( double helmholtzEstimate, double sourceTermEstimate )
     {
-      timeProvider_.provideTimeStepEstimate( parameters().initialDeltaT( helmholtzEstimate ) );
+      double estimate = std::numeric_limits< double >::max();
+      parameters().initTimeStepEstimate( sourceTermEstimate, helmholtzEstimate, estimate, cfl_ );
+      timeProvider_.provideTimeStepEstimate( estimate );
       initialized_ = true;
     }
 
     template< class Monitor >
-    void reduceTimeStep ( double helmholtzEstimate, double sourceEstimate, const Monitor &monitor )
+    void reduceTimeStep ( double helmholtzEstimate, double sourceTermEstimate, const Monitor &monitor )
     {
       if( !initialized_ )
         DUNE_THROW( Dune::InvalidStateException, "ImplicitRungeKuttaSolver must be initialized before first solve." );
 
       double factor( 1 );
-      parameters().cflFactor( sourceEstimate, helmholtzEstimate, monitor.newtonIterations_, false, factor );
+      parameters().cflFactor( sourceTermEstimate, helmholtzEstimate, monitor.newtonIterations_, false, factor );
 
       if( !((factor >= std::numeric_limits< double >::min()) && (factor < 1.0)) )
         DUNE_THROW( Dune::InvalidStateException, "invalid cfl factor: " << factor );
 
       cfl_ *= factor;
-      timeProvider_.provideTimeStepEstimate( cfl_ * helmholtzEstimate );
 
       if( (verbose_ >= ImplicitRungeKuttaSolverParameters::cflVerbosity) && (Dune::Fem::MPIManager::rank() == 0) )
       {
@@ -188,19 +189,19 @@ namespace DuneODE
     }
 
     template< class Monitor >
-    void timeStepEstimate ( double helmholtzEstimate, double sourceEstimate, const Monitor &monitor )
+    void timeStepEstimate ( double helmholtzEstimate, double sourceTermEstimate, const Monitor &monitor )
     {
       if( !initialized_ )
         DUNE_THROW( Dune::InvalidStateException, "ImplicitRungeKuttaSolver must be initialized before first solve." );
 
       double factor( 1 );
-      parameters().cflFactor( sourceEstimate, helmholtzEstimate, monitor.newtonIterations_, true, factor );
+      parameters().cflFactor( sourceTermEstimate, helmholtzEstimate, monitor.newtonIterations_, true, factor );
       if( !((factor >= std::numeric_limits< double >::min()) && (factor <= std::numeric_limits< double >::max())) )
         DUNE_THROW( Dune::InvalidStateException, "invalid cfl factor: " << factor );
 
       const double oldCfl = cfl_;
       cfl_ = std::min( cflMax_, factor * cfl_ );
-      timeProvider_.provideTimeStepEstimate( std::min( sourceEstimate, cfl_ * helmholtzEstimate ) );
+      timeProvider_.provideTimeStepEstimate( std::min( sourceTermEstimate, cfl_ * helmholtzEstimate ) );
 
       if( (cfl_ != oldCfl) && (verbose_ >= ImplicitRungeKuttaSolverParameters::cflVerbosity) && (Dune::Fem::MPIManager::rank() == 0) )
       {

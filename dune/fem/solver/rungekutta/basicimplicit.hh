@@ -125,8 +125,10 @@ namespace DuneODE
     //! apply operator once to get dt estimate 
     void initialize ( const DestinationType &U0 )
     {
+      const double time = timeStepControl_.time();
       helmholtzOp_( U0, *update_[ 0 ] );
-      timeStepControl_.initialTimeStepSize( helmholtzOp_.timeStepEstimate() );
+      sourceTerm_( time, 1.0, 0, U0, update_, rhs_ );
+      timeStepControl_.initialTimeStepSize( helmholtzOp_.timeStepEstimate(), sourceTerm_.timeStepEstimate() );
     }
 
     using BaseType::solve;
