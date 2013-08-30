@@ -40,13 +40,14 @@ namespace DuneODE
   /** \brief Implicit RungeKutta ODE solver. */
   template< class HelmholtzOperator, class NonlinearSolver, class TimeStepControl, class SourceTerm = NoImplicitRungeKuttaSourceTerm >
   class BasicImplicitRungeKuttaSolver
-  : public OdeSolverInterface< typename HelmholtzOperator::DestinationType >
+  : public OdeSolverInterface< typename HelmholtzOperator::DomainFunctionType >
   {
     typedef BasicImplicitRungeKuttaSolver< HelmholtzOperator, NonlinearSolver, TimeStepControl, SourceTerm > ThisType;
-    typedef OdeSolverInterface< typename HelmholtzOperator::DestinationType > BaseType;
+    typedef OdeSolverInterface< typename HelmholtzOperator::DomainFunctionType > BaseType;
 
   public:
     typedef typename BaseType::MonitorType MonitorType;
+    typedef typename BaseType::DestinationType DestinationType;
 
     typedef HelmholtzOperator HelmholtzOperatorType;
     typedef NonlinearSolver NonlinearSolverType;
@@ -55,10 +56,6 @@ namespace DuneODE
 
     typedef Dune::Fem::TimeProviderBase TimeProviderType;
 
-    typedef typename HelmholtzOperatorType::DestinationType DestinationType;
-
-    typedef typename DestinationType::DiscreteFunctionSpaceType SpaceType;
-      
     /** \brief constructor 
      *
      *  \param[in]  helmholtzOp      Helmholtz operator \f$L\f$
