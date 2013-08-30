@@ -8,8 +8,8 @@
 #include <dune/fem/space/common/arrays.hh>
 #include <dune/fem/space/common/dofmanager.hh>
 #include <dune/fem/misc/threads/threadmanager.hh>
+#include <dune/fem/misc/threads/threaditeratorstorage.hh>
 #include <dune/fem/gridpart/filter/threadfilter.hh>
-
 
 namespace Dune 
 {
@@ -17,13 +17,16 @@ namespace Dune
   namespace Fem 
   {
 
-    /** \brief Thread iterator */
-    template <class GridPart, PartitionIteratorType pitype = InteriorBorder_Partition >  
+    /** \brief Thread iterators */
+    template <class GridPart, PartitionIteratorType ptype = InteriorBorder_Partition >  
     class ThreadIterator
     {
       ThreadIterator( const ThreadIterator& );
       ThreadIterator& operator= ( const ThreadIterator& );
     public:  
+      // partition type of iterators used 
+      static const PartitionIteratorType pitype = ptype ;
+
       typedef GridPart GridPartType;
       typedef typename GridPartType :: GridType  GridType;
       typedef typename GridPartType :: template Codim< 0 > :: template Partition< pitype > :: IteratorType       IteratorType ;
@@ -33,6 +36,7 @@ namespace Dune
       typedef DofManager< GridType > DofManagerType;
 
       typedef ThreadFilter<GridPartType> FilterType;
+
 
     protected:  
       const GridPartType& gridPart_;
@@ -185,13 +189,11 @@ namespace Dune
               std::cout << "ThreadIterator: T[" << i << "] = " << nElems[ i ] << std::endl;
           }
 
-
           //for(size_t i = 0; i<size; ++i ) 
           //  std::cout << threadNum_[ i ] << std::endl;
         }
 #endif
       }
-
 
       //! return begin iterator for current thread 
       IteratorType begin() const 
@@ -232,6 +234,11 @@ namespace Dune
 #endif
       }
 
+      //! set ratio between master thread and other threads in comp time
+      void setMasterRatio( const double ratio )
+      {
+      }
+
     protected:  
       template < class Iterator > 
       size_t countElements( const Iterator& begin, const Iterator& end ) const 
@@ -241,6 +248,18 @@ namespace Dune
           ++count ;
         return count ;
       }
+    };
+
+    /** \brief Storage of thread iterators */
+    template <class GridPart, PartitionIteratorType pitype = InteriorBorder_Partition >  
+    class ThreadIteratorStorage 
+      : public ThreadIteratorStorageBase< ThreadIterator< GridPart, pitype > >
+    {
+      typedef ThreadIteratorStorageBase< ThreadIterator< GridPart, pitype > > BaseType ;
+    public:
+      ThreadIteratorStorage( const GridPart& gridPart )
+        : BaseType( gridPart )
+      {}
     };
 
   } // namespace Fem
