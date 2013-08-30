@@ -1,5 +1,6 @@
 operatordir = $(includedir)/dune/fem/operator
-operator_HEADERS = discreteoperatorimp.hh \
+operator_HEADERS = dghelmholtz.hh \
+		   discreteoperatorimp.hh \
                    integrationoperator.hh \
                    lagrangeinterpolation.hh
 
