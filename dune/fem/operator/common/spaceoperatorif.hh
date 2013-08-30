@@ -8,7 +8,7 @@
 #include <utility>
 
 //-Dune fem includes 
-#include <dune/fem/operator/common/operator.hh>
+#include <dune/fem/operator/common/automaticdifferenceoperator.hh>
 #include <dune/fem/operator/common/objpointer.hh>
 #include <dune/fem/function/adaptivefunction.hh>
 
@@ -87,7 +87,7 @@ namespace Dune
       */
     template< class DiscreteFunction >
     class SpaceOperatorInterface 
-    : public Fem::Operator< DiscreteFunction >,
+    : public Fem::AutomaticDifferenceOperator< DiscreteFunction >,
       public PARDGSpaceOperatorInterface< DiscreteFunction >
     {
       typedef SpaceOperatorInterface< DiscreteFunction > ThisType;

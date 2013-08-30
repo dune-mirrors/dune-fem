@@ -41,7 +41,7 @@ namespace Dune
         w.assign( u );
         if( lambda_ != 0.0 )
         {
-          diffOp_( u, wTmp_ );
+          spaceOp_( u, wTmp_ );
           w.axpy( -lambda_, wTmp_ );
         }
       }
@@ -56,12 +56,15 @@ namespace Dune
 
 
 
-    template< class DiffOperator >
+    // DGHelmholtzOperator
+    // -------------------
+
+    template< class SpaceOperator >
     class DGHelmholtzOperator
-    : public DifferentiableOperator< DGHelmholtzJacobianOperator< typename DiffOperator::JacobianOperatorType > >
+    : public DifferentiableOperator< DGHelmholtzJacobianOperator< typename SpaceOperator::JacobianOperatorType > >
     {
-      typedef DGHelmholtzOperator< DiffOperator > ThisType;
-      typedef DifferentiableOperator< DGHelmholtzJacobianOperator< typename DiffOperator::JacobianOperatorType > > BaseType;
+      typedef DGHelmholtzOperator< SpaceOperator > ThisType;
+      typedef DifferentiableOperator< DGHelmholtzJacobianOperator< typename SpaceOperator::JacobianOperatorType > > BaseType;
 
     public:
       typedef typename BaseType::DomainFunctionType DomainFunctionType;
@@ -71,8 +74,8 @@ namespace Dune
 
       typedef typename DomainFunctionType::DiscreteFunctionSpaceType DiscreteFunctionSpaceType;
 
-      explicit DGHelmholtzOperator ( DiffOperator &diffOp )
-      : diffOp_( diffOp ),
+      explicit DGHelmholtzOperator ( SpaceOperator &spaceOp )
+      : spaceOp_( spaceOp ),
         lambda_( 0 ),
         wTmp_( "DGHelmholtzOperator temporary", space() )
       {}
@@ -82,26 +85,26 @@ namespace Dune
         w.assign( u );
         if( lambda_ != 0.0 )
         {
-          diffOp_( u, wTmp_ );
+          spaceOp_( u, wTmp_ );
           w.axpy( -lambda_, wTmp_ );
         }
       }
 
       void jacobian ( const DomainFunctionType &u, JacobianOperatorType &jOp ) const
       {
-        diffOp_.jacobian( u, jOp.jacobianOp_ );
+        spaceOp_.jacobian( u, jOp.jacobianOp_ );
         jOp.setLambda( lambda_ );
       }
 
       void setLambda ( double lambda ) { lambda_ = lambda; }
-      void setTime ( double time ) { diffOp_.setTime( time ); }
+      void setTime ( double time ) { spaceOp_.setTime( time ); }
 
-      const DiscreteFunctionSpaceType &space () const { return diffOp_.space(); }
+      const DiscreteFunctionSpaceType &space () const { return spaceOp_.space(); }
 
-      double timeStepEstimate () const { return diffOp_.timeStepEstimate(); }
+      double timeStepEstimate () const { return spaceOp_.timeStepEstimate(); }
 
     protected:
-      DiffOperator diffOp_;
+      SpaceOperator spaceOp_;
       double lambda_;
       RangeFunctionType wTmp_;
     };

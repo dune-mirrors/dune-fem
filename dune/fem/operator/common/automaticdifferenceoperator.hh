@@ -4,6 +4,8 @@
 
 #include <limits>
 
+#include <dune/common/nullptr.hh>
+
 #include <dune/fem/io/parameter.hh>
 #include <dune/fem/operator/common/differentiableoperator.hh>
 
@@ -16,7 +18,7 @@ namespace Dune
     // Internal Forward Declarations
     // -----------------------------
 
-    template< class Operator, class LinearOperator >
+    template< class DomainFunction, class RangeFunction, class LinearOperator >
     class AutomaticDifferenceOperator;
 
 
@@ -24,17 +26,17 @@ namespace Dune
     // AutomaticDifferenceLinearOperator
     // ---------------------------------
 
-    template< class Operator >
-    class AutomaticDifferenceLinearOperator 
-    : public Dune::Fem::Operator< typename Operator::DomainFunctionType, typename Operator::RangeFunctionType >
+    template< class DomainFunction, class RangeFunction = DomainFunction >
+    class AutomaticDifferenceLinearOperator
+    : public Dune::Fem::Operator< DomainFunction, RangeFunction >
     {
-      typedef Dune::Fem::Operator< typename Operator::DomainFunctionType, typename Operator::RangeFunctionType > BaseType;
-      typedef AutomaticDifferenceLinearOperator< Operator > ThisType;
+      typedef AutomaticDifferenceLinearOperator< DomainFunction, RangeFunction > ThisType;
+      typedef Dune::Fem::Operator< DomainFunction, RangeFunction > BaseType;
 
-      friend class AutomaticDifferenceOperator< Operator, ThisType >;
+      friend class AutomaticDifferenceOperator< DomainFunction, RangeFunction, ThisType >;
 
     public:
-      typedef Operator OperatorType;
+      typedef Dune::Fem::Operator< DomainFunction, RangeFunction > OperatorType;
 
       typedef typename BaseType::RangeFunctionType RangeFunctionType;
       typedef typename BaseType::DomainFunctionType DomainFunctionType;
@@ -45,7 +47,7 @@ namespace Dune
       typedef typename DomainFunctionType::DiscreteFunctionSpaceType DomainSpaceType;
 
       AutomaticDifferenceLinearOperator ( const std::string &name, const DomainSpaceType &dSpace, const RangeSpaceType &rSpace )
-      : name_( name ), 
+      : name_( name ),
         op_( 0 ), // initial value for op_ is 'undefined'
         u_( 0 ), // initial value for u_ is 'undefined'
         b_( "AutomaticDifferenceOperator::b_", dSpace ),
@@ -60,32 +62,34 @@ namespace Dune
 
       const std::string name_;
       const OperatorType *op_;
-      const DomainFunctionType* u_;
+      const DomainFunctionType *u_;
 
       mutable DomainFunctionType b_;
       RangeFunctionType op_u_;
 
       RangeFieldType eps_;
       RangeFieldType norm_u_;
-    }; 
+    };
 
 
+
+    // AutomaticDifferenceOperator
+    // ---------------------------
 
     /** \class AutomaticDifferenceOperator
-     *  \brief operator wrapper providing a Jacobian through automatic differentiation
+     *  \brief operator providing a Jacobian through automatic differentiation
      *
      *  \note The Jacobian operator is an on-the-fly operator, i.e., it does
      *        not store a matrix but only implements the application.
      */
-    template< class Operator, class LinearOperator = AutomaticDifferenceLinearOperator< Operator > >
-    class AutomaticDifferenceOperator 
+    template< class DomainFunction, class RangeFunction = DomainFunction,
+              class LinearOperator = AutomaticDifferenceLinearOperator< DomainFunction, RangeFunction > >
+    class AutomaticDifferenceOperator
     : public Dune::Fem::DifferentiableOperator< LinearOperator >
     {
       typedef Dune::Fem::DifferentiableOperator< LinearOperator > BaseType;
 
     public:
-      typedef Operator OperatorType;
-
       typedef typename BaseType::RangeFunctionType RangeFunctionType;
       typedef typename BaseType::DomainFunctionType DomainFunctionType;
       typedef typename BaseType::RangeFieldType RangeFieldType;
@@ -96,28 +100,20 @@ namespace Dune
       typedef typename RangeFunctionType::DiscreteFunctionSpaceType RangeSpaceType;
       typedef typename DomainFunctionType::DiscreteFunctionSpaceType DomainSpaceType;
 
-      explicit AutomaticDifferenceOperator ( const Operator &op )
-      : operator_(op),
-        eps_( Parameter::getValue< RangeFieldType >( "fem.differenceoperator.eps", RangeFieldType( 0 ) ) )
+      AutomaticDifferenceOperator ()
+      : eps_( Parameter::getValue< RangeFieldType >( "fem.differenceoperator.eps", RangeFieldType( 0 ) ) )
       {}
 
-      AutomaticDifferenceOperator ( const Operator& op, const RangeFieldType &eps )
-      : operator_( op ),
-        eps_( eps )
+      explicit AutomaticDifferenceOperator ( const RangeFieldType &eps )
+      : eps_( eps )
       {}
-
-      virtual void operator() ( const DomainFunctionType &arg, RangeFunctionType &dest ) const
-      {
-        operator_( arg, dest );
-      }
 
       virtual void jacobian ( const DomainFunctionType &u, JacobianOperatorType &jOp ) const
       {
-        jOp.set( u, operator_, eps_ );
+        jOp.set( u, *this, eps_ );
       }
-        
+
     private:
-      const Operator &operator_;
       const RangeFieldType eps_;
     };
 
@@ -126,8 +122,8 @@ namespace Dune
     // Implementation of AutomaticDifferenceLinearOperator
     // ---------------------------------------------------
 
-    template< class Operator >
-    inline void AutomaticDifferenceLinearOperator< Operator >
+    template< class DomainFunction, class RangeFunction >
+    inline void AutomaticDifferenceLinearOperator< DomainFunction, RangeFunction >
       ::operator() ( const DomainFunctionType &arg, RangeFunctionType &dest ) const
     {
       assert( op_ && u_ );
@@ -135,7 +131,7 @@ namespace Dune
       // 'Normal' difference-quotient, i.e.
       // dest = 1/eps (op_(*u +eps*arg) - op_(*u))
       //
-      // eps is chosen dynamically, the same way as in 
+      // eps is chosen dynamically, the same way as in
       // dune-fem/dune/fem/solver/ode/quasi_exact_newton.cpp, see also
       // http://www.freidok.uni-freiburg.de/volltexte/3762/pdf/diss.pdf, page 137
       RangeFieldType eps = eps_;
@@ -157,11 +153,11 @@ namespace Dune
     }
 
 
-    template< class Operator >
-    inline void AutomaticDifferenceLinearOperator< Operator >
+    template< class DomainFunction, class RangeFunction >
+    inline void AutomaticDifferenceLinearOperator< DomainFunction, RangeFunction >
       ::set ( const DomainFunctionType &u, const OperatorType &op, const RangeFieldType &eps )
-    { 
-      u_ = &u; 
+    {
+      u_ = &u;
       op_ = &op;
       (*op_)( *u_, op_u_ );
 
