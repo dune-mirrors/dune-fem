@@ -104,9 +104,9 @@ namespace Dune
       double timeStepEstimate () const { return spaceOp_.timeStepEstimate(); }
 
     protected:
-      SpaceOperator spaceOp_;
+      SpaceOperator &spaceOp_;
       double lambda_;
-      RangeFunctionType wTmp_;
+      mutable RangeFunctionType wTmp_;
     };
 
   } // namespace Fem

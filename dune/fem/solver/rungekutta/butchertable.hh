@@ -32,7 +32,7 @@ namespace DuneODE
     int stages () const { return stages_; }
 
   private:
-    static Dune::DynamicMatrix< FieldType > makeMatrix ( int m, int n, FieldType *data )
+    static Dune::DynamicMatrix< FieldType > makeMatrix ( int m, int n, const FieldType *data )
     {
       Dune::DynamicMatrix< FieldType > A( m, n );
       for( int i = 0; i < m; ++i )
@@ -40,7 +40,7 @@ namespace DuneODE
       return A;
     }
 
-    static Dune::DynamicVector< FieldType > makeVector ( int n, FieldType *data )
+    static Dune::DynamicVector< FieldType > makeVector ( int n, const FieldType *data )
     {
       Dune::DynamicVector< FieldType > v( n );
       std::copy( data, data + n, v.begin() );

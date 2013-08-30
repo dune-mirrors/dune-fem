@@ -30,7 +30,7 @@ namespace DuneODE
     typedef typename ExplicitOperatorType::DestinationType DestinationType;
 
     template< class ButcherTable >
-    SemiImplicitRungeKuttaSourceTerm ( const ExplicitOperatorType &explicitOp,
+    SemiImplicitRungeKuttaSourceTerm ( ExplicitOperatorType &explicitOp,
                                        const ButcherTable &butcherTable,
                                        const Dune::DynamicMatrix< double > &implicitA )
     : explicitOp_( explicitOp ),
@@ -58,7 +58,7 @@ namespace DuneODE
       uex_.assign( u );
       uex_ *= gamma_[ stage ];
       for( int k = 0; k < stage; ++k )
-        uex_.axpy( alpha_[ stage ][ k ], update[ k ] );
+        uex_.axpy( alpha_[ stage ][ k ], *update[ k ] );
       explicitOp_.setTime( time + c_[ stage ]*timeStepSize );
       explicitOp_( uex_, source );
       return true;
@@ -70,7 +70,7 @@ namespace DuneODE
     }
 
   private:
-    const ExplicitOperatorType &explicitOp_;
+    ExplicitOperatorType &explicitOp_;
     Dune::DynamicMatrix< double > alpha_;
     Dune::DynamicVector< double > gamma_, c_;
     DestinationType uex_;
@@ -106,7 +106,7 @@ namespace DuneODE
      *  \param[in]  butcherTable  butcher table to use
      *  \param[in]  traits        additional traits
      */
-    SemiImplicitRungeKuttaSolver ( const ExplicitOperatorType &explicitOp,
+    SemiImplicitRungeKuttaSolver ( ExplicitOperatorType &explicitOp,
                                    HelmholtzOperatorType &helmholtzOp,
                                    TimeProviderType &timeProvider,
                                    int order = 1,
