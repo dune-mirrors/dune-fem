@@ -175,7 +175,7 @@ namespace DuneODE
 
       cfl_ *= factor;
 
-      if( (verbose_ >= ImplicitRungeKuttaSolverParameters::cflVerbosity) && (Dune::Fem::MPIManager::rank() == 0) )
+      if( (verbose_ >= ImplicitRungeKuttaSolverParameters::noConvergenceVerbosity) && (Dune::Fem::MPIManager::rank() == 0) )
       {
         Dune::derr << "Implicit Runge-Kutta step failed to convergence." << std::endl;
         Dune::derr << "New cfl number: " << cfl_
