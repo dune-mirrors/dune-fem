@@ -101,6 +101,11 @@ namespace Dune
 
       const DiscreteFunctionSpaceType &space () const { return spaceOp_.space(); }
 
+      void initializeTimeStepSize ( const DomainFunctionType &u ) const
+      {
+        spaceOp_( u, wTmp_ );
+      }
+
       double timeStepEstimate () const { return spaceOp_.timeStepEstimate(); }
 
     protected:

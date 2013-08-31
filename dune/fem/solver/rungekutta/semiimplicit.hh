@@ -67,7 +67,8 @@ namespace DuneODE
     double initialTimeStepEstimate ( double time, const DestinationType &u ) const
     {
       explicitOp_.setTime( time );
-      return explicitOp_.initializeTimeStepSize( u );
+      explicitOp_.initializeTimeStepSize( u );
+      return explicitOp_.timeStepEstimate();
     }
 
     double timeStepEstimate () const

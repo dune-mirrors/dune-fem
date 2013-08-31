@@ -132,9 +132,14 @@ namespace DuneODE
     void initialize ( const DestinationType &U0 )
     {
       const double time = timeStepControl_.time();
-      helmholtzOp_( U0, *update_[ 0 ] );
+
+      helmholtzOp_.setTime( time );
+      helmholtzOp_.initializeTimeStepSize( U0 );
+      const double helmholtzEstimate = helmholtzOp_.timeStepEstimate();
+
       const double sourceTermEstimate = sourceTerm_.initialTimeStepEstimate( time, U0 );
-      timeStepControl_.initialTimeStepSize( helmholtzOp_.timeStepEstimate(), sourceTermEstimate );
+
+      timeStepControl_.initialTimeStepSize( helmholtzEstimate, sourceTermEstimate );
     }
 
     using BaseType::solve;
