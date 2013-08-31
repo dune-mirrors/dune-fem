@@ -29,7 +29,13 @@ namespace DuneODE
       return false;
     }
 
-    double timeStepEstimate ()
+    template< class T >
+    double initialTimeStepEstimate ( double time, const T &u ) const
+    {
+      return std::numeric_limits< double >::max();
+    }
+
+    double timeStepEstimate () const
     {
       return std::numeric_limits< double >::max();
     }
@@ -127,8 +133,8 @@ namespace DuneODE
     {
       const double time = timeStepControl_.time();
       helmholtzOp_( U0, *update_[ 0 ] );
-      sourceTerm_( time, 1.0, 0, U0, update_, rhs_ );
-      timeStepControl_.initialTimeStepSize( helmholtzOp_.timeStepEstimate(), sourceTerm_.timeStepEstimate() );
+      const double sourceTermEstimate = sourceTerm_.initialTimeStepEstimate( time, U0 );
+      timeStepControl_.initialTimeStepSize( helmholtzOp_.timeStepEstimate(), sourceTermEstimate );
     }
 
     using BaseType::solve;
