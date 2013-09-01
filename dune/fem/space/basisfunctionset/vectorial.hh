@@ -372,6 +372,11 @@ namespace Dune
 
       DofAlignmentType dofAlignment () const { return dofAlignment_ ; }
 
+      const ScalarBasisFunctionSetType &scalarBasisFunctionSet () const
+      {
+        return scalarBasisFunctionSet_;
+      }
+
     private:
       template< class Evaluate, class Point, class DofVector >
       void axpy ( const Point &x, const typename Evaluate::Vector &factor, DofVector &dofs ) const
@@ -421,11 +426,6 @@ namespace Dune
             vector[ r ] = scalars[ i ][ 0 ];
           }
         }
-      }
-
-      const ScalarBasisFunctionSetType &scalarBasisFunctionSet () const
-      {
-        return scalarBasisFunctionSet_;
       }
 
       ScalarBasisFunctionSetType scalarBasisFunctionSet_;
