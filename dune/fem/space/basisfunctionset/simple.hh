@@ -76,7 +76,7 @@ namespace Dune
       //! \brief return reference element
       const ReferenceElementType &referenceElement () const
       {
-        return Dune::ReferenceElements< typename EntityType::ctype, EntityType::dimensionworld >::general( type() );
+        return Dune::ReferenceElements< typename EntityType::ctype, EntityType::dimensionworld >::general( entity().type() );
       }
 
       /** \brief evaluate all basis function and multiply with given
