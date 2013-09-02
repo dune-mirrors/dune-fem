@@ -80,7 +80,7 @@ namespace Dune
 
       void hessian ( const DomainType &x, HessianRangeType &hessian ) const
       {
-        hessian = HessianRangeType( 1 );
+        hessian = HessianRangeType( typename HessianRangeType::value_type( 1 ) );
         for( int k = 0; k < dimension; ++k )
         {
           const RangeFieldType phi = LegendrePolynomials::evaluate( multiIndex_[ k ], x[ k ] );

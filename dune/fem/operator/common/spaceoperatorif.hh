@@ -52,6 +52,14 @@ namespace Dune
        */
       virtual void operator() ( const double *u, double *f ) const = 0;
 
+      /** \brief application operator to apply right hand side 
+          \param u  argument, u 
+          \param f  destination, f(u)
+       */
+      virtual void limit ( const double *u, double *f ) const = 0;
+
+      virtual bool hasLimiter () const = 0 ;
+
       /** \brief set time for operators 
           \param time current time of evaluation 
       */
@@ -109,6 +117,12 @@ namespace Dune
           std::cerr << "ERROR: SpaceOperatorInterface::operator()( const double*, double* ) only works for RangeFieldType double" << std::endl;
           abort();
         }
+
+        static inline void limit( const Op& op, const double* u, double* f )
+        {
+          std::cerr << "ERROR: SpaceOperatorInterface::limit( const double*, double* ) only works for RangeFieldType double" << std::endl;
+          abort();
+        }
       };
 
       // this only works if the DestinationType is AdaptiveDiscreteFunction and the 
@@ -129,6 +143,20 @@ namespace Dune
           // call operator apply
           op( arg, dest );
         }
+
+        static inline void limit( const Op& op, const double* u, double* f )
+        {
+          typedef AdaptiveDiscreteFunction< SpaceType > Destination ;
+          // get space instance
+          const SpaceType &spc = op.space();
+
+          // convert arguments to discrete function
+          const Destination arg( "SpaceOperatorIF::limitARG", spc, u );
+          Destination dest( "SpaceOperatorIF::limitDEST", spc, f );
+
+          // call operator apply
+          op.limit( arg, dest );
+        }
       };
     public:
       //! destructor 
@@ -148,6 +176,25 @@ namespace Dune
           \param f  destination, f(u)
        */
       virtual void operator() ( const double *u, double *f ) const;
+
+      /** \brief limiter application operator 
+          \param u  argument, u 
+          \param f  destination, Limiter(u)
+       */
+      virtual void limit ( const double *u, double *f ) const;
+
+      /** \brief return true if explicit limiter is available */
+      virtual bool hasLimiter () const { return false ; }
+
+      /** \brief limiter application operator 
+          \param arg   argument, u 
+          \param dest  destination, Limiter(u)
+       */
+      virtual void limit (const DestinationType& arg, DestinationType& dest) const
+      {
+        // default operation is the identiy 
+        dest.assign( arg );
+      }
 
       /** \copydoc Dune::Fem::PARDGSpaceOperatorInterface::initializeTimeStepSize(const DestinationType &U0) const */
       virtual void initializeTimeStepSize ( const DestinationType &U0 ) const;
@@ -309,6 +356,15 @@ namespace Dune
       CallDoubleOperator< SpaceOperatorInterface< DiscreteFunction >, 
                           DiscreteFunction, 
                           typename DiscreteFunction :: RangeFieldType >::apply( *this, u, f );
+    }
+
+    template< class DiscreteFunction >
+    inline void SpaceOperatorInterface< DiscreteFunction >
+      ::limit ( const double *u, double *f ) const
+    {
+      CallDoubleOperator< SpaceOperatorInterface< DiscreteFunction >, 
+                          DiscreteFunction, 
+                          typename DiscreteFunction :: RangeFieldType >::limit( *this, u, f );
     }
 
     template< class DiscreteFunction >
