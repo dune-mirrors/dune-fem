@@ -63,14 +63,16 @@ namespace DuneODE
       explicitOp_.setTime( time + c_[ stage ]*timeStepSize );
       explicitOp_( uex_, source );
 
+      return true;
+    }
+
+    void limit( DestinationType& update ) 
+    {
       if( limiter_ ) 
       {
-        explicitOp_.limit( source, uex_ );
-        // copy solution to source 
-        source.assign( uex_ );
+        uex_.assign( update );
+        explicitOp_.limit( uex_, update );
       }
-
-      return true;
     }
 
     double initialTimeStepEstimate ( double time, const DestinationType &u ) const
