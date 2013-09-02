@@ -66,11 +66,15 @@ namespace DuneODE
       return true;
     }
 
-    void limit( DestinationType& update ) 
+    void limit( DestinationType& update, const double time ) 
     {
       if( limiter_ ) 
       {
+        // set correct time 
+        explicitOp_.setTime( time );
+        // copy given function 
         uex_.assign( update );
+        // apply limiter 
         explicitOp_.limit( uex_, update );
       }
     }

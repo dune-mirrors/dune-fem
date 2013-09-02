@@ -30,7 +30,7 @@ namespace DuneODE
     }
 
     template< class T >
-    void limit( T& update ) {}
+    void limit( T& update, const double time ) {}
 
     template< class T >
     double initialTimeStepEstimate ( double time, const T &u ) const
@@ -163,14 +163,16 @@ namespace DuneODE
         *update_[ s ] *= gamma_[ s ];
         for( int k = 0; k < s; ++k )
           update_[ s ]->axpy( alpha_[ s ][ k ], *update_[ k ] );
+
+        const double stageTime = time + c_[ s ]*timeStepSize;
         if( sourceTerm_( time, timeStepSize, s, U, update_, rhs_ ) )
         {
           update_[ s ]->axpy( alpha_[ s ][ s ]*timeStepSize, rhs_ ); 
-          sourceTerm_.limit( *update_[ s ] );
+          sourceTerm_.limit( *update_[ s ], stageTime );
         }
 
         // apply Helmholtz operator to right hand side
-        helmholtzOp_.setTime( time + c_[ s ]*timeStepSize );
+        helmholtzOp_.setTime( stageTime );
         helmholtzOp_.setLambda( 0 );
         helmholtzOp_( *update_[ s ], rhs_ );
 
