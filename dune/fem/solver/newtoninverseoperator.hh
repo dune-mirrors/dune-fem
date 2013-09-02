@@ -137,7 +137,9 @@ namespace Dune
 
       bool converged () const
       {
-        return (iterations_ < maxIterations_) && (linearIterations_ < maxLinearIterations_);
+        // check for finite |residual| - this also works for -ffinite-math-only (gcc)
+        const bool finite = (delta_ < std::numeric_limits< DomainFieldType >::max());
+        return finite && (iterations_ < maxIterations_) && (linearIterations_ < maxLinearIterations_);
       }
 
     private:
@@ -148,6 +150,7 @@ namespace Dune
       const int maxIterations_;
       const int maxLinearIterations_;
 
+      mutable DomainFieldType delta_;
       mutable int iterations_;
       mutable int linearIterations_;
     };
@@ -165,12 +168,12 @@ namespace Dune
       // compute initial residual
       op_( w, residual );
       residual -= u;
-      DomainFieldType delta = std::sqrt( residual.scalarProductDofs( residual ) );
+      delta_ = std::sqrt( residual.scalarProductDofs( residual ) );
 
-      for( iterations_ = 0, linearIterations_ = 0; converged() && (delta > tolerance_); ++iterations_ )
+      for( iterations_ = 0, linearIterations_ = 0; converged() && (delta_ > tolerance_); ++iterations_ )
       {
         if( verbose_ )
-          std::cerr << "Newton iteration " << iterations_ << ": |residual| = " << delta << std::endl;
+          std::cerr << "Newton iteration " << iterations_ << ": |residual| = " << delta_ << std::endl;
 
         // evaluate operator's jacobian
         op_.jacobian( w, jOp );
@@ -179,7 +182,7 @@ namespace Dune
         //        rather than the relative error
         //        (see also dune-fem/dune/fem/solver/inverseoperators.hh)
         const int remLinearIts = maxLinearIterations_ - linearIterations_;
-        const LinearInverseOperatorType jInv( jOp, linReduction_, linAbsTol_ / delta, remLinearIts, linVerbose_ );
+        const LinearInverseOperatorType jInv( jOp, linReduction_, linAbsTol_ / delta_, remLinearIts, linVerbose_ );
         
         dw.clear();
         jInv( residual, dw );
@@ -188,10 +191,10 @@ namespace Dune
         
         op_( w, residual );
         residual -= u;
-        delta = std::sqrt( residual.scalarProductDofs( residual ) );
+        delta_ = std::sqrt( residual.scalarProductDofs( residual ) );
       }
       if( verbose_ )
-        std::cerr << "Newton iteration " << iterations_ << ": |residual| = " << delta << std::endl;
+        std::cerr << "Newton iteration " << iterations_ << ": |residual| = " << delta_ << std::endl;
     }
 
   } // namespace Fem
