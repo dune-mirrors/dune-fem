@@ -171,10 +171,14 @@ namespace DuneODE
         // solve the system
         helmholtzOp_.setLambda( alpha_[ s ][ s ]*timeStepSize );
         nonlinearSolver_( rhs_, *update_[ s ] );
+      
+        // update monitor
+        monitor.newtonIterations_ += nonlinearSolver_.iterations();
+        monitor.linearSolverIterations_ += nonlinearSolver_.linearIterations();
 
         // on failure break solving
         if( !nonlinearSolver_.converged() )
-          return timeStepControl_.reduceTimeStep( helmholtzOp_.timeStepEstimate(), sourceTerm_.timeStepEstimate(), updateMonitor( monitor ) );
+          return timeStepControl_.reduceTimeStep( helmholtzOp_.timeStepEstimate(), sourceTerm_.timeStepEstimate(), monitor );
       }
 
       // update solution
@@ -183,7 +187,7 @@ namespace DuneODE
         U.axpy( beta_[ s ], *update_[ s ] );
 
       // update time step size
-      timeStepControl_.timeStepEstimate( helmholtzOp_.timeStepEstimate(), sourceTerm_.timeStepEstimate(), updateMonitor( monitor ) );
+      timeStepControl_.timeStepEstimate( helmholtzOp_.timeStepEstimate(), sourceTerm_.timeStepEstimate(), monitor );
     }
 
     int stages () const { return stages_; }
@@ -194,13 +198,6 @@ namespace DuneODE
     }
 
   protected:
-    const MonitorType &updateMonitor ( MonitorType &monitor ) const
-    {
-      monitor.newtonIterations_ = nonlinearSolver_.iterations();
-      monitor.linearSolverIterations_ = nonlinearSolver_.linearIterations();
-      return monitor;
-    }
-
     HelmholtzOperatorType &helmholtzOp_;
     NonlinearSolverType nonlinearSolver_;
     TimeStepControl timeStepControl_;
