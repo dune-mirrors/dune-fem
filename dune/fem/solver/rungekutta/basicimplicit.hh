@@ -153,7 +153,7 @@ namespace DuneODE
       const double timeStepSize = timeStepControl_.timeStepSize();
       assert( timeStepSize > 0.0 );
 
-      for( int s; s < stages(); ++s )
+      for( int s = 0; s < stages(); ++s )
       {
         // assemble rhs of nonlinear equation
         update_[ s ]->assign( U );
