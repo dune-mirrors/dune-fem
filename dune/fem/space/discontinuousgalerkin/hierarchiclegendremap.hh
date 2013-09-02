@@ -110,6 +110,7 @@ namespace Dune
              loop( term, polStorage, baseFunctionMap_, oldBaseNum, newBaseNum );
          }
        
+        /*
 #ifndef NDEBUG 
         if( Parameter :: verbose() )
         {
@@ -121,6 +122,7 @@ namespace Dune
           }
         }
 #endif
+        */
       }
 
       const int operator[](int i) const { return baseFunctionMap_[ i ]; }
