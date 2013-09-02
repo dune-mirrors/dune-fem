@@ -126,11 +126,17 @@ bool SIRK::step_iterative(double t, double dt, double *u, int& newton_iterations
 
     // prediction uf ui, todo: extrapolation or something...
     // ui = u^n
-    cblas_dcopy(dim, Fpre, 1, ui, 1);
+    
+    // apply limiter if set, or copy to ui
+    if (explLimiter) 
+      (*explLimiter)(Fpre, ui);
+    else 
+      cblas_dcopy(dim, Fpre, 1, ui, 1);
 
     // Newton iteration
     int newton_iter = 0;
-    while (newton_iter < max_num_of_iterations){
+    while (newton_iter < max_num_of_iterations)
+    {
       // setup f_tmp and F
       f(t + c[i]*dt, ui, f_tmp);
       const double lambda = alpha(i,i) * dt;

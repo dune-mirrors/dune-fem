@@ -18,6 +18,7 @@ namespace pardg
   public:
     virtual ~Limiter () {}
     virtual void operator()(double *u) = 0;
+    virtual void operator()(const double* u, double *uLimited) = 0;
   };
   
 

@@ -24,6 +24,7 @@ public:
 
   void set_output(std::ostream &os);
   void set_limiter(Limiter &limiter);
+  void set_expl_limiter(Limiter &limiter);
 
   // user-interface for solving
   virtual bool step(double t, double dt, double *u, 
@@ -51,6 +52,7 @@ protected:
   int dim;
   double *U;
   Limiter *limiter;
+  Limiter *explLimiter;
   std::ostream *os;
 };
 
