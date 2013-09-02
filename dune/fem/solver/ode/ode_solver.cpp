@@ -9,7 +9,7 @@ using namespace pardg;
 ODESolver::ODESolver(Communicator &comm, int num_of_tmpobj) : 
   DynamicalObject( "ODESolver", comm.id() ), comm(comm),
   num_of_tmpobj(num_of_tmpobj),
-  dim(0), U(NULL), limiter(NULL), os(NULL)
+  dim(0), U(NULL), limiter(NULL), explLimiter(NULL), os(NULL)
 {}
 
 
@@ -28,6 +28,11 @@ void ODESolver::set_output(std::ostream &os)
 void ODESolver::set_limiter(Limiter &limiter)
 {
   this->limiter = &limiter;
+}
+
+void ODESolver::set_expl_limiter(Limiter &limiter)
+{
+  this->explLimiter = &limiter;
 }
 
 

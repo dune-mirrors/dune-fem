@@ -216,6 +216,36 @@ namespace DuneODE
   };
 
 
+  template <class Operator>
+  class LimiterWrapper : public PARDG::Limiter 
+  {
+    // type of discrete function 
+    typedef typename Operator::DestinationType DestinationType;
+   public:
+    //! constructor 
+    LimiterWrapper(Operator& op) 
+      : op_(op)
+    {}
+
+    void operator()( double* ) { abort(); }
+
+    //! apply operator applies space operator and creates temporary
+    //! discrete function using the memory from outside 
+    void operator()(const double *u, double *f)
+    {
+      // call operator apply 
+      op_.limit( u, f );
+    }
+
+    //! return reference to real operator 
+    const Operator& op() const { return op_; }
+
+  protected:
+    // operator to call 
+    Operator& op_;
+  };
+
+
   /**
      @ingroup ODESolver
      @{
@@ -647,7 +677,8 @@ namespace DuneODE
                           const int order,
                           const ODEParameters& parameter = ODEParameters() ) :
       BaseType( implOp, tp, order, parameter ),
-      expl_( explOp )
+      expl_( explOp ),
+      limiter_( explOp )
     {
     }
 
@@ -706,6 +737,9 @@ namespace DuneODE
       odeSolver->set_linear_solver(*linsolver_);
       odeSolver->set_tolerance( parameter().tolerance() );
       odeSolver->set_max_number_of_iterations( parameter().iterations() );
+
+      if( expl_.op().hasLimiter() )
+        odeSolver->set_expl_limiter( limiter_ );
       
       if( verbose_ == ODEParameters :: fullVerbosity ) 
       {
@@ -730,6 +764,8 @@ namespace DuneODE
                        cfl * impl_.op().timeStepEstimate() ); 
     }
     OperatorWrapper<OperatorType> expl_;
+    LimiterWrapper <OperatorType> limiter_;
+
   }; // end SemiImplicitOdeSolver
 
 #endif // USE_PARDG_ODE_SOLVER
