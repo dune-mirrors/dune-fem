@@ -37,7 +37,8 @@ namespace DuneODE
       alpha_( butcherTable.A() ),
       gamma_( butcherTable.stages() ),
       c_( butcherTable.c() ),
-      uex_( "SIRK u-explicit", explicitOp_.space() )
+      uex_( "SIRK u-explicit", explicitOp_.space() ),
+      limiter_( explicitOp_.hasLimiter() )
     {
       Dune::DynamicMatrix< double > Ainv( implicitA );
       Ainv.invert();
@@ -61,6 +62,14 @@ namespace DuneODE
         uex_.axpy( alpha_[ stage ][ k ], *update[ k ] );
       explicitOp_.setTime( time + c_[ stage ]*timeStepSize );
       explicitOp_( uex_, source );
+
+      if( limiter_ ) 
+      {
+        explicitOp_.limit( source, uex_ );
+        // copy solution to source 
+        source.assign( uex_ );
+      }
+
       return true;
     }
 
@@ -81,6 +90,7 @@ namespace DuneODE
     Dune::DynamicMatrix< double > alpha_;
     Dune::DynamicVector< double > gamma_, c_;
     DestinationType uex_;
+    const bool limiter_ ;
   };
 
 
