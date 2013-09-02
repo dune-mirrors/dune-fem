@@ -832,9 +832,6 @@ namespace Dune
       // generate filename, with path only for serial run  
       std::string name = genFilename( (parallel) ? "" : path_, datapref_, writeStep_ );
 
-      // choose output format type (i.e. ascii or raw binary)
-      VTK :: OutputType vtkOutputType = VTK :: appendedraw ;
-
       if( vertexData ) 
       {
 #if ENABLE_VTXPROJECTION
@@ -857,12 +854,12 @@ namespace Dune
         if( parallel )
         {
           // write all data for parallel runs  
-          filename = vtkio.pwrite( name, path_, "." , vtkOutputType );
+          filename = vtkio.pwrite( name, path_, "." );
         }
         else
         {
           // write all data serial 
-          filename = vtkio.write( name, vtkOutputType );
+          filename = vtkio.write( name );
         }
 #endif
       }
@@ -883,12 +880,12 @@ namespace Dune
         if( parallel )
         {
           // write all data for parallel runs  
-          filename = vtkio.pwrite( name, path_, "." , vtkOutputType );
+          filename = vtkio.pwrite( name, path_, "." );
         }
         else
         {
           // write all data serial 
-          filename = vtkio.write( name, vtkOutputType );
+          filename = vtkio.write( name );
         }
       }
       else if ( outputFormat_ == subvtk )
@@ -908,12 +905,12 @@ namespace Dune
         if( parallel )
         {
           // write all data for parallel runs  
-          filename = vtkio.pwrite( name, path_, "." , vtkOutputType );
+          filename = vtkio.pwrite( name, path_, "." );
         }
         else
         {
           // write all data serial 
-          filename = vtkio.write( name, vtkOutputType );
+          filename = vtkio.write( name );
         }
       }
       return filename;

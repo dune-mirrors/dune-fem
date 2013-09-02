@@ -228,6 +228,9 @@ namespace Dune
         vtkWriter_( vtkWriter ),
         addPartition_( getPartitionParameter() )
       {
+        static const std::string typeTable[] = { "ascii", "base64", "appended-raw", "appended-base64" };
+        static const VTK::OutputType typeValue[] = { VTK::ascii, VTK::base64, VTK::appendedraw, VTK::appendedbase64 };
+        type_ = typeValue[ Parameter::getEnum( "fem.io.vtk.type", typeTable, 2 ) ];
       }
 
       void addPartitionData( const int myRank = -1 ) 
@@ -301,7 +304,7 @@ namespace Dune
         vtkWriter_->clear();
       }
 
-      std::string write ( const std::string &name, VTK::OutputType type = VTK::ascii )
+      std::string write ( const std::string &name, VTK::OutputType type )
       {
         addPartitionData();
         size_t pos = name.find_last_of( '/' );
@@ -311,13 +314,25 @@ namespace Dune
           return vtkWriter_->write( name, type );
       }
 
+      std::string write ( const std::string &name )
+      {
+        return write( name, type_ );
+      }
+
       std::string pwrite ( const std::string &name,
                            const std::string &path,
                            const std::string &extendpath,
-                           VTK::OutputType type = VTK::ascii )
+                           VTK::OutputType type )
       {
         addPartitionData();
         return vtkWriter_->pwrite( name, path, extendpath, type );
+      }
+
+      std::string pwrite ( const std::string &name,
+                           const std::string &path,
+                           const std::string &extendpath )
+      {
+        return pwrite( name, path, extendpath, type_ );
       }
 
       std::string write ( const std::string &name,
@@ -329,10 +344,18 @@ namespace Dune
         return vtkWriter_->write( name, type, rank, size );
       }
 
+      std::string write ( const std::string &name,
+                          const int rank, 
+                          const int size )
+      {
+        return write( name, type_, rank, size );
+      }
+
     protected:
       const GridPartType &gridPart_;
       VTKWriterType *vtkWriter_;
       int addPartition_;
+      VTK::OutputType type_;
     };
 
 
