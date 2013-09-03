@@ -107,7 +107,7 @@ namespace Dune
         tolerance_( parameter.toleranceParameter() ),
         linAbsTol_( parameter.linAbsTolParameter( tolerance_ ) ),
         linReduction_( parameter.linReductionParameter( tolerance_ ) ),
-        verbose_( parameter.verbose() ),
+        verbose_( parameter.verbose() && MPIManager :: rank () == 0 ),
         linVerbose_( parameter.linearSolverVerbose() ),
         maxIterations_( parameter.maxIterationsParameter() ),
         maxLinearIterations_( parameter.maxLinearIterationsParameter() )
