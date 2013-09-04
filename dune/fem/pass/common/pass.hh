@@ -47,7 +47,7 @@ namespace Dune
     public:
       //! position in pass tree (0 for start pass)
       static const int passNum = 0;
-      static const int passId DUNE_DEPRECATED = passIdImp;
+      static const int passId = passIdImp;
 
       //! pass ids up to here (tuple of integral constants)
       typedef Dune::tuple< integral_constant< int, passIdImp > > PassIds;
@@ -148,7 +148,7 @@ namespace Dune
 
       //! position in pass tree
       static const int passNum = PreviousPassType::passNum + 1;
-      static const int passId DUNE_DEPRECATED = passIdImp;
+      static const int passId  = passIdImp;
 
       //! pass ids up to here (tuple of integral constants)
       typedef typename Dune::PushBackTuple< typename PreviousPassType::PassIds, integral_constant< int, passIdImp > >::type PassIds;
