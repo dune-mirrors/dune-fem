@@ -126,7 +126,7 @@ namespace Dune
       //! class.
       virtual void applyLocal (const EntityType &en ) const = 0;
 
-    protected:
+    public:
       //! The actual computations are performed as follows. First, prepare
       //! the grid walkthrough, then call applyLocal on each entity and then
       //! call finalize.
