@@ -182,7 +182,7 @@ namespace Dune
         //        rather than the relative error
         //        (see also dune-fem/dune/fem/solver/inverseoperators.hh)
         const int remLinearIts = maxLinearIterations_ - linearIterations_;
-        const LinearInverseOperatorType jInv( jOp, linReduction_, linAbsTol_ / delta_, remLinearIts, linVerbose_ );
+        const LinearInverseOperatorType jInv( jOp, linReduction_, linAbsTol_, remLinearIts, linVerbose_ );
         
         dw.clear();
         jInv( residual, dw );
