@@ -167,7 +167,9 @@ namespace Dune
                                        JacobianRangeType &flux,
                                        RangeType &source )
       {
-        analyticalFlux( entity, quadrature, qp, flux );
+        // we may only assume that hasSource() == true, cf. pass.hh
+        if( hasFlux() ) 
+          analyticalFlux( entity, quadrature, qp, flux );
         return ThisType::source( entity, quadrature, qp, source );
       }
 
