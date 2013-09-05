@@ -20,7 +20,7 @@ namespace Dune
     template< class F >
     class DenseRowMatrix
     {
-      typedef DenseRowMatrix< F > This;
+      typedef DenseRowMatrix< F > ThisType;
 
     public:
       typedef F Field;
@@ -34,7 +34,7 @@ namespace Dune
         fields_( 0 )
       {}
 
-      DenseRowMatrix ( const unsigned int rows, const unsigned int cols )
+      DenseRowMatrix ( unsigned int rows, unsigned int cols )
       : rows_( 0 ),
         cols_( 0 ),
         fields_( 0 )
@@ -105,7 +105,7 @@ namespace Dune
         }
       }
 
-      void reserve ( const unsigned int rows, const unsigned int cols )
+      void reserve ( unsigned int rows, unsigned int cols )
       {
         if( (rows != rows_) || (cols != cols_) )
         {
@@ -145,7 +145,7 @@ namespace Dune
     template< class RF >
     class DenseRowMatrix< F >::Row
     {
-      typedef Row< RF > This;
+      typedef Row< RF > ThisType;
 
       template< class > friend class Row;
 
@@ -194,11 +194,11 @@ namespace Dune
     // DenseRowMatrixObject
     // --------------------
 
-    template< class DomainSpace, class RangeSpace, class TraitsImp >
+    template< class DomainSpace, class RangeSpace >
     class DenseRowMatrixObject
-    : public Fem :: OEMMatrix
+    : public OEMMatrix
     {
-      typedef DenseRowMatrixObject< DomainSpace, RangeSpace, TraitsImp > This;
+      typedef DenseRowMatrixObject< DomainSpace, RangeSpace > ThisType;
 
     public:
       typedef DomainSpace DomainSpaceType;
@@ -210,17 +210,13 @@ namespace Dune
       typedef typename RangeSpace::GridType::template Codim< 0 >::Entity RowEntityType;
 
       typedef DenseRowMatrix< Field > MatrixType;
-      //! type of traits 
-      typedef TraitsImp Traits;
-      //! type of stencil class 
-      typedef typename Traits :: StencilType StencilType;
 
     private:
       class LocalMatrixTraits;
       class LocalMatrix;
       class LocalMatrixFactory;
 
-      typedef Fem :: ObjectStack< LocalMatrixFactory > LocalMatrixStack;
+      typedef Fem::ObjectStack< LocalMatrixFactory > LocalMatrixStack;
 
     public:
       typedef LocalMatrixWrapper< LocalMatrixStack > LocalMatrixType;
@@ -251,7 +247,8 @@ namespace Dune
         matrix_.clear();
       }
 
-      void reserve ()
+      template< class Stencil >
+      void reserve ( const Stencil &stencil, bool verbose = false )
       {
         if( (domainSequence_ != domainSpace().sequence()) || (rangeSequence_ != rangeSpace().sequence()) )
         {
@@ -313,10 +310,10 @@ namespace Dune
     // DenseRowMatrixObject::LocalMatrixTraits
     // ---------------------------------------
 
-    template< class DomainSpace, class RangeSpace, class TraitsImp >
-    class DenseRowMatrixObject< DomainSpace, RangeSpace, TraitsImp >::LocalMatrixTraits
+    template< class DomainSpace, class RangeSpace >
+    class DenseRowMatrixObject< DomainSpace, RangeSpace >::LocalMatrixTraits
     {
-      typedef DenseRowMatrixObject< DomainSpace, RangeSpace, TraitsImp > MatrixObject;
+      typedef DenseRowMatrixObject< DomainSpace, RangeSpace > MatrixObject;
 
     public:
       typedef typename MatrixObject::DomainSpaceType DomainSpaceType;
@@ -333,14 +330,14 @@ namespace Dune
     // DenseRowMatrixObject::LocalMatrix
     // ---------------------------------
 
-    template< class DomainSpace, class RangeSpace, class TraitsImp >
-    class DenseRowMatrixObject< DomainSpace, RangeSpace, TraitsImp >::LocalMatrix
+    template< class DomainSpace, class RangeSpace >
+    class DenseRowMatrixObject< DomainSpace, RangeSpace >::LocalMatrix
     : public LocalMatrixDefault< LocalMatrixTraits >
     {
-      typedef DenseRowMatrixObject< DomainSpace, RangeSpace, TraitsImp > MatrixObject;
+      typedef DenseRowMatrixObject< DomainSpace, RangeSpace > MatrixObject;
 
-      typedef LocalMatrix This;
-      typedef LocalMatrixDefault< LocalMatrixTraits > Base;
+      typedef LocalMatrix ThisType;
+      typedef LocalMatrixDefault< LocalMatrixTraits > BaseType;
 
     public:
       typedef LocalMatrixTraits Traits;
@@ -354,18 +351,18 @@ namespace Dune
       LocalMatrix ( MatrixType &matrix,
                     const DomainSpaceType &domainSpace,
                     const RangeSpaceType &rangeSpace )
-      : Base( domainSpace, rangeSpace ),
+      : BaseType( domainSpace, rangeSpace ),
         matrix_( matrix )
       {}
 
     private:
-      LocalMatrix ( const This & );
-      This &operator= ( const This & );
+      LocalMatrix ( const ThisType & );
+      ThisType &operator= ( const ThisType & );
 
     public:
       void init ( const RowEntityType &rowEntity, const ColEntityType &colEntity )
       {
-        Base::init( rowEntity, colEntity );
+        BaseType::init( rowEntity, colEntity );
         
         map( rangeSpace().mapper(), rowEntity, rowIndices_ );
         map( domainSpace().mapper(), colEntity, colIndices_ );
@@ -448,8 +445,8 @@ namespace Dune
       }
 
     protected:
-      using Base::domainSpace_;
-      using Base::rangeSpace_;
+      using BaseType::domainSpace_;
+      using BaseType::rangeSpace_;
 
     private:
       MatrixType &matrix_;
@@ -463,10 +460,10 @@ namespace Dune
     // DenseRowMatrixObject::LocalMatrixFactory
     // ----------------------------------------
 
-    template< class DomainSpace, class RangeSpace, class TraitsImp >
-    class DenseRowMatrixObject< DomainSpace, RangeSpace, TraitsImp >::LocalMatrixFactory
+    template< class DomainSpace, class RangeSpace >
+    class DenseRowMatrixObject< DomainSpace, RangeSpace >::LocalMatrixFactory
     {
-      typedef DenseRowMatrixObject< DomainSpace, RangeSpace, TraitsImp > MatrixObject;
+      typedef DenseRowMatrixObject< DomainSpace, RangeSpace > MatrixObject;
 
     public:
       typedef LocalMatrix ObjectType;
@@ -484,31 +481,42 @@ namespace Dune
       MatrixObject *matrixObject_;
     };
 
+  } // namespace Fem
 
+} // namespace Dune
+
+
+// the following is deprecated
+#include <dune/fem/operator/common/stencil.hh>
+
+namespace Dune
+{
+
+  namespace Fem
+  {
 
     // DenseRowMatrixOperator
     // ----------------------
 
-    template< class DomainFunction, class RangeFunction , class TraitsImp >
+    template< class DomainFunction, class RangeFunction , class Traits >
     class DenseRowMatrixOperator
-    : public DenseRowMatrixObject< typename DomainFunction::DiscreteFunctionSpaceType, 
-                                   typename RangeFunction::DiscreteFunctionSpaceType,
-                                   TraitsImp >,
-      public Operator< DomainFunction, RangeFunction >
+    : public DenseRowMatrixObject< typename DomainFunction::DiscreteFunctionSpaceType, typename RangeFunction::DiscreteFunctionSpaceType >
+      public AssembledOperator< DomainFunction, RangeFunction >
     {
-      typedef DenseRowMatrixOperator< DomainFunction, RangeFunction, TraitsImp > This;
-      typedef DenseRowMatrixObject< typename DomainFunction::DiscreteFunctionSpaceType, typename RangeFunction::DiscreteFunctionSpaceType, TraitsImp > Base;
+      typedef DenseRowMatrixOperator< DomainFunction, RangeFunction, Traits > ThisType;
+      typedef DenseRowMatrixObject< typename DomainFunction::DiscreteFunctionSpaceType, typename RangeFunction::DiscreteFunctionSpaceType > BaseType;
 
     public:
-      typedef typename Base::DomainSpaceType DomainSpaceType;
-      typedef typename Base::RangeSpaceType RangeSpaceType;
+      typedef typename BaseType::DomainSpaceType DomainSpaceType;
+      typedef typename BaseType::RangeSpaceType RangeSpaceType;
 
-      using Base::apply;
+      using BaseType::apply;
 
+      DUNE_VERSION_DEPRECATED(1,4,remove)
       DenseRowMatrixOperator ( const std::string &name,
                                const DomainSpaceType &domainSpace,
                                const RangeSpaceType &rangeSpace )
-      : Base( domainSpace, rangeSpace )
+      : BaseType( domainSpace, rangeSpace )
       {}
 
       virtual void operator() ( const DomainFunction &u, RangeFunction &w ) const
@@ -516,10 +524,20 @@ namespace Dune
         apply( u, w );
       }
 
-      const Base &systemMatrix () const
+      const BaseType &systemMatrix () const
       {
         return *this;
+      }i
+
+      void communicate () const {}
+
+      void reserve ( bool verbose = false )
+      {
+        BaseType::reserve( DummyStencil(), verbose );
       }
+
+    private:
+      class DummyStencil {};
     };
 
   } // namespace Fem
@@ -527,8 +545,8 @@ namespace Dune
 #if DUNE_FEM_COMPATIBILITY  
   // put this in next version 1.4 
 
-  using Fem :: DenseRowMatrixOperator ;
-  using Fem :: DenseRowMatrixObject ;
+  using Fem::DenseRowMatrixOperator;
+  using Fem::DenseRowMatrixObject;
 
 #endif // DUNE_FEM_COMPATIBILITY
 
