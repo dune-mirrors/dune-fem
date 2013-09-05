@@ -311,7 +311,7 @@ namespace Dune
       {
         const EntityType &entity = localMatrix.domainEntity();
         Geometry geo = entity.geometry();
-        assert( dgNumDofs == localMatrix.cols() );
+        assert( dgNumDofs == localMatrix.columns() );
 
         // in case of affine mappings we only have to multiply with a factor
         if( affine() || geo.affine() )
