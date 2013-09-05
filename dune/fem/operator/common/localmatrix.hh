@@ -18,6 +18,11 @@ namespace Dune
     template <class Traits> 
     class MatrixColumnObject ;
 
+
+
+    // LocalMatrixInterface
+    // --------------------
+
     /** \brief Interface for local matrix classes. */
     template< class LocalMatrixTraits >
     class LocalMatrixInterface 
@@ -56,10 +61,14 @@ namespace Dune
       typedef typename RangeSpaceType :: BasisFunctionSetType
         RangeBasisFunctionSetType;
 
+      typedef typename DomainSpaceType::EntityType DomainEntityType;
+      typedef typename RangeSpaceType::EntityType RangeEntityType;
+
       /*! type of block (i.e. FieldMatrix for BlockMatrices */
       typedef typename Traits :: LittleBlockType  LittleBlockType;
 
-      typedef MatrixColumnObject< Traits >  MatrixColumnType ;
+      typedef MatrixColumnObject< Traits >  MatrixColumnType;
+
     protected:  
       using BaseType::asImp;
 
@@ -72,9 +81,7 @@ namespace Dune
        *  \param[in]  domainEntity  entity within grid of domain space,
        *  \param[in]  rangeEntity   entity within grid of range space
        */
-      template< class DomainEntityType, class RangeEntityType >
-      inline void init ( const DomainEntityType &domainEntity,
-                         const RangeEntityType &rangeEntity )
+      void init ( const DomainEntityType &domainEntity, const RangeEntityType &rangeEntity )
       {
         CHECK_AND_CALL_INTERFACE_IMPLEMENTATION
           ( asImp().init( domainEntity, rangeEntity ) );
@@ -86,7 +93,7 @@ namespace Dune
           \param[in] localCol local column 
           \param[in] value value to add 
       */
-      inline void add ( const int localRow, 
+      void add ( const int localRow, 
                         const int localCol, 
                         const RangeFieldType &value )
       {
@@ -100,7 +107,7 @@ namespace Dune
           \param[in] localCol local column 
           \param[in] value value to set  
       */
-      inline void set ( const int localRow, 
+      void set ( const int localRow, 
                         const int localCol, 
                         const RangeFieldType &value )
       {
@@ -113,7 +120,7 @@ namespace Dune
       */
       /* makes no sens for unsymetrix matrices, use clearRow( localRow ) and 
        * set( localRow, localRow, 1.) instead */
-      inline void unitRow ( const int localRow ) DUNE_DEPRECATED
+      void unitRow ( const int localRow ) DUNE_DEPRECATED
       {
         CHECK_AND_CALL_INTERFACE_IMPLEMENTATION(
           asImp().unitRow( localRow ));
@@ -123,7 +130,7 @@ namespace Dune
       /*! \brief set row to zero values
           \param[in] localRow local row that is set to zero 
        */
-      inline void clearRow( const int  localRow )
+      void clearRow( const int  localRow )
       {
         CHECK_AND_CALL_INTERFACE_IMPLEMENTATION(
             asImp().clearRow( localRow ));
@@ -133,7 +140,7 @@ namespace Dune
           \param[in] localCol local column that is set to zero
        */
 
-      inline void clearCol( const int localCol )
+      void clearCol( const int localCol )
       {
         CHECK_AND_CALL_INTERFACE_IMPLEMENTATION(
             asImp().clearCol( localCol ));
@@ -147,7 +154,7 @@ namespace Dune
       */
       template <class DomainLocalFunctionType,
                 class RangeLocalFunctionType> 
-      inline void multiplyAdd(const DomainLocalFunctionType& lhs,
+      void multiplyAdd(const DomainLocalFunctionType& lhs,
                               RangeLocalFunctionType& rhs) const
       {
         CHECK_AND_CALL_INTERFACE_IMPLEMENTATION(
@@ -160,7 +167,7 @@ namespace Dune
           \param[in] localCol local column 
           \return value of matrix entry   
       */
-      inline const RangeFieldType get ( const int localRow, 
+      const RangeFieldType get ( const int localRow, 
                                         const int localCol ) const
       {
         CHECK_INTERFACE_IMPLEMENTATION(
@@ -171,64 +178,76 @@ namespace Dune
       /*! \brief scale matrix with scalar value 
           \param[in] scalar scalar value that scales the matrix
       */
-      inline void scale ( const RangeFieldType& scalar )
+      void scale ( const RangeFieldType& scalar )
       {
         CHECK_AND_CALL_INTERFACE_IMPLEMENTATION(
           asImp().scale( scalar ) );
       }
 
       /*! \brief set all entries of local matrix to zero */
-      inline void clear ()
+      void clear ()
       {
         CHECK_AND_CALL_INTERFACE_IMPLEMENTATION(asImp().clear());
       }
 
       /*! \brief resort ordering in global matrix (if possible) */
-      inline void resort ()
+      void resort ()
       {
         CHECK_AND_CALL_INTERFACE_IMPLEMENTATION(asImp().resort());
       }
 
       /** \brief get number of rows within the matrix */
-      inline int rows () const
+      int rows () const
       {
         CHECK_AND_CALL_INTERFACE_IMPLEMENTATION( asImp().rows() );
         return asImp().rows();
       }
       
       /** \brief get number of columns within the matrix */
-      inline int columns () const
+      int columns () const
       {
         CHECK_AND_CALL_INTERFACE_IMPLEMENTATION( asImp().columns() );
         return asImp().columns();
       }
 
       /** \brief access to the domain space */
-      inline const DomainSpaceType &domainSpace () const
+      const DomainSpaceType &domainSpace () const
       {
         CHECK_INTERFACE_IMPLEMENTATION( asImp().domainSpace() );
         return asImp().domainSpace();
       }
       
       /** \brief access to the range space */
-      inline const RangeSpaceType &rangeSpace () const
+      const RangeSpaceType &rangeSpace () const
       {
         CHECK_INTERFACE_IMPLEMENTATION( asImp().rangeSpace() );
         return asImp().rangeSpace();
       }
 
       /** \brief access to the base function set within the domain space */
-      inline const DomainBasisFunctionSetType &domainBasisFunctionSet () const
+      const DomainBasisFunctionSetType &domainBasisFunctionSet () const
       {
         CHECK_INTERFACE_IMPLEMENTATION( asImp().domainBasisFunctionSet() );
         return asImp().domainBasisFunctionSet();
       }
       
       /** \brief access to the base function set within the range space */
-      inline const RangeBasisFunctionSetType &rangeBasisFunctionSet () const
+      const RangeBasisFunctionSetType &rangeBasisFunctionSet () const
       {
         CHECK_INTERFACE_IMPLEMENTATION( asImp().rangeBasisFunctionSet() );
         return asImp().rangeBasisFunctionSet();
+      }
+
+      const DomainEntityType &domainEntity () const
+      {
+        CHECK_INTERFACE_IMPLEMENTATION( asImp().domainEntity() );
+        return asImp().domainEntity();
+      }
+
+      const RangeEntityType &rangeEntity () const
+      {
+        CHECK_INTERFACE_IMPLEMENTATION( asImp().rangeEntity() );
+        return asImp().rangeEntity();
       }
 
       /** \brief return column object for local matrix which contains axpy methods 
@@ -243,13 +262,16 @@ namespace Dune
       }
 
       /*! \brief finalize local matrix setup and possibly add values to real matrix */
-      inline void finalize() 
+      void finalize() 
       {
         CHECK_AND_CALL_INTERFACE_IMPLEMENTATION(asImp().finalize());
       }
-
     };
 
+
+
+    // LocalMatrixDefault
+    // ------------------
 
     /** \brief Default implementation for local matrix classes. */
     template< class LocalMatrixTraits >
@@ -262,13 +284,14 @@ namespace Dune
     public:
       typedef LocalMatrixTraits Traits;
 
-      typedef typename BaseType :: DomainSpaceType DomainSpaceType;
-      typedef typename BaseType :: RangeSpaceType RangeSpaceType;
+      typedef typename BaseType::DomainSpaceType DomainSpaceType;
+      typedef typename BaseType::RangeSpaceType RangeSpaceType;
 
-      typedef typename BaseType :: DomainBasisFunctionSetType
-        DomainBasisFunctionSetType;
-      typedef typename BaseType :: RangeBasisFunctionSetType
-        RangeBasisFunctionSetType;
+      typedef typename BaseType::DomainBasisFunctionSetType DomainBasisFunctionSetType;
+      typedef typename BaseType::RangeBasisFunctionSetType RangeBasisFunctionSetType;
+
+      typedef typename BaseType::DomainEntityType DomainEntityType;
+      typedef typename BaseType::RangeEntityType RangeEntityType;
 
     protected:
       const DomainSpaceType &domainSpace_;
@@ -306,9 +329,7 @@ namespace Dune
 
     public:
       /** \copydoc Dune::Fem::LocalMatrixInterface::init */
-      template< class DomainEntityType, class RangeEntityType >
-      inline void init ( const DomainEntityType &domainEntity,
-                         const RangeEntityType &rangeEntity )
+      void init ( const DomainEntityType &domainEntity, const RangeEntityType &rangeEntity )
       {
         domainBaseSet_ = domainSpace_.basisFunctionSet( domainEntity );
         rangeBaseSet_ = rangeSpace_.basisFunctionSet( rangeEntity );
@@ -344,10 +365,13 @@ namespace Dune
         return rangeBaseSet_;
       }
 
+      const DomainEntityType &domainEntity () const { return domainBasisFunctionSet().entity(); }
+      const RangeEntityType &rangeEntity () const { return rangeBasisFunctionSet().entity(); }
+
       /** \copydoc Dune::Fem::LocalMatrixInterface::multiplyAdd */
       template <class DomainLocalFunctionType,
                 class RangeLocalFunctionType> 
-      inline void multiplyAdd(const DomainLocalFunctionType& lhs,
+      void multiplyAdd(const DomainLocalFunctionType& lhs,
                               RangeLocalFunctionType& rhs) const
       {
         const int row = this->rows();
