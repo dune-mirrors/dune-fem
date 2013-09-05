@@ -1,21 +1,24 @@
 #ifndef DUNE_FEM_LOCALMASSMATRIX_HH
 #define DUNE_FEM_LOCALMASSMATRIX_HH
 
-//- Dune includes 
-#include <dune/common/fmatrix.hh>
+//- dune-common includes
 #include <dune/common/dynmatrix.hh>
+#include <dune/common/fmatrix.hh>
+#include <dune/common/nullptr.hh>
+
+//- dune-geometry includes
 #include <dune/geometry/typeindex.hh>
 
-#include <dune/fem/version.hh>
-
+//- dune-fem includes
+#include <dune/fem/misc/checkgeomaffinity.hh>
 #include <dune/fem/quadrature/cachingquadrature.hh>
 #include <dune/fem/space/common/allgeomtypes.hh>
-#include <dune/fem/misc/checkgeomaffinity.hh>
+#include <dune/fem/version.hh>
 
-namespace Dune 
+namespace Dune
 {
 
-  namespace Fem 
+  namespace Fem
   {
 
     /*! @addtogroup PassHyp
@@ -23,12 +26,14 @@ namespace Dune
     */
 
     /** \brief Local Mass Matrix inversion implementation, select the correct method in your
-        implementation */ 
-    template <class DiscreteFunctionSpaceImp, class VolumeQuadratureImp> 
-    class LocalMassMatrixImplementation  
+        implementation */
+    template< class DiscreteFunctionSpace, class VolumeQuadrature >
+    class LocalMassMatrixImplementation
     {
-    public:  
-      typedef DiscreteFunctionSpaceImp DiscreteFunctionSpaceType;
+      typedef LocalMassMatrixImplementation< DiscreteFunctionSpace, VolumeQuadrature > ThisType;
+
+    public:
+      typedef DiscreteFunctionSpace DiscreteFunctionSpaceType;
       typedef typename DiscreteFunctionSpaceType :: RangeFieldType ctype;
       typedef typename DiscreteFunctionSpaceType :: RangeFieldType RangeFieldType;
       typedef typename DiscreteFunctionSpaceType :: RangeType RangeType;
@@ -36,33 +41,34 @@ namespace Dune
       enum { localBlockSize = DiscreteFunctionSpaceType :: localBlockSize };
       enum { dgNumDofs = localBlockSize };
 
-      typedef Dune::FieldMatrix<ctype, dgNumDofs, dgNumDofs > DGMatrixType;
-      typedef Dune::FieldVector<ctype, dgNumDofs >            DGVectorType;
+      typedef Dune::FieldMatrix< ctype, dgNumDofs, dgNumDofs > DGMatrixType;
+      typedef Dune::FieldVector< ctype, dgNumDofs >            DGVectorType;
 
       typedef typename DiscreteFunctionSpaceType :: GridPartType GridPartType;
 
-      typedef typename DiscreteFunctionSpaceType :: IndexSetType IndexSetType; 
+      typedef typename DiscreteFunctionSpaceType :: IndexSetType IndexSetType;
       typedef typename IndexSetType :: IndexType   IndexType;
 
-      typedef typename DiscreteFunctionSpaceType :: BasisFunctionSetType BasisFunctionSetType; 
+      typedef typename DiscreteFunctionSpaceType :: BasisFunctionSetType BasisFunctionSetType;
 
       typedef typename GridPartType :: GridType GridType;
       typedef typename DiscreteFunctionSpaceType :: EntityType  EntityType;
       typedef typename EntityType :: Geometry  Geometry;
 
-      typedef VolumeQuadratureImp VolumeQuadratureType;
+      typedef VolumeQuadrature VolumeQuadratureType;
 
       typedef Fem::GeometryAffinityCheck<VolumeQuadratureType>  GeometryAffinityCheckType;
 
-      //! is true if grid is structured grid 
+      //! is true if grid is structured grid
       enum { StructuredGrid = Dune::Capabilities::isCartesian< GridType >::v };
 
       typedef AllGeomTypes< typename GridPartType :: IndexSetType,GridType> GeometryInformationType;
       typedef typename GeometryInformationType :: DomainType DomainType;
-      // use dynamic matrix from dune-common
-      typedef Dune::DynamicMatrix< RangeFieldType > MatrixType; 
 
-    protected:  
+      // use dynamic matrix from dune-common
+      typedef Dune::DynamicMatrix< RangeFieldType > MatrixType;
+
+    protected:
       const DiscreteFunctionSpaceType& spc_;
       const IndexSetType& indexSet_;
 
@@ -74,390 +80,395 @@ namespace Dune
       mutable DGVectorType dgX_, dgRhs_;
 
       // use dynamic vector from dune-common
-      mutable Dune::DynamicVector< RangeFieldType > rhs_;
+      mutable Dune::DynamicVector< RangeFieldType > rhs_, row_;
       mutable MatrixType matrix_;
 
       mutable std::vector< RangeType > phi_;
       mutable std::vector< RangeType > phiMass_;
 
-      typedef std::map< const int, MatrixType* > MassMatrixStorageType ;
+      typedef std::map< const int, MatrixType* > MassMatrixStorageType;
       typedef std::vector< MassMatrixStorageType > LocalInverseMassMatrixStorageType;
 
       mutable LocalInverseMassMatrixStorageType localInverseMassMatrix_;
 
-      // index of entity from index set, don't setup mass matrix for the same entity twice 
-      mutable IndexType lastEntityIndex_; 
+      // index of entity from index set, don't setup mass matrix for the same entity twice
+      mutable IndexType lastEntityIndex_;
       mutable unsigned int lastTopologyId_ ;
       // sequence number (obtained from DofManager via the space)
-      mutable int sequence_; 
+      mutable int sequence_;
 
-      //! dummy caller 
       struct NoMassDummyCaller
       {
-        enum { dimRange = DiscreteFunctionSpaceType::dimRange };
-        typedef Dune::FieldMatrix<ctype, dimRange, dimRange> MassFactorType;
+        static const int dimRange = DiscreteFunctionSpaceType::dimRange;
+
+        typedef Dune::FieldMatrix< ctype, dimRange, dimRange > MassFactorType;
+
         // return false since we don;t have a mass term
-        bool hasMass() const { return false; }
-        void mass(const EntityType&,
-                  const VolumeQuadratureType&,
-                  const int, 
-                  MassFactorType&) const
-        {
-        }
+        bool hasMass () const { return false; }
+
+        void mass ( const EntityType &, const VolumeQuadratureType &, int, MassFactorType & ) const
+        {}
       };
 
-      template <class BasisFunctionSetType> 
-      MatrixType& getLocalInverseMassMatrix(const EntityType& en, 
-                                            const Geometry& geo,
-                                            const BasisFunctionSetType& basisSet,
-                                            const int numBasisFct ) const 
+      template< class BasisFunctionSet >
+      MatrixType &getLocalInverseMassMatrix ( const EntityType &entity, const Geometry &geo,
+                                              const BasisFunctionSet &basisSet, int numBasisFct ) const
       {
         const GeometryType geomType = geo.type();
-        typedef typename MassMatrixStorageType :: iterator iterator ;
-        MassMatrixStorageType& massMap = localInverseMassMatrix_[ GlobalGeometryTypeIndex :: index( geomType ) ];
+        typedef typename MassMatrixStorageType::iterator iterator;
+        MassMatrixStorageType &massMap = localInverseMassMatrix_[ GlobalGeometryTypeIndex::index( geomType ) ];
 
-        iterator it = massMap.find( numBasisFct ); 
-        if( it == massMap.end() ) 
+        std::pair< iterator, bool > insertPair = massMap.insert( std::make_pair( numBasisFct, nullptr ) );
+        MatrixType *&matrix = insertPair.first->second;
+
+        if( insertPair.second )
         {
-          MatrixType* matrix = new MatrixType( numBasisFct, numBasisFct, 0.0 );
-          massMap[ numBasisFct ] = matrix ;
-
-          // create quadrature 
-          VolumeQuadratureType volQuad(en, volumeQuadratureOrder( en ) );
-
-          // setup matrix 
-          buildMatrixNoMassFactor(en, geo, basisSet, volQuad, numBasisFct, *matrix, false );
+          matrix = new MatrixType( numBasisFct, numBasisFct, 0.0 );
+          VolumeQuadratureType volQuad( entity, volumeQuadratureOrder( entity ) );
+          buildMatrixNoMassFactor( entity, geo, basisSet, volQuad, numBasisFct, *matrix, false );
           matrix->invert();
-
-          return *matrix;
         }
 
-        return *((*it).second );
+        return *matrix;
       }
 
-      //! return appropriate quadrature order, default is 2 * order(entity) 
-      int volumeQuadratureOrder( const EntityType& entity ) const 
+      template< class MassCaller, class BasisFunctionSet >
+      MatrixType &getLocalInverseMassMatrixDefault ( MassCaller &caller, const EntityType &entity,
+                                                     const Geometry &geo, const BasisFunctionSet &basisSet ) const
       {
-        return ( volumeQuadOrd_ < 0 ) ? ( spc_.order( entity ) * 2 ) : volumeQuadOrd_ ;
+        const int numDofs = basisSet.size();
+        // if sequence changed or entity index changed: recompute mass matrix
+        if( entityHasChanged( entity ) || (numDofs != int( matrix_.rows())) )
+        {
+          // resize temporary memory if necessary
+          if( numDofs != int( matrix_.rows() ) )
+            matrix_.resize( numDofs, numDofs );
+
+          buildMatrix( caller, entity, geo, basisSet, numDofs, matrix_ );
+          matrix_.invert();
+        }
+
+        // make sure that rhs_ has the correct size
+        assert( numDofs == int( matrix_.rows() ) );
+        return matrix_;
       }
 
-      //! return appropriate quadrature order, default is 2 * order() 
-      int maxVolumeQuadratureOrder() const 
+      //! return appropriate quadrature order, default is 2 * order(entity)
+      int volumeQuadratureOrder ( const EntityType &entity ) const
       {
-        return ( volumeQuadOrd_ < 0 ) ? ( spc_.order() * 2 ) : volumeQuadOrd_ ;
+        return (volumeQuadOrd_ < 0 ? 2 * spc_.order( entity ) : volumeQuadOrd_);
       }
 
-      // return number of max non blocked dofs 
-      int maxNumDofs() const 
+      //! return appropriate quadrature order, default is 2 * order()
+      int maxVolumeQuadratureOrder () const
       {
-        return spc_.blockMapper().maxNumDofs() * localBlockSize ;
+        return (volumeQuadOrd_ < 0 ? 2 * spc_.order() : volumeQuadOrd_);
+      }
+
+      // return number of max non blocked dofs
+      int maxNumDofs () const
+      {
+        return spc_.blockMapper().maxNumDofs() * localBlockSize;
       }
 
     public:
-      //! constructor taking space and volume quadrature order 
-      LocalMassMatrixImplementation(const DiscreteFunctionSpaceType& spc, const int volQuadOrd = -1 ) 
-        : spc_(spc) 
-        , indexSet_( spc.indexSet() )  
-        , geoInfo_( indexSet_ ) 
+      //! constructor taking space and volume quadrature order
+      explicit LocalMassMatrixImplementation ( const DiscreteFunctionSpaceType &spc, int volQuadOrd = -1 )
+        : spc_(spc)
+        , indexSet_( spc.indexSet() )
+        , geoInfo_( indexSet_ )
         , volumeQuadOrd_ ( volQuadOrd )
         , affine_ ( setup() )
-        , rhs_(), matrix_() 
+        , rhs_(), row_(), matrix_()
         , phi_( maxNumDofs() )
         , phiMass_( maxNumDofs() )
         , localInverseMassMatrix_( GlobalGeometryTypeIndex :: size( GridType::dimension ) )
         , lastEntityIndex_( -1 )
         , lastTopologyId_( ~0u )
-        , sequence_( -1 )  
-      {
-      }
+        , sequence_( -1 )
+      {}
 
-      //! copy constructor 
-      LocalMassMatrixImplementation(const LocalMassMatrixImplementation& org) 
-        : spc_(org.spc_),
-          indexSet_( spc_.indexSet() ),  
-          geoInfo_( indexSet_ ),
-          volumeQuadOrd_( org.volumeQuadOrd_ ),
-          affine_( org.affine_ ),
-          rhs_( org.rhs_ ), matrix_( org.matrix_ ),
-          phi_( org.phi_ ),
-          phiMass_( org.phiMass_ ),
-          localInverseMassMatrix_( GlobalGeometryTypeIndex :: size( GridType::dimension ) ),
-          lastEntityIndex_( org.lastEntityIndex_ ),
-          lastTopologyId_( org.lastTopologyId_ ),
-          sequence_( org.sequence_ )  
-      {
-      }
+      //! copy constructor
+      LocalMassMatrixImplementation ( const ThisType &other )
+      : spc_(other.spc_),
+        indexSet_( spc_.indexSet() ),
+        geoInfo_( indexSet_ ),
+        volumeQuadOrd_( other.volumeQuadOrd_ ),
+        affine_( other.affine_ ),
+        rhs_( other.rhs_ ), row_( other.row_ ), matrix_( other.matrix_ ),
+        phi_( other.phi_ ),
+        phiMass_( other.phiMass_ ),
+        localInverseMassMatrix_( GlobalGeometryTypeIndex :: size( GridType::dimension ) ),
+        lastEntityIndex_( other.lastEntityIndex_ ),
+        lastTopologyId_( other.lastTopologyId_ ),
+        sequence_( other.sequence_ )
+      {}
 
-      ~LocalMassMatrixImplementation()
+      ~LocalMassMatrixImplementation ()
       {
-        typedef typename MassMatrixStorageType :: iterator iterator ;
-        for (unsigned int i=0;i< localInverseMassMatrix_.size();++i)
+        typedef typename MassMatrixStorageType::iterator iterator;
+        for( unsigned int i = 0; i < localInverseMassMatrix_.size(); ++i )
         {
-          const iterator end = localInverseMassMatrix_[i].end();
-          for ( iterator it =  localInverseMassMatrix_[i].begin();it != end; ++it )
-            delete (*it).second;
+          const iterator end = localInverseMassMatrix_[ i ].end();
+          for( iterator it = localInverseMassMatrix_[ i ].begin(); it != end; ++it )
+            delete it->second;
         }
       }
 
-    public:  
-      //! returns true if geometry mapping is affine 
+    public:
+      //! returns true if geometry mapping is affine
       bool affine () const { return affine_; }
 
-      //! return mass factor for diagonal mass matrix 
-      double getAffineMassFactor(const Geometry& geo) const 
+      //! return mass factor for diagonal mass matrix
+      double getAffineMassFactor(const Geometry& geo) const
       {
-        return geoInfo_.referenceVolume( geo.type() ) / geo.volume(); 
+        return geoInfo_.referenceVolume( geo.type() ) / geo.volume();
       }
 
       //! apply local dg mass matrix to local function lf
-      //! using the massFactor method of the caller 
-      template <class MassCallerType, class LocalFunctionType> 
-      void applyInverse(MassCallerType& caller, 
-                        const EntityType& en, 
-                        LocalFunctionType& lf) const 
+      //! using the massFactor method of the caller
+      template< class MassCaller, class LocalFunction >
+      void applyInverse ( MassCaller &caller, const EntityType &entity, LocalFunction &lf ) const
       {
-        // get geometry 
-        const Geometry& geo = en.geometry();
-
-        // get appropriate affinty information 
-        const bool affineGeometry = ( geo.affine() ) ? true : 
-            GeometryAffinityCheckType :: checkGeometry( en, geo, volumeQuadratureOrder( en ) )  ;  
-
-        if( affineGeometry && ! caller.hasMass() ) 
-        {
-          applyInverseLocally( caller, en, geo, lf );
-        }
-        else 
-        {
-          applyInverseDefault( caller, en, geo, lf );
-        }
+        Geometry geo = entity.geometry();
+        const bool affineGeometry
+          = (geo.affine() || GeometryAffinityCheckType::checkGeometry( entity, geo, volumeQuadratureOrder( entity ) ));
+        if( affineGeometry && !caller.hasMass() )
+          applyInverseLocally( caller, entity, geo, lf );
+        else
+          applyInverseDefault( caller, entity, geo, lf );
       }
 
-      //! apply local dg mass matrix to local function lf without mass factor 
-      template <class LocalFunctionType> 
-      void applyInverse(const EntityType& en, 
-                        LocalFunctionType& lf) const 
+      //! apply local dg mass matrix to local function lf without mass factor
+      template< class LocalFunction >
+      void applyInverse ( const EntityType &entity, LocalFunction &lf ) const
       {
         NoMassDummyCaller caller;
-        applyInverse(caller, en, lf );
+        applyInverse( caller, entity, lf );
       }
 
-      //! apply local dg mass matrix to local function lf without mass factor 
-      template <class LocalFunctionType> 
-      void applyInverse(LocalFunctionType& lf) const 
+      //! apply local dg mass matrix to local function lf without mass factor
+      template< class LocalFunction >
+      void applyInverse ( LocalFunction &lf ) const
       {
         applyInverse( lf.entity(), lf );
       }
 
-      /////////////////////////////////////////////
-      // end of public methods 
-      /////////////////////////////////////////////
-      
-      
-    protected:  
-      ///////////////////////////////////////////////////////////
-      //  applyInverse for DG spaces 
-      ///////////////////////////////////////////////////////////
-      template <class MassCallerType, class LocalFunctionType> 
-      void applyInverseDgOrthoNormalBasis(MassCallerType& caller, 
-                                          const EntityType& en, 
-                                          LocalFunctionType& lf) const 
+      template< class LocalMatrix >
+      void rightMultiplyInverse ( LocalMatrix &localMatrix ) const
       {
-        // get geometry 
-        const Geometry& geo = en.geometry();
+        const EntityType &entity = localMatrix.domainEntity();
+        Geometry geo = entity.geometry();
+        if( geo.affine() || GeometryAffinityCheckType::checkGeometry( entity, geo, volumeQuadratureOrder( entity ) ) )
+          rightMultiplyInverseLocally( entity, geo, localMatrix );
+        else
+          rightMultiplyInverseDefault( entity, geo, localMatrix );
+      }
+
+      /////////////////////////////////////////////
+      // end of public methods
+      /////////////////////////////////////////////
+
+    protected:
+      ///////////////////////////////////////////////////////////
+      //  applyInverse for DG spaces
+      ///////////////////////////////////////////////////////////
+      template< class MassCaller, class LocalFunction >
+      void applyInverseDgOrthoNormalBasis ( MassCaller &caller, const EntityType &entity, LocalFunction &lf ) const
+      {
+        Geometry geo = entity.geometry();
         assert( dgNumDofs == lf.numDofs() );
 
-        // affine_ can be a static information 
-        const bool isAffine = ( affine() ) ? true : geo.affine() ;
+        // affine_ can be a static information
+        const bool isAffine = affine() || geo.affine();
 
-        // in case of affine mappings we only have to multiply with a factor 
-        if( isAffine && ! caller.hasMass() )
+        // in case of affine mappings we only have to multiply with a factor
+        if( isAffine && !caller.hasMass() )
         {
           const double massVolInv = getAffineMassFactor( geo );
 
-          // apply inverse mass matrix  
-          for(int l=0; l<dgNumDofs; ++l) 
-          {
-            lf[l] *= massVolInv;
-          }
-
-          return; 
+          // apply inverse mass matrix
+          for( int l = 0; l < dgNumDofs; ++l )
+            lf[ l ] *= massVolInv;
         }
-        else 
+        else
         {
-          // copy local function to right hand side 
-          for(int l=0; l<dgNumDofs; ++l) 
-          {
-            // copy 
+          // copy local function to right hand side
+          for( int l = 0; l < dgNumDofs; ++l )
             dgRhs_[ l ] = lf[ l ];
-          }
 
-          // setup local mass matrix 
-          buildMatrix( caller, en, geo, lf.basisFunctionSet(), dgNumDofs, dgMatrix_ );
-
-          // solve linear system  
+          buildMatrix( caller, entity, geo, lf.basisFunctionSet(), dgNumDofs, dgMatrix_ );
           dgMatrix_.solve( dgX_, dgRhs_ );
 
-          // copy back to local function 
-          for(int l=0; l<dgNumDofs; ++l)
-          {
+          // copy back to local function
+          for( int l = 0; l < dgNumDofs; ++l )
             lf[ l ] = dgX_[ l ];
-          }
-
-          return; 
         }
       }
 
-      //! returns true if the entity has been changed 
-      bool entityHasChanged( const EntityType& entity ) const 
+      template< class LocalMatrix >
+      void rightMultiplyInverseDgOrthoNormalBasis ( LocalMatrix &localMatrix ) const
       {
-        // don't compute matrix new for the same entity 
+        const EntityType &entity = localMatrix.domainEntity();
+        Geometry geo = entity.geometry();
+        assert( dgNumDofs == localMatrix.cols() );
+
+        // affine_ can be a static information
+        const bool isAffine = affine() || geo.affine();
+
+        // in case of affine mappings we only have to multiply with a factor
+        if( affine() || geo.affine() )
+          localMatrix.scale( getAffineMassFactor( geo ) );
+        else
+        {
+          NoMassDummyCaller caller;
+          buildMatrix( caller, entity, geo, localMatrix.domainBasisFunctionSet(), dgNumDofs, dgMatrix_ );
+          dgMatrix_.invert();
+
+          const int rows = localMatrix.rows();
+          for( int i = 0; i < rows; ++i )
+          {
+            for( int j = 0; j < dgNumDofs; ++j )
+              dgRhs_[ j ] = localMatrix.get( i, j );
+            dgMatrix_.mtv( dgRhs_, dgX_ );
+            for( int j = 0; j < dgNumDofs; ++j )
+              localMatrix.set( i, j, dgX_[ j ] );
+          }
+        }
+      }
+
+      //! returns true if the entity has been changed
+      bool entityHasChanged( const EntityType& entity ) const
+      {
+        // don't compute matrix new for the same entity
         const int currentSequence   = spc_.sequence();
         const unsigned int topologyId = entity.type().id();
         const IndexType entityIndex = indexSet_.index( entity ) ;
 
-        // check whether sequence has been updated 
+        // check whether sequence has been updated
         if( sequence_ != currentSequence ||
-            lastEntityIndex_ != entityIndex || 
-            lastTopologyId_  != topologyId ) 
+            lastEntityIndex_ != entityIndex ||
+            lastTopologyId_  != topologyId )
         {
-          // update identifiers 
+          // update identifiers
           lastEntityIndex_ = entityIndex ;
           sequence_        = currentSequence;
           lastTopologyId_  = topologyId ;
 
           return true ;
         }
-        else 
+        else
           // the entity did not change
           return false ;
       }
 
       ///////////////////////////////////////////////////////////
-      //  standard applyInverse method 
+      //  standard applyInverse method
       ///////////////////////////////////////////////////////////
       //! apply local mass matrix to local function lf
-      //! using the massFactor method of the caller 
-      template <class MassCallerType, class LocalFunctionType> 
-      void applyInverseDefault(MassCallerType& caller, 
-                               const EntityType& entity, 
-                               const Geometry& geo,
-                               LocalFunctionType& lf) const 
+      //! using the massFactor method of the caller
+      template< class MassCaller, class LocalFunction >
+      void applyInverseDefault ( MassCaller &caller, const EntityType &entity,
+                                 const Geometry &geo, LocalFunction &lf ) const
       {
+        // get local inverted mass matrix
+        MatrixType &invMassMatrix
+          = getLocalInverseMassMatrixDefault ( caller, entity, geo, lf.basisFunctionSet() );
+
+        // copy local function to right hand side
         const int numDofs = lf.numDofs();
-
-        // if sequence changed or entity index changed 
-        // compute mass matrix new 
-        if( entityHasChanged( entity ) || numDofs != int(matrix_.rows()) ) 
-        {
-          // resize temporary memory if necessary 
-          if( numDofs != int(matrix_.rows()) ) 
-          {
-            // resize matrix 
-            matrix_.resize( numDofs, numDofs );
-          }
-
-          // setup local mass matrix 
-          buildMatrix( caller, entity, geo, lf.basisFunctionSet(), numDofs, matrix_ );
-
-          // invert mass matrix 
-          matrix_.invert();
-        }
-
-        // make sure that rhs_ has the correct size
-        assert( numDofs == int(matrix_.rows()) );
-        // resize temporary memory if necessary 
-        if( numDofs != int(rhs_.size()) )
-        {
-          // resize vectors 
-          rhs_.resize( numDofs );
-        }
-
-        assert( int(rhs_.size()) == numDofs );
-
-        // copy local function to right hand side 
-        for(int l=0; l<numDofs; ++l) 
-        {
-          rhs_[ l ] = lf[ l ];
-        }
-
-        // apply inverse to right hand side and store in lf 
-        multiply( numDofs, matrix_, rhs_, lf );
-      }
-
-      //! implement matvec with matrix (mv of densematrix is too stupid)
-      template <class Matrix, class Rhs, class X> 
-      void multiply( const int size, 
-                     const Matrix& matrix, 
-                     const Rhs& rhs, 
-                     X& x ) const 
-      {
-        assert( (int) matrix.rows() == size );
-        assert( (int) matrix.cols() == size );
-        assert( (int) rhs.size() == size );
-
-        for( int row = 0; row < size; ++ row ) 
-        {
-          RangeFieldType sum = 0;
-          // get matrix row 
-          typedef typename Matrix :: const_row_reference  MatRow;
-          MatRow matRow = matrix[ row ];
-
-          // multiply row with right hand side
-          for( int col = 0; col < size; ++ col ) 
-          {
-            sum += matRow[ col ] * rhs[ col ];        
-          }
-
-          // set to result to result vector 
-          x[ row ] = sum;
-        }
-      }
-
-      ///////////////////////////////////////////////////////////
-      //  local applyInverse method for affine geometries 
-      ///////////////////////////////////////////////////////////
-      //! apply local mass matrix to local function lf
-      //! using the massFactor method of the caller 
-      template <class MassCallerType, class LocalFunctionType> 
-      void applyInverseLocally(MassCallerType& caller, 
-                               const EntityType& en, 
-                               const Geometry& geo,
-                               LocalFunctionType& lf) const 
-      {
-        const int numDofs = lf.numDofs();
-
-        // get local inverted mass matrix 
-        MatrixType& invMassMatrix = 
-          getLocalInverseMassMatrix( en, geo, lf.basisFunctionSet(), numDofs );
-
-        // resize vectors 
         rhs_.resize( numDofs );
+        for( int l = 0; l < numDofs; ++l )
+          rhs_[ l ] = lf[ l ];
+
+        // apply inverse to right hand side and store in lf
+        multiply( numDofs, invMassMatrix, rhs_, lf );
+      }
+
+      template< class LocalMatrix >
+      void rightMultiplyInverseDefault ( const EntityType &entity, const Geometry &geo, LocalMatrix &localMatrix ) const
+      {
+        NoMassDummyCaller caller;
+        MatrixType &invMassMatrix
+          = getLocalInverseMassMatrixDefault ( caller, entity, geo, localMatrix.domainBasisFunctionSet() );
+
+        const int cols = localMatrix.colums();
+        rhs_.resize( cols );
+        row_.resize( cols );
+
+        const int rows = localMatrix.rows();
+        for( int i = 0; i < rows; ++i )
+        {
+          for( int j = 0; j < cols; ++j )
+            rhs_[ j ] = localMatrix.get( i, j );
+          invMassMatrix.mtv( rhs_, row_ );
+          for( int j = 0; j < cols; ++j )
+            localMatrix.set( i, j, row_[ j ] );
+        }
+      }
+
+      ///////////////////////////////////////////////////////////
+      //  local applyInverse method for affine geometries
+      ///////////////////////////////////////////////////////////
+      //! apply local mass matrix to local function lf
+      //! using the massFactor method of the caller
+      template< class MassCaller, class LocalFunction >
+      void applyInverseLocally ( MassCaller &caller, const EntityType &entity,
+                                 const Geometry &geo, LocalFunction &lf ) const
+      {
+        const int numDofs = lf.numDofs();
+
+        // get local inverted mass matrix
+        MatrixType &invMassMatrix =
+          getLocalInverseMassMatrix( entity, geo, lf.basisFunctionSet(), numDofs );
 
         const double massVolInv = getAffineMassFactor( geo );
 
-        // copy local function to right hand side 
-        // and apply inverse mass volume fraction 
-        for(int l=0; l<numDofs; ++l) 
-        {
-          rhs_[ l ] = lf[ l ] * massVolInv ;
-        }
+        // copy local function to right hand side
+        // and apply inverse mass volume fraction
+        rhs_.resize( numDofs );
+        for( int l = 0; l < numDofs; ++l )
+          rhs_[ l ] = lf[ l ] * massVolInv;
 
-        // apply inverse local mass matrix and store in lf 
-        multiply( numDofs, invMassMatrix,  rhs_, lf );
+        // apply inverse local mass matrix and store in lf
+        multiply( numDofs, invMassMatrix, rhs_, lf );
       }
 
-      //! setup and return affinity 
-      bool setup() const 
+      template< class LocalMatrix >
+      void rightMultiplyInverseLocally ( const EntityType &entity, const Geometry &geo, LocalMatrix &localMatrix ) const
       {
-        // for structured grids this is always true 
-        if( StructuredGrid ) return true;
+        const int cols = localMatrix.colums();
+        MatrixType &invMassMatrix =
+          getLocalInverseMassMatrix( entity, geo, localMatrix.domainBasisFunctionSet(), cols );
 
-        // get types for codim 0 
+        const double massVolInv = getAffineMassFactor( geo );
+
+        rhs_.resize( cols );
+        row_.resize( cols );
+
+        const int rows = localMatrix.rows();
+        for( int i = 0; i < rows; ++i )
+        {
+          for( int j = 0; j < cols; ++j )
+            rhs_[ j ] = localMatrix.get( i, j ) * massVolInv;
+          invMassMatrix.mtv( rhs_, row_ );
+          for( int j = 0; j < cols; ++j )
+            localMatrix.set( i, j, row_[ j ] );
+        }
+      }
+
+      //! setup and return affinity
+      bool setup () const
+      {
+        // for structured grids this is always true
+        if( StructuredGrid )
+          return true;
+
+        // get types for codim 0
         const std::vector<Dune::GeometryType>& geomTypes = geoInfo_.geomTypes(0);
 
-        // for simplices we also have affine mappings 
-        if( (geomTypes.size() == 1) && geomTypes[0].isSimplex() ) 
+        // for simplices we also have affine mappings
+        if( (geomTypes.size() == 1) && geomTypes[0].isSimplex() )
         {
           return true;
         }
@@ -467,60 +478,51 @@ namespace Dune
         return affine;
       }
 
-      //! check whether all geometry mappings are affine 
-      bool checkAffinity() const 
+      //! check whether all geometry mappings are affine
+      bool checkAffinity () const
       {
-        return GeometryAffinityCheckType :: 
-          checkAffinity( spc_.begin(), spc_.end(), maxVolumeQuadratureOrder() );
+        return GeometryAffinityCheckType::checkAffinity( spc_.begin(), spc_.end(), maxVolumeQuadratureOrder() );
       }
 
-      //! build local mass matrix 
-      template <class MassCallerType, class Matrix> 
-      void buildMatrix(MassCallerType& caller,
-                       const EntityType& en,
-                       const Geometry& geo, 
-                       const BasisFunctionSetType& set,
-                       const std::size_t numDofs,
-                       Matrix& matrix) const 
+      //! build local mass matrix
+      template< class MassCaller, class Matrix >
+      void buildMatrix ( MassCaller &caller, const EntityType &entity,
+                         const Geometry &geo, const BasisFunctionSetType &set,
+                         std::size_t numDofs, Matrix &matrix ) const
       {
         assert( numDofs == set.size() );
 
-        // clear matrix 
+        // clear matrix
         matrix = 0;
 
-        // create quadrature 
-        VolumeQuadratureType volQuad(en, volumeQuadratureOrder( en ) );
+        // create quadrature
+        VolumeQuadratureType volQuad( entity, volumeQuadratureOrder( entity ) );
 
         if( caller.hasMass() )
-        {
-          // build matix with calling 
-          buildMatrixWithMassFactor(caller, en, geo, set, volQuad, numDofs, matrix);
-        }
-        else 
-        {
-          buildMatrixNoMassFactor(en, geo, set, volQuad, numDofs, matrix);
-        }
+          buildMatrixWithMassFactor( caller, entity, geo, set, volQuad, numDofs, matrix );
+        else
+          buildMatrixNoMassFactor( entity, geo, set, volQuad, numDofs, matrix );
       }
 
-      //! build local mass matrix with mass factor 
+      //! build local mass matrix with mass factor
       template <class Matrix>
       void buildMatrixNoMassFactor(
                        const EntityType& en,
-                       const Geometry& geo, 
+                       const Geometry& geo,
                        const BasisFunctionSetType& set,
                        const VolumeQuadratureType& volQuad,
                        const int numDofs,
                        Matrix& matrix,
-                       const bool applyIntegrationElement = true ) const 
+                       const bool applyIntegrationElement = true ) const
       {
         const int volNop = volQuad.nop();
-        for(int qp=0; qp<volNop; ++qp) 
+        for(int qp=0; qp<volNop; ++qp)
         {
-          // calculate integration weight 
-          const double intel = ( applyIntegrationElement ) ? 
+          // calculate integration weight
+          const double intel = ( applyIntegrationElement ) ?
               ( volQuad.weight(qp) * geo.integrationElement(volQuad.point(qp)) ) : volQuad.weight(qp) ;
 
-          // eval basis functions 
+          // eval basis functions
           set.evaluateAll(volQuad[qp], phi_);
 
           for(int m=0; m<numDofs; ++m)
@@ -528,8 +530,8 @@ namespace Dune
             const RangeType& phi_m = phi_[m];
             const ctype val = intel * (phi_m * phi_m);
             matrix[m][m] += val;
-           
-            for(int k=m+1; k<numDofs; ++k) 
+
+            for(int k=m+1; k<numDofs; ++k)
             {
               const ctype val = intel * (phi_m * phi_[k]);
               matrix[m][k] += val;
@@ -539,127 +541,164 @@ namespace Dune
         }
       }
 
-      //! build local mass matrix with mass factor 
-      template <class MassCallerType, class Matrix> 
+      //! build local mass matrix with mass factor
+      template <class MassCallerType, class Matrix>
       void buildMatrixWithMassFactor(
                        MassCallerType& caller,
                        const EntityType& en,
-                       const Geometry& geo, 
+                       const Geometry& geo,
                        const BasisFunctionSetType& set,
                        const VolumeQuadratureType& volQuad,
                        const int numDofs,
-                       Matrix& matrix) const 
+                       Matrix& matrix) const
       {
         typedef typename MassCallerType :: MassFactorType MassFactorType;
         MassFactorType mass;
 
         const int volNop = volQuad.nop();
-        for(int qp=0; qp<volNop; ++qp) 
+        for(int qp=0; qp<volNop; ++qp)
         {
-          // calculate integration weight 
+          // calculate integration weight
           const double intel = volQuad.weight(qp)
              * geo.integrationElement(volQuad.point(qp));
 
-          // eval basis functions 
+          // eval basis functions
           set.evaluateAll( volQuad[qp], phi_);
 
-          // call mass factor 
+          // call mass factor
           caller.mass( en, volQuad, qp, mass);
 
-          // apply mass matrix to all basis functions 
+          // apply mass matrix to all basis functions
           for(int m=0; m<numDofs; ++m)
           {
             mass.mv( phi_[m], phiMass_[m] );
           }
 
-          // add values to matrix 
+          // add values to matrix
           for(int m=0; m<numDofs; ++m)
           {
-            for(int k=0; k<numDofs; ++k) 
+            for(int k=0; k<numDofs; ++k)
             {
               matrix[m][k] += intel * (phiMass_[m] * phi_[k]);
             }
           }
         }
       }
-    }; // end class LocalMassMatrixImplementation
 
-    ///////////////////////////////////////////////////////////////////
-    //
-    //  default LocalMassMatrix Implementation 
-    //
-    ///////////////////////////////////////////////////////////////////
+      // implement matvec with matrix (mv of densematrix is too stupid)
+      template <class Matrix, class Rhs, class X>
+      void multiply( const int size,
+                     const Matrix& matrix,
+                     const Rhs& rhs,
+                     X& x ) const
+      {
+        assert( (int) matrix.rows() == size );
+        assert( (int) matrix.cols() == size );
+        assert( (int) rhs.size() == size );
 
-    /** \brief Local Mass Matrix for arbitrary spaces */ 
-    template <class DiscreteFunctionSpaceImp, class VolumeQuadratureImp> 
-    class LocalMassMatrix 
-      : public LocalMassMatrixImplementation< DiscreteFunctionSpaceImp, VolumeQuadratureImp >
+        for( int row = 0; row < size; ++ row )
+        {
+          RangeFieldType sum = 0;
+          // get matrix row
+          typedef typename Matrix :: const_row_reference  MatRow;
+          MatRow matRow = matrix[ row ];
+
+          // multiply row with right hand side
+          for( int col = 0; col < size; ++ col )
+          {
+            sum += matRow[ col ] * rhs[ col ];
+          }
+
+          // set to result to result vector
+          x[ row ] = sum;
+        }
+      }
+    };
+
+
+
+    // LocalMassMatrix
+    // ---------------
+
+    /** \brief Local Mass Matrix for arbitrary spaces */
+    template< class DiscreteFunctionSpace, class VolumeQuadrature >
+    class LocalMassMatrix
+    : public LocalMassMatrixImplementation< DiscreteFunctionSpace, VolumeQuadrature >
     {
-      typedef LocalMassMatrixImplementation< DiscreteFunctionSpaceImp, VolumeQuadratureImp > BaseType;
+      typedef LocalMassMatrixImplementation< DiscreteFunctionSpace, VolumeQuadrature > BaseType;
+
     public:
-      LocalMassMatrix( const DiscreteFunctionSpaceImp& spc, const int volQuadOrd = -1 )
-        : BaseType( spc, volQuadOrd )
+      explicit LocalMassMatrix ( const DiscreteFunctionSpace &spc, int volQuadOrd = -1 )
+      : BaseType( spc, volQuadOrd )
       {}
     };
 
 
+
     ///////////////////////////////////////////////////////////////////
     //
-    //  DG LocalMassMatrix Implementation 
+    //  DG LocalMassMatrix Implementation
     //
     ///////////////////////////////////////////////////////////////////
 
-    /** \brief DG Local Mass Matrix for arbitrary spaces */ 
-    template <class DiscreteFunctionSpaceImp, class VolumeQuadratureImp> 
+    /** \brief DG Local Mass Matrix for arbitrary spaces */
+    template< class DiscreteFunctionSpace, class VolumeQuadrature >
     class LocalMassMatrixImplementationDgOrthoNormal
-      : public LocalMassMatrixImplementation< DiscreteFunctionSpaceImp, VolumeQuadratureImp >
+    : public LocalMassMatrixImplementation< DiscreteFunctionSpace, VolumeQuadrature >
     {
-      typedef LocalMassMatrixImplementation< DiscreteFunctionSpaceImp, VolumeQuadratureImp > BaseType;
+      typedef LocalMassMatrixImplementation< DiscreteFunctionSpace, VolumeQuadrature > BaseType;
+
     public:
       typedef typename BaseType :: EntityType  EntityType;
 
-      LocalMassMatrixImplementationDgOrthoNormal( const DiscreteFunctionSpaceImp& spc, const int volQuadOrd = -1 )
-        : BaseType( spc, volQuadOrd )
+      explicit LocalMassMatrixImplementationDgOrthoNormal ( const DiscreteFunctionSpace &spc, int volQuadOrd = -1 )
+      : BaseType( spc, volQuadOrd )
       {}
 
       //! apply local dg mass matrix to local function lf
-      //! using the massFactor method of the caller 
-      template <class MassCallerType, class LocalFunctionType> 
-      void applyInverse(MassCallerType& caller, 
-                        const EntityType& en, 
-                        LocalFunctionType& lf) const 
+      //! using the massFactor method of the caller
+      template <class MassCallerType, class LocalFunctionType>
+      void applyInverse(MassCallerType& caller,
+                        const EntityType& en,
+                        LocalFunctionType& lf) const
       {
         BaseType :: applyInverseDgOrthoNormalBasis( caller, en, lf );
       }
 
-      //! apply local dg mass matrix to local function lf without mass factor 
-      template <class LocalFunctionType> 
-      void applyInverse(const EntityType& en, 
-                        LocalFunctionType& lf) const 
+      //! apply local dg mass matrix to local function lf without mass factor
+      template <class LocalFunctionType>
+      void applyInverse(const EntityType& en,
+                        LocalFunctionType& lf) const
       {
         typename BaseType :: NoMassDummyCaller caller;
         applyInverse(caller, en, lf );
       }
 
-      //! apply local dg mass matrix to local function lf without mass factor 
-      template <class LocalFunctionType> 
-      void applyInverse(LocalFunctionType& lf) const 
+      //! apply local dg mass matrix to local function lf without mass factor
+      template< class LocalFunction >
+      void applyInverse ( LocalFunction &lf ) const
       {
         applyInverse( lf.entity(), lf );
       }
 
+      template< class LocalMatrix >
+      void rightMultiplyInverse ( LocalMatrix &localMatrix ) const
+      {
+        BaseType::rightMultiplyInverseDgOrthoNormalBasis( localMatrix );
+      }
     };
 
-//! @}  
+//! @}
 
-  } // namespace Fem  
+  } // namespace Fem
 
-#if DUNE_FEM_COMPATIBILITY  
-// put this in next version 1.4 
+#if DUNE_FEM_COMPATIBILITY
+// put this in next version 1.4
 
-using Fem :: LocalMassMatrix ;
+using Fem::LocalMassMatrix;
 
 #endif // DUNE_FEM_COMPATIBILITY
 
-} // namespace Dune 
+} // namespace Dune
+
 #endif // #ifndef DUNE_FEM_LOCALMASSMATRIX_HH
