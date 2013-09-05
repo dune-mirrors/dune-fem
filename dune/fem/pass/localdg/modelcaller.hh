@@ -112,7 +112,9 @@ namespace Dune
       {
         setEntity( entity );
         values_.resize( quadrature.nop() );
+        jacobians_.resize( quadrature.nop() );
         localFunctionsInside_.evaluateQuadrature( quadrature, values_ );
+        localFunctionsInside_.evaluateQuadrature( quadrature, jacobians_ );
       }
 
       // evaluate outside local functions in all quadrature points
