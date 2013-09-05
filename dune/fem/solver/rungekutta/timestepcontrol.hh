@@ -177,7 +177,7 @@ namespace DuneODE
 
       if( (verbose_ >= ImplicitRungeKuttaSolverParameters::noConvergenceVerbosity) && (Dune::Fem::MPIManager::rank() == 0) )
       {
-        Dune::derr << "Implicit Runge-Kutta step failed to convergence." << std::endl;
+        Dune::derr << "Implicit Runge-Kutta step failed to converge." << std::endl;
         Dune::derr << "New cfl number: " << cfl_
                    << ", iterations per time step: ILS = " << monitor.linearSolverIterations_
                    << ", INLS = " << monitor.newtonIterations_
