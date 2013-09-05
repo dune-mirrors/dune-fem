@@ -313,9 +313,6 @@ namespace Dune
         Geometry geo = entity.geometry();
         assert( dgNumDofs == localMatrix.cols() );
 
-        // affine_ can be a static information
-        const bool isAffine = affine() || geo.affine();
-
         // in case of affine mappings we only have to multiply with a factor
         if( affine() || geo.affine() )
           localMatrix.scale( getAffineMassFactor( geo ) );
