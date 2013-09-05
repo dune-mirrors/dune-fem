@@ -500,7 +500,7 @@ namespace Dune
 
     template< class DomainFunction, class RangeFunction , class Traits >
     class DenseRowMatrixOperator
-    : public DenseRowMatrixObject< typename DomainFunction::DiscreteFunctionSpaceType, typename RangeFunction::DiscreteFunctionSpaceType >
+    : public DenseRowMatrixObject< typename DomainFunction::DiscreteFunctionSpaceType, typename RangeFunction::DiscreteFunctionSpaceType >,
       public AssembledOperator< DomainFunction, RangeFunction >
     {
       typedef DenseRowMatrixOperator< DomainFunction, RangeFunction, Traits > ThisType;
@@ -524,10 +524,7 @@ namespace Dune
         apply( u, w );
       }
 
-      const BaseType &systemMatrix () const
-      {
-        return *this;
-      }i
+      const BaseType &systemMatrix () const { return *this; }
 
       void communicate () const {}
 
