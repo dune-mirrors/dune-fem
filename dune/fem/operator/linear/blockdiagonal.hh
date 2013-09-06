@@ -79,6 +79,8 @@ namespace Dune
           uit += dit->M();
           wit += dit->N();
         }
+        assert( uit == u.leakPointer() + u.size() );
+        assert( wit == w.leakPointer() + w.size() );
       }
 
       void clear ()
