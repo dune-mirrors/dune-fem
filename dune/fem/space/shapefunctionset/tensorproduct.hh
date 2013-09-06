@@ -276,7 +276,7 @@ namespace Dune
     template< class FunctionSpace, class ShapeFunctionSetTuple >
     inline int TensorProductShapeFunctionSet< FunctionSpace, ShapeFunctionSetTuple >::order () const
     {
-      Dune::ForEachValue< ShapeFunctionSetTupleType > forEach;
+      Dune::ForEachValue< const ShapeFunctionSetTupleType > forEach( shapeFunctionSetTuple_ );
       Order functor;
       forEach.apply( functor );
       return functor;
