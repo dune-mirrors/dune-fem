@@ -1,6 +1,7 @@
 lineardir =  $(includedir)/dune/fem/operator/linear
-linear_HEADERS = istloperator.hh \
-                 spoperator.hh \
-								 petscoperator.hh 
+linear_HEADERS = blockdiagonal.hh \
+		 istloperator.hh \
+		 petscoperator.hh \
+		 spoperator.hh
 
 include $(top_srcdir)/am/global-rules
