@@ -281,6 +281,8 @@ namespace Dune
 
         // affine_ can be a static information
         const bool isAffine = affine() || geo.affine();
+        // make sure that for affine grids the geometry info is also correct
+        assert( affine() ? geo.affine() : true );
 
         // in case of affine mappings we only have to multiply with a factor
         if( isAffine && !caller.hasMass() )
@@ -469,16 +471,9 @@ namespace Dune
         {
           return true;
         }
-
-        bool affine = checkAffinity();
-        //std::cout << "found affine grid? = " << affine << "\n";
-        return affine;
-      }
-
-      //! check whether all geometry mappings are affine
-      bool checkAffinity () const
-      {
-        return GeometryAffinityCheckType::checkAffinity( spc_.begin(), spc_.end(), maxVolumeQuadratureOrder() );
+        
+        // otherwise use geometry affinity 
+        return false ;
       }
 
       //! build local mass matrix
