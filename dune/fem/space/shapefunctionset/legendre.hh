@@ -125,7 +125,7 @@ namespace Dune
       typedef FunctionSpace FunctionSpaceType;
       typedef LegendreShapeFunction< FunctionSpaceType > ShapeFunctionType;
 
-      LegendreShapeFunctionSetFactory ( int order )
+      explicit LegendreShapeFunctionSetFactory ( int order )
       : order_( order )
       {}
 
@@ -178,7 +178,7 @@ namespace Dune
       typedef SimpleShapeFunctionSet< ShapeFunctionType > BaseType;
 
     public:
-      LegendreShapeFunctionSet ( const int order )
+      explicit LegendreShapeFunctionSet ( const int order )
       : BaseType( FactoryType( order ) )
       {}
     };
