@@ -19,12 +19,10 @@ namespace Dune
     template<int polOrder, int dimension>
     class HierarchicLegendreMap
     {
-      enum{numBaseFct=StaticPower<polOrder+1,dimension>::power};
+      enum{ numBaseFct = StaticPower<polOrder+1,dimension>::power };
       
-      protected:
-      
+    protected:
       typedef  array<int, numBaseFct> BaseNumberMapType;
-    
       
       template<int pOrd, int d>
       struct DimLoop 
@@ -102,7 +100,7 @@ namespace Dune
         int newBaseNum = 0;
         // check for all terms the number of base functions 
         for(int term=0; term <= polOrder; ++term )
-         {
+        {
            // initialize oldBaseNum counter new for each term 
            int oldBaseNum = 0;
            // construct mapping for this term 

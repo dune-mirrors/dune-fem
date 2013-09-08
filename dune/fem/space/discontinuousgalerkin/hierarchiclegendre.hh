@@ -67,8 +67,8 @@ namespace Dune
          
         static ScalarShapeFunctionSetType *createObject ( const GeometryType &type )
         {
-       
-          return new ScalarShapeFunctionSetType( type, LegendreShapeFunctionSetType( polOrder) );
+          return new ScalarShapeFunctionSetType( type, 
+                                                 LegendreShapeFunctionSetType( OriginalShapeFunctionSetType( polOrder ) ) );
         }
 
         static void deleteObject ( ScalarShapeFunctionSetType *object ) { delete object; }
