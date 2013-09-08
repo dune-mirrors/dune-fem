@@ -68,6 +68,9 @@ namespace Dune
 #elif defined USE_LEGENDRESPACE 
     typedef LegendreDiscontinuousGalerkinSpace< FunctionSpaceType, GridPartType, polOrder >
       DiscreteFunctionSpaceType;
+#elif defined USE_HIERARCHCILEGENDRESPACE 
+    typedef HierarchicLegendreDiscontinuousGalerkinSpace< FunctionSpaceType, GridPartType, polOrder >
+      DiscreteFunctionSpaceType;
 #else
     typedef DiscontinuousGalerkinSpace< FunctionSpaceType, GridPartType, polOrder >
       DiscreteFunctionSpaceType;
