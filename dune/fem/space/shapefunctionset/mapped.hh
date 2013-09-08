@@ -35,32 +35,29 @@ namespace Dune
       typedef typename FunctionSpaceType::JacobianRangeType JacobianRangeType; 
       typedef typename FunctionSpaceType::HessianRangeType HessianRangeType;  
     public:
-      explicit MappedShapeFunctionSet(const OriginalShapeFunctionSetType & originalShapeFunctionSet, const MappingType& mapping=MappingType()):
-      originalShapeFunctionSet_(originalShapeFunctionSet),
-      mapping_(mapping)
+      explicit MappedShapeFunctionSet(const OriginalShapeFunctionSetType & originalShapeFunctionSet, 
+                                      const MappingType& mapping = MappingType() )
+        : originalShapeFunctionSet_(originalShapeFunctionSet),
+          mapping_(mapping)
       { 
-        //for(size_t i=0; i<size();++i)
-        //  std::cout<<"Mapping[ "<< i <<" ] = "<<mapping_[i]<<std::endl;
       }
 
       int order() const {return originalShapeFunctionSet_.order();}
 
       std::size_t size() const {return originalShapeFunctionSet_.size();}
      
-      const MappingType& map() const { return mapping_;}
+      const MappingType& map() const { return mapping_; }
 
       template< class Point, class Functor >
       void evaluateEach ( const Point &x, Functor functor ) const;
 
-    
       template< class Point, class Functor > 
       void jacobianEach ( const Point &x, Functor functor ) const;
 
- 
       template< class Point, class Functor > 
       void hessianEach ( const Point &x, Functor functor ) const;
        
-      const OriginalShapeFunctionSetType& originalShapeFunctionSet() const {return originalShapeFunctionSet_;}
+      const OriginalShapeFunctionSetType& originalShapeFunctionSet() const { return originalShapeFunctionSet_; }
 
     protected:
       OriginalShapeFunctionSetType originalShapeFunctionSet_;
