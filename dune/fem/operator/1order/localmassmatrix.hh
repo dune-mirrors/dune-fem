@@ -231,9 +231,7 @@ namespace Dune
       void applyInverse ( MassCaller &caller, const EntityType &entity, LocalFunction &lf ) const
       {
         Geometry geo = entity.geometry();
-        const bool affineGeometry
-          = (geo.affine() || GeometryAffinityCheckType::checkGeometry( entity, geo, volumeQuadratureOrder( entity ) ));
-        if( affineGeometry && !caller.hasMass() )
+        if( affine() || geo.affine() )
           applyInverseLocally( caller, entity, geo, lf );
         else
           applyInverseDefault( caller, entity, geo, lf );
@@ -259,7 +257,7 @@ namespace Dune
       {
         const EntityType &entity = localMatrix.domainEntity();
         Geometry geo = entity.geometry();
-        if( geo.affine() || GeometryAffinityCheckType::checkGeometry( entity, geo, volumeQuadratureOrder( entity ) ) )
+        if( affine() || geo.affine() ) 
           rightMultiplyInverseLocally( entity, geo, localMatrix );
         else
           rightMultiplyInverseDefault( entity, geo, localMatrix );
