@@ -15,52 +15,60 @@ namespace Dune
   namespace Fem
   {
 
+    // NewtonParameter
+    // ---------------
+
     struct NewtonParameter
-#ifndef DOXYGEN 
-    : public LocalParameter< NewtonParameter, NewtonParameter>
+#ifndef DOXYGEN
+    : public LocalParameter< NewtonParameter, NewtonParameter >
 #endif
     {
-      NewtonParameter(){}
+      NewtonParameter () {}
 
-      virtual double toleranceParameter () const 
+      virtual double toleranceParameter () const
       {
         return Parameter::getValue< double >( "fem.solver.newton.tolerance", 1e-6 );
       }
 
-      virtual double linAbsTolParameter ( const double &tolerance )  const 
+      virtual double linAbsTolParameter ( const double &tolerance )  const
       {
         return Parameter::getValue< double >( "fem.solver.newton.linabstol", tolerance / 8 );
       }
 
-      virtual double linReductionParameter ( const double &tolerance ) const 
+      virtual double linReductionParameter ( const double &tolerance ) const
       {
         return Parameter::getValue< double >( "fem.solver.newton.linreduction", tolerance / 8 );
       }
 
-      virtual bool verbose () const 
+      virtual bool verbose () const
       {
         const bool v = Parameter::getValue< bool >( "fem.solver.verbose", false );
         return Parameter::getValue< bool >( "fem.solver.newton.verbose", v );
       }
 
-      virtual bool linearSolverVerbose () const 
+      virtual bool linearSolverVerbose () const
       {
         const bool v = Parameter::getValue< bool >( "fem.solver.verbose", false );
         return Parameter::getValue< bool >( "fem.solver.newton.linear.verbose", v );
       }
 
-      virtual int maxIterationsParameter () const 
+      virtual int maxIterationsParameter () const
       {
         return Parameter::getValue< int >( "fem.solver.newton.maxiterations", std::numeric_limits< int >::max() );
       }
 
-      virtual int maxLinearIterationsParameter () const 
+      virtual int maxLinearIterationsParameter () const
       {
         return Parameter::getValue< int >( "fem.solver.newton.maxlineariterations", std::numeric_limits< int >::max() );
       }
     };
 
-    /** \class NewtonInverseOperator >
+
+
+    // NewtonInverseOperator
+    // ---------------------
+
+    /** \class NewtonInverseOperator
      *  \brief inverse operator based on a newton scheme
      *
      *  \tparam  Op      operator to invert (must be a DifferentiableOperator)
@@ -71,20 +79,18 @@ namespace Dune
      *        <b>fem.solver.verbose</b>.
      */
     template< class JacobianOperator, class LInvOp >
-    class NewtonInverseOperator 
-    : public Operator< typename JacobianOperator :: DomainFunctionType, 
-                              typename JacobianOperator :: RangeFunctionType > 
+    class NewtonInverseOperator
+    : public Operator< typename JacobianOperator::RangeFunctionType, typename JacobianOperator::DomainFunctionType >
     {
       typedef NewtonInverseOperator< JacobianOperator, LInvOp > ThisType;
-      typedef Operator< typename JacobianOperator :: DomainFunctionType,
-                        typename JacobianOperator :: RangeFunctionType > BaseType;
+      typedef Operator< typename JacobianOperator::RangeFunctionType, typename JacobianOperator::DomainFunctionType > BaseType;
 
     public:
       //! type of operator's Jacobian
       typedef JacobianOperator JacobianOperatorType;
-      
+
       //! type of operator to invert
-      typedef DifferentiableOperator<JacobianOperatorType> OperatorType;
+      typedef DifferentiableOperator< JacobianOperatorType > OperatorType;
 
       //! type of linear inverse operator
       typedef LInvOp LinearInverseOperatorType;
@@ -101,13 +107,13 @@ namespace Dune
        *  \note The tolerance is read from the paramter
        *        <b>fem.solver.newton.tolerance</b>
        */
-      explicit NewtonInverseOperator ( const OperatorType &op, 
+      explicit NewtonInverseOperator ( const OperatorType &op,
                                        const NewtonParameter &parameter = NewtonParameter() )
       : op_( op ),
         tolerance_( parameter.toleranceParameter() ),
         linAbsTol_( parameter.linAbsTolParameter( tolerance_ ) ),
         linReduction_( parameter.linReductionParameter( tolerance_ ) ),
-        verbose_( parameter.verbose() && MPIManager :: rank () == 0 ),
+        verbose_( parameter.verbose() && MPIManager::rank () == 0 ),
         linVerbose_( parameter.linearSolverVerbose() ),
         maxIterations_( parameter.maxIterationsParameter() ),
         maxLinearIterations_( parameter.maxLinearIterationsParameter() )
@@ -129,7 +135,7 @@ namespace Dune
         maxIterations_( parameter.maxIterationsParameter() ),
         maxLinearIterations_( parameter.maxLinearIterationsParameter() )
       {}
-        
+
       virtual void operator() ( const DomainFunctionType &u, RangeFunctionType &w ) const;
 
       int iterations () const { return iterations_; }
@@ -156,7 +162,10 @@ namespace Dune
     };
 
 
-    
+
+    // Implementation of NewtonInverseOperator
+    // ---------------------------------------
+
     template< class JacobianOperator, class LInvOp >
     inline void NewtonInverseOperator< JacobianOperator, LInvOp >
       ::operator() ( const DomainFunctionType &u, RangeFunctionType &w ) const
@@ -177,18 +186,18 @@ namespace Dune
 
         // evaluate operator's jacobian
         op_.jacobian( w, jOp );
-        
+
         // David: With this factor, the tolerance of CGInverseOp is the absolute
         //        rather than the relative error
         //        (see also dune-fem/dune/fem/solver/inverseoperators.hh)
         const int remLinearIts = maxLinearIterations_ - linearIterations_;
         const LinearInverseOperatorType jInv( jOp, linReduction_, linAbsTol_, remLinearIts, linVerbose_ );
-        
+
         dw.clear();
         jInv( residual, dw );
         linearIterations_ += jInv.iterations();
         w -= dw;
-        
+
         op_( w, residual );
         residual -= u;
         delta_ = std::sqrt( residual.scalarProductDofs( residual ) );
