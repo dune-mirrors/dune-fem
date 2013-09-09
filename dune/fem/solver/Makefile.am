@@ -11,6 +11,7 @@ solver_HEADERS = cginverseoperator.hh \
                  pardg.hh \
 		 pardginverseoperators.hh \
                  petscsolver.hh \
+		 preconditionedinverseoperator.hh \
                  rungekutta.hh \
                  timeprovider.hh \
                  umfpacksolver.hh
