@@ -68,6 +68,8 @@ namespace Dune
       typedef DifferentiableOperator< DGHelmholtzJacobianOperator< typename SpaceOperator::JacobianOperatorType > > BaseType;
 
     public:
+      typedef SpaceOperator SpaceOperatorType;
+
       typedef typename BaseType::DomainFunctionType DomainFunctionType;
       typedef typename BaseType::RangeFunctionType RangeFunctionType;
 
@@ -75,7 +77,7 @@ namespace Dune
 
       typedef typename DomainFunctionType::DiscreteFunctionSpaceType DiscreteFunctionSpaceType;
 
-      explicit DGHelmholtzOperator ( SpaceOperator &spaceOp )
+      explicit DGHelmholtzOperator ( SpaceOperatorType &spaceOp )
       : spaceOp_( spaceOp ),
         lambda_( 0 ),
         wTmp_( "DGHelmholtzOperator temporary", space() )
@@ -86,30 +88,33 @@ namespace Dune
         w.assign( u );
         if( lambda() != 0.0 )
         {
-          spaceOp_( u, wTmp_ );
+          spaceOperator()( u, wTmp_ );
           w.axpy( -lambda(), wTmp_ );
         }
       }
 
       void jacobian ( const DomainFunctionType &u, JacobianOperatorType &jOp ) const
       {
-        spaceOp_.jacobian( u, jOp.jacobianOp_ );
+        spaceOperator().jacobian( u, jOp.jacobianOp_ );
         jOp.setLambda( lambda() );
       }
 
       const double &lambda () const { return lambda_; }
       void setLambda ( double lambda ) { lambda_ = lambda; }
 
-      void setTime ( double time ) { spaceOp_.setTime( time ); }
+      void setTime ( double time ) { spaceOperator().setTime( time ); }
 
-      const DiscreteFunctionSpaceType &space () const { return spaceOp_.space(); }
+      const DiscreteFunctionSpaceType &space () const { return spaceOperator().space(); }
 
       void initializeTimeStepSize ( const DomainFunctionType &u ) const
       {
-        spaceOp_( u, wTmp_ );
+        spaceOperator()( u, wTmp_ );
       }
 
-      double timeStepEstimate () const { return spaceOp_.timeStepEstimate(); }
+      double timeStepEstimate () const { return spaceOperator().timeStepEstimate(); }
+
+      const SpaceOperatorType &spaceOperator () const { return spaceOp_; }
+      SpaceOperatorType &spaceOperator () { return spaceOp_; }
 
     protected:
       SpaceOperator &spaceOp_;
