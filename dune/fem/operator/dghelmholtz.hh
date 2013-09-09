@@ -39,13 +39,14 @@ namespace Dune
       void operator() ( const DomainFunctionType &u, RangeFunctionType &w ) const
       {
         w.assign( u );
-        if( lambda_ != 0.0 )
+        if( lambda() != 0.0 )
         {
           jacobianOp_( u, wTmp_ );
-          w.axpy( -lambda_, wTmp_ );
+          w.axpy( -lambda(), wTmp_ );
         }
       }
 
+      const double &lambda () const { return lambda_; }
       void setLambda ( double lambda ) { lambda_ = lambda; }
 
     protected:
@@ -83,20 +84,22 @@ namespace Dune
       void operator() ( const DomainFunctionType &u, RangeFunctionType &w ) const
       {
         w.assign( u );
-        if( lambda_ != 0.0 )
+        if( lambda() != 0.0 )
         {
           spaceOp_( u, wTmp_ );
-          w.axpy( -lambda_, wTmp_ );
+          w.axpy( -lambda(), wTmp_ );
         }
       }
 
       void jacobian ( const DomainFunctionType &u, JacobianOperatorType &jOp ) const
       {
         spaceOp_.jacobian( u, jOp.jacobianOp_ );
-        jOp.setLambda( lambda_ );
+        jOp.setLambda( lambda() );
       }
 
+      const double &lambda () const { return lambda_; }
       void setLambda ( double lambda ) { lambda_ = lambda; }
+
       void setTime ( double time ) { spaceOp_.setTime( time ); }
 
       const DiscreteFunctionSpaceType &space () const { return spaceOp_.space(); }
