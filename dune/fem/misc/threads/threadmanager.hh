@@ -94,12 +94,12 @@ namespace Dune
           return mg ;
         }
 
-        inline void setThreadNumber(  const pthread_t& theadId, const int threadNum )
+        inline void setThreadNumber(  const pthread_t& threadId, const int threadNum )
         {
           assert( isMaster() );
           // thread number 0 is reserved for the master thread 
           assert( threadNum > 0 );
-          idmap_[ theadId ] = threadNum ;
+          idmap_[ threadId ] = threadNum ;
         }
 
         inline void setMaxThreads( const int maxThreads ) 
