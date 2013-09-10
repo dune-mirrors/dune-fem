@@ -90,6 +90,14 @@ namespace Dune
           *dit = RangeFieldType( 0 );
       }
 
+      template< class Functor >
+      void forEach ( const Functor &functor )
+      {
+        typedef typename std::vector< LocalBlockType >::iterator Iterator;
+        for( Iterator dit = diagonal_.begin(); dit != diagonal_.end(); ++dit )
+          functor( *dit );
+      }
+
       void invert ()
       {
         typedef typename std::vector< LocalBlockType >::iterator Iterator;
