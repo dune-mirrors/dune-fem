@@ -3,12 +3,14 @@
 
 #include <vector>
 
+#include <dune/common/array.hh>
+
 #include "streams.hh"
 
 namespace Dune
 {
 
-  namespace Fem 
+  namespace Fem
   {
 
     template< class Traits >
@@ -19,7 +21,7 @@ namespace Dune
       out.writeDouble( value );
       return out;
     }
-    
+
     template< class Traits >
     inline OutStreamInterface< Traits > &
       operator<< ( OutStreamInterface< Traits > &out,
@@ -64,7 +66,7 @@ namespace Dune
       out.writeString( s );
       return out;
     }
-    
+
     template< class Traits >
     inline OutStreamInterface< Traits > &
       operator<< ( OutStreamInterface< Traits > &out,
@@ -74,17 +76,17 @@ namespace Dune
       return out;
     }
 
-    template <class ulongint, class uint64>  
-    struct SelectUnsignedLongInteger 
+    template <class ulongint, class uint64>
+    struct SelectUnsignedLongInteger
     {
-      // select uint64_t int 
+      // select uint64_t int
       typedef ulongint UnsignedLongIntType;
 
       template < class Traits >
       static void write( OutStreamInterface< Traits > &out,
-                         const UnsignedLongIntType& value ) 
+                         const UnsignedLongIntType& value )
       {
-        // in case uint64_t int and uint64_t are not the same 
+        // in case uint64_t int and uint64_t are not the same
         // convert long to uint64_t, there will be no information loss
         assert( sizeof(ulongint) <= sizeof(uint64) );
         uint64 value64 = value ;
@@ -93,31 +95,31 @@ namespace Dune
 
       template < class Traits >
       static void read( InStreamInterface< Traits > &in,
-                        UnsignedLongIntType& value ) 
+                        UnsignedLongIntType& value )
       {
         assert( sizeof(ulongint) <= sizeof(uint64) );
-        // always read uint64_t int as uin64_t, since it is always written this way 
-        uint64 value64; 
+        // always read uint64_t int as uin64_t, since it is always written this way
+        uint64 value64;
         in.readUnsignedInt64( value64 );
         value = value64;
       }
     };
 
-    //- in case uint64_t int and uint64_t are the same, do nothing 
-    template <class ulongint>  
+    //- in case uint64_t int and uint64_t are the same, do nothing
+    template <class ulongint>
     struct SelectUnsignedLongInteger< ulongint, ulongint >
     {
       struct UnsignedLongIntType {};
       template < class Traits >
       static void write( OutStreamInterface< Traits > &out,
-                         const UnsignedLongIntType value ) 
+                         const UnsignedLongIntType value )
       {
         DUNE_THROW(NotImplemented,"method not implemented");
       }
 
       template < class Traits >
       static void read( InStreamInterface< Traits > &in,
-                        UnsignedLongIntType& value ) 
+                        UnsignedLongIntType& value )
       {
         DUNE_THROW(NotImplemented,"method not implemented");
       }
@@ -141,6 +143,15 @@ namespace Dune
       return out;
     }
 
+    template< class Traits, class T, std::size_t N >
+    inline OutStreamInterface< Traits > &
+    operator<< ( OutStreamInterface< Traits > &out, const Dune::array< T, N > &value )
+    {
+      for( std::size_t i = 0; i < N; ++i )
+        out << value[ i ];
+      return out;
+    }
+
     template< class Traits, class T, class A >
     inline OutStreamInterface< Traits > &
       operator<< ( OutStreamInterface< Traits > &out,
@@ -161,7 +172,7 @@ namespace Dune
       in.readDouble( value );
       return in;
     }
-    
+
     template< class Traits >
     inline InStreamInterface< Traits > &
       operator>> ( InStreamInterface< Traits > &in,
@@ -170,7 +181,7 @@ namespace Dune
       in.readFloat( value );
       return in;
     }
-    
+
     template< class Traits >
     inline InStreamInterface< Traits > &
       operator>> ( InStreamInterface< Traits > &in,
@@ -179,7 +190,7 @@ namespace Dune
       in.readInt( value );
       return in;
     }
-    
+
     template< class Traits >
     inline InStreamInterface< Traits > &
       operator>> ( InStreamInterface< Traits > &in,
@@ -197,7 +208,7 @@ namespace Dune
       in.readBool( value );
       return in;
     }
-    
+
     template< class Traits >
     inline InStreamInterface< Traits > &
       operator>> ( InStreamInterface< Traits > &in,
@@ -206,7 +217,7 @@ namespace Dune
       in.readString( s );
       return in;
     }
-    
+
     template< class Traits >
     inline InStreamInterface< Traits > &
       operator>> ( InStreamInterface< Traits > &in,
@@ -234,21 +245,30 @@ namespace Dune
       return in;
     }
 
+    template< class Traits, class T, std::size_t N >
+    inline InStreamInterface< Traits > &
+    operator<< ( InStreamInterface< Traits > &in, Dune::array< T, N > &value )
+    {
+      for( std::size_t i = 0; i < N; ++i )
+        in >> value[ i ];
+      return in;
+    }
+
     template< class Traits, class T, class A >
     inline InStreamInterface< Traits > &
       operator>> ( InStreamInterface< Traits > &in,
                    std::vector< T, A > & value )
     {
       size_t size = 0;
-      in >> size;    
+      in >> size;
       value.resize( size );
       for( size_t i = 0; i < size; ++i )
         in >> value[ i ];
       return in;
     }
 
-  } // Namespace Fem   
+  } // namespace Fem
 
-} // namespace Dune 
+} // namespace Dune
 
 #endif // #ifndef DUNE_FEM_STREAMS_INLINE_HH
