@@ -44,7 +44,6 @@ namespace Dune
 
     private:
       static const int localBlockSize = DomainSpaceType::localBlockSize;
-      typedef Dune::FieldMatrix< RangeFieldType, localBlockSize, localBlockSize > LocalBlockType;
 
       class LocalMatrixTraits;
       class LocalMatrix;
@@ -55,6 +54,8 @@ namespace Dune
       typedef LocalMatrixWrapper< LocalMatrixStackType > LocalMatrixType;
 
       typedef ColumnObject< ThisType > LocalColumnObjectType;
+
+      typedef Dune::FieldMatrix< RangeFieldType, localBlockSize, localBlockSize > LocalBlockType;
 
       BlockDiagonalLinearOperator ( const std::string &name,
                                     const DomainSpaceType &domainSpace,
