@@ -52,13 +52,17 @@ namespace Dune
        */
       virtual void operator() ( const double *u, double *f ) const = 0;
 
-      /** \brief application operator to apply right hand side 
+      /** \brief apply limiter to u and store result in f 
           \param u  argument, u 
           \param f  destination, f(u)
        */
-      virtual void limit ( const double *u, double *f ) const = 0;
+      virtual void limit ( const double *u, double *f ) const { }
 
-      virtual bool hasLimiter () const = 0 ;
+      /** \brief return true if limit method is implemented 
+       
+          \return true if limit is implemented 
+       */
+      virtual bool hasLimiter () const { return false ; }
 
       /** \brief set time for operators 
           \param time current time of evaluation 
