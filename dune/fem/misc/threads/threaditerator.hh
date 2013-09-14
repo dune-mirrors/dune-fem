@@ -189,6 +189,8 @@ namespace Dune
               std::cout << "ThreadIterator: T[" << i << "] = " << nElems[ i ] << std::endl;
           }
 
+          checkConsistency( iterSize );
+
           //for(size_t i = 0; i<size; ++i ) 
           //  std::cout << threadNum_[ i ] << std::endl;
         }
@@ -248,6 +250,28 @@ namespace Dune
           ++count ;
         return count ;
       }
+
+#ifdef USE_SMP_PARALLEL
+      // check that we have a non-overlapping iterator decomposition
+      void checkConsistency( const size_t totalElements ) 
+      {
+#ifndef NDEBUG
+        const int maxThreads = ThreadManager :: maxThreads() ;
+        std::set< int > indices ;
+        for( int thread = 0; thread < maxThreads; ++ thread ) 
+        {
+          const IteratorType end = iterators_[ thread+1 ];
+          for( IteratorType it = iterators_[ thread ]; it != end; ++it ) 
+          {
+            const int idx = gridPart_.indexSet().index( *it );
+            assert( indices.find( idx ) == indices.end() ) ;
+            indices.insert( idx );
+          }
+        }
+        assert( indices.size() == totalElements );
+#endif
+      }
+#endif
     };
 
     /** \brief Storage of thread iterators */
