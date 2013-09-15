@@ -111,6 +111,16 @@ namespace Dune
       ElementQuadrature( const EntityType &entity, int order )
       : BaseType( entity.type(), order )
       {}
+
+      /*! \brief constructor
+       *
+       *  \param[in]  type    geometry type, on whose reference element the quadratre
+       *                      lives
+       *  \param[in]  order   desired minimal order of the quadrature
+       */
+      ElementQuadrature( const GeometryType &type, int order )
+      : BaseType( type, order )
+      {}
       
       /** \brief copy constructor
        *
