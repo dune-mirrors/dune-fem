@@ -80,6 +80,11 @@ namespace Dune
         return format;
       }
 
+      virtual bool conformingoutput () const
+      {
+        return Parameter::getValue< bool >( "fem.io.conforming", false );
+      }
+
       //! use online grape display (fem.io.grapedisplay)
       virtual bool grapedisplay () const
       {
@@ -391,6 +396,7 @@ namespace Dune
       int saveCount_;
       // grape, vtk or ...
       OutputFormat outputFormat_;
+      bool conformingOutput_;
       mutable std::ofstream sequence_;
       mutable std::ofstream pvd_;
       const DataOutputParameters* param_;
@@ -469,8 +475,9 @@ namespace Dune
     struct DataOutput< GridImp, DataImp >::VTKOutputerDG
     {
       //! Constructor
-      explicit VTKOutputerDG ( VTKOut &vtkOut )
-      : vtkOut_( vtkOut )
+      explicit VTKOutputerDG ( VTKOut &vtkOut, bool conforming = false )
+      : vtkOut_( vtkOut ),
+        conforming_( conforming )
       {}
 
       //! Applies the setting on every DiscreteFunction/LocalFunction pair.
@@ -479,16 +486,10 @@ namespace Dune
       {
         if( df ) 
         {
-          if(df->space().order() > 0)
-          {
-            vtkOut_.addVertexData( *df );
-            // vtkOut_.addVectorVertexData( *df );
-          }
-          else 
-          {
+          if( conforming_ || (df->space().order() == 0) )
             vtkOut_.addCellData( *df ); 
-            // vtkOut_.addVectorCellData( *df );
-          }
+          else
+            vtkOut_.addVertexData( *df );
         }
       }
 
@@ -501,6 +502,7 @@ namespace Dune
 
     private:
       VTKOut &vtkOut_;
+      bool conforming_;
     };
 #endif // #if USE_VTKWRITER
 
@@ -630,6 +632,7 @@ namespace Dune
       saveStep_(-1),
       saveCount_(-1),
       outputFormat_(vtkvtx),
+      conformingOutput_( false ),
       param_(parameter.clone())
     {
       // initialize class 
@@ -642,15 +645,16 @@ namespace Dune
       ::DataOutput ( const GridType &grid, OutPutDataType &data,
                      const TimeProviderBase &tp,
                      const DataOutputParameters &parameter )
-      : grid_(grid),
-        data_(data),
-        writeStep_(0),
-        writeCalls_(0),
-        saveTime_(0),
-        saveStep_(-1),
-        saveCount_(-1),
-        outputFormat_(vtkvtx),
-        param_(parameter.clone())
+    : grid_(grid),
+      data_(data),
+      writeStep_(0),
+      writeCalls_(0),
+      saveTime_(0),
+      saveStep_(-1),
+      saveCount_(-1),
+      outputFormat_(vtkvtx),
+      conformingOutput_( false ),
+      param_(parameter.clone())
     {
       // initialize class 
       init( parameter );
@@ -711,6 +715,8 @@ namespace Dune
         default:
           DUNE_THROW(NotImplemented,"DataOutput::init: wrong output format");
       }
+
+      conformingOutput_ = parameter.conformingoutput();
 
       grapeDisplay_ = parameter.grapedisplay();
 
@@ -869,11 +875,11 @@ namespace Dune
         GridPartGetterType gp( grid_, data_ );
 
         // create vtk output handler 
-        typedef VTKIO < typename GridPartGetterType :: GridPartType > VTKIOType; 
-        VTKIOType vtkio ( gp.gridPart() , VTK::nonconforming );
+        typedef VTKIO< typename GridPartGetterType::GridPartType > VTKIOType;
+        VTKIOType vtkio( gp.gridPart(), conformingOutput_ ? VTK::conforming : VTK::nonconforming );
 
-        // add all functions 
-        VTKOutputerDG< VTKIOType > io( vtkio );
+        // add all functions
+        VTKOutputerDG< VTKIOType > io( vtkio, conformingOutput_ );
         io.forEach( data_ );
 
         // write all data 
@@ -898,7 +904,7 @@ namespace Dune
         VTKIOType vtkio ( gp.gridPart(), param_->subsamplingLevel() );
 
         // add all functions 
-        VTKOutputerDG< VTKIOType > io( vtkio );
+        VTKOutputerDG< VTKIOType > io( vtkio, conformingOutput_ );
         io.forEach( data_ );
 
         // write all data 
