@@ -337,7 +337,7 @@ namespace Dune
       ~CommunicationManagerList() 
       {
         // delete all entries 
-        while( ! objList_.size() == 0 )
+        while( objList_.size() > 0 )
         {
           CommObjIFType * obj = objList_.back();
           objList_.pop_back();
