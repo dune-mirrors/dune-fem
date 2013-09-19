@@ -399,14 +399,11 @@ namespace Dune
     template< int N >
     struct IOTuple< Tuple >::AddToDisplayOrRemove
     {
-      // revert tuple order to reverse deletion to creation 
-      static const int pos = tuple_size< Tuple >::value - 1 - N;
-
       template< class Disp, class DINFO >
       static void apply ( Disp &disp, const DINFO *&dinf, const double &time, Tuple &tuple )
       {
         if( dinf->comp )
-          AddToDisplay< pos >::apply( disp, dinf, time, tuple );
+          AddToDisplay< N >::apply( disp, dinf, time, tuple );
         else
           // RemoveData reverts N itself
           RemoveData< N >::apply( tuple );
