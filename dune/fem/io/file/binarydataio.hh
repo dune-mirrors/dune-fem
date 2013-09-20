@@ -4,7 +4,6 @@
 #warning "BinaryDataIO is deprecated and will be removed after dune-fem 1.4."
 
 //- Dune includes 
-#include <dune/common/misc.hh>
 #include <dune/grid/common/capabilities.hh>
 #include <dune/grid/common/grid.hh>
 #include <dune/grid/io/file/dgfparser/dgfparser.hh>
@@ -27,8 +26,11 @@ namespace Dune
                                         int ntime,
                                         int precision = 6)
     {
-      const char * fakePath = "";
-      return genFilename(fakePath,fn,ntime,precision);
+      std::ostringstream name;
+      name << fn << std::setw(precision) << std::setfill('0') << ntime;
+
+      // Return the string corresponding to the stringstream
+      return name.str();
     }
 
 
