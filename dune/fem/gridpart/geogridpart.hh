@@ -3,6 +3,7 @@
 
 #include <dune/fem/gridpart/common/gridpart.hh>
 #include <dune/fem/gridpart/common/deaditerator.hh>
+#include <dune/fem/gridpart/common/entitysearch.hh>
 #include <dune/fem/gridpart/common/metatwistutility.hh>
 #include <dune/fem/gridpart/geogridpart/capabilities.hh>
 #include <dune/fem/gridpart/geogridpart/datahandle.hh>
@@ -300,6 +301,26 @@ namespace Dune
       {
         return HostAccessType::gridEntity( entity.impl().hostEntity() );
       }
+    };
+
+
+
+    // EntitySearch for GeoGridPart
+    // ----------------------------
+
+    template< class CoordFunction, int codim, PartitionIteratorType partition >
+    class EntitySearch< GeoGridPart< CoordFunction >, codim, partition >
+    : public DefaultEntitySearch< GeoGridPart< CoordFunction >, codim, partition >
+    {
+      typedef EntitySearch< GeoGridPart< CoordFunction >, codim, partition > ThisType;
+      typedef DefaultEntitySearch< GeoGridPart< CoordFunction >, codim, partition > BaseType;
+
+    public:
+      typedef typename BaseType::GridPartType GridPartType;
+
+      explicit EntitySearch ( const GridPartType &gridPart )
+      : BaseType( gridPart )
+      {}
     };
 
   } // namespace Fem

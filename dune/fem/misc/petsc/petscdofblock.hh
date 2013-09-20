@@ -296,7 +296,7 @@ namespace Dune
       void decrement ()
       {
         assert( blockIndex_ > 0 );
-        if( indexInBlock_ = 0 )
+        if( indexInBlock_ == 0 )
         {
           indexInBlock_ = DofBlockType::blockSize - 1;
           --blockIndex_;

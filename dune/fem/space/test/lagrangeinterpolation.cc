@@ -459,7 +459,7 @@ try
   }
 
   int ml = atoi( argv[1] );
-  double error[ ml ];
+  std::vector< double > error( ml );
 
   std::ostringstream gridFilenameStream;
   gridFilenameStream << MyGridType::dimensionworld << "dgrid.dgf";
