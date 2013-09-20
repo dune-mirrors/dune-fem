@@ -8,7 +8,7 @@
 #include <rpc/xdr.h>
 #include <cassert>
 
-#include <dune/common/misc.hh>
+#include <dune/common/exceptions.hh>
 
 /** @file
  @brief Provides default empty index set class for persistent index sets. 
@@ -93,68 +93,15 @@ namespace Dune
       //! write index set to xdr file 
       bool write_xdr ( const std::string &filename, int timestep )
       {
-        FILE  *file;
-        XDR   xdrs;
-        const char *path = "";
-
-        std::string fnstr  = genFilename(path,filename, timestep);
-        const char * fn = fnstr.c_str();
-        file = fopen(fn, "wb");
-        if (!file)
-        {
-            std::cerr << "\aERROR in DefaultGridIndexSet::write_xdr(..): could not open <"
-                      << filename << ">!" << std::endl;
-          return false;
-        }
-
-        xdrstdio_create(&xdrs, file, XDR_ENCODE);
-        this->processXdr(&xdrs);
-
-        xdr_destroy(&xdrs);
-        fclose(file);
-
-        return true;
+        DUNE_THROW(Dune::NotImplemented,"write_xdr is deprecated");
+        return false;
       }
       
       //! read index set to xdr file 
       bool read_xdr ( const std::string &filename, int timestep )
       {
-        FILE   *file;
-        XDR     xdrs;
-        const char *path = "";
-
-        std::string fnstr = genFilename(path,filename, timestep);
-        const char * fn  = fnstr.c_str();
-        std::cout << "Reading <" << fn << "> \n";
-        file = fopen(fn, "rb");
-        if(!file)
-        {
-          std::cerr << "\aERROR in DefaultGridIndexSet::read_xdr(..): could not open <" 
-                    << filename << ">!" << std::endl;
-          return(false);
-        }
-
-        // read xdr 
-        xdrstdio_create(&xdrs, file, XDR_DECODE);
-        this->processXdr(&xdrs);
-
-        xdr_destroy(&xdrs);
-        fclose(file);
-        return true;
-      }
-
-    protected: 
-      // read/write from/to xdr stream 
-      bool processXdr( XDR *xdrs )
-      {
-        int type = myType;
-        xdr_int ( xdrs, &type);
-        if(type != myType)
-        {
-          std::cerr << "\nERROR: DefaultGridIndex: wrong type choosen! \n\n";
-          assert(type == myType);
-        }
-        return true;
+        DUNE_THROW(Dune::NotImplemented,"read_xdr is deprecated");
+        return false;
       }
     };
 
