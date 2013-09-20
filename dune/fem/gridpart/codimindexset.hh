@@ -5,7 +5,6 @@
 #include <set>
 
 //- Dune includes 
-#include <dune/common/misc.hh>
 #include <dune/fem/space/common/arrays.hh>
 #include <dune/fem/gridpart/defaultindexsets.hh>
 
