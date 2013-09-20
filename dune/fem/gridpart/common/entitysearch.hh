@@ -33,7 +33,6 @@ namespace Dune
       typedef typename GridPart::template Codim< codimension >::GeometryType GeometryType;
       typedef typename GridPart::template Codim< codimension >::template Partition< partition >::IteratorType IteratorType;
 
-
       typedef typename GeometryType::ctype ctype;
       typedef typename GeometryType::LocalCoordinate LocalCoordinateType;
 
