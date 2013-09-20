@@ -366,12 +366,15 @@ namespace Dune
     template< int N >
     struct IOTuple< Tuple >::AddToDisplay
     {
-      typedef typename TypeTraits< typename tuple_element< N, Tuple >::type >::PointeeType DiscreteFunction;
+      // revert tuple order to reverse deletion to creation 
+      static const int pos = tuple_size< Tuple >::value - 1 - N;
+
+      typedef typename TypeTraits< typename tuple_element< pos, Tuple >::type >::PointeeType DiscreteFunction;
 
       template< class Disp, class DINFO >
       static void apply ( Disp &disp, const DINFO *&dinf, const double &time, Tuple &tuple )
       {
-        DiscreteFunction *df = Dune::get< N >( tuple );
+        DiscreteFunction *df = Dune::get< pos >( tuple );
         if( df ) 
         {
           assert( dinf->comp );
@@ -383,7 +386,7 @@ namespace Dune
       template< class Disp >
       static void apply ( Disp &disp, Tuple &tuple )
       {
-        DiscreteFunction *df = Dune::get< N >( tuple );
+        DiscreteFunction *df = Dune::get< pos >( tuple );
         if( df ) 
         {
           disp.addData( *df );
@@ -402,6 +405,7 @@ namespace Dune
         if( dinf->comp )
           AddToDisplay< N >::apply( disp, dinf, time, tuple );
         else
+          // RemoveData reverts N itself
           RemoveData< N >::apply( tuple );
       }
     };
@@ -411,20 +415,25 @@ namespace Dune
     template< int N >
     struct IOTuple< Tuple >::RemoveData
     {
-      typedef typename TypeTraits< typename tuple_element< N, Tuple >::type >::PointeeType DiscreteFunction;
+      // revert tuple order to reverse deletion to creation 
+      static const int pos = tuple_size< Tuple >::value - 1 - N;
+      typedef typename TypeTraits< typename tuple_element< pos, Tuple >::type >::PointeeType DiscreteFunction;
       typedef typename DiscreteFunction::DiscreteFunctionSpaceType DiscreteFunctionSpace;
       typedef typename DiscreteFunctionSpace::GridPartType GridPart;
 
       static void apply ( Tuple &tuple )
       {
-        DiscreteFunction *&df = Dune::get< N >( tuple );
-        const GridPart *gridPart = &(df->space().gridPart());
-        const DiscreteFunctionSpace *space = &(df->space());
+        DiscreteFunction *&df = Dune::get< pos >( tuple );
+        if( df ) 
+        {
+          const DiscreteFunctionSpace *space = &(df->space());
+          const GridPart *gridPart = &(space->gridPart());
 
-        delete df;
-        delete space;
-        delete gridPart;
-        df = 0;
+          delete df;
+          delete space;
+          delete gridPart;
+          df = 0;
+        }
       }
     };
 

@@ -3,6 +3,7 @@
 
 #include <dune/fem/gridpart/common/gridpart.hh>
 #include <dune/fem/gridpart/common/deaditerator.hh>
+#include <dune/fem/gridpart/common/entitysearch.hh>
 #include <dune/fem/gridpart/common/metatwistutility.hh>
 #include <dune/fem/gridpart/idgridpart/capabilities.hh>
 #include <dune/fem/gridpart/idgridpart/datahandle.hh>
@@ -135,6 +136,8 @@ namespace Dune
       typedef typename IdGridPartTraits< HostGridPart >::GridFamily GridFamily;
 
     public:
+      typedef HostGridPart HostGridPartType;
+
       typedef typename BaseType::GridType GridType;
       typedef typename BaseType::IndexSetType IndexSetType;
       typedef typename BaseType::IntersectionIteratorType IntersectionIteratorType;
@@ -151,14 +154,14 @@ namespace Dune
         indexSet_( hostGridPart_.indexSet() )
       {}
 
-      explicit IdGridPart ( const HostGridPart &hostGridPart )
+      explicit IdGridPart ( const HostGridPartType &hostGridPart )
       : hostGridPart_( hostGridPart ),
         indexSet_( hostGridPart_.indexSet() )
       {}
 
       const GridType &grid () const
       {
-        return hostGridPart_.grid();
+        return hostGridPart().grid();
       }
 
       GridType &grid ()
@@ -182,7 +185,7 @@ namespace Dune
       typename Codim< codim >::template Partition< pitype >::IteratorType
       begin () const 
       {
-        return IdIterator< codim, pitype, const GridFamily >( hostGridPart_.template begin< codim, pitype >() );
+        return IdIterator< codim, pitype, const GridFamily >( hostGridPart().template begin< codim, pitype >() );
       }
 
       template< int codim >
@@ -196,30 +199,30 @@ namespace Dune
       typename Codim< codim >::template Partition< pitype >::IteratorType
       end () const 
       { 
-        return IdIterator< codim, pitype, const GridFamily >( hostGridPart_.template end< codim, pitype >() );
+        return IdIterator< codim, pitype, const GridFamily >( hostGridPart().template end< codim, pitype >() );
       }
 
       int level () const 
       {
-        return hostGridPart_.level();
+        return hostGridPart().level();
       }
 
       IntersectionIteratorType ibegin ( const typename Codim< 0 >::EntityType &entity ) const
       {
-        return IdIntersectionIterator< const GridFamily >( hostGridPart_.ibegin( entity.impl().hostEntity() ) );
+        return IdIntersectionIterator< const GridFamily >( hostGridPart().ibegin( entity.impl().hostEntity() ) );
       }
       
       IntersectionIteratorType iend ( const typename Codim< 0 >::EntityType &entity ) const 
       {
-        return IdIntersectionIterator< const GridFamily >( hostGridPart_.iend( entity.impl().hostEntity() ) );
+        return IdIntersectionIterator< const GridFamily >( hostGridPart().iend( entity.impl().hostEntity() ) );
       }
 
       int boundaryId ( const IntersectionType &intersection ) const
       {
-        return hostGridPart_.boundaryId( intersection.impl().hostIntersection() );
+        return hostGridPart().boundaryId( intersection.impl().hostIntersection() );
       }
 
-      const CollectiveCommunicationType &comm () const { return hostGridPart_.comm(); }
+      const CollectiveCommunicationType &comm () const { return hostGridPart().comm(); }
 
       template< class DataHandle, class Data >
       void communicate ( CommDataHandleIF< DataHandle, Data > &handle,
@@ -227,7 +230,7 @@ namespace Dune
       {
         typedef CommDataHandleIF< DataHandle, Data >  HostHandleType;
         IdDataHandle< GridFamily, HostHandleType > handleWrapper( handle );
-        hostGridPart_.communicate( handleWrapper, iftype, dir );
+        hostGridPart().communicate( handleWrapper, iftype, dir );
       }
 
       template < class EntitySeed >
@@ -235,7 +238,7 @@ namespace Dune
       entityPointer ( const EntitySeed &seed ) const
       {
         typedef typename Codim< EntitySeed::codimension >::EntityPointerType::Implementation EntityPointerImp;
-        return EntityPointerImp( hostGridPart_.entityPointer( seed ) );
+        return EntityPointerImp( hostGridPart().entityPointer( seed ) );
       }
 
       // convert a grid entity to a grid part entity ("Gurke!")
@@ -251,8 +254,10 @@ namespace Dune
         return EntityObj( Implementation( entity ) );
       }
 
+      const HostGridPartType &hostGridPart () const { return hostGridPart_; }
+
     private:
-      HostGridPart hostGridPart_;
+      HostGridPartType hostGridPart_;
       IndexSetType indexSet_;
     };
 
@@ -272,6 +277,38 @@ namespace Dune
       {
         return HostAccessType::gridEntity( entity.impl().hostEntity() );
       }
+    };
+
+
+
+    // EntitySearch for IdGridPart
+    // ---------------------------
+
+    template< class HostGridPart, int codim, PartitionIteratorType partition >
+    class EntitySearch< IdGridPart< HostGridPart >, codim, partition >
+    {
+      typedef EntitySearch< IdGridPart< HostGridPart >, codim, partition > ThisType;
+
+    public:
+      typedef IdGridPart< HostGridPart > GridPartType;
+
+      typedef typename GridPartType::template Codim< codim >::EntityType EntityType;
+      typedef typename GridPartType::template Codim< codim >::EntityPointerType EntityPointerType;
+
+      typedef typename EntityType::Geometry::GlobalCoordinate GlobalCoordinateType;
+
+      explicit EntitySearch ( const GridPartType &gridPart )
+      : hostEntitySearch_( gridPart.hostGridPart() )
+      {}
+
+      EntityPointerType operator() ( const GlobalCoordinateType &x ) const
+      {
+        typedef typename EntityPointerType::Implementation EntityPointerImpl;
+        return EntityPointerImpl( hostEntitySearch_( x ) );
+      }
+
+    private:
+      const EntitySearch< HostGridPart > hostEntitySearch_;
     };
 
   } // namespace Fem

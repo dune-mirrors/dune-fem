@@ -169,31 +169,14 @@ namespace Dune
     inline void DiscreteFunctionDefault< Traits >
       ::evaluateGlobal ( const DomainType &x, Functor functor ) const
     {
-      typedef typename DiscreteFunctionSpaceType::IteratorType IteratorType;
-      typedef typename EntityType::Geometry GeometryType;
-      typedef typename GeometryType::LocalCoordinate LocalCoordinateType;
+      typedef typename DiscreteFunctionSpaceType::GridPartType GridPartType;
 
-      const int dimLocal = LocalCoordinateType::dimension;
-      
-      const DiscreteFunctionSpaceType &space = BaseType::space();
-      const IteratorType end = space.end();
-      for( IteratorType it = space.begin(); it != end; ++it )
-      {
-        const EntityType &entity = *it;
-        const GeometryType &geometry = entity.geometry();
+      EntitySearch< GridPartType, EntityType::codimension > entitySearch( BaseType::space().gridPart() );
+      const typename EntityType::EntityPointer entityPtr = entitySearch( x );
 
-        const Dune::ReferenceElement< DomainFieldType, dimLocal > &refElement
-          = Dune::ReferenceElements< DomainFieldType, dimLocal >::general( geometry.type() );
-
-        const LocalCoordinateType xlocal = geometry.local( x );
-        if( refElement.checkInside( xlocal ) )
-        {
-          const LocalFunctionType localFunction = BaseType::localFunction( entity );
-          functor( xlocal, localFunction );
-          return;
-        }
-      }
-      DUNE_THROW( RangeError, "DiscreteFunctionDefault::evaluate: x is not within domain." );
+      const EntityType &entity = *entityPtr;
+      const typename EntityType::Geometry geometry = entity.geometry();
+      functor( geometry.local( x ), BaseType::localFunction( entity ) );
     }
 
 

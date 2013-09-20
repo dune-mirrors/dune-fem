@@ -68,9 +68,15 @@ namespace Dune
       if( !pipe )
         DUNE_THROW( IOError, "Unable to execute '" << command << "'." );
 
-      char buffer[128];
-      while( fgets( buffer, 128, pipe) )
-        returnString += buffer;
+      std::size_t size;
+      do
+      {
+        char buffer[ 4096 ];
+        size = fread( buffer, sizeof( char ), sizeof( buffer ) / sizeof( char ), pipe );
+        returnString.append( buffer, size );
+      }
+      while( size > std::size_t( 0 ) );
+
       const int status = pclose( pipe );
       if( status != 0 )
         DUNE_THROW( IOError, "Command '" << command << "' returned unsuccessfully (" << status << ")." );

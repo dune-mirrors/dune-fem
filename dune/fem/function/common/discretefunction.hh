@@ -12,6 +12,7 @@
 #include <dune/fem/function/common/function.hh>
 #include <dune/fem/function/common/scalarproducts.hh>
 #include <dune/fem/function/localfunction/wrapper.hh>
+#include <dune/fem/gridpart/common/entitysearch.hh>
 #include <dune/fem/io/file/persistencemanager.hh>
 #include <dune/fem/io/streams/asciistreams.hh>
 #include <dune/fem/io/streams/streams.hh>
