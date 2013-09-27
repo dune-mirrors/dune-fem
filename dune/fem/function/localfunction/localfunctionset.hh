@@ -33,7 +33,7 @@ namespace Dune
 
       //! \brief function space type
       typedef FunctionSpace< typename Entity::ctype, typename Range::value_type,
-                             Entity::dimensionworld, Range::dimension > FunctionSpaceType;
+                             Entity::Geometry::coordinatedim, Range::dimension > FunctionSpaceType;
       
       //! \brief domain type
       typedef typename FunctionSpaceType::DomainType DomainType;
