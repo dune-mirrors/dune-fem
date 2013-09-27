@@ -106,8 +106,6 @@ namespace Dune
         typedef typename DiscreteFunctionImp::LocalFunctionType LocalFuncType;
         typedef typename DiscreteFunctionSpaceType::GridPartType GridPartType;
         typedef typename DiscreteFunctionSpaceType::IteratorType Iterator;
-        typedef typename DiscreteFunctionSpaceType::BasisFunctionSetType BasisFunctionSetType ; 
-        typedef typename GridPartType::GridType GridType;
 
         typedef typename FunctionImp::LocalFunctionType LocalFType;
         
