@@ -66,7 +66,7 @@ namespace Dune
     public:
       //  slight misuse of struct ToLocalFunctionSpace!!!
       //! \brief type of function space
-      typedef typename ToLocalFunctionSpace< LocalFunctionSpaceType, EntityType :: dimworld >::Type FunctionSpaceType;
+      typedef typename ToLocalFunctionSpace< LocalFunctionSpaceType, EntityType :: Geometry :: coorddimension >::Type FunctionSpaceType;
 
       //! \brief range type
       typedef typename FunctionSpaceType::RangeType RangeType;

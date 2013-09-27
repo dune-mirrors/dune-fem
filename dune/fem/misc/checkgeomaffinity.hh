@@ -233,7 +233,7 @@ namespace Dune
             
         typedef typename IntersectionType :: Entity EntityType;
         typedef typename EntityType :: ctype ctype; 
-        enum { dimworld = EntityType :: dimensionworld }; 
+        enum { dimworld = EntityType :: Geometry :: coorddimension }; 
 
         // get reference normals 
         static const ReferenceNormals<ctype,dimworld> normals;
