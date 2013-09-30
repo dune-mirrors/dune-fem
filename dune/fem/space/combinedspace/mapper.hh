@@ -2,7 +2,7 @@
 #define DUNE_FEM_COMBINEDSPACE_MAPPER_HH
 
 //- Dune includes
-#include <dune/common/misc.hh>
+#include <dune/common/math.hh>
 
 //- Local includes
 #include <dune/fem/space/mapper/dofmapper.hh>

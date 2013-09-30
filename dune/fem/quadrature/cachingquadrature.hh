@@ -2,7 +2,7 @@
 #define DUNE_FEM_CACHINGQUADRATURE_HH
 
 //- Dune includes
-#include <dune/common/misc.hh>
+#include <dune/common/math.hh>
 
 //- Local includes
 #include "elementquadrature.hh"

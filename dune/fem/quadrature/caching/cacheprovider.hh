@@ -4,7 +4,7 @@
 #include <vector>
 #include <map>
 
-#include <dune/common/misc.hh>
+#include <dune/common/math.hh>
 #include <dune/common/version.hh>
 
 #include <dune/fem/gridpart/common/capabilities.hh>
