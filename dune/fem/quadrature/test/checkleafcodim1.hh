@@ -30,7 +30,7 @@ protected:
                     const int face, const bool neighbor, const bool output ) const
   {
     enum { dim = EntityType :: dimension };
-    typedef typename EntityType :: ctype ctype;
+    typedef typename EntityType :: Geometry :: ctype ctype;
 
     typedef FaceTopologyMapping<tetra> SimplexFaceMapping;
     typedef FaceTopologyMapping<hexa>  CubeFaceMapping;

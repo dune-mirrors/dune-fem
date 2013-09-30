@@ -232,7 +232,7 @@ namespace Dune
         if ( ! nit.type().isCube() ) return false;
             
         typedef typename IntersectionType :: Entity EntityType;
-        typedef typename EntityType :: ctype ctype; 
+        typedef typename EntityType :: Geometry :: ctype ctype; 
         enum { dimworld = EntityType :: Geometry :: coorddimension }; 
 
         // get reference normals 
