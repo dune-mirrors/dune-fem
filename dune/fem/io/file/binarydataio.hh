@@ -11,6 +11,7 @@
 
 #include <dune/fem/space/common/dofmanager.hh>
 #include <dune/fem/gridpart/defaultindexsets.hh>
+#include <dune/fem/io/file/iointerface.hh>
 #include <dune/fem/misc/gridname.hh> 
 
 //- Local includes 
@@ -19,20 +20,9 @@
 
 namespace Dune
 {
+
   namespace Fem 
   {
-
-    inline std::string generateFilename(const std::string& fn,
-                                        int ntime,
-                                        int precision = 6)
-    {
-      std::ostringstream name;
-      name << fn << std::setw(precision) << std::setfill('0') << ntime;
-
-      // Return the string corresponding to the stringstream
-      return name.str();
-    }
-
 
     ///////////////////////////////////////////////////
     //

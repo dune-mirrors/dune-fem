@@ -2,10 +2,12 @@
 #define DUNE_FEM_IOINTERFACE_HH
 
 //- system includes 
+#include <dirent.h>
 #include <iostream>
+#include <iomanip>
+#include <sstream>
 #include <sys/stat.h>  
 #include <sys/types.h>
-#include <dirent.h>
 
 
 //- Dune includes
@@ -39,6 +41,20 @@ namespace Dune
 
   namespace Fem 
   {
+
+    // generateFilename
+    // ----------------
+
+    inline std::string generateFilename ( const std::string &fn,
+                                          int ntime,
+                                          int precision = 6 )
+    {
+      std::ostringstream name;
+      name << fn << std::setw( precision ) << std::setfill( '0' ) << ntime;
+      return name.str();
+    }
+
+
 
     class TimeProviderBase;
 
@@ -302,7 +318,7 @@ namespace Dune
         std::string filename( copyPathToFilename( pathPrefix ));
 
         filename += dataPrefix;
-        std::string path = genFilename("",filename,step);
+        std::string path = generateFilename( filename, step );
 
         // create global path 
         createGlobalPath( comm, path );
@@ -335,7 +351,7 @@ namespace Dune
         std::string filename( copyPathToFilename( pathPrefix ));
 
         filename += dataPrefix;
-        std::string path = genFilename("",filename,step);
+        std::string path = generateFilename( filename, step );
 
         if( alsoUseRankPath ) 
         {
