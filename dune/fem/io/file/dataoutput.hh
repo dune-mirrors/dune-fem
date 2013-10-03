@@ -830,7 +830,7 @@ namespace Dune
       const bool parallel = (grid_.comm().size() > 1);
 
       // generate filename, with path only for serial run  
-      std::string name = genFilename( (parallel) ? "" : path_, datapref_, writeStep_ );
+      std::string name = generateFilename( (parallel ? path_ + "/" + datapref_ : datapref_), writeStep_ );
 
       // choose output format type (i.e. ascii or raw binary)
       VTK :: OutputType vtkOutputType = VTK :: appendedraw ;
@@ -925,7 +925,7 @@ namespace Dune
     inline std::string DataOutput< GridImp, DataImp >::writeGnuPlotOutput () const
     {
       // generate filename
-      std::string name = genFilename( path_, datapref_, writeStep_ );
+      std::string name = generateFilename( path_ + "/" + datapref_, writeStep_ );
       name += ".gnu";
       std::ofstream gnuout(name.c_str());
       gnuout << std::scientific << std::setprecision( 16 );
