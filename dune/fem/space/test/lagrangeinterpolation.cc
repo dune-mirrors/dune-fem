@@ -274,7 +274,7 @@ public:
         localFunction.evaluate( quadrature[qp], psi );
 
         for( int i = 0; i < DimRange; ++i )
-          error[ i ] += weight * SQR( phi[ i ] - psi[ i ] );
+          error[ i ] += weight * ((phi[ i ] - psi[ i ])*(phi[ i ] - psi[ i ]));
       }
     }
     
@@ -362,9 +362,9 @@ public:
         localFunction.jacobian( quadrature[ qp ], Dpsi );
 
         for( int i = 0; i < DimRange; ++i ) {
-          RangeFieldType localError = SQR( phi[ i ] - psi[ i ] );
+          RangeFieldType localError = (phi[ i ] - psi[ i ])*(phi[ i ] - psi[ i ]);
           for( int j = 0; j < DimDomain; ++j )
-            localError += SQR(Dphi[ i ][ j ] - Dpsi[ i ][ j ]);
+            localError += (Dphi[ i ][ j ] - Dpsi[ i ][ j ])*(Dphi[ i ][ j ] - Dpsi[ i ][ j ]);
           error[ i ] += weight * localError;
         }
       }
