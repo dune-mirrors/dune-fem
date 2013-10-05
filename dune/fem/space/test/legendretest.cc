@@ -244,15 +244,14 @@ public:
 	
 	tmp=0.0;
 
-	for(int i=0; i< dimDomain; ++i)
-	  {
-	    for(int j=0;j< dimRange; ++j)
-	      
-	      tmp[j]+=SQR(xi[j][i]-psi[j][i]);	
-	  }
+	for( int i = 0; i < dimDomain; ++i )
+        {
+          for( int j = 0; j < dimRange; ++j )
+            tmp[ j ] += (xi[ j ][ i ] - psi[ j ][ i ])*(xi[ j ][ i ] - psi[ j ][ i ]);
+        }
 
-	for(int i=0; i< dimRange; ++i)
-	  error[i] += weight * (SQR(ret[i] - phi[i])+tmp[i]);
+        for( int i = 0; i < dimRange; ++i )
+          error[ i ] += weight * ((ret[ i ] - phi[ i ])*(ret[ i ] - phi[ i ]) + tmp[ i ]);
       }
     }
     
@@ -293,8 +292,8 @@ template <class FunctionType>
        
 	lf.evaluate(quad[qP],phi);
 
-        for(int i=0; i< dimRange; ++i)
-          error[i] += weight * SQR(ret[i] - phi[i]);
+        for( int i = 0; i < dimRange; ++i )
+          error[ i ] += weight * ((ret[ i ] - phi[ i ])*(ret[ i ] - phi[ i ]));
       }
     }
     
