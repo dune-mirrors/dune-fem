@@ -6,8 +6,10 @@
 /dgl2projection_combined
 /dgl2projection_filtered
 /dgl2projection_fv
+/dgl2projection_hierarchiclegendre
 /dgl2projection_idgridpart
 /dgl2projection_legendre
+/dgl2projection_petscdiscretefunction
 /dgl2projection_vector
 /dgl2projection_vector_int
 /intersectionindexset
