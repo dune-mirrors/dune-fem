@@ -2,7 +2,7 @@
 #define DUNE_FEM_INTERSECTIONQUADRATURE_HH
 
 //- Dune includes
-#include <dune/common/misc.hh>
+#include <dune/common/math.hh>
 
 //- Local includes
 #include "elementquadrature.hh"

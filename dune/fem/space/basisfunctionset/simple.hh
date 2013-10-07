@@ -47,7 +47,7 @@ namespace Dune
       typedef typename FunctionSpaceType::HessianRangeType HessianRangeType;
 
       //! \brief type of reference element
-      typedef Dune::ReferenceElement< typename EntityType::ctype, EntityType::dimensionworld > ReferenceElementType;
+      typedef Dune::ReferenceElement< typename EntityType::Geometry::ctype, EntityType::Geometry::coordinatedim > ReferenceElementType;
 
       /* default constructor
        *
@@ -76,7 +76,7 @@ namespace Dune
       //! \brief return reference element
       const ReferenceElementType &referenceElement () const
       {
-        return Dune::ReferenceElements< typename EntityType::ctype, EntityType::dimensionworld >::general( entity().type() );
+        return Dune::ReferenceElements< typename EntityType::Geometry::ctype, EntityType::Geometry::coordinatedim >::general( entity().type() );
       }
 
       /** \brief evaluate all basis function and multiply with given

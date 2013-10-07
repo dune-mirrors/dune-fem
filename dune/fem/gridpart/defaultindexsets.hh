@@ -6,7 +6,6 @@
 #include <rpc/rpc.h>
 
 //- Dune includes 
-#include <dune/common/misc.hh>
 #include <dune/common/typetraits.hh>
 
 #include <dune/grid/common/grid.hh>

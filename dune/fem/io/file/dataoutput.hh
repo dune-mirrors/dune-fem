@@ -836,7 +836,7 @@ namespace Dune
       const bool parallel = (grid_.comm().size() > 1);
 
       // generate filename, with path only for serial run  
-      std::string name = genFilename( (parallel) ? "" : path_, datapref_, writeStep_ );
+      std::string name = generateFilename( (parallel ? datapref_ : path_ + "/" + datapref_ ), writeStep_ );
 
       if( vertexData ) 
       {
@@ -928,7 +928,7 @@ namespace Dune
     inline std::string DataOutput< GridImp, DataImp >::writeGnuPlotOutput () const
     {
       // generate filename
-      std::string name = genFilename( path_, datapref_, writeStep_ );
+      std::string name = generateFilename( path_ + "/" + datapref_, writeStep_ );
       name += ".gnu";
       std::ofstream gnuout(name.c_str());
       gnuout << std::scientific << std::setprecision( 16 );

@@ -296,14 +296,14 @@ namespace Dune
         closeStreams();
       }
 
-      std::string getUniqueFileName (const std::string& tag )
+      std::string getUniqueFileName ( const std::string &tag )
       { 
-        return genFilename( path_, tag, ++fileCounter_ );
+        return generateFilename( path_ + "/" + tag, ++fileCounter_ );
       }
 
-      std::string getUniqueTag(const std::string& tag )
+      std::string getUniqueTag ( const std::string &tag )
       { 
-        return genFilename( "", tag, ++fileCounter_ );
+        return generateFilename( tag, ++fileCounter_ );
       }
 
       template< class T >

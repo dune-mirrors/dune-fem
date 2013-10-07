@@ -25,7 +25,9 @@ namespace Dune
     class IndexSetDofMapper
     {
       typedef IndexSetDofMapper< GridPart > ThisType;
-
+    public:  
+      typedef std::size_t SizeType;
+    protected:  
       struct SubEntityInfo
       {
         SubEntityInfo ()
@@ -34,7 +36,7 @@ namespace Dune
 
         unsigned int codim;
         unsigned int numDofs;
-        std::size_t offset, oldOffset;
+        SizeType offset, oldOffset;
       };
 
       enum CodimType { CodimEmpty, CodimFixedSize, CodimVariableSize };
@@ -55,7 +57,6 @@ namespace Dune
       const ThisType &operator= ( const ThisType & );
 
     public:
-      typedef size_t SizeType;
       typedef SizeType GlobalKeyType;
 
       typedef GridPart GridPartType;
@@ -94,12 +95,10 @@ namespace Dune
 
       void map ( const ElementType &element, std::vector< GlobalKeyType > &indices ) const;
 
-      std::size_t maxNumDofs () const { return maxNumDofs_; }
-      std::size_t numDofs ( const ElementType &element ) const { return code( element ).numDofs(); }
-
+      unsigned int maxNumDofs () const { return maxNumDofs_; }
+      unsigned int numDofs ( const ElementType &element ) const { return code( element ).numDofs(); }
 
       // assignment of DoFs to entities
-
       template< class Entity, class Functor >
       void mapEachEntityDof ( const Entity &entity, Functor f ) const;
 
@@ -107,7 +106,7 @@ namespace Dune
       void mapEntityDofs ( const Entity &entity, std::vector< GlobalKeyType > &indices ) const;
 
       template< class Entity >
-      std::size_t numEntityDofs ( const Entity &entity ) const;
+      unsigned int numEntityDofs ( const Entity &entity ) const;
 
 
       // global information
@@ -116,20 +115,20 @@ namespace Dune
 
       bool fixedDataSize ( int codim ) const { return (codimType_[ codim ] == CodimFixedSize); }
 
-      std::size_t size () const { return size_; }
+      SizeType size () const { return size_; }
 
 
       // adaptation interface
 
       int numBlocks () const { return blockMap_.size(); }
 
-      std::size_t offSet ( int blk ) const;
-      std::size_t oldOffSet ( int blk ) const;
+      SizeType offSet ( int blk ) const;
+      SizeType oldOffSet ( int blk ) const;
 
-      std::size_t numberOfHoles ( int blk ) const;
+      SizeType numberOfHoles ( int blk ) const;
 
-      std::size_t oldIndex ( std::size_t hole, int blk ) const;
-      std::size_t newIndex ( std::size_t hole, int blk ) const;
+      SizeType oldIndex ( SizeType hole, int blk ) const;
+      SizeType newIndex ( SizeType hole, int blk ) const;
 
       void update ();
 
@@ -175,7 +174,7 @@ namespace Dune
       const GridPartType &gridPart_;
       std::vector< DofMapperCode > code_;
       unsigned int maxNumDofs_;
-      std::size_t size_;
+      SizeType size_;
       std::vector< SubEntityInfo > subEntityInfo_;
       BlockMapType blockMap_;
       CodimType codimType_[ dimension+1 ];
@@ -235,12 +234,12 @@ namespace Dune
         enum { dimension = GridPart :: dimension };
 
         const SubEntityInfo &info = subEntityInfo_[ gtIndex ];
-        const std::size_t subIndex = indexSet_.subIndex( element_, subEntity, info.codim );
-        std::size_t index = info.offset + std::size_t( info.numDofs ) * subIndex;
+        const SizeType subIndex = indexSet_.subIndex( element_, subEntity, info.codim );
+        SizeType index = info.offset + SizeType( info.numDofs ) * subIndex;
 
-        const std::size_t codim = info.codim ;
+        const unsigned int codim = info.codim ;
 
-        const size_t numDofs = info.numDofs ;
+        const unsigned int numDofs = info.numDofs ;
         // for non-Cartesian grids check twist if on codim 1 noDofs > 1 
         // this should be the case for polOrder > 2  
         if( ! isCartesian && dimension == 2 && codim == 1 && numDofs > 1 ) 
@@ -261,10 +260,10 @@ namespace Dune
           if( gridPart_.grid().localIdSet().subId( gridEntity( element_ ), vx[ 1 ], dimension ) 
               < gridPart_.grid().localIdSet().subId( gridEntity( element_ ), vx[ 0 ], dimension ) )
           {
-            std::size_t global[ numDofs ];
-            std::size_t local[ numDofs ];
+            std::vector< unsigned int > global( numDofs );
+            std::vector< unsigned int > local ( numDofs );
 
-            std::size_t count = 0 ;
+            unsigned int count = 0 ;
             while( it != end )
             {
               global[ count ] = index++;
@@ -272,8 +271,8 @@ namespace Dune
               ++count ;
             }
 
-            size_t reverse = numDofs - 1;
-            for( std::size_t i=0; i<numDofs; ++ i, --reverse )
+            unsigned int reverse = numDofs - 1;
+            for( unsigned int i=0; i<numDofs; ++ i, --reverse )
             {
               functor_( local[ i ], global[ reverse ] ); 
             }
@@ -326,7 +325,7 @@ namespace Dune
         {
           for( int i = 0; i < refElement.size( codim ); ++i )
           {
-            const std::size_t gtIdx = GlobalGeometryTypeIndex::index( refElement.type( i, codim ) );
+            const unsigned int gtIdx = GlobalGeometryTypeIndex::index( refElement.type( i, codim ) );
             gt[ gtIdx ] = refElement.type( i, codim );
             subEntityInfo_[ gtIdx ].codim = codim;
           }
@@ -380,10 +379,10 @@ namespace Dune
 
     template< class GridPart >
     inline void IndexSetDofMapper< GridPart >
-      ::map ( const ElementType &element, std::vector< std::size_t > &indices ) const
+      ::map ( const ElementType &element, std::vector< SizeType > &indices ) const
     {
       indices.resize( numDofs( element ) );
-      mapEach( element, AssignFunctor< std::vector< std::size_t > >( indices ) );
+      mapEach( element, AssignFunctor< std::vector< SizeType > >( indices ) );
     }
 
 
@@ -393,9 +392,9 @@ namespace Dune
       ::mapEachEntityDof ( const Entity &entity, Functor f ) const
     {
       const SubEntityInfo &info = subEntityInfo( entity );
-      std::size_t numDofs = info.numDofs;
-      std::size_t index = info.offset + numDofs * std::size_t( indexSet().index( entity ) );
-      for( std::size_t i = 0; i < info.numDofs; ++i )
+      const unsigned int numDofs = info.numDofs;
+      SizeType index = info.offset + numDofs * SizeType( indexSet().index( entity ) );
+      for( unsigned int i = 0; i < info.numDofs; ++i )
         f( i, index++ );
     }
 
@@ -403,16 +402,17 @@ namespace Dune
     template< class GridPart >
     template< class Entity >
     inline void IndexSetDofMapper< GridPart >
-      ::mapEntityDofs ( const Entity &entity, std::vector< std::size_t > &indices ) const
+      ::mapEntityDofs ( const Entity &entity, std::vector< SizeType > &indices ) const
     {
       indices.resize( numEntityDofs( entity ) );
-      mapEachEntityDof( entity, AssignFunctor< std::vector< std::size_t > >( indices ) );
+      mapEachEntityDof( entity, AssignFunctor< std::vector< SizeType > >( indices ) );
     }
 
 
     template< class GridPart >
     template< class Entity >
-    inline std::size_t IndexSetDofMapper< GridPart >
+    inline unsigned int 
+    IndexSetDofMapper< GridPart >
       ::numEntityDofs ( const Entity &entity ) const
     {
       return subEntityInfo( entity ).numDofs;
@@ -420,53 +420,56 @@ namespace Dune
 
 
     template< class GridPart >
-    inline std::size_t IndexSetDofMapper< GridPart >::offSet ( int blk ) const
+    inline typename IndexSetDofMapper< GridPart >::SizeType
+    IndexSetDofMapper< GridPart >::offSet ( int blk ) const
     {
       assert( (blk >= 0) && (blk < numBlocks()) );
-      const std::size_t gtIdx = GlobalGeometryTypeIndex::index( blockMap_[ blk ] );
+      const unsigned int gtIdx = GlobalGeometryTypeIndex::index( blockMap_[ blk ] );
       return subEntityInfo_[ gtIdx ].offset;
     }
 
 
     template< class GridPart >
-    inline std::size_t IndexSetDofMapper< GridPart >::oldOffSet ( int blk ) const
+    inline typename IndexSetDofMapper< GridPart >::SizeType
+    IndexSetDofMapper< GridPart >::oldOffSet ( int blk ) const
     {
       assert( (blk >= 0) && (blk < numBlocks()) );
-      const std::size_t gtIdx = GlobalGeometryTypeIndex::index( blockMap_[ blk ] );
+      const unsigned int gtIdx = GlobalGeometryTypeIndex::index( blockMap_[ blk ] );
       return subEntityInfo_[ gtIdx ].oldOffset;
     }
 
 
     template< class GridPart >
-    inline std::size_t IndexSetDofMapper< GridPart >::numberOfHoles ( int blk ) const
+    inline typename IndexSetDofMapper< GridPart >::SizeType
+    IndexSetDofMapper< GridPart >::numberOfHoles ( int blk ) const
     {
       assert( (blk >= 0) && (blk < numBlocks()) );
-      const std::size_t gtIdx = GlobalGeometryTypeIndex::index( blockMap_[ blk ] );
+      const unsigned int gtIdx = GlobalGeometryTypeIndex::index( blockMap_[ blk ] );
       const SubEntityInfo &info = subEntityInfo_[ gtIdx ];
-      return std::size_t( info.numDofs ) * std::size_t( indexSet().numberOfHoles( info.codim ) );
+      return SizeType( info.numDofs ) * SizeType( indexSet().numberOfHoles( info.codim ) );
     }
 
 
     template< class GridPart >
-    inline std::size_t IndexSetDofMapper< GridPart >::oldIndex ( std::size_t hole, int blk ) const
+    inline typename IndexSetDofMapper< GridPart >::SizeType IndexSetDofMapper< GridPart >::oldIndex ( SizeType hole, int blk ) const
     {
       assert( (hole >= 0) && (hole < numberOfHoles( blk )) );
-      const std::size_t gtIdx = GlobalGeometryTypeIndex::index( blockMap_[ blk ] );
+      const unsigned int gtIdx = GlobalGeometryTypeIndex::index( blockMap_[ blk ] );
       const SubEntityInfo &info = subEntityInfo_[ gtIdx ];
-      const std::size_t numDofs = info.numDofs;
-      const std::size_t index = indexSet().oldIndex( hole / numDofs, info.codim );
+      const unsigned int numDofs = info.numDofs;
+      const SizeType index = indexSet().oldIndex( hole / numDofs, info.codim );
       return info.offset + numDofs * index + (hole % numDofs);
     }
 
 
     template< class GridPart >
-    inline std::size_t IndexSetDofMapper< GridPart >::newIndex ( std::size_t hole, int blk ) const
+    inline typename IndexSetDofMapper< GridPart >::SizeType IndexSetDofMapper< GridPart >::newIndex ( SizeType hole, int blk ) const
     {
       assert( (hole >= 0) && (hole < numberOfHoles( blk )) );
-      const std::size_t gtIdx = GlobalGeometryTypeIndex::index( blockMap_[ blk ] );
+      const unsigned int gtIdx = GlobalGeometryTypeIndex::index( blockMap_[ blk ] );
       const SubEntityInfo &info = subEntityInfo_[ gtIdx ];
-      const std::size_t numDofs = info.numDofs;
-      const std::size_t index = indexSet().newIndex( hole / numDofs, info.codim );
+      const unsigned int numDofs = info.numDofs;
+      const SizeType index = indexSet().newIndex( hole / numDofs, info.codim );
       return info.offset + numDofs * index + (hole % numDofs);
     }
 
@@ -480,7 +483,7 @@ namespace Dune
         SubEntityInfo &info = subEntityInfo_[ GlobalGeometryTypeIndex::index( *it ) ];
         info.oldOffset = info.offset;
         info.offset = size_;
-        size_ += std::size_t( info.numDofs ) * std::size_t( indexSet().size( *it ) );
+        size_ += SizeType( info.numDofs ) * SizeType( indexSet().size( *it ) );
       }
     }
 

@@ -44,7 +44,7 @@ namespace Dune
         typedef typename DiscreteFunctionSpaceType::GridPartType GridPartType;
         typedef typename GridPartType::template Codim<0>::EntityType    EntityType;
         typedef typename GridPartType::template Codim<0>::GeometryType  EnGeometryType;
-        typedef typename EntityType::ctype coordType;
+        typedef typename EnGeometryType::ctype coordType;
         
         typedef typename DiscreteFunctionType::LocalFunctionType LocalFunctionType;
           

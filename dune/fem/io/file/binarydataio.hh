@@ -4,7 +4,6 @@
 #warning "BinaryDataIO is deprecated and will be removed after dune-fem 1.4."
 
 //- Dune includes 
-#include <dune/common/misc.hh>
 #include <dune/grid/common/capabilities.hh>
 #include <dune/grid/common/grid.hh>
 #include <dune/grid/io/file/dgfparser/dgfparser.hh>
@@ -12,6 +11,7 @@
 
 #include <dune/fem/space/common/dofmanager.hh>
 #include <dune/fem/gridpart/defaultindexsets.hh>
+#include <dune/fem/io/file/iointerface.hh>
 #include <dune/fem/misc/gridname.hh> 
 
 //- Local includes 
@@ -20,17 +20,9 @@
 
 namespace Dune
 {
+
   namespace Fem 
   {
-
-    inline std::string generateFilename(const std::string& fn,
-                                        int ntime,
-                                        int precision = 6)
-    {
-      const char * fakePath = "";
-      return genFilename(fakePath,fn,ntime,precision);
-    }
-
 
     ///////////////////////////////////////////////////
     //

@@ -149,7 +149,7 @@ namespace Dune
 
       const ReferenceElementType &referenceElement () const
       {
-        return Dune::ReferenceElements< typename EntityType::ctype, EntityType::dimensionworld >::general( type() );
+        return Dune::ReferenceElements< typename EntityType::Geometry::ctype, EntityType::Geometry::coorddimension >::general( type() );
       }
 
       Dune::GeometryType type () const { return entity().type(); }

@@ -232,8 +232,8 @@ namespace Dune
         if ( ! nit.type().isCube() ) return false;
             
         typedef typename IntersectionType :: Entity EntityType;
-        typedef typename EntityType :: ctype ctype; 
-        enum { dimworld = EntityType :: dimensionworld }; 
+        typedef typename EntityType :: Geometry :: ctype ctype; 
+        enum { dimworld = EntityType :: Geometry :: coorddimension }; 
 
         // get reference normals 
         static const ReferenceNormals<ctype,dimworld> normals;

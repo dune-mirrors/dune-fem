@@ -5,6 +5,7 @@
 #include <dune/common/forloop.hh>
 
 #include <dune/fem/version.hh>
+#include <dune/fem/io/file/iointerface.hh>
 #include <dune/fem/gridpart/common/gridpart.hh>
 #include <dune/fem/gridpart/dunefemindexsets.hh>
 #include <dune/fem/gridpart/codimindexset.hh>
@@ -1165,9 +1166,7 @@ namespace Dune
     inline bool AdaptiveIndexSetBase< TraitsImp >
       ::write_xdr ( const std::string &filename, int timestep ) const
     {
-      const char *path = "";
-      std::string fnstr = genFilename( path, filename, timestep );
-      return write_xdr( fnstr );
+      return write_xdr( generateFilename( filename, timestep ) );
     }
 
 
@@ -1240,9 +1239,7 @@ namespace Dune
     inline bool AdaptiveIndexSetBase< TraitsImp >
       ::read_xdr ( const std::string &filename, int timestep )
     {
-      const char *path = "";
-      std::string fnstr = genFilename(path,filename, timestep);
-      return read_xdr( fnstr );
+      return read_xdr( generateFilename( filename, timestep ) );
     }
 
 

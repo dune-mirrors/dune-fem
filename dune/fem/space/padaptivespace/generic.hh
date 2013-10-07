@@ -5,7 +5,7 @@
 #include <list>
 #include <vector>
 
-#include <dune/common/misc.hh>
+#include <dune/common/math.hh>
 
 #include <dune/fem/function/adaptivefunction.hh>
 #include <dune/fem/space/basisfunctionset/default.hh>

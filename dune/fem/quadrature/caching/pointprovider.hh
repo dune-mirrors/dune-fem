@@ -6,7 +6,7 @@
 #include <map>
 
 //- Dune includes
-#include <dune/common/misc.hh>
+#include <dune/common/math.hh>
 
 //- Local includes
 #include "pointmapper.hh"

@@ -1287,6 +1287,12 @@ namespace Dune
         }
       } // end applyLocalBoundary
 
+      template <class T> 
+      T SQR( const T& a ) const 
+      {
+        return (a * a);
+      } 
+
       double compBetaK(const FluxRangeType& K) const 
       {
         double detK = K[0][0]*K[1][1]-K[1][0]*K[0][1];

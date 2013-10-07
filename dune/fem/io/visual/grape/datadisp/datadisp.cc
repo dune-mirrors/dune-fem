@@ -82,7 +82,6 @@ namespace Dune {
 #warning "Visualization does not work in parallel" 
 #endif 
 
-#include <dune/common/misc.hh>
 #include <dune/common/exceptions.hh>
 using namespace Dune;
 

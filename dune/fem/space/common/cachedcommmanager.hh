@@ -8,7 +8,7 @@
 #include <vector>
 
 //- dune-common includes  
-#include <dune/common/misc.hh>
+#include <dune/common/math.hh>
 #include <dune/common/timer.hh>
 
 //- dune-grid includes  

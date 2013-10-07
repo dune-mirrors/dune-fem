@@ -1,7 +1,7 @@
 #ifndef DUNE_FEM_VECTOR_HH
 #define DUNE_FEM_VECTOR_HH
 
-#include <dune/common/misc.hh>
+#include <dune/common/math.hh>
 #include <dune/common/typetraits.hh>
 #include <dune/common/bartonnackmanifcheck.hh>
 #include <dune/common/fvector.hh>

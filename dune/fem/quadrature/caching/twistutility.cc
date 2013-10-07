@@ -168,7 +168,7 @@ namespace Dune
         ( const IndexSet &indexSet, const Entity &en, const int inEn,
           const Entity &nb, const int inNb )
       {
-        typedef typename Entity::ctype ctype;
+        typedef typename Entity::Geometry::ctype ctype;
         static const int dim = Entity::dimension;
 
         const Dune::ReferenceElement< ctype, dim > &enRef
