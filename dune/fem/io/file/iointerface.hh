@@ -467,7 +467,7 @@ namespace Dune
           // Yasp only can do origin = 0
           origin = 0;
 
-          enum { tag = MultiYGrid< dim, double> ::tag };
+          enum { tag = Grid::tag };
           YLoadBalance< dim > loadBalancer;
           Torus< dim > torus( MPI_COMM_WORLD, tag, anz, &loadBalancer );
           torus.partition( torus.rank(), origin, anz, originInterior, lengthInterior );
