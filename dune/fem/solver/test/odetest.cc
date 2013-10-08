@@ -12,7 +12,7 @@
 #include <dune/fem/misc/mpimanager.hh>
 #include <dune/fem/solver/timeprovider.hh>
 #include <dune/fem/operator/common/spaceoperatorif.hh>
-#include <dune/fem/solver/rungekutta.hh>
+#include <dune/fem/solver/rungekutta/explicit.hh>
 
 
 using namespace Dune;
@@ -62,7 +62,9 @@ public:
     d_ += other.d_;
     return *this;
   }
-  
+
+  RangeFieldType scalarProductDofs ( const myDest &other ) const { return d_ * other.d_; }
+
 private:
   RangeFieldType d_;
 };
