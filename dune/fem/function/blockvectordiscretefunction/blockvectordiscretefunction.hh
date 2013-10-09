@@ -469,38 +469,6 @@ namespace Dune
           in >> *it;
       }
 
-      /** \copydoc Dune::Fem::DiscreteFunctionInterface::read_xdr */
-      bool read_xdr ( const std :: string filename )
-      {
-        // TODO: do we want to implement this?
-        try
-        {
-          XDRFileInStream in( filename );
-          read( in );
-          return true;
-        }
-        catch( Exception e )
-        {
-          return false;
-        }
-      }
-
-      /** \copydoc Dune::Fem::DiscreteFunctionInterface::read_ascii */
-      bool read_ascii ( const std :: string filename )
-      {
-        // TODO: do we want to implement this?
-        try
-        {
-          ASCIIInStream in( filename );
-          read( in );
-          return true;
-        }
-        catch( Exception e )
-        {
-          return false;
-        }
-      }
-   
     
       /** \copydoc Dune::Fem::DiscreteFunctionInterface::scalarProductDofs */
       DofType scalarProductDofs ( const ThisType &other ) const
@@ -538,38 +506,6 @@ namespace Dune
           out << *it;
       }
 
-      /** \copydoc Dune::Fem::DiscreteFunctionInterface::write_ascii */
-      bool write_ascii ( const std :: string filename ) const
-      {
-        // TODO: do we want to implement this?
-        try
-        {
-          ASCIIOutStream out( filename );
-          write( out );
-          return true;
-        }
-        catch( Exception e )
-        {
-          return false;
-        }
-      }
-
-      /** \copydoc Dune::Fem::DiscreteFunctionInterface::write_xdr */
-      bool write_xdr ( const std :: string filename ) const
-      {
-        // TODO: do we want to implement this here?
-        try
-        {
-          XDRFileOutStream out( filename );
-          write( out );
-          return true;
-        }
-        catch( Exception e )
-        {
-          return false;
-        }
-      }
-
     private:
 
       /*
@@ -593,7 +529,6 @@ namespace Dune
       std::string name_;
       std::pair< DofStorageInterface *, BlockVectorType * > memPair_;
       ScalarProductType scalarProduct_;
-
     };
 
   } // namespace Fem

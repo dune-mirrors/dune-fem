@@ -8,7 +8,6 @@
 #include <dune/fem/space/common/arrays.hh>
 #include <dune/fem/gridpart/defaultindexsets.hh>
 
-#include <dune/fem/io/streams/xdrstreams.hh>
 #include <dune/grid/utility/persistentcontainer.hh>
 
 #include <dune/grid/utility/persistentcontainervector.hh>

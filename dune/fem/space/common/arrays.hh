@@ -20,7 +20,6 @@
 #include <dune/fem/solver/oemsolver/cblas.h>
 #endif
 
-// include xdr wrapper 
 #include <dune/fem/io/streams/streams.hh>
 
 namespace Dune 

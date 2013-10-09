@@ -666,16 +666,6 @@ namespace Dune
       template< class StreamTraits > 
       bool read( InStreamInterface< StreamTraits >& in );
 
-      //! write indexset to xdr file 
-      bool write_xdr( const std::string &filename ) const ;
-      //! write indexset to xdr file 
-      bool write_xdr( const std::string &filename, int timestep ) const ;
-
-      //! read index set from given xdr file 
-      bool read_xdr( const std::string &filename, int timestep );
-      //! read index set from given xdr file 
-      bool read_xdr( const std::string &filename );
-
     protected:
       FacePointerType getIntersectionFace( const IntersectionType& intersection ) const 
       {
@@ -1145,30 +1135,6 @@ namespace Dune
       return true;
     }
 
-    template< class TraitsImp >
-    inline bool AdaptiveIndexSetBase< TraitsImp >
-      ::write_xdr ( const std::string &filename ) const
-    {
-      // new version using streams 
-      try
-      {
-        XDRFileOutStream out( filename );
-        return write( out );
-      }
-      catch( Exception e )
-      {
-        return false;
-      }
-    }
-
-
-    template< class TraitsImp >
-    inline bool AdaptiveIndexSetBase< TraitsImp >
-      ::write_xdr ( const std::string &filename, int timestep ) const
-    {
-      return write_xdr( generateFilename( filename, timestep ) );
-    }
-
 
     template< class TraitsImp >
     template< class StreamTraits > 
@@ -1216,30 +1182,6 @@ namespace Dune
 
       // if we got until here reading was sucessful 
       return true;
-    }
-
-    template< class TraitsImp >
-    inline bool AdaptiveIndexSetBase< TraitsImp >
-      ::read_xdr ( const std::string &filename )
-    {
-      // new version using streams 
-      try
-      {
-        XDRFileInStream in( filename );
-        return read( in );
-      }
-      catch( Exception e )
-      {
-        return false;
-      }
-    }
-
-
-    template< class TraitsImp >
-    inline bool AdaptiveIndexSetBase< TraitsImp >
-      ::read_xdr ( const std::string &filename, int timestep )
-    {
-      return read_xdr( generateFilename( filename, timestep ) );
     }
 
 

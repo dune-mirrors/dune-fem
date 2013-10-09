@@ -4,8 +4,6 @@
 //- system includes 
 #include <iostream>
 #include <string> 
-#include <rpc/types.h>
-#include <rpc/xdr.h>
 #include <cassert>
 
 #include <dune/common/exceptions.hh>
@@ -88,20 +86,6 @@ namespace Dune
       int newIndex ( const int hole, const int codim ) const
       {
         return 0;
-      }
-      
-      //! write index set to xdr file 
-      bool write_xdr ( const std::string &filename, int timestep )
-      {
-        DUNE_THROW(Dune::NotImplemented,"write_xdr is deprecated");
-        return false;
-      }
-      
-      //! read index set to xdr file 
-      bool read_xdr ( const std::string &filename, int timestep )
-      {
-        DUNE_THROW(Dune::NotImplemented,"read_xdr is deprecated");
-        return false;
       }
     };
 
