@@ -30,7 +30,7 @@ namespace Dune {
         int retval = PAPI_flops(&realTime, &procTime, &flops, &mFlops);
         if( retval < PAPI_OK ) 
         {
-          DUNE_THROW(InvalidStateException,"PAPI_FP_OPS event is not available");
+          std::cerr << "ERROR: PAPI_FP_OPS event is not available, check papi_avail!" << std::endl;
         }
 #endif
       }
