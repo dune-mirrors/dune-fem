@@ -1,6 +1,8 @@
 #ifndef DUNE_FEM_COMBINEDSPACE_HH
 #define DUNE_FEM_COMBINEDSPACE_HH
 
+
+#warning "This file is broken and will be fixed in time."
 //- System includes
 #include <vector>
 #include <map>
