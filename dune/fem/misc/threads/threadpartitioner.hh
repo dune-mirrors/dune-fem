@@ -16,16 +16,20 @@
 
 #include <dune/fem/gridpart/common/capabilities.hh>
 
-#if ALU3DGRID_PARALLEL
 
 #warning "Using the ThreadPartitioner"
 
 #if HAVE_DUNE_ALUGRID 
+// the dune-alugrid module always allows to use the partitioners
+#define ALUGRID_PARTIONER_AVAILABLE 1
 namespace ALUGrid {
 #else
+// the dune-grid ALUGrid version needs MPI to allows to use the partitioners
+#define ALUGRID_PARTIONER_AVAILABLE ALU3DGRID_PARALLEL
 namespace ALUGridSpace {
 #endif
 
+#if ALUGRID_PARTIONER_AVAILABLE
   // class fulfilling the ALUGrid communicator interface
   // but without any communication, this is needed to avoid 
   // communication during the call of DataBase :: repartition 
@@ -382,6 +386,8 @@ public:
 
 } // end namespace Dune 
 #else 
-#warning "Parallel ALUGrid not available"
-#endif // ALU3DGRID_PARALLEL
+#warning "ALUGrid Partitioner not available"
+#endif // ALUGRID_PARTIONER_AVAILABLE 
+#undef ALUGRID_PARTIONER_AVAILABLE
+
 #endif // ifndef DUNE_FEM_THREADPARTITIONER_HH
