@@ -9,7 +9,7 @@
 #include <dune/grid/common/capabilities.hh>
 #include <dune/fem/storage/singletonlist.hh>
 #include <dune/fem/space/common/allgeomtypes.hh>
-#include <dune/fem/gridpart/hierarchicgridpart.hh>
+#include <dune/fem/gridpart/leafgridpart.hh>
 #include <dune/fem/space/common/dofmanager.hh>
 #include <dune/common/binaryfunctions.hh>
 
@@ -186,7 +186,7 @@ namespace Dune
     protected:
       typedef DofManager<GridType> DofManagerType;
 
-      typedef HierarchicGridPart< GridType > GridPartType; 
+      typedef LeafGridPart< GridType > GridPartType; 
       
       const GridType& grid_;
       const DofManagerType& dm_;
