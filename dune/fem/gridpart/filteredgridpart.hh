@@ -162,7 +162,7 @@ namespace Dune
       static const InterfaceType indexSetInterfaceType = HostGridPartType::indexSetInterfaceType;
 
       //! \brief is true if grid on this view only has conforming intersections
-      static const bool conforming = HostGridPartType::conforming;
+      static const bool conforming = HostGridPartType::Traits::conforming;
     };
 
 
