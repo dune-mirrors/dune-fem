@@ -14,9 +14,6 @@
 #include <dune/fem/space/common/dofmanager.hh>
 #include <dune/fem/space/mapper/nonblockmapper.hh>
 #include <dune/fem/space/common/discretefunctionspace.hh>
-#include <dune/fem/space/basefunctions/basefunctionstorage.hh>
-#include <dune/fem/space/basefunctions/basefunctionsets.hh>
-#include <dune/fem/space/basefunctions/basefunctionproxy.hh>
 #include <dune/fem/space/common/defaultcommhandler.hh>
 
 #include <dune/fem/space/mapper/codimensionmapper.hh>
@@ -396,7 +393,7 @@ namespace Dune
         return polynomialOrder;
       }
 
-      /** \copydoc Dune::Fem::DiscreteFunctionSpaceInterface::baseFunctionSet(const EntityType &entity) const */
+      /** \copydoc Dune::Fem::DiscreteFunctionSpaceInterface::basisFunctionSet(const EntityType &entity) const */
       template< class EntityType >
       BasisFunctionSetType basisFunctionSet ( const EntityType &entity ) const
       {
@@ -409,12 +406,6 @@ namespace Dune
       int dimensionOfValue () const
       {
         return dimVal;
-      }
-
-      /** \copydoc Dune::Fem::DiscreteFunctionSpaceInterface::mapper */
-      MapperType &mapper () const
-      {
-        return mapper_;
       }
 
       /** \brief obtain the DoF block mapper of this space
