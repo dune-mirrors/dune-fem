@@ -208,18 +208,6 @@ namespace Dune
 
 
     template< class Traits >
-    template< int diffOrder >
-    inline void DiscreteFunctionDefault< Traits >
-      ::evaluate ( const FieldVector< int, diffOrder > &diffVariable,
-                   const DomainType &x,
-                   RangeType &value ) const
-    {
-      LocalFunctionEvaluateFunctor< LocalFunctionType, diffOrder > functor( diffVariable, value );
-      asImp().evaluateGlobal( x, functor );
-    }
-
-
-    template< class Traits >
     inline typename DiscreteFunctionDefault< Traits > :: DiscreteFunctionType &
     DiscreteFunctionDefault< Traits >
       ::operator+= ( const DiscreteFunctionInterfaceType &g )

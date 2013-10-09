@@ -6,7 +6,6 @@
 #include <dune/common/bartonnackmanifcheck.hh>
 #include <dune/common/fvector.hh>
 
-#include <dune/fem/misc/combineinterface.hh>
 
 #include <dune/fem/storage/arrayallocator.hh>
 #include <dune/fem/storage/array.hh>
