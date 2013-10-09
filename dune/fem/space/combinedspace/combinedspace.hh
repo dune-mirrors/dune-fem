@@ -1,6 +1,8 @@
 #ifndef DUNE_FEM_COMBINEDSPACE_HH
 #define DUNE_FEM_COMBINEDSPACE_HH
 
+
+#warning "This file is broken and will be fixed in time."
 //- System includes
 #include <vector>
 #include <map>
@@ -183,7 +185,7 @@ namespace Dune
 
       enum { dimLocal = GridType :: dimension };
 
-      typedef typename ToLocalFunctionSpace< FunctionSpaceType, dimLocal > :: Type 
+      typedef typename ToNewDimDomainFunctionSpace< FunctionSpaceType, dimLocal > :: Type 
         BaseFunctionSpaceType; 
 
       // type of singleton factory 
@@ -522,12 +524,6 @@ namespace Dune
     /** @} **/  
     
   } // namespace Fem
-
-#if DUNE_FEM_COMPATIBILITY  
-  // put this in next version 1.4 
-
-  using Fem :: CombinedSpace ;
-#endif // DUNE_FEM_COMPATIBILITY
 
 } // namespace Dune
 

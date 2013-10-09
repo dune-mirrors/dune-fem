@@ -16,8 +16,6 @@
 #include <dune/fem/space/lagrange.hh>
 #include <dune/fem/function/adaptivefunction.hh>
 #include <dune/fem/operator/lagrangeinterpolation.hh>
-#include <dune/fem/io/streams/xdrstreams.hh>
-#include <dune/fem/io/streams/asciistreams.hh>
 #include <dune/fem/io/streams/virtualstreams.hh>
 #include <dune/fem/io/file/vtkio.hh>
 

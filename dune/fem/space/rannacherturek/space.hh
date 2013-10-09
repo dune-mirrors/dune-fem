@@ -84,7 +84,6 @@ namespace Dune
       typedef typename BlockMapperFactoryType::BlockMapperType BlockMapperType;
 
       static const int localBlockSize = FunctionSpaceType::dimRange;
-      typedef NonBlockMapper< BlockMapperType, localBlockSize > MapperType;
 
       typedef LocalFunctionsShapeFunctionSet< LocalBasisType > LocalFunctionsShapeFunctionSetType;
       typedef SelectCachingShapeFunctionSet< LocalFunctionsShapeFunctionSetType, Storage > ScalarShapeFunctionSetType;
@@ -153,7 +152,6 @@ namespace Dune
       typedef typename BaseType::Traits::ShapeFunctionSetType ShapeFunctionSetType;
       typedef typename BaseType::BasisFunctionSetType BasisFunctionSetType;
       
-      typedef typename BaseType::MapperType MapperType;
       typedef typename BaseType::BlockMapperType BlockMapperType;
 
     private:
@@ -172,8 +170,7 @@ namespace Dune
                                      const CommunicationDirection commDirection = defaultDirection )
       : BaseType( gridPart, commInterface, commDirection ),
         scalarShapeFunctionSet_( nullptr ),
-        blockMapper_( nullptr ),
-        mapper_( nullptr )
+        blockMapper_( nullptr )
       {
         // create scalar shape function set
         GeometryType type = GeometryType( Dune::Fem::GridPartCapabilities::hasSingleGeometryType< GridPartType >::topologyId, GridPartType::dimension );
@@ -182,17 +179,10 @@ namespace Dune
         // create block mapper
         BlockMapperSingletonKeyType key( gridPart );
         blockMapper_ = &( BlockMapperProviderType::getObject( key ) );
-
-        // create mapper
-        mapper_ = new MapperType( blockMapper() );
       }
 
       ~RannacherTurekDiscreteFunctionSpace ()
       {
-        if( mapper_ )
-          delete mapper_;
-        mapper_ = nullptr;
-
         if( blockMapper_ )
           BlockMapperProviderType::removeObject( *blockMapper_ );
         blockMapper_ = nullptr;
@@ -243,14 +233,6 @@ namespace Dune
         return *blockMapper_;
       }
 
-      /** @copydoc Dune::Fem::DiscreteFunctionSpaceInterface::mapper */
-      DUNE_VERSION_DEPRECATED(1,4,remove)
-      MapperType &mapper () const
-      {
-        assert( mapper_ );
-        return *mapper_;
-      }      
-
       /** \brief interpolate a function locally
        *
        *  \param[in]  f     local function to interpolate
@@ -270,7 +252,6 @@ namespace Dune
 
       ScalarShapeFunctionSetType *scalarShapeFunctionSet_;
       BlockMapperType *blockMapper_;
-      MapperType *mapper_;
     };
 
   } // namespace Fem

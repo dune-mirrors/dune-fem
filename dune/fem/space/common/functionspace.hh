@@ -4,8 +4,6 @@
 #include <dune/fem/space/common/functionspaceinterface.hh>
 #include <dune/common/fmatrix.hh>
 
-#include <dune/fem/version.hh>
-
 namespace Dune
 {
 
@@ -247,31 +245,12 @@ namespace Dune
     template < class FunctionSpaceImp, int newDimRange >
     struct ToNewDimRangeFunctionSpace; 
 
-    //! convert functions space to scalar function space
-    template < class FunctionSpaceImp >
-    struct DUNE_DEPRECATED
-      ToScalarFunctionSpace
-    {
-      
-      typedef typename ToNewDimRangeFunctionSpace< FunctionSpaceImp, 1 >::Type Type;
-    }; 
-
-    //! convert functions space to scalar function space of basis functions (local space)
-    template < class FunctionSpaceImp, int dimLocal >
-    struct DUNE_DEPRECATED
-      ToLocalFunctionSpace
-    {
-      typedef typename ToNewDimDomainFunctionSpace< FunctionSpaceImp, dimLocal >::Type Type;
-    };
-
-
     //! specialization for parameter list <domainfile,rangefield,dimDomain,dimRange,newDimDomain> 
     template< class DomainFieldImp, class RangeFieldImp, int dimDomain, int dimRange, int newDimDomain >
     struct ToNewDimDomainFunctionSpace< FunctionSpace< DomainFieldImp, RangeFieldImp, dimDomain, dimRange >, newDimDomain >
     {
       typedef FunctionSpace< DomainFieldImp, RangeFieldImp, newDimDomain, dimRange> Type;
     };
-
 
     //! specialization for parameter list <domainfile,rangefield,dimDomain,dimRange,dimLocal> 
     template< class DomainFieldImp, class RangeFieldImp, int n, int m1, int m2, int newDimDomain >
@@ -280,7 +259,6 @@ namespace Dune
       typedef MatrixFunctionSpace< DomainFieldImp, RangeFieldImp, newDimDomain, m1, m2 > Type;
     };
     
-
     //! specialization for parameter list <domainfile,rangefield,dimDomain,dimRange,dimLocal> 
     template< class DomainFieldImp, class RangeFieldImp, int dimDomain, int dimRange, int newDimRange >
     struct ToNewDimRangeFunctionSpace< FunctionSpace< DomainFieldImp, RangeFieldImp, dimDomain, dimRange >, newDimRange >
@@ -289,16 +267,6 @@ namespace Dune
     };
 
   } // namespace Fem 
-
-#if DUNE_FEM_COMPATIBILITY  
-// put this in next version 1.4 
-
-using Fem :: FunctionSpace ;
-using Fem :: MatrixFunctionSpace ;
-using Fem :: ToNewDimRangeFunctionSpace ;
-using Fem :: ToLocalFunctionSpace ;
-
-#endif // DUNE_FEM_COMPATIBILITY
 
 } // namespace Dune 
 

@@ -11,7 +11,6 @@
 #include <dune/fem/misc/engineconcept.hh>
 #include <dune/fem/space/basisfunctionset/functor.hh>
 #include <dune/fem/space/common/functionspace.hh>
-#include <dune/fem/version.hh>
 
 namespace Dune
 {
@@ -25,8 +24,8 @@ namespace Dune
     /** \brief Interface documentation for Dof alignment classes
      *         used in VectorialBasisFunctionSet.
      *
-     *  \note This interface class is implemented by 
-     *        HorizontalDofAlignment and 
+     *  \note This interface class is implemented by
+     *        HorizontalDofAlignment and
      *        VerticalDofAlignment
      *
      *  \tparam  Imp  implementation type (CRTP)
@@ -43,7 +42,7 @@ namespace Dune
     public:
       //! \brief global Dof type
       typedef std::size_t GlobalDofType;
-      /** \brief local Dof type consists of coordinate number and Dof 
+      /** \brief local Dof type consists of coordinate number and Dof
        *         number in scalar basis function set
        */
       typedef std::pair< int, std::size_t > LocalDofType;
@@ -67,11 +66,11 @@ namespace Dune
        *
        *  \param[in]  global  global Dof
        *
-       *  \returns local Dof 
+       *  \returns local Dof
        */
       LocalDofType localDof ( const GlobalDofType &globalDof ) const
       {
-        return asImp().globalDof( localDof );
+        return asImp().localDof( globalDof );
       }
     };
 
@@ -124,7 +123,7 @@ namespace Dune
       /** @copydoc Dune::Fem::DofAlignment::localDof */
       LocalDofType localDof ( const GlobalDofType &globalDof ) const
       {
-         return LocalDofType( globalDof / scalarSize_, globalDof % scalarSize_ ); 
+         return LocalDofType( globalDof / scalarSize_, globalDof % scalarSize_ );
       }
 
     private:
@@ -175,7 +174,7 @@ namespace Dune
       /** @copydoc Dune::Fem::DofAlignment::localDof */
       LocalDofType localDof ( const GlobalDofType &globalDof ) const
       {
-        return LocalDofType( globalDof % dimRange, globalDof / dimRange ); 
+        return LocalDofType( globalDof % dimRange, globalDof / dimRange );
       }
     };
 
@@ -253,7 +252,7 @@ namespace Dune
     // VectorialBasisFunctionSet
     // -------------------------
 
-    /** \brief Builds a vectorial basis function set 
+    /** \brief Builds a vectorial basis function set
      *         from given scalar basis function set.
      *
      *  \tparam  ScalarBasisFunctionSet  scalar basis function set
@@ -277,7 +276,7 @@ namespace Dune
 
     public:
       typedef typename ToNewDimRangeFunctionSpace< ScalarFunctionSpaceType, dimRange >::Type FunctionSpaceType;
-       
+
       typedef typename FunctionSpaceType::DomainType DomainType;
       typedef typename FunctionSpaceType::RangeType RangeType;
       typedef typename FunctionSpaceType::JacobianRangeType JacobianRangeType;
@@ -306,9 +305,6 @@ namespace Dune
       int order () const { return scalarBasisFunctionSet().order(); }
 
       std::size_t size () const { return dimRange*scalarBasisFunctionSet().size(); }
-
-      DUNE_VERSION_DEPRECATED(1,4,remove)
-      Dune::GeometryType type () const { return scalarBasisFunctionSet().type(); }
 
       const ReferenceElementType &referenceElement () const { return scalarBasisFunctionSet().referenceElement(); }
 

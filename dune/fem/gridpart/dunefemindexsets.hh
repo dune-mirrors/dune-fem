@@ -289,12 +289,6 @@ namespace Dune
       //! return if index set is marked for backup/restore 
       bool backupRestoreNeeded() const { return backupRestoreCounter_ > 0 ; }
 
-      //! write index set to file 
-      virtual bool write_xdr( const std::string & ) const { return false; }
-
-      //! read index set from file 
-      virtual bool read_xdr( const std::string & ) { return false; }
-
       using BaseType::asImp;
 
       // reference to dof manager 

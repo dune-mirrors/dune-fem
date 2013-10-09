@@ -3,11 +3,9 @@
 
 #include <dune/common/typetraits.hh>
 
-#include <dune/fem/version.hh>
 #include <dune/fem/function/common/gridfunctionadapter.hh>
 #include <dune/fem/misc/iteratorprovider.hh>
 #include <dune/fem/operator/common/operator.hh>
-
 
 namespace Dune 
 {
@@ -169,70 +167,6 @@ namespace Dune
     }
 
   } // namespace Fem 
-
-
-  /** \class LagrangeInterpolation
-   *  \brief Generates the Lagrange Interpolation of an analytic function
-   */
-  template< class DiscreteFunction >
-  class LagrangeInterpolation
-  {
-    typedef LagrangeInterpolation< DiscreteFunction > ThisType;
-
-  public:
-    //! type of discrete functions
-    typedef DiscreteFunction DiscreteFunctionType;
-
-    //! type of discrete function space
-    typedef typename DiscreteFunctionType::DiscreteFunctionSpaceType
-      DiscreteFunctionSpaceType;
-    //! type of local functions
-    typedef typename DiscreteFunctionType::LocalFunctionType
-      LocalFunctionType;
-
-    //! type of grid partition
-    typedef typename DiscreteFunctionSpaceType::GridPartType GridPartType;
-
-    //! type of Lagrange point set
-    typedef typename DiscreteFunctionSpaceType::LagrangePointSetType
-      LagrangePointSetType;
-    //! type of vectors in function's domain
-    typedef typename DiscreteFunctionSpaceType::DomainType DomainType;
-    //! type of vectors in function's range
-    typedef typename DiscreteFunctionSpaceType::RangeType RangeType;
-
-  public:
-    /** interpolate an analytical function into a Lagrange discrete function
-     *
-     *  This Method evaluates the given function (which can be evaluated
-     *  globally) at the Lagrange points and writes the values into a discrete
-     *  function.
-     *
-     *  \param[in] function function to interpolate
-     *
-     *  \param[out] discreteFunction discrete function to receive the
-     *              interpolation
-     */
-    template< class Function >
-    DUNE_VERSION_DEPRECATED(1,4,remove)
-    static void interpolateFunction ( const Function &function,
-                                      DiscreteFunctionType &discreteFunction )
-    {
-      // forward to new implementation 
-      Fem :: LagrangeInterpolation< Function, DiscreteFunctionType > 
-        :: interpolateFunction ( function, discreteFunction );
-    }
-
-    //! \copydoc interpolateFunction 
-    //- make interface equal to DGL2Projection 
-    template< class Function >
-    DUNE_VERSION_DEPRECATED(1,4,remove)
-    static void apply ( const Function &function,
-                        DiscreteFunctionType &discreteFunction )
-    {
-      interpolateFunction( function, discreteFunction );
-    }
-  };
 
 } // namespace Dune
 

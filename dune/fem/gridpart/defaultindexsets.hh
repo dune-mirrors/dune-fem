@@ -230,10 +230,6 @@ namespace Dune
       : BaseType( grid.leafIndexSet() )
       {}
 
-      WrappedLeafIndexSet ( const GridType &grid, const int level ) DUNE_DEPRECATED
-      : BaseType( grid.leafIndexSet() )
-      {}
-
       //! constructor taking grid part 
       template< class GridPartType >
       WrappedLeafIndexSet ( const GridPartType &gridPart )

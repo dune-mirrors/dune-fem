@@ -252,23 +252,6 @@ namespace Dune
       };
 #endif // #if HAVE_DUNE_METAGRID
 
-
-      // IsUnstructured (deprecated)
-      // --------------
-#ifdef DUNE_FEM_COMPATIBILITY
-      template< class Grid >
-      struct IsUnstructured
-      {
-        static const bool v = ! Dune::Capabilities::isCartesian< Grid > :: v ;
-      };
-
-      template< class Grid >
-      struct IsUnstructured< const Grid >
-      {
-        static const bool v = ! Dune::Capabilities::isCartesian< Grid > :: v;
-      };
-#endif
-
     } // namespace Capabilities 
 
   } // namespace Fem

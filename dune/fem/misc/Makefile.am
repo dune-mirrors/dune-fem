@@ -1,6 +1,6 @@
 miscdir =  $(includedir)/dune/fem/misc
 
-SUBDIRS = petsc test threads
+SUBDIRS = petsc threads
 
 misc_HEADERS = alugridwriter.hh \
 	       bartonnackmaninterface.hh \
@@ -9,7 +9,6 @@ misc_HEADERS = alugridwriter.hh \
 	       capabilities.hh \
 	       checkgeomaffinity.hh \
 	       codimmap.hh \
-	       combineinterface.hh \
 	       commhelper.hh \
 	       debug.hh \
 	       double.hh \
@@ -28,10 +27,8 @@ misc_HEADERS = alugridwriter.hh \
 	       gridsolution.hh \
 	       gridwidth.hh \
 	       h1norm.hh \
-				 iteratorprovider.hh \
-	       l1error.hh \
+	       iteratorprovider.hh \
 	       l1norm.hh \
-	       l2error.hh \
 	       l2norm.hh \
 	       linesegmentsampler.hh \
 	       lpnorm.hh \

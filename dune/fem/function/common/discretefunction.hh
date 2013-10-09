@@ -14,9 +14,7 @@
 #include <dune/fem/function/localfunction/wrapper.hh>
 #include <dune/fem/gridpart/common/entitysearch.hh>
 #include <dune/fem/io/file/persistencemanager.hh>
-#include <dune/fem/io/streams/asciistreams.hh>
 #include <dune/fem/io/streams/streams.hh>
-#include <dune/fem/io/streams/xdrstreams.hh>
 #include <dune/fem/misc/debug.hh>
 #include <dune/fem/misc/threadmanager.hh>
 #include <dune/fem/space/common/discretefunctionspace.hh>
@@ -447,42 +445,6 @@ namespace Dune
         asImp().write( out );
       }
       
-      /** \brief read discrete function from file using XDR decoding
-       * 
-       *  \param[in]  filename  name of file to read from
-       *
-       *  \return \b true if operation was successful
-       */
-      DUNE_VERSION_DEPRECATED(1,4,remove)
-      virtual bool read_xdr ( const std :: string filename ) = 0;
-     
-      /** \brief write discrete function to file using XDR encoding
-       *
-       *  \param[in]  filename  name of file to write to
-       *
-       *  \return \b true if operation was successful
-       */
-      DUNE_VERSION_DEPRECATED(1,4,remove)
-      virtual bool write_xdr ( const std :: string filename ) const = 0;
-      
-      /** \brief read discrete function from file using ASCII decoding
-       *
-       *  \param[in]  filename  name of file to read from 
-       *
-       *  \returns \b true if operation was successful
-       */
-      DUNE_VERSION_DEPRECATED(1,4,remove)
-      virtual bool read_ascii ( const std :: string filename ) = 0;
-
-      /** \brief write discrete function to file using ASCII encoding
-       *
-       *  \param[in]  filename  name of the file to write to 
-       *  
-       *  \returns \b true if operation was successful
-       */
-      DUNE_VERSION_DEPRECATED(1,4,remove)
-      virtual bool write_ascii ( const std :: string filename ) const = 0;
-
       /** \brief Enable this discrete function for dof compression, 
            i.e. during grdi changes a dof compression 
            is done when the DofManagers compress is called. 
@@ -651,8 +613,6 @@ namespace Dune
        */
       inline void freeDofPointer( RangeFieldType *dofPointer );
 
-      // use overloaded deprecated axpy method from BaseType
-      using BaseType :: axpy;
       /** \copydoc Dune::Fem::DiscreteFunctionInterface::axpy(const RangeFieldType &s,const DiscreteFunctionInterfaceType &g) */
       void axpy ( const RangeFieldType &s, const DiscreteFunctionInterfaceType &g );
       
@@ -690,12 +650,6 @@ namespace Dune
       /** \copydoc Dune::Fem::Function::hessian (const DomainType &x,HessianRangeType &hessian) const */
       inline void hessian ( const DomainType &x, HessianRangeType &hessian ) const;
 
-      /** \copydoc Dune::Fem::Function::evaluate(const FieldVector<int,diffOrder> &diffVariable,const DomainType &x,RangeType &ret) const */
-      template< int diffOrder >
-      DUNE_VERSION_DEPRECATED(1,4,remove)
-      inline void evaluate ( const FieldVector< int, diffOrder > &diffVariable,
-                             const DomainType &x, RangeType &ret ) const;
-
       /** \copydoc Dune::Fem::DiscreteFunctionInterface::operator+=(const DiscreteFunctionInterfaceType &g) */
       DiscreteFunctionType &operator+= ( const DiscreteFunctionInterfaceType &g );
 
@@ -730,34 +684,6 @@ namespace Dune
       template< class StreamTraits >
       inline void write ( OutStreamInterface< StreamTraits > &out ) const;
       
-      /** \copydoc Dune::Fem::DiscreteFunctionInterface::read_xdr
-       * 
-       *  \note The default implementation uses the read method to read the
-       *        discrete function from an XDRFileInStream.
-       */
-      virtual bool read_xdr ( const std :: string filename );
-   
-      /** \copydoc Dune::Fem::DiscreteFunctionInterface::write_xdr
-       *
-       *  \note The default implementation uses the write method to write the
-       *        discrete function to an XDRFileOutStream.
-       */
-      virtual bool write_xdr ( const std :: string filename ) const;
-      
-      /** \copydoc Dune::Fem::DiscreteFunctionInterface::read_ascii
-       * 
-       *  \note The default implementation uses the read method to read the
-       *        discrete function from an ASCIIInStream.
-       */
-      virtual bool read_ascii ( const std :: string filename );
-   
-      /** \copydoc Dune::Fem::DiscreteFunctionInterface::write_ascii
-       *
-       *  \note The default implementation uses the write method to write the
-       *        discrete function to an ASSCIIOutStream.
-       */
-      virtual bool write_ascii ( const std :: string filename ) const;
-
       /** \copydoc Dune::Fem::DiscreteFunctionInterface::enableDofCompression()
        *
        *  \note The default implementation does nothing.
@@ -834,14 +760,6 @@ namespace Dune
   ///@}
 
   } // end namespace Fem
-
-#if DUNE_FEM_COMPATIBILITY  
-// put this in next version 1.4 
-
-using Fem :: IsDiscreteFunction ;
-using Fem :: HasLocalFunction ;
-
-#endif // DUNE_FEM_COMPATIBILITY
 
 } // end namespace Dune
 

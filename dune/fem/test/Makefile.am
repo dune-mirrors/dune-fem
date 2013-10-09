@@ -29,7 +29,8 @@ TESTPROGS = lagrangeinterpolation_linear lagrangeinterpolation_quadratic \
             dgl2projection_fv      \
             dgl2projection_idgridpart \
             vtxprojection_adaptive \
-            intersectionindexset
+            intersectionindexset \
+						combinedspaceadaptation
 
 TESTS = $(TESTPROGS) adaptation-4.sh
 check_PROGRAMS = $(TESTPROGS) adaptation
@@ -86,5 +87,8 @@ intersectionindexset_CPPFLAGS = $(AM_CPPFLAGS)
 
 adaptation_SOURCES = adaptation.cc
 adaptation_CPPFLAGS = $(AM_CPPFLAGS) -UGRIDDIM -DGRIDDIM=3 -UWORLDDIM -DWORLDDIM=3
+
+combinedspaceadaptation_SOURCES = adaptation.cc
+combinedspaceadaptation_CPPFLAGS = $(AM_CPPFLAGS) -DUSECOMBINEDSPACE -UGRIDDIM -DGRIDDIM=3 -UWORLDDIM -DWORLDDIM=3
 
 include $(top_srcdir)/am/global-rules

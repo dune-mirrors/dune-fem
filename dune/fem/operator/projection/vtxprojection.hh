@@ -102,7 +102,7 @@ namespace Dune
 
         // make function continuous over hanging nodes
 
-        if( !GridPartType::conforming && Fem::GridPartCapabilities::hasGrid< GridPartType >::v)
+        if( !GridPartType::Traits::conforming && Fem::GridPartCapabilities::hasGrid< GridPartType >::v)
         {
           const GridPartType &gridPart =  space.gridPart();
           for( IteratorType it = space.begin(); it != end; ++it )
@@ -192,13 +192,6 @@ namespace Dune
     };
 
   } // namespace Fem
-
-#if DUNE_FEM_COMPATIBILITY  
-  // put this in next version 1.4 
-
-  using Fem :: VtxProjection ;
-
-#endif // DUNE_FEM_COMPATIBILITY
 
 } // name space Dune
 

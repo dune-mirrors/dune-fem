@@ -10,7 +10,6 @@ localfunction_HEADERS = average.hh \
 			localfunctionset.hh \
 			standard.hh \
 			temporary.hh \
-			temporarylocalfunction.hh \
 			wrapper.hh
 
 include $(top_srcdir)/am/global-rules

@@ -273,12 +273,5 @@ namespace Dune
  
   } // end namespace Fem 
 
-#if DUNE_FEM_COMPATIBILITY
-
-  // for convenience, to be removed in the future
-  using Fem :: AdaptiveDiscreteFunction ;
-
-#endif // DUNE_FEM_COMPATIBILITY
-
 } // end namespace Dune
 #endif // #ifndef DUNE_FEM_ADAPTIVEFUNCTION_HH

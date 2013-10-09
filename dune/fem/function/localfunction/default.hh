@@ -83,12 +83,6 @@ namespace Dune
       template< class T >
       void axpy ( const RangeFieldType s, const LocalFunction< T > &lf );
 
-      /** \copydoc Dune::Fem::LocalFunction::evaluate(const FieldVector<int,diffOrder> &diffVariable,const PointType &x,RangeType &ret) const */
-      template< int diffOrder, class PointType >
-      DUNE_VERSION_DEPRECATED(1,4,remove)
-      void evaluate ( const FieldVector< int, diffOrder > &diffVariable,
-                      const PointType &x, RangeType &ret ) const;
-
       /** \copydoc Dune::Fem::LocalFunction::evaluate(const PointType &x,RangeType &ret) const */
       template< class PointType >
       void evaluate ( const PointType &x, RangeType &ret ) const;
@@ -120,32 +114,6 @@ namespace Dune
         const int numDofs = asImp().numDofs();
         assert( numDofs % dimRange == 0 );
         return numDofs / dimRange;
-      }
-
-    private:
-      template< class PointType >
-      void doEvaluate ( const FieldVector< int, 0 > &,
-                        const PointType &x, RangeType &ret ) const
-      {
-        return evaluate( x, ret );
-      }
-
-      template< class PointType >
-      void doEvaluate ( const FieldVector< int, 1 > &diffVariable,
-                        const PointType &x, RangeType &ret ) const
-      {
-        JacobianRangeType tmp;
-        jacobian( x, tmp );
-        const int j = diffVariable[ 0 ];
-        for( int i = 0; i < dimRange; ++i )
-          ret[ i ] = tmp[ i ][ j ];
-      }
-
-      template< int diffOrder, class PointType >
-      void doEvaluate ( const FieldVector< int, diffOrder > &diffVariable,
-                        const PointType &x, RangeType &ret ) const
-      {
-        DUNE_THROW( NotImplemented, "Method evaluate() not implemented yet." );
       }
 
     protected:
@@ -211,17 +179,6 @@ namespace Dune
 
       for( int i = 0; i < numDofs; ++i )
         asImp()[ i ] += s * lf[ i ];
-    }
-
-
-    template< class DiscreteFunctionSpace, class LocalFunctionImp >
-    template< int diffOrder, class PointType >
-    inline void LocalFunctionDefault< DiscreteFunctionSpace, LocalFunctionImp >
-      ::evaluate ( const FieldVector< int, diffOrder > &diffVariable,
-                   const PointType &x, RangeType &ret ) const
-    {
-      // asImp().baseFunctionSet().evaluateAll( diffVariable, x, asImp(), ret );
-      doEvaluate( diffVariable, x, ret );
     }
 
     

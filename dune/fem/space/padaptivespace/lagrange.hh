@@ -65,7 +65,7 @@ namespace Dune
 
       static const int dimLocal = GridPartType::dimension;
       typedef typename FunctionSpace::ScalarFunctionSpaceType ScalarFunctionSpaceType;
-      typedef typename ToLocalFunctionSpace< ScalarFunctionSpaceType, dimLocal >::Type ShapeFunctionSpaceType;
+      typedef typename ToNewDimDomainFunctionSpace< ScalarFunctionSpaceType, dimLocal >::Type ShapeFunctionSpaceType;
 
       typedef LagrangeShapeFunctionInterface< ShapeFunctionSpaceType > ShapeFunctionType;
       typedef SimpleShapeFunctionSet< ShapeFunctionType > SimpleShapeFunctionSetType;

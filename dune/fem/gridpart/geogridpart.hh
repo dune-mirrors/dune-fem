@@ -133,7 +133,7 @@ namespace Dune
 
       typedef typename HostGridPartType::CollectiveCommunicationType CollectiveCommunicationType;
 
-      static const bool conforming = HostGridPartType::conforming;
+      static const bool conforming = HostGridPartType::Traits::conforming;
     };
 
 

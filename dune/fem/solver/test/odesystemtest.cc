@@ -27,6 +27,7 @@ using namespace std;
 // than a simple, tuned up double. 
 template <int N>
 class myDest : public FieldVector<double, N> {
+  typedef myDest< N > ThisType;
 private:
   struct SpaceDummy {
     int size () const { return N; }
@@ -61,6 +62,15 @@ public:
       std::cout << "ERROR: Accessing element " << i << std::endl;
     }
     return (*this)[i];
+  }
+
+  double scalarProductDofs ( const ThisType &other ) const
+  {
+    double scp = 0;
+    for( std::size_t i=0; i < N; ++i )
+      scp += (*this)[ i ] * other[ i ];
+
+    return scp;
   }
 };
 

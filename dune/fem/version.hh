@@ -12,7 +12,7 @@
 #define DUNE_VERSION_DEPRECATED_1_9(m) DUNE_DEPRECATED
 
 // current version should fail 
-#define DUNE_VERSION_DEPRECATED_1_3(newmethod) \
+#define DUNE_VERSION_DEPRECATED_1_4(newmethod) \
   dune_remove_deprecated_method__use_##newmethod##_instead
 
 #define DUNE_VERSION_DEPRECATED(major,minor,newmethod) \

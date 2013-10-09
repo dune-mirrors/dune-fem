@@ -45,7 +45,7 @@ namespace Dune
         };
       };
 
-      static const bool conforming = GridPart::conforming;
+      static const bool conforming = GridPart::Traits::conforming;
     };
 
 

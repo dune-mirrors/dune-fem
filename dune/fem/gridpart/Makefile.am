@@ -11,8 +11,6 @@ gridpart_HEADERS = adaptiveleafgridpart.hh \
 		   filter.hh \
 		   filteredgridpart.hh \
 		   geogridpart.hh \
-		   gridpart.hh \
-		   hierarchicgridpart.hh \
 		   idgridpart.hh \
 		   leafgridpart.hh \
 		   levelgridpart.hh

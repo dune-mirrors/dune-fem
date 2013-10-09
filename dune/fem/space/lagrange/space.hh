@@ -63,7 +63,6 @@ namespace Dune
 
       static const int localBlockSize = FunctionSpaceType::dimRange;
       typedef IndexSetDofMapper< GridPartType > BlockMapperType;
-      typedef NonBlockMapper< BlockMapperType, localBlockSize > MapperType;
 
       static const int codimension = 0;
 
@@ -71,7 +70,7 @@ namespace Dune
       typedef typename GridPartType::template Codim< codimension >::EntityType EntityType;
       static const int dimLocal = GridPartType::dimension;
       typedef typename FunctionSpace::ScalarFunctionSpaceType ScalarFunctionSpaceType;
-      typedef typename ToLocalFunctionSpace< ScalarFunctionSpaceType, dimLocal >::Type ShapeFunctionSpaceType;
+      typedef typename ToNewDimDomainFunctionSpace< ScalarFunctionSpaceType, dimLocal >::Type ShapeFunctionSpaceType;
 
     public:
       typedef LagrangeShapeFunctionSet< ShapeFunctionSpaceType, polynomialOrder > LagrangeShapeFunctionSetType;
@@ -154,7 +153,6 @@ namespace Dune
       typedef typename BaseType::BasisFunctionSetType BasisFunctionSetType;
 
       typedef typename BaseType::BlockMapperType BlockMapperType;
-      typedef typename BaseType::MapperType MapperType;
 
       typedef LagrangePointSet< GridPartType, polynomialOrder > LagrangePointSetType;
 
@@ -188,7 +186,6 @@ namespace Dune
                                                const CommunicationDirection commDirection = defaultDirection )
       : BaseType( gridPart, commInterface, commDirection ),
         blockMapper_( nullptr ),
-        mapper_( nullptr ),
         lagrangePointSetContainer_( gridPart )
       {
         const IndexSetType &indexSet = gridPart.indexSet();
@@ -204,16 +201,10 @@ namespace Dune
         MapperSingletonKeyType key( gridPart, lagrangePointSetContainer_.compiledLocalKeys( polynomialOrder ), polynomialOrder );
         blockMapper_ = &BlockMapperProviderType::getObject( key );
         assert( blockMapper_ );
-        
-        mapper_ = new MapperType( *blockMapper_ );
-        assert( mapper_ );
       }
 
       ~LagrangeDiscreteFunctionSpace ()
       {
-        if( mapper_ )
-          delete mapper_;
-        mapper_ = nullptr;
         BlockMapperProviderType::removeObject( *blockMapper_ );
       }
 
@@ -245,13 +236,6 @@ namespace Dune
       int order () const
       {
         return polOrder;
-      }
-
-      /** \copydoc Dune::Fem::DiscreteFunctionSpaceInterface::mapper */
-      MapperType &mapper () const
-      {
-        assert( mapper_ );
-        return *mapper_;
       }
 
       /** \copydoc Dune::Fem::DiscreteFunctionSpaceInterface::blockMapper */
@@ -349,7 +333,6 @@ namespace Dune
       ThisType &operator= ( const ThisType & );
 
       BlockMapperType *blockMapper_;
-      MapperType *mapper_;
       ScalarShapeFunctionSetStorageType scalarShapeFunctionSets_;
       LagrangePointSetContainerType lagrangePointSetContainer_;
     };

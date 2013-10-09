@@ -8,7 +8,6 @@
 #include <dune/geometry/type.hh>
 
 #include <dune/fem/space/basisfunctionset/functor.hh>
-#include <dune/fem/version.hh>
 
 namespace Dune
 {
@@ -70,9 +69,6 @@ namespace Dune
       //! \brief return size of basis function set
       std::size_t size () const { return localFunctionSet().size(); }
 
-      DUNE_VERSION_DEPRECATED(1,4,remove)
-      Dune::GeometryType type () const { return entity().type(); }
-
       //! \brief return reference element
       const ReferenceElementType &referenceElement () const
       {
@@ -91,10 +87,10 @@ namespace Dune
       }
 
       /** \brief evaluate all basis function and multiply with given
-       *         values and add to dofs 
+       *         values and add to dofs
        *
        *  \note valuesA and valuesB can be vectors of RangeType or
-       *        JacobianRangeType 
+       *        JacobianRangeType
       */
       template< class Quadrature, class VectorA, class VectorB, class DofVector >
       void axpy ( const Quadrature &quad, const VectorA &valuesA, const VectorB &valuesB, DofVector &dofs ) const

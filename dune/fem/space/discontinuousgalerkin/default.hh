@@ -58,7 +58,6 @@ namespace Dune
       typedef typename Traits::ShapeFunctionSetType ShapeFunctionSetType;
       typedef typename BaseType::BasisFunctionSetType BasisFunctionSetType;
 
-      typedef typename BaseType::MapperType MapperType;
       typedef typename BaseType::BlockMapperType BlockMapperType;
 
     protected:
@@ -83,8 +82,7 @@ namespace Dune
                                           const InterfaceType commInterface,
                                           const CommunicationDirection commDirection )
       : BaseType( gridPart, commInterface, commDirection ),
-        blockMapper_( &BlockMapperProviderType::getObject( gridPart ) ),
-        mapper_( blockMapper() )
+        blockMapper_( &BlockMapperProviderType::getObject( gridPart ) )
       {
         // get geometry types
         std::vector< GeometryType > geomTypes = AllGeomTypes< IndexSetType, GridType >( gridPart.indexSet()).geomTypes( Traits::codimension );
@@ -131,13 +129,6 @@ namespace Dune
       int order () const
       {
         return polynomialOrder;
-      }
-
-      /** @copydoc Dune::Fem::DiscreteFunctionSpaceInterface::mapper */
-      DUNE_VERSION_DEPRECATED(1,4,remove)
-      MapperType &mapper () const
-      {
-        return mapper_;
       }
 
       /** @copydoc Dune::Fem::DiscreteFunctionSpaceInterface::blockMapper */
@@ -189,7 +180,6 @@ namespace Dune
 
     private:
       BlockMapperType *blockMapper_;
-      mutable MapperType mapper_;
       ScalarShapeFunctionSetStorageType scalarShapeFunctionSets_;
     };
 
@@ -225,7 +215,6 @@ namespace Dune
 
       typedef CodimensionMapper< GridPartType, codimension > BlockMapperType;
       static const int localBlockSize = Traits::localBlockSize;
-      typedef NonBlockMapper< BlockMapperType, localBlockSize > MapperType;
 
       template <class DiscreteFunction, class Operation = DFCommunicationOperation::Copy >
       struct CommDataHandle
