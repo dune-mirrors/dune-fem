@@ -104,7 +104,6 @@ namespace Dune
 
       enum{ localBlockSize = MapperSelectorType :: localBlockSize };
       typedef typename MapperSelectorType :: BlockMapperType BlockMapperType;
-      typedef NonBlockMapper< BlockMapperType, localBlockSize > MapperType;
 
       static BlockMapperType* getBlockMapper ( const DiscreteFunctionSpace1 &space1, const DiscreteFunctionSpace2 &space2 )
       {
@@ -201,13 +200,6 @@ namespace Dune
       //! type of the base function set(s)
       typedef typename Traits :: BasisFunctionSetType BasisFunctionSetType;
 
-      //! types of the dof mapper for the two subspaces
-      typedef typename DiscreteFunctionSpaceType1 :: MapperType MapperType1;
-      typedef typename DiscreteFunctionSpaceType2 :: MapperType MapperType2;
-
-      //! mapper used to implement mapToGlobal
-      typedef typename Traits :: MapperType MapperType;
-
       //! mapper used to for block vector function
       typedef typename Traits :: BlockMapperType BlockMapperType;
 
@@ -256,8 +248,7 @@ namespace Dune
       : BaseType( gridPart, commInterface, commDirection ),
         space1_( gridPart, commInterface, commDirection ),
         space2_( gridPart, commInterface, commDirection ),
-        blockMapper_( Traits::getBlockMapper( space1_, space2_ ) ),
-        mapper_( blockMapper() )
+        blockMapper_( Traits::getBlockMapper( space1_, space2_ ) )
       {
       }
 
@@ -363,9 +354,6 @@ namespace Dune
 
       //! BlockMapper
       BlockMapperType *blockMapper_;
-
-      //! corresponding mapper
-      mutable MapperType mapper_;
     };
 
 
