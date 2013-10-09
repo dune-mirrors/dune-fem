@@ -37,7 +37,7 @@ namespace Dune {
 
     public:
       FlopCounter () 
-      : values_( 3, float(0.0 ) ),
+      : values_( 3, float(0.0) ),
         flops_( 0 )
       {
         // reset flop counters
