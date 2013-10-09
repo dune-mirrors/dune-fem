@@ -153,8 +153,6 @@ namespace Dune
     public:
       //! type of \ref Dune::Fem::BasisFunctionSet "basis function set" of this space 
       typedef typename Traits :: BasisFunctionSetType BasisFunctionSetType;
-      //! type of \ref Dune::DofMapper "DoF mapper" of this space
-      typedef typename Traits :: MapperType MapperType;
       //! type of block mapper of this space
       typedef typename Traits :: BlockMapperType BlockMapperType;
 
@@ -605,7 +603,6 @@ namespace Dune
 
     public:
       using BaseType :: blockMapper;
-      using BaseType :: mapper;
       using BaseType :: order ;
 
       //! type of DoF manager
