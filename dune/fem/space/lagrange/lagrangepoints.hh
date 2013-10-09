@@ -740,12 +740,6 @@ namespace Dune
         return lagrangePointList_.dofInfo( index );
       }
 
-      DUNE_DEPRECATED
-      const LocalKey &dofInfo ( unsigned int index ) const
-      {
-        return localKey( index );
-      }
-
       void dofSubEntity ( unsigned int index, unsigned int &codim,
                           unsigned int &subEntity ) const
       {

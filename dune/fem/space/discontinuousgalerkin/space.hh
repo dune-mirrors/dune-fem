@@ -46,7 +46,7 @@ namespace Dune
 
       typedef typename FunctionSpaceType::ScalarFunctionSpaceType ScalarFunctionSpaceType;
       static const int dimLocal = GridPartType::dimension;
-      typedef typename ToLocalFunctionSpace< ScalarFunctionSpaceType, dimLocal >::Type ScalarShapeFunctionSpaceType;
+      typedef typename ToNewDimDomainFunctionSpace< ScalarFunctionSpaceType, dimLocal >::Type ScalarShapeFunctionSpaceType;
 
     public:
       static const int localBlockSize = FunctionSpaceType::dimRange * OrthonormalShapeFunctionSetSize< ScalarShapeFunctionSpaceType, polOrder >::v;

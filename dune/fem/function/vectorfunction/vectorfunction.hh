@@ -58,8 +58,6 @@ namespace Dune
       typedef typename DiscreteFunctionSpaceType :: JacobianRangeType
         JacobianRangeType;
 
-      typedef typename DiscreteFunctionSpaceType :: MapperType MapperType;
-
       typedef typename DofVectorType :: value_type  DofType;
       typedef DofVectorType DofStorageType;
 
@@ -286,11 +284,6 @@ namespace Dune
     }
 
   } // namespace Fem 
-
-#if DUNE_FEM_COMPATIBILITY
-
-  using Fem :: VectorDiscreteFunction ;
-#endif // DUNE_FEM_COMPATIBILITY
 
 } // namespace Dune
 

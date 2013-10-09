@@ -388,14 +388,6 @@ namespace Dune
 
   } // namespace Fem 
 
-#if DUNE_FEM_COMPATIBILITY  
-  // put this in next version 1.4 
-
-  using Fem :: Pass ;
-  using Fem :: StartPass ;
-
-#endif // DUNE_FEM_COMPATIBILITY
-
 } // namespace Dune
 
 #endif // #ifndef DUNE_FEM_PASS_COMMON_PASS_HH

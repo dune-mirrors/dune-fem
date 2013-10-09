@@ -39,7 +39,7 @@ namespace Dune
       typedef typename FunctionSpaceType::ScalarFunctionSpaceType ScalarFunctionSpaceType;
 
       static const int dimLocal = GridPartType::dimension;
-      typedef typename ToLocalFunctionSpace< ScalarFunctionSpaceType, dimLocal >::Type ShapeFunctionSpaceType;
+      typedef typename ToNewDimDomainFunctionSpace< ScalarFunctionSpaceType, dimLocal >::Type ShapeFunctionSpaceType;
 
       template< class GridPartType, bool hasSingleGeometryType = Dune::Fem::GridPartCapabilities::hasSingleGeometryType< GridPartType >::v >
       struct HaveSingleGeometryType;

@@ -250,14 +250,6 @@ namespace Dune
         return true;
       }
 
-      void read_xdr ( const char *filename, int timestep )
-      {
-        update();
-      }
-
-      void write_xdr ( const char *filename, int timestep )
-      {}
-
     private:
       GenericDofMapper ( const ThisType & );
       ThisType &operator= ( const ThisType & );

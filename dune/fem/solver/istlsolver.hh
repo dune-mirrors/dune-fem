@@ -540,17 +540,6 @@ namespace Dune
 
 } // namespace Dune
 
-#if DUNE_FEM_COMPATIBILITY  
-  // put this in next version 1.4 
-
-  using Fem :: ISTLLoopOp ;
-  using Fem :: ISTLCGOp ;
-  using Fem :: ISTLBICGSTABOp ;
-  using Fem :: ISTLMINResOp ;
-  using Fem :: ISTLGMResOp ;
-  using Fem :: ISTLSuperLU ;
-#endif // DUNE_FEM_COMPATIBILITY
-
 #endif // #if HAVE_DUNE_ISTL 
 
 #endif // #ifndef DUNE_FEM_ISTLSOLVERS_HH 

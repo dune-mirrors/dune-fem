@@ -10,7 +10,6 @@
 #include <dune/fem/space/mapper/codimensionmapper.hh>
 #include <dune/fem/space/mapper/nonblockmapper.hh>
 #include <dune/fem/space/shapefunctionset/selectcaching.hh>
-#include <dune/fem/version.hh>
 
 #include <dune/fem/space/finitevolume/basisfunctionset.hh>
 #include <dune/fem/space/finitevolume/declaration.hh>
@@ -64,7 +63,6 @@ namespace Dune
       static const int localBlockSize = dimRange;
 
       typedef CodimensionMapper< GridPartType, codimension > BlockMapperType;
-      typedef NonBlockMapper< BlockMapperType, localBlockSize > MapperType;
 
       template< class DiscreteFunction, class Operation = DFCommunicationOperation::Copy >
       struct CommDataHandle
@@ -94,7 +92,7 @@ namespace Dune
       static const CommunicationDirection defaultDirection =  ForwardCommunication;
 
     public:
-      static const int polynomialOrder DUNE_DEPRECATED = 0;
+      static const int polynomialOrder = 0;
 
       typedef typename BaseType::FunctionSpaceType FunctionSpaceType;
 
@@ -107,15 +105,13 @@ namespace Dune
 
       typedef typename BaseType::BasisFunctionSetType BasisFunctionSetType;
 
-      typedef typename BaseType::MapperType MapperType;
       typedef typename BaseType::BlockMapperType BlockMapperType;
 
       explicit FiniteVolumeSpace( GridPartType &gridPart,
                                   const InterfaceType commInterface = defaultInterface,
                                   const CommunicationDirection commDirection = defaultDirection )
       : BaseType( gridPart, commInterface, commDirection ),
-        blockMapper_( gridPart ),
-        mapper_( blockMapper_ )
+        blockMapper_( gridPart )
       {}
 
       /** @copydoc Dune::Fem::DiscreteFunctionSpaceInterface::type */
@@ -154,13 +150,6 @@ namespace Dune
         return order();          
       }
 
-      /** @copydoc Dune::Fem::DiscreteFunctionSpaceInterface::mapper */
-      DUNE_VERSION_DEPRECATED(1,4,remove)
-      MapperType &mapper () const
-      {
-        return mapper_;
-      }
-
       /** @copydoc Dune::Fem::DiscreteFunctionSpaceInterface::blockMapper */
       BlockMapperType &blockMapper () const
       {
@@ -187,7 +176,6 @@ namespace Dune
 
     private:
       mutable BlockMapperType blockMapper_;
-      mutable MapperType mapper_; 
     };
 
 

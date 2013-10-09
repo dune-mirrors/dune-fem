@@ -203,13 +203,6 @@ namespace Dune
 
   } // namespace Fem
 
-#if DUNE_FEM_COMPATIBILITY  
-  // put this in next version 1.4 
-
-  using Fem :: BoundaryModelDefault ;
-
-#endif // DUNE_FEM_COMPATIBILITY
-
 } // namespace Dune
 
 #endif // #ifndef DUNE_FEM_BOUNDARYMODEL_HH

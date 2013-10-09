@@ -458,14 +458,6 @@ namespace Dune
   
   } //end namespace Fem
 
-  // #if DUNE_FEM_COMPATIBILITY  
-  // put this in next version 1.4 
-
-  using Fem :: QuadraturePointWrapper ;
-  using Fem :: Quadrature ;
-  using Fem :: coordinate ;
-  // #endif // DUNE_FEM_COMPATIBILITY
-
 } //end namespace Dune
 
 #endif

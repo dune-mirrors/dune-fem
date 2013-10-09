@@ -115,18 +115,6 @@ namespace Dune
           asImp().set(localRow,localCol,value));
       }
 
-      /*! \brief set row to unit rwo (all entries zero only diagonal entry is one)
-          \param[in] localRow local row that is set to unit row 
-      */
-      /* makes no sens for unsymetrix matrices, use clearRow( localRow ) and 
-       * set( localRow, localRow, 1.) instead */
-      void unitRow ( const int localRow ) DUNE_DEPRECATED
-      {
-        CHECK_AND_CALL_INTERFACE_IMPLEMENTATION(
-          asImp().unitRow( localRow ));
-      }
-
-
       /*! \brief set row to zero values
           \param[in] localRow local row that is set to zero 
        */
@@ -514,14 +502,6 @@ namespace Dune
 ///@}
 
   } // namespace Fem 
-
-#if DUNE_FEM_COMPATIBILITY  
-  // put this in next version 1.4 
-
-  using Fem :: LocalMatrixDefault ;
-  using Fem :: MatrixColumnObject ;
-
-#endif // DUNE_FEM_COMPATIBILITY
 
 } // namespace Dune 
 

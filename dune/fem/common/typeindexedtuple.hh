@@ -31,11 +31,6 @@ namespace Dune
       typedef typename Dune::tuple_element< Position< T >::value, Tuple >::type Type;
     };
 
-    template< class T >
-    struct DUNE_DEPRECATED Get
-    : public Value< T >
-    {};
-
     explicit TypeIndexedTuple ( const Tuple &tuple = Tuple() )
     : tuple_( tuple )
     {}
@@ -53,12 +48,6 @@ namespace Dune
     {
       return Dune::get< Position< T >::value >( tuple_ );
     }
-
-    template< class T >
-    DUNE_DEPRECATED typename Value< T >::Type &get () { return at< T >(); }
-
-    template< class T >
-    DUNE_DEPRECATED const typename Value< T >::Type &get () const { return at< T >(); }
 
     //! \brief please doc me
     template< class T >

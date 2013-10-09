@@ -143,14 +143,5 @@ namespace Dune
 
   } // namespace Fem
 
-#if DUNE_FEM_COMPATIBILITY  
-  // put this in next version 1.4 
-
-  using Fem :: MatrixObjectSingleton ;
-  using Fem :: MatrixObjectSingletonKey ;
-  using Fem :: MatrixObjectSingletonFactory ;
-
-#endif // DUNE_FEM_COMPATIBILITY
-
 } // namespace Dune 
 #endif // #ifndef DUNE_FEM_MATRIXSINGLETON_HH

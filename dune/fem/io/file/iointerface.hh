@@ -253,26 +253,6 @@ namespace Dune
       {
         return Parameter::commonOutputPath();
       }
-
-      //! standard path reading and creation method 
-      //! rank is added to output path 
-      static std::string readPath(const std::string& paramfile) DUNE_DEPRECATED
-      {
-        std::string path;
-
-        // read output path from parameter file 
-        if( readParameter(paramfile,"OutputPath",path) ) 
-        {
-          return path;
-        }
-        else 
-        {
-          std::cerr << "Couldn't read output path, exiting... " << std::endl;
-        }
-        // default path is current directory 
-        path = ".";
-        return path;
-      }
       
       /** \brief create global path for data output */
       template <class CommunicatorType>
@@ -650,13 +630,6 @@ namespace Dune
     }; // end class IOInterface 
 
   } // end namespace Fem 
-
-#if DUNE_FEM_COMPATIBILITY  
-  // put this in next version 1.4 
-
-  using Fem :: IOInterface ;
-
-#endif // DUNE_FEM_COMPATIBILITY
 
 } // end namespace Dune  
 #endif // #ifndef DUNE_FEM_IOINTERFACE_HH

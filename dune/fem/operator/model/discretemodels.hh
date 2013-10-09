@@ -935,17 +935,5 @@ namespace Dune
 
   } // namespace Fem
 
-#if DUNE_FEM_COMPATIBILITY  
-  // put this in next version 1.4 
-
-  using Fem :: AdvDiffDModel1 ;
-  using Fem :: AdvDiffDModel2 ;
-  using Fem :: AdvDiffDModel3WithSource ;
-  using Fem :: AdvDiffDModel3 ;
-  using Fem :: AdvDiffDModel4 ;
-  using Fem :: LimiterDiscreteModel1 ; 
-
-#endif // DUNE_FEM_COMPATIBILITY
-
 } // namespace Dune
 #endif // #ifndef DUNE_FEM_LDG_DISCRETEMODELS_HH

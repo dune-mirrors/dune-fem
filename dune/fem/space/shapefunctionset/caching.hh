@@ -95,8 +95,6 @@ namespace Dune
 
       GeometryType type () const {  return type_; }
       
-      GeometryType geometryType () const DUNE_DEPRECATED {  return type(); }
-
       template < class QuadratureType >
       const RangeType* rangeCache( const QuadratureType& quadrature ) const
       {

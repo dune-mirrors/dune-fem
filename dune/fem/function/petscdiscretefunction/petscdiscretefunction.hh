@@ -56,7 +56,6 @@ namespace Dune
       typedef typename DiscreteFunctionSpaceType::RangeType             RangeType;
 
       typedef typename DiscreteFunctionSpaceType::JacobianRangeType     JacobianRangeType;
-      typedef typename DiscreteFunctionSpaceType::MapperType            MapperType;
       typedef typename DiscreteFunctionSpaceType::BlockMapperType       BlockMapperType;
       typedef typename DiscreteFunctionSpaceType::GridPartType          GridPartType;
       typedef PetscDiscreteFunction< DiscreteFunctionSpaceType >        DiscreteFunctionType;

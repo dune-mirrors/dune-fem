@@ -78,21 +78,13 @@ namespace Dune
     protected:
       using BaseType::asImp;
 
-    protected:
       /** \brief default constructor */
       Function ()
       {}
 
-      /** \brief constructor storing the function space
-       *
-       *  \param[in]  fSpace  function space for this function
-       */
-      explicit Function ( const FunctionSpaceType &fSpace ) DUNE_DEPRECATED
-      {}
-
-    protected:
       // Disallow copying of function, but allow copying of derived classes 
       Function ( const ThisType &other ) {} 
+
     private:  
       // Disallow assignment
       ThisType &operator= ( const ThisType & );
@@ -139,32 +131,6 @@ namespace Dune
       void hessian ( const DomainType &x, HessianRangeType &hessian ) const
       {
         CHECK_AND_CALL_INTERFACE_IMPLEMENTATION( asImp().hessian( x, hessian ) );
-      }
-
-      /** \brief evaluate a derivative of the function
-       * 
-       *  \param[in]  diffVariable  vector describing the partial derivative to
-       *                            evaluate
-       *  \param[in]  x             evaluation point
-       *  \param[out] value         value of the derivative in x 
-       */    
-      template< int diffOrder >
-      DUNE_VERSION_DEPRECATED(1,4,remove)
-      void evaluate ( const FieldVector< int, diffOrder > &diffVariable,
-                      const DomainType &x,
-                      RangeType &value ) const
-      {
-        CHECK_AND_CALL_INTERFACE_IMPLEMENTATION( asImp().evaluate( diffVariable, x, value ) );
-      }
-
-      /** \brief Obtain the related function space
-       * 
-       *  \returns a reference to the function space 
-       */ 
-      const FunctionSpaceType &space () const DUNE_DEPRECATED
-      {
-        static FunctionSpaceType functionSpace;
-        return functionSpace;
       }
 
     private:

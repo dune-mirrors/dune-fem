@@ -232,12 +232,6 @@ namespace Dune
           localBlock()[ i ][ j ] = RangeFieldType( 0 );
       }
 
-      void unitRow ( int i ) DUNE_DEPRECATED
-      {
-        localBlock()[ i ] = RangeFieldType( 0 );
-        localBlock()[ i ][ i ] = RangeFieldType( 1 );
-      }
-
       template< class DomainLocalFunction, class RangeLocalFunction >
       void multiplyAdd ( const DomainLocalFunction &x, RangeLocalFunction &y ) const
       {

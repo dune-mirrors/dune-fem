@@ -282,15 +282,6 @@ namespace Dune
 
   } // namespace Fem
 
-#if HAVE_DUNE_ISTL
-#if DUNE_FEM_COMPATIBILITY  
-  // put this in next version 1.4 
-
-  using Fem :: PreconditionerWrapper ;
-
-#endif // DUNE_FEM_COMPATIBILITY
-#endif // HAVE_DUNE_ISTL
-
 } // namespace Dune 
 
 #endif // #ifndef DUNE_FEM_PRECONDITIONERWRAPPER_HH

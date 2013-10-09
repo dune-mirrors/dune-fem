@@ -208,18 +208,6 @@ namespace Dune
 
 
     template< class Traits >
-    template< int diffOrder >
-    inline void DiscreteFunctionDefault< Traits >
-      ::evaluate ( const FieldVector< int, diffOrder > &diffVariable,
-                   const DomainType &x,
-                   RangeType &value ) const
-    {
-      LocalFunctionEvaluateFunctor< LocalFunctionType, diffOrder > functor( diffVariable, value );
-      asImp().evaluateGlobal( x, functor );
-    }
-
-
-    template< class Traits >
     inline typename DiscreteFunctionDefault< Traits > :: DiscreteFunctionType &
     DiscreteFunctionDefault< Traits >
       ::operator+= ( const DiscreteFunctionInterfaceType &g )
@@ -325,73 +313,6 @@ namespace Dune
       const ConstDofIteratorType end = BaseType :: dend();
       for( ConstDofIteratorType it = BaseType :: dbegin(); it != end; ++it )
         out << *it;
-    }
-
-    template< class Traits >
-    bool DiscreteFunctionDefault< Traits >
-      :: read_xdr ( const std :: string filename )
-    {
-      try
-      {
-        XDRFileInStream in( filename );
-        BaseType :: read( in );
-        return true;
-      }
-      catch( Exception e )
-      {
-        return false;
-      }
-    }
-   
-    
-    template< class Traits >
-    bool DiscreteFunctionDefault< Traits >
-      :: write_xdr ( const std :: string filename ) const
-    {
-      try
-      {
-        XDRFileOutStream out( filename );
-        BaseType :: write( out );
-        return true;
-      }
-      catch( Exception e )
-      {
-        return false;
-      }
-    }
-    
-    
-    template< class Traits >
-    bool DiscreteFunctionDefault< Traits >
-      :: read_ascii ( const std :: string filename )
-    {
-      try
-      {
-        ASCIIInStream in( filename );
-        BaseType :: read( in );
-        return true;
-      }
-      catch( Exception e )
-      {
-        return false;
-      }
-    }
-   
-    
-    template< class Traits >
-    bool DiscreteFunctionDefault< Traits >
-      :: write_ascii ( const std :: string filename ) const
-    {
-      try
-      {
-        ASCIIOutStream out( filename );
-        BaseType :: write( out );
-        return true;
-      }
-      catch( Exception e )
-      {
-        return false;
-      }
     }
 
 
