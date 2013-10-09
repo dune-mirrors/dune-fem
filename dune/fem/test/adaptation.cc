@@ -33,6 +33,7 @@
 #include <dune/fem/space/lagrange.hh>
 #include <dune/fem/space/padaptivespace.hh>
 #include <dune/fem/space/discontinuousgalerkin.hh>
+#include <dune/fem/space/combineddiscretefunctionspace.hh>
 
 // adaptation ...
 #include <dune/fem/function/adaptivefunction.hh>
@@ -84,13 +85,22 @@ struct Scheme
 {
   typedef GridPart GridPartType;
   typedef typename GridPartType::GridType GridType;
-  
+
+#ifndef USECOMBINEDSPACE
   typedef FunctionSpace FunctionSpaceType;
 #ifdef CONFORMING_SPACE
   typedef Dune::Fem::LagrangeDiscreteFunctionSpace< FunctionSpaceType, GridPartType, POLORDER > DiscreteFunctionSpaceType;
   // typedef Dune::Fem::PAdaptiveLagrangeSpace< FunctionSpaceType, GridPartType, POLORDER > DiscreteFunctionSpaceType;
 #else 
   typedef Dune::Fem::DiscontinuousGalerkinSpace< FunctionSpaceType, GridPartType, POLORDER > DiscreteFunctionSpaceType;
+#endif
+#else
+  typedef Dune::Fem::DiscontinuousGalerkinSpace< FunctionSpace, GridPartType, POLORDER > DiscreteFunctionSpaceType1;
+  typedef Dune::Fem::DiscontinuousGalerkinSpace< FunctionSpace, GridPartType, POLORDER > DiscreteFunctionSpaceType2;
+  typedef Dune::Fem::CombinedDiscreteFunctionSpace< DiscreteFunctionSpaceType1, DiscreteFunctionSpaceType2 >
+    DiscreteFunctionSpaceType;
+
+  typedef typename DiscreteFunctionSpaceType :: FunctionSpaceType FunctionSpaceType; 
 #endif
 
 #if WANT_ISTL
