@@ -881,13 +881,6 @@ namespace Dune
   
   } // namespace Fem 
 
-#if DUNE_FEM_COMPATIBILITY 
-  // for convenience 
-  using Fem :: FieldVectorAdapter ;
-  using Fem :: DynamicVector ;
-  using Fem :: StaticVector ;
-#endif // DUNE_FEM_COMPATIBILITY
-
 } // namespace Dune 
 
 #include "vector_inline.hh"

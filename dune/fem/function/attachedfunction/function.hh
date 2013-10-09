@@ -217,10 +217,6 @@ namespace Dune
 
   } // namespace Fem
 
-#if DUNE_FEM_COMPATIBILITY  
-  using Fem :: AttachedDiscreteFunction ;
-#endif // DUNE_FEM_COMPATIBILITY
-
 } // namespace Dune
 
 #endif //#ifndef DUNE_FEM_ATTACHEDFUNCTION_FUNCTION_HH

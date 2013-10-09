@@ -651,12 +651,5 @@ namespace Dune
 
   } // end namespace Fem 
 
-#if DUNE_FEM_COMPATIBILITY  
-  // put this in next version 1.4 
-
-  using Fem :: IOInterface ;
-
-#endif // DUNE_FEM_COMPATIBILITY
-
 } // end namespace Dune  
 #endif // #ifndef DUNE_FEM_IOINTERFACE_HH

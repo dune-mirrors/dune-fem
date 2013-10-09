@@ -290,16 +290,6 @@ namespace Dune
 
   } // namespace Fem 
 
-#if DUNE_FEM_COMPATIBILITY  
-// put this in next version 1.4 
-
-using Fem :: FunctionSpace ;
-using Fem :: MatrixFunctionSpace ;
-using Fem :: ToNewDimRangeFunctionSpace ;
-using Fem :: ToLocalFunctionSpace ;
-
-#endif // DUNE_FEM_COMPATIBILITY
-
 } // namespace Dune 
 
 #endif // #ifndef DUNE_FEM_FUNCTIONSPACE_HH

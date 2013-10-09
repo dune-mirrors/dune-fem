@@ -193,13 +193,6 @@ namespace Dune
 
   } // namespace Fem
 
-#if DUNE_FEM_COMPATIBILITY  
-  // put this in next version 1.4 
-
-  using Fem :: VtxProjection ;
-
-#endif // DUNE_FEM_COMPATIBILITY
-
 } // name space Dune
 
 #endif // #ifndef DUNE_FEM_VTXPROJECTION_HH

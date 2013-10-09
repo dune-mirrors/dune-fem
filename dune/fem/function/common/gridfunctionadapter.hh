@@ -525,14 +525,6 @@ namespace Dune
 
   } // namespace Fem 
 
-#if DUNE_FEM_COMPATIBILITY  
-  // put this in next version 1.4 
-
-  using Fem :: GridFunctionAdapter ;
-  using Fem :: ConvertToGridFunction ;
-
-#endif // DUNE_FEM_COMPATIBILITY
-
 } // namespace Dune
 
 //@}

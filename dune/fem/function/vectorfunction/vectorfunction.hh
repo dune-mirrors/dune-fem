@@ -287,11 +287,6 @@ namespace Dune
 
   } // namespace Fem 
 
-#if DUNE_FEM_COMPATIBILITY
-
-  using Fem :: VectorDiscreteFunction ;
-#endif // DUNE_FEM_COMPATIBILITY
-
 } // namespace Dune
 
 #include "managedvectorfunction.hh"
