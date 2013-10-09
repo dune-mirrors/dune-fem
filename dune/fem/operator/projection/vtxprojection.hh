@@ -102,7 +102,7 @@ namespace Dune
 
         // make function continuous over hanging nodes
 
-        if( !GridPartType::conforming && Fem::GridPartCapabilities::hasGrid< GridPartType >::v)
+        if( !GridPartType::Traits::conforming && Fem::GridPartCapabilities::hasGrid< GridPartType >::v)
         {
           const GridPartType &gridPart =  space.gridPart();
           for( IteratorType it = space.begin(); it != end; ++it )
