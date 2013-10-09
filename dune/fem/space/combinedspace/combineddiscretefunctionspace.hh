@@ -76,7 +76,7 @@ namespace Dune
       // get dimension of local coordinate
       enum { dimLocal = GridType :: dimension };
 
-      typedef typename ToLocalFunctionSpace< FunctionSpaceType, dimLocal > :: Type
+      typedef typename ToNewDimDomainFunctionSpace< FunctionSpaceType, dimLocal > :: Type
         BaseFunctionSpaceType;
 
       enum { polynomialOrder1 =  DiscreteFunctionSpace1 :: polynomialOrder,

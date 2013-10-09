@@ -185,7 +185,7 @@ namespace Dune
 
       enum { dimLocal = GridType :: dimension };
 
-      typedef typename ToLocalFunctionSpace< FunctionSpaceType, dimLocal > :: Type 
+      typedef typename ToNewDimDomainFunctionSpace< FunctionSpaceType, dimLocal > :: Type 
         BaseFunctionSpaceType; 
 
       // type of singleton factory 

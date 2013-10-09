@@ -70,7 +70,7 @@ namespace Dune
       typedef typename GridPartType::template Codim< codimension >::EntityType EntityType;
       static const int dimLocal = GridPartType::dimension;
       typedef typename FunctionSpace::ScalarFunctionSpaceType ScalarFunctionSpaceType;
-      typedef typename ToLocalFunctionSpace< ScalarFunctionSpaceType, dimLocal >::Type ShapeFunctionSpaceType;
+      typedef typename ToNewDimDomainFunctionSpace< ScalarFunctionSpaceType, dimLocal >::Type ShapeFunctionSpaceType;
 
     public:
       typedef LagrangeShapeFunctionSet< ShapeFunctionSpaceType, polynomialOrder > LagrangeShapeFunctionSetType;
