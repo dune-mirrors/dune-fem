@@ -2,6 +2,7 @@
 #define DUNE_FEM_SPACE_COMBINEDSPACE_LOCALSUBFUNCTION_HH
 
 #include <dune/common/typetraits.hh>
+#include <dune/common/tuples.hh>
 // dune-fem includes
 #include <dune/fem/function/localfunction/localfunction.hh>
 #include <dune/fem/function/localfunction/default.hh>
