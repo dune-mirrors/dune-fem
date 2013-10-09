@@ -16,47 +16,45 @@ namespace Dune
     // FilteredGridPartIterator
     // ------------------------
 
-    template< int codim, PartitionIteratorType pitype, class GridPartImp, class HostIteratorImp >
+    template< int codim, PartitionIteratorType pitype, class GridPartImp >
     class FilteredGridPartIterator
     {
-      // type of this
-      typedef FilteredGridPartIterator< codim, pitype, GridPartImp, HostIteratorImp > ThisType;
+      typedef FilteredGridPartIterator< codim, pitype, GridPartImp > ThisType;
 
-      // grid part type
       typedef GridPartImp GridPartType;
+      typedef typename GridPartType::HostGridPartType HostGridPartType;
+      typedef typename HostGridPartType::template Codim< codim >::template Partition< pitype >::IteratorType HostIteratorType;
 
-      // host iterator type
-      typedef HostIteratorImp HostIteratorType;
-
-      // entity pointer type
-      typedef typename GridPartType::GridType::template Codim< codim >::EntityPointer EntityPointerType;
+      typedef typename GridPartType::template Codim< codim >::EntityPointerType EntityPointerType;
 
     public:
       // type of entity
       typedef typename HostIteratorType::Entity Entity;
 
+      static const int codimension = codim;
+
       //! \brief constructor
-      FilteredGridPartIterator ( const GridPartType & gridPart, const HostIteratorType & hostIterator )
+      FilteredGridPartIterator ( const GridPartType &gridPart, const HostIteratorType &hostIterator )
       : gridPart_( gridPart ),
         hostIterator_( hostIterator ),
         hostEnd_( gridPart.hostGridPart().template end< codim, pitype >() )
       {
-        if( done() ) 
+        if( done() )
           return;
 
         if( !gridPart.contains( *hostIterator_ ) )
-          ++(*this);
+          increment();
       }
 
       //! \brief constructor
-      FilteredGridPartIterator ( const ThisType & other )
+      FilteredGridPartIterator ( const ThisType &other )
       : gridPart_( other.gridPart_ ),
         hostIterator_( other.hostIterator_ ),
         hostEnd_( other.hostEnd_ )
-      { }
+      {}
 
       //! \brief assignment operator
-      ThisType & operator= ( const ThisType & other )
+      ThisType &operator= ( const ThisType &other )
       {
         assert( &gridPart_ == &other.gridPart_ );
         hostIterator_ = other.hostIterator_;
@@ -65,61 +63,33 @@ namespace Dune
       }
 
       //! \brief increment
-      ThisType & operator++ ()
+      void increment ()
       {
         assert( !done() );
-        do
-        {
-          ++hostIterator_;
-        } while ( !done() && !contains() );
-        return *this;
+        do { ++hostIterator_; } while ( !done() && !contains() );
       }
 
       //! \brief return level
-      int level () const
-      {
-        return hostIterator_.level();
-      }
+      int level () const { return hostIterator_.level(); }
 
-      const Entity & operator* () const
-      {
-        return *hostIterator_;
-      }
+      Entity &dereference () const { return *hostIterator_; }
 
-      const Entity * operator-> () const
-      {
-        return &(*hostIterator_);
-      }
-
-      //! \brief cast to entity pointer
-      operator EntityPointerType & ()
-      {
-        return hostIterator_;
-      }
-
-      //! \brief cast to const entity pointer
-      operator const EntityPointerType & () const
-      {
-        return hostIterator_;
-      }
+      /** \brief cast to entity pointer implementation
+       *
+       *  This cast allows to cast the iterator into an entity pointer.
+       */
+      operator typename EntityPointerType::Implementation () const { return hostIterator_.impl(); }
 
       //! \brief check for equality
-      bool operator== ( const ThisType & other ) const
+      bool equals ( const ThisType &other ) const
       {
-        return hostIterator_.operator==( other.hostIterator_ );
-      }
-
-      //! \brief check for inequality
-      bool operator != ( const ThisType & other ) const
-      {
-        return !(*(this)==other);
+        return hostIterator_ == other.hostIterator_;
       }
 
     private:
-      // return true for end iterator
       bool done () const
       {
-        return (hostIterator_ == hostEnd_ );
+        return (hostIterator_ == hostEnd_);
       }
 
       bool contains () const
@@ -129,16 +99,12 @@ namespace Dune
       }
 
       // reference to grid part
-      const GridPartType & gridPart () const
-      {
-        return gridPart_;
-      }
+      const GridPartType &gridPart () const { return gridPart_; }
 
-      const GridPartType & gridPart_;
+      const GridPartType &gridPart_;
       HostIteratorType hostIterator_;
       HostIteratorType hostEnd_;
-
-    }; // class FilteredGridPartIterator
+    };
 
   }  // namespace Fem
 
