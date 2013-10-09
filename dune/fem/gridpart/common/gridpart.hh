@@ -107,15 +107,6 @@ namespace Dune
       //! \brief type of Intersection
       typedef typename IntersectionIteratorType::Intersection IntersectionType;
 
-      /** \brief is true if grid on this view only has conforming intersections;
-       *         use the grid part capability 
-       *         \code         
-  Dune::Fem::GridPartCapabilities::isConforming< GridPartType >::v
-       *         \endcode
-       *         instead.
-       */
-      static const bool conforming DUNE_DEPRECATED = Traits::conforming;
-
       typedef GridView< Fem::GridPartViewTraits< GridPartType > > GridViewType;
 
       typedef typename GridType::ctype ctype;

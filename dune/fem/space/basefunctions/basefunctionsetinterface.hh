@@ -194,100 +194,6 @@ namespace Dune
         CHECK_INTERFACE_IMPLEMENTATION( asImp().size() );
         return asImp().size();
       }
-
-
-      // deprecated methods
-
-      /** \brief evaluate a derivative of a base function
-       *
-       *  Evaluates a partial derivative of a base function in a point (specified
-       *  in local coordinates).
-       *  If the derivative is  of order 0, the base function itself is
-       *  evaluated.
-       *  
-       *  \note This method only makes sense for shape function sets.
-       *
-       *  \param[in]   baseFunction  number of base function to evaluate
-       *  \param[in]   diffVariable  vector describing the partial derivative to
-       *                             evaluate
-       *  \param[in]   x             point within reference element to evaluate the
-       *                             base function in
-       *  \param[out]  value         return value, i.e., value of the base function
-       */
-      template< int diffOrder, class Point >
-      DUNE_VERSION_DEPRECATED(1,4,remove)
-      void evaluate ( const int baseFunction,
-                      const FieldVector< int, diffOrder > &diffVariable,
-                      const Point &x,
-                      RangeType &value ) const
-      {
-        CHECK_AND_CALL_INTERFACE_IMPLEMENTATION
-          ( asImp().evaluate( baseFunction, diffVariable, x, value ) );
-      }
-
-      /** \brief evaluate the base function
-       *
-       *  Evaluates the base function in a point (specified in local coordinates).
-       *  
-       *  \param[in]   baseFunction  number of base function to evaluate
-       *  \param[in]   x             point within reference element to evaluate the
-       *                             base function in
-       *  \param[out]  value         return value, i.e., value of the base function
-       */
-      template< class Point >
-      DUNE_VERSION_DEPRECATED(1,4,remove)
-      void evaluate ( const int baseFunction, const Point &x, RangeType &value ) const
-      {
-        CHECK_AND_CALL_INTERFACE_IMPLEMENTATION
-          ( asImp().evaluate( baseFunction, x , value ) );
-      }
-
-      /** \brief \todo please doc me */
-      template< class Point >
-      DUNE_VERSION_DEPRECATED(1,4,remove)
-      void hessian ( const int baseFunction, const Point &x, HessianRangeType &hessian ) const
-      {
-        CHECK_AND_CALL_INTERFACE_IMPLEMENTATION
-          ( asImp().hessian( baseFunction, x, hessian ) );
-      }
-
-      /** \brief evaluate the Jacobian of the base function
-       *
-       *  Evaluates the Jacobian of base function in a point (specified in local
-       *  coordinates.
-       *
-       *  \note The Jacobian is calculated with respect to the reference element.
-       *        To obtain the jacobian with respect to a real entity, it must be
-       *        multiplied (from the left) by
-       *  \code
-       *  entity.geometry().jacobianInverseTransposed()
-       *  \endcode
-       *
-       *  \note While the Jacobian of base functions is returned with respect to
-       *        the reference element, local functions return the Jacobian with
-       *        respect to the real entity.
-       *  
-       *  \param[in]   baseFunction  number of base function to evaluate
-       *  \param[in]   x             point within reference element to evaluate the
-       *                             Jacobian in
-       *  \param[out]  jacobian      return value, i.e., value of the Jacobian
-       */
-      template< class Point >
-      DUNE_VERSION_DEPRECATED(1,4,remove)
-      void jacobian ( const int baseFunction, const Point &x, JacobianRangeType &jacobian ) const
-      {
-        CHECK_AND_CALL_INTERFACE_IMPLEMENTATION
-          ( asImp().jacobian( baseFunction, x, jacobian ) );
-      }
-
-      /** \brief number of base functions 
-          \return number of base functions 
-      */
-      DUNE_VERSION_DEPRECATED(1,4,remove)
-      int numBaseFunctions () const
-      {
-        return size();
-      }
     };
 
 
@@ -336,35 +242,6 @@ namespace Dune
     public:
       using BaseType::size;
 
-      /** \copydoc Dune::Fem::BaseFunctionSetInterface::evaluate(const int baseFunction,const FieldVector<int,diffOrder> &diffVariable,const Point &x,RangeType &value) const */
-      template< int diffOrder, class Point >
-      DUNE_VERSION_DEPRECATED(1,4,remove)
-      void evaluate ( const int baseFunction,
-                      const FieldVector< int, diffOrder > &diffVariable,
-                      const Point &x,
-                      RangeType &value ) const
-      {
-        asImp().evaluate( baseFunction, diffVariable, coordinate( x ), value );
-      }
-      
-      /** \copydoc Dune::Fem::BaseFunctionSetInterface::evaluate(const int baseFunction,const Point &x,RangeType &value) const */
-      template< class Point >
-      DUNE_VERSION_DEPRECATED(1,4,remove)
-      void evaluate ( const int baseFunction, const Point &x, RangeType &value ) const
-      {
-        FieldVector< int, 0 > diffVariable;
-        asImp().evaluate( baseFunction, diffVariable, x, value );
-      }
-
-#if 0
-      // This declaration is only to avoid a problem with specialization
-      template< class Point >
-      void evaluate ( const unsigned int baseFunction, const Point &x, RangeType &value ) const DUNE_DEPRECATED
-      {
-        evaluate( int( baseFunction ), x, value );
-      }
-#endif
-
       template< int diffOrder, class Point, class DofVector >
       void evaluateAll ( const FieldVector< int, diffOrder > &diffVariable,
                          const Point &x, const DofVector &dofs, RangeType &value ) const
@@ -401,11 +278,6 @@ namespace Dune
           asImp().evaluate( i, x, values[ i ] );
       }
 
-      /** \copydoc Dune::Fem::BaseFunctionSetInterface::jacobian(const int baseFunction,const Point &x,JacobianRangeType &jacobian) const */
-      template< class Point >
-      DUNE_VERSION_DEPRECATED(1,4,remove)
-      void jacobian ( const int baseFunction, const Point &x, JacobianRangeType &jacobian ) const;
-
       template< class Point, class GeometryJacobianInverse, class DofVector, class GlobalJacobianRange >
       void jacobianAll ( const Point &x, const GeometryJacobianInverse &gjit, 
                          const DofVector &dofs, GlobalJacobianRange &jacobian ) const;
@@ -413,10 +285,6 @@ namespace Dune
       template< class Point, class GeometryJacobianInverse, class GlobalJacobianRangeArray >
       void jacobianAll ( const Point &x, const GeometryJacobianInverse &gjit,
                          GlobalJacobianRangeArray &jacobians ) const;
-
-      template< class Point >
-      DUNE_VERSION_DEPRECATED(1,4,remove)
-      void hessian ( const int baseFunction, const Point &x, HessianRangeType &hessian ) const;
 
       template< class Point, class Geometry, class DofVector, class GlobalHessianRange >
       void hessianAll ( const Point &x, const Geometry &geometry,
@@ -553,22 +421,6 @@ namespace Dune
     // Implementation of BaseFunctionSetDefault
     // ----------------------------------------
 
-    template< class TraitsImp >
-    template< class Point >
-    inline void BaseFunctionSetDefault< TraitsImp >
-      ::jacobian ( const int baseFunction, const Point &x, JacobianRangeType &jacobian ) const
-    {
-      FieldVector< int, 1 > diffVariable;
-      int &i = diffVariable[ 0 ];
-      for( i = 0; i < dimCol; ++i )
-      {
-        RangeType tmp;
-        asImp().evaluate( baseFunction, diffVariable, x, tmp );
-        for( int j = 0; j < dimRange; ++j )
-          jacobian[ j ][ i ] = tmp[ j ];
-      }
-    }
-
 
     template< class TraitsImp >
     template< class Point, class GeometryJacobianInverse, class DofVector, class GlobalJacobianRange >
@@ -606,33 +458,6 @@ namespace Dune
         asImp().jacobian( i, x, tmp );
         for( int r = 0; r < dimRange; ++r )
           gjit.mv( tmp[ r ], jacobians[ i ][ r ] );
-      }
-    }
-
-
-    template< class TraitsImp >
-    template< class Point >
-    inline void BaseFunctionSetDefault< TraitsImp >
-      ::hessian ( const int baseFunction, const Point &x, HessianRangeType &hessian ) const
-    {
-      FieldVector< int, 2 > diffVar;
-      int &i = diffVar[ 0 ];
-      int &j = diffVar[ 1 ];
-      RangeType tmp;
-      for( i = 0; i < dimDomain; ++i )
-      {
-        // We use symmetrized evaluation of the hessian, since calling
-        // evaluate is in general quite expensive
-        for( j = 0; j < i; ++j )
-        {
-          asImp().evaluate( baseFunction, diffVar, x, tmp );
-          for( int k = 0; k < dimRange; ++k )
-            hessian[ k ][ i ][ j ] = hessian[ k ][ j ][ i ] = tmp[ k ];
-        }
-        assert( j == i );
-        asImp().evaluate( baseFunction, diffVar, x, tmp );
-        for( int k = 0; k < dimRange; ++k )
-          hessian[ k ][ i ][ i ] = tmp[ k ];
       }
     }
 

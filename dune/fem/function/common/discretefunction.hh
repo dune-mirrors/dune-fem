@@ -651,8 +651,6 @@ namespace Dune
        */
       inline void freeDofPointer( RangeFieldType *dofPointer );
 
-      // use overloaded deprecated axpy method from BaseType
-      using BaseType :: axpy;
       /** \copydoc Dune::Fem::DiscreteFunctionInterface::axpy(const RangeFieldType &s,const DiscreteFunctionInterfaceType &g) */
       void axpy ( const RangeFieldType &s, const DiscreteFunctionInterfaceType &g );
       
@@ -689,12 +687,6 @@ namespace Dune
 
       /** \copydoc Dune::Fem::Function::hessian (const DomainType &x,HessianRangeType &hessian) const */
       inline void hessian ( const DomainType &x, HessianRangeType &hessian ) const;
-
-      /** \copydoc Dune::Fem::Function::evaluate(const FieldVector<int,diffOrder> &diffVariable,const DomainType &x,RangeType &ret) const */
-      template< int diffOrder >
-      DUNE_VERSION_DEPRECATED(1,4,remove)
-      inline void evaluate ( const FieldVector< int, diffOrder > &diffVariable,
-                             const DomainType &x, RangeType &ret ) const;
 
       /** \copydoc Dune::Fem::DiscreteFunctionInterface::operator+=(const DiscreteFunctionInterfaceType &g) */
       DiscreteFunctionType &operator+= ( const DiscreteFunctionInterfaceType &g );

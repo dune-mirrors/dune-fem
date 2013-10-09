@@ -594,13 +594,6 @@ namespace Dune
        */
       static std::string outputPath ();
 
-      /** \brief obtain the value for fem.prefix defaults to '.'
-       */
-      DUNE_DEPRECATED static const std::string &prefix ()
-      {
-        return instance().map( "fem.prefix", std::string(".") );
-      }
-
       /** \brief obtain the cached value for fem.verbose
        */
       static bool verbose ()
