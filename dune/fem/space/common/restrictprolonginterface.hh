@@ -138,67 +138,6 @@ namespace Dune
 
 
 
-    /*! \brief Allow the combination of two restrict/prolong instances
-     */
-    template <class I1,class I2>
-    class RestrictProlongPair
-    : public RestrictProlongInterface< RestrictProlongTraits
-        < RestrictProlongPair<I1,I2>,
-          typename PairOfInterfaces< I1, I2 >::T1Type::DomainFieldType > >,
-      public PairOfInterfaces<I1,I2>
-    {
-      typedef PairOfInterfaces<I1,I2> BaseType;
-
-    public:  
-      typedef typename BaseType::T1Type::DomainFieldType DomainFieldType;
-      dune_static_assert( (Conversion< DomainFieldType, typename BaseType::T2Type::DomainFieldType >::sameType),
-                          "DomainFieldType doesn't match." );
-
-      RestrictProlongPair(I1 i1, I2 i2)
-      : PairOfInterfaces<I1,I2>(i1,i2)
-      {}
-      
-      //! \copydoc RestrictProlongInterface::setFatherChildWeight(const DomainFieldType &weight) const
-      void setFatherChildWeight (const DomainFieldType& weight) const {
-        this->first().setFatherChildWeight(weight);
-        this->second().setFatherChildWeight(weight);    
-      }
-
-      //! \copydoc RestrictProlongInterface::restrictLocal 
-      template <class EntityType>
-      void restrictLocal ( EntityType &father, EntityType &son, 
-                           bool initialize ) const {
-        this->first().restrictLocal(father,son,initialize);
-        this->second().restrictLocal(father,son,initialize);    
-      }
-
-      //! \copydoc RestrictProlongInterface::prolongLocal 
-      template <class EntityType>
-      void prolongLocal ( EntityType &father, EntityType &son, 
-                          bool initialize ) const {
-        this->first().prolongLocal(father,son,initialize);
-        this->second().prolongLocal(father,son,initialize);    
-      }
-      
-      //! \copydoc RestrictProlongInterface::addToList 
-      template <class CommunicatorImp>
-      void addToList(CommunicatorImp& comm) 
-      {
-        this->first().addToList(comm); 
-        this->second().addToList(comm);    
-      }
-
-      //! \copydoc RestrictProlongInterface::addToLoadBalancer 
-      template <class LoadBalancerImp>
-      void addToLoadBalancer(LoadBalancerImp& lb) 
-      {
-        this->first().addToLoadBalancer( lb ); 
-        this->second().addToLoadBalancer( lb );    
-      }
-    };
-
-
-
     /** \brief Interface default implementation for derived classes */
     template< class Traits >
     class RestrictProlongInterfaceDefault 

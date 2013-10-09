@@ -83,12 +83,6 @@ namespace Dune
       template< class T >
       void axpy ( const RangeFieldType s, const LocalFunction< T > &lf );
 
-      /** \copydoc Dune::Fem::LocalFunction::evaluate(const FieldVector<int,diffOrder> &diffVariable,const PointType &x,RangeType &ret) const */
-      template< int diffOrder, class PointType >
-      DUNE_VERSION_DEPRECATED(1,4,remove)
-      void evaluate ( const FieldVector< int, diffOrder > &diffVariable,
-                      const PointType &x, RangeType &ret ) const;
-
       /** \copydoc Dune::Fem::LocalFunction::evaluate(const PointType &x,RangeType &ret) const */
       template< class PointType >
       void evaluate ( const PointType &x, RangeType &ret ) const;

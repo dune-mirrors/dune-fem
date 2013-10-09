@@ -100,14 +100,6 @@ namespace Dune
 #endif
       }
 
-      static MPIHelper &helper () DUNE_DEPRECATED
-      {
-        MPIHelper *const helper = instance().helper_;
-        if( helper == 0 )
-          DUNE_THROW( InvalidStateException, "MPIManager has not been initialized." );
-        return *helper;
-      }
-
       static const CollectiveCommunication &comm ()
       {
         const CollectiveCommunication *const comm = instance().comm_;

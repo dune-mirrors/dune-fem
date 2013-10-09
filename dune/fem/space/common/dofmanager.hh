@@ -1,20 +1,16 @@
 #ifndef DUNE_FEM_DOFMANAGER_HH
 #define DUNE_FEM_DOFMANAGER_HH
 
-//- system includes
 #include <cassert>
 #include <string>
 #include <list>
 
-//- dune-common includes
-#include <dune/common/stdstreams.hh>
 #include <dune/common/exceptions.hh>
+#include <dune/common/stdstreams.hh>
 #include <dune/common/version.hh>
 
-// dune-grid includes
 #include <dune/grid/alugrid/common/interfaces.hh>
 
-//- dune-fem includes
 #include <dune/fem/io/parameter.hh>
 #include <dune/fem/io/streams/xdrstreams.hh>
 #include <dune/fem/io/streams/standardstreams.hh>
@@ -25,8 +21,6 @@
 #include <dune/fem/space/common/restrictprolonginterface.hh>
 #include <dune/fem/space/mapper/dofmapper.hh>
 #include <dune/fem/storage/singletonlist.hh>
-#include <dune/fem/version.hh>
-
 
 namespace Dune
 {
@@ -1253,56 +1247,7 @@ namespace Dune
         typedef DofManagerFactory< ThisType > DofManagerFactoryType;
         return DofManagerFactoryType :: instance( grid );
       }
-
-      //! writes DofManager of corresponding grid, when DofManager exists 
-      DUNE_VERSION_DEPRECATED(1,4,remove)
-      inline static bool
-      write(const GridType & grid, const std::string filename, int timestep)
-      {
-        typedef DofManagerFactory< ThisType > DofManagerFactoryType;
-        return DofManagerFactoryType :: writeDofManagerNew(grid, filename, timestep);
-      }
-
-      //! reads DofManager of corresponding grid, when DofManager exists 
-      DUNE_VERSION_DEPRECATED(1,4,remove)
-      inline static bool
-      read(const GridType & grid, const std::string filename, int timestep, bool verbose = true )
-      {
-        typedef DofManagerFactory< ThisType > DofManagerFactoryType;
-        return DofManagerFactoryType :: readDofManagerNew(grid, filename, timestep);
-      }
-
-    private:
-      //! only called from DofManagerFactory 
-      //********************************************************
-      // read-write Interface for index set 
-      //********************************************************
-
-      //! writes all underlying index sets to a file 
-      DUNE_VERSION_DEPRECATED(1,4,remove)
-      bool writeIndexSets(const std::string& filename, int timestep);
-      //! reads all underlying index sets from a file 
-      DUNE_VERSION_DEPRECATED(1,4,remove)
-      bool readIndexSets(const std::string& filename, int timestep);
-
-      // generate index set filename 
-      DUNE_VERSION_DEPRECATED(1,4,remove)
-      std::string generateIndexSetName(const std::string& filename,
-                                       const int count) const
-      {
-        std::string newFilename (filename);
-        newFilename += "_";
-        // add number 
-        {
-          std::stringstream tmp;
-          tmp << count;
-          newFilename += tmp.str();
-        }
-
-        newFilename += "_";
-        return newFilename;
-      }
-    }; // end class DofManager
+    };
 
     //***************************************************************************
     //

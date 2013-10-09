@@ -1,22 +1,12 @@
 #ifndef DUNE_FEM_BASISFUNCTIONSET_BASISFUNCTIONSET_HH
 #define DUNE_FEM_BASISFUNCTIONSET_BASISFUNCTIONSET_HH
 
-//- C++ includes
 #include <cstddef>
 
-//- dune-geometry includes
 #include <dune/geometry/referenceelements.hh>
 #include <dune/geometry/type.hh>
 
-//- dune-fem includes
 #include <dune/fem/space/common/functionspace.hh>
-#include <dune/fem/version.hh>
-
-/**
-  @file
-  @brief Interface for basis function sets
-*/
-
 
 namespace Dune
 {
@@ -66,10 +56,6 @@ namespace Dune
 
       //! \brief return size of basis function set
       std::size_t size () const;
-
-      //! \brief return geometry type of entity
-      DUNE_VERSION_DEPRECATED(1,4,remove)
-      Dune::GeometryType type () const;
 
       //! \brief return reference element
       const ReferenceElementType &referenceElement () const;

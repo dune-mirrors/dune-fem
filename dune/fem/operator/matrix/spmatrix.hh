@@ -577,38 +577,6 @@ namespace Dune
           sequence_ = domainSpace_.sequence();
         }
       }
-      #if 0
-      //! reserve memory corresponnding to size of spaces
-      DUNE_VERSION_DEPRECATED(1,5,remove)
-      inline void reserve(bool verbose = false ) 
-      {
-        if( sequence_ != domainSpace_.sequence() )
-        {
-#ifndef DUNE_FEM_DONT_CHECKITERATORS_OF_SPACE
-          // if empty grid do nothing (can appear in parallel runs)
-          if( (domainSpace_.begin() != domainSpace_.end())
-              && (rangeSpace_.begin() != rangeSpace_.end()) )
-#endif
-          {
-            
-            if( verbose )
-            {
-              const int rowMaxNumbers = rangeMapper_.maxNumDofs();
-              const int colMaxNumbers = domainMapper_.maxNumDofs();
-
-              std::cout << "Reserve Matrix with (" << rangeSpace_.size() << "," << domainSpace_.size()<< ")\n";
-              std::cout << "Max number of base functions = (" << rowMaxNumbers << "," << colMaxNumbers << ")\n";
-            }
-
-            // upper estimate for number of non-zeros 
-            const int nonZeros = std::max( StencilType :: nonZerosEstimate( domainSpace_ ), matrix_.numNonZeros() );
-
-            matrix_.reserve( rangeSpace_.size(), domainSpace_.size(), nonZeros, 0.0 );
-          }
-          sequence_ = domainSpace_.sequence();
-        }
-      }
-      #endif
 
       //! solve A dest = arg using the UMFPACK direct solver 
       template< class DomainFunction, class RangeFunction >

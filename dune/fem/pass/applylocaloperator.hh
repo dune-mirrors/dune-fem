@@ -346,16 +346,10 @@ namespace Dune
       }
 
       //! \brief set value to be returned by method time()
-      void setTime ( double time ) // DUNE_DEPRECATED
-      {
-        discreteModel().setTime( time );
-      }
+      void setTime ( double time ) { discreteModel().setTime( time ); }
 
       //!  \brief return time
-      double time () const // DUNE_DEPRECATED
-      {
-        return discreteModel().time();
-      }
+      double time () const { return discreteModel().time(); }
 
       int order () const
       {
