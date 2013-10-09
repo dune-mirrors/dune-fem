@@ -256,19 +256,6 @@ namespace Dune
         return asImp().basisFunctionSet();
       }
 
-      /** \brief obtain the basis function set for this local function
-       *
-       *  \returns reference to the basis function set
-       *
-       *  \note compatibility method, will be removed
-       */
-      typedef BasisFunctionSetType BaseFunctionSetType;
-      DUNE_VERSION_DEPRECATED(1,4,remove)
-      const BaseFunctionSetType &baseFunctionSet () const
-      {
-        return asImp().basisFunctionSet();
-      }
-
       /** \brief obtain the entity, this local function lives on
        *
        *  \returns reference to the entity
@@ -284,21 +271,6 @@ namespace Dune
         asImp().init( entity );
       }
 
-      /** \brief evaluate a partial deriviaive of the local function
-       *
-       *  \param[in]   diffVariable  vector describing the desired partial
-       *                             derivative
-       *  \param[in]   x             evaluation point in local coordinates 
-       *  \param[out]  ret           value of the function in the given point
-       */
-      template< int diffOrder, class PointType >
-      DUNE_VERSION_DEPRECATED(1,4,remove)
-      void evaluate ( const FieldVector< int, diffOrder > &diffVariable,
-                      const PointType &x, RangeType &ret ) const
-      {
-        asImp().evaluate( diffVariable, x, ret );
-      }
-     
       /** \brief evaluate the local function
        *
        *  \param[in]   x    evaluation point in local coordinates 

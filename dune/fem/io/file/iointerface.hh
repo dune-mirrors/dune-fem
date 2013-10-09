@@ -253,26 +253,6 @@ namespace Dune
       {
         return Parameter::commonOutputPath();
       }
-
-      //! standard path reading and creation method 
-      //! rank is added to output path 
-      static std::string readPath(const std::string& paramfile) DUNE_DEPRECATED
-      {
-        std::string path;
-
-        // read output path from parameter file 
-        if( readParameter(paramfile,"OutputPath",path) ) 
-        {
-          return path;
-        }
-        else 
-        {
-          std::cerr << "Couldn't read output path, exiting... " << std::endl;
-        }
-        // default path is current directory 
-        path = ".";
-        return path;
-      }
       
       /** \brief create global path for data output */
       template <class CommunicatorType>

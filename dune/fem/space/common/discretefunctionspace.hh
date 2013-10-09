@@ -16,7 +16,6 @@
 #include <dune/fem/space/common/dofmanager.hh>
 #include <dune/fem/space/common/functionspace.hh>
 #include <dune/fem/storage/singletonlist.hh>
-#include <dune/fem/version.hh>
 
 // local includes 
 #include "allgeomtypes.hh"
@@ -246,7 +245,6 @@ namespace Dune
         CHECK_INTERFACE_IMPLEMENTATION(asImp().type());
         return asImp().type();
       }
-
    
       /** \brief get basis function set for given entity
        *
@@ -259,19 +257,6 @@ namespace Dune
       {
         CHECK_INTERFACE_IMPLEMENTATION( asImp().basisFunctionSet( entity ) );
         return asImp().basisFunctionSet( entity );
-      }
-
-      /** \brief returns true if the space contains DoFs of given codimension
-       * 
-       *  \param[in]  codim  codimension to check for DoFs
-       *  
-       *  \returns \b true if codimension contains DoFs,
-       *           \b false otherwise
-       */
-      DUNE_VERSION_DEPRECATED(1,4,remove) 
-      inline bool contains ( const int codim ) const
-      { 
-        return blockMapper().contains( codim ); 
       }
 
       /** \brief returns true if the space contains only globally continuous
@@ -313,17 +298,6 @@ namespace Dune
         return asImp().order();
       } 
     
-      /** \brief get order of space for given entity 
-       *  \param entity Entity for which we want to obtain the polynomial order
-       *
-       *  \return polorder of space on the given entity 
-       */
-      inline int order ( const EntityType& entity ) const DUNE_DEPRECATED
-      { 
-        CHECK_INTERFACE_IMPLEMENTATION( asImp().order( entity ) );
-        return asImp().order( entity );
-      } 
-    
       /** \brief returns true if discrete functions over this space have zero jump
        *         over the given intersection.
        *
@@ -341,19 +315,6 @@ namespace Dune
       { 
         CHECK_INTERFACE_IMPLEMENTATION( asImp().continuous(intersection) );
         return asImp().continuous(intersection); 
-      }
-
-
-      /** \brief get a reference to the DoF mapper
-       *
-       *  \returns refernce to mapper
-       */    
-      inline 
-      DUNE_VERSION_DEPRECATED(1,4,remove) 
-      MapperType &mapper () const
-      {
-        CHECK_INTERFACE_IMPLEMENTATION( asImp().mapper() );
-        return asImp().mapper();
       }
 
       /** \brief get a reference to the block mapper
@@ -477,16 +438,7 @@ namespace Dune
         return asImp().multipleGeometryTypes();
       }
 
-      /** \brief returns true if base function sets depend on the entity
-       *
-       *  \returns \b true if base function set depend on entities, \b false
-       *           otherwise
-       */
-      inline bool multipleBaseFunctionSets () const DUNE_DEPRECATED
-      {
-        return multipleBasisFunctionSets();
-      }
-      
+     
       /** \brief returns true if base function sets depend on the entity
        *
        *  \returns \b true if base function set depend on entities, \b false
@@ -497,24 +449,6 @@ namespace Dune
         CHECK_INTERFACE_IMPLEMENTATION( asImp().multipleBasisFunctionSets() );
         return asImp().multipleBasisFunctionSets();
       }
-
-      /** \brief Map local DoF number to global DoF number
-       *
-       *  Maps an entity and a local DoF number to a global DoF number, i.e.,
-       *  the index of the DoF within the DoF vector.
-       *
-       *  \param[in]  entity    entity (of codim 0) for which the mapping is done
-       *  \param[in]  localDof  local dof number
-       *
-       *  \returns global DoF number
-       */    
-      inline int mapToGlobal ( const EntityType &entity,
-                               const int localDof ) const DUNE_DEPRECATED
-      {
-        CHECK_INTERFACE_IMPLEMENTATION( asImp().mapToGlobal( entity, localDof ) );
-        return asImp().mapToGlobal( entity, localDof );
-      }
-
 
       /** \brief return the communication interface appropriate for this space 
           \return communication interface 
@@ -566,16 +500,6 @@ namespace Dune
       {
         CHECK_AND_CALL_INTERFACE_IMPLEMENTATION(
             asImp().communicate( discreteFunction , op ) );
-      }
-
-      /** \brief return maximal number of local DoFs
-       *
-       *  \returns an upper bound for the number of local DoFs
-       */
-      inline int maxNumLocalDofs () const DUNE_DEPRECATED
-      {
-        CHECK_INTERFACE_IMPLEMENTATION( asImp().maxNumLocalDofs() );
-        return asImp().maxNumLocalDofs();
       }
 
       /** \brief Creates DataHandle for given discrete function
@@ -838,21 +762,6 @@ namespace Dune
       inline bool multipleBasisFunctionSets () const
       {
         return false;
-      }
-
-      /** \copydoc Dune::Fem::DiscreteFunctionSpaceInterface::mapToGlobal(const EntityType &entity,const int localDof) const */
-      inline 
-      DUNE_VERSION_DEPRECATED(1,4,remove) 
-      int mapToGlobal ( const EntityType &entity,
-                               const int localDof ) const DUNE_DEPRECATED
-      {
-        return mapper().mapToGlobal( entity, localDof );
-      }
-
-      /** \copydoc Dune::Fem::DiscreteFunctionSpaceInterface::maxNumLocalDofs */
-      inline int maxNumLocalDofs () const DUNE_VERSION_DEPRECATED(1,4,remove)
-      {
-        return mapper().maxNumDofs();
       }
 
       /** \copydoc Dune::Fem::DiscreteFunctionSpaceInterface::communicationInterface() */

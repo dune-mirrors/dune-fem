@@ -33,7 +33,6 @@ AC_CONFIG_FILES([Makefile
      dune/fem/pass/test/Makefile
      dune/fem/space/Makefile
      dune/fem/space/test/Makefile
-     dune/fem/space/basefunctions/Makefile
      dune/fem/space/basisfunctionset/Makefile
      dune/fem/space/basisfunctionset/test/Makefile
      dune/fem/space/shapefunctionset/Makefile
@@ -45,8 +44,6 @@ AC_CONFIG_FILES([Makefile
      dune/fem/space/lagrange/Makefile
      dune/fem/space/lagrange/test/Makefile
      dune/fem/space/rannacherturek/Makefile
-     dune/fem/space/reducedbasisspace/Makefile
-     dune/fem/space/reducedbasisspace/test/Makefile
      dune/fem/space/combinedspace/Makefile
      dune/fem/space/padaptivespace/Makefile
      dune/fem/space/mapper/Makefile
@@ -103,7 +100,6 @@ AC_CONFIG_FILES([Makefile
      dune/fem/solver/rungekutta/Makefile
      dune/fem/misc/Makefile
      dune/fem/misc/petsc/Makefile
-     dune/fem/misc/test/Makefile
      dune/fem/misc/threads/Makefile
      dune/fem/storage/Makefile
      dune/fem/test/Makefile

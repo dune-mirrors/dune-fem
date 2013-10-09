@@ -7,15 +7,20 @@ space_HEADERS = combineddiscretefunctionspace.hh \
 		fourier.hh \
 		lagrange.hh \
 		padaptivespace.hh \
-		rannacherturek.hh \
-		reducedbasisspace.hh
+		rannacherturek.hh
 
-SUBDIRS = basefunctions basisfunctionset \
-	  combinedspace common \
-	  discontinuousgalerkin dofmapper \
-	  finitevolume fourier lagrange mapper \
-	  padaptivespace rannacherturek \
-	  reducedbasisspace shapefunctionset \
+SUBDIRS = basisfunctionset \
+	  combinedspace \
+	  common \
+	  discontinuousgalerkin \
+	  dofmapper \
+	  finitevolume \
+	  fourier \
+	  lagrange \
+	  mapper \
+	  padaptivespace \
+	  rannacherturek \
+	  shapefunctionset \
 	  test
 
 noinst_LTLIBRARIES = libspace.la

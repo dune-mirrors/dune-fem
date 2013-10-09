@@ -12,7 +12,6 @@
 #include <dune/fem/space/common/discretefunctionspace.hh>
 #include <dune/fem/space/mapper/codimensionmapper.hh>
 #include <dune/fem/space/mapper/nonblockmapper.hh>
-#include <dune/fem/version.hh>
 
 #include <dune/fem/space/fourier/capabilities.hh>
 #include <dune/fem/space/fourier/declaration.hh>
@@ -50,7 +49,6 @@ namespace Dune
       static const int localBlockSize = FunctionSpace::dimRange * FourierFunctionSetSize< FunctionSpaceType::dimDomain, order >::v;
 
       typedef FourierDofMapper< GridPartType, order > BlockMapperType;
-      typedef NonBlockMapper< BlockMapperType, localBlockSize > MapperType;
 
       template< class DiscreteFunction, class Operation = Dune::Fem::DFCommunicationOperation::Add >
       struct CommDataHandle
@@ -88,7 +86,6 @@ namespace Dune
       typedef typename BaseType::BasisFunctionSetType BasisFunctionSetType;
 
       typedef typename BaseType::BlockMapperType BlockMapperType;
-      typedef typename BaseType::MapperType MapperType;
 
     protected:
       static const InterfaceType defaultInterface = InteriorBorder_All_Interface;
@@ -102,7 +99,6 @@ namespace Dune
                                               const InterfaceType commInterface = defaultInterface,
                                               const CommunicationDirection commDirection = defaultDirection )
       : BaseType( gridPart, commInterface, commDirection ),
-        mapper_( blockMapper_ ),
         functionSet_( order )
       {}
 
@@ -129,13 +125,8 @@ namespace Dune
       /** @copydoc Dune::Fem::DiscreteFunctionSpaceInterface::blockMapper */
       BlockMapperType &blockMapper () const { return blockMapper_; }
 
-      /** @copydoc Dune::Fem::DiscreteFunctionSpaceInterface::mapper */
-      DUNE_VERSION_DEPRECATED(1,4,remove)
-      MapperType &mapper () const { return mapper_; }
-
     private:
       mutable BlockMapperType blockMapper_;
-      mutable MapperType mapper_;
       FunctionSetType functionSet_;
     };
 

@@ -140,12 +140,6 @@ namespace Dune
         localMatrix().set( localRow, localCol, value );
       }
 
-      /** \copydoc Dune::Fem::LocalMatrixInterface::unitRow */
-      void unitRow ( const int localRow ) DUNE_DEPRECATED
-      {
-        localMatrix().unitRow( localRow );
-      }
-
       /** \copydoc Dune::Fem::LocalMatrixInterface::clearRow */
       void clearRow ( const int localRow )
       {
