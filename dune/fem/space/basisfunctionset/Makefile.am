@@ -1,6 +1,7 @@
 basisfunctionsetdir = $(includedir)/dune/fem/space/basisfunctionset
 
 basisfunctionset_HEADERS = basisfunctionset.hh \
+				 codegen.hh \
 			   default.hh \
          evaluatecaller.hh \
 			   functor.hh \
