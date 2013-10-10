@@ -56,13 +56,18 @@ namespace Dune {
       {
       }
 
+      static unsigned long threadId () 
+      {
+        return ThreadManager :: thread();
+      }
+
       // initialize counters 
       void startCounter()
       {
         if( ! ThreadManager :: singleThreadMode() ) 
         {
 #if HAVE_PAPI
-          PAPI_thread_init((unsigned long(*)(void))(ThreadManager :: thread));
+          PAPI_thread_init( threadId );
           PAPI_register_thread();
 #endif
         }
