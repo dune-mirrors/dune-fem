@@ -111,6 +111,7 @@ namespace Dune {
 
         if( comm.rank() == 0 ) 
         {
+          out << "FlopCounter::   real  proc  mflops " << std::endl;
           printValues( out, "FlopCounter::sum: ", sum );
           printValues( out, "FlopCounter::max: ", max );
           printValues( out, "FlopCounter::min: ", min );
