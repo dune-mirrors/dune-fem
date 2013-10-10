@@ -307,7 +307,7 @@ namespace Dune
               if ( ! visited_[ indexSet_.index( nb ) ] ) 
               {
                 // for conforming situations apply Quadrature given
-                if( !GridPartCapabilities::isConforming< GridPartType >::conforming
+                if( !GridPartCapabilities::isConforming< GridPartType >::v
                     && !intersection.conforming() )
                 {
                   // apply neighbor part, return is volume of neighbor which is
