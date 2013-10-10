@@ -19,7 +19,6 @@ const int polOrder = POLORDER;
 //#include <dune/common/stdstreams.cc>
 
 #include <dune/fem/gridpart/adaptiveleafgridpart.hh>
-#include <dune/fem/gridpart/hierarchicgridpart.hh>
 
 #include <dune/fem/quadrature/intersectionquadrature.hh>
 #include <dune/fem/space/common/adaptmanager.hh>

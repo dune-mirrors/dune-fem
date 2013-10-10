@@ -27,7 +27,6 @@
 #include <dune/fem/operator/lagrangeinterpolation.hh>
 
 #include <dune/fem/gridpart/adaptiveleafgridpart.hh> 
-#include <dune/fem/gridpart/hierarchicgridpart.hh>
 #include <dune/fem/gridpart/leafgridpart.hh>
 
 #if HAVE_GRAPE

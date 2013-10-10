@@ -19,7 +19,7 @@ static const int dim2 = 3;
 #include <dune/fem/space/discontinuousgalerkin.hh>
 #include <dune/fem/space/lagrange.hh>
 #include <dune/fem/quadrature/cachingquadrature.hh>
-#include <dune/fem/gridpart/hierarchicgridpart.hh>
+#include <dune/fem/gridpart/leafgridpart.hh>
 #include <dune/fem/gridpart/adaptiveleafgridpart.hh> 
 
 #if HAVE_GRAPE
@@ -46,8 +46,8 @@ typedef Dune::GridSelector::GridType HGridType;
 typedef SGrid  < dim2,dim2 > Grid2Type;
 // static const int refStepsForHalf = 1;
 //! the index set we are using 
-typedef HierarchicGridPart<HGridType> GridPartType;
-typedef HierarchicGridPart<Grid2Type> GridPart2Type;
+typedef LeafGridPart<HGridType> GridPartType;
+typedef LeafGridPart<Grid2Type> GridPart2Type;
  
 //! define the function space, \f[ \R^2 \rightarrow \R \f]
 // see dune/common/functionspace.hh

@@ -13,7 +13,6 @@ using namespace Dune;
 #include <dune/fem/quadrature/cachingquadrature.hh>
 
 #include <dune/fem/gridpart/adaptiveleafgridpart.hh>
-#include <dune/fem/gridpart/hierarchicgridpart.hh>
 
 #include <dune/fem/space/lagrange.hh>
 #include <dune/fem/operator/projection/dgl2projection.hh>

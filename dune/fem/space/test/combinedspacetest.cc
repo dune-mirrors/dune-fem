@@ -11,7 +11,7 @@ static const int dimw = Dune::GridSelector::dimworld;
 #include <dune/fem/space/combineddiscretefunctionspace.hh>
 
 #include <dune/fem/gridpart/adaptiveleafgridpart.hh>
-#include <dune/fem/gridpart/hierarchicgridpart.hh>
+#include <dune/fem/gridpart/leafgridpart.hh>
 
 #include <dune/fem/misc/double.hh>
 

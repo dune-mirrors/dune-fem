@@ -3,7 +3,6 @@
 #include <config.h>
 #include <iostream>
 
-#include <dune/fem/gridpart/hierarchicgridpart.hh>
 #include <dune/fem/gridpart/adaptiveleafgridpart.hh>
 #include <dune/fem/operator/projection/l2projection.hh>
 #include <dune/fem/misc/gridwidth.hh>

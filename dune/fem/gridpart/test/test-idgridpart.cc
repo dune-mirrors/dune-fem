@@ -8,7 +8,7 @@
 #include <dune/geometry/referenceelements.hh>
 
 #include <dune/fem/gridpart/adaptiveleafgridpart.hh>
-#include <dune/fem/gridpart/hierarchicgridpart.hh>
+#include <dune/fem/gridpart/leafgridpart.hh>
 #include <dune/fem/gridpart/idgridpart.hh>
 #include <dune/fem/misc/gridwidth.hh>
 

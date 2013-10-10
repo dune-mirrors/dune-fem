@@ -21,7 +21,6 @@ using namespace Dune;
 #include <dune/fem/quadrature/cachingquadrature.hh>
 
 #include <dune/fem/gridpart/adaptiveleafgridpart.hh>
-#include <dune/fem/gridpart/hierarchicgridpart.hh>
 
 #if HAVE_GRAPE && GRIDDIM > 1 
 #define USE_GRAPE 1

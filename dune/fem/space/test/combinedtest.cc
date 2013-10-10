@@ -14,7 +14,7 @@ static const int dimw = Dune::GridSelector::dimworld;
 #include <dune/fem/quadrature/cachingquadrature.hh>
 
 #include <dune/fem/gridpart/adaptiveleafgridpart.hh> 
-#include <dune/fem/gridpart/hierarchicgridpart.hh>
+#include <dune/fem/gridpart/leafgridpart.hh>
 
 #include <dune/fem/misc/double.hh>
 
@@ -46,7 +46,7 @@ const int polOrd = POLORDER;
 
 //! the index set we are using 
 typedef GridSelector::GridType MyGridType;
-typedef HierarchicGridPart< MyGridType > GridPartType;
+typedef LeafGridPart< MyGridType > GridPartType;
 
 //! define the function space, \f[ \R^2 \rightarrow \R \f]
 // see dune/common/functionspace.hh
