@@ -19,12 +19,22 @@ namespace Dune {
 
   namespace Fem {
     
+    // FlopCounter
+    // -----------
+
+    /** 
+     * @brief A class wrapper for the function PAPI_flops 
+     *        from the package PAPI. The results are 
+     *        CPU time, real and process local and the number 
+     *        of floating point operations in MFLOP/s.
+     **/
     class FlopCounter
     {
       typedef std::vector< float > values_t ;
       ThreadSafeValue< values_t >  values_;
       ThreadSafeValue< int >       stopped_;
 
+      // call PAPI_flops for given values
       void evaluateCounters( float& realTime, 
                              float& procTime, 
                              float& mFlops ) 
@@ -39,12 +49,14 @@ namespace Dune {
 #endif
       }
 
+      // constructor
       FlopCounter () 
         : values_( values_t(3, float(0.0)) ),
           stopped_( 0 )
       {
       }
 
+      // initialize counters 
       void startCounter()
       {
         float realtime, proctime, mflops;
@@ -53,6 +65,7 @@ namespace Dune {
         *stopped_ = 0;
       }
 
+      // stop counters and store values
       void stopCounter() 
       {
         if( *stopped_ == 0 ) 
@@ -66,6 +79,8 @@ namespace Dune {
         }
       }
 
+      // print values to given ostream, all values are gathered to 
+      // the master rank
       void printCounter( std::ostream& out ) const
       {
         // make sure this method is called in single thread mode only 
@@ -121,16 +136,25 @@ namespace Dune {
       }
 
     public:
+      /** \brief Start counters.
+       *
+       * \note  Call this method for the master thread before all other 
+       *        threads call this method if used in a multi-thread environment.
+       */
       static void start( )
       {
         instance().startCounter();
       }
 
+      /** \brief stop counters */
       static void stop( ) 
       {
         instance().stopCounter();
       }
 
+      /** \brief print values to given ostream, all values are gathered to 
+       *         the master rank before printing 
+       */         
       static void print( std::ostream& out ) 
       {
         instance().printCounter( out );
