@@ -2,6 +2,7 @@
 #define DUNE_FEM_PASS_LOCALDG_HH
 
 #include <dune/fem/function/localfunction/temporary.hh>
+#include <dune/fem/gridpart/common/capabilities.hh>
 #include <dune/fem/operator/1order/localmassmatrix.hh>
 #include <dune/fem/pass/common/local.hh>
 #include <dune/fem/quadrature/caching/twistutility.hh>
@@ -306,7 +307,8 @@ namespace Dune
               if ( ! visited_[ indexSet_.index( nb ) ] ) 
               {
                 // for conforming situations apply Quadrature given
-                if( ! GridPartType :: conforming && ! intersection.conforming() )
+                if( !GridPartCapabilities::isConforming< GridPartType >::conforming
+                    && !intersection.conforming() )
                 {
                   // apply neighbor part, return is volume of neighbor which is
                   // needed below 
