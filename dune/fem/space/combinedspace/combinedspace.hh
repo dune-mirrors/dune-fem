@@ -15,25 +15,18 @@
 #include <dune/fem/space/common/discretefunctionspace.hh>
 #include <dune/fem/space/common/dofmanager.hh>
 #include <dune/fem/space/mapper/nonblockmapper.hh>
-#include <dune/fem/space/basefunctions/basefunctionsets.hh>
-#include <dune/fem/space/basefunctions/basefunctionstorage.hh>
-#include <dune/fem/space/basefunctions/basefunctionproxy.hh>
+
+#include <dune/fem/space/basisfunctionset/vectorial.hh>
 
 #include "combineddofstorage.hh"
-
 #include "mapper.hh"
+#include "lagrangepointsetexporter.hh"
 
 namespace Dune
 {
 
   namespace Fem 
   {
-
-    template< class FunctionSpaceImp,
-              class GridPartImp,
-              int polOrder,
-              template< class > class BaseFunctionStorageImp >
-    class LagrangeDiscreteFunctionSpace;
 
 
     namespace CombinedSpaceHelper
@@ -45,6 +38,7 @@ namespace Dune
       template< class ContainedSpace, int N >
       struct BlockTraits< ContainedSpace, N, PointBased >
       {
+        enum { containedLocalBlockSize = ContainedSpace :: localBlockSize };
         enum { localBlockSize = N * ContainedSpace :: localBlockSize };
 
         typedef typename ContainedSpace :: Traits :: BlockMapperType
@@ -63,9 +57,10 @@ namespace Dune
       template< class ContainedSpace, int N >
       struct BlockTraits< ContainedSpace, N, VariableBased >
       {
+        enum { containedLocalBlockSize = ContainedSpace :: localBlockSize };
         enum { localBlockSize = 1 };
         
-        typedef typename ContainedSpace :: Traits :: MapperType
+        typedef typename ContainedSpace :: Traits :: BlockMapperType
           ContainedBlockMapperType;
         
         typedef CombinedMapper< ContainedBlockMapperType, N, VariableBased >
@@ -94,30 +89,6 @@ namespace Dune
         }
 #endif
       };
-
-      template <class DFSpace>
-      struct LagrangePointSetExporter
-      {
-        LagrangePointSetExporter( const DFSpace& spc ) {}
-      };
-
-      template <class FunctionSpaceImp, class GridPartImp, int polOrder, template <class> class BaseFunctionStorageImp >
-      struct LagrangePointSetExporter<
-          LagrangeDiscreteFunctionSpace< FunctionSpaceImp, GridPartImp, polOrder, BaseFunctionStorageImp > >
-      {
-        typedef LagrangeDiscreteFunctionSpace< FunctionSpaceImp, GridPartImp, polOrder, BaseFunctionStorageImp > LagrangeSpaceType;
-        typedef typename LagrangeSpaceType :: LagrangePointSetType LagrangePointSetType;
-
-        const LagrangeSpaceType& lagrangeSpace_;
-
-        LagrangePointSetExporter( const LagrangeSpaceType& spc ) : lagrangeSpace_( spc ) {}
-        template <class Entity>
-        const LagrangePointSetType& lagrangePointSet( const Entity& entity ) const
-        {
-          return lagrangeSpace_.lagrangePointSet( entity );
-        }
-      };
-
     }
 
     
@@ -139,7 +110,8 @@ namespace Dune
     template< class DiscreteFunctionSpaceImp, int N, DofStoragePolicy policy >
     struct CombinedSpaceTraits
     {
-      static const int codimension = 0;
+      static const int codimension = DiscreteFunctionSpaceImp::Traits::codimension;
+
     private:
       typedef DiscreteFunctionSpaceImp ContainedDiscreteFunctionSpaceType;
 
@@ -147,9 +119,9 @@ namespace Dune
       ContainedSpaceTraits;
       typedef typename ContainedSpaceTraits::FunctionSpaceType 
       ContainedFunctionSpaceType;
-      typedef typename ContainedSpaceTraits::BaseFunctionSetType 
-      ContainedBaseFunctionSetType;
-      
+      typedef typename ContainedSpaceTraits::BasisFunctionSetType 
+      ContainedBasisFunctionSetType;
+
       enum { ContainedDimRange = ContainedFunctionSpaceType::dimRange,
              ContainedDimDomain = ContainedFunctionSpaceType::dimDomain };
 
@@ -157,10 +129,8 @@ namespace Dune
         BlockTraits;
 
     public:
-      typedef typename ContainedDiscreteFunctionSpaceType :: BlockMapperType
-        ContainedBlockMapperType ;
-      typedef NonBlockMapper< ContainedBlockMapperType,
-                              ContainedDiscreteFunctionSpaceType :: localBlockSize >  ContainedMapperType;
+      typedef typename ContainedDiscreteFunctionSpaceType::BlockMapperType
+        ContainedBlockMapperType;
 
       typedef typename ContainedFunctionSpaceType::DomainFieldType 
       DomainFieldType;
@@ -183,31 +153,25 @@ namespace Dune
         DomainFieldType, RangeFieldType, 
         ContainedDimDomain, ContainedDimRange*N > FunctionSpaceType;
 
-      enum { dimLocal = GridType :: dimension };
-
-      typedef typename ToNewDimDomainFunctionSpace< FunctionSpaceType, dimLocal > :: Type 
-        BaseFunctionSpaceType; 
-
-      // type of singleton factory 
-      typedef VectorialBaseFunctionSet< BaseFunctionSpaceType, CachingStorage >
-        BaseFunctionSetImp;
-      typedef SimpleBaseFunctionProxy<BaseFunctionSetImp> BaseFunctionSetType;
-
-      typedef CombinedMapper< ContainedMapperType, N, policy > MapperType;
-      typedef CombinedSubMapper< ContainedMapperType, N, policy > SubMapperType;
-      
-      enum { localBlockSize = BlockTraits :: localBlockSize };
-      typedef typename BlockTraits :: BlockMapperType BlockMapperType;
-     
+      // coordinates tpyes of this space
       typedef typename FunctionSpaceType::RangeType RangeType;
       typedef typename FunctionSpaceType::DomainType DomainType;
       typedef typename FunctionSpaceType::JacobianRangeType JacobianRangeType;
 
-      typedef CombinedDofConversionUtility< ContainedMapperType, N, policy >
-        DofConversionType;
-
       enum { dimRange = FunctionSpaceType :: dimRange,
              dimDomain = FunctionSpaceType :: dimDomain };
+
+      // type of Vectorial BasisFunctionSet
+      typedef VectorialBasisFunctionSet< ContainedBasisFunctionSetType, RangeType >
+        BasisFunctionSetType;
+
+      enum { localBlockSize = BlockTraits :: localBlockSize };
+      typedef typename BlockTraits :: BlockMapperType BlockMapperType;
+
+      // we will need further the SubBlockMapper and other stuff
+     
+      typedef CombinedDofConversionUtility< ContainedBlockMapperType, N, policy >
+        DofConversionType;
 
       //! \brief defines type of data handle for communication 
       template <class DiscreteFunctionImp,
@@ -225,11 +189,9 @@ namespace Dune
     private:
       //- Friends
       friend class CombinedSpace< DiscreteFunctionSpaceImp, N, policy >;
-      friend class CombinedMapper< ContainedMapperType, N, policy >;
+      friend class CombinedMapper< ContainedBlockMapperType, N, policy >;
     };
 
-
-    
 
     /** @brief 
         Combined Space Function Space
@@ -276,19 +238,10 @@ namespace Dune
       typedef typename Traits::ContainedRangeType ContainedRangeType;
       typedef typename Traits::ContainedJacobianRangeType ContainedJacobianRangeType;
 
-      typedef typename Traits::BaseFunctionSetImp  BaseFunctionSetImp;
-      typedef typename Traits::BaseFunctionSetType BaseFunctionSetType;
-      typedef typename ContainedDiscreteFunctionSpaceType::ScalarFactoryType ScalarFactoryType;
+      typedef typename Traits::BasisFunctionSetType  BasisFunctionSetType;
       
-      typedef BaseFunctionSetSingletonFactory<GeometryType,BaseFunctionSetImp,
-                  ScalarFactoryType> SingletonFactoryType; 
-      typedef SingletonList< GeometryType, BaseFunctionSetImp,
-              SingletonFactoryType > SingletonProviderType;
-      
-      typedef typename Traits :: MapperType MapperType;
-      typedef typename Traits :: BlockMapperType BlockMapperType;
-
-      typedef typename Traits :: ContainedMapperType ContainedMapperType;
+      typedef typename Traits::ContainedBlockMapperType ContainedBlockMapperType;
+      typedef typename Traits::BlockMapperType BlockMapperType;
    
       typedef typename Traits::GridType GridType;
       typedef typename Traits::GridPartType GridPartType;
@@ -313,32 +266,13 @@ namespace Dune
       //- Public methods
       //! constructor
       explicit CombinedSpace( GridPartType &gridpart,
-          const InterfaceType commInterface = defaultInterface ,
-          const CommunicationDirection commDirection = defaultDirection )
+                              const InterfaceType commInterface = defaultInterface ,
+                              const CommunicationDirection commDirection = defaultDirection )
       : BaseType( gridpart, commInterface, commDirection  ),
         LagrangePointSetExporterType( containedSpace_ ),
         containedSpace_( gridpart ),
-        containedMapper_( containedSpace_.blockMapper() ),
-        mapper_( containedMapper_ ),
-        blockMapper_( Traits :: BlockTraits :: containedBlockMapper( containedSpace_ ) ),
-        baseSetMap_(),
-        dm_( DofManagerType :: instance( containedSpace_.gridPart().grid() ) )
+        blockMapper_( Traits :: BlockTraits :: containedBlockMapper( containedSpace_ ) )
       {
-        const std::vector<GeometryType>& geomTypes = containedSpace_.geomTypes(0);
-        int maxNumDofs = -1;
-        // create mappers and base sets for all existing geom types
-        for(size_t i=0; i<geomTypes.size(); ++i)
-        {
-          if(baseSetMap_.find(geomTypes[i]) == baseSetMap_.end())
-          {
-            BaseFunctionSetImp* baseSet =
-              & SingletonProviderType::getObject(geomTypes[i]);
-            // store in map 
-            baseSetMap_[ geomTypes[i] ] = baseSet;
-            // calc max dofs 
-            maxNumDofs = std::max(maxNumDofs,int( baseSet->size() ));
-          }
-        }
       }
 
     private:
@@ -346,94 +280,59 @@ namespace Dune
       CombinedSpace ( const ThisType & );
 
     public:
-      //! destructor
-      ~CombinedSpace()
-      {
-        typedef typename BaseFunctionMapType :: iterator iterator;
-        iterator end = baseSetMap_.end();
-        for (iterator it = baseSetMap_.begin(); it != end; ++it)
-        {
-          BaseFunctionSetImp * set = (BaseFunctionSetImp *) (*it).second;
-          SingletonProviderType::removeObject(*set);
-        }
-      }
-
 
       /** \copydoc Dune::Fem::DiscreteFunctionSpaceInterface::contains(const int codim) const */
-      inline bool contains ( const int codim ) const
+      bool contains ( const int codim ) const
       {
         return containedSpace().contains( codim );
       }
 
       /** \copydoc Dune::Fem::DiscreteFunctionSpaceInterface::continuous() const */
-      inline bool continuous () const
+      bool continuous () const
       {
         return containedSpace().continuous();
       }
 
-#if 0
-      /** \copydoc Dune::Fem::DiscreteFunctionSpaceInterface::polynomOrder() const */
-      inline int polynomOrder () const
-      {
-        return containedSpace().polynomOrder();
-      }
-#endif
-
       /** \copydoc Dune::Fem::DiscreteFunctionSpaceInterface::order() const */
-      inline int order () const
+      int order () const
       {
         return containedSpace().order();
       }
 
       /** \copydoc Dune::Fem::DiscreteFunctionSpaceInterface::order(const EntityType &entity) const */
       template< class EntityType >
-      inline int order ( const EntityType &entity) const
+      int order ( const EntityType &entity) const
       {
         return containedSpace().order( entity );
       }
 
       /** \copydoc Dune::Fem::DiscreteFunctionSpaceInterface::begin() const */
-      inline IteratorType begin () const
+      IteratorType begin () const
       {
         return containedSpace().begin();
       }
 
       /** \copydoc Dune::Fem::DiscreteFunctionSpaceInterface::end() const */
-      inline IteratorType end () const
+      IteratorType end () const
       {
         return containedSpace().end();
       }
 
       //! Return the identifier
-      inline DFSpaceIdentifier type () const
+      DFSpaceIdentifier type () const
       {
         return CombinedSpace_id;
       }
 
       /** \copydoc Dune::Fem::DiscreteFunctionSpaceInterface::baseFunctionSet(const EntityType &entity) const */
       template< class EntityType >
-      const BaseFunctionSetType baseFunctionSet ( const EntityType &entity ) const
+      const BasisFunctionSetType basisFunctionSet ( const EntityType &entity ) const
       {
-        return baseFunctionSet( entity.geometry().type() );
-      }
-
-      //! access to base function set for given id 
-      const BaseFunctionSetType baseFunctionSet ( const GeometryType type ) const
-      {
-        assert( baseSetMap_.find( type ) != baseSetMap_.end() );
-        return BaseFunctionSetType( baseSetMap_[ type ] );
+        return BasisFunctionSetType( containedSpace().basisFunctionSet( entity ) );
       }
 
       //! access to mapper
-      inline 
-      DUNE_VERSION_DEPRECATED(1,4,remove)
-      MapperType &mapper () const
-      {
-        return mapper_;
-      }
-
-      //! access to mapper
-      inline BlockMapperType &blockMapper () const
+      BlockMapperType &blockMapper () const
       {
         return blockMapper_;
       }
@@ -442,32 +341,26 @@ namespace Dune
       //! number of components
       int numComponents() const { return N; }
 
-      //! return index in grid sequence 
-      int sequence () const { return dm_.sequence(); }
-
       //! policy of this space
-      inline DofStoragePolicy myPolicy() const
+      DofStoragePolicy myPolicy() const
       {
         return DofConversionType :: policy();
       }
    
       //! return a reference to the contained space's mapper
-      inline ContainedMapperType &containedMapper () const
+      ContainedBlockMapperType &containedBlockMapper () const
       { 
-        return containedMapper_;
+        return containedSpace().blockMapper();
       }
 
-      const DiscreteFunctionSpaceImp& containedSpace() const { return containedSpace_; }
+      const ContainedDiscreteFunctionSpaceType& containedSpace() const 
+      { 
+        return containedSpace_; 
+      }
 
     protected:
-      DiscreteFunctionSpaceImp containedSpace_;
-      ContainedMapperType containedMapper_;
-      mutable MapperType mapper_;
+      ContainedDiscreteFunctionSpaceType containedSpace_;
       mutable BlockMapperType blockMapper_;
-
-      typedef std::map< const GeometryType, BaseFunctionSetImp* > BaseFunctionMapType; 
-      mutable BaseFunctionMapType baseSetMap_; 
-      const DofManagerType & dm_;
     }; // end class CombinedSpace  
 
 
