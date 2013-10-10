@@ -22,8 +22,8 @@ namespace Dune {
     class FlopCounter
     {
       typedef std::vector< float > values_t ;
-      ThreadSafeValue< values_t > values_;
-      bool masterStarted_;
+      ThreadSafeValue< values_t >  values_;
+      ThreadSafeValue< int >       stopped_;
 
       void evaluateCounters( float& realTime, 
                              float& procTime, 
@@ -41,48 +41,51 @@ namespace Dune {
 
       FlopCounter () 
         : values_( values_t(3, float(0.0)) ),
-          masterStarted_( false )
+          stopped_( 0 )
       {
       }
 
-      void startCounter( const bool startCounters ) 
+      void startCounter()
       {
-        const bool reallyStart = (ThreadManager :: isMaster() && startCounters) || 
-                                 masterStarted_ ; 
-        if( reallyStart ) 
-        {
 #if HAVE_PAPI
-          PAPI_thread_init((unsigned long(*)(void))(pthread_self));
-          PAPI_register_thread();
+        PAPI_thread_init((unsigned long(*)(void))(pthread_self));
+        PAPI_register_thread();
 #endif
-          float realtime, proctime, mflops;
-          evaluateCounters( realtime, proctime, mflops );
-
-          // notify that master thread started counters 
-          if( ThreadManager :: isMaster() ) 
-            masterStarted_ = true ;
-        }
+        float realtime, proctime, mflops;
+        evaluateCounters( realtime, proctime, mflops );
+        // mark as not stopped 
+        *stopped_ = 0;
       }
 
       void stopCounter() 
       {
-        if( masterStarted_ ) 
+        if( *stopped_ == 0 ) 
         {
           // get reference to thread local value 
           values_t& values = *values_;
           evaluateCounters( values[ 0 ], values[ 1 ], values[ 2 ] );
-          std::cout << "counters[ " << ThreadManager::thread() << "]: " << values[ 2 ] << std::endl;
-          std::cout << "Counter: "<< this << std::endl;
+
+          // mark thread as stopped 
+          *stopped_ = 1 ;
         }
       }
 
       void printCounter( std::ostream& out ) const
       {
+        // make sure this method is called in single thread mode only 
+        assert( ThreadManager :: singleThreadMode () );
+
+        int allStopped = 0 ;
         const int threads = ThreadManager :: maxThreads ();
         for( int i=0; i<threads; ++i ) 
         {
-          std::cout << "print" << values_[ i ][ 2 ] << std::endl;
+          allStopped += stopped_[ i ];
         }
+
+        // make sure all other thread have been stopped, otherwise 
+        // the results wont be coorect 
+        if( allStopped != threads ) 
+          DUNE_THROW(InvalidStateException,"Not all thread have been stopped");
 
         values_t values( values_[ 0 ] );
         // tkae maximum for times and sum flops for all threads 
@@ -90,7 +93,6 @@ namespace Dune {
         {
           values[ 0 ] = std::max( values[ 0 ], values_[ i ][ 0 ] );
           values[ 1 ] = std::max( values[ 1 ], values_[ i ][ 1 ] );
-          std::cout << "Other threads = " << values_[ i ][ 2 ] << std::endl;
           values[ 2 ] += values_[ i ][ 2 ];
         }
 
@@ -122,9 +124,9 @@ namespace Dune {
       }
 
     public:
-      static void start( const bool startCounters = true ) 
+      static void start( )
       {
-        instance().startCounter( startCounters );
+        instance().startCounter();
       }
 
       static void stop( ) 
@@ -134,7 +136,6 @@ namespace Dune {
 
       static void print( std::ostream& out ) 
       {
-        assert( ThreadManager :: singleThreadMode () );
         instance().printCounter( out );
       }
 
