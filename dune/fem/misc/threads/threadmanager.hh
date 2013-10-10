@@ -74,6 +74,7 @@ namespace Dune
     }; // end class ThreadManager 
 #elif defined USE_PTHREADS 
 #warning "ThreadManager: using pthreads"
+
     struct ThreadManager 
     {
     private:  
@@ -132,13 +133,12 @@ namespace Dune
           // set pointer to thread number function 
           threadNum_ = & Manager :: multiThreadNumber ;
         }
-
+        
         inline int currentThreads() const { return activeThreads_; }
         inline int maxThreads() const { return maxThreads_; }
         inline int thread() { return threadNum_( *this ); }
 
         bool isMaster() const { return master_ == pthread_self(); }
-
       private:  
         //! default thread number 
         static inline int singleThreadNumber( Manager& ) { return 0; }
@@ -176,6 +176,17 @@ namespace Dune
       {
         return Manager :: instance();
       }
+
+#if HAVE_PTHREAD_TLS
+      //! thread local storage of thread number 
+      static int& threadNumber () 
+      { 
+        // this static variable is thread local 
+        static __thread int pthreadThreadNumber;
+        return pthreadThreadNumber; 
+      }
+#endif
+
     public:  
       ///////////////////////////////////////////////////////
       //  begin of pthread specific interface 
@@ -195,7 +206,11 @@ namespace Dune
       //! set thread number for given thead id 
       static inline void setThreadNumber( const pthread_t& threadId, const int threadNum ) 
       {
+#if HAVE_PTHREAD_TLS
+        threadNumber() = threadNum ;
+#else
         manager().setThreadNumber( threadId, threadNum );
+#endif
       }
 
       ///////////////////////////////////////////////////////
@@ -216,7 +231,11 @@ namespace Dune
       //! return thread number 
       static inline int thread() 
       {
+#if HAVE_PTHREAD_TLS
+        return threadNumber();
+#else
         return manager().thread(); 
+#endif
       }
 
       //! set maximal number of threads available during run  
