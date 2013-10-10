@@ -182,7 +182,7 @@ namespace Dune
       static int& threadNumber () 
       { 
         // this static variable is thread local 
-        static __thread int pthreadThreadNumber;
+        static __thread int pthreadThreadNumber = 0;
         return pthreadThreadNumber; 
       }
 #endif
