@@ -8,9 +8,12 @@
 //- system includes 
 #include <iostream>
 #include <vector>
+#include <cassert>
 
 //- dune-fem includes
 #include <dune/fem/misc/mpimanager.hh>
+#include <dune/fem/misc/threads/threadmanager.hh>
+#include <dune/fem/misc/threads/threadsafevalue.hh>
 
 namespace Dune {
 
@@ -19,14 +22,15 @@ namespace Dune {
     class FlopCounter
     {
       typedef std::vector< float > values_t ;
+      ThreadSafeValue< values_t > values_;
+      bool masterStarted_;
 
-      values_t values_;
-      long long flops_;
-
-      void evaluateCounters( float& realTime,  float& procTime, 
-                             long long& flops, float& mFlops ) 
+      void evaluateCounters( float& realTime, 
+                             float& procTime, 
+                             float& mFlops ) 
       {
 #if HAVE_PAPI
+        long long flops ; // we are only interrested in MFLOPs
         int retval = PAPI_flops(&realTime, &procTime, &flops, &mFlops);
         if( retval < PAPI_OK ) 
         {
@@ -35,32 +39,64 @@ namespace Dune {
 #endif
       }
 
-    public:
       FlopCounter () 
-      : values_( 3, float(0.0) ),
-        flops_( 0 )
+        : values_( values_t(3, float(0.0)) ),
+          masterStarted_( false )
       {
-        // reset flop counters
-        // start();
       }
 
-      void start() 
+      void startCounter( const bool startCounters ) 
       {
-        float realtime, proctime, mflops;
-        long long flops;
-        evaluateCounters( realtime, proctime, flops, mflops );
+        const bool reallyStart = (ThreadManager :: isMaster() && startCounters) || 
+                                 masterStarted_ ; 
+        if( reallyStart ) 
+        {
+#if HAVE_PAPI
+          PAPI_thread_init((unsigned long(*)(void))(pthread_self));
+          PAPI_register_thread();
+#endif
+          float realtime, proctime, mflops;
+          evaluateCounters( realtime, proctime, mflops );
+
+          // notify that master thread started counters 
+          if( ThreadManager :: isMaster() ) 
+            masterStarted_ = true ;
+        }
       }
 
-      void stop() 
+      void stopCounter() 
       {
-        evaluateCounters( values_[ 0 ], values_[ 1 ], flops_, values_[ 2 ] );
+        if( masterStarted_ ) 
+        {
+          // get reference to thread local value 
+          values_t& values = *values_;
+          evaluateCounters( values[ 0 ], values[ 1 ], values[ 2 ] );
+          std::cout << "counters[ " << ThreadManager::thread() << "]: " << values[ 2 ] << std::endl;
+          std::cout << "Counter: "<< this << std::endl;
+        }
       }
 
-      void print( std::ostream& out ) const
+      void printCounter( std::ostream& out ) const
       {
-        values_t max( values_ );
-        values_t min( values_ );
-        values_t sum( values_ );
+        const int threads = ThreadManager :: maxThreads ();
+        for( int i=0; i<threads; ++i ) 
+        {
+          std::cout << "print" << values_[ i ][ 2 ] << std::endl;
+        }
+
+        values_t values( values_[ 0 ] );
+        // tkae maximum for times and sum flops for all threads 
+        for( int i=1; i<threads; ++i ) 
+        {
+          values[ 0 ] = std::max( values[ 0 ], values_[ i ][ 0 ] );
+          values[ 1 ] = std::max( values[ 1 ], values_[ i ][ 1 ] );
+          std::cout << "Other threads = " << values_[ i ][ 2 ] << std::endl;
+          values[ 2 ] += values_[ i ][ 2 ];
+        }
+
+        values_t max( values );
+        values_t min( values );
+        values_t sum( values );
 
         typedef MPIManager :: CollectiveCommunication CollectiveCommunication;
         const CollectiveCommunication& comm = MPIManager :: comm();
@@ -77,6 +113,29 @@ namespace Dune {
           printValues( out, "FlopCounter::max: ", max );
           printValues( out, "FlopCounter::min: ", min );
         }
+      }
+
+      static FlopCounter& instance() 
+      {
+        static FlopCounter counter;
+        return counter;
+      }
+
+    public:
+      static void start( const bool startCounters = true ) 
+      {
+        instance().startCounter( startCounters );
+      }
+
+      static void stop( ) 
+      {
+        instance().stopCounter();
+      }
+
+      static void print( std::ostream& out ) 
+      {
+        assert( ThreadManager :: singleThreadMode () );
+        instance().printCounter( out );
       }
 
     protected:
