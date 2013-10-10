@@ -59,6 +59,13 @@ namespace Dune {
       // initialize counters 
       void startCounter()
       {
+        if( ! ThreadManager :: singleThreadMode() ) 
+        {
+#if HAVE_PAPI
+          PAPI_thread_init((unsigned long(*)(void))(ThreadManager :: thread));
+          PAPI_register_thread();
+#endif
+        }
         float realtime, proctime, mflops;
         evaluateCounters( realtime, proctime, mflops );
         // mark as not stopped 
