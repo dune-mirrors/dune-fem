@@ -7,6 +7,7 @@ combinedspace_HEADERS = combinedadaptmanager.hh \
                         combineddiscretefunctionspace.hh  \
                         combinedmapper.hh \
                         combinedbasisfunctionset.hh \
+												lagrangepointsetexporter.hh \
 												localsubfunction.hh \
                         adaptmanager.hh
 
