@@ -1,18 +1,19 @@
 AC_DEFUN([THREAD_LOCAL_STORAGE],[
   AC_REQUIRE([ACX_PTHREAD])
 
-  AC_MSG_CHECKING(for working __thread)
-  # store old values
-  ac_save_LDFLAGS="$LDFLAGS"
-  ac_save_CPPFLAGS="$CPPFLAGS"
-  ac_save_LIBS="$LIBS"
+  AC_CACHE_CHECK([for working __thread], dune_cv_pthread_tls, [
+    dune_cv_pthread_tls=no
+    # store old values
+    ac_save_LDFLAGS="$LDFLAGS"
+    ac_save_CPPFLAGS="$CPPFLAGS"
+    ac_save_LIBS="$LIBS"
 
-  CPPFLAGS="$CPPFLAGS $PTHREAD_CFLAGS"
-  LDFLAGS="$LDFLAGS $PTHREAD_LDFLAGS"
-  LIBS="$LIBS $PTHREAD_LIBS"
+    CPPFLAGS="$CPPFLAGS $PTHREAD_CFLAGS"
+    LDFLAGS="$LDFLAGS $PTHREAD_LDFLAGS"
+    LIBS="$LIBS $PTHREAD_LIBS"
 
-  AC_LANG_PUSH([C++])
-  AC_TRY_RUN([#include <pthread.h>
+    AC_LANG_PUSH([C++])
+    AC_TRY_RUN([#include <pthread.h>
               static const int maxThreads = 2 ;
               static int& threadNumber () {
                   static __thread int tn;
@@ -47,15 +48,15 @@ AC_DEFUN([THREAD_LOCAL_STORAGE],[
                   if( threadnumber[ i ] != i ) result = 1;
                 return result;
               } ],
-              [AC_MSG_RESULT(yes)
-               AC_DEFINE(HAVE_PTHREAD_TLS, 1,[This is true if the keyword __thread can be used])
-               ],
-              [AC_MSG_RESULT(no)])
+              [dune_cv_pthread_tls=yes],[])
+    AC_LANG_POP
 
-  AC_LANG_POP
+    # reset old values
+    LIBS="$ac_save_LIBS"
+    CPPFLAGS="$ac_save_CPPFLAGS"
+    LDFLAGS="$ac_save_LDFLAGS"
+  ])
 
-  # reset old values
-  LIBS="$ac_save_LIBS"
-  CPPFLAGS="$ac_save_CPPFLAGS"
-  LDFLAGS="$ac_save_LDFLAGS"
+  AS_IF([test $dune_cv_pthread_tls = yes],
+        [AC_DEFINE(HAVE_PTHREAD_TLS, 1,[This is true if the keyword __thread can be used])])
 ])
