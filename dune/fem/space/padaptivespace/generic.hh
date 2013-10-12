@@ -56,7 +56,6 @@ namespace Dune
       typedef typename Traits::ShapeFunctionSetType ShapeFunctionSetType;
       typedef typename BaseType::BasisFunctionSetType BasisFunctionSetType;
 
-      typedef typename BaseType::MapperType MapperType;
       typedef typename BaseType::BlockMapperType BlockMapperType;
 
       static const int polynomialOrder = Traits::polynomialOrder;
@@ -126,8 +125,7 @@ namespace Dune
       : BaseType( gridPart, commInterface, commDirection ),
         scalarShapeFunctionSets_( polynomialOrder+1 ),
         compiledLocalKeys_( polynomialOrder+1 ),
-        blockMapper_( initialize() ),
-        mapper_( blockMapper() )
+        blockMapper_( initialize() )
       {}
 
     protected:
@@ -136,8 +134,7 @@ namespace Dune
       : BaseType( other.gridPart_, other.commInterface_, other.commDirection_ ),
         scalarShapeFunctionSets_( polynomialOrder+1 ),
         compiledLocalKeys_( polynomialOrder+1 ),
-        blockMapper_( initialize( &other.blockMapper() ) ),
-        mapper_( blockMapper() )
+        blockMapper_( initialize( &other.blockMapper() ) )
       {}
 
     public:
@@ -176,9 +173,6 @@ namespace Dune
 
       /** \brief this space has more than one base function set */
       inline bool multipleBaseFunctionSets () const { return (polynomialOrder > 1); }
-
-      /** \copydoc Dune::Fem::DiscreteFunctionSpaceInterface::mapper */
-      MapperType &mapper () const { return mapper_; }
 
       /** \copydoc Dune::Fem::DiscreteFunctionSpaceInterface::blockMapper */
       BlockMapperType &blockMapper () const
@@ -367,8 +361,6 @@ namespace Dune
 
       // corresponding mapper
       BlockMapperType *blockMapper_;
-      // corresponding mapper
-      mutable MapperType mapper_;
       // list of registered discrete functions 
       mutable PAdaptiveDiscreteFunctionListType dfList_;
     };

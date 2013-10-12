@@ -54,7 +54,6 @@ namespace Dune
       static const int localBlockSize = FunctionSpaceType::dimRange;
 
       typedef PAdaptiveLagrangeMapper< GridPartType, polynomialOrder > BlockMapperType;
-      typedef NonBlockMapper< BlockMapperType, localBlockSize > MapperType;
 
       typedef LagrangePointSet< GridPartType, polynomialOrder > CompiledLocalKeyType;
 
