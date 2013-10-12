@@ -384,10 +384,10 @@ public:
 
 };
 
-} // end namespace Dune 
 #else 
 #warning "ALUGrid Partitioner not available"
 #endif // ALUGRID_PARTIONER_AVAILABLE 
 #undef ALUGRID_PARTIONER_AVAILABLE
 
+} // end namespace Dune 
 #endif // ifndef DUNE_FEM_THREADPARTITIONER_HH
