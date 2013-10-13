@@ -4,18 +4,12 @@
 GRIDTYPE=YASPGRID
 GRIDDIM=2
 
-EXTRA_DIST = testgrid.hh
-
 AM_CXXFLAGS=-g -Wall
 
 # linker flags
 LDADD = $(ALL_PKG_LDFLAGS) $(ALL_PKG_LIBS) $(MPI_LDFLAGS) $(LOCAL_LIBS)
 # preprocessor flags
 AM_CPPFLAGS = -Wall $(ALL_PKG_CPPFLAGS)
-
-check_PROGRAMS = test
-
-test_SOURCES = test.cc
 
 include $(top_srcdir)/am/global-rules
 
