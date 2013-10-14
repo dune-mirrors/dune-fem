@@ -77,7 +77,7 @@ namespace Dune
     */
     template< typename DiscreteFunctionSpace, typename BlockVector >
     class BlockVectorDiscreteFunction
-    : public DiscreteFunctionInterface< BlockVectorDiscreteFunctionTraits< DiscreteFunctionSpace, BlockVector > >,
+    : public DiscreteFunctionDefault< BlockVectorDiscreteFunctionTraits< DiscreteFunctionSpace, BlockVector > >,
       public IsBlockVectorDiscreteFunction
     {
 
@@ -88,6 +88,7 @@ namespace Dune
       typedef BlockVectorDiscreteFunction< DiscreteFunctionSpace, BlockVector >   ThisType;
       typedef ParallelScalarProduct< ThisType >                                   ScalarProductType;
 
+      typedef DiscreteFunctionDefault< BlockVectorDiscreteFunctionTraits< DiscreteFunctionSpace, BlockVector > > BaseType;
     public:
       // ==================== Types
 
@@ -130,6 +131,10 @@ namespace Dune
       //! size type of the block vector
       typedef typename BlockVectorType::SizeType                                          SizeType;
 
+      // methods from DiscreteFunctionDefault
+      using BaseType :: space ;
+      using BaseType :: name ;
+
       //! size of the dof blocks
       enum { blockSize = BlockVectorType::blockSize };
 
@@ -142,13 +147,9 @@ namespace Dune
       BlockVectorDiscreteFunction ( const std::string& name,
                                     const DiscreteFunctionSpaceType& dfSpace,
                                     BlockVectorType& blockVector )
-      : dfSpace_( dfSpace ),
+      : BaseType( name, dfSpace, lfFactory_ ),
         lfFactory_( *this ),
-        lfStorage_( lfFactory_ ),
-        mapper_( dfSpace.blockMapper() ),
-        name_( name ),
-        memPair_( static_cast< DofStorageInterface* >( 0 ), &blockVector ),
-        scalarProduct_( dfSpace_ )
+        memPair_( static_cast< DofStorageInterface* >( 0 ), &blockVector )
       {
       }
 
@@ -159,38 +160,32 @@ namespace Dune
        */
       BlockVectorDiscreteFunction ( const std::string &name,
                                     const DiscreteFunctionSpaceType &dfSpace )
-      : dfSpace_( dfSpace ),
+      : BaseType( name, dfSpace, lfFactory_ ),
         lfFactory_( *this ), 
-        lfStorage_( lfFactory_ ),
-        mapper_( dfSpace.blockMapper() ),
-        name_( name ),
-        memPair_( allocateManagedDofStorage< BlockVectorType >( space().gridPart().grid(), mapper_, name ) ),
-        scalarProduct_( dfSpace_ )
+        memPair_( allocateManagedDofStorage< BlockVectorType >( space().gridPart().grid(), space().blockMapper(), name ) )
       {
       }
 
-
-      // TODO: DiscreteFunctionDefault prohibits the copy ctor. Should this be done here too?
 
       /** \brief Copy constructor
        */
       BlockVectorDiscreteFunction ( const ThisType &other )
-      : dfSpace_( other.space() ),
+      : BaseType( "copy of "+other.name(), other.space(), lfFactory_ ),
         lfFactory_( *this ),
-        lfStorage_( lfFactory_ ),
-        mapper_( other.space().blockMapper() ), 
-        name_( other.name() ),
-        memPair_( allocateManagedDofStorage< BlockVectorType >( space().gridPart().grid(), mapper_, name() ) ),
-        scalarProduct_( dfSpace_ )
+        memPair_( allocateManagedDofStorage< BlockVectorType >( space().gridPart().grid(), space().blockMapper(), name() ) )
       {
+        // copy dof vector content 
         dofVector() = other.dofVector();
       }
 
+      /** \brief Destructor deleting DoF storage
+       */
       ~BlockVectorDiscreteFunction ()
       {
         // TODO: use a smart pointer for this?
         // No need for a null check here. Stroustrup: "Applying delete to zero has no effect."
         delete memPair_.first;
+        memPair_.first = 0 ;
       }
 
     private:
@@ -260,22 +255,6 @@ namespace Dune
          dofVector().clear();
       }
 
-      /** \copydoc Dune::Fem::DiscreteFunctionInterface::communicate() */
-      void communicate()
-      {
-        // Works only in singleThreadMode currently
-        assert( Fem :: ThreadManager :: singleThreadMode() );
-        space().communicate( *this );
-      }
-    
-      /** \copydoc Dune::Fem::DiscreteFunctionInterface::dataHandle */
-      template< class Operation >
-      typename DiscreteFunctionSpaceType :: template CommDataHandle< ThisType, Operation > :: Type 
-      dataHandle ( const Operation *operation )
-      {
-        return space().createDataHandle( *this, operation );
-      }
-
       /** \brief Obtain the constant iterator pointing to the first dof
        *
        *  \return Constant iterator pointing to the first dof
@@ -299,19 +278,6 @@ namespace Dune
        *  \return Non-Constant iterator pointing to the last dof
        */
       DofIteratorType dend () { return dofVector().dend(); }
-
-
-      /** \copydoc Dune::Fem::DiscreteFunctionInterface::dofsValid */
-      bool dofsValid () const
-      {
-        // check for NaN or inf...
-        const ConstDofIteratorType end = dend();
-        for( ConstDofIteratorType it = dbegin(); it != end; ++it )
-          if( *it != *it )
-            return false;
-
-        return true;
-      }
 
       /** \brief Obtain constant reference to the dof vector
        *
@@ -340,64 +306,6 @@ namespace Dune
         if ( memPair_.first )
           memPair_.first->enableDofCompression();
       }
-
-      /** \copydoc Dune::Fem::Function::evaluate(const DomainType &x,RangeType &ret) const */
-      void evaluate ( const DomainType &x, RangeType &ret ) const
-      {
-        FieldVector< int, 0 > diffVariable;
-        evaluate( diffVariable, x, ret );
-      }
-
-      /** \copydoc Dune::Fem::Function::evaluate(const FieldVector<int,diffOrder> &diffVariable,const DomainType &x,RangeType &ret) const */
-      template< int diffOrder >
-      void evaluate ( const FieldVector< int, diffOrder > &diffVariable,
-                      const DomainType &x,
-                      RangeType &ret ) const
-      {
-        //std::cout << "using my evaluate() :)\n\n\n\n";
-        typedef typename DiscreteFunctionSpaceType::IteratorType Iterator;
-        typedef typename Iterator::Entity Entity;
-        typedef typename Entity::Geometry Geometry;
-        typedef typename Geometry :: LocalCoordinate LocalCoordinateType;
-
-        const int dimLocal = LocalCoordinateType :: dimension;
-        
-        const Iterator end = space().end();
-        for( Iterator it = space().begin(); it != end; ++it )
-        {
-          const Entity &entity = *it;
-          const Geometry &geometry = entity.geometry();
-
-          const Dune::ReferenceElement< DomainFieldType, dimLocal > &refElement
-            = Dune::ReferenceElements< DomainFieldType, dimLocal >::general( geometry.type() );
-
-          const LocalCoordinateType xlocal = geometry.local( x );
-          if( refElement.checkInside( xlocal ) )
-          {
-            localFunction( entity ).evaluate( diffVariable, xlocal, ret );
-            return;
-          }
-        }
-        DUNE_THROW( RangeError, "DiscreteFunctionDefault::evaluate: x is not within domain." );
-      }
-
-      /** \copydoc Dune::Fem::DiscreteFunctionInterface::localFunction(const EntityType &entity) */
-      template< class EntityType >
-      LocalFunctionType localFunction ( const EntityType &entity )
-      {
-        return localFunctionStorage().localFunction( entity );
-      }
-
-      /** \copydoc Dune::Fem::DiscreteFunctionInterface::localFunction(const EntityType &entity) const */
-      template< class EntityType >
-      const LocalFunctionType localFunction ( const EntityType &entity ) const
-      {
-        return localFunctionStorage().localFunction( entity );
-      }
-
-
-      /** \copydoc Dune::Fem::DiscreteFunctionInterface::name() const */
-      const std::string& name () const { return name_; }
 
       /** \brief Add another discrete function to this one
        *
@@ -443,92 +351,18 @@ namespace Dune
         return *this;
       }
 
-      /** \copydoc Dune::Fem::DiscreteFunctionInterface::read */
-      template< class StreamTraits >
-      void read ( InStreamInterface< StreamTraits > &in )
-      {
-        unsigned int versionId = in.readUnsignedInt();
-        if( versionId < DUNE_VERSION_ID(0,9,1) )
-          DUNE_THROW( IOError, "Trying to read outdated file." );
-        else if( versionId > DUNE_MODULE_VERSION_ID(DUNE_FEM) )
-          std :: cerr << "Warning: Reading discrete function from newer version: "
-                      << versionId << std :: endl;
-
-        in >> name_;
-        
-        uint64_t mysize64; 
-        in >> mysize64 ;
-        const SizeType mysize = mysize64 ;
-
-        if( mysize != size() && 
-            size() != static_cast< SizeType >( space().size() ) ) // only read compressed vectors 
-          DUNE_THROW( IOError, "Trying to read discrete function of different size." );
-
-        const DofIteratorType end = dend();
-        for( DofIteratorType it = dbegin(); it != end; ++it )
-          in >> *it;
-      }
-
-    
-      /** \copydoc Dune::Fem::DiscreteFunctionInterface::scalarProductDofs */
-      DofType scalarProductDofs ( const ThisType &other ) const
-      {
-        return scalarProduct_.scalarProductDofs( *this, other );
-      }
-
       /** \brief Return the number of blocks in the block vector
        *
        *  \return Number of block in the block vector
        */
       SizeType size () const { return dofVector().size(); }
 
-      /** \copydoc Dune::Fem::DiscreteFunctionInterface::space() const */
-      const DiscreteFunctionSpaceType& space () const { return dfSpace_; }
-
-      /** \copydoc Dune::Fem::DiscreteFunctionInterface::write */
-      template< class StreamTraits >
-      void write ( OutStreamInterface< StreamTraits > &out ) const
-      {
-        out << DUNE_MODULE_VERSION_ID(DUNE_FEM);
-        out << name_;
-      
-        // only allow write when vector is compressed 
-        if( size() != static_cast< SizeType >( space().size() ) )
-          DUNE_THROW(InvalidStateException,"Writing DiscreteFunction in uncompressed state!");
-       
-        // write size as 64bit integer to avoid problems between 
-        // 32bit and 64bit machines 
-        const uint64_t mysize = size();
-        out << mysize;
-
-        const ConstDofIteratorType end = dend();
-        for( ConstDofIteratorType it = dbegin(); it != end; ++it )
-          out << *it;
-      }
-
-    private:
-
-      /*
-       * ============================== private methods ====================
-       */
-
-      // Obtain the correct local function storage object for this thread
-      LocalFunctionStorageType& localFunctionStorage () const
-      {
-        return lfStorage_;
-      }
-
+    protected:
       /* 
        * ============================== data fields ====================
        */
-      const DiscreteFunctionSpaceType& dfSpace_;
       const LocalFunctionFactoryType lfFactory_;
-      // local function storage
-      mutable LocalFunctionStorageType lfStorage_;
-      MapperType mapper_;
-      std::string name_;
       std::pair< DofStorageInterface *, BlockVectorType * > memPair_;
-      ScalarProductType scalarProduct_;
     };
 
   } // namespace Fem
