@@ -120,8 +120,6 @@ namespace Dune
       typedef typename DiscreteFunctionSpaceType::DomainFieldType                         DomainFieldType;
       //! type of the local functions
       typedef typename TraitsType::LocalFunctionType                                      LocalFunctionType;
-      //! type of the local function storage
-      typedef typename TraitsType::LocalFunctionStorageType                               LocalFunctionStorageType;
       //! type of the factory which produces local functions
       typedef typename TraitsType::LocalFunctionFactoryType                               LocalFunctionFactoryType;
       //! type of the discrete functions's domain
