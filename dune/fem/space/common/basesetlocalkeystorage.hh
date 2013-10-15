@@ -92,7 +92,7 @@ namespace Dune
           {
             // we need the interface method geometry 
             // (on base function sets and compiled local keys )
-            entryStorage_[ i ] = factory_->getObject( otherEntry->geometryType() );
+            entryStorage_[ i ] = factory_->getObject( otherEntry->type() );
           }
         }
       }
