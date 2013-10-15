@@ -96,6 +96,13 @@ namespace Dune
       
       /** \copydoc Dune::Fem::IntegrationPointList::geometry
        */
+      GeometryType type () const
+      {
+        return quadImp().geometryType();
+      }
+      
+      /** \copydoc Dune::Fem::IntegrationPointList::geometry
+       */
       GeometryType geometryType () const
       {
         return quadImp().geometryType();
