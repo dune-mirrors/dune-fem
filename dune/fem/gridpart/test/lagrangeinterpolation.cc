@@ -133,7 +133,7 @@ using namespace Dune;
       DiscreteFunctionType solution( "solution", discreteFunctionSpace );
       solution.clear();
 
-      std :: cout << "maxDofs = " << discreteFunctionSpace.mapper().maxNumDofs() << std :: endl;
+      std :: cout << "maxDofs = " << discreteFunctionSpace.blockMapper().maxNumDofs() * DiscreteFunctionType::localBlockSize << std :: endl;
 
       //! perform Lagrange interpolation
       Fem::LagrangeInterpolation< ExactSolutionType, DiscreteFunctionType >
