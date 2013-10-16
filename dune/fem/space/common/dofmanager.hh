@@ -894,10 +894,14 @@ namespace Dune
           ( "fem.dofmanager.memoryfactor",  double( 1.1 ),
             ValidateNotLess< double >( 1.0 ) ) )
       {
-        if( Parameter::verbose() && (grid_.comm().rank() == 0) )
+        // only print memory factor if it deviates from the default value
+        if( std::abs( memoryFactor_ - 1.1 ) > 1e-12 ) 
         {
-          std::cout << "Created DofManager with memory factor "
-                    << memoryFactor_ << "." << std::endl;
+          if( Parameter::verbose() && (grid_.comm().rank() == 0) )
+          {
+            std::cout << "Created DofManager with memory factor "
+                      << memoryFactor_ << "." << std::endl;
+          }
         }
       }
 
