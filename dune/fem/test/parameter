@@ -1,0 +1,19 @@
+# macro grid file
+fem.io.macroGridFile_1d: unitcube1.dgf
+fem.io.macroGridFile_2d: unitcube2.dgf
+fem.io.macroGridFile_3d: unitcube3.dgf
+
+# toggle verbosity of on process (-1: off, p: process p is verbose, in general 0 is a good choice)
+fem.verboserank: -1
+
+# verbosity of the cg inverse operator
+fem.solver.verbose: 0
+
+# valid are: "cg" , "bicg", "bicgstab", "gmres" 
+petsc.kspsolver.method: cg
+
+# valid are:  "none", "asm", "sor", "jacobi", "ilu-n", "lu", "icc", "hypre"
+petsc.preconditioning.method: none
+petsc.preconditioning.iterations: 2
+
+fem.io.macroGridFile: macrogrid

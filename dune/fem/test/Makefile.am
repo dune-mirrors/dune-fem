@@ -12,6 +12,7 @@ EXTRA_DIST = 2dgrid.dgf \
 						 adaptation-4.sh \
              dfspace.hh \
              exactsolution.hh \
+						 massoperator.hh \
              weightfunction.hh \
              testgrid.hh
 
@@ -30,7 +31,8 @@ TESTPROGS = lagrangeinterpolation_linear lagrangeinterpolation_quadratic \
             dgl2projection_idgridpart \
             vtxprojection_adaptive \
             intersectionindexset \
-						combinedspaceadaptation
+						combinedspaceadaptation \
+						petscl2projection
 
 TESTS = $(TESTPROGS) adaptation-4.sh
 check_PROGRAMS = $(TESTPROGS) adaptation
@@ -90,5 +92,8 @@ adaptation_CPPFLAGS = $(AM_CPPFLAGS) -UGRIDDIM -DGRIDDIM=3 -UWORLDDIM -DWORLDDIM
 
 combinedspaceadaptation_SOURCES = adaptation.cc
 combinedspaceadaptation_CPPFLAGS = $(AM_CPPFLAGS) -DUSECOMBINEDSPACE -UGRIDDIM -DGRIDDIM=3 -UWORLDDIM -DWORLDDIM=3
+
+petscl2projection_SOURCES = l2projection.cc
+petscl2projection_CPPFLAGS = $(AM_CPPFLAGS) -DCOUNT_FLOPS -DPOLORDER=1 
 
 include $(top_srcdir)/am/global-rules
