@@ -2,6 +2,7 @@
 #define DUNE_FEM_CGINVERSEOPERATOR_HH
 
 #include <dune/common/static_assert.hh>
+#include <dune/common/typetraits.hh>
 
 #include <dune/fem/function/common/discretefunction.hh>
 #include <dune/fem/operator/common/operator.hh>
@@ -290,8 +291,7 @@ namespace Dune
       : BaseType( op, redEps, absLimit, maxIter, verbose ),
         precondObj_( 0 )
       {
-        PreconditionChooser< LinearOperator >::choose( op, precondObj_ );
-        preconditioner_ = precondObj_;
+        checkPreconditioning( op );
       }
 
       /** \brief constructor of CGInverseOperator
@@ -308,8 +308,7 @@ namespace Dune
       : BaseType( op, redEps, absLimit, maxIter ),
         precondObj_( 0 )
       {
-        PreconditionChooser< LinearOperator >::choose( op, precondObj_ );
-        preconditioner_ = precondObj_;
+        checkPreconditioning( op );
       }
       
       /** \brief constructor of CGInverseOperator
@@ -337,27 +336,16 @@ namespace Dune
 
     protected:
       template< class LinearOperator >
-      struct PreconditionChooser
+      void checkPreconditioning( const LinearOperator &linearOp )
       {
-        template< class Preconditioner >
-        static void choose ( const LinearOperator &op, Preconditioner *pr )
-        {}
-      };
-
-      template< class DomainFunction, class RangeFunction >
-      struct PreconditionChooser< AssembledOperator< DomainFunction, RangeFunction > >
-      {
-        typedef AssembledOperator< DomainFunction, RangeFunction > LinearOperator;
-        template< class Preconditioner >
-        static void choose ( const LinearOperator &op, Preconditioner *pr )
+        const bool preconditioning = Parameter::getValue< bool >( "fem.preconditioning", false );
+        if( preconditioning && IsBaseOf< AssembledOperator< DomainFunctionType, DomainFunctionType > ,LinearOperator > :: value ) 
         {
-          const bool preconditioning = Parameter::getValue< bool >( "fem.preconditioning", false );
           // create diagonal preconditioner 
-          if( preconditioning )
-            pr = new DiagonalPreconditioner< DomainFunctionType, LinearOperator >( op );
+          precondObj_ = new DiagonalPreconditioner< DomainFunctionType, LinearOperator >( linearOp );
+          preconditioner_ = precondObj_;
         }
-      };
-
+      }
 
       using BaseType::preconditioner_;
       PreconditioningType *precondObj_;

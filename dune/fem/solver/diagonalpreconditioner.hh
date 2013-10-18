@@ -18,7 +18,7 @@ namespace Dune
 
     // DiagonalPreconditionerBase (default non-assembled)
     // --------------------------------------------------
-    template< class DFImp, class OperatorImp >
+    template< class DFImp, class OperatorImp, bool assembled >
     class DiagonalPreconditionerBase
       : public Operator< DFImp, DFImp >
     {
@@ -57,13 +57,13 @@ namespace Dune
 
     // DiagonalPreconditionerBase (assembled version)
     // ----------------------------------------------
-    template< class DFImp >
-    class DiagonalPreconditionerBase< DFImp, AssembledOperator < DFImp, DFImp >  >
+    template< class DFImp, class OperatorImp >
+    class DiagonalPreconditionerBase< DFImp, OperatorImp, true  >
       : public Operator< DFImp, DFImp >
     {
     public:   
       typedef DFImp              DiscreteFunctionType;
-      typedef AssembledOperator< DFImp, DFImp > OperatorType;
+      typedef OperatorImp        OperatorType;
       
       typedef typename DiscreteFunctionType :: DofType DofType;
       typedef typename DiscreteFunctionType :: DofIteratorType DofIteratorType;  
@@ -147,9 +147,10 @@ namespace Dune
       */
     template< class DFImp, class Operator>
     class DiagonalPreconditioner
-      : public DiagonalPreconditionerBase< DFImp, Operator > 
+      : public DiagonalPreconditionerBase< DFImp, Operator, IsBaseOf< AssembledOperator< DFImp, DFImp >, Operator > :: value > 
     {
-      typedef DiagonalPreconditionerBase< DFImp, Operator > BaseType;
+      typedef DiagonalPreconditionerBase< DFImp, Operator, IsBaseOf< AssembledOperator< DFImp, DFImp >, Operator > :: value >
+        BaseType;
     public:
       typedef Operator   OperatorType;
       DiagonalPreconditioner(const OperatorType &op) 
