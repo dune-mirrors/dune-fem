@@ -290,7 +290,8 @@ namespace Dune
       : BaseType( op, redEps, absLimit, maxIter, verbose ),
         precondObj_( 0 )
       {
-        checkPreconditioning( op );
+        PreconditionChooser< LinearOperator >::choose( op, precondObj_ );
+        preconditioner_ = precondObj_;
       }
 
       /** \brief constructor of CGInverseOperator
@@ -307,7 +308,8 @@ namespace Dune
       : BaseType( op, redEps, absLimit, maxIter ),
         precondObj_( 0 )
       {
-        checkPreconditioning( op );
+        PreconditionChooser< LinearOperator >::choose( op, precondObj_ );
+        preconditioner_ = precondObj_;
       }
       
       /** \brief constructor of CGInverseOperator
@@ -335,16 +337,27 @@ namespace Dune
 
     protected:
       template< class LinearOperator >
-      void checkPreconditioning( const LinearOperator &linearOp )
+      struct PreconditionChooser
       {
-        const bool preconditioning = Parameter::getValue< bool >( "fem.preconditioning", false );
-        if( preconditioning && LinearOperator :: assembled ) 
+        template< class Preconditioner >
+        static void choose ( const LinearOperator &op, Preconditioner *pr )
+        {}
+      };
+
+      template< class DomainFunction, class RangeFunction >
+      struct PreconditionChooser< AssembledOperator< DomainFunction, RangeFunction > >
+      {
+        typedef AssembledOperator< DomainFunction, RangeFunction > LinearOperator;
+        template< class Preconditioner >
+        static void choose ( const LinearOperator &op, Preconditioner *pr )
         {
+          const bool preconditioning = Parameter::getValue< bool >( "fem.preconditioning", false );
           // create diagonal preconditioner 
-          precondObj_ = new DiagonalPreconditioner< DomainFunctionType, LinearOperator >( linearOp );
-          preconditioner_ = precondObj_;
+          if( preconditioning )
+            pr = new DiagonalPreconditioner< DomainFunctionType, LinearOperator >( op );
         }
-      }
+      };
+
 
       using BaseType::preconditioner_;
       PreconditioningType *precondObj_;
