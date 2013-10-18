@@ -41,6 +41,7 @@ const int polOrder = POLORDER;
 const int polOrder = 1;
 #endif
 
+
 typedef Dune::GridSelector :: GridType GridType;
 
 
@@ -179,39 +180,35 @@ try
   const int step = Dune::Fem::TestGrid :: refineStepsForHalf();
   grid.globalRefine( 2*step );
 
-  const int nrSteps = 3;
+  const int nrSteps = 4;
 
+  std::cout<< "testing with polorder "<< polOrder <<std::endl;
   Algorithm algorithm( grid );
   typename Algorithm::ErrorType *error; 
   error = new  typename Algorithm::ErrorType[ nrSteps ];
   for( int step = 0; step<nrSteps; ++step )
   {
-    std::cout<<error[ step ]<<std::endl;
     error[ step ] = algorithm( step );
     algorithm.nextMesh();
-
-    std::cout<<error[ step ]<<std::endl;
   }
 
   for( int step = 1; step <nrSteps; ++step )
   {
     // !!! note there is a bug within the H1 Norm, the test will fail !!!
     double l2eoc = log( error[ step ][ 0 ] / error[ step -1 ][ 0 ] ) / log( 0.5 );
-//    double h1eoc = log( error[ step ][ 1 ] / error[ step -1 ][ 1 ] ) / log( 0.5 );
+    double h1eoc = log( error[ step ][ 1 ] / error[ step -1 ][ 1 ] ) / log( 0.5 );
 
-    std::cout<< "L2 Eoc: " << l2eoc << std::endl;
+//    std::cout<< "L2 Eoc: " << l2eoc << std::endl;
 //    std::cout<< "H1 Eoc: " << h1eoc << std::endl;
-
-    if( std::abs( l2eoc - 1 - polOrder )  > 0.2 )
+    if( std::abs( l2eoc -1 - polOrder )  > 0.2 )
     {
       DUNE_THROW(Dune::InvalidStateException,"EOC check of refinement failed");
     }
-    /*
     if( std::abs( h1eoc - polOrder )  > 0.2 )
-    {
+    { 
+      //note: This will fail with Yaspgrid, bug in Geometry JacobianInverse
       DUNE_THROW(Dune::InvalidStateException,"EOC check of refinement failed");
     }
-    */
   }
 
   delete error;

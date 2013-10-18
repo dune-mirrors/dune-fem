@@ -47,7 +47,6 @@ namespace Dune
       }
 #endif
 
-
     protected:
       void apply( const DiscreteFunctionType& u, DiscreteFunctionType& res ) const
       {
@@ -58,13 +57,13 @@ namespace Dune
 
     // DiagonalPreconditionerBase (assembled version)
     // ----------------------------------------------
-    template< class DFImp, class AssembledOperator >
-    class DiagonalPreconditionerBase< DFImp, AssembledOperator, true >
+    template< class DFImp, class OperatorImp >
+    class DiagonalPreconditionerBase< DFImp, OperatorImp, true  >
       : public Operator< DFImp, DFImp >
     {
     public:   
       typedef DFImp              DiscreteFunctionType;
-      typedef AssembledOperator  OperatorType;
+      typedef OperatorImp        OperatorType;
       
       typedef typename DiscreteFunctionType :: DofType DofType;
       typedef typename DiscreteFunctionType :: DofIteratorType DofIteratorType;  
@@ -148,9 +147,10 @@ namespace Dune
       */
     template< class DFImp, class Operator>
     class DiagonalPreconditioner
-      : public DiagonalPreconditionerBase< DFImp, Operator, Operator::assembled > 
+      : public DiagonalPreconditionerBase< DFImp, Operator, IsBaseOf< AssembledOperator< DFImp, DFImp >, Operator > :: value > 
     {
-      typedef DiagonalPreconditionerBase< DFImp, Operator, Operator::assembled > BaseType;
+      typedef DiagonalPreconditionerBase< DFImp, Operator, IsBaseOf< AssembledOperator< DFImp, DFImp >, Operator > :: value >
+        BaseType;
     public:
       typedef Operator   OperatorType;
       DiagonalPreconditioner(const OperatorType &op) 

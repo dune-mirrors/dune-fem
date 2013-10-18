@@ -2,6 +2,7 @@
 #define DUNE_FEM_CGINVERSEOPERATOR_HH
 
 #include <dune/common/static_assert.hh>
+#include <dune/common/typetraits.hh>
 
 #include <dune/fem/function/common/discretefunction.hh>
 #include <dune/fem/operator/common/operator.hh>
@@ -338,7 +339,7 @@ namespace Dune
       void checkPreconditioning( const LinearOperator &linearOp )
       {
         const bool preconditioning = Parameter::getValue< bool >( "fem.preconditioning", false );
-        if( preconditioning && LinearOperator :: assembled ) 
+        if( preconditioning && IsBaseOf< AssembledOperator< DomainFunctionType, DomainFunctionType > ,LinearOperator > :: value ) 
         {
           // create diagonal preconditioner 
           precondObj_ = new DiagonalPreconditioner< DomainFunctionType, LinearOperator >( linearOp );
