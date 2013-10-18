@@ -620,9 +620,6 @@ namespace Dune
       typedef AllGeomTypes< IndexSetType, GridType > AllGeometryTypes;
       const AllGeometryTypes allGeomTypes_;
 
-      // reference to dof manager 
-      DofManagerType& dofManager_;
-
       // communication manager 
       const InterfaceType commInterface_;
       const CommunicationDirection commDirection_;
@@ -638,7 +635,6 @@ namespace Dune
         lfFactory_( asImp() ),
         lfStorage_( lfFactory_ ),
         allGeomTypes_( gridPart.indexSet() ),
-        dofManager_( DofManagerType :: instance( gridPart.grid() ) ),
         commInterface_( commInterface ),
         commDirection_( commDirection ),
         communicator_( 0 )
@@ -655,7 +651,7 @@ namespace Dune
       /** \copydoc Dune::Fem::DiscreteFunctionSpaceInterface::sequence */
       inline int sequence () const
       { 
-        return dofManager_.sequence();
+        return DofManagerType :: instance( grid() ).sequence();
       }
 
       /** \brief default implementation of the method order 
