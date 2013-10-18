@@ -321,18 +321,15 @@ namespace Dune
       typedef DofManager< GridType >  DofManagerType;
     protected:
       GridType       &grid_;
-      DofManagerType &dofManager_; 
 
     protected:
       //! constructor
       GridPartDefault ( GridType &grid )
-      : grid_( grid ),
-        dofManager_( DofManagerType :: instance( grid_ ) )
+      : grid_( grid )
       {}
 
       GridPartDefault ( const ThisType &other )
-      : grid_( other.grid_ ),
-        dofManager_( DofManagerType :: instance( grid_ ) )
+      : grid_( other.grid_ )
       {}
 
       ~GridPartDefault ()
@@ -381,7 +378,7 @@ namespace Dune
        */
       int sequence () const 
       {
-        return dofManager_.sequence();
+        return DofManagerType :: instance( grid_ ).sequence();
       }
     };
 
