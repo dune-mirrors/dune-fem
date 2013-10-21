@@ -6,6 +6,7 @@
 
 // dune-fem includes
 #include <dune/fem/function/localfunction/default.hh>
+#include <dune/fem/space/mapper/nonblockmapper.hh>
 #include <dune/fem/storage/array.hh>
 
 

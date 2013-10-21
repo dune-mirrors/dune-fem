@@ -62,7 +62,7 @@ namespace Dune
 
     template< class DiscreteFunction, class DiscreteFunctionSpace >
     inline
-    const typename GenericLocalFunctionImpl< DiscreteFunction, DiscreteFunctionSpace >::BaseFunctionSetType &
+    const typename GenericLocalFunctionImpl< DiscreteFunction, DiscreteFunctionSpace >::BasisFunctionSetType &
     GenericLocalFunctionImpl< DiscreteFunction, DiscreteFunctionSpace >
       ::basisFunctionSet () const
     {
