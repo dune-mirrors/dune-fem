@@ -62,7 +62,7 @@ namespace Dune
       enum { dimRange = DiscreteFunctionSpaceType :: dimRange };
       
       //! type of base function sets
-      typedef typename DiscreteFunctionSpaceType::BaseFunctionSetType  BaseFunctionSetType;
+      typedef typename DiscreteFunctionSpaceType::BasisFunctionSetType  BasisFunctionSetType;
 
       //! type of codim 0 entities
       typedef typename DiscreteFunctionSpaceType :: EntityType         EntityType;
@@ -85,8 +85,8 @@ namespace Dune
       /** \copydoc Dune::Fem::LocalFunction::operator[](const int num) */
       DofType &operator[] ( const int num );
 
-      /** \copydoc Dune::Fem::LocalFunction::baseFunctionSet() const */
-      const BaseFunctionSetType &baseFunctionSet() const;
+      /** \copydoc Dune::Fem::LocalFunction::basisFunctionSet() const */
+      const BasisFunctionSetType &basisFunctionSet() const;
 
       /** \copydoc Dune::Fem::LocalFunction::entity() const */
       const EntityType &entity () const;
@@ -107,7 +107,7 @@ namespace Dune
       Fem :: DynamicArray< DofType* > values_;
 
        // base function set 
-      BaseFunctionSetType baseFunctionSet_;
+      BasisFunctionSetType basisFunctionSet_;
 
       // actual entity
       const EntityType *entity_;

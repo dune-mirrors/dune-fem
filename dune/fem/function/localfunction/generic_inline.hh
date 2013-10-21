@@ -17,7 +17,7 @@ namespace Dune
       ::GenericLocalFunctionImpl ( DiscreteFunctionType &discreteFunction )
     : discreteFunction_( discreteFunction ),
       values_( DiscreteFunctionSpace::localBlockSize * discreteFunction_.space().blockMapper().maxNumDofs() ),
-      baseFunctionSet_(),
+      basisFunctionSet_(),
       entity_( 0 ),
       numDofs_( 0 )
     {}
@@ -29,7 +29,7 @@ namespace Dune
       ::GenericLocalFunctionImpl ( const ThisType &other )
     : discreteFunction_( other.discreteFunction_ ),
       values_( other.values_ ),
-      baseFunctionSet_( other.baseFunctionSet_ ),
+      basisFunctionSet_( other.basisFunctionSet_ ),
       entity_( other.entity_ ),
       numDofs_( other.numDofs_ )
     {}
@@ -64,10 +64,10 @@ namespace Dune
     inline
     const typename GenericLocalFunctionImpl< DiscreteFunction, DiscreteFunctionSpace >::BaseFunctionSetType &
     GenericLocalFunctionImpl< DiscreteFunction, DiscreteFunctionSpace >
-      ::baseFunctionSet () const
+      ::basisFunctionSet () const
     {
       assert( entity_ != 0 );
-      return baseFunctionSet_;
+      return basisFunctionSet_;
     }
 
 
@@ -86,18 +86,21 @@ namespace Dune
     template< class DiscreteFunction, class DiscreteFunctionSpace >
     inline void GenericLocalFunctionImpl< DiscreteFunction, DiscreteFunctionSpace >::init ( const EntityType &entity )
     {
-      typedef typename DiscreteFunctionSpaceType::MapperType MapperType;
+      typedef typename DiscreteFunctionSpaceType::BlockMapperType BlockMapperType;
+      typedef NonBlockMapper< BlockMapperType, DiscreteFunctionSpaceType :: localBlockSize > NonBlockMapper;
      
       const DiscreteFunctionSpaceType &space = discreteFunction_.space();
       
-      baseFunctionSet_ = space.baseFunctionSet( entity );
-      numDofs_ = baseFunctionSet_.size();
+      basisFunctionSet_ = space.basisFunctionSet( entity );
+      numDofs_ = basisFunctionSet_.size();
       entity_ = &entity;
 
       assert( numDofs_ <= values_.size() );
       
-      const MapperType &mapper = space.mapper();
+      const BlockMapperType &blockMapper = space.blockMapper();
+      NonBlockMapper mapper( blockMapper );
       mapper.map( entity, indices_ );
+
       assert( indices_.size() == numDofs_ );
       for( unsigned int i = 0; i < numDofs_; ++i )
         values_[ i ] = &discreteFunction_.dof( indices_[ i ] );
