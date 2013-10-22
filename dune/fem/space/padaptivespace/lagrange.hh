@@ -79,7 +79,7 @@ namespace Dune
         {
           static ScalarShapeFunctionSetType *createObject ( const GeometryType &type )
           {
-            typedef LagrangeShapeFunctionFactory< FunctionSpace, polOrder > SimpleShapeFunctionSetFactoryType;
+            typedef LagrangeShapeFunctionFactory< ShapeFunctionSpaceType, polOrder > SimpleShapeFunctionSetFactoryType;
             return new ScalarShapeFunctionSetType( type, SimpleShapeFunctionSetType( SimpleShapeFunctionSetFactoryType( type ) ) );
           }
 
