@@ -9,6 +9,8 @@
 
 #include <dune/fem/space/lagrange.hh>
 #include <dune/fem/space/discontinuousgalerkin.hh>
+#include <dune/fem/space/padaptivespace/lagrange.hh>
+#include <dune/fem/space/padaptivespace/discontinuousgalerkin.hh>
 #include <dune/fem/operator/common/operator.hh>
 #include <dune/fem/operator/matrix/preconditionerwrapper.hh>
 
@@ -333,6 +335,13 @@ namespace Dune
     {
       typedef LagrangeParallelMatrixAdapter<MatrixImp> Type;
     };
+
+    template< class MatrixImp,
+              class FunctionSpace, class GridPart, int polOrder, template< class > class Storage>
+    struct ISTLParallelMatrixAdapter< MatrixImp, PAdaptiveLagrangeSpace< FunctionSpace,GridPart,polOrder,Storage> >
+    {
+      typedef LagrangeParallelMatrixAdapter<MatrixImp> Type;
+    };
     template< class MatrixImp,
               class FunctionSpace, class GridPart, int polOrder, template< class > class Storage>
     struct ISTLParallelMatrixAdapter< MatrixImp, DiscontinuousGalerkinSpace< FunctionSpace,GridPart,polOrder,Storage> >
@@ -348,6 +357,18 @@ namespace Dune
     template< class MatrixImp,
               class FunctionSpace, class GridPart, int polOrder, template< class > class Storage>
     struct ISTLParallelMatrixAdapter< MatrixImp, LegendreDiscontinuousGalerkinSpace< FunctionSpace,GridPart,polOrder,Storage> >
+    {
+      typedef DGParallelMatrixAdapter<MatrixImp> Type ;
+    };
+    template< class MatrixImp,
+              class FunctionSpace, class GridPart, int polOrder, template< class > class Storage>
+    struct ISTLParallelMatrixAdapter< MatrixImp, HierarchicLegendreDiscontinuousGalerkinSpace< FunctionSpace,GridPart,polOrder,Storage> >
+    {
+      typedef DGParallelMatrixAdapter<MatrixImp> Type ;
+    };
+    template< class MatrixImp,
+              class FunctionSpace, class GridPart, int polOrder, template< class > class Storage>
+    struct ISTLParallelMatrixAdapter< MatrixImp, PAdaptiveDGSpace< FunctionSpace,GridPart,polOrder,Storage> >
     {
       typedef DGParallelMatrixAdapter<MatrixImp> Type ;
     };
