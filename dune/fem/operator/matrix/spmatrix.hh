@@ -364,13 +364,10 @@ namespace Dune
     };
 
 
-    //! identifier for exchange type of SparseRowMatrixObject when necessary
-    struct OverloadedSparseRowMatrix {};
-
-
     // SparseRowMatrixObject
     // ---------------------
-    template <class DomainSpace, class RangeSpace>
+    template <class DomainSpace, class RangeSpace, 
+              class Matrix = SparseRowMatrix< typename DomainSpace :: RangeFieldType > >
     class SparseRowMatrixObject;
 
     template <class RowSpaceImp, class ColSpaceImp = RowSpaceImp>
@@ -386,7 +383,7 @@ namespace Dune
 
     };
 
-    template< class DomainSpace, class RangeSpace>
+    template< class DomainSpace, class RangeSpace, class Matrix >
     class SparseRowMatrixObject
     : public Fem :: OEMMatrix
     {
@@ -410,7 +407,8 @@ namespace Dune
                               RangeSpaceType :: localBlockSize > RangeMapperType;
 
     private:  
-      typedef SparseRowMatrixObject< DomainSpaceType, RangeSpaceType > ThisType;
+      typedef Matrix  MatrixType ;
+      typedef SparseRowMatrixObject< DomainSpaceType, RangeSpaceType, MatrixType > ThisType;
 
     protected:
       typedef typename DomainSpaceType :: GridType GridType;
@@ -422,27 +420,7 @@ namespace Dune
       template< class MatrixObject >
       class LocalMatrix;
       
-#if 0
-      template <class Traits, bool definesNewMatrix >
-      struct MatrixImpl
-      {
-        // type of matrix implementation 
-        typedef SparseRowMatrix< double > MatrixType;
-      };
-
-      // if Traits are derived from OverloadedSparseRowMatrix then we exchange the MatrixImpl
-      template <class Traits>
-      struct MatrixImpl<Traits, true>
-      {
-        typedef typename Traits :: MatrixType MatrixType;
-      };
-#endif
-
     public:  
-      // extract matrix impl depending on traits 
-      typedef SparseRowMatrix< double > MatrixType;
-      // ???????
-      // typedef typename MatrixImpl< Traits, Conversion< Traits, OverloadedSparseRowMatrix> :: exists > :: MatrixType  MatrixType;
       typedef MatrixType PreconditionMatrixType;
 
     public:
@@ -754,14 +732,14 @@ namespace Dune
 
 
 
-    template< class DomainSpace, class RangeSpace >
+    template< class DomainSpace, class RangeSpace, class Matrix >
     template< class MatrixObject >
-    struct SparseRowMatrixObject< DomainSpace, RangeSpace >::LocalMatrixTraits
+    struct SparseRowMatrixObject< DomainSpace, RangeSpace, Matrix >::LocalMatrixTraits
     {
       typedef DomainSpace DomainSpaceType;
       typedef RangeSpace RangeSpaceType;
 
-      typedef SparseRowMatrixObject< DomainSpaceType, RangeSpaceType >
+      typedef SparseRowMatrixObject< DomainSpaceType, RangeSpaceType, Matrix >
         SparseRowMatrixObjectType;
       
       typedef typename SparseRowMatrixObjectType :: template LocalMatrix< MatrixObject > LocalMatrixType;
@@ -776,9 +754,9 @@ namespace Dune
 
 
     //! LocalMatrix 
-    template< class DomainSpace, class RangeSpace>
+    template< class DomainSpace, class RangeSpace, class Matrix >
     template< class MatrixObject >
-    class SparseRowMatrixObject< DomainSpace, RangeSpace> :: LocalMatrix
+    class SparseRowMatrixObject< DomainSpace, RangeSpace, Matrix > :: LocalMatrix
     : public LocalMatrixDefault< LocalMatrixTraits< MatrixObject > >
     {
     public:
