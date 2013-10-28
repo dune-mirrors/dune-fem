@@ -114,9 +114,10 @@ namespace Dune {
         // tkae maximum for times and sum flops for all threads 
         for( int i=1; i<threads; ++i ) 
         {
-          values[ 0 ] = std::max( values[ 0 ], values_[ i ][ 0 ] );
-          values[ 1 ] = std::max( values[ 1 ], values_[ i ][ 1 ] );
-          values[ 2 ] += values_[ i ][ 2 ];
+          // the first two components are times (ie take the maximum time)
+          values[ 0 ]  = std::max( values[ 0 ], values_[ i ][ 0 ] );
+          values[ 1 ]  = std::max( values[ 1 ], values_[ i ][ 1 ] );
+          values[ 2 ] += values_[ i ][ 2 ]; // mflops counter 
         }
 
         values_t max( values );
