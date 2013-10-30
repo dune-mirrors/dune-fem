@@ -30,18 +30,19 @@ namespace Dune {
      **/
     class FlopCounter
     {
-      typedef std::vector< float > values_t ;
-      ThreadSafeValue< values_t >  values_;
-      ThreadSafeValue< int >       stopped_;
+      typedef std::vector< float >  values_t ;
+      ThreadSafeValue< values_t  >  values_;
+      ThreadSafeValue< long long >  flop_;
+      ThreadSafeValue< int >        stopped_;
 
       // call PAPI_flops for given values
       void evaluateCounters( float& realTime, 
                              float& procTime, 
-                             float& mFlops ) 
+                             float& mFlops,
+                             long long& flop ) 
       {
 #if HAVE_PAPI
-        long long flops ; // we are only interrested in MFLOPs
-        int retval = PAPI_flops(&realTime, &procTime, &flops, &mFlops);
+        int retval = PAPI_flops(&realTime, &procTime, &flop, &mFlops);
         if( retval < PAPI_OK ) 
         {
           std::cerr << "ERROR: PAPI_FP_OPS event is not available, check papi_avail!" << std::endl;
@@ -72,7 +73,8 @@ namespace Dune {
 #endif
         }
         float realtime, proctime, mflops;
-        evaluateCounters( realtime, proctime, mflops );
+        long long flop ;
+        evaluateCounters( realtime, proctime, mflops, flop );
         // mark as not stopped 
         *stopped_ = 0;
       }
@@ -84,7 +86,8 @@ namespace Dune {
         {
           // get reference to thread local value 
           values_t& values = *values_;
-          evaluateCounters( values[ 0 ], values[ 1 ], values[ 2 ] );
+          long long& flop = *flop_;
+          evaluateCounters( values[ 0 ], values[ 1 ], values[ 2 ], flop );
 
           // mark thread as stopped 
           *stopped_ = 1 ;
@@ -110,18 +113,29 @@ namespace Dune {
         if( allStopped != threads ) 
           DUNE_THROW(InvalidStateException,"Not all thread have been stopped");
 
-        values_t values( values_[ 0 ] );
+        typedef std::vector< double > result_t ;
+        result_t values( 5, 0.0 );
+
+        for( int i=0; i<3; ++i ) 
+          values[ i ] = values_[ 0 ][ i ];
+        values[ 3 ] = flop_[ 0 ];
+
         // tkae maximum for times and sum flops for all threads 
         for( int i=1; i<threads; ++i ) 
         {
-          values[ 0 ] = std::max( values[ 0 ], values_[ i ][ 0 ] );
-          values[ 1 ] = std::max( values[ 1 ], values_[ i ][ 1 ] );
+          values[ 0 ]  = std::max( values[ 0 ], double(values_[ i ][ 0 ]) );
+          values[ 1 ]  = std::max( values[ 1 ], double(values_[ i ][ 1 ]) );
           values[ 2 ] += values_[ i ][ 2 ];
+          values[ 3 ] += flop_[ i ];
         }
+        // convert to GFLOP 
+        values[ 3 ] /= 1.0e9 ;
+        // compute mflops ourselfs
+        values[ 4 ] = values[ 3 ] / values[ 0 ]; 
 
-        values_t max( values );
-        values_t min( values );
-        values_t sum( values );
+        result_t max( values );
+        result_t min( values );
+        result_t sum( values );
 
         typedef MPIManager :: CollectiveCommunication CollectiveCommunication;
         const CollectiveCommunication& comm = MPIManager :: comm();
@@ -134,7 +148,7 @@ namespace Dune {
 
         if( comm.rank() == 0 ) 
         {
-          out << "FlopCounter::typ:   real  proc  mflops " << std::endl;
+          out << "FlopCounter::typ:   real  proc  mflops flop  flop/real " << std::endl;
           printValues( out, "FlopCounter::sum: ", sum );
           printValues( out, "FlopCounter::max: ", max );
           printValues( out, "FlopCounter::min: ", min );
@@ -173,7 +187,8 @@ namespace Dune {
       }
 
     protected:
-      void printValues( std::ostream& out, const std::string name, const values_t& values ) const
+      template <class vec_t>
+      void printValues( std::ostream& out, const std::string name, const vec_t& values ) const
       {
         out << name << " ";
         for( unsigned int i=0; i<values.size(); ++i )
