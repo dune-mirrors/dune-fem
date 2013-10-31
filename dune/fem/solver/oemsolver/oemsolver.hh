@@ -814,17 +814,17 @@ namespace Dune
           int size = arg.space().size();
           if( arg.space().gridPart().comm().size() > 1 )
           {
-            typedef typename OperatorImp::SystemMatrixType SystemMatrixType;
-            OEMSolver::SolverInterfaceImpl< SystemMatrixType > opSolve( op.systemMatrix() ); 
+            typedef typename OperatorImp::MatrixType MatrixType;
+            OEMSolver::SolverInterfaceImpl< MatrixType > opSolve( op.matrix() ); 
             FakeConditionerType preConditioner( size, opSolve );
             return OEMSolver::gmres(arg.space().gridPart().comm(),
-                     inner,size,op.systemMatrix(),preConditioner,
+                     inner,size,op.matrix(),preConditioner,
                      arg.leakPointer(),dest.leakPointer(),eps,maxIter,verbose);
           }
           else 
           {
             return OEMSolver::gmres(arg.space().gridPart().comm(),
-                     inner,size,op.systemMatrix(),
+                     inner,size,op.matrix(),
                      arg.leakPointer(),dest.leakPointer(),eps,maxIter,verbose);
           }
         }
