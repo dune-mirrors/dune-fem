@@ -407,8 +407,8 @@ namespace Dune
       typedef NonBlockMapper< RangeBlockMapperType, 
                               RangeSpaceType :: localBlockSize > RangeMapperType;
 
-    private:  
       typedef Matrix  MatrixType ;
+    private:  
       typedef SparseRowMatrixObject< DomainSpaceType, RangeSpaceType, MatrixType > ThisType;
 
     protected:
