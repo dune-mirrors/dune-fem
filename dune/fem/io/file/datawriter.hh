@@ -3,6 +3,7 @@
 
 #include <string>
 
+#include <dune/fem/io/file/asciiparser.hh>
 #include <dune/fem/io/file/iointerface.hh>
 #include <dune/fem/io/file/iotuple.hh>
 #include <dune/fem/io/parameter.hh>

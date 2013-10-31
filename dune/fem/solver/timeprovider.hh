@@ -6,7 +6,6 @@
 
 #include <dune/common/tuples.hh>
 
-#include <dune/fem/io/file/asciiparser.hh>
 #include <dune/fem/io/file/persistencemanager.hh>
 #include <dune/fem/io/parameter.hh>
 #include <dune/fem/misc/commhelper.hh>

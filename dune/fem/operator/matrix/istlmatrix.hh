@@ -16,7 +16,6 @@
 
 //- Dune fem includes 
 #include <dune/fem/function/blockvectorfunction.hh>
-#include <dune/fem/io/file/asciiparser.hh>
 #include <dune/fem/operator/common/localmatrix.hh>
 #include <dune/fem/operator/common/localmatrixwrapper.hh>
 #include <dune/fem/operator/common/operator.hh>

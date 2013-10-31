@@ -7,7 +7,6 @@
 #include <dune/common/static_assert.hh>
 #include <dune/common/typetraits.hh>
 
-#include <dune/fem/io/file/asciiparser.hh>
 #include <dune/fem/io/file/iointerface.hh>
 #include <dune/fem/io/parameter.hh>
 #include <dune/fem/io/streams/binarystreams.hh>
