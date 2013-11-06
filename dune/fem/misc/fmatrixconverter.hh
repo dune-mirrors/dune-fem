@@ -53,10 +53,10 @@ namespace Dune
     // derive from dense vector to inherit functionality
     template< class K, int m >
     class FieldMatrixConverterRow
-      : public DenseVector< FieldMatrixConverterRow< K, m > >
+      : public Dune::DenseVector< FieldMatrixConverterRow< K, m > >
     {
       typedef FieldMatrixConverterRow< K, m > This;
-      typedef DenseVector< FieldMatrixConverterRow< K, m > > Base;
+      typedef Dune::DenseVector< FieldMatrixConverterRow< K, m > > Base;
 
     public:
       typedef typename Base::size_type size_type;
@@ -115,9 +115,9 @@ namespace Dune
     //! convert a FieldVector with length n * m to a FieldMatrix with n rows and m cols
     template< typename K, int n, int m >
     class FieldMatrixConverter< FieldVector< K, n *m >, FieldMatrix< K, n, m > >
-      : public DenseMatrix< FieldMatrixConverter< FieldVector< K, n *m >, FieldMatrix< K, n, m > > >
+      : public Dune::DenseMatrix< FieldMatrixConverter< FieldVector< K, n *m >, FieldMatrix< K, n, m > > >
     {
-      typedef DenseMatrix< FieldMatrixConverter< FieldVector< K, n *m >, FieldMatrix< K, n, m > > > Base;
+      typedef Dune::DenseMatrix< FieldMatrixConverter< FieldVector< K, n *m >, FieldMatrix< K, n, m > > > Base;
 
     public:
       //! internal storage of matrix
