@@ -32,10 +32,15 @@ TESTPROGS = lagrangeinterpolation_linear lagrangeinterpolation_quadratic \
             vtxprojection_adaptive \
             intersectionindexset \
 						combinedspaceadaptation \
-						petscl2projection
+						petscl2projection \
+						fmatrixconverter
 
 TESTS = $(TESTPROGS) adaptation-4.sh
 check_PROGRAMS = $(TESTPROGS) adaptation
+
+
+fmatrixconverter_SOURCES = fmatrixconverter.cc
+fmatrixconverter_CPPFLAGS = -DCOUNT_FLOPS $(AM_CPPFLAGS)
 
 lagrangeinterpolation_linear_SOURCES = lagrangeinterpolation.cc
 lagrangeinterpolation_linear_CPPFLAGS = -DPOLORDER=1 -DCOUNT_FLOPS $(AM_CPPFLAGS)
