@@ -223,9 +223,9 @@ namespace Dune
         LocalJacobianRangeType localJacobian( RangeFieldType( 0 ) );
         AxpyFunctor< DofVector, LocalJacobianRangeType > f( dofs, localJacobian );
         shapeFunctionSet().jacobianEach( x, f );
-
+        const GeometryType &geo = geometry();
         typedef JacobianTransformation< GeometryType > Transformation;
-        Transformation transformation( geometry(), coordinate( x ) );
+        Transformation transformation( geo, coordinate( x ) );
         transformation( localJacobian, jacobian );
       }
 
@@ -234,8 +234,9 @@ namespace Dune
       void jacobianAll ( const Point &x, JacobianRangeArray &jacobians ) const
       {
         assert( jacobians.size() >= size() );
+        const GeometryType &geo = geometry();
         typedef JacobianTransformation< GeometryType > Transformation;
-        Transformation transformation( geometry(), coordinate( x ) );
+        Transformation transformation( geo, coordinate( x ) );
         AssignFunctor< JacobianRangeArray, Transformation > f( jacobians, transformation );
         shapeFunctionSet().jacobianEach( x, f );
       }
@@ -247,9 +248,9 @@ namespace Dune
         LocalHessianRangeType localHessian( typename LocalHessianRangeType::value_type( RangeFieldType( 0 ) ) );
         AxpyFunctor< DofVector, LocalHessianRangeType > f( dofs, localHessian );
         shapeFunctionSet().hessianEach( x, f );
-
+        const GeometryType &geo = geometry();
         typedef HessianTransformation< GeometryType > Transformation;
-        Transformation transformation( geometry(), coordinate( x ) );
+        Transformation transformation( geo, coordinate( x ) );
         transformation( localHessian, hessian );
       }
 
@@ -258,8 +259,9 @@ namespace Dune
       void hessianAll ( const Point &x, HessianRangeArray &hessians ) const
       {
         assert( hessians.size() >= size() );
+        const GeometryType &geo = geometry();
         typedef HessianTransformation< GeometryType > Transformation;
-        Transformation transformation( geometry(), coordinate( x ) );
+        Transformation transformation( geo, coordinate( x ) );
         AssignFunctor< HessianRangeArray, Transformation > f( hessians, transformation );
         shapeFunctionSet().hessianEach( x, f );
       }
