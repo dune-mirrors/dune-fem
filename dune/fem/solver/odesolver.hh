@@ -489,10 +489,12 @@ namespace DuneODE
                           monitor.maxNewtonIterations_,
                           monitor.maxLinearSolverIterations_ );
 
+      assert( linsolver_->number_of_iterations() == monitor.linearSolverIterations_ );
+
       double factor( 1 );
       bool changed = 
         parameter().cflFactor( impl_.op().timeStepEstimate(), spaceOperator().timeStepEstimate(), 
-                               linsolver_->number_of_iterations(), convergence, factor );
+                               monitor.linearSolverIterations_, convergence, factor );
 
       if( (factor >= std::numeric_limits< double >::min()) && 
           (factor <= std::numeric_limits< double >::max()) ) 
