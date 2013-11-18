@@ -21,6 +21,7 @@
 #include <dune/fem/operator/common/spaceoperatorif.hh>
 #include <dune/fem/solver/odesolverinterface.hh>
 #include <dune/fem/solver/timeprovider.hh>
+#include <dune/fem/solver/rungekutta/timestepcontrol.hh>
 
 // include headers of PARDG 
 #include "pardg.hh"
@@ -33,24 +34,9 @@ namespace DuneODE
   using namespace std;
 
 #ifdef USE_PARDG_ODE_SOLVER
-  struct ODEParameters
-  : public LocalParameter< ODEParameters, ODEParameters >
+  // see rungekutta/timestepcontrol.hh for the adaptive control of the clf for implicit solvers 
+  struct ODEParameters : public ImplicitRungeKuttaSolverParameters 
   { 
-    enum { noVerbosity = 0,  noConvergenceVerbosity = 1,
-           cflVerbosity = 2, fullVerbosity = 3 };
-
-    ODEParameters() : 
-      // number of minimal iterations that the linear solver should do 
-      // if the number of iterations done is smaller then the cfl number is increased  
-      min_it( Parameter::getValue< int >( "fem.ode.miniterations" , 14 ) ),
-      // number of maximal iterations that the linear solver should do 
-      // if the number of iterations larger then the cfl number is decreased   
-      max_it( Parameter::getValue< int >( "fem.ode.maxiterations" , 16 ) ),
-      // factor for cfl number on increase (decrease is 0.5)
-      sigma( Parameter::getValue< double >( "fem.ode.cflincrease" , 1.1 ) )
-    {
-    }
-
     // choice of linear solver for the implicit ODE solver 
     virtual PARDG::IterativeLinearSolver *linearSolver(PARDG::Communicator & comm) const
     {
@@ -87,89 +73,10 @@ namespace DuneODE
       return solver;
     }
 
-    /** \brief tolerance for the non-linear solver (should be larger than the tolerance for
-               the linear solver */
-    virtual double tolerance() const
-    {
-      return Parameter::getValue< double >( "fem.ode.tolerance" , 1e-6 );
-    }
-    virtual int iterations() const
-    {
-      return Parameter::getValue< int >( "fem.ode.iterations" , 1000 );
-    }
-    /** \brief verbosity level ( none, noconv, cfl, full )  */
-    virtual int verbose() const
-    {
-      static const std::string verboseTypeTable[]
-        = { "none", "noconv", "cfl", "full" };
-      return Parameter::getEnum( "fem.ode.verbose" , verboseTypeTable, 0 );
-    }
-    virtual double cflStart() const
-    {
-      return Parameter::getValue< double >( "fem.ode.cflStart" , 1);
-    }
-    virtual double cflMax() const
-    {
-      return Parameter::getValue< double >( "fem.ode.cflMax" , std::numeric_limits<double>::max() );
-    }
-    
-    /** \brief return multiplication factor for the current cfl number
-     *  \param[in] imOpTimeStepEstimate Time step estimate of the first ode solver
-     *  \param[in] exOpTimeStepEstimate Time step estimate of the second ode solver
-     *  \param[in] solver Iterative linear solver (ILS)
-     *  \param[in] converged Convergence of the ILS
-     *  \param[out] factor Multiplication factor for the current cfl number
-     *
-     *  \note Do not increase the cfl number of the implicit solver if its time step 
-     *    estimate is already larger than the one of the explicit solver
-     */
-    virtual bool cflFactor( const double imOpTimeStepEstimate,
-                            const double exOpTimeStepEstimate,
-                            const PARDG::IterativeLinearSolver &solver,
-                            bool converged,
-                            double &factor) const
-    {
-      const int iter = solver.number_of_iterations();
-      factor = 1.;
-      bool changed = false;
-      if (converged) 
-      {
-        if (iter < min_it) 
-        {
-          if( imOpTimeStepEstimate <= exOpTimeStepEstimate )
-          {
-            factor = sigma;
-            changed = true;
-          }
-        }
-        else if (iter > max_it) 
-        {
-          factor = (double)max_it/(sigma*(double)iter);
-          changed = true;
-        }
-      }
-      else
-      {
-        factor = 0.5;
-        changed = true;
-      }
-      return changed;
-    }
-
-    virtual void initTimeStepEstimate ( const double dtEstExpl, const double dtEstImpl, double &dtEst, double &cfl ) const
-    {
-      // initial time step already set to explicit time step
-      dtEst = dtEstExpl;
-
-      // heuristics for initial CFL number
-      cfl = 1.0;
-      if( (dtEstImpl > 0) && (dtEstExpl > dtEstImpl) )
-        cfl = dtEstExpl / dtEstImpl;
-    }
-
-    const int min_it,max_it;
-    const double sigma;
+    // overload clone method 
+    virtual ODEParameters* clone () const { return new ODEParameters( *this ); } 
   };
+
 
   template <class Operator>
   class OperatorWrapper : public PARDG::Function 
@@ -585,7 +492,7 @@ namespace DuneODE
       double factor( 1 );
       bool changed = 
         parameter().cflFactor( impl_.op().timeStepEstimate(), spaceOperator().timeStepEstimate(), 
-                               *(linsolver_), convergence, factor );
+                               linsolver_->number_of_iterations(), convergence, factor );
 
       if( (factor >= std::numeric_limits< double >::min()) && 
           (factor <= std::numeric_limits< double >::max()) ) 
