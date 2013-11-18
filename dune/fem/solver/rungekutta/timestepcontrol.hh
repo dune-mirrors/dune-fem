@@ -23,10 +23,21 @@ namespace DuneODE
     enum { noVerbosity = 0,  noConvergenceVerbosity = 1,
            cflVerbosity = 2, fullVerbosity = 3 };
 
+  protected:  
+    // number of minimal iterations that the linear solver should do 
+    // if the number of iterations done is smaller then the cfl number is increased  
+    const int minIter_;
+    // number of maximal iterations that the linear solver should do 
+    // if the number of iterations larger then the cfl number is decreased   
+    const int maxIter_;
+    // factor for cfl number on increase (decrease is 0.5)
+    const double sigma_;
+
+  public:  
     ImplicitRungeKuttaSolverParameters ()
-    : min_it( Dune::Fem::Parameter::getValue< int >( "fem.ode.miniterations" , 14 ) ),
-      max_it( Dune::Fem::Parameter::getValue< int >( "fem.ode.maxiterations" , 16 ) ),
-      sigma( Dune::Fem::Parameter::getValue< double >( "fem.ode.cflincrease" , 1.1 ) )
+    : minIter_( Dune::Fem::Parameter::getValue< int >( "fem.ode.miniterations" , 14 ) ),
+      maxIter_( Dune::Fem::Parameter::getValue< int >( "fem.ode.maxiterations" , 16 ) ),
+      sigma_( Dune::Fem::Parameter::getValue< double >( "fem.ode.cflincrease" , 1.1 ) )
     {}
 
     /** \brief tolerance for the non-linear solver (should be larger than the tolerance for
@@ -84,22 +95,23 @@ namespace DuneODE
       bool changed = false;
       if (converged) 
       {
-        if (iter < min_it) 
+        if (iter < minIter_) 
         {
           if( imOpTimeStepEstimate <= exOpTimeStepEstimate )
           {
-            factor = sigma;
+            factor = sigma_;
             changed = true;
           }
         }
-        else if (iter > max_it) 
+        else if (iter > maxIter_) 
         {
-          factor = (double)max_it/(sigma*(double)iter);
+          factor = (double)maxIter_/(sigma_*(double)iter);
           changed = true;
         }
       }
       else
       {
+        abort();
         factor = 0.5;
         changed = true;
       }
@@ -116,15 +128,6 @@ namespace DuneODE
       if( (dtEstImpl > 0) && (dtEstExpl > dtEstImpl) )
         cfl = dtEstExpl / dtEstImpl;
     }
-
-    // number of minimal iterations that the linear solver should do 
-    // if the number of iterations done is smaller then the cfl number is increased  
-    int min_it;
-    // number of maximal iterations that the linear solver should do 
-    // if the number of iterations larger then the cfl number is decreased   
-    int max_it;
-    // factor for cfl number on increase (decrease is 0.5)
-    double sigma;
   };
 
 
@@ -168,7 +171,7 @@ namespace DuneODE
         DUNE_THROW( Dune::InvalidStateException, "ImplicitRungeKuttaSolver must be initialized before first solve." );
 
       double factor( 1 );
-      parameters().cflFactor( sourceTermEstimate, helmholtzEstimate, monitor.newtonIterations_, false, factor );
+      parameters().cflFactor( helmholtzEstimate, sourceTermEstimate, monitor.linearSolverIterations_, false, factor );
 
       if( !((factor >= std::numeric_limits< double >::min()) && (factor < 1.0)) )
         DUNE_THROW( Dune::InvalidStateException, "invalid cfl factor: " << factor );
@@ -195,12 +198,15 @@ namespace DuneODE
         DUNE_THROW( Dune::InvalidStateException, "ImplicitRungeKuttaSolver must be initialized before first solve." );
 
       double factor( 1 );
-      parameters().cflFactor( sourceTermEstimate, helmholtzEstimate, monitor.newtonIterations_, true, factor );
+      // true means converged, which is always true since this function is only called
+      // when the implicit solver did converge 
+      parameters().cflFactor( helmholtzEstimate, sourceTermEstimate, monitor.linearSolverIterations_, true, factor );
       if( !((factor >= std::numeric_limits< double >::min()) && (factor <= std::numeric_limits< double >::max())) )
         DUNE_THROW( Dune::InvalidStateException, "invalid cfl factor: " << factor );
 
       const double oldCfl = cfl_;
       cfl_ = std::min( cflMax_, factor * cfl_ );
+
       timeProvider_.provideTimeStepEstimate( std::min( sourceTermEstimate, cfl_ * helmholtzEstimate ) );
 
       if( (cfl_ != oldCfl) && (verbose_ >= ImplicitRungeKuttaSolverParameters::cflVerbosity) && (Dune::Fem::MPIManager::rank() == 0) )
