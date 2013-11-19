@@ -128,6 +128,8 @@ namespace Dune
         // false means don't backup persistent objects 
         CheckPointerType :: writeSingleCheckPoint( grid, data, time, false, writeStep );
       }
+
+      const DiscreteFunctionType& discreteFunction() const { return discreteFunction_ ; }
     };
 
     ///////////////////////////////////////////////////////////////////
@@ -198,7 +200,6 @@ namespace Dune
         }
       };
 #endif
-
 
       const int numProcs_;
       std::vector< GridSolutionType* > solutions_; 
@@ -281,6 +282,12 @@ namespace Dune
                                         const int writeStep = 0 ) 
       {
         GridSolutionType :: writeDiscreteFunction( grid, discreteFunction, time, writeStep );
+      }
+
+      const DiscreteFunctionType& discreteFunction( const int rank ) const 
+      {
+        assert( rank < numProcs_ );
+        return solutions_[ rank ]->discreteFunction();
       }
     };
 
