@@ -74,7 +74,8 @@ namespace Dune
         typedef typename std::vector< LocalBlockType >::const_iterator Iterator;
         const RangeFieldType *uit = u.leakPointer();
         RangeFieldType *wit = w.leakPointer();
-        for( Iterator dit = diagonal_.begin(); dit != diagonal_.end(); ++dit )
+        const Iterator dend = diagonal_.end();
+        for( Iterator dit = diagonal_.begin(); dit != dend; ++dit )
         {
           dit->mv( uit, wit );
           uit += dit->M();
@@ -87,7 +88,8 @@ namespace Dune
       void clear ()
       {
         typedef typename std::vector< LocalBlockType >::iterator Iterator;
-        for( Iterator dit = diagonal_.begin(); dit != diagonal_.end(); ++dit )
+        const Iterator dend = diagonal_.end();
+        for( Iterator dit = diagonal_.begin(); dit != dend; ++dit )
           *dit = RangeFieldType( 0 );
       }
 
@@ -95,15 +97,43 @@ namespace Dune
       void forEach ( const Functor &functor )
       {
         typedef typename std::vector< LocalBlockType >::iterator Iterator;
-        for( Iterator dit = diagonal_.begin(); dit != diagonal_.end(); ++dit )
+        const Iterator dend = diagonal_.end();
+        for( Iterator dit = diagonal_.begin(); dit != dend; ++dit )
           functor( *dit );
       }
 
       void invert ()
       {
         typedef typename std::vector< LocalBlockType >::iterator Iterator;
-        for( Iterator dit = diagonal_.begin(); dit != diagonal_.end(); ++dit )
+        const Iterator dend = diagonal_.end();
+        for( Iterator dit = diagonal_.begin(); dit != dend; ++dit )
           dit->invert();
+      }
+
+      void rightmultiply( const ThisType& other ) 
+      {
+        assert( other.diagonal_.size() == diagonal_.size() );
+        typedef typename std::vector< LocalBlockType >::iterator Iterator;
+        typedef typename std::vector< LocalBlockType >::const_iterator ConstIterator;
+        ConstIterator otherIt = other.diagonal_.begin();
+        const Iterator dend = diagonal_.end();
+        for( Iterator dit = diagonal_.begin(); dit != dend; ++dit, ++otherIt )
+        {
+          (*dit).rightmultiply( *otherIt );
+        }
+      }
+
+      void leftmultiply( const ThisType& other ) 
+      {
+        assert( other.diagonal_.size() == diagonal_.size() );
+        typedef typename std::vector< LocalBlockType >::iterator Iterator;
+        typedef typename std::vector< LocalBlockType >::const_iterator ConstIterator;
+        ConstIterator otherIt = other.diagonal_.begin();
+        const Iterator dend = diagonal_.end();
+        for( Iterator dit = diagonal_.begin(); dit != dend; ++dit, ++otherIt )
+        {
+          (*dit).leftmultiply( *otherIt );
+        }
       }
 
       void communicate () {}
