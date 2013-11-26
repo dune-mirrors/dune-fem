@@ -245,6 +245,18 @@ namespace Dune
         basisFunctionSet_ = domainSpace().basisFunctionSet( domainEntity );
         SetLocalBlockFunctor f( op_->diagonal_, localBlock_ );
         domainSpace().blockMapper().mapEach( domainEntity, f );
+        if( &domainEntity != &rangeEntity ) 
+        {
+          static LocalBlockType dummyBlock( 0 );
+
+          LocalBlockType *otherBlock = 0;
+          SetLocalBlockFunctor f( op_->diagonal_, otherBlock );
+          rangeSpace().blockMapper().mapEach( rangeEntity, f );
+          // check whether the blocks match, otherwise off-diagonal 
+          // for off-diagonal we simply use a dummy local matrix 
+          if( otherBlock != localBlock_ ) 
+            localBlock_ = &dummyBlock ;
+        }
       }
 
       void clear () { localBlock() = RangeFieldType( 0 ); }
