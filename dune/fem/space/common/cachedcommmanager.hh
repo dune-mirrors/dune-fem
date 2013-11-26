@@ -502,6 +502,8 @@ namespace Dune
         const int size = indexMap.size();
 
         typedef typename DiscreteFunction :: DofType DofType;
+        typedef typename DiscreteFunction :: ConstDofBlockPtrType ConstDofBlockPtrType;
+
         enum { blockSize = DiscreteFunction :: 
                        DiscreteFunctionSpaceType :: localBlockSize } ;
 
@@ -513,7 +515,6 @@ namespace Dune
         for( int i = 0; i < size; ++i )
         {
           // get dof block 
-          typedef typename DiscreteFunction :: ConstDofBlockPtrType ConstDofBlockPtrType;
           ConstDofBlockPtrType blockPtr = discreteFunction.block( indexMap[i] );
 
           // write dof block to stream  
@@ -545,6 +546,7 @@ namespace Dune
       {
         assert( sequence_ == space_.sequence() );
         typedef typename DiscreteFunction :: DofType DofType;
+        typedef typename DiscreteFunction :: DofBlockPtrType DofBlockPtrType;
 
         enum { blockSize = DiscreteFunction :: 
                 DiscreteFunctionSpaceType :: localBlockSize } ;
@@ -557,14 +559,14 @@ namespace Dune
         const int size = indexMap.size();
         // make sure that the receive buffer has the correct size 
         assert( size_t(size * blockSize * sizeof( DofType )) <= size_t(str.size()) );
+
+        DofType value;
         for( int i = 0; i < size; ++i )
         {
           // get dof block 
-          typedef typename DiscreteFunction :: DofBlockPtrType DofBlockPtrType;
           DofBlockPtrType blockPtr = discreteFunction.block( indexMap[i] );
 
           // read block 
-          DofType value;
           for( int k = 0; k < blockSize; ++k )  
           {
             os.readUnsave( value );
