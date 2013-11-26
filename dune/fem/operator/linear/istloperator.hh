@@ -47,6 +47,10 @@ namespace Dune
       {
         return *this;
       }
+      Base &systemMatrix ()
+      {
+        return *this;
+      }
 
       void communicate () 
       {

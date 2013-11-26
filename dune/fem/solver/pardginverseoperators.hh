@@ -100,7 +100,7 @@ namespace Dune
         operator_( op ),
         preconditioner_( nullptr )
       {
-        setupSolver( absLimit, maxIterations, verbose );
+        setupSolver( redEps, absLimit, maxIterations, verbose );
       }
 
       ParDGGeneralizedMinResInverseOperator ( const OperatorType &op,
@@ -110,7 +110,7 @@ namespace Dune
         operator_( op ),
         preconditioner_( nullptr )
       {
-        setupSolver( absLimit, maxIterations, false );
+        setupSolver( redEps, absLimit, maxIterations, false );
       }
 
       ParDGGeneralizedMinResInverseOperator ( const OperatorType &op,
@@ -121,7 +121,7 @@ namespace Dune
         operator_( op ),
         preconditioner_( &preconditioner )
       {
-        setupSolver( absLimit, maxIterations, verbose );
+        setupSolver( redEps, absLimit, maxIterations, verbose );
       }
 
       ParDGGeneralizedMinResInverseOperator ( const OperatorType &op,
@@ -132,7 +132,7 @@ namespace Dune
         operator_( op ),
         preconditioner_( &preconditioner )
       {
-        setupSolver( absLimit, maxIterations, false );
+        setupSolver( redEps, absLimit, maxIterations, false );
       }
 
       virtual void operator() ( const DomainFunctionType &u, RangeFunctionType &w ) const
@@ -160,9 +160,15 @@ namespace Dune
         return Parameter::getValue< int >( "fem.solver.gmres.restart", 20 );
       }
 
-      void setupSolver ( double epsilon, unsigned int maxIterations, bool verbose )
+      void setupSolver ( double redEps, double absLimit, unsigned int maxIterations, bool verbose )
       {
-        solver_.set_tolerance( epsilon );
+        static const std::string errorTypeTable[] = { "absolute", "relative" };
+        // errormeassure used in the linear solver 
+        int errorType = Parameter::getEnum( "fem.solver.errormeasure", errorTypeTable, 0 );
+        if (errorType == 1)
+          solver_.set_tolerance( redEps, true);
+        else
+          solver_.set_tolerance( absLimit, false );
 
         maxIterations = std::min( (unsigned int)std::numeric_limits< int >::max(), maxIterations );
         solver_.set_max_number_of_iterations( int( maxIterations ) );

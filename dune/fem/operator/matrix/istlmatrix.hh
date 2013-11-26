@@ -800,6 +800,7 @@ namespace Dune
       static const bool assembled = true ;
 
       const ThisType& systemMatrix() const { return *this; }
+      ThisType& systemMatrix() { return *this; }
     public:  
       //! destructor 
       ~ISTLMatrixObject() 
@@ -867,6 +868,12 @@ namespace Dune
 
       //! return matrix adapter object  
       const MatrixAdapterType& matrixAdapter() const 
+      {
+        if( matrixAdap_ == 0 ) 
+          matrixAdap_ = new MatrixAdapterType( matrixAdapterObject() );
+        return *matrixAdap_;
+      }
+      MatrixAdapterType& matrixAdapter() 
       {
         if( matrixAdap_ == 0 ) 
           matrixAdap_ = new MatrixAdapterType( matrixAdapterObject() );
