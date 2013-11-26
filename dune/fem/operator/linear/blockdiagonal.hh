@@ -50,7 +50,7 @@ namespace Dune
       typedef       LocalBlockType*               DofBlockPtrType;
       typedef const LocalBlockType*               ConstDofBlockPtrType;
       typedef typename LocalBlockType::row_type   DofType ;
-      typedef DiscreteFunctionSpace               DiscreteFunctionSpaceType ;
+      typedef DomainSpaceType                     DiscreteFunctionSpaceType ;
 
     private:
 
