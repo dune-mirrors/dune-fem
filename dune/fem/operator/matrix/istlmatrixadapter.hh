@@ -85,6 +85,11 @@ namespace Dune
       {
         return preconditioner_;
       }
+      //! return reference to preconditioner 
+      const PreconditionAdapterType &preconditionAdapter() const
+      {
+        return preconditioner_;
+      }
 
       //! return reference to preconditioner 
       ParallelScalarProductType &scp()
@@ -225,6 +230,7 @@ namespace Dune
 
       //! return reference to preconditioner 
       PreconditionAdapterType& preconditionAdapter() { return preconditioner_; }
+      const PreconditionAdapterType& preconditionAdapter() const { return preconditioner_; }
 
       //! return reference to preconditioner 
       ParallelScalarProductType& scp() { return scp_; }
