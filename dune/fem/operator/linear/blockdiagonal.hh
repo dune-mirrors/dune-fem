@@ -42,8 +42,17 @@ namespace Dune
       typedef typename DomainSpaceType::EntityType DomainEntityType;
       typedef typename RangeSpaceType::EntityType RangeEntityType;
 
-    private:
       static const int localBlockSize = DomainSpaceType::localBlockSize;
+
+      typedef Dune::FieldMatrix< RangeFieldType, localBlockSize, localBlockSize > LocalBlockType;
+
+      // types needed for CommunicationManager to fake DiscreteFunction interface
+      typedef       LocalBlockType*               DofBlockPtrType;
+      typedef const LocalBlockType*               ConstDofBlockPtrType;
+      typedef typename LocalBlockType::row_type   DofType ;
+      typedef DiscreteFunctionSpace               DiscreteFunctionSpaceType ;
+
+    private:
 
       class LocalMatrixTraits;
       class LocalMatrix;
@@ -55,7 +64,6 @@ namespace Dune
 
       typedef ColumnObject< ThisType > LocalColumnObjectType;
 
-      typedef Dune::FieldMatrix< RangeFieldType, localBlockSize, localBlockSize > LocalBlockType;
 
       BlockDiagonalLinearOperator ( const std::string &name,
                                     const DomainSpaceType &domainSpace,
@@ -136,7 +144,25 @@ namespace Dune
         }
       }
 
-      void communicate () {}
+      //! return block matrix for given block number (== entity number)
+      DofBlockPtrType block( const size_t block )
+      {
+        assert( block < diagonal_.size() );
+        return &diagonal_[ block ];
+      }
+
+      //! return block matrix for given block number (== entity number)
+      ConstDofBlockPtrType block( const size_t block ) const 
+      {
+        assert( block < diagonal_.size() );
+        return &diagonal_[ block ];
+      }
+
+      // copy matrices to ghost cells, needs the block methods to behave like discrete function 
+      void communicate () 
+      {
+        domainSpace().communicate( *this ); 
+      }
 
       template< class Stencil >
       void reserve ( const Stencil &stencil, bool verbose = false )
