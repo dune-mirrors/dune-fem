@@ -36,3 +36,4 @@ Makefile.in
 *.log
 *.o
 *.swp
+*.trs

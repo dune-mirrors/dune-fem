@@ -1,4 +1,5 @@
 /adaptation
+/combinedspaceadaptation
 /dgl2projection_adaptive
 /dgl2projection_attached
 /dgl2projection_blockvector
@@ -12,6 +13,7 @@
 /dgl2projection_petscdiscretefunction
 /dgl2projection_vector
 /dgl2projection_vector_int
+/fmatrixconverter
 /intersectionindexset
 /lagrangeinterpolation_linear
 /lagrangeinterpolation_quadratic
