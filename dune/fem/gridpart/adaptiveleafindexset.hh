@@ -300,7 +300,7 @@ namespace Dune
         {
           // get level-0 view, this is alrady used in GridPtr (DFG parser)
           typedef typename GridType :: LevelGridView MacroViewType;
-          MacroViewType macroView = grid_.levelView( 0 );
+          MacroViewType macroView = grid_.levelGridView( 0 );
 
           // resize vector of geometry types 
           geomTypes_.resize( dimension+1 );
@@ -954,7 +954,7 @@ namespace Dune
         Iterator;
 
       typedef typename GridType :: template Partition< All_Partition > :: LevelGridView LevelGridView ;
-      LevelGridView macroView = grid_.levelView( 0 );
+      LevelGridView macroView = grid_.levelGridView( 0 );
 
       const Iterator macroend = macroView.template end< 0, pt >();
       for( Iterator macroit = macroView.template begin< 0, pt >(); 

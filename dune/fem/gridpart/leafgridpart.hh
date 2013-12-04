@@ -63,14 +63,14 @@ namespace Dune
       //! Constructor
       explicit LeafGridPart ( GridType &grid )
       : BaseType( grid ),
-        leafView_( grid.leafView() ),
+        leafGridView_( grid.leafGridView() ),
         isetWrapper_( grid )
       {}
 
       //! copy constructor
       LeafGridPart ( const ThisType &other )
       : BaseType( other ),
-        leafView_( other.leafView_ ),
+        leafGridView_( other.leafGridView_ ),
         isetWrapper_( other.grid() )
       {}
 
@@ -95,7 +95,7 @@ namespace Dune
       typename Traits::template Codim< codim >::template Partition< pitype >::IteratorType
       begin () const
       {
-        return leafView_.template begin< codim, pitype >();
+        return leafGridView_.template begin< codim, pitype >();
       }
 
       //! Begin iterator on the leaf level
@@ -111,19 +111,19 @@ namespace Dune
       typename Traits::template Codim< codim >::template Partition< pitype >::IteratorType
       end () const
       {
-        return leafView_.template end< codim, pitype >();
+        return leafGridView_.template end< codim, pitype >();
       }
 
       //! ibegin of corresponding intersection iterator for given entity
       IntersectionIteratorType ibegin ( const EntityCodim0Type &entity ) const
       {
-        return leafView_.ibegin( entity );
+        return leafGridView_.ibegin( entity );
       }
       
       //! iend of corresponding intersection iterator for given entity
       IntersectionIteratorType iend ( const EntityCodim0Type &entity ) const
       {
-        return leafView_.iend( entity );
+        return leafGridView_.iend( entity );
       }
 
       int boundaryId ( const IntersectionType &intersection ) const
@@ -139,12 +139,12 @@ namespace Dune
       void communicate(CommDataHandleIF<DataHandleImp,DataType> & data, 
                        InterfaceType iftype, CommunicationDirection dir) const 
       {
-        leafView_.communicate( data, iftype, dir );
+        leafGridView_.communicate( data, iftype, dir );
       }
 
     private: 
       //! leaf grid view 
-      LeafGridView leafView_ ;
+      LeafGridView leafGridView_ ;
       //! GridDefaultIndexSet Wrapper 
       IndexSetType isetWrapper_;
     };
