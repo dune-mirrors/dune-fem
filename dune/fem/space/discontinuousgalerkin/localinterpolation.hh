@@ -43,8 +43,8 @@ namespace Dune
 
     public:
       DiscontinuousGalerkinLocalInterpolation ( const DiscreteFunctionSpaceType &space, const int order = -1 )
-      : order_( order < 0 ? 2*space.order() : order ),
-        massMatrix_( space, order_ )
+      : order_( space.order() ),
+        massMatrix_( space, (order < 0 ? 2*space.order() : order) )
       {}
 
     private:
@@ -64,7 +64,7 @@ namespace Dune
         const EntityType &entity = localFunction.entity();
         const typename EntityType::Geometry geometry = entity.geometry();
         
-        QuadratureType quadrature( entity, order_ );
+        QuadratureType quadrature( entity, localFunction.order() + order_ );
         const int nop = quadrature.nop();
         for( int qp = 0; qp < nop; ++qp )
         {
