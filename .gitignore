@@ -20,6 +20,7 @@
 /missing
 /setup.sh
 /stamp-h1
+/test-driver
 /check.out
 /check-doxygen.out
 /check-headers.out
