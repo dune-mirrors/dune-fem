@@ -189,9 +189,6 @@ namespace Dune
         else if ( pcType == petsc_hypre ) 
         {
           type = PCHYPRE;
-          // set type of HYPRE preconditioner to boomer-amg
-          // there are also other preconditioners in this package
-          ::Dune::Petsc::PCHYPRESetType( pc_, "boomeramg" );
         }
         else if ( pcType == petsc_ml )
           type = PCML;
@@ -235,6 +232,13 @@ namespace Dune
         ::Dune::Petsc::PCCreate( &pc_ );
         ::Dune::Petsc::PCSetType( pc_, type );
         ::Dune::Petsc::PCFactorSetLevels( pc_, pcLevel );
+
+        if ( pcType == petsc_hypre ) 
+        {
+          // set type of HYPRE preconditioner to boomer-amg
+          // there are also other preconditioners in this package
+          ::Dune::Petsc::PCHYPRESetType( pc_, "boomeramg" );
+        }
 
         // set preconditioning context 
         ::Dune::Petsc::KSPSetPC( ksp_, pc_ );
