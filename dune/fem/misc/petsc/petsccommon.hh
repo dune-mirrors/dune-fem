@@ -192,6 +192,18 @@ namespace Dune
     }
     inline void PCSetType ( PC pc, const PCType type ) { ErrorCheck( ::PCSetType(  pc, type ) ); }
     inline void PCFactorSetLevels( PC pc, PetscInt level ) { ErrorCheck( ::PCFactorSetLevels(  pc, level ) ); }
+    inline void PCFactorSetMatSolverPackage( PC pc, const MatSolverPackage type )
+    { 
+      ErrorCheck( ::PCFactorSetMatSolverPackage(  pc, type ) );
+    }
+    inline void PCHYPRESetType( PC pc, const char* type )
+    { 
+#if HAVE_PETSC_HYPRE
+      ErrorCheck( ::PCHYPRESetType( pc, type ) );
+#else 
+      DUNE_THROW( InvalidStateException, "HYPRE not found within PETSc, please re-configure!");
+#endif
+    }
 
     // matrix routines 
     inline void MatAssemblyBegin ( Mat mat, MatAssemblyType type ) { ErrorCheck( ::MatAssemblyBegin( mat, type ) ); }

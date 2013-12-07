@@ -125,7 +125,7 @@ AC_DEFUN([DUNE_PATH_FEM_PETSC],[
       
       # if header is found check for the libs
 
-      LIBS="-lm $LIBS -lX11 $LAPACK_LIBS $BLAS_LIBS $X_LIBS $DUNEMPILIBS $DUNEMPILDFLAGS"
+      LIBS="$LIBS $LAPACK_LIBS $BLAS_LIBS $DUNEMPILIBS $DUNEMPILDFLAGS"
       
       if test x$HAVE_PETSC = x1 ; then
 	    DUNE_CHECK_LIB_EXT([$PETSC_LIB_PATH], [petsc], [PetscTrMalloc],
@@ -136,6 +136,14 @@ AC_DEFUN([DUNE_PATH_FEM_PETSC],[
           HAVE_PETSC="0"
     		  AC_MSG_WARN(libpetsc not found!)
         ])
+      DUNE_CHECK_LIB_EXT([$PETSC_LIB_PATH], [petsc], [PCHYPRESetType],
+        [ 
+          HAVE_PETSC_HYPRE="1"
+        ],
+        [
+          HAVE_PETSC_HYPRE="0"
+          AC_MSG_WARN(PETSc without HYPRE configured!)
+        ])
       fi
 
 #      AC_LANG_POP([C++])
@@ -144,18 +152,22 @@ AC_DEFUN([DUNE_PATH_FEM_PETSC],[
       #with_petsc="no"
       
       # did it work?
+      if test x$HAVE_PETSC_HYPRE = x1 ; then
+	      AC_DEFINE(HAVE_PETSC_HYPRE, 1, [true if HYPRE was found through PETSc])
+      fi 
+
       AC_MSG_CHECKING(PETSc in $with_petsc)
       if test x$HAVE_PETSC = x1 ; then
-          AC_SUBST(PETSC_LIBS, $PETSC_LIBS)
-	  AC_SUBST(PETSC_LDFLAGS, $PETSC_LDFLAGS)
-	  AC_SUBST(PETSC_CPPFLAGS, $PETSC_CPPFLAGS)
-	  AC_DEFINE(HAVE_PETSC,ENABLE_PETSC,[Define if you have the PETSc library.
-		  This is only true if the application uses the PETSC_CPPFLAGS])
-	  AC_MSG_RESULT(ok)
+        AC_SUBST(PETSC_LIBS, $PETSC_LIBS)
+        AC_SUBST(PETSC_LDFLAGS, $PETSC_LDFLAGS)
+        AC_SUBST(PETSC_CPPFLAGS, $PETSC_CPPFLAGS)
+        AC_DEFINE(HAVE_PETSC,ENABLE_PETSC,[Define if you have the PETSc library.
+          This is only true if the application uses the PETSC_CPPFLAGS])
+        AC_MSG_RESULT(ok)
 	  
-          # add to global list
-          DUNE_ADD_ALL_PKG([PETSC], [\${PETSC_CPPFLAGS}],
-                           [\${PETSC_LDFLAGS}], [\${PETSC_LIBS}])
+        # add to global list
+        DUNE_ADD_ALL_PKG([PETSC], [\${PETSC_CPPFLAGS}],
+                         [\${PETSC_LDFLAGS}], [\${PETSC_LIBS}])
 
           # re-set variable correctly
 	  with_petsc="yes"

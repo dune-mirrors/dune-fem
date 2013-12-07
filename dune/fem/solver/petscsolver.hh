@@ -189,6 +189,9 @@ namespace Dune
         else if ( pcType == petsc_hypre ) 
         {
           type = PCHYPRE;
+          // set type of HYPRE preconditioner to boomer-amg
+          // there are also other preconditioners in this package
+          ::Dune::Petsc::PCHYPRESetType( pc_, "boomeramg" );
         }
         else if ( pcType == petsc_ml )
           type = PCML;
@@ -233,14 +236,12 @@ namespace Dune
         ::Dune::Petsc::PCSetType( pc_, type );
         ::Dune::Petsc::PCFactorSetLevels( pc_, pcLevel );
 
-        :: PCHYPRESetType( pc_, "boomeramg" );
-
         // set preconditioning context 
         ::Dune::Petsc::KSPSetPC( ksp_, pc_ );
         if( pcType == petsc_mumps )
-          PCFactorSetMatSolverPackage(pc_,MATSOLVERMUMPS);
+          ::Dune::Petsc::PCFactorSetMatSolverPackage(pc_,MATSOLVERMUMPS);
         if( pcType == petsc_superlu )
-          PCFactorSetMatSolverPackage(pc_,MATSOLVERSUPERLU_DIST);
+          ::Dune::Petsc::PCFactorSetMatSolverPackage(pc_,MATSOLVERSUPERLU_DIST);
 
         // get matrix from linear operator 
         Mat& A = const_cast< Mat & > (op_.petscMatrix());
