@@ -169,7 +169,7 @@ namespace Dune
         const PetscPcType serialStart = petsc_ilu;
         const PetscPcType serialEnd = petsc_icc;
 
-        PCType type = PCNONE ;
+        const PCType type = PCNONE ;
 
         // see PETSc docu for more types 
         const std::string preconNames [end] = { "none", "asm", "sor", "jacobi", 
