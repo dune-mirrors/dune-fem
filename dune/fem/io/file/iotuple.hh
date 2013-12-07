@@ -269,7 +269,7 @@ namespace Dune
         // write data to stream 
         ForLoop< OutputStream, 0, length-1 >::apply( outStream, tuple );
 
-        // delete stream create by StreamFactory
+        // delete stream created by StreamFactory
         delete &outStream; 
       }
       
