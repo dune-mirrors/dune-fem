@@ -111,7 +111,6 @@ namespace DuneODE
       }
       else
       {
-        abort();
         factor = 0.5;
         changed = true;
       }
