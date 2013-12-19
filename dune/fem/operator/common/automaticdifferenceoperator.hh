@@ -57,9 +57,8 @@ namespace Dune
 
       virtual void operator() ( const DomainFunctionType &arg, RangeFunctionType &dest ) const;
 
-    private:
+    protected:
       void set ( const DomainFunctionType &u, const OperatorType &op, const RangeFieldType &eps );
-
       const std::string name_;
       const OperatorType *op_;
       const DomainFunctionType *u_;
