@@ -22,11 +22,13 @@ namespace Dune
     // BlockDiagonalLinearOperator
     // ---------------------------
 
-    template< class DiscreteFunctionSpace >
+    template< class DiscreteFunctionSpace, 
+              class LocalBlock = Dune::FieldMatrix< typename DiscreteFunctionSpace ::
+                RangeFieldType, DiscreteFunctionSpace::localBlockSize, DiscreteFunctionSpace::localBlockSize > >
     class BlockDiagonalLinearOperator
     : public Fem::AssembledOperator< AdaptiveDiscreteFunction< DiscreteFunctionSpace > >
     {
-      typedef BlockDiagonalLinearOperator< DiscreteFunctionSpace > ThisType;
+      typedef BlockDiagonalLinearOperator< DiscreteFunctionSpace, LocalBlock > ThisType;
       typedef Fem::AssembledOperator< AdaptiveDiscreteFunction< DiscreteFunctionSpace > > BaseType;
 
     public:
@@ -44,7 +46,7 @@ namespace Dune
 
       static const int localBlockSize = DomainSpaceType::localBlockSize;
 
-      typedef Dune::FieldMatrix< RangeFieldType, localBlockSize, localBlockSize > LocalBlockType;
+      typedef LocalBlock  LocalBlockType;
 
       // types needed for CommunicationManager to fake DiscreteFunction interface
       typedef       LocalBlockType*               DofBlockPtrType;
@@ -79,9 +81,23 @@ namespace Dune
 
       void operator() ( const DomainFunctionType &u, RangeFunctionType &w ) const
       {
+        multiply( u, w );
+      }
+
+      template < class DomainSpace, class RangeSpace >
+      void operator() ( const AdaptiveDiscreteFunction< DomainSpace > &u, 
+                        AdaptiveDiscreteFunction< RangeSpace > &w ) const
+      {
+        multiply( u, w );
+      }
+
+      template < class DomainSpace, class RangeSpace >
+      void multiply( const AdaptiveDiscreteFunction< DomainSpace > &u, 
+                     AdaptiveDiscreteFunction< RangeSpace > &w ) const
+      {
         typedef typename std::vector< LocalBlockType >::const_iterator Iterator;
-        const RangeFieldType *uit = u.leakPointer();
-        RangeFieldType *wit = w.leakPointer();
+        const typename DomainSpace :: RangeFieldType *uit = u.leakPointer();
+        typename RangeSpace :: RangeFieldType *wit = w.leakPointer();
         const Iterator dend = diagonal_.end();
         for( Iterator dit = diagonal_.begin(); dit != dend; ++dit )
         {
@@ -183,7 +199,7 @@ namespace Dune
 
       const std::string &name () const { return name_; }
 
-    private:
+    protected:
       std::string name_;
       const RangeSpaceType &space_;
       std::vector< LocalBlockType > diagonal_;
@@ -197,10 +213,10 @@ namespace Dune
     // BlockDiagonalLinearOperator::LocalMatrixTraits
     // ----------------------------------------------
 
-    template< class DiscreteFunctionSpace >
-    class BlockDiagonalLinearOperator< DiscreteFunctionSpace >::LocalMatrixTraits
+    template< class DiscreteFunctionSpace, class LocalBlock >
+    class BlockDiagonalLinearOperator< DiscreteFunctionSpace, LocalBlock >::LocalMatrixTraits
     {
-      typedef BlockDiagonalLinearOperator< DiscreteFunctionSpace > OperatorType;
+      typedef BlockDiagonalLinearOperator< DiscreteFunctionSpace, LocalBlock > OperatorType;
 
     public:
       typedef typename OperatorType::LocalMatrix LocalMatrixType;
@@ -218,15 +234,15 @@ namespace Dune
     // BlockDiagonalLinearOperator::LocalMatrix
     // ----------------------------------------
 
-    template< class DiscreteFunctionSpace >
-    class BlockDiagonalLinearOperator< DiscreteFunctionSpace >::LocalMatrix
+    template< class DiscreteFunctionSpace, class LocalBlock >
+    class BlockDiagonalLinearOperator< DiscreteFunctionSpace, LocalBlock >::LocalMatrix
     : public LocalMatrixInterface< LocalMatrixTraits >
     {
       typedef LocalMatrix ThisType;
       typedef LocalMatrixInterface< LocalMatrixTraits > BaseType;
 
     public:
-      typedef BlockDiagonalLinearOperator< DiscreteFunctionSpace > OperatorType;
+      typedef BlockDiagonalLinearOperator< DiscreteFunctionSpace, LocalBlock > OperatorType;
 
       typedef typename BaseType::RangeFieldType RangeFieldType;
 
@@ -335,10 +351,10 @@ namespace Dune
     // BlockDiagonalLinearOperator::LocalMatrixFactory
     // -----------------------------------------------
 
-    template< class DiscreteFunctionSpace >
-    struct BlockDiagonalLinearOperator< DiscreteFunctionSpace >::LocalMatrixFactory
+    template< class DiscreteFunctionSpace, class LocalBlock >
+    struct BlockDiagonalLinearOperator< DiscreteFunctionSpace, LocalBlock >::LocalMatrixFactory
     {
-      typedef BlockDiagonalLinearOperator< DiscreteFunctionSpace > OperatorType;
+      typedef BlockDiagonalLinearOperator< DiscreteFunctionSpace, LocalBlock > OperatorType;
       typedef LocalMatrix ObjectType;
 
       explicit LocalMatrixFactory ( OperatorType &op )
@@ -356,9 +372,9 @@ namespace Dune
     // Implementation of BlockDiagonalLinearOperator
     // ---------------------------------------------
 
-    template< class DiscreteFunctionSpace >
-    inline typename BlockDiagonalLinearOperator< DiscreteFunctionSpace >::LocalMatrixType
-    BlockDiagonalLinearOperator< DiscreteFunctionSpace >
+    template< class DiscreteFunctionSpace, class LocalBlock >
+    inline typename BlockDiagonalLinearOperator< DiscreteFunctionSpace, LocalBlock >::LocalMatrixType
+    BlockDiagonalLinearOperator< DiscreteFunctionSpace, LocalBlock >
       ::localMatrix ( const DomainEntityType &domainEntity, const RangeEntityType &rangeEntity ) const
     {
       return LocalMatrixType( localMatrixStack_, domainEntity, rangeEntity );
