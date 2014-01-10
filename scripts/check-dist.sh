@@ -35,6 +35,7 @@ for MODULE in $MODULES ; do
   cd $DUNEDIR/$MODULE
   if test x`find -maxdepth 1 -name "*.tar.gz"` != x ; then
     continue
+    EXISTINGMODULES+=" $MODULE"
   fi
 
   if test "$MODULE" != "dune-fem" ; then
@@ -50,8 +51,6 @@ for MODULE in $MODULES ; do
     echo "Fatal: No tarball available for $MODULE"
     exit 1
   fi
-
-  EXISTINGMODULES+=" $MODULE"
 done
 
 # perform tests
@@ -100,6 +99,7 @@ for OPTS in `cd $OPTSDIR ; ls *.opts` ; do
   MAKE_CHECK_FLAGS="$(source $OPTSDIR/$OPTS; echo $MAKE_CHECK_FLAGS)"
 
   # check for dependencies
+  MAKE_CHECK_DEPS=""
   MAKE_CHECK_DEPS="$(source $OPTSDIR/$OPTS; echo $MAKE_CHECK_DEPS)"
 
   MISSINGDEPS=""
