@@ -20,7 +20,8 @@ FEMDIR="$DUNEDIR/dune-fem"
 SCRIPTSDIR="$FEMDIR/scripts"
 OPTSDIR="$SCRIPTSDIR/opts"
 
-MODULES="dune-common dune-geometry dune-grid dune-istl dune-spgrid dune-fem"
+MODULES="dune-common dune-geometry dune-grid dune-istl dune-localfunctions dune-spgrid dune-fem dune-alugrid"
+EXISTINGMODULES=""
 
 # fetch missing tarballs from website
 # -----------------------------------
@@ -34,6 +35,7 @@ for MODULE in $MODULES ; do
   cd $DUNEDIR/$MODULE
   if test x`find -maxdepth 1 -name "*.tar.gz"` != x ; then
     continue
+    EXISTINGMODULES+=" $MODULE"
   fi
 
   if test "$MODULE" != "dune-fem" ; then
@@ -95,11 +97,27 @@ for OPTS in `cd $OPTSDIR ; ls *.opts` ; do
   CHECKLOG="$WORKINGDIR/${OPTS%.opts}-check.out"
   MAKE_CHECK_FLAGS=""
   MAKE_CHECK_FLAGS="$(source $OPTSDIR/$OPTS; echo $MAKE_CHECK_FLAGS)"
-  if ! $SCRIPTSDIR/check-tests.sh $TESTDIR/dune-fem "$MAKE_CHECK_FLAGS"; then
-    echo "Error: Check failed with $OPTS (see $CHECKLOG)"
-    errors=$((errors+1))
+
+  # check for dependencies
+  MAKE_CHECK_DEPS=""
+  MAKE_CHECK_DEPS="$(source $OPTSDIR/$OPTS; echo $MAKE_CHECK_DEPS)"
+
+  MISSINGDEPS=""
+  for dep in $MAKE_CHECK_DEPS ; do
+    if ! echo $EXISTINGMODULES | grep $dep; then
+      MISSINGDEPS+=" $dep"
+    fi
+  done
+ 
+  if test -z "$MISSINGDEPS" ; then 
+    if ! $SCRIPTSDIR/check-tests.sh $TESTDIR/dune-fem "$MAKE_CHECK_FLAGS"; then
+      echo "Error: Check failed with $OPTS (see $CHECKLOG)"
+      errors=$((errors+1))
+    fi
+    mv $WORKINGDIR/check-tests.out $CHECKLOG
+  else
+    echo "Skipping $OPTS due to missing dependencies:$MISSINGDEPS"
   fi
-  mv $WORKINGDIR/check-tests.out $CHECKLOG
 done
 
 # clean up
