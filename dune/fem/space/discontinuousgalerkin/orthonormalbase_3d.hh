@@ -12,21 +12,20 @@ namespace Dune
 {
   namespace Fem
   {
-
     template <class DomainField, class RangeField>
     class OrthonormalBase_3D 
     {
-      typedef const DomainField* DomainType;
-      typedef RangeField* JacobianRangeType;
+      typedef const DomainField*  DomainType;
+      typedef       RangeField*   JacobianRangeType;
 
     public:
       /* \phi_i(x,y,z) for tetrahedron */
-      double  
+      static RangeField  
       eval_tetrahedron_3d ( const int i, DomainType xi )
       {
-        const double &x = xi[0];
-        const double &y = xi[1];
-        const double &z = xi[2];
+        const RangeField &x = xi[0];
+        const RangeField &y = xi[1];
+        const RangeField &z = xi[2];
 
         switch (i)	{
           #if (PMAX3D>=0)
@@ -9295,12 +9294,12 @@ namespace Dune
 
 
       /* \nabla\phi_i(x,y,z) for tetrahedron */
-      void  
+      static void  
       grad_tetrahedron_3d ( const int i, DomainType xi, JacobianRangeType grad )
       {
-        const double &x = xi[0];
-        const double &y = xi[1];
-        const double &z = xi[2];
+        const RangeField &x = xi[0];
+        const RangeField &y = xi[1];
+        const RangeField &z = xi[2];
 
         switch (i)	{
           #if (PMAX3D>=0)
@@ -27860,12 +27859,12 @@ namespace Dune
       }
 
       /* \phi_i(x,y,z) for pyramid */
-      double  
+      static RangeField  
       eval_pyramid_3d ( const int i, DomainType xi )
       {
-        const double &x = xi[0];
-        const double &y = xi[1];
-        const double &z = xi[2];
+        const RangeField &x = xi[0];
+        const RangeField &y = xi[1];
+        const RangeField &z = xi[2];
 
         switch (i)	{
           #if (PMAX3D>=0)
@@ -36342,12 +36341,12 @@ namespace Dune
 
 
       /* \nabla\phi_i(x,y,z) for pyramid */
-      void  
+      static void  
       grad_pyramid_3d ( const int i, DomainType xi, JacobianRangeType grad )
       {
-        const double &x = xi[0];
-        const double &y = xi[1];
-        const double &z = xi[2];
+        const RangeField &x = xi[0];
+        const RangeField &y = xi[1];
+        const RangeField &z = xi[2];
 
         switch (i)	{
           #if (PMAX3D>=0)
@@ -53192,12 +53191,12 @@ namespace Dune
       }
 
       /* \phi_i(x,y,z) for prim */
-      double  
+      static RangeField  
       eval_prism_3d ( const int i, DomainType xi )
       {
-        const double &x = xi[0];
-        const double &y = xi[1];
-        const double &z = xi[2];
+        const RangeField &x = xi[0];
+        const RangeField &y = xi[1];
+        const RangeField &z = xi[2];
 
         switch (i)	{
           #if (PMAX3D>=0)
@@ -58110,12 +58109,12 @@ namespace Dune
 
 
       /* \nabla\phi_i(x,y,z) for prim */
-      void  
+      static void  
       grad_prism_3d ( const int i, DomainType xi, JacobianRangeType grad )
       {
-        const double &x = xi[0];
-        const double &y = xi[1];
-        const double &z = xi[2];
+        const RangeField &x = xi[0];
+        const RangeField &y = xi[1];
+        const RangeField &z = xi[2];
 
         switch (i)	{
           #if (PMAX3D>=0)
@@ -67281,12 +67280,12 @@ namespace Dune
       }
 
       /* \phi_i(x,y,z) for hexahedron */
-      double  
+      static RangeField  
       eval_hexahedron_3d ( const int i, DomainType xi )
       {
-        const double &x = xi[0];
-        const double &y = xi[1];
-        const double &z = xi[2];
+        const RangeField &x = xi[0];
+        const RangeField &y = xi[1];
+        const RangeField &z = xi[2];
 
         switch (i)	{
           #if (PMAX3D>=0)
@@ -70483,12 +70482,12 @@ namespace Dune
 
 
       /* \nabla\phi_i(x,y,z) for hexahedron */
-      void  
+      static void  
       grad_hexahedron_3d ( const int i, DomainType xi, JacobianRangeType grad )
       {
-        const double &x = xi[0];
-        const double &y = xi[1];
-        const double &z = xi[2];
+        const RangeField &x = xi[0];
+        const RangeField &y = xi[1];
+        const RangeField &z = xi[2];
 
         switch (i)	{
           #if (PMAX3D>=0)
