@@ -34,8 +34,8 @@ for MODULE in $MODULES ; do
 
   cd $DUNEDIR/$MODULE
   if test x`find -maxdepth 1 -name "*.tar.gz"` != x ; then
-    continue
     EXISTINGMODULES+=" $MODULE"
+    continue
   fi
 
   if test "$MODULE" != "dune-fem" ; then
@@ -86,30 +86,31 @@ for OPTS in `cd $OPTSDIR ; ls *.opts` ; do
     fi
   done
 
-  CONFIGLOG="$WORKINGDIR/${OPTS%.opts}-conf.out"
-  if ! do_configure ; then
-    echo "Error: Cannot configure with $OPTS (see $CONFIGLOG)"
-    errors=$((errors+1))
-    continue
-  fi
-
-  cd $WORKINGDIR
-  CHECKLOG="$WORKINGDIR/${OPTS%.opts}-check.out"
-  MAKE_CHECK_FLAGS=""
-  MAKE_CHECK_FLAGS="$(source $OPTSDIR/$OPTS; echo $MAKE_CHECK_FLAGS)"
-
-  # check for dependencies
+# check for dependencies
   MAKE_CHECK_DEPS=""
   MAKE_CHECK_DEPS="$(source $OPTSDIR/$OPTS; echo $MAKE_CHECK_DEPS)"
 
   MISSINGDEPS=""
   for dep in $MAKE_CHECK_DEPS ; do
-    if ! echo $EXISTINGMODULES | grep $dep; then
+    if ! echo $EXISTINGMODULES | grep $dep >/dev/null; then
       MISSINGDEPS+=" $dep"
     fi
   done
- 
+
+  # we can skip the configuration if a dependend module is not found
   if test -z "$MISSINGDEPS" ; then 
+    CONFIGLOG="$WORKINGDIR/${OPTS%.opts}-conf.out"
+    if ! do_configure ; then
+      echo "Error: Cannot configure with $OPTS (see $CONFIGLOG)"
+      errors=$((errors+1))
+      continue
+    fi
+
+    cd $WORKINGDIR
+    CHECKLOG="$WORKINGDIR/${OPTS%.opts}-check.out"
+    MAKE_CHECK_FLAGS=""
+    MAKE_CHECK_FLAGS="$(source $OPTSDIR/$OPTS; echo $MAKE_CHECK_FLAGS)"
+
     if ! $SCRIPTSDIR/check-tests.sh $TESTDIR/dune-fem "$MAKE_CHECK_FLAGS"; then
       echo "Error: Check failed with $OPTS (see $CHECKLOG)"
       errors=$((errors+1))
