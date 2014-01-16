@@ -14,7 +14,7 @@ namespace Dune
 
     class LegendrePolynomials
     {
-    protected:
+    public:
       static const int maxOrder = 11;
 
       static const double factor[ maxOrder ][ maxOrder ];

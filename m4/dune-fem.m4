@@ -26,5 +26,5 @@ AC_DEFUN([DUNE_FEM_CHECKS],[
 ])
 
 AC_DEFUN([DUNE_FEM_CHECK_MODULE],[
-  DUNE_CHECK_MODULES([dune-fem], [fem/space/discontinuousgalerkin/orthonormalbase_mod.hh], [OrthonormalBase_1D::eval_line])
+  DUNE_CHECK_MODULES([dune-fem], [fem/space/discontinuousgalerkin/legendrepolynomials.hh], [Dune::Fem::LegendrePolynomials::weight])
 ])
