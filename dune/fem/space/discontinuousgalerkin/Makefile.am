@@ -10,6 +10,9 @@ discontinuousgalerkin_HEADERS = capabilities.hh \
 				localdgmassmatrix.hh \
 				localinterpolation.hh \
 				localrestrictprolong.hh \
+				orthonormalbase_1d.hh \
+				orthonormalbase_2d.hh \
+				orthonormalbase_3d.hh \
 				orthonormalbase_mod.hh \
 				shapefunctionset.hh \
 				space.hh
