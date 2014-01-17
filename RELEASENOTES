@@ -1,0 +1,38 @@
+1) moving to namespace Dune::Fem finalized 
+
+2) DiscreteFunctionSpaces / DofMapper:
+    - new local 'interpolation' method on spaces
+    - New spaces:
+      - HierarchicLegendreDiscontinuousGalerkinSpace
+      - GenericDiscreteFunctionSpace
+      - FouierDiscreteFunctionSpace
+      - RannacherTurekDiscreteFunctionSpace (dune-localfunctions is required)
+    - transition to BlockMapper is finished
+
+3) ShapeFunctionSets / Basis/BaseFunctionSets 
+    - Introduction of ShapeFunctionSets, basis function sets on reference elements
+    - renamed: BaseFunctionSet -> BasisFunctionSets
+    - Introduction of MakeVectorialExpression to handle efficiently vectorial shapefunctionsets,
+      expression tamplates are used
+
+3) GridParts / Parallel:
+    - each gridpart provides access to the underlaying communiction manager, gridPart.comm()
+    - HierarchicGridPart has been deprecated
+    - MPIHelper and its header mpihelper.hh is removed, use MPIManager from  mpimanager.hh instead
+    - SMP???
+
+4) Operators / Solvers:
+    - Introduction of stencil objects holding the sparsity pattern
+    - Indroduction of new LinearOperator classes for ISTL-, PETsc- and Adaptivfunctions
+    - Introduction of LocalColumnObjects in the matrix implementation
+    - added binding to PETsc as a new solver library
+    - improved UMFPACK binding
+
+5) misc:
+  - support for gcc-4.7, gcc-4.8, icpc (not tested) and clang (not tested)
+  - support for BlueGene arcitectures is improved
+  - Dune::Fem::Tuples are replaced by Dune::tuples
+  - further functionality for Dune::tuples is added ( eg. push_front)
+  - Error computation is replaced by the corresponding norms, eg. L2Error -> L2Norm
+  - binarydataio.hh has been deprecated 
+
