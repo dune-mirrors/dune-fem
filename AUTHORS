@@ -11,6 +11,11 @@
   Copyright (C) 2006 - 2013 Christoph Gersbacher
   Copyright (C) 2006 - 2013 Martin Nolte
   Copyright (C) 2011 - 2013 Tobias Malkmus
+  Copyright (C) 2013 - 2014 Claus-Justus Heine
+  Copyright (C) 2013 - 2014 Janick Gerstenberger
+  Copyright (C) 2013        Sven Kaulman
+  Copyright (C) 2013        Tom Ranner
+
 
   The dune-fem module is free software; you can redistribute it and/or 
   modify it under the terms of the GNU General Public License as 
