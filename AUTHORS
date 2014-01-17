@@ -3,14 +3,15 @@
   extending the grid interface by a number of discretization algorithms
   for solving non-linear systems of partial differential equations.
 
-  Copyright (C) 2003 - 2013 Robert Kloefkorn
+  Copyright (C) 2003 - 2014 Robert Kloefkorn
   Copyright (C) 2003 - 2010 Mario Ohlberger 
-  Copyright (C) 2004 - 2013 Andreas Dedner
+  Copyright (C) 2004 - 2014 Andreas Dedner
   Copyright (C) 2005        Adrian Burri
-  Copyright (C) 2005 - 2012 Mirko Kraenkel
-  Copyright (C) 2006 - 2013 Christoph Gersbacher
-  Copyright (C) 2006 - 2013 Martin Nolte
-  Copyright (C) 2011 - 2013 Tobias Malkmus
+  Copyright (C) 2005 - 2014 Mirko Kraenkel
+  Copyright (C) 2006 - 2014 Christoph Gersbacher
+  Copyright (C) 2006 - 2014 Martin Nolte
+  Copyright (C) 2011 - 2014 Tobias Malkmus
+  Copyright (C) 2012 - 2014 Stefan Girke
   Copyright (C) 2013 - 2014 Claus-Justus Heine
   Copyright (C) 2013 - 2014 Janick Gerstenberger
   Copyright (C) 2013        Sven Kaulman
