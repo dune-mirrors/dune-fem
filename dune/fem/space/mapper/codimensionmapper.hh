@@ -162,19 +162,19 @@ namespace Dune
         f( 0, IndexExtractor< codimension, Entity::codimension >::index( indexSet_, entity ) );
       }
 
-      /** \copydoc DofMapper::maxNumDofs() const */
+      /** \copydoc Dune::Fem::DofMapper::maxNumDofs() const */
       SizeType maxNumDofs () const
       {
         return maxNumberOfDofs_;
       }
 
-      /** \copydoc Dune::DofMapper::numDofs(const ElementType &element) const */
+      /** \copydoc Dune::Fem::DofMapper::numDofs(const ElementType &element) const */
       SizeType numDofs ( const ElementType &element ) const
       {
         return element.template count< codimension >();
       }
 
-      /** \copydoc Dune::DofMapper::numEntityDofs(const Entity &entity) const */
+      /** \copydoc Dune::Fem::DofMapper::numEntityDofs(const Entity &entity) const */
       template< class Entity >
       SizeType numEntityDofs ( const Entity &entity ) const
       {

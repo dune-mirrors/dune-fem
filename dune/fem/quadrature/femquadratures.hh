@@ -71,7 +71,7 @@ namespace Dune
     public:
       /** \brief constructor filling the list of points and weights
        *
-       *  \param[in]  gemoetry  geometry type for which a quadrature is desired
+       *  \param[in]  geometry  geometry type for which a quadrature is desired
        *  \param[in]  order     desired order (provided by the user)
        *  \param[in]  id        unique identifier (provided by QuadratureProvider)
        */
@@ -139,7 +139,7 @@ namespace Dune
     public:
       /** \brief constructor filling the list of points and weights
        *
-       *  \param[in]  gemoetry  geometry type for which a quadrature is desired
+       *  \param[in]  geometry  geometry type for which a quadrature is desired
        *  \param[in]  order     desired order (provided by the user)
        *  \param[in]  id        unique identifier (provided by QuadratureProvider)
        */
@@ -198,7 +198,7 @@ namespace Dune
     public:
       /** \brief constructor filling the list of points and weights
        *
-       *  \param[in]  gemoetry  geometry type for which a quadrature is desired
+       *  \param[in]  geometry  geometry type for which a quadrature is desired
        *  \param[in]  order     desired order (provided by the user)
        *  \param[in]  id        unique identifier (provided by QuadratureProvider)
        */
@@ -259,7 +259,7 @@ namespace Dune
     public:
       /** \brief constructor filling the list of points and weights
        *
-       *  \param[in]  gemoetry  geometry type for which a quadrature is desired
+       *  \param[in]  geometry  geometry type for which a quadrature is desired
        *  \param[in]  order     desired order (provided by the user)
        *  \param[in]  id        unique identifier (provided by QuadratureProvider)
        */
@@ -321,7 +321,7 @@ namespace Dune
     public:
       /** \brief constructor filling the list of points and weights
        *
-       *  \param[in]  gemoetry  geometry type for which a quadrature is desired
+       *  \param[in]  geometry  geometry type for which a quadrature is desired
        *  \param[in]  order     desired order (provided by the user)
        *  \param[in]  id        unique identifier (provided by QuadratureProvider)
        */
@@ -382,7 +382,7 @@ namespace Dune
     public:
       /** \brief constructor filling the list of points and weights
        *
-       *  \param[in]  gemoetry  geometry type for which a quadrature is desired
+       *  \param[in]  geometry  geometry type for which a quadrature is desired
        *  \param[in]  order     desired order (provided by the user)
        *  \param[in]  id        unique identifier (provided by QuadratureProvider)
        */
@@ -444,7 +444,7 @@ namespace Dune
     public:
       /** \brief constructor filling the list of points and weights
        *
-       *  \param[in]  gemoetry  geometry type for which a quadrature is desired
+       *  \param[in]  geometry  geometry type for which a quadrature is desired
        *  \param[in]  order     desired order (provided by the user)
        *  \param[in]  id        unique identifier (provided by QuadratureProvider)
        */
@@ -504,7 +504,7 @@ namespace Dune
     public:
       /** \brief constructor filling the list of points and weights
        *
-       *  \param[in]  gemoetry  geometry type for which a quadrature is desired
+       *  \param[in]  geometry  geometry type for which a quadrature is desired
        *  \param[in]  order     desired order (provided by the user)
        *  \param[in]  id        unique identifier (provided by QuadratureProvider)
        */
@@ -564,7 +564,7 @@ namespace Dune
     public:
       /** \brief constructor filling the list of points and weights
        *
-       *  \param[in]  gemoetry  geometry type for which a quadrature is desired
+       *  \param[in]  geometry  geometry type for which a quadrature is desired
        *  \param[in]  order     desired order (provided by the user)
        *  \param[in]  id        unique identifier (provided by QuadratureProvider)
        */

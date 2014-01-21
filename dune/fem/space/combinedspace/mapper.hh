@@ -190,30 +190,30 @@ namespace Dune
       //! Total number of degrees of freedom
       int size () const;
       
-      /** \copydoc Dune::DofMapper::begin(const ElementType &entity) const */
+      /** \copydoc Dune::Fem::DofMapper::begin(const ElementType &entity) const */
       DofMapIteratorType begin ( const ElementType &entity ) const;
       
-      /** \copydoc Dune::DofMapper::end(const ElementType &entity) const */
+      /** \copydoc Dune::Fem::DofMapper::end(const ElementType &entity) const */
       DofMapIteratorType end ( const ElementType &entity ) const;
 
-      /** \copydoc Dune::DofMapper::mapToGlobal(const ElementType &entity,const int localDof) const */
+      /** \copydoc Dune::Fem::DofMapper::mapToGlobal(const ElementType &entity,const int localDof) const */
       int mapToGlobal( const ElementType &entity, const int localDof ) const;
 
-      /** \copydoc DofMapper::mapEach */
+      /** \copydoc Dune::Fem::DofMapper::mapEach */
       template< class Functor >
       void mapEach ( const ElementType &element, Functor f ) const;
 
-      /** \copydoc Dune::DofMapper::mapEntityDofToGlobal(const Entity &entity,const int localDof) const */
+      /** \copydoc Dune::Fem::DofMapper::mapEntityDofToGlobal(const Entity &entity,const int localDof) const */
       template< class Entity, class Functor >
       void mapEachEntityDof ( const Entity &entity, Functor f ) const;
 
-      /** \copydoc Dune::DofMapper::maxNumDofs() const */
+      /** \copydoc Dune::Fem::DofMapper::maxNumDofs() const */
       int maxNumDofs () const;
 
-      /** \copydoc Dune::DofMapper::numDofs(const ElementType &element) const */
+      /** \copydoc Dune::Fem::DofMapper::numDofs(const ElementType &element) const */
       int numDofs ( const ElementType &element ) const;
 
-      /** \copydoc Dune::DofMapper::numEntityDofs(const Entity &entity) const */
+      /** \copydoc Dune::Fem::DofMapper::numEntityDofs(const Entity &entity) const */
       template< class Entity >
       int numEntityDofs ( const Entity &entity ) const;
 

@@ -53,7 +53,7 @@ namespace Dune
       : baseFunctionList_( baseFunctionList )
       {}
 
-      /** \copydoc Dune::DofMapper::mapEach */
+      /** \copydoc Dune::Fem::DofMapper::mapEach */
       template< class Functor >
       void mapEach ( const ElementType &element, Functor f ) const
       {
@@ -62,32 +62,32 @@ namespace Dune
           f( i, i );
       }
 
-      /** \copydoc Dune::DofMapper::mapToGlobal(const ElementType &entity,const int localDof) const */
+      /** \copydoc Dune::Fem::DofMapper::mapToGlobal(const ElementType &entity,const int localDof) const */
       int mapToGlobal ( const ElementType &entity, const int localDof ) const
       {
         return localDof;
       }
 
-      /** \copydoc Dune::DofMapper::mapEachEntityDof(const Entity &entity,Functor f) const */
+      /** \copydoc Dune::Fem::DofMapper::mapEachEntityDof(const Entity &entity,Functor f) const */
       template< class Entity, class Functor >
       void mapEachEntityDof ( const Entity &entity, Functor f ) const
       {
         DUNE_THROW( NotImplemented, "ReducedBasisSpace cannot map entity DoFs." );
       }
 
-      /** \copydoc Dune::DofMapper::numDofs(const ElementType &element) const */
+      /** \copydoc Dune::Fem::DofMapper::numDofs(const ElementType &element) const */
       int numDofs ( const ElementType &element ) const
       {
         return size();
       }
 
-      /** \copydoc Dune::DofMapper::maxNumDofs() const */
+      /** \copydoc Dune::Fem::DofMapper::maxNumDofs() const */
       int maxNumDofs () const
       {
         return size();
       }
 
-      /** \copydoc Dune::DofMapper::numEntityDofs(const Entity &entity) const */
+      /** \copydoc Dune::Fem::DofMapper::numEntityDofs(const Entity &entity) const */
       template< class Entity >
       int numEntityDofs ( const Entity &entity ) const
       {
@@ -95,7 +95,7 @@ namespace Dune
         return 0;
       }
      
-      /** \copydoc Dune::DofMapper::size() const */
+      /** \copydoc Dune::Fem::DofMapper::size() const */
       SizeType size () const
       {
         return baseFunctionList_.size();

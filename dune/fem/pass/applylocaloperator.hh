@@ -44,7 +44,7 @@ namespace Dune
     struct ApplyLocalOperatorDiscreteModel
     {
       typedef DiscreteFunction DiscreteFunctionType;
-      //! \biref type of discrete function space type
+      //! \brief type of discrete function space type
       typedef typename DiscreteFunctionType::DiscreteFunctionSpaceType DiscreteFunctionSpaceType;
 
       //! \brief function space type
