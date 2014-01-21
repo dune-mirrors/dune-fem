@@ -38,12 +38,12 @@
    general vector space \ref Mapping "mappings".
 
    The domain and the range are defined by 
-   a \ref Dune::FunctionSpaceInterface "function space".
+   a \ref Dune::Fem::FunctionSpaceInterface "function space".
    
-   \ref Dune::DiscreteFunctionInterface "Discrete function" 
+   \ref Dune::Fem::DiscreteFunctionInterface "Discrete function"
    are special functions defined on a grid and
    belong to corresponding 
-   \ref Dune::DiscreteFunctionSpaceInterface "discrete function space".
+   \ref Dune::Fem::DiscreteFunctionSpaceInterface "discrete function space".
 */
   /** @defgroup FunctionSpace Analytical function spaces 
       @ingroup FunctionCommon */
@@ -169,19 +169,16 @@
       There is direct support for saving and visualizing data using the GraPE
       library, for generating VTK output, and Matlab data files.
       - GraPE: Data can be either visualized directly during a computation
-        using the \ref Dune::DataWriter "DataWriter" class. The same format is
+        using the \ref Dune::Fem::DataWriter "DataWriter" class. The same format is
         also used for \ref Checkpointing "checkpointing". It can be visualized
         through the \ref Visualization "datadisp program" which can also read a
         time series of data.
       - VTK: Discrete functions can be written to a file
         either as element data (piecewise constant function)
         or as vertex data (piecewise linear function)
-        on a flat grid. Again, the \ref Dune::DataWriter "DataWriter" is used.
+        on a flat grid. Again, the \ref Dune::Fem::DataWriter "DataWriter" is used.
         Note that the resulting files cannot be used for checkpointing since
         the grid hierarchy is lost. 
-      - Matlab: Discrete functions and SparseRowMatrix
-        can be written to disk using the \ref Dune::MatlabHelper "MatlabHelper"
-        class. Utility functions for Matlab are available in "fem/io/matlab".
 */
   /** @defgroup DiscFuncIO I/O for discrete functions
       @ingroup IOGroup */

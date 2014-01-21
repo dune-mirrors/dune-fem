@@ -61,7 +61,7 @@ namespace Dune
        *
        *  \note methods localDof and globalDof must be inverse
        *
-       *  \param[in]  global  global Dof
+       *  \param[in]  globalDof  global Dof
        *
        *  \returns local Dof
        */
@@ -244,7 +244,7 @@ namespace Dune
      *
      *  \tparam  ScalarBasisFunctionSet  scalar basis function set
      *  \tparam  Range                   range vector
-     *  \taparm  DofAlignment            type of dof alignment
+     *  \tparam  DofAlignment            type of dof alignment
      */
     template< class ScalarBasisFunctionSet, class Range, template< class, class > class DofAlignment = VerticalDofAlignment >
     class VectorialBasisFunctionSet
