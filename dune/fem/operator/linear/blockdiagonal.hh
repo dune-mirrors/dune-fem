@@ -54,6 +54,14 @@ namespace Dune
       typedef typename LocalBlockType::row_type   DofType ;
       typedef DomainSpaceType                     DiscreteFunctionSpaceType ;
 
+      template< class Operation >
+      struct CommDataHandle
+      {
+        typedef typename DiscreteFunctionSpaceType
+          :: template CommDataHandle< ThisType, Operation > :: Type
+          Type;
+      };
+
     private:
 
       class LocalMatrixTraits;
@@ -174,10 +182,23 @@ namespace Dune
         return &diagonal_[ block ];
       }
 
-      // copy matrices to ghost cells, needs the block methods to behave like discrete function 
+      /** \brief copy matrices to ghost cells to make this class work in parallel
+          \note needs the block methods to behave like discrete function
+          (needed to make this class work with CommunicationManager) 
+      */ 
       void communicate () 
       {
         domainSpace().communicate( *this ); 
+      }
+
+      /** \brief return reference to data handle object 
+          (needed to make this class work with CommunicationManager) 
+      */ 
+      template< class Operation >
+      typename CommDataHandle< Operation > :: Type
+      dataHandle( const Operation *operation )
+      {
+        return space().createDataHandle( *this, operation );
       }
 
       template< class Stencil >
@@ -196,6 +217,9 @@ namespace Dune
 
       const DomainSpaceType &domainSpace () const { return space_; }
       const RangeSpaceType &rangeSpace () const { return space_; }
+
+      /** \brief return reference to space (needed to make this class work with CommunicationManager) */ 
+      const DomainSpaceType &space () const { return space_; }
 
       const std::string &name () const { return name_; }
 
