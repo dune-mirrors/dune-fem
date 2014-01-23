@@ -6,12 +6,11 @@
 #include <vector>
 #include <cassert>
 
+namespace pardg {
+
 // some dummy typedefs to make the code compile  
 typedef int MPI_Comm;
 typedef int MPI_Op;
-enum { MPI_SUM = 0 };
-
-namespace pardg {
 
 class Communicator 
 {

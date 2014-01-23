@@ -14,6 +14,8 @@ namespace parDG_NoMPI {
 
 #include "emptycommunicator.hpp"
 #define COMMUNICATOR_HPP
+
+static const int MPI_SUM = 0;  
   
 #include "bulirsch_stoer.cpp"  
 #include "iterative_solver.cpp"  
