@@ -271,6 +271,19 @@ namespace Dune
         std :: cerr << "Warning: Reading discrete function from newer version: "
                     << versionId << std :: endl;
 
+      // write space id to for testing when function is read
+      const DFSpaceIdentifier spaceId = space().type();
+      int mySpaceIdInt ;
+      in >> mySpaceIdInt ;
+      const DFSpaceIdentifier mySpaceId = (DFSpaceIdentifier) mySpaceIdInt;
+
+      // make sure that space of discrete function matches the space 
+      // of the data that was written 
+      if( spaceId != mySpaceId ) 
+      {
+        DUNE_THROW( IOError, "Trying to read discrete function from different space: DFSpace (" << spaceName( spaceId ) << ") != DataSpace (" << spaceName( mySpaceId ) << ")" );
+      }
+
       // read name 
       in >> name_;
 
@@ -299,8 +312,14 @@ namespace Dune
     {
       unsigned int versionId = DUNE_MODULE_VERSION_ID(DUNE_FEM);
       out << versionId ;
+
+      // write space id to for testing when function is read
+      int spaceId = space().type();
+      out << spaceId ;
+
+      // write name 
       out << name_;
-    
+
       // only allow write when vector is compressed 
       if( BaseType :: size() != this->space().size() )
         DUNE_THROW(InvalidStateException,"Writing DiscreteFunction in uncompressed state!");
