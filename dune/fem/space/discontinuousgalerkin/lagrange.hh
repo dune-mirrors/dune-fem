@@ -100,6 +100,8 @@ namespace Dune
                                            const CommunicationDirection commDirection = BaseType::defaultDirection )
       : BaseType( gridPart, commInterface, commDirection )
       {}
+
+      DFSpaceIdentifier type () const { return LagrangeDGSpace_id; }
     };
 
   } // namespace Fem

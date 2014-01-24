@@ -83,16 +83,37 @@ namespace Dune
 
     //! \brief enumerator for identification of spaces 
     enum DFSpaceIdentifier {
-      CombinedSpace_id,       //!< id for Combined Space 
-      DFAdapter_id,           //!< id for DiscreteFunctionSpace Adapter
-      DGSpace_id,             //!< id for Discontinuous Galerkin Space 
-      FiniteVolumeSpace_id,   //!< id for Finite Volume Space 
-      FourierSpace_id,        //!< id for Fourier space
-      GenericSpace_id,        //!< id for Generic Space
-      LagrangeSpace_id,       //!< id for Lagrange Space
-      RannacherTurekSpace_id  //!< id for Rannacher-Turek space
+      CombinedSpace_id,             //!< id for Combined Space 
+      DFAdapter_id,                 //!< id for DiscreteFunctionSpace Adapter
+      DGSpace_id,                   //!< id for Discontinuous Galerkin Space 
+      FiniteVolumeSpace_id,         //!< id for Finite Volume Space 
+      FourierSpace_id,              //!< id for Fourier space
+      GenericSpace_id,              //!< id for Generic Space
+      LagrangeSpace_id,             //!< id for Lagrange Space
+      RannacherTurekSpace_id,       //!< id for Rannacher-Turek space
+      LegendreDGSpace_id,           //!< id for Legendre Discontinuous Galerkin Space 
+      HierarchicLegendreDGSpace_id, //!< id for Hierarchic Legendre Discontinuous Galerkin Space 
+      LagrangeDGSpace_id            //!< id for Lagrange Discontinuous Galerkin Space 
     };
 
+    inline std::string spaceName( const DFSpaceIdentifier id ) 
+    {
+      switch( id ) 
+      {
+        case CombinedSpace_id             : return "CombinedSpace";
+        case DFAdapter_id                 : return "DFAdapter";
+        case DGSpace_id                   : return "DiscontinuousGalerkinSpace";
+        case FiniteVolumeSpace_id         : return "FiniteVolumeSpace";
+        case FourierSpace_id              : return "FourierSpace";
+        case GenericSpace_id              : return "GenericSpace";
+        case LagrangeSpace_id             : return "LagrangeSpace";
+        case RannacherTurekSpace_id       : return "RannacherTurekSpace";
+        case LegendreDGSpace_id           : return "LegendreDGSpace";
+        case HierarchicLegendreDGSpace_id : return "HierarchicLegendreDGSpace";
+        case LagrangeDGSpace_id           : return "LagrangeDGSpace";
+        default                           : return "unknown space";
+      }
+    }
 
     struct isGenericDiscreteFunctionSpace
     {};
