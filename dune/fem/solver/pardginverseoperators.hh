@@ -173,7 +173,9 @@ namespace Dune
         maxIterations = std::min( (unsigned int)std::numeric_limits< int >::max(), maxIterations );
         solver_.set_max_number_of_iterations( int( maxIterations ) );
 
-        if( verbose )
+        // only set output when general verbose mode is enabled 
+        // (basically to avoid output on every rank)
+        if( verbose && Parameter :: verbose() )
         {
           solver_.IterativeSolver::set_output( std::cout );
           solver_.DynamicalObject::set_output( std::cout );

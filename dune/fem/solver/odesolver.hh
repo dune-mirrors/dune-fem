@@ -356,7 +356,9 @@ namespace DuneODE
                   }
       }
 
-      if( verbose_ )
+      // only set output when general verbose mode is enabled 
+      // (basically to avoid output on every rank)
+      if( verbose_ && Parameter :: verbose() )
       {
         odeSolver->DynamicalObject::set_output(cout);
       }
@@ -451,7 +453,10 @@ namespace DuneODE
       odeSolver->set_tolerance( parameter().tolerance() );
       odeSolver->set_max_number_of_iterations( parameter().iterations() );
       
-      if( verbose_ == ODEParameters :: fullVerbosity ) 
+      // only set output when general verbose mode is enabled 
+      // (basically to avoid output on every rank)
+      if( verbose_ == ODEParameters :: fullVerbosity && 
+          Parameter :: verbose() ) 
       {
         odeSolver->IterativeSolver::set_output(cout);
         odeSolver->DynamicalObject::set_output(cout);
@@ -650,7 +655,10 @@ namespace DuneODE
       if( expl_.op().hasLimiter() )
         odeSolver->set_expl_limiter( limiter_ );
       
-      if( verbose_ == ODEParameters :: fullVerbosity ) 
+      // only set output when general verbose mode is enabled 
+      // (basically to avoid output on every rank)
+      if( verbose_ == ODEParameters :: fullVerbosity && 
+          Parameter :: verbose() ) 
       {
         odeSolver->IterativeSolver::set_output(cout);
         odeSolver->DynamicalObject::set_output(cout);
