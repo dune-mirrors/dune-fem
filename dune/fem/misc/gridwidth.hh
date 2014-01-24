@@ -113,7 +113,6 @@ namespace Dune
       {     
         typedef typename GridPartType :: GridType GridType;
         typedef typename GridPartType :: template Codim<0> :: IteratorType IteratorType; 
-        typedef typename IteratorType :: Entity EntityType;
 
         // get geo infor for elements 
         typedef AllGeomTypes< typename GridPartType :: IndexSetType, GridType > GeomInfoType;
