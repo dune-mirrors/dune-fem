@@ -271,17 +271,18 @@ namespace Dune
         std :: cerr << "Warning: Reading discrete function from newer version: "
                     << versionId << std :: endl;
 
-      // write space id to for testing when function is read
-      const DFSpaceIdentifier spaceId = space().type();
-      int mySpaceIdInt ;
-      in >> mySpaceIdInt ;
-      const DFSpaceIdentifier mySpaceId = (DFSpaceIdentifier) mySpaceIdInt;
-
-      // make sure that space of discrete function matches the space 
-      // of the data that was written 
-      if( spaceId != mySpaceId ) 
+      // verify space id for files written with dune-fem version 1.5 or newer
+      if( versionId >= DUNE_VERSION_ID(1,5,0) )
       {
-        DUNE_THROW( IOError, "Trying to read discrete function from different space: DFSpace (" << spaceName( spaceId ) << ") != DataSpace (" << spaceName( mySpaceId ) << ")" );
+        // make sure that space of discrete function matches the space
+        // of the data that was written
+        const DFSpaceIdentifier spaceId = space().type();
+        int mySpaceIdInt;
+        in >> mySpaceIdInt;
+        const DFSpaceIdentifier mySpaceId = (DFSpaceIdentifier) mySpaceIdInt;
+
+        if( spaceId != mySpaceId )
+          DUNE_THROW( IOError, "Trying to read discrete function from different space: DFSpace (" << spaceName( spaceId ) << ") != DataSpace (" << spaceName( mySpaceId ) << ")" );
       }
 
       // read name 
