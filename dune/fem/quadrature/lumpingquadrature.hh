@@ -12,8 +12,14 @@ namespace Fem {
  * hexagonal grids. For simplicial methods the quadrature formula is
  * exact on linear polynomials and hence the quadrature error is
  * quadratic in the mesh-size. A mass-matrix assembled with the
- * caching quadrature will be diagonal in the context of linear Lagrange
- * spaces.
+ * caching quadrature will be diagonal in the context of Lagrange
+ * spaces. Generally, it is a bad idea to use mass-lumping for
+ * anything else than linear (or maybe bilinear) finite elements.
+ *
+ * There are probably much more efficient ways to perform
+ * mass-lumping. This "quadrature" approach is convenient, however, as
+ * it can simply be plugged into existing code by replacing
+ * the quadrature rules.
  */
 template<class FieldImp, class Topology>
 class LumpingQuadrature
@@ -36,10 +42,10 @@ class LumpingQuadrature
   typedef Dune::GenericGeometry::ReferenceDomain<TopologyType> ReferenceDomain;
 
  public:
-  /** \brief constructor filling the list of points and weights
+  /** \brief constructor filling the list of points and weights.
    *
    *  \param[in]  gemoetry  geometry type for which a quadrature is desired
-   *  \param[in]  ignored     order is ignored
+   *  \param[in]  ignored   order is ignored
    *  \param[in]  id        unique identifier, ignored
    */
   LumpingQuadrature(const GeometryType& geometry, int ignored, int id)
@@ -200,10 +206,6 @@ class CachingLumpingQuadrature<GridPart, 1>
  public:
   /** \brief constructor
    *
-   *  \note The CachingQuadrature requires the grid part to get twist
-   *        information for TwistUtility (see also
-   *        ElementQuadrature<GridPartImp,1>).
-   * 
    *  \param[in]  gridPart      grid partition
    *  \param[in]  intersection  intersection
    *  \param[in]  ignored       desired order of the quadrature, which is ignored here
