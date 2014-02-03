@@ -240,13 +240,13 @@ DIRK34::DIRK34(Communicator &comm, Function &f) :
 
 
 //class DIRK3
-static const double delta_dirk = 1.0/2.0 + sqrt(3.0)/6.0;
+static const double delta_dirk = 0.5 + sqrt(3.0)/6.0;
 static const double DIRK3_A[] =
   {delta_dirk, 0.0,
    1.0-2.0*delta_dirk, delta_dirk
   };
 static const double DIRK3_b[] = 
-  {(0.5-delta_dirk)/(1.0-2.0*delta_dirk), (0.5-delta_dirk)/(1.0-2.0*delta_dirk)};
+  { 0.5, 0.5 };
 static const double DIRK3_c[] = 
   {delta_dirk, 1.0-delta_dirk};
 
