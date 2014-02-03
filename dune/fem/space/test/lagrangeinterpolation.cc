@@ -94,7 +94,7 @@ class ExactSolution
 : public Fem::Function< FunctionSpaceType, ExactSolution >
 {
   typedef ExactSolution ThisType;
-  typedef Function< FunctionSpaceType, ExactSolution > BaseType;
+  typedef Fem::Function< FunctionSpaceType, ExactSolution > BaseType;
 
 public:
   typedef BaseType::DomainFieldType DomainFieldType;
@@ -131,7 +131,7 @@ public:
     jacobian( x, Dphi );
   }
 };
-                      
+
  
 // ********************************************************************
 template <class DiscreteFunctionType>
