@@ -123,7 +123,7 @@ namespace Dune
         */
       }
 
-      const int operator[](int i) const { return baseFunctionMap_[ i ]; }
+      int operator[](int i) const { return baseFunctionMap_[ i ]; }
     };
   
   } // namespace Fem
