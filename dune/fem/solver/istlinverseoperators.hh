@@ -177,7 +177,7 @@ namespace Dune
 
         BlockVectorType rhs( u.blockVector() );
         InverseOperatorResult returnInfo;
-        solver.apply( rhs, w.blockVector(), returnInfo );
+        solver.apply( w.blockVector(), rhs, returnInfo );
 
         iterations_ = returnInfo.iterations;
       }
