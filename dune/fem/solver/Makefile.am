@@ -2,6 +2,7 @@ solverdir =  $(includedir)/dune/fem/solver
 solver_HEADERS = cginverseoperator.hh \
                  diagonalpreconditioner.hh \
                  istlsolver.hh \
+								 istlinverseoperators.hh \
                  odesolver.hh \
                  odesolverinterface.hh \
                  oemsolver.hh \
