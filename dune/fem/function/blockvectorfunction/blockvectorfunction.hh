@@ -200,9 +200,6 @@ namespace Dune
       typedef typename Traits :: DofIteratorType DofIteratorType;
       typedef typename Traits :: ConstDofIteratorType ConstDofIteratorType;
 
-      //! The associated discrete function space
-      typedef DiscreteFunctionSpaceType FunctionSpaceType;
-
       //! the type of the unknowns 
       typedef RangeFieldType DofType;
 
