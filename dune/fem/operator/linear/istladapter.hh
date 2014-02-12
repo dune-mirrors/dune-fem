@@ -25,6 +25,8 @@ namespace Dune
       typedef typename Operator::RangeFunctionType RangeFunctionType;
 
     public:
+      enum {category=SolverCategory::sequential};
+
       typedef Operator OperatorType;
 
       typedef typename DomainFunctionType::DiscreteFunctionSpaceType DomainFunctionSpaceType;

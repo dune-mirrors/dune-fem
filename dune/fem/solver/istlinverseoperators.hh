@@ -35,6 +35,8 @@ namespace Dune
       typedef typename Preconditioner::RangeFunctionType RangeFunctionType;
 
     public:
+      enum {category=SolverCategory::sequential};
+
       typedef typename BaseType::domain_type domain_type;
       typedef typename BaseType::range_type range_type;
       typedef typename BaseType::field_type field_type;
@@ -42,7 +44,7 @@ namespace Dune
       typedef typename DomainFunctionType::DiscreteFunctionSpaceType DomainFunctionSpaceType;
       typedef typename RangeFunctionType::DiscreteFunctionSpaceType RangeFunctionSpaceType;
 
-      ISTLPreconditionAdapter ( Preconditioner *precon, const DomainFunctionSpaceType &domainSpace, const RangeFunctionSpaceType &rangeSpace )
+      ISTLPreconditionAdapter ( const Preconditioner *precon, const DomainFunctionSpaceType &domainSpace, const RangeFunctionSpaceType &rangeSpace )
       : precon_( precon ),
         domainSpace_( domainSpace ),
         rangeSpace_( rangeSpace )
@@ -71,7 +73,7 @@ namespace Dune
       }
     
     protected:
-      Preconditioner *precon_;
+      const Preconditioner *precon_;
       const DomainFunctionSpaceType &domainSpace_;
       const RangeFunctionSpaceType &rangeSpace_;
     };
@@ -98,7 +100,7 @@ namespace Dune
       typedef ISTLLinearOperatorAdapter< OperatorType > ISTLOperatorType;
       typedef ISTLPreconditionAdapter< PreconditionerType > ISTLPreconditionerType;
 
-      typedef ParallelScalarProduct< typename RangeFunctionType::DiscreteFunctionSpaceType > ParallelScalarProductType;
+      typedef ParallelScalarProduct< RangeFunctionType > ParallelScalarProductType;
 
       typedef typename DomainFunctionType::DofStorageType BlockVectorType;
     public:
@@ -175,7 +177,7 @@ namespace Dune
 
         BlockVectorType rhs( u.blockVector() );
         InverseOperatorResult returnInfo;
-        solver( rhs, w.blockVector(), returnInfo );
+        solver.apply( rhs, w.blockVector(), returnInfo );
 
         iterations_ = returnInfo.iterations;
       }
