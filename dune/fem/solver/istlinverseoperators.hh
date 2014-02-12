@@ -10,6 +10,7 @@
 #if HAVE_DUNE_ISTL
 #include <dune/fem/operator/linear/istladapter.hh>
 
+#include <dune/istl/scalarproducts.hh>
 #include <dune/istl/solvers.hh>
 #include <dune/istl/preconditioner.hh>
 
@@ -18,10 +19,6 @@ namespace Dune
 
   namespace Fem
   {
-
-    // forward declartion
-    template< class DiscreteFunction >
-    class ISTLGeneralizedMinResInverseOperator;
 
     // wrapper for Fem Preconditioners (Operators acting as preconditioners) into ISTL preconditioners
     template< class Preconditioner >
@@ -79,15 +76,135 @@ namespace Dune
     };
 
 
-    // ISLTGeneralizedMinResInverseOperator
-    // ------------------------------------
+    template< class BlockVector >
+    struct ISTLSolverReduction
+    {
+      ISTLSolverReduction ( double redEps, double absLimit )
+        : redEps_( redEps ),
+          absLimit_( absLimit )
+      {}
 
-    template< class DiscreteFunction >
-    class ISTLGeneralizedMinResInverseOperator
+      double operator() ( const Dune::LinearOperator< BlockVector, BlockVector > &op,
+                          Dune::ScalarProduct< BlockVector > &scp,
+                          const BlockVector &rhs, const BlockVector &x ) const
+      {
+        if( absLimit_ < std::numeric_limits< double >::max() )
+        {
+          BlockVector residuum( rhs );
+          op.applyscaleadd( -1., x, residuum );
+          const double res = scp.norm( residuum );
+          return (res > 0 ? absLimit_ / res : 1e-3);
+        }
+        else
+          return redEps_;
+      }
+
+    private:
+      double redEps_;
+      double absLimit_;
+    };
+
+
+
+    template< class Solver, class Reduction = ISTLSolverReduction< typename Solver::range_type > >
+    struct ISTLSolverAdapter
+    {
+      typedef Solver SolverType;
+      typedef Reduction ReductionType;
+
+      typedef typename SolverType::domain_type domain_type;
+      typedef typename SolverType::range_type range_type;
+
+      ISTLSolverAdapter ( const ReductionType &reduction, unsigned int maxIterations, int verbose )
+        : reduction_( reduction ),
+          maxIterations_( maxIterations ),
+          verbose_( verbose )
+      {}
+
+      template<class Op, class ScP, class PC >
+      void operator () ( Op& op, ScP &scp, PC &pc,
+                         range_type &rhs, domain_type &x,
+                         Dune::InverseOperatorResult &result ) const
+      {
+        SolverType solver( op, scp, pc, reduction_( op, scp, rhs, x ), maxIterations_, verbose_ );
+        solver.apply( x, rhs, result );
+      }
+
+    private:
+      ReductionType reduction_;
+      int maxIterations_;
+      int verbose_;
+    };
+
+
+    template< class X, class Y, class F, class Reduction >
+    struct ISTLSolverAdapter< Dune::RestartedGMResSolver< X, Y, F>, Reduction >
+    {
+      typedef Dune::RestartedGMResSolver< X, Y, F> SolverType;
+      typedef Reduction ReductionType;
+
+      typedef typename SolverType::domain_type domain_type;
+      typedef typename SolverType::range_type range_type;
+
+      ISTLSolverAdapter ( const ReductionType &reduction, unsigned int restart, unsigned int maxIterations, int verbose )
+        : reduction_( reduction ),
+          restart_( restart ),
+          maxIterations_( maxIterations ),
+          verbose_( verbose )
+      {}
+
+      ISTLSolverAdapter ( const Reduction &reduction, unsigned int maxIterations, int verbose )
+        : reduction_( reduction ),
+          restart_( Parameter::getValue< int >( "fem.solver.gmres.restart", 20 ) ),
+          maxIterations_( maxIterations ),
+          verbose_( verbose )
+      {}
+
+      template<class Op, class ScP, class PC >
+      void operator () ( Op& op, ScP &scp, PC &pc,
+                         range_type &rhs, domain_type &x,
+                         Dune::InverseOperatorResult &result ) const
+      {
+        SolverType solver( op, scp, pc, reduction_( op, scp, rhs, x ), restart_, maxIterations_, verbose_ );
+        solver.apply( x, rhs, result );
+      }
+
+    private:
+      ReductionType reduction_;
+      unsigned int restart_;
+      unsigned int maxIterations_;
+      int verbose_;
+    };
+
+
+    template< class X >
+    struct ISTLLoopSolver { typedef LoopSolver< X > Type; };
+
+    template< class X >
+    struct ISTLGradientSolver { typedef GradientSolver< X > Type; };
+
+    template< class X >
+    struct ISTLCGSolver { typedef CGSolver< X > Type; };
+
+    template< class X >
+    struct ISTLBiCGSTABSolver { typedef BiCGSTABSolver< X > Type; };
+
+    template< class X >
+    struct ISTLMINRESSolver { typedef MINRESSolver< X > Type; };
+
+    template< class X >
+    struct ISTLRestartedGMRes { typedef RestartedGMResSolver< X > Type; };
+
+
+
+    // ISTLInverseOperator
+    // -------------------
+
+    template< class DiscreteFunction, template< class > class Solver >
+    class ISTLInverseOperator
     : public Operator< DiscreteFunction, DiscreteFunction >
     {
       typedef Operator< DiscreteFunction, DiscreteFunction > BaseType;
-
 
     public:
       typedef typename BaseType::DomainFunctionType DomainFunctionType;
@@ -100,60 +217,48 @@ namespace Dune
       typedef ISTLLinearOperatorAdapter< OperatorType > ISTLOperatorType;
       typedef ISTLPreconditionAdapter< PreconditionerType > ISTLPreconditionerType;
 
-      typedef ParallelScalarProduct< RangeFunctionType > ParallelScalarProductType;
-
+      typedef Fem::ParallelScalarProduct< RangeFunctionType > ParallelScalarProductType;
       typedef typename DomainFunctionType::DofStorageType BlockVectorType;
+
+      typedef ISTLSolverAdapter< typename Solver< BlockVectorType >::Type > SolverAdapterType;
+      typedef typename SolverAdapterType::ReductionType ReductionType;
     public:
 
-      ISTLGeneralizedMinResInverseOperator ( const OperatorType &op,
-                                             double redEps, double absLimit,
-                                             unsigned int maxIterations, bool verbose )
+      typedef typename SolverAdapterType::SolverType SolverType;
+
+      ISTLInverseOperator ( const OperatorType &op,
+                            double redEps, double absLimit,
+                            unsigned int maxIterations, bool verbose )
       : operator_( op ),
         preconditioner_( nullptr ),
-        redEps_( redEps ),
-        absLimit_( absLimit ),
-        maxIterations_( maxIterations ),
-        verbose_( verbose )
-      {
-      }
+        solverAdapter_( ReductionType( redEps, absLimit ), maxIterations, (Parameter::verbose() && verbose) ? 2 : 0 )
+      {}
 
-      ISTLGeneralizedMinResInverseOperator ( const OperatorType &op,
-                                             double redEps, double absLimit,
-                                             unsigned int maxIterations = std::numeric_limits< unsigned int >::max() )
+      ISTLInverseOperator ( const OperatorType &op,
+                            double redEps, double absLimit,
+                            unsigned int maxIterations = std::numeric_limits< unsigned int >::max() )
       : operator_( op ),
         preconditioner_( nullptr ),
-        redEps_( redEps ),
-        absLimit_( absLimit ),
-        maxIterations_( maxIterations ),
-        verbose_( false )
-      {
-      }
+        solverAdapter_( ReductionType( redEps, absLimit ), maxIterations, 0 )
+      {}
 
-      ISTLGeneralizedMinResInverseOperator ( const OperatorType &op,
-                                             const PreconditionerType &preconditioner,
-                                             double redEps, double absLimit,
-                                             unsigned int maxIterations, bool verbose )
+      ISTLInverseOperator ( const OperatorType &op,
+                            const PreconditionerType &preconditioner,
+                            double redEps, double absLimit,
+                            unsigned int maxIterations, bool verbose )
       : operator_( op ),
         preconditioner_( &preconditioner ),
-        redEps_( redEps ),
-        absLimit_( absLimit ),
-        maxIterations_( maxIterations ),
-        verbose_( verbose )
-      {
-      }
+        solverAdapter_( ReductionType( redEps, absLimit ), maxIterations, (Parameter::verbose() && verbose) ? 2 : 0 )
+      {}
 
-      ISTLGeneralizedMinResInverseOperator ( const OperatorType &op,
-                                             const PreconditionerType &preconditioner,
-                                             double redEps, double absLimit,
-                                             unsigned int maxIterations = std::numeric_limits< unsigned int >::max() )
+      ISTLInverseOperator ( const OperatorType &op,
+                            const PreconditionerType &preconditioner,
+                            double redEps, double absLimit,
+                            unsigned int maxIterations = std::numeric_limits< unsigned int >::max() )
       : operator_( op ),
         preconditioner_( &preconditioner ),
-        redEps_( redEps ),
-        absLimit_( absLimit ),
-        maxIterations_( maxIterations ),
-        verbose_( false )
-      {
-      }
+        solverAdapter_( ReductionType( redEps, absLimit ), maxIterations, 0 )
+      {}
 
       virtual void operator() ( const DomainFunctionType &u, RangeFunctionType &w ) const
       {
@@ -161,45 +266,17 @@ namespace Dune
         ISTLPreconditionerType istlPreconditioner( preconditioner_, w.space(), u.space() );
         ParallelScalarProductType scp( u.space() );
 
-        // verbose only in verbose mode and for rank 0 
-        int verb = ( Parameter :: verbose() && verbose_ ) ? 2 : 0;
-
-        double reduction = redEps_;
-        if( absLimit_ < std::numeric_limits< double >::max() )
-        {
-          BlockVectorType residuum( u.blockVector() );
-          istlOperator.applyscaleadd( -1., w.blockVector(), residuum );
-          const double res = scp.norm( residuum );
-          reduction = (res > 0) ? absLimit_/ res : 1e-3;
-        }
-
-        RestartedGMResSolver< BlockVectorType > solver( istlOperator, scp, istlPreconditioner, reduction, paramRestart(), maxIterations_, verb );
-
         BlockVectorType rhs( u.blockVector() );
-        InverseOperatorResult returnInfo;
-        solver.apply( w.blockVector(), rhs, returnInfo );
-
-        iterations_ = returnInfo.iterations;
+        solverAdapter_( istlOperator, scp, istlPreconditioner, rhs, w.blockVector(), result_ );
       }
 
-      unsigned int iterations () const
-      {
-        return iterations_;
-      }
+      unsigned int iterations () const { return result_.iterations; }
 
     private:
-      static int paramRestart ()
-      {
-        return Parameter::getValue< int >( "fem.solver.gmres.restart", 20 );
-      }
-
       const OperatorType &operator_;
       const PreconditionerType *preconditioner_;
-      const double redEps_;
-      const double absLimit_;
-      const int maxIterations_;
-      const bool verbose_;
-      mutable unsigned int iterations_;
+      SolverAdapterType solverAdapter_;
+      mutable Dune::InverseOperatorResult result_;
     };
 
   } // namespace Fem
