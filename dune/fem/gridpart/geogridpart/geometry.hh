@@ -137,21 +137,6 @@ namespace Dune
   } // namespace Fem
 
 
-
-  // FacadeOptions
-  // -------------
-
-  namespace FacadeOptions
-  {
-
-    template< int mydim, int cdim, class GridFamily >
-    struct StoreGeometryReference< mydim, cdim, GridFamily, Dune::Fem::GeoGeometry >
-    {
-      static const bool v = false;
-    };
-
-  } // namespace FacadeOptions
-
 } // namespace Dune
 
 #endif // #ifndef DUNE_FEM_GRIDPART_GEOGRIDPART_GEOMETRY_HH
