@@ -46,7 +46,7 @@ namespace Dune
       }
 
     private:
-      const GeometryJacobianInverseTransposed &gjit_;
+      GeometryJacobianInverseTransposed gjit_;
     };
 
 
@@ -97,7 +97,7 @@ namespace Dune
       }
 
     private:
-      const GeometryJacobianInverseTransposed &gjit_;
+      GeometryJacobianInverseTransposed gjit_;
     };
 
   } // namespace Fem
