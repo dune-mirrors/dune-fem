@@ -40,8 +40,7 @@ namespace Dune
       typedef FieldVector< ctype, coorddimension > GlobalVector;
 
       typedef typename HostGeometryType::JacobianTransposed JacobianTransposed;
-      typedef typename HostGeometryType::Jacobian JacobianInverseTransposed;
-      typedef JacobianInverseTransposed Jacobian;
+      typedef typename HostGeometryType::JacobianInverseTransposed JacobianInverseTransposed;
 
       IdBasicGeometry ( const HostGeometryType &hostGeometry )
       : hostGeometry_( hostGeometry )
@@ -62,14 +61,12 @@ namespace Dune
       ctype integrationElement ( const LocalVector &local ) const { return hostGeometry_.integrationElement( local ); }
       ctype volume () const { return hostGeometry_.volume(); }
 
-      const JacobianTransposed &
-      jacobianTransposed ( const LocalVector &local ) const
+      JacobianTransposed jacobianTransposed ( const LocalVector &local ) const
       {
         return hostGeometry_.jacobianTransposed( local );
       }
 
-      const JacobianInverseTransposed &
-      jacobianInverseTransposed ( const LocalVector &local ) const
+      JacobianInverseTransposed jacobianInverseTransposed ( const LocalVector &local ) const
       {
         return hostGeometry_.jacobianInverseTransposed( local );
       }
