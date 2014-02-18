@@ -70,7 +70,7 @@ namespace Dune
         // get gauss quadrature 
         const DuneQuadratureRuleType &rule
           = QuadratureRules< FieldType, dimension >
-            :: rule( geometry, order, QuadratureType :: Gauss );
+            :: rule( geometry, order, QuadratureType :: GaussLegendre );
 
         order_ = rule.order();
         assert( order <= order_ );
