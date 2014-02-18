@@ -260,8 +260,8 @@ namespace Dune
 
         if( dimLocal != dimDomain )
         {
-          const typename GeometryType::JacobianTransposed &gjt = geometry.jacobianTransposed( cx );
-          const typename GeometryType::Jacobian &gjit = geometry.jacobianInverseTransposed( cx );
+          const typename GeometryType::JacobianTransposed gjt = geometry.jacobianTransposed( cx );
+          const typename GeometryType::JacobianInverseTransposed gjit = geometry.jacobianInverseTransposed( cx );
 
           FieldVector< RangeFieldType, dimLocal > tmp;
           for( int i = 0; i < dimRange; ++i )
