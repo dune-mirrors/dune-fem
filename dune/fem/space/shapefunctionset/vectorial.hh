@@ -365,7 +365,7 @@ namespace Dune
       {
         FieldMatrixColumn< const FieldMatrix< K, dimLocal, dimGlobal > > ci( c, i );
         FieldMatrixColumn< FieldMatrix< K, dimGlobal, dimGlobal > > bi( RgTraits::access( b, a.component() ), i );
-        gjit.mv( ci, bi );
+        gjit.umv( ci, bi );
       }
 
 #if 0
