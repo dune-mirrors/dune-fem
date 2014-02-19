@@ -284,8 +284,8 @@ namespace Dune
       }
 
     protected:
-      typedef typename DomainType       :: value_type  DomainField;
-      typedef typename HessianRangeType :: value_type  RangeField;
+      typedef typename DomainType :: value_type  DomainField;
+      typedef typename RangeType :: value_type  RangeField;
       typedef OrthonormalBase_2D< DomainField, RangeField > OrthonormalBase2d;
 
       static void evaluate ( const Line &, std::size_t i, const DomainType &x, double (&hessian)[3] )
