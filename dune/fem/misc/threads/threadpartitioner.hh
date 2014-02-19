@@ -360,11 +360,6 @@ public:
     }
   }
 
-  int getDestination( const int idx ) const 
-  {
-    return db_.getDestination ( idx ) ;
-  }
-
   std::set < int, std::less < int > > scan() const 
   {
     return db_.scan();
