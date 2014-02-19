@@ -268,6 +268,10 @@ namespace Dune
       }
 
     protected:
+      typedef typename DomainType :: value_type  DomainField;
+      typedef typename RangeType :: value_type  RangeField;
+      typedef OrthonormalBase_2D< DomainField, RangeField > OrthonormalBase2d;
+
       static void evaluate ( const Line &, std::size_t i, const DomainType &x, double (&hessian)[3] )
       {
         DUNE_THROW( NotImplemented, "On orthonormal shape function set HessianAll() is only implemented for triangles" );
