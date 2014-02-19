@@ -101,6 +101,25 @@ double algorithm ( GridType &grid, const int step )
   // perform the interpolation 
   interpolation( gridExactSolution, solution );
 
+  typedef Dune::Capabilities::hasSingleGeometryType< GridType > HasSingleGeometryType;
+  if( dimDomain == 2 && HasSingleGeometryType::v && HasSingleGeometryType::topologyId == 0 )
+  {
+    typename DiscreteFunctionType::HessianRangeType h1, h2;
+    typename DiscreteFunctionType::DomainType x(0.5);
+
+    solution.hessian( x, h1 );
+    exactSolution.hessian( x, h2 );
+
+    double norm =0;
+    for( int r =0; r< dimRange; ++r )
+    {
+      h1[ r ]-= h2[ r ];
+      norm += h1[r ].frobenius_norm2();
+    }
+
+    std::cout<<std::sqrt( norm )<<std::endl;
+  }
+
 #if 0
   // prepare output
   typedef Dune::tuple< const DiscreteFunctionType *, GridExactSolutionType * > IOTupleType;
