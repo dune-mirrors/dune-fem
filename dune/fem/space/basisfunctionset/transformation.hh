@@ -1,9 +1,11 @@
-#ifndef DUNE_FEM_BASEFUNCTIONSET_TRANSFORMATION_HH
-#define DUNE_FEM_BASEFUNCTIONSET_TRANSFORMATION_HH
+#ifndef DUNE_FEM_SPACE_BASISFUNCTIONSET_TRANSFORMATION_HH
+#define DUNE_FEM_SPACE_BASISFUNCTIONSET_TRANSFORMATION_HH
 
 #include <dune/common/exceptions.hh>
 #include <dune/common/fmatrix.hh>
 #include <dune/common/fvector.hh>
+
+#include <dune/fem/common/fmatrixcol.hh>
 
 namespace Dune
 {
@@ -13,7 +15,6 @@ namespace Dune
 
     // jacobianTransformation
     // ----------------------
-
 
     template< class GeometryJacobianInverseTransposed, class K, int ROWS >
     void jacobianTransformation ( const GeometryJacobianInverseTransposed &gjit,
@@ -59,8 +60,24 @@ namespace Dune
                                  const FieldVector< FieldMatrix< K, GeometryJacobianInverseTransposed::cols, GeometryJacobianInverseTransposed::cols >, SIZE > &a,
                                  FieldVector< FieldMatrix< K, GeometryJacobianInverseTransposed::rows, GeometryJacobianInverseTransposed::rows >, SIZE > &b )
     {
+      const int dimLocal = GeometryJacobianInverseTransposed::cols;
+      const int dimGlobal = GeometryJacobianInverseTransposed::rows;
+
       for( int r = 0; r < SIZE; ++r )
       {
+        // c = J^{-T} a_r^T
+        FieldMatrix< K, dimLocal, dimGlobal > c;
+        for( int i = 0; i < dimLocal; ++i )
+          gjit.mv( a[ r ][ i ], c[ i ] );
+
+        // b_r = J^{-T} c
+        for( int i = 0; i < dimGlobal; ++i )
+        {
+          FieldMatrixColumn< const FieldMatrix< K, dimLocal, dimGlobal > > ci( c, i );
+          FieldMatrixColumn< FieldMatrix< K, dimGlobal, dimGlobal > > bi( b[ r ], i );
+          gjit.mv( ci, bi );
+        }
+#if 0
         b[ r ] = K( 0 );
         for( int k = 0; k < GeometryJacobianInverseTransposed::cols; ++k )
         {
@@ -69,6 +86,7 @@ namespace Dune
           for( int j = 0; j < GeometryJacobianInverseTransposed::rows; ++j )
             b[ r ][ j ].axpy( gjit[ j ][ k ], c );
         }
+#endif
       }
     }
 
@@ -104,4 +122,4 @@ namespace Dune
 
 } // namespace Dune
 
-#endif // #ifndef DUNE_FEM_BASEFUNCTIONSET_TRANSFORMATION_HH
+#endif // #ifndef DUNE_FEM_SPACE_BASISFUNCTIONSET_TRANSFORMATION_HH

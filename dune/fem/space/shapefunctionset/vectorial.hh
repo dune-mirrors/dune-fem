@@ -348,9 +348,27 @@ namespace Dune
                                  const MakeVectorialExpression< FieldVector< FieldMatrix< K, GeometryJacobianInverseTransposed::cols, GeometryJacobianInverseTransposed::cols >, 1 >, FieldVector< FieldMatrix< K, GeometryJacobianInverseTransposed::cols, GeometryJacobianInverseTransposed::cols >, SIZE > > &a,
                                  FieldVector< FieldMatrix< K, GeometryJacobianInverseTransposed::rows, GeometryJacobianInverseTransposed::rows >, SIZE > &b )
     {
-      typedef MakeVectorialTraits< FieldVector< FieldMatrix< K, GeometryJacobianInverseTransposed::cols, GeometryJacobianInverseTransposed::cols >, 1 >, FieldVector< FieldMatrix< K, GeometryJacobianInverseTransposed::cols, GeometryJacobianInverseTransposed::cols >, SIZE > > Traits;
-      typedef MakeVectorialTraits< FieldVector< FieldMatrix< K, GeometryJacobianInverseTransposed::rows, GeometryJacobianInverseTransposed::rows >, 1 >, FieldVector< FieldMatrix< K, GeometryJacobianInverseTransposed::rows, GeometryJacobianInverseTransposed::rows >, SIZE > > RgTraits;
+      const int dimLocal = GeometryJacobianInverseTransposed::cols;
+      const int dimGlobal = GeometryJacobianInverseTransposed::rows;
+      typedef MakeVectorialTraits< FieldVector< FieldMatrix< K, dimLocal, dimLocal >, 1 >, FieldVector< FieldMatrix< K, dimLocal, dimLocal >, SIZE > > Traits;
+      typedef MakeVectorialTraits< FieldVector< FieldMatrix< K, dimGlobal, dimGlobal >, 1 >, FieldVector< FieldMatrix< K, dimGlobal, dimGlobal >, SIZE > > RgTraits;
+
       b = RgTraits::zeroVectorial();
+
+      // c = J^{-T} a_r^T
+      FieldMatrix< K, dimLocal, dimGlobal > c;
+      for( int i = 0; i < dimLocal; ++i )
+        gjit.mv( Traits::access( a.scalar() )[ i ], c[ i ] );
+
+      // b_r = J^{-T} c
+      for( int i = 0; i < dimGlobal; ++i )
+      {
+        FieldMatrixColumn< const FieldMatrix< K, dimLocal, dimGlobal > > ci( c, i );
+        FieldMatrixColumn< FieldMatrix< K, dimGlobal, dimGlobal > > bi( RgTraits::access( b, a.component() ), i );
+        gjit.mv( ci, bi );
+      }
+
+#if 0
       for( int k = 0; k < GeometryJacobianInverseTransposed::cols; ++k )
       {
         FieldVector< K, GeometryJacobianInverseTransposed::rows > c;
@@ -358,6 +376,7 @@ namespace Dune
         for( int j = 0; j < GeometryJacobianInverseTransposed::rows; ++j )
           RgTraits::access( b, a.component() )[ j ].axpy( gjit[ j ][ k ], c );
       }
+#endif
     }
 
     template< class Scalar, class Vectorial >

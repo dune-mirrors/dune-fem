@@ -1,0 +1,97 @@
+#ifndef DUNE_FEM_COMMON_FMATRIXCOL_HH
+#define DUNE_FEM_COMMON_FMATRIXCOL_HH
+
+#include <dune/common/densevector.hh>
+#include <dune/common/fmatrix.hh>
+#include <dune/common/typetraits.hh>
+
+namespace Dune
+{
+
+  // Internal Forward Declarations
+  // -----------------------------
+
+  template< class FieldMatrix >
+  class FieldMatrixColumn;
+
+
+
+  // DenseMatVecTraits for FieldMatrixColumn
+  // ---------------------------------------
+
+  template< class FieldMatrix >
+  struct DenseMatVecTraits< FieldMatrixColumn< FieldMatrix > >
+  {
+    typedef FieldMatrixColumn< FieldMatrix > derived_type;
+
+    typedef typename DenseMatVecTraits< typename remove_const< FieldMatrix >::type >::value_type value_type;
+    typedef typename DenseMatVecTraits< typename remove_const< FieldMatrix >::type >::size_type size_type;
+  };
+
+
+
+  // FieldMatrixColumn
+  // -----------------
+
+  template< class K, int m, int n >
+  class FieldMatrixColumn< FieldMatrix< K, m, n > >
+    : public DenseVector< FieldMatrixColumn< FieldMatrix< K, m, n > > >
+  {
+    typedef DenseVector< FieldMatrixColumn< FieldMatrix< K, m, n > > > Base;
+
+  public:
+    static const int dimension = m;
+
+    typedef typename Base::size_type size_type;
+    typedef typename Base::value_type value_type;
+
+    FieldMatrixColumn ( FieldMatrix< K, m, n > &fieldMatrix, int column )
+      : fieldMatrix_( fieldMatrix ),
+        column_( column )
+    {}
+
+    using Base::operator=;
+
+    DUNE_CONSTEXPR size_type size () const { return vec_size(); }
+
+    DUNE_CONSTEXPR size_type vec_size () const { return dimension; }
+    const value_type &vec_access ( size_type i ) const { return fieldMatrix_[ i ][ column_ ]; }
+    value_type &vec_access ( size_type i ) { return fieldMatrix_[ i ][ column_ ]; }
+
+  private:
+    FieldMatrix< K, m, n > &fieldMatrix_;
+    int column_;
+  };
+
+  template< class K, int m, int n >
+  class FieldMatrixColumn< const FieldMatrix< K, m, n > >
+    : public DenseVector< FieldMatrixColumn< const FieldMatrix< K, m, n > > >
+  {
+    typedef DenseVector< FieldMatrixColumn< const FieldMatrix< K, m, n > > > Base;
+
+  public:
+    static const int dimension = m;
+
+    typedef typename Base::size_type size_type;
+    typedef typename Base::value_type value_type;
+
+    FieldMatrixColumn ( FieldMatrix< K, m, n > &fieldMatrix, int column )
+      : fieldMatrix_( fieldMatrix ),
+        column_( column )
+    {}
+
+    using Base::operator=;
+
+    DUNE_CONSTEXPR size_type size () const { return vec_size(); }
+
+    DUNE_CONSTEXPR size_type vec_size () const { return dimension; }
+    const value_type &vec_access ( size_type i ) const { return fieldMatrix_[ i ][ column_ ]; }
+
+  private:
+    const FieldMatrix< K, m, n > &fieldMatrix_;
+    int column_;
+  };
+
+} // namespace Dune
+
+#endif // #ifndef DUNE_FEM_COMMON_FMATRIXCOL_HH
