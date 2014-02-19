@@ -30,6 +30,7 @@ namespace Dune
       typedef typename FunctionSpaceType::DomainType DomainType;
       typedef typename FunctionSpaceType::RangeType RangeType;
       typedef typename FunctionSpaceType::JacobianRangeType JacobianRangeType;
+      typedef typename FunctionSpaceType::HessianRangeType HessianRangeType;
 
     public:
       void evaluate( const DomainType &x, RangeType &phi ) const
@@ -58,6 +59,25 @@ namespace Dune
       void jacobian( const DomainType &x, RangeFieldType t, JacobianRangeType &Dphi ) const
       {
         jacobian( x, Dphi );
+      }
+
+      void hessian( const DomainType &x, HessianRangeType &H ) const
+      {
+        for (int r = 0; r < RangeType :: dimension; ++r) 
+        {
+          H[ r ] = RangeFieldType ( 0 );
+          for( int i = 0; i < DomainType :: dimension; ++i )
+          {
+            const double s =  sin( M_PI * x[ i ] );
+            H[ r ][ i ][ i ] = M_PI * M_PI * (r+1) *
+              ( r * std::pow( s, double( r-1 ) )  - ( r+1 ) * std::pow( s, double( r+1 ) ) );
+           }
+        }
+      }
+
+      void hessian( const DomainType &x, RangeFieldType t, HessianRangeType &H ) const
+      {
+        hessian( x, H );
       }
     };
 
