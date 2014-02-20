@@ -1,6 +1,6 @@
 femcommondir = $(includedir)/dune/fem/common
 femcommon_HEADERS = \
-	fmatrixcol.hh
+	fmatrixcol.hh \
 	tupletypetraits.hh \
 	tupleutility.hh \
 	typeindexedtuple.hh
