@@ -68,7 +68,7 @@ namespace Dune
           (*precon_)( px, py );
         }
       }
-    
+
     protected:
       const Preconditioner *precon_;
       const DomainFunctionSpaceType &domainSpace_;
@@ -196,11 +196,11 @@ namespace Dune
     struct ISTLRestartedGMRes { typedef RestartedGMResSolver< X > Type; };
 
 
-
     // ISTLInverseOperator
     // -------------------
 
-    template< class DiscreteFunction, template< class > class Solver >
+    template< class DiscreteFunction, template< class > class Solver,
+              class Preconditioner = Operator< DiscreteFunction, DiscreteFunction > >
     class ISTLInverseOperator
     : public Operator< DiscreteFunction, DiscreteFunction >
     {
@@ -211,11 +211,11 @@ namespace Dune
       typedef typename BaseType::RangeFunctionType RangeFunctionType;
 
       typedef Operator< DiscreteFunction, DiscreteFunction > OperatorType;
-      typedef Operator< DiscreteFunction, DiscreteFunction > PreconditionerType;
+      typedef Preconditioner PreconditionerType;
 
     protected:
       typedef ISTLLinearOperatorAdapter< OperatorType > ISTLOperatorType;
-      typedef ISTLPreconditionAdapter< PreconditionerType > ISTLPreconditionerType;
+      typedef ISTLPreconditionAdapter< OperatorType > ISTLPreconditionerAdapterType;
 
       typedef Fem::ParallelScalarProduct< RangeFunctionType > ParallelScalarProductType;
       typedef typename DomainFunctionType::DofStorageType BlockVectorType;
@@ -242,6 +242,7 @@ namespace Dune
         solverAdapter_( ReductionType( redEps, absLimit ), maxIterations, 0 )
       {}
 
+
       ISTLInverseOperator ( const OperatorType &op,
                             const PreconditionerType &preconditioner,
                             double redEps, double absLimit,
@@ -260,19 +261,41 @@ namespace Dune
         solverAdapter_( ReductionType( redEps, absLimit ), maxIterations, 0 )
       {}
 
+
       virtual void operator() ( const DomainFunctionType &u, RangeFunctionType &w ) const
       {
         ISTLOperatorType istlOperator( operator_, w.space(), u.space() );
-        ISTLPreconditionerType istlPreconditioner( preconditioner_, w.space(), u.space() );
         ParallelScalarProductType scp( u.space() );
 
-        BlockVectorType rhs( u.blockVector() );
-        solverAdapter_( istlOperator, scp, istlPreconditioner, rhs, w.blockVector(), result_ );
+        if( !preconditioner_ )
+        {
+          ISTLPreconditionerAdapterType istlPreconditioner( nullptr, w.space(), u.space() );
+          solve( istlOperator, scp, istlPreconditioner, u, w );
+        }
+        else
+          solve( istlOperator, scp, *preconditioner_, u, w );
       }
 
       unsigned int iterations () const { return result_.iterations; }
 
     private:
+      void solve ( ISTLOperatorType &istlOperator, ParallelScalarProductType &scp,
+                   const OperatorType &preconditioner,
+                   const DomainFunctionType &u, RangeFunctionType &w ) const
+      {
+        ISTLPreconditionerAdapterType istlPreconditioner( &preconditioner, w.space(), u.space() );
+        solve( istlOperator, scp, istlPreconditioner, u, w );
+      }
+
+      template< class ISTLPreconditioner >
+      void solve ( ISTLOperatorType &istlOperator, ParallelScalarProductType &scp,
+                   ISTLPreconditioner &preconditioner,
+                   const DomainFunctionType &u, RangeFunctionType &w ) const
+      {
+        BlockVectorType rhs( u.blockVector() );
+        solverAdapter_( istlOperator, scp, preconditioner, rhs, w.blockVector(), result_ );
+      }
+
       const OperatorType &operator_;
       const PreconditionerType *preconditioner_;
       SolverAdapterType solverAdapter_;
