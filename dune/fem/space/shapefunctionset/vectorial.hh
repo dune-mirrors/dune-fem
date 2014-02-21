@@ -6,6 +6,7 @@
 #include <cstddef>
 
 // dune-fem includes
+#include <dune/fem/common/fmatrixcol.hh>
 #include <dune/fem/space/common/functionspace.hh>
 
 
