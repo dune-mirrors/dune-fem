@@ -1,9 +1,7 @@
 set(LDADD  ${ALL_PKG_LDFLAGS} ${ALL_PKG_LIBS} ${LOCAL_LIBS} ${MPI_LDFLAGS})
 set(AM_CPPFLAGS  ${ALL_PKG_CPPFLAGS})
 set(SUBDIRS )
-set(check_PROGRAMS  example longexample)
-add_executable(example example.cc)
-add_executable(longexample longexample.cc)
+
 set(EXTRA_DIST )
 set(CLEANFILES )
 # include not needed for CMake

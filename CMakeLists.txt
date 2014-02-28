@@ -7,10 +7,15 @@ set(BUILD_DOCS 1)
 # general stuff
 cmake_minimum_required(VERSION 2.8.6)
 
+if(NOT (dune-common_DIR OR dune-common_ROOT OR
+        "${CMAKE_PREFIX_PATH}" MATCHES ".*dune-common.*"))
+    string(REPLACE  ${CMAKE_PROJECT_NAME} dune-common dune-common_DIR
+      ${PROJECT_BINARY_DIR})
+endif()
+
 #find dune-common and set the module path
-find_package(dune-common)
-list(APPEND CMAKE_MODULE_PATH ${dune-common_MODULE_PATH}
-     "${CMAKE_SOURCE_DIR}/cmake/modules")# make sure our own modules are found
+find_package(dune-common REQUIRED)
+list(APPEND CMAKE_MODULE_PATH ${dune-common_MODULE_PATH})
 
 #include the dune macros
 include(DuneMacros)
