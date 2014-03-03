@@ -200,7 +200,7 @@ namespace Dune
     // -------------------
 
     template< class DiscreteFunction, template< class > class Solver,
-              class Preconditioner = Operator< DiscreteFunction, DiscreteFunction > >
+              class Preconditioner = const Operator< DiscreteFunction, DiscreteFunction > >
     class ISTLInverseOperator
     : public Operator< DiscreteFunction, DiscreteFunction >
     {
@@ -244,7 +244,7 @@ namespace Dune
 
 
       ISTLInverseOperator ( const OperatorType &op,
-                            const PreconditionerType &preconditioner,
+                            PreconditionerType &preconditioner,
                             double redEps, double absLimit,
                             unsigned int maxIterations, bool verbose )
       : operator_( op ),
@@ -253,7 +253,7 @@ namespace Dune
       {}
 
       ISTLInverseOperator ( const OperatorType &op,
-                            const PreconditionerType &preconditioner,
+                            PreconditionerType &preconditioner,
                             double redEps, double absLimit,
                             unsigned int maxIterations = std::numeric_limits< unsigned int >::max() )
       : operator_( op ),
@@ -297,7 +297,7 @@ namespace Dune
       }
 
       const OperatorType &operator_;
-      const PreconditionerType *preconditioner_;
+      PreconditionerType *preconditioner_;
       SolverAdapterType solverAdapter_;
       mutable Dune::InverseOperatorResult result_;
     };
