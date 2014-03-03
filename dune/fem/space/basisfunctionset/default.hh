@@ -154,8 +154,9 @@ namespace Dune
       void axpy ( const Point &x, const JacobianRangeType &jacobianFactor, DofVector &dofs ) const
       {
         typedef typename GeometryType::JacobianInverseTransposed GeometryJacobianInverseTransposedType;
-        const GeometryJacobianInverseTransposedType &gjit = geometry().jacobianInverseTransposed( coordinate( x ) );
-        LocalJacobianRangeType tmpJacobianFactor;
+        const GeometryType &geo = geometry();
+        const GeometryJacobianInverseTransposedType &gjit = geo.jacobianInverseTransposed( coordinate( x ) );
+        LocalJacobianRangeType tmpJacobianFactor( RangeFieldType(0) );
         for( int r = 0; r < FunctionSpaceType::dimRange; ++r )
           gjit.mtv( jacobianFactor[ r ], tmpJacobianFactor[ r ] );
 
