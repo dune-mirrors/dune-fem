@@ -73,7 +73,7 @@ namespace Dune
       DUNE_VERSION_DEPRECATED(1,4,remove)
       explicit HierarchicGridPart ( GridType &grid )
       : BaseType( grid ),
-        leafView_( grid.leafView() ),
+        leafGridView_( grid.leafGridView() ),
         isetWrapper_( grid )
       {}
 
@@ -81,7 +81,7 @@ namespace Dune
       DUNE_VERSION_DEPRECATED(1,4,remove)
       HierarchicGridPart ( GridType &grid, const IndexSetType & )
       : BaseType( grid ),
-        leafView_( grid.leafView() ),
+        leafGridView_( grid.leafGridView() ),
         isetWrapper_( grid )
       {}
 
@@ -89,7 +89,7 @@ namespace Dune
       DUNE_VERSION_DEPRECATED(1,4,remove)
       HierarchicGridPart ( const ThisType &other )
       : BaseType( other ),
-        leafView_( other.leafView_ ),
+        leafGridView_( other.leafGridView_ ),
         isetWrapper_( other.grid() )
       {}
 
@@ -112,7 +112,7 @@ namespace Dune
       typename Traits :: template Codim< codim > :: template Partition< pitype > :: IteratorType
       begin () const
       {
-        return leafView_.template begin< codim, pitype >();
+        return leafGridView_.template begin< codim, pitype >();
       }
 
       //! Begin iterator on the leaf level
@@ -128,7 +128,7 @@ namespace Dune
       typename Traits :: template Codim< codim > :: template Partition< pitype > :: IteratorType
       end () const
       {
-        return leafView_.template end< codim, pitype >();
+        return leafGridView_.template end< codim, pitype >();
       }
 
       //! ibegin of corresponding intersection iterator for given entity
@@ -161,7 +161,7 @@ namespace Dune
 
     private: 
       //! leaf grid view 
-      LeafGridView leafView_ ;
+      LeafGridView leafGridView_ ;
       //! GridDefaultIndexSet Wrapper 
       IndexSetType isetWrapper_;
     };

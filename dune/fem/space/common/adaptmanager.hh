@@ -387,7 +387,7 @@ namespace Dune
       if(restr)
       {
         // get macro grid view 
-        MacroGridView macroView = grid_.levelView( 0 );
+        MacroGridView macroView = grid_.levelGridView( 0 );
 
         // make a hierarchical to insert all elements 
         // that are father of elements that might be coarsened 
@@ -438,7 +438,7 @@ namespace Dune
       if( refined ) 
       {
         // get macro grid view 
-        MacroGridView macroView = grid_.levelView( 0 );
+        MacroGridView macroView = grid_.levelGridView( 0 );
 
         // make run through grid to project data 
         MacroIterator endit  = macroView.template end<0,pitype>  ();

@@ -106,7 +106,7 @@ namespace Dune
         typedef typename GridType :: template Partition< All_Partition > :: LevelGridView  MacroGridView ;
         
         // get macro grid view 
-        MacroGridView macroView = grid.levelView( 0 );
+        MacroGridView macroView = grid.levelGridView( 0 );
 
         const MacroIteratorType endit = macroView.template end<0> ();
         MacroIteratorType it = macroView.template begin<0> ();
