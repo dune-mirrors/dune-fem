@@ -81,6 +81,7 @@ namespace Dune
       //! type of local matrix using stacking mechanism
       typedef LocalMatrixWrapper< LocalMatrixStackType > LocalMatrixType;
       typedef ColumnObject< ThisType > LocalColumnObjectType;
+      typedef ColumnObject< ThisType > ColumnObjectType;
 
       /*
        * ctors, dtor, methods...
