@@ -1,6 +1,10 @@
 #ifndef DUNE_FEM_GRIDPART_GEOGRIDPART_HH
 #define DUNE_FEM_GRIDPART_GEOGRIDPART_HH
 
+#if not DUNE_GRID_EXPERIMENTAL_GRID_EXTENSIONS
+#error "Experimental grid extensions required for GeoGridPart. Reconfigure with --enable-experimental-grid-extensions to enable GeoGridPart."
+#else
+
 #include <dune/fem/gridpart/common/gridpart.hh>
 #include <dune/fem/gridpart/common/deaditerator.hh>
 #include <dune/fem/gridpart/common/entitysearch.hh>
@@ -327,4 +331,5 @@ namespace Dune
 
 } // namespace Dune
 
+#endif // #if not DUNE_GRID_EXPERIMENTAL_GRID_EXTENSIONS
 #endif // #ifndef DUNE_FEM_GRIDPART_GEOGRIDPART_HH
