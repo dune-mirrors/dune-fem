@@ -71,6 +71,8 @@ namespace Dune
       void fill ( const DomainEntityType &dEntity, const RangeEntityType &rEntity,
                   bool fillGhost=true )
       {
+        typedef typename Dune::Fem::MatrixFunctor<DomainBlockMapper,DomainEntityType,FillFunctor > MFunctor;
+
         bool doFill = (dEntity.partitionType()!=GhostEntity) || fillGhost;
         rangeBlockMapper_.mapEach(rEntity, 
                   MFunctor( domainBlockMapper_, dEntity, FillFunctor(globalStencil_,doFill) ) );
@@ -128,9 +130,7 @@ namespace Dune
         LocalStencilType *localStencil_;
         bool fill_;
       };
-      typedef typename Dune::Fem::MatrixFunctor<RangeBlockMapper,RangeEntityType,FillFunctor > MFunctor;
-
-      const DomainBlockMapper &domainBlockMapper_;
+        const DomainBlockMapper &domainBlockMapper_;
       const RangeBlockMapper &rangeBlockMapper_;
       GlobalStencilType globalStencil_;
     };
