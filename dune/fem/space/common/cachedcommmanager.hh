@@ -42,14 +42,10 @@ namespace Dune
     /** @addtogroup Communication Communication 
         @{
      **/
-    
+
 // only if ALUGrid found and was build for parallel runs 
 // if HAVE_ALUGRID is not defined, ALU3DGRID_PARALLEL shouldn't be either
 #if ALU3DGRID_PARALLEL 
-
-#ifdef ALUGRID_PERIODIC_BOUNDARY_PARALLEL
-#define ALUGRID_HAS_NONBLOCKING_COMM
-#endif
 
     //! class to build up a map of all dofs of entities to be exchanged
     //! during a communication procedure. This speeds up the communication
@@ -129,9 +125,65 @@ namespace Dune
       {
         typedef DependencyCache < Space > DependencyCacheType ;
 
-#ifdef ALUGRID_HAS_NONBLOCKING_COMM
+#if HAVE_DUNE_ALUGRID
         typedef MPAccessInterfaceType :: NonBlockingExchange  NonBlockingExchange;
-#else 
+
+        template <class DiscreteFunction>
+        class Pack : public NonBlockingExchange :: DataHandleIF 
+        {
+        protected:  
+          NonBlockingCommunication& commObj_;
+          const DiscreteFunction&    discreteFunction_;
+
+        public:  
+          Pack( NonBlockingCommunication& commObj, 
+                const DiscreteFunction& df )
+          : commObj_( commObj ),
+            discreteFunction_( df )
+          {}
+
+          void pack( const int link, ObjectStreamType& buffer )
+          {
+            commObj_.pack( link, buffer, discreteFunction_ );
+          }
+
+          void unpack( const int link, ObjectStreamType& buffer ) 
+          {
+            DUNE_THROW(InvalidStateException,"Pack::unpack should not be called!");
+          }
+        };
+
+        template <class DiscreteFunction, 
+                  class Operation>
+        class Unpack
+        : public NonBlockingExchange :: DataHandleIF 
+        {
+        protected:  
+          NonBlockingCommunication& commObj_;
+          DiscreteFunction&    discreteFunction_;
+
+          // communication operation (ADD or COPY)
+          const Operation* operation_;
+          
+        public:  
+          Unpack( NonBlockingCommunication& commObj, 
+                  DiscreteFunction& df )
+          : commObj_( commObj ),
+            discreteFunction_( df ),
+            operation_( 0 )
+          {}
+
+          void pack( const int link, ObjectStreamType& buffer )
+          {
+            DUNE_THROW(InvalidStateException,"Unpack::pack should not be called!");
+          }
+
+          void unpack( const int link, ObjectStreamType& buffer ) 
+          {
+            commObj_.unpack( link, buffer, discreteFunction_, operation_ );
+          }
+        };
+#else   // ALUGRID_HAS_NONBLOCKING_COMM is false
         typedef int NonBlockingExchange;
 #endif
 
@@ -209,27 +261,27 @@ namespace Dune
           // take time 
           Dune::Timer sendTimer ;
 
-#ifdef ALUGRID_HAS_NONBLOCKING_COMM
-          // get non-blocking exchange object from mpAccess including message tag
-          nonBlockingExchange_ = dependencyCache_.mpAccess().nonBlockingExchange( getMessageTag() );
-#endif
-
           // this variable can change during rebuild 
           const int nLinks = dependencyCache_.nlinks();
           
           // resize buffer vector 
           buffer_.resize( nLinks );
 
+#if HAVE_DUNE_ALUGRID
+          // get non-blocking exchange object from mpAccess including message tag
+          nonBlockingExchange_ = dependencyCache_.mpAccess().nonBlockingExchange( getMessageTag() );
+
+          // pack data object  
+          Pack< DiscreteFunction > packData( *this, discreteFunction );
+
+          // perform send operation including packing of data
+          nonBlockingExchange_->send( buffer_, packData );
+#else
           // write buffers 
           for( int link = 0; link < nLinks; ++link )
           {
-            buffer_[ link ].clear();
-            dependencyCache_.writeBuffer( link, buffer_[ link ], discreteFunction );
+            pack( link, buffer_[ link ], discreteFunction );
           }
-
-#ifdef ALUGRID_HAS_NONBLOCKING_COMM
-          // perform send operation 
-          nonBlockingExchange_->send( buffer_ );
 #endif
 
           // store time needed for sending
@@ -257,34 +309,36 @@ namespace Dune
           // on serial runs: do nothing 
           if( mySize_ <= 1 ) return 0.0;
 
-          // this variable can change during rebuild 
-          const int nLinks = buffer_.size();
-
           // take time 
           Dune::Timer recvTimer ;
 
-#ifdef ALUGRID_HAS_NONBLOCKING_COMM
-          // overwrite buffer (other method not working correctly)
-          buffer_ = nonBlockingExchange_->receive();
+#if HAVE_DUNE_ALUGRID
+          // unpack data object  
+          Unpack< DiscreteFunction, Operation > unpackData( *this, discreteFunction );
+
+          // receive data and unpack 
+          nonBlockingExchange_->receive( unpackData );
 #else 
-          // use exchange for older ALUGrid versions  
+          // use exchange for older ALUGrid versions (send and receive)
           buffer_ = dependencyCache_.mpAccess().exchange( buffer_ );
-#endif
+
+          // this variable can change during rebuild 
+          const int nLinks = buffer_.size();
 
           // read buffers and store to discrete function 
           for( int link = 0; link < nLinks; ++link )
           {
-            dependencyCache_.readBuffer( link, buffer_[ link ], discreteFunction, operation );
+            unpack( link, buffer_[ link ], discreteFunction, operation );
           }
+#endif
 
           // store time needed for sending
           exchangeTime_ += recvTimer.elapsed();
 
-#ifdef ALUGRID_HAS_NONBLOCKING_COMM
+#if HAVE_DUNE_ALUGRID
           delete nonBlockingExchange_;
           nonBlockingExchange_ = 0;
 #endif
-
           return exchangeTime_;
         }
 
@@ -296,6 +350,24 @@ namespace Dune
           typedef typename DiscreteFunction :: DiscreteFunctionSpaceType
             :: template CommDataHandle< DiscreteFunction > :: OperationType  DefaultOperationType;
           return receive( discreteFunction, (DefaultOperationType *) 0 );
+        }
+
+      protected:
+        template <class DiscreteFunction>
+        void pack( const int link, ObjectStreamType& buffer, const DiscreteFunction& discreteFunction ) 
+        {
+          // reset buffer counters 
+          buffer.clear();
+          // write data of discrete function to message buffer
+          dependencyCache_.writeBuffer( link, buffer, discreteFunction );
+        }
+
+        template <class DiscreteFunction, class Operation>
+        void unpack( const int link, ObjectStreamType& buffer, 
+                     DiscreteFunction& discreteFunction, const Operation* operation ) 
+        {
+          // read data of discrete function from message buffer 
+          dependencyCache_.readBuffer( link, buffer, discreteFunction, operation );
         }
 
       protected:
@@ -394,7 +466,7 @@ namespace Dune
 
       bool noOpenCommunications() const 
       {
-        return nonBlockingObjects_ == 0;
+        return true ; //nonBlockingObjects_ == 0;
       }
     protected:
       // check consistency of maps 
@@ -1347,7 +1419,7 @@ namespace Dune
         }
       }
     };
-#endif 
+#endif  // #if ALU3DGRID_PARALLEL
     //@}
    
   } // namespace Fem
