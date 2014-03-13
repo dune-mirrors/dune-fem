@@ -59,13 +59,13 @@ namespace Dune
       GeometryType elemGeo = GeometryType( GeometryType::prism, 3 );
 
       // Get reference element
-      const Dune::ReferenceElement< double, dim > &refElem
-        = Dune::ReferenceElements< double, dim >::general( elemGeo );
+      typedef Dune::ReferenceElement< double, dim > RefElement;
+      const RefElement &refElement = Dune::ReferenceElements< double, dim >::general( elemGeo );
 
       // Loop over all faces
-      for( int i = 0; i < refElem.size( codim ); ++i )
+      for( int i = 0; i < refElement.size( codim ); ++i )
       {
-        GeometryType faceGeo = (refElem.size( i, codim, dim ) == dim) ?
+        GeometryType faceGeo = (refElement.size( i, codim, dim ) == dim) ?
                                GeometryType( GeometryType::simplex, 2 ) :
                                GeometryType( GeometryType::cube, 2 );
 
@@ -84,11 +84,13 @@ namespace Dune
         _test( m.size() == (size_t) quad.nop());
 
         // Loop over all points
-        for( size_t j = 0; j < m.size(); ++j )
+        const RefElement::Codim< codim >::Geometry refEmbedding = refElement.geometry< codim >( i );
+        for( std::size_t j = 0; j < m.size(); ++j )
+        {
+          const FieldVector< double, dim > qpGlobal = refEmbedding.global( quad.point( j ) );
           for( int d = 0; d < dim; ++d )
-            _floatTest( points[ m[ j ] ][ d ],
-                        refElem.global< codim >( quad.point( j ), i, codim )[ d ] );
-
+            _floatTest( points[ m[ j ] ][ d ], qpGlobal[ d ] );
+        }
       }
 #endif
     }
@@ -112,8 +114,8 @@ namespace Dune
       GeometryType faceGeo = GeometryType( GeometryType::cube, 2 );
 
       // Get reference element
-      const Dune::ReferenceElement< double, dim > &refElem
-        = Dune::ReferenceElements< double, dim >::general( elemGeo );
+      typedef Dune::ReferenceElement< double, dim > RefElement;
+      const RefElement &refElement = Dune::ReferenceElements< double, dim >::general( elemGeo );
 
       // Build quadrature
       QuadratureType quad( faceGeo, 3 );
@@ -125,18 +127,20 @@ namespace Dune
         = PointProviderType::getPoints( quad.id(), elemGeo );
 
       // Loop over all faces
-      for( int i = 0; i < refElem.size( codim ); ++i )
+      for( int i = 0; i < refElement.size( codim ); ++i )
       {
         const MapperType &m
           = CacheProviderType::getMapper( quad, elemGeo, i, 0 );
 
         _test( m.size() == (size_t) quad.nop());
         // Loop over all points
-        for( size_t j = 0; j < m.size(); ++j )
+        const RefElement::Codim< codim >::Geometry refEmbedding = refElement.geometry< codim >( i );
+        for( std::size_t j = 0; j < m.size(); ++j )
+        {
+          const FieldVector< double, dim > qpGlobal = refEmbedding.global( quad.point( j ) );
           for( int d = 0; d < dim; ++d )
-            _floatTest( points[ m[ j ] ][ d ],
-                        refElem.global< codim >( quad.point( j ), i, codim )[ d ] );
-
+            _floatTest( points[ m[ j ] ][ d ], qpGlobal[ d ] );
+        }
       }
 #endif
     }
@@ -160,8 +164,8 @@ namespace Dune
       GeometryType faceGeo = GeometryType( GeometryType::simplex, 2 );
 
       // Get reference element
-      const ReferenceElement< double, dim > &refElem
-        = ReferenceElements< double, dim >::general( elemGeo );
+      typedef Dune::ReferenceElement< double, dim > RefElement;
+      const RefElement &refElement = Dune::ReferenceElements< double, dim >::general( elemGeo );
 
       // Build quadrature
       QuadratureType quad( faceGeo, 3 );
@@ -173,17 +177,19 @@ namespace Dune
         = PointProviderType::getPoints( quad.id(), elemGeo );
 
       // Loop over all faces
-      for( int i = 0; i < refElem.size( codim ); ++i )
+      for( int i = 0; i < refElement.size( codim ); ++i )
       {
         const MapperType &m = CacheProviderType::getMapper( quad, elemGeo, i, 0 );
 
         _test( m.size() == (size_t) quad.nop());
         // Loop over all points
-        for( size_t j = 0; j < m.size(); ++j )
+        const RefElement::Codim< codim >::Geometry refEmbedding = refElement.geometry< codim >( i );
+        for( std::size_t j = 0; j < m.size(); ++j )
+        {
+          const FieldVector< double, dim > qpGlobal = refEmbedding.global( quad.point( j ) );
           for( int d = 0; d < dim; ++d )
-            _floatTest( points[ m[ j ] ][ d ],
-                        refElem.global< codim >( quad.point( j ), i, codim )[ d ] );
-
+            _floatTest( points[ m[ j ] ][ d ], qpGlobal[ d ] );
+        }
       }
 #endif
     }
@@ -207,8 +213,8 @@ namespace Dune
       GeometryType faceGeo = GeometryType( GeometryType::simplex, 1 );
 
       // Get reference element
-      const Dune::ReferenceElement< double, dim > &refElem
-        = Dune::ReferenceElements< double, dim >::general( elemGeo );
+      typedef Dune::ReferenceElement< double, dim > RefElement;
+      const RefElement &refElement = Dune::ReferenceElements< double, dim >::general( elemGeo );
 
       // Build quadrature
       QuadratureType quad( faceGeo, 3 );
@@ -220,17 +226,19 @@ namespace Dune
         = PointProviderType::getPoints( quad.id(), elemGeo );
 
       // Loop over all faces
-      for( int i = 0; i < refElem.size( codim ); ++i )
+      for( int i = 0; i < refElement.size( codim ); ++i )
       {
         const MapperType &m = CacheProviderType::getMapper( quad, elemGeo, i, 0 );
 
         _test( m.size() == (size_t) quad.nop());
         // Loop over all points
+        const RefElement::Codim< codim >::Geometry refEmbedding = refElement.geometry< codim >( i );
         for( size_t j = 0; j < m.size(); ++j )
+        {
+          const FieldVector< double, dim > qpGlobal = refEmbedding.global( quad.point( j ) );
           for( int d = 0; d < dim; ++d )
-            _floatTest( points[ m[ j ] ][ d ],
-                        refElem.global< codim >( quad.point( j ), i, codim )[ d ] );
-
+            _floatTest( points[ m[ j ] ][ d ], qpGlobal[ d ] );
+        }
       }
 #endif
     }
@@ -253,8 +261,8 @@ namespace Dune
       GeometryType faceGeo = GeometryType( GeometryType::cube, 1 );
 
       // Get reference element
-      const Dune::ReferenceElement< double, dim > &refElem
-        = Dune::ReferenceElements< double, dim >::general( elemGeo );
+      typedef Dune::ReferenceElement< double, dim > RefElement;
+      const RefElement &refElement = Dune::ReferenceElements< double, dim >::general( elemGeo );
 
       // Build quadrature
       QuadratureType quad( faceGeo, 5 );
@@ -266,16 +274,19 @@ namespace Dune
         = PointProviderType::getPoints( quad.id(), elemGeo );
 
       // Loop over all faces
-      for( int i = 0; i < refElem.size( codim ); ++i )
+      for( int i = 0; i < refElement.size( codim ); ++i )
       {
         const MapperType &m = CacheProviderType::getMapper( quad, elemGeo, i, 0 );
 
         _test( m.size() == (size_t) quad.nop());
         // Loop over all points
-        for( size_t j = 0; j < m.size(); ++j )
+        const RefElement::Codim< codim >::Geometry refEmbedding = refElement.geometry< codim >( i );
+        for( std::size_t j = 0; j < m.size(); ++j )
+        {
+          const FieldVector< double, dim > qpGlobal = refEmbedding.global( quad.point( j ) );
           for( int d = 0; d < dim; ++d )
-            _floatTest( points[ m[ j ] ][ d ],
-                        refElem.global< codim >( quad.point( j ), i, codim )[ d ] );
+            _floatTest( points[ m[ j ] ][ d ], qpGlobal[ d ] );
+        }
       }
     }
 
