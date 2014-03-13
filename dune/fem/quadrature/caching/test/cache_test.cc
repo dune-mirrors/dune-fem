@@ -18,269 +18,267 @@
 #endif
 
 #ifdef USE_PRISMGRID
-//#include <dune/prismgrid/dgfgridtype.hh> 
+//#include <dune/prismgrid/dgfgridtype.hh>
 #endif
 
 #include <dune/geometry/referenceelements.hh>
 
 #include "cache_test.hh"
 
-namespace Dune {
-  namespace Fem {
-  
-  void CacheProvider_Test::run() 
+namespace Dune
+{
+  namespace Fem
   {
-    hexaTest();
-    tetraTest();
-    prismTest();
-    triangleTest();
-    quadTest();
-  }
 
-  void CacheProvider_Test::prismTest()
-  {
-#ifdef USE_PRISMGRID 
-    const int dim = 3;
-    const int codim = 1;
-
-    //typedef PrismGrid<dim, dim> GridType;
-    typedef UGGrid<dim> GridType;
-    typedef Dune::Fem::LeafGridPart< GridType > GridPartType;
-    
-    typedef CacheProvider<GridPartType, codim> CacheProviderType;
-    typedef Quadrature< GridPartType :: ctype, GridPartType :: dimension-1> QuadratureType;
-
-    typedef CacheProviderType::MapperType MapperType;
-    typedef PointProvider<double, dim, codim> PointProviderType;
-    typedef PointProviderType::GlobalPointVectorType PointVectorType;
-
-    GeometryType elemGeo = GeometryType(GeometryType::prism,3);
-
-    // Get reference element
-    const Dune::ReferenceElement<double, dim>& refElem =
-      Dune::ReferenceElements<double, dim>::general(elemGeo);
-    
-    // Loop over all faces
-    for (int i = 0; i < refElem.size(codim); ++i) 
+    void CacheProvider_Test::run ()
     {
-      GeometryType faceGeo = (refElem.size(i,codim,dim) == dim) ? 
-          GeometryType(GeometryType::simplex,2) :
-          GeometryType(GeometryType::cube,2);
+      hexaTest();
+      tetraTest();
+      prismTest();
+      triangleTest();
+      quadTest();
+    }
+
+    void CacheProvider_Test::prismTest ()
+    {
+#ifdef USE_PRISMGRID
+      const int dim = 3;
+      const int codim = 1;
+
+      //typedef PrismGrid<dim, dim> GridType;
+      typedef UGGrid< dim > GridType;
+      typedef Dune::Fem::LeafGridPart< GridType > GridPartType;
+
+      typedef CacheProvider< GridPartType, codim > CacheProviderType;
+      typedef Quadrature< GridPartType::ctype, GridPartType::dimension-1 > QuadratureType;
+
+      typedef CacheProviderType::MapperType MapperType;
+      typedef PointProvider< double, dim, codim > PointProviderType;
+      typedef PointProviderType::GlobalPointVectorType PointVectorType;
+
+      GeometryType elemGeo = GeometryType( GeometryType::prism, 3 );
+
+      // Get reference element
+      const Dune::ReferenceElement< double, dim > &refElem
+        = Dune::ReferenceElements< double, dim >::general( elemGeo );
+
+      // Loop over all faces
+      for( int i = 0; i < refElem.size( codim ); ++i )
+      {
+        GeometryType faceGeo = (refElem.size( i, codim, dim ) == dim) ?
+                               GeometryType( GeometryType::simplex, 2 ) :
+                               GeometryType( GeometryType::cube, 2 );
+
+        // Build quadrature
+        QuadratureType quad( faceGeo, 3 );
+
+        // Ask for one mapper so that the points get registered
+        CacheProviderType::getMapper( quad, elemGeo, 0, 0 );
+
+        const PointVectorType &points
+          = PointProviderType::getPoints( quad.id(), elemGeo );
+
+        const MapperType &m
+          = CacheProviderType::getMapper( quad, elemGeo, i, 0 );
+
+        _test( m.size() == (size_t) quad.nop());
+
+        // Loop over all points
+        for( size_t j = 0; j < m.size(); ++j )
+          for( int d = 0; d < dim; ++d )
+            _floatTest( points[ m[ j ] ][ d ],
+                        refElem.global< codim >( quad.point( j ), i, codim )[ d ] );
+
+      }
+#endif
+    }
+
+    void CacheProvider_Test::hexaTest ()
+    {
+#ifdef ENABLE_ALUGRID
+      const int dim = 3;
+      const int codim = 1;
+
+      typedef ALUCubeGrid< 3, 3 > GridType;
+      typedef Dune::Fem::LeafGridPart< GridType > GridPartType;
+      typedef CacheProvider< GridPartType, codim > CacheProviderType;
+      typedef Quadrature< GridPartType::ctype, GridPartType::dimension-1 > QuadratureType;
+      //typedef CacheProviderType::QuadratureType QuadratureType;
+      typedef CacheProviderType::MapperType MapperType;
+      typedef PointProvider< double, dim, codim > PointProviderType;
+      typedef PointProviderType::GlobalPointVectorType PointVectorType;
+
+      GeometryType elemGeo = GeometryType( GeometryType::cube, 3 );
+      GeometryType faceGeo = GeometryType( GeometryType::cube, 2 );
+
+      // Get reference element
+      const Dune::ReferenceElement< double, dim > &refElem
+        = Dune::ReferenceElements< double, dim >::general( elemGeo );
 
       // Build quadrature
-      QuadratureType quad(faceGeo, 3);
+      QuadratureType quad( faceGeo, 3 );
 
       // Ask for one mapper so that the points get registered
-      CacheProviderType::getMapper(quad, elemGeo, 0, 0);
+      CacheProviderType::getMapper( quad, elemGeo, 0, 0 );
 
-      const PointVectorType& points =
-        PointProviderType::getPoints(quad.id(), elemGeo);
+      const PointVectorType &points
+        = PointProviderType::getPoints( quad.id(), elemGeo );
 
-      const MapperType& m = 
-        CacheProviderType::getMapper(quad, elemGeo, i, 0);
-      
-      _test(m.size() == (size_t) quad.nop());
-      
-      // Loop over all points
-      for (size_t j = 0; j < m.size(); ++j) 
+      // Loop over all faces
+      for( int i = 0; i < refElem.size( codim ); ++i )
       {
-        for (int d = 0; d < dim; ++d) {
-          _floatTest(points[m[j]][d], 
-                     refElem.global<codim>(quad.point(j), i, codim)[d]);
-        }
+        const MapperType &m
+          = CacheProviderType::getMapper( quad, elemGeo, i, 0 );
+
+        _test( m.size() == (size_t) quad.nop());
+        // Loop over all points
+        for( size_t j = 0; j < m.size(); ++j )
+          for( int d = 0; d < dim; ++d )
+            _floatTest( points[ m[ j ] ][ d ],
+                        refElem.global< codim >( quad.point( j ), i, codim )[ d ] );
+
       }
-
-    }
 #endif
-  }
+    }
 
-  void CacheProvider_Test::hexaTest()
-  {
+    void CacheProvider_Test::tetraTest ()
+    {
 #ifdef ENABLE_ALUGRID
-    const int dim = 3;
-    const int codim = 1;
+      const int dim = 3;
+      const int codim = 1;
 
-    typedef ALUCubeGrid< 3, 3 > GridType;
-    typedef Dune::Fem::LeafGridPart< GridType > GridPartType;
-    typedef CacheProvider<GridPartType, codim> CacheProviderType;
-    typedef Quadrature< GridPartType :: ctype, GridPartType :: dimension-1> QuadratureType;
-    //typedef CacheProviderType::QuadratureType QuadratureType;
-    typedef CacheProviderType::MapperType MapperType;
-    typedef PointProvider<double, dim, codim> PointProviderType;
-    typedef PointProviderType::GlobalPointVectorType PointVectorType;
+      typedef ALUSimplexGrid< 3, 3 > GridType;
+      typedef Dune::Fem::LeafGridPart< GridType > GridPartType;
+      typedef CacheProvider< GridPartType, codim > CacheProviderType;
+      //typedef CacheProviderType::QuadratureType QuadratureType;
+      typedef Quadrature< GridPartType::ctype, GridPartType::dimension-1 > QuadratureType;
+      typedef CacheProviderType::MapperType MapperType;
+      typedef PointProvider< double, dim, codim > PointProviderType;
+      typedef PointProviderType::GlobalPointVectorType PointVectorType;
 
-    GeometryType elemGeo = GeometryType(GeometryType::cube,3);
-    GeometryType faceGeo = GeometryType(GeometryType::cube,2);
+      GeometryType elemGeo = GeometryType( GeometryType::simplex, 3 );
+      GeometryType faceGeo = GeometryType( GeometryType::simplex, 2 );
 
-    // Get reference element
-    const Dune::ReferenceElement<double, dim>& refElem =
-      Dune::ReferenceElements<double, dim>::general(elemGeo);
-    
-    // Build quadrature
-    QuadratureType quad(faceGeo, 3);
+      // Get reference element
+      const ReferenceElement< double, dim > &refElem
+        = ReferenceElements< double, dim >::general( elemGeo );
 
-    // Ask for one mapper so that the points get registered
-    CacheProviderType::getMapper(quad, elemGeo, 0, 0);
+      // Build quadrature
+      QuadratureType quad( faceGeo, 3 );
 
-    const PointVectorType& points =
-      PointProviderType::getPoints(quad.id(), elemGeo);
+      // Ask for one mapper so that the points get registered
+      CacheProviderType::getMapper( quad, elemGeo, 0, 0 );
 
-    // Loop over all faces
-    for (int i = 0; i < refElem.size(codim); ++i) {
-      const MapperType& m = 
-        CacheProviderType::getMapper(quad, elemGeo, i, 0);
-      
-      _test(m.size() == (size_t) quad.nop());
-      // Loop over all points
-      for (size_t j = 0; j < m.size(); ++j) {
-        for (int d = 0; d < dim; ++d) {
-          _floatTest(points[m[j]][d], 
-                     refElem.global<codim>(quad.point(j), i, codim)[d]);
-        }
+      const PointVectorType &points
+        = PointProviderType::getPoints( quad.id(), elemGeo );
+
+      // Loop over all faces
+      for( int i = 0; i < refElem.size( codim ); ++i )
+      {
+        const MapperType &m = CacheProviderType::getMapper( quad, elemGeo, i, 0 );
+
+        _test( m.size() == (size_t) quad.nop());
+        // Loop over all points
+        for( size_t j = 0; j < m.size(); ++j )
+          for( int d = 0; d < dim; ++d )
+            _floatTest( points[ m[ j ] ][ d ],
+                        refElem.global< codim >( quad.point( j ), i, codim )[ d ] );
+
       }
-
-    }
 #endif
-  }
-
-  void CacheProvider_Test::tetraTest()
-  {
-#ifdef ENABLE_ALUGRID
-    const int dim = 3;
-    const int codim = 1;
-
-    typedef ALUSimplexGrid< 3, 3 > GridType;
-    typedef Dune::Fem::LeafGridPart< GridType > GridPartType;
-    typedef CacheProvider<GridPartType, codim> CacheProviderType;
-    //typedef CacheProviderType::QuadratureType QuadratureType;
-    typedef Quadrature< GridPartType :: ctype, GridPartType :: dimension-1> QuadratureType;
-    typedef CacheProviderType::MapperType MapperType;
-    typedef PointProvider<double, dim, codim> PointProviderType;
-    typedef PointProviderType::GlobalPointVectorType PointVectorType;
-
-    GeometryType elemGeo = GeometryType(GeometryType::simplex,3);
-    GeometryType faceGeo = GeometryType(GeometryType::simplex,2);
-
-    // Get reference element
-    const ReferenceElement<double, dim>& refElem =
-      ReferenceElements<double, dim>::general(elemGeo);
-    
-    // Build quadrature
-    QuadratureType quad(faceGeo, 3);
-
-    // Ask for one mapper so that the points get registered
-    CacheProviderType::getMapper(quad, elemGeo, 0, 0);
-
-    const PointVectorType& points =
-      PointProviderType::getPoints(quad.id(), elemGeo);
-
-    // Loop over all faces
-    for (int i = 0; i < refElem.size(codim); ++i) {
-      const MapperType& m = CacheProviderType::getMapper(quad, elemGeo, i, 0);
-      
-      _test(m.size() == (size_t) quad.nop());
-      // Loop over all points
-      for (size_t j = 0; j < m.size(); ++j) {
-        for (int d = 0; d < dim; ++d) {
-          _floatTest(points[m[j]][d], 
-                     refElem.global<codim>(quad.point(j), i, codim)[d]);
-        }
-      }
     }
-#endif
-  }
 
-  void CacheProvider_Test::triangleTest()
-  {
+    void CacheProvider_Test::triangleTest ()
+    {
 #ifdef ENALBE_ALBERTA
-    const int dim = 2;
-    const int codim = 1;
+      const int dim = 2;
+      const int codim = 1;
 
-    typedef AlbertaGrid< dim > GridType;
-    typedef Dune::Fem::LeafGridPart< GridType > GridPartType;
-    typedef CacheProvider<GridPartType, codim> CacheProviderType;
-    //typedef CacheProviderType::QuadratureType QuadratureType;
-    typedef Quadrature< GridPartType :: ctype, GridPartType :: dimension-1> QuadratureType;
-    typedef CacheProviderType::MapperType MapperType;
-    typedef PointProvider<double, dim, codim> PointProviderType;
-    typedef PointProviderType::GlobalPointVectorType PointVectorType;
+      typedef AlbertaGrid< dim > GridType;
+      typedef Dune::Fem::LeafGridPart< GridType > GridPartType;
+      typedef CacheProvider< GridPartType, codim > CacheProviderType;
+      //typedef CacheProviderType::QuadratureType QuadratureType;
+      typedef Quadrature< GridPartType::ctype, GridPartType::dimension-1 > QuadratureType;
+      typedef CacheProviderType::MapperType MapperType;
+      typedef PointProvider< double, dim, codim > PointProviderType;
+      typedef PointProviderType::GlobalPointVectorType PointVectorType;
 
-    GeometryType elemGeo = GeometryType(GeometryType::simplex,2);
-    GeometryType faceGeo = GeometryType(GeometryType::simplex,1);
+      GeometryType elemGeo = GeometryType( GeometryType::simplex, 2 );
+      GeometryType faceGeo = GeometryType( GeometryType::simplex, 1 );
 
-    // Get reference element
-    const Dune::ReferenceElement<double, dim>& refElem =
-      Dune::ReferenceElements<double, dim>::general(elemGeo);
-    
-    // Build quadrature
-    QuadratureType quad(faceGeo, 3);
+      // Get reference element
+      const Dune::ReferenceElement< double, dim > &refElem
+        = Dune::ReferenceElements< double, dim >::general( elemGeo );
 
-    // Ask for one mapper so that the points get registered
-    CacheProviderType::getMapper(quad, elemGeo, 0, 0);
+      // Build quadrature
+      QuadratureType quad( faceGeo, 3 );
 
-    const PointVectorType& points =
-      PointProviderType::getPoints(quad.id(), elemGeo);
+      // Ask for one mapper so that the points get registered
+      CacheProviderType::getMapper( quad, elemGeo, 0, 0 );
 
-    // Loop over all faces
-    for (int i = 0; i < refElem.size(codim); ++i) {
-      const MapperType& m = CacheProviderType::getMapper(quad, elemGeo, i, 0);
-      
-      _test(m.size() == (size_t) quad.nop());
-      // Loop over all points
-      for (size_t j = 0; j < m.size(); ++j) {
-        for (int d = 0; d < dim; ++d) {
-          _floatTest(points[m[j]][d], 
-                     refElem.global<codim>(quad.point(j), i, codim)[d]);
-        }
+      const PointVectorType &points
+        = PointProviderType::getPoints( quad.id(), elemGeo );
+
+      // Loop over all faces
+      for( int i = 0; i < refElem.size( codim ); ++i )
+      {
+        const MapperType &m = CacheProviderType::getMapper( quad, elemGeo, i, 0 );
+
+        _test( m.size() == (size_t) quad.nop());
+        // Loop over all points
+        for( size_t j = 0; j < m.size(); ++j )
+          for( int d = 0; d < dim; ++d )
+            _floatTest( points[ m[ j ] ][ d ],
+                        refElem.global< codim >( quad.point( j ), i, codim )[ d ] );
+
       }
-    }
 #endif
-  }
+    }
 
-  void CacheProvider_Test::quadTest()
-  {
-    const int dim = 2;
-    const int codim = 1;
+    void CacheProvider_Test::quadTest ()
+    {
+      const int dim = 2;
+      const int codim = 1;
 
-    typedef SGrid< dim, dim > GridType;
-    typedef Dune::Fem::LeafGridPart< GridType > GridPartType;
-    typedef CacheProvider<GridPartType, codim> CacheProviderType;
-    typedef Quadrature< GridPartType :: ctype, GridPartType :: dimension-1> QuadratureType;
-    //typedef CacheProviderType::QuadratureType QuadratureType;
-    typedef CacheProviderType::MapperType MapperType;
-    typedef PointProvider<double, dim, codim> PointProviderType;
-    typedef PointProviderType::GlobalPointVectorType PointVectorType;
+      typedef SGrid< dim, dim > GridType;
+      typedef Dune::Fem::LeafGridPart< GridType > GridPartType;
+      typedef CacheProvider< GridPartType, codim > CacheProviderType;
+      typedef Quadrature< GridPartType::ctype, GridPartType::dimension-1 > QuadratureType;
+      //typedef CacheProviderType::QuadratureType QuadratureType;
+      typedef CacheProviderType::MapperType MapperType;
+      typedef PointProvider< double, dim, codim > PointProviderType;
+      typedef PointProviderType::GlobalPointVectorType PointVectorType;
 
-    GeometryType elemGeo = GeometryType(GeometryType::cube,2);
-    GeometryType faceGeo = GeometryType(GeometryType::cube,1);
+      GeometryType elemGeo = GeometryType( GeometryType::cube, 2 );
+      GeometryType faceGeo = GeometryType( GeometryType::cube, 1 );
 
-    // Get reference element
-    const Dune::ReferenceElement<double, dim>& refElem =
-      Dune::ReferenceElements<double, dim>::general(elemGeo);
-    
-    // Build quadrature
-    QuadratureType quad(faceGeo, 5);
+      // Get reference element
+      const Dune::ReferenceElement< double, dim > &refElem
+        = Dune::ReferenceElements< double, dim >::general( elemGeo );
 
-    // Ask for one mapper so that the points get registered
-    CacheProviderType::getMapper(quad, elemGeo, 0, 0);
+      // Build quadrature
+      QuadratureType quad( faceGeo, 5 );
 
-    const PointVectorType& points =
-      PointProviderType::getPoints(quad.id(), elemGeo);
+      // Ask for one mapper so that the points get registered
+      CacheProviderType::getMapper( quad, elemGeo, 0, 0 );
 
-    // Loop over all faces
-    for (int i = 0; i < refElem.size(codim); ++i) {
-      const MapperType& m = CacheProviderType::getMapper(quad, elemGeo, i, 0);
-      
-      _test(m.size() == (size_t) quad.nop());
-      // Loop over all points
-      for (size_t j = 0; j < m.size(); ++j) {
-        for (int d = 0; d < dim; ++d) {
-          _floatTest(points[m[j]][d], 
-                     refElem.global<codim>(quad.point(j), i, codim)[d]);
-        }
+      const PointVectorType &points
+        = PointProviderType::getPoints( quad.id(), elemGeo );
+
+      // Loop over all faces
+      for( int i = 0; i < refElem.size( codim ); ++i )
+      {
+        const MapperType &m = CacheProviderType::getMapper( quad, elemGeo, i, 0 );
+
+        _test( m.size() == (size_t) quad.nop());
+        // Loop over all points
+        for( size_t j = 0; j < m.size(); ++j )
+          for( int d = 0; d < dim; ++d )
+            _floatTest( points[ m[ j ] ][ d ],
+                        refElem.global< codim >( quad.point( j ), i, codim )[ d ] );
       }
     }
-  }
 
-  } // end namespace Fem
-} // end namespace Dune
+  } // namespace Fem
+
+} // namespace Dune
