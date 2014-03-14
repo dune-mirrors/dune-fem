@@ -428,8 +428,14 @@ namespace Dune
       
     public:
       //! create DiscreteOperator with a LocalOperator 
-      explicit DataCollector ( LocalDataCollectImp & ldc )
-        : ldc_ (ldc) 
+      DataCollector (GridType & grid, 
+                     DofManagerType & dm, 
+                     LocalDataCollectImp & ldc, 
+                     const ReadWriteType rwType,
+                     int numChildren = 8) 
+        : grid_(grid) , dm_ ( dm ), ldc_ (ldc) 
+        , rwType_( rwType )
+        , numChildren_(numChildren) 
       {}
 
       //! Desctructor 
@@ -447,7 +453,7 @@ namespace Dune
         COType *newLDCOp = new COType ( ldc_  , const_cast<CopyType &> (op).getLocalOp() );
         typedef DataCollector <GridType, COType> OPType;
        
-        OPType *dcOp = new OPType ( *newLDCOp );    
+        OPType *dcOp = new OPType ( grid_ , dm_ , *newLDCOp, rwType_ );    
 
         // memorize this new generated object because is represents this
         // operator and is deleted if this operator is deleted
@@ -466,7 +472,7 @@ namespace Dune
         COType *newLDCOp = new COType ( ldc_ + op.getLocalOp() );
         typedef DataCollector <GridType, COType> OPType;
        
-        OPType *dcOp = new OPType ( *newLDCOp );    
+        OPType *dcOp = new OPType ( grid_ , dm_ , *newLDCOp, rwType_ );    
 
         // memorize this new generated object because is represents this
         // operator and is deleted if this operator is deleted
@@ -485,7 +491,7 @@ namespace Dune
         COType *newLDCOp = new COType ( ldc_ + op.getLocalInterfaceOp() );
         typedef DataCollector<GridType, COType> OPType;
        
-        OPType *dcOp = new OPType ( *newLDCOp );  
+        OPType *dcOp = new OPType ( grid_ , dm_ , *newLDCOp, rwType_ );  
 
         // memorize this new generated object because is represents this
         // operator and is deleted if this operator is deleted
@@ -518,13 +524,62 @@ namespace Dune
         return ldc_;
       }
 
+      //! return true if data collector is writing data instead of reading 
+      bool writeData() const  { return rwType_ == DataCollectorTraits :: writeData ; }
+
       //! apply, if this operator is in write status the inlineData is called
       //! else xtractData is called 
       void apply ( ObjectStreamType & str, const EntityType & entity ) const 
       {
+#if HAVE_DUNE_ALUGRID
         ParamType p( &str , &entity );
         // apply local operators 
         ldc_.apply( p );
+#else 
+        // old version with dune-grid ALUGrid version
+        if( writeData() ) 
+          inlineData(str, entity );
+        else 
+          xtractData(str, entity );
+#endif
+      }
+
+      //! write all data of all entities blowe this Entity to the stream 
+      void inlineData (ObjectStreamType & str, const EntityType & entity ) const 
+      {
+        const int mxlvl = grid_.maxLevel();
+
+        // read/write macro element
+        inlineLocal(str, entity );
+        
+        {
+          typedef typename EntityType::HierarchicIterator HierarchicIteratorType;
+          const HierarchicIteratorType endit  = entity.hend( mxlvl );
+          for(HierarchicIteratorType it = entity.hbegin( mxlvl ); 
+              it != endit; ++it )
+          {
+            inlineLocal(str, *it); 
+          }
+        }
+      }
+
+      //! read all data of all entities blowe this Entity from the stream 
+      void xtractData (ObjectStreamType & str, const EntityType & entity ) const 
+      {
+        const int mxlvl = grid_.maxLevel();
+
+        // read/write macro element
+        xtractLocal(str, entity );
+        
+        {
+          typedef typename EntityType::HierarchicIterator HierarchicIteratorType;
+          const HierarchicIteratorType endit  = entity.hend( mxlvl );
+          for(HierarchicIteratorType it = entity.hbegin( mxlvl ); 
+              it != endit; ++it )
+          {
+            xtractLocal(str, *it); 
+          }
+        }
       }
       
     private:
@@ -535,7 +590,7 @@ namespace Dune
         COType *newLDCOp = new COType ( ldc_ );
         typedef DataCollector <GridType, COType> OPType;
        
-        OPType *dcOp = new OPType ( *newLDCOp );    
+        OPType *dcOp = new OPType ( grid_ , dm_ , *newLDCOp, rwType_ );    
 
         // memorize this new generated object because is represents this
         // operator and is deleted if this operator is deleted
@@ -544,8 +599,40 @@ namespace Dune
         return dcOp;
       }
      
+      // write data of entity 
+      void inlineLocal(ObjectStreamType & str, const EntityType& entity ) const 
+      {
+        assert( writeData() );
+
+        ParamType p( &str , &entity );
+        // apply local operators 
+        ldc_.apply( p );
+      }
+      
+      // read data of entity 
+      void xtractLocal(ObjectStreamType & str, const EntityType& entity ) const 
+      {
+        assert( ! writeData() );
+        
+        ParamType p( &str , &entity );
+        // apply local operators 
+        ldc_.apply( p );
+      }
+      
+      //! corresponding grid 
+      GridType &grid_;
+
+      //! DofManager corresponding to grid
+      DofManagerType &dm_;
+      
       //! Local Data Writer and Reader 
       LocalDataCollectImp &ldc_;
+
+      //! determines whether data is read or written
+      const ReadWriteType rwType_;
+
+      // number of childs one element can have 
+      const int numChildren_;
     };
 
 
