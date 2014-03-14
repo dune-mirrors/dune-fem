@@ -1026,8 +1026,9 @@ namespace Dune
         resizeMemory();
       }
       
-      /** \brief reserve memory for at least nsize elements */ 
-      void reserveMemory ( int nsize ) 
+      /** \brief reserve memory for at least nsize elements, 
+       *         dummy is needed for dune-grid ALUGrid version */ 
+      void reserveMemory ( int nsize, bool dummy = false ) 
       {
         int localChunkSize = std::max(nsize, defaultChunkSize_ );
         assert( localChunkSize > 0 );
