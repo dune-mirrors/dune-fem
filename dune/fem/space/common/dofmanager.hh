@@ -1228,8 +1228,7 @@ namespace Dune
       }
 
       //! unpacks all data attached of this entity from message buffer 
-
-      void scatter ( XtractStreamImplType& str, ConstElementType& element, size_t newElements )
+      void xtractData( XtractStreamImplType& str, ConstElementType& element, size_t newElements )
       {
         // reserve memory for elements to be read 
         reserveMemory( newElements );
