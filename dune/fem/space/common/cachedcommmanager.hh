@@ -125,7 +125,7 @@ namespace Dune
       {
         typedef DependencyCache < Space > DependencyCacheType ;
 
-#if HAVE_DUNE_ALUGRID
+#if HAVE_DUNE_ALUGRID && ! HAVE_ALUGRID
         typedef MPAccessInterfaceType :: NonBlockingExchange  NonBlockingExchange;
 
         template <class DiscreteFunction>
@@ -267,7 +267,7 @@ namespace Dune
           // resize buffer vector 
           buffer_.resize( nLinks );
 
-#if HAVE_DUNE_ALUGRID
+#if HAVE_DUNE_ALUGRID && ! HAVE_ALUGRID
           // get non-blocking exchange object from mpAccess including message tag
           nonBlockingExchange_ = dependencyCache_.mpAccess().nonBlockingExchange( getMessageTag() );
 
@@ -312,7 +312,7 @@ namespace Dune
           // take time 
           Dune::Timer recvTimer ;
 
-#if HAVE_DUNE_ALUGRID
+#if HAVE_DUNE_ALUGRID && ! HAVE_ALUGRID
           // unpack data object  
           Unpack< DiscreteFunction, Operation > unpackData( *this, discreteFunction );
 
@@ -335,7 +335,7 @@ namespace Dune
           // store time needed for sending
           exchangeTime_ += recvTimer.elapsed();
 
-#if HAVE_DUNE_ALUGRID
+#if HAVE_DUNE_ALUGRID && ! HAVE_ALUGRID
           delete nonBlockingExchange_;
           nonBlockingExchange_ = 0;
 #endif
