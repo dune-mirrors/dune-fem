@@ -22,6 +22,11 @@
 #include <dune/fem/space/mapper/dofmapper.hh>
 #include <dune/fem/storage/singletonlist.hh>
 
+#include <dune/grid/common/datahandleif.hh>
+#if HAVE_DUNE_ALUGRID
+#include <dune/alugrid/common/ldbhandleif.hh>
+#endif
+
 namespace Dune
 {
 
@@ -790,7 +795,12 @@ namespace Dune
     */
     // --DofManager 
     template< class Grid > 
-    class DofManager : public IsDofManager
+    class DofManager : public IsDofManager,
+#if HAVE_DUNE_ALUGRID
+      public LoadBalanceHandleWithReserveAndCompress,
+#endif
+      // DofManager behaves like a communication data handle for load balancing
+      public CommDataHandleIF< DofManager< Grid >, char > 
     {
       typedef DofManager< Grid > ThisType;
 
@@ -803,8 +813,8 @@ namespace Dune
 
     public:
       // types of inlining and xtraction stream types 
-      typedef typename GridObjectStreamTraits< GridType >::InStreamType XtractStreamType;
-      typedef typename GridObjectStreamTraits< GridType >::OutStreamType InlineStreamType;
+      typedef MessageBufferIF< typename GridObjectStreamTraits< GridType >::InStreamType  >  XtractStreamType;
+      typedef MessageBufferIF< typename GridObjectStreamTraits< GridType >::OutStreamType >  InlineStreamType;
 
       // types of data collectors 
       typedef DataCollectorInterface<GridType, XtractStreamType >   DataXtractorType;
@@ -1014,14 +1024,10 @@ namespace Dune
         resizeMemory();
       }
       
-      /** \brief reserve memory for at least nsize elements 
-          this will increase the sequence counter by 1 
-          if useNsize is true, then nsize will be used as chunk size 
-          otherwise max( nsize, defaultChunkSize_ )
-      */ 
-      void reserveMemory (int nsize, bool useNsize = false ) 
+      /** \brief reserve memory for at least nsize elements */ 
+      void reserveMemory ( int nsize ) 
       {
-        int localChunkSize = (useNsize) ? nsize : std::max(nsize, defaultChunkSize_ );
+        int localChunkSize = std::max(nsize, defaultChunkSize_ );
         assert( localChunkSize > 0 );
 
         // reserves (size + chunkSize * elementMemory), see above 
@@ -1156,20 +1162,55 @@ namespace Dune
         dataXtractor_.clear();
       }
 
-      //! packs all data of this entity en and all child entities  
-      void inlineData ( InlineStreamType& str, ConstElementType& element )
+      //////////////////////////////////////////////////////////
+      //  CommDataHandleIF methods 
+      //////////////////////////////////////////////////////////
+
+      //! the dof manager only transfers element data during load balancing
+      bool contains( const int dim, const int codim ) const 
+      {
+        return ( codim == 0 );
+      }
+
+      //! fixed size is false 
+      bool fixedsize( const int dim, const int codim ) const 
+      {
+        return false;
+      } 
+
+      //! for convenience 
+      template <class Entity>
+      size_t size( const Entity& ) const 
+      {
+        DUNE_THROW(NotImplemented,"DofManager::size should not be called!");
+        return 0;
+      }
+
+      //! packs all data attached to this entity 
+      void gather( InlineStreamType& str, ConstElementType& element ) const
       {
         dataInliner_.apply(str, element);
       }
 
-      //! unpacks all data of this entity from message buffer 
-      void xtractData ( XtractStreamType & str, ConstElementType& element, size_t newElements )
+      template <class MessageBuffer, class Entity>
+      void gather( MessageBuffer& str, const Entity& entity ) const 
       {
-        // reserve memory for new elements 
-        reserveMemory(newElements , true );
+        DUNE_THROW(NotImplemented,"DofManager::gather( entity ) with codim > 0 not implemented");
+      }
+
+      //! unpacks all data attached of this entity from message buffer 
+      void scatter ( XtractStreamType& str, ConstElementType& element, size_t )
+      {
         // here the elements already have been created 
         // that means we can xtract data
         dataXtractor_.apply(str, element);
+      }
+
+      //! unpacks all data of this entity from message buffer 
+      template <class MessageBuffer, class Entity>
+      void scatter ( MessageBuffer & str, const Entity& entity, size_t )
+      {
+        DUNE_THROW(NotImplemented,"DofManager::scatter( entity ) with codim > 0 not implemented");
       }
 
       //********************************************************
