@@ -811,10 +811,12 @@ namespace Dune
       //! type of Grid this DofManager belongs to 
       typedef Grid GridType;
 
+      typedef typename GridObjectStreamTraits< GridType >::InStreamType  XtractStreamImplType;
+      typedef typename GridObjectStreamTraits< GridType >::OutStreamType InlineStreamImplType;
     public:
       // types of inlining and xtraction stream types 
-      typedef MessageBufferIF< typename GridObjectStreamTraits< GridType >::InStreamType  >  XtractStreamType;
-      typedef MessageBufferIF< typename GridObjectStreamTraits< GridType >::OutStreamType >  InlineStreamType;
+      typedef MessageBufferIF< XtractStreamImplType > XtractStreamType;
+      typedef MessageBufferIF< InlineStreamImplType > InlineStreamType;
 
       // types of data collectors 
       typedef DataCollectorInterface<GridType, XtractStreamType >   DataXtractorType;
@@ -1212,6 +1214,31 @@ namespace Dune
       {
         DUNE_THROW(NotImplemented,"DofManager::scatter( entity ) with codim > 0 not implemented");
       }
+
+#if HAVE_ALUGRID 
+      ///////////////////////////////////////////////////////
+      // old implementation for convenience, when using dune-grid ALUGrid version
+      ///////////////////////////////////////////////////////
+      //! packs all data attached to this entity 
+      void inlineData( InlineStreamImplType& str, ConstElementType& element ) const
+      {
+        InlineStreamType buffer( str ); 
+        dataInliner_.apply( buffer, element);
+      }
+
+      //! unpacks all data attached of this entity from message buffer 
+
+      void scatter ( XtractStreamImplType& str, ConstElementType& element, size_t newElements )
+      {
+        // reserve memory for elements to be read 
+        reserveMemory( newElements );
+
+        XtractStreamType buffer( str );
+        // here the elements already have been created 
+        // that means we can xtract data
+        dataXtractor_.apply( buffer, element);
+      }
+#endif
 
       //********************************************************
       // Interface for PersistentObjects 

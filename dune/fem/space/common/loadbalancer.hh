@@ -287,7 +287,7 @@ namespace Dune
             localPair.first = di ;
           
             typedef DataCollector<GridType, LocalInlinerType > DataCollectorImp;
-            DataCollectorImp* gdi = new DataCollectorImp( *di );
+            DataCollectorImp* gdi = new DataCollectorImp( grid_, dm_ , *di, di->readWriteInfo() );
             collPair.first = gdi ;
             
             dm_.addDataInliner( *gdi );
@@ -302,7 +302,7 @@ namespace Dune
             localPair.second = dx ;
 
             typedef DataCollector<GridType,LocalXtractorType> DataCollectorImp;
-            DataCollectorImp* gdx = new DataCollectorImp( *dx );
+            DataCollectorImp* gdx = new DataCollectorImp( grid_, dm_ , *dx, dx->readWriteInfo() );
             collPair.second = gdx ;
             
             dm_.addDataXtractor( *gdx );
