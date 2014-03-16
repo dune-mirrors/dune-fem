@@ -168,7 +168,7 @@ namespace Dune
           typedef typename Grid :: LevelGridView MacroView ;
           typedef typename MacroView :: template Codim< 0 > :: Iterator Iterator ;
           typedef typename Iterator :: Entity Entity;
-          const MacroView& macroView = grid.levelView( 0 );
+          const MacroView& macroView = grid.levelGridView( 0 );
           const Iterator end = macroView.template end< 0 > ();
           for( Iterator it = macroView.template begin< 0 > (); it != end; ++it )
           {

@@ -22,7 +22,7 @@ dune-fem/doc/doxygen.out. So this file should be empty...
 - A new implementation can be marked as such by adding \\newimplementation to
   the documentation. This helps others to get an overview over new additions.
   Again, a related page linking all new classes is generated.
-- Global parameters (using the Dune::Parameter class) should be
+- Global parameters (using the Dune::Fem::Parameter class) should be
   documented (e.g. in the documentation of the class using this
   parameter) through the command 
   \c femparameter
@@ -114,7 +114,7 @@ implementation class:
 If the function has been overloaded, the complete function declaration must be
 given, like this:
 \verbatim
-/** \copydoc Dune::LocalFunctionInterface::evaluate(const QuadratureType &quadrature,const int quadPoint,RangeType &ret) const */
+/** \copydoc Dune::Fem::LocalFunctionInterface::evaluate(const QuadratureType &quadrature,const int quadPoint,RangeType &ret) const */
 \endverbatim
 Please note that the trailing "const" is important (otherwise Doxygen will look
 for a non-nonst version of the member).

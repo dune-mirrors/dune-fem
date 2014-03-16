@@ -3,6 +3,11 @@
 #include <cassert>
 #include <iostream>
 
+#if not DUNE_GRID_EXPERIMENTAL_GRID_EXTENSIONS
+// do nothing in this test if experimental_grid_extension is not activated
+int main () { return 0; }
+#else
+
 #include <dune/common/exceptions.hh>
 
 #include <dune/geometry/referenceelements.hh>
@@ -198,3 +203,4 @@ catch( ... )
   std::cerr << "Generic exception!" << std::endl;
   return 2;
 }
+#endif // #if not DUNE_GRID_EXPERIMENTAL_GRID_EXTENSIONS

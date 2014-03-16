@@ -151,7 +151,7 @@ namespace Dune
         localMatrix().clearRow( localRow );
       }
 
-      /** \copydoc Dune::Fem::LocalMatrixInterface::clearRow */
+      /** \copydoc Dune::Fem::LocalMatrixInterface::clearCol */
       inline void clearCol ( const int localCol )
       {
         localMatrix().clearCol( localCol );
@@ -197,10 +197,10 @@ namespace Dune
       /** \copydoc Dune::Fem::LocalMatrixInterface::multiplyAdd */
       template <class DomainLocalFunctionImp, 
                 class RangeLocalFunctionImp>
-      inline void multiplyAdd(const DomainLocalFunctionImp& dLf,
-                              RangeLocalFunctionImp& rLf)
+      inline void multiplyAdd(const DomainLocalFunctionImp& lhs,
+                              RangeLocalFunctionImp& rhs)
       {
-        localMatrix().multiplyAdd( dLf, rLf); 
+        localMatrix().multiplyAdd( lhs, rhs );
       }
       
       /** \copydoc Dune::Fem::LocalMatrixInterface::domainSpace */

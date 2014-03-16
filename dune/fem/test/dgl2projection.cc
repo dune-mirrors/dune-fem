@@ -3,6 +3,11 @@
 #include <config.h>
 #include <iostream>
 
+#if not DUNE_GRID_EXPERIMENTAL_GRID_EXTENSIONS && defined USE_IDGRIDPART
+// do nothing in this test if experimental_grid_extension is not activated and it is tested for IDGridPart
+int main () { return 0;}
+#else
+
 #include <dune/fem/gridpart/hierarchicgridpart.hh>
 #include <dune/fem/gridpart/adaptiveleafgridpart.hh>
 #include <dune/fem/operator/projection/l2projection.hh>
@@ -207,3 +212,4 @@ int main(int argc, char ** argv)
     return 1;
   }
 }
+#endif // #if not DUNE_GRID_EXPERIMENTAL_GRID_EXTENSIONS && defined USE_IDGRIDPART

@@ -64,7 +64,7 @@ namespace Dune
       //! Constructor
       LevelGridPart ( GridType &grid, const int level )
       : BaseType( grid ),
-        levelView_( grid.levelView( level ) ),
+        levelGridView_( grid.levelGridView( level ) ),
         isetWrapper_( grid, level ),
         level_( level )
       {}
@@ -72,7 +72,7 @@ namespace Dune
       //! Constructor, choosing maxLevel
       explicit LevelGridPart ( GridType &grid )
       : BaseType( grid ),
-        levelView_( grid.levelView( grid.maxLevel() ) ),
+        levelGridView_( grid.levelGridView( grid.maxLevel() ) ),
         isetWrapper_( grid, grid.maxLevel() ),
         level_( grid.maxLevel() )
       {}
@@ -80,7 +80,7 @@ namespace Dune
       //! copy constructor
       LevelGridPart ( const ThisType &other )
       : BaseType( other ),
-        levelView_( other.levelView_ ),
+        levelGridView_( other.levelGridView_ ),
         isetWrapper_( other.grid(), other.level_ ),
         level_( other.level_ )
       {}
@@ -106,7 +106,7 @@ namespace Dune
       typename Traits::template Codim< codim >::template Partition< pitype >::IteratorType
       begin () const
       {
-        return levelView_.template begin< codim, pitype >();
+        return levelGridView_.template begin< codim, pitype >();
       }
 
       //! Begin iterator on the GridPart's level
@@ -122,19 +122,19 @@ namespace Dune
       typename Traits::template Codim< codim >::template Partition< pitype >::IteratorType
       end () const
       {
-        return levelView_.template end< codim, pitype >();
+        return levelGridView_.template end< codim, pitype >();
       }
 
       //! ibegin of corresponding intersection iterator for given entity
       IntersectionIteratorType ibegin ( const EntityCodim0Type &entity ) const
       {
-        return levelView_.ibegin( entity );
+        return levelGridView_.ibegin( entity );
       }
       
       //! iend of corresponding intersection iterator for given entity
       IntersectionIteratorType iend ( const EntityCodim0Type &entity ) const
       {
-        return levelView_.iend( entity );
+        return levelGridView_.iend( entity );
       }
 
       int boundaryId ( const IntersectionType &intersection ) const
@@ -150,11 +150,11 @@ namespace Dune
       void communicate ( CommDataHandleIF< DataHandleImp, DataType > &data,
                          InterfaceType iftype, CommunicationDirection dir ) const
       {
-        levelView_.communicate( data, iftype, dir );
+        levelGridView_.communicate( data, iftype, dir );
       }
 
     private:
-      LevelGridView levelView_;
+      LevelGridView levelGridView_;
       //! GridDefaultIndexSet Wrapper 
       IndexSetType isetWrapper_;
       const int level_;

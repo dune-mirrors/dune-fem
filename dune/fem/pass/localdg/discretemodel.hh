@@ -416,7 +416,7 @@ namespace Dune
         }
       }
 
-      //! \brier empty implementation 
+      //! \brief empty implementation
       void setEntity( const EntityType& en )
       { }
 

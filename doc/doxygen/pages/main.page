@@ -104,12 +104,12 @@ Handling of the degrees of freedom (dof) on locally
 adapted and parallel grids - 
 including dynamic load balancing - 
 is automatically performed by the 
-Dune::DofManager so that very little additional coding 
+Dune::Fem::DofManager so that very little additional coding
 is required from the user. 
-The Dune::AdaptiveLeafIndexSet implements an efficient 
+The Dune::Fem::AdaptiveLeafIndexSet implements an efficient
 reorganization of the dofs during adaptation and grid 
 reorganization. To use this
-feature the Dune::AdaptationManager should be used. 
+feature the Dune::Fem::AdaptationManager should be used.
 
 For handling parallel tasks the
 Dune::CommunicationManager is available which

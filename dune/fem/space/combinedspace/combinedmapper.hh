@@ -116,19 +116,19 @@ namespace Dune
         dm_.addIndexSet( *this );
       }
 
-      /** \copydoc Dune::DofMapper::size const */
+      /** \copydoc Dune::Fem::DofMapper::size const */
       int size () const 
       {
         return mapper1_.size() + mapper2_.size();
       }
 
-      /** \copydoc Dune::DofMapper::contains(const int codim) const */
+      /** \copydoc Dune::Fem::DofMapper::contains(const int codim) const */
       bool contains ( const int codim ) const    
       {
         return ( mapper1_.contains( codim ) || mapper2_.contains( codim ) );
       }
 
-      /** \copydoc Dune::DofMapper::mapToGlobal(const ElementType &entity, const int localDof) const */
+      /** \copydoc Dune::Fem::DofMapper::mapToGlobal(const ElementType &entity, const int localDof) const */
       int mapToGlobal ( const ElementType &entity, const int localDof ) const
       {
         assert( mapper1_.size() == globalOffset_ );
@@ -145,7 +145,7 @@ namespace Dune
         return index;
       }
       
-      /** \copydoc Dune::DofMapper::mapEachEntityDof(const Entity &entity,Functor f) const */
+      /** \copydoc Dune::Fem::DofMapper::mapEachEntityDof(const Entity &entity,Functor f) const */
       template< class Entity, class Functor > 
       void mapEachEntityDof ( const Entity &entity, Functor f ) const
       {
@@ -153,14 +153,14 @@ namespace Dune
         mapper2_.mapEachEntityDof( entity, FunctorWrapper< Functor >( f, mapper1_.numEntityDofs( entity ), globalOffset_) );
       }
       
-      /** \copydoc Dune::DofMapper::maxNumDofs const */
+      /** \copydoc Dune::Fem::DofMapper::maxNumDofs const */
       int maxNumDofs () const
       {
         return mapper1_.maxNumDofs() + mapper2_.maxNumDofs();
       }
 
 
-      /** \copydoc Dune::DofMapper::mapEach(const ElementType &element, Functor f) const */
+      /** \copydoc Dune::Fem::DofMapper::mapEach(const ElementType &element, Functor f) const */
       template< class Functor >
       void mapEach ( const ElementType &element, Functor f ) const
       {
@@ -168,7 +168,7 @@ namespace Dune
         mapper2_.mapEach( element, FunctorWrapper< Functor > (f, mapper1_.numDofs( element ), globalOffset_) );
       }
 
-      /** \copydoc Dune::DofMapper::numDofs(const ElementType &element) const */
+      /** \copydoc Dune::Fem::DofMapper::numDofs(const ElementType &element) const */
       int numDofs ( const ElementType &element ) const
       {
         int nDofs = mapper1_.numDofs( element ) + mapper2_.numDofs( element );
@@ -176,20 +176,20 @@ namespace Dune
         return nDofs;
       }
 
-      /** \copydoc Dune::DofMapper::numEntityDofs(const Entity &entity) const */
+      /** \copydoc Dune::Fem::DofMapper::numEntityDofs(const Entity &entity) const */
       template< class Entity >
       int numEntityDofs ( const Entity &entity ) const
       {
         return mapper1_.numEntityDofs( entity ) + mapper2_.numEntityDofs( entity );
       }
 
-      /** \copydoc Dune::DofMapper::fixedDataSize(int codim) const */
+      /** \copydoc Dune::Fem::DofMapper::fixedDataSize(int codim) const */
       bool fixedDataSize ( int codim ) const
       {
         return mapper1_.fixedDataSize( codim ) && mapper2_.fixedDataSize( codim );
       }
 
-      /** \copydoc Dune::DofMapper::numberOfHoles(const int block) const */
+      /** \copydoc Dune::Fem::DofMapper::numberOfHoles(const int block) const */
       int numberOfHoles(const int block) const 
       {
         const int numBlock1 = mapper1_.numBlocks(); 
@@ -199,7 +199,7 @@ namespace Dune
           return mapper2_.numberOfHoles( block - numBlock1 );
       }
       
-      /** \copydoc Dune::DofMapper::oldIndex(const int hole, const int block) const */
+      /** \copydoc Dune::Fem::DofMapper::oldIndex(const int hole, const int block) const */
       int oldIndex (const int hole, const int block) const 
       { 
         const int numBlock1 = mapper1_.numBlocks(); 
@@ -209,7 +209,7 @@ namespace Dune
           return mapper2_.oldIndex( hole, block - numBlock1 );
       }
         
-      /** \copydoc Dune::DofMapper::newIndex(const int hole, const int block) const */
+      /** \copydoc Dune::Fem::DofMapper::newIndex(const int hole, const int block) const */
       int newIndex (const int hole, const int block) const 
       { 
         const int numBlock1 = mapper1_.numBlocks(); 
@@ -219,13 +219,13 @@ namespace Dune
           return mapper2_.newIndex( hole, block - numBlock1 );
       }
 
-      /** \copydoc Dune::DofMapper::consecutive const */
+      /** \copydoc Dune::Fem::DofMapper::consecutive const */
       bool consecutive () const 
       {
         return mapper1_.consecutive() && mapper2_.consecutive();
       }
 
-      /** \copydoc Dune::DofMapper::oldOffSet(const int block) const */
+      /** \copydoc Dune::Fem::DofMapper::oldOffSet(const int block) const */
       int oldOffSet(const int block) const
       {
         const int numBlock1 = mapper1_.numBlocks();
@@ -235,7 +235,7 @@ namespace Dune
           return mapper2_.oldOffSet( block - numBlock1 ) + oldGlobalOffset_;
       }
 
-      /** \copydoc Dune::DofMapper::offSet(const int block) const */
+      /** \copydoc Dune::Fem::DofMapper::offSet(const int block) const */
       int offSet(const int block) const
       {
         assert( globalOffset_ == mapper1_.size() );

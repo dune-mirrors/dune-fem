@@ -25,6 +25,7 @@ solver_HEADERS = cginverseoperator.hh \
                  multistep.hh \
                  newtoninverseoperator.hh \
                  pardg.hh \
+		 pardginverseoperators.hh \
                  petscsolver.hh \
                  rungekutta.hh \
                  timeprovider.hh \
