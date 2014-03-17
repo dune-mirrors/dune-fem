@@ -396,16 +396,15 @@ int main (int argc, char **argv)
 #endif
 
 #if YGRID
-FieldVector<double, dimw> lang;
- for(int i=0;i<dimw;i++)
-   lang[i]= 1.0;
-  
-  FieldVector<int, dimw> anz;
+  FieldVector<double, dimw> lang;
+  array<int, dimw> anz;
+  std::bitset< dimw > per;  
   for(int i=0;i<dimw;i++)
+  {
+    lang[i]= 1.0;
     anz[i] = 1;
-  FieldVector<bool, dimw> per;
-  for(int i=0;i<dimw;i++)
     per[i] = false; 
+  }
   
   HGridType grid(lang,anz,per,1);
 
