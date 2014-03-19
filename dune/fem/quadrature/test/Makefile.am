@@ -13,9 +13,10 @@ EXTRA_DIST = checkleafcodim1.hh
 LDADD = $(ALL_PKG_LDFLAGS) $(ALL_PKG_LIBS) $(LOCAL_LIBS)
 AM_CPPFLAGS = $(ALL_PKG_CPPFLAGS)
 
-check_PROGRAMS = cachingquadrature
+check_PROGRAMS = cachingquadrature elementquadrature
 
 cachingquadrature_SOURCES = cachingquadrature.cc
+elementquadrature_SOURCES = elementquadrature.cc
 
 include $(top_srcdir)/am/global-rules
 
