@@ -9,7 +9,7 @@ namespace Fem {
 
 /**Define a lumping quadrature for all geometries. Note, however, that
  * this may not make sense for anything else than simplices or maybe
- * hexagonal grids. For simplicial methods the quadrature formula is
+ * hexagonal grids. For simplicial meshes the quadrature formula is
  * exact on linear polynomials and hence the quadrature error is
  * quadratic in the mesh-size. A mass-matrix assembled with the
  * caching quadrature will be diagonal in the context of Lagrange
