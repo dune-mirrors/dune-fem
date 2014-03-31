@@ -1,10 +1,5 @@
 /tester
 /cachingquadrature
-/Makefile
-/Makefile.in
-/.deps
-/.libs
-/*.log
-/*.so.*
-/*.swp
+/elementquadrature
+
 /*.dgf.*

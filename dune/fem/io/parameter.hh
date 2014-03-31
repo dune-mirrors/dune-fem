@@ -1,10 +1,11 @@
 #ifndef DUNE_FEM_PARAMETER_HH
 #define DUNE_FEM_PARAMETER_HH
 
+#include <algorithm>
+#include <fstream>
+#include <iostream>
 #include <map>
 #include <queue>
-#include <iostream>
-#include <fstream>
 #include <sstream>
 
 #include <dune/common/exceptions.hh>
@@ -989,15 +990,15 @@ namespace Dune
     Parameter::append ( int &argc, char **argv )
     {
       std::queue< std::string > includes;
-      instance().curFileName_ = "programm arguments";
-      int &i = instance().curLineNumber_;
-      for( i = 1 ; i < argc; ++i )
+      instance().curFileName_ = "program arguments";
+      instance().curLineNumber_ = 0;
+      for( int i = 1 ; i < argc; ++i )
       {
+        ++instance().curLineNumber_;
         if( !instance().insert( std::string( argv[ i ] ), includes ) )
           continue;
 
-        for( int j = i+1; j < argc; ++j )
-          argv[ j-1 ] = argv[ j ];
+        std::copy( argv + (i+1), argv + argc, argv + i );
         --i;
         --argc;
       }
