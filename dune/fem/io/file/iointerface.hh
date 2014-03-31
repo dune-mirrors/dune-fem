@@ -197,7 +197,7 @@ namespace Dune
       static std::string defaultGridKey( const std::string base, 
                                          const int dimension , const bool  check = true )
       {
-        const std::string oldGridKey( "fem.io.macroGridFile" );
+        const std::string oldGridKey( base );
         
         std::ostringstream gridKeyStream;
         gridKeyStream << oldGridKey << "_" << dimension << "d";
