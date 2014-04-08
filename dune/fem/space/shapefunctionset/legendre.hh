@@ -7,7 +7,6 @@
 
 // dune-common includes
 #include <dune/common/array.hh>
-#include <dune/common/static_assert.hh>
 
 // dune-fem includes
 #include <dune/fem/space/discontinuousgalerkin/legendrepolynomials.hh>
@@ -37,8 +36,8 @@ namespace Dune
     template< class FunctionSpace >
     class LegendreShapeFunction
     {
-      dune_static_assert( (FunctionSpace::dimRange == 1),
-                          "FunctionSpace must be scalar (i.e., dimRange = 1)." );
+      static_assert( (FunctionSpace::dimRange == 1),
+                     "FunctionSpace must be scalar (i.e., dimRange = 1)." );
 
       typedef LegendreShapeFunction< FunctionSpace > ThisType;
 
@@ -119,8 +118,8 @@ namespace Dune
     {
       static const int dimension = FunctionSpace::dimDomain;
 
-      dune_static_assert( (FunctionSpace::dimRange == 1),
-                          "FunctionSpace must be scalar (i.e., dimRange = 1)." );
+      static_assert( (FunctionSpace::dimRange == 1),
+                     "FunctionSpace must be scalar (i.e., dimRange = 1)." );
     public:
       typedef FunctionSpace FunctionSpaceType;
       typedef LegendreShapeFunction< FunctionSpaceType > ShapeFunctionType;
@@ -170,8 +169,8 @@ namespace Dune
     class LegendreShapeFunctionSet
     : public SimpleShapeFunctionSet< typename LegendreShapeFunctionSetFactory< FunctionSpace >::ShapeFunctionType >
     {
-      dune_static_assert( (FunctionSpace::dimRange == 1),
-                          "FunctionSpace must be scalar (i.e., dimRange = 1)." );
+      static_assert( (FunctionSpace::dimRange == 1),
+                     "FunctionSpace must be scalar (i.e., dimRange = 1)." );
 
       typedef LegendreShapeFunctionSetFactory< FunctionSpace > FactoryType;
       typedef typename LegendreShapeFunctionSetFactory< FunctionSpace >::ShapeFunctionType ShapeFunctionType;

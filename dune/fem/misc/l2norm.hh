@@ -1,8 +1,6 @@
 #ifndef DUNE_FEM_L2NORM_HH
 #define DUNE_FEM_L2NORM_HH
 
-#include <dune/common/static_assert.hh>
-
 #include <dune/fem/quadrature/cachingquadrature.hh>
 #include <dune/fem/quadrature/integrator.hh>
 
@@ -290,8 +288,8 @@ namespace Dune
     : BaseType( weightFunction.space().gridPart(), order ),
       weightFunction_( weightFunction )
     {
-      dune_static_assert( (WeightFunctionSpaceType::dimRange == 1),
-                          "Wight function must be scalar." );
+      static_assert( (WeightFunctionSpaceType::dimRange == 1),
+                     "Wight function must be scalar." );
     }
 
 

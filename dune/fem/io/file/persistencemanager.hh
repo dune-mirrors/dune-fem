@@ -4,7 +4,6 @@
 #include <fstream>
 #include <list>
 
-#include <dune/common/static_assert.hh>
 #include <dune/common/typetraits.hh>
 
 #include <dune/fem/io/file/iointerface.hh>
@@ -485,7 +484,7 @@ namespace Dune
     inline PersistenceManager &
     operator<< ( PersistenceManager &pm, ObjectType &object )
     {
-      dune_static_assert( !TypeTraits< ObjectType >::isPointer, "Do not add pointers to PersistenceManager." );
+      static_assert( !TypeTraits< ObjectType >::isPointer, "Do not add pointers to PersistenceManager." );
       pm.insertObject( object );
       return pm;
     }

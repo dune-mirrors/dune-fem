@@ -20,7 +20,7 @@ namespace Dune
     {
       typedef GenericLagrangeBaseFunction< FunctionSpace, PointGeometry, order > ThisType;
       
-      dune_static_assert( (FunctionSpace::dimRange == 1), "FunctionSpace must be scalar." );
+      static_assert( (FunctionSpace::dimRange == 1), "FunctionSpace must be scalar." );
 
     public:
       typedef FunctionSpace FunctionSpaceType;
@@ -95,7 +95,7 @@ namespace Dune
     {
       typedef GenericLagrangeBaseFunction< FunctionSpace, PyramidGeometry< BaseGeometryType >, 0 > ThisType;
       
-      dune_static_assert( (FunctionSpace::dimRange == 1), "FunctionSpace must be scalar." );
+      static_assert( (FunctionSpace::dimRange == 1), "FunctionSpace must be scalar." );
 
     public:
       typedef FunctionSpace FunctionSpaceType;
@@ -199,7 +199,7 @@ namespace Dune
     {
       typedef GenericLagrangeBaseFunction< FunctionSpace, PyramidGeometry< BaseGeometryType >, order > ThisType;
       
-      dune_static_assert( (FunctionSpace::dimRange == 1), "FunctionSpace must be scalar." );
+      static_assert( (FunctionSpace::dimRange == 1), "FunctionSpace must be scalar." );
 
     public:
       typedef FunctionSpace FunctionSpaceType;
@@ -422,7 +422,7 @@ namespace Dune
     {
       typedef GenericLagrangeBaseFunction< FunctionSpace, ProductGeometry< FirstGeometryType, SecondGeometryType >, order > ThisType;
       
-      dune_static_assert( (FunctionSpace::dimRange == 1), "FunctionSpace must be scalar." );
+      static_assert( (FunctionSpace::dimRange == 1), "FunctionSpace must be scalar." );
 
     public:
       typedef FunctionSpace FunctionSpaceType;

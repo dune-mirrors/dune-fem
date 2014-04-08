@@ -1,9 +1,6 @@
 #ifndef DUNE_FEM_SPACE_DISCONTINUOUSGALERKIN_DEFAULT_HH
 #define DUNE_FEM_SPACE_DISCONTINUOUSGALERKIN_DEFAULT_HH
 
-// dune-common includes
-#include <dune/common/static_assert.hh>
-
 // dune-fem includes
 #include <dune/fem/misc/bartonnackmaninterface.hh>
 #include <dune/fem/space/basisfunctionset/default.hh>
@@ -201,7 +198,7 @@ namespace Dune
 
       static const int codimension = Traits::codimension;
       static const int polynomialOrder = Traits::polynomialOrder;
-      dune_static_assert( (polynomialOrder >= 0), "Negative polynomial order." );
+      static_assert( (polynomialOrder >= 0), "Negative polynomial order." );
 
       typedef typename GridPartType::template Codim< codimension >::EntityType EntityType;
 

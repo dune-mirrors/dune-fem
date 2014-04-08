@@ -7,7 +7,6 @@
 // dune-common includes
 #include <dune/common/exceptions.hh>
 #include <dune/common/nullptr.hh>
-#include <dune/common/static_assert.hh>
 
 // dune-geometry includes
 #include <dune/geometry/type.hh>
@@ -132,7 +131,7 @@ namespace Dune
     class LagrangeDiscreteFunctionSpace
     : public DiscreteFunctionSpaceDefault< LagrangeDiscreteFunctionSpaceTraits< FunctionSpace, GridPart, polOrder, Storage > >
     {
-      dune_static_assert( (polOrder > 0), "LagrangeDiscreteFunctionSpace only defined for polOrder > 0" );
+      static_assert( (polOrder > 0), "LagrangeDiscreteFunctionSpace only defined for polOrder > 0" );
 
       typedef LagrangeDiscreteFunctionSpace< FunctionSpace, GridPart, polOrder, Storage > ThisType;
       typedef DiscreteFunctionSpaceDefault< LagrangeDiscreteFunctionSpaceTraits< FunctionSpace, GridPart, polOrder, Storage > > BaseType;

@@ -11,7 +11,6 @@
 #include <dune/fem/misc/petsc/petscghostarraybuilder.hh>
 #include <dune/fem/misc/petsc/petscdofmappings.hh>
 #include <dune/fem/misc/petsc/petscdofblock.hh>
-#include <dune/common/static_assert.hh>
 
 
 namespace Dune 
@@ -147,7 +146,7 @@ namespace Dune
         localSize_( 0 ),
         numGhosts_( 0 )
       {
-        dune_static_assert( CommunicationOperationType::value == DFCommunicationOperation::copy ||
+        static_assert( CommunicationOperationType::value == DFCommunicationOperation::copy ||
                             CommunicationOperationType::value == DFCommunicationOperation::add,
                             "only copy/add are available communication operations for petsc");
         // init vector 

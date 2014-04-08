@@ -34,7 +34,7 @@ namespace Dune
     class GeoDiscreteCoordFunctionCaller< codim, CoordFunction, LagrangeDiscreteFunctionSpace< FunctionSpace, GridPart, 1, Storage > >
     {
       typedef LagrangeDiscreteFunctionSpace< FunctionSpace, GridPart, 1, Storage > DFSpace;
-      dune_static_assert( (Conversion< DFSpace, typename CoordFunction::DiscreteFunctionSpaceType >::sameType), "Invalid use of template argument DFSpace." );
+      static_assert( (Conversion< DFSpace, typename CoordFunction::DiscreteFunctionSpaceType >::sameType), "Invalid use of template argument DFSpace." );
 
     public:
       typedef CoordFunction CoordFunctionType;
@@ -222,7 +222,7 @@ namespace Dune
       }
 
     private:
-      dune_static_assert( LocalCoordFunctionType::dimRange == dimensionworld, "Invalid local coordinate function." );
+      static_assert( LocalCoordFunctionType::dimRange == dimensionworld, "Invalid local coordinate function." );
 
       const LocalCoordFunctionType &localCoordFunction_;
     };

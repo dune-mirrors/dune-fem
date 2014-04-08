@@ -3,7 +3,6 @@
 
 //- dune-common includes
 #include <dune/common/exceptions.hh>
-#include <dune/common/static_assert.hh>
 #include <dune/common/stdstreams.hh>
 
 //- dune-geometry includes
@@ -46,17 +45,17 @@ namespace Dune
 
     private:
       // static tests
-      dune_static_assert( ( is_same< typename IntersectionType::ctype,
-                                     typename GridPartType::ctype 
-                                   >::value 
-                          ), "Conflicting types for Intersection" );
+      static_assert( ( is_same< typename IntersectionType::ctype,
+                                 typename GridPartType::ctype 
+                               >::value 
+                      ), "Conflicting types for Intersection" );
 
-      dune_static_assert( ( static_cast< int>( IntersectionType::dimension )
-                              == static_cast< int >( GridPartType::dimension )
-                          ), "IntersectionIterator has wrong dimension" );
-      dune_static_assert( ( static_cast< int>( IntersectionType::dimensionworld )
-                              == static_cast< int >( GridPartType::dimensionworld )
-                          ), "IntersectionIterator has wrong dimensionworld" );
+      static_assert( ( static_cast< int>( IntersectionType::dimension )
+                          == static_cast< int >( GridPartType::dimension )
+                      ), "IntersectionIterator has wrong dimension" );
+      static_assert( ( static_cast< int>( IntersectionType::dimensionworld )
+                          == static_cast< int >( GridPartType::dimensionworld )
+                      ), "IntersectionIterator has wrong dimensionworld" );
 
       // check intersection iterator assignment
       template< class IntersectionIterator >

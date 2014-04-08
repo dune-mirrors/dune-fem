@@ -7,7 +7,6 @@
 
 // dune-common includes
 #include <dune/common/exceptions.hh>
-#include <dune/common/static_assert.hh>
 
 // dune-geometry includes
 #include <dune/geometry/genericgeometry/topologytypes.hh>
@@ -45,7 +44,7 @@ namespace Dune
     template< class FunctionSpace, int polOrder >
     class OrthonormalShapeFunctionSetSize
     {
-      dune_static_assert( (FunctionSpace::dimDomain <= 3),
+      static_assert( (FunctionSpace::dimDomain <= 3),
                           "Shape function set only implemented up to dimension 3." );
 
       template< int order, int dimension >
@@ -82,7 +81,7 @@ namespace Dune
     template< class FunctionSpace, int polOrder >
     struct OrthonormalShapeFunctionHelper 
     {
-      dune_static_assert( (FunctionSpace::dimRange == 1),
+      static_assert( (FunctionSpace::dimRange == 1),
                           "FunctionSpace must be scalar (i.e., dimRange = 1)." );
 
       typedef FunctionSpace FunctionSpaceType;
@@ -325,7 +324,7 @@ namespace Dune
     template< class FunctionSpace, int polOrder >
     class OrthonormalShapeFunctionSet
     {
-      dune_static_assert( (FunctionSpace::dimRange == 1),
+      static_assert( (FunctionSpace::dimRange == 1),
                           "FunctionSpace must be scalar (i.e., dimRange = 1)." );
 
       // this type

@@ -144,8 +144,8 @@ namespace Dune
       typedef typename V::FieldType FieldType;
 
     private:
-      dune_static_assert( (Conversion< FieldType, typename W::FieldType >::sameType),
-                          "FieldType must be identical." );
+      static_assert( (Conversion< FieldType, typename W::FieldType >::sameType),
+                     "FieldType must be identical." );
     };
 
 
@@ -751,8 +751,8 @@ namespace Dune
       typedef CombinedVector< Vector1Type, Vector2Type > ThisType;
       typedef VectorDefault< typename ExtractCommonFieldType< Vector1Type, Vector2Type >::FieldType, ThisType > BaseType;
 
-      dune_static_assert( SupportsVectorInterface< Vector1Type >::v, "CombinedVector only works on vectors." );
-      dune_static_assert( SupportsVectorInterface< Vector2Type >::v, "CombinedVector only works on vectors." );
+      static_assert( SupportsVectorInterface< Vector1Type >::v, "CombinedVector only works on vectors." );
+      static_assert( SupportsVectorInterface< Vector2Type >::v, "CombinedVector only works on vectors." );
 
     public:
       typedef typename ExtractCommonFieldType< Vector1Type, Vector2Type >::FieldType FieldType;

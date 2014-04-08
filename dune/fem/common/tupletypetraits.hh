@@ -1,7 +1,6 @@
 #ifndef DUNE_FEM_PASS_COMMON_TUPLETYPETRAITS_HH
 #define DUNE_FEM_PASS_COMMON_TUPLETYPETRAITS_HH
 
-#include <dune/common/static_assert.hh>
 #include <dune/common/tuples.hh>
 #include <dune/common/tupleutility.hh>
 #include <dune/common/typetraits.hh>
@@ -242,8 +241,8 @@ namespace Dune
   template< class Tuple >
   class ValidPointerTupleCheck
   {
-    dune_static_assert( TupleTypeTraits< Tuple >::isPointerTuple,
-                        "Can not check non-pointer tuple." );
+    static_assert( TupleTypeTraits< Tuple >::isPointerTuple,
+                   "Can not check non-pointer tuple." );
 
     struct ValidPointer
     {
@@ -327,7 +326,7 @@ namespace Dune
         typename Dune::TupleTypeTraits< Tuple >::PointeeTupleType
       >::Type Type;
 
-    dune_static_assert( (Dune::is_same< Seed, Type >::value), "Failed to dereference pointer tuple." );
+    static_assert( (Dune::is_same< Seed, Type >::value), "Failed to dereference pointer tuple." );
 
     static Type apply ( Tuple & )
     {

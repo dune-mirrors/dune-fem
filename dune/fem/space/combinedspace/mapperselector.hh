@@ -20,7 +20,7 @@ namespace Dune
       CodimensionMapper< GridPart, codim1 >, blockSize1, 
       CodimensionMapper< GridPart, codim2 >, blockSize2 > 
     {
-      dune_static_assert( codim1 == codim2, "CombinedDiscreteFunctionSpace only implemented for same codim spaces" );
+      static_assert( codim1 == codim2, "CombinedDiscreteFunctionSpace only implemented for same codim spaces" );
 
       static const int localBlockSize = blockSize1 + blockSize2; 
       typedef CodimensionMapper< GridPart, codim1 > BlockMapperType;

@@ -8,7 +8,6 @@
 #include <map>
 
 //- Dune includes
-#include <dune/common/static_assert.hh>
 #include <dune/fem/version.hh>
 
 //- Local includes
@@ -252,7 +251,7 @@ namespace Dune
 
       enum { spaceId_ = 13 };
      
-      dune_static_assert( (Traits::ContainedDimRange == 1),
+      static_assert( (Traits::ContainedDimRange == 1),
                           "Use CombinedSpace only with scalar spaces." );
     public:
       //! default communication interface 

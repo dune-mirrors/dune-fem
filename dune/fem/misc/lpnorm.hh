@@ -1,7 +1,6 @@
 #ifndef DUNE_FEM_LPNORM_HH
 #define DUNE_FEM_LPNORM_HH
 
-#include <dune/common/static_assert.hh>
 #include <dune/common/typetraits.hh>
 
 #include <dune/fem/quadrature/cachingquadrature.hh>
@@ -107,7 +106,7 @@ namespace Dune
                              const ReturnType& initialValue, 
                              const unsigned int order )
         {
-          dune_static_assert( uDiscrete && vDiscrete, "Distance can only be calculated between GridFunctions" );
+          static_assert( uDiscrete && vDiscrete, "Distance can only be calculated between GridFunctions" );
 
           typedef NormOnEntityFunctor< ReturnType, UDiscreteFunctionType, VDiscreteFunctionType >
             ForEachFunctorType;
@@ -168,7 +167,7 @@ namespace Dune
                 const ReturnType& initialValue,
                 const unsigned int order = 0 ) const 
       {
-        dune_static_assert( (IsBaseOf<Fem::HasLocalFunction, DiscreteFunctionType>::value),
+        static_assert( (IsBaseOf<Fem::HasLocalFunction, DiscreteFunctionType>::value),
                             "Norm only implemented for quantities implementing a local function!" );
 
         typedef NormOnEntityFunctor< ReturnType, DiscreteFunctionType, DiscreteFunctionType >
@@ -564,7 +563,7 @@ namespace Dune
       weightFunction_( weightFunction ),
       p_(p)
     {
-      dune_static_assert( (WeightFunctionSpaceType::dimRange == 1),
+      static_assert( (WeightFunctionSpaceType::dimRange == 1),
                           "Weight function must be scalar." );
     }
 

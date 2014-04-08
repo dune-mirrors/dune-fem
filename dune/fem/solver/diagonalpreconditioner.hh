@@ -1,8 +1,6 @@
 #ifndef DUNE_FEM_DIAGONALPRECONDITIONER_HH
 #define DUNE_FEM_DIAGONALPRECONDITIONER_HH
 
-#include <dune/common/static_assert.hh>
-
 #include <dune/fem/function/common/discretefunction.hh>
 #include <dune/fem/operator/common/operator.hh>
 

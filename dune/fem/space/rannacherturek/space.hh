@@ -12,7 +12,6 @@
 
 // dune-common includes
 #include <dune/common/nullptr.hh>
-#include <dune/common/static_assert.hh>
 
 // dune-geometry types
 #include <dune/geometry/type.hh>
@@ -57,7 +56,7 @@ namespace Dune
     template< class FunctionSpace, class GridPart, template< class > class Storage >
     struct RannacherTurekDiscreteFunctionSpaceTraits
     {
-      dune_static_assert( Dune::Fem::GridPartCapabilities::hasSingleGeometryType< GridPart >::v,
+      static_assert( Dune::Fem::GridPartCapabilities::hasSingleGeometryType< GridPart >::v,
                           "GridPart has more than one geometry type." );
 
       typedef RannacherTurekDiscreteFunctionSpace< FunctionSpace, GridPart, Storage > DiscreteFunctionSpaceType;

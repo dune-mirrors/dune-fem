@@ -6,7 +6,6 @@
 #include <set>
 #include <vector>
 
-#include <dune/common/static_assert.hh>
 #include <dune/common/timer.hh>
 #include <dune/common/tuples.hh>
 
@@ -265,7 +264,7 @@ namespace Dune
       template <class DiscreteFunctionType, class ContainsCheck > 
       void addDiscreteFunction(DiscreteFunctionType& df, const ContainsCheck& containsCheck ) 
       {
-        dune_static_assert( (Conversion< DiscreteFunctionType, IsDiscreteFunction >::exists),
+        static_assert( (Conversion< DiscreteFunctionType, IsDiscreteFunction >::exists),
                             "Only valid for discrete functions" );
 
         const IsDiscreteFunction * fct = &df;

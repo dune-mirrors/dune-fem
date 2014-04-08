@@ -133,7 +133,7 @@ namespace Dune
     {
       typedef AllGeomTypes< IndexSetImp, Dune::UGGrid< dim > > ThisType;
 
-      dune_static_assert( (dim == 2) || (dim == 3), "Invalid dimension for UG specified." );
+      static_assert( (dim == 2) || (dim == 3), "Invalid dimension for UG specified." );
 
     public:
       typedef IndexSetImp IndexSetType;

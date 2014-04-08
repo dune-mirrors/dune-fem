@@ -38,7 +38,7 @@ namespace Dune
     template< class DFunctionSpace1, class DFunctionSpace2>
     struct CombinedDiscreteFunctionSpaceTraits
     {
-      dune_static_assert( DFunctionSpace1 :: Traits :: codimension == DFunctionSpace2 :: Traits :: codimension,
+      static_assert( DFunctionSpace1 :: Traits :: codimension == DFunctionSpace2 :: Traits :: codimension,
           "CombinedDiscreteFunctionSpace for spaces with different codimensions is not supported" );
 
       static const int codimension = DFunctionSpace1 :: Traits :: codimension;

@@ -1,7 +1,6 @@
 #ifndef DUNE_FEM_COMMON_TUPLEUTILITY_HH
 #define DUNE_FEM_COMMON_TUPLEUTILITY_HH
 
-#include <dune/common/static_assert.hh>
 #include <dune/common/tuples.hh>
 #include <dune/common/tupleutility.hh>
 
@@ -27,8 +26,8 @@ namespace
           >
   class CutOutTuple
   {
-    dune_static_assert( (begin+length <= Dune::tuple_size< Tuple >::value),
-                        "Can not cut out tuple of given length" );
+    static_assert( (begin+length <= Dune::tuple_size< Tuple >::value),
+                    "Can not cut out tuple of given length" );
     typedef typename Dune::PushBackTuple< StartType, Dune::tuple_element< begin, Tuple > >::type NextType;
 
   public:
@@ -54,10 +53,10 @@ namespace Dune
   template< class Tuple, int size = Dune::tuple_size< Tuple >::value >
   struct PopFrontTuple
   {
-    dune_static_assert( (size == Dune::tuple_size< Tuple >::value),
-                        "The \"size\" template parameter of PopFrontTuple "
-                        "is an implementation detail and should never be "
-                        "set explicitly!" );
+    static_assert( (size == Dune::tuple_size< Tuple >::value),
+                    "The \"size\" template parameter of PopFrontTuple "
+                    "is an implementation detail and should never be "
+                    "set explicitly!" );
 
     typedef typename CutOutTuple< Tuple, 1, (Dune::tuple_size< Tuple >::value - 1) >::type type;
   };
@@ -76,10 +75,10 @@ namespace Dune
   template< class Tuple, int size = Dune::tuple_size< Tuple >::value >
   struct PopBackTuple
   {
-    dune_static_assert( (size == Dune::tuple_size< Tuple >::value),
-                        "The \"size\" template parameter of PopBackTuple "
-                        "is an implementation detail and should never be "
-                        "set explicitly!" );
+    static_assert( (size == Dune::tuple_size< Tuple >::value),
+                    "The \"size\" template parameter of PopBackTuple "
+                    "is an implementation detail and should never be "
+                    "set explicitly!" );
 
     typedef typename CutOutTuple< Tuple, 0, (Dune::tuple_size< Tuple >::value - 1) >::type type;
   };
@@ -371,10 +370,10 @@ namespace Dune
           >
   class FirstTypeIndexTuple
   {
-    dune_static_assert( (index == Dune::tuple_size< Seed >::value),
-                        "The \"index\" template parameter of FirstTypeIndexTuple"
-                        "is an implementation detail and should never be "
-                        "set explicitly!" );
+    static_assert( (index == Dune::tuple_size< Seed >::value),
+                    "The \"index\" template parameter of FirstTypeIndexTuple"
+                    "is an implementation detail and should never be "
+                    "set explicitly!" );
 
     // get element from selector
     typedef typename Dune::tuple_element< index, SubTuple >::type Element;

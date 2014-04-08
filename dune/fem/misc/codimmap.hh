@@ -3,7 +3,6 @@
 
 #include <cassert>
 
-#include <dune/common/static_assert.hh>
 #include <dune/fem/misc/metaprogramming.hh>
 
 namespace Dune
@@ -50,7 +49,7 @@ namespace Dune
   {
     typedef CodimMap< nCodims, CodimObjectImp > ThisType;
 
-    dune_static_assert( (nCodims > 0), "numCodims must be positive." );
+    static_assert( (nCodims > 0), "numCodims must be positive." );
 
   public:
     //! number of codimensions (= size of the array)

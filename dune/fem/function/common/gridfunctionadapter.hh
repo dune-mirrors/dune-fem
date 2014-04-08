@@ -75,8 +75,8 @@ namespace Dune
       typedef Function< typename FunctionImp::FunctionSpaceType, ThisType > BaseType;
 
       // Make sure the function is not a discrete functon
-      dune_static_assert( !(Dune::Conversion< FunctionImp, HasLocalFunction >::exists),
-                          "FunctionType may not be a discrete function type." );
+      static_assert( !(Dune::Conversion< FunctionImp, HasLocalFunction >::exists),
+                     "FunctionType may not be a discrete function type." );
 
     public:  
       //! type of traits 

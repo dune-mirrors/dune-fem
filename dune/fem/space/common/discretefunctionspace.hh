@@ -243,7 +243,7 @@ namespace Dune
       };
 
     private:
-      dune_static_assert( (Conversion<typename BaseType::DomainFieldType,
+      static_assert( (Conversion<typename BaseType::DomainFieldType,
                                       typename GridType::ctype>::sameType),
                           "Domain field type of function space must equal field type of grid." );
 

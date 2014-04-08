@@ -4,9 +4,6 @@
 // dune-geometry includes
 #include <dune/geometry/type.hh>
 
-// dune-common includes
-#include <dune/common/static_assert.hh>
-
 // dune-fem includes
 #include <dune/fem/space/basisfunctionset/default.hh>
 #include <dune/fem/space/common/functionspace.hh>
@@ -31,7 +28,7 @@ namespace Dune
     template< class FunctionSpace, class GridPart, int polOrder, template< class > class Storage >
     struct DiscontinuousGalerkinSpaceTraits
     {
-      dune_static_assert( (GridPart::dimensionworld <= 3), "Use Legendre spaces for higher spatial dimensions." );
+      static_assert( (GridPart::dimensionworld <= 3), "Use Legendre spaces for higher spatial dimensions." );
 
       typedef DiscontinuousGalerkinSpace< FunctionSpace, GridPart, polOrder, Storage > DiscreteFunctionSpaceType;
 

@@ -44,7 +44,7 @@ namespace Dune
       typedef FieldVector< DomainFieldType, dimGrid > LocalDomainType;
 
     private:
-      dune_static_assert( dimDomain == dimGrid, "LineSegmentSampler supports only flat grids." );
+      static_assert( dimDomain == dimGrid, "LineSegmentSampler supports only flat grids." );
 
       template< class Vector >
       struct Reduce;

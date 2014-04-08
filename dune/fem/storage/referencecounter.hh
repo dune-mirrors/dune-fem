@@ -232,7 +232,7 @@ namespace Dune
     {
       typedef ObjectPointer< ReferenceCounter > ThisType;
 
-      dune_static_assert( SupportsReferenceCounterInterface< ReferenceCounter >::v, "ObjectPointer can only point to reference counting types." );
+      static_assert( SupportsReferenceCounterInterface< ReferenceCounter >::v, "ObjectPointer can only point to reference counting types." );
 
     public:
       //! type of the object, this pointer points to

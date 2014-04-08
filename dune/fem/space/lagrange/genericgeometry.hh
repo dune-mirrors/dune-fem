@@ -3,7 +3,6 @@
 
 // dune-common includes
 #include <dune/common/fvector.hh>
-#include <dune/common/static_assert.hh>
 
 // dune-geometry includes
 #include <dune/geometry/type.hh>
@@ -67,7 +66,7 @@ namespace Dune
       template< unsigned int codim >
       class Codim
       {
-        dune_static_assert( (codim <= dimension), "Codimension must be less or equal to dimension." );
+        static_assert( (codim <= dimension), "Codimension must be less or equal to dimension." );
 
       public:
         static const unsigned int numSubEntities = ((codim == 0) ? 1 : 0);
@@ -99,7 +98,7 @@ namespace Dune
       template< unsigned int codim >
       class Codim
       {
-        dune_static_assert( (codim <= dimension), "Codimension must be less or equal to dimension." );
+        static_assert( (codim <= dimension), "Codimension must be less or equal to dimension." );
 
       public:
         static const unsigned int numSubEntities
@@ -146,7 +145,7 @@ namespace Dune
       template< unsigned int codim >
       class Codim
       {
-        dune_static_assert( (codim <= dimension), "Codimension must be less or equal to dimension." );
+        static_assert( (codim <= dimension), "Codimension must be less or equal to dimension." );
 
         template< unsigned int i >
         struct NumSubEntities
@@ -172,7 +171,7 @@ namespace Dune
     template< unsigned int id, unsigned int dim >
     class GeometryWrapper
     {
-      dune_static_assert( (id < (1 << dim)), "id too large." );
+      static_assert( (id < (1 << dim)), "id too large." );
 
       static const bool isPrism = ((id >> (dim-1)) != 0);
 
@@ -203,7 +202,7 @@ namespace Dune
     template< unsigned int id >
     class GeometryWrapper< id, 1 >
     {
-      dune_static_assert( (id < 2), "id too large." );
+      static_assert( (id < 2), "id too large." );
 
     public:
       static const unsigned int dimension = 1;
@@ -214,7 +213,7 @@ namespace Dune
     template< unsigned int id >
     class GeometryWrapper< id, 0 >
     {
-      dune_static_assert( (id < 1), "id too large." );
+      static_assert( (id < 1), "id too large." );
 
     public:
       static const unsigned int dimension = 0;
@@ -250,7 +249,7 @@ namespace Dune
       template< int sz >
       explicit LocalCoordinate ( const FieldVector< FieldType, sz > &x )
       {
-        dune_static_assert( (sz >= offset + dimension), "Invalid vector size" );
+        static_assert( (sz >= offset + dimension), "Invalid vector size" );
       }
 
       ThisType &operator= ( const FieldType s )
@@ -261,7 +260,7 @@ namespace Dune
       template< int sz >
       ThisType &operator= ( const FieldVector< FieldType, sz > &x )
       {
-        dune_static_assert( (sz >= offset + dimension), "Invalid vector size" );
+        static_assert( (sz >= offset + dimension), "Invalid vector size" );
         return *this;
       }
       
@@ -324,7 +323,7 @@ namespace Dune
       : myCoordinate_( x[ index ] ),
         baseCoordinate_( x ) 
       {
-        dune_static_assert( (sz >= offset + dimension), "Invalid vector size" );
+        static_assert( (sz >= offset + dimension), "Invalid vector size" );
       }
       
       ThisType &operator= ( const FieldType s )
@@ -337,7 +336,7 @@ namespace Dune
       template< int sz >
       ThisType &operator= ( const FieldVector< FieldType, sz > &x )
       {
-        dune_static_assert( (sz >= offset + dimension), "Invalid vector size" );
+        static_assert( (sz >= offset + dimension), "Invalid vector size" );
         
         myCoordinate_ = x[ index ];
         baseCoordinate_ = x;
@@ -445,7 +444,7 @@ namespace Dune
       : firstCoordinate_( x ),
         secondCoordinate_( x )
       {
-        dune_static_assert( (sz >= offset + dimension), "Invalid vector size" );
+        static_assert( (sz >= offset + dimension), "Invalid vector size" );
       }
 
       ThisType &operator= ( const FieldType s )
@@ -458,7 +457,7 @@ namespace Dune
       template< int sz >
       ThisType &operator= ( const FieldVector< FieldType, sz > &x )
       {
-        dune_static_assert( (sz >= offset + dimension), "Invalid vector size" );
+        static_assert( (sz >= offset + dimension), "Invalid vector size" );
         
         firstCoordinate_ = x;
         secondCoordinate_ = x;

@@ -1,9 +1,6 @@
 #ifndef DUNE_FEM_L1NORM_HH
 #define DUNE_FEM_L1NORM_HH
 
-#include <dune/common/static_assert.hh>
-
-#include <dune/fem/quadrature/cachingquadrature.hh>
 #include <dune/fem/quadrature/integrator.hh>
 
 #include <dune/fem/misc/lpnorm.hh>

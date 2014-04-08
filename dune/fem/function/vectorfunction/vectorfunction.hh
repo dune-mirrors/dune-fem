@@ -1,7 +1,6 @@
 #ifndef DUNE_FEM_VECTORFUNCTION_HH
 #define DUNE_FEM_VECTORFUNCTION_HH
 
-#include <dune/common/static_assert.hh>
 #include <dune/common/typetraits.hh>
 
 #include <dune/fem/storage/vector.hh>
@@ -86,7 +85,7 @@ namespace Dune
       typedef VectorDiscreteFunction< DiscreteFunctionSpace, DofVector > ThisType;
       typedef DiscreteFunctionDefault< VectorDiscreteFunctionTraits< DiscreteFunctionSpace, DofVector > > BaseType;
 
-      dune_static_assert( SupportsVectorInterface< DofVector >::v, "DofVector must support VectorInterface." );
+      static_assert( SupportsVectorInterface< DofVector >::v, "DofVector must support VectorInterface." );
 
     public:
       //! type of this class's traits
@@ -123,7 +122,7 @@ namespace Dune
       typedef typename Traits::ConstDofBlockPtrType ConstDofBlockPtrType;
 
     //private:
-    //  dune_static_assert( (Conversion< RangeFieldType, DofType >::sameType), "RangeFieldType and DofType must equal." );
+    //  static_assert( (Conversion< RangeFieldType, DofType >::sameType), "RangeFieldType and DofType must equal." );
 
     public:
       //! Constructor

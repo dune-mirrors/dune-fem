@@ -20,7 +20,7 @@ namespace Dune
     template< class ct, int dim, int codim >
     class PointProvider 
     {
-      dune_static_assert( (codim >= 0) && (codim <= 1),
+      static_assert( (codim >= 0) && (codim <= 1),
                           "PointProvider exists only for codimension 0 and 1." );
     };
 

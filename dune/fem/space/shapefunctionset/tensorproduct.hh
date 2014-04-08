@@ -10,7 +10,6 @@
 #include <dune/common/fmatrix.hh>
 #include <dune/common/forloop.hh>
 #include <dune/common/fvector.hh>
-#include <dune/common/static_assert.hh>
 #include <dune/common/tuples.hh>
 #include <dune/common/tupleutility.hh>
 
@@ -29,10 +28,10 @@ namespace Dune
     {
       typedef TensorProductShapeFunctionSet< FunctionSpace, ShapeFunctionSetTuple > ThisType;
 
-      dune_static_assert( (FunctionSpace::dimDomain == Dune::tuple_size< ShapeFunctionSetTuple >::value),
-                          "dimDomain of FunctionSpace must coincide with length of ShapeFunctionSetTuple." );
-      dune_static_assert( (FunctionSpace::dimRange == 1),
-                          "FunctionSpace must be scalar (i.e., dimRange = 1)." );
+      static_assert( (FunctionSpace::dimDomain == Dune::tuple_size< ShapeFunctionSetTuple >::value),
+                     "dimDomain of FunctionSpace must coincide with length of ShapeFunctionSetTuple." );
+      static_assert( (FunctionSpace::dimRange == 1),
+                     "FunctionSpace must be scalar (i.e., dimRange = 1)." );
 
       struct Assign;
       struct Order;

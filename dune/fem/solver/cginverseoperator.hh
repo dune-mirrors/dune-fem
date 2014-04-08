@@ -1,7 +1,6 @@
 #ifndef DUNE_FEM_CGINVERSEOPERATOR_HH
 #define DUNE_FEM_CGINVERSEOPERATOR_HH
 
-#include <dune/common/static_assert.hh>
 #include <dune/common/typetraits.hh>
 
 #include <dune/fem/function/common/discretefunction.hh>
@@ -48,7 +47,7 @@ namespace Dune
 
 
     private:
-      dune_static_assert( (Conversion< DomainFunctionType, RangeFunctionType >::sameType),
+      static_assert( (Conversion< DomainFunctionType, RangeFunctionType >::sameType),
                           "DomainFunctionType must equal RangeFunctionType." );
 
     public:

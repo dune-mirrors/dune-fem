@@ -3,7 +3,6 @@
 
 #include <cassert>
 
-#include <dune/common/static_assert.hh>
 #include <dune/common/version.hh>
 #include <dune/geometry/type.hh>
 #include <dune/geometry/genericgeometry/topologytypes.hh>
@@ -82,7 +81,7 @@ namespace Dune
     template< class Grid > 
     struct TwistUtility;
     //{
-    //  dune_static_assert( false, "TwistUtility not specialized, please specialize TwistUtility!");
+    //  static_assert( false, "TwistUtility not specialized, please specialize TwistUtility!");
     //};
 
     // Specialization for YaspGrid

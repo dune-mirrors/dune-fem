@@ -6,7 +6,6 @@
 
 #include <dune/common/fvector.hh>
 #include <dune/common/nullptr.hh>
-#include <dune/common/static_assert.hh>
 
 #include <dune/geometry/genericgeometry/topologytypes.hh>
 #include <dune/geometry/type.hh>
@@ -42,7 +41,7 @@ namespace Dune
     {
       typedef LagrangeShapeFunctionInterface< FunctionSpace > ThisType;
       
-      dune_static_assert( (FunctionSpace::dimRange == 1), "FunctionSpace must be scalar." );
+      static_assert( (FunctionSpace::dimRange == 1), "FunctionSpace must be scalar." );
 
     public:
       typedef FunctionSpace FunctionSpaceType;
@@ -166,7 +165,7 @@ namespace Dune
         typename LagrangeShapeFunctionFactory< FunctionSpace, polOrder >::ShapeFunctionType 
       >
     {
-      dune_static_assert( (FunctionSpace::dimRange == 1), "FunctionSpace must be scalar." );
+      static_assert( (FunctionSpace::dimRange == 1), "FunctionSpace must be scalar." );
 
       typedef LagrangeShapeFunctionFactory< FunctionSpace, polOrder > ShapeFunctionFactoryType;
       typedef SimpleShapeFunctionSet< typename ShapeFunctionFactoryType::ShapeFunctionType > BaseType;
