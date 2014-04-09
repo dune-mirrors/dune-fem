@@ -6,7 +6,6 @@
 #include <dune/grid/geometrygrid/hostcorners.hh>
 #include <dune/grid/geometrygrid/coordfunction.hh>
 
-#include <dune/fem/function/localfunction/localfunction.hh>
 
 namespace Dune
 {
@@ -187,7 +186,7 @@ namespace Dune
     // GeoLocalCoordVector
     // -------------------
 
-    template< int mydim, class GridFamily, class LCFTraits >
+    template< int mydim, class GridFamily, class LocalFunction >
     class GeoLocalCoordVector
     {
       typedef typename remove_const< GridFamily >::type::Traits Traits;
@@ -202,7 +201,7 @@ namespace Dune
       typedef FieldVector< ctype, dimensionworld > Coordinate;
 
     public:
-      typedef LocalFunction< LCFTraits > LocalCoordFunctionType;
+      typedef LocalFunction LocalCoordFunctionType;
 
       explicit GeoLocalCoordVector ( const LocalCoordFunctionType &localCoordFunction )
       : localCoordFunction_( localCoordFunction )
@@ -222,7 +221,7 @@ namespace Dune
       }
 
     private:
-      static_assert( LocalCoordFunctionType::dimRange == dimensionworld, "Invalid local coordinate function." );
+      dune_static_assert( LocalCoordFunctionType::dimRange == dimensionworld, "Invalid local coordinate function." );
 
       const LocalCoordFunctionType &localCoordFunction_;
     };
