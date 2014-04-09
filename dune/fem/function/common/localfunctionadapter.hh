@@ -212,12 +212,6 @@ namespace Dune
         DUNE_THROW( NotImplemented, "LocalFunctionAdapter::evaluate is not implemented." );
       }
 
-      /** \copydoc Dune::Fem::DiscreteFunctionInterface::localFunction(const EntityType &entity) const */ 
-      const LocalFunctionType localFunction( const EntityType &entity ) const 
-      {
-        return LocalFunctionType( entity, *this );
-      }
-
       /** \copydoc Dune::Fem::DiscreteFunctionInterface::localFunction(const EntityType &entity) */ 
       LocalFunctionType localFunction( const EntityType &entity )
       {

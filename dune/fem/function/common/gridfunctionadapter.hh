@@ -113,12 +113,10 @@ namespace Dune
 
     private:
       class LocalFunction;
-      class LocalFunctionStorage;
 
-      public:
+    public:
       //! type of local function to export 
       typedef LocalFunction LocalFunctionType; 
-      typedef LocalFunctionStorage LocalFunctionStorageType;
 
       // reference to function this local belongs to
       GridFunctionAdapter ( const std::string &name,
@@ -126,7 +124,6 @@ namespace Dune
                             const GridPartType &gridPart,
                             unsigned int order = DiscreteFunctionSpaceType::polynomialOrder )
       : space_( gridPart, order ),
-        localFunctionStorage_( *this ),
         function_( f ),
         name_( name )
       {}
@@ -134,7 +131,6 @@ namespace Dune
       // reference to function this local belongs to
       GridFunctionAdapter ( const ThisType &other ) 
       : space_( other.space_ ),
-        localFunctionStorage_( *this ),
         function_( other.function_ ),
         name_( other.name_ )
       {}
@@ -151,21 +147,16 @@ namespace Dune
         function_.jacobian(global,result);  
       }
 
+      /** \copydoc Dune::Fem::DiscreteFunctionInterface::localFunction(const EntityType &entity) */ 
+      LocalFunctionType localFunction ( const EntityType &entity ) 
+      {
+        return LocalFunctionType( entity, *this );
+      }
+
       /** \copydoc Dune::Fem::DiscreteFunctionInterface::localFunction(const EntityType &entity) const */ 
       const LocalFunctionType localFunction ( const EntityType &entity ) const 
       {
-        return localFunctionStorage().localFunction( entity );
-      }
-
-      /** \copydoc Dune::Fem::DiscreteFunctionInterface::localFunction(const EntityType &entity) */ 
-      LocalFunctionType localFunction ( const EntityType &entity )
-      {
-        return localFunctionStorage().localFunction( entity );
-      }
-
-      LocalFunctionStorageType &localFunctionStorage () const
-      {
-        return localFunctionStorage_;
+        return LocalFunctionType( entity, *this );
       }
 
       /** \copydoc Dune::Fem::DiscreteFunctionInterface::name() const */
@@ -184,7 +175,6 @@ namespace Dune
 
     protected:    
       DiscreteFunctionSpaceType space_;
-      mutable LocalFunctionStorageType localFunctionStorage_;
       const FunctionType& function_; 
       const std::string name_;
     };
@@ -229,12 +219,6 @@ namespace Dune
       : function_( &df.function_ ),
         entity_( 0 ),
         order_( df.space().order() )
-      {}
-
-      LocalFunction ( LocalFunctionStorage &storage )
-      : function_( &storage.function().function_ ),
-        entity_( 0 ),
-        order_( storage.function().space().order() )
       {}
 
       //! evaluate local function 
@@ -323,53 +307,6 @@ namespace Dune
       const FunctionType *function_;
       const EntityType *entity_;
       int order_;
-    };
-
-
-
-    // GridFunctionAdapter::LocalFunctionStorage
-    // ---------------------------------------------
-
-    template< class Function, class GridPart >
-    class GridFunctionAdapter< Function, GridPart >::LocalFunctionStorage
-    {
-      typedef LocalFunctionStorage ThisType;
-      typedef GridFunctionAdapter< Function, GridPart > DiscreteFunctionType;
-
-    public:
-      typedef typename DiscreteFunctionType::LocalFunctionType LocalFunctionType;
-
-      explicit LocalFunctionStorage ( DiscreteFunctionType &discreteFunction )
-      : discreteFunction_( discreteFunction )
-      {}
-
-      LocalFunctionType localFunction ()
-      {
-        return LocalFunctionType( discreteFunction_ );
-      }
-
-      template< class Entity >
-      const LocalFunctionType localFunction ( const Entity &entity ) const
-      {
-        return LocalFunctionType( entity, discreteFunction_ );
-      }
-
-      template< class Entity >
-      LocalFunctionType localFunction ( const Entity &entity )
-      {
-        return LocalFunctionType( entity, discreteFunction_ );
-      }
-
-      DiscreteFunctionType &function ()
-      {
-        return discreteFunction_;
-      }
-
-    private:
-      LocalFunctionStorage ( const ThisType & );
-      ThisType operator= ( const ThisType & );
-
-      DiscreteFunctionType &discreteFunction_;
     };
 
 
