@@ -56,8 +56,8 @@ namespace Dune
       }
 
       //! restrict data to father 
-      template< class FT, class ST, class LocalGeometry >
-      void restrictLocal ( LocalFunction< FT > &lfFather, const LocalFunction< ST > &lfSon, 
+      template< class LFFather, class LFSon, class LocalGeometry >
+      void restrictLocal ( LFFather &lfFather, const LFSon &lfSon, 
                            const LocalGeometry &geometryInFather, bool initialize ) const
       {
         typedef ConstantLocalRestrictProlong< DiscreteFunctionSpaceType > ConstantLocalRestrictProlongType;
@@ -74,10 +74,10 @@ namespace Dune
           temp_.clear();
         }
 
-        typedef typename LocalFunction< ST > :: EntityType  EntityType ;
+        typedef typename LFSon :: EntityType  EntityType ;
         typedef typename EntityType :: Geometry   Geometry;
         const EntityType& sonEntity = lfSon.entity();
-        const Geometry& sonGeo = sonEntity.geometry();
+        const Geometry sonGeo = sonEntity.geometry();
 
         QuadratureType quad( sonEntity, 2*lfFather.order()+1 );
         const int nop = quad.nop();
@@ -112,16 +112,16 @@ namespace Dune
         }
       }
 
-      template< class FT, class ST, class LocalGeometry >
-      void prolongLocal ( const LocalFunction< FT > &lfFather, LocalFunction< ST > &lfSon,
+      template< class LFFather, class LFSon, class LocalGeometry >
+      void prolongLocal ( const LFFather &lfFather, LFSon &lfSon,
                           const LocalGeometry &geometryInFather, bool initialize ) const
       {
         lfSon.clear();
 
-        typedef typename LocalFunction< ST > :: EntityType  EntityType ;
+        typedef typename LFSon :: EntityType  EntityType ;
         typedef typename EntityType :: Geometry   Geometry;
         const EntityType& sonEntity = lfSon.entity();
-        const Geometry& sonGeo = sonEntity.geometry();
+        const Geometry sonGeo = sonEntity.geometry();
 
         QuadratureType quad( sonEntity, 2*lfSon.order()+1 );
         const int nop = quad.nop();

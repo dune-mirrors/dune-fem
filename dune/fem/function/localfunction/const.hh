@@ -141,7 +141,7 @@ namespace Dune
       {
       }
 
-      //! doc me
+      //! cast a MutableLocalFunction into this one !!! expensive !!!
       ConstLocalFunction ( const typename DiscreteFunctionType::LocalFunctionType &localFunction )
       : BaseType( localFunction.basisFunctionSet(), LocalDofVectorType( localFunction.size(), localFunction.discreteFunction_.localDofVectorAllocator() ) ), 
         discreteFunction_( localFunction.discreteFunction_ )

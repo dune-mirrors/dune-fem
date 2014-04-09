@@ -70,8 +70,10 @@ namespace Dune
           \param[in] dfSpace discrete function space the local function shall
                              belong to
        */
-      explicit BasicTemporaryLocalFunction ( const DiscreteFunctionSpaceType &dfSpace )
-      : dfSpace_( dfSpace ) 
+      explicit BasicTemporaryLocalFunction ( const DiscreteFunctionSpaceType &dfSpace, 
+                                             const LocalDofVectorType &localDofVector = LocalDofVectorType () )
+      : BaseType( localDofVector ),
+        dfSpace_( dfSpace ) 
       {
         localDofVector().reserve( DiscreteFunctionSpaceType::localBlockSize * dfSpace_.blockMapper().maxNumDofs() );
       }
@@ -89,8 +91,10 @@ namespace Dune
                              belong to
           \param[in] entity  entity for initialize the local function to
        */
-      BasicTemporaryLocalFunction ( const DiscreteFunctionSpaceType &dfSpace, const EntityType &entity )
-      : dfSpace_( dfSpace ) 
+      BasicTemporaryLocalFunction ( const DiscreteFunctionSpaceType &dfSpace, const EntityType &entity,
+                                    const LocalDofVectorType &localDofVector = LocalDofVectorType() )
+      : BaseType( localDofVector ),
+        dfSpace_( dfSpace ) 
       {
         localDofVector().reserve( DiscreteFunctionSpaceType::localBlockSize * dfSpace_.blockMapper().maxNumDofs() );
         init( entity );

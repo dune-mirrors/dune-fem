@@ -7,6 +7,7 @@
 
 //- local includes 
 #include <dune/fem/gridpart/emptyindexset.hh>
+#include <dune/fem/function/localfunction/const.hh>
 #include <dune/fem/function/localfunction/temporary.hh>
 #include <dune/fem/space/common/localrestrictprolong.hh>
 
@@ -185,7 +186,6 @@ namespace Dune
       typedef typename DiscreteFunctionType::LocalFunctionType LocalFunctionType;
       typedef typename DiscreteFunctionType::GridPartType GridPartType;
 
-      typedef ConstLocalFunction< DiscreteFunctionType > ConstLocalFunctionType;
       typedef DefaultLocalRestrictProlong< DiscreteFunctionSpaceType > LocalRestrictProlongType;
 
       explicit RestrictProlongDefault ( DiscreteFunctionType &discreteFunction )
@@ -286,7 +286,7 @@ namespace Dune
 
     protected:
       DiscreteFunctionType &discreteFunction_;
-      mutable ConstLocalFunctionType constLf_;
+      mutable LocalFunctionType constLf_;
       mutable LocalRestrictProlongType localRP_;
     };
     ///@} 

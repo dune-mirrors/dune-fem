@@ -8,7 +8,6 @@ combinedspace_HEADERS = combinedadaptmanager.hh \
                         combinedmapper.hh \
                         combinedbasisfunctionset.hh \
 												lagrangepointsetexporter.hh \
-												localsubfunction.hh \
                         adaptmanager.hh
 
 include $(top_srcdir)/am/global-rules

@@ -97,7 +97,7 @@ namespace Dune
       enum { dimRange2 = FunctionSpaceType2 :: dimRange };
 
       typedef Dune::tuple< BasisFunctionSetType1, BasisFunctionSetType2 > BasisSetTupleType;
-    public:
+
       //! constructor
       CombinedBasisFunctionSet( const BasisFunctionSetType1 &basisSet1, const BasisFunctionSetType2 &basisSet2 )
       : basisSetTuple_( basisSet1, basisSet2 ),
@@ -254,7 +254,7 @@ namespace Dune
     :: evaluateAll ( const Point &x, const DofVector &dofs, RangeType &value ) const
     {
       assert( offset() == basisSet1().size() );
-      typedef typename DofVector :: DofType DofType;
+      typedef typename DofVector :: value_type DofType;
       SubDofVector<const DofVector, DofType > dofs1( dofs, size1_, 0  );
       SubDofVector<const DofVector, DofType > dofs2( dofs, size2_, offset() );
       RangeType1 value1;
@@ -325,7 +325,7 @@ namespace Dune
     inline void CombinedBasisFunctionSet< CombFunctSpace, BasisSetType1, BasisSetType2>
     :: jacobianAll ( const Point &x, const DofVector &dofs, JacobianRangeType &jacobian ) const
     {
-      typedef typename DofVector :: DofType DofType;
+      typedef typename DofVector :: value_type DofType;
       SubDofVector<const DofVector, DofType > dofs1( dofs, size1_, 0  );
       SubDofVector<const DofVector, DofType > dofs2( dofs, size2_, offset() );
 
@@ -397,7 +397,7 @@ namespace Dune
     inline void CombinedBasisFunctionSet< CombFunctSpace, BasisSetType1, BasisSetType2>
     :: hessianAll ( const Point &x, const DofVector &dofs, HessianRangeType &hessian ) const
     {
-      typedef typename DofVector :: DofType DofType;
+      typedef typename DofVector :: value_type DofType;
       SubDofVector<const DofVector, DofType > dofs1( dofs, size1_, 0  );
       SubDofVector<const DofVector, DofType > dofs2( dofs, size2_, offset() );
 
@@ -456,7 +456,7 @@ namespace Dune
     inline void CombinedBasisFunctionSet< CombFunctSpace, BasisSetType1, BasisSetType2>
     :: axpy ( const Point &x, const RangeType &valueFactor, DofVector &dofs ) const
     {
-      typedef typename DofVector :: DofType DofType;
+      typedef typename DofVector :: value_type DofType;
       SubDofVector<DofVector, DofType > dofs1( dofs, size1_, 0  );
       SubDofVector<DofVector, DofType > dofs2( dofs, size2_, offset() );
       SubObject< const RangeType, const RangeType1, 0 > valueFactor1( valueFactor );
@@ -475,7 +475,7 @@ namespace Dune
     inline void CombinedBasisFunctionSet< CombFunctSpace, BasisSetType1, BasisSetType2>
     :: axpy ( const Point &x, const JacobianRangeType &jacobianFactor, DofVector &dofs ) const
     {
-      typedef typename DofVector :: DofType DofType;
+      typedef typename DofVector :: value_type DofType;
       SubDofVector<DofVector, DofType > dofs1( dofs, size1_, 0  );
       SubDofVector<DofVector, DofType > dofs2( dofs, size2_, offset() );
       SubObject< const JacobianRangeType, const JacobianRangeType1, 0 > jacobianFactor1( jacobianFactor );
@@ -495,7 +495,7 @@ namespace Dune
     :: axpy ( const Point &x, const RangeType &valueFactor, const JacobianRangeType &jacobianFactor,
               DofVector &dofs ) const
     {
-      typedef typename DofVector :: DofType DofType;
+      typedef typename DofVector :: value_type DofType;
       SubDofVector<DofVector, DofType > dofs1( dofs, size1_, 0  );
       SubDofVector<DofVector, DofType > dofs2( dofs, size2_, offset() );
       SubObject< const RangeType, const RangeType1, 0 > valueFactor1( valueFactor );

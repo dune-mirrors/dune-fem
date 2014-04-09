@@ -9,7 +9,7 @@
 #include <dune/common/nullptr.hh>
 
 // dune-fem includes
-#include <dune/fem/function/localfunction/wrapper.hh>
+#include <dune/fem/common/stackallocator.hh>
 #include <dune/fem/function/localfunction/temporary.hh>
 #include <dune/fem/space/common/commoperations.hh>
 #include <dune/fem/space/common/communicationmanager.hh>
@@ -609,13 +609,6 @@ namespace Dune
       typedef typename BaseType :: IteratorType IteratorType;
       typedef typename BaseType :: EntityType EntityType;
 
-      typedef TemporaryLocalFunctionFactory< DiscreteFunctionSpaceType, typename Traits::FunctionSpaceType::RangeFieldType >
-        LocalFunctionFactoryType;
-      typedef LocalFunctionStack< LocalFunctionFactoryType > LocalFunctionStorageType;
-
-      typedef typename LocalFunctionStorageType :: LocalFunctionType
-        LocalFunctionType;
-
       //! size of local blocks 
       enum { localBlockSize = BaseType :: localBlockSize };
 
@@ -634,9 +627,15 @@ namespace Dune
     protected:
       GridPartType &gridPart_;
 
-      const LocalFunctionFactoryType lfFactory_;
-      mutable LocalFunctionStorageType lfStorage_;
-   
+      typedef ThreadSafeValue< UninitializedObjectStack > LocalDofVectorStackType;
+      typedef StackAllocator< typename BaseType::RangeFieldType, LocalDofVectorStackType* > LocalDofVectorAllocatorType;
+      typedef DynamicVector< typename BaseType::RangeFieldType, LocalDofVectorAllocatorType > LocalDofVectorType;
+
+      LocalDofVectorStackType ldvStack_;
+      mutable LocalDofVectorAllocatorType ldvAllocator_;
+
+      typedef BasicTemporaryLocalFunction< ThisType, LocalDofVectorType > LocalFunctionType;
+
       // set of all geometry types possible 
       typedef AllGeomTypes< IndexSetType, GridType > AllGeometryTypes;
       const AllGeometryTypes allGeomTypes_;
@@ -656,8 +655,8 @@ namespace Dune
           const CommunicationDirection commDirection = ForwardCommunication )
       : BaseType(),
         gridPart_( gridPart ),
-        lfFactory_( asImp() ),
-        lfStorage_( lfFactory_ ),
+        ldvStack_( sizeof( typename BaseType::RangeFieldType ) * blockMapper().maxNumDofs() * localBlockSize ),
+        ldvAllocator_( &ldvStack_ ),
         allGeomTypes_( gridPart.indexSet() ),
         dofManager_( DofManagerType :: instance( gridPart.grid() ) ),
         commInterface_( commInterface ),
@@ -687,19 +686,19 @@ namespace Dune
       { 
         return asImp().basisFunctionSet( entity ).order();
       } 
-    
+
       /** obtain a local function for an entity (to store intermediate values)
-       *  
-       *  \param[in]  entity  entity (of codim 0) for which a local function is
-       *                      desired
-       *
-       *  \returns a local function backed by a small, fast array
+
+          \param[in]  entity  entity (of codim 0) for which a local function is
+                             desired
+
+          \returns a local function backed by a small, fast array
        */
       LocalFunctionType localFunction ( const EntityType &entity ) const
       {
-        return lfStorage_.localFunction( entity );
+        return LocalFunctionType( *this, entity, LocalDofVectorType( ldvAllocator_ ) ); 
       }
-      
+    
       /** \copydoc Dune::Fem::DiscreteFunctionSpaceInterface::grid() const */
       inline const GridType &grid () const
       {

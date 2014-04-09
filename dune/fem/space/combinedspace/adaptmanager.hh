@@ -3,8 +3,11 @@
 
 #include <dune/common/exceptions.hh>
 //- local includes  
+#include <dune/fem/common/subvector.hh>
+#include <dune/fem/function/localfunction/const.hh>
+#include <dune/fem/function/localfunction/localfunction.hh>
 #include <dune/fem/space/common/adaptmanager.hh>
-#include <dune/fem/space/combinedspace/localsubfunction.hh>
+
 
 
 namespace Dune
@@ -47,28 +50,82 @@ namespace Dune
       }
 
       //! restrict data to father
-      template< class FT, class ST, class LocalGeometry >
-      void restrictLocal ( LocalFunction< FT > &lfFather, const LocalFunction< ST > &lfSon,
+      template< class LFFather, class LFSon, class LocalGeometry >
+      void restrictLocal ( LFFather &lfFather, const LFSon &lfSon,
                            const LocalGeometry &geometryInFather, bool initialize ) const
       {
-        LocalSubFunction< FT, 0 >  lfFather1( lfFather );
-        ConstLocalSubFunction< ST, 0 >  lfSon1( lfSon );
-        LocalSubFunction< FT, 1 >  lfFather2( lfFather );
-        ConstLocalSubFunction< ST, 1 >  lfSon2( lfSon );
+        typedef DenseSubVector< typename LFFather::LocalDofVectorType > SubDofVectorTypeFather;
+        typedef DenseSubVector< const typename LFSon::LocalDofVectorType > SubDofVectorTypeSon;
+
+        typedef typename DiscreteFunctionSpaceType1 :: BasisFunctionSetType BasisFunctionSetType1;
+        typedef typename DiscreteFunctionSpaceType2 :: BasisFunctionSetType BasisFunctionSetType2;
+
+        const BasisFunctionSetType1 &fatherBasisFunctionSet1 = lfFather.basisFunctionSet().template subBasisFunctionSet< 0 >();
+        const BasisFunctionSetType2 &fatherBasisFunctionSet2 = lfFather.basisFunctionSet().template subBasisFunctionSet< 1 >();
+
+        const BasisFunctionSetType1 &sonBasisFunctionSet1 = lfSon.basisFunctionSet().template subBasisFunctionSet< 0 >();
+        const BasisFunctionSetType2 &sonBasisFunctionSet2 = lfSon.basisFunctionSet().template subBasisFunctionSet< 1 >();
+
+        const std::size_t fatherSize1 = fatherBasisFunctionSet1.size();
+        const std::size_t fatherSize2 = fatherBasisFunctionSet2.size();
+        const std::size_t fatherOffset1 = lfFather.basisFunctionSet().template offset<0>();
+        const std::size_t fatherOffset2 = lfFather.basisFunctionSet().template offset<1>();
+
+        const std::size_t sonSize1 = sonBasisFunctionSet1.size();
+        const std::size_t sonSize2 = sonBasisFunctionSet2.size();
+        const std::size_t sonOffset1 = lfSon.basisFunctionSet().template offset<0>();
+        const std::size_t sonOffset2 = lfSon.basisFunctionSet().template offset<1>();
+
+        LocalFunction< BasisFunctionSetType1, SubDofVectorTypeFather > lfFather1 (
+            fatherBasisFunctionSet1, SubDofVectorTypeFather( lfFather.localDofVector(), fatherSize1, fatherOffset1 ) );
+        LocalFunction< BasisFunctionSetType1, SubDofVectorTypeFather > lfFather2 (
+            fatherBasisFunctionSet2, SubDofVectorTypeFather( lfFather.localDofVector(), fatherSize2, fatherOffset2 ) );
+
+        BasicConstLocalFunction< BasisFunctionSetType1, SubDofVectorTypeSon > lfSon1 (
+            sonBasisFunctionSet1, SubDofVectorTypeSon( lfSon.localDofVector(), sonSize1, sonOffset1 ) );
+        BasicConstLocalFunction< BasisFunctionSetType2, SubDofVectorTypeSon > lfSon2 (
+            sonBasisFunctionSet2, SubDofVectorTypeSon( lfSon.localDofVector(), sonSize2, sonOffset2 ) );
 
         rp1_.restrictLocal( lfFather1, lfSon1, geometryInFather, initialize );
         rp2_.restrictLocal( lfFather2, lfSon2, geometryInFather, initialize );
       }
 
 
-      template< class FT, class ST, class LocalGeometry >
-      void prolongLocal ( const LocalFunction< FT > &lfFather, LocalFunction< ST > &lfSon,
+      template< class LFFather, class LFSon, class LocalGeometry >
+      void prolongLocal ( const LFFather &lfFather, LFSon &lfSon,
                           const LocalGeometry &geometryInFather, bool initialize ) const
       {
-        ConstLocalSubFunction< FT, 0 >  lfFather1( lfFather );
-        LocalSubFunction< ST, 0 >  lfSon1( lfSon );
-        ConstLocalSubFunction< FT, 1 >  lfFather2( lfFather );
-        LocalSubFunction< ST, 1 >  lfSon2( lfSon );
+        typedef DenseSubVector< const typename LFFather::LocalDofVectorType > SubDofVectorTypeFather;
+        typedef DenseSubVector< typename LFSon::LocalDofVectorType > SubDofVectorTypeSon;
+
+        typedef typename DiscreteFunctionSpaceType1 :: BasisFunctionSetType BasisFunctionSetType1;
+        typedef typename DiscreteFunctionSpaceType2 :: BasisFunctionSetType BasisFunctionSetType2;
+
+        const BasisFunctionSetType1 &fatherBasisFunctionSet1 = lfFather.basisFunctionSet().template subBasisFunctionSet< 0 >();
+        const BasisFunctionSetType2 &fatherBasisFunctionSet2 = lfFather.basisFunctionSet().template subBasisFunctionSet< 1 >();
+
+        const BasisFunctionSetType1 &sonBasisFunctionSet1 = lfSon.basisFunctionSet().template subBasisFunctionSet< 0 >();
+        const BasisFunctionSetType2 &sonBasisFunctionSet2 = lfSon.basisFunctionSet().template subBasisFunctionSet< 1 >();
+
+        const std::size_t fatherSize1 = fatherBasisFunctionSet1.size();
+        const std::size_t fatherSize2 = fatherBasisFunctionSet2.size();
+        const std::size_t fatherOffset1 = lfFather.basisFunctionSet().template offset<0>();
+        const std::size_t fatherOffset2 = lfFather.basisFunctionSet().template offset<1>();
+
+        const std::size_t sonSize1 = sonBasisFunctionSet1.size();
+        const std::size_t sonSize2 = sonBasisFunctionSet2.size();
+        const std::size_t sonOffset1 = lfSon.basisFunctionSet().template offset<0>();
+        const std::size_t sonOffset2 = lfSon.basisFunctionSet().template offset<1>();
+
+        LocalFunction< BasisFunctionSetType1, SubDofVectorTypeSon > lfSon1 (
+            sonBasisFunctionSet1, SubDofVectorTypeSon( lfSon.localDofVector(), sonSize1, sonOffset1 ) );
+        LocalFunction< BasisFunctionSetType1, SubDofVectorTypeSon > lfSon2 (
+            sonBasisFunctionSet2, SubDofVectorTypeSon( lfSon.localDofVector(), sonSize2, sonOffset2 ) );
+
+        BasicConstLocalFunction< BasisFunctionSetType1, SubDofVectorTypeFather > lfFather1 (
+            fatherBasisFunctionSet1, SubDofVectorTypeFather( lfFather.localDofVector(), fatherSize1, fatherOffset1 ) );
+        BasicConstLocalFunction< BasisFunctionSetType2, SubDofVectorTypeFather > lfFather2 (
+            fatherBasisFunctionSet2, SubDofVectorTypeFather( lfFather.localDofVector(), fatherSize2, fatherOffset2 ) );
 
         rp1_.prolongLocal( lfFather1, lfSon1, geometryInFather, initialize );
         rp2_.prolongLocal( lfFather2, lfSon2, geometryInFather, initialize );
