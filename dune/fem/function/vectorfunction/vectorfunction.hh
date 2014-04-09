@@ -1,13 +1,17 @@
 #ifndef DUNE_FEM_VECTORFUNCTION_HH
 #define DUNE_FEM_VECTORFUNCTION_HH
 
+#include <dune/common/static_assert.hh>
 #include <dune/common/typetraits.hh>
 
-#include <dune/fem/storage/vector.hh>
-#include <dune/fem/storage/envelope.hh>
-#include <dune/fem/function/common/dofblock.hh>
+#include <dune/fem/common/referencevector.hh>
+#include <dune/fem/common/stackallocator.hh>
 #include <dune/fem/function/common/discretefunction.hh>
-#include <dune/fem/function/localfunction/standard.hh>
+#include <dune/fem/function/common/dofblock.hh>
+#include <dune/fem/function/localfunction/mutable.hh>
+#include <dune/fem/storage/envelope.hh>
+#include <dune/fem/storage/vector.hh>
+
 
 namespace Dune
 {
@@ -26,25 +30,13 @@ namespace Dune
     // ----------------------------
 
     template< class DiscreteFunctionSpace, class DofVector >
-    struct VectorDiscreteFunctionTraits
+    struct DiscreteFunctionTraits< VectorDiscreteFunction< DiscreteFunctionSpace, DofVector > > 
     {
       typedef DiscreteFunctionSpace DiscreteFunctionSpaceType;
 
       typedef DofVector DofVectorType;
 
-      typedef VectorDiscreteFunctionTraits
-        < DiscreteFunctionSpaceType, DofVectorType >
-        DiscreteFunctionTraits;
-      typedef VectorDiscreteFunction
-        < DiscreteFunctionSpaceType, DofVectorType >
-        DiscreteFunctionType;
-
-      typedef StandardLocalFunctionFactory< DiscreteFunctionTraits >
-        LocalFunctionFactoryType;
-      typedef LocalFunctionStack< LocalFunctionFactoryType >
-        LocalFunctionStorageType;
-      typedef typename LocalFunctionStorageType :: LocalFunctionType
-        LocalFunctionType;
+      typedef VectorDiscreteFunction< DiscreteFunctionSpaceType, DofVectorType >  DiscreteFunctionType;
 
       typedef typename DiscreteFunctionSpaceType :: DomainType DomainType;
       typedef typename DiscreteFunctionSpaceType :: RangeType RangeType;
@@ -72,6 +64,12 @@ namespace Dune
         ConstDofBlockType;
       typedef Envelope< DofBlockType > DofBlockPtrType;
       typedef Envelope< ConstDofBlockType > ConstDofBlockPtrType;
+
+      typedef ThreadSafeValue< UninitializedObjectStack > LocalDofVectorStackType;
+      typedef StackAllocator< DofType, LocalDofVectorStackType* > LocalDofVectorAllocatorType;
+      typedef DynamicReferenceVector< DofType, LocalDofVectorAllocatorType > LocalDofVectorType;
+
+      typedef MutableLocalFunction< DiscreteFunctionType > LocalFunctionType;
     };
 
 
@@ -80,57 +78,56 @@ namespace Dune
 
     template< class DiscreteFunctionSpace, class DofVector >
     class VectorDiscreteFunction
-    : public DiscreteFunctionDefault< VectorDiscreteFunctionTraits< DiscreteFunctionSpace, DofVector > >
+    : public DiscreteFunctionDefault< VectorDiscreteFunction< DiscreteFunctionSpace, DofVector > >
     {
       typedef VectorDiscreteFunction< DiscreteFunctionSpace, DofVector > ThisType;
-      typedef DiscreteFunctionDefault< VectorDiscreteFunctionTraits< DiscreteFunctionSpace, DofVector > > BaseType;
+      typedef DiscreteFunctionDefault< VectorDiscreteFunction< DiscreteFunctionSpace, DofVector > > BaseType;
 
-      static_assert( SupportsVectorInterface< DofVector >::v, "DofVector must support VectorInterface." );
+      dune_static_assert( SupportsVectorInterface< DofVector >::v, "DofVector must support VectorInterface." );
 
     public:
       //! type of this class's traits
-      typedef VectorDiscreteFunctionTraits< DiscreteFunctionSpace, DofVector > Traits;
+      typedef DiscreteFunctionTraits< ThisType > Traits;
 
       //! type of the associated discrete function space
-      typedef typename Traits::DiscreteFunctionSpaceType DiscreteFunctionSpaceType;
-      //! type of the DoF storage array
-      typedef typename Traits::DofVectorType DofVectorType;
+      typedef typename BaseType::DiscreteFunctionSpaceType DiscreteFunctionSpaceType;
 
       typedef typename Traits::DiscreteFunctionType DiscreteFunctionType;
 
-      typedef typename Traits::LocalFunctionType LocalFunctionType;
-      typedef typename Traits::LocalFunctionFactoryType  LocalFunctionFactoryType;
-      typedef typename Traits::LocalFunctionStorageType LocalFunctionStorageType;
 
-      typedef typename Traits::DomainType DomainType;
-      typedef typename Traits::RangeType RangeType;
+      typedef typename BaseType::LocalFunctionType LocalFunctionType;
 
-      typedef typename Traits::DomainFieldType DomainFieldType;
-      typedef typename Traits::RangeFieldType RangeFieldType;
 
-      typedef typename Traits::JacobianRangeType JacobianRangeType;
+      typedef typename BaseType::DomainType DomainType;
+      typedef typename BaseType::RangeType RangeType;
 
-      typedef typename Traits::DofType DofType;
+      typedef typename BaseType::DomainFieldType DomainFieldType;
+      typedef typename BaseType::RangeFieldType RangeFieldType;
+
+      typedef typename BaseType::JacobianRangeType JacobianRangeType;
+
+      typedef typename BaseType::DofType DofType;
+
+      //! type of the DoF storage array
+      typedef typename Traits::DofVectorType DofVectorType;
       typedef typename Traits::DofStorageType DofStorageType;
 
-      typedef typename Traits::ConstDofIteratorType ConstDofIteratorType;
-      typedef typename Traits::DofIteratorType DofIteratorType;
+      typedef typename BaseType::ConstDofIteratorType ConstDofIteratorType;
+      typedef typename BaseType::DofIteratorType DofIteratorType;
 
-      typedef typename Traits::DofBlockType DofBlockType;
-      typedef typename Traits::ConstDofBlockType ConstDofBlockType;
-      typedef typename Traits::DofBlockPtrType DofBlockPtrType;
-      typedef typename Traits::ConstDofBlockPtrType ConstDofBlockPtrType;
+      typedef typename BaseType::DofBlockType DofBlockType;
+      typedef typename BaseType::ConstDofBlockType ConstDofBlockType;
+      typedef typename BaseType::DofBlockPtrType DofBlockPtrType;
+      typedef typename BaseType::ConstDofBlockPtrType ConstDofBlockPtrType;
 
-    //private:
-    //  static_assert( (Conversion< RangeFieldType, DofType >::sameType), "RangeFieldType and DofType must equal." );
+      typedef typename BaseType :: LocalDofVectorAllocatorType LocalDofVectorAllocatorType;
 
-    public:
       //! Constructor
       VectorDiscreteFunction ( const std::string &name,
                                const DiscreteFunctionSpaceType &dfSpace,
                                DofVectorType &dofVector )
-      : BaseType( name, dfSpace, lfFactory_ ),
-        lfFactory_( *this ),
+      : BaseType( name, dfSpace, LocalDofVectorAllocatorType( &ldvStack_ ) ),
+        ldvStack_( std::max( sizeof( DofType ), sizeof( DofType* ) ) * space().blockMapper().maxNumDofs() * DiscreteFunctionSpaceType::localBlockSize ),
         dofVector_( &dofVector ),
         freeDofVector_( false )
       {
@@ -140,8 +137,8 @@ namespace Dune
       }
 
       VectorDiscreteFunction ( const ThisType &other )
-      : BaseType( other.name(), other.space(), lfFactory_ ),
-        lfFactory_( *this ),
+      : BaseType( other.name(), other.space(), LocalDofVectorAllocatorType( &ldvStack_ ) ),
+        ldvStack_( std::max( sizeof( DofType ), sizeof( DofType* ) ) * space().blockMapper().maxNumDofs() * DiscreteFunctionSpaceType::localBlockSize ),
         dofVector_( new DofVectorType( other.dofVector() ) ),
         freeDofVector_( true )
       {}
@@ -151,6 +148,8 @@ namespace Dune
         if( freeDofVector_ )
           delete dofVector_;
       }
+
+      using BaseType::space;
 
     private:
       // prohibit assignment
@@ -262,7 +261,7 @@ namespace Dune
       }
 
     private:
-      const LocalFunctionFactoryType lfFactory_;
+      typename Traits :: LocalDofVectorStackType ldvStack_;
 
       DofVectorType *const dofVector_;
       const bool freeDofVector_;

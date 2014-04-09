@@ -1,8 +1,6 @@
 #ifndef DUNE_FEM_FUNCTION_LOCALFUNCTION_AVERAGE_HH
 #define DUNE_FEM_FUNCTION_LOCALFUNCTION_AVERAGE_HH
 
-#include <dune/fem/function/localfunction/default.hh>
-#include <dune/fem/function/localfunction/standard.hh>
 #include <dune/fem/gridpart/common/capabilities.hh>
 #include <dune/fem/quadrature/cachingquadrature.hh>
 #include <dune/fem/space/common/discretefunctionspace.hh>

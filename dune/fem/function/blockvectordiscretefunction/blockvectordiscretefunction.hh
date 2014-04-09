@@ -5,22 +5,23 @@
 #include <string>
 
 #include <dune/common/exceptions.hh>
-#include <dune/common/fvector.hh> 
+#include <dune/common/fvector.hh>
 
 #include <dune/geometry/referenceelements.hh>
 
+#include <dune/fem/common/referencevector.hh>
+#include <dune/fem/common/stackallocator.hh>
 #include <dune/fem/function/common/discretefunction.hh>
 #include <dune/fem/function/common/scalarproducts.hh>
-#include <dune/fem/function/localfunction/standard.hh>
-#include <dune/fem/function/localfunction/wrapper.hh>
+#include <dune/fem/function/localfunction/mutable.hh>
 
-#include <dune/fem/storage/envelope.hh>
 #include <dune/fem/misc/threadmanager.hh>
+#include <dune/fem/storage/envelope.hh>
 
-namespace Dune 
+namespace Dune
 {
 
-  namespace Fem 
+  namespace Fem
   {
 
     // forward declaration
@@ -28,110 +29,116 @@ namespace Dune
     class BlockVectorDiscreteFunction;
 
     /** \class IsBlockVectorDiscreteFunction
-    *  \brief Tag for discrete functions using block vectors
-    *
-    *  A discrete function using block vectors for its dof storage and calculations should inherit from
-    *  this struct. For example, Dune::Fem::MatrixOperator recognizes discrete functions with block vectors
-    *  only as such if they inherit from this tag. If they do, their method .dofVector() is used (which is 
-    *  a block vector). If they do not, this indicates that they don't use block vectors and thus provide 
-    *  a .leakPointer() method -  which is used by Dune::Fem::MatrixOperator in this case.
-    *
-    */
+     *  \brief Tag for discrete functions using block vectors
+     *
+     *  A discrete function using block vectors for its dof storage and calculations should inherit from
+     *  this struct. For example, Dune::Fem::MatrixOperator recognizes discrete functions with block vectors
+     *  only as such if they inherit from this tag. If they do, their method .dofVector() is used (which is
+     *  a block vector). If they do not, this indicates that they don't use block vectors and thus provide
+     *  a .leakPointer() method -  which is used by Dune::Fem::MatrixOperator in this case.
+     *
+     */
     struct IsBlockVectorDiscreteFunction {};
 
 
     /** \class BlockVectorDiscreteFunctionTraits
-    *  \brief Traits class for a BlockVectorDiscreteFunction
-    *
-    *  \tparam  DiscreteFunctionSpace   space the discrete function lives in
-    *  \tparam  BlockVector             implementation class of the block vector
-    */
+     *  \brief Traits class for a BlockVectorDiscreteFunction
+     *
+     *  \tparam  DiscreteFunctionSpace   space the discrete function lives in
+     *  \tparam  BlockVector             implementation class of the block vector
+     */
     template< typename DiscreteFunctionSpace, typename BlockVector >
-    struct BlockVectorDiscreteFunctionTraits
+    struct DiscreteFunctionTraits< BlockVectorDiscreteFunction< DiscreteFunctionSpace, BlockVector > >
     {
-      typedef BlockVectorDiscreteFunctionTraits< DiscreteFunctionSpace, BlockVector > ThisType;
-      typedef BlockVector                                                             DofVectorType;
+      typedef BlockVector DofVectorType;
 
-      typedef DiscreteFunctionSpace                                               DiscreteFunctionSpaceType;
-      typedef typename DiscreteFunctionSpaceType::DomainType                      DomainType;
-      typedef typename DiscreteFunctionSpaceType::RangeType                       RangeType;
+      typedef DiscreteFunctionSpace DiscreteFunctionSpaceType;
+      typedef typename DiscreteFunctionSpaceType::DomainType DomainType;
+      typedef typename DiscreteFunctionSpaceType::RangeType RangeType;
       typedef BlockVectorDiscreteFunction< DiscreteFunctionSpace, BlockVector >   DiscreteFunctionType;
-      typedef StandardLocalFunctionFactory< ThisType >                      LocalFunctionFactoryType;
-      typedef LocalFunctionStack< LocalFunctionFactoryType >                LocalFunctionStorageType;
-      typedef typename LocalFunctionStorageType::LocalFunctionType                LocalFunctionType;
-      typedef typename DofVectorType::IteratorType                                DofIteratorType;
-      typedef typename DofVectorType::ConstIteratorType                           ConstDofIteratorType;
-      typedef typename DofVectorType::DofBlockType                                DofBlockType;
-      typedef typename DofVectorType::ConstDofBlockType                           ConstDofBlockType;
-      typedef Fem::Envelope<DofBlockType>                          DofBlockPtrType; 
-      typedef Fem::Envelope<ConstDofBlockType>                     ConstDofBlockPtrType;
-      typedef typename DiscreteFunctionSpaceType::BlockMapperType  MapperType;
-      typedef typename DofVectorType::FieldType                    DofType;
+
+      typedef typename DofVectorType::IteratorType DofIteratorType;
+      typedef typename DofVectorType::ConstIteratorType ConstDofIteratorType;
+      typedef typename DofVectorType::DofBlockType DofBlockType;
+      typedef typename DofVectorType::ConstDofBlockType ConstDofBlockType;
+      typedef Fem::Envelope< DofBlockType >                          DofBlockPtrType;
+      typedef Fem::Envelope< ConstDofBlockType >                     ConstDofBlockPtrType;
+      typedef typename DiscreteFunctionSpaceType::BlockMapperType MapperType;
+      typedef typename DofVectorType::FieldType DofType;
+
+      typedef ThreadSafeValue< UninitializedObjectStack > LocalDofVectorStackType;
+      typedef StackAllocator< DofType, LocalDofVectorStackType* > LocalDofVectorAllocatorType;
+      typedef DynamicReferenceVector< DofType, LocalDofVectorAllocatorType > LocalDofVectorType;
+
+      typedef MutableLocalFunction< DiscreteFunctionType > LocalFunctionType;
     };
 
     /** \class BlockVectorDiscreteFunctionTraits
-    *  \brief A discrete function which uses block vectors for its dof storage and dof calculations
-    *
-    *  \tparam  DiscreteFunctionSpace   space the discrete function lives in
-    *  \tparam  BlockVector             implementation class of the block vector
-    */
+     *  \brief A discrete function which uses block vectors for its dof storage and dof calculations
+     *
+     *  \tparam  DiscreteFunctionSpace   space the discrete function lives in
+     *  \tparam  BlockVector             implementation class of the block vector
+     */
     template< typename DiscreteFunctionSpace, typename BlockVector >
     class BlockVectorDiscreteFunction
-    : public DiscreteFunctionDefault< BlockVectorDiscreteFunctionTraits< DiscreteFunctionSpace, BlockVector > >,
-      public IsBlockVectorDiscreteFunction
+      : public DiscreteFunctionDefault< BlockVectorDiscreteFunction< DiscreteFunctionSpace, BlockVector > >,
+        public IsBlockVectorDiscreteFunction
     {
 
       /*
-       I didn't implement these methods of DiscreteFunctionDefault (deliberately):
+         I didn't implement these methods of DiscreteFunctionDefault (deliberately):
           void print ( std :: ostream &out ) const;
        */
       typedef BlockVectorDiscreteFunction< DiscreteFunctionSpace, BlockVector >   ThisType;
+      typedef DiscreteFunctionDefault< BlockVectorDiscreteFunction< DiscreteFunctionSpace, BlockVector > > BaseType;
+
       typedef ParallelScalarProduct< ThisType >                                   ScalarProductType;
 
-      typedef DiscreteFunctionDefault< BlockVectorDiscreteFunctionTraits< DiscreteFunctionSpace, BlockVector > > BaseType;
     public:
       // ==================== Types
 
       //! the traits of ThisType
-      typedef BlockVectorDiscreteFunctionTraits< DiscreteFunctionSpace, BlockVector >     TraitsType;
+      typedef DiscreteFunctionTraits< ThisType > Traits;
       //! type for the discrete function space this function lives in
-      typedef DiscreteFunctionSpace                                                       DiscreteFunctionSpaceType;
+      typedef DiscreteFunctionSpace DiscreteFunctionSpaceType;
       //! type for the class which implements the block vector
-      typedef BlockVector                                                                 BlockVectorType;
+      typedef BlockVector BlockVectorType;
       //! type for the class which implements the block vector (which is the dof vector)
-      typedef BlockVectorType                                                             DofVectorType;
+      typedef BlockVectorType DofVectorType;
       //! type for the mapper which maps local to global indices
-      typedef typename TraitsType::MapperType                                             MapperType;
+      typedef typename Traits::MapperType MapperType;
       //! type of the fields the dofs live in
-      typedef typename TraitsType::DofType                                                DofType;
+      typedef typename BaseType::DofType DofType;
       //! pointer to a block of dofs
-      typedef typename TraitsType::DofBlockPtrType                                        DofBlockPtrType;
+      typedef typename BaseType::DofBlockPtrType DofBlockPtrType;
       //! pointer to a block of dofs, const version
-      typedef typename TraitsType::ConstDofBlockPtrType                                   ConstDofBlockPtrType;
+      typedef typename BaseType::ConstDofBlockPtrType ConstDofBlockPtrType;
       //! type of a block of dofs
-      typedef typename TraitsType::DofBlockType                                           DofBlockType;
+      typedef typename BaseType::DofBlockType DofBlockType;
       //! iterator type for iterate over the dofs
-      typedef typename TraitsType::DofIteratorType                                        DofIteratorType;
+      typedef typename BaseType::DofIteratorType DofIteratorType;
       //! iterator type for iterate over the dofs, const verision
-      typedef typename TraitsType::ConstDofIteratorType                                   ConstDofIteratorType;
+      typedef typename BaseType::ConstDofIteratorType ConstDofIteratorType;
       //! type of the range field
-      typedef typename DiscreteFunctionSpaceType::RangeFieldType                          RangeFieldType;
+      typedef typename BaseType::RangeFieldType RangeFieldType;
       //! type of the domain field
-      typedef typename DiscreteFunctionSpaceType::DomainFieldType                         DomainFieldType;
+      typedef typename BaseType::DomainFieldType DomainFieldType;
       //! type of the local functions
-      typedef typename TraitsType::LocalFunctionType                                      LocalFunctionType;
-      //! type of the factory which produces local functions
-      typedef typename TraitsType::LocalFunctionFactoryType                               LocalFunctionFactoryType;
+      typedef typename BaseType::LocalFunctionType LocalFunctionType;
+      //! type of LocalDofVector
+      typedef typename BaseType::LocalDofVectorType LocalDofVectorType;
+      //! type of LocalDofVector StackAllocator
+      typedef typename BaseType::LocalDofVectorAllocatorType LocalDofVectorAllocatorType;
       //! type of the discrete functions's domain
-      typedef typename TraitsType::DomainType                                             DomainType;
+      typedef typename BaseType::DomainType DomainType;
       //! type of the discrete functions's range
-      typedef typename TraitsType::RangeType                                              RangeType;
+      typedef typename BaseType::RangeType RangeType;
       //! size type of the block vector
-      typedef typename BlockVectorType::SizeType                                          SizeType;
+      typedef typename BlockVectorType::SizeType SizeType;
 
       // methods from DiscreteFunctionDefault
-      using BaseType :: space ;
-      using BaseType :: name ;
+      using BaseType::space;
+      using BaseType::name;
 
       //! size of the dof blocks
       enum { blockSize = BlockVectorType::blockSize };
@@ -142,14 +149,13 @@ namespace Dune
        *  \param[in]  dfSpace      space the discrete function lives in
        *  \param[in]  blockVector  reference to the blockVector
        */
-      BlockVectorDiscreteFunction ( const std::string& name,
-                                    const DiscreteFunctionSpaceType& dfSpace,
-                                    BlockVectorType& blockVector )
-      : BaseType( name, dfSpace, lfFactory_ ),
-        lfFactory_( *this ),
-        memPair_( static_cast< DofStorageInterface* >( 0 ), &blockVector )
-      {
-      }
+      BlockVectorDiscreteFunction ( const std::string &name,
+                                    const DiscreteFunctionSpaceType &dfSpace,
+                                    BlockVectorType &blockVector )
+        : BaseType( name, dfSpace, LocalDofVectorAllocatorType( &ldvStack_ ) ),
+          ldvStack_( std::max( sizeof( DofType ), sizeof( DofType* ) ) * space().blockMapper().maxNumDofs() * DiscreteFunctionSpaceType::localBlockSize ),
+          memPair_( static_cast< DofStorageInterface * >( 0 ), &blockVector )
+      {}
 
       /** \brief Constructor to use if the vector storing the dofs does not exist yet
        *
@@ -158,21 +164,20 @@ namespace Dune
        */
       BlockVectorDiscreteFunction ( const std::string &name,
                                     const DiscreteFunctionSpaceType &dfSpace )
-      : BaseType( name, dfSpace, lfFactory_ ),
-        lfFactory_( *this ), 
-        memPair_( allocateManagedDofStorage< BlockVectorType >( space().gridPart().grid(), space().blockMapper(), name ) )
-      {
-      }
+        : BaseType( name, dfSpace, LocalDofVectorAllocatorType( &ldvStack_ ) ),
+          ldvStack_( std::max( sizeof( DofType ), sizeof( DofType* ) ) * space().blockMapper().maxNumDofs() * DiscreteFunctionSpaceType::localBlockSize ),
+          memPair_( allocateManagedDofStorage< BlockVectorType >( space().gridPart().grid(), space().blockMapper(), name ) )
+      {}
 
 
       /** \brief Copy constructor
        */
       BlockVectorDiscreteFunction ( const ThisType &other )
-      : BaseType( "copy of "+other.name(), other.space(), lfFactory_ ),
-        lfFactory_( *this ),
-        memPair_( allocateManagedDofStorage< BlockVectorType >( space().gridPart().grid(), space().blockMapper(), name() ) )
+        : BaseType( "copy of "+other.name(), other.space(), LocalDofVectorAllocatorType( &ldvStack_ ) ),
+          ldvStack_( other.ldvStack_ ),
+          memPair_( allocateManagedDofStorage< BlockVectorType >( space().gridPart().grid(), space().blockMapper(), name() ) )
       {
-        // copy dof vector content 
+        // copy dof vector content
         dofVector() = other.dofVector();
       }
 
@@ -183,7 +188,7 @@ namespace Dune
         // TODO: use a smart pointer for this?
         // No need for a null check here. Stroustrup: "Applying delete to zero has no effect."
         delete memPair_.first;
-        memPair_.first = 0 ;
+        memPair_.first = 0;
       }
 
     private:
@@ -192,7 +197,7 @@ namespace Dune
       BlockVectorDiscreteFunction ();
 
       // TODO: un-disallow this??
-      ThisType& operator= (const ThisType& other);
+      ThisType &operator= ( const ThisType &other );
 
     public:
 
@@ -201,19 +206,9 @@ namespace Dune
        *  \param[in]  other   reference to the other dof vector
        *  \return Reference to this
        */
-      void assign (const ThisType& other)
+      void assign ( const ThisType &other )
       {
         dofVector() = other.dofVector();
-      }
-    
-      /** \brief Add scalar*v to *this
-       *
-       *  \param[in]  scalar  scalar by which v has to be multiplied before adding it to *this
-       *  \param[in]  v       the other discrete function which has to be scaled and added
-       */
-      void axpy (const RangeFieldType& scalar, const ThisType& v)
-      {
-        dofVector().addScaled(v.dofVector(), scalar);
       }
 
       /** \brief Add scalar*v to *this
@@ -221,9 +216,19 @@ namespace Dune
        *  \param[in]  scalar  scalar by which v has to be multiplied before adding it to *this
        *  \param[in]  v       the other discrete function which has to be scaled and added
        */
-      void axpy (const ThisType& v, const RangeFieldType& scalar)
+      void axpy ( const RangeFieldType &scalar, const ThisType &v )
       {
-        dofVector().addScaled(v.dofVector(), scalar);
+        dofVector().addScaled( v.dofVector(), scalar );
+      }
+
+      /** \brief Add scalar*v to *this
+       *
+       *  \param[in]  scalar  scalar by which v has to be multiplied before adding it to *this
+       *  \param[in]  v       the other discrete function which has to be scaled and added
+       */
+      void axpy ( const ThisType &v, const RangeFieldType &scalar )
+      {
+        dofVector().addScaled( v.dofVector(), scalar );
       }
 
       /** \brief Obtain the (modifiable) 'index'-th block
@@ -233,7 +238,7 @@ namespace Dune
        */
       DofBlockPtrType block ( unsigned int index )
       {
-        return DofBlockPtrType( memPair_.second->operator[](index) );
+        return DofBlockPtrType( memPair_.second->operator[]( index ) );
       }
 
       /** \brief Obtain the (constant) 'index'-th block
@@ -241,16 +246,16 @@ namespace Dune
        *  \param[in]  index   index of the block
        *  \return The (constant) 'index'-th block
        */
-      ConstDofBlockPtrType block ( unsigned int index ) const 
+      ConstDofBlockPtrType block ( unsigned int index ) const
       {
-        return ConstDofBlockPtrType( memPair_.second->operator[](index) );
+        return ConstDofBlockPtrType( memPair_.second->operator[]( index ) );
       }
 
       /** \brief Set each dof to zero
        */
       void clear ()
       {
-         dofVector().clear();
+        dofVector().clear();
       }
 
       /** \brief Obtain the constant iterator pointing to the first dof
@@ -301,7 +306,7 @@ namespace Dune
        */
       void enableDofCompression ()
       {
-        if ( memPair_.first )
+        if( memPair_.first )
           memPair_.first->enableDofCompression();
       }
 
@@ -356,10 +361,10 @@ namespace Dune
       SizeType size () const { return dofVector().size(); }
 
     protected:
-      /* 
+      /*
        * ============================== data fields ====================
        */
-      const LocalFunctionFactoryType lfFactory_;
+      typename Traits :: LocalDofVectorStackType ldvStack_;
       std::pair< DofStorageInterface *, BlockVectorType * > memPair_;
     };
 
